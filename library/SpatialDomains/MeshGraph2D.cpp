@@ -276,12 +276,15 @@ namespace Nektar
                         };
 
                             TriGeomSharedPtr trigeom;
+							bool cylindrical=(m_coord_system==eCylindrical)?1:0;
+
                             if ((x = faceCurves.find(indx)) == faceCurves.end())
                             {
                                 trigeom = MemoryManager<TriGeom>
                                             ::AllocateSharedPtr(indx,
                                                     edges,
-                                                    edgeorient);
+                                                    edgeorient,
+													cylindrical);
                             }
                             else
                             {
@@ -289,7 +292,9 @@ namespace Nektar
                                             ::AllocateSharedPtr(indx,
                                                     edges,
                                                     edgeorient,
-                                                    m_curvedFaces[x->second]);
+                                                    m_curvedFaces[x->second],
+													cylindrical);
+
                             }
                             trigeom->SetGlobalID(indx);
 
@@ -329,12 +334,15 @@ namespace Nektar
                         };
 
                             QuadGeomSharedPtr quadgeom;
+							bool cylindrical=(m_coord_system==eCylindrical)?1:0;
+
                             if ((x = faceCurves.find(indx)) == faceCurves.end())
                             {
                                 quadgeom = MemoryManager<QuadGeom>
                                             ::AllocateSharedPtr(indx,
                                                     edges,
-                                                    edgeorient);
+                                                    edgeorient,
+													cylindrical);
                             }
                             else
                             {
@@ -342,7 +350,8 @@ namespace Nektar
                                             ::AllocateSharedPtr(indx,
                                                     edges,
                                                     edgeorient,
-                                                    m_curvedFaces[x->second]);
+                                                    m_curvedFaces[x->second],
+													cylindrical);
                             }
                             quadgeom->SetGlobalID(indx);
 
@@ -607,7 +616,6 @@ namespace Nektar
             // Need to iterate through vectors because there may be multiple
             // occurrences.
             ElementEdgeSharedPtr elementEdge;
-            //TriGeomVectorIter triIter;
 
             ElementEdgeVectorSharedPtr returnval = MemoryManager<ElementEdgeVector>::AllocateSharedPtr();
 

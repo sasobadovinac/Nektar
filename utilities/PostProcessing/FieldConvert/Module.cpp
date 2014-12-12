@@ -82,7 +82,7 @@ namespace Nektar
             }
             
             m_f->m_inputfiles[fileType].push_back(fileName);
-        }
+        } 
         /**
          * @brief Open a file for output.
          */

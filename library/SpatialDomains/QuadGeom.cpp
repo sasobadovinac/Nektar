@@ -59,10 +59,10 @@ namespace Nektar
         /**
          *
          */
-        QuadGeom::QuadGeom(int id, const int coordim):
+        QuadGeom::QuadGeom(int id, const int coordim, const bool cylindrical):
             Geometry2D(coordim)
         {
-
+			m_cylindrical=cylindrical;
             const LibUtilities::BasisKey B(LibUtilities::eModified_A, 2,
             LibUtilities::PointsKey(3,LibUtilities::eGaussLobattoLegendre));
 
@@ -78,12 +78,14 @@ namespace Nektar
         QuadGeom::QuadGeom(const int id,
                            const PointGeomSharedPtr verts[],
                            const SegGeomSharedPtr edges[],
-                           const StdRegions::Orientation eorient[]):
+                           const StdRegions::Orientation eorient[],
+						   const bool cylindrical):
             Geometry2D(verts[0]->GetCoordim()),
             m_fid(id)
         {
             m_globalID = id;
             m_shapeType = LibUtilities::eQuadrilateral;
+			m_cylindrical=cylindrical;
 
             /// Copy the vert shared pointers.
             m_verts.insert(m_verts.begin(), verts, verts+QuadGeom::kNverts);
@@ -126,7 +128,8 @@ namespace Nektar
         QuadGeom::QuadGeom(const int id,
                            const SegGeomSharedPtr edges[],
                            const StdRegions::Orientation eorient[],
-                           const CurveSharedPtr &curve) :
+                           const CurveSharedPtr &curve,
+						   const bool cylindrical) :
             Geometry2D(edges[0]->GetVertex(0)->GetCoordim()),
             m_fid(id)
         {
@@ -135,6 +138,8 @@ namespace Nektar
             m_globalID = m_fid;
 
             m_shapeType = LibUtilities::eQuadrilateral;
+			m_cylindrical=cylindrical;
+
 
             /// Copy the edge shared pointers.
             m_edges.insert(m_edges.begin(), edges, edges+QuadGeom::kNedges);
@@ -219,11 +224,13 @@ namespace Nektar
          */
         QuadGeom::QuadGeom(const int id,
                            const SegGeomSharedPtr edges[],
-                           const StdRegions::Orientation eorient[]):
+                           const StdRegions::Orientation eorient[],
+						   const bool cylindrical):
             Geometry2D(edges[0]->GetVertex(0)->GetCoordim()),
             m_fid(id)
         {
             int j;
+			m_cylindrical=cylindrical;
 
             m_globalID = m_fid;
             m_shapeType = LibUtilities::eQuadrilateral;
@@ -576,9 +583,11 @@ namespace Nektar
                     }
                 }
 
+				cout << "GenGeoFactor in QuadGeom" << endl;
                 m_geomFactors = MemoryManager<GeomFactors>::AllocateSharedPtr(
-                    Gtype, m_coordim, m_xmap, m_coeffs);
+                    Gtype, m_coordim, m_xmap, m_coeffs, m_cylindrical);
                 m_geomFactorsState = ePtsFilled;
+				cout << "generation GenFactor done " << endl;
             }
         }
 

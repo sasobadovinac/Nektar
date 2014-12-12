@@ -62,24 +62,29 @@ namespace Nektar
         public:
             SPATIAL_DOMAINS_EXPORT QuadGeom();
             
-	    SPATIAL_DOMAINS_EXPORT QuadGeom(int id, const int coordim);
+	    SPATIAL_DOMAINS_EXPORT QuadGeom(int id, const int coordim, const bool cylindrical=false);
             
 	    SPATIAL_DOMAINS_EXPORT QuadGeom(
                     const int id, 
                     const PointGeomSharedPtr verts[],
                     const SegGeomSharedPtr edges[], 
-                    const StdRegions::Orientation eorient[]);
+                    const StdRegions::Orientation eorient[],
+					const bool cylindrical=false);
 
             SPATIAL_DOMAINS_EXPORT QuadGeom(
                     const int id, 
                     const SegGeomSharedPtr edges[], 
-                    const StdRegions::Orientation eorient[]);
+                    const StdRegions::Orientation eorient[],
+					const bool cylindrical=false);
+
 
             SPATIAL_DOMAINS_EXPORT QuadGeom(
                     const int id, 
                     const SegGeomSharedPtr edges[], 
                     const StdRegions::Orientation eorient[], 
-                    const CurveSharedPtr &curve);
+                    const CurveSharedPtr &curve,
+					const bool cylindrical=false);
+
 
             SPATIAL_DOMAINS_EXPORT QuadGeom(const QuadGeom &in);
 
@@ -110,6 +115,8 @@ namespace Nektar
             int                                 m_fid;
             bool                                m_ownVerts;
             std::list<CompToElmt>               m_elmtMap;
+			bool	m_cylindrical;
+
  
             SPATIAL_DOMAINS_EXPORT virtual void v_AddElmtConnected(
                     int gvo_id, 

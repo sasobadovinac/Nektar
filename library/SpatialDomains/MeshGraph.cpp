@@ -126,7 +126,7 @@ namespace Nektar
             TiXmlElement* geometry_tag = pSession->GetElement("NEKTAR/GEOMETRY");
             TiXmlAttribute *attr = geometry_tag->FirstAttribute();
             int meshDim = 0;
-            while (attr)
+			while (attr)
             {
                 std::string attrName(attr->Name());
                 if (attrName == "DIM")
@@ -267,6 +267,7 @@ namespace Nektar
             m_meshPartitioned = false;
             m_meshDimension = 3;
             m_spaceDimension = 3;
+			m_coord_system=eCartesian;
 
             while (attr)
             {
@@ -281,6 +282,16 @@ namespace Nektar
                     err = attr->QueryIntValue(&m_spaceDimension);
                     ASSERTL1(err==TIXML_SUCCESS, "Unable to read space dimension.");
                 }
+				else if(attrName=="COORDINATE")
+				{
+					string CoordSystem=attr->Value();
+					if(CoordSystem=="CYLINDRICAL")
+					{
+						m_coord_system=eCylindrical;
+						cout << "value " << attr->Value();
+					}
+					
+				}
                 else if (attrName == "PARTITION")
                 {
                     err = attr->QueryIntValue(&m_partition);
@@ -3331,8 +3342,9 @@ namespace Nektar
          */
         TriGeomSharedPtr MeshGraph::AddTriangle(SegGeomSharedPtr edges[], StdRegions::Orientation orient[])
         {
+			bool cylindrical=(m_coord_system==eCylindrical)?1:0;
             int indx = m_triGeoms.rbegin()->first + 1;
-            TriGeomSharedPtr trigeom(MemoryManager<TriGeom>::AllocateSharedPtr(indx, edges, orient));
+            TriGeomSharedPtr trigeom(MemoryManager<TriGeom>::AllocateSharedPtr(indx, edges, orient,cylindrical));
             trigeom->SetGlobalID(indx);
 
             m_triGeoms[indx] = trigeom;
@@ -3346,8 +3358,9 @@ namespace Nektar
          */
         QuadGeomSharedPtr MeshGraph::AddQuadrilateral(SegGeomSharedPtr edges[], StdRegions::Orientation orient[])
         {
+			bool cylindrical=(m_coord_system==eCylindrical)?1:0;
             int indx = m_quadGeoms.rbegin()->first + 1;
-            QuadGeomSharedPtr quadgeom(MemoryManager<QuadGeom>::AllocateSharedPtr(indx, edges, orient));
+            QuadGeomSharedPtr quadgeom(MemoryManager<QuadGeom>::AllocateSharedPtr(indx, edges, orient,cylindrical));
             quadgeom->SetGlobalID(indx);
 
             m_quadGeoms[indx] = quadgeom;

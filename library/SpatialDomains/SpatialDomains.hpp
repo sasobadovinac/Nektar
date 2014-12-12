@@ -58,6 +58,7 @@ namespace Nektar
             eMovingRegular, ///< Currently unused.
         };
 
+		
         /**
          * @brief Indicates if the geometric information for an element has
          *        been populated.

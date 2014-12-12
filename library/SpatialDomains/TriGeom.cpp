@@ -79,12 +79,14 @@ namespace Nektar
         TriGeom::TriGeom(const int id,
                 const PointGeomSharedPtr verts[],
                 const SegGeomSharedPtr edges[],
-                const StdRegions::Orientation eorient[]):
+                const StdRegions::Orientation eorient[],
+				const bool cylindrical):
                 Geometry2D(verts[0]->GetCoordim()),
                 m_fid(id)
         {
             m_globalID = m_fid;
             m_shapeType = LibUtilities::eTriangle;
+			m_cylindrical=cylindrical;
 
             /// Copy the vert shared pointers.
             m_verts.insert(m_verts.begin(), verts, verts+TriGeom::kNverts);
@@ -125,12 +127,14 @@ namespace Nektar
          *
          */
         TriGeom::TriGeom(const int id, const SegGeomSharedPtr edges[],
-                const StdRegions::Orientation eorient[]):
+                const StdRegions::Orientation eorient[],
+				const bool cylindrical):
                 Geometry2D(edges[0]->GetVertex(0)->GetCoordim()),
                 m_fid(id)
         {
             m_globalID = m_fid;
             m_shapeType = LibUtilities::eTriangle;
+			m_cylindrical=cylindrical;
 
             /// Copy the edge shared pointers.
             m_edges.insert(m_edges.begin(), edges, edges+TriGeom::kNedges);
@@ -180,12 +184,14 @@ namespace Nektar
         TriGeom::TriGeom(const int id,
                 const SegGeomSharedPtr edges[],
                 const StdRegions::Orientation eorient[],
-                const CurveSharedPtr &curve) :
+                const CurveSharedPtr &curve,
+				const bool cylindrical):
                 Geometry2D(edges[0]->GetVertex(0)->GetCoordim()),
                 m_fid(id)
         {
             m_globalID = m_fid;
             m_shapeType =  LibUtilities::eTriangle;
+			m_cylindrical=cylindrical;
 
             /// Copy the edge shared pointers.
             m_edges.insert(m_edges.begin(), edges, edges+TriGeom::kNedges);
@@ -570,7 +576,7 @@ namespace Nektar
                 }
 
                 m_geomFactors = MemoryManager<GeomFactors>::AllocateSharedPtr(
-                    Gtype, m_coordim, m_xmap, m_coeffs);
+                    Gtype, m_coordim, m_xmap, m_coeffs,m_cylindrical);
 
                 m_geomFactorsState = ePtsFilled;
             }

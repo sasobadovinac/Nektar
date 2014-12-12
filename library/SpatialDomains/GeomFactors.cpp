@@ -90,13 +90,15 @@ namespace Nektar
                 const GeomType                              gtype,
                 const int                                   coordim,
                 const StdRegions::StdExpansionSharedPtr    &xmap,
-                const Array<OneD, Array<OneD, NekDouble> > &coords) :
+                const Array<OneD, Array<OneD, NekDouble> > &coords,
+				const bool cylindrical) :
             m_type(gtype),
             m_expDim(xmap->GetShapeDimension()),
             m_coordDim(coordim),
             m_valid(true),
             m_xmap(xmap),
-            m_coords(coords)
+            m_coords(coords),
+			m_cylindrical(cylindrical)
         {
             CheckIfValid();
         }
@@ -112,7 +114,8 @@ namespace Nektar
             m_coordDim(S.m_coordDim),
             m_valid(S.m_valid),
             m_xmap(S.m_xmap),
-            m_coords(S.m_coords)
+            m_coords(S.m_coords),
+			m_cylindrical(S.m_cylindrical)
         {
         }
 
@@ -151,6 +154,16 @@ namespace Nektar
             const Array<OneD, const NekDouble> jac_rhs =
                             rhs.ComputeJac(rhs.m_xmap->GetPointsKeys());
             if(!(jac_lhs == jac_rhs))
+            {
+                return false;
+            }
+			
+			
+			const Array<OneD, const NekDouble> jac_cyl_lhs =
+							   lhs.ComputeJacCyl(lhs.m_xmap->GetPointsKeys());
+            const Array<OneD, const NekDouble> jac_cyl_rhs =
+							  rhs.ComputeJacCyl(rhs.m_xmap->GetPointsKeys());
+            if(!(jac_cyl_lhs == jac_cyl_rhs))
             {
                 return false;
             }
@@ -252,23 +265,24 @@ namespace Nektar
          */
         Array<OneD, NekDouble> GeomFactors::ComputeJac(
                 const LibUtilities::PointsKeyVector &keyTgt) const
-        {
-            ASSERTL1(keyTgt.size() == m_expDim,
+        {            ASSERTL1(keyTgt.size() == m_expDim,
                      "Dimension of target point distribution does not match "
                      "expansion dimension.");
 
             int i = 0, j = 0, k = 0, l = 0;
             int ptsTgt   = 1;
 
+			//if it is a cylindrical coordinate or deformed
             if (m_type == eDeformed)
             {
                 // Allocate storage and compute number of points
                 for (i = 0; i < m_expDim; ++i)
                 {
                     ptsTgt   *= keyTgt[i].GetNumPoints();
+
                 }
             }
-
+		
             // Get derivative at geometry points
             DerivStorage deriv = ComputeDeriv(keyTgt);
 
@@ -306,6 +320,103 @@ namespace Nektar
 
             return jac;
         }
+		
+		
+		Array<OneD, NekDouble> GeomFactors::ComputeJacCyl(
+													   const LibUtilities::PointsKeyVector &keyTgt) const
+        {            
+			ASSERTL1(keyTgt.size() == m_expDim,
+							  "Dimension of target point distribution does not match "
+							  "expansion dimension.");
+			
+            int i = 0, j = 0, k = 0, l = 0;
+            int ptsTgt   = 1;
+			
+                // Allocate storage and compute number of points
+                for (i = 0; i < m_expDim; ++i)
+                {
+                    ptsTgt   *= keyTgt[i].GetNumPoints();
+                }
+            
+			
+			DirectionalCoordinate Radial=DirectionalCoordinate(ptsTgt);
+			Vmath::Zero(ptsTgt, &Radial[0],1);
+			LibUtilities::PointsKeyVector map_points(m_expDim);
+            int nqtot_map      = 1;
+            int nqtot_tbasis   = 1;
+			
+			// Allocate storage and compute number of points
+            for (i = 0; i < m_expDim; ++i)
+            {
+                map_points[i]  = m_xmap->GetBasis(i)->GetPointsKey();
+                nqtot_map     *= map_points[i].GetNumPoints();
+                nqtot_tbasis  *= keyTgt[i].GetNumPoints();
+            }
+			
+			
+			Array<OneD, NekDouble> tmp1(nqtot_map);
+			m_xmap->BwdTrans(m_coords[1], tmp1);
+
+			bool same = true;
+			same = same && (map_points[1] == keyTgt[1]);
+			
+			if( same )
+			{
+				
+				Vmath::Vcopy(nqtot_map,&tmp1[0],1, &Radial[0],1); 
+				
+			}
+			else
+			{
+				for (j = 0; j < m_expDim; ++j)
+			    {
+				    Interp(map_points, tmp1, keyTgt, Radial);
+				}
+			}
+			
+            // Get derivative at geometry points
+            DerivStorage deriv = ComputeDeriv(keyTgt);
+			
+            Array<TwoD, NekDouble> tmp (m_expDim*m_expDim, ptsTgt, 0.0);
+            Array<TwoD, NekDouble> gmat(m_expDim*m_expDim, ptsTgt, 0.0);
+            Array<OneD, NekDouble> jac (ptsTgt, 0.0);
+			
+            // Compute g_{ij} as t_i \cdot t_j and store in tmp
+            for (i = 0, l = 0; i < m_expDim; ++i)
+            {
+                for (j = 0; j < m_expDim; ++j, ++l)
+                {
+                    for (k = 0; k < m_coordDim; ++k)
+                    {
+                        Vmath::Vvtvp(ptsTgt, &deriv[i][k][0], 1,
+									 &deriv[j][k][0], 1,
+									 &tmp[l][0],      1,
+									 &tmp[l][0],      1);
+                    }
+                }
+            }
+			
+            Adjoint(tmp, gmat);
+			
+            // Compute g = det(g_{ij}) (= Jacobian squared) and store
+            // temporarily in m_jac.
+            for (i = 0; i < m_expDim; ++i)
+            {
+                Vmath::Vvtvp(ptsTgt, &tmp[i][0], 1, &gmat[i*m_expDim][0], 1,
+							 &jac[0], 1, &jac[0], 1);
+            }
+			
+            // Compute the Jacobian = sqrt(g)
+            Vmath::Vsqrt(ptsTgt, &jac[0], 1, &jac[0], 1);
+			
+			if(m_cylindrical)
+			{
+				Vmath::Vmul(ptsTgt, &Radial[0],1,&jac[0],1,&jac[0],1);
+			}
+			
+            return jac;
+        }
+		
 
 
         /**

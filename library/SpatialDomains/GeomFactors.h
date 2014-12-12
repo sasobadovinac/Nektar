@@ -73,6 +73,8 @@ namespace SpatialDomains
     /// Storage type for derivative of mapping.
     typedef Array<OneD, Array<OneD, Array<OneD,NekDouble> > >
                                                 DerivStorage;
+	
+	typedef Array<OneD, NekDouble> DirectionalCoordinate;
 
     /// Calculation and storage of geometric factors associated with the
     /// mapping from StdRegions reference elements to a given LocalRegions
@@ -84,7 +86,8 @@ namespace SpatialDomains
             GeomFactors(const GeomType                              gtype,
                         const int                                   coordim,
                         const StdRegions::StdExpansionSharedPtr    &xmap,
-                        const Array<OneD, Array<OneD, NekDouble> > &coords);
+                        const Array<OneD, Array<OneD, NekDouble> > &coords,
+						const bool cylindrical=false);
 
             /// Copy constructor.
             GeomFactors(const GeomFactors &S);
@@ -107,6 +110,8 @@ namespace SpatialDomains
             inline const Array<OneD, const NekDouble> GetJac(
                     const LibUtilities::PointsKeyVector &keyTgt);
 
+		inline const Array<OneD, const NekDouble> GetJacCyl(
+								const LibUtilities::PointsKeyVector &keyTgt);
             /// Return the Laplacian coefficients \f$g_{ij}\f$.
             inline const Array<TwoD, const NekDouble> GetGmat(
                     const LibUtilities::PointsKeyVector &keyTgt);
@@ -137,13 +142,19 @@ namespace SpatialDomains
             int m_coordDim;
             /// Validity of element (Jacobian positive)
             bool m_valid;
+			/// Stores coordinates of the geometry.
+			Array<OneD, Array<OneD, NekDouble> > m_coords;
+			/// Cyindrical Coordinate Formulation
+			bool m_cylindrical;
             /// Stores information about the expansion.
-            StdRegions::StdExpansionSharedPtr m_xmap;
-            /// Stores coordinates of the geometry.
-            Array<OneD, Array<OneD, NekDouble> > m_coords;
+			StdRegions::StdExpansionSharedPtr m_xmap;
+
+
             /// Jacobian vector cache
             std::map<LibUtilities::PointsKeyVector, Array<OneD, NekDouble> >
                                                 m_jacCache;
+			std::map<LibUtilities::PointsKeyVector, Array<OneD, NekDouble> >
+													m_jacCacheCyl;
             /// DerivFactors vector cache
             std::map<LibUtilities::PointsKeyVector, Array<TwoD, NekDouble> >
                                                 m_derivFactorCache;
@@ -158,6 +169,9 @@ namespace SpatialDomains
             /// Return the Jacobian of the mapping and cache the result.
             SPATIAL_DOMAINS_EXPORT Array<OneD, NekDouble> ComputeJac(
                     const LibUtilities::PointsKeyVector &keyTgt) const;
+		
+			SPATIAL_DOMAINS_EXPORT Array<OneD, NekDouble> ComputeJacCyl(
+								    const LibUtilities::PointsKeyVector &keyTgt) const;
 
             /// Computes the Laplacian coefficients \f$g_{ij}\f$.
             SPATIAL_DOMAINS_EXPORT Array<TwoD, NekDouble> ComputeGmat(
@@ -180,6 +194,9 @@ namespace SpatialDomains
             void Adjoint(
                     const Array<TwoD, const NekDouble>& src,
                     Array<TwoD, NekDouble>& tgt) const;
+		
+			DirectionalCoordinate CoordinateInterpolation(int direction);
+		
     };
 
 
@@ -232,6 +249,24 @@ namespace SpatialDomains
 
         return m_jacCache[keyTgt];
 
+    }
+	
+
+	inline const Array<OneD, const NekDouble> GeomFactors::GetJacCyl(
+							  const LibUtilities::PointsKeyVector &keyTgt)
+    {
+        std::map<LibUtilities::PointsKeyVector,
+		Array<OneD, NekDouble> >::const_iterator x;
+		
+        if ((x = m_jacCacheCyl.find(keyTgt)) != m_jacCacheCyl.end())
+        {
+            return x->second;
+        }
+		
+        m_jacCacheCyl[keyTgt] = ComputeJacCyl(keyTgt);
+		
+        return m_jacCacheCyl[keyTgt];
+		
     }
 
 
