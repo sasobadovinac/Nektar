@@ -49,8 +49,10 @@
 #include <MultiRegions/ExpList3DHomogeneous1D.h>
 #include <MultiRegions/ExpList3DHomogeneous2D.h>
 
-#include <SolverUtils/Advection/Advection.h>
+#include <SolverUtils/AdvectionSystem.h>
 #include <SolverUtils/Diffusion/Diffusion.h>
+
+#include <boost/format.hpp>
 
 #include <iostream>
 
@@ -363,7 +365,8 @@ namespace Nektar
 									
                                 for (i = 0; i < m_fields.num_elements(); i++)
                                 {
-                                    if (i == m_fields.num_elements()-2)
+                                    if(m_session->GetVariable(i).compare("w")
+                                            == 0)
                                     {
                                         m_fields[i] = MemoryManager<MultiRegions
                                             ::ContField3DHomogeneous1D>
@@ -375,14 +378,18 @@ namespace Nektar
                                                     m_session->GetVariable(i), 
                                                     m_checkIfSystemSingular[i]);
                                     }
-                                    m_fields[i] = MemoryManager<MultiRegions
-                                        ::ContField3DHomogeneous1D>
-                                            ::AllocateSharedPtr(
-                                                m_session, BkeyZR, m_LhomZ, 
-                                                m_useFFT, m_homogen_dealiasing,
-                                                m_graph, 
-                                                m_session->GetVariable(i), 
-                                                m_checkIfSystemSingular[i]);
+	
+										m_fields[i] = MemoryManager<MultiRegions
+										::ContField3DHomogeneous1D>
+										::AllocateSharedPtr(
+															m_session, BkeyZR, m_LhomZ, 
+															m_useFFT, m_homogen_dealiasing,
+															m_graph, 
+															m_session->GetVariable(i), 
+															m_checkIfSystemSingular[i]);
+								
+
+	
                                 }
                             }
                             // Normal homogeneous 1D
@@ -766,7 +773,7 @@ namespace Nektar
 
                 ffunc->Evaluate(x0,x1,x2,pTime,pArray);
             }
-            else if (vType == LibUtilities::eFunctionTypeFile)
+            else if (vType == LibUtilities::eFunctionTypeFile || vType == LibUtilities::eFunctionTypeTransientFile)
             {
                 std::string filename
                     = m_session->GetFunctionFilename(pFunctionName, pFieldName,domain);
@@ -785,6 +792,18 @@ namespace Nektar
                     ElementGIDs[i] = m_fields[0]->GetExp(i)->GetGeom()->GetGlobalID();
                 }
 
+                if (vType == LibUtilities::eFunctionTypeTransientFile)
+                {
+                    try
+                    {
+                        filename = boost::str(boost::format(filename) % m_time);
+                    }
+                    catch (...)
+                    {
+                        ASSERTL0(false, "Invalid Filename in function \""
+                        + pFunctionName + "\", variable \"" + pFieldName + "\"")
+                    }
+                }
 
                 m_fld->Import(filename,FieldDef,FieldData,
                                      LibUtilities::NullFieldMetaDataMap,
@@ -1864,18 +1883,26 @@ namespace Nektar
         void EquationSystem::Checkpoint_Output(
             const int n, 
             MultiRegions::ExpListSharedPtr &field, 
-            Array< OneD, Array<OneD, NekDouble> > &fieldcoeffs, 
-            Array<OneD, std::string> &variables)
+            std::vector<Array<OneD, NekDouble> > &fieldcoeffs, 
+            std::vector<std::string> &variables)
         {
             char chkout[16] = "";
             sprintf(chkout, "%d", n);
             std::string outname = m_sessionName + "_" + chkout + ".chk";
             WriteFld(outname, field, fieldcoeffs, variables);
         }
+        
+        /**
+         * Write the n-th base flow into a .chk file
+         * @param   n   The index of the base flow file.
+         */
+        void EquationSystem::Checkpoint_BaseFlow(const int n)
+        {
+            std::string outname =  m_sessionName +  "_BaseFlow_" + 
+                boost::lexical_cast<std::string>(n);
 
-
-
-
+            WriteFld(outname + ".chk");
+        }
 
         /**
          * Writes the field data to a file with the given filename.
@@ -1883,9 +1910,9 @@ namespace Nektar
          */
         void EquationSystem::WriteFld(const std::string &outname)
         {
-            Array<OneD, Array<OneD, NekDouble> > fieldcoeffs
-                                                    (m_fields.num_elements());
-            Array<OneD, std::string>  variables(m_fields.num_elements());
+            std::vector<Array<OneD, NekDouble> > fieldcoeffs(
+                m_fields.num_elements());
+            std::vector<std::string> variables(m_fields.num_elements());
 
             for (int i = 0; i < m_fields.num_elements(); ++i)
             {
@@ -1904,8 +1931,9 @@ namespace Nektar
                 variables[i] = m_boundaryConditions->GetVariable(i);
             }
 
-            WriteFld(outname, m_fields[0], fieldcoeffs, variables);
+            v_ExtraFldOutput(fieldcoeffs, variables);
 
+            WriteFld(outname, m_fields[0], fieldcoeffs, variables);
         }
 
 
@@ -1918,17 +1946,17 @@ namespace Nektar
          * @param   variables       An array of variable names.
          */
         void EquationSystem::WriteFld(
-                                      const std::string &outname, 
-                                      MultiRegions::ExpListSharedPtr &field, 
-                                      Array<OneD, Array<OneD, NekDouble> > &fieldcoeffs, 
-                                      Array<OneD, std::string> &variables)
+            const std::string                    &outname,
+            MultiRegions::ExpListSharedPtr       &field,
+            std::vector<Array<OneD, NekDouble> > &fieldcoeffs,
+            std::vector<std::string>             &variables)
         {
             std::vector<LibUtilities::FieldDefinitionsSharedPtr> FieldDef
                 = field->GetFieldDefinitions();
             std::vector<std::vector<NekDouble> > FieldData(FieldDef.size());
 
             // Copy Data into FieldData and set variable
-            for(int j = 0; j < fieldcoeffs.num_elements(); ++j)
+            for(int j = 0; j < fieldcoeffs.size(); ++j)
             {
                 for(int i = 0; i < FieldDef.size(); ++i)
                 {
@@ -2290,6 +2318,12 @@ namespace Nektar
             ASSERTL0(false, "This function is not valid for the Base class");
             MultiRegions::ExpListSharedPtr null;
             return null;
+        }
+
+        void EquationSystem::v_ExtraFldOutput(
+            std::vector<Array<OneD, NekDouble> > &fieldcoeffs,
+            std::vector<std::string>             &variables)
+        {
         }
     }
 }

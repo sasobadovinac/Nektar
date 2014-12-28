@@ -903,6 +903,45 @@ namespace Nektar
             }
         }
 
+        const LibUtilities::BasisKey StdPrismExp::v_DetFaceBasisKey(
+            const int i, const int k) const
+        {
+            ASSERTL2(i >= 0 && i <= 4, "face id is out of range");
+            ASSERTL2(k >= 0 && k <= 1, "basis key id is out of range");
+
+            switch(i)
+            {
+                case 0:
+                {
+                    return EvaluateQuadFaceBasisKey(k,
+                                                    m_base[k]->GetBasisType(),
+                                                    m_base[k]->GetNumPoints(),
+                                                    m_base[k]->GetNumModes());
+                }
+                case 2:
+                case 4:
+                {
+                    return EvaluateQuadFaceBasisKey(k,
+                                                    m_base[k+1]->GetBasisType(),
+                                                    m_base[k+1]->GetNumPoints(),
+                                                    m_base[k+1]->GetNumModes());
+                }
+                case 1:
+                case 3:
+                {
+                    return EvaluateTriFaceBasisKey(k,
+                                                   m_base[2*k]->GetBasisType(),
+                                                   m_base[2*k]->GetNumPoints(),
+                                                   m_base[2*k]->GetNumModes());
+                    
+                }
+                break;
+            }
+
+            // Should never get here.
+            return LibUtilities::NullBasisKey;
+        }
+
         int StdPrismExp::v_CalcNumberOfCoefficients(const std::vector<unsigned int> &nummodes, 
                                                     int &modes_offset)
         {

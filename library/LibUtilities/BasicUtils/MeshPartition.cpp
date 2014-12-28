@@ -45,9 +45,8 @@
 #include <vector>
 #include <map>
 
-#include <tinyxml/tinyxml.h>
+#include <tinyxml.h>
 
-#include <LibUtilities/BasicUtils/Metis.hpp>
 #include <LibUtilities/BasicUtils/ParseUtils.hpp>
 #include <LibUtilities/BasicUtils/SessionReader.h>
 #include <LibUtilities/BasicUtils/ShapeType.hpp>
@@ -63,6 +62,14 @@ namespace Nektar
 {
     namespace LibUtilities
     {
+        MeshPartitionFactory& GetMeshPartitionFactory()
+        {
+            typedef Loki::SingletonHolder<MeshPartitionFactory,
+                Loki::CreateUsingNew,
+                Loki::NoDestroy > Type;
+            return Type::Instance();
+        }
+
         MeshPartition::MeshPartition(const LibUtilities::SessionReaderSharedPtr& pSession) :
                 m_numFields(0),
                 m_fieldNameToId(),
@@ -79,17 +86,15 @@ namespace Nektar
 
         }
 
-        void MeshPartition::PartitionMesh(bool shared)
+        void MeshPartition::PartitionMesh(int nParts, bool shared)
         {
-            ASSERTL0(m_comm->GetRowComm()->GetSize() > 1,
-                     "Partitioning only necessary in parallel case.");
-            ASSERTL0(m_meshElements.size() >= m_comm->GetRowComm()->GetSize(),
+            ASSERTL0(m_meshElements.size() >= nParts,
                      "Too few elements for this many processes.");
             m_shared = shared;
 
             if (m_weightingRequired)  WeightElements();
             CreateGraph(m_mesh);
-            PartitionGraph(m_mesh, m_localPartition);
+            PartitionGraph(m_mesh, nParts, m_localPartition);
         }
 
         void MeshPartition::WriteLocalPartition(LibUtilities::SessionReaderSharedPtr& pSession)
@@ -124,7 +129,7 @@ namespace Nektar
 
         void MeshPartition::WriteAllPartitions(LibUtilities::SessionReaderSharedPtr& pSession)
         {
-            for (int i = 0; i < m_comm->GetRowComm()->GetSize(); ++i)
+            for (int i = 0; i < m_localPartition.size(); ++i)
             {
                 TiXmlDocument vNew;
                 TiXmlDeclaration * decl = new TiXmlDeclaration("1.0", "utf-8", "");
@@ -300,6 +305,10 @@ namespace Nektar
 
             x = vSubElement->FirstChildElement();
             i = 0;
+            if (x->FirstAttribute())
+            {
+                i = x->FirstAttribute()->IntValue();
+            }
             while(x)
             {
                 TiXmlAttribute* y = x->FirstAttribute();
@@ -471,11 +480,12 @@ namespace Nektar
         void MeshPartition::PrintPartInfo(std::ostream &out)
         {
             int nElmt = boost::num_vertices(m_mesh);
-            int nPart = m_comm->GetRowComm()->GetSize();
+            int nPart = m_localPartition.size();
 
             out << "# Partition information:" << std::endl;
             out << "# No. elements  : " << nElmt << std::endl;
             out << "# No. partitions: " << nPart << std::endl;
+            out << "# ID  nElmt  nLocDof  nBndDof" << std::endl;
 
             BoostVertexIterator vertit, vertit_end;
             std::vector<int> partElmtCount(nPart, 0);
@@ -539,6 +549,10 @@ namespace Nektar
                         case 'S':
                             weight    = StdSegData::getNumberOfCoefficients(na);
                             bndWeight = StdSegData::getNumberOfBndCoefficients(na);
+                            break;
+                        case 'V':
+                            weight    = 1;
+                            bndWeight = 1;
                             break;
                         default:
                             break;
@@ -704,6 +718,10 @@ namespace Nektar
                             weight    = StdSegData::getNumberOfCoefficients(na);
                             bndWeight = StdSegData::getNumberOfBndCoefficients(na);
                             break;
+                        case 'V':
+                            weight    = 1;
+                            bndWeight = 1;
+                            break;
                         default:
                             break;
                     }
@@ -756,6 +774,7 @@ namespace Nektar
         }
 
         void MeshPartition::PartitionGraph(BoostSubGraph& pGraph,
+                                           int nParts,
                                            std::vector<BoostSubGraph>& pLocalPartition)
         {
             int i;
@@ -766,7 +785,7 @@ namespace Nektar
             BoostVertexIterator    vertit, vertit_end;
             Array<OneD, int> part(nGraphVerts,0);
 
-            if (m_comm->GetRowComm()->GetRank() == 0)
+            if (m_comm->GetRowComm()->TreatAsRankZero())
             {
                 int acnt = 0;
                 int vcnt = 0;
@@ -800,7 +819,6 @@ namespace Nektar
                 }
 
                 // Call Metis and partition graph
-                int npart = m_comm->GetRowComm()->GetSize();
                 int vol = 0;
 
                 try
@@ -812,9 +830,10 @@ namespace Nektar
                     {
                         // Attempt partitioning using METIS.
                         int ncon = 1;
-                        Metis::PartGraphVKway(nGraphVerts, ncon, xadj, adjncy, vwgt, vsize, npart, vol, part);
+                        PartitionGraphImpl(nGraphVerts, ncon, xadj, adjncy, vwgt, vsize, nParts, vol, part);
+
                         // Check METIS produced a valid partition and fix if not.
-                        CheckPartitions(part);
+                        CheckPartitions(nParts, part);
                         if (!m_shared)
                         {
                             // distribute among columns
@@ -852,7 +871,7 @@ namespace Nektar
             }
 
             // Create boost subgraph for this process's partitions
-            int nCols = m_comm->GetRowComm()->GetSize();
+            int nCols = nParts;
             pLocalPartition.resize(nCols);
             for (i = 0; i < nCols; ++i)
             {
@@ -872,7 +891,7 @@ namespace Nektar
         }
 
 
-        void MeshPartition::CheckPartitions(Array<OneD, int> &pPart)
+        void MeshPartition::CheckPartitions(int nParts, Array<OneD, int> &pPart)
         {
             unsigned int       i     = 0;
             unsigned int       cnt   = 0;
@@ -880,7 +899,7 @@ namespace Nektar
             bool               valid = true;
 
             // Check that every process has at least one element assigned
-            for (i = 0; i < npart; ++i)
+            for (i = 0; i < nParts; ++i)
             {
                 cnt = std::count(pPart.begin(), pPart.end(), i);
                 if (cnt == 0)
@@ -898,7 +917,7 @@ namespace Nektar
             {
                 for (i = 0; i < pPart.num_elements(); ++i)
                 {
-                    pPart[i] = i % npart;
+                    pPart[i] = i % nParts;
                 }
             }
         }
@@ -1112,6 +1131,12 @@ namespace Nektar
                     // Based on entity type, check if in this partition
                     switch (vIt->second.type)
                     {
+                    case 'V':
+                        if (vVertices.find(vIt->second.list[j]) == vVertices.end())
+                        {
+                            continue;
+                        }
+                        break;
                     case 'E':
                         if (vEdges.find(vIt->second.list[j]) == vEdges.end())
                         {
@@ -1296,5 +1321,19 @@ namespace Nektar
             }
         }
 
+        void MeshPartition::GetElementIDs(const int procid, std::vector<unsigned int> &elmtid)
+        {
+            BoostVertexIterator    vertit, vertit_end;
+
+            ASSERTL0(procid < m_localPartition.size(),"procid is less than the number of partitions");
+            
+            // Populate lists of elements, edges and vertices required.
+            for ( boost::tie(vertit, vertit_end) = boost::vertices(m_localPartition[procid]);
+                  vertit != vertit_end;
+                  ++vertit)
+            {
+                elmtid.push_back(m_meshElements[m_localPartition[procid][*vertit].id].id);
+            }
+        }
     }
 }

@@ -42,9 +42,14 @@ namespace Nektar
 {
     namespace SolverUtils
     {
-        string DriverModifiedArnoldi::className = GetDriverFactory().RegisterCreatorFunction("ModifiedArnoldi", DriverModifiedArnoldi::create);
-        string DriverModifiedArnoldi::driverLookupId = LibUtilities::SessionReader::RegisterEnumValue("Driver","ModifiedArnoldi",0);
-    
+
+	string DriverModifiedArnoldi::className =
+	GetDriverFactory().RegisterCreatorFunction("ModifiedArnoldi",
+						   DriverModifiedArnoldi::create);
+	string DriverModifiedArnoldi::driverLookupId =
+	LibUtilities::SessionReader::RegisterEnumValue("Driver",
+						       "ModifiedArnoldi",0);
+
         /**
          *
          */
@@ -53,16 +58,16 @@ namespace Nektar
             : DriverArnoldi(pSession)
         {
         }
-    
-    
+
+
         /**
          *
          */
         DriverModifiedArnoldi::~DriverModifiedArnoldi()
         {
         }
-    
-    
+
+
         /**
          *
          */
@@ -71,20 +76,23 @@ namespace Nektar
             DriverArnoldi::v_InitObject(out);
 
             m_equ[0]->PrintSummary(out);
-            
+
             // Print session parameters
+	    if (m_comm->GetRank() == 0)
+	    {
             out << "\tArnoldi solver type   : Modified Arnoldi" << endl;
+	    }
 
             DriverArnoldi::ArnoldiSummary(out);
 
             m_equ[m_nequ - 1]->DoInitialise();
-	
+
             //FwdTrans Initial conditions to be in Coefficient Space
             m_equ[m_nequ-1] ->TransPhysToCoeff();
 
         }
-    
-	
+
+
         /**
          *
          */
@@ -96,15 +104,20 @@ namespace Nektar
             int ntot                = m_nfields*nq;
             int converged           = 0;
             NekDouble resnorm       = 0.0;
-            std::string evlFile     = m_session->GetFilename().substr(0,m_session->GetFilename().find_last_of('.')) + ".evl";
-            ofstream evlout(evlFile.c_str());
-        
+	    ofstream evlout;
+	    std::string evlFile = m_session->GetSessionName() + ".evl";
+
+	    if (m_comm->GetRank() == 0)
+	    {
+		evlout.open(evlFile.c_str());
+	    }
+
             // Allocate memory
             Array<OneD, NekDouble> alpha     = Array<OneD, NekDouble> (m_kdim+1,      0.0);
             Array<OneD, NekDouble> wr        = Array<OneD, NekDouble> (m_kdim,        0.0);
             Array<OneD, NekDouble> wi        = Array<OneD, NekDouble> (m_kdim,        0.0);
             Array<OneD, NekDouble> zvec      = Array<OneD, NekDouble> (m_kdim*m_kdim, 0.0);
-        
+
             Array<OneD, Array<OneD, NekDouble> > Kseq
                 = Array<OneD, Array<OneD, NekDouble> > (m_kdim + 1);
             Array<OneD, Array<OneD, NekDouble> > Tseq
@@ -115,36 +128,41 @@ namespace Nektar
                 Tseq[i] = Array<OneD, NekDouble>(ntot, 0.0);
             }
 
-		
             // Copy starting vector into second sequence element (temporary).
             if(m_session->DefinesFunction("InitialConditions"))
             {
+		if (m_comm->GetRank() == 0)
+		{
                 out << "\tInital vector       : specified in input file " << endl;
+		}
                 m_equ[0]->SetInitialConditions(0.0,false);
 
                 CopyFieldToArnoldiArray(Kseq[1]);
             }
-            else 
+            else
             {
+		if (m_comm->GetRank() == 0)
+		{
                 out << "\tInital vector       : random  " << endl;
-             
+		}
+
                 NekDouble eps=1;
-             
                 Vmath::FillWhiteNoise(ntot, eps , &Kseq[1][0], 1);
-             
             }
-         
+
             // Perform one iteration to enforce boundary conditions.
             // Set this as the initial value in the sequence.
             EV_update(Kseq[1], Kseq[0]);
-            out << "Iteration: " << 0 <<  endl;
-         
-            // Normalise first vector in sequence
-            alpha[0] = std::sqrt(Vmath::Dot(ntot, &Kseq[0][0], 1, &Kseq[0][0], 1));
-			m_comm->AllReduce(alpha[0], Nektar::LibUtilities::ReduceSum);
-            
-			
-            //alpha[0] = std::sqrt(alpha[0]);
+
+	    if (m_comm->GetRank() == 0)
+	    {
+		out << "Iteration: " << 0 <<  endl;
+	    }
+
+	    // Normalise first vector in sequence
+	    alpha[0] = Blas::Ddot(ntot, &Kseq[0][0], 1, &Kseq[0][0], 1);
+	    m_comm->AllReduce(alpha[0], Nektar::LibUtilities::ReduceSum);
+	    alpha[0] = std::sqrt(alpha[0]);
             Vmath::Smul(ntot, 1.0/alpha[0], Kseq[0], 1, Kseq[0], 1);
 
             // Fill initial krylov sequence
@@ -153,29 +171,36 @@ namespace Nektar
             {
                 // Compute next vector
                 EV_update(Kseq[i-1], Kseq[i]);
-             
+
                 // Normalise
-                alpha[i] = std::sqrt(Vmath::Dot(ntot, &Kseq[i][0], 1, &Kseq[i][0], 1));
-				m_comm->AllReduce(alpha[i], Nektar::LibUtilities::ReduceSum);
-				
+		alpha[i] = Blas::Ddot(ntot, &Kseq[i][0], 1, &Kseq[i][0], 1);
+		m_comm->AllReduce(alpha[i], Nektar::LibUtilities::ReduceSum);
+		alpha[i] = std::sqrt(alpha[i]);
+
                 //alpha[i] = std::sqrt(alpha[i]);
                 Vmath::Smul(ntot, 1.0/alpha[i], Kseq[i], 1, Kseq[i], 1);
-             
+
                 // Copy Krylov sequence into temporary storage
                 for (int k = 0; k < i + 1; ++k)
                 {
                     Vmath::Vcopy(ntot, Kseq[k], 1, Tseq[k], 1);
                 }
-             
+
                 // Generate Hessenberg matrix and compute eigenvalues of it.
                 EV_small(Tseq, ntot, alpha, i, zvec, wr, wi, resnorm);
-             
+
                 // Test for convergence.
-                converged = EV_test(i,i,zvec,wr,wi,resnorm,std::min(i,m_nvec),evlout,resid0); 
+		converged = EV_test(i, i, zvec, wr, wi, resnorm,
+				    std::min(i, m_nvec), evlout, resid0);
                 converged = max (converged, 0);
-                out << "Iteration: " <<  i << " (residual : " << resid0 << ")" <<endl;
+
+		if (m_comm->GetRank() == 0)
+		{
+		    out << "Iteration: " <<  i << " (residual : " << resid0
+		    << ")" <<endl;
+		}
             }
-         
+
             // Continue with full sequence
             if (!converged)
             {
@@ -183,39 +208,47 @@ namespace Nektar
                 {
                     // Shift all the vectors in the sequence.
                     // First vector is removed.
-                    //NekDouble invnorm = 1.0/sqrt(Blas::Ddot(ntot,Kseq[1],1,Kseq[1],1));
                     for (int j = 1; j <= m_kdim; ++j)
                     {
                         alpha[j-1] = alpha[j];
-                        //Vmath::Smul(ntot,invnorm,Kseq[j],1,Kseq[j],1);
                         Vmath::Vcopy(ntot, Kseq[j], 1, Kseq[j-1], 1);
                     }
-                 
+
                     // Compute next vector
                     EV_update(Kseq[m_kdim - 1], Kseq[m_kdim]);
-                 
+
                     // Compute new scale factor
-                    alpha[m_kdim] = std::sqrt(Vmath::Dot(ntot, &Kseq[m_kdim][0], 1, &Kseq[m_kdim][0], 1));
-                    //alpha[m_kdim] = std::sqrt(alpha[m_kdim]);
-                    Vmath::Smul(ntot, 1.0/alpha[m_kdim], Kseq[m_kdim], 1, Kseq[m_kdim], 1);
-                 
+		    alpha[m_kdim] = Blas::Ddot(ntot, &Kseq[m_kdim][0], 1,
+					       &Kseq[m_kdim][0], 1);
+		    m_comm->AllReduce(alpha[m_kdim],
+				      Nektar::LibUtilities::ReduceSum);
+		    alpha[m_kdim] = std::sqrt(alpha[m_kdim]);
+		    Vmath::Smul(ntot, 1.0/alpha[m_kdim], Kseq[m_kdim], 1,
+				Kseq[m_kdim], 1);
+
                     // Copy Krylov sequence into temporary storage
                     for (int k = 0; k < m_kdim + 1; ++k)
                     {
                         Vmath::Vcopy(ntot, Kseq[k], 1, Tseq[k], 1);
                     }
-                 
+
                     // Generate Hessenberg matrix and compute eigenvalues of it
                     EV_small(Tseq, ntot, alpha, m_kdim, zvec, wr, wi, resnorm);
-                 
+
                     // Test for convergence.
-                    converged = EV_test(i,m_kdim,zvec,wr,wi,resnorm,m_nvec,evlout,resid0);
-                    out << "Iteration: " <<  i << " (residual : " << resid0 << ")" <<endl;
+		    converged = EV_test(i, m_kdim, zvec, wr, wi, resnorm,
+					m_nvec, evlout, resid0);
+
+		    if (m_comm->GetRank() == 0)
+		    {
+			out << "Iteration: " <<  i << " (residual : "
+			<< resid0 << ")" <<endl;
+		    }
                 }
             }
-         
+
             m_equ[0]->Output();
-         
+
             // Evaluate and output computation time and solution accuracy.
             // The specific format of the error output is essential for the
             // regression tests to work.
@@ -226,23 +259,29 @@ namespace Nektar
                 NekDouble vLinfError = m_equ[0]->LinfError(j);
                 if (m_comm->GetRank() == 0)
                 {
-                    out << "L 2 error (variable " << m_equ[0]->GetVariable(j) << ") : " << vL2Error << endl;
-                    out << "L inf error (variable " << m_equ[0]->GetVariable(j) << ") : " << vLinfError << endl;
+		    out << "L 2 error (variable " << m_equ[0]->GetVariable(j)
+		    << ") : " << vL2Error << endl;
+		    out << "L inf error (variable " << m_equ[0]->GetVariable(j)
+		    << ") : " << vLinfError << endl;
                 }
             }
-         
+
             // Process eigenvectors and write out.
-            EV_post(Tseq, Kseq, ntot, min(--i, m_kdim), m_nvec, zvec, wr, wi, converged);
+	    EV_post(Tseq, Kseq, ntot, min(--i, m_kdim), m_nvec, zvec, wr, wi,
+		    converged);
 
             // store eigenvalues so they can be access from driver class
             m_real_evl = wr;
             m_imag_evl = wi;
-         
+
             // Close the runtime info file.
+	    if (m_comm->GetRank() == 0)
+	    {
             evlout.close();
         }
-    
-    
+	}
+
+
         /**
          *
          */
@@ -252,30 +291,27 @@ namespace Nektar
         {
             // Copy starting vector into first sequence element.
             CopyArnoldiArrayToField(src);
-		
             m_equ[0]->TransCoeffToPhys();
 
-		
             m_equ[0]->DoSolve();
 
             if(m_EvolutionOperator == eTransientGrowth)
             {
                 Array<OneD, MultiRegions::ExpListSharedPtr> fields;
                 fields = m_equ[0]->UpdateFields();
-		
-                //start Adjoint with latest fields of direct 
-                CopyFwdToAdj();
 
+                //start Adjoint with latest fields of direct
+                CopyFwdToAdj();
                 m_equ[1]->TransCoeffToPhys();
-			
+
                 m_equ[1]->DoSolve();
             }
 
             // Copy starting vector into first sequence element.
             CopyFieldToArnoldiArray(tgt);
         }
-	
-	
+
+
         /**
          *
          */
@@ -295,22 +331,27 @@ namespace Nektar
             Array<OneD, NekDouble> R(kdimp * kdimp, 0.0);
             Array<OneD, NekDouble> H(kdimp * kdim, 0.0);
             Array<OneD, NekDouble> rwork(lwork, 0.0);
-	
+
             // Modified G-S orthonormalisation
             for (int i = 0; i < kdimp; ++i)
             {
-                NekDouble gsc = std::sqrt(Vmath::Dot(ntot, &Kseq[i][0], 1, &Kseq[i][0], 1));
+		NekDouble gsc = Blas::Ddot(ntot, &Kseq[i][0], 1, &Kseq[i][0], 1);
+		m_comm->AllReduce(gsc, Nektar::LibUtilities::ReduceSum);
+		gsc = std::sqrt(gsc);
                 ASSERTL0(gsc != 0.0, "Vectors are linearly independent.");
+
                 R[i*kdimp+i] = gsc;
                 Vmath::Smul(ntot, 1.0/gsc, Kseq[i], 1, Kseq[i], 1);
+
                 for (int j = i + 1; j < kdimp; ++j)
                 {
-                    gsc = Vmath::Dot(ntot, Kseq[i], 1, Kseq[j], 1);
+		    gsc = Blas::Ddot(ntot, &Kseq[i][0], 1, &Kseq[j][0], 1);
+		    m_comm->AllReduce(gsc, Nektar::LibUtilities::ReduceSum);
                     Vmath::Svtvp(ntot, -gsc, Kseq[i], 1, Kseq[j], 1, Kseq[j], 1);
                     R[j*kdimp+i] = gsc;
                 }
             }
-	
+
             // Compute H matrix
             for (int i = 0; i < kdim; ++i)
             {
@@ -321,18 +362,19 @@ namespace Nektar
                     H[j*kdim+i] /= R[j*kdimp+j];
                 }
             }
-	
+
             H[(kdim-1)*kdim+kdim] = alpha[kdim]
                 * std::fabs(R[kdim*kdimp+kdim] / R[(kdim-1)*kdimp + kdim-1]);
-	
-            Lapack::dgeev_('N','V',kdim,&H[0],kdim,&wr[0],&wi[0],0,1,&zvec[0],kdim,&rwork[0],lwork,ier);
-	
+
+	    Lapack::dgeev_('N', 'V', kdim, &H[0], kdim, &wr[0], &wi[0], 0, 1,
+			   &zvec[0], kdim, &rwork[0], lwork, ier);
+
             ASSERTL0(!ier, "Error with dgeev");
-	
+
             resnorm = H[(kdim-1)*kdim + kdim];
         }
-    
-	
+
+
         /**
          *
          */
@@ -349,44 +391,54 @@ namespace Nektar
         {
             int idone = 0;
             // NekDouble period = 0.1;
-	
+
             Array<OneD, NekDouble> resid(kdim);
             for (int i = 0; i < kdim; ++i)
             {
-                resid[i] = resnorm * std::fabs(zvec[kdim - 1 + i*kdim]) /
-                    std::sqrt(Vmath::Dot(kdim, &zvec[0] + i*kdim, 1, &zvec[0] + i*kdim, 1));
-                if (wi[i] < 0.0) resid[i-1] = resid[i] = hypot(resid[i-1], resid[i]);
+		NekDouble tmp = std::sqrt(Vmath::Dot(kdim, &zvec[0] + i*kdim, 1,
+						     &zvec[0] + i*kdim, 1));
+		resid[i] = resnorm * std::fabs(zvec[kdim - 1 + i*kdim]) / tmp;
+		if (wi[i] < 0.0)
+		{
+		    resid[i-1] = resid[i] = hypot(resid[i-1], resid[i]);
+		}
             }
-            EV_sort(zvec, wr, wi, resid, kdim);
-	
-            if (resid[nvec-1] < m_evtol) idone = nvec;
-	
-            evlout << "-- Iteration = " << itrn << ", H(k+1, k) = " << resnorm << endl;
-		
+
+	    EV_sort(zvec, wr, wi, resid, kdim);
+
+	    if (resid[nvec-1] < m_evtol)
+	    {
+		idone = nvec;
+	    }
+
+	    if (m_comm->GetRank() == 0)
+	    {
+		evlout << "-- Iteration = " << itrn << ", H(k+1, k) = "
+		<< resnorm << endl;
             evlout.precision(4);
             evlout.setf(ios::scientific, ios::floatfield);
             if(m_timeSteppingAlgorithm)
             {
-                evlout << "EV  Magnitude   Angle       Growth      Frequency   Residual"
-                       << endl;
+		    evlout << "EV  Magnitude   Angle       Growth      "
+		    << "Frequency   Residual" << endl;
             }
             else
             {
-                evlout << "EV  Real        Imaginary   inverse real  inverse imag  Residual"
-                       << endl;
+		    evlout << "EV  Real        Imaginary   inverse real  "
+		    << "inverse imag  Residual" << endl;
             }
-        
-            for (int i = 0; i < kdim; i++) 
+
+            for (int i = 0; i < kdim; i++)
             {
                 WriteEvs(evlout,i,wr[i],wi[i],resid[i]);
             }
-            
-	
+	    }
+
             resid0 = resid[nvec-1];
             return idone;
         }
-    
-    
+
+
         /**
          *
          */
@@ -418,9 +470,9 @@ namespace Nektar
                 wi[i+1] = wi_tmp;
                 test[i+1] = te_tmp;
                 Vmath::Vcopy(dim, &z_tmp[0], 1, &evec[0] + (i+1)*dim, 1);
-            }	
-        };
-    
+            }
+	}
+
 
         /**
          *
@@ -439,7 +491,8 @@ namespace Nektar
             if (icon == 0)
             {
                 // Not converged, write final Krylov vector
-                ASSERTL0(false, "Convergence was not achieved within the prescribed number of iterations.");
+		ASSERTL0(false, "Convergence was not achieved within the "
+		"prescribed number of iterations.");
             }
             else if (icon < 0)
             {
@@ -455,8 +508,9 @@ namespace Nektar
 
                 for (int j = 0; j < icon; ++j)
                 {
-                    std::string file = m_session->GetFilename().substr(0,m_session->GetFilename().find_last_of('.')) + "_eig_" + boost::lexical_cast<std::string>(j);
-                
+		    std::string file = m_session->GetSessionName() + "_eig_"
+		    + boost::lexical_cast<std::string>(j);
+
                     WriteFld(file,Kseq[j]);
                 }
             }
@@ -499,19 +553,25 @@ namespace Nektar
             {
                 if (wi[i] == 0.0)   // Real mode
                 {
-                    norm = std::sqrt(Vmath::Dot(ntot, evecs[i], evecs[i]));
+		    norm = Blas::Ddot(ntot, &evecs[i][0], 1, &evecs[i][0], 1);
+		    m_comm->AllReduce(norm, Nektar::LibUtilities::ReduceSum);
+		    norm = std::sqrt(norm);
                     Vmath::Smul(ntot, 1.0/norm, evecs[i], 1, evecs[i], 1);
                 }
                 else
                 {
-                    norm = Vmath::Dot(ntot, evecs[i], 1, evecs[i], 1);
-                    norm += Vmath::Dot(ntot, evecs[i+1], 1, evecs[i+1], 1);
+		    norm  = Blas::Ddot(ntot, &evecs[i][0],   1, &evecs[i][0],   1);
+		    norm += Blas::Ddot(ntot, &evecs[i+1][0], 1, &evecs[i+1][0], 1);
+		    m_comm->AllReduce(norm, Nektar::LibUtilities::ReduceSum);
                     norm = std::sqrt(norm);
+
                     Vmath::Smul(ntot, 1.0/norm, evecs[i], 1, evecs[i], 1);
                     Vmath::Smul(ntot, 1.0/norm, evecs[i+1], 1, evecs[i+1], 1);
+
                     i++;
                 }
             }
         }
+
     }
 }

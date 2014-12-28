@@ -135,7 +135,7 @@ namespace Nektar
             {
                 for(j = 0; j < 2; ++j)
                 {
-                    exp = LocalRegions::Expansion1D::FromStdExp(locexp[i]);
+                    exp = locexp[i]->as<LocalRegions::Expansion1D>();
                     PointGeom = (exp->GetGeom1D())->GetVertex(j);
 					id = PointGeom->GetVid();
 					
@@ -184,7 +184,7 @@ namespace Nektar
             // Setup Default optimisation information.
             int nel = GetExpSize();
             m_globalOptParam = MemoryManager<NekOptimize::GlobalOptParam>::AllocateSharedPtr(nel);
-			
+
             // Set up offset information and array sizes
             SetCoeffPhysOffsets();
 			
@@ -246,7 +246,7 @@ namespace Nektar
             // Process each expansion.
             for(i = 0; i < m_exp->size(); ++i)
             {
-                LocalRegions::Expansion0DSharedPtr loc_exp = boost::dynamic_pointer_cast<LocalRegions::Expansion0D>((*m_exp)[i]);
+                LocalRegions::Expansion0DSharedPtr loc_exp = (*m_exp)[i]->as<LocalRegions::Expansion0D>();
 
                 LocalRegions::Expansion1DSharedPtr loc_elmt = loc_exp->GetLeftAdjacentElementExp();
                 

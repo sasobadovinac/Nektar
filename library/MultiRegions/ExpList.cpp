@@ -178,8 +178,8 @@ namespace Nektar
             
             if(DeclareCoeffPhysArrays)
             {
-                m_coeffs = Array<OneD, NekDouble>(m_ncoeffs);
-                m_phys   = Array<OneD, NekDouble>(m_npoints);
+                m_coeffs = Array<OneD, NekDouble>(m_ncoeffs, 0.0);
+                m_phys   = Array<OneD, NekDouble>(m_npoints, 0.0);
             }
         }
         
@@ -1208,17 +1208,19 @@ namespace Nektar
          */
         int ExpList::GetExpIndex(
                                  const Array<OneD, const NekDouble> &gloCoord,
-                                 NekDouble tol)
+                                 NekDouble tol,
+                                 bool returnNearestElmt)
         {
             Array<OneD, NekDouble> Lcoords(gloCoord.num_elements()); 
             
-            return GetExpIndex(gloCoord,Lcoords,tol);
+            return GetExpIndex(gloCoord,Lcoords,tol,returnNearestElmt);
         }
         
 
         int ExpList::GetExpIndex(const Array<OneD, const NekDouble> &gloCoords,
                                  Array<OneD, NekDouble> &locCoords,
-                                 NekDouble tol)
+                                 NekDouble tol,
+                                 bool returnNearestElmt)
         {
             NekDouble resid;
 
@@ -1226,53 +1228,61 @@ namespace Nektar
             {
                 return -1;
             }
+            std::vector<std::pair<int,NekDouble> > elmtIdDist;
 
             // Manifold case (point may match multiple elements)
             if (GetExp(0)->GetCoordim() > GetExp(0)->GetShapeDimension())
             {
-                std::vector<std::pair<int,NekDouble> > elmtIdDist;
                 SpatialDomains::PointGeomSharedPtr v;
                 SpatialDomains::PointGeom w;
-                NekDouble x, y, z;
+                NekDouble dist;
 
                 // Scan all elements and store those which may contain the point
                 for (int i = 0; i < (*m_exp).size(); ++i)
                 {
-                    if ((*m_exp)[i]->GetGeom()->ContainsPoint(gloCoords, locCoords,
+                    if ((*m_exp)[i]->GetGeom()->ContainsPoint(gloCoords,
+                                                              locCoords,
                                                               tol, resid))
                     {
-                        v = m_graph->GetVertex((*m_exp)[i]->GetGeom()->GetVid(0));
-
                         w.SetX(gloCoords[0]);
                         w.SetY(gloCoords[1]);
                         w.SetZ(gloCoords[2]);
-                        v->GetCoords(x,y,z);
 
-                        elmtIdDist.push_back(std::pair<int, NekDouble>(i, v->dist(w)));
+                        // Find closest vertex
+                        for (int j = 0; j < (*m_exp)[i]->GetNverts(); ++j) {
+                            v = m_graph->GetVertex(
+                                            (*m_exp)[i]->GetGeom()->GetVid(j));
+                            if (j == 0 || dist > v->dist(w))
+                            {
+                                dist = v->dist(w);
+                            }
+                        }
+                        elmtIdDist.push_back(
+                                    std::pair<int, NekDouble>(i, dist));
                     }
                 }
 
                 // Find nearest element
                 if (!elmtIdDist.empty())
                 {
-                    NekDouble   min_d  = elmtIdDist[0].second;
                     int         min_id = elmtIdDist[0].first;
+                    NekDouble   min_d  = elmtIdDist[0].second;
 
                     for (int i = 1; i < elmtIdDist.size(); ++i)
                     {
                         if (elmtIdDist[i].second < min_d) {
-                            min_d = elmtIdDist[i].second;
                             min_id = elmtIdDist[i].first;
+                            min_d = elmtIdDist[i].second;
                         }
                     }
 
-                    // retrieve local coordinates of chosen point
-                    (*m_exp)[min_id]->GetGeom()->ContainsPoint(gloCoords,
-                                                               locCoords,
-                                                               tol, resid);
+                    // retrieve local coordinate of point
+                    (*m_exp)[min_id]->GetGeom()->GetLocCoords(gloCoords,
+                                                          locCoords);
                     return min_id;
                 }
-                else {
+                else 
+                {
                     return -1;
                 }
             }
@@ -1280,7 +1290,10 @@ namespace Nektar
             else
             {
                 static int start = 0;
-
+                int min_id  = 0;
+                NekDouble resid_min = 1e6;
+                Array<OneD, NekDouble> savLocCoords(locCoords.num_elements());
+                
                 // restart search from last found value
                 for (int i = start; i < (*m_exp).size(); ++i)
                 {
@@ -1290,8 +1303,17 @@ namespace Nektar
                         start = i;
                         return i;
                     }
+                    else
+                    {
+                        if(resid < resid_min)
+                        {
+                            min_id    = i;
+                            resid_min = resid;
+                            Vmath::Vcopy(locCoords.num_elements(),savLocCoords,1,locCoords,1);
+                        }
+                    }
                 }
-
+                
                 for (int i = 0; i < start; ++i)
                 {
                     if ((*m_exp)[i]->GetGeom()->ContainsPoint(gloCoords, locCoords,
@@ -1300,6 +1322,15 @@ namespace Nektar
                         start = i;
                         return i;
                     }
+                    else
+                    {
+                        if(resid < resid_min)
+                        {
+                            min_id    = i;
+                            resid_min = resid;
+                            Vmath::Vcopy(locCoords.num_elements(),savLocCoords,1,locCoords,1);
+                        }
+                    }
                 }
 
                 std::string msg = "Failed to find point in element to tolerance of "
@@ -1307,29 +1338,19 @@ namespace Nektar
                                 + " using nearest point found";
                 WARNINGL0(true,msg.c_str());
 
-                return -1;
+                if(returnNearestElmt)
+                {
+                    Vmath::Vcopy(locCoords.num_elements(),locCoords,1,savLocCoords,1);
+                    return min_id;
+                }
+                else
+                {
+                    return -1;
+                }
 
             }
         }
 
-
-        /**
-         * The operation is evaluated locally by the elemental
-         * function StdRegions#StdExpansion#GetSurfaceNormal.
-         */
-        void ExpList::GetSurfaceNormal(Array<OneD, NekDouble> &SurfaceNormal,
-                                const int k)
-        {
-            int i;
-            Array<OneD, NekDouble> normals;
-
-            for(i = 0; i < (*m_exp).size(); ++i)
-            {
-                //e_SN = SurfaceNormal + m_phys_offset[i];
-                normals = (*m_exp)[i]->GetSurfaceNormal()[k];
-                Vmath::Vcopy(normals.num_elements(), &normals[0], 1, &SurfaceNormal[0] + m_phys_offset[i], 1);
-            }
-        }
 
         /**
          * Configures geometric info, such as tangent direction, on each
@@ -1617,7 +1638,7 @@ namespace Nektar
             int nq = (*m_exp)[expansion]->GetTotPoints();
 
             // printing the fields of that zone
-            outfile << "        <DataArray type=\"Float32\" Name=\""
+            outfile << "        <DataArray type=\"Float64\" Name=\""
                     << var << "\">" << endl;
             outfile << "          ";
             const Array<OneD, NekDouble> phys = m_phys + m_phys_offset[expansion];
