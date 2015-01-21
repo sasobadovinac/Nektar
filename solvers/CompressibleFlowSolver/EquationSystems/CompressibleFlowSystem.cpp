@@ -326,6 +326,7 @@ namespace Nektar
                       const int n,
                       const NekDouble time,
                       int &cnt,
+                      Array<OneD, Array<OneD, NekDouble> > &Fwd,
                       Array<OneD, Array<OneD, NekDouble> > &inarray)
     {
         std::string varName;
@@ -335,48 +336,48 @@ namespace Nektar
         {
             if(boost::iequals(userDefStr,"Wall"))
             {
-                WallBC(n, cnt, inarray);
+                WallBC(n, cnt, Fwd, inarray);
             }
             else if(boost::iequals(userDefStr,"WallViscous") ||
                     boost::iequals(userDefStr,"WallAdiabatic"))
             {
                 // Wall Boundary Condition
-                WallViscousBC(n, cnt, inarray);
+                WallViscousBC(n, cnt, Fwd, inarray);
             }
             else if(boost::iequals(userDefStr,"Symmetry"))
             {
                 // Symmetric Boundary Condition
-                SymmetryBC(n, cnt, inarray);
+                SymmetryBC(n, cnt, Fwd, inarray);
             }
             else if(boost::iequals(userDefStr,"RiemannInvariant"))
             {
                 // Riemann invariant characteristic Boundary Condition
-                RiemannInvariantBC(n, cnt, inarray);
+                RiemannInvariantBC(n, cnt, Fwd, inarray);
             }
             else if(boost::iequals(userDefStr,"PressureOutflowNonReflective"))
             {
                 // Pressure outflow non-reflective Boundary Condition
-                PressureOutflowNonReflectiveBC(n, cnt, inarray);
+                PressureOutflowNonReflectiveBC(n, cnt, Fwd, inarray);
             }
             else if(boost::iequals(userDefStr,"PressureOutflow"))
             {
                 // Pressure outflow Boundary Condition
-                PressureOutflowBC(n, cnt, inarray);
+                PressureOutflowBC(n, cnt, Fwd, inarray);
             }
             else if(boost::iequals(userDefStr,"PressureOutflowFile"))
             {
                 // Pressure outflow Boundary Condition from file 
-                PressureOutflowFileBC(n, cnt, inarray);
+                PressureOutflowFileBC(n, cnt, Fwd, inarray);
             }
             else if(boost::iequals(userDefStr,"PressureInflowFile"))
             {
                 // Pressure inflow Boundary Condition from file
-                PressureInflowFileBC(n, cnt, inarray);
+                PressureInflowFileBC(n, cnt, Fwd, inarray);
             }
             else if(boost::iequals(userDefStr,"ExtrapOrder0"))
             {
                 // Extrapolation of the data at the boundaries
-                ExtrapOrder0BC(n, cnt, inarray);
+                ExtrapOrder0BC(n, cnt, Fwd, inarray);
             }
             else if(boost::iequals(userDefStr,"TimeDependent"))
             {
@@ -401,6 +402,7 @@ namespace Nektar
     void CompressibleFlowSystem::WallBC(
         int                                   bcRegion,
         int                                   cnt,
+        Array<OneD, Array<OneD, NekDouble> > &Fwd,
         Array<OneD, Array<OneD, NekDouble> > &physarray)
     {
         int i;
@@ -409,14 +411,6 @@ namespace Nektar
 
         const Array<OneD, const int> &traceBndMap
             = m_fields[0]->GetTraceBndMap();
-
-        // Get physical values of the forward trace
-        Array<OneD, Array<OneD, NekDouble> > Fwd(nVariables);
-        for (i = 0; i < nVariables; ++i)
-        {
-            Fwd[i] = Array<OneD, NekDouble>(nTracePts);
-            m_fields[i]->ExtractTracePhys(physarray[i], Fwd[i]);
-        }
 
         // Adjust the physical values of the trace to take
         // user defined boundaries into account
@@ -498,6 +492,7 @@ namespace Nektar
     void CompressibleFlowSystem::WallViscousBC(
         int                                   bcRegion,
         int                                   cnt,
+        Array<OneD, Array<OneD, NekDouble> > &Fwd,
         Array<OneD, Array<OneD, NekDouble> > &physarray)
     {
         int i;
@@ -506,14 +501,6 @@ namespace Nektar
 
         const Array<OneD, const int> &traceBndMap
             = m_fields[0]->GetTraceBndMap();
-
-        // Get physical values of the forward trace
-        Array<OneD, Array<OneD, NekDouble> > Fwd(nVariables);
-        for (i = 0; i < nVariables; ++i)
-        {
-            Fwd[i] = Array<OneD, NekDouble>(nTracePts);
-            m_fields[i]->ExtractTracePhys(physarray[i], Fwd[i]);
-        }
 
         // Take into account that for PDE based shock capturing, eps = 0 at the
         // wall. Adjust the physical values of the trace to take user defined
@@ -573,6 +560,7 @@ namespace Nektar
     void CompressibleFlowSystem::SymmetryBC(
         int                                      bcRegion,
         int                                      cnt,
+        Array<OneD, Array<OneD, NekDouble> >    &Fwd,
         Array<OneD, Array<OneD, NekDouble> >    &physarray)
     {
         int i;
@@ -581,14 +569,6 @@ namespace Nektar
 
         const Array<OneD, const int> &traceBndMap
             = m_fields[0]->GetTraceBndMap();
-
-        // Get physical values of the forward trace (from exp to phys)
-        Array<OneD, Array<OneD, NekDouble> > Fwd(nVariables);
-        for (i = 0; i < nVariables; ++i)
-        {
-            Fwd[i] = Array<OneD, NekDouble>(nTracePts);
-            m_fields[i]->ExtractTracePhys(physarray[i], Fwd[i]);
-        }
 
         // Take into account that for PDE based shock capturing, eps = 0 at the
         // wall.
@@ -669,6 +649,7 @@ namespace Nektar
     void CompressibleFlowSystem::RiemannInvariantBC(
         int                                   bcRegion,
         int                                   cnt,
+        Array<OneD, Array<OneD, NekDouble> > &Fwd,
         Array<OneD, Array<OneD, NekDouble> > &physarray)
     {
         int i, j;
@@ -704,14 +685,6 @@ namespace Nektar
             velInf[2] = m_wInf;
             Vmath::Smul(nTracePts, m_wInf, m_traceNormals[2], 1, tmp2, 1);
             Vmath::Vadd(nTracePts, VnInf, 1, tmp2, 1, VnInf, 1);
-        }
-
-        // Get physical values of the forward trace
-        Array<OneD, Array<OneD, NekDouble> > Fwd(nVariables);
-        for (i = 0; i < nVariables; ++i)
-        {
-            Fwd[i] = Array<OneD, NekDouble>(nTracePts);
-            m_fields[i]->ExtractTracePhys(physarray[i], Fwd[i]);
         }
 
         // Computing the normal velocity for characteristics coming
@@ -926,6 +899,7 @@ namespace Nektar
     void CompressibleFlowSystem::PressureOutflowNonReflectiveBC(
         int                                   bcRegion,
         int                                   cnt,
+        Array<OneD, Array<OneD, NekDouble> > &Fwd,
         Array<OneD, Array<OneD, NekDouble> > &physarray)
     {
         int i, j;
@@ -960,14 +934,6 @@ namespace Nektar
             velInf[2] = m_wInf;
             Vmath::Smul(nTracePts, m_wInf, m_traceNormals[2], 1, tmp2, 1);
             Vmath::Vadd(nTracePts, VnInf, 1, tmp2, 1, VnInf, 1);
-        }
-
-        // Get physical values of the forward trace
-        Array<OneD, Array<OneD, NekDouble> > Fwd(nVariables);
-        for (i = 0; i < nVariables; ++i)
-        {
-            Fwd[i] = Array<OneD, NekDouble>(nTracePts);
-            m_fields[i]->ExtractTracePhys(physarray[i], Fwd[i]);
         }
 
         // Computing the normal velocity for characteristics coming
@@ -1086,6 +1052,7 @@ namespace Nektar
     void CompressibleFlowSystem::PressureOutflowBC(
         int                                   bcRegion,
         int                                   cnt,
+        Array<OneD, Array<OneD, NekDouble> > &Fwd,
         Array<OneD, Array<OneD, NekDouble> > &physarray)
     {
         int i, j;
@@ -1120,14 +1087,6 @@ namespace Nektar
             velInf[2] = m_wInf;
             Vmath::Smul(nTracePts, m_wInf, m_traceNormals[2], 1, tmp2, 1);
             Vmath::Vadd(nTracePts, VnInf, 1, tmp2, 1, VnInf, 1);
-        }
-
-        // Get physical values of the forward trace
-        Array<OneD, Array<OneD, NekDouble> > Fwd(nVariables);
-        for (i = 0; i < nVariables; ++i)
-        {
-            Fwd[i] = Array<OneD, NekDouble>(nTracePts);
-            m_fields[i]->ExtractTracePhys(physarray[i], Fwd[i]);
         }
 
         // Computing the normal velocity for characteristics coming
@@ -1247,6 +1206,7 @@ namespace Nektar
     void CompressibleFlowSystem::PressureOutflowFileBC(
         int                                   bcRegion,
         int                                   cnt,
+        Array<OneD, Array<OneD, NekDouble> > &Fwd,
         Array<OneD, Array<OneD, NekDouble> > &physarray)
     {
         int i, j;
@@ -1281,15 +1241,6 @@ namespace Nektar
             velInf[2] = m_wInf;
             Vmath::Smul(nTracePts, m_wInf, m_traceNormals[2], 1, tmp2, 1);
             Vmath::Vadd(nTracePts, VnInf, 1, tmp2, 1, VnInf, 1);
-        }
-
-        // Get physical values of the forward trace
-        Array<OneD, Array<OneD, NekDouble> > Fwd(nVariables);
-
-        for (i = 0; i < nVariables; ++i)
-        {
-            Fwd[i] = Array<OneD, NekDouble>(nTracePts, 0.0);
-            m_fields[i]->ExtractTracePhys(physarray[i], Fwd[i]);
         }
 
         // Computing the normal velocity for characteristics coming
@@ -1411,6 +1362,7 @@ namespace Nektar
     void CompressibleFlowSystem::PressureInflowFileBC(
         int                                   bcRegion,
         int                                   cnt,
+        Array<OneD, Array<OneD, NekDouble> > &Fwd,
         Array<OneD, Array<OneD, NekDouble> > &physarray)
     {
         int i, j;
@@ -1445,15 +1397,6 @@ namespace Nektar
             velInf[2] = m_wInf;
             Vmath::Smul(nTracePts, m_wInf, m_traceNormals[2], 1, tmp2, 1);
             Vmath::Vadd(nTracePts, VnInf, 1, tmp2, 1, VnInf, 1);
-        }
-
-        // Get physical values of the forward trace
-        Array<OneD, Array<OneD, NekDouble> > Fwd(nVariables);
-
-        for (i = 0; i < nVariables; ++i)
-        {
-            Fwd[i] = Array<OneD, NekDouble>(nTracePts, 0.0);
-            m_fields[i]->ExtractTracePhys(physarray[i], Fwd[i]);
         }
 
         // Computing the normal velocity for characteristics coming
@@ -1574,6 +1517,7 @@ namespace Nektar
     void CompressibleFlowSystem::ExtrapOrder0BC(
         int                                   bcRegion,
         int                                   cnt,
+        Array<OneD, Array<OneD, NekDouble> > &Fwd,
         Array<OneD, Array<OneD, NekDouble> > &physarray)
     {
         int i, j;
@@ -1585,14 +1529,6 @@ namespace Nektar
 
         const Array<OneD, const int> &traceBndMap
             = m_fields[0]->GetTraceBndMap();
-
-        // Get physical values of the forward trace
-        Array<OneD, Array<OneD, NekDouble> > Fwd(nVariables);
-        for (i = 0; i < nVariables; ++i)
-        {
-            Fwd[i] = Array<OneD, NekDouble>(nTracePts);
-            m_fields[i]->ExtractTracePhys(physarray[i], Fwd[i]);
-        }
 
         int eMax;
 
