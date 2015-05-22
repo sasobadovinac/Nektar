@@ -25,7 +25,7 @@ SET(FieldConvertHeaders
     ProcessVorticity.h
     ProcessC0Projection.h
     ProcessQCriterion.h
-    ProcessAddModeTo2DFld.h
+#    ProcessAddModeTo2DFld.h
 )
 
 SET(FieldConvertSources 
@@ -55,7 +55,7 @@ SET(FieldConvertSources
     ProcessVorticity.cpp
     ProcessC0Projection.cpp
     ProcessQCriterion.cpp
-    ProcessAddModeTo2DFld.cpp
+#    ProcessAddModeTo2DFld.cpp
 
 
 )

@@ -1916,16 +1916,8 @@ namespace Nektar
                         returnval = false;
                     }
                 }
-<<<<<<< HEAD
-
-                if(m_domainRange->doYrange)
-||||||| merged common ancestors
-                
-                if(m_domainRange->doYrange)
-=======
 
                 if(m_domainRange->m_doYrange)
->>>>>>> master
                 {
                     int ncnt_low = 0;
                     int ncnt_up = 0;
@@ -1951,16 +1943,8 @@ namespace Nektar
                         returnval = false;
                     }
                 }
-<<<<<<< HEAD
-                
-                if(m_domainRange->doZrange)
-||||||| merged common ancestors
-
-                if(m_domainRange->doZrange)
-=======
 
                 if(m_domainRange->m_doZrange)
->>>>>>> master
                 {
                     int ncnt_low = 0;
                     int ncnt_up  = 0;
