@@ -176,12 +176,11 @@ namespace Nektar
                 GeomType             m_geomType;
                 LibUtilities::ShapeType   m_shapeType;
                 int                  m_globalID;
-				bool	m_cylindrical;
+                bool                m_cylindrical;
 
 
                 Array<OneD, Array<OneD, NekDouble> > m_coeffs;
-			
-            
+
                 void GenGeomFactors();
 
                 //---------------------------------------

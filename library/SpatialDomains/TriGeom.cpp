@@ -149,8 +149,8 @@ namespace Nektar
             const int                      id,
             const SegGeomSharedPtr         edges[],
             const StdRegions::Orientation  eorient[],
-            const CurveSharedPtr          &curve)
-            const bool                     cylindrical):
+            const CurveSharedPtr          &curve,
+            const bool                     cylindrical)
             : Geometry2D(edges[0]->GetVertex(0)->GetCoordim()),
               m_fid(id),
               m_curve(curve)
