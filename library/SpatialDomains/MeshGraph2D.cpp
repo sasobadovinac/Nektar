@@ -112,33 +112,23 @@ namespace Nektar
             TiXmlElement *edge = field->FirstChildElement("E");
 
             /// Since all edge data is one big text block, we need to
-            /// accumulate all TEXT data and then parse it.  This
+            /// accumulate all TINYXML_TEXT data and then parse it.  This
             /// approach effectively skips all comments or other node
             /// types since we only care about the edge list.  We
             /// cannot handle missing edge numbers as we could with
             /// missing element numbers due to the text block format.
             std::string edgeStr;
-            int i,indx;
-            int nextEdgeNumber = -1;
-
-            // Curved Edges
-            map<int, int> edge_curved;
-            for(i = 0; i < m_curvedEdges.size(); ++i)
-            {
-                edge_curved[m_curvedEdges[i]->m_curveID] = i;
-            }
+            int indx;
+            CurveMap::iterator it;
 
             while(edge)
             {
-                nextEdgeNumber++;
-
                 int err = edge->QueryIntAttribute("ID",&indx);
                 ASSERTL0(err == TIXML_SUCCESS, "Unable to read edge attribute ID.");
-//                ASSERTL0(indx == nextEdgeNumber, "Edge IDs must begin with zero and be sequential.");
 
                 TiXmlNode *child = edge->FirstChild();
                 edgeStr.clear();
-                if (child->Type() == TiXmlNode::TEXT)
+                if (child->Type() == TiXmlNode::TINYXML_TEXT)
                 {
                     edgeStr += child->ToText()->ValueStr();
                 }
@@ -163,14 +153,16 @@ namespace Nektar
 
                             SegGeomSharedPtr edge;
 
-                            if(edge_curved.count(indx) == 0)
+                            it = m_curvedEdges.find(indx);
+
+                            if(it == m_curvedEdges.end())
                             {
                                 edge = MemoryManager<SegGeom>::AllocateSharedPtr(indx, m_spaceDimension, vertices);
                                 edge->SetGlobalID(indx); // Set global mesh id
                             }
                             else
                             {
-                                edge = MemoryManager<SegGeom>::AllocateSharedPtr(indx, m_spaceDimension, vertices, m_curvedEdges[edge_curved.find(indx)->second]);
+                                edge = MemoryManager<SegGeom>::AllocateSharedPtr(indx, m_spaceDimension, vertices, it->second);
                                 edge->SetGlobalID(indx); //Set global mesh id
                             }
 
@@ -201,14 +193,7 @@ namespace Nektar
             ASSERTL0(field, "Unable to find ELEMENT tag in file.");
 
             // Set up curve map for curved elements on an embedded manifold.
-            map<int, int> faceCurves;
-            map<int,int>::iterator x;
-            for (int i = 0; i < m_curvedFaces.size(); ++i)
-            {
-                faceCurves[m_curvedFaces[i]->m_curveID] = i;
-            }
-
-            int nextElementNumber = -1;
+            CurveMap::iterator it;
 
             /// All elements are of the form: "<? ID="#"> ... </?>", with
             /// ? being the element type.
@@ -222,21 +207,19 @@ namespace Nektar
                     ASSERTL0(elementType == "Q" || elementType == "T",
                              (std::string("Unknown 2D element type: ") + elementType).c_str());
 
-                    /// These should be ordered.
-                    nextElementNumber++;
-
                     /// Read id attribute.
                     int indx;
                     int err = element->QueryIntAttribute("ID", &indx);
                     ASSERTL0(err == TIXML_SUCCESS, "Unable to read element attribute ID.");
-//                    ASSERTL0(indx == nextElementNumber, "Element IDs must begin with zero and be sequential.");
+
+                    it = m_curvedFaces.find(indx);
 
                     /// Read text element description.
                     TiXmlNode* elementChild = element->FirstChild();
                     std::string elementStr;
                     while(elementChild)
                     {
-                        if (elementChild->Type() == TiXmlNode::TEXT)
+                        if (elementChild->Type() == TiXmlNode::TINYXML_TEXT)
                         {
                             elementStr += elementChild->ToText()->ValueStr();
                         }
@@ -276,15 +259,15 @@ namespace Nektar
                         };
 
                             TriGeomSharedPtr trigeom;
-							bool cylindrical=(m_coord_system==eCylindrical)?1:0;
+                            bool cylindrical=(m_coord_system==eCylindrical)?1:0;
 
-                            if ((x = faceCurves.find(indx)) == faceCurves.end())
+                            if (it == m_curvedFaces.end())
                             {
                                 trigeom = MemoryManager<TriGeom>
                                             ::AllocateSharedPtr(indx,
                                                     edges,
                                                     edgeorient,
-													cylindrical);
+                                                    cylindrical);
                             }
                             else
                             {
@@ -292,8 +275,8 @@ namespace Nektar
                                             ::AllocateSharedPtr(indx,
                                                     edges,
                                                     edgeorient,
-                                                    m_curvedFaces[x->second],
-													cylindrical);
+                                                    it->second,
+                                                    cylindrical);
 
                             }
                             trigeom->SetGlobalID(indx);
@@ -334,15 +317,16 @@ namespace Nektar
                         };
 
                             QuadGeomSharedPtr quadgeom;
-							bool cylindrical=(m_coord_system==eCylindrical)?1:0;
 
-                            if ((x = faceCurves.find(indx)) == faceCurves.end())
+                            bool cylindrical=(m_coord_system==eCylindrical)?1:0;
+
+                            if (it == m_curvedFaces.end())
                             {
                                 quadgeom = MemoryManager<QuadGeom>
                                             ::AllocateSharedPtr(indx,
                                                     edges,
                                                     edgeorient,
-													cylindrical);
+                                                    cylindrical);
                             }
                             else
                             {
@@ -350,8 +334,8 @@ namespace Nektar
                                             ::AllocateSharedPtr(indx,
                                                     edges,
                                                     edgeorient,
-                                                    m_curvedFaces[x->second],
-													cylindrical);
+                                                    it->second,
+                                                    cylindrical);
                             }
                             quadgeom->SetGlobalID(indx);
 
@@ -404,7 +388,7 @@ namespace Nektar
                 // Comments appear as nodes just like elements.
                 // We are specifically looking for text in the body
                 // of the definition.
-                while(compositeChild && compositeChild->Type() != TiXmlNode::TEXT)
+                while(compositeChild && compositeChild->Type() != TiXmlNode::TINYXML_TEXT)
                 {
                     compositeChild = compositeChild->NextSibling();
                 }

@@ -81,7 +81,7 @@ namespace SpatialDomains
     /// physical element in the mesh.
     class GeomFactors
     {
-        public:
+    public:
             /// Constructor for GeomFactors class.
             GeomFactors(const GeomType                              gtype,
                         const int                                   coordim,
@@ -133,7 +133,7 @@ namespace SpatialDomains
             /// Computes a hash of this GeomFactors element.
             inline size_t GetHash();
 
-        protected:
+    protected:
             /// Type of geometry (e.g. eRegular, eDeformed, eMovingRegular).
             GeomType m_type;
             /// Dimension of expansion.
@@ -158,6 +158,8 @@ namespace SpatialDomains
             /// DerivFactors vector cache
             std::map<LibUtilities::PointsKeyVector, Array<TwoD, NekDouble> >
                                                 m_derivFactorCache;
+            /// Return the Xmap;
+            inline StdRegions::StdExpansionSharedPtr &GetXmap();
 
         private:
             /// Tests if the element is valid and not self-intersecting.
@@ -169,9 +171,9 @@ namespace SpatialDomains
             /// Return the Jacobian of the mapping and cache the result.
             SPATIAL_DOMAINS_EXPORT Array<OneD, NekDouble> ComputeJac(
                     const LibUtilities::PointsKeyVector &keyTgt) const;
-		
-			SPATIAL_DOMAINS_EXPORT Array<OneD, NekDouble> ComputeJacCyl(
-								    const LibUtilities::PointsKeyVector &keyTgt) const;
+
+            SPATIAL_DOMAINS_EXPORT Array<OneD, NekDouble> ComputeJacCyl(
+                    const LibUtilities::PointsKeyVector &keyTgt) const;
 
             /// Computes the Laplacian coefficients \f$g_{ij}\f$.
             SPATIAL_DOMAINS_EXPORT Array<TwoD, NekDouble> ComputeGmat(
@@ -194,9 +196,8 @@ namespace SpatialDomains
             void Adjoint(
                     const Array<TwoD, const NekDouble>& src,
                     Array<TwoD, NekDouble>& tgt) const;
-		
-			DirectionalCoordinate CoordinateInterpolation(int direction);
-		
+
+            DirectionalCoordinate CoordinateInterpolation(int direction);
     };
 
 
@@ -238,8 +239,8 @@ namespace SpatialDomains
             const LibUtilities::PointsKeyVector &keyTgt)
     {
         std::map<LibUtilities::PointsKeyVector,
-                 Array<OneD, NekDouble> >::const_iterator x;
-
+            Array<OneD, NekDouble> >::const_iterator x;
+        
         if ((x = m_jacCache.find(keyTgt)) != m_jacCache.end())
         {
             return x->second;
@@ -268,7 +269,6 @@ namespace SpatialDomains
         return m_jacCacheCyl[keyTgt];
 		
     }
-
 
     /**
      * @param   keyTgt      Target point distributions.
@@ -365,6 +365,11 @@ namespace SpatialDomains
             boost::hash_combine(hash, jac[0]);
         }
         return hash;
+    }
+
+    StdRegions::StdExpansionSharedPtr &GeomFactors::GetXmap(void)
+    {
+        return m_xmap;
     }
 
 } //end of namespace

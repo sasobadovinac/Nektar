@@ -61,21 +61,19 @@ namespace Nektar
         {
         public:
             SPATIAL_DOMAINS_EXPORT QuadGeom();
-            
-	    SPATIAL_DOMAINS_EXPORT QuadGeom(int id, const int coordim, const bool cylindrical=false);
-            
-	    SPATIAL_DOMAINS_EXPORT QuadGeom(
+
+            SPATIAL_DOMAINS_EXPORT QuadGeom(
                     const int id, 
                     const PointGeomSharedPtr verts[],
                     const SegGeomSharedPtr edges[], 
                     const StdRegions::Orientation eorient[],
-					const bool cylindrical=false);
+                    const bool cylindrical = false);
 
             SPATIAL_DOMAINS_EXPORT QuadGeom(
                     const int id, 
                     const SegGeomSharedPtr edges[], 
                     const StdRegions::Orientation eorient[],
-					const bool cylindrical=false);
+                    const bool cylindrical=false);
 
 
             SPATIAL_DOMAINS_EXPORT QuadGeom(
@@ -83,7 +81,7 @@ namespace Nektar
                     const SegGeomSharedPtr edges[], 
                     const StdRegions::Orientation eorient[], 
                     const CurveSharedPtr &curve,
-					const bool cylindrical=false);
+                    const bool cylindrical=false);
 
 
             SPATIAL_DOMAINS_EXPORT QuadGeom(const QuadGeom &in);
@@ -115,9 +113,9 @@ namespace Nektar
             int                                 m_fid;
             bool                                m_ownVerts;
             std::list<CompToElmt>               m_elmtMap;
-			bool	m_cylindrical;
+            bool                                m_cylindrical;
+            CurveSharedPtr                      m_curve;
 
- 
             SPATIAL_DOMAINS_EXPORT virtual void v_AddElmtConnected(
                     int gvo_id, 
                     int locid);
@@ -191,10 +189,16 @@ namespace Nektar
                           Array<OneD, NekDouble>       &locCoord,
                           NekDouble                     tol,
                           NekDouble                    &resid);
+
+            SPATIAL_DOMAINS_EXPORT virtual void v_Reset(
+                    CurveMap &curvedEdges,
+                    CurveMap &curvedFaces);
+
         private:
             /// Boolean indicating whether object owns the data
             bool                                m_ownData;
 
+            void SetUpXmap();
         };
 
     }; //end of namespace

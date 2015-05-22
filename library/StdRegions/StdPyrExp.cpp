@@ -549,18 +549,31 @@ namespace Nektar
 
         void StdPyrExp::v_IProductWRTBase_SumFac(
             const Array<OneD, const NekDouble>& inarray,
-                  Array<OneD,       NekDouble>& outarray)
+                  Array<OneD,       NekDouble>& outarray,
+            bool                                multiplybyweights)
         {
-            Array<OneD, NekDouble> tmp(inarray.num_elements());
             Array<OneD, NekDouble> wsp;
 
-            v_MultiplyByStdQuadratureMetric(inarray, tmp);
+            if(multiplybyweights)
+            {
+                Array<OneD, NekDouble> tmp(inarray.num_elements());
 
-            v_IProductWRTBase_SumFacKernel(m_base[0]->GetBdata(),
-                                           m_base[1]->GetBdata(),
-                                           m_base[2]->GetBdata(),
-                                           tmp,outarray,wsp,
-                                           true,true,true);
+                v_MultiplyByStdQuadratureMetric(inarray, tmp);
+
+                v_IProductWRTBase_SumFacKernel(m_base[0]->GetBdata(),
+                                               m_base[1]->GetBdata(),
+                                               m_base[2]->GetBdata(),
+                                               tmp,outarray,wsp,
+                                               true,true,true);
+            }
+            else
+            {
+                v_IProductWRTBase_SumFacKernel(m_base[0]->GetBdata(),
+                                               m_base[1]->GetBdata(),
+                                               m_base[2]->GetBdata(),
+                                               inarray,outarray,wsp,
+                                               true,true,true);
+            }
         }
 
         void StdPyrExp::v_IProductWRTBase_SumFacKernel(
@@ -1625,8 +1638,8 @@ namespace Nektar
             const int R              = m_base[2]->GetNumModes() - 1;
             const int nFaceIntCoeffs = v_GetFaceIntNcoeffs(fid);
             int       p, q, r, idx   = 0;
-            int       nummodesA;
-            int       nummodesB;
+            int       nummodesA      = 0;
+            int       nummodesB      = 0;
             int       i, j;
 
             if (maparray.num_elements() != nFaceIntCoeffs)

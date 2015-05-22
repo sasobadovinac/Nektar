@@ -50,6 +50,7 @@
 #include <tinyxml.h>
 #include <cstring>
 #include <sstream>
+#include <iomanip>
 
 #include <SpatialDomains/MeshGraph1D.h>
 #include <SpatialDomains/MeshGraph2D.h>
@@ -116,7 +117,7 @@ namespace Nektar
          *
          */
         boost::shared_ptr<MeshGraph> MeshGraph::Read(
-                      const LibUtilities::SessionReaderSharedPtr &pSession, 
+                      const LibUtilities::SessionReaderSharedPtr &pSession,
                       DomainRangeShPtr &rng)
         {
             boost::shared_ptr<MeshGraph> returnval;
@@ -132,14 +133,14 @@ namespace Nektar
                 if (attrName == "DIM")
                 {
                     int err = attr->QueryIntValue(&meshDim);
-                    ASSERTL1(err==TIXML_SUCCESS, "Unable to read mesh dimension.");
+                    ASSERTL0(err==TIXML_SUCCESS, "Unable to read mesh dimension.");
                     break;
                 }
                 else
                 {
                     std::string errstr("Unknown attribute: ");
                     errstr += attrName;
-                    ASSERTL1(false, errstr.c_str());
+                    ASSERTL0(false, errstr.c_str());
                 }
 
                 // Get the next attribute.
@@ -425,7 +426,7 @@ namespace Nektar
                 while (vertexBody)
                 {
                     // Accumulate all non-comment body data.
-                    if (vertexBody->Type() == TiXmlNode::TEXT)
+                    if (vertexBody->Type() == TiXmlNode::TINYXML_TEXT)
                     {
                         vertexBodyStr += vertexBody->ToText()->Value();
                         vertexBodyStr += " ";
@@ -449,7 +450,7 @@ namespace Nektar
                         xval = xval*xscale + xmove;
                         yval = yval*yscale + ymove;
                         zval = zval*zscale + zmove;
-                        
+
                         // Need to check it here because we may not be
                         // good after the read indicating that there
                         // was nothing to read.
@@ -1041,33 +1042,33 @@ namespace Nektar
                 {
                     int indx;
                     int err = multidomains->QueryIntAttribute("ID", &indx);
-                    ASSERTL0(err == TIXML_SUCCESS, 
+                    ASSERTL0(err == TIXML_SUCCESS,
                              "Unable to read attribute ID in Domain.");
 
 
                     TiXmlNode* elementChild = multidomains->FirstChild();
-                    while(elementChild && elementChild->Type() != TiXmlNode::TEXT)
+                    while(elementChild && elementChild->Type() != TiXmlNode::TINYXML_TEXT)
                     {
                         elementChild = elementChild->NextSibling();
                     }
-                    
+
                     ASSERTL0(elementChild, "Unable to read DOMAIN body.");
                     std::string elementStr = elementChild->ToText()->ValueStr();
-                    
+
                     elementStr = elementStr.substr(elementStr.find_first_not_of(" "));
-                
+
                     std::string::size_type indxBeg = elementStr.find_first_of('[') + 1;
                     std::string::size_type indxEnd = elementStr.find_last_of(']') - 1;
                     std::string indxStr = elementStr.substr(indxBeg, indxEnd - indxBeg + 1);
-                    
+
                     ASSERTL0(!indxStr.empty(), "Unable to read domain's composite index (index missing?).");
-                    
+
                     // Read the domain composites.
                     // Parse the composites into a list.
                     CompositeMap unrollDomain;
                     GetCompositeList(indxStr, unrollDomain);
                     m_domain.push_back(unrollDomain);
-                
+
                     ASSERTL0(!m_domain[nextDomainNumber++].empty(), (std::string("Unable to obtain domain's referenced composite: ") + indxStr).c_str());
 
                     /// Keep looking
@@ -1080,28 +1081,28 @@ namespace Nektar
 
                 // find the non comment portion of the body.
                 TiXmlNode* elementChild = domain->FirstChild();
-                while(elementChild && elementChild->Type() != TiXmlNode::TEXT)
+                while(elementChild && elementChild->Type() != TiXmlNode::TINYXML_TEXT)
                 {
                     elementChild = elementChild->NextSibling();
                 }
-                
+
                 ASSERTL0(elementChild, "Unable to read DOMAIN body.");
                 std::string elementStr = elementChild->ToText()->ValueStr();
-                
+
                 elementStr = elementStr.substr(elementStr.find_first_not_of(" "));
-                
+
                 std::string::size_type indxBeg = elementStr.find_first_of('[') + 1;
                 std::string::size_type indxEnd = elementStr.find_last_of(']') - 1;
                 std::string indxStr = elementStr.substr(indxBeg, indxEnd - indxBeg + 1);
-                
+
                 ASSERTL0(!indxStr.empty(), "Unable to read domain's composite index (index missing?).");
-                
+
                 // Read the domain composites.
                 // Parse the composites into a list.
                 CompositeMap fullDomain;
                 GetCompositeList(indxStr, fullDomain);
                 m_domain.push_back(fullDomain);
-                
+
                 ASSERTL0(!m_domain[0].empty(), (std::string("Unable to obtain domain's referenced composite: ") + indxStr).c_str());
             }
         }
@@ -1203,7 +1204,7 @@ namespace Nektar
                 while(elementChild)
                 {
                     // Accumulate all non-comment element data
-                    if (elementChild->Type() == TiXmlNode::TEXT)
+                    if (elementChild->Type() == TiXmlNode::TINYXML_TEXT)
                     {
                         elementStr += elementChild->ToText()->ValueStr();
                         elementStr += " ";
@@ -1267,7 +1268,7 @@ namespace Nektar
 
                     ASSERTL0(curve->m_points.size() == numPts,"Number of points specificed by attribute NUMPOINTS is different from number of points in list");
 
-                    m_curvedEdges.push_back(curve);
+                    m_curvedEdges[edgeid] = curve;
 
                     edgelement = edgelement->NextSiblingElement("E");
 
@@ -1299,7 +1300,7 @@ namespace Nektar
                 while(elementChild)
                 {
                     // Accumulate all non-comment element data
-                    if (elementChild->Type() == TiXmlNode::TEXT)
+                    if (elementChild->Type() == TiXmlNode::TINYXML_TEXT)
                     {
                         elementStr += elementChild->ToText()->ValueStr();
                         elementStr += " ";
@@ -1362,7 +1363,7 @@ namespace Nektar
                                 (std::string("Unable to read curve data for FACE: ")
                         + elementStr).c_str());
                     }
-                    m_curvedFaces.push_back(curve);
+                    m_curvedFaces[faceid] = curve;
 
                     facelement = facelement->NextSiblingElement("F");
 
@@ -1388,64 +1389,418 @@ namespace Nektar
             ReadCurves(doc);
         }
 
-        void MeshGraph::SetDomainRange (NekDouble xmin, NekDouble xmax, NekDouble ymin, 
-                             NekDouble ymax, NekDouble zmin, NekDouble zmax)
+        /**
+         * @brief Populate a TinyXML document with a GEOMETRY tag inside the
+         * NEKTAR tag.
+         *
+         * This routine will create a GEOMETRY XML tag which represents the
+         * MeshGraph object. If a NEKTAR tag does not already exist, it will
+         * create one. If a GEOMETRY block already exists inside the NEKTAR tag,
+         * it will overwrite it.
+         */
+        void MeshGraph::WriteGeometry(TiXmlDocument &doc)
         {
-            if(m_domainRange == NullDomainRangeShPtr)
+            TiXmlElement *root = doc.FirstChildElement("NEKTAR");
+            TiXmlElement *geomTag;
+
+            // Try to find existing NEKTAR tag.
+            if (!root)
             {
-                m_domainRange = MemoryManager<DomainRange>::AllocateSharedPtr();
-                m_domainRange->doXrange = true;
-            }
-            
-            m_domainRange->xmin = xmin;
-            m_domainRange->xmax = xmax;
-            
-            if(ymin == NekConstants::kNekUnsetDouble)
-            {
-                m_domainRange->doYrange = false;
+                root = new TiXmlElement("NEKTAR");
+                doc.LinkEndChild(root);
+
+                geomTag = new TiXmlElement("GEOMETRY");
+                root->LinkEndChild(geomTag);
             }
             else
             {
-                m_domainRange->doYrange = true;
-                m_domainRange->ymin = ymin;
-                m_domainRange->ymax = ymax;
+                // Try to find existing GEOMETRY tag.
+                geomTag = root->FirstChildElement("GEOMETRY");
+
+                if (!geomTag)
+                {
+                    geomTag = new TiXmlElement("GEOMETRY");
+                    root->LinkEndChild(geomTag);
+                }
+            }
+
+            // Update attributes with dimensions.
+            geomTag->SetAttribute("DIM",   m_meshDimension);
+            geomTag->SetAttribute("SPACE", m_spaceDimension);
+
+            // Clear existing elements.
+            geomTag->Clear();
+
+            // Construct <VERTEX> block
+            TiXmlElement *vertTag = new TiXmlElement("VERTEX");
+            PointGeomMap::iterator pIt;
+
+            for (pIt = m_vertSet.begin(); pIt != m_vertSet.end(); ++pIt)
+            {
+                stringstream s;
+                s << scientific << setprecision(8)
+                  << (*pIt->second)(0) << " " << (*pIt->second)(1) << " "
+                  << (*pIt->second)(2);
+                TiXmlElement * v = new TiXmlElement("V");
+                v->SetAttribute("ID", pIt->second->GetVid());
+                v->LinkEndChild(new TiXmlText(s.str()));
+                vertTag->LinkEndChild(v);
+            }
+
+            geomTag->LinkEndChild(vertTag);
+
+            // Construct <EDGE> or <ELEMENT> block
+            TiXmlElement *edgeTag = new TiXmlElement(
+                m_meshDimension == 1 ? "ELEMENT" : "EDGE");
+            SegGeomMap::iterator sIt;
+            string tag = m_meshDimension == 1 ? "S" : "E";
+
+            for (sIt = m_segGeoms.begin(); sIt != m_segGeoms.end(); ++sIt)
+            {
+                stringstream s;
+                SegGeomSharedPtr seg = sIt->second;
+                s << seg->GetVid(0) << " " << seg->GetVid(1);
+                TiXmlElement *e = new TiXmlElement(tag);
+                e->SetAttribute("ID", sIt->first);
+                e->LinkEndChild(new TiXmlText(s.str()));
+                edgeTag->LinkEndChild(e);
+            }
+
+            geomTag->LinkEndChild(edgeTag);
+
+            // Construct <FACE> or <ELEMENT> block
+            if (m_meshDimension > 1)
+            {
+                TiXmlElement *faceTag = new TiXmlElement(
+                    m_meshDimension == 2 ? "ELEMENT" : "FACE");
+
+                TriGeomMap::iterator tIt;
+                tag = "T";
+
+                for (tIt = m_triGeoms.begin(); tIt != m_triGeoms.end(); ++tIt)
+                {
+                    stringstream s;
+                    TriGeomSharedPtr tri = tIt->second;
+                    s << tri->GetEid(0) << " " << tri->GetEid(1) << " "
+                      << tri->GetEid(2);
+                    TiXmlElement *t = new TiXmlElement(tag);
+                    t->SetAttribute("ID", tIt->first);
+                    t->LinkEndChild(new TiXmlText(s.str()));
+                    faceTag->LinkEndChild(t);
+                }
+
+                QuadGeomMap::iterator qIt;
+                tag = "Q";
+
+                for (qIt = m_quadGeoms.begin(); qIt != m_quadGeoms.end(); ++qIt)
+                {
+                    stringstream s;
+                    QuadGeomSharedPtr quad = qIt->second;
+                    s << quad->GetEid(0) << " " << quad->GetEid(1) << " "
+                      << quad->GetEid(2) << " " << quad->GetEid(3);
+                    TiXmlElement *q = new TiXmlElement(tag);
+                    q->SetAttribute("ID", qIt->first);
+                    q->LinkEndChild(new TiXmlText(s.str()));
+                    faceTag->LinkEndChild(q);
+                }
+
+                geomTag->LinkEndChild(faceTag);
+            }
+
+            if (m_meshDimension > 2)
+            {
+                TiXmlElement *elmtTag = new TiXmlElement("ELEMENT");
+
+                HexGeomMap::iterator hIt;
+                tag = "H";
+
+                for (hIt = m_hexGeoms.begin(); hIt != m_hexGeoms.end(); ++hIt)
+                {
+                    stringstream s;
+                    HexGeomSharedPtr hex = hIt->second;
+                    s << hex->GetFid(0) << " " << hex->GetFid(1) << " "
+                      << hex->GetFid(2) << " " << hex->GetFid(3) << " "
+                      << hex->GetFid(4) << " " << hex->GetFid(5) << " ";
+                    TiXmlElement *h = new TiXmlElement(tag);
+                    h->SetAttribute("ID", hIt->first);
+                    h->LinkEndChild(new TiXmlText(s.str()));
+                    elmtTag->LinkEndChild(h);
+                }
+
+                PrismGeomMap::iterator rIt;
+                tag = "R";
+
+                for (rIt = m_prismGeoms.begin(); rIt != m_prismGeoms.end(); ++rIt)
+                {
+                    stringstream s;
+                    PrismGeomSharedPtr prism = rIt->second;
+                    s << prism->GetFid(0) << " " << prism->GetFid(1) << " "
+                      << prism->GetFid(2) << " " << prism->GetFid(3) << " "
+                      << prism->GetFid(4) << " ";
+                    TiXmlElement *p = new TiXmlElement(tag);
+                    p->SetAttribute("ID", rIt->first);
+                    p->LinkEndChild(new TiXmlText(s.str()));
+                    elmtTag->LinkEndChild(p);
+                }
+
+                PyrGeomMap::iterator pIt;
+                tag = "P";
+
+                for (pIt = m_pyrGeoms.begin(); pIt != m_pyrGeoms.end(); ++pIt)
+                {
+                    stringstream s;
+                    PyrGeomSharedPtr pyr = pIt->second;
+                    s << pyr->GetFid(0) << " " << pyr->GetFid(1) << " "
+                      << pyr->GetFid(2) << " " << pyr->GetFid(3) << " "
+                      << pyr->GetFid(4) << " ";
+                    TiXmlElement *p = new TiXmlElement(tag);
+                    p->SetAttribute("ID", pIt->first);
+                    p->LinkEndChild(new TiXmlText(s.str()));
+                    elmtTag->LinkEndChild(p);
+                }
+
+                TetGeomMap::iterator tIt;
+                tag = "A";
+
+                for (tIt = m_tetGeoms.begin(); tIt != m_tetGeoms.end(); ++tIt)
+                {
+                    stringstream s;
+                    TetGeomSharedPtr tet = tIt->second;
+                    s << tet->GetFid(0) << " " << tet->GetFid(1) << " "
+                      << tet->GetFid(2) << " " << tet->GetFid(3) << " ";
+                    TiXmlElement *t = new TiXmlElement(tag);
+                    t->SetAttribute("ID", tIt->first);
+                    t->LinkEndChild(new TiXmlText(s.str()));
+                    elmtTag->LinkEndChild(t);
+                }
+
+                geomTag->LinkEndChild(elmtTag);
+            }
+
+            // Construct <CURVED> block
+            TiXmlElement *curveTag = new TiXmlElement("CURVED");
+            CurveMap::iterator curveIt;
+            int curveId = 0;
+
+            for (curveIt  = m_curvedEdges.begin();
+                 curveIt != m_curvedEdges.end(); ++curveIt)
+            {
+                CurveSharedPtr curve = curveIt->second;
+                TiXmlElement *c = new TiXmlElement("E");
+                stringstream s;
+                s.precision(8);
+
+                for (int j = 0; j < curve->m_points.size(); ++j)
+                {
+                    SpatialDomains::PointGeomSharedPtr p = curve->m_points[j];
+                    s << scientific << (*p)(0) << " " << (*p)(1) << " " << (*p)(2) << "   ";
+                }
+
+                c->SetAttribute("ID", curveId++);
+                c->SetAttribute("EDGEID", curve->m_curveID);
+                c->SetAttribute("NUMPOINTS", curve->m_points.size());
+                c->SetAttribute("TYPE", LibUtilities::kPointsTypeStr[curve->m_ptype]);
+                c->LinkEndChild(new TiXmlText(s.str()));
+                curveTag->LinkEndChild(c);
+            }
+
+            for (curveIt  = m_curvedFaces.begin();
+                 curveIt != m_curvedFaces.end(); ++curveIt)
+            {
+                CurveSharedPtr curve = curveIt->second;
+                TiXmlElement *c = new TiXmlElement("F");
+                stringstream s;
+                s.precision(8);
+
+                for (int j = 0; j < curve->m_points.size(); ++j)
+                {
+                    SpatialDomains::PointGeomSharedPtr p = curve->m_points[j];
+                    s << scientific << (*p)(0) << " " << (*p)(1) << " " << (*p)(2) << "   ";
+                }
+
+                c->SetAttribute("ID", curveId++);
+                c->SetAttribute("FACEID", curve->m_curveID);
+                c->SetAttribute("NUMPOINTS", curve->m_points.size());
+                c->SetAttribute("TYPE", LibUtilities::kPointsTypeStr[curve->m_ptype]);
+                c->LinkEndChild(new TiXmlText(s.str()));
+                curveTag->LinkEndChild(c);
+            }
+
+            geomTag->LinkEndChild(curveTag);
+
+            // Construct <COMPOSITE> blocks
+            TiXmlElement *compTag = new TiXmlElement("COMPOSITE");
+            CompositeMap::iterator cIt;
+
+            // Create a map that gets around the issue of mapping faces -> F and
+            // edges -> E inside the tag.
+            map<LibUtilities::ShapeType, pair<string, string> > compMap;
+            compMap[LibUtilities::eSegment]       = make_pair("S", "E");
+            compMap[LibUtilities::eQuadrilateral] = make_pair("Q", "F");
+            compMap[LibUtilities::eTriangle]      = make_pair("T", "F");
+            compMap[LibUtilities::eTetrahedron]   = make_pair("A", "A");
+            compMap[LibUtilities::ePyramid]       = make_pair("P", "P");
+            compMap[LibUtilities::ePrism]         = make_pair("R", "R");
+            compMap[LibUtilities::eHexahedron]    = make_pair("H", "H");
+
+            for (cIt = m_meshComposites.begin(); cIt != m_meshComposites.end(); ++cIt)
+            {
+                stringstream s;
+                TiXmlElement *c = new TiXmlElement("C");
+                bool range = false;
+                GeometrySharedPtr firstGeom = cIt->second->at(0);
+                int shapeDim = firstGeom->GetShapeDim();
+                string tag = (shapeDim < m_meshDimension) ?
+                    compMap[firstGeom->GetShapeType()].second :
+                    compMap[firstGeom->GetShapeType()].first;
+
+                int vId = firstGeom->GetGlobalID();
+                int prevId = vId;
+                s << " " << tag << "[" << vId;
+
+                for (int i = 1; i < cIt->second->size(); ++i)
+                {
+                    // store previous element ID and get current one
+                    prevId = vId;
+                    vId = (*cIt->second)[i]->GetGlobalID();
+
+                    // continue an already started range
+                    if (prevId > -1 && vId == prevId + 1)
+                    {
+                        range = true;
+                        // if this is the last element, it's the end of a range,
+                        // so write
+                        if (i == cIt->second->size() - 1)
+                        {
+                            s << "-" << vId;
+                        }
+                        continue;
+                    }
+
+                    // terminate a range, if present
+                    if (range)
+                    {
+                        s << "-" << prevId;
+                        range = false;
+                    }
+
+                    // write what will be either a single entry or start of new
+                    // range
+                    s << "," << vId;
+                }
+
+                // terminate
+                s << "] ";
+
+                c->SetAttribute("ID", cIt->first);
+                c->LinkEndChild(new TiXmlText(s.str()));
+                compTag->LinkEndChild(c);
+            }
+
+            geomTag->LinkEndChild(compTag);
+
+            // Construct <DOMAIN> block
+            TiXmlElement *domTag = new TiXmlElement("DOMAIN");
+            stringstream domString;
+
+            domString << " C[";
+            // TODO: Fix this
+            CompositeMap::iterator cIt2 = m_domain[0].end();
+            --cIt2;
+
+            for (cIt = m_domain[0].begin(); cIt != m_domain[0].end(); ++cIt)
+            {
+                domString << cIt->first;
+                if (cIt != cIt2)
+                {
+                    domString << ",";
+                }
+            }
+
+            domString << "] ";
+            domTag->LinkEndChild(new TiXmlText(domString.str()));
+            geomTag->LinkEndChild(domTag);
+        }
+
+        /**
+         * @brief Write out an XML file containing the GEOMETRY block
+         * representing this MeshGraph instance inside a NEKTAR tag.
+         */
+        void MeshGraph::WriteGeometry(std::string &outfilename)
+        {
+            // Create empty TinyXML document.
+            TiXmlDocument doc;
+            TiXmlDeclaration* decl = new TiXmlDeclaration( "1.0", "utf-8", "");
+            doc.LinkEndChild(decl);
+
+            // Write out geometry information.
+            WriteGeometry(doc);
+
+            // Save file.
+            doc.SaveFile(outfilename);
+        }
+
+        void MeshGraph::SetDomainRange (
+            NekDouble xmin, NekDouble xmax, NekDouble ymin,
+            NekDouble ymax, NekDouble zmin, NekDouble zmax)
+        {
+            m_domainRange->m_checkShape = false;
+
+            if(m_domainRange == NullDomainRangeShPtr)
+            {
+                m_domainRange = MemoryManager<DomainRange>::AllocateSharedPtr();
+                m_domainRange->m_doXrange = true;
+            }
+
+            m_domainRange->m_xmin = xmin;
+            m_domainRange->m_xmax = xmax;
+
+            if(ymin == NekConstants::kNekUnsetDouble)
+            {
+                m_domainRange->m_doYrange = false;
+            }
+            else
+            {
+                m_domainRange->m_doYrange = true;
+                m_domainRange->m_ymin = ymin;
+                m_domainRange->m_ymax = ymax;
             }
 
             if(zmin == NekConstants::kNekUnsetDouble)
             {
-                m_domainRange->doZrange = false;
+                m_domainRange->m_doZrange = false;
             }
             else
             {
-                m_domainRange->doZrange = true;
-                m_domainRange->zmin = zmin;
-                m_domainRange->zmax = zmax;
+                m_domainRange->m_doZrange = true;
+                m_domainRange->m_zmin = zmin;
+                m_domainRange->m_zmax = zmax;
             }
         }
 
         bool MeshGraph::CheckRange(Geometry2D &geom)
         {
             bool returnval = true;
-            
+
             if(m_domainRange  != NullDomainRangeShPtr)
             {
                 int nverts  = geom.GetNumVerts();
                 int coordim = geom.GetCoordim();
-                
-                // exclude elements outside x range if all vertices not in region 
-                if(m_domainRange->doXrange)
+
+                // exclude elements outside x range if all vertices not in region
+                if(m_domainRange->m_doXrange)
                 {
                     int ncnt_low = 0;
                     int ncnt_up = 0;
                     for(int i = 0; i < nverts; ++i)
                     {
                         NekDouble xval = (*geom.GetVertex(i))[0];
-                        if(xval < m_domainRange->xmin)
+                        if(xval < m_domainRange->m_xmin)
                         {
                             ncnt_low++;
                         }
 
-                        if(xval > m_domainRange->xmax)
+                        if(xval > m_domainRange->m_xmax)
                         {
                             ncnt_up++;
                         }
@@ -1460,20 +1815,20 @@ namespace Nektar
                     }
                 }
 
-                // exclude elements outside y range if all vertices not in region 
-                if(m_domainRange->doYrange)
+                // exclude elements outside y range if all vertices not in region
+                if(m_domainRange->m_doYrange)
                 {
                     int ncnt_low = 0;
                     int ncnt_up  = 0;
                     for(int i = 0; i < nverts; ++i)
                     {
                         NekDouble yval = (*geom.GetVertex(i))[1];
-                        if(yval < m_domainRange->ymin)
+                        if(yval < m_domainRange->m_ymin)
                         {
                             ncnt_low++;
                         }
 
-                        if(yval > m_domainRange->ymax)
+                        if(yval > m_domainRange->m_ymax)
                         {
                             ncnt_up++;
                         }
@@ -1487,11 +1842,11 @@ namespace Nektar
                         returnval = false;
                     }
                 }
-                
+
                 if(coordim > 2)
                 {
-                    // exclude elements outside z range if all vertices not in region 
-                    if(m_domainRange->doZrange)
+                    // exclude elements outside z range if all vertices not in region
+                    if(m_domainRange->m_doZrange)
                     {
                         int ncnt_low = 0;
                         int ncnt_up  = 0;
@@ -1500,12 +1855,12 @@ namespace Nektar
                         {
                             NekDouble zval = (*geom.GetVertex(i))[2];
 
-                            if(zval < m_domainRange->zmin)
+                            if(zval < m_domainRange->m_zmin)
                             {
                                 ncnt_low++;
                             }
 
-                            if(zval > m_domainRange->zmax)
+                            if(zval > m_domainRange->m_zmax)
                             {
                                 ncnt_up++;
                             }
@@ -1524,17 +1879,17 @@ namespace Nektar
             return returnval;
         }
 
-        
-        /* Domain checker for 3D geometries */ 
+
+        /* Domain checker for 3D geometries */
         bool MeshGraph::CheckRange(Geometry3D &geom)
         {
             bool returnval = true;
-            
+
             if(m_domainRange  != NullDomainRangeShPtr)
             {
                 int nverts  = geom.GetNumVerts();
-                
-                if(m_domainRange->doXrange)
+
+                if(m_domainRange->m_doXrange)
                 {
                     int ncnt_low = 0;
                     int ncnt_up = 0;
@@ -1542,12 +1897,12 @@ namespace Nektar
                     for(int i = 0; i < nverts; ++i)
                     {
                         NekDouble xval = (*geom.GetVertex(i))[0];
-                        if(xval < m_domainRange->xmin)
+                        if(xval < m_domainRange->m_xmin)
                         {
                             ncnt_low++;
                         }
 
-                        if(xval > m_domainRange->xmax)
+                        if(xval > m_domainRange->m_xmax)
                         {
                             ncnt_up++;
                         }
@@ -1561,20 +1916,28 @@ namespace Nektar
                         returnval = false;
                     }
                 }
+<<<<<<< HEAD
 
                 if(m_domainRange->doYrange)
+||||||| merged common ancestors
+                
+                if(m_domainRange->doYrange)
+=======
+
+                if(m_domainRange->m_doYrange)
+>>>>>>> master
                 {
                     int ncnt_low = 0;
                     int ncnt_up = 0;
                     for(int i = 0; i < nverts; ++i)
                     {
                         NekDouble yval = (*geom.GetVertex(i))[1];
-                        if(yval < m_domainRange->ymin)
+                        if(yval < m_domainRange->m_ymin)
                         {
                             ncnt_low++;
                         }
 
-                        if(yval > m_domainRange->ymax)
+                        if(yval > m_domainRange->m_ymax)
                         {
                             ncnt_up++;
                         }
@@ -1588,8 +1951,16 @@ namespace Nektar
                         returnval = false;
                     }
                 }
+<<<<<<< HEAD
                 
                 if(m_domainRange->doZrange)
+||||||| merged common ancestors
+
+                if(m_domainRange->doZrange)
+=======
+
+                if(m_domainRange->m_doZrange)
+>>>>>>> master
                 {
                     int ncnt_low = 0;
                     int ncnt_up  = 0;
@@ -1597,12 +1968,12 @@ namespace Nektar
                     {
                         NekDouble zval = (*geom.GetVertex(i))[2];
 
-                        if(zval < m_domainRange->zmin)
+                        if(zval < m_domainRange->m_zmin)
                         {
                             ncnt_low++;
                         }
 
-                        if(zval > m_domainRange->zmax)
+                        if(zval > m_domainRange->m_zmax)
                         {
                             ncnt_up++;
                         }
@@ -1616,6 +1987,15 @@ namespace Nektar
                         returnval = false;
                     }
                 }
+
+                if(m_domainRange->m_checkShape)
+                {
+                    if(geom.GetShapeType() != m_domainRange->m_shapeType)
+                    {
+                        returnval = false;
+                    }
+                }
+
             }
             
             return returnval;
@@ -1679,7 +2059,7 @@ namespace Nektar
                 // being added in the first place.
                 if (std::find(addedVector.begin(), addedVector.end(), *iter) == addedVector.end())
                 {
-                    
+
                     // If the composite listed is not found and we are working
                     // on a partitioned mesh, silently ignore it.
                     if (m_meshComposites.find(*iter) == m_meshComposites.end()
@@ -1700,7 +2080,7 @@ namespace Nektar
                         char str[64];
                         ::sprintf(str, "%d", *iter);
                         NEKERROR(ErrorUtil::ewarning, (std::string("Undefined composite: ") + str).c_str());
-                        
+
                     }
                 }
             }
@@ -1789,16 +2169,16 @@ namespace Nektar
                     // loop over all elements in partition and set expansion
                     expansionMap = m_expansionMapShPtrMap.find(field)->second;
                     LibUtilities::BasisKeyVector def;
-                                
+
                     for(int d = 0; d < m_domain.size(); ++d)
                     {
                         CompositeMap::const_iterator compIter;
 
-                        for (compIter = m_domain[d].begin(); 
+                        for (compIter = m_domain[d].begin();
                              compIter != m_domain[d].end(); ++compIter)
                         {
                             GeometryVector::const_iterator x;
-                            for (x = compIter->second->begin(); 
+                            for (x = compIter->second->begin();
                                  x != compIter->second->end(); ++x)
                             {
                                 ExpansionShPtr expansionElementShPtr =
@@ -1832,16 +2212,20 @@ namespace Nektar
                 int check = 0;
                 for (j=0; j< basis.size(); ++j)
                 {
-                    if ( (strcmp(LibUtilities::BasisTypeMap[basis[j]], "Modified_A") == 0) ||
-                            (strcmp(LibUtilities::BasisTypeMap[basis[j]], "Modified_B") == 0) ||
-                            (strcmp(LibUtilities::BasisTypeMap[basis[j]], "Modified_C") == 0) ||
-                            (strcmp(LibUtilities::BasisTypeMap[basis[j]], "GLL_Lagrange") == 0) ||
-                            (strcmp(LibUtilities::BasisTypeMap[basis[j]], "Gauss_Lagrange") == 0) ||
-                            (strcmp(LibUtilities::BasisTypeMap[basis[j]], "Fourier") == 0) ||
-					        (strcmp(LibUtilities::BasisTypeMap[basis[j]], "FourierSingleMode") == 0)||
-							(strcmp(LibUtilities::BasisTypeMap[basis[j]], "FourierHalfModeRe") == 0) ||
-							(strcmp(LibUtilities::BasisTypeMap[basis[j]], "FourierHalfModeIm") == 0))
-                    {
+                    if ( 
+			(strcmp(LibUtilities::BasisTypeMap[basis[j]], "Modified_A") == 0) ||
+			(strcmp(LibUtilities::BasisTypeMap[basis[j]], "Modified_B") == 0) ||
+			(strcmp(LibUtilities::BasisTypeMap[basis[j]], "Modified_C") == 0) ||
+			(strcmp(LibUtilities::BasisTypeMap[basis[j]], "Ortho_A") == 0) ||
+			(strcmp(LibUtilities::BasisTypeMap[basis[j]], "Ortho_B") == 0) ||
+			(strcmp(LibUtilities::BasisTypeMap[basis[j]], "Ortho_C") == 0) ||
+			(strcmp(LibUtilities::BasisTypeMap[basis[j]], "GLL_Lagrange") == 0) ||
+			(strcmp(LibUtilities::BasisTypeMap[basis[j]], "Gauss_Lagrange") == 0) ||
+			(strcmp(LibUtilities::BasisTypeMap[basis[j]], "Fourier") == 0) ||
+			(strcmp(LibUtilities::BasisTypeMap[basis[j]], "FourierSingleMode") == 0)||
+			(strcmp(LibUtilities::BasisTypeMap[basis[j]], "FourierHalfModeRe") == 0) ||
+			(strcmp(LibUtilities::BasisTypeMap[basis[j]], "FourierHalfModeIm") == 0))
+		      {
                         check++;
                     }
                 }
@@ -1989,7 +2373,7 @@ namespace Nektar
                         case LibUtilities::eTetrahedron:
                         {
                             k = fielddef[i]->m_elementIDs[j];
-                            
+
                             // allow for possibility that fielddef is
                             // larger than m_graph which can happen in
                             // parallel runs
@@ -2027,7 +2411,7 @@ namespace Nektar
 #else
                             {
                                 LibUtilities::PointsKey pkey(nmodes[cnt], LibUtilities::eGaussLobattoLegendre);
-                                
+
                                 if(numPointDef&&pointDef)
                                 {
                                     const LibUtilities::PointsKey pkey2(npoints[cnt],points[0]);
@@ -2050,7 +2434,7 @@ namespace Nektar
                             }
                             {
                                 LibUtilities::PointsKey pkey(nmodes[cnt+1], LibUtilities::eGaussRadauMAlpha1Beta0);
-                                
+
                                 if(numPointDef&&pointDef)
                                 {
                                     const LibUtilities::PointsKey pkey2(npoints[cnt+1],points[1]);
@@ -2074,7 +2458,7 @@ namespace Nektar
 
                             {
                                 LibUtilities::PointsKey pkey(nmodes[cnt+2], LibUtilities::eGaussRadauMAlpha2Beta0);
-                                
+
                                 if(numPointDef&&pointDef)
                                 {
                                     const LibUtilities::PointsKey pkey2(npoints[cnt+2],points[2]);
@@ -2516,12 +2900,54 @@ namespace Nektar
             }
         }
 
-        /** 
+        /**
          * \brief Reset all points keys to have equispaced points with
          * optional arguemtn of \a npoints which redefines how many
          * points are to be used.
          */
         void MeshGraph::SetExpansionsToEvenlySpacedPoints(int npoints)
+        {
+            ExpansionMapShPtrMapIter   it;
+
+            // iterate over all defined expansions
+            for(it = m_expansionMapShPtrMap.begin(); it != m_expansionMapShPtrMap.end(); ++it)
+            {
+                ExpansionMapIter expIt;
+
+                for(expIt = it->second->begin(); expIt != it->second->end(); ++expIt)
+                {
+                    for(int i = 0; i < expIt->second->m_basisKeyVector.size(); ++i)
+                    {
+                        LibUtilities::BasisKey  bkeyold = expIt->second->m_basisKeyVector[i];
+
+                        int npts;
+
+                        if(npoints) // use input
+                        {
+                            npts = npoints;
+                        }
+                        else
+                        {
+                            npts = bkeyold.GetNumModes();
+                        }
+
+
+                        const LibUtilities::PointsKey pkey(npts,LibUtilities::ePolyEvenlySpaced);
+                        LibUtilities::BasisKey bkeynew(bkeyold.GetBasisType(),bkeyold.GetNumModes(), pkey);
+                        expIt->second->m_basisKeyVector[i] = bkeynew;
+
+                    }
+                }
+            }
+        }
+
+        /** 
+         * \brief Reset all points keys to have expansion order of \a
+         *  nmodes.  we keep the point distribution the same and make
+         *  the number of points the same difference from the number
+         *  of modes as the original expansion definition
+         */
+        void MeshGraph::SetExpansionsToPolyOrder(int nmodes)
         {
             ExpansionMapShPtrMapIter   it;
 
@@ -2536,30 +2962,16 @@ namespace Nektar
                     {
                         LibUtilities::BasisKey  bkeyold = expIt->second->m_basisKeyVector[i]; 
                         
-                        int npts;
-
-                        if(npoints) // use input
-                        {
-                            npts = npoints;
-                        }
-                        else
-                        {
-                            npts = bkeyold.GetNumModes();
-                        }
+                        int npts = nmodes + (bkeyold.GetNumPoints() - bkeyold.GetNumModes());
                         
-
-                        const LibUtilities::PointsKey pkey(npts,LibUtilities::ePolyEvenlySpaced);
-                        LibUtilities::BasisKey bkeynew(bkeyold.GetBasisType(),bkeyold.GetNumModes(), pkey);
+                        const LibUtilities::PointsKey pkey(npts,bkeyold.GetPointsType());
+                        LibUtilities::BasisKey bkeynew(bkeyold.GetBasisType(),nmodes, pkey);
                         expIt->second->m_basisKeyVector[i] = bkeynew; 
                         
                     }
                 }
             }
         }
-
-
-
-
 
         /**
          * For each element of shape given by \a shape in field \a
@@ -2618,7 +3030,7 @@ namespace Nektar
             default:
                 break;
             }
-            
+
             switch(type)
             {
             case eModified:
@@ -2656,10 +3068,10 @@ namespace Nektar
                             const LibUtilities::PointsKey pkey(nummodes+quadoffset, LibUtilities::eGaussLobattoLegendre);
                             LibUtilities::BasisKey bkey(LibUtilities::eModified_A, nummodes, pkey);
                             returnval.push_back(bkey);
-                            
+
                             const LibUtilities::PointsKey pkey1(nummodes+quadoffset-1, LibUtilities::eGaussRadauMAlpha1Beta0);
                             LibUtilities::BasisKey bkey1(LibUtilities::eModified_B, nummodes, pkey1);
-                            
+
                             returnval.push_back(bkey1);
                         }
                         break;
@@ -2668,11 +3080,11 @@ namespace Nektar
                             const LibUtilities::PointsKey pkey(nummodes+quadoffset, LibUtilities::eGaussLobattoLegendre);
                             LibUtilities::BasisKey bkey(LibUtilities::eModified_A, nummodes, pkey);
                             returnval.push_back(bkey);
-                            
+
                             const LibUtilities::PointsKey pkey1(nummodes+quadoffset-1, LibUtilities::eGaussRadauMAlpha1Beta0);
                             LibUtilities::BasisKey bkey1(LibUtilities::eModified_B, nummodes, pkey1);
                             returnval.push_back(bkey1);
-                            
+
                             const LibUtilities::PointsKey pkey2(nummodes+quadoffset-1, LibUtilities::eGaussRadauMAlpha2Beta0);
                             LibUtilities::BasisKey bkey2(LibUtilities::eModified_C, nummodes, pkey2);
                             returnval.push_back(bkey2);
@@ -2696,11 +3108,11 @@ namespace Nektar
                             LibUtilities::BasisKey bkey(LibUtilities::eModified_A, nummodes, pkey);
                             returnval.push_back(bkey);
                             returnval.push_back(bkey);
-                            
+
                             const LibUtilities::PointsKey pkey1(nummodes+quadoffset-1, LibUtilities::eGaussRadauMAlpha1Beta0);
                             LibUtilities::BasisKey bkey1(LibUtilities::eModified_B, nummodes, pkey1);
                             returnval.push_back(bkey1);
-                            
+
                         }
                         break;
                     default:
@@ -2711,7 +3123,7 @@ namespace Nektar
                     }
                 }
                 break;
-                
+
             case eGLL_Lagrange:
                 {
                     switch(shape)
@@ -2737,7 +3149,7 @@ namespace Nektar
                             const LibUtilities::PointsKey pkey(nummodes+1, LibUtilities::eGaussLobattoLegendre);
                             LibUtilities::BasisKey bkey(LibUtilities::eGLL_Lagrange, nummodes, pkey);
                             returnval.push_back(bkey);
-                            
+
                             const LibUtilities::PointsKey pkey1(nummodes, LibUtilities::eGaussRadauMAlpha1Beta0);
                             LibUtilities::BasisKey bkey1(LibUtilities::eOrtho_B, nummodes, pkey1);
                             returnval.push_back(bkey1);
@@ -2747,7 +3159,7 @@ namespace Nektar
                         {
                             const LibUtilities::PointsKey pkey(nummodes+1,LibUtilities::eGaussLobattoLegendre);
                             LibUtilities::BasisKey bkey(LibUtilities::eGLL_Lagrange, nummodes, pkey);
-                            
+
                             returnval.push_back(bkey);
                             returnval.push_back(bkey);
                             returnval.push_back(bkey);
@@ -2761,7 +3173,7 @@ namespace Nektar
                     }
                 }
                 break;
-                
+
             case eGauss_Lagrange:
                 {
                     switch (shape)
@@ -2770,7 +3182,7 @@ namespace Nektar
                         {
                             const LibUtilities::PointsKey pkey(nummodes, LibUtilities::eGaussGaussLegendre);
                             LibUtilities::BasisKey bkey(LibUtilities::eGauss_Lagrange, nummodes, pkey);
-                            
+
                             returnval.push_back(bkey);
                         }
                         break;
@@ -2778,7 +3190,7 @@ namespace Nektar
                         {
                             const LibUtilities::PointsKey pkey(nummodes,LibUtilities::eGaussGaussLegendre);
                             LibUtilities::BasisKey bkey(LibUtilities::eGauss_Lagrange, nummodes, pkey);
-                            
+
                             returnval.push_back(bkey);
                             returnval.push_back(bkey);
                         }
@@ -2787,7 +3199,7 @@ namespace Nektar
                         {
                             const LibUtilities::PointsKey pkey(nummodes,LibUtilities::eGaussGaussLegendre);
                             LibUtilities::BasisKey bkey(LibUtilities::eGauss_Lagrange, nummodes, pkey);
-                            
+
                             returnval.push_back(bkey);
                             returnval.push_back(bkey);
                             returnval.push_back(bkey);
@@ -2801,7 +3213,7 @@ namespace Nektar
                     }
                 }
                 break;
-                
+
             case eOrthogonal:
                 {
                     switch (shape)
@@ -2818,12 +3230,12 @@ namespace Nektar
                         {
                             const LibUtilities::PointsKey pkey(nummodes+1, LibUtilities::eGaussLobattoLegendre);
                             LibUtilities::BasisKey bkey(LibUtilities::eOrtho_A, nummodes, pkey);
-                            
+
                             returnval.push_back(bkey);
-                            
+
                             const LibUtilities::PointsKey pkey1(nummodes, LibUtilities::eGaussRadauMAlpha1Beta0);
                             LibUtilities::BasisKey bkey1(LibUtilities::eOrtho_B, nummodes, pkey1);
-                            
+
                             returnval.push_back(bkey1);
                         }
                         break;
@@ -2831,7 +3243,7 @@ namespace Nektar
                         {
                             const LibUtilities::PointsKey pkey(nummodes+1, LibUtilities::eGaussLobattoLegendre);
                             LibUtilities::BasisKey bkey(LibUtilities::eOrtho_A, nummodes, pkey);
-                            
+
                             returnval.push_back(bkey);
                             returnval.push_back(bkey);
                         }
@@ -2840,14 +3252,14 @@ namespace Nektar
                         {
                             const LibUtilities::PointsKey pkey(nummodes+1, LibUtilities::eGaussLobattoLegendre);
                             LibUtilities::BasisKey bkey(LibUtilities::eOrtho_A, nummodes, pkey);
-                            
+
                             returnval.push_back(bkey);
-                            
+
                             const LibUtilities::PointsKey pkey1(nummodes, LibUtilities::eGaussRadauMAlpha1Beta0);
                             LibUtilities::BasisKey bkey1(LibUtilities::eOrtho_B, nummodes, pkey1);
-                            
+
                             returnval.push_back(bkey1);
-                            
+
                             const LibUtilities::PointsKey pkey2(nummodes, LibUtilities::eGaussRadauMAlpha2Beta0);
                             LibUtilities::BasisKey bkey2(LibUtilities::eOrtho_C, nummodes, pkey2);
                         }
@@ -2860,7 +3272,7 @@ namespace Nektar
                     }
                 }
                 break;
-                
+
             case eGLL_Lagrange_SEM:
                 {
                     switch (shape)
@@ -2900,8 +3312,8 @@ namespace Nektar
                 }
             }
             break;
-                    
-            
+
+
             case eFourier:
             {
                 switch (shape)
@@ -2938,8 +3350,8 @@ namespace Nektar
                 }
             }
             break;
-					
-					
+
+
             case eFourierSingleMode:
             {
                 switch (shape)
@@ -2976,7 +3388,7 @@ namespace Nektar
                 }
             }
             break;
-					
+
             case eFourierHalfModeRe:
             {
                 switch (shape)
@@ -3013,7 +3425,7 @@ namespace Nektar
                 }
             }
             break;
-					
+
             case eFourierHalfModeIm:
             {
                 switch (shape)
@@ -3213,7 +3625,7 @@ namespace Nektar
                             returnval.push_back(bkey1);
                         }
                             break;
-							
+
 						case eFourierSingleMode:
                         {
                             const LibUtilities::PointsKey pkey1(nummodes_x,LibUtilities::eFourierSingleModeSpaced);
@@ -3221,7 +3633,7 @@ namespace Nektar
                             returnval.push_back(bkey1);
                         }
                             break;
-							
+
 						case eFourierHalfModeRe:
                         {
                             const LibUtilities::PointsKey pkey1(nummodes_x,LibUtilities::eFourierSingleModeSpaced);
@@ -3229,7 +3641,7 @@ namespace Nektar
                             returnval.push_back(bkey1);
                         }
                             break;
-							
+
 						case eFourierHalfModeIm:
                         {
                             const LibUtilities::PointsKey pkey1(nummodes_x,LibUtilities::eFourierSingleModeSpaced);
@@ -3237,7 +3649,7 @@ namespace Nektar
                             returnval.push_back(bkey1);
                         }
                             break;
-							
+
 
                         case eChebyshev:
                         {
@@ -3246,8 +3658,8 @@ namespace Nektar
                             returnval.push_back(bkey1);
                         }
                             break;
-						
-	
+
+
 
                         default:
                         {
@@ -3266,7 +3678,7 @@ namespace Nektar
                             returnval.push_back(bkey2);
                         }
                             break;
-							
+
 
 						case eFourierSingleMode:
                         {
@@ -3274,8 +3686,8 @@ namespace Nektar
                             LibUtilities::BasisKey bkey2(LibUtilities::eFourierSingleMode,nummodes_y,pkey2);
                             returnval.push_back(bkey2);
                         }
-                            break;	
-							
+                            break;
+
 						case eFourierHalfModeRe:
                         {
                             const LibUtilities::PointsKey pkey2(nummodes_y,LibUtilities::eFourierSingleModeSpaced);
@@ -3283,7 +3695,7 @@ namespace Nektar
                             returnval.push_back(bkey2);
                         }
                             break;
-						
+
 						case eFourierHalfModeIm:
                         {
                             const LibUtilities::PointsKey pkey2(nummodes_y,LibUtilities::eFourierSingleModeSpaced);
@@ -3291,7 +3703,7 @@ namespace Nektar
                             returnval.push_back(bkey2);
                         }
                             break;
-							
+
                         case eChebyshev:
                         {
                             const LibUtilities::PointsKey pkey2(nummodes_y,LibUtilities::eGaussGaussChebyshev);
@@ -3316,7 +3728,7 @@ namespace Nektar
                             returnval.push_back(bkey3);
                         }
                             break;
-							
+
 						case eFourierSingleMode:
                         {
                             const LibUtilities::PointsKey pkey3(nummodes_z,LibUtilities::eFourierSingleModeSpaced);
@@ -3324,7 +3736,7 @@ namespace Nektar
                             returnval.push_back(bkey3);
                         }
                             break;
-							
+
 						case eFourierHalfModeRe:
                         {
                             const LibUtilities::PointsKey pkey3(nummodes_z,LibUtilities::eFourierSingleModeSpaced);
@@ -3332,7 +3744,7 @@ namespace Nektar
                             returnval.push_back(bkey3);
                         }
                             break;
-					
+
 						case eFourierHalfModeIm:
                         {
                             const LibUtilities::PointsKey pkey3(nummodes_z,LibUtilities::eFourierSingleModeSpaced);
@@ -3389,7 +3801,6 @@ namespace Nektar
             m_vertSet[nextId] = vert;
             return vert;
         }
-
 
         /**
          *
