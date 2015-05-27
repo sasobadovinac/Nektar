@@ -35,6 +35,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 #include <SpatialDomains/QuadGeom.h>
+#include <SpatialDomains/GeomFactorsCyl.h>
 #include <LibUtilities/Foundations/Interp.h>
 
 #include <StdRegions/StdQuadExp.h>
@@ -512,7 +513,7 @@ namespace Nektar
                     }
                 }
 
-                m_geomFactors = MemoryManager<GeomFactors>::AllocateSharedPtr(
+                m_geomFactors = MemoryManager<GeomFactorsCyl>::AllocateSharedPtr(
                     Gtype, m_coordim, m_xmap, m_coeffs, m_coordSys);
                 m_geomFactorsState = ePtsFilled;
             }

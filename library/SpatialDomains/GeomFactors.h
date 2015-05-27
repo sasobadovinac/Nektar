@@ -163,14 +163,11 @@ namespace SpatialDomains
                     const LibUtilities::PointsKeyVector &keyTgt) const;
 
             /// Return the Jacobian of the mapping and cache the result.
-            SPATIAL_DOMAINS_EXPORT Array<OneD, NekDouble> ComputeJac(
-                    const LibUtilities::PointsKeyVector &keyTgt) const;
-
-            SPATIAL_DOMAINS_EXPORT Array<OneD, NekDouble> ComputeJacCyl(
+            SPATIAL_DOMAINS_EXPORT virtual Array<OneD, NekDouble> ComputeJac(
                     const LibUtilities::PointsKeyVector &keyTgt) const;
 
             /// Computes the Laplacian coefficients \f$g_{ij}\f$.
-            SPATIAL_DOMAINS_EXPORT Array<TwoD, NekDouble> ComputeGmat(
+            SPATIAL_DOMAINS_EXPORT virtual Array<TwoD, NekDouble> ComputeGmat(
                     const LibUtilities::PointsKeyVector &keyTgt) const;
 
             /// Return the derivative of the reference coordinates with respect
