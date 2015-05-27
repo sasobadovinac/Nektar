@@ -74,20 +74,20 @@ namespace Nektar
                         const PointGeomSharedPtr verts[],
                         const SegGeomSharedPtr edges[],
                         const StdRegions::Orientation eorient[],
-						const bool cylindrical=false);
+                        const CoordinateSystem coordSys = eCartesian);
 
                 SPATIAL_DOMAINS_EXPORT TriGeom(
                         const int id,
                         const SegGeomSharedPtr edges[],
                         const StdRegions::Orientation eorient[],
-						const bool cylindrical=false);
+                        const CoordinateSystem coordSys = eCartesian);
 
                 SPATIAL_DOMAINS_EXPORT TriGeom(
                         const int id,
                         const SegGeomSharedPtr edges[],
                         const StdRegions::Orientation eorient[],
                         const CurveSharedPtr &curve,
-						const bool cylindrical=false);
+                        const CoordinateSystem coordSys = eCartesian);
 
 
                 SPATIAL_DOMAINS_EXPORT TriGeom(const TriGeom &in);

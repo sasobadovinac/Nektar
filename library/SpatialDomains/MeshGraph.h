@@ -57,14 +57,6 @@ namespace Nektar
 {
     namespace SpatialDomains
     {
-		
-		enum CoordinateSystem
-		{
-			eNoCoordinateType,
-			eCartesian,
-			eCylindrical
-		};
-		
         enum ExpansionType
         {
             eNoExpansionType,
@@ -109,14 +101,6 @@ namespace Nektar
             "CHEBYSHEV-FOURIER",
             "FOURIER-MODIFIED"
         };
-		
-		const std::string CoordinateSystemStr[]=
-		{
-				"NOTYPE",
-				"CARTESIAN",
-				"CYLINDRICAL"
-			
-		};
 
         class InterfaceComponent;
         typedef boost::shared_ptr< InterfaceComponent > SharedInterfaceCompPtr;
@@ -267,8 +251,8 @@ namespace Nektar
                 /// Dimension of the mesh (can be a 1D curve in 3D space).
                 inline int GetMeshDimension() const;
 
-				///Type of coordinate system
-				inline int GetCoordinateSystem() const;
+                /// Type of coordinate system
+                inline int GetCoordSystem() const;
 
                 /// Dimension of the space (can be a 1D curve in 3D space).
                 inline int GetSpaceDimension() const;
@@ -436,7 +420,7 @@ namespace Nektar
                 int                                     m_spaceDimension;
                 int                                     m_partition;
                 bool                                    m_meshPartitioned;
-				CoordinateSystem                        m_coord_system;
+                CoordinateSystem                        m_coordSys;
 
                 CompositeMap                            m_meshComposites;
                 std::vector<CompositeMap>               m_domain;
@@ -468,13 +452,13 @@ namespace Nektar
         {
             return m_spaceDimension;
         }
-		
-		/**
-		 *
-		 */
-		inline int MeshGraph::GetCoordinateSystem(void) const
+
+        /**
+         *
+         */
+        inline int MeshGraph::GetCoordSystem(void) const
         {
-            return m_coord_system;
+            return m_coordSys;
         }
 
 

@@ -259,7 +259,6 @@ namespace Nektar
                         };
 
                             TriGeomSharedPtr trigeom;
-                            bool cylindrical=(m_coord_system==eCylindrical)?1:0;
 
                             if (it == m_curvedFaces.end())
                             {
@@ -267,7 +266,7 @@ namespace Nektar
                                             ::AllocateSharedPtr(indx,
                                                     edges,
                                                     edgeorient,
-                                                    cylindrical);
+                                                    m_coordSys);
                             }
                             else
                             {
@@ -276,7 +275,7 @@ namespace Nektar
                                                     edges,
                                                     edgeorient,
                                                     it->second,
-                                                    cylindrical);
+                                                    m_coordSys);
 
                             }
                             trigeom->SetGlobalID(indx);
@@ -318,15 +317,13 @@ namespace Nektar
 
                             QuadGeomSharedPtr quadgeom;
 
-                            bool cylindrical=(m_coord_system==eCylindrical)?1:0;
-
                             if (it == m_curvedFaces.end())
                             {
                                 quadgeom = MemoryManager<QuadGeom>
                                             ::AllocateSharedPtr(indx,
                                                     edges,
                                                     edgeorient,
-                                                    cylindrical);
+                                                    m_coordSys);
                             }
                             else
                             {
@@ -335,7 +332,7 @@ namespace Nektar
                                                     edges,
                                                     edgeorient,
                                                     it->second,
-                                                    cylindrical);
+                                                    m_coordSys);
                             }
                             quadgeom->SetGlobalID(indx);
 

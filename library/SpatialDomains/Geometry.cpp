@@ -50,7 +50,8 @@ namespace Nektar
             m_geomFactorsState(eNotFilled),
             m_state(eNotFilled),
             m_shapeType(LibUtilities::eNoShapeType),
-            m_globalID(-1)
+            m_globalID(-1),
+            m_coordSys(eCartesian)
         {
         }
 
@@ -59,7 +60,8 @@ namespace Nektar
             m_geomFactorsState(eNotFilled),
             m_state(eNotFilled),
             m_shapeType(LibUtilities::eNoShapeType),
-            m_globalID(-1)
+            m_globalID(-1),
+            m_coordSys(eCartesian)
         {
         }
 

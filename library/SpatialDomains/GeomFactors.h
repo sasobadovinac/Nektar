@@ -87,7 +87,7 @@ namespace SpatialDomains
                         const int                                   coordim,
                         const StdRegions::StdExpansionSharedPtr    &xmap,
                         const Array<OneD, Array<OneD, NekDouble> > &coords,
-                        const bool cylindrical=false);
+                        const CoordinateSystem                      coordSys = eCartesian);
 
             /// Copy constructor.
             GeomFactors(const GeomFactors &S);
@@ -108,9 +108,6 @@ namespace SpatialDomains
 
             /// Return the Jacobian of the mapping and cache the result.
             inline const Array<OneD, const NekDouble> GetJac(
-                    const LibUtilities::PointsKeyVector &keyTgt);
-
-            inline const Array<OneD, const NekDouble> GetJacCyl(
                     const LibUtilities::PointsKeyVector &keyTgt);
 
             /// Return the Laplacian coefficients \f$g_{ij}\f$.
@@ -145,17 +142,13 @@ namespace SpatialDomains
             bool m_valid;
             /// Stores coordinates of the geometry.
             Array<OneD, Array<OneD, NekDouble> > m_coords;
-            /// Cyindrical Coordinate Formulation
-            bool m_cylindrical;
+            /// Coordinate system being used.
+            CoordinateSystem m_coordSys;
             /// Stores information about the expansion.
             StdRegions::StdExpansionSharedPtr m_xmap;
-
-
             /// Jacobian vector cache
             std::map<LibUtilities::PointsKeyVector, Array<OneD, NekDouble> >
                                                 m_jacCache;
-            std::map<LibUtilities::PointsKeyVector, Array<OneD, NekDouble> >
-                                                m_jacCacheCyl;
             /// DerivFactors vector cache
             std::map<LibUtilities::PointsKeyVector, Array<TwoD, NekDouble> >
                                                 m_derivFactorCache;
@@ -251,22 +244,6 @@ namespace SpatialDomains
 
         return m_jacCache[keyTgt];
 
-    }
-
-    inline const Array<OneD, const NekDouble> GeomFactors::GetJacCyl(
-            const LibUtilities::PointsKeyVector &keyTgt)
-    {
-        std::map<LibUtilities::PointsKeyVector,
-                 Array<OneD, NekDouble> >::const_iterator x;
-
-        if ((x = m_jacCacheCyl.find(keyTgt)) != m_jacCacheCyl.end())
-        {
-            return x->second;
-        }
-
-        m_jacCacheCyl[keyTgt] = ComputeJacCyl(keyTgt);
-
-        return m_jacCacheCyl[keyTgt];
     }
 
     /**

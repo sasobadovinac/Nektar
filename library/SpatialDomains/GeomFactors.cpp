@@ -91,14 +91,14 @@ namespace Nektar
                 const int                                   coordim,
                 const StdRegions::StdExpansionSharedPtr    &xmap,
                 const Array<OneD, Array<OneD, NekDouble> > &coords,
-                const bool cylindrical) :
+                const CoordinateSystem                      coordSys) :
             m_type(gtype),
             m_expDim(xmap->GetShapeDimension()),
             m_coordDim(coordim),
             m_valid(true),
             m_xmap(xmap),
             m_coords(coords),
-            m_cylindrical(cylindrical)
+            m_coordSys(coordSys)
         {
             CheckIfValid();
         }
@@ -115,7 +115,7 @@ namespace Nektar
             m_valid(S.m_valid),
             m_xmap(S.m_xmap),
             m_coords(S.m_coords),
-            m_cylindrical(S.m_cylindrical)
+            m_coordSys(S.m_coordSys)
         {
         }
 
@@ -149,20 +149,16 @@ namespace Nektar
                 return false;
             }
 
+            if (!(lhs.m_coordSys == rhs.m_coordSys))
+            {
+                return false;
+            }
+
             const Array<OneD, const NekDouble> jac_lhs =
                             lhs.ComputeJac(lhs.m_xmap->GetPointsKeys());
             const Array<OneD, const NekDouble> jac_rhs =
                             rhs.ComputeJac(rhs.m_xmap->GetPointsKeys());
             if(!(jac_lhs == jac_rhs))
-            {
-                return false;
-            }
-
-            const Array<OneD, const NekDouble> jac_cyl_lhs =
-                lhs.ComputeJacCyl(lhs.m_xmap->GetPointsKeys());
-            const Array<OneD, const NekDouble> jac_cyl_rhs =
-                rhs.ComputeJacCyl(rhs.m_xmap->GetPointsKeys());
-            if(!(jac_cyl_lhs == jac_cyl_rhs))
             {
                 return false;
             }
@@ -264,14 +260,19 @@ namespace Nektar
          */
         Array<OneD, NekDouble> GeomFactors::ComputeJac(
                 const LibUtilities::PointsKeyVector &keyTgt) const
-        {            ASSERTL1(keyTgt.size() == m_expDim,
+        {
+            ASSERTL1(keyTgt.size() == m_expDim,
                      "Dimension of target point distribution does not match "
                      "expansion dimension.");
+
+            if (m_coordSys == eCylindrical)
+            {
+                return ComputeJacCyl(keyTgt);
+            }
 
             int i = 0, j = 0, k = 0, l = 0;
             int ptsTgt   = 1;
 
-            //if it is a cylindrical coordinate or deformed
             if (m_type == eDeformed)
             {
                 // Allocate storage and compute number of points
@@ -336,8 +337,7 @@ namespace Nektar
                 ptsTgt   *= keyTgt[i].GetNumPoints();
             }
 
-
-            DirectionalCoordinate Radial=DirectionalCoordinate(ptsTgt);
+            DirectionalCoordinate Radial = DirectionalCoordinate(ptsTgt);
             Vmath::Zero(ptsTgt, &Radial[0],1);
             LibUtilities::PointsKeyVector map_points(m_expDim);
             int nqtot_map      = 1;
@@ -406,11 +406,7 @@ namespace Nektar
 
             // Compute the Jacobian = sqrt(g)
             Vmath::Vsqrt(ptsTgt, &jac[0], 1, &jac[0], 1);
-
-            if(m_cylindrical)
-            {
-                Vmath::Vmul(ptsTgt, &Radial[0],1,&jac[0],1,&jac[0],1);
-            }
+            Vmath::Vmul(ptsTgt, &Radial[0],1,&jac[0],1,&jac[0],1);
 
             return jac;
         }

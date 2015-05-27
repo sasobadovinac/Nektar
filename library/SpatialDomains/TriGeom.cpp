@@ -73,13 +73,13 @@ namespace Nektar
                          const PointGeomSharedPtr verts[],
                          const SegGeomSharedPtr edges[],
                          const StdRegions::Orientation eorient[],
-                         const bool cylindrical):
+                         const CoordinateSystem coordSys):
                 Geometry2D(verts[0]->GetCoordim()),
                 m_fid(id)
         {
-            m_globalID = m_fid;
+            m_globalID  = m_fid;
             m_shapeType = LibUtilities::eTriangle;
-            m_cylindrical = cylindrical;
+            m_coordSys  = coordSys;
 
             /// Copy the vert shared pointers.
             m_verts.insert(m_verts.begin(), verts, verts+TriGeom::kNverts);
@@ -106,13 +106,13 @@ namespace Nektar
          */
         TriGeom::TriGeom(const int id, const SegGeomSharedPtr edges[],
                          const StdRegions::Orientation eorient[],
-                         const bool cylindrical):
-                Geometry2D(edges[0]->GetVertex(0)->GetCoordim()),
-                m_fid(id)
+                         const CoordinateSystem coordSys)
+            : Geometry2D(edges[0]->GetVertex(0)->GetCoordim()),
+              m_fid(id)
         {
-            m_globalID    = m_fid;
-            m_shapeType   = LibUtilities::eTriangle;
-            m_cylindrical = cylindrical;
+            m_globalID  = m_fid;
+            m_shapeType = LibUtilities::eTriangle;
+            m_coordSys  = coordSys;
 
             /// Copy the edge shared pointers.
             m_edges.insert(m_edges.begin(), edges, edges+TriGeom::kNedges);
@@ -150,14 +150,14 @@ namespace Nektar
             const SegGeomSharedPtr         edges[],
             const StdRegions::Orientation  eorient[],
             const CurveSharedPtr          &curve,
-            const bool                     cylindrical)
+            const CoordinateSystem         coordSys)
             : Geometry2D(edges[0]->GetVertex(0)->GetCoordim()),
               m_fid(id),
               m_curve(curve)
         {
-            m_globalID    = m_fid;
-            m_shapeType   = LibUtilities::eTriangle;
-            m_cylindrical = cylindrical;
+            m_globalID  = m_fid;
+            m_shapeType = LibUtilities::eTriangle;
+            m_coordSys  = coordSys;
 
             /// Copy the edge shared pointers.
             m_edges.insert(m_edges.begin(), edges, edges+TriGeom::kNedges);
@@ -434,7 +434,7 @@ namespace Nektar
                 }
 
                 m_geomFactors = MemoryManager<GeomFactors>::AllocateSharedPtr(
-                    Gtype, m_coordim, m_xmap, m_coeffs,m_cylindrical);
+                    Gtype, m_coordim, m_xmap, m_coeffs, m_coordSys);
 
                 m_geomFactorsState = ePtsFilled;
             }

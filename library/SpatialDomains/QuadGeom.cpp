@@ -63,13 +63,13 @@ namespace Nektar
                            const PointGeomSharedPtr verts[],
                            const SegGeomSharedPtr edges[],
                            const StdRegions::Orientation eorient[],
-                           const bool cylindrical):
+                           const CoordinateSystem coordSys):
             Geometry2D(verts[0]->GetCoordim()),
             m_fid(id)
         {
-            m_globalID    = id;
-            m_shapeType   = LibUtilities::eQuadrilateral;
-            m_cylindrical = cylindrical;
+            m_globalID  = id;
+            m_shapeType = LibUtilities::eQuadrilateral;
+            m_coordSys  = coordSys;
 
             /// Copy the vert shared pointers.
             m_verts.insert(m_verts.begin(), verts, verts+QuadGeom::kNverts);
@@ -99,18 +99,16 @@ namespace Nektar
                            const SegGeomSharedPtr edges[],
                            const StdRegions::Orientation eorient[],
                            const CurveSharedPtr &curve,
-                           const bool cylindrical) :
+                           const CoordinateSystem coordSys) :
             Geometry2D(edges[0]->GetVertex(0)->GetCoordim()),
             m_fid(id),
             m_curve(curve)
         {
             int j;
 
-            m_globalID = m_fid;
-
+            m_globalID  = m_fid;
             m_shapeType = LibUtilities::eQuadrilateral;
-            m_cylindrical=cylindrical;
-
+            m_coordSys  = coordSys;
 
             /// Copy the edge shared pointers.
             m_edges.insert(m_edges.begin(), edges, edges+QuadGeom::kNedges);
@@ -147,15 +145,14 @@ namespace Nektar
         QuadGeom::QuadGeom(const int id,
                            const SegGeomSharedPtr edges[],
                            const StdRegions::Orientation eorient[],
-                           const bool cylindrical):
+                           const CoordinateSystem coordSys) :
             Geometry2D(edges[0]->GetVertex(0)->GetCoordim()),
             m_fid(id)
         {
             int j;
-            m_cylindrical=cylindrical;
-
-            m_globalID = m_fid;
+            m_globalID  = m_fid;
             m_shapeType = LibUtilities::eQuadrilateral;
+            m_coordSys  = coordSys;
 
             /// Copy the edge shared pointers.
             m_edges.insert(m_edges.begin(), edges, edges+QuadGeom::kNedges);
@@ -198,6 +195,7 @@ namespace Nektar
             m_fid = in.m_fid;
             m_globalID = m_fid;
             m_ownVerts = in.m_ownVerts;
+            m_coordSys = in.m_coordSys;
             std::list<CompToElmt>::const_iterator def;
             for(def = in.m_elmtMap.begin(); def != in.m_elmtMap.end(); def++)
             {
@@ -514,11 +512,9 @@ namespace Nektar
                     }
                 }
 
-				cout << "GenGeoFactor in QuadGeom" << endl;
                 m_geomFactors = MemoryManager<GeomFactors>::AllocateSharedPtr(
-                    Gtype, m_coordim, m_xmap, m_coeffs, m_cylindrical);
+                    Gtype, m_coordim, m_xmap, m_coeffs, m_coordSys);
                 m_geomFactorsState = ePtsFilled;
-				cout << "generation GenFactor done " << endl;
             }
         }
 

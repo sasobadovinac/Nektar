@@ -33,6 +33,7 @@
 //
 //
 ////////////////////////////////////////////////////////////////////////////////
+
 #ifndef NEKTAR_SPATIALDOMAINS_QUADGEOM_H
 #define NEKTAR_SPATIALDOMAINS_QUADGEOM_H
 
@@ -63,25 +64,24 @@ namespace Nektar
             SPATIAL_DOMAINS_EXPORT QuadGeom();
 
             SPATIAL_DOMAINS_EXPORT QuadGeom(
-                    const int id, 
+                    const int id,
                     const PointGeomSharedPtr verts[],
-                    const SegGeomSharedPtr edges[], 
+                    const SegGeomSharedPtr edges[],
                     const StdRegions::Orientation eorient[],
-                    const bool cylindrical = false);
+                    const CoordinateSystem coordSys = eCartesian);
 
             SPATIAL_DOMAINS_EXPORT QuadGeom(
-                    const int id, 
-                    const SegGeomSharedPtr edges[], 
+                    const int id,
+                    const SegGeomSharedPtr edges[],
                     const StdRegions::Orientation eorient[],
-                    const bool cylindrical=false);
-
+                    const CoordinateSystem coordSys = eCartesian);
 
             SPATIAL_DOMAINS_EXPORT QuadGeom(
-                    const int id, 
-                    const SegGeomSharedPtr edges[], 
-                    const StdRegions::Orientation eorient[], 
+                    const int id,
+                    const SegGeomSharedPtr edges[],
+                    const StdRegions::Orientation eorient[],
                     const CurveSharedPtr &curve,
-                    const bool cylindrical=false);
+                    const CoordinateSystem coordSys = eCartesian);
 
 
             SPATIAL_DOMAINS_EXPORT QuadGeom(const QuadGeom &in);
@@ -91,7 +91,7 @@ namespace Nektar
             SPATIAL_DOMAINS_EXPORT NekDouble GetCoord(
                     const int i,
                     const Array<OneD, const NekDouble> &Lcoord);
-  
+
             /// Get the orientation of face1.
             SPATIAL_DOMAINS_EXPORT static StdRegions::Orientation
                 GetFaceOrientation(
@@ -113,7 +113,6 @@ namespace Nektar
             int                                 m_fid;
             bool                                m_ownVerts;
             std::list<CompToElmt>               m_elmtMap;
-            bool                                m_cylindrical;
             CurveSharedPtr                      m_curve;
 
             SPATIAL_DOMAINS_EXPORT virtual void v_AddElmtConnected(
