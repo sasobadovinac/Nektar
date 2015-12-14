@@ -33,33 +33,62 @@
 //
 ////////////////////////////////////////////////////////////////////////////////
 
-#include <SpatialDomains/GeomFactors.h>
+#include <SpatialDomains/GeomFactorsCyl.h>
 
 namespace Nektar
 {
 namespace SpatialDomains
 {
 
-class GeomFactorsCyl : public GeomFactors
+DerivStorage GeomFactorsCyl::ComputeDeriv(
+    const LibUtilities::PointsKeyVector &keyTgt) const
 {
-public:
-    GeomFactorsCyl(
-        const GeomType                              gtype,
-        const int                                   coordim,
-        const StdRegions::StdExpansionSharedPtr    &xmap,
-        const Array<OneD, Array<OneD, NekDouble> > &coords,
-        const CoordinateSystem                      coordSys)
-        : GeomFactors(gtype, coordim, xmap, coords, coordSys)
+    DerivStorage deriv = GeomFactors::ComputeDeriv(keyTgt);
+
+    for (int i = 0; i < m_expDim; ++i)
     {
+        for (int j = 0; j < m_coordDim; ++j)
+        {
+            MultByRadius(&deriv[i][j][0], keyTgt);
+        }
     }
 
-protected:
-    virtual DerivStorage ComputeDeriv(
-        const LibUtilities::PointsKeyVector &keyTgt) const;
+    return deriv;
+}
 
-    void MultByRadius(NekDouble *work,
-                      const LibUtilities::PointsKeyVector &keyTgt) const;
-};
+void GeomFactorsCyl::MultByRadius(
+    NekDouble *work,
+    const LibUtilities::PointsKeyVector &keyTgt) const
+{
+    int j;
+
+    // Backward transform y-component to get radius.
+    Array<OneD, NekDouble> tmp(m_xmap->GetTotPoints()), tmp2;
+    m_xmap->BwdTrans(m_coords[1], tmp);
+
+    int nPts = m_xmap->GetTotPoints();
+    LibUtilities::PointsKeyVector xmapKeys = m_xmap->GetPointsKeys();
+    int nTgtPts = 1;
+
+    bool same = true;
+    for (j = 0; j < m_expDim; ++j)
+    {
+        same = same && (xmapKeys[j] == keyTgt[j]);
+        nTgtPts *= keyTgt[j].GetNumPoints();
+    }
+
+    if (same)
+    {
+        tmp2 = tmp;
+    }
+    else
+    {
+        tmp2 = Array<OneD, NekDouble>(nTgtPts);
+        Interp(xmapKeys, tmp, keyTgt, tmp2);
+    }
+
+    Vmath::Vmul(nPts, &work[0], 1, &tmp2[0], 1, &work[0], 1);
+}
 
 }
 }

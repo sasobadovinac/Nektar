@@ -155,11 +155,10 @@ namespace SpatialDomains
             /// Return the Xmap;
             inline StdRegions::StdExpansionSharedPtr &GetXmap();
 
-        private:
             /// Tests if the element is valid and not self-intersecting.
             void CheckIfValid();
 
-            SPATIAL_DOMAINS_EXPORT DerivStorage ComputeDeriv(
+            SPATIAL_DOMAINS_EXPORT virtual DerivStorage ComputeDeriv(
                     const LibUtilities::PointsKeyVector &keyTgt) const;
 
             /// Return the Jacobian of the mapping and cache the result.

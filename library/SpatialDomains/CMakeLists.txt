@@ -1,6 +1,7 @@
 SET(SPATIAL_DOMAINS_SOURCES
 Conditions.cpp
 GeomFactors.cpp
+GeomFactorsCyl.cpp
 Geometry0D.cpp
 Geometry1D.cpp
 Geometry2D.cpp
@@ -27,6 +28,7 @@ SET(SPATIAL_DOMAINS_HEADERS
 Conditions.h
 Curve.hpp
 GeomFactors.h
+GeomFactorsCyl.h
 Geometry0D.h
 Geometry1D.h
 Geometry2D.h
