@@ -513,8 +513,21 @@ namespace Nektar
                     }
                 }
 
-                m_geomFactors = MemoryManager<GeomFactorsCyl>::AllocateSharedPtr(
-                    Gtype, m_coordim, m_xmap, m_coeffs, m_coordSys);
+                if (m_coordSys == eCylindrical)
+                {
+                    Gtype = eDeformed;
+                }
+
+                if (m_coordSys == eCylindrical)
+                {
+                    m_geomFactors = MemoryManager<GeomFactorsCyl>::AllocateSharedPtr(
+                        Gtype, m_coordim, m_xmap, m_coeffs, m_coordSys);
+                }
+                else
+                {
+                    m_geomFactors = MemoryManager<GeomFactors>::AllocateSharedPtr(
+                        Gtype, m_coordim, m_xmap, m_coeffs, m_coordSys);
+                }
                 m_geomFactorsState = ePtsFilled;
             }
         }

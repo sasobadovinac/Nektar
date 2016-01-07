@@ -56,8 +56,10 @@ public:
 protected:
     virtual DerivStorage ComputeDeriv(
         const LibUtilities::PointsKeyVector &keyTgt) const;
+    virtual Array<OneD, NekDouble> ComputeJac(
+        const LibUtilities::PointsKeyVector &keyTgt) const;
 
-    void MultByRadius(NekDouble *work,
+    void MultByRadius(Array<OneD, NekDouble> &work,
                       const LibUtilities::PointsKeyVector &keyTgt) const;
 };
 

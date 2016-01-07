@@ -68,6 +68,13 @@ namespace Nektar
 
     void Laplace::v_DoSolve()
     {
+        int nPhys = m_fields[0]->GetNpoints();
+        Array<OneD, NekDouble> tmp(nPhys, 1.0);
+        Array<OneD, NekDouble> tmp2(nPhys, 0.0);
+
+        m_fields[0]->HomogeneousFwdTrans(tmp, tmp2);
+        cout << m_fields[0]->GetPlane(0)->Integral(tmp2) << endl;
+
         for(int i = 0; i < m_fields.num_elements(); ++i)
         {
             // Zero field so initial conditions are zero

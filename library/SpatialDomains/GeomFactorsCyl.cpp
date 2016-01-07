@@ -45,6 +45,7 @@ DerivStorage GeomFactorsCyl::ComputeDeriv(
 {
     DerivStorage deriv = GeomFactors::ComputeDeriv(keyTgt);
 
+    /*
     for (int i = 0; i < m_expDim; ++i)
     {
         for (int j = 0; j < m_coordDim; ++j)
@@ -52,42 +53,42 @@ DerivStorage GeomFactorsCyl::ComputeDeriv(
             MultByRadius(&deriv[i][j][0], keyTgt);
         }
     }
+    */
 
     return deriv;
 }
 
-void GeomFactorsCyl::MultByRadius(
-    NekDouble *work,
+Array<OneD, NekDouble> GeomFactorsCyl::ComputeJac(
     const LibUtilities::PointsKeyVector &keyTgt) const
 {
+    Array<OneD, NekDouble> jac = GeomFactors::ComputeJac(keyTgt);
+    MultByRadius(jac, keyTgt);
+    return jac;
+}
+
+void GeomFactorsCyl::MultByRadius(
+    Array<OneD, NekDouble> &work,
+    const LibUtilities::PointsKeyVector &keyTgt) const
+{
+    LibUtilities::PointsKeyVector xmapKeys = m_xmap->GetPointsKeys();
     int j;
 
+    int nTotPts = 1;
+
+    for (j = 0; j < keyTgt.size(); ++j)
+    {
+        nTotPts *= keyTgt[j].GetNumPoints();
+    }
+
+    ASSERTL0(nTotPts == work.num_elements(), "should be equal");
+
     // Backward transform y-component to get radius.
-    Array<OneD, NekDouble> tmp(m_xmap->GetTotPoints()), tmp2;
+    Array<OneD, NekDouble> tmp(m_xmap->GetTotPoints()), tmp2(nTotPts);
     m_xmap->BwdTrans(m_coords[1], tmp);
 
-    int nPts = m_xmap->GetTotPoints();
-    LibUtilities::PointsKeyVector xmapKeys = m_xmap->GetPointsKeys();
-    int nTgtPts = 1;
-
-    bool same = true;
-    for (j = 0; j < m_expDim; ++j)
-    {
-        same = same && (xmapKeys[j] == keyTgt[j]);
-        nTgtPts *= keyTgt[j].GetNumPoints();
-    }
-
-    if (same)
-    {
-        tmp2 = tmp;
-    }
-    else
-    {
-        tmp2 = Array<OneD, NekDouble>(nTgtPts);
-        Interp(xmapKeys, tmp, keyTgt, tmp2);
-    }
-
-    Vmath::Vmul(nPts, &work[0], 1, &tmp2[0], 1, &work[0], 1);
+    // Interpolate onto target distribution
+    Interp(xmapKeys, tmp, keyTgt, tmp2);
+    Vmath::Vmul(nTotPts, &work[0], 1, &tmp2[0], 1, &work[0], 1);
 }
 
 }
