@@ -253,7 +253,7 @@ namespace Nektar
             Vmath::Smul(nzplanes,m_lhom/2.0,local_pts,1,z,1);
             Vmath::Sadd(nzplanes,m_lhom/2.0,z,1,z,1);
 
-            if (true)//m_graph->GetCoordSystem() == SpatialDomains::eCylindrical)
+            if (false)//m_graph->GetCoordSystem() == SpatialDomains::eCylindrical)
             {
                 int cnt = 0;
                 for(n = 0; n < nzplanes; ++n)
@@ -271,8 +271,8 @@ namespace Nektar
             {
                 for(n = 0; n < nzplanes; ++n)
                 {
-                    Vmath::Vcopy(npoints,xc0,1,tmp_xc = tmpX+npoints*n,1);
-                    Vmath::Vcopy(npoints,xc1,1,tmp_xc = tmpY+npoints*n,1);
+                    Vmath::Vcopy(npoints,tmpX,1,tmp_xc = xc0+npoints*n,1);
+                    Vmath::Vcopy(npoints,tmpY,1,tmp_xc = xc1+npoints*n,1);
                     Vmath::Fill(npoints, z[n], tmp_xc = xc2+npoints*n, 1);
                 }
             }
@@ -323,7 +323,8 @@ namespace Nektar
             Vmath::Smul(nzplanes,m_lhom/2.0,local_pts,1,z,1);
             Vmath::Sadd(nzplanes,m_lhom/2.0,z,1,z,1);
 
-            if (m_graph->GetCoordSystem() == SpatialDomains::eCylindrical)
+            if ( false)
+            //if (m_graph->GetCoordSystem() == SpatialDomains::eCylindrical)
             {
                 int cnt = 0;
                 for(n = 0; n < nzplanes; ++n)
@@ -341,8 +342,8 @@ namespace Nektar
             {
                 for(n = 0; n < nzplanes; ++n)
                 {
-                    Vmath::Vcopy(npoints,xc0,1,tmp_xc = tmpX+npoints*n,1);
-                    Vmath::Vcopy(npoints,xc1,1,tmp_xc = tmpY+npoints*n,1);
+                    Vmath::Vcopy(npoints,tmpX,1,tmp_xc = xc0+npoints*n,1);
+                    Vmath::Vcopy(npoints,tmpY,1,tmp_xc = xc1+npoints*n,1);
                     Vmath::Fill(npoints, z[n], tmp_xc = xc2+npoints*n, 1);
                 }
             }
