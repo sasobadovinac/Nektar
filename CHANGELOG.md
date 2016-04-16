@@ -8,9 +8,10 @@ v4.3.1
   is not compiled with SSL support. (!602)
 - Fixed a number of documentation issues (!586, !593)
 - Fix Homogeneous transform when unshuffling is not used. (!599)
+- Fix namespace pollution in library header files. (!601)
+- Fix issue with METIS compilation on clang 7.3 (!603)
 - Fix bug in modified Arnoldi algorithm causing convergence to be reported when
   number of vectors is less than `nvec` (!608)
-- Fix namespace pollution in library header files. (!601)
 
 **NekMesh**:
 - Fix incorrect link directory on CCMIO library.
