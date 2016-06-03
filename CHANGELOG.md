@@ -39,6 +39,7 @@ v4.3.2
 - Fix `IO_CheckSteps` to avoid missing first checkpoint (!639)
 - Fix bug in iterative solver where only root process would ASSERT when
   exceeding the maximum number of iterations (!636)
+- Fix CMake configuration for building on Windows 10 with VS 2015 (!641)
 
 **FieldConvert**:
 - Fix appearence of duplicate messages when running in parallel (!626)
