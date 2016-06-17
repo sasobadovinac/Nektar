@@ -190,6 +190,7 @@ INCLUDE (ThirdPartySMV)
 INCLUDE (ThirdPartyTriangle)
 INCLUDE (ThirdPartyTetGen)
 INCLUDE (ThirdPartyCCM)
+INCLUDE (ThirdPartyKokkos)
 
 INCLUDE (Doxygen)
 
