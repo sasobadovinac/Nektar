@@ -8,6 +8,10 @@ SET(HelmholtzCont2DSource  Helmholtz2D.cpp)
 ADD_NEKTAR_EXECUTABLE(Helmholtz2D demos HelmholtzCont2DSource)
 TARGET_LINK_LIBRARIES(Helmholtz2D ${LinkLibraries})
 
+SET(HelmholtzCont2DKokkosSource  Helmholtz2D_Kokkos.cpp)
+ADD_NEKTAR_EXECUTABLE(Helmholtz2D_Kokkos demos HelmholtzCont2DKokkosSource)
+TARGET_LINK_LIBRARIES(Helmholtz2D_Kokkos ${LinkLibraries})
+
 #SET(Helmholtz2DHomo1DSource  Helmholtz2DHomo1D.cpp)
 #ADD_NEKTAR_EXECUTABLE(Helmholtz2DHomo1D Helmholtz2DHomo1DSource)
 #TARGET_LINK_LIBRARIES(Helmholtz2DHomo1D ${LinkLibraries})
