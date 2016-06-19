@@ -10,6 +10,9 @@ MACRO(SET_COMMON_PROPERTIES name)
     SET_TARGET_PROPERTIES(${name} PROPERTIES MINSIZEREL_POSTFIX -ms)
     SET_TARGET_PROPERTIES(${name} PROPERTIES RELWITHDEBINFO_POSTFIX -rg)
     
+    SET_PROPERTY(TARGET ${name} PROPERTY CXX_STANDARD 11)
+    SET_PROPERTY(TARGET ${name} PROPERTY CXX_STANDARD_REQUIRED ON)
+
     IF( MSVC )
         # Disable the warnings about duplicate copy/assignment methods 
         #   (4521, 4522)
@@ -28,7 +31,7 @@ MACRO(SET_COMMON_PROPERTIES name)
         # Enable source level parallel builds.
         SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MP")
     ENDIF( MSVC )	
-    
+
     IF( ${CMAKE_COMPILER_IS_GNUCXX} )
 	    IF(NEKTAR_ENABLE_PROFILE)
 	        SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pg")
