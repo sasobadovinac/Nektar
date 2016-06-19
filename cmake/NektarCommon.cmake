@@ -10,7 +10,7 @@ MACRO(SET_COMMON_PROPERTIES name)
     SET_TARGET_PROPERTIES(${name} PROPERTIES MINSIZEREL_POSTFIX -ms)
     SET_TARGET_PROPERTIES(${name} PROPERTIES RELWITHDEBINFO_POSTFIX -rg)
     
-    SET(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} --std=c++11)
+    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} --std=c++11")
 
     IF( MSVC )
         # Disable the warnings about duplicate copy/assignment methods 
