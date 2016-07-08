@@ -10,6 +10,7 @@ v4.3.3
 
 **FieldConvert**:
 - Fix to avoid repeated import of field file (!649)
+- Fix issue with C^0 projection (!644)
 
 **CompressibleFlowSolver**:
 - Fix issue with residual output (!647)
