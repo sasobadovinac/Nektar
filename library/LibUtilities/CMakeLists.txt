@@ -30,6 +30,7 @@ SET(BasicUtilsHeaders
     ./BasicUtils/RawType.hpp
     ./BasicUtils/SessionReader.h
     ./BasicUtils/ShapeType.hpp
+    ./BasicUtils/SharedArrayFwd.hpp
     ./BasicUtils/SharedArray.hpp
     ./BasicUtils/Thread.h
     ./BasicUtils/ThreadBoost.h
