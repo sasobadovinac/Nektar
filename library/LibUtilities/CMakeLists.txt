@@ -30,6 +30,7 @@ SET(BasicUtilsHeaders
     ./BasicUtils/RawType.hpp
     ./BasicUtils/SessionReader.h
     ./BasicUtils/ShapeType.hpp
+    ./BasicUtils/SharedArrayFwd.hpp
     ./BasicUtils/SharedArray.hpp
     ./BasicUtils/Thread.h
     ./BasicUtils/ThreadBoost.h
@@ -390,6 +391,12 @@ IF( NEKTAR_USE_FFTW )
     SET_SOURCE_FILES_PROPERTIES(./FFT/NekFFTW.cpp
         PROPERTY COMPILE_FLAGS "-I${FFTW_INCLUDE_DIR}")
 ENDIF( NEKTAR_USE_FFTW )
+
+# Kokkos
+IF( NEKTAR_USE_KOKKOS )
+    TARGET_LINK_LIBRARIES(LibUtilities LINK_PUBLIC ${KOKKOS_LIBRARY} dl)
+    ADD_DEPENDENCIES(LibUtilities kokkos-master)
+ENDIF( NEKTAR_USE_KOKKOS )
 
 # ARPACK
 IF( NEKTAR_USE_ARPACK )

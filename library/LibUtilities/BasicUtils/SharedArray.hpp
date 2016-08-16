@@ -37,6 +37,7 @@
 #define NEKTAR_LIB_UTILITIES_BASIC_UTILS_SHARED_ARRAY_HPP
 
 #include <LibUtilities/BasicUtils/ArrayPolicies.hpp>
+#include <LibUtilities/BasicUtils/SharedArrayFwd.hpp>
 #include <LibUtilities/BasicUtils/ErrorUtil.hpp>
 #include <LibUtilities/LinearAlgebra/NekVectorFwd.hpp>
 #include <LibUtilities/LinearAlgebra/NekMatrixFwd.hpp>
@@ -50,13 +51,9 @@ namespace Nektar
 {
     class LinearSystem;
 
-    // Forward declaration for a ConstArray constructor.
-    template<typename Dim, typename DataType>
-    class Array;
-
     /// \brief 1D Array of constant elements with garbage collection and bounds checking.
     template<typename DataType>
-    class Array<OneD, const DataType>
+    class Array<OneD, const DataType, NativeImpl>
     {
         public:
             typedef DataType* ArrayType;
@@ -145,7 +142,7 @@ namespace Nektar
             /// Any changes to rhs will be reflected in this array.
             /// The memory for the array will only be deallocated when
             /// both rhs and this array have gone out of scope.
-            Array(unsigned int dim1Size, const Array<OneD, const DataType>& rhs) :
+            Array(unsigned int dim1Size, const Array<OneD, const DataType, NativeImpl>& rhs) :
                 m_size(dim1Size),
                 m_capacity(rhs.m_capacity),
                 m_data(rhs.m_data),
@@ -157,7 +154,7 @@ namespace Nektar
             }
 
             /// \brief Creates a reference to rhs.
-            Array(const Array<OneD, const DataType>& rhs) :
+            Array(const Array<OneD, const DataType, NativeImpl>& rhs) :
                 m_size(rhs.m_size),
                 m_capacity(rhs.m_capacity),
                 m_data(rhs.m_data),
@@ -183,7 +180,7 @@ namespace Nektar
             }
 
             /// \brief Creates a reference to rhs.
-            Array<OneD, const DataType>& operator=(const Array<OneD, const DataType>& rhs)
+            Array<OneD, const DataType, NativeImpl>& operator=(const Array<OneD, const DataType, NativeImpl>& rhs)
             {
                 *m_count -= 1;
                 if( *m_count == 0 )
@@ -230,7 +227,7 @@ namespace Nektar
             unsigned int GetOffset() const { return m_offset; }
 
             /// \brief Returns true is this array and rhs overlap.
-            bool Overlaps(const Array<OneD, const DataType>& rhs) const
+            bool Overlaps(const Array<OneD, const DataType, NativeImpl>& rhs) const
             {
                 const element* start = get();
                 const element* end = start + m_size;
@@ -243,9 +240,11 @@ namespace Nektar
             }
 
             template<typename T1, typename T2>
-            friend bool operator==(const Array<OneD, T1>&, const Array<OneD, T2>&);
-            LIB_UTILITIES_EXPORT friend bool operator==(const Array<OneD, NekDouble>&, const Array<OneD, NekDouble>&);
-            LIB_UTILITIES_EXPORT friend bool IsEqual(const Array<OneD, const NekDouble>&,const Array<OneD, const NekDouble>&,NekDouble);
+            friend bool operator==(const Array<OneD, T1, NativeImpl>&, const Array<OneD, T2, NativeImpl>&);
+            LIB_UTILITIES_EXPORT friend bool operator==(const Array<OneD, NekDouble, NativeImpl>&,
+                                                        const Array<OneD, NekDouble, NativeImpl>&);
+            LIB_UTILITIES_EXPORT friend bool IsEqual(const Array<OneD, const NekDouble, NativeImpl>&,
+                                                     const Array<OneD, const NekDouble, NativeImpl>&, NekDouble);
 
             /// \brief Creates an array with a specified offset.
             ///
@@ -258,10 +257,10 @@ namespace Nektar
             /// \endcode
             /// result[0] == anArray[10];
             template<typename T>
-            friend Array<OneD, T> operator+(const Array<OneD, T>& lhs, unsigned int offset);
+            friend Array<OneD, T, NativeImpl> operator+(const Array<OneD, T, NativeImpl>& lhs, unsigned int offset);
 
             template<typename T>
-            friend Array<OneD, T> operator+(unsigned int offset, const Array<OneD, T>& rhs);
+            friend Array<OneD, T, NativeImpl> operator+(unsigned int offset, const Array<OneD, T, NativeImpl>& rhs);
 
         protected:
             unsigned int m_size;
@@ -303,9 +302,9 @@ namespace Nektar
             }
 
             template<typename T>
-            static Array<OneD, T> CreateWithOffset(const Array<OneD, T>& rhs, unsigned int offset)
+            static Array<OneD, T, NativeImpl> CreateWithOffset(const Array<OneD, T, NativeImpl>& rhs, unsigned int offset)
             {
-                Array<OneD, T> result(rhs);
+                Array<OneD, T, NativeImpl> result(rhs);
                 result.m_offset += offset;
                 result.m_size = rhs.m_size - offset;
                 return result;
@@ -316,7 +315,7 @@ namespace Nektar
 
     /// \brief 2D array with garbage collection and bounds checking.
     template<typename DataType>
-    class Array<TwoD, const DataType>
+    class Array<TwoD, const DataType, NativeImpl>
     {
         public:
             typedef boost::multi_array_ref<DataType, 2> ArrayType;
@@ -357,21 +356,22 @@ namespace Nektar
                 ArrayInitializationPolicy<DataType>::Initialize(m_data->data(), m_data->num_elements(), data);
             }
 
-            Array(const Array<TwoD, const DataType>& rhs) :
+            Array(const Array<TwoD, const DataType, NativeImpl>& rhs) :
                 m_data(rhs.m_data)
             {
             }
 
-            Array<TwoD, const DataType>& operator=(const Array<TwoD, const DataType>& rhs)
+            Array<TwoD, const DataType, NativeImpl>& operator=(const Array<TwoD, const DataType, NativeImpl>& rhs)
             {
                 m_data = rhs.m_data;
                 return *this;
             }
 
             template<typename T>
-            friend bool operator==(const Array<TwoD, T>&, const Array<TwoD, T>&);
-            LIB_UTILITIES_EXPORT friend bool operator==(const Array<TwoD, NekDouble>&, const Array<TwoD, NekDouble>&);
-            LIB_UTILITIES_EXPORT friend bool IsEqual(const Array<TwoD, const NekDouble>&,const Array<TwoD, const NekDouble>&,NekDouble);
+            friend bool operator==(const Array<TwoD, T, NativeImpl>&, const Array<TwoD, T, NativeImpl>&);
+            LIB_UTILITIES_EXPORT friend bool operator==(const Array<TwoD, NekDouble, NativeImpl>&, const Array<TwoD, NekDouble, NativeImpl>&);
+            LIB_UTILITIES_EXPORT friend bool IsEqual(const Array<TwoD, const NekDouble, NativeImpl>&,
+                                                     const Array<TwoD, const NekDouble, NativeImpl>&, NekDouble);
 
             const_iterator begin() const { return m_data->begin(); }
             const_iterator end() const { return m_data->end(); }
@@ -394,7 +394,7 @@ namespace Nektar
 
     /// \brief 3D array with garbage collection and bounds checking.
     template<typename DataType>
-    class Array<ThreeD, const DataType>
+    class Array<ThreeD, const DataType, NativeImpl>
     {
         public:
             typedef boost::multi_array_ref<DataType, 3> ArrayType;
@@ -429,12 +429,12 @@ namespace Nektar
                 ArrayInitializationPolicy<DataType>::Initialize(m_data->data(), m_data->num_elements(), initValue);
             }
 
-            Array(const Array<ThreeD, const DataType>& rhs) :
+            Array(const Array<ThreeD, const DataType, NativeImpl>& rhs) :
                 m_data(rhs.m_data)
             {
             }
 
-            Array<ThreeD, const DataType>& operator=(const Array<ThreeD, const DataType>& rhs)
+            Array<ThreeD, const DataType, NativeImpl>& operator=(const Array<ThreeD, const DataType, NativeImpl>& rhs)
             {
                 m_data = rhs.m_data;
                 return *this;
@@ -474,10 +474,10 @@ namespace Nektar
     /// method names which match those in the base class, the base class names are hidden.
     /// Therefore, we have to explicitly bring them into scope to use them.
     template<typename DataType>
-    class Array<OneD, DataType> : public Array<OneD, const DataType>
+    class Array<OneD, DataType, NativeImpl> : public Array<OneD, const DataType, NativeImpl>
     {
         public:
-            typedef Array<OneD, const DataType> BaseType;
+            typedef Array<OneD, const DataType, NativeImpl> BaseType;
             typedef typename BaseType::iterator iterator;
             typedef typename BaseType::reference reference;
             typedef typename BaseType::size_type size_type;
@@ -504,35 +504,35 @@ namespace Nektar
             {
             }
 
-            Array(unsigned int dim1Size, const Array<OneD, DataType>& rhs) :
+            Array(unsigned int dim1Size, const Array<OneD, DataType, NativeImpl>& rhs) :
                 BaseType(dim1Size, rhs)
             {
             }
 
-            Array(unsigned int dim1Size, const Array<OneD, const DataType>& rhs) :
+            Array(unsigned int dim1Size, const Array<OneD, const DataType, NativeImpl>& rhs) :
                 BaseType(dim1Size, rhs.data())
             {
             }
 
-            Array(const Array<OneD, DataType>& rhs) :
+            Array(const Array<OneD, DataType, NativeImpl>& rhs) :
                 BaseType(rhs)
             {
             }
 
-            Array(const Array<OneD, const DataType>& rhs) :
+            Array(const Array<OneD, const DataType, NativeImpl>& rhs) :
                 BaseType(rhs.num_elements(), rhs.data())
             {
             }
 
-            Array<OneD, DataType>& operator=(const Array<OneD, DataType>& rhs)
+            Array<OneD, DataType, NativeImpl>& operator=(const Array<OneD, DataType, NativeImpl>& rhs)
             {
                 BaseType::operator=(rhs);
                 return *this;
             }
 
-            static Array<OneD, DataType> CreateWithOffset(const Array<OneD, DataType>& rhs, unsigned int offset)
+            static Array<OneD, DataType, NativeImpl> CreateWithOffset(const Array<OneD, DataType, NativeImpl>& rhs, unsigned int offset)
             {
-                Array<OneD, DataType> result(rhs);
+                Array<OneD, DataType, NativeImpl> result(rhs);
                 result.m_offset += offset;
                 result.m_size = rhs.m_size - offset;
                 return result;
@@ -569,7 +569,7 @@ namespace Nektar
             friend class LinearSystem;
 
         protected:
-            Array(const Array<OneD, const DataType>& rhs, AllowWrappingOfConstArrays a) :
+            Array(const Array<OneD, const DataType, NativeImpl>& rhs, AllowWrappingOfConstArrays a) :
                 BaseType(rhs)
             {
             }
@@ -586,10 +586,10 @@ namespace Nektar
 
     /// \brief A 2D array.
     template<typename DataType>
-    class Array<TwoD, DataType> : public Array<TwoD, const DataType>
+    class Array<TwoD, DataType, NativeImpl> : public Array<TwoD, const DataType, NativeImpl>
     {
         public:
-            typedef Array<TwoD, const DataType> BaseType;
+            typedef Array<TwoD, const DataType, NativeImpl> BaseType;
             typedef typename BaseType::iterator iterator;
             typedef typename BaseType::reference reference;
             typedef typename BaseType::index index;
@@ -617,12 +617,12 @@ namespace Nektar
             {
             }
 
-            Array(const Array<TwoD, DataType>& rhs) :
+            Array(const Array<TwoD, DataType, NativeImpl>& rhs) :
                 BaseType(rhs)
             {
             }
 
-            Array<TwoD, DataType>& operator=(const Array<TwoD, DataType>& rhs)
+            Array<TwoD, DataType, NativeImpl>& operator=(const Array<TwoD, DataType, NativeImpl>& rhs)
             {
                 BaseType::operator=(rhs);
                 return *this;
@@ -649,10 +649,10 @@ namespace Nektar
 
     /// \brief A 3D array.
     template<typename DataType>
-    class Array<ThreeD, DataType> : public Array<ThreeD, const DataType>
+    class Array<ThreeD, DataType, NativeImpl> : public Array<ThreeD, const DataType, NativeImpl>
     {
         public:
-            typedef Array<ThreeD, const DataType> BaseType;
+            typedef Array<ThreeD, const DataType, NativeImpl> BaseType;
             typedef typename BaseType::iterator iterator;
             typedef typename BaseType::reference reference;
             typedef typename BaseType::index index;
@@ -675,12 +675,12 @@ namespace Nektar
             {
             }
 
-            Array(const Array<ThreeD, DataType>& rhs) :
+            Array(const Array<ThreeD, DataType, NativeImpl>& rhs) :
                 BaseType(rhs)
             {
             }
 
-            Array<ThreeD, DataType>& operator=(const Array<ThreeD, DataType>& rhs)
+            Array<ThreeD, DataType, NativeImpl>& operator=(const Array<ThreeD, DataType, NativeImpl>& rhs)
             {
                 BaseType::operator=(rhs);
                 return *this;
@@ -705,13 +705,14 @@ namespace Nektar
 
     };
 
-    LIB_UTILITIES_EXPORT bool IsEqual(const Array<OneD, const NekDouble>& lhs,
-                 const Array<OneD, const NekDouble>& rhs,
-                 NekDouble tol = NekConstants::kNekZeroTol);
-    LIB_UTILITIES_EXPORT bool operator==(const Array<OneD, NekDouble>& lhs, const Array<OneD, NekDouble>& rhs);
+    LIB_UTILITIES_EXPORT bool IsEqual(const Array<OneD, const NekDouble, NativeImpl>& lhs,
+                                      const Array<OneD, const NekDouble, NativeImpl>& rhs,
+                                      NekDouble tol = NekConstants::kNekZeroTol);
+    LIB_UTILITIES_EXPORT bool operator==(const Array<OneD, NekDouble, NativeImpl>& lhs,
+                                         const Array<OneD, NekDouble, NativeImpl>& rhs);
 
     template<typename T1, typename T2>
-    bool operator==(const Array<OneD, T1>& lhs, const Array<OneD, T2>& rhs)
+    bool operator==(const Array<OneD, T1, NativeImpl>& lhs, const Array<OneD, T2, NativeImpl>& rhs)
     {
         if( lhs.num_elements() != rhs.num_elements() )
         {
@@ -735,21 +736,21 @@ namespace Nektar
     }
 
     template<typename T1, typename T2>
-    bool operator!=(const Array<OneD, T1>& lhs, const Array<OneD, T2>& rhs)
+    bool operator!=(const Array<OneD, T1, NativeImpl>& lhs, const Array<OneD, T2, NativeImpl>& rhs)
     {
         return !(lhs == rhs);
     }
 
     template<typename DataType>
-    Array<OneD, DataType> operator+(const Array<OneD, DataType>& lhs, unsigned int offset)
+    Array<OneD, DataType, NativeImpl> operator+(const Array<OneD, DataType, NativeImpl>& lhs, unsigned int offset)
     {
-        return Array<OneD, const DataType>::CreateWithOffset(lhs, offset);
+        return Array<OneD, const DataType, NativeImpl>::CreateWithOffset(lhs, offset);
     }
 
     template<typename DataType>
-    Array<OneD, DataType> operator+(unsigned int offset, const Array<OneD, DataType>& rhs)
+    Array<OneD, DataType, NativeImpl> operator+(unsigned int offset, const Array<OneD, DataType, NativeImpl>& rhs)
     {
-        return Array<OneD, const DataType>::CreateWithOffset(rhs, offset);
+        return Array<OneD, const DataType, NativeImpl>::CreateWithOffset(rhs, offset);
     }
 
 //    template<typename DataType>
@@ -759,44 +760,44 @@ namespace Nektar
 //    }
 
     template<typename ConstDataType, typename DataType>
-    void CopyArray(const Array<OneD, ConstDataType>& source, Array<OneD, DataType>& dest)
+    void CopyArray(const Array<OneD, ConstDataType, NativeImpl>& source, Array<OneD, DataType, NativeImpl>& dest)
     {
         if( dest.num_elements() != source.num_elements() )
         {
-            dest = Array<OneD, DataType>(source.num_elements());
+            dest = Array<OneD, DataType, NativeImpl>(source.num_elements());
         }
 
         std::copy(source.data(), source.data() + source.num_elements(), dest.data());
     }
 
     template<typename ConstDataType, typename DataType>
-    void CopyArrayN(const Array<OneD, ConstDataType>& source, Array<OneD, DataType>& dest, unsigned int n)
+    void CopyArrayN(const Array<OneD, ConstDataType, NativeImpl>& source, Array<OneD, DataType, NativeImpl>& dest, unsigned int n)
     {
         if( dest.num_elements() != n )
         {
-            dest = Array<OneD, DataType>(n);
+            dest = Array<OneD, DataType, NativeImpl>(n);
         }
 
         std::copy(source.data(), source.data() + n, dest.data());
     }
 
-    static Array<OneD, int> NullInt1DArray;
-    static Array<OneD, NekDouble> NullNekDouble1DArray;
-    static Array<OneD, Array<OneD, NekDouble> > NullNekDoubleArrayofArray;
+    static Array<OneD, int, NativeImpl> NullInt1DArray;
+    static Array<OneD, NekDouble, NativeImpl> NullNekDouble1DArray;
+    static Array<OneD, Array<OneD, NekDouble, NativeImpl>, NativeImpl > NullNekDoubleArrayofArray;
 
-    LIB_UTILITIES_EXPORT bool IsEqual(const Array<TwoD, const NekDouble>& lhs,
-                 const Array<TwoD, const NekDouble>& rhs,
-                 NekDouble tol = NekConstants::kNekZeroTol);
-    LIB_UTILITIES_EXPORT bool operator==(const Array<TwoD, NekDouble>& lhs, const Array<TwoD, NekDouble>& rhs) ;
+    LIB_UTILITIES_EXPORT bool IsEqual(const Array<TwoD, const NekDouble, NativeImpl>& lhs,
+                                      const Array<TwoD, const NekDouble, NativeImpl>& rhs,
+                                      NekDouble tol = NekConstants::kNekZeroTol);
+    LIB_UTILITIES_EXPORT bool operator==(const Array<TwoD, NekDouble, NativeImpl>& lhs, const Array<TwoD, NekDouble, NativeImpl>& rhs) ;
 
     template<typename DataType>
-    bool operator==(const Array<TwoD, DataType>& lhs, const Array<TwoD, DataType>& rhs)
+    bool operator==(const Array<TwoD, DataType, NativeImpl>& lhs, const Array<TwoD, DataType, NativeImpl>& rhs)
     {
         return *lhs.m_data == *rhs.m_data;
     }
 
     template<typename DataType>
-    bool operator!=(const Array<TwoD, DataType>& lhs, const Array<TwoD, DataType>& rhs)
+    bool operator!=(const Array<TwoD, DataType, NativeImpl>& lhs, const Array<TwoD, DataType, NativeImpl>& rhs)
     {
         return !(lhs == rhs);
     }
