@@ -50,6 +50,8 @@
 #include <LibUtilities/BasicUtils/Timer.h>
 #include <LibUtilities/Foundations/NodalUtil.h>
 
+#include<Kokkos_Core.hpp>
+
 using namespace std;
 using namespace Nektar::NekMeshUtils;
 
