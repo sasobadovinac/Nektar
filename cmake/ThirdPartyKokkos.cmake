@@ -7,7 +7,7 @@
 ########################################################################
 
 OPTION(NEKTAR_USE_KOKKOS
-    "Use KOKKOS routines for performing the Fast Fourier Transform." OFF)
+    "Use KOKKOS routines for solver acceleration." OFF)
 
 IF (NEKTAR_USE_KOKKOS)
     #SET(KOKKOS_SEARCH_PATHS $ENV{LD_LIBRARY_PATH} $ENV{KOKKOS_HOME}/lib)
@@ -30,7 +30,7 @@ IF (NEKTAR_USE_KOKKOS)
             "Build KOKKOS with CUDA support" OFF
             "NEKTAR_USE_KOKKOS" OFF)
 
-        SET(KOKKOS_OPTIONS "--prefix=${TPDIST}")
+        SET(KOKKOS_OPTIONS "--prefix=${TPDIST}" --cxxflags=-fPIC)
         IF (NEKTAR_USE_KOKKOS_CUDA)
             FIND_PACKAGE(CUDA REQUIRED VERSION 7.1)
             SET(KOKKOS_OPTIONS
@@ -65,6 +65,9 @@ IF (NEKTAR_USE_KOKKOS)
         MESSAGE(STATUS "Found KOKKOS: ${KOKKOS_LIBRARY}")
         SET(KOKKOS_CONFIG_INCLUDE_DIR ${KOKKOS_INCLUDE_DIR})
     ENDIF()
+
+    ADD_DEFINITIONS(-DNEKTAR_USE_KOKKOS)
+
 ENDIF( NEKTAR_USE_KOKKOS )
 
 INCLUDE_DIRECTORIES(SYSTEM ${KOKKOS_INCLUDE_DIR})

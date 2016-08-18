@@ -7,7 +7,9 @@
 #include <MultiRegions/ContField2D.h>
 #include <SpatialDomains/MeshGraph2D.h>
 
-#include <Kokkos_Core.hpp>
+#ifdef NEKTAR_USE_KOKKOS
+    #include <Kokkos_Core.hpp>
+#endif
 
 using namespace std;
 using namespace Nektar;
@@ -27,9 +29,12 @@ int NoCaseStringCompare(const string & s1, const string& s2);
 
 int main(int argc, char *argv[])
 {
+
+#ifdef NEKTAR_USE_KOKKOS
     typedef Kokkos::View<NekDouble*,Kokkos::Threads> device_array;
 
     Kokkos::initialize( argc , argv );
+#endif
 
     LibUtilities::SessionReaderSharedPtr vSession
             = LibUtilities::SessionReader::CreateInstance(argc, argv);
@@ -90,12 +95,14 @@ int main(int argc, char *argv[])
         coordim = Exp->GetCoordim(0);
         nq      = Exp->GetTotPoints();
 
+#ifdef NEKTAR_USE_KOKKOS
         device_array test("test", nq);
         for (int i = 0; i < nq; ++i)
         {
             test(i) = i;
             cout << test(i) << endl;
         }
+#endif
 
         xc0 = Array<OneD,NekDouble>(nq,0.0);
         xc1 = Array<OneD,NekDouble>(nq,0.0);
@@ -226,7 +233,9 @@ int main(int argc, char *argv[])
 
     vSession->Finalise();
 
+#ifdef NEKTAR_USE_KOKKOS
     Kokkos::finalize();
+#endif
 
     return 0;
 }
