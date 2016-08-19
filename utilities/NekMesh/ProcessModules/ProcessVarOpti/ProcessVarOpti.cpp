@@ -50,7 +50,7 @@
 #include <LibUtilities/BasicUtils/Timer.h>
 #include <LibUtilities/Foundations/NodalUtil.h>
 
-#include<Kokkos_Core.hpp>
+#include <Kokkos_Core.hpp>
 
 using namespace std;
 using namespace Nektar::NekMeshUtils;
@@ -223,16 +223,32 @@ void ProcessVarOpti::Process()
          << "Max set:\t\t" << mx << endl
          << "Residual tolerance:\t" << restol << endl;
 
-    int nThreads = m_config["numthreads"].as<int>();
-
-    int ctr = 0;
+    /*     
+    int nThreads = m_config["numthreads"].as<int>();    
     Thread::ThreadMaster tms;
     tms.SetThreadingType("ThreadManagerBoost");
     Thread::ThreadManagerSharedPtr tm =
                 tms.CreateInstance(Thread::ThreadMaster::SessionJob, nThreads);
+    */
 
     Timer t;
     t.Start();
+
+    int ctr = 0;
+
+    // Initialize kokkos
+    //Kokkos::initialize(argc,argv);
+    int nThreads = m_config["numthreads"].as<int>(); 
+    Kokkos::InitArguments args;
+    args.num_threads = nThreads;
+    Kokkos::initialize(args);
+
+    
+    int N = 10;
+    Kokkos::parallel_for(N,KOKKOS_LAMBDA (const int i){
+        cout << "Hello Kokkos" << i << "!" << endl;
+    });
+    
 
     while (res->val > restol)
     {
@@ -240,33 +256,46 @@ void ProcessVarOpti::Process()
         res->val = 0.0;
         res->nReset = 0;
         for(int i = 0; i < optiNodes.size(); i++)
+        //Kokkos::parallel_for(optiNodes.size(),KOKKOS_LAMBDA (const int i)
         {
+            /*
             vector<Thread::ThreadJob*> jobs(optiNodes[i].size());
             for(int j = 0; j < optiNodes[i].size(); j++)
             {
                 jobs[j] = optiNodes[i][j]->GetJob();
             }
-
             tm->SetNumWorkers(0);
             tm->QueueJobs(jobs);
             tm->SetNumWorkers(nThreads);
             tm->Wait();
+            */
+            //for(int j = 0; j < optiNodes[i].size(); j++)
+            Kokkos::parallel_for(optiNodes[i].size(),KOKKOS_LAMBDA (const int j)
+            {
+                optiNodes[i][j]->Optimise();
+            });
+            
         }
 
         res->startInv = 0;
         res->worstJac = numeric_limits<double>::max();
 
+        /*
         vector<Thread::ThreadJob*> elJobs(dataSet.size());
         for(int i = 0; i < dataSet.size(); i++)
         {
             elJobs[i] = dataSet[i]->GetJob();
         }
-
         tm->SetNumWorkers(0);
         tm->QueueJobs(elJobs);
         tm->SetNumWorkers(nThreads);
         tm->Wait();
-
+        */
+        Kokkos:: parallel_for(dataSet.size(), KOKKOS_LAMBDA(const int i) 
+        {
+            dataSet[i]->Evaluate();
+        });
+        
         cout << ctr << "\tResidual: " << res->val
                     << "\tMin Jac: " << res->worstJac
                     << "\tInvalid: " << res->startInv
@@ -275,6 +304,10 @@ void ProcessVarOpti::Process()
         if(ctr >= maxIter)
             break;
     }
+
+    //Finalize kokkos
+    Kokkos::finalize();
+
 
     t.Stop();
     cout << "Time to compute: " << t.TimePerTest(1) << endl;

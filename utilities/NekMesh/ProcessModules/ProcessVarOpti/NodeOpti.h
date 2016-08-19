@@ -179,6 +179,7 @@ private:
 
 };
 
+
 class NodeOptiJob : public Thread::ThreadJob
 {
 public:
@@ -191,6 +192,7 @@ public:
 private:
     NodeOpti* node;
 };
+
 
 }
 }

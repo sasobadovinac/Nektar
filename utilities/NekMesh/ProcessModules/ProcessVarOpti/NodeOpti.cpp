@@ -791,10 +791,12 @@ NekDouble NodeOpti::GetFunctional(bool gradient, bool hessian)
     return integral;
 }
 
+
 NodeOptiJob* NodeOpti::GetJob()
 {
     return new NodeOptiJob(this);
 }
+
 
 }
 }
