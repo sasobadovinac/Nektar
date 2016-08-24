@@ -73,7 +73,7 @@ public:
            const NekDouble min,
            const NekDouble max,
            const NekDouble eps,
-           const string uds)
+           const std::string uds)
         : m_minDelta(min), m_maxDelta(max), m_eps(eps), m_cad(cad),
           m_verbose(ver), m_udsfile(uds)
     {
@@ -180,7 +180,7 @@ private:
     /// number of octants made, used for id index
     int m_numoct;
 
-    string m_udsfile;
+    std::string m_udsfile;
 };
 
 typedef boost::shared_ptr<Octree> OctreeSharedPtr;
