@@ -79,6 +79,13 @@ IF(NEKTAR_USE_SCOTCH)
         ./BasicUtils/MeshPartitionScotch.cpp)
 ENDIF(NEKTAR_USE_SCOTCH)
 
+# Kokkos
+IF( NEKTAR_USE_KOKKOS )
+    #message("KOKKOS BRANCH NAME = ${KOKKOS_BRANCH_NAME}")
+    SET(BasicUtilsHeaders ${BasicUtilsHeaders} ./BasicUtils/ThreadKokkos.h)
+    SET(BasicUtilsSources ${BasicUtilsSources} ./BasicUtils/ThreadKokkos.cpp) 
+ENDIF( NEKTAR_USE_KOKKOS )
+
 IF(NEKTAR_USE_MPI)
     SET(CommunicationHeaders ${CommunicationHeaders}
         ./Communication/CommMpi.h)
@@ -223,6 +230,7 @@ SET(LinearAlgebraHeaders
 IF(NEKTAR_USING_SMV)
     SET(LinearAlgebraHeaders ${LinearAlgebraHeaders} ./LinearAlgebra/LibSMV.hpp)
 ENDIF(NEKTAR_USING_SMV)
+
 
 SET(LinearAlgebraSources
     ./LinearAlgebra/blas.cpp
@@ -379,7 +387,7 @@ IF( NEKTAR_USE_SCOTCH )
     TARGET_LINK_LIBRARIES(LibUtilities LINK_PRIVATE
         ${SCOTCH_LIBRARY} ${SCOTCHERR_LIBRARY})
     ADD_DEPENDENCIES(LibUtilities scotch-6.0.0)
-ENDIF ()
+ENDIF (NEKTAR_USE_SCOTCH)
 
 # Metis
 TARGET_LINK_LIBRARIES(LibUtilities LINK_PRIVATE ${METIS_LIB})
@@ -395,7 +403,7 @@ ENDIF( NEKTAR_USE_FFTW )
 # Kokkos
 IF( NEKTAR_USE_KOKKOS )
     TARGET_LINK_LIBRARIES(LibUtilities LINK_PUBLIC ${KOKKOS_LIBRARY} dl)
-    ADD_DEPENDENCIES(LibUtilities kokkos-master)
+    ADD_DEPENDENCIES(LibUtilities kokkos-${KOKKOS_BRANCH_NAME})
 ENDIF( NEKTAR_USE_KOKKOS )
 
 # ARPACK

@@ -109,6 +109,8 @@ private:
     ResidualSharedPtr res;
     DerivUtilSharedPtr derivUtil;
     optimiser opti;
+
+    std::string ThreadManagerType;
 };
 
 }
