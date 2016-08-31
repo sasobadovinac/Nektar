@@ -5,6 +5,8 @@ RelWithDebInfo MinSizeRel.")
 
 PROJECT(Nektar++)
 
+SET(CMAKE_CXX_EXTENSIONS OFF)
+
 # Helps organize projects in IDEs.
 SET_PROPERTY(GLOBAL PROPERTY USE_FOLDERS ON)
 

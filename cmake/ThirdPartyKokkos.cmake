@@ -32,24 +32,31 @@ IF (NEKTAR_USE_KOKKOS)
 
         #SET(KOKKOS_OPTIONS "--prefix=${TPDIST}" --cxxflags=-fPIC --with-serial --with-pthread --with-openmp)
 
-        SET(KOKKOS_OPTIONS "--prefix=${TPDIST}" --cxxflags=-fPIC --with-pthread)
+        SET(KOKKOS_OPTIONS "--prefix=${TPDIST}" --cxxflags=-fPIC --with-serial --with-pthread)
+        
         IF (NEKTAR_USE_KOKKOS_CUDA)
-            FIND_PACKAGE(CUDA REQUIRED VERSION 7.1)
+            FIND_PACKAGE(CUDA REQUIRED VERSION 8.0)
+            #SET(KOKKOS_OPTIONS ${KOKKOS_OPTIONS} --with-cuda=${CUDA_TOOLKIT_ROOT_DIR})
             SET(KOKKOS_OPTIONS
-                ${KOKKOS_OPTIONS} --with-cuda=${CUDA_TOOLKIT_ROOT_DIR})
+                ${KOKKOS_OPTIONS} --with-cuda=${CUDA_TOOLKIT_ROOT_DIR} --arch=Maxwell52 --with-cuda-options=enable_lambda)
         ENDIF()
+
+        #SET(KOKKOS_BRANCH_NAME master)
+        SET(KOKKOS_BRANCH_NAME develop)
+
+        #message("KOKKOS BRANCH NAME = ${KOKKOS_BRANCH_NAME}")
 
         INCLUDE(ExternalProject)
         EXTERNALPROJECT_ADD(
-            kokkos-master
+            kokkos-${KOKKOS_BRANCH_NAME}
             GIT_REPOSITORY https://github.com/kokkos/kokkos.git
-            GIT_TAG master
+            GIT_TAG ${KOKKOS_BRANCH_NAME}
             STAMP_DIR ${TPBUILD}/stamp
-            SOURCE_DIR ${TPSRC}/kokkos-master
-            BINARY_DIR ${TPBUILD}/kokkos-master
-            TMP_DIR ${TPBUILD}/kokkos-master-tmp
+            SOURCE_DIR ${TPSRC}/kokkos-${KOKKOS_BRANCH_NAME}
+            BINARY_DIR ${TPBUILD}/kokkos-${KOKKOS_BRANCH_NAME}
+            TMP_DIR ${TPBUILD}/kokkos-${KOKKOS_BRANCH_NAME}-tmp
             INSTALL_DIR ${TPDIST}
-            CONFIGURE_COMMAND CC=${CMAKE_C_COMPILER} ${TPSRC}/kokkos-master/generate_makefile.bash ${KOKKOS_OPTIONS}
+            CONFIGURE_COMMAND CC=${CMAKE_C_COMPILER} ${TPSRC}/kokkos-${KOKKOS_BRANCH_NAME}/generate_makefile.bash ${KOKKOS_OPTIONS}
             BUILD_COMMAND make lib
         )
 
@@ -63,7 +70,7 @@ IF (NEKTAR_USE_KOKKOS)
         MESSAGE(STATUS "Build KOKKOS: ${TPDIST}/lib/lib${KOKKOS_LIBRARY}.a")
         SET(KOKKOS_CONFIG_INCLUDE_DIR ${TPINC})
     ELSE ()
-        ADD_CUSTOM_TARGET(kokkos-master ALL)
+        ADD_CUSTOM_TARGET(kokkos-${KOKKOS_BRANCH_NAME} ALL)
         MESSAGE(STATUS "Found KOKKOS: ${KOKKOS_LIBRARY}")
         SET(KOKKOS_CONFIG_INCLUDE_DIR ${KOKKOS_INCLUDE_DIR})
     ENDIF()
