@@ -47,6 +47,9 @@
 #include <LibUtilities/Foundations/NodalTetEvenlySpaced.h>
 #include <LibUtilities/Foundations/NodalTetSPI.h>
 #include <LibUtilities/Foundations/NodalPrismEvenlySpaced.h>
+#include <LibUtilities/Foundations/NodalPrismElec.h>
+#include <LibUtilities/Foundations/NodalQuadEvenlySpaced.h>
+#include <LibUtilities/Foundations/NodalQuadElec.h>
 #include <LibUtilities/Foundations/Basis.h>
 #include <LibUtilities/Foundations/Foundations.hpp>
 #include <LibUtilities/Foundations/ManagerAccess.h>
@@ -84,11 +87,14 @@ namespace Nektar
             const bool NodalTriInited0 =  PointsManager().RegisterCreator(PointsKey(0, eNodalTriElec), NodalTriElec::Create);
             const bool NodalTriInited1 =  PointsManager().RegisterCreator(PointsKey(0, eNodalTriFekete), NodalTriFekete::Create);
             const bool NodalTriInited2 =  PointsManager().RegisterCreator(PointsKey(0, eNodalTriSPI), NodalTriSPI::Create);
+            const bool NodalQuadInited0 =  PointsManager().RegisterCreator(PointsKey(0, eNodalQuadEvenlySpaced), NodalQuadEvenlySpaced::Create);
+            const bool NodalQuadInited1 =  PointsManager().RegisterCreator(PointsKey(0, eNodalQuadElec), NodalQuadElec::Create);
             const bool nodalTetElecInited = PointsManager().RegisterCreator(PointsKey(0, eNodalTetElec), NodalTetElec::Create);
             const bool nodalTetElecInited1 = PointsManager().RegisterCreator(PointsKey(0, eNodalTetSPI), NodalTetSPI::Create);
             const bool NodalTriEveInited = PointsManager().RegisterCreator(PointsKey(0, eNodalTriEvenlySpaced), NodalTriEvenlySpaced::Create);
             const bool NodalTetEveInited = PointsManager().RegisterCreator(PointsKey(0, eNodalTetEvenlySpaced), NodalTetEvenlySpaced::Create);
             const bool NodalPrismEveInited = PointsManager().RegisterCreator(PointsKey(0, eNodalPrismEvenlySpaced), NodalPrismEvenlySpaced::Create);
+            const bool NodalPrismElecInited = PointsManager().RegisterCreator(PointsKey(0, eNodalPrismElec), NodalPrismElec::Create);
 
             const bool Basis_Inited = BasisManager().RegisterGlobalCreator(Basis::Create);
         };
@@ -105,5 +111,3 @@ namespace Nektar
 
     } // end of namespace LibUtilities
 } // end of namespace Nektar
-
-

@@ -95,6 +95,12 @@ ProcessVarOpti::ProcessVarOpti(MeshSharedPtr m) : ProcessModule(m)
         ConfigOption(true, "", "Parallelise with Boost");
     m_config["Kokkos"] =
         ConfigOption(true, "", "Parallelise with Kokkos");
+    m_config["region"] =
+        ConfigOption(false, "0.0", "create regions based on target");
+    m_config["resfile"] =
+        ConfigOption(false, "", "writes residual values to file");
+    m_config["histfile"] =
+        ConfigOption(false, "", "histogram of scaled jac");
 }
 
 ProcessVarOpti::~ProcessVarOpti()
@@ -162,6 +168,12 @@ void ProcessVarOpti::Process()
             }
         }
 
+        if(!fd && m_config["nq"].beenSet)
+        {
+            m_mesh->m_nummode = m_config["nq"].as<int>();
+            fd = true;
+        }
+
         ASSERTL0(fd,"failed to find order of mesh");
     }
 
@@ -178,13 +190,18 @@ void ProcessVarOpti::Process()
     res = boost::shared_ptr<Residual>(new Residual);
     res->val = 1.0;
 
-    derivUtil = boost::shared_ptr<DerivUtil>(new DerivUtil);
-
-    FillQuadPoints();
+    m_mesh->MakeOrder(m_mesh->m_nummode-1,LibUtilities::eGaussLobattoLegendre);
     BuildDerivUtil();
     GetElementMap();
 
-    vector<vector<NodeSharedPtr> > freenodes = GetColouredNodes();
+    vector<ElementSharedPtr> elLock;
+
+    if(m_config["region"].beenSet)
+    {
+        elLock = GetLockedElements(m_config["region"].as<NekDouble>());
+    }
+
+    vector<vector<NodeSharedPtr> > freenodes = GetColouredNodes(elLock);
     vector<vector<NodeOptiSharedPtr> > optiNodes;
 
     //turn the free nodes into optimisable objects with all required data
@@ -236,8 +253,21 @@ void ProcessVarOpti::Process()
         dataSet[i]->Evaluate();
     }
 
+    if(m_config["histfile"].beenSet)
+    {
+        ofstream histFile;
+        string name = m_config["histfile"].as<string>() + "_start.txt";
+        histFile.open(name.c_str());
+
+        for(int i = 0; i < dataSet.size(); i++)
+        {
+            histFile << dataSet[i]->scaledJac << endl;
+        }
+        histFile.close();
+    }
+
     cout << scientific << endl;
-    cout << "N elements:\t\t" << m_mesh->m_element[m_mesh->m_expDim].size() << endl
+    cout << "N elements:\t\t" << m_mesh->m_element[m_mesh->m_expDim].size() - elLock.size() << endl
          << "N elements invalid:\t" << res->startInv << endl
          << "Worst jacobian:\t\t" << res->worstJac << endl
          << "N free nodes:\t\t" << res->n << endl
@@ -368,11 +398,17 @@ void ProcessVarOpti::Process()
     t.Start();
 
     int ctr = 0;
+    ofstream resFile;
+    if(m_config["resfile"].beenSet)
+    {
+        resFile.open(m_config["resfile"].as<string>().c_str());
+    }
 
     while (res->val > restol)
     {
         ctr++;
         res->val = 0.0;
+        res->func = 0.0;
         res->nReset = 0;
         for(int i = 0; i < optiNodes.size(); i++)
         {
@@ -386,7 +422,10 @@ void ProcessVarOpti::Process()
             tm->QueueJobs(jobs);
             tm->SetNumWorkers(nThreads);
             tm->Wait();
-                        
+            //for(int j = 0; j < jobs.size(); j++)
+            //{
+            //    jobs[j]->Run();
+            //}
         }
 
         res->startInv = 0;
@@ -402,15 +441,37 @@ void ProcessVarOpti::Process()
         tm->QueueJobs(elJobs);
         tm->SetNumWorkers(nThreads);
         tm->Wait();
-        
-        
+
+        if(m_config["resfile"].beenSet)
+        {
+            resFile << res->val << " " << res->worstJac << " " << res->func << endl;
+        }
+
         cout << ctr << "\tResidual: " << res->val
                     << "\tMin Jac: " << res->worstJac
                     << "\tInvalid: " << res->startInv
                     << "\tReset nodes: " << res->nReset
+                    << "\tFunctional: " << res->func
                     << endl;
         if(ctr >= maxIter)
             break;
+    }
+
+    if(m_config["histfile"].beenSet)
+    {
+        ofstream histFile;
+        string name = m_config["histfile"].as<string>() + "_end.txt";
+        histFile.open(name.c_str());
+
+        for(int i = 0; i < dataSet.size(); i++)
+        {
+            histFile << dataSet[i]->scaledJac << endl;
+        }
+        histFile.close();
+    }
+    if(m_config["resfile"].beenSet)
+    {
+        resFile.close();
     }
 
     t.Stop();

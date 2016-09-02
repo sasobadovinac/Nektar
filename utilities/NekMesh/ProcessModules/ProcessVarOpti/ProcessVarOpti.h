@@ -74,6 +74,7 @@ struct Residual
     int startInv;
     int nReset;
     NekDouble worstJac;
+    NekDouble func;
 };
 
 typedef boost::shared_ptr<Residual> ResidualSharedPtr;
@@ -97,17 +98,17 @@ private:
     typedef std::map<int, std::pair<std::vector<int>,
                                     std::vector<ElUtilSharedPtr> > > NodeElMap;
 
-    void FillQuadPoints();
     void BuildDerivUtil();
     void GetElementMap();
+    std::vector<ElementSharedPtr> GetLockedElements(NekDouble thres);
     std::vector<Array<OneD, NekDouble> > MappingIdealToRef(ElementSharedPtr el);
-    std::vector<std::vector<NodeSharedPtr> > GetColouredNodes();
+    std::vector<std::vector<NodeSharedPtr> > GetColouredNodes(std::vector<ElementSharedPtr> elLock);
 
     NodeElMap nodeElMap;
     std::vector<ElUtilSharedPtr> dataSet;
 
     ResidualSharedPtr res;
-    DerivUtilSharedPtr derivUtil;
+    std::map<LibUtilities::ShapeType,DerivUtilSharedPtr> derivUtil;
     optimiser opti;
 
     std::string ThreadManagerType;

@@ -69,8 +69,14 @@ public:
     std::vector<std::vector<NekDouble *> > nodes;
     std::vector<Array<OneD, NekDouble> > maps;
     NekDouble minJac;
+    NekDouble scaledJac;
 
     void Evaluate();
+
+    ElementSharedPtr GetEl()
+    {
+        return m_el;
+    }
 
 private:
 

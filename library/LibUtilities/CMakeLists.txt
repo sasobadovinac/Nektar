@@ -13,6 +13,7 @@ SET(BasicUtilsHeaders
     ./BasicUtils/CompressData.h
     ./BasicUtils/Equation.h
     ./BasicUtils/FieldIO.h
+    ./BasicUtils/FieldIOXml.h
     ./BasicUtils/FileSystem.h
     ./BasicUtils/ErrorUtil.hpp
     ./BasicUtils/MeshEntities.hpp
@@ -47,6 +48,7 @@ SET(BasicUtilsSources
     ./BasicUtils/CompressData.cpp
     ./BasicUtils/Equation.cpp
     ./BasicUtils/FieldIO.cpp
+    ./BasicUtils/FieldIOXml.cpp
     ./BasicUtils/FileSystem.cpp
     ./BasicUtils/MeshPartition.cpp
     ./BasicUtils/MeshPartitionMetis.cpp
@@ -60,9 +62,20 @@ SET(BasicUtilsSources
     ./BasicUtils/XmlUtil.cpp
 )
 
+# HDF5
+IF( NEKTAR_USE_HDF5 )
+    SET(BasicUtilsHeaders ${BasicUtilsHeaders}
+	./BasicUtils/H5.h
+        ./BasicUtils/FieldIOHdf5.h)
+    SET(BasicUtilsSources ${BasicUtilsSources}
+	./BasicUtils/H5.cpp
+        ./BasicUtils/FieldIOHdf5.cpp)
+ENDIF( NEKTAR_USE_HDF5 )
+
 SET(CommunicationHeaders
     ./Communication/Comm.h
     ./Communication/CommSerial.h
+    ./Communication/CommDataType.h
     ./Communication/GsLib.hpp
     ./Communication/Transposition.h
     ./Communication/Xxt.hpp
@@ -70,6 +83,7 @@ SET(CommunicationHeaders
 
 SET(CommunicationSources
     ./Communication/Comm.cpp
+    ./Communication/CommDataType.cpp
     ./Communication/CommSerial.cpp
     ./Communication/Transposition.cpp
 )
@@ -122,6 +136,7 @@ SET(FoundationHeaders
     ./Foundations/Interp.h
     ./Foundations/ManagerAccess.h
     ./Foundations/NodalPrismEvenlySpaced.h
+    ./Foundations/NodalPrismElec.h
     ./Foundations/NodalTetElecData.h
     ./Foundations/NodalTetElec.h
     ./Foundations/NodalTetEvenlySpaced.h
@@ -134,6 +149,8 @@ SET(FoundationHeaders
     ./Foundations/NodalTriSPI.h
     ./Foundations/NodalTetSPI.h
     ./Foundations/NodalTetSPIData.h
+    ./Foundations/NodalQuadEvenlySpaced.h
+    ./Foundations/NodalQuadElec.h
     ./Foundations/NodalUtil.h
     ./Foundations/PhysGalerkinProject.h
     ./Foundations/Points.h
@@ -142,7 +159,7 @@ SET(FoundationHeaders
 )
 
 SET(FoundationSources
-        ./Foundations/Basis.cpp
+    ./Foundations/Basis.cpp
     ./Foundations/BLPoints.cpp
     ./Foundations/FourierPoints.cpp
     ./Foundations/FourierSingleModePoints.cpp
@@ -151,16 +168,19 @@ SET(FoundationSources
     ./Foundations/InterpCoeff.cpp
     ./Foundations/Interp.cpp
     ./Foundations/ManagerAccess.cpp
-        ./Foundations/NodalPrismEvenlySpaced.cpp
+    ./Foundations/NodalPrismEvenlySpaced.cpp
+    ./Foundations/NodalPrismElec.cpp
     ./Foundations/NodalTetElec.cpp
-        ./Foundations/NodalTetEvenlySpaced.cpp
+    ./Foundations/NodalTetEvenlySpaced.cpp
     ./Foundations/NodalTriElec.cpp
-        ./Foundations/NodalTriEvenlySpaced.cpp
+    ./Foundations/NodalTriEvenlySpaced.cpp
     ./Foundations/NodalTriFekete.cpp
     ./Foundations/NodalTriSPI.cpp
     ./Foundations/NodalTetSPI.cpp
+    ./Foundations/NodalQuadEvenlySpaced.cpp
+    ./Foundations/NodalQuadElec.cpp
     ./Foundations/NodalUtil.cpp
-        ./Foundations/PhysGalerkinProject.cpp
+    ./Foundations/PhysGalerkinProject.cpp
     ./Foundations/Points.cpp
     ./Foundations/PolyEPoints.cpp
 )
@@ -486,6 +506,12 @@ IF( NEKTAR_USE_PETSC )
     TARGET_LINK_LIBRARIES(LibUtilities LINK_PUBLIC ${CMAKE_DL_LIBS})
     ADD_DEPENDENCIES(LibUtilities petsc-3.7.2)
 ENDIF( NEKTAR_USE_PETSC )
+
+# HDF5
+IF( NEKTAR_USE_HDF5 )
+    TARGET_LINK_LIBRARIES(LibUtilities LINK_PRIVATE ${HDF5_LIBRARIES})
+    ADD_DEPENDENCIES(LibUtilities hdf5-1.8.16)
+ENDIF( NEKTAR_USE_HDF5 )
 
 INSTALL(FILES ${ExpressionTemplates} DESTINATION ${NEKTAR_INCLUDE_DIR}/ExpressionTemplates COMPONENT dev)
 INSTALL(DIRECTORY ./ DESTINATION ${NEKTAR_INCLUDE_DIR}/LibUtilities COMPONENT dev FILES_MATCHING PATTERN "*.h" PATTERN "*.hpp")

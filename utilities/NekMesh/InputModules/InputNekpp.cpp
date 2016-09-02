@@ -68,6 +68,13 @@ InputNekpp::~InputNekpp()
 {
 }
 
+struct cadVar
+{
+    string type;
+    int id;
+    NekDouble u,v;
+};
+
 /**
  *
  */
@@ -341,6 +348,8 @@ void InputNekpp::Process()
     // set up composite labels if they exist
     m_mesh->m_faceLabels = graph->GetCompositesLabels();
 
+    m_mesh->m_hasCAD = false;
+
 #ifdef NEKTAR_USE_MESHGEN
 
     if(pSession->DefinesElement("NEKTAR/GEOMETRY/CADID"))
@@ -360,9 +369,9 @@ void InputNekpp::Process()
         ASSERTL0(false, "CAD file but no data");
     }
 
-    map<int, vector<string> > vertToString;
-    map<pair<int,int>, vector<string> > edgeToString;
-    map<pair<int,int>, vector<string> > faceToString;
+    map<int, vector<cadVar> > vertToString;
+    map<pair<int,int>, pair<int,vector<cadVar> > > edgeToString;
+    map<pair<int,int>, pair<int,vector<cadVar> > > faceToString;
 
     if(pSession->DefinesElement("NEKTAR/GEOMETRY/CAD"))
     {
@@ -383,23 +392,46 @@ void InputNekpp::Process()
             err = vertex->QueryIntAttribute("VERTID", &vid);
             ASSERTL0(err == TIXML_SUCCESS, "Unable to read curve attribute VERTID.");
 
-            /// Read text edgelement description.
-            TiXmlNode* elementChild = vertex->FirstChild();
+            vector<cadVar> items;
 
-            vector<string> strs;
-            string str = elementChild->ToText()->ValueStr();
-            boost::split(strs, str, boost::is_any_of(":"));
+            TiXmlElement *curve = vertex->FirstChildElement("C");
 
-            vertToString[vid] = strs;
+            while(curve)
+            {
+                cadVar cv;
+                cv.type = "C";
+                curve->QueryIntAttribute("CADID", &cv.id);
+                TiXmlNode* elementChild = curve->FirstChild();
+                string str = elementChild->ToText()->ValueStr();
+                istringstream ss(str);
+                ss >> cv.u;
+                items.push_back(cv);
+                curve = curve->NextSiblingElement("C");
+            }
+
+            TiXmlElement *surf = vertex->FirstChildElement("S");
+
+            while(surf)
+            {
+                cadVar cv;
+                cv.type = "S";
+                surf->QueryIntAttribute("CADID", &cv.id);
+                TiXmlNode* elementChild = surf->FirstChild();
+                string str = elementChild->ToText()->ValueStr();
+                istringstream ss(str);
+                ss >> cv.u >> cv.v;
+                items.push_back(cv);
+                surf = surf->NextSiblingElement("S");
+            }
+
+            vertToString[vid] = items;
 
             vertex = vertex->NextSiblingElement("V");
-
         }
 
         TiXmlElement *edge = cad->FirstChildElement("E");
 
         int eid;
-        int node;
 
         while(edge)
         {
@@ -409,19 +441,52 @@ void InputNekpp::Process()
             /// Read edge id attribute.
             err = edge->QueryIntAttribute("EDGEID", &eid);
             ASSERTL0(err == TIXML_SUCCESS, "Unable to read curve attribute EDGEID.");
-
+            int cu;
             /// Read edge node attribute.
-            err = edge->QueryIntAttribute("NODE", &node);
+            err = edge->QueryIntAttribute("ONCURVE", &cu);
             ASSERTL0(err == TIXML_SUCCESS, "Unable to read curve attribute EDGEID.");
 
-            /// Read text edgelement description.
-            TiXmlNode* elementChild = edge->FirstChild();
+            TiXmlElement *node = edge->FirstChildElement("N");
 
-            vector<string> strs;
-            string str = elementChild->ToText()->ValueStr();
-            boost::split(strs, str, boost::is_any_of(":"));
+            while(node)
+            {
+                int nid;
+                node->QueryIntAttribute("NODEID",&nid);
+                vector<cadVar> items;
 
-            edgeToString[pair<int,int>(eid,node)] = strs;
+                TiXmlElement *curve = node->FirstChildElement("C");
+
+                while(curve)
+                {
+                    cadVar cv;
+                    cv.type = "C";
+                    curve->QueryIntAttribute("CADID", &cv.id);
+                    TiXmlNode* elementChild = curve->FirstChild();
+                    string str = elementChild->ToText()->ValueStr();
+                    istringstream ss(str);
+                    ss >> cv.u;
+                    items.push_back(cv);
+                    curve = curve->NextSiblingElement("C");
+                }
+
+                TiXmlElement *surf = node->FirstChildElement("S");
+
+                while(surf)
+                {
+                    cadVar cv;
+                    cv.type = "S";
+                    surf->QueryIntAttribute("CADID", &cv.id);
+                    TiXmlNode* elementChild = surf->FirstChild();
+                    string str = elementChild->ToText()->ValueStr();
+                    istringstream ss(str);
+                    ss >> cv.u >> cv.v;
+                    items.push_back(cv);
+                    surf = surf->NextSiblingElement("S");
+                }
+
+                node = node->NextSiblingElement("N");
+                edgeToString[pair<int,int>(eid,nid)] = pair<int,vector<cadVar> >(cu,items);
+            }
 
             edge = edge->NextSiblingElement("E");
         }
@@ -438,19 +503,36 @@ void InputNekpp::Process()
             /// Read edge id attribute.
             err = face->QueryIntAttribute("FACEID", &fid);
             ASSERTL0(err == TIXML_SUCCESS, "Unable to read curve attribute FACEID.");
+            int su;
+            err = face->QueryIntAttribute("ONSURF", &su);
+            ASSERTL0(err == TIXML_SUCCESS, "Unable to read curve attribute EDGEID.");
 
-            /// Read edge node attribute.
-            err = face->QueryIntAttribute("NODE", &node);
-            ASSERTL0(err == TIXML_SUCCESS, "Unable to read curve attribute FACEID.");
+            TiXmlElement *node = face->FirstChildElement("N");
 
-            /// Read text edgelement description.
-            TiXmlNode* elementChild = face->FirstChild();
+            while(node)
+            {
+                int nid;
+                node->QueryIntAttribute("NODEID",&nid);
+                vector<cadVar> items;
 
-            vector<string> strs;
-            string str = elementChild->ToText()->ValueStr();
-            boost::split(strs, str, boost::is_any_of(":"));
+                TiXmlElement *surf = node->FirstChildElement("S");
 
-            faceToString[pair<int,int>(fid,node)] = strs;
+                while(surf)
+                {
+                    cadVar cv;
+                    cv.type = "S";
+                    surf->QueryIntAttribute("CADID", &cv.id);
+                    TiXmlNode* elementChild = surf->FirstChild();
+                    string str = elementChild->ToText()->ValueStr();
+                    istringstream ss(str);
+                    ss >> cv.u >> cv.v;
+                    items.push_back(cv);
+                    surf = surf->NextSiblingElement("S");
+                }
+
+                node = node->NextSiblingElement("N");
+                faceToString[pair<int,int>(fid,nid)] = pair<int,vector<cadVar> >(su,items);
+            }
 
             face = face->NextSiblingElement("F");
         }
@@ -464,9 +546,9 @@ void InputNekpp::Process()
 
 #ifdef NEKTAR_USE_MESHGEN
 
-    map<int, vector<string> >::iterator vsit;
-    map<pair<int,int>, vector<string> >::iterator esit;
-    map<pair<int,int>, vector<string> >::iterator fsit;
+    map<int, vector<cadVar> >::iterator vsit;
+    map<pair<int,int>, pair<int,vector<cadVar> > >::iterator esit;
+    map<pair<int,int>, pair<int,vector<cadVar> > >::iterator fsit;
 
     {
         int ct= 0;
@@ -480,21 +562,19 @@ void InputNekpp::Process()
                 ct++;
                 for(int i = 0; i < vsit->second.size(); i++)
                 {
-                    istringstream iss(vsit->second[i]);
-                    string t;
-                    int id;
-                    NekDouble u, v;
-                    iss >> t >> id >> u >> v;
-                    if(t == "C")
+                    if(vsit->second[i].type == "C")
                     {
-                        (*it)->SetCADCurve(id,m_mesh->m_cad->GetCurve(id),u);
+                        int c = vsit->second[i].id;
+                        int t = vsit->second[i].u;
+                        (*it)->SetCADCurve(c,m_mesh->m_cad->GetCurve(c),t);
                     }
-                    else if(t == "S")
+                    else if(vsit->second[i].type == "S")
                     {
+                        int s = vsit->second[i].id;
                         Array<OneD,NekDouble> uv(2);
-                        uv[0] = u;
-                        uv[1] = v;
-                        (*it)->SetCADSurf(id,m_mesh->m_cad->GetSurf(id),uv);
+                        uv[0] = vsit->second[i].u;
+                        uv[1] = vsit->second[i].v;
+                        (*it)->SetCADSurf(s,m_mesh->m_cad->GetSurf(s),uv);
                     }
                     else
                     {
@@ -515,33 +595,46 @@ void InputNekpp::Process()
             for(int j = 0; j < (*it)->m_edgeNodes.size(); j++)
             {
                 esit = edgeToString.find(pair<int,int>((*it)->m_id,j));
+                int surf = 0;
                 if(esit != edgeToString.end())
                 {
                     ct++;
-                    for(int i = 0; i < esit->second.size(); i++)
+                    for(int i = 0; i < esit->second.second.size(); i++)
                     {
-                        istringstream iss(esit->second[i]);
-                        string t;
-                        int id;
-                        NekDouble u, v;
-                        iss >> t >> id >> u >> v;
-                        if(t == "C")
+                        if(esit->second.second[i].type == "C")
                         {
-                            (*it)->m_edgeNodes[j]->SetCADCurve(id,m_mesh->m_cad->GetCurve(id),u);
+                            int c = esit->second.second[i].id;
+                            int t = esit->second.second[i].u;
+                            (*it)->m_edgeNodes[j]->SetCADCurve(c,m_mesh->m_cad->GetCurve(c),t);
                         }
-                        else if(t == "S")
+                        else if(esit->second.second[i].type == "S")
                         {
+                            int s = esit->second.second[i].id;
+                            surf = s;
                             Array<OneD,NekDouble> uv(2);
-                            uv[0] = u;
-                            uv[1] = v;
-                            (*it)->m_edgeNodes[j]->SetCADSurf(id,m_mesh->m_cad->GetSurf(id),uv);
+                            uv[0] = esit->second.second[i].u;
+                            uv[1] = esit->second.second[i].v;
+                            (*it)->m_edgeNodes[j]->SetCADSurf(s,m_mesh->m_cad->GetSurf(s),uv);
                         }
                         else
                         {
                             ASSERTL0(false,"unsure on type");
                         }
                     }
+                    if(esit->second.first > 0)
+                    {
+                        (*it)->onCurve = true;
+                        (*it)->CADCurveId = esit->second.first;
+                        (*it)->CADCurve = m_mesh->m_cad->GetCurve(esit->second.first);
+                    }
+                    else if(surf > 0)
+                    {
+                        (*it)->onSurf = true;
+                        (*it)->CADSurfId = surf;
+                        (*it)->CADSurf = m_mesh->m_cad->GetSurf(surf);
+                    }
                 }
+
             }
         }
         ASSERTL0(ct == edgeToString.size(), "did not find all CAD information");
@@ -559,30 +652,22 @@ void InputNekpp::Process()
                 if(fsit != faceToString.end())
                 {
                     ct++;
-                    for(int i = 0; i < fsit->second.size(); i++)
+                    for(int i = 0; i < fsit->second.second.size(); i++)
                     {
-                        istringstream iss(fsit->second[i]);
-                        string t;
-                        int id;
-                        NekDouble u, v;
-                        iss >> t >> id >> u >> v;
-                        if(t == "C")
-                        {
-                            (*it)->m_faceNodes[j]->SetCADCurve(id,m_mesh->m_cad->GetCurve(id),u);
-                        }
-                        else if(t == "S")
-                        {
-                            Array<OneD,NekDouble> uv(2);
-                            uv[0] = u;
-                            uv[1] = v;
-                            (*it)->m_faceNodes[j]->SetCADSurf(id,m_mesh->m_cad->GetSurf(id),uv);
-                        }
-                        else
-                        {
-                            ASSERTL0(false,"unsure on type");
-                        }
+                        int s = fsit->second.second[i].id;
+                        Array<OneD,NekDouble> uv(2);
+                        uv[0] = fsit->second.second[i].u;
+                        uv[1] = fsit->second.second[i].v;
+                        (*it)->m_faceNodes[j]->SetCADSurf(s,m_mesh->m_cad->GetSurf(s),uv);
+                    }
+                    if(fsit->second.first > 0)
+                    {
+                        (*it)->onSurf = true;
+                        (*it)->CADSurfId = fsit->second.first;
+                        (*it)->CADSurf = m_mesh->m_cad->GetSurf(fsit->second.first);
                     }
                 }
+
             }
         }
         ASSERTL0(ct == faceToString.size(), "did not find all CAD information");

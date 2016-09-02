@@ -38,12 +38,10 @@
 
 #include <iomanip>
 
-#include <boost/thread/mutex.hpp>
-
+#include <LibUtilities/Foundations/ManagerAccess.h>
 #include <SpatialDomains/SegGeom.h>
 
 #include <NekMeshUtils/NekMeshUtilsDeclspec.h>
-#include <NekMeshUtils/MeshElements/Element.h>
 #include <NekMeshUtils/MeshElements/Node.h>
 
 namespace Nektar
@@ -73,6 +71,7 @@ public:
     {
 #ifdef NEKTAR_USE_MESHGEN
         onCurve = false;
+        onSurf = false;
 #endif
     }
 
@@ -82,6 +81,7 @@ public:
     {
 #ifdef NEKTAR_USE_MESHGEN
         onCurve = false;
+        onSurf = false;
 #endif
     }
 
@@ -115,64 +115,17 @@ public:
 
     /// Creates a Nektar++ string listing the coordinates of all the
     /// nodes.
-    NEKMESHUTILS_EXPORT std::string GetXmlCurveString() const
-    {
-        std::vector<NodeSharedPtr> nodeList;
-
-        GetCurvedNodes(nodeList);
-
-        std::stringstream s;
-        std::string str;
-
-        // put them into a string and return
-        for (int k = 0; k < nodeList.size(); ++k)
-        {
-            s << std::scientific << std::setprecision(8) << "    "
-              << nodeList[k]->m_x << "  " << nodeList[k]->m_y << "  "
-              << nodeList[k]->m_z << "    ";
-        }
-
-        return s.str();
-    }
+    NEKMESHUTILS_EXPORT std::string GetXmlCurveString();
 
     /// Generate a SpatialDomains::SegGeom object for this edge.
-    NEKMESHUTILS_EXPORT SpatialDomains::SegGeomSharedPtr GetGeom(int coordDim)
-    {
-        static boost::mutex io_mutex;
-        boost::mutex::scoped_lock lock(io_mutex);
+    NEKMESHUTILS_EXPORT SpatialDomains::SegGeomSharedPtr GetGeom(int coordDim);
 
-        // Create edge vertices.
-        SpatialDomains::PointGeomSharedPtr p[2];
-        SpatialDomains::SegGeomSharedPtr ret;
-
-        p[0] = m_n1->GetGeom(coordDim);
-        p[1] = m_n2->GetGeom(coordDim);
-
-        // Create a curve if high-order information exists.
-        if (m_edgeNodes.size() > 0)
-        {
-            SpatialDomains::CurveSharedPtr c =
-                MemoryManager<SpatialDomains::Curve>::AllocateSharedPtr(
-                    m_id, m_curveType);
-
-            c->m_points.push_back(p[0]);
-            for (int i = 0; i < m_edgeNodes.size(); ++i)
-            {
-                c->m_points.push_back(m_edgeNodes[i]->GetGeom(coordDim));
-            }
-            c->m_points.push_back(p[1]);
-
-            ret = MemoryManager<SpatialDomains::SegGeom>::AllocateSharedPtr(
-                m_id, coordDim, p, c);
-        }
-        else
-        {
-            ret = MemoryManager<SpatialDomains::SegGeom>::AllocateSharedPtr(
-                m_id, coordDim, p);
-        }
-
-        return ret;
-    }
+    /// Make this edge an order @p order edge. @see Element::MakeOrder.
+    void MakeOrder(int                                order,
+                   SpatialDomains::GeometrySharedPtr  geom,
+                   LibUtilities::PointsType           edgeType,
+                   int                                coordDim,
+                   int                               &id);
 
     /// ID of edge.
     unsigned int m_id;
@@ -192,6 +145,9 @@ public:
     /// id of cad curve which edge lies on
     int CADCurveId;
     CADCurveSharedPtr CADCurve;
+    bool onSurf;
+    int CADSurfId;
+    CADSurfSharedPtr CADSurf;
 #endif
 
 private:

@@ -52,18 +52,20 @@ void ProcessVarOpti::BuildDerivUtil()
     {
         case 2:
         {
-            derivUtil->ptsLow  = m_mesh->m_nummode*(m_mesh->m_nummode+1)/2;
+            LibUtilities::ShapeType st = LibUtilities::eTriangle;
+            derivUtil[st] = boost::shared_ptr<DerivUtil>(new DerivUtil);
+            derivUtil[st]->ptsLow  = m_mesh->m_nummode*(m_mesh->m_nummode+1)/2;
 
             LibUtilities::PointsKey pkey1(m_mesh->m_nummode,
                                           LibUtilities::eNodalTriElec);
-            LibUtilities::PointsKey pkey2(m_mesh->m_nummode + 2,
+            LibUtilities::PointsKey pkey2(m_mesh->m_nummode + 4,
                                           LibUtilities::eNodalTriSPI);
             Array<OneD, NekDouble> u1, v1, u2, v2;
 
             LibUtilities::PointsManager()[pkey1]->GetPoints(u1, v1);
             LibUtilities::PointsManager()[pkey2]->GetPoints(u2, v2);
 
-            derivUtil->ptsHigh = u2.num_elements();
+            derivUtil[st]->ptsHigh = u2.num_elements();
 
             LibUtilities::NodalUtilTriangle nodalTri(
                 m_mesh->m_nummode - 1, u1, v1);
@@ -80,61 +82,118 @@ void ProcessVarOpti::BuildDerivUtil()
             NekMatrix<NekDouble> VandermondeI = Vandermonde;
             VandermondeI.Invert();
 
-            derivUtil->VdmDL[0] = *nodalTri.GetVandermondeForDeriv(0) * VandermondeI;
-            derivUtil->VdmDL[1] = *nodalTri.GetVandermondeForDeriv(1) * VandermondeI;
-            derivUtil->VdmD[0] = interp * derivUtil->VdmDL[0];
-            derivUtil->VdmD[1] = interp * derivUtil->VdmDL[1];
+            derivUtil[st]->VdmDL[0] = *nodalTri.GetVandermondeForDeriv(0) * VandermondeI;
+            derivUtil[st]->VdmDL[1] = *nodalTri.GetVandermondeForDeriv(1) * VandermondeI;
+            derivUtil[st]->VdmD[0] = interp * derivUtil[st]->VdmDL[0];
+            derivUtil[st]->VdmD[1] = interp * derivUtil[st]->VdmDL[1];
             //derivUtil->quadW = LibUtilities::MakeQuadratureWeights(U2,V1);
             Array<OneD, NekDouble> qds = LibUtilities::PointsManager()[pkey2]->GetW();
             NekVector<NekDouble> quadWi(qds);
-            derivUtil->quadW = quadWi;
+            derivUtil[st]->quadW = quadWi;
         }
         break;
         case 3:
         {
-            derivUtil->ptsLow  = m_mesh->m_nummode*(m_mesh->m_nummode+1)*(m_mesh->m_nummode+2)/6;
-            LibUtilities::PointsKey pkey1(m_mesh->m_nummode,
-                                          LibUtilities::eNodalTetElec);
-            LibUtilities::PointsKey pkey2(m_mesh->m_nummode+2,
-                                          LibUtilities::eNodalTetSPI);
-            Array<OneD, NekDouble> u1, v1, u2, v2, w1, w2;
-            LibUtilities::PointsManager()[pkey1]->GetPoints(u1, v1, w1);
-            LibUtilities::PointsManager()[pkey2]->GetPoints(u2, v2, w2);
+            {
+                LibUtilities::ShapeType st = LibUtilities::eTetrahedron;
+                derivUtil[st] = boost::shared_ptr<DerivUtil>(new DerivUtil);
+                derivUtil[st]->ptsLow  = m_mesh->m_nummode*(m_mesh->m_nummode+1)*(m_mesh->m_nummode+2)/6;
+                LibUtilities::PointsKey pkey1(m_mesh->m_nummode,
+                                              LibUtilities::eNodalTetElec);
+                LibUtilities::PointsKey pkey2(m_mesh->m_nummode+4,
+                                              LibUtilities::eNodalTetSPI);
+                Array<OneD, NekDouble> u1, v1, u2, v2, w1, w2;
+                LibUtilities::PointsManager()[pkey1]->GetPoints(u1, v1, w1);
+                LibUtilities::PointsManager()[pkey2]->GetPoints(u2, v2, w2);
 
-            derivUtil->ptsHigh = u2.num_elements();
+                derivUtil[st]->ptsHigh = u2.num_elements();
 
-            LibUtilities::NodalUtilTetrahedron nodalTet(
-                m_mesh->m_nummode - 1, u1, v1, w1);
+                LibUtilities::NodalUtilTetrahedron nodalTet(
+                    m_mesh->m_nummode - 1, u1, v1, w1);
 
-            Array<OneD, Array<OneD, NekDouble> > uv2(3), uv1(3);
-            uv2[0] = u2;
-            uv2[1] = v2;
-            uv2[2] = w2;
-            uv1[0] = u1;
-            uv1[1] = v1;
-            uv1[2] = w1;
+                Array<OneD, Array<OneD, NekDouble> > uv2(3), uv1(3);
+                uv2[0] = u2;
+                uv2[1] = v2;
+                uv2[2] = w2;
+                uv1[0] = u1;
+                uv1[1] = v1;
+                uv1[2] = w1;
 
-            NekMatrix<NekDouble> interp = *nodalTet.GetInterpolationMatrix(uv2);
-            NekMatrix<NekDouble> Vandermonde = *nodalTet.GetVandermonde();
-            NekMatrix<NekDouble> VandermondeI = Vandermonde;
-            VandermondeI.Invert();
+                NekMatrix<NekDouble> interp = *nodalTet.GetInterpolationMatrix(uv2);
+                NekMatrix<NekDouble> Vandermonde = *nodalTet.GetVandermonde();
+                NekMatrix<NekDouble> VandermondeI = Vandermonde;
+                VandermondeI.Invert();
 
-            derivUtil->VdmDL[0] = *nodalTet.GetVandermondeForDeriv(0) * VandermondeI;
-            derivUtil->VdmDL[1] = *nodalTet.GetVandermondeForDeriv(1) * VandermondeI;
-            derivUtil->VdmDL[2] = *nodalTet.GetVandermondeForDeriv(2) * VandermondeI;
+                derivUtil[st]->VdmDL[0] = *nodalTet.GetVandermondeForDeriv(0) * VandermondeI;
+                derivUtil[st]->VdmDL[1] = *nodalTet.GetVandermondeForDeriv(1) * VandermondeI;
+                derivUtil[st]->VdmDL[2] = *nodalTet.GetVandermondeForDeriv(2) * VandermondeI;
 
-            derivUtil->VdmD[0] = interp * derivUtil->VdmDL[0];
-            derivUtil->VdmD[1] = interp * derivUtil->VdmDL[1];
-            derivUtil->VdmD[2] = interp * derivUtil->VdmDL[2];
-            Array<OneD, NekDouble> qds = LibUtilities::PointsManager()[pkey2]->GetW();
-            NekVector<NekDouble> quadWi(qds);
-            derivUtil->quadW = quadWi;
+                derivUtil[st]->VdmD[0] = interp * derivUtil[st]->VdmDL[0];
+                derivUtil[st]->VdmD[1] = interp * derivUtil[st]->VdmDL[1];
+                derivUtil[st]->VdmD[2] = interp * derivUtil[st]->VdmDL[2];
+                Array<OneD, NekDouble> qds = LibUtilities::PointsManager()[pkey2]->GetW();
+                NekVector<NekDouble> quadWi(qds);
+                derivUtil[st]->quadW = quadWi;
+            }
+
+            {
+                LibUtilities::ShapeType st = LibUtilities::ePrism;
+                derivUtil[st] = boost::shared_ptr<DerivUtil>(new DerivUtil);
+                derivUtil[st]->ptsLow  = m_mesh->m_nummode*m_mesh->m_nummode*(m_mesh->m_nummode+1)/2;
+                LibUtilities::PointsKey pkey1(m_mesh->m_nummode,
+                                              LibUtilities::eNodalPrismElec);
+                LibUtilities::PointsKey pkey2(m_mesh->m_nummode+4,
+                                              LibUtilities::eNodalPrismElec);
+                Array<OneD, NekDouble> u1, v1, u2, v2, w1, w2;
+                LibUtilities::PointsManager()[pkey1]->GetPoints(u1, v1, w1);
+                LibUtilities::PointsManager()[pkey2]->GetPoints(u2, v2, w2);
+
+                derivUtil[st]->ptsHigh = u2.num_elements();
+
+                LibUtilities::NodalUtilPrism nodalPrism(
+                    m_mesh->m_nummode - 1, u1, v1, w1);
+
+                Array<OneD, Array<OneD, NekDouble> > uv2(3), uv1(3);
+                uv2[0] = u2;
+                uv2[1] = v2;
+                uv2[2] = w2;
+                uv1[0] = u1;
+                uv1[1] = v1;
+                uv1[2] = w1;
+
+                NekMatrix<NekDouble> interp = *nodalPrism.GetInterpolationMatrix(uv2);
+                NekMatrix<NekDouble> Vandermonde = *nodalPrism.GetVandermonde();
+                NekMatrix<NekDouble> VandermondeI = Vandermonde;
+                VandermondeI.Invert();
+
+                derivUtil[st]->VdmDL[0] = *nodalPrism.GetVandermondeForDeriv(0) * VandermondeI;
+                derivUtil[st]->VdmDL[1] = *nodalPrism.GetVandermondeForDeriv(1) * VandermondeI;
+                derivUtil[st]->VdmDL[2] = *nodalPrism.GetVandermondeForDeriv(2) * VandermondeI;
+
+                derivUtil[st]->VdmD[0] = interp * derivUtil[st]->VdmDL[0];
+                derivUtil[st]->VdmD[1] = interp * derivUtil[st]->VdmDL[1];
+                derivUtil[st]->VdmD[2] = interp * derivUtil[st]->VdmDL[2];
+                Array<OneD, NekDouble> qds = LibUtilities::PointsManager()[pkey2]->GetW();
+                NekVector<NekDouble> quadWi(qds);
+                derivUtil[st]->quadW = quadWi;
+            }
         }
     }
 }
 
-vector<vector<NodeSharedPtr> > ProcessVarOpti::GetColouredNodes()
+vector<vector<NodeSharedPtr> > ProcessVarOpti::GetColouredNodes(vector<ElementSharedPtr> elLock)
 {
+    NodeSet ignoredNodes;
+    for(int i = 0; i < elLock.size(); i++)
+    {
+        vector<NodeSharedPtr> nodes;
+        elLock[i]->GetCurvedNodes(nodes);
+        for(int j = 0; j < nodes.size(); j++)
+        {
+            ignoredNodes.insert(nodes[j]);
+        }
+    }
+
     //this figures out the dirclet nodes and colors the others into paralell sets
     NodeSet boundaryNodes;
 
@@ -217,7 +276,8 @@ vector<vector<NodeSharedPtr> > ProcessVarOpti::GetColouredNodes()
     for (nit = m_mesh->m_vertexSet.begin(); nit != m_mesh->m_vertexSet.end(); ++nit)
     {
         NodeSet::iterator nit2 = boundaryNodes.find(*nit);
-        if(nit2 == boundaryNodes.end())
+        NodeSet::iterator nit3 = ignoredNodes.find(*nit);
+        if(nit2 == boundaryNodes.end() && nit3 == ignoredNodes.end())
         {
             remain.push_back(*nit);
             if((*nit)->GetNumCadCurve() == 1)
@@ -241,8 +301,9 @@ vector<vector<NodeSharedPtr> > ProcessVarOpti::GetColouredNodes()
         vector<NodeSharedPtr> n = (*eit)->m_edgeNodes;
         for(int j = 0; j < n.size(); j++)
         {
-            NodeSet::iterator nit = boundaryNodes.find(n[j]);
-            if(nit == boundaryNodes.end())
+            NodeSet::iterator nit2 = boundaryNodes.find(n[j]);
+            NodeSet::iterator nit3 = ignoredNodes.find(n[j]);
+            if(nit2 == boundaryNodes.end() && nit3 == ignoredNodes.end())
             {
                 remain.push_back(n[j]);
                 if(n[j]->GetNumCadCurve() == 1)
@@ -266,8 +327,9 @@ vector<vector<NodeSharedPtr> > ProcessVarOpti::GetColouredNodes()
     {
         for(int j = 0; j < (*fit)->m_faceNodes.size(); j++)
         {
-            NodeSet::iterator nit = boundaryNodes.find((*fit)->m_faceNodes[j]);
-            if(nit == boundaryNodes.end())
+            NodeSet::iterator nit2 = boundaryNodes.find((*fit)->m_faceNodes[j]);
+            NodeSet::iterator nit3 = ignoredNodes.find((*fit)->m_faceNodes[j]);
+            if(nit2 == boundaryNodes.end() && nit3 == ignoredNodes.end())
             {
                 remain.push_back((*fit)->m_faceNodes[j]);
                 if((*fit)->m_faceNodes[j]->GetNumCADSurf() == 1)
@@ -288,8 +350,9 @@ vector<vector<NodeSharedPtr> > ProcessVarOpti::GetColouredNodes()
             m_mesh->m_element[m_mesh->m_expDim][i]->GetVolumeNodes();
         for(int j = 0; j < ns.size(); j++)
         {
-            NodeSet::iterator nit = boundaryNodes.find(ns[j]);
-            if(nit == boundaryNodes.end())
+            NodeSet::iterator nit2 = boundaryNodes.find(ns[j]);
+            NodeSet::iterator nit3 = ignoredNodes.find(ns[j]);
+            if(nit2 == boundaryNodes.end() && nit3 == ignoredNodes.end())
             {
                 remain.push_back(ns[j]);
                 res->nDoF += 3;
@@ -356,7 +419,8 @@ void ProcessVarOpti::GetElementMap()
         ElementSharedPtr el = m_mesh->m_element[m_mesh->m_expDim][i];
         vector<NodeSharedPtr> ns;
         el->GetCurvedNodes(ns);
-        ElUtilSharedPtr d = boost::shared_ptr<ElUtil>(new ElUtil(el, derivUtil,
+        ElUtilSharedPtr d = boost::shared_ptr<ElUtil>(new ElUtil(el,
+                                    derivUtil[el->GetShapeType()],
                                     res, m_mesh->m_nummode));
         dataSet.push_back(d);
     }
@@ -375,259 +439,155 @@ void ProcessVarOpti::GetElementMap()
     }
 }
 
-void ProcessVarOpti::FillQuadPoints()
+vector<ElementSharedPtr> ProcessVarOpti::GetLockedElements(NekDouble thres)
 {
-    int nq = m_mesh->m_nummode;
-    int id = m_mesh->m_vertexSet.size();
-
-    LibUtilities::PointsKey ekey(m_mesh->m_nummode,
-                                 LibUtilities::eGaussLobattoLegendre);
-    Array<OneD, NekDouble> gll;
-    LibUtilities::PointsManager()[ekey]->GetPoints(gll);
-
-    EdgeSet::iterator eit;
-    FaceSet::iterator fit;
-
-    boost::unordered_map<int, SpatialDomains::Geometry1DSharedPtr> edgeGeoms;
-    boost::unordered_map<int, SpatialDomains::Geometry2DSharedPtr> faceGeoms;
-    boost::unordered_map<int, SpatialDomains::GeometrySharedPtr> volGeoms;
-
-    for(eit = m_mesh->m_edgeSet.begin(); eit != m_mesh->m_edgeSet.end(); eit++)
-    {
-        SpatialDomains::Geometry1DSharedPtr geom =
-            (*eit)->GetGeom(m_mesh->m_spaceDim);
-        geom->FillGeom();
-        edgeGeoms[(*eit)->m_id] = geom;
-    }
-
-    for(fit = m_mesh->m_faceSet.begin(); fit != m_mesh->m_faceSet.end(); fit++)
-    {
-        SpatialDomains::Geometry2DSharedPtr geom =
-            (*fit)->GetGeom(m_mesh->m_spaceDim);
-        geom->FillGeom();
-        faceGeoms[(*fit)->m_id] = geom;
-    }
-
-    for(int i = 0; i < m_mesh->m_element[m_mesh->m_expDim].size(); i++)
+    vector<ElementSharedPtr> elBelowThres;
+    for (int i = 0; i < m_mesh->m_element[m_mesh->m_expDim].size(); ++i)
     {
         ElementSharedPtr el = m_mesh->m_element[m_mesh->m_expDim][i];
-        SpatialDomains::GeometrySharedPtr geom =
-            el->GetGeom(m_mesh->m_spaceDim);
-        geom->FillGeom();
-        volGeoms[el->GetId()] = geom;
+        vector<NodeSharedPtr> nodes;
+        el->GetCurvedNodes(nodes);
+        NekDouble mx = -1.0 * numeric_limits<double>::max();
+        NekDouble mn =  numeric_limits<double>::max();
+
+        if(m_mesh->m_expDim == 2)
+        {
+            NekVector<NekDouble> X(nodes.size()),Y(nodes.size());
+            for(int j = 0; j < nodes.size(); j++)
+            {
+                X(j) = nodes[j]->m_x;
+                Y(j) = nodes[j]->m_y;
+            }
+
+            NekVector<NekDouble> x1i(nodes.size()),y1i(nodes.size()),
+                                 x2i(nodes.size()),y2i(nodes.size());
+
+            x1i = derivUtil[el->GetShapeType()]->VdmDL[0]*X;
+            y1i = derivUtil[el->GetShapeType()]->VdmDL[0]*Y;
+            x2i = derivUtil[el->GetShapeType()]->VdmDL[1]*X;
+            y2i = derivUtil[el->GetShapeType()]->VdmDL[1]*Y;
+
+            for(int j = 0; j < nodes.size(); j++)
+            {
+                NekDouble jacDet = x1i(j) * y2i(j) - x2i(j)*y1i(j);
+                mx = max(mx,jacDet);
+                mn = min(mn,jacDet);
+            }
+        }
+        else if(m_mesh->m_expDim == 3)
+        {
+            NekVector<NekDouble> X(nodes.size()),Y(nodes.size()),Z(nodes.size());
+            for(int j = 0; j < nodes.size(); j++)
+            {
+                X(j) = nodes[j]->m_x;
+                Y(j) = nodes[j]->m_y;
+                Z(j) = nodes[j]->m_z;
+            }
+
+            NekVector<NekDouble> x1i(nodes.size()),y1i(nodes.size()),z1i(nodes.size()),
+                                 x2i(nodes.size()),y2i(nodes.size()),z2i(nodes.size()),
+                                 x3i(nodes.size()),y3i(nodes.size()),z3i(nodes.size());
+
+            x1i = derivUtil[el->GetShapeType()]->VdmDL[0]*X;
+            y1i = derivUtil[el->GetShapeType()]->VdmDL[0]*Y;
+            z1i = derivUtil[el->GetShapeType()]->VdmDL[0]*Z;
+            x2i = derivUtil[el->GetShapeType()]->VdmDL[1]*X;
+            y2i = derivUtil[el->GetShapeType()]->VdmDL[1]*Y;
+            z2i = derivUtil[el->GetShapeType()]->VdmDL[1]*Z;
+            x3i = derivUtil[el->GetShapeType()]->VdmDL[2]*X;
+            y3i = derivUtil[el->GetShapeType()]->VdmDL[2]*Y;
+            z3i = derivUtil[el->GetShapeType()]->VdmDL[2]*Z;
+
+            for(int j = 0; j < nodes.size(); j++)
+            {
+                DNekMat dxdz(3,3,1.0,eFULL);
+                dxdz(0,0) = x1i(j);
+                dxdz(0,1) = x2i(j);
+                dxdz(0,2) = x3i(j);
+                dxdz(1,0) = y1i(j);
+                dxdz(1,1) = y2i(j);
+                dxdz(1,2) = y3i(j);
+                dxdz(2,0) = z1i(j);
+                dxdz(2,1) = z2i(j);
+                dxdz(2,2) = z3i(j);
+
+                NekDouble jacDet = dxdz(0,0)*(dxdz(1,1)*dxdz(2,2)-dxdz(2,1)*dxdz(1,2))
+                                  -dxdz(0,1)*(dxdz(1,0)*dxdz(2,2)-dxdz(2,0)*dxdz(1,2))
+                                  +dxdz(0,2)*(dxdz(1,0)*dxdz(2,1)-dxdz(2,0)*dxdz(1,1));
+
+                mx = max(mx,jacDet);
+                mn = min(mn,jacDet);
+            }
+        }
+
+        if(mn/mx < thres)
+        {
+            elBelowThres.push_back(el);
+        }
     }
 
-    for(eit = m_mesh->m_edgeSet.begin(); eit != m_mesh->m_edgeSet.end(); eit++)
+    boost::unordered_set<int> inmesh;
+    pair<boost::unordered_set<int>::iterator, bool> t;
+    vector<ElementSharedPtr> totest;
+
+    for (int i = 0; i < elBelowThres.size(); i++)
     {
-        if((*eit)->m_edgeNodes.size() > 0 && (*eit)->m_curveType == LibUtilities::eGaussLobattoLegendre)
+        t = inmesh.insert(elBelowThres[i]->GetId());
+
+        vector<FaceSharedPtr> f = elBelowThres[i]->GetFaceList();
+        for (int j = 0; j < f.size(); j++)
         {
-            //already high-order just need to Id and double check type
-            for(int i = 0; i < (*eit)->m_edgeNodes.size(); i++)
+            for (int k = 0; k < f[j]->m_elLink.size(); k++)
             {
-                (*eit)->m_edgeNodes[i]->m_id = id++;
-            }
-            continue;
-        }
-        SpatialDomains::Geometry1DSharedPtr geom = edgeGeoms[(*eit)->m_id];
-        StdRegions::StdExpansionSharedPtr xmap = geom->GetXmap();
+                if (f[j]->m_elLink[k].first->GetId() == elBelowThres[i]->GetId())
+                    continue;
 
-        vector<NodeSharedPtr> hons;
-
-        switch (m_mesh->m_spaceDim)
-        {
-            case 2:
-            {
-                Array<OneD, NekDouble> coeffs0 = geom->GetCoeffs(0);
-                Array<OneD, NekDouble> coeffs1 = geom->GetCoeffs(1);
-
-                Array<OneD, NekDouble> xc(xmap->GetTotPoints());
-                Array<OneD, NekDouble> yc(xmap->GetTotPoints());
-
-                xmap->BwdTrans(coeffs0,xc);
-                xmap->BwdTrans(coeffs1,yc);
-
-                for(int j = 1; j < m_mesh->m_nummode - 1; j++)
+                t = inmesh.insert(f[j]->m_elLink[k].first->GetId());
+                if (t.second)
                 {
-                    Array<OneD, NekDouble> xp(2);
-                    xp[0] = gll[j];
-
-                    hons.push_back(boost::shared_ptr<Node>(new Node(
-                            id++,xmap->PhysEvaluate(xp,xc),
-                                 xmap->PhysEvaluate(xp,yc),0.0)));
+                    totest.push_back(f[j]->m_elLink[k].first);
                 }
-                (*eit)->m_edgeNodes.clear();
-                (*eit)->m_edgeNodes = hons;
-                (*eit)->m_curveType = LibUtilities::eGaussLobattoLegendre;
             }
-            break;
-            case 3:
-            {
-                Array<OneD, NekDouble> coeffs0 = geom->GetCoeffs(0);
-                Array<OneD, NekDouble> coeffs1 = geom->GetCoeffs(1);
-                Array<OneD, NekDouble> coeffs2 = geom->GetCoeffs(2);
-
-                Array<OneD, NekDouble> xc(xmap->GetTotPoints());
-                Array<OneD, NekDouble> yc(xmap->GetTotPoints());
-                Array<OneD, NekDouble> zc(xmap->GetTotPoints());
-
-                xmap->BwdTrans(coeffs0,xc);
-                xmap->BwdTrans(coeffs1,yc);
-                xmap->BwdTrans(coeffs2,zc);
-
-                for(int j = 1; j < m_mesh->m_nummode - 1; j++)
-                {
-                    Array<OneD, NekDouble> xp(2);
-                    xp[0] = gll[j];
-
-                    hons.push_back(boost::shared_ptr<Node>(new Node(
-                            id++,xmap->PhysEvaluate(xp,xc),
-                                 xmap->PhysEvaluate(xp,yc),
-                                 xmap->PhysEvaluate(xp,zc))));
-                }
-                (*eit)->m_edgeNodes.clear();
-                (*eit)->m_edgeNodes = hons;
-                (*eit)->m_curveType = LibUtilities::eGaussLobattoLegendre;
-            }
-            break;
         }
     }
 
-    if(m_mesh->m_expDim == 2)
+    for (int i = 0; i < 12; i++)
     {
-        //for faces need to do volume nodes
-        for(int i = 0; i < m_mesh->m_element[m_mesh->m_expDim].size(); i++)
+        vector<ElementSharedPtr> tmp = totest;
+        totest.clear();
+        for (int j = 0; j < tmp.size(); j++)
         {
-            ElementSharedPtr el = m_mesh->m_element[m_mesh->m_expDim][i];
-
-            SpatialDomains::GeometrySharedPtr geom = volGeoms[el->GetId()];
-            StdRegions::StdExpansionSharedPtr xmap = geom->GetXmap();
-
-            LibUtilities::PointsKey pkey(m_mesh->m_nummode,
-                                         LibUtilities::eNodalTriElec);
-            Array<OneD, NekDouble> u, v;
-            LibUtilities::PointsManager()[pkey]->GetPoints(u, v);
-
-            Array<OneD, NekDouble> coeffs0 = geom->GetCoeffs(0);
-            Array<OneD, NekDouble> coeffs1 = geom->GetCoeffs(1);
-
-            Array<OneD, NekDouble> xc(xmap->GetTotPoints());
-            Array<OneD, NekDouble> yc(xmap->GetTotPoints());
-
-            xmap->BwdTrans(coeffs0,xc);
-            xmap->BwdTrans(coeffs1,yc);
-
-            vector<NodeSharedPtr> hons;
-
-            for(int j = 3 + 3*(nq-2); j < u.num_elements(); j++)
+            vector<FaceSharedPtr> f = tmp[j]->GetFaceList();
+            for (int k = 0; k < f.size(); k++)
             {
-                Array<OneD, NekDouble> xp(2);
-                xp[0] = u[j];
-                xp[1] = v[j];
-
-                hons.push_back(boost::shared_ptr<Node>(new Node(
-                        id++,xmap->PhysEvaluate(xp,xc),
-                             xmap->PhysEvaluate(xp,yc),0.0)));
-            }
-
-            el->SetVolumeNodes(hons);
-            el->SetCurveType(LibUtilities::eNodalTriElec);
-        }
-    }
-    else
-    {
-        FaceSet::iterator it;
-        for(it = m_mesh->m_faceSet.begin(); it != m_mesh->m_faceSet.end(); it++)
-        {
-            if((*it)->m_faceNodes.size() > 0 && (*it)->m_curveType == LibUtilities::eNodalTriElec)
-            {
-                for(int i = 0; i < (*it)->m_faceNodes.size(); i++)
+                for (int l = 0; l < f[k]->m_elLink.size(); l++)
                 {
-                    (*it)->m_faceNodes[i]->m_id = id++;
+                    if (f[k]->m_elLink[l].first->GetId() == tmp[j]->GetId())
+                        continue;
+
+                    t = inmesh.insert(f[k]->m_elLink[l].first->GetId());
+                    if (t.second)
+                    {
+                        totest.push_back(f[k]->m_elLink[l].first);
+                    }
                 }
-                continue;
             }
-            SpatialDomains::Geometry2DSharedPtr geom = faceGeoms[(*it)->m_id];
-            StdRegions::StdExpansionSharedPtr xmap = geom->GetXmap();
-
-            LibUtilities::PointsKey pkey(m_mesh->m_nummode,
-                                         LibUtilities::eNodalTriElec);
-            Array<OneD, NekDouble> u, v;
-            LibUtilities::PointsManager()[pkey]->GetPoints(u, v);
-
-            vector<NodeSharedPtr> hons;
-
-            Array<OneD, NekDouble> coeffs0 = geom->GetCoeffs(0);
-            Array<OneD, NekDouble> coeffs1 = geom->GetCoeffs(1);
-            Array<OneD, NekDouble> coeffs2 = geom->GetCoeffs(2);
-
-            Array<OneD, NekDouble> xc(xmap->GetTotPoints());
-            Array<OneD, NekDouble> yc(xmap->GetTotPoints());
-            Array<OneD, NekDouble> zc(xmap->GetTotPoints());
-
-            xmap->BwdTrans(coeffs0,xc);
-            xmap->BwdTrans(coeffs1,yc);
-            xmap->BwdTrans(coeffs2,zc);
-
-            for(int j = 3 + 3*(nq-2); j < u.num_elements(); j++)
-            {
-                Array<OneD, NekDouble> xp(2);
-                xp[0] = u[j];
-                xp[1] = v[j];
-
-                hons.push_back(boost::shared_ptr<Node>(new Node(
-                        id++,xmap->PhysEvaluate(xp,xc),
-                             xmap->PhysEvaluate(xp,yc),
-                             xmap->PhysEvaluate(xp,zc))));
-            }
-            (*it)->m_faceNodes.clear();
-            (*it)->m_faceNodes = hons;
-            (*it)->m_curveType = LibUtilities::eNodalTriElec;
-        }
-        for(int i = 0; i < m_mesh->m_element[m_mesh->m_expDim].size(); i++)
-        {
-            ElementSharedPtr el = m_mesh->m_element[m_mesh->m_expDim][i];
-
-            SpatialDomains::GeometrySharedPtr geom = volGeoms[el->GetId()];
-            StdRegions::StdExpansionSharedPtr xmap = geom->GetXmap();
-
-            LibUtilities::PointsKey pkey(m_mesh->m_nummode,
-                                         LibUtilities::eNodalTetElec);
-            Array<OneD, NekDouble> u, v, w;
-            LibUtilities::PointsManager()[pkey]->GetPoints(u, v, w);
-
-            Array<OneD, NekDouble> coeffs0 = geom->GetCoeffs(0);
-            Array<OneD, NekDouble> coeffs1 = geom->GetCoeffs(1);
-            Array<OneD, NekDouble> coeffs2 = geom->GetCoeffs(2);
-
-            Array<OneD, NekDouble> xc(xmap->GetTotPoints());
-            Array<OneD, NekDouble> yc(xmap->GetTotPoints());
-            Array<OneD, NekDouble> zc(xmap->GetTotPoints());
-
-            xmap->BwdTrans(coeffs0,xc);
-            xmap->BwdTrans(coeffs1,yc);
-            xmap->BwdTrans(coeffs2,zc);
-
-            vector<NodeSharedPtr> hons;
-
-            //need to finish for tet
-            for(int j = 4 + 6*(nq-2) + 4 * ((nq-2)*(nq-3) / 2);
-                                                    j < u.num_elements(); j++)
-            {
-                Array<OneD, NekDouble> xp(3);
-                xp[0] = u[j];
-                xp[1] = v[j];
-                xp[2] = w[j];
-
-                hons.push_back(boost::shared_ptr<Node>(new Node(
-                        id++,xmap->PhysEvaluate(xp,xc),
-                             xmap->PhysEvaluate(xp,yc),
-                             xmap->PhysEvaluate(xp,zc))));
-            }
-
-            el->SetVolumeNodes(hons);
-            el->SetCurveType(LibUtilities::eNodalTetElec);
         }
     }
+
+    //now need to invert the list
+    vector<ElementSharedPtr> ret;
+    for (int i = 0; i < m_mesh->m_element[m_mesh->m_expDim].size(); ++i)
+    {
+        ElementSharedPtr el = m_mesh->m_element[m_mesh->m_expDim][i];
+        boost::unordered_set<int>::iterator s = inmesh.find(el->GetId());
+        if(s == inmesh.end())
+        {
+            ret.push_back(el);
+        }
+    }
+
+    return ret;
 }
 
 }
