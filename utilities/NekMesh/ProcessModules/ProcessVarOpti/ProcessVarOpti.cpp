@@ -52,7 +52,13 @@
 #include <LibUtilities/BasicUtils/Timer.h>
 #include <LibUtilities/Foundations/NodalUtil.h>
 
-//#include <Kokkos_Core.hpp>
+#include <Kokkos_Core.hpp>
+#include <limits>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <sys/time.h>
+
 
 using namespace std;
 using namespace Nektar::NekMeshUtils;
@@ -125,10 +131,7 @@ void ProcessVarOpti::Process()
 
     if(m_config["Kokkos"].beenSet)
     {
-        ThreadManagerType = "ThreadManagerKokkos";
-        //Kokkos::InitArguments args;
-        //args.num_threads = m_config["numthreads"].as<int>();
-        //Kokkos::initialize(args);
+        ThreadManagerType = "ThreadManagerKokkos";        
     }
     else if(m_config["Boost"].beenSet)
     {
@@ -143,8 +146,7 @@ void ProcessVarOpti::Process()
     const int maxIter = m_config["maxiter"].as<int>();
     const NekDouble restol = m_config["restol"].as<NekDouble>();
 
-    //m_mesh->m_nummode = m_config["nq"].as<int>();
-
+    
     EdgeSet::iterator eit;
     m_mesh->m_nummode = -1;
     if (m_mesh->m_nummode == -1)
@@ -246,20 +248,126 @@ void ProcessVarOpti::Process()
          << "Max set:\t\t" << mx << endl
          << "Residual tolerance:\t" << restol << endl;
 
-       
+
+    /*
+    if(m_config["Kokkos"].beenSet)
+    {
+        // Initialise Kokkos
+        Kokkos::InitArguments args;
+        args.num_threads = m_config["numthreads"].as<int>();
+        Kokkos::DefaultHostExecutionSpace::initialize(args.num_threads);       
+        Kokkos::DefaultExecutionSpace::initialize();
+
+        int N = pow(2,12) ;       // number of rows 2^12
+        int M = pow(2,10);       // number of columns 2^10
+        int S = pow(2,22) ;      // total size 2^22
+        int nrepeat = 100 ;    // number of repeats of the test
+        
+        // typedef Kokkos::Serial   ExecSpace ;
+        // typedef Kokkos::Threads  ExecSpace ;
+        // typedef Kokkos::OpenMP   ExecSpace ;
+        typedef Kokkos::Cuda        ExecSpace ;
+        
+        // typedef Kokkos::HostSpace    MemSpace; 
+        // typedef Kokkos::OpenMP       MemSpace; 
+        typedef Kokkos::CudaSpace       MemSpace;
+        // typedef Kokkos::CudaUVMSpace MemSpace;
+
+        typedef Kokkos::LayoutLeft   Layout ;
+        // typedef Kokkos::LayoutRight  Layout ;
+
+        typedef Kokkos::RangePolicy<ExecSpace> range_policy ;
+
+        // Allocate y, x vectors and Matrix A:
+        // Device
+        typedef Kokkos::View<double*, Layout, MemSpace>   ViewVectorType;
+        typedef Kokkos::View<double**, Layout, MemSpace>   ViewMatrixType;
+        ViewVectorType devy("devy", N);
+        ViewVectorType devx("devx", M);
+        ViewMatrixType devA("devA", N, M);
+
+        //Host mirror
+        ViewVectorType::HostMirror y =  Kokkos::create_mirror_view(devy);
+        ViewVectorType::HostMirror x =  Kokkos::create_mirror_view(devx);
+        ViewMatrixType::HostMirror A =  Kokkos::create_mirror_view(devA);
+
+
+        // Initialize y vector on host
+        for (int i = 0; i < N; ++i) {
+          y( i ) = 1;
+        }
+
+        // Initialize x vector on host
+        for (int i = 0; i < M; ++i) {
+          x( i ) = 1;
+        }
+
+        // Initialize A matrix, note 2D indexing computation on host
+        for (int j = 0; j < N; ++j) {
+          for ( int i = 0 ; i < M ; ++i ) {
+            A( j , i ) = 1;
+          }
+        }
+
+        //Deep copy host view to device views
+        Kokkos::deep_copy(devy, y);
+        Kokkos::deep_copy(devx, x);
+        Kokkos::deep_copy(devA, A);
+
+        // Timer products
+        struct timeval begin,end;
+        gettimeofday(&begin,NULL);
+
+        for ( int repeat = 0; repeat < nrepeat; repeat++)
+        {
+            //Application: <y,Ax> = y^T*A*x
+            double result = 0;
+            Kokkos::parallel_reduce( range_policy( 0, N ), KOKKOS_LAMBDA ( int j, double &update ) {
+              double temp2 = 0;
+              for ( int i = 0 ; i < M ; ++i ) {
+                temp2 += devA( j , i ) * devx( i );
+              }
+              update += devy( j ) * temp2;
+            }, result );
+
+            //Output result
+            if ( repeat == (nrepeat - 1) )
+              printf("  Computed result for %d x %d is %lf\n", N, M, result);
+            const double solution = (double)N *(double)M;
+
+            if ( result != solution ) {
+              printf("  Error: result( %lf ) != solution( %lf )\n",result,solution);
+            }
+        }
+
+        gettimeofday(&end,NULL);
+
+        // Calculate time
+        double time = 1.0*(end.tv_sec-begin.tv_sec) +
+                        1.0e-6*(end.tv_usec-begin.tv_usec);
+
+        // Calculate bandwidth.
+        double Gbytes = 1.0e-9 * double(sizeof(double) * ( M + M * N + N )) ;
+
+        // Print results (problem size, time and bandwidth in GB/s)
+        printf("  M( %d ) N( %d ) nrepeat ( %d ) problem( %g MB ) time( %g s ) bandwidth( %g GB/s )\n",
+                 M , N, nrepeat, Gbytes * 1000, time, Gbytes * nrepeat / time );
+
+        
+    }
+    */
+
     int nThreads = m_config["numthreads"].as<int>();    
-    Thread::ThreadMaster tms;
-    std::cout <<"pointA" <<std::endl;
+    Thread::ThreadMaster tms;    
     tms.SetThreadingType(ThreadManagerType);
     Thread::ThreadManagerSharedPtr tm =
                 tms.CreateInstance(Thread::ThreadMaster::SessionJob, nThreads);
     
-                std::cout <<"pointB" <<std::endl;
+
     Timer t;
     t.Start();
 
     int ctr = 0;
-   
 
     while (res->val > restol)
     {
@@ -305,16 +413,17 @@ void ProcessVarOpti::Process()
             break;
     }
 
-    if(m_config["Kokkos"].beenSet)
-    {
-        //Kokkos::finalize();
-    }
-
     t.Stop();
     cout << "Time to compute: " << t.TimePerTest(1) << endl;
 
     cout << "Invalid at end:\t\t" << res->startInv << endl;
     cout << "Worst at end:\t\t" << res->worstJac << endl;
+
+    /*if(m_config["Kokkos"].beenSet)
+    {
+        Kokkos::DefaultExecutionSpace::finalize();
+        Kokkos::DefaultHostExecutionSpace::finalize();        
+    }*/
 }
 
 }

@@ -59,6 +59,18 @@ ThreadManagerKokkos::ThreadManagerKokkos(unsigned int numT) :
         m_numThreads(numT), m_numWorkers(numT)
 {        
     m_type = "Threading with Kokkos";
+    m_Initialised = false;
+    
+    if ( !Kokkos::HostSpace::execution_space::is_initialized())
+    {
+        // ** Initialise Kokkos with number of threads **
+        Kokkos::InitArguments args;
+        args.num_threads = m_numThreads;
+        Kokkos::DefaultHostExecutionSpace::initialize(args.num_threads);
+        std::cout << "ThreadManager::Initialise" << std::endl;
+        std::cout << "Number of threads: = " << args.num_threads << std::endl;
+        m_Initialised = true;
+    }
 }
 
 
@@ -68,7 +80,12 @@ ThreadManagerKokkos::ThreadManagerKokkos(unsigned int numT) :
  */
 ThreadManagerKokkos::~ThreadManagerKokkos()
 {
-    //empty
+    // ** finalize kokkos **
+    if ( m_Initialised)
+    {
+        Kokkos::DefaultHostExecutionSpace::finalize();
+        std::cout << "ThreadManager::Finalise" << std::endl;
+    }
 }
 
 
@@ -122,21 +139,19 @@ bool ThreadManagerKokkos::InThread()
  */
 void ThreadManagerKokkos::Wait()
 {
-    Kokkos::InitArguments args;
-    args.num_threads = GetNumWorkers();
-    Kokkos::initialize(args);
-    //std::cout << "Number of threads: = " << args.num_threads << std::endl;
-
+    // ** retrieve queued jobs **
     std::vector<ThreadJob*> *jobs = m_masterJob;
+
+    // ** establish size of parallel_for loop **
     int jobSize = jobs->size();
     //std::cout << "Number of threads in Kokkos::parallel_for loop: " << N << std::endl;
 
-    Kokkos::parallel_for ( jobSize, KOKKOS_LAMBDA (const int& i) {
+    // ** call Kokkos parallel_for loop **
+    typedef Kokkos::RangePolicy<Kokkos::DefaultHostExecutionSpace> range_policy;
+    Kokkos::parallel_for ( range_policy(0,jobSize), KOKKOS_LAMBDA (const int& i) {
         jobs->at(i)->Run();
         //printf("Hello Kokkos %i\n", i);
     });
-
-    Kokkos::finalize();
 }
 
 

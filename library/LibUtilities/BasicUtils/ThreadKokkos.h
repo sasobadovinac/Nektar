@@ -87,10 +87,11 @@ class ThreadManagerKokkos: public ThreadManager
         // Member variables
         const unsigned int                         m_numThreads;
         unsigned int                               m_numWorkers;
-        std::vector<ThreadJob*> *                   m_masterJob;
-        
+        std::vector<ThreadJob*> *                  m_masterJob;        
+
         static std::string                         className;
         std::string                                m_type;
+        bool                                       m_Initialised;
 };
 
 } // Thread
