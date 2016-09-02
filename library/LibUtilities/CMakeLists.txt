@@ -32,6 +32,8 @@ SET(BasicUtilsHeaders
     ./BasicUtils/ShapeType.hpp
     ./BasicUtils/SharedArrayFwd.hpp
     ./BasicUtils/SharedArray.hpp
+    ./BasicUtils/SharedArrayNative.hpp
+    ./BasicUtils/SharedArrayKokkos.hpp
     ./BasicUtils/Thread.h
     ./BasicUtils/ThreadBoost.h
     ./BasicUtils/Vmath.hpp
