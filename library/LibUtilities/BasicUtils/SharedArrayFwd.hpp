@@ -47,13 +47,15 @@ namespace Nektar
     };
 
     // Forward declaration for a ConstArray constructor.
-#ifdef NEKTAR_USE_KOKKOS
+/*#ifdef NEKTAR_USE_KOKKOS
     template<typename Dim, typename DataType, typename Implementation = KokkosImpl>
     class Array;
 #else
     template<typename Dim, typename DataType, typename Implementation = NativeImpl>
     class Array;
-#endif
+#endif*/
+template<typename Dim, typename DataType, typename Implementation = NativeImpl>
+class Array;
 
 }
 

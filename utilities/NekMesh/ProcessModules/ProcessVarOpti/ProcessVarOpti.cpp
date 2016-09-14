@@ -132,7 +132,7 @@ void ProcessVarOpti::Process()
     }
     else
     {
-        ASSERTL0(false,"not opti type set");
+        ASSERTL0(false,"no opti type set");
     }
 
     if(m_config["Kokkos"].beenSet)
@@ -248,10 +248,23 @@ void ProcessVarOpti::Process()
 
     res->startInv =0;
     res->worstJac = numeric_limits<double>::max();
-    for(int i = 0; i < dataSet.size(); i++)
+
+    if(m_config["Kokkos"].beenSet)
+    {
+        int nThreads = m_config["numthreads"].as<int>();
+        Kokkos::InitArguments args;
+        args.num_threads = nThreads;
+        Kokkos::DefaultHostExecutionSpace::initialize(args.num_threads);
+        Kokkos::DefaultExecutionSpace::initialize();
+        
+        
+    }
+    typedef Kokkos::RangePolicy<Kokkos::DefaultHostExecutionSpace> range_policy_host;
+
+    Kokkos::parallel_for(range_policy_host(0,dataSet.size()), KOKKOS_LAMBDA (const int i)
     {
         dataSet[i]->Evaluate();
-    }
+    });
 
     if(m_config["histfile"].beenSet)
     {
@@ -387,13 +400,6 @@ void ProcessVarOpti::Process()
     }
     */
 
-    int nThreads = m_config["numthreads"].as<int>();    
-    Thread::ThreadMaster tms;    
-    tms.SetThreadingType(ThreadManagerType);
-    Thread::ThreadManagerSharedPtr tm =
-                tms.CreateInstance(Thread::ThreadMaster::SessionJob, nThreads);
-    
-
     Timer t;
     t.Start();
 
@@ -412,35 +418,22 @@ void ProcessVarOpti::Process()
         res->nReset = 0;
         for(int i = 0; i < optiNodes.size(); i++)
         {
-            
-            vector<Thread::ThreadJob*> jobs(optiNodes[i].size());
-            for(int j = 0; j < optiNodes[i].size(); j++)
+            Kokkos::parallel_for(range_policy_host(0,optiNodes[i].size()),KOKKOS_LAMBDA (const int j)
             {
-                jobs[j] = optiNodes[i][j]->GetJob();
-            }
-            tm->SetNumWorkers(0);
-            tm->QueueJobs(jobs);
-            tm->SetNumWorkers(nThreads);
-            tm->Wait();
-            //for(int j = 0; j < jobs.size(); j++)
-            //{
-            //    jobs[j]->Run();
-            //}
+                optiNodes[i][j]->Optimise();
+            });
         }
+
 
         res->startInv = 0;
         res->worstJac = numeric_limits<double>::max();
 
         
-        vector<Thread::ThreadJob*> elJobs(dataSet.size());
-        for(int i = 0; i < dataSet.size(); i++)
+        Kokkos::parallel_for(range_policy_host(0,dataSet.size()), KOKKOS_LAMBDA (const int i)
         {
-            elJobs[i] = dataSet[i]->GetJob();
-        }
-        tm->SetNumWorkers(0);
-        tm->QueueJobs(elJobs);
-        tm->SetNumWorkers(nThreads);
-        tm->Wait();
+            dataSet[i]->Evaluate();
+        });
+
 
         if(m_config["resfile"].beenSet)
         {
@@ -480,11 +473,11 @@ void ProcessVarOpti::Process()
     cout << "Invalid at end:\t\t" << res->startInv << endl;
     cout << "Worst at end:\t\t" << res->worstJac << endl;
 
-    /*if(m_config["Kokkos"].beenSet)
+    if(m_config["Kokkos"].beenSet)
     {
         Kokkos::DefaultExecutionSpace::finalize();
         Kokkos::DefaultHostExecutionSpace::finalize();        
-    }*/
+    }
 }
 
 }

@@ -250,7 +250,8 @@ public:
 
     LIB_UTILITIES_EXPORT static const std::string GetFileType(
         const std::string &filename, CommSharedPtr comm);
-    LIB_UTILITIES_EXPORT virtual const std::string &GetClassName() const = 0;
+    //LIB_UTILITIES_EXPORT virtual const std::string &GetClassName() const = 0;
+    LIB_UTILITIES_EXPORT const std::string &GetClassName();
 
     LIB_UTILITIES_EXPORT static boost::shared_ptr<FieldIO> CreateDefault(
         const LibUtilities::SessionReaderSharedPtr session);
@@ -301,9 +302,12 @@ protected:
     /// @copydoc FieldIO::ImportFieldMetaData
     LIB_UTILITIES_EXPORT virtual DataSourceSharedPtr v_ImportFieldMetaData(
         const std::string &filename, FieldMetaDataMap &fieldmetadatamap) = 0;
+
+
 };
 
 typedef boost::shared_ptr<FieldIO> FieldIOSharedPtr;
+
 
 /**
  * @brief Write out the field information to the file @p outFile.
@@ -314,6 +318,7 @@ typedef boost::shared_ptr<FieldIO> FieldIOSharedPtr;
  *                      to @p fielddefs.
  * @param fieldinfomap  Associated field metadata map.
  */
+ 
 inline void FieldIO::Write(const std::string                      &outFile,
                            std::vector<FieldDefinitionsSharedPtr> &fielddefs,
                            std::vector<std::vector<NekDouble> > &fielddata,
@@ -321,6 +326,7 @@ inline void FieldIO::Write(const std::string                      &outFile,
 {
     v_Write(outFile, fielddefs, fielddata, fieldinfomap);
 }
+
 
 /**
  * @brief Read field information from the file @p infilename.
@@ -335,6 +341,7 @@ inline void FieldIO::Write(const std::string                      &outFile,
  *                      optionally supplied to avoid reading the entire file on
  *                      each processor.
  */
+ 
 inline void FieldIO::Import(const std::string                      &infilename,
                             std::vector<FieldDefinitionsSharedPtr> &fielddefs,
                             std::vector<std::vector<NekDouble> >   &fielddata,
@@ -351,6 +358,7 @@ inline void FieldIO::Import(const std::string                      &infilename,
  * @param fieldmetadatamap  On return contains the field metadata map from @p
  *                          filename.
  */
+ 
 inline DataSourceSharedPtr FieldIO::ImportFieldMetaData(
     const std::string &filename, FieldMetaDataMap &fieldmetadatamap)
 {

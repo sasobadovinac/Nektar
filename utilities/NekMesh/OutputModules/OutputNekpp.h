@@ -75,8 +75,12 @@ private:
     void WriteXmlCurves(TiXmlElement *pRoot);
     /// Writes the <COMPOSITES> section of the XML file.
     void WriteXmlComposites(TiXmlElement *pRoot);
+    
+#ifdef NEKTAR_USE_MESHGEN
     void WriteXmlCADId(TiXmlElement *pRoot);
     void WriteXmlCAD(TiXmlElement *pRoot);
+#endif
+
     /// Writes the <DOMAIN> section of the XML file.
     void WriteXmlDomain(TiXmlElement *pRoot);
     /// Writes the <EXPANSIONS> section of the XML file.

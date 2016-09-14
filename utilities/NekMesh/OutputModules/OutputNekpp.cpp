@@ -125,11 +125,13 @@ void OutputNekpp::Process()
     WriteXmlEdges(geomTag);
     WriteXmlFaces(geomTag);
     WriteXmlElements(geomTag);
+    #ifdef NEKTAR_USE_MESHGEN
     if(m_mesh->m_hasCAD && !m_config["nocad"].beenSet)
     {
         WriteXmlCADId(geomTag);
         WriteXmlCAD(geomTag);
     }
+    #endif
     WriteXmlCurves(geomTag);
     WriteXmlComposites(geomTag);
     WriteXmlDomain(geomTag);
@@ -1002,6 +1004,7 @@ void OutputNekpp::WriteXmlCurves(TiXmlElement *pRoot)
     pRoot->LinkEndChild(curved);
 }
 
+#ifdef NEKTAR_USE_MESHGEN
 void OutputNekpp::WriteXmlCAD(TiXmlElement *pRoot)
 {
     int vertcnt = 0;
@@ -1159,6 +1162,8 @@ void OutputNekpp::WriteXmlCADId(TiXmlElement *pRoot)
     cadTag->SetAttribute("NAME", m_mesh->m_CADId);
     pRoot->LinkEndChild(cadTag);
 }
+
+#endif
 
 void OutputNekpp::WriteXmlComposites(TiXmlElement *pRoot)
 {

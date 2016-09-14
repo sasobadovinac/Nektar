@@ -98,9 +98,9 @@ protected:
         CommDataType recvtype);
     LIB_UTILITIES_EXPORT virtual void v_Bcast(void *buffer, int count,
                                               CommDataType dt, int root);
-    LIB_UTILITIES_EXPORT virtual void v_Exscan(
-        Array<OneD, unsigned long long> &pData, const enum ReduceOperator pOp,
-        Array<OneD, unsigned long long> &ans);
+    LIB_UTILITIES_EXPORT virtual void v_Exscan(void *pData, void *ans, int count,
+                                               CommDataType sendType,
+                                               const enum ReduceOperator pOp);
     LIB_UTILITIES_EXPORT virtual void v_Gather(void *sendbuf, int sendcount,
                                                CommDataType sendtype,
                                                void *recvbuf, int recvcount,

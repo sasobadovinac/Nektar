@@ -3,6 +3,7 @@
 
 #include <LibUtilities/Memory/NekMemoryManager.hpp>
 #include <LibUtilities/BasicUtils/SessionReader.h>
+#include <LibUtilities/BasicUtils/FieldIOXml.h>
 #include <LibUtilities/Communication/Comm.h>
 #include <MultiRegions/ContField2D.h>
 #include <SpatialDomains/MeshGraph2D.h>
@@ -55,8 +56,13 @@ int main(int argc, char *argv[])
 
     try
     {
+        /*
         LibUtilities::FieldIOSharedPtr fld =
-            MemoryManager<LibUtilities::FieldIO>::AllocateSharedPtr(vSession->GetComm());
+            MemoryManager<LibUtilities::FieldIOXml>::AllocateSharedPtr(vSession->GetComm());
+        */
+
+       LibUtilities::FieldIOSharedPtr fld =
+            LibUtilities::FieldIO::CreateDefault(vSession);
 
         //----------------------------------------------
         // Read in mesh from input file

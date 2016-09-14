@@ -36,10 +36,25 @@
 #ifndef NEKTAR_LIB_UTILITIES_BASIC_UTILS_SHARED_ARRAY_HPP
 #define NEKTAR_LIB_UTILITIES_BASIC_UTILS_SHARED_ARRAY_HPP
 
-#ifdef NEKTAR_USE_KOKKOS
+#include <vector>
+#include <boost/assign/list_of.hpp>
+
+/*#ifdef NEKTAR_USE_KOKKOS
     #include <LibUtilities/BasicUtils/SharedArrayKokkos.hpp>
 #else
     #include <LibUtilities/BasicUtils/SharedArrayNative.hpp>
-#endif
+#endif*/
+#include <LibUtilities/BasicUtils/SharedArrayNative.hpp>
+
+namespace Nektar
+{
+namespace LibUtilities
+{
+    static std::vector<NekDouble> NullNekDoubleVector;
+    static std::vector<unsigned int> NullUnsignedIntVector;
+    static std::vector<std::vector<NekDouble> > NullVectorNekDoubleVector =
+        boost::assign::list_of(NullNekDoubleVector);
+}
+}
 
 #endif //NEKTAR_LIB_UTILITIES_BASIC_UTILS_SHARED_ARRAY_HPP

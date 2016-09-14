@@ -37,6 +37,7 @@
 #define NEKTAR_LIB_UTILITIES_COMMDATATYPE_H
 
 #include <LibUtilities/BasicConst/NektarUnivTypeDefs.hpp>
+#include <LibUtilities/BasicUtils/SharedArray.hpp>
 #include <vector>
 
 #ifdef NEKTAR_USE_MPI
@@ -74,7 +75,6 @@ enum CommDataType
 
 namespace Nektar
 {
-template <typename Dim, typename DataType> class Array;
 
 namespace LibUtilities
 {
