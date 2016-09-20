@@ -1,3 +1,5 @@
+
+
 ////////////////////////////////////////////////////////////////////////////////
 //
 //  File: ProcessJac.h
@@ -117,4 +119,124 @@ private:
 }
 }
 
+
+KOKKOS_INLINE_FUNCTION
+int num_min(int & mn){return INT_MIN;}
+KOKKOS_INLINE_FUNCTION
+int num_max(int & mx){return INT_MAX;}
+KOKKOS_INLINE_FUNCTION
+double num_min(double & mn){return DBL_MIN;}
+KOKKOS_INLINE_FUNCTION
+double num_max(double & mx){return DBL_MAX;}
+
+
+template <typename T>
+struct MinFunctor {
+  Kokkos::View<T*> vect;
+  MinFunctor(const Kokkos::View<T*> vect_):
+    vect(vect_) {}
+  KOKKOS_INLINE_FUNCTION
+  void init(T& mn )const {
+    mn = num_max(mn);
+  }
+  KOKKOS_INLINE_FUNCTION
+  void join(volatile T& mn, const volatile T& update) const {
+    if(update < mn) {
+      mn = update;
+    }
+  }
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const int& i, T& mn) const {
+    const T value = vect(i);
+    if(value < mn) {
+       mn = value;
+    }
+  }
+};
+
+template <typename T>
+struct MaxFunctor {
+  Kokkos::View<T*> vect;
+  MaxFunctor(const Kokkos::View<T*> vect_):
+    vect(vect_) {}
+  KOKKOS_INLINE_FUNCTION
+  void init(T& mx) const {
+    mx = num_min(mx);
+  }
+  KOKKOS_INLINE_FUNCTION
+  void join(volatile T& mx, const volatile T& update) const {
+    if(update > mx) {
+      mx = update;
+    }
+  }
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const int& i, T& mx) const {
+    const T value = vect(i);
+    if(value > mx) {
+       mx = value;
+    }
+  }
+};
+
+template <typename T>
+void process()
+{
+  // initialise some vector
+  T nset = 1024;
+  Kokkos::View< T*> points("Points",nset);
+  typename Kokkos::View<T*>::HostMirror h_points = Kokkos::create_mirror_view(points);
+  srand(56779);
+  for(int i = 0; i < nset; i++)
+  {
+      //h_points(i) = 1.0*i;
+      h_points(i) = rand()%(1024);
+  }
+  // compute sum min and max of vector on CPU for comparison
+  T h_sm = 0;
+  T h_mn = num_max(h_mn);
+  T h_mx = num_min(h_mx);
+  for(int i = 0; i < nset; i++)
+  {
+      h_sm += h_points[i];
+      h_mn = (h_mn > h_points[i] ? h_points[i] : h_mn);
+      h_mx = (h_mx < h_points[i] ? h_points[i] : h_mx);
+  }
+  // copy vector to GPU
+  Kokkos::deep_copy(points,h_points);
+  typedef Kokkos::RangePolicy<Kokkos::DefaultExecutionSpace> range_policy;
+
+  // calculate sum of vector on GPU
+  T sm = 0.0;
+  Kokkos::parallel_reduce(range_policy(0, nset), KOKKOS_LAMBDA (const int& i, T& sum)
+  {
+      sum += points(i);
+  }, sm);  
+
+  // atomic add of vector on GPU
+  Kokkos::View< T*> sm_atomic("atomic",1);
+  typename Kokkos::View< T*>::HostMirror h_sm_atomic = Kokkos::create_mirror_view(sm_atomic);  
+  h_sm_atomic[0] = 0.0;
+  Kokkos::deep_copy(sm_atomic,h_sm_atomic);
+  
+  Kokkos::parallel_for("summation", range_policy(0,nset), KOKKOS_LAMBDA (const int& i)  {
+      Kokkos::atomic_add(&sm_atomic[0], points(i));
+  });
+  Kokkos::deep_copy(h_sm_atomic,sm_atomic);
+  std::cout << "h_sm = " << h_sm << ", sm = " << sm << ", h_sm_atomic = " << h_sm_atomic[0] <<std::endl;
+
+  //calculate max of vector on GPU
+  T mx;    
+  MaxFunctor <T> mxfunctor(points);
+  Kokkos::parallel_reduce(range_policy(0, nset) , mxfunctor, mx);
+  std::cout << "h_mx = " << h_mx << ", mx = " << mx <<std::endl;
+
+  //calculate min of vector on GPU
+  T mn;
+  MinFunctor <T> mnfunctor(points);
+  Kokkos::parallel_reduce( range_policy(0, nset) , mnfunctor, mn);
+  std::cout << "h_mn = " << h_mn << ", mn = " << mn <<std::endl;  
+}
+
+
 #endif
+

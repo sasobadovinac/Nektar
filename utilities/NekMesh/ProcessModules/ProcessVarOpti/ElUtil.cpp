@@ -38,6 +38,8 @@
 
 #include <LibUtilities/Foundations/ManagerAccess.h>
 
+#include <Kokkos_Core.hpp>
+
 using namespace std;
 
 namespace Nektar
@@ -281,60 +283,98 @@ vector<Array<OneD, NekDouble> > ElUtil::MappingIdealToRef()
 
 void ElUtil::Evaluate()
 {
-    NekDouble mx = -1.0 * numeric_limits<double>::max();
-    NekDouble mn =  numeric_limits<double>::max();
+    NekDouble mx = -1.0 * DBL_MAX;
+    NekDouble mn =  DBL_MAX;
+
+    //int res_startInv = res->startInv;
+    //NekDouble res_worstJac = res->worstJac;
+    int nodes_size = nodes.size();
+
+    NekMatrix<NekDouble> derivUtil_VdmDL_0 = derivUtil->VdmDL[0];
+    NekMatrix<NekDouble> derivUtil_VdmDL_1 = derivUtil->VdmDL[1];
+    NekMatrix<NekDouble> derivUtil_VdmDL_2 = derivUtil->VdmDL[2];
+
+    NekVector<NekDouble> X(nodes_size),Y(nodes_size),Z(nodes_size);
+
+    //std::vector<std::vector<NekDouble *> > nodes
+    for(int j = 0; j < nodes_size; j++)
+    {
+        X(j) = *nodes[j][0];
+        Y(j) = *nodes[j][1];
+        Z(j) = *nodes[j][2];
+    }
+        
+
 
     if(m_dim == 2)
     {
-        NekVector<NekDouble> X(nodes.size()),Y(nodes.size());
-        for(int j = 0; j < nodes.size(); j++)
-        {
-            X(j) = *nodes[j][0];
-            Y(j) = *nodes[j][1];
-        }
+        NekVector<NekDouble> x1i(nodes_size),y1i(nodes_size),
+                             x2i(nodes_size),y2i(nodes_size);
 
-        NekVector<NekDouble> x1i(nodes.size()),y1i(nodes.size()),
-                             x2i(nodes.size()),y2i(nodes.size());
+        x1i = derivUtil_VdmDL_0*X;
+        y1i = derivUtil_VdmDL_0*Y;
+        x2i = derivUtil_VdmDL_1*X;
+        y2i = derivUtil_VdmDL_1*Y;
 
-        x1i = derivUtil->VdmDL[0]*X;
-        y1i = derivUtil->VdmDL[0]*Y;
-        x2i = derivUtil->VdmDL[1]*X;
-        y2i = derivUtil->VdmDL[1]*Y;
-
-        for(int j = 0; j < nodes.size(); j++)
+        for(int j = 0; j < nodes_size; j++)
         {
             NekDouble jacDet = x1i(j) * y2i(j) - x2i(j)*y1i(j);
-            mx = max(mx,jacDet);
-            mn = min(mn,jacDet);
+            //mx = max(mx,jacDet);
+            mx = (mx < jacDet ? jacDet : mx);
+            //mn = min(mn,jacDet);
+            mn = (mn > jacDet ? jacDet : mn);
         }
     }
     else if(m_dim == 3)
     {
-        NekVector<NekDouble> X(nodes.size()),Y(nodes.size()),Z(nodes.size());
-        for(int j = 0; j < nodes.size(); j++)
+        
+        /*Kokkos::View<double*,Kokkos::DefaultExecutionSpace>
+                             x1i(nodes_size),y1i(nodes_size),z1i(nodes_size),
+                             x2i(nodes_size),y2i(nodes_size),z2i(nodes_size),
+                             x3i(nodes_size),y3i(nodes_size),z3i(nodes_size);*/
+
+        NekVector<NekDouble> x1i(nodes_size),y1i(nodes_size),z1i(nodes_size),
+                             x2i(nodes_size),y2i(nodes_size),z2i(nodes_size),
+                             x3i(nodes_size),y3i(nodes_size),z3i(nodes_size);
+
+        x1i = derivUtil_VdmDL_0*X;
+        y1i = derivUtil_VdmDL_0*Y;
+        z1i = derivUtil_VdmDL_0*Z;
+        x2i = derivUtil_VdmDL_1*X;
+        y2i = derivUtil_VdmDL_1*Y;
+        z2i = derivUtil_VdmDL_1*Z;
+        x3i = derivUtil_VdmDL_2*X;
+        y3i = derivUtil_VdmDL_2*Y;
+        z3i = derivUtil_VdmDL_2*Z;
+
+        Kokkos::View<double*[3][3],Kokkos::DefaultHostExecutionSpace> dxdz("dxdz", nodes_size);
+
+        Kokkos::View<double*,Kokkos::DefaultExecutionSpace> jacDet("jacDet", nodes_size);
+        typename Kokkos::View< double*>::HostMirror h_jacDet = Kokkos::create_mirror_view(jacDet);  
+        
+        typedef Kokkos::RangePolicy<Kokkos::DefaultExecutionSpace> range_policy;
+        typedef Kokkos::RangePolicy<Kokkos::DefaultHostExecutionSpace> range_policy_host;
+        //        for(int j = 0; j < nodes_size; j++)
+        Kokkos::parallel_for(range_policy_host(0,nodes_size), KOKKOS_LAMBDA (const int j)
         {
-            X(j) = *nodes[j][0];
-            Y(j) = *nodes[j][1];
-            Z(j) = *nodes[j][2];
-        }
+            
+            //NekDouble dxdz[3][3];
+            dxdz(j,0,0) = x1i(j);
+            dxdz(j,0,1) = x2i(j);
+            dxdz(j,0,2) = x3i(j);
+            dxdz(j,1,0) = y1i(j);
+            dxdz(j,1,1) = y2i(j);
+            dxdz(j,1,2) = y3i(j);
+            dxdz(j,2,0) = z1i(j);
+            dxdz(j,2,1) = z2i(j);
+            dxdz(j,2,2) = z3i(j);
 
-        NekVector<NekDouble> x1i(nodes.size()),y1i(nodes.size()),z1i(nodes.size()),
-                             x2i(nodes.size()),y2i(nodes.size()),z2i(nodes.size()),
-                             x3i(nodes.size()),y3i(nodes.size()),z3i(nodes.size());
+            h_jacDet(j) = dxdz(j,0,0)*(dxdz(j,1,1)*dxdz(j,2,2)-dxdz(j,2,1)*dxdz(j,1,2))
+                              -dxdz(j,0,1)*(dxdz(j,1,0)*dxdz(j,2,2)-dxdz(j,2,0)*dxdz(j,1,2))
+                              +dxdz(j,0,2)*(dxdz(j,1,0)*dxdz(j,2,1)-dxdz(j,2,0)*dxdz(j,1,1)); 
 
-        x1i = derivUtil->VdmDL[0]*X;
-        y1i = derivUtil->VdmDL[0]*Y;
-        z1i = derivUtil->VdmDL[0]*Z;
-        x2i = derivUtil->VdmDL[1]*X;
-        y2i = derivUtil->VdmDL[1]*Y;
-        z2i = derivUtil->VdmDL[1]*Z;
-        x3i = derivUtil->VdmDL[2]*X;
-        y3i = derivUtil->VdmDL[2]*Y;
-        z3i = derivUtil->VdmDL[2]*Z;
-
-        for(int j = 0; j < nodes.size(); j++)
-        {
-            DNekMat dxdz(3,3,1.0,eFULL);
+            /*
+            DNekMat dxdz(3,3,1.0,eFULL); // replace
             dxdz(0,0) = x1i(j);
             dxdz(0,1) = x2i(j);
             dxdz(0,2) = x3i(j);
@@ -347,11 +387,23 @@ void ElUtil::Evaluate()
 
             NekDouble jacDet = dxdz(0,0)*(dxdz(1,1)*dxdz(2,2)-dxdz(2,1)*dxdz(1,2))
                               -dxdz(0,1)*(dxdz(1,0)*dxdz(2,2)-dxdz(2,0)*dxdz(1,2))
-                              +dxdz(0,2)*(dxdz(1,0)*dxdz(2,1)-dxdz(2,0)*dxdz(1,1));
+                              +dxdz(0,2)*(dxdz(1,0)*dxdz(2,1)-dxdz(2,0)*dxdz(1,1));*/
+        });
 
-            mx = max(mx,jacDet);
-            mn = min(mn,jacDet);
-        }
+        Kokkos::deep_copy(jacDet,h_jacDet);
+        
+        MaxFunctor <double> mxfunctor(jacDet);
+        Kokkos::parallel_reduce(range_policy(0, nodes_size) , mxfunctor, mx);
+        MinFunctor <double> mnfunctor(jacDet);
+        Kokkos::parallel_reduce(range_policy(0, nodes_size) , mnfunctor, mn);
+
+        /*for(int j = 0; j < nodes_size; j++)
+        {
+            //  mx = max(mx,jacDet);
+            mx = (mx < h_jacDet(j) ? h_jacDet(j) : mx);
+            //  mn = min(mn,jacDet);
+            mn = (mn > h_jacDet(j) ? h_jacDet(j) : mn);
+        }*/
     }
 
     mtx2.lock();
@@ -359,7 +411,11 @@ void ElUtil::Evaluate()
     {
         res->startInv++;
     }
-    res->worstJac = min(res->worstJac,mn/mx);
+    //  res->worstJac = min(res->worstJac,mn/mx);
+    res->worstJac = (res->worstJac > mn/mx ? mn/mx : res->worstJac);
+
+    //res->worstJac = res_worstJac;
+    //res->startInv = res_startInv;
     mtx2.unlock();
 
     //mtx2.lock();
@@ -368,6 +424,7 @@ void ElUtil::Evaluate()
 
     minJac = mn;
     scaledJac = mn/mx;
+
 }
 
 ElUtilJob* ElUtil::GetJob()

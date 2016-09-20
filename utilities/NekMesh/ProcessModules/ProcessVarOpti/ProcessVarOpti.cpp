@@ -1,5 +1,3 @@
-
-
 ////////////////////////////////////////////////////////////////////////////////
 //
 //  File: ProcessJac.cpp
@@ -64,112 +62,7 @@ using namespace std;
 using namespace Nektar::NekMeshUtils;
 
 
-template <typename T>
-struct MinFunctor {
-  Kokkos::View<T*> vect;
-  MinFunctor(const Kokkos::View<T*> vect_):
-    vect(vect_) {}
-  KOKKOS_INLINE_FUNCTION
-  void init(T& mn )const {
-    mn = 1e08;
-  }
-  KOKKOS_INLINE_FUNCTION
-  void join(volatile T& mn, const volatile T& update) const {
-    if(update < mn) {
-      mn = update;
-    }
-  }
-  KOKKOS_INLINE_FUNCTION
-  void operator() (const int& i, T& mn) const {
-    const T value = vect(i);
-    if(value < mn) {
-       mn = value;
-    }
-  }
-};
 
-template <typename T>
-struct MaxFunctor {
-  Kokkos::View<T*> vect;
-  MaxFunctor(const Kokkos::View<T*> vect_):
-    vect(vect_) {}
-  KOKKOS_INLINE_FUNCTION
-  void init(T& mx) const {
-    mx = 0.0;
-  }
-  KOKKOS_INLINE_FUNCTION
-  void join(volatile T& mx, const volatile T& update) const {
-    if(update > mx) {
-      mx = update;
-    }
-  }
-  KOKKOS_INLINE_FUNCTION
-  void operator() (const int& i, T& mx) const {
-    const T value = vect(i);
-    if(value > mx) {
-       mx = value;
-    }
-  }
-};
-
-template <typename T>
-void process()
-{
-  // initialise some vector
-  T nset = 1024;
-  Kokkos::View< T*> points("Points",nset);
-  typename Kokkos::View<T*>::HostMirror h_points = Kokkos::create_mirror_view(points);
-  srand(56779);
-  for(int i = 0; i < nset; i++)
-  {
-      //h_points(i) = 1.0*i;
-      h_points(i) = rand()%(1024);
-  }
-  // compute sum min and max of vector on CPU for comparison
-  T h_sm = 0;
-  T h_mn = 1e08;
-  T h_mx = 0;
-  for(int i = 0; i < nset; i++)
-  {
-      h_sm += h_points[i];
-      h_mn = (h_mn > h_points[i] ? h_points[i] : h_mn);
-      h_mx = (h_mx < h_points[i] ? h_points[i] : h_mx);
-  }
-  // copy vector to GPU
-  Kokkos::deep_copy(points,h_points);
-  typedef Kokkos::RangePolicy<Kokkos::DefaultExecutionSpace> range_policy;
-
-  // calculate sum of vector on GPU
-  T sm = 0.0;
-  Kokkos::parallel_reduce(range_policy(0, nset), KOKKOS_LAMBDA (const int& i, T& sum)
-  {
-      sum += points(i);
-  }, sm);  
-
-  // atomic add of vector on GPU
-  Kokkos::View< T*> sm_atomic("atomic",1);
-  typename Kokkos::View< T*>::HostMirror h_sm_atomic = Kokkos::create_mirror_view(sm_atomic);  
-  h_sm_atomic[0] = 0.0;
-  Kokkos::deep_copy(sm_atomic,h_sm_atomic);
-  
-  Kokkos::parallel_for("summation", range_policy(0,nset), KOKKOS_LAMBDA (const int& i)  {
-      Kokkos::atomic_add(&sm_atomic[0], points(i));
-  });
-  Kokkos::deep_copy(h_sm_atomic,sm_atomic);
-  std::cout << "h_sm = " << h_sm << ", sm = " << sm << ", h_sm_atomic = " << h_sm_atomic[0] <<std::endl;
-
-  //calculate max of vector on GPU
-  T mx;    
-  MaxFunctor <T> mxfunctor(points);
-  Kokkos::parallel_reduce(range_policy(0, nset) , mxfunctor, mx);
-  std::cout << "h_mx = " << h_mx << ", mx = " << mx <<std::endl;
-
-  //calculate min of vector on GPU
-  T mn;
-  MinFunctor <T> mnfunctor(points);
-  Kokkos::parallel_reduce( range_policy(0, nset) , mnfunctor, mn);
-  std::cout << "h_mn = " << h_mn << ", mn = " << mn <<std::endl;  
-}
 
 
 
@@ -377,10 +270,14 @@ void ProcessVarOpti::Process()
     }
     typedef Kokkos::RangePolicy<Kokkos::DefaultHostExecutionSpace> range_policy_host;
 
-    Kokkos::parallel_for(range_policy_host(0,dataSet.size()), KOKKOS_LAMBDA (const int i)
+    /*Kokkos::parallel_for(range_policy_host(0,dataSet.size()), KOKKOS_LAMBDA (const int i)
     {
         dataSet[i]->Evaluate();
-    });
+    });*/
+    for (int i = 0; i < dataSet.size(); ++i)
+    {
+      dataSet[i]->Evaluate();
+    }
 
     if(m_config["histfile"].beenSet)
     {
@@ -545,10 +442,15 @@ void ProcessVarOpti::Process()
         res->worstJac = numeric_limits<double>::max();
 
         
-        Kokkos::parallel_for(range_policy_host(0,dataSet.size()), KOKKOS_LAMBDA (const int i)
+        /*Kokkos::parallel_for(range_policy_host(0,dataSet.size()), KOKKOS_LAMBDA (const int i)
         {
             dataSet[i]->Evaluate();
-        });
+        });*/
+        for (int i = 0; i < dataSet.size(); ++i)
+        {
+          dataSet[i]->Evaluate();
+        }
+
 
 
         if(m_config["resfile"].beenSet)
@@ -598,4 +500,3 @@ void ProcessVarOpti::Process()
 
 }
 }
-
