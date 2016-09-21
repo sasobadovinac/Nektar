@@ -128,6 +128,10 @@ KOKKOS_INLINE_FUNCTION
 double num_min(double & mn){return DBL_MIN;}
 KOKKOS_INLINE_FUNCTION
 double num_max(double & mx){return DBL_MAX;}
+KOKKOS_INLINE_FUNCTION
+float num_min(float & mn){return FLT_MIN;}
+KOKKOS_INLINE_FUNCTION
+float num_max(float & mx){return FLT_MAX;}
 
 
 template <typename T>
