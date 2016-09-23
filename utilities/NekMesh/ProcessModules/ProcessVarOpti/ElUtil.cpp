@@ -354,41 +354,19 @@ void ElUtil::Evaluate()
 
         Kokkos::View<double**> devA("devA",nodes_size,nodes_size);
         typename Kokkos::View< double**>::HostMirror h_devA = Kokkos::create_mirror_view(devA);        
-        Kokkos::View<double**,Kokkos::LayoutLeft, Kokkos::DefaultHostExecutionSpace> t_devA( derivUtil_VdmDL_0.GetRawPtr() ,nodes_size, nodes_size);
-        h_devA = t_devA;
-
+        //Kokkos::View<double**,Kokkos::LayoutLeft, Kokkos::DefaultHostExecutionSpace> t_devA( derivUtil_VdmDL_0.GetRawPtr() ,nodes_size, nodes_size);
+        //h_devA = t_devA;
         
-
-        /*
         int N2 = nodes_size;
         int M2 = nodes_size;
         Kokkos::parallel_for(team_policy_host(N2,M2), KOKKOS_LAMBDA (const member_type_host& teamMember)
         {         
             const int i = teamMember.league_rank();
-            h_devx(i) = h2_devx[i];
             Kokkos::parallel_for(Kokkos::TeamThreadRange( teamMember, M2 ), [&] (const int j)
-            {
-                //h_devA(i,j) = h2_devA[i][j]; 
-                //h_devA(i,j) = h2_devA[i+j*M1];
-                //h_devA(i,j) = h2_devA[i*N1+j];
-                h_devA(i,j) = derivUtil_VdmDL_0(i,j);
-                if (i == 0 && j == 0)
-                {
-                    //printf("h_devA(%i,%i): %e\n", i,j, h_devA(i,j));
-                }
-                
+            {                
+                h_devA(i,j) = derivUtil_VdmDL_0(i,j);                
             }); 
-        });*/
-        
-        /*for (int i = 0; i < N1; ++i)
-        {
-            h_devx(i) = h2_devx[i];
-            for (int j = 0; j < M1; ++j)
-            {
-                h_devA(i,j) = derivUtil_VdmDL_0(i,j);
-            }
-        }*/
-
+        });
 
             // check for devA -----------------------------------
         double VdmDL;
@@ -408,18 +386,6 @@ void ElUtil::Evaluate()
 
         Kokkos::View<double*> devy("devy",nodes_size);
         typename Kokkos::View< double*>::HostMirror h_devy = Kokkos::create_mirror_view(devy);
-/*
-        int N = nodes_size;
-        int M = nodes_size;
-        for (int i = 0; i < N; ++i)
-        {
-            h_devy[i] = 0;  
-            for (int j = 0; j < M; ++j)
-            {
-                h_devy(i) += h_devA( i , j ) * h_devx( j );
-            }
-        }
-*/
 
         Kokkos::deep_copy(devx,h_devx);
         Kokkos::deep_copy(devA,h_devA);
@@ -429,13 +395,12 @@ void ElUtil::Evaluate()
         /*Kokkos::parallel_for( team_policy( N , Kokkos::AUTO ), KOKKOS_LAMBDA ( const member_type& teamMember)
         {
             const int i = teamMember.league_rank();
-            devy[i] = 0;           
+            devy(i) = 0.0;           
             Kokkos::parallel_reduce( Kokkos::TeamThreadRange( teamMember, M ), [&] (const int j, double &update )
             {
                 update += devA( i , j ) * devx( j );
-            }, devy[i]);      
-        }); */  
-
+            }, devy(i));      
+        }); // not working yet */
         Kokkos::parallel_for( range_policy( 0 , N ), KOKKOS_LAMBDA ( const int i)
         {
             devy[i] = 0;           
@@ -443,7 +408,7 @@ void ElUtil::Evaluate()
             {
                 devy(i) += devA( i , j ) * devx( j );
             }      
-        });         
+        });      
 
         Kokkos::deep_copy(h_devy,devy);
 
@@ -457,11 +422,6 @@ void ElUtil::Evaluate()
         NekVector<NekDouble> h3_x3i = derivUtil_VdmDL_2*X;
         NekVector<NekDouble> h3_y3i = derivUtil_VdmDL_2*Y;
         NekVector<NekDouble> h3_z3i = derivUtil_VdmDL_2*Z;
-
-        Kokkos::View<double*> y1i("y1i",nodes_size);
-        typename Kokkos::View<double*>::HostMirror h_y1i = Kokkos::create_mirror_view(y1i);        
-        Kokkos::View<double*,Kokkos::DefaultHostExecutionSpace> t_y1i( h3_y1i.GetRawPtr(),nodes_size);
-        h_y1i = t_y1i;
         
         // pure GPU version =====================================================       
         Kokkos::View<double*[9]> deriv("deriv",nodes_size);
@@ -470,9 +430,9 @@ void ElUtil::Evaluate()
             //check for devy -------------------------------
         for (int i = 0; i < nodes_size; ++i)
         {
-            if (h_devy[i] != h_y1i[i])
+            if (abs(h_devy[i] - h3_y1i[i]) > 1e-08)
             {
-                printf("h_devy[%i] = %e -- h_y1i[%i] = %e \n", i, h_devy[i],i, h_y1i[i]);
+                printf("h_devy[%i] = %e -- h3_y1i[%i] = %e \n", i, h_devy[i],i, h3_y1i[i]);
             }
         } //----------------------------------------------
         
@@ -480,7 +440,6 @@ void ElUtil::Evaluate()
         Kokkos::parallel_for(range_policy_host(0,nodes_size), KOKKOS_LAMBDA (const int i)
         {         
             h_deriv(i,0) = h3_x1i[i];
-            //h_deriv(i,1) = h_y1i[i];
             //h_deriv(i,1) = h3_y1i[i];
             h_deriv(i,1) = h_devy(i);
             h_deriv(i,2) = h3_z1i[i];
@@ -553,7 +512,7 @@ void ElUtil::Evaluate()
                               -dxdz(j,0,1)*(dxdz(j,1,0)*dxdz(j,2,2)-dxdz(j,2,0)*dxdz(j,1,2))
                               +dxdz(j,0,2)*(dxdz(j,1,0)*dxdz(j,2,1)-dxdz(j,2,0)*dxdz(j,1,1));
         });
-        Kokkos::deep_copy(jacDet,h_jacDet); */
+        Kokkos::deep_copy(jacDet,h_jacDet); // ========================================*/
         
         // resume
         MaxFunctor <double> mxfunctor(jacDet);
