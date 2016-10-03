@@ -40,6 +40,8 @@
 
 #include <LibUtilities/BasicUtils/Thread.h>
 
+#include <Kokkos_Core.hpp>
+
 namespace Nektar
 {
 namespace Utilities
@@ -78,16 +80,20 @@ public:
         return m_el;
     }
 
+    DerivUtilSharedPtr derivUtil; // be careful
+    ResidualSharedPtr res; // be careful
+    std::vector<Array<OneD, NekDouble> > MappingIdealToRef(); // be careful
+
 private:
 
-    std::vector<Array<OneD, NekDouble> > MappingIdealToRef();
+    //std::vector<Array<OneD, NekDouble> > MappingIdealToRef();
 
     ElementSharedPtr m_el;
     int m_dim;
     int m_mode;
 
-    DerivUtilSharedPtr derivUtil;
-    ResidualSharedPtr res;
+    //DerivUtilSharedPtr derivUtil;
+    //ResidualSharedPtr res;
 };
 typedef boost::shared_ptr<ElUtil> ElUtilSharedPtr;
 

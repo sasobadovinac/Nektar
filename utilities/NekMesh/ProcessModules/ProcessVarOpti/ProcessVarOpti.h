@@ -95,6 +95,8 @@ public:
     virtual ~ProcessVarOpti();
 
     virtual void Process();
+    
+    void PreEvaluate();
 
 private:
     typedef std::map<int, std::pair<std::vector<int>,
@@ -102,6 +104,8 @@ private:
 
     void BuildDerivUtil();
     void GetElementMap();
+
+
     std::vector<ElementSharedPtr> GetLockedElements(NekDouble thres);
     std::vector<Array<OneD, NekDouble> > MappingIdealToRef(ElementSharedPtr el);
     std::vector<std::vector<NodeSharedPtr> > GetColouredNodes(std::vector<ElementSharedPtr> elLock);

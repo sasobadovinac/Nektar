@@ -261,23 +261,29 @@ void ProcessVarOpti::Process()
         Kokkos::DefaultHostExecutionSpace::initialize(args.num_threads);
         Kokkos::DefaultExecutionSpace::initialize();
 
-          std::cout << " Template using int" << std::endl;  
-          process<int>();
-          std::cout << " Template using double" << std::endl; 
-          process<double>();
+        std::cout << " Template using int" << std::endl;  
+        process<int>();
+        std::cout << " Template using double" << std::endl; 
+        process<double>();
         
         
     }
-    typedef Kokkos::RangePolicy<Kokkos::DefaultHostExecutionSpace> range_policy_host;
+    
+    PreEvaluate();
 
+
+
+    typedef Kokkos::RangePolicy<Kokkos::DefaultHostExecutionSpace> range_policy_host;    
     /*Kokkos::parallel_for(range_policy_host(0,dataSet.size()), KOKKOS_LAMBDA (const int i)
     {
         dataSet[i]->Evaluate();
     });*/
     for (int i = 0; i < dataSet.size(); ++i)
     {
-      dataSet[i]->Evaluate();
+      //dataSet[i]->Evaluate();
     }
+
+
 
     if(m_config["histfile"].beenSet)
     {
@@ -448,8 +454,9 @@ void ProcessVarOpti::Process()
         });*/
         for (int i = 0; i < dataSet.size(); ++i)
         {
-          dataSet[i]->Evaluate();
+          //dataSet[i]->Evaluate();
         }
+        PreEvaluate();
 
 
 
@@ -498,5 +505,177 @@ void ProcessVarOpti::Process()
     }
 }
 
+void ProcessVarOpti::PreEvaluate()
+{
+    typedef Kokkos::RangePolicy<Kokkos::DefaultExecutionSpace> range_policy;
+    typedef Kokkos::RangePolicy<Kokkos::DefaultHostExecutionSpace> range_policy_host;
+    typedef Kokkos::TeamPolicy<Kokkos::DefaultExecutionSpace> team_policy;
+    typedef Kokkos::TeamPolicy<Kokkos::DefaultHostExecutionSpace> team_policy_host;
+    typedef Kokkos::TeamPolicy<Kokkos::DefaultExecutionSpace>::member_type  member_type;
+    typedef Kokkos::TeamPolicy<Kokkos::DefaultHostExecutionSpace>::member_type  member_type_host;
+
+    int nodes_size = dataSet[0]->nodes.size();
+    int dataSet_size = dataSet.size();
+
+    // initialise min and max Jacobian
+    Kokkos::View<double*> mx("mx",dataSet_size);
+    typename Kokkos::View< double*>::HostMirror h_mx = Kokkos::create_mirror_view(mx);
+    Kokkos::View<double*> mn("mn",dataSet_size);
+    typename Kokkos::View< double*>::HostMirror h_mn = Kokkos::create_mirror_view(mn);
+
+   
+    Kokkos::parallel_for(range_policy(0,dataSet_size), KOKKOS_LAMBDA (const int k)
+    {
+      mx(k) = -1.0 * DBL_MAX;
+      mn(k) = DBL_MAX;
+    });
+
+
+    // initialising and copying Vandermonde coefficients onto the GPU
+    Kokkos::View<double**> VdmDL_0("VdmDL_0",nodes_size,nodes_size);
+    typename Kokkos::View< double**>::HostMirror h_VdmDL_0 = Kokkos::create_mirror_view(VdmDL_0);
+    Kokkos::View<double**> VdmDL_1("VdmDL_1",nodes_size,nodes_size);
+    typename Kokkos::View< double**>::HostMirror h_VdmDL_1 = Kokkos::create_mirror_view(VdmDL_1);        
+    Kokkos::View<double**> VdmDL_2("VdmDL_2",nodes_size,nodes_size);
+    typename Kokkos::View< double**>::HostMirror h_VdmDL_2 = Kokkos::create_mirror_view(VdmDL_2);
+
+    NekMatrix<NekDouble> derivUtil_VdmDL_0 = dataSet[0]->derivUtil->VdmDL[0];
+    NekMatrix<NekDouble> derivUtil_VdmDL_1 = dataSet[0]->derivUtil->VdmDL[1];
+    NekMatrix<NekDouble> derivUtil_VdmDL_2 = dataSet[0]->derivUtil->VdmDL[2];
+    int N2 = nodes_size;
+    int M2 = nodes_size;
+    Kokkos::parallel_for(team_policy_host(N2,M2), KOKKOS_LAMBDA (const member_type_host& teamMember)
+    {         
+        const int i = teamMember.league_rank();
+        Kokkos::parallel_for(Kokkos::TeamThreadRange( teamMember, M2 ), [&] (const int j)
+        {                
+            h_VdmDL_0(i,j) = derivUtil_VdmDL_0(i,j);
+            h_VdmDL_1(i,j) = derivUtil_VdmDL_1(i,j);
+            h_VdmDL_2(i,j) = derivUtil_VdmDL_2(i,j);                
+        }); 
+    });        
+   
+    Kokkos::deep_copy(VdmDL_0,h_VdmDL_0);
+    Kokkos::deep_copy(VdmDL_1,h_VdmDL_1);
+    Kokkos::deep_copy(VdmDL_2,h_VdmDL_2);
+
+    // initialise and copy node coordinates    
+    Kokkos::View<double**> X("X",dataSet_size, nodes_size);
+    typename Kokkos::View< double**>::HostMirror h_X = Kokkos::create_mirror_view(X);
+    Kokkos::View<double**> Y("Y",dataSet_size, nodes_size);
+    typename Kokkos::View< double**>::HostMirror h_Y = Kokkos::create_mirror_view(Y);
+    Kokkos::View<double**> Z("Z",dataSet_size, nodes_size);
+    typename Kokkos::View< double**>::HostMirror h_Z = Kokkos::create_mirror_view(Z);
+    
+    for (int i = 0; i < dataSet_size; ++i) // change to parallel for loop
+    {
+      for(int j = 0; j < nodes_size; j++)
+      {
+          h_X(i,j) = *dataSet[i]->nodes[j][0];
+          h_Y(i,j) = *dataSet[i]->nodes[j][1];
+          h_Z(i,j) = *dataSet[i]->nodes[j][2];
+      }      
+    }
+    Kokkos::deep_copy(X,h_X);
+    Kokkos::deep_copy(Y,h_Y);
+    Kokkos::deep_copy(Z,h_Z);
+
+
+    for(int k; k < dataSet_size; k++)
+    {
+
+      // do the matrix vector multiplication on the GPU
+      Kokkos::View<double*> x1i("x1i",nodes_size);
+      Kokkos::View<double*> y1i("y1i",nodes_size);
+      Kokkos::View<double*> z1i("z1i",nodes_size);
+      Kokkos::View<double*> x2i("x2i",nodes_size);
+      Kokkos::View<double*> y2i("y2i",nodes_size);
+      Kokkos::View<double*> z2i("z2i",nodes_size);
+      Kokkos::View<double*> x3i("x3i",nodes_size);
+      Kokkos::View<double*> y3i("y3i",nodes_size);
+      Kokkos::View<double*> z3i("z3i",nodes_size);
+  
+      int N = nodes_size;
+      int M = nodes_size;
+      Kokkos::parallel_for( range_policy( 0 , N ), KOKKOS_LAMBDA ( const int i)
+      {
+          x1i[i] = 0;
+          y1i[i] = 0;
+          z1i[i] = 0;
+          x2i[i] = 0;
+          y2i[i] = 0;
+          z2i[i] = 0;
+          x3i[i] = 0;
+          y3i[i] = 0;
+          z3i[i] = 0;              
+          for (int j = 0; j < M; ++j)
+          {
+              x1i(i) += VdmDL_0( i , j ) * X( k, j );
+              y1i(i) += VdmDL_0( i , j ) * Y( k, j );
+              z1i(i) += VdmDL_0( i , j ) * Z( k, j );
+              x2i(i) += VdmDL_1( i , j ) * X( k, j );
+              y2i(i) += VdmDL_1( i , j ) * Y( k, j );
+              z2i(i) += VdmDL_1( i , j ) * Z( k, j );
+              x3i(i) += VdmDL_2( i , j ) * X( k, j );
+              y3i(i) += VdmDL_2( i , j ) * Y( k, j );
+              z3i(i) += VdmDL_2( i , j ) * Z( k, j );
+          }      
+      });     
+
+      
+      // calculate the Jacobian       
+      Kokkos::View<double[3][3]> dxdz("dxdz");
+      Kokkos::View<double*> jacDet("jacDet", nodes_size);
+      Kokkos::parallel_for(range_policy(0,nodes_size), KOKKOS_LAMBDA (const int i)
+      {
+          dxdz(0,0) = x1i(i);
+          dxdz(0,1) = y1i(i);
+          dxdz(0,2) = z1i(i);
+          dxdz(1,0) = x2i(i);
+          dxdz(1,1) = y2i(i);
+          dxdz(1,2) = z2i(i);
+          dxdz(2,0) = x3i(i);
+          dxdz(2,1) = y3i(i);
+          dxdz(2,2) = z3i(i);
+
+          jacDet(i) = dxdz(0,0)*(dxdz(1,1)*dxdz(2,2)-dxdz(2,1)*dxdz(1,2))
+                            -dxdz(0,1)*(dxdz(1,0)*dxdz(2,2)-dxdz(2,0)*dxdz(1,2))
+                            +dxdz(0,2)*(dxdz(1,0)*dxdz(2,1)-dxdz(2,0)*dxdz(1,1));             
+      });
+      
+      MaxFunctor <double> mxfunctor(jacDet);
+      Kokkos::parallel_reduce(range_policy(0, nodes_size) , mxfunctor, h_mx(k));
+      MinFunctor <double> mnfunctor(jacDet);
+      Kokkos::parallel_reduce(range_policy(0, nodes_size) , mnfunctor, h_mn(k));
+      
+    }   
+    
+
+    for(int k; k < dataSet_size; k++)
+    {
+      //mtx2.lock();
+      if(h_mn(k) < 0)
+      {
+          dataSet[k]->res->startInv++;
+      }
+      //  res->worstJac = min(res->worstJac,mn/mx);
+      dataSet[k]->res->worstJac = (dataSet[k]->res->worstJac > h_mn(k)/h_mx(k) ? h_mn(k)/h_mx(k) : dataSet[k]->res->worstJac);
+      //mtx2.unlock();
+
+      //mtx2.lock();
+      dataSet[k]->maps = dataSet[k]->MappingIdealToRef();
+      //mtx2.unlock();
+
+      dataSet[k]->minJac = h_mn(k);
+      //printf("minJac: %f\n", minJac);
+      dataSet[k]->scaledJac = h_mn(k)/h_mx(k);
+      //printf("scaledJac: %f\n", scaledJac);
+    }
+
+
+
 }
-}
+
+} // Utilities
+} // Nektar
+

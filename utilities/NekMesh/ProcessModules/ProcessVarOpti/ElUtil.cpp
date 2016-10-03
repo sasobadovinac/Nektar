@@ -281,6 +281,8 @@ vector<Array<OneD, NekDouble> > ElUtil::MappingIdealToRef()
     return ret;
 }
 
+
+
 void ElUtil::Evaluate()
 {
     NekDouble mx = -1.0 * DBL_MAX;
@@ -299,7 +301,6 @@ void ElUtil::Evaluate()
         {
             X(j) = *nodes[j][0];
             Y(j) = *nodes[j][1];
-            Z(j) = *nodes[j][2];
         }
 
         NekVector<NekDouble> x1i(nodes_size),y1i(nodes_size),
@@ -327,6 +328,8 @@ void ElUtil::Evaluate()
         typedef Kokkos::TeamPolicy<Kokkos::DefaultHostExecutionSpace> team_policy_host;
         typedef Kokkos::TeamPolicy<Kokkos::DefaultExecutionSpace>::member_type  member_type;
         typedef Kokkos::TeamPolicy<Kokkos::DefaultHostExecutionSpace>::member_type  member_type_host;
+        typedef Kokkos::MemoryTraits<Kokkos::RandomAccess> random_memory;
+        //typedef Kokkos::MemoryTraits<Kokkos::Unmanaged> random_memory;
 
         //int res_startInv = res->startInv;
         //NekDouble res_worstJac = res->worstJac;
@@ -366,14 +369,19 @@ void ElUtil::Evaluate()
         NekMatrix<NekDouble> derivUtil_VdmDL_1 = derivUtil->VdmDL[1];
         NekMatrix<NekDouble> derivUtil_VdmDL_2 = derivUtil->VdmDL[2];
 
-        Kokkos::View<double**> VdmDL_0("VdmDL_0",nodes_size,nodes_size);
-        typename Kokkos::View< double**>::HostMirror h_VdmDL_0 = Kokkos::create_mirror_view(VdmDL_0);
-        Kokkos::View<double**> VdmDL_1("VdmDL_1",nodes_size,nodes_size);
-        typename Kokkos::View< double**>::HostMirror h_VdmDL_1 = Kokkos::create_mirror_view(VdmDL_1);        
-        Kokkos::View<double**> VdmDL_2("VdmDL_2",nodes_size,nodes_size);
-        typename Kokkos::View< double**>::HostMirror h_VdmDL_2 = Kokkos::create_mirror_view(VdmDL_2);
+        //Kokkos::View<double**> VdmDL_0("VdmDL_0",nodes_size,nodes_size);
+        Kokkos::View<double**,random_memory> VdmDL_0("VdmDL_0",nodes_size,nodes_size);
+        typename Kokkos::View< const double**>::HostMirror h_VdmDL_0 = Kokkos::create_mirror_view(VdmDL_0);
+        Kokkos::View<double**,random_memory> VdmDL_1("VdmDL_1",nodes_size,nodes_size);
+        typename Kokkos::View< const double**>::HostMirror h_VdmDL_1 = Kokkos::create_mirror_view(VdmDL_1);        
+        Kokkos::View<double**,random_memory> VdmDL_2("VdmDL_2",nodes_size,nodes_size);
+        typename Kokkos::View< const double**>::HostMirror h_VdmDL_2 = Kokkos::create_mirror_view(VdmDL_2);
         //Kokkos::View<double**,Kokkos::LayoutLeft, Kokkos::DefaultHostExecutionSpace> t_VdmDL_0( derivUtil_VdmDL_0.GetRawPtr() ,nodes_size, nodes_size);
         //h_VdmDL_0 = t_VdmDL_0;     // easy version, but will result in wrong layout
+        //Kokkos::View<double**,Kokkos::LayoutLeft, Kokkos::DefaultHostExecutionSpace> t_VdmDL_1( derivUtil_VdmDL_1.GetRawPtr() ,nodes_size, nodes_size);
+        //h_VdmDL_1 = t_VdmDL_1;     // easy version, but will result in wrong layout
+        //Kokkos::View<double**,Kokkos::LayoutLeft, Kokkos::DefaultHostExecutionSpace> t_VdmDL_2( derivUtil_VdmDL_2.GetRawPtr() ,nodes_size, nodes_size);
+        //h_VdmDL_2 = t_VdmDL_2;     // easy version, but will result in wrong layout
         
         int N2 = nodes_size;
         int M2 = nodes_size;
@@ -386,7 +394,7 @@ void ElUtil::Evaluate()
                 h_VdmDL_1(i,j) = derivUtil_VdmDL_1(i,j);
                 h_VdmDL_2(i,j) = derivUtil_VdmDL_2(i,j);                
             }); 
-        });        
+        });      
        
         Kokkos::deep_copy(VdmDL_0,h_VdmDL_0);
         Kokkos::deep_copy(VdmDL_1,h_VdmDL_1);
@@ -395,23 +403,14 @@ void ElUtil::Evaluate()
 
         // do the matrix vector multiplication on the GPU
         Kokkos::View<double*> x1i("x1i",nodes_size);
-        typename Kokkos::View< double*>::HostMirror h_x1i = Kokkos::create_mirror_view(x1i);
         Kokkos::View<double*> y1i("y1i",nodes_size);
-        typename Kokkos::View< double*>::HostMirror h_y1i = Kokkos::create_mirror_view(y1i);
         Kokkos::View<double*> z1i("z1i",nodes_size);
-        typename Kokkos::View< double*>::HostMirror h_z1i = Kokkos::create_mirror_view(z1i);
         Kokkos::View<double*> x2i("x2i",nodes_size);
-        typename Kokkos::View< double*>::HostMirror h_x2i = Kokkos::create_mirror_view(x2i);
         Kokkos::View<double*> y2i("y2i",nodes_size);
-        typename Kokkos::View< double*>::HostMirror h_y2i = Kokkos::create_mirror_view(y2i);
         Kokkos::View<double*> z2i("z2i",nodes_size);
-        typename Kokkos::View< double*>::HostMirror h_z2i = Kokkos::create_mirror_view(z2i);
         Kokkos::View<double*> x3i("x3i",nodes_size);
-        typename Kokkos::View< double*>::HostMirror h_x3i = Kokkos::create_mirror_view(x3i);
         Kokkos::View<double*> y3i("y3i",nodes_size);
-        typename Kokkos::View< double*>::HostMirror h_y3i = Kokkos::create_mirror_view(y3i);
         Kokkos::View<double*> z3i("z3i",nodes_size);
-        typename Kokkos::View< double*>::HostMirror h_z3i = Kokkos::create_mirror_view(z3i);
         
         int N = nodes_size;
         int M = nodes_size;
@@ -426,7 +425,15 @@ void ElUtil::Evaluate()
         }); // not working yet */
         Kokkos::parallel_for( range_policy( 0 , N ), KOKKOS_LAMBDA ( const int i)
         {
-            y1i[i] = 0;           
+            x1i[i] = 0;
+            y1i[i] = 0;
+            z1i[i] = 0;
+            x2i[i] = 0;
+            y2i[i] = 0;
+            z2i[i] = 0;
+            x3i[i] = 0;
+            y3i[i] = 0;
+            z3i[i] = 0;           
             for (int j = 0; j < M; ++j)
             {
                 x1i(i) += VdmDL_0( i , j ) * X( j );
@@ -444,23 +451,23 @@ void ElUtil::Evaluate()
         
         // pure GPU version =====================================================
         // calculate the Jacobian       
-        Kokkos::View<double*[3][3]> dxdz("dxdz", nodes_size);
+        Kokkos::View<double[3][3]> dxdz("dxdz");
         Kokkos::View<double*> jacDet("jacDet", nodes_size);
-        Kokkos::parallel_for(range_policy(0,nodes_size), KOKKOS_LAMBDA (const int j)
+        Kokkos::parallel_for(range_policy(0,nodes_size), KOKKOS_LAMBDA (const int i)
         {
-            dxdz(j,0,0) = x1i(j);
-            dxdz(j,0,1) = y1i(j);
-            dxdz(j,0,2) = z1i(j);
-            dxdz(j,1,0) = x2i(j);
-            dxdz(j,1,1) = y2i(j);
-            dxdz(j,1,2) = z2i(j);
-            dxdz(j,2,0) = x3i(j);
-            dxdz(j,2,1) = y3i(j);
-            dxdz(j,2,2) = z3i(j);
+            dxdz(0,0) = x1i(i);
+            dxdz(0,1) = y1i(i);
+            dxdz(0,2) = z1i(i);
+            dxdz(1,0) = x2i(i);
+            dxdz(1,1) = y2i(i);
+            dxdz(1,2) = z2i(i);
+            dxdz(2,0) = x3i(i);
+            dxdz(2,1) = y3i(i);
+            dxdz(2,2) = z3i(i);
 
-            jacDet(j) = dxdz(j,0,0)*(dxdz(j,1,1)*dxdz(j,2,2)-dxdz(j,2,1)*dxdz(j,1,2))
-                              -dxdz(j,0,1)*(dxdz(j,1,0)*dxdz(j,2,2)-dxdz(j,2,0)*dxdz(j,1,2))
-                              +dxdz(j,0,2)*(dxdz(j,1,0)*dxdz(j,2,1)-dxdz(j,2,0)*dxdz(j,1,1));             
+            jacDet(i) = dxdz(0,0)*(dxdz(1,1)*dxdz(2,2)-dxdz(2,1)*dxdz(1,2))
+                              -dxdz(0,1)*(dxdz(1,0)*dxdz(2,2)-dxdz(2,0)*dxdz(1,2))
+                              +dxdz(0,2)*(dxdz(1,0)*dxdz(2,1)-dxdz(2,0)*dxdz(1,1));             
         });
         
         // CPU-Version with GPU reduce =================================================
