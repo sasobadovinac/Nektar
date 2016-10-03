@@ -688,55 +688,68 @@ namespace Nektar
         {
             ASSERTL1(k1 >= 0 && k1 < GetCoordim(),"invalid first  argument");
             ASSERTL1(k2 >= 0 && k2 < GetCoordim(),"invalid second argument");
-
+            
             int nq = GetTotPoints();
             Array<OneD, NekDouble> tmp(nq);
             Array<OneD, NekDouble> dtmp(nq);
+            Array<OneD, NekDouble> savdtmp;
             VarCoeffType varcoefftypes[3][3]
                 = { {eVarCoeffD00, eVarCoeffD01, eVarCoeffD02},
                     {eVarCoeffD01, eVarCoeffD11, eVarCoeffD12},
                     {eVarCoeffD02, eVarCoeffD12, eVarCoeffD22}
             };
 
+            // nothing to do so zero and return
+            if(mkey.GetNVarCoeff()&&(!mkey.HasVarCoeff(varcoefftypes[k1][k2])))
+            {
+                Vmath::Zero(GetNcoeffs(), outarray, 1);
+                return;
+            }   
+
+            // By default, k1 == k2 has \sigma = 1 (diagonal entries)
             v_BwdTrans(inarray,tmp);
             v_PhysDeriv(k2,tmp,dtmp);
-            if (mkey.GetNVarCoeff()&&
-                (!mkey.ConstFactorExists(eFactorSVVDiffCoeff)))
+            
+            if (mkey.GetNVarCoeff())
             {
+                if(mkey.ConstFactorExists(eFactorSVVDiffCoeff)) // save dtmp
+                {
+                    savdtmp  = Array<OneD, NekDouble>(nq);
+                    Vmath::Vcopy(nq,dtmp,1,savdtmp,1);
+                }
+                
                 if (k1 == k2)
                 {
-                    // By default, k1 == k2 has \sigma = 1 (diagonal entries)
                     if(mkey.HasVarCoeff(varcoefftypes[k1][k1]))
                     {
-                        Vmath::Vmul(nq, mkey.GetVarCoeff(varcoefftypes[k1][k1]), 1, dtmp, 1, dtmp, 1);
+                        Vmath::Vmul(nq, mkey.GetVarCoeff(varcoefftypes[k1][k1]), 1,
+                                    dtmp, 1, dtmp, 1);
                     }
-                    v_IProductWRTDerivBase(k1, dtmp, outarray);
                 }
                 else
                 {
                     // By default, k1 != k2 has \sigma = 0 (off-diagonal entries)
                     if(mkey.HasVarCoeff(varcoefftypes[k1][k2]))
                     {
-                        Vmath::Vmul(nq, mkey.GetVarCoeff(varcoefftypes[k1][k2]), 1, dtmp, 1, dtmp, 1);
-                        v_IProductWRTDerivBase(k1, dtmp, outarray);
-                    }
-                    else
-                    {
-                        Vmath::Zero(GetNcoeffs(), outarray, 1);
+                        Vmath::Vmul(nq, mkey.GetVarCoeff(varcoefftypes[k1][k2]), 1,
+                                    dtmp, 1, dtmp, 1);
                     }
                 }
             }
             else
             {
-                // Multiply by svv tensor
-                if(mkey.ConstFactorExists(eFactorSVVDiffCoeff))
-                {
-                    Vmath::Vcopy(nq, dtmp, 1, tmp, 1);
-                    SVVLaplacianFilter(dtmp,mkey);
-                    Vmath::Vadd(nq, tmp, 1, dtmp, 1, dtmp, 1);
-                }
-                v_IProductWRTDerivBase(k1, dtmp, outarray);
+                savdtmp = dtmp;
             }
+            
+            // Add svv tensor if required 
+            if(mkey.ConstFactorExists(eFactorSVVDiffCoeff))
+            {
+                Vmath::Vcopy(nq, dtmp, 1, tmp, 1);
+                SVVLaplacianFilter(savdtmp,mkey);
+                Vmath::Vadd(nq, tmp, 1, savdtmp, 1, dtmp, 1);
+            }
+
+            v_IProductWRTDerivBase(k1, dtmp, outarray);
         }
 
         void StdExpansion::LaplacianMatrixOp_MatFree_GenericImpl(const Array<OneD, const NekDouble> &inarray,
