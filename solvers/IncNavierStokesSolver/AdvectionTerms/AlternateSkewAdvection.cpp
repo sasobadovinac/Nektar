@@ -113,7 +113,7 @@ void AlternateSkewAdvection::v_Advect(
                 Vmath::Vmul(nPointsTot,inarray[n],1,velocity[0],1,gradV0,1);
                 fields[0]->PhysDeriv(gradV0,outarray[n]);
             }
-            Vmath::Smul(nPointsTot,0.5,outarray[n],1,outarray[n],1); //must be mult by 0.5????
+            Vmath::Smul(nPointsTot,1.0,outarray[n],1,outarray[n],1); //must be mult by 0.5????
             break;
         case 2:
             gradV1 = Array<OneD, NekDouble> (nPointsTot);
