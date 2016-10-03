@@ -1433,6 +1433,21 @@ namespace Nektar
         }
 
         /**
+         * @brief Reset local matrix managers 
+         *
+         * This routine clears all local matrix managers
+         */
+        void ExpList::v_ResetLocalManagers()
+        {
+            // Reset matrix managers.
+            LibUtilities::NekManager<LocalRegions::MatrixKey,
+                DNekScalMat, LocalRegions::MatrixKey::opLess>::ClearManager();
+            LibUtilities::NekManager<LocalRegions::MatrixKey,
+                DNekScalBlkMat, LocalRegions::MatrixKey::opLess>::ClearManager();
+
+        }
+
+        /**
          * @brief Reset geometry information, metrics, matrix managers and
          * geometry information.
          *
@@ -1443,10 +1458,7 @@ namespace Nektar
         void ExpList::v_Reset()
         {
             // Reset matrix managers.
-            LibUtilities::NekManager<LocalRegions::MatrixKey,
-                DNekScalMat, LocalRegions::MatrixKey::opLess>::ClearManager();
-            LibUtilities::NekManager<LocalRegions::MatrixKey,
-                DNekScalBlkMat, LocalRegions::MatrixKey::opLess>::ClearManager();
+            v_ResetLocalManagers();
 
             // Loop over all elements and reset geometry information.
             for (int i = 0; i < m_exp->size(); ++i)
