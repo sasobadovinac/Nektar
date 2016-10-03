@@ -257,22 +257,38 @@ namespace Nektar
             // coefficient case
             StdRegions::VarCoeffMap vVarCoeffMap;
 
+            StdRegions::ConstFactorMap vConstFactorMap = m_linSysKey.GetConstFactors();
+
             // retrieve variable coefficients
             if(m_linSysKey.GetNVarCoeffs() > 0)
             {
-                StdRegions::VarCoeffMap::const_iterator x;
-                cnt = expList->GetPhys_Offset(n);
-                
-                for (x = m_linSysKey.GetVarCoeffs().begin(); 
-                     x != m_linSysKey.GetVarCoeffs().end(); ++x)
+                if(m_linSysKey.GetVarCoeffs().
+                   count(StdRegions::eVarCoeffSVVDiff) != 0)
                 {
-                    vVarCoeffMap[x->first] = x->second + cnt;
+                    ASSERTL0(m_linSysKey.GetConstFactors().
+                             count(StdRegions::eFactorSVVDiffCoeff),
+                             "VarCoeffSVVDiff is set but not FactorSVVDiff");
+
+                    vConstFactorMap[StdRegions::eFactorSVVDiffCoeff] =
+                        m_linSysKey.GetVarCoeff(StdRegions::eVarCoeffSVVDiff)[n];
+                }
+                else
+                {
+                    StdRegions::VarCoeffMap::const_iterator x;
+                    cnt = expList->GetPhys_Offset(n);
+                    
+                    for (x = m_linSysKey.GetVarCoeffs().begin(); 
+                         x != m_linSysKey.GetVarCoeffs().end(); ++x)
+                    {
+                        vVarCoeffMap[x->first] = x->second + cnt;
+                    }
                 }
             }
 
             LocalRegions::MatrixKey matkey(m_linSysKey.GetMatrixType(),
                                            vExp->DetShapeType(),
-                                           *vExp, m_linSysKey.GetConstFactors(),
+                                           *vExp,
+                                           vConstFactorMap,
                                            vVarCoeffMap);
             loc_mat = vExp->GetLocMatrix(matkey);
 
@@ -327,22 +343,37 @@ namespace Nektar
             // coefficient case
             StdRegions::VarCoeffMap vVarCoeffMap;
 
+            StdRegions::ConstFactorMap vConstFactorMap = m_linSysKey.GetConstFactors();
+
             // retrieve variable coefficients
             if(m_linSysKey.GetNVarCoeffs() > 0)
             {
-                StdRegions::VarCoeffMap::const_iterator x;
-                cnt = expList->GetPhys_Offset(n);
-                for (x  = m_linSysKey.GetVarCoeffs().begin(); 
-                     x != m_linSysKey.GetVarCoeffs().end  (); ++x)
+                if(m_linSysKey.GetVarCoeffs().
+                   count(StdRegions::eVarCoeffSVVDiff) != 0)
                 {
-                    vVarCoeffMap[x->first] = x->second + cnt;
+                    ASSERTL0(m_linSysKey.GetConstFactors().
+                             count(StdRegions::eFactorSVVDiffCoeff),
+                             "VarCoeffSVVDiff is set but not FactorSVVDiff");
+
+                    vConstFactorMap[StdRegions::eFactorSVVDiffCoeff] =
+                        m_linSysKey.GetVarCoeff(StdRegions::eVarCoeffSVVDiff)[n];
+                }
+                else
+                {
+                    StdRegions::VarCoeffMap::const_iterator x;
+                    cnt = expList->GetPhys_Offset(n);
+                    for (x  = m_linSysKey.GetVarCoeffs().begin(); 
+                         x != m_linSysKey.GetVarCoeffs().end  (); ++x)
+                    {
+                        vVarCoeffMap[x->first] = x->second + cnt;
+                    }
                 }
             }
 
             LocalRegions::MatrixKey matkey(m_linSysKey.GetMatrixType(),
                                            vExp->DetShapeType(),
                                            *vExp,
-                                           m_linSysKey.GetConstFactors(),
+                                           vConstFactorMap,
                                            vVarCoeffMap);
 
             loc_mat = vExp->GetLocStaticCondMatrix(matkey);
