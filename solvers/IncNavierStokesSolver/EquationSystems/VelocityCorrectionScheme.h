@@ -40,6 +40,23 @@
 
 namespace Nektar
 {
+
+    struct DynamicViscData
+    {
+        /// String defining type of dynamic viscosity
+        std::string m_type; 
+        /// Scalar field we use for the sensor
+        Array<OneD, NekDouble> m_sensorField;
+        /// Number of steps we do average over
+        int m_numStepsAvg;
+        /// Current steps within average
+        int m_numSteps;
+
+        StdRegions::VarCoeffMap m_savVarCoeffMap;
+    };
+ 
+    typedef boost::shared_ptr<DynamicViscData> DynamicViscDataSharedPtr;
+    
     class VelocityCorrectionScheme: public IncNavierStokes
     {
     public:
@@ -126,6 +143,8 @@ namespace Nektar
         /// Variable Coefficient map for the Laplacian which can be activated as part of SVV or otherwise
         StdRegions::VarCoeffMap m_varCoeffLap; 
 
+        DynamicViscDataSharedPtr m_dynamicVisc;
+        
         // Virtual functions
         virtual void v_GenerateSummary(SolverUtils::SummaryList& s);
 
@@ -166,11 +185,18 @@ namespace Nektar
             return false;
         }
         
-        Array<OneD, Array< OneD, NekDouble> > m_F;
+        virtual void v_ExtraFldOutput( std::vector<Array<OneD, NekDouble> > &fieldcoeffs,
+                                       std::vector<std::string>             &variables);
+        
 
+        Array<OneD, Array< OneD, NekDouble> > m_F; ///< Storage for forcing 
+
+        void DynamicVisc(StdRegions::VarCoeffMap &varCoeffMap);
+            
     private:
         
     };
+
 
     typedef boost::shared_ptr<VelocityCorrectionScheme>
                 VelocityCorrectionSchemeSharedPtr;

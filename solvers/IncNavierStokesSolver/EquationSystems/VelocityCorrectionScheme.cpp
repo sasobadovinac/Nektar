@@ -176,6 +176,20 @@ namespace Nektar
 
         m_session->MatchSolverInfo("SmoothAdvection", "True", m_SmoothAdvection, false);
 
+        if(m_session->DefinesSolverInfo("DynamicViscosity"))
+        {
+
+            m_dynamicVisc = MemoryManager<DynamicViscData>::AllocateSharedPtr();
+            m_dynamicVisc->m_type = m_session->GetSolverInfo("DynamicViscosity");
+
+            m_dynamicVisc->m_sensorField  = Array<OneD, NekDouble>
+                (m_fields[0]->GetTotPoints());
+
+            m_session->LoadParameter("DynamicViscEvalSteps",
+                                     m_dynamicVisc->m_numStepsAvg,100);
+            m_dynamicVisc->m_numSteps     = 0; 
+        }
+
         // set explicit time-intregration class operators
         m_ode.DefineOdeRhs(&VelocityCorrectionScheme::EvaluateAdvection_SetPressureBCs, this);
 
@@ -246,7 +260,7 @@ namespace Nektar
         m_fieldMetaDataMap["TimeStep"] = boost::lexical_cast<std::string>(m_timestep);
 
         // set boundary conditions here so that any normal component
-        // correction are imposed before they are imposed on intiial
+        // correction are imposed before they are imposed on initial
         // field below
         SetBoundaryConditions(m_time);
 
@@ -260,6 +274,7 @@ namespace Nektar
                                   m_fields[i]->UpdatePhys());
             m_F[i] = Array< OneD, NekDouble> (m_fields[0]->GetTotPoints(), 0.0);
         }
+
     }
     
 
@@ -451,11 +466,16 @@ namespace Nektar
         const NekDouble aii_Dt)
     {
         StdRegions::ConstFactorMap factors;
-
+        StdRegions::VarCoeffMap varCoeffMap = StdRegions::NullVarCoeffMap;
         if(m_useSpecVanVisc)
         {
             factors[StdRegions::eFactorSVVCutoffRatio] = m_sVVCutoffRatio;
-            factors[StdRegions::eFactorSVVDiffCoeff]   = m_sVVDiffCoeff/m_kinvis;
+            factors[StdRegions::eFactorSVVDiffCoeff]   = m_sVVDiffCoeff/m_kinvis;            
+        }
+
+        if(m_dynamicVisc)
+        {
+            DynamicVisc(varCoeffMap);
         }
 
         // Solve Helmholtz system and put in Physical space
@@ -464,9 +484,125 @@ namespace Nektar
             // Setup coefficients for equation
             factors[StdRegions::eFactorLambda] = 1.0/aii_Dt/m_diffCoeff[i];
             m_fields[i]->HelmSolve(Forcing[i], m_fields[i]->UpdateCoeffs(),
-                                   NullFlagList, factors);
+                                   NullFlagList,  factors, varCoeffMap);
             m_fields[i]->BwdTrans(m_fields[i]->GetCoeffs(),outarray[i]);
         }
     }
+
+    void VelocityCorrectionScheme::v_ExtraFldOutput(
+            std::vector<Array<OneD, NekDouble> > &fieldcoeffs,
+            std::vector<std::string>             &variables)
+    {
+        if(m_dynamicVisc&&m_steps)
+        {
+            if(m_dynamicVisc->m_savVarCoeffMap.count(StdRegions::eVarCoeffD00) != 0)
+            {
+                int ncoeffs = m_fields[0]->GetNcoeffs();
+
+                variables.push_back("DynamicViscosity");
+                Array<OneD, NekDouble> newfld(ncoeffs); 
+                fieldcoeffs.push_back(newfld);  
+                m_fields[0]->FwdTrans_IterPerExp(m_dynamicVisc->m_savVarCoeffMap[StdRegions::eVarCoeffD00],
+                                                 fieldcoeffs[fieldcoeffs.size()-1]);
+                // rescale with kinvis since we dividing by kinvis earlier
+                Vmath::Smul(ncoeffs,m_kinvis, fieldcoeffs[fieldcoeffs.size()-1],1,
+                            fieldcoeffs[fieldcoeffs.size()-1],1);
+
+                variables.push_back("SensorField");
+                
+                fieldcoeffs.push_back(Array<OneD, NekDouble>(ncoeffs));
+                m_fields[0]->FwdTrans_IterPerExp(m_dynamicVisc->m_sensorField,
+                                                 fieldcoeffs[fieldcoeffs.size()-1]);
+                // rescale with kinvis since we dividing by kinvis earlier
+                Vmath::Smul(ncoeffs,1.0/(m_dynamicVisc->m_numSteps),
+                            fieldcoeffs[fieldcoeffs.size()-1],1,
+                            fieldcoeffs[fieldcoeffs.size()-1],1);
+                
+            }
+        }
+    }
     
+    void VelocityCorrectionScheme::DynamicVisc(StdRegions::VarCoeffMap &varCoeffMap)
+    {
+        // Update sensor field with u^2
+        int nquad = m_fields[0]->GetTotPoints();
+        Array<OneD, NekDouble> energy(nquad,0.0);
+        Vmath::Vmul(nquad,m_fields[m_velocity[0]]->GetPhys(),1,
+                    m_fields[m_velocity[0]]->GetPhys(),1,energy,1);   
+        
+        for(int i = 1; i < m_velocity.num_elements(); ++i)
+        {
+            Vmath::Vvtvp(nquad,m_fields[m_velocity[i]]->GetPhys(),1,
+                         m_fields[m_velocity[i]]->GetPhys(),1,energy,1,
+                         energy,1); 
+        }
+
+        Vmath::Vsqrt(nquad,energy,1,energy,1);
+        Vmath::Vadd(nquad,energy,1,m_dynamicVisc->m_sensorField,1,
+                    m_dynamicVisc->m_sensorField,1);
+        
+        if(m_dynamicVisc->m_numSteps%m_dynamicVisc->m_numStepsAvg == 0)
+        {
+            
+            if (m_comm->GetRank() == 0)
+            {
+                cout << "Reseting up variable viscosity in step:" << m_dynamicVisc->m_numSteps << endl;
+            }
+
+
+            // Release  current linear sys
+            for(int i =0 ; i < m_velocity.num_elements(); ++i)
+            {
+                m_fields[m_velocity[i]]->ClearGlobalLinSysManager();
+                m_fields[m_velocity[i]]->ResetLocalManagers();
+            }
+
+            
+            Vmath::Smul(nquad,1.0/(m_dynamicVisc->m_numSteps +1.0),
+                        m_dynamicVisc->m_sensorField,1,energy,1);
+            
+            Array<OneD, NekDouble> sensor(nquad);
+
+            GetSensor(energy,sensor);
+            
+            // Calculate new viscosity if required
+            if(boost::iequals(m_dynamicVisc->m_type,"VariableDiff"))
+            {
+                // add in dynamics viscosity and then divide by dyanmics viscosity
+                // for consistency with standard implementation.
+                Vmath::Sadd(nquad,m_kinvis,sensor,1,sensor,1);
+                Vmath::Smul(nquad,1.0/m_kinvis,sensor,1,sensor,1);
+                m_dynamicVisc->m_savVarCoeffMap[StdRegions::eVarCoeffD00]
+                    = sensor; 
+                m_dynamicVisc->m_savVarCoeffMap[StdRegions::eVarCoeffD11]
+                    = sensor;
+                if(m_expdim == 3)
+                {
+                    m_dynamicVisc->m_savVarCoeffMap[StdRegions::eVarCoeffD22]
+                        = sensor;
+                }
+            }
+            else if(boost::iequals(m_dynamicVisc->m_type,"VariableSVV"))
+            {
+                int nexp = m_fields[0]->GetExpSize();
+                Array<OneD, NekDouble> svvDiffCoeff(nexp,0.25);
+                
+                // just set svv diff coeff to 0.25
+                varCoeffMap[StdRegions::eVarCoeffSVVDiff] = svvDiffCoeff;
+            }
+            else
+            {
+                ASSERTL0(false,"Unknown definition for SolverInfo DynamicsViscosity");
+            }
+            
+            m_dynamicVisc->m_numSteps = 0; 
+            // reset average field wiht current average
+            Vmath::Vcopy(nquad,energy,1,m_dynamicVisc->m_sensorField,1);
+        }
+
+        m_dynamicVisc->m_numSteps++;
+        
+        varCoeffMap = m_dynamicVisc->m_savVarCoeffMap;
+
+    }
 } //end of namespace
