@@ -322,6 +322,51 @@ void ElUtil::Evaluate()
     }
     else if(m_dim == 3)
     {
+        NekVector<NekDouble> X(nodes.size()),Y(nodes.size()),Z(nodes.size());
+        for(int j = 0; j < nodes.size(); j++)
+        {
+            X(j) = *nodes[j][0];
+            Y(j) = *nodes[j][1];
+            Z(j) = *nodes[j][2];
+        }
+
+        NekVector<NekDouble> x1i(nodes.size()),y1i(nodes.size()),z1i(nodes.size()),
+                             x2i(nodes.size()),y2i(nodes.size()),z2i(nodes.size()),
+                             x3i(nodes.size()),y3i(nodes.size()),z3i(nodes.size());
+
+        x1i = derivUtil->VdmDL[0]*X;
+        y1i = derivUtil->VdmDL[0]*Y;
+        z1i = derivUtil->VdmDL[0]*Z;
+        x2i = derivUtil->VdmDL[1]*X;
+        y2i = derivUtil->VdmDL[1]*Y;
+        z2i = derivUtil->VdmDL[1]*Z;
+        x3i = derivUtil->VdmDL[2]*X;
+        y3i = derivUtil->VdmDL[2]*Y;
+        z3i = derivUtil->VdmDL[2]*Z;
+
+        for(int j = 0; j < nodes.size(); j++)
+        {
+            DNekMat dxdz(3,3,1.0,eFULL);
+            dxdz(0,0) = x1i(j);
+            dxdz(0,1) = x2i(j);
+            dxdz(0,2) = x3i(j);
+            dxdz(1,0) = y1i(j);
+            dxdz(1,1) = y2i(j);
+            dxdz(1,2) = y3i(j);
+            dxdz(2,0) = z1i(j);
+            dxdz(2,1) = z2i(j);
+            dxdz(2,2) = z3i(j);
+
+            NekDouble jacDet = dxdz(0,0)*(dxdz(1,1)*dxdz(2,2)-dxdz(2,1)*dxdz(1,2))
+                   -dxdz(0,1)*(dxdz(1,0)*dxdz(2,2)-dxdz(2,0)*dxdz(1,2))
+                   +dxdz(0,2)*(dxdz(1,0)*dxdz(2,1)-dxdz(2,0)*dxdz(1,1));
+
+            mx = max(mx,jacDet);
+            mn = min(mn,jacDet);
+        }
+    }        
+    else if(m_dim == 4)
+    {
         typedef Kokkos::RangePolicy<Kokkos::DefaultExecutionSpace> range_policy;
         typedef Kokkos::RangePolicy<Kokkos::DefaultHostExecutionSpace> range_policy_host;
         typedef Kokkos::TeamPolicy<Kokkos::DefaultExecutionSpace> team_policy;

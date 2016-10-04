@@ -58,6 +58,18 @@ struct DerivUtil
     int ptsHigh;
     int ptsLow;
 };
+
+struct DerivUtilGPU
+{
+    Kokkos::View<double**> VdmDL_0;
+    typename Kokkos::View< double**>::HostMirror h_VdmDL_0;
+    Kokkos::View<double**> VdmDL_1;
+    typename Kokkos::View< double**>::HostMirror h_VdmDL_1;        
+    Kokkos::View<double**> VdmDL_2;
+    typename Kokkos::View< double**>::HostMirror h_VdmDL_2;
+    int nodes_size;
+};
+
 typedef boost::shared_ptr<DerivUtil> DerivUtilSharedPtr;
 
 enum optimiser
@@ -95,8 +107,9 @@ public:
     virtual ~ProcessVarOpti();
 
     virtual void Process();
-    
-    void PreEvaluate();
+
+    void Load_derivUtil(DerivUtilGPU &derivUtil);
+    void Evaluate(DerivUtilGPU &derivUtil);
 
 private:
     typedef std::map<int, std::pair<std::vector<int>,
@@ -140,7 +153,7 @@ float num_max(float & mx){return FLT_MAX;}
 
 template <typename T>
 struct MinFunctor {
-  Kokkos::View<T*> vect;
+  Kokkos::View<T*> vect;  
   MinFunctor(const Kokkos::View<T*> vect_):
     vect(vect_) {}
   KOKKOS_INLINE_FUNCTION
@@ -221,7 +234,9 @@ void process()
   }, sm);  
 
   // atomic add of vector on GPU
-  Kokkos::View< T*> sm_atomic("atomic",1);
+  Kokkos::View< T[1]> sm_atomic("atomic");
+  //Kokkos::View< T*> sm_atomic;
+  //sm_atomic = Kokkos::View< T*>("atomic",1);
   typename Kokkos::View< T*>::HostMirror h_sm_atomic = Kokkos::create_mirror_view(sm_atomic);  
   h_sm_atomic[0] = 0.0;
   Kokkos::deep_copy(sm_atomic,h_sm_atomic);
