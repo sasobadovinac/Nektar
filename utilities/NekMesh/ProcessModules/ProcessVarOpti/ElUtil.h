@@ -83,13 +83,14 @@ public:
     DerivUtilSharedPtr derivUtil; // be careful
     ResidualSharedPtr res; // be careful
     std::vector<Array<OneD, NekDouble> > MappingIdealToRef(); // be careful
+    int m_dim;  // be careful
 
 private:
 
     //std::vector<Array<OneD, NekDouble> > MappingIdealToRef();
 
     ElementSharedPtr m_el;
-    int m_dim;
+    //int m_dim;
     int m_mode;
 
     //DerivUtilSharedPtr derivUtil;
