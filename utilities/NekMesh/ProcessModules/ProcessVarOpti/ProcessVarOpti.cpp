@@ -66,7 +66,7 @@ void p2rocess2()
 {
 
   int num_vectors = 1000; // number of vectors
-  int len  = 1000;       // length of vectors 
+  int len  = 4000;       // length of vectors 
   int nrepeat = 10;       // number of repeats of the test
 
     // allocate space for vectors to do num_vectors dot products of length len
@@ -130,9 +130,11 @@ void p2rocess2()
   // Error check
   Kokkos::deep_copy(h_c,c);
   int error = 0;
-  for(int i = 0; i < num_vectors; i++) {
+  for(int i = 0; i < num_vectors; i++)
+  {
     double diff = ((h_c(i) - 1.0*(i+1)*len*(len+1)/2))/((i+1)*len*(len+1)/2);
-    if ( diff*diff>1e-20 ) { 
+    if ( diff*diff>1e-20 )
+    { 
       error = 1;
       printf("Error: %i %i %i %lf %lf %e %lf\n",i,num_vectors,len,h_c(i),1.0*(i+1)*len*(len+1)/2,h_c(i) - 1.0*(i+1)*len*(len+1)/2,diff);
     }
@@ -155,6 +157,8 @@ namespace Nektar
 {
 namespace Utilities
 {
+
+boost::mutex mtx3;
 
 ModuleKey ProcessVarOpti::className = GetModuleFactory().RegisterCreatorFunction(
     ModuleKey(eProcessModule, "varopti"),
@@ -594,6 +598,7 @@ void ProcessVarOpti::Load_derivUtil(DerivUtilGPU &derivUtil)
 {
     typedef Kokkos::TeamPolicy<Kokkos::DefaultHostExecutionSpace> team_policy_host;
     typedef Kokkos::TeamPolicy<Kokkos::DefaultHostExecutionSpace>::member_type  member_type_host;
+    //typedef Kokkos::MemoryTraits<Kokkos::RandomAccess> random_memory; //?
     int nodes_size = derivUtil.nodes_size;
     derivUtil.VdmDL_0 = Kokkos::View<double**>("VdmDL_0",nodes_size,nodes_size);
     derivUtil.h_VdmDL_0 = Kokkos::create_mirror_view(derivUtil.VdmDL_0);
@@ -649,7 +654,7 @@ void ProcessVarOpti::Evaluate(DerivUtilGPU &derivUtil)
     {
       h_mx(k) = -1.0 * DBL_MAX;
       h_mn(k) = DBL_MAX;
-    });
+    });    
 
     // initialise and copy node coordinates    
     Kokkos::View<double**> X("X",dataSet_size, nodes_size);
@@ -675,23 +680,19 @@ void ProcessVarOpti::Evaluate(DerivUtilGPU &derivUtil)
     Kokkos::deep_copy(Y,h_Y);
     Kokkos::deep_copy(Z,h_Z);
 
+    // do the matrix vector multiplication on the GPU
+    Kokkos::View<double[3][3]> dxdz("dxdz");
+    Kokkos::View<double[9]> x1i("x1i");
+    Kokkos::View<double**> jacDet("jacDet", dataSet_size, nodes_size);
+    typename Kokkos::View< double**>::HostMirror h_jacDet = Kokkos::create_mirror_view(jacDet);
 
-    for(int k = 0; k < dataSet_size; k++)
+    Kokkos::parallel_for( team_policy( dataSet_size , Kokkos::AUTO ), KOKKOS_LAMBDA ( const member_type& teamMember)
     {
-      // do the matrix vector multiplication on the GPU
-      Kokkos::View<double*> x1i("x1i",nodes_size);
-      Kokkos::View<double*> y1i("y1i",nodes_size);
-      Kokkos::View<double*> z1i("z1i",nodes_size);
-      Kokkos::View<double*> x2i("x2i",nodes_size);
-      Kokkos::View<double*> y2i("y2i",nodes_size);
-      Kokkos::View<double*> z2i("z2i",nodes_size);
-      Kokkos::View<double*> x3i("x3i",nodes_size);
-      Kokkos::View<double*> y3i("y3i",nodes_size);
-      Kokkos::View<double*> z3i("z3i",nodes_size);
+      const int k = teamMember.league_rank();
   
       int N = nodes_size;
       int M = nodes_size;     
-      Kokkos::parallel_for( team_policy( N , Kokkos::AUTO ), KOKKOS_LAMBDA ( const member_type& teamMember)
+      /*Kokkos::parallel_for( team_policy( N , Kokkos::AUTO ), KOKKOS_LAMBDA ( const member_type& teamMember)
       {
           const int i = teamMember.league_rank();
           double x1i_i = 0.0;    
@@ -703,84 +704,126 @@ void ProcessVarOpti::Evaluate(DerivUtilGPU &derivUtil)
           {
             x1i(i) = x1i_i;
           });
-      });
-
-      
-      Kokkos::parallel_for( range_policy( 0 , N ), KOKKOS_LAMBDA ( const int i)
+      });*/
+      Kokkos::parallel_for( Kokkos::TeamThreadRange( teamMember , N ), [&] ( const int i)
       {
-          //x1i[i] = 0.0;
-          y1i[i] = 0.0;
-          z1i[i] = 0.0;
-          x2i[i] = 0.0;
-          y2i[i] = 0.0;
-          z2i[i] = 0.0;
-          x3i[i] = 0.0;
-          y3i[i] = 0.0;
-          z3i[i] = 0.0;              
+          double x1i = 0.0;
+          double y1i = 0.0;
+          double z1i = 0.0;
+          double x2i = 0.0;
+          double y2i = 0.0;
+          double z2i = 0.0;
+          double x3i = 0.0;
+          double y3i = 0.0;
+          double z3i = 0.0;
+                    
           for (int j = 0; j < M; ++j)
           {
-              //x1i(i) += derivUtil.VdmDL_0( i , j ) * X( k , j );
-              y1i(i) += derivUtil.VdmDL_0( i , j ) * Y( k , j );
-              z1i(i) += derivUtil.VdmDL_0( i , j ) * Z( k , j );
-              x2i(i) += derivUtil.VdmDL_1( i , j ) * X( k , j );
-              y2i(i) += derivUtil.VdmDL_1( i , j ) * Y( k , j );
-              z2i(i) += derivUtil.VdmDL_1( i , j ) * Z( k , j );
-              x3i(i) += derivUtil.VdmDL_2( i , j ) * X( k , j );
-              y3i(i) += derivUtil.VdmDL_2( i , j ) * Y( k , j );
-              z3i(i) += derivUtil.VdmDL_2( i , j ) * Z( k , j );
-          }      
-      }); 
-      
-      // calculate the Jacobian       
-      Kokkos::View<double[3][3]> dxdz("dxdz");
-      Kokkos::View<double*> jacDet("jacDet", nodes_size);
-      Kokkos::parallel_for(range_policy(0,nodes_size), KOKKOS_LAMBDA (const int i)
-      {
-          dxdz(0,0) = x1i(i);
-          dxdz(0,1) = y1i(i);
-          dxdz(0,2) = z1i(i);
-          dxdz(1,0) = x2i(i);
-          dxdz(1,1) = y2i(i);
-          dxdz(1,2) = z2i(i);
-          dxdz(2,0) = x3i(i);
-          dxdz(2,1) = y3i(i);
-          dxdz(2,2) = z3i(i);
+              x1i += derivUtil.VdmDL_0( i , j ) * X( k , j );
+              y1i += derivUtil.VdmDL_0( i , j ) * Y( k , j );
+              z1i += derivUtil.VdmDL_0( i , j ) * Z( k , j );
+              x2i += derivUtil.VdmDL_1( i , j ) * X( k , j );
+              y2i += derivUtil.VdmDL_1( i , j ) * Y( k , j );
+              z2i += derivUtil.VdmDL_1( i , j ) * Z( k , j );
+              x3i += derivUtil.VdmDL_2( i , j ) * X( k , j );
+              y3i += derivUtil.VdmDL_2( i , j ) * Y( k , j );
+              z3i += derivUtil.VdmDL_2( i , j ) * Z( k , j );
+          }
+          
+          /*Kokkos::parallel_reduce( Kokkos::ThreadVectorRange(teamMember, M), [&] (const int j, double &update )
+          {
+              update += derivUtil.VdmDL_0( i , j ) * X( k , j );
+          }, x1i);
+          Kokkos::parallel_reduce( Kokkos::ThreadVectorRange(teamMember, M), [&] (const int j, double &update )
+          {
+              update += derivUtil.VdmDL_0( i , j ) * Y( k , j );
+          }, y1i);
+          Kokkos::parallel_reduce( Kokkos::ThreadVectorRange(teamMember, M), [&] (const int j, double &update )
+          {
+              update += derivUtil.VdmDL_0( i , j ) * Z( k , j );
+          }, z1i);
+          Kokkos::parallel_reduce( Kokkos::ThreadVectorRange(teamMember, M), [&] (const int j, double &update )
+          {
+              update += derivUtil.VdmDL_1( i , j ) * X( k , j );
+          }, x2i);
+          Kokkos::parallel_reduce( Kokkos::ThreadVectorRange(teamMember, M), [&] (const int j, double &update )
+          {
+              update += derivUtil.VdmDL_1( i , j ) * Y( k , j );
+          }, y2i);
+          Kokkos::parallel_reduce( Kokkos::ThreadVectorRange(teamMember, M), [&] (const int j, double &update )
+          {
+              update += derivUtil.VdmDL_1( i , j ) * Z( k , j );
+          }, z2i);
+          Kokkos::parallel_reduce( Kokkos::ThreadVectorRange(teamMember, M), [&] (const int j, double &update )
+          {
+              update += derivUtil.VdmDL_2( i , j ) * X( k , j );
+          }, x3i);
+          Kokkos::parallel_reduce( Kokkos::ThreadVectorRange(teamMember, M), [&] (const int j, double &update )
+          {
+              update += derivUtil.VdmDL_2( i , j ) * Y( k , j );
+          }, y3i);
+          Kokkos::parallel_reduce( Kokkos::ThreadVectorRange(teamMember, M), [&] (const int j, double &update )
+          {
+              update += derivUtil.VdmDL_2( i , j ) * Z( k , j );
+          }, z3i);*/
+          
 
-          jacDet(i) = dxdz(0,0)*(dxdz(1,1)*dxdz(2,2)-dxdz(2,1)*dxdz(1,2))
+          
+          // calculate the Jacobian  
+          dxdz(0,0) = x1i;
+          dxdz(0,1) = y1i;
+          dxdz(0,2) = z1i;
+          dxdz(1,0) = x2i;
+          dxdz(1,1) = y2i;
+          dxdz(1,2) = z2i;
+          dxdz(2,0) = x3i;
+          dxdz(2,1) = y3i;
+          dxdz(2,2) = z3i;
+
+          jacDet(k,i) = dxdz(0,0)*(dxdz(1,1)*dxdz(2,2)-dxdz(2,1)*dxdz(1,2))
                             -dxdz(0,1)*(dxdz(1,0)*dxdz(2,2)-dxdz(2,0)*dxdz(1,2))
                             +dxdz(0,2)*(dxdz(1,0)*dxdz(2,1)-dxdz(2,0)*dxdz(1,1));             
       });
-  
-      MaxFunctor <double> mxfunctor(jacDet);
-      Kokkos::parallel_reduce(range_policy(0, nodes_size) , mxfunctor, h_mx(k));
-  
-      MinFunctor <double> mnfunctor(jacDet);
-      Kokkos::parallel_reduce(range_policy(0, nodes_size) , mnfunctor, h_mn(k));
-      
-    }   
+
+    });
+
+    Kokkos::deep_copy(h_jacDet,jacDet);
+
     
-    for(int k = 0; k < dataSet_size; k++)
+    Kokkos::parallel_for(range_policy_host(0,dataSet_size), KOKKOS_LAMBDA (const int k)
     {
-      //mtx2.lock();
-      if(h_mn(k) < 0)
-      {
-          dataSet[k]->res->startInv++;
-      }
-      //  res->worstJac = min(res->worstJac,mn/mx);
-      dataSet[k]->res->worstJac = (dataSet[k]->res->worstJac > h_mn(k)/h_mx(k) ? h_mn(k)/h_mx(k) : dataSet[k]->res->worstJac);
-      //mtx2.unlock();
+        for(int j = 0; j < nodes_size; j++)
+        {
+            //  mx = max(mx,jacDet);
+            h_mx(k) = (h_mx(k) < h_jacDet(k,j) ? h_jacDet(k,j) : h_mx(k));
+            //  mn = min(mn,jacDet);
+            h_mn(k) = (h_mn(k) > h_jacDet(k,j) ? h_jacDet(k,j) : h_mn(k));
+        }    
 
-      //mtx2.lock();
-      dataSet[k]->maps = dataSet[k]->MappingIdealToRef();
-      //mtx2.unlock();
+        mtx3.lock();
+        if(h_mn(k) < 0)
+        {
+            dataSet[k]->res->startInv++;
+        }
+        //  res->worstJac = min(res->worstJac,mn/mx);
+        dataSet[k]->res->worstJac = (dataSet[k]->res->worstJac > h_mn(k)/h_mx(k) ? 
+                                      h_mn(k)/h_mx(k) : dataSet[k]->res->worstJac);
+        mtx3.unlock();
 
-      dataSet[k]->minJac = h_mn(k);
-      //printf("minJac: %f\n", minJac);
-      dataSet[k]->scaledJac = h_mn(k)/h_mx(k);
-      //printf("scaledJac: %f\n", scaledJac);
-    }
+        dataSet[k]->maps = dataSet[k]->MappingIdealToRef();
+        
+        dataSet[k]->minJac = h_mn(k);
+        dataSet[k]->scaledJac = h_mn(k)/h_mx(k); 
+    });
+    
+    /*
+      auto jacDet_sub = Kokkos::subview(jacDet, k, Kokkos::ALL);
+      MaxFunctor <double> mxfunctor(jacDet_sub);
+      Kokkos::parallel_reduce(range_policy(0, nodes_size) , mxfunctor, h_mx(k));
 
-
+      MinFunctor <double> mnfunctor(jacDet_sub);
+      Kokkos::parallel_reduce(range_policy(0, nodes_size) , mnfunctor, h_mn(k));      
+    */
 
 }
 
