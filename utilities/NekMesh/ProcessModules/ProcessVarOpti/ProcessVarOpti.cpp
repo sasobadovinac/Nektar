@@ -353,29 +353,30 @@ void ProcessVarOpti::Process()
         process<int>();
         std::cout << " Template using double" << std::endl; 
         process<double>();
-        
-        
+
+        //p2rocess2(); 
     }
-    typedef Kokkos::RangePolicy<Kokkos::DefaultHostExecutionSpace> range_policy_host;
     
-    
+    // initialise and load derivUtils onto GPU
     DerivUtilGPU derivUtil;
     derivUtil.nodes_size = dataSet[0]->nodes.size();
+    Load_derivUtil(derivUtil);
 
-    Load_derivUtil(derivUtil); 
+    // initialise views for node coordinates on GPU
+    NodesGPU nodes;
+    nodes.nodes_size = dataSet[0]->nodes.size();
+    nodes.dataSet_size = dataSet.size();
+    Create_nodes_view(nodes);    
 
-    Evaluate(derivUtil);
+    // copy nodes onto GPU and evaluate the elements on GPU
+    Load_nodes(nodes);
+    Evaluate(derivUtil, nodes);
+
+    // Evaluate elements on CPU
     /*Kokkos::parallel_for(range_policy_host(0,dataSet.size()), KOKKOS_LAMBDA (const int i)
     {
         dataSet[i]->Evaluate();
-    });
-    for (int i = 0; i < dataSet.size(); ++i)
-    {
-      dataSet[i]->Evaluate();
-    }*/
-
-    //p2rocess2();
-
+    });*/ 
 
 
     if(m_config["histfile"].beenSet)
@@ -401,116 +402,7 @@ void ProcessVarOpti::Process()
          << "Avg set colors:\t\t" << p/nset << endl
          << "Min set:\t\t" << mn << endl
          << "Max set:\t\t" << mx << endl
-         << "Residual tolerance:\t" << restol << endl;
-
-
-    /*
-    if(m_config["Kokkos"].beenSet)
-    {
-        // Initialise Kokkos
-        Kokkos::InitArguments args;
-        args.num_threads = m_config["numthreads"].as<int>();
-        Kokkos::DefaultHostExecutionSpace::initialize(args.num_threads);       
-        Kokkos::DefaultExecutionSpace::initialize();
-
-        int N = pow(2,12) ;       // number of rows 2^12
-        int M = pow(2,10);       // number of columns 2^10
-        int S = pow(2,22) ;      // total size 2^22
-        int nrepeat = 100 ;    // number of repeats of the test
-        
-        // typedef Kokkos::Serial   ExecSpace ;
-        // typedef Kokkos::Threads  ExecSpace ;
-        // typedef Kokkos::OpenMP   ExecSpace ;
-        typedef Kokkos::Cuda        ExecSpace ;
-        
-        // typedef Kokkos::HostSpace    MemSpace; 
-        // typedef Kokkos::OpenMP       MemSpace; 
-        typedef Kokkos::CudaSpace       MemSpace;
-        // typedef Kokkos::CudaUVMSpace MemSpace;
-
-        typedef Kokkos::LayoutLeft   Layout ;
-        // typedef Kokkos::LayoutRight  Layout ;
-
-        typedef Kokkos::RangePolicy<ExecSpace> range_policy ;
-
-        // Allocate y, x vectors and Matrix A:
-        // Device
-        typedef Kokkos::View<double*, Layout, MemSpace>   ViewVectorType;
-        typedef Kokkos::View<double**, Layout, MemSpace>   ViewMatrixType;
-        ViewVectorType devy("devy", N);
-        ViewVectorType devx("devx", M);
-        ViewMatrixType devA("devA", N, M);
-
-        //Host mirror
-        ViewVectorType::HostMirror y =  Kokkos::create_mirror_view(devy);
-        ViewVectorType::HostMirror x =  Kokkos::create_mirror_view(devx);
-        ViewMatrixType::HostMirror A =  Kokkos::create_mirror_view(devA);
-
-
-        // Initialize y vector on host
-        for (int i = 0; i < N; ++i) {
-          y( i ) = 1;
-        }
-
-        // Initialize x vector on host
-        for (int i = 0; i < M; ++i) {
-          x( i ) = 1;
-        }
-
-        // Initialize A matrix, note 2D indexing computation on host
-        for (int j = 0; j < N; ++j) {
-          for ( int i = 0 ; i < M ; ++i ) {
-            A( j , i ) = 1;
-          }
-        }
-
-        //Deep copy host view to device views
-        Kokkos::deep_copy(devy, y);
-        Kokkos::deep_copy(devx, x);
-        Kokkos::deep_copy(devA, A);
-
-        // Timer products
-        struct timeval begin,end;
-        gettimeofday(&begin,NULL);
-
-        for ( int repeat = 0; repeat < nrepeat; repeat++)
-        {
-            //Application: <y,Ax> = y^T*A*x
-            double result = 0;
-            Kokkos::parallel_reduce( range_policy( 0, N ), KOKKOS_LAMBDA ( int j, double &update ) {
-              double temp2 = 0;
-              for ( int i = 0 ; i < M ; ++i ) {
-                temp2 += devA( j , i ) * devx( i );
-              }
-              update += devy( j ) * temp2;
-            }, result );
-
-            //Output result
-            if ( repeat == (nrepeat - 1) )
-              printf("  Computed result for %d x %d is %lf\n", N, M, result);
-            const double solution = (double)N *(double)M;
-
-            if ( result != solution ) {
-              printf("  Error: result( %lf ) != solution( %lf )\n",result,solution);
-            }
-        }
-
-        gettimeofday(&end,NULL);
-
-        // Calculate time
-        double time = 1.0*(end.tv_sec-begin.tv_sec) +
-                        1.0e-6*(end.tv_usec-begin.tv_usec);
-
-        // Calculate bandwidth.
-        double Gbytes = 1.0e-9 * double(sizeof(double) * ( M + M * N + N )) ;
-
-        // Print results (problem size, time and bandwidth in GB/s)
-        printf("  M( %d ) N( %d ) nrepeat ( %d ) problem( %g MB ) time( %g s ) bandwidth( %g GB/s )\n",
-                 M , N, nrepeat, Gbytes * 1000, time, Gbytes * nrepeat / time );
-
-        
-    }
-    */
+         << "Residual tolerance:\t" << restol << endl;   
 
     Timer t;
     t.Start();
@@ -536,22 +428,18 @@ void ProcessVarOpti::Process()
             });
         }
 
-
         res->startInv = 0;
         res->worstJac = numeric_limits<double>::max();
 
-        
+        // copy nodes onto GPU and evaluate the elements on GPU
+        Load_nodes(nodes);
+        Evaluate(derivUtil, nodes);
+
+        // Evaluate elements on CPU
         /*Kokkos::parallel_for(range_policy_host(0,dataSet.size()), KOKKOS_LAMBDA (const int i)
         {
             dataSet[i]->Evaluate();
-        });
-        for (int i = 0; i < dataSet.size(); ++i)
-        {
-          dataSet[i]->Evaluate();
-        }*/
-        Evaluate(derivUtil);
-
-
+        });*/
 
         if(m_config["resfile"].beenSet)
         {
@@ -595,22 +483,19 @@ void ProcessVarOpti::Process()
         Kokkos::DefaultHostExecutionSpace::finalize();        
     }
 }
+
+
 void ProcessVarOpti::Load_derivUtil(DerivUtilGPU &derivUtil)
 {
-    typedef Kokkos::TeamPolicy<Kokkos::DefaultHostExecutionSpace> team_policy_host;
-    typedef Kokkos::TeamPolicy<Kokkos::DefaultHostExecutionSpace>::member_type  member_type_host;
     //typedef Kokkos::MemoryTraits<Kokkos::RandomAccess> random_memory; //?
     int nodes_size = derivUtil.nodes_size;
     derivUtil.VdmDL_0 = Kokkos::View<double**>("VdmDL_0",nodes_size,nodes_size);
     derivUtil.h_VdmDL_0 = Kokkos::create_mirror_view(derivUtil.VdmDL_0);
     derivUtil.VdmDL_1 = Kokkos::View<double**>("VdmDL_1",nodes_size,nodes_size);
     derivUtil.h_VdmDL_1 = Kokkos::create_mirror_view(derivUtil.VdmDL_1);
-    //derivUtil.VdmDL_2 = Kokkos::View<double**>("VdmDL_2",nodes_size,nodes_size);
-    //derivUtil.h_VdmDL_2 = Kokkos::create_mirror_view(derivUtil.VdmDL_2);        
     
     NekMatrix<NekDouble> derivUtil_VdmDL_0 = dataSet[0]->derivUtil->VdmDL[0];
     NekMatrix<NekDouble> derivUtil_VdmDL_1 = dataSet[0]->derivUtil->VdmDL[1];
-    //NekMatrix<NekDouble> derivUtil_VdmDL_2 = dataSet[0]->derivUtil->VdmDL[2];
     int N2 = nodes_size;
     int M2 = nodes_size;
     Kokkos::parallel_for(team_policy_host(N2,M2), KOKKOS_LAMBDA (const member_type_host& teamMember)
@@ -619,14 +504,12 @@ void ProcessVarOpti::Load_derivUtil(DerivUtilGPU &derivUtil)
         Kokkos::parallel_for(Kokkos::TeamThreadRange( teamMember, M2 ), [&] (const int j)
         {                
             derivUtil.h_VdmDL_0(i,j) = derivUtil_VdmDL_0(i,j);
-            derivUtil.h_VdmDL_1(i,j) = derivUtil_VdmDL_1(i,j);
-            //derivUtil.h_VdmDL_2(i,j) = derivUtil_VdmDL_2(i,j);                
+            derivUtil.h_VdmDL_1(i,j) = derivUtil_VdmDL_1(i,j);                      
         }); 
     });        
    
     Kokkos::deep_copy(derivUtil.VdmDL_0,derivUtil.h_VdmDL_0);
     Kokkos::deep_copy(derivUtil.VdmDL_1,derivUtil.h_VdmDL_1);
-    //Kokkos::deep_copy(derivUtil.VdmDL_2,derivUtil.h_VdmDL_2);
 
 
     int m_dim = dataSet[0]->m_dim;
@@ -651,7 +534,40 @@ void ProcessVarOpti::Load_derivUtil(DerivUtilGPU &derivUtil)
     }
 }
 
-void ProcessVarOpti::Evaluate(DerivUtilGPU &derivUtil)
+
+void ProcessVarOpti::Create_nodes_view(NodesGPU &nodes)
+{
+    int nodes_size = nodes.nodes_size;
+    int dataSet_size = nodes.dataSet_size;    
+    nodes.X = Kokkos::View<double**> ("X",dataSet_size, nodes_size);
+    nodes.h_X = Kokkos::create_mirror_view(nodes.X);
+    nodes.Y = Kokkos::View<double**> ("Y",dataSet_size, nodes_size);
+    nodes.h_Y = Kokkos::create_mirror_view(nodes.Y);
+    nodes.Z = Kokkos::View<double**> ("Z",dataSet_size, nodes_size);
+    nodes.h_Z = Kokkos::create_mirror_view(nodes.Z);
+}
+
+
+void ProcessVarOpti::Load_nodes(NodesGPU &nodes)
+{
+    int N1 = nodes.dataSet_size;
+    int M1 = nodes.nodes_size;
+    Kokkos::parallel_for(team_policy_host(N1,M1), KOKKOS_LAMBDA (const member_type_host& teamMember)
+    {         
+        const int k = teamMember.league_rank();
+        Kokkos::parallel_for(Kokkos::TeamThreadRange( teamMember, M1 ), [&] (const int j)
+        {                
+            nodes.h_X(k,j) = *dataSet[k]->nodes[j][0];
+            nodes.h_Y(k,j) = *dataSet[k]->nodes[j][1];
+            nodes.h_Z(k,j) = *dataSet[k]->nodes[j][2];              
+        }); 
+    });
+    Kokkos::deep_copy(nodes.X,nodes.h_X);
+    Kokkos::deep_copy(nodes.Y,nodes.h_Y);
+    Kokkos::deep_copy(nodes.Z,nodes.h_Z);
+}
+
+void ProcessVarOpti::Evaluate(DerivUtilGPU &derivUtil,NodesGPU &nodes)
 {
     int m_dim = dataSet[0]->m_dim;
     if(m_dim == 2)
@@ -660,15 +576,8 @@ void ProcessVarOpti::Evaluate(DerivUtilGPU &derivUtil)
     }
     else if (m_dim == 3)
     {
-        typedef Kokkos::RangePolicy<Kokkos::DefaultExecutionSpace> range_policy;
-        typedef Kokkos::RangePolicy<Kokkos::DefaultHostExecutionSpace> range_policy_host;
-        typedef Kokkos::TeamPolicy<Kokkos::DefaultExecutionSpace> team_policy;
-        typedef Kokkos::TeamPolicy<Kokkos::DefaultHostExecutionSpace> team_policy_host;
-        typedef Kokkos::TeamPolicy<Kokkos::DefaultExecutionSpace>::member_type  member_type;
-        typedef Kokkos::TeamPolicy<Kokkos::DefaultHostExecutionSpace>::member_type  member_type_host;
-
-        int nodes_size = derivUtil.nodes_size;
-        int dataSet_size = dataSet.size();
+        int nodes_size = nodes.nodes_size;
+        int dataSet_size = nodes.dataSet_size;   
 
         // declare min and max Jacobian
         Kokkos::View<double*> mx("mx",dataSet_size);
@@ -681,33 +590,8 @@ void ProcessVarOpti::Evaluate(DerivUtilGPU &derivUtil)
           h_mn(k) = DBL_MAX;
         });    
 
-        // initialise and copy node coordinates    
-        Kokkos::View<double**> X("X",dataSet_size, nodes_size);
-        typename Kokkos::View< double**>::HostMirror h_X = Kokkos::create_mirror_view(X);
-        Kokkos::View<double**> Y("Y",dataSet_size, nodes_size);
-        typename Kokkos::View< double**>::HostMirror h_Y = Kokkos::create_mirror_view(Y);
-        Kokkos::View<double**> Z("Z",dataSet_size, nodes_size);
-        typename Kokkos::View< double**>::HostMirror h_Z = Kokkos::create_mirror_view(Z);
-            
-        int N1 = dataSet_size;
-        int M1 = nodes_size;
-        Kokkos::parallel_for(team_policy_host(N1,M1), KOKKOS_LAMBDA (const member_type_host& teamMember)
-        {         
-            const int i = teamMember.league_rank();
-            Kokkos::parallel_for(Kokkos::TeamThreadRange( teamMember, M1 ), [&] (const int j)
-            {                
-                h_X(i,j) = *dataSet[i]->nodes[j][0];
-                h_Y(i,j) = *dataSet[i]->nodes[j][1];
-                h_Z(i,j) = *dataSet[i]->nodes[j][2];              
-            }); 
-        });
-        Kokkos::deep_copy(X,h_X);
-        Kokkos::deep_copy(Y,h_Y);
-        Kokkos::deep_copy(Z,h_Z);
-
         // do the matrix vector multiplication on the GPU
         Kokkos::View<double[3][3]> dxdz("dxdz");
-        Kokkos::View<double[9]> x1i("x1i");
         Kokkos::View<double**> jacDet("jacDet", dataSet_size, nodes_size);
         typename Kokkos::View< double**>::HostMirror h_jacDet = Kokkos::create_mirror_view(jacDet);
 
@@ -744,15 +628,15 @@ void ProcessVarOpti::Evaluate(DerivUtilGPU &derivUtil)
                         
               for (int j = 0; j < M; ++j)
               {
-                  x1i += derivUtil.VdmDL_0( i , j ) * X( k , j );
-                  y1i += derivUtil.VdmDL_0( i , j ) * Y( k , j );
-                  z1i += derivUtil.VdmDL_0( i , j ) * Z( k , j );
-                  x2i += derivUtil.VdmDL_1( i , j ) * X( k , j );
-                  y2i += derivUtil.VdmDL_1( i , j ) * Y( k , j );
-                  z2i += derivUtil.VdmDL_1( i , j ) * Z( k , j );
-                  x3i += derivUtil.VdmDL_2( i , j ) * X( k , j );
-                  y3i += derivUtil.VdmDL_2( i , j ) * Y( k , j );
-                  z3i += derivUtil.VdmDL_2( i , j ) * Z( k , j );
+                  x1i += derivUtil.VdmDL_0( i , j ) * nodes.X( k , j );
+                  y1i += derivUtil.VdmDL_0( i , j ) * nodes.Y( k , j );
+                  z1i += derivUtil.VdmDL_0( i , j ) * nodes.Z( k , j );
+                  x2i += derivUtil.VdmDL_1( i , j ) * nodes.X( k , j );
+                  y2i += derivUtil.VdmDL_1( i , j ) * nodes.Y( k , j );
+                  z2i += derivUtil.VdmDL_1( i , j ) * nodes.Z( k , j );
+                  x3i += derivUtil.VdmDL_2( i , j ) * nodes.X( k , j );
+                  y3i += derivUtil.VdmDL_2( i , j ) * nodes.Y( k , j );
+                  z3i += derivUtil.VdmDL_2( i , j ) * nodes.Z( k , j );
               }
               
               /*Kokkos::parallel_reduce( Kokkos::ThreadVectorRange(teamMember, M), [&] (const int j, double &update )

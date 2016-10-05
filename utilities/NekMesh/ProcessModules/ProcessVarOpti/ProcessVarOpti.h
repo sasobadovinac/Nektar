@@ -70,6 +70,18 @@ struct DerivUtilGPU
     int nodes_size;
 };
 
+struct NodesGPU
+{
+    Kokkos::View<double**> X;
+    typename Kokkos::View< double**>::HostMirror h_X;
+    Kokkos::View<double**> Y;
+    typename Kokkos::View< double**>::HostMirror h_Y;        
+    Kokkos::View<double**> Z;
+    typename Kokkos::View< double**>::HostMirror h_Z;
+    int nodes_size;
+    int dataSet_size;
+};
+
 typedef boost::shared_ptr<DerivUtil> DerivUtilSharedPtr;
 
 enum optimiser
@@ -109,7 +121,9 @@ public:
     virtual void Process();
 
     void Load_derivUtil(DerivUtilGPU &derivUtil);
-    void Evaluate(DerivUtilGPU &derivUtil);
+    void Create_nodes_view(NodesGPU &nodes);
+    void Load_nodes(NodesGPU &nodes);
+    void Evaluate(DerivUtilGPU &derivUtil,NodesGPU &nodes);
 
 private:
     typedef std::map<int, std::pair<std::vector<int>,
@@ -132,6 +146,25 @@ private:
 
     std::string ThreadManagerType;
 };
+
+
+typedef Kokkos::RangePolicy<Kokkos::DefaultExecutionSpace> range_policy;
+typedef Kokkos::RangePolicy<Kokkos::DefaultHostExecutionSpace> range_policy_host;
+typedef Kokkos::TeamPolicy<Kokkos::DefaultExecutionSpace> team_policy;
+typedef Kokkos::TeamPolicy<Kokkos::DefaultHostExecutionSpace> team_policy_host;
+typedef Kokkos::TeamPolicy<Kokkos::DefaultExecutionSpace>::member_type  member_type;
+typedef Kokkos::TeamPolicy<Kokkos::DefaultHostExecutionSpace>::member_type  member_type_host;
+
+
+class ElUtilGPU //: public ElUtil
+{
+public:
+    //void Evaluate(DerivUtilGPU &derivUtil, NodesGPU &nodes);
+private:
+    //DerivUtilGPU derivUtil;
+    //NodesGPU nodes;
+};
+
 
 }
 }
