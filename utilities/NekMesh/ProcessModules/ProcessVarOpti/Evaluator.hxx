@@ -176,25 +176,27 @@ inline NekDouble FrobeniusNorm(NekDouble inarray[DIM][DIM])
 }
 
 template<int DIM>
-NekDouble NodeOpti::GetFunctional(bool gradient, bool hessian)
+NekDouble NodeOpti::GetFunctional(DerivUtilGPU &derivUtilGPU, bool gradient, bool hessian)
 {
     LibUtilities::ShapeType st = data[0]->GetEl()->GetShapeType();
-    const int nElmt  = data.size();
-    const int totpts = derivUtil[st]->ptsLow * nElmt;
+    const int nElmt = data.size();    
+    const int ptsLowGPU = derivUtilGPU.ptsLow;
+    const int ptsHighGPU = derivUtilGPU.ptsHigh;
+    const int totpts = ptsLowGPU * nElmt;
     NekDouble X[DIM * totpts];
 
     // Store x/y components of each element sequentially in memory
     for (int i = 0, cnt = 0; i < nElmt; ++i)
     {
-        for (int j = 0; j < derivUtil[st]->ptsLow; ++j)
+        for (int j = 0; j < ptsLowGPU; ++j)
         {
             for (int d = 0; d < DIM; ++d)
             {
-                X[cnt + d*derivUtil[st]->ptsLow + j] = *(data[i]->nodes[j][d]);
+                X[cnt + d*ptsLowGPU + j] = *(data[i]->nodes[j][d]);
             }
         }
 
-        cnt += DIM*derivUtil[st]->ptsLow;
+        cnt += DIM*ptsLowGPU;
     }
 
     // Storage for derivatives, ordered by:
@@ -202,16 +204,59 @@ NekDouble NodeOpti::GetFunctional(bool gradient, bool hessian)
     //   - number of elements
     //   - cartesian coordinate direction
     //   - quadrature points
-    DerivArray deriv(boost::extents[DIM][nElmt][DIM][derivUtil[st]->ptsHigh]);
+    DerivArray deriv(boost::extents[DIM][nElmt][DIM][ptsHighGPU]);
 
-    // Calculate x- and y-gradients
-    for (int d = 0; d < DIM; ++d)
+    // Calculate x- and y- (and z-) gradients
+    /*for (int d = 0; d < DIM; ++d)
     {
         Blas::Dgemm(
-            'N', 'N', derivUtil[st]->ptsHigh, DIM * nElmt, derivUtil[st]->ptsLow, 1.0,
-            derivUtil[st]->VdmD[d].GetRawPtr(), derivUtil[st]->ptsHigh, X,
-            derivUtil[st]->ptsLow, 0.0, &deriv[d][0][0][0], derivUtil[st]->ptsHigh);
+            'N', 'N', ptsHighGPU, DIM * nElmt, ptsLowGPU, 1.0,
+            derivUtil[st]->VdmD[d].GetRawPtr(), ptsHighGPU, X,
+            ptsLowGPU, 0.0, &deriv[d][0][0][0], ptsHighGPU);
+    }*/
+    for (int d = 0; d < DIM; ++d)
+    {
+        //Kokkos::View< double**, Kokkos::DefaultHostExecutionSpace> h_VdmD;
+        const double** h_VdmD = new const double*[ptsHighGPU*ptsLowGPU];
+        //printf("%s\n", "pointB");
+        if (d == 0)
+        {
+            for (int i = 0; i < ptsHighGPU; ++i)
+            {
+                for (int j = 0; j < ptsLowGPU; ++j)
+                {
+                    h_VdmD[i+ptsHighGPU*j] = &derivUtilGPU.h_VdmD_0(i,j);
+                }
+            }
+            //printf("%s\n","pointC" );
+        }
+        else if (d == 1)
+        {
+            for (int i = 0; i < ptsHighGPU; ++i)
+            {
+                for (int j = 0; j < ptsLowGPU; ++j)
+                {
+                    h_VdmD[i+ptsHighGPU*j] = &derivUtilGPU.h_VdmD_1(i,j);
+                }
+            }
+        }
+        else
+        {
+            for (int i = 0; i < ptsHighGPU; ++i)
+            {
+                for (int j = 0; j < ptsLowGPU; ++j)
+                {
+                    h_VdmD[i+ptsHighGPU*j] = &derivUtilGPU.h_VdmD_2(i,j);
+                }
+            }
+        }
+
+            Blas::Dgemm(
+            'N', 'N', ptsHighGPU, DIM * nElmt, ptsLowGPU, 1.0,
+            *h_VdmD, ptsHighGPU, X,
+            ptsLowGPU, 0.0, &deriv[d][0][0][0], ptsHighGPU);
     }
+
 
     NekDouble integral = 0.0;
     //NekDouble ep = minJac < gam ? sqrt(gam*(gam-minJac)) : 0.0;
@@ -229,7 +274,7 @@ NekDouble NodeOpti::GetFunctional(bool gradient, bool hessian)
 
             for (int i = 0; i < nElmt; ++i)
             {
-                for(int k = 0; k < derivUtil[st]->ptsHigh; ++k)
+                for(int k = 0; k < ptsHighGPU; ++k)
                 {
                     jacDet = CalcIdealJac(i, k, deriv, data, jacIdeal);
 
@@ -255,7 +300,7 @@ NekDouble NodeOpti::GetFunctional(bool gradient, bool hessian)
 
             for (int i = 0; i < nElmt; ++i)
             {
-                for(int k = 0; k < derivUtil[st]->ptsHigh; ++k)
+                for(int k = 0; k < ptsHighGPU; ++k)
                 {
                     jacDet = CalcIdealJac(i, k, deriv, data, jacIdeal);
                     NekDouble I1 = FrobeniusNorm(jacIdeal);
@@ -380,7 +425,7 @@ NekDouble NodeOpti::GetFunctional(bool gradient, bool hessian)
         {
             for (int i = 0; i < nElmt; ++i)
             {
-                for(int k = 0; k < derivUtil[st]->ptsHigh; ++k)
+                for(int k = 0; k < ptsHighGPU; ++k)
                 {
                     jacDet = CalcIdealJac(i, k, deriv, data, jacIdeal);
                     NekDouble frob = FrobeniusNorm(jacIdeal);
@@ -501,7 +546,7 @@ NekDouble NodeOpti::GetFunctional(bool gradient, bool hessian)
         {
             for (int i = 0; i < nElmt; ++i)
             {
-                for(int k = 0; k < derivUtil[st]->ptsHigh; ++k)
+                for(int k = 0; k < ptsHighGPU; ++k)
                 {
                     jacDet = CalcIdealJac(i, k, deriv, data, jacIdeal);
                     NekDouble frob = FrobeniusNorm(jacIdeal);

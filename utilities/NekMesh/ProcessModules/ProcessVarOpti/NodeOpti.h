@@ -63,12 +63,12 @@ public:
 
     virtual ~NodeOpti(){};
 
-    virtual void Optimise() = 0;
+    virtual void Optimise(DerivUtilGPU &derivUtil) = 0;
     NodeOptiJob *GetJob();
 
 protected:
 
-    template<int DIM> NekDouble GetFunctional(bool gradient = true,
+    template<int DIM> NekDouble GetFunctional(DerivUtilGPU &derivUtil, bool gradient = true,
                                               bool hessian = true);
     NodeSharedPtr node;
     boost::mutex mtx;
@@ -122,7 +122,7 @@ public:
 
     ~NodeOpti3D3D(){};
 
-    void Optimise();
+    void Optimise(DerivUtilGPU &derivUtil);
 
     static int m_type;
     static NodeOptiSharedPtr create(
@@ -151,7 +151,7 @@ public:
 
     ~NodeOpti2D2D(){};
 
-    void Optimise();
+    void Optimise(DerivUtilGPU &derivUtil);
 
     static int m_type;
     static NodeOptiSharedPtr create(
@@ -167,7 +167,7 @@ private:
 };
 
 
-class NodeOptiJob : public Thread::ThreadJob
+/*class NodeOptiJob : public Thread::ThreadJob
 {
 public:
     NodeOptiJob(NodeOpti* no) : node(no) {}
@@ -178,7 +178,7 @@ public:
     }
 private:
     NodeOpti* node;
-};
+};*/
 
 
 }

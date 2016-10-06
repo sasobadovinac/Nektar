@@ -79,11 +79,11 @@ void NodeOpti::CalcMinJac()
 int NodeOpti2D2D::m_type = GetNodeOptiFactory().RegisterCreatorFunction(
     22, NodeOpti2D2D::create, "2D2D");
 
-void NodeOpti2D2D::Optimise()
+void NodeOpti2D2D::Optimise(DerivUtilGPU &derivUtil)
 {
     CalcMinJac();
 
-    NekDouble currentW = GetFunctional<2>();
+    NekDouble currentW = GetFunctional<2>(derivUtil);
 
     // Gradient already zero
     if (G[0]*G[0] + G[1]*G[1] > gradTol())
@@ -107,7 +107,7 @@ void NodeOpti2D2D::Optimise()
             node->m_x = xc - alpha * delX;
             node->m_y = yc - alpha * delY;
 
-            newVal = GetFunctional<2>(true,false);
+            newVal = GetFunctional<2>(derivUtil,true,false);
             //dont need the hessian again this function updates G to be the new
             //location
 
@@ -144,11 +144,11 @@ void NodeOpti2D2D::Optimise()
 int NodeOpti3D3D::m_type = GetNodeOptiFactory().RegisterCreatorFunction(
     33, NodeOpti3D3D::create, "3D3D");
 
-void NodeOpti3D3D::Optimise()
+void NodeOpti3D3D::Optimise(DerivUtilGPU &derivUtil)
 {
     CalcMinJac();
 
-    NekDouble currentW = GetFunctional<3>();
+    NekDouble currentW = GetFunctional<3>(derivUtil);
     NekDouble newVal;
 
     if(G[0]*G[0] + G[1]*G[1] + G[2]*G[2] > gradTol())
@@ -233,7 +233,7 @@ void NodeOpti3D3D::Optimise()
                 node->m_y = yc + alpha * sk[1];
                 node->m_z = zc + alpha * sk[2];
 
-                newVal = GetFunctional<3>(false,false);
+                newVal = GetFunctional<3>(derivUtil,false,false);
                 //dont need the hessian again this function updates G to be the new
                 //location
                 //
@@ -263,7 +263,7 @@ void NodeOpti3D3D::Optimise()
             node->m_x = xc + dk[0];
             node->m_y = yc + dk[1];
             node->m_z = zc + dk[2];
-            newVal = GetFunctional<3>(false,false);
+            newVal = GetFunctional<3>(derivUtil,false,false);
 
             if(newVal <= currentW + c1() * (
                 pg + 0.5*hes))
@@ -276,13 +276,13 @@ void NodeOpti3D3D::Optimise()
                     node->m_y = yc + alpha * dk[1];
                     node->m_z = zc + alpha * dk[2];
 
-                    newVal = GetFunctional<3>(false,false);
+                    newVal = GetFunctional<3>(derivUtil,false,false);
 
                     node->m_x = xc + alpha/beta * dk[0];
                     node->m_y = yc + alpha/beta * dk[1];
                     node->m_z = zc + alpha/beta * dk[2];
 
-                    NekDouble dbVal = GetFunctional<3>(false,false);
+                    NekDouble dbVal = GetFunctional<3>(derivUtil,false,false);
 
                     if (newVal <= currentW + c1() * (
                         alpha*pg + 0.5*alpha*alpha*hes) &&
@@ -307,7 +307,7 @@ void NodeOpti3D3D::Optimise()
                     node->m_y = yc + alpha * dk[1];
                     node->m_z = zc + alpha * dk[2];
 
-                    newVal = GetFunctional<3>(false,false);
+                    newVal = GetFunctional<3>(derivUtil,false,false);
 
                     if (newVal <= currentW + c1() * (
                         alpha*pg + 0.5*alpha*alpha*hes))
@@ -343,10 +343,10 @@ void NodeOpti3D3D::Optimise()
 }
 
 
-NodeOptiJob* NodeOpti::GetJob()
+/*NodeOptiJob* NodeOpti::GetJob()
 {
     return new NodeOptiJob(this);
-}
+}*/
 
 
 }

@@ -67,7 +67,18 @@ struct DerivUtilGPU
     typename Kokkos::View< double**>::HostMirror h_VdmDL_1;        
     Kokkos::View<double**> VdmDL_2;
     typename Kokkos::View< double**>::HostMirror h_VdmDL_2;
+
+    Kokkos::View<double**> VdmD_0;
+    typename Kokkos::View< double**>::HostMirror h_VdmD_0;
+    Kokkos::View<double**> VdmD_1;
+    typename Kokkos::View< double**>::HostMirror h_VdmD_1;        
+    Kokkos::View<double**> VdmD_2;
+    typename Kokkos::View< double**>::HostMirror h_VdmD_2;
+
     int nodes_size;
+
+    int ptsHigh;
+    int ptsLow;
 };
 
 struct NodesGPU
@@ -79,7 +90,7 @@ struct NodesGPU
     Kokkos::View<double**> Z;
     typename Kokkos::View< double**>::HostMirror h_Z;
     int nodes_size;
-    int dataSet_size;
+    int nElmt;
 };
 
 typedef boost::shared_ptr<DerivUtil> DerivUtilSharedPtr;
@@ -124,6 +135,8 @@ public:
     void Create_nodes_view(NodesGPU &nodes);
     void Load_nodes(NodesGPU &nodes);
     void Evaluate(DerivUtilGPU &derivUtil,NodesGPU &nodes);
+
+    void Optimise();
 
 private:
     typedef std::map<int, std::pair<std::vector<int>,
