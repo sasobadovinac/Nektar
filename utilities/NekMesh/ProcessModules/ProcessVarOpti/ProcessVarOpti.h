@@ -89,8 +89,12 @@ struct NodesGPU
     typename Kokkos::View< double**>::HostMirror h_Y;        
     Kokkos::View<double**> Z;
     typename Kokkos::View< double**>::HostMirror h_Z;
+    Kokkos::View<int**> Id;
+    typename Kokkos::View< int**>::HostMirror h_Id;
     int nodes_size;
     int nElmt;
+    Kokkos::View<int*> ElmtOffset;
+    typename Kokkos::View< int*>::HostMirror h_ElmtOffset;
 };
 
 typedef boost::shared_ptr<DerivUtil> DerivUtilSharedPtr;
@@ -136,7 +140,7 @@ public:
     void Load_nodes(NodesGPU &nodes);
     void Evaluate(DerivUtilGPU &derivUtil,NodesGPU &nodes);
 
-    void Optimise();
+    void Optimise(); // for GPU parallelisation
 
 private:
     typedef std::map<int, std::pair<std::vector<int>,

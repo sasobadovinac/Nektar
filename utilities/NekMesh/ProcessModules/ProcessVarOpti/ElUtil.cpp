@@ -60,9 +60,10 @@ ElUtil::ElUtil(ElementSharedPtr e, DerivUtilSharedPtr d,
     vector<NodeSharedPtr> ns;
     m_el->GetCurvedNodes(ns);
     nodes.resize(ns.size());
+    nodeIds.resize(ns.size());
     for (int i = 0; i < ns.size(); ++i)
     {
-        nodes[i].resize(m_dim);
+        nodes[i].resize(m_dim+1);
         nodes[i][0] = &ns[i]->m_x;
 
         if (m_dim >= 2)
@@ -74,6 +75,7 @@ ElUtil::ElUtil(ElementSharedPtr e, DerivUtilSharedPtr d,
         {
             nodes[i][2] = &ns[i]->m_z;
         }
+        nodeIds[i] = &ns[i]->m_id;
     }
     maps = MappingIdealToRef();
 }

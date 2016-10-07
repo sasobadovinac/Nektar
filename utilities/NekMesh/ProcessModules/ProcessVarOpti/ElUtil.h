@@ -69,6 +69,8 @@ public:
     }
 
     std::vector<std::vector<NekDouble *> > nodes;
+    std::vector<int *> nodeIds;
+
     std::vector<Array<OneD, NekDouble> > maps;
     NekDouble minJac;
     NekDouble scaledJac;

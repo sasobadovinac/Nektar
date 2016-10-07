@@ -176,7 +176,7 @@ inline NekDouble FrobeniusNorm(NekDouble inarray[DIM][DIM])
 }
 
 template<int DIM>
-NekDouble NodeOpti::GetFunctional(DerivUtilGPU &derivUtilGPU, bool gradient, bool hessian)
+NekDouble NodeOpti::GetFunctional(DerivUtilGPU &derivUtilGPU, NodesGPU &nodes, bool gradient, bool hessian)
 {
     LibUtilities::ShapeType st = data[0]->GetEl()->GetShapeType();
     const int nElmt = data.size();    
@@ -198,6 +198,47 @@ NekDouble NodeOpti::GetFunctional(DerivUtilGPU &derivUtilGPU, bool gradient, boo
 
         cnt += DIM*ptsLowGPU;
     }
+    /*int iD = 0;
+    int offset = 0;
+    for (int i = 0, cnt = 0; i < nElmt; ++i)
+    {
+        iD = data[i]->GetId();
+        offset = nodes.h_ElmtOffset(iD);
+        for (int j = 0; j < ptsLowGPU; ++j)
+        {
+            for (int d = 0; d < DIM; ++d)
+            {
+                if (d == 0)
+                {
+                    X[cnt + d*ptsLowGPU + j] = nodes.h_X(offset,j);
+                    if (X[cnt + d*ptsLowGPU + j] - *(data[i]->nodes[j][d]) > 1e-6)
+                    {
+                        //printf("Elmt %i ptsLow %i iD %i correct %e wrong %e\n", i,j, iD,*(data[i]->nodes[j][d]),nodes.h_X(offset,j));
+                    }
+                }
+                else if (d == 1)
+                {
+                    X[cnt + d*ptsLowGPU + j] = nodes.h_Y(offset,j);
+                    if (X[cnt + d*ptsLowGPU + j] - *(data[i]->nodes[j][d]) > 1e-6)
+                    {
+                        //printf("Elmt %i ptsLow %i iD %i correct %e wrong %e\n", i,j, iD,*(data[i]->nodes[j][d]),nodes.h_Y(offset,j));
+                    }
+                }
+                else if (d == 2)
+                {
+                    X[cnt + d*ptsLowGPU + j] = nodes.h_Z(offset,j);
+                    if (X[cnt + d*ptsLowGPU + j] - *(data[i]->nodes[j][d]) > 1e-6)
+                    {
+                        //printf("Elmt %i ptsLow %i iD %i correct %e wrong %e\n", i,j, iD,*(data[i]->nodes[j][d]),nodes.h_Z(offset,j));
+                    }
+                }
+
+                
+            }
+        }
+
+        cnt += DIM*ptsLowGPU;
+    }*/
 
     // Storage for derivatives, ordered by:
     //   - standard coordinate direction
@@ -216,9 +257,7 @@ NekDouble NodeOpti::GetFunctional(DerivUtilGPU &derivUtilGPU, bool gradient, boo
     }*/
     for (int d = 0; d < DIM; ++d)
     {
-        //Kokkos::View< double**, Kokkos::DefaultHostExecutionSpace> h_VdmD;
         const double** h_VdmD = new const double*[ptsHighGPU*ptsLowGPU];
-        //printf("%s\n", "pointB");
         if (d == 0)
         {
             for (int i = 0; i < ptsHighGPU; ++i)
@@ -228,7 +267,6 @@ NekDouble NodeOpti::GetFunctional(DerivUtilGPU &derivUtilGPU, bool gradient, boo
                     h_VdmD[i+ptsHighGPU*j] = &derivUtilGPU.h_VdmD_0(i,j);
                 }
             }
-            //printf("%s\n","pointC" );
         }
         else if (d == 1)
         {
@@ -240,7 +278,7 @@ NekDouble NodeOpti::GetFunctional(DerivUtilGPU &derivUtilGPU, bool gradient, boo
                 }
             }
         }
-        else
+        else if (d == 2)
         {
             for (int i = 0; i < ptsHighGPU; ++i)
             {

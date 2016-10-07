@@ -301,6 +301,8 @@ void ProcessVarOpti::Process()
         vector<NodeOptiSharedPtr> ns;
         for(int j = 0; j < freenodes[i].size(); j++)
         {
+            //printf("freenodes[%i][%i]: %i\n", i,j,freenodes[i][j]->m_id);
+            
             NodeElMap::iterator it = nodeElMap.find(freenodes[i][j]->m_id);
             ASSERTL0(it != nodeElMap.end(), "could not find");
 
@@ -436,17 +438,19 @@ printf("%s\n", "pointA2");
             {
                 optiNodes[i][j]->Optimise();
             });*/
+
+            
             for(int j = 0; j < optiNodes[i].size(); j++)
             {
-                optiNodes[i][j]->Optimise(derivUtil);
+                optiNodes[i][j]->Optimise(derivUtil,nodes);
             }
+            Load_nodes(nodes);
         }
 
         res->startInv = 0;
         res->worstJac = numeric_limits<double>::max();
 
         // copy nodes onto GPU and evaluate the elements on GPU
-        Load_nodes(nodes);
         Evaluate(derivUtil, nodes);
 
         // Evaluate elements on CPU

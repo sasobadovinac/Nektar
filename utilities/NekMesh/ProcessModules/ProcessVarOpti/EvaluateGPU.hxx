@@ -131,6 +131,11 @@ void ProcessVarOpti::Create_nodes_view(NodesGPU &nodes)
     nodes.h_Y = Kokkos::create_mirror_view(nodes.Y);
     nodes.Z = Kokkos::View<double**> ("Z",nElmt, nodes_size);
     nodes.h_Z = Kokkos::create_mirror_view(nodes.Z);
+    nodes.Id = Kokkos::View<int**> ("Id",nElmt, nodes_size);
+    nodes.h_Id = Kokkos::create_mirror_view(nodes.Id);
+
+    nodes.ElmtOffset = Kokkos::View<int*> ("ElmtOffset",nElmt);
+    nodes.h_ElmtOffset = Kokkos::create_mirror_view(nodes.ElmtOffset);
 }
 
 
@@ -145,12 +150,19 @@ void ProcessVarOpti::Load_nodes(NodesGPU &nodes)
         {                
             nodes.h_X(k,j) = *dataSet[k]->nodes[j][0];
             nodes.h_Y(k,j) = *dataSet[k]->nodes[j][1];
-            nodes.h_Z(k,j) = *dataSet[k]->nodes[j][2];              
-        }); 
+            nodes.h_Z(k,j) = *dataSet[k]->nodes[j][2];
+            nodes.h_Id(k,j) = *dataSet[k]->nodeIds[j];
+            //printf("nodes.h_Id(k,j): %i\n", nodes.h_Id(k,j));
+        });
+        const int ElmtId = dataSet[k]->GetId();
+        nodes.h_ElmtOffset(ElmtId) = k;
     });
     Kokkos::deep_copy(nodes.X,nodes.h_X);
     Kokkos::deep_copy(nodes.Y,nodes.h_Y);
     Kokkos::deep_copy(nodes.Z,nodes.h_Z);
+    Kokkos::deep_copy(nodes.Id,nodes.h_Id);
+
+    Kokkos::deep_copy(nodes.ElmtOffset,nodes.h_ElmtOffset);
 }
 
 void ProcessVarOpti::Evaluate(DerivUtilGPU &derivUtil,NodesGPU &nodes)
