@@ -136,8 +136,6 @@ namespace Nektar
 
         void AddForcing(const SolverUtils::ForcingSharedPtr& pForce);
 
-        void GetSensor(const Array<OneD, const NekDouble > &physarray,
-                                        Array<OneD, NekDouble>   &Sensor);
     protected:
 		
         // pointer to the extrapolation class for sub-stepping and HOPBS
