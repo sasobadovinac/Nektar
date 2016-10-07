@@ -37,6 +37,7 @@
 #define NEKTAR_SOLVERS_VELOCITYCORRECTIONSCHEME_H
 
 #include <IncNavierStokesSolver/EquationSystems/IncNavierStokes.h>
+#include <IncNavierStokesSolver/Forcing/ForcingDynamicVisc.h>
 
 namespace Nektar
 {
@@ -52,7 +53,13 @@ namespace Nektar
         /// Current steps within average
         int m_numSteps;
 
+        NekDouble              m_origKinvis;
+        NekDouble              m_fixedKinvis;
+        NekDouble              m_kinvisC0;
+        NekDouble              m_defS0;
+        
         StdRegions::VarCoeffMap m_savVarCoeffMap;
+        ForcingDynamicViscSharedPtr  m_forcing; 
     };
  
     typedef boost::shared_ptr<DynamicViscData> DynamicViscDataSharedPtr;
@@ -81,6 +88,7 @@ namespace Nektar
         virtual ~VelocityCorrectionScheme();
 
         virtual void v_InitObject();
+
 
         void SetUpPressureForcing(
                     const Array<OneD, const Array<OneD, NekDouble> > &fields,
@@ -125,6 +133,11 @@ namespace Nektar
             v_EvaluateAdvection_SetPressureBCs( inarray, outarray, time);
         }
 
+        void GetStabiliseKinvis(const Array<OneD, const NekDouble > &physarray,
+                                NekDouble C,
+                                NekDouble S0_def,
+                                Array<OneD, NekDouble>   &Sensor);
+
     protected:
         /// bool to identify if spectral vanishing viscosity is active.
         bool m_useHomo1DSpecVanVisc;
@@ -158,6 +171,8 @@ namespace Nektar
 
         virtual int v_GetForceDimension();
         
+        virtual bool v_PreIntegrate(int step);
+
         virtual void v_SetUpPressureForcing(
                     const Array<OneD, const Array<OneD, NekDouble> > &fields,
                     Array<OneD, Array<OneD, NekDouble> > &Forcing,
@@ -191,7 +206,7 @@ namespace Nektar
 
         Array<OneD, Array< OneD, NekDouble> > m_F; ///< Storage for forcing 
 
-        void DynamicVisc(StdRegions::VarCoeffMap &varCoeffMap);
+        void DynamicVisc();
             
     private:
         

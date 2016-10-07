@@ -36,7 +36,6 @@
 #include <IncNavierStokesSolver/EquationSystems/VelocityCorrectionScheme.h>
 #include <LibUtilities/BasicUtils/Timer.h>
 #include <SolverUtils/Core/Misc.h>
-
 #include <boost/algorithm/string.hpp>
 
 using namespace std;
@@ -185,9 +184,38 @@ namespace Nektar
             m_dynamicVisc->m_sensorField  = Array<OneD, NekDouble>
                 (m_fields[0]->GetTotPoints());
 
-            m_session->LoadParameter("DynamicViscEvalSteps",
-                                     m_dynamicVisc->m_numStepsAvg,100);
-            m_dynamicVisc->m_numSteps     = 0; 
+            m_dynamicVisc->m_numSteps     = 0;
+
+            if(boost::iequals(m_dynamicVisc->m_type,"SemiImplicitVariableDiff"))
+            {
+                ForcingDynamicViscSharedPtr forcing = MemoryManager<ForcingDynamicVisc>::AllocateSharedPtr(m_session);
+                forcing->InitObject(m_fields, m_velocity.num_elements(), (TiXmlElement*)NULL);
+                // initialisae kinvis as zero
+                Array<OneD, NekDouble> Zero(m_fields[0]->GetTotPoints(),0.0);
+                forcing->SetKinvis(Zero);
+                m_dynamicVisc->m_forcing = forcing;
+                m_forcing.push_back(forcing);
+
+                m_session->LoadParameter("DynamicViscEvalSteps",
+                                         m_dynamicVisc->m_numStepsAvg,5);
+                m_session->LoadParameter("DynamicViscC0",
+                                         m_dynamicVisc->m_kinvisC0,0.1);
+                m_session->LoadParameter("DynamicViscDefS0",
+                                         m_dynamicVisc->m_defS0,3);
+
+                // store original kinvis for later use
+                m_dynamicVisc->m_origKinvis = m_kinvis;
+
+                // initialise with zero
+                m_dynamicVisc->m_fixedKinvis = 0.0;
+                
+            }
+            else
+            {
+                m_session->LoadParameter("DynamicViscEvalSteps",
+                                         m_dynamicVisc->m_numStepsAvg,100);
+            }
+
         }
 
         // set explicit time-intregration class operators
@@ -274,6 +302,8 @@ namespace Nektar
                                   m_fields[i]->UpdatePhys());
             m_F[i] = Array< OneD, NekDouble> (m_fields[0]->GetTotPoints(), 0.0);
         }
+
+        
 
     }
     
@@ -382,7 +412,20 @@ namespace Nektar
         // Solve velocity system
         SolveViscous( m_F, outarray, aii_Dt);
     }
+    
+    /**
+     * Perform the extrapolation.
+     */
+    bool   VelocityCorrectionScheme::v_PreIntegrate(int step)
+    {
+        if(m_dynamicVisc)
+        {
+            DynamicVisc();
+        }
         
+        return false;
+    }
+
     /**
      * Forcing term for Poisson solver solver
      */ 
@@ -406,6 +449,7 @@ namespace Nektar
 
         Vmath::Smul(physTot,1.0/aii_Dt,Forcing[0],1,Forcing[0],1);
     }
+
     
     /**
      * Forcing term for Helmholtz solver
@@ -467,6 +511,7 @@ namespace Nektar
     {
         StdRegions::ConstFactorMap factors;
         StdRegions::VarCoeffMap varCoeffMap = StdRegions::NullVarCoeffMap;
+
         if(m_useSpecVanVisc)
         {
             factors[StdRegions::eFactorSVVCutoffRatio] = m_sVVCutoffRatio;
@@ -475,7 +520,7 @@ namespace Nektar
 
         if(m_dynamicVisc)
         {
-            DynamicVisc(varCoeffMap);
+            varCoeffMap = m_dynamicVisc->m_savVarCoeffMap;
         }
 
         // Solve Helmholtz system and put in Physical space
@@ -502,27 +547,38 @@ namespace Nektar
                 variables.push_back("DynamicViscosity");
                 Array<OneD, NekDouble> newfld(ncoeffs); 
                 fieldcoeffs.push_back(newfld);  
-                m_fields[0]->FwdTrans_IterPerExp(m_dynamicVisc->m_savVarCoeffMap[StdRegions::eVarCoeffD00],
-                                                 fieldcoeffs[fieldcoeffs.size()-1]);
-                // rescale with kinvis since we dividing by kinvis earlier
-                Vmath::Smul(ncoeffs,m_kinvis, fieldcoeffs[fieldcoeffs.size()-1],1,
-                            fieldcoeffs[fieldcoeffs.size()-1],1);
 
-                variables.push_back("SensorField");
-                
-                fieldcoeffs.push_back(Array<OneD, NekDouble>(ncoeffs));
-                m_fields[0]->FwdTrans_IterPerExp(m_dynamicVisc->m_sensorField,
-                                                 fieldcoeffs[fieldcoeffs.size()-1]);
+                m_fields[0]->FwdTrans_IterPerExp(
+                       m_dynamicVisc->m_savVarCoeffMap[StdRegions::eVarCoeffD00],
+                       fieldcoeffs[fieldcoeffs.size()-1]);
                 // rescale with kinvis since we dividing by kinvis earlier
-                Vmath::Smul(ncoeffs,1.0/(m_dynamicVisc->m_numSteps),
+                Vmath::Smul(ncoeffs,m_kinvis,
                             fieldcoeffs[fieldcoeffs.size()-1],1,
                             fieldcoeffs[fieldcoeffs.size()-1],1);
-                
             }
+            
+            else if(boost::iequals(m_dynamicVisc->m_type,
+                                   "SemiImplicitVariableDiff"))
+            {
+                int ncoeffs = m_fields[0]->GetNcoeffs();
+                int nquad   = m_fields[0]->GetTotPoints();
+                
+                variables.push_back("DynamicViscosity");
+                Array<OneD, NekDouble> newfld(ncoeffs);
+                Array<OneD, NekDouble> kinvis(nquad);
+                fieldcoeffs.push_back(newfld);  
+
+                Vmath::Sadd(nquad,m_kinvis,m_dynamicVisc->m_forcing->GetKinvis(),
+                            1,kinvis,1);
+
+                m_fields[0]->FwdTrans_IterPerExp(kinvis,
+                       fieldcoeffs[fieldcoeffs.size()-1]);
+            }
+            
         }
     }
     
-    void VelocityCorrectionScheme::DynamicVisc(StdRegions::VarCoeffMap &varCoeffMap)
+    void VelocityCorrectionScheme::DynamicVisc()
     {
         // Update sensor field with u^2
         int nquad = m_fields[0]->GetTotPoints();
@@ -541,68 +597,226 @@ namespace Nektar
         Vmath::Vadd(nquad,energy,1,m_dynamicVisc->m_sensorField,1,
                     m_dynamicVisc->m_sensorField,1);
         
-        if(m_dynamicVisc->m_numSteps%m_dynamicVisc->m_numStepsAvg == 0)
-        {
             
-            if (m_comm->GetRank() == 0)
+        // Calculate new viscosity if required
+        if(boost::iequals(m_dynamicVisc->m_type,"VariableDiff"))
+        {
+            if(m_dynamicVisc->m_numSteps%m_dynamicVisc->m_numStepsAvg == 0)
             {
-                cout << "Reseting up variable viscosity in step:" << m_dynamicVisc->m_numSteps << endl;
+                
+                if (m_comm->GetRank() == 0)
+                {
+                    cout << "Reseting up variable viscosity in step:" << m_dynamicVisc->m_numSteps << endl;
+                }
+                
+                
+                Vmath::Smul(nquad,1.0/(m_dynamicVisc->m_numSteps +1.0),
+                            m_dynamicVisc->m_sensorField,1,energy,1);
+                
+                Array<OneD, NekDouble> kinvis(nquad);
+                
+                GetStabiliseKinvis(energy,m_dynamicVisc->m_kinvisC0,
+                                   m_dynamicVisc->m_defS0,kinvis);
+                
+                // Release  current linear sys
+                for(int i =0 ; i < m_velocity.num_elements(); ++i)
+                {
+                    m_fields[m_velocity[i]]->ClearGlobalLinSysManager();
+                    m_fields[m_velocity[i]]->ResetLocalManagers();
+                }
+                
+                // add in dynamics viscosity and then divide by
+                // dyanmics viscosity for consistency with standard
+                // implementation.
+                Vmath::Sadd(nquad,m_kinvis,kinvis,1,kinvis,1);
+                Vmath::Smul(nquad,1.0/m_kinvis,kinvis,1,kinvis,1);
+                m_dynamicVisc->m_savVarCoeffMap[StdRegions::eVarCoeffD00]
+                    = kinvis; 
+                m_dynamicVisc->m_savVarCoeffMap[StdRegions::eVarCoeffD11]
+                    = kinvis;
+                if(m_expdim == 3)
+                {
+                    m_dynamicVisc->m_savVarCoeffMap[StdRegions::eVarCoeffD22]
+                        = kinvis;
+                }
             }
-
-
-            // Release  current linear sys
-            for(int i =0 ; i < m_velocity.num_elements(); ++i)
-            {
-                m_fields[m_velocity[i]]->ClearGlobalLinSysManager();
-                m_fields[m_velocity[i]]->ResetLocalManagers();
-            }
-
+            m_dynamicVisc->m_numSteps = 0; 
+            // reset average field wiht current average
+            Vmath::Vcopy(nquad,energy,1,m_dynamicVisc->m_sensorField,1);
+            
+            m_dynamicVisc->m_numSteps++;
+        }
+        else if(boost::iequals(m_dynamicVisc->m_type,
+                               "SemiImplicitVariableDiff"))
+        {
             
             Vmath::Smul(nquad,1.0/(m_dynamicVisc->m_numSteps +1.0),
                         m_dynamicVisc->m_sensorField,1,energy,1);
             
-            Array<OneD, NekDouble> sensor(nquad);
-
-            GetSensor(energy,sensor);
+            Array<OneD, NekDouble> kinvis(nquad);
             
-            // Calculate new viscosity if required
-            if(boost::iequals(m_dynamicVisc->m_type,"VariableDiff"))
+            GetStabiliseKinvis(energy,m_dynamicVisc->m_kinvisC0,
+                               m_dynamicVisc->m_defS0,kinvis);
+
+            // add in dynamics viscosity and then divide by
+            // dyanmics viscosity for consistency with standard
+            // implementation.
+            Vmath::Sadd(nquad,m_dynamicVisc->m_origKinvis,kinvis,1,kinvis,1);
+            
+            NekDouble maxkinvis = Vmath::Vmax(nquad,kinvis,1);
+
+            // reset max kinvis to 60% of current and 40% of previous
+            // to try and damp large variations. 
+            if(m_dynamicVisc->m_numSteps)
             {
-                // add in dynamics viscosity and then divide by dyanmics viscosity
-                // for consistency with standard implementation.
-                Vmath::Sadd(nquad,m_kinvis,sensor,1,sensor,1);
-                Vmath::Smul(nquad,1.0/m_kinvis,sensor,1,sensor,1);
-                m_dynamicVisc->m_savVarCoeffMap[StdRegions::eVarCoeffD00]
-                    = sensor; 
-                m_dynamicVisc->m_savVarCoeffMap[StdRegions::eVarCoeffD11]
-                    = sensor;
-                if(m_expdim == 3)
-                {
-                    m_dynamicVisc->m_savVarCoeffMap[StdRegions::eVarCoeffD22]
-                        = sensor;
-                }
+                maxkinvis = 0.3*maxkinvis +  0.7*m_dynamicVisc->m_fixedKinvis;
             }
-            else if(boost::iequals(m_dynamicVisc->m_type,"VariableSVV"))
+            
+            if((maxkinvis > 2*m_dynamicVisc->m_fixedKinvis)||
+               (maxkinvis < 0.5*m_dynamicVisc->m_fixedKinvis))
             {
-                int nexp = m_fields[0]->GetExpSize();
-                Array<OneD, NekDouble> svvDiffCoeff(nexp,0.25);
+                m_dynamicVisc->m_fixedKinvis = maxkinvis;
+
+                if (m_comm->GetRank() == 0)
+                {
+                    cout << "Updating fixed viscosity: " <<
+                        m_dynamicVisc->m_numSteps << " (value: "
+                         << maxkinvis << ")" << endl;
+                }
                 
-                // just set svv diff coeff to 0.25
-                varCoeffMap[StdRegions::eVarCoeffSVVDiff] = svvDiffCoeff;
+                
+                // Release  current linear sys
+                for(int i =0 ; i < m_velocity.num_elements(); ++i)
+                {
+                    m_fields[m_velocity[i]]->ClearGlobalLinSysManager();
+                    m_fields[m_velocity[i]]->ResetLocalManagers();
+                }
+            
+                for(int i =0 ; i < m_velocity.num_elements(); ++i)
+                {
+                    m_diffCoeff[m_velocity[i]] = maxkinvis;
+                }
+                m_kinvis = maxkinvis;
+            }
+            
+            // calculate variable viscosity 
+            Vmath::Sadd(nquad,-1*m_dynamicVisc->m_fixedKinvis,
+                        kinvis,1,kinvis,1);
+            m_dynamicVisc->m_forcing->SetKinvis(kinvis);
+
+
+            if(m_dynamicVisc->m_numSteps%m_dynamicVisc->m_numStepsAvg == 0)
+            {
+                m_dynamicVisc->m_numSteps = 0; 
+                // reset average field wiht current average
+                Vmath::Vcopy(nquad,energy,1,m_dynamicVisc->m_sensorField,1);
+            }
+
+            m_dynamicVisc->m_numSteps++;
+        }
+        else
+        {
+            ASSERTL0(false,"Unknown definition for SolverInfo DynamicsViscosity");
+        }
+    }
+    void VelocityCorrectionScheme::GetStabiliseKinvis(
+                               const Array<OneD, const NekDouble > &physarray,
+                               NekDouble C,
+                               NekDouble S0_def,
+                               Array<OneD, NekDouble>   &StabKinvis)
+    {
+        int e, NumModesElement, nQuadPointsElement;
+        int nTotQuadPoints  = GetTotPoints();
+        int nElements       = m_fields[0]->GetExpSize();
+
+        // Find solution (SolP) at p = P;
+        // The input array (physarray) is the solution at p = P;
+        Array<OneD,int> ExpOrderElement = GetNumExpModesPerExp();
+        Array<OneD, NekDouble> tmp;
+
+        int nummodes,PhysCount = 0;
+        NekDouble e0,h,sensorVal;
+        NekDouble SolPmeanNumerator, SolPmeanDenumerator; 
+
+        NekDouble kappa = 0.5;
+        NekDouble s0, kinvis;
+        
+        int nCoeffsElement, numCutOff;        
+
+        for (e = 0; e < nElements; e++)
+        {
+            PhysCount = m_fields[0]->GetPhys_Offset(e);
+            NumModesElement    = ExpOrderElement[e];
+            nQuadPointsElement = m_fields[0]->GetExp(e)->GetTotPoints();
+            nCoeffsElement     = m_fields[0]->GetExp(e)->GetNcoeffs();
+            numCutOff          = NumModesElement - 1;
+
+            // Set-up of the Orthogonal basis for an element which
+            // is needed to obtain thesolution at P =  p - 1;
+
+            Array<OneD, NekDouble> SolPElementPhys  (nQuadPointsElement, 0.0);
+            Array<OneD, NekDouble> SolPElementCoeffs(nCoeffsElement,     0.0);
+            Array<OneD, NekDouble> SolNorm          (nQuadPointsElement, 0.0);
+
+            Array<OneD, NekDouble> SolPmOneElementPhys(nQuadPointsElement, 0.0);
+            Array<OneD, NekDouble> SolPmOneElementCoeffs(nCoeffsElement, 0.0);
+
+            // create vector the save the solution points per element at P = p;
+            Vmath::Vcopy(nQuadPointsElement,physarray+PhysCount,1,SolPElementPhys,1);
+
+            m_fields[0]->GetExp(e)->FwdTrans(SolPElementPhys, SolPElementCoeffs);
+
+            // ReduceOrderCoeffs reduces the polynomial order of the solution
+            // that is represented by the coeffs given as an inarray. This is
+            // done by projecting the higher order solution onto the orthogonal
+            // basis and padding the higher order coefficients with zeros.
+            m_fields[0]->GetExp(e)->ReduceOrderCoeffs(numCutOff,
+                                                      SolPElementCoeffs,
+                                                      SolPmOneElementCoeffs);
+
+            m_fields[0]->GetExp(e)->BwdTrans(SolPmOneElementCoeffs,
+                                             SolPmOneElementPhys);
+
+            // Determining the norm of the numerator of the Sensor
+            Vmath::Vsub(nQuadPointsElement, SolPElementPhys, 1,
+                        SolPmOneElementPhys, 1, SolNorm, 1);
+
+            Vmath::Vmul(nQuadPointsElement, SolNorm, 1, SolNorm, 1,
+                        SolNorm, 1);
+
+            Vmath::Vmul(nQuadPointsElement, SolPElementPhys, 1,
+                        SolPElementPhys, 1, SolPElementPhys, 1);
+            
+            SolPmeanNumerator   = m_fields[0]->GetExp(e)->Integral(SolNorm);
+            SolPmeanDenumerator = m_fields[0]->GetExp(e)->Integral(SolPElementPhys);
+
+            sensorVal = SolPmeanNumerator / SolPmeanDenumerator;
+            sensorVal = log10(sensorVal);
+            
+            nummodes = m_fields[0]->GetExp(e)->GetBasisNumModes(0)-1;
+            
+            Array<OneD, NekDouble> One(nQuadPointsElement,1.0);
+            h = m_fields[0]->GetExp(e)->Integral(One);
+            h = pow(h,1.0/(NekDouble) m_spacedim);
+            e0 = C*h/nummodes;
+            s0 = -(S0_def + 4.0*log10(nummodes));
+            
+            if(sensorVal < s0 - kappa)
+            {
+                kinvis = 0.0;
+            }
+            else if (sensorVal > s0 + kappa)
+            {
+                kinvis = e0; 
             }
             else
             {
-                ASSERTL0(false,"Unknown definition for SolverInfo DynamicsViscosity");
+                kinvis = 0.5*e0*(1 + sin(M_PI*(sensorVal-s0)/(2*kappa)));
             }
             
-            m_dynamicVisc->m_numSteps = 0; 
-            // reset average field wiht current average
-            Vmath::Vcopy(nquad,energy,1,m_dynamicVisc->m_sensorField,1);
+            Vmath::Fill(nQuadPointsElement,kinvis,
+                        tmp = StabKinvis + PhysCount,1);
         }
-
-        m_dynamicVisc->m_numSteps++;
-        
-        varCoeffMap = m_dynamicVisc->m_savVarCoeffMap;
-
     }
+
 } //end of namespace
