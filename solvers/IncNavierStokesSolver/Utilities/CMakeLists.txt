@@ -11,11 +11,12 @@ SET(CFLStepSources  CFLStep.cpp
        ../AdvectionTerms/NavierStokesAdvection.cpp
        ../AdvectionTerms/SkewSymmetricAdvection.cpp
        ../AdvectionTerms/NoAdvection.cpp
+       ../Forcing/ForcingDynamicVisc.cpp	
        )
 
 ADD_SOLVER_EXECUTABLE(CFLStep solvers ${CFLStepSources})
 
-SET(SensorSources  Sensor.cpp 
+SET(DynamicViscSources  DynamicVisc.cpp 
        ../EquationSystems/CoupledLinearNS.cpp
        ../EquationSystems/CoupledLocalToGlobalC0ContMap.cpp
        ../EquationSystems/IncNavierStokes.cpp
@@ -28,9 +29,10 @@ SET(SensorSources  Sensor.cpp
        ../AdvectionTerms/NavierStokesAdvection.cpp
        ../AdvectionTerms/SkewSymmetricAdvection.cpp
        ../AdvectionTerms/NoAdvection.cpp
+       ../Forcing/ForcingDynamicVisc.cpp	
        )
 
-ADD_SOLVER_EXECUTABLE(Sensor solvers ${SensorSources})
+ADD_SOLVER_EXECUTABLE(DynamicVisc solvers ${DynamicViscSources})
 
 
 SET(AliasingSources  Aliasing.cpp 
@@ -46,6 +48,7 @@ SET(AliasingSources  Aliasing.cpp
        ../AdvectionTerms/NavierStokesAdvection.cpp
        ../AdvectionTerms/SkewSymmetricAdvection.cpp
        ../AdvectionTerms/NoAdvection.cpp
+       ../Forcing/ForcingDynamicVisc.cpp	
        )
 
 
@@ -65,6 +68,7 @@ SET(NonLinearEnergySources  NonLinearEnergy.cpp
        ../AdvectionTerms/NavierStokesAdvection.cpp
        ../AdvectionTerms/SkewSymmetricAdvection.cpp
        ../AdvectionTerms/NoAdvection.cpp
+       ../Forcing/ForcingDynamicVisc.cpp	
        )
 
 

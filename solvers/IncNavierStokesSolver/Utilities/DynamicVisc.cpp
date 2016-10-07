@@ -4,7 +4,7 @@
 #include <SolverUtils/Driver.h>
 #include <LibUtilities/BasicUtils/SessionReader.h>
 
-#include <IncNavierStokesSolver/EquationSystems/IncNavierStokes.h>
+#include <IncNavierStokesSolver/EquationSystems/VelocityCorrectionScheme.h>
 
 using namespace std;
 using namespace Nektar;
@@ -14,7 +14,7 @@ int main(int argc, char *argv[])
 {
     if(argc != 2)
     {
-        fprintf(stderr,"Usage: ./Sensor file.xml \n");
+        fprintf(stderr,"Usage: ./DynamicVisc file.xml \n");
         fprintf(stderr,"\t Method will read intiial conditions section of .xml file for input \n");
         exit(1);
     }
@@ -33,7 +33,7 @@ int main(int argc, char *argv[])
 
 
         EquationSystemSharedPtr EqSys = drv->GetEqu()[0];
-        IncNavierStokesSharedPtr IncNav = EqSys->as<IncNavierStokes>();
+        VelocityCorrectionSchemeSharedPtr IncNav = EqSys->as<VelocityCorrectionScheme>();
         
         IncNav->SetInitialConditions(0.0,false);
 
@@ -65,9 +65,14 @@ int main(int argc, char *argv[])
             Vmath::Vadd(nquad,energy,1,tmp,1,energy,1);
         }
         Vmath::Vsqrt(nquad,energy,1,energy,1);
-        IncNav->GetSensor(energy,sensor);
         
-        fields[n]->FwdTrans_IterPerExp(fields[n]->GetPhys(),fields[n]->UpdateCoeffs());
+        NekDouble kinvisC0, defS0;
+        session->LoadParameter("DynamicViscC0", kinvisC0,0.1);
+        session->LoadParameter("DynamicViscDefS0", defS0, 3);
+        IncNav->GetStabiliseKinvis(energy, kinvisC0, defS0, sensor);
+        
+        fields[n]->FwdTrans_IterPerExp(fields[n]->GetPhys(),
+                                       fields[n]->UpdateCoeffs());
         
         // Need to reset varibale name for output
         session->SetVariable(n,"Sensor");
@@ -75,7 +80,7 @@ int main(int argc, char *argv[])
         // Reset session name for output file
         std::string outname = IncNav->GetSessionName();
         
-        outname += "_Sensor";
+        outname += "_DynVisc";
         IncNav->ResetSessionName(outname);
         IncNav->Output();
 
