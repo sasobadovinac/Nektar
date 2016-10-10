@@ -664,8 +664,10 @@ namespace Nektar
             Vmath::Sadd(nquad,m_dynamicVisc->m_origKinvis,kinvis,1,kinvis,1);
             
             NekDouble maxkinvis = Vmath::Vmax(nquad,kinvis,1);
+            
+            m_comm->AllReduce(maxkinvis,LibUtilities::ReduceMax);
 
-            // reset max kinvis to 60% of current and 40% of previous
+            // reset max kinvis to 70% of current and 30% of previous
             // to try and damp large variations. 
             if(m_dynamicVisc->m_numSteps)
             {
@@ -726,7 +728,6 @@ namespace Nektar
                                Array<OneD, NekDouble>   &StabKinvis)
     {
         int e, NumModesElement, nQuadPointsElement;
-        int nTotQuadPoints  = GetTotPoints();
         int nElements       = m_fields[0]->GetExpSize();
 
         // Find solution (SolP) at p = P;

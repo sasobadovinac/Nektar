@@ -71,7 +71,7 @@ void ForcingDynamicVisc::v_InitObject(
 
 
 /*
-  Laplacian d/dx kinvis d/dx + d/dy kinvis d/dy + d/dxz kinvis d/dz 
+  Laplacian d/dx kinvis d/dx + d/dy kinvis d/dy + d/dz kinvis d/dz 
 */
 void ForcingDynamicVisc::v_Apply(
         const Array<OneD, MultiRegions::ExpListSharedPtr>&  pFields,
@@ -95,16 +95,14 @@ void ForcingDynamicVisc::v_Apply(
             pFields[i]->PhysDeriv(inarray[i],m_diff[0],m_diff[1],m_diff[2]);
         }
 
-        Vmath::Zero(nquad,Lap,1);
         //Div kivis
         for(int j = 0; j < m_dim; ++j)
         {
             Vmath::Vmul(nquad,m_kinvis,1,m_diff[j],1,m_diff[j],1);
-            pFields[i]->PhysDeriv(j,m_diff[j],m_diff[0]);
-            Vmath::Vadd(nquad,m_diff[0],1,Lap,1,Lap,1);
+            pFields[i]->PhysDeriv(j,m_diff[j],Lap);
+            Vmath::Vadd(nquad,Lap,1,outarray[i],1,outarray[i],1);
         }
         
-        Vmath::Vadd(nquad,Lap,1,outarray[i],1,outarray[i],1);
     }
 }
 
