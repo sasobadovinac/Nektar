@@ -444,13 +444,17 @@ printf("%s\n", "pointA2");
             {
                 optiNodes[i][j]->Optimise(derivUtil,nodes);
             }
-            Load_nodes(nodes);
+            
         }
 
         res->startInv = 0;
         res->worstJac = numeric_limits<double>::max();
 
         // copy nodes onto GPU and evaluate the elements on GPU
+        //Load_nodes(nodes);
+        Kokkos::deep_copy(nodes.X,nodes.h_X);
+        Kokkos::deep_copy(nodes.Y,nodes.h_Y);
+        Kokkos::deep_copy(nodes.Z,nodes.h_Z);
         Evaluate(derivUtil, nodes);
 
         // Evaluate elements on CPU

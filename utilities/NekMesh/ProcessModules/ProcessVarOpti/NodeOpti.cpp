@@ -78,10 +78,10 @@ void NodeOpti::CalcMinJac()
 
 void NodeOpti::GetNodeCoord(double &x,double &y, double &z, int id, NodesGPU &nodes)
 {
-    x = node->m_x;
-    y = node->m_y;
-    z = node->m_z;
-    /*int N1 = nodes.nElmt;
+    //x = node->m_x;
+    //y = node->m_y;
+    //z = node->m_z;
+    int N1 = nodes.nElmt;
     int M1 = nodes.nodes_size;
     for(int k = 0; k < N1; k++)
     {         
@@ -92,17 +92,18 @@ void NodeOpti::GetNodeCoord(double &x,double &y, double &z, int id, NodesGPU &no
                 x = nodes.h_X(k,j);
                 y = nodes.h_Y(k,j);
                 z = nodes.h_Z(k,j);
+                //printf("get node id (%i,%i): %i\n", k,j, nodes.h_Id(k,j));
             }
         }
-    }*/
+    }
 }
 
 void NodeOpti::SetNodeCoord(double &x,double &y, double &z, int id, NodesGPU &nodes)
 {
-    node->m_x = x;
-    node->m_y = y;
-    node->m_z = z;
-    /*int N1 = nodes.nElmt;
+    //node->m_x = x;
+    //node->m_y = y;
+    //node->m_z = z;
+    int N1 = nodes.nElmt;
     int M1 = nodes.nodes_size;
     Kokkos::parallel_for(team_policy_host(N1,M1), KOKKOS_LAMBDA (const member_type_host& teamMember)
     {         
@@ -114,9 +115,10 @@ void NodeOpti::SetNodeCoord(double &x,double &y, double &z, int id, NodesGPU &no
                 nodes.h_X(k,j) = x;
                 nodes.h_Y(k,j) = y;
                 nodes.h_Z(k,j) = z;
+                //printf("set node id (%i,%i): %i\n", k,j, nodes.h_Id(k,j));
             }
         });
-    });*/
+    });
 }
 
 

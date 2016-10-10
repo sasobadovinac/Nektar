@@ -186,7 +186,7 @@ NekDouble NodeOpti::GetFunctional(DerivUtilGPU &derivUtilGPU, NodesGPU &nodes, b
     NekDouble X[DIM * totpts];
 
     // Store x/y components of each element sequentially in memory
-    for (int i = 0, cnt = 0; i < nElmt; ++i)
+    /*for (int i = 0, cnt = 0; i < nElmt; ++i)
     {
         for (int j = 0; j < ptsLowGPU; ++j)
         {
@@ -197,8 +197,8 @@ NekDouble NodeOpti::GetFunctional(DerivUtilGPU &derivUtilGPU, NodesGPU &nodes, b
         }
 
         cnt += DIM*ptsLowGPU;
-    }
-    /*int iD = 0;
+    }*/
+    int iD = 0;
     int offset = 0;
     for (int i = 0, cnt = 0; i < nElmt; ++i)
     {
@@ -238,7 +238,7 @@ NekDouble NodeOpti::GetFunctional(DerivUtilGPU &derivUtilGPU, NodesGPU &nodes, b
         }
 
         cnt += DIM*ptsLowGPU;
-    }*/
+    }
 
     // Storage for derivatives, ordered by:
     //   - standard coordinate direction
