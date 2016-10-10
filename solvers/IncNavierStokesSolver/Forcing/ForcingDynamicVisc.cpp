@@ -65,6 +65,7 @@ void ForcingDynamicVisc::v_InitObject(
     m_diff = Array<OneD, Array<OneD, NekDouble> > (3);
     for(int i = 0; i < m_dim; i++)
     {
+        
         m_diff[i] = Array<OneD, NekDouble>(phystot);
     }
 }

@@ -181,8 +181,9 @@ namespace Nektar
             m_dynamicVisc = MemoryManager<DynamicViscData>::AllocateSharedPtr();
             m_dynamicVisc->m_type = m_session->GetSolverInfo("DynamicViscosity");
 
+            // must be initialised to zero sicne we will add to vector later. 
             m_dynamicVisc->m_sensorField  = Array<OneD, NekDouble>
-                (m_fields[0]->GetTotPoints());
+                (m_fields[0]->GetTotPoints(),0.0);
 
             m_dynamicVisc->m_numSteps     = 0;
 
@@ -191,8 +192,6 @@ namespace Nektar
                 ForcingDynamicViscSharedPtr forcing = MemoryManager<ForcingDynamicVisc>::AllocateSharedPtr(m_session);
                 forcing->InitObject(m_fields, m_velocity.num_elements(), (TiXmlElement*)NULL);
                 // initialisae kinvis as zero
-                Array<OneD, NekDouble> Zero(m_fields[0]->GetTotPoints(),0.0);
-                forcing->SetKinvis(Zero);
                 m_dynamicVisc->m_forcing = forcing;
                 m_forcing.push_back(forcing);
 
@@ -791,7 +790,7 @@ namespace Nektar
             SolPmeanNumerator   = m_fields[0]->GetExp(e)->Integral(SolNorm);
             SolPmeanDenumerator = m_fields[0]->GetExp(e)->Integral(SolPElementPhys);
 
-            sensorVal = SolPmeanNumerator / SolPmeanDenumerator;
+            sensorval = SolPmeanNumerator / SolPmeanDenumerator;
             sensorVal = log10(sensorVal);
             
             nummodes = m_fields[0]->GetExp(e)->GetBasisNumModes(0)-1;
@@ -802,6 +801,7 @@ namespace Nektar
             e0 = C*h/nummodes;
             s0 = -(S0_def + 4.0*log10(nummodes));
             
+            kinvis = 0.0; 
             if(sensorVal < s0 - kappa)
             {
                 kinvis = 0.0;
