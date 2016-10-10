@@ -790,7 +790,7 @@ namespace Nektar
             SolPmeanNumerator   = m_fields[0]->GetExp(e)->Integral(SolNorm);
             SolPmeanDenumerator = m_fields[0]->GetExp(e)->Integral(SolPElementPhys);
 
-            sensorval = SolPmeanNumerator / SolPmeanDenumerator;
+            sensorVal = SolPmeanNumerator / SolPmeanDenumerator;
             sensorVal = log10(sensorVal);
             
             nummodes = m_fields[0]->GetExp(e)->GetBasisNumModes(0)-1;
