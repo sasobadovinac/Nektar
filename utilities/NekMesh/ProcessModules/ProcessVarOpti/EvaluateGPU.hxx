@@ -36,6 +36,8 @@
 #ifndef UTILITIES_NEKMESH_PROCESSVAROPTI_EVALUATEGPU
 #define UTILITIES_NEKMESH_PROCESSVAROPTI_EVALUATEGPU
 
+#include <map>
+
 namespace Nektar
 {
 namespace Utilities
@@ -152,7 +154,6 @@ void ProcessVarOpti::Load_nodes(NodesGPU &nodes)
             nodes.h_Y(k,j) = *dataSet[k]->nodes[j][1];
             nodes.h_Z(k,j) = *dataSet[k]->nodes[j][2];
             nodes.h_Id(k,j) = *dataSet[k]->nodeIds[j];
-            //printf("nodes.h_Id(k,j): %i\n", nodes.h_Id(k,j));
         });
         const int ElmtId = dataSet[k]->GetId();
         nodes.h_ElmtOffset(ElmtId) = k;
@@ -163,6 +164,32 @@ void ProcessVarOpti::Load_nodes(NodesGPU &nodes)
     Kokkos::deep_copy(nodes.Id,nodes.h_Id);
 
     Kokkos::deep_copy(nodes.ElmtOffset,nodes.h_ElmtOffset);
+}
+
+void ProcessVarOpti::Create_NodeMap(NodesGPU &nodes, 
+			std::vector<std::vector<NodeSharedPtr> > &freenodes, NodeMap &nodeMap)
+{
+	int N1 = nodes.nElmt;
+    int M1 = nodes.nodes_size;
+    int id;
+    //std::multimap<int,std::pair<int,int>> nodeMap;
+    for(int ii = 0; ii < freenodes.size(); ii++)
+    {
+        for(int jj = 0; jj < freenodes[ii].size(); jj++)
+        {
+        	id = freenodes[ii][jj]->m_id;
+		    for(int k = 0; k < N1; k++)
+		    {         
+		        for(int j = 0; j < M1; j++)
+		        {                
+		            if(nodes.h_Id(k,j) == id)
+		            {
+		                nodeMap.insert(std::pair<int,std::pair<int,int>> (id, {k,j} ));
+		            }
+		        }
+		    }
+		}
+	}
 }
 
 void ProcessVarOpti::Evaluate(DerivUtilGPU &derivUtil,NodesGPU &nodes)

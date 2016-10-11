@@ -350,6 +350,7 @@ void ProcessVarOpti::Process()
         Kokkos::DefaultHostExecutionSpace::initialize(args.num_threads);
         Kokkos::DefaultExecutionSpace::initialize();
 
+        // Test functions
         std::cout << " Template using int" << std::endl;  
         process<int>();
         std::cout << " Template using double" << std::endl; 
@@ -363,24 +364,30 @@ void ProcessVarOpti::Process()
     derivUtil.nodes_size = dataSet[0]->nodes.size();
     derivUtil.ptsLow = dataSet[0]->derivUtil->ptsLow;
     derivUtil.ptsHigh = dataSet[0]->derivUtil->ptsHigh;
+    Load_derivUtil(derivUtil);
 
     printf("derivUtil.nodes_size%i\n", derivUtil.nodes_size);
     printf("derivUtil.ptsLow%i\n", derivUtil.ptsLow);
     printf("derivUtil.ptsHigh%i\n", derivUtil.ptsHigh);
+    
 
-    Load_derivUtil(derivUtil);
-printf("%s\n", "pointA");
     // initialise views for node coordinates on GPU
     NodesGPU nodes;
     nodes.nodes_size = dataSet[0]->nodes.size();
     nodes.nElmt = dataSet.size();
-    Create_nodes_view(nodes);    
-printf("%s\n", "pointA1");
+    Create_nodes_view(nodes); 
+
     // copy nodes onto GPU and evaluate the elements on GPU
     Load_nodes(nodes);
+
+    // create mapping between node ids and their position on node array
+    NodeMap nodeMap;
+    Create_NodeMap(nodes, freenodes, nodeMap);
+
+    // Evaluate the Jacobian of all elements on GPU
     Evaluate(derivUtil, nodes);
-printf("%s\n", "pointA2");
-    // Evaluate elements on CPU
+
+    // Evaluate the Jacobian of all elements on CPU
     /*Kokkos::parallel_for(range_policy_host(0,dataSet.size()), KOKKOS_LAMBDA (const int i)
     {
         dataSet[i]->Evaluate();
@@ -442,7 +449,7 @@ printf("%s\n", "pointA2");
             
             for(int j = 0; j < optiNodes[i].size(); j++)
             {
-                optiNodes[i][j]->Optimise(derivUtil,nodes);
+                optiNodes[i][j]->Optimise(derivUtil,nodes, nodeMap);
             }
             
         }
@@ -451,7 +458,6 @@ printf("%s\n", "pointA2");
         res->worstJac = numeric_limits<double>::max();
 
         // copy nodes onto GPU and evaluate the elements on GPU
-        //Load_nodes(nodes);
         Kokkos::deep_copy(nodes.X,nodes.h_X);
         Kokkos::deep_copy(nodes.Y,nodes.h_Y);
         Kokkos::deep_copy(nodes.Z,nodes.h_Z);

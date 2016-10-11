@@ -119,6 +119,8 @@ struct Residual
 };
 
 typedef boost::shared_ptr<Residual> ResidualSharedPtr;
+typedef std::multimap<int,std::pair<int,int>> NodeMap;
+
 
 class ProcessVarOpti : public ProcessModule
 {
@@ -139,13 +141,14 @@ public:
     void Create_nodes_view(NodesGPU &nodes);
     void Load_nodes(NodesGPU &nodes);
     void Evaluate(DerivUtilGPU &derivUtil,NodesGPU &nodes);
+    void Create_NodeMap(NodesGPU &nodes, std::vector<std::vector<NodeSharedPtr> > &freenodes, NodeMap &nodeMap);
 
     void Optimise(); // for GPU parallelisation
 
 private:
     typedef std::map<int, std::pair<std::vector<int>,
                                     std::vector<ElUtilSharedPtr> > > NodeElMap;
-
+    
     void BuildDerivUtil();
     void GetElementMap();
 
@@ -156,6 +159,8 @@ private:
 
     NodeElMap nodeElMap;
     std::vector<ElUtilSharedPtr> dataSet;
+
+    NodeMap nodeMap; //maps node_ids to GPU node array
 
     ResidualSharedPtr res;
     std::map<LibUtilities::ShapeType,DerivUtilSharedPtr> derivUtil;

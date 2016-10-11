@@ -210,33 +210,18 @@ NekDouble NodeOpti::GetFunctional(DerivUtilGPU &derivUtilGPU, NodesGPU &nodes, b
             {
                 if (d == 0)
                 {
-                    X[cnt + d*ptsLowGPU + j] = nodes.h_X(offset,j);
-                    if (X[cnt + d*ptsLowGPU + j] - *(data[i]->nodes[j][d]) > 1e-6)
-                    {
-                        //printf("Elmt %i ptsLow %i iD %i correct %e wrong %e\n", i,j, iD,*(data[i]->nodes[j][d]),nodes.h_X(offset,j));
-                    }
+                    X[cnt + d*ptsLowGPU + j] = nodes.h_X(offset,j);                    
                 }
                 else if (d == 1)
                 {
                     X[cnt + d*ptsLowGPU + j] = nodes.h_Y(offset,j);
-                    if (X[cnt + d*ptsLowGPU + j] - *(data[i]->nodes[j][d]) > 1e-6)
-                    {
-                        //printf("Elmt %i ptsLow %i iD %i correct %e wrong %e\n", i,j, iD,*(data[i]->nodes[j][d]),nodes.h_Y(offset,j));
-                    }
                 }
                 else if (d == 2)
                 {
                     X[cnt + d*ptsLowGPU + j] = nodes.h_Z(offset,j);
-                    if (X[cnt + d*ptsLowGPU + j] - *(data[i]->nodes[j][d]) > 1e-6)
-                    {
-                        //printf("Elmt %i ptsLow %i iD %i correct %e wrong %e\n", i,j, iD,*(data[i]->nodes[j][d]),nodes.h_Z(offset,j));
-                    }
-                }
-
-                
+                }                
             }
         }
-
         cnt += DIM*ptsLowGPU;
     }
 
@@ -289,10 +274,10 @@ NekDouble NodeOpti::GetFunctional(DerivUtilGPU &derivUtilGPU, NodesGPU &nodes, b
             }
         }
 
-            Blas::Dgemm(
-            'N', 'N', ptsHighGPU, DIM * nElmt, ptsLowGPU, 1.0,
-            *h_VdmD, ptsHighGPU, X,
-            ptsLowGPU, 0.0, &deriv[d][0][0][0], ptsHighGPU);
+        Blas::Dgemm(
+        'N', 'N', ptsHighGPU, DIM * nElmt, ptsLowGPU, 1.0,
+        *h_VdmD, ptsHighGPU, X,
+        ptsLowGPU, 0.0, &deriv[d][0][0][0], ptsHighGPU);
     }
 
 

@@ -82,21 +82,17 @@ public:
         return m_el;
     }
 
-    DerivUtilSharedPtr derivUtil; // be careful
-    ResidualSharedPtr res; // be careful
-    std::vector<Array<OneD, NekDouble> > MappingIdealToRef(); // be careful
-    int m_dim;  // be careful
+    // members moved from private to public
+    DerivUtilSharedPtr derivUtil;
+    ResidualSharedPtr res;
+    std::vector<Array<OneD, NekDouble> > MappingIdealToRef();
+    int m_dim;
 
 private:
 
-    //std::vector<Array<OneD, NekDouble> > MappingIdealToRef();
-
-    ElementSharedPtr m_el;
-    //int m_dim;
+    ElementSharedPtr m_el;    
     int m_mode;
-
-    //DerivUtilSharedPtr derivUtil;
-    //ResidualSharedPtr res;
+    
 };
 typedef boost::shared_ptr<ElUtil> ElUtilSharedPtr;
 

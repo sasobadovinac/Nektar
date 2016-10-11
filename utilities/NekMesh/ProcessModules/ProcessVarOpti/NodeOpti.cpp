@@ -76,56 +76,49 @@ void NodeOpti::CalcMinJac()
     }
 }
 
-void NodeOpti::GetNodeCoord(double &x,double &y, double &z, int id, NodesGPU &nodes)
+void NodeOpti::GetNodeCoord(double &x,double &y, double &z, int id, NodesGPU &nodes, NodeMap &nodeMap)
 {
     //x = node->m_x;
     //y = node->m_y;
     //z = node->m_z;
-    int N1 = nodes.nElmt;
-    int M1 = nodes.nodes_size;
-    for(int k = 0; k < N1; k++)
-    {         
-        for(int j = 0; j < M1; j++)
-        {                
-            if(nodes.h_Id(k,j) == id)
-            {
-                x = nodes.h_X(k,j);
-                y = nodes.h_Y(k,j);
-                z = nodes.h_Z(k,j);
-                //printf("get node id (%i,%i): %i\n", k,j, nodes.h_Id(k,j));
-            }
-        }
-    }
+    
+    NodeMap::const_iterator coeffs;
+    coeffs = nodeMap.find(id);
+    // its sufficient to pull the coordinates from the first instance of the node
+    int elmt = std::get<0>(coeffs->second);
+    int node = std::get<1>(coeffs->second);
+    x = nodes.h_X(elmt,node);
+    y = nodes.h_Y(elmt,node);
+    z = nodes.h_Z(elmt,node);
+
 }
 
-void NodeOpti::SetNodeCoord(double &x,double &y, double &z, int id, NodesGPU &nodes)
+void NodeOpti::SetNodeCoord(double &x,double &y, double &z, int id, NodesGPU &nodes, NodeMap &nodeMap)
 {
     //node->m_x = x;
     //node->m_y = y;
     //node->m_z = z;
-    int N1 = nodes.nElmt;
-    int M1 = nodes.nodes_size;
-    Kokkos::parallel_for(team_policy_host(N1,M1), KOKKOS_LAMBDA (const member_type_host& teamMember)
-    {         
-        const int k = teamMember.league_rank();
-        Kokkos::parallel_for(Kokkos::TeamThreadRange( teamMember, M1 ), [&] (const int j)
-        {                
-            if(nodes.h_Id(k,j) == id)
-            {
-                nodes.h_X(k,j) = x;
-                nodes.h_Y(k,j) = y;
-                nodes.h_Z(k,j) = z;
-                //printf("set node id (%i,%i): %i\n", k,j, nodes.h_Id(k,j));
-            }
-        });
-    });
+    
+    NodeMap::const_iterator coeffs;
+    coeffs = nodeMap.find(id);
+    for(int n = 0; n < nodeMap.count(id); n++)
+    {
+        int elmt = std::get<0>(coeffs->second);
+        int node = std::get<1>(coeffs->second);
+        nodes.h_X(elmt,node) = x;
+        nodes.h_Y(elmt,node) = y;
+        nodes.h_Z(elmt,node) = z;
+
+        coeffs++;
+    }    
+
 }
 
 
 int NodeOpti2D2D::m_type = GetNodeOptiFactory().RegisterCreatorFunction(
     22, NodeOpti2D2D::create, "2D2D");
 
-void NodeOpti2D2D::Optimise(DerivUtilGPU &derivUtil,NodesGPU &nodes)
+void NodeOpti2D2D::Optimise(DerivUtilGPU &derivUtil,NodesGPU &nodes, NodeMap &nodeMap)
 {
     CalcMinJac();
 
@@ -190,7 +183,7 @@ void NodeOpti2D2D::Optimise(DerivUtilGPU &derivUtil,NodesGPU &nodes)
 int NodeOpti3D3D::m_type = GetNodeOptiFactory().RegisterCreatorFunction(
     33, NodeOpti3D3D::create, "3D3D");
 
-void NodeOpti3D3D::Optimise(DerivUtilGPU &derivUtil,NodesGPU &nodes)
+void NodeOpti3D3D::Optimise(DerivUtilGPU &derivUtil,NodesGPU &nodes, NodeMap &nodeMap)
 {
     CalcMinJac();
 
@@ -204,7 +197,7 @@ void NodeOpti3D3D::Optimise(DerivUtilGPU &derivUtil,NodesGPU &nodes)
         
         NekDouble xc, yc, zc; // initial node coordinates, keep them constant
         NekDouble xn, yn, zn; // new node positions, update them
-        GetNodeCoord(xc, yc, zc, id, nodes);
+        GetNodeCoord(xc, yc, zc, id, nodes, nodeMap);
 
         Array<OneD, NekDouble> sk(3), dk(3);
         bool DNC = false;
@@ -280,7 +273,7 @@ void NodeOpti3D3D::Optimise(DerivUtilGPU &derivUtil,NodesGPU &nodes)
                 xn = xc + alpha * sk[0];
                 yn = yc + alpha * sk[1];
                 zn = zc + alpha * sk[2];
-                SetNodeCoord(xn, yn, zn, id, nodes);
+                SetNodeCoord(xn, yn, zn, id, nodes, nodeMap);
 
 
                 newVal = GetFunctional<3>(derivUtil, nodes,false,false);
@@ -313,7 +306,7 @@ void NodeOpti3D3D::Optimise(DerivUtilGPU &derivUtil,NodesGPU &nodes)
             xn = xc + dk[0];
             yn = yc + dk[1];
             zn = zc + dk[2];
-            SetNodeCoord(xn, yn, zn, id, nodes);
+            SetNodeCoord(xn, yn, zn, id, nodes, nodeMap);
 
             newVal = GetFunctional<3>(derivUtil, nodes,false,false);
 
@@ -327,7 +320,7 @@ void NodeOpti3D3D::Optimise(DerivUtilGPU &derivUtil,NodesGPU &nodes)
                     xn = xc + alpha * dk[0];
                     yn = yc + alpha * dk[1];
                     zn = zc + alpha * dk[2];
-                    SetNodeCoord(xn, yn, zn, id, nodes);
+                    SetNodeCoord(xn, yn, zn, id, nodes, nodeMap);
 
 
                     newVal = GetFunctional<3>(derivUtil, nodes,false,false);
@@ -335,7 +328,7 @@ void NodeOpti3D3D::Optimise(DerivUtilGPU &derivUtil,NodesGPU &nodes)
                     xn = xc + alpha/beta * dk[0];
                     yn = yc + alpha/beta * dk[1];
                     zn = zc + alpha/beta * dk[2];
-                    SetNodeCoord(xn, yn, zn, id, nodes);
+                    SetNodeCoord(xn, yn, zn, id, nodes, nodeMap);
 
                     NekDouble dbVal = GetFunctional<3>(derivUtil, nodes,false,false);
 
@@ -361,7 +354,7 @@ void NodeOpti3D3D::Optimise(DerivUtilGPU &derivUtil,NodesGPU &nodes)
                     xn = xc + alpha * dk[0];
                     yn = yc + alpha * dk[1];
                     zn = zc + alpha * dk[2];
-                    SetNodeCoord(xn, yn, zn, id, nodes);
+                    SetNodeCoord(xn, yn, zn, id, nodes, nodeMap);
 
                     newVal = GetFunctional<3>(derivUtil, nodes,false,false);
 
@@ -383,7 +376,7 @@ void NodeOpti3D3D::Optimise(DerivUtilGPU &derivUtil,NodesGPU &nodes)
             xn = xc;
             yn = yc;
             zn = zc;
-            SetNodeCoord(xn, yn, zn, id, nodes);
+            SetNodeCoord(xn, yn, zn, id, nodes, nodeMap);
 
             mtx.lock();
             res->nReset++;
@@ -393,7 +386,7 @@ void NodeOpti3D3D::Optimise(DerivUtilGPU &derivUtil,NodesGPU &nodes)
 
         // update residual value
         mtx.lock();        
-        GetNodeCoord(xn, yn, zn, id, nodes);
+        GetNodeCoord(xn, yn, zn, id, nodes, nodeMap);
         res->val = max(sqrt((xn-xc)*(xn-xc)+(yn-yc)*(yn-yc)+
                             (zn-zc)*(zn-zc)),res->val);
         res->func +=newVal;
