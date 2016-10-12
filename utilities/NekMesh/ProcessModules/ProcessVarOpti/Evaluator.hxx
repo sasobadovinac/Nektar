@@ -182,48 +182,7 @@ NekDouble NodeOpti::GetFunctional(DerivUtilGPU &derivUtilGPU, NodesGPU &nodes, b
     const int nElmt = data.size();    
     const int ptsLowGPU = derivUtilGPU.ptsLow;
     const int ptsHighGPU = derivUtilGPU.ptsHigh;
-    const int totpts = ptsLowGPU * nElmt;
-    NekDouble X[DIM * totpts];
-
-    // Store x/y components of each element sequentially in memory
-    /*for (int i = 0, cnt = 0; i < nElmt; ++i)
-    {
-        for (int j = 0; j < ptsLowGPU; ++j)
-        {
-            for (int d = 0; d < DIM; ++d)
-            {
-                X[cnt + d*ptsLowGPU + j] = *(data[i]->nodes[j][d]);
-            }
-        }
-
-        cnt += DIM*ptsLowGPU;
-    }*/
-    int iD = 0;
-    int offset = 0;
-    for (int i = 0, cnt = 0; i < nElmt; ++i)
-    {
-        iD = data[i]->GetId();
-        offset = nodes.h_ElmtOffset(iD);
-        for (int j = 0; j < ptsLowGPU; ++j)
-        {
-            for (int d = 0; d < DIM; ++d)
-            {
-                if (d == 0)
-                {
-                    X[cnt + d*ptsLowGPU + j] = nodes.h_X(offset,j);                    
-                }
-                else if (d == 1)
-                {
-                    X[cnt + d*ptsLowGPU + j] = nodes.h_Y(offset,j);
-                }
-                else if (d == 2)
-                {
-                    X[cnt + d*ptsLowGPU + j] = nodes.h_Z(offset,j);
-                }                
-            }
-        }
-        cnt += DIM*ptsLowGPU;
-    }
+       
 
     // Storage for derivatives, ordered by:
     //   - standard coordinate direction
@@ -232,54 +191,117 @@ NekDouble NodeOpti::GetFunctional(DerivUtilGPU &derivUtilGPU, NodesGPU &nodes, b
     //   - quadrature points
     DerivArray deriv(boost::extents[DIM][nElmt][DIM][ptsHighGPU]);
 
-    // Calculate x- and y- (and z-) gradients
-    /*for (int d = 0; d < DIM; ++d)
+    Kokkos::View<double****> derivGPU("derivGPU", DIM, nElmt, DIM, ptsHighGPU);
+    typename Kokkos::View< double****>::HostMirror h_derivGPU = Kokkos::create_mirror_view(derivGPU);
+
+
+    // prepare Vandermonde coeffs for Dgemm
+    /*const double** h_VdmD0 = new const double*[ptsHighGPU*ptsLowGPU];
+    const double** h_VdmD1 = new const double*[ptsHighGPU*ptsLowGPU];
+    const double** h_VdmD2 = new const double*[ptsHighGPU*ptsLowGPU];
+    for (int i = 0; i < ptsHighGPU; ++i)
     {
+        for (int j = 0; j < ptsLowGPU; ++j)
+        {
+            h_VdmD0[i+ptsHighGPU*j] = &derivUtilGPU.h_VdmD_0(i,j);
+            h_VdmD1[i+ptsHighGPU*j] = &derivUtilGPU.h_VdmD_1(i,j);
+            h_VdmD2[i+ptsHighGPU*j] = &derivUtilGPU.h_VdmD_2(i,j);
+        }
+    }     
+
+    int iD = 0;
+    int elmt_row = 0;
+    NekDouble X[DIM * ptsLowGPU * nElmt];
+    for (int el = 0; el < nElmt; ++el)
+    {
+        iD = data[el]->GetId();
+        elmt_row = nodes.h_ElmtOffset(iD);
+        for (int j = 0; j < ptsLowGPU; ++j)
+        {
+            for (int d = 0; d < DIM; ++d)
+            {
+                if (d == 0)
+                {
+                    X[d*ptsLowGPU + j] = nodes.h_X(elmt_row,j);                    
+                }
+                else if (d == 1)
+                {
+                    X[d*ptsLowGPU + j] = nodes.h_Y(elmt_row,j);
+                }
+                else if (d == 2)
+                {
+                    X[d*ptsLowGPU + j] = nodes.h_Z(elmt_row,j);
+                }                
+            }
+        }
+        
+        //Blas::Dgemm(
+        //    'N', 'N', ptsHighGPU, DIM, ptsLowGPU, 1.0,
+        //    *h_VdmD0, ptsHighGPU, X,
+        //    ptsLowGPU, 0.0, &deriv[0][el][0][0], ptsHighGPU);
         Blas::Dgemm(
-            'N', 'N', ptsHighGPU, DIM * nElmt, ptsLowGPU, 1.0,
-            derivUtil[st]->VdmD[d].GetRawPtr(), ptsHighGPU, X,
-            ptsLowGPU, 0.0, &deriv[d][0][0][0], ptsHighGPU);
+            'N', 'N', ptsHighGPU, DIM, ptsLowGPU, 1.0,
+            *h_VdmD1, ptsHighGPU, X,
+            ptsLowGPU, 0.0, &deriv[1][el][0][0], ptsHighGPU);
+        Blas::Dgemm(
+            'N', 'N', ptsHighGPU, DIM, ptsLowGPU, 1.0,
+            *h_VdmD2, ptsHighGPU, X,
+            ptsLowGPU, 0.0, &deriv[2][el][0][0], ptsHighGPU);
     }*/
+
+    int iD = 0;
+    int elmt_row = 0;
+    for (int el = 0; el < nElmt; ++el)
+    {   
+        iD = data[el]->GetId();
+        elmt_row = nodes.h_ElmtOffset(iD);     
+        Kokkos::parallel_for (range_policy(0,ptsHighGPU), KOKKOS_LAMBDA (const int j)
+        {
+            derivGPU(0,el,0,j) = 0.0;
+            derivGPU(0,el,1,j) = 0.0;
+            derivGPU(0,el,2,j) = 0.0;
+
+            derivGPU(1,el,0,j) = 0.0;
+            derivGPU(1,el,1,j) = 0.0;
+            derivGPU(1,el,2,j) = 0.0;
+
+            derivGPU(2,el,0,j) = 0.0;
+            derivGPU(2,el,1,j) = 0.0;
+            derivGPU(2,el,2,j) = 0.0;
+            for (int k = 0; k < ptsLowGPU; ++k)
+            {
+                derivGPU(0,el,0,j) += derivUtilGPU.VdmD_0(j,k) * nodes.X(elmt_row,k);
+                derivGPU(0,el,1,j) += derivUtilGPU.VdmD_0(j,k) * nodes.Y(elmt_row,k);
+                derivGPU(0,el,2,j) += derivUtilGPU.VdmD_0(j,k) * nodes.Z(elmt_row,k);
+
+                derivGPU(1,el,0,j) += derivUtilGPU.VdmD_1(j,k) * nodes.X(elmt_row,k);
+                derivGPU(1,el,1,j) += derivUtilGPU.VdmD_1(j,k) * nodes.Y(elmt_row,k);
+                derivGPU(1,el,2,j) += derivUtilGPU.VdmD_1(j,k) * nodes.Z(elmt_row,k);
+
+                derivGPU(2,el,0,j) += derivUtilGPU.VdmD_2(j,k) * nodes.X(elmt_row,k);
+                derivGPU(2,el,1,j) += derivUtilGPU.VdmD_2(j,k) * nodes.Y(elmt_row,k);
+                derivGPU(2,el,2,j) += derivUtilGPU.VdmD_2(j,k) * nodes.Z(elmt_row,k);
+            }
+        });
+        
+    }
+    Kokkos::deep_copy(h_derivGPU,derivGPU);
+    //DerivArray deriv(boost::extents[DIM][nElmt][DIM][ptsHighGPU]);
+
     for (int d = 0; d < DIM; ++d)
     {
-        const double** h_VdmD = new const double*[ptsHighGPU*ptsLowGPU];
-        if (d == 0)
+        for (int el = 0; el < nElmt; ++el)
         {
-            for (int i = 0; i < ptsHighGPU; ++i)
+            for (int dd = 0; dd < DIM; ++dd)
             {
-                for (int j = 0; j < ptsLowGPU; ++j)
+                for (int pts = 0; pts < ptsHighGPU; ++pts)
                 {
-                    h_VdmD[i+ptsHighGPU*j] = &derivUtilGPU.h_VdmD_0(i,j);
+                    deriv[d][el][dd][pts] = h_derivGPU(d,el,dd,pts);
                 }
             }
         }
-        else if (d == 1)
-        {
-            for (int i = 0; i < ptsHighGPU; ++i)
-            {
-                for (int j = 0; j < ptsLowGPU; ++j)
-                {
-                    h_VdmD[i+ptsHighGPU*j] = &derivUtilGPU.h_VdmD_1(i,j);
-                }
-            }
-        }
-        else if (d == 2)
-        {
-            for (int i = 0; i < ptsHighGPU; ++i)
-            {
-                for (int j = 0; j < ptsLowGPU; ++j)
-                {
-                    h_VdmD[i+ptsHighGPU*j] = &derivUtilGPU.h_VdmD_2(i,j);
-                }
-            }
-        }
-
-        Blas::Dgemm(
-        'N', 'N', ptsHighGPU, DIM * nElmt, ptsLowGPU, 1.0,
-        *h_VdmD, ptsHighGPU, X,
-        ptsLowGPU, 0.0, &deriv[d][0][0][0], ptsHighGPU);
     }
-
+    
 
     NekDouble integral = 0.0;
     //NekDouble ep = minJac < gam ? sqrt(gam*(gam-minJac)) : 0.0;

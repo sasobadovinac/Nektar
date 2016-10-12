@@ -66,13 +66,15 @@ public:
     virtual void Optimise(DerivUtilGPU &derivUtil,NodesGPU &nodes, NodeMap &nodeMap) = 0;
     NodeOptiJob *GetJob();
 
-    void GetNodeCoord(double &x,double &y, double &z, int id,NodesGPU &nodes, NodeMap &nodeMap);
-    void SetNodeCoord(double &x,double &y, double &z, int id,NodesGPU &nodes, NodeMap &nodeMap);
-
-protected:
+    void GetNodeCoord(double (&X)[3], int id,NodesGPU &nodes, NodeMap &nodeMap);
+    void SetNodeCoord(double (&X)[3], int id,NodesGPU &nodes, NodeMap &nodeMap);
 
     template<int DIM> NekDouble GetFunctional(DerivUtilGPU &derivUtil, NodesGPU &nodes,
                                         bool gradient = true, bool hessian = true);
+    
+
+protected:
+
     NodeSharedPtr node;
     boost::mutex mtx;
     std::vector<int> nodeIds;

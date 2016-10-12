@@ -76,39 +76,64 @@ void NodeOpti::CalcMinJac()
     }
 }
 
-void NodeOpti::GetNodeCoord(double &x,double &y, double &z, int id, NodesGPU &nodes, NodeMap &nodeMap)
+void NodeOpti::GetNodeCoord(double (&X)[3], int id, NodesGPU &nodes, NodeMap &nodeMap)
 {
     //x = node->m_x;
     //y = node->m_y;
     //z = node->m_z;
-    
+
+    // it is sufficient to pull the coordinates from the first instance of the node
     NodeMap::const_iterator coeffs;
-    coeffs = nodeMap.find(id);
-    // its sufficient to pull the coordinates from the first instance of the node
+    coeffs = nodeMap.find(id);    
     int elmt = std::get<0>(coeffs->second);
     int node = std::get<1>(coeffs->second);
-    x = nodes.h_X(elmt,node);
-    y = nodes.h_Y(elmt,node);
-    z = nodes.h_Z(elmt,node);
+    //x = nodes.h_X(elmt,node);
+    //y = nodes.h_Y(elmt,node);
+    //z = nodes.h_Z(elmt,node);
+
+    Kokkos::View<double[3]> Xt("Xt");
+    typename Kokkos::View< double[3]>::HostMirror h_Xt = Kokkos::create_mirror_view(Xt);
+    Kokkos::parallel_for(range_policy(0,1), KOKKOS_LAMBDA (const int k)
+    {
+        Xt(0) = nodes.X(elmt,node);
+        Xt(1) = nodes.Y(elmt,node);
+        Xt(2) = nodes.Z(elmt,node);
+    });    
+    Kokkos::deep_copy(h_Xt,Xt);
+    X[0] = h_Xt(0);
+    X[1] = h_Xt(1);
+    X[2] = h_Xt(2); 
 
 }
 
-void NodeOpti::SetNodeCoord(double &x,double &y, double &z, int id, NodesGPU &nodes, NodeMap &nodeMap)
+void NodeOpti::SetNodeCoord(double (&X)[3], int id, NodesGPU &nodes, NodeMap &nodeMap)
 {
     //node->m_x = x;
     //node->m_y = y;
     //node->m_z = z;
     
+    Kokkos::View<double[3]> Xt("Xt");
+    typename Kokkos::View< double[3]>::HostMirror h_Xt = Kokkos::create_mirror_view(Xt);
+    h_Xt(0) = X[0];
+    h_Xt(1) = X[1];
+    h_Xt(2) = X[2];
+    Kokkos::deep_copy(Xt,h_Xt);
+
     NodeMap::const_iterator coeffs;
-    coeffs = nodeMap.find(id);
+    coeffs = nodeMap.find(id);    
     for(int n = 0; n < nodeMap.count(id); n++)
     {
         int elmt = std::get<0>(coeffs->second);
         int node = std::get<1>(coeffs->second);
-        nodes.h_X(elmt,node) = x;
-        nodes.h_Y(elmt,node) = y;
-        nodes.h_Z(elmt,node) = z;
-
+        //nodes.h_X(elmt,node) = x;
+        //nodes.h_Y(elmt,node) = y;
+        //nodes.h_Z(elmt,node) = z;
+        Kokkos::parallel_for(range_policy(0,1), KOKKOS_LAMBDA (const int k)
+        {
+            nodes.X(elmt,node) = Xt(0);
+            nodes.Y(elmt,node) = Xt(1);
+            nodes.Z(elmt,node) = Xt(2);
+        });
         coeffs++;
     }    
 
@@ -195,9 +220,19 @@ void NodeOpti3D3D::Optimise(DerivUtilGPU &derivUtil,NodesGPU &nodes, NodeMap &no
         //needs to optimise
         int id             = node->m_id;
         
-        NekDouble xc, yc, zc; // initial node coordinates, keep them constant
-        NekDouble xn, yn, zn; // new node positions, update them
-        GetNodeCoord(xc, yc, zc, id, nodes, nodeMap);
+        //Kokkos::View<double[3]> Xc("Xc"); // initial node coordinates, keep them constant
+        //typename Kokkos::View< double[3]>::HostMirror h_Xc = Kokkos::create_mirror_view(Xc);
+        //Kokkos::View<double[3], Kokkos::DefaultHostExecutionSpace> h_Xc("h_Xc");
+        double h_Xc[3];
+        h_Xc[0] = 1.0;
+
+        //Kokkos::View<double[3]> Xn("Xn"); // new node positions, update them
+        //typename Kokkos::View< double[3]>::HostMirror h_Xn = Kokkos::create_mirror_view(Xn);
+        //Kokkos::View<double[3], Kokkos::DefaultHostExecutionSpace> h_Xn("h_Xn");
+        double h_Xn[3];
+
+        GetNodeCoord(h_Xc, id, nodes, nodeMap);
+        
 
         Array<OneD, NekDouble> sk(3), dk(3);
         bool DNC = false;
@@ -266,16 +301,15 @@ void NodeOpti3D3D::Optimise(DerivUtilGPU &derivUtil,NodesGPU &nodes, NodeMap &no
                             sk[1] * (sk[0]*G[4] + sk[1]*G[6] + sk[2]*G[7]) +
                             sk[2] * (sk[0]*G[5] + sk[1]*G[7] + sk[2]*G[8]);
             hes = min(hes,0.0);
-
+            
             while (alpha > alphaTol())
             {
                 // Update node                
-                xn = xc + alpha * sk[0];
-                yn = yc + alpha * sk[1];
-                zn = zc + alpha * sk[2];
-                SetNodeCoord(xn, yn, zn, id, nodes, nodeMap);
-
-
+                h_Xn[0] = h_Xc[0] + alpha * sk[0];
+                h_Xn[1] = h_Xc[1] + alpha * sk[1];
+                h_Xn[2] = h_Xc[2] + alpha * sk[2];
+                SetNodeCoord(h_Xn, id, nodes, nodeMap);
+                
                 newVal = GetFunctional<3>(derivUtil, nodes,false,false);
                 //dont need the hessian again this function updates G to be the new
                 //location
@@ -293,7 +327,7 @@ void NodeOpti3D3D::Optimise(DerivUtilGPU &derivUtil,NodesGPU &nodes, NodeMap &no
         }
         else
         {
-            NekDouble sig = 1.0;
+            //NekDouble sig = 1.0;
             NekDouble beta = 0.5;
             int l = 0;
             NekDouble alpha = pow(beta,l);
@@ -303,10 +337,10 @@ void NodeOpti3D3D::Optimise(DerivUtilGPU &derivUtil,NodesGPU &nodes, NodeMap &no
             pg = (G[0]*dk[0]+G[1]*dk[1]+G[2]*dk[2]);
 
             //choose whether to do forward or reverse line search
-            xn = xc + dk[0];
-            yn = yc + dk[1];
-            zn = zc + dk[2];
-            SetNodeCoord(xn, yn, zn, id, nodes, nodeMap);
+            h_Xn[0] = h_Xc[0] + dk[0];
+            h_Xn[1] = h_Xc[1] + dk[1];
+            h_Xn[2] = h_Xc[2] + dk[2];
+            SetNodeCoord(h_Xn, id, nodes, nodeMap);
 
             newVal = GetFunctional<3>(derivUtil, nodes,false,false);
 
@@ -317,18 +351,18 @@ void NodeOpti3D3D::Optimise(DerivUtilGPU &derivUtil,NodesGPU &nodes, NodeMap &no
                 while (l > -10)
                 {
                     // Update node
-                    xn = xc + alpha * dk[0];
-                    yn = yc + alpha * dk[1];
-                    zn = zc + alpha * dk[2];
-                    SetNodeCoord(xn, yn, zn, id, nodes, nodeMap);
+                    h_Xn[0] = h_Xc[0] + alpha * dk[0];
+                    h_Xn[1] = h_Xc[1] + alpha * dk[1];
+                    h_Xn[2] = h_Xc[2] + alpha * dk[2];
+                    SetNodeCoord(h_Xn, id, nodes, nodeMap);
 
 
                     newVal = GetFunctional<3>(derivUtil, nodes,false,false);
 
-                    xn = xc + alpha/beta * dk[0];
-                    yn = yc + alpha/beta * dk[1];
-                    zn = zc + alpha/beta * dk[2];
-                    SetNodeCoord(xn, yn, zn, id, nodes, nodeMap);
+                    h_Xn[0] = h_Xc[0] + alpha/beta * dk[0];
+                    h_Xn[1] = h_Xc[1] + alpha/beta * dk[1];
+                    h_Xn[2] = h_Xc[2] + alpha/beta * dk[2];
+                    SetNodeCoord(h_Xn, id, nodes, nodeMap);
 
                     NekDouble dbVal = GetFunctional<3>(derivUtil, nodes,false,false);
 
@@ -351,10 +385,10 @@ void NodeOpti3D3D::Optimise(DerivUtilGPU &derivUtil,NodesGPU &nodes, NodeMap &no
                 while (alpha > alphaTol())
                 {
                     // Update node
-                    xn = xc + alpha * dk[0];
-                    yn = yc + alpha * dk[1];
-                    zn = zc + alpha * dk[2];
-                    SetNodeCoord(xn, yn, zn, id, nodes, nodeMap);
+                    h_Xn[0] = h_Xc[0] + alpha * dk[0];
+                    h_Xn[1] = h_Xc[1] + alpha * dk[1];
+                    h_Xn[2] = h_Xc[2] + alpha * dk[2];
+                    SetNodeCoord(h_Xn, id, nodes, nodeMap);
 
                     newVal = GetFunctional<3>(derivUtil, nodes,false,false);
 
@@ -373,10 +407,10 @@ void NodeOpti3D3D::Optimise(DerivUtilGPU &derivUtil,NodesGPU &nodes, NodeMap &no
 
         if(!found)
         {
-            xn = xc;
-            yn = yc;
-            zn = zc;
-            SetNodeCoord(xn, yn, zn, id, nodes, nodeMap);
+            h_Xn[0] = h_Xc[0];
+            h_Xn[1] = h_Xc[1];
+            h_Xn[2] = h_Xc[2];
+            SetNodeCoord(h_Xn, id, nodes, nodeMap);
 
             mtx.lock();
             res->nReset++;
@@ -386,9 +420,10 @@ void NodeOpti3D3D::Optimise(DerivUtilGPU &derivUtil,NodesGPU &nodes, NodeMap &no
 
         // update residual value
         mtx.lock();        
-        GetNodeCoord(xn, yn, zn, id, nodes, nodeMap);
-        res->val = max(sqrt((xn-xc)*(xn-xc)+(yn-yc)*(yn-yc)+
-                            (zn-zc)*(zn-zc)),res->val);
+        GetNodeCoord(h_Xn, id, nodes, nodeMap);
+        res->val = max(sqrt( (h_Xn[0]-h_Xc[0])*(h_Xn[0]-h_Xc[0])
+                            +(h_Xn[1]-h_Xc[1])*(h_Xn[1]-h_Xc[1])
+                            +(h_Xn[2]-h_Xc[2])*(h_Xn[2]-h_Xc[2]) ),res->val );
         res->func +=newVal;
         mtx.unlock();
     }

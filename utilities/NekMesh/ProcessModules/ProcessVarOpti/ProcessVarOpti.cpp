@@ -364,11 +364,10 @@ void ProcessVarOpti::Process()
     derivUtil.nodes_size = dataSet[0]->nodes.size();
     derivUtil.ptsLow = dataSet[0]->derivUtil->ptsLow;
     derivUtil.ptsHigh = dataSet[0]->derivUtil->ptsHigh;
-    Load_derivUtil(derivUtil);
-
-    printf("derivUtil.nodes_size%i\n", derivUtil.nodes_size);
-    printf("derivUtil.ptsLow%i\n", derivUtil.ptsLow);
-    printf("derivUtil.ptsHigh%i\n", derivUtil.ptsHigh);
+    Load_derivUtil(derivUtil);//
+    //printf("derivUtil.nodes_size%i\n", derivUtil.nodes_size);
+    //printf("derivUtil.ptsLow%i\n", derivUtil.ptsLow);
+    //printf("derivUtil.ptsHigh%i\n", derivUtil.ptsHigh);
     
 
     // initialise views for node coordinates on GPU
@@ -458,9 +457,9 @@ void ProcessVarOpti::Process()
         res->worstJac = numeric_limits<double>::max();
 
         // copy nodes onto GPU and evaluate the elements on GPU
-        Kokkos::deep_copy(nodes.X,nodes.h_X);
-        Kokkos::deep_copy(nodes.Y,nodes.h_Y);
-        Kokkos::deep_copy(nodes.Z,nodes.h_Z);
+        //Kokkos::deep_copy(nodes.X,nodes.h_X);
+        //Kokkos::deep_copy(nodes.Y,nodes.h_Y);
+        //Kokkos::deep_copy(nodes.Z,nodes.h_Z);
         Evaluate(derivUtil, nodes);
 
         // Evaluate elements on CPU
