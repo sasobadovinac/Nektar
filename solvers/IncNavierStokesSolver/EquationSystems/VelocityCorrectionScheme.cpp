@@ -34,6 +34,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <IncNavierStokesSolver/EquationSystems/VelocityCorrectionScheme.h>
+#include <LocalRegions/Expansion3D.h>
 #include <LibUtilities/BasicUtils/Timer.h>
 #include <SolverUtils/Core/Misc.h>
 #include <boost/algorithm/string.hpp>
@@ -215,6 +216,47 @@ namespace Nektar
                                          m_dynamicVisc->m_numStepsAvg,100);
             }
 
+        }
+
+        NekDouble h;
+        int nexp = m_fields[0]->GetExpSize();
+        m_dynamicVisc->m_h = Array<OneD, NekDouble>(nexp);
+        
+        if(m_expdim == 3)
+        {
+            LocalRegions::Expansion3DSharedPtr exp3D;
+            for (int e = 0; e < nexp; e++)
+            {
+                exp3D = m_fields[0]->GetExp(e)->as<LocalRegions::Expansion3D>();
+                int nface0 = exp3D->GetGeom3D()->GetFace(0)->GetNumVerts();
+                
+                h = max(m_fields[0]->GetExp(e)->GetGeom()
+                        ->GetVertex(0)->dist(*(m_fields[0]->GetExp(e)->
+                                               GetGeom()->GetVertex(1))),
+                        m_fields[0]->GetExp(e)->GetGeom()
+                        ->GetVertex(0)->dist(*(m_fields[0]->GetExp(e)->
+                                               GetGeom()->GetVertex(nface0-1))));
+                h = max(h, m_fields[0]->GetExp(e)->GetGeom()
+                        ->GetVertex(0)->dist(*(m_fields[0]->GetExp(e)->
+                                               GetGeom()->GetVertex(nface0))));
+                m_dynamicVisc->m_h[e] = h;
+            }
+        }
+        else
+        {
+            for (int e = 0; e < nexp; e++)
+            {                        
+                int nvert = m_fields[0]->GetExp(e)->GetGeom()
+                    ->GetNumVerts();
+                
+                h = max(m_fields[0]->GetExp(e)->GetGeom()
+                        ->GetVertex(0)->dist(*(m_fields[0]->GetExp(e)->
+                                               GetGeom()->GetVertex(1))),
+                        m_fields[0]->GetExp(e)->GetGeom()
+                        ->GetVertex(0)->dist(*(m_fields[0]->GetExp(e)->
+                                               GetGeom()->GetVertex(nvert-1))));
+                m_dynamicVisc->m_h[e] = h;
+            }
         }
 
         // set explicit time-intregration class operators
@@ -720,6 +762,7 @@ namespace Nektar
             ASSERTL0(false,"Unknown definition for SolverInfo DynamicsViscosity");
         }
     }
+    
     void VelocityCorrectionScheme::GetStabiliseKinvis(
                                const Array<OneD, const NekDouble > &physarray,
                                NekDouble C,
@@ -795,10 +838,8 @@ namespace Nektar
             
             nummodes = m_fields[0]->GetExp(e)->GetBasisNumModes(0)-1;
             
-            Array<OneD, NekDouble> One(nQuadPointsElement,1.0);
-            h = m_fields[0]->GetExp(e)->Integral(One);
-            h = pow(h,1.0/(NekDouble) m_spacedim);
-            e0 = C*h/nummodes;
+            
+            e0 = C*m_dynamicVisc->m_h[e]/nummodes;
             s0 = -(S0_def + 4.0*log10(nummodes));
             
             kinvis = 0.0; 
@@ -814,6 +855,8 @@ namespace Nektar
             {
                 kinvis = 0.5*e0*(1 + sin(M_PI*(sensorVal-s0)/(2*kappa)));
             }
+            
+            //kinvis = sensorVal;
             
             Vmath::Fill(nQuadPointsElement,kinvis,
                         tmp = StabKinvis + PhysCount,1);

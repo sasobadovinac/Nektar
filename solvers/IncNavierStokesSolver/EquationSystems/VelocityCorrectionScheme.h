@@ -57,7 +57,8 @@ namespace Nektar
         NekDouble              m_fixedKinvis;
         NekDouble              m_kinvisC0;
         NekDouble              m_defS0;
-        
+
+        Array<OneD, NekDouble> m_h; /// estimate of h for an element 
         StdRegions::VarCoeffMap m_savVarCoeffMap;
         ForcingDynamicViscSharedPtr  m_forcing; 
     };
