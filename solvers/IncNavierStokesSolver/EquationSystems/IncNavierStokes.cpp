@@ -115,7 +115,8 @@ namespace Nektar
         case eUnsteadyStokes:
             {
                 m_session->LoadParameter("IO_InfoSteps", m_infosteps, 0);
-                m_session->LoadParameter("IO_CFLSteps", m_cflsteps, 0);
+                m_session->LoadParameter("IO_CFLSteps",  m_cflsteps, 0);
+                m_session->LoadParameter("IO_NormSteps", m_normsteps, 0);
                 m_session->LoadParameter("SteadyStateSteps", m_steadyStateSteps, 0);
                 m_session->LoadParameter("SteadyStateTol", m_steadyStateTol, 1e-6);            
             }
@@ -643,6 +644,23 @@ namespace Nektar
             {
                 cout << "CFL (zero plane): "<< cfl << " (in elmt "
                      << elmtid << ")" << endl;
+            }
+        }
+
+
+        if(m_normsteps && !((step+1)%m_normsteps))
+        {
+            for(int i = 0; i < m_fields.num_elements(); ++i)
+            {
+                NekDouble vL2Error   = L2Error  (i);
+                NekDouble vLinfError = LinfError(i);
+                if(m_comm->GetRank() == 0)
+                {
+                    cout << "L 2 error (variable " << GetVariable(i) 
+                        << ") : " << vL2Error << endl;
+                    cout << "L inf error (variable " << GetVariable(i) 
+                        << ") : " << vLinfError << endl;
+                }
             }
         }
 

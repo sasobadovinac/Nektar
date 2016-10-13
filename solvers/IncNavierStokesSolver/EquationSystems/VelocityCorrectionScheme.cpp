@@ -777,14 +777,14 @@ namespace Nektar
         Array<OneD,int> ExpOrderElement = GetNumExpModesPerExp();
         Array<OneD, NekDouble> tmp;
 
-        int nummodes,PhysCount = 0;
+        int nummodes,PhysCount;
         NekDouble e0,h,sensorVal;
         NekDouble SolPmeanNumerator, SolPmeanDenumerator; 
 
         NekDouble kappa = 0.5;
         NekDouble s0, kinvis;
         
-        int nCoeffsElement, numCutOff;        
+        int nCoeffsElement, numCutOff;
 
         for (e = 0; e < nElements; e++)
         {
@@ -805,9 +805,11 @@ namespace Nektar
             Array<OneD, NekDouble> SolPmOneElementCoeffs(nCoeffsElement, 0.0);
 
             // create vector the save the solution points per element at P = p;
-            Vmath::Vcopy(nQuadPointsElement,physarray+PhysCount,1,SolPElementPhys,1);
+            Vmath::Vcopy(nQuadPointsElement,physarray+PhysCount,1,
+                         SolPElementPhys,1);
 
-            m_fields[0]->GetExp(e)->FwdTrans(SolPElementPhys, SolPElementCoeffs);
+            m_fields[0]->GetExp(e)->FwdTrans(SolPElementPhys,
+                                             SolPElementCoeffs);
 
             // ReduceOrderCoeffs reduces the polynomial order of the solution
             // that is represented by the coeffs given as an inarray. This is
@@ -856,11 +858,19 @@ namespace Nektar
                 kinvis = 0.5*e0*(1 + sin(M_PI*(sensorVal-s0)/(2*kappa)));
             }
             
-            //kinvis = sensorVal;
-            
             Vmath::Fill(nQuadPointsElement,kinvis,
                         tmp = StabKinvis + PhysCount,1);
         }
+
+        // make kinvis continuous
+        int ncoeffs = m_fields[0]->GetNcoeffs();
+        Array<OneD, NekDouble> lockinvis(ncoeffs,0.0);
+        Array<OneD, NekDouble> glokinvis(ncoeffs,0.0);
+
+        m_fields[0]->FwdTrans_IterPerExp(StabKinvis,lockinvis);
+        m_fields[0]->LocalToGlobal(lockinvis,glokinvis);
+        m_fields[0]->GlobalToLocal(glokinvis,lockinvis);
+        m_fields[0]->BwdTrans(lockinvis,StabKinvis);
     }
 
 } //end of namespace

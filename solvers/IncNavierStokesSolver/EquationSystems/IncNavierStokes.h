@@ -166,6 +166,8 @@ namespace Nektar
         int         m_energysteps;
         /// dump cfl estimate
         int         m_cflsteps;
+        /// dump Linf and L2 error at step
+        int         m_normsteps;
         /// Check for steady state at step interval
         int         m_steadyStateSteps;
         /// Tolerance to which steady state should be evaluated at
