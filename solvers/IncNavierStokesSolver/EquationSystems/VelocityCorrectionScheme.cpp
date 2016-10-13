@@ -174,11 +174,8 @@ namespace Nektar
             
         }
 
-        m_session->MatchSolverInfo("SmoothAdvection", "True", m_SmoothAdvection, false);
-
         if(m_session->DefinesSolverInfo("DynamicViscosity"))
         {
-
             m_dynamicVisc = MemoryManager<DynamicViscData>::AllocateSharedPtr();
             m_dynamicVisc->m_type = m_session->GetSolverInfo("DynamicViscosity");
 
@@ -216,48 +213,49 @@ namespace Nektar
                                          m_dynamicVisc->m_numStepsAvg,100);
             }
 
+            NekDouble h;
+            int nexp = m_fields[0]->GetExpSize();
+            m_dynamicVisc->m_h = Array<OneD, NekDouble>(nexp);
+            
+            if(m_expdim == 3)
+            {
+                LocalRegions::Expansion3DSharedPtr exp3D;
+                for (int e = 0; e < nexp; e++)
+                {
+                    exp3D = m_fields[0]->GetExp(e)->as<LocalRegions::Expansion3D>();
+                    int nface0 = exp3D->GetGeom3D()->GetFace(0)->GetNumVerts();
+                    
+                    h = max(m_fields[0]->GetExp(e)->GetGeom()
+                            ->GetVertex(0)->dist(*(m_fields[0]->GetExp(e)->
+                                                   GetGeom()->GetVertex(1))),
+                            m_fields[0]->GetExp(e)->GetGeom()
+                            ->GetVertex(0)->dist(*(m_fields[0]->GetExp(e)->
+                                                   GetGeom()->GetVertex(nface0-1))));
+                    h = max(h, m_fields[0]->GetExp(e)->GetGeom()
+                            ->GetVertex(0)->dist(*(m_fields[0]->GetExp(e)->
+                                                   GetGeom()->GetVertex(nface0))));
+                    m_dynamicVisc->m_h[e] = h;
+                }
+            }
+            else
+            {
+                for (int e = 0; e < nexp; e++)
+                {                        
+                    int nvert = m_fields[0]->GetExp(e)->GetGeom()
+                        ->GetNumVerts();
+                    
+                    h = max(m_fields[0]->GetExp(e)->GetGeom()
+                            ->GetVertex(0)->dist(*(m_fields[0]->GetExp(e)->
+                                                   GetGeom()->GetVertex(1))),
+                            m_fields[0]->GetExp(e)->GetGeom()
+                            ->GetVertex(0)->dist(*(m_fields[0]->GetExp(e)->
+                                                   GetGeom()->GetVertex(nvert-1))));
+                    m_dynamicVisc->m_h[e] = h;
+                }
+            }
         }
 
-        NekDouble h;
-        int nexp = m_fields[0]->GetExpSize();
-        m_dynamicVisc->m_h = Array<OneD, NekDouble>(nexp);
-        
-        if(m_expdim == 3)
-        {
-            LocalRegions::Expansion3DSharedPtr exp3D;
-            for (int e = 0; e < nexp; e++)
-            {
-                exp3D = m_fields[0]->GetExp(e)->as<LocalRegions::Expansion3D>();
-                int nface0 = exp3D->GetGeom3D()->GetFace(0)->GetNumVerts();
-                
-                h = max(m_fields[0]->GetExp(e)->GetGeom()
-                        ->GetVertex(0)->dist(*(m_fields[0]->GetExp(e)->
-                                               GetGeom()->GetVertex(1))),
-                        m_fields[0]->GetExp(e)->GetGeom()
-                        ->GetVertex(0)->dist(*(m_fields[0]->GetExp(e)->
-                                               GetGeom()->GetVertex(nface0-1))));
-                h = max(h, m_fields[0]->GetExp(e)->GetGeom()
-                        ->GetVertex(0)->dist(*(m_fields[0]->GetExp(e)->
-                                               GetGeom()->GetVertex(nface0))));
-                m_dynamicVisc->m_h[e] = h;
-            }
-        }
-        else
-        {
-            for (int e = 0; e < nexp; e++)
-            {                        
-                int nvert = m_fields[0]->GetExp(e)->GetGeom()
-                    ->GetNumVerts();
-                
-                h = max(m_fields[0]->GetExp(e)->GetGeom()
-                        ->GetVertex(0)->dist(*(m_fields[0]->GetExp(e)->
-                                               GetGeom()->GetVertex(1))),
-                        m_fields[0]->GetExp(e)->GetGeom()
-                        ->GetVertex(0)->dist(*(m_fields[0]->GetExp(e)->
-                                               GetGeom()->GetVertex(nvert-1))));
-                m_dynamicVisc->m_h[e] = h;
-            }
-        }
+        m_session->MatchSolverInfo("SmoothAdvection", "True", m_SmoothAdvection, false);
 
         // set explicit time-intregration class operators
         m_ode.DefineOdeRhs(&VelocityCorrectionScheme::EvaluateAdvection_SetPressureBCs, this);
@@ -343,9 +341,7 @@ namespace Nektar
                                   m_fields[i]->UpdatePhys());
             m_F[i] = Array< OneD, NekDouble> (m_fields[0]->GetTotPoints(), 0.0);
         }
-
-        
-
+     
     }
     
 
@@ -404,6 +400,12 @@ namespace Nektar
         Array<OneD, Array<OneD, NekDouble> > &outarray, 
         const NekDouble time)
     {
+
+        if(m_dynamicVisc)
+        {
+            DynamicVisc();
+        }
+        
         EvaluateAdvectionTerms(inarray, outarray);
 
         // Smooth advection
@@ -451,22 +453,9 @@ namespace Nektar
         SetUpViscousForcing(inarray, m_F, aii_Dt);
 
         // Solve velocity system
-        SolveViscous( m_F, outarray, aii_Dt);
+        SolveViscous(m_F, outarray, aii_Dt);
     }
     
-    /**
-     * Perform the extrapolation.
-     */
-    bool   VelocityCorrectionScheme::v_PreIntegrate(int step)
-    {
-        if(m_dynamicVisc)
-        {
-            DynamicVisc();
-        }
-        
-        return false;
-    }
-
     /**
      * Forcing term for Poisson solver solver
      */ 
@@ -705,7 +694,6 @@ namespace Nektar
             Vmath::Sadd(nquad,m_dynamicVisc->m_origKinvis,kinvis,1,kinvis,1);
             
             NekDouble maxkinvis = Vmath::Vmax(nquad,kinvis,1);
-            
             m_comm->AllReduce(maxkinvis,LibUtilities::ReduceMax);
 
             // reset max kinvis to 70% of current and 30% of previous

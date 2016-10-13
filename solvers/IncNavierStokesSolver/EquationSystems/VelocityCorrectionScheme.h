@@ -172,8 +172,6 @@ namespace Nektar
 
         virtual int v_GetForceDimension();
         
-        virtual bool v_PreIntegrate(int step);
-
         virtual void v_SetUpPressureForcing(
                     const Array<OneD, const Array<OneD, NekDouble> > &fields,
                     Array<OneD, Array<OneD, NekDouble> > &Forcing,
