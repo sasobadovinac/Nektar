@@ -341,7 +341,6 @@ namespace Nektar
                                   m_fields[i]->UpdatePhys());
             m_F[i] = Array< OneD, NekDouble> (m_fields[0]->GetTotPoints(), 0.0);
         }
-     
     }
     
 
@@ -570,10 +569,25 @@ namespace Nektar
     {
         if(m_dynamicVisc&&m_steps)
         {
+            int ncoeffs = m_fields[0]->GetNcoeffs();
+            int nquad   = m_fields[0]->GetTotPoints();
+            
+#if 0 
+            // store sensorfield for potential restarts
+            variables.push_back("SensorField");
+            Array<OneD, NekDouble> senfld(ncoeffs);
+            Array<OneD, NekDouble> senvals(nquad);
+            fieldcoeffs.push_back(senfld);  
+            
+            Vmath::Smul(nquad,1.0/(m_dynamicVisc->m_numSteps +1.0),
+                        m_dynamicVisc->m_sensorField,1,senvals,1);
+
+            m_fields[0]->FwdTrans_IterPerExp(senvals,
+                               fieldcoeffs[fieldcoeffs.size()-1]);
+#endif
+            
             if(m_dynamicVisc->m_savVarCoeffMap.count(StdRegions::eVarCoeffD00) != 0)
             {
-                int ncoeffs = m_fields[0]->GetNcoeffs();
-
                 variables.push_back("DynamicViscosity");
                 Array<OneD, NekDouble> newfld(ncoeffs); 
                 fieldcoeffs.push_back(newfld);  
@@ -590,9 +604,6 @@ namespace Nektar
             else if(boost::iequals(m_dynamicVisc->m_type,
                                    "SemiImplicitVariableDiff"))
             {
-                int ncoeffs = m_fields[0]->GetNcoeffs();
-                int nquad   = m_fields[0]->GetTotPoints();
-                
                 variables.push_back("DynamicViscosity");
                 Array<OneD, NekDouble> newfld(ncoeffs);
                 Array<OneD, NekDouble> kinvis(nquad);
@@ -679,9 +690,8 @@ namespace Nektar
         else if(boost::iequals(m_dynamicVisc->m_type,
                                "SemiImplicitVariableDiff"))
         {
-            
             Vmath::Smul(nquad,1.0/(m_dynamicVisc->m_numSteps +1.0),
-                        m_dynamicVisc->m_sensorField,1,energy,1);
+            m_dynamicVisc->m_sensorField,1,energy,1);
             
             Array<OneD, NekDouble> kinvis(nquad);
             
@@ -694,15 +704,9 @@ namespace Nektar
             Vmath::Sadd(nquad,m_dynamicVisc->m_origKinvis,kinvis,1,kinvis,1);
             
             NekDouble maxkinvis = Vmath::Vmax(nquad,kinvis,1);
+            maxkinvis *= 0.3; // take 0.3 max as implicit value
             m_comm->AllReduce(maxkinvis,LibUtilities::ReduceMax);
 
-            // reset max kinvis to 70% of current and 30% of previous
-            // to try and damp large variations. 
-            if(m_dynamicVisc->m_numSteps)
-            {
-                maxkinvis = 0.3*maxkinvis +  0.7*m_dynamicVisc->m_fixedKinvis;
-            }
-            
             if((maxkinvis > 2*m_dynamicVisc->m_fixedKinvis)||
                (maxkinvis < 0.5*m_dynamicVisc->m_fixedKinvis))
             {
@@ -766,7 +770,7 @@ namespace Nektar
         Array<OneD, NekDouble> tmp;
 
         int nummodes,PhysCount;
-        NekDouble e0,h,sensorVal;
+        NekDouble e0,sensorVal;
         NekDouble SolPmeanNumerator, SolPmeanDenumerator; 
 
         NekDouble kappa = 0.5;
