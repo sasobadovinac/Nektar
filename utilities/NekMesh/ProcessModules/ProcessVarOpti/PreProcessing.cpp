@@ -181,7 +181,7 @@ void ProcessVarOpti::BuildDerivUtil()
     }
 }
 
-vector<vector<NodeSharedPtr> > ProcessVarOpti::GetColouredNodes(vector<ElementSharedPtr> elLock)
+vector<vector<NodeSharedPtr> > ProcessVarOpti::GetColouredNodes(vector<ElementSharedPtr> elLock, Residual &res)
 {
     NodeSet ignoredNodes;
     for(int i = 0; i < elLock.size(); i++)
@@ -270,7 +270,7 @@ vector<vector<NodeSharedPtr> > ProcessVarOpti::GetColouredNodes(vector<ElementSh
     }
 
     vector<NodeSharedPtr> remain;
-    res->nDoF = 0;
+    res.nDoF = 0;
 
     NodeSet::iterator nit;
     for (nit = m_mesh->m_vertexSet.begin(); nit != m_mesh->m_vertexSet.end(); ++nit)
@@ -282,15 +282,15 @@ vector<vector<NodeSharedPtr> > ProcessVarOpti::GetColouredNodes(vector<ElementSh
             remain.push_back(*nit);
             if((*nit)->GetNumCadCurve() == 1)
             {
-                res->nDoF++;
+                res.nDoF++;
             }
             else if((*nit)->GetNumCADSurf() == 1)
             {
-                res->nDoF += 2;
+                res.nDoF += 2;
             }
             else
             {
-                res->nDoF += 3;
+                res.nDoF += 3;
             }
         }
     }
@@ -308,15 +308,15 @@ vector<vector<NodeSharedPtr> > ProcessVarOpti::GetColouredNodes(vector<ElementSh
                 remain.push_back(n[j]);
                 if(n[j]->GetNumCadCurve() == 1)
                 {
-                    res->nDoF++;
+                    res.nDoF++;
                 }
                 else if(n[j]->GetNumCADSurf() == 1)
                 {
-                    res->nDoF += 2;
+                    res.nDoF += 2;
                 }
                 else
                 {
-                    res->nDoF += 3;
+                    res.nDoF += 3;
                 }
             }
         }
@@ -334,11 +334,11 @@ vector<vector<NodeSharedPtr> > ProcessVarOpti::GetColouredNodes(vector<ElementSh
                 remain.push_back((*fit)->m_faceNodes[j]);
                 if((*fit)->m_faceNodes[j]->GetNumCADSurf() == 1)
                 {
-                    res->nDoF += 2;
+                    res.nDoF += 2;
                 }
                 else
                 {
-                    res->nDoF += 3;
+                    res.nDoF += 3;
                 }
             }
         }
@@ -355,12 +355,12 @@ vector<vector<NodeSharedPtr> > ProcessVarOpti::GetColouredNodes(vector<ElementSh
             if(nit2 == boundaryNodes.end() && nit3 == ignoredNodes.end())
             {
                 remain.push_back(ns[j]);
-                res->nDoF += 3;
+                res.nDoF += 3;
             }
         }
     }
 
-    res->n = remain.size();
+    res.n = remain.size();
 
     vector<vector<NodeSharedPtr> > ret;
 

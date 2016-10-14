@@ -159,12 +159,7 @@ inline NekDouble CalcIdealJac(int elmt,
             {
                 jacIdeal[n][m] += deriv[l][elmt][n][point] *
                     elUtil.h_idealMap(iD,point,m * 3 + l);
-                /*if (data[elmt]->maps[point][m * 3 + l] != elUtil.h_idealMap(iD,point,m * 3 + l))
-                {
-                    printf("%s\n", "wrong map!");
-                    printf("goood value el: %i, node %i, m %i, l %i, %e ", elmt, point, m, l, data[elmt]->maps[point][m * 3 + l]);
-                    printf("bad value %e\n", elUtil.h_idealMap(iD,point,m * 3 + l));
-                }*/
+                
             }
         }
     }
@@ -191,6 +186,22 @@ NekDouble NodeOpti::GetFunctional(DerivUtilGPU &derivUtilGPU,
     const int nElmt = data.size();    
     const int ptsLowGPU = derivUtilGPU.ptsLow;
     const int ptsHighGPU = derivUtilGPU.ptsHigh;
+
+    int iD[nElmt];
+    for (int el = 0; el < nElmt; ++el)
+    {
+        iD[el] = data[el]->GetId();
+    }
+    double integral = 0.0;
+    double minJacGPU = CalcMinJac(elUtil, nElmt, iD);
+    double ep = minJacGPU < 0.0 ? sqrt(1e-9 + 0.04*minJacGPU*minJacGPU) : sqrt(1e-9);
+    double jacIdeal[DIM][DIM], jacDet;
+    G = Array<OneD, NekDouble>(DIM == 2 ? 5 : 9, 0.0);
+    //double G[DIM == 2 ? 5 : 9] = {0.0};
+        
+    const double nu = 0.4;
+    const double mu = 1.0 / 2.0 / (1.0+nu);
+    const double K  = 1.0 / 3.0 / (1.0 - 2.0 * nu);
        
 
     // Storage for derivatives, ordered by:
@@ -204,12 +215,12 @@ NekDouble NodeOpti::GetFunctional(DerivUtilGPU &derivUtilGPU,
     typename Kokkos::View< double****>::HostMirror h_derivGPU = Kokkos::create_mirror_view(derivGPU);
 
 
-    int iD = 0;
     int elmt_row = 0;
     for (int el = 0; el < nElmt; ++el)
     {   
-        iD = data[el]->GetId();
-        elmt_row = nodes.h_ElmtOffset(iD);     
+        //iD = data[el]->GetId();
+        //elmt_row = nodes.h_ElmtOffset(iD[el]);
+        elmt_row = iD[el];  
         Kokkos::parallel_for (range_policy(0,ptsHighGPU), KOKKOS_LAMBDA (const int j)
         {
             derivGPU(0,el,0,j) = 0.0;
@@ -243,9 +254,9 @@ NekDouble NodeOpti::GetFunctional(DerivUtilGPU &derivUtilGPU,
     Kokkos::deep_copy(h_derivGPU,derivGPU);
     //DerivArray deriv(boost::extents[DIM][nElmt][DIM][ptsHighGPU]);
 
-    for (int d = 0; d < DIM; ++d)
+    for (int el = 0; el < nElmt; ++el)
     {
-        for (int el = 0; el < nElmt; ++el)
+        for (int d = 0; d < DIM; ++d)
         {
             for (int dd = 0; dd < DIM; ++dd)
             {
@@ -258,412 +269,128 @@ NekDouble NodeOpti::GetFunctional(DerivUtilGPU &derivUtilGPU,
     }
     
 
-    NekDouble integral = 0.0;
-    //NekDouble ep = minJac < gam ? sqrt(gam*(gam-minJac)) : 0.0;
-    NekDouble ep = minJac < 0.0 ? sqrt(1e-9 + 0.04*minJac*minJac) : sqrt(1e-9);
-    NekDouble jacIdeal[DIM][DIM], jacDet;
-    G = Array<OneD, NekDouble>(DIM == 2 ? 5 : 9, 0.0);
+    
 
-    switch(opti)
+    for (int el = 0; el < nElmt; ++el)
     {
-        case eLinEl:
+        for(int k = 0; k < ptsHighGPU; ++k)
         {
-            const NekDouble nu = 0.45;
-            const NekDouble mu = 1.0 / 2.0 / (1.0+nu);
-            const NekDouble K  = 1.0 / 3.0 / (1.0 - 2.0 * nu);
+            jacDet = CalcIdealJac(el, k, deriv, data, jacIdeal, elUtil);
+            NekDouble I1 = FrobeniusNorm(jacIdeal);
 
-            for (int i = 0; i < nElmt; ++i)
+            NekDouble sigma =
+                0.5*(jacDet + sqrt(jacDet*jacDet + 4.0*ep*ep));
+            NekDouble lsigma = log(sigma);
+            integral += derivUtil[st]->quadW[k]*
+                fabs(data[el]->maps[k][9]) *
+                        (0.5 * mu * (I1 - 3.0 - 2.0*lsigma) +
+                         0.5 * K * lsigma * lsigma);
+
+            // Derivative of basis function in each direction
+            if(gradient)
             {
-                for(int k = 0; k < ptsHighGPU; ++k)
+                NekDouble jacInvTrans[DIM][DIM];
+                NekDouble jacDetDeriv[DIM];
+
+                NekDouble phiM[DIM][DIM];
+                for (int m = 0; m < DIM; ++m)
                 {
-                    jacDet = CalcIdealJac(i, k, deriv, data, jacIdeal, elUtil);
-
-                    NekDouble trEtE = LinElasTrace<DIM>(jacIdeal);
-                    NekDouble sigma =
-                        0.5*(jacDet + sqrt(jacDet*jacDet + 4.0*ep*ep));
-                    NekDouble lsigma = log(sigma);
-                    integral += derivUtil[st]->quadW[k] *
-                                fabs(data[i]->maps[k][9]) *
-                                (K * 0.5 * lsigma * lsigma + mu * trEtE);
-                    if(gradient)
-                        ASSERTL0(false,"no gradient capability for linear elastic");
-                }
-            }
-            break;
-        }
-
-        case eHypEl:
-        {
-            const NekDouble nu = 0.4;
-            const NekDouble mu = 1.0 / 2.0 / (1.0+nu);
-            const NekDouble K  = 1.0 / 3.0 / (1.0 - 2.0 * nu);
-
-            for (int i = 0; i < nElmt; ++i)
-            {
-                for(int k = 0; k < ptsHighGPU; ++k)
-                {
-                    jacDet = CalcIdealJac(i, k, deriv, data, jacIdeal, elUtil);
-                    NekDouble I1 = FrobeniusNorm(jacIdeal);
-
-                    NekDouble sigma =
-                        0.5*(jacDet + sqrt(jacDet*jacDet + 4.0*ep*ep));
-                    NekDouble lsigma = log(sigma);
-                    integral += derivUtil[st]->quadW[k]*
-                        fabs(data[i]->maps[k][9]) *
-                                (0.5 * mu * (I1 - 3.0 - 2.0*lsigma) +
-                                 0.5 * K * lsigma * lsigma);
-
-                    // Derivative of basis function in each direction
-                    if(gradient)
+                    for (int n = 0; n < DIM; ++n)
                     {
-                        NekDouble jacInvTrans[DIM][DIM];
-                        NekDouble jacDetDeriv[DIM];
+                        phiM[n][m] = deriv[m][el][n][k];
+                    }
+                }
 
-                        NekDouble phiM[DIM][DIM];
-                        for (int m = 0; m < DIM; ++m)
+                InvTrans<DIM>(phiM, jacInvTrans);
+                NekDouble derivDet = Determinant<DIM>(phiM);
+
+                NekDouble basisDeriv[DIM];
+                for (int m = 0; m < DIM; ++m)
+                {
+                    basisDeriv[m] = *(derivUtil[st]->VdmD[m])(k,nodeIds[el]);
+                }
+
+                for (int m = 0; m < DIM; ++m)
+                {
+                    jacDetDeriv[m] = 0.0;
+                    for (int n = 0; n < DIM; ++n)
+                    {
+                        jacDetDeriv[m] += jacInvTrans[m][n] * basisDeriv[n];
+                    }
+                    jacDetDeriv[m] *= derivDet / fabs(data[el]->maps[k][9]);
+                }
+
+                NekDouble jacDeriv[DIM][DIM][DIM];
+                for (int m = 0; m < DIM; ++m)
+                {
+                    for (int n = 0; n < DIM; ++n)
+                    {
+                        NekDouble delta = m == n ? 1.0 : 0.0;
+                        for (int l = 0; l < DIM; ++l)
                         {
-                            for (int n = 0; n < DIM; ++n)
+                            jacDeriv[m][n][l] = delta * basisDeriv[l];
+                        }
+                    }
+                }
+
+                NekDouble jacDerivPhi[DIM][DIM][DIM];
+                for (int p = 0; p < DIM; ++p)
+                {
+                    for (int m = 0; m < DIM; ++m)
+                    {
+                        for (int n = 0; n < DIM; ++n)
+                        {
+                            jacDerivPhi[p][m][n] = 0.0;
+                            for (int l = 0; l < DIM; ++l)
                             {
-                                phiM[n][m] = deriv[m][i][n][k];
-                            }
-                        }
-
-                        InvTrans<DIM>(phiM, jacInvTrans);
-                        NekDouble derivDet = Determinant<DIM>(phiM);
-
-                        NekDouble basisDeriv[DIM];
-                        for (int m = 0; m < DIM; ++m)
-                        {
-                            basisDeriv[m] = *(derivUtil[st]->VdmD[m])(k,nodeIds[i]);
-                        }
-
-                        for (int m = 0; m < DIM; ++m)
-                        {
-                            jacDetDeriv[m] = 0.0;
-                            for (int n = 0; n < DIM; ++n)
-                            {
-                                jacDetDeriv[m] += jacInvTrans[m][n] * basisDeriv[n];
-                            }
-                            jacDetDeriv[m] *= derivDet / fabs(data[i]->maps[k][9]);
-                        }
-
-                        NekDouble jacDeriv[DIM][DIM][DIM];
-                        for (int m = 0; m < DIM; ++m)
-                        {
-                            for (int n = 0; n < DIM; ++n)
-                            {
-                                NekDouble delta = m == n ? 1.0 : 0.0;
-                                for (int l = 0; l < DIM; ++l)
-                                {
-                                    jacDeriv[m][n][l] = delta * basisDeriv[l];
-                                }
-                            }
-                        }
-
-                        NekDouble jacDerivPhi[DIM][DIM][DIM];
-                        for (int p = 0; p < DIM; ++p)
-                        {
-                            for (int m = 0; m < DIM; ++m)
-                            {
-                                for (int n = 0; n < DIM; ++n)
-                                {
-                                    jacDerivPhi[p][m][n] = 0.0;
-                                    for (int l = 0; l < DIM; ++l)
-                                    {
-                                        // want phi_I^{-1} (l,n)
-                                        jacDerivPhi[p][m][n] +=
-                                            jacDeriv[p][m][l] * data[i]->maps[k][l + 3*n];
-                                    }
-                                }
-                            }
-                        }
-
-                        NekDouble frobProd[DIM];
-                        for (int m = 0; m < DIM; ++m)
-                        {
-                            frobProd[m] = FrobProd<DIM>(jacIdeal,jacDerivPhi[m]);
-                        }
-
-                        for (int j = 0; j < DIM; ++j)
-                        {
-                            G[j] += derivUtil[st]->quadW[k] * fabs(data[i]->maps[k][9]) * (
-                                mu * frobProd[j] + (jacDetDeriv[j] / (2.0*sigma - jacDet)
-                                                    * (K * lsigma - mu)));
-                        }
-
-                        if(hessian)
-                        {
-                            NekDouble frobProdHes[DIM][DIM]; //holder for the hessian frobprods
-                            for (int m = 0; m < DIM; ++m)
-                            {
-                                for(int l = m; l < DIM; ++l)
-                                {
-                                    frobProdHes[m][l] = FrobProd<DIM>(jacDerivPhi[m],jacDerivPhi[l]);
-                                }
-                            }
-
-
-                            int ct = 0;
-                            for (int m = 0; m < DIM; ++m)
-                            {
-                                for(int l = m; l < DIM; ++l, ct++)
-                                {
-                                    G[ct+DIM] += derivUtil[st]->quadW[k] * fabs(data[i]->maps[k][9]) * (
-                                        mu * frobProdHes[m][l] +
-                                        jacDetDeriv[m]*jacDetDeriv[l]/(2.0*sigma-jacDet)/(2.0*sigma-jacDet)*(
-                                            K- jacDet*(K*lsigma-mu)/(2.0*sigma-jacDet)));
-                                }
+                                // want phi_I^{-1} (l,n)
+                                jacDerivPhi[p][m][n] +=
+                                    jacDeriv[p][m][l] * data[el]->maps[k][l + 3*n];
                             }
                         }
                     }
                 }
-            }
-            break;
-        }
 
-        case eRoca:
-        {
-            for (int i = 0; i < nElmt; ++i)
-            {
-                for(int k = 0; k < ptsHighGPU; ++k)
+                NekDouble frobProd[DIM];
+                for (int m = 0; m < DIM; ++m)
                 {
-                    jacDet = CalcIdealJac(i, k, deriv, data, jacIdeal, elUtil);
-                    NekDouble frob = FrobeniusNorm(jacIdeal);
-                    NekDouble sigma = 0.5*(jacDet +
-                                    sqrt(jacDet*jacDet + 4.0*ep*ep));
-                    NekDouble W = frob / DIM / pow(fabs(sigma), 2.0/DIM);
-                    integral += derivUtil[st]->quadW[k] * fabs(data[i]->maps[k][9]) * W;
+                    frobProd[m] = FrobProd<DIM>(jacIdeal,jacDerivPhi[m]);
+                }
 
-                    // Derivative of basis function in each direction
-                    if(gradient)
+                for (int j = 0; j < DIM; ++j)
+                {
+                    G[j] += derivUtil[st]->quadW[k] * fabs(data[el]->maps[k][9]) * (
+                        mu * frobProd[j] + (jacDetDeriv[j] / (2.0*sigma - jacDet)
+                                            * (K * lsigma - mu)));
+                }
+
+                if(hessian)
+                {
+                    NekDouble frobProdHes[DIM][DIM]; //holder for the hessian frobprods
+                    for (int m = 0; m < DIM; ++m)
                     {
-                        NekDouble jacInvTrans[DIM][DIM];
-                        NekDouble jacDetDeriv[DIM];
-
-                        NekDouble phiM[DIM][DIM];
-                        for (int m = 0; m < DIM; ++m)
+                        for(int l = m; l < DIM; ++l)
                         {
-                            for (int n = 0; n < DIM; ++n)
-                            {
-                                phiM[n][m] = deriv[m][i][n][k];
-                            }
+                            frobProdHes[m][l] = FrobProd<DIM>(jacDerivPhi[m],jacDerivPhi[l]);
                         }
+                    }
 
-                        InvTrans<DIM>(phiM, jacInvTrans);
-                        NekDouble derivDet = Determinant<DIM>(phiM);
 
-                        NekDouble basisDeriv[DIM];
-                        for (int m = 0; m < DIM; ++m)
+                    int ct = 0;
+                    for (int m = 0; m < DIM; ++m)
+                    {
+                        for(int l = m; l < DIM; ++l, ct++)
                         {
-                            basisDeriv[m] = *(derivUtil[st]->VdmD[m])(k,nodeIds[i]);
-                        }
-
-                        for (int m = 0; m < DIM; ++m)
-                        {
-                            jacDetDeriv[m] = 0.0;
-                            for (int n = 0; n < DIM; ++n)
-                            {
-                                jacDetDeriv[m] += jacInvTrans[m][n] * basisDeriv[n];
-                            }
-                            jacDetDeriv[m] *= derivDet / fabs(data[i]->maps[k][9]);
-                        }
-
-                        NekDouble jacDeriv[DIM][DIM][DIM];
-                        for (int m = 0; m < DIM; ++m)
-                        {
-                            for (int n = 0; n < DIM; ++n)
-                            {
-                                NekDouble delta = m == n ? 1.0 : 0.0;
-                                for (int l = 0; l < DIM; ++l)
-                                {
-                                    jacDeriv[m][n][l] = delta * basisDeriv[l];
-                                }
-                            }
-                        }
-
-                        NekDouble jacDerivPhi[DIM][DIM][DIM];
-                        for (int p = 0; p < DIM; ++p)
-                        {
-                            for (int m = 0; m < DIM; ++m)
-                            {
-                                for (int n = 0; n < DIM; ++n)
-                                {
-                                    jacDerivPhi[p][m][n] = 0.0;
-                                    for (int l = 0; l < DIM; ++l)
-                                    {
-                                        // want phi_I^{-1} (l,n)
-                                        jacDerivPhi[p][m][n] +=
-                                            jacDeriv[p][m][l] * data[i]->maps[k][l + 3*n];
-                                    }
-                                }
-                            }
-                        }
-
-                        NekDouble frobProd[DIM];
-                        for (int m = 0; m < DIM; ++m)
-                        {
-                            frobProd[m] = FrobProd<DIM>(jacIdeal,jacDerivPhi[m]);
-                        }
-
-                        for (int j = 0; j < DIM; ++j)
-                        {
-                            G[j] += derivUtil[st]->quadW[k] * fabs(data[i]->maps[k][9]) * (
-                                    2.0*W*(frobProd[j]/frob -
-                                            jacDetDeriv[j]/DIM/(2.0*sigma-jacDet)));
-                        }
-
-                        if(hessian)
-                        {
-                            NekDouble frobProdHes[DIM][DIM]; //holder for the hessian frobprods
-                            for (int m = 0; m < DIM; ++m)
-                            {
-                                for(int l = m; l < DIM; ++l)
-                                {
-                                    frobProdHes[m][l] = FrobProd<DIM>(jacDerivPhi[m],jacDerivPhi[l]);
-                                }
-                            }
-
-
-                            int ct = 0;
-                            for (int m = 0; m < DIM; ++m)
-                            {
-                                for(int l = m; l < DIM; ++l, ct++)
-                                {
-                                    G[ct+DIM] += derivUtil[st]->quadW[k] * fabs(data[i]->maps[k][9]) * (
-                                        G[m]*G[l]/W + 2.0*W*(frobProdHes[m][l]/frob
-                                            - 2.0 * frobProd[m]*frobProd[l]/frob/frob
-                                            + jacDetDeriv[m]*jacDetDeriv[l] * jacDet/(2.0*sigma-jacDet)/(2.0*sigma-jacDet)/(2.0*sigma-jacDet)/DIM));
-                                }
-                            }
+                            G[ct+DIM] += derivUtil[st]->quadW[k] * fabs(data[el]->maps[k][9]) * (
+                                mu * frobProdHes[m][l] +
+                                jacDetDeriv[m]*jacDetDeriv[l]/(2.0*sigma-jacDet)/(2.0*sigma-jacDet)*(
+                                    K- jacDet*(K*lsigma-mu)/(2.0*sigma-jacDet)));
                         }
                     }
                 }
             }
-            break;
         }
-
-        case eWins:
-        {
-            for (int i = 0; i < nElmt; ++i)
-            {
-                for(int k = 0; k < ptsHighGPU; ++k)
-                {
-                    jacDet = CalcIdealJac(i, k, deriv, data, jacIdeal, elUtil);
-                    NekDouble frob = FrobeniusNorm(jacIdeal);
-                    NekDouble sigma = 0.5*(jacDet +
-                                    sqrt(jacDet*jacDet + 4.0*ep*ep));
-                    NekDouble W = frob / sigma;
-                    integral += derivUtil[st]->quadW[k]*
-                                fabs(data[i]->maps[k][9])* W;
-
-                    // Derivative of basis function in each direction
-                    if(gradient)
-                    {
-                        NekDouble jacInvTrans[DIM][DIM];
-                        NekDouble jacDetDeriv[DIM];
-
-                        NekDouble phiM[DIM][DIM];
-                        for (int m = 0; m < DIM; ++m)
-                        {
-                            for (int n = 0; n < DIM; ++n)
-                            {
-                                phiM[n][m] = deriv[m][i][n][k];
-                            }
-                        }
-
-                        InvTrans<DIM>(phiM, jacInvTrans);
-                        NekDouble derivDet = Determinant<DIM>(phiM);
-
-                        NekDouble basisDeriv[DIM];
-                        for (int m = 0; m < DIM; ++m)
-                        {
-                            basisDeriv[m] = *(derivUtil[st]->VdmD[m])(k,nodeIds[i]);
-                        }
-
-                        for (int m = 0; m < DIM; ++m)
-                        {
-                            jacDetDeriv[m] = 0.0;
-                            for (int n = 0; n < DIM; ++n)
-                            {
-                                jacDetDeriv[m] += jacInvTrans[m][n] * basisDeriv[n];
-                            }
-                            jacDetDeriv[m] *= derivDet / fabs(data[i]->maps[k][9]);
-                        }
-
-                        NekDouble jacDeriv[DIM][DIM][DIM];
-                        for (int m = 0; m < DIM; ++m)
-                        {
-                            for (int n = 0; n < DIM; ++n)
-                            {
-                                NekDouble delta = m == n ? 1.0 : 0.0;
-                                for (int l = 0; l < DIM; ++l)
-                                {
-                                    jacDeriv[m][n][l] = delta * basisDeriv[l];
-                                }
-                            }
-                        }
-
-                        NekDouble jacDerivPhi[DIM][DIM][DIM];
-                        for (int p = 0; p < DIM; ++p)
-                        {
-                            for (int m = 0; m < DIM; ++m)
-                            {
-                                for (int n = 0; n < DIM; ++n)
-                                {
-                                    jacDerivPhi[p][m][n] = 0.0;
-                                    for (int l = 0; l < DIM; ++l)
-                                    {
-                                        // want phi_I^{-1} (l,n)
-                                        jacDerivPhi[p][m][n] +=
-                                            jacDeriv[p][m][l] * data[i]->maps[k][l + 3*n];
-                                    }
-                                }
-                            }
-                        }
-
-                        NekDouble frobProd[DIM];
-                        for (int m = 0; m < DIM; ++m)
-                        {
-                            frobProd[m] = FrobProd<DIM>(jacIdeal,jacDerivPhi[m]);
-                        }
-
-                        for (int j = 0; j < DIM; ++j)
-                        {
-                            G[j] += derivUtil[st]->quadW[k] * fabs(data[i]->maps[k][9]) * (
-                                    W*(2.0*frobProd[j]/frob -
-                                            jacDetDeriv[j]/(2.0*sigma-jacDet)));
-                        }
-
-                        if(hessian)
-                        {
-                            NekDouble frobProdHes[DIM][DIM]; //holder for the hessian frobprods
-                            for (int m = 0; m < DIM; ++m)
-                            {
-                                for(int l = m; l < DIM; ++l)
-                                {
-                                    frobProdHes[m][l] = FrobProd<DIM>(jacDerivPhi[m],jacDerivPhi[l]);
-                                }
-                            }
-
-
-                            int ct = 0;
-                            for (int m = 0; m < DIM; ++m)
-                            {
-                                for(int l = m; l < DIM; ++l, ct++)
-                                {
-                                    G[ct+DIM] += derivUtil[st]->quadW[k] * fabs(data[i]->maps[k][9]) * (
-                                        G[m]*G[l]/W + 2.0*W*(frobProdHes[m][l]/frob
-                                            - 2.0 * frobProd[m]*frobProd[l]/frob/frob
-                                            + 0.5*jacDetDeriv[m]*jacDetDeriv[l] * jacDet/(2.0*sigma-jacDet)/(2.0*sigma-jacDet)/(2.0*sigma-jacDet)/DIM));
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-            break;
-        }
-    }
+    } 
 
     return integral;
 }

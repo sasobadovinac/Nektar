@@ -55,15 +55,15 @@ class NodeOpti
 public:
     NodeOpti(NodeSharedPtr n,
              std::pair<std::vector<int>, std::vector<ElUtilSharedPtr> > e,
-             ResidualSharedPtr r, std::map<LibUtilities::ShapeType,DerivUtilSharedPtr> d,
+             std::map<LibUtilities::ShapeType,DerivUtilSharedPtr> d,
              optimiser o)
-        : node(n), nodeIds(e.first), data(e.second), res(r), derivUtil(d), opti(o)
+        : node(n), nodeIds(e.first), data(e.second), derivUtil(d), opti(o)
     {
     }
 
     virtual ~NodeOpti(){};
 
-    virtual void Optimise(DerivUtilGPU &derivUtil,NodesGPU &nodes, NodeMap &nodeMap, ElUtilGPU &elUtil) = 0;
+    virtual void Optimise(DerivUtilGPU &derivUtil,NodesGPU &nodes, NodeMap &nodeMap, ElUtilGPU &elUtil, Residual &res) = 0;
     NodeOptiJob *GetJob();
 
     void GetNodeCoord(double (&X)[3], int id,NodesGPU &nodes, NodeMap &nodeMap);
@@ -82,6 +82,7 @@ protected:
     Array<OneD, NekDouble> G;
 
     void CalcMinJac();
+    double CalcMinJac(ElUtilGPU &elUtil, int nElmt, int * iD);
     bool Linear();
 
     template<int DIM> int IsIndefinite();
@@ -89,7 +90,7 @@ protected:
 
     NekDouble dx;
     NekDouble minJac;
-    ResidualSharedPtr res;
+    Residual res;
     std::map<LibUtilities::ShapeType,DerivUtilSharedPtr> derivUtil;
     optimiser opti;
 
@@ -107,7 +108,6 @@ typedef LibUtilities::NekFactory<int,
                                  NodeSharedPtr,
                                  std::pair<std::vector<int>,
                                            std::vector<ElUtilSharedPtr> >,
-                                 ResidualSharedPtr,
                                  std::map<LibUtilities::ShapeType,DerivUtilSharedPtr>,
                                  optimiser> NodeOptiFactory;
 
@@ -119,24 +119,24 @@ class NodeOpti3D3D : public NodeOpti //1D optimsation in 3D space
 public:
     NodeOpti3D3D(NodeSharedPtr n,
                  std::pair<std::vector<int>, std::vector<ElUtilSharedPtr> > e,
-                 ResidualSharedPtr r, std::map<LibUtilities::ShapeType,DerivUtilSharedPtr> d,
+                 std::map<LibUtilities::ShapeType,DerivUtilSharedPtr> d,
                  optimiser o)
-                 : NodeOpti(n,e,r,d,o)
+                 : NodeOpti(n,e,d,o)
     {
     }
 
     ~NodeOpti3D3D(){};
 
-    void Optimise(DerivUtilGPU &derivUtil,NodesGPU &nodes, NodeMap &nodeMap, ElUtilGPU &elUtil);
+    void Optimise(DerivUtilGPU &derivUtil,NodesGPU &nodes, NodeMap &nodeMap, ElUtilGPU &elUtil, Residual &res);
 
     static int m_type;
     static NodeOptiSharedPtr create(
         NodeSharedPtr n,
         std::pair<std::vector<int>, std::vector<ElUtilSharedPtr> > e,
-        ResidualSharedPtr r, std::map<LibUtilities::ShapeType,DerivUtilSharedPtr> d,
+        std::map<LibUtilities::ShapeType,DerivUtilSharedPtr> d,
         optimiser o)
     {
-        return NodeOptiSharedPtr(new NodeOpti3D3D(n, e, r, d, o));
+        return NodeOptiSharedPtr(new NodeOpti3D3D(n, e, d, o));
     }
 
 private:
@@ -148,23 +148,23 @@ class NodeOpti2D2D : public NodeOpti //1D optimsation in 3D space
 public:
     NodeOpti2D2D(NodeSharedPtr n,
                  std::pair<std::vector<int>, std::vector<ElUtilSharedPtr> > e,
-                 ResidualSharedPtr r, std::map<LibUtilities::ShapeType,DerivUtilSharedPtr> d,
+                 std::map<LibUtilities::ShapeType,DerivUtilSharedPtr> d,
                  optimiser o)
-                 : NodeOpti(n,e,r,d,o)
+                 : NodeOpti(n,e,d,o)
     {
     }
 
     ~NodeOpti2D2D(){};
 
-    void Optimise(DerivUtilGPU &derivUtil,NodesGPU &nodes, NodeMap &nodeMap, ElUtilGPU &elUtil);
+    void Optimise(DerivUtilGPU &derivUtil,NodesGPU &nodes, NodeMap &nodeMap, ElUtilGPU &elUtil, Residual &res);
 
     static int m_type;
     static NodeOptiSharedPtr create(
         NodeSharedPtr n, std::pair<std::vector<int>, std::vector<ElUtilSharedPtr> > e,
-        ResidualSharedPtr r, std::map<LibUtilities::ShapeType,DerivUtilSharedPtr> d,
+        std::map<LibUtilities::ShapeType,DerivUtilSharedPtr> d,
         optimiser o)
     {
-        return NodeOptiSharedPtr(new NodeOpti2D2D(n, e, r, d, o));
+        return NodeOptiSharedPtr(new NodeOpti2D2D(n, e, d, o));
     }
 
 private:

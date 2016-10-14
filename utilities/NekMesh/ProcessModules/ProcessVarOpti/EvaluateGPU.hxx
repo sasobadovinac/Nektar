@@ -128,6 +128,11 @@ void ProcessVarOpti::Load_elUtils(ElUtilGPU &elUtil)
 	elUtil.idealMap = Kokkos::View<double**[10]> ("idealMap", elUtil.nElmt, elUtil.ptsHigh);
 	elUtil.h_idealMap = Kokkos::create_mirror_view(elUtil.idealMap);
 
+	elUtil.minJac = Kokkos::View<double*> ("minJac", elUtil.nElmt);
+	elUtil.h_minJac = Kokkos::create_mirror_view(elUtil.minJac);
+	elUtil.scaledJac = Kokkos::View<double*> ("scaledJac", elUtil.nElmt);
+	elUtil.h_scaledJac = Kokkos::create_mirror_view(elUtil.scaledJac);
+
 	int N1 = elUtil.nElmt;
     int M1 = elUtil.ptsHigh;
     Kokkos::parallel_for(team_policy_host(N1,M1), KOKKOS_LAMBDA (const member_type_host& teamMember)
@@ -138,8 +143,12 @@ void ProcessVarOpti::Load_elUtils(ElUtilGPU &elUtil)
             for (int i = 0; i < 10; i++)
         	{
         		elUtil.h_idealMap(el,node,i) = dataSet[el]->maps[node][i];
-        	}           
+        	}
+        	 
         });
+        elUtil.h_minJac(el) = DBL_MAX;
+        elUtil.h_scaledJac(el) = DBL_MAX;   
+
         //const int ElmtId = dataSet[el]->GetId();
         //elUtil.h_ElmtOffset(ElmtId) = el;
     });
@@ -218,7 +227,7 @@ void ProcessVarOpti::Create_NodeMap(NodesGPU &nodes,
 	}
 }
 
-void ProcessVarOpti::Evaluate(DerivUtilGPU &derivUtil,NodesGPU &nodes)
+void ProcessVarOpti::Evaluate(DerivUtilGPU &derivUtil,NodesGPU &nodes, ElUtilGPU &elUtil, Residual &res)
 {
     int m_dim = dataSet[0]->m_dim;
     if(m_dim == 2)
@@ -364,21 +373,25 @@ void ProcessVarOpti::Evaluate(DerivUtilGPU &derivUtil,NodesGPU &nodes)
             Kokkos::parallel_reduce(range_policy(0, nodes_size) , mnfunctor, h_mn(k));      
             */   
 
-            mtx3.lock();
+            /*mtx3.lock();
             if(h_mn(k) < 0)
             {
-                dataSet[k]->res->startInv++;
+                res.startInv++;
             }
-            //  res->worstJac = min(res->worstJac,mn/mx);
-            dataSet[k]->res->worstJac = (dataSet[k]->res->worstJac > h_mn(k)/h_mx(k) ? 
-                                          h_mn(k)/h_mx(k) : dataSet[k]->res->worstJac);
-            mtx3.unlock();
+            //  res.worstJac = min(res.worstJac,mn/mx);
+            res.worstJac = (res.worstJac > h_mn(k)/h_mx(k) ? h_mn(k)/h_mx(k) : res.worstJac);
+            mtx3.unlock();*/
 
-            //dataSet[k]->maps = dataSet[k]->MappingIdealToRef();
             
-            dataSet[k]->minJac = h_mn(k);
-            dataSet[k]->scaledJac = h_mn(k)/h_mx(k); 
+            //dataSet[k]->minJac = h_mn(k);
+            elUtil.h_minJac(k) = h_mn(k);     
+
+            //dataSet[k]->scaledJac = h_mn(k)/h_mx(k);
+            elUtil.h_scaledJac(k) = h_mn(k)/h_mx(k); 
         });
+
+        Kokkos::deep_copy(elUtil.minJac,elUtil.h_minJac);
+        Kokkos::deep_copy(elUtil.scaledJac,elUtil.h_scaledJac);
     }
 }
 

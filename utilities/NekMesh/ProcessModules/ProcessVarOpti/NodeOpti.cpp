@@ -75,6 +75,19 @@ void NodeOpti::CalcMinJac()
         minJac = min(minJac, data[i]->minJac);
     }
 }
+double NodeOpti::CalcMinJac(ElUtilGPU &elUtil, int nElmt, int * iD)
+{
+    double minJac = DBL_MAX;
+    int el;
+
+    for(int i = 0; i < nElmt; i++)
+    {
+        el = iD[i];
+        minJac = (minJac > elUtil.h_minJac(el) ? elUtil.h_minJac(el) : minJac);
+            
+    }
+    return minJac;
+}
 
 void NodeOpti::GetNodeCoord(double (&X)[3], int id, NodesGPU &nodes, NodeMap &nodeMap)
 {
@@ -143,7 +156,7 @@ void NodeOpti::SetNodeCoord(double (&X)[3], int id, NodesGPU &nodes, NodeMap &no
 int NodeOpti2D2D::m_type = GetNodeOptiFactory().RegisterCreatorFunction(
     22, NodeOpti2D2D::create, "2D2D");
 
-void NodeOpti2D2D::Optimise(DerivUtilGPU &derivUtil,NodesGPU &nodes, NodeMap &nodeMap, ElUtilGPU &elUtil)
+void NodeOpti2D2D::Optimise(DerivUtilGPU &derivUtil,NodesGPU &nodes, NodeMap &nodeMap, ElUtilGPU &elUtil, Residual &res)
 {
     CalcMinJac();
 
@@ -192,15 +205,15 @@ void NodeOpti2D2D::Optimise(DerivUtilGPU &derivUtil,NodesGPU &nodes, NodeMap &no
             node->m_y = yc;
 
             mtx.lock();
-            res->nReset++;
+            res.nReset++;
             mtx.unlock();
         }
 
         mtx.lock();
-        res->func += newVal;
-        res->val = max(sqrt((node->m_x-xc)*(node->m_x-xc)+
+        res.func += newVal;
+        res.val = max(sqrt((node->m_x-xc)*(node->m_x-xc)+
                             (node->m_y-yc)*(node->m_y-yc)),
-                       res->val);
+                       res.val);
         mtx.unlock();
     }
 }
@@ -208,7 +221,7 @@ void NodeOpti2D2D::Optimise(DerivUtilGPU &derivUtil,NodesGPU &nodes, NodeMap &no
 int NodeOpti3D3D::m_type = GetNodeOptiFactory().RegisterCreatorFunction(
     33, NodeOpti3D3D::create, "3D3D");
 
-void NodeOpti3D3D::Optimise(DerivUtilGPU &derivUtil,NodesGPU &nodes, NodeMap &nodeMap, ElUtilGPU &elUtil)
+void NodeOpti3D3D::Optimise(DerivUtilGPU &derivUtil,NodesGPU &nodes, NodeMap &nodeMap, ElUtilGPU &elUtil, Residual &res)
 {
     CalcMinJac();
 
@@ -412,7 +425,7 @@ void NodeOpti3D3D::Optimise(DerivUtilGPU &derivUtil,NodesGPU &nodes, NodeMap &no
             SetNodeCoord(h_Xn, id, nodes, nodeMap);
 
             mtx.lock();
-            res->nReset++;
+            res.nReset++;
             cout << "3d reset " << runDNC << endl;
             mtx.unlock();
         }
@@ -420,10 +433,10 @@ void NodeOpti3D3D::Optimise(DerivUtilGPU &derivUtil,NodesGPU &nodes, NodeMap &no
         // update residual value
         mtx.lock();        
         //GetNodeCoord(h_Xn, id, nodes, nodeMap);
-        res->val = max(sqrt( (h_Xn[0]-h_Xc[0])*(h_Xn[0]-h_Xc[0])
+        res.val = max(sqrt( (h_Xn[0]-h_Xc[0])*(h_Xn[0]-h_Xc[0])
                             +(h_Xn[1]-h_Xc[1])*(h_Xn[1]-h_Xc[1])
-                            +(h_Xn[2]-h_Xc[2])*(h_Xn[2]-h_Xc[2]) ),res->val );
-        res->func +=newVal;
+                            +(h_Xn[2]-h_Xc[2])*(h_Xn[2]-h_Xc[2]) ),res.val );
+        res.func +=newVal;
         mtx.unlock();
     }
 }

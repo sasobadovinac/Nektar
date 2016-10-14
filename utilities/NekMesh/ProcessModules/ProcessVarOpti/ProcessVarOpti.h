@@ -88,6 +88,11 @@ struct ElUtilGPU
     typename Kokkos::View< double**[10]>::HostMirror h_idealMap;
     int ptsHigh;
     int nElmt;
+
+    Kokkos::View<double*> minJac;
+    typename Kokkos::View< double*>::HostMirror h_minJac;
+    Kokkos::View<double*> scaledJac;
+    typename Kokkos::View< double*>::HostMirror h_scaledJac;
 };
 
 struct NodesGPU
@@ -127,7 +132,7 @@ struct Residual
     NekDouble func;
 };
 
-typedef boost::shared_ptr<Residual> ResidualSharedPtr;
+//typedef boost::shared_ptr<Residual> ResidualSharedPtr;
 typedef std::multimap<int,std::pair<int,int>> NodeMap;
 
 
@@ -150,7 +155,7 @@ public:
     template<int DIM> void Load_elUtils(ElUtilGPU &elUtil);
     void Create_nodes_view(NodesGPU &nodes);
     void Load_nodes(NodesGPU &nodes);
-    void Evaluate(DerivUtilGPU &derivUtil,NodesGPU &nodes);
+    void Evaluate(DerivUtilGPU &derivUtil,NodesGPU &nodes, ElUtilGPU &elUtil, Residual &res);
     void Create_NodeMap(NodesGPU &nodes, std::vector<std::vector<NodeSharedPtr> > &freenodes, NodeMap &nodeMap);
 
     void Optimise(); // for GPU parallelisation
@@ -165,7 +170,7 @@ private:
 
     std::vector<ElementSharedPtr> GetLockedElements(NekDouble thres);
     std::vector<Array<OneD, NekDouble> > MappingIdealToRef(ElementSharedPtr el);
-    std::vector<std::vector<NodeSharedPtr> > GetColouredNodes(std::vector<ElementSharedPtr> elLock);
+    std::vector<std::vector<NodeSharedPtr> > GetColouredNodes(std::vector<ElementSharedPtr> elLock, Residual &res);
 
     NodeElMap nodeElMap;
     std::vector<ElUtilSharedPtr> dataSet;
