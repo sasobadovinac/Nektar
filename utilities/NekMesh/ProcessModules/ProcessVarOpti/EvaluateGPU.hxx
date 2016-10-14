@@ -122,6 +122,32 @@ void ProcessVarOpti::Load_derivUtil(DerivUtilGPU &derivUtil)
     }
 }
 
+template<int DIM>
+void ProcessVarOpti::Load_elUtils(ElUtilGPU &elUtil)
+{
+	elUtil.idealMap = Kokkos::View<double**[10]> ("idealMap", elUtil.nElmt, elUtil.ptsHigh);
+	elUtil.h_idealMap = Kokkos::create_mirror_view(elUtil.idealMap);
+
+	int N1 = elUtil.nElmt;
+    int M1 = elUtil.ptsHigh;
+    Kokkos::parallel_for(team_policy_host(N1,M1), KOKKOS_LAMBDA (const member_type_host& teamMember)
+    {         
+        const int el = teamMember.league_rank();
+        Kokkos::parallel_for(Kokkos::TeamThreadRange( teamMember, M1 ), [&] (const int node)
+        {                
+            for (int i = 0; i < 10; i++)
+        	{
+        		elUtil.h_idealMap(el,node,i) = dataSet[el]->maps[node][i];
+        	}           
+        });
+        //const int ElmtId = dataSet[el]->GetId();
+        //elUtil.h_ElmtOffset(ElmtId) = el;
+    });
+    
+    Kokkos::deep_copy(elUtil.idealMap,elUtil.h_idealMap);
+
+}
+
 
 void ProcessVarOpti::Create_nodes_view(NodesGPU &nodes)
 {
@@ -147,16 +173,16 @@ void ProcessVarOpti::Load_nodes(NodesGPU &nodes)
     int M1 = nodes.nodes_size;
     Kokkos::parallel_for(team_policy_host(N1,M1), KOKKOS_LAMBDA (const member_type_host& teamMember)
     {         
-        const int k = teamMember.league_rank();
-        Kokkos::parallel_for(Kokkos::TeamThreadRange( teamMember, M1 ), [&] (const int j)
+        const int el = teamMember.league_rank();
+        Kokkos::parallel_for(Kokkos::TeamThreadRange( teamMember, M1 ), [&] (const int node)
         {                
-            nodes.h_X(k,j) = *dataSet[k]->nodes[j][0];
-            nodes.h_Y(k,j) = *dataSet[k]->nodes[j][1];
-            nodes.h_Z(k,j) = *dataSet[k]->nodes[j][2];
-            nodes.h_Id(k,j) = *dataSet[k]->nodeIds[j];
+            nodes.h_X(el,node) = *dataSet[el]->nodes[node][0];
+            nodes.h_Y(el,node) = *dataSet[el]->nodes[node][1];
+            nodes.h_Z(el,node) = *dataSet[el]->nodes[node][2];
+            nodes.h_Id(el,node) = *dataSet[el]->nodeIds[node];
         });
-        const int ElmtId = dataSet[k]->GetId();
-        nodes.h_ElmtOffset(ElmtId) = k;
+        const int ElmtId = dataSet[el]->GetId();
+        nodes.h_ElmtOffset(ElmtId) = el;
     });
     Kokkos::deep_copy(nodes.X,nodes.h_X);
     Kokkos::deep_copy(nodes.Y,nodes.h_Y);
@@ -348,7 +374,7 @@ void ProcessVarOpti::Evaluate(DerivUtilGPU &derivUtil,NodesGPU &nodes)
                                           h_mn(k)/h_mx(k) : dataSet[k]->res->worstJac);
             mtx3.unlock();
 
-            dataSet[k]->maps = dataSet[k]->MappingIdealToRef();
+            //dataSet[k]->maps = dataSet[k]->MappingIdealToRef();
             
             dataSet[k]->minJac = h_mn(k);
             dataSet[k]->scaledJac = h_mn(k)/h_mx(k); 

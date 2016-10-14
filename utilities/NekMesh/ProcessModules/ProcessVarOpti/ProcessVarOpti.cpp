@@ -368,6 +368,12 @@ void ProcessVarOpti::Process()
     //printf("derivUtil.nodes_size%i\n", derivUtil.nodes_size);
     //printf("derivUtil.ptsLow%i\n", derivUtil.ptsLow);
     //printf("derivUtil.ptsHigh%i\n", derivUtil.ptsHigh);
+
+    // load mapping ideal to ref element
+    ElUtilGPU elUtil;
+    elUtil.ptsHigh = dataSet[0]->derivUtil->ptsHigh;
+    elUtil.nElmt = dataSet.size();
+    Load_elUtils<3>(elUtil);
     
 
     // initialise views for node coordinates on GPU
@@ -448,7 +454,7 @@ void ProcessVarOpti::Process()
             
             for(int j = 0; j < optiNodes[i].size(); j++)
             {
-                optiNodes[i][j]->Optimise(derivUtil,nodes, nodeMap);
+                optiNodes[i][j]->Optimise(derivUtil,nodes, nodeMap, elUtil);
             }
             
         }

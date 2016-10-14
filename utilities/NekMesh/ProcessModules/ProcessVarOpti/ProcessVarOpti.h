@@ -81,6 +81,15 @@ struct DerivUtilGPU
     int ptsLow;
 };
 
+
+struct ElUtilGPU
+{
+    Kokkos::View<double**[10]> idealMap;
+    typename Kokkos::View< double**[10]>::HostMirror h_idealMap;
+    int ptsHigh;
+    int nElmt;
+};
+
 struct NodesGPU
 {
     Kokkos::View<double**> X;
@@ -138,6 +147,7 @@ public:
     virtual void Process();
 
     void Load_derivUtil(DerivUtilGPU &derivUtil);
+    template<int DIM> void Load_elUtils(ElUtilGPU &elUtil);
     void Create_nodes_view(NodesGPU &nodes);
     void Load_nodes(NodesGPU &nodes);
     void Evaluate(DerivUtilGPU &derivUtil,NodesGPU &nodes);
@@ -178,14 +188,6 @@ typedef Kokkos::TeamPolicy<Kokkos::DefaultExecutionSpace>::member_type  member_t
 typedef Kokkos::TeamPolicy<Kokkos::DefaultHostExecutionSpace>::member_type  member_type_host;
 
 
-class ElUtilGPU //: public ElUtil
-{
-public:
-    //void Evaluate(DerivUtilGPU &derivUtil, NodesGPU &nodes);
-private:
-    //DerivUtilGPU derivUtil;
-    //NodesGPU nodes;
-};
 
 
 }

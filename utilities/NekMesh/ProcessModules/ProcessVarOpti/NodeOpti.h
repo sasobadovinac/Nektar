@@ -63,14 +63,14 @@ public:
 
     virtual ~NodeOpti(){};
 
-    virtual void Optimise(DerivUtilGPU &derivUtil,NodesGPU &nodes, NodeMap &nodeMap) = 0;
+    virtual void Optimise(DerivUtilGPU &derivUtil,NodesGPU &nodes, NodeMap &nodeMap, ElUtilGPU &elUtil) = 0;
     NodeOptiJob *GetJob();
 
     void GetNodeCoord(double (&X)[3], int id,NodesGPU &nodes, NodeMap &nodeMap);
     void SetNodeCoord(double (&X)[3], int id,NodesGPU &nodes, NodeMap &nodeMap);
 
     template<int DIM> NekDouble GetFunctional(DerivUtilGPU &derivUtil, NodesGPU &nodes,
-                                        bool gradient = true, bool hessian = true);
+                        ElUtilGPU &elUtil, bool gradient = true, bool hessian = true);
     
 
 protected:
@@ -127,7 +127,7 @@ public:
 
     ~NodeOpti3D3D(){};
 
-    void Optimise(DerivUtilGPU &derivUtil,NodesGPU &nodes, NodeMap &nodeMap);
+    void Optimise(DerivUtilGPU &derivUtil,NodesGPU &nodes, NodeMap &nodeMap, ElUtilGPU &elUtil);
 
     static int m_type;
     static NodeOptiSharedPtr create(
@@ -156,7 +156,7 @@ public:
 
     ~NodeOpti2D2D(){};
 
-    void Optimise(DerivUtilGPU &derivUtil,NodesGPU &nodes, NodeMap &nodeMap);
+    void Optimise(DerivUtilGPU &derivUtil,NodesGPU &nodes, NodeMap &nodeMap, ElUtilGPU &elUtil);
 
     static int m_type;
     static NodeOptiSharedPtr create(
