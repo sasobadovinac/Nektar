@@ -61,6 +61,11 @@ namespace Nektar
         Array<OneD, NekDouble> m_h; /// estimate of h for an element 
         StdRegions::VarCoeffMap m_savVarCoeffMap;
         ForcingDynamicViscSharedPtr  m_forcing; 
+
+        bool      m_doTimeRamp;
+        NekDouble m_initTime; 
+        NekDouble m_timeRamp; 
+
     };
  
     typedef boost::shared_ptr<DynamicViscData> DynamicViscDataSharedPtr;

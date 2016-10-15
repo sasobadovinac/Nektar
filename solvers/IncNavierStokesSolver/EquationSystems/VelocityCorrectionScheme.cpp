@@ -200,6 +200,21 @@ namespace Nektar
                 m_session->LoadParameter("DynamicViscDefS0",
                                          m_dynamicVisc->m_defS0,3);
 
+                m_session->LoadParameter("DynamicViscDefS0",
+                                         m_dynamicVisc->m_defS0,3);
+
+                m_session->LoadParameter("DynamicViscTimeRamp",
+                                         m_dynamicVisc->m_timeRamp,-1);
+
+                if(m_dynamicVisc->m_timeRamp == -1)
+                {
+                    m_dynamicVisc->m_doTimeRamp = false;
+                }
+                else
+                {
+                    m_dynamicVisc->m_doTimeRamp = true;
+                }
+                
                 // store original kinvis for later use
                 m_dynamicVisc->m_origKinvis = m_kinvis;
 
@@ -340,6 +355,22 @@ namespace Nektar
             m_fields[i]->BwdTrans(m_fields[i]->GetCoeffs(),
                                   m_fields[i]->UpdatePhys());
             m_F[i] = Array< OneD, NekDouble> (m_fields[0]->GetTotPoints(), 0.0);
+        }
+
+        if(m_dynamicVisc)
+        {
+            m_dynamicVisc->m_initTime = m_time; 
+
+            if(boost::iequals(m_dynamicVisc->m_type,
+                              "SemiImplicitVariableDiff"))
+            {
+                if(m_fieldMetaDataMap.count("DynVisc_FixedKinvis") != 0)
+                {
+                    m_dynamicVisc->m_fixedKinvis =
+                        boost::lexical_cast<NekDouble>(
+                               m_fieldMetaDataMap["DynVisc_FixedKinvis"]);
+                }
+            }
         }
     }
     
@@ -614,8 +645,9 @@ namespace Nektar
 
                 m_fields[0]->FwdTrans_IterPerExp(kinvis,
                        fieldcoeffs[fieldcoeffs.size()-1]);
+                m_fieldMetaDataMap["DynVisc_FixedKinvis"]
+                    = boost::lexical_cast<std::string>(m_dynamicVisc->m_fixedKinvis);
             }
-            
         }
     }
     
@@ -697,6 +729,14 @@ namespace Nektar
             
             GetStabiliseKinvis(energy,m_dynamicVisc->m_kinvisC0,
                                m_dynamicVisc->m_defS0,kinvis);
+
+            if(m_dynamicVisc->m_doTimeRamp)
+            {
+                NekDouble scale = (1.0-exp(-2*(m_time-m_dynamicVisc->m_initTime)/
+                                           m_dynamicVisc->m_timeRamp));
+                
+                Vmath::Smul(nquad,scale,kinvis,1,kinvis,1);
+            }
 
             // add in dynamics viscosity and then divide by
             // dyanmics viscosity for consistency with standard
