@@ -278,6 +278,24 @@ void ProcessVarOpti::Process()
         ASSERTL0(false,"cannot deal with manifolds");
     }
 
+
+    if(m_config["Kokkos"].beenSet)
+    {
+        int nThreads = m_config["numthreads"].as<int>();
+        Kokkos::InitArguments args;
+        args.num_threads = nThreads;
+        Kokkos::DefaultHostExecutionSpace::initialize(args.num_threads);
+        Kokkos::DefaultExecutionSpace::initialize();
+
+        // Test functions
+        std::cout << " Template using int" << std::endl;  
+        process<int>();
+        std::cout << " Template using double" << std::endl; 
+        process<double>();
+
+        //p2rocess2(); 
+    }
+
     //res = boost::shared_ptr<Residual>(new Residual);
     Residual res;
     res.val = 1.0;
@@ -302,8 +320,6 @@ void ProcessVarOpti::Process()
         vector<NodeOptiSharedPtr> ns;
         for(int j = 0; j < freenodes[i].size(); j++)
         {
-            //printf("freenodes[%i][%i]: %i\n", i,j,freenodes[i][j]->m_id);
-            
             NodeElMap::iterator it = nodeElMap.find(freenodes[i][j]->m_id);
             ASSERTL0(it != nodeElMap.end(), "could not find");
 
@@ -329,9 +345,10 @@ void ProcessVarOpti::Process()
         optiNodes.push_back(ns);
     }
 
+    // determine statistics of element colouring
     int nset = optiNodes.size();
     int p = 0;
-    int mn = numeric_limits<int>::max();
+    int mn = DBL_MAX;
     int mx = 0;
     for(int i = 0; i < nset; i++)
     {
@@ -340,25 +357,18 @@ void ProcessVarOpti::Process()
         mx = max(mx, int(optiNodes[i].size()));
     }
 
-    res.startInv = 0;
-    res.worstJac = DBL_MAX;
+    // initialise variable for number of invalid elements
+    res.startInv = Kokkos::View<int[1]>("startInv");
+    res.h_startInv = Kokkos::create_mirror_view(res.startInv);
+    res.h_startInv[0] = 0;
+    Kokkos::deep_copy(res.startInv,res.h_startInv);
 
-    if(m_config["Kokkos"].beenSet)
-    {
-        int nThreads = m_config["numthreads"].as<int>();
-        Kokkos::InitArguments args;
-        args.num_threads = nThreads;
-        Kokkos::DefaultHostExecutionSpace::initialize(args.num_threads);
-        Kokkos::DefaultExecutionSpace::initialize();
+    // initialise variable for smallest Jacobian of all elements
+    res.worstJac = Kokkos::View<double[1]>("worstJac");
+    res.h_worstJac = Kokkos::create_mirror_view(res.worstJac);    
+    res.h_worstJac[0] = DBL_MAX;
 
-        // Test functions
-        std::cout << " Template using int" << std::endl;  
-        process<int>();
-        std::cout << " Template using double" << std::endl; 
-        process<double>();
-
-        //p2rocess2(); 
-    }
+    
     
     // initialise and load derivUtils onto GPU
     DerivUtilGPU derivUtil;
@@ -366,9 +376,7 @@ void ProcessVarOpti::Process()
     derivUtil.ptsLow = dataSet[0]->derivUtil->ptsLow;
     derivUtil.ptsHigh = dataSet[0]->derivUtil->ptsHigh;
     Load_derivUtil(derivUtil);//
-    //printf("derivUtil.nodes_size%i\n", derivUtil.nodes_size);
-    //printf("derivUtil.ptsLow%i\n", derivUtil.ptsLow);
-    //printf("derivUtil.ptsHigh%i\n", derivUtil.ptsHigh);
+    
 
     // load mapping ideal to ref element
     ElUtilGPU elUtil;
@@ -415,8 +423,8 @@ void ProcessVarOpti::Process()
 
     cout << scientific << endl;
     cout << "N elements:\t\t" << m_mesh->m_element[m_mesh->m_expDim].size() - elLock.size() << endl
-         << "N elements invalid:\t" << res.startInv << endl
-         << "Worst jacobian:\t\t" << res.worstJac << endl
+         << "N elements invalid:\t" << res.h_startInv[0] << endl
+         << "Worst jacobian:\t\t" << res.h_worstJac[0] << endl
          << "N free nodes:\t\t" << res.n << endl
          << "N Dof:\t\t\t" << res.nDoF << endl
          << "N color sets:\t\t" << nset << endl
@@ -443,16 +451,13 @@ void ProcessVarOpti::Process()
         res.nReset = 0;
         for(int i = 0; i < optiNodes.size(); i++)
         {
-            // Optimise elements on GPU
-            //Optimise();
-
             // Optimise node coordinates on the CPU
             /*Kokkos::parallel_for(range_policy_host(0,optiNodes[i].size()),KOKKOS_LAMBDA (const int j)
             {
                 optiNodes[i][j]->Optimise();
             });*/
 
-            
+            // Optimise node coordinates on the GPU
             for(int j = 0; j < optiNodes[i].size(); j++)
             {
                 optiNodes[i][j]->Optimise(derivUtil,nodes, nodeMap, elUtil, res);
@@ -460,13 +465,11 @@ void ProcessVarOpti::Process()
             
         }
 
-        res.startInv = 0;
-        res.worstJac = numeric_limits<double>::max();
+        res.h_startInv[0] = 0;
+        Kokkos::deep_copy(res.startInv,res.h_startInv);
+        res.h_worstJac[0] = DBL_MAX;
 
-        // copy nodes onto GPU and evaluate the elements on GPU
-        //Kokkos::deep_copy(nodes.X,nodes.h_X);
-        //Kokkos::deep_copy(nodes.Y,nodes.h_Y);
-        //Kokkos::deep_copy(nodes.Z,nodes.h_Z);
+        // Evaluate the elements on GPU
         Evaluate(derivUtil, nodes, elUtil, res);
 
         // Evaluate elements on CPU
@@ -477,12 +480,12 @@ void ProcessVarOpti::Process()
 
         if(m_config["resfile"].beenSet)
         {
-            resFile << res.val << " " << res.worstJac << " " << res.func << endl;
+            resFile << res.val << " " << res.h_worstJac[0] << " " << res.func << endl;
         }
 
         cout << ctr << "\tResidual: " << res.val
-                    << "\tMin Jac: " << res.worstJac
-                    << "\tInvalid: " << res.startInv
+                    << "\tMin Jac: " << res.h_worstJac[0]
+                    << "\tInvalid: " << res.h_startInv[0]
                     << "\tReset nodes: " << res.nReset
                     << "\tFunctional: " << res.func
                     << endl;
@@ -508,8 +511,8 @@ void ProcessVarOpti::Process()
     t.Stop();
     cout << "Time to compute: " << t.TimePerTest(1) << endl;
 
-    cout << "Invalid at end:\t\t" << res.startInv << endl;
-    cout << "Worst at end:\t\t" << res.worstJac << endl;
+    cout << "Invalid at end:\t\t" << res.h_startInv[0] << endl;
+    cout << "Worst at end:\t\t" << res.h_worstJac[0] << endl;
 
     if(m_config["Kokkos"].beenSet)
     {

@@ -240,13 +240,22 @@ void ProcessVarOpti::Evaluate(DerivUtilGPU &derivUtil,NodesGPU &nodes, ElUtilGPU
         int nElmt = nodes.nElmt;   
 
         // declare min and max Jacobian
-        Kokkos::View<double*,Kokkos::DefaultHostExecutionSpace> h_mx("mx",nElmt);
-        Kokkos::View<double*,Kokkos::DefaultHostExecutionSpace> h_mn("mn",nElmt);   
+        //Kokkos::View<double*,Kokkos::DefaultHostExecutionSpace> h_mx("h_mx",nElmt);
+        //Kokkos::View<double*,Kokkos::DefaultHostExecutionSpace> h_mn("h_mn",nElmt);
+        Kokkos::View<double*> mx("mx",nElmt);
+        Kokkos::View<double*> mn("mn",nElmt);
+        typename Kokkos::View< double*>::HostMirror h_mx = Kokkos::create_mirror_view(mx);
+		typename Kokkos::View< double*>::HostMirror h_mn = Kokkos::create_mirror_view(mn);
+  
+           
         Kokkos::parallel_for(range_policy_host(0,nElmt), KOKKOS_LAMBDA (const int k)
         {
             h_mx(k) = -1.0 * DBL_MAX;
             h_mn(k) = DBL_MAX;
-        });    
+        });
+        Kokkos::deep_copy(mx, h_mx);
+        Kokkos::deep_copy(mn, h_mn);
+
 
         // do the matrix vector multiplication on the GPU
         Kokkos::View<double[3][3]> dxdz("dxdz");
@@ -351,47 +360,40 @@ void ProcessVarOpti::Evaluate(DerivUtilGPU &derivUtil,NodesGPU &nodes, ElUtilGPU
             });
 
         });
-
-        Kokkos::deep_copy(h_jacDet,jacDet);
-
         
-        Kokkos::parallel_for(range_policy_host(0,nElmt), KOKKOS_LAMBDA (const int k)
+        // compute minimum and scaled Jacobian of each element 
+        Kokkos::parallel_for(range_policy(0,nElmt), KOKKOS_LAMBDA (const int k)
         {
             for(int j = 0; j < nodes_size; j++)
             {
                 //  mx = max(mx,jacDet);
-                h_mx(k) = (h_mx(k) < h_jacDet(k,j) ? h_jacDet(k,j) : h_mx(k));
+                mx(k) = (mx(k) < jacDet(k,j) ? jacDet(k,j) : mx(k));
                 //  mn = min(mn,jacDet);
-                h_mn(k) = (h_mn(k) > h_jacDet(k,j) ? h_jacDet(k,j) : h_mn(k));
+                mn(k) = (mn(k) > jacDet(k,j) ? jacDet(k,j) : mn(k));
             }
-            /*
-            auto jacDet_sub = Kokkos::subview(jacDet, k, Kokkos::ALL);
-            MaxFunctor <double> mxfunctor(jacDet_sub);
-            Kokkos::parallel_reduce(range_policy(0, nodes_size) , mxfunctor, h_mx(k));
-
-            MinFunctor <double> mnfunctor(jacDet_sub);
-            Kokkos::parallel_reduce(range_policy(0, nodes_size) , mnfunctor, h_mn(k));      
-            */   
-
-            /*mtx3.lock();
-            if(h_mn(k) < 0)
-            {
-                res.startInv++;
-            }
-            //  res.worstJac = min(res.worstJac,mn/mx);
-            res.worstJac = (res.worstJac > h_mn(k)/h_mx(k) ? h_mn(k)/h_mx(k) : res.worstJac);
-            mtx3.unlock();*/
-
-            
             //dataSet[k]->minJac = h_mn(k);
-            elUtil.h_minJac(k) = h_mn(k);     
-
+            elUtil.minJac(k) = mn(k);
             //dataSet[k]->scaledJac = h_mn(k)/h_mx(k);
-            elUtil.h_scaledJac(k) = h_mn(k)/h_mx(k); 
+            elUtil.scaledJac(k) = mn(k)/mx(k); 
         });
+        Kokkos::deep_copy(elUtil.h_minJac,elUtil.minJac);
+        Kokkos::deep_copy(elUtil.h_scaledJac,elUtil.scaledJac);
 
-        Kokkos::deep_copy(elUtil.minJac,elUtil.h_minJac);
-        Kokkos::deep_copy(elUtil.scaledJac,elUtil.h_scaledJac);
+        // compute the smallest (worst) Jacobian of all elements
+        MinFunctor <double> mnfunctor(elUtil.scaledJac);
+        Kokkos::parallel_reduce(range_policy(0, nElmt) , mnfunctor, res.h_worstJac[0]);
+
+        // compute number of invalied elements (Jacobian < 0)
+        Kokkos::parallel_for("summation", range_policy(0,nElmt), KOKKOS_LAMBDA (const int& k)
+        {	
+		    if(elUtil.minJac(k) < 0)
+		    {
+		    	Kokkos::atomic_add(&res.startInv[0], 1);
+		    }			    
+		});
+		Kokkos::deep_copy(res.h_startInv,res.startInv); 
+
+        
     }
 }
 

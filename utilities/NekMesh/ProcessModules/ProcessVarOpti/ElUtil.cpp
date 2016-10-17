@@ -371,18 +371,19 @@ void ElUtil::Evaluate()
     }        
     
 
-    mtx2.lock();
+    /*mtx2.lock();
     if(mn < 0)
     {
-        res->startInv++;
+        res.h_startInv[0]++;
     }
     //  res->worstJac = min(res->worstJac,mn/mx);
-    res->worstJac = (res->worstJac > mn/mx ? mn/mx : res->worstJac);
+    res.h_worstJac[0] = (res.h_worstJac[0] > mn/mx ? 
+                                mn/mx : res.h_worstJac[0]);
 
-    mtx2.unlock();
+    mtx2.unlock();*/
 
     //mtx2.lock();
-    maps = MappingIdealToRef();
+    //maps = MappingIdealToRef();
     //mtx2.unlock();
 
     minJac = mn;

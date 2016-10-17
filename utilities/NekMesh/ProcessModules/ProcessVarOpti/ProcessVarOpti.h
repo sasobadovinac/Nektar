@@ -124,12 +124,23 @@ enum optimiser
 struct Residual
 {
     NekDouble val;
+    NekDouble func;
+    //NekDouble worstJac;
+    Kokkos::View<double[1]> worstJac;
+    typename Kokkos::View< double[1]>::HostMirror h_worstJac;
+    
     int n;
     int nDoF;
-    int startInv;
+
+    //int startInv;
+    Kokkos::View<int[1]> startInv;
+    typename Kokkos::View< int[1]>::HostMirror h_startInv;
+    
+
     int nReset;
-    NekDouble worstJac;
-    NekDouble func;
+    
+
+    
 };
 
 //typedef boost::shared_ptr<Residual> ResidualSharedPtr;
@@ -297,8 +308,6 @@ void process()
 
   // atomic add of vector on GPU
   Kokkos::View< T[1]> sm_atomic("atomic");
-  //Kokkos::View< T*> sm_atomic;
-  //sm_atomic = Kokkos::View< T*>("atomic",1);
   typename Kokkos::View< T*>::HostMirror h_sm_atomic = Kokkos::create_mirror_view(sm_atomic);  
   h_sm_atomic[0] = 0.0;
   Kokkos::deep_copy(sm_atomic,h_sm_atomic);
