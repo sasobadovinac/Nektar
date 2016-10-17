@@ -1,4 +1,4 @@
-////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
 //
 //  File: FieldIO.cpp
 //
@@ -479,6 +479,13 @@ std::string FieldIO::SetUpOutput(const std::string outname, bool perRank)
             {
                 fs::create_directory(specPath);
             }
+
+            int created = 0;
+            do
+            {
+                created = fs::is_directory(specPath) ? 1 : 0;
+                m_comm->AllReduce(created, ReduceMin);
+            } while (!created);
         }
         catch (fs::filesystem_error &e)
         {
