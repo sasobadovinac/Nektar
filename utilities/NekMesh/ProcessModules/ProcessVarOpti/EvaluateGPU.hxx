@@ -146,14 +146,16 @@ void ProcessVarOpti::Load_elUtils(ElUtilGPU &elUtil)
         	}
         	 
         });
-        elUtil.h_minJac(el) = DBL_MAX;
-        elUtil.h_scaledJac(el) = DBL_MAX;   
+        //elUtil.h_minJac(el) = DBL_MAX;
+        //elUtil.h_scaledJac(el) = DBL_MAX;   
 
         //const int ElmtId = dataSet[el]->GetId();
         //elUtil.h_ElmtOffset(ElmtId) = el;
     });
     
     Kokkos::deep_copy(elUtil.idealMap,elUtil.h_idealMap);
+    //Kokkos::deep_copy(elUtil.minJac,elUtil.h_minJac);
+    //Kokkos::deep_copy(elUtil.scaledJac,elUtil.h_scaledJac);
 
 }
 

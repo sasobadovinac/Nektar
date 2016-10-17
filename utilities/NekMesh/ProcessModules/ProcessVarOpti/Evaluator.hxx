@@ -144,10 +144,10 @@ typedef boost::multi_array<NekDouble, 4> DerivArray;
 template<int DIM>
 inline NekDouble CalcIdealJac(int elmt,
                               int point,
-                              DerivArray &deriv,
-                              std::vector<ElUtilSharedPtr> &data,
-                              NekDouble jacIdeal[DIM][DIM],
-                              ElUtilGPU &elUtil)
+                  typename Kokkos::View< double**>::HostMirror &deriv,
+                  std::vector<ElUtilSharedPtr> &data,
+                  NekDouble jacIdeal[DIM][DIM],
+                  ElUtilGPU &elUtil)
 {
     int iD = data[elmt]->GetId();
     for (int m = 0; m < DIM; ++m)
@@ -157,7 +157,7 @@ inline NekDouble CalcIdealJac(int elmt,
             jacIdeal[n][m] = 0.0;
             for (int l = 0; l < DIM; ++l)
             {
-                jacIdeal[n][m] += deriv[l][elmt][n][point] *
+                jacIdeal[n][m] += deriv(l*DIM+n,point) *
                     elUtil.h_idealMap(iD,point,m * 3 + l);
                 
             }
@@ -182,7 +182,7 @@ template<int DIM>
 NekDouble NodeOpti::GetFunctional(DerivUtilGPU &derivUtilGPU,
          NodesGPU &nodes, ElUtilGPU &elUtil, bool gradient, bool hessian)
 {
-    LibUtilities::ShapeType st = data[0]->GetEl()->GetShapeType();
+    LibUtilities::ShapeType st = data[0]->GetEl()->GetShapeType(); // only for derivUtil->quadW
     const int nElmt = data.size();    
     const int ptsLowGPU = derivUtilGPU.ptsLow;
     const int ptsHighGPU = derivUtilGPU.ptsHigh;
@@ -193,9 +193,10 @@ NekDouble NodeOpti::GetFunctional(DerivUtilGPU &derivUtilGPU,
         iD[el] = data[el]->GetId();
     }
     double integral = 0.0;
-    double minJacGPU = CalcMinJac(elUtil, nElmt, iD);
-    double ep = minJacGPU < 0.0 ? sqrt(1e-9 + 0.04*minJacGPU*minJacGPU) : sqrt(1e-9);
+    double minJac = CalcMinJac(elUtil, nElmt, iD);
+    double ep = minJac < 0.0 ? sqrt(1e-9 + 0.04*minJac*minJac) : sqrt(1e-9);
     double jacIdeal[DIM][DIM], jacDet;
+
     G = Array<OneD, NekDouble>(DIM == 2 ? 5 : 9, 0.0);
     //double G[DIM == 2 ? 5 : 9] = {0.0};
         
@@ -206,13 +207,10 @@ NekDouble NodeOpti::GetFunctional(DerivUtilGPU &derivUtilGPU,
 
     // Storage for derivatives, ordered by:
     //   - standard coordinate direction
-    //   - number of elements
-    //   - cartesian coordinate direction
-    //   - quadrature points
-    DerivArray deriv(boost::extents[DIM][nElmt][DIM][ptsHighGPU]);
-
-    Kokkos::View<double****> derivGPU("derivGPU", DIM, nElmt, DIM, ptsHighGPU);
-    typename Kokkos::View< double****>::HostMirror h_derivGPU = Kokkos::create_mirror_view(derivGPU);
+    //   - cartesian coordinate direction, combined
+    //   - quadrature points    
+    Kokkos::View<double**> derivGPU("derivGPU", DIM*DIM, ptsHighGPU);
+    typename Kokkos::View< double**>::HostMirror h_derivGPU = Kokkos::create_mirror_view(derivGPU);
 
 
     int elmt_row = 0;
@@ -223,59 +221,39 @@ NekDouble NodeOpti::GetFunctional(DerivUtilGPU &derivUtilGPU,
         elmt_row = iD[el];  
         Kokkos::parallel_for (range_policy(0,ptsHighGPU), KOKKOS_LAMBDA (const int j)
         {
-            derivGPU(0,el,0,j) = 0.0;
-            derivGPU(0,el,1,j) = 0.0;
-            derivGPU(0,el,2,j) = 0.0;
+            derivGPU(0,j) = 0.0;
+            derivGPU(1,j) = 0.0;
+            derivGPU(2,j) = 0.0;
 
-            derivGPU(1,el,0,j) = 0.0;
-            derivGPU(1,el,1,j) = 0.0;
-            derivGPU(1,el,2,j) = 0.0;
+            derivGPU(3,j) = 0.0;
+            derivGPU(4,j) = 0.0;
+            derivGPU(5,j) = 0.0;
 
-            derivGPU(2,el,0,j) = 0.0;
-            derivGPU(2,el,1,j) = 0.0;
-            derivGPU(2,el,2,j) = 0.0;
+            derivGPU(6,j) = 0.0;
+            derivGPU(7,j) = 0.0;
+            derivGPU(8,j) = 0.0;
             for (int k = 0; k < ptsLowGPU; ++k)
             {
-                derivGPU(0,el,0,j) += derivUtilGPU.VdmD_0(j,k) * nodes.X(elmt_row,k);
-                derivGPU(0,el,1,j) += derivUtilGPU.VdmD_0(j,k) * nodes.Y(elmt_row,k);
-                derivGPU(0,el,2,j) += derivUtilGPU.VdmD_0(j,k) * nodes.Z(elmt_row,k);
+                derivGPU(0,j) += derivUtilGPU.VdmD_0(j,k) * nodes.X(elmt_row,k);
+                derivGPU(1,j) += derivUtilGPU.VdmD_0(j,k) * nodes.Y(elmt_row,k);
+                derivGPU(2,j) += derivUtilGPU.VdmD_0(j,k) * nodes.Z(elmt_row,k);
 
-                derivGPU(1,el,0,j) += derivUtilGPU.VdmD_1(j,k) * nodes.X(elmt_row,k);
-                derivGPU(1,el,1,j) += derivUtilGPU.VdmD_1(j,k) * nodes.Y(elmt_row,k);
-                derivGPU(1,el,2,j) += derivUtilGPU.VdmD_1(j,k) * nodes.Z(elmt_row,k);
+                derivGPU(3,j) += derivUtilGPU.VdmD_1(j,k) * nodes.X(elmt_row,k);
+                derivGPU(4,j) += derivUtilGPU.VdmD_1(j,k) * nodes.Y(elmt_row,k);
+                derivGPU(5,j) += derivUtilGPU.VdmD_1(j,k) * nodes.Z(elmt_row,k);
 
-                derivGPU(2,el,0,j) += derivUtilGPU.VdmD_2(j,k) * nodes.X(elmt_row,k);
-                derivGPU(2,el,1,j) += derivUtilGPU.VdmD_2(j,k) * nodes.Y(elmt_row,k);
-                derivGPU(2,el,2,j) += derivUtilGPU.VdmD_2(j,k) * nodes.Z(elmt_row,k);
+                derivGPU(6,j) += derivUtilGPU.VdmD_2(j,k) * nodes.X(elmt_row,k);
+                derivGPU(7,j) += derivUtilGPU.VdmD_2(j,k) * nodes.Y(elmt_row,k);
+                derivGPU(8,j) += derivUtilGPU.VdmD_2(j,k) * nodes.Z(elmt_row,k);
             }
         });
+
+        Kokkos::deep_copy(h_derivGPU,derivGPU);
         
-    }
-    Kokkos::deep_copy(h_derivGPU,derivGPU);
-    //DerivArray deriv(boost::extents[DIM][nElmt][DIM][ptsHighGPU]);
-
-    for (int el = 0; el < nElmt; ++el)
-    {
-        for (int d = 0; d < DIM; ++d)
-        {
-            for (int dd = 0; dd < DIM; ++dd)
-            {
-                for (int pts = 0; pts < ptsHighGPU; ++pts)
-                {
-                    deriv[d][el][dd][pts] = h_derivGPU(d,el,dd,pts);
-                }
-            }
-        }
-    }
     
-
-    
-
-    for (int el = 0; el < nElmt; ++el)
-    {
         for(int k = 0; k < ptsHighGPU; ++k)
         {
-            jacDet = CalcIdealJac(el, k, deriv, data, jacIdeal, elUtil);
+            jacDet = CalcIdealJac(el, k, h_derivGPU, data, jacIdeal, elUtil);
             NekDouble I1 = FrobeniusNorm(jacIdeal);
 
             NekDouble sigma =
@@ -297,7 +275,8 @@ NekDouble NodeOpti::GetFunctional(DerivUtilGPU &derivUtilGPU,
                 {
                     for (int n = 0; n < DIM; ++n)
                     {
-                        phiM[n][m] = deriv[m][el][n][k];
+                        //phiM[n][m] = h_derivGPU(m,n,k);
+                        phiM[n][m] = h_derivGPU(m*DIM+n,k);
                     }
                 }
 

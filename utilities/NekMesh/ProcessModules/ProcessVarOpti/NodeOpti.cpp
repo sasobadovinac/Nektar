@@ -223,7 +223,7 @@ int NodeOpti3D3D::m_type = GetNodeOptiFactory().RegisterCreatorFunction(
 
 void NodeOpti3D3D::Optimise(DerivUtilGPU &derivUtil,NodesGPU &nodes, NodeMap &nodeMap, ElUtilGPU &elUtil, Residual &res)
 {
-    CalcMinJac();
+    //CalcMinJac();
 
     NekDouble currentW = GetFunctional<3>(derivUtil, nodes, elUtil);
     NekDouble newVal;
