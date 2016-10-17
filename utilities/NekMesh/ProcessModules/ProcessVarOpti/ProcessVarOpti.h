@@ -169,8 +169,7 @@ public:
     void Evaluate(DerivUtilGPU &derivUtil,NodesGPU &nodes, ElUtilGPU &elUtil, Residual &res);
     void Create_NodeMap(NodesGPU &nodes, std::vector<std::vector<NodeSharedPtr> > &freenodes, NodeMap &nodeMap);
 
-    void Optimise(); // for GPU parallelisation
-
+    
 private:
     typedef std::map<int, std::pair<std::vector<int>,
                                     std::vector<ElUtilSharedPtr> > > NodeElMap;
