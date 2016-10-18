@@ -41,136 +41,115 @@ namespace Nektar
 namespace Utilities
 {
 
-template<int DIM> inline NekDouble Determinant(NekDouble jac[DIM][DIM])
+
+template<int DIM>
+inline double Determinant(Kokkos::View<double[DIM][DIM], host_space> &jac)
 {
     return 0.0;
 }
 
-template<> inline NekDouble Determinant<2>(NekDouble jac[2][2])
+template<> inline double Determinant<2>(Kokkos::View<double[2][2], host_space> &jac)
 {
-    return jac[0][0] * jac[1][1] - jac[0][1] * jac[1][0];
+    return jac(0,0) * jac(1,1) - jac(0,1) * jac(1,0);
 }
 
-template<> inline NekDouble Determinant<3>(NekDouble jac[3][3])
+template<> inline double Determinant<3>(Kokkos::View<double[3][3], host_space> &jac)
 {
-    return jac[0][0] * (jac[1][1]*jac[2][2] - jac[2][1]*jac[1][2])
-          -jac[0][1] * (jac[1][0]*jac[2][2] - jac[1][2]*jac[2][0])
-          +jac[0][2] * (jac[1][0]*jac[2][1] - jac[1][1]*jac[2][0]);
+    return jac(0,0) * (jac(1,1)*jac(2,2) - jac(2,1)*jac(1,2))
+          -jac(0,1) * (jac(1,0)*jac(2,2) - jac(1,2)*jac(2,0))
+          +jac(0,2) * (jac(1,0)*jac(2,1) - jac(1,1)*jac(2,0));
 }
 
-template<int DIM> inline NekDouble LinElasTrace(NekDouble jac[DIM][DIM])
+
+template<int DIM>
+inline double LinElasTrace(Kokkos::View<double[DIM][DIM], host_space> &jac)
 {
     return 0.0;
 }
 
-template<> inline NekDouble LinElasTrace<2>(NekDouble jac[2][2])
+template<> inline double LinElasTrace<2>(Kokkos::View<double[2][2], host_space> &jac)
 {
     return 0.25 * (
-        (jac[0][0]*jac[0][0] + jac[1][0]*jac[1][0] - 1.0) *
-        (jac[0][0]*jac[0][0] + jac[1][0]*jac[1][0] - 1.0) +
-        (jac[0][1]*jac[0][1] + jac[1][1]*jac[1][1] - 1.0)*
-        (jac[0][1]*jac[0][1] + jac[1][1]*jac[1][1] - 1.0))
+        (jac(0,0)*jac(0,0) + jac(1,0)*jac(1,0) - 1.0)*
+        (jac(0,0)*jac(0,0) + jac(1,0)*jac(1,0) - 1.0) +
+        (jac(0,1)*jac(0,1) + jac(1,1)*jac(1,1) - 1.0)*
+        (jac(0,1)*jac(0,1) + jac(1,1)*jac(1,1) - 1.0) )
         + 0.5 * (
-            (jac[0][0]*jac[0][1] + jac[1][0]*jac[1][1])*
-            (jac[0][0]*jac[0][1] + jac[1][0]*jac[1][1]));
+            (jac(0,0)*jac(0,1) + jac(1,0)*jac(1,1))*
+            (jac(0,0)*jac(0,1) + jac(1,0)*jac(1,1)) );
 }
 
-template<> inline NekDouble LinElasTrace<3>(NekDouble jac[3][3])
+template<> inline double LinElasTrace<3>(Kokkos::View<double[3][3], host_space> &jac)
 {
     return 0.25 *(
-        (jac[0][0]*jac[0][0]+jac[1][0]*jac[1][0]+jac[2][0]*jac[2][0]-1.0)*
-        (jac[0][0]*jac[0][0]+jac[1][0]*jac[1][0]+jac[2][0]*jac[2][0]-1.0) +
-        (jac[0][1]*jac[0][1]+jac[1][1]*jac[1][1]+jac[2][1]*jac[2][1]-1.0)*
-        (jac[0][1]*jac[0][1]+jac[1][1]*jac[1][1]+jac[2][1]*jac[2][1]-1.0) +
-        (jac[0][2]*jac[0][2]+jac[1][2]*jac[1][2]+jac[2][2]*jac[2][2]-1.0)*
-        (jac[0][2]*jac[0][2]+jac[1][2]*jac[1][2]+jac[2][2]*jac[2][2]-1.0))
+        (jac(0,0)*jac(0,0)+jac(1,0)*jac(1,0)+jac(2,0)*jac(2,0)-1.0)*
+        (jac(0,0)*jac(0,0)+jac(1,0)*jac(1,0)+jac(2,0)*jac(2,0)-1.0) +
+        (jac(0,1)*jac(0,1)+jac(1,1)*jac(1,1)+jac(2,1)*jac(2,1)-1.0)*
+        (jac(0,1)*jac(0,1)+jac(1,1)*jac(1,1)+jac(2,1)*jac(2,1)-1.0) +
+        (jac(0,2)*jac(0,2)+jac(1,2)*jac(1,2)+jac(2,2)*jac(2,2)-1.0)*
+        (jac(0,2)*jac(0,2)+jac(1,2)*jac(1,2)+jac(2,2)*jac(2,2)-1.0) )
         + 0.5 * (
-            (jac[0][0]*jac[0][2]+jac[1][0]*jac[1][2]+jac[2][0]*jac[2][2])*
-            (jac[0][0]*jac[0][2]+jac[1][0]*jac[1][2]+jac[2][0]*jac[2][2])+
-            (jac[0][1]*jac[0][2]+jac[1][1]*jac[1][2]+jac[2][1]*jac[2][2])*
-            (jac[0][1]*jac[0][2]+jac[1][1]*jac[1][2]+jac[2][1]*jac[2][2])+
-            (jac[0][0]*jac[0][1]+jac[1][0]*jac[1][1]+jac[0][1]*jac[2][1])*
-            (jac[0][0]*jac[0][1]+jac[1][0]*jac[1][1]+jac[0][1]*jac[2][1]));
+            (jac(0,0)*jac(0,2)+jac(1,0)*jac(1,2)+jac(2,0)*jac(2,2))*
+            (jac(0,0)*jac(0,2)+jac(1,0)*jac(1,2)+jac(2,0)*jac(2,2)) +
+            (jac(0,1)*jac(0,2)+jac(1,1)*jac(1,2)+jac(2,1)*jac(2,2))*
+            (jac(0,1)*jac(0,2)+jac(1,1)*jac(1,2)+jac(2,1)*jac(2,2)) +
+            (jac(0,0)*jac(0,1)+jac(1,0)*jac(1,1)+jac(0,1)*jac(2,1))*
+            (jac(0,0)*jac(0,1)+jac(1,0)*jac(1,1)+jac(0,1)*jac(2,1)) );
 }
 
-template<int DIM> inline void InvTrans(NekDouble in[DIM][DIM],
-                                       NekDouble out[DIM][DIM])
+
+template<int DIM>
+inline void InvTrans(Kokkos::View<double[DIM][DIM], host_space> &in,
+                                       Kokkos::View<double[DIM][DIM], host_space> &out)
 {
 }
 
 template<>
-inline void InvTrans<2>(NekDouble in[2][2], NekDouble out[2][2])
+inline void InvTrans<2>(Kokkos::View<double[2][2], host_space> &in, Kokkos::View<double[2][2], host_space> &out)
 {
-    NekDouble invDet = 1.0 / Determinant(in);
-    out[0][0] =  in[1][1] * invDet;
-    out[1][0] = -in[0][1] * invDet;
-    out[0][1] = -in[1][0] * invDet;
-    out[1][1] =  in[0][0] * invDet;
+    double invDet = 1.0 / Determinant(in);
+    out(0,0) =  in(1,1) * invDet;
+    out(1,0) = -in(0,1) * invDet;
+    out(0,1) = -in(1,0) * invDet;
+    out(1,1) =  in(0,0) * invDet;
 }
 
 template<>
-inline void InvTrans<3>(NekDouble in[3][3], NekDouble out[3][3])
+inline void InvTrans<3>(Kokkos::View<double[3][3], host_space> &in, Kokkos::View<double[3][3], host_space> &out)
 {
-    NekDouble invdet = 1.0 / Determinant(in);
-    out[0][0] =  (in[1][1]*in[2][2]-in[2][1]*in[1][2])*invdet;
-    out[1][0] = -(in[0][1]*in[2][2]-in[0][2]*in[2][1])*invdet;
-    out[2][0] =  (in[0][1]*in[1][2]-in[0][2]*in[1][1])*invdet;
-    out[0][1] = -(in[1][0]*in[2][2]-in[1][2]*in[2][0])*invdet;
-    out[1][1] =  (in[0][0]*in[2][2]-in[0][2]*in[2][0])*invdet;
-    out[2][1] = -(in[0][0]*in[1][2]-in[1][0]*in[0][2])*invdet;
-    out[0][2] =  (in[1][0]*in[2][1]-in[2][0]*in[1][1])*invdet;
-    out[1][2] = -(in[0][0]*in[2][1]-in[2][0]*in[0][1])*invdet;
-    out[2][2] =  (in[0][0]*in[1][1]-in[1][0]*in[0][1])*invdet;
+    double invdet = 1.0 / Determinant(in);
+    out(0,0) =  (in(1,1)*in(2,2)-in(2,1)*in(1,2))*invdet;
+    out(1,0) = -(in(0,1)*in(2,2)-in(0,2)*in(2,1))*invdet;
+    out(2,0) =  (in(0,1)*in(1,2)-in(0,2)*in(1,1))*invdet;
+    out(0,1) = -(in(1,0)*in(2,2)-in(1,2)*in(2,0))*invdet;
+    out(1,1) =  (in(0,0)*in(2,2)-in(0,2)*in(2,0))*invdet;
+    out(2,1) = -(in(0,0)*in(1,2)-in(1,0)*in(0,2))*invdet;
+    out(0,2) =  (in(1,0)*in(2,1)-in(2,0)*in(1,1))*invdet;
+    out(1,2) = -(in(0,0)*in(2,1)-in(2,0)*in(0,1))*invdet;
+    out(2,2) =  (in(0,0)*in(1,1)-in(1,0)*in(0,1))*invdet;
 }
 
-template<int DIM> inline NekDouble FrobProd(NekDouble in1[DIM][DIM],
-                                            NekDouble in2[DIM][DIM])
+
+template<int DIM>
+inline double FrobProd(Kokkos::View<double[DIM][DIM], host_space> &in1,
+                                            Kokkos::View<double[DIM][DIM], host_space> &in2)
 {
-    NekDouble ret = 0;
+    double ret = 0;
     for (int n = 0; n < DIM; ++n)
     {
         for (int l = 0; l < DIM; ++l)
         {
-            ret += in1[n][l] * in2[n][l];
+            ret += in1(n,l)* in2(n,l);
         }
     }
     return ret;
 }
 
-// Typedef for derivative storage, we use boost::multi_array so we can pass this
-// to functions easily
-typedef boost::multi_array<NekDouble, 4> DerivArray;
-
 template<int DIM>
-inline NekDouble CalcIdealJac(int elmt,
-                              int point,
-                  typename Kokkos::View< double**>::HostMirror &deriv,
-                  std::vector<ElUtilSharedPtr> &data,
-                  NekDouble jacIdeal[DIM][DIM],
-                  ElUtilGPU &elUtil)
+inline double FrobeniusNorm(Kokkos::View<double[DIM][DIM], host_space> &inarray)
 {
-    int iD = data[elmt]->GetId();
-    for (int m = 0; m < DIM; ++m)
-    {
-        for (int n = 0; n < DIM; ++n)
-        {
-            jacIdeal[n][m] = 0.0;
-            for (int l = 0; l < DIM; ++l)
-            {
-                jacIdeal[n][m] += deriv(l*DIM+n,point) *
-                    elUtil.h_idealMap(iD,point,m * 3 + l);
-                
-            }
-        }
-    }
-
-    return Determinant(jacIdeal);
-}
-
-template<int DIM>
-inline NekDouble FrobeniusNorm(NekDouble inarray[DIM][DIM])
-{
-    NekDouble ret = 0.0, *start = &inarray[0][0];
+    double ret = 0.0;
+    double *start = &inarray(0,0);
     for (int i = 0; i < DIM*DIM; ++i, ++start)
     {
         ret += (*start) * (*start);
@@ -178,32 +157,72 @@ inline NekDouble FrobeniusNorm(NekDouble inarray[DIM][DIM])
     return ret;
 }
 
+
 template<int DIM>
-NekDouble NodeOpti::GetFunctional(DerivUtilGPU &derivUtilGPU,
-         NodesGPU &nodes, ElUtilGPU &elUtil, bool gradient, bool hessian)
+inline double CalcIdealJac(int iD, int point,
+                  typename Kokkos::View< double**>::HostMirror &deriv,                  
+                  Kokkos::View<double[DIM][DIM], host_space> &jacIdeal,
+                  ElUtilGPU &elUtil)
+{
+    //int iD = data[elmt]->GetId();
+    for (int m = 0; m < DIM; ++m)
+    {
+        for (int n = 0; n < DIM; ++n)
+        {
+            jacIdeal(n,m) = 0.0;
+            for (int l = 0; l < DIM; ++l)
+            {
+                jacIdeal(n,m) += deriv(l*DIM+n,point) *
+                    elUtil.h_idealMap(iD,point,m * 3 + l);                
+            }
+        }
+    }
+    return Determinant(jacIdeal);
+}
+
+
+template<int DIM>
+double NodeOpti::GetFunctional(DerivUtilGPU &derivUtilGPU,
+         NodesGPU &nodes, ElUtilGPU &elUtil, NodeMap &nodeMap, 
+         Kokkos::View<double[DIM == 2 ? 5 : 9], host_space> &G,
+         bool gradient, bool hessian)
 {
     LibUtilities::ShapeType st = data[0]->GetEl()->GetShapeType(); // only for derivUtil->quadW
     const int nElmt = data.size();    
     const int ptsLowGPU = derivUtilGPU.ptsLow;
     const int ptsHighGPU = derivUtilGPU.ptsHigh;
 
-    int iD[nElmt];
+    int elIdArray[nElmt];
+    // using the node ID and the node map find the local coordinates of the node,
+                // depending on the considered element
+    int globalNodeId = node->m_id;
+    int localNodeIdArray[nElmt];
+    NodeMap::const_iterator coeffs;
+    coeffs = nodeMap.find(globalNodeId); 
     for (int el = 0; el < nElmt; ++el)
     {
-        iD[el] = data[el]->GetId();
-    }
-    double integral = 0.0;
-    double minJac = CalcMinJac(elUtil, nElmt, iD);
-    double ep = minJac < 0.0 ? sqrt(1e-9 + 0.04*minJac*minJac) : sqrt(1e-9);
-    double jacIdeal[DIM][DIM], jacDet;
+        elIdArray[el] = data[el]->GetId();
 
-    G = Array<OneD, NekDouble>(DIM == 2 ? 5 : 9, 0.0);
+        int elmt = std::get<0>(coeffs->second);
+        if (elmt == elIdArray[el])
+        {
+            localNodeIdArray[el] = std::get<1>(coeffs->second);
+        }            
+        coeffs++;
+    }
+
+    double minJac = CalcMinJac(elUtil, nElmt, elIdArray);
+    double ep = minJac < 0.0 ? sqrt(1e-9 + 0.04*minJac*minJac) : sqrt(1e-9);    
+
+    //G = Array<OneD, NekDouble>(DIM == 2 ? 5 : 9, 0.0);
     //double G[DIM == 2 ? 5 : 9] = {0.0};
+    
         
     const double nu = 0.4;
     const double mu = 1.0 / 2.0 / (1.0+nu);
-    const double K  = 1.0 / 3.0 / (1.0 - 2.0 * nu);
-       
+    const double K  = 1.0 / 3.0 / (1.0 - 2.0 * nu); 
+
+    double integral = 0.0;      
 
     // Storage for derivatives, ordered by:
     //   - standard coordinate direction
@@ -212,13 +231,11 @@ NekDouble NodeOpti::GetFunctional(DerivUtilGPU &derivUtilGPU,
     Kokkos::View<double**> derivGPU("derivGPU", DIM*DIM, ptsHighGPU);
     typename Kokkos::View< double**>::HostMirror h_derivGPU = Kokkos::create_mirror_view(derivGPU);
 
-
-    int elmt_row = 0;
     for (int el = 0; el < nElmt; ++el)
     {   
-        //iD = data[el]->GetId();
-        //elmt_row = nodes.h_ElmtOffset(iD[el]);
-        elmt_row = iD[el];  
+        int elId = elIdArray[el];
+        int localNodeId = localNodeIdArray[el];
+
         Kokkos::parallel_for (range_policy(0,ptsHighGPU), KOKKOS_LAMBDA (const int j)
         {
             derivGPU(0,j) = 0.0;
@@ -234,17 +251,17 @@ NekDouble NodeOpti::GetFunctional(DerivUtilGPU &derivUtilGPU,
             derivGPU(8,j) = 0.0;
             for (int k = 0; k < ptsLowGPU; ++k)
             {
-                derivGPU(0,j) += derivUtilGPU.VdmD_0(j,k) * nodes.X(elmt_row,k);
-                derivGPU(1,j) += derivUtilGPU.VdmD_0(j,k) * nodes.Y(elmt_row,k);
-                derivGPU(2,j) += derivUtilGPU.VdmD_0(j,k) * nodes.Z(elmt_row,k);
+                derivGPU(0,j) += derivUtilGPU.VdmD_0(j,k) * nodes.X(elId,k);
+                derivGPU(1,j) += derivUtilGPU.VdmD_0(j,k) * nodes.Y(elId,k);
+                derivGPU(2,j) += derivUtilGPU.VdmD_0(j,k) * nodes.Z(elId,k);
 
-                derivGPU(3,j) += derivUtilGPU.VdmD_1(j,k) * nodes.X(elmt_row,k);
-                derivGPU(4,j) += derivUtilGPU.VdmD_1(j,k) * nodes.Y(elmt_row,k);
-                derivGPU(5,j) += derivUtilGPU.VdmD_1(j,k) * nodes.Z(elmt_row,k);
+                derivGPU(3,j) += derivUtilGPU.VdmD_1(j,k) * nodes.X(elId,k);
+                derivGPU(4,j) += derivUtilGPU.VdmD_1(j,k) * nodes.Y(elId,k);
+                derivGPU(5,j) += derivUtilGPU.VdmD_1(j,k) * nodes.Z(elId,k);
 
-                derivGPU(6,j) += derivUtilGPU.VdmD_2(j,k) * nodes.X(elmt_row,k);
-                derivGPU(7,j) += derivUtilGPU.VdmD_2(j,k) * nodes.Y(elmt_row,k);
-                derivGPU(8,j) += derivUtilGPU.VdmD_2(j,k) * nodes.Z(elmt_row,k);
+                derivGPU(6,j) += derivUtilGPU.VdmD_2(j,k) * nodes.X(elId,k);
+                derivGPU(7,j) += derivUtilGPU.VdmD_2(j,k) * nodes.Y(elId,k);
+                derivGPU(8,j) += derivUtilGPU.VdmD_2(j,k) * nodes.Z(elId,k);
             }
         });
 
@@ -253,104 +270,114 @@ NekDouble NodeOpti::GetFunctional(DerivUtilGPU &derivUtilGPU,
     
         for(int k = 0; k < ptsHighGPU; ++k)
         {
-            jacDet = CalcIdealJac(el, k, h_derivGPU, data, jacIdeal, elUtil);
-            NekDouble I1 = FrobeniusNorm(jacIdeal);
+            double absIdealMapDet = fabs(elUtil.h_idealMap(elId,k,9));
+            double quadW = derivUtil[st]->quadW[k];
 
-            NekDouble sigma =
-                0.5*(jacDet + sqrt(jacDet*jacDet + 4.0*ep*ep));
-            NekDouble lsigma = log(sigma);
-            integral += derivUtil[st]->quadW[k]*
-                fabs(data[el]->maps[k][9]) *
+
+            Kokkos::View<double[DIM][DIM], host_space> jacIdeal("jacIdeal");
+            double jacDet = CalcIdealJac(elId, k, h_derivGPU, jacIdeal, elUtil);
+            
+            double I1 = FrobeniusNorm(jacIdeal);
+
+            double sigma = 0.5*(jacDet + sqrt(jacDet*jacDet + 4.0*ep*ep));
+            double lsigma = log(sigma);
+
+            integral += quadW * absIdealMapDet *
                         (0.5 * mu * (I1 - 3.0 - 2.0*lsigma) +
                          0.5 * K * lsigma * lsigma);
+
 
             // Derivative of basis function in each direction
             if(gradient)
             {
-                NekDouble jacInvTrans[DIM][DIM];
-                NekDouble jacDetDeriv[DIM];
-
-                NekDouble phiM[DIM][DIM];
+                Kokkos::View<double[DIM][DIM], host_space> phiM("phiM");
                 for (int m = 0; m < DIM; ++m)
                 {
                     for (int n = 0; n < DIM; ++n)
                     {
                         //phiM[n][m] = h_derivGPU(m,n,k);
-                        phiM[n][m] = h_derivGPU(m*DIM+n,k);
+                        phiM(n,m) = h_derivGPU(m*DIM+n,k);
                     }
                 }
 
+                Kokkos::View<double[DIM][DIM], host_space> jacInvTrans("jacInvTrans");
                 InvTrans<DIM>(phiM, jacInvTrans);
-                NekDouble derivDet = Determinant<DIM>(phiM);
+                double derivDet = Determinant<DIM>(phiM);
 
-                NekDouble basisDeriv[DIM];
+                Kokkos::View<double[DIM], host_space> basisDeriv("basisDeriv");
+                basisDeriv(0) = derivUtilGPU.h_VdmD_0(k,localNodeId);
+                basisDeriv(1) = derivUtilGPU.h_VdmD_1(k,localNodeId);
+                basisDeriv(2) = derivUtilGPU.h_VdmD_2(k,localNodeId);
+
+                Kokkos::View<double[DIM], host_space> jacDetDeriv("jacDetDeriv");
                 for (int m = 0; m < DIM; ++m)
                 {
-                    basisDeriv[m] = *(derivUtil[st]->VdmD[m])(k,nodeIds[el]);
-                }
-
-                for (int m = 0; m < DIM; ++m)
-                {
-                    jacDetDeriv[m] = 0.0;
+                    jacDetDeriv(m) = 0.0;
                     for (int n = 0; n < DIM; ++n)
                     {
-                        jacDetDeriv[m] += jacInvTrans[m][n] * basisDeriv[n];
+                        jacDetDeriv(m) += jacInvTrans(m,n) * basisDeriv(n);
                     }
-                    jacDetDeriv[m] *= derivDet / fabs(data[el]->maps[k][9]);
+                    jacDetDeriv(m) *= derivDet / absIdealMapDet;
                 }
 
-                NekDouble jacDeriv[DIM][DIM][DIM];
+                Kokkos::View<double[DIM][DIM][DIM], host_space> jacDeriv("jacDeriv");
                 for (int m = 0; m < DIM; ++m)
                 {
                     for (int n = 0; n < DIM; ++n)
                     {
-                        NekDouble delta = m == n ? 1.0 : 0.0;
+                        double delta = (m == n ? 1.0 : 0.0);
                         for (int l = 0; l < DIM; ++l)
                         {
-                            jacDeriv[m][n][l] = delta * basisDeriv[l];
+                            jacDeriv(m,n,l) = delta * basisDeriv(l);
                         }
                     }
                 }
 
-                NekDouble jacDerivPhi[DIM][DIM][DIM];
+                Kokkos::View<double[DIM][DIM][DIM], host_space> jacDerivPhi("jacDerivPhi");
                 for (int p = 0; p < DIM; ++p)
                 {
                     for (int m = 0; m < DIM; ++m)
                     {
                         for (int n = 0; n < DIM; ++n)
                         {
-                            jacDerivPhi[p][m][n] = 0.0;
+                            jacDerivPhi(p,m,n) = 0.0;
                             for (int l = 0; l < DIM; ++l)
                             {
                                 // want phi_I^{-1} (l,n)
-                                jacDerivPhi[p][m][n] +=
-                                    jacDeriv[p][m][l] * data[el]->maps[k][l + 3*n];
+                                jacDerivPhi(p,m,n) +=
+                                    jacDeriv(p,m,l) * elUtil.h_idealMap(elId,k,l + 3*n);
                             }
                         }
                     }
                 }
 
-                NekDouble frobProd[DIM];
+                Kokkos::View<double[DIM], host_space> frobProd("frobProd");
                 for (int m = 0; m < DIM; ++m)
                 {
-                    frobProd[m] = FrobProd<DIM>(jacIdeal,jacDerivPhi[m]);
+                    Kokkos::View<double[DIM][DIM], host_space> jacDerivPhi_sub 
+                            = Kokkos::subview(jacDerivPhi, m, Kokkos::ALL(), Kokkos::ALL());
+                    frobProd(m) = FrobProd<DIM>(jacIdeal,jacDerivPhi_sub);
                 }
 
                 for (int j = 0; j < DIM; ++j)
                 {
-                    G[j] += derivUtil[st]->quadW[k] * fabs(data[el]->maps[k][9]) * (
-                        mu * frobProd[j] + (jacDetDeriv[j] / (2.0*sigma - jacDet)
+                    G(j) += quadW * absIdealMapDet * (
+                        mu * frobProd(j) + (jacDetDeriv(j) / (2.0*sigma - jacDet)
                                             * (K * lsigma - mu)));
                 }
 
                 if(hessian)
                 {
-                    NekDouble frobProdHes[DIM][DIM]; //holder for the hessian frobprods
+                    Kokkos::View<double[DIM][DIM], host_space> frobProdHes("frobProdHes"); //holder for the hessian frobprods
                     for (int m = 0; m < DIM; ++m)
                     {
                         for(int l = m; l < DIM; ++l)
                         {
-                            frobProdHes[m][l] = FrobProd<DIM>(jacDerivPhi[m],jacDerivPhi[l]);
+                            Kokkos::View<double[DIM][DIM], host_space> jacDerivPhi_m 
+                                = Kokkos::subview(jacDerivPhi, m, Kokkos::ALL(), Kokkos::ALL());
+                            Kokkos::View<double[DIM][DIM], host_space> jacDerivPhi_l 
+                                = Kokkos::subview(jacDerivPhi, l, Kokkos::ALL(), Kokkos::ALL());
+                            frobProdHes(m,l) = FrobProd<DIM>(jacDerivPhi_m,jacDerivPhi_l);
                         }
                     }
 
@@ -360,9 +387,9 @@ NekDouble NodeOpti::GetFunctional(DerivUtilGPU &derivUtilGPU,
                     {
                         for(int l = m; l < DIM; ++l, ct++)
                         {
-                            G[ct+DIM] += derivUtil[st]->quadW[k] * fabs(data[el]->maps[k][9]) * (
-                                mu * frobProdHes[m][l] +
-                                jacDetDeriv[m]*jacDetDeriv[l]/(2.0*sigma-jacDet)/(2.0*sigma-jacDet)*(
+                            G(ct+DIM) += quadW * absIdealMapDet * (
+                                mu * frobProdHes(m,l) +
+                                jacDetDeriv(m)*jacDetDeriv(l)/(2.0*sigma-jacDet)/(2.0*sigma-jacDet)*(
                                     K- jacDet*(K*lsigma-mu)/(2.0*sigma-jacDet)));
                         }
                     }

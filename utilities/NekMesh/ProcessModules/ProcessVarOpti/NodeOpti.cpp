@@ -75,14 +75,14 @@ void NodeOpti::CalcMinJac()
         minJac = min(minJac, data[i]->minJac);
     }
 }
-double NodeOpti::CalcMinJac(ElUtilGPU &elUtil, int nElmt, int * iD)
+double NodeOpti::CalcMinJac(ElUtilGPU &elUtil, int nElmt, int * elIdArray)
 {
     double minJac = DBL_MAX;
     int el;
 
     for(int i = 0; i < nElmt; i++)
     {
-        el = iD[i];
+        el = elIdArray[i];
         minJac = (minJac > elUtil.h_minJac(el) ? elUtil.h_minJac(el) : minJac);
             
     }
@@ -159,8 +159,14 @@ int NodeOpti2D2D::m_type = GetNodeOptiFactory().RegisterCreatorFunction(
 void NodeOpti2D2D::Optimise(DerivUtilGPU &derivUtil,NodesGPU &nodes, NodeMap &nodeMap, ElUtilGPU &elUtil, Residual &res)
 {
     CalcMinJac();
+    Kokkos::View<double[5], host_space> Grad("G");
 
-    NekDouble currentW = GetFunctional<2>(derivUtil, nodes, elUtil);
+    NekDouble currentW = GetFunctional<2>(derivUtil, nodes, elUtil, nodeMap, Grad);
+    G = Array<OneD, NekDouble>(5, 0.0);
+    for (int i = 0; i < 5; ++i)
+    {
+        G[i] = Grad(i);
+    }
 
     // Gradient already zero
     if (G[0]*G[0] + G[1]*G[1] > gradTol())
@@ -184,7 +190,7 @@ void NodeOpti2D2D::Optimise(DerivUtilGPU &derivUtil,NodesGPU &nodes, NodeMap &no
             node->m_x = xc - alpha * delX;
             node->m_y = yc - alpha * delY;
 
-            newVal = GetFunctional<2>(derivUtil, nodes, elUtil, true,false);
+            newVal = GetFunctional<2>(derivUtil, nodes, elUtil,nodeMap, Grad, true,false);
             //dont need the hessian again this function updates G to be the new
             //location
 
@@ -224,14 +230,21 @@ int NodeOpti3D3D::m_type = GetNodeOptiFactory().RegisterCreatorFunction(
 void NodeOpti3D3D::Optimise(DerivUtilGPU &derivUtil,NodesGPU &nodes, NodeMap &nodeMap, ElUtilGPU &elUtil, Residual &res)
 {
     //CalcMinJac();
+    Kokkos::View<double[9], host_space> Grad("G");
 
-    NekDouble currentW = GetFunctional<3>(derivUtil, nodes, elUtil);
+    NekDouble currentW = GetFunctional<3>(derivUtil, nodes, elUtil, nodeMap, Grad);
+    G = Array<OneD, NekDouble>(9, 0.0);
+    for (int i = 0; i < 9; ++i)
+    {
+        G[i] = Grad(i);
+    }
     NekDouble newVal;
 
+    //if(G(0)*G(0) + G(1)*G(1) + G(2)*G(2) > gradTol())
     if(G[0]*G[0] + G[1]*G[1] + G[2]*G[2] > gradTol())
     {
         //needs to optimise
-        int id             = node->m_id;
+        int id = node->m_id; // global id
         
         //Kokkos::View<double[3]> Xc("Xc"); // initial node coordinates, keep them constant
         //typename Kokkos::View< double[3]>::HostMirror h_Xc = Kokkos::create_mirror_view(Xc);
@@ -257,6 +270,7 @@ void NodeOpti3D3D::Optimise(DerivUtilGPU &derivUtil,NodesGPU &nodes, NodeMap &no
             NekDouble val;
             MinEigen<3>(val,dk);
 
+            //if(dk[0]*G(0) + dk[1]*G(1) + dk[2]*G(2) > 0.0)
             if(dk[0]*G[0] + dk[1]*G[1] + dk[2]*G[2] > 0.0)
             {
                 for(int i = 0; i < 3; i++)
@@ -265,6 +279,9 @@ void NodeOpti3D3D::Optimise(DerivUtilGPU &derivUtil,NodesGPU &nodes, NodeMap &no
                 }
             }
 
+            //lhs = dk[0] * (dk[0]*G(3) + dk[1]*G(4) + dk[2]*G(5)) +
+            //      dk[1] * (dk[0]*G(4) + dk[1]*G(6) + dk[2]*G(7)) +
+            //      dk[2] * (dk[0]*G(5) + dk[1]*G(7) + dk[2]*G(8));
             lhs = dk[0] * (dk[0]*G[3] + dk[1]*G[4] + dk[2]*G[5]) +
                   dk[1] * (dk[0]*G[4] + dk[1]*G[6] + dk[2]*G[7]) +
                   dk[2] * (dk[0]*G[5] + dk[1]*G[7] + dk[2]*G[8]);
@@ -322,7 +339,8 @@ void NodeOpti3D3D::Optimise(DerivUtilGPU &derivUtil,NodesGPU &nodes, NodeMap &no
                 h_Xn[2] = h_Xc[2] + alpha * sk[2];
                 SetNodeCoord(h_Xn, id, nodes, nodeMap);
                 
-                newVal = GetFunctional<3>(derivUtil, nodes, elUtil,false,false);
+                newVal = GetFunctional<3>(derivUtil, nodes,
+                        elUtil, nodeMap, Grad,false,false);
                 //dont need the hessian again this function updates G to be the new
                 //location
                 //
@@ -354,7 +372,8 @@ void NodeOpti3D3D::Optimise(DerivUtilGPU &derivUtil,NodesGPU &nodes, NodeMap &no
             h_Xn[2] = h_Xc[2] + dk[2];
             SetNodeCoord(h_Xn, id, nodes, nodeMap);
 
-            newVal = GetFunctional<3>(derivUtil, nodes, elUtil,false,false);
+            newVal = GetFunctional<3>(derivUtil, nodes, 
+                    elUtil, nodeMap, Grad,false,false);
 
             if(newVal <= currentW + c1() * (
                 pg + 0.5*hes))
@@ -369,14 +388,16 @@ void NodeOpti3D3D::Optimise(DerivUtilGPU &derivUtil,NodesGPU &nodes, NodeMap &no
                     SetNodeCoord(h_Xn, id, nodes, nodeMap);
 
 
-                    newVal = GetFunctional<3>(derivUtil, nodes, elUtil,false,false);
+                    newVal = GetFunctional<3>(derivUtil, nodes, 
+                            elUtil, nodeMap, Grad,false,false);
 
                     h_Xn[0] = h_Xc[0] + alpha/beta * dk[0];
                     h_Xn[1] = h_Xc[1] + alpha/beta * dk[1];
                     h_Xn[2] = h_Xc[2] + alpha/beta * dk[2];
                     SetNodeCoord(h_Xn, id, nodes, nodeMap);
 
-                    NekDouble dbVal = GetFunctional<3>(derivUtil, nodes, elUtil,false,false);
+                    NekDouble dbVal = GetFunctional<3>(derivUtil, nodes, 
+                            elUtil, nodeMap, Grad,false,false);
 
                     if (newVal <= currentW + c1() * (
                         alpha*pg + 0.5*alpha*alpha*hes) &&
@@ -402,7 +423,7 @@ void NodeOpti3D3D::Optimise(DerivUtilGPU &derivUtil,NodesGPU &nodes, NodeMap &no
                     h_Xn[2] = h_Xc[2] + alpha * dk[2];
                     SetNodeCoord(h_Xn, id, nodes, nodeMap);
 
-                    newVal = GetFunctional<3>(derivUtil, nodes, elUtil,false,false);
+                    newVal = GetFunctional<3>(derivUtil, nodes, elUtil, nodeMap, Grad,false,false);
 
                     if (newVal <= currentW + c1() * (
                         alpha*pg + 0.5*alpha*alpha*hes))

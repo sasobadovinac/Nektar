@@ -70,7 +70,9 @@ public:
     void SetNodeCoord(double (&X)[3], int id,NodesGPU &nodes, NodeMap &nodeMap);
 
     template<int DIM> NekDouble GetFunctional(DerivUtilGPU &derivUtil, NodesGPU &nodes,
-                        ElUtilGPU &elUtil, bool gradient = true, bool hessian = true);
+                        ElUtilGPU &elUtil, NodeMap &nodeMap, 
+                        Kokkos::View<double[DIM == 2 ? 5 : 9], host_space> &G,
+                        bool gradient = true, bool hessian = true);
     
 
 protected:
