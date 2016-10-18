@@ -75,6 +75,9 @@ struct DerivUtilGPU
     Kokkos::View<double**> VdmD_2;
     typename Kokkos::View< double**>::HostMirror h_VdmD_2;
 
+    Kokkos::View<double*> quadW;
+    typename Kokkos::View< double*>::HostMirror h_quadW;
+
     int nodes_size;
 
     int ptsHigh;

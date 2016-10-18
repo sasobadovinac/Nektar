@@ -87,6 +87,16 @@ void ProcessVarOpti::Load_derivUtil(DerivUtilGPU &derivUtil)
     Kokkos::deep_copy(derivUtil.VdmD_0,derivUtil.h_VdmD_0);
     Kokkos::deep_copy(derivUtil.VdmD_1,derivUtil.h_VdmD_1);
 
+
+    // Quadrature Weights
+    derivUtil.quadW = Kokkos::View<double*>("quadW",ptsHigh);
+    derivUtil.h_quadW = Kokkos::create_mirror_view(derivUtil.quadW);
+    Kokkos::parallel_for(range_policy_host(0,ptsHigh), KOKKOS_LAMBDA (const int pts)
+    {
+    	derivUtil.h_quadW(pts) = dataSet[0]->derivUtil->quadW[pts];
+    });
+    Kokkos::deep_copy(derivUtil.quadW,derivUtil.h_quadW);
+
     
     int m_dim = dataSet[0]->m_dim;
     if(m_dim == 3)

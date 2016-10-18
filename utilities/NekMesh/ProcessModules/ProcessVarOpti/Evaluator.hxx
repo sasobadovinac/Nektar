@@ -213,16 +213,15 @@ double NodeOpti::GetFunctional(DerivUtilGPU &derivUtilGPU,
 
     double minJac = CalcMinJac(elUtil, nElmt, elIdArray);
     double ep = minJac < 0.0 ? sqrt(1e-9 + 0.04*minJac*minJac) : sqrt(1e-9);    
-
-    //G = Array<OneD, NekDouble>(DIM == 2 ? 5 : 9, 0.0);
-    //double G[DIM == 2 ? 5 : 9] = {0.0};
-    
         
     const double nu = 0.4;
     const double mu = 1.0 / 2.0 / (1.0+nu);
     const double K  = 1.0 / 3.0 / (1.0 - 2.0 * nu); 
 
-    double integral = 0.0;      
+    //double integral = 0.0;
+    Kokkos::View<double[1]> integral("integral");
+    typename Kokkos::View< double[1]>::HostMirror h_integral = Kokkos::create_mirror_view(integral);
+    h_integral[0] = 0.0; 
 
     // Storage for derivatives, ordered by:
     //   - standard coordinate direction
@@ -268,23 +267,39 @@ double NodeOpti::GetFunctional(DerivUtilGPU &derivUtilGPU,
         Kokkos::deep_copy(h_derivGPU,derivGPU);
         
     
-        for(int k = 0; k < ptsHighGPU; ++k)
+        //for(int k = 0; k < ptsHighGPU; ++k)
+        Kokkos::parallel_for (range_policy_host(0,ptsHighGPU), KOKKOS_LAMBDA (const int k)
         {
             double absIdealMapDet = fabs(elUtil.h_idealMap(elId,k,9));
-            double quadW = derivUtil[st]->quadW[k];
-
+            double quadW = derivUtilGPU.h_quadW(k);
 
             Kokkos::View<double[DIM][DIM], host_space> jacIdeal("jacIdeal");
-            double jacDet = CalcIdealJac(elId, k, h_derivGPU, jacIdeal, elUtil);
+            //double jacDet = CalcIdealJac(elId, k, h_derivGPU, jacIdeal, elUtil);
+            for (int m = 0; m < DIM; ++m)
+            {
+                for (int n = 0; n < DIM; ++n)
+                {
+                    jacIdeal(n,m) = 0.0;
+                    for (int l = 0; l < DIM; ++l)
+                    {
+                        jacIdeal(n,m) += h_derivGPU(l*DIM+n,k) *
+                            elUtil.h_idealMap(elId,k,m * 3 + l);                
+                    }
+                }
+            }
+            double jacDet = Determinant(jacIdeal);
+            // end CalcIdealJac
             
             double I1 = FrobeniusNorm(jacIdeal);
 
             double sigma = 0.5*(jacDet + sqrt(jacDet*jacDet + 4.0*ep*ep));
             double lsigma = log(sigma);
 
-            integral += quadW * absIdealMapDet *
+            double inc = quadW * absIdealMapDet *
                         (0.5 * mu * (I1 - 3.0 - 2.0*lsigma) +
                          0.5 * K * lsigma * lsigma);
+            Kokkos::atomic_add(&h_integral[0], inc);
+            
 
 
             // Derivative of basis function in each direction
@@ -361,9 +376,10 @@ double NodeOpti::GetFunctional(DerivUtilGPU &derivUtilGPU,
 
                 for (int j = 0; j < DIM; ++j)
                 {
-                    G(j) += quadW * absIdealMapDet * (
+                    double inc = quadW * absIdealMapDet * (
                         mu * frobProd(j) + (jacDetDeriv(j) / (2.0*sigma - jacDet)
                                             * (K * lsigma - mu)));
+                    Kokkos::atomic_add(&G(j), inc);
                 }
 
                 if(hessian)
@@ -387,18 +403,19 @@ double NodeOpti::GetFunctional(DerivUtilGPU &derivUtilGPU,
                     {
                         for(int l = m; l < DIM; ++l, ct++)
                         {
-                            G(ct+DIM) += quadW * absIdealMapDet * (
+                            double inc = quadW * absIdealMapDet * (
                                 mu * frobProdHes(m,l) +
                                 jacDetDeriv(m)*jacDetDeriv(l)/(2.0*sigma-jacDet)/(2.0*sigma-jacDet)*(
                                     K- jacDet*(K*lsigma-mu)/(2.0*sigma-jacDet)));
+                            Kokkos::atomic_add(&G(ct+DIM), inc);
                         }
                     }
                 }
             }
-        }
+        });
     } 
 
-    return integral;
+    return h_integral[0];
 }
 
 }
