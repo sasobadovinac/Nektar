@@ -47,12 +47,12 @@ boost::mutex mtx3;
 
 void ProcessVarOpti::Load_derivUtil(DerivUtilGPU &derivUtil)
 {
-    //typedef Kokkos::MemoryTraits<Kokkos::RandomAccess> random_memory; //?
+    
     int nodes_size = derivUtil.nodes_size;
     int ptsHigh = derivUtil.ptsHigh;
-    derivUtil.VdmDL_0 = Kokkos::View<double**>("VdmDL_0",nodes_size,nodes_size);
+    derivUtil.VdmDL_0 = Kokkos::View<double**,random_memory>("VdmDL_0",nodes_size,nodes_size);
     derivUtil.h_VdmDL_0 = Kokkos::create_mirror_view(derivUtil.VdmDL_0);
-    derivUtil.VdmDL_1 = Kokkos::View<double**>("VdmDL_1",nodes_size,nodes_size);
+    derivUtil.VdmDL_1 = Kokkos::View<double**,random_memory>("VdmDL_1",nodes_size,nodes_size);
     derivUtil.h_VdmDL_1 = Kokkos::create_mirror_view(derivUtil.VdmDL_1);
     int N1 = nodes_size;
     int M1 = nodes_size;
@@ -69,9 +69,9 @@ void ProcessVarOpti::Load_derivUtil(DerivUtilGPU &derivUtil)
     Kokkos::deep_copy(derivUtil.VdmDL_1,derivUtil.h_VdmDL_1);
     
 
-    derivUtil.VdmD_0 = Kokkos::View<double**>("VdmD_0",ptsHigh,nodes_size);
+    derivUtil.VdmD_0 = Kokkos::View<double**,random_memory>("VdmD_0",ptsHigh,nodes_size);
     derivUtil.h_VdmD_0 = Kokkos::create_mirror_view(derivUtil.VdmD_0);
-    derivUtil.VdmD_1 = Kokkos::View<double**>("VdmD_1",ptsHigh,nodes_size);
+    derivUtil.VdmD_1 = Kokkos::View<double**,random_memory>("VdmD_1",ptsHigh,nodes_size);
     derivUtil.h_VdmD_1 = Kokkos::create_mirror_view(derivUtil.VdmD_1);   
     int N2 = ptsHigh;
     int M2 = nodes_size;
@@ -89,7 +89,7 @@ void ProcessVarOpti::Load_derivUtil(DerivUtilGPU &derivUtil)
 
 
     // Quadrature Weights
-    derivUtil.quadW = Kokkos::View<double*>("quadW",ptsHigh);
+    derivUtil.quadW = Kokkos::View<double*,random_memory>("quadW",ptsHigh);
     derivUtil.h_quadW = Kokkos::create_mirror_view(derivUtil.quadW);
     Kokkos::parallel_for(range_policy_host(0,ptsHigh), KOKKOS_LAMBDA (const int pts)
     {
@@ -101,7 +101,7 @@ void ProcessVarOpti::Load_derivUtil(DerivUtilGPU &derivUtil)
     int m_dim = dataSet[0]->m_dim;
     if(m_dim == 3)
     {
-        derivUtil.VdmDL_2 = Kokkos::View<double**>("VdmDL_2",nodes_size,nodes_size);
+        derivUtil.VdmDL_2 = Kokkos::View<double**,random_memory>("VdmDL_2",nodes_size,nodes_size);
         derivUtil.h_VdmDL_2 = Kokkos::create_mirror_view(derivUtil.VdmDL_2);
         int N1 = nodes_size;
 	    int M1 = nodes_size;
@@ -116,7 +116,7 @@ void ProcessVarOpti::Load_derivUtil(DerivUtilGPU &derivUtil)
 	    Kokkos::deep_copy(derivUtil.VdmDL_2,derivUtil.h_VdmDL_2);
 
 
-        derivUtil.VdmD_2 = Kokkos::View<double**>("VdmD_2",ptsHigh,nodes_size);
+        derivUtil.VdmD_2 = Kokkos::View<double**,random_memory>("VdmD_2",ptsHigh,nodes_size);
         derivUtil.h_VdmD_2 = Kokkos::create_mirror_view(derivUtil.VdmD_2);
         int N2 = ptsHigh;
 	    int M2 = nodes_size;
@@ -135,7 +135,7 @@ void ProcessVarOpti::Load_derivUtil(DerivUtilGPU &derivUtil)
 template<int DIM>
 void ProcessVarOpti::Load_elUtils(ElUtilGPU &elUtil)
 {
-	elUtil.idealMap = Kokkos::View<double**[10]> ("idealMap", elUtil.nElmt, elUtil.ptsHigh);
+	elUtil.idealMap = Kokkos::View<double**[10],random_memory> ("idealMap", elUtil.nElmt, elUtil.ptsHigh);
 	elUtil.h_idealMap = Kokkos::create_mirror_view(elUtil.idealMap);
 
 	elUtil.minJac = Kokkos::View<double*> ("minJac", elUtil.nElmt);

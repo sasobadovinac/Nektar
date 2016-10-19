@@ -71,7 +71,7 @@ public:
 
     template<int DIM> NekDouble GetFunctional(DerivUtilGPU &derivUtil, NodesGPU &nodes,
                         ElUtilGPU &elUtil, NodeMap &nodeMap, 
-                        Kokkos::View<double[DIM == 2 ? 5 : 9], host_space> &G,
+                        Grad &grad,
                         bool gradient = true, bool hessian = true);
     
 

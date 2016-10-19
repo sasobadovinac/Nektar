@@ -47,6 +47,21 @@ namespace Nektar
 namespace Utilities
 {
 
+typedef Kokkos::RangePolicy<Kokkos::DefaultExecutionSpace> range_policy;
+typedef Kokkos::RangePolicy<Kokkos::DefaultHostExecutionSpace> range_policy_host;
+typedef Kokkos::TeamPolicy<Kokkos::DefaultExecutionSpace> team_policy;
+typedef Kokkos::TeamPolicy<Kokkos::DefaultHostExecutionSpace> team_policy_host;
+typedef Kokkos::TeamPolicy<Kokkos::DefaultExecutionSpace>::member_type  member_type;
+typedef Kokkos::TeamPolicy<Kokkos::DefaultHostExecutionSpace>::member_type  member_type_host;
+
+typedef Kokkos::DefaultHostExecutionSpace host_space;
+typedef Kokkos::DefaultExecutionSpace exe_space;
+
+typedef Kokkos::MemoryTraits<Kokkos::RandomAccess> random_memory;
+//typedef Kokkos::MemoryTraits<> random_memory;
+
+
+
 struct DerivUtil
 {
     NekMatrix<NekDouble> VdmD[3];
@@ -61,21 +76,21 @@ struct DerivUtil
 
 struct DerivUtilGPU
 {
-    Kokkos::View<double**> VdmDL_0;
+    Kokkos::View<double**,random_memory> VdmDL_0;
     typename Kokkos::View< double**>::HostMirror h_VdmDL_0;
-    Kokkos::View<double**> VdmDL_1;
+    Kokkos::View<double**,random_memory> VdmDL_1;
     typename Kokkos::View< double**>::HostMirror h_VdmDL_1;        
-    Kokkos::View<double**> VdmDL_2;
+    Kokkos::View<double**,random_memory> VdmDL_2;
     typename Kokkos::View< double**>::HostMirror h_VdmDL_2;
 
-    Kokkos::View<double**> VdmD_0;
+    Kokkos::View<double**,random_memory> VdmD_0;
     typename Kokkos::View< double**>::HostMirror h_VdmD_0;
-    Kokkos::View<double**> VdmD_1;
+    Kokkos::View<double**,random_memory> VdmD_1;
     typename Kokkos::View< double**>::HostMirror h_VdmD_1;        
-    Kokkos::View<double**> VdmD_2;
+    Kokkos::View<double**,random_memory> VdmD_2;
     typename Kokkos::View< double**>::HostMirror h_VdmD_2;
 
-    Kokkos::View<double*> quadW;
+    Kokkos::View<double*,random_memory> quadW;
     typename Kokkos::View< double*>::HostMirror h_quadW;
 
     int nodes_size;
@@ -87,7 +102,7 @@ struct DerivUtilGPU
 
 struct ElUtilGPU
 {
-    Kokkos::View<double**[10]> idealMap;
+    Kokkos::View<double**[10],random_memory> idealMap;
     typename Kokkos::View< double**[10]>::HostMirror h_idealMap;
     int ptsHigh;
     int nElmt;
@@ -137,13 +152,17 @@ struct Residual
 
     //int startInv;
     Kokkos::View<int[1]> startInv;
-    typename Kokkos::View< int[1]>::HostMirror h_startInv;
-    
+    typename Kokkos::View< int[1]>::HostMirror h_startInv;    
 
-    int nReset;
-    
+    int nReset;    
+};
 
-    
+struct Grad
+{
+    Kokkos::View<double[9]> G;
+    typename Kokkos::View< double[9]>::HostMirror h_G;
+    Kokkos::View<double[1]> integral;
+    typename Kokkos::View< double[1]>::HostMirror h_integral;
 };
 
 //typedef boost::shared_ptr<Residual> ResidualSharedPtr;
@@ -197,15 +216,6 @@ private:
     std::string ThreadManagerType;
 };
 
-
-typedef Kokkos::RangePolicy<Kokkos::DefaultExecutionSpace> range_policy;
-typedef Kokkos::RangePolicy<Kokkos::DefaultHostExecutionSpace> range_policy_host;
-typedef Kokkos::TeamPolicy<Kokkos::DefaultExecutionSpace> team_policy;
-typedef Kokkos::TeamPolicy<Kokkos::DefaultHostExecutionSpace> team_policy_host;
-typedef Kokkos::TeamPolicy<Kokkos::DefaultExecutionSpace>::member_type  member_type;
-typedef Kokkos::TeamPolicy<Kokkos::DefaultHostExecutionSpace>::member_type  member_type_host;
-
-typedef Kokkos::DefaultHostExecutionSpace host_space;
 
 
 
