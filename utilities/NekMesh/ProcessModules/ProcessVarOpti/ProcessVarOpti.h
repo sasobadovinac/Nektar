@@ -58,7 +58,6 @@ typedef Kokkos::DefaultHostExecutionSpace host_space;
 typedef Kokkos::DefaultExecutionSpace exe_space;
 
 typedef Kokkos::MemoryTraits<Kokkos::RandomAccess> random_memory;
-//typedef Kokkos::MemoryTraits<> random_memory;
 
 
 

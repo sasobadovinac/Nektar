@@ -128,7 +128,7 @@ inline void InvTrans<3>(NekDouble in[3][3], NekDouble out[3][3])
 }
 
 
-/*template<int DIM>
+template<int DIM>
 inline NekDouble FrobProd(NekDouble in1[DIM][DIM],
                           NekDouble in2[DIM][DIM])
 {
@@ -156,19 +156,6 @@ inline NekDouble FrobProd<3>(NekDouble in1[3][3], NekDouble in2[3][3])
             + in1[2][0] * in2[2][0]
             + in1[2][1] * in2[2][1]
             + in1[2][2] * in2[2][2] ;
-}*/
-template<int DIM> inline NekDouble FrobProd(NekDouble in1[DIM][DIM],
-                                            NekDouble in2[DIM][DIM])
-{
-    NekDouble ret = 0;
-    for (int n = 0; n < DIM; ++n)
-    {
-        for (int l = 0; l < DIM; ++l)
-        {
-            ret += in1[n][l] * in2[n][l];
-        }
-    }
-    return ret;
 }
 
 
@@ -247,21 +234,17 @@ NekDouble NodeOpti::GetFunctional(DerivUtilGPU &derivUtilGPU,
     //   - cartesian coordinate direction, combined
     //   - quadrature points    
     Kokkos::View<double**> derivGPU("derivGPU", DIM*DIM, ptsHighGPU);
-    typename Kokkos::View< double**>::HostMirror h_derivGPU = Kokkos::create_mirror_view(derivGPU);
+    //typename Kokkos::View< double**>::HostMirror h_derivGPU = Kokkos::create_mirror_view(derivGPU);
 
-    grad.h_integral[0] = 0.0; 
+    grad.h_integral[0] = 0.0;
+    Kokkos::deep_copy(grad.integral,grad.h_integral);
 
 
     for (int el = 0; el < nElmt; ++el)
     {   
         int elId = elIdArray[el];
         int localNodeId = localNodeIdArray[el];
-        if (node->m_id == 165  || node->m_id == 3905 || node->m_id == 189)
-        {
-            printf("elId = %i\n", elId);
-            printf("localNodeId = %i\n", localNodeId);
-        }
-
+        
         Kokkos::parallel_for (range_policy(0,ptsHighGPU), KOKKOS_LAMBDA (const int j)
         {
             derivGPU(0,j) = 0.0;
@@ -291,13 +274,13 @@ NekDouble NodeOpti::GetFunctional(DerivUtilGPU &derivUtilGPU,
             }
         });
 
-        Kokkos::deep_copy(h_derivGPU,derivGPU);
+        //Kokkos::deep_copy(h_derivGPU,derivGPU);
 
-        Kokkos::parallel_for (range_policy_host(0,ptsHighGPU), KOKKOS_LAMBDA (const int k)
+        Kokkos::parallel_for (range_policy(0,ptsHighGPU), KOKKOS_LAMBDA (const int k)
         {
             
-            double absIdealMapDet = fabs(elUtil.h_idealMap(elId,k,9));
-            double quadW = derivUtilGPU.h_quadW(k);
+            double absIdealMapDet = fabs(elUtil.idealMap(elId,k,9));
+            double quadW = derivUtilGPU.quadW(k);
             double jacIdeal[3][3];
             for (int m = 0; m < DIM; ++m)
             {
@@ -306,8 +289,8 @@ NekDouble NodeOpti::GetFunctional(DerivUtilGPU &derivUtilGPU,
                     jacIdeal[n][m] = 0.0;
                     for (int l = 0; l < DIM; ++l)
                     {
-                        jacIdeal[n][m] += h_derivGPU(l*DIM+n,k) *
-                            elUtil.h_idealMap(elId,k,m * 3 + l);               
+                        jacIdeal[n][m] += derivGPU(l*DIM+n,k) *
+                            elUtil.idealMap(elId,k,m * 3 + l);               
                     }
                 }
             }
@@ -320,10 +303,8 @@ NekDouble NodeOpti::GetFunctional(DerivUtilGPU &derivUtilGPU,
             double inc = quadW * absIdealMapDet *
                         (0.5 * mu * (I1 - 3.0 - 2.0*lsigma) +
                          0.5 * K * lsigma * lsigma);        
-            Kokkos::atomic_add(&grad.h_integral[0], inc);
-            //printf("inc = %e\n", inc);
-            //printf("grad.h_integral[0] = %e\n", grad.h_integral[0]);
-
+            Kokkos::atomic_add(&grad.integral[0], inc);
+            
             // Derivative of basis function in each direction
             if(gradient)
             {
@@ -333,7 +314,7 @@ NekDouble NodeOpti::GetFunctional(DerivUtilGPU &derivUtilGPU,
                     for (int n = 0; n < DIM; ++n)
                     {
                         //phiM[n][m] = derivGPU(m,n,k);
-                        phiM[n][m] = h_derivGPU(m*DIM+n,k);
+                        phiM[n][m] = derivGPU(m*DIM+n,k);
                     }
                 }
 
@@ -342,11 +323,9 @@ NekDouble NodeOpti::GetFunctional(DerivUtilGPU &derivUtilGPU,
                 double derivDet = Determinant<DIM>(phiM);
 
                 double basisDeriv [DIM];
-                if (localNodeId != nodeIds[el])
-                    printf("%s%i\n", "localNodeId, " ,localNodeId);
-                basisDeriv[0] = derivUtilGPU.h_VdmD_0(k,localNodeId);
-                basisDeriv[1] = derivUtilGPU.h_VdmD_1(k,localNodeId);
-                basisDeriv[2] = derivUtilGPU.h_VdmD_2(k,localNodeId);
+                basisDeriv[0] = derivUtilGPU.VdmD_0(k,localNodeId);
+                basisDeriv[1] = derivUtilGPU.VdmD_1(k,localNodeId);
+                basisDeriv[2] = derivUtilGPU.VdmD_2(k,localNodeId);
 
                 double jacDetDeriv [DIM];
                 for (int m = 0; m < DIM; ++m)
@@ -384,7 +363,7 @@ NekDouble NodeOpti::GetFunctional(DerivUtilGPU &derivUtilGPU,
                             {
                                 // want phi_I^{-1} (l,n)
                                 jacDerivPhi[p][m][n] +=
-                                    jacDeriv[p][m][l] * elUtil.h_idealMap(elId,k,l + 3*n);
+                                    jacDeriv[p][m][l] * elUtil.idealMap(elId,k,l + 3*n);
                             }
                         }
                     }
@@ -401,7 +380,7 @@ NekDouble NodeOpti::GetFunctional(DerivUtilGPU &derivUtilGPU,
                     double inc = quadW * absIdealMapDet * (
                         mu * frobProd[j] + (jacDetDeriv[j] / (2.0*sigma - jacDet)
                                             * (K * lsigma - mu)));
-                    Kokkos::atomic_add(&grad.h_G(j), inc);
+                    Kokkos::atomic_add(&grad.G(j), inc);
                 }
 
                 if(hessian)
@@ -425,18 +404,19 @@ NekDouble NodeOpti::GetFunctional(DerivUtilGPU &derivUtilGPU,
                                 mu * frobProdHes[m][l] +
                                 jacDetDeriv[m]*jacDetDeriv[l]/(2.0*sigma-jacDet)/(2.0*sigma-jacDet)*(
                                     K- jacDet*(K*lsigma-mu)/(2.0*sigma-jacDet)));
-                            Kokkos::atomic_add(&grad.h_G(ct+DIM), inc);
+                            Kokkos::atomic_add(&grad.G(ct+DIM), inc);
                         }
                     }
                 }
             }
         });
     } 
-    //Kokkos::deep_copy(grad.h_integral, grad.integral);
-    //Kokkos::deep_copy(grad.h_G, grad.G);
-
-    //printf("grad.h_integral[0] = %e\n", grad.h_integral[0]);
-
+    Kokkos::deep_copy(grad.h_integral, grad.integral);
+    if (hessian && gradient)
+    {
+        Kokkos::deep_copy(grad.h_G, grad.G);
+    }
+    
     return grad.h_integral[0];
 }
 

@@ -241,13 +241,9 @@ void NodeOpti3D3D::Optimise(DerivUtilGPU &derivUtil,NodesGPU &nodes, NodeMap &no
 
     G = Array<OneD, NekDouble>(9, 0.0);
     double currentW = GetFunctional<3>(derivUtil, nodes, elUtil, nodeMap, grad);
-    if (node->m_id == 165 || node->m_id == 3905 || node->m_id == 189)
-        printf("current W = %e\n",currentW );
     for (int i = 0; i < 9; ++i)
     {
-        G[i] = grad.h_G(i);
-        if (node->m_id == 165 || node->m_id == 3905)
-            printf("G[%i] = %e\n",i, G[i]);
+        G[i] = grad.h_G(i);        
     }
     NekDouble newVal;
 
@@ -346,14 +342,8 @@ void NodeOpti3D3D::Optimise(DerivUtilGPU &derivUtil,NodesGPU &nodes, NodeMap &no
                 SetNodeCoord(h_Xn, id, nodes, nodeMap);
                 
                 newVal = GetFunctional<3>(derivUtil, nodes, elUtil, nodeMap, grad,false,false);
-                for (int i = 0; i < 9; ++i)
-                {
-                    G[i] = grad.h_G(i);
-                    if (node->m_id == 165 || node->m_id == 3905 || node->m_id == 189)
-                        printf("G[%i] = %e\n",i, G[i]);
-                }
-
-    //dont need the hessian again this function updates G to be the new
+                
+                //dont need the hessian again this function updates G to be the new
                 //location
                 //
                 // Wolfe conditions
