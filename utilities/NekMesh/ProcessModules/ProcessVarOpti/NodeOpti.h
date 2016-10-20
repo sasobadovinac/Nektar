@@ -69,10 +69,11 @@ public:
     void GetNodeCoord(double (&X)[3], int id,NodesGPU &nodes, NodeMap &nodeMap);
     void SetNodeCoord(double (&X)[3], int id,NodesGPU &nodes, NodeMap &nodeMap);
 
-    template<int DIM> NekDouble GetFunctional(DerivUtilGPU &derivUtil, NodesGPU &nodes,
-                        ElUtilGPU &elUtil, NodeMap &nodeMap, 
-                        Grad &grad,
-                        bool gradient = true, bool hessian = true);
+    template<int DIM> NekDouble GetFunctional(DerivUtilGPU &derivUtilGPU,
+         NodesGPU &nodes, ElUtilGPU &elUtil, NodeMap &nodeMap, 
+         Grad &grad, int elId, int localNodeId,
+         double ep,
+         bool gradient = true, bool hessian = true);
     
 
 protected:
