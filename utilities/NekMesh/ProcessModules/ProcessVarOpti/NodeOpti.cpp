@@ -89,20 +89,25 @@ double NodeOpti::CalcMinJac(ElUtilGPU &elUtil, int nElmt, int * elIdArray)
     return minJac;
 }
 
-void NodeOpti::GetNodeCoord(double (&X)[3], int id, NodesGPU &nodes, NodeMap &nodeMap)
+void NodeOpti::GetNodeCoord(double (&X)[3], int id, NodesGPU &nodes,
+            int * elIdArray, int * localNodeIdArray)
 {
     //x = node->m_x;
     //y = node->m_y;
     //z = node->m_z;
 
     // it is sufficient to pull the coordinates from the first instance of the node
-    NodeMap::const_iterator coeffs;
-    coeffs = nodeMap.find(id);    
-    int elmt = std::get<0>(coeffs->second);
-    int node = std::get<1>(coeffs->second);
+    ////NodeMap::const_iterator coeffs;
+    ////coeffs = nodeMap.find(id);    
+    ////int elmt = std::get<0>(coeffs->second);
+    ////int node = std::get<1>(coeffs->second);
+
     //x = nodes.h_X(elmt,node);
     //y = nodes.h_Y(elmt,node);
     //z = nodes.h_Z(elmt,node);
+
+    int elmt = elIdArray[0];
+    int node = localNodeIdArray[0];
 
     Kokkos::View<double[3]> Xt("Xt");
     typename Kokkos::View< double[3]>::HostMirror h_Xt = Kokkos::create_mirror_view(Xt);
@@ -119,7 +124,8 @@ void NodeOpti::GetNodeCoord(double (&X)[3], int id, NodesGPU &nodes, NodeMap &no
 
 }
 
-void NodeOpti::SetNodeCoord(double (&X)[3], int id, NodesGPU &nodes, NodeMap &nodeMap)
+void NodeOpti::SetNodeCoord(double (&X)[3], int id, NodesGPU &nodes,
+             int * elIdArray, int * localNodeIdArray, int nElmt)
 {
     //node->m_x = x;
     //node->m_y = y;
@@ -132,12 +138,14 @@ void NodeOpti::SetNodeCoord(double (&X)[3], int id, NodesGPU &nodes, NodeMap &no
     h_Xt(2) = X[2];
     Kokkos::deep_copy(Xt,h_Xt);
 
-    NodeMap::const_iterator coeffs;
-    coeffs = nodeMap.find(id);    
-    for(int n = 0; n < nodeMap.count(id); n++)
+    ////NodeMap::const_iterator coeffs;
+    ////coeffs = nodeMap.find(id);    
+    for(int el = 0; el < nElmt; el++)
     {
-        int elmt = std::get<0>(coeffs->second);
-        int node = std::get<1>(coeffs->second);
+        ////int elmt = std::get<0>(coeffs->second);
+        ////int node = std::get<1>(coeffs->second);
+        int elmt = elIdArray[el];
+        int node = localNodeIdArray[el];
         //nodes.h_X(elmt,node) = x;
         //nodes.h_Y(elmt,node) = y;
         //nodes.h_Z(elmt,node) = z;
@@ -147,7 +155,7 @@ void NodeOpti::SetNodeCoord(double (&X)[3], int id, NodesGPU &nodes, NodeMap &no
             nodes.Y(elmt,node) = Xt(1);
             nodes.Z(elmt,node) = Xt(2);
         });
-        coeffs++;
+        ////coeffs++;
     }    
 
 }
@@ -156,7 +164,9 @@ void NodeOpti::SetNodeCoord(double (&X)[3], int id, NodesGPU &nodes, NodeMap &no
 int NodeOpti2D2D::m_type = GetNodeOptiFactory().RegisterCreatorFunction(
     22, NodeOpti2D2D::create, "2D2D");
 
-void NodeOpti2D2D::Optimise(DerivUtilGPU &derivUtil,NodesGPU &nodes, NodeMap &nodeMap, ElUtilGPU &elUtil, Residual &res)
+void NodeOpti2D2D::Optimise(DerivUtilGPU &derivUtil,NodesGPU &nodes, 
+        NodeMap &nodeMap, ElUtilGPU &elUtil, Residual &res, 
+        int nElmt, int globalNodeId, int * elIdArray, int * localNodeIdArray)
 {
 
 }
@@ -164,26 +174,22 @@ void NodeOpti2D2D::Optimise(DerivUtilGPU &derivUtil,NodesGPU &nodes, NodeMap &no
 int NodeOpti3D3D::m_type = GetNodeOptiFactory().RegisterCreatorFunction(
     33, NodeOpti3D3D::create, "3D3D");
 
-void NodeOpti3D3D::Optimise(DerivUtilGPU &derivUtil,NodesGPU &nodes, 
-        NodeMap &nodeMap, ElUtilGPU &elUtil, Residual &res)
-{
-    Grad grad;
-    grad.G = Kokkos::View<double[9]> ("G");
-    grad.h_G = Kokkos::create_mirror_view(grad.G);
-    grad.integral = Kokkos::View<double[1]> ("integral");
-    grad.h_integral = Kokkos::create_mirror_view(grad.integral);
 
-    G = Array<OneD, NekDouble>(9, 0.0);
-    double currentW, newVal, dbVal;
-    int elId, localNodeId;
-    
-    // prepare GetFunctional()
-    const int nElmt = data.size();
-    int elIdArray[nElmt];
+
+
+void NodeOpti3D3D::Optimise(DerivUtilGPU &derivUtil,NodesGPU &nodes, 
+        NodeMap &nodeMap, ElUtilGPU &elUtil, Residual &res, 
+        int nElmt, int globalNodeId, int * elIdArray, int * localNodeIdArray)
+{
+       
     // using the node ID and the node map find the local coordinates of the node,
                 // depending on the considered element
-    int globalNodeId = node->m_id;
+    /*const int nElmt = data.size();
+    const int globalNodeId = node->m_id;
+    
+    int elIdArray[nElmt];    
     int localNodeIdArray[nElmt];
+
     NodeMap::const_iterator coeffs;
     coeffs = nodeMap.find(globalNodeId); 
     for (int el = 0; el < nElmt; ++el)
@@ -196,54 +202,83 @@ void NodeOpti3D3D::Optimise(DerivUtilGPU &derivUtil,NodesGPU &nodes,
             localNodeIdArray[el] = std::get<1>(coeffs->second);
         }            
         coeffs++;
-    }
+    }*/
+
+
     double minJac = CalcMinJac(elUtil, nElmt, elIdArray);
     double ep = minJac < 0.0 ? sqrt(1e-9 + 0.04*minJac*minJac) : sqrt(1e-9);    
 
-    currentW = 0;
+    Grad grad;
+    grad.G = Kokkos::View<double[9]> ("G");
+    grad.h_G = Kokkos::create_mirror_view(grad.G);
+    grad.integral = Kokkos::View<double[1]> ("integral");
+    grad.h_integral = Kokkos::create_mirror_view(grad.integral);
+
+    //Kokkos::parallel_for(range_policy_host(0,1), KOKKOS_LAMBDA (const int dum)
+    //{
+
+    double currentW, newVal, dbVal;
+    int elId, localNodeId;    
+    grad.h_integral[0] = 0.0;
+    Kokkos::deep_copy(grad.integral,grad.h_integral);
     for (int el = 0; el < nElmt; ++el)
     { 
         elId = elIdArray[el];
         localNodeId = localNodeIdArray[el];
-        currentW += GetFunctional<3>(derivUtil, nodes, elUtil, nodeMap, grad,
+        GetFunctional<3>(derivUtil, nodes, elUtil, nodeMap, grad,
             elId, localNodeId, ep);
     }
+    Kokkos::deep_copy(grad.h_integral, grad.integral);
+    currentW = grad.h_integral[0];
     Kokkos::deep_copy(grad.h_G, grad.G);
-    for (int i = 0; i < 9; ++i)
-    {
-        G[i] = grad.h_G(i);        
-    }
+
     
-    if(G[0]*G[0] + G[1]*G[1] + G[2]*G[2] > gradTol())
+    
+    
+    if(grad.h_G[0]*grad.h_G[0] + grad.h_G[1]*grad.h_G[1] + grad.h_G[2]*grad.h_G[2] > gradTol())
     {
-        //needs to optimise
-        int id             = node->m_id;
         
-        //Kokkos::View<double[3]> Xc("Xc"); // initial node coordinates, keep them constant
-        //typename Kokkos::View< double[3]>::HostMirror h_Xc = Kokkos::create_mirror_view(Xc);
-        //Kokkos::View<double[3], Kokkos::DefaultHostExecutionSpace> h_Xc("h_Xc");
-        double h_Xc[3];
-        
-        //Kokkos::View<double[3]> Xn("Xn"); // new node positions, update them
-        //typename Kokkos::View< double[3]>::HostMirror h_Xn = Kokkos::create_mirror_view(Xn);
-        //Kokkos::View<double[3], Kokkos::DefaultHostExecutionSpace> h_Xn("h_Xn");
+        double h_Xc[3];        
         double h_Xn[3];
 
-        GetNodeCoord(h_Xc, id, nodes, nodeMap);
+        //GetNodeCoord(h_Xc, globalNodeId, nodes, nodeMap); 
+
+        //calculate sk
+        double sk[3];
+        double det = grad.h_G[3]*(grad.h_G[6]*grad.h_G[8]-grad.h_G[7]*grad.h_G[7])
+                       -grad.h_G[4]*(grad.h_G[4]*grad.h_G[8]-grad.h_G[5]*grad.h_G[7])
+                       +grad.h_G[5]*(grad.h_G[4]*grad.h_G[7]-grad.h_G[5]*grad.h_G[6]);
+
+        sk[0] = grad.h_G[0]*(grad.h_G[6]*grad.h_G[8]-grad.h_G[7]*grad.h_G[7]) +
+                grad.h_G[1]*(grad.h_G[5]*grad.h_G[7]-grad.h_G[4]*grad.h_G[8]) +
+                grad.h_G[2]*(grad.h_G[4]*grad.h_G[7]-grad.h_G[3]*grad.h_G[7]);
+        sk[1] = grad.h_G[0]*(grad.h_G[7]*grad.h_G[5]-grad.h_G[4]*grad.h_G[5]) +
+                grad.h_G[1]*(grad.h_G[3]*grad.h_G[8]-grad.h_G[5]*grad.h_G[5]) +
+                grad.h_G[2]*(grad.h_G[4]*grad.h_G[5]-grad.h_G[3]*grad.h_G[7]);
+        sk[2] = grad.h_G[0]*(grad.h_G[4]*grad.h_G[7]-grad.h_G[6]*grad.h_G[5]) +
+                grad.h_G[1]*(grad.h_G[4]*grad.h_G[5]-grad.h_G[3]*grad.h_G[7]) +
+                grad.h_G[2]*(grad.h_G[3]*grad.h_G[6]-grad.h_G[4]*grad.h_G[4]);
+
+        sk[0] /= det * -1.0;
+        sk[1] /= det * -1.0;
+        sk[2] /= det * -1.0;
+
+        double pg = (grad.h_G[0]*sk[0]+grad.h_G[1]*sk[1]+grad.h_G[2]*sk[2]);
+
+        bool runDNC = false; //so want to make this varible runDMC
+        bool found  = false;        
         
-
-        Array<OneD, NekDouble> sk(3), dk(3);
-        bool DNC = false;
-        NekDouble lhs;
-
-        int def = IsIndefinite<3>();
-        if(def)
+        //checks for DNC
+        /*double dk[3];
+        double lhs;
+        int def = IsIndefinite<3>(grad);
+        if(def) // def != 0
         {
             //the dk vector needs calculating
-            NekDouble val;
-            MinEigen<3>(val,dk);
+            double val;
+            MinEigen<3>(val,dk, grad);
 
-            if(dk[0]*G[0] + dk[1]*G[1] + dk[2]*G[2] > 0.0)
+            if(dk[0]*grad.h_G[0] + dk[1]*grad.h_G[1] + dk[2]*grad.h_G[2] > 0.0)
             {
                 for(int i = 0; i < 3; i++)
                 {
@@ -251,77 +286,57 @@ void NodeOpti3D3D::Optimise(DerivUtilGPU &derivUtil,NodesGPU &nodes,
                 }
             }
 
-            lhs = dk[0] * (dk[0]*G[3] + dk[1]*G[4] + dk[2]*G[5]) +
-                  dk[1] * (dk[0]*G[4] + dk[1]*G[6] + dk[2]*G[7]) +
-                  dk[2] * (dk[0]*G[5] + dk[1]*G[7] + dk[2]*G[8]);
+            lhs = dk[0] * (dk[0]*grad.h_G[3] + dk[1]*grad.h_G[4] + dk[2]*grad.h_G[5]) +
+                  dk[1] * (dk[0]*grad.h_G[4] + dk[1]*grad.h_G[6] + dk[2]*grad.h_G[7]) +
+                  dk[2] * (dk[0]*grad.h_G[5] + dk[1]*grad.h_G[7] + dk[2]*grad.h_G[8]);
 
             ASSERTL0(lhs < 0.0 , "weirdness");
+        
+            NekDouble skmag = sqrt(sk[0]*sk[0] + sk[1]*sk[1] + sk[2]*sk[2]);
+            runDNC = !((grad.h_G[0]*sk[0]+grad.h_G[1]*sk[1]+grad.h_G[2]*sk[2])/skmag <=
+                        2.0*(0.5*lhs + grad.h_G[0]*dk[0]+grad.h_G[1]*dk[1]+grad.h_G[2]*dk[2]));
+        }*/
 
-            DNC = true;
-        }
-
-        //calculate sk
-        NekDouble det = G[3]*(G[6]*G[8]-G[7]*G[7])
-                       -G[4]*(G[4]*G[8]-G[5]*G[7])
-                       +G[5]*(G[4]*G[7]-G[5]*G[6]);
-
-        sk[0] = G[0]*(G[6]*G[8]-G[7]*G[7]) +
-                G[1]*(G[5]*G[7]-G[4]*G[8]) +
-                G[2]*(G[4]*G[7]-G[3]*G[7]);
-        sk[1] = G[0]*(G[7]*G[5]-G[4]*G[5]) +
-                G[1]*(G[3]*G[8]-G[5]*G[5]) +
-                G[2]*(G[4]*G[5]-G[3]*G[7]);
-        sk[2] = G[0]*(G[4]*G[7]-G[6]*G[5]) +
-                G[1]*(G[4]*G[5]-G[3]*G[7]) +
-                G[2]*(G[3]*G[6]-G[4]*G[4]);
-
-        sk[0] /= det * -1.0;
-        sk[1] /= det * -1.0;
-        sk[2] /= det * -1.0;
-
-        bool runDNC = false; //so want to make this varible runDMC
-        bool found  = false;
-
-        NekDouble skmag = sqrt(sk[0]*sk[0] + sk[1]*sk[1] + sk[2]*sk[2]);
-        if(DNC)
-        {
-            runDNC = !((G[0]*sk[0]+G[1]*sk[1]+G[2]*sk[2])/skmag <=
-                        2.0*(0.5*lhs + G[0]*dk[0]+G[1]*dk[1]+G[2]*dk[2]));
-        }
-
-        NekDouble pg = (G[0]*sk[0]+G[1]*sk[1]+G[2]*sk[2]);
+        
 
         if(!runDNC)
         {
             //normal gradient line Search
-            NekDouble alpha    = 1.0;
-            NekDouble hes = sk[0] * (sk[0]*G[3] + sk[1]*G[4] + sk[2]*G[5]) +
-                            sk[1] * (sk[0]*G[4] + sk[1]*G[6] + sk[2]*G[7]) +
-                            sk[2] * (sk[0]*G[5] + sk[1]*G[7] + sk[2]*G[8]);
-            hes = min(hes,0.0);
+            GetNodeCoord(h_Xc, globalNodeId, nodes, elIdArray, localNodeIdArray); 
+
+            double alpha  = 1.0;
+            double hes    = sk[0] * (sk[0]*grad.h_G[3] + sk[1]*grad.h_G[4] + sk[2]*grad.h_G[5]) +
+                            sk[1] * (sk[0]*grad.h_G[4] + sk[1]*grad.h_G[6] + sk[2]*grad.h_G[7]) +
+                            sk[2] * (sk[0]*grad.h_G[5] + sk[1]*grad.h_G[7] + sk[2]*grad.h_G[8]);
+            //hes = min(hes,0.0);
+            hes = (hes > 0.0 ? 0.0 : hes);
             
             while (alpha > alphaTol())
             {
-                // Update node                
+            // Update node                
                 h_Xn[0] = h_Xc[0] + alpha * sk[0];
                 h_Xn[1] = h_Xc[1] + alpha * sk[1];
                 h_Xn[2] = h_Xc[2] + alpha * sk[2];
-                SetNodeCoord(h_Xn, id, nodes, nodeMap);
+                SetNodeCoord(h_Xn, globalNodeId, nodes, elIdArray, localNodeIdArray, nElmt);
                 
-                newVal = 0;
+                grad.h_integral[0] = 0.0;
+                Kokkos::deep_copy(grad.integral,grad.h_integral);
                 for (int el = 0; el < nElmt; ++el)
                 {
                     elId = elIdArray[el];
                     localNodeId = localNodeIdArray[el];
-                    newVal += GetFunctional<3>(derivUtil, nodes, elUtil, nodeMap, grad,
+                    GetFunctional<3>(derivUtil, nodes, elUtil, nodeMap, grad,
                             elId, localNodeId, ep, false,false);
                 }
+                Kokkos::deep_copy(grad.h_integral, grad.integral);
+                newVal = grad.h_integral[0];
+            // end evaluate node
+
                 //dont need the hessian again this function updates G to be the new
                 //location
                 //
                 // Wolfe conditions
-                if (newVal <= currentW + c1() * (
-                    alpha*pg+ 0.5*alpha*alpha*hes))
+                if (newVal <= currentW + c1() * (alpha*pg+ 0.5*alpha*alpha*hes))
                 {
                     found = true;
                     break;
@@ -330,30 +345,36 @@ void NodeOpti3D3D::Optimise(DerivUtilGPU &derivUtil,NodesGPU &nodes,
                 alpha /= 2.0;
             }
         }
-        else
+        /*else
         {
-            //NekDouble sig = 1.0;
+            GetNodeCoord(h_Xc, globalNodeId, nodes, elIdArray, localNodeIdArray); 
+
             NekDouble beta = 0.5;
             int l = 0;
             NekDouble alpha = pow(beta,l);
 
             NekDouble hes = lhs;
 
-            pg = (G[0]*dk[0]+G[1]*dk[1]+G[2]*dk[2]);
+            pg = (grad.h_G[0]*dk[0]+grad.h_G[1]*dk[1]+grad.h_G[2]*dk[2]);
 
-            //choose whether to do forward or reverse line search
+        //choose whether to do forward or reverse line search
             h_Xn[0] = h_Xc[0] + dk[0];
             h_Xn[1] = h_Xc[1] + dk[1];
             h_Xn[2] = h_Xc[2] + dk[2];
-            SetNodeCoord(h_Xn, id, nodes, nodeMap);
+            SetNodeCoord(h_Xn, globalNodeId, nodes, elIdArray, localNodeIdArray, nElmt);
 
-            newVal = 0;for (int el = 0; el < nElmt; ++el)
+            grad.h_integral[0] = 0.0;
+            Kokkos::deep_copy(grad.integral,grad.h_integral);
+            for (int el = 0; el < nElmt; ++el)
             {
                 elId = elIdArray[el];
                 localNodeId = localNodeIdArray[el];
-                newVal += GetFunctional<3>(derivUtil, nodes, elUtil, nodeMap, grad,
+                GetFunctional<3>(derivUtil, nodes, elUtil, nodeMap, grad,
                             elId, localNodeId, ep, false,false);
             }
+            Kokkos::deep_copy(grad.h_integral, grad.integral);
+            newVal = grad.h_integral[0];
+        // end evaluate node
 
             if(newVal <= currentW + c1() * (
                 pg + 0.5*hes))
@@ -361,32 +382,41 @@ void NodeOpti3D3D::Optimise(DerivUtilGPU &derivUtil,NodesGPU &nodes,
                 //this is a minimser so see if we can extend further
                 while (l > -10)
                 {
-                    // Update node
+                // Update node
                     h_Xn[0] = h_Xc[0] + alpha * dk[0];
                     h_Xn[1] = h_Xc[1] + alpha * dk[1];
                     h_Xn[2] = h_Xc[2] + alpha * dk[2];
-                    SetNodeCoord(h_Xn, id, nodes, nodeMap);
+                    SetNodeCoord(h_Xn, globalNodeId, nodes, elIdArray, localNodeIdArray, nElmt);
 
-                    newVal = 0;
+                    grad.h_integral[0] = 0.0;
+                    Kokkos::deep_copy(grad.integral,grad.h_integral);
                     for (int el = 0; el < nElmt; ++el)
                     {
-                        newVal += GetFunctional<3>(derivUtil, nodes, elUtil, nodeMap, grad,
+                        GetFunctional<3>(derivUtil, nodes, elUtil, nodeMap, grad,
                             elId, localNodeId, ep, false,false);
                     }
+                    Kokkos::deep_copy(grad.h_integral, grad.integral);
+                    newVal = grad.h_integral[0];
+                // end evaluate node
 
+                // update node, but scaled
                     h_Xn[0] = h_Xc[0] + alpha/beta * dk[0];
                     h_Xn[1] = h_Xc[1] + alpha/beta * dk[1];
                     h_Xn[2] = h_Xc[2] + alpha/beta * dk[2];
-                    SetNodeCoord(h_Xn, id, nodes, nodeMap);
+                    SetNodeCoord(h_Xn, globalNodeId, nodes, elIdArray, localNodeIdArray, nElmt);
 
-                    dbVal = 0;
+                    grad.h_integral[0] = 0.0;
+                    Kokkos::deep_copy(grad.integral,grad.h_integral);
                     for (int el = 0; el < nElmt; ++el)
                     {
                         elId = elIdArray[el];
                         localNodeId = localNodeIdArray[el];
-                        dbVal += GetFunctional<3>(derivUtil, nodes, elUtil, nodeMap, grad,
+                        GetFunctional<3>(derivUtil, nodes, elUtil, nodeMap, grad,
                             elId, localNodeId, ep, false,false);
                     }
+                    Kokkos::deep_copy(grad.h_integral, grad.integral);
+                    dbVal = grad.h_integral[0];
+                // end evaluate node
 
                     if (newVal <= currentW + c1() * (
                         alpha*pg + 0.5*alpha*alpha*hes) &&
@@ -406,20 +436,25 @@ void NodeOpti3D3D::Optimise(DerivUtilGPU &derivUtil,NodesGPU &nodes,
                 //this is not a minimser so reverse line search
                 while (alpha > alphaTol())
                 {
-                    // Update node
+                // Update node
                     h_Xn[0] = h_Xc[0] + alpha * dk[0];
                     h_Xn[1] = h_Xc[1] + alpha * dk[1];
                     h_Xn[2] = h_Xc[2] + alpha * dk[2];
-                    SetNodeCoord(h_Xn, id, nodes, nodeMap);
+                    SetNodeCoord(h_Xn, globalNodeId, nodes, elIdArray, localNodeIdArray, nElmt);
 
-                    newVal = 0;
+                    grad.h_integral[0] = 0.0;
+                    Kokkos::deep_copy(grad.integral,grad.h_integral);
                     for (int el = 0; el < nElmt; ++el)
                     {
                         elId = elIdArray[el];
                         localNodeId = localNodeIdArray[el];
-                        newVal += GetFunctional<3>(derivUtil, nodes, elUtil, nodeMap, grad,
+                        GetFunctional<3>(derivUtil, nodes, elUtil, nodeMap, grad,
                             elId, localNodeId, ep, false,false);
                     }
+                    Kokkos::deep_copy(grad.h_integral, grad.integral);
+                    newVal = grad.h_integral[0];
+                // end evaluate node
+
 
                     if (newVal <= currentW + c1() * (
                         alpha*pg + 0.5*alpha*alpha*hes))
@@ -432,14 +467,14 @@ void NodeOpti3D3D::Optimise(DerivUtilGPU &derivUtil,NodesGPU &nodes,
                     alpha = pow(beta,l);
                 }
             }
-        }
+        }*/
 
         if(!found)
         {
             h_Xn[0] = h_Xc[0];
             h_Xn[1] = h_Xc[1];
             h_Xn[2] = h_Xc[2];
-            SetNodeCoord(h_Xn, id, nodes, nodeMap);
+            SetNodeCoord(h_Xn, globalNodeId, nodes, elIdArray, localNodeIdArray, nElmt);
 
             mtx.lock();
             res.nReset++;
@@ -450,12 +485,13 @@ void NodeOpti3D3D::Optimise(DerivUtilGPU &derivUtil,NodesGPU &nodes,
         // update residual value
         mtx.lock();        
         //GetNodeCoord(h_Xn, id, nodes, nodeMap);
-        res.val = max(sqrt( (h_Xn[0]-h_Xc[0])*(h_Xn[0]-h_Xc[0])
+        res.val = max(sqrt(  (h_Xn[0]-h_Xc[0])*(h_Xn[0]-h_Xc[0])
                             +(h_Xn[1]-h_Xc[1])*(h_Xn[1]-h_Xc[1])
                             +(h_Xn[2]-h_Xc[2])*(h_Xn[2]-h_Xc[2]) ),res.val );
         res.func +=newVal;
         mtx.unlock();
     }
+    //});
 }
 
 

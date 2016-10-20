@@ -190,6 +190,9 @@ public:
     void Evaluate(DerivUtilGPU &derivUtil,NodesGPU &nodes, ElUtilGPU &elUtil, Residual &res);
     void Create_NodeMap(NodesGPU &nodes, std::vector<std::vector<NodeSharedPtr> > &freenodes, NodeMap &nodeMap);
 
+    void Optimise(DerivUtilGPU &derivUtil,NodesGPU &nodes, 
+        NodeMap &nodeMap, ElUtilGPU &elUtil, Residual &res);
+
     
 private:
     typedef std::map<int, std::pair<std::vector<int>,

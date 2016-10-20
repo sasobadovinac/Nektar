@@ -43,7 +43,6 @@ namespace Nektar
 namespace Utilities
 {
 
-boost::mutex mtx3;
 
 void ProcessVarOpti::Load_derivUtil(DerivUtilGPU &derivUtil)
 {

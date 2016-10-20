@@ -460,7 +460,27 @@ void ProcessVarOpti::Process()
             // Optimise node coordinates on the GPU
             for(int j = 0; j < optiNodes[i].size(); j++)
             {
-                optiNodes[i][j]->Optimise(derivUtil,nodes, nodeMap, elUtil, res);
+                const int nElmt = optiNodes[i][j]->data.size();
+                const int globalNodeId = optiNodes[i][j]->node->m_id;
+                
+                int elIdArray[nElmt];    
+                int localNodeIdArray[nElmt];
+
+                NodeMap::const_iterator coeffs;
+                coeffs = nodeMap.find(globalNodeId); 
+                for (int el = 0; el < nElmt; ++el)
+                {
+                    elIdArray[el] = optiNodes[i][j]->data[el]->GetId();
+
+                    int elmt = std::get<0>(coeffs->second);
+                    if (elmt == elIdArray[el])
+                    {
+                        localNodeIdArray[el] = std::get<1>(coeffs->second);
+                    }            
+                    coeffs++;
+                }
+                optiNodes[i][j]->Optimise(derivUtil,nodes, nodeMap, elUtil, res,
+                        nElmt, globalNodeId, elIdArray, localNodeIdArray);
             }
             
         }

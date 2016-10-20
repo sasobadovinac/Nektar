@@ -63,11 +63,16 @@ public:
 
     virtual ~NodeOpti(){};
 
-    virtual void Optimise(DerivUtilGPU &derivUtil,NodesGPU &nodes, NodeMap &nodeMap, ElUtilGPU &elUtil, Residual &res) = 0;
+    virtual void Optimise(DerivUtilGPU &derivUtil,NodesGPU &nodes, 
+            NodeMap &nodeMap, ElUtilGPU &elUtil, Residual &res,
+            int nElmt, int globalNodeId, int * elIdArray, int * localNodeIdArray) = 0;
+    
     NodeOptiJob *GetJob();
 
-    void GetNodeCoord(double (&X)[3], int id,NodesGPU &nodes, NodeMap &nodeMap);
-    void SetNodeCoord(double (&X)[3], int id,NodesGPU &nodes, NodeMap &nodeMap);
+    void GetNodeCoord(double (&X)[3], int id,NodesGPU &nodes,
+            int * elIdArray, int * localNodeIdArray);
+    void SetNodeCoord(double (&X)[3], int id,NodesGPU &nodes,
+            int * elIdArray, int * localNodeIdArray, int nElmt);
 
     template<int DIM> NekDouble GetFunctional(DerivUtilGPU &derivUtilGPU,
          NodesGPU &nodes, ElUtilGPU &elUtil, NodeMap &nodeMap, 
@@ -75,21 +80,23 @@ public:
          double ep,
          bool gradient = true, bool hessian = true);
     
+    std::vector<ElUtilSharedPtr> data;
+    NodeSharedPtr node;
 
 protected:
 
-    NodeSharedPtr node;
+    //NodeSharedPtr node;
     boost::mutex mtx;
     std::vector<int> nodeIds;
-    std::vector<ElUtilSharedPtr> data;
-    Array<OneD, NekDouble> G;
+    //std::vector<ElUtilSharedPtr> data;
+    //Array<OneD, NekDouble> G;
 
     void CalcMinJac();
     double CalcMinJac(ElUtilGPU &elUtil, int nElmt, int * iD);
     bool Linear();
 
-    template<int DIM> int IsIndefinite();
-    template<int DIM> void MinEigen(NekDouble &val, Array<OneD, NekDouble> &vec);
+    template<int DIM> int IsIndefinite(Grad &grad);
+    template<int DIM> void MinEigen(NekDouble &val, NekDouble (&vec)[DIM], Grad &grad);
 
     NekDouble dx;
     NekDouble minJac;
@@ -130,7 +137,9 @@ public:
 
     ~NodeOpti3D3D(){};
 
-    void Optimise(DerivUtilGPU &derivUtil,NodesGPU &nodes, NodeMap &nodeMap, ElUtilGPU &elUtil, Residual &res);
+    void Optimise(DerivUtilGPU &derivUtil,NodesGPU &nodes, 
+            NodeMap &nodeMap, ElUtilGPU &elUtil, Residual &res,
+            int nElmt, int globalNodeId, int * elIdArray, int * localNodeIdArray);
 
     static int m_type;
     static NodeOptiSharedPtr create(
@@ -159,7 +168,9 @@ public:
 
     ~NodeOpti2D2D(){};
 
-    void Optimise(DerivUtilGPU &derivUtil,NodesGPU &nodes, NodeMap &nodeMap, ElUtilGPU &elUtil, Residual &res);
+    void Optimise(DerivUtilGPU &derivUtil,NodesGPU &nodes, 
+            NodeMap &nodeMap, ElUtilGPU &elUtil, Residual &res,
+            int nElmt, int globalNodeId, int * elIdArray, int * localNodeIdArray);
 
     static int m_type;
     static NodeOptiSharedPtr create(
