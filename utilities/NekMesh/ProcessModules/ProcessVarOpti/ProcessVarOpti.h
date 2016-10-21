@@ -145,8 +145,12 @@ enum optimiser
 
 struct Residual
 {
-    NekDouble val;
-    NekDouble func;
+    //NekDouble val;
+    Kokkos::View<double[1]> val;
+    typename Kokkos::View< double[1]>::HostMirror h_val;
+    //NekDouble func;
+    Kokkos::View<double[1]> func;
+    typename Kokkos::View< double[1]>::HostMirror h_func;
     //NekDouble worstJac;
     Kokkos::View<double[1]> worstJac;
     typename Kokkos::View< double[1]>::HostMirror h_worstJac;
@@ -156,9 +160,10 @@ struct Residual
 
     //int startInv;
     Kokkos::View<int[1]> startInv;
-    typename Kokkos::View< int[1]>::HostMirror h_startInv;    
-
-    int nReset;    
+    typename Kokkos::View< int[1]>::HostMirror h_startInv;
+    //int nReset;
+    Kokkos::View<int[1]> nReset;
+    typename Kokkos::View< int[1]>::HostMirror h_nReset;     
 };
 
 struct Grad

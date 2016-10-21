@@ -296,10 +296,11 @@ void ProcessVarOpti::Process()
         //p2rocess2(); 
     }
 
-    //res = boost::shared_ptr<Residual>(new Residual);
     Residual res;
-    res.val = 1.0;
-
+    res.val = Kokkos::View<double[1]>("val");
+    res.h_val = Kokkos::create_mirror_view(res.val);
+    res.h_val[0] = 1.0;
+    
     m_mesh->MakeOrder(m_mesh->m_nummode-1,LibUtilities::eGaussLobattoLegendre);
     BuildDerivUtil();
     GetElementMap();
@@ -368,6 +369,10 @@ void ProcessVarOpti::Process()
     res.h_worstJac = Kokkos::create_mirror_view(res.worstJac);    
     res.h_worstJac[0] = DBL_MAX;
 
+    res.func = Kokkos::View<double[1]>("func");
+    res.h_func = Kokkos::create_mirror_view(res.func);
+    res.nReset = Kokkos::View<int[1]>("nReset");
+    res.h_nReset = Kokkos::create_mirror_view(res.nReset);
     
     
     // initialise and load derivUtils onto GPU
@@ -401,13 +406,7 @@ void ProcessVarOpti::Process()
     // Evaluate the Jacobian of all elements on GPU
     Evaluate(derivUtil, nodes, elUtil, res);
 
-    // Evaluate the Jacobian of all elements on CPU
-    /*Kokkos::parallel_for(range_policy_host(0,dataSet.size()), KOKKOS_LAMBDA (const int i)
-    {
-        dataSet[i]->Evaluate();
-    });*/ 
-
-
+    
     if(m_config["histfile"].beenSet)
     {
         ofstream histFile;
@@ -443,38 +442,30 @@ void ProcessVarOpti::Process()
         resFile.open(m_config["resfile"].as<string>().c_str());
     }
 
-    while (ctr < maxIter && res.val > restol)
+    while (ctr < maxIter && res.h_val[0] > restol)
     {
         ctr++;
-        res.val = 0.0;
-        res.func = 0.0;
-        res.nReset = 0;
+        res.h_val[0] = 0.0;
+        res.h_func[0] = 0.0;
+        res.h_nReset[0] = 0;
+        Kokkos::deep_copy(res.val,res.h_val);
+        Kokkos::deep_copy(res.func,res.h_func);
+        Kokkos::deep_copy(res.nReset,res.h_nReset);
+        
         for(int i = 0; i < optiNodes.size(); i++)
         {
-            // Optimise node coordinates on the CPU
-            /*Kokkos::parallel_for(range_policy_host(0,optiNodes[i].size()),KOKKOS_LAMBDA (const int j)
-            {
-                optiNodes[i][j]->Optimise();
-            });*/
-
             // Optimise node coordinates on the GPU
             for(int j = 0; j < optiNodes[i].size(); j++)
             {
                 const int nElmt = optiNodes[i][j]->data.size();
                 const int globalNodeId = optiNodes[i][j]->node->m_id;
                 
-                //int elIdArray[nElmt];
                 nodes.elIdArray = Kokkos::View<int*> ("elIdArray", nElmt);
                 nodes.h_elIdArray = Kokkos::create_mirror_view(nodes.elIdArray);
 
                 nodes.localNodeIdArray = Kokkos::View<int*> ("localNodeIdArray", nElmt);
                 nodes.h_localNodeIdArray = Kokkos::create_mirror_view(nodes.localNodeIdArray);
       
-                //int localNodeIdArray[nElmt];
-                //Kokkos::View<int*> localNodeIdArray("localNodeIdArray", nElmt);
-                //typename Kokkos::View<int*>::HostMirror h_localNodeIdArray 
-                //            = Kokkos::create_mirror_view(localNodeIdArray);
-
                 NodeMap::const_iterator coeffs;
                 coeffs = nodeMap.find(globalNodeId); 
                 for (int el = 0; el < nElmt; ++el)
@@ -490,10 +481,12 @@ void ProcessVarOpti::Process()
                 }
                 Kokkos::deep_copy(nodes.localNodeIdArray,nodes.h_localNodeIdArray);
                 Kokkos::deep_copy(nodes.elIdArray,nodes.h_elIdArray);
-
+                
                 optiNodes[i][j]->Optimise(derivUtil, nodes, nodeMap, elUtil, res,
                         nElmt, globalNodeId);
+                //printf("node %i finished\n", j);
             }
+            //printf("colorset %i finished\n", i);
             
         }
 
@@ -503,23 +496,21 @@ void ProcessVarOpti::Process()
 
         // Evaluate the elements on GPU
         Evaluate(derivUtil, nodes, elUtil, res);
-
-        // Evaluate elements on CPU
-        /*Kokkos::parallel_for(range_policy_host(0,dataSet.size()), KOKKOS_LAMBDA (const int i)
-        {
-            dataSet[i]->Evaluate();
-        });*/
+        
+        Kokkos::deep_copy(res.h_val,res.val);
+        Kokkos::deep_copy(res.h_func,res.func);
+        Kokkos::deep_copy(res.h_nReset,res.nReset);
 
         if(m_config["resfile"].beenSet)
         {
-            resFile << res.val << " " << res.h_worstJac[0] << " " << res.func << endl;
+            resFile << res.h_val[0] << " " << res.h_worstJac[0] << " " << res.h_func[0] << endl;
         }
 
-        cout << ctr << "\tResidual: " << res.val
+        cout << ctr << "\tResidual: " << res.h_val[0]
                     << "\tMin Jac: " << res.h_worstJac[0]
                     << "\tInvalid: " << res.h_startInv[0]
-                    << "\tReset nodes: " << res.nReset
-                    << "\tFunctional: " << res.func
+                    << "\tReset nodes: " << res.h_nReset[0]
+                    << "\tFunctional: " << res.h_func[0]
                     << endl;
     }
 

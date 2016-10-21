@@ -70,9 +70,14 @@ public:
     NodeOptiJob *GetJob();
 
     void GetNodeCoord(double (&X)[3], int id,NodesGPU &nodes,
-            int * elIdArray, int * localNodeIdArray);
+            typename Kokkos::View<int*>::HostMirror elIdArray, typename Kokkos::View<int*>::HostMirror localNodeIdArray);
     void SetNodeCoord(double (&X)[3], int id,NodesGPU &nodes,
-            int * elIdArray, int * localNodeIdArray, int nElmt);
+            typename Kokkos::View<int*>::HostMirror elIdArray, typename Kokkos::View<int*>::HostMirror localNodeIdArray, int nElmt);
+
+    void GetNodeCoordGPU( double (&X)[3], const NodesGPU &nodes,
+            Kokkos::View<int*> elIdArray, Kokkos::View<int*> localNodeIdArray);
+    void SetNodeCoordGPU (const double (&X)[3], const NodesGPU &nodes,
+            Kokkos::View<int*> elIdArray, Kokkos::View<int*> localNodeIdArray, int nElmt);
 
     template<int DIM> NekDouble GetFunctional(const DerivUtilGPU &derivUtilGPU,
          const NodesGPU &nodes, const ElUtilGPU &elUtil, const NodeMap &nodeMap, 
@@ -91,8 +96,8 @@ protected:
     //std::vector<ElUtilSharedPtr> data;
     //Array<OneD, NekDouble> G;
 
-    void CalcMinJac();
-    double CalcMinJac(ElUtilGPU &elUtil, int nElmt, int * iD);
+    double CalcMinJac(ElUtilGPU &elUtil, int nElmt, typename Kokkos::View<int*>::HostMirror elIdArray);
+    double CalcMinJacGPU(const ElUtilGPU &elUtil, int nElmt, Kokkos::View<int*> elIdArray);
     bool Linear();
 
     template<int DIM> int IsIndefinite(Grad &grad);
