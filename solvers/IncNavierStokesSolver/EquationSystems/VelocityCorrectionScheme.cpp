@@ -584,7 +584,7 @@ namespace Nektar
                 NekDouble   xstart = 100; 
                 Array<OneD, NekDouble> SVVDiffCoeff(nel);
                 Array<OneD, NekDouble> SVVCutoffRatio(nel);
-                m_session->LoadParameter("SVVXstart",  xstart,  100.0);
+                m_session->LoadParameter("SVVXstart",  xstart,  1e6);
 
                 for(int i= 0; i < nel; ++i)
                 {
