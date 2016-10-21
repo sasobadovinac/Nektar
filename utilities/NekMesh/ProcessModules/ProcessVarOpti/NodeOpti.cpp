@@ -196,13 +196,11 @@ inline void CalcSK(Kokkos::View< double[9]> G, double sk[3])
 int NodeOpti3D3D::m_type = GetNodeOptiFactory().RegisterCreatorFunction(
     33, NodeOpti3D3D::create, "3D3D");
 
-
+KOKKOS_INLINE_FUNCTION
 void NodeOpti3D3D::Optimise(DerivUtilGPU &derivUtil,NodesGPU &nodes, 
         NodeMap &nodeMap, ElUtilGPU &elUtil, Residual &res, 
         int nElmt, int globalNodeId)
 {      
-    Kokkos::View<double[1]> eps("eps");     
-
     Grad grad;
     grad.G = Kokkos::View<double[9]> ("G");
     grad.h_G = Kokkos::create_mirror_view(grad.G);
@@ -216,18 +214,19 @@ void NodeOpti3D3D::Optimise(DerivUtilGPU &derivUtil,NodesGPU &nodes,
         double currentW, newVal;
 
         double minJac = CalcMinJacGPU(elUtil, nElmt, nodes.elIdArray);
-        eps[0] = minJac < 0.0 ? sqrt(1e-9 + 0.04*minJac*minJac) : sqrt(1e-9); 
-        double ep = eps[0];
-
-        grad.integral[0] = 0.0;        
+        double ep = minJac < 0.0 ? sqrt(1e-9 + 0.04*minJac*minJac) : sqrt(1e-9); 
+        
+        /*grad.integral[0] = 0.0;        
         for (int el = 0; el < nElmt; ++el)
         { 
             int elId = nodes.elIdArray[el];
             int localNodeId = nodes.localNodeIdArray[el];
-            NodeOpti::GetFunctional<3>(derivUtil, nodes, elUtil, nodeMap, grad,
+            NodeOpti::GetFunctional<3>(derivUtil, nodes, elUtil, grad,
                 elId, localNodeId, ep, teamMember);
         }    
-        currentW = grad.integral[0]; 
+        currentW = grad.integral[0];*/
+
+        currentW = NodeOpti::GetFunctional<3>(derivUtil, nodes, elUtil, grad, nElmt, ep, teamMember);
     
     
         if(grad.G[0]*grad.G[0] + grad.G[1]*grad.G[1] + grad.G[2]*grad.G[2] > gradTol())
@@ -255,16 +254,17 @@ void NodeOpti3D3D::Optimise(DerivUtilGPU &derivUtil,NodesGPU &nodes,
                 h_Xn[2] = h_Xc[2] + alpha * sk[2];
                 SetNodeCoordGPU(h_Xn, nodes, nodes.elIdArray, nodes.localNodeIdArray, nElmt);
                 
-                double ep = eps[0];
-                grad.integral[0] = 0.0;              
+                /*grad.integral[0] = 0.0;              
                 for (int el = 0; el < nElmt; ++el)
                 {
                     int elId = nodes.elIdArray[el];
                     int localNodeId = nodes.localNodeIdArray[el];
-                    GetFunctional<3>(derivUtil, nodes, elUtil, nodeMap, grad,
+                    GetFunctional<3>(derivUtil, nodes, elUtil, grad,
                             elId, localNodeId, ep, teamMember, false,false);
                 } 
-                newVal = grad.integral[0];        
+                newVal = grad.integral[0];*/
+                newVal = NodeOpti::GetFunctional<3>(derivUtil, nodes, elUtil, grad, nElmt, ep, teamMember);
+           
 
                 if (newVal <= currentW + c1() * (alpha*pg+ 0.5*alpha*alpha*hes))
                 {

@@ -63,6 +63,7 @@ public:
 
     virtual ~NodeOpti(){};
 
+    KOKKOS_INLINE_FUNCTION
     virtual void Optimise(DerivUtilGPU &derivUtil,NodesGPU &nodes, 
             NodeMap &nodeMap, ElUtilGPU &elUtil, Residual &res,
             int nElmt, int globalNodeId) = 0;
@@ -80,8 +81,8 @@ public:
             Kokkos::View<int*> elIdArray, Kokkos::View<int*> localNodeIdArray, int nElmt);
 
     template<int DIM> NekDouble GetFunctional(const DerivUtilGPU &derivUtilGPU,
-         const NodesGPU &nodes, const ElUtilGPU &elUtil, const NodeMap &nodeMap, 
-         const Grad &grad, const int elId, const int localNodeId,
+         const NodesGPU &nodes, const ElUtilGPU &elUtil, 
+         const Grad &grad, int nElmt,//const int elId, const int localNodeId,
          const double ep, const member_type &teamMember,
          bool gradient = true, bool hessian = true);
     
@@ -142,6 +143,7 @@ public:
 
     ~NodeOpti3D3D(){};
 
+    KOKKOS_INLINE_FUNCTION
     void Optimise(DerivUtilGPU &derivUtil,NodesGPU &nodes, 
             NodeMap &nodeMap, ElUtilGPU &elUtil, Residual &res,
             int nElmt, int globalNodeId);

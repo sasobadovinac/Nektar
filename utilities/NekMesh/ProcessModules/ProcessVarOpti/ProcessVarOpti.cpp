@@ -349,7 +349,7 @@ void ProcessVarOpti::Process()
     // determine statistics of element colouring
     int nset = optiNodes.size();
     int p = 0;
-    int mn = DBL_MAX;
+    int mn = INT_MAX;
     int mx = 0;
     for(int i = 0; i < nset; i++)
     {

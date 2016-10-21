@@ -190,11 +190,12 @@ inline NekDouble FrobeniusNorm<3>(NekDouble inarray[3][3])
 
 
 
+
 template<int DIM>
 KOKKOS_INLINE_FUNCTION
 NekDouble NodeOpti::GetFunctional(const DerivUtilGPU &derivUtilGPU,
-         const NodesGPU &nodes, const ElUtilGPU &elUtil, const NodeMap &nodeMap, 
-         const Grad &grad, const int elId, const int localNodeId,
+         const NodesGPU &nodes, const ElUtilGPU &elUtil, 
+         const Grad &grad, int nElmt, //const int elId, const int localNodeId,
          const double ep, const member_type &teamMember,
          bool gradient, bool hessian)
 { 
@@ -212,7 +213,13 @@ NekDouble NodeOpti::GetFunctional(const DerivUtilGPU &derivUtilGPU,
     
     //grad.h_integral[0] = 0.0;
     //Kokkos::deep_copy(grad.integral,grad.h_integral);
-    
+grad.integral[0] = 0.0;
+for (int el = 0; el < nElmt; ++el)
+{
+//Kokkos::parallel_for( team_policy( nElmt, Kokkos::AUTO ), KOKKOS_LAMBDA ( const member_type& teamMember)
+//{ 
+    int elId = nodes.elIdArray[el];
+    int localNodeId = nodes.localNodeIdArray[el];   
     
     Kokkos::parallel_for( Kokkos::TeamThreadRange( teamMember , ptsHighGPU ), [&] ( const int k)
     {        
@@ -410,12 +417,13 @@ NekDouble NodeOpti::GetFunctional(const DerivUtilGPU &derivUtilGPU,
             }
         }
     });
+}
 
     //});
      
     //Kokkos::deep_copy(grad.h_integral, grad.integral);
         
-    return 0;
+    return grad.integral[0];
 
 }
 
