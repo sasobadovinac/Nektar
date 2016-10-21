@@ -586,11 +586,15 @@ namespace Nektar
                 Array<OneD, NekDouble> SVVCutoffRatio(nel);
                 m_session->LoadParameter("SVVXstart",  xstart,  1e6);
 
+                if (m_comm->GetRank() == 0)
+                {
+                    cout << "Applying a SVVCutoffRation of 0.4 after x > :" << xstart <<endl;
+                }
+                
                 for(int i= 0; i < nel; ++i)
                 {
                     SVVDiffCoeff[i]   = m_sVVDiffCoeff/m_kinvis;
                     SVVCutoffRatio[i] = m_sVVCutoffRatio;
-#if 1
                     NekDouble xmin  = 1e6;
                     for(int j = 0; j < m_fields[0]->GetExp(i)->GetNverts(); ++j)
                     {
@@ -601,7 +605,6 @@ namespace Nektar
                     {
                         SVVCutoffRatio[i] = 0.4;
                     }
-#endif
                 }
 
                 varCoeffMap[StdRegions::eVarCoeffSVVDiff]        = SVVDiffCoeff;
