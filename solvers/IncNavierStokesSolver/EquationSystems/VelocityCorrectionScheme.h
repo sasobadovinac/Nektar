@@ -139,10 +139,13 @@ namespace Nektar
             v_EvaluateAdvection_SetPressureBCs( inarray, outarray, time);
         }
 
+        void GetSensor(const Array<OneD, const NekDouble > &physarray,
+                       Array<OneD, NekDouble>   &Sensor);
+
         void GetStabiliseKinvis(const Array<OneD, const NekDouble > &physarray,
                                 NekDouble C,
                                 NekDouble S0_def,
-                                Array<OneD, NekDouble>   &Sensor);
+                                Array<OneD, NekDouble>   &StabKinvis);
 
     protected:
         /// bool to identify if spectral vanishing viscosity is active.

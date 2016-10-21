@@ -265,12 +265,19 @@ namespace Nektar
                 if(m_linSysKey.GetVarCoeffs().
                    count(StdRegions::eVarCoeffSVVDiff) != 0)
                 {
-                    ASSERTL0(m_linSysKey.GetConstFactors().
+                    ASSERTL1(m_linSysKey.GetConstFactors().
                              count(StdRegions::eFactorSVVDiffCoeff),
                              "VarCoeffSVVDiff is set but not FactorSVVDiff");
 
                     vConstFactorMap[StdRegions::eFactorSVVDiffCoeff] =
                         m_linSysKey.GetVarCoeff(StdRegions::eVarCoeffSVVDiff)[n];
+
+                    ASSERTL1(m_linSysKey.GetConstFactors().
+                             count(StdRegions::eFactorSVVCutoffRatio),
+                             "VarCoeffSVVCuroffRatio is set but not FactorSVVCutoffRatio");
+
+                    vConstFactorMap[StdRegions::eFactorSVVCutoffRatio] =
+                        m_linSysKey.GetVarCoeff(StdRegions::eVarCoeffSVVCutoffRatio)[n];
                 }
                 else
                 {
@@ -357,6 +364,14 @@ namespace Nektar
 
                     vConstFactorMap[StdRegions::eFactorSVVDiffCoeff] =
                         m_linSysKey.GetVarCoeff(StdRegions::eVarCoeffSVVDiff)[n];
+ 
+                    ASSERTL1(m_linSysKey.GetConstFactors().
+                             count(StdRegions::eFactorSVVCutoffRatio),
+                             "VarCoeffSVVCuroffRatio is set but not FactorSVVCutoffRatio");
+
+                    vConstFactorMap[StdRegions::eFactorSVVCutoffRatio] =
+                        m_linSysKey.GetVarCoeff(StdRegions::eVarCoeffSVVCutoffRatio)[n];
+                   
                 }
                 else
                 {

@@ -576,6 +576,40 @@ namespace Nektar
         {
             factors[StdRegions::eFactorSVVCutoffRatio] = m_sVVCutoffRatio;
             factors[StdRegions::eFactorSVVDiffCoeff]   = m_sVVDiffCoeff/m_kinvis;            
+
+            static bool init = true;
+            if(init)
+            {
+                int nel   = m_fields[0]->GetExpSize();
+                NekDouble   xstart = 100; 
+                Array<OneD, NekDouble> SVVDiffCoeff(nel);
+                Array<OneD, NekDouble> SVVCutoffRatio(nel);
+                m_session->LoadParameter("SVVXstart",  xstart,  100.0);
+
+                for(int i= 0; i < nel; ++i)
+                {
+                    SVVDiffCoeff[i]   = m_sVVDiffCoeff/m_kinvis;
+                    SVVCutoffRatio[i] = m_sVVCutoffRatio;
+#if 1
+                    NekDouble xmin  = 1e6;
+                    for(int j = 0; j < m_fields[0]->GetExp(i)->GetNverts(); ++j)
+                    {
+                        xmin = min(xmin,m_fields[0]->GetExp(i)->GetGeom()
+                                   ->GetVertex(j)->x());
+                    }
+                    if(xmin > xstart)
+                    {
+                        SVVCutoffRatio[i] = 0.4;
+                    }
+#endif
+                }
+
+                varCoeffMap[StdRegions::eVarCoeffSVVDiff]        = SVVDiffCoeff;
+                varCoeffMap[StdRegions::eVarCoeffSVVCutoffRatio] = SVVCutoffRatio;
+
+                init = false; 
+            }
+
         }
 
         if(m_dynamicVisc)
@@ -603,7 +637,7 @@ namespace Nektar
             int ncoeffs = m_fields[0]->GetNcoeffs();
             int nquad   = m_fields[0]->GetTotPoints();
             
-#if 0 
+#if 0
             // store sensorfield for potential restarts
             variables.push_back("SensorField");
             Array<OneD, NekDouble> senfld(ncoeffs);
@@ -789,17 +823,65 @@ namespace Nektar
 
             m_dynamicVisc->m_numSteps++;
         }
+        else if(boost::iequals(m_dynamicVisc->m_type,
+                               "SemiImplicitSVVCutoffRatio"))
+        {
+            int nel = m_fields[0]->GetExpSize();
+            
+            Vmath::Smul(nquad,1.0/(m_dynamicVisc->m_numSteps +1.0),
+            m_dynamicVisc->m_sensorField,1,energy,1);
+            
+            Array<OneD, NekDouble> sensor(nel);
+            
+            GetSensor(energy,sensor);
+
+            NekDouble maxsensor = Vmath::Vmax(nel,sensor,1);
+            maxsensor *= 0.3; // take 0.3 max as implicit value
+            m_comm->AllReduce(maxsensor,LibUtilities::ReduceMax);
+
+            if((maxsensor > 2*m_dynamicVisc->m_fixedKinvis)||
+               (maxsensor < 0.5*m_dynamicVisc->m_fixedKinvis))
+            {
+                m_dynamicVisc->m_fixedKinvis = maxsensor;
+
+                if (m_comm->GetRank() == 0)
+                {
+                    cout << "Updating fixed viscosity: " <<
+                        m_dynamicVisc->m_numSteps << " (value: "
+                         << maxsensor << ")" << endl;
+                }
+                
+                
+                // Release  current linear sys
+                for(int i =0 ; i < m_velocity.num_elements(); ++i)
+                {
+                    m_fields[m_velocity[i]]->ClearGlobalLinSysManager();
+                    m_fields[m_velocity[i]]->ResetLocalManagers();
+                }
+                //->Sensors need setting up here. 
+            }
+            
+
+
+            if(m_dynamicVisc->m_numSteps%m_dynamicVisc->m_numStepsAvg == 0)
+            {
+                m_dynamicVisc->m_numSteps = 0; 
+                // reset average field wiht current average
+                Vmath::Vcopy(nquad,energy,1,m_dynamicVisc->m_sensorField,1);
+            }
+
+            m_dynamicVisc->m_numSteps++;
+        }
         else
         {
             ASSERTL0(false,"Unknown definition for SolverInfo DynamicsViscosity");
         }
     }
     
-    void VelocityCorrectionScheme::GetStabiliseKinvis(
+
+    void VelocityCorrectionScheme::GetSensor(
                                const Array<OneD, const NekDouble > &physarray,
-                               NekDouble C,
-                               NekDouble S0_def,
-                               Array<OneD, NekDouble>   &StabKinvis)
+                               Array<OneD, NekDouble>   &sensorVal)
     {
         int e, NumModesElement, nQuadPointsElement;
         int nElements       = m_fields[0]->GetExpSize();
@@ -809,15 +891,11 @@ namespace Nektar
         Array<OneD,int> ExpOrderElement = GetNumExpModesPerExp();
         Array<OneD, NekDouble> tmp;
 
-        int nummodes,PhysCount;
-        NekDouble e0,sensorVal;
         NekDouble SolPmeanNumerator, SolPmeanDenumerator; 
 
-        NekDouble kappa = 0.5;
-        NekDouble s0, kinvis;
-        
         int nCoeffsElement, numCutOff;
-
+        int PhysCount;
+        
         for (e = 0; e < nElements; e++)
         {
             PhysCount = m_fields[0]->GetPhys_Offset(e);
@@ -867,27 +945,61 @@ namespace Nektar
             SolPmeanNumerator   = m_fields[0]->GetExp(e)->Integral(SolNorm);
             SolPmeanDenumerator = m_fields[0]->GetExp(e)->Integral(SolPElementPhys);
 
-            sensorVal = SolPmeanNumerator / SolPmeanDenumerator;
-            sensorVal = log10(sensorVal);
-            
+            sensorVal[e] = SolPmeanNumerator / SolPmeanDenumerator;
+            sensorVal[e] = log10(sensorVal[e]);
+        }
+    }
+
+    void VelocityCorrectionScheme::GetStabiliseKinvis(
+                               const Array<OneD, const NekDouble > &physarray,
+                               NekDouble C,
+                               NekDouble S0_def,
+                               Array<OneD, NekDouble>   &StabKinvis)
+    {
+        int e, NumModesElement, nQuadPointsElement;
+        int nElements       = m_fields[0]->GetExpSize();
+        Array<OneD, NekDouble> sensorVal(nElements);
+
+        GetSensor(physarray,sensorVal);
+        
+        // Find solution (SolP) at p = P;
+        // The input array (physarray) is the solution at p = P;
+        Array<OneD,int> ExpOrderElement = GetNumExpModesPerExp();
+        Array<OneD, NekDouble> tmp;
+
+        int PhysCount;
+        NekDouble e0;
+        NekDouble nummodes;
+        NekDouble kappa = 0.5;
+        NekDouble s0, kinvis;
+        
+        int nCoeffsElement, numCutOff;
+
+        for (e = 0; e < nElements; e++)
+        {
+            PhysCount = m_fields[0]->GetPhys_Offset(e);
+            NumModesElement    = ExpOrderElement[e];
+            nQuadPointsElement = m_fields[0]->GetExp(e)->GetTotPoints();
+            nCoeffsElement     = m_fields[0]->GetExp(e)->GetNcoeffs();
+            numCutOff          = NumModesElement - 1;
+
             nummodes = m_fields[0]->GetExp(e)->GetBasisNumModes(0)-1;
-            
-            
+                        
             e0 = C*m_dynamicVisc->m_h[e]/nummodes;
             s0 = -(S0_def + 4.0*log10(nummodes));
             
             kinvis = 0.0; 
-            if(sensorVal < s0 - kappa)
+            if(sensorVal[e] < s0 - kappa)
             {
                 kinvis = 0.0;
             }
-            else if (sensorVal > s0 + kappa)
+            else if (sensorVal[e] > s0 + kappa)
             {
                 kinvis = e0; 
             }
             else
             {
-                kinvis = 0.5*e0*(1 + sin(M_PI*(sensorVal-s0)/(2*kappa)));
+                kinvis = 0.5*e0*(1 + sin(M_PI*(sensorVal[e]-s0)/(2*kappa)));
             }
             
             Vmath::Fill(nQuadPointsElement,kinvis,
