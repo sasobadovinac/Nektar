@@ -126,6 +126,11 @@ struct NodesGPU
     int nElmt;
     Kokkos::View<int*> ElmtOffset;
     typename Kokkos::View< int*>::HostMirror h_ElmtOffset;
+
+    Kokkos::View<int*> elIdArray;
+    typename Kokkos::View<int*>::HostMirror h_elIdArray;
+    Kokkos::View<int*> localNodeIdArray;
+    typename Kokkos::View<int*>::HostMirror h_localNodeIdArray;
 };
 
 typedef boost::shared_ptr<DerivUtil> DerivUtilSharedPtr;

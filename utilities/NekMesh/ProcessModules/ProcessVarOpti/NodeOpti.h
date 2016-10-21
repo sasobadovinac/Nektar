@@ -65,7 +65,7 @@ public:
 
     virtual void Optimise(DerivUtilGPU &derivUtil,NodesGPU &nodes, 
             NodeMap &nodeMap, ElUtilGPU &elUtil, Residual &res,
-            int nElmt, int globalNodeId, int * elIdArray, int * localNodeIdArray) = 0;
+            int nElmt, int globalNodeId) = 0;
     
     NodeOptiJob *GetJob();
 
@@ -74,10 +74,10 @@ public:
     void SetNodeCoord(double (&X)[3], int id,NodesGPU &nodes,
             int * elIdArray, int * localNodeIdArray, int nElmt);
 
-    template<int DIM> NekDouble GetFunctional(DerivUtilGPU &derivUtilGPU,
-         NodesGPU &nodes, ElUtilGPU &elUtil, NodeMap &nodeMap, 
-         Grad &grad, int elId, int localNodeId,
-         double ep,
+    template<int DIM> NekDouble GetFunctional(const DerivUtilGPU &derivUtilGPU,
+         const NodesGPU &nodes, const ElUtilGPU &elUtil, const NodeMap &nodeMap, 
+         const Grad &grad, const int elId, const int localNodeId,
+         const double ep, const member_type &teamMember,
          bool gradient = true, bool hessian = true);
     
     std::vector<ElUtilSharedPtr> data;
@@ -139,7 +139,7 @@ public:
 
     void Optimise(DerivUtilGPU &derivUtil,NodesGPU &nodes, 
             NodeMap &nodeMap, ElUtilGPU &elUtil, Residual &res,
-            int nElmt, int globalNodeId, int * elIdArray, int * localNodeIdArray);
+            int nElmt, int globalNodeId);
 
     static int m_type;
     static NodeOptiSharedPtr create(
@@ -155,7 +155,7 @@ private:
 
 };
 
-class NodeOpti2D2D : public NodeOpti //1D optimsation in 3D space
+/*class NodeOpti2D2D : public NodeOpti //1D optimsation in 3D space
 {
 public:
     NodeOpti2D2D(NodeSharedPtr n,
@@ -170,7 +170,7 @@ public:
 
     void Optimise(DerivUtilGPU &derivUtil,NodesGPU &nodes, 
             NodeMap &nodeMap, ElUtilGPU &elUtil, Residual &res,
-            int nElmt, int globalNodeId, int * elIdArray, int * localNodeIdArray);
+            int nElmt, int globalNodeId);
 
     static int m_type;
     static NodeOptiSharedPtr create(
@@ -183,21 +183,10 @@ public:
 
 private:
 
-};
-
-
-/*class NodeOptiJob : public Thread::ThreadJob
-{
-public:
-    NodeOptiJob(NodeOpti* no) : node(no) {}
-
-    void Run()
-    {
-        node->Optimise();
-    }
-private:
-    NodeOpti* node;
 };*/
+
+
+
 
 
 }

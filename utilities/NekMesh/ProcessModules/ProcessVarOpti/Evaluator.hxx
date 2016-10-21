@@ -41,7 +41,7 @@ namespace Nektar
 namespace Utilities
 {
 
-
+typedef Kokkos::TeamPolicy<Kokkos::DefaultExecutionSpace>::member_type  member_type;
 
 template<int DIM> inline NekDouble Determinant(NekDouble jac[DIM][DIM])
 {
@@ -191,10 +191,11 @@ inline NekDouble FrobeniusNorm<3>(NekDouble inarray[3][3])
 
 
 template<int DIM>
-NekDouble NodeOpti::GetFunctional(DerivUtilGPU &derivUtilGPU,
-         NodesGPU &nodes, ElUtilGPU &elUtil, NodeMap &nodeMap, 
-         Grad &grad, int elId, int localNodeId,
-         double ep, 
+KOKKOS_INLINE_FUNCTION
+NekDouble NodeOpti::GetFunctional(const DerivUtilGPU &derivUtilGPU,
+         const NodesGPU &nodes, const ElUtilGPU &elUtil, const NodeMap &nodeMap, 
+         const Grad &grad, const int elId, const int localNodeId,
+         const double ep, const member_type &teamMember,
          bool gradient, bool hessian)
 { 
     const double nu = 0.4;
@@ -213,9 +214,12 @@ NekDouble NodeOpti::GetFunctional(DerivUtilGPU &derivUtilGPU,
     //Kokkos::deep_copy(grad.integral,grad.h_integral);
     
     
-        
-    Kokkos::parallel_for (range_policy(0,ptsHighGPU), KOKKOS_LAMBDA (const int k)
-    {
+    Kokkos::parallel_for( Kokkos::TeamThreadRange( teamMember , ptsHighGPU ), [&] ( const int k)
+    {        
+    //Kokkos::parallel_for (range_policy(0,ptsHighGPU), KOKKOS_LAMBDA (const int k)
+    //{
+    //for (int k = 0; k < ptsHighGPU; ++k)
+    //{
         /*derivGPU(0,k) = 0.0;
         derivGPU(1,k) = 0.0;
         derivGPU(2,k) = 0.0;
@@ -406,6 +410,8 @@ NekDouble NodeOpti::GetFunctional(DerivUtilGPU &derivUtilGPU,
             }
         }
     });
+
+    //});
      
     //Kokkos::deep_copy(grad.h_integral, grad.integral);
         

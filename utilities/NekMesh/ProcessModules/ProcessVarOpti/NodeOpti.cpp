@@ -161,15 +161,15 @@ void NodeOpti::SetNodeCoord(double (&X)[3], int id, NodesGPU &nodes,
 }
 
 
-int NodeOpti2D2D::m_type = GetNodeOptiFactory().RegisterCreatorFunction(
+/*int NodeOpti2D2D::m_type = GetNodeOptiFactory().RegisterCreatorFunction(
     22, NodeOpti2D2D::create, "2D2D");
 
 void NodeOpti2D2D::Optimise(DerivUtilGPU &derivUtil,NodesGPU &nodes, 
         NodeMap &nodeMap, ElUtilGPU &elUtil, Residual &res, 
-        int nElmt, int globalNodeId, int * elIdArray, int * localNodeIdArray)
+        int nElmt, int globalNodeId)
 {
 
-}
+}*/
 
 int NodeOpti3D3D::m_type = GetNodeOptiFactory().RegisterCreatorFunction(
     33, NodeOpti3D3D::create, "3D3D");
@@ -179,7 +179,7 @@ int NodeOpti3D3D::m_type = GetNodeOptiFactory().RegisterCreatorFunction(
 
 void NodeOpti3D3D::Optimise(DerivUtilGPU &derivUtil,NodesGPU &nodes, 
         NodeMap &nodeMap, ElUtilGPU &elUtil, Residual &res, 
-        int nElmt, int globalNodeId, int * elIdArray, int * localNodeIdArray)
+        int nElmt, int globalNodeId)
 {
        
     // using the node ID and the node map find the local coordinates of the node,
@@ -203,6 +203,14 @@ void NodeOpti3D3D::Optimise(DerivUtilGPU &derivUtil,NodesGPU &nodes,
         }            
         coeffs++;
     }*/
+    int elIdArray[nElmt];
+    int localNodeIdArray[nElmt];
+    for (int i = 0; i < nElmt; ++i)
+    {
+        elIdArray[i] = nodes.h_elIdArray[i];
+        localNodeIdArray[i] = nodes.h_localNodeIdArray[i];
+
+    }
 
 
     double minJac = CalcMinJac(elUtil, nElmt, elIdArray);
@@ -214,20 +222,30 @@ void NodeOpti3D3D::Optimise(DerivUtilGPU &derivUtil,NodesGPU &nodes,
     grad.integral = Kokkos::View<double[1]> ("integral");
     grad.h_integral = Kokkos::create_mirror_view(grad.integral);
 
-    //Kokkos::parallel_for(range_policy_host(0,1), KOKKOS_LAMBDA (const int dum)
-    //{
+    
 
     double currentW, newVal, dbVal;
-    int elId, localNodeId;    
+    //int elId, localNodeId;    
     grad.h_integral[0] = 0.0;
     Kokkos::deep_copy(grad.integral,grad.h_integral);
-    for (int el = 0; el < nElmt; ++el)
-    { 
-        elId = elIdArray[el];
-        localNodeId = localNodeIdArray[el];
-        GetFunctional<3>(derivUtil, nodes, elUtil, nodeMap, grad,
-            elId, localNodeId, ep);
-    }
+
+    const int ptsHighGPU = derivUtil.ptsHigh;
+    Kokkos::parallel_for( team_policy( nElmt, 1 ), KOKKOS_LAMBDA ( const member_type& teamMember)
+    {
+        const int el = teamMember.league_rank();
+//
+
+    ///Kokkos::parallel_for(range_policy(0,nElmt), KOKKOS_LAMBDA (const int el)
+    ///{
+    //for (int el = 0; el < nElmt; ++el)
+    //{ 
+        //int elId = elIdArray[el];
+        //int localNodeId = localNodeIdArray[el];
+        int elId = nodes.elIdArray[el];
+        int localNodeId = nodes.localNodeIdArray[el];
+        NodeOpti::GetFunctional<3>(derivUtil, nodes, elUtil, nodeMap, grad,
+            elId, localNodeId, ep, teamMember);
+    });
     Kokkos::deep_copy(grad.h_integral, grad.integral);
     currentW = grad.h_integral[0];
     Kokkos::deep_copy(grad.h_G, grad.G);
@@ -318,16 +336,78 @@ void NodeOpti3D3D::Optimise(DerivUtilGPU &derivUtil,NodesGPU &nodes,
                 h_Xn[1] = h_Xc[1] + alpha * sk[1];
                 h_Xn[2] = h_Xc[2] + alpha * sk[2];
                 SetNodeCoord(h_Xn, globalNodeId, nodes, elIdArray, localNodeIdArray, nElmt);
-                
+                //printf("%s\n", "point2");
                 grad.h_integral[0] = 0.0;
                 Kokkos::deep_copy(grad.integral,grad.h_integral);
-                for (int el = 0; el < nElmt; ++el)
+                Kokkos::parallel_for( team_policy( nElmt, ptsHighGPU ), KOKKOS_LAMBDA ( const member_type& teamMember)
                 {
-                    elId = elIdArray[el];
-                    localNodeId = localNodeIdArray[el];
+                    const int el = teamMember.league_rank();
+                    //printf("%s\n", "point1");
+                //for (int el = 0; el < nElmt; ++el)
+                //{
+                    int elId = nodes.elIdArray[el];
+                    int localNodeId = nodes.localNodeIdArray[el];
                     GetFunctional<3>(derivUtil, nodes, elUtil, nodeMap, grad,
-                            elId, localNodeId, ep, false,false);
+                            elId, localNodeId, ep, teamMember, false,false);
+    /*const double nu = 0.4;
+    const double mu = 1.0 / 2.0 / (1.0+nu);
+    const double K  = 1.0 / 3.0 / (1.0 - 2.0 * nu);
+    const int ptsLowGPU = derivUtil.ptsLow;
+    const int ptsHighGPU = derivUtil.ptsHigh;
+    int DIM = 3;
+    //printf("%s\n", "pointA");    
+    Kokkos::parallel_for( Kokkos::TeamThreadRange( teamMember , ptsHighGPU ), [&] ( const int k)
+    {        
+        //printf("%s\n", "pointB"); 
+        double derivGPU[9];
+        //printf("%s\n", "pointC"); 
+        for (int i = 0; i < DIM*DIM; ++i)
+        {
+            derivGPU[i] = 0.0;
+        }
+        //printf("%s\n", "pointD"); 
+        for (int n = 0; n < ptsLowGPU; ++n)
+        {
+            derivGPU[0] += derivUtil.VdmD_0(k,n) * nodes.X(elId,n);
+            derivGPU[1] += derivUtil.VdmD_0(k,n) * nodes.Y(elId,n);
+            derivGPU[2] += derivUtil.VdmD_0(k,n) * nodes.Z(elId,n);
+
+            derivGPU[3] += derivUtil.VdmD_1(k,n) * nodes.X(elId,n);
+            derivGPU[4] += derivUtil.VdmD_1(k,n) * nodes.Y(elId,n);
+            derivGPU[5] += derivUtil.VdmD_1(k,n) * nodes.Z(elId,n);
+
+            derivGPU[6] += derivUtil.VdmD_2(k,n) * nodes.X(elId,n);
+            derivGPU[7] += derivUtil.VdmD_2(k,n) * nodes.Y(elId,n);
+            derivGPU[8] += derivUtil.VdmD_2(k,n) * nodes.Z(elId,n);
+        }    
+        double absIdealMapDet = fabs(elUtil.idealMap(elId,k,9));
+        double quadW = derivUtil.quadW(k);
+        //printf("%s\n", "pointF"); 
+        double jacIdeal[3][3];
+        for (int m = 0; m < DIM; ++m)
+        {
+            for (int n = 0; n < DIM; ++n)
+            {
+                jacIdeal[n][m] = 0.0;
+                for (int l = 0; l < DIM; ++l)
+                {
+                    jacIdeal[n][m] += derivGPU[l*DIM+n] *
+                        elUtil.idealMap(elId,k,m * 3 + l);               
                 }
+            }
+        }
+        double jacDet = Determinant<3>(jacIdeal);
+        double I1 = FrobeniusNorm<3>(jacIdeal);        
+        double sigma = 0.5*(jacDet + sqrt(jacDet*jacDet + 4.0*ep*ep));
+        double lsigma = log(sigma);        
+        double inc = quadW * absIdealMapDet *
+                    (0.5 * mu * (I1 - 3.0 - 2.0*lsigma) +
+                     0.5 * K * lsigma * lsigma);
+        Kokkos::atomic_add(&grad.integral[0], inc);
+    });*/
+
+
+                });
                 Kokkos::deep_copy(grad.h_integral, grad.integral);
                 newVal = grad.h_integral[0];
             // end evaluate node

@@ -463,24 +463,36 @@ void ProcessVarOpti::Process()
                 const int nElmt = optiNodes[i][j]->data.size();
                 const int globalNodeId = optiNodes[i][j]->node->m_id;
                 
-                int elIdArray[nElmt];    
-                int localNodeIdArray[nElmt];
+                //int elIdArray[nElmt];
+                nodes.elIdArray = Kokkos::View<int*> ("elIdArray", nElmt);
+                nodes.h_elIdArray = Kokkos::create_mirror_view(nodes.elIdArray);
+
+                nodes.localNodeIdArray = Kokkos::View<int*> ("localNodeIdArray", nElmt);
+                nodes.h_localNodeIdArray = Kokkos::create_mirror_view(nodes.localNodeIdArray);
+      
+                //int localNodeIdArray[nElmt];
+                //Kokkos::View<int*> localNodeIdArray("localNodeIdArray", nElmt);
+                //typename Kokkos::View<int*>::HostMirror h_localNodeIdArray 
+                //            = Kokkos::create_mirror_view(localNodeIdArray);
 
                 NodeMap::const_iterator coeffs;
                 coeffs = nodeMap.find(globalNodeId); 
                 for (int el = 0; el < nElmt; ++el)
                 {
-                    elIdArray[el] = optiNodes[i][j]->data[el]->GetId();
+                    nodes.h_elIdArray[el] = optiNodes[i][j]->data[el]->GetId();
 
                     int elmt = std::get<0>(coeffs->second);
-                    if (elmt == elIdArray[el])
+                    if (elmt == nodes.h_elIdArray[el])
                     {
-                        localNodeIdArray[el] = std::get<1>(coeffs->second);
+                        nodes.h_localNodeIdArray[el] = std::get<1>(coeffs->second);
                     }            
                     coeffs++;
                 }
-                optiNodes[i][j]->Optimise(derivUtil,nodes, nodeMap, elUtil, res,
-                        nElmt, globalNodeId, elIdArray, localNodeIdArray);
+                Kokkos::deep_copy(nodes.localNodeIdArray,nodes.h_localNodeIdArray);
+                Kokkos::deep_copy(nodes.elIdArray,nodes.h_elIdArray);
+
+                optiNodes[i][j]->Optimise(derivUtil, nodes, nodeMap, elUtil, res,
+                        nElmt, globalNodeId);
             }
             
         }
