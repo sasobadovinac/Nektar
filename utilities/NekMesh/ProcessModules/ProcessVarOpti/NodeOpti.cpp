@@ -74,20 +74,7 @@ double NodeOpti::CalcMinJac( ElUtilGPU &elUtil, int nElmt, typename Kokkos::View
     return minJac;
 }
 
-KOKKOS_INLINE_FUNCTION
-double NodeOpti::CalcMinJacGPU(const ElUtilGPU &elUtil, int nElmt, Kokkos::View<int*> elIdArray)
-{
-    double minJac = DBL_MAX;
-    int el;
 
-    for(int i = 0; i < nElmt; i++)
-    {
-        el = elIdArray[i];
-        minJac = (minJac > elUtil.minJac(el) ? elUtil.minJac(el) : minJac);
-            
-    }
-    return minJac;
-}
 
 KOKKOS_INLINE_FUNCTION
 void NodeOpti::GetNodeCoord(double (&X)[3], int id, NodesGPU &nodes,
@@ -132,32 +119,7 @@ void NodeOpti::SetNodeCoord(double (&X)[3], int id, NodesGPU &nodes,
     }   
 }
 
-KOKKOS_INLINE_FUNCTION
-void NodeOpti::GetNodeCoordGPU ( double (&X)[3], const NodesGPU &nodes,
-            Kokkos::View<int*> elIdArray, Kokkos::View<int*> localNodeIdArray)
-{   
-    int elmt = elIdArray[0];
-    int node = localNodeIdArray[0];
-    
-    X[0] = nodes.X(elmt,node);
-    X[1] = nodes.Y(elmt,node);
-    X[2] = nodes.Z(elmt,node); 
-}
 
-KOKKOS_INLINE_FUNCTION
-void NodeOpti::SetNodeCoordGPU (const double (&X)[3], const NodesGPU &nodes,
-             Kokkos::View<int*> elIdArray, Kokkos::View<int*> localNodeIdArray, int nElmt)
-{
-    for(int el = 0; el < nElmt; el++)
-    {
-        int elmt = elIdArray[el];
-        int node = localNodeIdArray[el];
-
-        nodes.X(elmt,node) = X[0];
-        nodes.Y(elmt,node) = X[1];
-        nodes.Z(elmt,node) = X[2];        
-    }   
-}
 
 
 /*int NodeOpti2D2D::m_type = GetNodeOptiFactory().RegisterCreatorFunction(
@@ -170,27 +132,7 @@ void NodeOpti2D2D::Optimise(DerivUtilGPU &derivUtil,NodesGPU &nodes,
 
 }*/
 
-inline void CalcSK(Kokkos::View< double[9]> G, double sk[3])
-{
 
-    double det =    G[3]*(G[6]*G[8]-G[7]*G[7])
-                   -G[4]*(G[4]*G[8]-G[5]*G[7])
-                   +G[5]*(G[4]*G[7]-G[5]*G[6]);
-
-    sk[0] = G[0]*(G[6]*G[8]-G[7]*G[7]) +
-            G[1]*(G[5]*G[7]-G[4]*G[8]) +
-            G[2]*(G[4]*G[7]-G[3]*G[7]);
-    sk[1] = G[0]*(G[7]*G[5]-G[4]*G[5]) +
-            G[1]*(G[3]*G[8]-G[5]*G[5]) +
-            G[2]*(G[4]*G[5]-G[3]*G[7]);
-    sk[2] = G[0]*(G[4]*G[7]-G[6]*G[5]) +
-            G[1]*(G[4]*G[5]-G[3]*G[7]) +
-            G[2]*(G[3]*G[6]-G[4]*G[4]);
-
-    sk[0] /= det * -1.0;
-    sk[1] /= det * -1.0;
-    sk[2] /= det * -1.0;
-}
 
 
 int NodeOpti3D3D::m_type = GetNodeOptiFactory().RegisterCreatorFunction(
@@ -199,9 +141,9 @@ int NodeOpti3D3D::m_type = GetNodeOptiFactory().RegisterCreatorFunction(
 KOKKOS_INLINE_FUNCTION
 void NodeOpti3D3D::Optimise(DerivUtilGPU &derivUtil,NodesGPU &nodes, 
         NodeMap &nodeMap, ElUtilGPU &elUtil, Residual &res, 
-        int nElmt, int globalNodeId)
+        int nElmt)
 {      
-    Grad grad;
+    /*Grad grad;
     grad.G = Kokkos::View<double[9]> ("G");
     grad.h_G = Kokkos::create_mirror_view(grad.G);
     grad.integral = Kokkos::View<double[1]> ("integral");
@@ -216,15 +158,7 @@ void NodeOpti3D3D::Optimise(DerivUtilGPU &derivUtil,NodesGPU &nodes,
         double minJac = CalcMinJacGPU(elUtil, nElmt, nodes.elIdArray);
         double ep = minJac < 0.0 ? sqrt(1e-9 + 0.04*minJac*minJac) : sqrt(1e-9); 
         
-        /*grad.integral[0] = 0.0;        
-        for (int el = 0; el < nElmt; ++el)
-        { 
-            int elId = nodes.elIdArray[el];
-            int localNodeId = nodes.localNodeIdArray[el];
-            NodeOpti::GetFunctional<3>(derivUtil, nodes, elUtil, grad,
-                elId, localNodeId, ep, teamMember);
-        }    
-        currentW = grad.integral[0];*/
+        
 
         currentW = NodeOpti::GetFunctional<3>(derivUtil, nodes, elUtil, grad, nElmt, ep, teamMember);
     
@@ -254,15 +188,7 @@ void NodeOpti3D3D::Optimise(DerivUtilGPU &derivUtil,NodesGPU &nodes,
                 h_Xn[2] = h_Xc[2] + alpha * sk[2];
                 SetNodeCoordGPU(h_Xn, nodes, nodes.elIdArray, nodes.localNodeIdArray, nElmt);
                 
-                /*grad.integral[0] = 0.0;              
-                for (int el = 0; el < nElmt; ++el)
-                {
-                    int elId = nodes.elIdArray[el];
-                    int localNodeId = nodes.localNodeIdArray[el];
-                    GetFunctional<3>(derivUtil, nodes, elUtil, grad,
-                            elId, localNodeId, ep, teamMember, false,false);
-                } 
-                newVal = grad.integral[0];*/
+                
                 newVal = NodeOpti::GetFunctional<3>(derivUtil, nodes, elUtil, grad, nElmt, ep, teamMember);
            
 
@@ -306,9 +232,10 @@ void NodeOpti3D3D::Optimise(DerivUtilGPU &derivUtil,NodesGPU &nodes,
 
         }
 
-    });
+    });*/
 
 }
+
 
 
 }

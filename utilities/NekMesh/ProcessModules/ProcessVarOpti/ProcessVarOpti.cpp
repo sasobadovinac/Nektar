@@ -452,44 +452,60 @@ void ProcessVarOpti::Process()
         Kokkos::deep_copy(res.func,res.h_func);
         Kokkos::deep_copy(res.nReset,res.h_nReset);
         
-        for(int i = 0; i < optiNodes.size(); i++)
+        for(int cs = 0; cs < optiNodes.size(); cs++)
         {
-            
-        // Optimise node coordinates on the GPU
-            for(int j = 0; j < optiNodes[i].size(); j++)
-            {
-                const int nElmt = optiNodes[i][j]->data.size();
-                const int globalNodeId = optiNodes[i][j]->node->m_id;
-                
-                nodes.elIdArray = Kokkos::View<int*> ("elIdArray", nElmt);
-                nodes.h_elIdArray = Kokkos::create_mirror_view(nodes.elIdArray);
+            nodes.coloursetSize = optiNodes[cs].size();
 
-                nodes.localNodeIdArray = Kokkos::View<int*> ("localNodeIdArray", nElmt);
-                nodes.h_localNodeIdArray = Kokkos::create_mirror_view(nodes.localNodeIdArray);
-      
+            //construct Vector that contains the number of elements that each node in the colorset is associated with
+            nodes.nElmtArray = Kokkos::View<int*> ("nElmtArray",nodes.coloursetSize);
+            nodes.h_nElmtArray = Kokkos::create_mirror_view(nodes.nElmtArray);
+            int maxnElmt = 0;
+            for(int node = 0; node < nodes.coloursetSize; node++)
+            {
+                //const int nElmt = optiNodes[cs][node]->data.size();
+                nodes.h_nElmtArray(node) = optiNodes[cs][node]->data.size();
+                maxnElmt = (maxnElmt < nodes.h_nElmtArray(node) ? nodes.h_nElmtArray(node) : maxnElmt);
+            }
+
+            // construct Array that contains the element Ids of all elements that each node in the colorset is associated with
+            nodes.elIdArray = Kokkos::View<int**> ("elIdArray",nodes.coloursetSize, maxnElmt);
+            nodes.h_elIdArray = Kokkos::create_mirror_view(nodes.elIdArray);
+
+            // construct Array that contains the local node Ids in all elements that each node in the colorset is associated with
+            nodes.localNodeIdArray = Kokkos::View<int**> ("localNodeIdArray",nodes.coloursetSize, maxnElmt);
+            nodes.h_localNodeIdArray = Kokkos::create_mirror_view(nodes.localNodeIdArray);
+
+            for(int node = 0; node < nodes.coloursetSize; node++)            
+            {
+                const int globalNodeId = optiNodes[cs][node]->node->m_id;
                 NodeMap::const_iterator coeffs;
                 coeffs = nodeMap.find(globalNodeId); 
-                for (int el = 0; el < nElmt; ++el)
+                for (int el = 0; el < nodes.h_nElmtArray(node); ++el)
                 {
-                    nodes.h_elIdArray[el] = optiNodes[i][j]->data[el]->GetId();
+                    nodes.h_elIdArray(node,el) = optiNodes[cs][node]->data[el]->GetId();
 
                     int elmt = std::get<0>(coeffs->second);
-                    if (elmt == nodes.h_elIdArray[el])
+                    if (elmt == nodes.h_elIdArray(node,el))
                     {
-                        nodes.h_localNodeIdArray[el] = std::get<1>(coeffs->second);
+                        nodes.h_localNodeIdArray(node,el) = std::get<1>(coeffs->second);
                     }            
                     coeffs++;
                 }
-                Kokkos::deep_copy(nodes.localNodeIdArray,nodes.h_localNodeIdArray);
-                Kokkos::deep_copy(nodes.elIdArray,nodes.h_elIdArray);
-                
-                optiNodes[i][j]->Optimise(derivUtil, nodes, nodeMap, elUtil, res,
-                        nElmt, globalNodeId);
-                //printf("node %i finished\n", j);
             }
-            //printf("colorset %i finished\n", i);
+            Kokkos::deep_copy(nodes.localNodeIdArray,nodes.h_localNodeIdArray);
+            Kokkos::deep_copy(nodes.elIdArray,nodes.h_elIdArray);
+            Kokkos::deep_copy(nodes.nElmtArray,nodes.h_nElmtArray);
+
+
             
-            //NodeOpti::OptimiseGPU(derivUtil, nodes, nodeMap, elUtil, res);
+            for(int node = 0; node < nodes.coloursetSize; node++)
+            {   
+                //optiNodes[cs][node]->Optimise(derivUtil, nodes, nodeMap, elUtil, res, nElmt);
+                //printf("node %cs finished\n", node);
+            }
+            //printf("colorset %cs finished\n", cs);
+            
+            OptimiseGPU(derivUtil, nodes, nodeMap, elUtil, res);
             
         }
 

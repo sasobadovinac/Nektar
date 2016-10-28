@@ -30,7 +30,6 @@ SET(NekMeshHeaders
     ProcessModules/ProcessVarOpti/Evaluator.hxx
     ProcessModules/ProcessVarOpti/Hessian.hxx
     ProcessModules/ProcessVarOpti/EvaluateGPU.hxx
-    ProcessModules/ProcessVarOpti/OptimiseGPU.hxx
 )
 
 SET(NekMeshSources

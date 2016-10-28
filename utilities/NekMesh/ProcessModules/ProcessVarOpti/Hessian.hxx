@@ -59,7 +59,7 @@ template<> int NodeOpti::IsIndefinite<2>(Grad &grad)
 
 template<> int NodeOpti::IsIndefinite<3>(Grad &grad)
 {
-    NekMatrix<NekDouble> H(3,3);
+    /*NekMatrix<NekDouble> H(3,3);
     H(0,0) = grad.h_G[3];
     H(1,0) = grad.h_G[4];
     H(0,1) = H(1,0);
@@ -98,7 +98,7 @@ template<> int NodeOpti::IsIndefinite<3>(Grad &grad)
         }
     }
 
-    return 0;
+    return 0;*/
 }
 
 template<int DIM> void NodeOpti::MinEigen(NekDouble &val, NekDouble (&vec)[DIM], Grad &grad)
@@ -117,7 +117,7 @@ template<> void NodeOpti::MinEigen<2>(NekDouble &val, NekDouble (&vec)[2], Grad 
 
 template<> void NodeOpti::MinEigen<3>(NekDouble &val, NekDouble (&vec)[3], Grad &grad)
 {
-    NekMatrix<NekDouble> H(3,3);
+    /*NekMatrix<NekDouble> H(3,3);
     H(0,0) = grad.h_G[3];
     H(1,0) = grad.h_G[4];
     H(0,1) = H(1,0);
@@ -158,7 +158,7 @@ template<> void NodeOpti::MinEigen<3>(NekDouble &val, NekDouble (&vec)[3], Grad 
     val = eval(minI,minI);
     vec[0] = evec(0,minI);
     vec[1] = evec(1,minI);
-    vec[2] = evec(2,minI);
+    vec[2] = evec(2,minI);*/
 
 }
 

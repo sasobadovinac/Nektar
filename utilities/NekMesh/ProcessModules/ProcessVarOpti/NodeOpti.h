@@ -67,7 +67,7 @@ public:
     KOKKOS_INLINE_FUNCTION
     virtual void Optimise(DerivUtilGPU &derivUtil,NodesGPU &nodes, 
             NodeMap &nodeMap, ElUtilGPU &elUtil, Residual &res,
-            int nElmt, int globalNodeId) = 0;
+            int nElmt) = 0;
     
     NodeOptiJob *GetJob();
 
@@ -76,22 +76,13 @@ public:
     void SetNodeCoord(double (&X)[3], int id,NodesGPU &nodes,
             typename Kokkos::View<int*>::HostMirror elIdArray, typename Kokkos::View<int*>::HostMirror localNodeIdArray, int nElmt);
 
-    void GetNodeCoordGPU( double (&X)[3], const NodesGPU &nodes,
-            Kokkos::View<int*> elIdArray, Kokkos::View<int*> localNodeIdArray);
-    void SetNodeCoordGPU (const double (&X)[3], const NodesGPU &nodes,
-            Kokkos::View<int*> elIdArray, Kokkos::View<int*> localNodeIdArray, int nElmt);
-
-    template<int DIM> NekDouble GetFunctional(const DerivUtilGPU &derivUtilGPU,
-         const NodesGPU &nodes, const ElUtilGPU &elUtil, 
-         const Grad &grad, int nElmt,//const int elId, const int localNodeId,
-         const double ep, const member_type &teamMember,
-         bool gradient = true, bool hessian = true);
+    
+    
     
     std::vector<ElUtilSharedPtr> data;
     NodeSharedPtr node;
 
-    void OptimiseGPU(DerivUtilGPU &derivUtil,NodesGPU &nodes, 
-        NodeMap &nodeMap, ElUtilGPU &elUtil, Residual &res);
+    
 
 protected:
 
@@ -102,7 +93,6 @@ protected:
     //Array<OneD, NekDouble> G;
 
     double CalcMinJac(ElUtilGPU &elUtil, int nElmt, typename Kokkos::View<int*>::HostMirror elIdArray);
-    double CalcMinJacGPU(const ElUtilGPU &elUtil, int nElmt, Kokkos::View<int*> elIdArray);
     bool Linear();
 
     template<int DIM> int IsIndefinite(Grad &grad);
@@ -150,7 +140,7 @@ public:
     KOKKOS_INLINE_FUNCTION
     void Optimise(DerivUtilGPU &derivUtil,NodesGPU &nodes, 
             NodeMap &nodeMap, ElUtilGPU &elUtil, Residual &res,
-            int nElmt, int globalNodeId);
+            int nElmt);
 
     static int m_type;
     static NodeOptiSharedPtr create(
