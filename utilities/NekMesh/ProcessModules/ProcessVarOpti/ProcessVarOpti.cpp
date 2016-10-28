@@ -386,14 +386,14 @@ void ProcessVarOpti::Process()
     // load mapping ideal to ref element
     ElUtilGPU elUtil;
     elUtil.ptsHigh = dataSet[0]->derivUtil->ptsHigh;
-    elUtil.nElmt = dataSet.size();
+    elUtil.globalnElmt = dataSet.size();
     Load_elUtils<3>(elUtil);
     
 
     // initialise views for node coordinates on GPU
     NodesGPU nodes;
     nodes.nodes_size = dataSet[0]->nodes.size();
-    nodes.nElmt = dataSet.size();
+    nodes.globalnElmt = dataSet.size();
     Create_nodes_view(nodes); 
 
     // copy nodes onto GPU and evaluate the elements on GPU
@@ -454,7 +454,8 @@ void ProcessVarOpti::Process()
         
         for(int i = 0; i < optiNodes.size(); i++)
         {
-            // Optimise node coordinates on the GPU
+            
+        // Optimise node coordinates on the GPU
             for(int j = 0; j < optiNodes[i].size(); j++)
             {
                 const int nElmt = optiNodes[i][j]->data.size();
@@ -487,6 +488,8 @@ void ProcessVarOpti::Process()
                 //printf("node %i finished\n", j);
             }
             //printf("colorset %i finished\n", i);
+            
+            //NodeOpti::OptimiseGPU(derivUtil, nodes, nodeMap, elUtil, res);
             
         }
 

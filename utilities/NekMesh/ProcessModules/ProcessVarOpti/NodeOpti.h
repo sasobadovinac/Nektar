@@ -36,7 +36,7 @@
 #ifndef UTILITIES_NEKMESH_NODEOPTI
 #define UTILITIES_NEKMESH_NODEOPTI
 
-#include <ostream>
+#include <iostream>
 
 #include "../../Module.h"
 #include "ProcessVarOpti.h"
@@ -47,6 +47,7 @@ namespace Nektar
 {
 namespace Utilities
 {
+
 
 class NodeOptiJob;
 
@@ -88,6 +89,9 @@ public:
     
     std::vector<ElUtilSharedPtr> data;
     NodeSharedPtr node;
+
+    void OptimiseGPU(DerivUtilGPU &derivUtil,NodesGPU &nodes, 
+        NodeMap &nodeMap, ElUtilGPU &elUtil, Residual &res);
 
 protected:
 

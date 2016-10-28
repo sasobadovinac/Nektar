@@ -134,15 +134,15 @@ void ProcessVarOpti::Load_derivUtil(DerivUtilGPU &derivUtil)
 template<int DIM>
 void ProcessVarOpti::Load_elUtils(ElUtilGPU &elUtil)
 {
-	elUtil.idealMap = Kokkos::View<double**[10],random_memory> ("idealMap", elUtil.nElmt, elUtil.ptsHigh);
+	elUtil.idealMap = Kokkos::View<double**[10],random_memory> ("idealMap", elUtil.globalnElmt, elUtil.ptsHigh);
 	elUtil.h_idealMap = Kokkos::create_mirror_view(elUtil.idealMap);
 
-	elUtil.minJac = Kokkos::View<double*> ("minJac", elUtil.nElmt);
+	elUtil.minJac = Kokkos::View<double*> ("minJac", elUtil.globalnElmt);
 	elUtil.h_minJac = Kokkos::create_mirror_view(elUtil.minJac);
-	elUtil.scaledJac = Kokkos::View<double*> ("scaledJac", elUtil.nElmt);
+	elUtil.scaledJac = Kokkos::View<double*> ("scaledJac", elUtil.globalnElmt);
 	elUtil.h_scaledJac = Kokkos::create_mirror_view(elUtil.scaledJac);
 
-	int N1 = elUtil.nElmt;
+	int N1 = elUtil.globalnElmt;
     int M1 = elUtil.ptsHigh;
     Kokkos::parallel_for(team_policy_host(N1,M1), KOKKOS_LAMBDA (const member_type_host& teamMember)
     {         
@@ -172,7 +172,7 @@ void ProcessVarOpti::Load_elUtils(ElUtilGPU &elUtil)
 void ProcessVarOpti::Create_nodes_view(NodesGPU &nodes)
 {
     int nodes_size = nodes.nodes_size;
-    int nElmt = nodes.nElmt;    
+    int nElmt = nodes.globalnElmt;    
     nodes.X = Kokkos::View<double**> ("X",nElmt, nodes_size);
     nodes.h_X = Kokkos::create_mirror_view(nodes.X);
     nodes.Y = Kokkos::View<double**> ("Y",nElmt, nodes_size);
@@ -189,7 +189,7 @@ void ProcessVarOpti::Create_nodes_view(NodesGPU &nodes)
 
 void ProcessVarOpti::Load_nodes(NodesGPU &nodes)
 {
-    int N1 = nodes.nElmt;
+    int N1 = nodes.globalnElmt;
     int M1 = nodes.nodes_size;
     Kokkos::parallel_for(team_policy_host(N1,M1), KOKKOS_LAMBDA (const member_type_host& teamMember)
     {         
@@ -215,7 +215,7 @@ void ProcessVarOpti::Load_nodes(NodesGPU &nodes)
 void ProcessVarOpti::Create_NodeMap(NodesGPU &nodes, 
 			std::vector<std::vector<NodeSharedPtr> > &freenodes, NodeMap &nodeMap)
 {
-	int N1 = nodes.nElmt;
+	int N1 = nodes.globalnElmt;
     int M1 = nodes.nodes_size;
     int id;
     //std::multimap<int,std::pair<int,int>> nodeMap;
@@ -248,7 +248,7 @@ void ProcessVarOpti::Evaluate(DerivUtilGPU &derivUtil,NodesGPU &nodes, ElUtilGPU
     else if (m_dim == 3)
     {
         int nodes_size = nodes.nodes_size;
-        int nElmt = nodes.nElmt;   
+        int nElmt = nodes.globalnElmt;   
 
         // declare and initialise min and max Jacobian
         Kokkos::View<double*> mx("mx",nElmt);

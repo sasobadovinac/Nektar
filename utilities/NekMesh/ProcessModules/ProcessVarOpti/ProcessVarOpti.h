@@ -41,6 +41,7 @@
 #include "../../Module.h"
 
 #include "ElUtil.h"
+//#include "NodeOpti.h"
 
 namespace Nektar
 {
@@ -104,7 +105,7 @@ struct ElUtilGPU
     Kokkos::View<double**[10],random_memory> idealMap;
     typename Kokkos::View< double**[10]>::HostMirror h_idealMap;
     int ptsHigh;
-    int nElmt;
+    int globalnElmt;
 
     Kokkos::View<double*> minJac;
     typename Kokkos::View< double*>::HostMirror h_minJac;
@@ -123,7 +124,7 @@ struct NodesGPU
     Kokkos::View<int**> Id;
     typename Kokkos::View< int**>::HostMirror h_Id;
     int nodes_size;
-    int nElmt;
+    int globalnElmt;
     Kokkos::View<int*> ElmtOffset;
     typename Kokkos::View< int*>::HostMirror h_ElmtOffset;
 
@@ -178,6 +179,7 @@ struct Grad
 typedef std::multimap<int,std::pair<int,int>> NodeMap;
 
 
+
 class ProcessVarOpti : public ProcessModule
 {
 public:
@@ -200,9 +202,9 @@ public:
     void Evaluate(DerivUtilGPU &derivUtil,NodesGPU &nodes, ElUtilGPU &elUtil, Residual &res);
     void Create_NodeMap(NodesGPU &nodes, std::vector<std::vector<NodeSharedPtr> > &freenodes, NodeMap &nodeMap);
 
-    void Optimise(DerivUtilGPU &derivUtil,NodesGPU &nodes, 
-        NodeMap &nodeMap, ElUtilGPU &elUtil, Residual &res);
+    
 
+    
     
 private:
     typedef std::map<int, std::pair<std::vector<int>,
