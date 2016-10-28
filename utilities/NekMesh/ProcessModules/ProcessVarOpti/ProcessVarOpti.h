@@ -128,13 +128,14 @@ struct NodesGPU
     Kokkos::View<int*> ElmtOffset;
     typename Kokkos::View< int*>::HostMirror h_ElmtOffset;
 
-    int coloursetSize;
-    Kokkos::View<int*> nElmtArray;
-    typename Kokkos::View<int*>::HostMirror h_nElmtArray;
-    Kokkos::View<int**> elIdArray;
-    typename Kokkos::View<int**>::HostMirror h_elIdArray;
-    Kokkos::View<int**> localNodeIdArray;
-    typename Kokkos::View<int**>::HostMirror h_localNodeIdArray;
+    Kokkos::View<int*> coloursetSize;
+    typename Kokkos::View<int*>::HostMirror h_coloursetSize;
+    Kokkos::View<int**> nElmtArray;
+    typename Kokkos::View<int**>::HostMirror h_nElmtArray;
+    Kokkos::View<int***> elIdArray;
+    typename Kokkos::View<int***>::HostMirror h_elIdArray;
+    Kokkos::View<int***> localNodeIdArray;
+    typename Kokkos::View<int***>::HostMirror h_localNodeIdArray;
 };
 
 typedef boost::shared_ptr<DerivUtil> DerivUtilSharedPtr;
@@ -206,18 +207,18 @@ public:
     void Create_NodeMap(NodesGPU &nodes, std::vector<std::vector<NodeSharedPtr> > &freenodes, NodeMap &nodeMap);
 
     void OptimiseGPU(DerivUtilGPU &derivUtil,NodesGPU &nodes, 
-        NodeMap &nodeMap, ElUtilGPU &elUtil, Residual &res);
+        NodeMap &nodeMap, ElUtilGPU &elUtil, Residual &res, int cs);
 
     void GetNodeCoordGPU( double (&X)[3], const NodesGPU &nodes,
-            Kokkos::View<int**> elIdArray, Kokkos::View<int**> localNodeIdArray, int node);
+            Kokkos::View<int***> elIdArray, Kokkos::View<int***> localNodeIdArray, int node, int cs);
     void SetNodeCoordGPU (const double (&X)[3], const NodesGPU &nodes,
-            Kokkos::View<int**> elIdArray, Kokkos::View<int**> localNodeIdArray, int nElmt, int node);
+            Kokkos::View<int***> elIdArray, Kokkos::View<int***> localNodeIdArray, int nElmt, int node, int cs);
 
-    double CalcMinJacGPU(const ElUtilGPU &elUtil, int nElmt, int node, Kokkos::View<int**> elIdArray);
+    double CalcMinJacGPU(const ElUtilGPU &elUtil, int nElmt, int node, int cs, Kokkos::View<int***> elIdArray);
     
     template<int DIM> NekDouble GetFunctional(const DerivUtilGPU &derivUtilGPU,
          const NodesGPU &nodes, const ElUtilGPU &elUtil, 
-         const Grad &grad, int nElmt, int node,//const int elId, const int localNodeId,
+         const Grad &grad, int nElmt, int node, int cs,//const int elId, const int localNodeId,
          const double ep, const member_type &teamMember,
          bool gradient = true, bool hessian = true);
 

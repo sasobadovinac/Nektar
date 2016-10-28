@@ -195,7 +195,7 @@ template<int DIM>
 KOKKOS_INLINE_FUNCTION
 NekDouble ProcessVarOpti::GetFunctional(const DerivUtilGPU &derivUtilGPU,
          const NodesGPU &nodes, const ElUtilGPU &elUtil, 
-         const Grad &grad, int nElmt, int node,//const int elId, const int localNodeId,
+         const Grad &grad, int nElmt, int node, int cs,//const int elId, const int localNodeId,
          const double ep, const member_type &teamMember,
          bool gradient, bool hessian)
 { 
@@ -215,17 +215,18 @@ NekDouble ProcessVarOpti::GetFunctional(const DerivUtilGPU &derivUtilGPU,
     //grad.h_integral[0] = 0.0;
     //Kokkos::deep_copy(grad.integral,grad.h_integral);
 grad.integral(node) = 0.0;
+
+//Kokkos::parallel_for( Kokkos::TeamThreadRange( teamMember , nElmt ), [&] ( const int el)
+//{
 for (int el = 0; el < nElmt; ++el)
 {
-//Kokkos::parallel_for( team_policy( nElmt, Kokkos::AUTO ), KOKKOS_LAMBDA ( const member_type& teamMember)
-//{ 
-    int elId = nodes.elIdArray(node,el);
-    int localNodeId = nodes.localNodeIdArray(node,el);   
+    const int elId = nodes.elIdArray(cs,node,el);
+    const int localNodeId = nodes.localNodeIdArray(cs,node,el);   
     
     Kokkos::parallel_for( Kokkos::TeamThreadRange( teamMember , ptsHighGPU ), [&] ( const int k)
-    {        
-    //Kokkos::parallel_for (range_policy(0,ptsHighGPU), KOKKOS_LAMBDA (const int k)
-    //{
+    {
+    //Kokkos::parallel_for( Kokkos::ThreadVectorRange( teamMember , ptsHighGPU ), [&] ( const int k)        
+    //{        
     //for (int k = 0; k < ptsHighGPU; ++k)
     //{
         /*derivGPU(0,k) = 0.0;
@@ -430,14 +431,14 @@ for (int el = 0; el < nElmt; ++el)
 
 
 KOKKOS_INLINE_FUNCTION
-double ProcessVarOpti::CalcMinJacGPU(const ElUtilGPU &elUtil, int nElmt, int node, Kokkos::View<int**> elIdArray)
+double ProcessVarOpti::CalcMinJacGPU(const ElUtilGPU &elUtil, int nElmt, int node, int cs, Kokkos::View<int***> elIdArray)
 {
     double minJac = DBL_MAX;
     int el;
 
     for(int i = 0; i < nElmt; i++)
     {
-        el = elIdArray(node,i);
+        el = elIdArray(cs,node,i);
         minJac = (minJac > elUtil.minJac(el) ? elUtil.minJac(el) : minJac);
             
     }
@@ -447,10 +448,10 @@ double ProcessVarOpti::CalcMinJacGPU(const ElUtilGPU &elUtil, int nElmt, int nod
 
 KOKKOS_INLINE_FUNCTION
 void ProcessVarOpti::GetNodeCoordGPU ( double (&X)[3], const NodesGPU &nodes,
-            Kokkos::View<int**> elIdArray, Kokkos::View<int**> localNodeIdArray, int node)
+            Kokkos::View<int***> elIdArray, Kokkos::View<int***> localNodeIdArray, int node, int cs)
 {   
-    int elmt = elIdArray(node,0);
-    int nodeId = localNodeIdArray(node,0);
+    int elmt = elIdArray(cs,node,0);
+    int nodeId = localNodeIdArray(cs,node,0);
     
     X[0] = nodes.X(elmt,nodeId);
     X[1] = nodes.Y(elmt,nodeId);
@@ -459,12 +460,12 @@ void ProcessVarOpti::GetNodeCoordGPU ( double (&X)[3], const NodesGPU &nodes,
 
 KOKKOS_INLINE_FUNCTION
 void ProcessVarOpti::SetNodeCoordGPU (const double (&X)[3], const NodesGPU &nodes,
-             Kokkos::View<int**> elIdArray, Kokkos::View<int**> localNodeIdArray, int nElmt, int node)
+             Kokkos::View<int***> elIdArray, Kokkos::View<int***> localNodeIdArray, int nElmt, int node, int cs)
 {
     for(int el = 0; el < nElmt; el++)
     {
-        int elmt = elIdArray(node,el);
-        int nodeId = localNodeIdArray(node, el);
+        int elmt = elIdArray(cs,node,el);
+        int nodeId = localNodeIdArray(cs,node, el);
 
         nodes.X(elmt,nodeId) = X[0];
         nodes.Y(elmt,nodeId) = X[1];
@@ -500,30 +501,31 @@ inline void CalcSK(Kokkos::View< double*[9]> G, double sk[3], int node)
 
 
 void ProcessVarOpti::OptimiseGPU(DerivUtilGPU &derivUtil,NodesGPU &nodes, 
-        NodeMap &nodeMap, ElUtilGPU &elUtil, Residual &res)
+        NodeMap &nodeMap, ElUtilGPU &elUtil, Residual &res, int cs)
 {
 
     //printf("%s\n", "in OptimiseGPU");
+    const int coloursetSize = nodes.h_coloursetSize(cs);
     Grad grad;
-    grad.G = Kokkos::View<double*[9]> ("G",nodes.coloursetSize);
-    grad.integral = Kokkos::View<double*> ("integral", nodes.coloursetSize);
+    grad.G = Kokkos::View<double*[9]> ("G",coloursetSize);
+    grad.integral = Kokkos::View<double*> ("integral", coloursetSize);
     
-    Kokkos::parallel_for( team_policy( nodes.coloursetSize, Kokkos::AUTO ), KOKKOS_LAMBDA ( const member_type& teamMember)
+    Kokkos::parallel_for( team_policy( coloursetSize, Kokkos::AUTO ), KOKKOS_LAMBDA ( const member_type& teamMember)
     {
         const int node = teamMember.league_rank();
-        const int nElmt = nodes.nElmtArray(node);        
+        const int nElmt = nodes.nElmtArray(cs,node);        
         double currentW, newVal;
 
-        double minJac = CalcMinJacGPU(elUtil, nElmt, node, nodes.elIdArray);
+        double minJac = CalcMinJacGPU(elUtil, nElmt, node, cs, nodes.elIdArray);
         double ep = minJac < 0.0 ? sqrt(1e-9 + 0.04*minJac*minJac) : sqrt(1e-9); 
         
-        currentW = GetFunctional<3>(derivUtil, nodes, elUtil, grad, nElmt, node, ep, teamMember);        
+        currentW = GetFunctional<3>(derivUtil, nodes, elUtil, grad, nElmt, node, cs, ep, teamMember);        
     
         if(grad.G(node,0)*grad.G(node,0) + grad.G(node,1)*grad.G(node,1) + grad.G(node,2)*grad.G(node,2) > 1e-20)
         {        
             double h_Xc[3];        
             double h_Xn[3];        
-            GetNodeCoordGPU(h_Xc, nodes, nodes.elIdArray, nodes.localNodeIdArray, node); 
+            GetNodeCoordGPU(h_Xc, nodes, nodes.elIdArray, nodes.localNodeIdArray, node, cs); 
 
             double sk[3];
             CalcSK(grad.G, sk, node);
@@ -542,9 +544,9 @@ void ProcessVarOpti::OptimiseGPU(DerivUtilGPU &derivUtil,NodesGPU &nodes,
                 h_Xn[0] = h_Xc[0] + alpha * sk[0];
                 h_Xn[1] = h_Xc[1] + alpha * sk[1];
                 h_Xn[2] = h_Xc[2] + alpha * sk[2];
-                SetNodeCoordGPU(h_Xn, nodes, nodes.elIdArray, nodes.localNodeIdArray, nElmt, node);
+                SetNodeCoordGPU(h_Xn, nodes, nodes.elIdArray, nodes.localNodeIdArray, nElmt, node, cs);
                 
-                newVal = GetFunctional<3>(derivUtil, nodes, elUtil, grad, nElmt, node, ep, teamMember);
+                newVal = GetFunctional<3>(derivUtil, nodes, elUtil, grad, nElmt, node, cs, ep, teamMember);
            
                 if (newVal <= currentW + 1e-03 * (alpha*pg+ 0.5*alpha*alpha*hes))
                 {
@@ -559,7 +561,7 @@ void ProcessVarOpti::OptimiseGPU(DerivUtilGPU &derivUtil,NodesGPU &nodes,
                 h_Xn[0] = h_Xc[0];
                 h_Xn[1] = h_Xc[1];
                 h_Xn[2] = h_Xc[2];
-                SetNodeCoordGPU(h_Xn, nodes, nodes.elIdArray, nodes.localNodeIdArray, nElmt, node);
+                SetNodeCoordGPU(h_Xn, nodes, nodes.elIdArray, nodes.localNodeIdArray, nElmt, node, cs);
 
                 //mtx.lock();
                 Kokkos::single(Kokkos::PerTeam(teamMember),[&] ()

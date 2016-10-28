@@ -432,6 +432,78 @@ void ProcessVarOpti::Process()
          << "Max set:\t\t" << mx << endl
          << "Residual tolerance:\t" << restol << endl;   
 
+    
+
+    // ------------ Indexing
+
+// construct vector that contains the number of nodes in each colourset
+        int nColoursets = optiNodes.size();
+        nodes.coloursetSize = Kokkos::View<int*> ("coloursetSize",nColoursets);
+        nodes.h_coloursetSize = Kokkos::create_mirror_view(nodes.coloursetSize);
+//printf("%s\n", "pointA");        
+        int maxColoursetSize = 0;
+        for(int cs = 0; cs < nColoursets; cs++)
+        {            
+            nodes.h_coloursetSize(cs) = optiNodes[cs].size();
+            maxColoursetSize = (maxColoursetSize < nodes.h_coloursetSize(cs)
+                    ? nodes.h_coloursetSize(cs) : maxColoursetSize);
+        }
+//printf("%s\n", "pointB");
+        //construct Vector that contains the number of elements that each node in the colorset is associated with
+        nodes.nElmtArray = Kokkos::View<int**> ("nElmtArray",nColoursets,maxColoursetSize);
+        nodes.h_nElmtArray = Kokkos::create_mirror_view(nodes.nElmtArray);
+
+        int maxnElmt = 0;
+        for(int cs = 0; cs < nColoursets; cs++)
+        {
+            for(int node = 0; node < nodes.h_coloursetSize(cs); node++)
+            {
+                nodes.h_nElmtArray(cs,node) = optiNodes[cs][node]->data.size();
+                maxnElmt = (maxnElmt < nodes.h_nElmtArray(cs,node)
+                        ? nodes.h_nElmtArray(cs,node) : maxnElmt);
+            }
+        }
+//printf("%s\n", "pointC");
+        // construct Array that contains the element Ids of all elements that each node in the colorset is associated with
+        nodes.elIdArray = Kokkos::View<int***> ("elIdArray",nColoursets,maxColoursetSize, maxnElmt);
+        nodes.h_elIdArray = Kokkos::create_mirror_view(nodes.elIdArray);
+
+        // construct Array that contains the local node Ids in all elements that each node in the colorset is associated with
+        nodes.localNodeIdArray = Kokkos::View<int***> ("localNodeIdArray",nColoursets,maxColoursetSize, maxnElmt);
+        nodes.h_localNodeIdArray = Kokkos::create_mirror_view(nodes.localNodeIdArray);
+
+        for(int cs = 0; cs < nColoursets; cs++)
+        {
+            for(int node = 0; node < nodes.h_coloursetSize(cs); node++)            
+            {
+                const int globalNodeId = optiNodes[cs][node]->node->m_id;
+                NodeMap::const_iterator coeffs;
+                coeffs = nodeMap.find(globalNodeId); 
+                for (int el = 0; el < nodes.h_nElmtArray(cs,node); ++el)
+                {
+                    nodes.h_elIdArray(cs,node,el) = optiNodes[cs][node]->data[el]->GetId();
+
+                    int elmt = std::get<0>(coeffs->second);
+                    if (elmt == nodes.h_elIdArray(cs,node,el))
+                    {
+                        nodes.h_localNodeIdArray(cs,node,el) = std::get<1>(coeffs->second);
+                    }            
+                    coeffs++;
+                }
+            }
+        }
+
+//printf("%s\n", "pointD");
+        Kokkos::deep_copy(nodes.localNodeIdArray,nodes.h_localNodeIdArray);
+        Kokkos::deep_copy(nodes.elIdArray,nodes.h_elIdArray);
+        Kokkos::deep_copy(nodes.nElmtArray,nodes.h_nElmtArray);
+        Kokkos::deep_copy(nodes.coloursetSize,nodes.h_coloursetSize);
+
+
+
+    // EMD InDEXING ----------------------------------------------
+
+
     Timer t;
     t.Start();
 
@@ -441,6 +513,7 @@ void ProcessVarOpti::Process()
     {
         resFile.open(m_config["resfile"].as<string>().c_str());
     }
+
 
     while (ctr < maxIter && res.h_val[0] > restol)
     {
@@ -452,60 +525,12 @@ void ProcessVarOpti::Process()
         Kokkos::deep_copy(res.func,res.h_func);
         Kokkos::deep_copy(res.nReset,res.h_nReset);
         
-        for(int cs = 0; cs < optiNodes.size(); cs++)
-        {
-            nodes.coloursetSize = optiNodes[cs].size();
-
-            //construct Vector that contains the number of elements that each node in the colorset is associated with
-            nodes.nElmtArray = Kokkos::View<int*> ("nElmtArray",nodes.coloursetSize);
-            nodes.h_nElmtArray = Kokkos::create_mirror_view(nodes.nElmtArray);
-            int maxnElmt = 0;
-            for(int node = 0; node < nodes.coloursetSize; node++)
-            {
-                //const int nElmt = optiNodes[cs][node]->data.size();
-                nodes.h_nElmtArray(node) = optiNodes[cs][node]->data.size();
-                maxnElmt = (maxnElmt < nodes.h_nElmtArray(node) ? nodes.h_nElmtArray(node) : maxnElmt);
-            }
-
-            // construct Array that contains the element Ids of all elements that each node in the colorset is associated with
-            nodes.elIdArray = Kokkos::View<int**> ("elIdArray",nodes.coloursetSize, maxnElmt);
-            nodes.h_elIdArray = Kokkos::create_mirror_view(nodes.elIdArray);
-
-            // construct Array that contains the local node Ids in all elements that each node in the colorset is associated with
-            nodes.localNodeIdArray = Kokkos::View<int**> ("localNodeIdArray",nodes.coloursetSize, maxnElmt);
-            nodes.h_localNodeIdArray = Kokkos::create_mirror_view(nodes.localNodeIdArray);
-
-            for(int node = 0; node < nodes.coloursetSize; node++)            
-            {
-                const int globalNodeId = optiNodes[cs][node]->node->m_id;
-                NodeMap::const_iterator coeffs;
-                coeffs = nodeMap.find(globalNodeId); 
-                for (int el = 0; el < nodes.h_nElmtArray(node); ++el)
-                {
-                    nodes.h_elIdArray(node,el) = optiNodes[cs][node]->data[el]->GetId();
-
-                    int elmt = std::get<0>(coeffs->second);
-                    if (elmt == nodes.h_elIdArray(node,el))
-                    {
-                        nodes.h_localNodeIdArray(node,el) = std::get<1>(coeffs->second);
-                    }            
-                    coeffs++;
-                }
-            }
-            Kokkos::deep_copy(nodes.localNodeIdArray,nodes.h_localNodeIdArray);
-            Kokkos::deep_copy(nodes.elIdArray,nodes.h_elIdArray);
-            Kokkos::deep_copy(nodes.nElmtArray,nodes.h_nElmtArray);
-
-
+        
+        for(int cs = 0; cs < nColoursets; cs++)
+        {  
             
-            for(int node = 0; node < nodes.coloursetSize; node++)
-            {   
-                //optiNodes[cs][node]->Optimise(derivUtil, nodes, nodeMap, elUtil, res, nElmt);
-                //printf("node %cs finished\n", node);
-            }
+            OptimiseGPU(derivUtil, nodes, nodeMap, elUtil, res, cs);
             //printf("colorset %cs finished\n", cs);
-            
-            OptimiseGPU(derivUtil, nodes, nodeMap, elUtil, res);
             
         }
 
