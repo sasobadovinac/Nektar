@@ -131,7 +131,7 @@ void ProcessVarOpti::Load_derivUtil(DerivUtilGPU &derivUtil)
     }
 }
 
-template<int DIM>
+
 void ProcessVarOpti::Load_elUtils(ElUtilGPU &elUtil)
 {
 	elUtil.idealMap = Kokkos::View<double**[10],random_memory> ("idealMap", elUtil.globalnElmt, elUtil.ptsHigh);
@@ -154,22 +154,19 @@ void ProcessVarOpti::Load_elUtils(ElUtilGPU &elUtil)
         		elUtil.h_idealMap(el,node,i) = dataSet[el]->maps[node][i];
         	}
         	 
-        });
-        //elUtil.h_minJac(el) = DBL_MAX;
-        //elUtil.h_scaledJac(el) = DBL_MAX;   
-
+        });        
         //const int ElmtId = dataSet[el]->GetId();
         //elUtil.h_ElmtOffset(ElmtId) = el;
     });
     
-    Kokkos::deep_copy(elUtil.idealMap,elUtil.h_idealMap);
-    //Kokkos::deep_copy(elUtil.minJac,elUtil.h_minJac);
-    //Kokkos::deep_copy(elUtil.scaledJac,elUtil.h_scaledJac);
+    Kokkos::deep_copy(elUtil.idealMap,elUtil.h_idealMap);   
 
 }
 
 
-void ProcessVarOpti::Create_nodes_view(NodesGPU &nodes)
+
+
+void ProcessVarOpti::Load_nodes(NodesGPU &nodes)
 {
     int nodes_size = nodes.nodes_size;
     int nElmt = nodes.globalnElmt;    
@@ -184,11 +181,8 @@ void ProcessVarOpti::Create_nodes_view(NodesGPU &nodes)
 
     nodes.ElmtOffset = Kokkos::View<int*> ("ElmtOffset",nElmt);
     nodes.h_ElmtOffset = Kokkos::create_mirror_view(nodes.ElmtOffset);
-}
 
 
-void ProcessVarOpti::Load_nodes(NodesGPU &nodes)
-{
     int N1 = nodes.globalnElmt;
     int M1 = nodes.nodes_size;
     Kokkos::parallel_for(team_policy_host(N1,M1), KOKKOS_LAMBDA (const member_type_host& teamMember)
@@ -201,15 +195,15 @@ void ProcessVarOpti::Load_nodes(NodesGPU &nodes)
             nodes.h_Z(el,node) = *dataSet[el]->nodes[node][2];
             nodes.h_Id(el,node) = *dataSet[el]->nodeIds[node];
         });
-        const int ElmtId = dataSet[el]->GetId();
-        nodes.h_ElmtOffset(ElmtId) = el;
+        //const int ElmtId = dataSet[el]->GetId();
+        //nodes.h_ElmtOffset(ElmtId) = el;
     });
     Kokkos::deep_copy(nodes.X,nodes.h_X);
     Kokkos::deep_copy(nodes.Y,nodes.h_Y);
     Kokkos::deep_copy(nodes.Z,nodes.h_Z);
     Kokkos::deep_copy(nodes.Id,nodes.h_Id);
 
-    Kokkos::deep_copy(nodes.ElmtOffset,nodes.h_ElmtOffset);
+    //Kokkos::deep_copy(nodes.ElmtOffset,nodes.h_ElmtOffset);
 }
 
 void ProcessVarOpti::Create_NodeMap(NodesGPU &nodes, 
@@ -236,6 +230,8 @@ void ProcessVarOpti::Create_NodeMap(NodesGPU &nodes,
 		    }
 		}
 	}
+
+    
 }
 
 void ProcessVarOpti::Evaluate(DerivUtilGPU &derivUtil,NodesGPU &nodes, ElUtilGPU &elUtil, Residual &res)
@@ -377,13 +373,20 @@ void ProcessVarOpti::Evaluate(DerivUtilGPU &derivUtil,NodesGPU &nodes, ElUtilGPU
             //dataSet[k]->scaledJac = h_mn(k)/h_mx(k);
             elUtil.scaledJac(k) = mn(k)/mx(k); 
         });
-        Kokkos::deep_copy(elUtil.h_minJac,elUtil.minJac);
-        Kokkos::deep_copy(elUtil.h_scaledJac,elUtil.scaledJac);
+        
+
+        // Initialising for Outputs
+        Kokkos::parallel_for("output", range_policy(0,1), KOKKOS_LAMBDA (const int& k)
+        {
+            res.startInv[0] = 0;
+            printf("Residual: %e  ", res.val[0]);
+        });
 
 
         // compute the smallest (worst) Jacobian of all elements
         MinFunctor <double> mnfunctor(elUtil.scaledJac);
         Kokkos::parallel_reduce(range_policy(0, nElmt) , mnfunctor, res.h_worstJac[0]);
+        printf("Worst Jacobian: %e  ", res.h_worstJac[0]);        
 
 
         // compute number of invalied elements (Jacobian < 0)
@@ -394,7 +397,18 @@ void ProcessVarOpti::Evaluate(DerivUtilGPU &derivUtil,NodesGPU &nodes, ElUtilGPU
 		    	Kokkos::atomic_add(&res.startInv[0], 1);
 		    }			    
 		});
-		Kokkos::deep_copy(res.h_startInv,res.startInv); 
+		
+        // Outputs
+        Kokkos::parallel_for("output", range_policy(0,1), KOKKOS_LAMBDA (const int& k)
+        {
+            printf("Invalid Elements: %i  ", res.startInv[0]);
+            
+            printf("Reset Nodes: %i  ", res.nReset[0]);
+            printf("Functional: %e\n", res.func[0]);
+            res.val[0] = 0.0;
+            res.func[0] = 0.0;
+            res.nReset[0] = 0;
+        });
         
     }
 }

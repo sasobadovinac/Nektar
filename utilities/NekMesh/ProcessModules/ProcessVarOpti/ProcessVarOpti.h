@@ -159,16 +159,15 @@ struct Residual
     //NekDouble worstJac;
     Kokkos::View<double[1]> worstJac;
     typename Kokkos::View< double[1]>::HostMirror h_worstJac;
-    
-    int n;
-    int nDoF;
-
     //int startInv;
     Kokkos::View<int[1]> startInv;
     typename Kokkos::View< int[1]>::HostMirror h_startInv;
     //int nReset;
     Kokkos::View<int[1]> nReset;
-    typename Kokkos::View< int[1]>::HostMirror h_nReset;     
+    typename Kokkos::View< int[1]>::HostMirror h_nReset;
+
+    int n;
+    int nDoF;    
 };
 
 struct Grad
@@ -200,11 +199,15 @@ public:
     virtual void Process();
 
     void Load_derivUtil(DerivUtilGPU &derivUtil);
-    template<int DIM> void Load_elUtils(ElUtilGPU &elUtil);
-    void Create_nodes_view(NodesGPU &nodes);
+
+    void Load_elUtils(ElUtilGPU &elUtil);
+
     void Load_nodes(NodesGPU &nodes);
+
     void Evaluate(DerivUtilGPU &derivUtil,NodesGPU &nodes, ElUtilGPU &elUtil, Residual &res);
-    void Create_NodeMap(NodesGPU &nodes, std::vector<std::vector<NodeSharedPtr> > &freenodes, NodeMap &nodeMap);
+    
+    void Create_NodeMap(NodesGPU &nodes, std::vector<std::vector<NodeSharedPtr> > &freenodes, 
+          NodeMap &nodeMap);
 
     void OptimiseGPU(DerivUtilGPU &derivUtil,NodesGPU &nodes, 
         NodeMap &nodeMap, ElUtilGPU &elUtil, Residual &res, int cs);

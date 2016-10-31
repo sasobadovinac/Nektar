@@ -212,8 +212,7 @@ NekDouble ProcessVarOpti::GetFunctional(const DerivUtilGPU &derivUtilGPU,
     //   - quadrature points    
     //Kokkos::View<double**> derivGPU("derivGPU", DIM*DIM, ptsHighGPU);
     
-    //grad.h_integral[0] = 0.0;
-    //Kokkos::deep_copy(grad.integral,grad.h_integral);
+    
 grad.integral(node) = 0.0;
 
 //Kokkos::parallel_for( Kokkos::TeamThreadRange( teamMember , nElmt ), [&] ( const int el)
@@ -421,10 +420,8 @@ for (int el = 0; el < nElmt; ++el)
     });
 }
 
-    //});
-     
-    //Kokkos::deep_copy(grad.h_integral, grad.integral);
-        
+    //});     
+       
     return grad.integral(node);
 
 }
@@ -566,7 +563,7 @@ void ProcessVarOpti::OptimiseGPU(DerivUtilGPU &derivUtil,NodesGPU &nodes,
                 //mtx.lock();
                 Kokkos::single(Kokkos::PerTeam(teamMember),[&] ()
                 {
-                    res.nReset[0]++;
+                    Kokkos::atomic_add(&res.nReset[0], 1);
                     printf("%s\n", "3D reset");
                 });            
                 //mtx.unlock();
@@ -582,7 +579,7 @@ void ProcessVarOpti::OptimiseGPU(DerivUtilGPU &derivUtil,NodesGPU &nodes,
             {
                 //res.val[0] = max(thisval, res.val[0] );
                 res.val[0] = (res.val[0] < thisval ? thisval : res.val[0]);
-                res.func[0] +=newVal;
+                Kokkos::atomic_add(&res.func[0], newVal);
             });
             //mtx.unlock();
 
