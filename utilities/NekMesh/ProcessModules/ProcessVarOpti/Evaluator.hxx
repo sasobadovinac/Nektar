@@ -609,7 +609,7 @@ void ProcessVarOpti::OptimiseGPU(DerivUtilGPU &derivUtil,NodesGPU &nodes,
                 Kokkos::single(Kokkos::PerTeam(teamMember),[&] ()
                 {
                     Kokkos::atomic_add(&res.nReset[0], 1);
-                    printf("%s\n", "3D reset");
+                    //printf("%s\n", "3D reset");
                 });            
                 //mtx.unlock();
             }

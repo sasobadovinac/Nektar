@@ -376,7 +376,7 @@ void ProcessVarOpti::Evaluate(DerivUtilGPU &derivUtil,NodesGPU &nodes, ElUtilGPU
             
             printf("Reset Nodes: %i  ", res.nReset[0]);
             printf("Functional: %e\n", res.func[0]);
-            res.val[0] = 0.0;
+            //res.val[0] = 0.0;
             res.func[0] = 0.0;
             res.nReset[0] = 0;
         });
