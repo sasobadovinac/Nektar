@@ -551,6 +551,8 @@ void ProcessVarOpti::OptimiseGPU(DerivUtilGPU &derivUtil,NodesGPU &nodes,
     Grad grad;
     grad.G = Kokkos::View<double*[9]> ("G",coloursetSize);
     grad.integral = Kokkos::View<double*> ("integral", coloursetSize);
+
+    res.resid = Kokkos::View<double*> ("resid", coloursetSize);
     
     Kokkos::parallel_for( team_policy( coloursetSize, Kokkos::AUTO ), KOKKOS_LAMBDA ( const member_type& teamMember)
     {
@@ -605,40 +607,34 @@ void ProcessVarOpti::OptimiseGPU(DerivUtilGPU &derivUtil,NodesGPU &nodes,
                 h_Xn[2] = h_Xc[2];
                 SetNodeCoordGPU(h_Xn, nodes, nodes.elIdArray, nodes.localNodeIdArray, nElmt, node, cs);
 
-                //mtx.lock();
                 Kokkos::single(Kokkos::PerTeam(teamMember),[&] ()
                 {
-                    Kokkos::atomic_add(&res.nReset[0], 1);
-                    //printf("%s\n", "3D reset");
-                });            
-                //mtx.unlock();
+                    Kokkos::atomic_add(&res.nReset[0], 1);                    
+                });   
             }
 
-            // update residual value
-            double thisval = sqrt( (h_Xn[0]-h_Xc[0])*(h_Xn[0]-h_Xc[0])
+            // store residual values of each node
+            res.resid[node] = sqrt( (h_Xn[0]-h_Xc[0])*(h_Xn[0]-h_Xc[0])
                                   +(h_Xn[1]-h_Xc[1])*(h_Xn[1]-h_Xc[1])
-                                  +(h_Xn[2]-h_Xc[2])*(h_Xn[2]-h_Xc[2]) );
+                                  +(h_Xn[2]-h_Xc[2])*(h_Xn[2]-h_Xc[2]) );            
 
-            //mtx.lock();
             Kokkos::single(Kokkos::PerTeam(teamMember),[&] ()
             {
-                //res.val[0] = max(thisval, res.val[0] );
-                res.val[0] = (res.val[0] < thisval ? thisval : res.val[0]);
                 Kokkos::atomic_add(&res.func[0], newVal);
-            });
-            //mtx.unlock();
+            });            
 
         }        
         //printf("node %i finished\n", node);
     
     });
     //printf("colorset %i finished\n", i);
-    
+
+    // do reduction to yield the max residual of the colourset
+    MaxFunctor <double> mxfunctor(res.resid);
+    double maxResidCs = 0.0;
+    Kokkos::parallel_reduce(range_policy(0, coloursetSize) , mxfunctor, maxResidCs);
+    res.h_val[0] = (res.h_val[0] < maxResidCs ? maxResidCs : res.h_val[0]);
 }
-
-
-
-
 
 
 

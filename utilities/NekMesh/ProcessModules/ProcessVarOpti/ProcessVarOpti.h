@@ -166,6 +166,8 @@ struct Residual
 
     int n;
     int nDoF;    
+
+    Kokkos::View<double*> resid;  // for residual of every node in a colourset
 };
 
 struct Grad
@@ -221,7 +223,7 @@ public:
          const Grad &grad, int nElmt, int node, int cs,//const int elId, const int localNodeId,
          const double ep, const member_type &teamMember,
          bool gradient = true, bool hessian = true);
-    
+
 private:
     typedef std::map<int, std::pair<std::vector<int>,
                                     std::vector<ElUtilSharedPtr> > > NodeElMap;

@@ -350,9 +350,9 @@ void ProcessVarOpti::Evaluate(DerivUtilGPU &derivUtil,NodesGPU &nodes, ElUtilGPU
         Kokkos::parallel_for("output", range_policy(0,1), KOKKOS_LAMBDA (const int& k)
         {
             res.startInv[0] = 0;
-            printf("Residual: %e  ", res.val[0]);
+            //printf("Residual: %e  ", res.val[0]);
         });
-
+        printf("Residual: %e  ", res.h_val[0]);
 
         // compute the smallest (worst) Jacobian of all elements
         MinFunctor <double> mnfunctor(elUtil.scaledJac);

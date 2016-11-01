@@ -396,7 +396,7 @@ void ProcessVarOpti::Process()
     {
         ctr++;
         res.h_val[0] = 0.0;
-        Kokkos::deep_copy(res.val,res.h_val);
+        //Kokkos::deep_copy(res.val,res.h_val);
         
         for(int cs = 0; cs < optiNodes.size(); cs++)
         {              
@@ -404,7 +404,7 @@ void ProcessVarOpti::Process()
             //printf("colorset %cs finished\n", cs);            
         }
                 
-        Kokkos::deep_copy(res.h_val,res.val);
+        //Kokkos::deep_copy(res.h_val,res.val);
 
         Evaluate(derivUtil, nodes, elUtil, res);        
         
