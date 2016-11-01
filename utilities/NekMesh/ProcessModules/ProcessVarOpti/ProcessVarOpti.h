@@ -192,23 +192,6 @@ public:
 
     virtual void Process();
     
-private:
-    typedef std::map<int, std::pair<std::vector<int>,
-                                    std::vector<ElUtilSharedPtr> > > NodeElMap;
-    
-    void BuildDerivUtil();
-    void GetElementMap();
-
-    std::vector<ElementSharedPtr> GetLockedElements(NekDouble thres);
-    std::vector<Array<OneD, NekDouble> > MappingIdealToRef(ElementSharedPtr el);
-    std::vector<std::vector<NodeSharedPtr> > GetColouredNodes(std::vector<ElementSharedPtr> elLock, Residual &res);
-
-    NodeElMap nodeElMap;
-    std::vector<ElUtilSharedPtr> dataSet;
-
-    std::map<LibUtilities::ShapeType,DerivUtilSharedPtr> derivUtil;
-    optimiser opti;
-
     // new GPU functions
     void Load_derivUtil(DerivUtilGPU &derivUtil);
 
@@ -238,6 +221,25 @@ private:
          const Grad &grad, int nElmt, int node, int cs,//const int elId, const int localNodeId,
          const double ep, const member_type &teamMember,
          bool gradient = true, bool hessian = true);
+    
+private:
+    typedef std::map<int, std::pair<std::vector<int>,
+                                    std::vector<ElUtilSharedPtr> > > NodeElMap;
+    
+    void BuildDerivUtil();
+    void GetElementMap();
+
+    std::vector<ElementSharedPtr> GetLockedElements(NekDouble thres);
+    std::vector<Array<OneD, NekDouble> > MappingIdealToRef(ElementSharedPtr el);
+    std::vector<std::vector<NodeSharedPtr> > GetColouredNodes(std::vector<ElementSharedPtr> elLock, Residual &res);
+
+    NodeElMap nodeElMap;
+    std::vector<ElUtilSharedPtr> dataSet;
+
+    std::map<LibUtilities::ShapeType,DerivUtilSharedPtr> derivUtil;
+    optimiser opti;
+
+    
 };
 
 
