@@ -155,8 +155,6 @@ void ProcessVarOpti::Load_elUtils(ElUtilGPU &elUtil)
         	}
         	 
         });        
-        //const int ElmtId = dataSet[el]->GetId();
-        //elUtil.h_ElmtOffset(ElmtId) = el;
     });
     
     Kokkos::deep_copy(elUtil.idealMap,elUtil.h_idealMap);   
@@ -179,8 +177,8 @@ void ProcessVarOpti::Load_nodes(NodesGPU &nodes)
     nodes.Id = Kokkos::View<int**> ("Id",nElmt, nodes_size);
     nodes.h_Id = Kokkos::create_mirror_view(nodes.Id);
 
-    nodes.ElmtOffset = Kokkos::View<int*> ("ElmtOffset",nElmt);
-    nodes.h_ElmtOffset = Kokkos::create_mirror_view(nodes.ElmtOffset);
+    //nodes.ElmtOffset = Kokkos::View<int*> ("ElmtOffset",nElmt);
+    //nodes.h_ElmtOffset = Kokkos::create_mirror_view(nodes.ElmtOffset);
 
 
     int N1 = nodes.globalnElmt;
@@ -206,33 +204,6 @@ void ProcessVarOpti::Load_nodes(NodesGPU &nodes)
     //Kokkos::deep_copy(nodes.ElmtOffset,nodes.h_ElmtOffset);
 }
 
-void ProcessVarOpti::Create_NodeMap(NodesGPU &nodes, 
-			std::vector<std::vector<NodeSharedPtr> > &freenodes, NodeMap &nodeMap)
-{
-	int N1 = nodes.globalnElmt;
-    int M1 = nodes.nodes_size;
-    int id;
-    //std::multimap<int,std::pair<int,int>> nodeMap;
-    for(int ii = 0; ii < freenodes.size(); ii++)
-    {
-        for(int jj = 0; jj < freenodes[ii].size(); jj++)
-        {
-        	id = freenodes[ii][jj]->m_id;
-		    for(int k = 0; k < N1; k++)
-		    {         
-		        for(int j = 0; j < M1; j++)
-		        {                
-		            if(nodes.h_Id(k,j) == id)
-		            {
-		                nodeMap.insert(std::pair<int,std::pair<int,int>> (id, {k,j} ));
-		            }
-		        }
-		    }
-		}
-	}
-
-    
-}
 
 void ProcessVarOpti::Evaluate(DerivUtilGPU &derivUtil,NodesGPU &nodes, ElUtilGPU &elUtil, Residual &res)
 {

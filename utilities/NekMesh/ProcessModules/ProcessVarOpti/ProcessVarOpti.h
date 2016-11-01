@@ -41,7 +41,6 @@
 #include "../../Module.h"
 
 #include "ElUtil.h"
-//#include "NodeOpti.h"
 
 namespace Nektar
 {
@@ -61,6 +60,13 @@ typedef Kokkos::DefaultExecutionSpace exe_space;
 typedef Kokkos::MemoryTraits<Kokkos::RandomAccess> random_memory;
 
 
+enum optimiser
+{
+    eLinEl,
+    eWins,
+    eRoca,
+    eHypEl
+};
 
 struct DerivUtil
 {
@@ -73,6 +79,8 @@ struct DerivUtil
     int ptsHigh;
     int ptsLow;
 };
+
+typedef boost::shared_ptr<DerivUtil> DerivUtilSharedPtr;
 
 struct DerivUtilGPU
 {
@@ -125,8 +133,8 @@ struct NodesGPU
     typename Kokkos::View< int**>::HostMirror h_Id;
     int nodes_size;
     int globalnElmt;
-    Kokkos::View<int*> ElmtOffset;
-    typename Kokkos::View< int*>::HostMirror h_ElmtOffset;
+    //Kokkos::View<int*> ElmtOffset;
+    //typename Kokkos::View< int*>::HostMirror h_ElmtOffset;
 
     Kokkos::View<int*> coloursetSize;
     typename Kokkos::View<int*>::HostMirror h_coloursetSize;
@@ -136,16 +144,6 @@ struct NodesGPU
     typename Kokkos::View<int***>::HostMirror h_elIdArray;
     Kokkos::View<int***> localNodeIdArray;
     typename Kokkos::View<int***>::HostMirror h_localNodeIdArray;
-};
-
-typedef boost::shared_ptr<DerivUtil> DerivUtilSharedPtr;
-
-enum optimiser
-{
-    eLinEl,
-    eWins,
-    eRoca,
-    eHypEl
 };
 
 struct Residual
@@ -178,10 +176,6 @@ struct Grad
     typename Kokkos::View< double*>::HostMirror h_integral;
 };
 
-//typedef boost::shared_ptr<Residual> ResidualSharedPtr;
-typedef std::multimap<int,std::pair<int,int>> NodeMap;
-
-
 
 class ProcessVarOpti : public ProcessModule
 {
@@ -197,35 +191,6 @@ public:
     virtual ~ProcessVarOpti();
 
     virtual void Process();
-
-    void Load_derivUtil(DerivUtilGPU &derivUtil);
-
-    void Load_elUtils(ElUtilGPU &elUtil);
-
-    void Load_nodes(NodesGPU &nodes);
-
-    void Evaluate(DerivUtilGPU &derivUtil,NodesGPU &nodes, ElUtilGPU &elUtil, Residual &res);
-    
-    void Create_NodeMap(NodesGPU &nodes, std::vector<std::vector<NodeSharedPtr> > &freenodes, 
-          NodeMap &nodeMap);
-
-    void OptimiseGPU(DerivUtilGPU &derivUtil,NodesGPU &nodes, 
-        NodeMap &nodeMap, ElUtilGPU &elUtil, Residual &res, int cs);
-
-    void GetNodeCoordGPU( double (&X)[3], const NodesGPU &nodes,
-            Kokkos::View<int***> elIdArray, Kokkos::View<int***> localNodeIdArray, int node, int cs);
-    void SetNodeCoordGPU (const double (&X)[3], const NodesGPU &nodes,
-            Kokkos::View<int***> elIdArray, Kokkos::View<int***> localNodeIdArray, int nElmt, int node, int cs);
-
-    double CalcMinJacGPU(const ElUtilGPU &elUtil, int nElmt, int node, int cs, Kokkos::View<int***> elIdArray);
-    
-    template<int DIM> NekDouble GetFunctional(const DerivUtilGPU &derivUtilGPU,
-         const NodesGPU &nodes, const ElUtilGPU &elUtil, 
-         const Grad &grad, int nElmt, int node, int cs,//const int elId, const int localNodeId,
-         const double ep, const member_type &teamMember,
-         bool gradient = true, bool hessian = true);
-
-
     
 private:
     typedef std::map<int, std::pair<std::vector<int>,
@@ -234,7 +199,6 @@ private:
     void BuildDerivUtil();
     void GetElementMap();
 
-
     std::vector<ElementSharedPtr> GetLockedElements(NekDouble thres);
     std::vector<Array<OneD, NekDouble> > MappingIdealToRef(ElementSharedPtr el);
     std::vector<std::vector<NodeSharedPtr> > GetColouredNodes(std::vector<ElementSharedPtr> elLock, Residual &res);
@@ -242,13 +206,38 @@ private:
     NodeElMap nodeElMap;
     std::vector<ElUtilSharedPtr> dataSet;
 
-    NodeMap nodeMap; //maps node_ids to GPU node array
-
-    ResidualSharedPtr res;
     std::map<LibUtilities::ShapeType,DerivUtilSharedPtr> derivUtil;
     optimiser opti;
 
-    std::string ThreadManagerType;
+    // new GPU functions
+    void Load_derivUtil(DerivUtilGPU &derivUtil);
+
+    void Load_elUtils(ElUtilGPU &elUtil);
+
+    void Load_nodes(NodesGPU &nodes);
+
+    void Evaluate(DerivUtilGPU &derivUtil,NodesGPU &nodes, ElUtilGPU &elUtil, Residual &res);
+    
+    void OptimiseGPU(DerivUtilGPU &derivUtil,NodesGPU &nodes, 
+        ElUtilGPU &elUtil, Residual &res, int cs);
+
+    void GetNodeCoordGPU( double (&X)[3], const NodesGPU &nodes,
+            Kokkos::View<int***> elIdArray, Kokkos::View<int***> localNodeIdArray, int node, int cs);
+    void SetNodeCoordGPU (const double (&X)[3], const NodesGPU &nodes,
+            Kokkos::View<int***> elIdArray, Kokkos::View<int***> localNodeIdArray, int nElmt, int node, int cs);
+
+    void GetNodeCoord(double (&X)[3], int id,NodesGPU &nodes,
+            typename Kokkos::View<int*>::HostMirror elIdArray, typename Kokkos::View<int*>::HostMirror localNodeIdArray);
+    void SetNodeCoord(double (&X)[3], int id,NodesGPU &nodes,
+            typename Kokkos::View<int*>::HostMirror elIdArray, typename Kokkos::View<int*>::HostMirror localNodeIdArray, int nElmt);
+
+    double CalcMinJacGPU(const ElUtilGPU &elUtil, int nElmt, int node, int cs, Kokkos::View<int***> elIdArray);
+    
+    template<int DIM> NekDouble GetFunctional(const DerivUtilGPU &derivUtilGPU,
+         const NodesGPU &nodes, const ElUtilGPU &elUtil, 
+         const Grad &grad, int nElmt, int node, int cs,//const int elId, const int localNodeId,
+         const double ep, const member_type &teamMember,
+         bool gradient = true, bool hessian = true);
 };
 
 
@@ -320,64 +309,7 @@ struct MaxFunctor {
   }
 };
 
-template <typename T>
-void process()
-{
-  // initialise some vector
-  T nset = 1024;
-  Kokkos::View< T*> points("Points",nset);
-  typename Kokkos::View<T*>::HostMirror h_points = Kokkos::create_mirror_view(points);
-  srand(56779);
-  for(int i = 0; i < nset; i++)
-  {
-      //h_points(i) = 1.0*i;
-      h_points(i) = rand()%(1024);
-  }
-  // compute sum min and max of vector on CPU for comparison
-  T h_sm = 0;
-  T h_mn = num_max(h_mn);
-  T h_mx = num_min(h_mx);
-  for(int i = 0; i < nset; i++)
-  {
-      h_sm += h_points[i];
-      h_mn = (h_mn > h_points[i] ? h_points[i] : h_mn);
-      h_mx = (h_mx < h_points[i] ? h_points[i] : h_mx);
-  }
-  // copy vector to GPU
-  Kokkos::deep_copy(points,h_points);
-  typedef Kokkos::RangePolicy<Kokkos::DefaultExecutionSpace> range_policy;
 
-  // calculate sum of vector on GPU
-  T sm = 0.0;
-  Kokkos::parallel_reduce(range_policy(0, nset), KOKKOS_LAMBDA (const int& i, T& sum)
-  {
-      sum += points(i);
-  }, sm);  
-
-  // atomic add of vector on GPU
-  Kokkos::View< T[1]> sm_atomic("atomic");
-  typename Kokkos::View< T*>::HostMirror h_sm_atomic = Kokkos::create_mirror_view(sm_atomic);  
-  h_sm_atomic[0] = 0.0;
-  Kokkos::deep_copy(sm_atomic,h_sm_atomic);
-  
-  Kokkos::parallel_for("summation", range_policy(0,nset), KOKKOS_LAMBDA (const int& i)  {
-      Kokkos::atomic_add(&sm_atomic[0], points(i));
-  });
-  Kokkos::deep_copy(h_sm_atomic,sm_atomic);
-  std::cout << "h_sm = " << h_sm << ", sm = " << sm << ", h_sm_atomic = " << h_sm_atomic[0] <<std::endl;
-
-  //calculate max of vector on GPU
-  T mx;    
-  MaxFunctor <T> mxfunctor(points);
-  Kokkos::parallel_reduce(range_policy(0, nset) , mxfunctor, mx);
-  std::cout << "h_mx = " << h_mx << ", mx = " << mx <<std::endl;
-
-  //calculate min of vector on GPU
-  T mn;
-  MinFunctor <T> mnfunctor(points);
-  Kokkos::parallel_reduce( range_policy(0, nset) , mnfunctor, mn);
-  std::cout << "h_mn = " << h_mn << ", mn = " << mn <<std::endl;  
-}
 
 
 #endif

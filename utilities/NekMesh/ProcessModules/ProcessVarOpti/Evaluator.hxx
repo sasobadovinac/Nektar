@@ -471,6 +471,51 @@ void ProcessVarOpti::SetNodeCoordGPU (const double (&X)[3], const NodesGPU &node
 }
 
 
+KOKKOS_INLINE_FUNCTION
+void ProcessVarOpti::GetNodeCoord(double (&X)[3], int id, NodesGPU &nodes,
+            typename Kokkos::View<int*>::HostMirror elIdArray, typename Kokkos::View<int*>::HostMirror localNodeIdArray)
+{   
+    int elmt = elIdArray[0];
+    int node = localNodeIdArray[0];
+    Kokkos::View<double[3]> Xt("Xt");
+    typename Kokkos::View< double[3]>::HostMirror h_Xt = Kokkos::create_mirror_view(Xt);
+    Kokkos::parallel_for(range_policy(0,1), KOKKOS_LAMBDA (const int k)
+    {
+        Xt(0) = nodes.X(elmt,node);
+        Xt(1) = nodes.Y(elmt,node);
+        Xt(2) = nodes.Z(elmt,node);
+    });    
+    Kokkos::deep_copy(h_Xt,Xt);
+    X[0] = h_Xt(0);
+    X[1] = h_Xt(1);
+    X[2] = h_Xt(2); 
+}
+
+KOKKOS_INLINE_FUNCTION
+void ProcessVarOpti::SetNodeCoord(double (&X)[3], int id, NodesGPU &nodes,
+             typename Kokkos::View<int*>::HostMirror elIdArray, typename Kokkos::View<int*>::HostMirror localNodeIdArray, int nElmt)
+{
+    Kokkos::View<double[3]> Xt("Xt");
+    typename Kokkos::View< double[3]>::HostMirror h_Xt = Kokkos::create_mirror_view(Xt);
+    h_Xt(0) = X[0];
+    h_Xt(1) = X[1];
+    h_Xt(2) = X[2];
+    Kokkos::deep_copy(Xt,h_Xt);
+    for(int el = 0; el < nElmt; el++)
+    {
+        int elmt = elIdArray[el];
+        int node = localNodeIdArray[el];
+        Kokkos::parallel_for(range_policy(0,1), KOKKOS_LAMBDA (const int k)
+        {
+            nodes.X(elmt,node) = Xt(0);
+            nodes.Y(elmt,node) = Xt(1);
+            nodes.Z(elmt,node) = Xt(2);
+        });
+    }   
+}
+
+
+
 
 inline void CalcSK(Kokkos::View< double*[9]> G, double sk[3], int node)
 {
@@ -498,7 +543,7 @@ inline void CalcSK(Kokkos::View< double*[9]> G, double sk[3], int node)
 
 
 void ProcessVarOpti::OptimiseGPU(DerivUtilGPU &derivUtil,NodesGPU &nodes, 
-        NodeMap &nodeMap, ElUtilGPU &elUtil, Residual &res, int cs)
+        ElUtilGPU &elUtil, Residual &res, int cs)
 {
 
     //printf("%s\n", "in OptimiseGPU");

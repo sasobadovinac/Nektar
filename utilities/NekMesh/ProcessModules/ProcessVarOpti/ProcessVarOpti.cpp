@@ -63,95 +63,6 @@ using namespace std;
 using namespace Nektar::NekMeshUtils;
 
 
-void p2rocess2()
-{
-
-  int num_vectors = 1000; // number of vectors
-  int len  = 4000;       // length of vectors 
-  int nrepeat = 10;       // number of repeats of the test
-
-    // allocate space for vectors to do num_vectors dot products of length len
-  Kokkos::View<double**,Kokkos::LayoutRight> a("A",num_vectors,len);
-  Kokkos::View<double**,Kokkos::LayoutRight> b("B",num_vectors,len);
-  Kokkos::View<double*>  c("C",num_vectors);
-  auto h_c = Kokkos::create_mirror_view(c);
-  
-  //int team_size = std::is_same<Kokkos::DefaultExecutionSpace,Kokkos::DefaultHostExecutionSpace>::value?1:256;
-
-  typedef Kokkos::TeamPolicy<>::member_type team_member;
-
-  // Initialize vectors
-  Kokkos::parallel_for( Kokkos::TeamPolicy<>(num_vectors,Kokkos::AUTO), 
-                        KOKKOS_LAMBDA (const team_member& thread) {
-    const int i = thread.league_rank();
-    Kokkos::parallel_for( Kokkos::TeamThreadRange(thread,len), [&] (const int& j) {
-      a(i,j) = i+1;
-      b(i,j) = j+1;
-    });
-    //Kokkos::single( Kokkos::PerTeam(thread), [&] () {
-    //  c(i) = 0.0;
-    //});
-  });
-
-
-  // Time dot products
-  struct timeval begin,end;
-
-  gettimeofday(&begin,NULL);
-
-  for(int repeat = 0; repeat < nrepeat; repeat++)
-  {
-    Kokkos::parallel_for( Kokkos::TeamPolicy<>(num_vectors,Kokkos::AUTO), 
-                          KOKKOS_LAMBDA (const team_member& thread) {
-      double c_i = 0.0;
-      const int i = thread.league_rank();
-      Kokkos::parallel_reduce( Kokkos::TeamThreadRange(thread,len), [&] (const int& j, double& ctmp) {
-        ctmp += a(i,j) * b(i,j);
-      },c_i);
-      Kokkos::single( Kokkos::PerTeam(thread), [&] () {
-        c(i) = c_i;
-      });
-    });
-    /*Kokkos::parallel_for( num_vectors, KOKKOS_LAMBDA (const int i)
-    {
-      double c_i = 0.0;
-      for( int j = 0; j < len; j++)
-      {
-        c_i += a(i,j) * b(i,j);
-      }
-      c(i) = c_i;      
-    });*/
-  }
-
-  gettimeofday(&end,NULL);
-
-  // Calculate time
-  double time = 1.0*(end.tv_sec-begin.tv_sec) + 1.0e-6*(end.tv_usec-begin.tv_usec);
-
-  // Error check
-  Kokkos::deep_copy(h_c,c);
-  int error = 0;
-  for(int i = 0; i < num_vectors; i++)
-  {
-    double diff = ((h_c(i) - 1.0*(i+1)*len*(len+1)/2))/((i+1)*len*(len+1)/2);
-    if ( diff*diff>1e-20 )
-    { 
-      error = 1;
-      printf("Error: %i %i %i %lf %lf %e %lf\n",i,num_vectors,len,h_c(i),1.0*(i+1)*len*(len+1)/2,h_c(i) - 1.0*(i+1)*len*(len+1)/2,diff);
-    }
-  }
-
-  // Print results (problem size, time and bandwidth in GB/s)
-
-  if(error==0) { 
-    printf("#NumVector Length Time(s) ProblemSize(MB) Bandwidth(GB/s)\n");
-    printf("%i %i %e %lf %lf\n",num_vectors,len,time,1.0e-6*num_vectors*len*2*8,1.0e-9*num_vectors*len*2*8*nrepeat/time);
-  }
-  else printf("Error\n");
-  
-}
-
-
 
 
 namespace Nektar
@@ -224,21 +135,7 @@ void ProcessVarOpti::Process()
     else
     {
         ASSERTL0(false,"no opti type set");
-    }
-
-    if(m_config["Kokkos"].beenSet)
-    {
-        ThreadManagerType = "ThreadManagerKokkos";        
-    }
-    else if(m_config["Boost"].beenSet)
-    {
-        ThreadManagerType = "ThreadManagerBoost";
-    }
-    else
-    {
-        ThreadManagerType = "ThreadManagerBoost";
-        cout << endl << "Default parallelisation using Boost" << endl;
-    }
+    }    
 
     const int maxIter = m_config["maxiter"].as<int>();
     const NekDouble restol = m_config["restol"].as<NekDouble>();
@@ -284,23 +181,14 @@ void ProcessVarOpti::Process()
         int nThreads = m_config["numthreads"].as<int>();
         Kokkos::InitArguments args;
         args.num_threads = nThreads;
-        Kokkos::DefaultHostExecutionSpace::initialize(args.num_threads);
-        Kokkos::DefaultExecutionSpace::initialize();
+        //Kokkos::DefaultHostExecutionSpace::initialize(args.num_threads);
+        //Kokkos::DefaultExecutionSpace::initialize();
+        Kokkos::initialize(args);
 
-        // Test functions
-        std::cout << " Template using int" << std::endl;  
-        process<int>();
-        std::cout << " Template using double" << std::endl; 
-        process<double>();
-
-        //p2rocess2(); 
     }
 
-    Residual res;
-    res.val = Kokkos::View<double[1]>("val");
-    res.h_val = Kokkos::create_mirror_view(res.val);
-    res.h_val[0] = 1.0;
     
+     
     m_mesh->MakeOrder(m_mesh->m_nummode-1,LibUtilities::eGaussLobattoLegendre);
     BuildDerivUtil();
     GetElementMap();
@@ -312,6 +200,7 @@ void ProcessVarOpti::Process()
         elLock = GetLockedElements(m_config["region"].as<NekDouble>());
     }
 
+    Residual res;
     vector<vector<NodeSharedPtr> > freenodes = GetColouredNodes(elLock, res);
     vector<vector<NodeOptiSharedPtr> > optiNodes;
 
@@ -369,11 +258,10 @@ void ProcessVarOpti::Process()
          << "Residual tolerance:\t" << restol << endl;
 
 
-    // initialise variable for number of invalid elements
+    // initialise residual variables
     res.startInv = Kokkos::View<int[1]>("startInv");
     res.h_startInv = Kokkos::create_mirror_view(res.startInv);
     
-    // initialise variable for smallest Jacobian of all elements
     res.worstJac = Kokkos::View<double[1]>("worstJac");
     res.h_worstJac = Kokkos::create_mirror_view(res.worstJac);    
     
@@ -381,6 +269,9 @@ void ProcessVarOpti::Process()
     res.h_func = Kokkos::create_mirror_view(res.func);
 
     res.nReset = Kokkos::View<int[1]>("nReset");
+
+    res.val = Kokkos::View<double[1]>("val");
+    res.h_val = Kokkos::create_mirror_view(res.val);   
     
     
     // initialise and load derivUtils onto GPU
@@ -492,21 +383,24 @@ void ProcessVarOpti::Process()
     Timer t;
     t.Start();
 
-    int ctr = 0;
+    
     ofstream resFile;
     if(m_config["resfile"].beenSet)
     {
         resFile.open(m_config["resfile"].as<string>().c_str());
     }
 
-
+    int ctr = 0;
+    res.h_val[0] = 1.0;
     while (ctr < maxIter && res.h_val[0] > restol)
     {
         ctr++;
+        res.h_val[0] = 0.0;
+        Kokkos::deep_copy(res.val,res.h_val);
         
         for(int cs = 0; cs < optiNodes.size(); cs++)
         {              
-            OptimiseGPU(derivUtil, nodes, nodeMap, elUtil, res, cs);
+            OptimiseGPU(derivUtil, nodes, elUtil, res, cs);
             //printf("colorset %cs finished\n", cs);            
         }
                 
@@ -528,9 +422,12 @@ void ProcessVarOpti::Process()
         string name = m_config["histfile"].as<string>() + "_end.txt";
         histFile.open(name.c_str());
 
+        Kokkos::deep_copy(elUtil.h_scaledJac,elUtil.scaledJac);
+
         for(int i = 0; i < dataSet.size(); i++)
         {
-            histFile << dataSet[i]->scaledJac << endl;
+            //histFile << dataSet[i]->scaledJac << endl;
+            histFile << elUtil.h_scaledJac(i) << endl;
         }
         histFile.close();
     }
@@ -547,8 +444,9 @@ void ProcessVarOpti::Process()
 
     if(m_config["Kokkos"].beenSet)
     {
-        Kokkos::DefaultExecutionSpace::finalize();
-        Kokkos::DefaultHostExecutionSpace::finalize();        
+        //Kokkos::DefaultExecutionSpace::finalize();
+        //Kokkos::DefaultHostExecutionSpace::finalize(); 
+        Kokkos::finalize();       
     }
 }
 

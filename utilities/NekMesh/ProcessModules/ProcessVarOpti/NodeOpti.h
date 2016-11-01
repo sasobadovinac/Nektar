@@ -63,38 +63,16 @@ public:
     }
 
     virtual ~NodeOpti(){};
-
-    KOKKOS_INLINE_FUNCTION
-    virtual void Optimise(DerivUtilGPU &derivUtil,NodesGPU &nodes, 
-            NodeMap &nodeMap, ElUtilGPU &elUtil, Residual &res,
-            int nElmt) = 0;
-    
-    NodeOptiJob *GetJob();
-
-    void GetNodeCoord(double (&X)[3], int id,NodesGPU &nodes,
-            typename Kokkos::View<int*>::HostMirror elIdArray, typename Kokkos::View<int*>::HostMirror localNodeIdArray);
-    void SetNodeCoord(double (&X)[3], int id,NodesGPU &nodes,
-            typename Kokkos::View<int*>::HostMirror elIdArray, typename Kokkos::View<int*>::HostMirror localNodeIdArray, int nElmt);
-
-    
-    
-    
+        
     std::vector<ElUtilSharedPtr> data;
     NodeSharedPtr node;
-
     
 
 protected:
 
-    //NodeSharedPtr node;
-    boost::mutex mtx;
     std::vector<int> nodeIds;
-    //std::vector<ElUtilSharedPtr> data;
-    //Array<OneD, NekDouble> G;
-
-    double CalcMinJac(ElUtilGPU &elUtil, int nElmt, typename Kokkos::View<int*>::HostMirror elIdArray);
+    
     bool Linear();
-
     template<int DIM> int IsIndefinite(Grad &grad);
     template<int DIM> void MinEigen(NekDouble &val, NekDouble (&vec)[DIM], Grad &grad);
 
@@ -105,7 +83,6 @@ protected:
     optimiser opti;
 
     static const NekDouble gam;
-
     static NekDouble c1() {return 1e-3;}
     static NekDouble c2() {return 0.9;}
     static NekDouble gradTol() {return 1e-20;}
@@ -135,12 +112,7 @@ public:
     {
     }
 
-    ~NodeOpti3D3D(){};
-
-    KOKKOS_INLINE_FUNCTION
-    void Optimise(DerivUtilGPU &derivUtil,NodesGPU &nodes, 
-            NodeMap &nodeMap, ElUtilGPU &elUtil, Residual &res,
-            int nElmt);
+    ~NodeOpti3D3D(){};    
 
     static int m_type;
     static NodeOptiSharedPtr create(
@@ -155,40 +127,6 @@ public:
 private:
 
 };
-
-/*class NodeOpti2D2D : public NodeOpti //1D optimsation in 3D space
-{
-public:
-    NodeOpti2D2D(NodeSharedPtr n,
-                 std::pair<std::vector<int>, std::vector<ElUtilSharedPtr> > e,
-                 std::map<LibUtilities::ShapeType,DerivUtilSharedPtr> d,
-                 optimiser o)
-                 : NodeOpti(n,e,d,o)
-    {
-    }
-
-    ~NodeOpti2D2D(){};
-
-    void Optimise(DerivUtilGPU &derivUtil,NodesGPU &nodes, 
-            NodeMap &nodeMap, ElUtilGPU &elUtil, Residual &res,
-            int nElmt, int globalNodeId);
-
-    static int m_type;
-    static NodeOptiSharedPtr create(
-        NodeSharedPtr n, std::pair<std::vector<int>, std::vector<ElUtilSharedPtr> > e,
-        std::map<LibUtilities::ShapeType,DerivUtilSharedPtr> d,
-        optimiser o)
-    {
-        return NodeOptiSharedPtr(new NodeOpti2D2D(n, e, d, o));
-    }
-
-private:
-
-};*/
-
-
-
-
 
 }
 }

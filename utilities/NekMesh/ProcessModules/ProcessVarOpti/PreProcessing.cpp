@@ -421,7 +421,7 @@ void ProcessVarOpti::GetElementMap()
         el->GetCurvedNodes(ns);
         ElUtilSharedPtr d = boost::shared_ptr<ElUtil>(new ElUtil(el,
                                     derivUtil[el->GetShapeType()],
-                                    res, m_mesh->m_nummode));
+                                    m_mesh->m_nummode));
         dataSet.push_back(d);
     }
 

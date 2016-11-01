@@ -48,20 +48,14 @@ namespace Utilities
 {
 
 struct DerivUtil;
-struct Residual;
-
 typedef boost::shared_ptr<DerivUtil> DerivUtilSharedPtr;
-typedef boost::shared_ptr<Residual> ResidualSharedPtr;
 
 class ElUtilJob;
 
 class ElUtil : public boost::enable_shared_from_this<ElUtil>
 {
 public:
-    ElUtil(ElementSharedPtr e, DerivUtilSharedPtr d,
-           ResidualSharedPtr, int n);
-
-    ElUtilJob *GetJob();
+    ElUtil(ElementSharedPtr e, DerivUtilSharedPtr d, int n);
 
     int GetId()
     {
@@ -70,21 +64,11 @@ public:
 
     std::vector<std::vector<NekDouble *> > nodes;
     std::vector<int *> nodeIds;
-
     std::vector<Array<OneD, NekDouble> > maps;
-    NekDouble minJac;
-    NekDouble scaledJac;
-
-    void Evaluate();
-
-    ElementSharedPtr GetEl()
-    {
-        return m_el;
-    }
+    
 
     // members moved from private to public
     DerivUtilSharedPtr derivUtil;
-    ResidualSharedPtr res;
     std::vector<Array<OneD, NekDouble> > MappingIdealToRef();
     int m_dim;
 
@@ -94,20 +78,10 @@ private:
     int m_mode;
     
 };
+
 typedef boost::shared_ptr<ElUtil> ElUtilSharedPtr;
 
-class ElUtilJob : public Thread::ThreadJob
-{
-public:
-    ElUtilJob(ElUtil* e) : el(e) {}
 
-    void Run()
-    {
-        el->Evaluate();
-    }
-private:
-    ElUtil* el;
-};
 
 }
 }
