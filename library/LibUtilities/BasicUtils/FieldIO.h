@@ -180,12 +180,12 @@ struct FieldDefinitions
 
 typedef boost::shared_ptr<FieldDefinitions> FieldDefinitionsSharedPtr;
 
-LIB_UTILITIES_EXPORT void Write(
+LIB_UTILITIES_EXPORT unsigned long Write(
     const std::string &outFile,
     std::vector<FieldDefinitionsSharedPtr> &fielddefs,
     std::vector<std::vector<NekDouble> > &fielddata,
     const FieldMetaDataMap &fieldinfomap = NullFieldMetaDataMap);
-LIB_UTILITIES_EXPORT void Import(
+LIB_UTILITIES_EXPORT unsigned long Import(
     const std::string &infilename,
     std::vector<FieldDefinitionsSharedPtr> &fielddefs,
     std::vector<std::vector<NekDouble> > &fielddata = NullVectorNekDoubleVector,
@@ -230,13 +230,13 @@ public:
     {
     }
 
-    LIB_UTILITIES_EXPORT inline void Write(
+    LIB_UTILITIES_EXPORT inline unsigned long Write(
         const std::string &outFile,
         std::vector<FieldDefinitionsSharedPtr> &fielddefs,
         std::vector<std::vector<NekDouble> > &fielddata,
         const FieldMetaDataMap &fieldinfomap = NullFieldMetaDataMap);
 
-    LIB_UTILITIES_EXPORT inline void Import(
+    LIB_UTILITIES_EXPORT inline unsigned long Import(
         const std::string &infilename,
         std::vector<FieldDefinitionsSharedPtr> &fielddefs,
         std::vector<std::vector<NekDouble> > &fielddata =
@@ -247,6 +247,12 @@ public:
     LIB_UTILITIES_EXPORT DataSourceSharedPtr ImportFieldMetaData(
         const std::string &filename,
         FieldMetaDataMap  &fieldmetadatamap);
+
+    LIB_UTILITIES_EXPORT void ImportMultiFldFileIDs(
+        const std::string &inFile,
+        std::vector<std::string> &fileNames,
+        std::vector<std::vector<unsigned int> > &elementList,
+        FieldMetaDataMap &fieldmetadatamap);
 
     LIB_UTILITIES_EXPORT static const std::string GetFileType(
         const std::string &filename, CommSharedPtr comm);
@@ -283,14 +289,14 @@ protected:
         const std::string outname, bool perRank);
 
     /// @copydoc FieldIO::Write
-    LIB_UTILITIES_EXPORT virtual void v_Write(
+    LIB_UTILITIES_EXPORT virtual unsigned long v_Write(
         const std::string                      &outFile,
         std::vector<FieldDefinitionsSharedPtr> &fielddefs,
         std::vector<std::vector<NekDouble> >   &fielddata,
         const FieldMetaDataMap                 &fieldinfomap) = 0;
 
     /// @copydoc FieldIO::Import
-    LIB_UTILITIES_EXPORT virtual void v_Import(
+    LIB_UTILITIES_EXPORT virtual unsigned long v_Import(
         const std::string &infilename,
         std::vector<FieldDefinitionsSharedPtr> &fielddefs,
         std::vector<std::vector<NekDouble> >
@@ -301,6 +307,12 @@ protected:
     /// @copydoc FieldIO::ImportFieldMetaData
     LIB_UTILITIES_EXPORT virtual DataSourceSharedPtr v_ImportFieldMetaData(
         const std::string &filename, FieldMetaDataMap &fieldmetadatamap) = 0;
+
+    LIB_UTILITIES_EXPORT virtual void v_ImportMultiFldFileIDs(
+        const std::string &inFile,
+        std::vector<std::string> &fileNames,
+        std::vector<std::vector<unsigned int> > &elementList,
+        FieldMetaDataMap &fieldmetadatamap) {};
 };
 
 typedef boost::shared_ptr<FieldIO> FieldIOSharedPtr;
@@ -313,13 +325,14 @@ typedef boost::shared_ptr<FieldIO> FieldIOSharedPtr;
  * @param fielddata     Binary field data that stores the output corresponding
  *                      to @p fielddefs.
  * @param fieldinfomap  Associated field metadata map.
+ * @return The number of bytes written.
  */
-inline void FieldIO::Write(const std::string                      &outFile,
+inline unsigned long FieldIO::Write(const std::string             &outFile,
                            std::vector<FieldDefinitionsSharedPtr> &fielddefs,
-                           std::vector<std::vector<NekDouble> > &fielddata,
+                           std::vector<std::vector<NekDouble> >   &fielddata,
                            const FieldMetaDataMap                 &fieldinfomap)
 {
-    v_Write(outFile, fielddefs, fielddata, fieldinfomap);
+    return v_Write(outFile, fielddefs, fielddata, fieldinfomap);
 }
 
 /**
@@ -334,14 +347,15 @@ inline void FieldIO::Write(const std::string                      &outFile,
  * @param ElementIDs    Element IDs that lie on this processor, which can be
  *                      optionally supplied to avoid reading the entire file on
  *                      each processor.
+ * @return The number of bytes read.
  */
-inline void FieldIO::Import(const std::string                      &infilename,
+inline unsigned long FieldIO::Import(const std::string             &infilename,
                             std::vector<FieldDefinitionsSharedPtr> &fielddefs,
                             std::vector<std::vector<NekDouble> >   &fielddata,
                             FieldMetaDataMap                       &fieldinfo,
                             const Array<OneD, int>                 &ElementIDs)
 {
-    v_Import(infilename, fielddefs, fielddata, fieldinfo, ElementIDs);
+    return v_Import(infilename, fielddefs, fielddata, fieldinfo, ElementIDs);
 }
 
 /**
@@ -357,6 +371,24 @@ inline DataSourceSharedPtr FieldIO::ImportFieldMetaData(
     return v_ImportFieldMetaData(filename, fieldmetadatamap);
 }
 
+
+/**
+ * @brief Read file containing element ID to partition mapping.
+ *
+ * @param inFile             Input multi-field file name.
+ * @param fileNames          List of partition filenames.
+ * @param elementList        Vector of element IDs that lie on each process.
+ * @param fieldmetadatamap   Field metadata map that is read from @p inFile.
+ */
+inline void FieldIO::ImportMultiFldFileIDs(
+        const std::string &inFile,
+        std::vector<std::string> &fileNames,
+        std::vector<std::vector<unsigned int> > &elementList,
+        FieldMetaDataMap &fieldmetadatamap)
+{
+    v_ImportMultiFldFileIDs(inFile, fileNames, elementList, fieldmetadatamap);
+}
+ 
 }
 }
 #endif
