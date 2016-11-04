@@ -200,13 +200,66 @@ template<int DIM> int ProcessVarOpti::IsIndefinite(const Grad &grad, const int n
     ASSERTL0(false,"DIM error");
 }
 
-template<> int ProcessVarOpti::IsIndefinite<1>(const Grad &grad, const int node)
-{
-
-}
 
 template<> int ProcessVarOpti::IsIndefinite<2>(const Grad &grad, const int node)
 {
+    double H[2][2];
+    H[0][0] = grad.G(node,2);
+    H[1][0] = grad.G(node,3);
+    //H[0][1] = H[1][0];
+    H[1][1] = grad.G(node,4);
+
+    double eval[2]; // the eigenvalues
+
+    double D = (H[0][0] - H[1][1]) * (H[0][0] - H[1][1]) + 4.0 * H[1][0] * H[1][0];
+    double Dsqrt = sqrt(D);
+
+    eval[0] = (H[0][0] + H[1][1] + Dsqrt ) / 2.0;
+    eval[1] = (H[0][0] + H[1][1] - Dsqrt ) / 2.0;
+
+    // TEST
+    /*NekMatrix<NekDouble> HH(2,2);
+    HH(0,0) = H[0][0];
+    HH(1,0) = H[1][0];
+    HH(0,1) = H[1][0];
+    HH(1,1) = H[1][1];
+
+    int nVel = 2;
+    char jobvl = 'N', jobvr = 'N';
+    int worklen = 8*nVel, info;
+    NekDouble dum;
+
+    DNekMat evalDia   (nVel, nVel, 0.0, eDIAGONAL);
+    Array<OneD, NekDouble> vl  (nVel*nVel);
+    Array<OneD, NekDouble> work(worklen);
+    Array<OneD, NekDouble> wi  (nVel);
+
+    Lapack::Dgeev(jobvl, jobvr, nVel, HH.GetRawPtr(), nVel,
+                  &(evalDia.GetPtr())[0], &wi[0], &vl[0], nVel,
+                  &dum, nVel,
+                  &work[0], worklen, info);
+
+    ASSERTL0(!info,"dgeev failed");
+
+    printf("eval[0] = %e\n",eval[0] );
+    printf("eval[1] = %e\n",eval[1] );       
+    std::cout << "evalDia(1,1) = " << evalDia(1,1) << std::endl;
+    std::cout << "evalDia(0,0) = " << evalDia(0,0) << std::endl;*/
+
+    if(eval[0] < 0.0 || eval[1] < 0.0)
+    {
+        if(eval[0] < 0.0 && eval[1] < 0.0)
+        {
+            return 2;
+        }
+        else
+        {
+            return 1;
+        }
+    }
+
+    return 0;
+
 
 }
 
@@ -236,21 +289,22 @@ template<> int ProcessVarOpti::IsIndefinite<3>(const Grad &grad, const int node)
     else
     {
         double q  = (H[0][0] + H[1][1] + H[2][2]) / 3.0;
-        double p2 =    (H[1][1] - q)*(H[1][1] - q)
+        double p2 =    (H[0][0] - q)*(H[0][0] - q)
+                     + (H[1][1] - q)*(H[1][1] - q)
                      + (H[2][2] - q)*(H[2][2] - q)
-                     + (H[3][3] - q)*(H[3][3] - q)
                      + 2.0 * p1;
         double p = sqrt(p2 / 6.0);
 
         double B[3][3];   // B = (1.0 / p) * (H - q * I)   with I being the identity matrix
-        B[0][0] = (1.0 / p) * (H[0][0] - q);
-        B[1][1] = (1.0 / p) * (H[1][1] - q);
-        B[2][2] = (1.0 / p) * (H[2][2] - q);
-        B[0][1] = 1.0/p * H[0][1];
+        double pinv = 1.0 / p;
+        B[0][0] = pinv * (H[0][0] - q);
+        B[1][1] = pinv * (H[1][1] - q);
+        B[2][2] = pinv * (H[2][2] - q);
+        B[0][1] = pinv * H[0][1];
         B[1][0] = B[0][1];
-        B[0][2] = 1.0/p * H[0][2];
+        B[0][2] = pinv * H[0][2];
         B[2][0] = B[0][2];
-        B[1][2] = 1.0/p * H[1][2];
+        B[1][2] = pinv * H[1][2];
         B[2][1] = B[1][2];
 
         double r = Determinant<3>(B) / 2.0;
@@ -277,7 +331,9 @@ template<> int ProcessVarOpti::IsIndefinite<3>(const Grad &grad, const int node)
         eval[1] = 3.0 * q - eval[0] - eval[2];     // since trace(H) = eval[0] + eval[1] + eval[2]
     }
 
-    NekMatrix<NekDouble> HH(3,3);
+    // TEST
+
+    /*NekMatrix<NekDouble> HH(3,3);
     HH(0,0) = H[0][0];
     HH(1,0) = H[1][0];
     HH(0,1) = H[0][1];
@@ -303,14 +359,24 @@ template<> int ProcessVarOpti::IsIndefinite<3>(const Grad &grad, const int node)
                   &dum, nVel,
                   &work[0], worklen, info);
 
-    if ( abs(evalDia(0,0) - eval[0]) <= 1e-08 &&
+    ASSERTL0(!info,"dgeev failed");
+
+    if ( abs(evalDia(0,0) - eval[2]) <= 1e-08 &&
          abs(evalDia(1,1) - eval[1]) <= 1e-08 &&
-         abs(evalDia(2,2) - eval[2]) <= 1e-08 )
+         abs(evalDia(2,2) - eval[1]) <= 1e-08 )
     {}
     else
     {
         printf("%s\n", "wrong eigenvalues");
-    }
+        printf("eval[0] = %e\n",eval[0] );
+        printf("eval[1] = %e\n",eval[1] );
+        printf("eval[2] = %e\n",eval[2] );
+        std::cout << "evalDia(2,2) = " << evalDia(2,2) << std::endl;        
+        std::cout << "evalDia(1,1) = " << evalDia(1,1) << std::endl;
+        std::cout << "evalDia(0,0) = " << evalDia(0,0) << std::endl;
+        
+        //printf("evalDia(0,0) = %e\n",evalDia(0,0) );
+    }*/
 
     if(eval[0] < 0.0 || eval[1] < 0.0 || eval[2] < 0.0)
     {

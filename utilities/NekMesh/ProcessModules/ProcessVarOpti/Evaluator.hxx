@@ -420,8 +420,12 @@ void ProcessVarOpti::OptimiseGPU(DerivUtilGPU &derivUtil,NodesGPU &nodes,
         
         currentW = GetFunctional<3>(derivUtil, nodes, elUtil, grad, nElmt, node, cs, ep, teamMember);
 
-        IsIndefinite<3>(grad, node);    
-    
+        if (node == 1)
+        {
+            IsIndefinite<3>(grad, node);
+            IsIndefinite<2>(grad, node);   
+        }
+
         if(grad.G(node,0)*grad.G(node,0) + grad.G(node,1)*grad.G(node,1) + grad.G(node,2)*grad.G(node,2) > 1e-20)
         {        
             double h_Xc[3];        

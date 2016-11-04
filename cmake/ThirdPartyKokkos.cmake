@@ -32,7 +32,7 @@ IF (NEKTAR_USE_KOKKOS)
 
         SET(KOKKOS_OPTIONS "--prefix=${TPDIST}" --cxxflags=-fPIC --with-serial --with-pthread --with-openmp)
         #SET(KOKKOS_OPTIONS "--prefix=${TPDIST}" --cxxflags=-fPIC --with-serial --with-pthread)
-
+        
         IF (NEKTAR_USE_KOKKOS_CUDA)
             FIND_PACKAGE(CUDA REQUIRED VERSION 8.0)
             #SET(KOKKOS_OPTIONS ${KOKKOS_OPTIONS} --with-cuda=${CUDA_TOOLKIT_ROOT_DIR})

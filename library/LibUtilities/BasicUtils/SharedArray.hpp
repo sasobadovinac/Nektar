@@ -39,11 +39,11 @@
 #include <vector>
 #include <boost/assign/list_of.hpp>
 
-#ifdef NEKTAR_USE_KOKKOS
-    #include <LibUtilities/BasicUtils/SharedArrayKokkos.hpp>
-#else
+//#ifdef NEKTAR_USE_KOKKOS
+//    #include <LibUtilities/BasicUtils/SharedArrayKokkos.hpp>
+//#else
     #include <LibUtilities/BasicUtils/SharedArrayNative.hpp>
-#endif
+//#endif
 
 namespace Nektar
 {
