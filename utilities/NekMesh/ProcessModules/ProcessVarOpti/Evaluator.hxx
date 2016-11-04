@@ -46,6 +46,7 @@ namespace Utilities
 
 
 
+//typedef Kokkos::TeamPolicy<Kokkos::DefaultExecutionSpace>::member_type  member_type;
 
 
 template<int DIM>
@@ -374,24 +375,22 @@ void ProcessVarOpti::SetNodeCoord(double (&X)[3], int id, NodesGPU &nodes,
 
 
 
-inline void CalcSK(Kokkos::View< double*[9]> G, double sk[3], int node)
+inline void CalcSK(double G[9], double sk[3])
 {
 
-    double det =    G(node,3)*(G(node,6)*G(node,8)-G(node,7)*G(node,7))
-                   -G(node,4)*(G(node,4)*G(node,8)-G(node,5)*G(node,7))
-                   +G(node,5)*(G(node,4)*G(node,7)-G(node,5)*G(node,6));
+    NekDouble det = G[3]*(G[6]*G[8]-G[7]*G[7])
+                   -G[4]*(G[4]*G[8]-G[5]*G[7])
+                   +G[5]*(G[4]*G[7]-G[5]*G[6]);
 
-    sk[0] = G(node,0)*(G(node,6)*G(node,8)-G(node,7)*G(node,7)) +
-            G(node,1)*(G(node,5)*G(node,7)-G(node,4)*G(node,8)) +
-            G(node,2)*(G(node,4)*G(node,7)-G(node,3)*G(node,7));
-    
-    sk[1] = G(node,0)*(G(node,7)*G(node,5)-G(node,4)*G(node,5)) +
-            G(node,1)*(G(node,3)*G(node,8)-G(node,5)*G(node,5)) +
-            G(node,2)*(G(node,4)*G(node,5)-G(node,3)*G(node,7));
-    
-    sk[2] = G(node,0)*(G(node,4)*G(node,7)-G(node,6)*G(node,5)) +
-            G(node,1)*(G(node,4)*G(node,5)-G(node,3)*G(node,7)) +
-            G(node,2)*(G(node,3)*G(node,6)-G(node,4)*G(node,4));
+        sk[0] = G[0]*(G[6]*G[8]-G[7]*G[7]) +
+                G[1]*(G[5]*G[7]-G[4]*G[8]) +
+                G[2]*(G[4]*G[7]-G[3]*G[7]);
+        sk[1] = G[0]*(G[7]*G[5]-G[4]*G[5]) +
+                G[1]*(G[3]*G[8]-G[5]*G[5]) +
+                G[2]*(G[4]*G[5]-G[3]*G[7]);
+        sk[2] = G[0]*(G[4]*G[7]-G[6]*G[5]) +
+                G[1]*(G[4]*G[5]-G[3]*G[7]) +
+                G[2]*(G[3]*G[6]-G[4]*G[4]);
 
     sk[0] /= det * -1.0;
     sk[1] /= det * -1.0;
@@ -420,24 +419,43 @@ void ProcessVarOpti::OptimiseGPU(DerivUtilGPU &derivUtil,NodesGPU &nodes,
         
         currentW = GetFunctional<3>(derivUtil, nodes, elUtil, grad, nElmt, node, cs, ep, teamMember);
 
+        double G[9];
+        for (int i = 0; i < 9; ++i)
+        {
+            G[i] = grad.G(node,i);
+        }
+        
         if (node == 1)
         {
-            IsIndefinite<3>(grad, node);
-            IsIndefinite<2>(grad, node);   
+            double eval3[3];
+            double eval2[2];
+            CalcEValues<3>(G, eval3);
+            double G2[4];
+            for (int i = 0; i < 4; ++i)
+            {
+                G2[i] = G[i];
+            }
+            CalcEValues<2>(G2, eval2);
+            IsIndefinite<3>(eval3);
+            IsIndefinite<2>(eval2);
+            double evec3[3];
+            double evec2[2];
+            CalcEVector<3>(G, eval3[2], evec3);
+            CalcEVector<2>(G2, eval2[1], evec2);
         }
 
-        if(grad.G(node,0)*grad.G(node,0) + grad.G(node,1)*grad.G(node,1) + grad.G(node,2)*grad.G(node,2) > 1e-20)
+        if(G[0]*G[0] + G[1]*G[1] + G[2]*G[2] > 1e-20)
         {        
             double h_Xc[3];        
             double h_Xn[3];        
             GetNodeCoordGPU(h_Xc, nodes, nodes.elIdArray, nodes.localNodeIdArray, node, cs); 
 
             double sk[3];
-            CalcSK(grad.G, sk, node);
-            double pg = (grad.G(node,0)*sk[0]+grad.G(node,1)*sk[1]+grad.G(node,2)*sk[2]);
-            double hes    = sk[0] * (sk[0]*grad.G(node,3)+ sk[1]*grad.G(node,4) + sk[2]*grad.G(node,5)) +
-                            sk[1] * (sk[0]*grad.G(node,4)+ sk[1]*grad.G(node,6) + sk[2]*grad.G(node,7)) +
-                            sk[2] * (sk[0]*grad.G(node,5)+ sk[1]*grad.G(node,7) + sk[2]*grad.G(node,8));
+            CalcSK(G, sk);
+            double pg  = (G[0]*sk[0] + G[1]*sk[1] + G[2]*sk[2]);
+            double hes =    sk[0] * (sk[0]*G[3] + sk[1]*G[4] + sk[2]*G[5]) +
+                            sk[1] * (sk[0]*G[4] + sk[1]*G[6] + sk[2]*G[7]) +
+                            sk[2] * (sk[0]*G[5] + sk[1]*G[7] + sk[2]*G[8]);
             hes = (hes > 0.0 ? 0.0 : hes);
 
             double alpha  = 1.0;
@@ -451,7 +469,7 @@ void ProcessVarOpti::OptimiseGPU(DerivUtilGPU &derivUtil,NodesGPU &nodes,
                 h_Xn[2] = h_Xc[2] + alpha * sk[2];
                 SetNodeCoordGPU(h_Xn, nodes, nodes.elIdArray, nodes.localNodeIdArray, nElmt, node, cs);
                 
-                newVal = GetFunctional<3>(derivUtil, nodes, elUtil, grad, nElmt, node, cs, ep, teamMember);
+                newVal = GetFunctional<3>(derivUtil, nodes, elUtil, grad, nElmt, node, cs, ep, teamMember, false, false);
            
                 if (newVal <= currentW + 1e-03 * (alpha*pg+ 0.5*alpha*alpha*hes))
                 {

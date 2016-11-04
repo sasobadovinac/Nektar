@@ -45,7 +45,6 @@ namespace Utilities
 {
 
 
-typedef Kokkos::TeamPolicy<Kokkos::DefaultExecutionSpace>::member_type  member_type;
 
 template<int DIM> inline NekDouble Determinant(NekDouble jac[DIM][DIM])
 {
@@ -195,21 +194,25 @@ inline NekDouble FrobeniusNorm<3>(NekDouble inarray[3][3])
 
 
 //returns zero if hessian is good, 1 if indefinite
-template<int DIM> int ProcessVarOpti::IsIndefinite(const Grad &grad, const int node)
+template<int DIM>
+KOKKOS_INLINE_FUNCTION
+void ProcessVarOpti::CalcEValues(const double (&G)[DIM*DIM], double (&eval)[DIM])
 {
     ASSERTL0(false,"DIM error");
 }
 
 
-template<> int ProcessVarOpti::IsIndefinite<2>(const Grad &grad, const int node)
+template<>
+KOKKOS_INLINE_FUNCTION
+void ProcessVarOpti::CalcEValues<2>(const double (&G)[4], double (&eval)[2])
 {
     double H[2][2];
-    H[0][0] = grad.G(node,2);
-    H[1][0] = grad.G(node,3);
+    H[0][0] = G[2];
+    H[1][0] = G[3];
     //H[0][1] = H[1][0];
-    H[1][1] = grad.G(node,4);
+    H[1][1] = G[4];
 
-    double eval[2]; // the eigenvalues
+    //double eval[2]; // the eigenvalues
 
     double D = (H[0][0] - H[1][1]) * (H[0][0] - H[1][1]) + 4.0 * H[1][0] * H[1][0];
     double Dsqrt = sqrt(D);
@@ -246,37 +249,24 @@ template<> int ProcessVarOpti::IsIndefinite<2>(const Grad &grad, const int node)
     std::cout << "evalDia(1,1) = " << evalDia(1,1) << std::endl;
     std::cout << "evalDia(0,0) = " << evalDia(0,0) << std::endl;*/
 
-    if(eval[0] < 0.0 || eval[1] < 0.0)
-    {
-        if(eval[0] < 0.0 && eval[1] < 0.0)
-        {
-            return 2;
-        }
-        else
-        {
-            return 1;
-        }
-    }
-
-    return 0;
-
-
 }
 
-template<> int ProcessVarOpti::IsIndefinite<3>(const Grad &grad, const int node)
+template<>
+KOKKOS_INLINE_FUNCTION
+void ProcessVarOpti::CalcEValues<3>(const double (&G)[9], double (&eval)[3])
 {
     double H[3][3];
-    H[0][0] = grad.G(node,3);
-    H[1][0] = grad.G(node,4);
+    H[0][0] = G[3];
+    H[1][0] = G[4];
     H[0][1] = H[1][0];
-    H[2][0] = grad.G(node,5);
+    H[2][0] = G[5];
     H[0][2] = H[2][0];
-    H[1][1] = grad.G(node,6);
-    H[2][1] = grad.G(node,7);
+    H[1][1] = G[6];
+    H[2][1] = G[7];
     H[1][2] = H[2][1];
-    H[2][2] = grad.G(node,8);
+    H[2][2] = G[8];
 
-    double eval[3]; // the eigenvalues
+    //double eval[3]; // the eigenvalues
 
     double p1 = H[0][1] * H[0][1] + H[0][2] * H[0][2] + H[1][2] * H[1][2];
     if (p1 == 0.0) 
@@ -376,8 +366,39 @@ template<> int ProcessVarOpti::IsIndefinite<3>(const Grad &grad, const int node)
         std::cout << "evalDia(0,0) = " << evalDia(0,0) << std::endl;
         
         //printf("evalDia(0,0) = %e\n",evalDia(0,0) );
-    }*/
+    }*/    
+}
 
+
+template<int DIM>
+KOKKOS_INLINE_FUNCTION
+int ProcessVarOpti::IsIndefinite(const double (&eval)[DIM])
+{
+    ASSERTL0(false,"DIM error");
+}
+
+template<>
+KOKKOS_INLINE_FUNCTION
+int ProcessVarOpti::IsIndefinite<2>(const double (&eval)[2])
+{   
+    if(eval[0] < 0.0 || eval[1] < 0.0)
+    {
+        if(eval[0] < 0.0 && eval[1] < 0.0)
+        {
+            return 2;
+        }
+        else
+        {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+template<>
+KOKKOS_INLINE_FUNCTION
+int ProcessVarOpti::IsIndefinite<3>(const double (&eval)[3])
+{    
     if(eval[0] < 0.0 || eval[1] < 0.0 || eval[2] < 0.0)
     {
         if(eval[0] < 0.0 && eval[1] < 0.0 && eval[2])
@@ -389,26 +410,107 @@ template<> int ProcessVarOpti::IsIndefinite<3>(const Grad &grad, const int node)
             return 1;
         }
     }
-
     return 0;
 }
 
-template<int DIM> void NodeOpti::MinEigen(NekDouble &val, NekDouble (&vec)[DIM], Grad &grad)
+
+
+template<int DIM>
+KOKKOS_INLINE_FUNCTION
+void ProcessVarOpti::CalcEVector(const double (&G)[DIM*DIM], const double &eval, double (&evec)[DIM])
 {
     ASSERTL0(false,"DIM error");
 }
 
-template<> void NodeOpti::MinEigen<1>(NekDouble &val, NekDouble (&vec)[1], Grad &grad)
+template<>
+KOKKOS_INLINE_FUNCTION
+void ProcessVarOpti::CalcEVector<2>(const double (&G)[4], const double &eval, double (&evec)[2])
 {
+    double H[2][2];
+    H[0][0] = G[2];
+    H[1][0] = G[3];
+    //H[0][1] = H[1][0];
+    H[1][1] = G[4];
+
+    evec[1] = 1.0;
+    evec[0] = H[1][0] / (eval - H[0][0]);
+    double testvec1 = (eval - H[1][1]) / H[1][0];
+    if (evec[1] == testvec1)
+    {
+        printf("testvec1 %e\n", testvec1);
+    }
+    double norm = sqrt(evec[0]*evec[0] + evec[1]*evec[1]);
+    evec[0] = evec[0] / norm;
+    evec[1] = evec[1] / norm;
+
+
+    // Test
+    NekMatrix<NekDouble> HH(2,2);
+    HH(0,0) = G[2];
+    HH(1,0) = G[3];
+    HH(0,1) = HH(1,0);
+    HH(1,1) = G[4];
+
+    int nVel = 2;
+    char jobvl = 'N', jobvr = 'V';
+    int worklen = 8*nVel, info;
+
+    DNekMat evalTest   (nVel, nVel, 0.0, eDIAGONAL);
+    DNekMat evecTest   (nVel, nVel, 0.0, eFULL);
+    Array<OneD, NekDouble> vl  (nVel*nVel);
+    Array<OneD, NekDouble> work(worklen);
+    Array<OneD, NekDouble> wi  (nVel);
+
+    Lapack::Dgeev(jobvl, jobvr, nVel, HH.GetRawPtr(), nVel,
+                  &(evalTest.GetPtr())[0], &wi[0], &vl[0], nVel,
+                  &(evecTest.GetPtr())[0], nVel,
+                  &work[0], worklen, info);
+
+    ASSERTL0(!info,"dgeev failed");
+
+    int minI;
+    NekDouble tmp = DBL_MAX;
+    for(int i = 0; i < 2; i++)
+    {
+        if(evalTest(i,i) < tmp)
+        {
+            minI = i;
+            tmp = evalTest(i,i);
+        }
+    }
+
+    double val = evalTest(minI,minI);
+    double vec[2];
+    vec[0] = evecTest(0,minI);
+    vec[1] = evecTest(1,minI);
+
+    printf("evec[0] = %e\n",evec[0] );
+    printf("evec[1] = %e\n",evec[1] );
+
+    printf("vec[0] = %e\n",vec[0] );
+    printf("vec[1] = %e\n",vec[1] );
+    std::cout << "evecTest(0,0) = " << evecTest(0,0) << std::endl;        
+    std::cout << "evecTest(1,0) = " << evecTest(1,0) << std::endl;
+    std::cout << "evecTest(0,1) = " << evecTest(0,1) << std::endl;        
+    std::cout << "evecTest(1,1) = " << evecTest(1,1) << std::endl;
+
+
 }
 
-template<> void NodeOpti::MinEigen<2>(NekDouble &val, NekDouble (&vec)[2], Grad &grad)
+template<>
+KOKKOS_INLINE_FUNCTION
+void ProcessVarOpti::CalcEVector<3>(const double (&G)[9], const double &eval, double (&evec)[3])
 {
-
-}
-
-template<> void NodeOpti::MinEigen<3>(NekDouble &val, NekDouble (&vec)[3], Grad &grad)
-{
+    double H[3][3];
+    H[0][0] = G[3];
+    H[1][0] = G[4];
+    H[0][1] = H[1][0];
+    H[2][0] = G[5];
+    H[0][2] = H[2][0];
+    H[1][1] = G[6];
+    H[2][1] = G[7];
+    H[1][2] = H[2][1];
+    H[2][2] = G[8];
     /*NekMatrix<NekDouble> H(3,3);
     H(0,0) = grad.h_G[3];
     H(1,0) = grad.h_G[4];

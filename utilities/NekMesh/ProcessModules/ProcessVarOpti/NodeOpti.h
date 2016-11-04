@@ -73,8 +73,7 @@ protected:
     std::vector<int> nodeIds;
     
     bool Linear();
-    //template<int DIM> int IsIndefinite(Grad &grad);
-    template<int DIM> void MinEigen(NekDouble &val, NekDouble (&vec)[DIM], Grad &grad);
+     
 
     NekDouble dx;
     NekDouble minJac;

@@ -223,8 +223,11 @@ public:
          const Grad &grad, int nElmt, int node, int cs,//const int elId, const int localNodeId,
          const double ep, const member_type &teamMember,
          bool gradient = true, bool hessian = true);
+    
+    template<int DIM> void CalcEValues(const double (&G)[DIM*DIM], double (&eval)[DIM]);
+    template<int DIM> int IsIndefinite(const double (&eval)[DIM]);
 
-    template<int DIM> int IsIndefinite(const Grad &grad, const int node);
+    template<int DIM> void CalcEVector(const double (&G)[DIM*DIM], const double &eval, double (&evec)[DIM]);
 
 private:
     typedef std::map<int, std::pair<std::vector<int>,
