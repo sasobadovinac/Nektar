@@ -83,25 +83,22 @@ FieldIOXml::FieldIOXml(LibUtilities::CommSharedPtr pComm, bool sharedFilesystem)
  * @param fielddefs         Input field definitions.
  * @param fielddata         Input field data.
  * @param fieldmetadatamap  Field metadata.
+ * @return The number of bytes written.
  */
-void FieldIOXml::v_Write(const std::string &outFile,
+unsigned long FieldIOXml::v_Write(const std::string &outFile,
                          std::vector<FieldDefinitionsSharedPtr> &fielddefs,
                          std::vector<std::vector<NekDouble> > &fielddata,
                          const FieldMetaDataMap &fieldmetadatamap)
 {
-    double tm0 = 0.0, tm1 = 0.0;
-    if (m_comm->GetRank() == 0)
-    {
-        tm0 = m_comm->Wtime();
-    }
-
+    unsigned long nWritten = 0;
+    
     // Check everything seems sensible
     ASSERTL1(fielddefs.size() == fielddata.size(),
-             "Length of fielddefs and fielddata incompatible");
+             "Length of fielddefs and fielddata incompatible.");
     for (int f = 0; f < fielddefs.size(); ++f)
     {
         ASSERTL1(fielddata[f].size() > 0,
-                 "Fielddata vector must contain at least one value.");
+                 "fielddata vector must contain at least one value.");
 
         ASSERTL1(fielddata[f].size() ==
                      fielddefs[f]->m_fields.size() *
@@ -150,6 +147,7 @@ void FieldIOXml::v_Write(const std::string &outFile,
             }
             fieldsString = fieldsStringStream.str();
         }
+        nWritten += fieldsString.size();
         elemTag->SetAttribute("FIELDS", fieldsString);
 
         // Write SHAPE
@@ -173,6 +171,7 @@ void FieldIOXml::v_Write(const std::string &outFile,
 
             shapeString = shapeStringStream.str();
         }
+        nWritten += shapeString.size();
         elemTag->SetAttribute("SHAPE", shapeString);
 
         // Write BASIS
@@ -193,6 +192,7 @@ void FieldIOXml::v_Write(const std::string &outFile,
             }
             basisString = basisStringStream.str();
         }
+        nWritten += basisString.size();
         elemTag->SetAttribute("BASIS", basisString);
 
         // Write homogeneuous length details
@@ -212,6 +212,7 @@ void FieldIOXml::v_Write(const std::string &outFile,
                 }
                 homoLenString = homoLenStringStream.str();
             }
+            nWritten += homoLenString.size();
             elemTag->SetAttribute("HOMOGENEOUSLENGTHS", homoLenString);
         }
 
@@ -237,6 +238,7 @@ void FieldIOXml::v_Write(const std::string &outFile,
                     }
                     homoYIDsString = homoYIDsStringStream.str();
                 }
+                nWritten += homoYIDsString.size();
                 elemTag->SetAttribute("HOMOGENEOUSYIDS", homoYIDsString);
             }
 
@@ -259,6 +261,7 @@ void FieldIOXml::v_Write(const std::string &outFile,
                     }
                     homoZIDsString = homoZIDsStringStream.str();
                 }
+                nWritten += homoZIDsString.size();
                 elemTag->SetAttribute("HOMOGENEOUSZIDS", homoZIDsString);
             }
 
@@ -281,6 +284,7 @@ void FieldIOXml::v_Write(const std::string &outFile,
                     }
                     homoSIDsString = homoSIDsStringStream.str();
                 }
+                nWritten += homoSIDsString.size();
                 elemTag->SetAttribute("HOMOGENEOUSSIDS", homoSIDsString);
             }
         }
@@ -326,6 +330,7 @@ void FieldIOXml::v_Write(const std::string &outFile,
 
             numModesString = numModesStringStream.str();
         }
+        nWritten += numModesString.size();
         elemTag->SetAttribute("NUMMODESPERDIR", numModesString);
 
         // Write ID
@@ -336,32 +341,32 @@ void FieldIOXml::v_Write(const std::string &outFile,
             std::stringstream idStringStream;
             idString = ParseUtils::GenerateSeqString(fielddefs[f]->m_elementIDs);
         }
+        nWritten += idString.size();
         elemTag->SetAttribute("ID", idString);
+
+        std::string compressedString = LibUtilities::CompressData::GetCompressString();
+        nWritten += compressedString.size();
         elemTag->SetAttribute("COMPRESSED",
-                              LibUtilities::CompressData::GetCompressString());
+                              compressedString);
 
         // Add this information for future compatibility
         // issues, for exmaple in case we end up using a 128
         // bit machine.
-        elemTag->SetAttribute("BITSIZE",
-                              LibUtilities::CompressData::GetBitSizeStr());
+        std::string bitSizeString = LibUtilities::CompressData::GetBitSizeStr();
+        nWritten += bitSizeString.size();
+        elemTag->SetAttribute("BITSIZE" ,bitSizeString);
+	
         std::string base64string;
         ASSERTL0(Z_OK == CompressData::ZlibEncodeToBase64Str(fielddata[f],
                                                              base64string),
                  "Failed to compress field data.");
-
+        nWritten += base64string.size();
         elemTag->LinkEndChild(new TiXmlText(base64string));
     }
     doc.SaveFile(filename);
 
     m_comm->Block();
-
-    // all data has been written
-    if (m_comm->GetRank() == 0)
-    {
-        tm1 = m_comm->Wtime();
-        cout << " (" << tm1 - tm0 << "s, XML)" << endl;
-    }
+    return nWritten;
 }
 
 /**
@@ -387,7 +392,7 @@ void FieldIOXml::WriteMultiFldFileIDs(
     doc.LinkEndChild(decl);
 
     ASSERTL0(fileNames.size() == elementList.size(),
-             "Outfile names and list of elements ids does not match");
+             "Outfile names and list of elements ids does not match.");
 
     TiXmlElement *root = new TiXmlElement("NEKTAR");
     doc.LinkEndChild(root);
@@ -424,7 +429,7 @@ void FieldIOXml::WriteMultiFldFileIDs(
  * @param elementList        Vector of element IDs that lie on each process.
  * @param fieldmetadatamap   Field metadata map that is read from @p inFile.
  */
-void FieldIOXml::ImportMultiFldFileIDs(
+void FieldIOXml::v_ImportMultiFldFileIDs(
     const std::string                       &inFile,
     std::vector<std::string>                &fileNames,
     std::vector<std::vector<unsigned int> > &elementList,
@@ -497,13 +502,16 @@ void FieldIOXml::ImportMultiFldFileIDs(
  *                          this rank. The resulting field definitions will only
  *                          contain data for the element IDs specified in this
  *                          array.
+ * @return The number of bytes read.
  */
-void FieldIOXml::v_Import(const std::string &infilename,
+unsigned long FieldIOXml::v_Import(const std::string &infilename,
                           std::vector<FieldDefinitionsSharedPtr> &fielddefs,
                           std::vector<std::vector<NekDouble> > &fielddata,
                           FieldMetaDataMap &fieldinfomap,
                           const Array<OneD, int> &ElementIDs)
 {
+    unsigned long nRead = 0;
+    
     std::string infile = infilename;
 
     fs::path pinfilename(infilename);
@@ -533,10 +541,10 @@ void FieldIOXml::v_Import(const std::string &infilename,
                 fullpath                       = pinfilename / pfilename;
                 string fname                   = PortablePath(fullpath);
                 DataSourceSharedPtr dataSource = XmlDataSource::create(fname);
-                ImportFieldDefs(dataSource, fielddefs, false);
+                nRead += ImportFieldDefs(dataSource, fielddefs, false);
                 if (fielddata != NullVectorNekDoubleVector)
                 {
-                    ImportFieldData(dataSource, fielddefs, fielddata);
+                    nRead += ImportFieldData(dataSource, fielddefs, fielddata);
                 }
             }
         }
@@ -574,10 +582,10 @@ void FieldIOXml::v_Import(const std::string &infilename,
                 fullpath                       = pinfilename / pfilename;
                 string fname                   = PortablePath(fullpath);
                 DataSourceSharedPtr dataSource = XmlDataSource::create(fname);
-                ImportFieldDefs(dataSource, fielddefs, false);
+                nRead += ImportFieldDefs(dataSource, fielddefs, false);
                 if (fielddata != NullVectorNekDoubleVector)
                 {
-                    ImportFieldData(dataSource, fielddefs, fielddata);
+                    nRead += ImportFieldData(dataSource, fielddefs, fielddata);
                 }
             }
         }
@@ -586,12 +594,15 @@ void FieldIOXml::v_Import(const std::string &infilename,
     {
         // serial format case
         DataSourceSharedPtr doc = ImportFieldMetaData(infilename, fieldinfomap);
-        ImportFieldDefs(doc, fielddefs, false);
+        nRead += ImportFieldDefs(doc, fielddefs, false);
         if (fielddata != NullVectorNekDoubleVector)
         {
-            ImportFieldData(doc, fielddefs, fielddata);
+            nRead += ImportFieldData(doc, fielddefs, fielddata);
         }
     }
+
+    m_comm->Block();
+    return nRead;
 }
 
 /**
@@ -757,12 +768,14 @@ void FieldIOXml::SetUpFieldMetaData(
  * @param fielddefs   Output vector that will contain read field definitions.
  * @param expChild    Determines if the field definitions are defined by
  *                    `<EXPANSIONS>` or in `<NEKTAR>`.
+ * @return The number of bytes read.
  */
-void FieldIOXml::ImportFieldDefs(
+unsigned long FieldIOXml::ImportFieldDefs(
     DataSourceSharedPtr dataSource,
     std::vector<FieldDefinitionsSharedPtr> &fielddefs,
     bool expChild)
 {
+    unsigned long nRead = 0;
     XmlDataSourceSharedPtr xml =
         boost::static_pointer_cast<XmlDataSource>(dataSource);
     TiXmlElement *master =
@@ -856,12 +869,15 @@ void FieldIOXml::ImportFieldDefs(
                 }
                 else if (attrName == "COMPRESSED")
                 {
-                    WARNINGL0(boost::iequals(attr->Value(),
-                                             CompressData::GetCompressString()),
-                              "Compressed formats do not "
-                              "match. Expected: " +
-                              CompressData::GetCompressString() +
-                              " but got " + string(attr->Value()));
+                    if (!boost::iequals(attr->Value(),
+                                        CompressData::GetCompressString()))
+                    {
+                        WARNINGL0(false,
+                                  "Compressed formats do not "
+                                  "match. Expected: " +
+                                      CompressData::GetCompressString() +
+                                      " but got " + string(attr->Value()));
+                    }
                 }
                 else if (attrName == "BITSIZE")
                 {
@@ -876,6 +892,8 @@ void FieldIOXml::ImportFieldDefs(
                     ASSERTL1(false, errstr.c_str());
                 }
 
+                nRead += attr->ValueStr().size();
+                
                 // Get the next attribute.
                 attr = attr->Next();
             }
@@ -1088,6 +1106,8 @@ void FieldIOXml::ImportFieldDefs(
         }
         loopXml = loopXml->NextSiblingElement(strLoop);
     }
+
+    return nRead;
 }
 
 /**
@@ -1096,12 +1116,15 @@ void FieldIOXml::ImportFieldDefs(
  * @param dataSource  Target XML file
  * @param fielddefs   Field definitions for file
  * @param fielddata   On return, contains field data for each field.
+ * @return The number of bytes read.
  */
-void FieldIOXml::ImportFieldData(
+unsigned long FieldIOXml::ImportFieldData(
     DataSourceSharedPtr dataSource,
     const std::vector<FieldDefinitionsSharedPtr> &fielddefs,
     std::vector<std::vector<NekDouble> > &fielddata)
 {
+    unsigned long nRead = 0;
+    
     int cntdumps = 0;
     XmlDataSourceSharedPtr xml =
         boost::static_pointer_cast<XmlDataSource>(dataSource);
@@ -1139,14 +1162,19 @@ void FieldIOXml::ImportFieldData(
             const char *CompressStr = element->Attribute("COMPRESSED");
             if (CompressStr)
             {
-                WARNINGL0(boost::iequals(CompressStr,
-                                         CompressData::GetCompressString()),
-                          "Compressed formats do not match. "
-                          "Expected: " +
-                          CompressData::GetCompressString() +
-                          " but got " + string(CompressStr));
+                if (!boost::iequals(CompressStr,
+                                    CompressData::GetCompressString()))
+                {
+                    WARNINGL0(false,
+                              "Compressed formats do not match. "
+                              "Expected: " +
+                                  CompressData::GetCompressString() +
+                                  " but got " + string(CompressStr));
+                }
             }
 
+            nRead += elementStr.size();
+            
             ASSERTL0(Z_OK == CompressData::ZlibDecodeFromBase64Str(
                                  elementStr, elementFieldData),
                      "Failed to decompress field data.");
@@ -1156,14 +1184,17 @@ void FieldIOXml::ImportFieldData(
             ASSERTL0(
                 fielddata[cntdumps].size() ==
                     datasize * fielddefs[cntdumps]->m_fields.size(),
-                "Input data is not the same length as header infoarmation");
+                "Input data is not the same length as header information");
 
             cntdumps++;
 
             element = element->NextSiblingElement("ELEMENTS");
         }
         master = master->NextSiblingElement("NEKTAR");
+
     }
+
+    return nRead;
 }
 }
 }
