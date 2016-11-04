@@ -227,24 +227,23 @@ public:
 
 private:
     struct OffsetHelper {
-        OffsetHelper() : data(0), order(0), homy(0), homz(0), homs(0) {}
+        OffsetHelper() : ids(0), data(0), order(0), homy(0), homz(0), homs(0) {}
         OffsetHelper(const OffsetHelper &in) :
-            data(in.data), order(in.order), homy(in.homy), homz(in.homz),
-            homs(in.homs)
+            ids(in.data), data(in.data), order(in.order),
+	        homy(in.homy), homz(in.homz), homs(in.homs)
         {
         }
 
-        uint64_t data, order, homy, homz, homs;
+        uint64_t ids, data, order, homy, homz, homs;
     };
-
-    LIB_UTILITIES_EXPORT virtual void v_Write(
+    
+    LIB_UTILITIES_EXPORT virtual unsigned long v_Write(
         const std::string &outFile,
         std::vector<FieldDefinitionsSharedPtr> &fielddefs,
         std::vector<std::vector<NekDouble> > &fielddata,
         const FieldMetaDataMap &fieldinfomap = NullFieldMetaDataMap);
 
-    LIB_UTILITIES_EXPORT virtual void v_Import(
-        const std::string &infilename,
+    LIB_UTILITIES_EXPORT virtual unsigned long v_Import(const std::string &infilename,
         std::vector<FieldDefinitionsSharedPtr> &fielddefs,
         std::vector<std::vector<NekDouble> > &fielddata =
                                                       NullVectorNekDoubleVector,
@@ -257,24 +256,13 @@ private:
     LIB_UTILITIES_EXPORT void ImportHDF5FieldMetaData(
         DataSourceSharedPtr dataSource, FieldMetaDataMap &fieldmetadatamap);
 
-    LIB_UTILITIES_EXPORT void ImportFieldDef(
-        H5::PListSharedPtr        readPL,
+    LIB_UTILITIES_EXPORT unsigned long ImportFieldDef(H5::PListSharedPtr readPL,
         H5::GroupSharedPtr        root,
-        std::vector<uint64_t>    &decomps,
+        std::vector<uint64_t>     &decomps,
         uint64_t                  decomp,
         OffsetHelper              offset,
         std::string               group,
         FieldDefinitionsSharedPtr def);
-
-    LIB_UTILITIES_EXPORT void ImportFieldData(
-        H5::PListSharedPtr               readPL,
-        H5::DataSetSharedPtr             data_dset,
-        H5::DataSpaceSharedPtr           data_fspace,
-        uint64_t                         data_i,
-        std::vector<uint64_t>           &decomps,
-        uint64_t                         decomp,
-        const FieldDefinitionsSharedPtr  fielddef,
-        std::vector<NekDouble>          &fielddata);
 };
 }
 }
