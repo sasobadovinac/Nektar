@@ -10,7 +10,7 @@
 //  Department of Aeronautics, Imperial College London (UK), and Scientific
 //  Computing and Imaging Institute, University of Utah (USA).
 //
-//  License for the specific language governing rights and laimitations under
+//  License for the specific language governing rights and limitations under
 //  Permission is hereby granted, free of charge, to any person obtaining a
 //  copy of this software and associated documentation files (the "Software"),
 //  to deal in the Software without restriction, including without limitation
@@ -33,27 +33,40 @@
 //
 ////////////////////////////////////////////////////////////////////////////////
 
-#include <LibUtilities/BasicUtils/FieldIO.h>
-#include <LibUtilities/BasicUtils/FieldIOXml.h>
-#include <LibUtilities/BasicUtils/FileSystem.h>
-#include <LibUtilities/Communication/CommMpi.h>
+#include <string>
 #include <boost/algorithm/string.hpp>
 #include <boost/program_options.hpp>
-#include <boost/unordered_set.hpp>
-#include <string>
+#include <boost/bimap.hpp>
+#include <LibUtilities/BasicUtils/H5.h>
+#include <LibUtilities/BasicUtils/FieldIO.h>
+#include <LibUtilities/BasicUtils/FieldIOXml.h>
+#include <LibUtilities/BasicUtils/FieldIOHdf5.h>
+#include <LibUtilities/BasicUtils/FileSystem.h>
+#include <LibUtilities/Communication/CommMpi.h>
 
-typedef boost::unordered_set<int> IntSet;
+// Below, we'd like to use an unordered set for its faster lookup performance
+// However this is only available if C++11 is.
+//
+#if __cplusplus >= 201103L
+#include <unordered_set>
+typedef std::unordered_set<int> IntSet;
+#else
+#include <set>
+typedef std::set<int> IntSet;
+#endif
 
 using namespace Nektar;
 using namespace LibUtilities;
 
-namespace po    = boost::program_options;
+namespace po = boost::program_options;
 namespace berrc = boost::system::errc;
 
 typedef std::vector<FieldDefinitionsSharedPtr> DefVec;
 typedef std::vector<std::vector<NekDouble> > DatVec;
 
-/// Struct that contains experimental setup.
+typedef boost::shared_ptr<FieldIOXml> FieldIOXmlSharedPtr;
+typedef boost::shared_ptr<FieldIOHdf5> FieldIOHdf5SharedPtr;
+
 struct Experiment
 {
     /// Test read (false) or write (true)
@@ -72,7 +85,9 @@ struct Experiment
     CommSharedPtr comm;
 };
 
-typedef std::vector<NekDouble> Results;
+typedef std::vector<double> Results;
+
+const double MB = 1000000.0;
 
 Results TestRead(Experiment &exp);
 Results TestWrite(Experiment &exp);
@@ -274,92 +289,13 @@ Array<OneD, int> ReadIDsForThisRank(Experiment &exp, FieldIOSharedPtr fio)
 }
 
 /**
- * @brief Construct data for this rank based on element IDs and input data.
+ * @brief  Get the IDs of the elements managed by this rank.
  *
- * Extract from @p inFieldDefs and @p inFieldData those elements which are in @p
- * ElementIDs and return them in the parameters @p outFieldDefs and @p
- * outFieldData.
+ * @param exp  Experimental setup.
  *
- * @param inFieldDefs    Field definitions of input file
- * @param inFieldData    Input field data corresponding to the definitions
- * @param ElementIDs     Element IDs for this rank
- * @param outFieldDefs   Output field definitions containing this rank's data
- * @param outFieldData   Output field data corresponding to the definitions
+ * @return IDs of the elements managed by this rank.
  */
-void FilterDataForThisRank(const DefVec &inFieldDefs,
-                           const DatVec &inFieldData,
-                           Array<OneD, int> ElementIDs,
-                           DefVec &outFieldDefs,
-                           DatVec &outFieldData)
-{
-    // Create a set with all the IDs
-    IntSet IDs(ElementIDs.begin(), ElementIDs.end());
-
-    // Clear the output vectors
-    outFieldDefs.clear();
-    outFieldData.clear();
-
-    // Loop through all the loaded elements and copy over if in the requested
-    // set
-    DefVec::const_iterator inDefIt = inFieldDefs.begin();
-    DatVec::const_iterator inDatIt = inFieldData.begin();
-    for (; inDefIt != inFieldDefs.end(); ++inDefIt, ++inDatIt)
-    {
-        FieldDefinitionsSharedPtr inDef = *inDefIt;
-        // Use list to avoid endless reallocation.
-        std::list<unsigned int> elOut;
-        std::list<NekDouble> datOut;
-
-        unsigned dat_per_el = inDatIt->size() / inDef->m_elementIDs.size();
-
-        std::vector<unsigned int>::const_iterator elIt =
-            inDef->m_elementIDs.begin();
-        std::vector<NekDouble>::const_iterator datIt = inDatIt->begin();
-        for (; elIt != inDef->m_elementIDs.end(); ++elIt, datIt += dat_per_el)
-        {
-            if (IDs.find(*elIt) != IDs.end())
-            {
-                // Copy across element id
-                elOut.push_back(*elIt);
-                // and data
-                datOut.insert(datOut.end(), datIt, datIt + dat_per_el);
-            }
-        }
-        if (elOut.size())
-        {
-            // create the outFieldDefs
-            // boost::make_shared only works up to 9 arguments it seems.
-            FieldDefinitionsSharedPtr defOut =
-                FieldDefinitionsSharedPtr(new FieldDefinitions(
-                    inDef->m_shapeType,
-                    std::vector<unsigned int>(elOut.begin(), elOut.end()),
-                    inDef->m_basis, inDef->m_uniOrder, inDef->m_numModes,
-                    inDef->m_fields, inDef->m_numHomogeneousDir,
-                    inDef->m_homogeneousLengths, inDef->m_homoStrips,
-                    inDef->m_homogeneousSIDs, inDef->m_homogeneousZIDs,
-                    inDef->m_homogeneousYIDs, inDef->m_points,
-                    inDef->m_pointsDef, inDef->m_numPoints,
-                    inDef->m_numPointsDef));
-            // Add to return
-            outFieldDefs.push_back(defOut);
-            // create the out data vector from our list
-            outFieldData.push_back(
-                std::vector<NekDouble>(datOut.begin(), datOut.end()));
-        }
-    }
-}
-
-/**
- * @brief Read all data in those files that this rank wants (and any other data
- * in them too).
- *
- * @param Exp  Experiment to be run
- * @param outFieldDefs   Output field definitions
- * @param outFieldData   Output data corresponding to the definitions
- */
-void ReadWholeFilesForThisRank(Experiment &exp,
-                               DefVec &outFieldDefs,
-                               DatVec &outFieldData)
+Array<OneD, int> ReadIDsForThisRank(Experiment& exp)
 {
     std::string ft = FieldIO::GetFileType(exp.dataSource, exp.comm);
     FieldIOSharedPtr fio =
@@ -367,43 +303,16 @@ void ReadWholeFilesForThisRank(Experiment &exp,
 
     if (fs::is_directory(exp.dataSource))
     {
-        Array<OneD, int> ElementIDs = ReadIDsForThisRank(exp, fio);
-        FieldMetaDataMap fieldmetadatamap;
-
-        // Load all the data from files that contain any of the IDs we want.
-        fio->Import(exp.dataSource, outFieldDefs, outFieldData,
-                    fieldmetadatamap, ElementIDs);
+        return ReadIDsForThisRank(exp, fio);
     }
-    else
+    else if (exp.hdf)
     {
-        fio->Import(exp.dataSource, outFieldDefs, outFieldData);
+        // ensure auto_selective
+        Array<OneD, int> ElementIDs;
+        return ElementIDs;
     }
-}
 
-/**
- * @brief Read only the data that this rank wants.
- *
- * @param exp           Experiment setup details
- * @param outFieldDefs  Resulting output field definitions for this rank.
- * @param outFieldData  Output field data for this rank.
- */
-void ReadDecomposed(Experiment &exp, DefVec &outFieldDefs, DatVec &outFieldData)
-{
-    std::string ft = FieldIO::GetFileType(exp.dataSource, exp.comm);
-    FieldIOSharedPtr fio =
-        GetFieldIOFactory().CreateInstance(ft, exp.comm, true);
-
-    Array<OneD, int> ElementIDs = ReadIDsForThisRank(exp, fio);
-    DefVec fileFieldDefs;
-    DatVec fileFieldData;
-    FieldMetaDataMap fieldmetadatamap;
-
-    // Load all the data from files that contain any of the IDs we want.
-    fio->Import(exp.dataSource, fileFieldDefs, fileFieldData, fieldmetadatamap,
-                ElementIDs);
-    // Filter it
-    FilterDataForThisRank(fileFieldDefs, fileFieldData, ElementIDs,
-                          outFieldDefs, outFieldData);
+    return NullInt1DArray; 
 }
 
 /**
@@ -418,45 +327,51 @@ void ReadDecomposed(Experiment &exp, DefVec &outFieldDefs, DatVec &outFieldData)
  */
 Results TestRead(Experiment &exp)
 {
-    if (exp.verbose)
-    {
-        std::cout << "Beginning read experiment with " << exp.n << " loops."
-                  << std::endl;
-        std::cout << "Determining file type... ";
-    }
-
     const std::string ft = FieldIO::GetFileType(exp.dataSource, exp.comm);
     if (exp.verbose)
     {
-        std::cout << ft << endl;
+        std::cout << "Beginning read experiment..."
+                  << exp.n << " iterations." << std::endl;
+        std::cout << "Determining file type... ";
+        std::cout << ft << std::endl;
     }
 
+    if (0 == ft.compare("Hdf5"))
+    {
+        exp.hdf = true;
+    }
+    
+    std::vector<FieldDefinitionsSharedPtr> fielddefs;
+    std::vector < std::vector<NekDouble> > fielddata;
+    FieldMetaDataMap fieldmetadatamap;
+    FieldIOSharedPtr fio = GetFieldIOFactory().CreateInstance(
+            ft, exp.comm, true);
+
+    Array<OneD, int> ElementIDs = ReadIDsForThisRank(exp);
+            
     Results res(exp.n, 0.0);
     for (unsigned i = 0; i < exp.n; ++i)
     {
         if (exp.verbose)
         {
-            std::cout << "Test " << i << " of " << exp.n;
+            std::cout << "Test " << i+1 << " of " << exp.n;
         }
+                                
+        double t0 = MPI_Wtime();
+        unsigned long nRead = fio->Import(exp.dataSource,
+            fielddefs, fielddata,
+            fieldmetadatamap, ElementIDs);        
+        double t1 = MPI_Wtime() - t0;
 
-        std::vector<FieldDefinitionsSharedPtr> fielddefs;
-        std::vector<std::vector<NekDouble> > fielddata;
-        // Synchronise
-        exp.comm->Block();
-
-        NekDouble t0 = MPI_Wtime();
-
-        ReadWholeFilesForThisRank(exp, fielddefs, fielddata);
-
-        NekDouble t1 = MPI_Wtime();
-        t1 -= t0;
+        exp.comm->AllReduce(nRead, LibUtilities::ReduceSum);
 
         if (exp.verbose)
         {
-            std::cout << ": t = " << t1 << " s" << std::endl;
+            std::cout << ": read " << nRead/MB << " MB in "
+                      << t1 << " s." << std::endl;
         }
-
-        res[i] = t1;
+        
+        res[i] = (nRead/MB) / t1;
     }
     return res;
 }
@@ -473,72 +388,69 @@ Results TestRead(Experiment &exp)
  */
 Results TestWrite(Experiment &exp)
 {
+    const std::string ft = FieldIO::GetFileType(exp.dataSource, exp.comm);
     if (exp.verbose)
-        std::cout << "Reading in input: " << exp.dataSource << std::endl;
-
+    {
+        std::cout << "Beginning write experiment..."
+                  << exp.n << " iterations." << std::endl;
+        std::cout << "Determining file type... ";
+        std::cout << ft << std::endl;
+    }
+    
     std::vector<FieldDefinitionsSharedPtr> fielddefs;
-    std::vector<std::vector<NekDouble> > fielddata;
-    ReadDecomposed(exp, fielddefs, fielddata);
+    std::vector < std::vector<NekDouble> > fielddata;
+    FieldMetaDataMap fieldmetadatamap;
+    FieldIOSharedPtr fio = GetFieldIOFactory().CreateInstance(
+            ft, exp.comm, true);
 
-    std::string outtype;
-    if (exp.hdf)
-    {
-        outtype = "Hdf5";
-    }
-    else
-    {
-        outtype = "Xml";
-    }
+    Array<OneD, int> ElementIDs = ReadIDsForThisRank(exp);
+    fio->Import(exp.dataSource, fielddefs, fielddata,
+        fieldmetadatamap, ElementIDs);
 
-    if (exp.verbose)
-    {
-        std::cout << "Beginning write (" << outtype << ") experiment with "
-                  << exp.n << " loops." << std::endl;
-        std::cout << "Writing to temp file: " << exp.dataDest << std::endl;
-    }
+    exp.comm->Block();
 
     Results res(exp.n, 0);
+    fs::path specPath(exp.dataDest);
+
     for (unsigned i = 0; i < exp.n; ++i)
     {
         if (exp.verbose)
         {
-            std::cout << "Test " << i << " of " << exp.n << std::endl;
+            std::cout << "Test " << i+1 << " of " << exp.n;
         }
+        
+        double t0 = MPI_Wtime();
+        unsigned long nWritten = fio->Write(exp.dataDest, fielddefs, fielddata);
+        double t1 = MPI_Wtime() - t0;
 
-        // Synchronise - have to do this before removing any old data in case
-        // any ranks haven't closed their file yet.
-        exp.comm->Block();
-        // Remove any existing files
-        fs::path specPath(exp.dataDest);
-        try
-        {
-            fs::remove_all(specPath);
-        }
-        catch (fs::filesystem_error &e)
-        {
-            ASSERTL0(e.code().value() == berrc::no_such_file_or_directory,
-                     "Filesystem error: " + string(e.what()));
-        }
-
-        // Synchronise to make sure we're all at the same point.
-        exp.comm->Block();
-
-        NekDouble t0 = MPI_Wtime();
-
-        FieldIOSharedPtr fio =
-            GetFieldIOFactory().CreateInstance(outtype, exp.comm, true);
-
-        fio->Write(exp.dataDest, fielddefs, fielddata);
-
-        NekDouble t1 = MPI_Wtime();
-        t1 -= t0;
-
+        exp.comm->AllReduce(nWritten, LibUtilities::ReduceSum);
+         
         if (exp.verbose)
         {
-            std::cout << ": t = " << t1 << " s" << std::endl;
+            std::cout << ": written " << nWritten/MB << " MB in "
+                      << t1 << " s."  << std::endl;
         }
-
-        res[i] = t1;
+        
+        res[i] = (nWritten/MB) / t1;
+        
+        if (exp.comm->GetRank() == 0)
+        {
+            try
+            {
+                // remove any files that have just been written
+                // as part of test
+                fs::remove_all(specPath);  
+            }
+            catch (fs::filesystem_error& e)
+            {
+                ASSERTL0(
+                    e.code().value()
+                    == berrc::no_such_file_or_directory,
+                    "Filesystem error: " + string(e.what()));
+            }
+        }
+        
+        exp.comm->Block();
     }
     return res;
 }
@@ -566,8 +478,8 @@ void PrintResults(Experiment &exp, Results &results)
     }
 
     NekDouble mean = sum / exp.n;
-    // NekDouble var = sumSq / exp.n - mean*mean;
-    // NekDouble std = std::sqrt(var);
+    NekDouble var = sumSq / exp.n - mean*mean;
+    NekDouble std = std::sqrt(var);
 
     if (exp.comm->GetSize() > 1)
     {
@@ -579,6 +491,6 @@ void PrintResults(Experiment &exp, Results &results)
     if (exp.comm->GetRank() == 0)
     {
         std::cout << "Mean: " << mean << std::endl;
-        // std::cout << "Std: " << std << std::endl;
+        std::cout << "Std: " << std << std::endl;
     }
 }
