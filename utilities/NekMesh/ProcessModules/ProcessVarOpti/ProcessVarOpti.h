@@ -167,7 +167,7 @@ struct Residual
     int n;
     int nDoF;    
 
-    Kokkos::View<double*> resid;  // for residual of every node in a colourset
+    //Kokkos::View<double*> resid;  // for residual of every node in a colourset
 };
 
 struct Grad
@@ -224,6 +224,8 @@ public:
          const double ep, const member_type &teamMember,
          bool gradient = true, bool hessian = true);
 
+    template<int DIM> int IsIndefinite(const Grad &grad, const int node);
+
 private:
     typedef std::map<int, std::pair<std::vector<int>,
                                     std::vector<ElUtilSharedPtr> > > NodeElMap;
@@ -267,7 +269,8 @@ float num_max(float & mx){return FLT_MAX;}
 
 template <typename T>
 struct MinFunctor {
-  Kokkos::View<T*> vect;  
+  Kokkos::View<T*> vect;
+  KOKKOS_INLINE_FUNCTION 
   MinFunctor(const Kokkos::View<T*> vect_):
     vect(vect_) {}
   KOKKOS_INLINE_FUNCTION
@@ -282,9 +285,8 @@ struct MinFunctor {
   }
   KOKKOS_INLINE_FUNCTION
   void operator() (const int& i, T& mn) const {
-    const T value = vect(i);
-    if(value < mn) {
-       mn = value;
+    if(vect(i) < mn) {
+       mn = vect(i);
     }
   }
 };
@@ -292,6 +294,7 @@ struct MinFunctor {
 template <typename T>
 struct MaxFunctor {
   Kokkos::View<T*> vect;
+  KOKKOS_INLINE_FUNCTION 
   MaxFunctor(const Kokkos::View<T*> vect_):
     vect(vect_) {}
   KOKKOS_INLINE_FUNCTION

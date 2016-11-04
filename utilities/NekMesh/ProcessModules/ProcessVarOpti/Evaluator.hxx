@@ -36,157 +36,14 @@
 #ifndef UTILITIES_NEKMESH_NODEOPTI_EVALUATOR
 #define UTILITIES_NEKMESH_NODEOPTI_EVALUATOR
 
+#include "Hessian.hxx"
+
 namespace Nektar
 {
 namespace Utilities
 {
 
-typedef Kokkos::TeamPolicy<Kokkos::DefaultExecutionSpace>::member_type  member_type;
 
-template<int DIM> inline NekDouble Determinant(NekDouble jac[DIM][DIM])
-{
-    return 0.0;
-}
-
-template<> inline NekDouble Determinant<2>(NekDouble jac[2][2])
-{
-    return jac[0][0] * jac[1][1] - jac[0][1] * jac[1][0];
-}
-
-template<> inline NekDouble Determinant<3>(NekDouble jac[3][3])
-{
-    return jac[0][0] * (jac[1][1]*jac[2][2] - jac[2][1]*jac[1][2])
-          -jac[0][1] * (jac[1][0]*jac[2][2] - jac[1][2]*jac[2][0])
-          +jac[0][2] * (jac[1][0]*jac[2][1] - jac[1][1]*jac[2][0]);
-}
-
-
-template<int DIM> inline NekDouble LinElasTrace(NekDouble jac[DIM][DIM])
-{
-    return 0.0;
-}
-
-template<> inline NekDouble LinElasTrace<2>(NekDouble jac[2][2])
-{
-    return 0.25 * (
-        (jac[0][0]*jac[0][0] + jac[1][0]*jac[1][0] - 1.0) *
-        (jac[0][0]*jac[0][0] + jac[1][0]*jac[1][0] - 1.0) +
-        (jac[0][1]*jac[0][1] + jac[1][1]*jac[1][1] - 1.0)*
-        (jac[0][1]*jac[0][1] + jac[1][1]*jac[1][1] - 1.0))
-        + 0.5 * (
-            (jac[0][0]*jac[0][1] + jac[1][0]*jac[1][1])*
-            (jac[0][0]*jac[0][1] + jac[1][0]*jac[1][1]));
-}
-
-template<> inline NekDouble LinElasTrace<3>(NekDouble jac[3][3])
-{
-    return 0.25 *(
-        (jac[0][0]*jac[0][0]+jac[1][0]*jac[1][0]+jac[2][0]*jac[2][0]-1.0)*
-        (jac[0][0]*jac[0][0]+jac[1][0]*jac[1][0]+jac[2][0]*jac[2][0]-1.0) +
-        (jac[0][1]*jac[0][1]+jac[1][1]*jac[1][1]+jac[2][1]*jac[2][1]-1.0)*
-        (jac[0][1]*jac[0][1]+jac[1][1]*jac[1][1]+jac[2][1]*jac[2][1]-1.0) +
-        (jac[0][2]*jac[0][2]+jac[1][2]*jac[1][2]+jac[2][2]*jac[2][2]-1.0)*
-        (jac[0][2]*jac[0][2]+jac[1][2]*jac[1][2]+jac[2][2]*jac[2][2]-1.0))
-        + 0.5 * (
-            (jac[0][0]*jac[0][2]+jac[1][0]*jac[1][2]+jac[2][0]*jac[2][2])*
-            (jac[0][0]*jac[0][2]+jac[1][0]*jac[1][2]+jac[2][0]*jac[2][2])+
-            (jac[0][1]*jac[0][2]+jac[1][1]*jac[1][2]+jac[2][1]*jac[2][2])*
-            (jac[0][1]*jac[0][2]+jac[1][1]*jac[1][2]+jac[2][1]*jac[2][2])+
-            (jac[0][0]*jac[0][1]+jac[1][0]*jac[1][1]+jac[0][1]*jac[2][1])*
-            (jac[0][0]*jac[0][1]+jac[1][0]*jac[1][1]+jac[0][1]*jac[2][1]));
-}
-
-template<int DIM>
-inline void InvTrans(NekDouble in[DIM][DIM],
-                                       NekDouble out[DIM][DIM])
-{
-}
-
-template<>
-inline void InvTrans<2>(NekDouble in[2][2], NekDouble out[2][2])
-{
-    NekDouble invDet = 1.0 / Determinant(in);
-    out[0][0] =  in[1][1] * invDet;
-    out[1][0] = -in[0][1] * invDet;
-    out[0][1] = -in[1][0] * invDet;
-    out[1][1] =  in[0][0] * invDet;
-}
-
-template<>
-inline void InvTrans<3>(NekDouble in[3][3], NekDouble out[3][3])
-{
-    NekDouble invdet = 1.0 / Determinant(in);
-    out[0][0] =  (in[1][1]*in[2][2]-in[2][1]*in[1][2])*invdet;
-    out[1][0] = -(in[0][1]*in[2][2]-in[0][2]*in[2][1])*invdet;
-    out[2][0] =  (in[0][1]*in[1][2]-in[0][2]*in[1][1])*invdet;
-    out[0][1] = -(in[1][0]*in[2][2]-in[1][2]*in[2][0])*invdet;
-    out[1][1] =  (in[0][0]*in[2][2]-in[0][2]*in[2][0])*invdet;
-    out[2][1] = -(in[0][0]*in[1][2]-in[1][0]*in[0][2])*invdet;
-    out[0][2] =  (in[1][0]*in[2][1]-in[2][0]*in[1][1])*invdet;
-    out[1][2] = -(in[0][0]*in[2][1]-in[2][0]*in[0][1])*invdet;
-    out[2][2] =  (in[0][0]*in[1][1]-in[1][0]*in[0][1])*invdet;
-}
-
-
-template<int DIM>
-inline NekDouble FrobProd(NekDouble in1[DIM][DIM],
-                          NekDouble in2[DIM][DIM])
-{
-    return 0.0;
-}
-
-template<>
-inline NekDouble FrobProd<2>(NekDouble in1[2][2], NekDouble in2[2][2])
-{
-    return    in1[0][0] * in2[0][0]
-            + in1[0][1] * in2[0][1]
-            + in1[1][0] * in2[1][0]
-            + in1[1][1] * in2[1][1] ;
-}
-
-template<>
-inline NekDouble FrobProd<3>(NekDouble in1[3][3], NekDouble in2[3][3])
-{
-    return    in1[0][0] * in2[0][0]
-            + in1[0][1] * in2[0][1]
-            + in1[0][2] * in2[0][2]
-            + in1[1][0] * in2[1][0]
-            + in1[1][1] * in2[1][1]
-            + in1[1][2] * in2[1][2]
-            + in1[2][0] * in2[2][0]
-            + in1[2][1] * in2[2][1]
-            + in1[2][2] * in2[2][2] ;
-}
-
-
-template<int DIM>
-inline NekDouble FrobeniusNorm(NekDouble inarray[DIM][DIM])
-{
-    return 0.0;
-}
-
-template<>
-inline NekDouble FrobeniusNorm<2>(NekDouble inarray[2][2])
-{
-    return    inarray[0][0] * inarray[0][0]
-            + inarray[0][1] * inarray[0][1]
-            + inarray[1][0] * inarray[1][0]
-            + inarray[1][1] * inarray[1][1] ;
-}
-
-template<>
-inline NekDouble FrobeniusNorm<3>(NekDouble inarray[3][3])
-{
-    return    inarray[0][0] * inarray[0][0]
-            + inarray[0][1] * inarray[0][1]
-            + inarray[0][2] * inarray[0][2]
-            + inarray[1][0] * inarray[1][0]
-            + inarray[1][1] * inarray[1][1]
-            + inarray[1][2] * inarray[1][2]
-            + inarray[2][0] * inarray[2][0]
-            + inarray[2][1] * inarray[2][1]
-            + inarray[2][2] * inarray[2][2] ;
-}
 
 
 
@@ -552,8 +409,6 @@ void ProcessVarOpti::OptimiseGPU(DerivUtilGPU &derivUtil,NodesGPU &nodes,
     grad.G = Kokkos::View<double*[9]> ("G",coloursetSize);
     grad.integral = Kokkos::View<double*> ("integral", coloursetSize);
 
-    res.resid = Kokkos::View<double*> ("resid", coloursetSize);
-    
     Kokkos::parallel_for( team_policy( coloursetSize, Kokkos::AUTO ), KOKKOS_LAMBDA ( const member_type& teamMember)
     {
         const int node = teamMember.league_rank();
@@ -563,7 +418,9 @@ void ProcessVarOpti::OptimiseGPU(DerivUtilGPU &derivUtil,NodesGPU &nodes,
         double minJac = CalcMinJacGPU(elUtil, nElmt, node, cs, nodes.elIdArray);
         double ep = minJac < 0.0 ? sqrt(1e-9 + 0.04*minJac*minJac) : sqrt(1e-9); 
         
-        currentW = GetFunctional<3>(derivUtil, nodes, elUtil, grad, nElmt, node, cs, ep, teamMember);        
+        currentW = GetFunctional<3>(derivUtil, nodes, elUtil, grad, nElmt, node, cs, ep, teamMember);
+
+        IsIndefinite<3>(grad, node);    
     
         if(grad.G(node,0)*grad.G(node,0) + grad.G(node,1)*grad.G(node,1) + grad.G(node,2)*grad.G(node,2) > 1e-20)
         {        
@@ -614,13 +471,14 @@ void ProcessVarOpti::OptimiseGPU(DerivUtilGPU &derivUtil,NodesGPU &nodes,
             }
 
             // store residual values of each node
-            res.resid[node] = sqrt( (h_Xn[0]-h_Xc[0])*(h_Xn[0]-h_Xc[0])
+            double resid = sqrt( (h_Xn[0]-h_Xc[0])*(h_Xn[0]-h_Xc[0])
                                   +(h_Xn[1]-h_Xc[1])*(h_Xn[1]-h_Xc[1])
                                   +(h_Xn[2]-h_Xc[2])*(h_Xn[2]-h_Xc[2]) );            
 
             Kokkos::single(Kokkos::PerTeam(teamMember),[&] ()
             {
                 Kokkos::atomic_add(&res.func[0], newVal);
+                Kokkos::atomic_fetch_max(&res.val[0], resid);
             });            
 
         }        
@@ -629,11 +487,6 @@ void ProcessVarOpti::OptimiseGPU(DerivUtilGPU &derivUtil,NodesGPU &nodes,
     });
     //printf("colorset %i finished\n", i);
 
-    // do reduction to yield the max residual of the colourset
-    MaxFunctor <double> mxfunctor(res.resid);
-    double maxResidCs = 0.0;
-    Kokkos::parallel_reduce(range_policy(0, coloursetSize) , mxfunctor, maxResidCs);
-    res.h_val[0] = (res.h_val[0] < maxResidCs ? maxResidCs : res.h_val[0]);
 }
 
 

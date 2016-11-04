@@ -36,7 +36,7 @@
 #ifndef UTILITIES_NEKMESH_PROCESSVAROPTI_EVALUATEGPU
 #define UTILITIES_NEKMESH_PROCESSVAROPTI_EVALUATEGPU
 
-#include <map>
+//#include <map>
 
 namespace Nektar
 {
@@ -263,7 +263,7 @@ void ProcessVarOpti::Evaluate(DerivUtilGPU &derivUtil,NodesGPU &nodes, ElUtilGPU
                             
                 for (int j = 0; j < M; ++j)
                 {
-                    x1i += derivUtil.VdmDL_0( i , j ) * nodes.X( k , j );
+                    //x1i += derivUtil.VdmDL_0( i , j ) * nodes.X( k , j );
                     y1i += derivUtil.VdmDL_0( i , j ) * nodes.Y( k , j );
                     z1i += derivUtil.VdmDL_0( i , j ) * nodes.Z( k , j );
                     x2i += derivUtil.VdmDL_1( i , j ) * nodes.X( k , j );
@@ -274,11 +274,11 @@ void ProcessVarOpti::Evaluate(DerivUtilGPU &derivUtil,NodesGPU &nodes, ElUtilGPU
                     z3i += derivUtil.VdmDL_2( i , j ) * nodes.Z( k , j );
                 }
                   
-                /*Kokkos::parallel_reduce( Kokkos::ThreadVectorRange(teamMember, M), [&] (const int j, double &update )
-                {
-                    update += derivUtil.VdmDL_0( i , j ) * X( k , j );
-                }, x1i);
                 Kokkos::parallel_reduce( Kokkos::ThreadVectorRange(teamMember, M), [&] (const int j, double &update )
+                {
+                    update += derivUtil.VdmDL_0( i , j ) * nodes.X( k , j );
+                }, x1i);
+                /*Kokkos::parallel_reduce( Kokkos::ThreadVectorRange(teamMember, M), [&] (const int j, double &update )
                 {
                     update += derivUtil.VdmDL_0( i , j ) * Y( k , j );
                 }, y1i);
@@ -329,6 +329,13 @@ void ProcessVarOpti::Evaluate(DerivUtilGPU &derivUtil,NodesGPU &nodes, ElUtilGPU
 
         });
         
+        // initialisation
+        Kokkos::parallel_for("output", range_policy(0,1), KOKKOS_LAMBDA (const int& k)
+        {
+            res.worstJac[0] = DBL_MAX;
+            res.startInv[0] = 0;
+        });
+        
         // compute minimum and scaled Jacobian of each element 
         Kokkos::parallel_for(range_policy(0,nElmt), KOKKOS_LAMBDA (const int k)
         {
@@ -340,43 +347,49 @@ void ProcessVarOpti::Evaluate(DerivUtilGPU &derivUtil,NodesGPU &nodes, ElUtilGPU
                 mn(k) = (mn(k) > jacDet(k,j) ? jacDet(k,j) : mn(k));
             }
             //dataSet[k]->minJac = h_mn(k);
-            elUtil.minJac(k) = mn(k);
+            elUtil.minJac(k) = mn(k);            
             //dataSet[k]->scaledJac = h_mn(k)/h_mx(k);
-            elUtil.scaledJac(k) = mn(k)/mx(k); 
-        });
-        
+            elUtil.scaledJac(k) = mn(k)/mx(k);
 
-        // Initialising for Outputs
-        Kokkos::parallel_for("output", range_policy(0,1), KOKKOS_LAMBDA (const int& k)
-        {
-            res.startInv[0] = 0;
-            //printf("Residual: %e  ", res.val[0]);
+            // compute the smallest (worst) Jacobian of all elements
+            Kokkos::atomic_fetch_min(&res.worstJac[0], elUtil.scaledJac(k));
+
+            // compute number of invalied elements (Jacobian < 0)            
+            if(elUtil.minJac(k) < 0)
+            {
+                Kokkos::atomic_add(&res.startInv[0],1);
+            }
         });
-        printf("Residual: %e  ", res.h_val[0]);
 
         // compute the smallest (worst) Jacobian of all elements
+        // doesnt work yet due to Kokkos bug !!!!
+
+        /*Kokkos::parallel_for( team_policy( 1 , Kokkos::AUTO ), KOKKOS_LAMBDA ( const member_type& teamMember)
+        {  
+            double JacJac;
+            MinFunctor <double> mnfunctor(elUtil.scaledJac);
+            Kokkos::parallel_reduce(Kokkos::TeamThreadRange(teamMember, nElmt) , mnfunctor, JacJac);//res.worstJac[0]);
+            Kokkos::single( Kokkos::PerTeam(teamMember), [&] ()
+            {
+                printf("Worst JacJac: %e  ", JacJac);
+            });           
+        });
         MinFunctor <double> mnfunctor(elUtil.scaledJac);
         Kokkos::parallel_reduce(range_policy(0, nElmt) , mnfunctor, res.h_worstJac[0]);
-        printf("Worst Jacobian: %e  ", res.h_worstJac[0]);        
-
-
-        // compute number of invalied elements (Jacobian < 0)
-        Kokkos::parallel_for("summation", range_policy(0,nElmt), KOKKOS_LAMBDA (const int& k)
-        {	
-		    if(elUtil.minJac(k) < 0)
-		    {
-		    	Kokkos::atomic_add(&res.startInv[0], 1);
-		    }			    
-		});
+        printf("Worst Jacobian: %e  ", res.h_worstJac[0]);*/
 		
-        // Outputs
         Kokkos::parallel_for("output", range_policy(0,1), KOKKOS_LAMBDA (const int& k)
         {
+            // print the residual as calculated in the OptimiseGPU function
+            printf("Residual: %e  ", res.val[0]);
+
+            // print worst Jacobian and number of invalid elements
+            printf("Worst Jacobian: %e  ", res.worstJac[0]);            
             printf("Invalid Elements: %i  ", res.startInv[0]);
             
+            // print and reset functional and reset-nodes for next run of OptimiseGPU
             printf("Reset Nodes: %i  ", res.nReset[0]);
             printf("Functional: %e\n", res.func[0]);
-            //res.val[0] = 0.0;
             res.func[0] = 0.0;
             res.nReset[0] = 0;
         });

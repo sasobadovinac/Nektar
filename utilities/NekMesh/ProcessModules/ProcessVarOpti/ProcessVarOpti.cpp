@@ -41,7 +41,8 @@
 #include "ElUtil.h"
 #include "EvaluateGPU.hxx"
 
-#include <boost/thread/mutex.hpp>
+
+//#include <boost/thread/mutex.hpp>
 
 #include <StdRegions/StdTriExp.h>
 #include <StdRegions/StdQuadExp.h>
@@ -396,7 +397,7 @@ void ProcessVarOpti::Process()
     {
         ctr++;
         res.h_val[0] = 0.0;
-        //Kokkos::deep_copy(res.val,res.h_val);
+        Kokkos::deep_copy(res.val,res.h_val);
         
         for(int cs = 0; cs < optiNodes.size(); cs++)
         {              
@@ -404,7 +405,7 @@ void ProcessVarOpti::Process()
             //printf("colorset %cs finished\n", cs);            
         }
                 
-        //Kokkos::deep_copy(res.h_val,res.val);
+        Kokkos::deep_copy(res.h_val,res.val);
 
         Evaluate(derivUtil, nodes, elUtil, res);        
         
@@ -439,6 +440,7 @@ void ProcessVarOpti::Process()
     t.Stop();
     cout << "Time to compute: " << t.TimePerTest(1) << endl;
     Kokkos::deep_copy(res.h_startInv,res.startInv);
+    Kokkos::deep_copy(res.h_worstJac,res.worstJac);
     cout << "Invalid at end:\t\t" << res.h_startInv[0] << endl;
     cout << "Worst at end:\t\t" << res.h_worstJac[0] << endl;
 
