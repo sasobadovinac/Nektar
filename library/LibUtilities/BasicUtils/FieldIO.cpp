@@ -230,8 +230,9 @@ FieldIOSharedPtr FieldIO::CreateForFile(
  * @param fielddata     Binary field data that stores the output corresponding
  *                      to @p fielddefs.
  * @param fieldinfomap  Associated field metadata map.
+ * @return The number of bytes written.
  */
-void Write(const std::string &outFile,
+unsigned long Write(const std::string &outFile,
            std::vector<FieldDefinitionsSharedPtr> &fielddefs,
            std::vector<std::vector<NekDouble> > &fielddata,
            const FieldMetaDataMap &fieldinfomap)
@@ -256,7 +257,7 @@ void Write(const std::string &outFile,
 #endif
     CommSharedPtr c    = GetCommFactory().CreateInstance("Serial", 0, 0);
     FieldIOSharedPtr f = GetFieldIOFactory().CreateInstance("Xml", c, false);
-    f->Write(outFile, fielddefs, fielddata, fieldinfomap);
+    return f->Write(outFile, fielddefs, fielddata, fieldinfomap);
 }
 
 /**
@@ -273,8 +274,9 @@ void Write(const std::string &outFile,
  * @param ElementIDs    Element IDs that lie on this processor, which can be
  *                      optionally supplied to avoid reading the entire file on
  *                      each processor.
+ * @return The number of bytes read.
  */
-LIB_UTILITIES_EXPORT void Import(
+LIB_UTILITIES_EXPORT unsigned long Import(
     const std::string &infilename,
     std::vector<FieldDefinitionsSharedPtr> &fielddefs,
     std::vector<std::vector<NekDouble> > &fielddata,
@@ -302,7 +304,7 @@ LIB_UTILITIES_EXPORT void Import(
     CommSharedPtr c    = GetCommFactory().CreateInstance("Serial", 0, 0);
     const std::string iofmt = FieldIO::GetFileType(infilename, c);
     FieldIOSharedPtr f = GetFieldIOFactory().CreateInstance(iofmt, c, false);
-    f->Import(infilename, fielddefs, fielddata, fieldinfomap, ElementIDs);
+    return f->Import(infilename, fielddefs, fielddata, fieldinfomap, ElementIDs);
 }
 
 /**
@@ -459,10 +461,10 @@ std::string FieldIO::SetUpOutput(const std::string outname, bool perRank)
         m_comm->Block();
     }
 
-    if (rank == 0)
-    {
-        cout << "Writing: " << specPath;
-    }
+    //if (rank == 0)
+    //{
+    //    cout << "Writing: " << specPath << std::endl;
+    //}
 
     // serial processing just add ending.
     if (nprocs == 1)
