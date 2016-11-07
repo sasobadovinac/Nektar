@@ -442,11 +442,9 @@ void ProcessVarOpti::OptimiseGPU(DerivUtilGPU &derivUtil,NodesGPU &nodes,
             double evec2[2];
             CalcEVector<3>(G, eval3[2], evec3);
             CalcEVector<2>(G2, eval2[1], evec2);
-        }*/
+        }*/        
 
-        
-
-        if(G[0]*G[0] + G[1]*G[1] + G[2]*G[2] > 1e-20)
+        if(G[0]*G[0] + G[1]*G[1] + G[2]*G[2] > gradTol())
         {        
             double h_Xc[3];        
             double h_Xn[3];        
@@ -467,8 +465,11 @@ void ProcessVarOpti::OptimiseGPU(DerivUtilGPU &derivUtil,NodesGPU &nodes,
             int def = IsIndefinite<3>(eval);
             if(def)
             {               
-                printf("%s", "matrix is indefinite");
-                printf("lowest eigenvalue %e\n", eval[2]);
+                Kokkos::single(Kokkos::PerTeam(teamMember),[&] ()
+                {   
+                    printf("%s", "matrix is indefinite");
+                    printf("lowest eigenvalue %16.16e\n", eval[2]);
+                });
                 //the dk vector needs calculating                
                 CalcEVector<3>(G, eval[2], dk); //eval[2] is the minimum EigenValue
 
@@ -499,8 +500,9 @@ void ProcessVarOpti::OptimiseGPU(DerivUtilGPU &derivUtil,NodesGPU &nodes,
                             sk[2] * (sk[0]*G[5] + sk[1]*G[7] + sk[2]*G[8]);
                 hes = (hes > 0.0 ? 0.0 : hes);
                 double alpha  = 1.0;
-                //while (alpha > alphaTol())
-                for(int c  = 0; c < 34; c++)
+                
+                //for(int c  = 0; c < 34; c++)
+                while (alpha > alphaTol())
                 {
                 // Update node                
                     h_Xn[0] = h_Xc[0] + alpha * sk[0];
@@ -512,7 +514,7 @@ void ProcessVarOpti::OptimiseGPU(DerivUtilGPU &derivUtil,NodesGPU &nodes,
                     newVal = GetFunctional<3>(derivUtil, nodes, elUtil, grad, 
                             nElmt, node, cs, ep, teamMember, false, false);
                
-                    if (newVal <= currentW + 1e-03 * (alpha*pg+ 0.5*alpha*alpha*hes))
+                    if (newVal <= currentW + c1() * (alpha*pg+ 0.5*alpha*alpha*hes))
                     {
                         found = true;
                         break;
@@ -541,7 +543,7 @@ void ProcessVarOpti::OptimiseGPU(DerivUtilGPU &derivUtil,NodesGPU &nodes,
                 newVal = GetFunctional<3>(derivUtil, nodes, elUtil, grad, 
                         nElmt, node, cs, ep, teamMember, false, false);
 
-                if(newVal <= currentW + 1e-03 * (pg + 0.5*hes))
+                if(newVal <= currentW + c1() * (pg + 0.5*hes))
                 {
                     //this is a minimser so see if we can extend further
                     while (l > -10)
@@ -565,9 +567,9 @@ void ProcessVarOpti::OptimiseGPU(DerivUtilGPU &derivUtil,NodesGPU &nodes,
                         double dbVal = GetFunctional<3>(derivUtil, nodes, elUtil, grad, 
                                 nElmt, node, cs, ep, teamMember, false, false);
 
-                        if (newVal <= currentW + 1e-03 * (
+                        if (newVal <= currentW + c1() * (
                             alpha*pg + 0.5*alpha*alpha*hes) &&
-                            dbVal > currentW + 1e-03 * (
+                            dbVal > currentW + c1() * (
                             alpha/beta*pg + 0.5*alpha*alpha*hes/beta/beta))
                         {
                             found = true;
@@ -581,7 +583,7 @@ void ProcessVarOpti::OptimiseGPU(DerivUtilGPU &derivUtil,NodesGPU &nodes,
                 else
                 {
                     //this is not a minimser so reverse line search
-                    while (alpha > 1e-10)
+                    while (alpha > alphaTol())
                     {
                         // Update node
                         h_Xn[0] = h_Xc[0] + alpha * dk[0];
@@ -593,7 +595,7 @@ void ProcessVarOpti::OptimiseGPU(DerivUtilGPU &derivUtil,NodesGPU &nodes,
                         newVal = GetFunctional<3>(derivUtil, nodes, elUtil, grad, 
                                 nElmt, node, cs, ep, teamMember, false, false);
 
-                        if (newVal <= currentW + 1e-03 * (
+                        if (newVal <= currentW + c1() * (
                             alpha*pg + 0.5*alpha*alpha*hes))
                         {
                             found = true;

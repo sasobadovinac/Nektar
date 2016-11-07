@@ -480,11 +480,14 @@ void ProcessVarOpti::CalcEVector<2>(const double (&G)[4], const double &eval, do
     vec[0] = evecTest(0,minI);
     vec[1] = evecTest(1,minI);
 
-    printf("evec[0] = %e\n",evec[0] );
-    printf("evec[1] = %e\n",evec[1] );
-
     printf("vec[0] = %e\n",vec[0] );
-    printf("vec[1] = %e\n",vec[1] );*/
+    printf("vec[1] = %e\n",vec[1] );
+    
+
+    printf("evec[0] = %e\n",evec[0] );
+    printf("evec[1] = %e\n",evec[1] );*/
+
+    
 
 }
 
@@ -560,13 +563,15 @@ void ProcessVarOpti::CalcEVector<3>(const double (&G)[9], const double &eval, do
     vec[1] = evecTest(1,minI);
     vec[2] = evecTest(2,minI);
 
-    printf("evec[0] = %e\n",evec[0] );
-    printf("evec[1] = %e\n",evec[1] );
-    printf("evec[2] = %e\n",evec[2] );
-
     printf("vec[0] = %e\n",vec[0] );
     printf("vec[1] = %e\n",vec[1] );
-    printf("vec[2] = %e\n",vec[2] );*/
+    printf("vec[2] = %e\n",vec[2] );
+
+    printf("evec[0] = %e\n",evec[0] );
+    printf("evec[1] = %e\n",evec[1] );
+    printf("evec[2] = %e\n",evec[2] );*/
+
+
 
 }
 
