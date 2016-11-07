@@ -425,7 +425,7 @@ void ProcessVarOpti::OptimiseGPU(DerivUtilGPU &derivUtil,NodesGPU &nodes,
             G[i] = grad.G(node,i);
         }
         
-        if (node == 1)
+        /*if (node == 1)
         {
             double eval3[3];
             double eval2[2];
@@ -442,53 +442,182 @@ void ProcessVarOpti::OptimiseGPU(DerivUtilGPU &derivUtil,NodesGPU &nodes,
             double evec2[2];
             CalcEVector<3>(G, eval3[2], evec3);
             CalcEVector<2>(G2, eval2[1], evec2);
-        }
+        }*/
+
+        
 
         if(G[0]*G[0] + G[1]*G[1] + G[2]*G[2] > 1e-20)
         {        
             double h_Xc[3];        
             double h_Xn[3];        
             GetNodeCoordGPU(h_Xc, nodes, nodes.elIdArray, nodes.localNodeIdArray, node, cs); 
-
+        
             double sk[3];
             CalcSK(G, sk);
             double pg  = (G[0]*sk[0] + G[1]*sk[1] + G[2]*sk[2]);
-            double hes =    sk[0] * (sk[0]*G[3] + sk[1]*G[4] + sk[2]*G[5]) +
+            double lhs;
+            double dk[3];
+            
+            bool runDNC = false; //so want to make this varible runDMC
+            bool found  = false;
+
+            double eval[3]; // the eigenvalues
+            CalcEValues<3>(G, eval);
+            
+            int def = IsIndefinite<3>(eval);
+            if(def)
+            {               
+                printf("%s", "matrix is indefinite");
+                printf("lowest eigenvalue %e\n", eval[2]);
+                //the dk vector needs calculating                
+                CalcEVector<3>(G, eval[2], dk); //eval[2] is the minimum EigenValue
+
+                if(dk[0]*G[0] + dk[1]*G[1] + dk[2]*G[2] > 0.0)
+                {
+                    for(int i = 0; i < 3; i++)
+                    {
+                        dk[i] *= -1.0;
+                    }
+                }
+
+                lhs = dk[0] * (dk[0]*G[3] + dk[1]*G[4] + dk[2]*G[5]) +
+                      dk[1] * (dk[0]*G[4] + dk[1]*G[6] + dk[2]*G[7]) +
+                      dk[2] * (dk[0]*G[5] + dk[1]*G[7] + dk[2]*G[8]);
+
+                ASSERTL0(lhs < 0.0 , "weirdness");
+
+                double skmag = sqrt(sk[0]*sk[0] + sk[1]*sk[1] + sk[2]*sk[2]);
+                runDNC = !((G[0]*sk[0]+G[1]*sk[1]+G[2]*sk[2])/skmag <=
+                            2.0*(0.5*lhs + G[0]*dk[0]+G[1]*dk[1]+G[2]*dk[2]));                
+            }
+
+            if(!runDNC)
+            {
+                //printf("%s\n", "run normal opti");
+                double hes =sk[0] * (sk[0]*G[3] + sk[1]*G[4] + sk[2]*G[5]) +
                             sk[1] * (sk[0]*G[4] + sk[1]*G[6] + sk[2]*G[7]) +
                             sk[2] * (sk[0]*G[5] + sk[1]*G[7] + sk[2]*G[8]);
-            hes = (hes > 0.0 ? 0.0 : hes);
-
-            double alpha  = 1.0;
-            bool found  = false;
-            //while (alpha > alphaTol())
-            for(int c  = 0; c < 34; c++)
-            {
-            // Update node                
-                h_Xn[0] = h_Xc[0] + alpha * sk[0];
-                h_Xn[1] = h_Xc[1] + alpha * sk[1];
-                h_Xn[2] = h_Xc[2] + alpha * sk[2];
-                SetNodeCoordGPU(h_Xn, nodes, nodes.elIdArray, nodes.localNodeIdArray, nElmt, node, cs);
-                
-                newVal = GetFunctional<3>(derivUtil, nodes, elUtil, grad, nElmt, node, cs, ep, teamMember, false, false);
-           
-                if (newVal <= currentW + 1e-03 * (alpha*pg+ 0.5*alpha*alpha*hes))
+                hes = (hes > 0.0 ? 0.0 : hes);
+                double alpha  = 1.0;
+                //while (alpha > alphaTol())
+                for(int c  = 0; c < 34; c++)
                 {
-                    found = true;
-                    break;
+                // Update node                
+                    h_Xn[0] = h_Xc[0] + alpha * sk[0];
+                    h_Xn[1] = h_Xc[1] + alpha * sk[1];
+                    h_Xn[2] = h_Xc[2] + alpha * sk[2];
+                    SetNodeCoordGPU(h_Xn, nodes, nodes.elIdArray, 
+                            nodes.localNodeIdArray, nElmt, node, cs);
+                    
+                    newVal = GetFunctional<3>(derivUtil, nodes, elUtil, grad, 
+                            nElmt, node, cs, ep, teamMember, false, false);
+               
+                    if (newVal <= currentW + 1e-03 * (alpha*pg+ 0.5*alpha*alpha*hes))
+                    {
+                        found = true;
+                        break;
+                    }
+                    alpha /= 2.0;        
                 }
-                alpha /= 2.0;        
-            }        
+            }
+            else
+            {
+                //printf("%s\n", "run DNC opti");
+                double beta = 0.5;
+                int l = 0;
+                double alpha = pow(beta,l);
+
+                double hes = lhs;
+
+                pg = (G[0]*dk[0]+G[1]*dk[1]+G[2]*dk[2]);
+
+                //choose whether to do forward or reverse line search
+                h_Xn[0] = h_Xc[0] + dk[0];
+                h_Xn[1] = h_Xc[1] + dk[1];
+                h_Xn[2] = h_Xc[2] + dk[2];
+                SetNodeCoordGPU(h_Xn, nodes, nodes.elIdArray, 
+                        nodes.localNodeIdArray, nElmt, node, cs);
+
+                newVal = GetFunctional<3>(derivUtil, nodes, elUtil, grad, 
+                        nElmt, node, cs, ep, teamMember, false, false);
+
+                if(newVal <= currentW + 1e-03 * (pg + 0.5*hes))
+                {
+                    //this is a minimser so see if we can extend further
+                    while (l > -10)
+                    {
+                        // Update node
+                        h_Xn[0] = h_Xc[0] + alpha * dk[0];
+                        h_Xn[1] = h_Xc[1] + alpha * dk[1];
+                        h_Xn[2] = h_Xc[2] + alpha * dk[2];
+                        SetNodeCoordGPU(h_Xn, nodes, nodes.elIdArray, 
+                                nodes.localNodeIdArray, nElmt, node, cs);
+
+                        newVal = GetFunctional<3>(derivUtil, nodes, elUtil, grad, 
+                                nElmt, node, cs, ep, teamMember, false, false);
+
+                        h_Xn[0] = h_Xc[0] + alpha/beta * dk[0];
+                        h_Xn[1] = h_Xc[1] + alpha/beta * dk[1];
+                        h_Xn[2] = h_Xc[2] + alpha/beta * dk[2];
+                        SetNodeCoordGPU(h_Xn, nodes, nodes.elIdArray, 
+                                nodes.localNodeIdArray, nElmt, node, cs);
+
+                        double dbVal = GetFunctional<3>(derivUtil, nodes, elUtil, grad, 
+                                nElmt, node, cs, ep, teamMember, false, false);
+
+                        if (newVal <= currentW + 1e-03 * (
+                            alpha*pg + 0.5*alpha*alpha*hes) &&
+                            dbVal > currentW + 1e-03 * (
+                            alpha/beta*pg + 0.5*alpha*alpha*hes/beta/beta))
+                        {
+                            found = true;
+                            break;
+                        }
+
+                        l--;
+                        alpha = pow(beta,l);
+                    }
+                }
+                else
+                {
+                    //this is not a minimser so reverse line search
+                    while (alpha > 1e-10)
+                    {
+                        // Update node
+                        h_Xn[0] = h_Xc[0] + alpha * dk[0];
+                        h_Xn[1] = h_Xc[1] + alpha * dk[1];
+                        h_Xn[2] = h_Xc[2] + alpha * dk[2];
+                        SetNodeCoordGPU(h_Xn, nodes, nodes.elIdArray, 
+                                nodes.localNodeIdArray, nElmt, node, cs);
+
+                        newVal = GetFunctional<3>(derivUtil, nodes, elUtil, grad, 
+                                nElmt, node, cs, ep, teamMember, false, false);
+
+                        if (newVal <= currentW + 1e-03 * (
+                            alpha*pg + 0.5*alpha*alpha*hes))
+                        {
+                            found = true;
+                            break;
+                        }
+
+                        l++;
+                        alpha = pow(beta,l);
+                    }
+                }
+            }       
 
             if(!found)
             {
                 h_Xn[0] = h_Xc[0];
                 h_Xn[1] = h_Xc[1];
                 h_Xn[2] = h_Xc[2];
-                SetNodeCoordGPU(h_Xn, nodes, nodes.elIdArray, nodes.localNodeIdArray, nElmt, node, cs);
+                SetNodeCoordGPU(h_Xn, nodes, nodes.elIdArray, 
+                        nodes.localNodeIdArray, nElmt, node, cs);
 
                 Kokkos::single(Kokkos::PerTeam(teamMember),[&] ()
                 {
-                    Kokkos::atomic_add(&res.nReset[0], 1);                    
+                    Kokkos::atomic_add(&res.nReset[0], 1); 
+                    printf("%s\n", "3d reset");                   
                 });   
             }
 
@@ -507,7 +636,7 @@ void ProcessVarOpti::OptimiseGPU(DerivUtilGPU &derivUtil,NodesGPU &nodes,
         //printf("node %i finished\n", node);
     
     });
-    //printf("colorset %i finished\n", i);
+    printf("colorset %i finished\n", cs);
 
 }
 
