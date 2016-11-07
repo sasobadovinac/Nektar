@@ -434,18 +434,14 @@ void ProcessVarOpti::CalcEVector<2>(const double (&G)[4], const double &eval, do
 
     evec[1] = 1.0;
     evec[0] = H[1][0] / (eval - H[0][0]);
-    double testvec1 = (eval - H[1][1]) / H[1][0];
-    if (evec[1] == testvec1)
-    {
-        printf("testvec1 %e\n", testvec1);
-    }
+    
     double norm = sqrt(evec[0]*evec[0] + evec[1]*evec[1]);
     evec[0] = evec[0] / norm;
     evec[1] = evec[1] / norm;
 
 
     // Test
-    NekMatrix<NekDouble> HH(2,2);
+    /*NekMatrix<NekDouble> HH(2,2);
     HH(0,0) = G[2];
     HH(1,0) = G[3];
     HH(0,1) = HH(1,0);
@@ -488,12 +484,7 @@ void ProcessVarOpti::CalcEVector<2>(const double (&G)[4], const double &eval, do
     printf("evec[1] = %e\n",evec[1] );
 
     printf("vec[0] = %e\n",vec[0] );
-    printf("vec[1] = %e\n",vec[1] );
-    std::cout << "evecTest(0,0) = " << evecTest(0,0) << std::endl;        
-    std::cout << "evecTest(1,0) = " << evecTest(1,0) << std::endl;
-    std::cout << "evecTest(0,1) = " << evecTest(0,1) << std::endl;        
-    std::cout << "evecTest(1,1) = " << evecTest(1,1) << std::endl;
-
+    printf("vec[1] = %e\n",vec[1] );*/
 
 }
 
@@ -504,36 +495,50 @@ void ProcessVarOpti::CalcEVector<3>(const double (&G)[9], const double &eval, do
     double H[3][3];
     H[0][0] = G[3];
     H[1][0] = G[4];
-    H[0][1] = H[1][0];
+    //H[0][1] = H[1][0];
     H[2][0] = G[5];
-    H[0][2] = H[2][0];
+    //H[0][2] = H[2][0];
     H[1][1] = G[6];
     H[2][1] = G[7];
-    H[1][2] = H[2][1];
+    //H[1][2] = H[2][1];
     H[2][2] = G[8];
-    /*NekMatrix<NekDouble> H(3,3);
-    H(0,0) = grad.h_G[3];
-    H(1,0) = grad.h_G[4];
-    H(0,1) = H(1,0);
-    H(2,0) = grad.h_G[5];
-    H(0,2) = H(2,0);
-    H(1,1) = grad.h_G[6];
-    H(2,1) = grad.h_G[7];
-    H(1,2) = H(2,1);
-    H(2,2) = grad.h_G[8];
+
+    evec[2] = 1.0;
+
+    evec[0] = ((H[2][2] - eval)*H[1][0] - H[2][0]*H[2][1]) /
+              ((H[0][0] - eval)*H[2][1] - H[2][0]*H[1][0]);
+
+    evec[1] = (eval-H[2][2]-H[2][0]*evec[0]) / H[2][1];
+
+    double norm = sqrt(evec[0]*evec[0] + evec[1]*evec[1] + evec[2]*evec[2]);
+    evec[0] = evec[0] / norm;
+    evec[1] = evec[1] / norm;
+    evec[2] = evec[2] / norm;
+
+//Test
+    /*NekMatrix<NekDouble> HH(3,3);
+    HH(0,0) = G[3];
+    HH(1,0) = G[4];
+    HH(0,1) = HH(1,0);
+    HH(2,0) = G[5];
+    HH(0,2) = HH(2,0);
+    HH(1,1) = G[6];
+    HH(2,1) = G[7];
+    HH(1,2) = HH(2,1);
+    HH(2,2) = G[8];
 
     int nVel = 3;
     int worklen = 8*nVel, info;
 
-    DNekMat eval   (nVel, nVel, 0.0, eDIAGONAL);
-    DNekMat evec   (nVel, nVel, 0.0, eFULL);
+    DNekMat evalTest   (nVel, nVel, 0.0, eDIAGONAL);
+    DNekMat evecTest   (nVel, nVel, 0.0, eFULL);
     Array<OneD, NekDouble> vl  (nVel*nVel);
     Array<OneD, NekDouble> work(worklen);
     Array<OneD, NekDouble> wi  (nVel);
 
-    Lapack::Dgeev('N', 'V', nVel, H.GetRawPtr(), nVel,
-                  &(eval.GetPtr())[0], &wi[0], &vl[0], nVel,
-                  &(evec.GetPtr())[0], nVel,
+    Lapack::Dgeev('N', 'V', nVel, HH.GetRawPtr(), nVel,
+                  &(evalTest.GetPtr())[0], &wi[0], &vl[0], nVel,
+                  &(evecTest.GetPtr())[0], nVel,
                   &work[0], worklen, info);
 
     ASSERTL0(!info,"dgeev failed");
@@ -542,17 +547,26 @@ void ProcessVarOpti::CalcEVector<3>(const double (&G)[9], const double &eval, do
     NekDouble tmp = std::numeric_limits<double>::max();
     for(int i = 0; i < 3; i++)
     {
-        if(eval(i,i) < tmp)
+        if(evalTest(i,i) < tmp)
         {
             minI = i;
-            tmp = eval(i,i);
+            tmp = evalTest(i,i);
         }
     }
 
-    val = eval(minI,minI);
-    vec[0] = evec(0,minI);
-    vec[1] = evec(1,minI);
-    vec[2] = evec(2,minI);*/
+    double val = evalTest(minI,minI);
+    double vec[3];
+    vec[0] = evecTest(0,minI);
+    vec[1] = evecTest(1,minI);
+    vec[2] = evecTest(2,minI);
+
+    printf("evec[0] = %e\n",evec[0] );
+    printf("evec[1] = %e\n",evec[1] );
+    printf("evec[2] = %e\n",evec[2] );
+
+    printf("vec[0] = %e\n",vec[0] );
+    printf("vec[1] = %e\n",vec[1] );
+    printf("vec[2] = %e\n",vec[2] );*/
 
 }
 
