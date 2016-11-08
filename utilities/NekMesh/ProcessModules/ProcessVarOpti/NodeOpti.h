@@ -66,6 +66,9 @@ public:
         
     std::vector<ElUtilSharedPtr> data;
     NodeSharedPtr node;
+
+    static void Node_indexing(NodesGPU &nodes, 
+            std::vector<std::vector<boost::shared_ptr<NodeOpti>> > &optiNodes);
     
 
 protected:
@@ -82,10 +85,7 @@ protected:
     optimiser opti;
 
     static const NekDouble gam;
-    static NekDouble c1() {return 1e-3;}
-    static NekDouble c2() {return 0.9;}
-    static NekDouble gradTol() {return 1e-20;}
-    static NekDouble alphaTol() {return 1e-10;}
+
 };
 
 typedef boost::shared_ptr<NodeOpti> NodeOptiSharedPtr;

@@ -2,7 +2,7 @@
 
 ////////////////////////////////////////////////////////////////////////////////
 //
-//  File: ProcessJac.h
+//  File: ProcessVarOpti.h
 //
 //  For more information, please see: http://www.nektar.info/
 //
@@ -41,6 +41,8 @@
 #include "../../Module.h"
 
 #include "ElUtil.h"
+//#include "NodeOpti.h"
+
 
 namespace Nektar
 {
@@ -201,14 +203,17 @@ public:
 
     void Load_nodes(NodesGPU &nodes);
 
-    void Evaluate(DerivUtilGPU &derivUtil,NodesGPU &nodes, ElUtilGPU &elUtil, Residual &res);
-    
-    void OptimiseGPU(DerivUtilGPU &derivUtil,NodesGPU &nodes, 
-        ElUtilGPU &elUtil, Residual &res, int cs);
+    void Load_residual(Residual &res);
 
-    void GetNodeCoordGPU( double (&X)[3], const NodesGPU &nodes,
+    
+    void Evaluate(DerivUtilGPU &derivUtil,NodesGPU &nodes, ElUtilGPU &elUtil, Residual &res);
+
+    void Optimise(DerivUtilGPU &derivUtil,NodesGPU &nodes, 
+        ElUtilGPU &elUtil, Residual &res, int cs, optimiser opti);
+
+    void GetNodeCoordGPU(double (&X)[3], const NodesGPU &nodes,
             Kokkos::View<int***> elIdArray, Kokkos::View<int***> localNodeIdArray, int node, int cs);
-    void SetNodeCoordGPU (const double (&X)[3], const NodesGPU &nodes,
+    void SetNodeCoordGPU(const double (&X)[3], const NodesGPU &nodes,
             Kokkos::View<int***> elIdArray, Kokkos::View<int***> localNodeIdArray, int nElmt, int node, int cs);
 
     void GetNodeCoord(double (&X)[3], int id,NodesGPU &nodes,

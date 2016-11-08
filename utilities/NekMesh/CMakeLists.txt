@@ -27,9 +27,10 @@ SET(NekMeshHeaders
     ProcessModules/ProcessVarOpti/ProcessVarOpti.h
     ProcessModules/ProcessVarOpti/NodeOpti.h
     ProcessModules/ProcessVarOpti/ElUtil.h
-    ProcessModules/ProcessVarOpti/Evaluator.hxx
+    ProcessModules/ProcessVarOpti/GetFunctional.hxx
     ProcessModules/ProcessVarOpti/Hessian.hxx
-    ProcessModules/ProcessVarOpti/EvaluateGPU.hxx
+    ProcessModules/ProcessVarOpti/Evaluate.hxx
+    ProcessModules/ProcessVarOpti/Optimise.hxx
 )
 
 SET(NekMeshSources
@@ -63,6 +64,7 @@ SET(NekMeshSources
     ProcessModules/ProcessVarOpti/PreProcessing.cpp
     ProcessModules/ProcessVarOpti/NodeOpti.cpp
     ProcessModules/ProcessVarOpti/ElUtil.cpp
+    ProcessModules/ProcessVarOpti/LoadData.cpp
 )
 
 IF (NEKTAR_USE_CCM)
