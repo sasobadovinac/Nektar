@@ -169,15 +169,6 @@ NekDouble ProcessVarOpti::GetFunctional(const DerivUtilGPU &derivUtilGPU,
             // Derivative of basis function in each direction
             if(gradient)
             {
-                /*for (int n = 0; n < DIM; ++n)
-                {
-                    for (int l = 0; ml< DIM; ++l)
-                    {
-                        //phiM[n][l] = derivGPU(l*DIM+n,k);
-                        phiM[n][l] = derivGPU[l*DIM+n];
-                    }
-                }*/
-
                 double jacInvTrans [DIM][DIM];
                 InvTrans<DIM>(phiM, jacInvTrans);
                 double derivDet = Determinant<DIM>(phiM);
@@ -186,6 +177,16 @@ NekDouble ProcessVarOpti::GetFunctional(const DerivUtilGPU &derivUtilGPU,
                 basisDeriv[0] = derivUtilGPU.VdmD_0(k,localNodeId);
                 basisDeriv[1] = derivUtilGPU.VdmD_1(k,localNodeId);
                 basisDeriv[2] = derivUtilGPU.VdmD_2(k,localNodeId);
+
+                double jacDerivPhi[DIM];                
+                for (int n = 0; n < DIM; ++n)
+                {
+                    jacDerivPhi[n] = 0.0;                                   
+                    for (int l = 0; l < DIM; ++l)
+                    {
+                        jacDerivPhi[n] += basisDeriv[l] * elUtil.idealMap(elId,k,l + 3*n);                        
+                    }                    
+                }
 
                 double jacDetDeriv [DIM];
                 for (int m = 0; m < DIM; ++m)
@@ -196,123 +197,30 @@ NekDouble ProcessVarOpti::GetFunctional(const DerivUtilGPU &derivUtilGPU,
                         jacDetDeriv[m] += jacInvTrans[m][n] * basisDeriv[n];
                     }
                     jacDetDeriv[m] *= derivDet / absIdealMapDet;
-                }
-
-                //double jacDeriv [DIM][DIM][DIM];
-                /*for (int m = 0; m < DIM; ++m)
-                {
-                    for (int n = 0; n < DIM; ++n)
-                    {
-                        double delta = (m == n ? 1.0 : 0.0);
-                        for (int l = 0; l < DIM; ++l)
-                        {
-                            jacDeriv[m][n][l] = delta * basisDeriv[l];
-                        }
-                    }
-                }*/   
-
-                double jacDerivPhi[DIM];                
-                for (int n = 0; n < DIM; ++n)
-                {
-                    jacDerivPhi[n] = 0.0;                                   
-                    for (int l = 0; l < DIM; ++l)
-                    {
-                        // want phi_I^{-1} (l,n)
-                        jacDerivPhi[n] += basisDeriv[l] * elUtil.idealMap(elId,k,l + 3*n);
-                        /*if (cs == 0 && node == 0 && el == 0 && k==0)
-                        {
-                            Kokkos::single(Kokkos::PerThread(teamMember),[&] ()
-                            {
-                                printf("jacDerivPhi[%i][%i]%e\n",m,n, jacDerivPhi[m][n]);
-                            });
-                        }*/
-                    }
-                    
-                }
                 
+                    double frobProd = ScalarProd<DIM>(jacIdeal[m],jacDerivPhi);
                 
-                /*double jacDerivPhi [DIM][DIM][DIM];
-                for (int p = 0; p < DIM; ++p)
-                {
-                    for (int m = 0; m < DIM; ++m)
-                    {
-                        for (int n = 0; n < DIM; ++n)
-                        {
-                            jacDerivPhi[p][m][n] = 0.0;
-                            for (int l = 0; l < DIM; ++l)
-                            {
-                                // want phi_I^{-1} (l,n)
-                                jacDerivPhi[p][m][n] +=
-                                    jacDeriv[p][m][l] * elUtil.idealMap(elId,k,l + 3*n);
-                            }
-                        }
-                    }
-                }*/
-            
-                double frobProd [DIM];
-                double frobProd1 [DIM];
-                for (int m = 0; m < DIM; ++m)
-                {
-                    double jacIdeal_m[DIM];
-                    frobProd[m] = 0.0;
-                    for(int n = 0; n<DIM; n++)
-                    {
-                        jacIdeal_m[n] = jacIdeal[m][n];
-                    }
-                    frobProd[m] = ScalarProd<DIM>(jacIdeal_m,jacDerivPhi);
-
-                    ////frobProd[m] = FrobProd<DIM>(jacIdeal,jacDerivPhi[m]);
-                    //frobProd[m] = 0.0;
-                    for(int n = 0; n<DIM; n++)
-                    {
-                        //frobProd[m] += jacIdeal[m][n] * jacDerivPhi[n];
-                        //frobProd[m] += jacIdeal_m[n] * jacDerivPhi[n];
-                        /*if (frobProd1[m] != frobProd[m] && cs ==1 && node == 0 && k== 0)
-                        {
-                            printf("jacIdeal_m[0] = %e, jacIdeal[%i][0] = %e \t,jacIdeal_m[1] = %e, jacIdeal[%i][1] = %e \t,jacIdeal_m[2] = %e, jacIdeal[%i][2] = %e \t, frobProd[%i] = %e, frobProd1[%i] = %e\n",
-                                 jacIdeal_m[0], m, jacIdeal[m][0], jacIdeal_m[1], m, jacIdeal[m][1],jacIdeal_m[2], m, jacIdeal[m][2],
-                                 m, frobProd[m], m, frobProd1[m]);
-                        }*/
-                    }
-
-                }
-
-                for (int m = 0; m < DIM; ++m)
-                {
                     double inc = quadW * absIdealMapDet * (
-                        mu * frobProd[m] + (jacDetDeriv[m] / (2.0*sigma - jacDet)
+                        mu * frobProd + (jacDetDeriv[m] / (2.0*sigma - jacDet)
                                             * (K * lsigma - mu)));
                     Kokkos::atomic_add(&grad.G(node,m), inc);
                 }
 
                 if(hessian)
                 {
-                    //holder for the hessian frobprods
-                    double frobProdHes[DIM][DIM];
-                    for (int m = 0; m < DIM; ++m)
-                    {
-                        for(int l = m; l < DIM; ++l)
-                        {
-                            //frobProdHes[m][l] = FrobProd<DIM>(jacDerivPhi[m],jacDerivPhi[l]);
-                            frobProdHes[m][l] = 0.0;
-                            if (m == l)
-                            {
-                                frobProdHes[m][l] = ScalarProd<DIM>(jacDerivPhi,jacDerivPhi);
-                                /*for(int n = 0; n<DIM; n++)
-                                { 
-                                    frobProdHes[m][l] += jacDerivPhi[n] * jacDerivPhi[n] ;
-                                }*/
-                            }                        
-                        }
-                    }
-
                     int ct = 0;
                     for (int m = 0; m < DIM; ++m)
                     {
                         for(int l = m; l < DIM; ++l, ct++)
                         {
+                            double frobProdHes = 0.0;
+                            if (m == l)
+                            {
+                                frobProdHes = ScalarProd<DIM>(jacDerivPhi,jacDerivPhi);                                
+                            }                        
+            
                             double inc = quadW * absIdealMapDet 
-                                * (mu * frobProdHes[m][l]
+                                * (mu * frobProdHes
                                 + jacDetDeriv[m]*jacDetDeriv[l]/(2.0*sigma-jacDet)/(2.0*sigma-jacDet)
                                     * (K- jacDet*(K*lsigma-mu)/(2.0*sigma-jacDet)));
                             Kokkos::atomic_add(&grad.G(node,ct+DIM), inc);
