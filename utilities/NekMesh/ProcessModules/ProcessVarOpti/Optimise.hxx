@@ -166,6 +166,9 @@ void ProcessVarOpti::Optimise(DerivUtilGPU &derivUtil, NodesGPU &nodes,
     grad.G = Kokkos::View<double*[9]> ("G",coloursetSize);
     grad.integral = Kokkos::View<double*> ("integral", coloursetSize);
 
+    int optiint = opti;
+    //printf("optiint %i\n", optiint);
+
     Kokkos::parallel_for( team_policy( coloursetSize, Kokkos::AUTO ), KOKKOS_LAMBDA ( const member_type& teamMember)
     {
         const int node = teamMember.league_rank();
@@ -175,7 +178,8 @@ void ProcessVarOpti::Optimise(DerivUtilGPU &derivUtil, NodesGPU &nodes,
         double minJac = CalcMinJacGPU(elUtil, nElmt, node, cs, nodes.elIdArray);
         double ep = minJac < 0.0 ? sqrt(1e-9 + 0.04*minJac*minJac) : sqrt(1e-9); 
         
-        currentW = GetFunctional<3>(derivUtil, nodes, elUtil, grad, nElmt, node, cs, ep, teamMember);
+        currentW = GetFunctional<3>(derivUtil, nodes, elUtil,
+                grad, nElmt, node, cs, ep, teamMember, optiint);
 
         double G[9];
         for (int i = 0; i < 9; ++i)
@@ -270,7 +274,7 @@ void ProcessVarOpti::Optimise(DerivUtilGPU &derivUtil, NodesGPU &nodes,
                             nodes.localNodeIdArray, nElmt, node, cs);
                     
                     newVal = GetFunctional<3>(derivUtil, nodes, elUtil, grad, 
-                            nElmt, node, cs, ep, teamMember, false, false);
+                            nElmt, node, cs, ep, teamMember, optiint, false, false);
                
                     if (newVal <= currentW + c1() * (alpha*pg+ 0.5*alpha*alpha*hes))
                     {
@@ -299,7 +303,7 @@ void ProcessVarOpti::Optimise(DerivUtilGPU &derivUtil, NodesGPU &nodes,
                         nodes.localNodeIdArray, nElmt, node, cs);
 
                 newVal = GetFunctional<3>(derivUtil, nodes, elUtil, grad, 
-                        nElmt, node, cs, ep, teamMember, false, false);
+                        nElmt, node, cs, ep, teamMember, optiint, false, false);
 
                 if(newVal <= currentW + c1() * (pg + 0.5*hes))
                 {
@@ -314,7 +318,7 @@ void ProcessVarOpti::Optimise(DerivUtilGPU &derivUtil, NodesGPU &nodes,
                                 nodes.localNodeIdArray, nElmt, node, cs);
 
                         newVal = GetFunctional<3>(derivUtil, nodes, elUtil, grad, 
-                                nElmt, node, cs, ep, teamMember, false, false);
+                                nElmt, node, cs, ep, teamMember, optiint, false, false);
 
                         h_Xn[0] = h_Xc[0] + alpha/beta * dk[0];
                         h_Xn[1] = h_Xc[1] + alpha/beta * dk[1];
@@ -323,7 +327,7 @@ void ProcessVarOpti::Optimise(DerivUtilGPU &derivUtil, NodesGPU &nodes,
                                 nodes.localNodeIdArray, nElmt, node, cs);
 
                         double dbVal = GetFunctional<3>(derivUtil, nodes, elUtil, grad, 
-                                nElmt, node, cs, ep, teamMember, false, false);
+                                nElmt, node, cs, ep, teamMember, optiint, false, false);
 
                         if (newVal <= currentW + c1() * (
                             alpha*pg + 0.5*alpha*alpha*hes) &&
@@ -351,7 +355,7 @@ void ProcessVarOpti::Optimise(DerivUtilGPU &derivUtil, NodesGPU &nodes,
                                 nodes.localNodeIdArray, nElmt, node, cs);
 
                         newVal = GetFunctional<3>(derivUtil, nodes, elUtil, grad, 
-                                nElmt, node, cs, ep, teamMember, false, false);
+                                nElmt, node, cs, ep, teamMember, optiint, false, false);
 
                         if (newVal <= currentW + c1() * (
                             alpha*pg + 0.5*alpha*alpha*hes))

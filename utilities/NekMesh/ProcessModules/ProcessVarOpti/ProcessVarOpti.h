@@ -196,42 +196,38 @@ public:
 
     virtual void Process();
     
-    // new GPU functions
+    // in LoadData.cpp
     void Load_derivUtil(DerivUtilGPU &derivUtil);
-
     void Load_elUtils(ElUtilGPU &elUtil);
-
     void Load_nodes(NodesGPU &nodes);
-
     void Load_residual(Residual &res);
 
-    
+    // in Evaluate.hxx
     void Evaluate(DerivUtilGPU &derivUtil,NodesGPU &nodes, ElUtilGPU &elUtil, Residual &res);
-
-    void Optimise(DerivUtilGPU &derivUtil,NodesGPU &nodes, 
-        ElUtilGPU &elUtil, Residual &res, int cs, optimiser opti);
-
+   
+    // in Optimise.hxx
     void GetNodeCoordGPU(double (&X)[3], const NodesGPU &nodes,
             Kokkos::View<int***> elIdArray, Kokkos::View<int***> localNodeIdArray, int node, int cs);
     void SetNodeCoordGPU(const double (&X)[3], const NodesGPU &nodes,
             Kokkos::View<int***> elIdArray, Kokkos::View<int***> localNodeIdArray, int nElmt, int node, int cs);
-
     void GetNodeCoord(double (&X)[3], int id,NodesGPU &nodes,
             typename Kokkos::View<int*>::HostMirror elIdArray, typename Kokkos::View<int*>::HostMirror localNodeIdArray);
     void SetNodeCoord(double (&X)[3], int id,NodesGPU &nodes,
             typename Kokkos::View<int*>::HostMirror elIdArray, typename Kokkos::View<int*>::HostMirror localNodeIdArray, int nElmt);
-
     double CalcMinJacGPU(const ElUtilGPU &elUtil, int nElmt, int node, int cs, Kokkos::View<int***> elIdArray);
-    
+    void Optimise(DerivUtilGPU &derivUtil,NodesGPU &nodes, 
+        ElUtilGPU &elUtil, Residual &res, int cs, optimiser opti);
+
+    // in GetFunctional.hxx
     template<int DIM> NekDouble GetFunctional(const DerivUtilGPU &derivUtilGPU,
          const NodesGPU &nodes, const ElUtilGPU &elUtil, 
          const Grad &grad, int nElmt, int node, int cs,//const int elId, const int localNodeId,
-         const double ep, const member_type &teamMember,
+         const double ep, const member_type &teamMember, const int opti,
          bool gradient = true, bool hessian = true);
     
+    // in Hessian.hxx
     template<int DIM> void CalcEValues(const double (&G)[DIM*DIM], double (&eval)[DIM]);
     template<int DIM> int IsIndefinite(const double (&eval)[DIM]);
-
     template<int DIM> void CalcEVector(const double (&G)[DIM*DIM], const double &eval, double (&evec)[DIM]);
 
 private:

@@ -163,6 +163,28 @@ inline NekDouble FrobProd<3>(NekDouble in1[3][3], NekDouble in2[3][3])
 
 
 template<int DIM>
+inline NekDouble ScalarProd(NekDouble in1[DIM], NekDouble in2[DIM])
+{
+    return 0.0;
+}
+
+template<>
+inline NekDouble ScalarProd<2>(NekDouble in1[2], NekDouble in2[2])
+{
+    return    in1[0] * in2[0]
+            + in1[1] * in2[1];
+}
+
+template<>
+inline NekDouble ScalarProd<3>(NekDouble in1[3], NekDouble in2[3])
+{
+    return    in1[0] * in2[0]
+            + in1[1] * in2[1]
+            + in1[2] * in2[2];
+}
+
+
+template<int DIM>
 inline NekDouble FrobeniusNorm(NekDouble inarray[DIM][DIM])
 {
     return 0.0;
