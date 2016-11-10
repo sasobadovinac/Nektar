@@ -213,6 +213,35 @@ inline NekDouble FrobeniusNorm<3>(NekDouble inarray[3][3])
             + inarray[2][2] * inarray[2][2] ;
 }
 
+template<int DIM> inline void EMatrix(NekDouble in[DIM][DIM],
+                                       NekDouble out[DIM][DIM])
+{
+}
+
+template<>
+inline void EMatrix<2>(NekDouble in[2][2], NekDouble out[2][2])
+{
+    out[0][0] =  0.5*(in[0][0]*in[0][0] + in[1][0]*in[1][0] - 1.0);
+    out[1][0] =  0.5*(in[0][0]*in[0][1] + in[1][0]*in[1][1]);
+    out[0][1] =  0.5*(in[0][0]*in[0][1] + in[1][0]*in[1][1]);
+    out[1][1] =  0.5*(in[1][1]*in[1][1] + in[0][1]*in[0][1] - 1.0);
+}
+
+template<>
+inline void EMatrix<3>(NekDouble in[3][3], NekDouble out[3][3])
+{
+    out[0][0] =  0.5*(in[0][0]*in[0][0] + in[1][0]*in[1][0] + in[2][0]*in[2][0]- 1.0);
+    out[1][0] =  0.5*(in[0][0]*in[1][0] + in[1][0]*in[1][1] + in[2][0]*in[2][1]);
+    out[0][1] =  out[1][0];
+    out[2][0] =  0.5*(in[0][0]*in[0][2] + in[1][0]*in[1][2] + in[2][0]*in[2][2]);
+    out[0][2] =  out[2][0];
+    out[1][1] =  0.5*(in[0][1]*in[0][1] + in[1][1]*in[1][1] + in[2][1]*in[2][1]- 1.0);
+    out[1][2] =  0.5*(in[0][1]*in[0][2] + in[1][1]*in[1][2] + in[2][1]*in[2][2]);
+    out[2][1] =  out[1][2];
+    out[2][2] =  0.5*(in[0][2]*in[0][2] + in[1][2]*in[1][2] + in[2][2]*in[2][2]- 1.0);
+}
+
+
 
 
 //returns zero if hessian is good, 1 if indefinite
