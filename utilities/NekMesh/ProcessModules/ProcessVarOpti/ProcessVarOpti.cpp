@@ -308,7 +308,7 @@ void ProcessVarOpti::Process()
         for(int cs = 0; cs < optiNodes.size(); cs++)
         {              
             Optimise(derivUtil, nodes, elUtil, res, cs, opti);
-            //printf("colorset %cs finished\n", cs);            
+            printf("colorset %i finished\n", cs);            
         }
 
         Kokkos::deep_copy(res.h_val,res.val);

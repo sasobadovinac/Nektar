@@ -222,7 +222,7 @@ public:
     template<int DIM> NekDouble GetFunctional(const DerivUtilGPU &derivUtilGPU,
          const NodesGPU &nodes, const ElUtilGPU &elUtil, 
          const Grad &grad, int nElmt, int node, int cs,//const int elId, const int localNodeId,
-         const double ep, const member_type &teamMember, const int opti,
+         const double ep, const member_type &teamMember, const optimiser opti,
          bool gradient = true, bool hessian = true);
     
     // in Hessian.hxx
