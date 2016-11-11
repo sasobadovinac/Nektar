@@ -64,41 +64,6 @@ template<> inline NekDouble Determinant<3>(NekDouble jac[3][3])
 }
 
 
-template<int DIM> inline NekDouble LinElasTrace(NekDouble jac[DIM][DIM])
-{
-    return 0.0;
-}
-
-template<> inline NekDouble LinElasTrace<2>(NekDouble jac[2][2])
-{
-    return 0.25 * (
-        (jac[0][0]*jac[0][0] + jac[1][0]*jac[1][0] - 1.0) *
-        (jac[0][0]*jac[0][0] + jac[1][0]*jac[1][0] - 1.0) +
-        (jac[0][1]*jac[0][1] + jac[1][1]*jac[1][1] - 1.0)*
-        (jac[0][1]*jac[0][1] + jac[1][1]*jac[1][1] - 1.0))
-        + 0.5 * (
-            (jac[0][0]*jac[0][1] + jac[1][0]*jac[1][1])*
-            (jac[0][0]*jac[0][1] + jac[1][0]*jac[1][1]));
-}
-
-template<> inline NekDouble LinElasTrace<3>(NekDouble jac[3][3])
-{
-    return 0.25 *(
-        (jac[0][0]*jac[0][0]+jac[1][0]*jac[1][0]+jac[2][0]*jac[2][0]-1.0)*
-        (jac[0][0]*jac[0][0]+jac[1][0]*jac[1][0]+jac[2][0]*jac[2][0]-1.0) +
-        (jac[0][1]*jac[0][1]+jac[1][1]*jac[1][1]+jac[2][1]*jac[2][1]-1.0)*
-        (jac[0][1]*jac[0][1]+jac[1][1]*jac[1][1]+jac[2][1]*jac[2][1]-1.0) +
-        (jac[0][2]*jac[0][2]+jac[1][2]*jac[1][2]+jac[2][2]*jac[2][2]-1.0)*
-        (jac[0][2]*jac[0][2]+jac[1][2]*jac[1][2]+jac[2][2]*jac[2][2]-1.0))
-        + 0.5 * (
-            (jac[0][0]*jac[0][2]+jac[1][0]*jac[1][2]+jac[2][0]*jac[2][2])*
-            (jac[0][0]*jac[0][2]+jac[1][0]*jac[1][2]+jac[2][0]*jac[2][2])+
-            (jac[0][1]*jac[0][2]+jac[1][1]*jac[1][2]+jac[2][1]*jac[2][2])*
-            (jac[0][1]*jac[0][2]+jac[1][1]*jac[1][2]+jac[2][1]*jac[2][2])+
-            (jac[0][0]*jac[0][1]+jac[1][0]*jac[1][1]+jac[0][1]*jac[2][1])*
-            (jac[0][0]*jac[0][1]+jac[1][0]*jac[1][1]+jac[0][1]*jac[2][1]));
-}
-
 template<int DIM>
 inline void InvTrans(NekDouble in[DIM][DIM],
                                        NekDouble out[DIM][DIM])

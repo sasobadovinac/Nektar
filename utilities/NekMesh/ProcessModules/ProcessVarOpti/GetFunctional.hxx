@@ -159,106 +159,56 @@ NekDouble ProcessVarOpti::GetFunctional(const DerivUtilGPU &derivUtilGPU,
                 return DBL_MAX;
             }
             ASSERTL0(sigma > DBL_MIN,"dividing by zero");
-             
+            
+            // Derivative of basis function in each direction
+            NekDouble jacDerivPhi[DIM];
+            NekDouble jacDetDeriv[DIM];                  
+            if(gradient)
+            {
+                NekDouble jacInvTrans[DIM][DIM];                                
+                InvTrans<DIM>(phiM, jacInvTrans);
+                NekDouble derivDet = Determinant<DIM>(phiM);
+
+                NekDouble basisDeriv [DIM];
+                basisDeriv[0] = derivUtilGPU.VdmD_0(k,localNodeId);
+                basisDeriv[1] = derivUtilGPU.VdmD_1(k,localNodeId);
+                basisDeriv[2] = derivUtilGPU.VdmD_2(k,localNodeId);                        
+
+                // jacDeriv is actually a tensor,
+                // but can be stored as a vector, as 18 out of 27 entries are zero
+                // and the other 9 entries are three triplets
+                // this is due to the delta function in jacDeriv
+                NekDouble jacDeriv[DIM];
+                for (int l = 0; l < DIM; ++l)
+                {
+                    jacDeriv[l] = basisDeriv[l];
+                }
+
+                // jacDerivPhi is actually a tensor,
+                // but can be stored as a vector due to the simple form of jacDeriv 
+                for (int n = 0; n < DIM; ++n)
+                {
+                    jacDerivPhi[n] = 0.0;                                   
+                    for (int l = 0; l < DIM; ++l)
+                    {
+                        jacDerivPhi[n] += jacDeriv[l] * elUtil.idealMap(elId,k,l + 3*n);                        
+                    }                    
+                }
+
+                for (int m = 0; m < DIM; ++m)
+                {
+                    jacDetDeriv[m] = 0.0;
+                    for (int n = 0; n < DIM; ++n)
+                    {
+                        jacDetDeriv[m] += jacInvTrans[m][n] * basisDeriv[n];
+                    }
+                    jacDetDeriv[m] *= derivDet / absIdealMapDet;
+                }
+            }
 
 
             switch(opti)
             {               
-                case eHypEl:
-                {                    
-                    double lsigma = log(sigma);
-                    double I1 = FrobeniusNorm<DIM>(jacIdeal);                           
-                    double inc = quadW * absIdealMapDet *
-                                (0.5 * mu * (I1 - 3.0 - 2.0*lsigma) +
-                                 0.5 * K * lsigma * lsigma);
-                    Kokkos::atomic_add(&grad.integral(node), inc);
-                    
-                    // Derivative of basis function in each direction
-                    if(gradient)
-                    {
-                        NekDouble jacInvTrans[DIM][DIM];                                
-                        InvTrans<DIM>(phiM, jacInvTrans);
-                        NekDouble derivDet = Determinant<DIM>(phiM);
-
-                        NekDouble basisDeriv [DIM];
-                        basisDeriv[0] = derivUtilGPU.VdmD_0(k,localNodeId);
-                        basisDeriv[1] = derivUtilGPU.VdmD_1(k,localNodeId);
-                        basisDeriv[2] = derivUtilGPU.VdmD_2(k,localNodeId);                        
-
-                        // jacDeriv is actually a tensor,
-                        // but can be stored as a vector, as 18 out of 27 entries are zero
-                        // and the other 9 entries are three triplets
-                        // this is due to the delta function in jacDeriv
-                        double jacDeriv[DIM];
-                        for (int l = 0; l < DIM; ++l)
-                        {
-                            jacDeriv[l] = basisDeriv[l];
-                        }
-
-                        // jacDerivPhi is actually a tensor,
-                        // but can be stored as a vector due to the simple form of jacDeriv                      
-                        double jacDerivPhi[DIM];              
-                        for (int n = 0; n < DIM; ++n)
-                        {
-                            jacDerivPhi[n] = 0.0;                                   
-                            for (int l = 0; l < DIM; ++l)
-                            {
-                                jacDerivPhi[n] += jacDeriv[l] * elUtil.idealMap(elId,k,l + 3*n);                        
-                            }                    
-                        }
-
-                        NekDouble jacDetDeriv[DIM];  
-                        for (int m = 0; m < DIM; ++m)
-                        {
-                            jacDetDeriv[m] = 0.0;
-                            for (int n = 0; n < DIM; ++n)
-                            {
-                                jacDetDeriv[m] += jacInvTrans[m][n] * basisDeriv[n];
-                            }
-                            jacDetDeriv[m] *= derivDet / absIdealMapDet;
-                        }
-
-                    //start
-                        for (int m = 0; m < DIM; ++m)
-                        {
-                            // because of the zero entries of the tensor jacDerivPhi,
-                            // the Frobenius-product becomes a scalar product
-                            double frobProd = ScalarProd<DIM>(jacIdeal[m],jacDerivPhi);
-                                                
-                            double inc = quadW * absIdealMapDet * (
-                                mu * frobProd + (jacDetDeriv[m] / (2.0*sigma - jacDet)
-                                                    * (K * lsigma - mu)));
-                            Kokkos::atomic_add(&grad.G(node,m), inc);
-                        }
-
-                        if(hessian)
-                        {
-                            int ct = 0;
-                            for (int m = 0; m < DIM; ++m)
-                            {
-                                for(int l = m; l < DIM; ++l, ct++)
-                                {
-                                    double frobProdHes = 0.0;
-                                    // because of the zero entries of the tensor jacDerivPhi,
-                                    // the matrix frobProdHes has only diagonal entries
-                                    if (m == l)
-                                    {
-                                        // because of the zero entries of the tensor jacDerivPhi,
-                                        // the Frobenius-product becomes a scalar product
-                                        frobProdHes = ScalarProd<DIM>(jacDerivPhi,jacDerivPhi);                                
-                                    }                        
-                    
-                                    double inc = quadW * absIdealMapDet 
-                                        * (mu * frobProdHes
-                                        + jacDetDeriv[m]*jacDetDeriv[l]/(2.0*sigma-jacDet)/(2.0*sigma-jacDet)
-                                            * (K- jacDet*(K*lsigma-mu)/(2.0*sigma-jacDet)));
-                                    Kokkos::atomic_add(&grad.G(node,ct+DIM), inc);
-                                }
-                            }
-                        }
-                    }
-                    break;                      
-                }
                 case eLinEl:
                 {        
                     double lsigma = log(sigma);
@@ -273,50 +223,6 @@ NekDouble ProcessVarOpti::GetFunctional(const DerivUtilGPU &derivUtilGPU,
                     // Derivative of basis function in each direction
                     if(gradient)
                     {                       
-                        NekDouble jacInvTrans[DIM][DIM];                                
-                        InvTrans<DIM>(phiM, jacInvTrans);
-                        NekDouble derivDet = Determinant<DIM>(phiM);
-
-                        NekDouble basisDeriv [DIM];
-                        basisDeriv[0] = derivUtilGPU.VdmD_0(k,localNodeId);
-                        basisDeriv[1] = derivUtilGPU.VdmD_1(k,localNodeId);
-                        basisDeriv[2] = derivUtilGPU.VdmD_2(k,localNodeId);                        
-
-                        // jacDeriv is actually a tensor,
-                        // but can be stored as a vector, as 18 out of 27 entries are zero
-                        // and the other 9 entries are three triplets
-                        // this is due to the delta function in jacDeriv
-                        double jacDeriv[DIM];
-                        for (int l = 0; l < DIM; ++l)
-                        {
-                            jacDeriv[l] = basisDeriv[l];
-                        }
-
-                        // jacDerivPhi is actually a tensor,
-                        // but can be stored as a vector due to the simple form of jacDeriv                      
-                        double jacDerivPhi[DIM];              
-                        for (int n = 0; n < DIM; ++n)
-                        {
-                            jacDerivPhi[n] = 0.0;                                   
-                            for (int l = 0; l < DIM; ++l)
-                            {
-                                jacDerivPhi[n] += jacDeriv[l] * elUtil.idealMap(elId,k,l + 3*n);                        
-                            }                    
-                        }
-
-                        NekDouble jacDetDeriv[DIM];  
-                        for (int m = 0; m < DIM; ++m)
-                        {
-                            jacDetDeriv[m] = 0.0;
-                            for (int n = 0; n < DIM; ++n)
-                            {
-                                jacDetDeriv[m] += jacInvTrans[m][n] * basisDeriv[n];
-                            }
-                            jacDetDeriv[m] *= derivDet / absIdealMapDet;
-                        }
-                        
-
-                    // start
                         NekDouble dEdxi[DIM][DIM][DIM];
                         // use the delta function in jacDeriv and do some tensor calculus
                         // to come up with this simplified expression for:
@@ -379,6 +285,58 @@ NekDouble ProcessVarOpti::GetFunctional(const DerivUtilGPU &derivUtilGPU,
                     break;
                 }
 
+                case eHypEl:
+                {                    
+                    double lsigma = log(sigma);
+                    double I1 = FrobeniusNorm<DIM>(jacIdeal);                           
+                    double inc = quadW * absIdealMapDet *
+                                (0.5 * mu * (I1 - 3.0 - 2.0*lsigma) +
+                                 0.5 * K * lsigma * lsigma);
+                    Kokkos::atomic_add(&grad.integral(node), inc);
+                 
+                    if (gradient)
+                    {
+                        for (int m = 0; m < DIM; ++m)
+                        {
+                            // because of the zero entries of the tensor jacDerivPhi,
+                            // the Frobenius-product becomes a scalar product
+                            double frobProd = ScalarProd<DIM>(jacIdeal[m],jacDerivPhi);
+                                                
+                            double inc = quadW * absIdealMapDet * (
+                                mu * frobProd + (jacDetDeriv[m] / (2.0*sigma - jacDet)
+                                                    * (K * lsigma - mu)));
+                            Kokkos::atomic_add(&grad.G(node,m), inc);
+                        }
+
+                        if(hessian)
+                        {
+                            int ct = 0;
+                            for (int m = 0; m < DIM; ++m)
+                            {
+                                for(int l = m; l < DIM; ++l, ct++)
+                                {
+                                    double frobProdHes = 0.0;
+                                    // because of the zero entries of the tensor jacDerivPhi,
+                                    // the matrix frobProdHes has only diagonal entries
+                                    if (m == l)
+                                    {
+                                        // because of the zero entries of the tensor jacDerivPhi,
+                                        // the Frobenius-product becomes a scalar product
+                                        frobProdHes = ScalarProd<DIM>(jacDerivPhi,jacDerivPhi);                                
+                                    }                        
+                    
+                                    double inc = quadW * absIdealMapDet 
+                                        * (mu * frobProdHes
+                                        + jacDetDeriv[m]*jacDetDeriv[l]/(2.0*sigma-jacDet)/(2.0*sigma-jacDet)
+                                            * (K- jacDet*(K*lsigma-mu)/(2.0*sigma-jacDet)));
+                                    Kokkos::atomic_add(&grad.G(node,ct+DIM), inc);
+                                }
+                            }
+                        }
+                    }
+                    break;                      
+                }
+
                 case eRoca:
                 {
                     NekDouble frob = FrobeniusNorm(jacIdeal);
@@ -389,49 +347,6 @@ NekDouble ProcessVarOpti::GetFunctional(const DerivUtilGPU &derivUtilGPU,
                     // Derivative of basis function in each direction
                     if(gradient)
                     {
-                        NekDouble jacInvTrans[DIM][DIM];                                
-                        InvTrans<DIM>(phiM, jacInvTrans);
-                        NekDouble derivDet = Determinant<DIM>(phiM);
-
-                        NekDouble basisDeriv [DIM];
-                        basisDeriv[0] = derivUtilGPU.VdmD_0(k,localNodeId);
-                        basisDeriv[1] = derivUtilGPU.VdmD_1(k,localNodeId);
-                        basisDeriv[2] = derivUtilGPU.VdmD_2(k,localNodeId);                        
-
-                        // jacDeriv is actually a tensor,
-                        // but can be stored as a vector, as 18 out of 27 entries are zero
-                        // and the other 9 entries are three triplets
-                        // this is due to the delta function in jacDeriv
-                        double jacDeriv[DIM];
-                        for (int l = 0; l < DIM; ++l)
-                        {
-                            jacDeriv[l] = basisDeriv[l];
-                        }
-
-                        // jacDerivPhi is actually a tensor,
-                        // but can be stored as a vector due to the simple form of jacDeriv                      
-                        double jacDerivPhi[DIM];              
-                        for (int n = 0; n < DIM; ++n)
-                        {
-                            jacDerivPhi[n] = 0.0;                                   
-                            for (int l = 0; l < DIM; ++l)
-                            {
-                                jacDerivPhi[n] += jacDeriv[l] * elUtil.idealMap(elId,k,l + 3*n);                        
-                            }                    
-                        }
-
-                        NekDouble jacDetDeriv[DIM];  
-                        for (int m = 0; m < DIM; ++m)
-                        {
-                            jacDetDeriv[m] = 0.0;
-                            for (int n = 0; n < DIM; ++n)
-                            {
-                                jacDetDeriv[m] += jacInvTrans[m][n] * basisDeriv[n];
-                            }
-                            jacDetDeriv[m] *= derivDet / absIdealMapDet;
-                        }
-
-                    //start
                         NekDouble frobProd[DIM];
                         double inc[DIM];
                         for (int m = 0; m < DIM; ++m)
@@ -465,6 +380,7 @@ NekDouble ProcessVarOpti::GetFunctional(const DerivUtilGPU &derivUtilGPU,
                                 
                                     double incHes = quadW * absIdealMapDet * (
                                         grad.G(node,m)*grad.G(node,l) / W + 2.0*W*(frobProdHes/frob
+                                            //inc[m] * inc[l] / W + 2.0*W*(frobProdHes/frob
                                             - 2.0 * frobProd[m]*frobProd[l]/frob/frob
                                             + jacDetDeriv[m]*jacDetDeriv[l] * jacDet/(2.0*sigma-jacDet)/
                                             (2.0*sigma-jacDet)/(2.0*sigma-jacDet)/DIM));
@@ -486,49 +402,6 @@ NekDouble ProcessVarOpti::GetFunctional(const DerivUtilGPU &derivUtilGPU,
                     // Derivative of basis function in each direction
                     if(gradient)
                     {
-                        NekDouble jacInvTrans[DIM][DIM];
-                        InvTrans<DIM>(phiM, jacInvTrans);
-                        NekDouble derivDet = Determinant<DIM>(phiM);
-
-                        NekDouble basisDeriv [DIM];
-                        basisDeriv[0] = derivUtilGPU.VdmD_0(k,localNodeId);
-                        basisDeriv[1] = derivUtilGPU.VdmD_1(k,localNodeId);
-                        basisDeriv[2] = derivUtilGPU.VdmD_2(k,localNodeId);
-
-                        // jacDeriv is actually a tensor,
-                        // but can be stored as a vector, as 18 out of 27 entries are zero
-                        // and the other 9 entries are three triplets
-                        // this is due to the delta function in jacDeriv
-                        double jacDeriv[DIM];
-                        for (int l = 0; l < DIM; ++l)
-                        {
-                            jacDeriv[l] = basisDeriv[l];
-                        }
-
-                        // jacDerivPhi is actually a tensor,
-                        // but can be stored as a vector due to the simple form of jacDeriv                      
-                        double jacDerivPhi[DIM];              
-                        for (int n = 0; n < DIM; ++n)
-                        {
-                            jacDerivPhi[n] = 0.0;                                   
-                            for (int l = 0; l < DIM; ++l)
-                            {
-                                jacDerivPhi[n] += jacDeriv[l] * elUtil.idealMap(elId,k,l + 3*n);                        
-                            }                    
-                        }
-
-                        NekDouble jacDetDeriv[DIM];                                              
-                        for (int m = 0; m < DIM; ++m)
-                        {
-                            jacDetDeriv[m] = 0.0;
-                            for (int n = 0; n < DIM; ++n)
-                            {
-                                jacDetDeriv[m] += basisDeriv[n] * jacInvTrans[m][n];
-                            }
-                            jacDetDeriv[m] *= derivDet / absIdealMapDet;
-                        }
-
-                    //start
                         NekDouble frobProd[DIM];  
                         double inc[DIM];
                         for (int m = 0; m < DIM; ++m)
@@ -563,7 +436,7 @@ NekDouble ProcessVarOpti::GetFunctional(const DerivUtilGPU &derivUtilGPU,
                                         grad.G(node,m)*grad.G(node,l) / W + 2.0*W*(frobProdHes/frob
                                             - 2.0 * frobProd[m]*frobProd[l]/frob/frob
                                             + 0.5*jacDetDeriv[m]*jacDetDeriv[l] * jacDet/(2.0*sigma-jacDet)
-                                            /(2.0*sigma-jacDet)/(2.0*sigma-jacDet)));
+                                            /(2.0*sigma-jacDet)/(2.0*sigma-jacDet)/DIM));
                                     Kokkos::atomic_add(&grad.G(node,ct+DIM), incHes);
                                 }
                             }
