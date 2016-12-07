@@ -41,7 +41,10 @@
 #include <MultiRegions/AssemblyMap/AssemblyMapDG.h>
 #include <SolverUtils/UnsteadySystem.h>
 
+#include <LibUtilities/AnalysisUtils/PerformanceAnalyser.h>
+
 using namespace std;
+using namespace Nektar::LibUtilities;
 
 namespace Nektar
 {	
@@ -257,6 +260,8 @@ namespace Nektar
             NekDouble cpuTime       = 0.0;
             NekDouble elapsed       = 0.0;
 
+            PerformanceAnalyser::Initialise("./nektar_pat.out");
+
             while (step   < m_steps ||
                    m_time < m_fintime - NekConstants::kNekZeroTol)
             {
@@ -278,6 +283,8 @@ namespace Nektar
                         doCheckTime    = true;
                     }
                 }
+
+                PerformanceAnalyser::Record(step, 1);
                 
                 // Perform any solver-specific pre-integration steps
                 timer.Start();
@@ -294,6 +301,8 @@ namespace Nektar
                 elapsed  = timer.TimePerTest(1);
                 intTime += elapsed;
                 cpuTime += elapsed;
+
+                PerformanceAnalyser::Record(step, 2);
 		
                 // Write out status information
                 if (m_session->GetComm()->GetRank() == 0 && 
@@ -333,6 +342,8 @@ namespace Nektar
                 {
                     break;
                 }
+
+                PerformanceAnalyser::Record(step, 3);
 
                 // search for NaN and quit if found
                 if (m_nanSteps && !((step+1) % m_nanSteps) )
@@ -396,9 +407,13 @@ namespace Nektar
                     doCheckTime = false;
                 }
 
+                PerformanceAnalyser::Record(step, 4);
+
                 // Step advance
                 ++step;
             }
+
+            PerformanceAnalyser::Finalise();
             
             // Print out summary statistics
             if (m_session->GetComm()->GetRank() == 0)
