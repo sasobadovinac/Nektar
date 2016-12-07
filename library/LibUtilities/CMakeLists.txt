@@ -1,3 +1,12 @@
+SET(AnalysisUtilsHeaders
+   ./AnalysisUtils/PerformanceAnalyser.h
+   ./AnalysisUtils/PowerMonitor.h
+)
+
+SET(AnalysisUtilsSources
+    ./AnalysisUtils/PerformanceAnalyser.cpp
+    ./AnalysisUtils/PowerMonitor.cpp
+)
 
 SET(BasicConstHeaders
     ./BasicConst/NektarUnivConsts.hpp
@@ -312,6 +321,9 @@ SET(BaseHeaders
     LibUtilitiesDeclspec.h
 )
 
+SOURCE_GROUP("Analysis Utils Headers" FILES ${AnalysisUtilsHeaders})
+SOURCE_GROUP("Analysis Utils Sources" FILES ${AnalysisUtilsSources})
+
 SOURCE_GROUP("Basic Const" FILES ${BasicConstHeaders})
 SOURCE_GROUP("Basic Utils Headers" FILES ${BasicUtilsHeaders})
 SOURCE_GROUP("Basic Utils Sources" FILES ${BasicUtilsSources})
@@ -345,6 +357,7 @@ SOURCE_GROUP("Base" FILES ${BaseHeaders})
 
 SET(LibUtilityHeaders
     ${MemoryHeaders}
+    ${AnalysisUtilsHeaders}
     ${BasicUtilsHeaders}
     ${ExpressionTemplates}
     ${PolyLibHeaders}
@@ -368,6 +381,7 @@ CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/BasicConst/GitRevision.cpp.in
                ${GitRevisionFile})
 
 SET(LibUtilitySources
+    ${AnalysisUtilsSources}
     ${BasicUtilsSources}
     ${FoundationSources}
     ${CADSystemSources}
