@@ -200,9 +200,6 @@ namespace Nektar
                 m_session->LoadParameter("DynamicViscDefS0",
                                          m_dynamicVisc->m_defS0,3);
 
-                m_session->LoadParameter("DynamicViscDefS0",
-                                         m_dynamicVisc->m_defS0,3);
-
                 m_session->LoadParameter("DynamicViscTimeRamp",
                                          m_dynamicVisc->m_timeRamp,-1);
 
@@ -221,6 +218,20 @@ namespace Nektar
                 // initialise with zero
                 m_dynamicVisc->m_fixedKinvis = 0.0;
                 
+            }
+            else if (boost::iequals(m_dynamicVisc->m_type,"DynamicSvvCutoffRatio"))
+            {
+                int nel = m_fields[0]->GetExpSize();
+                
+                m_session->LoadParameter("DynamicViscEvalSteps",
+                                         m_dynamicVisc->m_numStepsAvg,10);
+                m_session->LoadParameter("DynamicViscC0",
+                                         m_dynamicVisc->m_kinvisC0,0.1);
+                m_session->LoadParameter("DynamicViscDefS0",
+                                         m_dynamicVisc->m_defS0,3);
+                //setup SVV parameters with default values; 
+                m_dynamicVisc->m_savVarCoeffMap[StdRegions::eVarCoeffSVVCutoffRatio] = Array<OneD, NekDouble>(nel,m_sVVCutoffRatio);
+                m_dynamicVisc->m_savVarCoeffMap[StdRegions::eVarCoeffSVVDiff] = Array<OneD, NekDouble>(nel,m_sVVDiffCoeff/m_kinvis);
             }
             else
             {
@@ -575,44 +586,7 @@ namespace Nektar
         if(m_useSpecVanVisc)
         {
             factors[StdRegions::eFactorSVVCutoffRatio] = m_sVVCutoffRatio;
-            factors[StdRegions::eFactorSVVDiffCoeff]   = m_sVVDiffCoeff/m_kinvis;            
-
-            static bool init = true;
-            if(init)
-            {
-                int nel   = m_fields[0]->GetExpSize();
-                NekDouble   xstart = 100; 
-                Array<OneD, NekDouble> SVVDiffCoeff(nel);
-                Array<OneD, NekDouble> SVVCutoffRatio(nel);
-                m_session->LoadParameter("SVVXstart",  xstart,  1e6);
-
-                if (m_comm->GetRank() == 0)
-                {
-                    cout << "Applying a SVVCutoffRation of 0.4 after x > :" << xstart <<endl;
-                }
-                
-                for(int i= 0; i < nel; ++i)
-                {
-                    SVVDiffCoeff[i]   = m_sVVDiffCoeff/m_kinvis;
-                    SVVCutoffRatio[i] = m_sVVCutoffRatio;
-                    NekDouble xmin  = 1e6;
-                    for(int j = 0; j < m_fields[0]->GetExp(i)->GetNverts(); ++j)
-                    {
-                        xmin = min(xmin,m_fields[0]->GetExp(i)->GetGeom()
-                                   ->GetVertex(j)->x());
-                    }
-                    if(xmin > xstart)
-                    {
-                        SVVCutoffRatio[i] = 0.4;
-                    }
-                }
-
-                varCoeffMap[StdRegions::eVarCoeffSVVDiff]        = SVVDiffCoeff;
-                varCoeffMap[StdRegions::eVarCoeffSVVCutoffRatio] = SVVCutoffRatio;
-
-                init = false; 
-            }
-
+            factors[StdRegions::eFactorSVVDiffCoeff]   = m_sVVDiffCoeff/m_kinvis; 
         }
 
         if(m_dynamicVisc)
@@ -669,7 +643,7 @@ namespace Nektar
                             fieldcoeffs[fieldcoeffs.size()-1],1);
             }
             
-            else if(boost::iequals(m_dynamicVisc->m_type,
+            if(boost::iequals(m_dynamicVisc->m_type,
                                    "SemiImplicitVariableDiff"))
             {
                 variables.push_back("DynamicViscosity");
@@ -684,6 +658,32 @@ namespace Nektar
                        fieldcoeffs[fieldcoeffs.size()-1]);
                 m_fieldMetaDataMap["DynVisc_FixedKinvis"]
                     = boost::lexical_cast<std::string>(m_dynamicVisc->m_fixedKinvis);
+            }
+
+            if(m_dynamicVisc->m_savVarCoeffMap.count(StdRegions::eVarCoeffSVVCutoffRatio) != 0)
+            {
+                variables.push_back("DynamicSVVCutoff");
+                Array<OneD, NekDouble> newfld(ncoeffs);
+                Array<OneD, NekDouble> cutoff(nquad),tmp;
+                fieldcoeffs.push_back(newfld);  
+
+                int offset = 0;
+                int nquad;
+                int nel = m_fields[0]->GetExpSize();
+                for(int e = 0; e < nel; ++e)
+                {
+                    nquad = m_fields[0]->GetExp(e)->GetTotPoints();
+
+                    Vmath::Fill(nquad,
+                                m_dynamicVisc->
+                                m_savVarCoeffMap[
+                                StdRegions::eVarCoeffSVVCutoffRatio][e],
+                                tmp = cutoff+offset,1);
+                    offset += nquad; 
+                }
+                
+                m_fields[0]->FwdTrans_IterPerExp(cutoff,
+                       fieldcoeffs[fieldcoeffs.size()-1]);
             }
         }
     }
@@ -827,52 +827,97 @@ namespace Nektar
             m_dynamicVisc->m_numSteps++;
         }
         else if(boost::iequals(m_dynamicVisc->m_type,
-                               "SemiImplicitSVVCutoffRatio"))
+                               "DynamicSVVCutoffRatio"))
         {
-            int nel = m_fields[0]->GetExpSize();
-            
-            Vmath::Smul(nquad,1.0/(m_dynamicVisc->m_numSteps +1.0),
-            m_dynamicVisc->m_sensorField,1,energy,1);
-            
-            Array<OneD, NekDouble> sensor(nel);
-            
-            GetSensor(energy,sensor);
-
-            NekDouble maxsensor = Vmath::Vmax(nel,sensor,1);
-            maxsensor *= 0.3; // take 0.3 max as implicit value
-            m_comm->AllReduce(maxsensor,LibUtilities::ReduceMax);
-
-            if((maxsensor > 2*m_dynamicVisc->m_fixedKinvis)||
-               (maxsensor < 0.5*m_dynamicVisc->m_fixedKinvis))
-            {
-                m_dynamicVisc->m_fixedKinvis = maxsensor;
-
-                if (m_comm->GetRank() == 0)
-                {
-                    cout << "Updating fixed viscosity: " <<
-                        m_dynamicVisc->m_numSteps << " (value: "
-                         << maxsensor << ")" << endl;
-                }
-                
-                
-                // Release  current linear sys
-                for(int i =0 ; i < m_velocity.num_elements(); ++i)
-                {
-                    m_fields[m_velocity[i]]->ClearGlobalLinSysManager();
-                    m_fields[m_velocity[i]]->ResetLocalManagers();
-                }
-                //->Sensors need setting up here. 
-            }
-            
-
-
+            // evaluate new cut off every numStepsAvg steps
             if(m_dynamicVisc->m_numSteps%m_dynamicVisc->m_numStepsAvg == 0)
             {
+
+                int nel = m_fields[0]->GetExpSize();
+                
+                Vmath::Smul(nquad,1.0/(m_dynamicVisc->m_numSteps +1.0),
+                            m_dynamicVisc->m_sensorField,1,energy,1);
+                
+                Array<OneD, NekDouble> sensorVal(nel);
+                
+                GetSensor(energy,sensorVal);
+                
+                Array<OneD, NekDouble> SVVDiffCoeff(nel);
+                Array<OneD, NekDouble> SVVCutoffRatio(nel);
+                
+                bool IsDiff = false;
+                
+                NekDouble  C =  m_dynamicVisc->m_kinvisC0;
+                NekDouble S0_def = m_dynamicVisc->m_defS0;
+                NekDouble e0,s0, porder;
+                NekDouble kappa = 0.5;
+                NekDouble SVVCutoffdef = m_sVVCutoffRatio;
+                
+                for(int e= 0; e < nel; ++e)
+                {
+                    porder = m_fields[0]->GetExp(e)->GetBasisNumModes(0)-1;
+                    e0 = C*m_dynamicVisc->m_h[e]/porder;
+                    s0 = -(S0_def + 4.0*log10(porder));
+                    
+                    SVVDiffCoeff[e]   = m_sVVDiffCoeff/m_kinvis;
+                    
+                    // minimum value which will affect 1st mode. 
+                    NekDouble SVVCutoffMin = 1.1/(porder+1);
+
+                    if(sensorVal[e] < s0 - kappa)
+                    {
+                        SVVCutoffRatio[e] = SVVCutoffdef;
+                    }
+                    else if (sensorVal[e] > s0 + kappa)
+                    {
+                        SVVCutoffRatio[e] = SVVCutoffMin;
+                    }
+                    else
+                    {
+                        SVVCutoffRatio[e] = SVVCutoffMin +
+                            (SVVCutoffdef - SVVCutoffMin) *
+                        0.5*(1 + sin(M_PI*(sensorVal[e]-s0)/(2*kappa)));
+                    }
+
+#if 0                     
+                    cout << SVVCutoffRatio[e] << " " <<
+                        m_dynamicVisc->m_savVarCoeffMap
+                        [StdRegions::eVarCoeffSVVCutoffRatio][e] << endl;
+#endif              
+                        
+                    IsDiff = (fabs(SVVCutoffRatio[e] -  m_dynamicVisc->
+                                   m_savVarCoeffMap
+                                   [StdRegions::eVarCoeffSVVCutoffRatio][e])
+                              > 0.1 ) ? false:true;
+                }
+                
+                if(IsDiff)
+                {
+                    m_dynamicVisc->m_savVarCoeffMap[
+                                    StdRegions::eVarCoeffSVVDiff]
+                        = SVVDiffCoeff;
+                    m_dynamicVisc->m_savVarCoeffMap
+                        [StdRegions::eVarCoeffSVVCutoffRatio]
+                        = SVVCutoffRatio;
+                    
+                    if (m_comm->GetRank() == 0)
+                    {
+                        cout << "Updating SVV Cutoff : " <<  endl;
+                    }
+                    
+                    // Release  current linear sys
+                    for(int i =0 ; i < m_velocity.num_elements(); ++i)
+                    {
+                        m_fields[m_velocity[i]]->ClearGlobalLinSysManager();
+                        m_fields[m_velocity[i]]->ResetLocalManagers();
+                    }
+                }
+                
                 m_dynamicVisc->m_numSteps = 0; 
                 // reset average field wiht current average
                 Vmath::Vcopy(nquad,energy,1,m_dynamicVisc->m_sensorField,1);
             }
-
+            
             m_dynamicVisc->m_numSteps++;
         }
         else
