@@ -87,15 +87,13 @@ namespace Nektar
         /// Name of class
         static std::string className;
 
-
         /// Constructor.
         VelocityCorrectionScheme(const LibUtilities::SessionReaderSharedPtr& pSession);
 
         virtual ~VelocityCorrectionScheme();
 
         virtual void v_InitObject();
-
-
+        
         void SetUpPressureForcing(
                     const Array<OneD, const Array<OneD, NekDouble> > &fields,
                     Array<OneD, Array<OneD, NekDouble> > &Forcing,
@@ -159,9 +157,6 @@ namespace Nektar
         /// Diffusion coefficients (will be kinvis for velocities)
         Array<OneD, NekDouble> m_diffCoeff;
 
-        /// Save aiiDt value to use as a trip to reset global matrix setup
-        Array<OneD, NekDouble> m_saved_aii_Dt;
-
         /// Variable Coefficient map for the Laplacian which can be activated as part of SVV or otherwise
         StdRegions::VarCoeffMap m_varCoeffLap; 
 
@@ -205,6 +200,17 @@ namespace Nektar
         virtual bool v_RequireFwdTrans()
         {
             return false;
+        }
+
+        virtual std::string v_GetExtrapolateStr(void)
+        {
+            return "Standard";
+        }
+        
+        virtual std::string v_GetSubSteppingExtrapolateStr(
+                                               const std::string &instr)
+        {
+            return instr;
         }
         
         virtual void v_ExtraFldOutput( std::vector<Array<OneD, NekDouble> > &fieldcoeffs,

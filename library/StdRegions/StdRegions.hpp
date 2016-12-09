@@ -208,6 +208,7 @@ namespace Nektar
             eVarCoeffD12,
             eVarCoeffVelX,
             eVarCoeffVelY,
+            eVarCoeffVelZ,
             eVarCoeffSVVDiff,
             eVarCoeffSVVCutoffRatio
         };
