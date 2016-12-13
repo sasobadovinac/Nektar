@@ -33,10 +33,10 @@
 //
 ////////////////////////////////////////////////////////////////////////////////
 
-#ifndef FIELDUTILS_PROCESSQCRITERION
-#define FIELDUTILS_PROCESSQCRITERION
+#ifndef INCNAVIERSTOKESSOLVER_FIELDMODULES_PROCESSQCRITERION
+#define INCNAVIERSTOKESSOLVER_FIELDMODULES_PROCESSQCRITERION
 
-#include "../Module.h"
+#include <FieldUtils/Module.h>
 
 namespace Nektar
 {

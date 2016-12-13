@@ -43,7 +43,6 @@ SET(FieldUtilsHeaders
     ProcessModules/ProcessMultiShear.h
     ProcessModules/ProcessWSS.h
     ProcessModules/ProcessC0Projection.h
-    ProcessModules/ProcessQCriterion.h
     ProcessModules/ProcessQualityMetric.h
 )
 
@@ -91,7 +90,6 @@ SET(FieldUtilsSources
     ProcessModules/ProcessMultiShear.cpp
     ProcessModules/ProcessWSS.cpp
     ProcessModules/ProcessC0Projection.cpp
-    ProcessModules/ProcessQCriterion.cpp
     ProcessModules/ProcessQualityMetric.cpp
 )
 
@@ -100,6 +98,18 @@ TARGET_LINK_LIBRARIES(FieldUtils LINK_PUBLIC GlobalMapping)
 
 ADD_DEFINITIONS(-DFIELD_UTILS_EXPORTS)
 
+SET_PROPERTY(SOURCE Module.cpp
+    APPEND PROPERTY COMPILE_DEFINITIONS FIELDUTILS_EXTENSION_DIR="${CMAKE_INSTALL_PREFIX}/${NEKTAR_LIB_DIR}/FieldUtils")
+
+MACRO(ADD_FIELDUTILS_MODULE name)
+    CMAKE_PARSE_ARGUMENTS(FIELDMOD "" "" "SOURCES" ${ARGN})
+    ADD_LIBRARY(${name} SHARED ${FIELDMOD_SOURCES})
+
+    INSTALL(TARGETS ${name}
+        ARCHIVE DESTINATION ${NEKTAR_LIB_DIR}/FieldUtils OPTIONAL
+        LIBRARY DESTINATION ${NEKTAR_LIB_DIR}/FieldUtils OPTIONAL)
+
+    TARGET_LINK_LIBRARIES(${name} LINK_PUBLIC FieldUtils)
+ENDMACRO()
+
 INSTALL(DIRECTORY ./ DESTINATION ${NEKTAR_INCLUDE_DIR}/FieldUtils COMPONENT dev FILES_MATCHING PATTERN "*.h" PATTERN "*.hpp")
-
-

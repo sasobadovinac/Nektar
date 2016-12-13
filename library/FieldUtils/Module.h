@@ -44,6 +44,8 @@
 #include <string>
 #include <vector>
 
+#include <boost/dll.hpp>
+
 #include <LibUtilities/BasicUtils/NekFactory.hpp>
 #include <LibUtilities/BasicUtils/Timer.h>
 #include <LibUtilities/Communication/CommSerial.h>
@@ -144,6 +146,8 @@ public:
 
     virtual std::string GetModuleName() = 0;
 
+    static FIELD_UTILS_EXPORT void LoadPlugins();
+
     FIELD_UTILS_EXPORT void RegisterConfig(string key, string value);
     FIELD_UTILS_EXPORT void PrintConfig();
     FIELD_UTILS_EXPORT void SetDefaults();
@@ -171,6 +175,8 @@ protected:
     /// List of configuration values.
     map<string, ConfigOption> m_config;
     bool m_requireEquiSpaced;
+
+    static FIELD_UTILS_EXPORT vector<boost::dll::shared_library> m_plugins;
 };
 
 /**

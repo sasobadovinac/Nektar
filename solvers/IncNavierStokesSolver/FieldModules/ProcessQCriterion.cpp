@@ -35,6 +35,8 @@
 
 #include <iostream>
 #include <string>
+#include <boost/dll.hpp>
+
 using namespace std;
 
 #include "ProcessQCriterion.h"
@@ -44,14 +46,16 @@ using namespace std;
 
 namespace Nektar
 {
-namespace FieldUtils
-{
 
-ModuleKey ProcessQCriterion::className =
-    GetModuleFactory().RegisterCreatorFunction(
+using namespace FieldUtils;
+
+extern "C" BOOST_SYMBOL_EXPORT void RegisterModule()
+{
+    static ModuleKey blah = GetModuleFactory().RegisterCreatorFunction(
         ModuleKey(eProcessModule, "QCriterion"),
         ProcessQCriterion::create,
         "Computes Q-Criterion.");
+}
 
 ProcessQCriterion::ProcessQCriterion(FieldSharedPtr f) : ProcessModule(f)
 {
@@ -271,6 +275,5 @@ void ProcessQCriterion::Process(po::variables_map &vm)
 
     m_f->m_fielddef = FieldDef;
     m_f->m_data     = FieldData;
-}
 }
 }

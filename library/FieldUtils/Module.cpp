@@ -35,7 +35,12 @@
 
 #include <iomanip>
 
+#include <boost/filesystem.hpp>
+
 #include "Module.h"
+
+namespace dll = boost::dll;
+namespace fs  = boost::filesystem;
 
 using namespace std;
 
@@ -43,6 +48,9 @@ namespace Nektar
 {
 namespace FieldUtils
 {
+
+vector<dll::shared_library> Module::m_plugins;
+
 /**
  * Returns an instance of the module factory, held as a singleton.
  */
@@ -94,6 +102,28 @@ void OutputModule::OpenStream()
     {
         cerr << "Error opening file: " << fname << endl;
         abort();
+    }
+}
+
+void Module::LoadPlugins()
+{
+    fs::path pluginPath(FIELDUTILS_EXTENSION_DIR);
+    fs::directory_iterator itr(pluginPath);
+
+    for (; itr != fs::directory_iterator(); ++itr)
+    {
+        fs::path plugin = *itr;
+        cout << "looking at" << plugin << endl;
+        dll::shared_library lib(plugin, dll::load_mode::append_decorations);
+        if (!lib.has("RegisterModule"))
+        {
+            continue;
+        }
+
+        boost::function<void()> f = lib.get<void()>("RegisterModule");
+        f();
+
+        m_plugins.push_back(lib);
     }
 }
 
