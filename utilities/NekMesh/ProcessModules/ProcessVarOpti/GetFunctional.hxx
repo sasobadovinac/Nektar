@@ -379,8 +379,8 @@ NekDouble ProcessVarOpti::GetFunctional(const DerivUtilGPU &derivUtilGPU,
                                     }
                                 
                                     double incHes = quadW * absIdealMapDet * (
-                                        grad.G(node,m)*grad.G(node,l) / W + 2.0*W*(frobProdHes/frob
-                                            //inc[m] * inc[l] / W + 2.0*W*(frobProdHes/frob
+                                        //grad.G(node,m)*grad.G(node,l) / W + 2.0*W*(frobProdHes/frob
+                                            inc[m] * inc[l] / W + 2.0*W*(frobProdHes/frob
                                             - 2.0 * frobProd[m]*frobProd[l]/frob/frob
                                             + jacDetDeriv[m]*jacDetDeriv[l] * jacDet/(2.0*sigma-jacDet)/
                                             (2.0*sigma-jacDet)/(2.0*sigma-jacDet)/DIM));
@@ -433,7 +433,8 @@ NekDouble ProcessVarOpti::GetFunctional(const DerivUtilGPU &derivUtilGPU,
                                         frobProdHes = ScalarProd<DIM>(jacDerivPhi,jacDerivPhi);                                
                                     }
                                     double incHes = quadW * absIdealMapDet * (
-                                        grad.G(node,m)*grad.G(node,l) / W + 2.0*W*(frobProdHes/frob
+                                        //grad.G(node,m)*grad.G(node,l) / W + 2.0*W*(frobProdHes/frob
+                                        inc[m] * inc[l] / W + 2.0*W*(frobProdHes/frob
                                             - 2.0 * frobProd[m]*frobProd[l]/frob/frob
                                             + 0.5*jacDetDeriv[m]*jacDetDeriv[l] * jacDet/(2.0*sigma-jacDet)
                                             /(2.0*sigma-jacDet)/(2.0*sigma-jacDet)));
