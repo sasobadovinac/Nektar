@@ -16,6 +16,7 @@ IF( NEKTAR_SOLVER_VORTEXWAVE )
        ../IncNavierStokesSolver/AdvectionTerms/NavierStokesAdvection.cpp
        ../IncNavierStokesSolver/AdvectionTerms/LinearisedAdvection.cpp
        ../IncNavierStokesSolver/AdvectionTerms/AdjointAdvection.cpp
+       ../IncNavierStokesSolver/Forcing/ForcingDynamicVisc.cpp	
        ./VortexWaveInteraction.cpp 
        ./VortexWaveInteractionSolver.cpp 
        )
@@ -33,6 +34,7 @@ IF( NEKTAR_SOLVER_VORTEXWAVE )
        ../IncNavierStokesSolver/AdvectionTerms/NavierStokesAdvection.cpp
        ../IncNavierStokesSolver/AdvectionTerms/LinearisedAdvection.cpp
        ../IncNavierStokesSolver/AdvectionTerms/AdjointAdvection.cpp
+       ../IncNavierStokesSolver/Forcing/ForcingDynamicVisc.cpp	
        ./CalcL2ToLinfPressure.cpp
        ./VortexWaveInteraction.h
        ./VortexWaveInteraction.cpp 
@@ -51,6 +53,7 @@ IF( NEKTAR_SOLVER_VORTEXWAVE )
        ../IncNavierStokesSolver/AdvectionTerms/NavierStokesAdvection.cpp
        ../IncNavierStokesSolver/AdvectionTerms/LinearisedAdvection.cpp
        ../IncNavierStokesSolver/AdvectionTerms/AdjointAdvection.cpp
+       ../IncNavierStokesSolver/Forcing/ForcingDynamicVisc.cpp	
        ./CalcVWIplusPressure.cpp
        ./VortexWaveInteraction.cpp 
        )
