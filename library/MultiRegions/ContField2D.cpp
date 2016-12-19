@@ -595,6 +595,12 @@ namespace Nektar
         GlobalLinSysSharedPtr ContField2D::GetGlobalLinSys(
                                 const GlobalLinSysKey &mkey)
         {
+            if(!m_globalLinSysManager.AlreadyCreated(mkey))
+            {
+                m_globalLinSysManager[mkey] =
+                    GenGlobalLinSys(mkey);
+            }
+
             return m_globalLinSysManager[mkey];
         }
 

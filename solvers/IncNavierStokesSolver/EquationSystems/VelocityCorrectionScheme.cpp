@@ -708,7 +708,6 @@ namespace Nektar
         Vmath::Vadd(nquad,energy,1,m_dynamicVisc->m_sensorField,1,
                     m_dynamicVisc->m_sensorField,1);
         
-            
         // Calculate new viscosity if required
         if(boost::iequals(m_dynamicVisc->m_type,"VariableDiff"))
         {
@@ -785,8 +784,13 @@ namespace Nektar
             maxkinvis *= 0.3; // take 0.3 max as implicit value
             m_comm->AllReduce(maxkinvis,LibUtilities::ReduceMax);
 
-            if((maxkinvis > 2*m_dynamicVisc->m_fixedKinvis)||
-               (maxkinvis < 0.5*m_dynamicVisc->m_fixedKinvis))
+            int update = ((maxkinvis > 2*m_dynamicVisc->m_fixedKinvis)||
+                          (maxkinvis < 0.5*m_dynamicVisc->m_fixedKinvis))? 1: 0;
+
+            // parallel check so all processor do the same thing
+            m_comm->AllReduce(update,LibUtilities::ReduceMax);
+
+            if(update)
             {
                 m_dynamicVisc->m_fixedKinvis = maxkinvis;
 
@@ -846,7 +850,7 @@ namespace Nektar
                 Array<OneD, NekDouble> SVVDiffCoeff(nel);
                 Array<OneD, NekDouble> SVVCutoffRatio(nel);
                 
-                bool IsDiff = false;
+                int IsDiff = 0;
                 
                 NekDouble  C =  m_dynamicVisc->m_kinvisC0;
                 NekDouble S0_def = m_dynamicVisc->m_defS0;
@@ -889,8 +893,11 @@ namespace Nektar
                     IsDiff = (fabs(SVVCutoffRatio[e] -  m_dynamicVisc->
                                    m_savVarCoeffMap
                                    [StdRegions::eVarCoeffSVVCutoffRatio][e])
-                              > 0.1 ) ? false:true;
+                              > 0.1 ) ? 0:1;
                 }
+
+                // need to ensure all processor have same value for next step. 
+                m_comm->AllReduce(IsDiff,LibUtilities::ReduceMax);
                 
                 if(IsDiff)
                 {
