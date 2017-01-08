@@ -34,6 +34,7 @@ v4.4.0
 - Enabled MUMPS support in PETSc if a Fortran compiler was found and added 3D
   support to the Helmholtz smoother used e.g. in FieldConverts C0Projection
   module (!714)
+- Fix bug in the calculation of the RHS magnitude in CG solver (!721)
 
 **ADRSolver:**
 - Add a projection equation system for C^0 projections (!675)
@@ -78,6 +79,7 @@ v4.4.0
 - 2D to 3D mesh extrusion module (!715)
 - Add a mesh extract option to the linearise module to visualise the result 
   (!712)
+- Refactor library to use NekMesh modules for CAD generation (!704)
 
 **FieldConvert:**
 - Move all modules to a new library, FieldUtils, to support post-processing
