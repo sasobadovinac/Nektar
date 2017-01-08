@@ -49,9 +49,11 @@ namespace Nektar
 
 using namespace FieldUtils;
 
+ModuleKey ProcessQCriterion::className;
+
 extern "C" BOOST_SYMBOL_EXPORT void RegisterModule()
 {
-    static ModuleKey blah = GetModuleFactory().RegisterCreatorFunction(
+    ProcessQCriterion::className = GetModuleFactory().RegisterCreatorFunction(
         ModuleKey(eProcessModule, "QCriterion"),
         ProcessQCriterion::create,
         "Computes Q-Criterion.");

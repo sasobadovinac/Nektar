@@ -33,7 +33,7 @@ IF( NEKTAR_SOLVER_INCNAVIERSTOKES )
     ADD_SOLVER_EXECUTABLE(IncNavierStokesSolver solvers 
 	${IncNavierStokesSolverSource})
 
-    ADD_FIELDUTILS_MODULE(FieldUtils-IncNSSolver SOURCES ./FieldModules/ProcessQCriterion.cpp)
+    ADD_FIELDUTILS_PLUGIN(FieldUtils-IncNSSolver SOURCES ./FieldModules/ProcessQCriterion.cpp)
 
     SUBDIRS(Utilities)      
 

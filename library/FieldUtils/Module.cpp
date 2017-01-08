@@ -105,24 +105,42 @@ void OutputModule::OpenStream()
     }
 }
 
-void Module::LoadPlugins()
+void Module::LoadPlugins(bool verbose)
 {
     fs::path pluginPath(FIELDUTILS_EXTENSION_DIR);
+
+    if (!fs::is_directory())
+    {
+        if (verbose)
+        {
+            cerr << "Unable to locate plugins directory at location: "
+                 << pluginPath << endl;
+        }
+        return;
+    }
+
     fs::directory_iterator itr(pluginPath);
 
+    // Loop over all files in the directory and attempt to load them as
+    // dll::shared_library objects.
     for (; itr != fs::directory_iterator(); ++itr)
     {
+        // Load this plugin. If we don't have the RegisterModule void function
+        // then skip to the next file.
         fs::path plugin = *itr;
-        cout << "looking at" << plugin << endl;
         dll::shared_library lib(plugin, dll::load_mode::append_decorations);
         if (!lib.has("RegisterModule"))
         {
             continue;
         }
 
+        // Call the plugin's RegisterModule command to register all modules
+        // belonging to this plugin.
         boost::function<void()> f = lib.get<void()>("RegisterModule");
         f();
 
+        // Make sure that we store this in a static variable, otherwise when we
+        // go out of scope the plugin will be unloaded.
         m_plugins.push_back(lib);
     }
 }

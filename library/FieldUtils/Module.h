@@ -146,7 +146,7 @@ public:
 
     virtual std::string GetModuleName() = 0;
 
-    static FIELD_UTILS_EXPORT void LoadPlugins();
+    static FIELD_UTILS_EXPORT void LoadPlugins(bool verbose);
 
     FIELD_UTILS_EXPORT void RegisterConfig(string key, string value);
     FIELD_UTILS_EXPORT void PrintConfig();
