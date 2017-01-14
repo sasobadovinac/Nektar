@@ -867,7 +867,7 @@ namespace Nektar
                     SVVDiffCoeff[e]   = m_sVVDiffCoeff/m_kinvis;
                     
                     // minimum value which will affect 1st mode. 
-                    NekDouble SVVCutoffMin = 1.1/(porder+1);
+                    NekDouble SVVCutoffMin = 0.1/(porder+1);
 
                     if(sensorVal[e] < s0 - kappa)
                     {
