@@ -279,13 +279,15 @@ namespace Nektar
                     vConstFactorMap[StdRegions::eFactorSVVCutoffRatio] =
                         m_linSysKey.GetVarCoeff(StdRegions::eVarCoeffSVVCutoffRatio)[n];
                 }
-                else
+
+                StdRegions::VarCoeffMap::const_iterator x;
+                cnt = expList->GetPhys_Offset(n);
+                
+                for (x = m_linSysKey.GetVarCoeffs().begin(); 
+                     x != m_linSysKey.GetVarCoeffs().end(); ++x)
                 {
-                    StdRegions::VarCoeffMap::const_iterator x;
-                    cnt = expList->GetPhys_Offset(n);
-                    
-                    for (x = m_linSysKey.GetVarCoeffs().begin(); 
-                         x != m_linSysKey.GetVarCoeffs().end(); ++x)
+                    if((x->first != StdRegions::eFactorSVVCutoffRatio)
+                       ||(x->first != StdRegions::eVarCoeffSVVDiff))
                     {
                         vVarCoeffMap[x->first] = x->second + cnt;
                     }
@@ -360,7 +362,7 @@ namespace Nektar
                 {
                     ASSERTL0(m_linSysKey.GetConstFactors().
                              count(StdRegions::eFactorSVVDiffCoeff),
-                             "VarCoeffSVVDiff is set but not FactorSVVDiff");
+                             "VarCoeffSVVDiff is set but not FactorSVVDiffCoeff");
 
                     vConstFactorMap[StdRegions::eFactorSVVDiffCoeff] =
                         m_linSysKey.GetVarCoeff(StdRegions::eVarCoeffSVVDiff)[n];
@@ -373,12 +375,15 @@ namespace Nektar
                         m_linSysKey.GetVarCoeff(StdRegions::eVarCoeffSVVCutoffRatio)[n];
                    
                 }
-                else
+
+
+                StdRegions::VarCoeffMap::const_iterator x;
+                cnt = expList->GetPhys_Offset(n);
+                for (x  = m_linSysKey.GetVarCoeffs().begin(); 
+                     x != m_linSysKey.GetVarCoeffs().end  (); ++x)
                 {
-                    StdRegions::VarCoeffMap::const_iterator x;
-                    cnt = expList->GetPhys_Offset(n);
-                    for (x  = m_linSysKey.GetVarCoeffs().begin(); 
-                         x != m_linSysKey.GetVarCoeffs().end  (); ++x)
+                    if((x->first != StdRegions::eFactorSVVCutoffRatio)
+                       ||(x->first != StdRegions::eVarCoeffSVVDiff))
                     {
                         vVarCoeffMap[x->first] = x->second + cnt;
                     }
@@ -448,23 +453,38 @@ namespace Nektar
             // need to be initialised with zero size for non variable
             // coefficient case
             StdRegions::VarCoeffMap vVarCoeffMap;
+            StdRegions::ConstFactorMap vConstFactorMap = m_linSysKey.GetConstFactors();
 
             // retrieve variable coefficients
             if(m_linSysKey.GetNVarCoeffs() > 0)
             {
+                if(m_linSysKey.GetVarCoeffs().
+                   count(StdRegions::eVarCoeffSVVDiff) != 0)
+                {
+                    vConstFactorMap[StdRegions::eFactorSVVDiffCoeff] =
+                        m_linSysKey.GetVarCoeff(StdRegions::eVarCoeffSVVDiff)[n];
+ 
+                    vConstFactorMap[StdRegions::eFactorSVVCutoffRatio] =
+                        m_linSysKey.GetVarCoeff(StdRegions::eVarCoeffSVVCutoffRatio)[n];
+                }
+
                 StdRegions::VarCoeffMap::const_iterator x;
                 int cnt = expList->GetPhys_Offset(n);
                 for (x  = m_linSysKey.GetVarCoeffs().begin(); 
                      x != m_linSysKey.GetVarCoeffs().end  (); ++x)
                 {
-                    vVarCoeffMap[x->first] = x->second + cnt;
+                    if((x->first != StdRegions::eFactorSVVCutoffRatio)
+                       ||(x->first != StdRegions::eVarCoeffSVVDiff))
+                    {
+                        vVarCoeffMap[x->first] = x->second + cnt;
+                    }
                 }
             }
 
             LocalRegions::MatrixKey matkey(m_linSysKey.GetMatrixType(),
                                            vExp->DetShapeType(),
                                            *vExp,
-                                           m_linSysKey.GetConstFactors(),
+                                           vConstFactorMap,
                                            vVarCoeffMap);
 
             vExp->DropLocStaticCondMatrix(matkey);
