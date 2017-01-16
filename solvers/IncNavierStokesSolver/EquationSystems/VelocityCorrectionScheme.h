@@ -59,6 +59,7 @@ namespace Nektar
         NekDouble              m_defS0;
 
         Array<OneD, NekDouble> m_h; /// estimate of h for an element 
+        MultiRegions::VarFactorsMap m_savVarFactorsMap;
         StdRegions::VarCoeffMap m_savVarCoeffMap;
         ForcingDynamicViscSharedPtr  m_forcing; 
 

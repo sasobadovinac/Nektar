@@ -259,26 +259,31 @@ namespace Nektar
 
             StdRegions::ConstFactorMap vConstFactorMap = m_linSysKey.GetConstFactors();
 
-            // retrieve variable coefficients
-            if(m_linSysKey.GetNVarCoeffs() > 0)
+            // setup variable factors
+            if(m_linSysKey.GetNVarFactors() > 0)
             {
-                if(m_linSysKey.GetVarCoeffs().
-                   count(StdRegions::eVarCoeffSVVDiff) != 0)
+                if(m_linSysKey.GetVarFactors().
+                   count(StdRegions::eFactorSVVDiffCoeff) != 0)
                 {
                     ASSERTL1(m_linSysKey.GetConstFactors().
                              count(StdRegions::eFactorSVVDiffCoeff),
                              "VarCoeffSVVDiff is set but not FactorSVVDiff");
 
                     vConstFactorMap[StdRegions::eFactorSVVDiffCoeff] =
-                        m_linSysKey.GetVarCoeff(StdRegions::eVarCoeffSVVDiff)[n];
+                        m_linSysKey.GetVarFactors(StdRegions::eFactorSVVDiffCoeff)[n];
 
                     ASSERTL1(m_linSysKey.GetConstFactors().
                              count(StdRegions::eFactorSVVCutoffRatio),
                              "VarCoeffSVVCuroffRatio is set but not FactorSVVCutoffRatio");
 
                     vConstFactorMap[StdRegions::eFactorSVVCutoffRatio] =
-                        m_linSysKey.GetVarCoeff(StdRegions::eVarCoeffSVVCutoffRatio)[n];
+                        m_linSysKey.GetVarFactors(StdRegions::eFactorSVVCutoffRatio)[n];
                 }
+            }
+
+                // retrieve variable coefficients
+            if(m_linSysKey.GetNVarCoeffs() > 0)
+            {
 
                 StdRegions::VarCoeffMap::const_iterator x;
                 cnt = expList->GetPhys_Offset(n);
@@ -286,11 +291,7 @@ namespace Nektar
                 for (x = m_linSysKey.GetVarCoeffs().begin(); 
                      x != m_linSysKey.GetVarCoeffs().end(); ++x)
                 {
-                    if((x->first != StdRegions::eFactorSVVCutoffRatio)
-                       ||(x->first != StdRegions::eVarCoeffSVVDiff))
-                    {
-                        vVarCoeffMap[x->first] = x->second + cnt;
-                    }
+                    vVarCoeffMap[x->first] = x->second + cnt;
                 }
             }
 
@@ -354,39 +355,39 @@ namespace Nektar
 
             StdRegions::ConstFactorMap vConstFactorMap = m_linSysKey.GetConstFactors();
 
-            // retrieve variable coefficients
-            if(m_linSysKey.GetNVarCoeffs() > 0)
+
+            // setup variable factors
+            if(m_linSysKey.GetNVarFactors() > 0)
             {
-                if(m_linSysKey.GetVarCoeffs().
-                   count(StdRegions::eVarCoeffSVVDiff) != 0)
+                if(m_linSysKey.GetVarFactors().
+                   count(StdRegions::eFactorSVVDiffCoeff) != 0)
                 {
                     ASSERTL0(m_linSysKey.GetConstFactors().
                              count(StdRegions::eFactorSVVDiffCoeff),
                              "VarCoeffSVVDiff is set but not FactorSVVDiffCoeff");
 
                     vConstFactorMap[StdRegions::eFactorSVVDiffCoeff] =
-                        m_linSysKey.GetVarCoeff(StdRegions::eVarCoeffSVVDiff)[n];
+                        m_linSysKey.GetVarFactors(StdRegions::eFactorSVVDiffCoeff)[n];
  
                     ASSERTL1(m_linSysKey.GetConstFactors().
                              count(StdRegions::eFactorSVVCutoffRatio),
                              "VarCoeffSVVCuroffRatio is set but not FactorSVVCutoffRatio");
 
                     vConstFactorMap[StdRegions::eFactorSVVCutoffRatio] =
-                        m_linSysKey.GetVarCoeff(StdRegions::eVarCoeffSVVCutoffRatio)[n];
+                        m_linSysKey.GetVarFactors(StdRegions::eFactorSVVCutoffRatio)[n];
                    
                 }
+            }
 
-
+            // retrieve variable coefficients
+            if(m_linSysKey.GetNVarCoeffs() > 0)
+            {
                 StdRegions::VarCoeffMap::const_iterator x;
                 cnt = expList->GetPhys_Offset(n);
                 for (x  = m_linSysKey.GetVarCoeffs().begin(); 
                      x != m_linSysKey.GetVarCoeffs().end  (); ++x)
                 {
-                    if((x->first != StdRegions::eFactorSVVCutoffRatio)
-                       ||(x->first != StdRegions::eVarCoeffSVVDiff))
-                    {
-                        vVarCoeffMap[x->first] = x->second + cnt;
-                    }
+                    vVarCoeffMap[x->first] = x->second + cnt;
                 }
             }
 
@@ -455,29 +456,30 @@ namespace Nektar
             StdRegions::VarCoeffMap vVarCoeffMap;
             StdRegions::ConstFactorMap vConstFactorMap = m_linSysKey.GetConstFactors();
 
+            // setup variable factors
+            if(m_linSysKey.GetNVarFactors() > 0)
+            {
+                if(m_linSysKey.GetVarFactors().
+                   count(StdRegions::eFactorSVVDiffCoeff) != 0)
+                {
+                    vConstFactorMap[StdRegions::eFactorSVVDiffCoeff] =
+                        m_linSysKey.GetVarFactors(StdRegions::eFactorSVVDiffCoeff)[n];
+ 
+                    vConstFactorMap[StdRegions::eFactorSVVCutoffRatio] =
+                        m_linSysKey.GetVarFactors(StdRegions::eFactorSVVCutoffRatio)[n];
+                }
+            }
+            
             // retrieve variable coefficients
             if(m_linSysKey.GetNVarCoeffs() > 0)
             {
-                if(m_linSysKey.GetVarCoeffs().
-                   count(StdRegions::eVarCoeffSVVDiff) != 0)
-                {
-                    vConstFactorMap[StdRegions::eFactorSVVDiffCoeff] =
-                        m_linSysKey.GetVarCoeff(StdRegions::eVarCoeffSVVDiff)[n];
- 
-                    vConstFactorMap[StdRegions::eFactorSVVCutoffRatio] =
-                        m_linSysKey.GetVarCoeff(StdRegions::eVarCoeffSVVCutoffRatio)[n];
-                }
 
                 StdRegions::VarCoeffMap::const_iterator x;
                 int cnt = expList->GetPhys_Offset(n);
                 for (x  = m_linSysKey.GetVarCoeffs().begin(); 
                      x != m_linSysKey.GetVarCoeffs().end  (); ++x)
                 {
-                    if((x->first != StdRegions::eFactorSVVCutoffRatio)
-                       ||(x->first != StdRegions::eVarCoeffSVVDiff))
-                    {
-                        vVarCoeffMap[x->first] = x->second + cnt;
-                    }
+                    vVarCoeffMap[x->first] = x->second + cnt;
                 }
             }
 

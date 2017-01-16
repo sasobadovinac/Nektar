@@ -230,8 +230,8 @@ namespace Nektar
                 m_session->LoadParameter("DynamicViscDefS0",
                                          m_dynamicVisc->m_defS0,3);
                 //setup SVV parameters with default values; 
-                m_dynamicVisc->m_savVarCoeffMap[StdRegions::eVarCoeffSVVCutoffRatio] = Array<OneD, NekDouble>(nel,m_sVVCutoffRatio);
-                m_dynamicVisc->m_savVarCoeffMap[StdRegions::eVarCoeffSVVDiff] = Array<OneD, NekDouble>(nel,m_sVVDiffCoeff/m_kinvis);
+                m_dynamicVisc->m_savVarFactorsMap[StdRegions::eFactorSVVCutoffRatio] = Array<OneD, NekDouble>(nel,m_sVVCutoffRatio);
+                m_dynamicVisc->m_savVarFactorsMap[StdRegions::eFactorSVVDiffCoeff] = Array<OneD, NekDouble>(nel,m_sVVDiffCoeff/m_kinvis);
             }
             else
             {
@@ -583,6 +583,8 @@ namespace Nektar
     {
         StdRegions::ConstFactorMap factors;
         StdRegions::VarCoeffMap varCoeffMap = StdRegions::NullVarCoeffMap;
+        MultiRegions::VarFactorsMap varFactorsMap =
+            MultiRegions::NullVarFactorsMap;
 
         if(m_useSpecVanVisc)
         {
@@ -592,7 +594,8 @@ namespace Nektar
 
         if(m_dynamicVisc)
         {
-            varCoeffMap = m_dynamicVisc->m_savVarCoeffMap;
+            varCoeffMap   = m_dynamicVisc->m_savVarCoeffMap;
+            varFactorsMap = m_dynamicVisc->m_savVarFactorsMap;
         }
 
         // Solve Helmholtz system and put in Physical space
@@ -601,7 +604,8 @@ namespace Nektar
             // Setup coefficients for equation
             factors[StdRegions::eFactorLambda] = 1.0/aii_Dt/m_diffCoeff[i];
             m_fields[i]->HelmSolve(Forcing[i], m_fields[i]->UpdateCoeffs(),
-                                   NullFlagList,  factors, varCoeffMap);
+                                   NullFlagList,  factors, varCoeffMap,
+                                   varFactorsMap);
             m_fields[i]->BwdTrans(m_fields[i]->GetCoeffs(),outarray[i]);
         }
     }
@@ -661,7 +665,7 @@ namespace Nektar
                     = boost::lexical_cast<std::string>(m_dynamicVisc->m_fixedKinvis);
             }
 
-            if(m_dynamicVisc->m_savVarCoeffMap.count(StdRegions::eVarCoeffSVVCutoffRatio) != 0)
+            if(m_dynamicVisc->m_savVarFactorsMap.count(StdRegions::eFactorSVVCutoffRatio) != 0)
             {
                 variables.push_back("DynamicSVVCutoff");
                 Array<OneD, NekDouble> newfld(ncoeffs);
@@ -677,8 +681,8 @@ namespace Nektar
 
                     Vmath::Fill(nquad,
                                 m_dynamicVisc->
-                                m_savVarCoeffMap[
-                                StdRegions::eVarCoeffSVVCutoffRatio][e],
+                                m_savVarFactorsMap[
+                                StdRegions::eFactorSVVCutoffRatio][e],
                                 tmp = cutoff+offset,1);
                     offset += nquad; 
                 }
@@ -886,13 +890,13 @@ namespace Nektar
 
 #if 0                     
                     cout << SVVCutoffRatio[e] << " " <<
-                        m_dynamicVisc->m_savVarCoeffMap
-                        [StdRegions::eVarCoeffSVVCutoffRatio][e] << endl;
+                        m_dynamicVisc->m_savVarFactorsMap
+                        [StdRegions::eFactorSVVCutoffRatio][e] << endl;
 #endif              
                         
                     IsDiff = (fabs(SVVCutoffRatio[e] -  m_dynamicVisc->
-                                   m_savVarCoeffMap
-                                   [StdRegions::eVarCoeffSVVCutoffRatio][e])
+                                   m_savVarFactorsMap
+                                   [StdRegions::eFactorSVVCutoffRatio][e])
                               > 0.1 ) ? 0:1;
                 }
 
@@ -901,11 +905,11 @@ namespace Nektar
                 
                 if(IsDiff)
                 {
-                    m_dynamicVisc->m_savVarCoeffMap[
-                                    StdRegions::eVarCoeffSVVDiff]
+                    m_dynamicVisc->m_savVarFactorsMap[
+                                    StdRegions::eFactorSVVDiffCoeff]
                         = SVVDiffCoeff;
-                    m_dynamicVisc->m_savVarCoeffMap
-                        [StdRegions::eVarCoeffSVVCutoffRatio]
+                    m_dynamicVisc->m_savVarFactorsMap
+                        [StdRegions::eFactorSVVCutoffRatio]
                         = SVVCutoffRatio;
                     
                     if (m_comm->GetRank() == 0)
