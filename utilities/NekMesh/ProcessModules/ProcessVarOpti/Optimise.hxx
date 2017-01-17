@@ -168,8 +168,9 @@ void ProcessVarOpti::Optimise(DerivUtilGPU &derivUtil, NodesGPU &nodes,
 
     //int optiint = opti;
     //printf("optiint %i\n", optiint);
-
-    Kokkos::parallel_for( team_policy( coloursetSize, Kokkos::AUTO ), KOKKOS_LAMBDA ( const member_type& teamMember)
+    //KOKKOS_INLINE_FUNCTION
+    //__launch_bounds__ (32,24)
+    Kokkos::parallel_for( team_policy( coloursetSize, 32 ), KOKKOS_LAMBDA ( const member_type& teamMember)
     {
         const int node = teamMember.league_rank();
         const int nElmt = nodes.nElmtArray(cs,node);        
@@ -179,7 +180,7 @@ void ProcessVarOpti::Optimise(DerivUtilGPU &derivUtil, NodesGPU &nodes,
         double ep = minJac < 0.0 ? sqrt(1e-9 + 0.04*minJac*minJac) : sqrt(1e-9); 
         
         currentW = GetFunctional<3>(derivUtil, nodes, elUtil,
-                grad, nElmt, node, cs, ep, teamMember, opti);       
+                grad, nElmt, node, cs, ep, teamMember, opti, true);       
 
         double G[9];
         for (int i = 0; i < 9; ++i)
@@ -250,7 +251,7 @@ void ProcessVarOpti::Optimise(DerivUtilGPU &derivUtil, NodesGPU &nodes,
                 ASSERTL0(lhs < 0.0 , "weirdness");
 
                 double skmag = sqrt(sk[0]*sk[0] + sk[1]*sk[1] + sk[2]*sk[2]);
-                runDNC = !((G[0]*sk[0]+G[1]*sk[1]+G[2]*sk[2])/skmag <=
+                runDNC =  !((G[0]*sk[0]+G[1]*sk[1]+G[2]*sk[2])/skmag <=
                             2.0*(0.5*lhs + G[0]*dk[0]+G[1]*dk[1]+G[2]*dk[2]));                
             }
 
@@ -274,7 +275,7 @@ void ProcessVarOpti::Optimise(DerivUtilGPU &derivUtil, NodesGPU &nodes,
                             nodes.localNodeIdArray, nElmt, node, cs);
                     
                     newVal = GetFunctional<3>(derivUtil, nodes, elUtil, grad, 
-                            nElmt, node, cs, ep, teamMember, opti, false, false);
+                            nElmt, node, cs, ep, teamMember, opti, false);
                
                     if (newVal <= currentW + c1() * (alpha*pg+ 0.5*alpha*alpha*hes))
                     {
@@ -303,7 +304,7 @@ void ProcessVarOpti::Optimise(DerivUtilGPU &derivUtil, NodesGPU &nodes,
                         nodes.localNodeIdArray, nElmt, node, cs);
 
                 newVal = GetFunctional<3>(derivUtil, nodes, elUtil, grad, 
-                        nElmt, node, cs, ep, teamMember, opti, false, false);
+                        nElmt, node, cs, ep, teamMember, opti, false);
 
                 if(newVal <= currentW + c1() * (pg + 0.5*hes))
                 {
@@ -318,7 +319,7 @@ void ProcessVarOpti::Optimise(DerivUtilGPU &derivUtil, NodesGPU &nodes,
                                 nodes.localNodeIdArray, nElmt, node, cs);
 
                         newVal = GetFunctional<3>(derivUtil, nodes, elUtil, grad, 
-                                nElmt, node, cs, ep, teamMember, opti, false, false);
+                                nElmt, node, cs, ep, teamMember, opti, false);
 
                         h_Xn[0] = h_Xc[0] + alpha/beta * dk[0];
                         h_Xn[1] = h_Xc[1] + alpha/beta * dk[1];
@@ -327,7 +328,7 @@ void ProcessVarOpti::Optimise(DerivUtilGPU &derivUtil, NodesGPU &nodes,
                                 nodes.localNodeIdArray, nElmt, node, cs);
 
                         double dbVal = GetFunctional<3>(derivUtil, nodes, elUtil, grad, 
-                                nElmt, node, cs, ep, teamMember, opti, false, false);
+                                nElmt, node, cs, ep, teamMember, opti, false);
 
                         if (newVal <= currentW + c1() * (
                             alpha*pg + 0.5*alpha*alpha*hes) &&
@@ -355,7 +356,7 @@ void ProcessVarOpti::Optimise(DerivUtilGPU &derivUtil, NodesGPU &nodes,
                                 nodes.localNodeIdArray, nElmt, node, cs);
 
                         newVal = GetFunctional<3>(derivUtil, nodes, elUtil, grad, 
-                                nElmt, node, cs, ep, teamMember, opti, false, false);
+                                nElmt, node, cs, ep, teamMember, opti, false);
 
                         if (newVal <= currentW + c1() * (
                             alpha*pg + 0.5*alpha*alpha*hes))

@@ -52,7 +52,7 @@ NekDouble ProcessVarOpti::GetFunctional(const DerivUtilGPU &derivUtilGPU,
          const NodesGPU &nodes, const ElUtilGPU &elUtil, 
          const Grad &grad, int nElmt, int node, int cs,//const int elId, const int localNodeId,
          const double ep, const member_type &teamMember, const optimiser opti,
-         bool gradient, bool hessian)
+         bool gradient)
 
 { 
     //printf("%s\n", "in GetFunctional");
@@ -153,7 +153,7 @@ NekDouble ProcessVarOpti::GetFunctional(const DerivUtilGPU &derivUtilGPU,
 
             double absIdealMapDet = fabs(elUtil.idealMap(elId,k,9));
 
-            double sigma = 0.5*(jacDet + sqrt(jacDet*jacDet + 4.0*ep*ep));
+            double sigma = 0.5*(jacDet + sqrt(jacDet*jacDet + 4.0*ep*ep)); // the regularised Jacobian
             if(sigma < DBL_MIN && !gradient)
             {
                 return DBL_MAX;
@@ -246,41 +246,39 @@ NekDouble ProcessVarOpti::GetFunctional(const DerivUtilGPU &derivUtilGPU,
                             double inc = quadW * absIdealMapDet * (
                                     2.0 * mu * frobProd + K * lsigma * jacDetDeriv[m] / (2.0*sigma - jacDet));
                             Kokkos::atomic_add(&grad.G(node,m), inc);
-                        }
-
-                        if(hessian)
+                        }                        
+                        
+                        //NekDouble frobProdHes[DIM][DIM]; //holder for the hessian frobprods
+                        int ct = 0;
+                        for (int m = 0; m < DIM; ++m)
                         {
-                            //NekDouble frobProdHes[DIM][DIM]; //holder for the hessian frobprods
-                            int ct = 0;
-                            for (int m = 0; m < DIM; ++m)
+                            for(int l = m; l < DIM; ++l,  ct++)
                             {
-                                for(int l = m; l < DIM; ++l,  ct++)
+                                double frobProdHes = FrobProd<DIM>(dEdxi[m],dEdxi[l]);
+                                
+                                NekDouble d2Edxi[DIM][DIM];
+                                // use the delta function in jacDeriv and do some tensor calculus
+                                // to come up with this simplified expression for:
+                                //CalcLinElSecGrad<DIM>(jacDerivPhi[m],jacDerivPhi[l],d2Edxi);
+                                if (m == l)
                                 {
-                                    double frobProdHes = FrobProd<DIM>(dEdxi[m],dEdxi[l]);
-                                    
-                                    NekDouble d2Edxi[DIM][DIM];
-                                    // use the delta function in jacDeriv and do some tensor calculus
-                                    // to come up with this simplified expression for:
-                                    //CalcLinElSecGrad<DIM>(jacDerivPhi[m],jacDerivPhi[l],d2Edxi);
-                                    if (m == l)
+                                    for (int p = 0; p < DIM; ++p)
                                     {
-                                        for (int p = 0; p < DIM; ++p)
-                                        {
-                                            for (int q = 0; q < DIM; ++q)
-                                            {                                                
-                                                d2Edxi[p][q] = jacDerivPhi[p] * jacDerivPhi[q];                                                
-                                            }
-                                        }    
-                                        frobProdHes += FrobProd<DIM>(d2Edxi,Emat);
-                                    }
-                           
-                                    double inc = quadW * absIdealMapDet * (2.0 * mu * frobProdHes +
-                                        jacDetDeriv[m]*jacDetDeriv[l]*K/(2.0*sigma-jacDet)/(2.0*sigma-jacDet)*(
-                                            1.0 - jacDet*lsigma/(2.0*sigma-jacDet)));                                        
-                                    Kokkos::atomic_add(&grad.G(node,ct+DIM), inc);
+                                        for (int q = 0; q < DIM; ++q)
+                                        {                                                
+                                            d2Edxi[p][q] = jacDerivPhi[p] * jacDerivPhi[q];                                                
+                                        }
+                                    }    
+                                    frobProdHes += FrobProd<DIM>(d2Edxi,Emat);
                                 }
-                            }                           
-                        }
+                       
+                                double inc = quadW * absIdealMapDet * (2.0 * mu * frobProdHes +
+                                    jacDetDeriv[m]*jacDetDeriv[l]*K/(2.0*sigma-jacDet)/(2.0*sigma-jacDet)*(
+                                        1.0 - jacDet*lsigma/(2.0*sigma-jacDet)));                                        
+                                Kokkos::atomic_add(&grad.G(node,ct+DIM), inc);
+                            }
+                        }                           
+                        
                     }                                 
                     break;
                 }
@@ -307,32 +305,29 @@ NekDouble ProcessVarOpti::GetFunctional(const DerivUtilGPU &derivUtilGPU,
                                                     * (K * lsigma - mu)));
                             Kokkos::atomic_add(&grad.G(node,m), inc);
                         }
-
-                        if(hessian)
+                        
+                        int ct = 0;
+                        for (int m = 0; m < DIM; ++m)
                         {
-                            int ct = 0;
-                            for (int m = 0; m < DIM; ++m)
+                            for(int l = m; l < DIM; ++l, ct++)
                             {
-                                for(int l = m; l < DIM; ++l, ct++)
+                                double frobProdHes = 0.0;
+                                // because of the zero entries of the tensor jacDerivPhi,
+                                // the matrix frobProdHes has only diagonal entries
+                                if (m == l)
                                 {
-                                    double frobProdHes = 0.0;
                                     // because of the zero entries of the tensor jacDerivPhi,
-                                    // the matrix frobProdHes has only diagonal entries
-                                    if (m == l)
-                                    {
-                                        // because of the zero entries of the tensor jacDerivPhi,
-                                        // the Frobenius-product becomes a scalar product
-                                        frobProdHes = ScalarProd<DIM>(jacDerivPhi,jacDerivPhi);                                
-                                    }                        
-                    
-                                    double inc = quadW * absIdealMapDet 
-                                        * (mu * frobProdHes
-                                        + jacDetDeriv[m]*jacDetDeriv[l]/(2.0*sigma-jacDet)/(2.0*sigma-jacDet)
-                                            * (K- jacDet*(K*lsigma-mu)/(2.0*sigma-jacDet)));
-                                    Kokkos::atomic_add(&grad.G(node,ct+DIM), inc);
-                                }
+                                    // the Frobenius-product becomes a scalar product
+                                    frobProdHes = ScalarProd<DIM>(jacDerivPhi,jacDerivPhi);                                
+                                }                        
+                
+                                double inc = quadW * absIdealMapDet 
+                                    * (mu * frobProdHes
+                                    + jacDetDeriv[m]*jacDetDeriv[l]/(2.0*sigma-jacDet)/(2.0*sigma-jacDet)
+                                        * (K- jacDet*(K*lsigma-mu)/(2.0*sigma-jacDet)));
+                                Kokkos::atomic_add(&grad.G(node,ct+DIM), inc);
                             }
-                        }
+                        }                        
                     }
                     break;                      
                 }
@@ -360,34 +355,31 @@ NekDouble ProcessVarOpti::GetFunctional(const DerivUtilGPU &derivUtilGPU,
                                             jacDetDeriv[m]/DIM/(2.0*sigma-jacDet)));
                             Kokkos::atomic_add(&grad.G(node,m), inc[m]);
                         }
-
-                        if(hessian)
+                        
+                        int ct = 0;
+                        for (int m = 0; m < DIM; ++m)
                         {
-                            int ct = 0;
-                            for (int m = 0; m < DIM; ++m)
+                            for(int l = m; l < DIM; ++l,  ct++)
                             {
-                                for(int l = m; l < DIM; ++l,  ct++)
+                                double frobProdHes = 0.0;
+                                // because of the zero entries of the tensor jacDerivPhi,
+                                // the matrix frobProdHes has only diagonal entries
+                                if (m == l)
                                 {
-                                    double frobProdHes = 0.0;
                                     // because of the zero entries of the tensor jacDerivPhi,
-                                    // the matrix frobProdHes has only diagonal entries
-                                    if (m == l)
-                                    {
-                                        // because of the zero entries of the tensor jacDerivPhi,
-                                        // the Frobenius-product becomes a scalar product
-                                        frobProdHes = ScalarProd<DIM>(jacDerivPhi,jacDerivPhi);                                
-                                    }
-                                
-                                    double incHes = quadW * absIdealMapDet * (
-                                        //grad.G(node,m)*grad.G(node,l) / W + 2.0*W*(frobProdHes/frob
-                                            inc[m] * inc[l] / W + 2.0*W*(frobProdHes/frob
-                                            - 2.0 * frobProd[m]*frobProd[l]/frob/frob
-                                            + jacDetDeriv[m]*jacDetDeriv[l] * jacDet/(2.0*sigma-jacDet)/
-                                            (2.0*sigma-jacDet)/(2.0*sigma-jacDet)/DIM));
-                                    Kokkos::atomic_add(&grad.G(node,ct+DIM), incHes);
+                                    // the Frobenius-product becomes a scalar product
+                                    frobProdHes = ScalarProd<DIM>(jacDerivPhi,jacDerivPhi);                                
                                 }
+                            
+                                double incHes = quadW * absIdealMapDet * (
+                                    //grad.G(node,m)*grad.G(node,l) / W + 2.0*W*(frobProdHes/frob
+                                        inc[m] * inc[l] / W + 2.0*W*(frobProdHes/frob
+                                        - 2.0 * frobProd[m]*frobProd[l]/frob/frob
+                                        + jacDetDeriv[m]*jacDetDeriv[l] * jacDet/(2.0*sigma-jacDet)/
+                                        (2.0*sigma-jacDet)/(2.0*sigma-jacDet)/DIM));
+                                Kokkos::atomic_add(&grad.G(node,ct+DIM), incHes);
                             }
-                        }
+                        }                        
                     }
                     break;
                 }
@@ -415,33 +407,30 @@ NekDouble ProcessVarOpti::GetFunctional(const DerivUtilGPU &derivUtilGPU,
                                             jacDetDeriv[m]/(2.0*sigma-jacDet)));
                             Kokkos::atomic_add(&grad.G(node,m), inc[m]);
                         }
-
-                        if(hessian)
+                        
+                        int ct = 0;
+                        for (int m = 0; m < DIM; ++m)
                         {
-                            int ct = 0;
-                            for (int m = 0; m < DIM; ++m)
+                            for(int l = m; l < DIM; ++l, ct++)
                             {
-                                for(int l = m; l < DIM; ++l, ct++)
+                                double frobProdHes = 0.0;
+                                // because of the zero entries of the tensor jacDerivPhi,
+                                // the matrix frobProdHes has only diagonal entries
+                                if (m == l)
                                 {
-                                    double frobProdHes = 0.0;
                                     // because of the zero entries of the tensor jacDerivPhi,
-                                    // the matrix frobProdHes has only diagonal entries
-                                    if (m == l)
-                                    {
-                                        // because of the zero entries of the tensor jacDerivPhi,
-                                        // the Frobenius-product becomes a scalar product
-                                        frobProdHes = ScalarProd<DIM>(jacDerivPhi,jacDerivPhi);                                
-                                    }
-                                    double incHes = quadW * absIdealMapDet * (
-                                        //grad.G(node,m)*grad.G(node,l) / W + 2.0*W*(frobProdHes/frob
-                                        inc[m] * inc[l] / W + 2.0*W*(frobProdHes/frob
-                                            - 2.0 * frobProd[m]*frobProd[l]/frob/frob
-                                            + 0.5*jacDetDeriv[m]*jacDetDeriv[l] * jacDet/(2.0*sigma-jacDet)
-                                            /(2.0*sigma-jacDet)/(2.0*sigma-jacDet)));
-                                    Kokkos::atomic_add(&grad.G(node,ct+DIM), incHes);
+                                    // the Frobenius-product becomes a scalar product
+                                    frobProdHes = ScalarProd<DIM>(jacDerivPhi,jacDerivPhi);                                
                                 }
+                                double incHes = quadW * absIdealMapDet * (
+                                    //grad.G(node,m)*grad.G(node,l) / W + 2.0*W*(frobProdHes/frob
+                                    inc[m] * inc[l] / W + 2.0*W*(frobProdHes/frob
+                                        - 2.0 * frobProd[m]*frobProd[l]/frob/frob
+                                        + 0.5*jacDetDeriv[m]*jacDetDeriv[l] * jacDet/(2.0*sigma-jacDet)
+                                        /(2.0*sigma-jacDet)/(2.0*sigma-jacDet)));
+                                Kokkos::atomic_add(&grad.G(node,ct+DIM), incHes);
                             }
-                        }
+                        }                        
                     }
                     break;
                 }

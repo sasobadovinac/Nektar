@@ -59,6 +59,8 @@
 #include <cstring>
 #include <sys/time.h>
 
+#include <cuda_profiler_api.h>
+
 
 using namespace std;
 using namespace Nektar::NekMeshUtils;
@@ -305,11 +307,13 @@ void ProcessVarOpti::Process()
         res.h_val[0] = 0.0;
         Kokkos::deep_copy(res.val,res.h_val);
         
+        if (ctr == 1) {cudaProfilerStart();}
         for(int cs = 0; cs < optiNodes.size(); cs++)
         {              
             Optimise(derivUtil, nodes, elUtil, res, cs, opti);
             printf("colorset %i finished\n", cs);            
         }
+        if (ctr == 1) {cudaProfilerStop();}
 
         Kokkos::deep_copy(res.h_val,res.val);
 

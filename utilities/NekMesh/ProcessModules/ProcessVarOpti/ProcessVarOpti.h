@@ -223,7 +223,7 @@ public:
          const NodesGPU &nodes, const ElUtilGPU &elUtil, 
          const Grad &grad, int nElmt, int node, int cs,//const int elId, const int localNodeId,
          const double ep, const member_type &teamMember, const optimiser opti,
-         bool gradient = true, bool hessian = true);
+         bool gradient = true);
     
     // in Hessian.hxx
     template<int DIM> void CalcEValues(const double (&G)[DIM*DIM], double (&eval)[DIM]);
