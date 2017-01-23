@@ -184,8 +184,11 @@ void ProcessVarOpti::Process()
     
     // Preprocessing
     m_mesh->MakeOrder(m_mesh->m_nummode-1,LibUtilities::eGaussLobattoLegendre);
-    BuildDerivUtil();
+
+    BuildDerivUtil(); // set integration order?
+    
     GetElementMap();
+
     vector<ElementSharedPtr> elLock;
     if(m_config["region"].beenSet)
     {

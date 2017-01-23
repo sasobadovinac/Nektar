@@ -61,6 +61,9 @@ typedef Kokkos::DefaultExecutionSpace exe_space;
 
 typedef Kokkos::MemoryTraits<Kokkos::RandomAccess> random_memory;
 
+typedef Kokkos::View<double*,
+    Kokkos::DefaultExecutionSpace::scratch_memory_space ,
+    Kokkos::MemoryTraits<Kokkos::Unmanaged> > ScratchViewType;
 
 enum optimiser
 {
@@ -219,11 +222,20 @@ public:
         ElUtilGPU &elUtil, Residual &res, int cs, optimiser opti);
 
     // in GetFunctional.hxx
-    template<int DIM> NekDouble GetFunctional(const DerivUtilGPU &derivUtilGPU,
+    /*template<const int DIM, const bool gradient, const optimiser opti> 
+    struct  GetFunctional
+    {
+         NekDouble operator() (const DerivUtilGPU &derivUtilGPU,
          const NodesGPU &nodes, const ElUtilGPU &elUtil, 
          const Grad &grad, int nElmt, int node, int cs,//const int elId, const int localNodeId,
-         const double ep, const member_type &teamMember, const optimiser opti,
-         bool gradient = true);
+         const double ep, const member_type &teamMember);
+    };*/
+    template<const int DIM, const bool gradient> 
+    NekDouble GetFunctional (const DerivUtilGPU &derivUtilGPU,
+         const NodesGPU &nodes, const ElUtilGPU &elUtil, 
+         const Grad &grad, int nElmt, int node, int cs,//const int elId, const int localNodeId,
+         const double ep, const member_type &teamMember);
+    
     
     // in Hessian.hxx
     template<int DIM> void CalcEValues(const double (&G)[DIM*DIM], double (&eval)[DIM]);
@@ -249,8 +261,8 @@ private:
 
     static NekDouble c1() {return 1e-3;}
     static NekDouble c2() {return 0.9;}
-    static NekDouble gradTol() {return 1e-20;}
-    static NekDouble alphaTol() {return 1e-10;}
+    static NekDouble gradTol() {return 1e-8;}
+    static NekDouble alphaTol() {return 1e-8;}
 
     
 };

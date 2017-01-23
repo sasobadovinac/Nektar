@@ -66,6 +66,7 @@ void ProcessVarOpti::Load_derivUtil(DerivUtilGPU &derivUtil)
         {                
             derivUtil.h_VdmDL_0(i,j) = dataSet[0]->derivUtil->VdmDL[0](i,j);
             derivUtil.h_VdmDL_1(i,j) = dataSet[0]->derivUtil->VdmDL[1](i,j);
+            //printf("VdmDL_0(%i,%i) = %e\n", i,j, derivUtil.h_VdmDL_0(i,j));
         }); 
     });
     Kokkos::deep_copy(derivUtil.VdmDL_0,derivUtil.h_VdmDL_0);
@@ -82,7 +83,8 @@ void ProcessVarOpti::Load_derivUtil(DerivUtilGPU &derivUtil)
         Kokkos::parallel_for(Kokkos::TeamThreadRange( teamMember, nodes_size ), [&] (const int j)
         {                
             derivUtil.h_VdmD_0(i,j) = dataSet[0]->derivUtil->VdmD[0](i,j);
-            derivUtil.h_VdmD_1(i,j) = dataSet[0]->derivUtil->VdmD[1](i,j);                      
+            derivUtil.h_VdmD_1(i,j) = dataSet[0]->derivUtil->VdmD[1](i,j); 
+            //printf("VdmD_0(%i,%i) = %e\n", i,j, derivUtil.h_VdmD_0(i,j));                     
         }); 
     });   
     Kokkos::deep_copy(derivUtil.VdmD_0,derivUtil.h_VdmD_0);
