@@ -93,7 +93,7 @@ NekDouble ProcessVarOpti::GetFunctional(const DerivUtilGPU &derivUtilGPU,
         const int localNodeId = nodes.localNodeIdArray(cs,node,el);
 
         // put node coordinates in shared memory
-        ScratchViewType s_nodesX(teamMember.team_scratch(0),3*ptsLowGPU);
+        ScratchViewType s_nodesX(teamMember.team_scratch(0),DIM*ptsLowGPU);
 
         Kokkos::parallel_for( Kokkos::TeamThreadRange( teamMember , ptsLowGPU ), [&] ( const int n)
         {
@@ -102,11 +102,14 @@ NekDouble ProcessVarOpti::GetFunctional(const DerivUtilGPU &derivUtilGPU,
         Kokkos::parallel_for( Kokkos::TeamThreadRange( teamMember , ptsLowGPU ), [&] ( const int n)
         {
             s_nodesX(n+ptsLowGPU) = nodes.Y(elId,n);            
-        }); 
-        Kokkos::parallel_for( Kokkos::TeamThreadRange( teamMember , ptsLowGPU ), [&] ( const int n)
+        });
+        if (DIM == 3)
         {
-            s_nodesX(n+2*ptsLowGPU) = nodes.Z(elId,n);
-        });  
+            Kokkos::parallel_for( Kokkos::TeamThreadRange( teamMember , ptsLowGPU ), [&] ( const int n)
+            {
+                s_nodesX(n+2*ptsLowGPU) = nodes.Z(elId,n);
+            }); 
+        }
 
         teamMember.team_barrier();
 
@@ -118,30 +121,37 @@ NekDouble ProcessVarOpti::GetFunctional(const DerivUtilGPU &derivUtilGPU,
             derivGPU[1] = 0.0;
             derivGPU[2] = 0.0;
             derivGPU[3] = 0.0;
-            derivGPU[4] = 0.0;
-            derivGPU[5] = 0.0;
-            derivGPU[6] = 0.0;
-            derivGPU[7] = 0.0;
-            derivGPU[8] = 0.0;
+            if (DIM == 3)
+            {
+                derivGPU[4] = 0.0;
+                derivGPU[5] = 0.0;
+                derivGPU[6] = 0.0;
+                derivGPU[7] = 0.0;
+                derivGPU[8] = 0.0;
+            }
 
             for (int n = 0; n < ptsLowGPU; ++n)
             {
                 derivGPU[0] += derivUtilGPU.VdmD_0(k,n) * s_nodesX(n+0*ptsLowGPU);
                 derivGPU[1] += derivUtilGPU.VdmD_0(k,n) * s_nodesX(n+1*ptsLowGPU);
-                derivGPU[2] += derivUtilGPU.VdmD_0(k,n) * s_nodesX(n+2*ptsLowGPU);
-
+                if (DIM == 3)
+                {
+                    derivGPU[2] += derivUtilGPU.VdmD_0(k,n) * s_nodesX(n+2*ptsLowGPU);
+                }
                 derivGPU[3] += derivUtilGPU.VdmD_1(k,n) * s_nodesX(n+0*ptsLowGPU);
                 derivGPU[4] += derivUtilGPU.VdmD_1(k,n) * s_nodesX(n+1*ptsLowGPU);
-                derivGPU[5] += derivUtilGPU.VdmD_1(k,n) * s_nodesX(n+2*ptsLowGPU);
-            //}
-            //for (int n = 0; n < ptsLowGPU; ++n)
-            //{
-                derivGPU[6] += derivUtilGPU.VdmD_2(k,n) * s_nodesX(n+0*ptsLowGPU);
-                derivGPU[7] += derivUtilGPU.VdmD_2(k,n) * s_nodesX(n+1*ptsLowGPU);
-                derivGPU[8] += derivUtilGPU.VdmD_2(k,n) * s_nodesX(n+2*ptsLowGPU);
+
+                if (DIM == 3)
+                {
+                    derivGPU[5] += derivUtilGPU.VdmD_1(k,n) * s_nodesX(n+2*ptsLowGPU);
+                    
+                    derivGPU[6] += derivUtilGPU.VdmD_2(k,n) * s_nodesX(n+0*ptsLowGPU);
+                    derivGPU[7] += derivUtilGPU.VdmD_2(k,n) * s_nodesX(n+1*ptsLowGPU);
+                    derivGPU[8] += derivUtilGPU.VdmD_2(k,n) * s_nodesX(n+2*ptsLowGPU);
+                }
             }          
             
-                        /*
+            /*
             Kokkos::parallel_reduce( Kokkos::ThreadVectorRange( teamMember , ptsLowGPU ), [&] ( const int n, double &update)
             {
                 update += derivUtilGPU.VdmD_0(k,n) * s_nodesX(n+0*ptsLowGPU);
@@ -253,8 +263,10 @@ NekDouble ProcessVarOpti::GetFunctional(const DerivUtilGPU &derivUtilGPU,
                 NekDouble basisDeriv [DIM];
                 basisDeriv[0] = derivUtilGPU.VdmD_0(k,localNodeId);
                 basisDeriv[1] = derivUtilGPU.VdmD_1(k,localNodeId);
-                basisDeriv[2] = derivUtilGPU.VdmD_2(k,localNodeId);                        
-
+                if (DIM == 3)
+                {
+                    basisDeriv[2] = derivUtilGPU.VdmD_2(k,localNodeId);                        
+                }
                 // jacDeriv is actually a tensor,
                 // but can be stored as a vector, as 18 out of 27 entries are zero
                 // and the other 9 entries are three triplets
