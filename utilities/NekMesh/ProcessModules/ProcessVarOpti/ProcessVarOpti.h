@@ -149,6 +149,9 @@ struct NodesGPU
     typename Kokkos::View<int***>::HostMirror h_elIdArray;
     Kokkos::View<int***> localNodeIdArray;
     typename Kokkos::View<int***>::HostMirror h_localNodeIdArray;
+
+    Kokkos::View<double**> minJac;
+    typename Kokkos::View< double**>::HostMirror h_minJac;
 };
 
 struct Residual
@@ -181,6 +184,8 @@ struct Grad
     typename Kokkos::View< double*[9]>::HostMirror h_G;
     Kokkos::View<double*> integral;
     typename Kokkos::View< double*>::HostMirror h_integral;
+    Kokkos::View<double*> minJacNew;
+    typename Kokkos::View< double*>::HostMirror h_minJacNew;
 };
 
 
@@ -207,6 +212,7 @@ public:
 
     // in Evaluate.hxx
     void Evaluate(DerivUtilGPU &derivUtil,NodesGPU &nodes, ElUtilGPU &elUtil, Residual &res);
+    void InitialMinJac(DerivUtilGPU &derivUtil,NodesGPU &nodes);
    
     // in Optimise.hxx
     void GetNodeCoordGPU(double (&X)[3], const NodesGPU &nodes,
@@ -217,7 +223,9 @@ public:
             typename Kokkos::View<int*>::HostMirror elIdArray, typename Kokkos::View<int*>::HostMirror localNodeIdArray);
     void SetNodeCoord(double (&X)[3], int id,NodesGPU &nodes,
             typename Kokkos::View<int*>::HostMirror elIdArray, typename Kokkos::View<int*>::HostMirror localNodeIdArray, int nElmt);
-    double CalcMinJacGPU(const ElUtilGPU &elUtil, int nElmt, int node, int cs, Kokkos::View<int***> elIdArray);
+    void CalcMinJacGPU (const NodesGPU &nodes, int nElmt, int node, int cs);
+    void SetMinJacGPU (const Grad &grad, const NodesGPU &nodes, int nElmt, int node, int cs);
+    double GetMinJacGPU (const NodesGPU &nodes, int nElmt, int node, int cs);
     void Optimise(DerivUtilGPU &derivUtil,NodesGPU &nodes, 
         ElUtilGPU &elUtil, Residual &res, int cs, optimiser opti);
 
@@ -246,8 +254,8 @@ private:
     typedef std::map<int, std::pair<std::vector<int>,
                                     std::vector<ElUtilSharedPtr> > > NodeElMap;
     
-    void BuildDerivUtil();
-    void GetElementMap();
+    void BuildDerivUtil(int order);
+    void GetElementMap(int order);
 
     std::vector<ElementSharedPtr> GetLockedElements(NekDouble thres);
     std::vector<Array<OneD, NekDouble> > MappingIdealToRef(ElementSharedPtr el);

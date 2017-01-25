@@ -45,7 +45,7 @@ namespace Utilities
 {
 
 
-KOKKOS_INLINE_FUNCTION
+/*KOKKOS_INLINE_FUNCTION
 double ProcessVarOpti::CalcMinJacGPU(const ElUtilGPU &elUtil, int nElmt, int node, int cs, Kokkos::View<int***> elIdArray)
 {
     double minJac = DBL_MAX;
@@ -58,6 +58,49 @@ double ProcessVarOpti::CalcMinJacGPU(const ElUtilGPU &elUtil, int nElmt, int nod
             
     }
     return minJac;
+}*/
+
+KOKKOS_INLINE_FUNCTION
+void ProcessVarOpti::CalcMinJacGPU (const NodesGPU &nodes, int nElmt, int node, int cs)
+{
+    double minJac = DBL_MAX;
+    for(int el = 0; el < nElmt; el++)
+    {
+        int elmt = nodes.elIdArray(cs, node, el);
+        int nodeId = nodes.localNodeIdArray(cs, node, el);
+
+        minJac = (minJac > nodes.minJac(elmt,nodeId) ? nodes.minJac(elmt,nodeId) : minJac);        
+    }
+    for(int el = 0; el < nElmt; el++)
+    {
+        int elmt = nodes.elIdArray(cs, node, el);
+        int nodeId = nodes.localNodeIdArray(cs, node, el);
+
+        nodes.minJac(elmt,nodeId) = minJac;        
+    }  
+}
+
+KOKKOS_INLINE_FUNCTION
+double ProcessVarOpti::GetMinJacGPU (const NodesGPU &nodes, int nElmt, int node, int cs)
+{
+    
+    int elmt = nodes.elIdArray(cs,node,0);
+    int nodeId = nodes.localNodeIdArray(cs,node, 0);
+
+    return nodes.minJac(elmt,nodeId);     
+       
+}
+
+KOKKOS_INLINE_FUNCTION
+void ProcessVarOpti::SetMinJacGPU (const Grad &grad, const NodesGPU &nodes, int nElmt, int node, int cs)
+{
+    for(int el = 0; el < nElmt; el++)
+    {
+        int elmt = nodes.elIdArray(cs,node,el);
+        int nodeId = nodes.localNodeIdArray(cs,node, el);
+
+        nodes.minJac(elmt,nodeId) = grad.minJacNew(node);     
+    }   
 }
 
 
@@ -165,6 +208,7 @@ void ProcessVarOpti::Optimise(DerivUtilGPU &derivUtil, NodesGPU &nodes,
     Grad grad;
     grad.G = Kokkos::View<double*[9]> ("G",coloursetSize);
     grad.integral = Kokkos::View<double*> ("integral", coloursetSize);
+    grad.minJacNew = Kokkos::View<double*> ("minJacNew", coloursetSize);
 
     //int optiint = opti;
     //printf("optiint %i\n", optiint);
@@ -179,14 +223,14 @@ void ProcessVarOpti::Optimise(DerivUtilGPU &derivUtil, NodesGPU &nodes,
     {
         const int node = teamMember.league_rank();
         const int nElmt = nodes.nElmtArray(cs,node);        
-        double currentW, newVal;        
+        double currentW, newVal;
 
-        double minJac = CalcMinJacGPU(elUtil, nElmt, node, cs, nodes.elIdArray);
+        double minJac = GetMinJacGPU(nodes, nElmt, node, cs);
         double ep = minJac < 0.0 ? sqrt(1e-8 + 0.04*minJac*minJac) : 1e-4; 
         
         currentW = GetFunctional<3,true>(derivUtil, nodes, elUtil,
-                grad, nElmt, node, cs, ep, teamMember);       
-
+                grad, nElmt, node, cs, ep, teamMember);
+        
         double G[9];
         for (int i = 0; i < 9; ++i)
         {
@@ -270,6 +314,10 @@ void ProcessVarOpti::Optimise(DerivUtilGPU &derivUtil, NodesGPU &nodes,
                     Kokkos::atomic_add(&res.nReset[0], 1); 
                     printf("%s\n", "3d reset");                   
                 });   
+            }
+            else
+            {
+                SetMinJacGPU(grad, nodes, nElmt, node, cs);
             }
 
             // store residual values of each node

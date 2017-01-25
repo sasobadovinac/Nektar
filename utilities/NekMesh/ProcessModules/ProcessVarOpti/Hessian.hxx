@@ -285,12 +285,59 @@ void ProcessVarOpti::CalcEValues<3>(const double (&G)[9], double (&eval)[3])
     //double eval[3]; // the eigenvalues
 
     double p1 = H[0][1] * H[0][1] + H[0][2] * H[0][2] + H[1][2] * H[1][2];
-    if (p1 == 0.0) 
+    if (p1 == 0.0) // H is diagonal
     {  
-        // H is diagonal
-        eval[0] = H[0][0];
-        eval[1] = H[1][1];
-        eval[2] = H[2][2];
+        // order the eigenvalues
+        if(H[0][0] < H[1][1])
+        {
+            if(H[0][0] < H[2][2])
+            {
+                if(H[1][1] < H[2][2])
+                {
+                    eval[2] = H[0][0];
+                    eval[1] = H[1][1];
+                    eval[0] = H[2][2];
+                }
+                else
+                {
+                    eval[2] = H[0][0];
+                    eval[1] = H[2][2];
+                    eval[0] = H[1][1];
+                }
+            }
+            else
+            {
+                eval[2] = H[2][2];
+                eval[1] = H[0][0];
+                eval[0] = H[1][1];
+            }
+        }
+        else
+        {
+            if(H[1][1] < H[2][2])
+            {
+                if(H[0][0] < H[2][2])
+                {
+                    eval[2] = H[1][1];
+                    eval[1] = H[0][0];
+                    eval[0] = H[2][2];
+                }
+                else
+                {
+                    eval[2] = H[1][1];
+                    eval[1] = H[2][2];
+                    eval[0] = H[0][0];
+                }
+            }
+            else
+            {
+                eval[2] = H[2][2];
+                eval[1] = H[1][1];
+                eval[0] = H[0][0];
+            }
+        }
+        
+     
     }
     else
     {

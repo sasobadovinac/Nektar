@@ -102,6 +102,8 @@ ProcessVarOpti::ProcessVarOpti(MeshSharedPtr m) : ProcessModule(m)
         ConfigOption(false, "", "writes residual values to file");
     m_config["histfile"] =
         ConfigOption(false, "", "histogram of scaled jac");
+    m_config["overint"] = 
+        ConfigOption(false, "6", "over integration order");
 }
 
 ProcessVarOpti::~ProcessVarOpti()
@@ -164,6 +166,8 @@ void ProcessVarOpti::Process()
         ASSERTL0(fd,"failed to find order of mesh");
     }
 
+    int intOrder = m_config["overint"].as<NekDouble>();
+
     if(m_mesh->m_verbose)
     {
         cout << "Identified mesh order as: " << m_mesh->m_nummode - 1 << endl;
@@ -185,9 +189,9 @@ void ProcessVarOpti::Process()
     // Preprocessing
     m_mesh->MakeOrder(m_mesh->m_nummode-1,LibUtilities::eGaussLobattoLegendre);
 
-    BuildDerivUtil(); // set integration order?
-    
-    GetElementMap();
+    BuildDerivUtil(intOrder); // set integration order?
+
+    GetElementMap(intOrder);
 
     vector<ElementSharedPtr> elLock;
     if(m_config["region"].beenSet)
@@ -276,6 +280,21 @@ void ProcessVarOpti::Process()
 
     // Evaluate the Jacobian of all elements on GPU
     Evaluate(derivUtil, nodes, elUtil, res);
+
+    // Calculate initial minimum Jacobians of all elements and store it per node
+    InitialMinJac(derivUtil, nodes);
+
+    for(int cs = 0; cs < optiNodes.size(); cs++)
+    {              
+        const int coloursetSize = nodes.h_coloursetSize(cs);
+        Kokkos::parallel_for( team_policy( coloursetSize, Kokkos::AUTO ), KOKKOS_LAMBDA ( const member_type& teamMember)
+        {
+            const int node = teamMember.league_rank();
+            const int nElmt = nodes.nElmtArray(cs,node);        
+            CalcMinJacGPU(nodes, nElmt, node, cs);        
+        });
+    }
+
 
     // Outputfiles
     ofstream histFile;

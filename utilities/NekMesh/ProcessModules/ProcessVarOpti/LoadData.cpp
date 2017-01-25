@@ -181,6 +181,9 @@ void ProcessVarOpti::Load_nodes(NodesGPU &nodes)
     nodes.Id = Kokkos::View<int**> ("Id",nElmt, nodes_size);
     nodes.h_Id = Kokkos::create_mirror_view(nodes.Id);
 
+    nodes.minJac = Kokkos::View<double**> ("minJac",nElmt, nodes_size);
+    nodes.h_minJac = Kokkos::create_mirror_view(nodes.minJac);
+
     //nodes.ElmtOffset = Kokkos::View<int*> ("ElmtOffset",nElmt);
     //nodes.h_ElmtOffset = Kokkos::create_mirror_view(nodes.ElmtOffset);
 

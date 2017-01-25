@@ -83,6 +83,8 @@ NekDouble ProcessVarOpti::GetFunctional(const DerivUtilGPU &derivUtilGPU,
     const int ptsLowGPU = derivUtilGPU.ptsLow;
     const int ptsHighGPU = derivUtilGPU.ptsHigh;
     
+    grad.minJacNew(node) = DBL_MAX;
+
     grad.integral(node) = 0.0;
 
     for (int el = 0; el < nElmt; ++el)
@@ -219,10 +221,17 @@ NekDouble ProcessVarOpti::GetFunctional(const DerivUtilGPU &derivUtilGPU,
             double jacDet = Determinant<DIM>(jacIdeal);
             // end CalcIdealJac
 
+            Kokkos::atomic_fetch_min(&grad.minJacNew(node), jacDet);
+
             double absIdealMapDet = fabs(elUtil.idealMap(elId,k,9));
 
             double sigma = 0.5*(jacDet + sqrt(jacDet*jacDet + 4.0*ep*ep)); // the regularised Jacobian
-                      
+
+            if(sigma < DBL_MIN && !gradient)
+            {
+                return DBL_MAX;
+            }
+            ASSERTL0(sigma > DBL_MIN,"dividing by zero");                      
                                 
             double lsigma = log(sigma);
             double I1 = FrobeniusNorm<DIM>(jacIdeal);                           
@@ -335,7 +344,7 @@ struct ProcessVarOpti::GetFunctional<DIM,gradient,eRoca>
     NekDouble operator()(const DerivUtilGPU &derivUtilGPU,
              const NodesGPU &nodes, const ElUtilGPU &elUtil, 
              const Grad &grad, int nElmt, int node, int cs,//const int elId, const int localNodeId,
-             const double ep, const member_type &teamMember)
+             const double ep, const member_type &teamMember, double &minJacNew)
 {     
     
     optimiser opti = eHypEl;
