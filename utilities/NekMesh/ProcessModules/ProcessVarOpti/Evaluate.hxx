@@ -44,10 +44,44 @@ namespace Utilities
 
 void ProcessVarOpti::Evaluate(DerivUtilGPU &derivUtil,NodesGPU &nodes, ElUtilGPU &elUtil, Residual &res)
 {
-    int m_dim = dataSet[0]->m_dim;
+    int nodes_size = nodes.nodes_size;
+    int nElmt = nodes.globalnElmt;   
+
+    // declare and initialise min and max Jacobian
+    Kokkos::View<double*> mx("mx",nElmt);
+    Kokkos::View<double*> mn("mn",nElmt);
+    Kokkos::parallel_for(range_policy(0,nElmt), KOKKOS_LAMBDA (const int el)
+    {
+        mx(el) = -1.0 * DBL_MAX;
+        mn(el) = DBL_MAX;
+    });
+    Kokkos::View<double**> jacDet("jacDet", nElmt, nodes_size);
+
     if(m_dim == 2)
     {
-        ASSERTL0(false,"not coded");
+        Kokkos::parallel_for( team_policy( nElmt , Kokkos::AUTO ), KOKKOS_LAMBDA ( const member_type& teamMember)
+        {
+            const int el = teamMember.league_rank();
+        
+            Kokkos::parallel_for( Kokkos::TeamThreadRange( teamMember , nodes_size), [&] ( const int i)
+            {
+                double x1i = 0.0;
+                double y1i = 0.0;
+                double x2i = 0.0;
+                double y2i = 0.0;
+                for (int j = 0; j < nodes_size; ++j)
+                {
+                    x1i += derivUtil.VdmDL_0( i , j ) * nodes.X( el , j );
+                    y1i += derivUtil.VdmDL_0( i , j ) * nodes.Y( el , j );
+                    x2i += derivUtil.VdmDL_1( i , j ) * nodes.X( el , j );
+                    y2i += derivUtil.VdmDL_1( i , j ) * nodes.Y( el , j );                    
+                }   
+                // calculate the Jacobian
+                jacDet(el,i) = x1i * y2i - x2i * y1i;           
+            });
+
+        });       
+        
     }
     else if (m_dim == 3)
     {
@@ -64,8 +98,7 @@ void ProcessVarOpti::Evaluate(DerivUtilGPU &derivUtil,NodesGPU &nodes, ElUtilGPU
         });
         
         // do the matrix vector multiplication on the GPU
-        Kokkos::View<double[3][3]> dxdz("dxdz");
-        Kokkos::View<double**> jacDet("jacDet", nElmt, nodes_size);
+        Kokkos::View<double[3][3]> dxdz("dxdz");        
         
         Kokkos::parallel_for( team_policy( nElmt , Kokkos::AUTO ), KOKKOS_LAMBDA ( const member_type& teamMember)
         {
@@ -151,96 +184,133 @@ void ProcessVarOpti::Evaluate(DerivUtilGPU &derivUtil,NodesGPU &nodes, ElUtilGPU
 
         });
         
-        // initialisation
-        Kokkos::parallel_for("output", range_policy(0,1), KOKKOS_LAMBDA (const int& el)
+    }
+    // initialisation
+    Kokkos::parallel_for("output", range_policy(0,1), KOKKOS_LAMBDA (const int& el)
+    {
+        res.worstJac[0] = DBL_MAX;
+        res.startInv[0] = 0;
+    });
+    
+    // compute minimum and scaled Jacobian of each element 
+    Kokkos::parallel_for(range_policy(0,nElmt), KOKKOS_LAMBDA (const int el)
+    {
+        for(int j = 0; j < nodes_size; j++)
         {
-            res.worstJac[0] = DBL_MAX;
-            res.startInv[0] = 0;
-        });
-        
-        // compute minimum and scaled Jacobian of each element 
-        Kokkos::parallel_for(range_policy(0,nElmt), KOKKOS_LAMBDA (const int el)
-        {
-            for(int j = 0; j < nodes_size; j++)
-            {
-                //  mx = max(mx,jacDet);
-                mx(el) = (mx(el) < jacDet(el,j) ? jacDet(el,j) : mx(el));
-                //  mn = min(mn,jacDet);
-                mn(el) = (mn(el) > jacDet(el,j) ? jacDet(el,j) : mn(el));
-            }
-            //dataSet[el]->minJac = h_mn(el);
-            //elUtil.minJac(el) = mn(el);            
-            //dataSet[el]->scaledJac = h_mn(el)/h_mx(el);
-            elUtil.scaledJac(el) = mn(el)/mx(el);
-
-            // compute the smallest (worst) Jacobian of all elements
-            Kokkos::atomic_fetch_min(&res.worstJac[0], elUtil.scaledJac(el));
-
-            // compute number of invalied elements (Jacobian < 0)            
-            if(mn(el) < 0)
-            {
-                Kokkos::atomic_add(&res.startInv[0],1);
-            }
-        });
+            //  mx = max(mx,jacDet);
+            mx(el) = (mx(el) < jacDet(el,j) ? jacDet(el,j) : mx(el));
+            //  mn = min(mn,jacDet);
+            mn(el) = (mn(el) > jacDet(el,j) ? jacDet(el,j) : mn(el));
+        }
+        //dataSet[el]->minJac = h_mn(el);
+        //elUtil.minJac(el) = mn(el);            
+        //dataSet[el]->scaledJac = h_mn(el)/h_mx(el);
+        elUtil.scaledJac(el) = mn(el)/mx(el);
 
         // compute the smallest (worst) Jacobian of all elements
-        // doesnt work yet due to Kokkos bug !!!!
+        Kokkos::atomic_fetch_min(&res.worstJac[0], elUtil.scaledJac(el));
 
-        /*Kokkos::parallel_for( team_policy( 1 , Kokkos::AUTO ), KOKKOS_LAMBDA ( const member_type& teamMember)
-        {  
-            double JacJac;
-            MinFunctor <double> mnfunctor(elUtil.scaledJac);
-            Kokkos::parallel_reduce(Kokkos::TeamThreadRange(teamMember, nElmt) , mnfunctor, JacJac);//res.worstJac[0]);
-            Kokkos::single( Kokkos::PerTeam(teamMember), [&] ()
-            {
-                printf("Worst JacJac: %e  ", JacJac);
-            });           
-        });
-        MinFunctor <double> mnfunctor(elUtil.scaledJac);
-        Kokkos::parallel_reduce(range_policy(0, nElmt) , mnfunctor, res.h_worstJac[0]);
-        printf("Worst Jacobian: %e  ", res.h_worstJac[0]);*/
-		
-        Kokkos::parallel_for("output", range_policy(0,1), KOKKOS_LAMBDA (const int& el)
+        // compute number of invalied elements (Jacobian < 0)            
+        if(mn(el) < 0)
         {
-            // print the residual as calculated in the OptimiseGPU function
-            printf("Residual: %e  ", res.val[0]);
+            Kokkos::atomic_add(&res.startInv[0],1);
+        }
+    });
 
-            // print worst Jacobian and number of invalid elements
-            printf("Worst Jacobian: %e  ", res.worstJac[0]);            
-            printf("Invalid Elements: %i  ", res.startInv[0]);
-            
-            // print and reset functional and reset-nodes for next run of OptimiseGPU
-            printf("Reset Nodes: %i  ", res.nReset[0]);
-            printf("Functional: %e\n", res.func[0]);
-            res.func[0] = 0.0;
-            res.nReset[0] = 0;
-        });
+    // compute the smallest (worst) Jacobian of all elements
+    // doesnt work yet due to Kokkos bug !!!!
+
+    /*Kokkos::parallel_for( team_policy( 1 , Kokkos::AUTO ), KOKKOS_LAMBDA ( const member_type& teamMember)
+    {  
+        double JacJac;
+        MinFunctor <double> mnfunctor(elUtil.scaledJac);
+        Kokkos::parallel_reduce(Kokkos::TeamThreadRange(teamMember, nElmt) , mnfunctor, JacJac);//res.worstJac[0]);
+        Kokkos::single( Kokkos::PerTeam(teamMember), [&] ()
+        {
+            printf("Worst JacJac: %e  ", JacJac);
+        });           
+    });
+    MinFunctor <double> mnfunctor(elUtil.scaledJac);
+    Kokkos::parallel_reduce(range_policy(0, nElmt) , mnfunctor, res.h_worstJac[0]);
+    printf("Worst Jacobian: %e  ", res.h_worstJac[0]);*/
+	
+    Kokkos::parallel_for("output", range_policy(0,1), KOKKOS_LAMBDA (const int& el)
+    {
+        // print the residual as calculated in the OptimiseGPU function
+        printf("Residual: %e  ", res.val[0]);
+
+        // print worst Jacobian and number of invalid elements
+        printf("Worst Jacobian: %e  ", res.worstJac[0]);            
+        printf("Invalid Elements: %i  ", res.startInv[0]);
         
-    }
+        // print and reset functional and reset-nodes for next run of OptimiseGPU
+        printf("Reset Nodes: %i  ", res.nReset[0]);
+        printf("Functional: %e\n", res.func[0]);
+        res.func[0] = 0.0;
+        res.nReset[0] = 0;
+    });
+        
 }
 
 
 
 void ProcessVarOpti::InitialMinJac(DerivUtilGPU &derivUtil,NodesGPU &nodes)
 {
-    int m_dim = dataSet[0]->m_dim;
+    //int m_dim = dataSet[0]->m_dim;
+    int nodes_size = nodes.nodes_size;
+    int nElmt = nodes.globalnElmt;
+    int ptsHigh = derivUtil.ptsHigh;   
+
+    // declare and initialise min and max Jacobian
+    Kokkos::View<double*> mn("mn",nElmt);
+    Kokkos::parallel_for(range_policy(0,nElmt), KOKKOS_LAMBDA (const int el)
+    {
+        mn(el) = DBL_MAX;
+    });
+
     if(m_dim == 2)
     {
-        ASSERTL0(false,"not coded");
+        // do the matrix vector multiplication on the GPU
+        Kokkos::View<double**> jacDet("jacDet", nElmt, ptsHigh);
+        
+        Kokkos::parallel_for( team_policy( nElmt , Kokkos::AUTO ), KOKKOS_LAMBDA ( const member_type& teamMember)
+        {
+            const int el = teamMember.league_rank();
+        
+            Kokkos::parallel_for( Kokkos::TeamThreadRange( teamMember , ptsHigh), [&] ( const int i)
+            {
+                double x1i = 0.0;
+                double y1i = 0.0;
+                double x2i = 0.0;
+                double y2i = 0.0;                             
+                for (int j = 0; j < nodes_size; ++j)
+                {
+                    x1i += derivUtil.VdmD_0( i , j ) * nodes.X( el , j );
+                    y1i += derivUtil.VdmD_0( i , j ) * nodes.Y( el , j );
+                    x2i += derivUtil.VdmD_1( i , j ) * nodes.X( el , j );
+                    y2i += derivUtil.VdmD_1( i , j ) * nodes.Y( el , j );                    
+                }
+                // calculate the Jacobian                  
+                jacDet(el,i) =  x1i * y2i - x2i * y1i;                             
+            });
+
+            for(int i = 0; i < ptsHigh; i++)
+            {
+                //  mn = min(mn,jacDet);
+                mn(el) = (mn(el) > jacDet(el,i) ? jacDet(el,i) : mn(el));
+            }
+
+            // copy the minimum Jacobian of each element to each node of that element
+            for (int j = 0; j < nodes_size; j++)
+            {
+                nodes.minJac(el,j) = mn(el);
+            }            
+
+
+        });
     }
     else if (m_dim == 3)
-    {
-        int nodes_size = nodes.nodes_size;
-        int nElmt = nodes.globalnElmt;
-        int ptsHigh = derivUtil.ptsHigh;   
-
-        // declare and initialise min and max Jacobian
-        Kokkos::View<double*> mn("mn",nElmt);
-        Kokkos::parallel_for(range_policy(0,nElmt), KOKKOS_LAMBDA (const int el)
-        {
-            mn(el) = DBL_MAX;
-        });
-        
+    {       
         // do the matrix vector multiplication on the GPU
         Kokkos::View<double**> jacDet("jacDet", nElmt, ptsHigh);
         

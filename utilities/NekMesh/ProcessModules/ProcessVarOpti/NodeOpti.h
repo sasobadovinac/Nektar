@@ -100,6 +100,32 @@ typedef LibUtilities::NekFactory<int,
 NodeOptiFactory &GetNodeOptiFactory();
 
 
+class NodeOpti2D2D : public NodeOpti // 1D optimsation in 3D space
+{
+public:
+    NodeOpti2D2D(NodeSharedPtr n,
+                 std::pair<std::vector<int>, std::vector<ElUtilSharedPtr> > e,
+                 std::map<LibUtilities::ShapeType,DerivUtilSharedPtr> d,
+                 optimiser o)
+                 : NodeOpti(n,e,d,o)
+    {
+    }
+
+    ~NodeOpti2D2D(){};
+    
+    static int m_type;
+    static NodeOptiSharedPtr create(
+        NodeSharedPtr n,
+        std::pair<std::vector<int>, std::vector<ElUtilSharedPtr> > e,
+        std::map<LibUtilities::ShapeType,DerivUtilSharedPtr> d,
+        optimiser o)
+    {
+        return NodeOptiSharedPtr(new NodeOpti2D2D(n, e, d, o));
+    }
+
+private:
+};
+
 class NodeOpti3D3D : public NodeOpti //1D optimsation in 3D space
 {
 public:

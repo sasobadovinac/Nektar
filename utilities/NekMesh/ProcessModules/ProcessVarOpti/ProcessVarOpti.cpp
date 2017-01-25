@@ -193,6 +193,8 @@ void ProcessVarOpti::Process()
 
     GetElementMap(intOrder);
 
+    m_dim = dataSet[0]->m_dim; // dimension of mesh
+
     vector<ElementSharedPtr> elLock;
     if(m_config["region"].beenSet)
     {
@@ -330,11 +332,24 @@ void ProcessVarOpti::Process()
         Kokkos::deep_copy(res.val,res.h_val);
         
         if (ctr == 1) {cudaProfilerStart();}
-        for(int cs = 0; cs < optiNodes.size(); cs++)
-        {              
-            Optimise(derivUtil, nodes, elUtil, res, cs, opti);
-            printf("colorset %i finished\n", cs);            
+
+        if(m_dim == 3)
+        {
+            for(int cs = 0; cs < optiNodes.size(); cs++)
+            {  
+                Optimise3D3D(derivUtil, nodes, elUtil, res, cs, opti);
+                printf("colorset %i finished\n", cs);
+            }            
+        } 
+        else if(m_dim ==2)
+        {
+            for(int cs = 0; cs < optiNodes.size(); cs++)
+            {
+                Optimise2D2D(derivUtil, nodes, elUtil, res, cs, opti);
+                printf("colorset %i finished\n", cs);          
+            }            
         }
+
         if (ctr == 1) {cudaProfilerStop();}
 
         Kokkos::deep_copy(res.h_val,res.val);

@@ -47,7 +47,7 @@ namespace Utilities
 
 void ProcessVarOpti::Load_derivUtil(DerivUtilGPU &derivUtil)
 {
-    int m_dim = dataSet[0]->m_dim;
+    //int m_dim = dataSet[0]->m_dim;
     derivUtil.nodes_size = dataSet[0]->nodes.size();
     derivUtil.ptsLow = dataSet[0]->derivUtil->ptsLow;
     derivUtil.ptsHigh = dataSet[0]->derivUtil->ptsHigh;
@@ -141,8 +141,8 @@ void ProcessVarOpti::Load_elUtils(ElUtilGPU &elUtil)
     elUtil.idealMap = Kokkos::View<double**[10],random_memory> ("idealMap", nElmt, ptsHigh);
 	elUtil.h_idealMap = Kokkos::create_mirror_view(elUtil.idealMap);
 
-	elUtil.minJac = Kokkos::View<double*> ("minJac", nElmt);
-	elUtil.h_minJac = Kokkos::create_mirror_view(elUtil.minJac);
+	//elUtil.minJac = Kokkos::View<double*> ("minJac", nElmt);
+	//elUtil.h_minJac = Kokkos::create_mirror_view(elUtil.minJac);
 	elUtil.scaledJac = Kokkos::View<double*> ("scaledJac", nElmt);
 	elUtil.h_scaledJac = Kokkos::create_mirror_view(elUtil.scaledJac);
 
@@ -176,8 +176,6 @@ void ProcessVarOpti::Load_nodes(NodesGPU &nodes)
     nodes.h_X = Kokkos::create_mirror_view(nodes.X);
     nodes.Y = Kokkos::View<double**> ("Y",nElmt, nodes_size);
     nodes.h_Y = Kokkos::create_mirror_view(nodes.Y);
-    nodes.Z = Kokkos::View<double**> ("Z",nElmt, nodes_size);
-    nodes.h_Z = Kokkos::create_mirror_view(nodes.Z);
     nodes.Id = Kokkos::View<int**> ("Id",nElmt, nodes_size);
     nodes.h_Id = Kokkos::create_mirror_view(nodes.Id);
 
@@ -194,18 +192,30 @@ void ProcessVarOpti::Load_nodes(NodesGPU &nodes)
         {                
             nodes.h_X(el,node) = *dataSet[el]->nodes[node][0];
             nodes.h_Y(el,node) = *dataSet[el]->nodes[node][1];
-            nodes.h_Z(el,node) = *dataSet[el]->nodes[node][2];
             nodes.h_Id(el,node) = *dataSet[el]->nodeIds[node];
         });
         //const int ElmtId = dataSet[el]->GetId();
         //nodes.h_ElmtOffset(ElmtId) = el;
     });
     Kokkos::deep_copy(nodes.X,nodes.h_X);
-    Kokkos::deep_copy(nodes.Y,nodes.h_Y);
-    Kokkos::deep_copy(nodes.Z,nodes.h_Z);
+    Kokkos::deep_copy(nodes.Y,nodes.h_Y);    
     Kokkos::deep_copy(nodes.Id,nodes.h_Id);
 
     //Kokkos::deep_copy(nodes.ElmtOffset,nodes.h_ElmtOffset);
+    if(m_dim ==3)
+    {
+        nodes.Z = Kokkos::View<double**> ("Z",nElmt, nodes_size);
+        nodes.h_Z = Kokkos::create_mirror_view(nodes.Z);
+        Kokkos::parallel_for(team_policy_host(nElmt,nodes_size), KOKKOS_LAMBDA (const member_type_host& teamMember)
+        {         
+            const int el = teamMember.league_rank();
+            Kokkos::parallel_for(Kokkos::TeamThreadRange( teamMember, nodes_size ), [&] (const int node)
+            {                
+                nodes.h_Z(el,node) = *dataSet[el]->nodes[node][2];
+            });        
+        });
+        Kokkos::deep_copy(nodes.Z,nodes.h_Z);
+    }
 }
 
 void ProcessVarOpti::Load_residual(Residual &res)

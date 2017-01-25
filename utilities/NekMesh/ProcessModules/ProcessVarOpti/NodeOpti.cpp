@@ -58,6 +58,9 @@ NodeOptiFactory &GetNodeOptiFactory()
 int NodeOpti3D3D::m_type = GetNodeOptiFactory().RegisterCreatorFunction(
     33, NodeOpti3D3D::create, "3D3D");
 
+int NodeOpti2D2D::m_type = GetNodeOptiFactory().RegisterCreatorFunction(
+    22, NodeOpti2D2D::create, "2D2D");
+
 
 void NodeOpti::Node_indexing(NodesGPU &nodes, 
 		std::vector<std::vector<boost::shared_ptr<NodeOpti>> > &optiNodes)

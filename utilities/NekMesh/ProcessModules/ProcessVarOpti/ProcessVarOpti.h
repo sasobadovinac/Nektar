@@ -189,6 +189,8 @@ struct Grad
 };
 
 
+
+
 class ProcessVarOpti : public ProcessModule
 {
 public:
@@ -204,30 +206,32 @@ public:
 
     virtual void Process();
     
+
     // in LoadData.cpp
     void Load_derivUtil(DerivUtilGPU &derivUtil);
     void Load_elUtils(ElUtilGPU &elUtil);
     void Load_nodes(NodesGPU &nodes);
     void Load_residual(Residual &res);
 
+
     // in Evaluate.hxx
     void Evaluate(DerivUtilGPU &derivUtil,NodesGPU &nodes, ElUtilGPU &elUtil, Residual &res);
     void InitialMinJac(DerivUtilGPU &derivUtil,NodesGPU &nodes);
    
+
     // in Optimise.hxx
-    void GetNodeCoordGPU(double (&X)[3], const NodesGPU &nodes,
-            Kokkos::View<int***> elIdArray, Kokkos::View<int***> localNodeIdArray, int node, int cs);
-    void SetNodeCoordGPU(const double (&X)[3], const NodesGPU &nodes,
-            Kokkos::View<int***> elIdArray, Kokkos::View<int***> localNodeIdArray, int nElmt, int node, int cs);
-    void GetNodeCoord(double (&X)[3], int id,NodesGPU &nodes,
-            typename Kokkos::View<int*>::HostMirror elIdArray, typename Kokkos::View<int*>::HostMirror localNodeIdArray);
-    void SetNodeCoord(double (&X)[3], int id,NodesGPU &nodes,
-            typename Kokkos::View<int*>::HostMirror elIdArray, typename Kokkos::View<int*>::HostMirror localNodeIdArray, int nElmt);
+    template<int DIM> void GetNodeCoordGPU(double (&X)[DIM], const NodesGPU &nodes, int node, int cs);
+    template<int DIM> void SetNodeCoordGPU(const double (&X)[DIM], const NodesGPU &nodes, int nElmt, int node, int cs);
+    
     void CalcMinJacGPU (const NodesGPU &nodes, int nElmt, int node, int cs);
     void SetMinJacGPU (const Grad &grad, const NodesGPU &nodes, int nElmt, int node, int cs);
     double GetMinJacGPU (const NodesGPU &nodes, int nElmt, int node, int cs);
-    void Optimise(DerivUtilGPU &derivUtil,NodesGPU &nodes, 
+    
+    void Optimise3D3D(DerivUtilGPU &derivUtil,NodesGPU &nodes, 
         ElUtilGPU &elUtil, Residual &res, int cs, optimiser opti);
+    void Optimise2D2D(DerivUtilGPU &derivUtil,NodesGPU &nodes, 
+        ElUtilGPU &elUtil, Residual &res, int cs, optimiser opti);
+
 
     // in GetFunctional.hxx
     /*template<const int DIM, const bool gradient, const optimiser opti> 
@@ -250,6 +254,7 @@ public:
     template<int DIM> int IsIndefinite(const double (&eval)[DIM]);
     template<int DIM> void CalcEVector(const double (&G)[DIM*DIM], const double &eval, double (&evec)[DIM]);
 
+
 private:
     typedef std::map<int, std::pair<std::vector<int>,
                                     std::vector<ElUtilSharedPtr> > > NodeElMap;
@@ -266,6 +271,8 @@ private:
 
     std::map<LibUtilities::ShapeType,DerivUtilSharedPtr> derivUtil;
     optimiser opti;
+
+    int m_dim;
 
     static NekDouble c1() {return 1e-3;}
     static NekDouble c2() {return 0.9;}
