@@ -85,9 +85,12 @@ namespace Nektar
         // Left and right pressures
         NekDouble pL = (gamma - 1.0) *
             (EL - 0.5 * (rhouL * uL + rhovL * vL + rhowL * wL));
+        
         NekDouble pR = (gamma - 1.0) *
             (ER - 0.5 * (rhouR * uR + rhovR * vR + rhowR * wR));
+        
         NekDouble cL = sqrt(gamma * pL / rhoL);
+        
         NekDouble cR = sqrt(gamma * pR / rhoR);
         
         // Average speeds of sound

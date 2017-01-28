@@ -45,8 +45,7 @@ namespace Nektar
     public:
         static RiemannSolverSharedPtr create()
         {
-            return RiemannSolverSharedPtr(
-                new LaxFriedrichsSolver());
+            return RiemannSolverSharedPtr(new LaxFriedrichsSolver());
         }
         
         static std::string solverName;

@@ -33,7 +33,7 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#include <CompressibleFlowSolver/RiemannSolvers/LaxFriedrichsSolver.h>
+#include <CompressibleFlowSolver/RiemannSolvers/LocalLaxFriedrichsSolver.h>
 
 namespace Nektar
 {
