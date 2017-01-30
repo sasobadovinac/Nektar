@@ -265,6 +265,8 @@ private:
     std::vector<ElementSharedPtr> GetLockedElements(NekDouble thres);
     std::vector<Array<OneD, NekDouble> > MappingIdealToRef(ElementSharedPtr el);
     std::vector<std::vector<NodeSharedPtr> > GetColouredNodes(std::vector<ElementSharedPtr> elLock, Residual &res);
+        std::vector<std::vector<NodeSharedPtr> > CreateColoursets(
+        std::vector<NodeSharedPtr> remain);
 
     NodeElMap nodeElMap;
     std::vector<ElUtilSharedPtr> dataSet;

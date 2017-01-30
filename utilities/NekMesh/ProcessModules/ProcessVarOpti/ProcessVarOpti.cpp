@@ -338,7 +338,7 @@ void ProcessVarOpti::Process()
             for(int cs = 0; cs < optiNodes.size(); cs++)
             {  
                 Optimise3D3D(derivUtil, nodes, elUtil, res, cs, opti);
-                printf("colorset %i finished\n", cs);
+                //printf("colorset %i finished\n", cs);
             }            
         } 
         else if(m_dim ==2)
@@ -346,7 +346,7 @@ void ProcessVarOpti::Process()
             for(int cs = 0; cs < optiNodes.size(); cs++)
             {
                 Optimise2D2D(derivUtil, nodes, elUtil, res, cs, opti);
-                printf("colorset %i finished\n", cs);          
+                //printf("colorset %i finished\n", cs);          
             }            
         }
 
