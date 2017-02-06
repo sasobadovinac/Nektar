@@ -141,11 +141,11 @@ namespace Nektar
             - 0.5 / alpha * dx / dt * ( ER - EL );
 
         // FORCE Riemann fluxes 
-        rhof  = 0.5 * ( rhofLW - rhofLF );
-        rhouf = 0.5 * ( rhoufLW - rhoufLF );
-        rhovf = 0.5 * ( rhovfLW - rhovfLF );
-        rhowf = 0.5 * ( rhowfLW - rhowfLF );
-        Ef    = 0.5 * ( EfLW - EfLF );
+        rhof  = 0.5 * ( rhofLW + rhofLF );
+        rhouf = 0.5 * ( rhoufLW + rhoufLF );
+        rhovf = 0.5 * ( rhovfLW + rhovfLF );
+        rhowf = 0.5 * ( rhowfLW + rhowfLF );
+        Ef    = 0.5 * ( EfLW + EfLF );
     
     }
 }
