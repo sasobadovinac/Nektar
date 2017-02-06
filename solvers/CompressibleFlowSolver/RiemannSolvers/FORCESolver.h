@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File: HLLCSolver.h
+// File: FORCESolver.h
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -29,39 +29,35 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 //
-// Description: HLLC Riemann solver.
+// Description: FORCE Riemann solver.
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#ifndef NEKTAR_SOLVERS_COMPRESSIBLEFLOWSOLVER_RIEMANNSOLVER_HLLCSOLVER
-#define NEKTAR_SOLVERS_COMPRESSIBLEFLOWSOLVER_RIEMANNSOLVER_HLLCSOLVER
+#ifndef NEKTAR_SOLVERS_COMPRESSIBLEFLOWSOLVER_RIEMANNSOLVER_FORCESOLVER
+#define NEKTAR_SOLVERS_COMPRESSIBLEFLOWSOLVER_RIEMANNSOLVER_FORCESOLVER
 
 #include <CompressibleFlowSolver/RiemannSolvers/CompressibleSolver.h>
 
 namespace Nektar
 {
-    class HLLCSolver : public CompressibleSolver
+    class FORCESolver : public CompressibleSolver
     {
     public:
         static RiemannSolverSharedPtr create()
         {
-            return RiemannSolverSharedPtr(new HLLCSolver());
+            return RiemannSolverSharedPtr(new FORCESolver());
         }
         
         static std::string solverName;
         
     protected:
-        HLLCSolver();
+        FORCESolver();
         
         virtual void v_PointSolve(
             NekDouble  rhoL, NekDouble  rhouL, NekDouble  rhovL, NekDouble  rhowL, NekDouble  EL,
             NekDouble  rhoR, NekDouble  rhouR, NekDouble  rhovR, NekDouble  rhowR, NekDouble  ER,
             NekDouble &rhof, NekDouble &rhouf, NekDouble &rhovf, NekDouble &rhowf, NekDouble &Ef);
         
-        virtual void v_PointSolveVisc(
-            NekDouble  rhoL, NekDouble  rhouL, NekDouble  rhovL, NekDouble  rhowL, NekDouble  EL, NekDouble  EpsL,
-            NekDouble  rhoR, NekDouble  rhouR, NekDouble  rhovR, NekDouble  rhowR, NekDouble  ER, NekDouble  EpsR,
-            NekDouble &rhof, NekDouble &rhouf, NekDouble &rhovf, NekDouble &rhowf, NekDouble &Ef, NekDouble &Epsf);
     };
 }
 

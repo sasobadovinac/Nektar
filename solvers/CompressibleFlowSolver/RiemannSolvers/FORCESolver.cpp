@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File: HLLCSolver.cpp
+// File: FORCESolver.cpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -29,25 +29,25 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 //
-// Description: HLLC Riemann solver.
+// Description: FORCE Riemann solver.
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#include <CompressibleFlowSolver/RiemannSolvers/HLLCSolver.h>
+#include <CompressibleFlowSolver/RiemannSolvers/FORCESolver.h>
 
 namespace Nektar
 {
-    std::string HLLCSolver::solverName =
+    std::string FORCESolver::solverName =
         SolverUtils::GetRiemannSolverFactory().RegisterCreatorFunction(
-            "HLLC", HLLCSolver::create, "HLLC Riemann solver");
+            "FORCE", FORCESolver::create, "FORCE Riemann solver");
     
-    HLLCSolver::HLLCSolver() : CompressibleSolver()
+    FORCESolver::FORCESolver() : CompressibleSolver()
     {
         
     }
     
     /**
-     * @brief HLLC Riemann solver
+     * @brief FORCE Riemann solver
      *
      * @param rhoL      Density left state.
      * @param rhoR      Density right state.
@@ -65,111 +65,15 @@ namespace Nektar
      * @param rhowf     Computed Riemann flux for z-momentum component
      * @param Ef        Computed Riemann flux for energy.
      */
-    void HLLCSolver::v_PointSolve(
+    void FORCESolver::v_PointSolve(
         NekDouble  rhoL, NekDouble  rhouL, NekDouble  rhovL, NekDouble  rhowL, NekDouble  EL,
         NekDouble  rhoR, NekDouble  rhouR, NekDouble  rhovR, NekDouble  rhowR, NekDouble  ER,
         NekDouble &rhof, NekDouble &rhouf, NekDouble &rhovf, NekDouble &rhowf, NekDouble &Ef)
     {
         static NekDouble gamma = m_params["gamma"]();
-        
-        // Left and Right velocities
-        NekDouble uL = rhouL / rhoL;
-        NekDouble vL = rhovL / rhoL;
-        NekDouble wL = rhowL / rhoL;
-        NekDouble uR = rhouR / rhoR;
-        NekDouble vR = rhovR / rhoR;
-        NekDouble wR = rhowR / rhoR;
-        
-        // Left and right pressure, sound speed and enthalpy.
-        NekDouble pL = (gamma - 1.0) *
-            (EL - 0.5 * (rhouL * uL + rhovL * vL + rhowL * wL));
-        NekDouble pR = (gamma - 1.0) *
-            (ER - 0.5 * (rhouR * uR + rhovR * vR + rhowR * wR));
-        NekDouble cL = sqrt(gamma * pL / rhoL);
-        NekDouble cR = sqrt(gamma * pR / rhoR);
-        NekDouble hL = (EL + pL) / rhoL;
-        NekDouble hR = (ER + pR) / rhoR;
-        
-        // Square root of rhoL and rhoR.
-        NekDouble srL  = sqrt(rhoL);
-        NekDouble srR  = sqrt(rhoR);
-        NekDouble srLR = srL + srR;
-        
-        // Velocity Roe averages
-        NekDouble uRoe   = (srL * uL + srR * uR) / srLR;
-        NekDouble vRoe   = (srL * vL + srR * vR) / srLR;
-        NekDouble wRoe   = (srL * wL + srR * wR) / srLR;
-        NekDouble hRoe   = (srL * hL + srR * hR) / srLR;
-        NekDouble cRoe   = sqrt((gamma - 1.0)*(hRoe - 0.5 *
-                                               (uRoe * uRoe + vRoe * vRoe + wRoe * wRoe)));
-        
-        // Maximum wave speeds
-        NekDouble SL = std::min(uL-cL, uRoe-cRoe);
-        NekDouble SR = std::max(uR+cR, uRoe+cRoe);
-        
-        // HLLC Riemann fluxes (positive case)
-        if (SL >= 0)
-        {
-            rhof  = rhouL;
-            rhouf = rhouL * uL + pL;
-            rhovf = rhouL * vL;
-            rhowf = rhouL * wL;
-            Ef    = uL * (EL + pL);
-        }
-        // HLLC Riemann fluxes (negative case)
-        else if (SR <= 0)
-        {
-            rhof  = rhouR;
-            rhouf = rhouR * uR + pR;
-            rhovf = rhouR * vR;
-            rhowf = rhouR * wR;
-            Ef    = uR * (ER + pR);
-        }
-        // HLLC Riemann fluxes (general case (SL < 0 | SR > 0)
-        else
-        {
-            NekDouble SM = (pR - pL + rhouL * (SL - uL) - rhouR * (SR - uR)) /
-            (rhoL * (SL - uL) - rhoR * (SR - uR));
-            NekDouble rhoML  = rhoL * (SL - uL) / (SL - SM);
-            NekDouble rhouML = rhoML * SM;
-            NekDouble rhovML = rhoML * vL;
-            NekDouble rhowML = rhoML * wL;
-            NekDouble EML    = rhoML * (EL / rhoL +
-                                        (SM - uL) * (SM + pL / (rhoL * (SL - uL))));
-            
-            NekDouble rhoMR  = rhoR * (SR - uR) / (SR - SM);
-            NekDouble rhouMR = rhoMR * SM;
-            NekDouble rhovMR = rhoMR * vR;
-            NekDouble rhowMR = rhoMR * wR;
-            NekDouble EMR    = rhoMR * (ER / rhoR +
-                                        (SM - uR) * (SM + pR / (rhoR * (SR - uR))));
-            
-            if (SL < 0.0 && SM >= 0.0)
-            {
-                rhof  = rhouL + SL * (rhoML - rhoL);
-                rhouf = rhouL * uL + pL + SL * (rhouML - rhouL);
-                rhovf = rhouL * vL + SL * (rhovML - rhovL);
-                rhowf = rhouL * wL + SL * (rhowML - rhowL);
-                Ef    = uL * (EL + pL) + SL * (EML - EL);
-            }
-            else if(SM < 0.0 && SR > 0.0)
-            {
-                rhof  = rhouR + SR * (rhoMR - rhoR);
-                rhouf = rhouR * uR + pR + SR * (rhouMR - rhouR);
-                rhovf = rhouR * vR + SR * (rhovMR - rhovR);
-                rhowf = rhouR * wR + SR * (rhowMR - rhowR);
-                Ef    = uR * (ER + pR) + SR * (EMR - ER);
-            }
-        }
-    }
+        static NekDouble alpha = 1.0;
 
-    void HLLCSolver::v_PointSolveVisc(
-        NekDouble  rhoL, NekDouble  rhouL, NekDouble  rhovL, NekDouble  rhowL, NekDouble  EL, NekDouble  EpsL,
-        NekDouble  rhoR, NekDouble  rhouR, NekDouble  rhovR, NekDouble  rhowR, NekDouble  ER, NekDouble  EpsR,
-        NekDouble &rhof, NekDouble &rhouf, NekDouble &rhovf, NekDouble &rhowf, NekDouble &Ef, NekDouble &Epsf)
-    {
-        static NekDouble gamma = m_params["gamma"]();
-        
+
         // Left and Right velocities
         NekDouble uL = rhouL / rhoL;
         NekDouble vL = rhovL / rhoL;
@@ -178,92 +82,70 @@ namespace Nektar
         NekDouble vR = rhovR / rhoR;
         NekDouble wR = rhowR / rhoR;
         
-        // Left and right pressure, sound speed and enthalpy.
+        // Left and Right pressure
         NekDouble pL = (gamma - 1.0) *
             (EL - 0.5 * (rhouL * uL + rhovL * vL + rhowL * wL));
         NekDouble pR = (gamma - 1.0) *
             (ER - 0.5 * (rhouR * uR + rhovR * vR + rhowR * wR));
-        NekDouble cL = sqrt(gamma * pL / rhoL);
-        NekDouble cR = sqrt(gamma * pR / rhoR);
-        NekDouble hL = (EL + pL) / rhoL;
-        NekDouble hR = (ER + pR) / rhoR;
         
-        // Square root of rhoL and rhoR.
-        NekDouble srL  = sqrt(rhoL);
-        NekDouble srR  = sqrt(rhoR);
-        NekDouble srLR = srL + srR;
+        // Left and Right fluxes
+        NekDouble rhofL = rhouL;
+        NekDouble rhoufL = rhouL * uL + pL;
+        NekDouble rhovfL = rhouL * vL;
+        NekDouble rhowfL = rhouL * wL;
+        NekDouble EfL = uL * (EL + pL);
+        NekDouble rhofR = rhouR;
+        NekDouble rhoufR = rhouR * uR + pR;
+        NekDouble rhovfR = rhouR * vR;
+        NekDouble rhowfR = rhouR * wR;
+        NekDouble EfR = uR * (ER + pR);
+
+        // Lax-Wendroff alpha Riemann cons vars
+        NekDouble rhoLW = 0.5 * ( rhoL + rhoR )
+            - 0.5 * alpha * dt / dx * ( rhofR - rhofL );
+        NekDouble rhouLW = 0.5 * ( rhouL + rhouR )
+            - 0.5 * alpha * dt / dx * ( rhoufR - rhoufL );
+        NekDouble rhovLW = 0.5 * ( rhovL + rhovR )
+            - 0.5 * alpha * dt / dx * ( rhovfR - rhovfL );
+        NekDouble rhowLW = 0.5 * ( rhowL + rhowR )
+            - 0.5 * alpha * dt / dx * ( rhowfR - rhowfL );
+        NekDouble ELW = 0.5 * ( EL + ER )
+            - 0.5 * alpha * dt / dx * ( EfR - EfL );
+
+        // Lax-Wendroff alpha velocities
+        NekDouble uLW = rhouLW / rhoLW;
+        NekDouble vLW = rhovLW / rhoLW;
+        NekDouble wLW = rhowLW / rhoLW;
         
-        // Velocity Roe averages
-        NekDouble uRoe   = (srL * uL + srR * uR) / srLR;
-        NekDouble vRoe   = (srL * vL + srR * vR) / srLR;
-        NekDouble wRoe   = (srL * wL + srR * wR) / srLR;
-        NekDouble hRoe   = (srL * hL + srR * hR) / srLR;
-        NekDouble cRoe   = sqrt((gamma - 1.0)*(hRoe - 0.5 *
-                            (uRoe * uRoe + vRoe * vRoe + wRoe * wRoe)));
-        
-        // Maximum wave speeds
-        NekDouble SL = std::min(uL-cL, uRoe-cRoe);
-        NekDouble SR = std::max(uR+cR, uRoe+cRoe);
-        
-        // HLLC Riemann fluxes (positive case)
-        if (SL >= 0)
-        {
-            rhof  = rhouL;
-            rhouf = rhouL * uL + pL;
-            rhovf = rhouL * vL;
-            rhowf = rhouL * wL;
-            Ef    = uL * (EL + pL);
-            Epsf  = 0.0;
-        }
-        // HLLC Riemann fluxes (negative case)
-        else if (SR <= 0)
-        {
-            rhof  = rhouR;
-            rhouf = rhouR * uR + pR;
-            rhovf = rhouR * vR;
-            rhowf = rhouR * wR;
-            Ef    = uR * (ER + pR);
-            Epsf  = 0.0;
-        }
-        // HLLC Riemann fluxes (general case (SL < 0 | SR > 0)
-        else
-        {
-            NekDouble SM = (pR - pL + rhouL * (SL - uL) - rhouR * (SR - uR)) /
-            (rhoL * (SL - uL) - rhoR * (SR - uR));
-            NekDouble rhoML  = rhoL * (SL - uL) / (SL - SM);
-            NekDouble rhouML = rhoML * SM;
-            NekDouble rhovML = rhoML * vL;
-            NekDouble rhowML = rhoML * wL;
-            NekDouble EML    = rhoML * (EL / rhoL +
-                                        (SM - uL) * (SM + pL / (rhoL * (SL - uL))));
-            NekDouble EpsML  = EpsL * (SL - uL) / (SL - SM);
-            
-            NekDouble rhoMR  = rhoR * (SR - uR) / (SR - SM);
-            NekDouble rhouMR = rhoMR * SM;
-            NekDouble rhovMR = rhoMR * vR;
-            NekDouble rhowMR = rhoMR * wR;
-            NekDouble EMR    = rhoMR * (ER / rhoR +
-                                        (SM - uR) * (SM + pR / (rhoR * (SR - uR))));
-            NekDouble EpsMR    = EpsR * (SL - uR) / (SL - SM);
-            
-            if (SL < 0.0 && SM >= 0.0)
-            {
-                rhof  = rhouL + SL * (rhoML - rhoL);
-                rhouf = rhouL * uL + pL + SL * (rhouML - rhouL);
-                rhovf = rhouL * vL + SL * (rhovML - rhovL);
-                rhowf = rhouL * wL + SL * (rhowML - rhowL);
-                Ef    = uL * (EL + pL) + SL * (EML - EL);
-                Epsf  = 0.0 + SL * (EpsML - EpsL);
-            }
-            else if(SM < 0.0 && SR > 0.0)
-            {
-                rhof  = rhouR + SR * (rhoMR - rhoR);
-                rhouf = rhouR * uR + pR + SR * (rhouMR - rhouR);
-                rhovf = rhouR * vR + SR * (rhovMR - rhovR);
-                rhowf = rhouR * wR + SR * (rhowMR - rhowR);
-                Ef    = uR * (ER + pR) + SR * (EMR - ER);
-                Epsf  = 0.0 + SR * (EpsMR - EpsR);
-            }
-        }
+        // Lax-Wendroff alpha pressure
+        NekDouble pLW = (gamma - 1.0) *
+            (ELW - 0.5 * (rhouLW * uLW + rhovLW * vLW + rhowLW * wLW));
+
+        // Lax-Wendroff alpha Riemann fluxes
+        NekDouble rhofLW = rhouLW;
+        NekDouble rhoufLW = rhouLW * uLW + pLW;
+        NekDouble rhovfLW = rhouLW * vLW;
+        NekDouble rhowfLW = rhouLW * wLW;
+        NekDouble EfLW = uLW * (ELW + pLW);
+
+        // Lax-Friedrics alpha Riemann fluxes
+        NekDouble rhofLF = 0.5 * ( rhofL + rhofR )
+            - 0.5 / alpha * dx / dt * ( rhoR - rhoL );
+        NekDouble rhoufLF = 0.5 * ( rhoufL + rhoufR )
+            - 0.5 / alpha * dx / dt * ( rhouR - rhouL );
+        NekDouble rhovfLF = 0.5 * ( rhovfL + rhovfR )
+            - 0.5 / alpha * dx / dt * ( rhovR - rhovL );
+        NekDouble rhowfLF = 0.5 * ( rhowfL + rhowfR )
+            - 0.5 / alpha * dx / dt * ( rhowR - rhowL );
+        NekDouble EfLF = 0.5 * ( EfL + EfR )
+            - 0.5 / alpha * dx / dt * ( ER - EL );
+
+        // FORCE Riemann fluxes 
+        rhof  = 0.5 * ( rhofLW - rhofLF );
+        rhouf = 0.5 * ( rhoufLW - rhoufLF );
+        rhovf = 0.5 * ( rhovfLW - rhovfLF );
+        rhowf = 0.5 * ( rhowfLW - rhowfLF );
+        Ef    = 0.5 * ( EfLW - EfLF );
+    
     }
 }
