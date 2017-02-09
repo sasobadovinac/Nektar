@@ -367,16 +367,13 @@ void PowerMonitor::Finalise(void)
     // if monitoring process (i.e., first process on node)    
     if (min_node_rank == rank)
     {
-        if (0 == rank)
-	{
-    	    PowerMonitor::CloseCounterFiles();
-    				
-      	    if (NULL != log_fp)
+        PowerMonitor::CloseCounterFiles();
+        
+        if (0 == rank && NULL != log_fp)
 	    {
-                // close performance counter data file
+    	    // close performance counter data file
         	fclose(log_fp);
         	log_fp = NULL;
-      	    }
     	}
     }		 
   
