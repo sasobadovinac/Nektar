@@ -67,9 +67,29 @@ CourtemancheRamirezNattel98::CourtemancheRamirezNattel98(
     const MultiRegions::ExpListSharedPtr &pField)
     : CellModel(pSession, pField)
 {
-    model_variant =
-        pSession->GetSolverInfoAsEnum<CourtemancheRamirezNattel98::Variants>(
-            "CellModelVariant");
+    std::map<string, Variants> VariantMap;
+    VariantMap["default"]  = eOriginal;
+    VariantMap["Original"] = eOriginal;
+    VariantMap["AF"]       = eAF;
+
+    TiXmlElement *vCellModel = m_session->GetElement("Nektar/CellModel");
+    ASSERTL0(vCellModel, "Cell Model information missing from XML.");
+
+    std::string vCellModelVariant =
+        vCellModel->FirstChildElement("VARIANT")->GetText();
+
+    if (VariantMap.count(vCellModelVariant) == 0)
+    {
+        vCellModelVariant = "default";
+    }
+    model_variant = VariantMap[vCellModelVariant];
+
+    m_cellparams["g_Na"]   = LoadCellParam("g_Na", 7.8);
+    m_cellparams["g_to"]   = LoadCellParam("g_to", 0.1652);
+    m_cellparams["g_Ca_L"] = LoadCellParam("g_Ca_L", 0.12375);
+    m_cellparams["g_K1"]   = LoadCellParam("g_K1", 0.09);
+    m_cellparams["g_Ks"]   = LoadCellParam("g_Ks", 0.12941176);
+    m_cellparams["g_Kr"]   = LoadCellParam("g_Kr", 0.02941176);
 
     C_m          = 100;  // picoF
     g_Na         = 7.8;  // nanoS_per_picoF
@@ -165,6 +185,9 @@ void CourtemancheRamirezNattel98::v_Update(
     ASSERTL0(inarray.get() != outarray.get(),
              "Must have different arrays for input and output.");
 
+    ASSERTL0(inarray.get() != outarray.get(),
+             "Must have different arrays for input and output.");
+
     // Variables
     //  0   V    membrane potential
     //  2   m    fast sodium current m gate
@@ -209,7 +232,8 @@ void CourtemancheRamirezNattel98::v_Update(
     Vmath::Vmul(n, inarray[1], 1, tmp_I_Na, 1, tmp_I_Na, 1);
     Vmath::Vmul(n, inarray[2], 1, tmp_I_Na, 1, tmp_I_Na, 1);
     Vmath::Vmul(n, inarray[3], 1, tmp_I_Na, 1, tmp_I_Na, 1);
-    Vmath::Smul(n, C_m * g_Na, tmp_I_Na, 1, tmp_I_Na, 1);
+    Vmath::Vmul(n, m_cellparams["g_Na"], 1, tmp_I_Na, 1, tmp_I_Na, 1);
+    Vmath::Smul(n, C_m, tmp_I_Na, 1, tmp_I_Na, 1);
     Vmath::Vsub(n, outarray[0], 1, tmp_I_Na, 1, outarray[0], 1);
     Vmath::Smul(n, -1.0, tmp_I_Na, 1, outarray[16], 1);
 
@@ -234,7 +258,8 @@ void CourtemancheRamirezNattel98::v_Update(
     Vmath::Vexp(n, tmp_I_K1, 1, tmp_I_K1, 1);
     Vmath::Sadd(n, 1.0, tmp_I_K1, 1, tmp_I_K1, 1);
     Vmath::Vdiv(n, tmp_V_E_k, 1, tmp_I_K1, 1, tmp_I_K1, 1);
-    Vmath::Smul(n, C_m * g_K1, tmp_I_K1, 1, tmp_I_K1, 1);
+    Vmath::Smul(n, C_m, tmp_I_K1, 1, tmp_I_K1, 1);
+    Vmath::Vmul(n, m_cellparams["g_K1"], 1, tmp_I_K1, 1, tmp_I_K1, 1);
     Vmath::Vsub(n, outarray[0], 1, tmp_I_K1, 1, outarray[0], 1);
     Vmath::Smul(n, -1.0, tmp_I_K1, 1, outarray[18], 1);
 
@@ -244,7 +269,8 @@ void CourtemancheRamirezNattel98::v_Update(
     Vmath::Vmul(n, inarray[4], 1, tmp_I_to, 1, tmp_I_to, 1);
     Vmath::Vmul(n, inarray[4], 1, tmp_I_to, 1, tmp_I_to, 1);
     Vmath::Vmul(n, inarray[4], 1, tmp_I_to, 1, tmp_I_to, 1);
-    Vmath::Smul(n, C_m * g_to, tmp_I_to, 1, tmp_I_to, 1);
+    Vmath::Vmul(n, m_cellparams["g_to"], 1, tmp_I_to, 1, tmp_I_to, 1);
+    Vmath::Smul(n, C_m, tmp_I_to, 1, tmp_I_to, 1);
     Vmath::Vsub(n, outarray[0], 1, tmp_I_to, 1, outarray[0], 1);
     Vmath::Vsub(n, outarray[18], 1, tmp_I_to, 1, outarray[18], 1);
 
@@ -273,7 +299,8 @@ void CourtemancheRamirezNattel98::v_Update(
     Vmath::Sadd(n, 1.0, tmp_I_Kr, 1, tmp_I_Kr, 1);
     Vmath::Vdiv(n, tmp_V_E_k, 1, tmp_I_Kr, 1, tmp_I_Kr, 1);
     Vmath::Vmul(n, inarray[8], 1, tmp_I_Kr, 1, tmp_I_Kr, 1);
-    Vmath::Smul(n, C_m * g_Kr, tmp_I_Kr, 1, tmp_I_Kr, 1);
+    Vmath::Smul(n, C_m, tmp_I_Kr, 1, tmp_I_Kr, 1);
+    Vmath::Vmul(n, m_cellparams["g_Kr"], 1, tmp_I_Kr, 1, tmp_I_Kr, 1);
     Vmath::Vsub(n, outarray[0], 1, tmp_I_Kr, 1, outarray[0], 1);
     Vmath::Vsub(n, outarray[18], 1, tmp_I_Kr, 1, outarray[18], 1);
 
@@ -281,7 +308,8 @@ void CourtemancheRamirezNattel98::v_Update(
     Array<OneD, NekDouble> &tmp_I_Ks = outarray[15];
     Vmath::Vmul(n, inarray[9], 1, tmp_V_E_k, 1, tmp_I_Ks, 1);
     Vmath::Vmul(n, inarray[9], 1, tmp_I_Ks, 1, tmp_I_Ks, 1);
-    Vmath::Smul(n, C_m * g_Ks, tmp_I_Ks, 1, tmp_I_Ks, 1);
+    Vmath::Smul(n, C_m, tmp_I_Ks, 1, tmp_I_Ks, 1);
+    Vmath::Vmul(n, m_cellparams["g_Ks"], 1, tmp_I_Ks, 1, tmp_I_Ks, 1);
     Vmath::Vsub(n, outarray[0], 1, tmp_I_Ks, 1, outarray[0], 1);
     Vmath::Vsub(n, outarray[18], 1, tmp_I_Ks, 1, outarray[18], 1);
 
@@ -300,7 +328,8 @@ void CourtemancheRamirezNattel98::v_Update(
     Vmath::Vmul(n, inarray[10], 1, tmp_I_Ca_L, 1, tmp_I_Ca_L, 1);
     Vmath::Vmul(n, inarray[11], 1, tmp_I_Ca_L, 1, tmp_I_Ca_L, 1);
     Vmath::Vmul(n, inarray[12], 1, tmp_I_Ca_L, 1, tmp_I_Ca_L, 1);
-    Vmath::Smul(n, C_m * g_Ca_L, tmp_I_Ca_L, 1, tmp_I_Ca_L, 1);
+    Vmath::Vmul(n, m_cellparams["g_Ca_L"], 1, tmp_I_Ca_L, 1, tmp_I_Ca_L, 1);
+    Vmath::Smul(n, C_m, tmp_I_Ca_L, 1, tmp_I_Ca_L, 1);
     Vmath::Vsub(n, outarray[0], 1, tmp_I_Ca_L, 1, outarray[0], 1);
 
     // Na-K Pump Current

@@ -39,8 +39,10 @@
 #include <LibUtilities/BasicUtils/SessionReader.h>
 #include <LibUtilities/BasicUtils/SharedArray.hpp>
 //#include <SpatialDomains/SpatialData.h>
+#include <LibUtilities/BasicUtils/Equation.h>
 #include <MultiRegions/ExpList.h>
 #include <SolverUtils/Core/Misc.h>
+#include <SolverUtils/UnsteadySystem.h>
 #include <StdRegions/StdNodalTetExp.h>
 #include <StdRegions/StdNodalTriExp.h>
 
@@ -108,6 +110,18 @@ public:
 
     Array<OneD, NekDouble> GetCellSolution(unsigned int idx);
 
+    /// Evaluate input expressions
+    Array<OneD, NekDouble> LoadCellParam(std::string parameter,
+                                         NekDouble defaultValue);
+
+    void ReadFromFile(std::string filename, std::string param,
+                      Array<OneD, NekDouble> outArray);
+
+    bool ParamExists(std::string var, std::string parameter);
+    std::string GetParamString(std::string strExpression,
+                               std::string parameter);
+    NekDouble GetParamDouble(std::string strExpression, std::string parameter);
+
 protected:
     /// Session
     LibUtilities::SessionReaderSharedPtr m_session;
@@ -121,6 +135,37 @@ protected:
     NekDouble m_lastTime;
     /// Number of substeps to take
     int m_substeps;
+
+    /// Hold scar map intensity array, if used
+    Array<OneD, NekDouble> m_scarmap;
+
+    /// Type of input of given parameter
+    enum InputType
+    {
+        eInputTypeExpression,
+        eInputTypeFile,
+        eInputTypeScarMap
+    };
+
+    /// Type of value-mapping to intensity field (scar map)
+    enum MappingType
+    {
+        ePosLinThresh,
+        eNegLinThresh,
+        eBinaryThresh,
+        eError,
+    };
+
+    struct VariableDefinition
+    {
+        enum InputType m_type;
+        std::string m_value;
+        /// Hold parameter values for scar map variables
+        std::map<std::string, std::string> m_var_params;
+    };
+
+    /// Hold parameter functions/filenames
+    std::map<std::string, VariableDefinition> m_parameters;
 
     /// Cell model solution variables
     Array<OneD, Array<OneD, NekDouble>> m_cellSol;
@@ -160,5 +205,4 @@ protected:
 };
 
 } // namespace Nektar
-
 #endif /* CELLMODEL_H_ */

@@ -83,12 +83,14 @@ void Monodomain::v_InitObject(bool DeclareField)
     m_session->LoadParameter("Chi", m_chi);
     m_session->LoadParameter("Cm", m_capMembrane);
 
-    std::string vCellModel;
-    m_session->LoadSolverInfo("CELLMODEL", vCellModel, "");
+    TiXmlElement *vCellModel = m_session->GetElement("Nektar/CellModel");
+    ASSERTL0(vCellModel, "Cell Model information missing from XML.")
 
-    ASSERTL0(vCellModel != "", "Cell Model not specified.");
+    std::string vCellModelName =
+        vCellModel->FirstChildElement("NAME")->GetText();
+    ASSERTL0(vCellModelName != "", "Cell Model not specified.");
 
-    m_cell = GetCellModelFactory().CreateInstance(vCellModel, m_session,
+    m_cell = GetCellModelFactory().CreateInstance(vCellModelName, m_session,
                                                   m_fields[0]);
 
     m_intVariables.push_back(0);

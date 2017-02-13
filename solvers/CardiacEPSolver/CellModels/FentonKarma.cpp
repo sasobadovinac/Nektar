@@ -123,8 +123,46 @@ FentonKarma::FentonKarma(const LibUtilities::SessionReaderSharedPtr &pSession,
                          const MultiRegions::ExpListSharedPtr &pField)
     : CellModel(pSession, pField)
 {
-    model_variant = pSession->GetSolverInfoAsEnum<FentonKarma::Variants>(
-        "CellModelVariant");
+    std::map<string, Variants> VariantMap;
+    VariantMap["default"]     = eBR;
+    VariantMap["BR"]          = eBR;
+    VariantMap["MBR"]         = eMBR;
+    VariantMap["MLR1"]        = eMLR1;
+    VariantMap["GP"]          = eGP;
+    VariantMap["CF1"]         = eCF1;
+    VariantMap["CF2a"]        = eCF2a;
+    VariantMap["CF2b"]        = eCF2b;
+    VariantMap["CF2c"]        = eCF2c;
+    VariantMap["CF3a"]        = eCF3a;
+    VariantMap["CF3b"]        = eCF3b;
+    VariantMap["FC2002Set1"]  = eFC2002Set1a;
+    VariantMap["FC2002Set1a"] = eFC2002Set1a;
+    VariantMap["FC2002Set1b"] = eFC2002Set1b;
+    VariantMap["FC2002Set1c"] = eFC2002Set1c;
+    VariantMap["FC2002Set1d"] = eFC2002Set1d;
+    VariantMap["FC2002Set1e"] = eFC2002Set1e;
+    VariantMap["FC2002Set2"]  = eFC2002Set2;
+    VariantMap["FC2002Set4"]  = eFC2002Set4a;
+    VariantMap["FC2002Set4a"] = eFC2002Set4a;
+    VariantMap["FC2002Set4b"] = eFC2002Set4b;
+    VariantMap["FC2002Set4c"] = eFC2002Set4c;
+    VariantMap["FC2002Set4d"] = eFC2002Set4d;
+    VariantMap["FC2002Set5"]  = eFC2002Set5;
+    VariantMap["FC2002Set6"]  = eFC2002Set6;
+    VariantMap["FC2002Set7"]  = eFC2002Set7;
+    VariantMap["FC2002Set8"]  = eFC2002Set8;
+    VariantMap["FC2002Set9"]  = eFC2002Set9;
+
+    TiXmlElement *vCellModel = m_session->GetElement("Nektar/CellModel");
+    ASSERTL0(vCellModel, "Cell Model information missing from XML.");
+
+    std::string vCellModelVariant =
+        vCellModel->FirstChildElement("VARIANT")->GetText();
+    if (VariantMap.count(vCellModelVariant) == 0)
+    {
+        vCellModelVariant = "default";
+    }
+    model_variant = VariantMap[vCellModelVariant];
 
     C_m  = 1; // picoF
     V_0  = -85;
