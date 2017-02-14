@@ -24,7 +24,7 @@ namespace LibUtilities
 {
 
 // initialise static constant attributes of PowerMonitor class
-const char PowerMonitor::ver[] = "1.0.0";
+const char PowerMonitor::ver[] = "2.0.0";
 
 const unsigned int PowerMonitor::MAX_FPATH_LEN = 128;
 const unsigned int PowerMonitor::MAX_FLINE_LEN = 128;
@@ -54,6 +54,7 @@ FILE* PowerMonitor::log_fp(NULL);
 double PowerMonitor::tm0(0.0);
 double PowerMonitor::entot0(0.0);
 int PowerMonitor::last_nstep(0);
+long int PowerMonitor::init_startup(0);
 
 bool PowerMonitor::all_initialised(false);
         
@@ -136,18 +137,34 @@ void PowerMonitor::GetFirstLine(const unsigned int i, char* line, const unsigned
     }
 }
 		
-unsigned int PowerMonitor::GetCounterValue(const unsigned int i)
+long int PowerMonitor::GetCounterValue(const unsigned int i)
 {
     char line[MAX_FLINE_LEN];
     PowerMonitor::GetFirstLine(i, line, MAX_FLINE_LEN);
-    return atoi(line);
+    return strtol(line, NULL, 10);
 }
 
-unsigned long long int PowerMonitor::GetLongCounterValue(const unsigned int i)
+// determine the number of the node on which the process is running
+int PowerMonitor::GetNodeNumber(void)
 {
-    char line[MAX_FLINE_LEN];
-    PowerMonitor::GetFirstLine(i, line, MAX_FLINE_LEN);
-    return strtoull(line, NULL, 10);
+    int node_name_len, nn_i, nn_m, node_num(0);
+    char node_name[MPI_MAX_PROCESSOR_NAME];
+    
+    MPI_Get_processor_name(node_name, &node_name_len);
+    if (node_name_len > 0)
+    {
+        nn_i = node_name_len-1;
+    	nn_m = 1;
+    	node_num = 0;
+    	while (nn_i > 0 && 0 != isdigit(node_name[nn_i]))
+	{
+      	    node_num = node_num + (node_name[nn_i]-'0')*nn_m;
+      	    nn_m = 10*nn_m;
+      	    nn_i = nn_i - 1;
+    	}
+    }
+
+    return node_num;
 }
 		
 
@@ -189,8 +206,7 @@ bool PowerMonitor::IsInitialised(void)
 // call PowerMonitor::Record(-1,1)
 void PowerMonitor::Initialise(const char* log_fpath)
 {  
-    int node_name_len, nn_i, nn_m, node_num(0);
-    char node_name[MPI_MAX_PROCESSOR_NAME];
+    int node_num = 0;
     MPI_Comm mpi_comm_node;
   
   
@@ -219,21 +235,9 @@ void PowerMonitor::Initialise(const char* log_fpath)
     	}
     }
 
-    // determine the number of the node this rank has been assigned
-    MPI_Get_processor_name(node_name, &node_name_len);
-    if (node_name_len > 0)
-    {
-        nn_i = node_name_len-1;
-    	nn_m = 1;
-    	node_num = 0;
-    	while (nn_i > 0 && 0 != isdigit(node_name[nn_i]))
-	{
-      	    node_num = node_num + (node_name[nn_i]-'0')*nn_m;
-      	    nn_m = 10*nn_m;
-      	    nn_i = nn_i - 1;
-    	}
-    }
-  
+    // determine the number of the node running this process
+    node_num = GetNodeNumber();
+      
     // determine if this rank is the minimum rank for the identified node number
     MPI_Comm_split(MPI_COMM_WORLD, node_num, rank, &mpi_comm_node);
     MPI_Allreduce(&rank, &min_node_rank, 1, MPI_INTEGER, MPI_MIN, mpi_comm_node);
@@ -265,6 +269,7 @@ void PowerMonitor::Initialise(const char* log_fpath)
     if (min_node_rank == rank)
     {
         PowerMonitor::OpenCounterFiles();
+	init_startup = PowerMonitor::GetCounterValue(PM_COUNTER_STARTUP);
     }
   
     bool ok = PowerMonitor::IsInitialised(), all_ok = false;
@@ -292,18 +297,20 @@ void PowerMonitor::Record(const int nstep, const int sstep) {
     {
         return;
     }
-  
+
+    MPI_Barrier(MPI_COMM_WORLD);
+    
     if (min_node_rank == rank)
     {
-        unsigned int start_freshness, end_freshness;
+        long int start_freshness, end_freshness;
     	double pmc_energy, tot_pmc_energy;
-    	unsigned int pmc_power, tot_pmc_power;
+    	long int pmc_power, tot_pmc_power;
     
     	// get time
     	double tm = MPI_Wtime();
     	if (first_record)
 	{
-      	    tm0 = tm;
+	    tm0 = tm;
       	    first_record = false;
     	}
     
@@ -318,10 +325,8 @@ void PowerMonitor::Record(const int nstep, const int sstep) {
       	    fresh = (end_freshness == start_freshness);
     	}
   
-    	MPI_Allreduce(&pmc_power, &tot_pmc_power, 1, MPI_LONG, MPI_SUM, mpi_comm_monitor);
-    	MPI_Allreduce(&pmc_energy, &tot_pmc_energy, 1, MPI_DOUBLE, MPI_SUM, mpi_comm_monitor);
-         
-        tot_pmc_energy = round(tot_pmc_energy);
+    	MPI_Reduce(&pmc_power, &tot_pmc_power, 1, MPI_LONG, MPI_SUM, 0, mpi_comm_monitor);
+    	MPI_Reduce(&pmc_energy, &tot_pmc_energy, 1, MPI_DOUBLE, MPI_SUM, 0, mpi_comm_monitor);
          		
     	// output data
     	if (0 == rank)
@@ -336,7 +341,8 @@ void PowerMonitor::Record(const int nstep, const int sstep) {
           	    fprintf(log_fp, "PowerMonitor v%s: time (s), step, substep, average power (W), energy used (J)\n", ver);
         	}
       	    }
-    
+
+	    tot_pmc_energy = round(tot_pmc_energy);
       	    double avg_pmc_power = (monitor_cnt > 0) ? ((double) tot_pmc_power)/((double) monitor_cnt) : 0.0;
       	    double dif_pmc_energy = tot_pmc_energy - entot0;
         
@@ -367,15 +373,20 @@ void PowerMonitor::Finalise(void)
     // if monitoring process (i.e., first process on node)    
     if (min_node_rank == rank)
     {
+        long int final_startup = PowerMonitor::GetCounterValue(PM_COUNTER_STARTUP);
+	if (final_startup != init_startup) {
+	    fprintf(stderr, "PowerMonitor meaurements invalid! Blade-controller was restarted for node %d.\n", GetNodeNumber());
+	}
+	
         PowerMonitor::CloseCounterFiles();
         
         if (0 == rank && NULL != log_fp)
-	    {
+	{
     	    // close performance counter data file
-        	fclose(log_fp);
-        	log_fp = NULL;
+            fclose(log_fp);
+            log_fp = NULL;
     	}
-    }		 
+    }	
   
     all_initialised = false;
     MPI_Barrier(MPI_COMM_WORLD);

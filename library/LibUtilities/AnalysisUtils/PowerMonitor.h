@@ -46,9 +46,9 @@ private:
     static void CloseCounterFiles(void);
     static bool IsAcceleratorCounter(const unsigned int i);
     static void GetFirstLine(const unsigned int i, char* line, const unsigned int len);
-    static unsigned int GetCounterValue(const unsigned int i);
-    static unsigned long long int GetLongCounterValue(const unsigned int i);
-
+    static long int GetCounterValue(const unsigned int i);
+    static int GetNodeNumber(void);
+    
     static bool IsInitialised(void);
 
 
@@ -68,6 +68,7 @@ private:
     static FILE* log_fp;
     static double tm0, entot0;
     static int last_nstep;
+    static long int init_startup;
 
     static bool all_initialised;
 };
