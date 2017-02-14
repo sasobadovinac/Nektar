@@ -90,6 +90,8 @@ ProcessVarOpti::ProcessVarOpti(MeshSharedPtr m) : ProcessModule(m)
         ConfigOption(true, "", "Optimise for hyper elasticity");
     m_config["numthreads"] =
         ConfigOption(false, "1", "Number of threads");
+    m_config["gpuid"] =
+        ConfigOption(false, "-1", "GPU Id");
     m_config["restol"] =
         ConfigOption(false, "1e-6", "Tolerance criterion");
     m_config["maxiter"] =
@@ -181,11 +183,15 @@ void ProcessVarOpti::Process()
 
     // Initialize Kokkos
     int nThreads = m_config["numthreads"].as<int>();
+    int gpuId = m_config["gpuid"].as<int>();
     Kokkos::InitArguments args;
     args.num_threads = nThreads;
+    args.device_id = gpuId;
     Kokkos::initialize(args);    
    
-    
+    // TIMING_BEGIN
+    Kokkos::Timer timer;
+
     // Preprocessing
     m_mesh->MakeOrder(m_mesh->m_nummode-1,LibUtilities::eGaussLobattoLegendre);
 
@@ -240,6 +246,7 @@ void ProcessVarOpti::Process()
         optiNodes.push_back(ns);
     }
 
+    
 
     // determine statistics of element colouring
     int nset = optiNodes.size();
@@ -318,6 +325,11 @@ void ProcessVarOpti::Process()
     {
         resFile.open(m_config["resfile"].as<string>().c_str());
     }
+    
+    // TIMING_END
+    //Kokkos::fence();
+    double timing = timer.seconds();
+    printf("Preprocessing time: %e sec\n", timing);
 
 
     // Start of Optimisation loops
@@ -338,7 +350,7 @@ void ProcessVarOpti::Process()
             for(int cs = 0; cs < optiNodes.size(); cs++)
             {  
                 Optimise3D3D(derivUtil, nodes, elUtil, res, cs, opti);
-                //printf("colorset %i finished\n", cs);
+                printf("colorset %i finished\n", cs);
             }            
         } 
         else if(m_dim ==2)
@@ -346,7 +358,7 @@ void ProcessVarOpti::Process()
             for(int cs = 0; cs < optiNodes.size(); cs++)
             {
                 Optimise2D2D(derivUtil, nodes, elUtil, res, cs, opti);
-                //printf("colorset %i finished\n", cs);          
+                printf("colorset %i finished\n", cs);          
             }            
         }
 

@@ -75,6 +75,7 @@ NekDouble ProcessVarOpti::GetFunctional(const DerivUtilGPU &derivUtilGPU,
              const double ep, const member_type &teamMember)
 {     
     
+    
     //printf("%s\n", "in GetFunctional");
     const double nu = 0.45;
     const double mu = 1.0 / 2.0 / (1.0+nu);
@@ -86,7 +87,8 @@ NekDouble ProcessVarOpti::GetFunctional(const DerivUtilGPU &derivUtilGPU,
     grad.minJacNew(node) = DBL_MAX;
 
     grad.integral(node) = 0.0;
-
+    
+    
     for (int el = 0; el < nElmt; ++el)
     {
         const int elId = nodes.elIdArray(cs,node,el);
@@ -116,6 +118,11 @@ NekDouble ProcessVarOpti::GetFunctional(const DerivUtilGPU &derivUtilGPU,
 
         Kokkos::parallel_for( Kokkos::TeamThreadRange( teamMember , ptsHighGPU ), [&] ( const int k)
         {               
+            // Timings
+            /*#ifdef __CUDA_ARCH__
+            long long int start = clock64();
+            #endif*/        
+
             double derivGPU[DIM*DIM];
             derivGPU[0] = 0.0;
             derivGPU[1] = 0.0;
@@ -149,7 +156,13 @@ NekDouble ProcessVarOpti::GetFunctional(const DerivUtilGPU &derivUtilGPU,
                     derivGPU[7] += derivUtilGPU.VdmD_2(k,n) * s_nodesX(n+1*ptsLowGPU);
                     derivGPU[8] += derivUtilGPU.VdmD_2(k,n) * s_nodesX(n+2*ptsLowGPU);
                 }
-            }          
+            } 
+            /*#ifdef __CUDA_ARCH__
+            long long int stop = clock64();
+            long long int cycles = stop - start;
+            if (k ==0){printf("GPUTimer Node %i, QP %i: %lli\n", node, k, cycles); }
+
+            #endif*/
             
             /*
             Kokkos::parallel_reduce( Kokkos::ThreadVectorRange( teamMember , ptsLowGPU ), [&] ( const int n, double &update)
@@ -211,6 +224,14 @@ NekDouble ProcessVarOpti::GetFunctional(const DerivUtilGPU &derivUtilGPU,
             double quadW = derivUtilGPU.quadW(k);
 
             double phiM[DIM][DIM];
+            for (int l = 0; l < DIM; ++l)
+            {
+                for (int n = 0; n < DIM; ++n)
+                {
+                    phiM[n][l] = derivGPU[l*DIM+n];
+                    //phiM[n][l] = derivGPU[l*DIM+n][k];
+                }
+            }
             // begin CalcIdealJac
             double jacIdeal[DIM][DIM];
             for (int m = 0; m < DIM; ++m)
@@ -220,9 +241,6 @@ NekDouble ProcessVarOpti::GetFunctional(const DerivUtilGPU &derivUtilGPU,
                     jacIdeal[n][m] = 0.0;
                     for (int l = 0; l < DIM; ++l)
                     {
-                        phiM[n][l] = derivGPU[l*DIM+n];
-                        //phiM[n][l] = derivGPU[l*DIM+n][k];
-
                         jacIdeal[n][m] += phiM[n][l] *
                             elUtil.idealMap(elId,k,m * 3 + l);               
                     }
@@ -253,8 +271,8 @@ NekDouble ProcessVarOpti::GetFunctional(const DerivUtilGPU &derivUtilGPU,
             if (gradient)
             {
                 // Derivative of basis function in each direction
-            NekDouble jacDerivPhi[DIM];
-            NekDouble jacDetDeriv[DIM]; 
+                NekDouble jacDerivPhi[DIM];
+                NekDouble jacDetDeriv[DIM]; 
 
                 NekDouble derivDet = Determinant<DIM>(phiM);
                 NekDouble jacInvTrans[DIM][DIM];                                
@@ -537,7 +555,7 @@ struct ProcessVarOpti::GetFunctional<DIM,gradient,eRoca>
                         NekDouble dEdxi[DIM][DIM][DIM];
                         // use the delta function in jacDeriv and do some tensor calculus
                         // to come up with this simplified expression for:
-                        //CalcLinElGrad<DIM>(jacIdeal,jacDerivPhi,dEdxi);
+                        // CalcLinElGrad<DIM>(jacIdeal,jacDerivPhi,dEdxi);
                         for(int d = 0; d < DIM; d++)
                         {
                             for (int m = 0; m < DIM; ++m)
@@ -683,7 +701,6 @@ struct ProcessVarOpti::GetFunctional<DIM,gradient,eRoca>
                                 }
                             
                                 double incHes = quadW * absIdealMapDet * (
-                                    //grad.G(node,m)*grad.G(node,l) / W + 2.0*W*(frobProdHes/frob
                                         inc[m] * inc[l] / W + 2.0*W*(frobProdHes/frob
                                         - 2.0 * frobProd[m]*frobProd[l]/frob/frob
                                         + jacDetDeriv[m]*jacDetDeriv[l] * jacDet/(2.0*sigma-jacDet)/
@@ -734,7 +751,6 @@ struct ProcessVarOpti::GetFunctional<DIM,gradient,eRoca>
                                     frobProdHes = ScalarProd<DIM>(jacDerivPhi,jacDerivPhi);                                
                                 }
                                 double incHes = quadW * absIdealMapDet * (
-                                    //grad.G(node,m)*grad.G(node,l) / W + 2.0*W*(frobProdHes/frob
                                     inc[m] * inc[l] / W + 2.0*W*(frobProdHes/frob
                                         - 2.0 * frobProd[m]*frobProd[l]/frob/frob
                                         + 0.5*jacDetDeriv[m]*jacDetDeriv[l] * jacDet/(2.0*sigma-jacDet)

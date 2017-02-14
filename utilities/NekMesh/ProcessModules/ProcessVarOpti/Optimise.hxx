@@ -162,7 +162,7 @@ void ProcessVarOpti::Optimise3D3D(DerivUtilGPU &derivUtil, NodesGPU &nodes,
 
     int scratch_size = ScratchViewType::shmem_size(3*derivUtil.ptsLow); // for all three dimensions
 
-    Kokkos::parallel_for( team_policy( coloursetSize, Kokkos::AUTO ).set_scratch_size(0,Kokkos::PerTeam(scratch_size))
+    Kokkos::parallel_for( team_policy( coloursetSize, Kokkos::AUTO).set_scratch_size(0,Kokkos::PerTeam(scratch_size))
         , KOKKOS_LAMBDA ( const member_type& teamMember)
     {
         const int node = teamMember.league_rank();
@@ -172,9 +172,25 @@ void ProcessVarOpti::Optimise3D3D(DerivUtilGPU &derivUtil, NodesGPU &nodes,
         double minJac = GetMinJacGPU(nodes, nElmt, node, cs);
         double ep = minJac < 0.0 ? sqrt(1e-8 + 0.04*minJac*minJac) : 1e-4; 
         
+        // Timings
+        /*#ifdef __CUDA_ARCH__
+        long long int start = clock64();
+        #endif*/
+        //cudaProfilerStart();
+
         currentW = GetFunctional<3,true>(derivUtil, nodes, elUtil,
                 grad, nElmt, node, cs, ep, teamMember);
         
+        //cudaProfilerStop();
+        /*#ifdef __CUDA_ARCH__
+        long long int stop = clock64();
+        long long int cycles = stop - start;
+        int thread = threadIdx.y;
+        //if (thread ==0){ // its the same for the whole block!
+        printf("GPUTimer Node %i: %lli\n", node, cycles); //}
+        #endif*/
+
+
         double G[9];
         for (int i = 0; i < 9; ++i)
         {

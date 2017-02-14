@@ -499,13 +499,13 @@ vector<vector<NodeSharedPtr> > ProcessVarOpti::GetColouredNodes(
 
     
     //create vector of free nodes which "remain", hence will be included in the coloursets
-    vector<NodeSharedPtr> remain_vertex;
+    //vector<NodeSharedPtr> remain_vertex;
     vector<NodeSharedPtr> remain_edge;
     vector<NodeSharedPtr> remain_face;
     vector<NodeSharedPtr> remain_volume;
     res.nDoF = 0;
 
-    // check if vertex nodes are in boundary or ignored nodes, otherwise add to remain nodes
+    // check if vertex nodes are in boundary or ignored nodes, otherwise add to remain EDGE_VERTEX nodes
     NodeSet::iterator nit;
     for (nit = m_mesh->m_vertexSet.begin(); nit != m_mesh->m_vertexSet.end();
          ++nit)
@@ -514,7 +514,7 @@ vector<vector<NodeSharedPtr> > ProcessVarOpti::GetColouredNodes(
         NodeSet::iterator nit3 = ignoredNodes.find(*nit);
         if (nit2 == boundaryNodes.end() && nit3 == ignoredNodes.end())
         {
-            remain_vertex.push_back(*nit);
+            remain_edge.push_back(*nit);
             if ((*nit)->GetNumCadCurve() == 1)
             {
                 res.nDoF++;
@@ -599,24 +599,69 @@ vector<vector<NodeSharedPtr> > ProcessVarOpti::GetColouredNodes(
     }
 
     // size of all free nodes to be included in the coloursets
-    res.n = remain_vertex.size() + remain_edge.size()
+    res.n = remain_edge.size() //+ remain_vertex.size()
                 + remain_face.size() + remain_volume.size();
 
     // data structure for coloursets, that will ultimately contain all free nodes
     vector<vector<NodeSharedPtr> > ret;
     vector<vector<NodeSharedPtr> > ret_part;
 
-    ret_part = CreateColoursets(remain_volume);
-    printf("Number of Volume Coloursets: %i\n", ret_part.size());
+
+
+// create vector el of number of associated elements
+    /*vector<int> elv(remain_vertex.size());
+    for (int i = 0; i < remain_vertex.size(); i++)
+    {
+        NodeElMap::iterator it = nodeElMap.find(remain_vertex[i]->m_id); //try to find node within all elements       
+        vector<ElUtilSharedPtr> &elUtils = it->second.second;       
+        elv[i] = elUtils.size();
+    }
+    // finding the permutation according to el
+    vector<int> pv(remain_vertex.size());
+    std::iota(pv.begin(),pv.end(),0);
+    std::sort(pv.begin(),pv.end(),[&] (int i, int j){return (elv[i] > elv[j]); }); // sort in descending order
+    // applying the permutation to remain_edge
+    vector<NodeSharedPtr> remain_vertex_sort(remain_vertex.size());    
+    std::transform(pv.begin(), pv.end(), remain_vertex_sort.begin(),[&](int i){ return remain_vertex[i]; });  
+
+
+    ret_part = CreateColoursets(remain_vertex_sort);
+    printf("Number of Vertex Coloursets: %i\n" ,ret_part.size());
     for (int i = 0; i < ret_part.size(); i++)
     {
         printf("Size of Colourset %i: %i\n", i, ret_part[i].size());
-        for (int j = 0; j < ret_part[i].size(); ++j)
-        {
-            el = ret_part[i][j]
-        }
         ret.push_back(ret_part[i]);
+    }*/
+
+
+
+// create vector el of number of associated elements
+    vector<int> ele(remain_edge.size());
+    for (int i = 0; i < remain_edge.size(); i++)
+    {
+        NodeElMap::iterator it = nodeElMap.find(remain_edge[i]->m_id); //try to find node within all elements       
+        vector<ElUtilSharedPtr> &elUtils = it->second.second;       
+        ele[i] = elUtils.size();
     }
+    // finding the permutation according to el
+    vector<int> pe(remain_edge.size());
+    std::iota(pe.begin(),pe.end(),0);    
+    std::sort(pe.begin(),pe.end(),[&] (int i, int j){return (ele[i] > ele[j]); }); // sort in descending order
+    // applying the permutation to remain_edge
+    vector<NodeSharedPtr> remain_edge_sort(remain_edge.size());    
+    std::transform(pe.begin(), pe.end(), remain_edge_sort.begin(),[&](int i){ return remain_edge[i]; });  
+
+    ret_part = CreateColoursets(remain_edge_sort);
+    
+    printf("Number of Edge/Vertex Coloursets: %i\n", ret_part.size());
+    for (int i = 0; i < ret_part.size(); i++)
+    {
+        printf("Size of Colourset %i: %i\n", i, ret_part[i].size());
+        ret.push_back(ret_part[i]);
+    } 
+
+
+// face nodes
     ret_part = CreateColoursets(remain_face);
     printf("Number of Face Coloursets: %i\n" ,ret_part.size());
     for (int i = 0; i < ret_part.size(); i++)
@@ -624,19 +669,14 @@ vector<vector<NodeSharedPtr> > ProcessVarOpti::GetColouredNodes(
         printf("Size of Colourset %i: %i\n", i, ret_part[i].size());
         ret.push_back(ret_part[i]);
     }
-    ret_part = CreateColoursets(remain_edge);
-    printf("Number of Edge Coloursets: %i\n", ret_part.size());
+
+// volume nodes
+    ret_part = CreateColoursets(remain_volume);
+    printf("Number of Volume Coloursets: %i\n", ret_part.size());
     for (int i = 0; i < ret_part.size(); i++)
     {
         printf("Size of Colourset %i: %i\n", i, ret_part[i].size());
-        ret.push_back(ret_part[i]);
-    }    
-    ret_part = CreateColoursets(remain_vertex);
-    printf("Number of Vertex Coloursets: %i\n" ,ret_part.size());
-    for (int i = 0; i < ret_part.size(); i++)
-    {
-        printf("Size of Colourset %i: %i\n", i, ret_part[i].size());
-        ret.push_back(ret_part[i]);
+        ret.push_back(ret_part[i]);        
     }
 
 
@@ -652,14 +692,13 @@ vector<vector<NodeSharedPtr> > ProcessVarOpti::CreateColoursets(
          vector<NodeSharedPtr> remain)
 {
     vector<vector<NodeSharedPtr> > ret_part;
-    vector<vector<int> > el_size;
-
+    vector<int> el;
+    vector<int> num_el;
 
     // loop until all free nodes have been sorted
     while (remain.size() > 0)
     {
         vector<NodeSharedPtr> layer;  // one colourset
-        vector<int> el;
         set<int> locked;
         set<int> completed;
         for (int i = 0; i < remain.size(); i++)
@@ -707,11 +746,19 @@ vector<vector<NodeSharedPtr> > ProcessVarOpti::CreateColoursets(
 
         // include layer or colourset into vector of coloursets
         ret_part.push_back(layer);
-
-        el_size.push_back(el);
-        
-
     }
+
+    //int el_max = std::max_element(el.begin(), el.end());
+    int el_max = 60;
+    for (int i=0; i < el_max; i++)
+    {
+        num_el.push_back(std::count (el.begin(), el.end(), i));
+        if (num_el[i] !=0 )
+        {
+            printf("Number of nodes with %i elements: %i\n", i, num_el[i]);
+        }
+    }
+
     return ret_part;
 }
 
