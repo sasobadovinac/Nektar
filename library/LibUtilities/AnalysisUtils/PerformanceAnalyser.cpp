@@ -396,6 +396,8 @@ void PerformanceAnalyser::Record(const int nstep, const int sstep) {
         return;
     }
 
+    MPI_Barrier(MPI_COMM_WORLD);
+
     if (rank == root_rank)
     {
         tm = MPI_Wtime();
