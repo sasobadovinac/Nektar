@@ -37,7 +37,10 @@
 #define UTILITIES_NEKMESH_PROCESSVAROPTI_OPTMISE
 
 #include "Hessian.hxx"
-#include "GetFunctional.hxx"
+#include "GetFunctional_eHypEl.hxx"
+#include "GetFunctional_eLinEl.hxx"
+#include "GetFunctional_eRoca.hxx"
+#include "GetFunctional_eWins.hxx"
 
 namespace Nektar
 {
@@ -178,8 +181,26 @@ void ProcessVarOpti::Optimise3D3D(DerivUtilGPU &derivUtil, NodesGPU &nodes,
         #endif*/
         //cudaProfilerStart();
 
-        currentW = GetFunctional<3,true>(derivUtil, nodes, elUtil,
-                grad, nElmt, node, cs, ep, teamMember);
+        if (opti == eHypEl)
+        {   
+            currentW = GetFunctional<3,true,eHypEl>()(derivUtil, nodes, elUtil,
+                    grad, nElmt, node, cs, ep, teamMember);
+        }
+        else if (opti == eLinEl)
+        {   
+            currentW = GetFunctional<3,true,eLinEl>()(derivUtil, nodes, elUtil,
+                    grad, nElmt, node, cs, ep, teamMember);
+        }
+        else if (opti == eRoca)
+        {   
+            currentW = GetFunctional<3,true,eRoca>()(derivUtil, nodes, elUtil,
+                    grad, nElmt, node, cs, ep, teamMember);
+        }
+        else if (opti == eWins)
+        {   
+            currentW = GetFunctional<3,true,eWins>()(derivUtil, nodes, elUtil,
+                    grad, nElmt, node, cs, ep, teamMember);
+        }
         
         //cudaProfilerStop();
         /*#ifdef __CUDA_ARCH__
@@ -247,8 +268,30 @@ void ProcessVarOpti::Optimise3D3D(DerivUtilGPU &derivUtil, NodesGPU &nodes,
                 h_Xn[2] = h_Xc[2] + alpha * sk[2];
                 SetNodeCoordGPU<3>(h_Xn, nodes, nElmt, node, cs);
                 
-                newVal = GetFunctional<3,false>(derivUtil, nodes, elUtil, grad, 
-                        nElmt, node, cs, ep, teamMember);
+                //newVal = GetFunctional<3,false,eHypEl>()(derivUtil, nodes, elUtil, grad, 
+                //        nElmt, node, cs, ep, teamMember);
+
+                if (opti == eHypEl)
+                {   
+                    newVal = GetFunctional<3,false,eHypEl>()(derivUtil, nodes, elUtil,
+                            grad, nElmt, node, cs, ep, teamMember);
+                }
+                else if (opti == eLinEl)
+                {   
+                    newVal = GetFunctional<3,false,eLinEl>()(derivUtil, nodes, elUtil,
+                            grad, nElmt, node, cs, ep, teamMember);
+                }
+                else if (opti == eRoca)
+                {   
+                    newVal = GetFunctional<3,false,eRoca>()(derivUtil, nodes, elUtil,
+                            grad, nElmt, node, cs, ep, teamMember);
+                }
+                else if (opti == eWins)
+                {   
+                    newVal = GetFunctional<3,false,eWins>()(derivUtil, nodes, elUtil,
+                            grad, nElmt, node, cs, ep, teamMember);
+                }
+
            
                 if (newVal <= currentW + c1() * alpha * pg)
                 {
@@ -318,9 +361,29 @@ void ProcessVarOpti::Optimise2D2D(DerivUtilGPU &derivUtil, NodesGPU &nodes,
         double minJac = GetMinJacGPU(nodes, nElmt, node, cs);
         double ep = minJac < 0.0 ? sqrt(1e-8 + 0.04*minJac*minJac) : 1e-4; 
         
-        currentW = GetFunctional<2,true>(derivUtil, nodes, elUtil,
-                grad, nElmt, node, cs, ep, teamMember);
-        
+        //currentW = GetFunctional<2,true,eHypEl>()(derivUtil, nodes, elUtil,
+        //        grad, nElmt, node, cs, ep, teamMember);
+        if (opti == eHypEl)
+        {   
+            currentW = GetFunctional<2,true,eHypEl>()(derivUtil, nodes, elUtil,
+                    grad, nElmt, node, cs, ep, teamMember);
+        }
+        else if (opti == eLinEl)
+        {   
+            currentW = GetFunctional<2,true,eLinEl>()(derivUtil, nodes, elUtil,
+                    grad, nElmt, node, cs, ep, teamMember);
+        }
+        else if (opti == eRoca)
+        {   
+            currentW = GetFunctional<2,true,eRoca>()(derivUtil, nodes, elUtil,
+                    grad, nElmt, node, cs, ep, teamMember);
+        }
+        else if (opti == eWins)
+        {   
+            currentW = GetFunctional<2,true,eWins>()(derivUtil, nodes, elUtil,
+                    grad, nElmt, node, cs, ep, teamMember);
+        }
+
         double G[4];
         for (int i = 0; i < 4; ++i)
         {
@@ -362,8 +425,28 @@ void ProcessVarOpti::Optimise2D2D(DerivUtilGPU &derivUtil, NodesGPU &nodes,
                 h_Xn[1] = h_Xc[1] + alpha * sk[1];
                 SetNodeCoordGPU<2>(h_Xn, nodes, nElmt, node, cs);
                 
-                newVal = GetFunctional<2,false>(derivUtil, nodes, elUtil, grad, 
-                        nElmt, node, cs, ep, teamMember);
+                //newVal = GetFunctional<2,false,eHypEl>()(derivUtil, nodes, elUtil, grad, 
+                //        nElmt, node, cs, ep, teamMember);
+                if (opti == eHypEl)
+                {   
+                    newVal = GetFunctional<2,false,eHypEl>()(derivUtil, nodes, elUtil,
+                            grad, nElmt, node, cs, ep, teamMember);
+                }
+                else if (opti == eLinEl)
+                {   
+                    newVal = GetFunctional<2,false,eLinEl>()(derivUtil, nodes, elUtil,
+                            grad, nElmt, node, cs, ep, teamMember);
+                }
+                else if (opti == eRoca)
+                {   
+                    newVal = GetFunctional<2,false,eRoca>()(derivUtil, nodes, elUtil,
+                            grad, nElmt, node, cs, ep, teamMember);
+                }
+                else if (opti == eWins)
+                {   
+                    newVal = GetFunctional<2,false,eWins>()(derivUtil, nodes, elUtil,
+                            grad, nElmt, node, cs, ep, teamMember);
+                }
            
                 if (newVal <= currentW + c1() * alpha * pg)
                 {

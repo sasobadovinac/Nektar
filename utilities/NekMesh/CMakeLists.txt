@@ -27,7 +27,10 @@ SET(NekMeshHeaders
     ProcessModules/ProcessVarOpti/ProcessVarOpti.h
     ProcessModules/ProcessVarOpti/NodeOpti.h
     ProcessModules/ProcessVarOpti/ElUtil.h
-    ProcessModules/ProcessVarOpti/GetFunctional.hxx
+    ProcessModules/ProcessVarOpti/GetFunctional_eHyplEl.hxx
+    ProcessModules/ProcessVarOpti/GetFunctional_eLinEl.hxx
+    ProcessModules/ProcessVarOpti/GetFunctional_eRoca.hxx
+    ProcessModules/ProcessVarOpti/GetFunctional_eWins.hxx
     ProcessModules/ProcessVarOpti/Hessian.hxx
     ProcessModules/ProcessVarOpti/Evaluate.hxx
     ProcessModules/ProcessVarOpti/Optimise.hxx

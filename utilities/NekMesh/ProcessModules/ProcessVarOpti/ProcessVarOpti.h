@@ -234,19 +234,19 @@ public:
 
 
     // in GetFunctional.hxx
-    /*template<const int DIM, const bool gradient, const optimiser opti> 
+    template<const int DIM, const bool gradient, const optimiser opti> 
     struct  GetFunctional
     {
          NekDouble operator() (const DerivUtilGPU &derivUtilGPU,
          const NodesGPU &nodes, const ElUtilGPU &elUtil, 
          const Grad &grad, int nElmt, int node, int cs,//const int elId, const int localNodeId,
          const double ep, const member_type &teamMember);
-    };*/
-    template<const int DIM, const bool gradient>
+    };
+    /*template<const int DIM, const bool gradient>
     NekDouble GetFunctional (const DerivUtilGPU &derivUtilGPU,
          const NodesGPU &nodes, const ElUtilGPU &elUtil, 
          const Grad &grad, int nElmt, int node, int cs,//const int elId, const int localNodeId,
-         const double ep, const member_type &teamMember);
+         const double ep, const member_type &teamMember);*/
     
     
     // in Hessian.hxx
