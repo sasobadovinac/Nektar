@@ -270,7 +270,6 @@ void ProcessVarOpti::Optimise3D3D(DerivUtilGPU &derivUtil, NodesGPU &nodes,
                 
                 //newVal = GetFunctional<3,false,eHypEl>()(derivUtil, nodes, elUtil, grad, 
                 //        nElmt, node, cs, ep, teamMember);
-
                 if (opti == eHypEl)
                 {   
                     newVal = GetFunctional<3,false,eHypEl>()(derivUtil, nodes, elUtil,

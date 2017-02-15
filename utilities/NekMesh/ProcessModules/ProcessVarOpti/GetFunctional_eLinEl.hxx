@@ -48,20 +48,15 @@ struct ProcessVarOpti::GetFunctional<DIM,gradient,eLinEl>
     KOKKOS_INLINE_FUNCTION
     NekDouble operator()(const DerivUtilGPU &derivUtilGPU,
              const NodesGPU &nodes, const ElUtilGPU &elUtil, 
-             const Grad &grad, int nElmt, int node, int cs,//const int elId, const int localNodeId,
-             const double ep, const member_type &teamMember)
+             const Grad &grad, int nElmt, int node, int cs,
+             const NekDouble ep, const member_type &teamMember)
 {   
-    const double nu = 0.45;
-    const double mu = 1.0 / 2.0 / (1.0+nu);
-    const double K  = 1.0 / 3.0 / (1.0 - 2.0 * nu); 
+    const NekDouble nu = 0.45;
+    const NekDouble mu = 1.0 / 2.0 / (1.0+nu);
+    const NekDouble K  = 1.0 / 3.0 / (1.0 - 2.0 * nu); 
 
     const int ptsLowGPU = derivUtilGPU.ptsLow;
     const int ptsHighGPU = derivUtilGPU.ptsHigh;
-    // Storage for derivatives, ordered by:
-    //   - standard coordinate direction
-    //   - cartesian coordinate direction, combined
-    //   - quadrature points    
-    //double derivGPU[DIM*DIM][ptsHighGPU];
 
     grad.minJacNew(node) = DBL_MAX;
     
@@ -73,7 +68,7 @@ struct ProcessVarOpti::GetFunctional<DIM,gradient,eLinEl>
         const int localNodeId = nodes.localNodeIdArray(cs,node,el);
 
         // put node coordinates in shared memory
-        ScratchViewType s_nodesX(teamMember.team_scratch(0),3*ptsLowGPU);
+        ScratchViewType s_nodesX(teamMember.team_scratch(0),DIM*ptsLowGPU);
 
         Kokkos::parallel_for( Kokkos::TeamThreadRange( teamMember , ptsLowGPU ), [&] ( const int n)
         {
@@ -82,54 +77,82 @@ struct ProcessVarOpti::GetFunctional<DIM,gradient,eLinEl>
         Kokkos::parallel_for( Kokkos::TeamThreadRange( teamMember , ptsLowGPU ), [&] ( const int n)
         {
             s_nodesX(n+ptsLowGPU) = nodes.Y(elId,n);            
-        }); 
-        Kokkos::parallel_for( Kokkos::TeamThreadRange( teamMember , ptsLowGPU ), [&] ( const int n)
+        });
+        if (DIM == 3)
         {
-            s_nodesX(n+2*ptsLowGPU) = nodes.Z(elId,n);
-        });  
+            Kokkos::parallel_for( Kokkos::TeamThreadRange( teamMember , ptsLowGPU ), [&] ( const int n)
+            {
+                s_nodesX(n+2*ptsLowGPU) = nodes.Z(elId,n);
+            }); 
+        }
 
         teamMember.team_barrier();
 
 
         Kokkos::parallel_for( Kokkos::TeamThreadRange( teamMember , ptsHighGPU ), [&] ( const int k)
         {               
-            double derivGPU[DIM*DIM];
+            // Timings
+            /*#ifdef __CUDA_ARCH__
+            long long int start = clock64();
+            #endif*/        
+
+            NekDouble derivGPU[DIM*DIM];
             derivGPU[0] = 0.0;
             derivGPU[1] = 0.0;
             derivGPU[2] = 0.0;
             derivGPU[3] = 0.0;
-            derivGPU[4] = 0.0;
-            derivGPU[5] = 0.0;
-            derivGPU[6] = 0.0;
-            derivGPU[7] = 0.0;
-            derivGPU[8] = 0.0;
-
-            for (int n = 0; n < ptsLowGPU; ++n)
+            if (DIM == 3)
             {
-                derivGPU[0] += derivUtilGPU.VdmD_0(k,n) * s_nodesX(n+0*ptsLowGPU);
-                derivGPU[1] += derivUtilGPU.VdmD_0(k,n) * s_nodesX(n+1*ptsLowGPU);
-                derivGPU[2] += derivUtilGPU.VdmD_0(k,n) * s_nodesX(n+2*ptsLowGPU);
+                derivGPU[4] = 0.0;
+                derivGPU[5] = 0.0;
+                derivGPU[6] = 0.0;
+                derivGPU[7] = 0.0;
+                derivGPU[8] = 0.0;
+            }
 
-                derivGPU[3] += derivUtilGPU.VdmD_1(k,n) * s_nodesX(n+0*ptsLowGPU);
-                derivGPU[4] += derivUtilGPU.VdmD_1(k,n) * s_nodesX(n+1*ptsLowGPU);
-                derivGPU[5] += derivUtilGPU.VdmD_1(k,n) * s_nodesX(n+2*ptsLowGPU);
-            //}
-            //for (int n = 0; n < ptsLowGPU; ++n)
-            //{
-                derivGPU[6] += derivUtilGPU.VdmD_2(k,n) * s_nodesX(n+0*ptsLowGPU);
-                derivGPU[7] += derivUtilGPU.VdmD_2(k,n) * s_nodesX(n+1*ptsLowGPU);
-                derivGPU[8] += derivUtilGPU.VdmD_2(k,n) * s_nodesX(n+2*ptsLowGPU);
+            if (DIM == 3)
+            {
+                for (int n = 0; n < ptsLowGPU; ++n)
+                {
+                    derivGPU[0] += derivUtilGPU.VdmD_0(k,n) * s_nodesX(n+0*ptsLowGPU);
+                    derivGPU[1] += derivUtilGPU.VdmD_0(k,n) * s_nodesX(n+1*ptsLowGPU);
+                    derivGPU[2] += derivUtilGPU.VdmD_0(k,n) * s_nodesX(n+2*ptsLowGPU);
+                    
+                    derivGPU[3] += derivUtilGPU.VdmD_1(k,n) * s_nodesX(n+0*ptsLowGPU);
+                    derivGPU[4] += derivUtilGPU.VdmD_1(k,n) * s_nodesX(n+1*ptsLowGPU);                
+                    derivGPU[5] += derivUtilGPU.VdmD_1(k,n) * s_nodesX(n+2*ptsLowGPU);
+                    
+                    derivGPU[6] += derivUtilGPU.VdmD_2(k,n) * s_nodesX(n+0*ptsLowGPU);
+                    derivGPU[7] += derivUtilGPU.VdmD_2(k,n) * s_nodesX(n+1*ptsLowGPU);
+                    derivGPU[8] += derivUtilGPU.VdmD_2(k,n) * s_nodesX(n+2*ptsLowGPU);
+                    
+                }
+            }
+            else if (DIM == 2)
+            {
+                for (int n = 0; n < ptsLowGPU; ++n)
+                {
+                    derivGPU[0] += derivUtilGPU.VdmD_0(k,n) * s_nodesX(n+0*ptsLowGPU);
+                    derivGPU[1] += derivUtilGPU.VdmD_0(k,n) * s_nodesX(n+1*ptsLowGPU);
+                    
+                    derivGPU[2] += derivUtilGPU.VdmD_1(k,n) * s_nodesX(n+0*ptsLowGPU);
+                    derivGPU[3] += derivUtilGPU.VdmD_1(k,n) * s_nodesX(n+1*ptsLowGPU);                    
+                }
             } 
 
-        //});
-        //Kokkos::parallel_for( Kokkos::TeamThreadRange( teamMember , ptsHighGPU ), [&] ( const int k)
-        //{
+            NekDouble quadW = derivUtilGPU.quadW(k);
 
-            double quadW = derivUtilGPU.quadW(k);
-
-            double phiM[DIM][DIM];
+            NekDouble phiM[DIM][DIM];
+            for (int l = 0; l < DIM; ++l)
+            {
+                for (int n = 0; n < DIM; ++n)
+                {
+                    phiM[n][l] = derivGPU[l*DIM+n];
+                    //phiM[n][l] = derivGPU[l*DIM+n][k];
+                }
+            }
             // begin CalcIdealJac
-            double jacIdeal[DIM][DIM];
+            NekDouble jacIdeal[DIM][DIM];
             for (int m = 0; m < DIM; ++m)
             {
                 for (int n = 0; n < DIM; ++n)
@@ -137,36 +160,31 @@ struct ProcessVarOpti::GetFunctional<DIM,gradient,eLinEl>
                     jacIdeal[n][m] = 0.0;
                     for (int l = 0; l < DIM; ++l)
                     {
-                        phiM[n][l] = derivGPU[l*DIM+n];
-                        //phiM[n][l] = derivGPU[l*DIM+n][k];
-
-                        //jacIdeal[n][m] += derivGPU(l*DIM+n,k) *
-                        //    elUtil.idealMap(elId,k,m * 3 + l);
                         jacIdeal[n][m] += phiM[n][l] *
                             elUtil.idealMap(elId,k,m * 3 + l);               
                     }
                 }
             }
-            double jacDet = Determinant<DIM>(jacIdeal);
+            NekDouble jacDet = Determinant<DIM>(jacIdeal);
             // end CalcIdealJac
 
             Kokkos::atomic_fetch_min(&grad.minJacNew(node), jacDet);
 
-            double absIdealMapDet = fabs(elUtil.idealMap(elId,k,9));
+            NekDouble absIdealMapDet = fabs(elUtil.idealMap(elId,k,9));
 
-            double sigma = 0.5*(jacDet + sqrt(jacDet*jacDet + 4.0*ep*ep)); // the regularised Jacobian
+            NekDouble sigma = 0.5*(jacDet + sqrt(jacDet*jacDet + 4.0*ep*ep)); // the regularised Jacobian
             if(sigma < DBL_MIN && !gradient)
             {
                 return DBL_MAX;
             }
             ASSERTL0(sigma > DBL_MIN,"dividing by zero");
                   
-            double lsigma = log(sigma);
+            NekDouble lsigma = log(sigma);
             NekDouble Emat[DIM][DIM];
             EMatrix<DIM>(jacIdeal,Emat);
             NekDouble trEtE = FrobeniusNorm<DIM>(Emat);
             
-            double inc = quadW * absIdealMapDet *
+            NekDouble inc = quadW * absIdealMapDet *
                         (K * 0.5 * lsigma * lsigma + mu * trEtE);
             Kokkos::atomic_add(&grad.integral(node), inc);
 
@@ -176,9 +194,9 @@ struct ProcessVarOpti::GetFunctional<DIM,gradient,eLinEl>
                 NekDouble jacDerivPhi[DIM];
                 NekDouble jacDetDeriv[DIM];  
 
-                NekDouble jacInvTrans[DIM][DIM];                                
-                InvTrans<DIM>(phiM, jacInvTrans);
                 NekDouble derivDet = Determinant<DIM>(phiM);
+                NekDouble jacInvTrans[DIM][DIM];                                
+                InvTrans<DIM>(phiM, jacInvTrans, derivDet);
 
                 NekDouble basisDeriv [DIM];
                 basisDeriv[0] = derivUtilGPU.VdmD_0(k,localNodeId);
@@ -234,9 +252,9 @@ struct ProcessVarOpti::GetFunctional<DIM,gradient,eLinEl>
             
                 for (int m = 0; m < DIM; ++m)
                 {   
-                    double frobProd = FrobProd<DIM>(dEdxi[m],Emat);
+                    NekDouble frobProd = FrobProd<DIM>(dEdxi[m],Emat);
                 
-                    double inc = quadW * absIdealMapDet * (
+                    NekDouble inc = quadW * absIdealMapDet * (
                             2.0 * mu * frobProd + K * lsigma * jacDetDeriv[m] / (2.0*sigma - jacDet));
                     Kokkos::atomic_add(&grad.G(node,m), inc);
                 }                        
@@ -247,7 +265,7 @@ struct ProcessVarOpti::GetFunctional<DIM,gradient,eLinEl>
                 {
                     for(int l = m; l < DIM; ++l,  ct++)
                     {
-                        double frobProdHes = FrobProd<DIM>(dEdxi[m],dEdxi[l]);
+                        NekDouble frobProdHes = FrobProd<DIM>(dEdxi[m],dEdxi[l]);
                         
                         NekDouble d2Edxi[DIM][DIM];
                         // use the delta function in jacDeriv and do some tensor calculus
@@ -265,7 +283,7 @@ struct ProcessVarOpti::GetFunctional<DIM,gradient,eLinEl>
                             frobProdHes += FrobProd<DIM>(d2Edxi,Emat);
                         }
                
-                        double inc = quadW * absIdealMapDet * (2.0 * mu * frobProdHes +
+                        NekDouble inc = quadW * absIdealMapDet * (2.0 * mu * frobProdHes +
                             jacDetDeriv[m]*jacDetDeriv[l]*K/(2.0*sigma-jacDet)/(2.0*sigma-jacDet)*(
                                 1.0 - jacDet*lsigma/(2.0*sigma-jacDet)));                                        
                         Kokkos::atomic_add(&grad.G(node,ct+DIM), inc);

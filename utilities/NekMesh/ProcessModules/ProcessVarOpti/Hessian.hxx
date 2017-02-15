@@ -66,14 +66,14 @@ template<> inline NekDouble Determinant<3>(NekDouble jac[3][3])
 
 template<int DIM>
 inline void InvTrans(NekDouble in[DIM][DIM],
-                                       NekDouble out[DIM][DIM])
+                                       NekDouble out[DIM][DIM], NekDouble Det)
 {
 }
 
 template<>
-inline void InvTrans<2>(NekDouble in[2][2], NekDouble out[2][2])
+inline void InvTrans<2>(NekDouble in[2][2], NekDouble out[2][2], NekDouble Det)
 {
-    NekDouble invDet = 1.0 / Determinant(in);
+    NekDouble invDet = 1.0 / Det;
     out[0][0] =  in[1][1] * invDet;
     out[1][0] = -in[0][1] * invDet;
     out[0][1] = -in[1][0] * invDet;
@@ -81,9 +81,9 @@ inline void InvTrans<2>(NekDouble in[2][2], NekDouble out[2][2])
 }
 
 template<>
-inline void InvTrans<3>(NekDouble in[3][3], NekDouble out[3][3])
+inline void InvTrans<3>(NekDouble in[3][3], NekDouble out[3][3], NekDouble Det)
 {
-    NekDouble invdet = 1.0 / Determinant(in);
+    NekDouble invdet = 1.0 / Det;
     out[0][0] =  (in[1][1]*in[2][2]-in[2][1]*in[1][2])*invdet;
     out[1][0] = -(in[0][1]*in[2][2]-in[0][2]*in[2][1])*invdet;
     out[2][0] =  (in[0][1]*in[1][2]-in[0][2]*in[1][1])*invdet;
