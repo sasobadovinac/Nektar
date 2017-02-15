@@ -155,9 +155,12 @@ namespace Nektar
         NekDouble m_sVVCutoffRatio;
         /// Diffusion coefficient of SVV modes
         NekDouble m_sVVDiffCoeff;
+        /// Array of coefficient if power kernel is used in SVV
+        Array<OneD, NekDouble> m_svvPowerKerDiffCoeff;
+        
         /// Diffusion coefficients (will be kinvis for velocities)
         Array<OneD, NekDouble> m_diffCoeff;
-
+        
         /// Variable Coefficient map for the Laplacian which can be activated as part of SVV or otherwise
         StdRegions::VarCoeffMap m_varCoeffLap; 
 
@@ -222,6 +225,11 @@ namespace Nektar
 
         void DynamicVisc();
             
+        void VelCorrectionScheme::SVVPowerKernelDiffCoeff(
+                     const NekDouble velmag, 
+                     Array<OneD, NekDouble> &diffcoeff,
+                     const Array<OneD, Array<OneD, NekDouble> >
+                     &vel = NullNekDoubleArrayofArray);
     private:
         
     };

@@ -234,6 +234,7 @@ namespace Nektar
             eFactorTime,
             eFactorSVVCutoffRatio,
             eFactorSVVDiffCoeff,
+            eFactorSVVPowerKerDiffCoeff,
             eFactorGaussVertex,
             eFactorGaussEdge,
             eFactorConst

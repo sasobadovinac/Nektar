@@ -1,4 +1,7 @@
 
+SET(OneDMeshSources 
+    OneDMesh.cpp)
+
 SET(RectangularMeshSources 
     RectangularMesh.cpp)
 
@@ -9,6 +12,7 @@ SET(VariableValence2DMeshSources
     VariableValence2DMeshGenerator.cpp)
 
 
+ADD_UTILITIES_EXECUTABLE(OneDMesh util-extra ${OneDMeshSources})
 ADD_UTILITIES_EXECUTABLE(RectangularMesh util-extra ${RectangularMeshSources})
 ADD_UTILITIES_EXECUTABLE(Regular2DMeshGenerator util-extra ${Regular2DMeshSources})
 ADD_UTILITIES_EXECUTABLE(VariableValence2DMeshGenerator util-extra ${VariableValence2DMeshSources})

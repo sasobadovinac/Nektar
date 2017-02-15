@@ -122,9 +122,26 @@ namespace Nektar
             m_intVariables.push_back(n);
         }
         
+        m_session->MatchSolverInfo("SpectralVanishingViscosity","PowerKernel",
+                                   m_useSpecVanVisc, false);
+
+        //set up varcoeff kernel if PowerKernel is specified
+        if(m_useSpecVanVisc)
+        {
+            m_svvPowerKerCoeff = Array<OneD, NekDouble>(m_field[0]->GetTotPoints());
+            SVVPowerKernelDiffCoeff(1.0,m_svvPowerKerCoeff);
+        }
+        else
+        {
+            m_svvPowerKerCoeff = NullNekDoubleArray;
+        }
+
         // Load parameters for Spectral Vanishing Viscosity
         m_session->MatchSolverInfo("SpectralVanishingViscosity","True",
                                    m_useSpecVanVisc, false);
+        m_session->MatchSolverInfo("SpectralVanishingViscosity","ExpKernel",
+                                   m_useSpecVanVisc, false);
+
         m_useHomo1DSpecVanVisc = m_useSpecVanVisc;
         if(m_useSpecVanVisc == false)
         {
@@ -331,13 +348,23 @@ namespace Nektar
         {
             smoothing += (smoothing == "" ? "" : " + ") + string("Homogeneous1D");
         }
+        
         if (smoothing != "")
         {
-            SolverUtils::AddSummaryItem(
-                s, "Smoothing", "SVV (" + smoothing + " SVV (cut-off = "
-                + boost::lexical_cast<string>(m_sVVCutoffRatio)
-                + ", diff coeff = "
-                + boost::lexical_cast<string>(m_sVVDiffCoeff)+")");
+            if(m_svvPowerKerDiffCoeff != NullNekDoubleArray)
+            {
+                SolverUtils::AddSummaryItem(
+                   s, "Smoothing", "SVV (" + smoothing +
+                   " Exp Kernel(cut-off = "
+                   + boost::lexical_cast<string>(m_sVVCutoffRatio)
+                   + ", diff coeff = "
+                   + boost::lexical_cast<string>(m_sVVDiffCoeff)+")");
+            }
+            else
+            {
+                SolverUtils::AddSummaryItem(
+                 s, "Smoothing", "SVV (" + smoothing + " Power Kernel");
+            }                
         }
     }
 
@@ -590,6 +617,11 @@ namespace Nektar
         {
             factors[StdRegions::eFactorSVVCutoffRatio] = m_sVVCutoffRatio;
             factors[StdRegions::eFactorSVVDiffCoeff]   = m_sVVDiffCoeff/m_kinvis; 
+            if(m_svvPowerKerCoeff != NullNekDoubleArray)
+            {
+                varFactorsMap[StdRegions::eFactorSVVPowerKerDiffCoeff] =
+                    m_svvPowerKerdiffCoeff; 
+            }
         }
 
         if(m_dynamicVisc)
@@ -888,12 +920,6 @@ namespace Nektar
                         0.5*(1 + sin(M_PI*(sensorVal[e]-s0)/(2*kappa)));
                     }
 
-#if 0                     
-                    cout << SVVCutoffRatio[e] << " " <<
-                        m_dynamicVisc->m_savVarFactorsMap
-                        [StdRegions::eFactorSVVCutoffRatio][e] << endl;
-#endif              
-                        
                     IsDiff = (fabs(SVVCutoffRatio[e] -  m_dynamicVisc->
                                    m_savVarFactorsMap
                                    [StdRegions::eFactorSVVCutoffRatio][e])
@@ -1077,4 +1103,55 @@ namespace Nektar
         m_fields[0]->BwdTrans(lockinvis,StabKinvis);
     }
 
+    void VelCorrectionScheme::SVVPowerKernelDiffCoeff(
+                     const NekDouble velmag, 
+                     Array<OneD, NekDouble> &diffcoeff,
+                     const Array<OneD, Array<OneD, NekDouble> >  &vel)
+        {
+            int phystot = m_fields[0]->GetTotPoints();
+            int nvel; 
+
+            Array<OneD, NekDouble> tmp;
+
+            Vmath::Fill(phystot,velmag,varcoeff);
+            
+            if(vel != NullNekDoubleArrayofArray)
+            {
+                nvel =  = vel.num_elements();
+                // calculate magnitude of v
+                Vmath::Vmul(phystot,vel[0],1,vel[0],1,varcoeff,1);
+                for(int n = 1; n < nvel; ++n)
+                {
+                    Vmath::Vvtvp(phystot,vel[n],1,vel[n],1,varcoeff,1,varcoeff,1);
+                }
+                Vmath::Vsqrt(phystot,varcoeff,1,varcoeff,1);
+            }
+            else
+            {
+                nvel = m_dim; 
+            }
+                
+            for(int i = 0; i < m_fields[0]->GetNumElmts(); ++i)
+            {
+                int offset = m_fields[0]->GetPhys_Offset(i);
+                int nq = m_fields[0]->GetExp(i)->GetTotPoints();
+                Array<OneD, NekDouble> unit(nq,1.0);
+
+                int nmodes = 0;
+
+                for(int n = 0; n < m_fields[0]->GetExp(i)->GetNumBases(); ++n)
+                {
+                    nmodes = max(nmodes,
+                                 m_fields[0]->GetExp(i)->GetBasisNumModes(n));
+                }
+
+                NekDouble h = m_fields[0]->GetExp(i)->Integral(unit);
+                h = pow(h,(NekDouble) (1.0/nvel))/((NekDouble) nmodes);
+
+                Vmath::Smul(nq,h,varcoeff+offset,1,tmp = varcoeff+offset,1);
+            }
+        }
+    }
+
+    
 } //end of namespace

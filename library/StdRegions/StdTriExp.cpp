@@ -1397,61 +1397,47 @@ namespace Nektar
             LibUtilities::BasisKey Ba(LibUtilities::eOrtho_A,nmodes_a,pa);
             LibUtilities::BasisKey Bb(LibUtilities::eOrtho_B,nmodes_b,pb);
             StdTriExp OrthoExp(Ba,Bb);
-
-            NekDouble  SvvDiffCoeff  = mkey.GetConstFactor(eFactorSVVDiffCoeff);
-
+            
             Array<OneD, NekDouble> orthocoeffs(OrthoExp.GetNcoeffs());
 
+            // project onto physical space.
+            OrthoExp.FwdTrans(array,orthocoeffs);
 
-            if(mkey.HasVarCoeff(eVarCoeffLaplacian)) // Rodrigo's svv mapping 
+            if(mkey.ConstFactorExists(eFactorSVVPowerKerDiffCoeff)) // Rodrigo's power kernel
             {
-                Array<OneD, NekDouble> sqrt_varcoeff(qa*qb);
-                Array<OneD, NekDouble> tmp(qa*qb);
-
-                Vmath::Vsqrt(qa * qb,
-                             mkey.GetVarCoeff(eVarCoeffLaplacian), 1,
-                             sqrt_varcoeff,                        1);
-
-                // multiply by sqrt(Variable Coefficient) containing h v /p
-                Vmath::Vmul(qa*qb,sqrt_varcoeff,1,array,1,tmp,1);
-
-                // project onto modal  space.
-                OrthoExp.FwdTrans(tmp,orthocoeffs);
+                NekDouble  SvvDiffCoeff  =
+                    mkey.GetConstFactor(eFactorSVVPowerKerDiffCoeff);
 
                 int cnt = 0;
                 for(int j = 0; j < nmodes_a; ++j)
                 {
                     for(int k = 0; k < nmodes_b-j; ++k, ++cnt)
                     {
-                        orthocoeffs[cnt] *=
-                            (1.0 + SvvDiffCoeff
-                                *pow(j/(nmodes_a-1)+k/(nmodes_b-1),0.5*nmodes));
+                        NekDouble fac = std::max(
+                                    pow((1.0*j)/(nmodes_a-1),0.5*nmodes_a),
+                                    pow((1.0*k)/(nmodes_b-1),0.5*nmodes_b));
+
+                        orthocoeffs[cnt] *= (SvvDiffCoeff *fac);
                     }
                 }
-
-                // backward transform to physical space
-                OrthoExp.BwdTrans(orthocoeffs,tmp);
-
-                // multiply by sqrt(Variable Coefficient) containing h v /p
-                // - split to keep symmetry
-                Vmath::Vmul(qa*qb,sqrt_varcoeff,1,tmp,1,array,1);
             }
             else
             {
-                int j, k , cnt = 0;
+                NekDouble  SvvDiffCoeff =
+                    mkey.GetConstFactor(eFactorSVVDiffCoeff);
+
                 int cutoff = (int) (mkey.GetConstFactor(eFactorSVVCutoffRatio)*
                                                         min(nmodes_a,nmodes_b));
-
+                
                 NekDouble epsilon = 1.0;
                 int nmodes = min(nmodes_a,nmodes_b);
 
-                // project onto physical space.
-                OrthoExp.FwdTrans(array,orthocoeffs);
+                int cnt = 0;
 
                 // apply SVV filter (JEL)
-                for(j = 0; j < nmodes_a; ++j)
+                for(int j = 0; j < nmodes_a; ++j)
                 {
-                    for(k = 0; k < nmodes_b-j; ++k)
+                    for(int k = 0; k < nmodes_b-j; ++k)
                     {
                         if(j + k >= cutoff)
                         {
@@ -1468,9 +1454,10 @@ namespace Nektar
                     }
                 }
 
-                // backward transform to physical space
-                OrthoExp.BwdTrans(orthocoeffs,array);
             }
+
+            // backward transform to physical space
+            OrthoExp.BwdTrans(orthocoeffs,array);
         }
 
         void StdTriExp::v_ReduceOrderCoeffs(
