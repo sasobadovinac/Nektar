@@ -236,6 +236,7 @@ INCLUDE (ThirdPartySMV)
 INCLUDE (ThirdPartyOCE)
 INCLUDE (ThirdPartyTetGen)
 INCLUDE (ThirdPartyCCM)
+INCLUDE (ThirdPartyKokkos)
 
 INCLUDE (Doxygen)
 

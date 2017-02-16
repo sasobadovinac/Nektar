@@ -51,6 +51,9 @@
 #include <LibUtilities/BasicUtils/Timer.h>
 #include <LibUtilities/Foundations/NodalUtil.h>
 
+#include <Kokkos_Core.hpp>
+
+
 using namespace std;
 using namespace Nektar::NekMeshUtils;
 
@@ -93,6 +96,10 @@ ProcessVarOpti::ProcessVarOpti(MeshSharedPtr m) : ProcessModule(m)
         ConfigOption(false, "6", "over integration order");
     m_config["analytics"] =
         ConfigOption(false, "", "basic analytics module");
+    m_config["Boost"] =
+        ConfigOption(true, "", "Parallelise with Boost");
+    m_config["Kokkos"] =
+        ConfigOption(true, "", "Parallelise with Kokkos");
     // clang-format on
 }
 
@@ -126,6 +133,15 @@ void ProcessVarOpti::Process()
     else
     {
         ASSERTL0(false, "not opti type set");
+    }
+
+    if(m_config["Kokkos"].beenSet)
+    {}
+    else if(m_config["Boost"].beenSet)
+    {}
+    else
+    {
+        ASSERTL0(false, "no parallelisation type set");
     }
 
     const int maxIter      = m_config["maxiter"].as<int>();
@@ -280,10 +296,16 @@ void ProcessVarOpti::Process()
              << "Max set:\t\t" << mx << endl
              << "Residual tolerance:\t" << restol << endl;
     }
-
+    typedef Kokkos::RangePolicy<Kokkos::DefaultHostExecutionSpace> range_policy_host;
     int nThreads = m_config["numthreads"].as<int>();
-
-    int ctr = 0;
+    if(m_config["Kokkos"].beenSet)
+    {
+        
+        Kokkos::InitArguments args;
+        args.num_threads = nThreads;
+        Kokkos::initialize(args);
+    }
+    
     Thread::ThreadMaster tms;
     tms.SetThreadingType("ThreadManagerBoost");
     Thread::ThreadManagerSharedPtr tm =
@@ -307,6 +329,7 @@ void ProcessVarOpti::Process()
         }
     }
 
+    int ctr = 0;
     while (m_res->val > restol)
     {
         ctr++;
@@ -318,31 +341,51 @@ void ProcessVarOpti::Process()
         m_res->alphaI    = 0;
         for (int i = 0; i < optiNodes.size(); i++)
         {
-            vector<Thread::ThreadJob *> jobs(optiNodes[i].size());
-            for (int j = 0; j < optiNodes[i].size(); j++)
+            if(m_config["Kokkos"].beenSet)
             {
-                jobs[j] = optiNodes[i][j]->GetJob();
+                Kokkos::parallel_for(range_policy_host(0,optiNodes[i].size()),KOKKOS_LAMBDA (const int j)
+                {
+                    optiNodes[i][j]->Optimise();
+                });
             }
+            else
+            {
+                vector<Thread::ThreadJob *> jobs(optiNodes[i].size());
+                for (int j = 0; j < optiNodes[i].size(); j++)
+                {
+                    jobs[j] = optiNodes[i][j]->GetJob();
+                }
 
-            tm->SetNumWorkers(0);
-            tm->QueueJobs(jobs);
-            tm->SetNumWorkers(nThreads);
-            tm->Wait();
+                tm->SetNumWorkers(0);
+                tm->QueueJobs(jobs);
+                tm->SetNumWorkers(nThreads);
+                tm->Wait();
+            }
         }
 
         m_res->startInv = 0;
         m_res->worstJac = numeric_limits<double>::max();
 
-        vector<Thread::ThreadJob *> elJobs(m_dataSet.size());
-        for (int i = 0; i < m_dataSet.size(); i++)
+        if(m_config["Kokkos"].beenSet)
         {
-            elJobs[i] = m_dataSet[i]->GetJob();
+            Kokkos::parallel_for(range_policy_host(0,m_dataSet.size()), KOKKOS_LAMBDA (const int i)
+            {
+                m_dataSet[i]->Evaluate();
+            });
         }
+        else
+        {
+            vector<Thread::ThreadJob *> elJobs(m_dataSet.size());
+            for (int i = 0; i < m_dataSet.size(); i++)
+            {
+                elJobs[i] = m_dataSet[i]->GetJob();
+            }
 
-        tm->SetNumWorkers(0);
-        tm->QueueJobs(elJobs);
-        tm->SetNumWorkers(nThreads);
-        tm->Wait();
+            tm->SetNumWorkers(0);
+            tm->QueueJobs(elJobs);
+            tm->SetNumWorkers(nThreads);
+            tm->Wait();
+        }
 
         if (m_config["resfile"].beenSet)
         {
@@ -394,6 +437,12 @@ void ProcessVarOpti::Process()
         cout << "Invalid at end: " << m_res->startInv << endl;
         cout << "Worst at end: " << m_res->worstJac << endl;
     }
+
+    if(m_config["Kokkos"].beenSet)
+    {
+        Kokkos::finalize();        
+    }
+
 }
 
 class NodalUtilTriMonomial : public LibUtilities::NodalUtilTriangle
