@@ -40,17 +40,15 @@ IF (NEKTAR_USE_KOKKOS)
                 ${KOKKOS_OPTIONS} --with-cuda=${CUDA_TOOLKIT_ROOT_DIR} --arch=Maxwell52 --with-cuda-options=enable_lambda)
         ENDIF()
 
-        #SET(KOKKOS_BRANCH_NAME master)
-        SET(KOKKOS_BRANCH_NAME develop)
-
-        #message("KOKKOS BRANCH NAME = ${KOKKOS_BRANCH_NAME}")
+        SET(KOKKOS_BRANCH_NAME master)
+        #SET(KOKKOS_BRANCH_NAME develop)
 
         INCLUDE(ExternalProject)
         EXTERNALPROJECT_ADD(
             kokkos-${KOKKOS_BRANCH_NAME}
-            #GIT_REPOSITORY https://github.com/kokkos/kokkos.git
-            #GIT_TAG ${KOKKOS_BRANCH_NAME}
-            URL ${CMAKE_SOURCE_DIR}/../kokkos-develop.zip
+            GIT_REPOSITORY https://github.com/kokkos/kokkos.git
+            GIT_TAG ${KOKKOS_BRANCH_NAME}
+            #URL ${CMAKE_SOURCE_DIR}/../kokkos-master.zip
 
             STAMP_DIR ${TPBUILD}/stamp
             SOURCE_DIR ${TPSRC}/kokkos-${KOKKOS_BRANCH_NAME}
@@ -58,7 +56,7 @@ IF (NEKTAR_USE_KOKKOS)
             TMP_DIR ${TPBUILD}/kokkos-${KOKKOS_BRANCH_NAME}-tmp
             INSTALL_DIR ${TPDIST}
             CONFIGURE_COMMAND CC=${CMAKE_C_COMPILER} ${TPSRC}/kokkos-${KOKKOS_BRANCH_NAME}/generate_makefile.bash ${KOKKOS_OPTIONS}
-            BUILD_COMMAND make lib
+            BUILD_COMMAND make
         )
 
         SET(KOKKOS_LIBRARY kokkos CACHE FILEPATH
