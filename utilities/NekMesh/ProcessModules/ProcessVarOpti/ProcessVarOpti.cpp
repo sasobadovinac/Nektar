@@ -59,7 +59,7 @@
 #include <cstring>
 #include <sys/time.h>
 
-#include <cuda_profiler_api.h>
+//#include <cuda_profiler_api.h>
 
 
 using namespace std;
@@ -343,7 +343,7 @@ void ProcessVarOpti::Process()
         res.h_val[0] = 0.0;
         Kokkos::deep_copy(res.val,res.h_val);
         
-        if (ctr == 1) {cudaProfilerStart();}
+        //if (ctr == 1) {cudaProfilerStart();}
 
         if(m_dim == 3)
         {
@@ -362,7 +362,7 @@ void ProcessVarOpti::Process()
             }            
         }
 
-        if (ctr == 1) {cudaProfilerStop();}
+        //if (ctr == 1) {cudaProfilerStop();}
 
         Kokkos::deep_copy(res.h_val,res.val);
 

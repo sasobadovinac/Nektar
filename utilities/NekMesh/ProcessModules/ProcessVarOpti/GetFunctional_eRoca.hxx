@@ -650,8 +650,7 @@ struct ProcessVarOpti::GetFunctional<DIM,gradient,eRoca>
             NekDouble W;
             if (DIM == 3)
             {
-                NekDouble pow_3 = rcbrt(sigma);
-                W = frob / 3.0 * pow_3 * pow_3;
+                W = frob / 3.0 / pow(fabs(sigma),2.0/3.0);
             }
             else if (DIM == 2)
             {
@@ -674,7 +673,10 @@ struct ProcessVarOpti::GetFunctional<DIM,gradient,eRoca>
                 NekDouble basisDeriv [DIM];
                 basisDeriv[0] = derivUtilGPU.VdmD_0(k,localNodeId);
                 basisDeriv[1] = derivUtilGPU.VdmD_1(k,localNodeId);
-                basisDeriv[2] = derivUtilGPU.VdmD_2(k,localNodeId);                        
+                if (DIM == 3)
+                {
+                    basisDeriv[2] = derivUtilGPU.VdmD_2(k,localNodeId);                        
+                }
 
                 // jacDeriv is actually a tensor,
                 // but can be stored as a vector, as 18 out of 27 entries are zero

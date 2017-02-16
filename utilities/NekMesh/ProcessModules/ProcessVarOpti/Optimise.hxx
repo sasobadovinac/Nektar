@@ -179,8 +179,7 @@ void ProcessVarOpti::Optimise3D3D(DerivUtilGPU &derivUtil, NodesGPU &nodes,
         /*#ifdef __CUDA_ARCH__
         long long int start = clock64();
         #endif*/
-        //cudaProfilerStart();
-
+        
         if (opti == eHypEl)
         {   
             currentW = GetFunctional<3,true,eHypEl>()(derivUtil, nodes, elUtil,
@@ -202,7 +201,8 @@ void ProcessVarOpti::Optimise3D3D(DerivUtilGPU &derivUtil, NodesGPU &nodes,
                     grad, nElmt, node, cs, ep, teamMember);
         }
         
-        //cudaProfilerStop();
+        newVal = currentW;
+
         /*#ifdef __CUDA_ARCH__
         long long int stop = clock64();
         long long int cycles = stop - start;
@@ -310,7 +310,7 @@ void ProcessVarOpti::Optimise3D3D(DerivUtilGPU &derivUtil, NodesGPU &nodes,
                 Kokkos::single(Kokkos::PerTeam(teamMember),[&] ()
                 {
                     Kokkos::atomic_add(&res.nReset[0], 1); 
-                    printf("%s\n", "3d reset");                   
+                    //printf("%s\n", "3d reset");                   
                 });   
             }
             else
@@ -382,6 +382,8 @@ void ProcessVarOpti::Optimise2D2D(DerivUtilGPU &derivUtil, NodesGPU &nodes,
             currentW = GetFunctional<2,true,eWins>()(derivUtil, nodes, elUtil,
                     grad, nElmt, node, cs, ep, teamMember);
         }
+
+        newVal = currentW;
 
         double G[4];
         for (int i = 0; i < 4; ++i)
@@ -464,7 +466,7 @@ void ProcessVarOpti::Optimise2D2D(DerivUtilGPU &derivUtil, NodesGPU &nodes,
                 Kokkos::single(Kokkos::PerTeam(teamMember),[&] ()
                 {
                     Kokkos::atomic_add(&res.nReset[0], 1); 
-                    printf("%s\n", "3d reset");                   
+                    //printf("%s\n", "3d reset");                   
                 });   
             }
             else

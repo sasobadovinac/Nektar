@@ -118,7 +118,7 @@ void ProcessVarOpti::Evaluate(DerivUtilGPU &derivUtil,NodesGPU &nodes, ElUtilGPU
                             
                 for (int j = 0; j < nodes_size; ++j)
                 {
-                    //x1i += derivUtil.VdmDL_0( i , j ) * nodes.X( el , j );
+                    x1i += derivUtil.VdmDL_0( i , j ) * nodes.X( el , j );
                     y1i += derivUtil.VdmDL_0( i , j ) * nodes.Y( el , j );
                     z1i += derivUtil.VdmDL_0( i , j ) * nodes.Z( el , j );
                     x2i += derivUtil.VdmDL_1( i , j ) * nodes.X( el , j );
@@ -129,11 +129,11 @@ void ProcessVarOpti::Evaluate(DerivUtilGPU &derivUtil,NodesGPU &nodes, ElUtilGPU
                     z3i += derivUtil.VdmDL_2( i , j ) * nodes.Z( el , j );
                 }
                   
-                Kokkos::parallel_reduce( Kokkos::ThreadVectorRange(teamMember, nodes_size), [&] (const int j, double &update )
+                /*Kokkos::parallel_reduce( Kokkos::ThreadVectorRange(teamMember, nodes_size), [&] (const int j, double &update )
                 {
                     update += derivUtil.VdmDL_0( i , j ) * nodes.X( el , j );
                 }, x1i);
-                /*Kokkos::parallel_reduce( Kokkos::ThreadVectorRange(teamMember, nodes_size), [&] (const int j, double &update )
+                Kokkos::parallel_reduce( Kokkos::ThreadVectorRange(teamMember, nodes_size), [&] (const int j, double &update )
                 {
                     update += derivUtil.VdmDL_0( i , j ) * Y( el , j );
                 }, y1i);
@@ -186,7 +186,7 @@ void ProcessVarOpti::Evaluate(DerivUtilGPU &derivUtil,NodesGPU &nodes, ElUtilGPU
         
     }
     // initialisation
-    Kokkos::parallel_for("output", range_policy(0,1), KOKKOS_LAMBDA (const int& el)
+    Kokkos::parallel_for("output1", range_policy(0,1), KOKKOS_LAMBDA (const int& el)
     {
         res.worstJac[0] = DBL_MAX;
         res.startInv[0] = 0;
@@ -234,7 +234,7 @@ void ProcessVarOpti::Evaluate(DerivUtilGPU &derivUtil,NodesGPU &nodes, ElUtilGPU
     Kokkos::parallel_reduce(range_policy(0, nElmt) , mnfunctor, res.h_worstJac[0]);
     printf("Worst Jacobian: %e  ", res.h_worstJac[0]);*/
 	
-    Kokkos::parallel_for("output", range_policy(0,1), KOKKOS_LAMBDA (const int& el)
+    Kokkos::parallel_for("output2", range_policy(0,1), KOKKOS_LAMBDA (const int& el)
     {
         // print the residual as calculated in the OptimiseGPU function
         printf("Residual: %e  ", res.val[0]);
