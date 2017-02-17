@@ -78,6 +78,22 @@ public:
      */
     bool ValidateCurves();
 
+    void ResetCurvemeshes(const std::map<int, CurveMeshSharedPtr> &cmeshes)
+    {
+        m_curvemeshes = cmeshes;
+    }
+
+    /**
+     * @brief Get the boundries of the surface and extracts the nodes from
+     * the curve meshes in the correct order
+     */
+    void OrientateCurves();
+
+    std::vector<EdgeLoopSharedPtr> GetEdges()
+    {
+        return m_edgeloops;
+    }
+
 private:
     /**
      * @brief Calculate the paramter plane streching factor
@@ -111,12 +127,6 @@ private:
     bool Validate();
 
     /**
-     * @brief Get the boundries of the surface and extracts the nodes from
-     * the curve meshes in the correct order
-     */
-    void OrientateCurves();
-
-    /**
      * @brief adds a new stiener point to the triangulation for meshing
      */
     void AddNewPoint(Array<OneD, NekDouble> uv);
@@ -134,7 +144,7 @@ private:
     std::map<int, CurveMeshSharedPtr> m_curvemeshes;
     /// data structure containing the edges, their order and oreientation for
     /// the surface
-    std::vector<EdgeLoop> m_edgeloops;
+    std::vector<EdgeLoopSharedPtr> m_edgeloops;
     /// id of the surface mesh
     int m_id;
     /// list of boundary nodes in their order loops
