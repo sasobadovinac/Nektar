@@ -225,11 +225,10 @@ namespace Nektar
 
         void DynamicVisc();
             
-        void VelCorrectionScheme::SVVPowerKernelDiffCoeff(
-                     const NekDouble velmag, 
-                     Array<OneD, NekDouble> &diffcoeff,
-                     const Array<OneD, Array<OneD, NekDouble> >
-                     &vel = NullNekDoubleArrayofArray);
+        void SVVPowerKernelDiffCoeff(const NekDouble velmag, 
+                                     Array<OneD, NekDouble> &diffcoeff,
+                                     const Array<OneD, Array<OneD, NekDouble> >
+                                     &vel = NullNekDoubleArrayofArray);
     private:
         
     };

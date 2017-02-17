@@ -128,12 +128,12 @@ namespace Nektar
         //set up varcoeff kernel if PowerKernel is specified
         if(m_useSpecVanVisc)
         {
-            m_svvPowerKerCoeff = Array<OneD, NekDouble>(m_field[0]->GetTotPoints());
-            SVVPowerKernelDiffCoeff(1.0,m_svvPowerKerCoeff);
+            m_svvPowerKerDiffCoeff = Array<OneD, NekDouble>(m_fields[0]->GetTotPoints());
+            SVVPowerKernelDiffCoeff(1.0,m_svvPowerKerDiffCoeff);
         }
         else
         {
-            m_svvPowerKerCoeff = NullNekDoubleArray;
+            m_svvPowerKerDiffCoeff = NullNekDouble1DArray;
         }
 
         // Load parameters for Spectral Vanishing Viscosity
@@ -351,7 +351,7 @@ namespace Nektar
         
         if (smoothing != "")
         {
-            if(m_svvPowerKerDiffCoeff != NullNekDoubleArray)
+            if(m_svvPowerKerDiffCoeff != NullNekDouble1DArray)
             {
                 SolverUtils::AddSummaryItem(
                    s, "Smoothing", "SVV (" + smoothing +
@@ -617,10 +617,10 @@ namespace Nektar
         {
             factors[StdRegions::eFactorSVVCutoffRatio] = m_sVVCutoffRatio;
             factors[StdRegions::eFactorSVVDiffCoeff]   = m_sVVDiffCoeff/m_kinvis; 
-            if(m_svvPowerKerCoeff != NullNekDoubleArray)
+            if(m_svvPowerKerDiffCoeff != NullNekDouble1DArray)
             {
                 varFactorsMap[StdRegions::eFactorSVVPowerKerDiffCoeff] =
-                    m_svvPowerKerdiffCoeff; 
+                    m_svvPowerKerDiffCoeff; 
             }
         }
 
@@ -1103,55 +1103,54 @@ namespace Nektar
         m_fields[0]->BwdTrans(lockinvis,StabKinvis);
     }
 
-    void VelCorrectionScheme::SVVPowerKernelDiffCoeff(
+    void VelocityCorrectionScheme::SVVPowerKernelDiffCoeff(
                      const NekDouble velmag, 
                      Array<OneD, NekDouble> &diffcoeff,
                      const Array<OneD, Array<OneD, NekDouble> >  &vel)
+    {
+        int phystot = m_fields[0]->GetTotPoints();
+        int nvel; 
+        
+        Array<OneD, NekDouble> tmp;
+        
+        Vmath::Fill(phystot,velmag,diffcoeff,1);
+        
+        if(vel != NullNekDoubleArrayofArray)
         {
-            int phystot = m_fields[0]->GetTotPoints();
-            int nvel; 
-
-            Array<OneD, NekDouble> tmp;
-
-            Vmath::Fill(phystot,velmag,varcoeff);
+            nvel = vel.num_elements();
+            // calculate magnitude of v
+            Vmath::Vmul(phystot,vel[0],1,vel[0],1,diffcoeff,1);
+            for(int n = 1; n < nvel; ++n)
+            {
+                Vmath::Vvtvp(phystot,vel[n],1,vel[n],1,diffcoeff,1,
+                             diffcoeff,1);
+            }
+            Vmath::Vsqrt(phystot,diffcoeff,1,diffcoeff,1);
+        }
+        else
+        {
+            nvel = m_expdim;
+        }
+        
+        for(int i = 0; i < m_fields[0]->GetNumElmts(); ++i)
+        {
+            int offset = m_fields[0]->GetPhys_Offset(i);
+            int nq = m_fields[0]->GetExp(i)->GetTotPoints();
+            Array<OneD, NekDouble> unit(nq,1.0);
             
-            if(vel != NullNekDoubleArrayofArray)
+            int nmodes = 0;
+            
+            for(int n = 0; n < m_fields[0]->GetExp(i)->GetNumBases(); ++n)
             {
-                nvel =  = vel.num_elements();
-                // calculate magnitude of v
-                Vmath::Vmul(phystot,vel[0],1,vel[0],1,varcoeff,1);
-                for(int n = 1; n < nvel; ++n)
-                {
-                    Vmath::Vvtvp(phystot,vel[n],1,vel[n],1,varcoeff,1,varcoeff,1);
-                }
-                Vmath::Vsqrt(phystot,varcoeff,1,varcoeff,1);
+                nmodes = max(nmodes,
+                             m_fields[0]->GetExp(i)->GetBasisNumModes(n));
             }
-            else
-            {
-                nvel = m_dim; 
-            }
-                
-            for(int i = 0; i < m_fields[0]->GetNumElmts(); ++i)
-            {
-                int offset = m_fields[0]->GetPhys_Offset(i);
-                int nq = m_fields[0]->GetExp(i)->GetTotPoints();
-                Array<OneD, NekDouble> unit(nq,1.0);
-
-                int nmodes = 0;
-
-                for(int n = 0; n < m_fields[0]->GetExp(i)->GetNumBases(); ++n)
-                {
-                    nmodes = max(nmodes,
-                                 m_fields[0]->GetExp(i)->GetBasisNumModes(n));
-                }
-
-                NekDouble h = m_fields[0]->GetExp(i)->Integral(unit);
-                h = pow(h,(NekDouble) (1.0/nvel))/((NekDouble) nmodes);
-
-                Vmath::Smul(nq,h,varcoeff+offset,1,tmp = varcoeff+offset,1);
-            }
+            
+            NekDouble h = m_fields[0]->GetExp(i)->Integral(unit);
+            h = pow(h,(NekDouble) (1.0/nvel))/((NekDouble) nmodes);
+            
+            Vmath::Smul(nq,h,diffcoeff+offset,1,tmp = diffcoeff+offset,1);
         }
     }
 
-    
 } //end of namespace

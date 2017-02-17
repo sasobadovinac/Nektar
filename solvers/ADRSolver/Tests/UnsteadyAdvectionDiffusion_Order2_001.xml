@@ -79,10 +79,10 @@
 		</BOUNDARYREGIONS>
 
 		<BOUNDARYCONDITIONS>
-			<REGION REF="0">
-				<D VAR="u" USERDEFINEDTYPE="TimeDependent"
-                   VALUE="exp(-2.0*wavefreq*wavefreq*t)*sin(wavefreq*(x-1*t))*sin(wavefreq*(y-1*t))" />
-			</REGION>
+		  <REGION REF="0">
+		    <D VAR="u" USERDEFINEDTYPE="TimeDependent"
+                       VALUE="exp(-2.0*wavefreq*wavefreq*t)*sin(wavefreq*(x-1*t))*sin(wavefreq*(y-1*t))" />
+		  </REGION>
 		</BOUNDARYCONDITIONS>
 
 		<FUNCTION NAME="AdvectionVelocity">
