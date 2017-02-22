@@ -1558,6 +1558,7 @@ namespace Nektar
             
             if(mkey.ConstFactorExists(eFactorSVVPowerKerDiffCoeff)) // Rodrigo's power kernel
             {
+                NekDouble cutoff = (int) mkey.GetConstFactor(eFactorSVVCutoffRatio); 
                 NekDouble  SvvDiffCoeff  =
                     mkey.GetConstFactor(eFactorSVVPowerKerDiffCoeff);
                 
@@ -1567,8 +1568,8 @@ namespace Nektar
                     {
                         // linear space but makes high modes very negative
                         NekDouble fac = std::max(
-                                    pow((1.0*j)/(nmodes_a-1),0.5*nmodes_a),
-                                    pow((1.0*k)/(nmodes_b-1),0.5*nmodes_b));
+                                    pow((1.0*j)/(nmodes_a-1),cutoff*nmodes_a),
+                                    pow((1.0*k)/(nmodes_b-1),cutoff*nmodes_b));
 
                         orthocoeffs[j*nmodes_b+k] *= SvvDiffCoeff * fac;
                     }

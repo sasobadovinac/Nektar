@@ -128,7 +128,7 @@ namespace Nektar
         //set up varcoeff kernel if PowerKernel is specified
         if(m_useSpecVanVisc)
         {
-            m_svvPowerKerDiffCoeff = Array<OneD, NekDouble>(m_fields[0]->GetTotPoints());
+            m_svvPowerKerDiffCoeff = Array<OneD, NekDouble>(m_fields[0]->GetNumElmts());
             SVVPowerKernelDiffCoeff(1.0,m_svvPowerKerDiffCoeff);
         }
         else
@@ -137,10 +137,17 @@ namespace Nektar
         }
 
         // Load parameters for Spectral Vanishing Viscosity
-        m_session->MatchSolverInfo("SpectralVanishingViscosity","True",
-                                   m_useSpecVanVisc, false);
-        m_session->MatchSolverInfo("SpectralVanishingViscosity","ExpKernel",
-                                   m_useSpecVanVisc, false);
+
+        if(m_useSpecVanVisc == false)
+        {
+            m_session->MatchSolverInfo("SpectralVanishingViscosity","True",
+                                       m_useSpecVanVisc, false);
+            if(m_useSpecVanVisc == false)
+            {
+                m_session->MatchSolverInfo("SpectralVanishingViscosity","ExpKernel",
+                                           m_useSpecVanVisc, false);
+            }
+        }
 
         m_useHomo1DSpecVanVisc = m_useSpecVanVisc;
         if(m_useSpecVanVisc == false)
@@ -351,19 +358,23 @@ namespace Nektar
         
         if (smoothing != "")
         {
-            if(m_svvPowerKerDiffCoeff != NullNekDouble1DArray)
+            if(m_svvPowerKerDiffCoeff == NullNekDouble1DArray)
             {
                 SolverUtils::AddSummaryItem(
                    s, "Smoothing", "SVV (" + smoothing +
                    " Exp Kernel(cut-off = "
                    + boost::lexical_cast<string>(m_sVVCutoffRatio)
                    + ", diff coeff = "
-                   + boost::lexical_cast<string>(m_sVVDiffCoeff)+")");
+                   + boost::lexical_cast<string>(m_sVVDiffCoeff)+"))");
             }
             else
             {
                 SolverUtils::AddSummaryItem(
-                 s, "Smoothing", "SVV (" + smoothing + " Power Kernel");
+                    s, "Smoothing", "SVV (" + smoothing +
+                    " Power Kernel (Power ratio ="
+                   + boost::lexical_cast<string>(m_sVVCutoffRatio)
+                   + ", diff coeff = "
+                    + boost::lexical_cast<string>(m_sVVDiffCoeff)+"*h))");
             }                
         }
     }
@@ -620,7 +631,7 @@ namespace Nektar
             if(m_svvPowerKerDiffCoeff != NullNekDouble1DArray)
             {
                 varFactorsMap[StdRegions::eFactorSVVPowerKerDiffCoeff] =
-                    m_svvPowerKerDiffCoeff; 
+                    m_svvPowerKerDiffCoeff;
             }
         }
 
@@ -1109,32 +1120,40 @@ namespace Nektar
                      const Array<OneD, Array<OneD, NekDouble> >  &vel)
     {
         int phystot = m_fields[0]->GetTotPoints();
-        int nvel; 
+        int nel = m_fields[0]->GetNumElmts();
+        int nvel,cnt; 
         
         Array<OneD, NekDouble> tmp;
         
-        Vmath::Fill(phystot,velmag,diffcoeff,1);
+        Vmath::Fill(nel,velmag,diffcoeff,1);
         
         if(vel != NullNekDoubleArrayofArray)
         {
+            Array<OneD, NekDouble> Velmag(phystot);
             nvel = vel.num_elements();
             // calculate magnitude of v
-            Vmath::Vmul(phystot,vel[0],1,vel[0],1,diffcoeff,1);
+            Vmath::Vmul(phystot,vel[0],1,vel[0],1,Velmag,1);
             for(int n = 1; n < nvel; ++n)
             {
-                Vmath::Vvtvp(phystot,vel[n],1,vel[n],1,diffcoeff,1,
-                             diffcoeff,1);
+                Vmath::Vvtvp(phystot,vel[n],1,vel[n],1,Velmag,1,
+                             Velmag,1);
             }
-            Vmath::Vsqrt(phystot,diffcoeff,1,diffcoeff,1);
+
+            cnt = 0;
+            for(int i = 0; i < nel; ++i)
+            {
+                int nq = m_fields[0]->GetExp(i)->GetTotPoints();
+                diffcoeff[i] = sqrt(Vmath::Vmax(nq,Velmag+cnt,1));
+                cnt += nq;
+            }
         }
         else
         {
             nvel = m_expdim;
         }
         
-        for(int i = 0; i < m_fields[0]->GetNumElmts(); ++i)
+        for(int i = 0; i < nel; ++i)
         {
-            int offset = m_fields[0]->GetPhys_Offset(i);
             int nq = m_fields[0]->GetExp(i)->GetTotPoints();
             Array<OneD, NekDouble> unit(nq,1.0);
             
@@ -1149,8 +1168,11 @@ namespace Nektar
             NekDouble h = m_fields[0]->GetExp(i)->Integral(unit);
             h = pow(h,(NekDouble) (1.0/nvel))/((NekDouble) nmodes);
             
-            Vmath::Smul(nq,h,diffcoeff+offset,1,tmp = diffcoeff+offset,1);
+            diffcoeff[i] = h; 
         }
+
+        // divide by kinvis to be consitent for viscous solve.
+        Vmath::Smul(nel,1.0/m_kinvis,diffcoeff,1,diffcoeff,1);
     }
 
 } //end of namespace

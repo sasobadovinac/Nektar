@@ -265,10 +265,6 @@ namespace Nektar
                 if(m_linSysKey.GetVarFactors().
                    count(StdRegions::eFactorSVVDiffCoeff) != 0)
                 {
-                    ASSERTL1(m_linSysKey.GetConstFactors().
-                             count(StdRegions::eFactorSVVDiffCoeff),
-                             "VarCoeffSVVDiff is set but not FactorSVVDiff");
-
                     vConstFactorMap[StdRegions::eFactorSVVDiffCoeff] =
                         m_linSysKey.GetVarFactors(StdRegions::eFactorSVVDiffCoeff)[n];
 
@@ -278,6 +274,13 @@ namespace Nektar
 
                     vConstFactorMap[StdRegions::eFactorSVVCutoffRatio] =
                         m_linSysKey.GetVarFactors(StdRegions::eFactorSVVCutoffRatio)[n];
+                }
+
+                if(m_linSysKey.GetVarFactors().
+                   count(StdRegions::eFactorSVVPowerKerDiffCoeff) != 0)
+                {
+                    vConstFactorMap[StdRegions::eFactorSVVPowerKerDiffCoeff] =
+                        m_linSysKey.GetVarFactors(StdRegions::eFactorSVVPowerKerDiffCoeff)[n];
                 }
             }
 
@@ -362,10 +365,6 @@ namespace Nektar
                 if(m_linSysKey.GetVarFactors().
                    count(StdRegions::eFactorSVVDiffCoeff) != 0)
                 {
-                    ASSERTL0(m_linSysKey.GetConstFactors().
-                             count(StdRegions::eFactorSVVDiffCoeff),
-                             "VarCoeffSVVDiff is set but not FactorSVVDiffCoeff");
-
                     vConstFactorMap[StdRegions::eFactorSVVDiffCoeff] =
                         m_linSysKey.GetVarFactors(StdRegions::eFactorSVVDiffCoeff)[n];
  
@@ -376,7 +375,16 @@ namespace Nektar
                     vConstFactorMap[StdRegions::eFactorSVVCutoffRatio] =
                         m_linSysKey.GetVarFactors(StdRegions::eFactorSVVCutoffRatio)[n];
                    
+
                 }
+                
+                if(m_linSysKey.GetVarFactors().
+                   count(StdRegions::eFactorSVVPowerKerDiffCoeff) != 0)
+                {
+                    vConstFactorMap[StdRegions::eFactorSVVPowerKerDiffCoeff] =
+                        m_linSysKey.GetVarFactors(StdRegions::eFactorSVVPowerKerDiffCoeff)[n];
+                }
+                
             }
 
             // retrieve variable coefficients
@@ -467,6 +475,13 @@ namespace Nektar
  
                     vConstFactorMap[StdRegions::eFactorSVVCutoffRatio] =
                         m_linSysKey.GetVarFactors(StdRegions::eFactorSVVCutoffRatio)[n];
+                }
+                
+                if(m_linSysKey.GetVarFactors().
+                   count(StdRegions::eFactorSVVPowerKerDiffCoeff) != 0)
+                {
+                    vConstFactorMap[StdRegions::eFactorSVVPowerKerDiffCoeff] =
+                        m_linSysKey.GetVarFactors(StdRegions::eFactorSVVPowerKerDiffCoeff)[n];
                 }
             }
             
