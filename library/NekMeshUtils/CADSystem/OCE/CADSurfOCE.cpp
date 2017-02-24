@@ -45,8 +45,7 @@ namespace NekMeshUtils
 std::string CADSurfOCE::key = GetCADSurfFactory().RegisterCreatorFunction(
     "oce", CADSurfOCE::create, "CADSurfOCE");
 
-void CADSurfOCE::Initialise(int i, TopoDS_Shape in,
-                            vector<EdgeLoopSharedPtr> ein)
+void CADSurfOCE::Initialise(int i, TopoDS_Shape in)
 {
     // this bit of code changes the units of the cad from mm opencascade
     // defualt to m
@@ -63,7 +62,6 @@ void CADSurfOCE::Initialise(int i, TopoDS_Shape in,
         SetReverseNomral();
     }
 
-    m_edges = ein;
     gp_Trsf transform;
     gp_Pnt ori(0.0, 0.0, 0.0);
     transform.SetScale(ori, 1.0 / 1000.0);
@@ -165,7 +163,9 @@ Array<OneD, NekDouble> CADSurfOCE::locuv(Array<OneD, NekDouble> p)
 
 NekDouble CADSurfOCE::Curvature(Array<OneD, NekDouble> uv)
 {
+#if defined(NEKTAR_DEBUG)
     Test(uv);
+#endif
 
     Array<OneD, NekDouble> n = N(uv);
 
@@ -245,7 +245,9 @@ void CADSurfOCE::ProjectTo(Array<OneD, NekDouble> &tp, Array<OneD, NekDouble> &u
 
 Array<OneD, NekDouble> CADSurfOCE::P(Array<OneD, NekDouble> uv)
 {
+#if defined(NEKTAR_DEBUG)
     Test(uv);
+#endif
 
     Array<OneD, NekDouble> location(3);
     gp_Pnt loc;
@@ -258,7 +260,9 @@ Array<OneD, NekDouble> CADSurfOCE::P(Array<OneD, NekDouble> uv)
 
 Array<OneD, NekDouble> CADSurfOCE::N(Array<OneD, NekDouble> uv)
 {
+#if defined(NEKTAR_DEBUG)
     Test(uv);
+#endif
 
     Array<OneD, NekDouble> normal(3);
     gp_Pnt Loc;
@@ -291,7 +295,9 @@ Array<OneD, NekDouble> CADSurfOCE::N(Array<OneD, NekDouble> uv)
 
 Array<OneD, NekDouble> CADSurfOCE::D1(Array<OneD, NekDouble> uv)
 {
+#if defined(NEKTAR_DEBUG)
     Test(uv);
+#endif
 
     Array<OneD, NekDouble> r(9);
     gp_Pnt Loc;
@@ -313,7 +319,9 @@ Array<OneD, NekDouble> CADSurfOCE::D1(Array<OneD, NekDouble> uv)
 
 Array<OneD, NekDouble> CADSurfOCE::D2(Array<OneD, NekDouble> uv)
 {
+#if defined(NEKTAR_DEBUG)
     Test(uv);
+#endif
 
     Array<OneD, NekDouble> r(18);
     gp_Pnt Loc;
@@ -388,10 +396,7 @@ void CADSurfOCE::Test(Array<OneD, NekDouble> uv)
     }
 
     error << " On Surface: " << GetId();
-    if (!passed)
-    {
-        cout << "Warning: " << error.str() << endl;
-    }
+    ASSERTL1(passed, "Warning: " + error.str());
 }
 }
 }

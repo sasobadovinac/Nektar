@@ -99,7 +99,6 @@ void SurfaceMesh::Process()
             MemoryManager<FaceMesh>::AllocateSharedPtr(i,m_mesh,
                 m_curvemeshes, i);
 
-        m_facemeshes[i]->OrientateCurves();
         validError = validError ? true : m_facemeshes[i]->ValidateCurves();
     }
 
@@ -132,7 +131,8 @@ void SurfaceMesh::Process()
     {
         if((*it)->m_elLink.size() != 2)
         {
-            ASSERTL0(false,"mesh connectivity error");
+            cout << (*it)->m_elLink.size() << endl;
+            //ASSERTL0(false,"mesh connectivity error");
         }
     }
 
