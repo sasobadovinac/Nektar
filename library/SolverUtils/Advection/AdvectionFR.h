@@ -54,6 +54,8 @@ namespace Nektar
 
             static std::string                   type[];
 
+            Array<OneD, NekDouble>  m_dx;
+            
             Array<OneD, NekDouble>               m_jac;
             Array<OneD, Array<OneD, NekDouble> > m_gmat;
 

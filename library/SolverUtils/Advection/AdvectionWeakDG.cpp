@@ -60,6 +60,166 @@ namespace Nektar
             Array<OneD, MultiRegions::ExpListSharedPtr> pFields)
         {
             Advection::v_InitObject(pSession, pFields);
+            v_SetupFluxLength      (pSession, pFields);
+        }
+        
+
+        
+        /**
+         * @brief Setup the metric terms to compute the contravariant
+         * fluxes. (i.e. this special metric terms transform the fluxes
+         * at the interfaces of each element from the physical space to
+         * the standard space).
+         *
+         * This routine calls the function #GetEdgeQFactors to compute and
+         * store the metric factors following an anticlockwise conventions
+         * along the edges/faces of each element. Note: for 1D problem
+         * the transformation is not needed.
+         *
+         * @param pSession  Pointer to session reader.
+         * @param pFields   Pointer to fields.
+         *
+         * \todo Add the metric terms for 3D Hexahedra.
+         */
+        void AdvectionWeakDG::v_SetupFluxLength(
+            LibUtilities::SessionReaderSharedPtr        pSession,
+            Array<OneD, MultiRegions::ExpListSharedPtr> pFields)
+        {
+            int nquad0, nquad1;
+            int physOffset;
+            int nLocalPts;
+            int nElements   = pFields[0]->GetExpSize();
+            int nDimensions = pFields[0]->GetCoordim(0);
+            int nTotalPts   = pFields[0]->GetTotPoints();
+            int nTracePts   = pFields[0]->GetTrace()->GetTotPoints();
+            
+            Array<TwoD, const NekDouble> gmat;
+            Array<OneD, const NekDouble> jac;
+            
+            m_dx = Array<OneD, NekDouble>(nTotalPts);
+            
+            // Auxiliary array
+            Array<OneD, NekDouble> auxArray1;
+            
+            // Base and point information
+            Array<OneD, LibUtilities::BasisSharedPtr> base;
+            LibUtilities::PointsKeyVector             ptsKeys;
+            
+            switch (nDimensions)
+            {
+            case 1:
+            {
+                for (int n = 0; n < nElements; ++n)
+                {
+                    ptsKeys   = pFields[0]->GetExp(n)->GetPointsKeys();
+                    nLocalPts = pFields[0]->GetExp(n)->GetTotPoints();
+    
+                    physOffset = pFields[0]->GetPhys_Offset(n);
+                    jac = pFields[0]->GetExp(n)->
+                            as<LocalRegions::Expansion1D>()->GetGeom1D()->
+                                GetMetricInfo()->GetJac(ptsKeys);
+                        
+                    for (int i = 0; i < nLocalPts; ++i)
+                    {
+                        m_dx[i+physOffset] = 2.0 * (jac[0] / nLocalPts);
+                    }
+                }
+                break;
+            }
+            case 2:
+            {
+                m_gmat = Array<OneD, Array<OneD, NekDouble> >(4);
+                m_gmat[0] = Array<OneD, NekDouble>(nTotalPts);
+                m_gmat[1] = Array<OneD, NekDouble>(nTotalPts);
+                m_gmat[2] = Array<OneD, NekDouble>(nTotalPts);
+                m_gmat[3] = Array<OneD, NekDouble>(nTotalPts);
+                    
+                m_Q2D_e0 = Array<OneD, Array<OneD, NekDouble> >(nElements);
+                m_Q2D_e1 = Array<OneD, Array<OneD, NekDouble> >(nElements);
+                m_Q2D_e2 = Array<OneD, Array<OneD, NekDouble> >(nElements);
+                m_Q2D_e3 = Array<OneD, Array<OneD, NekDouble> >(nElements);
+                    
+                LibUtilities::PointsKeyVector ptsKeys;
+                    
+                for (int n = 0; n < nElements; ++n)
+                {
+                    base        = pFields[0]->GetExp(n)->GetBase();
+                    nquad0      = base[0]->GetNumPoints();
+                    nquad1      = base[1]->GetNumPoints();
+                        
+                    m_Q2D_e0[n] = Array<OneD, NekDouble>(nquad0);
+                    m_Q2D_e1[n] = Array<OneD, NekDouble>(nquad1);
+                    m_Q2D_e2[n] = Array<OneD, NekDouble>(nquad0);
+                    m_Q2D_e3[n] = Array<OneD, NekDouble>(nquad1);
+                        
+                    // Extract the Q factors at each edge point
+                    pFields[0]->GetExp(n)->GetEdgeQFactors(
+                                            0, auxArray1 = m_Q2D_e0[n]);
+                    pFields[0]->GetExp(n)->GetEdgeQFactors(
+                                            1, auxArray1 = m_Q2D_e1[n]);
+                    pFields[0]->GetExp(n)->GetEdgeQFactors(
+                                            2, auxArray1 = m_Q2D_e2[n]);
+                    pFields[0]->GetExp(n)->GetEdgeQFactors(
+                                            3, auxArray1 = m_Q2D_e3[n]);
+                        
+                    ptsKeys = pFields[0]->GetExp(n)->GetPointsKeys();
+                    nLocalPts = pFields[0]->GetExp(n)->GetTotPoints();
+                    physOffset = pFields[0]->GetPhys_Offset(n);
+                        
+                    jac  = pFields[0]->GetExp(n)
+                        ->as<LocalRegions::Expansion2D>()->GetGeom2D()
+                        ->GetMetricInfo()->GetJac(ptsKeys);
+                    gmat = pFields[0]->GetExp(n)
+                        ->as<LocalRegions::Expansion2D>()->GetGeom2D()
+                        ->GetMetricInfo()->GetDerivFactors(ptsKeys);
+                        
+                    if (pFields[0]->GetExp(n)->as<LocalRegions::Expansion2D>()->
+                        GetGeom2D()->GetMetricInfo()->GetGtype()
+                        == SpatialDomains::eDeformed)
+                    {
+                        for (int i = 0; i < nLocalPts; ++i)
+                        {
+                            m_dx[i+physOffset]     = jac[i];
+                            m_gmat[0][i+physOffset] = gmat[0][i];
+                            m_gmat[1][i+physOffset] = gmat[1][i];
+                            m_gmat[2][i+physOffset] = gmat[2][i];
+                            m_gmat[3][i+physOffset] = gmat[3][i];
+                        }
+                    }
+                    else
+                    {
+                        for (int i = 0; i < nLocalPts; ++i)
+                        {
+                            m_dx[i+physOffset]     = jac[0];
+                            m_gmat[0][i+physOffset] = gmat[0][0];
+                            m_gmat[1][i+physOffset] = gmat[1][0];
+                            m_gmat[2][i+physOffset] = gmat[2][0];
+                            m_gmat[3][i+physOffset] = gmat[3][0];
+                        }
+                    }
+                }
+                    
+                m_traceNormals = Array<OneD, Array<OneD, NekDouble> >(
+                                                            nDimensions);
+                for(int i = 0; i < nDimensions; ++i)
+                {
+                    m_traceNormals[i] = Array<OneD, NekDouble> (nTracePts);
+                }
+                pFields[0]->GetTrace()->GetNormals(m_traceNormals);
+                    
+                break;
+            }
+            case 3:
+            {
+                ASSERTL0(false,"3D flux-lenght terms not implemented (yet)");
+                break;
+            }
+            default:
+            {
+                ASSERTL0(false, "Expansion dimension not recognised");
+                break;
+            }
+            }
         }
 
         /**
@@ -142,7 +302,7 @@ namespace Nektar
                 }
             }
 
-            m_riemann->Solve(m_spaceDim, Fwd, Bwd, numflux);
+            m_riemann->Solve(m_spaceDim, Fwd, Bwd, numflux, m_dx);
 
             // Evaulate <\phi, \hat{F}\cdot n> - OutField[i]
             for(i = 0; i < nConvectiveFields; ++i)

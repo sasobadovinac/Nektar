@@ -37,6 +37,19 @@
 #define NEKTAR_SOLVERUTILS_ADVECTIONWEAKDG
 
 #include <SolverUtils/Advection/Advection.h>
+#include <LibUtilities/Foundations/ManagerAccess.h>
+#include <LibUtilities/Foundations/Basis.h>
+#include <LibUtilities/Foundations/Points.h>
+#include <LibUtilities/Polylib/Polylib.h>
+#include <StdRegions/StdSegExp.h>
+#include <MultiRegions/AssemblyMap/AssemblyMapDG.h>
+#include <MultiRegions/DisContField1D.h>
+#include <boost/math/special_functions/gamma.hpp>
+#include <LocalRegions/Expansion1D.h>
+#include <LocalRegions/Expansion2D.h>
+
+#include <iostream>
+#include <iomanip>
 
 namespace Nektar
 {
@@ -51,9 +64,29 @@ namespace Nektar
             }
 
             static std::string type;
-
+            
+            Array<OneD, NekDouble>  m_dx;
+            
+            Array<OneD, Array<OneD, NekDouble> > m_gmat;
+            
+            Array<OneD, Array<OneD, NekDouble> > m_Q2D_e0;
+            Array<OneD, Array<OneD, NekDouble> > m_Q2D_e1;
+            Array<OneD, Array<OneD, NekDouble> > m_Q2D_e2;
+            Array<OneD, Array<OneD, NekDouble> > m_Q2D_e3;
+            
+            Array<OneD, Array<OneD, NekDouble> > m_dGL_xi1;
+            Array<OneD, Array<OneD, NekDouble> > m_dGR_xi1;
+            Array<OneD, Array<OneD, NekDouble> > m_dGL_xi2;
+            Array<OneD, Array<OneD, NekDouble> > m_dGR_xi2;
+            Array<OneD, Array<OneD, NekDouble> > m_dGL_xi3;
+            Array<OneD, Array<OneD, NekDouble> > m_dGR_xi3;
+            DNekMatSharedPtr                     m_Ixm;
+            DNekMatSharedPtr                     m_Ixp;
+            
         protected:
             AdvectionWeakDG();
+
+            Array<OneD, Array<OneD, NekDouble> >               m_traceNormals;
 
             virtual void v_InitObject(
                 LibUtilities::SessionReaderSharedPtr               pSession,
@@ -66,8 +99,14 @@ namespace Nektar
                 const Array<OneD, Array<OneD, NekDouble> >        &inarray,
                       Array<OneD, Array<OneD, NekDouble> >        &outarray,
                 const NekDouble                                   &time,
-                const Array<OneD, Array<OneD, NekDouble> > &pFwd = NullNekDoubleArrayofArray,
-                const Array<OneD, Array<OneD, NekDouble> > &pBwd = NullNekDoubleArrayofArray);
+                const Array<OneD, Array<OneD, NekDouble> >
+                                  &pFwd = NullNekDoubleArrayofArray,
+                const Array<OneD, Array<OneD, NekDouble> >
+                                  &pBwd = NullNekDoubleArrayofArray);
+            
+            virtual void v_SetupFluxLength(
+                LibUtilities::SessionReaderSharedPtr              pSession,
+                Array<OneD, MultiRegions::ExpListSharedPtr>       pFields);
         };
     }
 }

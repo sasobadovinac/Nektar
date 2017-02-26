@@ -138,6 +138,9 @@ namespace Nektar
     {
         NekDouble velInf, gasConstant;
 
+        // Get timestep parameter from session file.
+        m_session->LoadParameter("TimeStep", m_dt, 0.0);
+        
         // Get gamma parameter from session file.
         m_session->LoadParameter("Gamma", m_gamma, 1.4);
 
@@ -182,13 +185,12 @@ namespace Nektar
                  "Cannot define both Pr and thermalConductivity.");
 
             m_session->LoadParameter ("thermalConductivity",
-                                        m_thermalConductivity);
+                                      m_thermalConductivity);
             m_Prandtl = m_Cp * m_mu / m_thermalConductivity;
         }
         else
         {
-            m_session->LoadParameter ("Pr",
-                                        m_Prandtl, 0.72);
+            m_session->LoadParameter ("Pr", m_Prandtl, 0.72);
             m_thermalConductivity = m_Cp * m_mu / m_Prandtl;
         }
 
@@ -234,6 +236,8 @@ namespace Nektar
                                     .CreateInstance(riemName);
 
         // Setting up parameters for advection operator Riemann solver
+        riemannSolver->SetParam (
+            "dt",      &CompressibleFlowSystem::GetDt,      this);
         riemannSolver->SetParam (
             "gamma",   &CompressibleFlowSystem::GetGamma,   this);
         riemannSolver->SetAuxVec(

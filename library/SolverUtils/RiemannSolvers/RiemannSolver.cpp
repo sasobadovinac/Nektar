@@ -102,7 +102,8 @@ namespace Nektar
             const int                                         nDim,
             const Array<OneD, const Array<OneD, NekDouble> > &Fwd,
             const Array<OneD, const Array<OneD, NekDouble> > &Bwd,
-                  Array<OneD,       Array<OneD, NekDouble> > &flux)
+                  Array<OneD,       Array<OneD, NekDouble> > &flux,
+            const Array<OneD,                   NekDouble>   &dx)
         {
             if (m_requiresRotation)
             {
@@ -133,12 +134,12 @@ namespace Nektar
                 rotateToNormal  (Fwd, normals, vecLocs, m_rotStorage[0]);
                 rotateToNormal  (Bwd, normals, vecLocs, m_rotStorage[1]);
                 v_Solve         (nDim, m_rotStorage[0], m_rotStorage[1],
-                                       m_rotStorage[2]);
+                                       m_rotStorage[2], dx);
                 rotateFromNormal(m_rotStorage[2], normals, vecLocs, flux);
             }
             else
             {
-                v_Solve(nDim, Fwd, Bwd, flux);
+                v_Solve(nDim, Fwd, Bwd, flux, dx);
             }
         }
 

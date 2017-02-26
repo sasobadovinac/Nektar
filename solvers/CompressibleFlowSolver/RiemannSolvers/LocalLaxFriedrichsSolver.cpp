@@ -70,7 +70,7 @@ namespace Nektar
     void LaxFriedrichsSolver::v_PointSolve(
         double  rhoL, double  rhouL, double  rhovL, double  rhowL, double  EL,
         double  rhoR, double  rhouR, double  rhovR, double  rhowR, double  ER,
-        double &rhof, double &rhouf, double &rhovf, double &rhowf, double &Ef)
+        double &rhof, double &rhouf, double &rhovf, double &rhowf, double &Ef, NekDouble dx)
     {
         static NekDouble gamma = m_params["gamma"]();
         

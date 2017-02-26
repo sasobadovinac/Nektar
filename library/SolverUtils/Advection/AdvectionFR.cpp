@@ -130,6 +130,7 @@ namespace Nektar
             Array<OneD, const NekDouble> jac;
             
             m_jac  = Array<OneD, NekDouble>(nSolutionPts);
+            m_dx = Array<OneD, NekDouble>(nSolutionPts, 0.0);
 
             Array<OneD, NekDouble> auxArray1;
             Array<OneD, LibUtilities::BasisSharedPtr> base;
@@ -150,6 +151,7 @@ namespace Nektar
                         for (i = 0; i < nLocalSolutionPts; ++i)
                         {
                             m_jac[i+phys_offset] = jac[0];
+                            m_dx[i+phys_offset] = 2.0 * (jac[0] / nLocalSolutionPts);
                         }
                     }
                     break;
@@ -855,7 +857,7 @@ namespace Nektar
             }
 
             // Computing the interface flux at each trace point
-            m_riemann->Solve(m_spaceDim, Fwd, Bwd, numflux);
+            m_riemann->Solve(m_spaceDim, Fwd, Bwd, numflux, m_dx);
 
             // Divergence of the flux (computing the RHS)  
             switch(nDimensions)

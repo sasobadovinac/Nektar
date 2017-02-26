@@ -66,7 +66,8 @@ namespace Nektar
                 const int                                         nDim,
                 const Array<OneD, const Array<OneD, NekDouble> > &Fwd,
                 const Array<OneD, const Array<OneD, NekDouble> > &Bwd,
-                      Array<OneD,       Array<OneD, NekDouble> > &flux);
+                      Array<OneD,       Array<OneD, NekDouble> > &flux,
+                const Array<OneD, NekDouble> &dx);
 
             template<typename FuncPointerT, typename ObjectPointerT>
             void SetScalar(std::string    name,
@@ -141,8 +142,8 @@ namespace Nektar
             int m_spacedim;
 
         protected:
-            /// Indicates whether the Riemann solver requires a rotation to be
-            /// applied to the velocity fields.
+            /// Indicates whether the Riemann solver requires a rotation
+            /// to be applied to the velocity fields.
             bool                                    m_requiresRotation;
             /// Map of scalar function types.
             std::map<std::string, RSScalarFuncType> m_scalars;
@@ -165,7 +166,8 @@ namespace Nektar
                 const int                                         nDim,
                 const Array<OneD, const Array<OneD, NekDouble> > &Fwd,
                 const Array<OneD, const Array<OneD, NekDouble> > &Bwd,
-                      Array<OneD,       Array<OneD, NekDouble> > &flux) = 0;
+                      Array<OneD,       Array<OneD, NekDouble> > &flux,
+                const Array<OneD, NekDouble> &dx = NullNekDouble1DArray) = 0;
 
             void GenerateRotationMatrices(
                 const Array<OneD, const Array<OneD, NekDouble> > &normals);

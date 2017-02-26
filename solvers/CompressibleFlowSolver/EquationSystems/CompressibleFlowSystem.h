@@ -71,6 +71,7 @@ namespace Nektar
         SolverUtils::DiffusionSharedPtr     m_diffusion;
         ArtificialDiffusionSharedPtr        m_artificialDiffusion;
         Array<OneD, Array<OneD, NekDouble> >m_vecLocs;
+        NekDouble                           m_dt;
         NekDouble                           m_gamma;
         NekDouble                           m_pInf;
         NekDouble                           m_rhoInf;
@@ -158,6 +159,11 @@ namespace Nektar
             bool      dumpInitialConditions = true,
             const int domain                = 0);
 
+        NekDouble GetDt()
+        {
+            return m_dt;
+        }
+        
         NekDouble GetGamma()
         {
             return m_gamma;
