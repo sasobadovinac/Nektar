@@ -49,27 +49,29 @@
     </GEOMETRY>
 
     <EXPANSIONS>
-        <E COMPOSITE="C[0]" NUMMODES="3" TYPE="MODIFIED" />
+        <E COMPOSITE="C[0]" NUMMODES="10" TYPE="GLL_LAGRANGE"
+           FIELDS="rho,rhou,rhov,E" />
     </EXPANSIONS>
 
     <CONDITIONS>
 
         <PARAMETERS>
-            <P> TimeStep       = 0.00001   </P>
-            <P> NumSteps       = 0       </P>
-            <P> FinTime        = 0.38      </P>
-            <P> IO_CheckSteps  = 10000     </P>
-            <P> IO_InfoSteps   = 100     </P>
-            <P> Gamma          = 1.4      </P>
-            <P> IO_CheckTime   = 100      </P>
+            <P> TimeStep       = 0.000001         </P>
+            <P> FinTime        = 0.38             </P>
+            <P> NumSteps       = FinTime/TimeStep </P>
+            <P> IO_CheckSteps  = 10000   </P>
+            <P> IO_InfoSteps   = 1     </P>
+            <P> dxForce        = 1.66    </P>
+            <P> alpha          = 1.0     </P>
+            <P> Gamma          = 1.4     </P>
         </PARAMETERS>
 
         <SOLVERINFO>
-            <I PROPERTY="EQType" VALUE="EulerCFE" />
-            <I PROPERTY="Projection" VALUE="DisContinuous" />
+            <I PROPERTY="EQType"                VALUE="IsentropicVortex"     />
+            <I PROPERTY="Projection"            VALUE="DisContinuous"        />
             <I PROPERTY="TimeIntegrationMethod" VALUE="ClassicalRungeKutta4" />
-            <I PROPERTY="UpwindType" VALUE="ExactToro" />
-            <I PROPERTY="ProblemType" VALUE="IsentropicVortex" />
+            <I PROPERTY="UpwindType"            VALUE="FORCE"                />
+            <I PROPERTY="ProblemType"           VALUE="IsentropicVortex"     />
         </SOLVERINFO>
 
         <VARIABLES>
@@ -92,12 +94,12 @@
             </REGION>
         </BOUNDARYCONDITIONS>
 
-        <FUNCTION NAME="InitialConditions">
+        <!--FUNCTION NAME="InitialConditions">
             <E VAR="rho" VALUE="0" />
             <E VAR="rhou" VALUE="0" />
             <E VAR="rhov" VALUE="0" />
             <E VAR="E" VALUE="0" />
-        </FUNCTION>
+        </FUNCTION-->
 
     </CONDITIONS>
 

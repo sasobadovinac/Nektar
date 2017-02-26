@@ -140,12 +140,18 @@ namespace Nektar
 
         // Get timestep parameter from session file.
         m_session->LoadParameter("TimeStep", m_dt, 0.0);
+
+        // Get dxForce parameter (for FORCE Riemann solver) from session file.
+        m_session->LoadParameter("dxForce", m_dxForce, 0.0);
+        
+        // Get alpha parameter (for FORCE Riemann solver) from session file.
+        m_session->LoadParameter("alpha", m_alpha, 0.0);
         
         // Get gamma parameter from session file.
         m_session->LoadParameter("Gamma", m_gamma, 1.4);
 
         // Get gas constant from session file and compute Cp
-        m_session->LoadParameter ("GasConstant",   gasConstant,   287.058);
+        m_session->LoadParameter ("GasConstant", gasConstant, 287.058);
         m_Cp      = m_gamma / (m_gamma - 1.0) * gasConstant;
 
         // Get pInf parameter from session file.
@@ -224,8 +230,8 @@ namespace Nektar
         }
         else
         {
-            m_advection->SetFluxVector  (&CompressibleFlowSystem::
-                                          GetFluxVector, this);
+            m_advection->SetFluxVector(&CompressibleFlowSystem::
+                                       GetFluxVector, this);
         }
 
         // Setting up Riemann solver for advection operator
@@ -238,6 +244,10 @@ namespace Nektar
         // Setting up parameters for advection operator Riemann solver
         riemannSolver->SetParam (
             "dt",      &CompressibleFlowSystem::GetDt,      this);
+        riemannSolver->SetParam (
+            "dxForce", &CompressibleFlowSystem::GetDxForce, this);
+        riemannSolver->SetParam (
+            "alpha",   &CompressibleFlowSystem::GetAlpha,   this);
         riemannSolver->SetParam (
             "gamma",   &CompressibleFlowSystem::GetGamma,   this);
         riemannSolver->SetAuxVec(

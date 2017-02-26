@@ -72,6 +72,8 @@ namespace Nektar
         ArtificialDiffusionSharedPtr        m_artificialDiffusion;
         Array<OneD, Array<OneD, NekDouble> >m_vecLocs;
         NekDouble                           m_dt;
+        NekDouble                           m_dxForce;
+        NekDouble                           m_alpha;
         NekDouble                           m_gamma;
         NekDouble                           m_pInf;
         NekDouble                           m_rhoInf;
@@ -162,6 +164,16 @@ namespace Nektar
         NekDouble GetDt()
         {
             return m_dt;
+        }
+        
+        NekDouble GetDxForce()
+        {
+            return m_dxForce;
+        }
+        
+        NekDouble GetAlpha()
+        {
+            return m_alpha;
         }
         
         NekDouble GetGamma()

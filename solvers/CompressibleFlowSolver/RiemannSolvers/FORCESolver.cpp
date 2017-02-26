@@ -70,9 +70,11 @@ namespace Nektar
         NekDouble &rhof, NekDouble &rhouf, NekDouble &rhovf, NekDouble &rhowf, NekDouble &Ef,
         NekDouble dx)
     {
-        static NekDouble dt    = m_params["dt"]();
-        static NekDouble gamma = m_params["gamma"]();
-        static NekDouble alpha = 1.0;
+        static NekDouble dt      = m_params["dt"]();
+        static NekDouble dxForce = m_params["dxForce"]();
+        static NekDouble alpha   = m_params["alpha"]();
+        static NekDouble gamma   = m_params["gamma"]();
+
         
         // Left and Right velocities
         NekDouble uL = rhouL / rhoL;
@@ -101,21 +103,22 @@ namespace Nektar
         NekDouble EfR = uR * (ER + pR);
 
         
-        std::cout << "dt = " << dt << std::endl;
-        std::cout << "dx = " << dx << std::endl;
+        //std::cout << "dt      = " << dt      << std::endl;
+        //std::cout << "dx      = " << dx      << std::endl;
+        //std::cout << "dxForce = " << dxForce << std::endl;
+        //std::cout << "alpha   = " << alpha   << std::endl;
 
         
         // Lax-Wendroff alpha Riemann cons vars
-        NekDouble rhoLW = 0.5 * ( rhoL + rhoR )
-            - 0.5 * alpha * dt / dx * ( rhofR - rhofL );
-        NekDouble rhouLW = 0.5 * ( rhouL + rhouR )
-            - 0.5 * alpha * dt / dx * ( rhoufR - rhoufL );
+        NekDouble rhoLW = 0.5 * (rhoL + rhoR)
+                        - 0.5 * alpha * dt / dx * (rhofR - rhofL);
+        NekDouble rhouLW = 0.5 * (rhouL + rhouR)
+                         - 0.5 * alpha * dt / dx * (rhoufR - rhoufL);
         NekDouble rhovLW = 0.5 * ( rhovL + rhovR )
-            - 0.5 * alpha * dt / dx * ( rhovfR - rhovfL );
+                         - 0.5 * alpha * dt / dx * (rhovfR - rhovfL);
         NekDouble rhowLW = 0.5 * ( rhowL + rhowR )
-            - 0.5 * alpha * dt / dx * ( rhowfR - rhowfL );
-        NekDouble ELW = 0.5 * ( EL + ER )
-            - 0.5 * alpha * dt / dx * ( EfR - EfL );
+                         - 0.5 * alpha * dt / dx * (rhowfR - rhowfL);
+        NekDouble ELW = 0.5 * (EL + ER) - 0.5 * alpha * dt / dx * (EfR - EfL);
 
         // Lax-Wendroff alpha velocities
         NekDouble uLW = rhouLW / rhoLW;

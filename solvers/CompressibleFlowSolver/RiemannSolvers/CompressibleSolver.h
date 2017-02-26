@@ -72,8 +72,7 @@ namespace Nektar
             NekDouble  rhowR, NekDouble  ER,
             NekDouble &rhof,  NekDouble &rhouf,
             NekDouble &rhovf, NekDouble &rhowf,
-            NekDouble &Ef,
-            NekDouble dx)
+            NekDouble &Ef, NekDouble dx)
         {
             ASSERTL0(false, "This function should be defined by subclasses.");
         }

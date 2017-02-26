@@ -121,7 +121,7 @@ namespace Nektar
                         
                     for (int i = 0; i < nLocalPts; ++i)
                     {
-                        m_dx[i+physOffset] = 2.0 * (jac[0] / nLocalPts);
+                        m_dx[i+physOffset] = 2.0 * (jac[0] / nLocalPts-1);
                     }
                 }
                 break;
@@ -179,7 +179,7 @@ namespace Nektar
                     {
                         for (int i = 0; i < nLocalPts; ++i)
                         {
-                            m_dx[i+physOffset]     = jac[i];
+                            m_dx[i+physOffset] = 2.0 * (jac[i] / (nLocalPts-1));
                             m_gmat[0][i+physOffset] = gmat[0][i];
                             m_gmat[1][i+physOffset] = gmat[1][i];
                             m_gmat[2][i+physOffset] = gmat[2][i];
@@ -190,7 +190,7 @@ namespace Nektar
                     {
                         for (int i = 0; i < nLocalPts; ++i)
                         {
-                            m_dx[i+physOffset]     = jac[0];
+                            m_dx[i+physOffset] = 2.0 * (jac[0] / (nLocalPts-1));
                             m_gmat[0][i+physOffset] = gmat[0][0];
                             m_gmat[1][i+physOffset] = gmat[1][0];
                             m_gmat[2][i+physOffset] = gmat[2][0];
