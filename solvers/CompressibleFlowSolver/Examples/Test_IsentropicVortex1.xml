@@ -40,8 +40,11 @@
         </ELEMENT>
 
         <COMPOSITE>
-            <C ID="0"> Q[0-3] </C>
-            <C ID="1"> E[0,1,2,4,7,9,10,11] </C>
+            <C ID="0"> Q[0-3]   </C>
+            <C ID="1"> E[0,1]   </C>
+            <C ID="2"> E[4,9]   </C>
+            <C ID="3"> E[10,11] </C>
+            <C ID="4"> E[2,7]   </C>
         </COMPOSITE>
 
         <DOMAIN> C[0] </DOMAIN>
@@ -49,21 +52,21 @@
     </GEOMETRY>
 
     <EXPANSIONS>
-        <E COMPOSITE="C[0]" NUMMODES="10" TYPE="GLL_LAGRANGE"
+        <E COMPOSITE="C[0]" NUMMODES="18" TYPE="GLL_LAGRANGE"
            FIELDS="rho,rhou,rhov,E" />
     </EXPANSIONS>
 
     <CONDITIONS>
 
         <PARAMETERS>
-            <P> TimeStep       = 0.000001         </P>
-            <P> FinTime        = 0.38             </P>
+            <P> TimeStep       = 0.0005           </P>
+            <P> FinTime        = 10               </P>
             <P> NumSteps       = FinTime/TimeStep </P>
-            <P> IO_CheckSteps  = 10000   </P>
-            <P> IO_InfoSteps   = 1     </P>
-            <P> dxForce        = 1.66    </P>
-            <P> alpha          = 1.0     </P>
-            <P> Gamma          = 1.4     </P>
+            <P> IO_CheckSteps  = 100              </P>
+            <P> IO_InfoSteps   = 1                </P>
+            <P> dxForce        = 1.66             </P>
+            <P> alpha          = 1.0              </P>
+            <P> Gamma          = 1.4              </P>
         </PARAMETERS>
 
         <SOLVERINFO>
@@ -83,23 +86,51 @@
 
         <BOUNDARYREGIONS>
             <B ID="0"> C[1] </B>
+            <B ID="1"> C[2] </B>
+            <B ID="2"> C[3] </B>
+            <B ID="3"> C[4] </B>
         </BOUNDARYREGIONS>
+
+        <!--BOUNDARYCONDITIONS>
+            <REGION REF="0">
+                <D VAR="rho"  USERDEFINEDTYPE="IsentropicVortex" VALUE="0" />
+                <D VAR="rhou" USERDEFINEDTYPE="IsentropicVortex" VALUE="0" />
+                <D VAR="rhov" USERDEFINEDTYPE="IsentropicVortex" VALUE="0" />
+                <D VAR="E"    USERDEFINEDTYPE="IsentropicVortex" VALUE="0" />
+            </REGION>
+        </BOUNDARYCONDITIONS-->
+
+
 
         <BOUNDARYCONDITIONS>
             <REGION REF="0">
-                <D VAR="rho" USERDEFINEDTYPE="IsentropicVortex" VALUE="0" />
-                <D VAR="rhou" USERDEFINEDTYPE="IsentropicVortex" VALUE="0" />
-                <D VAR="rhov" USERDEFINEDTYPE="IsentropicVortex" VALUE="0" />
-                <D VAR="E" USERDEFINEDTYPE="IsentropicVortex" VALUE="0" />
+                <P VAR="rho"       VALUE="[2]"/>
+                <P VAR="rhou"      VALUE="[2]"/>
+                <P VAR="rhov"      VALUE="[2]"/>
+                <P VAR="E"         VALUE="[2]"/>
+            </REGION>
+    
+            <REGION REF="1">
+                <P VAR="rho"       VALUE="[3]"/>
+                <P VAR="rhou"      VALUE="[3]"/>
+                <P VAR="rhov"      VALUE="[3]"/>
+                <P VAR="E"         VALUE="[3]"/>
+            </REGION>
+    
+            <REGION REF="2">
+                <P VAR="rho"       VALUE="[0]"/>
+                <P VAR="rhou"      VALUE="[0]"/>
+                <P VAR="rhov"      VALUE="[0]"/>
+                <P VAR="E"         VALUE="[0]"/>
+            </REGION>
+    
+            <REGION REF="3">
+                <P VAR="rho"       VALUE="[1]"/>
+                <P VAR="rhou"      VALUE="[1]"/>
+                <P VAR="rhov"      VALUE="[1]"/>
+                <P VAR="E"         VALUE="[1]"/>
             </REGION>
         </BOUNDARYCONDITIONS>
-
-        <!--FUNCTION NAME="InitialConditions">
-            <E VAR="rho" VALUE="0" />
-            <E VAR="rhou" VALUE="0" />
-            <E VAR="rhov" VALUE="0" />
-            <E VAR="E" VALUE="0" />
-        </FUNCTION-->
 
     </CONDITIONS>
 
