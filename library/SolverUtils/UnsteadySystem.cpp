@@ -515,8 +515,12 @@ namespace Nektar
             outfile.open("solution1D.txt");
             for(int i = 0; i < GetNpoints(); i++)
             {
-                outfile << scientific << setw (17) << setprecision(16) << x[i]
-                        << "  " << solution1D[0][i] << endl;
+                outfile << scientific << setw (17) << setprecision(16) << x[i];
+                for(int j = 0; j < m_fields.num_elements(); j++)
+                {
+                    outfile << "  " << solution1D[j][i];
+                }
+                outfile << endl;
             }
             outfile << endl << endl;
             outfile.close();

@@ -54,7 +54,7 @@
 
         <DOMAIN> 
       	    <D ID="0"> C[0] </D>
-	</DOMAIN>
+	   </DOMAIN>
     </GEOMETRY>
 
     <EXPANSIONS>
@@ -68,10 +68,10 @@
             <P> FinTime        = 40e-6               </P>
             <P> NumSteps       = FinTime/TimeStep   </P>
             <P> IO_CheckSteps  = 100                </P>
-	    <P> IO_InfoSteps   = 10                 </P>
+	        <P> IO_InfoSteps   = 10                 </P>
             <P> Gamma          = 1.4                </P>
-	    <P> pInf           = 101325             </P>
-	    <P> rhoInf         = 1.225              </P>
+	        <P> pInf           = 101325             </P>
+	        <P> rhoInf         = 1.225              </P>
             <P> u0             = 0.1                </P>
             <P> uInf           = u0                 </P>
             <P> uInfL          = u0 + 0.01          </P>
