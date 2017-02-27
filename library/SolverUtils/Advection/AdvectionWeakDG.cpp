@@ -102,12 +102,12 @@ namespace Nektar
                     fluxvector[i][j] = Array<OneD, NekDouble>(nPointsTot);
                 }
             }
-
+            
             ASSERTL1(m_riemann,
                      "Riemann solver must be provided for AdvectionWeakDG.");
 
             m_fluxVector(inarray, fluxvector);
-
+            
             // Get the advection part (without numerical flux)
             for(i = 0; i < nConvectiveFields; ++i)
             {
@@ -115,7 +115,7 @@ namespace Nektar
 
                 fields[i]->IProductWRTDerivBase(fluxvector[i],tmp[i]);
             }
-
+            
             // Store forwards/backwards space along trace space
             Array<OneD, Array<OneD, NekDouble> > Fwd    (nConvectiveFields);
             Array<OneD, Array<OneD, NekDouble> > Bwd    (nConvectiveFields);
@@ -153,5 +153,6 @@ namespace Nektar
                 fields[i]->BwdTrans             (tmp[i], outarray[i]);
             }
         }
-    }//end of namespace SolverUtils
+        
+}//end of namespace SolverUtils
 }//end of namespace Nektar
