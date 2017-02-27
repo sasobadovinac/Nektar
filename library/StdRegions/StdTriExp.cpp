@@ -1405,9 +1405,10 @@ namespace Nektar
 
             if(mkey.ConstFactorExists(eFactorSVVPowerKerDiffCoeff)) // Rodrigo's power kernel
             {
-                NekDouble cutoff = (int) mkey.GetConstFactor(eFactorSVVCutoffRatio); 
+                NekDouble cutoff =  mkey.GetConstFactor(eFactorSVVCutoffRatio); 
                 NekDouble  SvvDiffCoeff  =
-                    mkey.GetConstFactor(eFactorSVVPowerKerDiffCoeff);
+                    mkey.GetConstFactor(eFactorSVVPowerKerDiffCoeff)*
+                    mkey.GetConstFactor(eFactorSVVDiffCoeff);
 
                 int cnt = 0;
                 for(int j = 0; j < nmodes_a; ++j)

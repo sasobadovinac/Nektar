@@ -374,7 +374,7 @@ namespace Nektar
                     " Power Kernel (Power ratio ="
                    + boost::lexical_cast<string>(m_sVVCutoffRatio)
                    + ", diff coeff = "
-                    + boost::lexical_cast<string>(m_sVVDiffCoeff)+"*h))");
+                    + boost::lexical_cast<string>(m_sVVDiffCoeff)+"/h))");
             }                
         }
     }
@@ -1125,7 +1125,7 @@ namespace Nektar
         
         Array<OneD, NekDouble> tmp;
         
-        Vmath::Fill(nel,velmag,diffcoeff,1);
+        Vmath::Fill(nel,1.0/velmag,diffcoeff,1);
         
         if(vel != NullNekDoubleArrayofArray)
         {
@@ -1143,7 +1143,7 @@ namespace Nektar
             for(int i = 0; i < nel; ++i)
             {
                 int nq = m_fields[0]->GetExp(i)->GetTotPoints();
-                diffcoeff[i] = sqrt(Vmath::Vmax(nq,Velmag+cnt,1));
+                diffcoeff[i] = 1.0/sqrt(Vmath::Vmax(nq,Velmag+cnt,1));
                 cnt += nq;
             }
         }
@@ -1168,11 +1168,8 @@ namespace Nektar
             NekDouble h = m_fields[0]->GetExp(i)->Integral(unit);
             h = pow(h,(NekDouble) (1.0/nvel))/((NekDouble) nmodes);
             
-            diffcoeff[i] = h; 
+            diffcoeff[i] /= h; 
         }
-
-        // divide by kinvis to be consitent for viscous solve.
-        Vmath::Smul(nel,1.0/m_kinvis,diffcoeff,1,diffcoeff,1);
     }
 
 } //end of namespace
