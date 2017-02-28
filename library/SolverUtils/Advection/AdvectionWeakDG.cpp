@@ -128,24 +128,13 @@ namespace Nektar
 
                     for (int i = 0; i < nLocalPts; ++i)
                     {
-                        m_dx[i+physOffset] = 2.0 * (z0[1]-z0[0])*jac[i];
+                        m_dx[i+physOffset] = 2.0 * (z0[1]-z0[0])*jac[n];
                     }
                 }
                 break;
             }
             case 2:
             {
-                m_gmat = Array<OneD, Array<OneD, NekDouble> >(4);
-                m_gmat[0] = Array<OneD, NekDouble>(nTotalPts);
-                m_gmat[1] = Array<OneD, NekDouble>(nTotalPts);
-                m_gmat[2] = Array<OneD, NekDouble>(nTotalPts);
-                m_gmat[3] = Array<OneD, NekDouble>(nTotalPts);
-                    
-                m_Q2D_e0 = Array<OneD, Array<OneD, NekDouble> >(nElements);
-                m_Q2D_e1 = Array<OneD, Array<OneD, NekDouble> >(nElements);
-                m_Q2D_e2 = Array<OneD, Array<OneD, NekDouble> >(nElements);
-                m_Q2D_e3 = Array<OneD, Array<OneD, NekDouble> >(nElements);
-                    
                 LibUtilities::PointsKeyVector ptsKeys;
                     
                 for (int n = 0; n < nElements; ++n)
@@ -162,21 +151,6 @@ namespace Nektar
                     base[0]->GetZW(z0, w0);
                     base[1]->GetZW(z1, w1);
 
-                    m_Q2D_e0[n] = Array<OneD, NekDouble>(nquad0);
-                    m_Q2D_e1[n] = Array<OneD, NekDouble>(nquad1);
-                    m_Q2D_e2[n] = Array<OneD, NekDouble>(nquad0);
-                    m_Q2D_e3[n] = Array<OneD, NekDouble>(nquad1);
-                        
-                    // Extract the Q factors at each edge point
-                    pFields[0]->GetExp(n)->GetEdgeQFactors(
-                                            0, auxArray1 = m_Q2D_e0[n]);
-                    pFields[0]->GetExp(n)->GetEdgeQFactors(
-                                            1, auxArray1 = m_Q2D_e1[n]);
-                    pFields[0]->GetExp(n)->GetEdgeQFactors(
-                                            2, auxArray1 = m_Q2D_e2[n]);
-                    pFields[0]->GetExp(n)->GetEdgeQFactors(
-                                            3, auxArray1 = m_Q2D_e3[n]);
-                        
                     ptsKeys = pFields[0]->GetExp(n)->GetPointsKeys();
                     nLocalPts = pFields[0]->GetExp(n)->GetTotPoints();
                     physOffset = pFields[0]->GetPhys_Offset(n);
@@ -184,9 +158,7 @@ namespace Nektar
                     jac  = pFields[0]->GetExp(n)
                         ->as<LocalRegions::Expansion2D>()->GetGeom2D()
                         ->GetMetricInfo()->GetJac(ptsKeys);
-                    gmat = pFields[0]->GetExp(n)
-                        ->as<LocalRegions::Expansion2D>()->GetGeom2D()
-                        ->GetMetricInfo()->GetDerivFactors(ptsKeys);
+
                         
                     if (pFields[0]->GetExp(n)->as<LocalRegions::Expansion2D>()->
                         GetGeom2D()->GetMetricInfo()->GetGtype()
@@ -195,33 +167,16 @@ namespace Nektar
                         for (int i = 0; i < nLocalPts; ++i)
                         {
                             m_dx[i+physOffset] = 2.0 * (z0[1]-z0[0])*jac[i];
-                            m_gmat[0][i+physOffset] = gmat[0][i];
-                            m_gmat[1][i+physOffset] = gmat[1][i];
-                            m_gmat[2][i+physOffset] = gmat[2][i];
-                            m_gmat[3][i+physOffset] = gmat[3][i];
                         }
                     }
                     else
                     {
                         for (int i = 0; i < nLocalPts; ++i)
                         {
-                            m_dx[i+physOffset] = 2.0 * (jac[0] / (nLocalPts-1));
-                            m_gmat[0][i+physOffset] = gmat[0][0];
-                            m_gmat[1][i+physOffset] = gmat[1][0];
-                            m_gmat[2][i+physOffset] = gmat[2][0];
-                            m_gmat[3][i+physOffset] = gmat[3][0];
+                            m_dx[i+physOffset] = 2.0 * (z0[1]-z0[0])*jac[n];
                         }
                     }
                 }
-                    
-                m_traceNormals = Array<OneD, Array<OneD, NekDouble> >(
-                                                            nDimensions);
-                for(int i = 0; i < nDimensions; ++i)
-                {
-                    m_traceNormals[i] = Array<OneD, NekDouble> (nTracePts);
-                }
-                pFields[0]->GetTrace()->GetNormals(m_traceNormals);
-                    
                 break;
             }
             case 3:
@@ -261,6 +216,8 @@ namespace Nektar
             int nPointsTot      = fields[0]->GetTotPoints();
             int nCoeffs         = fields[0]->GetNcoeffs();
             int nTracePointsTot = fields[0]->GetTrace()->GetTotPoints();
+            int nElements       = fields[0]->GetExpSize();
+
             int i, j;
             
             Array<OneD, Array<OneD, NekDouble> > tmp(nConvectiveFields);
@@ -295,11 +252,11 @@ namespace Nektar
             Array<OneD, Array<OneD, NekDouble> > Fwd    (nConvectiveFields);
             Array<OneD, Array<OneD, NekDouble> > Bwd    (nConvectiveFields);
             Array<OneD, Array<OneD, NekDouble> > numflux(nConvectiveFields);
-
+            
             if (pFwd == NullNekDoubleArrayofArray ||
                 pBwd == NullNekDoubleArrayofArray)
             {
-                for(i = 0; i < nConvectiveFields; ++i)
+                for (i = 0; i < nConvectiveFields; ++i)
                 {
                     Fwd[i]     = Array<OneD, NekDouble>(nTracePointsTot, 0.0);
                     Bwd[i]     = Array<OneD, NekDouble>(nTracePointsTot, 0.0);
@@ -309,14 +266,14 @@ namespace Nektar
             }
             else
             {
-                for(i = 0; i < nConvectiveFields; ++i)
+                for (i = 0; i < nConvectiveFields; ++i)
                 {
                     Fwd[i]     = pFwd[i];
                     Bwd[i]     = pBwd[i];
                     numflux[i] = Array<OneD, NekDouble>(nTracePointsTot, 0.0);
                 }
             }
-
+            
             m_riemann->Solve(m_spaceDim, Fwd, Bwd, numflux, m_dx);
 
             // Evaulate <\phi, \hat{F}\cdot n> - OutField[i]

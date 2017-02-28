@@ -103,10 +103,10 @@ namespace Nektar
         NekDouble EfR = uR * (ER + pR);
 
         
-        std::cout << "dt      = " << dt      << std::endl;
-        std::cout << "dx      = " << dx      << std::endl;
-        // std::cout << "dxForce = " << dxForce << std::endl;
-        // std::cout << "alpha   = " << alpha   << std::endl;
+        //std::cout << "dt      = " << dt      << std::endl;
+        //std::cout << "dx      = " << dx      << std::endl;
+        //std::cout << "dxForce = " << dxForce << std::endl;
+        //std::cout << "alpha   = " << alpha   << std::endl;
 
         
         // Lax-Wendroff alpha Riemann cons vars
