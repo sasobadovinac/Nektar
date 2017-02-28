@@ -103,22 +103,22 @@ namespace Nektar
         NekDouble EfR = uR * (ER + pR);
 
         
-        //std::cout << "dt      = " << dt      << std::endl;
-        //std::cout << "dx      = " << dx      << std::endl;
-        //std::cout << "dxForce = " << dxForce << std::endl;
-        //std::cout << "alpha   = " << alpha   << std::endl;
+        std::cout << "dt      = " << dt      << std::endl;
+        std::cout << "dx      = " << dx      << std::endl;
+        // std::cout << "dxForce = " << dxForce << std::endl;
+        // std::cout << "alpha   = " << alpha   << std::endl;
 
         
         // Lax-Wendroff alpha Riemann cons vars
         NekDouble rhoLW = 0.5 * (rhoL + rhoR)
-                        - 0.5 * alpha * dt / dx * (rhofR - rhofL);
+                        - 0.5 * alpha * dt / dxForce * (rhofR - rhofL);
         NekDouble rhouLW = 0.5 * (rhouL + rhouR)
-                         - 0.5 * alpha * dt / dx * (rhoufR - rhoufL);
+                         - 0.5 * alpha * dt / dxForce * (rhoufR - rhoufL);
         NekDouble rhovLW = 0.5 * ( rhovL + rhovR )
-                         - 0.5 * alpha * dt / dx * (rhovfR - rhovfL);
+                         - 0.5 * alpha * dt / dxForce * (rhovfR - rhovfL);
         NekDouble rhowLW = 0.5 * ( rhowL + rhowR )
-                         - 0.5 * alpha * dt / dx * (rhowfR - rhowfL);
-        NekDouble ELW = 0.5 * (EL + ER) - 0.5 * alpha * dt / dx * (EfR - EfL);
+                         - 0.5 * alpha * dt / dxForce * (rhowfR - rhowfL);
+        NekDouble ELW = 0.5 * (EL + ER) - 0.5 * alpha * dt / dxForce * (EfR - EfL);
 
         // Lax-Wendroff alpha velocities
         NekDouble uLW = rhouLW / rhoLW;
@@ -138,15 +138,15 @@ namespace Nektar
 
         // Lax-Friedrics alpha Riemann fluxes
         NekDouble rhofLF = 0.5 * ( rhofL + rhofR )
-            - 0.5 / alpha * dx / dt * ( rhoR - rhoL );
+            - 0.5 / alpha * dxForce / dt * ( rhoR - rhoL );
         NekDouble rhoufLF = 0.5 * ( rhoufL + rhoufR )
-            - 0.5 / alpha * dx / dt * ( rhouR - rhouL );
+            - 0.5 / alpha * dxForce / dt * ( rhouR - rhouL );
         NekDouble rhovfLF = 0.5 * ( rhovfL + rhovfR )
-            - 0.5 / alpha * dx / dt * ( rhovR - rhovL );
+            - 0.5 / alpha * dxForce / dt * ( rhovR - rhovL );
         NekDouble rhowfLF = 0.5 * ( rhowfL + rhowfR )
-            - 0.5 / alpha * dx / dt * ( rhowR - rhowL );
+            - 0.5 / alpha * dxForce / dt * ( rhowR - rhowL );
         NekDouble EfLF = 0.5 * ( EfL + EfR )
-            - 0.5 / alpha * dx / dt * ( ER - EL );
+            - 0.5 / alpha * dxForce / dt * ( ER - EL );
 
         // FORCE Riemann fluxes 
         rhof  = 0.5 * ( rhofLW + rhofLF );

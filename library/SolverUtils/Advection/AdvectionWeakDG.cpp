@@ -115,13 +115,20 @@ namespace Nektar
                     nLocalPts = pFields[0]->GetExp(n)->GetTotPoints();
     
                     physOffset = pFields[0]->GetPhys_Offset(n);
+                    base       = pFields[0]->GetExp(n)->GetBase();
+
                     jac = pFields[0]->GetExp(n)->
                             as<LocalRegions::Expansion1D>()->GetGeom1D()->
                                 GetMetricInfo()->GetJac(ptsKeys);
                         
+                    Array<OneD, const NekDouble> z0;
+                    Array<OneD, const NekDouble> w0;
+                    
+                    base[0]->GetZW(z0, w0);
+
                     for (int i = 0; i < nLocalPts; ++i)
                     {
-                        m_dx[i+physOffset] = 2.0 * (jac[0] / nLocalPts-1);
+                        m_dx[i+physOffset] = 2.0 * (z0[1]-z0[0])*jac[i];
                     }
                 }
                 break;
@@ -147,6 +154,14 @@ namespace Nektar
                     nquad0      = base[0]->GetNumPoints();
                     nquad1      = base[1]->GetNumPoints();
                         
+                    Array<OneD, const NekDouble> z0;
+                    Array<OneD, const NekDouble> w0;   
+                    Array<OneD, const NekDouble> z1;
+                    Array<OneD, const NekDouble> w1;
+                        
+                    base[0]->GetZW(z0, w0);
+                    base[1]->GetZW(z1, w1);
+
                     m_Q2D_e0[n] = Array<OneD, NekDouble>(nquad0);
                     m_Q2D_e1[n] = Array<OneD, NekDouble>(nquad1);
                     m_Q2D_e2[n] = Array<OneD, NekDouble>(nquad0);
@@ -179,7 +194,7 @@ namespace Nektar
                     {
                         for (int i = 0; i < nLocalPts; ++i)
                         {
-                            m_dx[i+physOffset] = 2.0 * (jac[i] / (nquad0-1));
+                            m_dx[i+physOffset] = 2.0 * (z0[1]-z0[0])*jac[i];
                             m_gmat[0][i+physOffset] = gmat[0][i];
                             m_gmat[1][i+physOffset] = gmat[1][i];
                             m_gmat[2][i+physOffset] = gmat[2][i];
