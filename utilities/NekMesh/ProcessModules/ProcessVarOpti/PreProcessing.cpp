@@ -168,6 +168,20 @@ map<LibUtilities::ShapeType, DerivUtilSharedPtr> ProcessVarOpti::BuildDerivUtil(
 
 
 
+struct NodeComparator
+{
+    const vector<int> & value_vector;
+
+    NodeComparator(const vector<int> & val_vec):
+        value_vector(val_vec) {}
+
+    bool operator()(int i1, int i2)
+    {
+        return value_vector[i1] > value_vector[i2];
+    }
+};
+
+
 
 vector<vector<NodeSharedPtr> > ProcessVarOpti::GetColouredNodes(
     vector<ElUtilSharedPtr> elLock)
@@ -263,10 +277,9 @@ vector<vector<NodeSharedPtr> > ProcessVarOpti::GetColouredNodes(
 
     
     //create vector of free nodes which "remain", hence will be included in the coloursets
-    //vector<NodeSharedPtr> remain_vertex;
-    vector<NodeSharedPtr> remain_edge;
-    vector<NodeSharedPtr> remain_face;
-    vector<NodeSharedPtr> remain_volume;
+    vector<NodeSharedPtr> remainEdgeVertex;
+    vector<NodeSharedPtr> remainFace;
+    vector<NodeSharedPtr> remainVolume;
     m_res->nDoF = 0;
 
     // check if vertex nodes are in boundary or ignored nodes, otherwise add to EDGE-VERTEX remain nodes
@@ -278,7 +291,7 @@ vector<vector<NodeSharedPtr> > ProcessVarOpti::GetColouredNodes(
         NodeSet::iterator nit3 = ignoredNodes.find(*nit);
         if (nit2 == boundaryNodes.end() && nit3 == ignoredNodes.end())
         {
-            remain_edge.push_back(*nit);
+            remainEdgeVertex.push_back(*nit);
             if ((*nit)->GetNumCadCurve() == 1)
             {
                 m_res->nDoF++;
@@ -294,7 +307,7 @@ vector<vector<NodeSharedPtr> > ProcessVarOpti::GetColouredNodes(
         }
     }
 
-    // check if edge nodes are in boundary or ignored nodes, otherwise add to remain nodes    
+    // check if edge nodes are in boundary or ignored nodes, otherwise add to EDGE-VERTEX remain nodes    
     EdgeSet::iterator eit;
     for (eit = m_mesh->m_edgeSet.begin(); eit != m_mesh->m_edgeSet.end(); eit++)
     {
@@ -305,7 +318,7 @@ vector<vector<NodeSharedPtr> > ProcessVarOpti::GetColouredNodes(
             NodeSet::iterator nit3 = ignoredNodes.find(n[j]);
             if (nit2 == boundaryNodes.end() && nit3 == ignoredNodes.end())
             {
-                remain_edge.push_back(n[j]);
+                remainEdgeVertex.push_back(n[j]);
                 if (n[j]->GetNumCadCurve() == 1)
                 {
                     m_res->nDoF++;
@@ -322,7 +335,7 @@ vector<vector<NodeSharedPtr> > ProcessVarOpti::GetColouredNodes(
         }
     }
 
-    // check if face nodes are in boundary or ignored nodes, otherwise add to remain nodes    
+    // check if face nodes are in boundary or ignored nodes, otherwise add to FACE remain nodes    
     FaceSet::iterator fit;
     for (fit = m_mesh->m_faceSet.begin(); fit != m_mesh->m_faceSet.end(); fit++)
     {
@@ -332,7 +345,7 @@ vector<vector<NodeSharedPtr> > ProcessVarOpti::GetColouredNodes(
             NodeSet::iterator nit3 = ignoredNodes.find((*fit)->m_faceNodes[j]);
             if (nit2 == boundaryNodes.end() && nit3 == ignoredNodes.end())
             {
-                remain_face.push_back((*fit)->m_faceNodes[j]);
+                remainFace.push_back((*fit)->m_faceNodes[j]);
                 if ((*fit)->m_faceNodes[j]->GetNumCADSurf() == 1)
                 {
                     m_res->nDoF += 2;
@@ -345,7 +358,7 @@ vector<vector<NodeSharedPtr> > ProcessVarOpti::GetColouredNodes(
         }
     }
 
-    // check if volume nodes are in boundary or ignored nodes, otherwise add to remain nodes
+    // check if volume nodes are in boundary or ignored nodes, otherwise add to VOLUME remain nodes
     for (int i = 0; i < m_mesh->m_element[m_mesh->m_expDim].size(); i++)
     {
         vector<NodeSharedPtr> ns =
@@ -356,90 +369,78 @@ vector<vector<NodeSharedPtr> > ProcessVarOpti::GetColouredNodes(
             NodeSet::iterator nit3 = ignoredNodes.find(ns[j]);
             if (nit2 == boundaryNodes.end() && nit3 == ignoredNodes.end())
             {
-                remain_volume.push_back(ns[j]);
+                remainVolume.push_back(ns[j]);
                 m_res->nDoF += m_mesh->m_spaceDim;
             }
         }
     }
 
     // size of all free nodes to be included in the coloursets
-    m_res->n = remain_edge.size() // + remain_vertex.size()
-                + remain_face.size() + remain_volume.size();
+    m_res->n = remainEdgeVertex.size()
+                + remainFace.size() + remainVolume.size();
 
     // data structure for coloursets, that will ultimately contain all free nodes
     vector<vector<NodeSharedPtr> > ret;
-    vector<vector<NodeSharedPtr> > ret_part;
+    vector<vector<NodeSharedPtr> > retPart;
 
-// edge and vertex nodes
-    // create vector el of number of associated elements
-    vector<int> ele(remain_edge.size());
-    for (int i = 0; i < remain_edge.size(); i++)
+
+    // edge and vertex nodes
+    // create vector num_el of number of associated elements of each node
+    vector<int> num_el(remainEdgeVertex.size());
+    for (int i = 0; i < remainEdgeVertex.size(); i++)
     {
-        NodeElMap::iterator it = m_nodeElMap.find(remain_edge[i]->m_id); //try to find node within all elements       
+        //try to find node within all elements       
+        NodeElMap::iterator it = m_nodeElMap.find(remainEdgeVertex[i]->m_id); 
         vector<ElUtilSharedPtr> &elUtils = it->second;       
-        ele[i] = elUtils.size();
+        num_el[i] = elUtils.size();
     }
-    // finding the permutation according to el
-    vector<int> pe(remain_edge.size());
-    for (int i = 0; i < remain_edge.size(); ++i)
+    // finding the permutation according to num_el
+    vector<int> permNode(remainEdgeVertex.size());
+    for (int i = 0; i < remainEdgeVertex.size(); ++i)
     {
-        pe[i] = i;
-    }
-    
-    std::sort(pe.begin(),pe.end(),[&] (int i, int j){return (ele[i] > ele[j]); }); // sort in descending order    
-    
-    // applying the permutation to remain_edge
-    vector<NodeSharedPtr> remain_edge_sort(remain_edge.size());    
-    //std::transform(pe.begin(), pe.end(), remain_edge_sort.begin(),[&](int i){ return remain_edge[i]; });    
-    for (int i = 0; i < remain_edge.size(); ++i)
+        permNode[i] = i;
+    }    
+    std::sort(permNode.begin(), permNode.end(), NodeComparator(num_el));        
+    // applying the permutation to remainEdgeVertex
+    vector<NodeSharedPtr> remainEdgeVertexSort(remainEdgeVertex.size());    
+    for (int i = 0; i < remainEdgeVertex.size(); ++i)
     {
-        int j = pe[i];
-        remain_edge_sort[i] = remain_edge[j];
+        int j = permNode[i];
+        remainEdgeVertexSort[i] = remainEdgeVertex[j];
     }
 
-    ret_part = CreateColoursets(remain_edge_sort);
+    retPart = CreateColoursets(remainEdgeVertexSort);
     if(m_mesh->m_verbose)
     {
-        printf("\nNumber of Edge/Vertex Coloursets: %i\n", ret_part.size());
+        printf("\nNumber of Edge/Vertex Coloursets: %i\n", retPart.size());
     }
-    for (int i = 0; i < ret_part.size(); i++)
+    for (int i = 0; i < retPart.size(); i++)
     {
-        if(m_mesh->m_verbose)
-        {
-            printf("Size of Edge/Vertex-Colourset %i: %i\n", i, ret_part[i].size());
-        }
-        ret.push_back(ret_part[i]);
+        ret.push_back(retPart[i]);
     } 
 
 
-// face nodes
-    ret_part = CreateColoursets(remain_face);
+    // face nodes
+    retPart = CreateColoursets(remainFace);
     if(m_mesh->m_verbose)
     {
-        printf("\nNumber of Face Coloursets: %i\n" ,ret_part.size());
+        printf("\nNumber of Face Coloursets: %i\n" ,retPart.size());
     }
-    for (int i = 0; i < ret_part.size(); i++)
+    for (int i = 0; i < retPart.size(); i++)
     {
-        if(m_mesh->m_verbose)
-        {
-            printf("Size of Face-Colourset %i: %i\n", i, ret_part[i].size());
-        }
-        ret.push_back(ret_part[i]);
+        ret.push_back(retPart[i]);
     }
 
-// volume nodes
-    ret_part = CreateColoursets(remain_volume);
+
+    // volume nodes
+    retPart = CreateColoursets(remainVolume);
     if(m_mesh->m_verbose)
     {
-        printf("\nNumber of Volume Coloursets: %i\n", ret_part.size());
+        printf("\nNumber of Volume Coloursets: %i\n", retPart.size());
     }
-    for (int i = 0; i < ret_part.size(); i++)
+    for (int i = 0; i < retPart.size(); i++)
     {
-        if(m_mesh->m_verbose)
-        {
-            printf("Size of Volume-Colourset %i: %i\n", i, ret_part[i].size());
-        }
-        ret.push_back(ret_part[i]);        
+        ret.push_back(retPart[i]);        
     }
 
 
@@ -454,7 +455,7 @@ vector<vector<NodeSharedPtr> > ProcessVarOpti::GetColouredNodes(
 vector<vector<NodeSharedPtr> > ProcessVarOpti::CreateColoursets(
          vector<NodeSharedPtr> remain)
 {
-    vector<vector<NodeSharedPtr> > ret_part;
+    vector<vector<NodeSharedPtr> > retPart;
 
     // loop until all free nodes have been sorted
     while (remain.size() > 0)
@@ -503,7 +504,7 @@ vector<vector<NodeSharedPtr> > ProcessVarOpti::CreateColoursets(
         }
 
         // include layer or colourset into vector of coloursets
-        ret_part.push_back(layer);
+        retPart.push_back(layer);
         
         // print out progress
         if(m_mesh->m_verbose)
@@ -512,7 +513,7 @@ vector<vector<NodeSharedPtr> > ProcessVarOpti::CreateColoursets(
         }
 
     }
-    return ret_part;
+    return retPart;
 }
 
 
