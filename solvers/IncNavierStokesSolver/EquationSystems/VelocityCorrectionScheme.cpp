@@ -34,6 +34,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <IncNavierStokesSolver/EquationSystems/VelocityCorrectionScheme.h>
+#include <LocalRegions/Expansion2D.h>
 #include <LocalRegions/Expansion3D.h>
 #include <LibUtilities/BasicUtils/Timer.h>
 #include <SolverUtils/Core/Misc.h>
@@ -1125,7 +1126,7 @@ namespace Nektar
         
         Array<OneD, NekDouble> tmp;
         
-        Vmath::Fill(nel,1.0/velmag,diffcoeff,1);
+        Vmath::Fill(nel,velmag,diffcoeff,1);
         
         if(vel != NullNekDoubleArrayofArray)
         {
@@ -1143,7 +1144,7 @@ namespace Nektar
             for(int i = 0; i < nel; ++i)
             {
                 int nq = m_fields[0]->GetExp(i)->GetTotPoints();
-                diffcoeff[i] = 1.0/sqrt(Vmath::Vmax(nq,Velmag+cnt,1));
+                diffcoeff[i] = sqrt(Vmath::Vmax(nq,Velmag+cnt,1));
                 cnt += nq;
             }
         }
@@ -1152,24 +1153,44 @@ namespace Nektar
             nvel = m_expdim;
         }
         
-        for(int i = 0; i < nel; ++i)
+        if(m_expdim == 3)
         {
-            int nq = m_fields[0]->GetExp(i)->GetTotPoints();
-            Array<OneD, NekDouble> unit(nq,1.0);
-            
-            int nmodes = 0;
-            
-            for(int n = 0; n < m_fields[0]->GetExp(i)->GetNumBases(); ++n)
+#if 1
+            ASSERTL0(false,"Need to set up h estimate");
+#else
+            LocalRegions::Expansion3DSharedPtr exp3D;
+            for (int e = 0; e < nel; e++)
             {
-                nmodes = max(nmodes,
-                             m_fields[0]->GetExp(i)->GetBasisNumModes(n));
+                exp3D = m_fields[0]->GetExp(e)->as<LocalRegions::Expansion3D>();
+                NekDouble h = 0; 
+                for(int i = 0; i < exp3D->GetNedges(); ++i)
+                {
+                    
+                    h = max(h, exp3D->GetGeom3D()->GetEdge(i)->GetVertex(0)->dist(
+                             *(exp3D->GetGeom3D()->GetEdge(i)->GetVertex(1))));
+                }
+                diffcoeff[e] *= h; 
+            }
+#endif
+        }
+        else
+        {
+            LocalRegions::Expansion2DSharedPtr exp2D;
+            for (int e = 0; e < nel; e++)
+            {
+                exp2D = m_fields[0]->GetExp(e)->as<LocalRegions::Expansion2D>();
+                NekDouble h = 0;
+                for(int i = 0; i < exp2D->GetNedges(); ++i)
+                {
+                    
+                   h = max(h, exp2D->GetGeom2D()->GetEdge(i)->GetVertex(0)->dist(
+                             *(exp2D->GetGeom2D()->GetEdge(i)->GetVertex(1))));
+                }
+                diffcoeff[e] *= h; 
             }
             
-            NekDouble h = m_fields[0]->GetExp(i)->Integral(unit);
-            h = pow(h,(NekDouble) (1.0/nvel))/((NekDouble) nmodes);
-            
-            diffcoeff[i] /= h; 
         }
+        
     }
 
 } //end of namespace
