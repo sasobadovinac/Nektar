@@ -366,7 +366,7 @@ namespace Nektar
                    " Exp Kernel(cut-off = "
                    + boost::lexical_cast<string>(m_sVVCutoffRatio)
                    + ", diff coeff = "
-                   + boost::lexical_cast<string>(m_sVVDiffCoeff)+"))");
+                   + boost::lexical_cast<string>(m_sVVDiffCoeff)+"*Uh/p))");
             }
             else
             {
@@ -1169,7 +1169,14 @@ namespace Nektar
                     h = max(h, exp3D->GetGeom3D()->GetEdge(i)->GetVertex(0)->dist(
                              *(exp3D->GetGeom3D()->GetEdge(i)->GetVertex(1))));
                 }
-                diffcoeff[e] *= h; 
+
+                NekDouble p;
+                for(int i = 0; i < 3; ++i)
+                {
+                    p = max(p,exp2d->GetBasisNumModes(i)-1.0);
+                }
+                
+                diffcoeff[e] *= h/p; 
             }
 #endif
         }
@@ -1186,7 +1193,14 @@ namespace Nektar
                    h = max(h, exp2D->GetGeom2D()->GetEdge(i)->GetVertex(0)->dist(
                              *(exp2D->GetGeom2D()->GetEdge(i)->GetVertex(1))));
                 }
-                diffcoeff[e] *= h; 
+
+                NekDouble p;
+                for(int i = 0; i < 2; ++i)
+                {
+                    p = max(p,exp2D->GetBasisNumModes(i)-1.0);
+                }
+                
+                diffcoeff[e] *= h/p; 
             }
             
         }
