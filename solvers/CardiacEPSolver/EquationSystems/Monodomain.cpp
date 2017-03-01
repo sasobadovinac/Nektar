@@ -119,11 +119,11 @@ namespace Nektar
             {
                 if (i == j)
                 {
-                    m_vardiff[varCoeffEnum[k]] = Array<OneD, NekDouble>(nq, 1.0);
+                    m_vardiff[varCoeffEnum[k]] = Array<OneD,NekDouble>(nq, 1.0);
                 }
                 else
                 {
-                    m_vardiff[varCoeffEnum[k]] = Array<OneD, NekDouble>(nq, 0.0);
+                    m_vardiff[varCoeffEnum[k]] = Array<OneD,NekDouble>(nq, 0.0);
                 }
                 ++k;
             }
@@ -137,7 +137,7 @@ namespace Nektar
             {
                 cout << "Loading Anisotropic Fibre map." << endl;
             }
-
+            
             NekDouble   o_min        = m_session->GetParameter("o_min");
             NekDouble   o_max        = m_session->GetParameter("o_max");
             int         k            = 0;

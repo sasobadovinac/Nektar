@@ -176,11 +176,17 @@ namespace Nektar
         LibUtilities::TimeIntegrationSchemeOperators
             m_subStepIntegrationOps;
 
+
+        
     private:
         
         // Risk-free interest rate and volatility
         NekDouble m_interest;
         NekDouble m_volatility;
+
+        /// Variable diffusivity
+        StdRegions::VarCoeffMap m_vardiff;
+
     };
 }
 

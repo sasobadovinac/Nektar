@@ -29,7 +29,7 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 //
-// Description: BS solve routines
+// Description: Black Scholes solve routines
 //
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -66,22 +66,84 @@ namespace Nektar
                                    m_subSteppingScheme, false);
         
         // Define Velocity fields
+        const int nq            = m_fields[0]->GetNpoints();
         m_stockPrice = Array<OneD, Array<OneD, NekDouble> >(m_spacedim);
+#if 0 
         std::vector<std::string> stock;
         stock.push_back("Vx");
         stock.push_back("Vy");
         stock.push_back("Vz");
         stock.resize(m_spacedim);
-        
         EvaluateFunction(stock, m_stockPrice, "AdvectionFactor");
+#else
+        Array<OneD, Array<OneD, NekDouble> > coords(m_spacedim);
 
+        // load local coords into stockprice
+        m_stockPrice[0] = Array<OneD, NekDouble> (nq);
+        coords[0] = Array<OneD, NekDouble> (nq);
+        if(m_spacedim == 1)
+        {
+            m_fields[0]->GetCoords(coords[0]);
+        }
+        else if(m_spacedim == 2)
+        {
+            m_stockPrice[1] = Array<OneD, NekDouble> (nq);
+            coords[1] = Array<OneD, NekDouble> (nq);
+            m_fields[0]->GetCoords(coords[0], coords[1]);
+            
+        }
+#endif
+        
         // Multiply the underlying stock price at time \tau = T - t
         // by the free-risk interest-rate, that is: r * S
         for (int i = 0; i < m_spacedim; ++i)
         {
             Vmath::Smul(m_stockPrice[0].num_elements(), m_interest,
-                        m_stockPrice[i], 1, m_stockPrice[i], 1);
+                        coords[i], 1, m_stockPrice[i], 1);
         }
+        
+        // Define diffuion variable containers
+        StdRegions::VarCoeffType varCoeffEnum[3] = {
+                StdRegions::eVarCoeffD00,
+                StdRegions::eVarCoeffD01,
+                StdRegions::eVarCoeffD11
+        };
+
+        std::string varCoeffString[3] = {"xx","xy","yy"};
+
+        const int nVarDiffCmpts = m_spacedim * (m_spacedim + 1) / 2;
+
+        // Allocate storage for variable coeffs and initialize to 1.
+        for (int i = 0, k = 0; i < m_spacedim; ++i)
+        {
+            for (int j = 0; j < i+1; ++j)
+            {
+                if (i == j)
+                {
+                    m_vardiff[varCoeffEnum[k]] = Array<OneD,NekDouble>(nq, 1.0);
+                }
+                else
+                {
+                    m_vardiff[varCoeffEnum[k]] = Array<OneD,NekDouble>(nq, 0.0);
+                }
+                ++k;
+            }
+        }
+
+
+        switch(m_spacedim)
+        {
+        case 1:
+            // Set up variable diffusivisity as volatility^2/*S 
+            Vmath::Smul(m_stockPrice[0].num_elements(),
+                        0.5*m_volatility*m_volatility,
+                        coords[0],1,m_vardiff[varCoeffEnum[0]],1);
+            break;
+        case 2:
+        default:
+            ASSERTL0(false,"Set up variable diffusion");
+        }
+
         
         m_session->MatchSolverInfo(
             "SpectralVanishingViscosity", "True", m_useSpecVanVisc, false);
@@ -151,6 +213,16 @@ namespace Nektar
                 m_advObject = SolverUtils::GetAdvectionFactory().
                     CreateInstance(advName, advName);
                 m_advObject->SetFluxVector(&BS::GetFluxVectorAdv, this);
+                
+                // Add sigma^2/2 to advection term to handle symmetric
+                // diffusion oeprator
+                for (int i = 0; i < m_spacedim; ++i)
+                {
+                    Vmath::Sadd(m_stockPrice[0].num_elements(),
+                                0.5*m_volatility*m_volatility,
+                                m_stockPrice[i], 1, m_stockPrice[i], 1);
+                }
+
 
                 if (advName.compare("WeakDG") == 0)
                 {
@@ -318,7 +390,6 @@ namespace Nektar
         }
     }
     
-    
     /* @brief Compute the diffusion term implicitly. 
      * 
      * @param inarray    Given fields.
@@ -330,50 +401,35 @@ namespace Nektar
         const Array<OneD, const Array<OneD, NekDouble> >&inarray,
               Array<OneD,       Array<OneD, NekDouble> >&outarray,
         const NekDouble time,
-        const NekDouble lambda)
+        const NekDouble aii_Dt)
     {
         int nvariables = inarray.num_elements();
-        int nq = m_fields[0]->GetNpoints();
+        int nq         = m_fields[0]->GetNpoints();
 		
         StdRegions::ConstFactorMap factors;
-        factors[StdRegions::eFactorLambda] = 1.0/lambda/m_volatility;
+
+        // time integration terms and source term
+        factors[StdRegions::eFactorLambda] = 1.0/aii_Dt + m_interest;
         
         if(m_useSpecVanVisc)
         {
             factors[StdRegions::eFactorSVVCutoffRatio] = m_sVVCutoffRatio;
-            factors[StdRegions::eFactorSVVDiffCoeff]   = m_sVVDiffCoeff /
-                                                         m_volatility;
+            factors[StdRegions::eFactorSVVDiffCoeff]   = m_sVVDiffCoeff; 
         }
+
         if(m_projectionType == MultiRegions::eDiscontinuous)
         {
             factors[StdRegions::eFactorTau] = 1.0;
         }
 
-        Array<OneD, Array< OneD, NekDouble> > F(nvariables);
-        for (int n = 0; n < nvariables; ++n)
-        {
-            F[n] = Array<OneD, NekDouble> (nq);
-        }
-
-        // We solve ( \nabla^2 - HHlambda ) Y[i] = rhs [i]
-        // inarray = input: \hat{rhs} -> output: \hat{Y}
-        // outarray = output: nabla^2 \hat{Y}
-        // where \hat = modal coeffs
-        for (int i = 0; i < nvariables; ++i)
-        {
-            // Multiply 1.0/timestep/lambda
-            Vmath::Smul(nq, -factors[StdRegions::eFactorLambda], 
-                        inarray[i], 1, F[i], 1);
-        }
-        
         //Setting boundary conditions
         SetBoundaryConditions(time);
         
         for (int i = 0; i < nvariables; ++i)
         {
             // Solve a system of equations with Helmholtz solver
-            m_fields[i]->HelmSolve(F[i], m_fields[i]->UpdateCoeffs(), 
-                                   NullFlagList, factors);
+            m_fields[i]->HelmSolve(inarray[i], m_fields[i]->UpdateCoeffs(), 
+                                   NullFlagList, factors, m_vardiff);
             
             m_fields[i]->BwdTrans(m_fields[i]->GetCoeffs(), outarray[i]);
         }
