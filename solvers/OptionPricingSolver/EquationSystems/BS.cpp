@@ -42,7 +42,7 @@ using namespace std;
 namespace Nektar
 {
     string BS::className = SolverUtils::GetEquationSystemFactory().
-        RegisterCreatorFunction("BS", BS::create, "BS equation.");
+        RegisterCreatorFunction("BlackScholes", BS::create, "Black Scholes equation.");
     
     BS::BS(const LibUtilities::SessionReaderSharedPtr& pSession)
             : UnsteadySystem(pSession), AdvectionSystem(pSession)
