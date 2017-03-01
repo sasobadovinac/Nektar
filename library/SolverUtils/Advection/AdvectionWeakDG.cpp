@@ -224,6 +224,9 @@ namespace Nektar
             Array<OneD, Array<OneD, Array<OneD, NekDouble> > > fluxvector(
                 nConvectiveFields);
 
+
+            std::cout << std::setprecision(16);
+            
             // Allocate storage for flux vector F(u).
             for (i = 0; i < nConvectiveFields; ++i)
             {
