@@ -318,6 +318,9 @@ void ProcessVarOpti::Process()
     if (m_config["resfile"].beenSet)
     {
         resFile.open(m_config["resfile"].as<string>().c_str());
+        resFile << "Number of Threads: " << nThreads << endl;
+        resFile << "N elements:\t\t" << m_mesh->m_element[m_mesh->m_expDim].size() - elLock.size() << endl;
+        resFile << "N Dof:\t\t\t" << m_res->nDoF << endl;
     }
 
     for (int i = 0; i < optiNodes.size(); i++)
@@ -422,12 +425,14 @@ void ProcessVarOpti::Process()
         }
         histFile.close();
     }
-    if (m_config["resfile"].beenSet)
-    {
-        resFile.close();
-    }
 
     t.Stop();
+
+    if (m_config["resfile"].beenSet)
+    {
+        resFile << "Time to compute: " << t.TimePerTest(1) << endl;
+        resFile.close();
+    }    
 
     RemoveLinearCurvature();
 
