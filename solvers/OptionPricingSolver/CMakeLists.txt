@@ -10,4 +10,5 @@ IF( NEKTAR_SOLVER_OPTIONPRICING )
     ADD_SOLVER_EXECUTABLE(OptionPricingSolver solvers 
         ${OptionPricingSolverSource})
 
+    ADD_NEKTAR_TEST(BlackScholes1DTest)
 ENDIF( NEKTAR_SOLVER_OPTIONPRICING )
