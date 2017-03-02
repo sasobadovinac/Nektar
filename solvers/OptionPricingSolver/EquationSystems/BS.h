@@ -40,6 +40,7 @@
 #include <SolverUtils/AdvectionSystem.h>
 #include <SolverUtils/Diffusion/Diffusion.h>
 #include <SolverUtils/RiemannSolvers/RiemannSolver.h>
+#include <SolverUtils/Forcing/Forcing.h>
 
 
 namespace Nektar
@@ -89,6 +90,9 @@ namespace Nektar
 
         /// Session reader
         BS(const LibUtilities::SessionReaderSharedPtr& pSession);
+
+        /// Forcing terms
+        std::vector<SolverUtils::ForcingSharedPtr>               m_forcing;
 
         /// Evaluate the flux at each solution point for the advection part
         void GetFluxVectorAdv(

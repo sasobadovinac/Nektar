@@ -131,6 +131,10 @@ namespace Nektar
         }
 
 
+        // Forcing terms
+        m_forcing = SolverUtils::Forcing::Load(m_session, m_fields,
+                                               m_fields.num_elements());
+
         switch(m_spacedim)
         {
         case 1:
@@ -323,6 +327,13 @@ namespace Nektar
             Vmath::Neg(GetNpoints(), outarray[i], 1);
         }
 
+        // Add forcing terms
+        std::vector<SolverUtils::ForcingSharedPtr>::const_iterator x;
+        for (x = m_forcing.begin(); x != m_forcing.end(); ++x)
+        {
+            (*x)->Apply(m_fields, inarray, outarray, time);
+        }
+
         if (m_explicitDiffusion)
         {
             Array<OneD, Array<OneD, NekDouble> > outD(inarray.num_elements());
@@ -404,8 +415,7 @@ namespace Nektar
         const NekDouble aii_Dt)
     {
         int nvariables = inarray.num_elements();
-        int nq         = m_fields[0]->GetNpoints();
-		
+        int nq          = m_fields[0]->GetNpoints();
         StdRegions::ConstFactorMap factors;
 
         // time integration terms and source term
@@ -427,8 +437,13 @@ namespace Nektar
         
         for (int i = 0; i < nvariables; ++i)
         {
+            // input is aii_Dt * F so need to divide by aii_Dt
+            Vmath::Smul(nq, -1.0/aii_Dt, inarray[i], 1,
+                        m_fields[i]->UpdatePhys(), 1);
+            
             // Solve a system of equations with Helmholtz solver
-            m_fields[i]->HelmSolve(inarray[i], m_fields[i]->UpdateCoeffs(), 
+            m_fields[i]->HelmSolve(m_fields[i]->GetPhys(),
+                                   m_fields[i]->UpdateCoeffs(), 
                                    NullFlagList, factors, m_vardiff);
             
             m_fields[i]->BwdTrans(m_fields[i]->GetCoeffs(), outarray[i]);
@@ -485,6 +500,7 @@ namespace Nektar
             SolverUtils::SummaryList& s)
     {
         AdvectionSystem::v_GenerateSummary(s);
+
     }
 
     
