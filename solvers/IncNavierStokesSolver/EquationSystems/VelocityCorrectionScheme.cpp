@@ -1155,9 +1155,6 @@ namespace Nektar
         
         if(m_expdim == 3)
         {
-#if 1
-            ASSERTL0(false,"Need to set up h estimate");
-#else
             LocalRegions::Expansion3DSharedPtr exp3D;
             for (int e = 0; e < nel; e++)
             {
@@ -1173,12 +1170,11 @@ namespace Nektar
                 NekDouble p;
                 for(int i = 0; i < 3; ++i)
                 {
-                    p = max(p,exp2d->GetBasisNumModes(i)-1.0);
+                    p = max(p,exp3D->GetBasisNumModes(i)-1.0);
                 }
                 
                 diffcoeff[e] *= h/p; 
             }
-#endif
         }
         else
         {

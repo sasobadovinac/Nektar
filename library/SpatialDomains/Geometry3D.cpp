@@ -76,6 +76,11 @@ namespace SpatialDomains
       return v_GetEid(i);
     }
 
+    const Geometry1DSharedPtr Geometry3D::GetEdge(int i) const
+    {
+        return v_GetEdge(i);
+    }
+
     /**
     * @brief Return face i in this element.
     */
