@@ -366,7 +366,7 @@ namespace Nektar
                    " Exp Kernel(cut-off = "
                    + boost::lexical_cast<string>(m_sVVCutoffRatio)
                    + ", diff coeff = "
-                   + boost::lexical_cast<string>(m_sVVDiffCoeff)+"*Uh/p))");
+                   + boost::lexical_cast<string>(m_sVVDiffCoeff)+"*))");
             }
             else
             {
@@ -375,7 +375,7 @@ namespace Nektar
                     " Power Kernel (Power ratio ="
                    + boost::lexical_cast<string>(m_sVVCutoffRatio)
                    + ", diff coeff = "
-                    + boost::lexical_cast<string>(m_sVVDiffCoeff)+"/h))");
+                    + boost::lexical_cast<string>(m_sVVDiffCoeff)+"*Uh/p))");
             }                
         }
     }
