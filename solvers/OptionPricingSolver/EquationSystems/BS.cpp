@@ -42,7 +42,8 @@ using namespace std;
 namespace Nektar
 {
     string BS::className = SolverUtils::GetEquationSystemFactory().
-        RegisterCreatorFunction("BlackScholes", BS::create, "Black Scholes equation.");
+        RegisterCreatorFunction("BlackScholes", BS::create,
+                                "Black Scholes equation.");
     
     BS::BS(const LibUtilities::SessionReaderSharedPtr& pSession)
             : UnsteadySystem(pSession), AdvectionSystem(pSession)
@@ -66,7 +67,7 @@ namespace Nektar
                                    m_subSteppingScheme, false);
         
         // Define Velocity fields
-        const int nq            = m_fields[0]->GetNpoints();
+        const int nq = m_fields[0]->GetNpoints();
         m_stockPrice = Array<OneD, Array<OneD, NekDouble> >(m_spacedim);
 #if 0 
         std::vector<std::string> stock;
@@ -76,21 +77,27 @@ namespace Nektar
         stock.resize(m_spacedim);
         EvaluateFunction(stock, m_stockPrice, "AdvectionFactor");
 #else
+        // Load local coords into stockprice
         Array<OneD, Array<OneD, NekDouble> > coords(m_spacedim);
-
-        // load local coords into stockprice
         m_stockPrice[0] = Array<OneD, NekDouble> (nq);
-        coords[0] = Array<OneD, NekDouble> (nq);
-        if(m_spacedim == 1)
+        coords[0]       = Array<OneD, NekDouble> (nq);
+        
+        switch (m_spacedim)
         {
-            m_fields[0]->GetCoords(coords[0]);
-        }
-        else if(m_spacedim == 2)
-        {
-            m_stockPrice[1] = Array<OneD, NekDouble> (nq);
-            coords[1] = Array<OneD, NekDouble> (nq);
-            m_fields[0]->GetCoords(coords[0], coords[1]);
-            
+            case 1:
+                m_fields[0]->GetCoords(coords[0]);
+                break;
+            case 2:
+                m_stockPrice[1] = Array<OneD, NekDouble> (nq);
+                coords[1]       = Array<OneD, NekDouble> (nq);
+                m_fields[0]->GetCoords(coords[0], coords[1]);
+                break;
+            case 3:
+                m_stockPrice[2] = Array<OneD, NekDouble> (nq);
+                coords[2]       = Array<OneD, NekDouble> (nq);
+                m_fields[0]->GetCoords(coords[0], coords[1], coords[3]);
+            default:
+                break;
         }
 #endif
         
@@ -102,7 +109,7 @@ namespace Nektar
                         coords[i], 1, m_stockPrice[i], 1);
         }
         
-        // Define diffuion variable containers
+        // Define diffusion variable containers
         StdRegions::VarCoeffType varCoeffEnum[3] = {
                 StdRegions::eVarCoeffD00,
                 StdRegions::eVarCoeffD01,
@@ -113,7 +120,7 @@ namespace Nektar
 
         const int nVarDiffCmpts = m_spacedim * (m_spacedim + 1) / 2;
 
-        // Allocate storage for variable coeffs and initialize to 1.
+        // Allocate storage for variable coeffs and initialize to 1
         for (int i = 0, k = 0; i < m_spacedim; ++i)
         {
             for (int j = 0; j < i+1; ++j)
@@ -130,29 +137,29 @@ namespace Nektar
             }
         }
 
-
         // Forcing terms
         m_forcing = SolverUtils::Forcing::Load(m_session, m_fields,
                                                m_fields.num_elements());
 
-        switch(m_spacedim)
+        switch (m_spacedim)
         {
-        case 1:
-            // Set up variable diffusivisity as volatility^2/*S 
-            Vmath::Smul(m_stockPrice[0].num_elements(),
-                        0.5*m_volatility*m_volatility,
-                        coords[0],1,m_vardiff[varCoeffEnum[0]],1);
-            break;
-        case 2:
-        default:
-            ASSERTL0(false,"Set up variable diffusion");
+            case 1:
+                // Set up variable diffusivity as 0.5 * volatility^2 * S
+                Vmath::Smul(m_stockPrice[0].num_elements(),
+                            0.5*m_volatility*m_volatility,
+                            coords[0],1,m_vardiff[varCoeffEnum[0]],1);
+                break;
+            case 2:
+            default:
+                ASSERTL0(false,"Set up variable diffusion");
+                break;
         }
 
         
         m_session->MatchSolverInfo(
             "SpectralVanishingViscosity", "True", m_useSpecVanVisc, false);
         
-        if(m_useSpecVanVisc)
+        if (m_useSpecVanVisc)
         {
             m_session->LoadParameter("SVVCutoffRatio", m_sVVCutoffRatio, 0.75);
             m_session->LoadParameter("SVVDiffCoeff"  , m_sVVDiffCoeff  , 0.10);
@@ -284,7 +291,9 @@ namespace Nektar
         return GetNormalStock(m_stockPrice);
     }
 
-
+    /**
+     * @brief Get the normal stock price for the B-S equation.
+     */
     Array<OneD, NekDouble> &BS::GetNormalStock(
         const Array<OneD, const Array<OneD, NekDouble> > &stockField)
     {
@@ -496,6 +505,9 @@ namespace Nektar
         Vmath::Vcopy(GetNpoints(), physfield[i], 1, flux[j], 1);
     }
     
+    /**
+     * Generate summary with information regarding simulation.
+     */
     void BS::v_GenerateSummary(
             SolverUtils::SummaryList& s)
     {
@@ -503,32 +515,9 @@ namespace Nektar
 
     }
 
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    // =========================================================================
-    // BELOW ALL STUFF RELATED TO  SUBSTEPPING - NOT NEEDED AT THE MOMENT
-    // =========================================================================
+    /**
+     * Perform substepping if required.
+     */
     bool BS::v_PreIntegrate(int step)
     {
         if(m_subSteppingScheme)
@@ -539,18 +528,15 @@ namespace Nektar
         return false;
     }
 
-
-    /** 
-     * 
+    /**
+     * Advance substepping time-integration.
      */
     void BS::SubStepAdvance(
         const LibUtilities::TimeIntegrationSolutionSharedPtr &integrationSoln,
         int                                                  nstep,
         NekDouble                                            time)
     {
-        int n;
         int nsubsteps;
-        
         NekDouble dt; 
         
         Array<OneD, Array<OneD, NekDouble> > fields, velfields;
@@ -590,10 +576,12 @@ namespace Nektar
                 SubIntegrationSoln = m_subStepIntegrationScheme->
                 InitializeScheme(dt, fields, time, m_subStepIntegrationOps);
             
-            for(n = 0; n < nsubsteps; ++n)
+            for(int n = 0; n < nsubsteps; ++n)
             {
-                fields = m_subStepIntegrationScheme->TimeIntegrate(n, dt, SubIntegrationSoln,
-                                                                   m_subStepIntegrationOps);
+                fields = m_subStepIntegrationScheme->TimeIntegrate(
+                            n, dt,
+                            SubIntegrationSoln,
+                            m_subStepIntegrationOps);
             }
             
             // Reset time integrated solution in m_integrationSoln 
@@ -601,25 +589,25 @@ namespace Nektar
         }
     }
     
-
-    /** 
-     * 
+    /**
+     * Get maximum substep allowed.
      */
     NekDouble BS::GetSubstepTimeStep()
     { 
-        int n_element      = m_fields[0]->GetExpSize(); 
+        int n_element = m_fields[0]->GetExpSize();
 
-        const Array<OneD, int> ExpOrder=m_fields[0]->EvalBasisNumModesMaxPerExp();
-        Array<OneD, int> ExpOrderList (n_element, ExpOrder);
+        const Array<OneD, int> ExpOrder=m_fields[0]->
+                                EvalBasisNumModesMaxPerExp();
+        Array<OneD, int> ExpOrderList(n_element, ExpOrder);
         
-        const NekDouble cLambda = 0.2; // Spencer book pag. 317
+        const NekDouble cLambda = 0.2;
         
         Array<OneD, NekDouble> tstep      (n_element, 0.0);
         Array<OneD, NekDouble> stdVelocity(n_element, 0.0);
 
         stdVelocity = GetMaxStdVelocity(m_stockPrice);
         
-        for(int el = 0; el < n_element; ++el)
+        for (int el = 0; el < n_element; ++el)
         {
             tstep[el] = m_cflSafetyFactor / 
                 (stdVelocity[el] * cLambda * 
@@ -632,6 +620,9 @@ namespace Nektar
         return TimeStep;
     }
 
+    /**
+     * Setup substepping time-integration.
+     */
     void BS::SetUpSubSteppingTimeIntegration(
         int                                                 intMethod,
         const LibUtilities::TimeIntegrationWrapperSharedPtr &IntegrationScheme)
@@ -643,36 +634,40 @@ namespace Nektar
         case LibUtilities::eBackwardEuler:
         case LibUtilities::eBDFImplicitOrder1: 
             {
-                m_subStepIntegrationScheme = LibUtilities::GetTimeIntegrationWrapperFactory().CreateInstance("ForwardEuler");
+                m_subStepIntegrationScheme = LibUtilities::
+                    GetTimeIntegrationWrapperFactory().
+                        CreateInstance("ForwardEuler");
                 
             }
             break;
         case LibUtilities::eBDFImplicitOrder2:
             {
-                m_subStepIntegrationScheme = LibUtilities::GetTimeIntegrationWrapperFactory().CreateInstance("RungeKutta2_ImprovedEuler");
+                m_subStepIntegrationScheme = LibUtilities::
+                    GetTimeIntegrationWrapperFactory().
+                        CreateInstance("RungeKutta2_ImprovedEuler");
             }
             break;
         default:
-            ASSERTL0(0,"Integration method not suitable: Options include BackwardEuler or BDFImplicitOrder1");
+            ASSERTL0(0, "Integration method not suitable: "
+                        "Options include BackwardEuler or BDFImplicitOrder1");
             break;
         }
         m_intSteps = IntegrationScheme->GetIntegrationSteps();
 	
         // set explicit time-integration class operators
-        m_subStepIntegrationOps.DefineOdeRhs(&BS::SubStepAdvection, this);
+        m_subStepIntegrationOps.DefineOdeRhs    (&BS::SubStepAdvection , this);
         m_subStepIntegrationOps.DefineProjection(&BS::SubStepProjection, this);
     }
     
     /** 
-     * Explicit Advection terms used by SubStepAdvance time integration
+     * Explicit Advection terms used by SubStepAdvance time integration.
      */
     void BS::SubStepAdvection(
         const Array<OneD, const Array<OneD, NekDouble> > &inarray,  
-        Array<OneD, Array<OneD,       NekDouble> > &outarray,
-        const NekDouble time)
+              Array<OneD,       Array<OneD, NekDouble> > &outarray,
+        const NekDouble                                  time)
     {
-        int i;
-        int nVariables     = inarray.num_elements();
+        int nVariables = inarray.num_elements();
         
         /// Get the number of coefficients
         int ncoeffs = m_fields[0]->GetNcoeffs(); 
@@ -680,21 +675,22 @@ namespace Nektar
         /// Define an auxiliary variable to compute the RHS 
         Array<OneD, Array<OneD, NekDouble> > WeakAdv(nVariables);
         WeakAdv[0] = Array<OneD, NekDouble> (ncoeffs*nVariables);
-        for(i = 1; i < nVariables; ++i)
+        for (int i = 1; i < nVariables; ++i)
         {
             WeakAdv[i] = WeakAdv[i-1] + ncoeffs;
         }
         
-        // Currently assume velocity field is time independent and does not
-        // therefore need extrapolating.
+        // Currently assume velocity field is time independent
+        // and does not therefore need extrapolating.
         // RHS computation using the advection base class
         m_advObject->Advect(nVariables, m_fields, m_stockPrice,
                             inarray, outarray, time);
 
-        for(i = 0; i < nVariables; ++i)
+        for (int i = 0; i < nVariables; ++i)
         {
-            m_fields[i]->IProductWRTBase(outarray[i],WeakAdv[i]); 
-            // negation requried due to sign of DoAdvection term to be consistent
+            m_fields[i]->IProductWRTBase(outarray[i],WeakAdv[i]);
+            
+            // Negation required due to sign of DoAdvection term
             Vmath::Neg(ncoeffs, WeakAdv[i], 1);
         }
         
@@ -702,7 +698,7 @@ namespace Nektar
 
         
         /// Operations to compute the RHS
-        for(i = 0; i < nVariables; ++i)
+        for (int i = 0; i < nVariables; ++i)
         {
             // Negate the RHS
             Vmath::Neg(ncoeffs, WeakAdv[i], 1);
@@ -716,30 +712,33 @@ namespace Nektar
     }
         
     /** 
-     * Projection used by SubStepAdvance time integration
+     * Projection used by SubStepAdvance time integration.
      */
     void BS::SubStepProjection(
         const Array<OneD, const Array<OneD, NekDouble> > &inarray,  
         Array<OneD, Array<OneD, NekDouble> > &outarray, 
         const NekDouble time)
     {
-        ASSERTL1(inarray.num_elements() == outarray.num_elements(),"Inarray and outarray of different sizes ");
+        ASSERTL1(inarray.num_elements() == outarray.num_elements(),
+                 "Inarray and outarray of different sizes ");
 
-        for(int i = 0; i < inarray.num_elements(); ++i)
+        for (int i = 0; i < inarray.num_elements(); ++i)
         {
-            Vmath::Vcopy(inarray[i].num_elements(),inarray[i],1,outarray[i],1);
+            Vmath::Vcopy(inarray[i].num_elements(),
+                         inarray[i], 1, outarray[i], 1);
         }
     }
 
+    /**
+     * Penalty flux for the LDG diffusion term.
+     */
     void BS::AddAdvectionPenaltyFlux(
-                                const Array<OneD, const Array<OneD, NekDouble> > &velfield, 
-                                const Array<OneD, const Array<OneD, NekDouble> > &physfield, 
-                                Array<OneD, Array<OneD, NekDouble> > &Outarray)
+        const Array<OneD, const Array<OneD, NekDouble> > &velfield,
+        const Array<OneD, const Array<OneD, NekDouble> > &physfield,
+              Array<OneD,       Array<OneD, NekDouble> > &Outarray)
     {
         ASSERTL1(physfield.num_elements() == Outarray.num_elements(),
                  "Physfield and outarray are of different dimensions");
-        
-        int i;
         
         /// Number of trace points
         int nTracePts   = m_fields[0]->GetTrace()->GetNpoints();
@@ -756,7 +755,7 @@ namespace Nektar
         /// Normal velocity array
         Array<OneD, NekDouble> Sn  = GetNormalStock(velfield);
         
-        for(i = 0; i < physfield.num_elements(); ++i)
+        for (int i = 0; i < physfield.num_elements(); ++i)
         {
             /// Extract forwards/backwards trace spaces
             /// Note: Needs to have correct i value to get boundary conditions
@@ -778,14 +777,16 @@ namespace Nektar
         }
     }
 
-
+    /**
+     * Get max standard velocity for each element to calculate max dt.
+     */
     Array<OneD, NekDouble> BS::GetMaxStdVelocity(
         const Array<OneD, Array<OneD,NekDouble> > inarray)
     {
         
-        int n_points_0      = m_fields[0]->GetExp(0)->GetTotPoints();
-        int n_element       = m_fields[0]->GetExpSize();       
-        int nvel            = inarray.num_elements();
+        int n_points_0 = m_fields[0]->GetExp(0)->GetTotPoints();
+        int n_element  = m_fields[0]->GetExpSize();
+        int nvel       = inarray.num_elements();
         int cnt; 
 
         ASSERTL0(nvel >= 2, "Method not implemented for 1D");
@@ -794,8 +795,8 @@ namespace Nektar
         
         // Getting the standard velocity vector on the 2D normal space
         Array<OneD, Array<OneD, NekDouble> > stdVelocity(nvel);
-        Array<OneD, NekDouble> maxV(n_element, 0.0);
-        LibUtilities::PointsKeyVector ptsKeys;
+        Array<OneD, NekDouble>               maxV(n_element, 0.0);
+        LibUtilities::PointsKeyVector        ptsKeys;
         
         for (int i = 0; i < nvel; ++i)
         {
@@ -821,10 +822,11 @@ namespace Nektar
                 }		
                 
                 Array<TwoD, const NekDouble> gmat = 
-                    m_fields[0]->GetExp(el)->GetGeom()->GetMetricInfo()->GetDerivFactors(ptsKeys);
+                    m_fields[0]->GetExp(el)->GetGeom()->GetMetricInfo()->
+                        GetDerivFactors(ptsKeys);
                 
-                if (m_fields[0]->GetExp(el)->GetGeom()->GetMetricInfo()->GetGtype()
-                    == SpatialDomains::eDeformed)
+                if (m_fields[0]->GetExp(el)->GetGeom()->GetMetricInfo()->
+                        GetGtype() == SpatialDomains::eDeformed)
                 {
                     for (int i = 0; i < n_points; i++)
                     {
@@ -867,13 +869,12 @@ namespace Nektar
         {
             cnt = 0;
             for (int el = 0; el < n_element; ++el)
-            { 
-                
+            {
                 int n_points = m_fields[0]->GetExp(el)->GetTotPoints();
                 ptsKeys = m_fields[0]->GetExp(el)->GetPointsKeys();
                 
                 // reset local space if necessary
-                if(n_points != n_points_0)
+                if (n_points != n_points_0)
                 {
                     for (int j = 0; j < nvel; ++j)
                     {
@@ -883,10 +884,11 @@ namespace Nektar
                 }		
                 
                 Array<TwoD, const NekDouble> gmat =
-                    m_fields[0]->GetExp(el)->GetGeom()->GetMetricInfo()->GetDerivFactors(ptsKeys);
+                    m_fields[0]->GetExp(el)->GetGeom()->GetMetricInfo()->
+                        GetDerivFactors(ptsKeys);
                 
-                if (m_fields[0]->GetExp(el)->GetGeom()->GetMetricInfo()->GetGtype()
-                    == SpatialDomains::eDeformed)
+                if (m_fields[0]->GetExp(el)->GetGeom()->GetMetricInfo()->
+                    GetGtype() == SpatialDomains::eDeformed)
                 {
                     for (int i = 0; i < n_points; i++)
                     {
@@ -920,7 +922,6 @@ namespace Nektar
                             + gmat[8][0]*inarray[2][i+cnt];
                     }
                 }
-                
                 cnt += n_points;
                 
                 for (int i = 0; i < n_points; i++)
@@ -934,12 +935,9 @@ namespace Nektar
                         maxV[el] = pntVelocity;
                     }
                 }
-
                 maxV[el] = sqrt(maxV[el]);
-                //cout << maxV[el]*maxV[el] << endl;
             }
         }
-		
         return maxV;
     }
 }

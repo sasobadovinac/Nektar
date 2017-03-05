@@ -173,7 +173,7 @@ namespace Nektar
         m_forcing = SolverUtils::Forcing::Load(m_session, m_fields,
                                                v_GetForceDimension());
 
-w        // check to see if any Robin boundary conditions and if so set
+        // check to see if any Robin boundary conditions and if so set
         // up m_field to boundary condition maps;
         m_fieldsBCToElmtID  = Array<OneD, Array<OneD, int> >(numfields);
         m_fieldsBCToTraceID = Array<OneD, Array<OneD, int> >(numfields);
