@@ -148,8 +148,8 @@ namespace Nektar
         const NekDouble x0    = 5.0;
         const NekDouble y0    = 0.0;
         const NekDouble beta  = 5.0;
-        const NekDouble u0    = 1.0;
-        const NekDouble v0    = 0.5;
+        const NekDouble u0    = 0.0;
+        const NekDouble v0    = 1.0;
         const NekDouble gamma = m_gamma;
         NekDouble r, xbar, ybar, tmp;
         NekDouble fac = 1.0/(16.0*gamma*M_PI*M_PI);

@@ -93,6 +93,7 @@ namespace Nektar
             int nTotalPts   = pFields[0]->GetTotPoints();
             int nTracePts   = pFields[0]->GetTrace()->GetTotPoints();
             
+
             Array<TwoD, const NekDouble> gmat;
             Array<OneD, const NekDouble> jac;
             
@@ -105,12 +106,32 @@ namespace Nektar
             Array<OneD, LibUtilities::BasisSharedPtr> base;
             LibUtilities::PointsKeyVector             ptsKeys;
             
+            // Load local coords into coords
+            Array<OneD, Array<OneD, NekDouble> > coords(nDimensions);
+            coords[0] = Array<OneD, NekDouble> (nTotalPts);
+
+            Array<OneD, NekDouble> tmpDX(nTotalPts);
+            
             switch (nDimensions)
             {
             case 1:
             {
                 for (int n = 0; n < nElements; ++n)
                 {
+                    pFields[0]->GetCoords(coords[0]);
+                    
+                    for (int i = 0; i < nTotalPts-1; ++i)
+                    {
+                        tmpDX[i] = (coords[0][i] - coords[0][i+1]);
+                    }
+                    tmpDX[nTotalPts] = (coords[0][nTotalPts-1] - coords[0][nTotalPts]);
+                    
+                    for (int i = 0; i < nTotalPts; ++i)
+                    {
+                        std::cout << "X     = " << coords[0][i] << std::endl;
+                        std::cout << "tmpDX = " << tmpDX[i]     << std::endl;
+                    }
+                        
                     ptsKeys   = pFields[0]->GetExp(n)->GetPointsKeys();
                     nLocalPts = pFields[0]->GetExp(n)->GetTotPoints();
     
@@ -142,7 +163,16 @@ namespace Nektar
                     base        = pFields[0]->GetExp(n)->GetBase();
                     nquad0      = base[0]->GetNumPoints();
                     nquad1      = base[1]->GetNumPoints();
-                        
+                    
+                    coords[1] = Array<OneD, NekDouble> (nTotalPts);
+                    pFields[0]->GetCoords(coords[0], coords[1]);
+                    
+                    for (int i = 0; i < nTotalPts; ++i)
+                    {
+                        std::cout << "X = " << coords[0][i]
+                        << "Y = " << coords[1][i] << std::endl;
+                    }
+                    
                     Array<OneD, const NekDouble> z0;
                     Array<OneD, const NekDouble> w0;   
                     Array<OneD, const NekDouble> z1;
@@ -181,6 +211,8 @@ namespace Nektar
             }
             case 3:
             {
+                coords[2] = Array<OneD, NekDouble> (nTotalPts);
+                pFields[0]->GetCoords(coords[0], coords[1], coords[3]);
                 ASSERTL0(false,"3D flux-lenght terms not implemented (yet)");
                 break;
             }
