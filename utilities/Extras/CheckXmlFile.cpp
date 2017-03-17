@@ -11,6 +11,13 @@ bool CheckTetRotation(Array<OneD, NekDouble> &xc, Array<OneD, NekDouble> &yc,
                       std::map<int,SpatialDomains::TetGeomSharedPtr>::iterator &tetIter,
                       int id);
 
+bool CheckTriRotation(Array<OneD, NekDouble> &xc, Array<OneD, NekDouble> &yc,
+                      std::map<int,SpatialDomains::TriGeomSharedPtr>::iterator &tetIter, int id);
+
+bool CheckQuadRotation(Array<OneD, NekDouble> &xc, Array<OneD, NekDouble> &yc,
+                      std::map<int,SpatialDomains::QuadGeomSharedPtr>::iterator &tetIter, int id);
+
+
 int main(int argc, char *argv[])
 {
     Array<OneD,NekDouble>  fce; 
@@ -52,7 +59,8 @@ int main(int argc, char *argv[])
 
             int nverts = mesh->GetNvertices();
 
-            Array<OneD, NekDouble> xc(nverts),yc(nverts),zc(nverts);
+            Array<OneD, NekDouble> xc(nverts),yc(nverts),zc(nverts,0.0);
+
 
             for(int i = 0; i < nverts; ++i)
             {
@@ -62,17 +70,117 @@ int main(int argc, char *argv[])
                 zc[i] = z;
             }
             
-            std::map<int,SpatialDomains::TriGeomSharedPtr>::iterator triIter;
+            for (int i = 0; i < nverts; ++i)
+            {
+                for (int j = i+1; j < nverts; ++j)
+                {
+                    if ((xc[i]-xc[j])*(xc[i]-xc[j]) +
+                        (yc[i]-yc[j])*(yc[i]-yc[j]) +
+                        (zc[i]-zc[j])*(zc[i]-zc[j]) < 1e-10)
+                    {
+                        cout << "Duplicate vertices: " << i << " " << j << endl;
+                    }
+                }
+            }
+            cout << "Finished checking vertices" << endl;
+#if 0 
+            int nedges = mesh->GetAllSegGeoms().size();
+            for(int i = 0; i < nedges; ++i)
+            {
+                mesh->GetEdge(i);
+                for(int j = i+1; j < nedges; ++j)
+                {
+                    if((mesh->GetEdge(i)->GetVid(0) ==
+                        mesh->GetEdge(j)->GetVid(0)) &&
+                       (mesh->GetEdge(i)->GetVid(1) ==
+                        mesh->GetEdge(j)->GetVid(1)))
+                    {
+                        cout << "Duplicate edges: " << i << " " << j << endl;
+                    }
+
+                    if((mesh->GetEdge(i)->GetVid(0) ==
+                        mesh->GetEdge(j)->GetVid(1)) &&
+                       (mesh->GetEdge(i)->GetVid(1) ==
+                        mesh->GetEdge(j)->GetVid(0)))
+                    {
+                        cout << "Duplicate edges: " << i << " " << j << endl;
+                    }
+                }
+            }
+            cout << "Finished checking edges" << endl;
+#endif
+            int cnt = 0;
+            bool NoOrientationIssues = true;
+
+            std::map<int,SpatialDomains::TriGeomSharedPtr>::iterator triIter, triIter1;
+
             for(triIter = trigeom.begin(); triIter != trigeom.end(); ++triIter)
             {
+                int eid0 = triIter->second->GetEid(0);
+                int eid1 = triIter->second->GetEid(1);
+                int eid2 = triIter->second->GetEid(2);
+
+                for(triIter1 = triIter; triIter1 != trigeom.end(); ++triIter1)
+                {
+                    if(triIter1 != triIter)
+                    {
+                        int neid0 = triIter1->second->GetEid(0);
+                        int neid1 = triIter1->second->GetEid(1);
+                        int neid2 = triIter1->second->GetEid(2);
+                        
+                        if((eid0 == neid0)&&(eid1 == neid1)&&(eid2 == neid2))
+                        {
+                            cout << "Duplicate elements: " <<
+                                triIter->second->GetGlobalID()
+                                 << " " << triIter1->second->GetGlobalID() << endl;
+                        }
+                        if((eid0 == neid1)&&(eid1 == neid2)&&(eid2 == neid0))
+                        {
+                            cout << "Duplicate elements: " <<
+                                triIter->second->GetGlobalID()
+                                 << " " << triIter1->second->GetGlobalID() << endl;
+                        }
+
+                        if((eid0 == neid2)&&(eid1 == neid0)&&(eid2 == neid1))
+                        {
+                            cout << "Duplicate elements: " <<
+                                triIter->second->GetGlobalID()
+                                 << " " << triIter1->second->GetGlobalID() << endl;
+                        }
+
+                    }
+                }
+            }
+            cout << "Finished checking elements" << endl;
+            
+            for(triIter = trigeom.begin(); triIter != trigeom.end(); ++triIter)
+
+            {
                 fprintf(fp,"%d %d %d %d\n",(triIter->second)->GetVid(0)+1,(triIter->second)->GetVid(1)+1,(triIter->second)->GetVid(2)+1,(triIter->second)->GetVid(2)+1);
+                NoOrientationIssues = CheckTriRotation(xc,yc,triIter,cnt++);
             }
             
+            if(NoOrientationIssues)
+            {
+                cout << "All Tris have correct ordering for anticlockwise rotation" << endl;
+            }
+
+            cnt = 0;
+            NoOrientationIssues = true;
+
             std::map<int,SpatialDomains::QuadGeomSharedPtr>::iterator quadIter;
             for(quadIter = quadgeom.begin(); quadIter != quadgeom.end(); ++quadIter)
             {
                 fprintf(fp,"%d %d %d %d\n",(quadIter->second)->GetVid(0)+1,(quadIter->second)->GetVid(1)+1,(quadIter->second)->GetVid(2)+1,(quadIter->second)->GetVid(3)+1);
+                NoOrientationIssues = CheckQuadRotation(xc,yc,quadIter,cnt++);
             }
+
+            if(NoOrientationIssues)
+            {
+                cout << "All Quads have correct ordering for anticlockwise rotation" << endl;
+            }
+
+
         }
         break;
     case 3:
@@ -138,8 +246,8 @@ int main(int argc, char *argv[])
                         NoRotateIssues = false; 
                     }
                 }
-                
             }
+            
             if(NoOrientationIssues)
             {
                 cout << "All Tet have correct ordering for anticlockwise rotation" << endl;
@@ -253,3 +361,60 @@ bool CheckTetRotation(Array<OneD, NekDouble> &xc, Array<OneD, NekDouble> &yc, Ar
     }
     return RotationOK;
 }
+
+bool CheckTriRotation(Array<OneD, NekDouble> &xc, Array<OneD, NekDouble> &yc, std::map<int,SpatialDomains::TriGeomSharedPtr>::iterator &tetIter, int id)
+{
+    bool      RotationOK = true;
+    Ord       v[3];
+    NekDouble abz;
+    
+    v[0].x = xc[(tetIter->second)->GetVid(0)];
+    v[0].y = yc[(tetIter->second)->GetVid(0)];
+
+    v[1].x = xc[(tetIter->second)->GetVid(1)];
+    v[1].y = yc[(tetIter->second)->GetVid(1)];
+
+    v[2].x = xc[(tetIter->second)->GetVid(2)];
+    v[2].y = yc[(tetIter->second)->GetVid(2)];
+    
+    // cross product of edge 0 and 2
+    abz = (v[1].x-v[0].x)*(v[2].y-v[0].y) -
+        (v[1].y-v[0].y)*(v[2].x-v[0].x);
+
+    // inner product of cross product with respect to edge 3 should be positive 
+    if(abz <0.0)
+    {
+        cerr << "ERROR: Element " << id + 1 << "is NOT counter-clockwise\n" << endl;
+        RotationOK = false;
+    }
+    return RotationOK;
+}
+
+bool CheckQuadRotation(Array<OneD, NekDouble> &xc, Array<OneD, NekDouble> &yc, std::map<int,SpatialDomains::QuadGeomSharedPtr>::iterator &tetIter, int id)
+{
+    bool      RotationOK = true;
+    Ord       v[3];
+    NekDouble abz;
+    
+    v[0].x = xc[(tetIter->second)->GetVid(0)];
+    v[0].y = yc[(tetIter->second)->GetVid(0)];
+
+    v[1].x = xc[(tetIter->second)->GetVid(1)];
+    v[1].y = yc[(tetIter->second)->GetVid(1)];
+
+    v[2].x = xc[(tetIter->second)->GetVid(3)];
+    v[2].y = yc[(tetIter->second)->GetVid(3)];
+    
+    // cross product of edge 0 and 2
+    abz = (v[1].x-v[0].x)*(v[2].y-v[0].y) -
+        (v[1].y-v[0].y)*(v[2].x-v[0].x);
+
+    // inner product of cross product with respect to edge 3 should be positive 
+    if(abz <0.0)
+    {
+        cerr << "ERROR: Element " << id + 1 << "is NOT counter-clockwise\n" << endl;
+        RotationOK = false;
+    }
+    return RotationOK;
+}
+
