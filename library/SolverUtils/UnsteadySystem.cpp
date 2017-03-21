@@ -393,6 +393,12 @@ namespace Nektar
                     else
                     {
                         Checkpoint_Output(m_nchk);
+                        
+                        // Print for 1D problems
+                        if(m_spacedim == 1)
+                        {
+                            v_AppendOutput1D(fields, m_time);
+                        }
                         m_nchk++;
                     }
                     doCheckTime = false;
@@ -400,12 +406,6 @@ namespace Nektar
 
                 // Step advance
                 ++step;
-                
-                // Print for 1D problems
-                if(m_spacedim == 1)
-                {
-                    v_AppendOutput1D(fields, m_time);
-                }
             }
             
             // Print out summary statistics
