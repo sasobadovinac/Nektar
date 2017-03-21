@@ -39,6 +39,7 @@
 #include <LibUtilities/TimeIntegration/TimeIntegrationWrapper.h>
 #include <SolverUtils/EquationSystem.h>
 #include <SolverUtils/Filters/Filter.h>
+#include <sstream>
 
 namespace Nektar
 {
@@ -106,7 +107,8 @@ namespace Nektar
             
             /// Print the solution at each solution point in a txt file
             SOLVER_UTILS_EXPORT virtual void v_AppendOutput1D(
-                Array<OneD, Array<OneD, NekDouble> > &solution1D);
+                Array<OneD, Array<OneD, NekDouble> > &solution1D,
+                NekDouble                             time);
 
             ///
             SOLVER_UTILS_EXPORT virtual void v_NumericalFlux(

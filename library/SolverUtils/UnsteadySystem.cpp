@@ -400,6 +400,12 @@ namespace Nektar
 
                 // Step advance
                 ++step;
+                
+                // Print for 1D problems
+                if(m_spacedim == 1)
+                {
+                    v_AppendOutput1D(fields, m_time);
+                }
             }
             
             // Print out summary statistics
@@ -444,12 +450,6 @@ namespace Nektar
             for (x = m_filters.begin(); x != m_filters.end(); ++x)
             {
                 (*x)->Finalise(m_fields, m_time);
-            }
-            
-            // Print for 1D problems
-            if(m_spacedim == 1)
-            {
-                v_AppendOutput1D(fields);   
             }
         }
         
@@ -498,11 +498,13 @@ namespace Nektar
         }
         
         /**
-         * Stores the solution in a file for 1D problems only. This method has 
-         * been implemented to facilitate the post-processing for 1D problems.
+         * Stores the solution in a file for 1D problems only. 
+         * This method has been implemented to facilitate the 
+         * post-processing for 1D problems.
          */
         void UnsteadySystem::v_AppendOutput1D(
-            Array<OneD, Array<OneD, NekDouble> > &solution1D)
+            Array<OneD, Array<OneD, NekDouble> > &solution1D,
+            NekDouble                             time)
         {
             // Coordinates of the quadrature points in the real physical space
             Array<OneD,NekDouble> x(GetNpoints());
@@ -510,10 +512,19 @@ namespace Nektar
             Array<OneD,NekDouble> z(GetNpoints());
             m_fields[0]->GetCoords(x, y, z);
             
+            std::string file_name;
+            //std::ostringstream strs;
+            //strs = time;
+            //std::string str = strs.str();
+            
+            std::string varAsString = std::to_string(time);
+            
             // Print out the solution in a txt file
             ofstream outfile;
-            outfile.open("solution1D.txt");
-            for(int i = 0; i < GetNpoints(); i++)
+            file_name = ("solution1D_" + varAsString) + ".txt";
+            outfile.open(file_name.c_str());
+            
+            for (int i = 0; i < GetNpoints(); i++)
             {
                 outfile << scientific << setw (17) << setprecision(16) << x[i]
                         << "  " << solution1D[0][i] << endl;
