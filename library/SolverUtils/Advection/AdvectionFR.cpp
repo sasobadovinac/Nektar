@@ -126,20 +126,53 @@ namespace Nektar
             int nSolutionPts = pFields[0]->GetTotPoints();
             int nTracePts    = pFields[0]->GetTrace()->GetTotPoints();
             
+            // Store forwards/backwards space along trace space
+            m_dxFwd = Array<OneD, NekDouble>(nTracePts   , 0.0);
+            m_dxBwd = Array<OneD, NekDouble>(nTracePts   , 0.0);
+            m_dx    = Array<OneD, NekDouble>(nSolutionPts, 0.0);
+            
+            // Auxiliary array
+            Array<OneD, NekDouble> auxArray1;
+            
             Array<TwoD, const NekDouble> gmat;
             Array<OneD, const NekDouble> jac;
             
-            m_jac  = Array<OneD, NekDouble>(nSolutionPts);
-            m_dx = Array<OneD, NekDouble>(nSolutionPts, 0.0);
+            m_jac = Array<OneD, NekDouble>(nSolutionPts, 0.0);
+            m_dx  = Array<OneD, NekDouble>(nSolutionPts, 0.0);
 
-            Array<OneD, NekDouble> auxArray1;
             Array<OneD, LibUtilities::BasisSharedPtr> base;
             LibUtilities::PointsKeyVector ptsKeys;
 
+            // Load local coords into coords
+            Array<OneD, Array<OneD, NekDouble> > coords(nDimensions);
+            coords[0] = Array<OneD, NekDouble> (nSolutionPts);
+            
+            Array<OneD, NekDouble> tmpDX(nSolutionPts);
+            
             switch (nDimensions)
             {
                 case 1:
                 {
+                    // Approach on physical space
+                    pFields[0]->GetCoords(coords[0]);
+                    for (i = 0; i < nSolutionPts-1; ++i)
+                    {
+                        m_dx[i] = (coords[0][i] - coords[0][i+1]);
+                        
+                        if (i == nquad0-1)
+                        {
+                            ++i;
+                            m_dx[i] = (coords[0][i] - coords[0][i+1]);
+                        }
+                    }
+                    pFields[0]->GetFwdBwdTracePhys(m_dx, m_dxFwd, m_dxBwd);
+                    
+                    for (i = 0; i < nSolutionPts; ++i)
+                    {
+                        std::cout << "x    = " << coords[0][i] << std::endl;
+                        std::cout << "m_dx = " << m_dx[i]     << std::endl;
+                    }
+                    
                     for (n = 0; n < nElements; ++n) 
                     {
                         ptsKeys = pFields[0]->GetExp(n)->GetPointsKeys();
@@ -151,7 +184,7 @@ namespace Nektar
                         for (i = 0; i < nLocalSolutionPts; ++i)
                         {
                             m_jac[i+phys_offset] = jac[0];
-                            m_dx[i+phys_offset] = 2.0 * (jac[0] / nLocalSolutionPts);
+                            //m_dx[i+phys_offset] = 2.0 * (jac[0] / nLocalSolutionPts);
                         }
                     }
                     break;
@@ -857,7 +890,7 @@ namespace Nektar
             }
 
             // Computing the interface flux at each trace point
-            m_riemann->Solve(m_spaceDim, Fwd, Bwd, numflux, m_dx);
+            m_riemann->Solve(m_spaceDim, Fwd, Bwd, numflux, m_dxFwd, m_dxBwd);
 
             // Divergence of the flux (computing the RHS)  
             switch(nDimensions)

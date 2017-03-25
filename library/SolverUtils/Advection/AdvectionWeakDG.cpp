@@ -85,6 +85,7 @@ namespace Nektar
             LibUtilities::SessionReaderSharedPtr        pSession,
             Array<OneD, MultiRegions::ExpListSharedPtr> pFields)
         {
+            int i;
             int nquad0, nquad1;
             int physOffset;
             int nLocalPts;
@@ -93,11 +94,14 @@ namespace Nektar
             int nTotalPts   = pFields[0]->GetTotPoints();
             int nTracePts   = pFields[0]->GetTrace()->GetTotPoints();
             
-
+            // Jacobian and its determinant
             Array<TwoD, const NekDouble> gmat;
             Array<OneD, const NekDouble> jac;
             
-            m_dx = Array<OneD, NekDouble>(nTotalPts);
+            // Store forwards/backwards space along trace space
+            m_dxFwd = Array<OneD, NekDouble>(nTracePts, 0.0);
+            m_dxBwd = Array<OneD, NekDouble>(nTracePts, 0.0);
+            m_dx    = Array<OneD, NekDouble>(nTotalPts, 0.0);
             
             // Auxiliary array
             Array<OneD, NekDouble> auxArray1;
@@ -116,22 +120,30 @@ namespace Nektar
             {
             case 1:
             {
+                // Approach on physical space
+                pFields[0]->GetCoords(coords[0]);
+                for (i = 0; i < nTotalPts-1; ++i)
+                {
+                    m_dx[i] = (coords[0][i] - coords[0][i+1]);
+                    
+                    if (i == nquad0-1)
+                    {
+                        ++i;
+                        m_dx[i] = (coords[0][i] - coords[0][i+1]);
+                    }
+                }
+                pFields[0]->GetFwdBwdTracePhys(m_dx, m_dxFwd, m_dxBwd);
+
+                for (i = 0; i < nTotalPts; ++i)
+                {
+                    std::cout << "x    = " << coords[0][i] << std::endl;
+                    std::cout << "m_dx = " << m_dx[i]      << std::endl;
+                }
+                
+                // Approach on standard space
+                /*
                 for (int n = 0; n < nElements; ++n)
                 {
-                    pFields[0]->GetCoords(coords[0]);
-                    
-                    for (int i = 0; i < nTotalPts-1; ++i)
-                    {
-                        tmpDX[i] = (coords[0][i] - coords[0][i+1]);
-                    }
-                    tmpDX[nTotalPts] = (coords[0][nTotalPts-1] - coords[0][nTotalPts]);
-                    
-                    for (int i = 0; i < nTotalPts; ++i)
-                    {
-                        std::cout << "X     = " << coords[0][i] << std::endl;
-                        std::cout << "tmpDX = " << tmpDX[i]     << std::endl;
-                    }
-                        
                     ptsKeys   = pFields[0]->GetExp(n)->GetPointsKeys();
                     nLocalPts = pFields[0]->GetExp(n)->GetTotPoints();
     
@@ -144,7 +156,6 @@ namespace Nektar
                         
                     Array<OneD, const NekDouble> z0;
                     Array<OneD, const NekDouble> w0;
-                    
                     base[0]->GetZW(z0, w0);
 
                     for (int i = 0; i < nLocalPts; ++i)
@@ -152,6 +163,7 @@ namespace Nektar
                         m_dx[i+physOffset] = 2.0 * (z0[1]-z0[0])*jac[n];
                     }
                 }
+                 */
                 break;
             }
             case 2:
@@ -167,7 +179,7 @@ namespace Nektar
                     coords[1] = Array<OneD, NekDouble> (nTotalPts);
                     pFields[0]->GetCoords(coords[0], coords[1]);
                     
-                    for (int i = 0; i < nTotalPts; ++i)
+                    for (i = 0; i < nTotalPts; ++i)
                     {
                         std::cout << "X = " << coords[0][i]
                         << "Y = " << coords[1][i] << std::endl;
@@ -194,14 +206,14 @@ namespace Nektar
                         GetGeom2D()->GetMetricInfo()->GetGtype()
                         == SpatialDomains::eDeformed)
                     {
-                        for (int i = 0; i < nLocalPts; ++i)
+                        for (i = 0; i < nLocalPts; ++i)
                         {
                             m_dx[i+physOffset] = 2.0 * (z0[1]-z0[0])*jac[i];
                         }
                     }
                     else
                     {
-                        for (int i = 0; i < nLocalPts; ++i)
+                        for (i = 0; i < nLocalPts; ++i)
                         {
                             m_dx[i+physOffset] = 2.0 * (z0[1]-z0[0])*jac[n];
                         }
@@ -309,7 +321,7 @@ namespace Nektar
                 }
             }
             
-            m_riemann->Solve(m_spaceDim, Fwd, Bwd, numflux, m_dx);
+            m_riemann->Solve(m_spaceDim, Fwd, Bwd, numflux, m_dxFwd, m_dxBwd);
 
             // Evaulate <\phi, \hat{F}\cdot n> - OutField[i]
             for(i = 0; i < nConvectiveFields; ++i)

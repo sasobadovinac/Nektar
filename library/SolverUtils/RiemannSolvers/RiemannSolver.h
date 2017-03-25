@@ -67,7 +67,8 @@ namespace Nektar
                 const Array<OneD, const Array<OneD, NekDouble> > &Fwd,
                 const Array<OneD, const Array<OneD, NekDouble> > &Bwd,
                       Array<OneD,       Array<OneD, NekDouble> > &flux,
-                const Array<OneD, NekDouble> &dx);
+                const Array<OneD, NekDouble>                     &dxFwd,
+                const Array<OneD, NekDouble>                     &dxBwd);
 
             template<typename FuncPointerT, typename ObjectPointerT>
             void SetScalar(std::string    name,
@@ -167,7 +168,8 @@ namespace Nektar
                 const Array<OneD, const Array<OneD, NekDouble> > &Fwd,
                 const Array<OneD, const Array<OneD, NekDouble> > &Bwd,
                       Array<OneD,       Array<OneD, NekDouble> > &flux,
-                const Array<OneD, NekDouble> &dx = NullNekDouble1DArray) = 0;
+                const Array<OneD, NekDouble> &dxFwd = NullNekDouble1DArray,
+                const Array<OneD, NekDouble> &dxBwd = NullNekDouble1DArray) = 0;
 
             void GenerateRotationMatrices(
                 const Array<OneD, const Array<OneD, NekDouble> > &normals);

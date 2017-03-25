@@ -62,7 +62,8 @@ namespace Nektar
                 const Array<OneD, const Array<OneD, NekDouble> > &Fwd,
                 const Array<OneD, const Array<OneD, NekDouble> > &Bwd,
                       Array<OneD,       Array<OneD, NekDouble> > &flux,
-                const Array<OneD, NekDouble> &dx);
+                const Array<OneD, NekDouble>                     &dxFwd,
+                const Array<OneD, NekDouble>                     &dxBwd);
         };
     }
 }

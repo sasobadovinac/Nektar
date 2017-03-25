@@ -68,7 +68,8 @@ namespace Nektar
     void HLLCSolver::v_PointSolve(
         NekDouble  rhoL, NekDouble  rhouL, NekDouble  rhovL, NekDouble  rhowL, NekDouble  EL,
         NekDouble  rhoR, NekDouble  rhouR, NekDouble  rhovR, NekDouble  rhowR, NekDouble  ER,
-        NekDouble &rhof, NekDouble &rhouf, NekDouble &rhovf, NekDouble &rhowf, NekDouble &Ef, NekDouble dx)
+        NekDouble &rhof, NekDouble &rhouf, NekDouble &rhovf, NekDouble &rhowf, NekDouble &Ef,
+        NekDouble dxL, NekDouble dxR)
     {
         static NekDouble gamma = m_params["gamma"]();
         

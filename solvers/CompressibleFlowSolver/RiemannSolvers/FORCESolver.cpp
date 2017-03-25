@@ -68,14 +68,13 @@ namespace Nektar
         NekDouble  rhoL, NekDouble  rhouL, NekDouble  rhovL, NekDouble  rhowL, NekDouble  EL,
         NekDouble  rhoR, NekDouble  rhouR, NekDouble  rhovR, NekDouble  rhowR, NekDouble  ER,
         NekDouble &rhof, NekDouble &rhouf, NekDouble &rhovf, NekDouble &rhowf, NekDouble &Ef,
-        NekDouble dx)
+        NekDouble dxL, NekDouble dxR)
     {
         static NekDouble dt      = m_params["dt"]();
         static NekDouble dxForce = m_params["dxForce"]();
         static NekDouble alpha   = m_params["alpha"]();
         static NekDouble gamma   = m_params["gamma"]();
 
-        
         // Left and Right velocities
         NekDouble uL = rhouL / rhoL;
         NekDouble vL = rhovL / rhoL;
@@ -103,10 +102,12 @@ namespace Nektar
         NekDouble EfR = uR * (ER + pR);
 
         
-        //std::cout << "dt      = " << dt      << std::endl;
-        //std::cout << "dx      = " << dx      << std::endl;
+        std::cout << "dt     = " << dt    << std::endl;
+        std::cout << "dxL    = " << dxL   << std::endl;
+        std::cout << "dxR    = " << dxR   << std::endl;
+        std::cout << "alpha  = " << alpha << std::endl;
+
         //std::cout << "dxForce = " << dxForce << std::endl;
-        //std::cout << "alpha   = " << alpha   << std::endl;
 
         
         // Lax-Wendroff alpha Riemann cons vars

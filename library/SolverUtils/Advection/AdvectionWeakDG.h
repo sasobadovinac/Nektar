@@ -66,20 +66,10 @@ namespace Nektar
             static std::string type;
             
             Array<OneD, NekDouble>  m_dx;
-            
+            Array<OneD, NekDouble>  m_dxFwd;
+            Array<OneD, NekDouble>  m_dxBwd;
+
             Array<OneD, Array<OneD, NekDouble> > m_gmat;
-            
-            Array<OneD, Array<OneD, NekDouble> > m_Q2D_e0;
-            Array<OneD, Array<OneD, NekDouble> > m_Q2D_e1;
-            Array<OneD, Array<OneD, NekDouble> > m_Q2D_e2;
-            Array<OneD, Array<OneD, NekDouble> > m_Q2D_e3;
-            
-            Array<OneD, Array<OneD, NekDouble> > m_dGL_xi1;
-            Array<OneD, Array<OneD, NekDouble> > m_dGR_xi1;
-            Array<OneD, Array<OneD, NekDouble> > m_dGL_xi2;
-            Array<OneD, Array<OneD, NekDouble> > m_dGR_xi2;
-            Array<OneD, Array<OneD, NekDouble> > m_dGL_xi3;
-            Array<OneD, Array<OneD, NekDouble> > m_dGR_xi3;
             DNekMatSharedPtr                     m_Ixm;
             DNekMatSharedPtr                     m_Ixp;
             
