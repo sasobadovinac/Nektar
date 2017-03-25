@@ -122,16 +122,45 @@ namespace Nektar
             {
                 // Approach on physical space
                 pFields[0]->GetCoords(coords[0]);
-                for (i = 0; i < nTotalPts-1; ++i)
+                
+                for (int n = 0; n < nElements; ++n)
                 {
-                    m_dx[i] = (coords[0][i] - coords[0][i+1]);
-                    
-                    if (i == nquad0-1)
+                    base       = pFields[0]->GetExp(n)->GetBase();
+                    nquad0     = base[0]->GetNumPoints();
+                    nLocalPts  = pFields[0]->GetExp(n)->GetTotPoints();
+                    physOffset = pFields[0]->GetPhys_Offset(n);
+
+                    for (i = 0; i < nLocalPts; ++i)
                     {
-                        ++i;
-                        m_dx[i] = (coords[0][i] - coords[0][i+1]);
+                        std::cout << "i  = "    << i
+                        << ",    nLocalPts = "  << nLocalPts
+                        << ",    physOffset = " << physOffset
+                        << ",    nquad0 = "     << nquad0
+                        << std::endl;
+                        
+                        if (i == nquad0-1)
+                        {
+                            m_dx[i+physOffset] =
+                                (coords[0][i+physOffset] -
+                                 coords[0][i-1+physOffset]);
+                            std::cout << "IF = " << m_dx[i+physOffset] << std::endl;
+                            std::cout << "i  = " << i
+                                      << ",    physOffset = " << physOffset
+                                      << ",    nquad0 = "     << nquad0
+                                      << std::endl;
+                        }
+                        else
+                        {
+                            m_dx[i+physOffset] =
+                                (coords[0][i+physOffset] -
+                                 coords[0][i+1+physOffset]);
+                            
+                            std::cout << "ELSE = " << m_dx[i+physOffset] << std::endl;
+
+                        }
                     }
                 }
+                Vmath::Vabs(nTotalPts, m_dx, 1, m_dx, 1);
                 pFields[0]->GetFwdBwdTracePhys(m_dx, m_dxFwd, m_dxBwd);
 
                 for (i = 0; i < nTotalPts; ++i)
