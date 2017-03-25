@@ -109,7 +109,6 @@ namespace Nektar
         // std::cout << "dxL    = " << dxL   << std::endl;
         // std::cout << "dxR    = " << dxR   << std::endl;
         // std::cout << "alpha  = " << alpha << std::endl;
-
         //std::cout << "dxForce = " << dxForce << std::endl;
 
         

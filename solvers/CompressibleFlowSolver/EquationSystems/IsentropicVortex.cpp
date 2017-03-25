@@ -135,12 +135,12 @@ namespace Nektar
     }
 
     void IsentropicVortex::EvaluateIsentropicVortex(
-        const Array<OneD, NekDouble>               &x,
-        const Array<OneD, NekDouble>               &y,
-        const Array<OneD, NekDouble>               &z,
+        const Array<OneD, NekDouble>         &x,
+        const Array<OneD, NekDouble>         &y,
+        const Array<OneD, NekDouble>         &z,
         Array<OneD, Array<OneD, NekDouble> > &u,
         NekDouble                             time,
-        const int                                   o)
+        const int                             o)
     {
         int nq = x.num_elements();
         

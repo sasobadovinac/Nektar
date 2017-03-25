@@ -85,7 +85,7 @@ namespace Nektar
             LibUtilities::SessionReaderSharedPtr        pSession,
             Array<OneD, MultiRegions::ExpListSharedPtr> pFields)
         {
-            int i;
+            int i, cntx, cnty;
             int nquad0, nquad1;
             int physOffset;
             int nLocalPts;
@@ -102,6 +102,9 @@ namespace Nektar
             m_dxFwd = Array<OneD, NekDouble>(nTracePts, 0.0);
             m_dxBwd = Array<OneD, NekDouble>(nTracePts, 0.0);
             m_dx    = Array<OneD, NekDouble>(nTotalPts, 0.0);
+            m_dyFwd = Array<OneD, NekDouble>(nTracePts, 0.0);
+            m_dyBwd = Array<OneD, NekDouble>(nTracePts, 0.0);
+            m_dy    = Array<OneD, NekDouble>(nTotalPts, 0.0);
             
             // Auxiliary array
             Array<OneD, NekDouble> auxArray1;
@@ -113,8 +116,6 @@ namespace Nektar
             // Load local coords into coords
             Array<OneD, Array<OneD, NekDouble> > coords(nDimensions);
             coords[0] = Array<OneD, NekDouble> (nTotalPts);
-
-            Array<OneD, NekDouble> tmpDX(nTotalPts);
             
             switch (nDimensions)
             {
@@ -156,7 +157,6 @@ namespace Nektar
                                  coords[0][i+1+physOffset]);
                             
                             std::cout << "ELSE = " << m_dx[i+physOffset] << std::endl;
-
                         }
                     }
                 }
@@ -197,15 +197,94 @@ namespace Nektar
             }
             case 2:
             {
-                LibUtilities::PointsKeyVector ptsKeys;
+                coords[1] = Array<OneD, NekDouble> (nTotalPts);
+
+                // Approach on physical space
+                pFields[0]->GetCoords(coords[0], coords[1]);
+                
+                for (int n = 0; n < nElements; ++n)
+                {
+                    cntx = 0;
+                    cnty = 0;
+                    base       = pFields[0]->GetExp(n)->GetBase();
+                    nquad0     = base[0]->GetNumPoints();
+                    nquad1     = base[1]->GetNumPoints();
+                    nLocalPts  = pFields[0]->GetExp(n)->GetTotPoints();
+                    physOffset = pFields[0]->GetPhys_Offset(n);
                     
+                    for (i = 0; i < nLocalPts; ++i)
+                    {
+                        std::cout << "i  = "    << i
+                        << ",    nLocalPts = "  << nLocalPts
+                        << ",    physOffset = " << physOffset
+                        << ",    nquad0 = "     << nquad0
+                        << std::endl;
+                        
+                        if (i == (nquad0-1)+cntx*nquad0)
+                        {
+                            cntx++;
+                            m_dx[i+physOffset] =
+                            (coords[0][i+physOffset] -
+                             coords[0][i-1+physOffset]);
+                            std::cout << "IF = " << m_dx[i+physOffset]
+                                                 << std::endl;
+                            std::cout << "i  = " << i
+                            << ",    physOffset = " << physOffset
+                            << ",    nquad0 = "     << nquad0
+                                                    << std::endl;
+                        }
+                        else
+                        {
+                            m_dx[i+physOffset] =
+                            (coords[0][i+physOffset] -
+                             coords[0][i+1+physOffset]);
+                            
+                            std::cout << "ELSE = " << m_dx[i+physOffset] << std::endl;
+                            
+                        }
+                        
+                        if (i == (nquad0-1)+cnt*nquad0)
+                        {
+                            cnty++;
+                            m_dx[i+physOffset] =
+                            (coords[0][i+cnty*nquad0+physOffset] -
+                             coords[0][i-1+physOffset]);
+                            std::cout << "IF = " << m_dx[i+physOffset]
+                            << std::endl;
+                            std::cout << "i  = " << i
+                            << ",    physOffset = " << physOffset
+                            << ",    nquad0 = "     << nquad0
+                            << std::endl;
+                        }
+                        else
+                        {
+                            m_dx[i+physOffset] =
+                            (coords[0][i+physOffset] -
+                             coords[0][i+1+physOffset]);
+                            
+                            std::cout << "ELSE = " << m_dx[i+physOffset] << std::endl;
+                            
+                        }
+                    }
+                }
+                Vmath::Vabs(nTotalPts, m_dx, 1, m_dx, 1);
+                pFields[0]->GetFwdBwdTracePhys(m_dx, m_dxFwd, m_dxBwd);
+                
+                for (i = 0; i < nTotalPts; ++i)
+                {
+                    std::cout << "x    = " << coords[0][i] << std::endl;
+                    std::cout << "m_dx = " << m_dx[i]      << std::endl;
+                }
+                
+                // Approach on standard space
+                /*
+                LibUtilities::PointsKeyVector ptsKeys;
                 for (int n = 0; n < nElements; ++n)
                 {
                     base        = pFields[0]->GetExp(n)->GetBase();
                     nquad0      = base[0]->GetNumPoints();
                     nquad1      = base[1]->GetNumPoints();
                     
-                    coords[1] = Array<OneD, NekDouble> (nTotalPts);
                     pFields[0]->GetCoords(coords[0], coords[1]);
                     
                     for (i = 0; i < nTotalPts; ++i)
@@ -248,10 +327,12 @@ namespace Nektar
                         }
                     }
                 }
+                 */
                 break;
             }
             case 3:
             {
+                coords[1] = Array<OneD, NekDouble> (nTotalPts);
                 coords[2] = Array<OneD, NekDouble> (nTotalPts);
                 pFields[0]->GetCoords(coords[0], coords[1], coords[3]);
                 ASSERTL0(false,"3D flux-lenght terms not implemented (yet)");
