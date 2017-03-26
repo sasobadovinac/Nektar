@@ -141,14 +141,16 @@ namespace Nektar
         // Forcing terms
         m_forcing = SolverUtils::Forcing::Load(m_session, m_fields,
                                                m_fields.num_elements());
-
         switch (m_spacedim)
         {
             case 1:
-                // Set up variable diffusivity as 0.5 * volatility^2 * S
+                // Set up variable diffusivity as 0.5 * volatility^2 * S^2
                 Vmath::Smul(m_stockPrice[0].num_elements(),
                             0.5*m_volatility*m_volatility,
                             coords[0],1,m_vardiff[varCoeffEnum[0]],1);
+                Vmath::Vmul(m_stockPrice[0].num_elements(),
+                            coords[0],1,m_vardiff[varCoeffEnum[0]],1,
+                            m_vardiff[varCoeffEnum[0]],1);
                 break;
             case 2:
             default:
