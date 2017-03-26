@@ -223,6 +223,8 @@ namespace Nektar
                         if (i == (nquad0-1)+cntx*nquad0)
                         {
                             cntx++;
+                            cnty++;
+
                             m_dx[i+physOffset] =
                             (coords[0][i+physOffset] -
                              coords[0][i-1+physOffset]);
@@ -240,25 +242,29 @@ namespace Nektar
                              coords[0][i+1+physOffset]);
                             
                             std::cout << "ELSE = " << m_dx[i+physOffset] << std::endl;
-                            
                         }
                         
-                        cnty++;
-                        m_dx[i+physOffset] =
-                        (coords[0][i+cnty*nquad0+physOffset] -
-                            coords[0][i+physOffset]);
-                            
-                        std::cout << "ELSE = " << m_dy[i+physOffset] << std::endl;
+                        m_dy[i+physOffset] =
+                            (coords[1][i+cnty*nquad0+physOffset] -
+                             coords[1][i+physOffset]);
+                        
+                        std::cout << "ELSE DY = " << m_dy[i+physOffset] << std::endl;
                     }
                 }
                 Vmath::Vabs(nTotalPts, m_dx, 1, m_dx, 1);
+                Vmath::Vabs(nTotalPts, m_dy, 1, m_dy, 1);
+
+                for (i = 0; i < nTotalPts; ++i)
+                {
+                    m_dx[i] = std::min(m_dx[i], m_dy[i]);
+                }
                 pFields[0]->GetFwdBwdTracePhys(m_dx, m_dxFwd, m_dxBwd);
                 
                 for (i = 0; i < nTotalPts; ++i)
                 {
                     std::cout << "x    = " << coords[0][i] << std::endl;
                     std::cout << "y    = " << coords[1][i] << std::endl;
-                    std::cout << "m_dx = " << m_dx[i]      << std::endl;
+                    std::cout << "m_dx - min = " << m_dx[i]      << std::endl;
                     std::cout << "m_dy = " << m_dx[i]      << std::endl;
 
                 }
