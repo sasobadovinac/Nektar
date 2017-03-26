@@ -205,7 +205,7 @@ namespace Nektar
                 for (int n = 0; n < nElements; ++n)
                 {
                     cntx = 0;
-                    cnty = 0;
+                    cnty = 1;
                     base       = pFields[0]->GetExp(n)->GetBase();
                     nquad0     = base[0]->GetNumPoints();
                     nquad1     = base[1]->GetNumPoints();
@@ -243,28 +243,12 @@ namespace Nektar
                             
                         }
                         
-                        if (i == (nquad0-1)+cnt*nquad0)
-                        {
-                            cnty++;
-                            m_dx[i+physOffset] =
-                            (coords[0][i+cnty*nquad0+physOffset] -
-                             coords[0][i-1+physOffset]);
-                            std::cout << "IF = " << m_dx[i+physOffset]
-                            << std::endl;
-                            std::cout << "i  = " << i
-                            << ",    physOffset = " << physOffset
-                            << ",    nquad0 = "     << nquad0
-                            << std::endl;
-                        }
-                        else
-                        {
-                            m_dx[i+physOffset] =
-                            (coords[0][i+physOffset] -
-                             coords[0][i+1+physOffset]);
+                        cnty++;
+                        m_dx[i+physOffset] =
+                        (coords[0][i+cnty*nquad0+physOffset] -
+                            coords[0][i+physOffset]);
                             
-                            std::cout << "ELSE = " << m_dx[i+physOffset] << std::endl;
-                            
-                        }
+                        std::cout << "ELSE = " << m_dy[i+physOffset] << std::endl;
                     }
                 }
                 Vmath::Vabs(nTotalPts, m_dx, 1, m_dx, 1);
@@ -273,7 +257,10 @@ namespace Nektar
                 for (i = 0; i < nTotalPts; ++i)
                 {
                     std::cout << "x    = " << coords[0][i] << std::endl;
+                    std::cout << "y    = " << coords[1][i] << std::endl;
                     std::cout << "m_dx = " << m_dx[i]      << std::endl;
+                    std::cout << "m_dy = " << m_dx[i]      << std::endl;
+
                 }
                 
                 // Approach on standard space
