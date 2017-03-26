@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File BS.cpp
+// File BlackScholes.cpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -35,17 +35,18 @@
 
 #include <iostream>
 
-#include <OptionPricingSolver/EquationSystems/BS.h>
+#include <OptionPricingSolver/EquationSystems/BlackScholes.h>
 
 using namespace std;
 
 namespace Nektar
 {
-    string BS::className = SolverUtils::GetEquationSystemFactory().
-        RegisterCreatorFunction("BlackScholes", BS::create,
+
+    string BlackScholes::className = SolverUtils::GetEquationSystemFactory().
+        RegisterCreatorFunction("BlackScholes", BlackScholes::create,
                                 "Black Scholes equation.");
     
-    BS::BS(const LibUtilities::SessionReaderSharedPtr& pSession)
+    BlackScholes::BlackScholes(const LibUtilities::SessionReaderSharedPtr& pSession)
             : UnsteadySystem(pSession), AdvectionSystem(pSession)
     {
     }
@@ -54,7 +55,7 @@ namespace Nektar
      * @brief Initialisation object for the unsteady linear advection 
      * diffusion equation.
      */
-    void BS::v_InitObject()
+    void BlackScholes::v_InitObject()
     {
         AdvectionSystem::v_InitObject();
         
@@ -180,7 +181,7 @@ namespace Nektar
                     CreateInstance(riemName);
                 
                 // Set additional parameters for numerical flux
-                m_riemannSolver->SetScalar("Vn", &BS::GetNormalStockPrice, this);
+                m_riemannSolver->SetScalar("Vn", &BlackScholes::GetNormalStockPrice, this);
                 
                 // Set explicit advection strategy
                 m_session->LoadSolverInfo("AdvectionType", advName, "WeakDG");
@@ -188,7 +189,7 @@ namespace Nektar
                     CreateInstance(advName, advName);
                 
                 // Set additional parameters for explicit advection
-                m_advObject->SetFluxVector   (&BS::GetFluxVectorAdv, this);
+                m_advObject->SetFluxVector   (&BlackScholes::GetFluxVectorAdv, this);
                 m_advObject->SetRiemannSolver(m_riemannSolver);
                 m_advObject->InitObject      (m_session, m_fields);
                 
@@ -204,7 +205,7 @@ namespace Nektar
                         CreateInstance(diffName, diffName);
                     
                     // Set additional parameters for explicit diffusion
-                    m_diffusion->SetFluxVector(&BS::GetFluxVectorDiff, this);
+                    m_diffusion->SetFluxVector(&BlackScholes::GetFluxVectorDiff, this);
                     m_diffusion->InitObject(m_session, m_fields);
                 }
 
@@ -223,15 +224,15 @@ namespace Nektar
                                           advName, "NonConservative");
                 m_advObject = SolverUtils::GetAdvectionFactory().
                     CreateInstance(advName, advName);
-                m_advObject->SetFluxVector(&BS::GetFluxVectorAdv, this);
+                m_advObject->SetFluxVector(&BlackScholes::GetFluxVectorAdv, this);
                 
                 // Add sigma^2/2 to advection term to handle symmetric
                 // diffusion oeprator
                 for (int i = 0; i < m_spacedim; ++i)
                 {
-                    Vmath::Sadd(m_stockPrice[0].num_elements(),
-                                0.5*m_volatility*m_volatility,
-                                m_stockPrice[i], 1, m_stockPrice[i], 1);
+                    Vmath::Svtvp(m_stockPrice[0].num_elements(),
+                                -1.0*m_volatility*m_volatility,
+                                coords[i],1,m_stockPrice[i], 1, m_stockPrice[i], 1);
                 }
 
 
@@ -242,7 +243,7 @@ namespace Nektar
                     m_riemannSolver = SolverUtils::GetRiemannSolverFactory().
                         CreateInstance(riemName);
                     m_riemannSolver->SetScalar(
-                        "Vn", &BS::GetNormalStockPrice, this);
+                        "Vn", &BlackScholes::GetNormalStockPrice, this);
                     m_advObject->SetRiemannSolver(m_riemannSolver);
                     m_advObject->InitObject      (m_session, m_fields);
                 }
@@ -262,9 +263,9 @@ namespace Nektar
             }
         }
 
-        m_ode.DefineImplicitSolve(&BS::DoImplicitSolve, this);
-        m_ode.DefineProjection   (&BS::DoOdeProjection, this);
-        m_ode.DefineOdeRhs       (&BS::DoOdeRhs       , this);
+        m_ode.DefineImplicitSolve(&BlackScholes::DoImplicitSolve, this);
+        m_ode.DefineProjection   (&BlackScholes::DoOdeProjection, this);
+        m_ode.DefineOdeRhs       (&BlackScholes::DoOdeRhs       , this);
 
         // Substepping
         if (m_subSteppingScheme)
@@ -279,22 +280,23 @@ namespace Nektar
     /**
      * @brief Unsteady linear advection diffusion equation destructor.
      */
-    BS::~BS()
+    BlackScholes::~BlackScholes()
     {
     }
     
     /**
      * @brief Get the normal stock price for the B-S equation.
      */
-    Array<OneD, NekDouble> &BS::GetNormalStockPrice()
+    Array<OneD, NekDouble> &BlackScholes::GetNormalStockPrice()
     {
         return GetNormalStock(m_stockPrice);
     }
 
+
     /**
      * @brief Get the normal stock price for the B-S equation.
      */
-    Array<OneD, NekDouble> &BS::GetNormalStock(
+    Array<OneD, NekDouble> &BlackScholes::GetNormalStock(
         const Array<OneD, const Array<OneD, NekDouble> > &stockField)
     {
         // Auxiliary variable to compute the normal velocity
@@ -321,7 +323,7 @@ namespace Nektar
      * @param outarray   Calculated solution.
      * @param time       Time.
      */
-    void BS::DoOdeRhs(
+    void BlackScholes::DoOdeRhs(
         const Array<OneD, const  Array<OneD, NekDouble> > &inarray,
               Array<OneD,        Array<OneD, NekDouble> > &outarray,
         const NekDouble                                   time)
@@ -330,12 +332,6 @@ namespace Nektar
         m_advObject->Advect(inarray.num_elements(), m_fields,
                             m_stockPrice, inarray, outarray, time);
         
-        // Negate the advection term
-        for (int i = 0; i < inarray.num_elements(); ++i)
-        {
-            Vmath::Neg(GetNpoints(), outarray[i], 1);
-        }
-
         // Add forcing terms
         std::vector<SolverUtils::ForcingSharedPtr>::const_iterator x;
         for (x = m_forcing.begin(); x != m_forcing.end(); ++x)
@@ -371,7 +367,7 @@ namespace Nektar
      * @param outarray   Calculated solution.
      * @param time       Time.
      */
-    void BS::DoOdeProjection(
+    void BlackScholes::DoOdeProjection(
         const Array<OneD, const Array<OneD, NekDouble> > &inarray,
               Array<OneD,       Array<OneD, NekDouble> > &outarray,
         const NekDouble                                  time)
@@ -417,7 +413,7 @@ namespace Nektar
      * @param time       Time.
      * @param lambda     Diffusion coefficient.
      */
-    void BS::DoImplicitSolve(
+    void BlackScholes::DoImplicitSolve(
         const Array<OneD, const Array<OneD, NekDouble> >&inarray,
               Array<OneD,       Array<OneD, NekDouble> >&outarray,
         const NekDouble time,
@@ -465,7 +461,7 @@ namespace Nektar
      * @param physfield   Fields.
      * @param flux        Resulting flux.
      */
-    void BS::GetFluxVectorAdv(
+    void BlackScholes::GetFluxVectorAdv(
         const Array<OneD, Array<OneD, NekDouble> >               &physfield,
               Array<OneD, Array<OneD, Array<OneD, NekDouble> > > &flux)
     {
@@ -491,7 +487,7 @@ namespace Nektar
      * @param derivatives First order derivatives.
      * @param flux        Resulting flux.
      */
-    void BS::GetFluxVectorDiff(
+    void BlackScholes::GetFluxVectorDiff(
         const int i,
         const int j,
         const Array<OneD, Array<OneD, NekDouble> > &physfield,
@@ -508,17 +504,17 @@ namespace Nektar
     /**
      * Generate summary with information regarding simulation.
      */
-    void BS::v_GenerateSummary(
-            SolverUtils::SummaryList& s)
+    void BlackScholes::v_GenerateSummary( SolverUtils::SummaryList& s)
     {
         AdvectionSystem::v_GenerateSummary(s);
 
     }
 
-    /**
-     * Perform substepping if required.
-     */
-    bool BS::v_PreIntegrate(int step)
+        
+    // =========================================================================
+    // BELOW ALL STUFF RELATED TO  SUBSTEPPING - NOT NEEDED AT THE MOMENT
+    // =========================================================================
+    bool BlackScholes::v_PreIntegrate(int step)
     {
         if(m_subSteppingScheme)
         {
@@ -531,7 +527,7 @@ namespace Nektar
     /**
      * Advance substepping time-integration.
      */
-    void BS::SubStepAdvance(
+    void BlackScholes::SubStepAdvance(
         const LibUtilities::TimeIntegrationSolutionSharedPtr &integrationSoln,
         int                                                  nstep,
         NekDouble                                            time)
@@ -592,7 +588,7 @@ namespace Nektar
     /**
      * Get maximum substep allowed.
      */
-    NekDouble BS::GetSubstepTimeStep()
+    NekDouble BlackScholes::GetSubstepTimeStep()
     { 
         int n_element = m_fields[0]->GetExpSize();
 
@@ -623,7 +619,7 @@ namespace Nektar
     /**
      * Setup substepping time-integration.
      */
-    void BS::SetUpSubSteppingTimeIntegration(
+    void BlackScholes::SetUpSubSteppingTimeIntegration(
         int                                                 intMethod,
         const LibUtilities::TimeIntegrationWrapperSharedPtr &IntegrationScheme)
     {
@@ -655,14 +651,14 @@ namespace Nektar
         m_intSteps = IntegrationScheme->GetIntegrationSteps();
 	
         // set explicit time-integration class operators
-        m_subStepIntegrationOps.DefineOdeRhs    (&BS::SubStepAdvection , this);
-        m_subStepIntegrationOps.DefineProjection(&BS::SubStepProjection, this);
+        m_subStepIntegrationOps.DefineOdeRhs(&BlackScholes::SubStepAdvection, this);
+        m_subStepIntegrationOps.DefineProjection(&BlackScholes::SubStepProjection, this);
     }
     
     /** 
      * Explicit Advection terms used by SubStepAdvance time integration.
      */
-    void BS::SubStepAdvection(
+    void BlackScholes::SubStepAdvection(
         const Array<OneD, const Array<OneD, NekDouble> > &inarray,  
               Array<OneD,       Array<OneD, NekDouble> > &outarray,
         const NekDouble                                  time)
@@ -714,7 +710,7 @@ namespace Nektar
     /** 
      * Projection used by SubStepAdvance time integration.
      */
-    void BS::SubStepProjection(
+    void BlackScholes::SubStepProjection(
         const Array<OneD, const Array<OneD, NekDouble> > &inarray,  
         Array<OneD, Array<OneD, NekDouble> > &outarray, 
         const NekDouble time)
@@ -732,10 +728,10 @@ namespace Nektar
     /**
      * Penalty flux for the LDG diffusion term.
      */
-    void BS::AddAdvectionPenaltyFlux(
-        const Array<OneD, const Array<OneD, NekDouble> > &velfield,
-        const Array<OneD, const Array<OneD, NekDouble> > &physfield,
-              Array<OneD,       Array<OneD, NekDouble> > &Outarray)
+    void BlackScholes::AddAdvectionPenaltyFlux(
+                                const Array<OneD, const Array<OneD, NekDouble> > &velfield, 
+                                const Array<OneD, const Array<OneD, NekDouble> > &physfield, 
+                                Array<OneD, Array<OneD, NekDouble> > &Outarray)
     {
         ASSERTL1(physfield.num_elements() == Outarray.num_elements(),
                  "Physfield and outarray are of different dimensions");
@@ -780,7 +776,7 @@ namespace Nektar
     /**
      * Get max standard velocity for each element to calculate max dt.
      */
-    Array<OneD, NekDouble> BS::GetMaxStdVelocity(
+    Array<OneD, NekDouble> BlackScholes::GetMaxStdVelocity(
         const Array<OneD, Array<OneD,NekDouble> > inarray)
     {
         

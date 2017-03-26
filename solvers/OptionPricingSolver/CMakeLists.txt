@@ -5,7 +5,7 @@ CMAKE_DEPENDENT_OPTION(NEKTAR_SOLVER_OPTIONPRICING
 IF( NEKTAR_SOLVER_OPTIONPRICING )
     SET(OptionPricingSolverSource 
        ./OptionPricingSolver.cpp
-       ./EquationSystems/BS.cpp)
+       ./EquationSystems/BlackScholes.cpp)
 
     ADD_SOLVER_EXECUTABLE(OptionPricingSolver solvers 
         ${OptionPricingSolverSource})

@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File BS
+// File BlackScholes
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -33,8 +33,8 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#ifndef NEKTAR_SOLVERS_OPTIONPRICINGSOLVER_EQUATIONSYSTEMS_BS_H
-#define NEKTAR_SOLVERS_OPTIONPRICINGSOLVER_EQUATIONSYSTEMS_BS_H
+#ifndef NEKTAR_SOLVERS_OPTIONPRICINGSOLVER_EQUATIONSYSTEMS_BlackScholes_H
+#define NEKTAR_SOLVERS_OPTIONPRICINGSOLVER_EQUATIONSYSTEMS_BlackScholes_H
 
 #include <SolverUtils/UnsteadySystem.h>
 #include <SolverUtils/AdvectionSystem.h>
@@ -45,15 +45,15 @@
 
 namespace Nektar
 {
-    class BS : public SolverUtils::AdvectionSystem
+    class BlackScholes : public SolverUtils::AdvectionSystem
     {
     public:
-        friend class MemoryManager<BS>;
+        friend class MemoryManager<BlackScholes>;
 
         /// Creates an instance of this class
         static SolverUtils::EquationSystemSharedPtr create(
             const LibUtilities::SessionReaderSharedPtr& pSession){
-            SolverUtils::EquationSystemSharedPtr p = MemoryManager<BS>::
+            SolverUtils::EquationSystemSharedPtr p = MemoryManager<BlackScholes>::
                 AllocateSharedPtr(pSession);
             
             p->InitObject();
@@ -64,7 +64,7 @@ namespace Nektar
         static std::string className;
 
         /// Destructor
-        virtual ~BS();
+        virtual ~BlackScholes();
 
     protected:
         int       m_intSteps;
@@ -89,7 +89,7 @@ namespace Nektar
         int m_planeNumber;
 
         /// Session reader
-        BS(const LibUtilities::SessionReaderSharedPtr& pSession);
+        BlackScholes(const LibUtilities::SessionReaderSharedPtr& pSession);
 
         /// Forcing terms
         std::vector<SolverUtils::ForcingSharedPtr>               m_forcing;
