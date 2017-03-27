@@ -1,6 +1,11 @@
 Changelog
 =========
 
+v4.4.1
+------
+**NekMesh**:
+- Fix memory consumption issue with Gmsh output (!747)
+
 v4.4.0
 ------
 **Library**:
