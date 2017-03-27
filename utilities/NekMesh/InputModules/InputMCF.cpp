@@ -432,19 +432,19 @@ void InputMCF::Process()
         module->RegisterConfig("maxiter", "10");
         module->RegisterConfig("numthreads",
                                     boost::lexical_cast<string>(np));
-    }
 
-    try
-    {
-        module->SetDefaults();
-        module->Process();
-    }
-    catch (runtime_error &e)
-    {
-        cout << "Variational optimisation has failed with message:" << endl;
-        cout << e.what() << endl;
-        cout << "The mesh will be written as is, it may be invalid" << endl;
-        return;
+        try
+        {
+            module->SetDefaults();
+            module->Process();
+        }
+        catch (runtime_error &e)
+        {
+            cout << "Variational optimisation has failed with message:" << endl;
+            cout << e.what() << endl;
+            cout << "The mesh will be written as is, it may be invalid" << endl;
+            return;
+        }
     }
 
     ////**** SPLIT BL ****////
@@ -457,34 +457,22 @@ void InputMCF::Process()
         module->RegisterConfig(
             "nq", boost::lexical_cast<string>(m_mesh->m_nummode));
         module->RegisterConfig("r", m_blprog);
-    }
 
-    try
-    {
-        vector<string> lines;
-        boost::split(lines, m_periodic, boost::is_any_of(":"));
-
-        for (vector<string>::iterator il = lines.begin(); il != lines.end();
-             ++il)
+        try
         {
-            module = GetModuleFactory().CreateInstance(
-                ModuleKey(eProcessModule, "peralign"), m_mesh);
-
-            vector<string> tmp(2);
-            boost::split(tmp, *il, boost::is_any_of(","));
-            module->RegisterConfig("surf1", tmp[0]);
+            module->SetDefaults();
+            module->Process();
         }
+        catch (runtime_error &e)
+        {
+            cout << "Boundary layer splitting has failed with message:" << endl;
+            cout << e.what() << endl;
+            cout << "The mesh will be written as is, it may be invalid" << endl;
+            return;
+        }
+    }
 
-        module->SetDefaults();
-        module->Process();
-    }
-    catch (runtime_error &e)
-    {
-        cout << "Boundary layer splitting has failed with message:" << endl;
-        cout << e.what() << endl;
-        cout << "The mesh will be written as is, it may be invalid" << endl;
-        return;
-    }
+
 }
 }
 }
