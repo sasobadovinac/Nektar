@@ -52,7 +52,7 @@
     </GEOMETRY>
 
     <EXPANSIONS>
-        <E COMPOSITE="C[0]" NUMMODES="17" TYPE="GLL_LAGRANGE"
+        <E COMPOSITE="C[0]" NUMMODES="2" TYPE="GLL_LAGRANGE_SEM"
            FIELDS="rho,rhou,rhov,E" />
     </EXPANSIONS>
 
@@ -60,7 +60,7 @@
 
         <PARAMETERS>
             <P> TimeStep       = 0.002          </P>
-            <P> FinTime        = 100              </P>
+            <P> FinTime        = 0.002              </P>
             <P> NumSteps       = FinTime/TimeStep </P>
             <P> IO_CheckSteps  = 100              </P>
             <P> IO_InfoSteps   = 1                </P>

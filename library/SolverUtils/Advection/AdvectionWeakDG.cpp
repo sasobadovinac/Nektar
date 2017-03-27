@@ -204,6 +204,9 @@ namespace Nektar
                 
                 for (int n = 0; n < nElements; ++n)
                 {
+                    std::cout << "======================================="
+                              << std::endl;
+                    std::cout << "n = " << n << std::endl;
                     cntx = 0;
                     cnty = 1;
                     base       = pFields[0]->GetExp(n)->GetBase();
@@ -220,9 +223,9 @@ namespace Nektar
                         << ",    nquad0 = "     << nquad0
                         << std::endl;
                         
-                        if (i == (nquad0-1)+cntx*nquad0 && i != nLocalPts)
+                        if (i == (nLocalPts-nquad0))
                         {
-                            cnty++;
+                            cnty = nLocalPts-nquad0;
                         }
                         if (i == (nquad0-1)+cntx*nquad0)
                         {
@@ -247,18 +250,22 @@ namespace Nektar
                             std::cout << "ELSE = " << m_dx[i+physOffset] << std::endl;
                         }
                         
-                        if (cnty == nquad1)
+                        if (cnty == (nLocalPts-nquad0))
                         {
                             std::cout << "cnty = " << cnty << std::endl;
                             m_dy[i+physOffset] = (coords[1][i+physOffset] -
                                                   coords[1][i-nquad0+physOffset]);
+                            std::cout << "------ IF DY = " << m_dy[i+physOffset] << std::endl;
+
                         }
-                        else{
+                        else
+                        {
                             m_dy[i+physOffset] =
                                 (coords[1][i+nquad0+physOffset] -
                                  coords[1][i+physOffset]);
+                            std::cout << "------ ELSE DY = " << m_dy[i+physOffset] << std::endl;
+
                         }
-                        std::cout << "ELSE DY = " << m_dy[i+physOffset] << std::endl;
                     }
                 }
                 Vmath::Vabs(nTotalPts, m_dx, 1, m_dx, 1);
