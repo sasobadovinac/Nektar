@@ -461,6 +461,20 @@ void InputMCF::Process()
 
     try
     {
+        vector<string> lines;
+        boost::split(lines, m_periodic, boost::is_any_of(":"));
+
+        for (vector<string>::iterator il = lines.begin(); il != lines.end();
+             ++il)
+        {
+            module = GetModuleFactory().CreateInstance(
+                ModuleKey(eProcessModule, "peralign"), m_mesh);
+
+            vector<string> tmp(2);
+            boost::split(tmp, *il, boost::is_any_of(","));
+            module->RegisterConfig("surf1", tmp[0]);
+        }
+
         module->SetDefaults();
         module->Process();
     }
