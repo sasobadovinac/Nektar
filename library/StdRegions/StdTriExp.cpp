@@ -517,7 +517,7 @@ namespace Nektar
             int i;
             int mode;
             int nquad0  = m_base[0]->GetNumPoints();
-            int nquad1  = m_base[1]->GetNumPoints();   
+            int nquad1  = m_base[1]->GetNumPoints();
             int nmodes0 = m_base[0]->GetNumModes();
             int nmodes1 = m_base[1]->GetNumModes();
 
@@ -915,7 +915,7 @@ namespace Nektar
                      "Mapping not defined for this type of basis");
 
             int i;
-            int numModes;
+            int numModes=0;
             int order0 = m_base[0]->GetNumModes();
             int order1 = m_base[1]->GetNumModes();
 
@@ -1403,8 +1403,7 @@ namespace Nektar
             // project onto physical space.
             OrthoExp.FwdTrans(array,orthocoeffs);
 
-            if(mkey.ConstFactorExists(eFactorSVVPowerKerDiffCoeff)) // Rodrigo's power kernel
-            {
+            if(mkey.ConstFactorExists(eFactorSVVPowerKerDiffCoeff)) // Rodrigo's power kern            {
                 NekDouble cutoff =  mkey.GetConstFactor(eFactorSVVCutoffRatio); 
                 NekDouble  SvvDiffCoeff  =
                     mkey.GetConstFactor(eFactorSVVPowerKerDiffCoeff)*
