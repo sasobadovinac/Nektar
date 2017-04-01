@@ -226,19 +226,20 @@ namespace Nektar
         };
         typedef std::map<StdRegions::VarCoeffType, Array<OneD, NekDouble> > VarCoeffMap;
         static VarCoeffMap NullVarCoeffMap;
-
+        
         enum ConstFactorType
-        {
-            eFactorLambda,
-            eFactorTau,
-            eFactorTime,
-            eFactorSVVCutoffRatio,
-            eFactorSVVDiffCoeff,
-            eFactorSVVPowerKerDiffCoeff,
-            eFactorGaussVertex,
-            eFactorGaussEdge,
-            eFactorConst
-        };
+            {
+                eFactorLambda,
+                eFactorTau,
+                eFactorTime,
+                eFactorSVVCutoffRatio,
+                eFactorSVVDiffCoeff,
+                eFactorSVVPowerKerDiffCoeff,
+                eFactorSVVDGKerDiffCoeff,
+                eFactorGaussVertex,
+                eFactorGaussEdge,
+                eFactorConst
+            };
 
         const char* const ConstFactorTypeMap[] = {
             "FactorLambda",
@@ -246,6 +247,8 @@ namespace Nektar
             "FactorTime",
             "FactorSVVCutoffRatio",
             "FactorSVVDiffCoeff",
+            "FactorSVVPowerKerDiffCoeff",
+            "FactorSVVDGKerDiffCoeff",
             "FactorGaussVertex",
             "FactorGaussEdge",
             "FactorConstant"
@@ -339,6 +342,19 @@ namespace Nektar
             return val;
         }
 
+        //Optimized Kernel Entries
+
+        const NekDouble SVVDGFiltermodesmin = 3;
+        const NekDouble SVVDGFiltermodesmax = 8;
+        const NekDouble SVVDGFilter[6][8] =
+        {
+           { 0, 0.36212, 1       , 0, 0, 0, 0, 0 },
+           { 0, 0.70546, 0.078836, 1, 0, 0, 0, 0 },
+           { 0, 0, 0.49411, 0.072394, 1, 0, 0, 0 },
+           { 0, 0, 7.3566e-5, 0.40506, 0.094122, 1, 0, 0 },
+           { 0, 0, 0, 0.0001422, 0.36863, 0.11815, 1, 0 },
+           { 0, 0, 0, 0, 0.00019497, 0.41397, 0.16927, 1 } };
+        
     } // end of namespace
 } // end of namespace
 

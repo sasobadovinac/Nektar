@@ -1576,6 +1576,28 @@ namespace Nektar
                     }
                 }
             }
+            else if(mkey.ConstFactorExists(eFactorSVVDGKerDiffCoeff)) // Rodrigo/mansoor's DG kernel
+            {
+                NekDouble cutoff = mkey.GetConstFactor(eFactorSVVCutoffRatio); 
+                NekDouble  SvvDiffCoeff  =
+                    mkey.GetConstFactor(eFactorSVVDGKerDiffCoeff)*
+                    mkey.GetConstFactor(eFactorSVVDiffCoeff);
+                int max_ab = max(nmodes_a-SVVDGFiltermodesmin,
+                                 nmodes_b-SVVDGFiltermodesmin);
+                
+                for(int j = 0; j < nmodes_a; ++j)
+                {
+                    for(int k = 0; k < nmodes_b; ++k)
+                    {
+                        int maxjk = max(j,k);
+                        maxjk = max(maxjk,7);
+                        max_ab = max(max_ab,0);
+                        max_ab = min(max_ab,5);
+                        
+                        orthocoeffs[j*nmodes_b+k] *= SvvDiffCoeff * SVVDGFilter[max_ab][maxjk];
+                    }
+                }
+            }
             else
             {
                 NekDouble  SvvDiffCoeff = mkey.GetConstFactor(eFactorSVVDiffCoeff);

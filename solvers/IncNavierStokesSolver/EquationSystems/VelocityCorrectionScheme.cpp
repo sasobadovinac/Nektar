@@ -125,16 +125,28 @@ namespace Nektar
         
         m_session->MatchSolverInfo("SpectralVanishingViscosity","PowerKernel",
                                    m_useSpecVanVisc, false);
-
-        //set up varcoeff kernel if PowerKernel is specified
         if(m_useSpecVanVisc)
         {
-            m_svvPowerKerDiffCoeff = Array<OneD, NekDouble>(m_fields[0]->GetNumElmts());
-            SVVPowerKernelDiffCoeff(1.0,m_svvPowerKerDiffCoeff);
+            m_IsSVVPowerKernel = true;
+        }
+
+        m_session->MatchSolverInfo("SpectralVanishingViscosity","DGKernel",
+                                   m_useSpecVanVisc, false);
+
+        if(m_useSpecVanVisc)
+        {
+            m_IsSVVPowerKernel = false;
+        }
+
+        //set up varcoeff kernel if PowerKernel or DG is specified
+        if(m_useSpecVanVisc)
+        {
+            m_svvVarDiffCoeff = Array<OneD, NekDouble>(m_fields[0]->GetNumElmts());
+            SVVVarDiffCoeff(1.0,m_svvVarDiffCoeff);
         }
         else
         {
-            m_svvPowerKerDiffCoeff = NullNekDouble1DArray;
+            m_svvVarDiffCoeff = NullNekDouble1DArray;
         }
 
         // Load parameters for Spectral Vanishing Viscosity
@@ -359,7 +371,7 @@ namespace Nektar
         
         if (smoothing != "")
         {
-            if(m_svvPowerKerDiffCoeff == NullNekDouble1DArray)
+            if(m_svvVarDiffCoeff == NullNekDouble1DArray)
             {
                 SolverUtils::AddSummaryItem(
                    s, "Smoothing", "SVV (" + smoothing +
@@ -370,12 +382,22 @@ namespace Nektar
             }
             else
             {
-                SolverUtils::AddSummaryItem(
-                    s, "Smoothing", "SVV (" + smoothing +
-                    " Power Kernel (Power ratio ="
-                   + boost::lexical_cast<string>(m_sVVCutoffRatio)
-                   + ", diff coeff = "
-                    + boost::lexical_cast<string>(m_sVVDiffCoeff)+"*Uh/p))");
+                if(m_IsSVVPowerKernel)
+                {
+                    SolverUtils::AddSummaryItem(
+                       s, "Smoothing", "SVV (" + smoothing +
+                       " Power Kernel (Power ratio ="
+                       + boost::lexical_cast<string>(m_sVVCutoffRatio)
+                       + ", diff coeff = "
+                       + boost::lexical_cast<string>(m_sVVDiffCoeff)+"*Uh/p))");
+                }
+                else
+                {
+                    SolverUtils::AddSummaryItem(
+                       s, "Smoothing", "SVV (" + smoothing +
+                       " DG Kernel (diff coeff = "
+                       + boost::lexical_cast<string>(m_sVVDiffCoeff)+"*Uh/p))");
+                }
             }                
         }
     }
@@ -629,10 +651,18 @@ namespace Nektar
         {
             factors[StdRegions::eFactorSVVCutoffRatio] = m_sVVCutoffRatio;
             factors[StdRegions::eFactorSVVDiffCoeff]   = m_sVVDiffCoeff/m_kinvis; 
-            if(m_svvPowerKerDiffCoeff != NullNekDouble1DArray)
+            if(m_svvVarDiffCoeff != NullNekDouble1DArray)
             {
-                varFactorsMap[StdRegions::eFactorSVVPowerKerDiffCoeff] =
-                    m_svvPowerKerDiffCoeff;
+                if(m_IsSVVPowerKernel)
+                {
+                    varFactorsMap[StdRegions::eFactorSVVPowerKerDiffCoeff] =
+                        m_svvVarDiffCoeff;
+                }
+                else
+                {
+                    varFactorsMap[StdRegions::eFactorSVVDGKerDiffCoeff] =
+                        m_svvVarDiffCoeff;
+                }
             }
         }
 
@@ -1115,7 +1145,7 @@ namespace Nektar
         m_fields[0]->BwdTrans(lockinvis,StabKinvis);
     }
 
-    void VelocityCorrectionScheme::SVVPowerKernelDiffCoeff(
+    void VelocityCorrectionScheme::SVVVarDiffCoeff(
                      const NekDouble velmag, 
                      Array<OneD, NekDouble> &diffcoeff,
                      const Array<OneD, Array<OneD, NekDouble> >  &vel)
@@ -1198,9 +1228,7 @@ namespace Nektar
                 
                 diffcoeff[e] *= h/p; 
             }
-            
         }
-        
     }
 
 } //end of namespace

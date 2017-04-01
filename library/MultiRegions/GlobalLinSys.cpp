@@ -282,6 +282,15 @@ namespace Nektar
                     vConstFactorMap[StdRegions::eFactorSVVPowerKerDiffCoeff] =
                         m_linSysKey.GetVarFactors(StdRegions::eFactorSVVPowerKerDiffCoeff)[n];
                 }
+
+
+                if(m_linSysKey.GetVarFactors().
+                   count(StdRegions::eFactorSVVDGKerDiffCoeff) != 0)
+                {
+                    vConstFactorMap[StdRegions::eFactorSVVDGKerDiffCoeff] =
+                        m_linSysKey.GetVarFactors(StdRegions::eFactorSVVDGKerDiffCoeff)[n];
+                }
+
             }
 
                 // retrieve variable coefficients
@@ -374,8 +383,7 @@ namespace Nektar
 
                     vConstFactorMap[StdRegions::eFactorSVVCutoffRatio] =
                         m_linSysKey.GetVarFactors(StdRegions::eFactorSVVCutoffRatio)[n];
-                   
-
+                    
                 }
                 
                 if(m_linSysKey.GetVarFactors().
@@ -384,7 +392,13 @@ namespace Nektar
                     vConstFactorMap[StdRegions::eFactorSVVPowerKerDiffCoeff] =
                         m_linSysKey.GetVarFactors(StdRegions::eFactorSVVPowerKerDiffCoeff)[n];
                 }
-                
+
+                if(m_linSysKey.GetVarFactors().
+                   count(StdRegions::eFactorSVVDGKerDiffCoeff) != 0)
+                {
+                    vConstFactorMap[StdRegions::eFactorSVVDGKerDiffCoeff] =
+                        m_linSysKey.GetVarFactors(StdRegions::eFactorSVVDGKerDiffCoeff)[n];
+                }
             }
 
             // retrieve variable coefficients
@@ -483,6 +497,14 @@ namespace Nektar
                     vConstFactorMap[StdRegions::eFactorSVVPowerKerDiffCoeff] =
                         m_linSysKey.GetVarFactors(StdRegions::eFactorSVVPowerKerDiffCoeff)[n];
                 }
+
+                if(m_linSysKey.GetVarFactors().
+                   count(StdRegions::eFactorSVVDGKerDiffCoeff) != 0)
+                {
+                    vConstFactorMap[StdRegions::eFactorSVVDGKerDiffCoeff] =
+                        m_linSysKey.GetVarFactors(StdRegions::eFactorSVVDGKerDiffCoeff)[n];
+                }
+
             }
             
             // retrieve variable coefficients

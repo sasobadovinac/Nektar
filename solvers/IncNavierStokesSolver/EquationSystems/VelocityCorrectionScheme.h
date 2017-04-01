@@ -156,8 +156,9 @@ namespace Nektar
         /// Diffusion coefficient of SVV modes
         NekDouble m_sVVDiffCoeff;
         /// Array of coefficient if power kernel is used in SVV
-        Array<OneD, NekDouble> m_svvPowerKerDiffCoeff;
-        
+        Array<OneD, NekDouble> m_svvVarDiffCoeff;
+        /// Identifier for Power Kernel otherwise DG kernel
+        bool m_IsSVVPowerKernel;
         /// Diffusion coefficients (will be kinvis for velocities)
         Array<OneD, NekDouble> m_diffCoeff;
         
@@ -225,10 +226,10 @@ namespace Nektar
 
         void DynamicVisc();
             
-        void SVVPowerKernelDiffCoeff(const NekDouble velmag, 
-                                     Array<OneD, NekDouble> &diffcoeff,
-                                     const Array<OneD, Array<OneD, NekDouble> >
-                                     &vel = NullNekDoubleArrayofArray);
+        void SVVVarDiffCoeff(const NekDouble velmag, 
+                             Array<OneD, NekDouble> &diffcoeff,
+                             const Array<OneD, Array<OneD, NekDouble> >
+                             &vel = NullNekDoubleArrayofArray);
     private:
         
     };
