@@ -1584,13 +1584,13 @@ namespace Nektar
                     mkey.GetConstFactor(eFactorSVVDiffCoeff);
                 int max_ab = max(nmodes_a-SVVDGFiltermodesmin,
                                  nmodes_b-SVVDGFiltermodesmin);
-                
+
                 for(int j = 0; j < nmodes_a; ++j)
                 {
                     for(int k = 0; k < nmodes_b; ++k)
                     {
                         int maxjk = max(j,k);
-                        maxjk = max(maxjk,7);
+                        maxjk = min(maxjk,7);
                         max_ab = max(max_ab,0);
                         max_ab = min(max_ab,5);
                         

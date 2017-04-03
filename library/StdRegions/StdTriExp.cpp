@@ -1438,7 +1438,7 @@ namespace Nektar
                     for(int k = 0; k < nmodes_b-j; ++k, ++cnt)
                     {
                         int maxjk = max(j,k);
-                        maxjk = max(maxjk,7);
+                        maxjk = min(maxjk,7);
                         max_ab = max(max_ab,0);
                         max_ab = min(max_ab,5);
                         
