@@ -4,7 +4,7 @@ Changelog
 v4.4.1
 ------
 **NekMesh**:
-- Fix memory consumption issue with Gmsh output (!747)
+- Fix memory consumption issue with Gmsh output (!747, !762)
 - Add periodic boundary condition meshing in 2D (!733)
 - Adjust boundary layer thickness in corners in 2D (!739)
 - Rework meshing control so that if possible viewable meshes will be dumped
