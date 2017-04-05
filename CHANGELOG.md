@@ -19,6 +19,7 @@ v4.4.1
   quad elements are listed before tri elements (!758)
 - Remove the duplicate output of errorutil (!756)
 - Fix interpolation issue with Lagrange basis functions (!768)
+- fix blas cmake dependencies (!763)
 
 **FieldConvert:**
 - Fix issue with field ordering in the interppointdatatofld module (!754)
