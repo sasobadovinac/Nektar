@@ -174,11 +174,25 @@ FieldIOHdf5::FieldIOHdf5(LibUtilities::CommSharedPtr pComm,
 unsigned long FieldIOHdf5::v_Write(const std::string &outFile,
                           std::vector<FieldDefinitionsSharedPtr> &fielddefs,
                           std::vector<std::vector<NekDouble> > &fielddata,
-                          const FieldMetaDataMap &fieldmetadatamap)
+                          const FieldMetaDataMap &fieldmetadatamap,
+                          const bool backup)
 {
+<<<<<<< HEAD
     unsigned long nWritten = 0;
     
     SetUpOutput(outFile, false);
+=======
+    std::stringstream prfx;
+    prfx << m_comm->GetRank() << ": FieldIOHdf5::v_Write(): ";
+    double tm0 = 0.0, tm1 = 0.0;
+
+    if (m_comm->GetRank() == 0)
+    {
+        tm0 = m_comm->Wtime();
+    }
+
+    SetUpOutput(outFile, false, backup);
+>>>>>>> origin/master
 
     // We make a number of assumptions in this code:
     //   1. All element ids have the same type: unsigned int

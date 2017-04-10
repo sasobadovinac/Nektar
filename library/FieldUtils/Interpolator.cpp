@@ -283,7 +283,8 @@ void Interpolator::Interpolate(const LibUtilities::PtsFieldSharedPtr ptsInField,
  */
 void Interpolator::Interpolate(
     const vector<MultiRegions::ExpListSharedPtr> expInField,
-    vector<MultiRegions::ExpListSharedPtr> &expOutField)
+    vector<MultiRegions::ExpListSharedPtr> &expOutField,
+    NekDouble def_value)
 {
     ASSERTL0(expInField.size() == expOutField.size(),
              "number of fields does not match");
@@ -338,8 +339,7 @@ void Interpolator::Interpolate(
 
         if (elmtid >= 0)
         {
-            int offset = m_expInField[0]->GetPhys_Offset(
-                m_expInField[0]->GetOffset_Elmt_Id(elmtid));
+            int offset = m_expInField[0]->GetPhys_Offset(elmtid);
 
             for (int f = 0; f < m_expInField.size(); ++f)
             {
@@ -355,6 +355,13 @@ void Interpolator::Interpolate(
                 {
                     m_expOutField[f]->UpdatePhys()[i] = value;
                 }
+            }
+        }
+        else
+        {
+            for (int f = 0; f < m_expInField.size(); ++f)
+            {
+                m_expOutField[f]->UpdatePhys()[i] = def_value;
             }
         }
 
@@ -380,7 +387,8 @@ void Interpolator::Interpolate(
  */
 void Interpolator::Interpolate(
     const vector<MultiRegions::ExpListSharedPtr> expInField,
-    LibUtilities::PtsFieldSharedPtr &ptsOutField)
+    LibUtilities::PtsFieldSharedPtr &ptsOutField,
+    NekDouble def_value)
 {
     ASSERTL0(expInField.size() == ptsOutField->GetNFields(),
              "number of fields does not match");
@@ -415,8 +423,7 @@ void Interpolator::Interpolate(
 
         if (elmtid >= 0)
         {
-            int offset = m_expInField[0]->GetPhys_Offset(
-                m_expInField[0]->GetOffset_Elmt_Id(elmtid));
+            int offset = m_expInField[0]->GetPhys_Offset(elmtid);
 
             for (int f = 0; f < m_expInField.size(); ++f)
             {
@@ -433,6 +440,14 @@ void Interpolator::Interpolate(
                     m_ptsOutField->SetPointVal(m_ptsOutField->GetDim() + f, i,
                                                value);
                 }
+            }
+        }
+        else
+        {
+            for (int f = 0; f < m_expInField.size(); ++f)
+            {
+                m_ptsOutField->SetPointVal(m_ptsOutField->GetDim() + f, i,
+                                           def_value);
             }
         }
 

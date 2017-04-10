@@ -184,8 +184,14 @@ LIB_UTILITIES_EXPORT unsigned long Write(
     const std::string &outFile,
     std::vector<FieldDefinitionsSharedPtr> &fielddefs,
     std::vector<std::vector<NekDouble> > &fielddata,
+<<<<<<< HEAD
     const FieldMetaDataMap &fieldinfomap = NullFieldMetaDataMap);
 LIB_UTILITIES_EXPORT unsigned long Import(
+=======
+    const FieldMetaDataMap &fieldinfomap = NullFieldMetaDataMap,
+    const bool backup = false);
+LIB_UTILITIES_EXPORT void Import(
+>>>>>>> origin/master
     const std::string &infilename,
     std::vector<FieldDefinitionsSharedPtr> &fielddefs,
     std::vector<std::vector<NekDouble> > &fielddata = NullVectorNekDoubleVector,
@@ -234,7 +240,8 @@ public:
         const std::string &outFile,
         std::vector<FieldDefinitionsSharedPtr> &fielddefs,
         std::vector<std::vector<NekDouble> > &fielddata,
-        const FieldMetaDataMap &fieldinfomap = NullFieldMetaDataMap);
+        const FieldMetaDataMap &fieldinfomap = NullFieldMetaDataMap,
+        const bool backup = false);
 
     LIB_UTILITIES_EXPORT inline unsigned long Import(
         const std::string &infilename,
@@ -286,14 +293,15 @@ protected:
     }
 
     LIB_UTILITIES_EXPORT std::string SetUpOutput(
-        const std::string outname, bool perRank);
+        const std::string outname, bool perRank, bool backup = false);
 
     /// @copydoc FieldIO::Write
     LIB_UTILITIES_EXPORT virtual unsigned long v_Write(
         const std::string                      &outFile,
         std::vector<FieldDefinitionsSharedPtr> &fielddefs,
         std::vector<std::vector<NekDouble> >   &fielddata,
-        const FieldMetaDataMap                 &fieldinfomap) = 0;
+        const FieldMetaDataMap                 &fieldinfomap,
+        const bool                              backup = false) = 0;
 
     /// @copydoc FieldIO::Import
     LIB_UTILITIES_EXPORT virtual unsigned long v_Import(
@@ -329,10 +337,18 @@ typedef boost::shared_ptr<FieldIO> FieldIOSharedPtr;
  */
 inline unsigned long FieldIO::Write(const std::string             &outFile,
                            std::vector<FieldDefinitionsSharedPtr> &fielddefs,
+<<<<<<< HEAD
                            std::vector<std::vector<NekDouble> >   &fielddata,
                            const FieldMetaDataMap                 &fieldinfomap)
 {
     return v_Write(outFile, fielddefs, fielddata, fieldinfomap);
+=======
+                           std::vector<std::vector<NekDouble> > &fielddata,
+                           const FieldMetaDataMap                 &fieldinfomap,
+                           const bool                              backup)
+{
+    v_Write(outFile, fielddefs, fielddata, fieldinfomap, backup);
+>>>>>>> origin/master
 }
 
 /**
