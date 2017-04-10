@@ -48,7 +48,7 @@ namespace LibUtilities
 {
 
 // initialise static constant attributes of PerformanceAnalyser class
-const char PerformanceAnalyser::ver[] = "2.1.0";
+const char PerformanceAnalyser::ver[] = "3.0.0";
 const unsigned int PerformanceAnalyser::MAX_NAME_LEN(128);
 const char PerformanceAnalyser::PAT_RT_SEPARATOR[] = ",";
 const unsigned int PerformanceAnalyser::PAT_REGION_OPEN(1);

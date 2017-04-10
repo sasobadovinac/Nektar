@@ -49,7 +49,7 @@ namespace LibUtilities
 {
 
 // initialise static constant attributes of PowerMonitor class
-const char PowerMonitor::ver[] = "2.0.0";
+const char PowerMonitor::ver[] = "4.0.0";
 
 const unsigned int PowerMonitor::MAX_FPATH_LEN = 128;
 const unsigned int PowerMonitor::MAX_FLINE_LEN = 128;
@@ -74,7 +74,7 @@ int PowerMonitor::non_monitor_cnt(0);
 bool PowerMonitor::first_record(false);
 int PowerMonitor::mpi_comm_monitor(0);
 
-FILE* PowerMonitor::cnt_fp[];
+FILE* PowerMonitor::cnt_fp[PM_NCOUNTERS];
 FILE* PowerMonitor::log_fp(NULL);
 double PowerMonitor::tm0(0.0);
 double PowerMonitor::entot0(0.0);
