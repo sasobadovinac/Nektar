@@ -259,11 +259,7 @@ unsigned long Write(const std::string &outFile,
 #endif
     CommSharedPtr c    = GetCommFactory().CreateInstance("Serial", 0, 0);
     FieldIOSharedPtr f = GetFieldIOFactory().CreateInstance("Xml", c, false);
-<<<<<<< HEAD
-    return f->Write(outFile, fielddefs, fielddata, fieldinfomap);
-=======
-    f->Write(outFile, fielddefs, fielddata, fieldinfomap, backup);
->>>>>>> origin/master
+    return f->Write(outFile, fielddefs, fielddata, fieldinfomap, backup);
 }
 
 /**
