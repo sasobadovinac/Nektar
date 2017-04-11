@@ -143,10 +143,12 @@ namespace Nektar
         {
             m_svvVarDiffCoeff = Array<OneD, NekDouble>(m_fields[0]->GetNumElmts());
             SVVVarDiffCoeff(1.0,m_svvVarDiffCoeff);
+            m_session->LoadParameter("SVVDiffCoeff",  m_sVVDiffCoeff,  1.0);
         }
         else
         {
             m_svvVarDiffCoeff = NullNekDouble1DArray;
+            m_session->LoadParameter("SVVDiffCoeff",  m_sVVDiffCoeff,  0.1);
         }
 
         // Load parameters for Spectral Vanishing Viscosity
@@ -171,7 +173,6 @@ namespace Nektar
                                 "True", m_useHomo1DSpecVanVisc, false);
         }
         m_session->LoadParameter("SVVCutoffRatio",m_sVVCutoffRatio,0.75);
-        m_session->LoadParameter("SVVDiffCoeff",  m_sVVDiffCoeff,  0.1);
 
         m_session->MatchSolverInfo("SPECTRALHPDEALIASING","True",
                                    m_specHP_dealiasing,false);
