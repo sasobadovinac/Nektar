@@ -16,6 +16,7 @@ v4.4.1
 
 **Library**
 - Remove the duplicate output of errorutil (!756)
+- Fix interpolation issue with Lagrange basis functions (!768)
 
 **FieldConvert:**
 - Fix issue with field ordering in the interppointdatatofld module (!754)
