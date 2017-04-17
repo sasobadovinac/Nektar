@@ -2049,6 +2049,38 @@ namespace Nektar
                     }
                 }
             }
+            else if(mkey.ConstFactorExists(eFactorSVVDGKerDiffCoeff))  // Rodrigo/Mansoor's DG Kernel
+            {
+                NekDouble cutoff = mkey.GetConstFactor(eFactorSVVCutoffRatio); 
+                NekDouble  SvvDiffCoeff  =
+                    mkey.GetConstFactor(eFactorSVVPowerKerDiffCoeff)*
+                    mkey.GetConstFactor(eFactorSVVDiffCoeff);
+
+                int max_abc = max(nmodes_a-SVVDGFiltermodesmin,
+                                  nmodes_b-SVVDGFiltermodesmin);
+                max_abc = max(max_abc, nmodes_c-SVVDGFiltermodesmin);
+                // clamp max_abc
+                max_abc = max(max_abc,0);
+                max_abc = min(max_abc,SVVDGFiltermodesmax-SVVDGFiltermodesmin);
+                
+                for(int i = 0; i < nmodes_a; ++i)
+                {
+                    for(int j = 0; j < nmodes_b; ++j)
+                    {
+                        int maxij = max(i,j);
+
+                        for(int k = 0; k < nmodes_c-i; ++k)
+                        {
+                            int maxijk = max(maxij,k);
+                            maxijk = min(maxijk,SVVDGFiltermodesmax-1);
+                        
+                            orthocoeffs[cnt] *= SvvDiffCoeff *
+                                SVVDGFilter[max_abc][maxijk];
+                            cnt++;
+                        }
+                    }
+                }
+            }
             else
             {
                 // SVV filter paramaters (how much added diffusion relative

@@ -344,8 +344,8 @@ namespace Nektar
 
         //Optimized Kernel Entries
 
-        const NekDouble SVVDGFiltermodesmin = 3;
-        const NekDouble SVVDGFiltermodesmax = 11;
+        const int SVVDGFiltermodesmin = 3;
+        const int SVVDGFiltermodesmax = 11;
        // Optimized Kernel Entries for p = 2 - 10
         const NekDouble SVVDGFilter[9][11] =
         { { 0, 0.36212, 1, 0, 0, 0, 0, 0, 0, 0, 0 },
@@ -357,18 +357,6 @@ namespace Nektar
           { 0, 0, 0, 0, 0, 0.0009762, 0.12747, 0.13763, 1, 0, 0 },
           { 0, 0, 0, 0, 0, 0, 0.0023592, 0.23683, 0.17196, 1, 0 },
           { 0, 0, 0, 0, 0, 0, 0, 0.0026055, 0.28682, 0.22473, 1 } };
-        
-#if 0 // OLD        
-        const NekDouble SVVDGFiltermodesmax = 8;
-        const NekDouble SVVDGFilter[6][8] =
-          {
-           { 0, 0.36212, 1       , 0, 0, 0, 0, 0 },
-           { 0, 0.70546, 0.078836, 1, 0, 0, 0, 0 },
-           { 0, 0, 0.49411, 0.072394, 1, 0, 0, 0 },
-           { 0, 0, 7.3566e-5, 0.40506, 0.094122, 1, 0, 0 },
-           { 0, 0, 0, 0.0001422, 0.36863, 0.11815, 1, 0 },
-           { 0, 0, 0, 0, 0.00019497, 0.41397, 0.16927, 1 } };
-#endif
         
     } // end of namespace
 } // end of namespace
