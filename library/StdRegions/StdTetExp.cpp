@@ -2094,7 +2094,7 @@ namespace Nektar
             {
                 NekDouble cutoff = mkey.GetConstFactor(eFactorSVVCutoffRatio); 
                 NekDouble  SvvDiffCoeff  =
-                    mkey.GetConstFactor(eFactorSVVPowerKerDiffCoeff)*
+                    mkey.GetConstFactor(eFactorSVVDGKerDiffCoeff)*
                     mkey.GetConstFactor(eFactorSVVDiffCoeff);
 
                 int max_abc = max(nmodes_a-SVVDGFiltermodesmin,

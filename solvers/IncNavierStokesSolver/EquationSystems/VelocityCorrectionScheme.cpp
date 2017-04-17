@@ -129,13 +129,15 @@ namespace Nektar
         {
             m_IsSVVPowerKernel = true;
         }
-
-        m_session->MatchSolverInfo("SpectralVanishingViscosity","DGKernel",
-                                   m_useSpecVanVisc, false);
-
-        if(m_useSpecVanVisc)
+        else
         {
-            m_IsSVVPowerKernel = false;
+            m_session->MatchSolverInfo("SpectralVanishingViscosity","DGKernel",
+                                       m_useSpecVanVisc, false);
+            
+            if(m_useSpecVanVisc)
+            {
+                m_IsSVVPowerKernel = false;
+            }
         }
 
         //set up varcoeff kernel if PowerKernel or DG is specified
