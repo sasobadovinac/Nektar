@@ -29,6 +29,9 @@ v4.4.1
 **IncNavierStokesSolver**
 - Fix an initialisation issue when using an additional advective field (!779)
 
+**FieldConvert:**
+- Fix issue when using output-points combined with noequispaced (!775)
+
 v4.4.0
 ------
 **Library**:
