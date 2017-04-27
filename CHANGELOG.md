@@ -3,17 +3,6 @@ Changelog
 
 v4.4.1
 ------
-**NekMesh**:
-- Fix memory consumption issue with Gmsh output (!747, !762)
-- Add periodic boundary condition meshing in 2D (!733)
-- Adjust boundary layer thickness in corners in 2D (!739)
-- Rework meshing control so that if possible viewable meshes will be dumped
-  when some part of the system fails (!756)
-- Add manifold meshing option (!756)
-
-**Documentation**:
-- Added the developer-guide repository as a submodule (!751)
-
 **Library**
 - Remove m_offset_elmt_id and GetOffsetElmtId which fixed problems in 2D when 
   quad elements are listed before tri elements (!758)
@@ -23,6 +12,12 @@ v4.4.1
 
 **FieldConvert:**
 - Fix issue with field ordering in the interppointdatatofld module (!754)
+
+**NekMesh**:
+- Fix memory consumption issue with Gmsh output (!747, !762)
+- Rework meshing control so that if possible viewable meshes will be dumped
+  when some part of the system fails (!756)
+- Add manifold meshing option (!756)
 
 v4.4.0
 ------
