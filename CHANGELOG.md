@@ -12,8 +12,6 @@ v4.4.1
 
 **FieldConvert:**
 - Fix issue with field ordering in the interppointdatatofld module (!754)
-
-**FieldConvert**:
 - Fix issue with FieldConvert when range flag used (!761)
 
 **NekMesh**:
