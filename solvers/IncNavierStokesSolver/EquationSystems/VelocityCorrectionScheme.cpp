@@ -143,8 +143,31 @@ namespace Nektar
         //set up varcoeff kernel if PowerKernel or DG is specified
         if(m_useSpecVanVisc)
         {
+            Array<OneD, Array<OneD, NekDouble> > SVVVelFields = NullNekDoubleArrayofArray;
+            if(m_session->DefinesFunction("SVVVelocityMagnitude"))
+            {
+                if (m_comm->GetRank() == 0)
+                {
+                    cout << "Seting up SVV velocity from "
+                        "SVVVelocityMagnitude section in session file" << endl;
+                }
+                int nvel = m_velocity.num_elements();
+                int phystot = m_fields[0]->GetTotPoints();
+                SVVVelFields = Array<OneD, Array<OneD, NekDouble> >(nvel);
+                vector<string> vars;
+                for(int i = 0; i < nvel; ++i)
+                {
+                    SVVVelFields[i] = Array<OneD, NekDouble>(phystot);
+                    vars.push_back(m_session->GetVariable(m_velocity[i]));
+                }
+                    
+                // Load up files into  m_fields;
+                EvaluateFunction(vars,SVVVelFields,"SVVVelocityMagnitude");
+                
+            }
+
             m_svvVarDiffCoeff = Array<OneD, NekDouble>(m_fields[0]->GetNumElmts());
-            SVVVarDiffCoeff(1.0,m_svvVarDiffCoeff);
+            SVVVarDiffCoeff(1.0,m_svvVarDiffCoeff,SVVVelFields);
             m_session->LoadParameter("SVVDiffCoeff",  m_sVVDiffCoeff,  1.0);
         }
         else
@@ -601,12 +624,18 @@ namespace Nektar
         int nvel = m_velocity.num_elements();
         if(nvel == 2)
         {
-            m_pressure->PhysDeriv(m_pressure->GetPhys(), Forcing[0], Forcing[1]);
+            m_pressure->PhysDeriv(m_pressure->GetPhys(), Forcing[m_velocity[0]],
+                                  Forcing[m_velocity[1]]);
         }
         else
         {
-            m_pressure->PhysDeriv(m_pressure->GetPhys(), Forcing[0], 
-                                  Forcing[1], Forcing[2]);
+            m_pressure->PhysDeriv(m_pressure->GetPhys(), Forcing[m_velocity[0]], 
+                                  Forcing[m_velocity[1]], Forcing[m_velocity[2]]);
+        }
+
+        for(int i = nvel; i < m_nConvectiveFields; ++i)
+        {
+            Vmath::Zero(phystot,Forcing[i],1);
         }
 
         // Subtract inarray/(aii_dt) and divide by kinvis. Kinvis will
@@ -1151,7 +1180,7 @@ namespace Nektar
     void VelocityCorrectionScheme::SVVVarDiffCoeff(
                      const NekDouble velmag, 
                      Array<OneD, NekDouble> &diffcoeff,
-                     const Array<OneD, Array<OneD, NekDouble> >  &vel)
+                     const  Array<OneD, Array<OneD, NekDouble> >  &vel)
     {
         int phystot = m_fields[0]->GetTotPoints();
         int nel = m_fields[0]->GetNumElmts();
@@ -1172,12 +1201,20 @@ namespace Nektar
                 Vmath::Vvtvp(phystot,vel[n],1,vel[n],1,Velmag,1,
                              Velmag,1);
             }
+            Vmath::Vsqrt(phystot,Velmag,1,Velmag,1);
+                
 
             cnt = 0;
+            Array<OneD, NekDouble> tmp;
+            // calculate mean value of vel mag. 
             for(int i = 0; i < nel; ++i)
             {
                 int nq = m_fields[0]->GetExp(i)->GetTotPoints();
-                diffcoeff[i] = sqrt(Vmath::Vmax(nq,Velmag+cnt,1));
+                tmp = Velmag + cnt;
+                diffcoeff[i] = m_fields[0]->GetExp(i)->Integral(tmp);
+                Vmath::Fill(nq,1.0,tmp,1);
+                NekDouble area = m_fields[0]->GetExp(i)->Integral(tmp);
+                diffcoeff[i] = diffcoeff[i]/area;
                 cnt += nq;
             }
         }
