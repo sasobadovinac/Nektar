@@ -24,10 +24,11 @@ v4.4.1
 - Fix interpolation issue with Lagrange basis functions (!768)
 - Fix issue with average fields not working with different polynomial order
   fields (!776)
+- Fix Hdf5 output in FilterFieldConvert (!781)
 
-**FieldConvert**:
-- Fix issue with FieldConvert when range flag used (!761)
+**FieldConvert:**
 - Fix issue with field ordering in the interppointdatatofld module (!754)
+- Fix issue with FieldConvert when range flag used (!761)
 
 **NekMesh**:
 - Fix memory consumption issue with Gmsh output (!747, !762)
@@ -35,6 +36,9 @@ v4.4.1
   when some part of the system fails (!756)
 - Add manifold meshing option (!756)
 - Fix issue with older rea input files (!765)
+
+**IncNavierStokesSolver**
+- Fix an initialisation issue when using an additional advective field (!779)
 
 v4.4.0
 ------
