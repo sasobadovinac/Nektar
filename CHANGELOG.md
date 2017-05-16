@@ -12,6 +12,8 @@ v4.4.1
 - Fix issue with average fields not working with different polynomial order
   fields (!776)
 - Fix Hdf5 output in FilterFieldConvert (!781)
+- Fixed extreme memory consumption of Interpolator when interpolating from pts
+  to fld or between different meshes (!783)
 
 **FieldConvert:**
 - Fix issue with field ordering in the interppointdatatofld module (!754)
