@@ -20,6 +20,7 @@ v4.4.1
 - Remove the duplicate output of errorutil (!756)
 - Fix BLAS CMake dependencies (!763)
 - Fix interpolation issue with Lagrange basis functions (!768)
+- Fix deadlock with HDF5 input (!786)
 
 **FieldConvert:**
 - Fix issue with field ordering in the interppointdatatofld module (!754)
