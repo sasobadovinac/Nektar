@@ -142,16 +142,14 @@ namespace Nektar
         Array<OneD, Array<OneD, NekDouble> > BndValues(m_bnd_dim);
         Array<OneD, Array<OneD, NekDouble> > Q(m_curl_dim);
 
-        MultiRegions::ExpListSharedPtr BndElmtExp;
         for(n = cnt = 0; n < m_PBndConds.num_elements(); ++n)
         {
             // High order boundary condition;
             if((m_hbcType[n] == eHBCNeumann)||(m_hbcType[n] == eConvectiveOBC))
             {
-                m_fields[0]->GetBndElmtExpansion(n, BndElmtExp, false);
                 int nqb = m_PBndExp[n]->GetTotPoints();
-                int nq  = BndElmtExp->GetTotPoints();
-
+                int nq  = m_bndElmtExp[n]->GetTotPoints();
+                
                 for(int i = 0; i < m_bnd_dim; i++)
                 {
                     BndValues[i] = Array<OneD, NekDouble> (nqb,0.0);
@@ -177,7 +175,7 @@ namespace Nektar
                 }
 
                 // CurlCurl
-                BndElmtExp->CurlCurl(Velocity, Q);
+                m_bndElmtExp[n]->CurlCurl(Velocity, Q);
 
                 // Mounting advection component into the high-order condition
                 for(int i = 0; i < m_bnd_dim; i++)
@@ -224,7 +222,6 @@ namespace Nektar
 
         Array<OneD, Array<OneD, NekDouble> > Velocity(m_curl_dim);
 
-        MultiRegions::ExpListSharedPtr BndElmtExp;
         int cnt    = 0;
 
         // Evaluate robin primitive coefficient here so they can be
@@ -237,10 +234,9 @@ namespace Nektar
             if((m_hbcType[n] == eOBC)||(m_hbcType[n] == eConvectiveOBC))
             {
                 // Get expansion with element on this boundary
-                m_fields[0]->GetBndElmtExpansion(n, BndElmtExp, false);
                 int nqb = m_PBndExp[n]->GetTotPoints();
-                int nq  = BndElmtExp->GetTotPoints();
-
+                int nq  = m_bndElmtExp[n]->GetTotPoints();
+                
                 // Get velocity and extrapolate
                 for(int i = 0; i < m_curl_dim; i++)
                 {
@@ -256,10 +252,10 @@ namespace Nektar
                 {
                     for(int i = 0; i < m_curl_dim; i++)
                     {
-                        BndElmtExp->HomogeneousBwdTrans(Velocity[i],
+                        m_bndElmtExp[n]->HomogeneousBwdTrans(Velocity[i],
                                                         Velocity[i]);
                     }
-                    BndElmtExp->SetWaveSpace(false);
+                    m_bndElmtExp[n]->SetWaveSpace(false);
                 }
 
                 // Get normal vector
@@ -279,12 +275,13 @@ namespace Nektar
                 {
                     if( m_curl_dim == 2)
                     {
-                        BndElmtExp->PhysDeriv(Velocity[i], grad[0], grad[1]);
+                        m_bndElmtExp[n]->PhysDeriv(Velocity[i], grad[0],
+                                                   grad[1]);
                     }
                     else
                     {
-                        BndElmtExp->PhysDeriv(Velocity[i], grad[0], grad[1],
-                                                                    grad[2]);
+                        m_bndElmtExp[n]->PhysDeriv(Velocity[i], grad[0],
+                                                   grad[1], grad[2]);
                     }
                     
                     for( int j = 0; j < m_curl_dim; j++)
@@ -650,6 +647,9 @@ namespace Nektar
         int numOutHBCPts = 0;
 
         m_hbcType = Array<OneD, HBCType> (m_PBndConds.num_elements(),eNOHBC);
+        m_bndElmtExp = Array<OneD, MultiRegions::ExpListSharedPtr>
+            (m_PBndConds.num_elements());
+        
         for( n = 0; n < m_PBndConds.num_elements(); ++n)
         {
             // High order boundary Neumann Condiiton 
@@ -679,6 +679,14 @@ namespace Nektar
                 m_hbcType[n] = eOBC;
                 numOutHBCPts += m_PBndExp[n]->GetTotPoints();
                 outHBCnumber++;
+            }
+            
+            
+            if((m_hbcType[n] == eHBCNeumann)||(m_hbcType[n] == eOBC)||
+               (m_hbcType[n] == eConvectiveOBC))
+            {
+                // Get expansion with element on this boundary
+                m_fields[0]->GetBndElmtExpansion(n, m_bndElmtExp[n], false);
             }
         }
 
@@ -727,8 +735,6 @@ namespace Nektar
         {
             m_houtflow  = MemoryManager<HighOrderOutflow>::AllocateSharedPtr(numOutHBCPts,  outHBCnumber, m_curl_dim, pSession);
                         
-            MultiRegions::ExpListSharedPtr BndElmtExp;
-
             // set up boundary expansions link 
             for (int i = 0; i < m_curl_dim; ++i)
             {
@@ -748,9 +754,8 @@ namespace Nektar
                         Array<OneD, Array<OneD,
                                  Array<OneD, NekDouble> > > (m_curl_dim);
                     
-                    m_fields[0]->GetBndElmtExpansion(n, BndElmtExp, false);
                     int nqb = m_PBndExp[n]->GetTotPoints();
-                    int nq  = BndElmtExp->GetTotPoints();
+                    int nq  = m_bndElmtExp[n]->GetTotPoints();
                     for(int j = 0; j < m_curl_dim; ++j)
                     {
                         m_houtflow->m_outflowVel[cnt][j] =

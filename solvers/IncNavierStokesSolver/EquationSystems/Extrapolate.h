@@ -270,7 +270,10 @@ namespace Nektar
 
         // data related to high order outflow. 
         HighOrderOutflowSharedPtr m_houtflow; 
-        
+
+        // set  up boundary condition expansion for edge element processing
+        Array<OneD, MultiRegions::ExpListSharedPtr> m_bndElmtExp;
+
     private:
         static std::string def;
     };
