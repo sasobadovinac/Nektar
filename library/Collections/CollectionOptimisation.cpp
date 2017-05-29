@@ -157,6 +157,7 @@ CollectionOptimisation::CollectionOptimisation(
                     ASSERTL0(i != Collections::SIZE_ImplementationType,
                          "Unknown default collection scheme: "+collinfo);
 
+                    defaults.clear();
                     // Override default types
                     for (it2 = elTypes.begin(); it2 != elTypes.end(); ++it2)
                     {
