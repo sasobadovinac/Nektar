@@ -61,8 +61,8 @@ void CADSurfOCE::Initialise(int i, TopoDS_Shape in)
     gp_Pnt ori(0.0, 0.0, 0.0);
     transform.SetScale(ori, 1.0 / 1000.0);
     TopLoc_Location mv(transform);
-
     in.Move(mv);
+
     m_occSurface = BRepAdaptor_Surface(TopoDS::Face(in));
     m_id         = i;
 
@@ -85,7 +85,7 @@ Array<OneD, NekDouble> CADSurfOCE::locuv(Array<OneD, NekDouble> p)
 
     Array<OneD, NekDouble> uvr(2);
 
-    gp_Pnt2d p2 = m_sas->ValueOfUV(loc, 1e-3);
+    gp_Pnt2d p2 = m_sas->ValueOfUV(loc, Precision::Confusion());
     uvr[0]      = p2.X();
     uvr[1]      = p2.Y();
 
@@ -171,13 +171,9 @@ NekDouble CADSurfOCE::DistanceTo(Array<OneD, NekDouble> p)
 {
     gp_Pnt loc(p[0] * 1000.0, p[1] * 1000.0, p[2] * 1000.0);
 
-    // alternative locuv methods
-    ShapeAnalysis_Surface sas(m_s);
-    sas.SetDomain(m_bounds[0], m_bounds[1], m_bounds[2], m_bounds[3]);
+    gp_Pnt2d p2 = m_sas->ValueOfUV(loc, Precision::Confusion());
 
-    gp_Pnt2d p2 = sas.ValueOfUV(loc, 1e-7);
-
-    gp_Pnt p3 = sas.Value(p2);
+    gp_Pnt p3 = m_sas->Value(p2);
 
     return p3.Distance(loc);
 }
@@ -187,13 +183,9 @@ void CADSurfOCE::ProjectTo(Array<OneD, NekDouble> &tp,
 {
     gp_Pnt loc(tp[0] * 1000.0, tp[1] * 1000.0, tp[2] * 1000.0);
 
-    // alternative locuv methods
-    ShapeAnalysis_Surface sas(m_s);
-    sas.SetDomain(m_bounds[0], m_bounds[1], m_bounds[2], m_bounds[3]);
+    gp_Pnt2d p2 = m_sas->ValueOfUV(loc, Precision::Confusion());
 
-    gp_Pnt2d p2 = sas.ValueOfUV(loc, 1e-7);
-
-    gp_Pnt p3 = sas.Value(p2);
+    gp_Pnt p3 = m_sas->Value(p2);
 
     tp[0] = p3.X() / 1000.0;
     tp[1] = p3.Y() / 1000.0;
@@ -224,7 +216,7 @@ Array<OneD, NekDouble> CADSurfOCE::N(Array<OneD, NekDouble> uv)
     Test(uv);
 #endif
 
-    BRepLProp_SLProps slp(m_occSurface, 2, 1e-6);
+    BRepLProp_SLProps slp(m_occSurface, 2, 1e-8);
     slp.SetParameters(uv[0], uv[1]);
 
     if (!slp.IsNormalDefined())
