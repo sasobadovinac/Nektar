@@ -1393,7 +1393,7 @@ namespace Polylib {
 
         zi  = *(zgj+i);
 
-        dz  = optdiff(z, zi);
+        dz  = z-zi;
 
 	if (fabs(dz) < EPS) return 1.0;
 
@@ -1456,7 +1456,7 @@ namespace Polylib {
 
         zi  = *(zgrj+i);
 
-        dz  = optdiff(z, zi);
+        dz  = z-zi;
 
         if (fabs(dz) < EPS) return 1.0;
 
@@ -1521,7 +1521,7 @@ namespace Polylib {
 
         zi  = *(zgrj+i);
 
-        dz  = optdiff(z, zi);
+        dz  = z-zi;
 
         if (fabs(dz) < EPS) return 1.0;
 
@@ -1585,7 +1585,7 @@ namespace Polylib {
 
         zi  = *(zglj+i);
 
-        dz  = optdiff(z, zi);
+        dz  = z-zi;
 
         if (fabs(dz) < EPS) return 1.0;
 	
