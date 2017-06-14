@@ -16,6 +16,7 @@ v4.4.1
 - Fixed extreme memory consumption of Interpolator when interpolating from pts
   to fld or between different meshes (!783)
 - Fix missing entriess in LibUtilities::kPointsTypeStr (!792)
+- Fix compiler warnings with CommDataType (!793)
 
 **FieldConvert:**
 - Fix issue with field ordering in the interppointdatatofld module (!754)
