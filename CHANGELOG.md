@@ -34,6 +34,7 @@ v4.4.1
   to fld or between different meshes (!783)
 - Fix deadlock with HDF5 input (!786)
 - Fix missing entriess in LibUtilities::kPointsTypeStr (!792)
+- Fix compiler warnings with CommDataType (!793)
 
 **FieldConvert:**
 - Fix issue with field ordering in the interppointdatatofld module (!754)
@@ -52,6 +53,9 @@ v4.4.1
 
 **IncNavierStokesSolver**
 - Fix an initialisation issue when using an additional advective field (!779)
+
+**Packaging**
+- Added missing package for FieldUtils library (!755)
 
 v4.4.0
 ------
