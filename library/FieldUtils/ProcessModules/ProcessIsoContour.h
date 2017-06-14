@@ -39,21 +39,12 @@
 #include "../Module.h"
 #include "ProcessEquiSpacedOutput.h"
 
-#include <boost/geometry.hpp>
-#include <boost/geometry/geometries/point.hpp>
-#include <boost/geometry/geometries/box.hpp>
-#include <boost/geometry/index/rtree.hpp>
-
-namespace bg  = boost::geometry;
-namespace bgi = boost::geometry::index;
-
-
 namespace Nektar
 {
 namespace FieldUtils
 {
 
-const NekDouble SQ_PNT_TOL=1e-6;
+const NekDouble SQ_PNT_TOL=1e-16;
 
 class Iso
 {

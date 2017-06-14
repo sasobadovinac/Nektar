@@ -33,6 +33,11 @@
 //
 ////////////////////////////////////////////////////////////////////////////////
 
+#include <boost/geometry.hpp>
+#include <boost/geometry/geometries/point.hpp>
+#include <boost/geometry/geometries/box.hpp>
+#include <boost/geometry/index/rtree.hpp>
+
 #include <LibUtilities/BasicUtils/ParseUtils.hpp>
 #include <LibUtilities/BasicUtils/SharedArray.hpp>
 #include <LibUtilities/BasicUtils/Progressbar.hpp>
@@ -45,11 +50,6 @@
 #include <NekMeshUtils/MeshElements/Element.h>
 
 #include "ProcessSpherigon.h"
-
-#include <boost/geometry.hpp>
-#include <boost/geometry/geometries/point.hpp>
-#include <boost/geometry/geometries/box.hpp>
-#include <boost/geometry/index/rtree.hpp>
 
 namespace bg  = boost::geometry;
 namespace bgi = boost::geometry::index;
@@ -226,7 +226,7 @@ void ProcessSpherigon::FindNormalFromPlyFile(MeshSharedPtr &plymesh,
 {
     int      cnt = 0;
     int      j;
-    int      prog,cntmin;
+    int      prog=0,cntmin;
     NodeSet::iterator it;
     map<int, NodeSharedPtr>::iterator vIt;
 
