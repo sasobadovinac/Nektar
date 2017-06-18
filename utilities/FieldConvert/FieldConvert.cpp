@@ -119,7 +119,7 @@ int main(int argc, char* argv[])
     }
 
     // Load plugins.
-    Module::LoadPlugins();
+    Module::LoadPlugins(vm.count("verbose"));
 
     // Print available modules.
     if (vm.count("modules-list"))

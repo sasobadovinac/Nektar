@@ -109,7 +109,7 @@ void Module::LoadPlugins(bool verbose)
 {
     fs::path pluginPath(FIELDUTILS_EXTENSION_DIR);
 
-    if (!fs::is_directory())
+    if (!fs::is_directory(pluginPath))
     {
         if (verbose)
         {
@@ -133,6 +133,13 @@ void Module::LoadPlugins(bool verbose)
         {
             continue;
         }
+
+        if (!lib.has("ModuleName"))
+        {
+            continue;
+        }
+
+        std::string modName = lib.get<std::string>("ModuleName");
 
         // Call the plugin's RegisterModule command to register all modules
         // belonging to this plugin.
