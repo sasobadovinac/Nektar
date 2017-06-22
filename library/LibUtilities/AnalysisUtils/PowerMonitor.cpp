@@ -49,8 +49,12 @@ namespace LibUtilities
 {
 
 // initialise static constant attributes of PowerMonitor class
-const char PowerMonitor::ver[] = "4.0.0";
+const char PowerMonitor::ver[] = "4.1.0";
 
+const unsigned int PowerMonitor::PM_RECORD_OK = 0;
+const unsigned int PowerMonitor::PM_RECORD_UNINITIALISED = 1;
+const unsigned int PowerMonitor::PM_RECORD_BLADE_RESTART = 2;
+  
 const unsigned int PowerMonitor::MAX_FPATH_LEN = 128;
 const unsigned int PowerMonitor::MAX_FLINE_LEN = 128;
 
@@ -77,7 +81,7 @@ int PowerMonitor::mpi_comm_monitor(0);
 FILE* PowerMonitor::cnt_fp[PM_NCOUNTERS];
 FILE* PowerMonitor::log_fp(NULL);
 double PowerMonitor::tm0(0.0);
-double PowerMonitor::entot0(0.0);
+long int PowerMonitor::entot0(0);
 int PowerMonitor::last_nstep(0);
 long int PowerMonitor::init_startup(0);
 
@@ -304,7 +308,7 @@ void PowerMonitor::Initialise(const char* log_fpath)
     {
         // do initial record, which ends with MPI_Barrier
         first_record = true;
-        PowerMonitor::Record(-1, 1);
+        PowerMonitor::Record(-1, 1, true, false);
     }
     else
     {
@@ -316,72 +320,109 @@ void PowerMonitor::Initialise(const char* log_fpath)
 
 // read counter values if first rank on node,
 // and output those values if rank zero
-void PowerMonitor::Record(const int nstep, const int sstep) {
+unsigned int PowerMonitor::RecordCounterValues(const int nstep, const int sstep) {
+  
+    if (min_node_rank != rank)
+    {
+        return PM_RECORD_OK;
+    }
+    
+    long int start_freshness, end_freshness;
+    long int pmc_energy, tot_pmc_energy;
+    long int pmc_power, tot_pmc_power;
+    
+    // get time
+    double tm = MPI_Wtime();
+    if (first_record)
+    {
+        tm0 = tm;
+        first_record = false;
+    }
+    
+    // read the point-in-time power and accumulated energy counters
+    bool fresh(false);
+    long int current_startup(0);
+    while (!fresh)
+    {
+        start_freshness = PowerMonitor::GetCounterValue(PM_COUNTER_FRESHNESS);
+        pmc_power = PowerMonitor::GetCounterValue(PM_COUNTER_POWER);
+        pmc_energy = PowerMonitor::GetCounterValue(PM_COUNTER_ENERGY);
+	current_startup = PowerMonitor::GetCounterValue(PM_COUNTER_STARTUP);
+        end_freshness = PowerMonitor::GetCounterValue(PM_COUNTER_FRESHNESS);
+        fresh = (end_freshness == start_freshness);
+    }
+
+    if (current_startup != init_startup)
+    {
+        fprintf(stderr, "PowerMonitor meaurements invalid! Blade-controller was restarted for node %d.\n", GetNodeNumber());
+	return PM_RECORD_BLADE_RESTART;
+    }
+    
+    MPI_Reduce(&pmc_power, &tot_pmc_power, 1, MPI_LONG, MPI_SUM, 0, mpi_comm_monitor);
+    MPI_Reduce(&pmc_energy, &tot_pmc_energy, 1, MPI_LONG, MPI_SUM, 0, mpi_comm_monitor);
+         		
+    // output data
+    if (0 == rank)
+    {
+        if (tm0 == tm)
+        {
+            // this function is being called by PowerMonitor::Initialise
+            entot0 = tot_pmc_energy;
+        
+            if (NULL != log_fp)
+	    {
+                fprintf(log_fp, "PowerMonitor v%s: time (s), step, substep, average power (W), energy used (J)\n", ver);
+            }
+      	}
+
+	tot_pmc_energy = round(tot_pmc_energy);
+      	double avg_pmc_power = (monitor_cnt > 0) ? ((double) tot_pmc_power)/((double) monitor_cnt) : 0.0;
+      	long int dif_pmc_energy = tot_pmc_energy - entot0;
+        
+      	if (NULL != log_fp)
+	{   
+            // update counter data file   
+            fprintf(log_fp, "%lf %d %d %lf %ld\n", tm-tm0, nstep, sstep, avg_pmc_power, dif_pmc_energy); 
+      	}
+    }
+
+    return PM_RECORD_OK;
+    
+} // end of PowerMonitor::RecordCounterValues method
+
+// read and record counter values if first rank on node
+// the reading will be labelled with the step and substep numbers
+// if initial_sync is true MPI_Barrier is called before reading takes place
+// if initial_sync and initial_rec are true then counters are read before and after initial barrier
+// initial_rec is only used when initial_sync is true
+unsigned int PowerMonitor::Record(const int nstep, const int sstep, const bool initial_sync, const bool initial_rec) {
    
     if (!all_initialised)
     {
-        return;
+        return PM_RECORD_UNINITIALISED;
     }
 
-    MPI_Barrier(MPI_COMM_WORLD);
-    
-    if (min_node_rank == rank)
+    unsigned int res = PM_RECORD_OK;
+    if (initial_sync)
     {
-        long int start_freshness, end_freshness;
-    	double pmc_energy, tot_pmc_energy;
-    	long int pmc_power, tot_pmc_power;
-    
-    	// get time
-    	double tm = MPI_Wtime();
-    	if (first_record)
+        if (initial_rec)
 	{
-	    tm0 = tm;
-      	    first_record = false;
-    	}
-    
-    	// read the point-in-time power and accumulated energy counters
-    	bool fresh(false);
-    	while (!fresh)
-	{
-      	    start_freshness = PowerMonitor::GetCounterValue(PM_COUNTER_FRESHNESS);
-      	    pmc_power = PowerMonitor::GetCounterValue(PM_COUNTER_POWER);
-      	    pmc_energy = PowerMonitor::GetCounterValue(PM_COUNTER_ENERGY);
-      	    end_freshness = PowerMonitor::GetCounterValue(PM_COUNTER_FRESHNESS);
-      	    fresh = (end_freshness == start_freshness);
-    	}
-  
-    	MPI_Reduce(&pmc_power, &tot_pmc_power, 1, MPI_LONG, MPI_SUM, 0, mpi_comm_monitor);
-    	MPI_Reduce(&pmc_energy, &tot_pmc_energy, 1, MPI_DOUBLE, MPI_SUM, 0, mpi_comm_monitor);
-         		
-    	// output data
-    	if (0 == rank)
-	{
-      	    if (tm0 == tm)
-	    {
-                // this function is being called by PowerMonitor::Initialise
-        	entot0 = tot_pmc_energy;
-        
-        	if (NULL != log_fp)
-		{
-          	    fprintf(log_fp, "PowerMonitor v%s: time (s), step, substep, average power (W), energy used (J)\n", ver);
-        	}
-      	    }
+	    res = RecordCounterValues(nstep, sstep);
+	}
+	
+        MPI_Barrier(MPI_COMM_WORLD);
+    }
 
-	    tot_pmc_energy = round(tot_pmc_energy);
-      	    double avg_pmc_power = (monitor_cnt > 0) ? ((double) tot_pmc_power)/((double) monitor_cnt) : 0.0;
-      	    double dif_pmc_energy = tot_pmc_energy - entot0;
-        
-      	    if (NULL != log_fp)
-	    {   
-                // update counter data file   
-        	fprintf(log_fp, "%f %d %d %f %f\n", tm-tm0, nstep, sstep, avg_pmc_power, dif_pmc_energy); 
-      	    }
-    	}
-    } // end of <if (min_node_rank == rank)> clause
-  
+    if (PM_RECORD_OK == res)
+    {
+        res = RecordCounterValues(nstep, sstep);
+    }
+    
     last_nstep = nstep;
   
     MPI_Barrier(MPI_COMM_WORLD);
+
+    return res;
   
 } // end of PowerMonitor::Record method
 
@@ -392,7 +433,7 @@ void PowerMonitor::Finalise(void)
     if (all_initialised)
     {
     	// do the last record
-    	PowerMonitor::Record(last_nstep+1, 1);
+      PowerMonitor::Record(last_nstep+1, 1, true, false);
     }
   
     // if monitoring process (i.e., first process on node)    

@@ -61,7 +61,7 @@ class PowerMonitor
 {
 public:
     static void Initialise(const char *out_fn);
-    static void Record(const int nstep, const int sstep);
+    static unsigned int Record(const int nstep, const int sstep, const bool initial_sync, const bool initial_rec);
     static void Finalise(void);
 
 private:
@@ -77,8 +77,15 @@ private:
     
     static bool IsInitialised(void);
 
+    static unsigned int RecordCounterValues(const int nstep, const int sstep);
+
 
     static const char ver[];
+
+    static const unsigned int PM_RECORD_OK;
+    static const unsigned int PM_RECORD_UNINITIALISED;
+    static const unsigned int PM_RECORD_BLADE_RESTART;
+  
     static const unsigned int MAX_FPATH_LEN;
     static const unsigned int MAX_FLINE_LEN;
 
@@ -92,7 +99,8 @@ private:
 
     static FILE* cnt_fp[PM_NCOUNTERS];
     static FILE* log_fp;
-    static double tm0, entot0;
+    static double tm0;
+    static long int entot0;
     static int last_nstep;
     static long int init_startup;
 
