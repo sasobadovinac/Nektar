@@ -108,7 +108,8 @@ namespace Nektar
             /// Print the solution at each solution point in a txt file
             SOLVER_UTILS_EXPORT virtual void v_AppendOutput1D(
                 Array<OneD, Array<OneD, NekDouble> > &solution1D,
-                NekDouble                             time);
+                NekDouble                             time,
+                int                                   step);
 
             ///
             SOLVER_UTILS_EXPORT virtual void v_NumericalFlux(

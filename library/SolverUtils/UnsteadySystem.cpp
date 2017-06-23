@@ -257,6 +257,12 @@ namespace Nektar
             NekDouble cpuTime       = 0.0;
             NekDouble elapsed       = 0.0;
 
+            // Print for 1D problems
+            if(m_spacedim == 1)
+            {
+                v_AppendOutput1D(fields, m_time, step);
+            }
+            
             while (step   < m_steps ||
                    m_time < m_fintime - NekConstants::kNekZeroTol)
             {
@@ -397,7 +403,7 @@ namespace Nektar
                         // Print for 1D problems
                         if(m_spacedim == 1)
                         {
-                            v_AppendOutput1D(fields, m_time);
+                            v_AppendOutput1D(fields, m_time, m_nchk);
                         }
                         m_nchk++;
                     }
@@ -504,7 +510,8 @@ namespace Nektar
          */
         void UnsteadySystem::v_AppendOutput1D(
             Array<OneD, Array<OneD, NekDouble> > &solution1D,
-            NekDouble                             time)
+            NekDouble                             time,
+            int                                   step)
         {
             // Coordinates of the quadrature points in the real physical space
             Array<OneD,NekDouble> x(GetNpoints());
@@ -513,11 +520,7 @@ namespace Nektar
             m_fields[0]->GetCoords(x, y, z);
             
             std::string file_name;
-            //std::ostringstream strs;
-            //strs = time;
-            //std::string str = strs.str();
-            
-            std::string varAsString = std::to_string(time);
+            std::string varAsString = std::to_string(step);
             
             // Print out the solution in a txt file
             ofstream outfile;
