@@ -123,8 +123,18 @@ namespace Nektar
             m_intVariables.push_back(n);
         }
         
-        m_session->MatchSolverInfo("SpectralVanishingViscosity","PowerKernel",
-                                   m_useSpecVanVisc, false);
+        m_session->MatchSolverInfo("SpectralVanishingViscosity",
+                                   "PowerKernel", m_useSpecVanVisc, false);
+        if(m_useSpecVanVisc)
+        {
+            m_useHomo1DSpecVanVisc = true;
+        }
+        else
+        {
+            m_session->MatchSolverInfo("SpectralVanishingViscositySpectralHP",
+                                       "PowerKernel", m_useSpecVanVisc, false);
+        }
+
         if(m_useSpecVanVisc)
         {
             m_IsSVVPowerKernel = true;
@@ -133,6 +143,15 @@ namespace Nektar
         {
             m_session->MatchSolverInfo("SpectralVanishingViscosity","DGKernel",
                                        m_useSpecVanVisc, false);
+            if(m_useSpecVanVisc)
+            {
+                m_useHomo1DSpecVanVisc = true;
+            }
+            else
+            {
+                m_session->MatchSolverInfo("SpectralVanishingViscositySpectralHP",
+                                           "DGKernel", m_useSpecVanVisc, false);
+            }
             
             if(m_useSpecVanVisc)
             {
@@ -177,7 +196,6 @@ namespace Nektar
         }
 
         // Load parameters for Spectral Vanishing Viscosity
-
         if(m_useSpecVanVisc == false)
         {
             m_session->MatchSolverInfo("SpectralVanishingViscosity","True",
@@ -187,18 +205,37 @@ namespace Nektar
                 m_session->MatchSolverInfo("SpectralVanishingViscosity","ExpKernel",
                                            m_useSpecVanVisc, false);
             }
+            m_useHomo1DSpecVanVisc = m_useSpecVanVisc;
+
+            if(m_useSpecVanVisc == false)
+            {
+                m_session->MatchSolverInfo("SpectralVanishingViscositySpectralHP","True",
+                                           m_useSpecVanVisc, false);
+                if(m_useSpecVanVisc == false)
+                {
+                    m_session->MatchSolverInfo("SpectralVanishingViscositySpectralHP","ExpKernel",
+                                               m_useSpecVanVisc, false);
+                }
+            }
         }
 
-        m_useHomo1DSpecVanVisc = m_useSpecVanVisc;
+
+        // Case of only Homo1D kernel
         if(m_useSpecVanVisc == false)
         {
-            m_session->MatchSolverInfo("SpectralVanishingViscositySpectralHP",
-                                "True", m_useSpecVanVisc, false);
             m_session->MatchSolverInfo("SpectralVanishingViscosityHomo1D",
                                 "True", m_useHomo1DSpecVanVisc, false);
+            if(m_useHomo1DSpecVanVisc == false)
+            {
+                m_session->MatchSolverInfo("SpectralVanishingViscosityHomo1D",
+                                       "ExpKernel", m_useHomo1DSpecVanVisc, false);
+            }
         }
-        m_session->LoadParameter("SVVCutoffRatio",m_sVVCutoffRatio,0.75);
 
+        m_session->LoadParameter("SVVCutoffRatio",m_sVVCutoffRatio,0.75);
+        m_session->LoadParameter("SVVCutoffRatioHomo1D",m_sVVCutoffRatioHomo1D,m_sVVCutoffRatio);
+        m_session->LoadParameter("SVVDiffCoeffHomo1D",  m_sVVDiffCoeffHomo1D,  m_sVVDiffCoeff);
+        
         m_session->MatchSolverInfo("SPECTRALHPDEALIASING","True",
                                    m_specHP_dealiasing,false);
 
@@ -217,7 +254,7 @@ namespace Nektar
                 int kmodes = m_fields[0]->GetHomogeneousBasis()->GetNumModes();
                 int pstart;
 
-                pstart = m_sVVCutoffRatio*kmodes;
+                pstart = m_sVVCutoffRatioHomo1D*kmodes;
                 
                 for(n = 0; n < num_planes; ++n)
                 {
@@ -225,7 +262,7 @@ namespace Nektar
                     {
                         fac = (NekDouble)((planes[n] - kmodes)*(planes[n] - kmodes))/
                             ((NekDouble)((planes[n] - pstart)*(planes[n] - pstart)));
-                        SVV[n] = m_sVVDiffCoeff*exp(-fac)/m_kinvis;
+                        SVV[n] = m_sVVDiffCoeffHomo1D*exp(-fac)/m_kinvis;
                     }
                 }
 
@@ -390,28 +427,23 @@ namespace Nektar
         }
 
         string smoothing = m_useSpecVanVisc ? "spectral/hp" : "";
-        if (m_useHomo1DSpecVanVisc && (m_HomogeneousType == eHomogeneous1D))
-        {
-            smoothing += (smoothing == "" ? "" : " + ") + string("Homogeneous1D");
-        }
-        
         if (smoothing != "")
         {
             if(m_svvVarDiffCoeff == NullNekDouble1DArray)
             {
                 SolverUtils::AddSummaryItem(
-                   s, "Smoothing", "SVV (" + smoothing +
+                   s, "Smoothing-SpecHP", "SVV (" + smoothing +
                    " Exp Kernel(cut-off = "
                    + boost::lexical_cast<string>(m_sVVCutoffRatio)
                    + ", diff coeff = "
-                   + boost::lexical_cast<string>(m_sVVDiffCoeff)+"*))");
+                   + boost::lexical_cast<string>(m_sVVDiffCoeff)+"))");
             }
             else
             {
                 if(m_IsSVVPowerKernel)
                 {
                     SolverUtils::AddSummaryItem(
-                       s, "Smoothing", "SVV (" + smoothing +
+                       s, "Smoothing-SpecHP", "SVV (" + smoothing +
                        " Power Kernel (Power ratio ="
                        + boost::lexical_cast<string>(m_sVVCutoffRatio)
                        + ", diff coeff = "
@@ -420,12 +452,25 @@ namespace Nektar
                 else
                 {
                     SolverUtils::AddSummaryItem(
-                       s, "Smoothing", "SVV (" + smoothing +
+                       s, "Smoothing-SpecHP", "SVV (" + smoothing +
                        " DG Kernel (diff coeff = "
                        + boost::lexical_cast<string>(m_sVVDiffCoeff)+"*Uh/p))");
+
                 }
-            }                
+            }
+            
         }
+
+        if (m_useHomo1DSpecVanVisc && (m_HomogeneousType == eHomogeneous1D))
+        {
+            SolverUtils::AddSummaryItem(
+                  s, "Smoothing-Homo1D", "SVV (Homogeneous1D - Exp Kernel(cut-off = "
+                  + boost::lexical_cast<string>(m_sVVCutoffRatioHomo1D)
+                  + ", diff coeff = "
+                  + boost::lexical_cast<string>(m_sVVDiffCoeffHomo1D)+"))");
+        }
+        
+        
     }
 
     /**

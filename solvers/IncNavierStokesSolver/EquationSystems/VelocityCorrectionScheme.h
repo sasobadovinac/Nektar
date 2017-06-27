@@ -151,10 +151,14 @@ namespace Nektar
         bool m_useHomo1DSpecVanVisc;
         /// bool to identify if spectral vanishing viscosity is active.
         bool m_useSpecVanVisc;
-        /// cutt off ratio from which to start decayhing modes
+        /// cut off ratio from which to start decaying modes in spectral/hp plane
         NekDouble m_sVVCutoffRatio;
-        /// Diffusion coefficient of SVV modes
+        /// Diffusion coefficient of SVV modes in spectral/hp plane
         NekDouble m_sVVDiffCoeff;
+        /// cut off ratio from which to start decaying modes in homogeneous 1D direction
+        NekDouble m_sVVCutoffRatioHomo1D;
+        /// Diffusion coefficient of SVV modes in homogeneous 1D Direction
+        NekDouble m_sVVDiffCoeffHomo1D;
         /// Array of coefficient if power kernel is used in SVV
         Array<OneD, NekDouble> m_svvVarDiffCoeff;
         /// Identifier for Power Kernel otherwise DG kernel
