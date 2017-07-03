@@ -43,6 +43,8 @@
 #include <LibUtilities/Foundations/ManagerAccess.h>  // for PointsManager, etc
 #include <LibUtilities/Foundations/Interp.h>
 
+using namespace std;
+
 namespace Nektar
 {
     namespace MultiRegions
@@ -695,37 +697,6 @@ namespace Nektar
         }
 
         /**
-         * Each expansion (local element) is processed in turn to
-         * determine the number of coefficients and physical data
-         * points it contributes to the domain. Three arrays,
-         * #m_coeff_offset, #m_phys_offset and #m_offset_elmt_id, are
-         * also initialised and updated to store the data offsets of
-         * each element in the #m_coeffs and #m_phys arrays, and the
-         * element id that each consecutive block is associated
-         * respectively.
-         */
-        void ExpList1D::SetCoeffPhysOffsets()
-        {
-            int i;
-
-            // Set up offset information and array sizes
-            m_coeff_offset   = Array<OneD,int>(m_exp->size());
-            m_phys_offset    = Array<OneD,int>(m_exp->size());
-            m_offset_elmt_id = Array<OneD,int>(m_exp->size());
-
-            m_ncoeffs = m_npoints = 0;
-            
-            for(i = 0; i < m_exp->size(); ++i)
-            {
-                m_coeff_offset[i]   = m_ncoeffs;
-                m_phys_offset [i]   = m_npoints;
-                m_offset_elmt_id[i] = i;
-                m_ncoeffs += (*m_exp)[i]->GetNcoeffs();
-                m_npoints += (*m_exp)[i]->GetTotPoints();
-            }
-        }
-
-        /**
          *
          */
         ExpList1D::~ExpList1D()
@@ -1215,7 +1186,7 @@ namespace Nektar
                     << ntot << "\" NumberOfCells=\""
                     << ntotminus << "\">" << endl;
             outfile << "      <Points>" << endl;
-            outfile << "        <DataArray type=\"Float32\" "
+            outfile << "        <DataArray type=\"Float64\" "
                     << "NumberOfComponents=\"3\" format=\"ascii\">" << endl;
             outfile << "          ";
             for (i = 0; i < ntot; ++i)

@@ -57,7 +57,8 @@ namespace Nektar
             
             /// Constructor copying only elements defined in eIds.
             MULTI_REGIONS_EXPORT ExpList3D(  const ExpList3D &In,
-                const std::vector<unsigned int> &eIDs);
+                const std::vector<unsigned int> &eIDs,
+                const bool DeclareCoeffPhysArrays = true);
 
             MULTI_REGIONS_EXPORT ExpList3D(  
                         const LibUtilities::SessionReaderSharedPtr &pSession,
@@ -89,16 +90,6 @@ namespace Nektar
             virtual void v_SetUpPhysNormals();
 
         private:
-            /// Definition of the total number of degrees of freedom and
-            /// quadrature points. Sets up the storage for \a m_coeff and \a
-            ///  m_phys.
-            void SetCoeffPhys(void);
-
-/*            LocalRegions::HexExpVector    m_hex;
-            LocalRegions::PrismExpVector  m_prism;
-            LocalRegions::PyrExpVector    m_pyr;
-            LocalRegions::TetExpVector    m_tet;
-*/
 
             virtual void v_ReadGlobalOptimizationParameters();
 

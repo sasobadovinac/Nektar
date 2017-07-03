@@ -37,6 +37,8 @@
 #include <MultiRegions/ExpList3DHomogeneous2D.h>
 #include <MultiRegions/ExpList1D.h>
 
+using namespace std;
+
 namespace Nektar
 {
     namespace MultiRegions
@@ -138,7 +140,7 @@ namespace Nektar
         ExpList3DHomogeneous2D::ExpList3DHomogeneous2D(const ExpList3DHomogeneous2D &In,
                 const std::vector<unsigned int> &eIDs,
                 const bool DeclareLinesSetCoeffPhys):
-            ExpListHomogeneous2D(In)
+            ExpListHomogeneous2D(In, eIDs)
         {
             SetExpType(e3DH2D);
 
@@ -193,7 +195,6 @@ namespace Nektar
             int nel = m_lines[0]->GetExpSize();
             m_coeff_offset   = Array<OneD,int>(nel*nyzlines);
             m_phys_offset    = Array<OneD,int>(nel*nyzlines);
-            m_offset_elmt_id = Array<OneD,int>(nel*nyzlines);
             Array<OneD, NekDouble> tmparray;
 
             for(cnt  = n = 0; n < nyzlines; ++n)
@@ -204,8 +205,7 @@ namespace Nektar
                 for(i = 0; i < nel; ++i)
                 {
                     m_coeff_offset[cnt] = m_lines[n]->GetCoeff_Offset(i) + n*ncoeffs_per_line;
-                    m_phys_offset[cnt] =  m_lines[n]->GetPhys_Offset(i) + n*npoints_per_line;
-                    m_offset_elmt_id[cnt++] = m_lines[n]->GetOffset_Elmt_Id(i) + n*nel;
+                    m_phys_offset[cnt++] =  m_lines[n]->GetPhys_Offset(i) + n*npoints_per_line;
                 }
             }
         }
@@ -365,7 +365,7 @@ namespace Nektar
                     << ntot << "\" NumberOfCells=\""
                     << ntotminus << "\">" << endl;
             outfile << "      <Points>" << endl;
-            outfile << "        <DataArray type=\"Float32\" "
+            outfile << "        <DataArray type=\"Float64\" "
                     << "NumberOfComponents=\"3\" format=\"ascii\">" << endl;
             outfile << "          ";
             for (i = 0; i < ntot; ++i)

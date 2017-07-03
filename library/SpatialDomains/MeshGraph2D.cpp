@@ -36,8 +36,11 @@
 #include <SpatialDomains/MeshGraph2D.h>
 #include <SpatialDomains/SegGeom.h>
 #include <SpatialDomains/TriGeom.h>
+#include <LibUtilities/BasicUtils/CompressData.h>
 #include <LibUtilities/BasicUtils/ParseUtils.hpp>
 #include <tinyxml.h>
+
+using namespace std;
 
 namespace Nektar
 {
@@ -547,7 +550,14 @@ namespace Nektar
                 int indx;
                 int err = composite->QueryIntAttribute("ID", &indx);
                 ASSERTL0(err == TIXML_SUCCESS, "Unable to read attribute ID.");
-//                ASSERTL0(indx == nextCompositeNumber, "Composite IDs must begin with zero and be sequential.");
+
+                // read and store label if they exist
+                string labelstr;
+                err = composite->QueryStringAttribute("LABEL", &labelstr);
+                if(err == TIXML_SUCCESS)
+                {
+                    m_compositesLabels[indx] = labelstr;
+                }
 
                 TiXmlNode* compositeChild = composite->FirstChild();
                 // This is primarily to skip comments that may be present.
@@ -848,6 +858,7 @@ namespace Nektar
                         switch(expansion->m_basisKeyVector[edge_id].GetPointsType())
                         {
                         case LibUtilities::eGaussLobattoLegendre:
+                        case LibUtilities::ePolyEvenlySpaced:
                             {
                                 const  LibUtilities::PointsKey pkey(numpoints,LibUtilities::eGaussLobattoLegendre);
                                 return LibUtilities::BasisKey(expansion->m_basisKeyVector[0].GetBasisType(),nummodes,pkey);
@@ -902,6 +913,7 @@ namespace Nektar
                             }
                             break;
                         case LibUtilities::eGaussLobattoLegendre:
+                        case LibUtilities::ePolyEvenlySpaced:
                             {
                                 const LibUtilities::PointsKey pkey(numpoints,LibUtilities::eGaussLobattoLegendre);
                                 return LibUtilities::BasisKey(expansion->m_basisKeyVector[0].GetBasisType(),nummodes,pkey);
@@ -926,6 +938,7 @@ namespace Nektar
                         switch(expansion->m_basisKeyVector[edge_id].GetPointsType())
                         {
                         case LibUtilities::eGaussLobattoLegendre:
+                        case LibUtilities::ePolyEvenlySpaced:
                         {
                             const LibUtilities::PointsKey pkey(numpoints,LibUtilities::eGaussLobattoLegendre);
                             return LibUtilities::BasisKey(expansion->m_basisKeyVector[0].GetBasisType(),nummodes,pkey);

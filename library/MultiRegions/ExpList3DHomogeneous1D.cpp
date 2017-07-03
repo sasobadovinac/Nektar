@@ -37,6 +37,8 @@
 #include <MultiRegions/ExpList3DHomogeneous1D.h>
 #include <MultiRegions/ExpList2D.h>
 
+using namespace std;
+
 namespace Nektar
 {
     namespace MultiRegions
@@ -107,7 +109,7 @@ namespace Nektar
                 (*m_exp).push_back(m_planes[0]->GetExp(j));
             }
             
-            for(n = 1; n < m_homogeneousBasis->GetNumPoints(); ++n)
+            for(n = 1; n < m_planes.num_elements(); ++n)
             {
                 m_planes[n] = MemoryManager<ExpList2D>::AllocateSharedPtr(*plane_zero,False);
                 for(j = 0; j < nel; ++j)
@@ -209,7 +211,6 @@ namespace Nektar
             int nel = m_planes[0]->GetExpSize();
             m_coeff_offset   = Array<OneD,int>(nel*nzplanes);
             m_phys_offset    = Array<OneD,int>(nel*nzplanes);
-            m_offset_elmt_id = Array<OneD,int>(nel*nzplanes);
             Array<OneD, NekDouble> tmparray;
 
             for(cnt  = n = 0; n < nzplanes; ++n)
@@ -220,8 +221,7 @@ namespace Nektar
                 for(i = 0; i < nel; ++i)
                 {
                     m_coeff_offset[cnt] = m_planes[n]->GetCoeff_Offset(i) + n*ncoeffs_per_plane;
-                    m_phys_offset[cnt] =  m_planes[n]->GetPhys_Offset(i) + n*npoints_per_plane;
-                    m_offset_elmt_id[cnt++] = m_planes[n]->GetOffset_Elmt_Id(i) + n*nel;
+                    m_phys_offset[cnt++] =  m_planes[n]->GetPhys_Offset(i) + n*npoints_per_plane;
                 }
             }
         }
@@ -402,10 +402,19 @@ namespace Nektar
                 return;
             }
 
+            // If we are using Fourier points, output extra plane to fill domain
+            int outputExtraPlane = 0;
+            if ( m_homogeneousBasis->GetBasisType()   == LibUtilities::eFourier
+               && m_homogeneousBasis->GetPointsType() ==
+                    LibUtilities::eFourierEvenlySpaced)
+            {
+                outputExtraPlane = 1;
+            }
+
             int i,j,k;
             int nq0 = (*m_exp)[expansion]->GetNumPoints(0);
             int nq1 = (*m_exp)[expansion]->GetNumPoints(1);
-            int nq2 = m_planes.num_elements();
+            int nq2 = m_planes.num_elements() + outputExtraPlane;
             int ntot = nq0*nq1*nq2;
             int ntotminus = (nq0-1)*(nq1-1)*(nq2-1);
 
@@ -414,6 +423,20 @@ namespace Nektar
             coords[1] = Array<OneD,NekDouble>(ntot);
             coords[2] = Array<OneD,NekDouble>(ntot);
             GetCoords(expansion,coords[0],coords[1],coords[2]);
+
+            if (outputExtraPlane)
+            {
+                // Copy coords[0] and coords[1] to extra plane
+                Array<OneD,NekDouble> tmp;
+                Vmath::Vcopy (nq0*nq1, coords[0], 1,
+                                      tmp = coords[0] + (nq2-1)*nq0*nq1, 1);
+                Vmath::Vcopy (nq0*nq1, coords[1], 1,
+                                      tmp = coords[1] + (nq2-1)*nq0*nq1, 1);
+                // Fill coords[2] for extra plane
+                NekDouble z = coords[2][nq0*nq1*m_planes.num_elements()-1] +
+                              (coords[2][nq0*nq1] - coords[2][0]);
+                Vmath::Fill(nq0*nq1, z, tmp = coords[2] + (nq2-1)*nq0*nq1, 1);
+            }
 
             NekDouble DistStrip;
             m_session->LoadParameter("DistStrip", DistStrip, 0);
@@ -427,7 +450,7 @@ namespace Nektar
                     << ntot << "\" NumberOfCells=\""
                     << ntotminus << "\">" << endl;
             outfile << "      <Points>" << endl;
-            outfile << "        <DataArray type=\"Float32\" "
+            outfile << "        <DataArray type=\"Float64\" "
                     << "NumberOfComponents=\"3\" format=\"ascii\">" << endl;
             outfile << "          ";
             for (i = 0; i < ntot; ++i)
