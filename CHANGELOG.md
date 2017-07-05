@@ -1,6 +1,12 @@
 Changelog
 =========
 
+v4.4.2
+------
+**Library**
+- Fix ability to set default implementation in Collections and added an option 
+  to set eNoCollections in FieldConvert as default (!789)
+
 v4.4.1
 ------
 **Library**
@@ -18,8 +24,8 @@ v4.4.1
 - Fix missing entriess in LibUtilities::kPointsTypeStr (!792)
 - Fix compiler warnings with CommDataType (!793)
 - Fix deadlock with HDF5 input (!786)
-- Fix ability to set default implementation in Collections and added an option 
-  to set eNoCollections in FieldConvert as default (!789)
+- Fix missing entriess in LibUtilities::kPointsTypeStr (!792)
+- Fix compiler warnings with CommDataType (!793)
 
 **FieldConvert:**
 - Fix issue with field ordering in the interppointdatatofld module (!754)
