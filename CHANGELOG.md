@@ -7,6 +7,11 @@ v4.4.2
 - Fix ability to set default implementation in Collections and added an option 
   to set eNoCollections in FieldConvert as default (!789)
 
+v4.4.2
+------
+**NekMesh**:
+- Fix uninitialised memory bug in Nek5000 input module (!801)
+
 v4.4.1
 ------
 **Library**
