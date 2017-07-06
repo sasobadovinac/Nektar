@@ -58,8 +58,13 @@ protected:
         const LibUtilities::PointsKeyVector &keyTgt) const;
     virtual Array<OneD, NekDouble> ComputeJac(
         const LibUtilities::PointsKeyVector &keyTgt) const;
+    virtual Array<TwoD, NekDouble> ComputeGmat(
+        const LibUtilities::PointsKeyVector &keyTgt) const;
 
     void MultByRadius(Array<OneD, NekDouble> &work,
+                      const LibUtilities::PointsKeyVector &keyTgt) const;
+    void MultByRadius(NekDouble *work,
+                      int nPts,
                       const LibUtilities::PointsKeyVector &keyTgt) const;
 };
 

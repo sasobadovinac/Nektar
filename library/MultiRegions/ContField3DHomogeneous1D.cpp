@@ -288,22 +288,44 @@ namespace Nektar
             {
                 smode = true;
             }
-            
+
+            new_factors = factors;
+            NekDouble lambda = new_factors[StdRegions::eFactorLambda];
+
+            StdRegions::VarCoeffMap varcoeff2 = varcoeff;
+
             for(n = 0; n < m_planes.num_elements(); ++n)
             {
                 if(n != 1 || m_transposition->GetK(n) != 0 || smode)
                 {
-                    
-                    beta = 2*M_PI*(m_transposition->GetK(n))/m_lhom;
                     new_factors = factors;
-                    // add in Homogeneous Fourier direction and SVV if turned on
-                    new_factors[StdRegions::eFactorLambda] +=
-                        beta*beta*(1+GetSpecVanVisc(n));
+                    beta = 2*M_PI*(m_transposition->GetK(n))/m_lhom;
+
+                    if (m_graph->GetCoordSystem() == (int)SpatialDomains::eCylindrical)
+                    {
+                        int planePts = m_planes[0]->GetNpoints();
+                        Array<OneD, NekDouble> xc0(planePts), xc1(m_npoints);
+                        m_planes[0]->GetCoords(xc0, xc1);
+
+                        for (int i = 0; i < m_npoints; ++i)
+                        {
+                            xc1[i] = beta * beta / xc1[i] / xc1[i] + lambda;
+                        }
+
+                        varcoeff2[StdRegions::eVarCoeffMass] = xc1;
+                        new_factors[StdRegions::eFactorLambda] = 1.0;
+                    }
+                    else
+                    {
+                        // add in Homogeneous Fourier direction and SVV if turned on
+                        new_factors[StdRegions::eFactorLambda] +=
+                            beta*beta*(1+GetSpecVanVisc(n));
+                    }
                     
                     wfce = (PhysSpaceForcing)? fce+cnt:fce+cnt1;
                     m_planes[n]->HelmSolve(wfce,
                                            e_out = outarray + cnt1,
-                                           flags, new_factors, varcoeff,
+                                           flags, new_factors, varcoeff2,
                                            dirForcing,
                                            PhysSpaceForcing);
                 }

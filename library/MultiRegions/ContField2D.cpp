@@ -884,6 +884,7 @@ namespace Nektar
             // Inner product of forcing
             int contNcoeffs = m_locToGloMap->GetNumGlobalCoeffs();
             Array<OneD,NekDouble> wsp(contNcoeffs);
+
             if(PhysSpaceForcing)
             {
                 IProductWRTBase(inarray,wsp,eGlobal);
@@ -892,6 +893,7 @@ namespace Nektar
             {
                 Assemble(inarray,wsp);
             }
+
             // Note -1.0 term necessary to invert forcing function to
             // be consistent with matrix definition
             Vmath::Neg(contNcoeffs, wsp, 1);

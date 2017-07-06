@@ -40,6 +40,23 @@ namespace Nektar
 namespace SpatialDomains
 {
 
+Array<TwoD, NekDouble> GeomFactorsCyl::ComputeGmat(
+    const LibUtilities::PointsKeyVector &keyTgt) const
+{
+    Array<TwoD, NekDouble> gmat = GeomFactors::ComputeGmat(keyTgt);
+
+    // Premultiply by radius
+    for (int i = 0; i < m_expDim; ++i)
+    {
+        for (int j = 0; j < m_expDim; ++j)
+        {
+            //MultByRadius(&gmat[i*m_expDim+j][0], gmat.shape()[1], keyTgt);
+        }
+    }
+
+    return gmat;
+}
+
 DerivStorage GeomFactorsCyl::ComputeDeriv(
     const LibUtilities::PointsKeyVector &keyTgt) const
 {
@@ -70,17 +87,24 @@ void GeomFactorsCyl::MultByRadius(
     Array<OneD, NekDouble> &work,
     const LibUtilities::PointsKeyVector &keyTgt) const
 {
-    LibUtilities::PointsKeyVector xmapKeys = m_xmap->GetPointsKeys();
-    int j;
+    MultByRadius(&work[0], work.num_elements(), keyTgt);
+}
 
-    int nTotPts = 1;
+void GeomFactorsCyl::MultByRadius(
+    NekDouble *work,
+    int nPts,
+    const LibUtilities::PointsKeyVector &keyTgt) const
+
+{
+    LibUtilities::PointsKeyVector xmapKeys = m_xmap->GetPointsKeys();
+    int j, nTotPts = 1;
 
     for (j = 0; j < keyTgt.size(); ++j)
     {
         nTotPts *= keyTgt[j].GetNumPoints();
     }
 
-    ASSERTL0(nTotPts == work.num_elements(), "should be equal");
+    ASSERTL0(nTotPts == nPts, "should be equal");
 
     // Backward transform y-component to get radius.
     Array<OneD, NekDouble> tmp(m_xmap->GetTotPoints()), tmp2(nTotPts);
@@ -88,7 +112,8 @@ void GeomFactorsCyl::MultByRadius(
 
     // Interpolate onto target distribution
     Interp(xmapKeys, tmp, keyTgt, tmp2);
-    Vmath::Vmul(nTotPts, &work[0], 1, &tmp2[0], 1, &work[0], 1);
+
+    Vmath::Vmul(nTotPts, work, 1, &tmp2[0], 1, &work[0], 1);
 }
 
 }
