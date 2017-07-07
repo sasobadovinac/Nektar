@@ -80,9 +80,9 @@ namespace Nektar
 
 	private:
 
-            void DiagonalPreconditionerSum(void);
+            Array<OneD, NekDouble> DiagonalPreconditionerSum(void);
 
-	    void StaticCondDiagonalPreconditionerSum(void);
+	        void StaticCondDiagonalPreconditionerSum(void);
 
             virtual void v_InitObject();
 
@@ -135,6 +135,7 @@ namespace Nektar
                       const Array<OneD, NekDouble>& pInput,
 		      Array<OneD, NekDouble>& pOutput);
 
+            //virtual Array<OneD, NekDouble> v_BuildPreconditioner();
             virtual void v_BuildPreconditioner();
 
             static std::string lookupIds[];

@@ -263,9 +263,12 @@ namespace Nektar
                   Array<OneD,NekDouble> &outarray,
             const StdRegions::StdMatrixKey &mkey)
         {
+            printf("%s\n", "within StdExpansion2D::v_HelmholtzMatrixOp_MatFree");
             if (mkey.GetNVarCoeff() == 0
                 &&!mkey.ConstFactorExists(StdRegions::eFactorSVVCutoffRatio))
             {
+                printf("%s\n", "within StdExpansion2D::v_HelmholtzMatrixOp_MatFree -- if");
+            
                 using std::max;
 
                 int       nquad0  = m_base[0]->GetNumPoints();
@@ -288,6 +291,8 @@ namespace Nektar
 
                 if (!(m_base[0]->Collocation() && m_base[1]->Collocation()))
                 {
+                    printf("%s\n", "within StdExpansion2D::v_HelmholtzMatrixOp_MatFree -- if -- Collocation");
+            
                     // MASS MATRIX OPERATION
                     // The following is being calculated:
                     // wsp0     = B   * u_hat = u
@@ -303,6 +308,8 @@ namespace Nektar
                 }
                 else
                 {
+                    printf("%s\n", "within StdExpansion2D::v_HelmholtzMatrixOp_MatFree -- if -- else");
+            
                     MultiplyByQuadratureMetric(inarray,outarray);
                     LaplacianMatrixOp_MatFree_Kernel(inarray, wsp1, wsp2);
                 }
@@ -314,6 +321,8 @@ namespace Nektar
             }
             else
             {
+                printf("%s\n", "within StdExpansion2D::v_HelmholtzMatrixOp_MatFree -- else");
+            
                 StdExpansion::HelmholtzMatrixOp_MatFree_GenericImpl(
                     inarray,outarray,mkey);
             }

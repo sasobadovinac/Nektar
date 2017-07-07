@@ -72,6 +72,7 @@ namespace Nektar
         {
 	}
 
+        //Array<OneD, NekDouble> 
         void PreconditionerDiagonal::v_BuildPreconditioner()
         {
             GlobalSysSolnType solvertype =
@@ -97,7 +98,7 @@ namespace Nektar
          * Diagonal preconditioner computed by summing the relevant elements of
          * the local matrix system.
          */
-         void PreconditionerDiagonal::DiagonalPreconditionerSum()
+         Array<OneD, NekDouble> PreconditionerDiagonal::DiagonalPreconditionerSum()
          {
              boost::shared_ptr<MultiRegions::ExpList> expList = 
                  ((m_linsys.lock())->GetLocMat()).lock();
@@ -153,6 +154,8 @@ namespace Nektar
 
              m_diagonals = Array<OneD, NekDouble> (nInt);
              Vmath::Sdiv(nInt, 1.0, &vOutput[nDir], 1, &m_diagonals[0], 1);
+
+             return m_diagonals;
          }
 
         /**

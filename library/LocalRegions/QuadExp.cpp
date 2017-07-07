@@ -2177,7 +2177,9 @@ namespace Nektar
                   Array<OneD,NekDouble> &outarray,
             const StdRegions::StdMatrixKey &mkey)
         {
+            printf("%s\n", "within QuadExp::v_HelmholtzMatrixOp");
             QuadExp::HelmholtzMatrixOp_MatFree(inarray, outarray, mkey);
+
         }
 
 

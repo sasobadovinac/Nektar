@@ -109,6 +109,8 @@ namespace Nektar
             const AssemblyMapSharedPtr         &pLocToGloMap,
             const Array<OneD, const NekDouble> &dirForcing)
         {
+            printf("Within GlobalLinSysStaticCond::v_Solve\n" );
+
             bool dirForcCalculated = (bool) dirForcing.num_elements();
             bool atLastLevel       = pLocToGloMap->AtLastLevel();
             int  scLevel           = pLocToGloMap->GetStaticCondLevel();

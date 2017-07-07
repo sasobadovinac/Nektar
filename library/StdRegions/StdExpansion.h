@@ -1049,6 +1049,7 @@ namespace Nektar
                                    const StdMatrixKey &mkey)
             {
                 v_HelmholtzMatrixOp(inarray,outarray,mkey);
+                //printf("%s\n", "within HelmholtzMatrixOp");
             }
 
             DNekMatSharedPtr GenMatrix (const StdMatrixKey &mkey)
@@ -1529,6 +1530,7 @@ namespace Nektar
                                                  const StdMatrixKey &mkey)
             {
                 v_HelmholtzMatrixOp_MatFree(inarray,outarray,mkey);
+                //printf("%s\n", "within HelmholtzMatrixOp_MatFree");
             }
 
             STD_REGIONS_EXPORT void HelmholtzMatrixOp_MatFree_GenericImpl(const Array<OneD, const NekDouble> &inarray,

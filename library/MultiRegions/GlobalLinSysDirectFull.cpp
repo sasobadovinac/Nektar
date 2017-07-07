@@ -117,6 +117,8 @@ namespace Nektar
             int nGlobDofs = pLocToGloMap->GetNumGlobalCoeffs();
             Array<OneD, NekDouble> tmp(nGlobDofs);
             
+            printf("Within GlobalLinSysDirectFull::v_Solve\n" );
+
             if(nDirDofs)
             {
                 // calculate the dirichlet forcing

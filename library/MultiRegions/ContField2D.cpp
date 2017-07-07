@@ -547,6 +547,8 @@ namespace Nektar
             // STEP 2: CALCULATE THE HOMOGENEOUS COEFFICIENTS
             if(contNcoeffs - NumDirBcs > 0)
             {
+                printf("Within ContField2D::GlobalSolve\n" );
+
                 GlobalLinSysSharedPtr LinSys = GetGlobalLinSys(key);
                 LinSys->Solve(rhs,inout,m_locToGloMap,dirForcing);
             }
@@ -923,6 +925,8 @@ namespace Nektar
 
             GlobalLinSysKey key(StdRegions::eHelmholtz,m_locToGloMap,factors,varcoeff);
             
+            printf("Within ContField2D v_HelmSolve\n" );
+
             if(flags.isSet(eUseGlobal))
             {
                 GlobalSolve(key,wsp,outarray,dirForcing);

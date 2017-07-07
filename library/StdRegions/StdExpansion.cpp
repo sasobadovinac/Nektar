@@ -530,6 +530,7 @@ namespace Nektar
                                            Array<OneD,NekDouble> &outarray,
                                            const StdMatrixKey &mkey)
         {
+            //std::cout << mkey.GetMatrixType() << std::endl;
             switch(mkey.GetMatrixType())
             {
             case eMass:
@@ -587,6 +588,7 @@ namespace Nektar
                 LaplacianMatrixOp(2,2,inarray,outarray,mkey);
                 break;
             case eHelmholtz:
+                //printf("%s\n", "call HelmholtzMatrixOp" );
                 HelmholtzMatrixOp(inarray,outarray,mkey);
                 break;
             default:

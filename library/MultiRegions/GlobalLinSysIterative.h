@@ -110,6 +110,14 @@ namespace Nektar
                     const AssemblyMapSharedPtr &locToGloMap,
                     const int pNumDir);
 
+            // solve with plain data layout
+            void DoConjugateGradient_plain(
+                    const int pNumRows,
+                    const Array<OneD,const NekDouble> &pInput,
+                          Array<OneD,      NekDouble> &pOutput,
+                    const AssemblyMapSharedPtr &locToGloMap,
+                    const int pNumDir);
+
 
             void Set_Rhs_Magnitude(const NekVector<NekDouble> &pIn);
 

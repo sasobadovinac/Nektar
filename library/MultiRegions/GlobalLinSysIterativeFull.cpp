@@ -114,6 +114,8 @@ namespace Nektar
                     const AssemblyMapSharedPtr &pLocToGloMap,
                     const Array<OneD, const NekDouble>  &pDirForcing)
         {
+            printf("Within GlobalLinSysIterativeFull::v_Solve\n" );
+
             boost::shared_ptr<MultiRegions::ExpList> expList = m_expList.lock();
             bool vCG;
             if ((m_locToGloMap = boost::dynamic_pointer_cast<AssemblyMapCG>(
@@ -164,7 +166,7 @@ namespace Nektar
                 if (vCG)
                 {
                     Array<OneD, NekDouble> out(nGlobDofs,0.0);
-
+                    printf("Within GlobalLinSysIterativeFull::v_Solve if(vCG)\n" );
                     // solve for perturbation from intiial guess in pOutput
                     SolveLinearSystem(
                         nGlobDofs, tmp, out, pLocToGloMap, nDirDofs);
@@ -179,6 +181,7 @@ namespace Nektar
             else
             {
                 Vmath::Vcopy(nGlobDofs, pInput, 1, tmp, 1);
+                printf("Within GlobalLinSysIterativeFull::v_Solve else\n" );
                 SolveLinearSystem(nGlobDofs, tmp, pOutput, pLocToGloMap);
             }
         }
@@ -191,6 +194,9 @@ namespace Nektar
                 const Array<OneD, NekDouble>& pInput,
                       Array<OneD, NekDouble>& pOutput)
         {
+            printf("Within GlobalLinSysIterativeFull::v_DoMatrixMultiply\n" );
+                    
+
             boost::shared_ptr<MultiRegions::ExpList> expList = m_expList.lock();
             // Perform matrix-vector operation A*d_i
             expList->GeneralMatrixOp(m_linSysKey,
@@ -199,6 +205,7 @@ namespace Nektar
             // Apply robin boundary conditions to the solution.
             if(m_robinBCInfo.size() > 0)
             {
+                printf("%s\n", "Robin BC are applied!");
                 ASSERTL0(false,
                         "Robin boundaries not set up in IterativeFull solver.");
                 int nGlobal = m_locToGloMap->GetNumGlobalCoeffs();

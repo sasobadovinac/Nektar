@@ -1534,6 +1534,7 @@ namespace Nektar
                                Array<OneD,NekDouble> &outarray,
                                const StdRegions::StdMatrixKey &mkey)
         {
+            printf("%s\n", "within TriExp::v_HelmholtzMatrixOp");
             TriExp::HelmholtzMatrixOp_MatFree(inarray,outarray,mkey);
         }
 

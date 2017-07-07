@@ -627,6 +627,8 @@ namespace Nektar
           // Solve the system
           GlobalLinSysKey key(StdRegions::eHelmholtz, m_locToGloMap, factors,varcoeff);
           
+          printf("Within ContField2D Global Solve\n" );
+          
           if(flags.isSet(eUseGlobal))
           {
               GlobalSolve(key,wsp,outarray,dirForcing);
