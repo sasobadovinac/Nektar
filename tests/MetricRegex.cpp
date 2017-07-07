@@ -123,7 +123,7 @@ namespace Nektar
         int                                 nMatch   = m_matches.size();
         bool                                success  = true;
         bool                                matchedTol = false;
-        boost::cmatch                       matches;
+        std::cmatch                         matches;
 
         // Process output file line by line searching for regex matches
         std::string line;
@@ -132,7 +132,7 @@ namespace Nektar
             matchedTol = true;
 
             // Test to see if we have a match on this line.
-            if (boost::regex_match(line.c_str(), matches, m_regex))
+            if (std::regex_match(line.c_str(), matches, m_regex))
             {
                 // Error if no fields in regex then throw an error.
                 if (matches.size() == 1)
@@ -266,14 +266,14 @@ namespace Nektar
      */
     void MetricRegex::v_Generate(std::istream& pStdout, std::istream& pStderr)
     {
-        boost::cmatch matches;
+        std::cmatch matches;
 
         // Process output file line by line searching for regex matches
         std::string line;
         while (getline(pStdout, line))
         {
             // Test to see if we have a match on this line.
-            if (boost::regex_match(line.c_str(), matches, m_regex))
+            if (std::regex_match(line.c_str(), matches, m_regex))
             {
                 // Error if no fields in regex then throw an error.
                 ASSERTL0(matches.size() != 1, "No test sections in regex!");

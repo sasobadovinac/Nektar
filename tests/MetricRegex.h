@@ -37,7 +37,7 @@
 #define NEKTAR_TESTS_METRICREGEX_H
 
 #include <Metric.h>
-#include <boost/regex.hpp>
+#include <regex>
 #include <vector>
 
 namespace Nektar
@@ -72,8 +72,8 @@ namespace Nektar
         static std::string type;
 
     protected:
-        /// Storage for the boost regex.
-        boost::regex                                     m_regex;
+        /// Storage for the regex.
+        std::regex                                       m_regex;
         /// Stores the multiple matches defined in each <MATCH> tag.
         std::vector<std::vector<MetricRegexFieldValue> > m_matches;
         /// If true, regex matches may be in any order in output
