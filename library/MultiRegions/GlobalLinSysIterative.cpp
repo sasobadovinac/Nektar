@@ -34,6 +34,8 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <MultiRegions/GlobalLinSysIterative.h>
+#include <MultiRegions/PreconditionerDiagonal.h>
+#include <MultiRegions/Preconditioner.h>
 
 using namespace std;
 
@@ -557,11 +559,14 @@ namespace Nektar
         {
             printf("Within GlobalLinSysIterative::DoConjugateGradient_plain\n" );
 
+            Array<OneD, NekDouble> diagonals;
             if (!m_precon)
             {
                 v_UniqueMap();
                 m_precon = CreatePrecon(plocToGloMap);
-                m_precon->BuildPreconditioner();
+
+                //m_precon->BuildPreconditioner();
+                diagonals = m_precon->Preconditioner::DiagonalPreconditionerSum_plain();
             }
 
             // Get vector sizes
@@ -626,7 +631,12 @@ namespace Nektar
                 return;
             }
 
-            m_precon->DoPreconditioner(r_A, tmp = w_A + nDir);
+            //preconditioner
+            //m_precon->DoPreconditioner(r_A, tmp = w_A + nDir);
+
+            Vmath::Vmul(nNonDir, &r_A[0], 1, &diagonals[0], 1, &w_A[nDir], 1);
+
+
 
             v_DoMatrixMultiply(w_A, s_A);
 
@@ -689,7 +699,9 @@ namespace Nektar
 
 
                 // Apply preconditioner
-                m_precon->DoPreconditioner(r_A, tmp = w_A + nDir);
+                //m_precon->DoPreconditioner(r_A, tmp = w_A + nDir);
+                Vmath::Vmul(nNonDir, &r_A[0], 1, &diagonals[0], 1, &w_A[nDir], 1);
+
 
                 // Perform the method-specific matrix-vector multiply operation.
                 //printf("CG iteration %i\n", totalIterations);

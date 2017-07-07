@@ -72,6 +72,9 @@ namespace Nektar
             MULTI_REGIONS_EXPORT
             virtual ~PreconditionerDiagonal() {}
 
+            //new
+            Array<OneD, NekDouble> DiagonalPreconditionerSum_plain(void);
+
 	protected:
 
             Array<OneD, NekDouble>                      m_diagonals;
@@ -80,7 +83,7 @@ namespace Nektar
 
 	private:
 
-            Array<OneD, NekDouble> DiagonalPreconditionerSum(void);
+            void DiagonalPreconditionerSum(void);
 
 	        void StaticCondDiagonalPreconditionerSum(void);
 

@@ -109,6 +109,10 @@ namespace Nektar
 
             Array<OneD, NekDouble> AssembleStaticCondGlobalDiagonals();
 
+            //new
+            Array<OneD, NekDouble> DiagonalPreconditionerSum_plain();
+
+
              inline const DNekScalBlkMatSharedPtr&
                 GetBlockTransformedSchurCompl() const;
             
@@ -139,6 +143,8 @@ namespace Nektar
 
             virtual DNekScalMatSharedPtr v_TransformedSchurCompl(
                 int offset, const boost::shared_ptr<DNekScalMat > &loc_mat);
+
+            Array<OneD, NekDouble>                      m_diagonals;
 
 
 	private:

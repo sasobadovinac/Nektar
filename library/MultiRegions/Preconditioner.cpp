@@ -240,6 +240,75 @@ namespace Nektar
 
             return diagonals;
         }
+
+
+        /**
+         * Diagonal preconditioner computed by summing the relevant elements of
+         * the local matrix system.
+         */
+         Array<OneD, NekDouble> Preconditioner::DiagonalPreconditionerSum_plain()
+         {
+             boost::shared_ptr<MultiRegions::ExpList> expList = 
+                 ((m_linsys.lock())->GetLocMat()).lock();
+
+             StdRegions::StdExpansionSharedPtr locExpansion;
+
+             int i,j,n,cnt,gid1,gid2;
+             NekDouble sign1,sign2,value;
+             int nGlobal = m_locToGloMap->GetNumGlobalCoeffs();
+             int nDir    = m_locToGloMap->GetNumGlobalDirBndCoeffs();
+             int nInt    = nGlobal - nDir;
+
+             // fill global matrix
+             DNekScalMatSharedPtr loc_mat;
+             Array<OneD, NekDouble> vOutput(nGlobal,0.0);
+
+             int loc_row;
+             int nElmt = expList->GetNumElmts();
+             for(n = cnt = 0; n < nElmt; ++n)
+             {
+                 loc_mat = (m_linsys.lock())->GetBlock(expList->GetOffset_Elmt_Id(n));
+                 loc_row = loc_mat->GetRows();
+
+                 for(i = 0; i < loc_row; ++i)
+                 {
+                     gid1 = m_locToGloMap->GetLocalToGlobalMap(cnt + i) - nDir;
+                     sign1 =  m_locToGloMap->GetLocalToGlobalSign(cnt + i);
+                     if(gid1 >= 0)
+                     {
+                         for(j = 0; j < loc_row; ++j)
+                         {
+                             gid2 = m_locToGloMap->GetLocalToGlobalMap(cnt + j)
+                                                                    - nDir;
+                             sign2 = m_locToGloMap->GetLocalToGlobalSign(cnt + j);
+                             if(gid2 == gid1)
+                             {
+                                 // When global matrix is symmetric,
+                                 // only add the value for the upper
+                                 // triangular part in order to avoid
+                                 // entries to be entered twice
+                                 value = vOutput[gid1 + nDir]
+                                            + sign1*sign2*(*loc_mat)(i,j);
+                                 vOutput[gid1 + nDir] = value;
+                             }
+                         }
+                     }
+                 }
+                 cnt   += loc_row;
+             }
+
+             // Assemble diagonal contributions across processes
+             m_locToGloMap->UniversalAssemble(vOutput);
+
+             m_diagonals = Array<OneD, NekDouble> (nInt);
+             Vmath::Sdiv(nInt, 1.0, &vOutput[nDir], 1, &m_diagonals[0], 1);
+
+             return m_diagonals;
+         }
+
+
+
+
     }
 }
 
