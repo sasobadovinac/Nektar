@@ -633,10 +633,11 @@ namespace Nektar
 
             //preconditioner
             //m_precon->DoPreconditioner(r_A, tmp = w_A + nDir);
-
-            Vmath::Vmul(nNonDir, &r_A[0], 1, &diagonals[0], 1, &w_A[nDir], 1);
-
-
+            //Vmath::Vmul(nNonDir, &r_A[0], 1, &diagonals[0], 1, &w_A[nDir], 1);
+            for (int i = 0; i < nNonDir; ++i)
+            {
+                w_A[i+nDir] = r_A[i] * diagonals[i];
+            }
 
             v_DoMatrixMultiply(w_A, s_A);
 
@@ -700,8 +701,11 @@ namespace Nektar
 
                 // Apply preconditioner
                 //m_precon->DoPreconditioner(r_A, tmp = w_A + nDir);
-                Vmath::Vmul(nNonDir, &r_A[0], 1, &diagonals[0], 1, &w_A[nDir], 1);
-
+                //Vmath::Vmul(nNonDir, &r_A[0], 1, &diagonals[0], 1, &w_A[nDir], 1);
+                for (int i = 0; i < nNonDir; ++i)
+                {
+                    w_A[i+nDir] = r_A[i] * diagonals[i];
+                }
 
                 // Perform the method-specific matrix-vector multiply operation.
                 //printf("CG iteration %i\n", totalIterations);

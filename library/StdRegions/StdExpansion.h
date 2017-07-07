@@ -1529,7 +1529,8 @@ namespace Nektar
                                                  Array<OneD,NekDouble> &outarray,
                                                  const StdMatrixKey &mkey)
             {
-                v_HelmholtzMatrixOp_MatFree(inarray,outarray,mkey);
+                //v_HelmholtzMatrixOp_MatFree(inarray,outarray,mkey);
+                v_HelmholtzMatrixOp_MatFree_plain(inarray,outarray,mkey);
                 //printf("%s\n", "within HelmholtzMatrixOp_MatFree");
             }
 
@@ -1838,6 +1839,10 @@ namespace Nektar
                                       Array<OneD,       NekDouble> &wsp);
 
             STD_REGIONS_EXPORT virtual void v_HelmholtzMatrixOp_MatFree(const Array<OneD, const NekDouble> &inarray,
+                                                           Array<OneD,NekDouble> &outarray,
+                                                           const StdMatrixKey &mkey);
+
+            STD_REGIONS_EXPORT virtual void v_HelmholtzMatrixOp_MatFree_plain(const Array<OneD, const NekDouble> &inarray,
                                                            Array<OneD,NekDouble> &outarray,
                                                            const StdMatrixKey &mkey);
 

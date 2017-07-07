@@ -176,6 +176,11 @@ namespace StdRegions
                           Array<OneD,       NekDouble> &outarray,
                     const StdRegions::StdMatrixKey &mkey);
 
+        STD_REGIONS_EXPORT virtual void v_HelmholtzMatrixOp_MatFree_plain(
+                    const Array<OneD, const NekDouble> &inarray,
+                          Array<OneD,       NekDouble> &outarray,
+                    const StdRegions::StdMatrixKey &mkey);
+
             STD_REGIONS_EXPORT virtual int v_GetTraceNcoeffs(const int i) const
             {
                 return GetEdgeNcoeffs(i);

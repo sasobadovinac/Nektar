@@ -1678,6 +1678,15 @@ namespace Nektar
             HelmholtzMatrixOp_MatFree_GenericImpl(inarray,outarray,mkey);
         }
 
+        void StdExpansion::v_HelmholtzMatrixOp_MatFree_plain(const Array<OneD, const NekDouble> &inarray,
+                                                       Array<OneD,NekDouble> &outarray,
+                                                       const StdMatrixKey &mkey)
+        {
+            // If this function is not reimplemented on shape level, the function
+            // below will be called
+            HelmholtzMatrixOp_MatFree_GenericImpl(inarray,outarray,mkey);
+        }
+
         const NormalVector & StdExpansion::v_GetEdgeNormal(const int edge) const
         {
             ASSERTL0(false, "Cannot get edge normals for this expansion.");

@@ -263,12 +263,9 @@ namespace Nektar
                   Array<OneD,NekDouble> &outarray,
             const StdRegions::StdMatrixKey &mkey)
         {
-            printf("%s\n", "within StdExpansion2D::v_HelmholtzMatrixOp_MatFree");
             if (mkey.GetNVarCoeff() == 0
                 &&!mkey.ConstFactorExists(StdRegions::eFactorSVVCutoffRatio))
             {
-                printf("%s\n", "within StdExpansion2D::v_HelmholtzMatrixOp_MatFree -- if");
-            
                 using std::max;
 
                 int       nquad0  = m_base[0]->GetNumPoints();
@@ -291,8 +288,6 @@ namespace Nektar
 
                 if (!(m_base[0]->Collocation() && m_base[1]->Collocation()))
                 {
-                    printf("%s\n", "within StdExpansion2D::v_HelmholtzMatrixOp_MatFree -- if -- Collocation");
-            
                     // MASS MATRIX OPERATION
                     // The following is being calculated:
                     // wsp0     = B   * u_hat = u
@@ -308,8 +303,6 @@ namespace Nektar
                 }
                 else
                 {
-                    printf("%s\n", "within StdExpansion2D::v_HelmholtzMatrixOp_MatFree -- if -- else");
-            
                     MultiplyByQuadratureMetric(inarray,outarray);
                     LaplacianMatrixOp_MatFree_Kernel(inarray, wsp1, wsp2);
                 }
@@ -321,11 +314,55 @@ namespace Nektar
             }
             else
             {
-                printf("%s\n", "within StdExpansion2D::v_HelmholtzMatrixOp_MatFree -- else");
-            
                 StdExpansion::HelmholtzMatrixOp_MatFree_GenericImpl(
                     inarray,outarray,mkey);
             }
+        }
+
+        void StdExpansion2D::v_HelmholtzMatrixOp_MatFree_plain(
+            const Array<OneD, const NekDouble> &inarray,
+                  Array<OneD,NekDouble> &outarray,
+            const StdRegions::StdMatrixKey &mkey)
+        {
+            printf("%s\n", "within StdExpansion2D::v_HelmholtzMatrixOp_MatFree");
+            using std::max;
+
+            int       nquad0  = m_base[0]->GetNumPoints();
+            int       nquad1  = m_base[1]->GetNumPoints();
+            int       nqtot   = nquad0*nquad1;
+            int       nmodes0 = m_base[0]->GetNumModes();
+            int       nmodes1 = m_base[1]->GetNumModes();
+            int       wspsize = max(max(max(nqtot,m_ncoeffs),nquad1*nmodes0),
+                                    nquad0*nmodes1);
+            NekDouble lambda  =
+                mkey.GetConstFactor(StdRegions::eFactorLambda);
+
+            const Array<OneD, const NekDouble>& base0 = m_base[0]->GetBdata();
+            const Array<OneD, const NekDouble>& base1 = m_base[1]->GetBdata();
+
+            // Allocate temporary storage
+            Array<OneD,NekDouble> wsp0(5*wspsize);      // size wspsize
+            Array<OneD,NekDouble> wsp1(wsp0 + wspsize);  // size wspsize
+            Array<OneD,NekDouble> wsp2(wsp0 + 2*wspsize);// size 3*wspsize
+
+            // MASS MATRIX OPERATION
+            // The following is being calculated:
+            // wsp0     = B   * u_hat = u
+            // wsp1     = W   * wsp0
+            // outarray = B^T * wsp1  = B^T * W * B * u_hat = M * u_hat
+            BwdTrans_SumFacKernel       (base0, base1, inarray,
+                                         wsp0, wsp2,true,true);
+            MultiplyByQuadratureMetric  (wsp0, wsp1);
+            IProductWRTBase_SumFacKernel(base0, base1, wsp1, outarray,
+                                         wsp2, true, true);
+
+            LaplacianMatrixOp_MatFree_Kernel(wsp0, wsp1, wsp2);
+            
+            // outarray = lambda * outarray + wsp1
+            //          = (lambda * M + L ) * u_hat
+            Vmath::Svtvp(m_ncoeffs, lambda, &outarray[0], 1,
+                          &wsp1[0], 1, &outarray[0], 1);           
+
         }
 
     } //end namespace

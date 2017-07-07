@@ -144,6 +144,7 @@ namespace Nektar
             virtual DNekScalMatSharedPtr v_TransformedSchurCompl(
                 int offset, const boost::shared_ptr<DNekScalMat > &loc_mat);
 
+            //new
             Array<OneD, NekDouble>                      m_diagonals;
 
 
