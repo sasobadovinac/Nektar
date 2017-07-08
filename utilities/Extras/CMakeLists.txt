@@ -20,7 +20,7 @@ IF (NEKTAR_USE_VTK)
         TARGET_LINK_LIBRARIES(VtkStripsToPolys vtkCommon vtkIO vtkGraphics)
     ELSE ()
         TARGET_LINK_LIBRARIES(VtkToFld vtkCommonCore vtkIOLegacy
-                                       vtkFiltersGeometry)
+                                              vtkFiltersGeometry vtkFiltersCore)
         TARGET_LINK_LIBRARIES(VtkStripsToPolys vtkCommonCore vtkIOLegacy)
     ENDIF ()
     
