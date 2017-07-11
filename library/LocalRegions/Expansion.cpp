@@ -187,12 +187,12 @@ namespace Nektar
         void Expansion::v_MultiplyByQuadratureMetric(const Array<OneD, const NekDouble>& inarray,
                                                  Array<OneD, NekDouble> &outarray)
         {
-            printf("%s\n", "within Expansion::v_MultiplyByQuadratureMetric" );
+            //printf("%s\n", "within Expansion::v_MultiplyByQuadratureMetric" );
             const int nqtot = GetTotPoints();
 
             if (m_metrics.count(eMetricQuadrature) == 0)
             {
-                printf("%s\n", "no eMetricQuadrature");
+                //printf("%s\n", "no eMetricQuadrature");
                 ComputeQuadratureMetric();
             }
             
@@ -202,6 +202,16 @@ namespace Nektar
         void Expansion::ComputeLaplacianMetric()
         {
             v_ComputeLaplacianMetric();
+        }
+
+        void Expansion::v_GetLaplacianMetric(
+                                  Array<OneD, NekDouble> &laplacian00,
+                                  Array<OneD, NekDouble> &laplacian01,
+                                  Array<OneD, NekDouble> &laplacian11)
+        {
+            v_GetLaplacianMetric(laplacian00,
+                                 laplacian01,
+                                 laplacian11);            
         }
 
         void Expansion::ComputeQuadratureMetric()
@@ -223,25 +233,13 @@ namespace Nektar
                                                    m_metrics[eMetricQuadrature]);
         }
 
-        Array<OneD, NekDouble> Expansion::v_GetQuadratureMetric()
+        void Expansion::v_GetQuadratureMetric(Array<OneD, NekDouble> &quadMetric)
         {
-            unsigned int nqtot = GetTotPoints();
-            SpatialDomains::GeomType type = m_metricinfo->GetGtype();
-            LibUtilities::PointsKeyVector p = GetPointsKeys();
-            if (type == SpatialDomains::eRegular ||
-                   type == SpatialDomains::eMovingRegular)
+            if (m_metrics.count(eMetricQuadrature) == 0)
             {
-                m_metrics[eMetricQuadrature] = Array<OneD, NekDouble>(nqtot, m_metricinfo->GetJac(p)[0]);
+                ComputeQuadratureMetric();
             }
-            else
-            {
-                m_metrics[eMetricQuadrature] = m_metricinfo->GetJac(p);
-            }
-
-            MultiplyByStdQuadratureMetric(m_metrics[eMetricQuadrature],
-                                                   m_metrics[eMetricQuadrature]);
-
-            return m_metrics[eMetricQuadrature];
+            quadMetric = m_metrics[eMetricQuadrature];
         }
 
         void Expansion::v_GetCoords(

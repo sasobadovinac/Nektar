@@ -325,11 +325,15 @@ namespace Nektar
             const Array<OneD, const NekDouble> &inarray,
                   Array<OneD,NekDouble> &outarray,
             const StdRegions::StdMatrixKey &mkey,
-            const Array<OneD, NekDouble> &metric)
+            const Array<OneD, NekDouble> &quadMetric,
+            const Array<OneD, NekDouble> &laplacian00,
+            const Array<OneD, NekDouble> &laplacian01,
+            const Array<OneD, NekDouble> &laplacian11)
         {
             printf("%s\n", "within StdExpansion2D::v_HelmholtzMatrixOp_MatFree");
             using std::max;
 
+            int i, mode;
             int       nquad0  = m_base[0]->GetNumPoints();
             int       nquad1  = m_base[1]->GetNumPoints();
             int       nqtot   = nquad0*nquad1;
@@ -356,8 +360,7 @@ namespace Nektar
             // wsp1     = W   * wsp0
             // outarray = B^T * wsp1  = B^T * W * B * u_hat = M * u_hat
             //BwdTrans_SumFacKernel       (base0, base1, inarray,
-            //                             wsp0, wsp2,true,true);
-            int i, mode;
+            //                             wsp0, wsp2,true,true);            
             for (i = mode = 0; i < nmodes0; ++i)
             {
                 Blas::Dgemv('N', nquad1,nmodes1-i,1.0,base1.get()+mode*nquad1,
@@ -372,15 +375,51 @@ namespace Nektar
 
 
             //MultiplyByQuadratureMetric  (wsp0, wsp1);
-            Vmath::Vmul(nqtot, metric, 1, wsp0, 1, wsp1, 1);
+            Vmath::Vmul(nqtot, quadMetric, 1, wsp0, 1, wsp1, 1);
             // end MultiplyByQuadratureMetric
 
 
-            IProductWRTBase_SumFacKernel(base0, base1, wsp1, outarray,
-                                         wsp2, true, true);
+            //IProductWRTBase_SumFacKernel(base0, base1, wsp1, outarray,
+            //                             wsp2, true, true);
+            Blas::Dgemm('T','N',nquad1,nmodes0,nquad0,1.0,wsp1.get(),nquad0,
+                        base0.get(),nquad0,0.0,wsp2.get(),nquad1);
+            for (mode=i=0; i < nmodes0; ++i)
+            {
+                Blas::Dgemv('T',nquad1,nmodes1-i,1.0, base1.get()+mode*nquad1,
+                            nquad1,wsp2.get()+i*nquad1,1, 0.0,
+                            outarray.get() + mode,1);
+                mode += nmodes1 - i;
+            }
+            outarray[1] += Blas::Ddot(nquad1,base1.get()+nquad1,1,
+                                          wsp2.get()+nquad1,1);
+            // end IProductWRTBase_SumFacKernel
 
-            LaplacianMatrixOp_MatFree_Kernel(wsp0, wsp1, wsp2);
-            
+
+            //LaplacianMatrixOp_MatFree_Kernel(wsp0, wsp1, wsp2);
+            const Array<OneD, const NekDouble>& dbase0 = m_base[0]->GetDbdata();
+            const Array<OneD, const NekDouble>& dbase1 = m_base[1]->GetDbdata();
+            const Array<OneD, const NekDouble>& metric00 = laplacian00;
+            const Array<OneD, const NekDouble>& metric01 = laplacian01;
+            const Array<OneD, const NekDouble>& metric11 = laplacian11;
+
+            // Allocate temporary storage
+            Array<OneD,NekDouble> wsp0L(wsp2);
+            Array<OneD,NekDouble> wsp1L(wsp2+wspsize);
+            Array<OneD,NekDouble> wsp2L(wsp2+2*wspsize);
+
+            StdExpansion2D::PhysTensorDeriv(wsp0,wsp1L,wsp2L);
+
+            Vmath::Vvtvvtp(nqtot,&metric00[0],1,&wsp1L[0],1,&metric01[0],1,&wsp2L[0],1,&wsp0L[0],1);
+            Vmath::Vvtvvtp(nqtot,&metric01[0],1,&wsp1L[0],1,&metric11[0],1,&wsp2L[0],1,&wsp2L[0],1);
+
+            IProductWRTBase_SumFacKernel(dbase0, base1,wsp0L,wsp1 ,wsp1L);
+            IProductWRTBase_SumFacKernel( base0,dbase1,wsp2L,wsp1L,wsp0L);
+
+            Vmath::Vadd(m_ncoeffs,wsp1L.get(),1,wsp1.get(),1,wsp1.get(),1);
+            //end LaplacianMatrixOp_MatFree_Kernel
+
+
+
             // outarray = lambda * outarray + wsp1
             //          = (lambda * M + L ) * u_hat
             Vmath::Svtvp(m_ncoeffs, lambda, &outarray[0], 1,

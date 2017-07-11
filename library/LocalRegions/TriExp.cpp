@@ -1731,6 +1731,19 @@ namespace Nektar
             }
         }
 
+        void TriExp::v_GetLaplacianMetric(Array<OneD, NekDouble> &laplacian00,
+                                          Array<OneD, NekDouble> &laplacian01,
+                                          Array<OneD, NekDouble> &laplacian11)
+        {
+            if (m_metrics.count(eMetricLaplacian00) == 0)
+            {
+                ComputeLaplacianMetric();
+            }
+            laplacian00 = m_metrics[eMetricLaplacian00];
+            laplacian01 = m_metrics[eMetricLaplacian01];
+            laplacian11 = m_metrics[eMetricLaplacian11];            
+        }
+
         /**
          * Function is used to compute exactly the advective numerical flux on
          * theinterface of two elements with different expansions, hence an

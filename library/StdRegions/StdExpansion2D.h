@@ -180,7 +180,10 @@ namespace StdRegions
                     const Array<OneD, const NekDouble> &inarray,
                           Array<OneD,       NekDouble> &outarray,
                     const StdRegions::StdMatrixKey &mkey,
-                    const Array<OneD, NekDouble> &metric);
+                    const Array<OneD, NekDouble> &quadMetric,
+                    const Array<OneD, NekDouble> &laplacian00,
+                    const Array<OneD, NekDouble> &laplacian01,
+                    const Array<OneD, NekDouble> &laplacian11);
 
             STD_REGIONS_EXPORT virtual int v_GetTraceNcoeffs(const int i) const
             {

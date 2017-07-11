@@ -518,6 +518,7 @@ namespace Nektar
                   bool                          doCheckCollDir0,
                   bool                          doCheckCollDir1)
         {
+            //printf("%s\n","within StdTriExp::v_IProductWRTBase_SumFacKernel" );
             int i;
             int mode;
             int nquad0  = m_base[0]->GetNumPoints();
@@ -543,6 +544,7 @@ namespace Nektar
             // fix for modified basis by splitting top vertex mode
             if (m_base[0]->GetBasisType() == LibUtilities::eModified_A)
             {
+                //printf("%s\n", "modified top vertex");
                 outarray[1] += Blas::Ddot(nquad1,base1.get()+nquad1,1,
                                           wsp.get()+nquad1,1);
             }

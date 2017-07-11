@@ -279,6 +279,11 @@ namespace Nektar
                                   Array<OneD,NekDouble> &outarray);
 
             LOCAL_REGIONS_EXPORT virtual void v_ComputeLaplacianMetric();
+
+            LOCAL_REGIONS_EXPORT virtual void v_GetLaplacianMetric(
+                                  Array<OneD, NekDouble> &laplacian00,
+                                  Array<OneD, NekDouble> &laplacian01,
+                                  Array<OneD, NekDouble> &laplacian11);
             
             LOCAL_REGIONS_EXPORT virtual void v_SVVLaplacianFilter(
                     Array<OneD, NekDouble> &array,

@@ -1536,10 +1536,16 @@ namespace Nektar
 
                 // new function
                 // get metrics for MultiplyBy QuadratureMetric()
-                const Array<OneD, NekDouble> metric = v_GetQuadratureMetric();
+                Array<OneD, NekDouble> quadMetric;
+                v_GetQuadratureMetric(quadMetric);
+                Array<OneD, NekDouble> laplacian00;
+                Array<OneD, NekDouble> laplacian01;
+                Array<OneD, NekDouble> laplacian11;
+                v_GetLaplacianMetric(laplacian00,laplacian01,laplacian11);
                 //printf("%s\n", "got metric");
 
-                v_HelmholtzMatrixOp_MatFree_plain(inarray,outarray,mkey, metric);
+                v_HelmholtzMatrixOp_MatFree_plain(inarray,outarray,mkey, 
+                        quadMetric, laplacian00,laplacian01,laplacian11);
 
             }
 
@@ -1778,7 +1784,13 @@ namespace Nektar
                     const Array<OneD, const NekDouble> &inarray,
                     Array<OneD, NekDouble> &outarray);
 
-            STD_REGIONS_EXPORT virtual Array<OneD, NekDouble> v_GetQuadratureMetric();
+            STD_REGIONS_EXPORT virtual void v_GetQuadratureMetric(
+                    Array<OneD, NekDouble> &quadMetric);
+
+            STD_REGIONS_EXPORT virtual void v_GetLaplacianMetric(
+                    Array<OneD, NekDouble> &laplacian00,
+                    Array<OneD, NekDouble> &laplacian01,
+                    Array<OneD, NekDouble> &laplacian11);
 
             STD_REGIONS_EXPORT virtual void v_MultiplyByStdQuadratureMetric(
                     const Array<OneD, const NekDouble> &inarray,
@@ -1856,7 +1868,10 @@ namespace Nektar
             STD_REGIONS_EXPORT virtual void v_HelmholtzMatrixOp_MatFree_plain(const Array<OneD, const NekDouble> &inarray,
                                                            Array<OneD,NekDouble> &outarray,
                                                            const StdMatrixKey &mkey,
-                                                           const Array<OneD, NekDouble> &metric);
+                                                           const Array<OneD, NekDouble> &quadMetric,
+                                                           const Array<OneD, NekDouble> &laplacian00,
+                                                           const Array<OneD, NekDouble> &laplacian01,
+                                                           const Array<OneD, NekDouble> &laplacian11);
 
             STD_REGIONS_EXPORT virtual const NormalVector & v_GetEdgeNormal(const int edge) const;
 
