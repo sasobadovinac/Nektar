@@ -108,6 +108,15 @@ namespace StdRegions
                     bool doCheckCollDir0 = true,
                     bool doCheckCollDir1 = true);
 
+            STD_REGIONS_EXPORT void BwdTrans_SumFacKernel_plain(
+                const Array<OneD, const NekDouble>& base0,
+                const Array<OneD, const NekDouble>& base1,
+                const Array<OneD, const NekDouble>& inarray,
+                Array<OneD, NekDouble> &wsp0,
+                Array<OneD, NekDouble> &wsp2,
+                int nmodes0, int nmodes1,
+                int nquad0, int nquad1);
+
             STD_REGIONS_EXPORT void IProductWRTBase_SumFacKernel(
                     const Array<OneD, const NekDouble>& base0,
                     const Array<OneD, const NekDouble>& base1,
@@ -116,6 +125,15 @@ namespace StdRegions
                     Array<OneD, NekDouble> &wsp,
                     bool doCheckCollDir0 = true,
                     bool doCheckCollDir1 = true);
+
+            STD_REGIONS_EXPORT void IProductWRTBase_SumFacKernel_plain(
+                const Array<OneD, const NekDouble>& base0,
+                const Array<OneD, const NekDouble>& base1,
+                const Array<OneD, const NekDouble>& inarray,
+                Array<OneD, NekDouble> &outarray,
+                Array<OneD, NekDouble> &wsp,
+                int nmodes0, int nmodes1,
+                int nquad0, int nquad1);
 
         protected:
 

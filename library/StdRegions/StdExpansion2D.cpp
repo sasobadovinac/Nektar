@@ -199,6 +199,29 @@ namespace Nektar
             v_BwdTrans_SumFacKernel(base0, base1, inarray, outarray, wsp, doCheckCollDir0, doCheckCollDir1);
         }
 
+        void StdExpansion2D::BwdTrans_SumFacKernel_plain(
+                const Array<OneD, const NekDouble>& base0,
+                const Array<OneD, const NekDouble>& base1,
+                const Array<OneD, const NekDouble>& inarray,
+                Array<OneD, NekDouble> &outarray,
+                Array<OneD, NekDouble> &wsp,
+                int nmodes0, int nmodes1,
+                int nquad0, int nquad1)
+        {
+            int i, mode;
+            for (i = mode = 0; i < nmodes0; ++i)
+            {
+                Blas::Dgemv('N', nquad1,nmodes1-i,1.0,base1.get()+mode*nquad1,
+                            nquad1,&inarray[0]+mode,1,0.0,&wsp[0]+i*nquad1,1);
+                mode += nmodes1-i;
+            }
+            Blas::Daxpy(nquad1,inarray[1],base1.get()+nquad1,1,
+                            &wsp[0]+nquad1,1);
+            Blas::Dgemm('N','T', nquad0,nquad1,nmodes0,1.0, base0.get(),nquad0,
+                        &wsp[0], nquad1,0.0, &outarray[0], nquad0);            
+        }
+
+
         void StdExpansion2D::IProductWRTBase_SumFacKernel(
                 const Array<OneD, const NekDouble>& base0,
                 const Array<OneD, const NekDouble>& base1,
@@ -209,6 +232,29 @@ namespace Nektar
                 bool doCheckCollDir1)
         {
             v_IProductWRTBase_SumFacKernel(base0, base1, inarray, outarray, wsp, doCheckCollDir0, doCheckCollDir1);
+        }
+
+        void StdExpansion2D::IProductWRTBase_SumFacKernel_plain(
+                const Array<OneD, const NekDouble>& base0,
+                const Array<OneD, const NekDouble>& base1,
+                const Array<OneD, const NekDouble>& inarray,
+                Array<OneD, NekDouble> &outarray,
+                Array<OneD, NekDouble> &wsp,
+                int nmodes0, int nmodes1,
+                int nquad0, int nquad1)
+        {
+            Blas::Dgemm('T','N',nquad1,nmodes0,nquad0,1.0,inarray.get(),nquad0,
+                        base0.get(),nquad0,0.0,wsp.get(),nquad1);
+            int i, mode;
+            for (mode=i=0; i < nmodes0; ++i)
+            {
+                Blas::Dgemv('T',nquad1,nmodes1-i,1.0, base1.get()+mode*nquad1,
+                            nquad1,wsp.get()+i*nquad1,1, 0.0,
+                            outarray.get() + mode,1);
+                mode += nmodes1 - i;
+            }
+            outarray[1] += Blas::Ddot(nquad1,base1.get()+nquad1,1,
+                                          wsp.get()+nquad1,1);
         }
 
         void StdExpansion2D::v_LaplacianMatrixOp_MatFree(
@@ -330,7 +376,7 @@ namespace Nektar
             const Array<OneD, NekDouble> &laplacian01,
             const Array<OneD, NekDouble> &laplacian11)
         {
-            printf("%s\n", "within StdExpansion2D::v_HelmholtzMatrixOp_MatFree");
+            printf("%s\n", "within StdExpansion2D::v_HelmholtzMatrixOp_MatFree_plain");
             using std::max;
 
             int i, mode;
@@ -341,8 +387,6 @@ namespace Nektar
             int       nmodes1 = m_base[1]->GetNumModes();
             int       wspsize = max(max(max(nqtot,m_ncoeffs),nquad1*nmodes0),
                                     nquad0*nmodes1);
-            printf("nquad0 = %i, nquad1 = %i\n",nquad0, nquad1 );
-
             NekDouble lambda  =
                 mkey.GetConstFactor(StdRegions::eFactorLambda);
 
@@ -354,46 +398,17 @@ namespace Nektar
             Array<OneD,NekDouble> wsp1(wsp0 + wspsize);  // size wspsize
             Array<OneD,NekDouble> wsp2(wsp0 + 2*wspsize);// size 3*wspsize
 
-            // MASS MATRIX OPERATION
-            // The following is being calculated:
-            // wsp0     = B   * u_hat = u
-            // wsp1     = W   * wsp0
-            // outarray = B^T * wsp1  = B^T * W * B * u_hat = M * u_hat
-            //BwdTrans_SumFacKernel       (base0, base1, inarray,
-            //                             wsp0, wsp2,true,true);            
-            for (i = mode = 0; i < nmodes0; ++i)
-            {
-                Blas::Dgemv('N', nquad1,nmodes1-i,1.0,base1.get()+mode*nquad1,
-                            nquad1,&inarray[0]+mode,1,0.0,&wsp2[0]+i*nquad1,1);
-                mode += nmodes1-i;
-            }
-            Blas::Daxpy(nquad1,inarray[1],base1.get()+nquad1,1,
-                            &wsp2[0]+nquad1,1);
-            Blas::Dgemm('N','T', nquad0,nquad1,nmodes0,1.0, base0.get(),nquad0,
-                        &wsp2[0], nquad1,0.0, &wsp0[0], nquad0);
-            // end BwdTrans_SumFacKernel
+            //BwdTrans_SumFacKernel(base0, base1, inarray, wsp0, wsp2,true,true);            
+            BwdTrans_SumFacKernel_plain(base0, base1, inarray, wsp0, wsp2,
+                nmodes0, nmodes1, nquad0, nquad1);
 
-
-            //MultiplyByQuadratureMetric  (wsp0, wsp1);
-            Vmath::Vmul(nqtot, quadMetric, 1, wsp0, 1, wsp1, 1);
-            // end MultiplyByQuadratureMetric
-
+            //MultiplyByQuadratureMetric(wsp0, wsp1);
+            Vmath::Vmul(nqtot, quadMetric, 1, wsp0, 1, wsp1, 1);            
 
             //IProductWRTBase_SumFacKernel(base0, base1, wsp1, outarray,
             //                             wsp2, true, true);
-            Blas::Dgemm('T','N',nquad1,nmodes0,nquad0,1.0,wsp1.get(),nquad0,
-                        base0.get(),nquad0,0.0,wsp2.get(),nquad1);
-            for (mode=i=0; i < nmodes0; ++i)
-            {
-                Blas::Dgemv('T',nquad1,nmodes1-i,1.0, base1.get()+mode*nquad1,
-                            nquad1,wsp2.get()+i*nquad1,1, 0.0,
-                            outarray.get() + mode,1);
-                mode += nmodes1 - i;
-            }
-            outarray[1] += Blas::Ddot(nquad1,base1.get()+nquad1,1,
-                                          wsp2.get()+nquad1,1);
-            // end IProductWRTBase_SumFacKernel
-
+            IProductWRTBase_SumFacKernel_plain(base0, base1, wsp1, outarray,
+                                         wsp2, nmodes0, nmodes1, nquad0, nquad1);
 
             //LaplacianMatrixOp_MatFree_Kernel(wsp0, wsp1, wsp2);
             const Array<OneD, const NekDouble>& dbase0 = m_base[0]->GetDbdata();
@@ -412,12 +427,15 @@ namespace Nektar
             Vmath::Vvtvvtp(nqtot,&metric00[0],1,&wsp1L[0],1,&metric01[0],1,&wsp2L[0],1,&wsp0L[0],1);
             Vmath::Vvtvvtp(nqtot,&metric01[0],1,&wsp1L[0],1,&metric11[0],1,&wsp2L[0],1,&wsp2L[0],1);
 
-            IProductWRTBase_SumFacKernel(dbase0, base1,wsp0L,wsp1 ,wsp1L);
-            IProductWRTBase_SumFacKernel( base0,dbase1,wsp2L,wsp1L,wsp0L);
+            //IProductWRTBase_SumFacKernel(dbase0, base1,wsp0L,wsp1 ,wsp1L);
+            //IProductWRTBase_SumFacKernel( base0,dbase1,wsp2L,wsp1L,wsp0L);
+            IProductWRTBase_SumFacKernel_plain(dbase0, base1,wsp0L,wsp1 ,wsp1L,
+                         nmodes0, nmodes1, nquad0, nquad1);
+            IProductWRTBase_SumFacKernel_plain( base0,dbase1,wsp2L,wsp1L,wsp0L,
+                         nmodes0, nmodes1, nquad0, nquad1);
 
             Vmath::Vadd(m_ncoeffs,wsp1L.get(),1,wsp1.get(),1,wsp1.get(),1);
             //end LaplacianMatrixOp_MatFree_Kernel
-
 
 
             // outarray = lambda * outarray + wsp1
