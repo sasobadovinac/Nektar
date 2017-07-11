@@ -272,12 +272,14 @@ namespace Nektar
                   bool                          doCheckCollDir0,
                   bool                          doCheckCollDir1)
         {
+            //printf("%s\n", "within StdTriExp::v_BwdTrans_SumFacKernel");
             int  i;
             int  mode;
             int  nquad0  = m_base[0]->GetNumPoints();
             int  nquad1  = m_base[1]->GetNumPoints();
             int  nmodes0 = m_base[0]->GetNumModes();
             int  nmodes1 = m_base[1]->GetNumModes();
+            //printf("nquad0 = %i, nquad1 = %i\n",nquad0, nquad1 );
 
             ASSERTL1(wsp.num_elements() >= nquad0*nmodes1,
                      "Workspace size is not sufficient");
@@ -287,6 +289,7 @@ namespace Nektar
 
             for (i = mode = 0; i < nmodes0; ++i)
             {
+                //printf("within mode %i\n", mode);
                 Blas::Dgemv('N', nquad1,nmodes1-i,1.0,base1.get()+mode*nquad1,
                             nquad1,&inarray[0]+mode,1,0.0,&wsp[0]+i*nquad1,1);
                 mode += nmodes1-i;
@@ -295,6 +298,7 @@ namespace Nektar
             // fix for modified basis by splitting top vertex mode
             if(m_base[0]->GetBasisType() == LibUtilities::eModified_A)
             {
+                //printf("%s\n", "in modified base");
                 Blas::Daxpy(nquad1,inarray[1],base1.get()+nquad1,1,
                             &wsp[0]+nquad1,1);
             }
@@ -1560,6 +1564,7 @@ namespace Nektar
             const Array<OneD, const NekDouble>& inarray,
             Array<OneD, NekDouble> &outarray)
         {
+            printf("%s\n","within StdTriExp::v_MultiplyByStdQuadratureMetric" );
             int    i;
             int    nquad0 = m_base[0]->GetNumPoints();
             int    nquad1 = m_base[1]->GetNumPoints();
@@ -1580,6 +1585,7 @@ namespace Nektar
                 // Legendre inner product
                 case LibUtilities::ePolyEvenlySpaced:
                 case LibUtilities::eGaussLobattoLegendre:
+                  printf("%s\n", "point type A");
                     for(i = 0; i < nquad1; ++i)
                     {
                         Blas::Dscal(nquad0,0.5*(1-z1[i])*w1[i],

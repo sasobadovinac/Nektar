@@ -1525,6 +1525,11 @@ namespace Nektar
             {
                 v_MultiplyByStdQuadratureMetric(inarray,outarray);
             }
+
+            Array<OneD, NekDouble> StdExpansion::v_GetQuadratureMetric()
+            {
+                // base function
+            }
         
             void StdExpansion::v_MultiplyByStdQuadratureMetric(
                     const Array<OneD, const NekDouble> &inarray,
@@ -1680,7 +1685,8 @@ namespace Nektar
 
         void StdExpansion::v_HelmholtzMatrixOp_MatFree_plain(const Array<OneD, const NekDouble> &inarray,
                                                        Array<OneD,NekDouble> &outarray,
-                                                       const StdMatrixKey &mkey)
+                                                       const StdMatrixKey &mkey,
+                                                       const Array<OneD, NekDouble> &metric)
         {
             // If this function is not reimplemented on shape level, the function
             // below will be called

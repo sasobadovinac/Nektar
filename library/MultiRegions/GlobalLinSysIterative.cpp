@@ -708,7 +708,7 @@ namespace Nektar
                 }
 
                 // Perform the method-specific matrix-vector multiply operation.
-                //printf("CG iteration %i\n", totalIterations);
+                printf("CG iteration %i ==================================\n", totalIterations);
                 v_DoMatrixMultiply(w_A, s_A);
 
                 rho_new = 0.0;

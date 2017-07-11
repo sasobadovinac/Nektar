@@ -187,13 +187,15 @@ namespace Nektar
         void Expansion::v_MultiplyByQuadratureMetric(const Array<OneD, const NekDouble>& inarray,
                                                  Array<OneD, NekDouble> &outarray)
         {
+            printf("%s\n", "within Expansion::v_MultiplyByQuadratureMetric" );
             const int nqtot = GetTotPoints();
 
             if (m_metrics.count(eMetricQuadrature) == 0)
             {
+                printf("%s\n", "no eMetricQuadrature");
                 ComputeQuadratureMetric();
             }
-
+            
             Vmath::Vmul(nqtot, m_metrics[eMetricQuadrature], 1, inarray, 1, outarray, 1);
         }
 
@@ -219,6 +221,27 @@ namespace Nektar
 
             MultiplyByStdQuadratureMetric(m_metrics[eMetricQuadrature],
                                                    m_metrics[eMetricQuadrature]);
+        }
+
+        Array<OneD, NekDouble> Expansion::v_GetQuadratureMetric()
+        {
+            unsigned int nqtot = GetTotPoints();
+            SpatialDomains::GeomType type = m_metricinfo->GetGtype();
+            LibUtilities::PointsKeyVector p = GetPointsKeys();
+            if (type == SpatialDomains::eRegular ||
+                   type == SpatialDomains::eMovingRegular)
+            {
+                m_metrics[eMetricQuadrature] = Array<OneD, NekDouble>(nqtot, m_metricinfo->GetJac(p)[0]);
+            }
+            else
+            {
+                m_metrics[eMetricQuadrature] = m_metricinfo->GetJac(p);
+            }
+
+            MultiplyByStdQuadratureMetric(m_metrics[eMetricQuadrature],
+                                                   m_metrics[eMetricQuadrature]);
+
+            return m_metrics[eMetricQuadrature];
         }
 
         void Expansion::v_GetCoords(

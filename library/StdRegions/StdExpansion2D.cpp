@@ -36,6 +36,8 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <StdRegions/StdExpansion2D.h>
+#include <LocalRegions/Expansion.h>
+#include <SpatialDomains/Geometry.h>
 
 #ifdef max
 #undef max
@@ -322,7 +324,8 @@ namespace Nektar
         void StdExpansion2D::v_HelmholtzMatrixOp_MatFree_plain(
             const Array<OneD, const NekDouble> &inarray,
                   Array<OneD,NekDouble> &outarray,
-            const StdRegions::StdMatrixKey &mkey)
+            const StdRegions::StdMatrixKey &mkey,
+            const Array<OneD, NekDouble> &metric)
         {
             printf("%s\n", "within StdExpansion2D::v_HelmholtzMatrixOp_MatFree");
             using std::max;
@@ -334,6 +337,8 @@ namespace Nektar
             int       nmodes1 = m_base[1]->GetNumModes();
             int       wspsize = max(max(max(nqtot,m_ncoeffs),nquad1*nmodes0),
                                     nquad0*nmodes1);
+            printf("nquad0 = %i, nquad1 = %i\n",nquad0, nquad1 );
+
             NekDouble lambda  =
                 mkey.GetConstFactor(StdRegions::eFactorLambda);
 
@@ -350,9 +355,27 @@ namespace Nektar
             // wsp0     = B   * u_hat = u
             // wsp1     = W   * wsp0
             // outarray = B^T * wsp1  = B^T * W * B * u_hat = M * u_hat
-            BwdTrans_SumFacKernel       (base0, base1, inarray,
-                                         wsp0, wsp2,true,true);
-            MultiplyByQuadratureMetric  (wsp0, wsp1);
+            //BwdTrans_SumFacKernel       (base0, base1, inarray,
+            //                             wsp0, wsp2,true,true);
+            int i, mode;
+            for (i = mode = 0; i < nmodes0; ++i)
+            {
+                Blas::Dgemv('N', nquad1,nmodes1-i,1.0,base1.get()+mode*nquad1,
+                            nquad1,&inarray[0]+mode,1,0.0,&wsp2[0]+i*nquad1,1);
+                mode += nmodes1-i;
+            }
+            Blas::Daxpy(nquad1,inarray[1],base1.get()+nquad1,1,
+                            &wsp2[0]+nquad1,1);
+            Blas::Dgemm('N','T', nquad0,nquad1,nmodes0,1.0, base0.get(),nquad0,
+                        &wsp2[0], nquad1,0.0, &wsp0[0], nquad0);
+            // end BwdTrans_SumFacKernel
+
+
+            //MultiplyByQuadratureMetric  (wsp0, wsp1);
+            Vmath::Vmul(nqtot, metric, 1, wsp0, 1, wsp1, 1);
+            // end MultiplyByQuadratureMetric
+
+
             IProductWRTBase_SumFacKernel(base0, base1, wsp1, outarray,
                                          wsp2, true, true);
 

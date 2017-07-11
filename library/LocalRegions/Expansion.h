@@ -134,6 +134,8 @@ namespace Nektar
                 void ComputeLaplacianMetric();
                 void ComputeQuadratureMetric();
 
+                virtual Array<OneD, NekDouble> v_GetQuadratureMetric();
+
                 virtual void v_MultiplyByQuadratureMetric(
                                 const Array<OneD, const NekDouble> &inarray,
                                       Array<OneD,       NekDouble> &outarray);

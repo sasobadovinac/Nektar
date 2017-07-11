@@ -1529,9 +1529,18 @@ namespace Nektar
                                                  Array<OneD,NekDouble> &outarray,
                                                  const StdMatrixKey &mkey)
             {
-                //v_HelmholtzMatrixOp_MatFree(inarray,outarray,mkey);
-                v_HelmholtzMatrixOp_MatFree_plain(inarray,outarray,mkey);
                 //printf("%s\n", "within HelmholtzMatrixOp_MatFree");
+
+                // original function
+                //v_HelmholtzMatrixOp_MatFree(inarray,outarray,mkey);
+
+                // new function
+                // get metrics for MultiplyBy QuadratureMetric()
+                const Array<OneD, NekDouble> metric = v_GetQuadratureMetric();
+                //printf("%s\n", "got metric");
+
+                v_HelmholtzMatrixOp_MatFree_plain(inarray,outarray,mkey, metric);
+
             }
 
             STD_REGIONS_EXPORT void HelmholtzMatrixOp_MatFree_GenericImpl(const Array<OneD, const NekDouble> &inarray,
@@ -1769,6 +1778,8 @@ namespace Nektar
                     const Array<OneD, const NekDouble> &inarray,
                     Array<OneD, NekDouble> &outarray);
 
+            STD_REGIONS_EXPORT virtual Array<OneD, NekDouble> v_GetQuadratureMetric();
+
             STD_REGIONS_EXPORT virtual void v_MultiplyByStdQuadratureMetric(
                     const Array<OneD, const NekDouble> &inarray,
                     Array<OneD, NekDouble> &outarray);
@@ -1844,7 +1855,8 @@ namespace Nektar
 
             STD_REGIONS_EXPORT virtual void v_HelmholtzMatrixOp_MatFree_plain(const Array<OneD, const NekDouble> &inarray,
                                                            Array<OneD,NekDouble> &outarray,
-                                                           const StdMatrixKey &mkey);
+                                                           const StdMatrixKey &mkey,
+                                                           const Array<OneD, NekDouble> &metric);
 
             STD_REGIONS_EXPORT virtual const NormalVector & v_GetEdgeNormal(const int edge) const;
 
