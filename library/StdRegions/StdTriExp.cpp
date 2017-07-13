@@ -1566,7 +1566,7 @@ namespace Nektar
             const Array<OneD, const NekDouble>& inarray,
             Array<OneD, NekDouble> &outarray)
         {
-            printf("%s\n","within StdTriExp::v_MultiplyByStdQuadratureMetric" );
+            //printf("%s\n","within StdTriExp::v_MultiplyByStdQuadratureMetric" );
             int    i;
             int    nquad0 = m_base[0]->GetNumPoints();
             int    nquad1 = m_base[1]->GetNumPoints();

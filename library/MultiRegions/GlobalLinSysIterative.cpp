@@ -578,7 +578,7 @@ namespace Nektar
             Array<OneD, NekDouble> p_A    (nNonDir, 0.0);
             Array<OneD, NekDouble> r_A    (nNonDir, 0.0);
             Array<OneD, NekDouble> q_A    (nNonDir, 0.0);
-            Array<OneD, NekDouble> tmp;
+            //Array<OneD, NekDouble> tmp;
             
             NekDouble alpha, beta, rho, rho_new, mu, eps,  min_resid;
             int map[nGlobal], maxiter, totalIterations, k;

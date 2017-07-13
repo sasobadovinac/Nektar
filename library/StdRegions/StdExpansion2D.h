@@ -94,6 +94,13 @@ namespace StdRegions
                           Array<OneD, NekDouble> &outarray_d0,
                           Array<OneD, NekDouble> &outarray_d1);
 
+            STD_REGIONS_EXPORT void PhysTensorDeriv_plain(
+                    const Array<OneD, const NekDouble>& inarray,
+                          Array<OneD, NekDouble> &outarray_d0,
+                          Array<OneD, NekDouble> &outarray_d1,
+                          int nquad0, int nquad1,
+                         DNekMatSharedPtr D0, DNekMatSharedPtr D1);
+
             STD_REGIONS_EXPORT NekDouble Integral(
                     const Array<OneD, const NekDouble>& inarray,
                     const Array<OneD, const NekDouble>& w0,
