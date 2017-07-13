@@ -181,8 +181,8 @@ namespace Nektar
                 }
                     
                 // Load up files into  m_fields;
-                EvaluateFunction(vars,SVVVelFields,"SVVVelocityMagnitude");
-                
+                GetFunction("SVVVelocityMagnitude")
+                    ->Evaluate(vars,SVVVelFields);
             }
 
             m_svvVarDiffCoeff = Array<OneD, NekDouble>(m_fields[0]->GetNumElmts());
