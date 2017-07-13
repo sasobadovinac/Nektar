@@ -1596,6 +1596,15 @@ namespace Nektar
                  ASSERTL0(false, "This function is not defined in StdExpansion.");
              }
 
+            void StdExpansion::v_ExponentialFilter(
+                                          Array<OneD, NekDouble> &array,
+                                    const NekDouble        alpha,
+                                    const NekDouble        exponent,
+                                    const NekDouble        cutoff)
+             {
+                 ASSERTL0(false, "This function is not defined in StdExpansion.");
+             }
+
             void StdExpansion::v_ReduceOrderCoeffs(int numMin,
                                                    const Array<OneD, const NekDouble> &inarray,
                                                    Array<OneD, NekDouble> &outarray)
@@ -1731,6 +1740,17 @@ namespace Nektar
         void StdExpansion::v_ComputeVertexNormal(const int vertex)
         {
             ASSERTL0(false, "Cannot compute vertex normal for this expansion.");
+        }
+
+        void StdExpansion::v_NegateVertexNormal(const int vertex)
+        {
+            ASSERTL0(false, "Not implemented.");
+        }
+
+        bool StdExpansion::v_VertexNormalNegated(const int vertex)
+        {
+            ASSERTL0(false, "Not implemented.");
+            return false;
         }
 
         const NormalVector & StdExpansion::v_GetFaceNormal(const int face) const
