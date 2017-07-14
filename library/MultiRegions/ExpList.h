@@ -786,7 +786,18 @@ namespace Nektar
                       Array<OneD,      NekDouble> &outarray,
                       CoeffState coeffstate = eLocal);
 
+            inline void GeneralMatrixOp_plain(
+                const GlobalMatrixKey             &gkey,
+                const Array<OneD,const NekDouble> &inarray,
+                      Array<OneD,      NekDouble> &outarray,
+                      CoeffState coeffstate = eLocal);
+
             MULTI_REGIONS_EXPORT void GeneralMatrixOp_IterPerExp(
+                const GlobalMatrixKey      &gkey,
+                const Array<OneD,const NekDouble> &inarray,
+                      Array<OneD,      NekDouble> &outarray);
+
+            MULTI_REGIONS_EXPORT void GeneralMatrixOp_IterPerExp_plain(
                 const GlobalMatrixKey      &gkey,
                 const Array<OneD,const NekDouble> &inarray,
                       Array<OneD,      NekDouble> &outarray);
@@ -1262,6 +1273,12 @@ namespace Nektar
                       Array<OneD,      NekDouble> &outarray);
             
             virtual void v_GeneralMatrixOp(
+                const GlobalMatrixKey             &gkey,
+                const Array<OneD,const NekDouble> &inarray,
+                      Array<OneD,      NekDouble> &outarray,
+                      CoeffState coeffstate);
+
+            virtual void v_GeneralMatrixOp_plain(
                 const GlobalMatrixKey             &gkey,
                 const Array<OneD,const NekDouble> &inarray,
                       Array<OneD,      NekDouble> &outarray,
@@ -2291,6 +2308,15 @@ namespace Nektar
                                 CoeffState coeffstate)
         {
             v_GeneralMatrixOp(gkey,inarray,outarray,coeffstate);
+        }
+
+        inline void ExpList::GeneralMatrixOp_plain(
+                                const GlobalMatrixKey             &gkey,
+                                const Array<OneD,const NekDouble> &inarray,
+                                      Array<OneD,      NekDouble> &outarray,
+                                CoeffState coeffstate)
+        {
+            v_GeneralMatrixOp_plain(gkey,inarray,outarray,coeffstate);
         }
 
 

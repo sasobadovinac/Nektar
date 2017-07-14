@@ -1386,6 +1386,27 @@ namespace Nektar
             StdTriExp::v_HelmholtzMatrixOp_MatFree(inarray,outarray,mkey);
         }
 
+        void StdTriExp::v_HelmholtzMatrixOp_plain(
+                                const Array<OneD, const NekDouble> &inarray,
+                               Array<OneD,NekDouble> &outarray,
+                               const NekDouble lambda,
+                               const Array<OneD, NekDouble> &quadMetric,
+                               const Array<OneD, NekDouble> &laplacian00,
+                               const Array<OneD, NekDouble> &laplacian01,
+                               const Array<OneD, NekDouble> &laplacian11,
+                        int nquad0, int nquad1, int nmodes0, int nmodes1, int ncoeffs,
+                        const Array<OneD, const NekDouble> base0,
+                        const Array<OneD, const NekDouble> base1,
+                        const Array<OneD, const NekDouble> dbase0,
+                        const Array<OneD, const NekDouble> dbase1,
+                        DNekMatSharedPtr D0, DNekMatSharedPtr D1)
+        {
+            StdTriExp::v_HelmholtzMatrixOp_MatFree_plain(inarray,outarray,lambda, 
+                        quadMetric, laplacian00,laplacian01,laplacian11,
+                        nquad0, nquad1, nmodes0, nmodes1, ncoeffs,
+                        base0, base1, dbase0, dbase1, D0, D1);
+        }
+
 
         void StdTriExp::v_SVVLaplacianFilter(Array<OneD, NekDouble> &array,
                                              const StdMatrixKey &mkey)

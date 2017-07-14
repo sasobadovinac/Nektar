@@ -969,7 +969,13 @@ namespace Nektar
 
             STD_REGIONS_EXPORT DNekMatSharedPtr CreateGeneralMatrix(const StdMatrixKey &mkey);
 
+            STD_REGIONS_EXPORT DNekMatSharedPtr CreateGeneralMatrix_plain(const StdMatrixKey &mkey);
+
             STD_REGIONS_EXPORT void GeneralMatrixOp(const Array<OneD, const NekDouble> &inarray,
+                                 Array<OneD,NekDouble> &outarray,
+                                 const StdMatrixKey &mkey);
+
+            STD_REGIONS_EXPORT void GeneralMatrixOp_plain(const Array<OneD, const NekDouble> &inarray,
                                  Array<OneD,NekDouble> &outarray,
                                  const StdMatrixKey &mkey);
 
@@ -1048,8 +1054,18 @@ namespace Nektar
                                    Array<OneD,NekDouble> &outarray,
                                    const StdMatrixKey &mkey)
             {
+                printf("%s\n", "within HelmholtzMatrixOp");
                 v_HelmholtzMatrixOp(inarray,outarray,mkey);
-                //printf("%s\n", "within HelmholtzMatrixOp");
+                
+            }
+
+            void HelmholtzMatrixOp_plain(const Array<OneD, const NekDouble> &inarray,
+                                   Array<OneD,NekDouble> &outarray,
+                                   const StdMatrixKey &mkey)
+            {
+                printf("%s\n", "within HelmholtzMatrixOp_plain");
+                v_HelmholtzMatrixOp_plain(inarray,outarray,mkey);
+                
             }
 
             DNekMatSharedPtr GenMatrix (const StdMatrixKey &mkey)
@@ -1479,6 +1495,10 @@ namespace Nektar
                                                Array<OneD,NekDouble> &outarray,
                                                const StdMatrixKey &mkey);
 
+            STD_REGIONS_EXPORT void GeneralMatrixOp_MatFree_plain(const Array<OneD, const NekDouble> &inarray,
+                                               Array<OneD,NekDouble> &outarray,
+                                               const StdMatrixKey &mkey);
+
             STD_REGIONS_EXPORT void MassMatrixOp_MatFree(const Array<OneD, const NekDouble> &inarray,
                                             Array<OneD,NekDouble> &outarray,
                                             const StdMatrixKey &mkey);
@@ -1529,7 +1549,17 @@ namespace Nektar
                                                  Array<OneD,NekDouble> &outarray,
                                                  const StdMatrixKey &mkey)
             {
-                //printf("%s\n", "within HelmholtzMatrixOp_MatFree");
+                printf("%s\n", "within HelmholtzMatrixOp_MatFree");
+
+                // original function
+                v_HelmholtzMatrixOp_MatFree(inarray,outarray,mkey);
+            }
+
+            void HelmholtzMatrixOp_MatFree_plain(const Array<OneD, const NekDouble> &inarray,
+                                                 Array<OneD,NekDouble> &outarray,
+                                                 const StdMatrixKey &mkey)
+            {
+                printf("%s\n", "within HelmholtzMatrixOp_MatFree_plain");
 
                 // original function
                 //v_HelmholtzMatrixOp_MatFree(inarray,outarray,mkey);
@@ -1542,10 +1572,24 @@ namespace Nektar
                 Array<OneD, NekDouble> laplacian01;
                 Array<OneD, NekDouble> laplacian11;
                 v_GetLaplacianMetric(laplacian00,laplacian01,laplacian11);
-                //printf("%s\n", "got metric");
+                
+                int       nquad0  = m_base[0]->GetNumPoints();
+                int       nquad1  = m_base[1]->GetNumPoints();
+                int       nmodes0 = m_base[0]->GetNumModes();
+                int       nmodes1 = m_base[1]->GetNumModes();
+                const Array<OneD, const NekDouble> base0 = m_base[0]->GetBdata();
+                const Array<OneD, const NekDouble> base1 = m_base[1]->GetBdata();
+                const Array<OneD, const NekDouble> dbase0 = m_base[0]->GetDbdata();
+                const Array<OneD, const NekDouble> dbase1 = m_base[1]->GetDbdata();
+                DNekMatSharedPtr D0 = m_base[0]->GetD();
+                DNekMatSharedPtr D1 = m_base[1]->GetD();
+                NekDouble lambda  = mkey.GetConstFactor(StdRegions::eFactorLambda);
+                int ncoeffs = m_ncoeffs;
 
-                v_HelmholtzMatrixOp_MatFree_plain(inarray,outarray,mkey, 
-                        quadMetric, laplacian00,laplacian01,laplacian11);
+                v_HelmholtzMatrixOp_MatFree_plain(inarray,outarray,lambda, 
+                        quadMetric, laplacian00,laplacian01,laplacian11,
+                        nquad0, nquad1, nmodes0, nmodes1, ncoeffs,
+                        base0, base1, dbase0, dbase1, D0, D1);
 
             }
 
@@ -1852,6 +1896,10 @@ namespace Nektar
                                              Array<OneD,NekDouble> &outarray,
                                              const StdMatrixKey &mkey);
 
+            STD_REGIONS_EXPORT virtual void v_HelmholtzMatrixOp_plain(const Array<OneD, const NekDouble> &inarray,
+                                             Array<OneD,NekDouble> &outarray,
+                                             const StdMatrixKey &mkey);
+
             STD_REGIONS_EXPORT virtual void v_LaplacianMatrixOp_MatFree(const Array<OneD, const NekDouble> &inarray,
                                                            Array<OneD,NekDouble> &outarray,
                                                            const StdMatrixKey &mkey);
@@ -1865,13 +1913,20 @@ namespace Nektar
                                                            Array<OneD,NekDouble> &outarray,
                                                            const StdMatrixKey &mkey);
 
-            STD_REGIONS_EXPORT virtual void v_HelmholtzMatrixOp_MatFree_plain(const Array<OneD, const NekDouble> &inarray,
-                                                           Array<OneD,NekDouble> &outarray,
-                                                           const StdMatrixKey &mkey,
-                                                           const Array<OneD, NekDouble> &quadMetric,
-                                                           const Array<OneD, NekDouble> &laplacian00,
-                                                           const Array<OneD, NekDouble> &laplacian01,
-                                                           const Array<OneD, NekDouble> &laplacian11);
+            STD_REGIONS_EXPORT virtual void v_HelmholtzMatrixOp_MatFree_plain(
+                                const Array<OneD, const NekDouble> &inarray,
+                               Array<OneD,NekDouble> &outarray,
+                               const NekDouble lambda,
+                               const Array<OneD, NekDouble> &quadMetric,
+                               const Array<OneD, NekDouble> &laplacian00,
+                               const Array<OneD, NekDouble> &laplacian01,
+                               const Array<OneD, NekDouble> &laplacian11,
+                        int nquad0, int nquad1, int nmodes0, int nmodes1, int ncoeffs,
+                        const Array<OneD, const NekDouble> base0,
+                        const Array<OneD, const NekDouble> base1,
+                        const Array<OneD, const NekDouble> dbase0,
+                        const Array<OneD, const NekDouble> dbase1,
+                        DNekMatSharedPtr D0, DNekMatSharedPtr D1);
 
             STD_REGIONS_EXPORT virtual const NormalVector & v_GetEdgeNormal(const int edge) const;
 

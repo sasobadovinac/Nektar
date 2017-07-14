@@ -386,37 +386,25 @@ namespace Nektar
         void StdExpansion2D::v_HelmholtzMatrixOp_MatFree_plain(
             const Array<OneD, const NekDouble> &inarray,
                   Array<OneD,NekDouble> &outarray,
-            const StdRegions::StdMatrixKey &mkey,
+            const NekDouble lambda,
             const Array<OneD, NekDouble> &quadMetric,
             const Array<OneD, NekDouble> &laplacian00,
             const Array<OneD, NekDouble> &laplacian01,
-            const Array<OneD, NekDouble> &laplacian11)
+            const Array<OneD, NekDouble> &laplacian11,
+                        int nquad0, int nquad1, int nmodes0, int nmodes1, int ncoeffs,
+                        const Array<OneD, const NekDouble> base0,
+                        const Array<OneD, const NekDouble> base1,
+                        const Array<OneD, const NekDouble> dbase0,
+                        const Array<OneD, const NekDouble> dbase1,
+                        DNekMatSharedPtr D0, DNekMatSharedPtr D1)
         {
-            //printf("%s\n", "within StdExpansion2D::v_HelmholtzMatrixOp_MatFree_plain");
-            int       nquad0  = m_base[0]->GetNumPoints();
-            int       nquad1  = m_base[1]->GetNumPoints();
-            int       nmodes0 = m_base[0]->GetNumModes();
-            int       nmodes1 = m_base[1]->GetNumModes();
-            const Array<OneD, const NekDouble>& base0 = m_base[0]->GetBdata();
-            const Array<OneD, const NekDouble>& base1 = m_base[1]->GetBdata();
-            const Array<OneD, const NekDouble>& dbase0 = m_base[0]->GetDbdata();
-            const Array<OneD, const NekDouble>& dbase1 = m_base[1]->GetDbdata();
-            DNekMatSharedPtr D0 = m_base[0]->GetD();
-            DNekMatSharedPtr D1 = m_base[1]->GetD(); 
+            printf("%s\n", "within StdExpansion2D::v_HelmholtzMatrixOp_MatFree_plain");
             int       nqtot   = nquad0*nquad1;
-            int       ncoeffs  = m_ncoeffs;
-            int       wspsize = std::max(std::max(std::max(nqtot,ncoeffs),nquad1*nmodes0),
-                                    nquad0*nmodes1);
-            NekDouble lambda  = mkey.GetConstFactor(StdRegions::eFactorLambda);
+            //int       wspsize = std::max(std::max(std::max(nqtot,ncoeffs),nquad1*nmodes0), nquad0*nmodes1);
+            int max1 = (nqtot >= ncoeffs) ? nqtot : ncoeffs;
+            int max2 = (nquad1*nmodes0 >= nquad0*nmodes1) ? nquad1*nmodes0 : nquad0*nmodes1;
+            int wspsize = (max1 >= max2) ? max1 : max2;
 
-            /*printf("nqtot = %i\n",nqtot);
-            printf("ncoeffs = %i\n",ncoeffs);
-            printf("nquad0 = %i\n",nquad0);
-            printf("nquad1 = %i\n",nquad1);
-            printf("nmodes0 = %i\n",nmodes0);
-            printf("nmodes1 = %i\n",nmodes1);            
-            printf("wspsize = %i\n",wspsize);*/            
-            
             // Allocate temporary storage
             Array<OneD,NekDouble> wsp0(5*wspsize);      // size wspsize
             Array<OneD,NekDouble> wsp1(wsp0 + wspsize);  // size wspsize // u_hat

@@ -196,6 +196,7 @@ namespace StdRegions
                     const Array<OneD, const NekDouble> &inarray,
                           Array<OneD,       NekDouble> &outarray,
                     const StdRegions::StdMatrixKey &mkey);
+            
             STD_REGIONS_EXPORT virtual void v_HelmholtzMatrixOp_MatFree(
                     const Array<OneD, const NekDouble> &inarray,
                           Array<OneD,       NekDouble> &outarray,
@@ -204,11 +205,17 @@ namespace StdRegions
             STD_REGIONS_EXPORT virtual void v_HelmholtzMatrixOp_MatFree_plain(
                     const Array<OneD, const NekDouble> &inarray,
                           Array<OneD,       NekDouble> &outarray,
-                    const StdRegions::StdMatrixKey &mkey,
+                    const NekDouble lambda,
                     const Array<OneD, NekDouble> &quadMetric,
                     const Array<OneD, NekDouble> &laplacian00,
                     const Array<OneD, NekDouble> &laplacian01,
-                    const Array<OneD, NekDouble> &laplacian11);
+                    const Array<OneD, NekDouble> &laplacian11,
+                        int nquad0, int nquad1, int nmodes0, int nmodes1, int ncoeffs,
+                        const Array<OneD, const NekDouble> base0,
+                        const Array<OneD, const NekDouble> base1,
+                        const Array<OneD, const NekDouble> dbase0,
+                        const Array<OneD, const NekDouble> dbase1,
+                        DNekMatSharedPtr D0, DNekMatSharedPtr D1);
 
             STD_REGIONS_EXPORT virtual int v_GetTraceNcoeffs(const int i) const
             {

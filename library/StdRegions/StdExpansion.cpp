@@ -508,8 +508,44 @@ namespace Nektar
                     {
                         Vmath::Zero(m_ncoeffs, tmp, 1);
                         tmp[i] = 1.0;
-
+                        printf("%s\n", "within StdExpansion::CreateGeneralMatrix");
                         GeneralMatrixOp_MatFree(tmp,tmp,mkey);
+
+                        Vmath::Vcopy(m_ncoeffs,&tmp[0],1,
+                                     &(Mat.GetPtr())[0]+i*m_ncoeffs,1);
+                    }
+                }
+                break;
+            default:
+                {
+                    NEKERROR(ErrorUtil::efatal, "This type of matrix can not be created using a general approach");
+                }
+                break;
+            }
+
+            return returnval;
+        }
+
+
+        DNekMatSharedPtr StdExpansion::CreateGeneralMatrix_plain(const StdMatrixKey &mkey)
+        {
+            int     i;
+            DNekMatSharedPtr  returnval;
+
+            switch(mkey.GetMatrixType())
+            {
+            case eHelmholtz:
+               {
+                    Array<OneD, NekDouble> tmp(m_ncoeffs);
+                    returnval = MemoryManager<DNekMat>::AllocateSharedPtr(m_ncoeffs,m_ncoeffs);
+                    DNekMat &Mat = *returnval;
+
+                    for(i=0; i < m_ncoeffs; ++i)
+                    {
+                        Vmath::Zero(m_ncoeffs, tmp, 1);
+                        tmp[i] = 1.0;
+                        printf("%s\n", "within StdExpansion::CreateGeneralMatrix_plain");
+                        GeneralMatrixOp_MatFree_plain(tmp,tmp,mkey);
 
                         Vmath::Vcopy(m_ncoeffs,&tmp[0],1,
                                      &(Mat.GetPtr())[0]+i*m_ncoeffs,1);
@@ -588,8 +624,26 @@ namespace Nektar
                 LaplacianMatrixOp(2,2,inarray,outarray,mkey);
                 break;
             case eHelmholtz:
-                //printf("%s\n", "call HelmholtzMatrixOp" );
-                HelmholtzMatrixOp(inarray,outarray,mkey);
+                printf("%s\n", "within StdExpansion::GeneralMatrixOp, calling HelmholtzMatrixOp_plain" );
+                HelmholtzMatrixOp_plain(inarray,outarray,mkey);
+                break;
+            default:
+                NEKERROR(ErrorUtil::efatal, "This matrix does not have an operator");
+                break;
+            }
+        }
+
+        void StdExpansion::GeneralMatrixOp_plain(const Array<OneD, const NekDouble> &inarray,
+                                           Array<OneD,NekDouble> &outarray,
+                                           const StdMatrixKey &mkey)
+        {
+            //std::cout << mkey.GetMatrixType() << std::endl;
+            switch(mkey.GetMatrixType())
+            {
+
+            case eHelmholtz:
+                printf("%s\n", "within StdExpansion::GeneralMatrixOp_plain, calling HelmholtzMatrixOp_plain" );
+                HelmholtzMatrixOp_plain(inarray,outarray,mkey);
                 break;
             default:
                 NEKERROR(ErrorUtil::efatal, "This matrix does not have an operator");
@@ -601,6 +655,7 @@ namespace Nektar
                                                    Array<OneD,NekDouble> &outarray,
                                                    const StdMatrixKey &mkey)
         {
+            printf("%s\n", "within StdExpansion::GeneralMatrixOp_MatFree");
             switch(mkey.GetMatrixType())
             {
             case eMass:
@@ -659,6 +714,22 @@ namespace Nektar
                 break;
             case eHelmholtz:
                 HelmholtzMatrixOp_MatFree(inarray,outarray,mkey);
+                break;
+            default:
+                NEKERROR(ErrorUtil::efatal, "This matrix does not have an operator");
+                break;
+            }
+        }
+
+        void StdExpansion::GeneralMatrixOp_MatFree_plain(const Array<OneD, const NekDouble> &inarray,
+                                                   Array<OneD,NekDouble> &outarray,
+                                                   const StdMatrixKey &mkey)
+        {
+            printf("%s\n", "within StdExpansion::GeneralMatrixOp_MatFree_plain");
+            switch(mkey.GetMatrixType())
+            {
+            case eHelmholtz:
+                HelmholtzMatrixOp_MatFree_plain(inarray,outarray,mkey);
                 break;
             default:
                 NEKERROR(ErrorUtil::efatal, "This matrix does not have an operator");
@@ -1666,6 +1737,15 @@ namespace Nektar
             HelmholtzMatrixOp_MatFree(inarray,outarray,mkey);
         }
 
+        void StdExpansion::v_HelmholtzMatrixOp_plain(const Array<OneD, const NekDouble> &inarray,
+                                               Array<OneD,NekDouble> &outarray,
+                                               const StdMatrixKey &mkey)
+        {
+            // If this function is not reimplemented on shape level, the function
+            // below will be called
+            HelmholtzMatrixOp_MatFree_plain(inarray,outarray,mkey);
+        }
+
         void StdExpansion::v_LaplacianMatrixOp_MatFree(const Array<OneD, const NekDouble> &inarray,
                                                        Array<OneD,NekDouble> &outarray,
                                                        const StdMatrixKey &mkey)
@@ -1694,15 +1774,21 @@ namespace Nektar
 
         void StdExpansion::v_HelmholtzMatrixOp_MatFree_plain(const Array<OneD, const NekDouble> &inarray,
                                                        Array<OneD,NekDouble> &outarray,
-                                                       const StdMatrixKey &mkey,
+                                                       const NekDouble lambda,
                                                        const Array<OneD, NekDouble> &quadMetric,
                                                            const Array<OneD, NekDouble> &laplacian00,
                                                            const Array<OneD, NekDouble> &laplacian01,
-                                                           const Array<OneD, NekDouble> &laplacian11)
+                                                           const Array<OneD, NekDouble> &laplacian11,
+                        int nquad0, int nquad1, int nmodes0, int nmodes1, int ncoeffs,
+                        const Array<OneD, const NekDouble> base0,
+                        const Array<OneD, const NekDouble> base1,
+                        const Array<OneD, const NekDouble> dbase0,
+                        const Array<OneD, const NekDouble> dbase1,
+                        DNekMatSharedPtr D0, DNekMatSharedPtr D1)
         {
             // If this function is not reimplemented on shape level, the function
             // below will be called
-            HelmholtzMatrixOp_MatFree_GenericImpl(inarray,outarray,mkey);
+            //HelmholtzMatrixOp_MatFree_GenericImpl(inarray,outarray,mkey);
         }
 
         const NormalVector & StdExpansion::v_GetEdgeNormal(const int edge) const
