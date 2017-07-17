@@ -979,49 +979,39 @@ namespace Nektar
             int eid;
             for(int n = 0; n < num_elmts.num_elements(); ++n)
             {
-                if(doBlockMatOp[n])
-                {
-                    const LibUtilities::ShapeType vType
-                                    = m_globalOptParam->GetShapeList()[n];
-                    const MultiRegions::GlobalMatrixKey vKey(gkey, vType);
-                    if (cnt < m_offset_elmt_id.num_elements())
-                    {
-                        eid = m_offset_elmt_id[cnt];
-                        MultiplyByBlockMatrix(vKey,inarray + m_coeff_offset[eid],
-                                              tmp_outarray = outarray + m_coeff_offset[eid]);
-                        cnt += num_elmts[n];
-                    }
-                }
-                else
-                {
-                    int i;
-                    int nvarcoeffs = gkey.GetNVarCoeffs();
+                
+                int i;
+                int nvarcoeffs = gkey.GetNVarCoeffs();
 
-                    for(i= 0; i < num_elmts[n]; ++i)
-                    {
-                        // need to be initialised with zero size for non variable coefficient case
-                        StdRegions::VarCoeffMap varcoeffs;
+                for(i= 0; i < num_elmts[n]; ++i)
+                {
+                    printf("num_elmts: %i\n", i);
+                        
+                    // need to be initialised with zero size for non variable coefficient case
+                    StdRegions::VarCoeffMap varcoeffs;
 
-                        eid = m_offset_elmt_id[cnt++];
-                        if(nvarcoeffs>0)
+                    eid = m_offset_elmt_id[cnt++];
+                    if(nvarcoeffs>0)
+                    {
+                        printf("%s\n", "nvarcoeffs");
+                            
+                        StdRegions::VarCoeffMap::const_iterator x;
+                        for (x = gkey.GetVarCoeffs().begin(); x != gkey.GetVarCoeffs().end(); ++x)
                         {
-                            StdRegions::VarCoeffMap::const_iterator x;
-                            for (x = gkey.GetVarCoeffs().begin(); x != gkey.GetVarCoeffs().end(); ++x)
-                            {
-                                varcoeffs[x->first] = x->second + m_phys_offset[eid];
-                            }
+                            varcoeffs[x->first] = x->second + m_phys_offset[eid];
                         }
-
-                        StdRegions::StdMatrixKey mkey(gkey.GetMatrixType(),
-                                                      (*m_exp)[eid]->DetShapeType(),
-                                                      *((*m_exp)[eid]),
-                                                      gkey.GetConstFactors(),varcoeffs);
-
-                        (*m_exp)[eid]->GeneralMatrixOp_plain(inarray + m_coeff_offset[eid],
-                                                       tmp_outarray = outarray+m_coeff_offset[eid],
-                                                       mkey);
                     }
+
+                    StdRegions::StdMatrixKey mkey(gkey.GetMatrixType(),
+                                                  (*m_exp)[eid]->DetShapeType(),
+                                                  *((*m_exp)[eid]),
+                                                  gkey.GetConstFactors(),varcoeffs);
+
+                    (*m_exp)[eid]->GeneralMatrixOp_plain(inarray + m_coeff_offset[eid],
+                                                   tmp_outarray = outarray+m_coeff_offset[eid],
+                                                   mkey);
                 }
+                
             }
         }
 
@@ -2778,6 +2768,8 @@ namespace Nektar
                                         Array<OneD,      NekDouble> &outarray,
                                         CoeffState coeffstate)
         {
+            printf("%s\n", "within ExpList::v_GeneralMatrixOp");
+            
             GeneralMatrixOp_IterPerExp(gkey,inarray,outarray);
         }
 
@@ -2787,6 +2779,7 @@ namespace Nektar
                                         Array<OneD,      NekDouble> &outarray,
                                         CoeffState coeffstate)
         {
+            printf("%s\n", "within ExpList::v_GeneralMatrixOp_plain");
             GeneralMatrixOp_IterPerExp_plain(gkey,inarray,outarray);
         }
 

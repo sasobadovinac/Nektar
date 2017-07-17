@@ -639,7 +639,7 @@ namespace Nektar
                 w_A[i+nDir] = r_A[i] * diagonals[i];
             }
 
-            v_DoMatrixMultiply(w_A, s_A);
+            v_DoMatrixMultiply_plain(w_A, s_A);
 
             rho = 0.0;
             for (int i = 0; i < nNonDir; ++i)
@@ -709,7 +709,7 @@ namespace Nektar
 
                 // Perform the method-specific matrix-vector multiply operation.
                 printf("CG iteration %i ==================================\n", totalIterations);
-                v_DoMatrixMultiply(w_A, s_A);
+                v_DoMatrixMultiply_plain(w_A, s_A);
 
                 rho_new = 0.0;
                 for (int i = 0; i < nNonDir; ++i)

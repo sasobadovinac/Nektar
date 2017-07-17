@@ -199,8 +199,8 @@ namespace Nektar
 
             boost::shared_ptr<MultiRegions::ExpList> expList = m_expList.lock();
             // Perform matrix-vector operation A*d_i
-            expList->GeneralMatrixOp(m_linSysKey, pInput, pOutput, eGlobal);
-            //expList->GeneralMatrixOp_plain(m_linSysKey, pInput, pOutput, eGlobal);
+            //expList->GeneralMatrixOp(m_linSysKey, pInput, pOutput, eGlobal);
+            expList->GeneralMatrixOp_plain(m_linSysKey, pInput, pOutput, eGlobal);
             
             // Apply robin boundary conditions to the solution.
             if(m_robinBCInfo.size() > 0)
@@ -253,6 +253,19 @@ namespace Nektar
                 // Add them to the output of the GeneralMatrixOp
                 Vmath::Vadd(nGlobal, pOutput, 1, robin_A, 1, pOutput, 1);
             }
+
+        }
+
+        void GlobalLinSysIterativeFull::v_DoMatrixMultiply_plain(
+                const Array<OneD, NekDouble>& pInput,
+                      Array<OneD, NekDouble>& pOutput)
+        {
+            printf("Within GlobalLinSysIterativeFull::v_DoMatrixMultiply_plain\n" );
+                    
+
+            boost::shared_ptr<MultiRegions::ExpList> expList = m_expList.lock();
+            // Perform matrix-vector operation A*d_i
+            expList->GeneralMatrixOp_plain(m_linSysKey, pInput, pOutput, eGlobal);
 
         }
 

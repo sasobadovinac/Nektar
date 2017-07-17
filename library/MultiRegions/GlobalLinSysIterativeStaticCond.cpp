@@ -521,6 +521,13 @@ namespace Nektar
             }
         }
 
+        void GlobalLinSysIterativeStaticCond::v_DoMatrixMultiply_plain(
+                const Array<OneD, NekDouble>& pInput,
+                      Array<OneD, NekDouble>& pOutput)
+        {
+            
+        }
+
         void GlobalLinSysIterativeStaticCond::v_UniqueMap()
         {
             m_map = m_locToGloMap->GetGlobalToUniversalBndMapUnique();

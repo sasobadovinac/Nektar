@@ -146,6 +146,10 @@ namespace Nektar
             virtual void v_DoMatrixMultiply(
                     const Array<OneD, NekDouble>& pInput,
                           Array<OneD, NekDouble>& pOutput) = 0;
+
+            virtual void v_DoMatrixMultiply_plain(
+                    const Array<OneD, NekDouble>& pInput,
+                          Array<OneD, NekDouble>& pOutput) = 0;
         };
     }
 }

@@ -508,7 +508,7 @@ namespace Nektar
                     {
                         Vmath::Zero(m_ncoeffs, tmp, 1);
                         tmp[i] = 1.0;
-                        printf("%s\n", "within StdExpansion::CreateGeneralMatrix");
+                        //printf("%s\n", "within StdExpansion::CreateGeneralMatrix");
                         GeneralMatrixOp_MatFree(tmp,tmp,mkey);
 
                         Vmath::Vcopy(m_ncoeffs,&tmp[0],1,
@@ -527,7 +527,7 @@ namespace Nektar
         }
 
 
-        DNekMatSharedPtr StdExpansion::CreateGeneralMatrix_plain(const StdMatrixKey &mkey)
+        /*DNekMatSharedPtr StdExpansion::CreateGeneralMatrix_plain(const StdMatrixKey &mkey)
         {
             int     i;
             DNekMatSharedPtr  returnval;
@@ -560,7 +560,7 @@ namespace Nektar
             }
 
             return returnval;
-        }
+        }*/
 
         void StdExpansion::GeneralMatrixOp(const Array<OneD, const NekDouble> &inarray,
                                            Array<OneD,NekDouble> &outarray,
@@ -624,8 +624,8 @@ namespace Nektar
                 LaplacianMatrixOp(2,2,inarray,outarray,mkey);
                 break;
             case eHelmholtz:
-                printf("%s\n", "within StdExpansion::GeneralMatrixOp, calling HelmholtzMatrixOp_plain" );
-                HelmholtzMatrixOp_plain(inarray,outarray,mkey);
+                //printf("%s\n", "within StdExpansion::GeneralMatrixOp, calling HelmholtzMatrixOp" );
+                HelmholtzMatrixOp(inarray,outarray,mkey);
                 break;
             default:
                 NEKERROR(ErrorUtil::efatal, "This matrix does not have an operator");
@@ -655,7 +655,7 @@ namespace Nektar
                                                    Array<OneD,NekDouble> &outarray,
                                                    const StdMatrixKey &mkey)
         {
-            printf("%s\n", "within StdExpansion::GeneralMatrixOp_MatFree");
+            //printf("%s\n", "within StdExpansion::GeneralMatrixOp_MatFree");
             switch(mkey.GetMatrixType())
             {
             case eMass:
@@ -721,7 +721,7 @@ namespace Nektar
             }
         }
 
-        void StdExpansion::GeneralMatrixOp_MatFree_plain(const Array<OneD, const NekDouble> &inarray,
+        /*void StdExpansion::GeneralMatrixOp_MatFree_plain(const Array<OneD, const NekDouble> &inarray,
                                                    Array<OneD,NekDouble> &outarray,
                                                    const StdMatrixKey &mkey)
         {
@@ -735,7 +735,7 @@ namespace Nektar
                 NEKERROR(ErrorUtil::efatal, "This matrix does not have an operator");
                 break;
             }
-        }
+        }*/
 
         void StdExpansion::MassMatrixOp_MatFree(const Array<OneD, const NekDouble> &inarray,
                                                 Array<OneD,NekDouble> &outarray,
