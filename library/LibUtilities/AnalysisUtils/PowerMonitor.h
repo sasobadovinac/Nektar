@@ -71,7 +71,7 @@ private:
     static void OpenCounterFiles(void);
     static void CloseCounterFiles(void);
     static bool IsAcceleratorCounter(const unsigned int i);
-    static void GetFirstLine(const unsigned int i, char* line, const unsigned int len);
+    static bool GetFirstLine(const unsigned int i, char* line, const unsigned int len);
     static long int GetCounterValue(const unsigned int i);
     static int GetNodeNumber(void);
     

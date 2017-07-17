@@ -49,7 +49,7 @@ namespace LibUtilities
 {
 
 // initialise static constant attributes of PowerMonitor class
-const char PowerMonitor::ver[] = "4.1.0";
+const char PowerMonitor::ver[] = "4.2.0";
 
 const unsigned int PowerMonitor::PM_RECORD_OK = 0;
 const unsigned int PowerMonitor::PM_RECORD_UNINITIALISED = 1;
@@ -149,21 +149,48 @@ bool PowerMonitor::IsAcceleratorCounter(const unsigned int i)
 }
 		
 // return the first line from the counter file identified by i
-void PowerMonitor::GetFirstLine(const unsigned int i, char* line, const unsigned int len)
+bool PowerMonitor::GetFirstLine(const unsigned int i, char* line, const unsigned int len)
 {
+    bool success = false;
+  
     if (NULL != line)
     {
         memset(line, 0, len);
 	if (i < PM_NCOUNTERS && NULL != cnt_fp[i])
 	{
   	    rewind(cnt_fp[i]);
-  	    while (NULL != fgets(line, len, cnt_fp[i]) || EAGAIN == errno);	
+  	    
+	    do {
+	        fgets(line, len, cnt_fp[i]);
+
+		if (feof(cnt_fp[i]))
+		{
+		    // end of file reached,
+		    // assume the last len characters have been read
+		    success = true;
+		    break;
+		}     
+		else if (ferror(cnt_fp[i]))
+		{
+		    if (EAGAIN != errno)
+		    {
+		        // error not due to file being busy
+		        // record error, zero line buffer and return
+		        fprintf(stderr, "GetFirstLine failed for PM counter %d: errno = %d.\n", i, errno);
+		        strcpy(line, "0");
+		        break;
+		    }
+		}
+		
+	    } while (true);
   	}
   	else
 	{
   	    strcpy(line, "0");
   	}
     }
+
+    return success;
 }
 		
 long int PowerMonitor::GetCounterValue(const unsigned int i)
@@ -375,8 +402,7 @@ unsigned int PowerMonitor::RecordCounterValues(const int nstep, const int sstep)
             }
       	}
 
-	tot_pmc_energy = round(tot_pmc_energy);
-      	double avg_pmc_power = (monitor_cnt > 0) ? ((double) tot_pmc_power)/((double) monitor_cnt) : 0.0;
+	double avg_pmc_power = (monitor_cnt > 0) ? ((double) tot_pmc_power)/((double) monitor_cnt) : 0.0;
       	long int dif_pmc_energy = tot_pmc_energy - entot0;
         
       	if (NULL != log_fp)
@@ -433,17 +459,12 @@ void PowerMonitor::Finalise(void)
     if (all_initialised)
     {
     	// do the last record
-      PowerMonitor::Record(last_nstep+1, 1, true, false);
+        PowerMonitor::Record(last_nstep+1, 1, true, false);
     }
   
     // if monitoring process (i.e., first process on node)    
     if (min_node_rank == rank)
     {
-        long int final_startup = PowerMonitor::GetCounterValue(PM_COUNTER_STARTUP);
-	if (final_startup != init_startup) {
-	    fprintf(stderr, "PowerMonitor meaurements invalid! Blade-controller was restarted for node %d.\n", GetNodeNumber());
-	}
-	
         PowerMonitor::CloseCounterFiles();
         
         if (0 == rank && NULL != log_fp)
