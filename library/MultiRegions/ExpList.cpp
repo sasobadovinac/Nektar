@@ -978,29 +978,14 @@ namespace Nektar
             int cnt = 0;
             int eid;
             for(int n = 0; n < num_elmts.num_elements(); ++n)
-            {
-                
-                int i;
-                int nvarcoeffs = gkey.GetNVarCoeffs();
-
-                for(i= 0; i < num_elmts[n]; ++i)
+            {                
+                for(int i= 0; i < num_elmts[n]; ++i)
                 {
-                    printf("num_elmts: %i\n", i);
-                        
+                    printf("num_elmts: %i\n", i);                        
                     // need to be initialised with zero size for non variable coefficient case
                     StdRegions::VarCoeffMap varcoeffs;
 
                     eid = m_offset_elmt_id[cnt++];
-                    if(nvarcoeffs>0)
-                    {
-                        printf("%s\n", "nvarcoeffs");
-                            
-                        StdRegions::VarCoeffMap::const_iterator x;
-                        for (x = gkey.GetVarCoeffs().begin(); x != gkey.GetVarCoeffs().end(); ++x)
-                        {
-                            varcoeffs[x->first] = x->second + m_phys_offset[eid];
-                        }
-                    }
 
                     StdRegions::StdMatrixKey mkey(gkey.GetMatrixType(),
                                                   (*m_exp)[eid]->DetShapeType(),
@@ -1010,8 +995,7 @@ namespace Nektar
                     (*m_exp)[eid]->GeneralMatrixOp_plain(inarray + m_coeff_offset[eid],
                                                    tmp_outarray = outarray+m_coeff_offset[eid],
                                                    mkey);
-                }
-                
+                }                
             }
         }
 
@@ -2726,6 +2710,13 @@ namespace Nektar
 
 
         void ExpList::v_GlobalToLocal(const Array<OneD, const NekDouble> &inarray,
+                                      Array<OneD,NekDouble> &outarray)
+        {
+            ASSERTL0(false,
+                     "This method is not defined or valid for this class type");
+        }
+
+        void ExpList::v_GlobalToLocal_plain(const Array<OneD, const NekDouble> &inarray,
                                       Array<OneD,NekDouble> &outarray)
         {
             ASSERTL0(false,

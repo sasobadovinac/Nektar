@@ -472,6 +472,7 @@ namespace Nektar
             // inline
             MULTI_REGIONS_EXPORT inline void GlobalToLocal(void);
 
+
             /**
              * This operation is evaluated as:
              * \f{tabbing}
@@ -499,6 +500,10 @@ namespace Nektar
              *                      array of size \f$N_\mathrm{eof}\f$.
              */
             MULTI_REGIONS_EXPORT inline void GlobalToLocal(
+                const Array<OneD, const NekDouble> &inarray,
+                Array<OneD,NekDouble> &outarray);
+
+            MULTI_REGIONS_EXPORT inline void GlobalToLocal_plain(
                 const Array<OneD, const NekDouble> &inarray,
                 Array<OneD,NekDouble> &outarray);
 
@@ -1240,6 +1245,10 @@ namespace Nektar
             virtual void v_GlobalToLocal(void);
 
             virtual void v_GlobalToLocal(
+                const Array<OneD, const NekDouble> &inarray,
+                Array<OneD,NekDouble> &outarray);
+
+            virtual void v_GlobalToLocal_plain(
                 const Array<OneD, const NekDouble> &inarray,
                 Array<OneD,NekDouble> &outarray);
 
@@ -2030,6 +2039,13 @@ namespace Nektar
                 Array<OneD,NekDouble> &outarray)
         {
             v_GlobalToLocal(inarray, outarray);
+        }
+
+        inline void ExpList::GlobalToLocal_plain(
+                const Array<OneD, const NekDouble> &inarray,
+                Array<OneD,NekDouble> &outarray)
+        {
+            v_GlobalToLocal_plain(inarray, outarray);
         }
         
 

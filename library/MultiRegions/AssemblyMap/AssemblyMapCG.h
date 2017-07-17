@@ -202,6 +202,10 @@ namespace Nektar
                     const Array<OneD, const NekDouble>& global,
                           Array<OneD,       NekDouble>& loc) const;
 
+            MULTI_REGIONS_EXPORT virtual void v_GlobalToLocal_plain(
+                    const Array<OneD, const NekDouble>& global,
+                          Array<OneD,       NekDouble>& loc) const;
+
             MULTI_REGIONS_EXPORT virtual void v_GlobalToLocal(
                     const NekVector<NekDouble>& global,
                           NekVector<      NekDouble>& loc) const;

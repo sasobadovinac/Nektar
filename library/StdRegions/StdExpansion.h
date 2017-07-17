@@ -1063,7 +1063,7 @@ namespace Nektar
                                    Array<OneD,NekDouble> &outarray,
                                    const StdMatrixKey &mkey)
             {
-                printf("%s\n", "within HelmholtzMatrixOp_plain");
+                printf("%s\n", "within StdExpansion::HelmholtzMatrixOp_plain");
                 v_HelmholtzMatrixOp_plain(inarray,outarray,mkey);
                 
             }
@@ -1559,7 +1559,7 @@ namespace Nektar
                                                  Array<OneD,NekDouble> &outarray,
                                                  const StdMatrixKey &mkey)
             {
-                printf("%s\n", "within HelmholtzMatrixOp_MatFree_plain");
+                printf("%s\n", "within StdExpansion::HelmholtzMatrixOp_MatFree_plain");
 
                 // original function
                 //v_HelmholtzMatrixOp_MatFree(inarray,outarray,mkey);

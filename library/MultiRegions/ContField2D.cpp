@@ -774,7 +774,16 @@ namespace Nektar
             const Array<OneD, const NekDouble> &inarray,
             Array<OneD,NekDouble> &outarray)
         {
+            printf("%s\n", "within ContField2D::v_GlobalToLocal");
             m_locToGloMap->GlobalToLocal(inarray, outarray);
+        }
+
+        void ContField2D::v_GlobalToLocal_plain(
+            const Array<OneD, const NekDouble> &inarray,
+            Array<OneD,NekDouble> &outarray)
+        {
+            printf("%s\n", "within ContField2D::v_GlobalToLocal_plain");
+            m_locToGloMap->GlobalToLocal_plain(inarray, outarray);
         }
 
 
@@ -997,30 +1006,11 @@ namespace Nektar
                       CoeffState                   coeffstate)
         {
             printf("%s\n", "within ContField2D::v_GeneralMatrixOp_plain");
-            if(coeffstate == eGlobal)
-            {
-                bool doGlobalOp = m_globalOptParam->DoGlobalMatOp(
-                                                        gkey.GetMatrixType());
-
-                if(doGlobalOp)
-                {
-                    GlobalMatrixSharedPtr mat = GetGlobalMatrix(gkey);
-                    mat->Multiply(inarray,outarray);
-                    m_locToGloMap->UniversalAssemble(outarray);
-                }
-                else
-                {
-                    Array<OneD,NekDouble> tmp1(2*m_ncoeffs);
-                    Array<OneD,NekDouble> tmp2(tmp1+m_ncoeffs);
-                    GlobalToLocal(inarray,tmp1);
-                    GeneralMatrixOp_IterPerExp_plain(gkey,tmp1,tmp2);
-                    Assemble(tmp2,outarray);
-                }
-            }
-            else
-            {
-                GeneralMatrixOp_IterPerExp_plain(gkey,inarray,outarray);
-            }
+            Array<OneD,NekDouble> tmp1(2*m_ncoeffs);
+            Array<OneD,NekDouble> tmp2(tmp1+m_ncoeffs);
+            GlobalToLocal_plain(inarray,tmp1);
+            GeneralMatrixOp_IterPerExp_plain(gkey,tmp1,tmp2);
+            Assemble(tmp2,outarray);   
         }
 
         /**

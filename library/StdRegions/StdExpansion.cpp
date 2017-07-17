@@ -642,7 +642,7 @@ namespace Nektar
             {
 
             case eHelmholtz:
-                printf("%s\n", "within StdExpansion::GeneralMatrixOp_plain, calling HelmholtzMatrixOp_plain" );
+                printf("%s\n", "within StdExpansion::GeneralMatrixOp_plain" );
                 HelmholtzMatrixOp_plain(inarray,outarray,mkey);
                 break;
             default:

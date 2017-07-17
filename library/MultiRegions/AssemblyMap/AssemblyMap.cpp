@@ -565,6 +565,13 @@ namespace Nektar
             ASSERTL0(false, "Not defined for this type of mapping.");
         }
 
+        void AssemblyMap::v_GlobalToLocal_plain(
+                const Array<OneD, const NekDouble>& global,
+                      Array<OneD,       NekDouble>& loc) const
+        {
+            ASSERTL0(false, "Not defined for this type of mapping.");
+        }
+
         void AssemblyMap::v_GlobalToLocal(
                 const NekVector<NekDouble>& global,
                       NekVector<      NekDouble>& loc) const
@@ -742,6 +749,14 @@ namespace Nektar
                       Array<OneD,       NekDouble>& loc) const
         {
             v_GlobalToLocal(global,loc);
+        }
+
+        void AssemblyMap::GlobalToLocal_plain(
+                const Array<OneD, const NekDouble>& global,
+                      Array<OneD,       NekDouble>& loc) const
+        {
+            printf("%s\n", "within AssemblyMap::GlobalToLocal_plain");
+            v_GlobalToLocal_plain(global,loc);
         }
 
         void AssemblyMap::GlobalToLocal(

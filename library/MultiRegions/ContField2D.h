@@ -203,12 +203,17 @@ namespace Nektar
                 Array<OneD,NekDouble> &outarray,
                 bool useComm);
 
+
             MULTI_REGIONS_EXPORT virtual void v_LocalToGlobal(bool useComm);
             
             /// Scatters from the global coefficients
             /// \f$\boldsymbol{\hat{u}}_g\f$ to the local coefficients
             /// \f$\boldsymbol{\hat{u}}_l\f$.
             MULTI_REGIONS_EXPORT virtual void v_GlobalToLocal(
+                const Array<OneD, const NekDouble> &inarray,
+                Array<OneD,NekDouble> &outarray);
+
+            MULTI_REGIONS_EXPORT virtual void v_GlobalToLocal_plain(
                 const Array<OneD, const NekDouble> &inarray,
                 Array<OneD,NekDouble> &outarray);
 
