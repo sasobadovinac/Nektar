@@ -48,7 +48,12 @@ namespace LibUtilities
 {
 
 // initialise static constant attributes of PerformanceAnalyser class
-const char PerformanceAnalyser::ver[] = "3.0.0";
+const char PerformanceAnalyser::ver[] = "4.0.0";
+
+const unsigned int PerformanceAnalyser::PAT_RECORD_OK = 0;
+const unsigned int PerformanceAnalyser::PAT_RECORD_UNINITIALISED = 1;
+const unsigned int PerformanceAnalyser::PAT_RECORD_ERROR = 2;
+  
 const unsigned int PerformanceAnalyser::MAX_NAME_LEN(128);
 const char PerformanceAnalyser::PAT_RT_SEPARATOR[] = ",";
 const unsigned int PerformanceAnalyser::PAT_REGION_OPEN(1);
@@ -402,26 +407,18 @@ void PerformanceAnalyser::Initialise(const char* log_fpath)
         // do initial monitoring call, which ends with MPI_Barrier
         open = true;
         first_monitor = true;
-	PerformanceAnalyser::Record(-1, 1);
+	PerformanceAnalyser::Record(-1, 1, true, false);
     }
   
 } // end of PerformanceAnalyser::Initialise method
 
 
-
 // read counter values if first rank on node,
 // and output those values if rank zero
-void PerformanceAnalyser::Record(const int nstep, const int sstep) {
-
+unsigned int PerformanceAnalyser::RecordCounterValues(const int nstep, const int sstep) {
     int ncntr_test(0), pat_res(0);
     unsigned long long ncntr_val(0);
-
-    if (!open)
-    {
-        return;
-    }
-
-    MPI_Barrier(MPI_COMM_WORLD);
+    unsigned int res(PAT_RECORD_OK);
 
     if (rank == root_rank)
     {
@@ -432,8 +429,7 @@ void PerformanceAnalyser::Record(const int nstep, const int sstep) {
             first_monitor = false;
         }
     }
-
-
+     
     if (ncat > 0 && ncntr > 0)
     {
         // get counter values
@@ -441,6 +437,7 @@ void PerformanceAnalyser::Record(const int nstep, const int sstep) {
         pat_res = PAT_region_begin(PAT_REGION_MONITOR, "pat_mpi_monitor");
         if (PAT_API_OK != pat_res)
 	{
+	    res = PAT_RECORD_ERROR;
             printf("%d: PAT_region_begin(PAT_REGION_MONITOR) failed with error %d.\n", rank, pat_res);
         }
         for (int i = 0; i < ncat; i++)
@@ -450,10 +447,12 @@ void PerformanceAnalyser::Record(const int nstep, const int sstep) {
 	    {
                 if (PAT_API_OK != pat_res)
 		{
+		    res = PAT_RECORD_ERROR;
                     printf("%d: PAT_counters failed with error %d within pat_mpi_monitor.\n", rank, pat_res);
                 }
                 else if (cat_ncntr[i] != ncntr_test)
 		{
+		    res = PAT_RECORD_ERROR;
                     printf("%d: counter category %d has %d counter(s) when %d expected.\n",
                         rank, cat_id[i], ncntr_test, cat_ncntr[i]);
                 }
@@ -462,6 +461,7 @@ void PerformanceAnalyser::Record(const int nstep, const int sstep) {
         pat_res = PAT_region_end(PAT_REGION_MONITOR);
         if (PAT_API_OK != pat_res)
 	{
+	    res = PAT_RECORD_ERROR;
             printf("%d: PAT_region_end(PAT_REGION_MONITOR) failed with error %d.\n", rank, pat_res);
         }
         ///////////////////////////////////////////////////////////////////////////////////////////
@@ -478,7 +478,6 @@ void PerformanceAnalyser::Record(const int nstep, const int sstep) {
         }
         ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     }
-
 
     if (rank == root_rank)
     {
@@ -511,9 +510,43 @@ void PerformanceAnalyser::Record(const int nstep, const int sstep) {
         }
     }
 
+    return res;
+}
+
+
+// read and record counter values if first rank on node
+// the reading will be labelled with the step and substep numbers
+// if initial_sync is true MPI_Barrier is called before reading takes place
+// if initial_sync and initial_rec are true then counters are read before and after initial barrier
+// initial_rec is only used when initial_sync is true
+unsigned int PerformanceAnalyser::Record(const int nstep, const int sstep, const bool initial_sync, const bool initial_rec) {
+
+    if (!open)
+    {
+        return PAT_RECORD_UNINITIALISED;
+    }
+
+    unsigned int res = PAT_RECORD_OK;
+    if (initial_sync)
+    {
+        if (initial_rec)
+	{
+	    res = RecordCounterValues(nstep, sstep);
+	}
+	
+        MPI_Barrier(MPI_COMM_WORLD);
+    }
+
+    if (PAT_RECORD_OK == res)
+    {
+        res = RecordCounterValues(nstep, sstep);
+    }
+    
     last_nstep = nstep;
 
     MPI_Barrier(MPI_COMM_WORLD);
+
+    return res;
     			
 } // end of PerformanceAnalyser::Record method
 
@@ -526,7 +559,7 @@ void PerformanceAnalyser::Finalise(void)
     if (open)
     {
         // do the last monitoring call
-        PerformanceAnalyser::Record(last_nstep+1, 1);
+        PerformanceAnalyser::Record(last_nstep+1, 1, true, false);
     }
 
     // turn off recording and free memory   

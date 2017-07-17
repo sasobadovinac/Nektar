@@ -45,7 +45,7 @@ class PerformanceAnalyser
 {
 public:
     static void Initialise(const char *out_fn);
-    static void Record(const int nstep, const int sstep);
+    static unsigned int Record(const int nstep, const int sstep, const bool initial_sync, const bool initial_rec);
     static void Finalise(void);
 
 private:
@@ -54,8 +54,14 @@ private:
             
     static bool IsInitialised(void);
     static int GetCategoryValue(const char* str);
+    static unsigned int RecordCounterValues(const int nstep, const int sstep);
             
     static const char ver[];
+
+    static const unsigned int PAT_RECORD_OK;
+    static const unsigned int PAT_RECORD_UNINITIALISED;
+    static const unsigned int PAT_RECORD_ERROR;
+    
     static const unsigned int MAX_NAME_LEN;
     static const char PAT_RT_SEPARATOR[];
     static const unsigned int PAT_REGION_OPEN;
