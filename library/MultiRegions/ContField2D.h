@@ -93,6 +93,10 @@ namespace Nektar
                             const Array<OneD, const NekDouble> &inarray,
                                   Array<OneD,NekDouble> &outarray) const;
 
+            inline void Assemble_plain(
+                            const Array<OneD, const NekDouble> &inarray,
+                                  Array<OneD,NekDouble> &outarray) const;
+
             /// Returns the map from local to global level.
             inline const AssemblyMapCGSharedPtr& GetLocalToGlobalMap()
                                                                         const;
@@ -327,6 +331,7 @@ namespace Nektar
             m_locToGloMap->Assemble(m_coeffs,m_coeffs);
         }
 
+
         /**
          * This operation is evaluated as:
          * \f{tabbing}
@@ -359,6 +364,13 @@ namespace Nektar
                                       Array<OneD,NekDouble> &outarray) const
         {
             m_locToGloMap->Assemble(inarray,outarray);
+        }
+
+        inline void ContField2D::Assemble_plain(
+                                const Array<OneD, const NekDouble> &inarray,
+                                      Array<OneD,NekDouble> &outarray) const
+        {
+            m_locToGloMap->Assemble_plain(inarray,outarray);
         }
 
 

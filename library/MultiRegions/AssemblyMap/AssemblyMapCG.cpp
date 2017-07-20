@@ -2656,11 +2656,10 @@ namespace Nektar
                     const Array<OneD, const NekDouble>& global,
                           Array<OneD,       NekDouble>& loc) const
         {
-            printf("%s\n","within AssemblyMapCG::v_GlobalToLocal" );
+            //printf("%s\n","within AssemblyMapCG::v_GlobalToLocal" );
             Array<OneD, const NekDouble> glo;
             if(global.data() == loc.data())
             {
-                printf("%s\n", "if globaldata");
                 glo = Array<OneD, NekDouble>(global.num_elements(),global.data());
             }
             else
@@ -2671,7 +2670,6 @@ namespace Nektar
 
             if(m_signChange)
             {
-                printf("%s\n"," if signchange" );
                 Vmath::Gathr(m_numLocalCoeffs, m_localToGlobalSign.get(), glo.get(), m_localToGlobalMap.get(), loc.get());
             }
             else
@@ -2686,8 +2684,31 @@ namespace Nektar
         {
             printf("%s\n","within AssemblyMapCG::v_GlobalToLocal_plain" );
 
+            /*for (int i = 0; i < m_numLocalCoeffs; ++i)
+            {
+                printf("m_localToGlobalSign(%i) = %e, m_localToGlobalMap(%i) = %i\n",
+                    i, m_localToGlobalSign[i], i, m_localToGlobalMap[i] );
+            }*/
             Vmath::Gathr(m_numLocalCoeffs, m_localToGlobalSign.get(),
                      global.get(), m_localToGlobalMap.get(), loc.get());
+        }
+
+        void AssemblyMapCG::v_GetGlobalToLocal(
+                    int &numLocalCoeffs,
+                    Array<OneD, const int> &localToGlobalMap,
+                    Array<OneD, const NekDouble> &localToGlobalSign)
+        {
+            printf("%s\n","within AssemblyMapCG::v_GetGlobalToLocal" );
+
+            numLocalCoeffs = m_numLocalCoeffs;
+            localToGlobalMap = m_localToGlobalMap;
+            localToGlobalSign = m_localToGlobalSign;
+
+            /*for (int i = 0; i < m_numLocalCoeffs; ++i)
+            {
+                printf("localToGlobalSign(%i) = %e, localToGlobalMap(%i) = %i\n",
+                    i, localToGlobalSign[i], i, localToGlobalMap[i] );
+            }*/
         }
 
         void AssemblyMapCG::v_GlobalToLocal(
@@ -2723,6 +2744,20 @@ namespace Nektar
                 Vmath::Assmb(m_numLocalCoeffs, local.get(), m_localToGlobalMap.get(), global.get());
             }
             UniversalAssemble(global);
+        }
+
+        void AssemblyMapCG::v_Assemble_plain(
+                    const Array<OneD, const NekDouble> &local,
+                          Array<OneD,       NekDouble> &global) const
+        {
+            printf("%s\n","within AssemblyMapCG::v_Assemble_plain" );
+            
+            Vmath::Zero(m_numGlobalCoeffs, global.get(), 1);
+            Vmath::Assmb(m_numLocalCoeffs, m_localToGlobalSign.get(), 
+                        local.get(), m_localToGlobalMap.get(), global.get());
+
+            //UniversalAssemble(global);
+            Gs::Gather(global, Gs::gs_add, m_gsh);
         }
 
         void AssemblyMapCG::v_Assemble(

@@ -505,7 +505,7 @@ namespace Nektar
 
             MULTI_REGIONS_EXPORT inline void GlobalToLocal_plain(
                 const Array<OneD, const NekDouble> &inarray,
-                Array<OneD,NekDouble> &outarray);
+                Array<OneD,NekDouble> &outarray); 
 
             /// Get the \a i th value  (coefficient) of #m_coeffs
             inline NekDouble GetCoeff(int i);
@@ -2047,6 +2047,14 @@ namespace Nektar
         {
             v_GlobalToLocal_plain(inarray, outarray);
         }
+
+        /*inline void ExpList::GetGlobalToLocal(
+                    int numLocalCoeffs,
+                    Array<OneD, const int> &localToGlobalMap,
+                    Array<OneD, const NekDouble> &localToGlobalSign)
+        {
+            v_GetGlobalToLocal(numLocalCoeffs, localToGlobalMap, localToGlobalSign);
+        }*/
         
 
         /**

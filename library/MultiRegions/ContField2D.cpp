@@ -1008,9 +1008,25 @@ namespace Nektar
             printf("%s\n", "within ContField2D::v_GeneralMatrixOp_plain");
             Array<OneD,NekDouble> tmp1(2*m_ncoeffs);
             Array<OneD,NekDouble> tmp2(tmp1+m_ncoeffs);
-            GlobalToLocal_plain(inarray,tmp1);
+
+            int numLocalCoeffs;
+            Array<OneD, const int> localToGlobalMap;
+            Array<OneD, const NekDouble> localToGlobalSign;
+
+            m_locToGloMap->AssemblyMap::GetGlobalToLocal(
+                    numLocalCoeffs,
+                    localToGlobalMap,
+                    localToGlobalSign);
+            //GlobalToLocal_plain(inarray,tmp1);
+            Vmath::Gathr(numLocalCoeffs, localToGlobalSign.get(),
+                     inarray.get(), localToGlobalMap.get(), tmp1.get());
             GeneralMatrixOp_IterPerExp_plain(gkey,tmp1,tmp2);
-            Assemble(tmp2,outarray);   
+            
+            Assemble_plain(tmp2,outarray);  
+            //Vmath::Zero(numGlobalCoeffs, global.get(), 1);
+            //Vmath::Assmb(numLocalCoeffs, localToGlobalSign.get(), 
+            //            local.get(), localToGlobalMap.get(), global.get());
+            //Gs::Gather(global, Gs::gs_add, m_gsh); 
         }
 
         /**

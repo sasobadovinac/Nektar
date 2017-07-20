@@ -572,6 +572,13 @@ namespace Nektar
             ASSERTL0(false, "Not defined for this type of mapping.");
         }
 
+        void AssemblyMap::v_GetGlobalToLocal(
+                    int &numLocalCoeffs,
+                    Array<OneD, const int> &localToGlobalMap,
+                    Array<OneD, const NekDouble> &localToGlobalSign)
+        {           
+        }
+
         void AssemblyMap::v_GlobalToLocal(
                 const NekVector<NekDouble>& global,
                       NekVector<      NekDouble>& loc) const
@@ -580,6 +587,13 @@ namespace Nektar
         }
 
         void AssemblyMap::v_Assemble(
+                const Array<OneD, const NekDouble> &loc,
+                      Array<OneD,       NekDouble> &global) const
+        {
+            ASSERTL0(false, "Not defined for this type of mapping.");
+        }
+
+        void AssemblyMap::v_Assemble_plain(
                 const Array<OneD, const NekDouble> &loc,
                       Array<OneD,       NekDouble> &global) const
         {
@@ -759,6 +773,15 @@ namespace Nektar
             v_GlobalToLocal_plain(global,loc);
         }
 
+        void AssemblyMap::GetGlobalToLocal(
+                    int &numLocalCoeffs,
+                    Array<OneD, const int> &localToGlobalMap,
+                    Array<OneD, const NekDouble> &localToGlobalSign)
+        {
+            printf("%s\n", "within AssemblyMap::GetGlobalToLocal");
+            v_GetGlobalToLocal(numLocalCoeffs, localToGlobalMap, localToGlobalSign);
+        }
+
         void AssemblyMap::GlobalToLocal(
                 const NekVector<NekDouble>& global,
                       NekVector<      NekDouble>& loc) const
@@ -771,6 +794,14 @@ namespace Nektar
                       Array<OneD,       NekDouble> &global) const
         {
             v_Assemble(loc,global);
+        }
+
+        void AssemblyMap::Assemble_plain(
+                const Array<OneD, const NekDouble> &loc,
+                      Array<OneD,       NekDouble> &global) const
+        {
+            //printf("%s\n", "within AssemblyMap::Assemble_plain");
+            v_Assemble_plain(loc,global);
         }
 
         void AssemblyMap::Assemble(
