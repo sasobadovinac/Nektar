@@ -2693,14 +2693,15 @@ namespace Nektar
                      global.get(), m_localToGlobalMap.get(), loc.get());
         }
 
-        void AssemblyMapCG::v_GetGlobalToLocal(
-                    int &numLocalCoeffs,
+        void AssemblyMapCG::GetGlobalToLocal(
+                    int &numLocalCoeffs, int &numGlobalCoeffs,
                     Array<OneD, const int> &localToGlobalMap,
                     Array<OneD, const NekDouble> &localToGlobalSign)
         {
-            printf("%s\n","within AssemblyMapCG::v_GetGlobalToLocal" );
+            printf("%s\n","within AssemblyMapCG::GetGlobalToLocal" );
 
             numLocalCoeffs = m_numLocalCoeffs;
+            numGlobalCoeffs = m_numGlobalCoeffs;
             localToGlobalMap = m_localToGlobalMap;
             localToGlobalSign = m_localToGlobalSign;
 
@@ -2757,7 +2758,7 @@ namespace Nektar
                         local.get(), m_localToGlobalMap.get(), global.get());
 
             //UniversalAssemble(global);
-            Gs::Gather(global, Gs::gs_add, m_gsh);
+            //Gs::Gather(global, Gs::gs_add, m_gsh);
         }
 
         void AssemblyMapCG::v_Assemble(

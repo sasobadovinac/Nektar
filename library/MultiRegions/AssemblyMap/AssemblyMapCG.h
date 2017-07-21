@@ -110,6 +110,11 @@ namespace Nektar
                 return m_extraDirDofs;
             }
 
+            MULTI_REGIONS_EXPORT void GetGlobalToLocal(
+                    int &numLocalCoeffs, int &numGloablCoeffs,
+                    Array<OneD, const int> &localToGlobalMap,
+                    Array<OneD, const NekDouble> &localToGlobalSign);
+
         protected:
             /// Integer map of local coeffs to global space
             Array<OneD,int> m_localToGlobalMap;
@@ -206,10 +211,7 @@ namespace Nektar
                     const Array<OneD, const NekDouble>& global,
                           Array<OneD,       NekDouble>& loc) const;
 
-            MULTI_REGIONS_EXPORT virtual void v_GetGlobalToLocal(
-                    int &numLocalCoeffs,
-                    Array<OneD, const int> &localToGlobalMap,
-                    Array<OneD, const NekDouble> &localToGlobalSign);
+
 
             MULTI_REGIONS_EXPORT virtual void v_GlobalToLocal(
                     const NekVector<NekDouble>& global,

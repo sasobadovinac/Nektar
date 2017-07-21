@@ -1009,24 +1009,36 @@ namespace Nektar
             Array<OneD,NekDouble> tmp1(2*m_ncoeffs);
             Array<OneD,NekDouble> tmp2(tmp1+m_ncoeffs);
 
-            int numLocalCoeffs;
+            int numLocalCoeffs, numGlobalCoeffs;
             Array<OneD, const int> localToGlobalMap;
             Array<OneD, const NekDouble> localToGlobalSign;
 
-            m_locToGloMap->AssemblyMap::GetGlobalToLocal(
-                    numLocalCoeffs,
-                    localToGlobalMap,
-                    localToGlobalSign);
+            m_locToGloMap->AssemblyMapCG::GetGlobalToLocal(
+                    numLocalCoeffs, numGlobalCoeffs,
+                    localToGlobalMap, localToGlobalSign);
+            printf("numLocalCoeffs = %i, numGlobalCoeffs = %i\n",numLocalCoeffs, numGlobalCoeffs);
             //GlobalToLocal_plain(inarray,tmp1);
-            Vmath::Gathr(numLocalCoeffs, localToGlobalSign.get(),
-                     inarray.get(), localToGlobalMap.get(), tmp1.get());
+            //Vmath::Gathr(numLocalCoeffs, localToGlobalSign.get(),
+            //         inarray.get(), localToGlobalMap.get(), tmp1.get());
+            for (int i = 0; i < numLocalCoeffs; ++i)
+            {
+                tmp1[i] = localToGlobalSign[i] * inarray[localToGlobalMap[i]];
+            }
             GeneralMatrixOp_IterPerExp_plain(gkey,tmp1,tmp2);
             
-            Assemble_plain(tmp2,outarray);  
-            //Vmath::Zero(numGlobalCoeffs, global.get(), 1);
+            //Assemble_plain(tmp2,outarray);  
+            //Vmath::Zero(numGlobalCoeffs, outarray.get(), 1);
+            for (int i = 0; i < numGlobalCoeffs; ++i)
+            {
+                outarray[i] = 0.0;
+            }
             //Vmath::Assmb(numLocalCoeffs, localToGlobalSign.get(), 
-            //            local.get(), localToGlobalMap.get(), global.get());
-            //Gs::Gather(global, Gs::gs_add, m_gsh); 
+            //            tmp2.get(), localToGlobalMap.get(), outarray.get());
+            for (int i = 0; i < numLocalCoeffs; ++i)
+            {
+                outarray[localToGlobalMap[i]] += localToGlobalSign[i] * tmp2[i]; 
+            }
+            
         }
 
         /**

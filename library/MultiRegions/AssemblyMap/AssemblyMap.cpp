@@ -572,12 +572,12 @@ namespace Nektar
             ASSERTL0(false, "Not defined for this type of mapping.");
         }
 
-        void AssemblyMap::v_GetGlobalToLocal(
+        /*void AssemblyMap::v_GetGlobalToLocal(
                     int &numLocalCoeffs,
                     Array<OneD, const int> &localToGlobalMap,
                     Array<OneD, const NekDouble> &localToGlobalSign)
         {           
-        }
+        }*/
 
         void AssemblyMap::v_GlobalToLocal(
                 const NekVector<NekDouble>& global,
@@ -773,14 +773,14 @@ namespace Nektar
             v_GlobalToLocal_plain(global,loc);
         }
 
-        void AssemblyMap::GetGlobalToLocal(
+        /*void AssemblyMap::GetGlobalToLocal(
                     int &numLocalCoeffs,
                     Array<OneD, const int> &localToGlobalMap,
                     Array<OneD, const NekDouble> &localToGlobalSign)
         {
             printf("%s\n", "within AssemblyMap::GetGlobalToLocal");
             v_GetGlobalToLocal(numLocalCoeffs, localToGlobalMap, localToGlobalSign);
-        }
+        }*/
 
         void AssemblyMap::GlobalToLocal(
                 const NekVector<NekDouble>& global,
