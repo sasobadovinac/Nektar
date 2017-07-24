@@ -70,6 +70,47 @@ namespace Nektar
         {
         public:
 
+            
+
+
+            void HelmholtzMatrixOp_MatFree_plain(const Array<OneD, const NekDouble> &inarray,
+                                                 Array<OneD,NekDouble> &outarray,
+                                                 const NekDouble lambda)
+            {
+                printf("%s\n", "within StdExpansion::HelmholtzMatrixOp_MatFree_plain");
+
+                // original function
+                //v_HelmholtzMatrixOp_MatFree(inarray,outarray,mkey);
+
+                // new function
+                // get metrics for MultiplyBy QuadratureMetric()
+                Array<OneD, NekDouble> quadMetric;
+                v_GetQuadratureMetric(quadMetric);
+                Array<OneD, NekDouble> laplacian00;
+                Array<OneD, NekDouble> laplacian01;
+                Array<OneD, NekDouble> laplacian11;
+                v_GetLaplacianMetric(laplacian00,laplacian01,laplacian11);
+                
+                int       nquad0  = m_base[0]->GetNumPoints();
+                int       nquad1  = m_base[1]->GetNumPoints();
+                int       nmodes0 = m_base[0]->GetNumModes();
+                int       nmodes1 = m_base[1]->GetNumModes();
+                const Array<OneD, const NekDouble> base0 = m_base[0]->GetBdata();
+                const Array<OneD, const NekDouble> base1 = m_base[1]->GetBdata();
+                const Array<OneD, const NekDouble> dbase0 = m_base[0]->GetDbdata();
+                const Array<OneD, const NekDouble> dbase1 = m_base[1]->GetDbdata();
+                DNekMatSharedPtr D0 = m_base[0]->GetD();
+                DNekMatSharedPtr D1 = m_base[1]->GetD();
+                //NekDouble lambda = mkey.GetConstFactor(StdRegions::eFactorLambda);
+                int ncoeffs = m_ncoeffs;
+
+                v_HelmholtzMatrixOp_MatFree_plain(inarray,outarray,lambda, 
+                        quadMetric, laplacian00,laplacian01,laplacian11,
+                        nquad0, nquad1, nmodes0, nmodes1, ncoeffs,
+                        base0, base1, dbase0, dbase1, D0, D1);
+
+            }
+
             /** \brief Default Constructor */
             STD_REGIONS_EXPORT StdExpansion();
 
@@ -1555,43 +1596,7 @@ namespace Nektar
                 v_HelmholtzMatrixOp_MatFree(inarray,outarray,mkey);
             }
 
-            void HelmholtzMatrixOp_MatFree_plain(const Array<OneD, const NekDouble> &inarray,
-                                                 Array<OneD,NekDouble> &outarray,
-                                                 const StdMatrixKey &mkey)
-            {
-                printf("%s\n", "within StdExpansion::HelmholtzMatrixOp_MatFree_plain");
 
-                // original function
-                //v_HelmholtzMatrixOp_MatFree(inarray,outarray,mkey);
-
-                // new function
-                // get metrics for MultiplyBy QuadratureMetric()
-                Array<OneD, NekDouble> quadMetric;
-                v_GetQuadratureMetric(quadMetric);
-                Array<OneD, NekDouble> laplacian00;
-                Array<OneD, NekDouble> laplacian01;
-                Array<OneD, NekDouble> laplacian11;
-                v_GetLaplacianMetric(laplacian00,laplacian01,laplacian11);
-                
-                int       nquad0  = m_base[0]->GetNumPoints();
-                int       nquad1  = m_base[1]->GetNumPoints();
-                int       nmodes0 = m_base[0]->GetNumModes();
-                int       nmodes1 = m_base[1]->GetNumModes();
-                const Array<OneD, const NekDouble> base0 = m_base[0]->GetBdata();
-                const Array<OneD, const NekDouble> base1 = m_base[1]->GetBdata();
-                const Array<OneD, const NekDouble> dbase0 = m_base[0]->GetDbdata();
-                const Array<OneD, const NekDouble> dbase1 = m_base[1]->GetDbdata();
-                DNekMatSharedPtr D0 = m_base[0]->GetD();
-                DNekMatSharedPtr D1 = m_base[1]->GetD();
-                NekDouble lambda  = mkey.GetConstFactor(StdRegions::eFactorLambda);
-                int ncoeffs = m_ncoeffs;
-
-                v_HelmholtzMatrixOp_MatFree_plain(inarray,outarray,lambda, 
-                        quadMetric, laplacian00,laplacian01,laplacian11,
-                        nquad0, nquad1, nmodes0, nmodes1, ncoeffs,
-                        base0, base1, dbase0, dbase1, D0, D1);
-
-            }
 
             STD_REGIONS_EXPORT void HelmholtzMatrixOp_MatFree_GenericImpl(const Array<OneD, const NekDouble> &inarray,
                                                              Array<OneD,NekDouble> &outarray,

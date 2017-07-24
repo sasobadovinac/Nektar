@@ -148,9 +148,9 @@ namespace Nektar
             /// Returns the vector of the number of modes in the elemental
             /// basis order over all elements.
             MULTI_REGIONS_EXPORT const Array<OneD,int>
-                EvalBasisNumModesMaxPerExp(void) const;
+                 EvalBasisNumModesMaxPerExp(void) const;
 
-            /// Returns the total number of quadrature points #m_npoints
+            // Returns the total number of quadrature points #m_npoints
             /// \f$=Q_{\mathrm{tot}}\f$.
             inline int GetTotPoints(void) const;
 
@@ -792,10 +792,9 @@ namespace Nektar
                       CoeffState coeffstate = eLocal);
 
             inline void GeneralMatrixOp_plain(
-                const GlobalMatrixKey             &gkey,
                 const Array<OneD,const NekDouble> &inarray,
                       Array<OneD,      NekDouble> &outarray,
-                      CoeffState coeffstate = eLocal);
+                const NekDouble lambda);
 
             MULTI_REGIONS_EXPORT void GeneralMatrixOp_IterPerExp(
                 const GlobalMatrixKey      &gkey,
@@ -803,9 +802,9 @@ namespace Nektar
                       Array<OneD,      NekDouble> &outarray);
 
             MULTI_REGIONS_EXPORT void GeneralMatrixOp_IterPerExp_plain(
-                const GlobalMatrixKey      &gkey,
                 const Array<OneD,const NekDouble> &inarray,
-                      Array<OneD,      NekDouble> &outarray);
+                      Array<OneD,      NekDouble> &outarray,
+                      const NekDouble lambda);
 
             inline void SetUpPhysNormals();
 
@@ -972,6 +971,11 @@ namespace Nektar
                                                     = Collections::eNoImpType);
 
             MULTI_REGIONS_EXPORT void ClearGlobalLinSysManager(void);
+
+            virtual void v_GeneralMatrixOp_plain(
+                const Array<OneD,const NekDouble> &inarray,
+                      Array<OneD,      NekDouble> &outarray,
+                const NekDouble lambda);
 
         protected:
             boost::shared_ptr<DNekMat> GenGlobalMatrixFull(
@@ -1287,11 +1291,7 @@ namespace Nektar
                       Array<OneD,      NekDouble> &outarray,
                       CoeffState coeffstate);
 
-            virtual void v_GeneralMatrixOp_plain(
-                const GlobalMatrixKey             &gkey,
-                const Array<OneD,const NekDouble> &inarray,
-                      Array<OneD,      NekDouble> &outarray,
-                      CoeffState coeffstate);
+
             
             virtual void v_GetCoords(
                 Array<OneD, NekDouble> &coord_0,
@@ -2335,12 +2335,11 @@ namespace Nektar
         }
 
         inline void ExpList::GeneralMatrixOp_plain(
-                                const GlobalMatrixKey             &gkey,
                                 const Array<OneD,const NekDouble> &inarray,
                                       Array<OneD,      NekDouble> &outarray,
-                                CoeffState coeffstate)
+                                const NekDouble lambda)
         {
-            v_GeneralMatrixOp_plain(gkey,inarray,outarray,coeffstate);
+            v_GeneralMatrixOp_plain(inarray,outarray,lambda);
         }
 
 

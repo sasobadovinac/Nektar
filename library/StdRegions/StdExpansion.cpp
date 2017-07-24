@@ -1743,7 +1743,7 @@ namespace Nektar
         {
             // If this function is not reimplemented on shape level, the function
             // below will be called
-            HelmholtzMatrixOp_MatFree_plain(inarray,outarray,mkey);
+            //HelmholtzMatrixOp_MatFree_plain(inarray,outarray,mkey);
         }
 
         void StdExpansion::v_LaplacianMatrixOp_MatFree(const Array<OneD, const NekDouble> &inarray,

@@ -1000,10 +1000,9 @@ namespace Nektar
         }
 
         void ContField2D::v_GeneralMatrixOp_plain(
-                const GlobalMatrixKey              &gkey,
                 const Array<OneD,const NekDouble>  &inarray,
                       Array<OneD,      NekDouble>  &outarray,
-                      CoeffState                   coeffstate)
+                      const NekDouble lambda)
         {
             printf("%s\n", "within ContField2D::v_GeneralMatrixOp_plain");
             Array<OneD,NekDouble> tmp1(2*m_ncoeffs);
@@ -1024,7 +1023,9 @@ namespace Nektar
             {
                 tmp1[i] = localToGlobalSign[i] * inarray[localToGlobalMap[i]];
             }
-            GeneralMatrixOp_IterPerExp_plain(gkey,tmp1,tmp2);
+
+            //NekDouble lambda = gkey.GetConstFactor(StdRegions::eFactorLambda);
+            GeneralMatrixOp_IterPerExp_plain(tmp1,tmp2,lambda);
             
             //Assemble_plain(tmp2,outarray);  
             //Vmath::Zero(numGlobalCoeffs, outarray.get(), 1);

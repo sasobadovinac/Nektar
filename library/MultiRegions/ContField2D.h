@@ -160,6 +160,11 @@ namespace Nektar
 
             inline int GetGlobalMatrixNnz(const GlobalMatrixKey &gkey);
 
+            MULTI_REGIONS_EXPORT void v_GeneralMatrixOp_plain(
+                   const Array<OneD,const NekDouble> &inarray,
+                   Array<OneD,      NekDouble> &outarray,
+                   const NekDouble lambda);
+
         protected:
 
         private:
@@ -266,11 +271,7 @@ namespace Nektar
                    Array<OneD,      NekDouble> &outarray,
                    CoeffState coeffstate);
 
-            virtual void v_GeneralMatrixOp_plain(
-                   const GlobalMatrixKey             &gkey,
-                   const Array<OneD,const NekDouble> &inarray,
-                   Array<OneD,      NekDouble> &outarray,
-                   CoeffState coeffstate);
+
 
             // Solve the linear advection problem assuming that m_coeffs
             // vector contains an intial estimate for solution

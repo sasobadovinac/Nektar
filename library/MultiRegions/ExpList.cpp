@@ -964,12 +964,10 @@ namespace Nektar
         }
 
         void ExpList::GeneralMatrixOp_IterPerExp_plain(
-                                                 const GlobalMatrixKey             &gkey,
                                                  const Array<OneD,const NekDouble> &inarray,
-                                                 Array<OneD,      NekDouble> &outarray)
+                                                 Array<OneD,      NekDouble> &outarray,
+                                                 const NekDouble lambda)
         {
-            const Array<OneD, const bool>  doBlockMatOp
-                        = m_globalOptParam->DoBlockMatOp(gkey.GetMatrixType());
             const Array<OneD, const int> num_elmts
                         = m_globalOptParam->GetShapeNumElements();
             printf("%s\n", "within ExpList::GeneralMatrixOp_IterPerExp_plain");
@@ -982,19 +980,14 @@ namespace Nektar
                 for(int i= 0; i < num_elmts[n]; ++i)
                 {
                     printf("num_elmts: %i\n", i);                        
-                    // need to be initialised with zero size for non variable coefficient case
-                    StdRegions::VarCoeffMap varcoeffs;
-
                     eid = m_offset_elmt_id[cnt++];
 
-                    StdRegions::StdMatrixKey mkey(gkey.GetMatrixType(),
-                                                  (*m_exp)[eid]->DetShapeType(),
-                                                  *((*m_exp)[eid]),
-                                                  gkey.GetConstFactors(),varcoeffs);
-
-                    (*m_exp)[eid]->GeneralMatrixOp_plain(inarray + m_coeff_offset[eid],
+                    //(*m_exp)[eid]->GeneralMatrixOp_plain(inarray + m_coeff_offset[eid],
+                    //                               tmp_outarray = outarray+m_coeff_offset[eid],
+                    //                               mkey);
+                    (*m_exp)[eid]->StdExpansion::HelmholtzMatrixOp_MatFree_plain(inarray + m_coeff_offset[eid],
                                                    tmp_outarray = outarray+m_coeff_offset[eid],
-                                                   mkey);
+                                                   lambda);
                 }                
             }
         }
@@ -2765,13 +2758,12 @@ namespace Nektar
         }
 
         void ExpList::v_GeneralMatrixOp_plain(
-                                        const GlobalMatrixKey             &gkey,
                                         const Array<OneD,const NekDouble> &inarray,
                                         Array<OneD,      NekDouble> &outarray,
-                                        CoeffState coeffstate)
+                                        const NekDouble lambda)
         {
-            printf("%s\n", "within ExpList::v_GeneralMatrixOp_plain");
-            GeneralMatrixOp_IterPerExp_plain(gkey,inarray,outarray);
+            //printf("%s\n", "within ExpList::v_GeneralMatrixOp_plain");
+            //GeneralMatrixOp_IterPerExp_plain(gkey,inarray,outarray);
         }
 
         /**

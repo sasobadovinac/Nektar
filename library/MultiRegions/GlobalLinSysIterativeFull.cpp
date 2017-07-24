@@ -37,6 +37,8 @@
 #include <MultiRegions/GlobalLinSysIterativeFull.h>
 #include <MultiRegions/AssemblyMap/AssemblyMapDG.h>
 
+#include <MultiRegions/ContField2D.h>
+
 using namespace std;
 
 namespace Nektar
@@ -261,11 +263,11 @@ namespace Nektar
                       Array<OneD, NekDouble>& pOutput)
         {
             printf("Within GlobalLinSysIterativeFull::v_DoMatrixMultiply_plain\n" );
-                    
+            NekDouble lambda = m_linSysKey.GetConstFactor(StdRegions::eFactorLambda);
 
             boost::shared_ptr<MultiRegions::ExpList> expList = m_expList.lock();
             // Perform matrix-vector operation A*d_i
-            expList->GeneralMatrixOp_plain(m_linSysKey, pInput, pOutput, eGlobal);
+            expList->GeneralMatrixOp_plain(pInput, pOutput, lambda);
 
         }
 
