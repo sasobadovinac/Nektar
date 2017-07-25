@@ -968,38 +968,60 @@ namespace Nektar
                                                  Array<OneD,      NekDouble> &outarray,
                                                  const NekDouble lambda)
         {
+            printf("%s\n", "within ExpList::GeneralMatrixOp_IterPerExp_plain");
+            // Gathering Data
             const Array<OneD, const int> num_elmts
                         = m_globalOptParam->GetShapeNumElements();
-            printf("%s\n", "within ExpList::GeneralMatrixOp_IterPerExp_plain");
-            
+            const int elmts = num_elmts[0];
+
+            Array<OneD, int> coeff_offset = m_coeff_offset;
             int nquad0, nquad1, nmodes0, nmodes1, ncoeffs;
             Array<OneD, NekDouble> quadMetric, laplacian00, laplacian01, laplacian11;
             Array<OneD, const NekDouble> base0, base1, dbase0, dbase1;
             DNekMatSharedPtr D0, D1;
+
+            (*m_exp)[0]->StdExpansion::GetStdExpansionMetrics(
+                    nquad0, nquad1, nmodes0, nmodes1, ncoeffs,
+                    base0, base1, dbase0, dbase1, D0, D1);
             
             Array<OneD,NekDouble> tmp_outarray;
+            int metricSize = elmts * nquad0 * nquad1;
+            Array<OneD, NekDouble> quadMetricGlo(4*metricSize);
+            Array<OneD, NekDouble> laplacian00Glo(quadMetric+metricSize);
+            Array<OneD, NekDouble> laplacian01Glo(quadMetric+2*metricSize);
+            Array<OneD, NekDouble> laplacian11Glo(quadMetric+3*metricSize);
 
-            for(int i = 0; i < num_elmts[0]; ++i)
+            for(int el = 0; el < num_elmts[0]; ++el)
             {
-                printf("num_elmts: %i\n", i);                        
+                printf("num_elmts: %i\n", el);                        
                 
-                (*m_exp)[i]->StdExpansion::GetHelmholtzMatrixOp_MatFree_Metrics(
+                (*m_exp)[el]->StdExpansion::GetHelmholtzMatrixOp_MatFree_Metrics(
+                    quadMetric, laplacian00,laplacian01,laplacian11);
+                for (int i = 0; i < nquad0*nquad1; ++i)
+                {
+                    quadMetricGlo[el*nquad0*nquad1+i] = quadMetric[i];
+                    laplacian00Glo[el*nquad0*nquad1+i] = laplacian00[i];
+                    laplacian01Glo[el*nquad0*nquad1+i] = laplacian01[i];
+                    laplacian11Glo[el*nquad0*nquad1+i] = laplacian11[i];
+                }
+            }
+            // Calculating
+            for(int el = 0; el < num_elmts[0]; ++el)
+            {
+                for (int i = 0; i < nquad0*nquad1; ++i)
+                {
+                    quadMetric[i] = quadMetricGlo[el*nquad0*nquad1+i];
+                    laplacian00[i] = laplacian00Glo[el*nquad0*nquad1+i];
+                    laplacian01[i] = laplacian01Glo[el*nquad0*nquad1+i];
+                    laplacian11[i] = laplacian11Glo[el*nquad0*nquad1+i];
+                }
+                (*m_exp)[el]->StdExpansion::HelmholtzMatrixOp_MatFree_plain(
+                    inarray + coeff_offset[el],
+                    tmp_outarray = outarray+coeff_offset[el], lambda,
                     quadMetric, laplacian00,laplacian01,laplacian11,
                     nquad0, nquad1, nmodes0, nmodes1, ncoeffs,
                     base0, base1, dbase0, dbase1, D0, D1);
-
-                //(*m_exp)[eid]->GeneralMatrixOp_plain(inarray + m_coeff_offset[eid],
-                //                               tmp_outarray = outarray+m_coeff_offset[eid],
-                //                               mkey);
-                (*m_exp)[i]->StdExpansion::HelmholtzMatrixOp_MatFree_plain(
-                    inarray + m_coeff_offset[i],
-                    tmp_outarray = outarray+m_coeff_offset[i], lambda,
-                    quadMetric, laplacian00,laplacian01,laplacian11,
-                    nquad0, nquad1, nmodes0, nmodes1, ncoeffs,
-                    base0, base1, dbase0, dbase1, D0, D1);
-
-            }                
-            
+            }            
         }
 
         /**
