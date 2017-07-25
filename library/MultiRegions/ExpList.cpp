@@ -972,24 +972,34 @@ namespace Nektar
                         = m_globalOptParam->GetShapeNumElements();
             printf("%s\n", "within ExpList::GeneralMatrixOp_IterPerExp_plain");
             
+            int nquad0, nquad1, nmodes0, nmodes1, ncoeffs;
+            Array<OneD, NekDouble> quadMetric, laplacian00, laplacian01, laplacian11;
+            Array<OneD, const NekDouble> base0, base1, dbase0, dbase1;
+            DNekMatSharedPtr D0, D1;
+            
             Array<OneD,NekDouble> tmp_outarray;
-            int cnt = 0;
-            int eid;
-            for(int n = 0; n < num_elmts.num_elements(); ++n)
-            {                
-                for(int i= 0; i < num_elmts[n]; ++i)
-                {
-                    printf("num_elmts: %i\n", i);                        
-                    eid = m_offset_elmt_id[cnt++];
 
-                    //(*m_exp)[eid]->GeneralMatrixOp_plain(inarray + m_coeff_offset[eid],
-                    //                               tmp_outarray = outarray+m_coeff_offset[eid],
-                    //                               mkey);
-                    (*m_exp)[eid]->StdExpansion::HelmholtzMatrixOp_MatFree_plain(inarray + m_coeff_offset[eid],
-                                                   tmp_outarray = outarray+m_coeff_offset[eid],
-                                                   lambda);
-                }                
-            }
+            for(int i = 0; i < num_elmts[0]; ++i)
+            {
+                printf("num_elmts: %i\n", i);                        
+                
+                (*m_exp)[i]->StdExpansion::GetHelmholtzMatrixOp_MatFree_Metrics(
+                    quadMetric, laplacian00,laplacian01,laplacian11,
+                    nquad0, nquad1, nmodes0, nmodes1, ncoeffs,
+                    base0, base1, dbase0, dbase1, D0, D1);
+
+                //(*m_exp)[eid]->GeneralMatrixOp_plain(inarray + m_coeff_offset[eid],
+                //                               tmp_outarray = outarray+m_coeff_offset[eid],
+                //                               mkey);
+                (*m_exp)[i]->StdExpansion::HelmholtzMatrixOp_MatFree_plain(
+                    inarray + m_coeff_offset[i],
+                    tmp_outarray = outarray+m_coeff_offset[i], lambda,
+                    quadMetric, laplacian00,laplacian01,laplacian11,
+                    nquad0, nquad1, nmodes0, nmodes1, ncoeffs,
+                    base0, base1, dbase0, dbase1, D0, D1);
+
+            }                
+            
         }
 
         /**

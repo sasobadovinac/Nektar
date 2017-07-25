@@ -75,39 +75,72 @@ namespace Nektar
 
             void HelmholtzMatrixOp_MatFree_plain(const Array<OneD, const NekDouble> &inarray,
                                                  Array<OneD,NekDouble> &outarray,
-                                                 const NekDouble lambda)
+                                                 const NekDouble lambda,
+                                                 Array<OneD, NekDouble> &quadMetric,                
+                Array<OneD, NekDouble> &laplacian00,
+                Array<OneD, NekDouble> &laplacian01,
+                Array<OneD, NekDouble> &laplacian11,
+                        int &nquad0, int &nquad1, int &nmodes0, int &nmodes1, int &ncoeffs,
+                        Array<OneD, const NekDouble> &base0,
+                        Array<OneD, const NekDouble> &base1,
+                        Array<OneD, const NekDouble> &dbase0,
+                        Array<OneD, const NekDouble> &dbase1,
+                        DNekMatSharedPtr &D0, DNekMatSharedPtr &D1)
             {
                 printf("%s\n", "within StdExpansion::HelmholtzMatrixOp_MatFree_plain");
-
-                // original function
-                //v_HelmholtzMatrixOp_MatFree(inarray,outarray,mkey);
-
-                // new function
-                // get metrics for MultiplyBy QuadratureMetric()
-                Array<OneD, NekDouble> quadMetric;
-                v_GetQuadratureMetric(quadMetric);
+                
+                /*Array<OneD, NekDouble> quadMetric;                
                 Array<OneD, NekDouble> laplacian00;
                 Array<OneD, NekDouble> laplacian01;
-                Array<OneD, NekDouble> laplacian11;
-                v_GetLaplacianMetric(laplacian00,laplacian01,laplacian11);
-                
-                int       nquad0  = m_base[0]->GetNumPoints();
-                int       nquad1  = m_base[1]->GetNumPoints();
-                int       nmodes0 = m_base[0]->GetNumModes();
-                int       nmodes1 = m_base[1]->GetNumModes();
+                Array<OneD, NekDouble> laplacian11; 
+                int nquad0  = m_base[0]->GetNumPoints();
+                int nquad1  = m_base[1]->GetNumPoints();
+                int nmodes0 = m_base[0]->GetNumModes();
+                int nmodes1 = m_base[1]->GetNumModes();
+                int ncoeffs = m_ncoeffs;
                 const Array<OneD, const NekDouble> base0 = m_base[0]->GetBdata();
                 const Array<OneD, const NekDouble> base1 = m_base[1]->GetBdata();
                 const Array<OneD, const NekDouble> dbase0 = m_base[0]->GetDbdata();
                 const Array<OneD, const NekDouble> dbase1 = m_base[1]->GetDbdata();
                 DNekMatSharedPtr D0 = m_base[0]->GetD();
                 DNekMatSharedPtr D1 = m_base[1]->GetD();
-                //NekDouble lambda = mkey.GetConstFactor(StdRegions::eFactorLambda);
-                int ncoeffs = m_ncoeffs;
+
+                v_GetQuadratureMetric(quadMetric);
+                v_GetLaplacianMetric(laplacian00,laplacian01,laplacian11);*/
 
                 v_HelmholtzMatrixOp_MatFree_plain(inarray,outarray,lambda, 
                         quadMetric, laplacian00,laplacian01,laplacian11,
                         nquad0, nquad1, nmodes0, nmodes1, ncoeffs,
                         base0, base1, dbase0, dbase1, D0, D1);
+
+            }
+
+            void GetHelmholtzMatrixOp_MatFree_Metrics(
+                Array<OneD, NekDouble> &quadMetric,                
+                Array<OneD, NekDouble> &laplacian00,
+                Array<OneD, NekDouble> &laplacian01,
+                Array<OneD, NekDouble> &laplacian11,
+                        int &nquad0, int &nquad1, int &nmodes0, int &nmodes1, int &ncoeffs,
+                        Array<OneD, const NekDouble> &base0,
+                        Array<OneD, const NekDouble> &base1,
+                        Array<OneD, const NekDouble> &dbase0,
+                        Array<OneD, const NekDouble> &dbase1,
+                        DNekMatSharedPtr &D0, DNekMatSharedPtr &D1)
+            {
+                nquad0  = m_base[0]->GetNumPoints();
+                nquad1  = m_base[1]->GetNumPoints();
+                nmodes0 = m_base[0]->GetNumModes();
+                nmodes1 = m_base[1]->GetNumModes();
+                ncoeffs = m_ncoeffs;
+                base0 = m_base[0]->GetBdata();
+                base1 = m_base[1]->GetBdata();
+                dbase0 = m_base[0]->GetDbdata();
+                dbase1 = m_base[1]->GetDbdata();
+                D0 = m_base[0]->GetD();
+                D1 = m_base[1]->GetD();
+
+                v_GetQuadratureMetric(quadMetric);
+                v_GetLaplacianMetric(laplacian00,laplacian01,laplacian11);                
 
             }
 
