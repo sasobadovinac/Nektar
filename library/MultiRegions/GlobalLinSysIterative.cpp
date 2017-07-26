@@ -571,6 +571,7 @@ namespace Nektar
 
             // Get vector sizes
             int nNonDir = nGlobal - nDir;
+            printf("nGlobal = %i, nNonDir=%i\n", nGlobal, nNonDir);
 
             // Allocate array storage
             Array<OneD, NekDouble> w_A    (nGlobal, 0.0);

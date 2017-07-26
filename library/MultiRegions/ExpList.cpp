@@ -966,17 +966,28 @@ namespace Nektar
         void ExpList::GeneralMatrixOp_IterPerExp_plain(
                                                  const Array<OneD,const NekDouble> &inarray,
                                                  Array<OneD,      NekDouble> &outarray,
-                                                 const NekDouble lambda)
+                                                 const NekDouble lambda,
+                        Array<OneD, NekDouble> &quadMetricGlo,                
+                Array<OneD, NekDouble> &laplacian00Glo,
+                Array<OneD, NekDouble> &laplacian01Glo,
+                Array<OneD, NekDouble> &laplacian11Glo,
+                int &nquad0, int &nquad1, int &nmodes0, int &nmodes1, int &ncoeffs, 
+                        Array<OneD, const int>  &coeff_offset, int &elmts,
+                        Array<OneD, const NekDouble> &base0,
+                        Array<OneD, const NekDouble> &base1,
+                        Array<OneD, const NekDouble> &dbase0,
+                        Array<OneD, const NekDouble> &dbase1,
+                        DNekMatSharedPtr &D0, DNekMatSharedPtr &D1)
         {
             printf("%s\n", "within ExpList::GeneralMatrixOp_IterPerExp_plain");
             // Gathering Data
-            const Array<OneD, const int> num_elmts
+            /*const Array<OneD, const int> num_elmts
                         = m_globalOptParam->GetShapeNumElements();
             const int elmts = num_elmts[0];
 
-            Array<OneD, int> coeff_offset = m_coeff_offset;
-            int nquad0, nquad1, nmodes0, nmodes1, ncoeffs;
-            Array<OneD, NekDouble> quadMetric, laplacian00, laplacian01, laplacian11;
+            Array<OneD, int> coeff_offset = m_coeff_offset;*/
+
+            /*int nquad0, nquad1, nmodes0, nmodes1, ncoeffs;
             Array<OneD, const NekDouble> base0, base1, dbase0, dbase1;
             DNekMatSharedPtr D0, D1;
 
@@ -984,14 +995,18 @@ namespace Nektar
                     nquad0, nquad1, nmodes0, nmodes1, ncoeffs,
                     base0, base1, dbase0, dbase1, D0, D1);
             
-            Array<OneD,NekDouble> tmp_outarray;
+            
             int metricSize = elmts * nquad0 * nquad1;
+            printf("metricSize = %i\n", metricSize);
             Array<OneD, NekDouble> quadMetricGlo(4*metricSize);
             Array<OneD, NekDouble> laplacian00Glo(quadMetric+metricSize);
             Array<OneD, NekDouble> laplacian01Glo(quadMetric+2*metricSize);
-            Array<OneD, NekDouble> laplacian11Glo(quadMetric+3*metricSize);
+            Array<OneD, NekDouble> laplacian11Glo(quadMetric+3*metricSize);*/
 
-            for(int el = 0; el < num_elmts[0]; ++el)
+            Array<OneD, NekDouble> quadMetric, laplacian00, laplacian01, laplacian11;
+            Array<OneD, NekDouble> tmp_outarray;
+
+            for(int el = 0; el < elmts; ++el)
             {
                 printf("num_elmts: %i\n", el);                        
                 
@@ -1006,7 +1021,7 @@ namespace Nektar
                 }
             }
             // Calculating
-            for(int el = 0; el < num_elmts[0]; ++el)
+            for(int el = 0; el < elmts; ++el)
             {
                 for (int i = 0; i < nquad0*nquad1; ++i)
                 {

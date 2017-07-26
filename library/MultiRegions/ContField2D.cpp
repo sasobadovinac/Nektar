@@ -1012,6 +1012,28 @@ namespace Nektar
             Array<OneD, const int> localToGlobalMap;
             Array<OneD, const NekDouble> localToGlobalSign;
 
+            //some StdExpansion Metrics
+            int nquad0, nquad1, nmodes0, nmodes1, ncoeffs;
+            Array<OneD, const NekDouble> base0, base1, dbase0, dbase1;
+            DNekMatSharedPtr D0, D1;
+            (*m_exp)[0]->StdExpansion::GetStdExpansionMetrics(
+                    nquad0, nquad1, nmodes0, nmodes1, ncoeffs,
+                    base0, base1, dbase0, dbase1, D0, D1);
+
+            Array<OneD, const int> num_elmts
+                        = m_globalOptParam->GetShapeNumElements();
+            int elmts = num_elmts[0];
+            Array<OneD, int> coeff_offset = m_coeff_offset;
+
+            int metricSize = elmts * nquad0 * nquad1;
+            //int metricSize = 74 * nquad0 * nquad1;
+            printf("metricSize = %i\n", metricSize);
+            Array<OneD, NekDouble> quadMetricGlo(4*metricSize);
+            Array<OneD, NekDouble> laplacian00Glo(quadMetricGlo+metricSize);
+            Array<OneD, NekDouble> laplacian01Glo(quadMetricGlo+2*metricSize);
+            Array<OneD, NekDouble> laplacian11Glo(quadMetricGlo+3*metricSize);
+
+
             m_locToGloMap->AssemblyMapCG::GetGlobalToLocal(
                     numLocalCoeffs, numGlobalCoeffs,
                     localToGlobalMap, localToGlobalSign);
@@ -1025,7 +1047,11 @@ namespace Nektar
             }
 
             //NekDouble lambda = gkey.GetConstFactor(StdRegions::eFactorLambda);
-            GeneralMatrixOp_IterPerExp_plain(tmp1,tmp2,lambda);
+            GeneralMatrixOp_IterPerExp_plain(tmp1,tmp2,lambda,
+                    quadMetricGlo, laplacian00Glo,laplacian01Glo,laplacian11Glo,                    
+                    nquad0, nquad1, nmodes0, nmodes1, ncoeffs,
+                    coeff_offset, elmts,
+                    base0, base1, dbase0, dbase1, D0, D1);
             
             //Assemble_plain(tmp2,outarray);  
             //Vmath::Zero(numGlobalCoeffs, outarray.get(), 1);
