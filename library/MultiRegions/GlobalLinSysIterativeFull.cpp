@@ -258,18 +258,7 @@ namespace Nektar
 
         }
 
-        void GlobalLinSysIterativeFull::v_DoMatrixMultiply_plain(
-                const Array<OneD, NekDouble>& pInput,
-                      Array<OneD, NekDouble>& pOutput)
-        {
-            printf("Within GlobalLinSysIterativeFull::v_DoMatrixMultiply_plain\n" );
-            NekDouble lambda = m_linSysKey.GetConstFactor(StdRegions::eFactorLambda);
 
-            boost::shared_ptr<MultiRegions::ExpList> expList = m_expList.lock();
-            // Perform matrix-vector operation A*d_i
-            expList->GeneralMatrixOp_plain(pInput, pOutput, lambda);
-
-        }
 
         /**
          *

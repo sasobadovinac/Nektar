@@ -640,7 +640,7 @@ namespace Nektar
                 w_A[i+nDir] = r_A[i] * diagonals[i];
             }
 
-            v_DoMatrixMultiply_plain(w_A, s_A);
+            DoMatrixMultiply_plain(w_A, s_A);
 
             rho = 0.0;
             for (int i = 0; i < nNonDir; ++i)
@@ -710,7 +710,7 @@ namespace Nektar
 
                 // Perform the method-specific matrix-vector multiply operation.
                 printf("CG iteration %i ==================================\n", totalIterations);
-                v_DoMatrixMultiply_plain(w_A, s_A);
+                DoMatrixMultiply_plain(w_A, s_A);
 
                 rho_new = 0.0;
                 for (int i = 0; i < nNonDir; ++i)
@@ -748,6 +748,19 @@ namespace Nektar
                     break;
                 }
             }
+        }
+
+        void GlobalLinSysIterative::DoMatrixMultiply_plain(
+                const Array<OneD, NekDouble>& pInput,
+                      Array<OneD, NekDouble>& pOutput)
+        {
+            printf("Within GlobalLinSysIterative::DoMatrixMultiply_plain\n" );
+            NekDouble lambda = m_linSysKey.GetConstFactor(StdRegions::eFactorLambda);
+
+            boost::shared_ptr<MultiRegions::ExpList> expList = m_expList.lock();
+            // Perform matrix-vector operation A*d_i
+            expList->GeneralMatrixOp_plain(pInput, pOutput, lambda);
+
         }
 
         void GlobalLinSysIterative::Set_Rhs_Magnitude(

@@ -1005,14 +1005,10 @@ namespace Nektar
                       const NekDouble lambda)
         {
             printf("%s\n", "within ContField2D::v_GeneralMatrixOp_plain");
-            Array<OneD,NekDouble> tmp1(2*m_ncoeffs);
-            Array<OneD,NekDouble> tmp2(tmp1+m_ncoeffs);
+            
 
-            int numLocalCoeffs, numGlobalCoeffs;
-            Array<OneD, const int> localToGlobalMap;
-            Array<OneD, const NekDouble> localToGlobalSign;
+            
 
-            //some StdExpansion Metrics
             int nquad0, nquad1, nmodes0, nmodes1, ncoeffs;
             Array<OneD, const NekDouble> base0, base1, dbase0, dbase1;
             DNekMatSharedPtr D0, D1;
@@ -1020,24 +1016,30 @@ namespace Nektar
                     nquad0, nquad1, nmodes0, nmodes1, ncoeffs,
                     base0, base1, dbase0, dbase1, D0, D1);
 
+            
+            int elmts;
+            Array<OneD, int> coeff_offset;
             Array<OneD, const int> num_elmts
                         = m_globalOptParam->GetShapeNumElements();
-            int elmts = num_elmts[0];
-            Array<OneD, int> coeff_offset = m_coeff_offset;
+            elmts = num_elmts[0];
+            coeff_offset = m_coeff_offset;
 
             int metricSize = elmts * nquad0 * nquad1;
-            //int metricSize = 74 * nquad0 * nquad1;
-            printf("metricSize = %i\n", metricSize);
             Array<OneD, NekDouble> quadMetricGlo(4*metricSize);
             Array<OneD, NekDouble> laplacian00Glo(quadMetricGlo+metricSize);
             Array<OneD, NekDouble> laplacian01Glo(quadMetricGlo+2*metricSize);
             Array<OneD, NekDouble> laplacian11Glo(quadMetricGlo+3*metricSize);
 
-
+            int numLocalCoeffs, numGlobalCoeffs;
+            Array<OneD, const int> localToGlobalMap;
+            Array<OneD, const NekDouble> localToGlobalSign;
             m_locToGloMap->AssemblyMapCG::GetGlobalToLocal(
                     numLocalCoeffs, numGlobalCoeffs,
                     localToGlobalMap, localToGlobalSign);
-            printf("numLocalCoeffs = %i, numGlobalCoeffs = %i\n",numLocalCoeffs, numGlobalCoeffs);
+            //printf("numLocalCoeffs = %i, numGlobalCoeffs = %i\n",numLocalCoeffs, numGlobalCoeffs);
+
+            Array<OneD,NekDouble> tmp1(2*m_ncoeffs);
+            Array<OneD,NekDouble> tmp2(tmp1+m_ncoeffs);
             //GlobalToLocal_plain(inarray,tmp1);
             //Vmath::Gathr(numLocalCoeffs, localToGlobalSign.get(),
             //         inarray.get(), localToGlobalMap.get(), tmp1.get());
