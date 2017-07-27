@@ -757,9 +757,34 @@ namespace Nektar
             printf("Within GlobalLinSysIterative::DoMatrixMultiply_plain\n" );
             NekDouble lambda = m_linSysKey.GetConstFactor(StdRegions::eFactorLambda);
 
+            int nquad0, nquad1, nmodes0, nmodes1, ncoeffs;
+            Array<OneD, const NekDouble> base0, base1, dbase0, dbase1;
+            DNekMatSharedPtr D0, D1;
+
+            int elmts;
+            Array<OneD, int> coeff_offset;
+            
+            //int metricSize = elmts * nquad0 * nquad1;
+            int metricSize = 2220;
+            Array<OneD, NekDouble> quadMetricGlo(4*metricSize);
+            Array<OneD, NekDouble> laplacian00Glo(quadMetricGlo+metricSize);
+            Array<OneD, NekDouble> laplacian01Glo(quadMetricGlo+2*metricSize);
+            Array<OneD, NekDouble> laplacian11Glo(quadMetricGlo+3*metricSize);
+
+            int numLocalCoeffs, numGlobalCoeffs;
+            Array<OneD, const int> localToGlobalMap;
+            Array<OneD, const NekDouble> localToGlobalSign;
+            
+
             boost::shared_ptr<MultiRegions::ExpList> expList = m_expList.lock();
             // Perform matrix-vector operation A*d_i
-            expList->GeneralMatrixOp_plain(pInput, pOutput, lambda);
+            expList->GeneralMatrixOp_plain(pInput, pOutput, lambda,quadMetricGlo, laplacian00Glo, laplacian01Glo, laplacian11Glo,
+                        nquad0, nquad1, nmodes0, nmodes1, ncoeffs, 
+                        coeff_offset, elmts,
+                        base0, base1, dbase0, dbase1,
+                        D0, D1,
+                        numLocalCoeffs, numGlobalCoeffs,
+                        localToGlobalMap, localToGlobalSign);
 
         }
 

@@ -794,7 +794,21 @@ namespace Nektar
             inline void GeneralMatrixOp_plain(
                 const Array<OneD,const NekDouble> &inarray,
                       Array<OneD,      NekDouble> &outarray,
-                const NekDouble lambda);
+                const NekDouble lambda,
+                      Array<OneD, NekDouble> &quadMetricGlo,                
+                Array<OneD, NekDouble> &laplacian00Glo,
+                Array<OneD, NekDouble> &laplacian01Glo,
+                Array<OneD, NekDouble> &laplacian11Glo,
+                int &nquad0, int &nquad1, int &nmodes0, int &nmodes1, int &ncoeffs, 
+                        Array<OneD, const int>  &coeff_offset, int &elmts,
+                        Array<OneD, const NekDouble> &base0,
+                        Array<OneD, const NekDouble> &base1,
+                        Array<OneD, const NekDouble> &dbase0,
+                        Array<OneD, const NekDouble> &dbase1,
+                        DNekMatSharedPtr &D0, DNekMatSharedPtr &D1,
+                        int &numLocalCoeffs, int &numGlobalCoeffs,
+            Array<OneD, const int> &localToGlobalMap,
+            Array<OneD, const NekDouble> &localToGlobalSign);
 
             MULTI_REGIONS_EXPORT void GeneralMatrixOp_IterPerExp(
                 const GlobalMatrixKey      &gkey,
@@ -986,7 +1000,21 @@ namespace Nektar
             virtual void v_GeneralMatrixOp_plain(
                 const Array<OneD,const NekDouble> &inarray,
                       Array<OneD,      NekDouble> &outarray,
-                const NekDouble lambda);
+                const NekDouble lambda,
+                      Array<OneD, NekDouble> &quadMetricGlo,                
+                Array<OneD, NekDouble> &laplacian00Glo,
+                Array<OneD, NekDouble> &laplacian01Glo,
+                Array<OneD, NekDouble> &laplacian11Glo,
+                int &nquad0, int &nquad1, int &nmodes0, int &nmodes1, int &ncoeffs, 
+                        Array<OneD, const int>  &coeff_offset, int &elmts,
+                        Array<OneD, const NekDouble> &base0,
+                        Array<OneD, const NekDouble> &base1,
+                        Array<OneD, const NekDouble> &dbase0,
+                        Array<OneD, const NekDouble> &dbase1,
+                        DNekMatSharedPtr &D0, DNekMatSharedPtr &D1,
+                        int &numLocalCoeffs, int &numGlobalCoeffs,
+            Array<OneD, const int> &localToGlobalMap,
+            Array<OneD, const NekDouble> &localToGlobalSign);
 
         protected:
             boost::shared_ptr<DNekMat> GenGlobalMatrixFull(
@@ -2348,9 +2376,30 @@ namespace Nektar
         inline void ExpList::GeneralMatrixOp_plain(
                                 const Array<OneD,const NekDouble> &inarray,
                                       Array<OneD,      NekDouble> &outarray,
-                                const NekDouble lambda)
+                                const NekDouble lambda,
+                      Array<OneD, NekDouble> &quadMetricGlo,                
+                Array<OneD, NekDouble> &laplacian00Glo,
+                Array<OneD, NekDouble> &laplacian01Glo,
+                Array<OneD, NekDouble> &laplacian11Glo,
+                int &nquad0, int &nquad1, int &nmodes0, int &nmodes1, int &ncoeffs, 
+                        Array<OneD, const int>  &coeff_offset, int &elmts,
+                        Array<OneD, const NekDouble> &base0,
+                        Array<OneD, const NekDouble> &base1,
+                        Array<OneD, const NekDouble> &dbase0,
+                        Array<OneD, const NekDouble> &dbase1,
+                        DNekMatSharedPtr &D0, DNekMatSharedPtr &D1,
+                        int &numLocalCoeffs, int &numGlobalCoeffs,
+            Array<OneD, const int> &localToGlobalMap,
+            Array<OneD, const NekDouble> &localToGlobalSign)
         {
-            v_GeneralMatrixOp_plain(inarray,outarray,lambda);
+            v_GeneralMatrixOp_plain(inarray,outarray,lambda,
+                        quadMetricGlo, laplacian00Glo, laplacian01Glo, laplacian11Glo,
+                        nquad0, nquad1, nmodes0, nmodes1, ncoeffs, 
+                        coeff_offset, elmts,
+                        base0, base1, dbase0, dbase1,
+                        D0, D1,
+                        numLocalCoeffs, numGlobalCoeffs,
+                        localToGlobalMap, localToGlobalSign);
         }
 
 

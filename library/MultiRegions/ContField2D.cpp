@@ -1002,37 +1002,36 @@ namespace Nektar
         void ContField2D::v_GeneralMatrixOp_plain(
                 const Array<OneD,const NekDouble>  &inarray,
                       Array<OneD,      NekDouble>  &outarray,
-                      const NekDouble lambda)
+                      const NekDouble lambda,
+                      Array<OneD, NekDouble> &quadMetricGlo,                
+                Array<OneD, NekDouble> &laplacian00Glo,
+                Array<OneD, NekDouble> &laplacian01Glo,
+                Array<OneD, NekDouble> &laplacian11Glo,
+                int &nquad0, int &nquad1, int &nmodes0, int &nmodes1, int &ncoeffs, 
+                        Array<OneD, const int>  &coeff_offset, int &elmts,
+                        Array<OneD, const NekDouble> &base0,
+                        Array<OneD, const NekDouble> &base1,
+                        Array<OneD, const NekDouble> &dbase0,
+                        Array<OneD, const NekDouble> &dbase1,
+                        DNekMatSharedPtr &D0, DNekMatSharedPtr &D1,
+                        int &numLocalCoeffs, int &numGlobalCoeffs,
+            Array<OneD, const int> &localToGlobalMap,
+            Array<OneD, const NekDouble> &localToGlobalSign)
         {
             printf("%s\n", "within ContField2D::v_GeneralMatrixOp_plain");
             
-
-            
-
-            int nquad0, nquad1, nmodes0, nmodes1, ncoeffs;
-            Array<OneD, const NekDouble> base0, base1, dbase0, dbase1;
-            DNekMatSharedPtr D0, D1;
             (*m_exp)[0]->StdExpansion::GetStdExpansionMetrics(
                     nquad0, nquad1, nmodes0, nmodes1, ncoeffs,
                     base0, base1, dbase0, dbase1, D0, D1);
-
             
-            int elmts;
-            Array<OneD, int> coeff_offset;
+
             Array<OneD, const int> num_elmts
                         = m_globalOptParam->GetShapeNumElements();
             elmts = num_elmts[0];
             coeff_offset = m_coeff_offset;
 
-            int metricSize = elmts * nquad0 * nquad1;
-            Array<OneD, NekDouble> quadMetricGlo(4*metricSize);
-            Array<OneD, NekDouble> laplacian00Glo(quadMetricGlo+metricSize);
-            Array<OneD, NekDouble> laplacian01Glo(quadMetricGlo+2*metricSize);
-            Array<OneD, NekDouble> laplacian11Glo(quadMetricGlo+3*metricSize);
-
-            int numLocalCoeffs, numGlobalCoeffs;
-            Array<OneD, const int> localToGlobalMap;
-            Array<OneD, const NekDouble> localToGlobalSign;
+            printf("metrcisize=%i\n",elmts*nquad0*nquad1 );
+            
             m_locToGloMap->AssemblyMapCG::GetGlobalToLocal(
                     numLocalCoeffs, numGlobalCoeffs,
                     localToGlobalMap, localToGlobalSign);
