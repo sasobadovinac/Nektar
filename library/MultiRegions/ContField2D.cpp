@@ -1019,24 +1019,11 @@ namespace Nektar
             Array<OneD, const NekDouble> &localToGlobalSign)
         {
             printf("%s\n", "within ContField2D::v_GeneralMatrixOp_plain");
-            
-            (*m_exp)[0]->StdExpansion::GetStdExpansionMetrics(
-                    nquad0, nquad1, nmodes0, nmodes1, ncoeffs,
-                    base0, base1, dbase0, dbase1, D0, D1);
-            
-
-            Array<OneD, const int> num_elmts
-                        = m_globalOptParam->GetShapeNumElements();
-            elmts = num_elmts[0];
-            coeff_offset = m_coeff_offset;
-
-            printf("metrcisize=%i\n",elmts*nquad0*nquad1 );
-            
+                        
             m_locToGloMap->AssemblyMapCG::GetGlobalToLocal(
                     numLocalCoeffs, numGlobalCoeffs,
                     localToGlobalMap, localToGlobalSign);
-            //printf("numLocalCoeffs = %i, numGlobalCoeffs = %i\n",numLocalCoeffs, numGlobalCoeffs);
-
+            
             Array<OneD,NekDouble> tmp1(2*m_ncoeffs);
             Array<OneD,NekDouble> tmp2(tmp1+m_ncoeffs);
             //GlobalToLocal_plain(inarray,tmp1);
@@ -1047,7 +1034,6 @@ namespace Nektar
                 tmp1[i] = localToGlobalSign[i] * inarray[localToGlobalMap[i]];
             }
 
-            //NekDouble lambda = gkey.GetConstFactor(StdRegions::eFactorLambda);
             GeneralMatrixOp_IterPerExp_plain(tmp1,tmp2,lambda,
                     quadMetricGlo, laplacian00Glo,laplacian01Glo,laplacian11Glo,                    
                     nquad0, nquad1, nmodes0, nmodes1, ncoeffs,

@@ -2827,6 +2827,27 @@ namespace Nektar
             //GeneralMatrixOp_IterPerExp_plain(gkey,inarray,outarray);
         }
 
+        void ExpList::v_GetStdExpansionMetric(
+            int &nquad0, int &nquad1, int &nmodes0, int &nmodes1, int &ncoeffs, 
+            Array<OneD, const int>  &coeff_offset, int &elmts,
+            Array<OneD, const NekDouble> &base0,
+            Array<OneD, const NekDouble> &base1,
+            Array<OneD, const NekDouble> &dbase0,
+            Array<OneD, const NekDouble> &dbase1,
+            DNekMatSharedPtr &D0, DNekMatSharedPtr &D1)
+        {
+            printf("%s\n", "within ExpList::v_GetStdExpansionMetric");
+            
+            (*m_exp)[0]->StdExpansion::GetStdExpansionMetrics(
+                    nquad0, nquad1, nmodes0, nmodes1, ncoeffs,
+                    base0, base1, dbase0, dbase1, D0, D1);            
+
+            Array<OneD, const int> num_elmts
+                        = m_globalOptParam->GetShapeNumElements();
+            elmts = num_elmts[0];
+            coeff_offset = m_coeff_offset;
+        }
+
         /**
          * The operation is evaluated locally by the elemental
          * function StdRegions#StdExpansion#GetCoords.

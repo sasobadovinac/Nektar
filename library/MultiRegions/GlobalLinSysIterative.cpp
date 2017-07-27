@@ -755,17 +755,23 @@ namespace Nektar
                       Array<OneD, NekDouble>& pOutput)
         {
             printf("Within GlobalLinSysIterative::DoMatrixMultiply_plain\n" );
+            // Gather Data
             NekDouble lambda = m_linSysKey.GetConstFactor(StdRegions::eFactorLambda);
 
             int nquad0, nquad1, nmodes0, nmodes1, ncoeffs;
             Array<OneD, const NekDouble> base0, base1, dbase0, dbase1;
             DNekMatSharedPtr D0, D1;
-
             int elmts;
             Array<OneD, int> coeff_offset;
+
+            boost::shared_ptr<MultiRegions::ExpList> expList = m_expList.lock();
+            expList->v_GetStdExpansionMetric(
+                nquad0, nquad1, nmodes0, nmodes1, ncoeffs, 
+                coeff_offset, elmts,
+                base0, base1, dbase0, dbase1,
+                D0, D1);
             
-            //int metricSize = elmts * nquad0 * nquad1;
-            int metricSize = 2220;
+            int metricSize = elmts * nquad0 * nquad1;
             Array<OneD, NekDouble> quadMetricGlo(4*metricSize);
             Array<OneD, NekDouble> laplacian00Glo(quadMetricGlo+metricSize);
             Array<OneD, NekDouble> laplacian01Glo(quadMetricGlo+2*metricSize);
@@ -773,10 +779,10 @@ namespace Nektar
 
             int numLocalCoeffs, numGlobalCoeffs;
             Array<OneD, const int> localToGlobalMap;
-            Array<OneD, const NekDouble> localToGlobalSign;
-            
+            Array<OneD, const NekDouble> localToGlobalSign;            
 
-            boost::shared_ptr<MultiRegions::ExpList> expList = m_expList.lock();
+            // Do Calculations
+            //boost::shared_ptr<MultiRegions::ExpList> expList = m_expList.lock();
             // Perform matrix-vector operation A*d_i
             expList->GeneralMatrixOp_plain(pInput, pOutput, lambda,quadMetricGlo, laplacian00Glo, laplacian01Glo, laplacian11Glo,
                         nquad0, nquad1, nmodes0, nmodes1, ncoeffs, 
