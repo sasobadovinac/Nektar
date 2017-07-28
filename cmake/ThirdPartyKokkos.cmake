@@ -46,9 +46,9 @@ IF (NEKTAR_USE_KOKKOS)
         INCLUDE(ExternalProject)
         EXTERNALPROJECT_ADD(
             kokkos-${KOKKOS_BRANCH_NAME}
-            GIT_REPOSITORY https://github.com/kokkos/kokkos.git
-            GIT_TAG ${KOKKOS_BRANCH_NAME}
-            #URL ${CMAKE_SOURCE_DIR}/../kokkos-master.zip
+            #GIT_REPOSITORY https://github.com/kokkos/kokkos.git
+            #GIT_TAG ${KOKKOS_BRANCH_NAME}
+            URL ${TPSRC}/kokkos-4906e3d5a3c3c95913221130a42785db4e620f4d.zip
 
             STAMP_DIR ${TPBUILD}/stamp
             SOURCE_DIR ${TPSRC}/kokkos-${KOKKOS_BRANCH_NAME}
