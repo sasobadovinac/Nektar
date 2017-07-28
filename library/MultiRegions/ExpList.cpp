@@ -980,28 +980,7 @@ namespace Nektar
                         DNekMatSharedPtr &D0, DNekMatSharedPtr &D1)
         {
             printf("%s\n", "within ExpList::GeneralMatrixOp_IterPerExp_plain");
-            // Gathering Data
-            /*const Array<OneD, const int> num_elmts
-                        = m_globalOptParam->GetShapeNumElements();
-            const int elmts = num_elmts[0];
 
-            Array<OneD, int> coeff_offset = m_coeff_offset;*/
-
-            /*int nquad0, nquad1, nmodes0, nmodes1, ncoeffs;
-            Array<OneD, const NekDouble> base0, base1, dbase0, dbase1;
-            DNekMatSharedPtr D0, D1;
-
-            (*m_exp)[0]->StdExpansion::GetStdExpansionMetrics(
-                    nquad0, nquad1, nmodes0, nmodes1, ncoeffs,
-                    base0, base1, dbase0, dbase1, D0, D1);
-            
-            
-            int metricSize = elmts * nquad0 * nquad1;
-            printf("metricSize = %i\n", metricSize);
-            Array<OneD, NekDouble> quadMetricGlo(4*metricSize);
-            Array<OneD, NekDouble> laplacian00Glo(quadMetric+metricSize);
-            Array<OneD, NekDouble> laplacian01Glo(quadMetric+2*metricSize);
-            Array<OneD, NekDouble> laplacian11Glo(quadMetric+3*metricSize);*/
 
             Array<OneD, NekDouble> quadMetric, laplacian00, laplacian01, laplacian11;
             Array<OneD, NekDouble> tmp_outarray;

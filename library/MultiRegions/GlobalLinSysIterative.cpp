@@ -549,6 +549,37 @@ namespace Nektar
         }
 
 
+        void GlobalLinSysIterative::Set_Rhs_Magnitude(
+            const NekVector<NekDouble> &pIn)
+        {
+            Array<OneD, NekDouble> vExchange(1, 0.0);
+            if (m_map.num_elements() > 0)
+            {
+                vExchange[0] = Vmath::Dot2(pIn.GetDimension(),
+                                        &pIn[0],&pIn[0],&m_map[0]);
+            }
+
+            m_expList.lock()->GetComm()->GetRowComm()->AllReduce(
+                vExchange, Nektar::LibUtilities::ReduceSum);
+
+            // To ensure that very different rhs values are not being
+            // used in subsequent solvers such as the velocit solve in
+            // INC NS. If this works we then need to work out a better
+            // way to control this.
+            NekDouble new_rhs_mag = (vExchange[0] > 1e-6)? vExchange[0] : 1.0;
+
+            if(m_rhs_magnitude == NekConstants::kNekUnsetDouble)
+            {
+                m_rhs_magnitude = new_rhs_mag;
+            }
+            else
+            {
+                m_rhs_magnitude = (m_rhs_mag_sm*(m_rhs_magnitude) + 
+                                   (1.0-m_rhs_mag_sm)*new_rhs_mag); 
+            }
+        }
+
+
 
         void GlobalLinSysIterative::DoConjugateGradient_plain(
             const int                          nGlobal,
@@ -666,7 +697,7 @@ namespace Nektar
             int numLocalCoeffs, numGlobalCoeffs;
             Array<OneD, const int> localToGlobalMap;
             Array<OneD, const NekDouble> localToGlobalSign; 
-            DoMatrixMultiply_plain(w_A, s_A, lambda,
+            GetMatrixMultiplyMetrics(w_A, s_A, lambda,
                         quadMetricGlo, laplacian00Glo, laplacian01Glo, laplacian11Glo,
                         nquad0, nquad1, nmodes0, nmodes1, ncoeffs, 
                         coeff_offset, elmts,
@@ -790,6 +821,45 @@ namespace Nektar
             }
         }
 
+
+
+
+        void GlobalLinSysIterative::GetMatrixMultiplyMetrics(
+                const Array<OneD, NekDouble>& pInput,
+                      Array<OneD, NekDouble>& pOutput,
+                const NekDouble &lambda,
+                      Array<OneD, NekDouble> &quadMetricGlo,                
+                Array<OneD, NekDouble> &laplacian00Glo,
+                Array<OneD, NekDouble> &laplacian01Glo,
+                Array<OneD, NekDouble> &laplacian11Glo,
+                int &nquad0, int &nquad1, int &nmodes0, int &nmodes1, int &ncoeffs, 
+                        Array<OneD, const int>  &coeff_offset, int &elmts,
+                        Array<OneD, const NekDouble> &base0,
+                        Array<OneD, const NekDouble> &base1,
+                        Array<OneD, const NekDouble> &dbase0,
+                        Array<OneD, const NekDouble> &dbase1,
+                        DNekMatSharedPtr &D0, DNekMatSharedPtr &D1,
+                        int &numLocalCoeffs, int &numGlobalCoeffs,
+            Array<OneD, const int> &localToGlobalMap,
+            Array<OneD, const NekDouble> &localToGlobalSign)
+        {
+            printf("Within GlobalLinSysIterative::GetMatrixMultiplyMetrics\n" );
+           
+
+            boost::shared_ptr<MultiRegions::ExpList> expList = m_expList.lock();
+            // Perform matrix-vector operation A*d_i
+            expList->GeneralMatrixOp_plain(pInput, pOutput, lambda,
+                        quadMetricGlo, laplacian00Glo, laplacian01Glo, laplacian11Glo,
+                        nquad0, nquad1, nmodes0, nmodes1, ncoeffs, 
+                        coeff_offset, elmts,
+                        base0, base1, dbase0, dbase1,
+                        D0, D1,
+                        numLocalCoeffs, numGlobalCoeffs,
+                        localToGlobalMap, localToGlobalSign);
+
+        }
+
+
         void GlobalLinSysIterative::DoMatrixMultiply_plain(
                 const Array<OneD, NekDouble>& pInput,
                       Array<OneD, NekDouble>& pOutput,
@@ -826,35 +896,9 @@ namespace Nektar
 
         }
 
-        void GlobalLinSysIterative::Set_Rhs_Magnitude(
-            const NekVector<NekDouble> &pIn)
-        {
-            Array<OneD, NekDouble> vExchange(1, 0.0);
-            if (m_map.num_elements() > 0)
-            {
-                vExchange[0] = Vmath::Dot2(pIn.GetDimension(),
-                                        &pIn[0],&pIn[0],&m_map[0]);
-            }
 
-            m_expList.lock()->GetComm()->GetRowComm()->AllReduce(
-                vExchange, Nektar::LibUtilities::ReduceSum);
 
-            // To ensure that very different rhs values are not being
-            // used in subsequent solvers such as the velocit solve in
-            // INC NS. If this works we then need to work out a better
-            // way to control this.
-            NekDouble new_rhs_mag = (vExchange[0] > 1e-6)? vExchange[0] : 1.0;
-
-            if(m_rhs_magnitude == NekConstants::kNekUnsetDouble)
-            {
-                m_rhs_magnitude = new_rhs_mag;
-            }
-            else
-            {
-                m_rhs_magnitude = (m_rhs_mag_sm*(m_rhs_magnitude) + 
-                                   (1.0-m_rhs_mag_sm)*new_rhs_mag); 
-            }
-        }
+        
 
     }
 }
