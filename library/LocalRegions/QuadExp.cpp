@@ -1667,8 +1667,8 @@ namespace Nektar
             {
                 case StdRegions::eMass:
                 {
-                    if ((m_metricinfo->GetGtype() ==
-                         SpatialDomains::eDeformed) || (mkey.GetNVarCoeff()))
+                    if (m_metricinfo->GetGtype() == SpatialDomains::eDeformed ||
+                        mkey.GetNVarCoeff())
                     {
                         NekDouble        one = 1.0;
                         DNekMatSharedPtr mat = GenMatrix(mkey);
@@ -1686,17 +1686,61 @@ namespace Nektar
                     break;
                 case StdRegions::eInvMass:
                 {
-                    if ((m_metricinfo->GetGtype() ==
-                        SpatialDomains::eDeformed) || (mkey.GetNVarCoeff()))
+                    if (m_metricinfo->GetCoordSys() ==
+                        SpatialDomains::eCylindrical)
                     {
-                        NekDouble one = 1.0;
+                        // Override quadrate metric along the axis to avoid
+                        // singular mass matrix issue.
+                        const int nq = GetTotPoints();
+
+                        // Usually eInvMass is the first thing to be called, so
+                        // we don't have the quadrature metric set up. Ensure
+                        // it's set up, otherwise we can't override it.
+                        if (m_metrics.count(eMetricQuadrature) == 0)
+                        {
+                            ComputeQuadratureMetric();
+                        }
+
+                        // Cache quadrature metric inside tmpMetric.
+                        Array<OneD, NekDouble> tmpMetric(nq);
+                        Vmath::Vcopy(nq, m_metrics[eMetricQuadrature], 1,
+                                     tmpMetric, 1);
+
+                        // Now mask out the quadrature metric along the axis.
+                        Array<OneD, const NekDouble> jac =
+                            m_metricinfo->GetJac(GetPointsKeys());
+
+                        for (int i = 0; i < nq; ++i)
+                        {
+                            if (jac[i] <= std::numeric_limits<NekDouble>::epsilon())
+                            {
+                                m_metrics[eMetricQuadrature][i] = 1.0;
+                            }
+                        }
+
+                        // Generate a mass matrix and invert.
                         StdRegions::StdMatrixKey masskey(
                             StdRegions::eMass, DetShapeType(), *this);
                         DNekMatSharedPtr mat = GenMatrix(masskey);
                         mat->Invert();
 
                         returnval = MemoryManager<DNekScalMat>::
-                            AllocateSharedPtr(one,mat);
+                            AllocateSharedPtr(1.0, mat);
+
+                        // Finally, restore the quadrature metric
+                        Vmath::Vcopy(nq, tmpMetric, 1,
+                                     m_metrics[eMetricQuadrature], 1);
+                    }
+                    else if (m_metricinfo->GetGtype() ==
+                             SpatialDomains::eDeformed || mkey.GetNVarCoeff())
+                    {
+                        StdRegions::StdMatrixKey masskey(
+                            StdRegions::eMass, DetShapeType(), *this);
+                        DNekMatSharedPtr mat = GenMatrix(masskey);
+                        mat->Invert();
+
+                        returnval = MemoryManager<DNekScalMat>::
+                            AllocateSharedPtr(1.0, mat);
                     }
                     else
                     {
@@ -1835,6 +1879,7 @@ namespace Nektar
 
                     returnval =
                         MemoryManager<DNekScalMat>::AllocateSharedPtr(one,helm);
+
                 }
                     break;
                 case StdRegions::eIProductWRTBase:

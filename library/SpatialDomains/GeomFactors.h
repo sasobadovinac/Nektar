@@ -128,6 +128,9 @@ namespace SpatialDomains
             /// Return the number of dimensions of the coordinate system.
             inline int GetCoordim() const;
 
+            /// Return the number of dimensions of the coordinate system.
+            inline CoordinateSystem GetCoordSys() const;
+
             /// Computes a hash of this GeomFactors element.
             inline size_t GetHash();
 
@@ -302,6 +305,15 @@ namespace SpatialDomains
     inline int GeomFactors::GetCoordim() const
     {
         return m_coordDim;
+    }
+
+    /**
+     * This returns the coordinate system of the geometric factor.
+     * @returns             The dimension of the coordinate system.
+     */
+    inline CoordinateSystem GeomFactors::GetCoordSys() const
+    {
+        return m_coordSys;
     }
 
     /**

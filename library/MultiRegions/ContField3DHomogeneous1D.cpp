@@ -34,6 +34,7 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
+#include <limits>
 #include <MultiRegions/ContField3DHomogeneous1D.h>
 #include <MultiRegions/ContField2D.h>
 
@@ -304,12 +305,20 @@ namespace Nektar
                     if (m_graph->GetCoordSystem() == (int)SpatialDomains::eCylindrical)
                     {
                         int planePts = m_planes[0]->GetNpoints();
-                        Array<OneD, NekDouble> xc0(planePts), xc1(m_npoints);
+                        Array<OneD, NekDouble> xc0(planePts), xc1(planePts);
                         m_planes[0]->GetCoords(xc0, xc1);
 
-                        for (int i = 0; i < m_npoints; ++i)
+                        for (int i = 0; i < planePts; ++i)
                         {
-                            xc1[i] = beta * beta / xc1[i] / xc1[i] + lambda;
+                            NekDouble r2 = xc1[i] * xc1[i];
+                            if (r2 > std::numeric_limits<NekDouble>::epsilon())
+                            {
+                                xc1[i] = beta * beta / r2 + lambda;
+                            }
+                            else
+                            {
+                                xc1[i] = beta * beta + lambda;
+                            }
                         }
 
                         varcoeff2[StdRegions::eVarCoeffMass] = xc1;

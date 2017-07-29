@@ -1438,11 +1438,10 @@ namespace Nektar
             // Utility function for a common case of retrieving a
             // BoundaryCondition from a boundary condition collection.
             MULTI_REGIONS_EXPORT
-                static SpatialDomains::BoundaryConditionShPtr
-                    GetBoundaryCondition(const SpatialDomains::
-                            BoundaryConditionCollection& collection,
-                            unsigned int index, const std::string& variable);
-
+            SpatialDomains::BoundaryConditionShPtr GetBoundaryCondition(
+                const SpatialDomains::BoundaryConditionCollection& collection,
+                unsigned int                                       index,
+                const std::string&                                 variable);
         
         private:
             virtual const Array<OneD,const SpatialDomains::BoundaryConditionShPtr> &v_GetBndConditions();
