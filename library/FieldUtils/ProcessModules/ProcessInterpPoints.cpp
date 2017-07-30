@@ -104,7 +104,7 @@ void ProcessInterpPoints::Process(po::variables_map &vm)
 {
     CreateFieldPts(vm);
 
-    FieldSharedPtr fromField = boost::shared_ptr<Field>(new Field());
+    FieldSharedPtr fromField = std::shared_ptr<Field>(new Field());
     std::vector<std::string> files;
     ParseUtils::GenerateOrderedStringVector(
         m_config["fromxml"].as<string>().c_str(), files);
@@ -153,11 +153,11 @@ void ProcessInterpPoints::Process(po::variables_map &vm)
     const SpatialDomains::ExpansionMap &expansions =
         fromField->m_graph->GetExpansions();
     Array<OneD, int> ElementGIDs(expansions.size());
-    SpatialDomains::ExpansionMap::const_iterator expIt;
+
     int i = 0;
-    for (expIt = expansions.begin(); expIt != expansions.end(); ++expIt)
+    for (auto &expIt : expansions)
     {
-        ElementGIDs[i++] = expIt->second->m_geomShPtr->GetGlobalID();
+        ElementGIDs[i++] = expIt.second->m_geomShPtr->GetGlobalID();
     }
     // check to see that we do have some elmement in teh domain since
     // possibly all points could be outside of the domain

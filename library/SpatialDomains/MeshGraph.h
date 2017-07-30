@@ -35,7 +35,7 @@
 #ifndef NEKTAR_SPATIALDOMAINS_MESHGRAPH_H
 #define NEKTAR_SPATIALDOMAINS_MESHGRAPH_H
 
-#include <boost/unordered_map.hpp>
+#include <unordered_map>
 
 #include <LibUtilities/BasicUtils/SessionReader.h>
 #include <LibUtilities/BasicUtils/FieldIO.h>
@@ -106,15 +106,13 @@ namespace Nektar
         };
 
         class InterfaceComponent;
-        typedef boost::shared_ptr< InterfaceComponent > SharedInterfaceCompPtr;
+        typedef std::shared_ptr< InterfaceComponent > SharedInterfaceCompPtr;
         typedef std::vector< PointGeomSharedPtr >       PointGeomVector;
         typedef std::map<int, PointGeomSharedPtr>       PointGeomMap;
         typedef std::list< SharedInterfaceCompPtr >     InterfaceCompList;
 
-        typedef boost::shared_ptr< GeometryVector >     Composite;
+        typedef std::shared_ptr< GeometryVector >     Composite;
         typedef std::map<int, Composite>                CompositeMap;
-        typedef std::map<int, Composite>::iterator      CompositeMapIter;
-        typedef std::map<int, Composite>::const_iterator      CompositeMapConstIter;
 
         struct ElementEdge
         {
@@ -129,13 +127,13 @@ namespace Nektar
         };
 
 
-        typedef boost::shared_ptr<ElementEdge> ElementEdgeSharedPtr;
+        typedef std::shared_ptr<ElementEdge> ElementEdgeSharedPtr;
         typedef std::vector<ElementEdgeSharedPtr> ElementEdgeVector;
-        typedef boost::shared_ptr<ElementEdgeVector> ElementEdgeVectorSharedPtr;
+        typedef std::shared_ptr<ElementEdgeVector> ElementEdgeVectorSharedPtr;
 
-        typedef boost::shared_ptr<ElementFace> ElementFaceSharedPtr;
+        typedef std::shared_ptr<ElementFace> ElementFaceSharedPtr;
         typedef std::vector<ElementFaceSharedPtr> ElementFaceVector;
-        typedef boost::shared_ptr<ElementFaceVector> ElementFaceVectorSharedPtr;
+        typedef std::shared_ptr<ElementFaceVector> ElementFaceVectorSharedPtr;
 
         // set restriction on domain range for post-processing.
         struct DomainRange
@@ -154,7 +152,7 @@ namespace Nektar
             LibUtilities::ShapeType m_shapeType;
         };
 
-        typedef boost::shared_ptr<DomainRange> DomainRangeShPtr;
+        typedef std::shared_ptr<DomainRange> DomainRangeShPtr;
         static DomainRangeShPtr NullDomainRangeShPtr;
 
         struct Expansion
@@ -170,15 +168,11 @@ namespace Nektar
             LibUtilities::BasisKeyVector  m_basisKeyVector;
         };
 
-        typedef boost::shared_ptr<Expansion> ExpansionShPtr;
+        typedef std::shared_ptr<Expansion> ExpansionShPtr;
         typedef std::map<int, ExpansionShPtr> ExpansionMap;
-        typedef std::map<int, ExpansionShPtr>::iterator ExpansionMapIter;
-        typedef std::map<int, ExpansionShPtr>::const_iterator ExpansionMapConstIter;
 
-        typedef boost::shared_ptr<ExpansionMap> ExpansionMapShPtr;
+        typedef std::shared_ptr<ExpansionMap> ExpansionMapShPtr;
         typedef std::map<std::string, ExpansionMapShPtr> ExpansionMapShPtrMap;
-        typedef std::map<std::string, ExpansionMapShPtr>::iterator  ExpansionMapShPtrMapIter;
-
 
         typedef std::map<std::string, std::string> GeomInfoMap;
 
@@ -201,12 +195,12 @@ namespace Nektar
 
 
                 /* ---- Mesh Reading routines ---- */
-                SPATIAL_DOMAINS_EXPORT static boost::shared_ptr<MeshGraph> Read(
+                SPATIAL_DOMAINS_EXPORT static std::shared_ptr<MeshGraph> Read(
                         const LibUtilities::SessionReaderSharedPtr &pSession,
                         DomainRangeShPtr &rng = NullDomainRangeShPtr);
 
                 /// \todo Remove updated routine
-                SPATIAL_DOMAINS_EXPORT static boost::shared_ptr<MeshGraph> Read(
+                SPATIAL_DOMAINS_EXPORT static std::shared_ptr<MeshGraph> Read(
                         const std::string& infilename,
                         bool pReadExpansions = true);
 
@@ -406,7 +400,7 @@ namespace Nektar
 
                 /// Convenience method for ElVis.
                 template<typename ElementType>
-                const std::map<int, boost::shared_ptr<ElementType> >& GetAllElementsOfType() const;
+                const std::map<int, std::shared_ptr<ElementType> >& GetAllElementsOfType() const;
 
             protected:
                 LibUtilities::SessionReaderSharedPtr    m_session;
@@ -443,7 +437,7 @@ namespace Nektar
 
                 ExpansionMapShPtr    SetUpExpansionMap(void);
         };
-        typedef boost::shared_ptr<MeshGraph> MeshGraphSharedPtr;
+        typedef std::shared_ptr<MeshGraph> MeshGraphSharedPtr;
 
 
         /**
@@ -599,7 +593,7 @@ namespace Nektar
         inline PointGeomSharedPtr MeshGraph::GetVertex(int id)
         {
             PointGeomSharedPtr returnval;
-            PointGeomMap::iterator x = m_vertSet.find(id);
+            auto x = m_vertSet.find(id);
             ASSERTL0(x != m_vertSet.end(),
                      "Vertex " + boost::lexical_cast<std::string>(id)
                      + " not found.");
@@ -611,7 +605,7 @@ namespace Nektar
          *
          */
         template<>
-        inline const std::map<int, boost::shared_ptr<SegGeom> >& MeshGraph::GetAllElementsOfType() const
+        inline const std::map<int, std::shared_ptr<SegGeom> >& MeshGraph::GetAllElementsOfType() const
         {
             return GetAllSegGeoms();
         }
@@ -620,7 +614,7 @@ namespace Nektar
          *
          */
         template<>
-        inline const std::map<int, boost::shared_ptr<TriGeom> >& MeshGraph::GetAllElementsOfType() const
+        inline const std::map<int, std::shared_ptr<TriGeom> >& MeshGraph::GetAllElementsOfType() const
         {
             return GetAllTriGeoms();
         }
@@ -629,7 +623,7 @@ namespace Nektar
          *
          */
         template<>
-        inline const std::map<int, boost::shared_ptr<QuadGeom> >& MeshGraph::GetAllElementsOfType() const
+        inline const std::map<int, std::shared_ptr<QuadGeom> >& MeshGraph::GetAllElementsOfType() const
         {
             return GetAllQuadGeoms();
         }
@@ -638,7 +632,7 @@ namespace Nektar
          *
          */
         template<>
-        inline const std::map<int, boost::shared_ptr<HexGeom> >& MeshGraph::GetAllElementsOfType() const
+        inline const std::map<int, std::shared_ptr<HexGeom> >& MeshGraph::GetAllElementsOfType() const
         {
             return GetAllHexGeoms();
         }
@@ -648,7 +642,7 @@ namespace Nektar
          *
          */
         template<>
-        inline const std::map<int, boost::shared_ptr<PrismGeom> >& MeshGraph::GetAllElementsOfType() const
+        inline const std::map<int, std::shared_ptr<PrismGeom> >& MeshGraph::GetAllElementsOfType() const
         {
             return GetAllPrismGeoms();
         }
@@ -658,7 +652,7 @@ namespace Nektar
          *
          */
         template<>
-        inline const std::map<int, boost::shared_ptr<TetGeom> >& MeshGraph::GetAllElementsOfType() const
+        inline const std::map<int, std::shared_ptr<TetGeom> >& MeshGraph::GetAllElementsOfType() const
         {
             return GetAllTetGeoms();
         }
@@ -668,7 +662,7 @@ namespace Nektar
          *
          */
         template<>
-        inline const std::map<int, boost::shared_ptr<PyrGeom> >& MeshGraph::GetAllElementsOfType() const
+        inline const std::map<int, std::shared_ptr<PyrGeom> >& MeshGraph::GetAllElementsOfType() const
         {
             return GetAllPyrGeoms();
         }
