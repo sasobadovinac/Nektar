@@ -71,9 +71,10 @@ private:
     static void OpenCounterFiles(void);
     static void CloseCounterFiles(void);
     static bool IsAcceleratorCounter(const unsigned int i);
-    static bool GetFirstLine(const unsigned int i, char* line, const unsigned int len);
+    static int GetFirstLine(const unsigned int i, char* line, const unsigned int len);
     static long int GetCounterValue(const unsigned int i);
     static int GetNodeNumber(void);
+    static int GetSystemError(void) { return system_error; }
     
     static bool IsInitialised(void);
 
@@ -85,6 +86,7 @@ private:
     static const unsigned int PM_RECORD_OK;
     static const unsigned int PM_RECORD_UNINITIALISED;
     static const unsigned int PM_RECORD_BLADE_RESTART;
+    static const unsigned int PM_RECORD_COUNTER_FILE_ERROR;
   
     static const unsigned int MAX_FPATH_LEN;
     static const unsigned int MAX_FLINE_LEN;
@@ -105,6 +107,8 @@ private:
     static long int init_startup;
 
     static bool all_initialised;
+
+    static int system_error;
 };
 
 }

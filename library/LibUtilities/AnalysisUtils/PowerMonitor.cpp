@@ -49,11 +49,12 @@ namespace LibUtilities
 {
 
 // initialise static constant attributes of PowerMonitor class
-const char PowerMonitor::ver[] = "4.2.0";
+const char PowerMonitor::ver[] = "4.3.0";
 
 const unsigned int PowerMonitor::PM_RECORD_OK = 0;
 const unsigned int PowerMonitor::PM_RECORD_UNINITIALISED = 1;
 const unsigned int PowerMonitor::PM_RECORD_BLADE_RESTART = 2;
+const unsigned int PowerMonitor::PM_RECORD_COUNTER_FILE_ERROR = 3;
   
 const unsigned int PowerMonitor::MAX_FPATH_LEN = 128;
 const unsigned int PowerMonitor::MAX_FLINE_LEN = 128;
@@ -86,6 +87,8 @@ int PowerMonitor::last_nstep(0);
 long int PowerMonitor::init_startup(0);
 
 bool PowerMonitor::all_initialised(false);
+
+int PowerMonitor::system_error(0);
         
         
 // private methods
@@ -148,58 +151,71 @@ bool PowerMonitor::IsAcceleratorCounter(const unsigned int i)
   	    i == PM_COUNTER_ACCEL_POWER_CAP);
 }
 		
-// return the first line from the counter file identified by i
-bool PowerMonitor::GetFirstLine(const unsigned int i, char* line, const unsigned int len)
+// return, via the line parameter, the first line from the counter file identified by i
+// this method returns zero if counter file has been read successfully, otherwise the system
+// error (errno) is returned
+int PowerMonitor::GetFirstLine(const unsigned int i, char* line, const unsigned int len)
 {
-    bool success = false;
-  
-    if (NULL != line)
+    int syserr = 0;
+    
+    memset(line, 0, len);
+    if (i < PM_NCOUNTERS && NULL != cnt_fp[i])
     {
-        memset(line, 0, len);
-	if (i < PM_NCOUNTERS && NULL != cnt_fp[i])
-	{
-  	    rewind(cnt_fp[i]);
+        rewind(cnt_fp[i]);
   	    
-	    do {
-	        fgets(line, len, cnt_fp[i]);
+        do {
+            fgets(line, len, cnt_fp[i]);
 
-		if (feof(cnt_fp[i]))
-		{
-		    // end of file reached,
-		    // assume the last len characters have been read
-		    success = true;
+    	    if (feof(cnt_fp[i]))
+	    {
+	        // end of file reached,
+	        // assume the last len characters have been read
+	        break;
+	    }     
+	    else if (ferror(cnt_fp[i]))
+	    {
+	        if (EAGAIN != errno)
+	        {
+	            // error not due to file being busy
+	            // record error, zero line buffer and return
+	            syserr = errno;
+		    fprintf(stderr, "GetFirstLine failed for PM counter %d: errno = %d.\n", i, errno);
+		    strcpy(line, "0");
 		    break;
-		}     
-		else if (ferror(cnt_fp[i]))
-		{
-		    if (EAGAIN != errno)
-		    {
-		        // error not due to file being busy
-		        // record error, zero line buffer and return
-		        fprintf(stderr, "GetFirstLine failed for PM counter %d: errno = %d.\n", i, errno);
-		        strcpy(line, "0");
-		        break;
-		    }
 		}
+	    }
 		
-	    } while (true);
-  	}
-  	else
-	{
-  	    strcpy(line, "0");
-  	}
+	} while (true);
     }
-
-    return success;
+    else
+    {
+        syserr = ENOENT;
+        strcpy(line, "0");
+    }
+    
+    return syserr;
 }
 		
 long int PowerMonitor::GetCounterValue(const unsigned int i)
 {
     char line[MAX_FLINE_LEN];
-    PowerMonitor::GetFirstLine(i, line, MAX_FLINE_LEN);
-    return strtol(line, NULL, 10);
+    long int val = 0;
+	
+    if (0 == system_error)
+    {
+        system_error = PowerMonitor::GetFirstLine(i, line, MAX_FLINE_LEN);   
+        if (0 == system_error)
+        {
+	    val = strtol(line, NULL, 10);
+	}
+    }
+        
+    return val;
 }
 
+
+
+  
 // determine the number of the node on which the process is running
 int PowerMonitor::GetNodeNumber(void)
 {
@@ -321,14 +337,16 @@ void PowerMonitor::Initialise(const char* log_fpath)
         // and other processes obtain the number of non-monitors
     	MPI_Comm_size(mpi_comm_monitor, &non_monitor_cnt);
     }
-  
+
+    system_error = 0;
     if (min_node_rank == rank)
     {
         PowerMonitor::OpenCounterFiles();
 	init_startup = PowerMonitor::GetCounterValue(PM_COUNTER_STARTUP);
     }
-  
-    bool ok = PowerMonitor::IsInitialised(), all_ok = false;
+
+    bool ok = PowerMonitor::IsInitialised() && (0 == system_error);
+    bool all_ok = false;
     MPI_Allreduce(&ok, &all_ok, 1, MPI_INTEGER, MPI_MIN, MPI_COMM_WORLD);
     all_initialised = all_ok;
     if (all_initialised)
@@ -377,6 +395,11 @@ unsigned int PowerMonitor::RecordCounterValues(const int nstep, const int sstep)
 	current_startup = PowerMonitor::GetCounterValue(PM_COUNTER_STARTUP);
         end_freshness = PowerMonitor::GetCounterValue(PM_COUNTER_FRESHNESS);
         fresh = (end_freshness == start_freshness);
+
+	if (0 != system_error)
+	{
+	    return PM_RECORD_COUNTER_FILE_ERROR;  
+	}
     }
 
     if (current_startup != init_startup)
@@ -456,7 +479,7 @@ unsigned int PowerMonitor::Record(const int nstep, const int sstep, const bool i
 // close the files used to read and record counter data
 void PowerMonitor::Finalise(void)
 {
-    if (all_initialised)
+    if (all_initialised && 0 == system_error)
     {
     	// do the last record
         PowerMonitor::Record(last_nstep+1, 1, true, false);
@@ -474,7 +497,8 @@ void PowerMonitor::Finalise(void)
             log_fp = NULL;
     	}
     }	
-  
+
+    system_error = 0;
     all_initialised = false;
     MPI_Barrier(MPI_COMM_WORLD);
   
