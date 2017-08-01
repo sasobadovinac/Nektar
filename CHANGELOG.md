@@ -8,6 +8,7 @@ v4.4.2
   to set eNoCollections in FieldConvert as default (!789)
 - Fix performance issue in ProcessIsoContour in relation to memory consumption
   (!821)
+- Fix performance issue with ExtractPhysToBndElmt (!796)
 
 **NekMesh**:
 - Fix uninitialised memory bug in Nek5000 input module (!801)
