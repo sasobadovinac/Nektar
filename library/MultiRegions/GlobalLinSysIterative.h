@@ -166,24 +166,82 @@ namespace Nektar
             Array<OneD, const int> &localToGlobalMap,
             Array<OneD, const NekDouble> &localToGlobalSign);
 
-            void DoMatrixMultiply_plain(
-                    const Array<OneD, NekDouble>& pInput,
-                          Array<OneD, NekDouble>& pOutput,
-                const NekDouble &lambda,
-                      Array<OneD, NekDouble> &quadMetricGlo,                
-                Array<OneD, NekDouble> &laplacian00Glo,
-                Array<OneD, NekDouble> &laplacian01Glo,
-                Array<OneD, NekDouble> &laplacian11Glo,
-                int &nquad0, int &nquad1, int &nmodes0, int &nmodes1, int &ncoeffs, 
-                        Array<OneD, const int>  &coeff_offset, int &elmts,
-                        Array<OneD, const NekDouble> &base0,
-                        Array<OneD, const NekDouble> &base1,
-                        Array<OneD, const NekDouble> &dbase0,
-                        Array<OneD, const NekDouble> &dbase1,
-                        DNekMatSharedPtr &D0, DNekMatSharedPtr &D1,
-                        int &numLocalCoeffs, int &numGlobalCoeffs,
-            Array<OneD, const int> &localToGlobalMap,
-            Array<OneD, const NekDouble> &localToGlobalSign);
+            
+            void GeneralMatrixOp_plain(
+                    const Array<OneD,const NekDouble>  &inarray,
+                    Array<OneD,      NekDouble>  &outarray,
+                    const NekDouble &lambda,
+                    Array<OneD, NekDouble> &quadMetricGlo,                
+                    Array<OneD, NekDouble> &laplacian00Glo,
+                    Array<OneD, NekDouble> &laplacian01Glo,
+                    Array<OneD, NekDouble> &laplacian11Glo,
+                    int &nquad0, int &nquad1, int &nmodes0, int &nmodes1, int &ncoeffs, 
+                    Array<OneD, const int>  &coeff_offset, int &elmts,
+                    Array<OneD, const NekDouble> &base0,
+                    Array<OneD, const NekDouble> &base1,
+                    Array<OneD, const NekDouble> &dbase0,
+                    Array<OneD, const NekDouble> &dbase1,
+                    DNekMatSharedPtr &D0, DNekMatSharedPtr &D1,
+                    int &numLocalCoeffs, int &numGlobalCoeffs,
+                    Array<OneD, const int> &localToGlobalMap,
+                    Array<OneD, const NekDouble> &localToGlobalSign);
+
+
+            void GeneralMatrixOp_IterPerExp_plain(
+                    const Array<OneD,const NekDouble> &inarray,
+                    Array<OneD, NekDouble> &outarray,
+                    const NekDouble &lambda,
+                    Array<OneD, NekDouble> &quadMetricGlo,                
+                    Array<OneD, NekDouble> &laplacian00Glo,
+                    Array<OneD, NekDouble> &laplacian01Glo,
+                    Array<OneD, NekDouble> &laplacian11Glo,
+                    int &nquad0, int &nquad1, int &nmodes0, int &nmodes1, int &ncoeffs, 
+                    Array<OneD, const int>  &coeff_offset, int &elmts,
+                    Array<OneD, const NekDouble> &base0,
+                    Array<OneD, const NekDouble> &base1,
+                    Array<OneD, const NekDouble> &dbase0,
+                    Array<OneD, const NekDouble> &dbase1,
+                    DNekMatSharedPtr &D0, DNekMatSharedPtr &D1);
+
+            void HelmholtzMatrixOp_MatFree_plain(
+                    const Array<OneD, const NekDouble> &inarray,
+                    Array<OneD, NekDouble> &outarray,
+                    const NekDouble &lambda,
+                    const Array<OneD, NekDouble> &quadMetric,
+                    const Array<OneD, NekDouble> &laplacian00,
+                    const Array<OneD, NekDouble> &laplacian01,
+                    const Array<OneD, NekDouble> &laplacian11,
+                    int &nquad0, int &nquad1, int &nmodes0, int &nmodes1, int &ncoeffs,
+                    const Array<OneD, const NekDouble> &base0,
+                    const Array<OneD, const NekDouble> &base1,
+                    const Array<OneD, const NekDouble> &dbase0,
+                    const Array<OneD, const NekDouble> &dbase1,
+                    DNekMatSharedPtr &D0, DNekMatSharedPtr &D1);
+
+            void PhysTensorDeriv_plain(
+                    const Array<OneD, const NekDouble>& inarray,
+                    Array<OneD, NekDouble> &outarray_d0,
+                    Array<OneD, NekDouble> &outarray_d1,
+                    int &nquad0, int &nquad1,
+                    DNekMatSharedPtr &D0, DNekMatSharedPtr &D1);
+
+            void BwdTrans_SumFacKernel_plain(
+                    const Array<OneD, const NekDouble>& base0,
+                    const Array<OneD, const NekDouble>& base1,
+                    const Array<OneD, const NekDouble>& inarray,
+                    Array<OneD, NekDouble> &outarray,
+                    Array<OneD, NekDouble> &wsp,
+                    int &nmodes0, int &nmodes1,
+                    int &nquad0, int &nquad1);
+
+            void IProductWRTBase_SumFacKernel_plain(
+                    const Array<OneD, const NekDouble>& base0,
+                    const Array<OneD, const NekDouble>& base1,
+                    const Array<OneD, const NekDouble>& inarray,
+                    Array<OneD, NekDouble> &outarray,
+                    Array<OneD, NekDouble> &wsp,
+                    int &nmodes0, int &nmodes1,
+                    int &nquad0, int &nquad1);
 
         };
     }

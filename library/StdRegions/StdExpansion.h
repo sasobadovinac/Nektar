@@ -87,7 +87,7 @@ namespace Nektar
                         Array<OneD, const NekDouble> &dbase1,
                         DNekMatSharedPtr &D0, DNekMatSharedPtr &D1)
             {
-                printf("%s\n", "within StdExpansion::HelmholtzMatrixOp_MatFree_plain");
+                //printf("%s\n", "within StdExpansion::HelmholtzMatrixOp_MatFree_plain");
 
                 v_HelmholtzMatrixOp_MatFree_plain(inarray,outarray,lambda, 
                         quadMetric, laplacian00,laplacian01,laplacian11,

@@ -398,7 +398,7 @@ namespace Nektar
                         const Array<OneD, const NekDouble> dbase1,
                         DNekMatSharedPtr D0, DNekMatSharedPtr D1)
         {
-            printf("%s\n", "within StdExpansion2D::v_HelmholtzMatrixOp_MatFree_plain");
+            //printf("%s\n", "within StdExpansion2D::v_HelmholtzMatrixOp_MatFree_plain");
             int       nqtot   = nquad0*nquad1;
             //int       wspsize = std::max(std::max(std::max(nqtot,ncoeffs),nquad1*nmodes0), nquad0*nmodes1);
             int max1 = (nqtot >= ncoeffs) ? nqtot : ncoeffs;

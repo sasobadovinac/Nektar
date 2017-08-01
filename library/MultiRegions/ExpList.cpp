@@ -987,21 +987,23 @@ namespace Nektar
 
             for(int el = 0; el < elmts; ++el)
             {
-                printf("num_elmts: %i\n", el);                        
+                //printf("num_elmts: %i\n", el);                        
                 
                 (*m_exp)[el]->StdExpansion::GetHelmholtzMatrixOp_MatFree_Metrics(
                     quadMetric, laplacian00,laplacian01,laplacian11);
                 for (int i = 0; i < nquad0*nquad1; ++i)
                 {
-                    quadMetricGlo[el*nquad0*nquad1+i] = quadMetric[i];
+                    quadMetricGlo [el*nquad0*nquad1+i] = quadMetric[i];
                     laplacian00Glo[el*nquad0*nquad1+i] = laplacian00[i];
                     laplacian01Glo[el*nquad0*nquad1+i] = laplacian01[i];
                     laplacian11Glo[el*nquad0*nquad1+i] = laplacian11[i];
                 }
             }
             // Calculating
+            /*printf("%s\n"," start calculating" );
             for(int el = 0; el < elmts; ++el)
             {
+                //printf("num_elmts: %i\n", el);      
                 for (int i = 0; i < nquad0*nquad1; ++i)
                 {
                     quadMetric[i] = quadMetricGlo[el*nquad0*nquad1+i];
@@ -1011,11 +1013,12 @@ namespace Nektar
                 }
                 (*m_exp)[el]->StdExpansion::HelmholtzMatrixOp_MatFree_plain(
                     inarray + coeff_offset[el],
-                    tmp_outarray = outarray+coeff_offset[el], lambda,
+                    tmp_outarray = outarray+coeff_offset[el],
+                    lambda,
                     quadMetric, laplacian00,laplacian01,laplacian11,
                     nquad0, nquad1, nmodes0, nmodes1, ncoeffs,
                     base0, base1, dbase0, dbase1, D0, D1);
-            }            
+            }  */          
         }
 
         /**

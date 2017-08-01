@@ -1024,8 +1024,9 @@ namespace Nektar
                     numLocalCoeffs, numGlobalCoeffs,
                     localToGlobalMap, localToGlobalSign);
             
-            Array<OneD,NekDouble> tmp1(2*m_ncoeffs);
-            Array<OneD,NekDouble> tmp2(tmp1+m_ncoeffs);
+            //printf("numLocalCoeffs = %i, numGlobalCoeffs = %i\n",numLocalCoeffs, numGlobalCoeffs);
+            Array<OneD,NekDouble> tmp1(2*numLocalCoeffs);
+            Array<OneD,NekDouble> tmp2(tmp1+numLocalCoeffs);
             //GlobalToLocal_plain(inarray,tmp1);
             //Vmath::Gathr(numLocalCoeffs, localToGlobalSign.get(),
             //         inarray.get(), localToGlobalMap.get(), tmp1.get());

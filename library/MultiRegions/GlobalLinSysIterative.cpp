@@ -602,8 +602,7 @@ namespace Nektar
 
             // Get vector sizes
             int nNonDir = nGlobal - nDir;
-            printf("nGlobal = %i, nNonDir=%i\n", nGlobal, nNonDir);
-
+            
             // Allocate array storage
             Array<OneD, NekDouble> w_A    (nGlobal, 0.0);
             Array<OneD, NekDouble> s_A    (nGlobal, 0.0);
@@ -689,7 +688,7 @@ namespace Nektar
                 D0, D1);
             
             int metricSize = elmts * nquad0 * nquad1;
-            Array<OneD, NekDouble> quadMetricGlo(4*metricSize);
+            Array<OneD, NekDouble> quadMetricGlo (4*metricSize);
             Array<OneD, NekDouble> laplacian00Glo(quadMetricGlo+metricSize);
             Array<OneD, NekDouble> laplacian01Glo(quadMetricGlo+2*metricSize);
             Array<OneD, NekDouble> laplacian11Glo(quadMetricGlo+3*metricSize);
@@ -705,6 +704,16 @@ namespace Nektar
                         D0, D1,
                         numLocalCoeffs, numGlobalCoeffs,
                         localToGlobalMap, localToGlobalSign);
+            printf("%s\n", "==== completed data gathering ====");
+            GeneralMatrixOp_plain(
+                    w_A, s_A, lambda,
+                    quadMetricGlo, laplacian00Glo, laplacian01Glo, laplacian11Glo,
+                    nquad0, nquad1, nmodes0, nmodes1, ncoeffs, 
+                    coeff_offset, elmts,
+                    base0, base1, dbase0, dbase1,
+                    D0, D1,
+                    numLocalCoeffs, numGlobalCoeffs,
+                    localToGlobalMap, localToGlobalSign);
 
             rho = 0.0;
             for (int i = 0; i < nNonDir; ++i)
@@ -774,14 +783,16 @@ namespace Nektar
 
                 // Perform the method-specific matrix-vector multiply operation.
                 printf("CG iteration %i ==================================\n", totalIterations);
-                DoMatrixMultiply_plain(w_A, s_A, lambda,
-                        quadMetricGlo, laplacian00Glo, laplacian01Glo, laplacian11Glo,
-                        nquad0, nquad1, nmodes0, nmodes1, ncoeffs, 
-                        coeff_offset, elmts,
-                        base0, base1, dbase0, dbase1,
-                        D0, D1,
-                        numLocalCoeffs, numGlobalCoeffs,
-                        localToGlobalMap, localToGlobalSign);
+                GeneralMatrixOp_plain(
+                    w_A, s_A, lambda,
+                    quadMetricGlo, laplacian00Glo, laplacian01Glo, laplacian11Glo,
+                    nquad0, nquad1, nmodes0, nmodes1, ncoeffs, 
+                    coeff_offset, elmts,
+                    base0, base1, dbase0, dbase1,
+                    D0, D1,
+                    numLocalCoeffs, numGlobalCoeffs,
+                    localToGlobalMap, localToGlobalSign);
+                
 
                 rho_new = 0.0;
                 for (int i = 0; i < nNonDir; ++i)
@@ -843,11 +854,9 @@ namespace Nektar
             Array<OneD, const int> &localToGlobalMap,
             Array<OneD, const NekDouble> &localToGlobalSign)
         {
-            printf("Within GlobalLinSysIterative::GetMatrixMultiplyMetrics\n" );
-           
+            printf("Within GlobalLinSysIterative::GetMatrixMultiplyMetrics\n" );           
 
             boost::shared_ptr<MultiRegions::ExpList> expList = m_expList.lock();
-            // Perform matrix-vector operation A*d_i
             expList->GeneralMatrixOp_plain(pInput, pOutput, lambda,
                         quadMetricGlo, laplacian00Glo, laplacian01Glo, laplacian11Glo,
                         nquad0, nquad1, nmodes0, nmodes1, ncoeffs, 
@@ -860,41 +869,261 @@ namespace Nektar
         }
 
 
-        void GlobalLinSysIterative::DoMatrixMultiply_plain(
-                const Array<OneD, NekDouble>& pInput,
-                      Array<OneD, NekDouble>& pOutput,
-                const NekDouble &lambda,
+        void GlobalLinSysIterative::GeneralMatrixOp_plain(
+                const Array<OneD,const NekDouble>  &inarray,
+                      Array<OneD,      NekDouble>  &outarray,
+                      const NekDouble &lambda,
                       Array<OneD, NekDouble> &quadMetricGlo,                
                 Array<OneD, NekDouble> &laplacian00Glo,
                 Array<OneD, NekDouble> &laplacian01Glo,
                 Array<OneD, NekDouble> &laplacian11Glo,
                 int &nquad0, int &nquad1, int &nmodes0, int &nmodes1, int &ncoeffs, 
-                        Array<OneD, const int>  &coeff_offset, int &elmts,
-                        Array<OneD, const NekDouble> &base0,
-                        Array<OneD, const NekDouble> &base1,
-                        Array<OneD, const NekDouble> &dbase0,
-                        Array<OneD, const NekDouble> &dbase1,
-                        DNekMatSharedPtr &D0, DNekMatSharedPtr &D1,
-                        int &numLocalCoeffs, int &numGlobalCoeffs,
-            Array<OneD, const int> &localToGlobalMap,
-            Array<OneD, const NekDouble> &localToGlobalSign)
+                Array<OneD, const int>  &coeff_offset, int &elmts,
+                Array<OneD, const NekDouble> &base0,
+                Array<OneD, const NekDouble> &base1,
+                Array<OneD, const NekDouble> &dbase0,
+                Array<OneD, const NekDouble> &dbase1,
+                DNekMatSharedPtr &D0, DNekMatSharedPtr &D1,
+                int &numLocalCoeffs, int &numGlobalCoeffs,
+                Array<OneD, const int> &localToGlobalMap,
+                Array<OneD, const NekDouble> &localToGlobalSign)
         {
-            printf("Within GlobalLinSysIterative::DoMatrixMultiply_plain\n" );
-           
+            printf("%s\n", "do the global to local mapping");
+            Array<OneD,NekDouble> tmp1(2*numLocalCoeffs);
+            Array<OneD,NekDouble> tmp2(tmp1+numLocalCoeffs);
 
-            // Do Calculations
-            boost::shared_ptr<MultiRegions::ExpList> expList = m_expList.lock();
-            // Perform matrix-vector operation A*d_i
-            expList->GeneralMatrixOp_plain(pInput, pOutput, lambda,
-                        quadMetricGlo, laplacian00Glo, laplacian01Glo, laplacian11Glo,
-                        nquad0, nquad1, nmodes0, nmodes1, ncoeffs, 
-                        coeff_offset, elmts,
-                        base0, base1, dbase0, dbase1,
-                        D0, D1,
-                        numLocalCoeffs, numGlobalCoeffs,
-                        localToGlobalMap, localToGlobalSign);
+            //GlobalToLocal_plain(inarray,tmp1);
+            //Vmath::Gathr(numLocalCoeffs, localToGlobalSign.get(),
+            //         inarray.get(), localToGlobalMap.get(), tmp1.get());
+            for (int i = 0; i < numLocalCoeffs; ++i)
+            {
+                tmp1[i] = localToGlobalSign[i] * inarray[localToGlobalMap[i]];
+            }
+
+            GeneralMatrixOp_IterPerExp_plain(tmp1,tmp2,lambda,
+                    quadMetricGlo, laplacian00Glo,laplacian01Glo,laplacian11Glo,                    
+                    nquad0, nquad1, nmodes0, nmodes1, ncoeffs,
+                    coeff_offset, elmts,
+                    base0, base1, dbase0, dbase1, D0, D1);
+
+            printf("%s\n", "do the local to global mapping");
+            //Assemble_plain(tmp2,outarray);  
+            //Vmath::Zero(numGlobalCoeffs, outarray.get(), 1);
+            for (int i = 0; i < numGlobalCoeffs; ++i)
+            {
+                outarray[i] = 0.0;
+            }
+            //Vmath::Assmb(numLocalCoeffs, localToGlobalSign.get(), 
+            //            tmp2.get(), localToGlobalMap.get(), outarray.get());
+            for (int i = 0; i < numLocalCoeffs; ++i)
+            {
+                outarray[localToGlobalMap[i]] += localToGlobalSign[i] * tmp2[i]; 
+            }
+            
+        }
+
+
+        void GlobalLinSysIterative::GeneralMatrixOp_IterPerExp_plain(
+                    const Array<OneD,const NekDouble> &inarray,
+                    Array<OneD,      NekDouble> &outarray,
+                    const NekDouble &lambda,
+                    Array<OneD, NekDouble> &quadMetricGlo,                
+                    Array<OneD, NekDouble> &laplacian00Glo,
+                    Array<OneD, NekDouble> &laplacian01Glo,
+                    Array<OneD, NekDouble> &laplacian11Glo,
+                    int &nquad0, int &nquad1, int &nmodes0, int &nmodes1, int &ncoeffs, 
+                    Array<OneD, const int>  &coeff_offset, int &elmts,
+                    Array<OneD, const NekDouble> &base0,
+                    Array<OneD, const NekDouble> &base1,
+                    Array<OneD, const NekDouble> &dbase0,
+                    Array<OneD, const NekDouble> &dbase1,
+                    DNekMatSharedPtr &D0, DNekMatSharedPtr &D1)
+        {
+            printf("%s\n", "perform operations by element");            
+
+            //Array<OneD, NekDouble> quadMetric (nquad0*nquad1);
+            //Array<OneD, NekDouble> laplacian00(nquad0*nquad1);
+            //Array<OneD, NekDouble> laplacian01(nquad0*nquad1);
+            //Array<OneD, NekDouble> laplacian11(nquad0*nquad1);
+            Array<OneD, NekDouble> tmp_outarray(ncoeffs);
+            // Calculating
+            for(int el = 0; el < elmts; ++el)
+            {
+                printf("%i ", el);
+                /*for (int i = 0; i < nquad0*nquad1; ++i)
+                {
+                    quadMetric[i] = quadMetricGlo[el*nquad0*nquad1+i];
+                    laplacian00[i] = laplacian00Glo[el*nquad0*nquad1+i];
+                    laplacian01[i] = laplacian01Glo[el*nquad0*nquad1+i];
+                    laplacian11[i] = laplacian11Glo[el*nquad0*nquad1+i];
+                }*/
+                HelmholtzMatrixOp_MatFree_plain(
+                    inarray + coeff_offset[el],
+                    tmp_outarray,
+                    lambda,
+                    quadMetricGlo + el*nquad0*nquad1 ,
+                    laplacian00Glo + el*nquad0*nquad1,
+                    laplacian01Glo + el*nquad0*nquad1,
+                    laplacian11Glo + el*nquad0*nquad1,
+                    nquad0, nquad1, nmodes0, nmodes1, ncoeffs,
+                    base0, base1, dbase0, dbase1, D0, D1);
+
+                for (int i = 0; i < ncoeffs; ++i)
+                {
+                    outarray[coeff_offset[el]+i] = tmp_outarray[i];
+                }                
+            }
+            printf("\n");           
+        }
+
+
+        void GlobalLinSysIterative::HelmholtzMatrixOp_MatFree_plain(
+                const Array<OneD, const NekDouble> &inarray,
+                      Array<OneD, NekDouble>  &outarray,
+                const NekDouble &lambda,
+                const Array<OneD, NekDouble> &quadMetric,
+                const Array<OneD, NekDouble> &laplacian00,
+                const Array<OneD, NekDouble> &laplacian01,
+                const Array<OneD, NekDouble> &laplacian11,
+                int &nquad0, int &nquad1, int &nmodes0, int &nmodes1, int &ncoeffs,
+                const Array<OneD, const NekDouble> &base0,
+                const Array<OneD, const NekDouble> &base1,
+                const Array<OneD, const NekDouble> &dbase0,
+                const Array<OneD, const NekDouble> &dbase1,
+                DNekMatSharedPtr &D0, DNekMatSharedPtr &D1)
+        {
+            //printf("%s\n", "within GlobalLinSysIterative::HelmholtzMatrixOp_MatFree_plain");
+            
+            int       nqtot   = nquad0*nquad1;
+            //int       wspsize = std::max(std::max(std::max(nqtot,ncoeffs),nquad1*nmodes0), nquad0*nmodes1);
+            int max1 = (nqtot >= ncoeffs) ? nqtot : ncoeffs;
+            int max2 = (nquad1*nmodes0 >= nquad0*nmodes1) ? nquad1*nmodes0 : nquad0*nmodes1;
+            int wspsize = (max1 >= max2) ? max1 : max2;
+
+            // Allocate temporary storage
+            Array<OneD,NekDouble> wsp0(5*wspsize);       // size wspsize
+            Array<OneD,NekDouble> wsp1(wsp0 + wspsize);  // size wspsize // u_hat
+            Array<OneD,NekDouble> wsp2(wsp0 + 2*wspsize);// size 3*wspsize
+            
+            //BwdTrans_SumFacKernel(base0, base1, inarray, wsp0, wsp2,true,true);            
+            BwdTrans_SumFacKernel_plain(base0, base1, inarray, wsp0, wsp2,
+                nmodes0, nmodes1, nquad0, nquad1);
+
+            //MultiplyByQuadratureMetric(wsp0, wsp1);
+            //Vmath::Vmul(nqtot, quadMetric, 1, wsp0, 1, wsp1, 1);            
+            for (int i = 0; i < nqtot; ++i)
+            {
+                wsp1[i] = quadMetric[i] * wsp0[i];
+            }
+
+            //IProductWRTBase_SumFacKernel(base0, base1, wsp1, outarray, wsp2, true, true);
+            IProductWRTBase_SumFacKernel_plain(base0, base1, wsp1, outarray,
+                                         wsp2, nmodes0, nmodes1, nquad0, nquad1);
+
+            //LaplacianMatrixOp_MatFree_Kernel(wsp0, wsp1, wsp2);
+            // Allocate temporary storage
+            Array<OneD,NekDouble> wsp0L(wsp2);//
+            Array<OneD,NekDouble> wsp1L(wsp2+wspsize);
+            Array<OneD,NekDouble> wsp2L(wsp2+2*wspsize);
+            
+            //StdExpansion2D::PhysTensorDeriv(wsp0,wsp1L,wsp2L);
+            PhysTensorDeriv_plain(wsp0,wsp1L,wsp2L, nquad0, nquad1, D0, D1);
+
+            //Vmath::Vvtvvtp(nqtot,&metric00[0],1,&wsp1L[0],1,&metric01[0],1,&wsp2L[0],1,&wsp0L[0],1);
+            for (int i = 0; i < nqtot; ++i)
+            {
+                wsp0L[i] = laplacian00[i] * wsp1L[i] + laplacian01[i] * wsp2L[i];
+            }
+            //Vmath::Vvtvvtp(nqtot,&metric01[0],1,&wsp1L[0],1,&metric11[0],1,&wsp2L[0],1,&wsp2L[0],1);
+            for (int i = 0; i < nqtot; ++i)
+            {
+                wsp2L[i] = laplacian01[i] * wsp1L[i] + laplacian11[i] * wsp2L[i];
+            }
+
+            //IProductWRTBase_SumFacKernel(dbase0, base1,wsp0L,wsp1 ,wsp1L);
+            //IProductWRTBase_SumFacKernel( base0,dbase1,wsp2L,wsp1L,wsp0L);
+            IProductWRTBase_SumFacKernel_plain(dbase0, base1,wsp0L,wsp1 ,wsp1L,
+                         nmodes0, nmodes1, nquad0, nquad1);
+            IProductWRTBase_SumFacKernel_plain( base0,dbase1,wsp2L,wsp1L,wsp0L,
+                         nmodes0, nmodes1, nquad0, nquad1);
+
+            //Vmath::Vadd(m_ncoeffs,wsp1L.get(),1,wsp1.get(),1,wsp1.get(),1);
+            for (int i = 0; i < ncoeffs; ++i)
+            {
+                wsp1[i] += wsp1L[i];
+            }
+            //end LaplacianMatrixOp_MatFree_Kernel
+           
+            // outarray = lambda * outarray + wsp1
+            //          = (lambda * M + L ) * u_hat
+            //Vmath::Svtvp(m_ncoeffs, lambda, &outarray[0], 1, &wsp1[0], 1, &outarray[0], 1);
+            for (int i = 0; i < ncoeffs; ++i)
+            {
+                outarray[i] = lambda * outarray[i] + wsp1[i];
+            }    
+            
 
         }
+
+        void GlobalLinSysIterative::IProductWRTBase_SumFacKernel_plain(
+                const Array<OneD, const NekDouble>& base0,
+                const Array<OneD, const NekDouble>& base1,
+                const Array<OneD, const NekDouble>& inarray,
+                Array<OneD, NekDouble> &outarray,
+                Array<OneD, NekDouble> &wsp,
+                int &nmodes0, int &nmodes1,
+                int &nquad0, int &nquad1)
+        {
+            Blas::Dgemm('T','N',nquad1,nmodes0,nquad0,1.0,inarray.get(),nquad0,
+                        base0.get(),nquad0,0.0,wsp.get(),nquad1);
+            int i, mode;
+            for (mode=i=0; i < nmodes0; ++i)
+            {
+                Blas::Dgemv('T',nquad1,nmodes1-i,1.0, base1.get()+mode*nquad1,
+                            nquad1,wsp.get()+i*nquad1,1, 0.0,
+                            outarray.get() + mode,1);
+                mode += nmodes1 - i;
+            }
+            outarray[1] += Blas::Ddot(nquad1,base1.get()+nquad1,1,
+                                          wsp.get()+nquad1,1);
+        }
+
+        void GlobalLinSysIterative::BwdTrans_SumFacKernel_plain(
+                const Array<OneD, const NekDouble>& base0,
+                const Array<OneD, const NekDouble>& base1,
+                const Array<OneD, const NekDouble>& inarray,
+                Array<OneD, NekDouble> &outarray,
+                Array<OneD, NekDouble> &wsp,
+                int &nmodes0, int &nmodes1,
+                int &nquad0, int &nquad1)
+        {
+            int i, mode;
+            for (i = mode = 0; i < nmodes0; ++i)
+            {
+                Blas::Dgemv('N', nquad1,nmodes1-i,1.0,base1.get()+mode*nquad1,
+                            nquad1,&inarray[0]+mode,1,0.0,&wsp[0]+i*nquad1,1);
+                mode += nmodes1-i;
+            }
+            Blas::Daxpy(nquad1,inarray[1],base1.get()+nquad1,1,
+                            &wsp[0]+nquad1,1);
+            Blas::Dgemm('N','T', nquad0,nquad1,nmodes0,1.0, base0.get(),nquad0,
+                        &wsp[0], nquad1,0.0, &outarray[0], nquad0);            
+        }
+
+        void GlobalLinSysIterative::PhysTensorDeriv_plain(
+            const Array<OneD, const NekDouble>& inarray,
+                         Array<OneD, NekDouble> &outarray_d0,
+                         Array<OneD, NekDouble> &outarray_d1,
+                         int &nquad0, int &nquad1,
+                         DNekMatSharedPtr &D0, DNekMatSharedPtr &D1)
+        {
+            Blas::Dgemm('N', 'N', nquad0, nquad1, nquad0, 1.0,
+                        &(D0->GetPtr())[0], nquad0, &inarray[0], nquad0, 0.0,
+                        &outarray_d0[0], nquad0);
+            Blas:: Dgemm('N', 'T', nquad0, nquad1, nquad1, 1.0, &inarray[0], nquad0,
+                         &(D1->GetPtr())[0], nquad1, 0.0, &outarray_d1[0], nquad0);
+        }
+
 
 
 
