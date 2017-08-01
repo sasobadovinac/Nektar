@@ -37,6 +37,8 @@
 #include <MultiRegions/PreconditionerDiagonal.h>
 #include <MultiRegions/Preconditioner.h>
 
+#include <Kokkos_Core.hpp>
+
 using namespace std;
 
 namespace Nektar
@@ -442,6 +444,10 @@ namespace Nektar
                 return;
             }
 
+            // Timing
+            Timer t;
+            t.Start();
+
             m_precon->DoPreconditioner(r_A, tmp = w_A + nDir);
 
             v_DoMatrixMultiply(w_A, s_A);
@@ -546,6 +552,9 @@ namespace Nektar
                 rho   = rho_new;
                 k++;
             }
+
+            t.Stop();
+            cout << "Time to compute: " << t.TimePerTest(1) << endl;
         }
 
 
@@ -590,6 +599,12 @@ namespace Nektar
         {
             printf("Within GlobalLinSysIterative::DoConjugateGradient_plain\n" );
 
+            //Initialise Kokkos
+            Kokkos::InitArguments args;
+            args.num_threads = 1;
+            Kokkos::initialize(args);   
+
+            // create preconditioner
             Array<OneD, NekDouble> diagonals;
             if (!m_precon)
             {
@@ -609,7 +624,6 @@ namespace Nektar
             Array<OneD, NekDouble> p_A    (nNonDir, 0.0);
             Array<OneD, NekDouble> r_A    (nNonDir, 0.0);
             Array<OneD, NekDouble> q_A    (nNonDir, 0.0);
-            //Array<OneD, NekDouble> tmp;
             
             NekDouble alpha, beta, rho, rho_new, mu, eps,  min_resid;
             int map[nGlobal], maxiter, totalIterations, k;
@@ -622,6 +636,41 @@ namespace Nektar
             }
             tolerance = m_tolerance;
             maxiter = m_maxiter;
+
+            // Gather Data for Helmholtz Matrix Multiplication
+            NekDouble lambda = m_linSysKey.GetConstFactor(StdRegions::eFactorLambda);
+
+            int nquad0, nquad1, nmodes0, nmodes1, ncoeffs;
+            Array<OneD, const NekDouble> base0, base1, dbase0, dbase1;
+            DNekMatSharedPtr D0, D1;
+            int elmts;
+            Array<OneD, int> coeff_offset;
+
+            boost::shared_ptr<MultiRegions::ExpList> expList = m_expList.lock();
+            expList->v_GetStdExpansionMetric(
+                nquad0, nquad1, nmodes0, nmodes1, ncoeffs, 
+                coeff_offset, elmts,
+                base0, base1, dbase0, dbase1,
+                D0, D1);
+            
+            int metricSize = elmts * nquad0 * nquad1;
+            Array<OneD, NekDouble> quadMetricGlo (4*metricSize);
+            Array<OneD, NekDouble> laplacian00Glo(quadMetricGlo+metricSize);
+            Array<OneD, NekDouble> laplacian01Glo(quadMetricGlo+2*metricSize);
+            Array<OneD, NekDouble> laplacian11Glo(quadMetricGlo+3*metricSize);
+
+            int numLocalCoeffs, numGlobalCoeffs;
+            Array<OneD, const int> localToGlobalMap;
+            Array<OneD, const NekDouble> localToGlobalSign; 
+            GetMatrixMultiplyMetrics(w_A, s_A, lambda,
+                        quadMetricGlo, laplacian00Glo, laplacian01Glo, laplacian11Glo,
+                        nquad0, nquad1, nmodes0, nmodes1, ncoeffs, 
+                        coeff_offset, elmts,
+                        base0, base1, dbase0, dbase1,
+                        D0, D1,
+                        numLocalCoeffs, numGlobalCoeffs,
+                        localToGlobalMap, localToGlobalSign); 
+            printf("%s\n", "==== completed data gathering ====");
 
             // Copy initial residual from input
             for (int i = 0; i < nNonDir; ++i)
@@ -662,6 +711,11 @@ namespace Nektar
                 return;
             }
 
+            // Timing
+            Timer t;
+            t.Start();
+
+
             //preconditioner
             //m_precon->DoPreconditioner(r_A, tmp = w_A + nDir);
             //Vmath::Vmul(nNonDir, &r_A[0], 1, &diagonals[0], 1, &w_A[nDir], 1);
@@ -670,41 +724,6 @@ namespace Nektar
                 w_A[i+nDir] = r_A[i] * diagonals[i];
             }
 
-
-            // Gather Data for Helmholtz Matrix Multiplication
-            NekDouble lambda = m_linSysKey.GetConstFactor(StdRegions::eFactorLambda);
-
-            int nquad0, nquad1, nmodes0, nmodes1, ncoeffs;
-            Array<OneD, const NekDouble> base0, base1, dbase0, dbase1;
-            DNekMatSharedPtr D0, D1;
-            int elmts;
-            Array<OneD, int> coeff_offset;
-
-            boost::shared_ptr<MultiRegions::ExpList> expList = m_expList.lock();
-            expList->v_GetStdExpansionMetric(
-                nquad0, nquad1, nmodes0, nmodes1, ncoeffs, 
-                coeff_offset, elmts,
-                base0, base1, dbase0, dbase1,
-                D0, D1);
-            
-            int metricSize = elmts * nquad0 * nquad1;
-            Array<OneD, NekDouble> quadMetricGlo (4*metricSize);
-            Array<OneD, NekDouble> laplacian00Glo(quadMetricGlo+metricSize);
-            Array<OneD, NekDouble> laplacian01Glo(quadMetricGlo+2*metricSize);
-            Array<OneD, NekDouble> laplacian11Glo(quadMetricGlo+3*metricSize);
-
-            int numLocalCoeffs, numGlobalCoeffs;
-            Array<OneD, const int> localToGlobalMap;
-            Array<OneD, const NekDouble> localToGlobalSign; 
-            GetMatrixMultiplyMetrics(w_A, s_A, lambda,
-                        quadMetricGlo, laplacian00Glo, laplacian01Glo, laplacian11Glo,
-                        nquad0, nquad1, nmodes0, nmodes1, ncoeffs, 
-                        coeff_offset, elmts,
-                        base0, base1, dbase0, dbase1,
-                        D0, D1,
-                        numLocalCoeffs, numGlobalCoeffs,
-                        localToGlobalMap, localToGlobalSign);
-            printf("%s\n", "==== completed data gathering ====");
             GeneralMatrixOp_plain(
                     w_A, s_A, lambda,
                     quadMetricGlo, laplacian00Glo, laplacian01Glo, laplacian11Glo,
@@ -830,6 +849,10 @@ namespace Nektar
                     break;
                 }
             }
+            t.Stop();
+            cout << "Time to compute: " << t.TimePerTest(1) << endl;
+
+            Kokkos::finalize();     
         }
 
 
