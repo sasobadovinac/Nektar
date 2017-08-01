@@ -792,23 +792,14 @@ namespace Nektar
                       CoeffState coeffstate = eLocal);
 
             inline void GeneralMatrixOp_plain(
-                const Array<OneD,const NekDouble> &inarray,
-                      Array<OneD,      NekDouble> &outarray,
-                const NekDouble lambda,
-                      Array<OneD, NekDouble> &quadMetricGlo,                
+                Array<OneD, NekDouble> &quadMetricGlo,                
                 Array<OneD, NekDouble> &laplacian00Glo,
                 Array<OneD, NekDouble> &laplacian01Glo,
                 Array<OneD, NekDouble> &laplacian11Glo,
-                int &nquad0, int &nquad1, int &nmodes0, int &nmodes1, int &ncoeffs, 
-                        Array<OneD, const int>  &coeff_offset, int &elmts,
-                        Array<OneD, const NekDouble> &base0,
-                        Array<OneD, const NekDouble> &base1,
-                        Array<OneD, const NekDouble> &dbase0,
-                        Array<OneD, const NekDouble> &dbase1,
-                        DNekMatSharedPtr &D0, DNekMatSharedPtr &D1,
-                        int &numLocalCoeffs, int &numGlobalCoeffs,
-            Array<OneD, const int> &localToGlobalMap,
-            Array<OneD, const NekDouble> &localToGlobalSign);
+                int &nquad0, int &nquad1, int &elmts,
+                int &numLocalCoeffs, int &numGlobalCoeffs,
+                Array<OneD, const int> &localToGlobalMap,
+                Array<OneD, const NekDouble> &localToGlobalSign);
 
             MULTI_REGIONS_EXPORT void GeneralMatrixOp_IterPerExp(
                 const GlobalMatrixKey      &gkey,
@@ -816,20 +807,11 @@ namespace Nektar
                       Array<OneD,      NekDouble> &outarray);
 
             MULTI_REGIONS_EXPORT void GeneralMatrixOp_IterPerExp_plain(
-                const Array<OneD,const NekDouble> &inarray,
-                      Array<OneD,      NekDouble> &outarray,
-                      const NekDouble lambda,
-                        Array<OneD, NekDouble> &quadMetricGlo,                
-                Array<OneD, NekDouble> &laplacian00Glo,
-                Array<OneD, NekDouble> &laplacian01Glo,
-                Array<OneD, NekDouble> &laplacian11Glo,
-                int &nquad0, int &nquad1, int &nmodes0, int &nmodes1, int &ncoeffs,
-                        Array<OneD, const int>  &coeff_offset, int &elmts,
-                        Array<OneD, const NekDouble> &base0,
-                        Array<OneD, const NekDouble> &base1,
-                        Array<OneD, const NekDouble> &dbase0,
-                        Array<OneD, const NekDouble> &dbase1,
-                        DNekMatSharedPtr &D0, DNekMatSharedPtr &D1);
+                    int &elmts, int &nquad0, int &nquad1,
+                    Array<OneD, NekDouble> &quadMetricGlo,                
+                    Array<OneD, NekDouble> &laplacian00Glo,
+                    Array<OneD, NekDouble> &laplacian01Glo,
+                    Array<OneD, NekDouble> &laplacian11Glo);
 
             inline void SetUpPhysNormals();
 
@@ -998,23 +980,14 @@ namespace Nektar
             MULTI_REGIONS_EXPORT void ClearGlobalLinSysManager(void);
 
             virtual void v_GeneralMatrixOp_plain(
-                const Array<OneD,const NekDouble> &inarray,
-                      Array<OneD,      NekDouble> &outarray,
-                const NekDouble lambda,
-                      Array<OneD, NekDouble> &quadMetricGlo,                
+                Array<OneD, NekDouble> &quadMetricGlo,                
                 Array<OneD, NekDouble> &laplacian00Glo,
                 Array<OneD, NekDouble> &laplacian01Glo,
                 Array<OneD, NekDouble> &laplacian11Glo,
-                int &nquad0, int &nquad1, int &nmodes0, int &nmodes1, int &ncoeffs, 
-                        Array<OneD, const int>  &coeff_offset, int &elmts,
-                        Array<OneD, const NekDouble> &base0,
-                        Array<OneD, const NekDouble> &base1,
-                        Array<OneD, const NekDouble> &dbase0,
-                        Array<OneD, const NekDouble> &dbase1,
-                        DNekMatSharedPtr &D0, DNekMatSharedPtr &D1,
-                        int &numLocalCoeffs, int &numGlobalCoeffs,
-            Array<OneD, const int> &localToGlobalMap,
-            Array<OneD, const NekDouble> &localToGlobalSign);
+                int &nquad0, int &nquad1, int &elmts,
+                int &numLocalCoeffs, int &numGlobalCoeffs,
+                Array<OneD, const int> &localToGlobalMap,
+                Array<OneD, const NekDouble> &localToGlobalSign);
 
             virtual void v_GetStdExpansionMetric(
                         int &nquad0, int &nquad1, int &nmodes0, int &nmodes1, int &ncoeffs, 
@@ -2383,30 +2356,18 @@ namespace Nektar
         }
 
         inline void ExpList::GeneralMatrixOp_plain(
-                                const Array<OneD,const NekDouble> &inarray,
-                                      Array<OneD,      NekDouble> &outarray,
-                                const NekDouble lambda,
-                      Array<OneD, NekDouble> &quadMetricGlo,                
+                Array<OneD, NekDouble> &quadMetricGlo,                
                 Array<OneD, NekDouble> &laplacian00Glo,
                 Array<OneD, NekDouble> &laplacian01Glo,
                 Array<OneD, NekDouble> &laplacian11Glo,
-                int &nquad0, int &nquad1, int &nmodes0, int &nmodes1, int &ncoeffs, 
-                        Array<OneD, const int>  &coeff_offset, int &elmts,
-                        Array<OneD, const NekDouble> &base0,
-                        Array<OneD, const NekDouble> &base1,
-                        Array<OneD, const NekDouble> &dbase0,
-                        Array<OneD, const NekDouble> &dbase1,
-                        DNekMatSharedPtr &D0, DNekMatSharedPtr &D1,
-                        int &numLocalCoeffs, int &numGlobalCoeffs,
-            Array<OneD, const int> &localToGlobalMap,
-            Array<OneD, const NekDouble> &localToGlobalSign)
+                int &nquad0, int &nquad1, int &elmts,
+                int &numLocalCoeffs, int &numGlobalCoeffs,
+                Array<OneD, const int> &localToGlobalMap,
+                Array<OneD, const NekDouble> &localToGlobalSign)
         {
-            v_GeneralMatrixOp_plain(inarray,outarray,lambda,
+            v_GeneralMatrixOp_plain(
                         quadMetricGlo, laplacian00Glo, laplacian01Glo, laplacian11Glo,
-                        nquad0, nquad1, nmodes0, nmodes1, ncoeffs, 
-                        coeff_offset, elmts,
-                        base0, base1, dbase0, dbase1,
-                        D0, D1,
+                        nquad0, nquad1, elmts,
                         numLocalCoeffs, numGlobalCoeffs,
                         localToGlobalMap, localToGlobalSign);
         }

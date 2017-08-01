@@ -964,26 +964,17 @@ namespace Nektar
         }
 
         void ExpList::GeneralMatrixOp_IterPerExp_plain(
-                                                 const Array<OneD,const NekDouble> &inarray,
-                                                 Array<OneD,      NekDouble> &outarray,
-                                                 const NekDouble lambda,
-                        Array<OneD, NekDouble> &quadMetricGlo,                
+                int &elmts, int &nquad0, int &nquad1,
+                Array<OneD, NekDouble> &quadMetricGlo,                
                 Array<OneD, NekDouble> &laplacian00Glo,
                 Array<OneD, NekDouble> &laplacian01Glo,
-                Array<OneD, NekDouble> &laplacian11Glo,
-                int &nquad0, int &nquad1, int &nmodes0, int &nmodes1, int &ncoeffs, 
-                        Array<OneD, const int>  &coeff_offset, int &elmts,
-                        Array<OneD, const NekDouble> &base0,
-                        Array<OneD, const NekDouble> &base1,
-                        Array<OneD, const NekDouble> &dbase0,
-                        Array<OneD, const NekDouble> &dbase1,
-                        DNekMatSharedPtr &D0, DNekMatSharedPtr &D1)
+                Array<OneD, NekDouble> &laplacian11Glo)
         {
             printf("%s\n", "within ExpList::GeneralMatrixOp_IterPerExp_plain");
 
 
             Array<OneD, NekDouble> quadMetric, laplacian00, laplacian01, laplacian11;
-            Array<OneD, NekDouble> tmp_outarray;
+            
 
             for(int el = 0; el < elmts; ++el)
             {
@@ -1001,6 +992,7 @@ namespace Nektar
             }
             // Calculating
             /*printf("%s\n"," start calculating" );
+            Array<OneD, NekDouble> tmp_outarray;
             for(int el = 0; el < elmts; ++el)
             {
                 //printf("num_elmts: %i\n", el);      
@@ -2787,23 +2779,14 @@ namespace Nektar
         }
 
         void ExpList::v_GeneralMatrixOp_plain(
-                                        const Array<OneD,const NekDouble> &inarray,
-                                        Array<OneD,      NekDouble> &outarray,
-                                        const NekDouble lambda,
-                      Array<OneD, NekDouble> &quadMetricGlo,                
+                Array<OneD, NekDouble> &quadMetricGlo,                
                 Array<OneD, NekDouble> &laplacian00Glo,
                 Array<OneD, NekDouble> &laplacian01Glo,
                 Array<OneD, NekDouble> &laplacian11Glo,
-                int &nquad0, int &nquad1, int &nmodes0, int &nmodes1, int &ncoeffs, 
-                        Array<OneD, const int>  &coeff_offset, int &elmts,
-                        Array<OneD, const NekDouble> &base0,
-                        Array<OneD, const NekDouble> &base1,
-                        Array<OneD, const NekDouble> &dbase0,
-                        Array<OneD, const NekDouble> &dbase1,
-                        DNekMatSharedPtr &D0, DNekMatSharedPtr &D1,
-                        int &numLocalCoeffs, int &numGlobalCoeffs,
-            Array<OneD, const int> &localToGlobalMap,
-            Array<OneD, const NekDouble> &localToGlobalSign)
+                int &nquad0, int &nquad1, int &elmts,
+                int &numLocalCoeffs, int &numGlobalCoeffs,
+                Array<OneD, const int> &localToGlobalMap,
+                Array<OneD, const NekDouble> &localToGlobalSign)
         {
             //printf("%s\n", "within ExpList::v_GeneralMatrixOp_plain");
             //GeneralMatrixOp_IterPerExp_plain(gkey,inarray,outarray);

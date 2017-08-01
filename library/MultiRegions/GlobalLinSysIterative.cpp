@@ -37,7 +37,7 @@
 #include <MultiRegions/PreconditionerDiagonal.h>
 #include <MultiRegions/Preconditioner.h>
 
-#include <Kokkos_Core.hpp>
+
 
 using namespace std;
 
@@ -601,7 +601,7 @@ namespace Nektar
 
             //Initialise Kokkos
             Kokkos::InitArguments args;
-            args.num_threads = 1;
+            args.num_threads = 12;
             Kokkos::initialize(args);   
 
             // create preconditioner
@@ -662,12 +662,9 @@ namespace Nektar
             int numLocalCoeffs, numGlobalCoeffs;
             Array<OneD, const int> localToGlobalMap;
             Array<OneD, const NekDouble> localToGlobalSign; 
-            GetMatrixMultiplyMetrics(w_A, s_A, lambda,
+            GetMatrixMultiplyMetrics(
                         quadMetricGlo, laplacian00Glo, laplacian01Glo, laplacian11Glo,
-                        nquad0, nquad1, nmodes0, nmodes1, ncoeffs, 
-                        coeff_offset, elmts,
-                        base0, base1, dbase0, dbase1,
-                        D0, D1,
+                        nquad0, nquad1, elmts,
                         numLocalCoeffs, numGlobalCoeffs,
                         localToGlobalMap, localToGlobalSign); 
             printf("%s\n", "==== completed data gathering ====");
@@ -859,33 +856,21 @@ namespace Nektar
 
 
         void GlobalLinSysIterative::GetMatrixMultiplyMetrics(
-                const Array<OneD, NekDouble>& pInput,
-                      Array<OneD, NekDouble>& pOutput,
-                const NekDouble &lambda,
-                      Array<OneD, NekDouble> &quadMetricGlo,                
+                Array<OneD, NekDouble> &quadMetricGlo,                
                 Array<OneD, NekDouble> &laplacian00Glo,
                 Array<OneD, NekDouble> &laplacian01Glo,
                 Array<OneD, NekDouble> &laplacian11Glo,
-                int &nquad0, int &nquad1, int &nmodes0, int &nmodes1, int &ncoeffs, 
-                        Array<OneD, const int>  &coeff_offset, int &elmts,
-                        Array<OneD, const NekDouble> &base0,
-                        Array<OneD, const NekDouble> &base1,
-                        Array<OneD, const NekDouble> &dbase0,
-                        Array<OneD, const NekDouble> &dbase1,
-                        DNekMatSharedPtr &D0, DNekMatSharedPtr &D1,
-                        int &numLocalCoeffs, int &numGlobalCoeffs,
-            Array<OneD, const int> &localToGlobalMap,
-            Array<OneD, const NekDouble> &localToGlobalSign)
+                int &nquad0, int &nquad1, int &elmts,
+                int &numLocalCoeffs, int &numGlobalCoeffs,
+                Array<OneD, const int> &localToGlobalMap,
+                Array<OneD, const NekDouble> &localToGlobalSign)
         {
             printf("Within GlobalLinSysIterative::GetMatrixMultiplyMetrics\n" );           
 
             boost::shared_ptr<MultiRegions::ExpList> expList = m_expList.lock();
-            expList->GeneralMatrixOp_plain(pInput, pOutput, lambda,
+            expList->GeneralMatrixOp_plain(
                         quadMetricGlo, laplacian00Glo, laplacian01Glo, laplacian11Glo,
-                        nquad0, nquad1, nmodes0, nmodes1, ncoeffs, 
-                        coeff_offset, elmts,
-                        base0, base1, dbase0, dbase1,
-                        D0, D1,
+                        nquad0, nquad1, elmts,
                         numLocalCoeffs, numGlobalCoeffs,
                         localToGlobalMap, localToGlobalSign);
 
@@ -893,23 +878,24 @@ namespace Nektar
 
 
         void GlobalLinSysIterative::GeneralMatrixOp_plain(
-                const Array<OneD,const NekDouble>  &inarray,
-                      Array<OneD,      NekDouble>  &outarray,
-                      const NekDouble &lambda,
-                      Array<OneD, NekDouble> &quadMetricGlo,                
-                Array<OneD, NekDouble> &laplacian00Glo,
-                Array<OneD, NekDouble> &laplacian01Glo,
-                Array<OneD, NekDouble> &laplacian11Glo,
-                int &nquad0, int &nquad1, int &nmodes0, int &nmodes1, int &ncoeffs, 
-                Array<OneD, const int>  &coeff_offset, int &elmts,
-                Array<OneD, const NekDouble> &base0,
-                Array<OneD, const NekDouble> &base1,
-                Array<OneD, const NekDouble> &dbase0,
-                Array<OneD, const NekDouble> &dbase1,
-                DNekMatSharedPtr &D0, DNekMatSharedPtr &D1,
-                int &numLocalCoeffs, int &numGlobalCoeffs,
-                Array<OneD, const int> &localToGlobalMap,
-                Array<OneD, const NekDouble> &localToGlobalSign)
+                const Array<OneD,const NekDouble> &inarray,
+                Array<OneD,      NekDouble> &outarray,
+                const NekDouble &lambda,
+                const Array<OneD, const NekDouble> &quadMetricGlo,                
+                const Array<OneD, const NekDouble> &laplacian00Glo,
+                const Array<OneD, const NekDouble> &laplacian01Glo,
+                const Array<OneD, const NekDouble> &laplacian11Glo,
+                const int &nquad0, const int &nquad1, 
+                const int &nmodes0, const int &nmodes1, const int &ncoeffs, 
+                const Array<OneD, const int>  &coeff_offset, const int &elmts,
+                const Array<OneD, const NekDouble> &base0,
+                const Array<OneD, const NekDouble> &base1,
+                const Array<OneD, const NekDouble> &dbase0,
+                const Array<OneD, const NekDouble> &dbase1,
+                const DNekMatSharedPtr &D0, const DNekMatSharedPtr &D1,
+                const int &numLocalCoeffs, const int &numGlobalCoeffs,
+                const Array<OneD, const int> &localToGlobalMap,
+                const Array<OneD, const NekDouble> &localToGlobalSign)
         {
             printf("%s\n", "do the global to local mapping");
             Array<OneD,NekDouble> tmp1(2*numLocalCoeffs);
@@ -950,17 +936,18 @@ namespace Nektar
                     const Array<OneD,const NekDouble> &inarray,
                     Array<OneD,      NekDouble> &outarray,
                     const NekDouble &lambda,
-                    Array<OneD, NekDouble> &quadMetricGlo,                
-                    Array<OneD, NekDouble> &laplacian00Glo,
-                    Array<OneD, NekDouble> &laplacian01Glo,
-                    Array<OneD, NekDouble> &laplacian11Glo,
-                    int &nquad0, int &nquad1, int &nmodes0, int &nmodes1, int &ncoeffs, 
-                    Array<OneD, const int>  &coeff_offset, int &elmts,
-                    Array<OneD, const NekDouble> &base0,
-                    Array<OneD, const NekDouble> &base1,
-                    Array<OneD, const NekDouble> &dbase0,
-                    Array<OneD, const NekDouble> &dbase1,
-                    DNekMatSharedPtr &D0, DNekMatSharedPtr &D1)
+                    const Array<OneD, const NekDouble> &quadMetricGlo,                
+                    const Array<OneD, const NekDouble> &laplacian00Glo,
+                    const Array<OneD, const NekDouble> &laplacian01Glo,
+                    const Array<OneD, const NekDouble> &laplacian11Glo,
+                    const int &nquad0, const int &nquad1, 
+                    const int &nmodes0, const int &nmodes1, const int &ncoeffs, 
+                    const Array<OneD, const int>  &coeff_offset, const int &elmts,
+                    const Array<OneD, const NekDouble> &base0,
+                    const Array<OneD, const NekDouble> &base1,
+                    const Array<OneD, const NekDouble> &dbase0,
+                    const Array<OneD, const NekDouble> &dbase1,
+                    const DNekMatSharedPtr &D0, const DNekMatSharedPtr &D1)
         {
             printf("%s\n", "perform operations by element");            
 
@@ -968,11 +955,15 @@ namespace Nektar
             //Array<OneD, NekDouble> laplacian00(nquad0*nquad1);
             //Array<OneD, NekDouble> laplacian01(nquad0*nquad1);
             //Array<OneD, NekDouble> laplacian11(nquad0*nquad1);
-            Array<OneD, NekDouble> tmp_outarray(ncoeffs);
+            
             // Calculating
+            //Kokkos::parallel_for(range_policy_host(0,elmts),KOKKOS_LAMBDA (const int el)
+            //{
+                                    
             for(int el = 0; el < elmts; ++el)
             {
                 printf("%i ", el);
+                Array<OneD, NekDouble> tmp_outarray(ncoeffs);
                 /*for (int i = 0; i < nquad0*nquad1; ++i)
                 {
                     quadMetric[i] = quadMetricGlo[el*nquad0*nquad1+i];
@@ -996,6 +987,7 @@ namespace Nektar
                     outarray[coeff_offset[el]+i] = tmp_outarray[i];
                 }                
             }
+            //});
             printf("\n");           
         }
 
@@ -1004,16 +996,17 @@ namespace Nektar
                 const Array<OneD, const NekDouble> &inarray,
                       Array<OneD, NekDouble>  &outarray,
                 const NekDouble &lambda,
-                const Array<OneD, NekDouble> &quadMetric,
-                const Array<OneD, NekDouble> &laplacian00,
-                const Array<OneD, NekDouble> &laplacian01,
-                const Array<OneD, NekDouble> &laplacian11,
-                int &nquad0, int &nquad1, int &nmodes0, int &nmodes1, int &ncoeffs,
+                const Array<OneD, const NekDouble> &quadMetric,
+                const Array<OneD, const NekDouble> &laplacian00,
+                const Array<OneD, const NekDouble> &laplacian01,
+                const Array<OneD, const NekDouble> &laplacian11,
+                const int &nquad0, const int &nquad1,
+                const int &nmodes0, const int &nmodes1, const int &ncoeffs,
                 const Array<OneD, const NekDouble> &base0,
                 const Array<OneD, const NekDouble> &base1,
                 const Array<OneD, const NekDouble> &dbase0,
                 const Array<OneD, const NekDouble> &dbase1,
-                DNekMatSharedPtr &D0, DNekMatSharedPtr &D1)
+                const DNekMatSharedPtr &D0, const DNekMatSharedPtr &D1)
         {
             //printf("%s\n", "within GlobalLinSysIterative::HelmholtzMatrixOp_MatFree_plain");
             
@@ -1094,8 +1087,8 @@ namespace Nektar
                 const Array<OneD, const NekDouble>& inarray,
                 Array<OneD, NekDouble> &outarray,
                 Array<OneD, NekDouble> &wsp,
-                int &nmodes0, int &nmodes1,
-                int &nquad0, int &nquad1)
+                const int &nmodes0, const int &nmodes1,
+                const int &nquad0, const int &nquad1)
         {
             Blas::Dgemm('T','N',nquad1,nmodes0,nquad0,1.0,inarray.get(),nquad0,
                         base0.get(),nquad0,0.0,wsp.get(),nquad1);
@@ -1117,8 +1110,8 @@ namespace Nektar
                 const Array<OneD, const NekDouble>& inarray,
                 Array<OneD, NekDouble> &outarray,
                 Array<OneD, NekDouble> &wsp,
-                int &nmodes0, int &nmodes1,
-                int &nquad0, int &nquad1)
+                const int &nmodes0, const int &nmodes1,
+                const int &nquad0, const int &nquad1)
         {
             int i, mode;
             for (i = mode = 0; i < nmodes0; ++i)
@@ -1134,11 +1127,11 @@ namespace Nektar
         }
 
         void GlobalLinSysIterative::PhysTensorDeriv_plain(
-            const Array<OneD, const NekDouble>& inarray,
-                         Array<OneD, NekDouble> &outarray_d0,
-                         Array<OneD, NekDouble> &outarray_d1,
-                         int &nquad0, int &nquad1,
-                         DNekMatSharedPtr &D0, DNekMatSharedPtr &D1)
+                const Array<OneD, const NekDouble>& inarray,
+                Array<OneD, NekDouble> &outarray_d0,
+                Array<OneD, NekDouble> &outarray_d1,
+                const int &nquad0, const int &nquad1,
+                const DNekMatSharedPtr &D0, const DNekMatSharedPtr &D1)
         {
             Blas::Dgemm('N', 'N', nquad0, nquad1, nquad0, 1.0,
                         &(D0->GetPtr())[0], nquad0, &inarray[0], nquad0, 0.0,

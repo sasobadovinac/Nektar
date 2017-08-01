@@ -1000,59 +1000,24 @@ namespace Nektar
         }
 
         void ContField2D::v_GeneralMatrixOp_plain(
-                const Array<OneD,const NekDouble>  &inarray,
-                      Array<OneD,      NekDouble>  &outarray,
-                      const NekDouble lambda,
-                      Array<OneD, NekDouble> &quadMetricGlo,                
+                Array<OneD, NekDouble> &quadMetricGlo,                
                 Array<OneD, NekDouble> &laplacian00Glo,
                 Array<OneD, NekDouble> &laplacian01Glo,
                 Array<OneD, NekDouble> &laplacian11Glo,
-                int &nquad0, int &nquad1, int &nmodes0, int &nmodes1, int &ncoeffs, 
-                        Array<OneD, const int>  &coeff_offset, int &elmts,
-                        Array<OneD, const NekDouble> &base0,
-                        Array<OneD, const NekDouble> &base1,
-                        Array<OneD, const NekDouble> &dbase0,
-                        Array<OneD, const NekDouble> &dbase1,
-                        DNekMatSharedPtr &D0, DNekMatSharedPtr &D1,
-                        int &numLocalCoeffs, int &numGlobalCoeffs,
-            Array<OneD, const int> &localToGlobalMap,
-            Array<OneD, const NekDouble> &localToGlobalSign)
+                int &nquad0, int &nquad1, int &elmts,
+                int &numLocalCoeffs, int &numGlobalCoeffs,
+                Array<OneD, const int> &localToGlobalMap,
+                Array<OneD, const NekDouble> &localToGlobalSign)
         {
             printf("%s\n", "within ContField2D::v_GeneralMatrixOp_plain");
                         
             m_locToGloMap->AssemblyMapCG::GetGlobalToLocal(
                     numLocalCoeffs, numGlobalCoeffs,
                     localToGlobalMap, localToGlobalSign);
-            
-            //printf("numLocalCoeffs = %i, numGlobalCoeffs = %i\n",numLocalCoeffs, numGlobalCoeffs);
-            Array<OneD,NekDouble> tmp1(2*numLocalCoeffs);
-            Array<OneD,NekDouble> tmp2(tmp1+numLocalCoeffs);
-            //GlobalToLocal_plain(inarray,tmp1);
-            //Vmath::Gathr(numLocalCoeffs, localToGlobalSign.get(),
-            //         inarray.get(), localToGlobalMap.get(), tmp1.get());
-            for (int i = 0; i < numLocalCoeffs; ++i)
-            {
-                tmp1[i] = localToGlobalSign[i] * inarray[localToGlobalMap[i]];
-            }
 
-            GeneralMatrixOp_IterPerExp_plain(tmp1,tmp2,lambda,
-                    quadMetricGlo, laplacian00Glo,laplacian01Glo,laplacian11Glo,                    
-                    nquad0, nquad1, nmodes0, nmodes1, ncoeffs,
-                    coeff_offset, elmts,
-                    base0, base1, dbase0, dbase1, D0, D1);
-            
-            //Assemble_plain(tmp2,outarray);  
-            //Vmath::Zero(numGlobalCoeffs, outarray.get(), 1);
-            for (int i = 0; i < numGlobalCoeffs; ++i)
-            {
-                outarray[i] = 0.0;
-            }
-            //Vmath::Assmb(numLocalCoeffs, localToGlobalSign.get(), 
-            //            tmp2.get(), localToGlobalMap.get(), outarray.get());
-            for (int i = 0; i < numLocalCoeffs; ++i)
-            {
-                outarray[localToGlobalMap[i]] += localToGlobalSign[i] * tmp2[i]; 
-            }
+            GeneralMatrixOp_IterPerExp_plain(
+                elmts, nquad0, nquad1,
+                quadMetricGlo, laplacian00Glo,laplacian01Glo,laplacian11Glo); 
             
         }
 
