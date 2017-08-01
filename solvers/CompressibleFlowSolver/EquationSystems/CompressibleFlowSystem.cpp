@@ -451,8 +451,7 @@ namespace Nektar
         }
 
         // Flux vector for energy.
-        Vmath::Vadd(nq, physfield[m_spacedim+1], 1, pressure, 1,
-                    pressure, 1);
+        Vmath::Vadd(nq, physfield[m_spacedim+1], 1, pressure, 1, pressure, 1);
 
         for (j = 0; j < m_spacedim; ++j)
         {
@@ -659,47 +658,55 @@ namespace Nektar
     }
 
     /**
-     * @brief Calculate the maximum timestep subject to CFL restrictions.
+     * @brief Calculate the maximum timestep subject to CFL restrictions
+     *        based on Spectral/hp element methods for Computational
+     *        Fluid Dynamics, G. Karniadakis, S. Sherwin, pp. 316, 317.
      */
     NekDouble CompressibleFlowSystem::v_GetTimeStep(
         const Array<OneD, const Array<OneD, NekDouble> > &inarray)
     {
-        int n;
-        int nElements = m_fields[0]->GetExpSize();
+        int nElements                   = m_fields[0]->GetExpSize();
         const Array<OneD, int> ExpOrder = GetNumExpModesPerExp();
 
+
         Array<OneD, NekDouble> tstep      (nElements, 0.0);
-        Array<OneD, NekDouble> stdVelocity(nElements);
+        Array<OneD, NekDouble> stdVelocity(nElements, 0.0);
 
         // Get standard velocity to compute the time-step limit
         GetStdVelocity(inarray, stdVelocity);
 
         // Factors to compute the time-step limit
         NekDouble minLength = 0.0;
+        NekDouble cLambda   = 1.5;
         NekDouble alpha     = MaxTimeStepEstimator();
-        NekDouble cLambda   = 0.2; // Spencer book-317
 
         // Loop over elements to compute the time-step limit for each element
-        for(n = 0; n < nElements; ++n)
+        for(int n = 0; n < nElements; ++n)
         {
-            int npoints = m_fields[0]->GetExp(n)->GetTotPoints();
-            Array<OneD, NekDouble> one2D(npoints, 1.0);
+            int nPoints = m_fields[0]->GetExp(n)->GetTotPoints();
+            Array<OneD, NekDouble> one2D(nPoints, 1.0);
             NekDouble Area = m_fields[0]->GetExp(n)->Integral(one2D);
 
             minLength = sqrt(Area);
-            if (m_fields[0]->GetExp(n)->as<LocalRegions::TriExp>())
-            {
-                minLength *= 2.0;
-            }
-
+            
             tstep[n] = m_cflSafetyFactor * alpha * minLength
-                     / (stdVelocity[n] * cLambda
-                        * (ExpOrder[n] - 1) * (ExpOrder[n] - 1));
+                     / (stdVelocity[n] * cLambda * (ExpOrder[n] - 1)
+                                                 * (ExpOrder[n] - 1));
+            
+            cout << "minLength      = " << minLength
+                 << "    stdVelocity[n] = " << stdVelocity[n]
+                 << "    ExpOrder[n]    = " << ExpOrder[n]
+                 << "    tstep[n]       = " << tstep[n]
+                 << "    m_cflSafety    = " << m_cflSafetyFactor
+                 << endl;
         }
 
         // Get the minimum time-step limit and return the time-step
         NekDouble TimeStep = Vmath::Vmin(nElements, tstep, 1);
         m_comm->AllReduce(TimeStep, LibUtilities::ReduceMin);
+        
+        cout << "TimeStep    = " << TimeStep << endl;
+        
         return TimeStep;
     }
 
@@ -792,7 +799,7 @@ namespace Nektar
     {
         int nTotQuadPoints = GetTotPoints();
         int n_element      = m_fields[0]->GetExpSize();
-        int nBCEdgePts           = 0;
+        int nBCEdgePts     = 0;
 
         // Getting the velocity vector on the 2D normal space
         Array<OneD, Array<OneD, NekDouble> > velocity   (m_spacedim);
@@ -818,7 +825,7 @@ namespace Nektar
         {
             ptsKeys = m_fields[0]->GetExp(el)->GetPointsKeys();
 
-            // Possible bug: not multiply by jacobian??
+            // Possible bug: not multiply by jacobian -- I do not think so
             const SpatialDomains::GeomFactorsSharedPtr metricInfo =
                 m_fields[0]->GetExp(el)->GetGeom()->GetMetricInfo();
             const Array<TwoD, const NekDouble> &gmat =
@@ -832,8 +839,7 @@ namespace Nektar
                 // d xi/ dx = gmat = 1/J * d x/d xi
                 for (int i = 0; i < m_spacedim; ++i)
                 {
-                    Vmath::Vmul(nq, gmat[i], 1, velocity[0], 1,
-                                stdVelocity[i], 1);
+                    Vmath::Vmul(nq, gmat[i], 1, velocity[0], 1, stdVelocity[i], 1);
                     for (int j = 1; j < m_spacedim; ++j)
                     {
                         Vmath::Vvtvp(nq, gmat[m_spacedim*j+i], 1, velocity[j],
@@ -845,8 +851,7 @@ namespace Nektar
             {
                 for (int i = 0; i < m_spacedim; ++i)
                 {
-                    Vmath::Smul(nq, gmat[i][0], velocity[0], 1,
-                                stdVelocity[i], 1);
+                    Vmath::Smul(nq, gmat[i][0], velocity[0], 1, stdVelocity[i], 1);
                     for (int j = 1; j < m_spacedim; ++j)
                     {
                         Vmath::Svtvp(nq, gmat[m_spacedim*j+i][0], velocity[j],

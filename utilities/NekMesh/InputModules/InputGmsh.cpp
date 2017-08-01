@@ -763,15 +763,15 @@ void InputGmsh::Process()
                 double x = 0, y = 0, z = 0;
                 st >> id >> x >> y >> z;
 
-                if ((x * x) > 0.000001 && m_mesh->m_spaceDim < 1)
+                if ((x * x) > 0.000000000001 && m_mesh->m_spaceDim < 1)
                 {
                     m_mesh->m_spaceDim = 1;
                 }
-                if ((y * y) > 0.000001 && m_mesh->m_spaceDim < 2)
+                if ((y * y) > 0.000000000001 && m_mesh->m_spaceDim < 2)
                 {
                     m_mesh->m_spaceDim = 2;
                 }
-                if ((z * z) > 0.000001 && m_mesh->m_spaceDim < 3)
+                if ((z * z) > 0.000000000001 && m_mesh->m_spaceDim < 3)
                 {
                     m_mesh->m_spaceDim = 3;
                 }

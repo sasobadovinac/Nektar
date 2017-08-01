@@ -112,7 +112,7 @@ namespace Nektar
         //std::cout << "dxForce = " << dxForce << std::endl;
 
         
-        // Lax-Wendroff alpha Riemann cons vars
+        // Lax-Wendroff alpha numerical cons vars
         NekDouble rhoLW = 0.5 * (rhoL + rhoR)
                         - 0.5 * alpha * dt / dxF * (rhofR - rhofL);
         NekDouble rhouLW = 0.5 * (rhouL + rhouR)
@@ -132,14 +132,14 @@ namespace Nektar
         NekDouble pLW = (gamma - 1.0) *
             (ELW - 0.5 * (rhouLW * uLW + rhovLW * vLW + rhowLW * wLW));
 
-        // Lax-Wendroff alpha Riemann fluxes
+        // Lax-Wendroff alpha numerical fluxes
         NekDouble rhofLW = rhouLW;
         NekDouble rhoufLW = rhouLW * uLW + pLW;
         NekDouble rhovfLW = rhouLW * vLW;
         NekDouble rhowfLW = rhouLW * wLW;
         NekDouble EfLW = uLW * (ELW + pLW);
 
-        // Lax-Friedrics alpha Riemann fluxes
+        // Lax-Friedrics alpha numerical fluxes
         NekDouble rhofLF = 0.5 * ( rhofL + rhofR )
             - 0.5 / alpha * dxF / dt * ( rhoR - rhoL );
         NekDouble rhoufLF = 0.5 * ( rhoufL + rhoufR )
@@ -151,12 +151,11 @@ namespace Nektar
         NekDouble EfLF = 0.5 * ( EfL + EfR )
             - 0.5 / alpha * dxF / dt * ( ER - EL );
 
-        // FORCE Riemann fluxes 
+        // FORCE numerical fluxes
         rhof  = 0.5 * ( rhofLW + rhofLF );
         rhouf = 0.5 * ( rhoufLW + rhoufLF );
         rhovf = 0.5 * ( rhovfLW + rhovfLF );
         rhowf = 0.5 * ( rhowfLW + rhowfLF );
         Ef    = 0.5 * ( EfLW + EfLF );
-    
     }
 }

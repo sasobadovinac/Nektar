@@ -89,7 +89,6 @@ NekDouble m_rhoInf;
 NekDouble m_R;
 NekDouble m_vInf;
 NekDouble m_mu;
-NekDouble m_To = 273.11;
 
 const int m_xpoints = 1000001;
 
@@ -102,38 +101,47 @@ const NekDouble errtol = 1e-5;
 /**
  * Calculate the compressible boundary layer using the similarity solution
  */
-void COMPBL(Array<OneD, NekDouble> v,
-            Array<OneD, NekDouble> dv)
+void COMPBL(Array<OneD, NekDouble> v, Array<OneD, NekDouble> dv)
 {
     NekDouble c, dcdg, cp;
 
+    // Sutherland's viscosity law
     if (Nvisc == 1)
     {
-        c = sqrt(v[3]) * (1.0 + m_Suth) / (v[3] + m_Suth);
-        dcdg = 1.0 / (2. * sqrt(v[3])) - sqrt(v[3]) / (v[3]+m_Suth);
+        c    = sqrt(v[3]) * (1.0 + m_Suth) / (v[3] + m_Suth);
+        dcdg = 1.0 / (2. * sqrt(v[3])) - sqrt(v[3]) / (v[3] + m_Suth);
         dcdg = dcdg * (1.0 + m_Suth) / (v[3] + m_Suth);
-        cp = dcdg * v[4];
+        cp   = dcdg * v[4];
     }
+    // Power law
     if (Nvisc == 2)
     {
         c    = pow(v[3], (Omega-1.0));
         dcdg = (Omega - 1.0) * pow(v[3], (Omega - 2.0));
         cp   = dcdg * v[4];
     }
+    // Chapman-Rubesin approximation
     if (Nvisc == 3)
     {
         c  = sqrt(m_Twall) * (1.0 + m_Suth) / (m_Suth + m_Twall);
         cp = 0.0;
     }
 
+    // Specify the ODE:
+    //     v(1) = f
+    //     v(2) = f'
+    //     v(3) = f''
+    //     v(4) = g
+    //     v(5) = g'
     dv[0] = v[1];
     dv[1] = v[2];
     dv[2] = - v[2] * (cp + v[0]) / c;
     dv[3] = v[4];
-    dv[4] = - v[4] * (cp + m_Pr * v[0]) / c -
-        m_Pr * (m_Gamma - 1.0) * pow(m_Mach, 2.0) *
-        pow(v[2], 2);
+    dv[4] = - v[4] * (cp + m_Pr * v[0]) / c
+            - m_Pr * (m_Gamma - 1.0) * m_Mach * m_Mach * v[2] * v[2];
 }
+
+
 
 /**
  * Perform the RK4 integration
@@ -206,8 +214,8 @@ void RKDUMB(Array<OneD, NekDouble>               vstart,
 
     xx[0] = x1;
     x     = x1;
-    h     = (x2-x1) / m_xpoints;
-
+    h     = (x2 - x1) / m_xpoints;
+    
     for (int k = 0; k < m_xpoints; k++)
     {
         COMPBL(v, dv);
@@ -218,7 +226,7 @@ void RKDUMB(Array<OneD, NekDouble>               vstart,
             cout << "bug" << endl;
         }
 
-        x = x + h;
+        x       = x + h;
         xx[k+1] = x;
 
         for (int i = 0; i < nvar; i++)
@@ -227,6 +235,8 @@ void RKDUMB(Array<OneD, NekDouble>               vstart,
         }
     }
 }
+
+
 
 /**
  * Create the output file
@@ -250,36 +260,34 @@ void OUTPUT(int                                  m_xpoints,
     Array <OneD, NekDouble > rho     (m_xpoints, 0.0);
     Array <OneD, NekDouble > mu      (m_xpoints, 0.0);
     Array <OneD, NekDouble > vv      (m_xpoints, 0.0);
-    Array <OneD, NekDouble > velocity(m_xpoints, 0.0);
+    Array <OneD, NekDouble > streamf (m_xpoints, 0.0);
     Array <OneD, NekDouble > test    (m_xpoints, 0.0);
 
 
-    NekDouble dd, dm, scale, flg;
-    NekDouble xcher, ycher;
+    NekDouble dd, dm, scaleX, flg;
     int index = -1;
 
-    z[0]           = 0.0;
-    NekDouble sumd = 0.0;
+    z[0]                = 0.0;
+    NekDouble deltastar = 0.0;
 
+    // trapezoid integration for diplacement thickness
     for (int i = 1; i < m_xpoints ; i++)
     {
-        z[i] = z[i-1] + 0.5 * (xx[i] - xx[i-1]) * (ff[3][i] + ff[3][i-1]);
-        dm   = ff[3][i-1] - ff[1][i-1];
-        dd   = ff[3][i] - ff[1][i];
-        sumd = sumd + 0.5 * (xx[i] - xx[i-1]) * (dd + dm);
+        z[i]      = z[i-1] + 0.5 * (xx[i] - xx[i-1]) * (ff[3][i] + ff[3][i-1]);
+        dm        = ff[3][i-1] - ff[1][i-1];
+        dd        = ff[3][i] - ff[1][i];
+        deltastar = deltastar + 0.5 * (xx[i] - xx[i-1]) * (dd + dm);
 
         if ((ff[1][i] > 0.999) && (flg < 1.0))
         {
             flg  = 2.0;
         }
     }
-
-    scale = sumd;
-
+    
     ofstream file3;
     file3.open("physical_data.dat");
 
-    NekDouble xin, rex, delsx, delta;
+    NekDouble xin, rex, re_deltastar, delsx, delta;
 
     for (int i = 0; i < m_xpoints; i++)
     {
@@ -287,56 +295,76 @@ void OUTPUT(int                                  m_xpoints,
         {
             v[k] = ff[k][i];
         }
+        
         COMPBL(v, dv);
-        u[i]        = ff[1][i];
-        t[i]        = ff[3][i];
-        rho[i]      = (1.0 / ff[3][i]);
-        vv[i]       = -ff[0][i]/sqrt(m_uInf);
-        mu[i]       = pow(t[i], 1.5) * (1 + m_Suth) / (t[i] + m_Suth) / (m_Re);
-        velocity[i] = ff[0][i] ;
+        u[i]       = ff[1][i];
+        t[i]       = ff[3][i];
+        rho[i]     = (1.0 / ff[3][i]);
+        vv[i]      = -ff[0][i] / sqrt(m_uInf);
+        mu[i]      = pow(t[i], 1.5) * (1 + m_Suth) / (t[i] + m_Suth) / (m_Re);
+        streamf[i] = ff[0][i];
     }
 
-    NekDouble scale2, coeff;
+    NekDouble scaleY, coeff;
 
     for (int i = 0; i < nQuadraturePts; i++)
     {
         if (i%100000 == 0)
         {
             cout << "i" << "  " << i << "/" << nQuadraturePts << endl;
+            cout << "deltastar = " << deltastar
+            << "xin = "       << xin
+            << "rex = "       << rex
+            << "delsx = "     << delsx
+            << "scale = "     << scaleX
+            << "delta = "     << delta
+            << "scale2 = "    << scaleY
+            << "coeff = "     << coeff
+            << endl;
         }
 
-        xcher  = x_QuadraturePts[i];
-        ycher  = y_QuadraturePts[i];
+        rex          = 0.5 * (m_Re / deltastar) * (m_Re / deltastar) + m_Re * (x_QuadraturePts[i] + 0.001);
+        re_deltastar = (m_Re / m_long) * deltastar;
+        //rex          = 0.5 * (re_deltastar / 1.4022838) * (re_deltastar / 1.4022838);
+        delsx        = sqrt(2.0 / rex) * deltastar * (x_QuadraturePts[i])* m_Pr;
+        scaleX       = deltastar / delsx;
+        delta        = 4.91 * sqrt((x_QuadraturePts[i] * m_mu) / (m_rhoInf * m_uInf));
+        scaleY       = y_QuadraturePts[i] * (scaleX * delta) / sqrt(etamax);
+        coeff        = 0.5 * sqrt(2 / (x_QuadraturePts[i] * m_Re));
 
-        scale  = sumd;
-        xin    = xcher;
-        rex    = 0.5 * pow(((m_Re) / scale), 2) + (m_Re) * xin;
-        delsx  = sqrt(2.0 / rex) * scale * (xin)* m_Pr;
-        scale  = scale / delsx;
-        delta  = 4.91 * sqrt((xin * m_mu) / (m_rhoInf * m_uInf));
-        scale2 = ycher * (scale * delta) / sqrt(etamax) ;
-        coeff  = 0.5 * sqrt( 2 / (xcher*m_Re)) ;
+        /*
+        rex    = 0.5 * pow(((m_Re) / sumd), 2) + (m_Re) * x_QuadraturePts[i];
+        delsx  = sqrt(2.0 / rex) * sumd * (x_QuadraturePts[i])* m_Pr;
+        scale  = sumd / delsx;
+        delta  = 4.91 * sqrt((x_QuadraturePts[i] * m_mu) / (m_rhoInf * m_uInf));
+        scale2 = ycher * (sumd * delta) / sqrt(etamax) ;
+        coeff  = 0.5 * sqrt( 2 / (x_QuadraturePts[i] * m_Re)) ;
+        */
+        
 
-        if (scale2 > z[m_xpoints-3])
+
+        
+        // Dumping values into DNS grid ----------------------------------------
+        if (scaleY > z[m_xpoints-3])
         {
             u_QuadraturePts[i]   = 1;
             rho_QuadraturePts[i] = 1;
             T_QuadraturePts[i]   = 1.0 / rho_QuadraturePts[i];
-            v_QuadraturePts[i]   =  coeff * (z[m_xpoints-3] -
-                                             velocity[m_xpoints-3]);
+            v_QuadraturePts[i]   = coeff * (z[m_xpoints-3] -
+                                            streamf[m_xpoints-3]);
 
-            file3 << xcher                 << "    "
-                  << ycher                 << "    "
-                  << velocity[m_xpoints-3] << "    "
-                  << z[m_xpoints-3]        << "    "
+            file3 << x_QuadraturePts[i]   << "    "
+                  << y_QuadraturePts[i]   << "    "
+                  << streamf[m_xpoints-3] << "    "
+                  << z[m_xpoints-3]       << "    "
                   << u[m_xpoints-3]
                   << endl;
         }
         else
         {
-            for (int j = 0 ; j< m_xpoints-1; j++)
+            for (int j = 0 ; j < m_xpoints-1; j++)
             {
-                if ((z[j] <= scale2) && (z[j+1] > scale2))
+                if ((z[j] <= scaleY) && (z[j+1] > scaleY))
                 {
                     index = j;
                     break;
@@ -349,9 +377,11 @@ void OUTPUT(int                                  m_xpoints,
 
             u_QuadraturePts[i]   = u[index];
             rho_QuadraturePts[i] = rho[index];
-            T_QuadraturePts[i]   = 1.0/rho_QuadraturePts[i];
-            v_QuadraturePts[i]   = coeff * (u[index]*scale2 - velocity[index]);
+            T_QuadraturePts[i]   = 1.0 / rho_QuadraturePts[i];
+            //v_QuadraturePts[i]   = coeff * (u[index] * scaleY - streamf[index]);
+            v_QuadraturePts[i]   = coeff * (scaleY * u[index] - streamf[index]);
         }
+        // ---------------------------------------------------------------------
     }
 }
 
@@ -476,7 +506,6 @@ int main(int argc, char *argv[])
     // Rescaling factors
     m_Suth = 110.4 / m_Tinf;
     m_Tw   = m_Twall / m_Tinf;
-    m_Re   = m_Re / m_long;
 
     cout << "Number of points" << "   " << m_xpoints << endl;
 
@@ -498,9 +527,9 @@ int main(int argc, char *argv[])
     }
     else
     {
-        v[1] = 0.062 * pow(m_Mach, 2) - 0.1 * (m_Tw - 1.0) *
-        (10 + m_Mach) / (0.2 + m_Mach);
-        v[0] = 0.45 - 0.01 * m_Mach + (m_Tw - 1.0) * 0.06;
+        v[1]    = 0.062 * pow(m_Mach, 2) - 0.1 * (m_Tw - 1.0)
+                    * (10 + m_Mach) / (0.2 + m_Mach);
+        v[0]    = 0.45 - 0.01 * m_Mach + (m_Tw - 1.0) * 0.06;
         m_Twall = m_Tw;
     }
 

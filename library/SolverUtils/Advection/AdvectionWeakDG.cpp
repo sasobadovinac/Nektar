@@ -133,41 +133,22 @@ namespace Nektar
 
                     for (i = 0; i < nLocalPts; ++i)
                     {
-                        std::cout << "i  = "    << i
-                        << ",    nLocalPts = "  << nLocalPts
-                        << ",    physOffset = " << physOffset
-                        << ",    nquad0 = "     << nquad0
-                        << std::endl;
-                        
                         if (i == nquad0-1)
                         {
                             m_dx[i+physOffset] =
                                 (coords[0][i+physOffset] -
                                  coords[0][i-1+physOffset]);
-                            std::cout << "IF = " << m_dx[i+physOffset] << std::endl;
-                            std::cout << "i  = " << i
-                                      << ",    physOffset = " << physOffset
-                                      << ",    nquad0 = "     << nquad0
-                                      << std::endl;
                         }
                         else
                         {
                             m_dx[i+physOffset] =
                                 (coords[0][i+physOffset] -
                                  coords[0][i+1+physOffset]);
-                            
-                            std::cout << "ELSE = " << m_dx[i+physOffset] << std::endl;
                         }
                     }
                 }
                 Vmath::Vabs(nTotalPts, m_dx, 1, m_dx, 1);
                 pFields[0]->GetFwdBwdTracePhys(m_dx, m_dxFwd, m_dxBwd);
-
-                for (i = 0; i < nTotalPts; ++i)
-                {
-                    std::cout << "x    = " << coords[0][i] << std::endl;
-                    std::cout << "m_dx = " << m_dx[i]      << std::endl;
-                }
                 
                 // Approach on standard space
                 /*
@@ -204,9 +185,6 @@ namespace Nektar
                 
                 for (int n = 0; n < nElements; ++n)
                 {
-                    std::cout << "======================================="
-                              << std::endl;
-                    std::cout << "n = " << n << std::endl;
                     cntx = 0;
                     cnty = 1;
                     base       = pFields[0]->GetExp(n)->GetBase();
@@ -217,12 +195,6 @@ namespace Nektar
                     
                     for (i = 0; i < nLocalPts; ++i)
                     {
-                        std::cout << "i  = "    << i
-                        << ",    nLocalPts = "  << nLocalPts
-                        << ",    physOffset = " << physOffset
-                        << ",    nquad0 = "     << nquad0
-                        << std::endl;
-                        
                         if (i == (nLocalPts-nquad0))
                         {
                             cnty = nLocalPts-nquad0;
@@ -234,28 +206,18 @@ namespace Nektar
                             m_dx[i+physOffset] =
                             (coords[0][i+physOffset] -
                              coords[0][i-1+physOffset]);
-                            std::cout << "IF = " << m_dx[i+physOffset]
-                                                 << std::endl;
-                            std::cout << "i  = " << i
-                            << ",    physOffset = " << physOffset
-                            << ",    nquad0 = "     << nquad0
-                                                    << std::endl;
                         }
                         else
                         {
                             m_dx[i+physOffset] =
                             (coords[0][i+physOffset] -
                              coords[0][i+1+physOffset]);
-                            
-                            std::cout << "ELSE = " << m_dx[i+physOffset] << std::endl;
                         }
                         
                         if (cnty == (nLocalPts-nquad0))
                         {
-                            std::cout << "cnty = " << cnty << std::endl;
                             m_dy[i+physOffset] = (coords[1][i+physOffset] -
                                                   coords[1][i-nquad0+physOffset]);
-                            std::cout << "------ IF DY = " << m_dy[i+physOffset] << std::endl;
 
                         }
                         else
@@ -263,8 +225,6 @@ namespace Nektar
                             m_dy[i+physOffset] =
                                 (coords[1][i+nquad0+physOffset] -
                                  coords[1][i+physOffset]);
-                            std::cout << "------ ELSE DY = " << m_dy[i+physOffset] << std::endl;
-
                         }
                     }
                 }
