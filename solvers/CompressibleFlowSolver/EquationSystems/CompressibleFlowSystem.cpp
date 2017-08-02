@@ -700,10 +700,14 @@ namespace Nektar
         m_comm->AllReduce(TimeStep        , LibUtilities::ReduceMin);
         m_comm->AllReduce(standardVelocity, LibUtilities::ReduceMax);
         
-        cout << "TimeStep              = " << TimeStep
-             << ",    standardVelocity = " << standardVelocity
-             << ",    minLength        = " << minLength << endl;
-
+        if (m_session->GetComm()->GetRank() == 0
+        {
+            cout << "TimeStep              = " << TimeStep
+                 << ",    standardVelocity = " << standardVelocity
+                 << ",    minLength        = " << minLength
+                 << endl;
+        }
+            
         return TimeStep;
     }
 
@@ -731,7 +735,7 @@ namespace Nektar
             {
                 Vmath::FillWhiteNoise(phystot, Noise, noise, 1,
                                       m_comm->GetColumnComm()->GetRank()+1);
-                Vmath::Vadd(phystot, m_fields[i]->GetPhys(), 1,
+                Vmath::Vadd(phystot , m_fields[i]->GetPhys()   , 1,
                             noise, 1, m_fields[i]->UpdatePhys(), 1);
                 m_fields[i]->FwdTrans_IterPerExp(m_fields[i]->GetPhys(),
                                                  m_fields[i]->UpdateCoeffs());

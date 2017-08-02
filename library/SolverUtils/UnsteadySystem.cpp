@@ -295,6 +295,8 @@ namespace Nektar
                 intTime += elapsed;
                 cpuTime += elapsed;
 		
+                NekDouble dtt = GetTimeStep(fields);
+
                 // Write out status information
                 if (m_session->GetComm()->GetRank() == 0 && 
                     !((step+1) % m_infosteps))
@@ -314,7 +316,6 @@ namespace Nektar
                          << ss.str() << endl;
                     cpuTime = 0.0;
                     
-                    NekDouble dtt = GetTimeStep(fields);
                 }
 
                 // Transform data into coefficient space
