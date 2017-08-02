@@ -183,7 +183,8 @@ namespace Nektar
 
             void GeneralMatrixOp_IterPerExp_plain(
                     const Array<OneD,const NekDouble> &inarray,
-                    Array<OneD,      NekDouble> &outarray,
+                    //Array<OneD,      NekDouble> &outarray,
+                    Kokkos::View<double*> transfer_out,                     
                     const NekDouble &lambda,
                     const Array<OneD, const NekDouble> &quadMetricGlo,                
                     const Array<OneD, const NekDouble> &laplacian00Glo,
@@ -200,7 +201,9 @@ namespace Nektar
 
             void HelmholtzMatrixOp_MatFree_plain(
                     const Array<OneD, const NekDouble> &inarray,
-                          Array<OneD,       NekDouble> &outarray,
+                    //      Array<OneD,       NekDouble> &outarray,
+                    Kokkos::View<double*> transfer_out, 
+                    const int &el, const Array<OneD, const int>  &coeff_offset,
                     const NekDouble &lambda,
                     const Array<OneD, const NekDouble> &quadMetric,
                     const Array<OneD, const NekDouble> &laplacian00,

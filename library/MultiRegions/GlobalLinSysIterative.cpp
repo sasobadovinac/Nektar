@@ -601,7 +601,7 @@ namespace Nektar
 
             //Initialise Kokkos
             Kokkos::InitArguments args;
-            args.num_threads = 12;
+            args.num_threads = 6;
             Kokkos::initialize(args);   
 
             // create preconditioner
@@ -666,7 +666,8 @@ namespace Nektar
                         quadMetricGlo, laplacian00Glo, laplacian01Glo, laplacian11Glo,
                         nquad0, nquad1, elmts,
                         numLocalCoeffs, numGlobalCoeffs,
-                        localToGlobalMap, localToGlobalSign); 
+                        localToGlobalMap, localToGlobalSign);
+
             printf("%s\n", "==== completed data gathering ====");
 
             // Copy initial residual from input
@@ -898,23 +899,26 @@ namespace Nektar
                 const Array<OneD, const NekDouble> &localToGlobalSign)
         {
             printf("%s\n", "do the global to local mapping");
-            Array<OneD,NekDouble> tmp1(2*numLocalCoeffs);
-            Array<OneD,NekDouble> tmp2(tmp1+numLocalCoeffs);
-
+            Array<OneD,NekDouble> tmp1(numLocalCoeffs);
+            
             //GlobalToLocal_plain(inarray,tmp1);
             //Vmath::Gathr(numLocalCoeffs, localToGlobalSign.get(),
             //         inarray.get(), localToGlobalMap.get(), tmp1.get());
             for (int i = 0; i < numLocalCoeffs; ++i)
             {
-                tmp1[i] = localToGlobalSign[i] * inarray[localToGlobalMap[i]];
+                tmp1[i] = localToGlobalSign[i] * inarray[localToGlobalMap[i]];            
             }
 
-            GeneralMatrixOp_IterPerExp_plain(tmp1,tmp2,lambda,
+            Kokkos::View<double*> transfer_out;
+            transfer_out = Kokkos::View<double*>("transfer_out", elmts*ncoeffs);                        
+
+            GeneralMatrixOp_IterPerExp_plain(tmp1,transfer_out,lambda,
                     quadMetricGlo, laplacian00Glo,laplacian01Glo,laplacian11Glo,                    
                     nquad0, nquad1, nmodes0, nmodes1, ncoeffs,
                     coeff_offset, elmts,
                     base0, base1, dbase0, dbase1, D0, D1);
-
+            //double *out_raw = transfer_out.ptr_on_device();
+            
             printf("%s\n", "do the local to global mapping");
             //Assemble_plain(tmp2,outarray);  
             //Vmath::Zero(numGlobalCoeffs, outarray.get(), 1);
@@ -926,7 +930,7 @@ namespace Nektar
             //            tmp2.get(), localToGlobalMap.get(), outarray.get());
             for (int i = 0; i < numLocalCoeffs; ++i)
             {
-                outarray[localToGlobalMap[i]] += localToGlobalSign[i] * tmp2[i]; 
+                outarray[localToGlobalMap[i]] += localToGlobalSign[i] * transfer_out(i); 
             }
             
         }
@@ -934,7 +938,8 @@ namespace Nektar
 
         void GlobalLinSysIterative::GeneralMatrixOp_IterPerExp_plain(
                     const Array<OneD,const NekDouble> &inarray,
-                    Array<OneD,      NekDouble> &outarray,
+                    //Array<OneD,      NekDouble> &outarray,
+                    Kokkos::View<double*> transfer_out,
                     const NekDouble &lambda,
                     const Array<OneD, const NekDouble> &quadMetricGlo,                
                     const Array<OneD, const NekDouble> &laplacian00Glo,
@@ -950,51 +955,47 @@ namespace Nektar
                     const DNekMatSharedPtr &D0, const DNekMatSharedPtr &D1)
         {
             printf("%s\n", "perform operations by element");            
-
-            //Array<OneD, NekDouble> quadMetric (nquad0*nquad1);
-            //Array<OneD, NekDouble> laplacian00(nquad0*nquad1);
-            //Array<OneD, NekDouble> laplacian01(nquad0*nquad1);
-            //Array<OneD, NekDouble> laplacian11(nquad0*nquad1);
-            
             // Calculating
-            //Kokkos::parallel_for(range_policy_host(0,elmts),KOKKOS_LAMBDA (const int el)
-            //{
-                                    
-            for(int el = 0; el < elmts; ++el)
-            {
+            Kokkos::parallel_for(range_policy_host(0,elmts),KOKKOS_LAMBDA (const int el)
+            {                                    
                 printf("%i ", el);
-                Array<OneD, NekDouble> tmp_outarray(ncoeffs);
-                /*for (int i = 0; i < nquad0*nquad1; ++i)
+                Array<OneD, NekDouble> tmp_inarray (ncoeffs);
+                for (int i = 0; i < ncoeffs; ++i)
                 {
-                    quadMetric[i] = quadMetricGlo[el*nquad0*nquad1+i];
+                    tmp_inarray[i] = inarray[coeff_offset[el]+i];
+                }
+                Array<OneD, NekDouble> quadMetric (nquad0*nquad1);
+                Array<OneD, NekDouble> laplacian00(nquad0*nquad1);
+                Array<OneD, NekDouble> laplacian01(nquad0*nquad1);
+                Array<OneD, NekDouble> laplacian11(nquad0*nquad1);
+                for (int i = 0; i < nquad0*nquad1; ++i)
+                {
+                     quadMetric[i] =  quadMetricGlo[el*nquad0*nquad1+i];
                     laplacian00[i] = laplacian00Glo[el*nquad0*nquad1+i];
                     laplacian01[i] = laplacian01Glo[el*nquad0*nquad1+i];
                     laplacian11[i] = laplacian11Glo[el*nquad0*nquad1+i];
-                }*/
+                }
                 HelmholtzMatrixOp_MatFree_plain(
-                    inarray + coeff_offset[el],
-                    tmp_outarray,
+                    tmp_inarray,
+                    transfer_out,
+                    el, coeff_offset,
                     lambda,
-                    quadMetricGlo + el*nquad0*nquad1 ,
-                    laplacian00Glo + el*nquad0*nquad1,
-                    laplacian01Glo + el*nquad0*nquad1,
-                    laplacian11Glo + el*nquad0*nquad1,
+                     quadMetric,
+                    laplacian00,
+                    laplacian01,
+                    laplacian11,
                     nquad0, nquad1, nmodes0, nmodes1, ncoeffs,
                     base0, base1, dbase0, dbase1, D0, D1);
-
-                for (int i = 0; i < ncoeffs; ++i)
-                {
-                    outarray[coeff_offset[el]+i] = tmp_outarray[i];
-                }                
-            }
-            //});
-            printf("\n");           
+            });
+            printf("\n completed all elements\n");             
         }
 
 
         void GlobalLinSysIterative::HelmholtzMatrixOp_MatFree_plain(
                 const Array<OneD, const NekDouble> &inarray,
-                      Array<OneD, NekDouble>  &outarray,
+                //      Array<OneD, NekDouble>  &outarray,
+                Kokkos::View<double*> transfer_out,
+                const int &el, const Array<OneD, const int>  &coeff_offset,
                 const NekDouble &lambda,
                 const Array<OneD, const NekDouble> &quadMetric,
                 const Array<OneD, const NekDouble> &laplacian00,
@@ -1009,6 +1010,8 @@ namespace Nektar
                 const DNekMatSharedPtr &D0, const DNekMatSharedPtr &D1)
         {
             //printf("%s\n", "within GlobalLinSysIterative::HelmholtzMatrixOp_MatFree_plain");
+            
+            Array<OneD, NekDouble> t_outarray(ncoeffs);
             
             int       nqtot   = nquad0*nquad1;
             //int       wspsize = std::max(std::max(std::max(nqtot,ncoeffs),nquad1*nmodes0), nquad0*nmodes1);
@@ -1033,7 +1036,7 @@ namespace Nektar
             }
 
             //IProductWRTBase_SumFacKernel(base0, base1, wsp1, outarray, wsp2, true, true);
-            IProductWRTBase_SumFacKernel_plain(base0, base1, wsp1, outarray,
+            IProductWRTBase_SumFacKernel_plain(base0, base1, wsp1, t_outarray,
                                          wsp2, nmodes0, nmodes1, nquad0, nquad1);
 
             //LaplacianMatrixOp_MatFree_Kernel(wsp0, wsp1, wsp2);
@@ -1075,7 +1078,8 @@ namespace Nektar
             //Vmath::Svtvp(m_ncoeffs, lambda, &outarray[0], 1, &wsp1[0], 1, &outarray[0], 1);
             for (int i = 0; i < ncoeffs; ++i)
             {
-                outarray[i] = lambda * outarray[i] + wsp1[i];
+                //outarray[i] = lambda * t_outarray[i] + wsp1[i];
+                transfer_out(coeff_offset[el] + i) = lambda * t_outarray[i] + wsp1[i];
             }    
             
 
