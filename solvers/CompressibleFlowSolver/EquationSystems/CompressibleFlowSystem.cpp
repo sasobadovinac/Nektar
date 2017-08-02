@@ -689,7 +689,7 @@ namespace Nektar
 
             minLength = sqrt(Area);
             
-            tstep[n] = m_cflSafetyFactor * alpha * minLength
+            tstep[n] = 1.0 * alpha * minLength
                      / (stdVelocity[n] * cLambda * (ExpOrder[n] - 1)
                                                  * (ExpOrder[n] - 1));
         }
@@ -735,8 +735,8 @@ namespace Nektar
             {
                 Vmath::FillWhiteNoise(phystot, Noise, noise, 1,
                                       m_comm->GetColumnComm()->GetRank()+1);
-                Vmath::Vadd(phystot , m_fields[i]->GetPhys()   , 1,
-                            noise, 1, m_fields[i]->UpdatePhys(), 1);
+                Vmath::Vadd(phystot , m_fields[i]->GetPhys(), 1, noise, 1,
+                                      m_fields[i]->UpdatePhys(), 1);
                 m_fields[i]->FwdTrans_IterPerExp(m_fields[i]->GetPhys(),
                                                  m_fields[i]->UpdateCoeffs());
             }
