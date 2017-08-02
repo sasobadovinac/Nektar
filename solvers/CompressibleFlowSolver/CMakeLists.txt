@@ -40,6 +40,7 @@ IF( NEKTAR_SOLVER_COMPRESSIBLE_FLOW )
        ./RiemannSolvers/FORCESolver.cpp
        ./RiemannSolvers/LocalLaxFriedrichsSolver.cpp
        ./RiemannSolvers/RoeSolver.cpp
+       ./RiemannSolvers/TVSplitSolver.cpp
        )
 
     ADD_SOLVER_EXECUTABLE(CompressibleFlowSolver solvers 
