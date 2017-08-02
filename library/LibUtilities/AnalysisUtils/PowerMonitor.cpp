@@ -200,16 +200,17 @@ long int PowerMonitor::GetCounterValue(const unsigned int i)
 {
     char line[MAX_FLINE_LEN];
     long int val = 0;
-	
-    if (0 == system_error)
+    	
+    int syserr = PowerMonitor::GetFirstLine(i, line, MAX_FLINE_LEN);   
+    if (0 == syserr)
     {
-        system_error = PowerMonitor::GetFirstLine(i, line, MAX_FLINE_LEN);   
-        if (0 == system_error)
-        {
-	    val = strtol(line, NULL, 10);
-	}
+        val = strtol(line, NULL, 10);
     }
-        
+    else
+    {
+        system_error = syserr;
+    }
+            
     return val;
 }
 
@@ -398,6 +399,7 @@ unsigned int PowerMonitor::RecordCounterValues(const int nstep, const int sstep)
 
 	if (0 != system_error)
 	{
+	    system_error = 0;
 	    return PM_RECORD_COUNTER_FILE_ERROR;  
 	}
     }
@@ -479,7 +481,7 @@ unsigned int PowerMonitor::Record(const int nstep, const int sstep, const bool i
 // close the files used to read and record counter data
 void PowerMonitor::Finalise(void)
 {
-    if (all_initialised && 0 == system_error)
+    if (all_initialised)
     {
     	// do the last record
         PowerMonitor::Record(last_nstep+1, 1, true, false);

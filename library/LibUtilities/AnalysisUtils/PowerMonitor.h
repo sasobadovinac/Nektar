@@ -74,7 +74,6 @@ private:
     static int GetFirstLine(const unsigned int i, char* line, const unsigned int len);
     static long int GetCounterValue(const unsigned int i);
     static int GetNodeNumber(void);
-    static int GetSystemError(void) { return system_error; }
     
     static bool IsInitialised(void);
 
