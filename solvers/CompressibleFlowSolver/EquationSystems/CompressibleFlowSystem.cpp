@@ -700,7 +700,7 @@ namespace Nektar
         m_comm->AllReduce(TimeStep        , LibUtilities::ReduceMin);
         m_comm->AllReduce(standardVelocity, LibUtilities::ReduceMax);
         
-        if (m_session->GetComm()->GetRank() == 0
+        if (m_session->GetComm()->GetRank() == 0)
         {
             cout << "TimeStep              = " << TimeStep
                  << ",    standardVelocity = " << standardVelocity
