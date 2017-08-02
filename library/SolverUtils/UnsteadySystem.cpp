@@ -313,6 +313,8 @@ namespace Nektar
                     cout << " CPU Time: " << setw(8) << left
                          << ss.str() << endl;
                     cpuTime = 0.0;
+                    
+                    NekDouble dtt = GetTimeStep(fields);
                 }
 
                 // Transform data into coefficient space

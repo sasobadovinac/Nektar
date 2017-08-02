@@ -692,21 +692,18 @@ namespace Nektar
             tstep[n] = m_cflSafetyFactor * alpha * minLength
                      / (stdVelocity[n] * cLambda * (ExpOrder[n] - 1)
                                                  * (ExpOrder[n] - 1));
-            
-            cout << "minLength      = " << minLength
-                 << "    stdVelocity[n] = " << stdVelocity[n]
-                 << "    ExpOrder[n]    = " << ExpOrder[n]
-                 << "    tstep[n]       = " << tstep[n]
-                 << "    m_cflSafety    = " << m_cflSafetyFactor
-                 << endl;
         }
 
         // Get the minimum time-step limit and return the time-step
-        NekDouble TimeStep = Vmath::Vmin(nElements, tstep, 1);
-        m_comm->AllReduce(TimeStep, LibUtilities::ReduceMin);
+        NekDouble TimeStep         = Vmath::Vmin(nElements, tstep      , 1);
+        NekDouble standardVelocity = Vmath::Vmax(nElements, stdVelocity, 1);
+        m_comm->AllReduce(TimeStep        , LibUtilities::ReduceMin);
+        m_comm->AllReduce(standardVelocity, LibUtilities::ReduceMax);
         
-        cout << "TimeStep    = " << TimeStep << endl;
-        
+        cout << "TimeStep              = " << TimeStep
+             << ",    standardVelocity = " << standardVelocity
+             << ",    minLength        = " << minLength << endl;
+
         return TimeStep;
     }
 
