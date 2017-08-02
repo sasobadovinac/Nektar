@@ -192,10 +192,8 @@ void ProcessCreateExp::Process(po::variables_map &vm)
             m_f->m_session->LoadParameter("Strip_Z", nstrips, 1);
 
             vector<string> vars;
-            if (vm.count("useSessionVariables"))
-            {
-                m_f->m_variables = m_f->m_session->GetVariables();
-            }
+
+            int nsessionvar = m_f->m_session->GetVariables().size();
             nfields = m_f->m_variables.size();
             vars    = m_f->m_variables;
 
@@ -206,7 +204,7 @@ void ProcessCreateExp::Process(po::variables_map &vm)
             {
                 for (i = 0; i < nfields; ++i)
                 {
-                    if (i < vars.size())
+                    if (i < nsessionvar)
                     {
                         // check to see if field already defined
                         if (!m_f->m_exp[s * nfields + i])
