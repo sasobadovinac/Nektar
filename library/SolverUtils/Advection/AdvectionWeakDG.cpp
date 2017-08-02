@@ -237,6 +237,7 @@ namespace Nektar
                 }
                 pFields[0]->GetFwdBwdTracePhys(m_dx, m_dxFwd, m_dxBwd);
                 
+                /*
                 for (i = 0; i < nTotalPts; ++i)
                 {
                     std::cout << "x    = " << coords[0][i] << std::endl;
@@ -244,7 +245,7 @@ namespace Nektar
                     std::cout << "m_dx - min = " << m_dx[i]      << std::endl;
                     std::cout << "m_dy = " << m_dx[i]      << std::endl;
 
-                }
+                }*/
                 
                 // Approach on standard space
                 /*

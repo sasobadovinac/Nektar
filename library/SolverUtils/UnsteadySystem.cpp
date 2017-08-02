@@ -337,7 +337,7 @@ namespace Nektar
                 }
 
                 // search for NaN and quit if found
-                if (m_nanSteps && !((step+1) % m_nanSteps) )
+                if (m_nanSteps && !((step+1) % m_nanSteps))
                 {
                     int nanFound = 0;
                     for (i = 0; i < nvariables; ++i)
