@@ -121,6 +121,20 @@ namespace Nektar
                     const AssemblyMapSharedPtr        &plocToGloMap,
                     const int                          nDir);
 
+            void DoConjugateGradient_Kokkos(
+                    const int                          nGlobal,
+                    const Array<OneD,const NekDouble> &pInput,
+                          Array<OneD,      NekDouble> &pOutput,
+                    const AssemblyMapSharedPtr        &plocToGloMap,
+                    const int                          nDir);
+
+            void DoConjugateGradient_OpenMP(
+                    const int                          nGlobal,
+                    const Array<OneD,const NekDouble> &pInput,
+                          Array<OneD,      NekDouble> &pOutput,
+                    const AssemblyMapSharedPtr        &plocToGloMap,
+                    const int                          nDir);
+
 
             void Set_Rhs_Magnitude(const NekVector<NekDouble> &pIn);
 
@@ -150,6 +164,7 @@ namespace Nektar
                     const Array<OneD, NekDouble>& pInput,
                           Array<OneD, NekDouble>& pOutput) = 0;
 
+            // functions for parallel Conjugate Gradient
             void GetMatrixMultiplyMetrics(
                 Array<OneD, NekDouble> &quadMetricGlo,                
                 Array<OneD, NekDouble> &laplacian00Glo,
@@ -160,7 +175,10 @@ namespace Nektar
                 Array<OneD, const int> &localToGlobalMap,
                 Array<OneD, const NekDouble> &localToGlobalSign);
 
+            //Kokkos
+            typedef Kokkos::RangePolicy<Kokkos::DefaultHostExecutionSpace> range_policy_host;
             
+            // functions for plain parallel Conjugate Gradient
             void GeneralMatrixOp_plain(
                     const Array<OneD,const NekDouble> &inarray,
                     Array<OneD,      NekDouble> &outarray,
@@ -244,22 +262,177 @@ namespace Nektar
                     const int &nquad0, const int &nquad1,
                     const DNekMatSharedPtr &D0, const DNekMatSharedPtr &D1);
 
-            //Kokkos
-            typedef Kokkos::RangePolicy<Kokkos::DefaultHostExecutionSpace> range_policy_host;
-            
-            void DoConjugateGradient_Kokkos(
-                    const int                          nGlobal,
-                    const Array<OneD,const NekDouble> &pInput,
-                          Array<OneD,      NekDouble> &pOutput,
-                    const AssemblyMapSharedPtr        &plocToGloMap,
-                    const int                          nDir);
 
-            void DoConjugateGradient_OpenMP(
-                    const int                          nGlobal,
-                    const Array<OneD,const NekDouble> &pInput,
-                          Array<OneD,      NekDouble> &pOutput,
-                    const AssemblyMapSharedPtr        &plocToGloMap,
-                    const int                          nDir);
+
+
+            // functions for full Kokkos Conjugate Gradient
+            void GeneralMatrixOp_Kokkos(
+                    const Array<OneD,const NekDouble> &inarray,
+                    Array<OneD,      NekDouble> &outarray,
+                    const NekDouble &lambda,
+                    const Array<OneD, const NekDouble> &quadMetricGlo,                
+                    const Array<OneD, const NekDouble> &laplacian00Glo,
+                    const Array<OneD, const NekDouble> &laplacian01Glo,
+                    const Array<OneD, const NekDouble> &laplacian11Glo,
+                    const int &nquad0, const int &nquad1, 
+                    const int &nmodes0, const int &nmodes1, const int &ncoeffs, 
+                    const Array<OneD, const int>  &coeff_offset, const int &elmts,
+                    const Array<OneD, const NekDouble> &base0,
+                    const Array<OneD, const NekDouble> &base1,
+                    const Array<OneD, const NekDouble> &dbase0,
+                    const Array<OneD, const NekDouble> &dbase1,
+                    const DNekMatSharedPtr &D0, const DNekMatSharedPtr &D1,
+                    const int &numLocalCoeffs, const int &numGlobalCoeffs,
+                    const Array<OneD, const int> &localToGlobalMap,
+                    const Array<OneD, const NekDouble> &localToGlobalSign);
+
+
+            void GeneralMatrixOp_IterPerExp_Kokkos(
+                    const Array<OneD,const NekDouble> &inarray,
+                    //Array<OneD,      NekDouble> &outarray,
+                    Kokkos::View<double*> transfer_out,                     
+                    const NekDouble &lambda,
+                    const Array<OneD, const NekDouble> &quadMetricGlo,                
+                    const Array<OneD, const NekDouble> &laplacian00Glo,
+                    const Array<OneD, const NekDouble> &laplacian01Glo,
+                    const Array<OneD, const NekDouble> &laplacian11Glo,
+                    const int &nquad0, const int &nquad1, 
+                    const int &nmodes0, const int &nmodes1, const int &ncoeffs, 
+                    const Array<OneD, const int>  &coeff_offset, const int &elmts,
+                    const Array<OneD, const NekDouble> &base0,
+                    const Array<OneD, const NekDouble> &base1,
+                    const Array<OneD, const NekDouble> &dbase0,
+                    const Array<OneD, const NekDouble> &dbase1,
+                    const DNekMatSharedPtr &D0, const DNekMatSharedPtr &D1);
+
+            void HelmholtzMatrixOp_MatFree_Kokkos(
+                    const Array<OneD, const NekDouble> &inarray,
+                    //      Array<OneD,       NekDouble> &outarray,
+                    Kokkos::View<double*> transfer_out, 
+                    const int &el, const Array<OneD, const int>  &coeff_offset,
+                    const NekDouble &lambda,
+                    const Array<OneD, const NekDouble> &quadMetric,
+                    const Array<OneD, const NekDouble> &laplacian00,
+                    const Array<OneD, const NekDouble> &laplacian01,
+                    const Array<OneD, const NekDouble> &laplacian11,
+                    const int &nquad0, const int &nquad1,
+                    const int &nmodes0, const int &nmodes1, const int &ncoeffs,
+                    const Array<OneD, const NekDouble> &base0,
+                    const Array<OneD, const NekDouble> &base1,
+                    const Array<OneD, const NekDouble> &dbase0,
+                    const Array<OneD, const NekDouble> &dbase1,
+                    const DNekMatSharedPtr &D0, const DNekMatSharedPtr &D1);
+
+            void IProductWRTBase_SumFacKernel_Kokkos(
+                    const Array<OneD, const NekDouble>& base0,
+                    const Array<OneD, const NekDouble>& base1,
+                    const Array<OneD, const NekDouble>& inarray,
+                          Array<OneD,       NekDouble> &outarray,
+                    Array<OneD, NekDouble> &wsp,
+                    const int &nmodes0, const int &nmodes1,
+                    const int &nquad0, const int &nquad1);
+
+
+            void BwdTrans_SumFacKernel_Kokkos(
+                    const Array<OneD, const NekDouble>& base0,
+                    const Array<OneD, const NekDouble>& base1,
+                    const Array<OneD, const NekDouble>& inarray,
+                    Array<OneD, NekDouble> &outarray,
+                    Array<OneD, NekDouble> &wsp,
+                    const int &nmodes0, const int &nmodes1,
+                    const int &nquad0, const int &nquad1);
+
+            void PhysTensorDeriv_Kokkos(
+                    const Array<OneD, const NekDouble>& inarray,
+                    Array<OneD, NekDouble> &outarray_d0,
+                    Array<OneD, NekDouble> &outarray_d1,
+                    const int &nquad0, const int &nquad1,
+                    const DNekMatSharedPtr &D0, const DNekMatSharedPtr &D1);
+
+
+
+            // functions for OpenMP Conjugate Gradient
+            void GeneralMatrixOp_OpenMP(
+                    const Array<OneD,const NekDouble> &inarray,
+                    Array<OneD,      NekDouble> &outarray,
+                    const NekDouble &lambda,
+                    const Array<OneD, const NekDouble> &quadMetricGlo,                
+                    const Array<OneD, const NekDouble> &laplacian00Glo,
+                    const Array<OneD, const NekDouble> &laplacian01Glo,
+                    const Array<OneD, const NekDouble> &laplacian11Glo,
+                    const int &nquad0, const int &nquad1, 
+                    const int &nmodes0, const int &nmodes1, const int &ncoeffs, 
+                    const Array<OneD, const int>  &coeff_offset, const int &elmts,
+                    const Array<OneD, const NekDouble> &base0,
+                    const Array<OneD, const NekDouble> &base1,
+                    const Array<OneD, const NekDouble> &dbase0,
+                    const Array<OneD, const NekDouble> &dbase1,
+                    const DNekMatSharedPtr &D0, const DNekMatSharedPtr &D1,
+                    const int &numLocalCoeffs, const int &numGlobalCoeffs,
+                    const Array<OneD, const int> &localToGlobalMap,
+                    const Array<OneD, const NekDouble> &localToGlobalSign);
+
+
+            void GeneralMatrixOp_IterPerExp_OpenMP(
+                    const Array<OneD,const NekDouble> &inarray,
+                    Array<OneD,      NekDouble> &outarray,
+                    const NekDouble &lambda,
+                    const Array<OneD, const NekDouble> &quadMetricGlo,                
+                    const Array<OneD, const NekDouble> &laplacian00Glo,
+                    const Array<OneD, const NekDouble> &laplacian01Glo,
+                    const Array<OneD, const NekDouble> &laplacian11Glo,
+                    const int &nquad0, const int &nquad1, 
+                    const int &nmodes0, const int &nmodes1, const int &ncoeffs, 
+                    const Array<OneD, const int>  &coeff_offset, const int &elmts,
+                    const Array<OneD, const NekDouble> &base0,
+                    const Array<OneD, const NekDouble> &base1,
+                    const Array<OneD, const NekDouble> &dbase0,
+                    const Array<OneD, const NekDouble> &dbase1,
+                    const DNekMatSharedPtr &D0, const DNekMatSharedPtr &D1);
+
+            void HelmholtzMatrixOp_MatFree_OpenMP(
+                    const Array<OneD, const NekDouble> &inarray,
+                          Array<OneD,       NekDouble> &outarray,
+                    const NekDouble &lambda,
+                    const Array<OneD, const NekDouble> &quadMetric,
+                    const Array<OneD, const NekDouble> &laplacian00,
+                    const Array<OneD, const NekDouble> &laplacian01,
+                    const Array<OneD, const NekDouble> &laplacian11,
+                    const int &nquad0, const int &nquad1,
+                    const int &nmodes0, const int &nmodes1, const int &ncoeffs,
+                    const Array<OneD, const NekDouble> &base0,
+                    const Array<OneD, const NekDouble> &base1,
+                    const Array<OneD, const NekDouble> &dbase0,
+                    const Array<OneD, const NekDouble> &dbase1,
+                    const DNekMatSharedPtr &D0, const DNekMatSharedPtr &D1);
+
+            void IProductWRTBase_SumFacKernel_OpenMP(
+                    const Array<OneD, const NekDouble>& base0,
+                    const Array<OneD, const NekDouble>& base1,
+                    const Array<OneD, const NekDouble>& inarray,
+                          Array<OneD,       NekDouble> &outarray,
+                    Array<OneD, NekDouble> &wsp,
+                    const int &nmodes0, const int &nmodes1,
+                    const int &nquad0, const int &nquad1);
+
+
+            void BwdTrans_SumFacKernel_OpenMP(
+                    const Array<OneD, const NekDouble>& base0,
+                    const Array<OneD, const NekDouble>& base1,
+                    const Array<OneD, const NekDouble>& inarray,
+                    Array<OneD, NekDouble> &outarray,
+                    Array<OneD, NekDouble> &wsp,
+                    const int &nmodes0, const int &nmodes1,
+                    const int &nquad0, const int &nquad1);
+
+            void PhysTensorDeriv_OpenMP(
+                    const Array<OneD, const NekDouble>& inarray,
+                    Array<OneD, NekDouble> &outarray_d0,
+                    Array<OneD, NekDouble> &outarray_d1,
+                    const int &nquad0, const int &nquad1,
+                    const DNekMatSharedPtr &D0, const DNekMatSharedPtr &D1);
+            
+
         };
     }
 }
