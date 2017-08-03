@@ -103,6 +103,15 @@ namespace Nektar
                 coeff_offset, elmts,
                 base0, base1, dbase0, dbase1,
                 D0, D1);
+
+            printf("base0: %i\n",base0.num_elements());
+            printf("base1: %i\n",base1.num_elements());
+            printf("nquad0: %i\n",nquad0);
+            printf("nquad1: %i\n",nquad1);
+            printf("nmodes0: %i\n",nmodes0);
+            printf("nmodes1: %i\n",nmodes1);
+            int BASE1 = nmodes0*(nmodes1-0.5*(nmodes0-1))*nquad1;
+            printf("BASE1: %i\n",BASE1);
             
             int metricSize = elmts * nquad0 * nquad1;
             Array<OneD, NekDouble> quadMetricGlo (4*metricSize);
@@ -357,6 +366,7 @@ namespace Nektar
                 tmp1[i] = localToGlobalSign[i] * inarray[localToGlobalMap[i]];            
             }
 
+
             Kokkos::View<double*> transfer_out;
             transfer_out = Kokkos::View<double*>("transfer_out", elmts*ncoeffs);                        
 
@@ -378,8 +388,14 @@ namespace Nektar
             //            tmp2.get(), localToGlobalMap.get(), outarray.get());
             for (int i = 0; i < numLocalCoeffs; ++i)
             {
-                outarray[localToGlobalMap[i]] += localToGlobalSign[i] * transfer_out(i); 
+                outarray[localToGlobalMap[i]] += localToGlobalSign[i] * transfer_out[i]; 
             }
+            
+            /*NekDouble sum = 0.0;
+            Kokkos::parallel_reduce(range_policy_host(0,numLocalCoeffs),KOKKOS_LAMBDA(const int &i, NekDouble &rho)
+            {
+                rho += transfer_out(i);
+            },sum);*/
             
         }
 
@@ -527,7 +543,7 @@ namespace Nektar
             for (int i = 0; i < ncoeffs; ++i)
             {
                 //outarray[i] = lambda * t_outarray[i] + wsp1[i];
-                transfer_out(coeff_offset[el] + i) = lambda * t_outarray[i] + wsp1[i];
+                transfer_out[coeff_offset[el] + i] = lambda * t_outarray[i] + wsp1[i];
             }    
             
 

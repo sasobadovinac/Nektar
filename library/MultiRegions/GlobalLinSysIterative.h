@@ -177,6 +177,7 @@ namespace Nektar
 
             //Kokkos
             typedef Kokkos::RangePolicy<Kokkos::DefaultHostExecutionSpace> range_policy_host;
+            typedef Kokkos::RangePolicy<Kokkos::DefaultExecutionSpace> range_policy;
             
             // functions for plain parallel Conjugate Gradient
             void GeneralMatrixOp_plain(
