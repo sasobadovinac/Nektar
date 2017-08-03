@@ -84,6 +84,9 @@ PreconditionerDiagonal.h
 PreconditionerLowEnergy.h
 PreconditionerBlock.h
 SubStructuredGraph.h
+ConjugateGradient_plain.hxx
+ConjugateGradient_Kokkos.hxx
+ConjugateGradient_OpenMP.hxx
 )
 
 SET(ASSEMBLY_MAP_HEADERS

@@ -43,6 +43,8 @@
 
 #include <Kokkos_Core.hpp>
 
+
+
 namespace Nektar
 {
     namespace MultiRegions
@@ -112,13 +114,12 @@ namespace Nektar
                     const AssemblyMapSharedPtr &locToGloMap,
                     const int pNumDir);
 
-            // solve with plain data layout
             void DoConjugateGradient_plain(
-                    const int pNumRows,
+                    const int                          nGlobal,
                     const Array<OneD,const NekDouble> &pInput,
                           Array<OneD,      NekDouble> &pOutput,
-                    const AssemblyMapSharedPtr &locToGloMap,
-                    const int pNumDir);
+                    const AssemblyMapSharedPtr        &plocToGloMap,
+                    const int                          nDir);
 
 
             void Set_Rhs_Magnitude(const NekVector<NekDouble> &pIn);
@@ -246,6 +247,19 @@ namespace Nektar
             //Kokkos
             typedef Kokkos::RangePolicy<Kokkos::DefaultHostExecutionSpace> range_policy_host;
             
+            void DoConjugateGradient_Kokkos(
+                    const int                          nGlobal,
+                    const Array<OneD,const NekDouble> &pInput,
+                          Array<OneD,      NekDouble> &pOutput,
+                    const AssemblyMapSharedPtr        &plocToGloMap,
+                    const int                          nDir);
+
+            void DoConjugateGradient_OpenMP(
+                    const int                          nGlobal,
+                    const Array<OneD,const NekDouble> &pInput,
+                          Array<OneD,      NekDouble> &pOutput,
+                    const AssemblyMapSharedPtr        &plocToGloMap,
+                    const int                          nDir);
         };
     }
 }
