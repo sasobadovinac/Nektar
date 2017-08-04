@@ -46,12 +46,15 @@
 #include <LibUtilities/BasicUtils/PtsField.h>
 #include <LibUtilities/BasicUtils/PtsIO.h>
 #include <MultiRegions/ExpList.h>
-#include <FieldUtils/Interpolator.h>
 #include <SolverUtils/SolverUtilsDeclspec.h>
 #include <SolverUtils/Core/Misc.h>
+#include <SolverUtils/Core/SessionFunction.h>
 
 namespace Nektar
 {
+namespace FieldUtils {
+class Interpolator;
+}
     namespace SolverUtils
     {
         class EquationSystem;
@@ -136,43 +139,12 @@ namespace Nektar
             
             /// Set parameter m_lambda
             SOLVER_UTILS_EXPORT inline void SetLambda(NekDouble lambda);
-            
-            /// Evaluates a function as specified in the session file.
-            SOLVER_UTILS_EXPORT void EvaluateFunction(
-                Array<OneD, Array<OneD, NekDouble> >& pArray,
-                std::string pFunctionName,
-                const NekDouble pTime = 0.0,
-                const int domain = 0);
-            
-            /// Populate given fields with the function from session.
-            SOLVER_UTILS_EXPORT void EvaluateFunction(
-                std::vector<std::string> pFieldNames,
-                Array<OneD, Array<OneD, NekDouble> > &pFields,
-                const std::string& pName,
-                const NekDouble& pTime = 0.0,
-                const int domain = 0);
-            
-            /// Populate given fields with the function from session.
-            SOLVER_UTILS_EXPORT void EvaluateFunction(
-                std::vector<std::string> pFieldNames,
-                Array<OneD, MultiRegions::ExpListSharedPtr> &pFields,
-                const std::string& pName,
-                const NekDouble& pTime = 0.0,
-                const int domain = 0);
-            
-            // Populate an array with a function variable from session.
-            SOLVER_UTILS_EXPORT void EvaluateFunction(
-                std::string pFieldName,
-                Array<OneD, NekDouble>& pArray,
-                const std::string& pFunctionName,
-                const NekDouble& pTime = 0.0,
-                const int domain = 0);
-            
-            // Describe a function.
-            SOLVER_UTILS_EXPORT std::string DescribeFunction(
-                std::string pFieldName,
-                const std::string &pFunctionName,
-                const int domain);
+
+            /// Get a SessionFunction by name
+            SOLVER_UTILS_EXPORT SessionFunctionSharedPtr GetFunction(
+                std::string name,
+                const MultiRegions::ExpListSharedPtr &field = MultiRegions::NullExpListSharedPtr,
+                bool cache = false);
             
             /// Perform initialisation of the base flow.
             SOLVER_UTILS_EXPORT void InitialiseBaseFlow(
@@ -451,10 +423,10 @@ namespace Nektar
             LibUtilities::CommSharedPtr                 m_comm;
             /// The session reader
             LibUtilities::SessionReaderSharedPtr        m_session;
+            /// Map of known SessionFunctions
+            std::map<std::string, SolverUtils::SessionFunctionSharedPtr> m_sessionFunctions;
             /// Field input/output
             LibUtilities::FieldIOSharedPtr              m_fld;
-            /// Map of interpolator objects
-            std::map<std::string, FieldUtils::Interpolator > m_interpolators;
             /// Array holding all dependent variables.
             Array<OneD, MultiRegions::ExpListSharedPtr> m_fields;
             /// Base fields.
@@ -477,8 +449,6 @@ namespace Nektar
             NekDouble                                   m_timestep;
             /// Lambda constant in real system if one required.
             NekDouble                                   m_lambda;
-
-            std::set<std::string>                       m_loadedFields;
             /// Time between checkpoints.
             NekDouble                                   m_checktime;
             /// Number of checkpoints written so far
