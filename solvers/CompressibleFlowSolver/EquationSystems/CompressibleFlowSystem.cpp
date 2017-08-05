@@ -114,7 +114,7 @@ namespace Nektar
 
         if (m_explicitAdvection)
         {
-            m_ode.DefineOdeRhs    (&CompressibleFlowSystem::DoOdeRhs, this);
+            m_ode.DefineOdeRhs    (&CompressibleFlowSystem::DoOdeRhs       , this);
             m_ode.DefineProjection(&CompressibleFlowSystem::DoOdeProjection, this);
         }
         else
@@ -718,7 +718,6 @@ namespace Nektar
         int nElements                   = m_fields[0]->GetExpSize();
         const Array<OneD, int> ExpOrder = GetNumExpModesPerExp();
 
-        Array<OneD, NekDouble> tstep      (nElements, 0.0);
         Array<OneD, NekDouble> stdVelocity(nElements, 0.0);
 
         // Get standard velocity to compute the time-step limit
@@ -738,9 +737,9 @@ namespace Nektar
             Array<OneD, NekDouble> one2D(nPoints, 1.0);
 
             NekDouble Area = m_fields[0]->GetExp(n)->Integral(one2D);
-            Areas[n] = Area;
-            minLength = sqrt(Areas[n]);
-            minLengths[n] = minLength;
+            Areas[n]       = Area;
+            minLength      = sqrt(Areas[n]);
+            minLengths[n]  = minLength;
             
             tstep[n] = 1.0 * alpha * minLength
                      / (stdVelocity[n] * cLambda * (ExpOrder[n] - 1)
@@ -756,23 +755,18 @@ namespace Nektar
     {
         int nElements = m_fields[0]->GetExpSize();
         Array<OneD, NekDouble> tstep (nElements, 0.0);
-
+        Array<OneD, NekDouble> Areas     (nElements, 0.0);
+        Array<OneD, NekDouble> minLengths(nElements, 0.0);
+        
         GetElmtTimeStep(inarray, tstep);
 
         // Get the minimum time-step limit and return the time-step
-        NekDouble TimeStep         = Vmath::Vmin(nElements, tstep      , 1);
-        NekDouble minimumLength    = Vmath::Vmin(nElements, minLengths , 1);
-        NekDouble standardVelocity = Vmath::Vmax(nElements, stdVelocity, 1);
-        m_comm->AllReduce(TimeStep        , LibUtilities::ReduceMin);
-        m_comm->AllReduce(minimumLength   , LibUtilities::ReduceMin);
-        m_comm->AllReduce(standardVelocity, LibUtilities::ReduceMax);
+        NekDouble TimeStep = Vmath::Vmin(nElements, tstep, 1);
+        m_comm->AllReduce(TimeStep, LibUtilities::ReduceMin);
         
         if (m_session->GetComm()->GetRank() == 0)
         {
-            cout << "TimeStep              = " << TimeStep
-                 << ",    standardVelocity = " << standardVelocity
-                 << ",    minimumLength    = " << minimumLength
-                 << endl;
+            cout << "TimeStep = " << TimeStep << endl;
         }
             
         return TimeStep;

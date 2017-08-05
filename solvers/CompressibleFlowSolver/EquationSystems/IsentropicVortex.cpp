@@ -112,14 +112,14 @@ namespace Nektar
      * flow problems.
      */
     void IsentropicVortex::v_EvaluateExactSolution(
-        unsigned int                         field,
-        Array<OneD, NekDouble>              &outfield,
-        const NekDouble                      time)
+        unsigned int            field,
+        Array<OneD, NekDouble> &outfield,
+        const NekDouble         time)
     {
-        int nTotQuadPoints  = GetTotPoints();
-        Array<OneD, NekDouble> x(nTotQuadPoints);
-        Array<OneD, NekDouble> y(nTotQuadPoints);
-        Array<OneD, NekDouble> z(nTotQuadPoints);
+        int nTotQuadPoints = GetTotPoints();
+        Array<OneD, NekDouble>               x(nTotQuadPoints);
+        Array<OneD, NekDouble>               y(nTotQuadPoints);
+        Array<OneD, NekDouble>               z(nTotQuadPoints);
         Array<OneD, Array<OneD, NekDouble> > u(m_spacedim+2);
         
         m_fields[0]->GetCoords(x, y, z);
@@ -129,7 +129,7 @@ namespace Nektar
             u[i] = Array<OneD, NekDouble>(nTotQuadPoints);
         }
         
-        EvaluateIsentropicVortex(x, y, z, u, time);
+        EvaluateIsentropicVortex(x, y, z, u, 0.0);
         
         Vmath::Vcopy(nTotQuadPoints, u[field], 1, outfield, 1);
     }
@@ -145,14 +145,14 @@ namespace Nektar
         int nq = x.num_elements();
         
         // Flow parameters
-        const NekDouble x0    = 5.0;
+        const NekDouble x0    = M_PI;
         const NekDouble y0    = 0.0;
         const NekDouble beta  = 5.0;
-        const NekDouble u0    = 0.0;
-        const NekDouble v0    = 1.0;
-        const NekDouble gamma = m_gamma;
+        const NekDouble u0    = 1.0;
+        const NekDouble v0    = 0.0;
         NekDouble r, xbar, ybar, tmp;
-        NekDouble fac = 1.0/(16.0*gamma*M_PI*M_PI);
+        
+        NekDouble fac = 1.0 / (16.0 * m_gamma * M_PI * M_PI);
         
         // In 3D zero rhow field.
         if (m_spacedim == 3)
@@ -166,12 +166,12 @@ namespace Nektar
             xbar      = x[i] - u0*time - x0;
             ybar      = y[i] - v0*time - y0;
             r         = sqrt(xbar*xbar + ybar*ybar);
-            tmp       = beta*exp(1-r*r);
-            u[0][i+o] = pow(1.0 - (gamma-1.0)*tmp*tmp*fac, 1.0/(gamma-1.0));
-            u[1][i+o] = u[0][i+o]*(u0 - tmp*ybar/(2*M_PI));
-            u[2][i+o] = u[0][i+o]*(v0 + tmp*xbar/(2*M_PI));
-            u[m_spacedim+1][i+o] = pow(u[0][i+o], gamma)/(gamma-1.0) +
-            0.5*(u[1][i+o]*u[1][i+o] + u[2][i+o]*u[2][i+o]) / u[0][i+o];
+            tmp       = beta * exp(1 - r*r);
+            u[0][i+o] = pow(1.0 - (m_gamma-1.0) * tmp * tmp * fac, 1.0/(m_gamma-1.0));
+            u[1][i+o]            = u[0][i+o] * (u0 - tmp*ybar/(2*M_PI));
+            u[2][i+o]            = u[0][i+o] * (v0 + tmp*xbar/(2*M_PI));
+            u[m_spacedim+1][i+o] = pow(u[0][i+o], m_gamma)/(m_gamma-1.0) +
+                0.5*(u[1][i+o]*u[1][i+o] + u[2][i+o]*u[2][i+o]) / u[0][i+o];
         }
     }
 

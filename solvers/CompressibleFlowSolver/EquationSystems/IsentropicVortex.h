@@ -50,7 +50,9 @@ namespace Nektar
         static SolverUtils::EquationSystemSharedPtr create(
             const LibUtilities::SessionReaderSharedPtr& pSession)
         {
-            SolverUtils::EquationSystemSharedPtr p = MemoryManager<IsentropicVortex>::AllocateSharedPtr(pSession);
+            SolverUtils::EquationSystemSharedPtr p =
+                MemoryManager<IsentropicVortex>::
+                    AllocateSharedPtr(pSession);
             p->InitObject();
             return p;
         }
