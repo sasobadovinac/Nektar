@@ -102,8 +102,9 @@ namespace Nektar
         NekDouble EfR = uR * (ER + pR);
 
         // dx Force
-        NekDouble dxF = std::min( dxL, dxR );
-        // NekDouble dxF = dxForce;
+        //NekDouble dxF = std::min( dxL, dxR );
+        //NekDouble dxF = dxForce;
+        NekDouble dxF = 0.5*( dxL + dxR );
         
         // std::cout << "dt     = " << dt    << std::endl;
         // std::cout << "dxL    = " << dxL   << std::endl;
