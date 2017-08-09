@@ -268,50 +268,51 @@ namespace Nektar
 
             // functions for full Kokkos Conjugate Gradient
             void GeneralMatrixOp_Kokkos(
-                Kokkos::View<double*> inarray,
+                const Kokkos::View<double*> inarray,
                 Kokkos::View<double*> outarray,
-                Kokkos::View<double[1]> lambda,
-                Kokkos::View<double*> quadMetricGlo,
-                Kokkos::View<double*> laplacian00Glo,
-                Kokkos::View<double*> laplacian01Glo,
-                Kokkos::View<double*> laplacian11Glo,
+                const Kokkos::View<double[1]> lambda,
+                const Kokkos::View<double*> quadMetricGlo,
+                const Kokkos::View<double*> laplacian00Glo,
+                const Kokkos::View<double*> laplacian01Glo,
+                const Kokkos::View<double*> laplacian11Glo,
                 const int &nquad0, const int &nquad1,
                 const int &nmodes0, const int &nmodes1, const int &ncoeffs, 
-                Kokkos::View<int*> coeff_offset,
+                const Kokkos::View<int*> coeff_offset,
                 const int &elmts,
-                Kokkos::View<double*> base0,
-                Kokkos::View<double*> base1,
-                Kokkos::View<double*> dbase0,
-                Kokkos::View<double*> dbase1,
-                Kokkos::View<double*> D0,
-                Kokkos::View<double*> D1,
+                const Kokkos::View<double*> base0,
+                const Kokkos::View<double*> base1,
+                const Kokkos::View<double*> dbase0,
+                const Kokkos::View<double*> dbase1,
+                const Kokkos::View<double*> D0,
+                const Kokkos::View<double*> D1,
                 const int &numLocalCoeffs, const int &numGlobalCoeffs,
-                Kokkos::View<int*> localToGlobalMap,
-                Kokkos::View<double*> localToGlobalSign);
+                const Kokkos::View<int*> localToGlobalMap,
+                const Kokkos::View<double*> localToGlobalSign);
 
 
             void GeneralMatrixOp_IterPerExp_Kokkos(
-                Kokkos::View<double*> transfer_in,
+                const Kokkos::View<double*> transfer_in,
                 Kokkos::View<double*> transfer_out,
-                Kokkos::View<double[1]> lambda,
-                Kokkos::View<double*> quadMetricGlo,
-                Kokkos::View<double*> laplacian00Glo,
-                Kokkos::View<double*> laplacian01Glo,
-                Kokkos::View<double*> laplacian11Glo,
+                const Kokkos::View<double[1]> lambda,
+                const Kokkos::View<double*> quadMetricGlo,
+                const Kokkos::View<double*> laplacian00Glo,
+                const Kokkos::View<double*> laplacian01Glo,
+                const Kokkos::View<double*> laplacian11Glo,
                 const int &nquad0, const int &nquad1,
                 const int &nmodes0, const int &nmodes1, const int &ncoeffs, 
-                Kokkos::View<int*> coeff_offset,
+                const Kokkos::View<int*> coeff_offset,
                 const int &elmts,
-                Kokkos::View<double*> base0,
-                Kokkos::View<double*> base1,
-                Kokkos::View<double*> dbase0,
-                Kokkos::View<double*> dbase1,
-                Kokkos::View<double*> D0,
-                Kokkos::View<double*> D1);
+                const Kokkos::View<double*> base0,
+                const Kokkos::View<double*> base1,
+                const Kokkos::View<double*> dbase0,
+                const Kokkos::View<double*> dbase1,
+                const Kokkos::View<double*> D0,
+                const Kokkos::View<double*> D1);
 
             KOKKOS_INLINE_FUNCTION
             void HelmholtzMatrixOp_MatFree_Kokkos(
-                Kokkos::View<double*> inarray,
+                const Kokkos::View<double*> inarray,
+                //const NekDouble* tmp_inarray,
                 Kokkos::View<double*> outarray,
                 const int &el,
                 const Kokkos::View<int*>  coeff_offset,
@@ -333,7 +334,7 @@ namespace Nektar
             void IProductWRTBase_SumFacKernel_Kokkos(
                 const Kokkos::View<double*> base0,
                 const Kokkos::View<double*> base1,
-                NekDouble* inarray,
+                const NekDouble* inarray,
                 NekDouble* outarray,
                 NekDouble* wsp,
                 const int &nmodes0, const int &nmodes1,
@@ -343,7 +344,7 @@ namespace Nektar
             void BwdTrans_SumFacKernel_Kokkos(
                 const Kokkos::View<double*> base0,
                 const Kokkos::View<double*> base1,
-                Kokkos::View<double*> inarray,
+                const NekDouble* inarray,
                 NekDouble* outarray,
                 NekDouble* wsp,
                 const int &nmodes0, const int &nmodes1,
@@ -351,7 +352,7 @@ namespace Nektar
 
             KOKKOS_INLINE_FUNCTION
             void PhysTensorDeriv_Kokkos(
-                NekDouble* inarray,
+                const NekDouble* inarray,
                 NekDouble* outarray_d0,
                 NekDouble* outarray_d1,
                 const int &nquad0, const int &nquad1,

@@ -110,8 +110,16 @@ namespace Nektar
             printf("nquad1: %i\n",nquad1);
             printf("nmodes0: %i\n",nmodes0);
             printf("nmodes1: %i\n",nmodes1);
-            int BASE1 = nmodes0*(nmodes1-0.5*(nmodes0-1))*nquad1;
-            printf("BASE1: %i\n",BASE1);
+            //int BASE1 = nmodes0*(nmodes1-0.5*(nmodes0-1))*nquad1;
+            //printf("BASE1: %i\n",BASE1);
+            for (int i = 0; i < base0.num_elements(); ++i)
+            {
+            	printf("base0[%i] = %e\n", i,base0[i]);
+            }
+            for (int i = 0; i < base1.num_elements(); ++i)
+            {
+            	printf("base1[%i] = %e\n", i,base1[i]);
+            }
             
             int metricSize = elmts * nquad0 * nquad1;
             Array<OneD, NekDouble> quadMetricGlo (4*metricSize);
@@ -166,6 +174,7 @@ namespace Nektar
                      << " (error = " << sqrt(eps/rhs_magnitude) 
                      << ", rhs_mag = " << sqrt(rhs_magnitude) <<  ")" 
                      << endl;
+                Kokkos::finalize(); 
                 return;
             }
 
@@ -220,6 +229,7 @@ namespace Nektar
                          << " (error = " << sqrt(eps/rhs_magnitude)
                          << ", rhs_mag = " << sqrt(rhs_magnitude) <<  ")"
                          << endl;                    
+                    Kokkos::finalize(); 
                     ROOTONLY_NEKERROR(ErrorUtil::efatal,
                                       "Exceeded maximum number of iterations");
                 }
@@ -363,12 +373,13 @@ namespace Nektar
             //         inarray.get(), localToGlobalMap.get(), tmp1.get());
             for (int i = 0; i < numLocalCoeffs; ++i)
             {
-                tmp1[i] = localToGlobalSign[i] * inarray[localToGlobalMap[i]];            
+                tmp1[i] = localToGlobalSign[i] * inarray[localToGlobalMap[i]];
+                //printf("tmp1[%i] = %e\n",i,tmp1[i]);           
             }
 
 
             Kokkos::View<double*> transfer_out;
-            transfer_out = Kokkos::View<double*>("transfer_out", elmts*ncoeffs);                        
+            transfer_out = Kokkos::View<double*>("transfer_out", numLocalCoeffs);                        
 
             GeneralMatrixOp_IterPerExp_plain(tmp1,transfer_out,lambda,
                     quadMetricGlo, laplacian00Glo,laplacian01Glo,laplacian11Glo,                    
@@ -420,15 +431,18 @@ namespace Nektar
         {
             printf("%s\n", "perform operations by element");            
             // Calculating
-            Kokkos::parallel_for(range_policy_host(0,elmts),KOKKOS_LAMBDA (const int el)
+            //Kokkos::parallel_for(range_policy_host(0,elmts),KOKKOS_LAMBDA (const int el)
+            for(int el = 0; el < elmts; el++)
             {                                    
                 printf("%i ", el);
                 Array<OneD, NekDouble> tmp_inarray (ncoeffs);
                 for (int i = 0; i < ncoeffs; ++i)
                 {
                     tmp_inarray[i] = inarray[coeff_offset[el]+i];
+                    //printf("tmp_inarray[%i] = %e\n", i, tmp_inarray[i]);
+         
                 }
-                Array<OneD, NekDouble> quadMetric (nquad0*nquad1);
+                /*Array<OneD, NekDouble> quadMetric (nquad0*nquad1);
                 Array<OneD, NekDouble> laplacian00(nquad0*nquad1);
                 Array<OneD, NekDouble> laplacian01(nquad0*nquad1);
                 Array<OneD, NekDouble> laplacian11(nquad0*nquad1);
@@ -438,19 +452,20 @@ namespace Nektar
                     laplacian00[i] = laplacian00Glo[el*nquad0*nquad1+i];
                     laplacian01[i] = laplacian01Glo[el*nquad0*nquad1+i];
                     laplacian11[i] = laplacian11Glo[el*nquad0*nquad1+i];
-                }
+                }*/
                 HelmholtzMatrixOp_MatFree_plain(
                     tmp_inarray,
                     transfer_out,
                     el, coeff_offset,
                     lambda,
-                     quadMetric,
-                    laplacian00,
-                    laplacian01,
-                    laplacian11,
+                     quadMetricGlo,
+                    laplacian00Glo,
+                    laplacian01Glo,
+                    laplacian11Glo,
                     nquad0, nquad1, nmodes0, nmodes1, ncoeffs,
                     base0, base1, dbase0, dbase1, D0, D1);
-            });
+                //if (el == 14) {exit(1);}
+            }
             printf("\n completed all elements\n");             
         }
 
@@ -492,16 +507,30 @@ namespace Nektar
             BwdTrans_SumFacKernel_plain(base0, base1, inarray, wsp0, wsp2,
                 nmodes0, nmodes1, nquad0, nquad1);
 
+            for (int i = 0; i < wspsize; ++i)
+            {
+            	//printf("wsp0[%i] = %e\n",i,wsp0[i] );
+            	//printf("wsp2[%i] = %e\n",i,wsp2[i] );
+            }
+            	
             //MultiplyByQuadratureMetric(wsp0, wsp1);
             //Vmath::Vmul(nqtot, quadMetric, 1, wsp0, 1, wsp1, 1);            
             for (int i = 0; i < nqtot; ++i)
             {
-                wsp1[i] = quadMetric[i] * wsp0[i];
+                wsp1[i] = quadMetric[el*nqtot+i] * wsp0[i];
             }
-
+            for (int i = 0; i < wspsize; ++i)
+            {
+            	//printf("wsp1[%i] = %e\n",i,wsp0[i] );
+            }
             //IProductWRTBase_SumFacKernel(base0, base1, wsp1, outarray, wsp2, true, true);
             IProductWRTBase_SumFacKernel_plain(base0, base1, wsp1, t_outarray,
                                          wsp2, nmodes0, nmodes1, nquad0, nquad1);
+
+            for (int i = 0; i < ncoeffs; ++i)
+            {
+            	//printf("t_outarray[%i] = %e\n",i,t_outarray[i] );
+            }
 
             //LaplacianMatrixOp_MatFree_Kernel(wsp0, wsp1, wsp2);
             // Allocate temporary storage
@@ -512,15 +541,22 @@ namespace Nektar
             //StdExpansion2D::PhysTensorDeriv(wsp0,wsp1L,wsp2L);
             PhysTensorDeriv_plain(wsp0,wsp1L,wsp2L, nquad0, nquad1, D0, D1);
 
+            for (int i = 0; i < wspsize; ++i)
+            {
+            	//printf("wsp1L[%i] = %e\n",i,wsp1L[i] );
+            	//printf("wsp2L[%i] = %e\n",i,wsp2L[i] );
+            }
             //Vmath::Vvtvvtp(nqtot,&metric00[0],1,&wsp1L[0],1,&metric01[0],1,&wsp2L[0],1,&wsp0L[0],1);
             for (int i = 0; i < nqtot; ++i)
             {
-                wsp0L[i] = laplacian00[i] * wsp1L[i] + laplacian01[i] * wsp2L[i];
+                wsp0L[i] = laplacian00[el*nqtot+i] * wsp1L[i] 
+                         + laplacian01[el*nqtot+i] * wsp2L[i];
             }
             //Vmath::Vvtvvtp(nqtot,&metric01[0],1,&wsp1L[0],1,&metric11[0],1,&wsp2L[0],1,&wsp2L[0],1);
             for (int i = 0; i < nqtot; ++i)
             {
-                wsp2L[i] = laplacian01[i] * wsp1L[i] + laplacian11[i] * wsp2L[i];
+                wsp2L[i] = laplacian01[el*nqtot+i] * wsp1L[i] 
+                         + laplacian11[el*nqtot+i] * wsp2L[i];
             }
 
             //IProductWRTBase_SumFacKernel(dbase0, base1,wsp0L,wsp1 ,wsp1L);
@@ -544,6 +580,7 @@ namespace Nektar
             {
                 //outarray[i] = lambda * t_outarray[i] + wsp1[i];
                 transfer_out[coeff_offset[el] + i] = lambda * t_outarray[i] + wsp1[i];
+                //printf("transfer_out[%i] = %e\n", coeff_offset[el] + i, transfer_out[coeff_offset[el] + i]);
             }    
             
 
