@@ -114,11 +114,11 @@ namespace Nektar
             //printf("BASE1: %i\n",BASE1);
             for (int i = 0; i < base0.num_elements(); ++i)
             {
-            	printf("base0[%i] = %e\n", i,base0[i]);
+            	//printf("base0[%i] = %e\n", i,base0[i]);
             }
             for (int i = 0; i < base1.num_elements(); ++i)
             {
-            	printf("base1[%i] = %e\n", i,base1[i]);
+            	//printf("base1[%i] = %e\n", i,base1[i]);
             }
             
             int metricSize = elmts * nquad0 * nquad1;
@@ -431,8 +431,8 @@ namespace Nektar
         {
             printf("%s\n", "perform operations by element");            
             // Calculating
-            //Kokkos::parallel_for(range_policy_host(0,elmts),KOKKOS_LAMBDA (const int el)
-            for(int el = 0; el < elmts; el++)
+            Kokkos::parallel_for(range_policy_host(0,elmts),KOKKOS_LAMBDA (const int el)
+            //for(int el = 0; el < elmts; el++)
             {                                    
                 printf("%i ", el);
                 Array<OneD, NekDouble> tmp_inarray (ncoeffs);
@@ -465,8 +465,8 @@ namespace Nektar
                     nquad0, nquad1, nmodes0, nmodes1, ncoeffs,
                     base0, base1, dbase0, dbase1, D0, D1);
                 //if (el == 14) {exit(1);}
-            }
-            printf("\n completed all elements\n");             
+            });
+            printf("\n");             
         }
 
 

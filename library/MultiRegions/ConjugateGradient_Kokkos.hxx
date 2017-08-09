@@ -154,20 +154,20 @@ namespace Nektar
 
             for (int i = 0; i < base0_len; ++i)
             {
-            	printf("base0[%i] = %e\n", i,base0[i]);
+            	//printf("base0[%i] = %e\n", i,base0[i]);
             }
             for (int i = 0; i < base1_len; ++i)
             {
-            	printf("base1[%i] = %e\n", i,base1[i]);
+            	//printf("base1[%i] = %e\n", i,base1[i]);
             }
 
 
 
             // copy coeff_offset to device 
-            Kokkos::View<int*> coeff_offset ("coeff_offset", ncoeffs);                        
+            Kokkos::View<int*> coeff_offset ("coeff_offset", elmts);                        
             typename Kokkos::View< int*>::HostMirror h_coeff_offset;
             h_coeff_offset = Kokkos::create_mirror_view(coeff_offset);
-            Kokkos::parallel_for(range_policy_host(0,ncoeffs), KOKKOS_LAMBDA (const int i)
+            Kokkos::parallel_for(range_policy_host(0,elmts), KOKKOS_LAMBDA (const int i)
     		{
             	h_coeff_offset(i) = Nekcoeff_offset[i];
             });
@@ -635,11 +635,11 @@ namespace Nektar
                     laplacian11Glo,
                     nquad0, nquad1, nmodes0, nmodes1, ncoeffs,
                     base0, base1, dbase0, dbase1, D0, D1);
-                printf("%s %i\n","completed element", el );
+                //printf("%s %i\n","completed element", el );
                 //if (el == 13) {exit(1);}
                 //delete[] tmp_inarray;
             });
-            printf("\n completed all elements\n");             
+            printf("\n");             
         }
 
         KOKKOS_INLINE_FUNCTION
@@ -772,7 +772,7 @@ namespace Nektar
                 //printf("outarray[%i] = %e\n", coeff_offset[el] + i, outarray[coeff_offset[el] + i]);
             }    
 
-            printf("%s\n","before freeing wsp2L" );
+            //printf("%s\n","before freeing wsp2L" );
         
             /*free(wsp2L);
             free(wsp1L);
