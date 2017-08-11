@@ -198,7 +198,8 @@ namespace Nektar
                     const DNekMatSharedPtr &D0, const DNekMatSharedPtr &D1,
                     const int &numLocalCoeffs, const int &numGlobalCoeffs,
                     const Array<OneD, const int> &localToGlobalMap,
-                    const Array<OneD, const NekDouble> &localToGlobalSign);
+                    const Array<OneD, const NekDouble> &localToGlobalSign,
+                    const int iteration);
 
 
             void GeneralMatrixOp_IterPerExp_plain(
@@ -287,7 +288,8 @@ namespace Nektar
                 const Kokkos::View<double*> D1,
                 const int &numLocalCoeffs, const int &numGlobalCoeffs,
                 const Kokkos::View<int*> localToGlobalMap,
-                const Kokkos::View<double*> localToGlobalSign);
+                const Kokkos::View<double*> localToGlobalSign,
+                const int iteration);
 
 
             void GeneralMatrixOp_IterPerExp_Kokkos(
@@ -311,8 +313,8 @@ namespace Nektar
 
             KOKKOS_INLINE_FUNCTION
             void HelmholtzMatrixOp_MatFree_Kokkos(
-                const Kokkos::View<double*> inarray,
-                //const NekDouble* tmp_inarray,
+                //const Kokkos::View<double*> inarray,
+                const NekDouble* tmp_inarray,
                 Kokkos::View<double*> outarray,
                 const int &el,
                 const Kokkos::View<int*>  coeff_offset,

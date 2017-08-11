@@ -30,8 +30,8 @@ IF (NEKTAR_USE_KOKKOS)
             "Build KOKKOS with CUDA support" OFF
             "NEKTAR_USE_KOKKOS" OFF)
 
-        #SET(KOKKOS_OPTIONS "--prefix=${TPDIST}" --cxxflags=-fPIC --with-serial --with-pthread --with-openmp)
-        SET(KOKKOS_OPTIONS "--prefix=${TPDIST}" --cxxflags=-fPIC --with-serial --with-pthread)
+        SET(KOKKOS_OPTIONS "--prefix=${TPDIST}" --cxxflags=-fPIC --with-serial --with-openmp)
+        #SET(KOKKOS_OPTIONS "--prefix=${TPDIST}" --cxxflags=-fPIC --with-serial --with-pthread)
 
         IF (NEKTAR_USE_KOKKOS_CUDA)
             FIND_PACKAGE(CUDA REQUIRED VERSION 8.0)

@@ -50,9 +50,12 @@ namespace Nektar
     	{
     		printf("Within GlobalLinSysIterative::DoConjugateGradient_Kokkos\n" );
     		
-            //Initialise Kokkos
+            //Initialise Kokkos]
+            cout << "How many threads?" << endl;
+            int threads;
+            cin >> threads;
             Kokkos::InitArguments args;
-            args.num_threads = 1;
+            args.num_threads = threads;
             Kokkos::initialize(args);   
             
 
@@ -268,7 +271,8 @@ namespace Nektar
 
             // CG variables
             NekDouble alpha, beta, rho, rho_new, mu, eps, min_resid, rhs_magnitude;
-            int totalIterations, k;
+            int totalIterations = 0;
+            int k;
 
             NekDouble tolerance = m_tolerance;
             int maxiter = m_maxiter;
@@ -370,7 +374,7 @@ namespace Nektar
                     base0, base1, dbase0, dbase1,
                     D0, D1,
                     numLocalCoeffs, numGlobalCoeffs,
-                    localToGlobalMap, localToGlobalSign);
+                    localToGlobalMap, localToGlobalSign,totalIterations);
 
             rho = 0.0;
             Kokkos::parallel_reduce(range_policy(0,nNonDir),KOKKOS_LAMBDA(const int i, NekDouble &irho)
@@ -448,7 +452,7 @@ namespace Nektar
                     base0, base1, dbase0, dbase1,
                     D0, D1,
                     numLocalCoeffs, numGlobalCoeffs,
-                    localToGlobalMap, localToGlobalSign);               
+                    localToGlobalMap, localToGlobalSign,totalIterations);               
 
                 rho_new = 0.0;
                 Kokkos::parallel_reduce(range_policy(0,nNonDir),KOKKOS_LAMBDA(const int i, NekDouble &irho_new)
@@ -502,44 +506,29 @@ namespace Nektar
 
 
         void GlobalLinSysIterative::GeneralMatrixOp_Kokkos(
-                //const Array<OneD,const NekDouble> &inarray,
-                //Array<OneD,      NekDouble> &outarray,
                 const Kokkos::View<double*> inarray,
                 Kokkos::View<double*> outarray,
-                //    const NekDouble &lambda,
                 const Kokkos::View<double[1]> lambda,                
-                //const Array<OneD, const NekDouble> &quadMetricGlo,                
-                //const Array<OneD, const NekDouble> &laplacian00Glo,
-                //const Array<OneD, const NekDouble> &laplacian01Glo,
-                //const Array<OneD, const NekDouble> &laplacian11Glo,
                 const Kokkos::View<double*> quadMetricGlo,
                 const Kokkos::View<double*> laplacian00Glo,
                 const Kokkos::View<double*> laplacian01Glo,
                 const Kokkos::View<double*> laplacian11Glo,
                 const int &nquad0, const int &nquad1,
                 const int &nmodes0, const int &nmodes1, const int &ncoeffs, 
-                //const Array<OneD, const int>  &coeff_offset, 
                 const Kokkos::View<int*> coeff_offset,
                 const int &elmts,
-                //const Array<OneD, const NekDouble> &base0,
-                //const Array<OneD, const NekDouble> &base1,
-                //const Array<OneD, const NekDouble> &dbase0,
-                //const Array<OneD, const NekDouble> &dbase1,
                 const Kokkos::View<double*> base0,
                 const Kokkos::View<double*> base1,
                 const Kokkos::View<double*> dbase0,
                 const Kokkos::View<double*> dbase1,
-                //const DNekMatSharedPtr &D0, const DNekMatSharedPtr &D1,
                 const Kokkos::View<double*> D0,
                 const Kokkos::View<double*> D1,
                 const int &numLocalCoeffs, const int &numGlobalCoeffs,
-                //const Array<OneD, const int> &localToGlobalMap,
-                //const Array<OneD, const NekDouble> &localToGlobalSign,
                 const Kokkos::View<int*> localToGlobalMap,
-                const Kokkos::View<double*> localToGlobalSign
-                )
+                const Kokkos::View<double*> localToGlobalSign,
+                const int iteration)
         {
-            printf("%s %i\n", "do the global to local mapping", numLocalCoeffs);
+            //printf("%s %i\n", "do the global to local mapping", numLocalCoeffs);
             Kokkos::View<double*> transfer_in("transfer_in", numLocalCoeffs);
             //typename Kokkos::View< double*>::HostMirror h_transfer_in;
             //h_transfer_in = Kokkos::create_mirror_view(transfer_in);
@@ -554,7 +543,6 @@ namespace Nektar
             Kokkos::parallel_for(range_policy(0,numLocalCoeffs), KOKKOS_LAMBDA (const int i)    		
             {
                 transfer_in[i] = localToGlobalSign[i] * inarray[localToGlobalMap[i]];
-                //printf("transfer_in[%i] = %e\n",i,transfer_in[i]);          
             });
             
             GeneralMatrixOp_IterPerExp_Kokkos(transfer_in,transfer_out,lambda,
@@ -564,7 +552,7 @@ namespace Nektar
                     base0, base1, dbase0, dbase1, D0, D1);
             //double *out_raw = transfer_out.ptr_on_device();
             
-            printf("%s\n", "do the local to global mapping");
+            //printf("%s\n", "do the local to global mapping");
             //Assemble_plain(tmp2,outarray);  
             //Vmath::Zero(numGlobalCoeffs, outarray.get(), 1);
             Kokkos::parallel_for(range_policy(0,numGlobalCoeffs), KOKKOS_LAMBDA (const int i)    		
@@ -573,10 +561,10 @@ namespace Nektar
             });
             //Vmath::Assmb(numLocalCoeffs, localToGlobalSign.get(), 
             //            tmp2.get(), localToGlobalMap.get(), outarray.get());
-            Kokkos::parallel_for(range_policy(0,numLocalCoeffs), KOKKOS_LAMBDA (const int i)    		
+            for (int i = 0; i < numLocalCoeffs; ++i)
             {
-                outarray[localToGlobalMap[i]] += localToGlobalSign[i] * transfer_out[i]; 
-            });
+                outarray[localToGlobalMap[i]] += localToGlobalSign[i] * transfer_out[i];
+            }
 
 
 
@@ -603,29 +591,16 @@ namespace Nektar
                 const Kokkos::View<double*> D1)
         {
             printf("%s %i\n", "perform operations by element, elements in total: ", elmts);            
-            // Calculating
             Kokkos::parallel_for(range_policy(0,elmts),KOKKOS_LAMBDA (const int el) {
-            //for (int el = 0; el < elmts; ++el){
                                                             
                 printf("%i ", el);
-                /*NekDouble* tmp_inarray = new NekDouble[ncoeffs];
-                for (int i = 0; i < ncoeffs; ++i)
+                NekDouble* tmp_inarray = (double*) Kokkos::kokkos_malloc<>(ncoeffs * sizeof(double));
+            	for (int i = 0; i < ncoeffs; ++i)
                 {
                     tmp_inarray[i] = transfer_in[coeff_offset[el]+i];
-                }
-                NekDouble quadMetric [nquad0*nquad1];
-                NekDouble laplacian00[nquad0*nquad1];
-                NekDouble laplacian01[nquad0*nquad1];
-                NekDouble laplacian11[nquad0*nquad1];
-                for (int i = 0; i < nquad0*nquad1; ++i)
-                {
-                     quadMetric[i] =  quadMetricGlo[el*nquad0*nquad1+i];
-                    laplacian00[i] = laplacian00Glo[el*nquad0*nquad1+i];
-                    laplacian01[i] = laplacian01Glo[el*nquad0*nquad1+i];
-                    laplacian11[i] = laplacian11Glo[el*nquad0*nquad1+i];
-                }*/
+                }                
                 HelmholtzMatrixOp_MatFree_Kokkos(
-                    transfer_in,//tmp_inarray,
+                    tmp_inarray,
                     transfer_out,
                     el, coeff_offset,
                     lambda,
@@ -635,17 +610,14 @@ namespace Nektar
                     laplacian11Glo,
                     nquad0, nquad1, nmodes0, nmodes1, ncoeffs,
                     base0, base1, dbase0, dbase1, D0, D1);
-                //printf("%s %i\n","completed element", el );
-                //if (el == 13) {exit(1);}
-                //delete[] tmp_inarray;
             });
             printf("\n");             
         }
 
         KOKKOS_INLINE_FUNCTION
         void GlobalLinSysIterative::HelmholtzMatrixOp_MatFree_Kokkos(
-                const Kokkos::View<double*> inarray,
-        	    //const NekDouble* tmp_inarray,
+                //const Kokkos::View<double*> inarray,
+        	    const NekDouble* tmp_inarray,
                 Kokkos::View<double*> outarray,
                 const int &el,
                 const Kokkos::View<int*>  coeff_offset,
@@ -669,77 +641,35 @@ namespace Nektar
             int max2 = (nquad1*nmodes0 >= nquad0*nmodes1) ? nquad1*nmodes0 : nquad0*nmodes1;
             int wspsize = (max1 >= max2) ? max1 : max2;
 
-            /*NekDouble* tmp_inarray = (double*) Kokkos::kokkos_malloc<>(ncoeffs * sizeof(double));
             NekDouble* tmp_outarray = (double*) Kokkos::kokkos_malloc<>(ncoeffs * sizeof(double));
 
             // Allocate temporary storage
             NekDouble* wsp0 = (double*) Kokkos::kokkos_malloc<>(wspsize * sizeof(double));            
             NekDouble* wsp1 = (double*) Kokkos::kokkos_malloc<>(wspsize * sizeof(double));
             NekDouble* wsp2 = (double*) Kokkos::kokkos_malloc<>(wspsize * sizeof(double));
-            // Allocate temporary storage
-            NekDouble* wsp0L = (double*) Kokkos::kokkos_malloc<>(wspsize * sizeof(double));
-            NekDouble* wsp1L = (double*) Kokkos::kokkos_malloc<>(wspsize * sizeof(double));            
-            NekDouble* wsp2L = (double*) Kokkos::kokkos_malloc<>(wspsize * sizeof(double));*/
-
-
-            NekDouble* tmp_inarray = new NekDouble[ncoeffs];
-            NekDouble* tmp_outarray = new NekDouble[ncoeffs];;
-
-            // Allocate temporary storage
-            NekDouble* wsp0 = new NekDouble[wspsize];            
-            NekDouble* wsp1 = new NekDouble[wspsize];
-            NekDouble* wsp2 = new NekDouble[wspsize];
             
-        
-            for (int i = 0; i < ncoeffs; ++i)
-            {
-                tmp_inarray[i] = inarray[coeff_offset[el]+i];
-                //printf("tmp_inarray[%i] = %e\n", i, tmp_inarray[i]);
-            }         
+            
             BwdTrans_SumFacKernel_Kokkos(base0, base1, tmp_inarray, wsp0, wsp2,
                 nmodes0, nmodes1, nquad0, nquad1);
-
-            for (int i = 0; i < wspsize; ++i)
-            {
-            	//printf("wsp0[%i] = %e\n",i,wsp0[i] );
-            	//printf("wsp2[%i] = %e\n",i,wsp2[i] );
-            }
 
             for (int i = 0; i < nqtot; ++i)
             {
                 wsp1[i] = quadMetricGlo[el*nqtot+i] * wsp0[i];
             }
-            for (int i = 0; i < wspsize; ++i)
-            {
-            	//printf("wsp1[%i] = %e\n",i,wsp0[i] );
-            }
-            IProductWRTBase_SumFacKernel_Kokkos(base0, base1, wsp1, tmp_outarray,
-                                         wsp2, nmodes0, nmodes1, nquad0, nquad1);
-        	
-        delete[] wsp2;
             
-        	for (int i = 0; i < ncoeffs; ++i)
-            {
-            	//printf("tmp_outarray[%i] = %e\n",i,tmp_outarray[i] );
-            }
+            IProductWRTBase_SumFacKernel_Kokkos(base0, base1, wsp1, tmp_outarray,
+                                         wsp2, nmodes0, nmodes1, nquad0, nquad1);       	
+                  	
+            //LaplacianMatrixOp_MatFree_Kernel
 
             // Allocate temporary storage
-            
-            NekDouble* wsp1L = new NekDouble[wspsize];            
-            NekDouble* wsp2L = new NekDouble[wspsize];
-            //LaplacianMatrixOp_MatFree_Kernel
-            //printf("%s\n", "before PhysTensorDeriv");
+            NekDouble* wsp1L = (double*) Kokkos::kokkos_malloc<>(wspsize * sizeof(double));            
+            NekDouble* wsp2L = wsp2;//(double*) Kokkos::kokkos_malloc<>(wspsize * sizeof(double));
+
             PhysTensorDeriv_Kokkos(wsp0,wsp1L,wsp2L, nquad0, nquad1, D0, D1);
-        delete[] wsp0;
 
-            for (int i = 0; i < wspsize; ++i)
-            {
-            	//printf("wsp1L[%i] = %e\n",i,wsp1L[i] );
-            	//printf("wsp2L[%i] = %e\n",i,wsp2L[i] );
-            }
-            //printf("%s\n", "after PhysTensorDeriv");
-
-            NekDouble* wsp0L = new NekDouble[wspsize];
+            NekDouble* wsp0L = wsp0;//(double*) Kokkos::kokkos_malloc<>(wspsize * sizeof(double));            
+        
             for (int i = 0; i < nqtot; ++i)
             {
                 wsp0L[i] = laplacian00Glo[el*nqtot+i] * wsp1L[i] 
@@ -750,49 +680,19 @@ namespace Nektar
                 wsp2L[i] = laplacian01Glo[el*nqtot+i] * wsp1L[i]
                 		 + laplacian11Glo[el*nqtot+i] * wsp2L[i];
             }
-            //printf("%s\n", "before IProductWRTBase");
             IProductWRTBase_SumFacKernel_Kokkos(dbase0, base1,wsp0L,wsp1 ,wsp1L,
                          nmodes0, nmodes1, nquad0, nquad1);
             IProductWRTBase_SumFacKernel_Kokkos( base0,dbase1,wsp2L,wsp1L,wsp0L,
                          nmodes0, nmodes1, nquad0, nquad1);
-            //printf("%s\n", "after IProductWRTBase");
             
-
-			for (int i = 0; i < ncoeffs; ++i)
+            for (int i = 0; i < ncoeffs; ++i)
             {
                 wsp1[i] += wsp1L[i];
             }
-            //end LaplacianMatrixOp_MatFree_Kernel
-           
-            // outarray = lambda * outarray + wsp1
-            //          = (lambda * M + L ) * u_hat
             for (int i = 0; i < ncoeffs; ++i)
             {
                 outarray[coeff_offset[el] + i] = lambda[0] * tmp_outarray[i] + wsp1[i];
-                //printf("outarray[%i] = %e\n", coeff_offset[el] + i, outarray[coeff_offset[el] + i]);
             }    
-
-            //printf("%s\n","before freeing wsp2L" );
-        
-            /*free(wsp2L);
-            free(wsp1L);
-            free(wsp0L);
-            free(wsp2);
-            free(wsp1);
-            free(wsp0);
-            free(tmp_outarray);
-            free(tmp_inarray);*/
-            
-            delete[] wsp2L;
-            delete[] wsp1L;
-            delete[] wsp0L;
-            
-            delete[] wsp1;
-            delete[] tmp_outarray;
-            delete[] tmp_inarray;
-            
-
-            
         }
 
         KOKKOS_INLINE_FUNCTION
