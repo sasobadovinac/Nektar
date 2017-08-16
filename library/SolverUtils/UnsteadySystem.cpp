@@ -41,7 +41,8 @@
 #include <MultiRegions/AssemblyMap/AssemblyMapDG.h>
 #include <SolverUtils/UnsteadySystem.h>
 
-#include <LibUtilities/AnalysisUtils/PerformanceAnalyser.h>
+//#include <LibUtilities/AnalysisUtils/PerformanceAnalyser.h>
+#include <LibUtilities/AnalysisUtils/PowerMonitor.h>
 
 using namespace std;
 using namespace Nektar::LibUtilities;
@@ -260,8 +261,9 @@ namespace Nektar
             NekDouble cpuTime       = 0.0;
             NekDouble elapsed       = 0.0;
 
-            PerformanceAnalyser::Initialise("./nektar_pat.out");
-
+            //PerformanceAnalyser::Initialise("./nektar_pat.out");
+            PowerMonitor::Initialise("./nektar_pm.out");
+	    
             while (step   < m_steps ||
                    m_time < m_fintime - NekConstants::kNekZeroTol)
             {
@@ -284,7 +286,8 @@ namespace Nektar
                     }
                 }
 
-                PerformanceAnalyser::Record(step, 1);
+                //PerformanceAnalyser::Record(step, 1, true, true);
+		PowerMonitor::Record(step, 1, true, true);
                 
                 // Perform any solver-specific pre-integration steps
                 timer.Start();
@@ -302,7 +305,8 @@ namespace Nektar
                 intTime += elapsed;
                 cpuTime += elapsed;
 
-                PerformanceAnalyser::Record(step, 2);
+                //PerformanceAnalyser::Record(step, 2, true, false);
+		PowerMonitor::Record(step, 2, true, false);
 		
                 // Write out status information
                 if (m_session->GetComm()->GetRank() == 0 && 
@@ -343,7 +347,8 @@ namespace Nektar
                     break;
                 }
 
-                PerformanceAnalyser::Record(step, 3);
+                //PerformanceAnalyser::Record(step, 3, true, false);
+		PowerMonitor::Record(step, 3, true, false);
 
                 // search for NaN and quit if found
                 if (m_nanSteps && !((step+1) % m_nanSteps) )
@@ -409,13 +414,15 @@ namespace Nektar
                     doCheckTime = false;
                 }
 
-                PerformanceAnalyser::Record(step, 4);
-
+                //PerformanceAnalyser::Record(step, 4, true, true);
+                PowerMonitor::Record(step, 4, true, false);
+		
                 // Step advance
                 ++step;
             }
 
-            PerformanceAnalyser::Finalise();
+            //PerformanceAnalyser::Finalise();
+	    PowerMonitor::Finalise();
             
             // Print out summary statistics
             if (m_session->GetComm()->GetRank() == 0)
