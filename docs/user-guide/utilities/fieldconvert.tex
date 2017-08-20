@@ -157,6 +157,7 @@ Specifically, FieldConvert has these additional functionalities
 \item \inltt{QCriterion}: Computes the Q-Criterion for a given output file;
 \item \inltt{addcompositeid}: Adds the composite ID of an element as an additional field;
 \item \inltt{addFld}: Sum two .fld files;
+\item \inltt{addConstToFld}: Add a constant value to a .fld file;
 \item \inltt{combineAvg}: Combine two \nekpp binary output (.chk or .fld) field file containing averages of fields (and
 possibly also Reynolds stresses) into single file;
 \item \inltt{concatenate}: Concatenate a \nekpp binary output (.chk or .fld) field file into single file (deprecated);
@@ -264,6 +265,25 @@ the input file \inlsh{mesh.xml} should be a surface XML file that can be
 obtained through the \nm \inltt{extract} module (see section
 \ref{s:utilities:nekmesh:extract}).
 
+\subsection{Add a constant to a .fld file: \textit{addConstToFld} module}
+To add a constant to a .fld file one can use the \inltt{addconsttofld}
+module of FieldConvert
+%
+\begin{lstlisting}[style=BashInputStyle]
+  FieldConvert -m addconsttofld:value=const:fieldid=2 file1.xml file1.fld \
+  file2.fld
+\end{lstlisting}
+%
+In this case we use it in conjunction with the command \inltt{fieldid}
+which specifieds the id of the field to which we can add the constant. 
+\inltt{file1.fld} is the file on which we want to add the constant of value
+\inltt{const}, \inltt{file1.xml} is the associated session file, \inltt{file2.fld} is the output which contain the modified data. 
+\inltt{file2.fld} can be processed in a similar way as described
+in section \ref{s:utilities:fieldconvert:sub:convert} to visualise
+the result either in Tecplot, Paraview or VisIt.
+%
+%
+%
 \subsection{Sum two .fld files: \textit{addFld} module}
 To sum two .fld files one can use the \inltt{addFld} module of FieldConvert
 %
