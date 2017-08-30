@@ -24,16 +24,6 @@ SET(NekMeshHeaders
     ProcessModules/ProcessSpherigon.h
     ProcessModules/ProcessTetSplit.h
     ProcessModules/ProcessOptiExtract.h
-    ProcessModules/ProcessVarOpti/ProcessVarOpti.h
-    ProcessModules/ProcessVarOpti/NodeOpti.h
-    ProcessModules/ProcessVarOpti/ElUtil.h
-    ProcessModules/ProcessVarOpti/GetFunctional_eHyplEl.hxx
-    ProcessModules/ProcessVarOpti/GetFunctional_eLinEl.hxx
-    ProcessModules/ProcessVarOpti/GetFunctional_eRoca.hxx
-    ProcessModules/ProcessVarOpti/GetFunctional_eWins.hxx
-    ProcessModules/ProcessVarOpti/Hessian.hxx
-    ProcessModules/ProcessVarOpti/Evaluate.hxx
-    ProcessModules/ProcessVarOpti/Optimise.hxx
 )
 
 SET(NekMeshSources
@@ -63,11 +53,6 @@ SET(NekMeshSources
     ProcessModules/ProcessSpherigon.cpp
     ProcessModules/ProcessTetSplit.cpp
     ProcessModules/ProcessOptiExtract.cpp
-    ProcessModules/ProcessVarOpti/ProcessVarOpti.cpp
-    ProcessModules/ProcessVarOpti/PreProcessing.cpp
-    ProcessModules/ProcessVarOpti/NodeOpti.cpp
-    ProcessModules/ProcessVarOpti/ElUtil.cpp
-    ProcessModules/ProcessVarOpti/LoadData.cpp
 )
 
 IF (NEKTAR_USE_CCM)
