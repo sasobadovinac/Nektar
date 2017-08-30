@@ -38,11 +38,13 @@
 #include <vector>
 
 #include <LibUtilities/BasicUtils/NekFactory.hpp>
+#include <LibUtilities/BasicUtils/SharedArrayFwd.hpp>
 #include <LibUtilities/LibUtilitiesDeclspec.h>
 #include <boost/enable_shared_from_this.hpp>
 #include <boost/static_assert.hpp>
 
 #include <LibUtilities/BasicConst/NektarUnivTypeDefs.hpp>
+
 // namespace Nektar { template <typename Dim, typename DataType> class Array; }
 #include <LibUtilities/BasicUtils/SharedArray.hpp>
 #include <LibUtilities/Communication/CommDataType.h>
@@ -157,9 +159,9 @@ protected:
     virtual void v_Bcast(void *buffer, int count, CommDataType dt,
                          int root) = 0;
 
-    virtual void v_Exscan(Array<OneD, unsigned long long> &pData,
-                          const enum ReduceOperator pOp,
-                          Array<OneD, unsigned long long> &ans) = 0;
+    virtual void v_Exscan(void *pData, void *ans, int count,
+                          CommDataType sendType,
+                          const enum ReduceOperator pOp) = 0;
 
     virtual void v_Gather(void *sendbuf, int sendcount, CommDataType sendtype,
                           void *recvbuf, int recvcount, CommDataType recvtype,

@@ -272,13 +272,10 @@ void CommMpi::v_Bcast(void *buffer, int count, CommDataType dt, int root)
     ASSERTL0(retval == MPI_SUCCESS, "MPI error performing Bcast-v.");
 }
 
-void CommMpi::v_Exscan(Array<OneD, unsigned long long> &pData,
-                       const enum ReduceOperator pOp,
-                       Array<OneD, unsigned long long> &ans)
+void CommMpi::v_Exscan(void *pData, void *ans, int count,
+                       CommDataType sendType,
+                       const enum ReduceOperator pOp)
 {
-    int n = pData.num_elements();
-    ASSERTL0(n == ans.num_elements(), "Array sizes differ in Exscan");
-
     MPI_Op vOp;
     switch (pOp)
     {
@@ -294,8 +291,7 @@ void CommMpi::v_Exscan(Array<OneD, unsigned long long> &pData,
             break;
     }
 
-    int retval = MPI_Exscan(pData.get(), ans.get(), n, MPI_UNSIGNED_LONG_LONG,
-                            vOp, m_comm);
+    int retval = MPI_Exscan(pData, ans, n, sendType, vOp, m_comm);
     ASSERTL0(retval == MPI_SUCCESS, "MPI error performing Exscan-v.");
 }
 

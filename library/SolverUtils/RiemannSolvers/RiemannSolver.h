@@ -37,6 +37,7 @@
 #define NEKTAR_SOLVERUTILS_RIEMANNSOLVER
 
 #include <LibUtilities/BasicUtils/NekFactory.hpp>
+#include <LibUtilities/BasicUtils/SharedArrayFwd.hpp>
 #include <LibUtilities/LinearAlgebra/NekTypeDefs.hpp>
 #include <SolverUtils/SolverUtilsDeclspec.h>
 
@@ -47,9 +48,6 @@
 
 namespace Nektar
 {
-    template <typename Dim, typename DataType>
-    class Array;
-
     namespace SolverUtils
     {
         typedef boost::function<

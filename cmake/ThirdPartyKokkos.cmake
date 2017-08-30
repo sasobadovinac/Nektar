@@ -30,9 +30,15 @@ IF (NEKTAR_USE_KOKKOS)
             "Build KOKKOS with CUDA support" OFF
             "NEKTAR_USE_KOKKOS" OFF)
 
+<<<<<<< HEAD
         SET(KOKKOS_OPTIONS "--prefix=${TPDIST}" --cxxflags=-fPIC --with-serial --with-openmp)
         #SET(KOKKOS_OPTIONS "--prefix=${TPDIST}" --cxxflags=-fPIC --with-serial --with-pthread)
 
+=======
+        SET(KOKKOS_OPTIONS "--prefix=${TPDIST}" --cxxflags=-fPIC --with-serial --with-pthread --with-openmp)
+        #SET(KOKKOS_OPTIONS "--prefix=${TPDIST}" --cxxflags=-fPIC --with-serial --with-pthread)
+        
+>>>>>>> feature/jan_kokkos_cuda
         IF (NEKTAR_USE_KOKKOS_CUDA)
             FIND_PACKAGE(CUDA REQUIRED VERSION 8.0)
             #SET(KOKKOS_OPTIONS ${KOKKOS_OPTIONS} --with-cuda=${CUDA_TOOLKIT_ROOT_DIR})
@@ -40,15 +46,26 @@ IF (NEKTAR_USE_KOKKOS)
                 ${KOKKOS_OPTIONS} --with-cuda=${CUDA_TOOLKIT_ROOT_DIR} --arch=Maxwell52 --with-cuda-options=enable_lambda)
         ENDIF()
 
+<<<<<<< HEAD
         SET(KOKKOS_BRANCH_NAME master)
         #SET(KOKKOS_BRANCH_NAME develop)
+=======
+        #SET(KOKKOS_BRANCH_NAME master)
+        SET(KOKKOS_BRANCH_NAME develop)
+
+        #message("KOKKOS BRANCH NAME = ${KOKKOS_BRANCH_NAME}")
+>>>>>>> feature/jan_kokkos_cuda
 
         INCLUDE(ExternalProject)
         EXTERNALPROJECT_ADD(
             kokkos-${KOKKOS_BRANCH_NAME}
             #GIT_REPOSITORY https://github.com/kokkos/kokkos.git
             #GIT_TAG ${KOKKOS_BRANCH_NAME}
+<<<<<<< HEAD
             URL ${TPSRC}/kokkos-4906e3d5a3c3c95913221130a42785db4e620f4d.zip
+=======
+            URL ${CMAKE_SOURCE_DIR}/../kokkos-develop_old.zip
+>>>>>>> feature/jan_kokkos_cuda
 
             STAMP_DIR ${TPBUILD}/stamp
             SOURCE_DIR ${TPSRC}/kokkos-${KOKKOS_BRANCH_NAME}
@@ -56,7 +73,11 @@ IF (NEKTAR_USE_KOKKOS)
             TMP_DIR ${TPBUILD}/kokkos-${KOKKOS_BRANCH_NAME}-tmp
             INSTALL_DIR ${TPDIST}
             CONFIGURE_COMMAND CC=${CMAKE_C_COMPILER} ${TPSRC}/kokkos-${KOKKOS_BRANCH_NAME}/generate_makefile.bash ${KOKKOS_OPTIONS}
+<<<<<<< HEAD
             BUILD_COMMAND make
+=======
+            BUILD_COMMAND make lib
+>>>>>>> feature/jan_kokkos_cuda
         )
 
         SET(KOKKOS_LIBRARY kokkos CACHE FILEPATH

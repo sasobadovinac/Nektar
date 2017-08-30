@@ -38,13 +38,11 @@
 
 #include <LibUtilities/BasicConst/NektarUnivTypeDefs.hpp>
 #include <LibUtilities/BasicUtils/NekFactory.hpp>
+#include <LibUtilities/BasicUtils/SharedArrayFwd.hpp>
 #include <LibUtilities/LibUtilitiesDeclspec.h>
 
 namespace Nektar
-{
-    template <typename Dim, typename DataType>
-    class Array;
-    
+{  
 	namespace LibUtilities
 	{
 		/**

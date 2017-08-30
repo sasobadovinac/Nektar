@@ -39,10 +39,7 @@
 #include <LibUtilities/Foundations/FoundationsFwd.hpp>
 #include <LibUtilities/BasicConst/NektarUnivTypeDefs.hpp>
 #include <LibUtilities/LibUtilitiesDeclspec.h>
-
-//#include <LibUtilities/BasicUtils/BasicUtilsFwd.hpp>  // for SharedArray
-namespace Nektar { template <typename Dim, typename DataType> class Array; }
-
+#include <LibUtilities/BasicUtils/SharedArrayFwd.hpp>
 
 namespace Nektar
 {    

@@ -15,6 +15,8 @@ ELSE()
   MESSAGE(STATUS "No Fortran support")
 ENDIF()
 
+SET(CMAKE_CXX_EXTENSIONS OFF)
+
 # Helps organize projects in IDEs.
 SET_PROPERTY(GLOBAL PROPERTY USE_FOLDERS ON)
 
