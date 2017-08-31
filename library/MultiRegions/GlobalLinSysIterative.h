@@ -64,121 +64,8 @@ namespace Nektar
 
             MULTI_REGIONS_EXPORT virtual ~GlobalLinSysIterative();
 
-        protected:
-            /// Global to universal unique map
-            Array<OneD, int>                            m_map;
-
-            /// maximum iterations
-            int                                         m_maxiter;
-
-            /// Tolerance of iterative solver.
-            NekDouble                                   m_tolerance;
-
-            /// dot product of rhs to normalise stopping criterion
-            NekDouble                                   m_rhs_magnitude;
-
-            /// cnt to how many times rhs_magnitude is called 
-            NekDouble                                   m_rhs_mag_sm; 
-            
-            PreconditionerSharedPtr                     m_precon;
-
-            MultiRegions::PreconditionerType            m_precontype;
-            
-            int                                         m_totalIterations;
-
-            /// Whether to apply projection technique
-            bool                                        m_useProjection;
-
-            /// Root if parallel
-            bool                                        m_root;
-
-            /// Storage for solutions to previous linear problems
-            boost::circular_buffer<Array<OneD, NekDouble> > m_prevLinSol;
-
-            /// Total counter of previous solutions
-            int m_numPrevSols;
-
-            /// A-conjugate projection technique
-            void DoAconjugateProjection(
-                    const int pNumRows,
-                    const Array<OneD,const NekDouble> &pInput,
-                          Array<OneD,      NekDouble> &pOutput,
-                    const AssemblyMapSharedPtr &locToGloMap,
-                    const int pNumDir);
-
-            /// Actual iterative solve
-            void DoConjugateGradient(
-                    const int pNumRows,
-                    const Array<OneD,const NekDouble> &pInput,
-                          Array<OneD,      NekDouble> &pOutput,
-                    const AssemblyMapSharedPtr &locToGloMap,
-                    const int pNumDir);
-
-            void DoConjugateGradient_plain(
-                    const int                          nGlobal,
-                    const Array<OneD,const NekDouble> &pInput,
-                          Array<OneD,      NekDouble> &pOutput,
-                    const AssemblyMapSharedPtr        &plocToGloMap,
-                    const int                          nDir);
-
-            void DoConjugateGradient_Kokkos(
-                    const int                          nGlobal,
-                    const Array<OneD,const NekDouble> &pInput,
-                          Array<OneD,      NekDouble> &pOutput,
-                    const AssemblyMapSharedPtr        &plocToGloMap,
-                    const int                          nDir);
-
-            void DoConjugateGradient_OpenMP(
-                    const int                          nGlobal,
-                    const Array<OneD,const NekDouble> &pInput,
-                          Array<OneD,      NekDouble> &pOutput,
-                    const AssemblyMapSharedPtr        &plocToGloMap,
-                    const int                          nDir);
 
 
-            void Set_Rhs_Magnitude(const NekVector<NekDouble> &pIn);
-
-            virtual void v_UniqueMap() = 0;
-            
-        private:
-            void UpdateKnownSolutions(
-                    const int pGlobalBndDofs,
-                    const Array<OneD,const NekDouble> &pSolution,
-                    const int pNumDirBndDofs);
-
-            NekDouble CalculateAnorm(
-                    const int nGlobal,
-                    const Array<OneD,const NekDouble> &in,
-                    const int nDir);
-
-
-            /// Solve the matrix system
-            virtual void v_SolveLinearSystem(
-                    const int pNumRows,
-                    const Array<OneD,const NekDouble> &pInput,
-                          Array<OneD,      NekDouble> &pOutput,
-                    const AssemblyMapSharedPtr &locToGloMap,
-                    const int pNumDir);
-
-            virtual void v_DoMatrixMultiply(
-                    const Array<OneD, NekDouble>& pInput,
-                          Array<OneD, NekDouble>& pOutput) = 0;
-
-            // functions for parallel Conjugate Gradient
-            void GetMatrixMultiplyMetrics(
-                Array<OneD, NekDouble> &quadMetricGlo,                
-                Array<OneD, NekDouble> &laplacian00Glo,
-                Array<OneD, NekDouble> &laplacian01Glo,
-                Array<OneD, NekDouble> &laplacian11Glo,
-                int &nquad0, int &nquad1, int &elmts,
-                int &numLocalCoeffs, int &numGlobalCoeffs,
-                Array<OneD, const int> &localToGlobalMap,
-                Array<OneD, const NekDouble> &localToGlobalSign);
-
-            //Kokkos
-            typedef Kokkos::RangePolicy<Kokkos::DefaultHostExecutionSpace> range_policy_host;
-            typedef Kokkos::RangePolicy<Kokkos::DefaultExecutionSpace> range_policy;
-            
             // functions for plain parallel Conjugate Gradient
             void GeneralMatrixOp_plain(
                     const Array<OneD,const NekDouble> &inarray,
@@ -205,7 +92,7 @@ namespace Nektar
             void GeneralMatrixOp_IterPerExp_plain(
                     const Array<OneD,const NekDouble> &inarray,
                     //Array<OneD,      NekDouble> &outarray,
-                    Kokkos::View<double*> transfer_out,                     
+                    Kokkos::View<double*, Kokkos::HostSpace> transfer_out,                     
                     const NekDouble &lambda,
                     const Array<OneD, const NekDouble> &quadMetricGlo,                
                     const Array<OneD, const NekDouble> &laplacian00Glo,
@@ -223,7 +110,7 @@ namespace Nektar
             void HelmholtzMatrixOp_MatFree_plain(
                     const Array<OneD, const NekDouble> &inarray,
                     //      Array<OneD,       NekDouble> &outarray,
-                    Kokkos::View<double*> transfer_out, 
+                    Kokkos::View<double*, Kokkos::HostSpace> transfer_out, 
                     const int &el, const Array<OneD, const int>  &coeff_offset,
                     const NekDouble &lambda,
                     const Array<OneD, const NekDouble> &quadMetric,
@@ -268,6 +155,14 @@ namespace Nektar
 
 
             // functions for full Kokkos Conjugate Gradient
+            void DoConjugateGradient_Kokkos(
+                    const int                          nGlobal,
+                    const Array<OneD,const NekDouble> &pInput,
+                          Array<OneD,      NekDouble> &pOutput,
+                    const AssemblyMapSharedPtr        &plocToGloMap,
+                    const int                          nDir);
+
+
             void GeneralMatrixOp_Kokkos(
                 const Kokkos::View<double*> inarray,
                 Kokkos::View<double*> outarray,
@@ -360,6 +255,118 @@ namespace Nektar
                 const int &nquad0, const int &nquad1,
                 const Kokkos::View<double*> D0,
                 const Kokkos::View<double*> D1);
+
+
+
+        protected:
+            /// Global to universal unique map
+            Array<OneD, int>                            m_map;
+
+            /// maximum iterations
+            int                                         m_maxiter;
+
+            /// Tolerance of iterative solver.
+            NekDouble                                   m_tolerance;
+
+            /// dot product of rhs to normalise stopping criterion
+            NekDouble                                   m_rhs_magnitude;
+
+            /// cnt to how many times rhs_magnitude is called 
+            NekDouble                                   m_rhs_mag_sm; 
+            
+            PreconditionerSharedPtr                     m_precon;
+
+            MultiRegions::PreconditionerType            m_precontype;
+            
+            int                                         m_totalIterations;
+
+            /// Whether to apply projection technique
+            bool                                        m_useProjection;
+
+            /// Root if parallel
+            bool                                        m_root;
+
+            /// Storage for solutions to previous linear problems
+            boost::circular_buffer<Array<OneD, NekDouble> > m_prevLinSol;
+
+            /// Total counter of previous solutions
+            int m_numPrevSols;
+
+            /// A-conjugate projection technique
+            void DoAconjugateProjection(
+                    const int pNumRows,
+                    const Array<OneD,const NekDouble> &pInput,
+                          Array<OneD,      NekDouble> &pOutput,
+                    const AssemblyMapSharedPtr &locToGloMap,
+                    const int pNumDir);
+
+            /// Actual iterative solve
+            void DoConjugateGradient(
+                    const int pNumRows,
+                    const Array<OneD,const NekDouble> &pInput,
+                          Array<OneD,      NekDouble> &pOutput,
+                    const AssemblyMapSharedPtr &locToGloMap,
+                    const int pNumDir);
+
+            void DoConjugateGradient_plain(
+                    const int                          nGlobal,
+                    const Array<OneD,const NekDouble> &pInput,
+                          Array<OneD,      NekDouble> &pOutput,
+                    const AssemblyMapSharedPtr        &plocToGloMap,
+                    const int                          nDir);
+
+            void DoConjugateGradient_OpenMP(
+                    const int                          nGlobal,
+                    const Array<OneD,const NekDouble> &pInput,
+                          Array<OneD,      NekDouble> &pOutput,
+                    const AssemblyMapSharedPtr        &plocToGloMap,
+                    const int                          nDir);
+
+
+            void Set_Rhs_Magnitude(const NekVector<NekDouble> &pIn);
+
+            virtual void v_UniqueMap() = 0;
+            
+        private:
+            void UpdateKnownSolutions(
+                    const int pGlobalBndDofs,
+                    const Array<OneD,const NekDouble> &pSolution,
+                    const int pNumDirBndDofs);
+
+            NekDouble CalculateAnorm(
+                    const int nGlobal,
+                    const Array<OneD,const NekDouble> &in,
+                    const int nDir);
+
+
+            /// Solve the matrix system
+            virtual void v_SolveLinearSystem(
+                    const int pNumRows,
+                    const Array<OneD,const NekDouble> &pInput,
+                          Array<OneD,      NekDouble> &pOutput,
+                    const AssemblyMapSharedPtr &locToGloMap,
+                    const int pNumDir);
+
+            virtual void v_DoMatrixMultiply(
+                    const Array<OneD, NekDouble>& pInput,
+                          Array<OneD, NekDouble>& pOutput) = 0;
+
+            // functions for parallel Conjugate Gradient
+            void GetMatrixMultiplyMetrics(
+                Array<OneD, NekDouble> &quadMetricGlo,                
+                Array<OneD, NekDouble> &laplacian00Glo,
+                Array<OneD, NekDouble> &laplacian01Glo,
+                Array<OneD, NekDouble> &laplacian11Glo,
+                int &nquad0, int &nquad1, int &elmts,
+                int &numLocalCoeffs, int &numGlobalCoeffs,
+                Array<OneD, const int> &localToGlobalMap,
+                Array<OneD, const NekDouble> &localToGlobalSign);
+
+            //Kokkos
+            typedef Kokkos::RangePolicy<Kokkos::DefaultHostExecutionSpace> range_policy_host;
+            typedef Kokkos::RangePolicy<Kokkos::DefaultExecutionSpace> range_policy;
+            
+            
 
 
 

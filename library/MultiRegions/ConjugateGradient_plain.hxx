@@ -52,7 +52,10 @@ namespace Nektar
 
             //Initialise Kokkos
             Kokkos::InitArguments args;
-            args.num_threads = 6;
+            cout << "How many threads?" << endl;
+            int threads;
+            cin >> threads;
+            args.num_threads = threads;
             Kokkos::initialize(args);   
 
             // create preconditioner
@@ -378,8 +381,8 @@ namespace Nektar
                 tmp1[i] = localToGlobalSign[i] * inarray[localToGlobalMap[i]];
             }
 
-            Kokkos::View<double*> transfer_out;
-            transfer_out = Kokkos::View<double*>("transfer_out", numLocalCoeffs);                        
+            Kokkos::View<double*, Kokkos::HostSpace> transfer_out;
+            transfer_out = Kokkos::View<double*, Kokkos::HostSpace>("transfer_out", numLocalCoeffs);                        
 
             GeneralMatrixOp_IterPerExp_plain(tmp1,transfer_out,lambda,
                     quadMetricGlo, laplacian00Glo,laplacian01Glo,laplacian11Glo,                    
@@ -410,7 +413,7 @@ namespace Nektar
         void GlobalLinSysIterative::GeneralMatrixOp_IterPerExp_plain(
                     const Array<OneD,const NekDouble> &inarray,
                     //Array<OneD,      NekDouble> &outarray,
-                    Kokkos::View<double*> transfer_out,
+                    Kokkos::View<double*, Kokkos::HostSpace> transfer_out,
                     const NekDouble &lambda,
                     const Array<OneD, const NekDouble> &quadMetricGlo,                
                     const Array<OneD, const NekDouble> &laplacian00Glo,
@@ -433,7 +436,7 @@ namespace Nektar
                 for (int i = 0; i < ncoeffs; ++i)
                 {
                     tmp_inarray[i] = inarray[coeff_offset[el]+i];
-                }                
+                }
                 HelmholtzMatrixOp_MatFree_plain(
                     tmp_inarray,
                     transfer_out,
@@ -452,7 +455,7 @@ namespace Nektar
 
         void GlobalLinSysIterative::HelmholtzMatrixOp_MatFree_plain(
                 const Array<OneD, const NekDouble> &inarray,
-                Kokkos::View<double*> transfer_out,
+                Kokkos::View<double*, Kokkos::HostSpace> transfer_out,
                 const int &el, const Array<OneD,
                 const int>  &coeff_offset,
                 const NekDouble &lambda,
@@ -468,8 +471,9 @@ namespace Nektar
                 const Array<OneD, const NekDouble> &dbase1,
                 const DNekMatSharedPtr &D0, const DNekMatSharedPtr &D1)
         {
-            Array<OneD, NekDouble> t_outarray(ncoeffs);
+            //printf("within GlobalLinSysIterative::HelmholtzMatrixOp_MatFree_plain \n");
             
+            Array<OneD, NekDouble> t_outarray(ncoeffs);
             int       nqtot   = nquad0*nquad1;
             //int       wspsize = std::max(std::max(std::max(nqtot,ncoeffs),nquad1*nmodes0), nquad0*nmodes1);
             int max1 = (nqtot >= ncoeffs) ? nqtot : ncoeffs;
@@ -480,17 +484,19 @@ namespace Nektar
             Array<OneD,NekDouble> wsp0(5*wspsize);       // size wspsize
             Array<OneD,NekDouble> wsp1(wsp0 + wspsize);  // size wspsize // u_hat
             Array<OneD,NekDouble> wsp2(wsp0 + 2*wspsize);// size 3*wspsize
-            
+
             //BwdTrans_SumFacKernel(base0, base1, inarray, wsp0, wsp2,true,true);            
             BwdTrans_SumFacKernel_plain(base0, base1, inarray, wsp0, wsp2,
                 nmodes0, nmodes1, nquad0, nquad1);
 
             //MultiplyByQuadratureMetric(wsp0, wsp1);
             //Vmath::Vmul(nqtot, quadMetric, 1, wsp0, 1, wsp1, 1);            
+            
             for (int i = 0; i < nqtot; ++i)
             {
                 wsp1[i] = quadMetric[el*nqtot+i] * wsp0[i];
-            }
+            }            
+            
             //IProductWRTBase_SumFacKernel(base0, base1, wsp1, outarray, wsp2, true, true);
             IProductWRTBase_SumFacKernel_plain(base0, base1, wsp1, t_outarray,
                                          wsp2, nmodes0, nmodes1, nquad0, nquad1);
@@ -552,6 +558,7 @@ namespace Nektar
                 const int &nmodes0, const int &nmodes1,
                 const int &nquad0, const int &nquad1)
         {
+            //printf("within GlobalLinSysIterative::IProductWRTBase_SumFacKernel_plain \n");
             Blas::Dgemm('T','N',nquad1,nmodes0,nquad0,1.0,inarray.get(),nquad0,
                         base0.get(),nquad0,0.0,wsp.get(),nquad1);
             int i, mode;
@@ -575,6 +582,7 @@ namespace Nektar
                 const int &nmodes0, const int &nmodes1,
                 const int &nquad0, const int &nquad1)
         {
+            //printf("within GlobalLinSysIterative::BwdTrans_SumFacKernel_plain \n");
             int i, mode;
             for (i = mode = 0; i < nmodes0; ++i)
             {
@@ -595,6 +603,7 @@ namespace Nektar
                 const int &nquad0, const int &nquad1,
                 const DNekMatSharedPtr &D0, const DNekMatSharedPtr &D1)
         {
+            //printf("within GlobalLinSysIterative::PhysTensorDeriv_plain \n");
             Blas::Dgemm('N', 'N', nquad0, nquad1, nquad0, 1.0,
                         &(D0->GetPtr())[0], nquad0, &inarray[0], nquad0, 0.0,
                         &outarray_d0[0], nquad0);

@@ -37,7 +37,7 @@
 
 using namespace std;
 
-namespace Nektar
+/*namespace Nektar
 {
     namespace MultiRegions
     {
@@ -759,4 +759,4 @@ namespace Nektar
         }
 
     }
-}
+}*/
