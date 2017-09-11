@@ -32,12 +32,16 @@
 // Description:
 //
 ///////////////////////////////////////////////////////////////////////////////
+#ifndef NEKTAR_LIB_MULTIREGIONS_CONJUGATEGRADIENT_KOKKOS_HXX
+#define NEKTAR_LIB_MULTIREGIONS_CONJUGATEGRADIENT_KOKKOS_HXX
 
 #include <MultiRegions/GlobalLinSysIterative.h>
+//#include <cuda_runtime.h>
+//#include "cublas_v2.h"
 
 using namespace std;
 
-/*namespace Nektar
+namespace Nektar
 {
     namespace MultiRegions
     {
@@ -332,10 +336,14 @@ using namespace std;
             },eps);
             
             rhs_magnitude = 0.0;
-            Kokkos::parallel_reduce(range_policy(0,nGlobal),KOKKOS_LAMBDA(const int i, NekDouble &mag)
+            /*Kokkos::parallel_reduce(range_policy_host(0,nGlobal),KOKKOS_LAMBDA(const int i, NekDouble &mag)
             {
-                mag += pInput[i] * pInput[i] * map[i];
-            },rhs_magnitude);                      
+                mag += pInput[i] * pInput[i] * h_map[i];
+            },rhs_magnitude);*/
+            for (int i = 0; i < nGlobal; ++i)
+            {
+                rhs_magnitude += pInput[i] * pInput[i] * h_map[i];
+            }                    
 
             // If input residual is less than tolerance skip solve.
             totalIterations = 0;
@@ -561,10 +569,13 @@ using namespace std;
             });
             //Vmath::Assmb(numLocalCoeffs, localToGlobalSign.get(), 
             //            tmp2.get(), localToGlobalMap.get(), outarray.get());
-            for (int i = 0; i < numLocalCoeffs; ++i)
-            {
-                outarray[localToGlobalMap[i]] += localToGlobalSign[i] * transfer_out[i];
-            }
+            Kokkos::parallel_for(range_policy(0,1), KOKKOS_LAMBDA (const int j)           
+            { 
+                for (int i = 0; i < numLocalCoeffs; ++i)
+                {
+                    outarray[localToGlobalMap[i]] += localToGlobalSign[i] * transfer_out[i];
+                }
+            });
 
 
 
@@ -591,14 +602,15 @@ using namespace std;
                 const Kokkos::View<double*> D1)
         {
             printf("%s %i\n", "perform operations by element, elements in total: ", elmts);            
-            Kokkos::parallel_for(range_policy(0,elmts),KOKKOS_LAMBDA (const int el) {
-                                                            
+            Kokkos::parallel_for(range_policy(0,elmts),KOKKOS_LAMBDA (const int el)
+            {                                                            
                 printf("%i ", el);
-                NekDouble* tmp_inarray = (double*) Kokkos::kokkos_malloc<>(ncoeffs * sizeof(double));
+                NekDouble* tmp_inarray = (double*) malloc(ncoeffs * sizeof(double));
             	for (int i = 0; i < ncoeffs; ++i)
                 {
                     tmp_inarray[i] = transfer_in[coeff_offset[el]+i];
-                }                
+                }
+                printf("tmp_inarray[1] = %e\n", tmp_inarray[1]);               
                 HelmholtzMatrixOp_MatFree_Kokkos(
                     tmp_inarray,
                     transfer_out,
@@ -610,6 +622,7 @@ using namespace std;
                     laplacian11Glo,
                     nquad0, nquad1, nmodes0, nmodes1, ncoeffs,
                     base0, base1, dbase0, dbase1, D0, D1);
+                printf("element %i C\n", el);
             });
             printf("\n");             
         }
@@ -635,38 +648,49 @@ using namespace std;
                 const Kokkos::View<double*> D0,
                 const Kokkos::View<double*> D1)
         {
+            
+            //#ifdef __CUDA_ARCH__  
+                //cublasStatus_t stat;              
+                //cublasHandle_t handle;
+                //stat = cublasCreate(&handle);
+                //if (stat != CUBLAS_STATUS_SUCCESS) {
+                //    printf ("CUBLAS initialization failed\n");
+                //}
+            //#endif
+
             int nqtot   = nquad0*nquad1;
             //int       wspsize = std::max(std::max(std::max(nqtot,ncoeffs),nquad1*nmodes0), nquad0*nmodes1);
             int max1 = (nqtot >= ncoeffs) ? nqtot : ncoeffs;
             int max2 = (nquad1*nmodes0 >= nquad0*nmodes1) ? nquad1*nmodes0 : nquad0*nmodes1;
             int wspsize = (max1 >= max2) ? max1 : max2;
+            printf("wspsize = %i\n",wspsize );
 
-            NekDouble* tmp_outarray = (double*) Kokkos::kokkos_malloc<>(ncoeffs * sizeof(double));
-
+            NekDouble* tmp_outarray = (double*) malloc(ncoeffs * sizeof(double));
+            
             // Allocate temporary storage
-            NekDouble* wsp0 = (double*) Kokkos::kokkos_malloc<>(wspsize * sizeof(double));            
-            NekDouble* wsp1 = (double*) Kokkos::kokkos_malloc<>(wspsize * sizeof(double));
-            NekDouble* wsp2 = (double*) Kokkos::kokkos_malloc<>(wspsize * sizeof(double));
+            NekDouble* wsp0 = (double*) malloc(wspsize * sizeof(double));            
+            NekDouble* wsp1 = (double*) malloc(wspsize * sizeof(double));
+            NekDouble* wsp2 = (double*) malloc(wspsize * sizeof(double));
             
             
-            BwdTrans_SumFacKernel_Kokkos(base0, base1, tmp_inarray, wsp0, wsp2,
-                nmodes0, nmodes1, nquad0, nquad1);
+            //BwdTrans_SumFacKernel_Kokkos(base0, base1, tmp_inarray, wsp0, wsp2,
+            //    nmodes0, nmodes1, nquad0, nquad1, handle);
 
             for (int i = 0; i < nqtot; ++i)
             {
                 wsp1[i] = quadMetricGlo[el*nqtot+i] * wsp0[i];
             }
             
-            IProductWRTBase_SumFacKernel_Kokkos(base0, base1, wsp1, tmp_outarray,
-                                         wsp2, nmodes0, nmodes1, nquad0, nquad1);       	
+            //IProductWRTBase_SumFacKernel_Kokkos(base0, base1, wsp1, tmp_outarray,
+            //                             wsp2, nmodes0, nmodes1, nquad0, nquad1, handle);       	
                   	
             //LaplacianMatrixOp_MatFree_Kernel
 
             // Allocate temporary storage
-            NekDouble* wsp1L = (double*) Kokkos::kokkos_malloc<>(wspsize * sizeof(double));            
+            NekDouble* wsp1L = (double*) malloc(wspsize * sizeof(double));            
             NekDouble* wsp2L = wsp2;//(double*) Kokkos::kokkos_malloc<>(wspsize * sizeof(double));
 
-            PhysTensorDeriv_Kokkos(wsp0,wsp1L,wsp2L, nquad0, nquad1, D0, D1);
+            //PhysTensorDeriv_Kokkos(wsp0,wsp1L,wsp2L, nquad0, nquad1, D0, D1, handle);
 
             NekDouble* wsp0L = wsp0;//(double*) Kokkos::kokkos_malloc<>(wspsize * sizeof(double));            
         
@@ -680,10 +704,10 @@ using namespace std;
                 wsp2L[i] = laplacian01Glo[el*nqtot+i] * wsp1L[i]
                 		 + laplacian11Glo[el*nqtot+i] * wsp2L[i];
             }
-            IProductWRTBase_SumFacKernel_Kokkos(dbase0, base1,wsp0L,wsp1 ,wsp1L,
-                         nmodes0, nmodes1, nquad0, nquad1);
-            IProductWRTBase_SumFacKernel_Kokkos( base0,dbase1,wsp2L,wsp1L,wsp0L,
-                         nmodes0, nmodes1, nquad0, nquad1);
+            //IProductWRTBase_SumFacKernel_Kokkos(dbase0, base1,wsp0L,wsp1 ,wsp1L,
+            //             nmodes0, nmodes1, nquad0, nquad1, handle);
+            //IProductWRTBase_SumFacKernel_Kokkos( base0,dbase1,wsp2L,wsp1L,wsp0L,
+            //             nmodes0, nmodes1, nquad0, nquad1, handle);
             
             for (int i = 0; i < ncoeffs; ++i)
             {
@@ -692,7 +716,13 @@ using namespace std;
             for (int i = 0; i < ncoeffs; ++i)
             {
                 outarray[coeff_offset[el] + i] = lambda[0] * tmp_outarray[i] + wsp1[i];
-            }    
+            }
+
+            printf("element %i A\n", el);
+            //#ifdef __CUDA_ARCH__
+                //cublasDestroy(handle);
+            //#endif
+            printf("element %i B\n", el);
         }
 
         KOKKOS_INLINE_FUNCTION
@@ -703,20 +733,46 @@ using namespace std;
                 NekDouble* outarray,
                 NekDouble* wsp,
                 const int &nmodes0, const int &nmodes1,
-                const int &nquad0, const int &nquad1)
+                const int &nquad0, const int &nquad1,
+                cublasHandle_t handle)
         {
-            Blas::Dgemm('T','N',nquad1,nmodes0,nquad0,1.0,&inarray[0],nquad0,
-                        base0.ptr_on_device(),nquad0,0.0,&wsp[0],nquad1);
-            int i, mode;
-            for (mode=i=0; i < nmodes0; ++i)
-            {
-                Blas::Dgemv('T',nquad1,nmodes1-i,1.0, base1.ptr_on_device()+mode*nquad1,
-                            nquad1,&wsp[0]+i*nquad1,1, 0.0,
-                            &outarray[0] + mode,1);
-                mode += nmodes1 - i;
-            }
-            outarray[1] += Blas::Ddot(nquad1,base1.ptr_on_device()+nquad1,1,
-                                          &wsp[0]+nquad1,1);
+            #ifdef __CUDA_ARCH__
+                const double alpha = 1.0;
+                const double beta = 0.0;
+                cublasDgemm(handle, CUBLAS_OP_T, CUBLAS_OP_N,
+                        nquad1, nmodes0, nquad0,
+                        &alpha, &inarray[0], nquad0, base0.ptr_on_device(),
+                        nquad0, &beta, &wsp[0], nquad1);
+
+                int i, mode;
+                for (mode=i=0; i < nmodes0; ++i)
+                {
+                    cublasDgemv(handle,CUBLAS_OP_T,nquad1,nmodes1-i,&alpha, base1.ptr_on_device()+mode*nquad1,
+                                nquad1,&wsp[0]+i*nquad1,1, &beta,
+                                &outarray[0] + mode,1);
+                    mode += nmodes1 - i;
+                }
+                double result;                
+                cublasDdot(handle, nquad1,base1.ptr_on_device()+nquad1,1,
+                                              &wsp[0]+nquad1,1, &result);
+                outarray[1] += result;
+            
+            #else
+                Blas::Dgemm('T','N',nquad1,nmodes0,nquad0,1.0,&inarray[0],nquad0,
+                            base0.ptr_on_device(),nquad0,0.0,&wsp[0],nquad1);
+                
+
+                int i, mode;
+                for (mode=i=0; i < nmodes0; ++i)
+                {
+                    Blas::Dgemv('T',nquad1,nmodes1-i,1.0, base1.ptr_on_device()+mode*nquad1,
+                                nquad1,&wsp[0]+i*nquad1,1, 0.0,
+                                &outarray[0] + mode,1);
+                    mode += nmodes1 - i;
+                }
+                outarray[1] += Blas::Ddot(nquad1,base1.ptr_on_device()+nquad1,1,
+                                              &wsp[0]+nquad1,1);
+            #endif
         }
 
         KOKKOS_INLINE_FUNCTION
@@ -727,19 +783,39 @@ using namespace std;
                 NekDouble* outarray,
                 NekDouble* wsp,
                 const int &nmodes0, const int &nmodes1,
-                const int &nquad0, const int &nquad1)
+                const int &nquad0, const int &nquad1,
+                cublasHandle_t handle)
         {
-            int i, mode;
-            for (i = mode = 0; i < nmodes0; ++i)
-            {
-                Blas::Dgemv('N', nquad1,nmodes1-i,1.0,base1.ptr_on_device()+mode*nquad1,
-                            nquad1,&inarray[0]+mode,1,0.0,&wsp[0]+i*nquad1,1);
-                mode += nmodes1-i;
-            }
-            Blas::Daxpy(nquad1,inarray[1],base1.ptr_on_device()+nquad1,1,
-                            &wsp[0]+nquad1,1);
-            Blas::Dgemm('N','T', nquad0,nquad1,nmodes0,1.0, base0.ptr_on_device(),nquad0,
-                        &wsp[0], nquad1,0.0, &outarray[0], nquad0);          
+            #ifdef __CUDA_ARCH__
+                const double alpha = 1.0;
+                const double beta = 0.0;
+                int i, mode;
+                for (i = mode = 0; i < nmodes0; ++i)
+                {
+                    cublasDgemv(handle,CUBLAS_OP_N, nquad1,nmodes1-i,&alpha,base1.ptr_on_device()+mode*nquad1,
+                                nquad1,&inarray[0]+mode,1,&beta,&wsp[0]+i*nquad1,1);
+                    mode += nmodes1-i;
+                }
+                const double* invalue = &inarray[1];
+                cublasDaxpy(handle, nquad1, invalue,
+                                base1.ptr_on_device()+nquad1,1,
+                                &wsp[0]+nquad1,1);
+                cublasDgemm(handle, CUBLAS_OP_N, CUBLAS_OP_T, nquad0,nquad1,nmodes0,&alpha, base0.ptr_on_device(),nquad0,
+                            &wsp[0], nquad1,&beta, &outarray[0], nquad0);
+
+            #else
+                int i, mode;
+                for (i = mode = 0; i < nmodes0; ++i)
+                {
+                    Blas::Dgemv('N', nquad1,nmodes1-i,1.0,base1.ptr_on_device()+mode*nquad1,
+                                nquad1,&inarray[0]+mode,1,0.0,&wsp[0]+i*nquad1,1);
+                    mode += nmodes1-i;
+                }
+                Blas::Daxpy(nquad1,inarray[1],base1.ptr_on_device()+nquad1,1,
+                                &wsp[0]+nquad1,1);
+                Blas::Dgemm('N','T', nquad0,nquad1,nmodes0,1.0, base0.ptr_on_device(),nquad0,
+                            &wsp[0], nquad1,0.0, &outarray[0], nquad0);
+            #endif         
         }
 
         KOKKOS_INLINE_FUNCTION
@@ -749,14 +825,28 @@ using namespace std;
                 NekDouble* outarray_d1,
                 const int &nquad0, const int &nquad1,
                 const Kokkos::View<double*> D0,
-                const Kokkos::View<double*> D1)
+                const Kokkos::View<double*> D1,
+                cublasHandle_t handle)
         {
-            Blas::Dgemm('N', 'N', nquad0, nquad1, nquad0, 1.0,
+            #ifdef __CUDA_ARCH__
+                const double alpha = 1.0;
+                const double beta = 0.0;
+                cublasDgemm(handle, CUBLAS_OP_N, CUBLAS_OP_N, nquad0, nquad1, nquad0, &alpha,
+                        (D0.ptr_on_device()), nquad0, &inarray[0], nquad0, &beta,
+                        &outarray_d0[0], nquad0);
+                cublasDgemm(handle, CUBLAS_OP_N, CUBLAS_OP_T, nquad0, nquad1, nquad1, &alpha, &inarray[0], nquad0,
+                         (D1.ptr_on_device()), nquad1, &beta, &outarray_d1[0], nquad0);
+            #else
+                
+                Blas::Dgemm('N', 'N', nquad0, nquad1, nquad0, 1.0,
                         (D0.ptr_on_device()), nquad0, &inarray[0], nquad0, 0.0,
                         &outarray_d0[0], nquad0);
-            Blas::Dgemm('N', 'T', nquad0, nquad1, nquad1, 1.0, &inarray[0], nquad0,
+                Blas::Dgemm('N', 'T', nquad0, nquad1, nquad1, 1.0, &inarray[0], nquad0,
                          (D1.ptr_on_device()), nquad1, 0.0, &outarray_d1[0], nquad0);
+            #endif
         }
 
     }
-}*/
+}
+
+#endif

@@ -32,6 +32,8 @@
 // Description:
 //
 ///////////////////////////////////////////////////////////////////////////////
+#ifndef NEKTAR_LIB_MULTIREGIONS_CONJUGATEGRADIENT_PLAIN_HXX
+#define NEKTAR_LIB_MULTIREGIONS_CONJUGATEGRADIENT_PLAIN_HXX
 
 #include <MultiRegions/GlobalLinSysIterative.h>
 
@@ -432,12 +434,14 @@ namespace Nektar
             Kokkos::parallel_for(range_policy_host(0,elmts),KOKKOS_LAMBDA (const int el)
             {                                    
                 printf("%i ", el);
-                Array<OneD, NekDouble> tmp_inarray (ncoeffs);
+                //Array<OneD, NekDouble> tmp_inarray (ncoeffs);
+                NekDouble* tmp_inarray = (double*) malloc(ncoeffs * sizeof(double));
                 for (int i = 0; i < ncoeffs; ++i)
                 {
                     tmp_inarray[i] = inarray[coeff_offset[el]+i];
                 }
-                HelmholtzMatrixOp_MatFree_plain(
+                printf("tmp_inarray[1] = %e\n", tmp_inarray[1]); 
+                /*HelmholtzMatrixOp_MatFree_plain(
                     tmp_inarray,
                     transfer_out,
                     el, coeff_offset,
@@ -447,7 +451,7 @@ namespace Nektar
                     laplacian01Glo,
                     laplacian11Glo,
                     nquad0, nquad1, nmodes0, nmodes1, ncoeffs,
-                    base0, base1, dbase0, dbase1, D0, D1);
+                    base0, base1, dbase0, dbase1, D0, D1);*/
             });
             printf("\n");             
         }
@@ -474,6 +478,7 @@ namespace Nektar
             //printf("within GlobalLinSysIterative::HelmholtzMatrixOp_MatFree_plain \n");
             
             Array<OneD, NekDouble> t_outarray(ncoeffs);
+            //NekDouble* wsptest = (double*) malloc(30 * sizeof(double)); 
             int       nqtot   = nquad0*nquad1;
             //int       wspsize = std::max(std::max(std::max(nqtot,ncoeffs),nquad1*nmodes0), nquad0*nmodes1);
             int max1 = (nqtot >= ncoeffs) ? nqtot : ncoeffs;
@@ -613,3 +618,5 @@ namespace Nektar
         
     }
 }
+
+#endif

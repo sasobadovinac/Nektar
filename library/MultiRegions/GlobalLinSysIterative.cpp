@@ -126,7 +126,7 @@ namespace Nektar
                 }
                 else if(version == 3)
                 {
-                    //DoConjugateGradient_Kokkos(nGlobal, pInput, pOutput, plocToGloMap, nDir);
+                    DoConjugateGradient_Kokkos(nGlobal, pInput, pOutput, plocToGloMap, nDir);
                 }
                 else if(version == 4)
                 {

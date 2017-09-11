@@ -41,8 +41,9 @@
 
 #include <boost/circular_buffer.hpp>
 
+#include "cublas_v2.h"
 #include <Kokkos_Core.hpp>
-
+//#include "cublas_v2.h"
 
 
 namespace Nektar
@@ -235,7 +236,8 @@ namespace Nektar
                 NekDouble* outarray,
                 NekDouble* wsp,
                 const int &nmodes0, const int &nmodes1,
-                const int &nquad0, const int &nquad1);
+                const int &nquad0, const int &nquad1,
+                cublasHandle_t handle);
 
             KOKKOS_INLINE_FUNCTION
             void BwdTrans_SumFacKernel_Kokkos(
@@ -245,7 +247,8 @@ namespace Nektar
                 NekDouble* outarray,
                 NekDouble* wsp,
                 const int &nmodes0, const int &nmodes1,
-                const int &nquad0, const int &nquad1);
+                const int &nquad0, const int &nquad1,
+                cublasHandle_t handle);
 
             KOKKOS_INLINE_FUNCTION
             void PhysTensorDeriv_Kokkos(
@@ -254,7 +257,8 @@ namespace Nektar
                 NekDouble* outarray_d1,
                 const int &nquad0, const int &nquad1,
                 const Kokkos::View<double*> D0,
-                const Kokkos::View<double*> D1);
+                const Kokkos::View<double*> D1,
+                cublasHandle_t handle);
 
 
 

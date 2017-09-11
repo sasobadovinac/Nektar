@@ -32,6 +32,8 @@
 // Description:
 //
 ///////////////////////////////////////////////////////////////////////////////
+#ifndef NEKTAR_LIB_MULTIREGIONS_CONJUGATEGRADIENT_OPENMP_HXX
+#define NEKTAR_LIB_MULTIREGIONS_CONJUGATEGRADIENT_OPENMP_HXX
 
 #include <MultiRegions/GlobalLinSysIterative.h>
 
@@ -563,3 +565,5 @@ namespace Nektar
 
     }
 }
+
+#endif
