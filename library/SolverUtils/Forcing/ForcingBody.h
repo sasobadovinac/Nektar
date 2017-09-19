@@ -1,4 +1,5 @@
 ///////////////////////////////////////////////////////////////////////////////
+//ost::variate_generator<boost::mt19937&,boost::normal_distribution<> >  m_normal(m_rng, boost::normal_distribution<>(0, 1.0) )
 //
 // File: ForcingBody.h
 //
@@ -44,6 +45,9 @@
 #include <SolverUtils/SolverUtilsDeclspec.h>
 #include <SolverUtils/Forcing/Forcing.h>
 
+#include <boost/random/mersenne_twister.hpp>  // for mt19937
+#include <boost/random/variate_generator.hpp>  // for variate_generator
+#include <boost/random/normal_distribution.hpp>
 
 namespace Nektar
 {
@@ -85,11 +89,24 @@ namespace SolverUtils
                     const NekDouble &time);
 
         private:
+	    int                             m_iter;
+	    NekDouble                       m_timestep;
             std::string                     m_funcName;
             bool                            m_hasTimeFcnScaling;
             LibUtilities::EquationSharedPtr m_timeFcnEqn;
             bool                            m_transform;
+            bool                            m_bodyforcing;
+            bool                            m_fieldforcing;
+	    boost::mt19937  		    m_rng;
+	    boost::random::normal_distribution<double>  m_dist;
 
+            bool                            m_oubodyforcing;    // mark OU process
+	    NekDouble                       m_tau;              // relaxation time
+	    NekDouble                       m_diff;             // diffusion constant
+	    NekDouble                       m_initx;            // initial position 
+	    NekDouble                       m_xi;               // random variable
+	    int                             m_checkou;          // random variable
+	    NekDouble                       m_standardvar;      // standard variation
             ForcingBody(const LibUtilities::SessionReaderSharedPtr& pSession);
 
             virtual ~ForcingBody(void){};
@@ -97,6 +114,7 @@ namespace SolverUtils
             void Update(
                 const Array<OneD, MultiRegions::ExpListSharedPtr>& pFields,
                 const NekDouble &time);
+	    void OUProcess(NekDouble&  xi);
     };
 
 }

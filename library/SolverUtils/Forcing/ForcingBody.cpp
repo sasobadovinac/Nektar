@@ -64,16 +64,81 @@ namespace SolverUtils
                                    const unsigned int& pNumForcingFields,
                                    const TiXmlElement* pForce)
     {
-        m_NumVariable = pNumForcingFields;
-
+        m_NumVariable   = pNumForcingFields;
+	m_bodyforcing   = false;
+	m_fieldforcing  = false;
+	m_oubodyforcing = false;
         const TiXmlElement* funcNameElmt = pForce->FirstChildElement("BODYFORCE");
-        if(!funcNameElmt)
-        {
-            funcNameElmt = pForce->FirstChildElement("FIELDFORCE");
 
-            ASSERTL0(funcNameElmt, "Requires BODYFORCE or FIELDFORCE tag "
+	const TiXmlElement* ouparameters = NULL; 
+
+	m_iter = 0;
+	// get time step size
+	m_session->LoadParameter("TimeStep", m_timestep,   0.01);
+	m_dist = boost::random::normal_distribution<double>(0.0,1.0);
+
+
+	if(funcNameElmt) m_bodyforcing = true;
+
+        if(!m_bodyforcing && !m_oubodyforcing)
+	{
+		funcNameElmt = pForce->FirstChildElement("FIELDFORCE");
+		if(funcNameElmt) m_fieldforcing = true;
+	}
+	if(!m_bodyforcing && !m_fieldforcing)
+	{
+		funcNameElmt = pForce->FirstChildElement("OUBODYFORCE");
+		if(funcNameElmt) m_oubodyforcing = true;
+	}
+        if(!m_bodyforcing && !m_fieldforcing && !m_oubodyforcing)
+        {
+            ASSERTL0(funcNameElmt, "Requires BODYFORCE or FIELDFORCE or OUBODYFORCE tag "
                      "specifying function name which prescribes body force.");
         }
+
+	// Get parameters for OU process
+	if (m_oubodyforcing)
+	{
+		ouparameters = pForce->FirstChildElement("OUTAU");
+		if (ouparameters)
+		{	
+			m_tau = boost::lexical_cast<NekDouble>(ouparameters->GetText());
+		}
+		else
+		{
+			ASSERTL0(ouparameters, "Requires OUTAU tag, specifying the relaxation parameter.");
+		}
+		ouparameters = pForce->FirstChildElement("OUDIFF");
+		if (ouparameters)
+		{
+			m_diff = boost::lexical_cast<NekDouble>(ouparameters->GetText());
+		}
+		else
+		{
+			ASSERTL0(ouparameters, "Requires OUDIFF tag, specifying the diffusion parameter.");
+		}
+		ouparameters = pForce->FirstChildElement("OUINITX");
+		if (ouparameters)
+		{
+			m_initx = boost::lexical_cast<NekDouble>(ouparameters->GetText());   // default value of the initial X
+		}
+		else
+		{
+			m_initx = 0.0;
+		}
+		ouparameters = pForce->FirstChildElement("CHECKOU");
+		if (ouparameters)
+		{
+			m_checkou  = boost::lexical_cast<int>(ouparameters->GetText());    // output Xi for each m_checkou steps for restart
+		}
+		else
+		{
+			m_checkou  = 100;
+		}
+		m_xi          = m_initx;
+		m_standardvar = sqrt(m_diff*m_tau/2.0); 
+	}
+
 
         m_funcName = funcNameElmt->GetText();
         ASSERTL0(m_session->DefinesFunction(m_funcName),
@@ -85,13 +150,11 @@ namespace SolverUtils
         bool homogeneous = pFields[0]->GetExpType() == MultiRegions::e3DH1D ||
                            pFields[0]->GetExpType() == MultiRegions::e3DH2D;
         m_transform = (singleMode || halfMode || homogeneous);
-
         // Time function is optional
-        funcNameElmt = pForce->FirstChildElement("BODYFORCETIMEFCN");
-        if(!funcNameElmt)
-        {
-            funcNameElmt = pForce->FirstChildElement("FIELDFORCETIMEFCN");
-        }
+        if (m_bodyforcing)   funcNameElmt = pForce->FirstChildElement("BODYFORCETIMEFCN");
+        if (m_fieldforcing)  funcNameElmt = pForce->FirstChildElement("FIELDFORCETIMEFCN");
+        if (m_oubodyforcing) funcNameElmt = pForce->FirstChildElement("OUBODYFORCETIMEFCN");
+	
 
         // Load time function if specified
         if(funcNameElmt)
@@ -100,7 +163,7 @@ namespace SolverUtils
 
             ASSERTL0(!funcNameTime.empty(),
                      "Expression must be given in BODYFORCETIMEFCN or "
-                     "FIELDFORCETIMEFCN.");
+                     "FIELDFORCETIMEFCN or OUFORCETIMEFCN");
 
             m_session->SubstituteExpressions(funcNameTime);
             m_timeFcnEqn = MemoryManager<LibUtilities::Equation>
@@ -144,7 +207,11 @@ namespace SolverUtils
         }
     }
 
-
+    void ForcingBody::OUProcess(NekDouble& xi)
+    {	
+	xi      = m_initx*exp(-m_timestep/m_tau)+sqrt((m_diff*m_tau*0.5)*(1.0-exp(-2.0*m_timestep/m_tau)))*m_dist(m_rng);
+	m_initx = xi;
+    }
     void ForcingBody::v_Apply(
             const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
             const Array<OneD, Array<OneD, NekDouble> > &inarray,
@@ -154,16 +221,30 @@ namespace SolverUtils
         if(m_hasTimeFcnScaling)
         {
             Array<OneD, NekDouble>  TimeFcn(1);
-
             for (int i = 0; i < m_NumVariable; i++)
             {
                 EvaluateTimeFunction(time, m_timeFcnEqn, TimeFcn);
-
+		if (m_oubodyforcing)
+		{
+			// modulate TimeFcn
+			TimeFcn[0] =  TimeFcn[0]*m_xi/m_standardvar;
+		}	
                 Vmath::Svtvp(outarray[i].num_elements(), TimeFcn[0],
                              m_Forcing[i], 1,
                              outarray[i],  1,
                              outarray[i],  1);
             }
+	    if (m_oubodyforcing)
+	    {
+		OUProcess(m_xi);
+		if(m_session->GetComm()->GetRank()==0)
+		{
+			if ((m_iter+1)%m_checkou==0)
+			{
+				cout <<"OU Process normalised X at the step "<< m_iter+1 << "\t : " << m_xi << endl;  
+			}
+		}
+	    }   
         }
         else
         {
@@ -175,7 +256,10 @@ namespace SolverUtils
                             m_Forcing[i], 1, outarray[i], 1);
             }
         }
+	++m_iter;
     }
 
 }
 }
+
+// Add the OU process
