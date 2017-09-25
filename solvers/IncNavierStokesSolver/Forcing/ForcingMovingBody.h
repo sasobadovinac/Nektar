@@ -43,6 +43,7 @@
 #include <SolverUtils/Forcing/Forcing.h>
 #include <IncNavierStokesSolver/Filters/FilterMovingBody.h>
 #include <GlobalMapping/Mapping.h>
+#include <IncNavierStokesSolver/Forcing/ExecuteSharpy.h>
 
 namespace Nektar
 {
@@ -92,70 +93,76 @@ class ForcingMovingBody : public SolverUtils::Forcing
 
         void CheckIsFromFile(const TiXmlElement* pForce);
 
-        void InitialiseCableModel(
-            const LibUtilities::SessionReaderSharedPtr& pSession,
+        void InitialiseVibrationModel(
             const Array<OneD, MultiRegions::ExpListSharedPtr> &pFields);
 
         void InitialiseFilter(
-            const LibUtilities::SessionReaderSharedPtr& pSession,
+			const LibUtilities::SessionReaderSharedPtr &pSession,
             const Array<OneD, MultiRegions::ExpListSharedPtr> &pFields,
             const TiXmlElement* pForce);
 
-        void Newmark_betaSolver(
-            const Array<OneD, MultiRegions::ExpListSharedPtr> &pFields,
-                  Array<OneD, NekDouble> &FcePhysinArray,
-                  Array<OneD, NekDouble> &MotPhysinArray);
+        void ModalDecompositionMethod(
+            const Array<OneD, NekDouble> &Hydroforces,
+                  Array<OneD, Array<OneD, NekDouble> > &motions);
 
-        void EvaluateStructDynModel(
+        void EvaluateVibrationModel(
             const Array<OneD, MultiRegions::ExpListSharedPtr> &pFields,
-                  Array<OneD, NekDouble> &Hydroforces,
-                  NekDouble time );
+            const NekDouble                                   &time);
 
-        void SetDynEqCoeffMatrix(
-            const Array<OneD, MultiRegions::ExpListSharedPtr> &pFields);
+        void SetModeMatrix();
 
         void RollOver(Array<OneD, Array<OneD, NekDouble> > &input);
 
+        void AverageForceCoefficients(const Array<OneD, Array <OneD, NekDouble> >& fces,
+            Array<OneD, Array<OneD, NekDouble> >& AverageHydFCoeffs);
+        
         int m_movingBodyCalls;     ///< number of times the movbody have been called
         int m_np;                  ///< number of planes per processors
         int m_vdim;                ///< vibration dimension
+        int m_nstrips;             ///< number of strips
+        int m_nv;                  ///< number of vibration modes
+        int m_nz;                  ///< number of homo modes
 
         NekDouble m_structrho;     ///< mass of the cable per unit length
         NekDouble m_structdamp;    ///< damping ratio of the cable
-        NekDouble m_lhom;          ///< length ratio of the cable
-        NekDouble m_kinvis;        ///< fluid viscous
+        NekDouble m_wave_number;   ///< damping ratio of the cable
+        NekDouble m_omega;		   ///< damping ratio of the cable
+        NekDouble m_A;    		   ///< damping ratio of the cable
+        NekDouble m_length;        ///< length ratio of the cable
         NekDouble m_timestep;      ///< time step
         ///
         LibUtilities::NektarFFTSharedPtr m_FFT;
         ///
-        FilterMovingBodySharedPtr m_MovBodyfilter;
-        /// storage for the cable's force(x,y) variables
-        Array<OneD, NekDouble> m_Aeroforces;
+        Nektar::FilterMovingBodySharedPtr m_MovBodyfilter;
         /// storage for the cable's motion(x,y) variables
-        Array<OneD, Array<OneD, NekDouble> >m_MotionVars;
-        /// fictitious velocity storage
-        Array<OneD, Array<OneD, Array<OneD, NekDouble> > > m_fV;
-        /// fictitious acceleration storage
-        Array<OneD, Array<OneD, Array<OneD, NekDouble> > > m_fA;
-        /// matrices in Newmart-beta method
+        Array<OneD, Array<OneD, Array<OneD, NekDouble> > > m_motions;
+        /// matrices in mode decomposition method
         Array<OneD, DNekMatSharedPtr> m_CoeffMat_A;
-        /// matrices in Newmart-beta method
+        /// matrices in mode decomposition method
         Array<OneD, DNekMatSharedPtr> m_CoeffMat_B;
         /// [0] is displacements, [1] is velocities, [2] is accelerations
         Array<OneD, std::string> m_funcName;
+        Array<OneD, std::string> m_mapfuncName;
         /// motion direction: [0] is 'x' and [1] is 'y'
         Array<OneD, std::string> m_motion;
         /// do determine if the the body motion come from an extern file
         Array<OneD, bool>        m_IsFromFile;
+        Array<OneD, bool>        m_IsMapFromFile;
         /// Store the derivatives of motion variables in x-direction
         Array<OneD, Array< OneD, NekDouble> > m_zta;
         /// Store the derivatives of motion variables in y-direction
         Array<OneD, Array< OneD, NekDouble> > m_eta;
-        ///
+
         unsigned int                    m_outputFrequency;
         Array<OneD, std::ofstream>      m_outputStream;
         std::string                     m_outputFile_fce;
         std::string                     m_outputFile_mot;
+        bool                            m_IsHomostrip;
+        bool                            m_IsFictmass;
+
+
+		Array < OneD, Array < OneD, NekDouble > > m_q;
+        Sharpy::Beam m_beam;
 };
 
 }
