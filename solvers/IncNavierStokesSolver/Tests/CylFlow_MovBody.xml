@@ -1831,9 +1831,9 @@
             <I PROPERTY="TimeIntegrationMethod" VALUE="IMEXOrder2" />
             <I PROPERTY="HOMOGENEOUS" VALUE="1D"/>
             <I PROPERTY="USEFFT" VALUE="FFTW"/>
+			<I PROPERTY="StructDynSolver" VALUE="ModalDecomposition"/>
             <I PROPERTY="VibrationType" VALUE="Constrained"/>
             <I PROPERTY="SupportType" VALUE="Free-Free"/>
-            <I PROPERTY="FictitiousMassMethod" VALUE="True"/>
         </SOLVERINFO>
         <PARAMETERS>
             <P> TimeStep      = 0.002            </P>
@@ -1843,7 +1843,9 @@
             <P> Re            = 100              </P>
             <P> Kinvis        = 1/Re             </P>
             <P> HomModesZ     = 4                </P>
+			<P> VibModesZ     = 4                </P>
             <P> LZ            = 4*PI             </P>
+            <P> LC            = 4*PI             </P>
             <P> A             = 0.025            </P>
             <P> omega         = 1.0              </P>
             <P> StructStiff   = 0.02             </P>
@@ -1899,17 +1901,17 @@
             <E VAR="x" VALUE="0.0" />
             <E VAR="y" VALUE="-1.0*omega*A*sin(omega*t)*cos(2*PI*z/LZ)" />
         </FUNCTION>
-        <FUNCTION NAME="Mapping">
-            <E VAR="x" VALUE="x" />
-            <E VAR="y" VALUE="y+A*cos(omega*t)*cos(2*PI*z/LZ)" />
-        </FUNCTION>
-        <FUNCTION NAME="MappingVel">
-            <E VAR="vx" VALUE="0.0" />
-            <E VAR="vy" VALUE="-1.0*omega*A*sin(omega*t)*cos(2*PI*z/LZ)" />
-        </FUNCTION>
         <FUNCTION NAME="accelerations">
             <E VAR="x" VALUE="0.0" />
             <E VAR="y" VALUE="-1.0*omega*omega*A*cos(omega*t)*cos(2*PI*z/LZ)" />
+        </FUNCTION>
+        <FUNCTION NAME="Mapping">
+            <E VAR="x" VALUE="x" />
+            <E VAR="y" VALUE="y" />
+        </FUNCTION>
+        <FUNCTION NAME="MappingVel">
+            <E VAR="vx" VALUE="0.0" />
+            <E VAR="vy" VALUE="0.0" />
         </FUNCTION>
     </CONDITIONS>
     
@@ -1923,6 +1925,7 @@
             <DISPLACEMENTS> displacements </DISPLACEMENTS>
             <VELOCITIES>    velocities    </VELOCITIES>
             <ACCELERATIONS> accelerations </ACCELERATIONS>
+			<MAPPING> mapping </MAPPING>
             <PARAM NAME="OutputFile">TensionedCable</PARAM>
             <PARAM NAME="OutputFrequency">5</PARAM>
             <PARAM NAME="Boundary"> B[0] </PARAM>
