@@ -44,7 +44,7 @@ namespace Nektar
 {
 class FilterMovingBody;
 
-typedef std::shared_ptr<FilterMovingBody>    FilterMovingBodySharedPtr;
+typedef std::shared_ptr<FilterMovingBody>  FilterMovingBodySharedPtr;
 typedef std::map<std::string, std::string>   FilterParams;
 typedef std::pair<std::string, FilterParams> FilterMap;
 
@@ -78,15 +78,12 @@ class FilterMovingBody : public SolverUtils::Filter
             const NekDouble &time) {}
 
         void UpdateForce(
-            const LibUtilities::SessionReaderSharedPtr &pSession,
             const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
-                  Array<OneD, NekDouble> &Aeroforces,
+                  Array<OneD, Array<OneD, NekDouble> > &Aeroforces,
             const NekDouble &time);
 
-        void UpdateMotion(
-            const LibUtilities::SessionReaderSharedPtr &pSession,
-            const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
-                  Array<OneD, NekDouble> &MotionVars,
+        void WriteMotion(
+            const Array<OneD, Array<OneD, Array<OneD, NekDouble> > > &spv,
             const NekDouble &time);
 
         virtual void v_Finalise(

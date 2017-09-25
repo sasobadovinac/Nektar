@@ -58,8 +58,10 @@ FilterMovingBody::FilterMovingBody(
     : Filter(pSession),
       m_session(pSession)
 {
+    ParamMap::const_iterator it;
+
     // OutputFile
-    auto it = pParams.find("OutputFile");
+    it = pParams.find("OutputFile");
     if (it == pParams.end())
     {
         m_outputFile_fce = pSession->GetSessionName();
@@ -92,7 +94,7 @@ FilterMovingBody::FilterMovingBody(
     else
     {
         LibUtilities::Equation equ(m_session, it->second);
-        m_outputFrequency = round(equ.Evaluate());
+        m_outputFrequency = floor(equ.Evaluate());
     }
 
     pSession->MatchSolverInfo("Homogeneous", "1D", m_isHomogeneous1D, false);
@@ -145,6 +147,8 @@ void FilterMovingBody::v_Initialise(
               "range for FilterAeroForces: ") + IndString).c_str());
 
     // determine what boundary regions need to be considered
+    int cnt;
+
     unsigned int numBoundaryRegions
                     = pFields[0]->GetBndConditions().num_elements();
 
@@ -156,16 +160,17 @@ void FilterMovingBody::v_Initialise(
     const SpatialDomains::BoundaryRegionCollection &bregions
                     = bcs.GetBoundaryRegions();
 
-    int cnt = 0;
-    for (auto &it : bregions)
+    SpatialDomains::BoundaryRegionCollection::const_iterator it;
+
+    for (cnt = 0, it = bregions.begin(); it != bregions.end();
+            ++it, cnt++)
     {
         if ( std::find(m_boundaryRegionsIdList.begin(),
-                       m_boundaryRegionsIdList.end(), it.first) !=
+                       m_boundaryRegionsIdList.end(), it->first) !=
                 m_boundaryRegionsIdList.end() )
         {
             m_boundaryRegionIsInList[cnt] = 1;
         }
-        ++cnt;
     }
 
     LibUtilities::CommSharedPtr vComm = pFields[0]->GetComm();
@@ -221,9 +226,8 @@ void FilterMovingBody::v_Initialise(
  *
  */
 void FilterMovingBody::UpdateForce(
-        const LibUtilities::SessionReaderSharedPtr &pSession,
         const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
-              Array<OneD, NekDouble> &Aeroforces,
+              Array<OneD, Array<OneD, NekDouble> > &Aeroforces,
         const NekDouble &time)
 {
     int n, cnt, elmtid, nq, offset, boundary;
@@ -265,10 +269,10 @@ void FilterMovingBody::UpdateForce(
     Array<OneD, NekDouble> Fyv(Num_z_pos,0.0);
 
 
-    NekDouble rho = (pSession->DefinesParameter("rho"))
-            ? (pSession->GetParameter("rho"))
+    NekDouble rho = (m_session->DefinesParameter("rho"))
+            ? (m_session->GetParameter("rho"))
             : 1;
-    NekDouble mu = rho*pSession->GetParameter("Kinvis");
+    NekDouble mu = rho*m_session->GetParameter("Kinvis");
 
     for(int i = 0; i < pFields.num_elements(); ++i)
     {
@@ -473,215 +477,139 @@ void FilterMovingBody::UpdateForce(
     // some of the entries of the vector Fxp, Fxp etc. are still zero.
     // Now we need to reduce the values on a single vector on rank (0,0) of the
     // global communicator.
-    if(!pSession->DefinesSolverInfo("HomoStrip"))
+
+   
+    if(vComm->GetRowComm()->GetRank() == 0)
     {
-        if(vComm->GetRowComm()->GetRank() == 0)
-        {
-            for(int z = 0 ; z < Num_z_pos; z++)
-            {
+        for(int z = 0 ; z < Num_z_pos; z++)
+		{
+            if(!m_session->DefinesSolverInfo("HomoStrip"))
+			{
                 vColComm->AllReduce(Fxp[z], LibUtilities::ReduceSum);
                 vColComm->AllReduce(Fxv[z], LibUtilities::ReduceSum);
                 vColComm->AllReduce(Fyp[z], LibUtilities::ReduceSum);
                 vColComm->AllReduce(Fyv[z], LibUtilities::ReduceSum);
             }
-        }
-    }
-    else
-    {
-        if(vComm->GetRowComm()->GetRank() == 0)
-        {
-            for(int z = 0 ; z < Num_z_pos; z++)
-            {
+			else
+			{
                 vCColComm->AllReduce(Fxp[z], LibUtilities::ReduceSum);
                 vCColComm->AllReduce(Fxv[z], LibUtilities::ReduceSum);
                 vCColComm->AllReduce(Fyp[z], LibUtilities::ReduceSum);
                 vCColComm->AllReduce(Fyv[z], LibUtilities::ReduceSum);
-            }
+			}
         }
     }
 
-    if(!pSession->DefinesSolverInfo("HomoStrip"))
+    //set the forces imparted on the cable's wall
+    for(int plane = 0 ; plane < local_planes; plane++)
     {
-        //set the forces imparted on the cable's wall
-        for(int plane = 0 ; plane < local_planes; plane++)
-        {
-            Aeroforces[plane]                = Fxp[ZIDs[plane]]
+        Aeroforces[0][plane] = Fxp[ZIDs[plane]]
                                              + Fxv[ZIDs[plane]];
-            Aeroforces[plane + local_planes] = Fyp[ZIDs[plane]]
+        Aeroforces[1][plane] = Fyp[ZIDs[plane]]
                                              + Fyv[ZIDs[plane]];
-        }
-
-        // Only output every m_outputFrequency.
-        if ((m_index_f++) % m_outputFrequency)
-        {
-            return;
-        }
-
-        // At thi point in rank (0,0) we have the full vectors
-        // containing Fxp,Fxv,Fyp and Fyv where different positions
-        // in the vectors correspond to different planes.
-        // Here we write it to file. We do it just on one porcess
-
-        Array<OneD, NekDouble> z_coords(Num_z_pos,0.0);
-        Array<OneD, const NekDouble> pts
-                            = pFields[0]->GetHomogeneousBasis()->GetZ();
-
-        NekDouble LZ;
-        pSession->LoadParameter("LZ", LZ);
-        Vmath::Smul(Num_z_pos,LZ/2.0,pts,1,z_coords,1);
-        Vmath::Sadd(Num_z_pos,LZ/2.0,z_coords,1,z_coords,1);
-        if (vComm->GetRank() == 0)
-        {
-
-            Vmath::Vadd(Num_z_pos,Fxp,1,Fxv,1,Fx,1);
-            Vmath::Vadd(Num_z_pos,Fyp,1,Fyv,1,Fy,1);
-
-            for(int i = 0 ; i < Num_z_pos; i++)
-            {
-                m_outputStream[0].width(8);
-                m_outputStream[0] << setprecision(6) << time;
-
-                m_outputStream[0].width(15);
-                m_outputStream[0] << setprecision(6) << z_coords[i];
-
-                m_outputStream[0].width(15);
-                m_outputStream[0] << setprecision(8) << Fxp[i];
-                m_outputStream[0].width(15);
-                m_outputStream[0] << setprecision(8) << Fxv[i];
-                m_outputStream[0].width(15);
-                m_outputStream[0] << setprecision(8) << Fx[i];
-
-                m_outputStream[0].width(15);
-                m_outputStream[0] << setprecision(8) << Fyp[i];
-                m_outputStream[0].width(15);
-                m_outputStream[0] << setprecision(8) << Fyv[i];
-                m_outputStream[0].width(15);
-                m_outputStream[0] << setprecision(8) << Fy[i];
-                m_outputStream[0] << endl;
-            }
-        }
     }
-    else
+
+    // Only output every m_outputFrequency.
+    if ((m_index_f++) % m_outputFrequency)
     {
-        // average the forces over local planes for each processor
-        Array<OneD, NekDouble> fces(6,0.0);
-        for(int plane = 0 ; plane < local_planes; plane++)
-        {
-            fces[0] += Fxp[ZIDs[plane]] + Fxv[ZIDs[plane]];
-            fces[1] += Fyp[ZIDs[plane]] + Fyv[ZIDs[plane]];
-            fces[2] += Fxp[ZIDs[plane]] ;
-            fces[3] += Fyp[ZIDs[plane]] ;
-            fces[4] += Fxv[ZIDs[plane]] ;
-            fces[5] += Fyv[ZIDs[plane]] ;
-        }
+        return;
+    }
 
-        fces[0] = fces[0]/local_planes;
-        fces[1] = fces[1]/local_planes;
-        fces[2] = fces[2]/local_planes;
-        fces[3] = fces[3]/local_planes;
-        fces[4] = fces[4]/local_planes;
-        fces[5] = fces[5]/local_planes;
+    // At thi point in rank (0,0) we have the full vectors
+    // containing Fxp,Fxv,Fyp and Fyv where different positions
+    // in the vectors correspond to different planes.
+    // Here we write it to file. We do it just on one porcess
 
-        // average the forces over communicators within each strip
-        vCColComm->AllReduce(fces[0], LibUtilities::ReduceSum);
-        vCColComm->AllReduce(fces[1], LibUtilities::ReduceSum);
-        vCColComm->AllReduce(fces[2], LibUtilities::ReduceSum);
-        vCColComm->AllReduce(fces[3], LibUtilities::ReduceSum);
-        vCColComm->AllReduce(fces[4], LibUtilities::ReduceSum);
-        vCColComm->AllReduce(fces[5], LibUtilities::ReduceSum);
+    Array<OneD, NekDouble> z_coords(Num_z_pos,0.0);
+    Array<OneD, const NekDouble> pts
+                            = pFields[0]->GetHomogeneousBasis()->GetZ();
+	Array<OneD, NekDouble> fces(6*Num_z_pos);
 
-        int npts = vComm->GetColumnComm()->GetColumnComm()->GetSize();
+    NekDouble Length,Dist;
+    
+    m_session->LoadParameter("LC", Length);
+	int nstrips;
+	m_session->LoadParameter("Strip_Z", nstrips,1);
+	Dist = Length/nstrips;
 
-        fces[0] = fces[0]/npts;
-        fces[1] = fces[1]/npts;
-        fces[2] = fces[2]/npts;
-        fces[3] = fces[3]/npts;
-        fces[4] = fces[4]/npts;
-        fces[5] = fces[5]/npts;
+    NekDouble LZ;
+    m_session->LoadParameter("LZ", LZ);
+    Vmath::Smul(Num_z_pos,LZ/2.0,pts,1,z_coords,1);
+    Vmath::Sadd(Num_z_pos,LZ/2.0,z_coords,1,z_coords,1);
+    if (vComm->GetRank() == 0)
+    {
+        Vmath::Vadd(Num_z_pos,Fxp,1,Fxv,1,Fx,1);
+        Vmath::Vadd(Num_z_pos,Fyp,1,Fyv,1,Fy,1);
 
-        for(int plane = 0 ; plane < local_planes; plane++)
-        {
-            Aeroforces[plane]              = fces[0];
-            Aeroforces[plane+local_planes] = fces[1];
-        }
-
-        // Only output every m_outputFrequency.
-        if ((m_index_f) % m_outputFrequency)
-        {
-            return;
-        }
-
-        int colrank = vColComm->GetRank();
-        int nstrips;
-
-        NekDouble DistStrip;
-
-        pSession->LoadParameter("Strip_Z", nstrips);
-        pSession->LoadParameter("DistStrip", DistStrip);
-
-        Array<OneD, NekDouble> z_coords(nstrips);
-        for(int i = 0; i < nstrips; i++)
-        {
-            z_coords[i] = i * DistStrip;
-        }
-
-        if(colrank == 0)
+        for(int i = 0 ; i < Num_z_pos; i++)
         {
             m_outputStream[0].width(8);
             m_outputStream[0] << setprecision(6) << time;
 
             m_outputStream[0].width(15);
-            m_outputStream[0] << setprecision(6) << z_coords[0];
+            m_outputStream[0] << setprecision(6) << z_coords[i];
 
             m_outputStream[0].width(15);
-            m_outputStream[0] << setprecision(8) << fces[2];
+            m_outputStream[0] << setprecision(8) << Fxp[i];
             m_outputStream[0].width(15);
-            m_outputStream[0] << setprecision(8) << fces[4];
+            m_outputStream[0] << setprecision(8) << Fxv[i];
             m_outputStream[0].width(15);
-            m_outputStream[0] << setprecision(8) << fces[0];
+            m_outputStream[0] << setprecision(8) << Fx[i];
 
             m_outputStream[0].width(15);
-            m_outputStream[0] << setprecision(8) << fces[3];
+            m_outputStream[0] << setprecision(8) << Fyp[i];
             m_outputStream[0].width(15);
-            m_outputStream[0] << setprecision(8) << fces[5];
+            m_outputStream[0] << setprecision(8) << Fyv[i];
             m_outputStream[0].width(15);
-            m_outputStream[0] << setprecision(8) << fces[1];
+            m_outputStream[0] << setprecision(8) << Fy[i];
             m_outputStream[0] << endl;
+        }
 
-            for(int i = 1; i < nstrips; i++)
+		for(int n = 1; n < nstrips; n++)
+		{
+			vComm->Recv(n,fces);
+            for(int i = 0 ; i < Num_z_pos; i++)
             {
-                vColComm->Recv(i, fces);
-
+				NekDouble z = n*Dist + z_coords[i];
                 m_outputStream[0].width(8);
                 m_outputStream[0] << setprecision(6) << time;
 
                 m_outputStream[0].width(15);
-                m_outputStream[0] << setprecision(6) << z_coords[i];
+                m_outputStream[0] << setprecision(6) << z;
 
                 m_outputStream[0].width(15);
-                m_outputStream[0] << setprecision(8) << fces[2];
+                m_outputStream[0] << setprecision(8) << fces[i];
                 m_outputStream[0].width(15);
-                m_outputStream[0] << setprecision(8) << fces[4];
+                m_outputStream[0] << setprecision(8) << fces[i+1*Num_z_pos];
                 m_outputStream[0].width(15);
-                m_outputStream[0] << setprecision(8) << fces[0];
+                m_outputStream[0] << setprecision(8) << fces[i+2*Num_z_pos];
 
                 m_outputStream[0].width(15);
-                m_outputStream[0] << setprecision(8) << fces[3];
+                m_outputStream[0] << setprecision(8) << fces[i+3*Num_z_pos];
                 m_outputStream[0].width(15);
-                m_outputStream[0] << setprecision(8) << fces[5];
+                m_outputStream[0] << setprecision(8) << fces[i+4*Num_z_pos];
                 m_outputStream[0].width(15);
-                m_outputStream[0] << setprecision(8) << fces[1];
+                m_outputStream[0] << setprecision(8) << fces[i+5*Num_z_pos];
                 m_outputStream[0] << endl;
             }
         }
-        else
+	}
+	else
+	{
+        for(int n = 1; n < nstrips; n++)
         {
-            for(int i = 1; i < nstrips; i++)
+            if(vComm->GetRank() == n)
             {
-                if(colrank == i)
-                {
-                    vColComm->Send(0, fces);
-                }
+				Array<OneD, NekDouble> tmp(Num_z_pos,0.0);
+        		Vmath::Vadd(Num_z_pos,Fxp,1,Fxv,1,Fx,1);
+        		Vmath::Vadd(Num_z_pos,Fyp,1,Fyv,1,Fy,1);
+				Vmath::Vcopy(Num_z_pos, Fxp,1,fces,1);
+				Vmath::Vcopy(Num_z_pos, Fxv,1,tmp = fces+1*Num_z_pos,1);
+				Vmath::Vcopy(Num_z_pos, Fx ,1,tmp = fces+2*Num_z_pos,1);
+				Vmath::Vcopy(Num_z_pos, Fyp,1,tmp = fces+3*Num_z_pos,1);
+				Vmath::Vcopy(Num_z_pos, Fyv,1,tmp = fces+4*Num_z_pos,1);
+				Vmath::Vcopy(Num_z_pos, Fy ,1,tmp = fces+5*Num_z_pos,1);
+                vComm->Send(0, fces);
             }
         }
     }
@@ -691,10 +619,8 @@ void FilterMovingBody::UpdateForce(
 /**
  *
  */
-void FilterMovingBody::UpdateMotion(
-        const LibUtilities::SessionReaderSharedPtr              &pSession,
-        const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
-              Array<OneD, NekDouble>                            &MotionVars,
+void FilterMovingBody::WriteMotion(
+        const Array<OneD, Array<OneD, Array<OneD, NekDouble> > >&motions,
         const NekDouble                                         &time)
 {
     // Only output every m_outputFrequency.
@@ -707,17 +633,8 @@ void FilterMovingBody::UpdateMotion(
     // Length of the cable
     NekDouble Length;
     
-    if(!pSession->DefinesSolverInfo("HomoStrip"))
-    {
-        pSession->LoadParameter("LZ", Length);
-        npts = m_session->GetParameter("HomModesZ");
-    }
-    else
-    {
-        pSession->LoadParameter("LC", Length);
-        npts = m_session->GetParameter("HomStructModesZ");
-    }
-
+    m_session->LoadParameter("LC", Length);
+    npts = m_session->GetParameter("VibModesZ");
     NekDouble z_coords;        
     for(int n = 0; n < npts; n++)
     {
@@ -727,17 +644,15 @@ void FilterMovingBody::UpdateMotion(
         m_outputStream[1].width(15);
         m_outputStream[1] << setprecision(6) << z_coords;
         m_outputStream[1].width(15);
-        m_outputStream[1] << setprecision(8) << MotionVars[n];
-        m_outputStream[1].width(15);
-        m_outputStream[1] << setprecision(8) << MotionVars[npts+n];
-        m_outputStream[1].width(15);
-        m_outputStream[1] << setprecision(8) << MotionVars[2*npts+n];
-        m_outputStream[1].width(15);
-        m_outputStream[1] << setprecision(8) << MotionVars[3*npts+n];
-        m_outputStream[1].width(15);
-        m_outputStream[1] << setprecision(8) << MotionVars[4*npts+n];
-        m_outputStream[1].width(15);
-        m_outputStream[1] << setprecision(8) << MotionVars[5*npts+n];
+		for(int i = 0; i < 2; i++)
+		{
+			for(int j = 0; j < 3; j++)
+			{
+        		m_outputStream[1].width(15);
+        		m_outputStream[1] << setprecision(8) 
+								  << motions[i][j][n];
+			}
+		}
         m_outputStream[1] << endl;
     }
 }
