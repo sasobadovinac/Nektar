@@ -1832,7 +1832,7 @@
             <I PROPERTY="HOMOGENEOUS" VALUE="1D"/>
             <I PROPERTY="USEFFT" VALUE="FFTW"/>
             <I PROPERTY="HomoStrip" VALUE="True"/>
-			<I PROPERTY="StructDynSolver" VALUE="ModalDecomposition"/>
+			<I PROPERTY="StructDynSolver" VALUE="TensionedBeam"/>
             <I PROPERTY="VibrationType" VALUE="Constrained"/>
             <I PROPERTY="SupportType" VALUE="Free-Free"/>
         </SOLVERINFO>
