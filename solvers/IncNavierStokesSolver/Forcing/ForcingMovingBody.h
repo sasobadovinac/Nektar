@@ -101,12 +101,13 @@ class ForcingMovingBody : public SolverUtils::Forcing
             const Array<OneD, MultiRegions::ExpListSharedPtr> &pFields,
             const TiXmlElement* pForce);
 
-        void ModalDecompositionMethod(
+        void TensionedBeamSolver(
             const Array<OneD, NekDouble> &Hydroforces,
                   Array<OneD, Array<OneD, NekDouble> > &motions);
 
         void EvaluateVibrationModel(
             const Array<OneD, MultiRegions::ExpListSharedPtr> &pFields,
+				  Array<OneD, Array<OneD, NekDouble> > &Hydroforces,
             const NekDouble                                   &time);
 
         void SetModeMatrix();
@@ -160,8 +161,6 @@ class ForcingMovingBody : public SolverUtils::Forcing
         bool                            m_IsHomostrip;
         bool                            m_IsFictmass;
 
-
-		Array < OneD, Array < OneD, NekDouble > > m_q;
         Sharpy::Beam m_beam;
 };
 

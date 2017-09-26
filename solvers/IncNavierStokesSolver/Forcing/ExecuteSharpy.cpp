@@ -831,7 +831,7 @@ void Beam::Input_elem(const LibUtilities::SessionReaderSharedPtr& m_session)
     BeamMass[0][0]      = rho*A;
     BeamMass[1][1]      = BeamMass[0][0];
     BeamMass[2][2]      = BeamMass[0][0];
-    BeamMass[3][3]      = G*I*2.0;
+    BeamMass[3][3]      = 2.0*G*I;
     BeamMass[4][4]      = G*I;
     BeamMass[5][5]      = G*I;
     BeamStiffness[0][0] = E*A;

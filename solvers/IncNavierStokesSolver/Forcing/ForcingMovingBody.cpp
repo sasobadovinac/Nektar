@@ -103,6 +103,13 @@ void ForcingMovingBody::v_Apply(
 {
     m_movingBodyCalls++;
 
+    Array<OneD, Array<OneD, NekDouble> > Hydroforces (2);
+    Hydroforces[0] = Array<OneD, NekDouble> (m_np, 0.0);
+    Hydroforces[1] = Array<OneD, NekDouble> (m_np, 0.0);
+
+    // Update hydroforces   
+    m_MovBodyfilter->UpdateForce(pFields, Hydroforces, time);
+
     // for "free" type (m_vdim = 2), the cable vibrates both in streamwise and crossflow
     // directions, for "constrained" type (m_vdim = 1), the cable only vibrates in crossflow
     // direction, and for "forced" type (m_vdim = 0), the calbe vibrates specifically along
@@ -111,7 +118,7 @@ void ForcingMovingBody::v_Apply(
     {
         // For free vibration case, displacements, velocities and acceleartions
         // are obtained through solving structure dynamic model
-        EvaluateVibrationModel(pFields, time);
+        EvaluateVibrationModel(pFields, Hydroforces,time);
         
         // Convert result to format required by mapping
         int physTot = pFields[0]->GetTotPoints();
@@ -126,21 +133,6 @@ void ForcingMovingBody::v_Apply(
 
         // Get original coordinates
         pFields[0]->GetCoords(coords[0], coords[1], coords[2]);
-	
-		//Get initial mapping coordinates
-        if(m_IsMapFromFile[0] && m_IsMapFromFile[1])
-        {
-            ASSERTL0(false, "Motion loading from file needs specific "
-                                "implementation: Work in Progress!");
-        }
-        else
-        {
-        	GetFunction(pFields, m_session, m_mapfuncName[0], true)->
-				Evaluate(m_motion[0], coords[0], time);
-        	GetFunction(pFields, m_session, m_mapfuncName[0], true)->
-				Evaluate(m_motion[1], coords[1], time);
-
-        }
 	
         // Add displacement to coordinates
         Vmath::Vadd(physTot, coords[0], 1, m_zta[0], 1, coords[0], 1);
@@ -217,15 +209,9 @@ void ForcingMovingBody::v_Apply(
  */
 void ForcingMovingBody::EvaluateVibrationModel(
         const Array<OneD, MultiRegions::ExpListSharedPtr> &pFields,
+			  Array<OneD, Array<OneD, NekDouble> > &Hydroforces,
 		const NekDouble                                   &time)
 {
-    Array<OneD, Array<OneD, NekDouble> > Hydroforces (2);
-    Hydroforces[0] = Array<OneD, NekDouble> (m_np, 0.0);
-    Hydroforces[1] = Array<OneD, NekDouble> (m_np, 0.0);
-
-	// Update hydroforces	
-    m_MovBodyfilter->UpdateForce(pFields, Hydroforces, time);
-	
     LibUtilities::CommSharedPtr vcomm = pFields[0]->GetComm();
     int colrank = vcomm->GetColumnComm()->GetRank();
     int nproc   = vcomm->GetColumnComm()->GetSize();
@@ -299,15 +285,15 @@ void ForcingMovingBody::EvaluateVibrationModel(
 
     	std::string StructDynSolver =
             m_session->GetSolverInfo("StructDynSolver");
-    	if(boost::iequals(StructDynSolver, "ModalDecomposition"))
+    	if(boost::iequals(StructDynSolver, "TensionedBeam"))
     	{
         	// Linear tensioned cable model is solved in Modal Decomposition Method
         	for(int n = 0, cn = 1; n < m_vdim; n++, cn--)
         	{
-            	ModalDecompositionMethod(HydFCoeffs[cn], m_motions[cn]);
+            	TensionedBeamSolver(HydFCoeffs[cn], m_motions[cn]);
         	}
     	}
-    	else if(boost::iequals(StructDynSolver, "SHARPy"))
+    	else if(boost::iequals(StructDynSolver, "NonlinearBeam"))
     	{
 			// Nonlinear Beam model is solved in Third-Party solver, SHARPy
     		if(m_movingBodyCalls == 1)
@@ -426,7 +412,7 @@ void ForcingMovingBody::EvaluateVibrationModel(
 /**
  *
  */
-void ForcingMovingBody::ModalDecompositionMethod(
+void ForcingMovingBody::TensionedBeamSolver(
      	const Array<OneD, NekDouble> &HydroForces,
               Array<OneD, Array<OneD, NekDouble> > &motions)
 {  
