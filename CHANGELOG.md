@@ -474,6 +474,7 @@ v4.1.0
 - Add fixes to support native Nektar++ extension in VisIt visulisation software
   (!490)
 - Fix warnings on OS X (!491)
+- Added the Expansion reset within the MeshGraph (!848)
 
 **CardiacEPSolver:**
 - Fixes for stimuli (!442, !446), conductivity (!441), cell restarts (!458)
