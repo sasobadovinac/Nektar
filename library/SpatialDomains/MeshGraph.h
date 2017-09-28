@@ -294,6 +294,10 @@ namespace Nektar
                 SPATIAL_DOMAINS_EXPORT ExpansionShPtr GetExpansion(
                                                                    GeometrySharedPtr geom, const std::string variable = "DefaultVar");
 
+                /// Resets the m_expansionMapShPtrMap
+                /// After the domain has been expanded by new elements
+                SPATIAL_DOMAINS_EXPORT void ReSetExpansions();
+
                 /// Sets expansions given field definitions
                 SPATIAL_DOMAINS_EXPORT void SetExpansions(
                         std::vector<LibUtilities::FieldDefinitionsSharedPtr>

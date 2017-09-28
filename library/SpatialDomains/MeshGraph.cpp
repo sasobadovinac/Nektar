@@ -2343,6 +2343,21 @@ namespace Nektar
             return iter->second;
         }
 
+        void MeshGraph::ReSetExpansions()
+        {
+            for(auto &kvp0 : m_expansionMapShPtrMap) //through all variables
+            {
+                ExpansionMapShPtr expMap = SetUpExpansionMap();
+                Expansion &exp = *(kvp0.second->begin()->second); //Get the first expansion and assume constant
+
+                for(auto &kvp : *expMap) //initialize the BasisVec accordingly
+                {
+                    kvp.second->m_basisKeyVector.resize(exp.m_basisKeyVector.size(),
+                                                        LibUtilities::BasisKey(*(exp.m_basisKeyVector.begin())) );
+                }
+                kvp0.second = expMap; //dereference current ExpansionMapShPtr, and replace with new
+            }
+        }
 
         /**
          *
