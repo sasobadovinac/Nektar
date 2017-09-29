@@ -31,6 +31,7 @@ v4.4.1
 - Fixed typo in eIMEXGear part (!854)
 - Added regression tests for IMEXOrder1, IMEXOrder2, IMEXOrder3, MCNAB,
   IMEXGear, CNAB, 2nd order IMEX-DIRK, 3rd order IMEX-DIRK (!854)
+- Fix DriverAdaptive with second order IMEX (!850)
 
 **FieldConvert:**
 - Fix issue with field ordering in the interppointdatatofld module (!754)
