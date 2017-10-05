@@ -36,8 +36,7 @@
 #define NEKTAR_LIB_MULTIREGIONS_CONJUGATEGRADIENT_KOKKOS_HXX
 
 #include <MultiRegions/GlobalLinSysIterative.h>
-//#include <cuda_runtime.h>
-//#include "cublas_v2.h"
+#include <MultiRegions/ConjugateGradient_BLAS.hxx>
 
 using namespace std;
 
@@ -52,20 +51,19 @@ namespace Nektar
             const AssemblyMapSharedPtr        &plocToGloMap,
             const int                          nDir)
     	{
-    		printf("Within GlobalLinSysIterative::DoConjugateGradient_Kokkos\n" );
-    		
+    		printf("Within GlobalLinSysIterative::DoConjugateGradient_Kokkos\n" ); 
+
             //Initialise Kokkos]
             cout << "How many threads?" << endl;
             int threads;
             cin >> threads;
             Kokkos::InitArguments args;
             args.num_threads = threads;
-            Kokkos::initialize(args);   
-            
+            Kokkos::initialize(args);
+            printf("%s\n","kokkos initialised");
 
             // Get vector sizes
             int nNonDir = nGlobal - nDir;
-
 
             // create preconditioner
             Array<OneD, NekDouble> NekDiagonals(nNonDir);
@@ -78,7 +76,7 @@ namespace Nektar
                 NekDiagonals = m_precon->Preconditioner::DiagonalPreconditionerSum_plain();
             }
             // copy preconditioner to device
-            Kokkos::View<double*> diagonals ("diagonals", nNonDir);                        
+            Kokkos::View<double*> diagonals ("diagonals", nNonDir); 
             typename Kokkos::View< double*>::HostMirror h_diagonals;
             h_diagonals = Kokkos::create_mirror_view(diagonals);
             Kokkos::parallel_for(range_policy_host(0,nNonDir), KOKKOS_LAMBDA (const int i)
@@ -104,9 +102,7 @@ namespace Nektar
             typename Kokkos::View< double[1]>::HostMirror h_lambda;
             h_lambda = Kokkos::create_mirror_view(lambda);
             h_lambda[0] = m_linSysKey.GetConstFactor(StdRegions::eFactorLambda);
-            Kokkos::deep_copy(lambda,h_lambda);           
-
-
+            Kokkos::deep_copy(lambda,h_lambda);
 
             // -------------------------------------------------------------------------------
             // Gather constant element data for Helmholtz Matrix Multiplication
@@ -157,17 +153,6 @@ namespace Nektar
             });
             Kokkos::deep_copy(base1,h_base1);
             Kokkos::deep_copy(dbase1,h_dbase1);
-
-
-            for (int i = 0; i < base0_len; ++i)
-            {
-            	//printf("base0[%i] = %e\n", i,base0[i]);
-            }
-            for (int i = 0; i < base1_len; ++i)
-            {
-            	//printf("base1[%i] = %e\n", i,base1[i]);
-            }
-
 
 
             // copy coeff_offset to device 
@@ -224,12 +209,10 @@ namespace Nektar
             Array<OneD, const NekDouble> NeklocalToGlobalSign; //numLocalCoeffs
             
 
-        {    Array<OneD, NekDouble> NekquadMetricGlo (4*metricSize);
+            Array<OneD, NekDouble> NekquadMetricGlo (4*metricSize);
             Array<OneD, NekDouble> Neklaplacian00Glo(NekquadMetricGlo+metricSize);
             Array<OneD, NekDouble> Neklaplacian01Glo(NekquadMetricGlo+2*metricSize);
             Array<OneD, NekDouble> Neklaplacian11Glo(NekquadMetricGlo+3*metricSize);
-
-            
             
             GetMatrixMultiplyMetrics(
                         NekquadMetricGlo, Neklaplacian00Glo, Neklaplacian01Glo, Neklaplacian11Glo,
@@ -250,7 +233,7 @@ namespace Nektar
             Kokkos::deep_copy(laplacian00Glo,h_laplacian00Glo);
             Kokkos::deep_copy(laplacian01Glo,h_laplacian01Glo);
             Kokkos::deep_copy(laplacian11Glo,h_laplacian11Glo);
-        }    
+            
             Kokkos::View<int*> localToGlobalMap ("localToGlobalMap", numLocalCoeffs);                        
             typename Kokkos::View< int*>::HostMirror h_localToGlobalMap;
             h_localToGlobalMap = Kokkos::create_mirror_view(localToGlobalMap);
@@ -269,9 +252,6 @@ namespace Nektar
         
             printf("%s\n", "finished data gathering");
             //--------------------------------------------------------------------------
-
-
-
 
             // CG variables
             NekDouble alpha, beta, rho, rho_new, mu, eps, min_resid, rhs_magnitude;
@@ -335,6 +315,7 @@ namespace Nektar
                 ieps += r_A[i] * r_A[i] * map[i+nDir];
             },eps);
             
+
             rhs_magnitude = 0.0;
             /*Kokkos::parallel_reduce(range_policy_host(0,nGlobal),KOKKOS_LAMBDA(const int i, NekDouble &mag)
             {
@@ -344,6 +325,7 @@ namespace Nektar
             {
                 rhs_magnitude += pInput[i] * pInput[i] * h_map[i];
             }                    
+
 
             // If input residual is less than tolerance skip solve.
             totalIterations = 0;
@@ -545,9 +527,6 @@ namespace Nektar
             //typename Kokkos::View< double*>::HostMirror h_transfer_out;
             //h_transfer_out = Kokkos::create_mirror_view(transfer_out);
 
-            //GlobalToLocal_plain(inarray,tmp1);
-            //Vmath::Gathr(numLocalCoeffs, localToGlobalSign.get(),
-            //         inarray.get(), localToGlobalMap.get(), tmp1.get());
             Kokkos::parallel_for(range_policy(0,numLocalCoeffs), KOKKOS_LAMBDA (const int i)    		
             {
                 transfer_in[i] = localToGlobalSign[i] * inarray[localToGlobalMap[i]];
@@ -558,17 +537,13 @@ namespace Nektar
                     nquad0, nquad1, nmodes0, nmodes1, ncoeffs,
                     coeff_offset, elmts,
                     base0, base1, dbase0, dbase1, D0, D1);
-            //double *out_raw = transfer_out.ptr_on_device();
             
-            //printf("%s\n", "do the local to global mapping");
-            //Assemble_plain(tmp2,outarray);  
-            //Vmath::Zero(numGlobalCoeffs, outarray.get(), 1);
+            //printf("\n%s\n", "do the local to global mapping");
             Kokkos::parallel_for(range_policy(0,numGlobalCoeffs), KOKKOS_LAMBDA (const int i)    		
             {
                 outarray[i] = 0.0;
             });
-            //Vmath::Assmb(numLocalCoeffs, localToGlobalSign.get(), 
-            //            tmp2.get(), localToGlobalMap.get(), outarray.get());
+            // dummy parallel region
             Kokkos::parallel_for(range_policy(0,1), KOKKOS_LAMBDA (const int j)           
             { 
                 for (int i = 0; i < numLocalCoeffs; ++i)
@@ -576,9 +551,7 @@ namespace Nektar
                     outarray[localToGlobalMap[i]] += localToGlobalSign[i] * transfer_out[i];
                 }
             });
-
-
-
+            printf("\n");            
         }
 
 
@@ -601,16 +574,22 @@ namespace Nektar
                 const Kokkos::View<double*> D0,
                 const Kokkos::View<double*> D1)
         {
+            //printf("%s\n", "within GlobalLinSysIterative::GeneralMatrixOp_IterPerExp_Kokkos");
+            
             printf("%s %i\n", "perform operations by element, elements in total: ", elmts);            
-            Kokkos::parallel_for(range_policy(0,elmts),KOKKOS_LAMBDA (const int el)
-            {                                                            
+            
+            Kokkos::parallel_for(range_policy(0,elmts),KOKKOS_LAMBDA (const int el)   {    
+            //Kokkos::parallel_for( team_policy( elmts , Kokkos::AUTO ), KOKKOS_LAMBDA ( const member_type& teamMember)
+            //{
+                //const int el = teamMember.league_rank();
+                
                 printf("%i ", el);
                 NekDouble* tmp_inarray = (double*) malloc(ncoeffs * sizeof(double));
             	for (int i = 0; i < ncoeffs; ++i)
                 {
                     tmp_inarray[i] = transfer_in[coeff_offset[el]+i];
                 }
-                printf("tmp_inarray[1] = %e\n", tmp_inarray[1]);               
+                              
                 HelmholtzMatrixOp_MatFree_Kokkos(
                     tmp_inarray,
                     transfer_out,
@@ -622,9 +601,8 @@ namespace Nektar
                     laplacian11Glo,
                     nquad0, nquad1, nmodes0, nmodes1, ncoeffs,
                     base0, base1, dbase0, dbase1, D0, D1);
-                printf("element %i C\n", el);
+                
             });
-            printf("\n");             
         }
 
         KOKKOS_INLINE_FUNCTION
@@ -648,41 +626,29 @@ namespace Nektar
                 const Kokkos::View<double*> D0,
                 const Kokkos::View<double*> D1)
         {
-            
-            //#ifdef __CUDA_ARCH__  
-                //cublasStatus_t stat;              
-                //cublasHandle_t handle;
-                //stat = cublasCreate(&handle);
-                //if (stat != CUBLAS_STATUS_SUCCESS) {
-                //    printf ("CUBLAS initialization failed\n");
-                //}
-            //#endif
-
             int nqtot   = nquad0*nquad1;
             //int       wspsize = std::max(std::max(std::max(nqtot,ncoeffs),nquad1*nmodes0), nquad0*nmodes1);
             int max1 = (nqtot >= ncoeffs) ? nqtot : ncoeffs;
             int max2 = (nquad1*nmodes0 >= nquad0*nmodes1) ? nquad1*nmodes0 : nquad0*nmodes1;
             int wspsize = (max1 >= max2) ? max1 : max2;
-            printf("wspsize = %i\n",wspsize );
-
+            
             NekDouble* tmp_outarray = (double*) malloc(ncoeffs * sizeof(double));
             
             // Allocate temporary storage
             NekDouble* wsp0 = (double*) malloc(wspsize * sizeof(double));            
             NekDouble* wsp1 = (double*) malloc(wspsize * sizeof(double));
-            NekDouble* wsp2 = (double*) malloc(wspsize * sizeof(double));
+            NekDouble* wsp2 = (double*) malloc(wspsize * sizeof(double));            
             
+            BwdTrans_SumFacKernel_Kokkos(base0, base1, tmp_inarray, wsp0, wsp2,
+                nmodes0, nmodes1, nquad0, nquad1);
             
-            //BwdTrans_SumFacKernel_Kokkos(base0, base1, tmp_inarray, wsp0, wsp2,
-            //    nmodes0, nmodes1, nquad0, nquad1, handle);
-
             for (int i = 0; i < nqtot; ++i)
             {
                 wsp1[i] = quadMetricGlo[el*nqtot+i] * wsp0[i];
             }
             
-            //IProductWRTBase_SumFacKernel_Kokkos(base0, base1, wsp1, tmp_outarray,
-            //                             wsp2, nmodes0, nmodes1, nquad0, nquad1, handle);       	
+            IProductWRTBase_SumFacKernel_Kokkos(base0, base1, wsp1, tmp_outarray,
+                                         wsp2, nmodes0, nmodes1, nquad0, nquad1);       	
                   	
             //LaplacianMatrixOp_MatFree_Kernel
 
@@ -690,7 +656,7 @@ namespace Nektar
             NekDouble* wsp1L = (double*) malloc(wspsize * sizeof(double));            
             NekDouble* wsp2L = wsp2;//(double*) Kokkos::kokkos_malloc<>(wspsize * sizeof(double));
 
-            //PhysTensorDeriv_Kokkos(wsp0,wsp1L,wsp2L, nquad0, nquad1, D0, D1, handle);
+            PhysTensorDeriv_Kokkos(wsp0,wsp1L,wsp2L, nquad0, nquad1, D0, D1);
 
             NekDouble* wsp0L = wsp0;//(double*) Kokkos::kokkos_malloc<>(wspsize * sizeof(double));            
         
@@ -704,10 +670,10 @@ namespace Nektar
                 wsp2L[i] = laplacian01Glo[el*nqtot+i] * wsp1L[i]
                 		 + laplacian11Glo[el*nqtot+i] * wsp2L[i];
             }
-            //IProductWRTBase_SumFacKernel_Kokkos(dbase0, base1,wsp0L,wsp1 ,wsp1L,
-            //             nmodes0, nmodes1, nquad0, nquad1, handle);
-            //IProductWRTBase_SumFacKernel_Kokkos( base0,dbase1,wsp2L,wsp1L,wsp0L,
-            //             nmodes0, nmodes1, nquad0, nquad1, handle);
+            IProductWRTBase_SumFacKernel_Kokkos(dbase0, base1,wsp0L,wsp1 ,wsp1L,
+                         nmodes0, nmodes1, nquad0, nquad1);
+            IProductWRTBase_SumFacKernel_Kokkos( base0,dbase1,wsp2L,wsp1L,wsp0L,
+                         nmodes0, nmodes1, nquad0, nquad1);
             
             for (int i = 0; i < ncoeffs; ++i)
             {
@@ -717,12 +683,6 @@ namespace Nektar
             {
                 outarray[coeff_offset[el] + i] = lambda[0] * tmp_outarray[i] + wsp1[i];
             }
-
-            printf("element %i A\n", el);
-            //#ifdef __CUDA_ARCH__
-                //cublasDestroy(handle);
-            //#endif
-            printf("element %i B\n", el);
         }
 
         KOKKOS_INLINE_FUNCTION
@@ -733,47 +693,27 @@ namespace Nektar
                 NekDouble* outarray,
                 NekDouble* wsp,
                 const int &nmodes0, const int &nmodes1,
-                const int &nquad0, const int &nquad1,
-                cublasHandle_t handle)
-        {
-            #ifdef __CUDA_ARCH__
-                const double alpha = 1.0;
-                const double beta = 0.0;
-                cublasDgemm(handle, CUBLAS_OP_T, CUBLAS_OP_N,
-                        nquad1, nmodes0, nquad0,
-                        &alpha, &inarray[0], nquad0, base0.ptr_on_device(),
-                        nquad0, &beta, &wsp[0], nquad1);
+                const int &nquad0, const int &nquad1)
+        {               
+            const double alpha = 1.0;
+            const double beta = 0.0;
+            plainDgemm('T','N',nquad1,nmodes0,nquad0,alpha,&inarray[0],nquad0,
+                        base0.ptr_on_device(),nquad0,beta,&wsp[0],nquad1);            
 
-                int i, mode;
-                for (mode=i=0; i < nmodes0; ++i)
-                {
-                    cublasDgemv(handle,CUBLAS_OP_T,nquad1,nmodes1-i,&alpha, base1.ptr_on_device()+mode*nquad1,
-                                nquad1,&wsp[0]+i*nquad1,1, &beta,
-                                &outarray[0] + mode,1);
-                    mode += nmodes1 - i;
-                }
-                double result;                
-                cublasDdot(handle, nquad1,base1.ptr_on_device()+nquad1,1,
-                                              &wsp[0]+nquad1,1, &result);
-                outarray[1] += result;
-            
-            #else
-                Blas::Dgemm('T','N',nquad1,nmodes0,nquad0,1.0,&inarray[0],nquad0,
-                            base0.ptr_on_device(),nquad0,0.0,&wsp[0],nquad1);
-                
-
-                int i, mode;
-                for (mode=i=0; i < nmodes0; ++i)
-                {
-                    Blas::Dgemv('T',nquad1,nmodes1-i,1.0, base1.ptr_on_device()+mode*nquad1,
-                                nquad1,&wsp[0]+i*nquad1,1, 0.0,
-                                &outarray[0] + mode,1);
-                    mode += nmodes1 - i;
-                }
-                outarray[1] += Blas::Ddot(nquad1,base1.ptr_on_device()+nquad1,1,
-                                              &wsp[0]+nquad1,1);
-            #endif
+            int i, mode;
+            for (mode=i=0; i < nmodes0; ++i)
+            {
+                plainDgemv('T',nquad1,nmodes1-i,alpha, base1.ptr_on_device()+mode*nquad1,
+                            nquad1,&wsp[0]+i*nquad1,1, beta,
+                            &outarray[0] + mode,1);
+                mode += nmodes1 - i;
+            }
+            double result = plainDdot(nquad1,base1.ptr_on_device()+nquad1,1,
+                                          &wsp[0]+nquad1,1);
+            outarray[1] += result;            
         }
+
+
 
         KOKKOS_INLINE_FUNCTION
         void GlobalLinSysIterative::BwdTrans_SumFacKernel_Kokkos(
@@ -783,39 +723,21 @@ namespace Nektar
                 NekDouble* outarray,
                 NekDouble* wsp,
                 const int &nmodes0, const int &nmodes1,
-                const int &nquad0, const int &nquad1,
-                cublasHandle_t handle)
+                const int &nquad0, const int &nquad1)
         {
-            #ifdef __CUDA_ARCH__
-                const double alpha = 1.0;
-                const double beta = 0.0;
-                int i, mode;
-                for (i = mode = 0; i < nmodes0; ++i)
-                {
-                    cublasDgemv(handle,CUBLAS_OP_N, nquad1,nmodes1-i,&alpha,base1.ptr_on_device()+mode*nquad1,
-                                nquad1,&inarray[0]+mode,1,&beta,&wsp[0]+i*nquad1,1);
-                    mode += nmodes1-i;
-                }
-                const double* invalue = &inarray[1];
-                cublasDaxpy(handle, nquad1, invalue,
-                                base1.ptr_on_device()+nquad1,1,
-                                &wsp[0]+nquad1,1);
-                cublasDgemm(handle, CUBLAS_OP_N, CUBLAS_OP_T, nquad0,nquad1,nmodes0,&alpha, base0.ptr_on_device(),nquad0,
-                            &wsp[0], nquad1,&beta, &outarray[0], nquad0);
-
-            #else
-                int i, mode;
-                for (i = mode = 0; i < nmodes0; ++i)
-                {
-                    Blas::Dgemv('N', nquad1,nmodes1-i,1.0,base1.ptr_on_device()+mode*nquad1,
-                                nquad1,&inarray[0]+mode,1,0.0,&wsp[0]+i*nquad1,1);
-                    mode += nmodes1-i;
-                }
-                Blas::Daxpy(nquad1,inarray[1],base1.ptr_on_device()+nquad1,1,
-                                &wsp[0]+nquad1,1);
-                Blas::Dgemm('N','T', nquad0,nquad1,nmodes0,1.0, base0.ptr_on_device(),nquad0,
-                            &wsp[0], nquad1,0.0, &outarray[0], nquad0);
-            #endif         
+            const double alpha = 1.0;
+            const double beta = 0.0;
+            int i, mode;
+            for (i = mode = 0; i < nmodes0; ++i)
+            {
+                plainDgemv('N', nquad1,nmodes1-i,alpha,base1.ptr_on_device()+mode*nquad1,
+                            nquad1,&inarray[0]+mode,1,beta,&wsp[0]+i*nquad1,1);
+                mode += nmodes1-i;
+            }
+            plainDaxpy(nquad1,inarray[1],base1.ptr_on_device()+nquad1,1,
+                            &wsp[0]+nquad1,1);
+            plainDgemm('N','T', nquad0,nquad1,nmodes0,alpha, base0.ptr_on_device(),nquad0,
+                        &wsp[0], nquad1,beta, &outarray[0], nquad0);
         }
 
         KOKKOS_INLINE_FUNCTION
@@ -825,25 +747,15 @@ namespace Nektar
                 NekDouble* outarray_d1,
                 const int &nquad0, const int &nquad1,
                 const Kokkos::View<double*> D0,
-                const Kokkos::View<double*> D1,
-                cublasHandle_t handle)
+                const Kokkos::View<double*> D1)
         {
-            #ifdef __CUDA_ARCH__
-                const double alpha = 1.0;
-                const double beta = 0.0;
-                cublasDgemm(handle, CUBLAS_OP_N, CUBLAS_OP_N, nquad0, nquad1, nquad0, &alpha,
-                        (D0.ptr_on_device()), nquad0, &inarray[0], nquad0, &beta,
-                        &outarray_d0[0], nquad0);
-                cublasDgemm(handle, CUBLAS_OP_N, CUBLAS_OP_T, nquad0, nquad1, nquad1, &alpha, &inarray[0], nquad0,
-                         (D1.ptr_on_device()), nquad1, &beta, &outarray_d1[0], nquad0);
-            #else
-                
-                Blas::Dgemm('N', 'N', nquad0, nquad1, nquad0, 1.0,
-                        (D0.ptr_on_device()), nquad0, &inarray[0], nquad0, 0.0,
-                        &outarray_d0[0], nquad0);
-                Blas::Dgemm('N', 'T', nquad0, nquad1, nquad1, 1.0, &inarray[0], nquad0,
-                         (D1.ptr_on_device()), nquad1, 0.0, &outarray_d1[0], nquad0);
-            #endif
+            const double alpha = 1.0;
+            const double beta = 0.0;
+            plainDgemm('N', 'N', nquad0, nquad1, nquad0, alpha,
+                    (D0.ptr_on_device()), nquad0, &inarray[0], nquad0, beta,
+                    &outarray_d0[0], nquad0);
+            plainDgemm('N', 'T', nquad0, nquad1, nquad1, alpha, &inarray[0], nquad0,
+                     (D1.ptr_on_device()), nquad1, beta, &outarray_d1[0], nquad0);
         }
 
     }

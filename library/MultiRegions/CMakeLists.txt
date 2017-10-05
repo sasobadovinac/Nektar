@@ -87,6 +87,7 @@ SubStructuredGraph.h
 ConjugateGradient_plain.hxx
 ConjugateGradient_Kokkos.hxx
 ConjugateGradient_OpenMP.hxx
+ConjugateGradient_BLAS.hxx
 )
 
 SET(ASSEMBLY_MAP_HEADERS
@@ -150,7 +151,7 @@ IF( NEKTAR_USE_PETSC )
 ENDIF( NEKTAR_USE_PETSC )
 
 IF (NEKTAR_USE_KOKKOS)
-    TARGET_LINK_LIBRARIES(MultiRegions LINK_PUBLIC kokkos dl pthread cudadevrt rt cublas)
+    TARGET_LINK_LIBRARIES(MultiRegions LINK_PUBLIC kokkos dl pthread)
 ENDIF (NEKTAR_USE_KOKKOS)
 
 

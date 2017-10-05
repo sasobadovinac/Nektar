@@ -41,9 +41,7 @@
 
 #include <boost/circular_buffer.hpp>
 
-#include "cublas_v2.h"
 #include <Kokkos_Core.hpp>
-//#include "cublas_v2.h"
 
 
 namespace Nektar
@@ -236,8 +234,7 @@ namespace Nektar
                 NekDouble* outarray,
                 NekDouble* wsp,
                 const int &nmodes0, const int &nmodes1,
-                const int &nquad0, const int &nquad1,
-                cublasHandle_t handle);
+                const int &nquad0, const int &nquad1);
 
             KOKKOS_INLINE_FUNCTION
             void BwdTrans_SumFacKernel_Kokkos(
@@ -247,8 +244,7 @@ namespace Nektar
                 NekDouble* outarray,
                 NekDouble* wsp,
                 const int &nmodes0, const int &nmodes1,
-                const int &nquad0, const int &nquad1,
-                cublasHandle_t handle);
+                const int &nquad0, const int &nquad1);
 
             KOKKOS_INLINE_FUNCTION
             void PhysTensorDeriv_Kokkos(
@@ -257,8 +253,26 @@ namespace Nektar
                 NekDouble* outarray_d1,
                 const int &nquad0, const int &nquad1,
                 const Kokkos::View<double*> D0,
-                const Kokkos::View<double*> D1,
-                cublasHandle_t handle);
+                const Kokkos::View<double*> D1);
+
+
+            /*KOKKOS_INLINE_FUNCTION
+            double plainDdot(int n, const double *dx, int incx,
+                    const double *dy, int incy);
+
+            KOKKOS_INLINE_FUNCTION
+            int plainDaxpy(int n, const double da, const double *dx,
+                    int incx, double *dy, int incy);
+
+            KOKKOS_INLINE_FUNCTION
+            int plainDgemm(char transa, char transb, int m, int n, int k,
+                    const double alpha, const double *a, int lda, const double *b,
+                    int ldb, const double beta, double *c, int ldc);
+
+            KOKKOS_INLINE_FUNCTION
+            int plainDgemv(char trans, int m, int n, const double alpha,
+                    const double *a, int lda, const double *x, int incx,
+                    const double beta, double *y, int incy);*/
 
 
 
@@ -369,8 +383,10 @@ namespace Nektar
             //Kokkos
             typedef Kokkos::RangePolicy<Kokkos::DefaultHostExecutionSpace> range_policy_host;
             typedef Kokkos::RangePolicy<Kokkos::DefaultExecutionSpace> range_policy;
+            typedef Kokkos::TeamPolicy<Kokkos::DefaultExecutionSpace> team_policy;
+            typedef Kokkos::TeamPolicy<Kokkos::DefaultExecutionSpace>::member_type  member_type;
             
-            
+
 
 
 

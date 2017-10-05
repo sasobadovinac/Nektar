@@ -36,6 +36,7 @@
 #define NEKTAR_LIB_MULTIREGIONS_CONJUGATEGRADIENT_PLAIN_HXX
 
 #include <MultiRegions/GlobalLinSysIterative.h>
+#include <MultiRegions/ConjugateGradient_BLAS.hxx>
 
 using namespace std;
 
@@ -116,16 +117,7 @@ namespace Nektar
             printf("nquad1: %i\n",nquad1);
             printf("nmodes0: %i\n",nmodes0);
             printf("nmodes1: %i\n",nmodes1);
-            //int BASE1 = nmodes0*(nmodes1-0.5*(nmodes0-1))*nquad1;
-            //printf("BASE1: %i\n",BASE1);
-            for (int i = 0; i < base0.num_elements(); ++i)
-            {
-            	//printf("base0[%i] = %e\n", i,base0[i]);
-            }
-            for (int i = 0; i < base1.num_elements(); ++i)
-            {
-            	//printf("base1[%i] = %e\n", i,base1[i]);
-            }
+
             
             int metricSize = elmts * nquad0 * nquad1;
             Array<OneD, NekDouble> quadMetricGlo (4*metricSize);
@@ -403,11 +395,7 @@ namespace Nektar
             //            tmp2.get(), localToGlobalMap.get(), outarray.get());
             for (int i = 0; i < numLocalCoeffs; ++i)
             {
-                outarray[localToGlobalMap[i]] += localToGlobalSign[i] * transfer_out[i];
-                if (iteration == 1)
-                {
-                	printf("transfer_out[%i] = %e\n",i, transfer_out[i] ); 
-                }
+                outarray[localToGlobalMap[i]] += localToGlobalSign[i] * transfer_out[i];                
             }
         }
 
@@ -434,14 +422,12 @@ namespace Nektar
             Kokkos::parallel_for(range_policy_host(0,elmts),KOKKOS_LAMBDA (const int el)
             {                                    
                 printf("%i ", el);
-                //Array<OneD, NekDouble> tmp_inarray (ncoeffs);
-                NekDouble* tmp_inarray = (double*) malloc(ncoeffs * sizeof(double));
+                Array<OneD, NekDouble> tmp_inarray (ncoeffs);
                 for (int i = 0; i < ncoeffs; ++i)
                 {
                     tmp_inarray[i] = inarray[coeff_offset[el]+i];
                 }
-                printf("tmp_inarray[1] = %e\n", tmp_inarray[1]); 
-                /*HelmholtzMatrixOp_MatFree_plain(
+                HelmholtzMatrixOp_MatFree_plain(
                     tmp_inarray,
                     transfer_out,
                     el, coeff_offset,
@@ -451,7 +437,7 @@ namespace Nektar
                     laplacian01Glo,
                     laplacian11Glo,
                     nquad0, nquad1, nmodes0, nmodes1, ncoeffs,
-                    base0, base1, dbase0, dbase1, D0, D1);*/
+                    base0, base1, dbase0, dbase1, D0, D1);
             });
             printf("\n");             
         }
@@ -478,7 +464,6 @@ namespace Nektar
             //printf("within GlobalLinSysIterative::HelmholtzMatrixOp_MatFree_plain \n");
             
             Array<OneD, NekDouble> t_outarray(ncoeffs);
-            //NekDouble* wsptest = (double*) malloc(30 * sizeof(double)); 
             int       nqtot   = nquad0*nquad1;
             //int       wspsize = std::max(std::max(std::max(nqtot,ncoeffs),nquad1*nmodes0), nquad0*nmodes1);
             int max1 = (nqtot >= ncoeffs) ? nqtot : ncoeffs;
@@ -495,8 +480,7 @@ namespace Nektar
                 nmodes0, nmodes1, nquad0, nquad1);
 
             //MultiplyByQuadratureMetric(wsp0, wsp1);
-            //Vmath::Vmul(nqtot, quadMetric, 1, wsp0, 1, wsp1, 1);            
-            
+            //Vmath::Vmul(nqtot, quadMetric, 1, wsp0, 1, wsp1, 1);
             for (int i = 0; i < nqtot; ++i)
             {
                 wsp1[i] = quadMetric[el*nqtot+i] * wsp0[i];
@@ -564,17 +548,17 @@ namespace Nektar
                 const int &nquad0, const int &nquad1)
         {
             //printf("within GlobalLinSysIterative::IProductWRTBase_SumFacKernel_plain \n");
-            Blas::Dgemm('T','N',nquad1,nmodes0,nquad0,1.0,inarray.get(),nquad0,
+            plainDgemm('T','N',nquad1,nmodes0,nquad0,1.0,inarray.get(),nquad0,
                         base0.get(),nquad0,0.0,wsp.get(),nquad1);
             int i, mode;
             for (mode=i=0; i < nmodes0; ++i)
             {
-                Blas::Dgemv('T',nquad1,nmodes1-i,1.0, base1.get()+mode*nquad1,
+                plainDgemv('T',nquad1,nmodes1-i,1.0, base1.get()+mode*nquad1,
                             nquad1,wsp.get()+i*nquad1,1, 0.0,
                             outarray.get() + mode,1);
                 mode += nmodes1 - i;
             }
-            outarray[1] += Blas::Ddot(nquad1,base1.get()+nquad1,1,
+            outarray[1] += plainDdot(nquad1,base1.get()+nquad1,1,
                                           wsp.get()+nquad1,1);
         }
 
@@ -591,13 +575,13 @@ namespace Nektar
             int i, mode;
             for (i = mode = 0; i < nmodes0; ++i)
             {
-                Blas::Dgemv('N', nquad1,nmodes1-i,1.0,base1.get()+mode*nquad1,
+                plainDgemv('N', nquad1,nmodes1-i,1.0,base1.get()+mode*nquad1,
                             nquad1,&inarray[0]+mode,1,0.0,&wsp[0]+i*nquad1,1);
                 mode += nmodes1-i;
             }
-            Blas::Daxpy(nquad1,inarray[1],base1.get()+nquad1,1,
+            plainDaxpy(nquad1,inarray[1],base1.get()+nquad1,1,
                             &wsp[0]+nquad1,1);
-            Blas::Dgemm('N','T', nquad0,nquad1,nmodes0,1.0, base0.get(),nquad0,
+            plainDgemm('N','T', nquad0,nquad1,nmodes0,1.0, base0.get(),nquad0,
                         &wsp[0], nquad1,0.0, &outarray[0], nquad0);            
         }
 
@@ -609,10 +593,10 @@ namespace Nektar
                 const DNekMatSharedPtr &D0, const DNekMatSharedPtr &D1)
         {
             //printf("within GlobalLinSysIterative::PhysTensorDeriv_plain \n");
-            Blas::Dgemm('N', 'N', nquad0, nquad1, nquad0, 1.0,
+            plainDgemm('N', 'N', nquad0, nquad1, nquad0, 1.0,
                         &(D0->GetPtr())[0], nquad0, &inarray[0], nquad0, 0.0,
                         &outarray_d0[0], nquad0);
-            Blas:: Dgemm('N', 'T', nquad0, nquad1, nquad1, 1.0, &inarray[0], nquad0,
+            plainDgemm('N', 'T', nquad0, nquad1, nquad1, 1.0, &inarray[0], nquad0,
                          &(D1->GetPtr())[0], nquad1, 0.0, &outarray_d1[0], nquad0);
         }
         
