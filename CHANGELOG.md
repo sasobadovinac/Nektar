@@ -43,6 +43,10 @@ v4.4.1
   IMEXGear, CNAB, 2nd order IMEX-DIRK, 3rd order IMEX-DIRK (!854)
 - Fix bug due to subtractive cancellation in polylib routines (!778)
 
+**Documentation**:
+- Fix sign of the viscous term in the velocity correction scheme equations in
+  the user guide (!856)
+
 **FieldConvert:**
 - Fix issue with field ordering in the interppointdatatofld module (!754)
 - Fix issue with FieldConvert when range flag used (!761)
