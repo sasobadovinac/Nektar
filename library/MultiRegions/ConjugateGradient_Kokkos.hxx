@@ -583,7 +583,7 @@ namespace Nektar
             //{
                 //const int el = teamMember.league_rank();
                 
-                printf("%i ", el);
+                //printf("%i ", el);
                 NekDouble* tmp_inarray = (double*) malloc(ncoeffs * sizeof(double));
             	for (int i = 0; i < ncoeffs; ++i)
                 {
@@ -601,6 +601,8 @@ namespace Nektar
                     laplacian11Glo,
                     nquad0, nquad1, nmodes0, nmodes1, ncoeffs,
                     base0, base1, dbase0, dbase1, D0, D1);
+
+                free(tmp_inarray);
                 
             });
         }
@@ -683,6 +685,12 @@ namespace Nektar
             {
                 outarray[coeff_offset[el] + i] = lambda[0] * tmp_outarray[i] + wsp1[i];
             }
+
+            free(tmp_outarray);
+            free(wsp0);
+            free(wsp1);
+            free(wsp2);
+            free(wsp1L);
         }
 
         KOKKOS_INLINE_FUNCTION

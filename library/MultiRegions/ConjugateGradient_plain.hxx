@@ -421,7 +421,7 @@ namespace Nektar
             printf("%s\n", "perform operations by element");            
             Kokkos::parallel_for(range_policy_host(0,elmts),KOKKOS_LAMBDA (const int el)
             {                                    
-                printf("%i ", el);
+                //printf("%i ", el);
                 Array<OneD, NekDouble> tmp_inarray (ncoeffs);
                 for (int i = 0; i < ncoeffs; ++i)
                 {
@@ -548,17 +548,17 @@ namespace Nektar
                 const int &nquad0, const int &nquad1)
         {
             //printf("within GlobalLinSysIterative::IProductWRTBase_SumFacKernel_plain \n");
-            plainDgemm('T','N',nquad1,nmodes0,nquad0,1.0,inarray.get(),nquad0,
+            Blas::Dgemm('T','N',nquad1,nmodes0,nquad0,1.0,inarray.get(),nquad0,
                         base0.get(),nquad0,0.0,wsp.get(),nquad1);
             int i, mode;
             for (mode=i=0; i < nmodes0; ++i)
             {
-                plainDgemv('T',nquad1,nmodes1-i,1.0, base1.get()+mode*nquad1,
+                Blas::Dgemv('T',nquad1,nmodes1-i,1.0, base1.get()+mode*nquad1,
                             nquad1,wsp.get()+i*nquad1,1, 0.0,
                             outarray.get() + mode,1);
                 mode += nmodes1 - i;
             }
-            outarray[1] += plainDdot(nquad1,base1.get()+nquad1,1,
+            outarray[1] += Blas::Ddot(nquad1,base1.get()+nquad1,1,
                                           wsp.get()+nquad1,1);
         }
 
@@ -575,13 +575,13 @@ namespace Nektar
             int i, mode;
             for (i = mode = 0; i < nmodes0; ++i)
             {
-                plainDgemv('N', nquad1,nmodes1-i,1.0,base1.get()+mode*nquad1,
+                Blas::Dgemv('N', nquad1,nmodes1-i,1.0,base1.get()+mode*nquad1,
                             nquad1,&inarray[0]+mode,1,0.0,&wsp[0]+i*nquad1,1);
                 mode += nmodes1-i;
             }
-            plainDaxpy(nquad1,inarray[1],base1.get()+nquad1,1,
+            Blas::Daxpy(nquad1,inarray[1],base1.get()+nquad1,1,
                             &wsp[0]+nquad1,1);
-            plainDgemm('N','T', nquad0,nquad1,nmodes0,1.0, base0.get(),nquad0,
+            Blas::Dgemm('N','T', nquad0,nquad1,nmodes0,1.0, base0.get(),nquad0,
                         &wsp[0], nquad1,0.0, &outarray[0], nquad0);            
         }
 
@@ -593,10 +593,10 @@ namespace Nektar
                 const DNekMatSharedPtr &D0, const DNekMatSharedPtr &D1)
         {
             //printf("within GlobalLinSysIterative::PhysTensorDeriv_plain \n");
-            plainDgemm('N', 'N', nquad0, nquad1, nquad0, 1.0,
+            Blas::Dgemm('N', 'N', nquad0, nquad1, nquad0, 1.0,
                         &(D0->GetPtr())[0], nquad0, &inarray[0], nquad0, 0.0,
                         &outarray_d0[0], nquad0);
-            plainDgemm('N', 'T', nquad0, nquad1, nquad1, 1.0, &inarray[0], nquad0,
+            Blas::Dgemm('N', 'T', nquad0, nquad1, nquad1, 1.0, &inarray[0], nquad0,
                          &(D1->GetPtr())[0], nquad1, 0.0, &outarray_d1[0], nquad0);
         }
         

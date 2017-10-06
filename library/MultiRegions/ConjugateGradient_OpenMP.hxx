@@ -378,7 +378,7 @@ namespace Nektar
             // Calculating
             for (int el = 0; el < elmts; ++el)
             {                                       
-                printf("%i ", el);
+                //printf("%i ", el);
                 Array<OneD, NekDouble> tmp_inarray (ncoeffs);
                 for (int i = 0; i < ncoeffs; ++i)
                 {
