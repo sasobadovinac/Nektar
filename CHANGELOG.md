@@ -1,64 +1,12 @@
 Changelog
 =========
 
-v5.0.0
-------
-**Library**
-- Added in sum factorisation version for pyramid expansions and orthogonal
-  expansion in pyramids (!750)
-- Significant overhaul of CMake infrastructure (!770, !804)
-- Fix ThridpartyCCM options (!802)
-- Fix Windows CRLF tokens in GEO reader and improve comment handling (!805)
-- Use chrono in Timer (!807)
-- Fix caching of FUNCTION tags that read from file and provide the same
-  functionality in FUNCTIONs defined for forcings (!759)
-- Add patch to tinyxml to fix size_t vs int bug (!820)
-- Add ARPACK thirdparty build capabilities (!828)
-- Added native support for csv files in addititon to pts (!760 !835)
-- Utilize LAPACK_DIR env variable to find the native blas/lapack install (!827)
-- Remove StdExpansion use from MultiRegion (use Expansions instead). (!831)
-- Simplify RawType typedefs (!840)
-- Remove unused files from BasicUtils (!841)
-- Remove checks for old boost versions which are no longer supported (!841)
-- Refactor ParseUtils to be more consistent (!843)
-- Added support for using the distance to a specific region (e.g. outlet) in the
-  function definitions for the Absorption Forcing (!769)
-- Improve performance of DisContField2D::v_ExtractTracePhys (!824)
-
-**NekMesh**:
-- Add feature to read basic 2D geo files as CAD (!731)
-- Add periodic boundary condition meshing in 2D (!733)
-- Adjust boundary layer thickness in corners in 2D (!739)
-- Add non-O BL meshing in 2D (!757)
-- Add ability to compile CCIO library but tar file is not yet openly
-  available whist we seek permission from Simens (!799)
-- Fix issue with reading CCM files due to definition of default arrays
-  rather than a vector (!797)
-- Fix inverted triangles and small memory issue in surface meshing (!798)
-- Update for the CAD system, more advance self-healing and analysis (!822)
-- Additional curve types in GEO reader: BSpline, Circle, Ellipse (!800)
-- Fix default command line argument value (!823)
-
-**FieldConvert**:
-- Add input module for Semtex field files (!777)
-- Fixed interppoints module (!760)
-- Move StreamFunction utility to a FieldConvert module (!809)
-- Extend wss module to compressible flows (!810)
-- Allow explicitly setting bool options of FieldConvert modules as false (!811)
-- Enable output to multiple files (!844)
-- Allow using xml file without expansion tag in FieldConvert (!849)
-
-**CompressibleFlowSolver**
-- Add 3D regression tests (!567)
-
-**Documentation**:
-- Added the developer-guide repository as a submodule (!751)
-
 v4.4.2
 ------
 **Library**
 - Fix evaluation of points (e.g. HistoryPoints, Interpolation to pts) close to
   the interface of two elements (!836)
+- Fix deadlock in Hdf5 with homogeneous expansions (!858)
 
 **NekMesh**
 - Fix missing periodic boundary meshing and boundary layer mesh adjustment
