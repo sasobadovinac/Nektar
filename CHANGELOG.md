@@ -32,6 +32,7 @@ v4.4.1
 - Added regression tests for IMEXOrder1, IMEXOrder2, IMEXOrder3, MCNAB,
   IMEXGear, CNAB, 2nd order IMEX-DIRK, 3rd order IMEX-DIRK (!854)
 - Fix DriverAdaptive with second order IMEX (!850)
+- Fix bug due to subtractive cancellation in polylib routines (!778)
 
 **FieldConvert:**
 - Fix issue with field ordering in the interppointdatatofld module (!754)
