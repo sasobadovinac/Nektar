@@ -486,6 +486,25 @@ void InputMCF::Process()
         }
     }
 
+<<<<<<< HEAD
+=======
+    ////**** Peralign ****////
+    if (m_2D && m_periodic.size())
+    {
+        vector<string> lines;
+        boost::split(lines, m_periodic, boost::is_any_of(":"));
+
+        for (auto &il : lines)
+        {
+            module = GetModuleFactory().CreateInstance(
+                ModuleKey(eProcessModule, "peralign"), m_mesh);
+
+            vector<string> tmp(2);
+            boost::split(tmp, il, boost::is_any_of(","));
+            module->RegisterConfig("surf1", tmp[0]);
+            module->RegisterConfig("surf2", tmp[1]);
+        }
+>>>>>>> bedd064a1... Missing surf2 in peralign call from InputMCF
 
 }
 }
