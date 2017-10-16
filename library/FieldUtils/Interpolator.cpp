@@ -350,7 +350,7 @@ void Interpolator::Interpolate(
 
         // Obtain Element and LocalCoordinate to interpolate
         int elmtid = m_expInField[0]->GetExpIndex(Scoords, Lcoords,
-                                                  NekConstants::kNekZeroTol);
+                                                  NekConstants::kNekZeroTol / 2.0);
 
         if (elmtid >= 0)
         {
