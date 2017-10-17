@@ -385,7 +385,10 @@ namespace Nektar
             typedef Kokkos::RangePolicy<Kokkos::DefaultExecutionSpace> range_policy;
             typedef Kokkos::TeamPolicy<Kokkos::DefaultExecutionSpace> team_policy;
             typedef Kokkos::TeamPolicy<Kokkos::DefaultExecutionSpace>::member_type  member_type;
-            
+            typedef Kokkos::MemoryTraits<Kokkos::RandomAccess> random_memory;
+            typedef Kokkos::View<double*,
+                Kokkos::DefaultExecutionSpace::scratch_memory_space ,
+                Kokkos::MemoryTraits<Kokkos::Unmanaged> > ScratchViewType;
 
 
 

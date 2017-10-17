@@ -115,7 +115,9 @@ namespace Nektar
                      << "(2) Plain Version" << endl 
                      << "(3) Full Kokkos Version" << endl 
                      << "(4) OpenMP Version" << endl;
-                cin >> version;
+                //cin >> version;
+                version = 3;
+
                 if(version == 1)
                 {
                     DoConjugateGradient(nGlobal, pInput, pOutput, plocToGloMap, nDir);

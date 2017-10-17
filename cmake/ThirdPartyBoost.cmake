@@ -72,7 +72,7 @@ IF (THIRDPARTY_BUILD_BOOST)
     IF (NOT WIN32)
         # We need -fPIC for 64-bit builds
         IF( CMAKE_SYSTEM_PROCESSOR STREQUAL "x86_64" )
-            SET(BOOST_FLAGS cxxflags=-fPIC cflags=-fPIC linkflags=-fPIC)
+            SET(BOOST_FLAGS cxxflags=-fPIC -std=c++11 cflags=-fPIC -std=c++11 linkflags=-fPIC -std=c++11)
         ENDIF ()
     ENDIF()
 
@@ -89,9 +89,9 @@ IF (THIRDPARTY_BUILD_BOOST)
         ELSEIF (MSVC14)
             SET(TOOLSET msvc-14.0)
         ENDIF()
-    ELSE(APPLE)
+    ELSE()
         SET(TOOLSET gcc)
-    ENDIF(APPLE)
+    ENDIF()
 
     IF (NOT WIN32)
         EXTERNALPROJECT_ADD(
