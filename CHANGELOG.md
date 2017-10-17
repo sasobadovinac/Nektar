@@ -1,6 +1,12 @@
 Changelog
 =========
 
+v4.4.2
+------
+**Library**
+- Fix evaluation of points (e.g. HistoryPoints, Interpolation to pts) close to
+  the interface of two elements (!836)
+
 v4.4.1
 ------
 **Library**
