@@ -365,10 +365,7 @@ namespace Nektar
             // Timing
             Timer t;
             t.Start();
-            //cuProfilerStart();
             
-
-
             //preconditioner
             //m_precon->DoPreconditioner(r_A, tmp = w_A + nDir);
             //Vmath::Vmul(nNonDir, &r_A[0], 1, &diagonals[0], 1, &w_A[nDir], 1);
@@ -376,9 +373,7 @@ namespace Nektar
     		{
                 w_A[i+nDir] = r_A[i] * diagonals[i];
             });
-
-            cuProfilerStart();
-
+            
             GeneralMatrixOp_Kokkos(
                     w_A, s_A, lambda,
                     quadMetricGlo, laplacian00Glo, laplacian01Glo, laplacian11Glo,
@@ -388,9 +383,6 @@ namespace Nektar
                     D0, D1,
                     numLocalCoeffs, numGlobalCoeffs,
                     localToGlobalMap, localToGlobalSign,totalIterations);
-
-            cudaDeviceSynchronize();
-            cuProfilerStop();
 
             rho = 0.0;
             Kokkos::parallel_reduce(range_policy(0,nNonDir),KOKKOS_LAMBDA(const int i, NekDouble &irho)
@@ -413,6 +405,17 @@ namespace Nektar
             totalIterations = 1;
             while (true) //true
             {
+                
+                if (k == 0)
+                {
+                    cuProfilerStart();
+                }
+                else if(k == 5)
+                {
+                    cudaDeviceSynchronize();
+                    cuProfilerStop();
+                }
+
                 if(k >= maxiter)
                 {
                     cout << "CG iterations made = " << totalIterations 
@@ -425,39 +428,19 @@ namespace Nektar
                                       "Exceeded maximum number of iterations");
                 }
 
-                // Compute new search direction p_k, q_k
-                //Vmath::Svtvp(nNonDir, beta, &p_A[0], 1, &w_A[nDir], 1, &p_A[0], 1);
                 Kokkos::parallel_for(range_policy(0,nNonDir), KOKKOS_LAMBDA (const int i)
     		    {
-                    p_A[i] = beta * p_A[i] + w_A[i+nDir];                    
+                    // Compute new search direction p_k, q_k
+                    p_A[i] = beta * p_A[i] + w_A[i+nDir]; 
+                    q_A[i] = beta * q_A[i] + s_A[i+nDir];
+                    // Update solution x_{k+1}
+                    Output[i+nDir] = alpha * p_A[i] + Output[i+nDir];
+                    // Update residual vector r_{k+1}
+                    r_A[i] = -alpha * q_A[i] + r_A[i];
+                    // Apply preconditioner  
+                    w_A[i+nDir] = r_A[i] * diagonals[i];                                      
                 });               
                 
-                //Vmath::Svtvp(nNonDir, beta, &q_A[0], 1, &s_A[nDir], 1, &q_A[0], 1);
-                Kokkos::parallel_for(range_policy(0,nNonDir), KOKKOS_LAMBDA (const int i)
-    			{
-                    q_A[i] = beta * q_A[i] + s_A[i+nDir];                    
-                });
-                // Update solution x_{k+1}
-                //Vmath::Svtvp(nNonDir, alpha, &p_A[0], 1, &pOutput[nDir], 1, &pOutput[nDir], 1);
-                Kokkos::parallel_for(range_policy(0,nNonDir), KOKKOS_LAMBDA (const int i)    		
-                {
-                    Output[i+nDir] = alpha * p_A[i] + Output[i+nDir];                    
-                }); 
-                // Update residual vector r_{k+1}
-                //Vmath::Svtvp(nNonDir, -alpha, &q_A[0], 1, &r_A[0], 1, &r_A[0], 1);
-                Kokkos::parallel_for(range_policy(0,nNonDir), KOKKOS_LAMBDA (const int i)    		
-                {
-                    r_A[i] = -alpha * q_A[i] + r_A[i];                    
-                });
-
-                // Apply preconditioner
-                //m_precon->DoPreconditioner(r_A, tmp = w_A + nDir);
-                //Vmath::Vmul(nNonDir, &r_A[0], 1, &diagonals[0], 1, &w_A[nDir], 1);
-                Kokkos::parallel_for(range_policy(0,nNonDir), KOKKOS_LAMBDA (const int i)    		
-                {
-                    w_A[i+nDir] = r_A[i] * diagonals[i];
-                });
-
                 // Perform the method-specific matrix-vector multiply operation.
                 printf("CG iteration %i ==================================\n", totalIterations);
                 GeneralMatrixOp_Kokkos(
@@ -575,14 +558,20 @@ namespace Nektar
             {
                 outarray[i] = 0.0;
             });
-            // dummy parallel region
-            Kokkos::parallel_for(range_policy(0,1), KOKKOS_LAMBDA (const int j)           
-            { 
-                for (int i = 0; i < numLocalCoeffs; ++i)
+            
+            Kokkos::parallel_for( team_policy( 1 , Kokkos::AUTO )
+                , KOKKOS_LAMBDA ( const member_type& teamMember)
+            {
+                for (int i = 0; i < elmts; ++i)
                 {
-                    outarray[localToGlobalMap[i]] += localToGlobalSign[i] * transfer_out[i];
+                    Kokkos::parallel_for( Kokkos::TeamThreadRange( teamMember , ncoeffs ), [&] ( const int j)                         
+                    { 
+                        int n = i * ncoeffs + j;
+                        outarray[localToGlobalMap[n]] += localToGlobalSign[n] * transfer_out[n];
+                    });
                 }
             });
+            
             printf("\n");            
         }
 
