@@ -64,6 +64,19 @@ namespace Nektar
             MULTI_REGIONS_EXPORT virtual ~GlobalLinSysIterative();
 
 
+                        //Kokkos
+            typedef Kokkos::RangePolicy<Kokkos::DefaultHostExecutionSpace> range_policy_host;
+            typedef Kokkos::RangePolicy<Kokkos::DefaultExecutionSpace> range_policy;
+            typedef Kokkos::TeamPolicy<Kokkos::DefaultExecutionSpace> team_policy;
+            typedef Kokkos::TeamPolicy<Kokkos::DefaultExecutionSpace>::member_type  member_type;
+            typedef Kokkos::MemoryTraits<Kokkos::RandomAccess> random_memory;
+            typedef Kokkos::View<double*,
+                Kokkos::DefaultExecutionSpace::scratch_memory_space ,
+                Kokkos::MemoryTraits<Kokkos::Unmanaged> > ScratchViewType;
+
+
+
+
 
             // functions for plain parallel Conjugate Gradient
             void GeneralMatrixOp_plain(
@@ -207,8 +220,7 @@ namespace Nektar
 
             KOKKOS_INLINE_FUNCTION
             void HelmholtzMatrixOp_MatFree_Kokkos(
-                //const Kokkos::View<double*> inarray,
-                const NekDouble* tmp_inarray,
+                const ScratchViewType s_tmp_inarray,
                 Kokkos::View<double*> outarray,
                 const int &el,
                 const Kokkos::View<int*>  coeff_offset,
@@ -224,15 +236,16 @@ namespace Nektar
                 const Kokkos::View<double*> dbase0,
                 const Kokkos::View<double*> dbase1,
                 const Kokkos::View<double*> D0,
-                const Kokkos::View<double*> D1);
+                const Kokkos::View<double*> D1,
+                const member_type &teamMember, const int &wspsize);
 
             KOKKOS_INLINE_FUNCTION
             void IProductWRTBase_SumFacKernel_Kokkos(
                 const Kokkos::View<double*> base0,
                 const Kokkos::View<double*> base1,
-                const NekDouble* inarray,
-                NekDouble* outarray,
-                NekDouble* wsp,
+                const ScratchViewType inarray,
+                ScratchViewType outarray,
+                ScratchViewType wsp,
                 const int &nmodes0, const int &nmodes1,
                 const int &nquad0, const int &nquad1);
 
@@ -240,17 +253,17 @@ namespace Nektar
             void BwdTrans_SumFacKernel_Kokkos(
                 const Kokkos::View<double*> base0,
                 const Kokkos::View<double*> base1,
-                const NekDouble* inarray,
-                NekDouble* outarray,
-                NekDouble* wsp,
+                const ScratchViewType inarray,
+                ScratchViewType outarray,
+                ScratchViewType wsp,
                 const int &nmodes0, const int &nmodes1,
                 const int &nquad0, const int &nquad1);
 
             KOKKOS_INLINE_FUNCTION
             void PhysTensorDeriv_Kokkos(
-                const NekDouble* inarray,
-                NekDouble* outarray_d0,
-                NekDouble* outarray_d1,
+                const ScratchViewType inarray,
+                ScratchViewType outarray_d0,
+                ScratchViewType outarray_d1,
                 const int &nquad0, const int &nquad1,
                 const Kokkos::View<double*> D0,
                 const Kokkos::View<double*> D1);
@@ -380,15 +393,7 @@ namespace Nektar
                 Array<OneD, const int> &localToGlobalMap,
                 Array<OneD, const NekDouble> &localToGlobalSign);
 
-            //Kokkos
-            typedef Kokkos::RangePolicy<Kokkos::DefaultHostExecutionSpace> range_policy_host;
-            typedef Kokkos::RangePolicy<Kokkos::DefaultExecutionSpace> range_policy;
-            typedef Kokkos::TeamPolicy<Kokkos::DefaultExecutionSpace> team_policy;
-            typedef Kokkos::TeamPolicy<Kokkos::DefaultExecutionSpace>::member_type  member_type;
-            typedef Kokkos::MemoryTraits<Kokkos::RandomAccess> random_memory;
-            typedef Kokkos::View<double*,
-                Kokkos::DefaultExecutionSpace::scratch_memory_space ,
-                Kokkos::MemoryTraits<Kokkos::Unmanaged> > ScratchViewType;
+
 
 
 

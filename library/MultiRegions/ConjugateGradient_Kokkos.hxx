@@ -608,15 +608,21 @@ namespace Nektar
         {
             //printf("%s\n", "within GlobalLinSysIterative::GeneralMatrixOp_IterPerExp_Kokkos");
             
+            int nqtot   = nquad0*nquad1;
+            //int       wspsize = std::max(std::max(std::max(nqtot,ncoeffs),nquad1*nmodes0), nquad0*nmodes1);
+            int max1 = (nqtot >= ncoeffs) ? nqtot : ncoeffs;
+            int max2 = (nquad1*nmodes0 >= nquad0*nmodes1) ? nquad1*nmodes0 : nquad0*nmodes1;
+            int wspsize = (max1 >= max2) ? max1 : max2;
+
             printf("%s %i\n", "perform operations by element, elements in total: ", elmts);
-            int max_threads = 128;
+            int max_threads = 32;
             int no_teams = (elmts + max_threads - 1) / max_threads;
 
-            int scratch_size = ScratchViewType::shmem_size(32*n_coeffs);
+            int scratch_size = ScratchViewType::shmem_size(2*ncoeffs+4*wspsize);
 
             //Kokkos::parallel_for(range_policy(0,elmts),KOKKOS_LAMBDA (const int el)   {    
             Kokkos::parallel_for( team_policy( no_teams , Kokkos::AUTO )
-                .set_scratch_size(0,Kokkos::PerTeam(scratch_size))
+                .set_scratch_size(1,Kokkos::PerThread(scratch_size))
                 , KOKKOS_LAMBDA ( const member_type& teamMember)
             {
                 const int el_o = teamMember.league_rank();
@@ -628,14 +634,15 @@ namespace Nektar
                     if (el < elmts)
                     {
                         //printf("el = %i, el_o = %i, el_i = %i\n ", el, el_o, el_i);
-                        NekDouble* tmp_inarray = (double*) malloc(ncoeffs * sizeof(double));
+                        //NekDouble* tmp_inarray = (double*) malloc(ncoeffs * sizeof(double));
+                        ScratchViewType s_tmp_inarray(teamMember.thread_scratch(1),ncoeffs);
                     	for (int i = 0; i < ncoeffs; ++i)
                         {
-                            tmp_inarray[i] = transfer_in[coeff_offset[el]+i];
+                            s_tmp_inarray[i] = transfer_in[coeff_offset[el]+i];
                         }
                                       
                         HelmholtzMatrixOp_MatFree_Kokkos(
-                            tmp_inarray,
+                            s_tmp_inarray,
                             transfer_out,
                             el, coeff_offset,
                             lambda,
@@ -644,9 +651,10 @@ namespace Nektar
                             laplacian01Glo,
                             laplacian11Glo,
                             nquad0, nquad1, nmodes0, nmodes1, ncoeffs,
-                            base0, base1, dbase0, dbase1, D0, D1);
+                            base0, base1, dbase0, dbase1, D0, D1,
+                            teamMember, wspsize);
 
-                        free(tmp_inarray);
+                        //free(tmp_inarray);
                     }
                 });                
             });
@@ -654,8 +662,7 @@ namespace Nektar
 
         KOKKOS_INLINE_FUNCTION
         void GlobalLinSysIterative::HelmholtzMatrixOp_MatFree_Kokkos(
-                //const Kokkos::View<double*> inarray,
-        	    const NekDouble* tmp_inarray,
+                const ScratchViewType s_tmp_inarray,
                 Kokkos::View<double*> outarray,
                 const int &el,
                 const Kokkos::View<int*>  coeff_offset,
@@ -671,101 +678,104 @@ namespace Nektar
                 const Kokkos::View<double*> dbase0,
                 const Kokkos::View<double*> dbase1,
                 const Kokkos::View<double*> D0,
-                const Kokkos::View<double*> D1)
+                const Kokkos::View<double*> D1,
+                const member_type &teamMember, const int &wspsize)
         {
-            int nqtot   = nquad0*nquad1;
-            //int       wspsize = std::max(std::max(std::max(nqtot,ncoeffs),nquad1*nmodes0), nquad0*nmodes1);
-            int max1 = (nqtot >= ncoeffs) ? nqtot : ncoeffs;
-            int max2 = (nquad1*nmodes0 >= nquad0*nmodes1) ? nquad1*nmodes0 : nquad0*nmodes1;
-            int wspsize = (max1 >= max2) ? max1 : max2;
+            int nqtot   = nquad0*nquad1;            
             
-            
-            NekDouble* tmp_outarray = (double*) malloc(ncoeffs * sizeof(double));
-            //ScratchViewType s_tmp_outarray(teamMember.team_scratch(0),ncoeffs);
+            //NekDouble* tmp_outarray = (double*) malloc(ncoeffs * sizeof(double));
+            ScratchViewType s_tmp_outarray(teamMember.thread_scratch(1),ncoeffs);
 
 
             // Allocate temporary storage
-            NekDouble* wsp0 = (double*) malloc(wspsize * sizeof(double));            
-            NekDouble* wsp1 = (double*) malloc(wspsize * sizeof(double));
-            NekDouble* wsp2 = (double*) malloc(wspsize * sizeof(double));            
+            //NekDouble* wsp0 = (double*) malloc(wspsize * sizeof(double));            
+            //NekDouble* wsp1 = (double*) malloc(wspsize * sizeof(double));
+            //NekDouble* wsp2 = (double*) malloc(wspsize * sizeof(double));
+            ScratchViewType s_wsp0(teamMember.thread_scratch(1),wspsize);
+            ScratchViewType s_wsp1(teamMember.thread_scratch(1),wspsize);
+            ScratchViewType s_wsp2(teamMember.thread_scratch(1),wspsize);  
+
             
-            BwdTrans_SumFacKernel_Kokkos(base0, base1, tmp_inarray, wsp0, wsp2,
+            BwdTrans_SumFacKernel_Kokkos(base0, base1, s_tmp_inarray, s_wsp0, s_wsp2,
                 nmodes0, nmodes1, nquad0, nquad1);
             
             for (int i = 0; i < nqtot; ++i)
             {
-                wsp1[i] = quadMetricGlo[el*nqtot+i] * wsp0[i];
+                s_wsp1[i] = quadMetricGlo[el*nqtot+i] * s_wsp0[i];
             }
             
-            IProductWRTBase_SumFacKernel_Kokkos(base0, base1, wsp1, tmp_outarray,
-                                         wsp2, nmodes0, nmodes1, nquad0, nquad1);       	
+            IProductWRTBase_SumFacKernel_Kokkos(base0, base1, s_wsp1, s_tmp_outarray,
+                                         s_wsp2, nmodes0, nmodes1, nquad0, nquad1);       	
                   	
             //LaplacianMatrixOp_MatFree_Kernel
 
             // Allocate temporary storage
-            NekDouble* wsp1L = (double*) malloc(wspsize * sizeof(double));            
-            NekDouble* wsp2L = wsp2;//(double*) Kokkos::kokkos_malloc<>(wspsize * sizeof(double));
+            //NekDouble* wsp1L = (double*) malloc(wspsize * sizeof(double));
+            ScratchViewType s_wsp1L(teamMember.thread_scratch(1),wspsize);           
+            //NekDouble* wsp2L = wsp2;
+            ScratchViewType s_wsp2L = s_wsp2;
 
-            PhysTensorDeriv_Kokkos(wsp0,wsp1L,wsp2L, nquad0, nquad1, D0, D1);
+            PhysTensorDeriv_Kokkos(s_wsp0,s_wsp1L,s_wsp2L, nquad0, nquad1, D0, D1);
 
-            NekDouble* wsp0L = wsp0;//(double*) Kokkos::kokkos_malloc<>(wspsize * sizeof(double));            
+            //NekDouble* wsp0L = wsp0;
+            ScratchViewType s_wsp0L = s_wsp0;           
         
             for (int i = 0; i < nqtot; ++i)
             {
-                wsp0L[i] = laplacian00Glo[el*nqtot+i] * wsp1L[i] 
-                         + laplacian01Glo[el*nqtot+i] * wsp2L[i];
+                s_wsp0L[i] = laplacian00Glo[el*nqtot+i] * s_wsp1L[i] 
+                         + laplacian01Glo[el*nqtot+i] * s_wsp2L[i];
             }
             for (int i = 0; i < nqtot; ++i)
             {
-                wsp2L[i] = laplacian01Glo[el*nqtot+i] * wsp1L[i]
-                		 + laplacian11Glo[el*nqtot+i] * wsp2L[i];
+                s_wsp2L[i] = laplacian01Glo[el*nqtot+i] * s_wsp1L[i]
+                		 + laplacian11Glo[el*nqtot+i] * s_wsp2L[i];
             }
-            IProductWRTBase_SumFacKernel_Kokkos(dbase0, base1,wsp0L,wsp1 ,wsp1L,
+            IProductWRTBase_SumFacKernel_Kokkos(dbase0, base1,s_wsp0L,s_wsp1 ,s_wsp1L,
                          nmodes0, nmodes1, nquad0, nquad1);
-            IProductWRTBase_SumFacKernel_Kokkos( base0,dbase1,wsp2L,wsp1L,wsp0L,
+            IProductWRTBase_SumFacKernel_Kokkos( base0,dbase1,s_wsp2L,s_wsp1L,s_wsp0L,
                          nmodes0, nmodes1, nquad0, nquad1);
             
             for (int i = 0; i < ncoeffs; ++i)
             {
-                wsp1[i] += wsp1L[i];
+                s_wsp1[i] += s_wsp1L[i];
             }
             for (int i = 0; i < ncoeffs; ++i)
             {
-                outarray[coeff_offset[el] + i] = lambda[0] * tmp_outarray[i] + wsp1[i];
+                outarray[coeff_offset[el] + i] = lambda[0] * s_tmp_outarray[i] + s_wsp1[i];
             }
 
-            free(tmp_outarray);
+            /*free(tmp_outarray);
             free(wsp0);
             free(wsp1);
             free(wsp2);
-            free(wsp1L);
+            free(wsp1L);*/
         }
 
         KOKKOS_INLINE_FUNCTION
         void GlobalLinSysIterative::IProductWRTBase_SumFacKernel_Kokkos(
                 const Kokkos::View<double*> base0,
                 const Kokkos::View<double*> base1,
-                const NekDouble* inarray,
-                NekDouble* outarray,
-                NekDouble* wsp,
+                const ScratchViewType inarray,
+                ScratchViewType outarray,
+                ScratchViewType wsp,
                 const int &nmodes0, const int &nmodes1,
                 const int &nquad0, const int &nquad1)
         {               
             const double alpha = 1.0;
             const double beta = 0.0;
-            plainDgemm('T','N',nquad1,nmodes0,nquad0,alpha,&inarray[0],nquad0,
-                        base0.ptr_on_device(),nquad0,beta,&wsp[0],nquad1);            
+            plainDgemm('T','N',nquad1,nmodes0,nquad0,alpha,inarray.ptr_on_device(),nquad0,
+                        base0.ptr_on_device(),nquad0,beta,wsp.ptr_on_device(),nquad1);            
 
             int i, mode;
             for (mode=i=0; i < nmodes0; ++i)
             {
                 plainDgemv('T',nquad1,nmodes1-i,alpha, base1.ptr_on_device()+mode*nquad1,
-                            nquad1,&wsp[0]+i*nquad1,1, beta,
-                            &outarray[0] + mode,1);
+                            nquad1,wsp.ptr_on_device()+i*nquad1,1, beta,
+                            outarray.ptr_on_device() + mode,1);
                 mode += nmodes1 - i;
             }
             double result = plainDdot(nquad1,base1.ptr_on_device()+nquad1,1,
-                                          &wsp[0]+nquad1,1);
+                                          wsp.ptr_on_device()+nquad1,1);
             outarray[1] += result;            
         }
 
@@ -775,9 +785,9 @@ namespace Nektar
         void GlobalLinSysIterative::BwdTrans_SumFacKernel_Kokkos(
                 const Kokkos::View<double*> base0,
                 const Kokkos::View<double*> base1,
-                const NekDouble* inarray,
-                NekDouble* outarray,
-                NekDouble* wsp,
+                const ScratchViewType inarray,
+                ScratchViewType outarray,
+                ScratchViewType wsp,
                 const int &nmodes0, const int &nmodes1,
                 const int &nquad0, const int &nquad1)
         {
@@ -787,20 +797,21 @@ namespace Nektar
             for (i = mode = 0; i < nmodes0; ++i)
             {
                 plainDgemv('N', nquad1,nmodes1-i,alpha,base1.ptr_on_device()+mode*nquad1,
-                            nquad1,&inarray[0]+mode,1,beta,&wsp[0]+i*nquad1,1);
+                            nquad1,inarray.ptr_on_device()+mode,1,beta,wsp.ptr_on_device()+i*nquad1,1);
                 mode += nmodes1-i;
             }
             plainDaxpy(nquad1,inarray[1],base1.ptr_on_device()+nquad1,1,
-                            &wsp[0]+nquad1,1);
+                            wsp.ptr_on_device()+nquad1,1);
             plainDgemm('N','T', nquad0,nquad1,nmodes0,alpha, base0.ptr_on_device(),nquad0,
-                        &wsp[0], nquad1,beta, &outarray[0], nquad0);
+                        wsp.ptr_on_device(), nquad1,beta,outarray.ptr_on_device(), nquad0);
         }
+
 
         KOKKOS_INLINE_FUNCTION
         void GlobalLinSysIterative::PhysTensorDeriv_Kokkos(
-                const NekDouble* inarray,
-                NekDouble* outarray_d0,
-                NekDouble* outarray_d1,
+                const ScratchViewType inarray,
+                ScratchViewType outarray_d0,
+                ScratchViewType outarray_d1,
                 const int &nquad0, const int &nquad1,
                 const Kokkos::View<double*> D0,
                 const Kokkos::View<double*> D1)
@@ -808,10 +819,10 @@ namespace Nektar
             const double alpha = 1.0;
             const double beta = 0.0;
             plainDgemm('N', 'N', nquad0, nquad1, nquad0, alpha,
-                    (D0.ptr_on_device()), nquad0, &inarray[0], nquad0, beta,
-                    &outarray_d0[0], nquad0);
-            plainDgemm('N', 'T', nquad0, nquad1, nquad1, alpha, &inarray[0], nquad0,
-                     (D1.ptr_on_device()), nquad1, beta, &outarray_d1[0], nquad0);
+                    (D0.ptr_on_device()), nquad0, inarray.ptr_on_device(), nquad0, beta,
+                    outarray_d0.ptr_on_device(), nquad0);
+            plainDgemm('N', 'T', nquad0, nquad1, nquad1, alpha, inarray.ptr_on_device(), nquad0,
+                     (D1.ptr_on_device()), nquad1, beta, outarray_d1.ptr_on_device(), nquad0);
         }
 
     }
