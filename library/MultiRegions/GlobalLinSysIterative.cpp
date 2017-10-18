@@ -614,6 +614,89 @@ namespace Nektar
                                    (1.0-m_rhs_mag_sm)*new_rhs_mag); 
             }
         }
+
+
+
+        std::vector<std::vector<int> > GlobalLinSysIterative::CreateColourSets(
+                Array<OneD, const int> &localToGlobalMap, int ncoeffs, int elmts)
+        {
+            // create graph of connected elements
+            std::vector<std::vector<int>> el_connect;
+            el_connect.resize(elmts);
+            for (int e_n = 0; e_n < elmts; ++e_n)
+            {                
+                for (int e_m = e_n+1; e_m < elmts; ++e_m)
+                {                    
+                    for (int n = 0; n < ncoeffs; ++n)
+                    {
+                        int map_n = localToGlobalMap[n + e_n * ncoeffs];
+                        for (int m = 0; m < ncoeffs; ++m)
+                        {                            
+                            int map_m = localToGlobalMap[m + e_m * ncoeffs];
+                            if (map_n == map_m)
+                            {
+                                el_connect[e_n].push_back(e_m);
+                                el_connect[e_m].push_back(e_n);
+                                n = ncoeffs; // to break out of second level loop
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+            /*for(int e_n = 0; e_n < elmts; ++e_n)
+            {
+                printf("element %i: ",e_n);
+                for (std::vector<int>::iterator it = el_connect[e_n].begin() ; it != el_connect[e_n].end(); ++it)
+                {
+                    printf("%i ",*it );
+                }
+                printf("\n");
+            }*/
+
+
+            // create element colourgroups based on graph           
+            
+            std::vector<int> remain(elmts);
+            for (int i = 0; i < remain.size(); ++i) // or use std::iota
+            {
+                remain[i] = i;
+            }
+            std::vector<std::vector<int> > coloursets;
+            // loop until all free elements have been sorted
+            while (remain.size() > 0)
+            {
+                std::vector<int> colour;  // one colour
+                std::set<int> locked;
+                std::set<int> completed;
+                for (int i = 0; i < remain.size(); i++)
+                {
+                    if (locked.find(remain[i]) == locked.end()) // if the element is not locked
+                    {                            
+                        colour.push_back(remain[i]);   // insert element into colour
+                        completed.insert(remain[i]);    // insert sorted element into "completed" list
+                        for (int j = 0; j < el_connect[i].size(); j++)   // loop over all connected element
+                        {
+                            locked.insert(el_connect[remain[i]][j]);   // and flag these elements as locked
+                        }
+                    }                       
+                }
+                // identify elements which are not sorted, yet and create new "remain" vector
+                std::vector<int> tmp = remain;
+                remain.clear();
+                for (int i = 0; i < tmp.size(); i++)
+                {
+                    if (completed.find(tmp[i]) == completed.end()) // if the lement is not completed
+                    {
+                        remain.push_back(tmp[i]);
+                    }
+                }
+                // include colour into vector of colours
+                coloursets.push_back(colour);
+            }
+            
+            return coloursets;
+        }
         
 
     }

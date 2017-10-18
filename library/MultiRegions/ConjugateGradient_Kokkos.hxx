@@ -253,7 +253,22 @@ namespace Nektar
             });
             Kokkos::deep_copy(localToGlobalMap,h_localToGlobalMap);
             Kokkos::deep_copy(localToGlobalSign,h_localToGlobalSign);
-        
+
+
+            std::vector<std::vector<int> > coloursets = CreateColourSets(
+                    NeklocalToGlobalMap, ncoeffs, elmts);
+
+            /*for(int cs = 0; cs < coloursets.size(); ++cs)
+            {
+                printf("colourset %i: ",cs);
+                for (std::vector<int>::iterator it = coloursets[cs].begin() ; it != coloursets[cs].end(); ++it)
+                {
+                    printf("%i ",*it );
+                }
+                printf("\n");
+            }*/
+
+            
             printf("%s\n", "finished data gathering");
             //--------------------------------------------------------------------------
 
@@ -313,7 +328,7 @@ namespace Nektar
 
 
             // set size of heap memory on device
-            //#ifdef __CUDA_ARCH__
+            /*#ifdef __CUDA_ARCH__
                 int nqtot   = nquad0*nquad1;
                 int max1 = (nqtot >= ncoeffs) ? nqtot : ncoeffs;
                 int max2 = (nquad1*nmodes0 >= nquad0*nmodes1) ? nquad1*nmodes0 : nquad0*nmodes1;
@@ -322,10 +337,10 @@ namespace Nektar
                 size_t size;
                 cudaDeviceGetLimit(&size, cudaLimitMallocHeapSize);
                 printf("Heap size found to be %d\n",(int)size);
-                cudaDeviceSetLimit(cudaLimitMallocHeapSize, 50 * elmts * el_size * sizeof(double));                
+                //cudaDeviceSetLimit(cudaLimitMallocHeapSize, 50 * elmts * el_size * sizeof(double));                
                 cudaDeviceGetLimit(&size, cudaLimitMallocHeapSize);
                 printf("New heap size set to be %d\n",(int)size);
-            //#endif
+            #endif*/
 
             // evaluate initial residual error for exit check            
             eps = 0.0;
@@ -361,7 +376,6 @@ namespace Nektar
             }
 
 
-
             // Timing
             Timer t;
             t.Start();
@@ -373,6 +387,14 @@ namespace Nektar
     		{
                 w_A[i+nDir] = r_A[i] * diagonals[i];
             });
+
+            Kokkos::View<double*> transfer_in("transfer_in", numLocalCoeffs);
+            //typename Kokkos::View< double*>::HostMirror h_transfer_in;
+            //h_transfer_in = Kokkos::create_mirror_view(transfer_in);
+
+            Kokkos::View<double*> transfer_out("transfer_out",numLocalCoeffs);
+            //typename Kokkos::View< double*>::HostMirror h_transfer_out;
+            //h_transfer_out = Kokkos::create_mirror_view(transfer_out);
             
             GeneralMatrixOp_Kokkos(
                     w_A, s_A, lambda,
@@ -382,7 +404,8 @@ namespace Nektar
                     base0, base1, dbase0, dbase1,
                     D0, D1,
                     numLocalCoeffs, numGlobalCoeffs,
-                    localToGlobalMap, localToGlobalSign,totalIterations);
+                    localToGlobalMap, localToGlobalSign,totalIterations,
+                    transfer_in, transfer_out);
 
             rho = 0.0;
             Kokkos::parallel_reduce(range_policy(0,nNonDir),KOKKOS_LAMBDA(const int i, NekDouble &irho)
@@ -405,12 +428,12 @@ namespace Nektar
             totalIterations = 1;
             while (true) //true
             {
-                
+                // CUDA Profiling
                 if (k == 0)
                 {
                     cuProfilerStart();
                 }
-                else if(k == 5)
+                else if(k == 3)
                 {
                     cudaDeviceSynchronize();
                     cuProfilerStop();
@@ -451,7 +474,8 @@ namespace Nektar
                     base0, base1, dbase0, dbase1,
                     D0, D1,
                     numLocalCoeffs, numGlobalCoeffs,
-                    localToGlobalMap, localToGlobalSign,totalIterations);               
+                    localToGlobalMap, localToGlobalSign,totalIterations,
+                    transfer_in, transfer_out);               
 
                 rho_new = 0.0;
                 Kokkos::parallel_reduce(range_policy(0,nNonDir),KOKKOS_LAMBDA(const int i, NekDouble &irho_new)
@@ -491,13 +515,7 @@ namespace Nektar
                 }
             }
             t.Stop();
-            cout << "Time to compute: " << t.TimePerTest(1) << endl;
-            //cuProfilerStop();
-
-            //#ifdef __CUDA_ARCH__
-                cudaDeviceGetLimit(&size, cudaLimitMallocHeapSize);
-                printf("Heap size found to be %d\n",(int)size);
-            //#endif
+            cout << "Time to compute: " << t.TimePerTest(1) << endl;            
             
 			Kokkos::deep_copy(h_Output,Output);
 			for (int i = 0; i < nNonDir; ++i)
@@ -531,16 +549,11 @@ namespace Nektar
                 const int &numLocalCoeffs, const int &numGlobalCoeffs,
                 const Kokkos::View<int*> localToGlobalMap,
                 const Kokkos::View<double*> localToGlobalSign,
-                const int iteration)
+                const int iteration,
+                Kokkos::View<double*> transfer_in,
+                Kokkos::View<double*> transfer_out)
         {
-            //printf("%s %i\n", "do the global to local mapping", numLocalCoeffs);
-            Kokkos::View<double*> transfer_in("transfer_in", numLocalCoeffs);
-            //typename Kokkos::View< double*>::HostMirror h_transfer_in;
-            //h_transfer_in = Kokkos::create_mirror_view(transfer_in);
-
-            Kokkos::View<double*> transfer_out("transfer_out",numLocalCoeffs);
-            //typename Kokkos::View< double*>::HostMirror h_transfer_out;
-            //h_transfer_out = Kokkos::create_mirror_view(transfer_out);
+            //printf("%s %i\n", "do the global to local mapping", numLocalCoeffs);            
 
             Kokkos::parallel_for(range_policy(0,numLocalCoeffs), KOKKOS_LAMBDA (const int i)    		
             {
@@ -559,6 +572,8 @@ namespace Nektar
                 outarray[i] = 0.0;
             });
             
+            // do mapping on per element basis
+            // numLocalCoeffs = elmts * ncoeffs
             Kokkos::parallel_for( team_policy( 1 , Kokkos::AUTO )
                 , KOKKOS_LAMBDA ( const member_type& teamMember)
             {

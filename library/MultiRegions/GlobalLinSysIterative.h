@@ -75,7 +75,9 @@ namespace Nektar
                 Kokkos::MemoryTraits<Kokkos::Unmanaged> > ScratchViewType;
 
 
-
+            std::vector<std::vector<int> > CreateColourSets(
+                Array<OneD, const int> &localToGlobalMap,
+                int ncoeffs, int elmts);
 
 
             // functions for plain parallel Conjugate Gradient
@@ -196,7 +198,9 @@ namespace Nektar
                 const int &numLocalCoeffs, const int &numGlobalCoeffs,
                 const Kokkos::View<int*> localToGlobalMap,
                 const Kokkos::View<double*> localToGlobalSign,
-                const int iteration);
+                const int iteration,
+                Kokkos::View<double*> transfer_in,
+                Kokkos::View<double*> transfer_out);
 
 
             void GeneralMatrixOp_IterPerExp_Kokkos(
