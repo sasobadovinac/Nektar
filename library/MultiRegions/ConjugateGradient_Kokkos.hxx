@@ -551,7 +551,8 @@ namespace Nektar
                 const Kokkos::View<double*> localToGlobalSign,
                 const int iteration,
                 Kokkos::View<double*> transfer_in,
-                Kokkos::View<double*> transfer_out)
+                Kokkos::View<double*> transfer_out,
+                std::vector<std::vector<int> > coloursets)
         {
             //printf("%s %i\n", "do the global to local mapping", numLocalCoeffs);            
 
@@ -574,14 +575,45 @@ namespace Nektar
             
             // do mapping on per element basis
             // numLocalCoeffs = elmts * ncoeffs
-            Kokkos::parallel_for( team_policy( 1 , Kokkos::AUTO )
+            int ncs = coloursets.size();
+            int max_cs = 0;
+            for (int i = 0; i < ncs; ++i)
+            {
+                cs_sizes[i] = coloursets[cs].size();
+                max_cs = (max_cs < cs_sizes[i] ? cs_sizes[i] : max_cs);
+            }
+
+            Kokkos::View<int*> csSizeArray ("csSizeArray", ncs);                        
+            typename Kokkos::View<int*>::HostMirror h_csSizeArray;
+            h_coloursetArray = Kokkos::create_mirror_view(csSizeArray);
+            for (int cs = 0; cs < ncs; ++cs)
+            {
+                 h_csSizeArray[cs] = cs_sizes[cs];
+            }                   
+            Kokkos::deep_copy(csSizeArray,h_csSizeArray);
+
+            Kokkos::View<int**> coloursetArray ("coloursetArray", ncs, max_cs);                        
+            typename Kokkos::View<int**>::HostMirror h_coloursetArray;
+            h_coloursetArray = Kokkos::create_mirror_view(coloursetArray);
+            for (int cs = 0; cs < ncs; ++cs)
+            {
+                for (int el = 0; el < cs_sizes[cs]; ++el)
+                {
+                    h_coloursetArray[cs][el] = coloursets[cs][el];
+                }
+            }        
+            Kokkos::deep_copy(coloursetArray,h_coloursetArray);
+
+
+            Kokkos::parallel_for( team_policy( ncs , Kokkos::AUTO )
                 , KOKKOS_LAMBDA ( const member_type& teamMember)
             {
-                for (int i = 0; i < elmts; ++i)
+                const int cs = teamMember.league_rank();
+                for (int el = 0; el < cs_sizes[cs]; ++el)
                 {
                     Kokkos::parallel_for( Kokkos::TeamThreadRange( teamMember , ncoeffs ), [&] ( const int j)                         
                     { 
-                        int n = i * ncoeffs + j;
+                        int n = el * ncoeffs + j;
                         outarray[localToGlobalMap[n]] += localToGlobalSign[n] * transfer_out[n];
                     });
                 }
