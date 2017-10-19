@@ -201,7 +201,7 @@ namespace Nektar
                 const int iteration,
                 Kokkos::View<double*> transfer_in,
                 Kokkos::View<double*> transfer_out,
-                std::vector<std::vector<int> > coloursets);
+                const Kokkos::View<int**> coloursetArray, int cs_sizes[], int ncs);
 
 
             void GeneralMatrixOp_IterPerExp_Kokkos(

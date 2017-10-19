@@ -620,7 +620,7 @@ namespace Nektar
         std::vector<std::vector<int> > GlobalLinSysIterative::CreateColourSets(
                 Array<OneD, const int> &localToGlobalMap, int ncoeffs, int elmts)
         {
-            // create graph of connected elements
+            // ===== create graph of connected elements =====
             std::vector<std::vector<int>> el_connect;
             el_connect.resize(elmts);
             for (int e_n = 0; e_n < elmts; ++e_n)
@@ -654,19 +654,17 @@ namespace Nektar
                 printf("\n");
             }*/
 
-
-            // create element colourgroups based on graph           
-            
+            // ===== create element colourgroups based on graph =====
             std::vector<int> remain(elmts);
             for (int i = 0; i < remain.size(); ++i) // or use std::iota
             {
                 remain[i] = i;
             }
             std::vector<std::vector<int> > coloursets;
-            // loop until all free elements have been sorted
+                // loop until all free elements have been sorted
             while (remain.size() > 0)
             {
-                std::vector<int> colour;  // one colour
+                std::vector<int> colour;
                 std::set<int> locked;
                 std::set<int> completed;
                 for (int i = 0; i < remain.size(); i++)
@@ -675,7 +673,7 @@ namespace Nektar
                     {                            
                         colour.push_back(remain[i]);   // insert element into colour
                         completed.insert(remain[i]);    // insert sorted element into "completed" list
-                        for (int j = 0; j < el_connect[i].size(); j++)   // loop over all connected element
+                        for (int j = 0; j < el_connect[remain[i]].size(); j++)   // loop over all connected element
                         {
                             locked.insert(el_connect[remain[i]][j]);   // and flag these elements as locked
                         }
@@ -686,18 +684,16 @@ namespace Nektar
                 remain.clear();
                 for (int i = 0; i < tmp.size(); i++)
                 {
-                    if (completed.find(tmp[i]) == completed.end()) // if the lement is not completed
+                    if (completed.find(tmp[i]) == completed.end()) // if the element is not completed
                     {
                         remain.push_back(tmp[i]);
                     }
                 }
-                // include colour into vector of colours
+                // include colour into vector of coloursets
                 coloursets.push_back(colour);
-            }
-            
+            }            
             return coloursets;
-        }
-        
+        }        
 
     }
 }

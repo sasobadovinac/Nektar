@@ -87,8 +87,7 @@ namespace Nektar
     		{
             	h_diagonals(i) = NekDiagonals[i];
             });
-            Kokkos::deep_copy(diagonals,h_diagonals);
-                        
+            Kokkos::deep_copy(diagonals,h_diagonals);                        
 
             // copy mapping            
             Kokkos::View<double*> map ("map", nGlobal);                        
@@ -99,7 +98,6 @@ namespace Nektar
                 h_map(i) = m_map[i];
             });
             Kokkos::deep_copy(map,h_map);
-
 
              // copying lambda
             Kokkos::View<double[1],random_memory> lambda ("lambda");                        
@@ -158,7 +156,6 @@ namespace Nektar
             Kokkos::deep_copy(base1,h_base1);
             Kokkos::deep_copy(dbase1,h_dbase1);
 
-
             // copy coeff_offset to device 
             Kokkos::View<int*,random_memory> coeff_offset ("coeff_offset", elmts);                        
             typename Kokkos::View< int*>::HostMirror h_coeff_offset;
@@ -191,7 +188,6 @@ namespace Nektar
             Kokkos::deep_copy(D1,h_D1);
 
 
-
             // --------------------------------------------------------------------------------
             // Gathering  quadrature and laplacian metrics for each element
             int metricSize = elmts * nquad0 * nquad1;
@@ -209,9 +205,8 @@ namespace Nektar
             h_laplacian11Glo = Kokkos::create_mirror_view(laplacian11Glo);
 
             int numLocalCoeffs, numGlobalCoeffs;
-            Array<OneD, const int> NeklocalToGlobalMap; //numLocalCoeffs
-            Array<OneD, const NekDouble> NeklocalToGlobalSign; //numLocalCoeffs
-            
+            Array<OneD, const int> NeklocalToGlobalMap; //size = numLocalCoeffs
+            Array<OneD, const NekDouble> NeklocalToGlobalSign; //size = numLocalCoeffs            
 
             Array<OneD, NekDouble> NekquadMetricGlo (4*metricSize);
             Array<OneD, NekDouble> Neklaplacian00Glo(NekquadMetricGlo+metricSize);
@@ -225,7 +220,7 @@ namespace Nektar
                         NeklocalToGlobalMap, NeklocalToGlobalSign);
 
             // copying metrics
-           
+
             Kokkos::parallel_for(range_policy_host(0,metricSize), KOKKOS_LAMBDA (const int i)
     		{
             	h_quadMetricGlo(i) = NekquadMetricGlo[i];
@@ -244,8 +239,6 @@ namespace Nektar
             Kokkos::View<double*> localToGlobalSign ("localToGlobalSign", numLocalCoeffs);                        
             typename Kokkos::View< double*>::HostMirror h_localToGlobalSign;
             h_localToGlobalSign = Kokkos::create_mirror_view(localToGlobalSign);
-            //Array<OneD, const int> NeklocalToGlobalMap; //numLocalCoeffs
-            //Array<OneD, const NekDouble> NeklocalToGlobalSign; //numLocalCoeffs
             Kokkos::parallel_for(range_policy_host(0,numLocalCoeffs), KOKKOS_LAMBDA (const int i)
     		{
             	h_localToGlobalMap(i) = NeklocalToGlobalMap[i];
@@ -255,9 +248,9 @@ namespace Nektar
             Kokkos::deep_copy(localToGlobalSign,h_localToGlobalSign);
 
 
+            // creating and copying coloursets
             std::vector<std::vector<int> > coloursets = CreateColourSets(
                     NeklocalToGlobalMap, ncoeffs, elmts);
-
             /*for(int cs = 0; cs < coloursets.size(); ++cs)
             {
                 printf("colourset %i: ",cs);
@@ -266,7 +259,27 @@ namespace Nektar
                     printf("%i ",*it );
                 }
                 printf("\n");
-            }*/
+            }*/                
+            int ncs = coloursets.size();
+            int max_cs = 0;
+            int cs_sizes[ncs];
+            for (int i = 0; i < ncs; ++i)
+            {
+                cs_sizes[i] = coloursets[i].size();
+                max_cs = (max_cs < cs_sizes[i] ? cs_sizes[i] : max_cs);
+            }            
+
+            Kokkos::View<int**> coloursetArray ("coloursetArray", ncs, max_cs);                        
+            typename Kokkos::View<int**>::HostMirror h_coloursetArray;
+            h_coloursetArray = Kokkos::create_mirror_view(coloursetArray);
+            for (int cs = 0; cs < ncs; ++cs)
+            {
+                for (int el = 0; el < cs_sizes[cs]; ++el)
+                {
+                    h_coloursetArray(cs,el) = coloursets[cs][el];
+                }
+            }        
+            Kokkos::deep_copy(coloursetArray,h_coloursetArray);
 
             
             printf("%s\n", "finished data gathering");
@@ -321,11 +334,8 @@ namespace Nektar
             });          
             Kokkos::deep_copy(Output,h_Output);
 
-
-
             printf("%s\n", "finished data copying");
             //--------------------------------------------------------------------------
-
 
             // set size of heap memory on device
             /*#ifdef __CUDA_ARCH__
@@ -358,8 +368,7 @@ namespace Nektar
             for (int i = 0; i < nGlobal; ++i)
             {
                 rhs_magnitude += pInput[i] * pInput[i] * h_map[i];
-            }                    
-
+            }
 
             // If input residual is less than tolerance skip solve.
             totalIterations = 0;
@@ -375,26 +384,18 @@ namespace Nektar
 	            return;
             }
 
-
             // Timing
             Timer t;
             t.Start();
             
             //preconditioner
-            //m_precon->DoPreconditioner(r_A, tmp = w_A + nDir);
-            //Vmath::Vmul(nNonDir, &r_A[0], 1, &diagonals[0], 1, &w_A[nDir], 1);
             Kokkos::parallel_for(range_policy(0,nNonDir), KOKKOS_LAMBDA (const int i)
     		{
                 w_A[i+nDir] = r_A[i] * diagonals[i];
             });
 
             Kokkos::View<double*> transfer_in("transfer_in", numLocalCoeffs);
-            //typename Kokkos::View< double*>::HostMirror h_transfer_in;
-            //h_transfer_in = Kokkos::create_mirror_view(transfer_in);
-
             Kokkos::View<double*> transfer_out("transfer_out",numLocalCoeffs);
-            //typename Kokkos::View< double*>::HostMirror h_transfer_out;
-            //h_transfer_out = Kokkos::create_mirror_view(transfer_out);
             
             GeneralMatrixOp_Kokkos(
                     w_A, s_A, lambda,
@@ -405,7 +406,8 @@ namespace Nektar
                     D0, D1,
                     numLocalCoeffs, numGlobalCoeffs,
                     localToGlobalMap, localToGlobalSign,totalIterations,
-                    transfer_in, transfer_out);
+                    transfer_in, transfer_out,
+                    coloursetArray, cs_sizes, ncs);
 
             rho = 0.0;
             Kokkos::parallel_reduce(range_policy(0,nNonDir),KOKKOS_LAMBDA(const int i, NekDouble &irho)
@@ -426,7 +428,7 @@ namespace Nektar
             // Continue until convergence
             k = 0;
             totalIterations = 1;
-            while (true) //true
+            while (true)
             {
                 // CUDA Profiling
                 if (k == 0)
@@ -475,7 +477,8 @@ namespace Nektar
                     D0, D1,
                     numLocalCoeffs, numGlobalCoeffs,
                     localToGlobalMap, localToGlobalSign,totalIterations,
-                    transfer_in, transfer_out);               
+                    transfer_in, transfer_out,
+                    coloursetArray, cs_sizes, ncs);               
 
                 rho_new = 0.0;
                 Kokkos::parallel_reduce(range_policy(0,nNonDir),KOKKOS_LAMBDA(const int i, NekDouble &irho_new)
@@ -552,10 +555,9 @@ namespace Nektar
                 const int iteration,
                 Kokkos::View<double*> transfer_in,
                 Kokkos::View<double*> transfer_out,
-                std::vector<std::vector<int> > coloursets)
+                const Kokkos::View<int**> coloursetArray, int cs_sizes[], int ncs)
         {
-            //printf("%s %i\n", "do the global to local mapping", numLocalCoeffs);            
-
+            //printf("%s %i\n", "do the global to local mapping", numLocalCoeffs); 
             Kokkos::parallel_for(range_policy(0,numLocalCoeffs), KOKKOS_LAMBDA (const int i)    		
             {
                 transfer_in[i] = localToGlobalSign[i] * inarray[localToGlobalMap[i]];
@@ -573,52 +575,25 @@ namespace Nektar
                 outarray[i] = 0.0;
             });
             
-            // do mapping on per element basis
-            // numLocalCoeffs = elmts * ncoeffs
-            int ncs = coloursets.size();
-            int max_cs = 0;
-            for (int i = 0; i < ncs; ++i)
-            {
-                cs_sizes[i] = coloursets[cs].size();
-                max_cs = (max_cs < cs_sizes[i] ? cs_sizes[i] : max_cs);
-            }
-
-            Kokkos::View<int*> csSizeArray ("csSizeArray", ncs);                        
-            typename Kokkos::View<int*>::HostMirror h_csSizeArray;
-            h_coloursetArray = Kokkos::create_mirror_view(csSizeArray);
+            // do mapping on per element basis and using element colourgroups
+            // ( numLocalCoeffs = elmts * ncoeffs, elmts = sum(cs_sizes) )
             for (int cs = 0; cs < ncs; ++cs)
             {
-                 h_csSizeArray[cs] = cs_sizes[cs];
-            }                   
-            Kokkos::deep_copy(csSizeArray,h_csSizeArray);
-
-            Kokkos::View<int**> coloursetArray ("coloursetArray", ncs, max_cs);                        
-            typename Kokkos::View<int**>::HostMirror h_coloursetArray;
-            h_coloursetArray = Kokkos::create_mirror_view(coloursetArray);
-            for (int cs = 0; cs < ncs; ++cs)
-            {
-                for (int el = 0; el < cs_sizes[cs]; ++el)
-                {
-                    h_coloursetArray[cs][el] = coloursets[cs][el];
-                }
-            }        
-            Kokkos::deep_copy(coloursetArray,h_coloursetArray);
-
-
-            Kokkos::parallel_for( team_policy( ncs , Kokkos::AUTO )
+                Kokkos::parallel_for( team_policy( cs_sizes[cs] , Kokkos::AUTO )
                 , KOKKOS_LAMBDA ( const member_type& teamMember)
-            {
-                const int cs = teamMember.league_rank();
-                for (int el = 0; el < cs_sizes[cs]; ++el)
                 {
-                    Kokkos::parallel_for( Kokkos::TeamThreadRange( teamMember , ncoeffs ), [&] ( const int j)                         
-                    { 
-                        int n = el * ncoeffs + j;
-                        outarray[localToGlobalMap[n]] += localToGlobalSign[n] * transfer_out[n];
-                    });
-                }
-            });
-            
+                    const int i = teamMember.league_rank();
+                    {
+                        const int el = coloursetArray(cs,i);
+                        Kokkos::parallel_for( Kokkos::TeamThreadRange( teamMember , ncoeffs ), [&] ( const int j)                         
+                        { 
+                            const int n = el * ncoeffs + j;
+                            outarray[localToGlobalMap[n]] += localToGlobalSign[n] * transfer_out[n];
+                        });
+                    }
+                });
+                cudaDeviceSynchronize();
+            }            
             printf("\n");            
         }
 
@@ -642,10 +617,7 @@ namespace Nektar
                 const Kokkos::View<double*> D0,
                 const Kokkos::View<double*> D1)
         {
-            //printf("%s\n", "within GlobalLinSysIterative::GeneralMatrixOp_IterPerExp_Kokkos");
-            
             int nqtot   = nquad0*nquad1;
-            //int       wspsize = std::max(std::max(std::max(nqtot,ncoeffs),nquad1*nmodes0), nquad0*nmodes1);
             int max1 = (nqtot >= ncoeffs) ? nqtot : ncoeffs;
             int max2 = (nquad1*nmodes0 >= nquad0*nmodes1) ? nquad1*nmodes0 : nquad0*nmodes1;
             int wspsize = (max1 >= max2) ? max1 : max2;
@@ -653,7 +625,6 @@ namespace Nektar
             printf("%s %i\n", "perform operations by element, elements in total: ", elmts);
             int max_threads = 32;
             int no_teams = (elmts + max_threads - 1) / max_threads;
-
             int scratch_size = ScratchViewType::shmem_size(2*ncoeffs+4*wspsize);
 
             //Kokkos::parallel_for(range_policy(0,elmts),KOKKOS_LAMBDA (const int el)   {    
@@ -666,17 +637,13 @@ namespace Nektar
                 Kokkos::parallel_for( Kokkos::TeamThreadRange( teamMember , max_threads ), [&] ( const int el_i)
                 {
                     const int el = el_o * max_threads + el_i;
-                    //printf("el_pot = %i\n", el);
                     if (el < elmts)
                     {
-                        //printf("el = %i, el_o = %i, el_i = %i\n ", el, el_o, el_i);
-                        //NekDouble* tmp_inarray = (double*) malloc(ncoeffs * sizeof(double));
                         ScratchViewType s_tmp_inarray(teamMember.thread_scratch(1),ncoeffs);
                     	for (int i = 0; i < ncoeffs; ++i)
                         {
                             s_tmp_inarray[i] = transfer_in[coeff_offset[el]+i];
-                        }
-                                      
+                        }                                      
                         HelmholtzMatrixOp_MatFree_Kokkos(
                             s_tmp_inarray,
                             transfer_out,
@@ -689,8 +656,6 @@ namespace Nektar
                             nquad0, nquad1, nmodes0, nmodes1, ncoeffs,
                             base0, base1, dbase0, dbase1, D0, D1,
                             teamMember, wspsize);
-
-                        //free(tmp_inarray);
                     }
                 });                
             });
@@ -718,19 +683,10 @@ namespace Nektar
                 const member_type &teamMember, const int &wspsize)
         {
             int nqtot   = nquad0*nquad1;            
-            
-            //NekDouble* tmp_outarray = (double*) malloc(ncoeffs * sizeof(double));
             ScratchViewType s_tmp_outarray(teamMember.thread_scratch(1),ncoeffs);
-
-
-            // Allocate temporary storage
-            //NekDouble* wsp0 = (double*) malloc(wspsize * sizeof(double));            
-            //NekDouble* wsp1 = (double*) malloc(wspsize * sizeof(double));
-            //NekDouble* wsp2 = (double*) malloc(wspsize * sizeof(double));
             ScratchViewType s_wsp0(teamMember.thread_scratch(1),wspsize);
             ScratchViewType s_wsp1(teamMember.thread_scratch(1),wspsize);
-            ScratchViewType s_wsp2(teamMember.thread_scratch(1),wspsize);  
-
+            ScratchViewType s_wsp2(teamMember.thread_scratch(1),wspsize);
             
             BwdTrans_SumFacKernel_Kokkos(base0, base1, s_tmp_inarray, s_wsp0, s_wsp2,
                 nmodes0, nmodes1, nquad0, nquad1);
@@ -743,18 +699,13 @@ namespace Nektar
             IProductWRTBase_SumFacKernel_Kokkos(base0, base1, s_wsp1, s_tmp_outarray,
                                          s_wsp2, nmodes0, nmodes1, nquad0, nquad1);       	
                   	
-            //LaplacianMatrixOp_MatFree_Kernel
-
-            // Allocate temporary storage
-            //NekDouble* wsp1L = (double*) malloc(wspsize * sizeof(double));
+            // === LaplacianMatrixOp_MatFree_Kernel ===
             ScratchViewType s_wsp1L(teamMember.thread_scratch(1),wspsize);           
-            //NekDouble* wsp2L = wsp2;
             ScratchViewType s_wsp2L = s_wsp2;
 
             PhysTensorDeriv_Kokkos(s_wsp0,s_wsp1L,s_wsp2L, nquad0, nquad1, D0, D1);
 
-            //NekDouble* wsp0L = wsp0;
-            ScratchViewType s_wsp0L = s_wsp0;           
+            ScratchViewType s_wsp0L = s_wsp0;          
         
             for (int i = 0; i < nqtot; ++i)
             {
@@ -775,16 +726,12 @@ namespace Nektar
             {
                 s_wsp1[i] += s_wsp1L[i];
             }
+            // === end LaplacianMatrixOp_MatFree_Kernel ===
+
             for (int i = 0; i < ncoeffs; ++i)
             {
                 outarray[coeff_offset[el] + i] = lambda[0] * s_tmp_outarray[i] + s_wsp1[i];
             }
-
-            /*free(tmp_outarray);
-            free(wsp0);
-            free(wsp1);
-            free(wsp2);
-            free(wsp1L);*/
         }
 
         KOKKOS_INLINE_FUNCTION
@@ -800,8 +747,7 @@ namespace Nektar
             const double alpha = 1.0;
             const double beta = 0.0;
             plainDgemm('T','N',nquad1,nmodes0,nquad0,alpha,inarray.ptr_on_device(),nquad0,
-                        base0.ptr_on_device(),nquad0,beta,wsp.ptr_on_device(),nquad1);            
-
+                        base0.ptr_on_device(),nquad0,beta,wsp.ptr_on_device(),nquad1);
             int i, mode;
             for (mode=i=0; i < nmodes0; ++i)
             {
