@@ -62,7 +62,7 @@ namespace Nektar
             threads = 1;
             Kokkos::InitArguments args;
             args.num_threads = threads;
-            args.device_id = 1; // 0 - 1080, 1 - 970
+            args.device_id = 0; // 0 - 1080, 1 - 970
             Kokkos::initialize(args);
             printf("%s\n","kokkos initialised");
 
@@ -592,7 +592,7 @@ namespace Nektar
                         });
                     }
                 });
-                cudaDeviceSynchronize();
+                //cudaDeviceSynchronize();
             }            
             printf("\n");            
         }
@@ -746,7 +746,7 @@ namespace Nektar
         {               
             const double alpha = 1.0;
             const double beta = 0.0;
-            plainDgemm('T','N',nquad1,nmodes0,nquad0,alpha,inarray.ptr_on_device(),nquad0,
+            plainerDgemm('T','N',nquad1,nmodes0,nquad0,alpha,inarray.ptr_on_device(),nquad0,
                         base0.ptr_on_device(),nquad0,beta,wsp.ptr_on_device(),nquad1);
             int i, mode;
             for (mode=i=0; i < nmodes0; ++i)
@@ -784,7 +784,7 @@ namespace Nektar
             }
             plainDaxpy(nquad1,inarray[1],base1.ptr_on_device()+nquad1,1,
                             wsp.ptr_on_device()+nquad1,1);
-            plainDgemm('N','T', nquad0,nquad1,nmodes0,alpha, base0.ptr_on_device(),nquad0,
+            plainerDgemm('N','T', nquad0,nquad1,nmodes0,alpha, base0.ptr_on_device(),nquad0,
                         wsp.ptr_on_device(), nquad1,beta,outarray.ptr_on_device(), nquad0);
         }
 
@@ -800,10 +800,10 @@ namespace Nektar
         {
             const double alpha = 1.0;
             const double beta = 0.0;
-            plainDgemm('N', 'N', nquad0, nquad1, nquad0, alpha,
+            plainerDgemm('N', 'N', nquad0, nquad1, nquad0, alpha,
                     (D0.ptr_on_device()), nquad0, inarray.ptr_on_device(), nquad0, beta,
                     outarray_d0.ptr_on_device(), nquad0);
-            plainDgemm('N', 'T', nquad0, nquad1, nquad1, alpha, inarray.ptr_on_device(), nquad0,
+            plainerDgemm('N', 'T', nquad0, nquad1, nquad1, alpha, inarray.ptr_on_device(), nquad0,
                      (D1.ptr_on_device()), nquad1, beta, outarray_d1.ptr_on_device(), nquad0);
         }
 

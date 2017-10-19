@@ -488,6 +488,215 @@ namespace MultiRegions
     } /* dgemm_ */
 
 
+
+    KOKKOS_INLINE_FUNCTION
+    int plainerDgemm(char transa, char transb, int m, int n, int k,
+        const double alpha, const double *a, int lda, const double *b,
+        int ldb, const double beta, double *c, int ldc)
+    {
+        /* Local variables */
+        int i, j, l;
+        bool nota, notb;
+        double temp;
+
+        /* Parameter adjustments */
+        a -= 1 + lda;
+        b -= 1 + ldb;
+        c -= 1 + ldc;
+
+        /* Function Body */
+        nota = (transa == 'N');
+        notb = (transb == 'N');       
+    
+
+    /*     Quick return if possible. */
+
+        if (m == 0 || n == 0 || (alpha == 0. || k == 0) && beta == 1.) {
+        return 0;
+        }
+
+    /*     And if  alpha.eq.zero. */
+
+        if (alpha == 0.) {
+        if (beta == 0.) {
+            for (j = 1; j <= n; ++j) {            
+            for (i = 1; i <= m; ++i) {
+                c[i + j * ldc] = 0.;
+    /* L10: */
+            }
+    /* L20: */
+            }
+        } else {
+            for (j = 1; j <= n; ++j) {            
+            for (i = 1; i <= m; ++i) {
+            c[i + j * ldc] = beta * c[i + j * ldc];
+    /* L30: */
+            }
+    /* L40: */
+            }
+        }
+        return 0;
+        }
+
+    /*     Start the operations. */
+        if (beta == 0.) { //======================================
+        if (notb) {
+        if (nota) {
+    /*           Form  C := alpha*A*B + beta*C. */
+            for (j = 1; j <= n; ++j) {                           
+                for (i = 1; i <= m; ++i) {
+                c[i + j * ldc] = 0.;
+    /* L50: */
+                }            
+            for (l = 1; l <= k; ++l) {                
+                if (b[l + j * ldb] != 0.) {
+                temp = alpha * b[l + j * ldb];
+                for (i = 1; i <= m; ++i) {
+                c[i + j * ldc] += temp * a[i + l * lda];
+    /* L70: */
+                }
+                }               
+    /* L80: */
+            }
+    /* L90: */
+            }
+        } else {
+    /*           Form  C := alpha*A'*B + beta*C */
+            for (j = 1; j <= n; ++j) {            
+            for (i = 1; i <= m; ++i) {
+                temp = 0.;
+                for (l = 1; l <= k; ++l) {
+                temp += a[l + i * lda] * b[l + j * ldb];
+    /* L100: */
+                }                
+                c[i + j * ldc] = alpha * temp;                
+    /* L110: */
+            }
+    /* L120: */
+            }
+        }
+        } else {
+        if (nota) {
+    /*           Form  C := alpha*A*B' + beta*C */
+            for (j = 1; j <= n; ++j) {                            
+                for (i = 1; i <= m; ++i) {
+                c[i + j * ldc] = 0.;
+    /* L130: */
+                }            
+            for (l = 1; l <= k; ++l) {                
+                if (b[j + l * ldb] != 0.) {
+                temp = alpha * b[j + l * ldb];
+                for (i = 1; i <= m; ++i) {
+                c[i + j * ldc] += temp * a[i + l * lda];
+    /* L150: */
+                }
+                }              
+    /* L160: */
+            }
+    /* L170: */
+            }
+        } else {
+    /*           Form  C := alpha*A'*B' + beta*C */
+            for (j = 1; j <= n; ++j) {            
+            for (i = 1; i <= m; ++i) {
+                temp = 0.;
+                for (l = 1; l <= k; ++l) {
+                temp += a[l + i * lda] * b[j + l * ldb];
+    /* L180: */
+                }                
+                c[i + j * ldc] = alpha * temp;                
+    /* L190: */
+            }
+    /* L200: */
+            }
+        }
+        }
+
+        }
+        else { //  if beta != 0. ====================================
+
+        if (notb) {
+        if (nota) {
+    /*           Form  C := alpha*A*B + beta*C. */
+            for (j = 1; j <= n; ++j) {                           
+                for (i = 1; i <= m; ++i) {
+                c[i + j * ldc] = beta * c[i + j * ldc];
+    /* L60: */
+                }            
+            for (l = 1; l <= k; ++l) {
+                if (b[l + j * ldb] != 0.) {
+                temp = alpha * b[l + j * ldb];
+                for (i = 1; i <= m; ++i) {
+                c[i + j * ldc] += temp * a[i + l * lda];
+    /* L70: */
+                }
+                }
+    /* L80: */
+            }
+    /* L90: */
+            }
+        } else {
+    /*           Form  C := alpha*A'*B + beta*C */
+            for (j = 1; j <= n; ++j) {            
+            for (i = 1; i <= m; ++i) {
+                temp = 0.;
+                for (l = 1; l <= k; ++l) {
+                temp += a[l + i * lda] * b[l + j * ldb];
+    /* L100: */
+                }                
+                c[i + j * ldc] = alpha * temp + beta * c[
+                    i + j * ldc];                
+    /* L110: */
+            }
+    /* L120: */
+            }
+        }
+        } else {
+        if (nota) {
+    /*           Form  C := alpha*A*B' + beta*C */
+            for (j = 1; j <= n; ++j) {                           
+                for (i = 1; i <= m; ++i) {
+                c[i + j * ldc] = beta * c[i + j * ldc];
+    /* L140: */
+                }            
+            for (l = 1; l <= k; ++l) {
+                if (b[j + l * ldb] != 0.) {
+                temp = alpha * b[j + l * ldb];
+                for (i = 1; i <= m; ++i) {
+                c[i + j * ldc] += temp * a[i + l * lda];
+    /* L150: */
+                }
+                }
+    /* L160: */
+            }
+    /* L170: */
+            }
+        } else {
+    /*           Form  C := alpha*A'*B' + beta*C */
+            for (j = 1; j <= n; ++j) {            
+            for (i = 1; i <= m; ++i) {
+                temp = 0.;
+                for (l = 1; l <= k; ++l) {
+                temp += a[l + i * lda] * b[j + l * ldb];
+    /* L180: */
+                }                
+                c[i + j * ldc] = alpha * temp + beta * c[
+                    i + j * ldc];                
+    /* L190: */
+            }
+    /* L200: */
+            }
+        }
+        }
+        }
+
+        return 0;
+
+    /*     End of DGEMM . */
+
+    } /* dgemm_ */
+
+
 }
 }
 

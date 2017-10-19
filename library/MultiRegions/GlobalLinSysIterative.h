@@ -272,27 +272,7 @@ namespace Nektar
                 const int &nquad0, const int &nquad1,
                 const Kokkos::View<double*> D0,
                 const Kokkos::View<double*> D1);
-
-
-            /*KOKKOS_INLINE_FUNCTION
-            double plainDdot(int n, const double *dx, int incx,
-                    const double *dy, int incy);
-
-            KOKKOS_INLINE_FUNCTION
-            int plainDaxpy(int n, const double da, const double *dx,
-                    int incx, double *dy, int incy);
-
-            KOKKOS_INLINE_FUNCTION
-            int plainDgemm(char transa, char transb, int m, int n, int k,
-                    const double alpha, const double *a, int lda, const double *b,
-                    int ldb, const double beta, double *c, int ldc);
-
-            KOKKOS_INLINE_FUNCTION
-            int plainDgemv(char trans, int m, int n, const double alpha,
-                    const double *a, int lda, const double *x, int incx,
-                    const double beta, double *y, int incy);*/
-
-
+            
 
         protected:
             /// Global to universal unique map
