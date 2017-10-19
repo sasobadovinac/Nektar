@@ -24,6 +24,7 @@ v5.0.0
 - Added support for using the distance to a specific region (e.g. outlet) in the
   function definitions for the Absorption Forcing (!769)
 - Improve performance of DisContField2D::v_ExtractTracePhys (!824)
+- Added Expansion reseting within the MeshGraph (!848)
 
 **NekMesh**:
 - Add feature to read basic 2D geo files as CAD (!731)
@@ -495,7 +496,6 @@ v4.1.0
 - Add fixes to support native Nektar++ extension in VisIt visulisation software
   (!490)
 - Fix warnings on OS X (!491)
-- Added the Expansion reset within the MeshGraph (!848)
 
 **CardiacEPSolver:**
 - Fixes for stimuli (!442, !446), conductivity (!441), cell restarts (!458)
