@@ -129,7 +129,7 @@ namespace Nektar
             u[i] = Array<OneD, NekDouble>(nTotQuadPoints);
         }
         
-        EvaluateIsentropicVortex(x, y, z, u, 0.0);
+        EvaluateIsentropicVortex(x, y, z, u, time);
         
         Vmath::Vcopy(nTotQuadPoints, u[field], 1, outfield, 1);
     }

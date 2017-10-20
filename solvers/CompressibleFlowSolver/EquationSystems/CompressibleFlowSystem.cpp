@@ -764,11 +764,11 @@ namespace Nektar
         NekDouble TimeStep = Vmath::Vmin(nElements, tstep, 1);
         m_comm->AllReduce(TimeStep, LibUtilities::ReduceMin);
         
-        if (m_session->GetComm()->GetRank() == 0)
-        {
-            cout << "TimeStep = " << TimeStep << endl;
-        }
-            
+//        if (m_session->GetComm()->GetRank() == 0)
+//        {
+//           cout << "TimeStep = " << TimeStep << endl;
+//        }
+        
         return TimeStep;
     }
 

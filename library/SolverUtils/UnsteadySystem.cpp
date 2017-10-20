@@ -256,6 +256,9 @@ namespace Nektar
             NekDouble lastCheckTime = 0.0;
             NekDouble cpuTime       = 0.0;
             NekDouble elapsed       = 0.0;
+            
+            NekDouble dtt = GetTimeStep(fields);
+            std::cout << "dtt = " << dtt << std::endl;
 
             while (step   < m_steps ||
                    m_time < m_fintime - NekConstants::kNekZeroTol)
@@ -295,7 +298,7 @@ namespace Nektar
                 intTime += elapsed;
                 cpuTime += elapsed;
 		
-                NekDouble dtt = GetTimeStep(fields);
+//                NekDouble dtt = GetTimeStep(fields);
 
                 // Write out status information
                 if (m_session->GetComm()->GetRank() == 0 && 
