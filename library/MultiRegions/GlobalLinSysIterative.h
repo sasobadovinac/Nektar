@@ -199,12 +199,10 @@ namespace Nektar
                 const Kokkos::View<int*> localToGlobalMap,
                 const Kokkos::View<double*> localToGlobalSign,
                 const int iteration,
-                Kokkos::View<double*> transfer_in,
-                Kokkos::View<double*> transfer_out,
                 const Kokkos::View<int**> coloursetArray, int cs_sizes[], int ncs);
 
 
-            void GeneralMatrixOp_IterPerExp_Kokkos(
+            void GeneralMatrixOp_IterPerExp_Kokkos_Cuda(
                 const Kokkos::View<double*> transfer_in,
                 Kokkos::View<double*> transfer_out,
                 const Kokkos::View<double[1]> lambda,

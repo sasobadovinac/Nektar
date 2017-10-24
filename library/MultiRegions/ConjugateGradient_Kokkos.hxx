@@ -396,9 +396,6 @@ namespace Nektar
                 w_A[i+nDir] = r_A[i] * diagonals[i];
             });
 
-            Kokkos::View<double*> transfer_in("transfer_in", numLocalCoeffs);
-            Kokkos::View<double*> transfer_out("transfer_out",numLocalCoeffs);
-            
             GeneralMatrixOp_Kokkos(
                     w_A, s_A, lambda,
                     quadMetricGlo, laplacian00Glo, laplacian01Glo, laplacian11Glo,
@@ -408,7 +405,6 @@ namespace Nektar
                     D0, D1,
                     numLocalCoeffs, numGlobalCoeffs,
                     localToGlobalMap, localToGlobalSign,totalIterations,
-                    transfer_in, transfer_out,
                     coloursetArray, cs_sizes, ncs);
 
             rho = 0.0;
@@ -481,7 +477,6 @@ namespace Nektar
                     D0, D1,
                     numLocalCoeffs, numGlobalCoeffs,
                     localToGlobalMap, localToGlobalSign,totalIterations,
-                    transfer_in, transfer_out,
                     coloursetArray, cs_sizes, ncs);               
 
                 rho_new = 0.0;
@@ -557,17 +552,18 @@ namespace Nektar
                 const Kokkos::View<int*> localToGlobalMap,
                 const Kokkos::View<double*> localToGlobalSign,
                 const int iteration,
-                Kokkos::View<double*> transfer_in,
-                Kokkos::View<double*> transfer_out,
                 const Kokkos::View<int**> coloursetArray, int cs_sizes[], int ncs)
         {
-            //printf("%s %i\n", "do the global to local mapping", numLocalCoeffs); 
+            //printf("%s %i\n", "do the global to local mapping", numLocalCoeffs);
+            Kokkos::View<double*> transfer_in("transfer_in", numLocalCoeffs);
+            Kokkos::View<double*> transfer_out("transfer_out",numLocalCoeffs);
+             
             Kokkos::parallel_for(range_policy(0,numLocalCoeffs), KOKKOS_LAMBDA (const int i)    		
             {
                 transfer_in[i] = localToGlobalSign[i] * inarray[localToGlobalMap[i]];
             });
             
-            GeneralMatrixOp_IterPerExp_Kokkos(transfer_in,transfer_out,lambda,
+            GeneralMatrixOp_IterPerExp_Kokkos_Cuda(transfer_in,transfer_out,lambda,
                     quadMetricGlo, laplacian00Glo,laplacian01Glo,laplacian11Glo,                    
                     nquad0, nquad1, nmodes0, nmodes1, ncoeffs,
                     coeff_offset, elmts,
@@ -602,7 +598,7 @@ namespace Nektar
         }
 
 
-        void GlobalLinSysIterative::GeneralMatrixOp_IterPerExp_Kokkos(
+        void GlobalLinSysIterative::GeneralMatrixOp_IterPerExp_Kokkos_Cuda(
                 const Kokkos::View<double*> transfer_in,
                 Kokkos::View<double*> transfer_out,
                 const Kokkos::View<double[1]> lambda,
