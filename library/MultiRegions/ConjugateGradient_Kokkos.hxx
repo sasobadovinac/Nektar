@@ -38,7 +38,9 @@
 #include <MultiRegions/GlobalLinSysIterative.h>
 #include <MultiRegions/ConjugateGradient_BLAS.hxx>
 
+#ifdef __CUDA_ARCH__
 #include "cudaProfiler.h"
+#endif
 
 using namespace std;
 
@@ -431,6 +433,7 @@ namespace Nektar
             while (true)
             {
                 // CUDA Profiling
+                #ifdef __CUDA_ARCH__
                 if (k == 0)
                 {
                     cuProfilerStart();
@@ -440,6 +443,7 @@ namespace Nektar
                     cudaDeviceSynchronize();
                     cuProfilerStop();
                 }
+                #endif
 
                 if(k >= maxiter)
                 {
