@@ -199,10 +199,11 @@ namespace Nektar
                 const Kokkos::View<int*> localToGlobalMap,
                 const Kokkos::View<double*> localToGlobalSign,
                 const int iteration,
-                const Kokkos::View<int**> coloursetArray, int cs_sizes[], int ncs);
+                const Kokkos::View<int**> coloursetArray, int cs_sizes[], int ncs,
+                const int base0_len, const int base1_len);
 
 
-            void GeneralMatrixOp_IterPerExp_Kokkos_Cuda(
+            void GeneralMatrixOp_IterPerExp_Kokkos(
                 const Kokkos::View<double*> transfer_in,
                 Kokkos::View<double*> transfer_out,
                 const Kokkos::View<double[1]> lambda,
@@ -219,7 +220,8 @@ namespace Nektar
                 const Kokkos::View<double*> dbase0,
                 const Kokkos::View<double*> dbase1,
                 const Kokkos::View<double*> D0,
-                const Kokkos::View<double*> D1);
+                const Kokkos::View<double*> D1,
+                const int base0_len, const int base1_len);
 
             KOKKOS_INLINE_FUNCTION
             void HelmholtzMatrixOp_MatFree_Kokkos(
@@ -232,20 +234,32 @@ namespace Nektar
                 const Kokkos::View<double*> laplacian00Glo,
                 const Kokkos::View<double*> laplacian01Glo,
                 const Kokkos::View<double*> laplacian11Glo,
+                /*const ScratchViewType s_quadMetric,
+                const ScratchViewType s_laplacian00,
+                const ScratchViewType s_laplacian01,
+                const ScratchViewType s_laplacian11,*/
                 const int &nquad0, const int &nquad1,
                 const int &nmodes0, const int &nmodes1, const int &ncoeffs,
-                const Kokkos::View<double*> base0,
+                /*const Kokkos::View<double*> base0,
                 const Kokkos::View<double*> base1,
                 const Kokkos::View<double*> dbase0,
                 const Kokkos::View<double*> dbase1,
                 const Kokkos::View<double*> D0,
-                const Kokkos::View<double*> D1,
+                const Kokkos::View<double*> D1,*/
+                const ScratchViewType s_base0,
+                const ScratchViewType s_base1,
+                const ScratchViewType s_dbase0,
+                const ScratchViewType s_dbase1,
+                const ScratchViewType s_D0,
+                const ScratchViewType s_D1,
                 const member_type &teamMember, const int &wspsize);
 
             KOKKOS_INLINE_FUNCTION
             void IProductWRTBase_SumFacKernel_Kokkos(
-                const Kokkos::View<double*> base0,
-                const Kokkos::View<double*> base1,
+                //const Kokkos::View<double*> base0,
+                //const Kokkos::View<double*> base1,
+                const ScratchViewType base0,
+                const ScratchViewType base1,
                 const ScratchViewType inarray,
                 ScratchViewType outarray,
                 ScratchViewType wsp,
@@ -254,8 +268,10 @@ namespace Nektar
 
             KOKKOS_INLINE_FUNCTION
             void BwdTrans_SumFacKernel_Kokkos(
-                const Kokkos::View<double*> base0,
-                const Kokkos::View<double*> base1,
+                //const Kokkos::View<double*> base0,
+                //const Kokkos::View<double*> base1,
+                const ScratchViewType base0,
+                const ScratchViewType base1,
                 const ScratchViewType inarray,
                 ScratchViewType outarray,
                 ScratchViewType wsp,
@@ -268,8 +284,10 @@ namespace Nektar
                 ScratchViewType outarray_d0,
                 ScratchViewType outarray_d1,
                 const int &nquad0, const int &nquad1,
-                const Kokkos::View<double*> D0,
-                const Kokkos::View<double*> D1);
+                //const Kokkos::View<double*> D0,
+                //const Kokkos::View<double*> D1,
+                const ScratchViewType D0,
+                const ScratchViewType D1);
             
 
         protected:

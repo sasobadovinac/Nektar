@@ -38,9 +38,9 @@
 #include <MultiRegions/GlobalLinSysIterative.h>
 #include <MultiRegions/ConjugateGradient_BLAS.hxx>
 
-#ifdef __CUDA_ARCH__
+//#ifdef __CUDA_ARCH__
 #include "cudaProfiler.h"
-#endif
+//#endif
 
 using namespace std;
 
@@ -334,7 +334,7 @@ namespace Nektar
     		{
                 h_Output[i+nDir] = 0.0;
             });          
-            Kokkos::deep_copy(Output,h_Output);
+            Kokkos::deep_copy(Output,h_Output);            
 
             printf("%s\n", "finished data copying");
             //--------------------------------------------------------------------------
@@ -405,7 +405,8 @@ namespace Nektar
                     D0, D1,
                     numLocalCoeffs, numGlobalCoeffs,
                     localToGlobalMap, localToGlobalSign,totalIterations,
-                    coloursetArray, cs_sizes, ncs);
+                    coloursetArray, cs_sizes, ncs,
+                    base0_len, base1_len);
 
             rho = 0.0;
             Kokkos::parallel_reduce(range_policy(0,nNonDir),KOKKOS_LAMBDA(const int i, NekDouble &irho)
@@ -429,7 +430,7 @@ namespace Nektar
             while (true)
             {
                 // CUDA Profiling
-                #ifdef __CUDA_ARCH__
+                //#ifdef __CUDA_ARCH__
                 if (k == 0)
                 {
                     cuProfilerStart();
@@ -439,7 +440,7 @@ namespace Nektar
                     cudaDeviceSynchronize();
                     cuProfilerStop();
                 }
-                #endif
+                //#endif
 
                 if(k >= maxiter)
                 {
@@ -477,7 +478,8 @@ namespace Nektar
                     D0, D1,
                     numLocalCoeffs, numGlobalCoeffs,
                     localToGlobalMap, localToGlobalSign,totalIterations,
-                    coloursetArray, cs_sizes, ncs);               
+                    coloursetArray, cs_sizes, ncs,
+                    base0_len, base1_len);               
 
                 rho_new = 0.0;
                 Kokkos::parallel_reduce(range_policy(0,nNonDir),KOKKOS_LAMBDA(const int i, NekDouble &irho_new)
@@ -552,7 +554,8 @@ namespace Nektar
                 const Kokkos::View<int*> localToGlobalMap,
                 const Kokkos::View<double*> localToGlobalSign,
                 const int iteration,
-                const Kokkos::View<int**> coloursetArray, int cs_sizes[], int ncs)
+                const Kokkos::View<int**> coloursetArray, int cs_sizes[], int ncs,
+                const int base0_len, const int base1_len)
         {
             //printf("%s %i\n", "do the global to local mapping", numLocalCoeffs);
             Kokkos::View<double*> transfer_in("transfer_in", numLocalCoeffs);
@@ -563,11 +566,12 @@ namespace Nektar
                 transfer_in[i] = localToGlobalSign[i] * inarray[localToGlobalMap[i]];
             });
             
-            GeneralMatrixOp_IterPerExp_Kokkos_Cuda(transfer_in,transfer_out,lambda,
+            GeneralMatrixOp_IterPerExp_Kokkos(transfer_in,transfer_out,lambda,
                     quadMetricGlo, laplacian00Glo,laplacian01Glo,laplacian11Glo,                    
                     nquad0, nquad1, nmodes0, nmodes1, ncoeffs,
                     coeff_offset, elmts,
-                    base0, base1, dbase0, dbase1, D0, D1);
+                    base0, base1, dbase0, dbase1, D0, D1,
+                    base0_len, base1_len);
             
             //printf("\n%s\n", "do the local to global mapping");
             Kokkos::parallel_for(range_policy(0,numGlobalCoeffs), KOKKOS_LAMBDA (const int i)    		
@@ -598,7 +602,7 @@ namespace Nektar
         }
 
 
-        void GlobalLinSysIterative::GeneralMatrixOp_IterPerExp_Kokkos_Cuda(
+        void GlobalLinSysIterative::GeneralMatrixOp_IterPerExp_Kokkos(
                 const Kokkos::View<double*> transfer_in,
                 Kokkos::View<double*> transfer_out,
                 const Kokkos::View<double[1]> lambda,
@@ -615,7 +619,8 @@ namespace Nektar
                 const Kokkos::View<double*> dbase0,
                 const Kokkos::View<double*> dbase1,
                 const Kokkos::View<double*> D0,
-                const Kokkos::View<double*> D1)
+                const Kokkos::View<double*> D1,
+                const int base0_len, const int base1_len)
         {
             int nqtot   = nquad0*nquad1;
             int max1 = (nqtot >= ncoeffs) ? nqtot : ncoeffs;
@@ -625,14 +630,52 @@ namespace Nektar
             printf("%s %i\n", "perform operations by element, elements in total: ", elmts);
             int max_threads = 32;
             int no_teams = (elmts + max_threads - 1) / max_threads;
-            int scratch_size = ScratchViewType::shmem_size(2*ncoeffs+4*wspsize);
+            int scratch_size_thread = ScratchViewType::shmem_size(0 * nqtot + 2*ncoeffs+4*wspsize);
+            int scratch_size_team = ScratchViewType::shmem_size(
+                2 * base0_len + 2 * base1_len + nquad0*nquad0 + nquad1*nquad1);
 
             //Kokkos::parallel_for(range_policy(0,elmts),KOKKOS_LAMBDA (const int el)   {    
-            Kokkos::parallel_for( team_policy( no_teams , Kokkos::AUTO )
-                .set_scratch_size(1,Kokkos::PerThread(scratch_size))
+            Kokkos::parallel_for( team_policy( no_teams , max_threads )
+                .set_scratch_size(1,Kokkos::PerThread(scratch_size_thread))
+                .set_scratch_size(0,Kokkos::PerTeam(scratch_size_team))
                 , KOKKOS_LAMBDA ( const member_type& teamMember)
             {
                 const int el_o = teamMember.league_rank();
+
+                // load per team scratch views
+                ScratchViewType s_base0(teamMember.team_scratch(0),base0_len);
+                ScratchViewType s_base1(teamMember.team_scratch(0),base1_len);
+                ScratchViewType s_dbase0(teamMember.team_scratch(0),base0_len);
+                ScratchViewType s_dbase1(teamMember.team_scratch(0),base1_len);
+                ScratchViewType s_D0(teamMember.team_scratch(0),nquad0*nquad0);
+                ScratchViewType s_D1(teamMember.team_scratch(0),nquad1*nquad1);
+
+                Kokkos::parallel_for( Kokkos::TeamThreadRange( teamMember , base0_len ), [&] ( const int i)
+                {
+                    s_base0[i] = base0[i];
+                });
+                Kokkos::parallel_for( Kokkos::TeamThreadRange( teamMember , base1_len ), [&] ( const int i)
+                {
+                    s_base1[i] = base1[i];
+                });
+                Kokkos::parallel_for( Kokkos::TeamThreadRange( teamMember , base0_len ), [&] ( const int i)
+                {
+                    s_dbase0[i] = dbase0[i];
+                });
+                Kokkos::parallel_for( Kokkos::TeamThreadRange( teamMember , base1_len ), [&] ( const int i)
+                {
+                    s_dbase1[i] = dbase1[i];
+                });
+                Kokkos::parallel_for( Kokkos::TeamThreadRange( teamMember , nquad0*nquad0 ), [&] ( const int i)
+                {
+                    s_D0[i] = D0[i];
+                });
+                Kokkos::parallel_for( Kokkos::TeamThreadRange( teamMember , nquad1*nquad1 ), [&] ( const int i)
+                {
+                    s_D1[i] = D1[i];
+                });
+
+                teamMember.team_barrier();
                 
                 Kokkos::parallel_for( Kokkos::TeamThreadRange( teamMember , max_threads ), [&] ( const int el_i)
                 {
@@ -643,7 +686,29 @@ namespace Nektar
                     	for (int i = 0; i < ncoeffs; ++i)
                         {
                             s_tmp_inarray[i] = transfer_in[coeff_offset[el]+i];
-                        }                                      
+                        }
+
+                        /*ScratchViewType s_quadMetric(teamMember.thread_scratch(1),nqtot);
+                        ScratchViewType s_laplacian00(teamMember.thread_scratch(1),nqtot);
+                        ScratchViewType s_laplacian01(teamMember.thread_scratch(1),nqtot);
+                        ScratchViewType s_laplacian11(teamMember.thread_scratch(1),nqtot);
+                        for (int i = 0; i < nqtot; ++i)
+                        {
+                            s_quadMetric[i] = quadMetricGlo[el*nqtot+i];
+                        }
+                        for (int i = 0; i < nqtot; ++i)
+                        {
+                            s_laplacian00[i] = laplacian00Glo[el*nqtot+i];
+                        }
+                        for (int i = 0; i < nqtot; ++i)
+                        {
+                            s_laplacian01[i] = laplacian01Glo[el*nqtot+i];
+                        }
+                        for (int i = 0; i < nqtot; ++i)
+                        {
+                            s_laplacian11[i] = laplacian11Glo[el*nqtot+i];
+                        }*/
+
                         HelmholtzMatrixOp_MatFree_Kokkos(
                             s_tmp_inarray,
                             transfer_out,
@@ -653,8 +718,12 @@ namespace Nektar
                             laplacian00Glo,
                             laplacian01Glo,
                             laplacian11Glo,
+                            /* s_quadMetric,
+                            s_laplacian00,
+                            s_laplacian01,
+                            s_laplacian11,*/
                             nquad0, nquad1, nmodes0, nmodes1, ncoeffs,
-                            base0, base1, dbase0, dbase1, D0, D1,
+                            s_base0, s_base1, s_dbase0, s_dbase1, s_D0, s_D1,
                             teamMember, wspsize);
                     }
                 });                
@@ -672,14 +741,24 @@ namespace Nektar
                 const Kokkos::View<double*> laplacian00Glo,
                 const Kokkos::View<double*> laplacian01Glo,
                 const Kokkos::View<double*> laplacian11Glo,
+                /*const ScratchViewType s_quadMetric,
+                const ScratchViewType s_laplacian00,
+                const ScratchViewType s_laplacian01,
+                const ScratchViewType s_laplacian11,*/
                 const int &nquad0, const int &nquad1,
                 const int &nmodes0, const int &nmodes1, const int &ncoeffs,
-                const Kokkos::View<double*> base0,
+                /*const Kokkos::View<double*> base0,
                 const Kokkos::View<double*> base1,
                 const Kokkos::View<double*> dbase0,
                 const Kokkos::View<double*> dbase1,
                 const Kokkos::View<double*> D0,
-                const Kokkos::View<double*> D1,
+                const Kokkos::View<double*> D1,*/
+                const ScratchViewType s_base0,
+                const ScratchViewType s_base1,
+                const ScratchViewType s_dbase0,
+                const ScratchViewType s_dbase1,
+                const ScratchViewType s_D0,
+                const ScratchViewType s_D1,
                 const member_type &teamMember, const int &wspsize)
         {
             int nqtot   = nquad0*nquad1;            
@@ -687,39 +766,44 @@ namespace Nektar
             ScratchViewType s_wsp0(teamMember.thread_scratch(1),wspsize);
             ScratchViewType s_wsp1(teamMember.thread_scratch(1),wspsize);
             ScratchViewType s_wsp2(teamMember.thread_scratch(1),wspsize);
-            
-            BwdTrans_SumFacKernel_Kokkos(base0, base1, s_tmp_inarray, s_wsp0, s_wsp2,
+
+            BwdTrans_SumFacKernel_Kokkos(s_base0, s_base1, s_tmp_inarray, s_wsp0, s_wsp2,
                 nmodes0, nmodes1, nquad0, nquad1);
             
             for (int i = 0; i < nqtot; ++i)
             {
                 s_wsp1[i] = quadMetricGlo[el*nqtot+i] * s_wsp0[i];
+                //s_wsp1[i] = s_quadMetric[i] * s_wsp0[i];
             }
             
-            IProductWRTBase_SumFacKernel_Kokkos(base0, base1, s_wsp1, s_tmp_outarray,
+            IProductWRTBase_SumFacKernel_Kokkos(s_base0, s_base1, s_wsp1, s_tmp_outarray,
                                          s_wsp2, nmodes0, nmodes1, nquad0, nquad1);       	
                   	
             // === LaplacianMatrixOp_MatFree_Kernel ===
             ScratchViewType s_wsp1L(teamMember.thread_scratch(1),wspsize);           
             ScratchViewType s_wsp2L = s_wsp2;
 
-            PhysTensorDeriv_Kokkos(s_wsp0,s_wsp1L,s_wsp2L, nquad0, nquad1, D0, D1);
+            PhysTensorDeriv_Kokkos(s_wsp0,s_wsp1L,s_wsp2L, nquad0, nquad1, s_D0, s_D1);
 
             ScratchViewType s_wsp0L = s_wsp0;          
         
             for (int i = 0; i < nqtot; ++i)
             {
                 s_wsp0L[i] = laplacian00Glo[el*nqtot+i] * s_wsp1L[i] 
-                         + laplacian01Glo[el*nqtot+i] * s_wsp2L[i];
+                           + laplacian01Glo[el*nqtot+i] * s_wsp2L[i];
+                //s_wsp0L[i] = s_laplacian00[i] * s_wsp1L[i] 
+                //           + s_laplacian01[i] * s_wsp2L[i];
             }
             for (int i = 0; i < nqtot; ++i)
             {
                 s_wsp2L[i] = laplacian01Glo[el*nqtot+i] * s_wsp1L[i]
-                		 + laplacian11Glo[el*nqtot+i] * s_wsp2L[i];
+                		   + laplacian11Glo[el*nqtot+i] * s_wsp2L[i];
+                //s_wsp2L[i] = s_laplacian01[i] * s_wsp1L[i]
+                //           + s_laplacian11[i] * s_wsp2L[i];
             }
-            IProductWRTBase_SumFacKernel_Kokkos(dbase0, base1,s_wsp0L,s_wsp1 ,s_wsp1L,
+            IProductWRTBase_SumFacKernel_Kokkos(s_dbase0, s_base1,s_wsp0L,s_wsp1 ,s_wsp1L,
                          nmodes0, nmodes1, nquad0, nquad1);
-            IProductWRTBase_SumFacKernel_Kokkos( base0,dbase1,s_wsp2L,s_wsp1L,s_wsp0L,
+            IProductWRTBase_SumFacKernel_Kokkos( s_base0,s_dbase1,s_wsp2L,s_wsp1L,s_wsp0L,
                          nmodes0, nmodes1, nquad0, nquad1);
             
             for (int i = 0; i < ncoeffs; ++i)
@@ -736,8 +820,10 @@ namespace Nektar
 
         KOKKOS_INLINE_FUNCTION
         void GlobalLinSysIterative::IProductWRTBase_SumFacKernel_Kokkos(
-                const Kokkos::View<double*> base0,
-                const Kokkos::View<double*> base1,
+                //const Kokkos::View<double*> base0,
+                //const Kokkos::View<double*> base1,
+                const ScratchViewType base0,
+                const ScratchViewType base1,
                 const ScratchViewType inarray,
                 ScratchViewType outarray,
                 ScratchViewType wsp,
@@ -765,8 +851,10 @@ namespace Nektar
 
         KOKKOS_INLINE_FUNCTION
         void GlobalLinSysIterative::BwdTrans_SumFacKernel_Kokkos(
-                const Kokkos::View<double*> base0,
-                const Kokkos::View<double*> base1,
+                //const Kokkos::View<double*> base0,
+                //const Kokkos::View<double*> base1,
+                const ScratchViewType base0,
+                const ScratchViewType base1,
                 const ScratchViewType inarray,
                 ScratchViewType outarray,
                 ScratchViewType wsp,
@@ -795,8 +883,10 @@ namespace Nektar
                 ScratchViewType outarray_d0,
                 ScratchViewType outarray_d1,
                 const int &nquad0, const int &nquad1,
-                const Kokkos::View<double*> D0,
-                const Kokkos::View<double*> D1)
+                //const Kokkos::View<double*> D0,
+                //const Kokkos::View<double*> D1,
+                const ScratchViewType D0,
+                const ScratchViewType D1)
         {
             const double alpha = 1.0;
             const double beta = 0.0;
