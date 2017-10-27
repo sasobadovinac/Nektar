@@ -77,7 +77,10 @@ namespace Nektar
 
             std::vector<std::vector<int> > CreateColourSets(
                 Array<OneD, const int> &localToGlobalMap,
-                int ncoeffs, int elmts);
+                int ncoeffs, int elmts, int threads);
+
+            std::vector<std::vector<int> > CreateColours(
+                Array<OneD, const int> &localToGlobalMap, int ncoeffs, int el_begin, int el_end);
 
 
             // functions for plain parallel Conjugate Gradient
@@ -234,18 +237,8 @@ namespace Nektar
                 const Kokkos::View<double*> laplacian00Glo,
                 const Kokkos::View<double*> laplacian01Glo,
                 const Kokkos::View<double*> laplacian11Glo,
-                /*const ScratchViewType s_quadMetric,
-                const ScratchViewType s_laplacian00,
-                const ScratchViewType s_laplacian01,
-                const ScratchViewType s_laplacian11,*/
                 const int &nquad0, const int &nquad1,
                 const int &nmodes0, const int &nmodes1, const int &ncoeffs,
-                /*const Kokkos::View<double*> base0,
-                const Kokkos::View<double*> base1,
-                const Kokkos::View<double*> dbase0,
-                const Kokkos::View<double*> dbase1,
-                const Kokkos::View<double*> D0,
-                const Kokkos::View<double*> D1,*/
                 const ScratchViewType s_base0,
                 const ScratchViewType s_base1,
                 const ScratchViewType s_dbase0,
@@ -256,8 +249,6 @@ namespace Nektar
 
             KOKKOS_INLINE_FUNCTION
             void IProductWRTBase_SumFacKernel_Kokkos(
-                //const Kokkos::View<double*> base0,
-                //const Kokkos::View<double*> base1,
                 const ScratchViewType base0,
                 const ScratchViewType base1,
                 const ScratchViewType inarray,
@@ -268,8 +259,6 @@ namespace Nektar
 
             KOKKOS_INLINE_FUNCTION
             void BwdTrans_SumFacKernel_Kokkos(
-                //const Kokkos::View<double*> base0,
-                //const Kokkos::View<double*> base1,
                 const ScratchViewType base0,
                 const ScratchViewType base1,
                 const ScratchViewType inarray,
@@ -284,8 +273,6 @@ namespace Nektar
                 ScratchViewType outarray_d0,
                 ScratchViewType outarray_d1,
                 const int &nquad0, const int &nquad1,
-                //const Kokkos::View<double*> D0,
-                //const Kokkos::View<double*> D1,
                 const ScratchViewType D0,
                 const ScratchViewType D1);
             

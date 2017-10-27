@@ -37,7 +37,7 @@ IF (NEKTAR_USE_KOKKOS)
             FIND_PACKAGE(CUDA REQUIRED VERSION 8.0)
             #SET(KOKKOS_OPTIONS ${KOKKOS_OPTIONS} --with-cuda=${CUDA_TOOLKIT_ROOT_DIR})
             SET(KOKKOS_OPTIONS
-                ${KOKKOS_OPTIONS} --with-cuda=${CUDA_TOOLKIT_ROOT_DIR} --arch=Pascal60 --with-cuda-options=enable_lambda)
+                ${KOKKOS_OPTIONS} --with-cuda=${CUDA_TOOLKIT_ROOT_DIR} --arch=Pascal61 --with-cuda-options=enable_lambda)
         ENDIF()
 
         SET(KOKKOS_BRANCH_NAME master)

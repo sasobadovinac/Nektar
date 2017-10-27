@@ -61,7 +61,7 @@ namespace Nektar
             cout << "How many threads?" << endl;
             int threads;
             //cin >> threads;
-            threads = 1;
+            threads = 6;
             Kokkos::InitArguments args;
             args.num_threads = threads;
             args.device_id = 0; // 0 - 1080, 1 - 970
@@ -252,7 +252,7 @@ namespace Nektar
 
             // creating and copying coloursets
             std::vector<std::vector<int> > coloursets = CreateColourSets(
-                    NeklocalToGlobalMap, ncoeffs, elmts);
+                    NeklocalToGlobalMap, ncoeffs, elmts, threads);
             /*for(int cs = 0; cs < coloursets.size(); ++cs)
             {
                 printf("colourset %i: ",cs);
@@ -261,7 +261,12 @@ namespace Nektar
                     printf("%i ",*it );
                 }
                 printf("\n");
-            }*/                
+            }*/
+            for(int cs = 0; cs < coloursets.size(); ++cs)
+            {
+                printf("colourset %i: %i\n",cs, coloursets[cs].size() );
+            }
+
             int ncs = coloursets.size();
             int max_cs = 0;
             int cs_sizes[ncs];
@@ -596,7 +601,6 @@ namespace Nektar
                         });
                     }
                 });
-                //cudaDeviceSynchronize();
             }            
             printf("\n");            
         }
@@ -630,7 +634,7 @@ namespace Nektar
             printf("%s %i\n", "perform operations by element, elements in total: ", elmts);
             int max_threads = 32;
             int no_teams = (elmts + max_threads - 1) / max_threads;
-            int scratch_size_thread = ScratchViewType::shmem_size(0 * nqtot + 2*ncoeffs+4*wspsize);
+            int scratch_size_thread = ScratchViewType::shmem_size(2*ncoeffs+4*wspsize);
             int scratch_size_team = ScratchViewType::shmem_size(
                 2 * base0_len + 2 * base1_len + nquad0*nquad0 + nquad1*nquad1);
 
@@ -649,7 +653,6 @@ namespace Nektar
                 ScratchViewType s_dbase1(teamMember.team_scratch(0),base1_len);
                 ScratchViewType s_D0(teamMember.team_scratch(0),nquad0*nquad0);
                 ScratchViewType s_D1(teamMember.team_scratch(0),nquad1*nquad1);
-
                 Kokkos::parallel_for( Kokkos::TeamThreadRange( teamMember , base0_len ), [&] ( const int i)
                 {
                     s_base0[i] = base0[i];
@@ -674,7 +677,6 @@ namespace Nektar
                 {
                     s_D1[i] = D1[i];
                 });
-
                 teamMember.team_barrier();
                 
                 Kokkos::parallel_for( Kokkos::TeamThreadRange( teamMember , max_threads ), [&] ( const int el_i)
@@ -688,27 +690,6 @@ namespace Nektar
                             s_tmp_inarray[i] = transfer_in[coeff_offset[el]+i];
                         }
 
-                        /*ScratchViewType s_quadMetric(teamMember.thread_scratch(1),nqtot);
-                        ScratchViewType s_laplacian00(teamMember.thread_scratch(1),nqtot);
-                        ScratchViewType s_laplacian01(teamMember.thread_scratch(1),nqtot);
-                        ScratchViewType s_laplacian11(teamMember.thread_scratch(1),nqtot);
-                        for (int i = 0; i < nqtot; ++i)
-                        {
-                            s_quadMetric[i] = quadMetricGlo[el*nqtot+i];
-                        }
-                        for (int i = 0; i < nqtot; ++i)
-                        {
-                            s_laplacian00[i] = laplacian00Glo[el*nqtot+i];
-                        }
-                        for (int i = 0; i < nqtot; ++i)
-                        {
-                            s_laplacian01[i] = laplacian01Glo[el*nqtot+i];
-                        }
-                        for (int i = 0; i < nqtot; ++i)
-                        {
-                            s_laplacian11[i] = laplacian11Glo[el*nqtot+i];
-                        }*/
-
                         HelmholtzMatrixOp_MatFree_Kokkos(
                             s_tmp_inarray,
                             transfer_out,
@@ -718,10 +699,6 @@ namespace Nektar
                             laplacian00Glo,
                             laplacian01Glo,
                             laplacian11Glo,
-                            /* s_quadMetric,
-                            s_laplacian00,
-                            s_laplacian01,
-                            s_laplacian11,*/
                             nquad0, nquad1, nmodes0, nmodes1, ncoeffs,
                             s_base0, s_base1, s_dbase0, s_dbase1, s_D0, s_D1,
                             teamMember, wspsize);
@@ -741,18 +718,8 @@ namespace Nektar
                 const Kokkos::View<double*> laplacian00Glo,
                 const Kokkos::View<double*> laplacian01Glo,
                 const Kokkos::View<double*> laplacian11Glo,
-                /*const ScratchViewType s_quadMetric,
-                const ScratchViewType s_laplacian00,
-                const ScratchViewType s_laplacian01,
-                const ScratchViewType s_laplacian11,*/
                 const int &nquad0, const int &nquad1,
                 const int &nmodes0, const int &nmodes1, const int &ncoeffs,
-                /*const Kokkos::View<double*> base0,
-                const Kokkos::View<double*> base1,
-                const Kokkos::View<double*> dbase0,
-                const Kokkos::View<double*> dbase1,
-                const Kokkos::View<double*> D0,
-                const Kokkos::View<double*> D1,*/
                 const ScratchViewType s_base0,
                 const ScratchViewType s_base1,
                 const ScratchViewType s_dbase0,
@@ -773,7 +740,6 @@ namespace Nektar
             for (int i = 0; i < nqtot; ++i)
             {
                 s_wsp1[i] = quadMetricGlo[el*nqtot+i] * s_wsp0[i];
-                //s_wsp1[i] = s_quadMetric[i] * s_wsp0[i];
             }
             
             IProductWRTBase_SumFacKernel_Kokkos(s_base0, s_base1, s_wsp1, s_tmp_outarray,
@@ -791,15 +757,11 @@ namespace Nektar
             {
                 s_wsp0L[i] = laplacian00Glo[el*nqtot+i] * s_wsp1L[i] 
                            + laplacian01Glo[el*nqtot+i] * s_wsp2L[i];
-                //s_wsp0L[i] = s_laplacian00[i] * s_wsp1L[i] 
-                //           + s_laplacian01[i] * s_wsp2L[i];
             }
             for (int i = 0; i < nqtot; ++i)
             {
                 s_wsp2L[i] = laplacian01Glo[el*nqtot+i] * s_wsp1L[i]
                 		   + laplacian11Glo[el*nqtot+i] * s_wsp2L[i];
-                //s_wsp2L[i] = s_laplacian01[i] * s_wsp1L[i]
-                //           + s_laplacian11[i] * s_wsp2L[i];
             }
             IProductWRTBase_SumFacKernel_Kokkos(s_dbase0, s_base1,s_wsp0L,s_wsp1 ,s_wsp1L,
                          nmodes0, nmodes1, nquad0, nquad1);
@@ -820,8 +782,6 @@ namespace Nektar
 
         KOKKOS_INLINE_FUNCTION
         void GlobalLinSysIterative::IProductWRTBase_SumFacKernel_Kokkos(
-                //const Kokkos::View<double*> base0,
-                //const Kokkos::View<double*> base1,
                 const ScratchViewType base0,
                 const ScratchViewType base1,
                 const ScratchViewType inarray,
@@ -851,8 +811,6 @@ namespace Nektar
 
         KOKKOS_INLINE_FUNCTION
         void GlobalLinSysIterative::BwdTrans_SumFacKernel_Kokkos(
-                //const Kokkos::View<double*> base0,
-                //const Kokkos::View<double*> base1,
                 const ScratchViewType base0,
                 const ScratchViewType base1,
                 const ScratchViewType inarray,
@@ -883,8 +841,6 @@ namespace Nektar
                 ScratchViewType outarray_d0,
                 ScratchViewType outarray_d1,
                 const int &nquad0, const int &nquad1,
-                //const Kokkos::View<double*> D0,
-                //const Kokkos::View<double*> D1,
                 const ScratchViewType D0,
                 const ScratchViewType D1)
         {

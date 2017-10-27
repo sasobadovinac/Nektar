@@ -41,6 +41,9 @@
 #include <MultiRegions/ConjugateGradient_Kokkos.hxx>
 #include <MultiRegions/ConjugateGradient_OpenMP.hxx>
 
+#include <mutex>
+#include "omp.h"
+
 using namespace std;
 
 namespace Nektar
@@ -615,17 +618,15 @@ namespace Nektar
             }
         }
 
-
-
-        std::vector<std::vector<int> > GlobalLinSysIterative::CreateColourSets(
-                Array<OneD, const int> &localToGlobalMap, int ncoeffs, int elmts)
+        std::vector<std::vector<int> > GlobalLinSysIterative::CreateColours(
+                Array<OneD, const int> &localToGlobalMap, int ncoeffs, int el_begin, int el_end)
         {
             // ===== create graph of connected elements =====
             std::vector<std::vector<int>> el_connect;
-            el_connect.resize(elmts);
-            for (int e_n = 0; e_n < elmts; ++e_n)
+            el_connect.resize(el_end);
+            for (int e_n = el_begin; e_n < el_end; ++e_n)
             {                
-                for (int e_m = e_n+1; e_m < elmts; ++e_m)
+                for (int e_m = e_n+1; e_m < el_end; ++e_m)
                 {                    
                     for (int n = 0; n < ncoeffs; ++n)
                     {
@@ -644,7 +645,7 @@ namespace Nektar
                     }
                 }
             }
-            /*for(int e_n = 0; e_n < elmts; ++e_n)
+            /*for(int e_n = el_begin; e_n < el_end; ++e_n)
             {
                 printf("element %i: ",e_n);
                 for (std::vector<int>::iterator it = el_connect[e_n].begin() ; it != el_connect[e_n].end(); ++it)
@@ -652,16 +653,17 @@ namespace Nektar
                     printf("%i ",*it );
                 }
                 printf("\n");
-            }*/
+            }
+            printf("completed connecting of partition %i\n", par );*/
 
             // ===== create element colourgroups based on graph =====
-            std::vector<int> remain(elmts);
+            std::vector<int> remain(el_end - el_begin);
             for (int i = 0; i < remain.size(); ++i) // or use std::iota
             {
-                remain[i] = i;
+                remain[i] = el_begin + i;
             }
             std::vector<std::vector<int> > coloursets;
-                // loop until all free elements have been sorted
+            // loop until all free elements have been sorted
             while (remain.size() > 0)
             {
                 std::vector<int> colour;
@@ -691,8 +693,100 @@ namespace Nektar
                 }
                 // include colour into vector of coloursets
                 coloursets.push_back(colour);
-            }            
+            }
+
+            // ===== distribute elements more evenly between groups =====
+            int iter = coloursets.size() / 2 + 1;
+            for (int it = 0; it < iter; ++it)
+            {
+                // find smallest and largest colourset
+                int set_min = 0;
+                int set_min_size = coloursets[0].size();
+                int set_max = 0;
+                int set_max_size = coloursets[0].size();
+                for (int set = 1; set < coloursets.size(); ++set)
+                {
+                    set_min = set_min_size < coloursets[set].size() ? set_min : set;
+                    set_min_size = coloursets[set_min].size();
+                    set_max = set_max_size > coloursets[set].size() ? set_max : set;
+                    set_max_size = coloursets[set_max].size();
+                }
+
+                // move elements from largest set to smallest set
+                int move_size = (set_max_size - set_min_size) / 2;
+                int move = 0;
+                // check connections of all all elements of largest set with all elements of smallest set               
+                for (int i = set_max_size-1; i >= 0 ; i--)
+                {
+                    // take element in largest set
+                    int el_max = coloursets[set_max][i];
+                    bool connection = false;
+                    for (int j = 0; j < set_min_size; ++j)
+                    {
+                        // take alement in smallest set
+                        int el_min = coloursets[set_min][j];
+                        // if there is a connection between the two elements
+                        if (std::find(el_connect[el_max].begin(), el_connect[el_max].end(), el_min)
+                                 != el_connect[el_max].end() )
+                        {
+                            connection = true;
+                            break;
+                        }
+                    }
+                    if (connection == false) // if there is no connection
+                    {
+                        // move element from largest set to smallest set
+                        coloursets[set_min].push_back(el_max);
+                        coloursets[set_max].erase(coloursets[set_max].begin() + i);
+                        move++;
+                    }
+                    if (move == move_size) // dont move more elements than necessary
+                    {
+                        break;
+                    }
+                }
+            }
+
             return coloursets;
+        }
+
+        std::vector<std::vector<int> > GlobalLinSysIterative::CreateColourSets(
+                Array<OneD, const int> &localToGlobalMap, int ncoeffs, int total_elmts, int threads)
+        {
+            // divide the list of elements into partitions
+            int partitions = std::max(1,total_elmts / (896*8));
+            //int partitions = threads;
+
+            int part_size = total_elmts / partitions;
+            std::vector<int> elmts(partitions+1);            
+            elmts[0] = 0;
+            for (int i = 1; i < partitions; ++i)
+            {
+                elmts[i] = i * part_size;
+            }
+            elmts[partitions] = total_elmts;
+            
+            // colour each partition
+            std::vector<std::vector<std::vector<int> > > coloursets;
+            coloursets.resize(partitions);
+
+            #pragma omp parallel for
+            for (int par = 0; par < partitions; ++par)
+            {
+                int el_begin = elmts[par];
+                int el_end = elmts[par+1];
+                coloursets[par] = CreateColours(localToGlobalMap, ncoeffs, el_begin, el_end);
+            }
+
+            // combine the coloursets of all partitions
+            std::vector<std::vector<int> > all_coloursets;
+            for (int i = 0; i < partitions; ++i)
+            {
+                all_coloursets.insert(
+                    all_coloursets.end(), coloursets[i].begin(), coloursets[i].end());
+            }
+
+            return all_coloursets;
         }        
 
     }
