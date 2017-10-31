@@ -685,9 +685,9 @@ namespace Nektar
                     const int el = el_o * max_threads + el_i;
                     if (el < elmts)
                     {
-                        for (int j = 0; j < ncoeffs; ++j)
+                        for (int i = 0; i < ncoeffs; ++i)
                         {
-                            s_inarray(j,el_i) = transfer_in[coeff_offset[el]+j];
+                            s_inarray(i,el_i) = transfer_in[coeff_offset[el]+i];
                         }
                     }
                 });
@@ -703,7 +703,6 @@ namespace Nektar
                     {
                         HelmholtzMatrixOp_MatFree_Kokkos(
                             s_inarray,
-                            transfer_out,
                             s_outarray,
                             el, el_i, max_threads,
                             coeff_offset,
@@ -716,15 +715,27 @@ namespace Nektar
                             s_base0, s_base1, s_dbase0, s_dbase1, s_D0, s_D1,
                             teamMember, wspsize);
                     }
-                });                
+                });
+
+                Kokkos::parallel_for( Kokkos::TeamThreadRange( teamMember , max_threads ), [&] ( const int el_i)
+                {
+                    const int el = el_o * max_threads + el_i;
+                    if (el < elmts)
+                    {
+                        for (int i = 0; i < ncoeffs; ++i)
+                        {
+                            transfer_out[coeff_offset[el] + i] = s_outarray(i,el_i);
+                        }
+                    }
+                });
+
             });
         }
 
         KOKKOS_INLINE_FUNCTION
         void GlobalLinSysIterative::HelmholtzMatrixOp_MatFree_Kokkos(
                 const ScratchViewType32 s_inarray,
-                Kokkos::View<double*> outarray,
-                const ScratchViewType32 s_outarray,
+                      ScratchViewType32 s_outarray,
                 const int &el, const int el_i, const int max_threads,
                 const Kokkos::View<int*>  coeff_offset,
                 const Kokkos::View<double[1]> lambda,
@@ -743,7 +754,7 @@ namespace Nektar
                 const member_type &teamMember, const int &wspsize)
         {
             int nqtot   = nquad0*nquad1;            
-            ScratchViewType s_tmp_outarray(teamMember.thread_scratch(1),ncoeffs);
+            //ScratchViewType s_tmp_outarray(teamMember.thread_scratch(1),ncoeffs);
             ScratchViewType s_wsp0(teamMember.thread_scratch(1),wspsize);
             ScratchViewType s_wsp1(teamMember.thread_scratch(1),wspsize);
             ScratchViewType s_wsp2(teamMember.thread_scratch(1),wspsize);
@@ -790,7 +801,7 @@ namespace Nektar
 
             for (int i = 0; i < ncoeffs; ++i)
             {
-                outarray[coeff_offset[el] + i] = lambda[0] * s_outarray(i,el_i) + s_wsp1[i];
+                s_outarray(i,el_i) = lambda[0] * s_outarray(i,el_i) + s_wsp1[i];
             }
         }
 

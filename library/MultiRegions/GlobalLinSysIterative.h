@@ -233,8 +233,7 @@ namespace Nektar
             KOKKOS_INLINE_FUNCTION
             void HelmholtzMatrixOp_MatFree_Kokkos(
                 const ScratchViewType32 s_inarray,
-                Kokkos::View<double*> outarray,
-                const ScratchViewType32 s_outarray,
+                      ScratchViewType32 s_outarray,
                 const int &el, const int el_i, const int max_threads,
                 const Kokkos::View<int*>  coeff_offset,
                 const Kokkos::View<double[1]> lambda,
