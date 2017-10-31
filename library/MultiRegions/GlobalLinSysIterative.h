@@ -234,6 +234,7 @@ namespace Nektar
             void HelmholtzMatrixOp_MatFree_Kokkos(
                 const ScratchViewType32 s_inarray,
                 Kokkos::View<double*> outarray,
+                const ScratchViewType32 s_outarray,
                 const int &el, const int el_i, const int max_threads,
                 const Kokkos::View<int*>  coeff_offset,
                 const Kokkos::View<double[1]> lambda,
@@ -260,6 +261,17 @@ namespace Nektar
                 ScratchViewType wsp,
                 const int &nmodes0, const int &nmodes1,
                 const int &nquad0, const int &nquad1);
+
+        KOKKOS_INLINE_FUNCTION
+            void IProductWRTBase_SumFacKernel_Kokkos_s(
+                const ScratchViewType base0,
+                const ScratchViewType base1,
+                const ScratchViewType inarray,
+                ScratchViewType32 outarray,
+                ScratchViewType wsp,
+                const int &nmodes0, const int &nmodes1,
+                const int &nquad0, const int &nquad1,
+                const int el_i, const int max_threads);
 
             KOKKOS_INLINE_FUNCTION
             void BwdTrans_SumFacKernel_Kokkos(

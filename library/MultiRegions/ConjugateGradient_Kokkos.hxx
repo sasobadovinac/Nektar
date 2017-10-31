@@ -642,7 +642,7 @@ namespace Nektar
             Kokkos::parallel_for( team_policy( no_teams , max_threads ) // no_teams
                 .set_scratch_size(1,Kokkos::PerThread(scratch_size_thread))
                 .set_scratch_size(0,Kokkos::PerTeam(scratch_size_team))
-                .set_scratch_size(1,Kokkos::PerTeam(ScratchViewType::shmem_size(max_threads*ncoeffs)))
+                .set_scratch_size(1,Kokkos::PerTeam(ScratchViewType::shmem_size(2*max_threads*ncoeffs)))
                 , KOKKOS_LAMBDA ( const member_type& teamMember)
             {
                 const int el_o = teamMember.league_rank();
@@ -692,6 +692,8 @@ namespace Nektar
                     }
                 });
 
+                ScratchViewType32 s_outarray(teamMember.team_scratch(1),ncoeffs);
+
                 teamMember.team_barrier();
                 
                 Kokkos::parallel_for( Kokkos::TeamThreadRange( teamMember , max_threads ), [&] ( const int el_i)
@@ -702,6 +704,7 @@ namespace Nektar
                         HelmholtzMatrixOp_MatFree_Kokkos(
                             s_inarray,
                             transfer_out,
+                            s_outarray,
                             el, el_i, max_threads,
                             coeff_offset,
                             lambda,
@@ -721,6 +724,7 @@ namespace Nektar
         void GlobalLinSysIterative::HelmholtzMatrixOp_MatFree_Kokkos(
                 const ScratchViewType32 s_inarray,
                 Kokkos::View<double*> outarray,
+                const ScratchViewType32 s_outarray,
                 const int &el, const int el_i, const int max_threads,
                 const Kokkos::View<int*>  coeff_offset,
                 const Kokkos::View<double[1]> lambda,
@@ -752,8 +756,8 @@ namespace Nektar
                 s_wsp1[i] = quadMetricGlo[el*nqtot+i] * s_wsp0[i];
             }
             
-            IProductWRTBase_SumFacKernel_Kokkos(s_base0, s_base1, s_wsp1, s_tmp_outarray,
-                                         s_wsp2, nmodes0, nmodes1, nquad0, nquad1);       	
+            IProductWRTBase_SumFacKernel_Kokkos_s(s_base0, s_base1, s_wsp1, s_outarray,
+                                         s_wsp2, nmodes0, nmodes1, nquad0, nquad1, el_i, max_threads);       	
                   	
             // === LaplacianMatrixOp_MatFree_Kernel ===
             ScratchViewType s_wsp1L(teamMember.thread_scratch(1),wspsize);           
@@ -786,7 +790,7 @@ namespace Nektar
 
             for (int i = 0; i < ncoeffs; ++i)
             {
-                outarray[coeff_offset[el] + i] = lambda[0] * s_tmp_outarray[i] + s_wsp1[i];
+                outarray[coeff_offset[el] + i] = lambda[0] * s_outarray(i,el_i) + s_wsp1[i];
             }
         }
 
@@ -815,6 +819,34 @@ namespace Nektar
             double result = plainDdot(nquad1,base1.ptr_on_device()+nquad1,1,
                                           wsp.ptr_on_device()+nquad1,1);
             outarray[1] += result;            
+        }
+
+        KOKKOS_INLINE_FUNCTION
+        void GlobalLinSysIterative::IProductWRTBase_SumFacKernel_Kokkos_s(
+                const ScratchViewType base0,
+                const ScratchViewType base1,
+                const ScratchViewType inarray,
+                ScratchViewType32 outarray32,
+                ScratchViewType wsp,
+                const int &nmodes0, const int &nmodes1,
+                const int &nquad0, const int &nquad1,
+                const int el_i, const int max_threads)
+        {               
+            const double alpha = 1.0;
+            const double beta = 0.0;
+            plainerDgemm('T','N',nquad1,nmodes0,nquad0,alpha,inarray.ptr_on_device(),nquad0,
+                        base0.ptr_on_device(),nquad0,beta,wsp.ptr_on_device(),nquad1);
+            int i, mode;
+            for (mode=i=0; i < nmodes0; ++i)
+            {
+                plainDgemv('T',nquad1,nmodes1-i,alpha, base1.ptr_on_device()+mode*nquad1,
+                            nquad1,wsp.ptr_on_device()+i*nquad1,1, beta,
+                            outarray32.ptr_on_device() + mode*max_threads+el_i,max_threads);
+                mode += nmodes1 - i;
+            }
+            double result = plainDdot(nquad1,base1.ptr_on_device()+nquad1,1,
+                                          wsp.ptr_on_device()+nquad1,1);
+            outarray32(1,el_i) += result;            
         }
 
 
