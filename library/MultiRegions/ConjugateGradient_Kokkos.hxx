@@ -639,9 +639,10 @@ namespace Nektar
                 2 * base0_len + 2 * base1_len + nquad0*nquad0 + nquad1*nquad1);
 
             //Kokkos::parallel_for(range_policy(0,elmts),KOKKOS_LAMBDA (const int el)   {    
-            Kokkos::parallel_for( team_policy( no_teams , max_threads )
+            Kokkos::parallel_for( team_policy( no_teams , max_threads ) // no_teams
                 .set_scratch_size(1,Kokkos::PerThread(scratch_size_thread))
                 .set_scratch_size(0,Kokkos::PerTeam(scratch_size_team))
+                .set_scratch_size(1,Kokkos::PerTeam(ScratchViewType::shmem_size(max_threads*ncoeffs)))
                 , KOKKOS_LAMBDA ( const member_type& teamMember)
             {
                 const int el_o = teamMember.league_rank();
@@ -677,6 +678,20 @@ namespace Nektar
                 {
                     s_D1[i] = D1[i];
                 });
+
+                ScratchViewType32 s_inarray(teamMember.team_scratch(1),ncoeffs);
+                Kokkos::parallel_for( Kokkos::TeamThreadRange( teamMember , max_threads ), [&] ( const int el_i)
+                {
+                    const int el = el_o * max_threads + el_i;
+                    if (el < elmts)
+                    {
+                        for (int j = 0; j < ncoeffs; ++j)
+                        {
+                            s_inarray(j,el_i) = transfer_in[coeff_offset[el]+j];
+                        }
+                    }
+                });
+
                 teamMember.team_barrier();
                 
                 Kokkos::parallel_for( Kokkos::TeamThreadRange( teamMember , max_threads ), [&] ( const int el_i)
@@ -684,16 +699,11 @@ namespace Nektar
                     const int el = el_o * max_threads + el_i;
                     if (el < elmts)
                     {
-                        ScratchViewType s_tmp_inarray(teamMember.thread_scratch(1),ncoeffs);
-                    	for (int i = 0; i < ncoeffs; ++i)
-                        {
-                            s_tmp_inarray[i] = transfer_in[coeff_offset[el]+i];
-                        }
-
                         HelmholtzMatrixOp_MatFree_Kokkos(
-                            s_tmp_inarray,
+                            s_inarray,
                             transfer_out,
-                            el, coeff_offset,
+                            el, el_i, max_threads,
+                            coeff_offset,
                             lambda,
                              quadMetricGlo,
                             laplacian00Glo,
@@ -709,9 +719,9 @@ namespace Nektar
 
         KOKKOS_INLINE_FUNCTION
         void GlobalLinSysIterative::HelmholtzMatrixOp_MatFree_Kokkos(
-                const ScratchViewType s_tmp_inarray,
+                const ScratchViewType32 s_inarray,
                 Kokkos::View<double*> outarray,
-                const int &el,
+                const int &el, const int el_i, const int max_threads,
                 const Kokkos::View<int*>  coeff_offset,
                 const Kokkos::View<double[1]> lambda,
 				const Kokkos::View<double*>  quadMetricGlo,
@@ -734,8 +744,8 @@ namespace Nektar
             ScratchViewType s_wsp1(teamMember.thread_scratch(1),wspsize);
             ScratchViewType s_wsp2(teamMember.thread_scratch(1),wspsize);
 
-            BwdTrans_SumFacKernel_Kokkos(s_base0, s_base1, s_tmp_inarray, s_wsp0, s_wsp2,
-                nmodes0, nmodes1, nquad0, nquad1);
+            BwdTrans_SumFacKernel_Kokkos(s_base0, s_base1, s_inarray, s_wsp0, s_wsp2,
+                nmodes0, nmodes1, nquad0, nquad1, el_i, max_threads);
             
             for (int i = 0; i < nqtot; ++i)
             {
@@ -813,22 +823,27 @@ namespace Nektar
         void GlobalLinSysIterative::BwdTrans_SumFacKernel_Kokkos(
                 const ScratchViewType base0,
                 const ScratchViewType base1,
-                const ScratchViewType inarray,
+                const ScratchViewType32 inarray32,
                 ScratchViewType outarray,
                 ScratchViewType wsp,
                 const int &nmodes0, const int &nmodes1,
-                const int &nquad0, const int &nquad1)
+                const int &nquad0, const int &nquad1,
+                const int el_i, const int max_threads)
         {
             const double alpha = 1.0;
             const double beta = 0.0;
             int i, mode;
             for (i = mode = 0; i < nmodes0; ++i)
             {
+                //printf("mode = %i, el_i = %i, inarray = %e, inarray32 = %e, inarray = %e, inarray32 = %e\n", mode, el_i,
+                //    *(inarray.ptr_on_device()+mode), *(inarray32.ptr_on_device()+mode*32+el_i),
+                //    *(inarray.ptr_on_device()+(mode+1)), *(inarray32.ptr_on_device()+(mode+1)*32+el_i));
+                
                 plainDgemv('N', nquad1,nmodes1-i,alpha,base1.ptr_on_device()+mode*nquad1,
-                            nquad1,inarray.ptr_on_device()+mode,1,beta,wsp.ptr_on_device()+i*nquad1,1);
+                            nquad1,inarray32.ptr_on_device()+mode*max_threads+el_i,max_threads,beta,wsp.ptr_on_device()+i*nquad1,1);
                 mode += nmodes1-i;
             }
-            plainDaxpy(nquad1,inarray[1],base1.ptr_on_device()+nquad1,1,
+            plainDaxpy(nquad1,inarray32(1,el_i),base1.ptr_on_device()+nquad1,1,
                             wsp.ptr_on_device()+nquad1,1);
             plainerDgemm('N','T', nquad0,nquad1,nmodes0,alpha, base0.ptr_on_device(),nquad0,
                         wsp.ptr_on_device(), nquad1,beta,outarray.ptr_on_device(), nquad0);

@@ -73,6 +73,10 @@ namespace Nektar
             typedef Kokkos::View<double*,
                 Kokkos::DefaultExecutionSpace::scratch_memory_space ,
                 Kokkos::MemoryTraits<Kokkos::Unmanaged> > ScratchViewType;
+            typedef Kokkos::View<double*[32],
+                Kokkos::LayoutRight,
+                Kokkos::DefaultExecutionSpace::scratch_memory_space ,
+                Kokkos::MemoryTraits<Kokkos::Unmanaged> > ScratchViewType32;
 
 
             std::vector<std::vector<int> > CreateColourSets(
@@ -228,9 +232,9 @@ namespace Nektar
 
             KOKKOS_INLINE_FUNCTION
             void HelmholtzMatrixOp_MatFree_Kokkos(
-                const ScratchViewType s_tmp_inarray,
+                const ScratchViewType32 s_inarray,
                 Kokkos::View<double*> outarray,
-                const int &el,
+                const int &el, const int el_i, const int max_threads,
                 const Kokkos::View<int*>  coeff_offset,
                 const Kokkos::View<double[1]> lambda,
                 const Kokkos::View<double*>  quadMetricGlo,
@@ -261,11 +265,12 @@ namespace Nektar
             void BwdTrans_SumFacKernel_Kokkos(
                 const ScratchViewType base0,
                 const ScratchViewType base1,
-                const ScratchViewType inarray,
+                const ScratchViewType32 inarray32,
                 ScratchViewType outarray,
                 ScratchViewType wsp,
                 const int &nmodes0, const int &nmodes1,
-                const int &nquad0, const int &nquad1);
+                const int &nquad0, const int &nquad1,
+                const int el_i, const int max_threads);
 
             KOKKOS_INLINE_FUNCTION
             void PhysTensorDeriv_Kokkos(
