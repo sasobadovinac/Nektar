@@ -54,6 +54,7 @@ v5.0.0
 **IncNavierStokesSolver**
 - Replace steady-state check based on difference of norms by check based on
   norm of the difference, to be consistent with the compressible solver (!832)
+- Enable BetaZero setting to be used with SingleMode Fourier expansion (!867)
 
 **CompressibleFlowSolver**
 - Add 3D regression tests (!567)
