@@ -360,6 +360,8 @@ class Interpolator;
             int                                         m_spacedim;
             /// Expansion dimension.
             int                                         m_expdim;
+            /// Flag to determine if beta is set to zero.
+            bool                                        m_betaZero;
             /// Flag to determine if single homogeneous mode is used.
             bool                                        m_singleMode;
             /// Flag to determine if half homogeneous mode is used.

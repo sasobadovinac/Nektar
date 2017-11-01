@@ -767,8 +767,19 @@ namespace Nektar
 
             //Fourier Real Half Mode
             case eFourierHalfModeRe:
-                m_bdata[0] = cos(M_PI*z[0]);
-                m_dbdata[0] = -M_PI*sin(M_PI*z[0]);
+                switch (GetPointsType())
+                {
+                    case eFourierEvenlySpaced:
+                        m_bdata[0] = 0.5;//cos(M_PI*z[0]);
+                        m_dbdata[0] = 0.0;//-M_PI*sin(M_PI*z[0]);
+                        break;
+                    case eFourierSingleModeSpaced:
+                        m_bdata[0] = cos(M_PI*z[0]);
+                        m_dbdata[0] = -M_PI*sin(M_PI*z[0]);
+                        break;
+                    default:
+                        ASSERTL0(false, "Points Type not compatible.");
+                }
                 break;
 
             //Fourier Imaginary Half Mode

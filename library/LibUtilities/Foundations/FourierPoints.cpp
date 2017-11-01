@@ -52,7 +52,7 @@ namespace Nektar
             PointsBaseType::CalculatePoints();
 
             unsigned int npts = m_pointsKey.GetNumPoints();
-            ASSERTL0(!(npts%2), "Fourier points need to be of even order");
+            //ASSERTL0(!(npts%2), "Fourier points need to be of even order");
 
             if(npts==1)
             {

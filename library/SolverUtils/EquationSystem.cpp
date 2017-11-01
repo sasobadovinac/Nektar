@@ -158,6 +158,8 @@ namespace Nektar
                     {
                         m_session->MatchSolverInfo("ModeType", "SingleMode", 
                                                    m_singleMode, false);
+                        m_session->MatchSolverInfo("BetaZero", "True",
+                                                   m_betaZero, false);
                         m_session->MatchSolverInfo("ModeType", "HalfMode", 
                                                    m_halfMode, false);
                         m_session->MatchSolverInfo("ModeType", "MultipleModes", 
@@ -167,7 +169,11 @@ namespace Nektar
                     // Stability Analysis flags
                     if (m_session->DefinesSolverInfo("ModeType"))
                     {
-                        if(m_singleMode)
+                        if(m_singleMode && m_betaZero)
+                        {
+                            m_npointsZ = 1;
+                        }
+                        else if(m_singleMode)
                         {
                             m_npointsZ = 2;
                         }
@@ -329,8 +335,32 @@ namespace Nektar
                     {
                         if (m_HomogeneousType == eHomogeneous1D)
                         {
+                            // Fourier single mode with beta zero - 2D
+                            if(m_singleMode && m_betaZero)
+                            {
+                                const LibUtilities::PointsKey PkeyZ(
+                                        m_npointsZ,
+                                        LibUtilities::eFourierEvenlySpaced);
+
+                                const LibUtilities::BasisKey  BkeyZ(
+                                        LibUtilities::eFourierHalfModeRe,
+                                        m_npointsZ,
+                                        PkeyZ);
+
+                                for(i = 0; i < m_fields.num_elements(); i++)
+                                {
+                                    m_fields[i] = MemoryManager<MultiRegions
+                                    ::ContField3DHomogeneous1D>
+                                    ::AllocateSharedPtr(
+                                            m_session, BkeyZ, m_LhomZ,
+                                            m_useFFT, m_homogen_dealiasing,
+                                            m_graph,
+                                            m_session->GetVariable(i),
+                                            m_checkIfSystemSingular[i]);
+                                }
+                            }
                             // Fourier single mode stability analysis
-                            if (m_singleMode)
+                            else if (m_singleMode)
                             {	
                                 const LibUtilities::PointsKey PkeyZ(
                                     m_npointsZ,

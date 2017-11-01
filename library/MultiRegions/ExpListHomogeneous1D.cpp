@@ -1236,7 +1236,9 @@ namespace Nektar
                     //Half Mode
                     if(m_homogeneousBasis->GetBasisType() == LibUtilities::eFourierHalfModeRe)
                     {
-                        beta = sign*2*M_PI*(m_transposition->GetK(0))/m_lhom;
+                        bool betaZero = false;
+                        m_session->MatchSolverInfo("BetaZero", "True", betaZero, false);
+                        beta = betaZero ? 0.0 : sign*2*M_PI*(m_transposition->GetK(0))/m_lhom;
                         
                         Vmath::Smul(nP_pts,beta,temparray,1,outarray,1);
                     }
@@ -1350,7 +1352,9 @@ namespace Nektar
                     //HalfMode
                     if(m_homogeneousBasis->GetBasisType() == LibUtilities::eFourierHalfModeRe)
                     {
-                        beta = 2*sign*M_PI*(m_transposition->GetK(0))/m_lhom;
+                        bool betaZero = false;
+                        m_session->MatchSolverInfo("BetaZero", "True", betaZero, false);
+                        beta = betaZero ? 0.0 : 2*sign*M_PI*(m_transposition->GetK(0))/m_lhom;
             
                         Vmath::Smul(nP_pts,beta,temparray,1,outarray,1);
                     }
