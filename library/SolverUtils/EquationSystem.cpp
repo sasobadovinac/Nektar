@@ -169,11 +169,7 @@ namespace Nektar
                     // Stability Analysis flags
                     if (m_session->DefinesSolverInfo("ModeType"))
                     {
-                        if(m_singleMode && m_betaZero)
-                        {
-                            m_npointsZ = 1;
-                        }
-                        else if(m_singleMode)
+                        if(m_singleMode)
                         {
                             m_npointsZ = 2;
                         }
@@ -336,7 +332,7 @@ namespace Nektar
                         if (m_HomogeneousType == eHomogeneous1D)
                         {
                             // Fourier single mode with beta zero - 2D
-                            if(m_singleMode && m_betaZero)
+                            if(m_halfMode && m_betaZero)
                             {
                                 const LibUtilities::PointsKey PkeyZ(
                                         m_npointsZ,
