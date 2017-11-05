@@ -425,6 +425,48 @@ namespace Nektar
         {
             NEKERROR(ErrorUtil::efatal, "Method does not exist" );
 	}
+
+
+        void GlobalLinSys::v_Solve(
+                             const Array<OneD, const NekDouble> &in,
+                             Array<OneD,       NekDouble> &out,
+                             const AssemblyMapSharedPtr         &locToGloMap,
+                             const Array<OneD, const NekDouble> &dirForcing)
+        {
+            NEKERROR(ErrorUtil::efatal, "Method does not exist" );
+	}
+            
+
+        void GlobalLinSys::v_SolveVec(
+                                const Array<OneD, Array<OneD,NekDouble> > &in,
+                                Array<OneD, Array<OneD,  NekDouble> > &out)
+        {
+            NEKERROR(ErrorUtil::efatal, "Method does not exist" );
+	}
+
+
+        void GlobalLinSys::v_SolveLinearSystem(
+                                         const int                          pNumRows,
+                                         const Array<OneD,const NekDouble> &pInput,
+                                         Array<OneD,      NekDouble> &pOutput,
+                                         const AssemblyMapSharedPtr        &locToGloMap,
+                                         const int                          pNumDir)
+        {
+            NEKERROR(ErrorUtil::efatal, "Method does not exist" );
+	}
+
+        
+        void GlobalLinSys::v_SolveVecLinearSystem(
+                                    const Array<OneD, int >& nGlobal,
+                                    const Array<OneD, const Array<OneD, NekDouble> > &pvecInput,
+                                    Array <OneD, Array<OneD, NekDouble> > &pvecOutput,
+                                    const Array<OneD, AssemblyMapSharedPtr > &pvecLocToGloMap,
+                                    const Array<OneD, int> & nDir)
+        {
+            NEKERROR(ErrorUtil::efatal, "Method does not exist" );
+	}
+
+
     } //end of namespace
 } //end of namespace
 

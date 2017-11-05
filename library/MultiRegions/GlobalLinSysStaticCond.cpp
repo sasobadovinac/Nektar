@@ -270,7 +270,7 @@ namespace Nektar
             int nDirBndDofs        = pLocToGloMap->GetNumGlobalDirBndCoeffs();
             int nGlobHomBndDofs    = nGlobBndDofs - nDirBndDofs;
             m_wsp = Array<OneD, NekDouble>
-                    (2*nLocalBnd + nGlobal + nGlobHomBndDofs, 0.0);
+                (2*nLocalBnd + nGlobal + nGlobHomBndDofs, 0.0);
 
             if (pLocToGloMap->AtLastLevel())
             {

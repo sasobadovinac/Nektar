@@ -102,6 +102,12 @@ namespace Nektar
                 const Array<OneD, const NekDouble> &dirForcing
                     = NullNekDouble1DArray);
 
+
+            MULTI_REGIONS_EXPORT
+            inline void SolveVec(
+                const Array<OneD, Array<OneD, NekDouble> >&in,
+                Array<OneD, Array<OneD,       NekDouble> >&out);
+            
             /// Returns a shared pointer to the current object.
             std::shared_ptr<GlobalLinSys> GetSharedThisPtr()
             {
@@ -121,6 +127,16 @@ namespace Nektar
                 const AssemblyMapSharedPtr        &locToGloMap,
                 const int                          pNumDir = 0);
 
+
+            /// Solve the linear system for given input and output vectors.
+            inline void SolveVecLinearSystem(
+                    const Array<OneD, int >& nGlobal,
+                    const Array<OneD, const Array<OneD, NekDouble> > &pvecInput,
+                    Array <OneD, Array<OneD, NekDouble> > &pvecOutput,
+                    const Array<OneD, AssemblyMapSharedPtr > &pvecLocToGloMap,
+                    const Array<OneD, int> & nDir);
+
+            
         protected:
             /// Key associated with this linear system.
             const GlobalLinSysKey                m_linSysKey;
@@ -142,18 +158,33 @@ namespace Nektar
             /// Solve a linear system based on mapping.
             virtual void v_Solve(
                 const Array<OneD, const NekDouble> &in,
-                      Array<OneD,       NekDouble> &out,
+                Array<OneD,       NekDouble> &out,
                 const AssemblyMapSharedPtr         &locToGloMap,
                 const Array<OneD, const NekDouble> &dirForcing
-                    = NullNekDouble1DArray) = 0;
+                    = NullNekDouble1DArray);
 
-            /// Solve a basic matrix system.
+            /// Solve a vector linear system based on mapping.
+            virtual void v_SolveVec(
+                         const Array<OneD, Array<OneD,NekDouble> > &in,
+                         Array<OneD, Array<OneD,  NekDouble> > &out);
+
+            /// Solve the linear system for given input and output vectors.
             virtual void v_SolveLinearSystem(
                 const int                          pNumRows,
                 const Array<OneD,const NekDouble> &pInput,
                       Array<OneD,      NekDouble> &pOutput,
                 const AssemblyMapSharedPtr        &locToGloMap,
-                const int                          pNumDir) = 0;
+                const int                          pNumDir = 0);
+
+
+            /// Solve a basic matrix system.
+            virtual void v_SolveVecLinearSystem(
+                    const Array<OneD, int >& nGlobal,
+                    const Array<OneD, const Array<OneD, NekDouble> > &pvecInput,
+                    Array <OneD, Array<OneD, NekDouble> > &pvecOutput,
+                    const Array<OneD, AssemblyMapSharedPtr > &pvecLocToGloMap,
+                    const Array<OneD, int> & nDir);
+
 
             virtual void v_InitObject();
             virtual void v_Initialise(
@@ -197,6 +228,17 @@ namespace Nektar
         /**
          *
          */
+        inline void GlobalLinSys::SolveVec(
+                       const Array<OneD, Array<OneD, NekDouble> > &in,
+                       Array<OneD, Array<OneD,       NekDouble> > &out)
+        {
+            v_SolveVec(in,out);
+        }
+
+        
+        /**
+         *
+         */
         inline void GlobalLinSys::SolveLinearSystem(
                 const int pNumRows,
                 const Array<OneD,const NekDouble> &pInput,
@@ -207,6 +249,20 @@ namespace Nektar
             v_SolveLinearSystem(pNumRows, pInput, pOutput, locToGloMap, pNumDir);
         }
 
+
+        /**
+         *
+         */
+        inline void GlobalLinSys::SolveVecLinearSystem(
+                    const Array<OneD, int >& nGlobal,
+                    const Array<OneD, const Array<OneD, NekDouble> > &pvecInput,
+                    Array <OneD, Array<OneD, NekDouble> > &pvecOutput,
+                    const Array<OneD, AssemblyMapSharedPtr > &pvecLocToGloMap,
+                    const Array<OneD, int> & nDir)
+        {
+            v_SolveVecLinearSystem(nGlobal,pvecInput, pvecOutput,pvecLocToGloMap,nDir);
+        }
+        
         inline void GlobalLinSys::InitObject()
         {
             v_InitObject();

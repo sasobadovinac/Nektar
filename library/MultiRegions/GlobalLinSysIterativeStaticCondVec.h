@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File: GlobalLinSysIterativeStaticCond.h
+// File: GlobalLinSysIterativeStaticCondVec.h
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -29,15 +29,15 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 //
-// Description: GlobalLinSysIterativeStaticCond header
+// Description: GlobalLinSysIterativeStaticCondVec header
 //
 ///////////////////////////////////////////////////////////////////////////////
-#ifndef NEKTAR_LIB_MULTIREGIONS_GLOBALLINSYSITERATIVESTATICCOND_H
-#define NEKTAR_LIB_MULTIREGIONS_GLOBALLINSYSITERATIVESTATICCOND_H
+#ifndef NEKTAR_LIB_MULTIREGIONS_GLOBALLINSYSITERATIVESTATICCONDVEC_H
+#define NEKTAR_LIB_MULTIREGIONS_GLOBALLINSYSITERATIVESTATICCONDVEC_H
 
 #include <MultiRegions/GlobalMatrix.h>
 #include <MultiRegions/GlobalLinSysIterative.h>
-#include <MultiRegions/GlobalLinSysStaticCond.h>
+#include <MultiRegions/GlobalLinSysStaticCondVec.h>
 #include <LibUtilities/LinearAlgebra/SparseMatrixFwd.hpp>
 
 
@@ -47,10 +47,10 @@ namespace Nektar
     {
         // Forward declarations
         class ExpList;
-        class GlobalLinSysIterativeStaticCond;
+        class GlobalLinSysIterativeStaticCondVec;
 
-        typedef std::shared_ptr<GlobalLinSysIterativeStaticCond>
-            GlobalLinSysIterativeStaticCondSharedPtr;
+        typedef std::shared_ptr<GlobalLinSysIterativeStaticCondVec>
+            GlobalLinSysIterativeStaticCondVecSharedPtr;
 
         enum LocalMatrixStorageStrategy
         {
@@ -69,8 +69,8 @@ namespace Nektar
 
 
         /// A global linear system.
-        class GlobalLinSysIterativeStaticCond : virtual public GlobalLinSysIterative,
-                                                virtual public GlobalLinSysStaticCond
+        class GlobalLinSysIterativeStaticCondVec : virtual public GlobalLinSysIterativeVec,
+            virtual public GlobalLinSysStaticCondVec
         {
         public:
             typedef NekSparseDiagBlkMatrix<StorageSmvBsr<NekDouble> >
@@ -78,56 +78,35 @@ namespace Nektar
             typedef std::shared_ptr<DNekSmvBsrDiagBlkMat>
                                             DNekSmvBsrDiagBlkMatSharedPtr;
 
-            /// Creates an instance of this class
-            static GlobalLinSysSharedPtr create(
-                const GlobalLinSysKey                &pLinSysKey,
-                const std::weak_ptr<ExpList>         &pExpList,
-                const std::shared_ptr<AssemblyMap>   &pLocToGloMap)
-            {
-                GlobalLinSysSharedPtr p = MemoryManager<
-                    GlobalLinSysIterativeStaticCond>::
-                    AllocateSharedPtr(pLinSysKey, pExpList, pLocToGloMap);
-                p->InitObject();
-                return p;
-            }
-
             /// Name of class
             static std::string className;
             static std::string className2;
 
             /// Constructor for full direct matrix solve.
-            MULTI_REGIONS_EXPORT GlobalLinSysIterativeStaticCond(
+            MULTI_REGIONS_EXPORT GlobalLinSysIterativeStaticCondVec(
                 const GlobalLinSysKey                &mkey,
-                const std::weak_ptr<ExpList>         &pExpList,
-                const std::shared_ptr<AssemblyMap>   &locToGloMap);
+                const Array<OneD, std::weak_ptr<ExpList> > &pVecExpList,
+                const Array<OneD, std::shared_ptr<AssemblyMap> > &pVecLocToGloMap);
 
             /// Constructor for full direct matrix solve.
-            MULTI_REGIONS_EXPORT GlobalLinSysIterativeStaticCond(
+            MULTI_REGIONS_EXPORT GlobalLinSysIterativeStaticCondVec(
                 const GlobalLinSysKey                &mkey,
-                const std::weak_ptr<ExpList>         &pExpList,
+                const Array<OneD, std::weak_ptr<ExpList> > &pVecExpList,
                 const DNekScalBlkMatSharedPtr         pSchurCompl,
                 const DNekScalBlkMatSharedPtr         pBinvD,
                 const DNekScalBlkMatSharedPtr         pC,
                 const DNekScalBlkMatSharedPtr         pInvD,
-                const std::shared_ptr<AssemblyMap>   &locToGloMap,
-                const PreconditionerSharedPtr         pPrecon);
+                const Array<OneD, std::shared_ptr<AssemblyMap> > &pVecLocToGloMap,
+                const Array<OneD, PreconditionerSharedPtr>       &pPreconVec);
 
-            virtual ~GlobalLinSysIterativeStaticCond();
+            virtual ~GlobalLinSysIterativeStaticCondVec();
 
         protected:
             virtual DNekScalBlkMatSharedPtr v_GetStaticCondBlock(unsigned int n);
-            virtual GlobalLinSysStaticCondSharedPtr v_Recurse(
-                const GlobalLinSysKey                &mkey,
-                const std::weak_ptr<ExpList>         &pExpList,
-                const DNekScalBlkMatSharedPtr         pSchurCompl,
-                const DNekScalBlkMatSharedPtr         pBinvD,
-                const DNekScalBlkMatSharedPtr         pC,
-                const DNekScalBlkMatSharedPtr         pInvD,
-                const std::shared_ptr<AssemblyMap>   &locToGloMap);
 
             virtual DNekScalBlkMatSharedPtr v_PreSolve(
                 int                     scLevel,
-                NekVector<NekDouble>   &F_GlobBnd);
+                Array<OneD, Array<OneD, NekDouble> >  &F);
             virtual void v_BasisTransform(
                 Array<OneD, NekDouble>& pInOut,
                 int                     offset);
@@ -162,6 +141,7 @@ namespace Nektar
 
             /// Perform a Shur-complement matrix multiply operation.
             virtual void v_DoMatrixMultiply(
+                            const Array<OneD, int> nglobal,
                             const Array<OneD, NekDouble>& pInput,
                             Array<OneD, NekDouble>& pOutput);
 
