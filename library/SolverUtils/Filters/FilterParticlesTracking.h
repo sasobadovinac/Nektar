@@ -50,16 +50,23 @@ struct Particle
     Particle(
         int                     dim,
         int                     numFields,
+        int                     intOrder,
         Array<OneD, NekDouble>  gloCoord)
         : m_dim(dim), m_used(true)
     {
         // Initialise arrays
         m_gloCoord          = Array<OneD, NekDouble> (3, 0.0);
         m_locCoord          = Array<OneD, NekDouble> (3, 0.0);
-        m_particleVelocity  = Array<OneD, NekDouble> (m_dim, 0.0);
-        m_fluidVelocity  = Array<OneD, NekDouble> (m_dim, 0.0);
+        m_fluidVelocity     = Array<OneD, NekDouble> (m_dim, 0.0);
         m_fields            = Array<OneD, NekDouble> (numFields, 0.0);
-        m_force             = Array<OneD, NekDouble> (m_dim, 0.0);
+        // Force and velocity with intOrder entries
+        m_force            = Array<OneD, Array<OneD,NekDouble>> (intOrder);
+        m_particleVelocity = Array<OneD, Array<OneD,NekDouble>> (intOrder);
+        for (int i = 0; i < intOrder; ++i)
+        {
+            m_force[i]         = Array<OneD, NekDouble> (m_dim, 0.0);
+            m_particleVelocity[i] = Array<OneD, NekDouble> (m_dim, 0.0);
+        }
 
         // Store coordinates
         SetCoord(gloCoord);
@@ -93,7 +100,7 @@ struct Particle
     /// Coordinate in the standard element
     Array<OneD, NekDouble>          m_locCoord;
     /// Velocity of the particle
-    Array<OneD, NekDouble>          m_particleVelocity;
+    Array<OneD, Array<OneD, NekDouble>> m_particleVelocity;
     /// Fluid velocity
     Array<OneD, NekDouble>          m_fluidVelocity;
     /// Id of the element currently holding the particle
@@ -103,7 +110,7 @@ struct Particle
     /// Simulation solution at the particle location
     Array<OneD, NekDouble>          m_fields;
     /// Force acting on the particle
-    Array<OneD, NekDouble>          m_force;
+    Array<OneD, Array<OneD, NekDouble>> m_force;
 };
 
 
@@ -144,8 +151,10 @@ protected:
     SOLVER_UTILS_EXPORT virtual bool v_IsTimeDependent();
 
 private:
-    /// Counter
+    /// Counter of times filter was called
     unsigned int                            m_index;
+    /// Counter of times particles were advanced
+    unsigned int                            m_advanceCalls;
 
     /// Location(s) where new points are created
     SpatialDomains::PointGeomVector         m_seedPoints;
@@ -163,6 +172,8 @@ private:
 
     /// Time-step
     NekDouble                               m_timestep;
+    /// Time integration order
+    unsigned int                            m_intOrder;
 
     /// Flag marking if tracking fluid or solid particles
     bool                                    m_fluidParticles;
@@ -182,6 +193,9 @@ private:
 
     /// Vector storing Particles
     std::vector<Particle>                   m_particles;
+
+    static NekDouble AdamsBashforth_coeffs[4][4];
+    static NekDouble AdamsMoulton_coeffs[4][4];
 
     /// Main function to advance the particles by one time-step
     void AdvanceParticles(
@@ -211,6 +225,8 @@ private:
     void CheckBoundingBox(Particle &particle);
     /// Write output information
     void OutputParticles(const NekDouble &time);
+    /// Rotate array for high order time integration
+    void RollOver(Array<OneD, Array<OneD, NekDouble> > &input);
 };
 
 }

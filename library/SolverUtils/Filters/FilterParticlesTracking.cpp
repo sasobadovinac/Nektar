@@ -51,6 +51,17 @@ std::string FilterParticlesTracking::className =
 
 int Particle::m_nextId = 0;
 
+NekDouble FilterParticlesTracking::AdamsBashforth_coeffs[4][4] = {
+        { 1.0       , 0.0       , 0.0       , 0.0       },
+        { 3.0/2.0   ,-1.0/2.0   , 0.0       , 0.0       },
+        { 23.0/12.0 ,-4.0/3.0   , 5.0/12.0  , 0.0       },
+        { 55.0/24.0 ,-59.0/24.0 , 37.0/24.0 ,-3.0/8.0   }};
+NekDouble FilterParticlesTracking::AdamsMoulton_coeffs[4][4] = {
+        { 1.0       ,  0.0      , 0.0       , 0.0       },
+        { 1.0/2.0   ,  1.0      , 0.0       , 0.0       },
+        { 5.0/12.0  ,  2.0/3.0  ,-1.0/12.0  , 0.0       },
+        { 3.0/8.0   ,  19.0/24.0,-5.0/24.0  , 1.0/24.0  }};
+
 /**
  *
  */
@@ -95,6 +106,20 @@ FilterParticlesTracking::FilterParticlesTracking(
                         it->second.c_str();
         m_postProc = ( boost::iequals(sOption,"true")) ||
                      ( boost::iequals(sOption,"yes"));
+    }
+
+    // Determine if tracking is performed during or after the simulation
+    it = pParams.find("TimeIntegrationOrder");
+    if (it == pParams.end())
+    {
+        m_intOrder = 1;
+    }
+    else
+    {
+        LibUtilities::Equation equ(m_session, it->second);
+        m_intOrder = round(equ.Evaluate());
+        ASSERTL0(m_intOrder >= 1 && m_intOrder <= 4,
+                "TimeIntegrationOrder must be between 1 and 4.");
     }
 
     // Time integration parameters
@@ -176,9 +201,9 @@ FilterParticlesTracking::FilterParticlesTracking(
         m_outputFile = it->second;
     }
     if (!(m_outputFile.length() >= 4
-          && m_outputFile.substr(m_outputFile.length() - 4) == ".his"))
+          && m_outputFile.substr(m_outputFile.length() - 4) == ".csv"))
     {
-        m_outputFile += ".his";
+        m_outputFile += ".csv";
     }
 
     it = pParams.find("OutputFrequency");
@@ -220,6 +245,7 @@ FilterParticlesTracking::FilterParticlesTracking(
 
     // Initialise m_index
     m_index = 0;
+    m_advanceCalls = 0;
 }
 
 
@@ -369,8 +395,12 @@ void FilterParticlesTracking::AdvanceParticles(
 {
     for (auto &particle : m_particles)
     {
+        m_advanceCalls++;
         if(particle.m_used)
         {
+            // Rotate arrays
+            RollOver(particle.m_particleVelocity);
+            RollOver(particle.m_force);
             // Obtain solution (an fluid velocity) at the particle location
             InterpSolution(pFields, particle);
             // Set particle velocity
@@ -441,7 +471,7 @@ void FilterParticlesTracking::AddSeedPoints(
         m_seedPoints[i]->GetCoords(gloCoord[0],
                                    gloCoord[1],
                                    gloCoord[2]);
-        m_particles.emplace_back(dim, numFields, gloCoord);
+        m_particles.emplace_back(dim, numFields, m_intOrder, gloCoord);
         // Find location of new particle
         UpdateLocCoord(pFields, m_particles.back());
         // Initialise particle velocity to match fluid velocity
@@ -495,11 +525,32 @@ void FilterParticlesTracking::InterpSolution(
  */
 void FilterParticlesTracking::UpdatePosition(Particle &particle)
 {
-    // TO DO: Generalise time integration to higher order
-    for (int i = 0; i < particle.m_dim; ++i)
+    int order = min(m_advanceCalls, m_intOrder);
+    if( m_fluidParticles)
     {
-        particle.m_gloCoord[i] = particle.m_gloCoord[i] +
-                                 m_timestep * particle.m_particleVelocity[i];
+        // Velocity is at time n, so we use Adams-Bashforth
+        for (int i = 0; i < particle.m_dim; ++i)
+        {
+            for(int j = 0; j < order; ++j)
+            {
+                particle.m_gloCoord[i] += m_timestep *
+                                        AdamsBashforth_coeffs[order-1][j] *
+                                        particle.m_particleVelocity[j][i];
+            }
+        }
+    }
+    else
+    {
+        // We already updated velocity to v_{n+1}, so we use Adams-Moulton
+        for (int i = 0; i < particle.m_dim; ++i)
+        {
+            for(int j = 0; j < order; ++j)
+            {
+                particle.m_gloCoord[i] += m_timestep *
+                                          AdamsMoulton_coeffs[order-1][j] *
+                                          particle.m_particleVelocity[j][i];
+            }
+        }
     }
 }
 
@@ -511,7 +562,7 @@ void FilterParticlesTracking::SetToFluidVelocity(
 {
     for (int i = 0; i < particle.m_dim; ++i)
     {
-        particle.m_particleVelocity[i] = particle.m_fluidVelocity[i];
+        particle.m_particleVelocity[0][i] = particle.m_fluidVelocity[i];
     }
 }
 
@@ -597,7 +648,7 @@ void FilterParticlesTracking::OutputParticles(const NekDouble &time)
             for(int n = 0; n < particle.m_dim; ++n)
             {
                 m_outputStream << ", " << boost::format("%25.19e") %
-                                            particle.m_particleVelocity[n];
+                                            particle.m_particleVelocity[0][n];
             }
 
             for(int n = 0; n < particle.m_fields.num_elements(); ++n)
@@ -608,6 +659,23 @@ void FilterParticlesTracking::OutputParticles(const NekDouble &time)
             m_outputStream << endl;
         }
     }
+}
+
+/**
+ *
+ */
+void FilterParticlesTracking::RollOver(
+        Array<OneD, Array<OneD, NekDouble> > &input)
+{
+    int  nlevels = input.num_elements();
+    Array<OneD, NekDouble> tmp = input[nlevels-1];
+
+    for(int n = nlevels-1; n > 0; --n)
+    {
+        input[n] = input[n-1];
+    }
+
+    input[0] = tmp;
 }
 
 }
