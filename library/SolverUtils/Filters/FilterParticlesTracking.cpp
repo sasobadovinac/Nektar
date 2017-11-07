@@ -306,7 +306,7 @@ void FilterParticlesTracking::v_Update(
 
         if (m_outputFrequency && !(m_index % m_outputFrequency))
         {
-            OutputParticles(time);
+            OutputParticles(time + m_timestep);
         }
 
         if (m_seedFrequency && !(m_index % m_seedFrequency))
@@ -333,12 +333,12 @@ void FilterParticlesTracking::v_Finalise(
             trackTime += m_timestep;
 
             ++m_index;
-            if (m_outputFrequency && !(m_index % m_outputFrequency))
+            if (m_outputFrequency && !( (n+1) % m_outputFrequency))
             {
                 OutputParticles(trackTime);
             }
 
-            if (m_seedFrequency && !(m_index % m_seedFrequency))
+            if (m_seedFrequency && !( (n+1) % m_seedFrequency))
             {
                 // Introduce new points in the domain;
                 AddSeedPoints(pFields);
