@@ -43,6 +43,66 @@ namespace Nektar
 namespace SolverUtils
 {
 
+/// Struct holding information of a particle for particle tracking
+struct Particle
+{
+    /// Constructor
+    Particle(
+        int                     dim,
+        int                     numFields,
+        Array<OneD, NekDouble>  gloCoord)
+        : m_dim(dim), m_gloCoord(gloCoord), m_used(true)
+    {
+        // Initialise arrays
+        m_locCoord          = Array<OneD, NekDouble> (3, 0.0);
+        m_particleVelocity  = Array<OneD, NekDouble> (m_dim, 0.0);
+        m_fluidVelocity  = Array<OneD, NekDouble> (m_dim, 0.0);
+        m_fields            = Array<OneD, NekDouble> (numFields, 0.0);
+        m_force             = Array<OneD, NekDouble> (m_dim, 0.0);
+
+        SetNewId();
+    }
+
+    /// Function to assign a new id to the particle
+    void SetNewId()
+    {
+        m_id = m_nextId++;
+    }
+
+    /// Function to assign a new id to the particle
+    void SetCoord(Array<OneD, NekDouble>  gloCoord)
+    {
+        m_gloCoord[0] = gloCoord[0];
+        m_gloCoord[1] = gloCoord[1];
+        m_gloCoord[2] = gloCoord[2];
+    }
+
+    /// Static counter for numbering particles
+    static int                      m_nextId;
+    /// Id of the particle
+    int                             m_id;
+    /// Spatial dimension
+    int                             m_dim;
+    /// Global coordinate
+    Array<OneD, NekDouble>          m_gloCoord;
+    /// Coordinate in the standard element
+    Array<OneD, NekDouble>          m_locCoord;
+    /// Velocity of the particle
+    Array<OneD, NekDouble>          m_particleVelocity;
+    /// Fluid velocity
+    Array<OneD, NekDouble>          m_fluidVelocity;
+    /// Id of the element currently holding the particle
+    int                             m_eId;
+    /// Flag marking if particle is still in use (it may have left the domain)
+    bool                            m_used;
+    /// Simulation solution at the particle location
+    Array<OneD, NekDouble>          m_fields;
+    /// Force acting on the particle
+    Array<OneD, NekDouble>          m_force;
+};
+
+
+
 class FilterParticlesTracking : public Filter
 {
 public:
@@ -78,25 +138,68 @@ protected:
         const NekDouble &time);
     SOLVER_UTILS_EXPORT virtual bool v_IsTimeDependent();
 
-    /* comment the variables definition
-    */
-    SpatialDomains::PointGeomVector         m_historyPoints;
+private:
+    /// Counter
     unsigned int                            m_index;
-    unsigned int                            m_MaxIter;
-    NekDouble                               m_DeltaT;
-    /// plane to take history point from if using a homogeneous1D expansion
-    //unsigned int                            m_outputPlane;
-    //Array<OneD, int>                        m_planeIDs;
-    //bool                                    m_isHomogeneous1D;
-    //bool                                    m_waveSpace;
+
+    /// Location(s) where new points are created
+    SpatialDomains::PointGeomVector         m_seedPoints;
+    /// Stringstream for temporarily holding seed points coordinates
+    std::stringstream                       m_seedPointStream;
+    /// Frequency for adding new points
+    unsigned int                            m_seedFrequency;
+
+    /// Flag marking if tracking should be done during or after the simulation
+    bool                                    m_postProc;
+    /// Number of steps (for post-processing tracking)
+    unsigned int                            m_numSteps;
+    /// Frequency for updating when tracking during the simulation 
+    unsigned int                            m_updateFrequency;
+
+    /// Time-step
+    NekDouble                               m_timestep;
+
+    /// Flag marking if tracking fluid or solid particles
+    bool                                    m_fluidParticles;
+    /// Particles relative density (for solid particles)
+    NekDouble                               m_density;
+    /// Particles diameter (for solid particles)
+    NekDouble                               m_diameter;
+
+    /// Variables for output file
     std::string                             m_outputFile;
     std::ofstream                           m_outputStream;
-    std::stringstream                       m_historyPointStream;
-    //std::list<std::pair<SpatialDomains::PointGeomSharedPtr,
-                        //Array<OneD, NekDouble> > > m_historyList;
+    unsigned int                            m_outputFrequency;
 
-    //std::map<int, int >                     m_historyLocalPointMap;
+    /// Vector storing Particles
+    std::vector<Particle>                   m_particles;
 
+    /// Main function to advance the particles by one time-step
+    void AdvanceParticles(
+        const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields);
+    /// Add seed points to m_particles
+    void AddSeedPoints(
+        const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields);
+    /// Update location of particle (eId and locCoords)
+    void UpdateLocCoord(
+        const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
+        Particle &particle);
+    /// Interpolate solution to particle location
+    void InterpSolution(
+        const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
+        Particle &particle);
+    /// Update particle position
+    void UpdatePosition(Particle &particle);
+    /// Set the particle velocity to match the fluid velocity
+    void SetToFluidVelocity(Particle &particle);
+    /// Update particle velocity
+    void UpdateVelocity(Particle &particle);
+    /// Calculate force (for solid particles)
+    void CalculateForce(Particle &particle);
+    /// Collision modelling
+    void HandleCollision(Particle &particle);
+    /// Write output information
+    void OutputParticles(const NekDouble &time);
 };
 
 }
