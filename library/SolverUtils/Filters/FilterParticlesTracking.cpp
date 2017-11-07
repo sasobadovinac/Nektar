@@ -117,8 +117,6 @@ FilterParticlesTracking::FilterParticlesTracking(
     }
     else
     {
-        m_session->LoadParameter("TimeStep", m_timestep);
-
         it = pParams.find("UpdateFrequency");
         if (it == pParams.end())
         {
@@ -129,6 +127,9 @@ FilterParticlesTracking::FilterParticlesTracking(
             LibUtilities::Equation equ(m_session, it->second);
             m_updateFrequency = round(equ.Evaluate());
         }
+
+        m_session->LoadParameter("TimeStep", m_timestep);
+        m_timestep *= m_updateFrequency;
     }
 
     // Determine if we are tracking fluid or solid particles
@@ -249,6 +250,19 @@ void FilterParticlesTracking::v_Initialise(
 
     // Add seed points to m_particles
     AddSeedPoints(pFields);
+
+    // Write initial particle results
+    if( m_postProc)
+    {
+        OutputParticles(0.0);
+    }
+    else
+    {
+        OutputParticles(time);
+    }
+
+    // Advance particles
+    v_Update(pFields, time);
 }
 
 
