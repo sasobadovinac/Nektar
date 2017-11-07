@@ -137,6 +137,17 @@ FilterParticlesTracking::FilterParticlesTracking(
         LibUtilities::Equation equ2(m_session, it->second);
         m_timestep = equ2.Evaluate();
 
+        it = pParams.find("InfoSteps");
+        if (it == pParams.end())
+        {
+            m_infoSteps = 0;
+        }
+        else
+        {
+            LibUtilities::Equation equ3(m_session, it->second);
+            m_infoSteps = round(equ3.Evaluate());
+        }
+
         // Use m_updateFrequency = 0 to avoid running during the simulation
         m_updateFrequency = 0;
     }
@@ -368,6 +379,12 @@ void FilterParticlesTracking::v_Finalise(
             {
                 // Introduce new points in the domain;
                 AddSeedPoints(pFields);
+            }
+
+            if (m_infoSteps && !( (n+1) % m_infoSteps))
+            {
+                cout << "Tracking steps: " << setw(8)  << left << n+1 << " "
+                     << "Time: "  << setw(12) << left << trackTime << endl;
             }
         }
     }

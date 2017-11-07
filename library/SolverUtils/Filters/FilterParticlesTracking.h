@@ -162,6 +162,8 @@ private:
     std::stringstream                       m_seedPointStream;
     /// Frequency for adding new points
     unsigned int                            m_seedFrequency;
+    /// Time integration order
+    unsigned int                            m_infoSteps;
 
     /// Flag marking if tracking should be done during or after the simulation
     bool                                    m_postProc;
