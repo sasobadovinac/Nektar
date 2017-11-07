@@ -365,10 +365,10 @@ void FilterParticlesTracking::AddSeedPoints(
         return;
     }
 
-    // First include points in unused positions
+    // First include points in unused positions of m_particles
     for (auto &particle : m_particles)
     {
-        if( particle.m_used == 0)
+        if( particle.m_used == false)
         {
             m_seedPoints[insertedPoints++]->GetCoords(gloCoord[0],
                                                     gloCoord[1],
@@ -415,6 +415,8 @@ void FilterParticlesTracking::UpdateLocCoord(
     const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
     Particle &particle)
 {
+    // TO DO: This would probably be more efficient if we first check
+    //        if the particle is still inside element m_eId
     particle.m_eId = pFields[0]->GetExpIndex(particle.m_gloCoord,
                                              particle.m_locCoord,
                                              NekConstants::kNekZeroTol);
@@ -438,8 +440,8 @@ void FilterParticlesTracking::InterpSolution(
                         particle.m_locCoord,physvals);
     }
 
-    // This could be changed later to allow solvers using different variables
-    //      (e.g. compressible flow solver)
+    // TO DO: This could be changed later to allow solvers using different
+    //        variables (e.g. compressible flow solver)
     for (int i = 0; i < particle.m_dim; ++i)
     {
         particle.m_fluidVelocity[i] = particle.m_fields[i];
@@ -451,6 +453,7 @@ void FilterParticlesTracking::InterpSolution(
  */
 void FilterParticlesTracking::UpdatePosition(Particle &particle)
 {
+    // TO DO: Generalise time integration to higher order
     for (int i = 0; i < particle.m_dim; ++i)
     {
         particle.m_gloCoord[i] = particle.m_gloCoord[i] +
