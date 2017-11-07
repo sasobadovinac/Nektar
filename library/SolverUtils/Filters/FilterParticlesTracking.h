@@ -171,6 +171,10 @@ private:
     std::ofstream                           m_outputStream;
     unsigned int                            m_outputFrequency;
 
+    /// Variables for bounding box determining domain of interest for particles
+    bool                                    m_useBoundingBox;
+    Array<OneD, NekDouble>                  m_boundingBox;
+
     /// Vector storing Particles
     std::vector<Particle>                   m_particles;
 
@@ -198,6 +202,8 @@ private:
     void CalculateForce(Particle &particle);
     /// Collision modelling
     void HandleCollision(Particle &particle);
+    /// Check if particle left the domain of interest
+    void CheckBoundingBox(Particle &particle);
     /// Write output information
     void OutputParticles(const NekDouble &time);
 };

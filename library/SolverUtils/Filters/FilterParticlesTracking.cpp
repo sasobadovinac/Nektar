@@ -192,6 +192,25 @@ FilterParticlesTracking::FilterParticlesTracking(
         m_outputFrequency = round(equ.Evaluate());
     }
 
+    // Read bounding box, if defined
+    it = pParams.find("BoundingBox");
+    if (it == pParams.end())
+    {
+        m_useBoundingBox = false;
+    }
+    else
+    {
+        m_useBoundingBox = true;
+        m_boundingBox    = Array<OneD, NekDouble> (6);
+        std::stringstream bbStream(it->second);
+        bbStream >> m_boundingBox[0] >> m_boundingBox[1]
+                 >> m_boundingBox[2] >> m_boundingBox[3]
+                 >> m_boundingBox[4] >> m_boundingBox[5];
+
+        ASSERTL0( !bbStream.fail(), "BoundingBox needs six entries: "
+                                    "xmin, xmax, ymin, ymax, zmin, zmax");
+    }
+
     // Initialise m_index
     m_index = 0;
 }
@@ -357,6 +376,8 @@ void FilterParticlesTracking::AdvanceParticles(
             UpdateLocCoord(pFields, particle);
             // Handle collisions if particle left the domain
             HandleCollision(particle);
+            // Check if particle left the domain of interest
+            CheckBoundingBox(particle);
         }
     }
 }
@@ -525,6 +546,26 @@ void FilterParticlesTracking::HandleCollision(Particle &particle)
     {
         cout << "Particle " << particle.m_id << " left the domain." << endl;
         particle.m_used = false;
+    }
+}
+
+/**
+ *
+ */
+void FilterParticlesTracking::CheckBoundingBox(Particle &particle)
+{
+    if( m_useBoundingBox)
+    {
+        for(int i = 0; i < particle.m_dim; ++i)
+        {
+            if( particle.m_gloCoord[i] < m_boundingBox[2*i] ||
+                particle.m_gloCoord[i] > m_boundingBox[2*i+1])
+            {
+                cout << "Particle " << particle.m_id
+                     << " left the bounding box." << endl;
+                particle.m_used = false;
+            }
+        }
     }
 }
 
