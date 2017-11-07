@@ -51,15 +51,20 @@ struct Particle
         int                     dim,
         int                     numFields,
         Array<OneD, NekDouble>  gloCoord)
-        : m_dim(dim), m_gloCoord(gloCoord), m_used(true)
+        : m_dim(dim), m_used(true)
     {
         // Initialise arrays
+        m_gloCoord          = Array<OneD, NekDouble> (3, 0.0);
         m_locCoord          = Array<OneD, NekDouble> (3, 0.0);
         m_particleVelocity  = Array<OneD, NekDouble> (m_dim, 0.0);
         m_fluidVelocity  = Array<OneD, NekDouble> (m_dim, 0.0);
         m_fields            = Array<OneD, NekDouble> (numFields, 0.0);
         m_force             = Array<OneD, NekDouble> (m_dim, 0.0);
 
+        // Store coordinates
+        SetCoord(gloCoord);
+
+        // Obtain a unique id
         SetNewId();
     }
 

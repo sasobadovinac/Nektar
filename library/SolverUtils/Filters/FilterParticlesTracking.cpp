@@ -184,7 +184,14 @@ FilterParticlesTracking::FilterParticlesTracking(
     it = pParams.find("OutputFrequency");
     if (it == pParams.end())
     {
-        m_outputFrequency = m_updateFrequency;
+        if(m_postProc)
+        {
+            m_outputFrequency = 1;
+        }
+        else
+        {
+            m_outputFrequency = m_updateFrequency;
+        }
     }
     else
     {
@@ -581,6 +588,12 @@ void FilterParticlesTracking::OutputParticles(const NekDouble &time)
             m_outputStream << boost::format("%25.19e") % time;
             m_outputStream << ", " << particle.m_id;
 
+            for(int n = 0; n < 3; ++n)
+            {
+                m_outputStream << ", " << boost::format("%25.19e") %
+                                            particle.m_gloCoord[n];
+            }
+
             for(int n = 0; n < particle.m_dim; ++n)
             {
                 m_outputStream << ", " << boost::format("%25.19e") %
@@ -592,6 +605,7 @@ void FilterParticlesTracking::OutputParticles(const NekDouble &time)
                 m_outputStream << ", " << boost::format("%25.19e") %
                                             particle.m_fields[n];
             }
+            m_outputStream << endl;
         }
     }
 }
