@@ -504,11 +504,22 @@ void FilterParticlesTracking::UpdateLocCoord(
     const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
     Particle &particle)
 {
-    // TO DO: This would probably be more efficient if we first check
-    //        if the particle is still inside element m_eId
-    particle.m_eId = pFields[0]->GetExpIndex(particle.m_gloCoord,
+    // First check if still in the same element
+    bool found = false;
+    if(particle.m_eId >= 0)
+    {
+        found = pFields[0]->GetExp(particle.m_eId)->GetGeom()->ContainsPoint(
+                                              particle.m_gloCoord,
+                                              particle.m_locCoord,
+                                              NekConstants::kNekZeroTol);
+    }
+    // If it changed elements just search again
+    if (!found)
+    {
+        particle.m_eId = pFields[0]->GetExpIndex(particle.m_gloCoord,
                                              particle.m_locCoord,
                                              NekConstants::kNekZeroTol);
+    }
 }
 
 /**
