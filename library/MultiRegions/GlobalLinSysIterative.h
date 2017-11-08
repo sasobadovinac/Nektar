@@ -234,6 +234,10 @@ namespace Nektar
             void HelmholtzMatrixOp_MatFree_Kokkos(
                 const ScratchViewType32 s_inarray,
                       ScratchViewType32 s_outarray,
+                      ScratchViewType32 s_wsp0,
+                      ScratchViewType32 s_wsp1,
+                      ScratchViewType32 s_wsp2,
+                      ScratchViewType32 s_wsp1L,
                 const int &el, const int el_i, const int max_threads,
                 const Kokkos::View<int*>  coeff_offset,
                 const Kokkos::View<double[1]> lambda,
@@ -259,18 +263,21 @@ namespace Nektar
                 ScratchViewType outarray,
                 ScratchViewType wsp,
                 const int &nmodes0, const int &nmodes1,
-                const int &nquad0, const int &nquad1);
+                const int &nquad0, const int &nquad1,
+                const int el_i, const int max_threads);
 
-        KOKKOS_INLINE_FUNCTION
-            void IProductWRTBase_SumFacKernel_Kokkos_s(
+            KOKKOS_INLINE_FUNCTION
+            void IProductWRTBase_SumFacKernel_Kokkos_s32(
                 const ScratchViewType base0,
                 const ScratchViewType base1,
+                const ScratchViewType32 inarray32,
                 const ScratchViewType inarray,
-                ScratchViewType32 outarray,
+                ScratchViewType32 outarray32,
+                ScratchViewType32 wsp32,
                 ScratchViewType wsp,
                 const int &nmodes0, const int &nmodes1,
                 const int &nquad0, const int &nquad1,
-                const int el_i, const int max_threads);
+                const int el_i, const int max_threads, const int wspsize);
 
             KOKKOS_INLINE_FUNCTION
             void BwdTrans_SumFacKernel_Kokkos(
@@ -290,7 +297,8 @@ namespace Nektar
                 ScratchViewType outarray_d1,
                 const int &nquad0, const int &nquad1,
                 const ScratchViewType D0,
-                const ScratchViewType D1);
+                const ScratchViewType D1,
+                const int el_i, const int max_threads);
             
 
         protected:
