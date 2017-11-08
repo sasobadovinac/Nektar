@@ -586,6 +586,7 @@ namespace Nektar
             
             // do mapping on per element basis and using element colourgroups
             // ( numLocalCoeffs = elmts * ncoeffs, elmts = sum(cs_sizes) )
+            // need to use element-colouring to prevent race condition
             for (int cs = 0; cs < ncs; ++cs)
             {
                 Kokkos::parallel_for( team_policy( cs_sizes[cs] , Kokkos::AUTO )
@@ -869,8 +870,12 @@ namespace Nektar
             const double beta = 0.0;
             //plainerDgemm('T','N',nquad1,nmodes0,nquad0,alpha,inarray.ptr_on_device(),nquad0,
             //           base0.ptr_on_device(),nquad0,beta,wsp.ptr_on_device(),nquad1);
-            plainerDgemm('T','N',nquad1,nmodes0,nquad0,alpha,inarray32.ptr_on_device()+el_i,nquad0*max_threads,
-                        base0.ptr_on_device(),nquad0,beta,wsp32.ptr_on_device()+el_i,nquad1*max_threads);
+            stridedDgemm('T','N',nquad1,nmodes0,nquad0,
+                alpha,
+                inarray32.ptr_on_device(),nquad0,max_threads,el_i,
+                base0.ptr_on_device(),nquad0, 1,0,
+                beta,
+                wsp32.ptr_on_device(),nquad1,max_threads,el_i);
             
             for (int i = 0; i < wspsize; ++i)
             {

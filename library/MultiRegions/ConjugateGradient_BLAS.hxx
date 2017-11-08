@@ -697,6 +697,119 @@ namespace MultiRegions
     } /* dgemm_ */
 
 
+
+        KOKKOS_INLINE_FUNCTION
+    int stridedDgemm(char transa, char transb,
+        int m, int n, int k,
+        const double alpha,
+        const double *a, int lda, int strideA, int batchA,
+        const double *b, int ldb, int strideB, int batchB,
+        const double beta,
+              double *c, int ldc, int strideC, int batchC)
+    {
+        /* Local variables */
+        int i, j, l;
+        bool nota, notb;
+        double temp;
+
+        /* Parameter adjustments */
+        a -= (1 + lda) * strideA;
+        b -= (1 + ldb) * strideB;
+        c -= (1 + ldc) * strideC;
+
+        /* Function Body */
+        nota = (transa == 'N');
+        notb = (transb == 'N');       
+    
+
+    /*     Start the operations. */
+        if (beta == 0.) { //======================================
+        if (notb) {
+        if (nota) {
+    /*           Form  C := alpha*A*B + beta*C. */
+            for (j = 1; j <= n; ++j)
+            {                           
+                for (i = 1; i <= m; ++i)
+                {
+                    c[(i + j * ldc)*strideC + batchC] = 0.;
+                }            
+                for (l = 1; l <= k; ++l)
+                {                
+                    if (b[(l + j * ldb)*strideB + batchB] != 0.)
+                    {
+                        temp = alpha * b[(l + j * ldb)*strideB + batchB];
+                        for (i = 1; i <= m; ++i)
+                        {
+                            c[(i + j * ldc)*strideC + batchC] += temp * a[(i + l * lda)*strideA + batchA];
+                        }
+                    }   
+                }
+            }
+        } else {
+    /*           Form  C := alpha*A'*B + beta*C */ // T N
+            for (j = 1; j <= n; ++j)
+            {            
+                for (i = 1; i <= m; ++i)
+                {
+                    temp = 0.;
+                    for (l = 1; l <= k; ++l)
+                    {
+                        temp += a[(l + i * lda)*strideA + batchA] * b[(l + j * ldb)*strideB + batchB];
+                    }                
+                    c[(i + j * ldc)*strideC + batchC] = alpha * temp;    
+                }
+            }
+        }
+        } else {
+        if (nota) {
+    /*           Form  C := alpha*A*B' + beta*C */
+            for (j = 1; j <= n; ++j)
+            {                            
+                for (i = 1; i <= m; ++i)
+                {
+                    c[(i + j * ldc)*strideC + batchC] = 0.;
+                }            
+                for (l = 1; l <= k; ++l)
+                {                
+                    if (b[(j + l * ldb)*strideB + batchB] != 0.)
+                    {
+                        temp = alpha * b[(j + l * ldb)*strideB + batchB];
+                        for (i = 1; i <= m; ++i)
+                        {
+                            c[(i + j * ldc)*strideC + batchC] += temp * a[(i + l * lda)*strideA + batchA];
+                        }
+                    }    
+                }
+            }
+        } else {
+    /*           Form  C := alpha*A'*B' + beta*C */
+            for (j = 1; j <= n; ++j)
+            {            
+                for (i = 1; i <= m; ++i)
+                {
+                    temp = 0.;
+                    for (l = 1; l <= k; ++l)
+                    {
+                        temp += a[(l + i * lda)*strideA + batchA] * b[(j + l * ldb)*strideB + batchB];
+                    }                
+                    c[(i + j * ldc)*strideC + batchC] = alpha * temp;  
+                }
+            }
+        }
+        }
+
+        }
+        else { //  if beta != 0. ====================================
+            ASSERTL0(beta != 0.0, "stridedDgemm with  beta != 0.0 not defined");
+        }
+
+        return 0;
+
+    /*     End of DGEMM . */
+
+    } /* dgemm_ */
+
+
 }
 }
 

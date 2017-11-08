@@ -623,7 +623,7 @@ namespace Nektar
         {
             // ===== create graph of connected elements =====
             std::vector<std::vector<int>> el_connect;
-            el_connect.resize(el_end);
+            el_connect.resize(el_end); // has lots of zeros at the beginning, could refactor indexing to save memory
             for (int e_n = el_begin; e_n < el_end; ++e_n)
             {                
                 for (int e_m = e_n+1; e_m < el_end; ++e_m)
@@ -663,6 +663,7 @@ namespace Nektar
                 remain[i] = el_begin + i;
             }
             std::vector<std::vector<int> > coloursets;
+            
             // loop until all free elements have been sorted
             while (remain.size() > 0)
             {
@@ -754,7 +755,9 @@ namespace Nektar
                 Array<OneD, const int> &localToGlobalMap, int ncoeffs, int total_elmts, int threads)
         {
             // divide the list of elements into partitions
-            int partitions = std::max(1,total_elmts / (896*8));
+            int min_blocks = 896; // minimum number of blocks to fully occupy a GPU, 896 for GTX 1080
+            int num_cs = 8; // typical number of coloursets depending on element type, 8 for triangular elements
+            int partitions = std::max(1,total_elmts / (min_blocks*num_cs));
             //int partitions = threads;
 
             int part_size = total_elmts / partitions;
