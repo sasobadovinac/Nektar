@@ -628,6 +628,7 @@ void FilterParticlesTracking::UpdateVelocity(Particle &particle)
 void FilterParticlesTracking::CalculateForce(Particle &particle)
 {
     // TO DO: update particle.m_force[0][i] with force per unit mass
+    
 }
 
 /**
