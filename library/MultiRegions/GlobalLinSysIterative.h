@@ -271,21 +271,30 @@ namespace Nektar
                 const ScratchViewType base0,
                 const ScratchViewType base1,
                 const ScratchViewType32 inarray32,
-                const ScratchViewType inarray,
                 ScratchViewType32 outarray32,
                 ScratchViewType32 wsp32,
-                ScratchViewType wsp,
                 const int &nmodes0, const int &nmodes1,
                 const int &nquad0, const int &nquad1,
-                const int el_i, const int max_threads, const int wspsize);
+                const int el_i, const int max_threads);
 
             KOKKOS_INLINE_FUNCTION
             void BwdTrans_SumFacKernel_Kokkos(
                 const ScratchViewType base0,
                 const ScratchViewType base1,
-                const ScratchViewType32 inarray32,
+                const ScratchViewType inarray,
                 ScratchViewType outarray,
                 ScratchViewType wsp,
+                const int &nmodes0, const int &nmodes1,
+                const int &nquad0, const int &nquad1,
+                const int el_i, const int max_threads);
+            
+            KOKKOS_INLINE_FUNCTION
+            void BwdTrans_SumFacKernel_Kokkos_s32(
+                const ScratchViewType base0,
+                const ScratchViewType base1,
+                const ScratchViewType32 inarray32,
+                ScratchViewType32 outarray,
+                ScratchViewType32 wsp,
                 const int &nmodes0, const int &nmodes1,
                 const int &nquad0, const int &nquad1,
                 const int el_i, const int max_threads);
@@ -295,6 +304,16 @@ namespace Nektar
                 const ScratchViewType inarray,
                 ScratchViewType outarray_d0,
                 ScratchViewType outarray_d1,
+                const int &nquad0, const int &nquad1,
+                const ScratchViewType D0,
+                const ScratchViewType D1,
+                const int el_i, const int max_threads);
+
+            KOKKOS_INLINE_FUNCTION
+            void PhysTensorDeriv_Kokkos_s32(
+                const ScratchViewType32 inarray,
+                ScratchViewType32 outarray_d0,
+                ScratchViewType32 outarray_d1,
                 const int &nquad0, const int &nquad1,
                 const ScratchViewType D0,
                 const ScratchViewType D1,
