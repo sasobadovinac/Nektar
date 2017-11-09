@@ -663,7 +663,7 @@ namespace Nektar
                 remain[i] = el_begin + i;
             }
             std::vector<std::vector<int> > coloursets;
-            
+
             // loop until all free elements have been sorted
             while (remain.size() > 0)
             {
