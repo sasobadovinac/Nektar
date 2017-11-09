@@ -73,6 +73,8 @@ FilterParticlesTracking::FilterParticlesTracking(
     // Read parameters
     ParamMap::const_iterator it;
 
+    m_session->LoadParameter("Kinvis", m_kinvis);
+
     // Seed points
     it = pParams.find("SeedPoints");
     ASSERTL0(it != pParams.end(),
@@ -415,8 +417,7 @@ void FilterParticlesTracking::AdvanceParticles(
         m_advanceCalls++;
         if(particle.m_used)
         {
-            // Rotate arrays
-            RollOver(particle.m_particleVelocity);
+            // Rotate force array
             RollOver(particle.m_force);
             // Obtain solution (an fluid velocity) at the particle location
             InterpSolution(pFields, particle);
@@ -601,14 +602,22 @@ void FilterParticlesTracking::UpdateVelocity(Particle &particle)
 {
     if( m_fluidParticles)
     {
+        RollOver(particle.m_particleVelocity);
         SetToFluidVelocity(particle);
     }
     else
     {
         CalculateForce(particle);
+        RollOver(particle.m_particleVelocity);
+        int order = min(m_advanceCalls, m_intOrder);
         for (int i = 0; i < particle.m_dim; ++i)
         {
-            // TO DO: v_{n+1} = v{n} + dT/m * F
+            for(int j = 0; j < order; ++j)
+            {
+                particle.m_particleVelocity[0][i] += m_timestep *
+                                        AdamsBashforth_coeffs[order-1][j] *
+                                        particle.m_force[j][i];
+            }
         }
     }
 }
@@ -618,7 +627,7 @@ void FilterParticlesTracking::UpdateVelocity(Particle &particle)
  */
 void FilterParticlesTracking::CalculateForce(Particle &particle)
 {
-    // TO DO
+    // TO DO: update particle.m_force[0][i] with force per unit mass
 }
 
 /**

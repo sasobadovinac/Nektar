@@ -183,6 +183,8 @@ private:
     NekDouble                               m_density;
     /// Particles diameter (for solid particles)
     NekDouble                               m_diameter;
+    /// Kinematic viscosity
+    NekDouble                               m_kinvis;
 
     /// Variables for output file
     std::string                             m_outputFile;
