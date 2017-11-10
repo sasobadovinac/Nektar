@@ -629,6 +629,41 @@ void FilterParticlesTracking::CalculateForce(Particle &particle)
 {
     // TO DO: update particle.m_force[0][i] with force per unit mass
     
+    NekDouble   Re = 0.0, Cd = 0.0, Fd = 0.0, g = 9.81;
+    
+    //Evaluate ^2
+    for (int i = 0; i < particle.m_dim; ++i)
+    {    
+        Re += pow(particle.m_fluidVelocity[i]
+                  -particle.m_particleVelocity[0][i],2.0);
+    }
+    Re = sqrt(Re)*m_diameter/m_kinvis;
+    
+    //Calcule Drag coeficient
+    // Openfoam 
+    if (Re >1000.0)
+    {
+        Cd = 0.424;
+    }
+    else
+    {
+        Cd = (24.0/Re)*(1.0+pow(Re,2.0/3.0)/6.0);
+    }
+        
+    //Cd = 0.47;
+                    
+    Fd = (18.0*m_kinvis/((m_density)
+          *pow(m_diameter,2.0)))*(Cd*Re/24.0);
+
+
+    for (int i = 0; i < particle.m_dim; ++i)
+    {
+        particle.m_force[0][i] = Fd*(particle.m_fluidVelocity[i]
+                                    -particle.m_particleVelocity[0][i]);
+    }
+    //Add gravity effects
+    particle.m_force[0][1] -= g * (1.0 - 1.0/m_density);
+
 }
 
 /**
