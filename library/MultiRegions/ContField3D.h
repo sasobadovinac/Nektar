@@ -90,13 +90,11 @@ namespace Nektar
 
             inline void Assemble();
 
-            inline void Assemble(
-                    const Array<OneD, const NekDouble> &inarray,
-                          Array<OneD,NekDouble> &outarray);
 
             inline const AssemblyMapCGSharedPtr& GetLocalToGlobalMap()
                                                                         const;
 
+            
             MULTI_REGIONS_EXPORT int GetGlobalMatrixNnz(const GlobalMatrixKey &gkey);
 
 
@@ -133,6 +131,7 @@ namespace Nektar
                     Array<OneD,       NekDouble> &outarray,
                     CoeffState coeffstate);
 
+            virtual AssemblyMapSharedPtr v_GetLocToGloMap();
             
         private:
             GlobalLinSysSharedPtr GetGlobalLinSys(const GlobalLinSysKey &mkey);
@@ -172,6 +171,10 @@ namespace Nektar
                 const Array<OneD, const NekDouble> &inarray,
                 Array<OneD,NekDouble> &outarray);
 
+
+            virtual void v_Assemble(
+                                    const Array<OneD, const NekDouble> &inarray,
+                                    Array<OneD,NekDouble> &outarray);
 
             virtual void v_MultiplyByInvMassMatrix(
                     const Array<OneD, const NekDouble> &inarray,
@@ -213,15 +216,15 @@ namespace Nektar
             return m_bndCondExpansions;
         }
 
-
+        
         inline void ContField3D::Assemble()
         {
             m_locToGloMap->Assemble(m_coeffs, m_coeffs);
         }
 
-        inline void ContField3D::Assemble(
-                const Array<OneD, const NekDouble> &inarray,
-                Array<OneD,NekDouble> &outarray)
+        inline void ContField3D::v_Assemble(
+                                const Array<OneD, const NekDouble> &inarray,
+                                Array<OneD,NekDouble> &outarray)
         {
             m_locToGloMap->Assemble(inarray, outarray);
         }
@@ -232,6 +235,12 @@ namespace Nektar
             return  m_locToGloMap;
         }
 
+        inline AssemblyMapSharedPtr ContField3D::v_GetLocToGloMap()
+        {
+            return m_locToGloMap;
+        }
+
+        
 
     } //end of namespace
 } //end of namespace

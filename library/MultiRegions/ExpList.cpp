@@ -2409,6 +2409,14 @@ namespace Nektar
             return result;
         }
 
+        std::shared_ptr<AssemblyMap> ExpList::v_GetLocToGloMap()
+        {
+            ASSERTL0(false,
+                     "This method is not defined or valid for this class type");
+            static std::shared_ptr<AssemblyMap> result;
+            return result;
+        }
+
         void ExpList::v_Upwind(
             const Array<OneD, const Array<OneD,       NekDouble> > &Vec,
             const Array<OneD,                   const NekDouble>   &Fwd,
@@ -2706,7 +2714,14 @@ namespace Nektar
                      "This method is not defined or valid for this class type");
         }
 
+        void ExpList::v_Assemble(const Array<OneD, const NekDouble> &inarray,
+                Array<OneD,NekDouble> &outarray)
+        {
+            ASSERTL0(false,
+                     "This method is not defined or valid for this class type");
+        }
 
+        
         void ExpList::v_GlobalToLocal(void)
         {
             ASSERTL0(false,

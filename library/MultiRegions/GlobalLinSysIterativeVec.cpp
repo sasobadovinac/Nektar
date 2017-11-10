@@ -163,7 +163,7 @@ namespace Nektar
 
             int cnt  = 0;
             int cnt1 = 0; 
-            for(i = 0; i < nvec; ++i, cnt += nNonDir[i])
+            for(i = 0; i < nvec; cnt += nNonDir[i], ++i)
             {
                 // Copy initial residual from input
                 Vmath::Vcopy(nNonDir[i],pvecInput[i],1,tmp = r_A+cnt,1);
@@ -205,8 +205,10 @@ namespace Nektar
                 return;
             }
 
+            for(i = 0,cnt=0,cnt1=0; i < nvec;
+                        cnt +=nNonDir[i],cnt1 += nGlobal[i],++i)
             {
-                m_preconVec[i]->DoPreconditioner(r_A+cnt, tmp = w_A + cnt +  nDir[i]);
+                m_preconVec[i]->DoPreconditioner(r_A+cnt, tmp = w_A + cnt1 +  nDir[i]);
             }
             
             v_DoMatrixMultiply(nGlobal,w_A, s_A);

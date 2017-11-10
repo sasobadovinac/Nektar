@@ -176,6 +176,8 @@ namespace Nektar
         Array<OneD, Array< OneD, NekDouble> > m_F;
 
     private:
+
+        Array<OneD, MultiRegions::AssemblyMapSharedPtr> m_locToGloMapVec;
         
     };
 

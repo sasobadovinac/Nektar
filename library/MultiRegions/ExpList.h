@@ -58,6 +58,7 @@ namespace Nektar
         class GlobalLinSys;
         class AssemblyMapDG;
 
+        class AssemblyMap;
         class AssemblyMapCG;
         class GlobalLinSysKey;
         class GlobalMatrix;
@@ -471,6 +472,10 @@ namespace Nektar
                 Array<OneD,NekDouble> &outarray,
                 bool useComm = true);
 
+            MULTI_REGIONS_EXPORT inline void Assemble(
+                    const Array<OneD, const NekDouble> &inarray,
+                          Array<OneD,NekDouble> &outarray);
+
             /// Scatters from the global coefficients
             /// \f$\boldsymbol{\hat{u}}_g\f$ to the local coefficients
             /// \f$\boldsymbol{\hat{u}}_l\f$.
@@ -736,7 +741,9 @@ namespace Nektar
             inline std::shared_ptr<ExpList> &GetTrace();
             
             inline std::shared_ptr<AssemblyMapDG> &GetTraceMap(void);
-            
+
+            inline std::shared_ptr<AssemblyMap> GetLocToGloMap(void);
+
             inline const Array<OneD, const int> &GetTraceBndMap(void);
 
             inline void GetNormals(Array<OneD, Array<OneD, NekDouble> > &normals);
@@ -778,6 +785,7 @@ namespace Nektar
             inline Array<OneD, SpatialDomains::
                 BoundaryConditionShPtr>& UpdateBndConditions();
 
+            
             inline void EvaluateBoundaryConditions(
                 const NekDouble   time      = 0.0,
                 const std::string varName   = "",
@@ -1145,6 +1153,8 @@ namespace Nektar
             
             virtual std::shared_ptr<AssemblyMapDG> &v_GetTraceMap();
 
+            virtual std::shared_ptr<AssemblyMap> v_GetLocToGloMap();
+
             virtual const Array<OneD, const int> &v_GetTraceBndMap();
 
             virtual void v_GetNormals(
@@ -1229,6 +1239,10 @@ namespace Nektar
                 const Array<OneD, const NekDouble> &inarray,
                 Array<OneD,NekDouble> &outarray,
                 bool UseComm);
+
+            virtual void v_Assemble(
+                const Array<OneD, const NekDouble> &inarray,
+                Array<OneD,NekDouble> &outarray);
 
             virtual void v_GlobalToLocal(void);
 
@@ -1442,7 +1456,7 @@ namespace Nektar
                             BoundaryConditionCollection& collection,
                             unsigned int index, const std::string& variable);
 
-        
+            
         private:
             virtual const Array<OneD,const SpatialDomains::BoundaryConditionShPtr> &v_GetBndConditions();
             
@@ -1974,6 +1988,13 @@ namespace Nektar
             v_LocalToGlobal(useComm);
         }
 
+        inline void ExpList::Assemble(
+                                const Array<OneD, const NekDouble> &inarray,
+                                      Array<OneD,NekDouble> &outarray)
+        {
+            v_Assemble(inarray,outarray);
+        }
+
         inline void ExpList::LocalToGlobal(
                 const Array<OneD, const NekDouble> &inarray,
                 Array<OneD,NekDouble> &outarray,
@@ -2163,6 +2184,11 @@ namespace Nektar
             return v_GetTraceMap();
         }
 
+        inline std::shared_ptr<AssemblyMap> ExpList::GetLocToGloMap()
+        {
+            return v_GetLocToGloMap();
+        }
+        
         inline const Array<OneD, const int> &ExpList::GetTraceBndMap()
         {
             return v_GetTraceBndMap();

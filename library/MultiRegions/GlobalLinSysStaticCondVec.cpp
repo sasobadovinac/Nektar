@@ -262,6 +262,7 @@ namespace Nektar
             int nGlobal = m_locToGloMapVec[0]->GetNumGlobalCoeffs();
             
             m_wsp = Array<OneD, NekDouble>(nvec*(nLocalBnd + nGlobal) + nLocalBnd, 0.0);
+
             v_AssembleSchurComplement(m_locToGloMapVec[0]);
         }
 

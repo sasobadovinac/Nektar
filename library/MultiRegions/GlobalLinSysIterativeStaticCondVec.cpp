@@ -139,6 +139,7 @@ namespace Nektar
         {
             int nvec = m_expListVec.num_elements();
             
+            m_preconVec = Array<OneD, PreconditionerSharedPtr>(nvec);
             for(int i = 0; i < nvec; ++i)
             {
                 m_preconVec[i] = CreatePrecon(m_locToGloMapVec[i]);

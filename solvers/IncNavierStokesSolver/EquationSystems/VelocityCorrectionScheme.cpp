@@ -37,6 +37,8 @@
 #include <LibUtilities/BasicUtils/Timer.h>
 #include <SolverUtils/Core/Misc.h>
 
+#include <MultiRegions/GlobalLinSysStaticCondVec.h>
+#include <MultiRegions/GlobalLinSysIterativeStaticCondVec.h>
 #include <boost/algorithm/string.hpp>
 
 using namespace std;
@@ -467,7 +469,116 @@ namespace Nektar
             factors[StdRegions::eFactorSVVCutoffRatio] = m_sVVCutoffRatio;
             factors[StdRegions::eFactorSVVDiffCoeff]   = m_sVVDiffCoeff/m_kinvis;
         }
+        
+#if 1
+        {
+            static GlobalLinSysSharedPtr linSys;
+            static bool init = false;
+            
+            if(init == false)
+            {
+                init = true;
 
+                m_locToGloMapVec = Array<OneD, AssemblyMapSharedPtr>
+                    (m_nConvectiveFields);
+
+                Array<OneD, std::weak_ptr<ExpList> > fields(m_nConvectiveFields);
+                
+                for(int n  = 0; n < m_nConvectiveFields; ++n)
+                {
+                    factors[StdRegions::eFactorLambda] = 1.0/aii_Dt/m_diffCoeff[n];
+                    m_locToGloMapVec[n] = m_fields[n]->GetLocToGloMap();
+                    fields[n] = m_fields[n];
+                }
+
+                GlobalLinSysKey key(
+                  StdRegions::eHelmholtz, m_locToGloMapVec[0], factors);
+
+                // note this assumes m_fields hold u,v,w consecutively!
+                linSys = MemoryManager<
+                    GlobalLinSysIterativeStaticCondVec>::
+                    AllocateSharedPtr(key,fields,m_locToGloMapVec);
+
+                linSys->InitObject(); 
+            }
+
+            Array<OneD, Array<OneD, NekDouble> >tmp(m_nConvectiveFields);
+            Array<OneD, Array<OneD, NekDouble> >wsp(m_nConvectiveFields);
+
+            // Inner product of forcing
+            int contNcoeffs = m_locToGloMapVec[0]->GetNumGlobalCoeffs();
+
+
+            Array<OneD, NekDouble> tmp1(m_fields[0]->GetNcoeffs());
+            // Solve Helmholtz system and put in Physical space
+            for(int n = 0; n < m_nConvectiveFields; ++n)
+            {
+                wsp[n] = Array<OneD, NekDouble>(contNcoeffs);
+                tmp[n] = Array<OneD, NekDouble>(contNcoeffs);
+                
+                m_fields[n]->IProductWRTBase(Forcing[n],tmp1);
+                m_fields[n]->Assemble(tmp1,wsp[n]);
+                
+                // Note -1.0 term necessary to invert forcing function to
+                // be consistent with matrix definition
+                Vmath::Neg(contNcoeffs, wsp[n], 1);
+                
+                // Forcing function with weak boundary conditions
+                int i,j;
+                int bndcnt = 0;
+                NekDouble sign;
+                Array<OneD, NekDouble> gamma(contNcoeffs, 0.0);
+                
+                Array<OneD, const MultiRegions::ExpListSharedPtr>
+                    bndCondExpansions = m_fields[n]->GetBndCondExpansions();
+                
+                const Array<OneD, const SpatialDomains::BoundaryConditionShPtr> 
+                    bndConditions = m_fields[n]->GetBndConditions();
+                
+                for(i = 0; i < bndCondExpansions.num_elements(); ++i)
+                {
+                    if(bndConditions[i]->GetBoundaryConditionType()
+                       != SpatialDomains::eDirichlet)
+                    {
+                        for(j = 0; j < (bndCondExpansions[i])->GetNcoeffs(); j++)
+                        {
+                            sign = m_locToGloMapVec[n]->
+                                GetBndCondCoeffsToGlobalCoeffsSign(bndcnt);
+                            gamma[m_locToGloMapVec[n]->
+                                  GetBndCondCoeffsToGlobalCoeffsMap(bndcnt++)] +=
+                                sign * (bndCondExpansions[i]->GetCoeffs())[j];
+                        }
+                    }
+                    else
+                    {
+                        bndcnt += bndCondExpansions[i]->GetNcoeffs();
+                    }
+                    
+                    m_locToGloMapVec[n]->UniversalAssemble(gamma);
+                    
+                    // Add weak boundary conditions to forcing
+                    Vmath::Vadd(contNcoeffs, wsp[n], 1, gamma, 1, wsp[n], 1);
+                }
+            }
+                    
+            for(int n = 0; n < m_nConvectiveFields; ++n)
+            {
+                m_fields[n]->LocalToGlobal(m_fields[n]->UpdateCoeffs(),
+                                           tmp[n]);
+            }
+                
+            // Solve the system
+            linSys->SolveVec(wsp,tmp);
+            
+            for(int n = 0; n < m_nConvectiveFields; ++n)
+            {
+                m_fields[n]->GlobalToLocal(tmp[n],tmp1);
+
+                m_fields[n]->BwdTrans(tmp1,outarray[n]);
+            }
+            
+        }
+#else
         // Solve Helmholtz system and put in Physical space
         for(int i = 0; i < m_nConvectiveFields; ++i)
         {
@@ -477,6 +588,7 @@ namespace Nektar
                                    NullFlagList, factors);
             m_fields[i]->BwdTrans(m_fields[i]->GetCoeffs(),outarray[i]);
         }
+#endif
     }
     
 } //end of namespace

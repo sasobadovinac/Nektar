@@ -89,16 +89,8 @@ namespace Nektar
             /// from the local coefficients \f$\boldsymbol{\hat{u}}_l\f$.
             inline void Assemble();
 
-            /// Assembles the global coefficients \f$\boldsymbol{\hat{u}}_g\f$
-            /// from the local coefficients \f$\boldsymbol{\hat{u}}_l\f$.
-            inline void Assemble(
-                            const Array<OneD, const NekDouble> &inarray,
-                                  Array<OneD,NekDouble> &outarray) const;
-
             /// Returns the map from local to global level.
-            inline const AssemblyMapCGSharedPtr& GetLocalToGlobalMap()
-                                                                        const;
-
+            inline const AssemblyMapCGSharedPtr& GetLocalToGlobalMap() const;
 
             /// Calculates the inner product of a function
             /// \f$f(\boldsymbol{x})\f$ with respect to all <em>global</em>
@@ -207,6 +199,10 @@ namespace Nektar
 
             MULTI_REGIONS_EXPORT virtual void v_LocalToGlobal(bool useComm);
             
+            MULTI_REGIONS_EXPORT virtual void v_Assemble(
+                                const Array<OneD, const NekDouble> &inarray,
+                                Array<OneD,NekDouble> &outarray);
+            
             /// Scatters from the global coefficients
             /// \f$\boldsymbol{\hat{u}}_g\f$ to the local coefficients
             /// \f$\boldsymbol{\hat{u}}_l\f$.
@@ -228,6 +224,8 @@ namespace Nektar
                                 const Array<OneD, const NekDouble> &inarray,
                                       Array<OneD,       NekDouble> &outarray,
                                 CoeffState coeffstate);
+
+            MULTI_REGIONS_EXPORT virtual AssemblyMapSharedPtr v_GetLocToGloMap();
 
             /// Template method virtual forwarded for SmoothField().
             MULTI_REGIONS_EXPORT virtual void v_SmoothField(
@@ -318,45 +316,16 @@ namespace Nektar
             m_locToGloMap->Assemble(m_coeffs,m_coeffs);
         }
 
-        /**
-         * This operation is evaluated as:
-         * \f{tabbing}
-         * \hspace{1cm}  \= Do \= $e=$  $1, N_{\mathrm{el}}$ \\
-         * \> \> Do \= $i=$  $0,N_m^e-1$ \\
-         * \> \> \> $\boldsymbol{\hat{u}}_g[\mbox{map}[e][i]] =
-         * \boldsymbol{\hat{u}}_g[\mbox{map}[e][i]]+\mbox{sign}[e][i] \cdot
-         * \boldsymbol{\hat{u}}^{e}[i]$\\
-        *  \> \> continue\\
-         * \> continue
-         * \f}
-         * where \a map\f$[e][i]\f$ is the mapping array and \a
-         * sign\f$[e][i]\f$ is an array of similar dimensions ensuring the
-         * correct modal connectivity between the different elements (both
-         * these arrays are contained in the data member #m_locToGloMap). This
-         * operation is equivalent to the gather operation
-         * \f$\boldsymbol{\hat{u}}_g=\mathcal{A}^{T}\boldsymbol{\hat{u}}_l\f$,
-         * where \f$\mathcal{A}\f$ is the
-         * \f$N_{\mathrm{eof}}\times N_{\mathrm{dof}}\f$ permutation matrix.
-         *
-         * @param   inarray     An array of size \f$N_\mathrm{eof}\f$
-         *                      containing the local degrees of freedom
-         *                      \f$\boldsymbol{x}_l\f$.
-         * @param   outarray    The resulting global degrees of freedom
-         *                      \f$\boldsymbol{x}_g\f$ will be stored in this
-         *                      array of size \f$N_\mathrm{dof}\f$.
-         */
-        inline void ContField2D::Assemble(
-                                const Array<OneD, const NekDouble> &inarray,
-                                      Array<OneD,NekDouble> &outarray) const
-        {
-            m_locToGloMap->Assemble(inarray,outarray);
-        }
-
 
         inline const AssemblyMapCGSharedPtr&
             ContField2D::GetLocalToGlobalMap() const
         {
             return  m_locToGloMap;
+        }
+
+        inline AssemblyMapSharedPtr ContField2D::v_GetLocToGloMap()
+        {
+            return m_locToGloMap;
         }
 
 
@@ -398,7 +367,7 @@ namespace Nektar
                 {
                     Array<OneD, NekDouble> wsp(m_ncoeffs);
                     IProductWRTBase_IterPerExp(inarray,wsp);
-                    Assemble(wsp,outarray);
+                    v_Assemble(wsp,outarray);
                 }
             }
             else
