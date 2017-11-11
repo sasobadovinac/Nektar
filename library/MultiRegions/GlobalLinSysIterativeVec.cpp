@@ -166,7 +166,8 @@ namespace Nektar
             for(i = 0; i < nvec; cnt += nNonDir[i], ++i)
             {
                 // Copy initial residual from input
-                Vmath::Vcopy(nNonDir[i],pvecInput[i],1,tmp = r_A+cnt,1);
+                Vmath::Vcopy(nNonDir[i],pvecInput[i]+nDir[i],1,
+                             tmp = r_A+cnt,1);
 
                 // zero homogeneous out array ready for solution updates
                 // Should not be earlier in case input vector is same as

@@ -174,7 +174,7 @@ namespace Nektar
             // calculate statically condensed forcing
             for(n = 0; n < nvec; ++n)
             {
-                m_locToGloMapVec[n]->AssembleBnd(V_locbnd[0], V_globhombndtmp,
+                m_locToGloMapVec[n]->AssembleBnd(V_locbnd[n], V_globhombndtmp,
                                                  nDirBndDofs[n]);
                 
                 // assemble new forcing
@@ -196,7 +196,8 @@ namespace Nektar
             }
             
             // Solve for difference from initial solution given inout;
-            SolveVecLinearSystem(nGlobBndDofs, F, pert, m_locToGloMapVec, nDirBndDofs);
+            SolveVecLinearSystem(nGlobBndDofs, F, pert, m_locToGloMapVec,
+                                 nDirBndDofs);
                 
             for(n = 0; n < nvec; ++n)
             {
