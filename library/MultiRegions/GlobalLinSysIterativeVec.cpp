@@ -187,7 +187,7 @@ namespace Nektar
             
             if(m_rhs_magnitude == NekConstants::kNekUnsetDouble)
             {
-                Set_Rhs_Magnitude(pvecInput[0].num_elements(), pvecInput);
+                Set_Rhs_Magnitude(nGlobal[0], pvecInput);
             }
 
             m_totalIterations = 0;
@@ -215,7 +215,6 @@ namespace Nektar
             v_DoMatrixMultiply(nGlobal,w_A, s_A);
 
             k = 0;
-
 
             vExchange[0]  = vExchange[1] = 0.0;
             for(i = 0,cnt=0,cnt1=0; i < nvec;

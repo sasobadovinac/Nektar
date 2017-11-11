@@ -572,9 +572,9 @@ namespace Nektar
             
             for(int n = 0; n < m_nConvectiveFields; ++n)
             {
-                m_fields[n]->GlobalToLocal(tmp[n],tmp1);
+                m_fields[n]->GlobalToLocal(tmp[n],m_fields[n]->UpdateCoeffs());
 
-                m_fields[n]->BwdTrans(tmp1,outarray[n]);
+                m_fields[n]->BwdTrans(m_fields[n]->GetCoeffs(),outarray[n]);
             }
             
         }

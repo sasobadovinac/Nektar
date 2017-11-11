@@ -120,7 +120,7 @@ namespace Nektar
             Array<OneD, Array<OneD, NekDouble > > F(nvec), V_locbnd(nvec);
             Array<OneD, NekDouble> tmp, V_globhombndtmp;
             
-            V_globhombndtmp = m_wsp + nvec*(nLocBndDofs+nGlobDofs);
+            V_globhombndtmp = m_wsp + 2*nvec*nLocBndDofs;
             
             int n;
             
@@ -133,7 +133,7 @@ namespace Nektar
                 nDirBndDofs[n]   = m_locToGloMapVec[n]->GetNumGlobalDirBndCoeffs();
 
                 V_locbnd[n] = m_wsp + n*nLocBndDofs;
-                F[n]        = m_wsp + nvec*nLocBndDofs + n*nGlobDofs;
+                F[n]        = m_wsp + (2*nvec+1)*nLocBndDofs + n*nGlobDofs;
 
                 // copy input forcing into F array
                 Vmath::Vcopy(nGlobDofs,in[n].get(),1,F[n].get(),1);
@@ -262,7 +262,7 @@ namespace Nektar
             int nLocalBnd  = m_locToGloMapVec[0]->GetNumLocalBndCoeffs();
             int nGlobal = m_locToGloMapVec[0]->GetNumGlobalCoeffs();
             
-            m_wsp = Array<OneD, NekDouble>(nvec*(nLocalBnd + nGlobal) + nLocalBnd, 0.0);
+            m_wsp = Array<OneD, NekDouble>(nvec*(2*nLocalBnd + nGlobal) + nLocalBnd, 0.0);
 
             v_AssembleSchurComplement(m_locToGloMapVec[0]);
         }
