@@ -108,7 +108,7 @@ void ProcessHomogeneousPlane::Process(po::variables_map &vm)
                 int n         = s * nfields + i;
                 m_f->m_exp[n] = m_f->m_exp[n]->GetPlane(plane);
 
-                if (m_config["wavespace"].as<bool>())
+                if (m_config["wavespace"].m_beenSet)
                 {
                     m_f->m_exp[n]->BwdTrans(m_f->m_exp[n]->GetCoeffs(),
                                             m_f->m_exp[n]->UpdatePhys());

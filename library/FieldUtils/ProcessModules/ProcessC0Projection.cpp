@@ -111,14 +111,14 @@ void ProcessC0Projection::Process(po::variables_map &vm)
             }
         }
     }
-    bool JustPerformLocToGloMap = m_config["localtoglobalmap"].as<bool>();
+    bool JustPerformLocToGloMap = m_config["localtoglobalmap"].m_beenSet;
     bool HelmSmoother =
         (boost::iequals(m_config["helmsmoothing"].as<string>(), "Not Set"))
             ? false
             : true;
     int nfields = m_f->m_exp.size();
     Array<OneD, MultiRegions::ExpListSharedPtr> C0ProjectExp(nfields);
-    if (m_config["usexmlbcs"].as<bool>())
+    if (m_config["usexmlbcs"].m_beenSet)
     {
         for (int i = 0; i < nfields; ++i)
         {

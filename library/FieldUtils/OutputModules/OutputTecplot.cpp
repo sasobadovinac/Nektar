@@ -84,7 +84,7 @@ OutputTecplot::~OutputTecplot()
 void OutputTecplot::Process(po::variables_map &vm)
 {
 
-    if(m_config["writemultiplefiles"].as<bool>())
+    if(m_config["writemultiplefiles"].m_beenSet)
     {
         m_oneOutputFile = false;
     }
@@ -613,7 +613,7 @@ void OutputTecplotBinary::WriteDoubleOrFloat(std::ofstream          &outfile,
                                              Array<OneD, NekDouble> &data)
 {
     // Data format: either double or single depending on user options
-    bool useDoubles = m_config["double"].as<bool>();
+    bool useDoubles = m_config["double"].m_beenSet;
 
     if (useDoubles)
     {
@@ -642,7 +642,7 @@ void OutputTecplotBinary::WriteTecplotZone(std::ofstream &outfile)
     Array<OneD, NekDouble> fieldMax(m_fields.num_elements());
 
     // Data format: either double or single depending on user options
-    bool useDoubles = m_config["double"].as<bool>();
+    bool useDoubles = m_config["double"].m_beenSet;
 
     if ((m_oneOutputFile && m_f->m_comm->GetRank() == 0) || !m_oneOutputFile)
     {

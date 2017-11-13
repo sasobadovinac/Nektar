@@ -129,7 +129,7 @@ void ProcessDisplacement::Process(po::variables_map &vm)
         return;
     }
 
-    bool useVertexIds = m_config["usevertexids"].as<bool>();
+    bool useVertexIds = m_config["usevertexids"].m_beenSet;
 
     vector<string> files;
     files.push_back(toFile);
