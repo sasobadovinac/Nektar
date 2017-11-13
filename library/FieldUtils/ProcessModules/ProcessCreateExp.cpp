@@ -190,10 +190,12 @@ void ProcessCreateExp::Process(po::variables_map &vm)
         if (fldfilegiven)
         {
             int nfields, nstrips;
-
+            
             m_f->m_session->LoadParameter("Strip_Z", nstrips, 1);
 
             vector<string> vars = m_f->m_session->GetVariables();
+	    int nsessionvar  = vars.size();
+	
             if (vm.count("useSessionVariables"))
             {
                 m_f->m_variables = vars;
