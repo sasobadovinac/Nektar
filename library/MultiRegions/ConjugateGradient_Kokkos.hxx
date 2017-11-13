@@ -192,28 +192,28 @@ namespace Nektar
 
             // --------------------------------------------------------------------------------
             // Gathering  quadrature and laplacian metrics for each element
-            int metricSize = elmts * nquad0 * nquad1;
-            Kokkos::View<double*,random_memory> quadMetricGlo ("quadMetricGlo", metricSize);                        
-            typename Kokkos::View< double*>::HostMirror h_quadMetricGlo;
-            h_quadMetricGlo = Kokkos::create_mirror_view(quadMetricGlo);
-            Kokkos::View<double*,random_memory> laplacian00Glo ("laplacian00Glo", metricSize);                        
-            typename Kokkos::View< double*>::HostMirror h_laplacian00Glo;
+            int metricSize = nquad0 * nquad1;
+            Kokkos::View<double**,random_memory> quadMetricGlo  ("quadMetricGlo" , metricSize, elmts);                        
+            typename Kokkos::View< double**>::HostMirror h_quadMetricGlo ;
+            h_quadMetricGlo  = Kokkos::create_mirror_view(quadMetricGlo );
+            Kokkos::View<double**,random_memory> laplacian00Glo ("laplacian00Glo", metricSize, elmts);                        
+            typename Kokkos::View< double**>::HostMirror h_laplacian00Glo;
             h_laplacian00Glo = Kokkos::create_mirror_view(laplacian00Glo);
-            Kokkos::View<double*,random_memory> laplacian01Glo ("laplacian01Glo", metricSize);                        
-            typename Kokkos::View< double*>::HostMirror h_laplacian01Glo;
+            Kokkos::View<double**,random_memory> laplacian01Glo ("laplacian01Glo", metricSize, elmts);                        
+            typename Kokkos::View< double**>::HostMirror h_laplacian01Glo;
             h_laplacian01Glo = Kokkos::create_mirror_view(laplacian01Glo);
-            Kokkos::View<double*,random_memory> laplacian11Glo ("laplacian11Glo", metricSize);                        
-            typename Kokkos::View< double*>::HostMirror h_laplacian11Glo;
+            Kokkos::View<double**,random_memory> laplacian11Glo ("laplacian11Glo", metricSize, elmts);                        
+            typename Kokkos::View< double**>::HostMirror h_laplacian11Glo;
             h_laplacian11Glo = Kokkos::create_mirror_view(laplacian11Glo);
 
             int numLocalCoeffs, numGlobalCoeffs;
             Array<OneD, const int> NeklocalToGlobalMap; //size = numLocalCoeffs
             Array<OneD, const NekDouble> NeklocalToGlobalSign; //size = numLocalCoeffs            
 
-            Array<OneD, NekDouble> NekquadMetricGlo (4*metricSize);
-            Array<OneD, NekDouble> Neklaplacian00Glo(NekquadMetricGlo+metricSize);
-            Array<OneD, NekDouble> Neklaplacian01Glo(NekquadMetricGlo+2*metricSize);
-            Array<OneD, NekDouble> Neklaplacian11Glo(NekquadMetricGlo+3*metricSize);
+            Array<OneD, NekDouble> NekquadMetricGlo (4*metricSize*elmts);
+            Array<OneD, NekDouble> Neklaplacian00Glo(NekquadMetricGlo+metricSize*elmts);
+            Array<OneD, NekDouble> Neklaplacian01Glo(NekquadMetricGlo+2*metricSize*elmts);
+            Array<OneD, NekDouble> Neklaplacian11Glo(NekquadMetricGlo+3*metricSize*elmts);
             
             GetMatrixMultiplyMetrics(
                         NekquadMetricGlo, Neklaplacian00Glo, Neklaplacian01Glo, Neklaplacian11Glo,
@@ -225,10 +225,13 @@ namespace Nektar
 
             Kokkos::parallel_for(range_policy_host(0,metricSize), KOKKOS_LAMBDA (const int i)
     		{
-            	h_quadMetricGlo(i) = NekquadMetricGlo[i];
-            	h_laplacian00Glo(i) = Neklaplacian00Glo[i];
-            	h_laplacian01Glo(i) = Neklaplacian01Glo[i];
-            	h_laplacian11Glo(i) = Neklaplacian11Glo[i];
+            	for (int el = 0; el < elmts; ++el)
+                {
+                    h_quadMetricGlo (i,el) = NekquadMetricGlo [i+el*metricSize];
+            	    h_laplacian00Glo(i,el) = Neklaplacian00Glo[i+el*metricSize];
+            	    h_laplacian01Glo(i,el) = Neklaplacian01Glo[i+el*metricSize];
+            	    h_laplacian11Glo(i,el) = Neklaplacian11Glo[i+el*metricSize];
+                }
             });
             Kokkos::deep_copy(quadMetricGlo,h_quadMetricGlo);
             Kokkos::deep_copy(laplacian00Glo,h_laplacian00Glo);
@@ -541,10 +544,10 @@ namespace Nektar
                 const Kokkos::View<double*> inarray,
                 Kokkos::View<double*> outarray,
                 const Kokkos::View<double[1]> lambda,                
-                const Kokkos::View<double*> quadMetricGlo,
-                const Kokkos::View<double*> laplacian00Glo,
-                const Kokkos::View<double*> laplacian01Glo,
-                const Kokkos::View<double*> laplacian11Glo,
+                const Kokkos::View<double**> quadMetricGlo,
+                const Kokkos::View<double**> laplacian00Glo,
+                const Kokkos::View<double**> laplacian01Glo,
+                const Kokkos::View<double**> laplacian11Glo,
                 const int &nquad0, const int &nquad1,
                 const int &nmodes0, const int &nmodes1, const int &ncoeffs, 
                 const Kokkos::View<int*> coeff_offset,
@@ -589,7 +592,7 @@ namespace Nektar
             // need to use element-colouring to prevent race condition
             for (int cs = 0; cs < ncs; ++cs)
             {
-                Kokkos::parallel_for( team_policy( cs_sizes[cs] , 32 )
+                Kokkos::parallel_for( team_policy( cs_sizes[cs] , ncoeffs )
                 , KOKKOS_LAMBDA ( const member_type& teamMember)
                 {
                     const int i = teamMember.league_rank();
@@ -602,7 +605,7 @@ namespace Nektar
                         });
                     }
                 });
-            }            
+            }           
             printf("\n");            
         }
 
@@ -611,10 +614,10 @@ namespace Nektar
                 const Kokkos::View<double*> transfer_in,
                 Kokkos::View<double*> transfer_out,
                 const Kokkos::View<double[1]> lambda,
-                const Kokkos::View<double*> quadMetricGlo,
-                const Kokkos::View<double*> laplacian00Glo,
-                const Kokkos::View<double*> laplacian01Glo,
-                const Kokkos::View<double*> laplacian11Glo,
+                const Kokkos::View<double**> quadMetricGlo,
+                const Kokkos::View<double**> laplacian00Glo,
+                const Kokkos::View<double**> laplacian01Glo,
+                const Kokkos::View<double**> laplacian11Glo,
                 const int &nquad0, const int &nquad1,
                 const int &nmodes0, const int &nmodes1, const int &ncoeffs, 
                 const Kokkos::View<int*> coeff_offset,
@@ -643,8 +646,8 @@ namespace Nektar
             //Kokkos::parallel_for(range_policy(0,elmts),KOKKOS_LAMBDA (const int el)   {    
             Kokkos::parallel_for( team_policy( no_teams , max_threads )
                 //.set_scratch_size(1,Kokkos::PerThread(scratch_size_thread))
-                .set_scratch_size(0,Kokkos::PerTeam(scratch_size_team0 + scratch_size_team1)) // fast shared memory
-                //.set_scratch_size(1,Kokkos::PerTeam(scratch_size_team1)) // L2 cache?
+                .set_scratch_size(0,Kokkos::PerTeam(scratch_size_team0)) // fast shared memory
+                .set_scratch_size(1,Kokkos::PerTeam(scratch_size_team1)) // L2 cache?
                 , KOKKOS_LAMBDA ( const member_type& teamMember)
             {
                 const int el_o = teamMember.league_rank();
@@ -681,7 +684,7 @@ namespace Nektar
                     s_D1[i] = D1[i];
                 });
 
-                int level = 0;
+                int level = 1;
                 ScratchViewType32 s_outarray(teamMember.team_scratch(level),ncoeffs);
                 ScratchViewType32 s_inarray(teamMember.team_scratch(level),ncoeffs);
                 Kokkos::parallel_for( Kokkos::TeamThreadRange( teamMember , max_threads ), [&] ( const int el_i)
@@ -691,7 +694,7 @@ namespace Nektar
                     {
                         for (int i = 0; i < ncoeffs; ++i)
                         {
-                            s_inarray(i,el_i) = transfer_in[coeff_offset[el]+i];
+                            s_inarray(i,el_i) = transfer_in[el*ncoeffs+i];
                         }
                     }
                 });
@@ -732,7 +735,7 @@ namespace Nektar
                     {
                         for (int i = 0; i < ncoeffs; ++i)
                         {
-                            transfer_out[coeff_offset[el] + i] = s_outarray(i,el_i);
+                            transfer_out[el*ncoeffs + i] = s_outarray(i,el_i);
                         }
                     }
                 });
@@ -751,10 +754,10 @@ namespace Nektar
                 const int &el, const int el_i, const int max_threads,
                 const Kokkos::View<int*>  coeff_offset,
                 const Kokkos::View<double[1]> lambda,
-				const Kokkos::View<double*>  quadMetricGlo,
-                const Kokkos::View<double*> laplacian00Glo,
-                const Kokkos::View<double*> laplacian01Glo,
-                const Kokkos::View<double*> laplacian11Glo,
+				const Kokkos::View<double**>  quadMetricGlo,
+                const Kokkos::View<double**> laplacian00Glo,
+                const Kokkos::View<double**> laplacian01Glo,
+                const Kokkos::View<double**> laplacian11Glo,
                 const int &nquad0, const int &nquad1,
                 const int &nmodes0, const int &nmodes1, const int &ncoeffs,
                 const ScratchViewType s_base0,
@@ -774,7 +777,7 @@ namespace Nektar
             
             for (int i = 0; i < nqtot; ++i)
             {
-                s32_wsp1(i,el_i) = quadMetricGlo[el*nqtot+i] * s32_wsp0(i,el_i);
+                s32_wsp1(i,el_i) = quadMetricGlo(i,el) * s32_wsp0(i,el_i);
             }
             
             IProductWRTBase_SumFacKernel_Kokkos_s32(s_base0, s_base1, s32_wsp1, s_outarray,
@@ -789,13 +792,13 @@ namespace Nektar
         
             for (int i = 0; i < nqtot; ++i)
             {
-                s32_wsp0(i,el_i) = laplacian00Glo[el*nqtot+i] * s32_wsp1L(i,el_i) 
-                                  + laplacian01Glo[el*nqtot+i] * s32_wsp2(i,el_i);
+                s32_wsp0(i,el_i) = laplacian00Glo(i,el) * s32_wsp1L(i,el_i) 
+                                 + laplacian01Glo(i,el) * s32_wsp2(i,el_i);
             }
             for (int i = 0; i < nqtot; ++i)
             {
-                s32_wsp2(i,el_i) = laplacian01Glo[el*nqtot+i] * s32_wsp1L(i,el_i)
-                		          + laplacian11Glo[el*nqtot+i] * s32_wsp2(i,el_i);
+                s32_wsp2(i,el_i) = laplacian01Glo(i,el) * s32_wsp1L(i,el_i)
+                                 + laplacian11Glo(i,el) * s32_wsp2(i,el_i);
             }
             IProductWRTBase_SumFacKernel_Kokkos_s32(s_dbase0, s_base1,s32_wsp0,s32_wsp1 ,s32_wsp1L,
                          nmodes0, nmodes1, nquad0, nquad1, el_i, max_threads);
