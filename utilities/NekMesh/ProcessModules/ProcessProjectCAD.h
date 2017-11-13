@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 //
-//  File: ThreadSpecificPool.hpp
+//  File: ProcessJac.h
 //
 //  For more information, please see: http://www.nektar.info/
 //
@@ -29,27 +29,59 @@
 //  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 //  DEALINGS IN THE SOFTWARE.
 //
-//  Description:
-//
+//  Description: Calculate jacobians of elements.
 //
 ////////////////////////////////////////////////////////////////////////////////
 
-#ifndef NEKTAR_LIB_UTILITIES_BOOST_UTIL_HPP
-#define NEKTAR_LIB_UTILITIES_BOOST_UTIL_HPP
+#ifndef UTILITIES_NEKMESH_PROCESSPROJECTCAD
+#define UTILITIES_NEKMESH_PROCESSPROJECTCAD
 
-#include <memory>
+#include <NekMeshUtils/Module/Module.h>
+
+#include <boost/geometry.hpp>
+#include <boost/geometry/geometries/point.hpp>
+#include <boost/geometry/geometries/box.hpp>
+
+#include <boost/geometry/index/rtree.hpp>
+
+namespace bg = boost::geometry;
+namespace bgi = boost::geometry::index;
+
+typedef bg::model::point<float, 3, bg::cs::cartesian> point;
+typedef bg::model::box<point> box;
+typedef std::pair<box, unsigned> boxI;
 
 namespace Nektar
 {
-    template<typename DataType>
-    std::shared_ptr<DataType> MakePtr(DataType* d)
+namespace Utilities
+{
+
+
+class ProcessProjectCAD : public NekMeshUtils::ProcessModule
+{
+public:
+    /// Creates an instance of this class
+    static std::shared_ptr<Module> create(NekMeshUtils::MeshSharedPtr m)
     {
-        return std::shared_ptr<DataType>(d);
+        return MemoryManager<ProcessProjectCAD>::AllocateSharedPtr(m);
     }
+    static NekMeshUtils::ModuleKey className;
+
+    ProcessProjectCAD(NekMeshUtils::MeshSharedPtr m);
+    virtual ~ProcessProjectCAD();
+
+    /// Write mesh to output file.
+    virtual void Process();
+
+private:
+
+    bool findAndProject(bgi::rtree<boxI, bgi::quadratic<16> > &rtree,
+                                           Array<OneD, NekDouble> in,
+                                           int &surf);
+
+    bool IsNotValid(std::vector<NekMeshUtils::ElementSharedPtr> &els);
+};
+}
 }
 
-
-#endif //NEKTAR_LIB_UTILITIES_BOOST_UTIL_HPP
-
-
-
+#endif

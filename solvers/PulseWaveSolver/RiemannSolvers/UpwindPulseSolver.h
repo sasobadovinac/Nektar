@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File: testBoostUtil.cpp
+// File: UpwindPulseSolver.h
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -29,63 +29,41 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 //
-// Description: Tests the boost utility functions.
+// Description: Upwind pulse Riemann solver.
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#include <LibUtilities/BasicUtils/BoostUtil.hpp>
+#ifndef NEKTAR_SOLVERS_PULSEWAVESOLVER_RIEMANNSOLVER_UPWINDPULSE
+#define NEKTAR_SOLVERS_PULSEWAVESOLVER_RIEMANNSOLVER_UPWINDPULSE
 
-#include <boost/test/auto_unit_test.hpp>
-#include <boost/test/test_case_template.hpp>
-#include <boost/test/floating_point_comparison.hpp>
-#include <boost/test/unit_test.hpp>
-#include <boost/progress.hpp>
-#include <LibUtilities/BasicUtils/ConsistentObjectAccess.hpp>
+#include <SolverUtils/RiemannSolvers/RiemannSolver.h>
+
+using namespace Nektar::SolverUtils;
 
 namespace Nektar
 {
-    namespace UnitTests
+class UpwindPulseSolver : public RiemannSolver
+{
+public:
+    static RiemannSolverSharedPtr create()
     {
-        class TestClass
-        {
-            public:
-                TestClass()
-                {
-                    ++constructionCount;
-                }
-
-                ~TestClass()
-                {
-                    ++destructionCount;
-                }
-
-                static unsigned int constructionCount;
-                static unsigned int destructionCount;
-        };
-
-        unsigned int TestClass::constructionCount = 0;
-        unsigned int TestClass::destructionCount = 0;
-
-        template<typename T>
-        class FakeClass {};
-        
-        
-        BOOST_AUTO_TEST_CASE(testMakePtr)
-        {
-            std::shared_ptr<FakeClass<int> > a(new FakeClass<int>());
-            //FakeClass<int>& b = ConsistentObjectAccess<std::shared_ptr<FakeClass<int> > >::reference(a);
-            
-            {
-                std::shared_ptr<TestClass> p = MakePtr(new TestClass());
-                BOOST_CHECK(TestClass::constructionCount == 1);
-                BOOST_CHECK(TestClass::destructionCount == 0);
-            }
-
-            BOOST_CHECK(TestClass::constructionCount == 1);
-            BOOST_CHECK(TestClass::destructionCount == 1);
-
-        }
+        return RiemannSolverSharedPtr(new UpwindPulseSolver());
     }
+
+    static std::string solverName;
+
+protected:
+    UpwindPulseSolver();
+
+    virtual void v_Solve(const int nDim,
+                         const Array<OneD, const Array<OneD, NekDouble>> &Fwd,
+                         const Array<OneD, const Array<OneD, NekDouble>> &Bwd,
+                         Array<OneD, Array<OneD, NekDouble>> &flux);
+
+    void RiemannSolverUpwind(NekDouble AL, NekDouble uL, NekDouble AR,
+                             NekDouble uR, NekDouble &Aflux, NekDouble &uflux,
+                             NekDouble A_0, NekDouble beta, NekDouble n);
+};
 }
 
-
+#endif
