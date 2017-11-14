@@ -735,7 +735,7 @@ namespace MultiRegions
                 }            
                 for (l = 1; l <= k; ++l)
                 {                
-                    if (b[(l + j * ldb)*strideB + batchB] != 0.)
+                    //if (b[(l + j * ldb)*strideB + batchB] != 0.)
                     {
                         temp = alpha * b[(l + j * ldb)*strideB + batchB];
                         for (i = 1; i <= m; ++i)
@@ -771,7 +771,7 @@ namespace MultiRegions
                 }            
                 for (l = 1; l <= k; ++l)
                 {                
-                    if (b[(j + l * ldb)*strideB + batchB] != 0.)
+                    //if (b[(j + l * ldb)*strideB + batchB] != 0.)
                     {
                         temp = alpha * b[(j + l * ldb)*strideB + batchB];
                         for (i = 1; i <= m; ++i)

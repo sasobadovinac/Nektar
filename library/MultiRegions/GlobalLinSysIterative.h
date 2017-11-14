@@ -237,7 +237,6 @@ namespace Nektar
                       ScratchViewType32 s_wsp0,
                       ScratchViewType32 s_wsp1,
                       ScratchViewType32 s_wsp2,
-                      ScratchViewType32 s_wsp1L,
                 const int &el, const int el_i, const int max_threads,
                 const Kokkos::View<int*>  coeff_offset,
                 const Kokkos::View<double[1]> lambda,
@@ -253,7 +252,8 @@ namespace Nektar
                 const ScratchViewType s_dbase1,
                 const ScratchViewType s_D0,
                 const ScratchViewType s_D1,
-                const member_type &teamMember, const int &wspsize);
+                const member_type &teamMember, const int &wspsize,
+                ScratchViewType32 s_scratch1, ScratchViewType32 s_scratch2);
 
             KOKKOS_INLINE_FUNCTION
             void IProductWRTBase_SumFacKernel_Kokkos(
@@ -313,7 +313,8 @@ namespace Nektar
             void PhysTensorDeriv_Kokkos_s32(
                 const ScratchViewType32 inarray,
                 ScratchViewType32 outarray_d0,
-                ScratchViewType32 outarray_d1,
+                ScratchViewType32 outarray_d1,                
+                ScratchViewType32 scratch,
                 const int &nquad0, const int &nquad1,
                 const ScratchViewType D0,
                 const ScratchViewType D1,
