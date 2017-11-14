@@ -645,17 +645,7 @@ namespace Nektar
                     }
                 }
             }
-            /*for(int e_n = el_begin; e_n < el_end; ++e_n)
-            {
-                printf("element %i: ",e_n);
-                for (std::vector<int>::iterator it = el_connect[e_n].begin() ; it != el_connect[e_n].end(); ++it)
-                {
-                    printf("%i ",*it );
-                }
-                printf("\n");
-            }
-            printf("completed connecting of partition %i\n", par );*/
-
+            
             // ===== create element colourgroups based on graph =====
             std::vector<int> remain(el_end - el_begin);
             for (int i = 0; i < remain.size(); ++i) // or use std::iota
@@ -695,6 +685,53 @@ namespace Nektar
                 // include colour into vector of coloursets
                 coloursets.push_back(colour);
             }
+
+            // try to accomodate smallest group in one of the other groups
+            // does not find any elements which fulfill the criteria
+            // find smallest colourset
+            /*int set_min = 0;
+            int set_min_size = coloursets[0].size();
+            for (int set = 1; set < coloursets.size(); ++set)
+            {
+                set_min = set_min_size < coloursets[set].size() ? set_min : set;
+                set_min_size = coloursets[set_min].size();                    
+            }
+            int colourset_size = coloursets.size();
+            for (int set = 0; set < coloursets.size(); ++set)
+            {                
+                for (int j = set_min_size-1; j >= 0; --j)
+                {
+                    bool connection = false;
+                    // take an element in smallest set
+                    int el_min = coloursets[set_min][j];                    
+                    
+                    for (int i = 0; i < coloursets[set].size(); ++i)
+                    {
+                        // take element in this set
+                        int el = coloursets[set][i];                       
+                            
+                        // if there is a connection between the two elements
+                        if (std::find(el_connect[el].begin(), el_connect[el].end(), el_min)
+                                 != el_connect[el].end() )
+                        {
+                            connection = true;
+                            break;
+                        }
+                    }
+                    if (connection == false) // if there is no connection
+                    {
+                        // move element from smallest set to this set
+                        coloursets[set].push_back(el_min);
+                        coloursets[set_min].erase(coloursets[set_min].begin() + j);
+                        printf("element %i moved from set %i to set %i\n",el_min,set_min, set );
+                        if (coloursets[set_min].empty())
+                        {
+                            coloursets.resize(colourset_size-1);
+                            printf("resized coloursets\n");
+                        }
+                    }
+                }
+            }*/
 
             // ===== distribute elements more evenly between groups =====
             int iter = coloursets.size() / 2 + 1;
@@ -746,7 +783,11 @@ namespace Nektar
                         break;
                     }
                 }
+                // sort elements within group
+                std::sort(coloursets[set_min].begin(), coloursets[set_min].end());
             }
+
+
 
             return coloursets;
         }
