@@ -289,6 +289,11 @@ void FilterParticlesTracking::v_Initialise(
     {
         m_outputStream << ", " << m_session->GetVariables()[n];
     }
+    m_outputStream << ", Fx, Fy";
+    if(dim == 3)
+    {
+        m_outputStream << ", Fz";
+    }
     m_outputStream << endl;
 
     // Read seed points
@@ -433,6 +438,15 @@ void FilterParticlesTracking::AdvanceParticles(
             HandleCollision(particle);
             // Check if particle left the domain of interest
             CheckBoundingBox(particle);
+            
+            //Plot data for debuging 
+            //for(int n = 0; n < 3; ++n)
+            //{
+                //cout << ", " << boost::format("%25.19e") %
+                                        //particle.m_gloCoord[n];
+            //}
+            //cout <<endl;
+            
         }
     }
 }
@@ -629,41 +643,67 @@ void FilterParticlesTracking::CalculateForce(Particle &particle)
 {
     // TO DO: update particle.m_force[0][i] with force per unit mass
     
-    NekDouble   Re = 0.0, Cd = 0.0, Fd = 0.0, g = 9.81;
+    NekDouble   Re = 0.0, Cd = 0.0, Fd = 0.0;     
+    //NekDouble   nu = 1.0e-6;     // m2/s
     
-    //Evaluate ^2
     for (int i = 0; i < particle.m_dim; ++i)
     {    
         Re += pow(particle.m_fluidVelocity[i]
                   -particle.m_particleVelocity[0][i],2.0);
     }
     Re = sqrt(Re)*m_diameter/m_kinvis;
-    
+    //Re = sqrt(Re)*m_diameter/nu;
     //Calcule Drag coeficient
+    
     // Openfoam 
-    if (Re >1000.0)
+    //if (Re < 0.1)
+    //{
+        //Cd = 1E4;
+    //}
+    //else if (Re >1000.0)
+    //{
+        //Cd = 0.424;
+    //}
+    //else
+    //{
+        //Cd = (24.0/Re)*(1.0+pow(Re,2.0/3.0)/6.0);
+    //}
+    
+    // Crowe et al. (1998) 
+    if (Re == 0.0)
     {
-        Cd = 0.424;
+        Cd = 1E4; //este valor es muy restrigindo!!!!
+    }
+    else if (Re < 0.5  )
+    {
+        Cd = 24.0 / Re;
+    }
+    else if (Re <1000.0)
+    {
+        Cd = (24.0 / Re) * ( 1.0 + 0.15 * pow(Re,0.687) );
     }
     else
     {
-        Cd = (24.0/Re)*(1.0+pow(Re,2.0/3.0)/6.0);
+        Cd = 0.44;
     }
-        
+    
     //Cd = 0.47;
-                    
+    
     Fd = (18.0*m_kinvis/((m_density)
           *pow(m_diameter,2.0)))*(Cd*Re/24.0);
-
-
+    
+    //Fd = (18.0 * nu / ((m_density)
+          //* pow(m_diameter,2.0))) * (Cd * Re / 24.0);
+    
+    //std::cout<<Re<<", "<<Cd<<", "<<Fd<<std::endl;
+    
     for (int i = 0; i < particle.m_dim; ++i)
     {
-        particle.m_force[0][i] = Fd*(particle.m_fluidVelocity[i]
-                                    -particle.m_particleVelocity[0][i]);
+        particle.m_force[0][i] = Fd * ( particle.m_fluidVelocity[i]
+                               - particle.m_particleVelocity[0][i]);
     }
     //Add gravity effects
-    particle.m_force[0][1] -= g * (1.0 - 1.0/m_density);
-
+    particle.m_force[0][1] -= 9.81 * (1.0 - 1.0/m_density);
 }
 
 /**
@@ -729,6 +769,12 @@ void FilterParticlesTracking::OutputParticles(const NekDouble &time)
                 m_outputStream << ", " << boost::format("%25.19e") %
                                             particle.m_fields[n];
             }
+            for(int n = 0; n < particle.m_dim; ++n)
+            {
+                m_outputStream << ", " << boost::format("%25.19e") %
+                                            particle.m_force[0][n];
+            }
+            
             m_outputStream << endl;
         }
     }
