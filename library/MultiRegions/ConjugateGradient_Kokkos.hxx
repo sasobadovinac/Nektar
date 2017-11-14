@@ -38,9 +38,9 @@
 #include <MultiRegions/GlobalLinSysIterative.h>
 #include <MultiRegions/ConjugateGradient_BLAS.hxx>
 
-//#ifdef __CUDA_ARCH__
+#ifdef KOKKOS_HAVE_CUDA
 #include "cudaProfiler.h"
-//#endif
+#endif
 
 using namespace std;
 
@@ -124,7 +124,7 @@ namespace Nektar
 
             // copying base0 and dbase0
             int base0_len = Nekbase0.num_elements();
-            printf("base0_len = %i \n",base0_len );
+            //printf("base0_len = %i \n",base0_len );
             
             Kokkos::View<double*,random_memory> base0 ("base0", base0_len);                        
             typename Kokkos::View< double*>::HostMirror h_base0;
@@ -142,7 +142,7 @@ namespace Nektar
 
             // copying base1 and dbase1
             int base1_len = Nekbase1.num_elements(); //nmodes0*(nmodes1-0.5*(nmodes0-1))*nquad1;
-            printf("base1_len = %i \n",base1_len );
+            //printf("base1_len = %i \n",base1_len );
 
             Kokkos::View<double*,random_memory> base1 ("base1", base1_len);                        
             typename Kokkos::View< double*>::HostMirror h_base1;
@@ -438,7 +438,7 @@ namespace Nektar
             while (true)
             {
                 // CUDA Profiling
-                //#ifdef __CUDA_ARCH__
+                #ifdef KOKKOS_HAVE_CUDA
                 if (k == 0)
                 {
                     cuProfilerStart();
@@ -448,7 +448,7 @@ namespace Nektar
                     cudaDeviceSynchronize();
                     cuProfilerStop();
                 }
-                //#endif
+                #endif
 
                 if(k >= maxiter)
                 {
@@ -476,7 +476,7 @@ namespace Nektar
                 });               
                 
                 // Perform the method-specific matrix-vector multiply operation.
-                printf("CG iteration %i ==================================\n", totalIterations);
+                //printf("CG iteration %i ==================================\n", totalIterations);
                 GeneralMatrixOp_Kokkos(
                     w_A, s_A, lambda,
                     quadMetricGlo, laplacian00Glo, laplacian01Glo, laplacian11Glo,
@@ -606,7 +606,7 @@ namespace Nektar
                     }
                 });
             }           
-            printf("\n");            
+            //printf("\n");            
         }
 
 
@@ -635,7 +635,7 @@ namespace Nektar
             int max2 = (nquad1*nmodes0 >= nquad0*nmodes1) ? nquad1*nmodes0 : nquad0*nmodes1;
             int wspsize = (max1 >= max2) ? max1 : max2;
 
-            printf("%s %i\n", "perform operations by element, elements in total: ", elmts);
+            //printf("%s %i\n", "perform operations by element, elements in total: ", elmts);
             int max_threads = 32;
             int no_teams = (elmts + max_threads - 1) / max_threads;
             //int scratch_size_thread = ScratchViewType::shmem_size(4*wspsize);
