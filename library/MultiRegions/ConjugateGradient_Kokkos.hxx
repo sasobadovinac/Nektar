@@ -281,7 +281,7 @@ namespace Nektar
                 }
 
                 ncs = coloursets.size();
-                int max_cs = 0;
+                max_cs = 0;
                 cs_sizes.resize(ncs);
                 for (int i = 0; i < ncs; ++i)
                 {
