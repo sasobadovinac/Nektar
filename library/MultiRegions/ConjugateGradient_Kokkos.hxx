@@ -254,42 +254,71 @@ namespace Nektar
 
 
             // creating and copying coloursets
-            std::vector<std::vector<int> > coloursets = CreateColourSets(
-                    NeklocalToGlobalMap, ncoeffs, elmts, threads);
-            /*for(int cs = 0; cs < coloursets.size(); ++cs)
+            bool use_coloursets = false;
+            #ifdef KOKKOS_HAVE_CUDA
+                use_coloursets = true;
+            #endif
+
+            std::vector<std::vector<int> > coloursets;
+            int ncs, max_cs;
+            std::vector<int> cs_sizes;
+            if (use_coloursets)
             {
-                printf("colourset %i: ",cs);
-                for (std::vector<int>::iterator it = coloursets[cs].begin() ; it != coloursets[cs].end(); ++it)
+                coloursets = CreateColourSets(
+                        NeklocalToGlobalMap, ncoeffs, elmts, threads);
+                /*for(int cs = 0; cs < coloursets.size(); ++cs)
                 {
-                    printf("%i ",*it );
+                    printf("colourset %i: ",cs);
+                    for (std::vector<int>::iterator it = coloursets[cs].begin() ; it != coloursets[cs].end(); ++it)
+                    {
+                        printf("%i ",*it );
+                    }
+                    printf("\n");
+                }*/
+                for(int cs = 0; cs < coloursets.size(); ++cs)
+                {
+                    printf("colourset %i: %i\n",cs, coloursets[cs].size() );
                 }
-                printf("\n");
-            }*/
-            for(int cs = 0; cs < coloursets.size(); ++cs)
-            {
-                printf("colourset %i: %i\n",cs, coloursets[cs].size() );
+
+                ncs = coloursets.size();
+                int max_cs = 0;
+                cs_sizes.resize(ncs);
+                for (int i = 0; i < ncs; ++i)
+                {
+                    cs_sizes[i] = coloursets[i].size();
+                    max_cs = (max_cs < cs_sizes[i] ? cs_sizes[i] : max_cs);
+                }
             }
-
-            int ncs = coloursets.size();
-            int max_cs = 0;
-            int cs_sizes[ncs];
-            for (int i = 0; i < ncs; ++i)
+            else
             {
-                cs_sizes[i] = coloursets[i].size();
-                max_cs = (max_cs < cs_sizes[i] ? cs_sizes[i] : max_cs);
-            }            
-
+                ncs = 1;
+                max_cs = elmts;
+                cs_sizes.resize(ncs);
+                cs_sizes[0] = elmts;
+            }
             Kokkos::View<int**> coloursetArray ("coloursetArray", ncs, max_cs);                        
             typename Kokkos::View<int**>::HostMirror h_coloursetArray;
             h_coloursetArray = Kokkos::create_mirror_view(coloursetArray);
-            for (int cs = 0; cs < ncs; ++cs)
+            if (use_coloursets)
             {
-                for (int el = 0; el < cs_sizes[cs]; ++el)
+                for (int cs = 0; cs < ncs; ++cs)
                 {
-                    h_coloursetArray(cs,el) = coloursets[cs][el];
+                    for (int el = 0; el < cs_sizes[cs]; ++el)
+                    {
+                        h_coloursetArray(cs,el) = coloursets[cs][el];
+                    }
                 }
-            }        
+            } 
+            else
+            {
+                for (int el = 0; el < cs_sizes[0]; ++el)
+                {
+                    h_coloursetArray(0,el) = el;
+                }
+            }      
             Kokkos::deep_copy(coloursetArray,h_coloursetArray);
+            
+            
 
             
             printf("%s\n", "finished data gathering");
@@ -413,7 +442,7 @@ namespace Nektar
                     D0, D1,
                     numLocalCoeffs, numGlobalCoeffs,
                     localToGlobalMap, localToGlobalSign,totalIterations,
-                    coloursetArray, cs_sizes, ncs,
+                    coloursetArray, cs_sizes, ncs, use_coloursets,
                     base0_len, base1_len);
 
             rho = 0.0;
@@ -486,7 +515,7 @@ namespace Nektar
                     D0, D1,
                     numLocalCoeffs, numGlobalCoeffs,
                     localToGlobalMap, localToGlobalSign,totalIterations,
-                    coloursetArray, cs_sizes, ncs,
+                    coloursetArray, cs_sizes, ncs, use_coloursets,
                     base0_len, base1_len);               
 
                 rho_new = 0.0;
@@ -562,7 +591,8 @@ namespace Nektar
                 const Kokkos::View<int*> localToGlobalMap,
                 const Kokkos::View<double*> localToGlobalSign,
                 const int iteration,
-                const Kokkos::View<int**> coloursetArray, int cs_sizes[], int ncs,
+                const Kokkos::View<int**> coloursetArray, std::vector<int> cs_sizes,
+                int ncs, bool use_coloursets,
                 const int base0_len, const int base1_len)
         {
             //printf("%s %i\n", "do the global to local mapping", numLocalCoeffs);
@@ -590,22 +620,41 @@ namespace Nektar
             // do mapping on per element basis and using element colourgroups
             // ( numLocalCoeffs = elmts * ncoeffs, elmts = sum(cs_sizes) )
             // need to use element-colouring to prevent race condition
-            for (int cs = 0; cs < ncs; ++cs)
+
+            if (use_coloursets)
             {
-                Kokkos::parallel_for( team_policy( cs_sizes[cs] , ncoeffs )
-                , KOKKOS_LAMBDA ( const member_type& teamMember)
+                for (int cs = 0; cs < ncs; ++cs)
                 {
-                    const int i = teamMember.league_rank();
+                    Kokkos::parallel_for( team_policy( cs_sizes[cs] , ncoeffs )
+                    , KOKKOS_LAMBDA ( const member_type& teamMember)
                     {
+                        const int i = teamMember.league_rank();
                         const int el = coloursetArray(cs,i);
                         Kokkos::parallel_for( Kokkos::TeamThreadRange( teamMember , ncoeffs ), [&] ( const int j)                         
                         { 
                             const int n = el * ncoeffs + j;
                             outarray[localToGlobalMap[n]] += localToGlobalSign[n] * transfer_out[n];
+                        });                        
+                    });
+                }
+            }
+            else
+            {
+                // dummy parallel region
+                Kokkos::parallel_for( team_policy( 1 , Kokkos::AUTO )
+                    , KOKKOS_LAMBDA ( const member_type& teamMember)
+                {
+                    for (int i = 0; i < elmts; ++i)
+                    {
+                        Kokkos::parallel_for( Kokkos::TeamThreadRange( teamMember , ncoeffs ), [&] ( const int j)                         
+                        { 
+                            int n = i * ncoeffs + j;
+                            outarray[localToGlobalMap[n]] += localToGlobalSign[n] * transfer_out[n];
                         });
                     }
                 });
-            }           
+            }
+          
             //printf("\n");            
         }
 
@@ -636,7 +685,11 @@ namespace Nektar
             int wspsize = (max1 >= max2) ? max1 : max2;
 
             //printf("%s %i\n", "perform operations by element, elements in total: ", elmts);
-            int max_threads = 32;
+            #ifdef KOKKOS_HAVE_CUDA
+                int max_threads = 32;
+            #else
+                int max_threads = 1;
+            #endif
             int no_teams = (elmts + max_threads - 1) / max_threads;
             //int scratch_size_thread = ScratchViewType::shmem_size(4*wspsize);
             int scratch_size_team0 = ScratchViewType::shmem_size(

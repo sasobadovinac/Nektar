@@ -73,10 +73,18 @@ namespace Nektar
             typedef Kokkos::View<double*,
                 Kokkos::DefaultExecutionSpace::scratch_memory_space ,
                 Kokkos::MemoryTraits<Kokkos::Unmanaged> > ScratchViewType;
-            typedef Kokkos::View<double*[32],
-                Kokkos::LayoutRight,
-                Kokkos::DefaultExecutionSpace::scratch_memory_space ,
-                Kokkos::MemoryTraits<Kokkos::Unmanaged> > ScratchViewType32;
+
+            #ifdef KOKKOS_HAVE_CUDA
+                typedef Kokkos::View<double*[32],
+                    Kokkos::LayoutRight,
+                    Kokkos::DefaultExecutionSpace::scratch_memory_space ,
+                    Kokkos::MemoryTraits<Kokkos::Unmanaged> > ScratchViewType32;
+            #else
+                typedef Kokkos::View<double*[1],
+                    Kokkos::LayoutRight,
+                    Kokkos::DefaultExecutionSpace::scratch_memory_space ,
+                    Kokkos::MemoryTraits<Kokkos::Unmanaged> > ScratchViewType32;
+            #endif
 
 
             std::vector<std::vector<int> > CreateColourSets(
@@ -206,7 +214,8 @@ namespace Nektar
                 const Kokkos::View<int*> localToGlobalMap,
                 const Kokkos::View<double*> localToGlobalSign,
                 const int iteration,
-                const Kokkos::View<int**> coloursetArray, int cs_sizes[], int ncs,
+                const Kokkos::View<int**> coloursetArray, std::vector<int> cs_sizes,
+                int ncs,  bool use_coloursets,
                 const int base0_len, const int base1_len);
 
 
