@@ -202,7 +202,7 @@ void SmoothShockCapture::GetForcingTerm(
             tau = 1.0 / (m_C1*pOrder*LambdaMax);
 
             outarrayForcing[nvariables-1][n + PointCount] =
-                1 / tau * (m_hFactor * LambdaMax /
+                m_mu0 / tau * (m_hFactor * LambdaMax /
                                     pOrder *
                                     SensorKappa[n + PointCount] -
                                     inarray[nvariables-1][n + PointCount]);

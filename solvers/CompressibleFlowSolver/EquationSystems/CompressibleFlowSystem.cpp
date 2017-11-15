@@ -192,15 +192,35 @@ namespace Nektar
         // Shock capture
         m_session->LoadSolverInfo("ShockCaptureType",
                                   m_shockCaptureType, "Off");
+        m_session->LoadParameter ("SensorOffset", m_sensorOffset, 1);
 
         // Load parameters for exponential filtering
         m_session->MatchSolverInfo("ExponentialFiltering","True",
                                    m_useFiltering, false);
+        m_session->MatchSolverInfo("ExponentialFiltering","Adaptive",
+                                   m_useAdaptiveFiltering, false);
         if(m_useFiltering)
         {
             m_session->LoadParameter ("FilterAlpha", m_filterAlpha, 36);
             m_session->LoadParameter ("FilterExponent", m_filterExponent, 16);
             m_session->LoadParameter ("FilterCutoff", m_filterCutoff, 0);
+        }
+        else if(m_useAdaptiveFiltering)
+        {
+            m_session->MatchSolverInfo("FilterAllElements","True",
+                                   m_filterAllElements, false);
+            m_session->LoadParameter ("FilterAlpha", m_filterAlpha, 1);
+            m_session->LoadParameter ("FilterCutoff", m_filterCutoff, 0);
+            m_session->LoadParameter (
+                        "FilterMinExponent", m_minFilterExponent, 2);
+            m_session->LoadParameter (
+                        "FilterMaxExponent", m_maxFilterExponent, 16);
+            m_minFilterExponent = log2(m_minFilterExponent);
+            m_maxFilterExponent = log2(m_maxFilterExponent);
+            m_session->LoadParameter (
+                        "FilterSmoothingFactor", m_filterSmoothingFactor, 0.7);
+            m_elmtExponent
+                = Array<OneD, NekDouble> (m_fields[0]->GetExpSize(), 0.0);
         }
 
         // Load CFL for local time-stepping (for steady state)
@@ -361,6 +381,10 @@ namespace Nektar
                         m_fields[i]->ExponentialFilter(outarray[i],
                             m_filterAlpha, m_filterExponent, m_filterCutoff);
                     }
+                }
+                if(m_useAdaptiveFiltering)
+                {
+                    AdaptiveFiltering(outarray);
                 }
                 SetBoundaryConditions(outarray, time);
                 break;
@@ -619,6 +643,45 @@ namespace Nektar
 
         // Restore value of m_timestep
         m_timestep = tmp;
+    }
+
+    /**
+     * @brief Selectively applies an exponential filtering based on the
+     *        shock capture sensor.
+     */
+    void CompressibleFlowSystem::AdaptiveFiltering(
+        Array<OneD, Array<OneD, NekDouble> > &array)
+    {
+        const int nPts       = m_fields[0]->GetTotPoints();
+        const int nvariables = m_fields.num_elements();
+        const int nElements  = m_fields[0]->GetExpSize();
+
+        Array<OneD,  NekDouble>  sensor(nPts, 0.0);
+        Array<OneD,  NekDouble>  sensorKappa(nPts, 0.0);
+        m_varConv->GetSensor(m_fields[0], array, sensor,
+                                sensorKappa, m_sensorOffset);
+
+        Array<OneD,  NekDouble> tmp;
+        for(int n = 0; n < nElements; ++n)
+        {
+            int physOffset = m_fields[0]->GetPhys_Offset(n);
+            m_elmtExponent[n] = (1.0-m_filterSmoothingFactor)*m_elmtExponent[n]+
+                               m_filterSmoothingFactor*sensorKappa[physOffset];
+            if(m_elmtExponent[n] > 1e-3 || m_filterAllElements)
+            {
+                NekDouble exponent = m_maxFilterExponent +
+                                    (m_minFilterExponent - m_maxFilterExponent)*
+                                     m_elmtExponent[n];
+
+                int expInt = round(pow(2,exponent));
+                for(int i = 0; i < nvariables; ++i)
+                {
+                    m_fields[i]->GetExp(n)->ExponentialFilter(
+                            tmp = array[i]+physOffset,
+                            m_filterAlpha, expInt, m_filterCutoff);
+                }
+            }
+        }
     }
 
     /**
@@ -881,10 +944,8 @@ namespace Nektar
             m_varConv->GetSoundSpeed(tmp, pressure, soundspeed);
             m_varConv->GetMach      (tmp, soundspeed, mach);
 
-            int sensorOffset;
-            m_session->LoadParameter ("SensorOffset", sensorOffset, 1);
             m_varConv->GetSensor (m_fields[0], tmp, sensor, SensorKappa,
-                                    sensorOffset);
+                                    m_sensorOffset);
 
             Array<OneD, NekDouble> pFwd(nCoeffs), sFwd(nCoeffs), mFwd(nCoeffs);
             Array<OneD, NekDouble> sensFwd(nCoeffs);
@@ -912,6 +973,38 @@ namespace Nektar
 
                 variables.push_back  ("ArtificialVisc");
                 fieldcoeffs.push_back(sensorFwd);
+            }
+            if (m_useAdaptiveFiltering)
+            {
+                const int nElements  = m_fields[0]->GetExpSize();
+                Array<OneD, NekDouble> exponent(nPhys);
+                Array<OneD, NekDouble> exponentFwd(nCoeffs);
+                Array<OneD, NekDouble> tmp;
+                for(int n = 0; n < nElements; ++n)
+                {
+                    int nq         = m_fields[0]->GetExp(n)->GetTotPoints();
+                    int physOffset = m_fields[0]->GetPhys_Offset(n);
+
+                    if(m_elmtExponent[n] > 1e-3 || m_filterAllElements)
+                    {
+                        NekDouble exp = m_maxFilterExponent +
+                                (m_minFilterExponent - m_maxFilterExponent)*
+                                m_elmtExponent[n];
+
+                        Vmath::Fill(nq, NekDouble(round(pow(2,exp))),
+                                        tmp = exponent+physOffset, 1);
+                    }
+                    else
+                    {
+                        // Use twice the maximum exponent to mark no filter
+                        Vmath::Fill(nq, 2*round(pow(2,m_maxFilterExponent)),
+                                        tmp = exponent+physOffset, 1);
+                    }
+                }
+                m_fields[0]->FwdTrans_IterPerExp(exponent, exponentFwd);
+
+                variables.push_back  ("FilterExponent");
+                fieldcoeffs.push_back(exponentFwd);
             }
         }
     }

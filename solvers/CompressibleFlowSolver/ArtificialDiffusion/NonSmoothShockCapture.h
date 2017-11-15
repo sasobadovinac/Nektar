@@ -83,6 +83,7 @@ class NonSmoothShockCapture : public ArtificialDiffusion
 
         /// Parameters
         int             m_offset;
+        NekDouble       m_mu0;
 };
 
 }

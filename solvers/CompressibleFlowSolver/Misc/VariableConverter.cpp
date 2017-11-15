@@ -74,7 +74,6 @@ namespace Nektar
         // Parameters for sensor
         m_session->LoadParameter ("Skappa",        m_Skappa,        -2.048);
         m_session->LoadParameter ("Kappa",         m_Kappa,         0.0);
-        m_session->LoadParameter ("mu0",           m_mu0,           1.0);
     }
 
     /**
@@ -400,12 +399,12 @@ namespace Nektar
             }
             else if (elmtSensor > (m_Skappa+m_Kappa))
             {
-                elmtSensorKappa = m_mu0;
+                elmtSensorKappa = 1.0;
             }
             else
             {
                 elmtSensorKappa =
-                    0.5 * m_mu0 *
+                    0.5  *
                         (1 + sin(M_PI * (elmtSensor - m_Skappa) / (2*m_Kappa)));
             }
             Vmath::Fill(nElmtPoints, elmtSensorKappa,

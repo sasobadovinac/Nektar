@@ -52,6 +52,7 @@ NonSmoothShockCapture::NonSmoothShockCapture(
     : ArtificialDiffusion(pSession, pFields, spacedim)
 {
     m_session->LoadParameter ("SensorOffset",  m_offset, 1);
+    m_session->LoadParameter ("mu0",           m_mu0,    1.0);
 }
 
 void NonSmoothShockCapture::v_GetArtificialViscosity(
@@ -62,6 +63,7 @@ void NonSmoothShockCapture::v_GetArtificialViscosity(
 
     Array<OneD, NekDouble> Sensor (nTotPoints, 0.0);
     m_varConv->GetSensor(m_fields[0], physfield, Sensor, mu, m_offset);
+    Vmath::Smul( nTotPoints, m_mu0, mu, 1, mu, 1);
 }
 
 }

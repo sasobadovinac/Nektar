@@ -77,6 +77,7 @@ namespace Nektar
         NekDouble                           m_UInf;
         std::string                         m_ViscosityType;
         std::string                         m_shockCaptureType;
+        int                                 m_sensorOffset;
         NekDouble                           m_mu;
         NekDouble                           m_thermalConductivity;
         NekDouble                           m_Cp;
@@ -87,6 +88,13 @@ namespace Nektar
         NekDouble                           m_filterExponent;
         NekDouble                           m_filterCutoff;
         bool                                m_useFiltering;
+        // Parameters for adaptive exponential filtering
+        bool                                m_useAdaptiveFiltering;
+        bool                                m_filterAllElements;
+        NekDouble                           m_minFilterExponent;
+        NekDouble                           m_maxFilterExponent;
+        NekDouble                           m_filterSmoothingFactor;
+        Array<OneD, NekDouble>              m_elmtExponent;
 
         // Parameters for local time-stepping
         bool                                m_useLocalTimeStep;
@@ -145,6 +153,9 @@ namespace Nektar
         void GetElmtTimeStep(
             const Array<OneD, const Array<OneD, NekDouble> > &inarray,
                   Array<OneD, NekDouble> &tstep);
+
+        void AdaptiveFiltering(
+                  Array<OneD, Array<OneD, NekDouble> > &array);
 
         virtual NekDouble v_GetTimeStep(
             const Array<OneD, const Array<OneD, NekDouble> > &inarray);
