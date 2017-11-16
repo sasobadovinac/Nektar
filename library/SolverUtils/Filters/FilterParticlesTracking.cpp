@@ -422,6 +422,11 @@ void FilterParticlesTracking::AdvanceParticles(
         m_advanceCalls++;
         if(particle.m_used)
         {
+            // Store original position of the particle
+            for (int i = 0; i < particle.m_dim; ++i)
+            {
+                particle.m_oldCoord[i] = particle.m_gloCoord[i];
+            }
             // Rotate force array
             RollOver(particle.m_force);
             // Obtain solution (an fluid velocity) at the particle location
@@ -435,7 +440,7 @@ void FilterParticlesTracking::AdvanceParticles(
             // Update element containing particle and coordinate in std element
             UpdateLocCoord(pFields, particle);
             // Handle collisions if particle left the domain
-            HandleCollision(particle);
+            HandleCollision(pFields,particle);
             // Check if particle left the domain of interest
             CheckBoundingBox(particle);
             
@@ -709,8 +714,128 @@ void FilterParticlesTracking::CalculateForce(Particle &particle)
 /**
  *
  */
-void FilterParticlesTracking::HandleCollision(Particle &particle)
+void FilterParticlesTracking::HandleCollision(
+    const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
+    Particle &particle)
 {
+     
+    
+    // Boundary Expansion
+    Array<OneD,const MultiRegions::ExpListSharedPtr> bndExp;
+    bndExp = pFields[0]->GetBndCondExpansions();
+    
+    //// Number the boundary defined in xml file: bndExp.num_elements()
+    //// Number of element in  the boundary bndExp[0]->GetExpSize() 
+    //cout << "getexp :"<< bndExp.num_elements()<<endl;
+    
+    //for (int i = 0; i < bndExp.num_elements(); ++i)
+    //{
+        //// how many elements are in the boundary i
+        //cout << "Boundary "<<i<<": "<< bndExp[i]->GetExpSize()<<endl;
+    //}
+    
+    //Numero elementos en la boundary BOUNDAY y el elemento ELEMENT
+    //bndExp[BOUNDARY]->GetTotPoints(ELEMENT)
+    //cout << " Boundary points " << bndExp[0]->GetTotPoints()<<endl;
+    
+     //cout << "Numero de puntos "<< elemBndExp->GetNumPoints(0)<<endl;
+    
+    LocalRegions::ExpansionSharedPtr elemBndExp;
+    //Array<OneD, NekDouble>  gloCoord(3,0.0);
+    
+    //particle.m_oldCoord[i] = particle.m_gloCoord[i];
+    
+    
+    //Print coordinates
+    //cout<<endl<<endl<<"Point Old: {";
+    //for (int i = 0; i < particle.m_dim; ++i)
+    //{
+        //cout<<particle.m_oldCoord[i]<<", ";  
+    //}
+    //cout<<'}'<<endl<<endl;
+    
+    
+    //cout<<endl<<endl<<"Point : {";
+    //for (int i = 0; i < particle.m_dim; ++i)
+    //{
+        //cout<<particle.m_gloCoord[i]<<", ";  
+    //}
+    //cout<<'}'<<endl<<endl;
+    
+    
+
+   for (int nb = 0; nb < bndExp.num_elements(); ++nb)
+    {
+        //Boundary normals - normals[dir][point]
+        Array<OneD,Array<OneD, NekDouble>> normals;
+        pFields[0]->GetBoundaryNormals(nb, normals);
+        
+        //Coordinates 
+        Array<OneD,Array<OneD, NekDouble>> coords(3);
+        for (int j = 0; j < 3; ++j)
+        {
+            coords[j] = Array<OneD, NekDouble>(bndExp[nb]->GetTotPoints());
+        }
+        bndExp[nb]->GetCoords(coords[0],coords[1],coords[2]);
+
+        
+        
+        for (int ne = 0; ne < bndExp[nb]->GetExpSize(); ++ne)
+        {
+            //Elements in a Boundary
+            elemBndExp = bndExp[nb]->GetExp(ne);
+            cout << "Boundary: "<<nb<<" Elemento: "<<ne<<" Global ID: "
+            <<elemBndExp->GetGeom()->GetGlobalID();       
+
+            int nq = elemBndExp->GetNumPoints(0);
+            int physOffset = bndExp[nb]->GetPhys_Offset(ne);
+            
+            cout<<endl;
+            for (int j = 0; j < nq; ++j)
+            {   
+                cout<<"Coordinates {"
+                << coords[0][j+physOffset]<<", "
+                << coords[1][j+physOffset]<<", "
+                << coords[2][j+physOffset]<<"}";
+                
+                cout <<" Normals: [";
+                for (int i = 0; i < particle.m_dim; ++i)
+                {    
+                    cout << normals[i][physOffset+j]<<", ";//nq-1
+                }
+                cout<<']'<<endl;
+            }
+        }
+        
+        ////int npoints    = bndExp[nb]->GetNpoints();
+        //int npoints    = bndExp[nb]->GetTotPoints();
+        
+        
+        //cout<<endl<<endl<<"Boundary "<<nb<< " puntos: "<<npoints<<endl;
+        
+        //Array<OneD, NekDouble> x0(npoints,0.0);
+        //Array<OneD, NekDouble> x1(npoints,0.0);
+        //Array<OneD, NekDouble> x2(npoints,0.0);
+        //bndExp[nb]->GetCoords(x0,x1,x2);        
+        
+        //for (int i = 0; i < npoints; ++i)
+            //{
+                //cout<<"Coordinates {"
+                //<< x0[i]<<", "<< x1[i]<<", "<< x2[i]<<"}";
+                
+                //cout<<" Normals: [";
+                //for (int i = 0; i < particle.m_dim; ++i)
+                //{    
+                    //cout << normals[i][npoints]<<", ";//nq-1
+                //}
+                //cout<<']'<<endl;
+            //}
+    //cout<<endl;
+    }
+    
+    
+    
+    
     // TO DO
     // For now, just mark particles outside the domain as unused
     if( particle.m_eId == -1)
