@@ -422,6 +422,11 @@ void FilterParticlesTracking::AdvanceParticles(
         m_advanceCalls++;
         if(particle.m_used)
         {
+            // Store original position of the particle
+            for (int i = 0; i < particle.m_dim; ++i)
+            {
+                particle.m_oldCoord[i] = particle.m_gloCoord[i];
+            }
             // Rotate force array
             RollOver(particle.m_force);
             // Obtain solution (an fluid velocity) at the particle location
@@ -435,7 +440,7 @@ void FilterParticlesTracking::AdvanceParticles(
             // Update element containing particle and coordinate in std element
             UpdateLocCoord(pFields, particle);
             // Handle collisions if particle left the domain
-            HandleCollision(particle);
+            HandleCollision(pFields,particle);
             // Check if particle left the domain of interest
             CheckBoundingBox(particle);
             
@@ -709,8 +714,60 @@ void FilterParticlesTracking::CalculateForce(Particle &particle)
 /**
  *
  */
-void FilterParticlesTracking::HandleCollision(Particle &particle)
+void FilterParticlesTracking::HandleCollision(
+    const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
+    Particle &particle)
+
 {
+    //Array<OneD, NekDouble> physvals;
+    
+    
+    //for (int i = 0; i < pFields.num_elements(); ++i)
+    //{
+        //physvals = pFields[i]->UpdatePhys()
+                    //+ pFields[i]->GetPhys_Offset(particle.m_eId);
+
+        //particle.m_fields[i] =
+                //pFields[i]->GetExp(particle.m_eId)->StdPhysEvaluate(
+                        //particle.m_locCoord,physvals);
+    
+    //}
+    
+    Array<OneD, NekDouble>  gloCoord(3,0.0);
+    Array<OneD,const MultiRegions::ExpListSharedPtr> bndExp;
+        
+    bndExp = pFields[0]->GetBndCondExpansions();
+     
+    // Number the boundary: bndExp.num_elements()
+    
+    // Number of element in  the boundary bndExp[0]->GetExpSize()
+    
+    cout << "Boundary 0 " << bndExp[0]->GetExpSize()<<endl;
+    
+    int bndPts = bndExp[0]->GetTotPoints();
+    
+    cout << "puntos " << bndPts<<endl;
+    
+    bndExp[0]->GetCoords(gloCoord);
+    
+    cout << "C0 " << gloCoord[0]<<endl;
+    cout << "C1 " << gloCoord[1]<<endl;
+    cout << "C2 " << gloCoord[2]<<endl;
+    
+    
+    //for(i =0; Boundary[0]->GetExpSize(); ++i)
+    //{  LocalRegions::ExpansionSharedPtr elmt = Boundary[0]->GetExp(i);
+    //   int nq = elmt->GetNumPoints();
+    //   int physOffset = Boundary[0]->GetPhys_Offset(i);
+    //   cout << normals[0][physOffset+nq-1]<<endl;
+    //}    
+    
+    //Array<OneD,Array<OneD, NekDouble>> normals;
+    //pFields[0]->GetBoundaryNormals(1, normals);
+    //cout << "Normal " << normals[0][0]<<endl; // normals[dir][point]
+    
+    
+    
     // TO DO
     // For now, just mark particles outside the domain as unused
     if( particle.m_eId == -1)

@@ -56,6 +56,7 @@ struct Particle
     {
         // Initialise arrays
         m_gloCoord          = Array<OneD, NekDouble> (3, 0.0);
+        m_oldCoord          = Array<OneD, NekDouble> (3, 0.0);
         m_locCoord          = Array<OneD, NekDouble> (3, 0.0);
         m_fluidVelocity     = Array<OneD, NekDouble> (m_dim, 0.0);
         m_fields            = Array<OneD, NekDouble> (numFields, 0.0);
@@ -97,6 +98,8 @@ struct Particle
     int                             m_dim;
     /// Global coordinate
     Array<OneD, NekDouble>          m_gloCoord;
+    /// Previous coordinates
+    Array<OneD, NekDouble>          m_oldCoord;
     /// Coordinate in the standard element
     Array<OneD, NekDouble>          m_locCoord;
     /// Velocity of the particle
@@ -224,7 +227,9 @@ private:
     /// Calculate force (for solid particles)
     void CalculateForce(Particle &particle);
     /// Collision modelling
-    void HandleCollision(Particle &particle);
+    void HandleCollision(
+        const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
+        Particle &particle);
     /// Check if particle left the domain of interest
     void CheckBoundingBox(Particle &particle);
     /// Write output information
