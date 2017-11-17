@@ -209,16 +209,23 @@ namespace Nektar
         {
             m_session->MatchSolverInfo("FilterAllElements","True",
                                    m_filterAllElements, false);
-            m_session->LoadParameter ("FilterAlpha", m_filterAlpha, 1);
+            m_session->LoadParameter (
+                        "FilterSmoothingFactor", m_filterSmoothingFactor, 1.0);
+            m_session->LoadParameter ("FilterAlpha", m_filterAlpha, 4);
             m_session->LoadParameter ("FilterCutoff", m_filterCutoff, 0);
+
+            int minExponent, maxExponent;
             m_session->LoadParameter (
-                        "FilterMinExponent", m_minFilterExponent, 2);
+                        "FilterMinExponent", minExponent, 2);
             m_session->LoadParameter (
-                        "FilterMaxExponent", m_maxFilterExponent, 16);
-            m_minFilterExponent = log2(m_minFilterExponent);
-            m_maxFilterExponent = log2(m_maxFilterExponent);
-            m_session->LoadParameter (
-                        "FilterSmoothingFactor", m_filterSmoothingFactor, 0.7);
+                        "FilterMaxExponent", maxExponent, 16);
+            ASSERTL0( minExponent % 2 == 0,
+                    "FilterMinExponent should be an even integer.");
+            ASSERTL0( maxExponent % 2 == 0,
+                    "FilterMaxExponent should be an even integer.");
+            m_minFilterExponent = log2(minExponent/2);
+            m_maxFilterExponent = log2(maxExponent/2);
+
             m_elmtExponent
                 = Array<OneD, NekDouble> (m_fields[0]->GetExpSize(), 0.0);
         }
@@ -661,6 +668,8 @@ namespace Nektar
         m_varConv->GetSensor(m_fields[0], array, sensor,
                                 sensorKappa, m_sensorOffset);
 
+        Array<OneD,  NekDouble> cfl = GetElmtCFLVals();
+
         Array<OneD,  NekDouble> tmp;
         for(int n = 0; n < nElements; ++n)
         {
@@ -673,12 +682,12 @@ namespace Nektar
                                     (m_minFilterExponent - m_maxFilterExponent)*
                                      m_elmtExponent[n];
 
-                int expInt = round(pow(2,exponent));
+                int expInt = round(2*pow(2,exponent));
                 for(int i = 0; i < nvariables; ++i)
                 {
                     m_fields[i]->GetExp(n)->ExponentialFilter(
                             tmp = array[i]+physOffset,
-                            m_filterAlpha, expInt, m_filterCutoff);
+                            m_filterAlpha * cfl[n], expInt, m_filterCutoff);
                 }
             }
         }
@@ -991,13 +1000,13 @@ namespace Nektar
                                 (m_minFilterExponent - m_maxFilterExponent)*
                                 m_elmtExponent[n];
 
-                        Vmath::Fill(nq, NekDouble(round(pow(2,exp))),
+                        Vmath::Fill(nq, NekDouble(round(2*pow(2,exp))),
                                         tmp = exponent+physOffset, 1);
                     }
                     else
                     {
                         // Use twice the maximum exponent to mark no filter
-                        Vmath::Fill(nq, 2*round(pow(2,m_maxFilterExponent)),
+                        Vmath::Fill(nq, 2*round(2*pow(2,m_maxFilterExponent)),
                                         tmp = exponent+physOffset, 1);
                     }
                 }
