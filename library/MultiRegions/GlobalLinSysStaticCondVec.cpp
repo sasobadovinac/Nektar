@@ -113,60 +113,67 @@ namespace Nektar
 
             // Can evaluate these sizes here since are assuming they
             // are constant over each vector components.
-            int nGlobDofs         = m_locToGloMapVec[0]->GetNumGlobalCoeffs();
-            int nLocBndDofs       = m_locToGloMapVec[0]->GetNumLocalBndCoeffs();
-            int nIntDofs          = nGlobDofs - m_locToGloMapVec[0]->GetNumGlobalBndCoeffs();
+            int nGlobDofs   = m_locToGloMapVec[0]->GetNumGlobalCoeffs();
+            int nLocBndDofs = m_locToGloMapVec[0]->GetNumLocalBndCoeffs();
+            int nIntDofs    = nGlobDofs - m_locToGloMapVec[0]->GetNumGlobalBndCoeffs();
             
-            Array<OneD, Array<OneD, NekDouble > > F(nvec), V_locbnd(nvec);
-            Array<OneD, NekDouble> tmp, V_globhombndtmp;
-            
-            V_globhombndtmp = m_wsp + 2*nvec*nLocBndDofs;
-            
+            Array<OneD, Array<OneD, NekDouble > > F(nvec), V_locbnd(nvec), F_bnd(nvec);
+            Array<OneD, NekDouble > tmp;
+                        
             int n;
             
-            // Set up definitions and get local bnd vector 
+            // Set up definitions and get local bnd vectoår 
             for(n = 0; n < nvec; ++n)
             {
                 // This value is actually the same but needed for LinearSolve call 
                 nGlobBndDofs[n]  = m_locToGloMapVec[n]->GetNumGlobalBndCoeffs();
-                // This value can change if number of Dirichlet BCs different in each component
+                // This value can change if number of Dirichlet BCs
+                // different in each component
                 nDirBndDofs[n]   = m_locToGloMapVec[n]->GetNumGlobalDirBndCoeffs();
 
-                V_locbnd[n] = m_wsp + n*nLocBndDofs;
-                F[n]        = m_wsp + (2*nvec+1)*nLocBndDofs + n*nGlobDofs;
+                // These first two arrays need to be untouched until end
+                // First space is used in Multiply_a operation 
+                V_locbnd[n] = m_wsp + 2*nvec*nLocBndDofs + n*nLocBndDofs;
+                F[n]        = m_wsp + 3*nvec*nLocBndDofs + n*nGlobDofs;
+                F_bnd[n]    = m_wsp + n*nLocBndDofs;
 
-                // copy input forcing into F array
-                Vmath::Vcopy(nGlobDofs,in[n].get(),1,F[n].get(),1);
-                
-                m_locToGloMapVec[0]->GlobalToLocalBnd(out[n], V_locbnd[n]);
+                m_locToGloMapVec[n]->LocalToLocalBnd(in[n], F_bnd[n]);
             }
             
-            DNekScalBlkMatSharedPtr sc = v_PreSolve(0, F);
+            DNekScalBlkMatSharedPtr sc = v_PreSolve(0, F_bnd);
             
-            // put in a bwd rotation term here.
-
-            // calculate statically condensed forcing
             for(n = 0; n < nvec; ++n)
             {
+                // Gather boundary expansison into locbnd 
+                m_locToGloMapVec[n]->LocalToLocalBnd(out[n],V_locbnd[n]);
                 NekVector<NekDouble> V_LocBnd(nLocBndDofs,V_locbnd[n],eWrapper);
-                NekVector<NekDouble> F_Int(nIntDofs, tmp = F[n]+nGlobBndDofs[n],
-                                           eWrapper);
+                NekVector<NekDouble> F_Bnd(nLocBndDofs,m_wsp +nvec*nLocBndDofs,eWrapper);
 
                 // construct boundary forcing
                 if(nIntDofs)
                 {
+                    m_locToGloMapVec[n]->LocalToLocalInt(in[n],
+                                          tmp = F[n]+nGlobBndDofs[n]);
+                    NekVector<NekDouble> F_Int(nIntDofs,
+                                          tmp = F[n]+nGlobBndDofs[n],eWrapper);
+
                     DNekScalBlkMat &BinvD      = *m_BinvD;
                     DNekScalBlkMat &SchurCompl = *sc;
 
                     // include dirichlet boundary forcing
-                    V_LocBnd = BinvD*F_Int + SchurCompl*V_LocBnd;
+                    F_Bnd = BinvD*F_Int + SchurCompl*V_LocBnd;
                 }
                 else
                 {
                     // include dirichlet boundary forcing
                     DNekScalBlkMat &SchurCompl = *sc;
-                    V_LocBnd = SchurCompl*V_LocBnd;
+                    F_Bnd = SchurCompl*V_LocBnd;
                 }
+
+                Vmath::Vsub(nLocBndDofs, &F_bnd[n][0],1, &F_Bnd[0], 1,
+                            &F_bnd[n][0],1);
+
+                v_BasisTransformLoc(F_bnd[n]);
             }
 
             // put in a bwd rotation term here.
@@ -174,62 +181,41 @@ namespace Nektar
             // calculate statically condensed forcing
             for(n = 0; n < nvec; ++n)
             {
-                m_locToGloMapVec[n]->AssembleBnd(V_locbnd[n], V_globhombndtmp,
-                                                 nDirBndDofs[n]);
-                
-                // assemble new forcing
-                Vmath::Vsub(nGlobBndDofs[n] - nDirBndDofs[n],
-                            tmp = F[n]+nDirBndDofs[n],1,
-                            V_globhombndtmp,1,
-                            tmp = F[n]+nDirBndDofs[n],1);
-                
-                // Will need to add rotation information to this operation too.
-                // -> Go to local -> Rotate -> call transform -> Rotate back
-                v_BasisTransform(F[n], nDirBndDofs[n]);
+                m_locToGloMapVec[n]->AssembleBnd(F_bnd[n], F[n]);
             }
 
             // solve boundary system
-            Array<OneD, Array<OneD, NekDouble> > pert(nvec);
-            for(n = 0; n < nvec; ++n)
-            {
-                pert[n] = Array<OneD, NekDouble>(nGlobBndDofs[n],0.0);
-            }
-            
             // Solve for difference from initial solution given inout;
-            SolveVecLinearSystem(nGlobBndDofs, F, pert, m_locToGloMapVec,
+            SolveVecLinearSystem(nGlobBndDofs, F, out, m_locToGloMapVec,
                                  nDirBndDofs);
                 
+            // rotate here
+
+            Array<OneD, NekDouble> V_int = m_wsp + 3*nvec*nLocBndDofs + nvec*nGlobDofs;
+            Array<OneD, NekDouble> outloc =  m_wsp; 
+
             for(n = 0; n < nvec; ++n)
             {
-                // Transform back to original basis -> Will need updating 
-                v_BasisInvTransform(pert[n]);
+                // put solution into local format
+                m_locToGloMapVec[n]->GlobalToLocalBnd(out[n],outloc);
+
+                // Transform back to original basis 
+                v_BasisInvTransformLoc(outloc);
                 
-                // Add back initial conditions onto difference
-                Vmath::Vadd(nGlobBndDofs[n] - nDirBndDofs[n],
-                            &out[n][nDirBndDofs[n]], 1,
-                            &pert[n][nDirBndDofs[n]],1,&out[n][nDirBndDofs[n]],1);
+                Vmath::Vadd(nLocBndDofs, V_locbnd[n], 1, outloc, 1, V_locbnd[n],1);
+
+                // put final solution back in out array
+                m_locToGloMapVec[n]->LocalBndToLocal(V_locbnd[n],out[n]);
 
                 // solve interior system
                 if(nIntDofs)
                 {
-                    if(nGlobBndDofs[n] - nDirBndDofs[n] || nDirBndDofs[n])
-                    {
-                        m_locToGloMapVec[n]->GlobalToLocalBnd(out[n],V_locbnd[n]);
-                    }
-                }
-            }
-
-            // Need rotation here.
-
-            for(n = 0; n < nvec; ++n)
-            {
-                // solve interior system
-                if(nIntDofs)
-                {
+                    // get array of local solutions
                     DNekScalBlkMat &invD  = *m_invD;
-
-                    NekVector<NekDouble> V_Int(nIntDofs,tmp=out[n]+nGlobBndDofs[n],eWrapper);
-                    NekVector<NekDouble> F_Int(nIntDofs, tmp = F[n]+nGlobBndDofs[n], eWrapper);
+                    
+                    NekVector<NekDouble> V_Int(nIntDofs, V_int ,eWrapper);
+                    NekVector<NekDouble> F_Int(nIntDofs, tmp = F[n]+nGlobBndDofs[n],
+                                               eWrapper);
 
                     if(nGlobBndDofs[n] - nDirBndDofs[n] || nDirBndDofs[n])
                     {
@@ -241,7 +227,10 @@ namespace Nektar
                     }
                     
                     Multiply(V_Int, invD, F_Int);
+
+                    m_locToGloMapVec[n]->LocalIntToLocal(V_int,out[n]);
                 }
+
                 
             }
         }
@@ -262,7 +251,7 @@ namespace Nektar
             int nLocalBnd  = m_locToGloMapVec[0]->GetNumLocalBndCoeffs();
             int nGlobal = m_locToGloMapVec[0]->GetNumGlobalCoeffs();
             
-            m_wsp = Array<OneD, NekDouble>(nvec*(2*nLocalBnd + nGlobal) + nLocalBnd, 0.0);
+            m_wsp = Array<OneD, NekDouble>(nvec*3*nLocalBnd + (nvec+1)*nGlobal, 0.0);
 
             v_AssembleSchurComplement(m_locToGloMapVec[0]);
         }

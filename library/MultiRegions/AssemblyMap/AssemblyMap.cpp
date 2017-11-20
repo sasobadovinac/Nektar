@@ -901,6 +901,7 @@ namespace Nektar
             return m_bndCondTraceToGlobalTraceMap;
         }
 
+        
         NekDouble AssemblyMap::GetBndCondCoeffsToGlobalCoeffsSign(const int i)
         {
             if(m_signChange)
@@ -919,6 +920,16 @@ namespace Nektar
             return m_bndCondCoeffsToGlobalCoeffsMap;
         }
 
+        const Array<OneD,const int>&
+                    AssemblyMap::GetBndCondCoeffsToLocalCoeffsMap()
+        {
+            return  m_bndCondCoeffsToLocalCoeffsMap;
+        }
+        
+        const Array<OneD, NekDouble > &AssemblyMap::GetBndCondCoeffsToLocalCoeffsSign()
+        {
+            return m_bndCondCoeffsToLocalCoeffsSign;
+        }
 
         int AssemblyMap::GetNumGlobalDirBndCoeffs() const
         {
@@ -957,25 +968,25 @@ namespace Nektar
         }
 
         void AssemblyMap::GlobalToLocalBnd(
-                    const NekVector<NekDouble>& global,
-                    NekVector<NekDouble>& loc,
-                    int offset) const
+                                           const NekVector<NekDouble>& global,
+                                           NekVector<NekDouble>& loc,
+                                           int offset) const
         {
             GlobalToLocalBnd(global.GetPtr(), loc.GetPtr(), offset);
         }
 
 
         void AssemblyMap::GlobalToLocalBnd(
-                    const NekVector<NekDouble>& global,
-                    NekVector<NekDouble>& loc) const
+                                           const NekVector<NekDouble>& global,
+                                           NekVector<NekDouble>& loc) const
         {
             GlobalToLocalBnd(global.GetPtr(), loc.GetPtr());
         }
 
 
         void AssemblyMap::GlobalToLocalBnd(
-                    const Array<OneD, const NekDouble>& global,
-                    Array<OneD,NekDouble>& loc, int offset) const
+                                           const Array<OneD, const NekDouble>& global,
+                                           Array<OneD,NekDouble>& loc, int offset) const
         {
             ASSERTL1(loc.num_elements() >= m_numLocalBndCoeffs,"Local vector is not of correct dimension");
             ASSERTL1(global.num_elements() >= m_numGlobalBndCoeffs-offset,"Global vector is not of correct dimension");
@@ -994,10 +1005,9 @@ namespace Nektar
             }
         }
 
-
         void AssemblyMap::GlobalToLocalBnd(
-                    const Array<OneD, const NekDouble>& global,
-                    Array<OneD,NekDouble>& loc) const
+                                           const Array<OneD, const NekDouble>& global,
+                                           Array<OneD,NekDouble>& loc) const
         {
             ASSERTL1(loc.num_elements() >= m_numLocalBndCoeffs,"Local vector is not of correct dimension");
             ASSERTL1(global.num_elements() >= m_numGlobalBndCoeffs,"Global vector is not of correct dimension");
@@ -1013,18 +1023,18 @@ namespace Nektar
         }
 
         void AssemblyMap::LocalBndToGlobal(
-                    const NekVector<NekDouble>& loc,
-                    NekVector<NekDouble>& global,
-                    int offset) const
+                                           const NekVector<NekDouble>& loc,
+                                           NekVector<NekDouble>& global,
+                                           int offset) const
         {
             LocalBndToGlobal(loc.GetPtr(), global.GetPtr(), offset);
         }
 
 
         void AssemblyMap::LocalBndToGlobal(
-                    const Array<OneD, const NekDouble>& loc,
-                    Array<OneD,NekDouble>& global,
-                    int offset) const
+                                           const Array<OneD, const NekDouble>& loc,
+                                           Array<OneD,NekDouble>& global,
+                                           int offset) const
         {
             ASSERTL1(loc.num_elements() >= m_numLocalBndCoeffs,"Local vector is not of correct dimension");
             ASSERTL1(global.num_elements() >= m_numGlobalBndCoeffs-offset,"Global vector is not of correct dimension");
@@ -1046,16 +1056,16 @@ namespace Nektar
         }
         
         void AssemblyMap::LocalBndToGlobal(
-                    const NekVector<NekDouble>& loc,
-                    NekVector<NekDouble>& global) const
+                                           const NekVector<NekDouble>& loc,
+                                           NekVector<NekDouble>& global) const
         {
             LocalBndToGlobal(loc.GetPtr(), global.GetPtr());
         }
 
 
         void AssemblyMap::LocalBndToGlobal(
-                    const Array<OneD, const NekDouble>& loc,
-                    Array<OneD,NekDouble>& global)  const
+                                           const Array<OneD, const NekDouble>& loc,
+                                           Array<OneD,NekDouble>& global)  const
         {
             ASSERTL1(loc.num_elements() >= m_numLocalBndCoeffs,"Local vector is not of correct dimension");
             ASSERTL1(global.num_elements() >= m_numGlobalBndCoeffs,"Global vector is not of correct dimension");
@@ -1070,26 +1080,61 @@ namespace Nektar
             }
         }
 
+        void AssemblyMap::LocalToLocalBnd(
+                                          const NekVector<NekDouble>& local,
+                                          NekVector<NekDouble>& locbnd) const
+        {
+            LocalToLocalBnd(local.GetPtr(), locbnd.GetPtr());
+        }
+
+
+        void AssemblyMap::LocalToLocalBnd(
+                                          const Array<OneD, const NekDouble>& local,
+                                          Array<OneD,NekDouble>& locbnd) const
+        {
+            ASSERTL1(locbnd.num_elements() >= m_numLocalBndCoeffs,"LocBnd vector is not of correct dimension");
+            ASSERTL1(local.num_elements() >= m_numLocalCoeffs,"Local vector is not of correct dimension");
+
+            Vmath::Gathr(m_numLocalBndCoeffs, local.get(), m_localToLocalBndMap.get(), locbnd.get());
+        }
+
+        void AssemblyMap::LocalToLocalInt(
+                                          const NekVector<NekDouble>& local,
+                                          NekVector<NekDouble>& locint) const
+        {
+            LocalToLocalInt(local.GetPtr(), locint.GetPtr());
+        }
+
+        void AssemblyMap::LocalToLocalInt(
+                                          const Array<OneD, const NekDouble>& local,
+                                          Array<OneD,NekDouble>& locint) const
+        {
+            ASSERTL1(locint.num_elements() >= m_numLocalCoeffs-m_numLocalBndCoeffs,"LocBnd vector is not of correct dimension");
+            ASSERTL1(local.num_elements() >= m_numLocalCoeffs,"Local vector is not of correct dimension");
+
+            Vmath::Gathr(m_numLocalCoeffs-m_numLocalBndCoeffs, local.get(), m_localToLocalIntMap.get(), locint.get());
+        }
+        
 
         void AssemblyMap::AssembleBnd(
-                    const NekVector<NekDouble>& loc,
-                    NekVector<NekDouble>& global, int offset) const
+                                      const NekVector<NekDouble>& loc,
+                                      NekVector<NekDouble>& global, int offset) const
         {
             AssembleBnd(loc.GetPtr(), global.GetPtr(), offset);
         }
 
 
         void AssemblyMap::AssembleBnd(
-                    const NekVector<NekDouble>& loc,
-                    NekVector<NekDouble>& global) const
+                                      const NekVector<NekDouble>& loc,
+                                      NekVector<NekDouble>& global) const
         {
             AssembleBnd(loc.GetPtr(), global.GetPtr());
         }
 
 
         void AssemblyMap::AssembleBnd(
-                    const Array<OneD,const NekDouble>& loc,
-                    Array<OneD, NekDouble>& global, int offset) const
+                                      const Array<OneD,const NekDouble>& loc,
+                                      Array<OneD, NekDouble>& global, int offset) const
         {
             ASSERTL1(loc.num_elements() >= m_numLocalBndCoeffs,"Local array is not of correct dimension");
             ASSERTL1(global.num_elements() >= m_numGlobalBndCoeffs-offset,"Global array is not of correct dimension");
@@ -1109,8 +1154,8 @@ namespace Nektar
 
 
         void AssemblyMap::AssembleBnd(
-                    const Array<OneD, const NekDouble>& loc,
-                    Array<OneD, NekDouble>& global) const
+                                      const Array<OneD, const NekDouble>& loc,
+                                      Array<OneD, NekDouble>& global) const
         {
             ASSERTL1(loc.num_elements() >= m_numLocalBndCoeffs,"Local vector is not of correct dimension");
             ASSERTL1(global.num_elements() >= m_numGlobalBndCoeffs,"Global vector is not of correct dimension");
@@ -1129,8 +1174,45 @@ namespace Nektar
             UniversalAssembleBnd(global);
         }
 
+        void AssemblyMap::LocalBndToLocal(
+                                          const NekVector<NekDouble>& locbnd,
+                                          NekVector<NekDouble>& local) const
+        {
+            LocalBndToLocal(locbnd.GetPtr(), local.GetPtr());
+        }
+
+
+        void AssemblyMap::LocalBndToLocal(
+                                          const Array<OneD, const NekDouble>& locbnd,
+                                          Array<OneD,NekDouble>& local) const
+        {
+            ASSERTL1(locbnd.num_elements() >= m_numLocalBndCoeffs,"LocBnd vector is not of correct dimension");
+            ASSERTL1(local.num_elements() >= m_numLocalCoeffs,"Local vector is not of correct dimension");
+
+            Vmath::Scatr(m_numLocalBndCoeffs, locbnd.get(), m_localToLocalBndMap.get(), local.get());
+        }
+
+
+        void AssemblyMap::LocalIntToLocal(
+                                          const NekVector<NekDouble>& locint,
+                                          NekVector<NekDouble>& local) const
+        {
+            LocalIntToLocal(locint.GetPtr(), local.GetPtr());
+        }
+
+
+        void AssemblyMap::LocalIntToLocal(
+                                          const Array<OneD, const NekDouble>& locint,
+                                          Array<OneD,NekDouble>& local) const
+        {
+            ASSERTL1(locint.num_elements() >= m_numLocalCoeffs-m_numLocalBndCoeffs,"LocBnd vector is not of correct dimension");
+            ASSERTL1(local.num_elements() >= m_numLocalCoeffs,"Local vector is not of correct dimension");
+
+            Vmath::Scatr(m_numLocalCoeffs-m_numLocalBndCoeffs, locint.get(), m_localToLocalIntMap.get(), local.get());
+        }
+
         void AssemblyMap::UniversalAssembleBnd(
-                      Array<OneD,     NekDouble>& pGlobal) const
+                                               Array<OneD,     NekDouble>& pGlobal) const
         {
             ASSERTL1(pGlobal.num_elements() >= m_numGlobalBndCoeffs,
                      "Wrong size.");
@@ -1138,14 +1220,14 @@ namespace Nektar
         }
 
         void AssemblyMap::UniversalAssembleBnd(
-                      NekVector<      NekDouble>& pGlobal) const
+                                               NekVector<      NekDouble>& pGlobal) const
         {
             UniversalAssembleBnd(pGlobal.GetPtr());
         }
 
         void AssemblyMap::UniversalAssembleBnd(
-                      Array<OneD,     NekDouble>& pGlobal,
-                      int                         offset) const
+                                               Array<OneD,     NekDouble>& pGlobal,
+                                               int                         offset) const
         {
             Array<OneD, NekDouble> tmp(offset);
             if (offset > 0)  Vmath::Vcopy(offset, pGlobal, 1, tmp, 1);
@@ -1169,20 +1251,20 @@ namespace Nektar
         }
 
         const Array<OneD,const unsigned int>&
-                    AssemblyMap::GetNumLocalBndCoeffsPerPatch()
+        AssemblyMap::GetNumLocalBndCoeffsPerPatch()
         {
             return m_numLocalBndCoeffsPerPatch;
         }
 
 
         const Array<OneD,const unsigned int>&
-            AssemblyMap::GetNumLocalIntCoeffsPerPatch()
+        AssemblyMap::GetNumLocalIntCoeffsPerPatch()
         {
             return m_numLocalIntCoeffsPerPatch;
         }
 
         const AssemblyMapSharedPtr
-                    AssemblyMap::GetNextLevelLocalToGlobalMap() const
+        AssemblyMap::GetNextLevelLocalToGlobalMap() const
         {
             return  m_nextLevelLocalToGlobalMap;
         }

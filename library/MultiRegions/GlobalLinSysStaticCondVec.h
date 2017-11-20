@@ -71,14 +71,13 @@ namespace Nektar
                 return m_schurCompl;
             }
 
-            virtual void v_BasisTransform(
-                Array<OneD, NekDouble>& pInOut,
-                int offset)
+            virtual void v_BasisTransformLoc(
+                Array<OneD, NekDouble>& pInOut)
             {
 
             }
 
-            virtual void v_BasisInvTransform(
+            virtual void v_BasisInvTransformLoc(
                 Array<OneD, NekDouble>& pInOut)
             {
                 

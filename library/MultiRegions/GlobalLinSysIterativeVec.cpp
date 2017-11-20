@@ -169,10 +169,10 @@ namespace Nektar
                 Vmath::Vcopy(nNonDir[i],pvecInput[i]+nDir[i],1,
                              tmp = r_A+cnt,1);
 
-                // zero homogeneous out array ready for solution updates
-                // Should not be earlier in case input vector is same as
+                // zero out array ready for solution updates. Should
+                // not be earlier in case input vector is same as
                 // output and above copy has been peformed
-                Vmath::Zero(nNonDir[i],tmp = pvecOutput[i] + nDir[i],1);
+                Vmath::Zero(nGlobal[i],pvecOutput[i],1);
                 
                 // evaluate initial residual error for exit check
                 vExchange[2] += Vmath::Dot2(nNonDir[i],
@@ -195,6 +195,12 @@ namespace Nektar
             // If input residual is less than tolerance skip solve.
             if (eps < m_tolerance * m_tolerance * m_rhs_magnitude)
             {
+                // Zero output
+                for(int i = 0; i < nvec; ++i)
+                {                    
+                    Vmath::Zero(nGlobal[i],pvecOutput[i],1);
+                }
+
                 if (m_verbose && m_root)
                 {
                     cout << "CG iterations made = " << m_totalIterations 
@@ -371,6 +377,6 @@ namespace Nektar
                                    (1.0-m_rhs_mag_sm)*new_rhs_mag); 
             }
         }
-
+ 
     }
 }

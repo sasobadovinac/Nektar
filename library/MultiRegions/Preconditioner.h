@@ -94,6 +94,13 @@ namespace Nektar
 	    inline void DoTransformFromLowEnergy(
                 Array<OneD, NekDouble>& pInOut);
 
+	    inline void DoTransformToLowEnergyLoc(
+                Array<OneD, NekDouble>& pInOut);
+ 
+	    inline void DoTransformFromLowEnergyLoc(
+                Array<OneD, NekDouble>& pInOut);
+
+
             inline void DoMultiplybyInverseTransformationMatrix(
                 const Array<OneD, NekDouble>& pInput,
                 Array<OneD, NekDouble>& pOutput);
@@ -166,6 +173,12 @@ namespace Nektar
                 Array<OneD, NekDouble>& pOutput);
 
 	    virtual void v_DoTransformFromLowEnergy(
+                Array<OneD, NekDouble>& pInput);
+
+	    virtual void v_DoTransformToLowEnergyLoc(
+               Array<OneD, NekDouble>& pInOut);
+
+	    virtual void v_DoTransformFromLowEnergyLoc(
                 Array<OneD, NekDouble>& pInput);
 
             virtual void v_DoMultiplybyInverseTransformationMatrix(
@@ -250,6 +263,25 @@ namespace Nektar
             Array<OneD, NekDouble>& pInput)
         {
 	    v_DoTransformFromLowEnergy(pInput);
+        }
+
+
+                /**
+         *
+         */
+        inline void Preconditioner::DoTransformToLowEnergyLoc(
+            Array<OneD, NekDouble>& pInOut)
+        {
+	    v_DoTransformToLowEnergyLoc(pInOut);
+        }
+
+        /**
+         *
+         */
+        inline void Preconditioner::DoTransformFromLowEnergyLoc(
+            Array<OneD, NekDouble>& pInput)
+        {
+	    v_DoTransformFromLowEnergyLoc(pInput);
         }
 
         /**

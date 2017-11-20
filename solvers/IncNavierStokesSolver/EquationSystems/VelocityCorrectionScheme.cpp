@@ -502,32 +502,29 @@ namespace Nektar
                 linSys->InitObject(); 
             }
 
-            Array<OneD, Array<OneD, NekDouble> >tmp(m_nConvectiveFields);
-            Array<OneD, Array<OneD, NekDouble> >wsp(m_nConvectiveFields);
+            Array<OneD, Array<OneD, NekDouble> >F(m_nConvectiveFields);
+            Array<OneD, Array<OneD, NekDouble> >coeffs(m_nConvectiveFields);
 
             // Inner product of forcing
             int contNcoeffs = m_locToGloMapVec[0]->GetNumGlobalCoeffs();
+            int Ncoeffs = m_fields[0]->GetNcoeffs();
 
-
-            Array<OneD, NekDouble> tmp1(m_fields[0]->GetNcoeffs());
             // Solve Helmholtz system and put in Physical space
             for(int n = 0; n < m_nConvectiveFields; ++n)
             {
-                wsp[n] = Array<OneD, NekDouble>(contNcoeffs);
-                tmp[n] = Array<OneD, NekDouble>(contNcoeffs);
+                F[n] = Array<OneD, NekDouble>(Ncoeffs);
                 
-                m_fields[n]->IProductWRTBase(Forcing[n],tmp1);
-                m_fields[n]->Assemble(tmp1,wsp[n]);
+                m_fields[n]->IProductWRTBase(Forcing[n],F[n]);
                 
                 // Note -1.0 term necessary to invert forcing function to
                 // be consistent with matrix definition
-                Vmath::Neg(contNcoeffs, wsp[n], 1);
+                Vmath::Neg(Ncoeffs, F[n], 1);
                 
                 // Forcing function with weak boundary conditions
                 int i,j;
                 int bndcnt = 0;
                 NekDouble sign;
-                Array<OneD, NekDouble> gamma(contNcoeffs, 0.0);
+                Array<OneD, NekDouble> gamma(Ncoeffs, 0.0);
                 
                 Array<OneD, const MultiRegions::ExpListSharedPtr>
                     bndCondExpansions = m_fields[n]->GetBndCondExpansions();
@@ -540,13 +537,13 @@ namespace Nektar
                     if(bndConditions[i]->GetBoundaryConditionType()
                        != SpatialDomains::eDirichlet)
                     {
+                        Array<OneD, NekDouble> sign = m_locToGloMapVec[n]->GetBndCondCoeffsToLocalCoeffsSign();
+                        const Array<OneD, const int> map= m_locToGloMapVec[n]->GetBndCondCoeffsToLocalCoeffsMap();
+                        const Array<OneD, NekDouble> bndcoeff = (bndCondExpansions[i])->GetCoeffs(); 
+
                         for(j = 0; j < (bndCondExpansions[i])->GetNcoeffs(); j++)
                         {
-                            sign = m_locToGloMapVec[n]->
-                                GetBndCondCoeffsToGlobalCoeffsSign(bndcnt);
-                            gamma[m_locToGloMapVec[n]->
-                                  GetBndCondCoeffsToGlobalCoeffsMap(bndcnt++)] +=
-                                sign * (bndCondExpansions[i]->GetCoeffs())[j];
+                            gamma[map[j]] += sign[j] * bndcoeff[j]; 
                         }
                     }
                     else
@@ -554,26 +551,21 @@ namespace Nektar
                         bndcnt += bndCondExpansions[i]->GetNcoeffs();
                     }
                     
-                    m_locToGloMapVec[n]->UniversalAssemble(gamma);
-                    
                     // Add weak boundary conditions to forcing
-                    Vmath::Vadd(contNcoeffs, wsp[n], 1, gamma, 1, wsp[n], 1);
+                    Vmath::Vadd(Ncoeffs, F[n], 1, gamma, 1, F[n], 1);
                 }
             }
                     
             for(int n = 0; n < m_nConvectiveFields; ++n)
             {
-                m_fields[n]->LocalToGlobal(m_fields[n]->UpdateCoeffs(),
-                                           tmp[n]);
+                coeffs[n] = m_fields[n]->UpdateCoeffs();
             }
                 
             // Solve the system
-            linSys->SolveVec(wsp,tmp);
+            linSys->SolveVec(F,coeffs);
             
             for(int n = 0; n < m_nConvectiveFields; ++n)
             {
-                m_fields[n]->GlobalToLocal(tmp[n],m_fields[n]->UpdateCoeffs());
-
                 m_fields[n]->BwdTrans(m_fields[n]->GetCoeffs(),outarray[n]);
             }
             

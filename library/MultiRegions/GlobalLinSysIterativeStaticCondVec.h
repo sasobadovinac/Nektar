@@ -107,11 +107,8 @@ namespace Nektar
             virtual DNekScalBlkMatSharedPtr v_PreSolve(
                 int                     scLevel,
                 Array<OneD, Array<OneD, NekDouble> >  &F);
-            virtual void v_BasisTransform(
-                Array<OneD, NekDouble>& pInOut,
-                int                     offset);
-            virtual void v_BasisInvTransform(
-                Array<OneD, NekDouble>& pInOut);
+            virtual void v_BasisTransformLoc(Array<OneD, NekDouble>& pInOut);
+            virtual void v_BasisInvTransformLoc(Array<OneD, NekDouble>& pInOut);
 
         private:
             DNekScalBlkMatSharedPtr                  m_S1Blk;

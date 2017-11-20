@@ -1593,13 +1593,18 @@ namespace Nektar
             m_numGlobalDirBndCoeffs          = graphVertOffset[firstNonDirGraphVertId];
             m_localToGlobalMap               = Array<OneD, int>(m_numLocalCoeffs,-1);
             m_localToGlobalBndMap            = Array<OneD, int>(m_numLocalBndCoeffs,-1);
+            m_localToLocalBndMap             = Array<OneD, int>(m_numLocalBndCoeffs,-1);
+            m_localToLocalIntMap             = Array<OneD, int>(m_numLocalCoeffs-m_numLocalBndCoeffs,-1);
             m_bndCondCoeffsToGlobalCoeffsMap = Array<OneD, int>(m_numLocalBndCondCoeffs,-1);
+            m_bndCondCoeffsToLocalCoeffsMap  = Array<OneD, int>(m_numLocalBndCondCoeffs,-1);
+            
             // If required, set up the sign-vector
             if(m_signChange)
             {
                 m_localToGlobalSign = Array<OneD, NekDouble>(m_numLocalCoeffs,1.0);
                 m_localToGlobalBndSign = Array<OneD, NekDouble>(m_numLocalBndCoeffs,1.0);
                 m_bndCondCoeffsToGlobalCoeffsSign = Array<OneD,NekDouble>(m_numLocalBndCondCoeffs,1.0);
+                m_bndCondCoeffsToLocalCoeffsSign = Array<OneD,NekDouble>(m_numLocalBndCondCoeffs,1.0);
             }
 
             m_staticCondLevel = 0;
@@ -1627,10 +1632,32 @@ namespace Nektar
             cnt = 0;
 
             // Loop over all the elements in the domain
+            int cntbdry = 0; 
+            int cntint  = 0; 
             for(i = 0; i < locExpVector.size(); ++i)
             {
                 exp = locExpVector[i];
                 cnt = locExp.GetCoeff_Offset(i);
+
+                int nbdry = exp->NumBndryCoeffs();
+                int nint  = exp->GetNcoeffs() - nbdry;
+
+                Array<OneD,unsigned int> bmap(nbdry);
+                Array<OneD,unsigned int> imap(nint);
+
+                exp->GetBoundaryMap(bmap);
+                exp->GetInteriorMap(imap);
+
+                for(j = 0; j < nbdry; ++j)
+                {
+                    m_localToLocalBndMap[cntbdry++] = cnt + bmap[j];
+                }
+
+                for(j = 0; j < nint; ++j)
+                {
+                    m_localToLocalIntMap[cntint++] = cnt + imap[j];
+                }
+
                 for(j = 0; j < exp->GetNverts(); ++j)
                 {
                     meshVertId = exp->GetGeom()->GetVid(j);
@@ -1782,6 +1809,25 @@ namespace Nektar
             }
 
             // Set up the mapping for the boundary conditions
+            // Set up boundary mapping
+            map<int, pair<int,int> > traceToElmtTraceMap;
+            int id;
+            
+            for(cnt = i = 0; i < locExpVector.size(); ++i)
+            {
+                exp = locExpVector[i];
+
+                for(j = 0; j < exp->GetNtrace(); ++j)
+                {
+                    id = exp->GetGeom()->GetTid(j);
+                    
+                    traceToElmtTraceMap[id] = pair<int,int>(i,j);
+                }
+            }
+
+            Array<OneD, unsigned int> maparray;
+            Array<OneD, int>          signarray;
+
             cnt = 0;
             int offset = 0;
             for(i = 0; i < bndCondExp.num_elements(); i++)
@@ -1790,7 +1836,54 @@ namespace Nektar
                 for(j = 0; j < bndCondExp[i]->GetNumElmts(); j++)
                 {
                     bndExp  = bndCondExp[i]->GetExp(j);
+
                     cnt = offset + bndCondExp[i]->GetCoeff_Offset(j);
+
+                    id = bndExp->GetGeom()->GetGlobalID();
+
+                    ASSERTL1(traceToElmtTraceMap.count(id) > 0, "Failed to find trace id");
+                    int eid = traceToElmtTraceMap[id].first;
+                    int tid = traceToElmtTraceMap[id].second;
+
+                    exp = locExpVector[eid]; 
+                    int dim = exp->GetShapeDimension();
+                    
+                    if(dim == 1)
+                    {
+                        m_bndCondCoeffsToLocalCoeffsMap [cnt] = locExp.GetCoeff_Offset(eid);
+                    }
+                    else
+                    {
+                        if(dim == 2)
+                        {
+                            exp->GetEdgeToElementMap(tid,exp->GetEorient(tid),
+                                                     maparray,signarray,
+                                                     bndExp->GetBasisNumModes(0));
+                        }
+                        else if (dim == 3)
+                        {
+                            exp->GetFaceToElementMap(tid,exp->GetForient(tid),
+                                                     maparray,signarray,
+                                                     bndExp->GetBasisNumModes(0),
+                                                     bndExp->GetBasisNumModes(1));
+                        }
+                        
+                        for(k = 0; k < bndExp->GetNcoeffs(); k++)
+                        {
+                            m_bndCondCoeffsToLocalCoeffsMap [cnt+k] =locExp.GetCoeff_Offset(eid) +
+                                maparray[k];
+                            if(m_signChange)
+                            {
+                                m_bndCondCoeffsToLocalCoeffsSign[cnt+k] = signarray[k];
+                            }
+                        }
+                    }
+
+                    for(k = 0; k < bndExp->GetNverts(); k++)
+                    {
+                        meshVertId = bndExp->GetGeom()->GetVid(k);
+                    }
+                    
                     for(k = 0; k < bndExp->GetNverts(); k++)
                     {
                         meshVertId = bndExp->GetGeom()->GetVid(k);

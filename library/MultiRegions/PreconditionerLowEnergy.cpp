@@ -1127,6 +1127,53 @@ namespace Nektar
         }
 
         /**
+         * \brief Transform the solution vector vector to low energy in local bnd space
+         *
+         * As the conjugate gradient system is solved for the low energy basis,
+         * the solution vector \f$\mathbf{x}\f$ must be transformed to the low
+         * energy basis i.e. \f$\overline{\mathbf{x}}=\mathbf{R}\mathbf{x}\f$.
+         */
+        void PreconditionerLowEnergy::v_DoTransformToLowEnergyLoc(
+            Array<OneD, NekDouble>& pInOut)
+        {
+            int nLocBndDofs        = m_locToGloMap->GetNumLocalBndCoeffs();
+
+            //Block transformation matrix
+            DNekScalBlkMat &R = *m_RBlk;
+
+            NekVector<NekDouble> F_LocBnd(nLocBndDofs,pInOut,eWrapper);
+
+            //Multiply by the block transformation matrix
+            F_LocBnd=R*F_LocBnd;
+        }
+
+        /**
+         * \brief transform the solution vector from low energy back to the
+         * original basis in local boundary space
+         *
+         * After the conjugate gradient routine the output vector is in the low
+         * energy basis and must be trasnformed back to the original basis in
+         * order to get the correct solution out. the solution vector
+         * i.e. \f$\mathbf{x}=\mathbf{R^{T}}\mathbf{\overline{x}}\f$.
+         */
+        void PreconditionerLowEnergy::v_DoTransformFromLowEnergyLoc(
+            Array<OneD, NekDouble>& pInOut)
+        {
+            int nLocBndDofs        = m_locToGloMap->GetNumLocalBndCoeffs();
+
+            ASSERTL1(pInOut.num_elements() >= nLocBndDofs,
+                     "Output array is not greater than the nLocBndDofs");
+
+            //Block transposed transformation matrix
+            DNekScalBlkMat &RT = *m_RTBlk;
+
+            NekVector<NekDouble> V_LocBnd(nLocBndDofs,pInOut,eWrapper);
+
+            //Multiply by the block transposed transformation matrix
+            V_LocBnd=RT*V_LocBnd;
+        }
+
+        /**
          * \brief Multiply by the block inverse transformation matrix
          */ 
         void PreconditionerLowEnergy::v_DoMultiplybyInverseTransformationMatrix(

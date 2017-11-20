@@ -1505,11 +1505,11 @@ using namespace boost::assign;
             }
 
             // make global list of faces to composite ids if rotComp is non-zero
-            Vmath::Zero(totPairSizes,first,1);
-            Vmath::Zero(totPairSizes,second,1);
-            
             if(rotComp.size())
             {
+                Vmath::Zero(totPairSizes,first,1);
+                Vmath::Zero(totPairSizes,second,1);
+            
                 cnt = pairOffsets[p];
                 
                 for (auto &pIt : fIdToCompId)

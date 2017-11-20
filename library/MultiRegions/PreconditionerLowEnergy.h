@@ -140,6 +140,13 @@ namespace Nektar
             virtual void v_DoTransformFromLowEnergy(
                 Array<OneD, NekDouble>& pInOut);
 
+            virtual void v_DoTransformToLowEnergyLoc(
+                Array<OneD, NekDouble>& pInOut);
+
+            virtual void v_DoTransformFromLowEnergyLoc(
+                Array<OneD, NekDouble>& pInOut);
+
+            
             virtual void v_DoMultiplybyInverseTransformationMatrix(
                 const Array<OneD, NekDouble>& pInput,
                 Array<OneD, NekDouble>& pOutput);

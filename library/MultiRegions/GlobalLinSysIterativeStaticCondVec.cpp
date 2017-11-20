@@ -338,7 +338,8 @@ namespace Nektar
                 // Do matrix multiply locally, using direct BLAS calls
                 for(n = cnt = 0; n < nvec; cnt += nGlobal[n], ++n)
                 {                    
-                    m_locToGloMapVec[n]->GlobalToLocalBnd(pInput+cnt, tmp = m_wsp+n*nLocal);
+                    m_locToGloMapVec[n]->GlobalToLocalBnd(pInput+cnt,
+                                                          tmp = m_wsp+n*nLocal);
                 }
 
                 // rotate values if required here                
@@ -401,10 +402,38 @@ namespace Nektar
                     }
                 }
                 
-                int nGlobBndDofs   = m_locToGloMapVec[0]->GetNumGlobalBndCoeffs();
+                int nLocBndDofs   = m_locToGloMapVec[0]->GetNumLocalBndCoeffs();
 
-                Set_Rhs_Magnitude(nGlobBndDofs,F);
+                ASSERTL1(F[0].num_elements() >= nLocBndDofs,"Wrong size array");
+                
+                //Set_Rhs_Magnitude - version using local array
 
+                Array<OneD, NekDouble> vExchange(1, 0.0);
+
+                for(int i = 0;  i < F.num_elements(); ++i)
+                {
+                    vExchange[0] += Blas::Ddot(nLocBndDofs, F[i],1,F[i],1);
+                }
+
+                m_expListVec[0].lock()->GetComm()->GetRowComm()->AllReduce(
+                vExchange, Nektar::LibUtilities::ReduceSum);
+
+                // To ensure that very different rhs values are not being
+                // used in subsequent solvers such as the velocit solve in
+                // INC NS. If this works we then need to work out a better
+                // way to control this.
+                NekDouble new_rhs_mag = (vExchange[0] > 1e-6)? vExchange[0] : 1.0;
+                
+                if(m_rhs_magnitude == NekConstants::kNekUnsetDouble)
+                {
+                    m_rhs_magnitude = new_rhs_mag;
+                }
+                else
+                {
+                    m_rhs_magnitude = (m_rhs_mag_sm*(m_rhs_magnitude) + 
+                                       (1.0-m_rhs_mag_sm)*new_rhs_mag); 
+                }
+ 
                 return m_S1Blk;
             }
             else
@@ -417,17 +446,16 @@ namespace Nektar
             }
         }
 
-        void GlobalLinSysIterativeStaticCondVec::v_BasisTransform(
-            Array<OneD, NekDouble>& pInOut,
-            int                     offset)
+        void GlobalLinSysIterativeStaticCondVec::v_BasisTransformLoc(
+                       Array<OneD, NekDouble>& pInOut)
         {
-            m_preconVec[0]->DoTransformToLowEnergy(pInOut, offset);
+            m_preconVec[0]->DoTransformToLowEnergyLoc(pInOut);
         }
 
-        void GlobalLinSysIterativeStaticCondVec::v_BasisInvTransform(
+        void GlobalLinSysIterativeStaticCondVec::v_BasisInvTransformLoc(
             Array<OneD, NekDouble>& pInOut)
         {
-            m_preconVec[0]->DoTransformFromLowEnergy(pInOut);
+            m_preconVec[0]->DoTransformFromLowEnergyLoc(pInOut);
         }
     }
 }

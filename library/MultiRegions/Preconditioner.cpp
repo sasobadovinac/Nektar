@@ -132,9 +132,10 @@ namespace Nektar
          * \brief Transform from original basis to low energy basis
          */ 
         void Preconditioner::v_DoTransformToLowEnergy(
-            const Array<OneD, NekDouble> &pInOut,
+            const Array<OneD, NekDouble> &pInput,
                   Array<OneD, NekDouble> &pOutput)
         {
+            Vmath::Smul(pInput.num_elements(), 1.0, pInput, 1, pOutput, 1);
 	}
 
         /**
@@ -143,8 +144,26 @@ namespace Nektar
         void Preconditioner::v_DoTransformFromLowEnergy(
             Array<OneD, NekDouble>& pInput)
         {
-            Vmath::Smul(pInput.num_elements(), 1.0, pInput, 1, pInput, 1);
 	}
+
+
+        /**
+         * \brief Transform from original basis to low energy basis
+         */ 
+        void Preconditioner::v_DoTransformToLowEnergyLoc(
+            Array<OneD, NekDouble>& pInOut)
+        {
+	}
+
+
+        /**
+         * \brief Transform from low energy basis to orignal basis
+         */ 
+        void Preconditioner::v_DoTransformFromLowEnergyLoc(
+            Array<OneD, NekDouble>& pInput)
+        {
+	}
+
 
         /**
          * \brief Multiply by the block inverse transformation matrix
