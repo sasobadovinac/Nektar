@@ -746,7 +746,7 @@ void FilterParticlesTracking::HandleCollision(
     //particle.m_oldCoord[i] = particle.m_gloCoord[i];
     
     
-    //Print coordinates
+    //Print coordinatAes
     //cout<<endl<<endl<<"Point Old: {";
     //for (int i = 0; i < particle.m_dim; ++i)
     //{
