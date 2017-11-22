@@ -723,54 +723,21 @@ void FilterParticlesTracking::HandleCollision(
     // Boundary Expansion
     Array<OneD,const MultiRegions::ExpListSharedPtr> bndExp;
     bndExp = pFields[0]->GetBndCondExpansions();
-    
-    //// Number the boundary defined in xml file: bndExp.num_elements()
-    //// Number of element in  the boundary bndExp[0]->GetExpSize() 
-    //cout << "getexp :"<< bndExp.num_elements()<<endl;
-    
-    //for (int i = 0; i < bndExp.num_elements(); ++i)
-    //{
-        //// how many elements are in the boundary i
-        //cout << "Boundary "<<i<<": "<< bndExp[i]->GetExpSize()<<endl;
-    //}
-    
-    //Numero elementos en la boundary BOUNDAY y el elemento ELEMENT
-    //bndExp[BOUNDARY]->GetTotPoints(ELEMENT)
-    //cout << " Boundary points " << bndExp[0]->GetTotPoints()<<endl;
-    
-     //cout << "Numero de puntos "<< elemBndExp->GetNumPoints(0)<<endl;
-    
     LocalRegions::ExpansionSharedPtr elemBndExp;
-    //Array<OneD, NekDouble>  gloCoord(3,0.0);
     
-    //particle.m_oldCoord[i] = particle.m_gloCoord[i];
-    
-    
-    //Print coordinatAes
-    //cout<<endl<<endl<<"Point Old: {";
-    //for (int i = 0; i < particle.m_dim; ++i)
-    //{
-        //cout<<particle.m_oldCoord[i]<<", ";  
-    //}
-    //cout<<'}'<<endl<<endl;
-    
-    
-    //cout<<endl<<endl<<"Point : {";
-    //for (int i = 0; i < particle.m_dim; ++i)
-    //{
-        //cout<<particle.m_gloCoord[i]<<", ";  
-    //}
-    //cout<<'}'<<endl<<endl;
-    
-    
-
-   for (int nb = 0; nb < bndExp.num_elements(); ++nb)
+    Array<OneD, NekDouble> Db(bndExp.num_elements());
+  
+  
+    for (int nb = 0; nb < bndExp.num_elements(); ++nb)
     {
-        //Boundary normals - normals[dir][point]
+        int npoints    = bndExp[nb]->GetTotPoints();
+        Array<OneD, NekDouble> dist(npoints,0.0);
+        
+        ////Boundary normals - normals[dir][point]
         Array<OneD,Array<OneD, NekDouble>> normals;
         pFields[0]->GetBoundaryNormals(nb, normals);
         
-        //Coordinates 
+        ////Coordinates 
         Array<OneD,Array<OneD, NekDouble>> coords(3);
         for (int j = 0; j < 3; ++j)
         {
@@ -778,59 +745,65 @@ void FilterParticlesTracking::HandleCollision(
         }
         bndExp[nb]->GetCoords(coords[0],coords[1],coords[2]);
 
-        
-        
         for (int ne = 0; ne < bndExp[nb]->GetExpSize(); ++ne)
         {
             //Elements in a Boundary
             elemBndExp = bndExp[nb]->GetExp(ne);
-            cout << "Boundary: "<<nb<<" Elemento: "<<ne<<" Global ID: "
-            <<elemBndExp->GetGeom()->GetGlobalID();       
-
             int nq = elemBndExp->GetNumPoints(0);
             int physOffset = bndExp[nb]->GetPhys_Offset(ne);
             
-            cout<<endl;
+            //cout << "Boundary: "<<nb<<" Elemento: "<<ne<<" Global ID: "
+            //<<elemBndExp->GetGeom()->GetGlobalID()<<endl;
+            
             for (int j = 0; j < nq; ++j)
             {   
-                cout<<"Coordinates {"
-                << coords[0][j+physOffset]<<", "
-                << coords[1][j+physOffset]<<", "
-                << coords[2][j+physOffset]<<"}";
+                //cout<<"Coordinates {"
+                //<< coords[0][j+physOffset]<<", "
+                //<< coords[1][j+physOffset]<<", "
+                //<< coords[2][j+physOffset]<<"}";
                 
-                cout <<" Normals: [";
+                //cout <<" Normals: [";
                 for (int i = 0; i < particle.m_dim; ++i)
-                {    
-                    cout << normals[i][physOffset+j]<<", ";//nq-1
+                {
+                
+                dist[physOffset+j] += (particle.m_oldCoord[i]
+                                      - coords[i][j+physOffset])
+                                      * normals[i][physOffset+j];
+                    
+                    //particle.m_gloCoord[i];
+                        
+                    //cout << normals[i][physOffset+j]<<", ";//nq-1
                 }
-                cout<<']'<<endl;
+                //cout<<']'<<endl;
+                cout<<"Dis"<<dist[physOffset+j]<<endl;
             }
+            //Db(nb) = min_element(dist);
         }
         
-        ////int npoints    = bndExp[nb]->GetNpoints();
-        //int npoints    = bndExp[nb]->GetTotPoints();
+        //////int npoints    = bndExp[nb]->GetNpoints();
+        ////int npoints    = bndExp[nb]->GetTotPoints();
         
         
-        //cout<<endl<<endl<<"Boundary "<<nb<< " puntos: "<<npoints<<endl;
+        ////cout<<endl<<endl<<"Boundary "<<nb<< " puntos: "<<npoints<<endl;
         
-        //Array<OneD, NekDouble> x0(npoints,0.0);
-        //Array<OneD, NekDouble> x1(npoints,0.0);
-        //Array<OneD, NekDouble> x2(npoints,0.0);
-        //bndExp[nb]->GetCoords(x0,x1,x2);        
+        ////Array<OneD, NekDouble> x0(npoints,0.0);
+        ////Array<OneD, NekDouble> x1(npoints,0.0);
+        ////Array<OneD, NekDouble> x2(npoints,0.0);
+        ////bndExp[nb]->GetCoords(x0,x1,x2);        
         
-        //for (int i = 0; i < npoints; ++i)
-            //{
-                //cout<<"Coordinates {"
-                //<< x0[i]<<", "<< x1[i]<<", "<< x2[i]<<"}";
+        ////for (int i = 0; i < npoints; ++i)
+            ////{
+                ////cout<<"Coordinates {"
+                ////<< x0[i]<<", "<< x1[i]<<", "<< x2[i]<<"}";
                 
-                //cout<<" Normals: [";
-                //for (int i = 0; i < particle.m_dim; ++i)
-                //{    
-                    //cout << normals[i][npoints]<<", ";//nq-1
-                //}
-                //cout<<']'<<endl;
-            //}
-    //cout<<endl;
+                ////cout<<" Normals: [";
+                ////for (int i = 0; i < particle.m_dim; ++i)
+                ////{    
+                    ////cout << normals[i][npoints]<<", ";//nq-1
+                ////}
+                ////cout<<']'<<endl;
+            ////}
+    ////cout<<endl;
     }
     
     
@@ -843,6 +816,15 @@ void FilterParticlesTracking::HandleCollision(
         cout << "Particle " << particle.m_id << " left the domain." << endl;
         particle.m_used = false;
     }
+    
+    //NekDouble FilterParticlesTracking::Distance(
+                        //Array<OneD,NekDouble>(3,0.0) point1,
+                        //Array<OneD,NekDouble>(3,0.0) point2,
+                        //Array<OneD,NekDouble>(3,0.0) normal)
+    //{
+        //cout<<normal[1];
+        
+                           //}
 }
 
 /**
