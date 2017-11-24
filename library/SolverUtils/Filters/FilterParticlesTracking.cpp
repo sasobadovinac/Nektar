@@ -317,7 +317,7 @@ void FilterParticlesTracking::v_Initialise(
             ++i;
         }
     }
-
+    
     // Add seed points to m_particles
     AddSeedPoints(pFields);
 
@@ -422,7 +422,7 @@ void FilterParticlesTracking::AdvanceParticles(
         m_advanceCalls++;
         if(particle.m_used)
         {
-            // Store original position of the particle
+             //Store original position of the particle
             for (int i = 0; i < particle.m_dim; ++i)
             {
                 particle.m_oldCoord[i] = particle.m_gloCoord[i];
@@ -444,13 +444,14 @@ void FilterParticlesTracking::AdvanceParticles(
             // Check if particle left the domain of interest
             CheckBoundingBox(particle);
             
-            //Plot data for debuging 
-            //for(int n = 0; n < 3; ++n)
-            //{
-                //cout << ", " << boost::format("%25.19e") %
-                                        //particle.m_gloCoord[n];
-            //}
-            //cout <<endl;
+            
+            ////Plot data for debuging 
+            ////for(int n = 0; n < 3; ++n)
+            ////{
+                ////cout << ", " << boost::format("%25.19e") %
+                                        ////particle.m_gloCoord[n];
+            ////}
+            ////cout <<endl;
             
         }
     }
@@ -467,7 +468,7 @@ void FilterParticlesTracking::AddSeedPoints(
     int dim            = pFields[0]->GetGraph()->GetSpaceDimension();
     int numFields      = pFields.num_elements();
     Array<OneD, NekDouble>  gloCoord(3,0.0);
-
+    
     // Avoid problems with empty list of points...
     if( totalPoints == 0)
     {
@@ -528,10 +529,11 @@ void FilterParticlesTracking::UpdateLocCoord(
     bool found = false;
     if(particle.m_eId >= 0)
     {
-        found = pFields[0]->GetExp(particle.m_eId)->GetGeom()->ContainsPoint(
-                                              particle.m_gloCoord,
-                                              particle.m_locCoord,
-                                              NekConstants::kNekZeroTol);
+        //found = pFields[0]->GetExp(particle.m_eId)->GetGeom()->ContainsPoint(
+                                              //particle.m_gloCoord,
+                                              //particle.m_locCoord,
+                                              //NekConstants::kNekZeroTol);
+        
     }
     // If it changed elements just search again
     if (!found)
@@ -730,13 +732,17 @@ void FilterParticlesTracking::HandleCollision(
     // For now, just mark particles outside the domain as unused
 if( particle.m_eId == -1)
 {
-// Boundary Expansion
+    cout << "Particle " << particle.m_id << " collisioned." << endl; 
+    //particle.m_used = false;    
+ 
+    //Boundary Expansion
     Array<OneD,const MultiRegions::ExpListSharedPtr> bndExp;
     bndExp = pFields[0]->GetBndCondExpansions();
     LocalRegions::ExpansionSharedPtr elemBndExp;
     
     NekDouble minDist = 0.0, dist = 0.0, distN = 0.0;
-    int minPnt = -1,minElem = -1, minBnd = -1;
+    Array<OneD,NekDouble> minNormal(3);
+    int minPnt = -1, minBnd = -1;
     
     //Loop over each boundary
     for (int nb = 0; nb < bndExp.num_elements(); ++nb)
@@ -746,136 +752,110 @@ if( particle.m_eId == -1)
         pFields[0]->GetBoundaryNormals(nb, normals);
         
         ////Coordinates 
+        int npoints    = bndExp[nb]->GetTotPoints();
         Array<OneD,Array<OneD, NekDouble>> coords(3);
         for (int j = 0; j < 3; ++j)
         {
-            coords[j] = Array<OneD,NekDouble>(bndExp[nb]->GetTotPoints());
+            coords[j] = Array<OneD,NekDouble>(npoints);
         }
         bndExp[nb]->GetCoords(coords[0],coords[1],coords[2]);
         
+    //Loop for each integration point on  any boundary
+    for (int j = 0; j < npoints; ++j)
+    {
+        //cout<<"Coordinates {"
+        //<< x0[i]<<", "<< x1[i]<<", "<< x2[i]<<"}";
         
-        //Loop over each element of the boundary
-        for (int ne = 0; ne < bndExp[nb]->GetExpSize(); ++ne)
-        {
-            //Elements in a Boundary
-            elemBndExp = bndExp[nb]->GetExp(ne);
-            int nq = elemBndExp->GetNumPoints(0);
-            int physOffset = bndExp[nb]->GetPhys_Offset(ne);
-            
-            //cout << "Boundary: "<<nb<<" Elemento: "<<ne<<" Global ID: "
-            //<<elemBndExp->GetGeom()->GetGlobalID()<<endl;
-            
-            for (int j = 0; j < nq; ++j)
-            {   
-                
-                //cout<<"Coordinates {"
-                //<< coords[0][j+physOffset]<<", "
-                //<< coords[1][j+physOffset]<<", "
-                //<< coords[2][j+physOffset]<<"}";
-                //cout <<" Normals: [";
+        //cout<<" Normals: [";
+        //for (int i = 0; i < particle.m_dim; ++j)
+        //{    
+            //cout << normals[i][j]<<", ";//nq-1
+        //}
+        //cout<<']'<<endl;
+        
+        
+        ////cout<<"Coordinates {"
+                ////<< coords[0][j]<<", "
+                ////<< coords[1][j]<<", "
+                ////<< coords[2][j]<<"}";
+                ////cout <<" Normals: [";
 
                 
-                dist = 0.0;
-                distN = 0.0;
-                for (int i = 0; i < particle.m_dim; ++i)
-                {
-                
-                dist +=    -(particle.m_oldCoord[i]
-                           - coords[i][physOffset+j])
-                           * normals[i][physOffset+j];
+        dist = 0.0; distN = 0.0;
+        for (int i = 0; i < particle.m_dim; ++i)
+        {
+            dist +=    (coords[i][j]
+                       - particle.m_oldCoord[i])
+                       * normals[i][j];
                              
-                distN +=   -(particle.m_gloCoord[i]
-                           - coords[i][physOffset+j])
-                           * normals[i][physOffset+j];
+            distN +=   (coords[i][j]
+                       - particle.m_gloCoord[i])
+                       * normals[i][j];
                 
-                //cout << normals[i][physOffset+j]<<", ";//nq-1
-                }
-                //cout<<"]"<<endl;
-                
+        ////cout << normals[i][physOffset+j]<<", ";//nq-1
+        }
+        ////cout<<"]"<<endl;
+
+        if (distN*dist<0 && (abs(dist) < minDist || minDist == 0.0))
+        {
+            ////cout<<endl<<"cruzo"<<endl<<endl;
+            ////cout << "Boundary: "<<nb<<" Elemento: "<<ne<<endl;
+            ////cout << "dist: "<<dist<<" minDist: "<<minDist<<endl;
+            minDist = abs(dist);
+            minPnt  =    j;
+            minBnd  =   nb;
             
-                
-                
-                if (distN*dist<0)
-                {          
-//cout<<endl<<"cruzo"<<endl<<endl;
-//cout << "Boundary: "<<nb<<" Elemento: "<<ne<<endl;
-//cout << "dist: "<<dist<<" minDist: "<<minDist<<endl;
-                    
-                    
-                    if (dist < minDist || minDist == 0.0)
-                    {
-                        
-                        minDist = dist;
-                        minPnt  =    j;
-                        minElem =   ne; 
-                        minBnd  =   nb;
-                    }
+            for (int i = 0; i < particle.m_dim; ++i)
+            {
+                if (dist<0)
+                {
+                    minNormal[i] = normals[i][j]; 
                 }
+                else
+                {   
+                    minNormal[i] = -normals[i][j]; 
+                } 
             }
         }
-        
-        //int npoints    = bndExp[nb]->GetNpoints();
-        //int npoints    = bndExp[nb]->GetTotPoints();
-        
-        ////Array<OneD, NekDouble> x0(npoints,0.0);
-        ////Array<OneD, NekDouble> x1(npoints,0.0);
-        ////Array<OneD, NekDouble> x2(npoints,0.0);
-        ////bndExp[nb]->GetCoords(x0,x1,x2);        
-        
-        ////for (int i = 0; i < npoints; ++i)
-            ////{
-                ////cout<<"Coordinates {"
-                ////<< x0[i]<<", "<< x1[i]<<", "<< x2[i]<<"}";
-                
-                ////cout<<" Normals: [";
-                ////for (int j = 0; j < particle.m_dim; ++j)
-                ////{    
-                    ////cout << normals[j][i]<<", ";//nq-1
-                ////}
-                ////cout<<']'<<endl;
-            ////}
-    ////cout<<endl;
+         
+    }
+    //cout<<endl;
     
     }
-    
-    //cout<<endl<< "Punto: {"<<particle.m_oldCoord[0]<<", "
-                           //<<particle.m_oldCoord[1]<<", "
-                           //<<particle.m_oldCoord[2]<<"}"<<endl;
-                               
-    //cout<<endl<<"Min Boundary: "<<minBnd<<" Min Elem: "<<minElem<<
-            //" Min Point: "<<minPnt<<" Distance: "<<minDist<<endl<<endl;
-    
-    
+    cout<<endl<<"Min Boundary: "<<minBnd<<" Min Point: "<<minPnt<<
+    " Distance: "<<minDist<<" Min normal: { "<<minNormal[0]<<","<<
+    minNormal[1]<<"}"<<endl<<endl;
+
     //// Collision point cordinates
     Array<OneD, NekDouble> collPnt(3,0.0);
-    NekDouble  collabs = 0;
-   
-    for (int i = 0; i < particle.m_dim; ++i)
-    {
-      collabs += pow(particle.m_gloCoord[i]-particle.m_oldCoord[i],2);
-    }
-    collabs = sqrt(collabs);
-    
+
+    cout<<"Punto collision: {";
     for (int i = 0; i < particle.m_dim; ++i)
     {
         collPnt[i] = particle.m_oldCoord[i]
                 + (  particle.m_gloCoord[i]
                 -    particle.m_oldCoord[i])
-                *  minDist/collabs;
+                *  minDist;
+                
+    cout<<collPnt[i]<<", ";
     }
+    cout<<"}"<<endl<<endl;
     
     
-    cout << "Particle " << particle.m_id << " collisioned." << endl;
-        //particle.m_used = false;
-
-
-    cout<<endl<< "Punto collision: {"<<collPnt[0]<<", "
-                           <<collPnt[1]<<", "
-                           <<collPnt[2]<<"}"<<endl<<endl;
-
-
+    //New coordinates
+    // evaluation of the restitution coeficients
+    cout<<"New positions: {";
+    for (int i = 0; i < particle.m_dim; ++i)
+    {
+        
+        particle.m_gloCoord[i] = collPnt[i]-
+                                ( particle.m_gloCoord[i]
+                                - collPnt[i] )
+                                * minNormal[i];
+    cout<<particle.m_gloCoord[i]<<", ";                           
+    }
+    cout<<"}"<<endl<<endl;
 }
-
 }
 
 /**
