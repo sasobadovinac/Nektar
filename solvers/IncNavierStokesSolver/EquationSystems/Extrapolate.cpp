@@ -853,11 +853,13 @@ namespace Nektar
                             SpatialDomains::RobinBoundaryCondition >(UBndConds[n]);
                     
                     SpatialDomains::BoundaryConditionShPtr bcond =
-                        MemoryManager<SpatialDomains::RobinBoundaryCondition>::AllocateSharedPtr(
-                                             m_session,rcond->m_robinFunction.GetExpression(),
-                                             primcoeff,
-                                             rcond->GetUserDefined(),
-                                             rcond->m_filename);
+                        MemoryManager<SpatialDomains::RobinBoundaryCondition>
+                        ::AllocateSharedPtr(
+                          rcond->GetBoundaryRegionID(),
+                          m_session,rcond->m_robinFunction.GetExpression(),
+                          primcoeff,
+                          rcond->GetUserDefined(),
+                          rcond->m_filename);
                     
                     UBndConds[n] = bcond;
                 }

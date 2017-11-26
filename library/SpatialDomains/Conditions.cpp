@@ -378,7 +378,7 @@ namespace Nektar
                             {
                                 BoundaryConditionShPtr neumannCondition(
                                         MemoryManager<NeumannBoundaryCondition>::AllocateSharedPtr(
-                                                m_session, "00.0"));
+                                                                 boundaryRegionID,m_session, "00.0"));
                                 (*boundaryConditions)[varIter] =
                                         neumannCondition;
                             }
@@ -453,6 +453,7 @@ namespace Nektar
 
                                 BoundaryConditionShPtr neumannCondition(
                                         MemoryManager<NeumannBoundaryCondition>::AllocateSharedPtr(
+                                                boundaryRegionID,
                                                 m_session, equation,
                                                 userDefined, filename,
                                                 boundaryRegionComm));
@@ -464,7 +465,7 @@ namespace Nektar
                                 // This variable's condition is zero.
                                 BoundaryConditionShPtr neumannCondition(
                                         MemoryManager<NeumannBoundaryCondition>::AllocateSharedPtr(
-                                                m_session, "0"));
+                                                boundaryRegionID, m_session, "0"));
                                 (*boundaryConditions)[*iter] = neumannCondition;
                             }
                         }
@@ -478,7 +479,7 @@ namespace Nektar
                             {
                                 BoundaryConditionShPtr dirichletCondition(
                                         MemoryManager<DirichletBoundaryCondition>::AllocateSharedPtr(
-                                                m_session, "0"));
+                                                boundaryRegionID, m_session, "0"));
                                 (*boundaryConditions)[varIter] =
                                         dirichletCondition;
                             }
@@ -553,7 +554,7 @@ namespace Nektar
 
                                 BoundaryConditionShPtr dirichletCondition(
                                         MemoryManager<DirichletBoundaryCondition>::AllocateSharedPtr(
-                                                m_session, equation,
+                                                boundaryRegionID, m_session, equation,
                                                 userDefined, filename,
                                                 boundaryRegionComm));
                                 dirichletCondition->SetIsTimeDependent(isTimeDependent);
@@ -565,7 +566,7 @@ namespace Nektar
                                 // This variable's condition is zero.
                                 BoundaryConditionShPtr dirichletCondition(
                                         MemoryManager<DirichletBoundaryCondition>::AllocateSharedPtr(
-                                                m_session, "0"));
+                                                boundaryRegionID, m_session, "0"));
                                 (*boundaryConditions)[*iter] =
                                         dirichletCondition;
                             }
@@ -580,7 +581,7 @@ namespace Nektar
                             {
                                 BoundaryConditionShPtr robinCondition(
                                         MemoryManager<RobinBoundaryCondition>::AllocateSharedPtr(
-                                                m_session, "0", "0"));
+                                                boundaryRegionID, m_session, "0", "0"));
                                 (*boundaryConditions)[varIter] =
                                         robinCondition;
                             }
@@ -659,7 +660,7 @@ namespace Nektar
                                 }
                                 BoundaryConditionShPtr robinCondition(
                                         MemoryManager<RobinBoundaryCondition>::AllocateSharedPtr(
-                                                m_session, equation1, equation2,
+                                                boundaryRegionID, m_session, equation1, equation2,
                                                 userDefined, filename,
                                                 boundaryRegionComm));
                                 (*boundaryConditions)[*iter] = robinCondition;
@@ -669,7 +670,7 @@ namespace Nektar
                                 // This variable's condition is zero.
                                 BoundaryConditionShPtr robinCondition(
                                         MemoryManager<RobinBoundaryCondition>::AllocateSharedPtr(
-                                                m_session, "0", "0"));
+                                                boundaryRegionID, m_session, "0", "0"));
                                 robinCondition->SetIsTimeDependent(isTimeDependent);
                                 (*boundaryConditions)[*iter] = robinCondition;
                             }
@@ -681,7 +682,7 @@ namespace Nektar
                         {
                             BoundaryConditionShPtr periodicCondition(
                                  MemoryManager<PeriodicBoundaryCondition>::AllocateSharedPtr(
-                                                                -1, "0"));
+                                                                boundaryRegionID, -1, "0"));
 
                                 for (auto &varIter : vars)
                                 {
@@ -749,7 +750,7 @@ namespace Nektar
                                 }
                                 BoundaryConditionShPtr periodicCondition(
                                  MemoryManager<PeriodicBoundaryCondition>::AllocateSharedPtr(
-                                               periodicBndRegionIndex[0], userDefined));
+                                               boundaryRegionID, periodicBndRegionIndex[0], userDefined));
 
                                 for (auto &varIter : vars)
                                 {

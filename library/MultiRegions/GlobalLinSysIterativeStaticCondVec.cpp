@@ -96,7 +96,7 @@ namespace Nektar
             const GlobalLinSysKey                &pKey,
             const Array<OneD, std::weak_ptr<ExpList> > &pVecExpList,
             const Array<OneD, std::shared_ptr<AssemblyMap> > &pVecLocToGloMap)
-                : GlobalLinSys(pKey, pVecExpList[0], pVecLocToGloMap[0]),
+                : GlobalLinSys(pKey, pVecExpList, pVecLocToGloMap[0]),
                   GlobalLinSysIterativeVec(pKey,pVecExpList,pVecLocToGloMap),
                   GlobalLinSysStaticCondVec(pKey,pVecExpList,pVecLocToGloMap)
         {
@@ -122,7 +122,7 @@ namespace Nektar
             const DNekScalBlkMatSharedPtr         pInvD,
             const Array<OneD, std::shared_ptr<AssemblyMap> > &pVecLocToGloMap,
             const Array<OneD, PreconditionerSharedPtr>       &pPreconVec)
-            : GlobalLinSys          (pKey, pVecExpList[0], pVecLocToGloMap[0]),
+            : GlobalLinSys          (pKey, pVecExpList, pVecLocToGloMap[0]),
               GlobalLinSysIterativeVec (pKey, pVecExpList, pVecLocToGloMap),
               GlobalLinSysStaticCondVec(pKey, pVecExpList, pVecLocToGloMap)
         {
@@ -342,7 +342,14 @@ namespace Nektar
                                                           tmp = m_wsp+n*nLocal);
                 }
 
-                // rotate values if required here                
+                // put in fwd rotation term here.
+                for(n = 0; n < m_periodicRotMap.num_elements(); ++n)
+                {
+                    m_perRotInfo->RotateFwd(m_wsp[m_periodicRotMap[i]],
+                                            m_wsp[nLocal + m_periodicRotMap[i]],
+                                            m_wsp[2*nLocal+m_periodicRotMap[i]]);
+                }
+                
                 Array<OneD, NekDouble> tmpout = m_wsp + nLocal*nvec;
                 
                 cnt = 0; 
@@ -358,8 +365,14 @@ namespace Nektar
                     }
                 }
                 
-                // unrotate values if required here
-
+                // put in bwd rotation term 
+                for(n = 0; n < m_periodicRotMap.num_elements(); ++n)
+                {
+                    m_perRotInfo->RotateBwd(
+                                  m_wsp[nLocal*nvec  +  m_periodicRotMap[i]],
+                                  m_wsp[nLocal*(nvec+1)+m_periodicRotMap[i]],
+                                  m_wsp[nLocal*(nvec+2)+m_periodicRotMap[i]]);
+                }
 
                 for(n = cnt = 0; n < nvec; cnt += nGlobal[n], ++n)
                 {                    

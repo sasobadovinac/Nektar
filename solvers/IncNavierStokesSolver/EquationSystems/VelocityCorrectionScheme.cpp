@@ -256,9 +256,11 @@ namespace Nektar
         m_F = Array<OneD, Array< OneD, NekDouble> > (m_nConvectiveFields);
         for(int i = 0; i < m_nConvectiveFields; ++i)
         {
+#if 0  // disabled since we would need to put in a rotation for non-planar periodic BCs 
             m_fields[i]->LocalToGlobal();
             m_fields[i]->ImposeDirichletConditions(m_fields[i]->UpdateCoeffs());
             m_fields[i]->GlobalToLocal();
+#endif
             m_fields[i]->BwdTrans(m_fields[i]->GetCoeffs(),
                                   m_fields[i]->UpdatePhys());
             m_F[i] = Array< OneD, NekDouble> (m_fields[0]->GetTotPoints(), 0.0);

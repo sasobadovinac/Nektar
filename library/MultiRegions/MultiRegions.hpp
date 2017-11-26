@@ -184,18 +184,21 @@ namespace Nektar
         {
             _PeriodicEntity(
                 const int                     id,
+                const int                     compid,
                 const StdRegions::Orientation orient,
                 const bool                    isLocal) :
-                id(id), orient(orient), isLocal(isLocal) {}
+                m_id(id), m_compid(compid), m_orient(orient), m_isLocal(isLocal) {}
 
             _PeriodicEntity() {}
             
             /// Geometry ID of entity.
-            int id;
+            int m_id;
+            /// composite  ID of entity.
+            int m_compid;
             /// Orientation of entity within higher dimensional entity.
-            StdRegions::Orientation orient;
+            StdRegions::Orientation m_orient;
             /// Flag specifying if this entity is local to this partition.
-            bool isLocal;
+            bool m_isLocal;
         } PeriodicEntity;
 
         typedef std::map<int, std::vector<PeriodicEntity> > PeriodicMap;
@@ -217,6 +220,63 @@ namespace Nektar
             NekDouble m_angle;
             /// Tolerance to rotation is considered identical
             NekDouble m_tol;
+
+            void RotateFwd(NekDouble u, NekDouble v, NekDouble w)
+            {
+                // Set up just
+                switch(m_dir)
+                {
+                case 0:
+                    {
+                        NekDouble yrot = cos(m_angle)*v - sin(m_angle)*w;
+                        NekDouble zrot = sin(m_angle)*v + cos(m_angle)*w;
+                        
+                        v = yrot;
+                        w = zrot;
+                    }
+                break;
+                case 1:
+                    {
+                        ASSERTL0(false,"Set up y axis rotation");
+                    }
+                    break;
+                case 2:
+                    {
+                        ASSERTL0(false,"Set up z axis rotation");
+                    }
+                    break;
+                }
+            }
+
+
+            void RotateBwd(NekDouble u, NekDouble v, NekDouble w)
+            {
+                // Set up just
+                switch(m_dir)
+                {
+                case 0:
+                    {
+                        NekDouble yrot =   cos(m_angle)*v + sin(m_angle)*w;
+                        NekDouble zrot = - sin(m_angle)*v + cos(m_angle)*w;
+                        
+                        v = yrot;
+                        w = zrot;
+                    }
+                break;
+                case 1:
+                    {
+                        ASSERTL0(false,"Set up y axis rotation");
+                    }
+                    break;
+                case 2:
+                    {
+                        ASSERTL0(false,"Set up z axis rotation");
+                    }
+                    break;
+                }
+            }
+            
+
         } RotPeriodicInfo;
 
     }// end of namespace

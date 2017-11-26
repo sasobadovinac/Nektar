@@ -303,12 +303,12 @@ namespace Nektar
                         
                         for (i = 0; i < pIt.second.size(); ++i)
                         {
-                            if (!pIt.second[i].isLocal)
+                            if (!pIt.second[i].m_isLocal)
                             {
                                 continue;
                             }
                             
-                            int meshEdgeId2 = pIt.second[i].id;
+                            int meshEdgeId2 = pIt.second[i].m_id;
                             
                             if(edgeDirMap.count(meshEdgeId2)==0)
                             {
@@ -395,9 +395,9 @@ namespace Nektar
                     {
                         bool SetUpNewFace = true;
                         
-                        if(pIt.second[0].isLocal)
+                        if(pIt.second[0].m_isLocal)
                         {
-                            int meshFaceId2 = pIt.second[0].id;
+                            int meshFaceId2 = pIt.second[0].m_id;
                             
                             if(faceDirMap.count(meshFaceId2)==0)
                             {
@@ -511,7 +511,7 @@ namespace Nektar
                         {
                             for (int l = 0; l < pIt->second.size(); ++l)
                             {
-                                uniOffset = min(uniOffset, pIt->second[l].id);
+                                uniOffset = min(uniOffset, pIt->second[l].m_id);
                             }
                         }
                         uniOffset = uniOffset *maxEdgeDof*maxEdgeDof; 
@@ -548,7 +548,7 @@ namespace Nektar
                         auto pIt = periodicFaces.find(meshFaceId);
                         if (pIt != periodicFaces.end())
                         {
-                            uniOffset = min(uniOffset, pIt->second[0].id);
+                            uniOffset = min(uniOffset, pIt->second[0].m_id);
                         }
                         uniOffset = uniOffset * maxFaceDof * maxFaceDof; 
                         
@@ -666,7 +666,7 @@ namespace Nektar
                                 {
                                     for (k = 0; k < pIt->second.size(); ++k)
                                     {
-                                        meshVertId = min(meshVertId, pIt->second[k].id);
+                                        meshVertId = min(meshVertId, pIt->second[k].m_id);
                                     }
                                 }
 
@@ -733,10 +733,10 @@ namespace Nektar
                         auto pIt = periodicFaces.find(meshFaceId);
                         if (pIt != periodicFaces.end())
                         {
-                            if(meshFaceId == min(meshFaceId, pIt->second[0].id))
+                            if(meshFaceId == min(meshFaceId, pIt->second[0].m_id))
                             {
                                 facemodearray = locExpansion->GetFaceInverseBoundaryMap(fid,faceOrient);
-                                faceOrient = DeterminePeriodicFaceOrient(faceOrient,pIt->second[0].orient);
+                                faceOrient = DeterminePeriodicFaceOrient(faceOrient,pIt->second[0].m_orient);
                             }
                         }
                         

@@ -122,7 +122,6 @@ namespace Nektar
                 
                 SetUpPhysNormals();
             }
-
         }
 
         void  DisContField1D::SetUpDG(const std::string &variable)
@@ -201,9 +200,9 @@ namespace Nektar
                 int traceGeomId = traceEl->GetGeom0D()->GetGlobalID();
                 PeriodicMap::iterator pIt = m_periodicVerts.find(traceGeomId);
 
-                if (pIt != m_periodicVerts.end() && !pIt->second[0].isLocal)
+                if (pIt != m_periodicVerts.end() && !pIt->second[0].m_isLocal)
                 {
-                    if (traceGeomId != min(pIt->second[0].id, traceGeomId))
+                    if (traceGeomId != min(pIt->second[0].m_id, traceGeomId))
                     {
                         traceEl->GetLeftAdjacentElementExp()->NegateVertexNormal(
                             traceEl->GetLeftAdjacentElementVertex());
@@ -279,12 +278,12 @@ namespace Nektar
                     if (it != m_periodicVerts.end())
                     {
                         const PeriodicEntity &ent = it->second[0];
-                        auto it2 = perVertToExpMap.find(ent.id);
+                        auto it2 = perVertToExpMap.find(ent.m_id);
 
                         if (it2 == perVertToExpMap.end())
                         {
                             if (m_session->GetComm()->GetRowComm()->GetSize() > 1 &&
-                                !ent.isLocal)
+                                !ent.m_isLocal)
                             {
                                 continue;
                             }
@@ -328,9 +327,9 @@ namespace Nektar
                     int traceGeomId = traceEl->GetGeom0D()->GetGlobalID();
                     auto pIt = m_periodicVerts.find(traceGeomId);
 
-                    if (pIt != m_periodicVerts.end() && !pIt->second[0].isLocal)
+                    if (pIt != m_periodicVerts.end() && !pIt->second[0].m_isLocal)
                     {
-                        fwd = traceGeomId == min(traceGeomId,pIt->second[0].id);
+                        fwd = traceGeomId == min(traceGeomId,pIt->second[0].m_id);
                     }
                     else
                     {
@@ -453,7 +452,7 @@ namespace Nektar
                     SpatialDomains::BoundaryConditionMapShPtr bCondition = MemoryManager<SpatialDomains::BoundaryConditionMap>::AllocateSharedPtr();
 
                     // Set up just boundary condition for this variable. 
-                    SpatialDomains::BoundaryConditionShPtr notDefinedCondition(MemoryManager<SpatialDomains::NotDefinedBoundaryCondition>::AllocateSharedPtr(m_session, "0"));
+                    SpatialDomains::BoundaryConditionShPtr notDefinedCondition(MemoryManager<SpatialDomains::NotDefinedBoundaryCondition>::AllocateSharedPtr(regIt.first, m_session, "0"));
                     (*bCondition)[variable] = notDefinedCondition;
                     
                     returnval->AddBoundaryConditions(bregions.size()+numNewBc,bCondition);
@@ -689,6 +688,7 @@ namespace Nektar
                          "Cannot determine vertex of region2ID");
 
                 PeriodicEntity ent(BregionToVertMap[region2ID],
+                                   region2ID,
                                    StdRegions::eNoOrientation,
                                    islocal.count(region2ID) != 0);
 

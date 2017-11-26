@@ -52,8 +52,7 @@ namespace Nektar
                 const GlobalLinSysKey &pKey,
                 const Array<OneD, std::weak_ptr<ExpList> > &pVecExpList,
                 const Array<OneD, std::shared_ptr<AssemblyMap> > &pVecLocToGloMap)
-                : GlobalLinSys(pKey, pVecExpList[0], pVecLocToGloMap[0]),
-                  m_expListVec(pVecExpList),
+                : GlobalLinSys(pKey, pVecExpList, pVecLocToGloMap[0]),
                   m_rhs_magnitude(NekConstants::kNekUnsetDouble),
                   m_rhs_mag_sm(0.9),
                   m_totalIterations(0)
@@ -61,7 +60,7 @@ namespace Nektar
             m_tolerance = pVecLocToGloMap[0]->GetIterativeTolerance();
             m_maxiter   = pVecLocToGloMap[0]->GetMaxIterations();
 
-            LibUtilities::CommSharedPtr vComm = m_expListVec[0].lock()->GetComm()->GetRowComm();
+            LibUtilities::CommSharedPtr vComm = pVecExpList[0].lock()->GetComm()->GetRowComm();
             m_root    = (vComm->GetRank())? false : true;
 
             // possibly see about adding sucessive RHS later

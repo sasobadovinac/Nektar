@@ -61,18 +61,25 @@ namespace Nektar
         struct BoundaryConditionBase
         {
             BoundaryConditionBase(
-                BoundaryConditionType type,
-                const std::string &userDefined 
-                         = std::string("NoUserDefined")):
-                    m_boundaryConditionType(type),
-                    m_userDefined(userDefined),
-                    m_isTimeDependent(false)
+                                  int id,
+                                  BoundaryConditionType type,
+                                  const std::string &userDefined 
+                                  = std::string("NoUserDefined")):
+                m_boundaryRegionID(id),
+                m_boundaryConditionType(type),
+                m_userDefined(userDefined),
+                m_isTimeDependent(false)
             {
             }
 
             virtual ~BoundaryConditionBase()
             {};
 
+            int GetBoundaryRegionID() const
+            {
+                return m_boundaryRegionID;
+            }
+            
             BoundaryConditionType GetBoundaryConditionType() const
             {
                 return m_boundaryConditionType;
@@ -104,6 +111,7 @@ namespace Nektar
             }
 
         protected:
+            int                   m_boundaryRegionID;
             BoundaryConditionType m_boundaryConditionType;
             std::string           m_userDefined;
             bool                  m_isTimeDependent;
@@ -113,12 +121,13 @@ namespace Nektar
         {
 
             DirichletBoundaryCondition(
+                const int id,
                 const LibUtilities::SessionReaderSharedPtr &pSession,
                 const std::string& eqn,
                 const std::string& userDefined = std::string("NoUserDefined"),
                 const std::string& filename=std::string(""),
                 const LibUtilities::CommSharedPtr comm=LibUtilities::CommSharedPtr()):
-                    BoundaryConditionBase(eDirichlet, userDefined),
+                BoundaryConditionBase(id,eDirichlet, userDefined),
                     m_dirichletCondition(pSession, eqn),
                     m_expr(eqn),
                     m_filename(filename),
@@ -135,12 +144,13 @@ namespace Nektar
         struct NeumannBoundaryCondition : public BoundaryConditionBase
         {
             NeumannBoundaryCondition(
+                const int id,
                 const LibUtilities::SessionReaderSharedPtr &pSession,
                 const std::string& eqn,
                 const std::string& userDefined = std::string("NoUserDefined"),
                 const std::string& filename=std::string(""),
                 const LibUtilities::CommSharedPtr comm=LibUtilities::CommSharedPtr()):
-                    BoundaryConditionBase(eNeumann, userDefined),
+                    BoundaryConditionBase(id,eNeumann, userDefined),
                     m_neumannCondition(pSession, eqn),
                     m_filename(filename),
                     m_comm(comm)
@@ -155,13 +165,14 @@ namespace Nektar
         struct RobinBoundaryCondition : public BoundaryConditionBase
         {
             RobinBoundaryCondition(
+                const int id,
                 const LibUtilities::SessionReaderSharedPtr &pSession,
                 const std::string &a,
                 const std::string &b,
                 const std::string &userDefined = std::string("NoUserDefined"),
                 const std::string& filename=std::string(""),
                 const LibUtilities::CommSharedPtr comm=LibUtilities::CommSharedPtr()):
-                    BoundaryConditionBase(eRobin, userDefined),
+                    BoundaryConditionBase(id, eRobin, userDefined),
                     m_robinFunction(pSession, a),
                     m_robinPrimitiveCoeff(pSession, b),
                     m_filename(filename),
@@ -180,9 +191,10 @@ namespace Nektar
         struct PeriodicBoundaryCondition : public BoundaryConditionBase
         {
             PeriodicBoundaryCondition(
+                    const int id,
                     const unsigned int n,
                     const std::string &userDefined = std::string("NoUserDefined")):
-                    BoundaryConditionBase(ePeriodic,userDefined),
+                    BoundaryConditionBase(id,ePeriodic,userDefined),
                     m_connectedBoundaryRegion(n)
             {
             }
@@ -194,12 +206,13 @@ namespace Nektar
         {
             
                NotDefinedBoundaryCondition(
+                    const int id,
                     const LibUtilities::SessionReaderSharedPtr &pSession,
                     const std::string& eqn,
                     const std::string& userDefined = std::string("NoUserDefined"),
                     const std::string& filename=std::string(""),
                     const LibUtilities::CommSharedPtr comm=LibUtilities::CommSharedPtr()):
-            BoundaryConditionBase(eNotDefined, userDefined),
+            BoundaryConditionBase(id, eNotDefined, userDefined),
                 m_notDefinedCondition(pSession, eqn),
                 m_filename(filename),
                 m_comm(comm)

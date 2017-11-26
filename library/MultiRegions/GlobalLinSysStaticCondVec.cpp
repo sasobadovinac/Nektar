@@ -76,7 +76,7 @@ namespace Nektar
             const GlobalLinSysKey                &pKey,
             const Array<OneD, std::weak_ptr<ExpList> > &pVecExpList,
             const Array<OneD, std::shared_ptr<AssemblyMap> > &pVecLocToGloMap)
-                : GlobalLinSys(pKey, pVecExpList[0], pVecLocToGloMap[0]),
+                : GlobalLinSys(pKey, pVecExpList, pVecLocToGloMap[0]),
                   m_locToGloMapVec (pVecLocToGloMap)
         {
         }
@@ -88,6 +88,9 @@ namespace Nektar
 
             // Construct this level
             Initialise(m_locToGloMapVec[0]);
+
+            // Set up periodic rotational information if required
+            SetupPeriodicRotation();
         }
         
         /**
@@ -176,9 +179,15 @@ namespace Nektar
                 v_BasisTransformLoc(F_bnd[n]);
             }
 
-            // put in a bwd rotation term here.
+            // put in fwd rotation term here.
+            for(n = 0; n < m_periodicRotMap.num_elements(); ++n)
+            {
+                m_perRotInfo->RotateFwd(F_bnd[0][m_periodicRotMap[n]],
+                                        F_bnd[1][m_periodicRotMap[n]],
+                                        F_bnd[2][m_periodicRotMap[n]]);
+            }
 
-            // calculate statically condensed forcing
+            // calculate globally  condensed forcing
             for(n = 0; n < nvec; ++n)
             {
                 m_locToGloMapVec[n]->AssembleBnd(F_bnd[n], F[n]);
@@ -189,20 +198,34 @@ namespace Nektar
             SolveVecLinearSystem(nGlobBndDofs, F, out, m_locToGloMapVec,
                                  nDirBndDofs);
                 
-            // rotate here
-
-            Array<OneD, NekDouble> V_int = m_wsp + 3*nvec*nLocBndDofs + nvec*nGlobDofs;
-            Array<OneD, NekDouble> outloc =  m_wsp; 
+            
+            Array<OneD, Array<OneD, NekDouble> > outloc(3); 
 
             for(n = 0; n < nvec; ++n)
             {
-                // put solution into local format
-                m_locToGloMapVec[n]->GlobalToLocalBnd(out[n],outloc);
-
-                // Transform back to original basis 
-                v_BasisInvTransformLoc(outloc);
+                outloc[n] = m_wsp + n*nLocBndDofs;
                 
-                Vmath::Vadd(nLocBndDofs, V_locbnd[n], 1, outloc, 1, V_locbnd[n],1);
+                // put solution into local format
+                m_locToGloMapVec[n]->GlobalToLocalBnd(out[n],outloc[n]);
+            }
+
+            for(n = 0; n < m_periodicRotMap.num_elements(); ++n)
+            {
+                m_perRotInfo->RotateBwd(F_bnd[0][m_periodicRotMap[n]],
+                                        F_bnd[1][m_periodicRotMap[n]],
+                                        F_bnd[2][m_periodicRotMap[n]]);
+            }
+
+            // rotate bwd
+
+            
+            Array<OneD, NekDouble> V_int = m_wsp + 3*nvec*nLocBndDofs + nvec*nGlobDofs;
+            for(n = 0; n < nvec; ++n)
+            {
+                // Transform back to original basis 
+                v_BasisInvTransformLoc(outloc[n]);
+                
+                Vmath::Vadd(nLocBndDofs, V_locbnd[n], 1, outloc[n], 1, V_locbnd[n],1);
 
                 // put final solution back in out array
                 m_locToGloMapVec[n]->LocalBndToLocal(V_locbnd[n],out[n]);
@@ -309,6 +332,211 @@ namespace Nektar
                     m_C         ->SetBlock(n, n, t = loc_schur->GetBlock(1,0));
                     m_invD      ->SetBlock(n, n, t = loc_schur->GetBlock(1,1));
                 }
+            }
+        }
+
+        void GlobalLinSysStaticCondVec::SetupPeriodicRotation(void)
+        {
+
+            const Array<OneD, const SpatialDomains::BoundaryConditionShPtr> 
+                bndCond = m_expListVec[0].lock()->GetBndConditions();
+                
+            LibUtilities::CommSharedPtr vComm = m_expListVec[0].lock()->GetComm()->GetRowComm();
+
+            // identify periodic composite id we are going to rotate and angle of rotation
+            // for now just assume there is only one. 
+            int PerRegionID = -1; 
+            int dir = -1;
+            NekDouble angle = 0;
+            NekDouble tol   = 0; 
+                
+            for(int i = 0; i < bndCond.num_elements(); ++i)
+            {
+                if(bndCond[i]->GetBoundaryConditionType() == SpatialDomains::ePeriodic)
+                {
+                    PerRegionID = bndCond[i]->GetBoundaryRegionID();
+                }
+            }
+
+            vComm->AllReduce(PerRegionID,LibUtilities::ReduceMax);
+            
+            if(PerRegionID == -1)
+            {
+                return; // no rotated periodic boundaries 
+            }
+            
+
+            for(int i = 0; i < bndCond.num_elements(); ++i)
+            {
+                if(bndCond[i]->GetBoundaryConditionType() == SpatialDomains::ePeriodic)
+                {
+
+                    if(bndCond[i]->GetBoundaryRegionID() == PerRegionID)
+                    {
+                        // check to see if boundary is rotationally aligned
+                        if(boost::iequals(bndCond[i]->GetUserDefined(),"NoUserDefined") == false)
+                        {
+                            vector<string> tmpstr;
+                            
+                            boost::split(tmpstr,bndCond[i]->GetUserDefined(), boost::is_any_of(":"));
+                            
+                            if(boost::iequals(tmpstr[0],"Rotated"))
+                            {
+                                ASSERTL1(tmpstr.size() > 2,
+                                         "Expected Rotated user defined string to "
+                                         "contain direction and rotation anlge "
+                                         "and optionally a tolerance, "
+                                         "i.e. Rotated:dir:PI/2:1e-6");
+                                
+                                dir = (tmpstr[1] == "x")? 0:(tmpstr[1] == "y")? 1:2;
+                                
+                                LibUtilities::AnalyticExpressionEvaluator strEval;
+                                int ExprId = strEval.DefineFunction(" ", tmpstr[2]);
+                                angle = strEval.Evaluate(ExprId);
+                                
+                                if(tmpstr.size() == 4)
+                                {
+                                    tol = boost::lexical_cast<NekDouble>(tmpstr[3]);
+                                }
+                                else
+                                {
+                                    tol = 1e-8;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Communication values to all processors 
+            vComm->AllReduce(dir,LibUtilities::ReduceMax);
+            vComm->AllReduce(angle,LibUtilities::ReduceMax);
+            vComm->AllReduce(tol,LibUtilities::ReduceMax);
+            
+            // set up rotation info
+            m_perRotInfo = MemoryManager<RotPeriodicInfo>
+                ::AllocateSharedPtr(dir,angle,tol);
+
+            // translate region id into composite id
+            int compId;
+            if(vComm->GetSize() == 1)
+            {
+                compId = PerRegionID;
+                WARNINGL0(false,"Have set Periodic Composite ID to be the same as the Peridiodic "
+                          "Region ID which may well not be true in serial. Probably need to update "
+                          "BndRegionOrdering to hold the same informaiotn in serial");
+            }
+            else
+            {
+                LibUtilities::BndRegionOrdering bndRegOrder =
+                    m_expListVec[0].lock()->GetSession()->GetBndRegionOrdering();
+                
+                compId = bndRegOrder.find(PerRegionID)->second[0];
+            }
+
+            // Get hold of periodic maps
+            
+            PeriodicMap perVerts, perEdges, perFaces; 
+            
+            m_expListVec[0].lock()->GetPeriodicEntities(perVerts,
+                                                        perEdges,perFaces);
+
+            set<int> VertsOnComp, EdgesOnComp, FacesOnComp;
+            set<int> localcoeffs;
+            
+            // search over vertices for entries and add to rotation index map; 
+            for (auto &perIt : perVerts)
+            {
+                ASSERTL1(perIt.second.size() == 1,"This routine is only "
+                         "set up for singly periodic domains");
+                
+                if(perIt.second[0].m_compid != compId) //implies this is in composite
+                {
+                    VertsOnComp.insert(perIt.first);
+                }
+            }
+
+            for (auto &perIt : perEdges)
+            {
+                ASSERTL1(perIt.second.size() == 1,"This routine is only "
+                         "set up for singly periodic domains");
+                
+                if(perIt.second[0].m_compid != compId) //implies this is in composite
+                {
+                    EdgesOnComp.insert(perIt.first);
+                }
+            }
+
+            for (auto &perIt : perFaces)
+            {
+                ASSERTL1(perIt.second.size() == 1,"This routine is only "
+                         "set up for singly periodic domains");
+                
+                if(perIt.second[0].m_compid != compId) //implies this is in composite
+                {
+                    FacesOnComp.insert(perIt.first);
+                }
+            }
+
+            const std::shared_ptr<LocalRegions::ExpansionVector>
+                locExp = m_expListVec[0].lock()->GetExp();
+            
+            int cnt;
+            for(int n = 0; n < locExp->size(); ++n)
+            {
+                cnt = m_expListVec[0].lock()->GetCoeff_Offset(n);
+                
+                for(int i = 0; i < (*locExp)[n]->GetNverts(); ++i)
+                {
+                    if(VertsOnComp.count((*locExp)[n]->GetGeom()->GetVid(i)) == 1)
+                    {
+                        localcoeffs.insert(cnt + (*locExp)[n]->GetVertexMap(i));
+                    }
+                }
+
+                for(int i = 0; i < (*locExp)[n]->GetNedges(); ++i)
+                {
+                    if(EdgesOnComp.count((*locExp)[n]->GetGeom()->GetEid(i)) == 1)
+                    { 
+                        Array<OneD, unsigned int> maparray;
+                        Array<OneD, int> signarray;
+                        (*locExp)[n]->GetEdgeInteriorMap(i,StdRegions::eForwards,
+                                                  maparray,
+                                                  signarray);
+                                                  
+                        for(int j = 0; j < maparray.num_elements(); ++j)
+                        {
+                            localcoeffs.insert(cnt + maparray[j]);
+                        }
+                    }
+                }
+
+                for(int i = 0; i < (*locExp)[n]->GetNfaces(); ++i)
+                {
+                    if(FacesOnComp.count((*locExp)[n]->GetGeom()->GetFid(i)) == 1)
+                    {
+                        Array<OneD, unsigned int> maparray;
+                        Array<OneD, int> signarray;
+
+                        (*locExp)[n]->GetFaceInteriorMap(i,
+                                       StdRegions::eDir1FwdDir1_Dir2FwdDir2,
+                                                        maparray,
+                                                  signarray);
+                                                  
+                        for(int j = 0; j < maparray.num_elements(); ++j)
+                        {
+                            localcoeffs.insert(cnt + maparray[j]);
+                        }
+                    }
+                }
+            }
+
+            // set up rotational mapping;
+            m_periodicRotMap = Array<OneD, int>(localcoeffs.size());
+            cnt = 0;
+            for (auto &setIt : localcoeffs)
+            {
+                m_periodicRotMap[cnt++] = setIt;
             }
         }
     }

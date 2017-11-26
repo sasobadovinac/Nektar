@@ -198,6 +198,19 @@ namespace Nektar
         {
         }
 
+        GlobalLinSys::GlobalLinSys(const GlobalLinSysKey &pKey,
+                const Array<OneD, std::weak_ptr<ExpList> > &pvecExpList,
+                const std::shared_ptr<AssemblyMap>
+                                   &pLocToGloMap):
+            m_linSysKey(pKey),
+            m_expList(pvecExpList[0]),
+            m_expListVec(pvecExpList),
+            m_robinBCInfo(m_expList.lock()->GetRobinBCInfo()),
+            m_verbose(m_expList.lock()->GetSession()->
+                      DefinesCmdLineArgument("verbose"))
+        {
+        }
+        
         /**
          *
          */

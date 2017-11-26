@@ -79,6 +79,12 @@ namespace Nektar
                 const std::weak_ptr<ExpList>       &pExpList,
                 const std::shared_ptr<AssemblyMap> &pLocToGloMap);
 
+            /// Constructor for full direct matrix solve.
+            MULTI_REGIONS_EXPORT GlobalLinSys(
+                const GlobalLinSysKey                &pKey,
+                const Array<OneD, std::weak_ptr<ExpList> >  &pvecExpList,
+                const std::shared_ptr<AssemblyMap> &pLocToGloMap);
+            
             MULTI_REGIONS_EXPORT
             virtual ~GlobalLinSys() {}
 
@@ -142,6 +148,8 @@ namespace Nektar
             const GlobalLinSysKey                m_linSysKey;
             /// Local Matrix System
             const std::weak_ptr<ExpList>       m_expList;
+            /// Local Matrix System/Expandiosn
+            const Array<OneD, std::weak_ptr<ExpList>>   m_expListVec;
             /// Robin boundary info
             const std::map<int, RobinBCInfoSharedPtr> m_robinBCInfo;
             // Provide verbose output

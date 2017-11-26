@@ -500,9 +500,9 @@ namespace Nektar
 
                         for (i = 0; i < pIt.second.size(); ++i)
                         {
-                            if (pIt.second[i].isLocal)
+                            if (pIt.second[i].m_isLocal)
                             {
-                                graph[0][pIt.second[i].id] = graph[0][meshVertId];
+                                graph[0][pIt.second[i].m_id] = graph[0][meshVertId];
                             }
                         }
                     }
@@ -511,7 +511,7 @@ namespace Nektar
                         bool found = false;
                         for (i = 0; i < pIt.second.size(); ++i)
                         {
-                            if (pIt.second[i].id == meshVertId)
+                            if (pIt.second[i].m_id == meshVertId)
                             {
                                 found = true;
                                 break;
@@ -525,9 +525,9 @@ namespace Nektar
 
                             for (i = 0; i < pIt.second.size(); ++i)
                             {
-                                if (pIt.second[i].isLocal)
+                                if (pIt.second[i].m_isLocal)
                                 {
-                                    graph[0][pIt.second[i].id] = graph[0][pIt.first];
+                                    graph[0][pIt.second[i].m_id] = graph[0][pIt.first];
                                 }
                             }
                         }
@@ -626,9 +626,9 @@ namespace Nektar
                 {
                     for (i = 0; i < pIt.second.size(); ++i)
                     {
-                        meshVertId2 = pIt.second[i].id;
+                        meshVertId2 = pIt.second[i].m_id;
                         if (graph[0].count(meshVertId2) == 0 &&
-                            pIt.second[i].isLocal)
+                            pIt.second[i].m_isLocal)
                         {
                             graph[0][meshVertId2] =
                                 graph[0][meshVertId];
@@ -641,12 +641,12 @@ namespace Nektar
                 bool isDirichlet = false;
                 for (i = 0; i < pIt.second.size(); ++i)
                 {
-                    if (!pIt.second[i].isLocal)
+                    if (!pIt.second[i].m_isLocal)
                     {
                         continue;
                     }
 
-                    meshVertId2 = pIt.second[i].id;
+                    meshVertId2 = pIt.second[i].m_id;
                     if (graph[0].count(meshVertId2) > 0)
                     {
                         isDirichlet = true;
@@ -657,19 +657,19 @@ namespace Nektar
                 if (isDirichlet)
                 {
                     graph[0][meshVertId] =
-                        graph[0][pIt.second[i].id];
+                        graph[0][pIt.second[i].m_id];
 
                     for (j = 0; j < pIt.second.size(); ++j)
                     {
-                        meshVertId2 = pIt.second[i].id;
-                        if (j == i || !pIt.second[j].isLocal ||
+                        meshVertId2 = pIt.second[i].m_id;
+                        if (j == i || !pIt.second[j].m_isLocal ||
                             graph[0].count(meshVertId2) > 0)
                         {
                             continue;
                         }
 
                         graph[0][meshVertId2] =
-                            graph[0][pIt.second[i].id];
+                            graph[0][pIt.second[i].m_id];
                     }
 
                     continue;
@@ -678,12 +678,12 @@ namespace Nektar
                 // Otherwise, see if a vertex ID has already been set.
                 for (i = 0; i < pIt.second.size(); ++i)
                 {
-                    if (!pIt.second[i].isLocal)
+                    if (!pIt.second[i].m_isLocal)
                     {
                         continue;
                     }
 
-                    if (tempGraph[0].count(pIt.second[i].id) > 0)
+                    if (tempGraph[0].count(pIt.second[i].m_id) > 0)
                     {
                         break;
                     }
@@ -697,7 +697,7 @@ namespace Nektar
                 }
                 else
                 {
-                    tempGraph[0][meshVertId] = tempGraph[0][pIt.second[i].id];
+                    tempGraph[0][meshVertId] = tempGraph[0][pIt.second[i].m_id];
                 }
             }
 
@@ -742,9 +742,9 @@ namespace Nektar
                 {
                     for (i = 0; i < pIt.second.size(); ++i)
                     {
-                        meshEdgeId2 = pIt.second[i].id;
+                        meshEdgeId2 = pIt.second[i].m_id;
                         if (graph[1].count(meshEdgeId2) == 0 &&
-                            pIt.second[i].isLocal)
+                            pIt.second[i].m_isLocal)
                         {
                             graph[1][meshEdgeId2] =
                                 graph[1][meshEdgeId];
@@ -757,12 +757,12 @@ namespace Nektar
                 bool isDirichlet = false;
                 for (i = 0; i < pIt.second.size(); ++i)
                 {
-                    if (!pIt.second[i].isLocal)
+                    if (!pIt.second[i].m_isLocal)
                     {
                         continue;
                     }
 
-                    meshEdgeId2 = pIt.second[i].id;
+                    meshEdgeId2 = pIt.second[i].m_id;
                     if (graph[1].count(meshEdgeId2) > 0)
                     {
                         isDirichlet = true;
@@ -773,19 +773,19 @@ namespace Nektar
                 if (isDirichlet)
                 {
                     graph[1][meshEdgeId] =
-                        graph[1][pIt.second[i].id];
+                        graph[1][pIt.second[i].m_id];
 
                     for (j = 0; j < pIt.second.size(); ++j)
                     {
-                        meshEdgeId2 = pIt.second[i].id;
-                        if (j == i || !pIt.second[j].isLocal ||
+                        meshEdgeId2 = pIt.second[i].m_id;
+                        if (j == i || !pIt.second[j].m_isLocal ||
                             graph[1].count(meshEdgeId2) > 0)
                         {
                             continue;
                         }
 
                         graph[1][meshEdgeId2] =
-                            graph[1][pIt.second[i].id];
+                            graph[1][pIt.second[i].m_id];
                     }
 
                     continue;
@@ -794,12 +794,12 @@ namespace Nektar
                 // Otherwise, see if a edge ID has already been set.
                 for (i = 0; i < pIt.second.size(); ++i)
                 {
-                    if (!pIt.second[i].isLocal)
+                    if (!pIt.second[i].m_isLocal)
                     {
                         continue;
                     }
 
-                    if (tempGraph[1].count(pIt.second[i].id) > 0)
+                    if (tempGraph[1].count(pIt.second[i].m_id) > 0)
                     {
                         break;
                     }
@@ -814,7 +814,7 @@ namespace Nektar
                 }
                 else
                 {
-                    tempGraph[1][meshEdgeId] = tempGraph[1][pIt.second[i].id];
+                    tempGraph[1][meshEdgeId] = tempGraph[1][pIt.second[i].m_id];
                 }
             }
 
@@ -852,7 +852,7 @@ namespace Nektar
             /// - Periodic faces
             for (auto &pIt : periodicFaces)
             {
-                if (!pIt.second[0].isLocal)
+                if (!pIt.second[0].m_isLocal)
                 {
                     // The face mapped to is on another process.
                     meshFaceId = pIt.first;
@@ -864,16 +864,16 @@ namespace Nektar
                     m_numNonDirFaceModes+=nFaceIntCoeffs;
                     m_numNonDirFaces++;
                 }
-                else if (pIt.first < pIt.second[0].id)
+                else if (pIt.first < pIt.second[0].m_id)
                 {
                     ASSERTL0(graph[2].count(pIt.first) == 0,
                              "This periodic boundary face has been specified before");
-                    ASSERTL0(graph[2].count(pIt.second[0].id) == 0,
+                    ASSERTL0(graph[2].count(pIt.second[0].m_id) == 0,
                              "This periodic boundary face has been specified before");
 
                     boost::add_vertex(boostGraphObj);
                     tempGraph[2][pIt.first]        = tempGraphVertId;
-                    tempGraph[2][pIt.second[0].id] = tempGraphVertId++;
+                    tempGraph[2][pIt.second[0].m_id] = tempGraphVertId++;
                     nFaceIntCoeffs  = FaceSize[pIt.first];
                     m_numNonDirFaceModes+=nFaceIntCoeffs;
                     m_numNonDirFaces++;
@@ -1402,7 +1402,7 @@ namespace Nektar
             {
                 for (i = 0; i < pIt.second.size(); ++i)
                 {
-                    meshEdgeId2 = pIt.second[i].id;
+                    meshEdgeId2 = pIt.second[i].m_id;
                     if (dofs[1].count(meshEdgeId2) == 0)
                     {
                         dofs[1][meshEdgeId2] = 1e6;
@@ -1413,7 +1413,7 @@ namespace Nektar
             {
                 for (i = 0; i < pIt.second.size(); ++i)
                 {
-                    meshFaceId2 = pIt.second[i].id;
+                    meshFaceId2 = pIt.second[i].m_id;
                     if (faceModes[0].count(meshFaceId2) == 0)
                     {
                         faceModes[0][meshFaceId2] = 1e6;
@@ -1447,7 +1447,7 @@ namespace Nektar
                 meshEdgeId = pIt.first;
                 for (i = 0; i < pIt.second.size(); ++i)
                 {
-                    meshEdgeId2 = pIt.second[i].id;
+                    meshEdgeId2 = pIt.second[i].m_id;
                     if (dofs[1][meshEdgeId2] < dofs[1][meshEdgeId])
                     {
                         dofs[1][meshEdgeId] = dofs[1][meshEdgeId2];
@@ -1482,7 +1482,7 @@ namespace Nektar
                 meshFaceId = pIt.first;
                 for (i = 0; i < pIt.second.size(); ++i)
                 {
-                    meshFaceId2 = pIt.second[i].id;
+                    meshFaceId2 = pIt.second[i].m_id;
                     if (faceModes[0][meshFaceId2] < faceModes[0][meshFaceId])
                     {
                         faceModes[0][meshFaceId] = faceModes[0][meshFaceId2];
@@ -1722,9 +1722,9 @@ namespace Nektar
                     auto pIt = periodicFaces.find(meshFaceId);
 
                     if (pIt != periodicFaces.end() &&
-                        meshFaceId == min(meshFaceId, pIt->second[0].id))
+                        meshFaceId == min(meshFaceId, pIt->second[0].m_id))
                     {
-                        faceOrient = DeterminePeriodicFaceOrient(faceOrient,pIt->second[0].orient);
+                        faceOrient = DeterminePeriodicFaceOrient(faceOrient,pIt->second[0].m_orient);
                     }
 
                     exp->GetFaceInteriorMap(j,faceOrient,faceInteriorMap,faceInteriorSign);
@@ -2167,15 +2167,15 @@ namespace Nektar
             StdRegions::Orientation       edgeOrient,
             const vector<PeriodicEntity> &periodicEdges)
         {
-            int minId  = periodicEdges[0].id;
+            int minId  = periodicEdges[0].m_id;
             int minIdK = 0;
             int k;
 
             for (k = 1; k < periodicEdges.size(); ++k)
             {
-                if (periodicEdges[k].id < minId)
+                if (periodicEdges[k].m_id < minId)
                 {
-                    minId  = min(minId, periodicEdges[k].id);
+                    minId  = min(minId, periodicEdges[k].m_id);
                     minIdK = k;
                 }
             }
@@ -2184,7 +2184,7 @@ namespace Nektar
 
             if (meshEdgeId != minId)
             {
-                if (periodicEdges[minIdK].orient == StdRegions::eBackwards)
+                if (periodicEdges[minIdK].m_orient == StdRegions::eBackwards)
                 {
                     // Swap edge orientation
                     edgeOrient = (edgeOrient == StdRegions::eForwards) ?
@@ -2340,7 +2340,7 @@ namespace Nektar
                     {
                         for (k = 0; k < pIt->second.size(); ++k)
                         {
-                            meshVertId = min(meshVertId, pIt->second[k].id);
+                            meshVertId = min(meshVertId, pIt->second[k].m_id);
                         }
                     }
 
@@ -2398,11 +2398,11 @@ namespace Nektar
                     auto pIt = perFaces.find(meshFaceId);
                     if (pIt != perFaces.end())
                     {
-                        if(meshFaceId == min(meshFaceId, pIt->second[0].id))
+                        if(meshFaceId == min(meshFaceId, pIt->second[0].m_id))
                         {
-                            faceOrient = DeterminePeriodicFaceOrient(faceOrient,pIt->second[0].orient);
+                            faceOrient = DeterminePeriodicFaceOrient(faceOrient,pIt->second[0].m_orient);
                         }
-                        meshFaceId = min(meshFaceId, pIt->second[0].id);
+                        meshFaceId = min(meshFaceId, pIt->second[0].m_id);
                     }
 
 

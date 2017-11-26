@@ -62,8 +62,6 @@ namespace Nektar
             MULTI_REGIONS_EXPORT virtual ~GlobalLinSysIterativeVec();
 
         protected:
-            /// Local Matrix System/Expandiosn
-            const Array<OneD, std::weak_ptr<ExpList>>   m_expListVec;
 
             /// Global to universal unique map
             Array<OneD, Array<OneD, int> >              m_mapVec;

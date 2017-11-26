@@ -763,9 +763,9 @@ namespace Nektar
                     if (perMap.count(eid) > 0)
                     {
                         PeriodicEntity ent = it->second[0];
-                        if (ent.isLocal == false) // Not sure if true in 1D
+                        if (ent.m_isLocal == false) // Not sure if true in 1D
                         {
-                            eid = min(eid, ent.id);
+                            eid = min(eid, ent.m_id);
                         }
                     }
 
@@ -789,10 +789,10 @@ namespace Nektar
                     if (perMap.count(eid) > 0)
                     {
                         PeriodicEntity ent = it->second[0];
-                        if (ent.isLocal == false)
+                        if (ent.m_isLocal == false)
                         {
-                            realign = eid == min(eid, ent.id);
-                            eid = min(eid, ent.id);
+                            realign = eid == min(eid, ent.m_id);
+                            eid = min(eid, ent.m_id);
                         }
                     }
 
@@ -807,13 +807,13 @@ namespace Nektar
                         {
                             RealignTraceElement(
                                 tmp = m_traceToUniversalMap+offset,
-                                it->second[0].orient, quad);
+                                it->second[0].m_orient, quad);
                         }
                         else
                         {
                             RealignTraceElement(
                                 tmp = m_traceToUniversalMap+offset,
-                                it->second[0].orient,
+                                it->second[0].m_orient,
                                 trace->GetExp(i)->GetNumPoints(0),
                                 trace->GetExp(i)->GetNumPoints(1));
                         }

@@ -211,7 +211,7 @@ namespace Nektar
                     {
                         for (j = 0; j < pIt->second.size(); ++j)
                         {
-                            meshVertId = min(meshVertId, pIt->second[j].id);
+                            meshVertId = min(meshVertId, pIt->second[j].m_id);
                         }
                     }
 
@@ -328,9 +328,9 @@ namespace Nektar
                     auto pIt = periodicFaces.find(meshFaceId);
                     if (pIt != periodicFaces.end())
                     {
-                        meshFaceId = min(meshFaceId, pIt->second[0].id);
+                        meshFaceId = min(meshFaceId, pIt->second[0].m_id);
                         faceOrient = DeterminePeriodicFaceOrient(
-                            faceOrient, pIt->second[0].orient);
+                            faceOrient, pIt->second[0].m_orient);
                     }
 
                     exp->GetFaceInteriorMap(i, faceOrient, bmap, sign);

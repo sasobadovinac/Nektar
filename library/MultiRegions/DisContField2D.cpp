@@ -446,9 +446,9 @@ namespace Nektar
                 int traceGeomId = traceEl->GetGeom1D()->GetGlobalID();
                 auto pIt = m_periodicEdges.find(traceGeomId);
 
-                if (pIt != m_periodicEdges.end() && !pIt->second[0].isLocal)
+                if (pIt != m_periodicEdges.end() && !pIt->second[0].m_isLocal)
                 {
-                    if (traceGeomId != min(pIt->second[0].id, traceGeomId))
+                    if (traceGeomId != min(pIt->second[0].m_id, traceGeomId))
                     {
                         traceEl->GetLeftAdjacentElementExp()->NegateEdgeNormal(
                             traceEl->GetLeftAdjacentElementEdge());
@@ -521,12 +521,12 @@ namespace Nektar
                     if (it != m_periodicEdges.end())
                     {
                         const PeriodicEntity &ent = it->second[0];
-                        auto it2 = perEdgeToExpMap.find(ent.id);
+                        auto it2 = perEdgeToExpMap.find(ent.m_id);
 
                         if (it2 == perEdgeToExpMap.end())
                         {
                             if (m_session->GetComm()->
-                                GetRowComm()->GetSize() > 1 && !ent.isLocal)
+                                GetRowComm()->GetSize() > 1 && !ent.m_isLocal)
                             {
                                 continue;
                             }
@@ -550,7 +550,7 @@ namespace Nektar
                         vector<int> tmpBwd(nquad);
                         vector<int> tmpFwd(nquad);
 
-                        if (ent.orient == StdRegions::eForwards)
+                        if (ent.m_orient == StdRegions::eForwards)
                         {
                             for (int i = 0; i < nquad; ++i)
                             {
@@ -1067,7 +1067,9 @@ namespace Nektar
                                 StdRegions::eBackwards :
                                 StdRegions::eForwards;
                         
-                        PeriodicEntity ent(ids  [other], o,
+                        // !!! Note other shoudl be fIDtoCompID (see 3D case)
+                        PeriodicEntity ent(ids  [other],
+                                           other, o,
                                            local[other]);
                         m_periodicEdges[ids[i]].push_back(ent);
                     }
@@ -1103,9 +1105,12 @@ namespace Nektar
 
                         for (auto &mIt : tmpMap)
                         {
-                            // See if this vertex has been recorded already.
-                            PeriodicEntity ent2(mIt.second.first,
-                                                StdRegions::eNoOrientation,
+                            // See if this vertex has been recorded
+                            // already.  !!! Note seocnd argument
+                            // should be fIDtoCompID (see 3D case)
+                            PeriodicEntity ent2(mIt.second.first, 
+                                                mIt.second.second,
+                                               StdRegions::eNoOrientation,
                                                 mIt.second.second);
                             auto perIt = periodicVerts.find(mIt.first);
 
@@ -1119,7 +1124,7 @@ namespace Nektar
                                 bool doAdd = true;
                                 for (j = 0; j < perIt->second.size(); ++j)
                                 {
-                                    if (perIt->second[j].id == mIt.second.first)
+                                    if (perIt->second[j].m_id == mIt.second.first)
                                     {
                                         doAdd = false;
                                         break;
@@ -1199,7 +1204,10 @@ namespace Nektar
                             orientMap[edgeId] == orientMap[perEdgeId] ?
                             vertMap[perEdgeId][(j+1)%2] : vertMap[perEdgeId][j];
 
+                        // !!! Note seocnd argument should be
+                        // !!! fIDtoCompID (see 3D case)
                         PeriodicEntity ent(perVertexId,
+                                           perVertexId,
                                            StdRegions::eNoOrientation,
                                            locVerts.count(perVertexId) > 0);
 
@@ -1215,13 +1223,13 @@ namespace Nektar
                 // Loop over associated vertices.
                 for (i = 0; i < perIt.second.size(); ++i)
                 {
-                    auto perIt2 = periodicVerts.find(perIt.second[i].id);
+                    auto perIt2 = periodicVerts.find(perIt.second[i].m_id);
                     ASSERTL0(perIt2 != periodicVerts.end(),
                              "Couldn't find periodic vertex.");
                     
                     for (j = 0; j < perIt2->second.size(); ++j)
                     {
-                        if (perIt2->second[j].id == perIt.first)
+                        if (perIt2->second[j].m_id == perIt.first)
                         {
                             continue;
                         }
@@ -1229,7 +1237,7 @@ namespace Nektar
                         bool doAdd = true;
                         for (k = 0; k < perIt.second.size(); ++k)
                         {
-                            if (perIt2->second[j].id == perIt.second[k].id)
+                            if (perIt2->second[j].m_id == perIt.second[k].m_id)
                             {
                                 doAdd = false;
                                 break;
@@ -1277,9 +1285,9 @@ namespace Nektar
                     int traceGeomId = traceEl->GetGeom1D()->GetGlobalID();
                     auto pIt = m_periodicEdges.find(traceGeomId);
 
-                    if (pIt != m_periodicEdges.end() && !pIt->second[0].isLocal)
+                    if (pIt != m_periodicEdges.end() && !pIt->second[0].m_isLocal)
                     {
-                        fwd = traceGeomId == min(traceGeomId,pIt->second[0].id);
+                        fwd = traceGeomId == min(traceGeomId,pIt->second[0].m_id);
                     }
                     else
                     {

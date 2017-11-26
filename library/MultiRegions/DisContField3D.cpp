@@ -373,9 +373,9 @@ using namespace boost::assign;
                  int traceGeomId = traceEl->GetGeom2D()->GetGlobalID();
                  auto pIt = m_periodicFaces.find(traceGeomId);
 
-                 if (pIt != m_periodicFaces.end() && !pIt->second[0].isLocal)
+                 if (pIt != m_periodicFaces.end() && !pIt->second[0].m_isLocal)
                  {
-                     if (traceGeomId != min(pIt->second[0].id, traceGeomId))
+                     if (traceGeomId != min(pIt->second[0].m_id, traceGeomId))
                      {
                          traceEl->GetLeftAdjacentElementExp()->NegateFaceNormal(
                              traceEl->GetLeftAdjacentElementFace());
@@ -452,12 +452,12 @@ using namespace boost::assign;
                      if (it != m_periodicFaces.end())
                      {
                          const PeriodicEntity &ent = it->second[0];
-                         auto it2 = perFaceToExpMap.find(ent.id);
+                         auto it2 = perFaceToExpMap.find(ent.m_id);
 
                          if (it2 == perFaceToExpMap.end())
                          {
                              if (m_session->GetComm()->GetSize() > 1 &&
-                                 !ent.isLocal)
+                                 !ent.m_isLocal)
                              {
                                  continue;
                              }
@@ -482,10 +482,10 @@ using namespace boost::assign;
                         vector<int> tmpBwd(nquad1*nquad2);
                         vector<int> tmpFwd(nquad1*nquad2);
 
-                        if (ent.orient == StdRegions::eDir1FwdDir2_Dir2FwdDir1 ||
-                            ent.orient == StdRegions::eDir1BwdDir2_Dir2FwdDir1 ||
-                            ent.orient == StdRegions::eDir1FwdDir2_Dir2BwdDir1 ||
-                            ent.orient == StdRegions::eDir1BwdDir2_Dir2BwdDir1)
+                        if (ent.m_orient == StdRegions::eDir1FwdDir2_Dir2FwdDir1 ||
+                            ent.m_orient == StdRegions::eDir1BwdDir2_Dir2FwdDir1 ||
+                            ent.m_orient == StdRegions::eDir1FwdDir2_Dir2BwdDir1 ||
+                            ent.m_orient == StdRegions::eDir1BwdDir2_Dir2BwdDir1)
                         {
                             for (int i = 0; i < nquad2; ++i)
                             {
@@ -508,10 +508,10 @@ using namespace boost::assign;
                             }
                         }
 
-                        if (ent.orient == StdRegions::eDir1BwdDir1_Dir2FwdDir2 ||
-                            ent.orient == StdRegions::eDir1BwdDir1_Dir2BwdDir2 ||
-                            ent.orient == StdRegions::eDir1FwdDir2_Dir2BwdDir1 ||
-                            ent.orient == StdRegions::eDir1BwdDir2_Dir2BwdDir1)
+                        if (ent.m_orient == StdRegions::eDir1BwdDir1_Dir2FwdDir2 ||
+                            ent.m_orient == StdRegions::eDir1BwdDir1_Dir2BwdDir2 ||
+                            ent.m_orient == StdRegions::eDir1FwdDir2_Dir2BwdDir1 ||
+                            ent.m_orient == StdRegions::eDir1BwdDir2_Dir2BwdDir1)
                         {
                             // Reverse x direction
                             for (int i = 0; i < nquad2; ++i)
@@ -524,10 +524,10 @@ using namespace boost::assign;
                             }
                         }
 
-                        if (ent.orient == StdRegions::eDir1FwdDir1_Dir2BwdDir2 ||
-                            ent.orient == StdRegions::eDir1BwdDir1_Dir2BwdDir2 ||
-                            ent.orient == StdRegions::eDir1BwdDir2_Dir2FwdDir1 ||
-                            ent.orient == StdRegions::eDir1BwdDir2_Dir2BwdDir1)
+                        if (ent.m_orient == StdRegions::eDir1FwdDir1_Dir2BwdDir2 ||
+                            ent.m_orient == StdRegions::eDir1BwdDir1_Dir2BwdDir2 ||
+                            ent.m_orient == StdRegions::eDir1BwdDir2_Dir2FwdDir1 ||
+                            ent.m_orient == StdRegions::eDir1BwdDir2_Dir2BwdDir1)
                         {
                             // Reverse y direction
                             for (int j = 0; j < nquad1; ++j)
@@ -1276,7 +1276,7 @@ using namespace boost::assign;
                     // Record periodic faces.
                     for (i = 0; i < 2; ++i)
                     {
-                        if (!local[i])
+                        if (!local[i])  
                         {
                             continue;
                         }
@@ -1303,11 +1303,12 @@ using namespace boost::assign;
 
                         // Record face ID, orientation and whether other face is
                         // local.
-                        PeriodicEntity ent(ids  [other], o,
+                        PeriodicEntity ent(ids  [other],
+                                           fIdToCompId[other], o,
                                            local[other]);
-                        m_periodicFaces[ids[i]].push_back(ent);
+                        m_periodicFaces[ids[ i]].push_back(ent);
                     }
-
+                
                     int nFaceVerts = vertMap[ids[0]].size();
 
                     // Determine periodic vertices.
@@ -1362,6 +1363,7 @@ using namespace boost::assign;
                         for (auto &mIt : tmpMap)
                         {
                             PeriodicEntity ent2(mIt.second.first,
+                                                fIdToCompId[other],
                                                 StdRegions::eNoOrientation,
                                                 mIt.second.second);
 
@@ -1382,7 +1384,7 @@ using namespace boost::assign;
                                 // mIt.second to the list.
                                 for (k = 0; k < perIt->second.size(); ++k)
                                 {
-                                    if (perIt->second[k].id == mIt.second.first)
+                                    if (perIt->second[k].m_id == mIt.second.first)
                                     {
                                         break;
                                     }
@@ -1435,6 +1437,7 @@ using namespace boost::assign;
                             // Note we assume orientation of edges is forwards -
                             // this may be reversed later.
                             PeriodicEntity ent2(mIt.second.first,
+                                                fIdToCompId[other],
                                                 StdRegions::eForwards,
                                                 mIt.second.second);
                             auto perIt = periodicEdges.find(mIt.first);
@@ -1448,7 +1451,7 @@ using namespace boost::assign;
                             {
                                 for (k = 0; k < perIt->second.size(); ++k)
                                 {
-                                    if (perIt->second[k].id == mIt.second.first)
+                                    if (perIt->second[k].m_id == mIt.second.first)
                                     {
                                         break;
                                     }
@@ -1592,6 +1595,7 @@ using namespace boost::assign;
                         
                         
                         PeriodicEntity ent(perVertexId,
+                                           fIdToCompId[perFaceId],
                                            StdRegions::eNoOrientation,
                                            locVerts.count(perVertexId) > 0);
                         
@@ -1621,15 +1625,18 @@ using namespace boost::assign;
                         int nFaceEdges = tmpVec[0].size();
                         StdRegions::Orientation o = nFaceEdges == 3 ? 
                             SpatialDomains::TriGeom::GetFaceOrientation(
-                                        tmpVec[0], tmpVec[1], rotbnd, dir, angle, tol):
+                                        tmpVec[0], tmpVec[1], rotbnd,
+                                        dir, angle, tol):
                         SpatialDomains::QuadGeom::GetFaceOrientation(
-                                        tmpVec[0], tmpVec[1], rotbnd, dir, angle, tol);
+                                        tmpVec[0], tmpVec[1], rotbnd,
+                                        dir, angle, tol);
                         
                         // Use emap to determine which edge of the other
                         // face should be periodic with this one.
                         int perEdgeId = edgeMap[perFaceId][emap[nFaceEdges][o][j]];
                         
                         PeriodicEntity ent(perEdgeId,
+                                           fIdToCompId[perFaceId],
                                            StdRegions::eForwards,
                                            locEdges.count(perEdgeId) > 0);
                         
@@ -1654,7 +1661,7 @@ using namespace boost::assign;
                 for (i = 0; i < perIt.second.size(); ++i)
                 {
                     // Find the vertex in the periodicVerts map...
-                    auto perIt2 = periodicVerts.find(perIt.second[i].id);
+                    auto perIt2 = periodicVerts.find(perIt.second[i].m_id);
                     ASSERTL0(perIt2 != periodicVerts.end(),
                              "Couldn't find periodic vertex.");
 
@@ -1663,14 +1670,14 @@ using namespace boost::assign;
                     // original list.
                     for (j = 0; j < perIt2->second.size(); ++j)
                     {
-                        if (perIt2->second[j].id == perIt.first)
+                        if (perIt2->second[j].m_id == perIt.first)
                         {
                             continue;
                         }
 
                         for (k = 0; k < perIt.second.size(); ++k)
                         {
-                            if (perIt2->second[j].id == perIt.second[k].id)
+                            if (perIt2->second[j].m_id == perIt.second[k].m_id)
                             {
                                 break;
                             }
@@ -1688,20 +1695,20 @@ using namespace boost::assign;
             {
                 for (i = 0; i < perIt.second.size(); ++i)
                 {
-                    auto perIt2 = periodicEdges.find(perIt.second[i].id);
+                    auto perIt2 = periodicEdges.find(perIt.second[i].m_id);
                     ASSERTL0(perIt2 != periodicEdges.end(),
                              "Couldn't find periodic edge.");
 
                     for (j = 0; j < perIt2->second.size(); ++j)
                     {
-                        if (perIt2->second[j].id == perIt.first)
+                        if (perIt2->second[j].m_id == perIt.first)
                         {
                             continue;
                         }
 
                         for (k = 0; k < perIt.second.size(); ++k)
                         {
-                            if (perIt2->second[j].id == perIt.second[k].id)
+                            if (perIt2->second[j].m_id == perIt.second[k].m_id)
                             {
                                 break;
                             }
@@ -1745,7 +1752,7 @@ using namespace boost::assign;
                 // vertex maps to which.
                 for (i = 0; i < perIt.second.size(); ++i)
                 {
-                    eIt = eIdMap.find(perIt.second[i].id);
+                    eIt = eIdMap.find(perIt.second[i].m_id);
 
                     SpatialDomains::PointGeom w[2] = {
                         *vCoMap[eIt->second.first],
@@ -1816,7 +1823,7 @@ using namespace boost::assign;
                     // reverse the orientation.
                     if (vMap[0] != 0)
                     {
-                        perIt.second[i].orient = StdRegions::eBackwards;
+                        perIt.second[i].m_orient = StdRegions::eBackwards;
                     }
                 }
             }
@@ -1863,9 +1870,9 @@ using namespace boost::assign;
                     int traceGeomId = traceEl->GetGeom2D()->GetGlobalID();
                     auto pIt = m_periodicFaces.find(traceGeomId);
 
-                    if (pIt != m_periodicFaces.end() && !pIt->second[0].isLocal)
+                    if (pIt != m_periodicFaces.end() && !pIt->second[0].m_isLocal)
                     {
-                        fwd = traceGeomId == min(traceGeomId,pIt->second[0].id);
+                        fwd = traceGeomId == min(traceGeomId,pIt->second[0].m_id);
                     }
                     else
                     {
