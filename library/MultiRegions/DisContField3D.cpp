@@ -1264,6 +1264,8 @@ using namespace boost::assign;
                     NekDouble angle,sign;
                     NekDouble tol = 1e-8;
 
+                    ASSERTL1(fIdToCompId.count(pIt.first) > 0,"fIdToCompId does not contain reference to " + boost::lexical_cast<string>(pIt.first));
+
                     // check to see if perioid boundary is rotated
                     if(rotComp.count(fIdToCompId[pIt.first]))
                     {
@@ -1304,7 +1306,7 @@ using namespace boost::assign;
                         // Record face ID, orientation and whether other face is
                         // local.
                         PeriodicEntity ent(ids  [other],
-                                           fIdToCompId[other], o,
+                                           fIdToCompId[ids[other]], o,
                                            local[other]);
                         m_periodicFaces[ids[ i]].push_back(ent);
                     }
@@ -1363,7 +1365,7 @@ using namespace boost::assign;
                         for (auto &mIt : tmpMap)
                         {
                             PeriodicEntity ent2(mIt.second.first,
-                                                fIdToCompId[other],
+                                                fIdToCompId[ids[other]],
                                                 StdRegions::eNoOrientation,
                                                 mIt.second.second);
 
@@ -1437,7 +1439,7 @@ using namespace boost::assign;
                             // Note we assume orientation of edges is forwards -
                             // this may be reversed later.
                             PeriodicEntity ent2(mIt.second.first,
-                                                fIdToCompId[other],
+                                                fIdToCompId[ids[other]],
                                                 StdRegions::eForwards,
                                                 mIt.second.second);
                             auto perIt = periodicEdges.find(mIt.first);

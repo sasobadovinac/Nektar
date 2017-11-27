@@ -543,9 +543,19 @@ namespace Nektar
                         const Array<OneD, const int> map= m_locToGloMapVec[n]->GetBndCondCoeffsToLocalCoeffsMap();
                         const Array<OneD, NekDouble> bndcoeff = (bndCondExpansions[i])->GetCoeffs(); 
 
-                        for(j = 0; j < (bndCondExpansions[i])->GetNcoeffs(); j++)
+                        if(m_locToGloMapVec[n]->GetSignChange())
                         {
-                            gamma[map[j]] += sign[j] * bndcoeff[j]; 
+                            for(j = 0; j < (bndCondExpansions[i])->GetNcoeffs(); j++)
+                            {
+                                gamma[map[j]] += sign[j] * bndcoeff[j]; 
+                            }
+                        }
+                        else
+                        {
+                            for(j = 0; j < (bndCondExpansions[i])->GetNcoeffs(); j++)
+                            {
+                                gamma[map[j]] += bndcoeff[j]; 
+                            }
                         }
                     }
                     else
