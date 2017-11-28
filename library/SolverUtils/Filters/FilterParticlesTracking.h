@@ -52,7 +52,7 @@ struct Particle
         int                     numFields,
         int                     intOrder,
         Array<OneD, NekDouble>  gloCoord)
-        : m_dim(dim), m_used(true)
+        : m_dim(dim), m_eId(-1), m_used(true)
     {
         // Initialise arrays
         m_gloCoord          = Array<OneD, NekDouble> (3, 0.0);

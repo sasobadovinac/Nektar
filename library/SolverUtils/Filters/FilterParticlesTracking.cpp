@@ -530,10 +530,10 @@ void FilterParticlesTracking::UpdateLocCoord(
     bool found = false;
     if(particle.m_eId >= 0)
     {
-        //found = pFields[0]->GetExp(particle.m_eId)->GetGeom()->ContainsPoint(
-                                              //particle.m_gloCoord,
-                                              //particle.m_locCoord,
-                                              //NekConstants::kNekZeroTol);
+        found = pFields[0]->GetExp(particle.m_eId)->GetGeom()->ContainsPoint(
+                                              particle.m_gloCoord,
+                                              particle.m_locCoord,
+                                              NekConstants::kNekZeroTol);
         
     }
     // If it changed elements just search again
@@ -613,6 +613,7 @@ void FilterParticlesTracking::SetToFluidVelocity(
 {
     for (int i = 0; i < particle.m_dim; ++i)
     {
+        //particle.m_particleVelocity[0][i] = 0.0;
         particle.m_particleVelocity[0][i] = particle.m_fluidVelocity[i];
     }
 }
@@ -652,66 +653,77 @@ void FilterParticlesTracking::CalculateForce(Particle &particle)
     // TO DO: update particle.m_force[0][i] with force per unit mass
     
     NekDouble   Re = 0.0, Cd = 0.0, Fd = 0.0;     
-    //NekDouble   nu = 1.0e-6;     // m2/s
+    NekDouble   nu = 1.0e-6;     // m2/s
     
     for (int i = 0; i < particle.m_dim; ++i)
     {    
         Re += pow(particle.m_fluidVelocity[i]
                   -particle.m_particleVelocity[0][i],2.0);
     }
-    Re = sqrt(Re)*m_diameter/m_kinvis;
-    //Re = sqrt(Re)*m_diameter/nu;
-    //Calcule Drag coeficient
+    //Re = sqrt(Re)*m_diameter/m_kinvis;
+    Re = sqrt(Re)*m_diameter/nu;
     
-    // Openfoam 
-    //if (Re < 0.1)
+    
+    ////Calcule Drag coeficient
+    
+    //// Openfoam 
+    ////if (Re < 0.1)
+    ////{
+        ////Cd = 1E4;
+    ////}
+    ////else if (Re >1000.0)
+    ////{
+        ////Cd = 0.424;
+    ////}
+    ////else
+    ////{
+        ////Cd = (24.0/Re)*(1.0+pow(Re,2.0/3.0)/6.0);
+    ////}
+    
+    //// Crowe et al. (1998) 
+    //if (Re == 0.0)
     //{
-        //Cd = 1E4;
+        //Cd = 1E4; //este valor es muy restrigindo!!!!
     //}
-    //else if (Re >1000.0)
+    //else if (Re < 0.5  )
     //{
-        //Cd = 0.424;
+        //Cd = 24.0 / Re;
+    //}
+    //else if (Re <1000.0)
+    //{
+        //Cd = (24.0 / Re) * ( 1.0 + 0.15 * pow(Re,0.687) );
     //}
     //else
     //{
-        //Cd = (24.0/Re)*(1.0+pow(Re,2.0/3.0)/6.0);
+        //Cd = 0.44;
     //}
     
-    // Crowe et al. (1998) 
-    if (Re == 0.0)
-    {
-        Cd = 1E4; //este valor es muy restrigindo!!!!
-    }
-    else if (Re < 0.5  )
-    {
-        Cd = 24.0 / Re;
-    }
-    else if (Re <1000.0)
-    {
-        Cd = (24.0 / Re) * ( 1.0 + 0.15 * pow(Re,0.687) );
-    }
-    else
-    {
-        Cd = 0.44;
-    }
+    Cd = 0.47;
     
-    //Cd = 0.47;
+    ////////Fd = (18.0*m_kinvis/((m_density)
+          ////*pow(m_diameter,2.0)))*(Cd*Re/24.0);
     
-    Fd = (18.0*m_kinvis/((m_density)
-          *pow(m_diameter,2.0)))*(Cd*Re/24.0);
+    Fd = (18.0 * nu / ((m_density*1000)
+          * pow(m_diameter,2.0))) * (Cd * Re / 24.0);
     
-    //Fd = (18.0 * nu / ((m_density)
-          //* pow(m_diameter,2.0))) * (Cd * Re / 24.0);
-    
-    //std::cout<<Re<<", "<<Cd<<", "<<Fd<<std::endl;
+    std::cout<<"Re "<<Re<<", "<<"Cd "<<Cd<<", "<<"Fd "<<Fd<<std::endl;
     
     for (int i = 0; i < particle.m_dim; ++i)
     {
         particle.m_force[0][i] = Fd * ( particle.m_fluidVelocity[i]
                                - particle.m_particleVelocity[0][i]);
     }
+    
+    cout<<"Particle Velocity [ "<<particle.m_particleVelocity[0][0]<<","
+                             <<particle.m_particleVelocity[0][1]<<","
+                             <<particle.m_particleVelocity[0][2]<<"]"<<endl;
+    
     //Add gravity effects
-    particle.m_force[0][1] -= 9.81 * (1.0 - 1.0/m_density);
+    //particle.m_force[0][1] = 0.0;
+    particle.m_force[0][1] -= 10 * (1.0 - 1.0/m_density);
+
+    cout<<"Force = "<<particle.m_force[0][1]<<endl;
+
 }
 
 /**
@@ -731,7 +743,7 @@ void FilterParticlesTracking::HandleCollision(
     
     // TO DO
     // For now, just mark particles outside the domain as unused
-while( particle.m_eId == -1)
+while( particle.m_eId == -1 && particle.m_used == true)
 {
     cout << "Particle " << particle.m_id << " collisioned." << endl; 
     //particle.m_used = false;    
@@ -741,7 +753,9 @@ while( particle.m_eId == -1)
     bndExp = pFields[0]->GetBndCondExpansions();
     LocalRegions::ExpansionSharedPtr elemBndExp;
     
-    NekDouble minDist = 0.0, dist = 0.0, distN = 0.0;
+    NekDouble   minDist = 0.0, dist = 0.0, distN = 0.0; 
+    NekDouble   maxDotProd = 0.0, dotProd = 0.0, ScaleDP = 0.0;
+                
     Array<OneD,double> minNormal(3);
     int minPnt = -1, minBnd = -1;
     
@@ -792,32 +806,46 @@ while( particle.m_eId == -1)
             distN +=   (coords[i][j]
                        - particle.m_gloCoord[i])
                        * normals[i][j];
-                
-        ////cout << normals[i][physOffset+j]<<", ";//nq-1
         }
         ////cout<<"]"<<endl;
 
-        if (distN*dist < 0 && (abs(dist) < minDist || minDist == 0.0) )
-        {
-            ////cout<<endl<<"cruzo"<<endl<<endl;
-            ////cout << "Boundary: "<<nb<<" Elemento: "<<ne<<endl;
-            ////cout << "dist: "<<dist<<" minDist: "<<minDist<<endl;
-            minDist = abs(dist);
-            minPnt  =    j;
-            minBnd  =   nb;
-            
-            
-                
-             //Vmath::Vcopy(3,&normals[0][j],1,&minNormal[0],1);  
+        //if (distN*dist < 0 && (abs(dist) < minDist || minDist == 0.0) )
+        
+        if (dist*distN < 0.0 )
+        {   
+            dotProd = 0.0; ScaleDP = 0.0;
             for (int i = 0; i < particle.m_dim; ++i)
             {
-                minNormal[i] = normals[i][j];
+                dotProd += ( particle.m_gloCoord[i]
+                           -   particle.m_oldCoord[i] )
+                           * ( coords[i][j]
+                           -   particle.m_oldCoord[i] );
+                
+                
+                ScaleDP += pow( particle.m_oldCoord[i]
+                               -  coords[i][j] , 2 );
             }
-        }
+            dotProd /= sqrt(ScaleDP);
+            
+            //cout<<endl<<"dotProd = "<<dotProd<<endl;
+            
+            if (dotProd > maxDotProd)
+            {
+                maxDotProd = dotProd;
+                minDist    = abs(dist);
+                minPnt     =    j;
+                minBnd     =   nb;
+                
+                for (int i = 0; i < particle.m_dim; ++i)
+                {
+                    minNormal[i] = normals[i][j];
+                }
+            }
          
-    }
+        }
     //cout<<endl;
     
+    }
     }
     
     cout<<endl<<"Min Boundary: "<<minBnd<<" Min Point: "<<minPnt<<
@@ -849,41 +877,63 @@ while( particle.m_eId == -1)
     
     
     //New coordinates and Velocities
+    
+    cout<<"Vel antes"<<particle.m_particleVelocity[0][1]<<endl;
+    cout<<"Force antes"<<particle.m_force[0][1]<<endl;
+
     // evaluation of the restitution coeficients
     int order = min(m_advanceCalls, m_intOrder);
-    cout<<"New positions: {";
-    for (int i = 0; i < particle.m_dim; ++i)
-    {
-        particle.m_gloCoord[i] =     particle.m_gloCoord[i]
+    //cout<<"New positions: {";
+    
+     
+    NekDouble dotProdCoord, dotProdVel, dotProdForce; 
+     
+    for(int j = 0; j < order; ++j)
+    {   
+        dotProdCoord = 0.0;
+        dotProdVel = 0.0;
+        dotProdForce = 0.0;
+    
+        for (int i = 0; i < particle.m_dim; ++i)
+        {
+            
+            //dotProdCoord += (particle.m_gloCoord[i]
+                                   //- collPnt[i]) * minNormal[i];
+
+            particle.m_gloCoord[i] =     particle.m_gloCoord[i]
                               - abs( particle.m_gloCoord[i]
                                    - collPnt[i] )
                                * 2 * minNormal[i];
                                
-        //particle.m_oldCoord[i] =  collPnt[i];
-    
-    // Velocities
-    
-        for(int j = 0; j < order; ++j)
+            particle.m_oldCoord[i] =  collPnt[i];
+        
+        dotProdVel += particle.m_particleVelocity[j][i] * minNormal[i];
+        dotProdForce += particle.m_force[j][i] * minNormal[i];
+        }
+        
+        // Velocities
+        for (int i = 0; i < particle.m_dim; ++i)
         {
-            particle.m_particleVelocity[j][i] = 
-            particle.m_particleVelocity[j][i] -
-            particle.m_particleVelocity[j][i] * 2 * minNormal[i];
+        //particle.m_gloCoord[i] += dotProdCoord * 2 * minNormal[i];
+        particle.m_particleVelocity[j][i] -=dotProdVel * 2 * minNormal[i];
+            
+        particle.m_force[j][i] -= dotProdForce * 2 * minNormal[i];
         }
 
     
-    cout<<particle.m_gloCoord[i]<<", ";      
+    //cout<<particle.m_gloCoord[i]<<", ";      
     
     
     
                          
     }
-    cout<<"}"<<endl<<endl;
+    //cout<<"}"<<endl<<endl;
     
-    particle.m_eId = pFields[0]->GetExpIndex(particle.m_gloCoord,
-                                             particle.m_locCoord,
-                                             NekConstants::kNekZeroTol);
-
-
+    cout<<"Vel despues"<<particle.m_particleVelocity[0][1]<<endl;
+    cout<<"Force despues"<<particle.m_force[0][1]<<endl;
+    
+    
+    UpdateLocCoord(pFields, particle);
 }
 }
 
