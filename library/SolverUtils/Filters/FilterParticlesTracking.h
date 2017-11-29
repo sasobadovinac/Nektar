@@ -193,6 +193,9 @@ private:
     std::string                             m_outputFile;
     std::ofstream                           m_outputStream;
     unsigned int                            m_outputFrequency;
+    std::string                             m_collisionFile;
+    std::ofstream                           m_collisionStream;
+    
 
     /// Variables for bounding box determining domain of interest for particles
     bool                                    m_useBoundingBox;

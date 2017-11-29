@@ -207,17 +207,25 @@ FilterParticlesTracking::FilterParticlesTracking(
     if (it == pParams.end())
     {
         m_outputFile = m_session->GetSessionName();
+        m_collisionFile = "Collision" + m_session->GetSessionName();
     }
     else
     {
         ASSERTL0(it->second.length() > 0, "Missing parameter 'OutputFile'.");
         m_outputFile = it->second;
+        m_collisionFile = it->second;
     }
     if (!(m_outputFile.length() >= 4
           && m_outputFile.substr(m_outputFile.length() - 4) == ".csv"))
     {
         m_outputFile += ".csv";
     }
+    if (!(m_collisionFile.length() >= 4
+          && m_collisionFile.substr(m_collisionFile.length() - 4) == ".csv"))
+    {
+        m_collisionFile += ".csv";
+    }
+    
 
     it = pParams.find("OutputFrequency");
     if (it == pParams.end())
@@ -280,10 +288,15 @@ void FilterParticlesTracking::v_Initialise(
     int dim = pFields[0]->GetGraph()->GetSpaceDimension();
     // Open output stream
     m_outputStream.open(m_outputFile.c_str());
+    m_collisionStream.open(m_collisionFile.c_str());
+    
     m_outputStream << "Time, Id, x, y, z, particleU, particleV";
+    m_collisionStream << " Id, x, y, z, particleU, particleV";
+
     if(dim == 3)
     {
         m_outputStream << ", particleW";
+        m_collisionStream << ", particleW";
     }
     for(int n = 0; n < pFields.num_elements(); ++n)
     {
@@ -295,6 +308,8 @@ void FilterParticlesTracking::v_Initialise(
         m_outputStream << ", Fz";
     }
     m_outputStream << endl;
+    
+    m_collisionStream << ", alpha" << endl;
 
     // Read seed points
     Array<OneD, NekDouble>  gloCoord(3,0.0);
@@ -399,6 +414,7 @@ void FilterParticlesTracking::v_Finalise(
     if (pFields[0]->GetComm()->GetRank() == 0)
     {
         m_outputStream.close();
+        m_collisionStream.close();
     }
 }
 
@@ -706,23 +722,16 @@ void FilterParticlesTracking::CalculateForce(Particle &particle)
     Fd = (18.0 * nu / ((m_density*1000)
           * pow(m_diameter,2.0))) * (Cd * Re / 24.0);
     
-    std::cout<<"Re "<<Re<<", "<<"Cd "<<Cd<<", "<<"Fd "<<Fd<<std::endl;
+    //std::cout<<"Re "<<Re<<", "<<"Cd "<<Cd<<", "<<"Fd "<<Fd<<std::endl;
     
     for (int i = 0; i < particle.m_dim; ++i)
     {
         particle.m_force[0][i] = Fd * ( particle.m_fluidVelocity[i]
                                - particle.m_particleVelocity[0][i]);
     }
-    
-    cout<<"Particle Velocity [ "<<particle.m_particleVelocity[0][0]<<","
-                             <<particle.m_particleVelocity[0][1]<<","
-                             <<particle.m_particleVelocity[0][2]<<"]"<<endl;
-    
+  
     //Add gravity effects
-    //particle.m_force[0][1] = 0.0;
     particle.m_force[0][1] -= 10 * (1.0 - 1.0/m_density);
-
-    cout<<"Force = "<<particle.m_force[0][1]<<endl;
 
 }
 
@@ -733,19 +742,11 @@ void FilterParticlesTracking::HandleCollision(
     const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
     Particle &particle)
 {
-    cout<<endl<< "Punto 1: {"<<particle.m_oldCoord[0]<<", "
-                             <<particle.m_oldCoord[1]<<", "
-                             <<particle.m_oldCoord[2]<<"}"<<endl;
-
-    cout<<endl<< "Punto 2: {"<<particle.m_gloCoord[0]<<", "
-                             <<particle.m_gloCoord[1]<<", "
-                             <<particle.m_gloCoord[2]<<"}"<<endl<<endl; 
+    Array<OneD, NekDouble> collPntOLD(3);
     
-    // TO DO
-    // For now, just mark particles outside the domain as unused
 while( particle.m_eId == -1 && particle.m_used == true)
 {
-    cout << "Particle " << particle.m_id << " collisioned." << endl; 
+    //cout << "Particle " << particle.m_id << " collisioned." << endl; 
     //particle.m_used = false;    
  
     //Boundary Expansion
@@ -778,24 +779,6 @@ while( particle.m_eId == -1 && particle.m_used == true)
     //Loop for each integration point on  any boundary
     for (int j = 0; j < npoints; ++j)
     {
-        //cout<<"Coordinates {"
-        //<< x0[i]<<", "<< x1[i]<<", "<< x2[i]<<"}";
-        
-        //cout<<" Normals: [";
-        //for (int i = 0; i < particle.m_dim; ++j)
-        //{    
-            //cout << normals[i][j]<<", ";//nq-1
-        //}
-        //cout<<']'<<endl;
-        
-        
-        ////cout<<"Coordinates {"
-                ////<< coords[0][j]<<", "
-                ////<< coords[1][j]<<", "
-                ////<< coords[2][j]<<"}";
-                ////cout <<" Normals: [";
-
-                
         dist = 0.0; distN = 0.0;
         for (int i = 0; i < particle.m_dim; ++i)
         {
@@ -807,13 +790,11 @@ while( particle.m_eId == -1 && particle.m_used == true)
                        - particle.m_gloCoord[i])
                        * normals[i][j];
         }
-        ////cout<<"]"<<endl;
-
-        //if (distN*dist < 0 && (abs(dist) < minDist || minDist == 0.0) )
-        
+        //Check if the wall is crossed
         if (dist*distN < 0.0 )
         {   
             dotProd = 0.0; ScaleDP = 0.0;
+            // Evaluate the dot Product
             for (int i = 0; i < particle.m_dim; ++i)
             {
                 dotProd += ( particle.m_gloCoord[i]
@@ -826,9 +807,8 @@ while( particle.m_eId == -1 && particle.m_used == true)
                                -  coords[i][j] , 2 );
             }
             dotProd /= sqrt(ScaleDP);
-            
-            //cout<<endl<<"dotProd = "<<dotProd<<endl;
-            
+
+            // Save the max dot Product 
             if (dotProd > maxDotProd)
             {
                 maxDotProd = dotProd;
@@ -843,15 +823,10 @@ while( particle.m_eId == -1 && particle.m_used == true)
             }
          
         }
-    //cout<<endl;
-    
+ 
     }
     }
     
-    cout<<endl<<"Min Boundary: "<<minBnd<<" Min Point: "<<minPnt<<
-    " Distance: "<<minDist<<" Min normal: { "<<minNormal[0]<<","<<
-    minNormal[1]<<"}"<<endl<<endl;
-
     //// Collision point cordinates
     Array<OneD, NekDouble> collPnt(3,0.0);
     NekDouble absVel = 0.0;
@@ -863,7 +838,7 @@ while( particle.m_eId == -1 && particle.m_used == true)
     }
     absVel = sqrt(absVel);
     
-    cout<<"Punto collision: {";
+    //cout<<"Punto collision: {";
     for (int i = 0; i < particle.m_dim; ++i)
     {
         collPnt[i] = particle.m_oldCoord[i]
@@ -871,21 +846,14 @@ while( particle.m_eId == -1 && particle.m_used == true)
                 -    particle.m_oldCoord[i])
                 *  minDist/absVel;
                 
-    cout<<collPnt[i]<<", ";
+    //cout<<collPnt[i]<<", ";
     }
-    cout<<"}"<<endl<<endl;
+    //cout<<"}"<<endl<<endl;
     
     
     //New coordinates and Velocities
-    
-    cout<<"Vel antes"<<particle.m_particleVelocity[0][1]<<endl;
-    cout<<"Force antes"<<particle.m_force[0][1]<<endl;
-
-    // evaluation of the restitution coeficients
+    // Evaluation of the restitution coeficients
     int order = min(m_advanceCalls, m_intOrder);
-    //cout<<"New positions: {";
-    
-     
     NekDouble dotProdCoord, dotProdVel, dotProdForce; 
      
     for(int j = 0; j < order; ++j)
@@ -893,51 +861,98 @@ while( particle.m_eId == -1 && particle.m_used == true)
         dotProdCoord = 0.0;
         dotProdVel = 0.0;
         dotProdForce = 0.0;
-    
+        
+        //Evaluate dot products to make the reflection
         for (int i = 0; i < particle.m_dim; ++i)
         {
-            
             dotProdCoord += (particle.m_gloCoord[i]
                              - collPnt[i]) * minNormal[i];
-
-            //particle.m_gloCoord[i] =     particle.m_gloCoord[i]
-                              //- abs( particle.m_gloCoord[i]
-                                   //- collPnt[i] )
-                               //* 2 * minNormal[i];
-                               
-            particle.m_oldCoord[i] =  collPnt[i];
         
-        dotProdVel += particle.m_particleVelocity[j][i] * minNormal[i];
-        dotProdForce += particle.m_force[j][i] * minNormal[i];
+            dotProdVel += particle.m_particleVelocity[j][i] * minNormal[i];
+            dotProdForce += particle.m_force[j][i] * minNormal[i];
         }
         
         // Velocities
         for (int i = 0; i < particle.m_dim; ++i)
         {
-        particle.m_gloCoord[i]  = collPnt[i]
-                                + (particle.m_gloCoord[i] - collPnt[i] )
-                                - dotProdCoord * 2 * minNormal[i];
-        
-        particle.m_particleVelocity[j][i] -=dotProdVel * 2 * minNormal[i];
-            
-        particle.m_force[j][i] -= dotProdForce * 2 * minNormal[i];
-        }
+            particle.m_oldCoord[i] =  collPnt[i];
 
-    
-    //cout<<particle.m_gloCoord[i]<<", ";      
-    
-    
-    
-                         
-    }
-    //cout<<"}"<<endl<<endl;
-    
-    cout<<"Vel despues"<<particle.m_particleVelocity[0][1]<<endl;
-    cout<<"Force despues"<<particle.m_force[0][1]<<endl;
-    
-    
+            particle.m_gloCoord[i]  = collPnt[i]
+                                    + (particle.m_gloCoord[i] - collPnt[i] )
+                                    - dotProdCoord * 2 * minNormal[i];
+            
+            particle.m_particleVelocity[j][i] -=dotProdVel * 2 * minNormal[i];
+                
+            particle.m_force[j][i] -= dotProdForce * 2 * minNormal[i];
+        }
+   }
     UpdateLocCoord(pFields, particle);
+    
+     // Evaluate the angle
+    dotProd = 0.0; absVel = 0.0; 
+    for (int i = 0; i < particle.m_dim; ++i)
+            {
+                dotProd += (particle.m_gloCoord[i]
+                           -   particle.m_oldCoord[i])
+                           * minNormal[i];
+                
+                
+                absVel += pow(particle.m_gloCoord[i]
+                           -   particle.m_oldCoord[i],2);
+            }
+            dotProd /= sqrt(absVel);
+            dotProd = asinf(dotProd);
+            
+            
+    
+    
+    
+    
+    //Output the collision information
+    //m_collisionStream << boost::format("%25.19e") % time;
+    m_collisionStream << particle.m_id;
+
+    for(int n = 0; n < 3; ++n)
+    {
+        m_collisionStream << ", " << boost::format("%25.19e") %
+                                    collPnt[n];
+    }
+
+    for(int n = 0; n < particle.m_dim; ++n)
+    {
+        m_collisionStream << ", " << boost::format("%25.19e") %
+                                    particle.m_particleVelocity[0][n];
+    }
+
+    m_collisionStream << ", " << boost::format("%25.19e") %
+                                    dotProd;
+
+    m_collisionStream << endl; 
+    
+    
+    
+    //Evaluate the change in the collision position
+    distN = 0.0;
+    for (int i = 0; i < particle.m_dim; ++i)
+    {
+        distN +=   pow(collPnt[i]-collPntOLD[i],2);
+    }
+    
+    if (distN <  1E-3)
+    {
+        cout << "Particle " << particle.m_id << " is unused." << endl; 
+        particle.m_used = false;    
+    }
+    else
+    {
+         for (int i = 0; i < particle.m_dim; ++i)
+        {
+            collPntOLD[i] = collPnt[i];
+        }
+    }
 }
+
+
 }
 
 /**
