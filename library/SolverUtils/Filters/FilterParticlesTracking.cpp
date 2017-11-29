@@ -897,13 +897,13 @@ while( particle.m_eId == -1 && particle.m_used == true)
         for (int i = 0; i < particle.m_dim; ++i)
         {
             
-            //dotProdCoord += (particle.m_gloCoord[i]
-                                   //- collPnt[i]) * minNormal[i];
+            dotProdCoord += (particle.m_gloCoord[i]
+                             - collPnt[i]) * minNormal[i];
 
-            particle.m_gloCoord[i] =     particle.m_gloCoord[i]
-                              - abs( particle.m_gloCoord[i]
-                                   - collPnt[i] )
-                               * 2 * minNormal[i];
+            //particle.m_gloCoord[i] =     particle.m_gloCoord[i]
+                              //- abs( particle.m_gloCoord[i]
+                                   //- collPnt[i] )
+                               //* 2 * minNormal[i];
                                
             particle.m_oldCoord[i] =  collPnt[i];
         
@@ -914,7 +914,10 @@ while( particle.m_eId == -1 && particle.m_used == true)
         // Velocities
         for (int i = 0; i < particle.m_dim; ++i)
         {
-        //particle.m_gloCoord[i] += dotProdCoord * 2 * minNormal[i];
+        particle.m_gloCoord[i]  = collPnt[i]
+                                + (particle.m_gloCoord[i] - collPnt[i] )
+                                - dotProdCoord * 2 * minNormal[i];
+        
         particle.m_particleVelocity[j][i] -=dotProdVel * 2 * minNormal[i];
             
         particle.m_force[j][i] -= dotProdForce * 2 * minNormal[i];
