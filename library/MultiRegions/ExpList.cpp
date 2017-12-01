@@ -2545,6 +2545,7 @@ namespace Nektar
                 const FlagList &flags,
                 const StdRegions::ConstFactorMap &factors,
                 const StdRegions::VarCoeffMap &varcoeff,
+                const MultiRegions::VarFactorsMap &varfactors,
                 const Array<OneD, const NekDouble> &dirForcing,
                 const bool PhysSpaceForcing)
         {
@@ -2941,8 +2942,8 @@ namespace Nektar
                             Array<OneD, NekDouble> &bnd)
         {
             int n, cnt;
-            Array<OneD, NekDouble> tmp1, tmp2;
-            LocalRegions::ExpansionSharedPtr elmt;
+            Array<OneD, NekDouble> tmp1;
+            StdRegions::StdExpansionSharedPtr elmt;
 
             Array<OneD, int> ElmtID,EdgeID;
             GetBoundaryToElmtMap(ElmtID,EdgeID);
@@ -2967,8 +2968,8 @@ namespace Nektar
                 elmt   = GetExp(ElmtID[cnt+n]);
                 elmt->GetTracePhysVals(EdgeID[cnt+n],
                                       GetBndCondExpansions()[i]->GetExp(n),
-                                      tmp1 = phys + offsetPhys,
-                                      tmp2 = bnd + offsetBnd);
+                                      phys + offsetPhys,
+                                      tmp1 = bnd + offsetBnd);
             }
         }
 

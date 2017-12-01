@@ -46,6 +46,7 @@
 #include <MultiRegions/MultiRegions.hpp>
 #include <MultiRegions/GlobalMatrix.h>
 #include <MultiRegions/GlobalMatrixKey.h>
+#include <MultiRegions/GlobalLinSysKey.h>
 #include <MultiRegions/GlobalOptimizationParameters.h>
 #include <MultiRegions/AssemblyMap/AssemblyMap.h>
 #include <tinyxml.h>
@@ -284,6 +285,8 @@ namespace Nektar
                 const StdRegions::ConstFactorMap &factors,
                 const StdRegions::VarCoeffMap &varcoeff =
                                 StdRegions::NullVarCoeffMap,
+                const MultiRegions::VarFactorsMap &varfactors =
+                                 MultiRegions::NullVarFactorsMap,
                 const Array<OneD, const NekDouble> &dirForcing =
                 NullNekDouble1DArray,
                 const bool PhysSpaceForcing = true);
@@ -1203,6 +1206,7 @@ namespace Nektar
                 const FlagList &flags,
                 const StdRegions::ConstFactorMap &factors,
                 const StdRegions::VarCoeffMap &varcoeff,
+                const MultiRegions::VarFactorsMap &varfactors,
                 const Array<OneD, const NekDouble> &dirForcing,
                 const bool PhysSpaceForcing);
 
@@ -1754,12 +1758,13 @@ namespace Nektar
             const FlagList &flags,
             const StdRegions::ConstFactorMap &factors,
             const StdRegions::VarCoeffMap &varcoeff,
+            const MultiRegions::VarFactorsMap &varfactors,
             const Array<OneD, const NekDouble> &dirForcing,
             const bool PhysSpaceForcing)
 
         {
             v_HelmSolve(inarray, outarray, flags, factors, varcoeff,
-                        dirForcing, PhysSpaceForcing);
+                        varfactors, dirForcing, PhysSpaceForcing);
         }
 
 
