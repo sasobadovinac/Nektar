@@ -641,11 +641,19 @@ namespace Nektar
 #if 1
         {
             static GlobalLinSysSharedPtr linSys;
-            static bool init = false;
-            
-            if(init == false)
+            static bool setup_linsys = true;
+            static NekDouble save_aii_Dt = 0;
+
+
+            if(fabs(save_aii_Dt - aii_Dt) > 1e-8)
             {
-                init = true;
+                setup_linsys = true; 
+            }
+            
+            if(setup_linsys == true)
+            {
+                setup_linsys = false;
+                save_aii_Dt = aii_Dt;
 
                 m_locToGloMapVec = Array<OneD, AssemblyMapSharedPtr>
                     (m_nConvectiveFields);
