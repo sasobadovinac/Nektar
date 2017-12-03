@@ -660,7 +660,7 @@ namespace Nektar
                 }
 
                 GlobalLinSysKey key(
-                  StdRegions::eHelmholtz, m_locToGloMapVec[0], factors);
+                                    StdRegions::eHelmholtz, m_locToGloMapVec[0], factors, varCoeffMap, varFactorsMap);
 
                 // note this assumes m_fields hold u,v,w consecutively!
                 linSys = MemoryManager<
