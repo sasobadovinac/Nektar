@@ -38,6 +38,8 @@
 #include <SolverUtils/Filters/FilterParticlesTracking.h>
 #include <MultiRegions/ExpList3DHomogeneous1D.h>
 #include <boost/format.hpp>
+#include <LibUtilities/BasicUtils/ParseUtils.h>
+
 
 using namespace std;
 
@@ -207,7 +209,7 @@ FilterParticlesTracking::FilterParticlesTracking(
     if (it == pParams.end())
     {
         m_outputFile = m_session->GetSessionName();
-        m_collisionFile = "Collision" + m_session->GetSessionName();
+        m_collisionFile =  m_session->GetSessionName()+ ".cll" ;
     }
     else
     {
@@ -267,6 +269,14 @@ FilterParticlesTracking::FilterParticlesTracking(
     // Initialise m_index
     m_index = 0;
     m_advanceCalls = 0;
+    
+    // Boundary (to evaluate colision)
+    it = pParams.find("Boundary");
+    ASSERTL0(it != pParams.end(),   "Missing parameter 'Boundary'");
+    ASSERTL0(it->second.length() > 0, "Empty parameter 'Boundary'.");
+    m_BoundaryString = it->second;
+    
+    
 }
 
 
@@ -285,6 +295,52 @@ void FilterParticlesTracking::v_Initialise(
     const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
     const NekDouble &time)
 {   
+    // Parse the boundary regions into a list.
+    std::string::size_type FirstInd =
+                            m_BoundaryString.find_first_of('[') + 1;
+    std::string::size_type LastInd =
+                            m_BoundaryString.find_last_of(']') - 1;
+
+    ASSERTL0(FirstInd <= LastInd,
+            (std::string("Error reading boundary region definition:") +
+             m_BoundaryString).c_str());
+
+    std::string IndString =
+            m_BoundaryString.substr(FirstInd, LastInd - FirstInd + 1);
+    bool parseGood = ParseUtils::GenerateSeqVector(IndString,
+                                                   m_boundaryRegionsIdList);
+    ASSERTL0(parseGood && !m_boundaryRegionsIdList.empty(),
+             (std::string("Unable to read boundary regions index "
+              "range for FilterAeroForces: ") + IndString).c_str());
+
+    // determine what boundary regions need to be considered
+    int cnt;
+    unsigned int numBoundaryRegions =
+                        pFields[0]->GetBndConditions().num_elements();
+    m_boundaryRegionIsInList.insert(m_boundaryRegionIsInList.end(),
+                                    numBoundaryRegions, 0);
+
+    SpatialDomains::BoundaryConditions bcs(m_session,
+                                            pFields[0]->GetGraph());
+    const SpatialDomains::BoundaryRegionCollection &bregions =
+                                            bcs.GetBoundaryRegions();
+
+    cnt = 0;
+    for (auto &it : bregions)
+    {
+        if ( std::find(m_boundaryRegionsIdList.begin(),
+                       m_boundaryRegionsIdList.end(), it.first) !=
+                m_boundaryRegionsIdList.end() )
+        {
+            m_boundaryRegionIsInList[cnt] = 1;
+        }
+        cnt++;
+    }
+    
+    
+    
+    
+    
     int dim = pFields[0]->GetGraph()->GetSpaceDimension();
     // Open output stream
     m_outputStream.open(m_outputFile.c_str());
@@ -444,8 +500,6 @@ void FilterParticlesTracking::AdvanceParticles(
                 particle.m_oldCoord[i] = particle.m_gloCoord[i];
             }
             
-            // Rotate force array
-            RollOver(particle.m_force);
             // Obtain solution (an fluid velocity) at the particle location
             InterpSolution(pFields, particle);
             // Set particle velocity
@@ -614,6 +668,7 @@ void FilterParticlesTracking::UpdatePosition(Particle &particle)
             for(int j = 0; j < order; ++j)
             {
                 particle.m_gloCoord[i] += m_timestep *
+                                          //AdamsBashforth_coeffs[order-1][j] *
                                           AdamsMoulton_coeffs[order-1][j] *
                                           particle.m_particleVelocity[j][i];
             }
@@ -646,7 +701,10 @@ void FilterParticlesTracking::UpdateVelocity(Particle &particle)
     }
     else
     {
+        // Rotate force array
+        RollOver(particle.m_force);
         CalculateForce(particle);
+        
         RollOver(particle.m_particleVelocity);
         int order = min(m_advanceCalls, m_intOrder);
         for (int i = 0; i < particle.m_dim; ++i)
@@ -676,7 +734,7 @@ void FilterParticlesTracking::CalculateForce(Particle &particle)
         Re += pow(particle.m_fluidVelocity[i]
                   -particle.m_particleVelocity[0][i],2.0);
     }
-    //Re = sqrt(Re)*m_diameter/m_kinvis;
+    //Re = sqrt(Re)*m_diameter/dm_kinvis;
     Re = sqrt(Re)*m_diameter/nu;
     
     
@@ -726,13 +784,12 @@ void FilterParticlesTracking::CalculateForce(Particle &particle)
     
     for (int i = 0; i < particle.m_dim; ++i)
     {
-        particle.m_force[0][i] = Fd * ( particle.m_fluidVelocity[i]
+        particle.m_force[0][i] = 0.0*Fd * ( particle.m_fluidVelocity[i]
                                - particle.m_particleVelocity[0][i]);
     }
   
     //Add gravity effects
-    particle.m_force[0][1] -= 10 * (1.0 - 1.0/m_density);
-
+        particle.m_force[0][1] -= 10.0 ;//* (1.0 - 1.0/m_density);
 }
 
 /**
@@ -758,7 +815,7 @@ while( particle.m_eId == -1 && particle.m_used == true)
     NekDouble   maxDotProd = 0.0, dotProd = 0.0, ScaleDP = 0.0;
                 
     Array<OneD,double> minNormal(3);
-    int minPnt = -1, minBnd = -1;
+    int minBnd = -1;
     
     //Loop over each boundary
     for (int nb = 0; nb < bndExp.num_elements(); ++nb)
@@ -813,7 +870,6 @@ while( particle.m_eId == -1 && particle.m_used == true)
             {
                 maxDotProd = dotProd;
                 minDist    = abs(dist);
-                minPnt     =    j;
                 minBnd     =   nb;
                 
                 for (int i = 0; i < particle.m_dim; ++i)
@@ -821,12 +877,12 @@ while( particle.m_eId == -1 && particle.m_used == true)
                     minNormal[i] = normals[i][j];
                 }
             }
-         
         }
- 
     }
     }
     
+    if(m_boundaryRegionIsInList[minBnd] == 1)
+    {
     //// Collision point cordinates
     Array<OneD, NekDouble> collPnt(3,0.0);
     NekDouble absVel = 0.0;
@@ -872,7 +928,7 @@ while( particle.m_eId == -1 && particle.m_used == true)
             dotProdForce += particle.m_force[j][i] * minNormal[i];
         }
         
-        // Velocities
+        // Update coordinates, velocites, and forces
         for (int i = 0; i < particle.m_dim; ++i)
         {
             particle.m_oldCoord[i] =  collPnt[i];
@@ -885,7 +941,8 @@ while( particle.m_eId == -1 && particle.m_used == true)
                 
             particle.m_force[j][i] -= dotProdForce * 2 * minNormal[i];
         }
-   }
+      }
+      
     UpdateLocCoord(pFields, particle);
     
      // Evaluate the angle
@@ -902,12 +959,8 @@ while( particle.m_eId == -1 && particle.m_used == true)
             }
             dotProd /= sqrt(absVel);
             dotProd = asinf(dotProd);
-            
-            
-    
-    
-    
-    
+
+
     //Output the collision information
     //m_collisionStream << boost::format("%25.19e") % time;
     m_collisionStream << particle.m_id;
@@ -950,6 +1003,15 @@ while( particle.m_eId == -1 && particle.m_used == true)
             collPntOLD[i] = collPnt[i];
         }
     }
+}
+else 
+{
+     cout << "Particle " << particle.m_id << 
+     " is unused because left the domain."<<endl; 
+     particle.m_used = false;   
+}
+   
+    
 }
 
 
@@ -1016,8 +1078,12 @@ void FilterParticlesTracking::OutputParticles(const NekDouble &time)
 }
 
 /**
- *
- */
+   * Function to roll time-level storages to the next step layout.
+   * The stored data associated with the oldest time-level
+   * (not required anymore) are moved to the top, where they will
+   * be overwritten as the solution process progresses.
+   *
+**/
 void FilterParticlesTracking::RollOver(
         Array<OneD, Array<OneD, NekDouble> > &input)
 {

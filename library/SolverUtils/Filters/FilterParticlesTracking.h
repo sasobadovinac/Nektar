@@ -196,6 +196,14 @@ private:
     std::string                             m_collisionFile;
     std::ofstream                           m_collisionStream;
     
+    /// Variables for output file
+    std::string                     m_BoundaryString;
+    
+    /// ID's of boundary regions where we want the forces
+    std::vector<unsigned int>       m_boundaryRegionsIdList;
+    /// Determines if a given Boundary Region is in
+    /// m_boundaryRegionsIdList
+    std::vector<bool>               m_boundaryRegionIsInList;
 
     /// Variables for bounding box determining domain of interest for particles
     bool                                    m_useBoundingBox;
