@@ -60,7 +60,7 @@ NekDouble FilterParticlesTracking::AdamsBashforth_coeffs[4][4] = {
         { 55.0/24.0 ,-59.0/24.0 , 37.0/24.0 ,-3.0/8.0   }};
 NekDouble FilterParticlesTracking::AdamsMoulton_coeffs[4][4] = {
         { 1.0       ,  0.0      , 0.0       , 0.0       },
-        { 1.0/2.0   ,  1.0      , 0.0       , 0.0       },
+        { 1.0/2.0   ,  1.0/2.0  , 0.0       , 0.0       },
         { 5.0/12.0  ,  2.0/3.0  ,-1.0/12.0  , 0.0       },
         { 3.0/8.0   ,  19.0/24.0,-5.0/24.0  , 1.0/24.0  }};
 
@@ -499,7 +499,6 @@ void FilterParticlesTracking::AdvanceParticles(
             {
                 particle.m_oldCoord[i] = particle.m_gloCoord[i];
             }
-            
             // Obtain solution (an fluid velocity) at the particle location
             InterpSolution(pFields, particle);
             // Set particle velocity
@@ -709,6 +708,12 @@ void FilterParticlesTracking::UpdateVelocity(Particle &particle)
         int order = min(m_advanceCalls, m_intOrder);
         for (int i = 0; i < particle.m_dim; ++i)
         {
+            if (order != 1)
+            {
+                particle.m_particleVelocity[0][i] = 
+                    particle.m_particleVelocity[1][i];
+            }
+            
             for(int j = 0; j < order; ++j)
             {
                 particle.m_particleVelocity[0][i] += m_timestep *
@@ -848,7 +853,9 @@ while( particle.m_eId == -1 && particle.m_used == true)
                        * normals[i][j];
         }
         //Check if the wall is crossed
-        if (dist*distN < 0.0 )
+        if (dist*distN < 0.0
+           || abs(dist) < NekConstants::kNekZeroTol
+           || abs(distN) < NekConstants::kNekZeroTol)
         {   
             dotProd = 0.0; ScaleDP = 0.0;
             // Evaluate the dot Product
@@ -866,7 +873,7 @@ while( particle.m_eId == -1 && particle.m_used == true)
             dotProd /= sqrt(ScaleDP);
 
             // Save the max dot Product 
-            if (dotProd > maxDotProd)
+            if (abs(dotProd) > maxDotProd)
             {
                 maxDotProd = dotProd;
                 minDist    = abs(dist);
@@ -881,7 +888,7 @@ while( particle.m_eId == -1 && particle.m_used == true)
     }
     }
     
-    if(m_boundaryRegionIsInList[minBnd] == 1)
+    if( m_boundaryRegionIsInList[minBnd] == 1)
     {
     //// Collision point cordinates
     Array<OneD, NekDouble> collPnt(3,0.0);
@@ -911,37 +918,45 @@ while( particle.m_eId == -1 && particle.m_used == true)
     // Evaluation of the restitution coeficients
     int order = min(m_advanceCalls, m_intOrder);
     NekDouble dotProdCoord, dotProdVel, dotProdForce; 
-     
+
+    dotProdCoord = 0.0;
+    //Evaluate dot products to make the reflection
+    for (int i = 0; i < particle.m_dim; ++i)
+    {
+        dotProdCoord += (particle.m_gloCoord[i]
+                         - collPnt[i]) * minNormal[i];
+    }
+    
+    // Update coordinates, velocites, and forces
+    for (int i = 0; i < particle.m_dim; ++i)
+    {
+        particle.m_oldCoord[i] =  collPnt[i];
+
+        particle.m_gloCoord[i]  = collPnt[i]
+                                + (particle.m_gloCoord[i] - collPnt[i] )
+                                - dotProdCoord * 2 * minNormal[i];
+    }
+
     for(int j = 0; j < order; ++j)
     {   
-        dotProdCoord = 0.0;
         dotProdVel = 0.0;
         dotProdForce = 0.0;
         
         //Evaluate dot products to make the reflection
         for (int i = 0; i < particle.m_dim; ++i)
-        {
-            dotProdCoord += (particle.m_gloCoord[i]
-                             - collPnt[i]) * minNormal[i];
-        
+        {        
             dotProdVel += particle.m_particleVelocity[j][i] * minNormal[i];
             dotProdForce += particle.m_force[j][i] * minNormal[i];
         }
         
         // Update coordinates, velocites, and forces
         for (int i = 0; i < particle.m_dim; ++i)
-        {
-            particle.m_oldCoord[i] =  collPnt[i];
-
-            particle.m_gloCoord[i]  = collPnt[i]
-                                    + (particle.m_gloCoord[i] - collPnt[i] )
-                                    - dotProdCoord * 2 * minNormal[i];
-            
+        {            
             particle.m_particleVelocity[j][i] -=dotProdVel * 2 * minNormal[i];
                 
             particle.m_force[j][i] -= dotProdForce * 2 * minNormal[i];
         }
-      }
+    }
       
     UpdateLocCoord(pFields, particle);
     
@@ -991,7 +1006,7 @@ while( particle.m_eId == -1 && particle.m_used == true)
         distN +=   pow(collPnt[i]-collPntOLD[i],2);
     }
     
-    if (distN <  1E-3)
+    if (distN < 1E-3)
     {
         cout << "Particle " << particle.m_id << " is unused." << endl; 
         particle.m_used = false;    
@@ -1003,6 +1018,7 @@ while( particle.m_eId == -1 && particle.m_used == true)
             collPntOLD[i] = collPnt[i];
         }
     }
+    
 }
 else 
 {
@@ -1011,7 +1027,7 @@ else
      particle.m_used = false;   
 }
    
-    
+cout << "Particle " << particle.m_id << " collisioned"<<endl; 
 }
 
 
