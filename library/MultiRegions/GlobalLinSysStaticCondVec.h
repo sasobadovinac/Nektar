@@ -106,9 +106,9 @@ namespace Nektar
             Array<OneD, NekDouble>                   m_wsp;
 
             /// Rotational information for periodic non-planar cases
-            shared_ptr<RotPeriodicInfo>  m_perRotInfo;
+            //shared_ptr<RotPeriodicInfo>  m_perRotInfo;
             /// Rotational local coefficients for periodic non-planar cases
-            Array<OneD, int>           m_periodicRotMap;
+            //Array<OneD, int>           m_periodicRotMap;
             
             /// using a specified local to global map.
             virtual void v_SolveVec(

@@ -335,6 +335,9 @@ namespace Nektar
 
                 int nvec = nGlobal.num_elements();
                 
+                RotPeriodicInfoSharedPtr perRotInfo = m_locToGloMapVec[0]->GetPerRotInfo();
+                Array<OneD, int> periodicRotMap = m_locToGloMapVec[0]->GetPeriodicRotMap();
+
                 // Do matrix multiply locally, using direct BLAS calls
                 for(n = cnt = 0; n < nvec; cnt += nGlobal[n], ++n)
                 {                    
@@ -343,11 +346,11 @@ namespace Nektar
                 }
 
                 // put in fwd rotation term here.
-                for(n = 0; n < m_periodicRotMap.num_elements(); ++n)
+                for(n = 0; n < periodicRotMap.num_elements(); ++n)
                 {
-                    m_perRotInfo->RotateFwd(m_wsp[m_periodicRotMap[i]],
-                                            m_wsp[nLocal + m_periodicRotMap[i]],
-                                            m_wsp[2*nLocal+m_periodicRotMap[i]]);
+                    perRotInfo->RotateFwd(m_wsp[periodicRotMap[i]],
+                                          m_wsp[nLocal + periodicRotMap[i]],
+                                          m_wsp[2*nLocal+periodicRotMap[i]]);
                 }
                 
                 Array<OneD, NekDouble> tmpout = m_wsp + nLocal*nvec;
@@ -366,12 +369,12 @@ namespace Nektar
                 }
                 
                 // put in bwd rotation term 
-                for(n = 0; n < m_periodicRotMap.num_elements(); ++n)
+                for(n = 0; n < periodicRotMap.num_elements(); ++n)
                 {
-                    m_perRotInfo->RotateBwd(
-                                  m_wsp[nLocal*nvec  +  m_periodicRotMap[i]],
-                                  m_wsp[nLocal*(nvec+1)+m_periodicRotMap[i]],
-                                  m_wsp[nLocal*(nvec+2)+m_periodicRotMap[i]]);
+                    perRotInfo->RotateBwd(
+                                  m_wsp[nLocal*nvec  +  periodicRotMap[i]],
+                                  m_wsp[nLocal*(nvec+1)+periodicRotMap[i]],
+                                  m_wsp[nLocal*(nvec+2)+periodicRotMap[i]]);
                 }
 
                 for(n = cnt = 0; n < nvec; cnt += nGlobal[n], ++n)

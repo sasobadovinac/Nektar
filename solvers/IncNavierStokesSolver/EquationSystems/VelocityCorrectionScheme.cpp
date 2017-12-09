@@ -403,13 +403,48 @@ namespace Nektar
         SetBoundaryConditions(m_time);
 
         m_F = Array<OneD, Array< OneD, NekDouble> > (m_nConvectiveFields);
+
+        Array<OneD, Array<OneD, NekDouble> > fields(m_nConvectiveFields);
+            
+        for(int n = 0; n < m_nConvectiveFields; ++n)
+        {
+            fields[n] = m_fields[n]->UpdateCoeffs();
+        }
+        
+        RotPeriodicInfoSharedPtr perRotInfo = m_fields[0]->GetLocToGloMap()->GetPerRotInfo();
+        Array<OneD, int> periodicRotMap = m_fields[0]->GetLocToGloMap()->GetPeriodicRotMap();
+
+        if(perRotInfo.get())
+        {
+            // put in fwd rotation term here.
+            for(int n = 0; n < periodicRotMap.num_elements(); ++n)
+            {
+                perRotInfo->RotateFwd(fields[0][periodicRotMap[n]],
+                                      fields[1][periodicRotMap[n]],
+                                      fields[2][periodicRotMap[n]]);
+            }
+        }
+        
         for(int i = 0; i < m_nConvectiveFields; ++i)
         {
-#if 0  // disabled since we would need to put in a rotation for non-planar periodic BCs 
             m_fields[i]->LocalToGlobal();
             m_fields[i]->ImposeDirichletConditions(m_fields[i]->UpdateCoeffs());
             m_fields[i]->GlobalToLocal();
-#endif
+        }
+
+        if(perRotInfo.get())
+        {
+            // put in fwd rotation term here.
+            for(int n = 0; n < periodicRotMap.num_elements(); ++n)
+            {
+                perRotInfo->RotateBwd(fields[0][periodicRotMap[n]],
+                                      fields[1][periodicRotMap[n]],
+                                      fields[2][periodicRotMap[n]]);
+            }
+        }
+
+        for(int i = 0; i < m_nConvectiveFields; ++i)
+        {
             m_fields[i]->BwdTrans(m_fields[i]->GetCoeffs(),
                                   m_fields[i]->UpdatePhys());
             m_F[i] = Array< OneD, NekDouble> (m_fields[0]->GetTotPoints(), 0.0);

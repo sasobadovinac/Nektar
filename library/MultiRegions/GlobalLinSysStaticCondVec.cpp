@@ -90,7 +90,7 @@ namespace Nektar
             Initialise(m_locToGloMapVec[0]);
 
             // Set up periodic rotational information if required
-            SetupPeriodicRotation();
+            //SetupPeriodicRotation();
         }
         
         /**
@@ -179,12 +179,16 @@ namespace Nektar
                 v_BasisTransformLoc(F_bnd[n]);
             }
 
+
+            RotPeriodicInfoSharedPtr perRotInfo = m_locToGloMapVec[0]->GetPerRotInfo();
+            Array<OneD, int> periodicRotMap = m_locToGloMapVec[0]->GetPeriodicRotMap();
+            
             // put in fwd rotation term here.
-            for(n = 0; n < m_periodicRotMap.num_elements(); ++n)
+            for(n = 0; n < periodicRotMap.num_elements(); ++n)
             {
-                m_perRotInfo->RotateFwd(F_bnd[0][m_periodicRotMap[n]],
-                                        F_bnd[1][m_periodicRotMap[n]],
-                                        F_bnd[2][m_periodicRotMap[n]]);
+                perRotInfo->RotateFwd(F_bnd[0][periodicRotMap[n]],
+                                      F_bnd[1][periodicRotMap[n]],
+                                      F_bnd[2][periodicRotMap[n]]);
             }
 
             // calculate globally  condensed forcing
@@ -209,11 +213,11 @@ namespace Nektar
                 m_locToGloMapVec[n]->GlobalToLocalBnd(out[n],outloc[n]);
             }
 
-            for(n = 0; n < m_periodicRotMap.num_elements(); ++n)
+            for(n = 0; n < periodicRotMap.num_elements(); ++n)
             {
-                m_perRotInfo->RotateBwd(F_bnd[0][m_periodicRotMap[n]],
-                                        F_bnd[1][m_periodicRotMap[n]],
-                                        F_bnd[2][m_periodicRotMap[n]]);
+                perRotInfo->RotateBwd(F_bnd[0][periodicRotMap[n]],
+                                      F_bnd[1][periodicRotMap[n]],
+                                      F_bnd[2][periodicRotMap[n]]);
             }
 
             // rotate bwd
@@ -335,6 +339,8 @@ namespace Nektar
             }
         }
 
+
+#if 0 
         void GlobalLinSysStaticCondVec::SetupPeriodicRotation(void)
         {
 
@@ -414,8 +420,8 @@ namespace Nektar
             vComm->AllReduce(tol,LibUtilities::ReduceMax);
             
             // set up rotation info
-            m_perRotInfo = MemoryManager<RotPeriodicInfo>
-                ::AllocateSharedPtr(dir,angle,tol);
+            //m_perRotInfo = MemoryManager<RotPeriodicInfo>
+            //::AllocateSharedPtr(dir,angle,tol);
 
             // translate region id into composite id
             int compId;
@@ -536,8 +542,9 @@ namespace Nektar
             cnt = 0;
             for (auto &setIt : localcoeffs)
             {
-                m_periodicRotMap[cnt++] = setIt;
+                m_periodicRotnMap[cnt++] = setIt;
             }
         }
+#endif
     }
 }

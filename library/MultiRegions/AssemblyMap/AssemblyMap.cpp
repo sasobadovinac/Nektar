@@ -1307,6 +1307,16 @@ namespace Nektar
             return m_successiveRHS;
         }
 
+        RotPeriodicInfoSharedPtr &AssemblyMap::GetPerRotInfo(void) 
+        {
+            return m_perRotInfo;
+        }
+
+        Array<OneD, int> &AssemblyMap::GetPeriodicRotMap(void) 
+        {
+            return m_periodicRotMap;
+        }
+
         void AssemblyMap::GlobalToLocalBndWithoutSign(
                     const Array<OneD, const NekDouble>& global,
                     Array<OneD,NekDouble>& loc)

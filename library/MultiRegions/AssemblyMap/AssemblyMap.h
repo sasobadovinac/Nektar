@@ -339,6 +339,10 @@ namespace Nektar
                 return m_lowestStaticCondLevel;
             }
 
+            MULTI_REGIONS_EXPORT RotPeriodicInfoSharedPtr &GetPerRotInfo(void); 
+
+            MULTI_REGIONS_EXPORT Array<OneD, int> &GetPeriodicRotMap(void); 
+
         protected:
             /// Session object
             LibUtilities::SessionReaderSharedPtr m_session;
@@ -445,6 +449,13 @@ namespace Nektar
             /// Lowest static condensation level.
             int m_lowestStaticCondLevel;
             
+
+            /// Rotational information for periodic non-planar cases
+            shared_ptr<RotPeriodicInfo>  m_perRotInfo;
+            /// Rotational local coefficients for periodic non-planar cases
+            Array<OneD, int>           m_periodicRotMap;
+
+
             /// Calculates the bandwidth of the boundary system.
             void CalculateBndSystemBandWidth();
 

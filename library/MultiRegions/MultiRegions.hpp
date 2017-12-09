@@ -279,6 +279,8 @@ namespace Nektar
 
         } RotPeriodicInfo;
 
+        typedef std::shared_ptr<RotPeriodicInfo> RotPeriodicInfoSharedPtr;
+        
     }// end of namespace
 }// end of namespace
 
