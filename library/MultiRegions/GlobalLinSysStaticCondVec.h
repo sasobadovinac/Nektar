@@ -105,11 +105,6 @@ namespace Nektar
             /// Workspace array for matrix multiplication
             Array<OneD, NekDouble>                   m_wsp;
 
-            /// Rotational information for periodic non-planar cases
-            //shared_ptr<RotPeriodicInfo>  m_perRotInfo;
-            /// Rotational local coefficients for periodic non-planar cases
-            //Array<OneD, int>           m_periodicRotMap;
-            
             /// using a specified local to global map.
             virtual void v_SolveVec(
                       const Array<OneD, Array<OneD,  NekDouble> >&in,
@@ -125,10 +120,6 @@ namespace Nektar
             /// of the multi-level Schur complement.
             void SetupTopLevel(
                     const std::shared_ptr<AssemblyMap>& locToGloMap);
-
-            /// Set up rotational information for local coefficients
-            /// if these are defined in mesh
-            void SetupPeriodicRotation(void);
         };
     }
 }
