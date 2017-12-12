@@ -348,9 +348,9 @@ namespace Nektar
                 // put in fwd rotation term here.
                 for(n = 0; n < periodicRotMap.num_elements(); ++n)
                 {
-                    perRotInfo->RotateFwd(m_wsp[periodicRotMap[i]],
-                                          m_wsp[nLocal + periodicRotMap[i]],
-                                          m_wsp[2*nLocal+periodicRotMap[i]]);
+                    perRotInfo->RotateFwd(m_wsp[periodicRotMap[n]],
+                                          m_wsp[nLocal + periodicRotMap[n]],
+                                          m_wsp[2*nLocal+periodicRotMap[n]]);
                 }
                 
                 Array<OneD, NekDouble> tmpout = m_wsp + nLocal*nvec;
@@ -372,9 +372,9 @@ namespace Nektar
                 for(n = 0; n < periodicRotMap.num_elements(); ++n)
                 {
                     perRotInfo->RotateBwd(
-                                  m_wsp[nLocal*nvec  +  periodicRotMap[i]],
-                                  m_wsp[nLocal*(nvec+1)+periodicRotMap[i]],
-                                  m_wsp[nLocal*(nvec+2)+periodicRotMap[i]]);
+                                  m_wsp[nLocal*nvec  +  periodicRotMap[n]],
+                                  m_wsp[nLocal*(nvec+1)+periodicRotMap[n]],
+                                  m_wsp[nLocal*(nvec+2)+periodicRotMap[n]]);
                 }
 
                 for(n = cnt = 0; n < nvec; cnt += nGlobal[n], ++n)
