@@ -268,7 +268,6 @@ FilterParticlesTracking::FilterParticlesTracking(
 
     // Initialise m_index
     m_index = 0;
-    m_advanceCalls = 0;
     
     // Boundary (to evaluate colision)
     it = pParams.find("Boundary");
@@ -491,9 +490,9 @@ void FilterParticlesTracking::AdvanceParticles(
 {
     for (auto &particle : m_particles)
     {
-        m_advanceCalls++;
         if(particle.m_used)
         {
+            particle.m_advanceCalls++;
              //Store original position of the particle
             for (int i = 0; i < particle.m_dim; ++i)
             {
@@ -509,10 +508,11 @@ void FilterParticlesTracking::AdvanceParticles(
             UpdatePosition(particle);
             // Update element containing particle and coordinate in std element
             UpdateLocCoord(pFields, particle);
-            // Handle collisions if particle left the domain
-            HandleCollision(pFields,particle);
             // Check if particle left the domain of interest
             CheckBoundingBox(particle);
+            // Handle collisions if particle left the domain
+            HandleCollision(pFields,particle);
+
             
             
             //Plot data for debuging 
@@ -645,7 +645,7 @@ void FilterParticlesTracking::InterpSolution(
  */
 void FilterParticlesTracking::UpdatePosition(Particle &particle)
 {
-    int order = min(m_advanceCalls, m_intOrder);
+    int order = min(particle.m_advanceCalls, m_intOrder);
     if( m_fluidParticles)
     {
         // Velocity is at time n, so we use Adams-Bashforth
@@ -654,8 +654,8 @@ void FilterParticlesTracking::UpdatePosition(Particle &particle)
             for(int j = 0; j < order; ++j)
             {
                 particle.m_gloCoord[i] += m_timestep *
-                                        AdamsBashforth_coeffs[order-1][j] *
-                                        particle.m_particleVelocity[j][i];
+                                    AdamsBashforth_coeffs[order-1][j] *
+                                    particle.m_particleVelocity[j][i];
             }
         }
     }
@@ -667,9 +667,8 @@ void FilterParticlesTracking::UpdatePosition(Particle &particle)
             for(int j = 0; j < order; ++j)
             {
                 particle.m_gloCoord[i] += m_timestep *
-                                          //AdamsBashforth_coeffs[order-1][j] *
-                                          AdamsMoulton_coeffs[order-1][j] *
-                                          particle.m_particleVelocity[j][i];
+                                      AdamsMoulton_coeffs[order-1][j] *
+                                      particle.m_particleVelocity[j][i];
             }
         }
     }
@@ -683,7 +682,6 @@ void FilterParticlesTracking::SetToFluidVelocity(
 {
     for (int i = 0; i < particle.m_dim; ++i)
     {
-        //particle.m_particleVelocity[0][i] = 0.0;
         particle.m_particleVelocity[0][i] = particle.m_fluidVelocity[i];
     }
 }
@@ -705,20 +703,20 @@ void FilterParticlesTracking::UpdateVelocity(Particle &particle)
         CalculateForce(particle);
         
         RollOver(particle.m_particleVelocity);
-        int order = min(m_advanceCalls, m_intOrder);
+        int order = min(particle.m_advanceCalls, m_intOrder);
         for (int i = 0; i < particle.m_dim; ++i)
         {
             if (order != 1)
             {
                 particle.m_particleVelocity[0][i] = 
-                    particle.m_particleVelocity[1][i];
+                particle.m_particleVelocity[1][i];
             }
             
             for(int j = 0; j < order; ++j)
             {
                 particle.m_particleVelocity[0][i] += m_timestep *
-                                        AdamsBashforth_coeffs[order-1][j] *
-                                        particle.m_force[j][i];
+                                    AdamsBashforth_coeffs[order-1][j] *
+                                    particle.m_force[j][i];
             }
         }
     }
@@ -729,7 +727,7 @@ void FilterParticlesTracking::UpdateVelocity(Particle &particle)
  */
 void FilterParticlesTracking::CalculateForce(Particle &particle)
 {
-    // TO DO: update particle.m_force[0][i] with force per unit mass
+    // Update particle.m_force[0][i] with force per unit mass
     
     NekDouble   Re = 0.0, Cd = 0.0, Fd = 0.0;     
     NekDouble   nu = 1.0e-6;     // m2/s
@@ -837,86 +835,86 @@ while( particle.m_eId == -1 && particle.m_used == true)
             coords[j] = Array<OneD,NekDouble>(npoints);
         }
         bndExp[nb]->GetCoords(coords[0],coords[1],coords[2]);
-        
-    //Loop for each integration point on  any boundary
-    for (int j = 0; j < npoints; ++j)
-    {
-        dist = 0.0; distN = 0.0;
-        for (int i = 0; i < particle.m_dim; ++i)
+            
+        //Loop for each integration point on  any boundary
+        for (int j = 0; j < npoints; ++j)
         {
-            dist +=    (coords[i][j]
-                       - particle.m_oldCoord[i])
-                       * normals[i][j];
-                             
-            distN +=   (coords[i][j]
-                       - particle.m_gloCoord[i])
-                       * normals[i][j];
-        }
-        //Check if the wall is crossed
-        if (dist*distN < 0.0
-           || abs(dist) < NekConstants::kNekZeroTol
-           || abs(distN) < NekConstants::kNekZeroTol)
-        {   
-            dotProd = 0.0; ScaleDP = 0.0;
-            // Evaluate the dot Product
+            dist = 0.0; distN = 0.0;
             for (int i = 0; i < particle.m_dim; ++i)
             {
-                dotProd += ( particle.m_gloCoord[i]
-                           -   particle.m_oldCoord[i] )
-                           * ( coords[i][j]
-                           -   particle.m_oldCoord[i] );
-                
-                
-                ScaleDP += pow( particle.m_oldCoord[i]
-                               -  coords[i][j] , 2 );
+                dist +=    (coords[i][j]
+                           - particle.m_oldCoord[i])
+                           * normals[i][j];
+                                 
+                distN +=   (coords[i][j]
+                           - particle.m_gloCoord[i])
+                           * normals[i][j];
             }
-            dotProd /= sqrt(ScaleDP);
-
-            // Save the max dot Product 
-            if (abs(dotProd) > maxDotProd)
-            {
-                maxDotProd = dotProd;
-                minDist    = abs(dist);
-                minBnd     =   nb;
-                
+            //Check if the wall is crossed
+            if (dist*distN < 0.0
+               || abs(dist) < NekConstants::kNekZeroTol
+               || abs(distN) < NekConstants::kNekZeroTol)
+            {   
+                dotProd = 0.0; ScaleDP = 0.0;
+                // Evaluate the dot Product
                 for (int i = 0; i < particle.m_dim; ++i)
                 {
-                    minNormal[i] = normals[i][j];
+                    dotProd += ( particle.m_gloCoord[i]
+                               -   particle.m_oldCoord[i] )
+                               * ( coords[i][j]
+                               -   particle.m_oldCoord[i] );
+                    
+                    
+                    ScaleDP += pow( particle.m_oldCoord[i]
+                                   -  coords[i][j] , 2 );
+                }
+                dotProd /= sqrt(ScaleDP);
+
+                // Save the max dot Product 
+                if (abs(dotProd) > maxDotProd)
+                {
+                    maxDotProd = dotProd;
+                    minDist    = abs(dist);
+                    minBnd     =   nb;
+                    
+                    for (int i = 0; i < particle.m_dim; ++i)
+                    {
+                        minNormal[i] = normals[i][j];
+                    }
                 }
             }
         }
     }
-    }
     
     if( m_boundaryRegionIsInList[minBnd] == 1)
     {
-    //// Collision point cordinates
-    Array<OneD, NekDouble> collPnt(3,0.0);
-    NekDouble absVel = 0.0;
+        //// Collision point cordinates
+        Array<OneD, NekDouble> collPnt(3,0.0);
+        NekDouble absVel = 0.0;
 
-    for (int i = 0; i < particle.m_dim; ++i)
-    {
-        absVel += pow((particle.m_gloCoord[i]
-                   -  particle.m_oldCoord[i])*minNormal[i],2);
-    }
-    absVel = sqrt(absVel);
-    
-    //cout<<"Punto collision: {";
-    for (int i = 0; i < particle.m_dim; ++i)
-    {
-        collPnt[i] = particle.m_oldCoord[i]
-                + (  particle.m_gloCoord[i]
-                -    particle.m_oldCoord[i])
-                *  minDist/absVel;
-                
-    //cout<<collPnt[i]<<", ";
+        for (int i = 0; i < particle.m_dim; ++i)
+        {
+            absVel += pow((particle.m_gloCoord[i]
+                       -  particle.m_oldCoord[i])*minNormal[i],2);
+        }
+        absVel = sqrt(absVel);
+        
+        //cout<<"Punto collision: {";
+        for (int i = 0; i < particle.m_dim; ++i)
+        {
+            collPnt[i] = particle.m_oldCoord[i]
+                    + (  particle.m_gloCoord[i]
+                    -    particle.m_oldCoord[i])
+                    *  minDist/absVel;
+                    
+        //cout<<collPnt[i]<<", ";
     }
     //cout<<"}"<<endl<<endl;
     
     
     //New coordinates and Velocities
     // Evaluation of the restitution coeficients
-    int order = min(m_advanceCalls, m_intOrder);
+    int order = min(particle.m_advanceCalls, m_intOrder);
     NekDouble dotProdCoord, dotProdVel, dotProdForce; 
 
     dotProdCoord = 0.0;
@@ -927,7 +925,7 @@ while( particle.m_eId == -1 && particle.m_used == true)
                          - collPnt[i]) * minNormal[i];
     }
     
-    // Update coordinates, velocites, and forces
+        // Update coordinates, velocites, and forces
     for (int i = 0; i < particle.m_dim; ++i)
     {
         particle.m_oldCoord[i] =  collPnt[i];
@@ -936,27 +934,59 @@ while( particle.m_eId == -1 && particle.m_used == true)
                                 + (particle.m_gloCoord[i] - collPnt[i] )
                                 - dotProdCoord * 2 * minNormal[i];
     }
-
-    for(int j = 0; j < order; ++j)
-    {   
+  
+  
         dotProdVel = 0.0;
         dotProdForce = 0.0;
         
         //Evaluate dot products to make the reflection
         for (int i = 0; i < particle.m_dim; ++i)
         {        
-            dotProdVel += particle.m_particleVelocity[j][i] * minNormal[i];
-            dotProdForce += particle.m_force[j][i] * minNormal[i];
+            dotProdVel += particle.m_particleVelocity[0][i] * minNormal[i];
         }
         
         // Update coordinates, velocites, and forces
         for (int i = 0; i < particle.m_dim; ++i)
         {            
-            particle.m_particleVelocity[j][i] -=dotProdVel * 2 * minNormal[i];
-                
-            particle.m_force[j][i] -= dotProdForce * 2 * minNormal[i];
+            particle.m_particleVelocity[0][i] -=dotProdVel * 2 * minNormal[i];
         }
-    }
+
+  
+  
+  
+  
+
+    
+    //// Update coordinates, velocites, and forces
+    //for (int i = 0; i < particle.m_dim; ++i)
+    //{
+        //particle.m_oldCoord[i] =  collPnt[i];
+
+        //particle.m_gloCoord[i]  = collPnt[i]
+                                //+ (particle.m_gloCoord[i] - collPnt[i] )
+                                //- dotProdCoord * 2 * minNormal[i];
+    //}
+
+    //for(int j = 0; j < order; ++j)
+    //{   
+        //dotProdVel = 0.0;
+        //dotProdForce = 0.0;
+        
+        ////Evaluate dot products to make the reflection
+        //for (int i = 0; i < particle.m_dim; ++i)
+        //{        
+            //dotProdVel += particle.m_particleVelocity[j][i] * minNormal[i];
+            //dotProdForce += particle.m_force[j][i] * minNormal[i];
+        //}
+        
+        //// Update coordinates, velocites, and forces
+        //for (int i = 0; i < particle.m_dim; ++i)
+        //{            
+            //particle.m_particleVelocity[j][i] -=dotProdVel * 2 * minNormal[i];
+                
+            //particle.m_force[j][i] -= dotProdForce * 2 * minNormal[i];
+        //}
+    //}
       
     UpdateLocCoord(pFields, particle);
     
@@ -1009,7 +1039,8 @@ while( particle.m_eId == -1 && particle.m_used == true)
     if (distN < 1E-3)
     {
         cout << "Particle " << particle.m_id << " is unused." << endl; 
-        particle.m_used = false;    
+        particle.m_used = false;
+        particle.m_advanceCalls = 0;      
     }
     else
     {
@@ -1024,10 +1055,12 @@ else
 {
      cout << "Particle " << particle.m_id << 
      " is unused because left the domain."<<endl; 
-     particle.m_used = false;   
+     particle.m_used = false;
+     particle.m_advanceCalls = 0;   
 }
    
-cout << "Particle " << particle.m_id << " collisioned"<<endl; 
+cout << "Particle " << particle.m_id << " collisioned."<<endl;
+particle.m_advanceCalls = 0;  
 }
 
 
@@ -1048,6 +1081,7 @@ void FilterParticlesTracking::CheckBoundingBox(Particle &particle)
                 cout << "Particle " << particle.m_id
                      << " left the bounding box." << endl;
                 particle.m_used = false;
+                particle.m_advanceCalls = 0;
             }
         }
     }

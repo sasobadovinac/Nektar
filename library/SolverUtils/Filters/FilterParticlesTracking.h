@@ -74,6 +74,8 @@ struct Particle
 
         // Obtain a unique id
         SetNewId();
+        // Times particles counter
+        m_advanceCalls = 0;
     }
 
     /// Function to assign a new id to the particle
@@ -114,6 +116,8 @@ struct Particle
     Array<OneD, NekDouble>          m_fields;
     /// Force acting on the particle
     Array<OneD, Array<OneD, NekDouble>> m_force;
+    /// Counter of times particles were advanced
+    unsigned int                            m_advanceCalls;
 };
 
 
@@ -156,9 +160,6 @@ protected:
 private:
     /// Counter of times filter was called
     unsigned int                            m_index;
-    /// Counter of times particles were advanced
-    unsigned int                            m_advanceCalls;
-
     /// Location(s) where new points are created
     SpatialDomains::PointGeomVector         m_seedPoints;
     /// Stringstream for temporarily holding seed points coordinates
