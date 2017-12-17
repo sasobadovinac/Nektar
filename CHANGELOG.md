@@ -12,6 +12,7 @@ v4.4.2
 - Fix uninitialised coefficients in DirectFull solver (!898)
 - Fix a few memory leaks in polylib (!863)
 - Fix deadlock in DiffusionLDG (!885)
+- Fix calculation of BLPoints (!892)
 
 **NekMesh**
 - Fix missing periodic boundary meshing and boundary layer mesh adjustment
