@@ -59,7 +59,7 @@ GeneralCoupler::GeneralCoupler(
  */
 void GeneralCoupler::v_InitObject(
         const Array<OneD, MultiRegions::ExpListSharedPtr>&   pFields,
-        const TiXmlElement* pFSI)
+              TiXmlElement* pFSI)
 {
 }
 

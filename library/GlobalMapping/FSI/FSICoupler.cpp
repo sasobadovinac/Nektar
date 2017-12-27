@@ -60,24 +60,65 @@ FSICoupler::FSICoupler(
  */
 void FSICoupler::v_InitObject(
         const Array<OneD, MultiRegions::ExpListSharedPtr> &pFields,
-        const TiXmlElement                                *pFSI)
+              TiXmlElement                                *pFSI)
 {
-
+    ReadBodies(pFSI);
 }
 
 /**
  * 
  */
 void FSICoupler::v_Apply(
-        const Array<OneD, Array<OneD, NekDouble> >        &inarray,
-        GlobalMapping::MappingSharedPtr                   &mapping)
+        const Array<OneD, MultiRegions::ExpListSharedPtr> &pFields,
+        GlobalMapping::MappingSharedPtr                   &mapping,
+        const NekDouble                                   &time)
 {
-
+    for (auto &x : m_bodies)
+    {
+        x->Apply(pFields, m_displFields, time);
+    }
 }
 
 void FSICoupler::CalculateCoordVel()
 {
 
+}
+
+void FSICoupler::ReadBodies(TiXmlElement* pFSI)
+{
+    m_bodies.clear();
+
+    TiXmlElement *body = pFSI->FirstChildElement("BODY");
+    while (body)
+    {
+        ASSERTL0(body->Attribute("TYPE"),
+                "Missing attribute 'TYPE' for filter.");
+        std::string typeStr = body->Attribute("TYPE");
+
+        std::map<std::string, std::string> vParams;
+
+        TiXmlElement *param = body->FirstChildElement("PARAM");
+        while (param)
+        {
+            ASSERTL0(param->Attribute("NAME"),
+                    "Missing attribute 'NAME' for parameter in body "
+                    + typeStr + "'.");
+            std::string nameStr = param->Attribute("NAME");
+
+            ASSERTL0(param->GetText(), "Empty value string for param.");
+            std::string valueStr = param->GetText();
+
+            vParams[nameStr] = valueStr;
+
+            param = param->NextSiblingElement("PARAM");
+        }
+
+        m_bodies.push_back(
+            GetFSIBodyFactory().CreateInstance(
+                        typeStr, m_session, m_displFields, vParams));
+
+        body = body->NextSiblingElement("BODY");
+    }
 }
 
 }

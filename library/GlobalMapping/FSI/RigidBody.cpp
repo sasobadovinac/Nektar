@@ -64,7 +64,9 @@ void RigidBody::v_InitObject(
 }
 
 void RigidBody::v_Apply(
-        const Array<OneD, MultiRegions::ExpListSharedPtr>& pFields)
+        const Array<OneD, MultiRegions::ExpListSharedPtr>    &pFields,
+        const Array<OneD, MultiRegions::ExpListSharedPtr>    &pDisplFields,
+        const NekDouble                                      &time)
 {
 }
 

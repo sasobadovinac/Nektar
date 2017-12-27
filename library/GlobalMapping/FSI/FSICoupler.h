@@ -43,6 +43,7 @@
 #include <MultiRegions/ExpList.h>
 #include <GlobalMapping/GlobalMappingDeclspec.h>
 #include <GlobalMapping/Mapping.h>
+#include <GlobalMapping/FSI/FSIBody.h>
 
 namespace Nektar
 {
@@ -58,7 +59,7 @@ GLOBAL_MAPPING_EXPORT typedef std::shared_ptr<FSICoupler> FSICouplerSharedPtr;
 typedef LibUtilities::NekFactory<std::string, FSICoupler,
         const LibUtilities::SessionReaderSharedPtr&,
         const Array<OneD, MultiRegions::ExpListSharedPtr>&,
-        const TiXmlElement*> FSICouplerFactory;
+              TiXmlElement*> FSICouplerFactory;
 
 /// Declaration of the FSICoupler factory singleton
 GLOBAL_MAPPING_EXPORT FSICouplerFactory& GetFSICouplerFactory();
@@ -76,16 +77,21 @@ public:
     /// @brief Initialise the FSICoupler object
     void InitObject(
         const Array<OneD, MultiRegions::ExpListSharedPtr>& pFields,
-        const TiXmlElement* pFSI);
+              TiXmlElement* pFSI);
 
     ///
     GLOBAL_MAPPING_EXPORT void Apply(
-        const Array<OneD, Array<OneD, NekDouble> >        &inarray,
-        GlobalMapping::MappingSharedPtr                   &pMapping);
+        const Array<OneD, MultiRegions::ExpListSharedPtr> &pFields,
+        GlobalMapping::MappingSharedPtr                   &pMapping,
+        const NekDouble                                   &time);
 
 protected:
     /// Session reader
-    LibUtilities::SessionReaderSharedPtr m_session;
+    LibUtilities::SessionReaderSharedPtr        m_session;
+    /// Vector of moving bodies
+    std::vector<FSIBodySharedPtr>               m_bodies;
+    /// Explist for the displacement of the coordinates
+    Array<OneD, MultiRegions::ExpListSharedPtr> m_displFields;
 
     /// @brief Constructor
     FSICoupler(
@@ -99,14 +105,18 @@ protected:
     ///
     void CalculateCoordVel();
 
+    ///
+    void ReadBodies(TiXmlElement* pFSI);
+
     // Virtual functions
     virtual void v_InitObject(
         const Array<OneD, MultiRegions::ExpListSharedPtr>&   pFields,
-        const TiXmlElement* pFSI);
+              TiXmlElement* pFSI);
 
     virtual void v_Apply(
-        const Array<OneD, Array<OneD, NekDouble> >        &inarray,
-        GlobalMapping::MappingSharedPtr                   &pMapping);
+        const Array<OneD, MultiRegions::ExpListSharedPtr> &pFields,
+        GlobalMapping::MappingSharedPtr                   &pMapping,
+        const NekDouble                                   &time);
 
     virtual void v_CalculateDisplacement(
         const Array<OneD, Array<OneD, NekDouble> >        &inarray) = 0;
@@ -114,16 +124,17 @@ protected:
 
 inline void FSICoupler::InitObject(
         const Array<OneD, MultiRegions::ExpListSharedPtr>&     pFields,
-        const TiXmlElement* pFSI)
+              TiXmlElement* pFSI)
 {
     v_InitObject(pFields, pFSI);
 }
 
 inline void FSICoupler::Apply(
-        const Array<OneD, Array<OneD, NekDouble> >        &inarray,
-        GlobalMapping::MappingSharedPtr                   &pMapping)
+        const Array<OneD, MultiRegions::ExpListSharedPtr> &pFields,
+        GlobalMapping::MappingSharedPtr                   &pMapping,
+        const NekDouble                                   &time)
 {
-    v_Apply(inarray, pMapping);
+    v_Apply(pFields, pMapping, time);
 }
 
 inline void FSICoupler::CalculateDisplacement(

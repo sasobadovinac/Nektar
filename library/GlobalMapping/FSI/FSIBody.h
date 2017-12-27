@@ -79,7 +79,9 @@ public:
 
     ///
     GLOBAL_MAPPING_EXPORT void Apply(
-        const Array<OneD, MultiRegions::ExpListSharedPtr>   &pFields);
+        const Array<OneD, MultiRegions::ExpListSharedPtr>    &pFields,
+        const Array<OneD, MultiRegions::ExpListSharedPtr>    &pDisplFields,
+        const NekDouble                                      &time);
 
 protected:
     /// Session reader
@@ -96,7 +98,9 @@ protected:
         const std::map<std::string, std::string>             &pParams);
 
     virtual void v_Apply(
-        const Array<OneD, MultiRegions::ExpListSharedPtr>    &pFields) = 0;
+        const Array<OneD, MultiRegions::ExpListSharedPtr>    &pFields,
+        const Array<OneD, MultiRegions::ExpListSharedPtr>    &pDisplFields,
+        const NekDouble                                      &time) = 0;
 
 };
 
@@ -108,9 +112,11 @@ inline void FSIBody::InitObject(
 }
 
 inline void FSIBody::Apply(
-        const Array<OneD, MultiRegions::ExpListSharedPtr>     &pFields)
+        const Array<OneD, MultiRegions::ExpListSharedPtr>    &pFields,
+        const Array<OneD, MultiRegions::ExpListSharedPtr>    &pDisplFields,
+        const NekDouble                                      &time)
 {
-    v_Apply(pFields);
+    v_Apply(pFields, pDisplFields, time);
 }
 
 }

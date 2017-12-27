@@ -55,7 +55,7 @@ public:
     static FSICouplerSharedPtr create(
         const LibUtilities::SessionReaderSharedPtr        &pSession,
         const Array<OneD, MultiRegions::ExpListSharedPtr> &pFields,
-        const TiXmlElement                                *pFSI)
+              TiXmlElement                                *pFSI)
     {
         FSICouplerSharedPtr p =
                 MemoryManager<GeneralCoupler>::AllocateSharedPtr(pSession,
@@ -75,7 +75,7 @@ protected:
     // Virtual functions
     virtual void v_InitObject(
         const Array<OneD, MultiRegions::ExpListSharedPtr>&   pFields,
-        const TiXmlElement* pFSI);
+              TiXmlElement* pFSI);
 
     virtual void v_CalculateDisplacement(
         const Array<OneD, Array<OneD, NekDouble> >        &inarray);

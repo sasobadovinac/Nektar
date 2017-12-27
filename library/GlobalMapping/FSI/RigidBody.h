@@ -78,7 +78,9 @@ protected:
         const std::map<std::string, std::string>             &pParams);
 
     virtual void v_Apply(
-        const Array<OneD, MultiRegions::ExpListSharedPtr>    &pFields);
+        const Array<OneD, MultiRegions::ExpListSharedPtr>    &pFields,
+        const Array<OneD, MultiRegions::ExpListSharedPtr>    &pDisplFields,
+        const NekDouble &time);
 
 };
 
