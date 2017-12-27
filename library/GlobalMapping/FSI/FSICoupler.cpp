@@ -62,6 +62,13 @@ void FSICoupler::v_InitObject(
         const Array<OneD, MultiRegions::ExpListSharedPtr> &pFields,
               TiXmlElement                                *pFSI)
 {
+    // Adjust mapping
+    GlobalMapping::MappingSharedPtr mapping =
+            GlobalMapping::Mapping::Load(m_session, pFields);
+    mapping->SetTimeDependent(true);
+    mapping->SetFromFunction (false);
+
+    // Create entries for m_bodies
     ReadBodies(pFSI);
 }
 

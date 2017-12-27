@@ -38,6 +38,7 @@
 
 #include <IncNavierStokesSolver/EquationSystems/VelocityCorrectionScheme.h>
 #include <GlobalMapping/Mapping.h>
+#include <GlobalMapping/FSI/FSICoupler.h>
 
 namespace Nektar
 {
@@ -74,7 +75,10 @@ namespace Nektar
     protected:
         // Mapping object
         GlobalMapping::MappingSharedPtr             m_mapping;
-        
+
+        // Object for imposing body motion in FSI problems
+        GlobalMapping::FSICouplerSharedPtr          m_fsi;
+
         bool                                        m_verbose;
         
         // Flags defining how pressure and viscous mapping terms 

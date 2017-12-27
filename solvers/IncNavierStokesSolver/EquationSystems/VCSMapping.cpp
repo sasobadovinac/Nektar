@@ -182,6 +182,15 @@ namespace Nektar
                 m_pressure->HomogeneousBwdTrans(m_gradP[i],m_gradP[i]);
             }
         }
+
+        // Create fsi element if defined in session file
+        if (m_session->DefinesElement("Nektar/FSI"))
+        {
+            TiXmlElement* vFSI  = m_session->GetElement("Nektar/FSI");
+            string        vType = vFSI->Attribute("TYPE");;
+            m_fsi = GlobalMapping::GetFSICouplerFactory().CreateInstance(
+                            vType, m_session, m_fields, vFSI);
+        }
     }
 
     /**
@@ -223,6 +232,10 @@ namespace Nektar
                 // If the transformation is explicitly defined, update it here
                 // Otherwise, it will be done somewhere else (ForcingMovingBody)
                 m_mapping->UpdateMapping(time+m_timestep);
+            }
+            else if(m_fsi)
+            {
+                m_fsi->Apply(m_fields, m_mapping, time+m_timestep);
             }
             m_mapping->UpdateBCs(time+m_timestep);
         }

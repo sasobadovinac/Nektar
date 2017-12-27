@@ -61,6 +61,7 @@ void GeneralCoupler::v_InitObject(
         const Array<OneD, MultiRegions::ExpListSharedPtr>&   pFields,
               TiXmlElement* pFSI)
 {
+    FSICoupler::v_InitObject(pFields, pFSI);
 }
 
 void GeneralCoupler::v_CalculateDisplacement(
