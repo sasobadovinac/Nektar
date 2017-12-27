@@ -62,11 +62,13 @@ void GeneralCoupler::v_InitObject(
               TiXmlElement* pFSI)
 {
     FSICoupler::v_InitObject(pFields, pFSI);
+
+    // TO DO: Create m_displFields
 }
 
-void GeneralCoupler::v_CalculateDisplacement(
-        const Array<OneD, Array<OneD, NekDouble> >        &inarray)
+void GeneralCoupler::v_CalculateDisplacement()
 {
+    // TO DO: solve Laplace equation to obtain displacements
 }
 
 }

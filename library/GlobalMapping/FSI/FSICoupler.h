@@ -40,6 +40,7 @@
 
 #include <LibUtilities/BasicUtils/NekFactory.hpp>
 #include <LibUtilities/BasicUtils/SharedArray.hpp>
+#include <LibUtilities/TimeIntegration/TimeIntegrationWrapper.h>
 #include <MultiRegions/ExpList.h>
 #include <GlobalMapping/GlobalMappingDeclspec.h>
 #include <GlobalMapping/Mapping.h>
@@ -93,14 +94,30 @@ protected:
     /// Explist for the displacement of the coordinates
     Array<OneD, MultiRegions::ExpListSharedPtr> m_displFields;
 
+    // Spatial dimension
+    int                                         m_dim;
+    // Time integration order
+    int                                         m_intSteps;
+
+    // Coordinates of the transformed system
+    Array<OneD, Array<OneD, NekDouble>>         m_coords;
+    // Coordinates of the mesh
+    Array<OneD, Array<OneD, NekDouble>>         m_meshCoords;
+    // Coordinates velocity
+    Array<OneD, Array<OneD, NekDouble>>         m_coordsVel;
+    // Previous coordinates for evaluating m_coordsVel
+    Array<OneD, Array<OneD, Array<OneD, NekDouble>>> m_oldCoords;
+
     /// @brief Constructor
     FSICoupler(
         const LibUtilities::SessionReaderSharedPtr&          pSession,
         const Array<OneD, MultiRegions::ExpListSharedPtr>&   pFields);
 
     /// 
-    void CalculateDisplacement(
-        const Array<OneD, Array<OneD, NekDouble> >        &inarray);
+    void CalculateDisplacement();
+
+    ///
+    void UpdateCoordinates();
 
     ///
     void CalculateCoordVel();
@@ -118,8 +135,7 @@ protected:
         GlobalMapping::MappingSharedPtr                   &pMapping,
         const NekDouble                                   &time);
 
-    virtual void v_CalculateDisplacement(
-        const Array<OneD, Array<OneD, NekDouble> >        &inarray) = 0;
+    virtual void v_CalculateDisplacement() = 0;
 };
 
 inline void FSICoupler::InitObject(
@@ -137,10 +153,9 @@ inline void FSICoupler::Apply(
     v_Apply(pFields, pMapping, time);
 }
 
-inline void FSICoupler::CalculateDisplacement(
-        const Array<OneD, Array<OneD, NekDouble> >        &inarray)
+inline void FSICoupler::CalculateDisplacement()
 {
-    v_CalculateDisplacement(inarray);
+    v_CalculateDisplacement();
 }
 
 }

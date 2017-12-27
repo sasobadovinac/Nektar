@@ -77,8 +77,7 @@ protected:
         const Array<OneD, MultiRegions::ExpListSharedPtr>&   pFields,
               TiXmlElement* pFSI);
 
-    virtual void v_CalculateDisplacement(
-        const Array<OneD, Array<OneD, NekDouble> >        &inarray);
+    virtual void v_CalculateDisplacement();
 
 };
 

@@ -53,6 +53,50 @@ FSICoupler::FSICoupler(
         const Array<OneD, MultiRegions::ExpListSharedPtr>  &pFields)
     : m_session(pSession)
 {
+    switch (pFields[0]->GetExpType())
+    {
+        case MultiRegions::e1D:
+        {
+            m_dim = 1;
+        }
+        break;
+
+        case MultiRegions::e2D:
+        {
+            m_dim = 2;
+        }
+        break;
+
+        case MultiRegions::e3D:
+        case MultiRegions::e3DH1D:
+        case MultiRegions::e3DH2D:
+        {
+            m_dim = 3;
+        }
+        break;
+
+        default:
+            ASSERTL0(0,"Dimension not supported");
+        break;
+    }
+
+    std::string intMethod = m_session->GetSolverInfo("TIMEINTEGRATIONMETHOD");
+    if(intMethod == "IMEXOrder1")
+    {
+        m_intSteps = 1;
+    }
+    else if (intMethod == "IMEXOrder2")
+    {
+        m_intSteps = 2;
+    }
+    else if (intMethod == "IMEXOrder3")
+    {
+        m_intSteps = 3;
+    }
+    else
+    {
+        ASSERTL0(false, "Time integration method not supported.");
+    }
 }
 
 /**
@@ -70,6 +114,36 @@ void FSICoupler::v_InitObject(
 
     // Create entries for m_bodies
     ReadBodies(pFSI);
+
+    // Allocate storage
+    int nPts     = pFields[0]->GetTotPoints();
+    m_coords     = Array<OneD, Array<OneD, NekDouble>> (m_dim);
+    m_meshCoords = Array<OneD, Array<OneD, NekDouble>> (m_dim);
+    m_coordsVel  = Array<OneD, Array<OneD, NekDouble>> (m_dim);
+    for( int i = 0; i < m_dim; ++i)
+    {
+        m_coords[i]     = Array<OneD, NekDouble> (nPts, 0.0);
+        m_meshCoords[i] = Array<OneD, NekDouble> (nPts, 0.0);
+        m_coordsVel[i]  = Array<OneD, NekDouble> (nPts, 0.0);
+    }
+
+    m_oldCoords = Array<OneD, Array<OneD, Array<OneD, NekDouble>>> (m_intSteps);
+    for( int j = 0; j < m_intSteps; ++j)
+    {
+        m_oldCoords[j] = Array<OneD, Array<OneD, NekDouble>> (m_dim);
+        for( int i = 0; i < m_dim; ++i)
+        {
+            m_oldCoords[j][i] = Array<OneD, NekDouble> (nPts, 0.0);
+        }
+    }
+
+    // Get mesh coordinates
+    m_meshCoords = Array<OneD, Array<OneD, NekDouble>> (3);
+    for( int i = 0; i < 3; ++i)
+    {
+        m_meshCoords[i] = Array<OneD, NekDouble> (nPts, 0.0);
+    }
+    pFields[0]->GetCoords(m_meshCoords[0],m_meshCoords[1],m_meshCoords[2]);
 }
 
 /**
@@ -80,15 +154,35 @@ void FSICoupler::v_Apply(
         GlobalMapping::MappingSharedPtr                   &mapping,
         const NekDouble                                   &time)
 {
+    // Call m_bodies to update the boundary conditions of m_displFields
     for (auto &x : m_bodies)
     {
         x->Apply(pFields, m_displFields, time);
+    }
+
+    CalculateDisplacement();
+
+    UpdateCoordinates();
+
+    CalculateCoordVel();
+
+    mapping->UpdateMapping(time, m_coords, m_coordsVel);
+}
+
+void FSICoupler::UpdateCoordinates()
+{
+    for( int i = 0; i < m_dim; ++i)
+    {
+        Vmath::Vadd(m_coords[i].num_elements(),
+                m_displFields[i]->GetPhys(), 1,
+                m_meshCoords[i], 1,
+                m_coords[i], 1);
     }
 }
 
 void FSICoupler::CalculateCoordVel()
 {
-
+    // TO DO: Calculate m_coordsVel and update m_oldCoords
 }
 
 void FSICoupler::ReadBodies(TiXmlElement* pFSI)
