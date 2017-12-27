@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File: FSICoupler.h
+// File: FSIBody.h
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -29,12 +29,12 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 //
-// Description: Abstract base class for fluid-structure interaction coupler.
+// Description: Abstract base class for fluid-structure interaction bodies.
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#ifndef NEKTAR_GLOBALMAPPING_FSI_FSICOUPLER
-#define NEKTAR_GLOBALMAPPING_FSI_FSICOUPLER
+#ifndef NEKTAR_GLOBALMAPPING_FSI_FSIBODY
+#define NEKTAR_GLOBALMAPPING_FSI_FSIBODY
 
 #include <string>
 
@@ -42,94 +42,75 @@
 #include <LibUtilities/BasicUtils/SharedArray.hpp>
 #include <MultiRegions/ExpList.h>
 #include <GlobalMapping/GlobalMappingDeclspec.h>
-#include <GlobalMapping/Mapping.h>
 
 namespace Nektar
 {
 namespace GlobalMapping
 {
 //  Forward declaration
-class FSICoupler;
+class FSIBody;
 
-/// A shared pointer to a FSICoupler object
-GLOBAL_MAPPING_EXPORT typedef std::shared_ptr<FSICoupler> FSICouplerSharedPtr;
+/// A shared pointer to a FSIBody object
+GLOBAL_MAPPING_EXPORT typedef std::shared_ptr<FSIBody> FSIBodySharedPtr;
 
-/// Declaration of the FSICoupler factory
-typedef LibUtilities::NekFactory<std::string, FSICoupler,
+/// Declaration of the FSIBody factory
+typedef LibUtilities::NekFactory<std::string, FSIBody,
         const LibUtilities::SessionReaderSharedPtr&,
         const Array<OneD, MultiRegions::ExpListSharedPtr>&,
-        const TiXmlElement*> FSICouplerFactory;
+        const std::map<std::string, std::string>&> FSIBodyFactory;
 
-/// Declaration of the FSICoupler factory singleton
-GLOBAL_MAPPING_EXPORT FSICouplerFactory& GetFSICouplerFactory();
+/// Declaration of the FSIBody factory singleton
+GLOBAL_MAPPING_EXPORT FSIBodyFactory& GetFSIBodyFactory();
 
 /**
- * @class FSICoupler
+ * @class FSIBody
  * @brief Base class for updating the mapping in FSI problems
  */
-class FSICoupler
+class FSIBody
 {
 public:
     /// @brief Destructor
-    GLOBAL_MAPPING_EXPORT virtual ~FSICoupler() {}
+    GLOBAL_MAPPING_EXPORT virtual ~FSIBody() {}
 
-    /// @brief Initialise the FSICoupler object
+    /// @brief Initialise the FSIBody object
     void InitObject(
-        const Array<OneD, MultiRegions::ExpListSharedPtr>& pFields,
-        const TiXmlElement* pFSI);
+        const Array<OneD, MultiRegions::ExpListSharedPtr> &pFields,
+        const std::map<std::string, std::string>          &pParams);
 
     ///
     GLOBAL_MAPPING_EXPORT void Apply(
-        const Array<OneD, Array<OneD, NekDouble> >        &inarray,
-        GlobalMapping::MappingSharedPtr                   &pMapping);
+        const Array<OneD, MultiRegions::ExpListSharedPtr>   &pFields);
 
 protected:
     /// Session reader
     LibUtilities::SessionReaderSharedPtr m_session;
 
     /// @brief Constructor
-    FSICoupler(
-        const LibUtilities::SessionReaderSharedPtr&          pSession,
-        const Array<OneD, MultiRegions::ExpListSharedPtr>&   pFields);
-
-    /// 
-    void CalculateDisplacement(
-        const Array<OneD, Array<OneD, NekDouble> >        &inarray);
-
-    ///
-    void CalculateCoordVel();
+    FSIBody(
+        const LibUtilities::SessionReaderSharedPtr           &pSession,
+        const Array<OneD, MultiRegions::ExpListSharedPtr>    &pFields);
 
     // Virtual functions
     virtual void v_InitObject(
-        const Array<OneD, MultiRegions::ExpListSharedPtr>&   pFields,
-        const TiXmlElement* pFSI);
+        const Array<OneD, MultiRegions::ExpListSharedPtr>    &pFields,
+        const std::map<std::string, std::string>             &pParams);
 
     virtual void v_Apply(
-        const Array<OneD, Array<OneD, NekDouble> >        &inarray,
-        GlobalMapping::MappingSharedPtr                   &pMapping);
+        const Array<OneD, MultiRegions::ExpListSharedPtr>    &pFields) = 0;
 
-    virtual void v_CalculateDisplacement(
-        const Array<OneD, Array<OneD, NekDouble> >        &inarray) = 0;
 };
 
-inline void FSICoupler::InitObject(
-        const Array<OneD, MultiRegions::ExpListSharedPtr>&     pFields,
-        const TiXmlElement* pFSI)
+inline void FSIBody::InitObject(
+        const Array<OneD, MultiRegions::ExpListSharedPtr>     &pFields,
+        const std::map<std::string, std::string>              &pParams)
 {
-    v_InitObject(pFields, pFSI);
+    v_InitObject(pFields, pParams);
 }
 
-inline void FSICoupler::Apply(
-        const Array<OneD, Array<OneD, NekDouble> >        &inarray,
-        GlobalMapping::MappingSharedPtr                   &pMapping)
+inline void FSIBody::Apply(
+        const Array<OneD, MultiRegions::ExpListSharedPtr>     &pFields)
 {
-    v_Apply(inarray, pMapping);
-}
-
-inline void FSICoupler::CalculateDisplacement(
-        const Array<OneD, Array<OneD, NekDouble> >        &inarray)
-{
-    v_CalculateDisplacement(inarray);
+    v_Apply(pFields);
 }
 
 }
