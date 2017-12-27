@@ -7,6 +7,8 @@ SET(GLOBAL_MAPPING_SOURCES
   MappingXYofXY.cpp
   MappingGeneral.cpp
   MappingTranslation.cpp
+  FSI/FSICoupler.cpp
+  FSI/GeneralCoupler.cpp
 )
 
 SET(GLOBAL_MAPPING_HEADERS
@@ -18,6 +20,8 @@ SET(GLOBAL_MAPPING_HEADERS
   MappingXYofXY.h
   MappingGeneral.h
   MappingTranslation.h
+  FSI/FSICoupler.h
+  FSI/GeneralCoupler.h
 )
 
 ADD_DEFINITIONS(-DGLOBAL_MAPPING_EXPORTS)
