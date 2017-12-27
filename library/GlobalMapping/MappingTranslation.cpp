@@ -94,10 +94,18 @@ void MappingTranslation::v_InitObject(
         m_fields[0]->GetCoords(m_coords[0], m_coords[1], m_coords[2]);
         
         // Initialise workspace variables
-        m_tmp = Array<OneD, Array<OneD, NekDouble> > (m_nConvectiveFields);
-        for (int i=0; i< m_nConvectiveFields; i++)
+        int nvel = m_nConvectiveFields;
+        m_wk1 = Array<OneD, Array<OneD, NekDouble> > (nvel*nvel);
+        m_wk2 = Array<OneD, Array<OneD, NekDouble> > (nvel*nvel);
+        m_tmp = Array<OneD, Array<OneD, NekDouble> > (nvel);
+        for (int i=0; i< nvel; i++)
         {
             m_tmp[i] = Array<OneD, NekDouble>(phystot,0.0);
+            for (int j=0; j< nvel; j++)
+            {
+                m_wk1[i*nvel+j] = Array<OneD, NekDouble>(phystot,0.0);
+                m_wk2[i*nvel+j] = Array<OneD, NekDouble>(phystot,0.0);
+            }
         }
     }
 
