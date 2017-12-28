@@ -57,24 +57,34 @@ FSICoupler::FSICoupler(
     {
         case MultiRegions::e1D:
         {
-            m_dim = 1;
+            m_expDim   = 1;
+            m_spaceDim = 1;
         }
         break;
-
         case MultiRegions::e2D:
         {
-            m_dim = 2;
+            m_expDim   = 2;
+            m_spaceDim = 2;
         }
         break;
-
         case MultiRegions::e3D:
+        {
+            m_expDim   = 3;
+            m_spaceDim = 3;
+        }
+        break;
         case MultiRegions::e3DH1D:
+        {
+            m_expDim   = 2;
+            m_spaceDim = 3;
+        }
+        break;
         case MultiRegions::e3DH2D:
         {
-            m_dim = 3;
+            m_expDim   = 1;
+            m_spaceDim = 3;
         }
         break;
-
         default:
             ASSERTL0(0,"Dimension not supported");
         break;
@@ -117,10 +127,10 @@ void FSICoupler::v_InitObject(
 
     // Allocate storage
     int nPts     = pFields[0]->GetTotPoints();
-    m_coords     = Array<OneD, Array<OneD, NekDouble>> (m_dim);
-    m_meshCoords = Array<OneD, Array<OneD, NekDouble>> (m_dim);
-    m_coordsVel  = Array<OneD, Array<OneD, NekDouble>> (m_dim);
-    for( int i = 0; i < m_dim; ++i)
+    m_coords     = Array<OneD, Array<OneD, NekDouble>> (3);
+    m_meshCoords = Array<OneD, Array<OneD, NekDouble>> (3);
+    m_coordsVel  = Array<OneD, Array<OneD, NekDouble>> (3);
+    for( int i = 0; i < 3; ++i)
     {
         m_coords[i]     = Array<OneD, NekDouble> (nPts, 0.0);
         m_meshCoords[i] = Array<OneD, NekDouble> (nPts, 0.0);
@@ -130,8 +140,8 @@ void FSICoupler::v_InitObject(
     m_oldCoords = Array<OneD, Array<OneD, Array<OneD, NekDouble>>> (m_intSteps);
     for( int j = 0; j < m_intSteps; ++j)
     {
-        m_oldCoords[j] = Array<OneD, Array<OneD, NekDouble>> (m_dim);
-        for( int i = 0; i < m_dim; ++i)
+        m_oldCoords[j] = Array<OneD, Array<OneD, NekDouble>> (3);
+        for( int i = 0; i < 3; ++i)
         {
             m_oldCoords[j][i] = Array<OneD, NekDouble> (nPts, 0.0);
         }
@@ -171,12 +181,16 @@ void FSICoupler::v_Apply(
 
 void FSICoupler::UpdateCoordinates()
 {
-    for( int i = 0; i < m_dim; ++i)
+    for( int i = 0; i < m_expDim; ++i)
     {
         Vmath::Vadd(m_coords[i].num_elements(),
                 m_displFields[i]->GetPhys(), 1,
                 m_meshCoords[i], 1,
                 m_coords[i], 1);
+    }
+    for( int i = m_expDim; i < m_spaceDim; ++i)
+    {
+        m_coords[i] = m_meshCoords[i];
     }
 }
 

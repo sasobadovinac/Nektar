@@ -94,8 +94,9 @@ protected:
     /// Explist for the displacement of the coordinates
     Array<OneD, MultiRegions::ExpListSharedPtr> m_displFields;
 
-    // Spatial dimension
-    int                                         m_dim;
+    // Dimensions
+    int                                         m_expDim;
+    int                                         m_spaceDim;
     // Time integration order
     int                                         m_intSteps;
 
