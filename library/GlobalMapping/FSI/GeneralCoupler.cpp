@@ -120,11 +120,31 @@ void GeneralCoupler::v_InitObject(
             ASSERTL0(0,"Dimension not supported");
         break;
     }
+
+    // Initialise to zero
+    for(int i = 0; i < m_expDim; ++i)
+    {
+        Vmath::Zero ( m_displFields[i]->GetTotPoints(),
+                        m_displFields[i]->UpdatePhys(), 1);
+        Vmath::Zero ( m_displFields[i]->GetNcoeffs(),
+                        m_displFields[i]->UpdateCoeffs(), 1);
+    }
 }
 
 void GeneralCoupler::v_CalculateDisplacement()
 {
-    // TO DO: solve Laplace equation to obtain displacements
+    // Solve Laplace equation to obtain displacements
+    StdRegions::ConstFactorMap factors;
+    factors[StdRegions::eFactorLambda] = 0.0;
+    Array<OneD, NekDouble> forcing(physTot, 0.0);
+    for(int i = 0; i < m_expDim; ++i)
+    {
+        m_displFields[i]->HelmSolve(forcing, m_displFields[i]->UpdateCoeffs(),
+                NullFlagList, factors);
+        // Bwd transform the result
+        m_displFields[i]->BwdTrans(m_displFields[i]->GetCoeffs(),
+                                   m_displFields[i]->UpdatePhys());
+    }
 }
 
 }

@@ -142,6 +142,12 @@ void FSICoupler::v_InitObject(
         m_meshCoords[i] = Array<OneD, NekDouble> (nPts, 0.0);
     }
     pFields[0]->GetCoords(m_meshCoords[0],m_meshCoords[1],m_meshCoords[2]);
+
+    // Coordinates above m_expDim are not changed
+    for( int i = m_expDim; i < 3; ++i)
+    {
+        Vmath::Vcopy(nPts, m_meshCoords[i], 1, m_coords[i], 1);
+    }
 }
 
 /**
@@ -175,10 +181,6 @@ void FSICoupler::UpdateCoordinates()
                 m_displFields[i]->GetPhys(), 1,
                 m_meshCoords[i], 1,
                 m_coords[i], 1);
-    }
-    for( int i = m_expDim; i < m_spaceDim; ++i)
-    {
-        m_coords[i] = m_meshCoords[i];
     }
 }
 
