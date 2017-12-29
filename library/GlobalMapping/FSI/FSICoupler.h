@@ -94,6 +94,12 @@ protected:
     /// Explist for the displacement of the coordinates
     Array<OneD, MultiRegions::ExpListSharedPtr> m_displFields;
 
+    /// Backward-difference coefficients for evaluating coordinates velocity
+    static NekDouble                            BDF_Alpha_Coeffs[3][3];
+    static NekDouble                            BDF_Gamma0_Coeffs[3];
+
+    // Time step
+    NekDouble                                   m_timestep;
     // Dimensions
     int                                         m_expDim;
     int                                         m_spaceDim;

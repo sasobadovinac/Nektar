@@ -41,6 +41,10 @@ namespace Nektar
 {
 namespace GlobalMapping
 {
+NekDouble FSICoupler::BDF_Alpha_Coeffs[3][3] = {
+    { 1.0,  0.0, 0.0},{ 2.0, -0.5, 0.0},{ 3.0, -1.5, 1.0/3.0}};
+NekDouble FSICoupler::BDF_Gamma0_Coeffs[3] = {
+      1.0,  1.5, 11.0/6.0};
 
 FSICouplerFactory& GetFSICouplerFactory()
 {
@@ -53,6 +57,9 @@ FSICoupler::FSICoupler(
         const Array<OneD, MultiRegions::ExpListSharedPtr>  &pFields)
     : m_session(pSession)
 {
+    // Get timestep
+    m_session->LoadParameter("TimeStep", m_timestep);
+
     switch (pFields[0]->GetExpType())
     {
         case MultiRegions::e2D:
@@ -128,8 +135,8 @@ void FSICoupler::v_InitObject(
     m_oldCoords = Array<OneD, Array<OneD, Array<OneD, NekDouble>>> (m_intSteps);
     for( int j = 0; j < m_intSteps; ++j)
     {
-        m_oldCoords[j] = Array<OneD, Array<OneD, NekDouble>> (3);
-        for( int i = 0; i < 3; ++i)
+        m_oldCoords[j] = Array<OneD, Array<OneD, NekDouble>> (m_expDim);
+        for( int i = 0; i < m_expDim; ++i)
         {
             m_oldCoords[j][i] = Array<OneD, NekDouble> (nPts, 0.0);
         }
@@ -186,7 +193,42 @@ void FSICoupler::UpdateCoordinates()
 
 void FSICoupler::CalculateCoordVel()
 {
-    // TO DO: Calculate m_coordsVel and update m_oldCoords
+    int nPts = m_coords[0].num_elements();
+
+    // Determine correct order (for initial time-steps)
+    static int nCalls = 0;
+    ++nCalls;
+    int order = min(nCalls,m_intSteps);
+
+    for( int i = 0; i < m_expDim; ++i)
+    {
+        // Calculate m_coordsVel
+        Vmath::Smul(nPts,
+                    BDF_Gamma0_Coeffs[order-1],
+                    m_coords[i], 1,
+                    m_coordsVel[i],  1);
+
+        for(int j = 0; j < order; j++)
+        {
+            Vmath::Svtvp(nPts,
+                        -1*BDF_Alpha_Coeffs[order-1][j],
+                         m_oldCoords[j][i], 1,
+                         m_coordsVel[i],    1,
+                         m_coordsVel[i],    1);
+        }
+        // Divide by time-step
+        Vmath::Smul(nPts, 1.0/m_timestep, m_coordsVel[i], 1,
+                                          m_coordsVel[i], 1);
+
+        // Update m_oldCoords
+        Array<OneD, NekDouble> tmp = m_oldCoords[m_intSteps-1][i];
+        for(int n = m_intSteps-1; n > 0; --n)
+        {
+            m_oldCoords[n][i] = m_oldCoords[n-1][i];
+        }
+        m_oldCoords[0][i] = tmp;
+        Vmath::Vcopy(nPts, m_coords[i], 1, m_oldCoords[0][i], 1);
+    }
 }
 
 void FSICoupler::ReadBodies(TiXmlElement* pFSI)
