@@ -69,26 +69,29 @@ public:
 
     SOLVER_UTILS_EXPORT virtual ~FilterAeroForces();
 
-    SOLVER_UTILS_EXPORT void GetForces(
-                    const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
-                    Array<OneD, NekDouble> &Aeroforces,
-                    const NekDouble &time);
+    SOLVER_UTILS_EXPORT void GetTotalForces(
+        const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
+              Array<OneD, NekDouble> &Aeroforces,
+        const NekDouble &time);
+
+    SOLVER_UTILS_EXPORT void GetPlaneForces(
+        const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
+              Array<OneD, NekDouble> &Aeroforces,
+        const NekDouble &time);
 
 protected:
     virtual void v_Initialise(
-            const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
-            const NekDouble &time);
+        const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
+        const NekDouble &time);
     virtual void v_Update(
-            const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
-            const NekDouble &time);
+        const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
+        const NekDouble &time);
     virtual void v_Finalise(
-            const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
-            const NekDouble &time);
+        const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
+        const NekDouble &time);
     virtual bool v_IsTimeDependent();
 
 private:
-    /// ID's of boundary regions where we want the forces
-    std::vector<unsigned int>       m_boundaryRegionsIdList;
     /// Determines if a given Boundary Region is in
     /// m_boundaryRegionsIdList
     std::vector<bool>               m_boundaryRegionIsInList;
@@ -111,15 +114,27 @@ private:
     NekDouble                       m_startTime;
     // Directions on which the forces will be projected
     Array<OneD, Array<OneD, NekDouble> >    m_directions;
+
     // Arrays storing the last forces that were calculated
+    Array<OneD, NekDouble>                  m_Fp;
+    Array<OneD, NekDouble>                  m_Fv;
+    Array<OneD, NekDouble>                  m_Ft;
     Array<OneD, Array<OneD, NekDouble> >    m_Fpplane;
     Array<OneD, Array<OneD, NekDouble> >    m_Fvplane;
     Array<OneD, Array<OneD, NekDouble> >    m_Ftplane;
 
-    NekDouble                       m_lastTime;
-    GlobalMapping::MappingSharedPtr               m_mapping;
+    NekDouble                               m_lastTime;
+    GlobalMapping::MappingSharedPtr         m_mapping;
+
+    // Density and viscosity
+    NekDouble                               m_rho;
+    NekDouble                               m_mu;
 
     void CalculateForces(
+        const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
+        const NekDouble &time);
+
+    void CalculateForcesStandard(
         const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
         const NekDouble &time);
 
