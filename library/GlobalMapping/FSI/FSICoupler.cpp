@@ -55,12 +55,6 @@ FSICoupler::FSICoupler(
 {
     switch (pFields[0]->GetExpType())
     {
-        case MultiRegions::e1D:
-        {
-            m_expDim   = 1;
-            m_spaceDim = 1;
-        }
-        break;
         case MultiRegions::e2D:
         {
             m_expDim   = 2;
@@ -76,12 +70,6 @@ FSICoupler::FSICoupler(
         case MultiRegions::e3DH1D:
         {
             m_expDim   = 2;
-            m_spaceDim = 3;
-        }
-        break;
-        case MultiRegions::e3DH2D:
-        {
-            m_expDim   = 1;
             m_spaceDim = 3;
         }
         break;

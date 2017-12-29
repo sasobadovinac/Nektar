@@ -34,6 +34,11 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <GlobalMapping/FSI/GeneralCoupler.h>
+#include <MultiRegions/ContField1D.h>
+#include <MultiRegions/ContField2D.h>
+#include <MultiRegions/ContField3D.h>
+#include <MultiRegions/ContField3DHomogeneous1D.h>
+#include <MultiRegions/ContField3DHomogeneous2D.h>
 
 namespace Nektar
 {
@@ -63,7 +68,58 @@ void GeneralCoupler::v_InitObject(
 {
     FSICoupler::v_InitObject(pFields, pFSI);
 
-    // TO DO: Create m_displFields
+    // Create m_displFields
+    m_displFields = Array<OneD, MultiRegions::ExpListSharedPtr> (m_expDim);
+    const SpatialDomains::MeshGraphSharedPtr graph = pFields[0]->GetGraph();
+    string fieldNames[3] = {"x", "y", "z"};
+    switch (pFields[0]->GetExpType())
+    {
+        case MultiRegions::e2D:
+        {
+            MultiRegions::ContField2DSharedPtr tmp =
+                std::dynamic_pointer_cast<
+                    MultiRegions::ContField2D>(pFields[0]);
+
+            for(int i = 0; i < m_expDim; ++i)
+            {
+                m_displFields[i] =
+                    MemoryManager<MultiRegions::ContField2D>::
+                        AllocateSharedPtr(*tmp, graph, fieldNames[i]);
+            }
+        }
+        break;
+        case MultiRegions::e3D:
+        {
+            MultiRegions::ContField3DSharedPtr tmp =
+                std::dynamic_pointer_cast<
+                    MultiRegions::ContField3D>(pFields[0]);
+
+            for(int i = 0; i < m_expDim; ++i)
+            {
+                m_displFields[i] =
+                    MemoryManager<MultiRegions::ContField3D>::
+                        AllocateSharedPtr(*tmp, graph, fieldNames[i]);
+            }
+        }
+        break;
+        case MultiRegions::e3DH1D:
+        {
+            MultiRegions::ContField3DHomogeneous1DSharedPtr tmp =
+                std::dynamic_pointer_cast<
+                    MultiRegions::ContField3DHomogeneous1D>(pFields[0]);
+
+            for(int i = 0; i < m_expDim; ++i)
+            {
+                m_displFields[i] =
+                    MemoryManager<MultiRegions::ContField3DHomogeneous1D>::
+                        AllocateSharedPtr(*tmp, graph, fieldNames[i]);
+            }
+        }
+        break;
+        default:
+            ASSERTL0(0,"Dimension not supported");
+        break;
+    }
 }
 
 void GeneralCoupler::v_CalculateDisplacement()
