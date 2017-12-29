@@ -356,17 +356,14 @@ namespace Nektar
                     // All have var specified, or else all variables are zero.
                     TiXmlAttribute *attr = conditionElement->FirstAttribute();
                     
-                    std::vector<std::string>::iterator iter;
+                    std::string varName;
                     std::string attrName;
 
                     attrData = conditionElement->Attribute("VAR");
 
                     if (!attrData.empty())
                     {
-                        iter = std::find(vars.begin(), vars.end(), attrData);
-                        ASSERTL0(iter != vars.end(),
-                                (std::string("Cannot find variable: ")
-                                        + attrData).c_str());
+                        varName = attrData;
                     }
                     
                     if (conditionType == "N")
@@ -385,7 +382,7 @@ namespace Nektar
                         }
                         else
                         {
-                            // Use the iterator from above, which must point to the variable.
+                            // Use varName from above
                             attr = attr->Next();
 
                             if (attr)
@@ -457,7 +454,7 @@ namespace Nektar
                                                 userDefined, filename,
                                                 boundaryRegionComm));
                                 neumannCondition->SetIsTimeDependent(isTimeDependent);
-                                (*boundaryConditions)[*iter] = neumannCondition;
+                                (*boundaryConditions)[varName] = neumannCondition;
                             }
                             else
                             {
@@ -465,7 +462,7 @@ namespace Nektar
                                 BoundaryConditionShPtr neumannCondition(
                                         MemoryManager<NeumannBoundaryCondition>::AllocateSharedPtr(
                                                 m_session, "0"));
-                                (*boundaryConditions)[*iter] = neumannCondition;
+                                (*boundaryConditions)[varName] = neumannCondition;
                             }
                         }
                     }
@@ -485,7 +482,7 @@ namespace Nektar
                         }
                         else
                         {
-                            // Use the iterator from above, which must point to the variable.
+                            // Use varName from above.
                             attr = attr->Next();
 
                             if (attr)
@@ -557,7 +554,7 @@ namespace Nektar
                                                 userDefined, filename,
                                                 boundaryRegionComm));
                                 dirichletCondition->SetIsTimeDependent(isTimeDependent);
-                                (*boundaryConditions)[*iter] =
+                                (*boundaryConditions)[varName] =
                                         dirichletCondition;
                             }
                             else
@@ -566,7 +563,7 @@ namespace Nektar
                                 BoundaryConditionShPtr dirichletCondition(
                                         MemoryManager<DirichletBoundaryCondition>::AllocateSharedPtr(
                                                 m_session, "0"));
-                                (*boundaryConditions)[*iter] =
+                                (*boundaryConditions)[varName] =
                                         dirichletCondition;
                             }
                         }
@@ -587,9 +584,8 @@ namespace Nektar
                         }
                         else
                         {
-                            // Use the iterator from above, which must
-                            // point to the variable.  Read the A and
-                            // B attributes.
+                            // Use varName from above. 
+                            // Read the A and B attributes.
                             attr = attr->Next();
 
                             if (attr)
@@ -662,7 +658,7 @@ namespace Nektar
                                                 m_session, equation1, equation2,
                                                 userDefined, filename,
                                                 boundaryRegionComm));
-                                (*boundaryConditions)[*iter] = robinCondition;
+                                (*boundaryConditions)[varName] = robinCondition;
                             }
                             else
                             {
@@ -671,7 +667,7 @@ namespace Nektar
                                         MemoryManager<RobinBoundaryCondition>::AllocateSharedPtr(
                                                 m_session, "0", "0"));
                                 robinCondition->SetIsTimeDependent(isTimeDependent);
-                                (*boundaryConditions)[*iter] = robinCondition;
+                                (*boundaryConditions)[varName] = robinCondition;
                             }
                         }
                     }
@@ -733,7 +729,7 @@ namespace Nektar
                         }
                         else
                         {
-                            // Use the iterator from above, which must point to the variable.
+                            // Use varName from above.
                             // Read the VALUE attribute.  It is the next and only other attribute.
                             attr = attr->Next();
 
@@ -777,7 +773,7 @@ namespace Nektar
                                 BoundaryConditionShPtr periodicCondition(
                                         MemoryManager<PeriodicBoundaryCondition>::AllocateSharedPtr(
                                                 periodicBndRegionIndex[0]));
-                                (*boundaryConditions)[*iter] =
+                                (*boundaryConditions)[varName] =
                                         periodicCondition;
                             }
                             else
