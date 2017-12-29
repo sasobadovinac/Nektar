@@ -117,6 +117,9 @@ void FSICoupler::v_InitObject(
     mapping->SetTimeDependent(true);
     mapping->SetFromFunction (false);
 
+    // Create m_displFields
+    CreateDisplacementFields(pFields);
+
     // Create entries for m_bodies
     ReadBodies(pFSI);
 
@@ -154,6 +157,71 @@ void FSICoupler::v_InitObject(
     for( int i = m_expDim; i < 3; ++i)
     {
         Vmath::Vcopy(nPts, m_meshCoords[i], 1, m_coords[i], 1);
+    }
+}
+
+void FSICoupler::CreateDisplacementFields(
+    const Array<OneD, MultiRegions::ExpListSharedPtr>&   pFields)
+{
+    m_displFields = Array<OneD, MultiRegions::ExpListSharedPtr> (m_expDim);
+    const SpatialDomains::MeshGraphSharedPtr graph = pFields[0]->GetGraph();
+    string fieldNames[3] = {"x", "y", "z"};
+    switch (pFields[0]->GetExpType())
+    {
+        case MultiRegions::e2D:
+        {
+            MultiRegions::ContField2DSharedPtr tmp =
+                std::dynamic_pointer_cast<
+                    MultiRegions::ContField2D>(pFields[0]);
+
+            for(int i = 0; i < m_expDim; ++i)
+            {
+                m_displFields[i] =
+                    MemoryManager<MultiRegions::ContField2D>::
+                        AllocateSharedPtr(*tmp, graph, fieldNames[i]);
+            }
+        }
+        break;
+        case MultiRegions::e3D:
+        {
+            MultiRegions::ContField3DSharedPtr tmp =
+                std::dynamic_pointer_cast<
+                    MultiRegions::ContField3D>(pFields[0]);
+
+            for(int i = 0; i < m_expDim; ++i)
+            {
+                m_displFields[i] =
+                    MemoryManager<MultiRegions::ContField3D>::
+                        AllocateSharedPtr(*tmp, graph, fieldNames[i]);
+            }
+        }
+        break;
+        case MultiRegions::e3DH1D:
+        {
+            MultiRegions::ContField3DHomogeneous1DSharedPtr tmp =
+                std::dynamic_pointer_cast<
+                    MultiRegions::ContField3DHomogeneous1D>(pFields[0]);
+
+            for(int i = 0; i < m_expDim; ++i)
+            {
+                m_displFields[i] =
+                    MemoryManager<MultiRegions::ContField3DHomogeneous1D>::
+                        AllocateSharedPtr(*tmp, graph, fieldNames[i]);
+            }
+        }
+        break;
+        default:
+            ASSERTL0(0,"Dimension not supported");
+        break;
+    }
+
+    // Initialise to zero
+    for(int i = 0; i < m_expDim; ++i)
+    {
+        Vmath::Zero ( m_displFields[i]->GetTotPoints(),
+                        m_displFields[i]->UpdatePhys(), 1);
+        Vmath::Zero ( m_displFields[i]->GetNcoeffs(),
+                        m_displFields[i]->UpdateCoeffs(), 1);
     }
 }
 
@@ -239,7 +307,7 @@ void FSICoupler::ReadBodies(TiXmlElement* pFSI)
     while (body)
     {
         ASSERTL0(body->Attribute("TYPE"),
-                "Missing attribute 'TYPE' for filter.");
+                "Missing attribute 'TYPE' for body.");
         std::string typeStr = body->Attribute("TYPE");
 
         std::map<std::string, std::string> vParams;

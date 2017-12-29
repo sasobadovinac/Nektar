@@ -73,10 +73,6 @@ protected:
                    const Array<OneD, MultiRegions::ExpListSharedPtr> &pFields);
 
     // Virtual functions
-    virtual void v_InitObject(
-        const Array<OneD, MultiRegions::ExpListSharedPtr>&   pFields,
-              TiXmlElement* pFSI);
-
     virtual void v_CalculateDisplacement();
 
 };

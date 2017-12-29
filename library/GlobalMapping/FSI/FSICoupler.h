@@ -120,6 +120,10 @@ protected:
         const LibUtilities::SessionReaderSharedPtr&          pSession,
         const Array<OneD, MultiRegions::ExpListSharedPtr>&   pFields);
 
+    ///
+    void CreateDisplacementFields(
+        const Array<OneD, MultiRegions::ExpListSharedPtr>&   pFields);
+
     /// 
     void CalculateDisplacement();
 
