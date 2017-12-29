@@ -33,9 +33,9 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
+#include <MultiRegions/AssemblyMap/AssemblyMapDG.h>
 #include <IncNavierStokesSolver/EquationSystems/SubSteppingExtrapolate.h>
 #include <LibUtilities/Communication/Comm.h>
-
 using namespace std;
 
 namespace Nektar
@@ -71,6 +71,8 @@ namespace Nektar
         }
         m_fields[0]->GetTrace()->GetNormals(m_traceNormals);
 
+        m_rotatedPerPhysVec = m_fields[0]->GetTraceMap()->GetRotatedPerPhysVec();
+        
     }
 
     SubSteppingExtrapolate::~SubSteppingExtrapolate()
@@ -414,9 +416,9 @@ namespace Nektar
 
 
     void SubSteppingExtrapolate::AddAdvectionPenaltyFlux(
-                                                         const Array<OneD, const Array<OneD, NekDouble> > &velfield,
-                                                         const Array<OneD, const Array<OneD, NekDouble> > &physfield,
-                                                         Array<OneD, Array<OneD, NekDouble> > &Outarray)
+                 const Array<OneD, const Array<OneD, NekDouble> > &velfield,
+                 const Array<OneD, const Array<OneD, NekDouble> > &physfield,
+                 Array<OneD, Array<OneD, NekDouble> > &Outarray)
     {
         ASSERTL1(
                  physfield.num_elements() == Outarray.num_elements(),
@@ -430,14 +432,26 @@ namespace Nektar
         /// Number of spatial dimensions
         int nDimensions = m_bnd_dim;
 
+        int nfields = physfield.num_elements(); 
+            
         /// Forward state array
-        Array<OneD, NekDouble> Fwd(3*nTracePts);
+        Array<OneD, Array<OneD, NekDouble> > Fwd(nfields);
 
         /// Backward state array
-        Array<OneD, NekDouble> Bwd = Fwd + nTracePts;
+        Array<OneD, Array<OneD, NekDouble> > Bwd(nfields);
 
+        Fwd[0] = Array<OneD, NekDouble >(nfields*nTracePts);
+        Bwd[0] = Array<OneD, NekDouble >(nfields*nTracePts);
+        
+        for(i = 1; i < nfields; ++i)
+        {
+            Fwd[i] = Fwd[i-1] + nTracePts;
+            Bwd[i] = Bwd[i-1] + nTracePts;
+        }
+            
+        
         /// upwind numerical flux state array
-        Array<OneD, NekDouble> numflux = Bwd + nTracePts;
+        Array<OneD, NekDouble> numflux(nTracePts);
 
         /// Normal velocity array
         Array<OneD, NekDouble> Vn (nTracePts, 0.0);
@@ -445,29 +459,46 @@ namespace Nektar
         // Extract velocity field along the trace space and multiply by trace normals
         for(i = 0; i < nDimensions; ++i)
         {
-            m_fields[0]->ExtractTracePhys(velfield[i], Fwd);
-            Vmath::Vvtvp(nTracePts, m_traceNormals[i], 1, Fwd, 1, Vn, 1, Vn, 1);
+            m_fields[0]->ExtractTracePhys(velfield[i], Fwd[0]);
+            Vmath::Vvtvp(nTracePts, m_traceNormals[i], 1, Fwd[0], 1, Vn, 1, Vn, 1);
         }
 
         for(i = 0; i < physfield.num_elements(); ++i)
         {
             /// Extract forwards/backwards trace spaces
             /// Note: Needs to have correct i value to get boundary conditions
-            m_fields[i]->GetFwdBwdTracePhys(physfield[i], Fwd, Bwd);
+            m_fields[i]->GetFwdBwdTracePhys(physfield[i], Fwd[i], Bwd[i]);
+        }
 
+        // rotated bwd periodic domains as required
+        for(i = 0; i < m_rotatedPerPhysVec.size(); ++i)
+        {
+            Array<OneD, int> index = m_rotatedPerPhysVec[i].second;
+            
+            for(int j = 0; j < index.num_elements(); ++j)
+            {
+                m_rotatedPerPhysVec[i].first.RotateFwd(Bwd[0][index[j]],
+                                                       Bwd[1][index[j]],
+                                                       Bwd[2][index[j]]);
+            }
+        }
+        
+        // Call or boundary update. 
+        for(i = 0; i < physfield.num_elements(); ++i)
+        {
             /// Upwind between elements
-            m_fields[0]->GetTrace()->Upwind(Vn, Fwd, Bwd, numflux);
+            m_fields[0]->GetTrace()->Upwind(Vn, Fwd[i], Bwd[i], numflux);
 
             /// Construct difference between numflux and Fwd,Bwd
-            Vmath::Vsub(nTracePts, numflux, 1, Fwd, 1, Fwd, 1);
-            Vmath::Vsub(nTracePts, numflux, 1, Bwd, 1, Bwd, 1);
+            Vmath::Vsub(nTracePts, numflux, 1, Fwd[i], 1, Fwd[i], 1);
+            Vmath::Vsub(nTracePts, numflux, 1, Bwd[i], 1, Bwd[i], 1);
 
             /// Calculate the numerical fluxes multipling Fwd, Bwd and
             /// numflux by the normal advection velocity
-            Vmath::Vmul(nTracePts, Fwd, 1, Vn, 1, Fwd, 1);
-            Vmath::Vmul(nTracePts, Bwd, 1, Vn, 1, Bwd, 1);
+            Vmath::Vmul(nTracePts, Fwd[i], 1, Vn, 1, Fwd[i], 1);
+            Vmath::Vmul(nTracePts, Bwd[i], 1, Vn, 1, Bwd[i], 1);
 
-            m_fields[0]->AddFwdBwdTraceIntegral(Fwd,Bwd,Outarray[i]);
+            m_fields[0]->AddFwdBwdTraceIntegral(Fwd[i],Bwd[i],Outarray[i]);
         }
     }
 
@@ -476,8 +507,8 @@ namespace Nektar
      * dt intervals) to time n+t at order Ord
      */
     void SubSteppingExtrapolate::SubStepExtrapolateField(
-                                                         NekDouble toff,
-                                                         Array< OneD, Array<OneD, NekDouble> > &ExtVel)
+                                 NekDouble toff,
+                                 Array< OneD, Array<OneD, NekDouble> > &ExtVel)
     {
         int npts = m_fields[0]->GetTotPoints();
         int nvel = m_velocity.num_elements();

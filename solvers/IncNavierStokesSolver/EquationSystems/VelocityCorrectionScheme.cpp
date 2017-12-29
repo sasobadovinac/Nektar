@@ -403,7 +403,7 @@ namespace Nektar
         SetBoundaryConditions(m_time);
 
         m_F = Array<OneD, Array< OneD, NekDouble> > (m_nConvectiveFields);
-
+#if 1
         Array<OneD, Array<OneD, NekDouble> > fields(m_nConvectiveFields);
             
         for(int n = 0; n < m_nConvectiveFields; ++n)
@@ -414,6 +414,7 @@ namespace Nektar
         RotPeriodicInfoSharedPtr perRotInfo = m_fields[0]->GetLocToGloMap()->GetPerRotInfo();
         Array<OneD, int> periodicRotMap = m_fields[0]->GetLocToGloMap()->GetPeriodicRotMap();
 
+#if 0 
         if(perRotInfo.get())
         {
             // put in fwd rotation term here.
@@ -424,6 +425,7 @@ namespace Nektar
                                       fields[2][periodicRotMap[n]]);
             }
         }
+#endif
         
         for(int i = 0; i < m_nConvectiveFields; ++i)
         {
@@ -432,6 +434,7 @@ namespace Nektar
             m_fields[i]->GlobalToLocal();
         }
 
+#if 0 
         if(perRotInfo.get())
         {
             // put in fwd rotation term here.
@@ -442,6 +445,11 @@ namespace Nektar
                                       fields[2][periodicRotMap[n]]);
             }
         }
+#endif
+
+        Checkpoint_Output(0);
+        exit(1);
+#endif
 
         for(int i = 0; i < m_nConvectiveFields; ++i)
         {

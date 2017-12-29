@@ -85,6 +85,10 @@ namespace Nektar
         virtual ~SubSteppingExtrapolate();
         
     protected:
+        
+        vector< pair<MultiRegions::RotPeriodicInfo, Array<OneD, int> > >
+            m_rotatedPerPhysVec;
+
         virtual void v_EvaluatePressureBCs(const Array<OneD, const Array<OneD, NekDouble> > &fields,
                                            const Array<OneD, const Array<OneD, NekDouble> >  &N,
                                            NekDouble kinvis);

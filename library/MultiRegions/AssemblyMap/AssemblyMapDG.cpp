@@ -111,7 +111,7 @@ namespace Nektar
             Array<OneD, LocalRegions::ExpansionSharedPtr> tracemap(cnt);
             m_elmtToTrace = Array<
                 OneD, Array<OneD, LocalRegions::ExpansionSharedPtr> >(nel);
-
+            
             // set up trace expansions links;
             for(cnt = i = 0; i < nel; ++i)
             {
@@ -136,18 +136,11 @@ namespace Nektar
             }
 
             // Set up boundary mapping
-            cnt = 0;
-            for(i = 0; i < nbnd; ++i)
-            {
-                cnt += bndCondExp[i]->GetExpSize();
-            }
-
             set<int> dirTrace;
 
             m_numLocalDirBndCoeffs = 0;
             m_numDirichletBndPhys  = 0;
 
-            cnt = 0;
             for(i = 0; i < bndCondExp.num_elements(); ++i)
             {
                 for(j = 0; j < bndCondExp[i]->GetExpSize(); ++j)
@@ -164,10 +157,82 @@ namespace Nektar
                         dirTrace.insert(id);
                     }
                 }
-
-                cnt += j;
             }
 
+            // check for any rotated boundary 
+            cnt = 0; 
+            for(i = 0; i < bndCondExp.num_elements(); ++i)
+            {
+                if(bndCond[i]->GetBoundaryConditionType() ==
+                   SpatialDomains::ePeriodic)
+                {
+                    if(boost::iequals(bndCond[i]->GetUserDefined(),"NoUserDefined")
+                       == false)
+                    {
+                        // Get Rotational information from string
+                        vector<string> tmpstr;
+                        
+                        boost::split(tmpstr,bndCond[i]->GetUserDefined(),
+                                     boost::is_any_of(":"));
+                        
+                        if(boost::iequals(tmpstr[0],"Rotated"))
+                        {
+                            ASSERTL1(tmpstr.size() > 2,
+                                     "Expected Rotated user defined string to "
+                                     "contain direction and rotation anlge "
+                                     "and optionally a tolerance, "
+                                     "i.e. Rotated:dir:PI/2:1e-6");
+                            
+                            int dir = (tmpstr[1] == "x")? 0:(tmpstr[1] == "y")? 1:2;
+                            
+                            LibUtilities::AnalyticExpressionEvaluator strEval;
+                            int ExprId = strEval.DefineFunction(" ", tmpstr[2]);
+                            NekDouble angle = strEval.Evaluate(ExprId);
+                            NekDouble tol;
+                            
+                            if(tmpstr.size() == 4)
+                            {
+                                tol = boost::lexical_cast<NekDouble>(tmpstr[3]);
+                            }
+                            else
+                            {
+                                tol = 1e-8;
+                            }
+                            
+                            RotPeriodicInfo RotInfo(dir,angle,tol);
+                            
+                            set<int> pts; 
+                            // evaluate location of tracel elements in trace expansion.
+                            
+                            for(j = 0; j < bndCondExp[i]->GetExpSize(); ++j)
+                            {
+                                bndExp = bndCondExp[i]->GetExp(j); 
+                                id      = bndExp->GetGeom()->GetGlobalID();
+
+                                int offset = bndCondExp[i]->
+                                    GetPhys_Offset(meshTraceId[id]);
+
+                                for(int n = 0; n < bndExp->GetTotPoints(); ++n)
+                                {
+                                    pts.insert(offset+n);
+                                }                            
+                            }
+
+                            Array<OneD, int> rotindex(pts.size());
+
+                            cnt = 0; 
+                            for (auto &setIt : pts)
+                            {
+                                rotindex[cnt++] = setIt;
+                            }
+                            
+                            //finally add pair of inte
+                            m_rotatedPerPhysVec.push_back(make_pair(RotInfo,rotindex));
+                        }
+                    }
+                }
+            }
+            
             // Set up integer mapping array and sign change for each degree of
             // freedom + initialise some more data members.
             m_staticCondLevel           = 0;
@@ -206,7 +271,7 @@ namespace Nektar
             int trace_id, trace_id1;
             int dirOffset = 0;
 
-            // make trace trace renumbering map where first solved trace starts
+            // make trace renumbering map where first solved trace starts
             // at 0 so we can set up graph.
             for(i = 0; i < nTraceExp; ++i)
             {
@@ -1045,5 +1110,12 @@ namespace Nektar
         {
             return m_elmtToTrace;
         }
+        
+        vector<pair<RotPeriodicInfo,Array<OneD, int> > > &
+                    AssemblyMapDG::GetRotatedPerPhysVec(void)
+        {
+            return m_rotatedPerPhysVec;
+        }
+
     } //namespace
 } // namespace

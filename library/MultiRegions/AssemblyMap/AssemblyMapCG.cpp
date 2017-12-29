@@ -2137,7 +2137,7 @@ namespace Nektar
 
             // identify periodic composite id we are going to rotate and angle of rotation
             // for now just assume there is only one. 
-            int PerRegionID = -1; 
+            int PerRegionID = 9999999; 
             int dir = -1;
             NekDouble angle = 0;
             NekDouble tol   = 0; 
@@ -2146,11 +2146,11 @@ namespace Nektar
             {
                 if(bndConditions[i]->GetBoundaryConditionType() == SpatialDomains::ePeriodic)
                 {
-                    PerRegionID = bndConditions[i]->GetBoundaryRegionID();
+                    PerRegionID = min(PerRegionID,bndConditions[i]->GetBoundaryRegionID());
                 }
             }
 
-            vComm->AllReduce(PerRegionID,LibUtilities::ReduceMax);
+            vComm->AllReduce(PerRegionID,LibUtilities::ReduceMin);
             
             if(PerRegionID == -1)
             {
@@ -2210,20 +2210,11 @@ namespace Nektar
 
             // translate region id into composite id
             int compId;
-            if(vComm->GetSize() == 1)
-            {
-                compId = PerRegionID;
-                WARNINGL0(false,"Have set Periodic Composite ID to be the same as the Peridiodic "
-                          "Region ID which may well not be true in serial. Probably need to update "
-                          "BndRegionOrdering to hold the same informaiotn in serial");
-            }
-            else
-            {
-                LibUtilities::BndRegionOrdering bndRegOrder =
-                    locExp.GetSession()->GetBndRegionOrdering();
-                
-                compId = bndRegOrder.find(PerRegionID)->second[0];
-            }
+            LibUtilities::BndRegionOrdering bndRegOrder =
+                locExp.GetSession()->GetBndRegionOrdering();
+            compId = bndRegOrder.find(PerRegionID)->second[0];
+
+            cout << "compId is " << compId << endl;
 
             // Get hold of periodic maps
             

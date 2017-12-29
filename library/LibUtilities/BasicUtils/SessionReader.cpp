@@ -1398,6 +1398,11 @@ namespace Nektar
             return m_bndRegOrder;
         }
 
+        void SessionReader::SetBndRegionOrdering(BndRegionOrdering &bndRegion) 
+        {
+            m_bndRegOrder = bndRegion;
+        }
+
         /**
          *
          */

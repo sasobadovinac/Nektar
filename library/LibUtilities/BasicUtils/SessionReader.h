@@ -427,6 +427,8 @@ namespace Nektar
 
             LIB_UTILITIES_EXPORT void SetUpXmlDoc();
 
+            LIB_UTILITIES_EXPORT void SetBndRegionOrdering(BndRegionOrdering &BndRegion);
+
         private:
             boost::program_options::variables_map m_cmdLineOptions;
 

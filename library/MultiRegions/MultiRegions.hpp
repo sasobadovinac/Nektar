@@ -221,7 +221,7 @@ namespace Nektar
             /// Tolerance to rotation is considered identical
             NekDouble m_tol;
 
-            void RotateFwd(NekDouble u, NekDouble v, NekDouble w)
+            void RotateFwd(NekDouble &u, NekDouble &v, NekDouble &w)
             {
                 // Set up just
                 switch(m_dir)
@@ -249,7 +249,7 @@ namespace Nektar
             }
 
 
-            void RotateBwd(NekDouble u, NekDouble v, NekDouble w)
+            void RotateBwd(NekDouble &u, NekDouble &v, NekDouble &w)
             {
                 // Set up just
                 switch(m_dir)

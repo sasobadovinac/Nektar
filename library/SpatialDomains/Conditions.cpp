@@ -232,6 +232,8 @@ namespace Nektar
             TiXmlElement *boundaryRegionsElement =
                     boundaryRegions->FirstChildElement("B");
 
+            LibUtilities::BndRegionOrdering BndRegOrder;
+                
             while (boundaryRegionsElement)
             {
                 /// All elements are of the form: "<B ID="#"> ... </B>", with
@@ -284,11 +286,20 @@ namespace Nektar
 
                     m_meshGraph->GetCompositeList(indxStr, *boundaryRegion);
                     m_boundaryRegions[indx] = boundaryRegion;
+
+                    vector<unsigned int> seqVector;
+                    bool parseGood = ParseUtils::GenerateSeqVector(indxStr, seqVector);
+                    
+                    ASSERTL0(parseGood && !seqVector.empty(), (std::string("Unable to read composite "
+                                                        "index range: ") + indxStr).c_str());
+                    BndRegOrder[indx] = seqVector;
                 }
 
                 boundaryRegionsElement =
                         boundaryRegionsElement->NextSiblingElement("B");
             }
+
+            m_session->SetBndRegionOrdering(BndRegOrder);
         }
 
         /**

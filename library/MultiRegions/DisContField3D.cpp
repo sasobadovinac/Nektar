@@ -623,8 +623,15 @@ using namespace boost::assign;
             {
                 SpatialDomains::BoundaryConditionShPtr boundaryCondition = 
                     GetBoundaryCondition(bconditions, it.first, variable);
-                if (boundaryCondition->GetBoundaryConditionType() != 
-                        SpatialDomains::ePeriodic)
+#if 1
+                if ((boundaryCondition->GetBoundaryConditionType() != 
+                     SpatialDomains::ePeriodic)||
+                    (boost::iequals(boundaryCondition->GetUserDefined(),
+                                    "NoUserDefined") == false))
+#else
+                if ((boundaryCondition->GetBoundaryConditionType() != 
+                     SpatialDomains::ePeriodic))
+#endif
                 {
                     cnt++;
                 }
@@ -641,8 +648,15 @@ using namespace boost::assign;
                 locBCond = GetBoundaryCondition(
                     bconditions, it.first, variable);
 
-                if(locBCond->GetBoundaryConditionType()
-                       != SpatialDomains::ePeriodic)
+#if 1
+                if((locBCond->GetBoundaryConditionType()
+                   != SpatialDomains::ePeriodic)||
+                   (boost::iequals(locBCond->GetUserDefined(),
+                                   "NoUserDefined") == false))
+#else
+                if((locBCond->GetBoundaryConditionType()
+                    != SpatialDomains::ePeriodic))
+#endif
                 {
                     locExpList = MemoryManager<MultiRegions::ExpList2D>
                         ::AllocateSharedPtr(m_session, *(it.second),
@@ -2767,6 +2781,11 @@ using namespace boost::assign;
                         locExpList->IProductWRTBase(locExpList->GetPhys(),
                                                     locExpList->UpdateCoeffs());
                         
+                    }
+                    else if (m_bndConditions[i]->GetBoundaryConditionType()
+                             == SpatialDomains::ePeriodic)
+                    {
+                        // not need to do anything for this BC
                     }
                     else
                     {

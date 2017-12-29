@@ -83,13 +83,16 @@ namespace Nektar
                 Array<OneD,Array<OneD,LocalRegions::ExpansionSharedPtr> >
                 &GetElmtToTrace();
 
+            MULTI_REGIONS_EXPORT vector<pair<RotPeriodicInfo, Array<OneD, int> > >
+                &GetRotatedPerPhysVec(void);
+
             MULTI_REGIONS_EXPORT int GetTraceToUniversalMap(int i);
 
             MULTI_REGIONS_EXPORT int GetTraceToUniversalMapUnique(int i);
 
             MULTI_REGIONS_EXPORT void UniversalTraceAssemble(
                 Array<OneD, NekDouble> &pGlobal) const;
-
+            
         protected:
             Gs::gs_data * m_traceGsh;
             
@@ -105,6 +108,11 @@ namespace Nektar
             /// universal space (signed).
             Array<OneD,int> m_traceToUniversalMapUnique;
 
+            /// Map or rotational information about how to rotated the
+            /// physical points periodic boundaries that are not
+            /// parallel
+            vector<pair<RotPeriodicInfo,Array<OneD, int> > > m_rotatedPerPhysVec;
+            
             void SetUpUniversalDGMap(const ExpList &locExp);
 
             void SetUpUniversalTraceMap(

@@ -651,7 +651,8 @@ namespace Nektar
             {
                 bc = GetBoundaryCondition(bconditions, it.first, variable);
                 
-                if (bc->GetBoundaryConditionType() != SpatialDomains::ePeriodic)
+                if ((bc->GetBoundaryConditionType() != SpatialDomains::ePeriodic)||
+                    (boost::iequals(bc->GetUserDefined(),"NoUserDefined") == false))
                 {
                     cnt++;
                 }
@@ -669,7 +670,8 @@ namespace Nektar
             {
                 bc = GetBoundaryCondition(bconditions, it.first, variable);
 
-                if (bc->GetBoundaryConditionType() != SpatialDomains::ePeriodic)
+                if ((bc->GetBoundaryConditionType() != SpatialDomains::ePeriodic)
+                    ||(boost::iequals(bc->GetUserDefined(),"NoUserDefined") == false))
                 {
                     locExpList = MemoryManager<MultiRegions::ExpList1D>
                         ::AllocateSharedPtr(m_session, *it.second, graph2D,
@@ -2369,6 +2371,11 @@ namespace Nektar
                             locExpList->GetPhys(),
                             locExpList->UpdateCoeffs());
                     }    
+                    else if (m_bndConditions[i]->GetBoundaryConditionType()
+                             == SpatialDomains::ePeriodic)
+                    {
+                        // not need to do anything for this BC
+                    }
                     else
                     {
                         ASSERTL0(false, "This type of BC not implemented yet");
