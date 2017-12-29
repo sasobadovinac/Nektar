@@ -1267,6 +1267,11 @@ namespace Nektar
              STD_REGIONS_EXPORT NekDouble H1(const Array<OneD, const NekDouble>& phys, const Array<OneD, const NekDouble>& sol = NullNekDouble1DArray);
 
             // I/O routines
+            const NormalVector & GetTraceNormal(const int trace) const
+            {
+                return v_GetTraceNormal(trace);
+            }
+
             const NormalVector & GetEdgeNormal(const int edge) const
             {
                 return v_GetEdgeNormal(edge);
@@ -1847,6 +1852,8 @@ namespace Nektar
             STD_REGIONS_EXPORT virtual void v_HelmholtzMatrixOp_MatFree(const Array<OneD, const NekDouble> &inarray,
                                                            Array<OneD,NekDouble> &outarray,
                                                            const StdMatrixKey &mkey);
+
+            STD_REGIONS_EXPORT virtual const NormalVector & v_GetTraceNormal(const int trace) const;
 
             STD_REGIONS_EXPORT virtual const NormalVector & v_GetEdgeNormal(const int edge) const;
 

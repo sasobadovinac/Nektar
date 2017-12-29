@@ -201,6 +201,8 @@ namespace Nektar
                 return GetFaceNcoeffs(i);
             }
 
+            STD_REGIONS_EXPORT const NormalVector & v_GetSurfaceNormal(const int id) const;
+            STD_REGIONS_EXPORT const NormalVector & v_GetFaceNormal(const int face) const;
             std::map<int, NormalVector> m_faceNormals;
             std::map<int, bool> m_negatedNormals;
 
@@ -215,9 +217,7 @@ namespace Nektar
             {
                 return 3;
             }
-            STD_REGIONS_EXPORT const NormalVector & v_GetSurfaceNormal(const int id) const;
-            STD_REGIONS_EXPORT const NormalVector & v_GetFaceNormal(const int face) const;
-            
+
         };
 
         STD_REGIONS_EXPORT LibUtilities::BasisKey EvaluateTriFaceBasisKey(

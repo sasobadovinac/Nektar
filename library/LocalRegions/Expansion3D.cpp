@@ -2007,7 +2007,13 @@ namespace Nektar
             ReOrientFacePhysMap(FaceExp->GetNverts(),orient,nq0,nq1,faceids);
             Vmath::Scatr(nq0*nq1,o_tmp2,faceids,outarray);
         }
-        
+
+        const StdRegions::NormalVector& Expansion3D::v_GetTraceNormal(
+            const int trace) const
+        {
+            return v_GetFaceNormal(trace);
+        }
+
         void Expansion3D::ReOrientFacePhysMap(const int nvert, 
                                               const StdRegions::Orientation orient,
                                               const int nq0, const int nq1,

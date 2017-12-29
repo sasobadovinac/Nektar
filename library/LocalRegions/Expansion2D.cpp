@@ -1323,6 +1323,12 @@ namespace Nektar
             return m_vertexmatrix;
         }
 
+        const StdRegions::NormalVector& Expansion2D::v_GetTraceNormal(
+            const int trace) const
+        {
+            return v_GetEdgeNormal(trace);
+        }
+
         Array<OneD, unsigned int> Expansion2D::v_GetEdgeInverseBoundaryMap(
             int eid)
         {

@@ -172,7 +172,10 @@ namespace Nektar
                 Array<OneD, NekDouble> &coeffs);
 
             virtual DNekMatSharedPtr v_BuildVertexMatrix(
-                const DNekScalMatSharedPtr &r_bnd); 
+                const DNekScalMatSharedPtr &r_bnd);
+
+            virtual const StdRegions::NormalVector& v_GetTraceNormal(
+                const int trace) const;
 
             void GetPhysEdgeVarCoeffsFromElement(
                 const int edge,

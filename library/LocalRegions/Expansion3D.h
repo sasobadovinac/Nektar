@@ -139,6 +139,9 @@ namespace Nektar
                       Array<OneD,       NekDouble>      &outarray,
                 StdRegions::Orientation                  orient);
 
+            virtual const StdRegions::NormalVector& v_GetTraceNormal(
+                const int trace) const;
+
             //-----------------------------
             // Low Energy Basis functions
             //-----------------------------

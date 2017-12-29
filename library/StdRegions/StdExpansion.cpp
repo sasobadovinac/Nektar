@@ -1678,6 +1678,13 @@ namespace Nektar
             HelmholtzMatrixOp_MatFree_GenericImpl(inarray,outarray,mkey);
         }
 
+        const NormalVector & StdExpansion::v_GetTraceNormal(const int trace) const
+        {
+            ASSERTL0(false, "Cannot get trace normals for this expansion.");
+            static NormalVector result;
+            return result;
+        }
+
         const NormalVector & StdExpansion::v_GetEdgeNormal(const int edge) const
         {
             ASSERTL0(false, "Cannot get edge normals for this expansion.");
