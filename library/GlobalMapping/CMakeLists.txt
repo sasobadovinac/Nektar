@@ -10,6 +10,7 @@ SET(GLOBAL_MAPPING_SOURCES
   FSI/FSICoupler.cpp
   FSI/GeneralCoupler.cpp
   FSI/FSIBody.cpp
+  FSI/ForcedBody.cpp
   FSI/RigidBody.cpp
 )
 
@@ -25,6 +26,7 @@ SET(GLOBAL_MAPPING_HEADERS
   FSI/FSICoupler.h
   FSI/GeneralCoupler.h
   FSI/FSIBody.h
+  FSI/ForcedBody.h
   FSI/RigidBody.h
 )
 
