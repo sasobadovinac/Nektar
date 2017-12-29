@@ -68,6 +68,8 @@ public:
     static std::string className;
 
 protected:
+    std::string m_funcName;
+
     // Constructor
     ForcedBody(const LibUtilities::SessionReaderSharedPtr        &pSession,
               const Array<OneD, MultiRegions::ExpListSharedPtr> &pFields);

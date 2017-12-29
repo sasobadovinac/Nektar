@@ -86,6 +86,8 @@ public:
 protected:
     /// Session reader
     LibUtilities::SessionReaderSharedPtr m_session;
+    /// Determines if a given Boundary Region is part of this body
+    std::vector<int>                     m_boundaryRegionIsInList;
 
     /// @brief Constructor
     FSIBody(

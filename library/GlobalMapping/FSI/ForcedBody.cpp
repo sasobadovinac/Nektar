@@ -61,6 +61,15 @@ void ForcedBody::v_InitObject(
         const Array<OneD, MultiRegions::ExpListSharedPtr>   &pFields,
         const std::map<std::string, std::string>            &pParams)
 {
+    FSIBody::v_InitObject(pFields, pParams);
+
+    // Read displacement parameter
+    auto it = pParams.find("DisplacementFCN");
+    ASSERTL0(it != pParams.end(),     "Missing parameter 'DisplacementFCN'.");
+    ASSERTL0(it->second.length() > 0, "Empty parameter 'DisplacementFCN'.");
+    ASSERTL0(m_session->DefinesFunction(it->second),
+            "Function '" + it->second + "' not defined.");
+    m_funcName = it->second;
 }
 
 void ForcedBody::v_Apply(
@@ -68,6 +77,60 @@ void ForcedBody::v_Apply(
         const Array<OneD, MultiRegions::ExpListSharedPtr>    &pDisplFields,
         const NekDouble                                      &time)
 {
+    int    dim           = pDisplFields.num_elements();
+    string fieldNames[3] = {"x", "y", "z"};
+
+    // Loop coordinates
+    for( int i = 0; i < dim; ++i)
+    {
+        // Skip this direction if function is not defined for it
+        if( !m_session->DefinesFunction(m_funcName, fieldNames[i]))
+        {
+            continue;
+        }
+
+        // Get boundary expansions
+        Array<OneD, const SpatialDomains::BoundaryConditionShPtr> bndConds =
+                pDisplFields[i]->GetBndConditions();
+        Array<OneD, MultiRegions::ExpListSharedPtr> bndExp =
+                pDisplFields[i]->GetBndCondExpansions();
+
+        // Get function for displacement in this direction
+        LibUtilities::EquationSharedPtr ffunc =
+            m_session->GetFunction(m_funcName, fieldNames[i]);
+
+        // Loop on boundary regions
+        for( int n = 0; n < bndConds.num_elements(); ++n)
+        {
+            // Only modify boundary regions corresponding to this body
+            if(m_boundaryRegionIsInList[n] == 1)
+            {
+                // Number of points on this boundary
+                int nPts = bndExp[n]->GetTotPoints();
+
+                // Get coordinates
+                Array<OneD, Array<OneD, NekDouble>> coords(3);
+                for (int j = 0; j < 3; ++j)
+                {
+                    coords[j] = Array<OneD, NekDouble>(nPts, 0.0);
+                }
+                bndExp[n]->GetCoords(coords[0], coords[1], coords[2]);
+
+                // Evaluate function
+                ffunc->Evaluate(coords[0], coords[1], coords[2], time,
+                        bndExp[n]->UpdatePhys());
+
+                // Update coefficients
+                bndExp[n]->FwdTrans_BndConstrained(bndExp[n]->GetPhys(),
+                                            bndExp[n]->UpdateCoeffs());
+                if (pDisplFields[i]->GetExpType() == MultiRegions::e3DH1D)
+                {
+                    bndExp[n]->HomogeneousFwdTrans(bndExp[n]->GetCoeffs(),
+                                            bndExp[n]->UpdateCoeffs());
+                }
+            }
+        }
+    }
 }
 
 }

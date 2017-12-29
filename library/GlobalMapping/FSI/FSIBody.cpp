@@ -34,6 +34,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <GlobalMapping/FSI/FSIBody.h>
+#include <LibUtilities/BasicUtils/ParseUtils.h>
 
 using namespace std;
 
@@ -62,6 +63,53 @@ void FSIBody::v_InitObject(
         const Array<OneD, MultiRegions::ExpListSharedPtr> &pFields,
         const std::map<std::string, std::string>          &pParams)
 {
+    // Read boundary parameter
+    auto it = pParams.find("Boundary");
+    ASSERTL0(it != pParams.end(),     "Missing parameter 'Boundary'.");
+    ASSERTL0(it->second.length() > 0, "Empty parameter 'Boundary'.");
+    std::string boundaryString = it->second;
+
+    // Parse the boundary regions into a list.
+    std::string::size_type firstInd =
+                            boundaryString.find_first_of('[') + 1;
+    std::string::size_type lastInd =
+                            boundaryString.find_last_of(']') - 1;
+
+    ASSERTL0(firstInd <= lastInd,
+            (std::string("Error reading boundary region definition:") +
+             boundaryString).c_str());
+
+    std::string indString =
+            boundaryString.substr(firstInd, lastInd - firstInd + 1);
+    std::vector<unsigned int> boundaryRegionsIdList;
+    bool parseGood = ParseUtils::GenerateSeqVector(indString,
+                                                   boundaryRegionsIdList);
+    ASSERTL0(parseGood && !boundaryRegionsIdList.empty(),
+             (std::string("Unable to read boundary regions index "
+              "range for FSIBody: ") + indString).c_str());
+
+    // determine what boundary regions need to be considered
+    unsigned int numBoundaryRegions =
+                        pFields[0]->GetBndConditions().num_elements();
+    m_boundaryRegionIsInList.insert(m_boundaryRegionIsInList.end(),
+                                    numBoundaryRegions, 0);
+
+    SpatialDomains::BoundaryConditions bcs(m_session,
+                                            pFields[0]->GetGraph());
+    const SpatialDomains::BoundaryRegionCollection &bregions =
+                                            bcs.GetBoundaryRegions();
+
+    int cnt = 0;
+    for (auto &it : bregions)
+    {
+        if ( std::find(boundaryRegionsIdList.begin(),
+                       boundaryRegionsIdList.end(), it.first) !=
+                boundaryRegionsIdList.end() )
+        {
+            m_boundaryRegionIsInList[cnt] = 1;
+        }
+        cnt++;
+    }
 }
 
 }
