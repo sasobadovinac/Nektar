@@ -133,10 +133,11 @@ void GeneralCoupler::v_InitObject(
 
 void GeneralCoupler::v_CalculateDisplacement()
 {
+    int nPts = m_coords[0].num_elements();
     // Solve Laplace equation to obtain displacements
     StdRegions::ConstFactorMap factors;
     factors[StdRegions::eFactorLambda] = 0.0;
-    Array<OneD, NekDouble> forcing(physTot, 0.0);
+    Array<OneD, NekDouble> forcing(nPts, 0.0);
     for(int i = 0; i < m_expDim; ++i)
     {
         m_displFields[i]->HelmSolve(forcing, m_displFields[i]->UpdateCoeffs(),
