@@ -38,6 +38,7 @@
 
 #include <string>
 #include <GlobalMapping/FSI/FSIBody.h>
+#include <SolverUtils/Filters/FilterAeroForces.h>
 
 namespace Nektar
 {
@@ -68,6 +69,35 @@ public:
     static std::string className;
 
 protected:
+    //Mass
+    NekDouble                               m_M;
+    // Spring coefficients
+    Array<OneD, NekDouble>                  m_K;
+    // Damping coefficients
+    Array<OneD, NekDouble>                  m_C;
+    // Number of degrees of freedom
+    int                                     m_nDof;
+    // Movement directions 
+    Array<OneD, Array<OneD, NekDouble> >    m_directions;
+    // AeroForces filter
+    SolverUtils::FilterAeroForcesSharedPtr  m_filterForces;
+
+    /// Time step
+    NekDouble                               m_timestep;
+    /// Time integration order
+    int                                     m_intSteps;
+
+    // Variables for time integration
+    Array<OneD, NekDouble>                  m_displacement;
+    Array<OneD, Array<OneD, NekDouble>>     m_velocity;
+    Array<OneD, Array<OneD, NekDouble>>     m_force;
+
+
+    // Coefficients for Adams time-integration
+    static NekDouble AdamsBashforth_coeffs[3][3];
+    static NekDouble AdamsMoulton_coeffs[3][3];
+
+
     // Constructor
     RigidBody(const LibUtilities::SessionReaderSharedPtr        &pSession,
               const Array<OneD, MultiRegions::ExpListSharedPtr> &pFields);
