@@ -7,11 +7,6 @@ SET(GLOBAL_MAPPING_SOURCES
   MappingXYofXY.cpp
   MappingGeneral.cpp
   MappingTranslation.cpp
-  FSI/FSICoupler.cpp
-  FSI/GeneralCoupler.cpp
-  FSI/FSIBody.cpp
-  FSI/ForcedBody.cpp
-  FSI/RigidBody.cpp
 )
 
 SET(GLOBAL_MAPPING_HEADERS
@@ -23,11 +18,6 @@ SET(GLOBAL_MAPPING_HEADERS
   MappingXYofXY.h
   MappingGeneral.h
   MappingTranslation.h
-  FSI/FSICoupler.h
-  FSI/GeneralCoupler.h
-  FSI/FSIBody.h
-  FSI/ForcedBody.h
-  FSI/RigidBody.h
 )
 
 ADD_DEFINITIONS(-DGLOBAL_MAPPING_EXPORTS)
