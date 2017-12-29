@@ -37,7 +37,7 @@
 #define NEKTAR_GLOBALMAPPING_FSI_GENERALCOUPLER
 
 #include <string>
-#include <GlobalMapping/FSI/FSICoupler.h>
+#include <IncNavierStokesSolver/FSI/FSICoupler.h>
 
 namespace Nektar
 {

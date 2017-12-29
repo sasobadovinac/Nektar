@@ -37,7 +37,7 @@
 #define NEKTAR_GLOBALMAPPING_FSI_FORCEDBODY
 
 #include <string>
-#include <GlobalMapping/FSI/FSIBody.h>
+#include <IncNavierStokesSolver/FSI/FSIBody.h>
 
 namespace Nektar
 {

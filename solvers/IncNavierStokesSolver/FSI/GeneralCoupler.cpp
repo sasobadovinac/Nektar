@@ -33,7 +33,7 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#include <GlobalMapping/FSI/GeneralCoupler.h>
+#include <IncNavierStokesSolver/FSI/GeneralCoupler.h>
 
 namespace Nektar
 {

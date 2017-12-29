@@ -44,7 +44,7 @@
 #include <MultiRegions/ExpList.h>
 #include <GlobalMapping/GlobalMappingDeclspec.h>
 #include <GlobalMapping/Mapping.h>
-#include <GlobalMapping/FSI/FSIBody.h>
+#include <IncNavierStokesSolver/FSI/FSIBody.h>
 
 namespace Nektar
 {

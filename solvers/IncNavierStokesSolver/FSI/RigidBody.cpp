@@ -33,7 +33,7 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#include <GlobalMapping/FSI/RigidBody.h>
+#include <IncNavierStokesSolver/FSI/RigidBody.h>
 #include <LibUtilities/BasicUtils/Equation.h>
 
 namespace Nektar

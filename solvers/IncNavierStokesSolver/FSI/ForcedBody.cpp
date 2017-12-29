@@ -33,7 +33,7 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#include <GlobalMapping/FSI/ForcedBody.h>
+#include <IncNavierStokesSolver/FSI/ForcedBody.h>
 
 namespace Nektar
 {

@@ -37,7 +37,7 @@
 #define NEKTAR_GLOBALMAPPING_FSI_RIGIDBODY
 
 #include <string>
-#include <GlobalMapping/FSI/FSIBody.h>
+#include <IncNavierStokesSolver/FSI/FSIBody.h>
 #include <SolverUtils/Filters/FilterAeroForces.h>
 
 namespace Nektar

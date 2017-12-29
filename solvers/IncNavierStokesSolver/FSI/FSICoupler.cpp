@@ -33,7 +33,7 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#include <GlobalMapping/FSI/FSICoupler.h>
+#include <IncNavierStokesSolver/FSI/FSICoupler.h>
 
 #include <MultiRegions/ContField1D.h>
 #include <MultiRegions/ContField2D.h>

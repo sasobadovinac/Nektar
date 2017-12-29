@@ -33,7 +33,7 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#include <GlobalMapping/FSI/FSIBody.h>
+#include <IncNavierStokesSolver/FSI/FSIBody.h>
 #include <LibUtilities/BasicUtils/ParseUtils.h>
 
 using namespace std;

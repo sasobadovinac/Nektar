@@ -38,7 +38,7 @@
 
 #include <IncNavierStokesSolver/EquationSystems/VelocityCorrectionScheme.h>
 #include <GlobalMapping/Mapping.h>
-#include <GlobalMapping/FSI/FSICoupler.h>
+#include <IncNavierStokesSolver/FSI/FSICoupler.h>
 
 namespace Nektar
 {
