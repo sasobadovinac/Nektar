@@ -33,16 +33,14 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#ifndef NEKTAR_GLOBALMAPPING_FSI_RIGIDBODY
-#define NEKTAR_GLOBALMAPPING_FSI_RIGIDBODY
+#ifndef NEKTAR_SOLVERS_FSI_RIGIDBODY
+#define NEKTAR_SOLVERS_FSI_RIGIDBODY
 
 #include <string>
 #include <IncNavierStokesSolver/FSI/FSIBody.h>
 #include <SolverUtils/Filters/FilterAeroForces.h>
 
 namespace Nektar
-{
-namespace GlobalMapping
 {
 
 class RigidBody: public FSIBody
@@ -114,7 +112,6 @@ protected:
 
 };
 
-}
 }
 
 #endif

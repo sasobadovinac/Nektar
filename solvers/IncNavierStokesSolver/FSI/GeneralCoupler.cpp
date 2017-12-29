@@ -37,8 +37,6 @@
 
 namespace Nektar
 {
-namespace GlobalMapping
-{
 
 std::string GeneralCoupler::className =
     GetFSICouplerFactory().RegisterCreatorFunction("General",
@@ -71,5 +69,4 @@ void GeneralCoupler::v_CalculateDisplacement()
     }
 }
 
-}
 }

@@ -45,8 +45,7 @@ using namespace std;
 
 namespace Nektar
 {
-namespace GlobalMapping
-{
+
 NekDouble FSICoupler::BDF_Alpha_Coeffs[3][3] = {
     { 1.0,  0.0, 0.0},{ 2.0, -0.5, 0.0},{ 3.0, -1.5, 1.0/3.0}};
 NekDouble FSICoupler::BDF_Gamma0_Coeffs[3] = {
@@ -348,5 +347,4 @@ void FSICoupler::ReadBodies(TiXmlElement* pFSI)
     }
 }
 
-}
 }

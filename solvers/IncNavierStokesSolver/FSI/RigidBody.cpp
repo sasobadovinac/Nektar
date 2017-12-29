@@ -38,8 +38,6 @@
 
 namespace Nektar
 {
-namespace GlobalMapping
-{
 
 std::string RigidBody::className =
     GetFSIBodyFactory().RegisterCreatorFunction("Rigid",
@@ -314,5 +312,4 @@ void RigidBody::v_Apply(
     }
 }
 
-}
 }

@@ -40,8 +40,6 @@ using namespace std;
 
 namespace Nektar
 {
-namespace GlobalMapping
-{
 
 FSIBodyFactory& GetFSIBodyFactory()
 {
@@ -112,5 +110,4 @@ void FSIBody::v_InitObject(
     }
 }
 
-}
 }

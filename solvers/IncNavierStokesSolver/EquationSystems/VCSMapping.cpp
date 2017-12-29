@@ -188,7 +188,7 @@ namespace Nektar
         {
             TiXmlElement* vFSI  = m_session->GetElement("Nektar/FSI");
             string        vType = vFSI->Attribute("TYPE");;
-            m_fsi = GlobalMapping::GetFSICouplerFactory().CreateInstance(
+            m_fsi = GetFSICouplerFactory().CreateInstance(
                             vType, m_session, m_fields, vFSI);
         }
     }

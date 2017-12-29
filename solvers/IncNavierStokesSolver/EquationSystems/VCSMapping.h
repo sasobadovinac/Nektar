@@ -77,7 +77,7 @@ namespace Nektar
         GlobalMapping::MappingSharedPtr             m_mapping;
 
         // Object for imposing body motion in FSI problems
-        GlobalMapping::FSICouplerSharedPtr          m_fsi;
+        FSICouplerSharedPtr                         m_fsi;
 
         bool                                        m_verbose;
         

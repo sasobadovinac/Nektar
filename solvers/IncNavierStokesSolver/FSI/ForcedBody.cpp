@@ -37,8 +37,6 @@
 
 namespace Nektar
 {
-namespace GlobalMapping
-{
 
 std::string ForcedBody::className =
     GetFSIBodyFactory().RegisterCreatorFunction("Forced",
@@ -133,5 +131,4 @@ void ForcedBody::v_Apply(
     }
 }
 
-}
 }

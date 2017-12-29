@@ -33,8 +33,8 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#ifndef NEKTAR_GLOBALMAPPING_FSI_FSIBODY
-#define NEKTAR_GLOBALMAPPING_FSI_FSIBODY
+#ifndef NEKTAR_SOLVERS_FSI_FSIBODY
+#define NEKTAR_SOLVERS_FSI_FSIBODY
 
 #include <string>
 
@@ -45,8 +45,7 @@
 
 namespace Nektar
 {
-namespace GlobalMapping
-{
+
 //  Forward declaration
 class FSIBody;
 
@@ -121,7 +120,6 @@ inline void FSIBody::Apply(
     v_Apply(pFields, pDisplFields, time);
 }
 
-}
 }
 
 #endif

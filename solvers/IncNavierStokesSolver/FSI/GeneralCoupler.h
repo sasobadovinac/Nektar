@@ -33,15 +33,13 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#ifndef NEKTAR_GLOBALMAPPING_FSI_GENERALCOUPLER
-#define NEKTAR_GLOBALMAPPING_FSI_GENERALCOUPLER
+#ifndef NEKTAR_SOLVERS_FSI_GENERALCOUPLER
+#define NEKTAR_SOLVERS_FSI_GENERALCOUPLER
 
 #include <string>
 #include <IncNavierStokesSolver/FSI/FSICoupler.h>
 
 namespace Nektar
-{
-namespace GlobalMapping
 {
 
 class GeneralCoupler: public FSICoupler
@@ -77,7 +75,6 @@ protected:
 
 };
 
-}
 }
 
 #endif

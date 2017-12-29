@@ -33,15 +33,13 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#ifndef NEKTAR_GLOBALMAPPING_FSI_FORCEDBODY
-#define NEKTAR_GLOBALMAPPING_FSI_FORCEDBODY
+#ifndef NEKTAR_SOLVERS_FSI_FORCEDBODY
+#define NEKTAR_SOLVERS_FSI_FORCEDBODY
 
 #include <string>
 #include <IncNavierStokesSolver/FSI/FSIBody.h>
 
 namespace Nektar
-{
-namespace GlobalMapping
 {
 
 class ForcedBody: public FSIBody
@@ -86,7 +84,6 @@ protected:
 
 };
 
-}
 }
 
 #endif

@@ -33,8 +33,8 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#ifndef NEKTAR_GLOBALMAPPING_FSI_FSICOUPLER
-#define NEKTAR_GLOBALMAPPING_FSI_FSICOUPLER
+#ifndef NEKTAR_SOLVERS_FSI_FSICOUPLER
+#define NEKTAR_SOLVERS_FSI_FSICOUPLER
 
 #include <string>
 
@@ -48,8 +48,7 @@
 
 namespace Nektar
 {
-namespace GlobalMapping
-{
+
 //  Forward declaration
 class FSICoupler;
 
@@ -169,7 +168,6 @@ inline void FSICoupler::CalculateDisplacement()
     v_CalculateDisplacement();
 }
 
-}
 }
 
 #endif
