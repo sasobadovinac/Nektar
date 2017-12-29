@@ -159,10 +159,16 @@ void FSICoupler::v_InitObject(
     }
     pFields[0]->GetCoords(m_meshCoords[0],m_meshCoords[1],m_meshCoords[2]);
 
-    // Coordinates above m_expDim are not changed
-    for( int i = m_expDim; i < 3; ++i)
+    // Initialise m_coords to m_meshCoords (zero displacement in IC)
+    for( int i = 0; i < 3; ++i)
     {
         Vmath::Vcopy(nPts, m_meshCoords[i], 1, m_coords[i], 1);
+    }
+
+    // Set m_oldCoords[0] to m_coords for calculating coordinates velocity
+    for( int i = 0; i < m_expDim; ++i)
+    {
+        Vmath::Vcopy(nPts, m_coords[i], 1, m_oldCoords[0][i], 1);
     }
 }
 
