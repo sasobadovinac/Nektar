@@ -71,13 +71,11 @@ public:
 
     SOLVER_UTILS_EXPORT void GetTotalForces(
         const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
-              Array<OneD, NekDouble> &Aeroforces,
-        const NekDouble &time);
+        Array<OneD, NekDouble> &Aeroforces, const NekDouble &time);
 
     SOLVER_UTILS_EXPORT void GetPlaneForces(
         const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
-              Array<OneD, NekDouble> &Aeroforces,
-        const NekDouble &time);
+        Array<OneD, NekDouble> &Aeroforces, const NekDouble &time);
 
 protected:
     virtual void v_Initialise(

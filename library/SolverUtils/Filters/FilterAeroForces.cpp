@@ -202,10 +202,8 @@ void FilterAeroForces::v_Initialise(
     m_mu = m_rho*m_session->GetParameter("Kinvis");
 
     // Parse the boundary regions into a list.
-    std::string::size_type FirstInd =
-                            m_BoundaryString.find_first_of('[') + 1;
-    std::string::size_type LastInd =
-                            m_BoundaryString.find_last_of(']') - 1;
+    std::string::size_type FirstInd = m_BoundaryString.find_first_of('[') + 1;
+    std::string::size_type LastInd  = m_BoundaryString.find_last_of(']') - 1;
 
     ASSERTL0(FirstInd <= LastInd,
             (std::string("Error reading boundary region definition:") +
@@ -298,8 +296,7 @@ void FilterAeroForces::v_Initialise(
     {
         // Open output stream
         bool adaptive;
-        m_session->MatchSolverInfo("Driver", "Adaptive",
-                                    adaptive, false);
+        m_session->MatchSolverInfo("Driver", "Adaptive", adaptive, false);
         if (adaptive)
         {
             m_outputStream.open(m_outputFile.c_str(), ofstream::app);
@@ -388,14 +385,11 @@ void FilterAeroForces::v_Update(
                 for( int i = 0; i < expdim; i++ )
                 {
                     m_outputStream.width(15);
-                    m_outputStream << setprecision(8) 
-                                   << m_Fpplane[i][plane];
+                    m_outputStream << setprecision(8) << m_Fpplane[i][plane];
                     m_outputStream.width(15);
-                    m_outputStream << setprecision(8)
-                                   << m_Fvplane[i][plane];
+                    m_outputStream << setprecision(8) << m_Fvplane[i][plane];
                     m_outputStream.width(15);
-                    m_outputStream << setprecision(8)  
-                                   << m_Ftplane[i][plane];
+                    m_outputStream << setprecision(8) << m_Ftplane[i][plane];
                 }
                 m_outputStream.width(10);
                 m_outputStream << plane;
@@ -467,9 +461,9 @@ void FilterAeroForces::v_Update(
         if (m_session->DefinesSolverInfo("HomoStrip") &&
                 (vComm->GetRowComm()->GetRank() == 0) )
         {
-                vComm->GetColumnComm()->Send(0, m_Fp);
-                vComm->GetColumnComm()->Send(0, m_Fv);
-                vComm->GetColumnComm()->Send(0, m_Ft);
+            vComm->GetColumnComm()->Send(0, m_Fp);
+            vComm->GetColumnComm()->Send(0, m_Fv);
+            vComm->GetColumnComm()->Send(0, m_Ft);
         }
     }
 }
@@ -478,7 +472,7 @@ void FilterAeroForces::v_Update(
  *
  */
 void FilterAeroForces::v_Finalise(
-    const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields, 
+    const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
     const NekDouble &time)
 {
     if (pFields[0]->GetComm()->GetRank() == 0)
@@ -500,8 +494,7 @@ bool FilterAeroForces::v_IsTimeDependent()
  */
 void FilterAeroForces::GetTotalForces(
     const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
-          Array<OneD, NekDouble> &Aeroforces,
-    const NekDouble &time)
+    Array<OneD, NekDouble> &Aeroforces, const NekDouble &time)
 {
     // Calculate forces if the result we have is not up-to-date
     if(time > m_lastTime)
@@ -524,8 +517,7 @@ void FilterAeroForces::GetTotalForces(
  */
 void FilterAeroForces::GetPlaneForces(
     const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
-          Array<OneD, NekDouble> &Aeroforces,
-    const NekDouble &time)
+    Array<OneD, NekDouble> &Aeroforces, const NekDouble &time)
 {
     // Calculate forces if the result we have is not up-to-date
     if(time > m_lastTime)
@@ -545,7 +537,7 @@ void FilterAeroForces::GetPlaneForces(
         {
             for(int dir = 0; dir < expdim; ++dir)
             {
-                Aeroforces[plane + dir*local_planes] = 
+                Aeroforces[plane + dir*local_planes] =
                         m_Ftplane[dir][ZIDs[plane]];
             }
         }
@@ -566,8 +558,8 @@ void FilterAeroForces::GetPlaneForces(
  *     This function calculates the forces
  */
 void FilterAeroForces::CalculateForces(
-        const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
-        const NekDouble &time)
+    const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
+    const NekDouble &time)
 {
     // Store time so we can check if result is up-to-date
     m_lastTime = time;
@@ -581,8 +573,7 @@ void FilterAeroForces::CalculateForces(
         {
             pFields[i]->SetWaveSpace(false);
         }
-        pFields[i]->BwdTrans(pFields[i]->GetCoeffs(),
-                             pFields[i]->UpdatePhys());
+        pFields[i]->BwdTrans(pFields[i]->GetCoeffs(), pFields[i]->UpdatePhys());
         pFields[i]->SetPhysState(true);
     }
 
@@ -618,9 +609,8 @@ void FilterAeroForces::CalculateForces(
     LibUtilities::CommSharedPtr vComm = pFields[0]->GetComm();
     LibUtilities::CommSharedPtr rowComm = vComm->GetRowComm();
     LibUtilities::CommSharedPtr colComm =
-                            m_session->DefinesSolverInfo("HomoStrip") ?
-                                vComm->GetColumnComm()->GetColumnComm():
-                                vComm->GetColumnComm();
+        m_session->DefinesSolverInfo("HomoStrip") ?
+            vComm->GetColumnComm()->GetColumnComm() : vComm->GetColumnComm();
 
     // Combine contributions from different processes
     //    this is split between row and col comm because of
