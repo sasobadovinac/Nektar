@@ -188,15 +188,15 @@ void RigidBody::v_InitObject(
 
     // Determine time integration order
     std::string intMethod = m_session->GetSolverInfo("TIMEINTEGRATIONMETHOD");
-    if(intMethod == "IMEXOrder1")
+    if(boost::iequals(intMethod, "IMEXOrder1"))
     {
         m_intSteps = 1;
     }
-    else if (intMethod == "IMEXOrder2")
+    else if (boost::iequals(intMethod, "IMEXOrder2"))
     {
         m_intSteps = 2;
     }
-    else if (intMethod == "IMEXOrder3")
+    else if (boost::iequals(intMethod, "IMEXOrder3"))
     {
         m_intSteps = 3;
     }
