@@ -90,8 +90,8 @@ void RigidBody::v_InitObject(
     else
     {
         vParams[it->first] = it->second;
-        LibUtilities::Equation equ(m_session, it->second);
-        m_outputFrequency = round(equ.Evaluate());
+        LibUtilities::Equation equ1(m_session, it->second);
+        m_outputFrequency = round(equ1.Evaluate());
     }
 
     // OutputFile
@@ -117,14 +117,14 @@ void RigidBody::v_InitObject(
     // Number of degrees of freedom
     it = pParams.find("TranslationDOFs");
     ASSERTL0(it != pParams.end(), "Missing parameter 'TranslationDOFs'.");
-    LibUtilities::Equation equ(m_session, it->second);
-    m_nDof = round(equ.Evaluate());
+    LibUtilities::Equation equ2(m_session, it->second);
+    m_nDof = round(equ2.Evaluate());
 
     // Mass
     it = pParams.find("M");
     ASSERTL0(it != pParams.end(), "Missing parameter 'M'.");
-    equ = LibUtilities::Equation (m_session, it->second);
-    m_M = equ.Evaluate();
+    LibUtilities::Equation equ3(m_session, it->second);
+    m_M = equ3.Evaluate();
 
     // Spring coefficient
     m_K = Array<OneD, NekDouble> (m_nDof);
@@ -137,8 +137,8 @@ void RigidBody::v_InitObject(
         sStream >> sString;
         if (!sString.empty())
         {
-            equ = LibUtilities::Equation (m_session, it->second);
-            m_K[i] = equ.Evaluate();
+            LibUtilities::Equation equ4(m_session, it->second);
+            m_K[i] = equ4.Evaluate();
         }
         else
         {
@@ -159,8 +159,8 @@ void RigidBody::v_InitObject(
         sStream >> sString;
         if (!sString.empty())
         {
-            equ = LibUtilities::Equation (m_session, it->second);
-            m_C[i] = equ.Evaluate();
+            LibUtilities::Equation equ5(m_session, it->second);
+            m_C[i] = equ5.Evaluate();
         }
         else
         {
@@ -201,8 +201,8 @@ void RigidBody::v_InitObject(
                 sStream >> sString;
                 if (!sString.empty())
                 {
-                    equ = LibUtilities::Equation (m_session, sString);
-                    m_directions[i][j] = equ.Evaluate();
+                    LibUtilities::Equation equ6(m_session, sString);
+                    m_directions[i][j] = equ6.Evaluate();
                     norm += m_directions[i][j]*m_directions[i][j];
                 }
             }
