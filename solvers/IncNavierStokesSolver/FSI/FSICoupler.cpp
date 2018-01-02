@@ -126,7 +126,7 @@ void FSICoupler::v_InitObject(
     CreateDisplacementFields(pFields);
 
     // Create entries for m_bodies
-    ReadBodies(pFSI);
+    ReadBodies(pFields, pFSI);
 
     // Allocate storage
     int nPts     = pFields[0]->GetTotPoints();
@@ -310,7 +310,9 @@ void FSICoupler::CalculateCoordVel()
     }
 }
 
-void FSICoupler::ReadBodies(TiXmlElement* pFSI)
+void FSICoupler::ReadBodies(
+    const Array<OneD, MultiRegions::ExpListSharedPtr> &pFields,
+          TiXmlElement* pFSI)
 {
     m_bodies.clear();
 
@@ -341,7 +343,7 @@ void FSICoupler::ReadBodies(TiXmlElement* pFSI)
 
         m_bodies.push_back(
             GetFSIBodyFactory().CreateInstance(
-                        typeStr, m_session, m_displFields, vParams));
+                        typeStr, m_session, pFields, vParams));
 
         body = body->NextSiblingElement("BODY");
     }

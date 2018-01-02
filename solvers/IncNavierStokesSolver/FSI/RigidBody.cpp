@@ -95,7 +95,7 @@ void RigidBody::v_InitObject(
     }
 
     // OutputFile
-   it = pParams.find("OutputFile");
+    it = pParams.find("OutputFile");
     if (it == pParams.end())
     {
         m_doOutput = false;

@@ -133,7 +133,9 @@ protected:
     void CalculateCoordVel();
 
     ///
-    void ReadBodies(TiXmlElement* pFSI);
+    void ReadBodies(
+        const Array<OneD, MultiRegions::ExpListSharedPtr> &pFields,
+              TiXmlElement* pFSI);
 
     // Virtual functions
     virtual void v_InitObject(
