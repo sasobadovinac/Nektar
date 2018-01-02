@@ -70,6 +70,8 @@ void RigidBody::v_InitObject(
         const Array<OneD, MultiRegions::ExpListSharedPtr>   &pFields,
         const std::map<std::string, std::string>            &pParams)
 {
+    FSIBody::v_InitObject(pFields, pParams);
+
     std::stringstream      sStream;
     std::string            sString;
 
