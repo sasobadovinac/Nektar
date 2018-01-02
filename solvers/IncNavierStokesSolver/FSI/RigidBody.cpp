@@ -288,8 +288,9 @@ void RigidBody::v_InitObject(
             for( int i = 1; i <= m_nDof; ++i )
             {
                 m_outputStream.width(14);
-                m_outputStream <<  "Displ_" << i;
+                m_outputStream <<  "Displ" << i;
             }
+            m_outputStream << endl;
         }
     }
 }
@@ -393,17 +394,18 @@ void RigidBody::v_Apply(
     {
         m_filterForces->Update(pFields, time);
         ++m_index;
-        if ( m_index % m_outputFrequency )
+        if ( !(m_index % m_outputFrequency) )
         {
             if ( pFields[0]->GetComm()->GetRank() == 0)
             {
                 m_outputStream.width(8);
                 m_outputStream << setprecision(6) << time;
-                for( int i = 1; i <= expdim; i++ )
+                for( int i = 0; i < m_nDof; i++ )
                 {
                     m_outputStream.width(15);
                     m_outputStream << setprecision(8) << m_displacement[i];
                 }
+                m_outputStream << endl;
             }
         }
     }
