@@ -331,7 +331,7 @@ void RigidBody::v_Apply(
     tmp = m_velocity[m_intSteps-1];
     for(int n = m_intSteps-1; n > 0; --n)
     {
-        m_velocity[n] = m_force[n-1];
+        m_velocity[n] = m_velocity[n-1];
     }
     m_velocity[0] = tmp;
 
