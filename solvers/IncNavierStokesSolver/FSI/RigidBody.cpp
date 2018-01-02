@@ -199,7 +199,7 @@ void RigidBody::v_InitObject(
                 sStream >> sString;
                 if (!sString.empty())
                 {
-                    equ = LibUtilities::Equation (m_session, it->second);
+                    equ = LibUtilities::Equation (m_session, sString);
                     m_directions[i][j] = equ.Evaluate();
                     norm += m_directions[i][j]*m_directions[i][j];
                 }
