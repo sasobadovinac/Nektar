@@ -359,12 +359,19 @@ void FilterAeroForces::v_Update(
     const NekDouble &time)
 {
     // Only output every m_outputFrequency.
+    if ( m_outputFrequency == 0)
+    {
+        return;
+    }
     if ((m_index++) % m_outputFrequency  || (time < m_startTime))
     {
         return;
     }
     // Calculate the forces
-    CalculateForces(pFields, time);
+    if(time > m_lastTime)
+    {
+        CalculateForces(pFields, time);
+    }
 
     // Communicators to exchange results
     LibUtilities::CommSharedPtr vComm = pFields[0]->GetComm();

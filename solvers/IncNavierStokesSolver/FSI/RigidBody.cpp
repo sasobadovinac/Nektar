@@ -79,8 +79,41 @@ void RigidBody::v_InitObject(
     // Get timestep
     m_session->LoadParameter("TimeStep", m_timestep);
 
+    // OutputFrequency
+    auto it = pParams.find("OutputFrequency");
+    if (it == pParams.end())
+    {
+        m_outputFrequency = 1;
+    }
+    else
+    {
+        vParams[it->first] = it->second;
+        LibUtilities::Equation equ(m_session, it->second);
+        m_outputFrequency = round(equ.Evaluate());
+    }
+
+    // OutputFile
+   it = pParams.find("OutputFile");
+    if (it == pParams.end())
+    {
+        m_doOutput = false;
+        vParams["OutputFrequency"] = "0";
+    }
+    else
+    {
+        m_doOutput = true;
+        ASSERTL0(it->second.length() > 0, "Missing parameter 'OutputFile'.");
+        vParams["OutputFile"] = it->second;
+        m_outputFile = it->second;
+    }
+    if (!(m_outputFile.length() >= 4
+          && m_outputFile.substr(m_outputFile.length() - 4) == ".mot"))
+    {
+        m_outputFile += ".mot";
+    }
+
     // Number of degrees of freedom
-    auto it = pParams.find("TranslationDOFs");
+    it = pParams.find("TranslationDOFs");
     ASSERTL0(it != pParams.end(), "Missing parameter 'TranslationDOFs'.");
     LibUtilities::Equation equ(m_session, it->second);
     m_nDof = round(equ.Evaluate());
@@ -214,6 +247,48 @@ void RigidBody::v_InitObject(
         m_velocity[i] = Array<OneD, NekDouble> (m_nDof, 0.0);
         m_force[i]    = Array<OneD, NekDouble> (m_nDof, 0.0);
     }
+
+    if( m_doOutput)
+    {
+        m_index = 0;
+        if ( pFields[0]->GetComm()->GetRank() == 0)
+        {
+            // Open output stream
+            bool adaptive;
+            m_session->MatchSolverInfo("Driver", "Adaptive", adaptive, false);
+            if (adaptive)
+            {
+                m_outputStream.open(m_outputFile.c_str(), ofstream::app);
+            }
+            else
+            {
+                m_outputStream.open(m_outputFile.c_str());
+            }
+            // Write header
+            m_outputStream << "# Displacement of bodies" << endl;
+            for( int i = 0; i < m_nDof; i++ )
+            {
+                m_outputStream << "#" << " Direction" << i+1 << " = (";
+                m_outputStream.width(8);
+                m_outputStream << setprecision(4) << m_directions[i][0];
+                m_outputStream.width(8);
+                m_outputStream << setprecision(4) << m_directions[i][1];
+                m_outputStream.width(8);
+                m_outputStream << setprecision(4) << m_directions[i][2];
+                m_outputStream << ")" << endl;
+            }
+            m_outputStream << "# Boundary regions: "
+                           << m_bondaryString.c_str() << endl;
+            m_outputStream << "#";
+            m_outputStream.width(7);
+            m_outputStream << "Time";
+            for( int i = 1; i <= m_nDof; ++i )
+            {
+                m_outputStream.width(14);
+                m_outputStream <<  "Displ_" << i;
+            }
+        }
+    }
 }
 
 void RigidBody::v_Apply(
@@ -306,6 +381,25 @@ void RigidBody::v_Apply(
                 {
                     bndExp[n]->HomogeneousFwdTrans(bndExp[n]->GetCoeffs(),
                                             bndExp[n]->UpdateCoeffs());
+                }
+            }
+        }
+    }
+
+    if( m_doOutput)
+    {
+        m_filterForces->Update(pFields, time);
+        ++m_index;
+        if ( m_index % m_outputFrequency )
+        {
+            if ( pFields[0]->GetComm()->GetRank() == 0)
+            {
+                m_outputStream.width(8);
+                m_outputStream << setprecision(6) << time;
+                for( int i = 1; i <= expdim; i++ )
+                {
+                    m_outputStream.width(15);
+                    m_outputStream << setprecision(8) << m_displacement[i];
                 }
             }
         }

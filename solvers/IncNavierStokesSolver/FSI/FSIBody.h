@@ -87,6 +87,8 @@ protected:
     LibUtilities::SessionReaderSharedPtr m_session;
     /// Determines if a given Boundary Region is part of this body
     std::vector<int>                     m_boundaryRegionIsInList;
+    /// String containing the list of boundary regions in this body
+    std::string                          m_bondaryString;
 
     /// @brief Constructor
     FSIBody(

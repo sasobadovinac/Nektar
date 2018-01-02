@@ -77,14 +77,14 @@ void FSIBody::v_InitObject(
             (std::string("Error reading boundary region definition:") +
              boundaryString).c_str());
 
-    std::string indString =
+    m_bondaryString =
             boundaryString.substr(firstInd, lastInd - firstInd + 1);
     std::vector<unsigned int> boundaryRegionsIdList;
-    bool parseGood = ParseUtils::GenerateSeqVector(indString,
+    bool parseGood = ParseUtils::GenerateSeqVector(m_bondaryString,
                                                    boundaryRegionsIdList);
     ASSERTL0(parseGood && !boundaryRegionsIdList.empty(),
              (std::string("Unable to read boundary regions index "
-              "range for FSIBody: ") + indString).c_str());
+              "range for FSIBody: ") + m_bondaryString).c_str());
 
     // determine what boundary regions need to be considered
     unsigned int numBoundaryRegions =

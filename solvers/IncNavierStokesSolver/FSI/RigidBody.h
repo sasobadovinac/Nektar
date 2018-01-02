@@ -85,6 +85,14 @@ protected:
     /// Time integration order
     int                                     m_intSteps;
 
+    // Output information
+    unsigned int                            m_outputFrequency;
+    std::string                             m_outputFile;
+    std::ofstream                           m_outputStream;
+    bool                                    m_doOutput;
+    unsigned int                            m_index;
+
+
     // Variables for time integration
     Array<OneD, NekDouble>                  m_displacement;
     Array<OneD, Array<OneD, NekDouble>>     m_velocity;
