@@ -218,6 +218,7 @@ void RigidBody::v_InitObject(
     vParams[it->first] = it->second;
     m_filterForces = MemoryManager<SolverUtils::FilterAeroForces>::
                                 AllocateSharedPtr(m_session, vParams);
+    m_filterForces->Initialise(pFields, 0.0);
 
     // Determine time integration order
     std::string intMethod = m_session->GetSolverInfo("TIMEINTEGRATIONMETHOD");
