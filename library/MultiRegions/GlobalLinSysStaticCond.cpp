@@ -130,7 +130,7 @@ namespace Nektar
             {
                 Vmath::Vcopy(nGlobDofs,in.get(),1,F.get(),1);
             }
-            
+
             NekVector<NekDouble> F_HomBnd(nGlobHomBndDofs,tmp=F+nDirBndDofs,
                                           eWrapper);
             NekVector<NekDouble> F_GlobBnd(nGlobBndDofs,F,eWrapper);

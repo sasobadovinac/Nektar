@@ -403,30 +403,22 @@ namespace Nektar
         SetBoundaryConditions(m_time);
 
         m_F = Array<OneD, Array< OneD, NekDouble> > (m_nConvectiveFields);
-#if 1
+
         Array<OneD, Array<OneD, NekDouble> > fields(m_nConvectiveFields);
             
         for(int n = 0; n < m_nConvectiveFields; ++n)
         {
             fields[n] = m_fields[n]->UpdateCoeffs();
         }
-        
+
         RotPeriodicInfoSharedPtr perRotInfo = m_fields[0]->GetLocToGloMap()->GetPerRotInfo();
         Array<OneD, int> periodicRotMap = m_fields[0]->GetLocToGloMap()->GetPeriodicRotMap();
 
-#if 0 
         if(perRotInfo.get())
         {
-            // put in fwd rotation term here.
-            for(int n = 0; n < periodicRotMap.num_elements(); ++n)
-            {
-                perRotInfo->RotateFwd(fields[0][periodicRotMap[n]],
-                                      fields[1][periodicRotMap[n]],
-                                      fields[2][periodicRotMap[n]]);
-            }
+            perRotInfo->RotateFwd(periodicRotMap,fields[0], fields[1], fields[2]);
         }
-#endif
-        
+
         for(int i = 0; i < m_nConvectiveFields; ++i)
         {
             m_fields[i]->LocalToGlobal();
@@ -434,22 +426,11 @@ namespace Nektar
             m_fields[i]->GlobalToLocal();
         }
 
-#if 0 
         if(perRotInfo.get())
         {
             // put in fwd rotation term here.
-            for(int n = 0; n < periodicRotMap.num_elements(); ++n)
-            {
-                perRotInfo->RotateBwd(fields[0][periodicRotMap[n]],
-                                      fields[1][periodicRotMap[n]],
-                                      fields[2][periodicRotMap[n]]);
-            }
+            perRotInfo->RotateBwd(periodicRotMap,fields[0],fields[1],fields[2]);
         }
-#endif
-
-        Checkpoint_Output(0);
-        exit(1);
-#endif
 
         for(int i = 0; i < m_nConvectiveFields; ++i)
         {
@@ -753,8 +734,8 @@ namespace Nektar
                 
                 for(i = 0; i < bndCondExpansions.num_elements(); ++i)
                 {
-                    if(bndConditions[i]->GetBoundaryConditionType()
-                       != SpatialDomains::eDirichlet)
+                    if((bndConditions[i]->GetBoundaryConditionType() == SpatialDomains::eNeumann)
+                       ||(bndConditions[i]->GetBoundaryConditionType() == SpatialDomains::eRobin))
                     {
                         Array<OneD, NekDouble> sign = m_locToGloMapVec[n]->GetBndCondCoeffsToLocalCoeffsSign();
                         const Array<OneD, const int> map= m_locToGloMapVec[n]->GetBndCondCoeffsToLocalCoeffsMap();

@@ -2133,11 +2133,9 @@ namespace Nektar
             CalculateBndSystemBandWidth();
             CalculateFullSystemBandWidth();
 
-#if 1
-
             // identify periodic composite id we are going to rotate and angle of rotation
             // for now just assume there is only one. 
-            int PerRegionID = 9999999; 
+            int PerRegionID = -1; 
             int dir = -1;
             NekDouble angle = 0;
             NekDouble tol   = 0; 
@@ -2146,11 +2144,11 @@ namespace Nektar
             {
                 if(bndConditions[i]->GetBoundaryConditionType() == SpatialDomains::ePeriodic)
                 {
-                    PerRegionID = min(PerRegionID,bndConditions[i]->GetBoundaryRegionID());
+                    PerRegionID = max(PerRegionID,bndConditions[i]->GetBoundaryRegionID());
                 }
             }
 
-            vComm->AllReduce(PerRegionID,LibUtilities::ReduceMin);
+            vComm->AllReduce(PerRegionID,LibUtilities::ReduceMax);
             
             if(PerRegionID == -1)
             {
@@ -2214,8 +2212,6 @@ namespace Nektar
                 locExp.GetSession()->GetBndRegionOrdering();
             compId = bndRegOrder.find(PerRegionID)->second[0];
 
-            cout << "compId is " << compId << endl;
-
             // Get hold of periodic maps
             
             PeriodicMap perVerts, perEdges, perFaces; 
@@ -2265,7 +2261,12 @@ namespace Nektar
                 {
                     if(VertsOnComp.count(locExpVector[n]->GetGeom()->GetVid(i)) == 1)
                     {
-                        localcoeffs.insert(cnt + locExpVector[n]->GetVertexMap(i));
+                        int locid = cnt + locExpVector[n]->GetVertexMap(i);
+                        // add to list if not on Dirichlet boundary
+                        if(m_localToGlobalMap[locid] >= m_numGlobalDirBndCoeffs)
+                        {
+                            localcoeffs.insert(locid);
+                        }
                     }
                 }
 
@@ -2279,9 +2280,15 @@ namespace Nektar
                                                   maparray,
                                                   signarray);
                                                   
-                        for(int j = 0; j < maparray.num_elements(); ++j)
+
+                        // add to list if not on Dirichlet boundary
+                        if(maparray.num_elements()&&m_localToGlobalMap[cnt+maparray[0]]
+                           >= m_numGlobalDirBndCoeffs)
                         {
-                            localcoeffs.insert(cnt + maparray[j]);
+                            for(int j = 0; j < maparray.num_elements(); ++j)
+                            {
+                                localcoeffs.insert(cnt + maparray[j]);
+                            }
                         }
                     }
                 }
@@ -2298,6 +2305,7 @@ namespace Nektar
                                                         maparray,
                                                   signarray);
                                                   
+                        // all interior face modes are independent
                         for(int j = 0; j < maparray.num_elements(); ++j)
                         {
                             localcoeffs.insert(cnt + maparray[j]);
@@ -2308,12 +2316,22 @@ namespace Nektar
 
             // set up rotational mapping;
             m_periodicRotMap = Array<OneD, int>(localcoeffs.size());
+            m_periodicRotBndMap = Array<OneD, int>(localcoeffs.size());
             cnt = 0;
+
+            // set up inverse index of localToLocalBndMap
+            map<int,int> invLocToLocBndMap;
+            for(int i = 0; i < m_localToLocalBndMap.num_elements(); ++i)
+            {
+                invLocToLocBndMap[m_localToLocalBndMap[i]] = i;
+            }
+            
             for (auto &setIt : localcoeffs)
             {
-                m_periodicRotMap[cnt++] = setIt;
+                m_periodicRotMap[cnt] = setIt;
+                m_periodicRotBndMap[cnt++] = invLocToLocBndMap[setIt];
             }
-#endif
+
         }
 
         /**

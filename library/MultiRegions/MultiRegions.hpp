@@ -249,6 +249,38 @@ namespace Nektar
             }
 
 
+            void RotateFwd(Array<OneD, int> &ind, Array<OneD,NekDouble> &u, Array<OneD, NekDouble> &v, Array<OneD, NekDouble> &w)
+            {
+                // Set up just
+                switch(m_dir)
+                {
+                case 0:
+                    {
+                        NekDouble yrot, zrot; 
+
+                        for(int n = 0; n < ind.num_elements(); ++n)
+                        {
+                            yrot = cos(m_angle)*v[ind[n]] - sin(m_angle)*w[ind[n]];
+                            zrot = sin(m_angle)*v[ind[n]] + cos(m_angle)*w[ind[n]];
+                            v[ind[n]] = yrot;
+                            w[ind[n]] = zrot;
+                        }
+                    }
+                break;
+                case 1:
+                    {
+                        ASSERTL0(false,"Set up y axis rotation");
+                    }
+                    break;
+                case 2:
+                    {
+                        ASSERTL0(false,"Set up z axis rotation");
+                    }
+                    break;
+                }
+            }
+
+            
             void RotateBwd(NekDouble &u, NekDouble &v, NekDouble &w)
             {
                 // Set up just
@@ -261,6 +293,37 @@ namespace Nektar
                         
                         v = yrot;
                         w = zrot;
+                    }
+                break;
+                case 1:
+                    {
+                        ASSERTL0(false,"Set up y axis rotation");
+                    }
+                    break;
+                case 2:
+                    {
+                        ASSERTL0(false,"Set up z axis rotation");
+                    }
+                    break;
+                }
+            }
+
+            void RotateBwd(Array<OneD, int> &ind, Array<OneD,NekDouble> &u, Array<OneD, NekDouble> &v, Array<OneD, NekDouble> &w)
+            {
+                // Set up just
+                switch(m_dir)
+                {
+                case 0:
+                    {
+                        NekDouble yrot, zrot; 
+
+                        for(int n = 0; n < ind.num_elements(); ++n)
+                        {
+                            yrot =   cos(m_angle)*v[ind[n]] + sin(m_angle)*w[ind[n]];
+                            zrot = - sin(m_angle)*v[ind[n]] + cos(m_angle)*w[ind[n]];
+                            v[ind[n]] = yrot;
+                            w[ind[n]] = zrot;
+                        }
                     }
                 break;
                 case 1:

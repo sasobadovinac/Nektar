@@ -343,6 +343,8 @@ namespace Nektar
 
             MULTI_REGIONS_EXPORT Array<OneD, int> &GetPeriodicRotMap(void); 
 
+            MULTI_REGIONS_EXPORT Array<OneD, int> &GetPeriodicRotBndMap(void); 
+
         protected:
             /// Session object
             LibUtilities::SessionReaderSharedPtr m_session;
@@ -454,6 +456,8 @@ namespace Nektar
             shared_ptr<RotPeriodicInfo>  m_perRotInfo;
             /// Rotational local coefficients for periodic non-planar cases
             Array<OneD, int>           m_periodicRotMap;
+            /// Rotational local bnd coefficients for periodic non-planar cases
+            Array<OneD, int>           m_periodicRotBndMap;
 
 
             /// Calculates the bandwidth of the boundary system.

@@ -405,7 +405,8 @@ namespace Nektar
             int bndcnt=0;
             for(i = 0; i < m_bndCondExpansions.num_elements(); ++i)
             {
-                if(m_bndConditions[i]->GetBoundaryConditionType() != SpatialDomains::eDirichlet)
+                if((m_bndConditions[i]->GetBoundaryConditionType() == SpatialDomains::eNeumann)
+                   ||(m_bndConditions[i]->GetBoundaryConditionType() == SpatialDomains::eRobin))
                 {
                     for(j = 0; j < (m_bndCondExpansions[i])->GetNcoeffs(); j++)
                     {
@@ -904,7 +905,8 @@ namespace Nektar
 			
             for(i = 0; i < m_bndCondExpansions.num_elements(); ++i)
             {
-                if(m_bndConditions[i]->GetBoundaryConditionType() != SpatialDomains::eDirichlet)
+                if((m_bndConditions[i]->GetBoundaryConditionType() == SpatialDomains::eNeumann)
+                   ||(m_bndConditions[i]->GetBoundaryConditionType() == SpatialDomains::eRobin))
                 {
                     for(j = 0; j < (m_bndCondExpansions[i])->GetNcoeffs(); j++)
                     {
@@ -1021,7 +1023,8 @@ namespace Nektar
             Array<OneD, NekDouble> gamma(contNcoeffs, 0.0);
             for(i = 0; i < m_bndCondExpansions.num_elements(); ++i)
             {
-                if(m_bndConditions[i]->GetBoundaryConditionType() != SpatialDomains::eDirichlet)
+                if((m_bndConditions[i]->GetBoundaryConditionType() == SpatialDomains::eNeumann)
+                   ||(m_bndConditions[i]->GetBoundaryConditionType() == SpatialDomains::eRobin))
                 {
                     for(j = 0; j < (m_bndCondExpansions[i])->GetNcoeffs(); j++)
                     {

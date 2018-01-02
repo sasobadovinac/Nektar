@@ -1317,6 +1317,11 @@ namespace Nektar
             return m_periodicRotMap;
         }
 
+        Array<OneD, int> &AssemblyMap::GetPeriodicRotBndMap(void) 
+        {
+            return m_periodicRotBndMap;
+        }
+        
         void AssemblyMap::GlobalToLocalBndWithoutSign(
                     const Array<OneD, const NekDouble>& global,
                     Array<OneD,NekDouble>& loc)

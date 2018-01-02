@@ -599,7 +599,7 @@ namespace Nektar
           // Note -1.0 term necessary to invert forcing function to
           // be consistent with matrix definition
           Vmath::Neg(contNcoeffs, wsp, 1);
-          
+
           // Forcing function with weak boundary conditions
           int i,j;
           int bndcnt = 0;
@@ -607,19 +607,29 @@ namespace Nektar
           Array<OneD, NekDouble> gamma(contNcoeffs, 0.0);
           for(i = 0; i < m_bndCondExpansions.num_elements(); ++i)
           {
-              if(m_bndConditions[i]->GetBoundaryConditionType() != SpatialDomains::eDirichlet)
+              switch(m_bndConditions[i]->GetBoundaryConditionType())
               {
-                  for(j = 0; j < (m_bndCondExpansions[i])->GetNcoeffs(); j++)
+              case SpatialDomains::eNeumann:
+              case SpatialDomains::eRobin:
                   {
-                      sign = m_locToGloMap->GetBndCondCoeffsToGlobalCoeffsSign(bndcnt);
-                      gamma[m_locToGloMap->GetBndCondCoeffsToGlobalCoeffsMap(bndcnt++)] +=
-                          sign * (m_bndCondExpansions[i]->GetCoeffs())[j];
+                      for(j = 0; j < (m_bndCondExpansions[i])->GetNcoeffs(); j++)
+                      {
+                          sign = m_locToGloMap->GetBndCondCoeffsToGlobalCoeffsSign(bndcnt);
+                          gamma[m_locToGloMap->GetBndCondCoeffsToGlobalCoeffsMap(bndcnt++)] +=
+                              sign * (m_bndCondExpansions[i]->GetCoeffs())[j];
+                      }
                   }
-              }
-              else
-              {
-                  bndcnt += m_bndCondExpansions[i]->GetNcoeffs();
-              }
+                  break;
+              case SpatialDomains::eDirichlet:
+              case SpatialDomains::ePeriodic: // for now we are defining a periodic expansion 
+                  {
+                      bndcnt += m_bndCondExpansions[i]->GetNcoeffs();
+                  }
+                  break;
+              default:
+                  {
+                  }
+              };
           }
           m_locToGloMap->UniversalAssemble(gamma);
           
@@ -706,8 +716,8 @@ namespace Nektar
         Array<OneD, NekDouble> gamma(contNcoeffs, 0.0);
         for (i = 0; i < m_bndCondExpansions.num_elements(); ++i)
         {
-            if (m_bndConditions[i]->GetBoundaryConditionType() !=
-                SpatialDomains::eDirichlet)
+            if((m_bndConditions[i]->GetBoundaryConditionType() == SpatialDomains::eNeumann)
+               ||(m_bndConditions[i]->GetBoundaryConditionType() == SpatialDomains::eRobin))
             {
                 for (j = 0; j < (m_bndCondExpansions[i])->GetNcoeffs(); j++)
                 {

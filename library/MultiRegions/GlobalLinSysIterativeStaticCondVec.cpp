@@ -331,12 +331,12 @@ namespace Nektar
             else
             {
                 int i,n, cnt;
-                Array<OneD, NekDouble> tmp;
+                Array<OneD, NekDouble> tmp,tmp1,tmp2;
 
                 int nvec = nGlobal.num_elements();
                 
                 RotPeriodicInfoSharedPtr perRotInfo = m_locToGloMapVec[0]->GetPerRotInfo();
-                Array<OneD, int> periodicRotMap = m_locToGloMapVec[0]->GetPeriodicRotMap();
+                Array<OneD, int> periodicRotBndMap = m_locToGloMapVec[0]->GetPeriodicRotBndMap();
 
                 // Do matrix multiply locally, using direct BLAS calls
                 for(n = cnt = 0; n < nvec; cnt += nGlobal[n], ++n)
@@ -345,14 +345,14 @@ namespace Nektar
                                                           tmp = m_wsp+n*nLocal);
                 }
 
-                // put in fwd rotation term here.
-                for(n = 0; n < periodicRotMap.num_elements(); ++n)
+                // put in bwd rotation term here.
+                if(perRotInfo.get())
                 {
-                    perRotInfo->RotateFwd(m_wsp[periodicRotMap[n]],
-                                          m_wsp[nLocal + periodicRotMap[n]],
-                                          m_wsp[2*nLocal+periodicRotMap[n]]);
+                    perRotInfo->RotateBwd(periodicRotBndMap,m_wsp,
+                                          tmp  = m_wsp + nLocal,
+                                          tmp1 = m_wsp+ 2*nLocal);
                 }
-                
+            
                 Array<OneD, NekDouble> tmpout = m_wsp + nLocal*nvec;
                 
                 cnt = 0; 
@@ -368,13 +368,13 @@ namespace Nektar
                     }
                 }
                 
-                // put in bwd rotation term 
-                for(n = 0; n < periodicRotMap.num_elements(); ++n)
+                // put in fwd rotation term here.
+                if(perRotInfo.get())
                 {
-                    perRotInfo->RotateBwd(
-                                  m_wsp[nLocal*nvec  +  periodicRotMap[n]],
-                                  m_wsp[nLocal*(nvec+1)+periodicRotMap[n]],
-                                  m_wsp[nLocal*(nvec+2)+periodicRotMap[n]]);
+                    perRotInfo->RotateFwd(periodicRotBndMap,tmp = m_wsp + nLocal*nvec,
+                                          tmp1 = m_wsp + nLocal*(nvec+1),
+                                          tmp2 = m_wsp + nLocal*(nvec+2));
+
                 }
 
                 for(n = cnt = 0; n < nvec; cnt += nGlobal[n], ++n)

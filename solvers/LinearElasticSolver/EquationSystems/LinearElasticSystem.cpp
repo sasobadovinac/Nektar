@@ -709,8 +709,10 @@ void LinearElasticSystem::v_DoSolve()
 
         for (i = 0; i < bndCondExp.num_elements(); ++i)
         {
-            if (m_fields[nv]->GetBndConditions()[i]->GetBoundaryConditionType()
-                == SpatialDomains::eDirichlet)
+            if ((m_fields[nv]->GetBndConditions()[i]->GetBoundaryConditionType()
+                == SpatialDomains::eNeumann)||
+                (m_fields[nv]->GetBndConditions()[i]->GetBoundaryConditionType()
+                 == SpatialDomains::eRobin))
             {
                 const Array<OneD,const NekDouble> &bndCoeffs =
                     bndCondExp[i]->GetCoeffs();

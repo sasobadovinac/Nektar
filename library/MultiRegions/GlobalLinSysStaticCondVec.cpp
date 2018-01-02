@@ -88,9 +88,6 @@ namespace Nektar
 
             // Construct this level
             Initialise(m_locToGloMapVec[0]);
-
-            // Set up periodic rotational information if required
-            //SetupPeriodicRotation();
         }
         
         /**
@@ -181,14 +178,13 @@ namespace Nektar
 
 
             RotPeriodicInfoSharedPtr perRotInfo = m_locToGloMapVec[0]->GetPerRotInfo();
-            Array<OneD, int> periodicRotMap = m_locToGloMapVec[0]->GetPeriodicRotMap();
+            Array<OneD, int> periodicRotBndMap = m_locToGloMapVec[0]->GetPeriodicRotBndMap();
             
             // put in fwd rotation term here.
-            for(n = 0; n < periodicRotMap.num_elements(); ++n)
+            if(perRotInfo.get())
             {
-                perRotInfo->RotateFwd(F_bnd[0][periodicRotMap[n]],
-                                      F_bnd[1][periodicRotMap[n]],
-                                      F_bnd[2][periodicRotMap[n]]);
+                perRotInfo->RotateFwd(periodicRotBndMap,F_bnd[0],F_bnd[1],
+                                      F_bnd[2]);
             }
 
             // calculate globally  condensed forcing
@@ -213,15 +209,12 @@ namespace Nektar
                 m_locToGloMapVec[n]->GlobalToLocalBnd(out[n],outloc[n]);
             }
 
-            for(n = 0; n < periodicRotMap.num_elements(); ++n)
+            // periodic rotate bwd
+            if(perRotInfo.get())
             {
-                perRotInfo->RotateBwd(F_bnd[0][periodicRotMap[n]],
-                                      F_bnd[1][periodicRotMap[n]],
-                                      F_bnd[2][periodicRotMap[n]]);
+                perRotInfo->RotateBwd(periodicRotBndMap,outloc[0],outloc[1],
+                                      outloc[2]);
             }
-
-            // rotate bwd
-
             
             Array<OneD, NekDouble> V_int = m_wsp + 3*nvec*nLocBndDofs + nvec*nGlobDofs;
             for(n = 0; n < nvec; ++n)

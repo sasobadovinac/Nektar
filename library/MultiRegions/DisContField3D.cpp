@@ -610,7 +610,6 @@ using namespace boost::assign;
             const std::string                        &variable)
         {
             int cnt  = 0;
-            MultiRegions::ExpList2DSharedPtr       locExpList;
             SpatialDomains::BoundaryConditionShPtr locBCond;
 
             const SpatialDomains::BoundaryRegionCollection    &bregions = 
@@ -623,15 +622,10 @@ using namespace boost::assign;
             {
                 SpatialDomains::BoundaryConditionShPtr boundaryCondition = 
                     GetBoundaryCondition(bconditions, it.first, variable);
-#if 1
                 if ((boundaryCondition->GetBoundaryConditionType() != 
                      SpatialDomains::ePeriodic)||
                     (boost::iequals(boundaryCondition->GetUserDefined(),
                                     "NoUserDefined") == false))
-#else
-                if ((boundaryCondition->GetBoundaryConditionType() != 
-                     SpatialDomains::ePeriodic))
-#endif
                 {
                     cnt++;
                 }
@@ -648,28 +642,24 @@ using namespace boost::assign;
                 locBCond = GetBoundaryCondition(
                     bconditions, it.first, variable);
 
-#if 1
                 if((locBCond->GetBoundaryConditionType()
                    != SpatialDomains::ePeriodic)||
                    (boost::iequals(locBCond->GetUserDefined(),
                                    "NoUserDefined") == false))
-#else
-                if((locBCond->GetBoundaryConditionType()
-                    != SpatialDomains::ePeriodic))
-#endif
                 {
-                    locExpList = MemoryManager<MultiRegions::ExpList2D>
+
+                    m_bndCondExpansions[cnt]  =
+                        MemoryManager<MultiRegions::ExpList2D>
                         ::AllocateSharedPtr(m_session, *(it.second),
                                             graph3D, variable);
-
+                    
                     // Set up normals on non-Dirichlet boundary conditions
                     if(locBCond->GetBoundaryConditionType() != 
-                           SpatialDomains::eDirichlet)
+                       SpatialDomains::eDirichlet)
                     {
                         SetUpPhysNormals();
                     }
 
-                    m_bndCondExpansions[cnt]  = locExpList;
                     m_bndConditions[cnt++]    = locBCond;
                 }
             }
@@ -2156,7 +2146,7 @@ using namespace boost::assign;
                 }
 
                 // Initialize arrays
-                m_BCtoElmMap = Array<OneD, int>(nbcs);
+                m_BCtoElmMap  = Array<OneD, int>(nbcs);
                 m_BCtoFaceMap = Array<OneD, int>(nbcs);
 
                 LocalRegions::Expansion2DSharedPtr exp2d;
@@ -2687,6 +2677,13 @@ using namespace boost::assign;
             {
                 if (time == 0.0 || m_bndConditions[i]->IsTimeDependent())
                 {
+                    
+                    if (m_bndConditions[i]->GetBoundaryConditionType()
+                        == SpatialDomains::ePeriodic)
+                    {
+                        continue; 
+                    }
+                    
                     locExpList = m_bndCondExpansions[i];
                     npoints    = locExpList->GetNpoints();
                     
