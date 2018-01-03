@@ -432,6 +432,9 @@ namespace Nektar
             perRotInfo->RotateBwd(periodicRotMap,fields[0],fields[1],fields[2]);
         }
 
+
+        Checkpoint_Output(0);
+
         for(int i = 0; i < m_nConvectiveFields; ++i)
         {
             m_fields[i]->BwdTrans(m_fields[i]->GetCoeffs(),

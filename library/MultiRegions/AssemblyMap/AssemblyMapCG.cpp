@@ -2137,7 +2137,7 @@ namespace Nektar
             // for now just assume there is only one. 
             int PerRegionID = -1; 
             int dir = -1;
-            NekDouble angle = 0;
+            NekDouble angle = 4*M_PI;
             NekDouble tol   = 0; 
                 
             for(int i = 0; i < bndConditions.num_elements(); ++i)
@@ -2154,7 +2154,7 @@ namespace Nektar
             {
                 return; // no rotated periodic boundaries 
             }
-            
+
             for(int i = 0; i < bndConditions.num_elements(); ++i)
             {
                 if(bndConditions[i]->GetBoundaryConditionType() == SpatialDomains::ePeriodic)
@@ -2162,6 +2162,7 @@ namespace Nektar
 
                     if(bndConditions[i]->GetBoundaryRegionID() == PerRegionID)
                     {
+                        
                         // check to see if boundary is rotationally aligned
                         if(boost::iequals(bndConditions[i]->GetUserDefined(),"NoUserDefined") == false)
                         {
@@ -2199,9 +2200,11 @@ namespace Nektar
 
             // Communication values to all processors 
             vComm->AllReduce(dir,LibUtilities::ReduceMax);
-            vComm->AllReduce(angle,LibUtilities::ReduceMax);
             vComm->AllReduce(tol,LibUtilities::ReduceMax);
             
+            // angle must be betweeen -2 PI < angle < 2 PI so can find with min
+            vComm->AllReduce(angle,LibUtilities::ReduceMin);
+
             // set up rotation info
             m_perRotInfo = MemoryManager<RotPeriodicInfo>
                 ::AllocateSharedPtr(dir,angle,tol);
@@ -2314,6 +2317,7 @@ namespace Nektar
                 }
             }
 
+            
             // set up rotational mapping;
             m_periodicRotMap = Array<OneD, int>(localcoeffs.size());
             m_periodicRotBndMap = Array<OneD, int>(localcoeffs.size());
