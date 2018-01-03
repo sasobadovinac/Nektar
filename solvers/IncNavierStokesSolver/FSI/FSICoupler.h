@@ -42,7 +42,6 @@
 #include <LibUtilities/BasicUtils/SharedArray.hpp>
 #include <LibUtilities/TimeIntegration/TimeIntegrationWrapper.h>
 #include <MultiRegions/ExpList.h>
-#include <GlobalMapping/GlobalMappingDeclspec.h>
 #include <GlobalMapping/Mapping.h>
 #include <IncNavierStokesSolver/FSI/FSIBody.h>
 
@@ -53,7 +52,7 @@ namespace Nektar
 class FSICoupler;
 
 /// A shared pointer to a FSICoupler object
-GLOBAL_MAPPING_EXPORT typedef std::shared_ptr<FSICoupler> FSICouplerSharedPtr;
+typedef std::shared_ptr<FSICoupler> FSICouplerSharedPtr;
 
 /// Declaration of the FSICoupler factory
 typedef LibUtilities::NekFactory<std::string, FSICoupler,
@@ -62,7 +61,7 @@ typedef LibUtilities::NekFactory<std::string, FSICoupler,
               TiXmlElement*> FSICouplerFactory;
 
 /// Declaration of the FSICoupler factory singleton
-GLOBAL_MAPPING_EXPORT FSICouplerFactory& GetFSICouplerFactory();
+FSICouplerFactory& GetFSICouplerFactory();
 
 /**
  * @class FSICoupler
@@ -72,7 +71,7 @@ class FSICoupler
 {
 public:
     /// @brief Destructor
-    GLOBAL_MAPPING_EXPORT virtual ~FSICoupler() {}
+    virtual ~FSICoupler() {}
 
     /// @brief Initialise the FSICoupler object
     void InitObject(
@@ -80,12 +79,12 @@ public:
               TiXmlElement* pFSI);
 
     ///
-    GLOBAL_MAPPING_EXPORT void UpdateMappingCoords(
+    void UpdateMappingCoords(
         const Array<OneD, MultiRegions::ExpListSharedPtr> &pFields,
         GlobalMapping::MappingSharedPtr                   &pMapping,
         const NekDouble                                   &time);
 
-    GLOBAL_MAPPING_EXPORT void UpdateMappingCoordsVel(
+    void UpdateMappingCoordsVel(
         const Array<OneD, MultiRegions::ExpListSharedPtr> &pFields,
         GlobalMapping::MappingSharedPtr                   &pMapping,
         const NekDouble                                   &time);

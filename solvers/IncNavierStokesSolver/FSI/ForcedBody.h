@@ -49,7 +49,6 @@ public:
     friend class MemoryManager<ForcedBody>;
 
     /// Creates an instance of this class
-    GLOBAL_MAPPING_EXPORT
     static FSIBodySharedPtr create(
         const LibUtilities::SessionReaderSharedPtr        &pSession,
         const Array<OneD, MultiRegions::ExpListSharedPtr> &pFields,

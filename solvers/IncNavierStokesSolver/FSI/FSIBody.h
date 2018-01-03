@@ -41,7 +41,6 @@
 #include <LibUtilities/BasicUtils/NekFactory.hpp>
 #include <LibUtilities/BasicUtils/SharedArray.hpp>
 #include <MultiRegions/ExpList.h>
-#include <GlobalMapping/GlobalMappingDeclspec.h>
 
 namespace Nektar
 {
@@ -50,7 +49,7 @@ namespace Nektar
 class FSIBody;
 
 /// A shared pointer to a FSIBody object
-GLOBAL_MAPPING_EXPORT typedef std::shared_ptr<FSIBody> FSIBodySharedPtr;
+typedef std::shared_ptr<FSIBody> FSIBodySharedPtr;
 
 /// Declaration of the FSIBody factory
 typedef LibUtilities::NekFactory<std::string, FSIBody,
@@ -59,7 +58,7 @@ typedef LibUtilities::NekFactory<std::string, FSIBody,
         const std::map<std::string, std::string>&> FSIBodyFactory;
 
 /// Declaration of the FSIBody factory singleton
-GLOBAL_MAPPING_EXPORT FSIBodyFactory& GetFSIBodyFactory();
+FSIBodyFactory& GetFSIBodyFactory();
 
 /**
  * @class FSIBody
@@ -69,7 +68,7 @@ class FSIBody
 {
 public:
     /// @brief Destructor
-    GLOBAL_MAPPING_EXPORT virtual ~FSIBody() {}
+    virtual ~FSIBody() {}
 
     /// @brief Initialise the FSIBody object
     void InitObject(
@@ -77,7 +76,7 @@ public:
         const std::map<std::string, std::string>          &pParams);
 
     ///
-    GLOBAL_MAPPING_EXPORT void Apply(
+    void Apply(
         const Array<OneD, MultiRegions::ExpListSharedPtr>    &pFields,
         const Array<OneD, MultiRegions::ExpListSharedPtr>    &pDisplFields,
         const NekDouble                                      &time);

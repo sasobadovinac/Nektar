@@ -49,7 +49,6 @@ public:
     friend class MemoryManager<RigidDomainCoupler>;
 
     /// Creates an instance of this class
-    GLOBAL_MAPPING_EXPORT
     static FSICouplerSharedPtr create(
         const LibUtilities::SessionReaderSharedPtr        &pSession,
         const Array<OneD, MultiRegions::ExpListSharedPtr> &pFields,
