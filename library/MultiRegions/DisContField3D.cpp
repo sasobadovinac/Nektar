@@ -773,7 +773,12 @@ using namespace boost::assign;
                 }
                 else
                 {
+                    ASSERTL1(bndRegOrder.count(region1ID) > 0,
+                             "Failed to find bndRegOrder[region1ID]");
                     cId1 = bndRegOrder.find(region1ID)->second[0];
+
+                    ASSERTL1(bndRegOrder.count(region2ID) > 0,
+                             "Failed to find bndRegOrder[region2ID]");
                     cId2 = bndRegOrder.find(region2ID)->second[0];
                 }
 
@@ -1167,7 +1172,8 @@ using namespace boost::assign;
 
             map<int,int> allCompPairs;
             
-            // Collect composite ides of each periodic face for use if rotation is required
+            // Collect composite ides of each periodic face for use if
+            // rotation is required
             map<int,int> fIdToCompId;
 
             // Finally we have enough information to populate the periodic
@@ -1201,9 +1207,9 @@ using namespace boost::assign;
 
 
                 ASSERTL0(compOrder.count(id1) > 0,
-                         "Unable to find composite "+id1s+" in order map.");
+                         "Unable to find id1 composite "+id1s+" in order map.");
                 ASSERTL0(compOrder.count(id2) > 0,
-                         "Unable to find composite "+id2s+" in order map.");
+                         "Unable to find id2 composite "+id2s+" in order map.");
                 ASSERTL0(compOrder[id1].size() == compOrder[id2].size(),
                          "Periodic composites "+id1s+" and "+id2s+
                          " should have the same number of elements.");

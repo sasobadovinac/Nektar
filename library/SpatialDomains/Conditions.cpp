@@ -298,8 +298,13 @@ namespace Nektar
                 boundaryRegionsElement =
                         boundaryRegionsElement->NextSiblingElement("B");
             }
-
-            m_session->SetBndRegionOrdering(BndRegOrder);
+                    
+            // set boundary region ordering if running in serial
+            // otherwise automaticaly set up by partitioner.
+            if(m_session->GetComm()->GetSize() == 1)
+            {
+                m_session->SetBndRegionOrdering(BndRegOrder);
+            }
         }
 
         /**
