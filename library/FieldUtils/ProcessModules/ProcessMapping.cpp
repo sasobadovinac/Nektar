@@ -255,7 +255,8 @@ GlobalMapping::MappingSharedPtr ProcessMapping::GetMapping(FieldSharedPtr f)
 
             // Update mapping with coordinates
             mapping->SetFromFunction(false);
-            mapping->UpdateMapping(time, coords_new, coords_vel);
+            mapping->UpdateMappingCoords(time, coords_new);
+            mapping->UpdateMappingCoordsVel(time, coords_vel);
         }
         else if (f->m_fieldMetaDataMap["MappingType"] == "File")
         {
@@ -298,7 +299,8 @@ GlobalMapping::MappingSharedPtr ProcessMapping::GetMapping(FieldSharedPtr f)
             }
             // Update mapping with coordinates
             mapping->SetFromFunction(false);
-            mapping->UpdateMapping(time, coords_new, coords_vel);
+            mapping->UpdateMappingCoords(time, coords_new);
+            mapping->UpdateMappingCoordsVel(time, coords_vel);
         }
     }
     else
@@ -313,7 +315,8 @@ GlobalMapping::MappingSharedPtr ProcessMapping::GetMapping(FieldSharedPtr f)
         }
         f->m_exp[0]->GetCoords(coords[0], coords[1], coords[2]);
         mapping->SetFromFunction(false);
-        mapping->UpdateMapping(time, coords, coords_vel);
+        mapping->UpdateMappingCoords(time, coords);
+        mapping->UpdateMappingCoordsVel(time, coords_vel);
     }
 
     return mapping;

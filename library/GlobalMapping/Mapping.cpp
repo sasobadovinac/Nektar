@@ -1222,16 +1222,14 @@ void Mapping::v_UpdateBCs( const NekDouble time)
     }
 }
 
-void Mapping::v_UpdateMapping(
+void Mapping::v_UpdateMappingCoords(
         const NekDouble time,
-        const Array<OneD, Array<OneD, NekDouble> > &coords  ,
-        const Array<OneD, Array<OneD, NekDouble> > &coordsVel)
+        const Array<OneD, Array<OneD, NekDouble> > &coords)
 {
     if (m_fromFunction)
     {
         std::string s_FieldStr; 
         string fieldNames[3] = {"x", "y", "z"};
-        string velFieldNames[3] = {"vx", "vy", "vz"};
         // Check if function from session file defines each component
         //      and evaluate them, otherwise there is no need to update
         //          coords
@@ -1248,6 +1246,35 @@ void Mapping::v_UpdateMapping(
                         "3DH1D does not support mapping in the z-direction.");
                 }
             }
+        }
+    }
+    else
+    {
+        int physTot = m_fields[0]->GetTotPoints();
+        // Copy coordinates
+        for(int i = 0; i < 3; i++)
+        {
+            Vmath::Vcopy(physTot, coords[i], 1, m_coords[i], 1);
+        }
+    }
+
+    // Update the information required by the specific mapping
+    UpdateGeomInfo();
+}
+
+void Mapping::v_UpdateMappingCoordsVel(
+        const NekDouble time,
+        const Array<OneD, Array<OneD, NekDouble> > &coordsVel)
+{
+    if (m_fromFunction)
+    {
+        std::string s_FieldStr;
+        string velFieldNames[3] = {"vx", "vy", "vz"};
+        // Check if function from session file defines each component
+        //      and evaluate them, otherwise there is no need to update
+        //          coordVel
+        for(int i = 0; i < 3; i++)
+        {
             s_FieldStr = velFieldNames[i];
             if ( m_session->DefinesFunction(m_velFuncName, s_FieldStr))
              {
@@ -1265,20 +1292,11 @@ void Mapping::v_UpdateMapping(
     {
         int physTot = m_fields[0]->GetTotPoints();
         int nvel = m_nConvectiveFields;
-        // Copy coordinates
-        for(int i = 0; i < 3; i++)
-        {
-            Vmath::Vcopy(physTot, coords[i], 1, m_coords[i], 1);
-        }
-
         for(int i = 0; i < nvel; i++)
         {
             Vmath::Vcopy(physTot, coordsVel[i], 1, m_coordsVel[i], 1);
         }
     }
-
-    // Update the information required by the specific mapping
-    UpdateGeomInfo();
 }
 
 }

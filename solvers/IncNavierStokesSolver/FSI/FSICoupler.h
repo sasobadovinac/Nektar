@@ -80,7 +80,12 @@ public:
               TiXmlElement* pFSI);
 
     ///
-    GLOBAL_MAPPING_EXPORT void Apply(
+    GLOBAL_MAPPING_EXPORT void UpdateMappingCoords(
+        const Array<OneD, MultiRegions::ExpListSharedPtr> &pFields,
+        GlobalMapping::MappingSharedPtr                   &pMapping,
+        const NekDouble                                   &time);
+
+    GLOBAL_MAPPING_EXPORT void UpdateMappingCoordsVel(
         const Array<OneD, MultiRegions::ExpListSharedPtr> &pFields,
         GlobalMapping::MappingSharedPtr                   &pMapping,
         const NekDouble                                   &time);
@@ -99,6 +104,8 @@ protected:
 
     // Time step
     NekDouble                                   m_timestep;
+    // Last time we evaluated the movement
+    NekDouble                                   m_time;
     // Dimensions
     int                                         m_expDim;
     int                                         m_spaceDim;
@@ -142,7 +149,12 @@ protected:
         const Array<OneD, MultiRegions::ExpListSharedPtr>&   pFields,
               TiXmlElement* pFSI);
 
-    virtual void v_Apply(
+    virtual void v_UpdateMappingCoords(
+        const Array<OneD, MultiRegions::ExpListSharedPtr> &pFields,
+        GlobalMapping::MappingSharedPtr                   &pMapping,
+        const NekDouble                                   &time);
+
+    virtual void v_UpdateMappingCoordsVel(
         const Array<OneD, MultiRegions::ExpListSharedPtr> &pFields,
         GlobalMapping::MappingSharedPtr                   &pMapping,
         const NekDouble                                   &time);
@@ -157,12 +169,20 @@ inline void FSICoupler::InitObject(
     v_InitObject(pFields, pFSI);
 }
 
-inline void FSICoupler::Apply(
+inline void FSICoupler::UpdateMappingCoords(
         const Array<OneD, MultiRegions::ExpListSharedPtr> &pFields,
         GlobalMapping::MappingSharedPtr                   &pMapping,
         const NekDouble                                   &time)
 {
-    v_Apply(pFields, pMapping, time);
+    v_UpdateMappingCoords(pFields, pMapping, time);
+}
+
+inline void FSICoupler::UpdateMappingCoordsVel(
+        const Array<OneD, MultiRegions::ExpListSharedPtr> &pFields,
+        GlobalMapping::MappingSharedPtr                   &pMapping,
+        const NekDouble                                   &time)
+{
+    v_UpdateMappingCoordsVel(pFields, pMapping, time);
 }
 
 inline void FSICoupler::CalculateDisplacement()

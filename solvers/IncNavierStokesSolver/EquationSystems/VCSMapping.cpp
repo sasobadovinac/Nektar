@@ -231,11 +231,15 @@ namespace Nektar
             {
                 // If the transformation is explicitly defined, update it here
                 // Otherwise, it will be done somewhere else (ForcingMovingBody)
-                m_mapping->UpdateMapping(time+m_timestep);
+                m_mapping->UpdateMappingCoordsVel(time+m_timestep);
+                m_mapping->UpdateMappingCoords(time+m_timestep);
             }
             else if(m_fsi)
             {
-                m_fsi->Apply(m_fields, m_mapping, time+m_timestep);
+                m_fsi->UpdateMappingCoordsVel(
+                        m_fields, m_mapping, time+m_timestep);
+                m_fsi->UpdateMappingCoords(
+                        m_fields, m_mapping, time+m_timestep);
             }
             m_mapping->UpdateBCs(time+m_timestep);
         }

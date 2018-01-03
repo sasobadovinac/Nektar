@@ -239,11 +239,12 @@ void FSICoupler::CreateDisplacementFields(
 /**
  * 
  */
-void FSICoupler::v_Apply(
+void FSICoupler::v_UpdateMappingCoordsVel(
         const Array<OneD, MultiRegions::ExpListSharedPtr> &pFields,
         GlobalMapping::MappingSharedPtr                   &mapping,
         const NekDouble                                   &time)
 {
+    m_time = time;
     // Call m_bodies to update the boundary conditions of m_displFields
     for (auto &x : m_bodies)
     {
@@ -256,7 +257,20 @@ void FSICoupler::v_Apply(
 
     CalculateCoordVel();
 
-    mapping->UpdateMapping(time, m_coords, m_coordsVel);
+    mapping->UpdateMappingCoordsVel(time, m_coordsVel);
+}
+
+/**
+ * 
+ */
+void FSICoupler::v_UpdateMappingCoords(
+        const Array<OneD, MultiRegions::ExpListSharedPtr> &pFields,
+        GlobalMapping::MappingSharedPtr                   &mapping,
+        const NekDouble                                   &time)
+{
+    ASSERTL1(time == m_time, "UpdateMappingCoordsVel should be called"
+            " before UpdateMappingCoords");
+    mapping->UpdateMappingCoords(time, m_coords);
 }
 
 void FSICoupler::UpdateCoordinates()

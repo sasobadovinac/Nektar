@@ -383,14 +383,20 @@ class Mapping
             v_UpdateBCs(time);
         }
 
-        /// @brief Update the Mapping with new coordinates
-        GLOBAL_MAPPING_EXPORT void UpdateMapping(const NekDouble time,
-            const Array<OneD, Array<OneD, NekDouble> > &coords    
-                                                    = NullNekDoubleArrayofArray,
-            const Array<OneD, Array<OneD, NekDouble> > &coordsVel 
+        /// @brief Update the Mapping coordinates
+        GLOBAL_MAPPING_EXPORT void UpdateMappingCoords(const NekDouble time,
+            const Array<OneD, Array<OneD, NekDouble> > &coords
                                                     = NullNekDoubleArrayofArray)
         {
-            v_UpdateMapping( time, coords, coordsVel);
+            v_UpdateMappingCoords( time, coords);
+        }
+
+        /// @brief Update the Mapping coordinate velocities
+        GLOBAL_MAPPING_EXPORT void UpdateMappingCoordsVel(const NekDouble time,
+            const Array<OneD, Array<OneD, NekDouble> > &coordsVel
+                                                    = NullNekDoubleArrayofArray)
+        {
+            v_UpdateMappingCoordsVel( time, coordsVel);
         }
 
         /// @brief Recompute the metric terms of the Mapping
@@ -472,7 +478,7 @@ class Mapping
 
         GLOBAL_MAPPING_EXPORT virtual void v_CovarToCartesian(
             const Array<OneD, Array<OneD, NekDouble> >        &inarray,
-            Array<OneD, Array<OneD, NekDouble> >              &outarray) =0;            
+            Array<OneD, Array<OneD, NekDouble> >              &outarray) =0;
 
         GLOBAL_MAPPING_EXPORT virtual void v_ContravarFromCartesian(
             const Array<OneD, Array<OneD, NekDouble> >        &inarray,
@@ -537,12 +543,15 @@ class Mapping
             Array<OneD, Array<OneD, NekDouble> >              &outarray,
             const bool                                         generalized);
 
-        GLOBAL_MAPPING_EXPORT virtual void v_UpdateMapping(
+        GLOBAL_MAPPING_EXPORT virtual void v_UpdateMappingCoords(
             const NekDouble time,
-            const Array<OneD, Array<OneD, NekDouble> > &coords    
-                                                = NullNekDoubleArrayofArray,
-            const Array<OneD, Array<OneD, NekDouble> > &coordsVel 
+            const Array<OneD, Array<OneD, NekDouble> > &coords
                                                 = NullNekDoubleArrayofArray);
+
+        GLOBAL_MAPPING_EXPORT virtual void v_UpdateMappingCoordsVel(
+            const NekDouble time,
+            const Array<OneD, Array<OneD, NekDouble> > &coordsVel
+                                                    = NullNekDoubleArrayofArray);
 
         GLOBAL_MAPPING_EXPORT virtual void v_UpdateGeomInfo() =0;
 

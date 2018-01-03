@@ -140,7 +140,8 @@ void ForcingMovingBody::v_Apply(
         Vmath::Vcopy(physTot, m_eta[1], 1, coordsVel[1], 1);
         
         // Update mapping
-        m_mapping->UpdateMapping(time, coords, coordsVel);
+        m_mapping->UpdateMappingCoords(time, coords);
+        m_mapping->UpdateMappingCoordsVel(time, coordsVel);
     }
     else if(m_vdim == 0)
     {
@@ -162,7 +163,8 @@ void ForcingMovingBody::v_Apply(
         }
         
         // Update mapping
-        m_mapping->UpdateMapping(time);
+        m_mapping->UpdateMappingCoords(time);
+        m_mapping->UpdateMappingCoordsVel(time);
 
         // Convert result from mapping       
         int physTot = pFields[0]->GetTotPoints();
