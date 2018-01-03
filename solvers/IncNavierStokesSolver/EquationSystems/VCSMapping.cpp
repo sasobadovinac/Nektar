@@ -221,10 +221,7 @@ namespace Nektar
         // Add mapping terms
         ApplyIncNSMappingForcing( inarray, outarray);
 
-        // Calculate High-Order pressure boundary conditions
-        m_extrapolation->EvaluatePressureBCs(inarray,outarray,m_kinvis);
-
-        // Update mapping and deal with Dirichlet boundary conditions
+        // Update mapping vel and deal with Dirichlet boundary conditions
         if (m_mapping->IsTimeDependent())
         {
             if (m_mapping->IsFromFunction())
@@ -232,20 +229,35 @@ namespace Nektar
                 // If the transformation is explicitly defined, update it here
                 // Otherwise, it will be done somewhere else (ForcingMovingBody)
                 m_mapping->UpdateMappingCoordsVel(time+m_timestep);
-                m_mapping->UpdateMappingCoords(time+m_timestep);
             }
             else if(m_fsi)
             {
                 m_fsi->UpdateMappingCoordsVel(
                         m_fields, m_mapping, time+m_timestep);
-                m_fsi->UpdateMappingCoords(
-                        m_fields, m_mapping, time+m_timestep);
             }
             m_mapping->UpdateBCs(time+m_timestep);
         }
+
+        // Calculate High-Order pressure boundary conditions
+        m_extrapolation->EvaluatePressureBCs(inarray,outarray,m_kinvis);
+
+        // Update mapping coords
+        if (m_mapping->IsTimeDependent())
+        {
+            if (m_mapping->IsFromFunction())
+            {
+                // If the transformation is explicitly defined, update it here
+                // Otherwise, it will be done somewhere else (ForcingMovingBody)
+                m_mapping->UpdateMappingCoords(time+m_timestep);
+            }
+            else if(m_fsi)
+            {
+                m_fsi->UpdateMappingCoords(
+                        m_fields, m_mapping, time+m_timestep);
+            }
+        }
     }
-    
-        
+
     /**
      * Forcing term for Poisson solver solver
      */ 
