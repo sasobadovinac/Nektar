@@ -313,11 +313,9 @@ void MappingExtrapolate::v_CalcNeumannPressureBCs(
         // Multiply by Jacobian and convert to wavespace (if necessary)
         for (i = 0; i < m_bnd_dim; i++)
         {
-            Vmath::Vmul(physTot, Jac, 1, fields_new[i], 1, fields_new[i], 1);
             Vmath::Vmul(physTot, Jac, 1, Q_field[i], 1, Q_field[i], 1);
             if (m_fields[0]->GetWaveSpace())
             {
-                m_fields[0]->HomogeneousFwdTrans(fields_new[i], fields_new[i]);
                 m_fields[0]->HomogeneousFwdTrans(Q_field[i], Q_field[i]);
             }
         }
@@ -335,8 +333,6 @@ void MappingExtrapolate::v_CalcNeumannPressureBCs(
                 for (int i = 0; i < m_bnd_dim; i++)
                 {
                     m_fields[0]->ExtractPhysToBndElmt(
-                        n, fields_new[i], Velocity[i]);
-                    m_fields[0]->ExtractPhysToBndElmt(
                         n, N_new[i], Advection[i]);
                     m_fields[0]->ExtractPhysToBndElmt(n, Q_field[i], Q[i]);
                 }
@@ -348,7 +344,6 @@ void MappingExtrapolate::v_CalcNeumannPressureBCs(
                 }
 
                 Pvals = (m_pressureHBCs[m_intSteps - 1]) + cnt;
-                Uvals = (m_iprodnormvel[m_intSteps]) + cnt;
 
                 // Getting values on the edge and filling the pressure boundary
                 // expansion and the acceleration term. Multiplication by the
@@ -358,13 +353,6 @@ void MappingExtrapolate::v_CalcNeumannPressureBCs(
                     m_fields[0]->ExtractElmtToBndPhys(n, Q[i], BndValues[i]);
                 }
                 m_PBndExp[n]->NormVectorIProductWRTBase(BndValues, Pvals);
-
-                for (int i = 0; i < m_bnd_dim; i++)
-                {
-                    m_fields[0]->ExtractElmtToBndPhys(
-                        n, Velocity[i], BndValues[i]);
-                }
-                m_PBndExp[n]->NormVectorIProductWRTBase(BndValues, Uvals);
 
                 // Get offset for next terms
                 cnt += m_PBndExp[n]->GetNcoeffs();
@@ -384,4 +372,71 @@ void MappingExtrapolate::v_CalcNeumannPressureBCs(
     }
     m_bcCorrection = Array<OneD, NekDouble>(m_numHBCDof, 0.0);
 }
+
+void MappingExtrapolate::v_IProductNormVelocityBCOnHBC(
+    Array<OneD, NekDouble> &IProdVn)
+{
+    if(!m_HBCnumber)
+    {
+        return;
+    }
+    // Get transformation Jacobian
+    int physTot = m_fields[0]->GetTotPoints();
+    Array<OneD, NekDouble> Jac(physTot, 0.0);
+    m_mapping->GetJacobian(Jac);
+
+    int i,n,cnt;
+    Array<OneD, NekDouble> IProdVnTmp;
+    Array<OneD, Array<OneD, NekDouble> > velbc(m_bnd_dim);
+
+    Array<OneD, Array<OneD, MultiRegions::ExpListSharedPtr> >
+            velBndExp(m_bnd_dim);
+    for(i = 0; i < m_bnd_dim; ++i)
+    {
+        velBndExp[i] = m_fields[m_velocity[i]]->GetBndCondExpansions();
+    }
+
+    for(n = cnt = 0; n < m_PBndConds.num_elements(); ++n)
+    {
+        // High order boundary condition;
+        if(m_hbcType[n] == eHBCNeumann)
+        {
+            Array<OneD, NekDouble> JacBnd;
+            m_fields[0]->ExtractPhysToBnd(n, Jac, JacBnd);
+            for(i = 0; i < m_bnd_dim; ++i)
+            {
+                int nq = velBndExp[i][n]->GetTotPoints();
+                velbc[i] = Array<OneD, NekDouble>
+                    (velBndExp[i][n]->GetTotPoints(), 0.0);
+                velBndExp[i][n]->SetWaveSpace(false);
+                velBndExp[i][n]->BwdTrans(velBndExp[i][n]->GetCoeffs(),
+                                          velbc[i]);
+
+                // Multiply by Jacobian
+                Vmath::Vmul(nq, JacBnd, 1, velbc[i], 1, velbc[i], 1);
+                // If pressure terms are treated implicitly, multiply
+                //     by the relaxation parameter
+                if (m_implicitPressure)
+                {
+                    Vmath::Smul(nq, m_pressureRelaxation,
+                                velbc[i], 1, velbc[i], 1);
+                }
+                // Transform to wavespace if required
+                if(m_fields[m_velocity[i]]->GetWaveSpace())
+                {
+                    velBndExp[i][n]->HomogeneousFwdTrans(velbc[i], velbc[i]);
+                }
+            }
+            IProdVnTmp = IProdVn + cnt;
+            m_PBndExp[n]->NormVectorIProductWRTBase(velbc, IProdVnTmp);
+            cnt += m_PBndExp[n]->GetNcoeffs();
+        }
+        else if(m_hbcType[n] == eConvectiveOBC)
+        {
+            // skip over convective OBC
+            cnt += m_PBndExp[n]->GetNcoeffs();
+        }
+    }
+}
+
 }

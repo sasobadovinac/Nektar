@@ -562,7 +562,8 @@ namespace Nektar
         }
     }
     
-    void Extrapolate::IProductNormVelocityBCOnHBC(Array<OneD, NekDouble> &IProdVn)
+    void Extrapolate::v_IProductNormVelocityBCOnHBC(
+        Array<OneD, NekDouble> &IProdVn)
     {
 
         if(!m_HBCnumber)
@@ -1052,9 +1053,9 @@ namespace Nektar
             
             // Calculate acceleration using Backward Differentiation Formula
             Array<OneD, NekDouble> accelerationTerm (nPts, 0.0);
-            if (m_pressureCalls > 2)
+            if (m_pressureCalls > 1)
             {
-                int acc_order = min(m_pressureCalls-2,m_intSteps);
+                int acc_order = min(m_pressureCalls-1,m_intSteps);
                 Vmath::Smul(nPts,
                             StifflyStable_Gamma0_Coeffs[acc_order-1],
                             array[0], 1,

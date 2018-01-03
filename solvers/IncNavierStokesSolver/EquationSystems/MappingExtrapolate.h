@@ -76,6 +76,9 @@ public:
         const Array<OneD, const Array<OneD, NekDouble> > &N,
         NekDouble kinvis);
 
+    virtual void v_IProductNormVelocityBCOnHBC(
+            Array<OneD, NekDouble> &IprodVn);
+
     MappingExtrapolate(const LibUtilities::SessionReaderSharedPtr pSession,
                        Array<OneD, MultiRegions::ExpListSharedPtr> pFields,
                        MultiRegions::ExpListSharedPtr pPressure,

@@ -133,7 +133,10 @@ namespace Nektar
         void IProductNormVelocityOnHBC(const Array<OneD, const Array<OneD, NekDouble> >  &Vel, 
                                        Array<OneD, NekDouble> &IprodVn);
         
-        void IProductNormVelocityBCOnHBC(Array<OneD, NekDouble> &IprodVn);
+        void IProductNormVelocityBCOnHBC(Array<OneD, NekDouble> &IprodVn)
+        {
+            v_IProductNormVelocityBCOnHBC(IprodVn);
+        }
         
         LibUtilities::TimeIntegrationMethod GetSubStepIntegrationMethod(void); 
 
@@ -159,7 +162,10 @@ namespace Nektar
             const Array<OneD, const Array<OneD, NekDouble> >  &N,
             NekDouble kinvis)=0;
 
-       virtual void v_SubSteppingTimeIntegration(
+        virtual void v_IProductNormVelocityBCOnHBC(
+            Array<OneD, NekDouble> &IprodVn);
+
+        virtual void v_SubSteppingTimeIntegration(
             int intMethod,        
             const LibUtilities::TimeIntegrationWrapperSharedPtr &IntegrationScheme)=0;
 
