@@ -82,7 +82,19 @@ void RigidBody::v_InitObject(
     m_session->LoadParameter("TimeStep", m_timestep);
 
     // OutputFrequency
-    auto it = pParams.find("OutputFrequency");
+    auto it = pParams.find("StartTime");
+    if (it == pParams.end())
+    {
+        m_startTime = 0.0;
+    }
+    else
+    {
+        LibUtilities::Equation equ(m_session, it->second);
+        m_startTime = equ.Evaluate();
+    }
+
+    // OutputFrequency
+    it = pParams.find("OutputFrequency");
     if (it == pParams.end())
     {
         m_outputFrequency = 1;
@@ -300,6 +312,12 @@ void RigidBody::v_Apply(
         const Array<OneD, MultiRegions::ExpListSharedPtr>    &pDisplFields,
         const NekDouble                                      &time)
 {
+    // Do not move before m_startTime
+    if(time < m_startTime)
+    {
+        return;
+    }
+
     // Determine order for this time step
     static int nCalls = 0;
     ++nCalls;

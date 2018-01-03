@@ -84,6 +84,8 @@ protected:
     NekDouble                               m_timestep;
     /// Time integration order
     int                                     m_intSteps;
+    /// Initial time when the body is fixed, to prevent instability in startup
+    NekDouble                               m_startTime;
 
     // Output information
     unsigned int                            m_outputFrequency;
