@@ -9,6 +9,7 @@ v4.4.2
 - Fix deadlock in Hdf5 with homogeneous expansions (!858)
 - Fix petsc compile without MPI (!873)
 - Fix a crash when Interpolator is called on an empty field (!869)
+- Fix uninitialised coefficients in DirectFull solver (!898)
 
 **NekMesh**
 - Fix missing periodic boundary meshing and boundary layer mesh adjustment
