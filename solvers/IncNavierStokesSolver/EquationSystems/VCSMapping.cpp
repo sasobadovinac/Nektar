@@ -601,7 +601,9 @@ namespace Nektar
             {
                 std::cout << " Pressure system (mapping) converged in " << s <<
                             " iterations with error = " << error << std::endl;
-            }            
+            }
+            // Add presure to outflow bc if using convective like BCs
+            m_extrapolation->AddPressureToOutflowBCs(m_kinvis);
         }
     }
     
@@ -646,14 +648,13 @@ namespace Nektar
 
             // Factors for Helmholtz system
             StdRegions::ConstFactorMap factors;
+            StdRegions::VarCoeffMap varCoeffMap = StdRegions::NullVarCoeffMap;
+            MultiRegions::VarFactorsMap varFactorsMap =
+                MultiRegions::NullVarFactorsMap;
+
             factors[StdRegions::eFactorLambda] = 
                                     1.0*m_viscousRelaxation/aii_Dt/m_kinvis;
-            if(m_useSpecVanVisc)
-            {
-                factors[StdRegions::eFactorSVVCutoffRatio] = m_sVVCutoffRatio;
-                factors[StdRegions::eFactorSVVDiffCoeff]   = 
-                                                      m_sVVDiffCoeff/m_kinvis;
-            }
+            AppendSVVFactors(factors,varFactorsMap);
 
             // Calculate L2-norm of F and set initial solution for iteration
             for(int i = 0; i < nvel; ++i)
@@ -733,7 +734,8 @@ namespace Nektar
                     //
                     m_fields[i]->HelmSolve(F_corrected[i], 
                                     m_fields[i]->UpdateCoeffs(),
-                                    NullFlagList, factors); 
+                                    NullFlagList, factors, varCoeffMap,
+                                    varFactorsMap);
                     m_fields[i]->BwdTrans(m_fields[i]->GetCoeffs(),outarray[i]);
 
                     //

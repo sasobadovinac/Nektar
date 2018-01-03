@@ -36,7 +36,6 @@
 #include <IncNavierStokesSolver/EquationSystems/VelocityCorrectionScheme.h>
 #include <LocalRegions/Expansion2D.h>
 #include <LocalRegions/Expansion3D.h>
-#include <LibUtilities/BasicUtils/Timer.h>
 #include <SolverUtils/Core/Misc.h>
 
 #include <boost/algorithm/string.hpp>
