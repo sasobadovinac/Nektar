@@ -284,14 +284,36 @@ void MappingGeneral::CalculateMetricTerms()
     }
     m_jac = Array<OneD, NekDouble>(physTot, 0.0);
 
+    // Get mesh coordinates
+    Array<OneD, Array<OneD, NekDouble> > coords(3);
+    for (int i = 0; i < 3; i++)
+    {
+        coords[i] = Array<OneD, NekDouble> (physTot);
+    }
+    m_fields[0]->GetCoords(coords[0], coords[1], coords[2]);
+
+    // Calculate displacements
+    Array<OneD, Array<OneD, NekDouble> > displ(nvel);
+    for (int i = 0; i < nvel; i++)
+    {
+        displ[i] = Array<OneD, NekDouble> (physTot);
+        Vmath::Vsub(physTot, m_coords[i], 1, coords[i], 1, displ[i], 1);
+    }
+
     // First, calculate derivatives of the mapping ->  dX^i/dx^j = c^i_j
+    //   use displ instead of m_coords to improve accuracy
     for( int i = 0; i<nvel; i++)
     {
         for( int j = 0; j<nvel; j++)
         {
             m_fields[0]->PhysDeriv(MultiRegions::DirCartesianMap[j],
-                                        m_coords[i],
+                                        displ[i],
                                         m_deriv[i*nvel+j]);
+            if (i == j)
+            {
+                Vmath::Sadd(physTot, 1.0, m_deriv[i*nvel+j], 1,
+                                          m_deriv[i*nvel+j], 1);
+            }
         }
     }
     // In Homogeneous case, m_deriv(2,2) needs to be set to 1

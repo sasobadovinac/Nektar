@@ -296,7 +296,7 @@ void MappingXYofZ::v_ApplyChristoffelCovar(
 
 void MappingXYofZ::v_UpdateGeomInfo()
 {
-    int phystot         = m_fields[0]->GetTotPoints();       
+    int phystot         = m_fields[0]->GetTotPoints();
     // Allocation of geometry memory
     m_GeometricInfo =  Array<OneD, Array<OneD, NekDouble> >(7);
     for (int i = 0; i < m_GeometricInfo.num_elements(); i++)
@@ -307,18 +307,35 @@ void MappingXYofZ::v_UpdateGeomInfo()
     bool waveSpace = m_fields[0]->GetWaveSpace();
     m_fields[0]->SetWaveSpace(false);        
 
+    // Get mesh coordinates
+    Array<OneD, Array<OneD, NekDouble> > coords(3);
+    for (int i = 0; i < 3; i++)
+    {
+        coords[i] = Array<OneD, NekDouble> (phystot);
+    }
+    m_fields[0]->GetCoords(coords[0], coords[1], coords[2]);
+
+    // Calculate displacements
+    Array<OneD, Array<OneD, NekDouble> > displ(2);
+    for (int i = 0; i < 2; i++)
+    {
+        displ[i] = Array<OneD, NekDouble> (phystot);
+        Vmath::Vsub(phystot, m_coords[i], 1, coords[i], 1, displ[i], 1);
+    }
+
     // Calculate derivatives of x transformation --> m_GeometricInfo 0-1
+    //   use displ instead of m_coords to improve accuracy
     m_fields[0]->PhysDeriv(MultiRegions::DirCartesianMap[2],
-                                m_coords[0],m_GeometricInfo[0]);
+                                displ[0],m_GeometricInfo[0]);
     m_fields[0]->PhysDeriv(MultiRegions::DirCartesianMap[2],
                                 m_GeometricInfo[0],m_GeometricInfo[1]);
     // m_GeometricInfo[2] = fz^2
     Vmath::Vmul(phystot,m_GeometricInfo[0],1,m_GeometricInfo[0],1,
-                                            m_GeometricInfo[2],1);       
+                                            m_GeometricInfo[2],1);
 
-    // Calculate derivatives of transformation -> m_GeometricInfo 3-4
+    // Calculate derivatives of y transformation -> m_GeometricInfo 3-4
     m_fields[0]->PhysDeriv(MultiRegions::DirCartesianMap[2],
-                                m_coords[1],m_GeometricInfo[3]);
+                                displ[1],m_GeometricInfo[3]);
     m_fields[0]->PhysDeriv(MultiRegions::DirCartesianMap[2],
                                 m_GeometricInfo[3],m_GeometricInfo[4]);
     // m_GeometricInfo[5] = gz^2

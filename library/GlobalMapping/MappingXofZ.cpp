@@ -327,11 +327,24 @@ void MappingXofZ::v_UpdateGeomInfo()
         m_GeometricInfo[i] = Array<OneD, NekDouble>(phystot, 0.0);
     }
 
+    // Get mesh coordinates
+    Array<OneD, Array<OneD, NekDouble> > coords(3);
+    for (int i = 0; i < 3; i++)
+    {
+        coords[i] = Array<OneD, NekDouble> (phystot);
+    }
+    m_fields[0]->GetCoords(coords[0], coords[1], coords[2]);
+
+    // Calculate displacement
+    Array<OneD, NekDouble> displX (phystot);
+    Vmath::Vsub(phystot, m_coords[0], 1, coords[0], 1, displX, 1);
+
     bool waveSpace = m_fields[0]->GetWaveSpace();
     m_fields[0]->SetWaveSpace(false);
     // Calculate derivatives of transformation
+    //   use displ instead of m_coords to improve accuracy
     m_fields[0]->PhysDeriv(MultiRegions::DirCartesianMap[2],
-                                m_coords[0],m_GeometricInfo[0]);
+                                displX,m_GeometricInfo[0]);
     m_fields[0]->PhysDeriv(MultiRegions::DirCartesianMap[2],
                                 m_GeometricInfo[0],m_GeometricInfo[1]);
     // m_GeometricInfo[2] = fz^2

@@ -369,24 +369,48 @@ void MappingXYofXY::v_UpdateGeomInfo()
     bool waveSpace = m_fields[0]->GetWaveSpace();
     m_fields[0]->SetWaveSpace(false);
 
+    // Get mesh coordinates
+    Array<OneD, Array<OneD, NekDouble> > coords(3);
+    for (int i = 0; i < 3; i++)
+    {
+        coords[i] = Array<OneD, NekDouble> (phystot);
+    }
+    m_fields[0]->GetCoords(coords[0], coords[1], coords[2]);
+
+    // Calculate displacements
+    Array<OneD, Array<OneD, NekDouble> > displ(2);
+    for (int i = 0; i < 2; i++)
+    {
+        displ[i] = Array<OneD, NekDouble> (phystot);
+        Vmath::Vsub(phystot, m_coords[i], 1, coords[i], 1, displ[i], 1);
+    }
+
     // Calculate derivatives of x transformation --> m_GeometricInfo 0-1
-    m_fields[0]->PhysDeriv(MultiRegions::DirCartesianMap[0],m_coords[0],m_GeometricInfo[0]);
-    m_fields[0]->PhysDeriv(MultiRegions::DirCartesianMap[1],m_coords[0],m_GeometricInfo[1]);     
+    //   use displ instead of m_coords to improve accuracy
+    m_fields[0]->PhysDeriv(MultiRegions::DirCartesianMap[0],
+                    displ[0],m_GeometricInfo[0]);
+    m_fields[0]->PhysDeriv(MultiRegions::DirCartesianMap[1],
+                    displ[0],m_GeometricInfo[1]);
+    Vmath::Sadd(phystot, 1.0, m_GeometricInfo[0], 1, m_GeometricInfo[0], 1);
 
     // Calculate derivatives of y transformation m_GeometricInfo 2-3
-    m_fields[0]->PhysDeriv(MultiRegions::DirCartesianMap[0],m_coords[1],m_GeometricInfo[2]);
-    m_fields[0]->PhysDeriv(MultiRegions::DirCartesianMap[1],m_coords[1],m_GeometricInfo[3]);
+    m_fields[0]->PhysDeriv(MultiRegions::DirCartesianMap[0],
+                    displ[1],m_GeometricInfo[2]);
+    m_fields[0]->PhysDeriv(MultiRegions::DirCartesianMap[1],
+                    displ[1],m_GeometricInfo[3]);
+    Vmath::Sadd(phystot, 1.0, m_GeometricInfo[3], 1, m_GeometricInfo[3], 1);
 
     // Calculate fx*gy-gx*fy --> m_GeometricInfo4
-    Vmath::Vmul(phystot, m_GeometricInfo[1], 1, m_GeometricInfo[2], 1, m_GeometricInfo[4], 1);
+    Vmath::Vmul(phystot, m_GeometricInfo[1], 1, m_GeometricInfo[2], 1,
+                    m_GeometricInfo[4], 1);
     Vmath::Vvtvm(phystot, m_GeometricInfo[0], 1, m_GeometricInfo[3], 1,
-                                                m_GeometricInfo[4], 1,
-                                                m_GeometricInfo[4], 1);
+                    m_GeometricInfo[4], 1, m_GeometricInfo[4], 1);
+
     // 
     CalculateMetricTensor();
     CalculateChristoffel();
 
-    m_fields[0]->SetWaveSpace(waveSpace);        
+    m_fields[0]->SetWaveSpace(waveSpace);
 }
 
 void MappingXYofXY::CalculateMetricTensor()
