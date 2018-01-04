@@ -37,9 +37,9 @@ IF( NEKTAR_SOLVER_INCNAVIERSTOKES )
         ./FSI/GeneralCoupler.cpp
         ./FSI/RigidDomainCoupler.cpp
         ./FSI/RigidPlaneCoupler.cpp
-        ./FSI/FSIBody.cpp
-        ./FSI/ForcedBody.cpp
-        ./FSI/RigidBody.cpp
+        ./FSI/Body/FSIBody.cpp
+        ./FSI/Body/ForcedBody.cpp
+        ./FSI/Body/RigidBody.cpp
         )
 
     SUBDIRS(Utilities)      

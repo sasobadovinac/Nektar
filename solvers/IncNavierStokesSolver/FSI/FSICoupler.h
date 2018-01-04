@@ -43,7 +43,7 @@
 #include <LibUtilities/TimeIntegration/TimeIntegrationWrapper.h>
 #include <MultiRegions/ExpList.h>
 #include <GlobalMapping/Mapping.h>
-#include <IncNavierStokesSolver/FSI/FSIBody.h>
+#include <IncNavierStokesSolver/FSI/Body/FSIBody.h>
 
 namespace Nektar
 {
