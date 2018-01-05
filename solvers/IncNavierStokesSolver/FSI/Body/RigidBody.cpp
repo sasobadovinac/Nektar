@@ -35,6 +35,7 @@
 
 #include <IncNavierStokesSolver/FSI/Body/RigidBody.h>
 #include <LibUtilities/BasicUtils/Equation.h>
+#include <GlobalMapping/Mapping.h>
 
 namespace Nektar
 {
@@ -263,6 +264,10 @@ void RigidBody::v_InitObject(
         m_force[i]    = Array<OneD, NekDouble> (m_nDof, 0.0);
     }
 
+    // Get initial displacement and velocity
+    GetInitialCondition(pFields);
+
+    // Open outputstream and write header
     if( m_doOutput)
     {
         m_index = 0;
@@ -280,7 +285,7 @@ void RigidBody::v_InitObject(
                 m_outputStream.open(m_outputFile.c_str());
             }
             // Write header
-            m_outputStream << "# Displacement of bodies" << endl;
+            m_outputStream << "# Velocity and displacement of bodies" << endl;
             for( int i = 0; i < m_nDof; i++ )
             {
                 m_outputStream << "#" << " Direction" << i+1 << " = (";
@@ -300,7 +305,9 @@ void RigidBody::v_InitObject(
             for( int i = 1; i <= m_nDof; ++i )
             {
                 m_outputStream.width(14);
-                m_outputStream <<  "Displ" << i;
+                m_outputStream <<  "Velocity_" << i;
+                m_outputStream.width(14);
+                m_outputStream <<  "Displacement_" << i;
             }
             m_outputStream << endl;
         }
@@ -421,12 +428,93 @@ void RigidBody::v_Apply(
                 for( int i = 0; i < m_nDof; i++ )
                 {
                     m_outputStream.width(15);
+                    m_outputStream << setprecision(8) << m_velocity[0][i];
+                    m_outputStream.width(15);
                     m_outputStream << setprecision(8) << m_displacement[i];
                 }
                 m_outputStream << endl;
             }
         }
     }
+}
+
+void RigidBody::GetInitialCondition(
+        const Array<OneD, MultiRegions::ExpListSharedPtr>    &pFields)
+{
+    // Check if this partition contains the boundary, and get a bnd id
+    int bndId = -1;
+    for( int n = 0; n < pFields[0]->GetBndConditions().num_elements(); ++n)
+    {
+        if(m_boundaryRegionIsInList[n] == 1)
+        {
+            bndId = n;
+        }
+    }
+    // Pick one process to broadcast the result
+    LibUtilities::CommSharedPtr comm = pFields[0]->GetComm()->GetRowComm();
+    int bcastRank = -1;
+    if (bndId != -1)
+    {
+        bcastRank = comm->GetRank();
+    }
+    comm->AllReduce(bcastRank, LibUtilities::ReduceMax);
+    ASSERTL0(bcastRank >= 0, "Boundary not found.");
+
+    // Get mapping, which will have the initial coordinates and velocities
+    GlobalMapping::MappingSharedPtr mapping =
+        GlobalMapping::Mapping::Load(m_session, pFields);
+
+    // Process bcastRank calculates the initial conditions
+    if( comm->GetRank() == bcastRank)
+    {
+        // Allocate storage
+        int totPts = pFields[0]->GetTotPoints();
+        int bndPts = pFields[0]->GetBndCondExpansions()[bndId]->GetTotPoints();
+        Array<OneD, Array<OneD,NekDouble>> tmp1(3);
+        Array<OneD, Array<OneD,NekDouble>> tmp2(3);
+        Array<OneD, Array<OneD,NekDouble>> displBnd(3);
+        Array<OneD, Array<OneD,NekDouble>> velBnd(3);
+        for (int i = 0; i < 3; ++i)
+        {
+            tmp1[i]     = Array<OneD,NekDouble> (totPts, 0.0);
+            tmp2[i]     = Array<OneD,NekDouble> (totPts, 0.0);
+            displBnd[i] = Array<OneD,NekDouble> (bndPts, 0.0);
+            velBnd[i]   = Array<OneD,NekDouble> (bndPts, 0.0);
+        }
+
+        // tmp1 = Cartesian coordinates
+        mapping->GetCartesianCoordinates(tmp1[0], tmp1[1], tmp1[2]);
+        // tmp2 = mesh coordinates
+        pFields[0]->GetCoords(tmp2[0],tmp2[1],tmp2[2]);
+        // tmp1 = displacement
+        for (int i = 0; i < 3; ++i)
+        {
+            Vmath::Vsub(totPts, tmp1[i], 1, tmp2[i], 1, tmp1[i], 1);
+        }
+        // tmp2 = coordinate velocities
+        mapping->GetCoordVelocity(tmp2);
+
+        // Extract values at the boundary
+        for (int i = 0; i < 3; ++i)
+        {
+            pFields[0]->ExtractPhysToBnd(bndId, tmp1[i], displBnd[i]);
+            pFields[0]->ExtractPhysToBnd(bndId, tmp2[i], velBnd[i]);
+        }
+        // Project to m_directions
+        for (int j = 0; j < m_nDof; ++j)
+        {
+            m_displacement[j] = 0;
+            m_velocity[0][j]  = 0;
+            for (int i = 0; i < 3; ++i)
+            {
+                m_displacement[j] += m_directions[j][i] * displBnd[i][0];
+                m_velocity[0][j]  += m_directions[j][i] * velBnd[i][0];
+            }
+        }
+    }
+    // Broadcast the initial conditions
+    comm->Bcast(m_displacement, bcastRank);
+    comm->Bcast(m_velocity[0] , bcastRank);
 }
 
 }

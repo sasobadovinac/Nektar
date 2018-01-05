@@ -119,6 +119,9 @@ protected:
         const Array<OneD, MultiRegions::ExpListSharedPtr>    &pDisplFields,
         const NekDouble &time);
 
+    void GetInitialCondition(
+        const Array<OneD, MultiRegions::ExpListSharedPtr>    &pFields);
+
 };
 
 }
