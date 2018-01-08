@@ -127,7 +127,7 @@ void HingedBody::v_InitObject(
         m_outputFile += ".mot";
     }
 
-    // Moment of Inertia
+    // Moment of Inertia around hinge point
     it = pParams.find("I");
     ASSERTL0(it != pParams.end(), "Missing parameter 'I'.");
     LibUtilities::Equation equ2(m_session, it->second);
