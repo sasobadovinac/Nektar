@@ -258,10 +258,27 @@
             ASSERTL1(n*incz <= z.num_elements()+z.GetOffset(),"Array out of bounds");
 
             Vvtvm(n,&w[0],incw,&x[0],incx,&y[0],incy,&z[0],incz);
-            
         }
-        
-        /// \brief vvtvvtp (vector times vector plus vector times vector): z = v*w + y*z
+
+        /// \brief vvtvvtm (vector times vector minus vector times vector): z = v*w - x*y
+        template<class T> void Vvtvvtm (
+            int n,
+            const Array<OneD,const T> &v, int incv,
+            const Array<OneD,const T> &w, int incw,
+            const Array<OneD,const T> &x, int incx,
+            const Array<OneD,const T> &y, int incy,
+                  Array<OneD,      T> &z, int incz)
+        {
+            ASSERTL1(n*incv <= v.num_elements()+v.GetOffset(),"Array out of bounds");
+            ASSERTL1(n*incw <= w.num_elements()+w.GetOffset(),"Array out of bounds");
+            ASSERTL1(n*incx <= x.num_elements()+x.GetOffset(),"Array out of bounds");
+            ASSERTL1(n*incy <= y.num_elements()+y.GetOffset(),"Array out of bounds");
+            ASSERTL1(n*incz <= z.num_elements()+z.GetOffset(),"Array out of bounds");
+            
+            Vvtvvtm(n,&v[0],incv,&w[0],incw,&x[0],incx,&y[0],incy,&z[0],incz);
+        }
+
+        /// \brief vvtvvtp (vector times vector plus vector times vector): z = v*w + x*y
         template<class T> void Vvtvvtp (
             int n,
             const Array<OneD,const T> &v, int incv,
