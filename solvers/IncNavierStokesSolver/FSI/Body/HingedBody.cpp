@@ -474,37 +474,67 @@ void HingedBody::GetInitialCondition(
         int bndPts = pFields[0]->GetBndCondExpansions()[bndId]->GetTotPoints();
         Array<OneD, Array<OneD,NekDouble>> tmp1(3);
         Array<OneD, Array<OneD,NekDouble>> tmp2(3);
-        Array<OneD, Array<OneD,NekDouble>> displBnd(3);
+        Array<OneD, Array<OneD,NekDouble>> tmp3(3);
+        Array<OneD, Array<OneD,NekDouble>> rBnd(3);
+        Array<OneD, Array<OneD,NekDouble>> rCartBnd(3);
         Array<OneD, Array<OneD,NekDouble>> velBnd(3);
         for (int i = 0; i < 3; ++i)
         {
             tmp1[i]     = Array<OneD,NekDouble> (totPts, 0.0);
             tmp2[i]     = Array<OneD,NekDouble> (totPts, 0.0);
-            displBnd[i] = Array<OneD,NekDouble> (bndPts, 0.0);
+            tmp3[i]     = Array<OneD,NekDouble> (totPts, 0.0);
+            rBnd[i]     = Array<OneD,NekDouble> (bndPts, 0.0);
+            rCartBnd[i] = Array<OneD,NekDouble> (bndPts, 0.0);
             velBnd[i]   = Array<OneD,NekDouble> (bndPts, 0.0);
         }
 
-        // tmp1 = Cartesian coordinates
+        // tmp1 = Position relative to hinge in Cartesian coordinates
         mapping->GetCartesianCoordinates(tmp1[0], tmp1[1], tmp1[2]);
-        // tmp2 = mesh coordinates
+        // tmp2 = Position relative to hinge in mesh coordinates
         pFields[0]->GetCoords(tmp2[0],tmp2[1],tmp2[2]);
-        // tmp1 = displacement
         for (int i = 0; i < 3; ++i)
         {
-            Vmath::Vsub(totPts, tmp1[i], 1, tmp2[i], 1, tmp1[i], 1);
+            Vmath::Sadd(totPts, -1.0*m_hingePoint[i], tmp1[i], 1, tmp1[i], 1);
+            Vmath::Sadd(totPts, -1.0*m_hingePoint[i], tmp2[i], 1, tmp2[i], 1);
         }
-        // tmp2 = coordinate velocities
-        mapping->GetCoordVelocity(tmp2);
+        // tmp3 = coordinate velocities
+        mapping->GetCoordVelocity(tmp3);
 
         // Extract values at the boundary
         for (int i = 0; i < 3; ++i)
         {
-            pFields[0]->ExtractPhysToBnd(bndId, tmp1[i], displBnd[i]);
-            pFields[0]->ExtractPhysToBnd(bndId, tmp2[i], velBnd[i]);
+            pFields[0]->ExtractPhysToBnd(bndId, tmp1[i], rCartBnd[i]);
+            pFields[0]->ExtractPhysToBnd(bndId, tmp2[i], rBnd[i]);
+            pFields[0]->ExtractPhysToBnd(bndId, tmp3[i], velBnd[i]);
         }
-        // TO DO: Implement logic for obtaining initial angle and velocity
-        m_angle = 0;
-        m_velocity[0]  = 0;
+        // Pick a point not coincident with the hinge
+        int pt;
+        for (pt = 0; pt < bndPts; ++pt)
+        {
+            if( abs(rCartBnd[0][pt]) > 1e-6 || abs(rCartBnd[1][pt]) > 1e-6)
+            {
+                break;
+            }
+        }
+        ASSERTL0(pt != bndPts, "Could not find valid point");
+
+        // Calculate angle and velocity. TO DO: Extend to 3D
+        NekDouble thetaCart = atan2(rCartBnd[1][pt], rCartBnd[0][pt]);
+        NekDouble theta     = atan2(rBnd[1][pt]    , rBnd[0][pt]);
+        m_angle             = thetaCart - theta;
+
+        // The magnitude of the angular velocity is abs(V) / R
+        NekDouble radius = sqrt( rCartBnd[0][pt]*rCartBnd[0][pt] +
+                                 rCartBnd[1][pt]*rCartBnd[1][pt]);
+        m_velocity[0]    = (velBnd[0][pt]*velBnd[0][pt] +
+                            velBnd[1][pt]*velBnd[1][pt]) / radius;
+        // Now check the sign
+        //    (check both conditions in case either x or y is zero)
+        if( velBnd[1][pt]*rCartBnd[0][pt] < 0 ||
+            velBnd[0][pt]*rCartBnd[1][pt] > 0)
+        {
+            m_velocity[0] = -m_velocity[0];
+        }
     }
     // Broadcast the initial conditions
     comm->Bcast(m_angle, bcastRank);
