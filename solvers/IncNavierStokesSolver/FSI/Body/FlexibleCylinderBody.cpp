@@ -103,10 +103,124 @@ void FlexibleCylinderBody::v_InitObject(
         m_outputFile += ".mot";
     }
 
+    // Vibration and support type
+    it =  pParams.find("VibrationType");
+    ASSERTL0(it != pParams.end(), "Missing parameter 'VibrationType'.");
+    std::string vibtype = it->second;
+    if(boost::iequals(vibtype, "Constrained"))
+    {
+        m_vdim = 1;
+    }
+    else if (boost::iequals(vibtype, "Free"))
+    {
+        m_vdim = 2;
+    }
+    else if (boost::iequals(vibtype, "Forced"))
+    {
+        ASSERTL0(false, "Forced is not a valid VibrationType for"
+                " FlexibleCylinder. Use the Forced body type instead.");
+    }
+    else
+    {
+        ASSERTL0(false, "Invalid value for VibrationType.");
+    }
+
+    it =  pParams.find("SupportType");
+    ASSERTL0(it != pParams.end(), "Missing parameter 'VibrationType'.");
+    m_supptype = it->second;
+
+    // Structural dynamic parameters
+    it =  pParams.find("StructRho");
+    if (it == pParams.end())
+    {
+        ASSERTL0(false, "Missing parameter 'StructRho'.");
+    }
+    else
+    {
+        LibUtilities::Equation equ(m_session, it->second);
+        m_structrho = equ.Evaluate();
+    }
+
+    it =  pParams.find("StructStiff");
+    if (it == pParams.end())
+    {
+        m_structstiff = 0.0;
+    }
+    else
+    {
+        LibUtilities::Equation equ(m_session, it->second);
+        m_structstiff = equ.Evaluate();
+    }
+
+    it =  pParams.find("StructDamp");
+    if (it == pParams.end())
+    {
+        m_structdamp = 0.0;
+    }
+    else
+    {
+        LibUtilities::Equation equ(m_session, it->second);
+        m_structdamp = equ.Evaluate();
+    }
+
+    it =  pParams.find("CableTension");
+    if (it == pParams.end())
+    {
+        m_cabletension = 0.0;
+    }
+    else
+    {
+        LibUtilities::Equation equ(m_session, it->second);
+        m_cabletension = equ.Evaluate();
+    }
+
+    it =  pParams.find("BendingStiff");
+    if (it == pParams.end())
+    {
+        m_bendingstiff = 0.0;
+    }
+    else
+    {
+        LibUtilities::Equation equ(m_session, it->second);
+        m_bendingstiff = equ.Evaluate();
+    }
+
+    // Fictitious mass parameters
+    it = pParams.find("FictitiousMassMethod");
+    if (it == pParams.end())
+    {
+        m_fictmass = false;
+    }
+    else
+    {
+        std::string sOption = it->second.c_str();
+        m_fictmass = ( boost::iequals(sOption,"true")) ||
+                     ( boost::iequals(sOption,"yes"));
+    }
+
+    if(m_fictmass)
+    {
+        it =  pParams.find("FictMass");
+        ASSERTL0(it != pParams.end(), "Missing parameter 'FictMass'.");
+        LibUtilities::Equation equ(m_session, it->second);
+        m_fictrho = equ.Evaluate();
+
+        it =  pParams.find("FictDamp");
+        ASSERTL0(it != pParams.end(), "Missing parameter 'FictDamp'.");
+        LibUtilities::Equation equ2(m_session, it->second);
+        m_fictdamp = equ2.Evaluate();
+    }
+
     // Create FilterAeroForces object
     it = pParams.find("Boundary");
     ASSERTL0(it != pParams.end(), "Missing parameter 'Boundary'.");
     vParams[it->first] = it->second;
+    bool homostrip;
+    m_session->MatchSolverInfo("HomoStrip","True",homostrip,false);
+    if( !homostrip)
+    {
+        vParams["OutputAllPlanes"] = "True";
+    }
     m_filterForces = MemoryManager<SolverUtils::FilterAeroForces>::
                                 AllocateSharedPtr(m_session, vParams);
     m_filterForces->Initialise(pFields, 0.0);
@@ -385,15 +499,8 @@ void FlexibleCylinderBody::EvaluateStructDynModel(
     {
         // Fictitious mass method used to stablize the explicit coupling at
         // relatively lower mass ratio
-        bool fictmass;
-        m_session->MatchSolverInfo("FictitiousMassMethod", "True",
-                                    fictmass, false);
-        if(fictmass)
+        if(m_fictmass)
         {
-            NekDouble fictrho, fictdamp;
-            m_session->LoadParameter("FictMass", fictrho);
-            m_session->LoadParameter("FictDamp", fictdamp);
-
             static NekDouble Betaq_Coeffs[2][2] = 
                                 {{1.0,  0.0},{2.0, -1.0}};
 
@@ -436,9 +543,9 @@ void FlexibleCylinderBody::EvaluateStructDynModel(
                 }
 
                 // Add the fictitious forces on the RHS of the equation
-                Vmath::Svtvp(npts, fictdamp,m_fV[i][nlevels-1],1,
+                Vmath::Svtvp(npts, m_fictdamp,m_fV[i][nlevels-1],1,
                              fces[i],1,fces[i],1);
-                Vmath::Svtvp(npts, fictrho, m_fA[i][nlevels-1],1,
+                Vmath::Svtvp(npts, m_fictrho, m_fA[i][nlevels-1],1,
                              fces[i],1,fces[i],1);
             }
         }
@@ -614,9 +721,7 @@ void FlexibleCylinderBody::Newmark_betaSolver(
         const Array<OneD, MultiRegions::ExpListSharedPtr> &pFields,
               Array<OneD, NekDouble> &HydroForces,
               Array<OneD, NekDouble> &BodyMotions)
-{  
-    std::string supptype = m_session->GetSolverInfo("SupportType");
-
+{
     int npts = HydroForces.num_elements();
         
     Array<OneD, Array<OneD, NekDouble> > fft_i(4);
@@ -635,14 +740,14 @@ void FlexibleCylinderBody::Newmark_betaSolver(
     }
     
     // Implement Fourier transformation of the motion variables
-    if(boost::iequals(supptype, "Free-Free"))
+    if(boost::iequals(m_supptype, "Free-Free"))
     {
         for(int j = 0 ; j < 4; ++j)
         {
             m_FFT->FFTFwdTrans(fft_i[j], fft_o[j]);
         }
     }
-    else if(boost::iequals(supptype, "Pinned-Pinned"))
+    else if(boost::iequals(m_supptype, "Pinned-Pinned"))
     {
         //TODO:
         int N = fft_i[0].num_elements();
@@ -702,14 +807,14 @@ void FlexibleCylinderBody::Newmark_betaSolver(
 
     // get physical coeffients via Backward Fourier transformation of wave
     // coefficients
-    if(boost::iequals(supptype, "Free-Free"))
+    if(boost::iequals(m_supptype, "Free-Free"))
     {
         for(int var = 0; var < 3; var++)
         {
             m_FFT->FFTBwdTrans(fft_i[var], fft_o[var]);
         }
     }
-    else if(boost::iequals(supptype, "Pinned-Pinned"))
+    else if(boost::iequals(m_supptype, "Pinned-Pinned"))
     {
         //TODO:
         int N = fft_i[0].num_elements();
@@ -778,26 +883,6 @@ void FlexibleCylinderBody::InitialiseCableModel(
     ZIDs = pFields[0]->GetZIDs();
     m_np = ZIDs.num_elements();
 
-    std::string vibtype = m_session->GetSolverInfo("VibrationType");
-
-    if(boost::iequals(vibtype, "Constrained"))
-    {
-        m_vdim = 1;
-    }
-    else if (boost::iequals(vibtype, "Free"))
-    {
-        m_vdim = 2;
-    }
-    else if (boost::iequals(vibtype, "Forced"))
-    {
-        ASSERTL0(false, "Forced is not a valid VibrationType for"
-                " FlexibleCylinder. Use the Forced body type instead.");
-    }
-    else
-    {
-        ASSERTL0(false, "Invalid value for VibrationType.");
-    }
-
     if(!homostrip)
     {
         m_session->LoadParameter("LZ", m_lhom);
@@ -819,22 +904,12 @@ void FlexibleCylinderBody::InitialiseCableModel(
                                             "NekFFTW", nstrips);
     }
 
-    // load the structural dynamic parameters from xml file
-    m_session->LoadParameter("StructRho",  m_structrho);
-    m_session->LoadParameter("StructDamp", m_structdamp, 0.0);
-
     // Identify whether the fictitious mass method is active for explicit
     // coupling of fluid solver and structural dynamics solver
-    bool fictmass;
-    m_session->MatchSolverInfo("FictitiousMassMethod", "True",
-                                fictmass, false);
-    if(fictmass)
+    if(m_fictmass)
     {
-        NekDouble fictrho, fictdamp;
-        m_session->LoadParameter("FictMass", fictrho);
-        m_session->LoadParameter("FictDamp", fictdamp);
-        m_structrho  += fictrho;
-        m_structdamp += fictdamp;
+        m_structrho  += m_fictrho;
+        m_structdamp += m_fictdamp;
 
         // Storage array of Struct Velocity and Acceleration used for
         // extrapolation of fictitious force
@@ -1027,25 +1102,14 @@ void FlexibleCylinderBody::SetDynEqCoeffMatrix(
     NekDouble tmp1, tmp2, tmp3;
     NekDouble tmp4, tmp5, tmp6, tmp7;
 
-    // load the structural dynamic parameters from xml file
-    NekDouble cabletension;
-    NekDouble bendingstiff;
-    NekDouble structstiff;
-    m_session->LoadParameter("StructStiff",  structstiff,  0.0);
-    m_session->LoadParameter("CableTension", cabletension, 0.0);
-    m_session->LoadParameter("BendingStiff", bendingstiff, 0.0);
-
-    tmp1 =   m_timestep * m_timestep;
-    tmp2 =  structstiff / m_structrho;
-    tmp3 = m_structdamp / m_structrho;
-    tmp4 = cabletension / m_structrho;
-    tmp5 = bendingstiff / m_structrho;
+    tmp1 = m_timestep     * m_timestep;
+    tmp2 = m_structstiff  / m_structrho;
+    tmp3 = m_structdamp   / m_structrho;
+    tmp4 = m_cabletension / m_structrho;
+    tmp5 = m_bendingstiff / m_structrho;
 
     // solve the ODE in the wave space for cable motion to obtain disp, vel and
     // accel
-
-    std::string supptype = m_session->GetSolverInfo("SupportType");
-
     for(int plane = 0; plane < nplanes; plane++)
     {
         int nel = 3;
@@ -1058,12 +1122,12 @@ void FlexibleCylinderBody::SetDynEqCoeffMatrix(
         unsigned int K = 0;
         NekDouble beta = 0.0;
 
-        if (boost::iequals(supptype, "Free-Free"))
+        if (boost::iequals(m_supptype, "Free-Free"))
         {
             K = plane/2;
             beta = 2.0 * M_PI/m_lhom;
         }
-        else if(boost::iequals(supptype, "Pinned-Pinned"))
+        else if(boost::iequals(m_supptype, "Pinned-Pinned"))
         {
             K = plane+1;
             beta = M_PI/m_lhom;

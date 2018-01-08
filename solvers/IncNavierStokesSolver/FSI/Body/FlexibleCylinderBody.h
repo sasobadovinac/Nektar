@@ -85,14 +85,26 @@ protected:
     /// Vibration dimension
     int m_vdim;
 
+    /// Structural dynamics parameters
+    NekDouble m_structstiff;
+    NekDouble m_cabletension;
+    NekDouble m_bendingstiff;
     /// Mass of the cable per unit length
     NekDouble m_structrho;
     /// Damping ratio of the cable
     NekDouble m_structdamp;
+    /// Flag marking if using fictitious mass
+    bool      m_fictmass;
+    /// Fictitious mass
+    NekDouble m_fictrho;
+    /// Fictitious damping
+    NekDouble m_fictdamp;
     /// Length ratio of the cable
     NekDouble m_lhom;
     ///
     LibUtilities::NektarFFTSharedPtr m_FFT;
+    /// Support type
+    std::string m_supptype;
 
     /// Storage for the cable's motion(x,y) variables
     Array<OneD, Array<OneD, NekDouble> >m_MotionVars;
