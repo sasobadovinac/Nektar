@@ -292,6 +292,7 @@ void FilterAeroForces::v_Initialise(
 
     // Write header
     int expdim = pFields[0]->GetGraph()->GetMeshDimension();
+    int momdim = (expdim == 2) ? 1 : 3;
     if ( pFields[0]->GetComm()->GetRank() == 0)
     {
         // Open output stream
@@ -305,7 +306,7 @@ void FilterAeroForces::v_Initialise(
         {
             m_outputStream.open(m_outputFile.c_str());
         }
-        m_outputStream << "# Forces acting on bodies" << endl;
+        m_outputStream << "# Forces and moments acting on bodies" << endl;
         for( int i = 0; i < expdim; i++ )
         {
             m_outputStream << "#" << " Direction" << i+1 << " = (";
@@ -329,6 +330,28 @@ void FilterAeroForces::v_Initialise(
             m_outputStream <<  "F" << i << "-visc";
             m_outputStream.width(8);
             m_outputStream <<  "F" << i << "-total";
+        }
+        if (momdim == 1)
+        {
+            // 2D case: we only have M3 (z-moment)
+            m_outputStream.width(8);
+            m_outputStream <<  "M" << 3 << "-press";
+            m_outputStream.width(9);
+            m_outputStream <<  "M" << 3 << "-visc";
+            m_outputStream.width(8);
+            m_outputStream <<  "M" << 3 << "-total";
+        }
+        else
+        {
+            for( int i = 1; i <= momdim; i++ )
+            {
+                m_outputStream.width(8);
+                m_outputStream <<  "M" << i << "-press";
+                m_outputStream.width(9);
+                m_outputStream <<  "M" << i << "-visc";
+                m_outputStream.width(8);
+                m_outputStream <<  "M" << i << "-total";
+            }
         }
         if( m_outputAllPlanes )
         {
@@ -380,6 +403,7 @@ void FilterAeroForces::v_Update(
     if (vComm->GetRank() == 0)
     {
         int expdim = pFields[0]->GetGraph()->GetMeshDimension();
+        int momdim = (expdim == 2) ? 1 : 3;
         // Write result in each plane
         if( m_outputAllPlanes)
         {
@@ -398,6 +422,16 @@ void FilterAeroForces::v_Update(
                     m_outputStream.width(15);
                     m_outputStream << setprecision(8) << m_Ftplane[i][plane];
                 }
+                // Write moments
+                for( int i = 0; i < momdim; i++ )
+                {
+                    m_outputStream.width(15);
+                    m_outputStream << setprecision(8) << m_Mpplane[i][plane];
+                    m_outputStream.width(15);
+                    m_outputStream << setprecision(8) << m_Mvplane[i][plane];
+                    m_outputStream.width(15);
+                    m_outputStream << setprecision(8) << m_Mtplane[i][plane];
+                }
                 m_outputStream.width(10);
                 m_outputStream << plane;
                 m_outputStream << endl;
@@ -415,6 +449,15 @@ void FilterAeroForces::v_Update(
             m_outputStream.width(15);
             m_outputStream << setprecision(8) << m_Ft[i];
         }
+        for( int i = 0; i < momdim; i++)
+        {
+            m_outputStream.width(15);
+            m_outputStream << setprecision(8) << m_Mp[i];
+            m_outputStream.width(15);
+            m_outputStream << setprecision(8) << m_Mv[i];
+            m_outputStream.width(15);
+            m_outputStream << setprecision(8) << m_Mt[i];
+        }
         if( m_outputAllPlanes)
         {
             m_outputStream.width(10);
@@ -427,6 +470,9 @@ void FilterAeroForces::v_Update(
             Array<OneD, NekDouble>  Fp(expdim,0.0);
             Array<OneD, NekDouble>  Fv(expdim,0.0);
             Array<OneD, NekDouble>  Ft(expdim,0.0);
+            Array<OneD, NekDouble>  Mp(momdim,0.0);
+            Array<OneD, NekDouble>  Mv(momdim,0.0);
+            Array<OneD, NekDouble>  Mt(momdim,0.0);
             // The result we already wrote is for strip 0
             m_outputStream.width(10);
             m_outputStream << 0;
@@ -440,6 +486,9 @@ void FilterAeroForces::v_Update(
                 vComm->GetColumnComm()->Recv(i, Fp);
                 vComm->GetColumnComm()->Recv(i, Fv);
                 vComm->GetColumnComm()->Recv(i, Ft);
+                vComm->GetColumnComm()->Recv(i, Mp);
+                vComm->GetColumnComm()->Recv(i, Mv);
+                vComm->GetColumnComm()->Recv(i, Mt);
 
                 m_outputStream.width(8);
                 m_outputStream << setprecision(6) << time;
@@ -451,6 +500,15 @@ void FilterAeroForces::v_Update(
                     m_outputStream << setprecision(8) << Fv[j];
                     m_outputStream.width(15);
                     m_outputStream << setprecision(8) << Ft[j];
+                }
+                for( int j = 0; j < momdim; j++)
+                {
+                    m_outputStream.width(15);
+                    m_outputStream << setprecision(8) << Mp[j];
+                    m_outputStream.width(15);
+                    m_outputStream << setprecision(8) << Mv[j];
+                    m_outputStream.width(15);
+                    m_outputStream << setprecision(8) << Mt[j];
                 }
                 m_outputStream.width(10);
                 m_outputStream << i;
@@ -471,6 +529,9 @@ void FilterAeroForces::v_Update(
             vComm->GetColumnComm()->Send(0, m_Fp);
             vComm->GetColumnComm()->Send(0, m_Fv);
             vComm->GetColumnComm()->Send(0, m_Ft);
+            vComm->GetColumnComm()->Send(0, m_Mp);
+            vComm->GetColumnComm()->Send(0, m_Mv);
+            vComm->GetColumnComm()->Send(0, m_Mt);
         }
     }
 }
@@ -586,17 +647,30 @@ void FilterAeroForces::CalculateForces(
 
     // Arrays with the results
     int expdim = pFields[0]->GetGraph()->GetMeshDimension();
+    int momdim = (expdim == 2) ? 1 : 3;
     m_Fp = Array<OneD, NekDouble> (expdim,0.0);
     m_Fv = Array<OneD, NekDouble> (expdim,0.0);
     m_Ft = Array<OneD, NekDouble> (expdim,0.0);
+    m_Mp = Array<OneD, NekDouble> (momdim,0.0);
+    m_Mv = Array<OneD, NekDouble> (momdim,0.0);
+    m_Mt = Array<OneD, NekDouble> (momdim,0.0);
     m_Fpplane = Array<OneD, Array<OneD, NekDouble> >  (expdim);
     m_Fvplane = Array<OneD, Array<OneD, NekDouble> >  (expdim);
     m_Ftplane = Array<OneD, Array<OneD, NekDouble> >  (expdim);
+    m_Mpplane = Array<OneD, Array<OneD, NekDouble> >  (momdim);
+    m_Mvplane = Array<OneD, Array<OneD, NekDouble> >  (momdim);
+    m_Mtplane = Array<OneD, Array<OneD, NekDouble> >  (momdim);
     for( int i = 0; i < expdim; ++i)
     {
         m_Fpplane[i] = Array<OneD, NekDouble>(m_nPlanes,0.0);
         m_Fvplane[i] = Array<OneD, NekDouble>(m_nPlanes,0.0);
         m_Ftplane[i] = Array<OneD, NekDouble>(m_nPlanes,0.0);
+    }
+    for( int i = 0; i < momdim; ++i)
+    {
+        m_Mpplane[i] = Array<OneD, NekDouble>(m_nPlanes,0.0);
+        m_Mvplane[i] = Array<OneD, NekDouble>(m_nPlanes,0.0);
+        m_Mtplane[i] = Array<OneD, NekDouble>(m_nPlanes,0.0);
     }
 
     // If a mapping is defined, call specific function
@@ -630,6 +704,14 @@ void FilterAeroForces::CalculateForces(
         rowComm->AllReduce(m_Fvplane[i], LibUtilities::ReduceSum);
         colComm->AllReduce(m_Fvplane[i], LibUtilities::ReduceSum);
     }
+    for( int i = 0; i < momdim; ++i)
+    {
+        rowComm->AllReduce(m_Mpplane[i], LibUtilities::ReduceSum);
+        colComm->AllReduce(m_Mpplane[i], LibUtilities::ReduceSum);
+
+        rowComm->AllReduce(m_Mvplane[i], LibUtilities::ReduceSum);
+        colComm->AllReduce(m_Mvplane[i], LibUtilities::ReduceSum);
+    }
 
     // Project results to new directions
     for( int plane = 0; plane < m_nPlanes; ++plane)
@@ -637,7 +719,7 @@ void FilterAeroForces::CalculateForces(
         Array< OneD, NekDouble> tmpP(expdim, 0.0);
         Array< OneD, NekDouble> tmpV(expdim, 0.0);
         for( int i = 0; i < expdim; ++i)
-        {   
+        {
             for( int j = 0; j < expdim; ++j )
             {
                 tmpP[i] += m_Fpplane[j][plane]*m_directions[i][j];
@@ -652,6 +734,29 @@ void FilterAeroForces::CalculateForces(
             // Sum viscous and pressure components
             m_Ftplane[i][plane] = m_Fpplane[i][plane] + m_Fvplane[i][plane];
         }
+
+        // Project moments only in 3D, since 2D moment is always in z direction
+        if (momdim == 3)
+        {
+            for( int i = 0; i < 3; ++i)
+            {
+                tmpP[i] = 0.0;
+                tmpV[i] = 0.0;
+                for( int j = 0; j < 3; ++j )
+                {
+                    tmpP[i] += m_Mpplane[j][plane]*m_directions[i][j];
+                    tmpV[i] += m_Mvplane[j][plane]*m_directions[i][j];
+                }
+            }
+            // Copy result
+            for( int i = 0; i < 3; ++i)
+            {
+                m_Mpplane[i][plane] = tmpP[i];
+                m_Mvplane[i][plane] = tmpV[i];
+                // Sum viscous and pressure components
+                m_Mtplane[i][plane] = m_Mpplane[i][plane] + m_Mvplane[i][plane];
+            }
+        }
     }
 
     // Combine planes
@@ -660,6 +765,12 @@ void FilterAeroForces::CalculateForces(
         m_Fp[i] = Vmath::Vsum(m_nPlanes, m_Fpplane[i], 1) / m_nPlanes;
         m_Fv[i] = Vmath::Vsum(m_nPlanes, m_Fvplane[i], 1) / m_nPlanes;
         m_Ft[i] = m_Fp[i] + m_Fv[i];
+    }
+    for( int i = 0; i < momdim; i++)
+    {
+        m_Mp[i] = Vmath::Vsum(m_nPlanes, m_Mpplane[i], 1) / m_nPlanes;
+        m_Mv[i] = Vmath::Vsum(m_nPlanes, m_Mvplane[i], 1) / m_nPlanes;
+        m_Mt[i] = m_Mp[i] + m_Mv[i];
     }
 
     // Put results back to wavespace, if necessary
@@ -683,6 +794,7 @@ void FilterAeroForces::CalculateForcesStandard(
 {
     // Get dimensions
     int expdim = pFields[0]->GetGraph()->GetMeshDimension();
+    int momdim = (expdim == 2) ? 1 : 3;
     int nVel = expdim;
     if( m_isHomogeneous1D )
     {
@@ -698,14 +810,19 @@ void FilterAeroForces::CalculateForcesStandard(
 
     // Velocity gradient
     Array<OneD, Array<OneD, NekDouble> >  grad( expdim*expdim);
+    Array<OneD, Array<OneD, NekDouble> >  coords(3);
 
     // Values at the boundary
     Array<OneD, NekDouble>                Pb;
     Array<OneD, Array<OneD, NekDouble> >  gradb( expdim*expdim);
+    Array<OneD, Array<OneD, NekDouble> >  coordsb(3);
 
     // Forces per element length in a boundary
     Array<OneD, Array<OneD, NekDouble> >  fp( expdim );
     Array<OneD, Array<OneD, NekDouble> >  fv( expdim );
+    // Moments per element length in a boundary
+    Array<OneD, Array<OneD, NekDouble> >  mp( momdim );
+    Array<OneD, Array<OneD, NekDouble> >  mv( momdim );
 
     // Define boundary expansions
     Array<OneD, const SpatialDomains::BoundaryConditionShPtr > BndConds;
@@ -777,6 +894,13 @@ void FilterAeroForces::CalculateForcesStandard(
                             }
                         }
 
+                        // Get coordinates
+                        for ( int j = 0; j < 3; ++j)
+                        {
+                            coords[j] = Array<OneD, NekDouble>(nq, 0.0);
+                        }
+                        elmt->GetCoords(coords[0], coords[1], coords[2]);
+
                         // identify boundary of element
                         int boundary = m_BCtoTraceID[cnt];
 
@@ -797,6 +921,12 @@ void FilterAeroForces::CalculateForcesStandard(
                             gradb[j] = Array<OneD, NekDouble> (nbc,0.0);
                             elmt->GetTracePhysVals(boundary,
                                     bc, grad[j], gradb[j]);
+                        }
+                        for(int j = 0; j < 3; ++j)
+                        {
+                            coordsb[j] = Array<OneD, NekDouble> (nbc,0.0);
+                            elmt->GetTracePhysVals(boundary,
+                                    bc, coords[j], coordsb[j]);
                         }
 
                         // Calculate forces per unit length
@@ -824,6 +954,42 @@ void FilterAeroForces::CalculateForcesStandard(
                             Vmath::Smul(nbc, -m_mu, fv[j], 1, fv[j], 1);
                         }
 
+                        // Calculate moments per unit length
+                        if( momdim == 1)
+                        {
+                            // Mz = Fy * x - Fx * y
+                            Vmath::Vvtvvtm(nbc, fp[1], 1, coordsb[0], 1,
+                                                fp[0], 1, coordsb[1], 1,
+                                                mp[0], 1);
+                            Vmath::Vvtvvtm(nbc, fv[1], 1, coordsb[0], 1,
+                                                fv[0], 1, coordsb[1], 1,
+                                                mv[0], 1);
+                        }
+                        else
+                        {
+                            // Mx = Fz * y - Fy * z
+                            Vmath::Vvtvvtm(nbc, fp[2], 1, coordsb[1], 1,
+                                                fp[1], 1, coordsb[2], 1,
+                                                mp[0], 1);
+                            Vmath::Vvtvvtm(nbc, fv[2], 1, coordsb[1], 1,
+                                                fv[1], 1, coordsb[2], 1,
+                                                mv[0], 1);
+                            // My = Fx * z - Fz * x
+                            Vmath::Vvtvvtm(nbc, fp[0], 1, coordsb[2], 1,
+                                                fp[2], 1, coordsb[0], 1,
+                                                mp[1], 1);
+                            Vmath::Vvtvvtm(nbc, fv[0], 1, coordsb[2], 1,
+                                                fv[2], 1, coordsb[0], 1,
+                                                mv[1], 1);
+                            // Mz = Fy * x - Fx * y
+                            Vmath::Vvtvvtm(nbc, fp[1], 1, coordsb[0], 1,
+                                                fp[0], 1, coordsb[1], 1,
+                                                mp[2], 1);
+                            Vmath::Vvtvvtm(nbc, fv[1], 1, coordsb[0], 1,
+                                                fv[0], 1, coordsb[1], 1,
+                                                mv[2], 1);
+                        }
+
                         // Integrate to obtain force
                         for ( int j = 0; j < expdim; ++j)
                         {
@@ -831,6 +997,13 @@ void FilterAeroForces::CalculateForcesStandard(
                                                     Integral(fp[j]);
                             m_Fvplane[j][plane] += BndExp[n]->GetExp(i)->
                                                     Integral(fv[j]);
+                        }
+                        for ( int j = 0; j < momdim; ++j)
+                        {
+                            m_Mpplane[j][plane] += BndExp[n]->GetExp(i)->
+                                                    Integral(mp[j]);
+                            m_Mvplane[j][plane] += BndExp[n]->GetExp(i)->
+                                                    Integral(mv[j]);
                         }
                     }
                 }
@@ -854,6 +1027,7 @@ void FilterAeroForces::CalculateForcesMapping(
     // Get number of quadrature points and dimensions
     int physTot = pFields[0]->GetNpoints();
     int expdim = pFields[0]->GetGraph()->GetMeshDimension();
+    int momdim = (expdim == 2) ? 1 : 3;
     int nVel = expdim;
     if( m_isHomogeneous1D )
     {
@@ -871,6 +1045,11 @@ void FilterAeroForces::CalculateForcesMapping(
     Array<OneD, MultiRegions::ExpListSharedPtr>  gradPlane( nVel*nVel);
     Array<OneD, Array<OneD, NekDouble> >         gradElmt ( nVel*nVel);
     Array<OneD, Array<OneD, NekDouble> >         gradBnd  ( nVel*nVel);
+    // Coordinates
+    Array<OneD, MultiRegions::ExpListSharedPtr>  coords     (3);
+    Array<OneD, MultiRegions::ExpListSharedPtr>  coordsPlane(3);
+    Array<OneD, Array<OneD, NekDouble> >         coordsElmt (3);
+    Array<OneD, Array<OneD, NekDouble> >         coordsBnd  (3);
 
     // Transformation to cartesian system
     Array<OneD, MultiRegions::ExpListSharedPtr>  C     ( nVel*nVel);
@@ -887,6 +1066,10 @@ void FilterAeroForces::CalculateForcesMapping(
     // Forces per element length in a boundary
     Array<OneD, Array<OneD, NekDouble> >  fp( nVel );
     Array<OneD, Array<OneD, NekDouble> >  fv( nVel );
+
+    // Moments per element length in a boundary
+    Array<OneD, Array<OneD, NekDouble> >  mp( nVel );
+    Array<OneD, Array<OneD, NekDouble> >  mv( nVel );
 
     // Define boundary expansions
     Array<OneD, const SpatialDomains::BoundaryConditionShPtr > BndConds;
@@ -930,6 +1113,12 @@ void FilterAeroForces::CalculateForcesMapping(
                         MemoryManager<MultiRegions::ExpList3DHomogeneous1D>::
                             AllocateSharedPtr(*Exp3DH1);
                 }
+                for( int i = 0; i < 3; ++i)
+                {
+                    coords[i] =
+                        MemoryManager<MultiRegions::ExpList3DHomogeneous1D>::
+                            AllocateSharedPtr(*Exp3DH1);
+                }
                 Jac = MemoryManager<MultiRegions::ExpList3DHomogeneous1D>::
                             AllocateSharedPtr(*Exp3DH1);
             }
@@ -948,6 +1137,11 @@ void FilterAeroForces::CalculateForcesMapping(
                                 AllocateSharedPtr(*Exp2D);
 
                     C[i] = MemoryManager<MultiRegions::ExpList2D>::
+                                AllocateSharedPtr(*Exp2D);
+                }
+                for( int i = 0; i < 3; ++i)
+                {
+                    coords[i] = MemoryManager<MultiRegions::ExpList2D>::
                                 AllocateSharedPtr(*Exp2D);
                 }
                 Jac = MemoryManager<MultiRegions::ExpList2D>::
@@ -972,6 +1166,11 @@ void FilterAeroForces::CalculateForcesMapping(
                 C[i] = MemoryManager<MultiRegions::ExpList3D>::
                             AllocateSharedPtr(*Exp3D);
             }
+            for( int i = 0; i < 3; ++i)
+            {
+                coords[i] = MemoryManager<MultiRegions::ExpList3D>::
+                            AllocateSharedPtr(*Exp3D);
+            }
             Jac = MemoryManager<MultiRegions::ExpList3D>::
                             AllocateSharedPtr(*Exp3D);
 
@@ -986,6 +1185,10 @@ void FilterAeroForces::CalculateForcesMapping(
     // Get g^ij
     Array<OneD, Array<OneD, NekDouble> > tmp( nVel*nVel );
     m_mapping->GetInvMetricTensor(tmp);
+
+    // Get Cartesian coordinates
+    m_mapping->GetCartesianCoordinates(coords[0]->UpdatePhys(),
+            coords[1]->UpdatePhys(), coords[2]->UpdatePhys());
 
     // Calculate P^ij = g^ij*p
     for ( int i = 0; i < nVel*nVel; ++i)
@@ -1071,6 +1274,10 @@ void FilterAeroForces::CalculateForcesMapping(
                     gradPlane[n] = grad[n]->GetPlane(m_planesID[plane]);
                     CPlane[n]    = C[n]->GetPlane(m_planesID[plane]);
                 }
+                for( int n = 0; n < 3; ++n)
+                {
+                    coordsPlane[n] = coords[n]->GetPlane(m_planesID[plane]);
+                }
                 JacPlane = Jac->GetPlane(m_planesID[plane]);
             }
             else
@@ -1079,7 +1286,11 @@ void FilterAeroForces::CalculateForcesMapping(
                 {
                     PPlane[n]    = P[n];
                     gradPlane[n] = grad[n];
-                    CPlane[n] = C[n];
+                    CPlane[n]    = C[n];
+                }
+                for( int n = 0; n < 3; ++n)
+                {
+                    coordsPlane[n] = coords[n];
                 }
                 JacPlane = Jac;
             }
@@ -1103,6 +1314,10 @@ void FilterAeroForces::CalculateForcesMapping(
                             PElmt[j]    = PPlane[j]->GetPhys()    + offset;
                             gradElmt[j] = gradPlane[j]->GetPhys() + offset;
                             CElmt[j]    = CPlane[j]->GetPhys()    + offset;
+                        }
+                        for( int j = 0; j < 3; ++j)
+                        {
+                            coordsElmt[j] = coordsPlane[j]->GetPhys() + offset;
                         }
                         JacElmt = JacPlane->GetPhys() + offset;
 
@@ -1133,6 +1348,12 @@ void FilterAeroForces::CalculateForcesMapping(
                             CBnd[j] = Array<OneD, NekDouble> (nbc,0.0);
                             elmt->GetTracePhysVals(boundary,
                                     bc, CElmt[j], CBnd[j]);
+                        }
+                        for(int j = 0; j < 3; ++j)
+                        {
+                            coordsBnd[j] = Array<OneD, NekDouble> (nbc,0.0);
+                            elmt->GetTracePhysVals(boundary,
+                                    bc, coordsElmt[j], coordsBnd[j]);
                         }
                         JacBnd = Array<OneD, NekDouble> (nbc,0.0);
                         elmt->GetTracePhysVals(boundary, bc, JacElmt, JacBnd);
@@ -1203,6 +1424,42 @@ void FilterAeroForces::CalculateForcesMapping(
                             Vmath::Vcopy(nbc, wk[k], 1, fv[k], 1);
                         }
 
+                        // Calculate moments per unit length
+                        if( momdim == 1)
+                        {
+                            // Mz = Fy * x - Fx * y
+                            Vmath::Vvtvvtm(nbc, fp[1], 1, coordsBnd[0], 1,
+                                                fp[0], 1, coordsBnd[1], 1,
+                                                mp[0], 1);
+                            Vmath::Vvtvvtm(nbc, fv[1], 1, coordsBnd[0], 1,
+                                                fv[0], 1, coordsBnd[1], 1,
+                                                mv[0], 1);
+                        }
+                        else
+                        {
+                            // Mx = Fz * y - Fy * z
+                            Vmath::Vvtvvtm(nbc, fp[2], 1, coordsBnd[1], 1,
+                                                fp[1], 1, coordsBnd[2], 1,
+                                                mp[0], 1);
+                            Vmath::Vvtvvtm(nbc, fv[2], 1, coordsBnd[1], 1,
+                                                fv[1], 1, coordsBnd[2], 1,
+                                                mv[0], 1);
+                            // My = Fx * z - Fz * x
+                            Vmath::Vvtvvtm(nbc, fp[0], 1, coordsBnd[2], 1,
+                                                fp[2], 1, coordsBnd[0], 1,
+                                                mp[1], 1);
+                            Vmath::Vvtvvtm(nbc, fv[0], 1, coordsBnd[2], 1,
+                                                fv[2], 1, coordsBnd[0], 1,
+                                                mv[1], 1);
+                            // Mz = Fy * x - Fx * y
+                            Vmath::Vvtvvtm(nbc, fp[1], 1, coordsBnd[0], 1,
+                                                fp[0], 1, coordsBnd[1], 1,
+                                                mp[2], 1);
+                            Vmath::Vvtvvtm(nbc, fv[1], 1, coordsBnd[0], 1,
+                                                fv[0], 1, coordsBnd[1], 1,
+                                                mv[2], 1);
+                        }
+
                         // Integrate to obtain force
                         for ( int j = 0; j < expdim; ++j)
                         {
@@ -1210,6 +1467,13 @@ void FilterAeroForces::CalculateForcesMapping(
                                                     Integral(fp[j]);
                             m_Fvplane[j][plane] += BndExp[n]->GetExp(i)->
                                                     Integral(fv[j]);
+                        }
+                        for ( int j = 0; j < momdim; ++j)
+                        {
+                            m_Mpplane[j][plane] += BndExp[n]->GetExp(i)->
+                                                    Integral(mp[j]);
+                            m_Mvplane[j][plane] += BndExp[n]->GetExp(i)->
+                                                    Integral(mv[j]);
                         }
                     }
                 }

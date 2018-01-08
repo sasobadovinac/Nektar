@@ -120,6 +120,13 @@ private:
     Array<OneD, Array<OneD, NekDouble> >    m_Fpplane;
     Array<OneD, Array<OneD, NekDouble> >    m_Fvplane;
     Array<OneD, Array<OneD, NekDouble> >    m_Ftplane;
+    // Arrays storing the last moments that were calculated
+    Array<OneD, NekDouble>                  m_Mp;
+    Array<OneD, NekDouble>                  m_Mv;
+    Array<OneD, NekDouble>                  m_Mt;
+    Array<OneD, Array<OneD, NekDouble> >    m_Mpplane;
+    Array<OneD, Array<OneD, NekDouble> >    m_Mvplane;
+    Array<OneD, Array<OneD, NekDouble> >    m_Mtplane;
 
     NekDouble                               m_lastTime;
     GlobalMapping::MappingSharedPtr         m_mapping;
