@@ -156,11 +156,11 @@ void RigidPlaneCoupler::v_CalculateDisplacement()
     comm->Bcast(displ, m_bcastRank);
 
     // Fill m_displFields with constant displacement per plane
-    int nPts = m_coords[0].num_elements();
     for(int i = 0; i < m_expDim; ++i)
     {
         for(int p = 0; p < nPlanes; ++p)
         {
+            int nPts = m_displFields[i]->GetPlane(p)->GetTotPoints();
             Vmath::Fill(nPts, displ[i + p * m_expDim],
                     m_displFields[i]->GetPlane(p)->UpdatePhys(), 1);
         }
