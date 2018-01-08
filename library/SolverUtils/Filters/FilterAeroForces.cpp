@@ -623,6 +623,73 @@ void FilterAeroForces::GetPlaneForces(
 }
 
 /**
+ *     This function outputs the total moments of force on the body
+ */
+void FilterAeroForces::GetTotalMoments(
+    const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
+    Array<OneD, NekDouble> &moments, const NekDouble &time)
+{
+    // Calculate forces if the result we have is not up-to-date
+    if(time > m_lastTime)
+    {
+        CalculateForces(pFields, time);
+    }
+
+    int expdim = pFields[0]->GetGraph()->GetMeshDimension();
+    int momdim = (expdim == 2) ? 1 : 3;
+
+    // Copy results to moments
+    for(int dir = 0; dir < momdim; ++dir)
+    {
+        moments[dir] = m_Mt[dir];
+    }
+}
+
+/**
+ *     This function outputs the moments of force on all planes of the current
+ *          process
+ */
+void FilterAeroForces::GetPlaneMoments(
+    const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
+    Array<OneD, NekDouble> &moments, const NekDouble &time)
+{
+    // Calculate forces if the result we have is not up-to-date
+    if(time > m_lastTime)
+    {
+        CalculateForces(pFields, time);
+    }
+
+    // Get information to write result
+    Array<OneD, unsigned int> ZIDs = pFields[0]->GetZIDs();
+    int local_planes = ZIDs.num_elements();
+    int expdim = pFields[0]->GetGraph()->GetMeshDimension();
+    int momdim = (expdim == 2) ? 1 : 3;
+
+    // Copy results to moments
+    if (m_outputAllPlanes)
+    {
+        for(int plane = 0 ; plane < local_planes; plane++)
+        {
+            for(int dir = 0; dir < momdim; ++dir)
+            {
+                moments[plane + dir*local_planes] =
+                        m_Mtplane[dir][ZIDs[plane]];
+            }
+        }
+    }
+    else
+    {
+        for(int plane = 0 ; plane < local_planes; ++plane)
+        {
+            for(int dir = 0; dir < momdim; dir++)
+            {
+                moments[plane + dir*local_planes] = m_Mt[dir];
+            }
+        }
+    }
+}
+
+/**
  *     This function calculates the forces
  */
 void FilterAeroForces::CalculateForces(
