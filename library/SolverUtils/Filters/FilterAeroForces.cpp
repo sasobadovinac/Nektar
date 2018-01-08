@@ -1048,6 +1048,8 @@ void FilterAeroForces::CalculateForcesStandard(
                         // Calculate moments per unit length
                         if( momdim == 1)
                         {
+                            mp[0] = Array<OneD, NekDouble> (nbc,0.0);
+                            mv[0] = Array<OneD, NekDouble> (nbc,0.0);
                             // Mz = Fy * x - Fx * y
                             Vmath::Vvtvvtm(nbc, fp[1], 1, coordsb[0], 1,
                                                 fp[0], 1, coordsb[1], 1,
@@ -1059,6 +1061,8 @@ void FilterAeroForces::CalculateForcesStandard(
                         else
                         {
                             // Mx = Fz * y - Fy * z
+                            mp[0] = Array<OneD, NekDouble> (nbc,0.0);
+                            mv[0] = Array<OneD, NekDouble> (nbc,0.0);
                             Vmath::Vvtvvtm(nbc, fp[2], 1, coordsb[1], 1,
                                                 fp[1], 1, coordsb[2], 1,
                                                 mp[0], 1);
@@ -1066,6 +1070,8 @@ void FilterAeroForces::CalculateForcesStandard(
                                                 fv[1], 1, coordsb[2], 1,
                                                 mv[0], 1);
                             // My = Fx * z - Fz * x
+                            mp[1] = Array<OneD, NekDouble> (nbc,0.0);
+                            mv[1] = Array<OneD, NekDouble> (nbc,0.0);
                             Vmath::Vvtvvtm(nbc, fp[0], 1, coordsb[2], 1,
                                                 fp[2], 1, coordsb[0], 1,
                                                 mp[1], 1);
@@ -1073,6 +1079,8 @@ void FilterAeroForces::CalculateForcesStandard(
                                                 fv[2], 1, coordsb[0], 1,
                                                 mv[1], 1);
                             // Mz = Fy * x - Fx * y
+                            mp[2] = Array<OneD, NekDouble> (nbc,0.0);
+                            mv[2] = Array<OneD, NekDouble> (nbc,0.0);
                             Vmath::Vvtvvtm(nbc, fp[1], 1, coordsb[0], 1,
                                                 fp[0], 1, coordsb[1], 1,
                                                 mp[2], 1);
@@ -1521,6 +1529,8 @@ void FilterAeroForces::CalculateForcesMapping(
                         // Calculate moments per unit length
                         if( momdim == 1)
                         {
+                            mp[0] = Array<OneD, NekDouble> (nbc,0.0);
+                            mv[0] = Array<OneD, NekDouble> (nbc,0.0);
                             // Mz = Fy * x - Fx * y
                             Vmath::Vvtvvtm(nbc, fp[1], 1, coordsBnd[0], 1,
                                                 fp[0], 1, coordsBnd[1], 1,
@@ -1532,6 +1542,8 @@ void FilterAeroForces::CalculateForcesMapping(
                         else
                         {
                             // Mx = Fz * y - Fy * z
+                            mp[0] = Array<OneD, NekDouble> (nbc,0.0);
+                            mv[0] = Array<OneD, NekDouble> (nbc,0.0);
                             Vmath::Vvtvvtm(nbc, fp[2], 1, coordsBnd[1], 1,
                                                 fp[1], 1, coordsBnd[2], 1,
                                                 mp[0], 1);
@@ -1539,6 +1551,8 @@ void FilterAeroForces::CalculateForcesMapping(
                                                 fv[1], 1, coordsBnd[2], 1,
                                                 mv[0], 1);
                             // My = Fx * z - Fz * x
+                            mp[1] = Array<OneD, NekDouble> (nbc,0.0);
+                            mv[1] = Array<OneD, NekDouble> (nbc,0.0);
                             Vmath::Vvtvvtm(nbc, fp[0], 1, coordsBnd[2], 1,
                                                 fp[2], 1, coordsBnd[0], 1,
                                                 mp[1], 1);
@@ -1546,6 +1560,8 @@ void FilterAeroForces::CalculateForcesMapping(
                                                 fv[2], 1, coordsBnd[0], 1,
                                                 mv[1], 1);
                             // Mz = Fy * x - Fx * y
+                            mp[2] = Array<OneD, NekDouble> (nbc,0.0);
+                            mv[2] = Array<OneD, NekDouble> (nbc,0.0);
                             Vmath::Vvtvvtm(nbc, fp[1], 1, coordsBnd[0], 1,
                                                 fp[0], 1, coordsBnd[1], 1,
                                                 mp[2], 1);
