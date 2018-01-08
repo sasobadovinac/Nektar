@@ -328,9 +328,9 @@ void FilterAeroForces::v_Initialise(
             m_outputStream.open(m_outputFile.c_str());
         }
         m_outputStream << "# Forces and moments acting on bodies" << endl;
-        for( int i = 0; i < expdim; i++ )
+        for( int i = 0; i < 3; i++ )
         {
-            m_outputStream << "#" << " Direction" << i+1 << " = (";
+            m_outputStream << "#" << " Direction " << i+1 << "  = (";
             m_outputStream.width(8);
             m_outputStream << setprecision(4) << m_directions[i][0];
             m_outputStream.width(8);
@@ -339,6 +339,16 @@ void FilterAeroForces::v_Initialise(
             m_outputStream << setprecision(4) << m_directions[i][2];
             m_outputStream << ")" << endl;
         }
+
+        m_outputStream << "#" << " Moments around" << " (";
+        m_outputStream.width(8);
+        m_outputStream << setprecision(4) << m_momPoint[0];
+        m_outputStream.width(8);
+        m_outputStream << setprecision(4) << m_momPoint[1];
+        m_outputStream.width(8);
+        m_outputStream << setprecision(4) << m_momPoint[2];
+        m_outputStream << ")" << endl;
+
         m_outputStream << "# Boundary regions: " << IndString.c_str() << endl;
         m_outputStream << "#";
         m_outputStream.width(7);
