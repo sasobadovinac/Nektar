@@ -549,6 +549,8 @@ namespace Nektar
             {
                 for(i = 0; i < m_bnd_dim; ++i)
                 {
+                    velbc[i] = Array<OneD, NekDouble>
+                            (m_PBndExp[n]->GetTotPoints());
                     m_fields[0]->ExtractPhysToBnd(n, Vel[i], velbc[i]);
                 }
                 IProdVnTmp = IProdVn + cnt;

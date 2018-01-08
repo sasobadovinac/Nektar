@@ -401,7 +401,7 @@ void MappingExtrapolate::v_IProductNormVelocityBCOnHBC(
         // High order boundary condition;
         if(m_hbcType[n] == eHBCNeumann)
         {
-            Array<OneD, NekDouble> JacBnd;
+            Array<OneD, NekDouble> JacBnd (velBndExp[0][n]->GetTotPoints());
             m_fields[0]->ExtractPhysToBnd(n, Jac, JacBnd);
             for(i = 0; i < m_bnd_dim; ++i)
             {

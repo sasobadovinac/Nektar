@@ -2933,10 +2933,6 @@ namespace Nektar
             Array<OneD, int> ElmtID,EdgeID;
             GetBoundaryToElmtMap(ElmtID,EdgeID);
 
-            // Initialise result
-            bnd = Array<OneD, NekDouble>
-                            (GetBndCondExpansions()[i]->GetTotPoints(), 0.0);
-
             // Skip other boundary regions
             for (cnt = n = 0; n < i; ++n)
             {
