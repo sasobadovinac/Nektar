@@ -177,6 +177,27 @@ FilterAeroForces::FilterAeroForces(
             }
         }
     }
+
+    // Point around which we compute the moments (default to the origin)
+    m_momPoint = Array<OneD, NekDouble> (3, 0.0);
+    it = pParams.find("MomentPoint");
+    if ( it != pParams.end() )
+    {
+        ASSERTL0(!(it->second.empty()), "Missing parameter 'MomentPoint'.");
+        std::stringstream       momPointStream;
+        std::string             momPointString;
+        momPointStream.str(it->second);
+
+        for (int j = 0; j < 3; ++j)
+        {
+            momPointStream >> momPointString;
+            if (!momPointString.empty())
+            {
+                LibUtilities::Equation equ(m_session, momPointString);
+                m_momPoint[j] = equ.Evaluate();
+            }
+        }
+    }
 }
 
 /**
@@ -994,6 +1015,9 @@ void FilterAeroForces::CalculateForcesStandard(
                             coordsb[j] = Array<OneD, NekDouble> (nbc,0.0);
                             elmt->GetTracePhysVals(boundary,
                                     bc, coords[j], coordsb[j]);
+                            // Subtract m_momPoint
+                            Vmath::Sadd (nbc, -1.0*m_momPoint[j],
+                                        coordsb[j], 1, coordsb[j], 1);
                         }
 
                         // Calculate forces per unit length
@@ -1421,6 +1445,9 @@ void FilterAeroForces::CalculateForcesMapping(
                             coordsBnd[j] = Array<OneD, NekDouble> (nbc,0.0);
                             elmt->GetTracePhysVals(boundary,
                                     bc, coordsElmt[j], coordsBnd[j]);
+                            // Subtract m_momPoint
+                            Vmath::Sadd (nbc, -1.0*m_momPoint[j],
+                                        coordsBnd[j], 1, coordsBnd[j], 1);
                         }
                         JacBnd = Array<OneD, NekDouble> (nbc,0.0);
                         elmt->GetTracePhysVals(boundary, bc, JacElmt, JacBnd);

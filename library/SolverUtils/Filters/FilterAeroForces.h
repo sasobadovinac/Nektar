@@ -120,6 +120,8 @@ private:
     NekDouble                       m_startTime;
     // Directions on which the forces will be projected
     Array<OneD, Array<OneD, NekDouble> >    m_directions;
+    // Point around which we compute the moments
+    Array<OneD, NekDouble>          m_momPoint;
 
     // Arrays storing the last forces that were calculated
     Array<OneD, NekDouble>                  m_Fp;
