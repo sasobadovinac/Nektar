@@ -151,11 +151,6 @@ void FSICoupler::v_InitObject(
     }
 
     // Get mesh coordinates
-    m_meshCoords = Array<OneD, Array<OneD, NekDouble>> (3);
-    for( int i = 0; i < 3; ++i)
-    {
-        m_meshCoords[i] = Array<OneD, NekDouble> (nPts, 0.0);
-    }
     pFields[0]->GetCoords(m_meshCoords[0],m_meshCoords[1],m_meshCoords[2]);
 
     // Initialise m_coords to initial coordinates from mapping

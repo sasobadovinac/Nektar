@@ -661,10 +661,6 @@ void Mapping::v_GetCartesianCoordinates(
 {
     int physTot = m_fields[0]->GetTotPoints();
 
-    out0 = Array<OneD, NekDouble>(physTot, 0.0);
-    out1 = Array<OneD, NekDouble>(physTot, 0.0);
-    out2 = Array<OneD, NekDouble>(physTot, 0.0);
-
     Vmath::Vcopy(physTot, m_coords[0], 1, out0, 1);
     Vmath::Vcopy(physTot, m_coords[1], 1, out1, 1);
     Vmath::Vcopy(physTot, m_coords[2], 1, out2, 1);
@@ -677,7 +673,6 @@ void Mapping::v_GetCoordVelocity(
 
     for(int i = 0; i < m_nConvectiveFields; ++i)
     {
-        outarray[i] = Array<OneD, NekDouble>(physTot, 0.0);
         Vmath::Vcopy(physTot, m_coordsVel[i], 1, outarray[i], 1);
     }
 }

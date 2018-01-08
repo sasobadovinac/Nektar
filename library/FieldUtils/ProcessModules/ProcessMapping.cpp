@@ -135,6 +135,10 @@ void ProcessMapping::Process(po::variables_map &vm)
 
     // Get coordinates from mapping
     Array<OneD, Array<OneD, NekDouble> > coords(3);
+    for (int i = 0; i < 3; i++)
+    {
+        coords[i] = Array<OneD, NekDouble> (npoints, 0.0);
+    }
     mapping->GetCartesianCoordinates(coords[0], coords[1], coords[2]);
 
     // Add new information to m_f
