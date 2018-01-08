@@ -855,6 +855,10 @@ void FilterAeroForces::CalculateForces(
                 m_Mtplane[i][plane] = m_Mpplane[i][plane] + m_Mvplane[i][plane];
             }
         }
+        else
+        {
+            m_Mtplane[0][plane] = m_Mpplane[0][plane] + m_Mvplane[0][plane];
+        }
     }
 
     // Combine planes
