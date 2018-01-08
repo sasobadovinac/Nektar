@@ -32,6 +32,7 @@ IF( NEKTAR_SOLVER_INCNAVIERSTOKES )
         ./Filters/FilterReynoldsStresses.cpp
         ./Filters/FilterMovingBody.cpp
         ./Forcing/ForcingMovingBody.cpp
+        ./Forcing/ForcingRotating.cpp
         ./Forcing/ForcingStabilityCoupledLNS.cpp
         )
 
