@@ -10,6 +10,7 @@ v4.4.2
 - Fix petsc compile without MPI (!873)
 - Fix a crash when Interpolator is called on an empty field (!869)
 - Fix uninitialised coefficients in DirectFull solver (!898)
+- Fix a few memory leaks in polylib (!863)
 
 **NekMesh**
 - Fix missing periodic boundary meshing and boundary layer mesh adjustment
@@ -53,7 +54,6 @@ v4.4.1
 - Added regression tests for IMEXOrder1, IMEXOrder2, IMEXOrder3, MCNAB,
   IMEXGear, CNAB, 2nd order IMEX-DIRK, 3rd order IMEX-DIRK (!854)
 - Fix bug due to subtractive cancellation in polylib routines (!778)
-- Fix a few memory leaks in polylib (!863)
 
 **FieldConvert:**
 - Fix issue with field ordering in the interppointdatatofld module (!754)
