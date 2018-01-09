@@ -735,7 +735,7 @@ void FilterAeroForces::CalculateForces(
     //     For case with mapping, we can never work in wavespace
     for( int i = 0; i < pFields.num_elements(); ++i)
     {
-        if (m_isHomogeneous1D && (m_outputAllPlanes | m_mapping->IsDefined()) )
+        if (m_isHomogeneous1D && (m_outputAllPlanes || m_mapping->IsDefined()) )
         {
             pFields[i]->SetWaveSpace(false);
         }
@@ -876,7 +876,7 @@ void FilterAeroForces::CalculateForces(
     }
 
     // Put results back to wavespace, if necessary
-    if(m_isHomogeneous1D && (m_outputAllPlanes | m_mapping->IsDefined()) )
+    if(m_isHomogeneous1D && (m_outputAllPlanes || m_mapping->IsDefined()) )
     {
         for ( int i = 0; i < pFields.num_elements(); ++i)
         {
