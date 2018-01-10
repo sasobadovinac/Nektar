@@ -653,9 +653,11 @@ using namespace boost::assign;
                         ::AllocateSharedPtr(m_session, *(it.second),
                                             graph3D, variable);
                     
-                    // Set up normals on non-Dirichlet boundary conditions
-                    if(locBCond->GetBoundaryConditionType() != 
-                       SpatialDomains::eDirichlet)
+                    // Set up normals on Neumann and Robin boundary conditions
+                    if((locBCond->GetBoundaryConditionType() ==
+                        SpatialDomains::eNeumann)||
+                       (locBCond->GetBoundaryConditionType() ==
+                        SpatialDomains::eRobin))
                     {
                         SetUpPhysNormals();
                     }
@@ -1959,8 +1961,12 @@ using namespace boost::assign;
             m_locTraceToTraceMap->InterpLocFacesToTrace(1, invals, Bwd);
             
             // Fill boundary conditions into missing elements
-            int id1, id2 = 0;
+            // This could be replaced by a index and scatter call. 
+            int id1, id2;
             cnt = 0;
+            
+            Array<OneD, const int> bndTraceToGloTrace
+                = m_traceMap->GetBndCondTraceToGlobalTraceMap();
             
             for(n = 0; n < m_bndCondExpansions.num_elements(); ++n)
             {
@@ -1971,8 +1977,7 @@ using namespace boost::assign;
                     {
                         npts = m_bndCondExpansions[n]->GetExp(e)->GetTotPoints();
                         id1  = m_bndCondExpansions[n]->GetPhys_Offset(e);
-                        id2  = m_trace->GetPhys_Offset(
-                            m_traceMap->GetBndCondTraceToGlobalTraceMap(cnt+e));
+                        id2  = m_trace->GetPhys_Offset(bndTraceToGloTrace[cnt+e]);
                         Vmath::Vcopy(npts,
                             &(m_bndCondExpansions[n]->GetPhys())[id1], 1,
                             &Bwd[id2],                                 1);
@@ -1989,9 +1994,8 @@ using namespace boost::assign;
                     {
                         npts = m_bndCondExpansions[n]->GetExp(e)->GetTotPoints();
                         id1  = m_bndCondExpansions[n]->GetPhys_Offset(e);
-                        id2  = m_trace->GetPhys_Offset(
-                            m_traceMap->GetBndCondTraceToGlobalTraceMap(cnt+e));
-                        
+                        id2  = m_trace->GetPhys_Offset(bndTraceToGloTrace[cnt+e]);
+
                         // Turning this off since we can have non-zero
                         //Neumann in mixed CG-DG method
                         //ASSERTL1((m_bndCondExpansions[n]->GetPhys())[id1]
@@ -2000,13 +2004,17 @@ using namespace boost::assign;
                         
                         Vmath::Vcopy(npts,&Fwd[id2],1,&Bwd[id2],1);
                     }
-
                     cnt += e;
+                }
+                else if (m_bndConditions[n]->GetBoundaryConditionType() ==
+                         SpatialDomains::ePeriodic)
+                {
+                    cnt += m_bndCondExpansions[n]->GetNumElmts();
                 }
                 else
                 {
                     ASSERTL0(false, "Method only set up for Dirichlet, Neumann "
-                             "and Robin conditions.");
+                             " Robin and Periodic conditions.");
                 }
             }
             
@@ -2788,7 +2796,7 @@ using namespace boost::assign;
                     else if (m_bndConditions[i]->GetBoundaryConditionType()
                              == SpatialDomains::ePeriodic)
                     {
-                        // not need to do anything for this BC
+                        // do  not need to do anything for this BC
                     }
                     else
                     {

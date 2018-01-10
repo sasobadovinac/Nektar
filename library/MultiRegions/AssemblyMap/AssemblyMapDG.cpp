@@ -209,7 +209,7 @@ namespace Nektar
                                 bndExp = bndCondExp[i]->GetExp(j); 
                                 id      = bndExp->GetGeom()->GetGlobalID();
 
-                                int offset = bndCondExp[i]->
+                                int offset = trace->
                                     GetPhys_Offset(meshTraceId[id]);
 
                                 for(int n = 0; n < bndExp->GetTotPoints(); ++n)
