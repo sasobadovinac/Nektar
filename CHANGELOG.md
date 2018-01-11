@@ -11,6 +11,7 @@ v4.4.2
 - Fix a crash when Interpolator is called on an empty field (!869)
 - Fix uninitialised coefficients in DirectFull solver (!898)
 - Fix a few memory leaks in polylib (!863)
+- Fix deadlock in DiffusionLDG (!885)
 
 **NekMesh**
 - Fix missing periodic boundary meshing and boundary layer mesh adjustment
