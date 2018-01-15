@@ -48,10 +48,11 @@ namespace Nektar
 
         /// Creates an instance of this class
         static SolverUtils::EquationSystemSharedPtr create(
-                const LibUtilities::SessionReaderSharedPtr& pSession) {
+            const LibUtilities::SessionReaderSharedPtr& pSession,
+            const SpatialDomains::MeshGraphSharedPtr &pGraph)
+        {
             SolverUtils::EquationSystemSharedPtr p =
-                                MemoryManager<VCSMapping>::
-                                            AllocateSharedPtr(pSession);
+                MemoryManager<VCSMapping>::AllocateSharedPtr(pSession, pGraph);
             p->InitObject();
             return p;
         }
@@ -61,8 +62,9 @@ namespace Nektar
 
 
         /// Constructor.
-        VCSMapping(const LibUtilities::SessionReaderSharedPtr& pSession);
-        
+        VCSMapping(const LibUtilities::SessionReaderSharedPtr& pSession,
+                   const SpatialDomains::MeshGraphSharedPtr &pGraph);
+
         // 
         void ApplyIncNSMappingForcing (
                 const Array<OneD, const Array<OneD, NekDouble> >  &inarray,
