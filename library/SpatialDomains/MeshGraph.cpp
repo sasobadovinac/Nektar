@@ -2016,40 +2016,6 @@ LibUtilities::BasisKeyVector MeshGraph::DefineBasisKeyFromExpansionType(
                 }
                 break;
             }
-<<<<<<< HEAD
-
-            return *returnval;
-        }
-
-
-        /**
-         *
-         */
-        ExpansionShPtr MeshGraph::GetExpansion(GeometrySharedPtr geom, const std::string variable)
-        {
-            ExpansionMapShPtr expansionMap;
-            if(m_expansionMapShPtrMap.count(variable))
-            {
-                expansionMap = m_expansionMapShPtrMap.find(variable)->second;
-            }
-            else
-            {
-                if(m_expansionMapShPtrMap.count("DefaultVar") == 0)
-                {
-                    NEKERROR(ErrorUtil::efatal,
-                        (std::string("Unable to find expansion vector definition for field: ")+variable).c_str());
-                }
-                expansionMap = m_expansionMapShPtrMap.find("DefaultVar")->second;
-            }
-
-            auto iter = expansionMap->find(geom->GetGlobalID());
-            ASSERTL1(iter != expansionMap->end(),
-                     "Could not find expansion " +
-                     boost::lexical_cast<string>(geom->GetGlobalID()) +
-                     " in expansion for variable " + variable);
-            return iter->second;
-=======
->>>>>>> master
         }
         break;
 
