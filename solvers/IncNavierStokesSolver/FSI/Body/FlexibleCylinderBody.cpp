@@ -79,7 +79,8 @@ void FlexibleCylinderBody::v_InitObject(
     else
     {
         vParams[it->first] = it->second;
-        LibUtilities::Equation equ1(m_session, it->second);
+        LibUtilities::Equation equ1(
+            m_session->GetExpressionEvaluator(), it->second);
         m_outputFrequency = round(equ1.Evaluate());
     }
 
@@ -137,7 +138,8 @@ void FlexibleCylinderBody::v_InitObject(
     }
     else
     {
-        LibUtilities::Equation equ(m_session, it->second);
+        LibUtilities::Equation equ(
+            m_session->GetExpressionEvaluator(), it->second);
         m_structrho = equ.Evaluate();
     }
 
@@ -148,7 +150,8 @@ void FlexibleCylinderBody::v_InitObject(
     }
     else
     {
-        LibUtilities::Equation equ(m_session, it->second);
+        LibUtilities::Equation equ(
+            m_session->GetExpressionEvaluator(), it->second);
         m_structstiff = equ.Evaluate();
     }
 
@@ -159,7 +162,8 @@ void FlexibleCylinderBody::v_InitObject(
     }
     else
     {
-        LibUtilities::Equation equ(m_session, it->second);
+        LibUtilities::Equation equ(
+            m_session->GetExpressionEvaluator(), it->second);
         m_structdamp = equ.Evaluate();
     }
 
@@ -170,7 +174,8 @@ void FlexibleCylinderBody::v_InitObject(
     }
     else
     {
-        LibUtilities::Equation equ(m_session, it->second);
+        LibUtilities::Equation equ(
+            m_session->GetExpressionEvaluator(), it->second);
         m_cabletension = equ.Evaluate();
     }
 
@@ -181,7 +186,8 @@ void FlexibleCylinderBody::v_InitObject(
     }
     else
     {
-        LibUtilities::Equation equ(m_session, it->second);
+        LibUtilities::Equation equ(
+            m_session->GetExpressionEvaluator(), it->second);
         m_bendingstiff = equ.Evaluate();
     }
 
@@ -202,12 +208,14 @@ void FlexibleCylinderBody::v_InitObject(
     {
         it =  pParams.find("FictMass");
         ASSERTL0(it != pParams.end(), "Missing parameter 'FictMass'.");
-        LibUtilities::Equation equ(m_session, it->second);
+        LibUtilities::Equation equ(
+            m_session->GetExpressionEvaluator(), it->second);
         m_fictrho = equ.Evaluate();
 
         it =  pParams.find("FictDamp");
         ASSERTL0(it != pParams.end(), "Missing parameter 'FictDamp'.");
-        LibUtilities::Equation equ2(m_session, it->second);
+        LibUtilities::Equation equ2(
+            m_session->GetExpressionEvaluator(), it->second);
         m_fictdamp = equ2.Evaluate();
     }
 

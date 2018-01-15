@@ -90,7 +90,8 @@ void HingedBody::v_InitObject(
     }
     else
     {
-        LibUtilities::Equation equ(m_session, it->second);
+        LibUtilities::Equation equ(
+            m_session->GetExpressionEvaluator(), it->second);
         m_startTime = equ.Evaluate();
     }
 
@@ -103,7 +104,8 @@ void HingedBody::v_InitObject(
     else
     {
         vParams[it->first] = it->second;
-        LibUtilities::Equation equ1(m_session, it->second);
+        LibUtilities::Equation equ1(
+            m_session->GetExpressionEvaluator(), it->second);
         m_outputFrequency = round(equ1.Evaluate());
     }
 
@@ -130,19 +132,22 @@ void HingedBody::v_InitObject(
     // Moment of Inertia around hinge point
     it = pParams.find("I");
     ASSERTL0(it != pParams.end(), "Missing parameter 'I'.");
-    LibUtilities::Equation equ2(m_session, it->second);
+    LibUtilities::Equation equ2(
+        m_session->GetExpressionEvaluator(), it->second);
     m_I = equ2.Evaluate();
 
     // Torsional spring coefficient
     it = pParams.find("K");
     ASSERTL0(it != pParams.end(), "Missing parameter 'K'.");
-    LibUtilities::Equation equ3(m_session, it->second);
+    LibUtilities::Equation equ3(
+        m_session->GetExpressionEvaluator(), it->second);
     m_K = equ3.Evaluate();
 
     // Torsional damping coefficient
     it = pParams.find("C");
     ASSERTL0(it != pParams.end(), "Missing parameter 'C'.");
-    LibUtilities::Equation equ4(m_session, it->second);
+    LibUtilities::Equation equ4(
+        m_session->GetExpressionEvaluator(), it->second);
     m_C = equ4.Evaluate();
 
     // Hinge point (default is origin)
@@ -162,7 +167,8 @@ void HingedBody::v_InitObject(
             sStream >> sString;
             if (!sString.empty())
             {
-                LibUtilities::Equation equ6(m_session, sString);
+                LibUtilities::Equation equ6(
+                    m_session->GetExpressionEvaluator(), sString);
                 m_hingePoint[j] = equ6.Evaluate();
             }
         }
@@ -185,7 +191,8 @@ void HingedBody::v_InitObject(
             sStream >> sString;
             if (!sString.empty())
             {
-                LibUtilities::Equation equ7(m_session, sString);
+                LibUtilities::Equation equ7(
+                    m_session->GetExpressionEvaluator(), sString);
                 m_axis[j] = equ7.Evaluate();
                 norm += m_axis[j]*m_axis[j];
             }

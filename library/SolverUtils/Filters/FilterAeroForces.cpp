@@ -196,7 +196,8 @@ FilterAeroForces::FilterAeroForces(
             momPointStream >> momPointString;
             if (!momPointString.empty())
             {
-                LibUtilities::Equation equ(m_session, momPointString);
+                LibUtilities::Equation equ(m_session->GetExpressionEvaluator(),
+                                           momPointString);
                 m_momPoint[j] = equ.Evaluate();
             }
         }

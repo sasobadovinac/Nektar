@@ -90,7 +90,8 @@ void RigidBody::v_InitObject(
     }
     else
     {
-        LibUtilities::Equation equ(m_session, it->second);
+        LibUtilities::Equation equ(
+            m_session->GetExpressionEvaluator(), it->second);
         m_startTime = equ.Evaluate();
     }
 
@@ -103,7 +104,8 @@ void RigidBody::v_InitObject(
     else
     {
         vParams[it->first] = it->second;
-        LibUtilities::Equation equ1(m_session, it->second);
+        LibUtilities::Equation equ1(
+            m_session->GetExpressionEvaluator(), it->second);
         m_outputFrequency = round(equ1.Evaluate());
     }
 
@@ -130,13 +132,15 @@ void RigidBody::v_InitObject(
     // Number of degrees of freedom
     it = pParams.find("TranslationDOFs");
     ASSERTL0(it != pParams.end(), "Missing parameter 'TranslationDOFs'.");
-    LibUtilities::Equation equ2(m_session, it->second);
+    LibUtilities::Equation equ2(
+        m_session->GetExpressionEvaluator(), it->second);
     m_nDof = round(equ2.Evaluate());
 
     // Mass
     it = pParams.find("M");
     ASSERTL0(it != pParams.end(), "Missing parameter 'M'.");
-    LibUtilities::Equation equ3(m_session, it->second);
+    LibUtilities::Equation equ3(
+        m_session->GetExpressionEvaluator(), it->second);
     m_M = equ3.Evaluate();
 
     // Spring coefficient
@@ -150,7 +154,8 @@ void RigidBody::v_InitObject(
         sStream >> sString;
         if (!sString.empty())
         {
-            LibUtilities::Equation equ4(m_session, it->second);
+            LibUtilities::Equation equ4(
+                m_session->GetExpressionEvaluator(), it->second);
             m_K[i] = equ4.Evaluate();
         }
         else
@@ -172,7 +177,8 @@ void RigidBody::v_InitObject(
         sStream >> sString;
         if (!sString.empty())
         {
-            LibUtilities::Equation equ5(m_session, it->second);
+            LibUtilities::Equation equ5(
+                m_session->GetExpressionEvaluator(), it->second);
             m_C[i] = equ5.Evaluate();
         }
         else
@@ -214,7 +220,8 @@ void RigidBody::v_InitObject(
                 sStream >> sString;
                 if (!sString.empty())
                 {
-                    LibUtilities::Equation equ6(m_session, sString);
+                    LibUtilities::Equation equ6(
+                        m_session->GetExpressionEvaluator(), sString);
                     m_directions[i][j] = equ6.Evaluate();
                     norm += m_directions[i][j]*m_directions[i][j];
                 }
