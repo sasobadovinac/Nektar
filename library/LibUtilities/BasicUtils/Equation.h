@@ -54,7 +54,15 @@ namespace Nektar
         class Equation
         {
 
-        public: 
+        public:
+            LIB_UTILITIES_EXPORT Equation():
+              m_vlist     (),
+              m_expr      (),
+              m_expr_id   (-1),
+              m_evaluator ()
+            {
+            }
+
             LIB_UTILITIES_EXPORT Equation(const Equation &src):
               m_vlist     (src.m_vlist),
               m_expr      (src.m_expr),
@@ -106,6 +114,11 @@ namespace Nektar
 
             LIB_UTILITIES_EXPORT Equation& operator=(const Equation &src)
             {
+                m_vlist     = src.m_vlist;
+                m_expr      = src.m_expr;
+                m_expr_id   = src.m_expr_id;
+                m_evaluator = src.m_evaluator;
+
                 return *this;
             }
 
