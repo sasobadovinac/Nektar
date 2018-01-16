@@ -75,6 +75,7 @@ void RigidBody::v_InitObject(
 
     std::stringstream      sStream;
     std::string            sString;
+    LibUtilities::Equation equ;
 
     // Parameter list for creating FilterAeroForces
     std::map<std::string, std::string> vParams;
@@ -90,7 +91,7 @@ void RigidBody::v_InitObject(
     }
     else
     {
-        LibUtilities::Equation equ(
+        equ = LibUtilities::Equation(
             m_session->GetExpressionEvaluator(), it->second);
         m_startTime = equ.Evaluate();
     }
@@ -104,9 +105,9 @@ void RigidBody::v_InitObject(
     else
     {
         vParams[it->first] = it->second;
-        LibUtilities::Equation equ1(
+        equ = LibUtilities::Equation(
             m_session->GetExpressionEvaluator(), it->second);
-        m_outputFrequency = round(equ1.Evaluate());
+        m_outputFrequency = round(equ.Evaluate());
     }
 
     // OutputFile
@@ -132,16 +133,16 @@ void RigidBody::v_InitObject(
     // Number of degrees of freedom
     it = pParams.find("TranslationDOFs");
     ASSERTL0(it != pParams.end(), "Missing parameter 'TranslationDOFs'.");
-    LibUtilities::Equation equ2(
+    equ = LibUtilities::Equation(
         m_session->GetExpressionEvaluator(), it->second);
-    m_nDof = round(equ2.Evaluate());
+    m_nDof = round(equ.Evaluate());
 
     // Mass
     it = pParams.find("M");
     ASSERTL0(it != pParams.end(), "Missing parameter 'M'.");
-    LibUtilities::Equation equ3(
+    equ = LibUtilities::Equation(
         m_session->GetExpressionEvaluator(), it->second);
-    m_M = equ3.Evaluate();
+    m_M = equ.Evaluate();
 
     // Spring coefficient
     m_K = Array<OneD, NekDouble> (m_nDof);
@@ -154,9 +155,9 @@ void RigidBody::v_InitObject(
         sStream >> sString;
         if (!sString.empty())
         {
-            LibUtilities::Equation equ4(
+            equ = LibUtilities::Equation(
                 m_session->GetExpressionEvaluator(), it->second);
-            m_K[i] = equ4.Evaluate();
+            m_K[i] = equ.Evaluate();
         }
         else
         {
@@ -177,9 +178,9 @@ void RigidBody::v_InitObject(
         sStream >> sString;
         if (!sString.empty())
         {
-            LibUtilities::Equation equ5(
+            equ = LibUtilities::Equation(
                 m_session->GetExpressionEvaluator(), it->second);
-            m_C[i] = equ5.Evaluate();
+            m_C[i] = equ.Evaluate();
         }
         else
         {
@@ -220,9 +221,9 @@ void RigidBody::v_InitObject(
                 sStream >> sString;
                 if (!sString.empty())
                 {
-                    LibUtilities::Equation equ6(
+                    equ = LibUtilities::Equation(
                         m_session->GetExpressionEvaluator(), sString);
-                    m_directions[i][j] = equ6.Evaluate();
+                    m_directions[i][j] = equ.Evaluate();
                     norm += m_directions[i][j]*m_directions[i][j];
                 }
             }
