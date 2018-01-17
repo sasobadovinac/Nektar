@@ -43,6 +43,8 @@
 
 #include <LibUtilities/Foundations/Interp.h>
 #include <LibUtilities/Foundations/PhysGalerkinProject.h>
+#include <LibUtilities/Foundations/ManagerAccess.h>
+#include <LibUtilities/Foundations/Points.h>
 
 using namespace std;
 
@@ -568,6 +570,106 @@ namespace Nektar
                                   const Array<OneD, NekDouble> &inarray, 
                                   Array<OneD, NekDouble> &outarray)
         {
+#if 1
+            static bool init = false;
+            static vector<int> numelmt; 
+            if(init == false)
+            {
+                LibUtilities::PointsKeyVector pvecsav
+                    = (*m_exp)[0]->GetPointsKeys();
+                LibUtilities::PointsKeyVector pvec;
+
+                int nelsame = 1;
+                int j; 
+                // search through elements and see how many have same phys space
+                for(int i = 1; i < GetExpSize(); ++i)
+                {
+                    pvec = (*m_exp)[i]->GetPointsKeys();
+                    
+                    for(j = 0; j < 3; ++j)
+                    {
+                        if(pvec[j] != pvecsav[j])
+                        {
+                            break;
+                        }
+                    }
+
+                    if(j != 3)
+                    {
+                        numelmt.push_back(nelsame);
+                        nelsame = 1;
+                        pvecsav = pvec;
+                    }
+                    else
+                    {
+                        nelsame++;
+                    }                    
+                }
+                numelmt.push_back(nelsame);
+                
+                init = true;
+            }
+
+            int cnt, cnt1, ncnt;
+            cnt = cnt1 = 0;
+            
+            ncnt = 0;
+            for(int i = 0; i < numelmt.size(); ++i)
+            {
+                // get new points key
+                int pt0 = (*m_exp)[ncnt]->GetNumPoints(0);
+                int pt1 = (*m_exp)[ncnt]->GetNumPoints(1);
+                int pt2 = (*m_exp)[ncnt]->GetNumPoints(2);
+                int npt0 = (int) pt0*scale;
+                int npt1 = (int) pt1*scale;
+                int npt2 = (int) pt2*scale;
+
+                LibUtilities::PointsKeyVector
+                    pvec = (*m_exp)[ncnt]->GetPointsKeys();
+
+                LibUtilities::PointsKey newPointsKey0(npt0,
+                                              (*m_exp)[ncnt]->GetPointsType(0));
+                LibUtilities::PointsKey newPointsKey1(npt1,
+                                              (*m_exp)[ncnt]->GetPointsType(1));
+                LibUtilities::PointsKey newPointsKey2(npt2,
+                                              (*m_exp)[ncnt]->GetPointsType(2));
+
+                DNekMatSharedPtr I0, I1, I2;
+                I0 = LibUtilities::PointsManager()[pvec[0]]->GetI(newPointsKey0);
+                I1 = LibUtilities::PointsManager()[pvec[1]]->GetI(newPointsKey1);
+                I2 = LibUtilities::PointsManager()[pvec[2]]->GetI(newPointsKey2);   
+            
+                Array<OneD, NekDouble> wsp(npt0*pt1*npt2*numelmt[i]);
+                Array<OneD, NekDouble> wsp1(pt0*npt1*npt2*numelmt[i]);
+
+                int totpts = pt0*pt1*pt2;
+                //loop over elements and do bwd trans wrt c
+                for(int n = 0; n < numelmt[i]; ++n)
+                { 
+                    Blas::Dgemm('N', 'T', npt2, pt0*pt1,
+                                pt2, 1.0, I2->GetPtr().get(), npt2,
+                                &inarray[cnt+n*totpts], pt0*pt1, 0.0,
+                                &wsp[n*npt2], npt2*numelmt[i]);
+                }
+
+                // trans wrt b
+                Blas::Dgemm('N', 'T', npt1, npt2*numelmt[i]*pt0,
+                            pt1, 1.0, I1->GetPtr().get(), npt1,
+                            wsp.get(), npt2*numelmt[i]*pt0, 0.0,
+                            wsp1.get(), npt1);
+
+                // trans wrt a
+                Blas::Dgemm('N', 'T', npt0, npt1*npt2*numelmt[i],
+                            pt0, 1.0, I0->GetPtr().get(), npt0,
+                            wsp1.get(), npt1*npt2*numelmt[i], 0.0,
+                            &outarray[cnt1], npt0);
+                
+                cnt  += pt0*pt1*pt2*numelmt[i];
+                cnt1 += npt0*npt1*npt2*numelmt[i];
+
+                ncnt += numelmt[i];
+            }
+#else
             int cnt,cnt1;
 
             cnt = cnt1 = 0;
@@ -596,6 +698,7 @@ namespace Nektar
                 cnt  += pt0*pt1*pt2;
                 cnt1 += npt0*npt1*npt2;
             }
+#endif
         }
         
         void ExpList3D::v_PhysGalerkinProjection1DScaled(const NekDouble scale, 
@@ -632,7 +735,6 @@ namespace Nektar
                 cnt  += npt0*npt1*npt2;
                 cnt1 += pt0*pt1*pt2;
             }
-
         }
   } //end of namespace
 } //end of namespace
