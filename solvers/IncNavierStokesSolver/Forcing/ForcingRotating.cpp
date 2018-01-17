@@ -71,18 +71,18 @@ namespace SolverUtils
         ASSERTL0(funcNameElmtz, "Requires OMEGAZ tag, specifying the z-rotating angular veloicty.");
         if (funcNameElmtx && funcNameElmty && funcNameElmtz)
 	{
-		m_omegax = 2.0*boost::lexical_cast<NekDouble>(funcNameElmtx->GetText());
-		m_omegay = 2.0*boost::lexical_cast<NekDouble>(funcNameElmty->GetText());
-		m_omegaz = 2.0*boost::lexical_cast<NekDouble>(funcNameElmtz->GetText());
-		if (m_NumVariable == 3)
-		{
-                    m_Forcing  = Array<OneD, Array<OneD, NekDouble> > (m_NumVariable);
-                    for (int i = 0; i < m_NumVariable; ++i)
-                    { 
-                        m_Forcing[i]  = Array<OneD, NekDouble> (npts, 0.0);
-                    }
-		}
-		m_hasAngularVelocity =true;
+            m_omegax = 2.0*boost::lexical_cast<NekDouble>(funcNameElmtx->GetText());
+            m_omegay = 2.0*boost::lexical_cast<NekDouble>(funcNameElmty->GetText());
+            m_omegaz = 2.0*boost::lexical_cast<NekDouble>(funcNameElmtz->GetText());
+            if (m_NumVariable == 3)
+            {
+                m_Forcing  = Array<OneD, Array<OneD, NekDouble> > (m_NumVariable);
+                for (int i = 0; i < m_NumVariable; ++i)
+                { 
+                    m_Forcing[i]  = Array<OneD, NekDouble> (npts, 0.0);
+                }
+            }
+            m_hasAngularVelocity =true;
 	}
     }
 
@@ -98,27 +98,31 @@ namespace SolverUtils
             if (2==m_NumVariable) //2D
             {
                 // 2*oz*v+out
-                Vmath::Svtvp(nq,      m_omegaz, inarray[1], 1, outarray[0],  1, outarray[0], 1);
+                Vmath::Svtvp(nq,      m_omegaz, inarray[1], 1,
+                             outarray[0],  1, outarray[0], 1);
                 //-2*oz*u+out	
-                Vmath::Svtvp(nq, -1.0*m_omegaz, inarray[0], 1, outarray[1],  1, outarray[1], 1);	
+                Vmath::Svtvp(nq, -1.0*m_omegaz, inarray[0], 1,
+                             outarray[1],  1, outarray[1], 1);	
             }
-            else //3D
+            else //3D - 2 \Omega x u 
             {
+                
                 // 2*oy*w - 2*oz*v
-                Vmath::Svtsvtp(nq, m_omegay,  inarray[2], 1,
+                Vmath::Svtsvtm(nq, m_omegay,  inarray[2], 1,
                                m_omegaz, inarray[1], 1, m_Forcing[0], 1);
-                Vmath::Svtvp(nq, -1.0, m_Forcing[0], 1,
-                             outarray[0], 1, outarray[0],  1);	
+                Vmath::Vsub(nq,outarray[0],1, m_Forcing[0], 1,
+                            outarray[0], 1);
+                             
                 // 2*oz*u - 2*ox*w
-                Vmath::Svtsvtp(nq, m_omegaz,  inarray[0], 1,
+                Vmath::Svtsvtm(nq, m_omegaz,  inarray[0], 1,
                                m_omegax, inarray[2], 1, m_Forcing[1], 1);
-                Vmath::Svtvp(nq, -1.0, m_Forcing[1], 1,
-                             outarray[1], 1, outarray[1],  1);	
+                Vmath::Vsub(nq,outarray[1],1, m_Forcing[1], 1,
+                            outarray[1], 1);	
                 // 2*ox*v - 2*oy*u
-                Vmath::Svtsvtp(nq, m_omegax,  inarray[1], 1,
+                Vmath::Svtsvtm(nq, m_omegax,  inarray[1], 1,
                                m_omegay, inarray[0], 1, m_Forcing[2], 1);
-                Vmath::Svtvp(nq, -1.0, m_Forcing[2], 1,
-                             outarray[2], 1, outarray[2],  1);	
+                Vmath::Vsub(nq,outarray[2],1, m_Forcing[2], 1,
+                            outarray[2], 1);	
             }
         }
     }   
