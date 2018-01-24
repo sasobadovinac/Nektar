@@ -130,6 +130,21 @@ void RigidBody::v_InitObject(
         m_outputFile += ".mot";
     }
 
+    // Sub-steps: this allows the structure time integration to have a time step
+    //            which is a multiple of the fluid time-step. The structure
+    //            displacement is linearly interpolated for intermediate values
+    it = pParams.find("SubSteps");
+    if (it == pParams.end())
+    {
+        m_subSteps = 1;
+    }
+    else
+    {
+        equ = LibUtilities::Equation(
+            m_session->GetExpressionEvaluator(), it->second);
+        m_subSteps = round(equ.Evaluate());
+    }
+
     // Number of degrees of freedom
     it = pParams.find("TranslationDOFs");
     ASSERTL0(it != pParams.end(), "Missing parameter 'TranslationDOFs'.");
@@ -264,6 +279,7 @@ void RigidBody::v_InitObject(
 
     // Allocate variables
     m_displacement = Array<OneD,NekDouble> (m_nDof, 0.0);
+    m_previousDisp = Array<OneD,NekDouble> (m_nDof, 0.0);
     m_velocity     = Array<OneD, Array<OneD,NekDouble>> (m_intSteps);
     m_force        = Array<OneD, Array<OneD,NekDouble>> (m_intSteps);
     for (int i = 0; i < m_intSteps; ++i)
@@ -327,62 +343,75 @@ void RigidBody::v_Apply(
         const Array<OneD, MultiRegions::ExpListSharedPtr>    &pDisplFields,
         const NekDouble                                      &time)
 {
+    // Get correct time considering m_subSteps parameter
+    NekDouble   newTime = time + (m_subSteps - 1) * m_timestep;
+
     // Do not move before m_startTime
-    if(time < m_startTime)
+    if(newTime < m_startTime)
     {
         return;
     }
 
-    // Determine order for this time step
-    static int nCalls = 0;
-    ++nCalls;
-    int order = min(nCalls, m_intSteps);
-
-    int expdim = pFields[0]->GetGraph()->GetMeshDimension();
-
-    // Get aerodynamic forces
-    Array<OneD, NekDouble> aeroForces(expdim, 0.0);
-    m_filterForces->GetTotalForces(pFields, aeroForces, time);
-
-    // Rotate force storage
-    Array<OneD, NekDouble> tmp = m_force[m_intSteps-1];
-    for(int n = m_intSteps-1; n > 0; --n)
+    static int totalCalls = -1;
+    ++totalCalls;
+    if( !(totalCalls % m_subSteps) )
     {
-        m_force[n] = m_force[n-1];
-    }
-    m_force[0] = tmp;
+        // Determine order for this time step
+        static int intCalls = 0;
+        ++intCalls;
+        int order = min(intCalls, m_intSteps);
 
-    // Calculate total force
-    for( int i = 0; i < m_nDof; ++i)
-    {
-        m_force[0][i] = aeroForces[i] -
-                m_K[i] * m_displacement[i] - m_C[i] * m_velocity[0][i];
-    }
+        int expdim = pFields[0]->GetGraph()->GetMeshDimension();
 
-    // Rotate velocity storage, keeping value of velocity[0]
-    Vmath::Vcopy(m_nDof, m_velocity[0], 1, m_velocity[m_intSteps-1], 1);
-    tmp = m_velocity[m_intSteps-1];
-    for(int n = m_intSteps-1; n > 0; --n)
-    {
-        m_velocity[n] = m_velocity[n-1];
-    }
-    m_velocity[0] = tmp;
+        // Get aerodynamic forces
+        Array<OneD, NekDouble> aeroForces(expdim, 0.0);
+        m_filterForces->GetTotalForces(pFields, aeroForces, newTime);
 
-    for( int i = 0; i < m_nDof; ++i)
-    {
-        // Update velocity
-        for(int j = 0; j < order; ++j)
+        // Rotate force storage
+        Array<OneD, NekDouble> tmp = m_force[m_intSteps-1];
+        for(int n = m_intSteps-1; n > 0; --n)
         {
-            m_velocity[0][i] += m_timestep *
-                AdamsBashforth_coeffs[order-1][j] * m_force[j][i] / m_M;
+            m_force[n] = m_force[n-1];
         }
-        // Update position
-        for(int j = 0; j < order; ++j)
+        m_force[0] = tmp;
+
+        // Calculate total force
+        for( int i = 0; i < m_nDof; ++i)
         {
-            m_displacement[i] += m_timestep *
-                AdamsMoulton_coeffs[order-1][j] * m_velocity[j][i];
+            m_force[0][i] = aeroForces[i] -
+                    m_K[i] * m_displacement[i] - m_C[i] * m_velocity[0][i];
+        }
+
+        // Rotate velocity storage, keeping value of velocity[0]
+        Vmath::Vcopy(m_nDof, m_velocity[0], 1, m_velocity[m_intSteps-1], 1);
+        tmp = m_velocity[m_intSteps-1];
+        for(int n = m_intSteps-1; n > 0; --n)
+        {
+            m_velocity[n] = m_velocity[n-1];
+        }
+        m_velocity[0] = tmp;
+
+        for( int i = 0; i < m_nDof; ++i)
+        {
+            // Update velocity
+            for(int j = 0; j < order; ++j)
+            {
+                m_velocity[0][i] += m_subSteps * m_timestep *
+                    AdamsBashforth_coeffs[order-1][j] * m_force[j][i] / m_M;
+            }
+            // Update position
+            m_previousDisp[i] = m_displacement[i];
+            for(int j = 0; j < order; ++j)
+            {
+                m_displacement[i] += m_subSteps * m_timestep *
+                    AdamsMoulton_coeffs[order-1][j] * m_velocity[j][i];
+            }
         }
     }
+
+    // Determine in which substep we are and calculate factor for interpolation
+    int       step = (totalCalls % m_subSteps ) + 1;
+    NekDouble fac  = (1.0*step) / m_subSteps;
 
     // Loop coordinates
     for( int i = 0; i < pDisplFields.num_elements(); ++i)
@@ -397,7 +426,9 @@ void RigidBody::v_Apply(
         NekDouble displ = 0;
         for (int j = 0; j < m_nDof; ++j)
         {
-            displ += m_displacement[j] * m_directions[j][i];
+            displ += (m_previousDisp[j] + fac *
+                        (m_displacement[j] - m_previousDisp[j])) *
+                     m_directions[j][i];
         }
         // Loop on boundary regions
         for( int n = 0; n < bndConds.num_elements(); ++n)
@@ -423,22 +454,23 @@ void RigidBody::v_Apply(
         }
     }
 
-    if( m_doOutput)
+    if( m_doOutput && !(totalCalls % m_subSteps) )
     {
-        m_filterForces->Update(pFields, time);
+        m_filterForces->Update(pFields, newTime);
         ++m_index;
         if ( !(m_index % m_outputFrequency) )
         {
             if ( pFields[0]->GetComm()->GetRank() == 0)
             {
                 m_outputStream.width(8);
-                m_outputStream << setprecision(6) << time;
+                m_outputStream << setprecision(6) << newTime;
                 for( int i = 0; i < m_nDof; i++ )
                 {
                     m_outputStream.width(15);
                     m_outputStream << setprecision(8) << m_velocity[0][i];
                     m_outputStream.width(15);
-                    m_outputStream << setprecision(8) << m_displacement[i];
+                    m_outputStream << setprecision(8)
+                                   << m_displacement[i];
                 }
                 m_outputStream << endl;
             }
