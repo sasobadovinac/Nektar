@@ -975,7 +975,7 @@ Similarly in the \inltt{WOMPARAMS} section the key parameters of the boundary co
 
 
 \subsection{Forcing}
-\subsubsection{MovingBody}
+\subsubsection{MovingBody} \label{sec:movingbody}
 
 \begin{notebox}
 This force type is only supported for the Quasi-3D incompressible Navier-Stokes solver.
@@ -1029,7 +1029,7 @@ For the simulation of low mass ratio, there is an option to activate fictitious 
 </PARAMETERS>
 \end{lstlisting}
 
-A filter calles as \inltt{MovingBody} is encapsulated in this module to evaluate the aerodynamic forces along the moving body surface. The
+A filter called  \inltt{MovingBody} is encapsulated in this module to evaluate the aerodynamic forces along the moving body surface. The
 forces for each computational plane are projected along the Cartesian axes and the pressure and viscous
 contributions are computed in each direction.
 
@@ -1385,6 +1385,177 @@ Examples of the use of mappings can be found in the test directory
 \inlsh{NEKTAR/solvers/IncNavierStokesSolver/Tests}. See for example the files
 \inlsh{KovaFlow\_3DH1D\_P8\_16modes\_Mapping-implicit.xml} and \inlsh{CylFlow\_Mov\_mapping.xml}.
 \end{notebox}
+
+\section{Fluid-structure interaction using coordinate transformation}\label{sec:fsi}
+
+The coordinate transformation technique described in section \ref{sec:mapping} can also
+be used for solving fluid-structure interaction problems by specifying an \inltt{FSI} block.
+All options described in that section also apply to this case, with the exception that the
+\inltt{COORDS} and \inltt{VEL} fields of the \inltt{MAPPING} now describe only the initial
+condition (in case they are omitted the default corresponds to a trivial initial transformation
+with zero displacement and velocities). Also, the  \inltt{TIMEDEPENDENT} option is not required,
+since it is implied in the presence of \inltt{FSI}. Therefore, a typical \inltt{MAPPING}
+block for a general 2D problem would be just:
+\begin{lstlisting}[style=XMLStyle]
+<MAPPING TYPE="XYofXY">
+</MAPPING>
+\end{lstlisting}
+In the case where we want to restart the simulation, this would be replaced by
+\begin{lstlisting}[style=XMLStyle]
+<MAPPING TYPE="XYofXY">
+    <COORDS> Mapping    </COORDS>
+    <VEL>    MappingVel </VEL>
+</MAPPING>
+\end{lstlisting}
+with the functions \inltt{Mapping} and \inltt{MappingVel} defined as
+\begin{lstlisting}[style=XMLStyle]
+<FUNCTION NAME="Mapping">
+    <F FILE="file.map" />
+</FUNCTION>
+
+<FUNCTION NAME="MappingVel">
+    <F FILE="file.map" />
+</FUNCTION>
+\end{lstlisting}
+In this case, the initial transformation is obtained from the file \inltt{file.map}.
+
+It is important to remind that the steps described in section \ref{sec:mapping} for setting up
+a simulation with a coordinate transformation are also required for this case. The additional steps
+required to setup this particular type of problem are described below.
+
+\subsection{Boundary conditions}
+For fluid-structure interaction problems, we must define dummy boundary conditions
+for the coordinates, which should always be of Dirichlet type with a value of zero. For example,
+the boundary conditions for a moving body in 2D are
+\begin{lstlisting}[style=XMLStyle]
+<BOUNDARYCONDITIONS>
+    <REGION REF="0">
+        <D VAR="u" USERDEFINEDTYPE="MovingBody" VALUE="0" />
+        <D VAR="v" USERDEFINEDTYPE="MovingBody" VALUE="0" />
+        <N VAR="p" USERDEFINEDTYPE="H" VALUE="0" />
+        <D VAR="x" VALUE="0" />
+        <D VAR="y" VALUE="0" />
+    </REGION>
+</BOUNDARYCONDITIONS>
+\end{lstlisting}
+
+\subsection{FSI block}
+The characteristics of the fluid-structure interaction problem are defined in an
+additional section of the xml file with the tag \inltt{FSI}. An example of this
+setup is
+\begin{lstlisting}[style=XMLStyle]
+<FSI TYPE="General" >
+    <BODY TYPE="Rigid" >
+        <PARAM NAME="Boundary"> B[0] </PARAM>
+        <PARAM NAME="OutputFile"> outFile </PARAM>
+        <PARAM NAME="OutputFrequency"> 10 </PARAM>
+        <PARAM NAME="TranslationDOFs"> 1 </PARAM>
+        <PARAM NAME="Direction1"> 0 1 0</PARAM>
+        <PARAM NAME="StartTime"> 0.0 </PARAM>
+        <PARAM NAME="M"> 3.0 </PARAM>
+        <PARAM NAME="C"> 0.02 </PARAM>
+        <PARAM NAME="K"> 1.0 </PARAM>
+    </BODY>
+    <BODY TYPE="Forced" >
+        <PARAM NAME="Boundary"> B[3] </PARAM>
+        <PARAM NAME="DisplacementFCN"> Displacement </PARAM>
+    </BODY>
+</FSI>
+\end{lstlisting}
+The first thing to notice in this is the type of \inltt{FSI}. In this case, the option is
+set to  \inltt{General}, meaning that after we have the displacement of each moving body,
+a Laplace equation is solved for obtaining a transformation over the whole domain. Other options
+are \inltt{RigidDomain}, where the transformation corresponds to a constant displacement obtained
+from a single moving body; and \inltt{RigidPlane}, which imposes a rigid translation to each plane
+of a Quasi-3D problem.
+
+Inside the \inltt{FSI} block we can define entries of \inltt{BODY}, each corresponding to an independent
+body which will be displaced. The parameters depend on the type of body, except for \inltt{Boundary}, which is always required and indicate the boundary region(s) of the moving body. The types of bodies available
+and the parameters for each of them are described below.
+
+\subsubsection{Forced motion}
+We can define a body with forced motion by using
+\begin{lstlisting}[style=XMLStyle]
+<BODY TYPE="Forced" >
+    <PARAM NAME="Boundary"> B[3] </PARAM>                <!-- Required  -->
+    <PARAM NAME="DisplacementFCN"> Displacement </PARAM> <!-- Required  -->
+</BODY>
+\end{lstlisting}
+where \inltt{DisplacementFCN} is the name of a function defining the
+displacement of the body relative to the mesh. In most cases, the function will
+depend just on the time variable, but in principle it can also depend on the coordinates.
+
+\subsubsection{Rigid body with translational motion}
+We can define a rigid body with translational movement obtained from a mass-spring-damper system using
+\begin{lstlisting}[style=XMLStyle]
+<BODY TYPE="Rigid" >
+    <PARAM NAME="Boundary"> B[0] </PARAM>      <!-- Required  -->
+    <PARAM NAME="OutputFile"> outFile </PARAM> <!-- Default: No output  -->
+    <PARAM NAME="OutputFrequency"> 10 </PARAM> <!-- Default = 1  -->
+    <PARAM NAME="TranslationDOFs"> 1 </PARAM>  <!-- Required  -->
+    <PARAM NAME="Direction1"> 0 1 0</PARAM>    <!-- Default = 1 0 0  -->
+    <PARAM NAME="StartTime"> 0.0 </PARAM>      <!-- Default = 0  -->
+    <PARAM NAME="SubSteps"> 1 </PARAM>         <!-- Default = 1  -->
+    <PARAM NAME="M"> 3.0 </PARAM>              <!-- Required  -->
+    <PARAM NAME="C"> 0.02 </PARAM>             <!-- Required  -->
+    <PARAM NAME="K"> 1.0 </PARAM>              <!-- Required  -->
+</BODY>
+\end{lstlisting}
+In this case, \inltt{TranslationDOFs} is the number of degrees of freedom,
+\inltt{Direction1} (and \inltt{Direction2} if required) is the direction of motion,
+\inltt{StartTime} keeps the body fixed for a given time and \inltt{SubSteps} allows
+using an integer multiple of the fluid time-step as the structure time-step, in which case
+the displacement is linearly interpolated for intermediate steps. By default there is no output,
+but setting \inltt{OutputFile} will write a .mot file with displacements and velocities and a .fce
+file with forces every \inltt{OutputFrequency} steps. Finally, \inltt{M}, \inltt{K} and
+\inltt{C} are the structural parameters for the system. It is possible to have different values for
+\inltt{K} and \inltt{C} in each direction by using, for example
+\begin{lstlisting}[style=XMLStyle]
+<PARAM NAME="K"> 1.0 2.0 </PARAM>
+\end{lstlisting}
+
+\subsubsection{Rigid body with movement around a hinge}
+For defining a rigid body with a one degree of freedom rotation around a hinge point,
+we can use
+\begin{lstlisting}[style=XMLStyle]
+<BODY TYPE="Hinged" >
+    <PARAM NAME="Boundary"> B[0] </PARAM>      <!-- Required  -->
+    <PARAM NAME="OutputFile"> outFile </PARAM> <!-- Default: No output  -->
+    <PARAM NAME="OutputFrequency"> 10 </PARAM> <!-- Default = 1  -->
+    <PARAM NAME="HingeAxis"> 0 0 1 </PARAM>    <!-- Default = 0 0 1-->
+    <PARAM NAME="HingePoint"> 0 1 0</PARAM>    <!-- Default = 0 0 0  -->
+    <PARAM NAME="StartTime"> 0.0 </PARAM>      <!-- Default = 0  -->
+    <PARAM NAME="SubSteps"> 1 </PARAM>         <!-- Default = 1  -->
+    <PARAM NAME="I"> 3.0 </PARAM>              <!-- Required  -->
+    <PARAM NAME="C"> 0.02 </PARAM>             <!-- Required  -->
+    <PARAM NAME="K"> 1.0 </PARAM>              <!-- Required  -->
+</BODY>
+\end{lstlisting}
+The parameters are similar to the previous case, with the moment of inertia
+\inltt{I} replacing the mass \inltt{M}. We can also define the hinge axis (only in 3D)
+and the hinge point.
+
+\subsubsection{Flexible cylinder}
+The flexible cylinder is a port of the structural solver from the MovingBody forcing
+(section \ref{sec:movingbody}) to the \inltt{FSI} framework. It can only be used in
+Quasi-3D problems and is defined using
+\begin{lstlisting}[style=XMLStyle]
+<BODY TYPE="FlexibleCylinder" >
+    <PARAM NAME="Boundary"> B[0] </PARAM>      <!-- Required  -->
+    <PARAM NAME="OutputFile"> outFile </PARAM> <!-- Default: No output -->
+    <PARAM NAME="OutputFrequency"> 10 </PARAM> <!-- Default = 1  -->
+    <PARAM NAME="VibrationType"> Free </PARAM> <!-- Required-->
+    <PARAM NAME="SupportType"> Free-Free</PARAM> <!-- Required  -->
+    <PARAM NAME="StructRho"> 1.0 </PARAM>      <!-- Required  -->
+    <PARAM NAME="StructStiff"> 0.0 </PARAM>    <!-- Default = 0.0  -->
+    <PARAM NAME="StructDamp"> 0.0 </PARAM>     <!-- Default = 0.0  -->
+    <PARAM NAME="CableTension"> 0.0 </PARAM>   <!-- Default = 0.0  -->
+    <PARAM NAME="BendingStiff"> 0.0 </PARAM>   <!-- Default = 0.0  -->
+    <PARAM NAME="FictitiousMassMethod"> False</PARAM><!-- Default = False-->
+    <PARAM NAME="FictMass"> 1.0 </PARAM>  <!-- Required if using fictmass -->
+    <PARAM NAME="FictDamp"> 1.0 </PARAM>  <!-- Required if using fictmass -->
+</BODY>
+\end{lstlisting}
 
 \section{Adaptive polynomial order Session file configuration}
 \label{SectionDriverAdaptive}
