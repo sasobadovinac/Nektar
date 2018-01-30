@@ -81,6 +81,8 @@ protected:
 
     /// Time step
     NekDouble                               m_timestep;
+    /// Number of sub steps (i.e. ratio of structure timestep to fluid timestep)
+    int                                     m_subSteps;
     /// Time integration order
     int                                     m_intSteps;
     /// Initial time when the body is fixed, to prevent instability in startup
@@ -96,6 +98,7 @@ protected:
 
     // Variables for time integration
     NekDouble                               m_angle;
+    NekDouble                               m_previousAngle;
     Array<OneD, NekDouble>                  m_velocity;
     Array<OneD, NekDouble>                  m_moment;
 

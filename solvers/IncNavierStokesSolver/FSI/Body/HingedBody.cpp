@@ -130,6 +130,21 @@ void HingedBody::v_InitObject(
         m_outputFile += ".mot";
     }
 
+    // Sub-steps: this allows the structure time integration to have a time step
+    //            which is a multiple of the fluid time-step. The structure
+    //            displacement is linearly interpolated for intermediate values
+    it = pParams.find("SubSteps");
+    if (it == pParams.end())
+    {
+        m_subSteps = 1;
+    }
+    else
+    {
+        equ = LibUtilities::Equation(
+            m_session->GetExpressionEvaluator(), it->second);
+        m_subSteps = round(equ.Evaluate());
+    }
+
     // Moment of Inertia around hinge point
     it = pParams.find("I");
     ASSERTL0(it != pParams.end(), "Missing parameter 'I'.");
@@ -295,71 +310,86 @@ void HingedBody::v_Apply(
         const Array<OneD, MultiRegions::ExpListSharedPtr>    &pDisplFields,
         const NekDouble                                      &time)
 {
+    // Get correct time considering m_subSteps parameter
+    NekDouble   newTime = time + (m_subSteps - 1) * m_timestep;
+
     // Do not move before m_startTime
-    if(time < m_startTime)
+    if(newTime < m_startTime)
     {
         return;
     }
 
-    // Determine order for this time step
-    static int nCalls = 0;
-    ++nCalls;
-    int order = min(nCalls, m_intSteps);
-
-    int expdim = pFields[0]->GetGraph()->GetMeshDimension();
-
-    // Get aerodynamic forces
-    Array<OneD, NekDouble> moments(expdim, 0.0);
-    m_filterForces->GetTotalMoments(pFields, moments, time);
-
-    // Shift moment storage
-    for(int n = m_intSteps-1; n > 0; --n)
+    static int totalCalls = -1;
+    ++totalCalls;
+    if( !(totalCalls % m_subSteps) )
     {
-        m_moment[n] = m_moment[n-1];
-    }
+        // Determine order for this time step
+        static int intCalls = 0;
+        ++intCalls;
+        int order = min(intCalls, m_intSteps);
 
-    // Calculate total moment
-    if( expdim == 2)
-    {
-        // Only have moment in z-direction
-        m_moment[0] = moments[0];
-    }
-    else
-    {
-        // Project to axis direction
-        m_moment[0] = 0;
-        for(int j = 0; j < 3; ++j)
+        int expdim = pFields[0]->GetGraph()->GetMeshDimension();
+
+        // Get aerodynamic forces
+        Array<OneD, NekDouble> moments(expdim, 0.0);
+        m_filterForces->GetTotalMoments(pFields, moments, newTime);
+
+        // Shift moment storage
+        for(int n = m_intSteps-1; n > 0; --n)
         {
-            m_moment[0] += moments[j] * m_axis[j];
+            m_moment[n] = m_moment[n-1];
+        }
+
+        // Calculate total moment
+        if( expdim == 2)
+        {
+            // Only have moment in z-direction
+            m_moment[0] = moments[0];
+        }
+        else
+        {
+            // Project to axis direction
+            m_moment[0] = 0;
+            for(int j = 0; j < 3; ++j)
+            {
+                m_moment[0] += moments[j] * m_axis[j];
+            }
+        }
+
+        // Account for torsional spring and damping contributions
+        m_moment[0] -= m_K * m_angle - m_C * m_velocity[0];
+
+        // Shift velocity storage
+        for(int n = m_intSteps-1; n > 0; --n)
+        {
+            m_velocity[n] = m_velocity[n-1];
+        }
+
+        // Update velocity
+        for(int j = 0; j < order; ++j)
+        {
+            m_velocity[0] += m_subSteps * m_timestep *
+                AdamsBashforth_coeffs[order-1][j] * m_moment[j] / m_I;
+        }
+        // Update position
+        m_previousAngle = m_angle;
+        for(int j = 0; j < order; ++j)
+        {
+            m_angle += m_subSteps * m_timestep *
+                AdamsMoulton_coeffs[order-1][j] * m_velocity[j];
         }
     }
 
-    // Account for torsional spring and damping contributions
-    m_moment[0] -= m_K * m_angle - m_C * m_velocity[0];
+    // Determine in which substep we are and calculate factor for interpolation
+    int       step = (totalCalls % m_subSteps ) + 1;
+    NekDouble fac  = (1.0*step) / m_subSteps;
 
-    // Shift velocity storage
-    for(int n = m_intSteps-1; n > 0; --n)
-    {
-        m_velocity[n] = m_velocity[n-1];
-    }
+    NekDouble angle = m_previousAngle + fac *(m_angle - m_previousAngle);
 
-    // Update velocity
-    for(int j = 0; j < order; ++j)
-    {
-        m_velocity[0] += m_timestep *
-            AdamsBashforth_coeffs[order-1][j] * m_moment[j] / m_I;
-    }
-    // Update position
-    for(int j = 0; j < order; ++j)
-    {
-        m_angle += m_timestep *
-            AdamsMoulton_coeffs[order-1][j] * m_velocity[j];
-    }
-
-    // One minus cosine m_angle
-    NekDouble oneMinusCosD = 1.0 - cos(m_angle);
-    // Sine m_angle
-    NekDouble sinD         = sin(m_angle);
+    // One minus cosine angle
+    NekDouble oneMinusCosD = 1.0 - cos(angle);
+    // Sine angle
+    NekDouble sinD         = sin(angle);
 
     // Create matrix representing displacement from rotation: rotMat = (R - I)
     Array< OneD, Array< OneD, NekDouble>> rotMat(3);
@@ -428,16 +458,16 @@ void HingedBody::v_Apply(
         }
     }
 
-    if( m_doOutput)
+    if( m_doOutput && !(totalCalls % m_subSteps) )
     {
-        m_filterForces->Update(pFields, time);
+        m_filterForces->Update(pFields, newTime);
         ++m_index;
         if ( !(m_index % m_outputFrequency) )
         {
             if ( pFields[0]->GetComm()->GetRank() == 0)
             {
                 m_outputStream.width(8);
-                m_outputStream << setprecision(6) << time;
+                m_outputStream << setprecision(6) << newTime;
                 m_outputStream.width(15);
                 m_outputStream << setprecision(8) << m_velocity[0];
                 m_outputStream.width(15);
