@@ -13,6 +13,7 @@ v4.4.2
 - Fix a few memory leaks in polylib (!863)
 - Fix deadlock in DiffusionLDG (!885)
 - Fix calculation of BLPoints (!892)
+- Updated PETSc to 3.7.7 (!916)
 
 **NekMesh**
 - Fix missing periodic boundary meshing and boundary layer mesh adjustment
