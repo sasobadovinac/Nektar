@@ -72,7 +72,10 @@ namespace SolverUtils
         protected:
 	    NekDouble                               m_omegax, m_omegay, m_omegaz;
 	    bool                                    m_hasAngularVelocity;
+	    //bool                                    m_centrifugalforcing;
             std::string                             m_funcNameTime;
+	    Array<OneD, Array<OneD, NekDouble> >    m_xyz;  // coordinates x y z
+	    Array<OneD, NekDouble>                  m_tmp;
   
             SOLVER_UTILS_EXPORT virtual void v_InitObject(
                     const Array<OneD, MultiRegions::ExpListSharedPtr>& pFields,

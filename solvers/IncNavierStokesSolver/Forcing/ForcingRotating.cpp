@@ -79,9 +79,28 @@ namespace SolverUtils
                 m_Forcing  = Array<OneD, Array<OneD, NekDouble> > (m_NumVariable);
                 for (int i = 0; i < m_NumVariable; ++i)
                 { 
-                    m_Forcing[i]  = Array<OneD, NekDouble> (npts, 0.0);
+                    	m_Forcing[i]  = Array<OneD, NekDouble> (npts, 0.0);
                 }
+		m_tmp = Array<OneD, NekDouble> (npts, 0.0);
             }
+	    if ((m_NumVariable == 2) || (m_NumVariable == 3))
+	    {
+                m_xyz      = Array<OneD, Array<OneD, NekDouble> > (m_NumVariable);
+                for (int i = 0; i < m_NumVariable; ++i)
+                { 
+                    	m_xyz[i]      = Array<OneD, NekDouble> (npts, 0.0);
+                }
+		// initialise the coordinates
+		if (m_NumVariable == 2)
+		{
+			pFields[0]->GetCoords( m_xyz[0], m_xyz[1]);
+		}
+		if (m_NumVariable == 3)
+		{	
+			pFields[0]->GetCoords( m_xyz[0], m_xyz[1], m_xyz[2]);
+		}
+
+	    }
             m_hasAngularVelocity =true;
 	}
     }
@@ -97,32 +116,54 @@ namespace SolverUtils
 	{
             if (2==m_NumVariable) //2D
             {
-                // 2*oz*v+out
-                Vmath::Svtvp(nq,   2.0*m_omegaz, inarray[1], 1,
+		/// Coriolis forcing
+                //-2*oz*v+out
+                Vmath::Svtvp(nq, -2.0*m_omegaz, inarray[1], 1,
                              outarray[0],  1, outarray[0], 1);
-                //-2*oz*u+out	
-                Vmath::Svtvp(nq, -2.0*m_omegaz, inarray[0], 1,
+                //+2*oz*u+out	
+                Vmath::Svtvp(nq,  2.0*m_omegaz, inarray[0], 1,
                              outarray[1],  1, outarray[1], 1);	
+		/// Centrifugal forcing
             }
             else //3D - 2 \Omega x u 
             {
-                
+                /// Coriolis forcing 
                 // 2*oy*w - 2*oz*v
                 Vmath::Svtsvtp(nq, 2.0*m_omegay,  inarray[2], 1,
                                -2.0*m_omegaz, inarray[1], 1, m_Forcing[0], 1);
-                Vmath::Vsub(nq,outarray[0],1, m_Forcing[0], 1,
-                            outarray[0], 1);
-                             
+                Vmath::Vsub(nq,outarray[0],1, m_Forcing[0], 1, outarray[0], 1);
                 // 2*oz*u - 2*ox*w
                 Vmath::Svtsvtp(nq, 2.0*m_omegaz,  inarray[0], 1,
                                -2.0*m_omegax, inarray[2], 1, m_Forcing[1], 1);
-                Vmath::Vsub(nq,outarray[1],1, m_Forcing[1], 1,
-                            outarray[1], 1);	
+                Vmath::Vsub(nq,outarray[1],1, m_Forcing[1], 1, outarray[1], 1);	
                 // 2*ox*v - 2*oy*u
                 Vmath::Svtsvtp(nq, 2.0*m_omegax,  inarray[1], 1,
                                -2.0*m_omegay, inarray[0], 1, m_Forcing[2], 1);
-                Vmath::Vsub(nq,outarray[2],1, m_Forcing[2], 1,
-                            outarray[2], 1);	
+                Vmath::Vsub(nq,outarray[2],1, m_Forcing[2], 1, outarray[2], 1);	
+
+
+		/// Centrifugal forcing
+		// - x*oy^2 + ox*y*oy - x*oz^2 + ox*z*oz
+		Vmath::Svtsvtp(nq, -m_omegay*m_omegay,  m_xyz[0], 1,
+                                    m_omegax*m_omegay,  m_xyz[1], 1, m_tmp, 1);
+		Vmath::Svtsvtp(nq, -m_omegaz*m_omegaz,  m_xyz[0], 1,
+                                    m_omegax*m_omegaz,  m_xyz[2], 1, m_Forcing[0], 1);
+		Vmath::Vadd(nq,m_tmp,1, m_Forcing[0], 1, m_Forcing[0], 1);
+		Vmath::Vsub(nq,outarray[0],1, m_Forcing[0], 1, outarray[0], 1);
+		// - y*ox^2 + oy*x*ox - y*oz^2 + oy*z*oz
+		Vmath::Svtsvtp(nq, -m_omegax*m_omegax,  m_xyz[1], 1,
+                                    m_omegay*m_omegax,  m_xyz[0], 1, m_tmp, 1);
+                Vmath::Svtsvtp(nq, -m_omegaz*m_omegaz,  m_xyz[1], 1,
+                                    m_omegay*m_omegaz,  m_xyz[2], 1, m_Forcing[1], 1);
+                Vmath::Vadd(nq,m_tmp,1, m_Forcing[1], 1, m_Forcing[1], 1);
+                Vmath::Vsub(nq,outarray[1],1, m_Forcing[1], 1, outarray[1], 1);
+		// - z*ox^2 + oz*x*ox - z*oy^2 + oz*y*oy
+		Vmath::Svtsvtp(nq, -m_omegax*m_omegax,  m_xyz[2], 1,
+                                    m_omegaz*m_omegax,  m_xyz[0], 1, m_tmp, 1);
+                Vmath::Svtsvtp(nq, -m_omegay*m_omegay,  m_xyz[2], 1,
+                                    m_omegaz*m_omegay,  m_xyz[1], 1, m_Forcing[2], 1);
+                Vmath::Vadd(nq,m_tmp,1, m_Forcing[2], 1, m_Forcing[2], 1);
+                Vmath::Vsub(nq,outarray[2],1, m_Forcing[2], 1, outarray[2], 1);
             }
         }
     }   
