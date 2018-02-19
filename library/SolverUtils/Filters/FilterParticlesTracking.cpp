@@ -512,17 +512,6 @@ void FilterParticlesTracking::AdvanceParticles(
             CheckBoundingBox(particle);
             // Handle collisions if particle left the domain
             HandleCollision(pFields,particle);
-
-            
-            
-            //Plot data for debuging 
-            //for(int n = 0; n < 3; ++n)
-            //{
-                //cout << ", " << boost::format("%25.19e") %
-                                        //particle.m_gloCoord[n];
-            //}
-            //cout <<endl;
-            
         }
     }
 }
@@ -703,6 +692,7 @@ void FilterParticlesTracking::UpdateVelocity(Particle &particle)
         CalculateForce(particle);
         
         RollOver(particle.m_particleVelocity);
+        
         int order = min(particle.m_advanceCalls, m_intOrder);
         for (int i = 0; i < particle.m_dim; ++i)
         {
@@ -737,10 +727,8 @@ void FilterParticlesTracking::CalculateForce(Particle &particle)
         Re += pow(particle.m_fluidVelocity[i]
                   -particle.m_particleVelocity[0][i],2.0);
     }
-    //Re = sqrt(Re)*m_diameter/dm_kinvis;
-    Re = sqrt(Re)*m_diameter/nu;
-    
-    
+    Re = sqrt(Re)*m_diameter/m_kinvis;
+
     ////Calcule Drag coeficient
     
     //// Openfoam 
@@ -787,7 +775,7 @@ void FilterParticlesTracking::CalculateForce(Particle &particle)
     
     for (int i = 0; i < particle.m_dim; ++i)
     {
-        particle.m_force[0][i] = 0.0*Fd * ( particle.m_fluidVelocity[i]
+        particle.m_force[0][i] = Fd * ( particle.m_fluidVelocity[i]
                                - particle.m_particleVelocity[0][i]);
     }
   
@@ -912,7 +900,7 @@ while( particle.m_eId == -1 && particle.m_used == true)
     //cout<<"}"<<endl<<endl;
     
     
-    //New coordinates and Velocities
+       //New coordinates and Velocities
     // Evaluation of the restitution coeficients
     int order = min(particle.m_advanceCalls, m_intOrder);
     NekDouble dotProdCoord, dotProdVel, dotProdForce; 
@@ -925,7 +913,7 @@ while( particle.m_eId == -1 && particle.m_used == true)
                          - collPnt[i]) * minNormal[i];
     }
     
-        // Update coordinates, velocites, and forces
+    // Update coordinates, velocites, and forces
     for (int i = 0; i < particle.m_dim; ++i)
     {
         particle.m_oldCoord[i] =  collPnt[i];
@@ -934,59 +922,27 @@ while( particle.m_eId == -1 && particle.m_used == true)
                                 + (particle.m_gloCoord[i] - collPnt[i] )
                                 - dotProdCoord * 2 * minNormal[i];
     }
-  
-  
+
+    for(int j = 0; j < order; ++j)
+    {   
         dotProdVel = 0.0;
         dotProdForce = 0.0;
         
         //Evaluate dot products to make the reflection
         for (int i = 0; i < particle.m_dim; ++i)
         {        
-            dotProdVel += particle.m_particleVelocity[0][i] * minNormal[i];
+            dotProdVel += particle.m_particleVelocity[j][i] * minNormal[i];
+            dotProdForce += particle.m_force[j][i] * minNormal[i];
         }
         
         // Update coordinates, velocites, and forces
         for (int i = 0; i < particle.m_dim; ++i)
         {            
-            particle.m_particleVelocity[0][i] -=dotProdVel * 2 * minNormal[i];
-        }
-
-  
-  
-  
-  
-
-    
-    //// Update coordinates, velocites, and forces
-    //for (int i = 0; i < particle.m_dim; ++i)
-    //{
-        //particle.m_oldCoord[i] =  collPnt[i];
-
-        //particle.m_gloCoord[i]  = collPnt[i]
-                                //+ (particle.m_gloCoord[i] - collPnt[i] )
-                                //- dotProdCoord * 2 * minNormal[i];
-    //}
-
-    //for(int j = 0; j < order; ++j)
-    //{   
-        //dotProdVel = 0.0;
-        //dotProdForce = 0.0;
-        
-        ////Evaluate dot products to make the reflection
-        //for (int i = 0; i < particle.m_dim; ++i)
-        //{        
-            //dotProdVel += particle.m_particleVelocity[j][i] * minNormal[i];
-            //dotProdForce += particle.m_force[j][i] * minNormal[i];
-        //}
-        
-        //// Update coordinates, velocites, and forces
-        //for (int i = 0; i < particle.m_dim; ++i)
-        //{            
-            //particle.m_particleVelocity[j][i] -=dotProdVel * 2 * minNormal[i];
+            particle.m_particleVelocity[j][i] -=dotProdVel * 2 * minNormal[i];
                 
-            //particle.m_force[j][i] -= dotProdForce * 2 * minNormal[i];
-        //}
-    //}
+            particle.m_force[j][i] -= dotProdForce * 2 * minNormal[i];
+        }
+    }
       
     UpdateLocCoord(pFields, particle);
     
