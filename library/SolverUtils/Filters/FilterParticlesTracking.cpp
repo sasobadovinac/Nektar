@@ -40,7 +40,6 @@
 #include <boost/format.hpp>
 #include <LibUtilities/BasicUtils/ParseUtils.h>
 
-
 using namespace std;
 
 namespace Nektar
@@ -274,8 +273,6 @@ FilterParticlesTracking::FilterParticlesTracking(
     ASSERTL0(it != pParams.end(),   "Missing parameter 'Boundary'");
     ASSERTL0(it->second.length() > 0, "Empty parameter 'Boundary'.");
     m_BoundaryString = it->second;
-    
-    
 }
 
 
@@ -310,7 +307,7 @@ void FilterParticlesTracking::v_Initialise(
                                                    m_boundaryRegionsIdList);
     ASSERTL0(parseGood && !m_boundaryRegionsIdList.empty(),
              (std::string("Unable to read boundary regions index "
-              "range for FilterAeroForces: ") + IndString).c_str());
+              "range for FilterParticleTracking: ") + IndString).c_str());
 
     // determine what boundary regions need to be considered
     int cnt;
@@ -335,11 +332,7 @@ void FilterParticlesTracking::v_Initialise(
         }
         cnt++;
     }
-    
-    
-    
-    
-    
+
     int dim = pFields[0]->GetGraph()->GetSpaceDimension();
     // Open output stream
     m_outputStream.open(m_outputFile.c_str());
@@ -404,8 +397,6 @@ void FilterParticlesTracking::v_Initialise(
     // Advance particles
     v_Update(pFields, time);
 }
-
-
 /**
  *
  */
@@ -472,7 +463,6 @@ void FilterParticlesTracking::v_Finalise(
         m_collisionStream.close();
     }
 }
-
 
 /**
  *
@@ -720,8 +710,7 @@ void FilterParticlesTracking::CalculateForce(Particle &particle)
     // Update particle.m_force[0][i] with force per unit mass
     
     NekDouble   Re = 0.0, Cd = 0.0, Fd = 0.0;     
-    NekDouble   nu = 1.0e-6;     // m2/s
-    
+   
     for (int i = 0; i < particle.m_dim; ++i)
     {    
         Re += pow(particle.m_fluidVelocity[i]
@@ -729,58 +718,36 @@ void FilterParticlesTracking::CalculateForce(Particle &particle)
     }
     Re = sqrt(Re)*m_diameter/m_kinvis;
 
-    ////Calcule Drag coeficient
+    //Calcule Drag coeficient Crowe et al. (1998), Lain et al. (2009) 
+    if (Re < 0.01)
+    {
+        Cd = 2400;
+    }
+    else if (Re < 0.5  )
+    {
+        Cd = 24.0 / Re;
+    }
+    else if (Re <1000.0)
+    {
+        Cd = (24.0 / Re) * ( 1.0 + 0.15 * pow(Re,0.687) );
+    }
+    else
+    {
+        Cd = 0.44;
+    }
+    //Evaluate the drag force
+    Fd = (18*m_kinvis/(m_density*pow(m_diameter,2.0)) ) * ( Cd*Re/24.0 );
     
-    //// Openfoam 
-    ////if (Re < 0.1)
-    ////{
-        ////Cd = 1E4;
-    ////}
-    ////else if (Re >1000.0)
-    ////{
-        ////Cd = 0.424;
-    ////}
-    ////else
-    ////{
-        ////Cd = (24.0/Re)*(1.0+pow(Re,2.0/3.0)/6.0);
-    ////}
-    
-    //// Crowe et al. (1998) 
-    //if (Re == 0.0)
-    //{
-        //Cd = 1E4; //este valor es muy restrigindo!!!!
-    //}
-    //else if (Re < 0.5  )
-    //{
-        //Cd = 24.0 / Re;
-    //}
-    //else if (Re <1000.0)
-    //{
-        //Cd = (24.0 / Re) * ( 1.0 + 0.15 * pow(Re,0.687) );
-    //}
-    //else
-    //{
-        //Cd = 0.44;
-    //}
-    
-    Cd = 0.47;
-    
-    ////////Fd = (18.0*m_kinvis/((m_density)
-          ////*pow(m_diameter,2.0)))*(Cd*Re/24.0);
-    
-    Fd = (18.0 * nu / ((m_density*1000)
-          * pow(m_diameter,2.0))) * (Cd * Re / 24.0);
-    
-    //std::cout<<"Re "<<Re<<", "<<"Cd "<<Cd<<", "<<"Fd "<<Fd<<std::endl;
-    
+   //std::cout<<"Re "<<Re<<", "<<"Cd "<<Cd<<", "<<"Fd "<<Fd<<std::endl;
+
     for (int i = 0; i < particle.m_dim; ++i)
     {
         particle.m_force[0][i] = Fd * ( particle.m_fluidVelocity[i]
                                - particle.m_particleVelocity[0][i]);
     }
   
-    //Add gravity effects
-        particle.m_force[0][1] -= 10.0 ;//* (1.0 - 1.0/m_density);
+    //Add gravity and buoyancy effects on -y direction
+        particle.m_force[0][1] -= 10.0 * (1.0 - 1.0/m_density);
 }
 
 /**
