@@ -190,11 +190,17 @@ FilterParticlesTracking::FilterParticlesTracking(
     // Read parameters for solid particles
     if( !m_fluidParticles)
     {
-        it = pParams.find("Density");
+        it = pParams.find("SpecifigGravity");
         ASSERTL0(it != pParams.end(),
-                "Missing parameter 'Density' for FilterParticleTracking.");
+                "Missing parameter 'SpecificGravity'  for FilterParticleTracking.");
         LibUtilities::Equation equ(m_session, it->second);
-        m_density = equ.Evaluate();
+        m_SG = equ.Evaluate();
+        
+        it = pParams.find("Gravity");
+        ASSERTL0(it != pParams.end(),
+                "Missing parameter  ''Gravity' for FilterParticleTracking.");
+        LibUtilities::Equation equ1(m_session, it->second);
+        m_gravity = equ1.Evaluate();
 
         it = pParams.find("Diameter");
         ASSERTL0(it != pParams.end(),
@@ -736,7 +742,7 @@ void FilterParticlesTracking::CalculateForce(Particle &particle)
         Cd = 0.44;
     }
     //Evaluate the drag force
-    Fd = (18*m_kinvis/(m_density*pow(m_diameter,2.0)) ) * ( Cd*Re/24.0 );
+    Fd = (18*m_kinvis/(m_SG*pow(m_diameter,2.0)) ) * ( Cd*Re/24.0 );
     
    //std::cout<<"Re "<<Re<<", "<<"Cd "<<Cd<<", "<<"Fd "<<Fd<<std::endl;
 
@@ -747,7 +753,7 @@ void FilterParticlesTracking::CalculateForce(Particle &particle)
     }
   
     //Add gravity and buoyancy effects on -y direction
-        particle.m_force[0][1] -= 10.0 * (1.0 - 1.0/m_density);
+        particle.m_force[0][1] += m_gravity * (1.0 - 1.0 / m_SG); 
 }
 
 /**

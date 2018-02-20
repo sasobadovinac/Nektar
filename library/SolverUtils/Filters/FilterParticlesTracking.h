@@ -183,8 +183,10 @@ private:
 
     /// Flag marking if tracking fluid or solid particles
     bool                                    m_fluidParticles;
-    /// Particles relative density (for solid particles)
-    NekDouble                               m_density;
+    /// Particles specific gravity (for solid particles)
+    NekDouble                               m_SG;
+    /// Particles Gravity (for solid particles)
+    NekDouble                               m_gravity;
     /// Particles diameter (for solid particles)
     NekDouble                               m_diameter;
     /// Kinematic viscosity
