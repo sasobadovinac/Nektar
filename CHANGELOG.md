@@ -14,6 +14,7 @@ v4.4.2
 - Fix deadlock in DiffusionLDG (!885)
 - Fix calculation of BLPoints (!892)
 - Updated PETSc to 3.7.7 (!916)
+- Fix typcase to an integer which set Lz < 1 to zero when postprocess hdf5 output (!9922)
 
 **NekMesh**
 - Fix missing periodic boundary meshing and boundary layer mesh adjustment
