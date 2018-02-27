@@ -190,7 +190,7 @@ FilterParticlesTracking::FilterParticlesTracking(
     // Read parameters for solid particles
     if( !m_fluidParticles)
     {
-        it = pParams.find("SpecifigGravity");
+        it = pParams.find("SpecificGravity");
         ASSERTL0(it != pParams.end(),
                 "Missing parameter 'SpecificGravity'  for FilterParticleTracking.");
         LibUtilities::Equation equ(m_session, it->second);
@@ -715,8 +715,8 @@ void FilterParticlesTracking::CalculateForce(Particle &particle)
 {
     // Update particle.m_force[0][i] with force per unit mass
     
+    // Particular Re evaluation
     NekDouble   Re = 0.0, Cd = 0.0, Fd = 0.0;     
-   
     for (int i = 0; i < particle.m_dim; ++i)
     {    
         Re += pow(particle.m_fluidVelocity[i]
@@ -742,10 +742,8 @@ void FilterParticlesTracking::CalculateForce(Particle &particle)
         Cd = 0.44;
     }
     //Evaluate the drag force
-    Fd = (18*m_kinvis/(m_SG*pow(m_diameter,2.0)) ) * ( Cd*Re/24.0 );
+    Fd = (3.0 * m_kinvis * Cd * Re) / (4.0 * m_SG * pow(m_diameter,2.0));
     
-   //std::cout<<"Re "<<Re<<", "<<"Cd "<<Cd<<", "<<"Fd "<<Fd<<std::endl;
-
     for (int i = 0; i < particle.m_dim; ++i)
     {
         particle.m_force[0][i] = Fd * ( particle.m_fluidVelocity[i]
@@ -754,6 +752,9 @@ void FilterParticlesTracking::CalculateForce(Particle &particle)
   
     //Add gravity and buoyancy effects on -y direction
         particle.m_force[0][1] += m_gravity * (1.0 - 1.0 / m_SG); 
+        
+    std::cout<<"Re "<<Re<<", "<<"Cd "<<Cd<<", "<<
+    "Fd "<<particle.m_force[0][0]<<", "<<particle.m_force[0][1]<<std::endl;
 }
 
 /**
@@ -770,16 +771,14 @@ while( particle.m_eId == -1 && particle.m_used == true)
     //cout << "Particle " << particle.m_id << " collisioned." << endl; 
     //particle.m_used = false;    
  
-    //Boundary Expansion
+    //Boundary Expansion: 
     Array<OneD,const MultiRegions::ExpListSharedPtr> bndExp;
     bndExp = pFields[0]->GetBndCondExpansions();
-    LocalRegions::ExpansionSharedPtr elemBndExp;
     
     NekDouble   minDist = 0.0, dist = 0.0, distN = 0.0; 
     NekDouble   maxDotProd = 0.0, dotProd = 0.0, ScaleDP = 0.0;
                 
-    Array<OneD,double> minNormal(3);
-    int minBnd = -1;
+    Array<OneD,double> minNormal(3); int minBnd = -1;
     
     //Loop over each boundary
     for (int nb = 0; nb < bndExp.num_elements(); ++nb)
@@ -849,6 +848,8 @@ while( particle.m_eId == -1 && particle.m_used == true)
     
     if( m_boundaryRegionIsInList[minBnd] == 1)
     {
+        cout << "Particle " << particle.m_id << " collisioned."<<endl;
+        
         //// Collision point cordinates
         Array<OneD, NekDouble> collPnt(3,0.0);
         NekDouble absVel = 0.0;
@@ -988,8 +989,8 @@ else
      particle.m_advanceCalls = 0;   
 }
    
-cout << "Particle " << particle.m_id << " collisioned."<<endl;
-particle.m_advanceCalls = 0;  
+//
+//particle.m_advanceCalls = 0;  
 }
 
 
