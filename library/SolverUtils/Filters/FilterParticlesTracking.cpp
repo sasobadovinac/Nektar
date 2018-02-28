@@ -171,42 +171,44 @@ FilterParticlesTracking::FilterParticlesTracking(
         m_timestep *= m_updateFrequency;
     }
 
+      
+    // Determine if gravity has effect
+    it = pParams.find("Gravity");
+    if (it == pParams.end())
+    {
+        m_gravity = 0.0;// By default the value of gravity is zero 
+    }
+    else
+    {
+        LibUtilities::Equation equ(m_session, it->second);
+        m_gravity = equ.Evaluate();
+    }
+    
     // Determine if we are tracking fluid or solid particles
-    it = pParams.find("FluidParticles");
+    it = pParams.find("Diameter");
     if (it == pParams.end())
     {
         // By default track fluid particles
-        //      TO DO: we could change this to false later
         m_fluidParticles = true;
     }
     else
     {
-        std::string sOption =
-                        it->second.c_str();
-        m_fluidParticles = ( boost::iequals(sOption,"true")) ||
-                     ( boost::iequals(sOption,"yes"));
-    }
-
-    // Read parameters for solid particles
-    if( !m_fluidParticles)
-    {
-        it = pParams.find("SpecificGravity");
-        ASSERTL0(it != pParams.end(),
-                "Missing parameter 'SpecificGravity'  for FilterParticleTracking.");
-        LibUtilities::Equation equ(m_session, it->second);
-        m_SG = equ.Evaluate();
-        
-        it = pParams.find("Gravity");
-        ASSERTL0(it != pParams.end(),
-                "Missing parameter  ''Gravity' for FilterParticleTracking.");
         LibUtilities::Equation equ1(m_session, it->second);
-        m_gravity = equ1.Evaluate();
-
-        it = pParams.find("Diameter");
-        ASSERTL0(it != pParams.end(),
-                "Missing parameter 'Diameter' for FilterParticleTracking.");
-        LibUtilities::Equation equ2(m_session, it->second);
-        m_diameter = equ2.Evaluate();
+        m_diameter = equ1.Evaluate();
+        m_fluidParticles = false;
+        
+        
+        // Determine if SpecifigGravity has effect
+        it = pParams.find("SpecifigGravity");
+        if (it == pParams.end())
+        {
+            m_SG = 1.0;         // By default SG = 1
+        }
+        else
+        {
+            LibUtilities::Equation equ2(m_session, it->second);
+            m_SG = equ2.Evaluate();
+        }
     }
 
     // Read variables for output
@@ -275,9 +277,9 @@ FilterParticlesTracking::FilterParticlesTracking(
     m_index = 0;
     
     // Boundary (to evaluate colision)
-    it = pParams.find("Boundary");
-    ASSERTL0(it != pParams.end(),   "Missing parameter 'Boundary'");
-    ASSERTL0(it->second.length() > 0, "Empty parameter 'Boundary'.");
+    it = pParams.find("WallBoundary");
+    ASSERTL0(it != pParams.end(),   "Missing parameter 'WallBoundary'");
+    ASSERTL0(it->second.length() > 0, "Empty parameter 'WallBoundary'.");
     m_BoundaryString = it->second;
 }
 
@@ -850,9 +852,9 @@ while( particle.m_eId == -1 && particle.m_used == true)
         }
     }
     
-    
+    // Check is the particle collision or leave the domain
     if( m_boundaryRegionIsInList[minBnd] == 1)
-    {
+    {   
         cout << "Particle " << particle.m_id << " collisioned."<<endl;
         
         //// Collision point cordinates
