@@ -771,7 +771,7 @@ while( particle.m_eId == -1 && particle.m_used == true)
     //cout << "Particle " << particle.m_id << " collisioned." << endl; 
     //particle.m_used = false;    
  
-    //Boundary Expansion: 
+    //Boundary Expansion:  Boundary list
     Array<OneD,const MultiRegions::ExpListSharedPtr> bndExp;
     bndExp = pFields[0]->GetBndCondExpansions();
     
@@ -780,14 +780,15 @@ while( particle.m_eId == -1 && particle.m_used == true)
                 
     Array<OneD,double> minNormal(3); int minBnd = -1;
     
-    //Loop over each boundary
+    //Loop over each boundary finding cross point
     for (int nb = 0; nb < bndExp.num_elements(); ++nb)
     {
-        ////Boundary normals - normals[dir][point]
+        // Boundary normals on each quadrature points
+        // normals[dir][point]
         Array<OneD,Array<OneD, double>> normals;
         pFields[0]->GetBoundaryNormals(nb, normals);
         
-        ////Coordinates 
+        // Get Coordinates of quadrature points
         int npoints    = bndExp[nb]->GetTotPoints();
         Array<OneD,Array<OneD, NekDouble>> coords(3);
         for (int j = 0; j < 3; ++j)
@@ -796,7 +797,10 @@ while( particle.m_eId == -1 && particle.m_used == true)
         }
         bndExp[nb]->GetCoords(coords[0],coords[1],coords[2]);
             
-        //Loop for each integration point on  any boundary
+        // Loop for each integration point on  any boundary
+        // Evaluating if the point cross the boundary at each
+        // quadrature point
+        
         for (int j = 0; j < npoints; ++j)
         {
             dist = 0.0; distN = 0.0;
@@ -830,12 +834,12 @@ while( particle.m_eId == -1 && particle.m_used == true)
                 }
                 dotProd /= sqrt(ScaleDP);
 
-                // Save the max dot Product 
+                // Save the max dot Product data
                 if (abs(dotProd) > maxDotProd)
                 {
                     maxDotProd = dotProd;
                     minDist    = abs(dist);
-                    minBnd     =   nb;
+                    minBnd     = nb;
                     
                     for (int i = 0; i < particle.m_dim; ++i)
                     {
@@ -845,6 +849,7 @@ while( particle.m_eId == -1 && particle.m_used == true)
             }
         }
     }
+    
     
     if( m_boundaryRegionIsInList[minBnd] == 1)
     {
@@ -868,132 +873,120 @@ while( particle.m_eId == -1 && particle.m_used == true)
                     + (  particle.m_gloCoord[i]
                     -    particle.m_oldCoord[i])
                     *  minDist/absVel;
-                    
-        //cout<<collPnt[i]<<", ";
-    }
-    //cout<<"}"<<endl<<endl;
-    
-    
-       //New coordinates and Velocities
-    // Evaluation of the restitution coeficients
-    int order = min(particle.m_advanceCalls, m_intOrder);
-    NekDouble dotProdCoord, dotProdVel, dotProdForce; 
+        }
 
-    dotProdCoord = 0.0;
-    //Evaluate dot products to make the reflection
-    for (int i = 0; i < particle.m_dim; ++i)
-    {
-        dotProdCoord += (particle.m_gloCoord[i]
-                         - collPnt[i]) * minNormal[i];
-    }
+        // New coordinates and Velocities
+        // Evaluation of the restitution coeficients
+        int order = min(particle.m_advanceCalls, m_intOrder);
+        NekDouble dotProdCoord=0.0, dotProdVel=0.0, dotProdForce=0.0; 
     
-    // Update coordinates, velocites, and forces
-    for (int i = 0; i < particle.m_dim; ++i)
-    {
-        particle.m_oldCoord[i] =  collPnt[i];
-
-        particle.m_gloCoord[i]  = collPnt[i]
-                                + (particle.m_gloCoord[i] - collPnt[i] )
-                                - dotProdCoord * 2 * minNormal[i];
-    }
-
-    for(int j = 0; j < order; ++j)
-    {   
-        dotProdVel = 0.0;
-        dotProdForce = 0.0;
-        
         //Evaluate dot products to make the reflection
         for (int i = 0; i < particle.m_dim; ++i)
-        {        
-            dotProdVel += particle.m_particleVelocity[j][i] * minNormal[i];
-            dotProdForce += particle.m_force[j][i] * minNormal[i];
+        {
+            dotProdCoord += (particle.m_gloCoord[i]
+                         - collPnt[i]) * minNormal[i];
+        }
+    
+        // Update coordinates
+        for (int i = 0; i < particle.m_dim; ++i)
+        {
+          particle.m_oldCoord[i] =  collPnt[i];
+
+          particle.m_gloCoord[i] = collPnt[i]
+                                 + (  particle.m_gloCoord[i] 
+                                    - collPnt[i] )
+                                 - dotProdCoord * 2 * minNormal[i];
+        }
+        UpdateLocCoord(pFields, particle);
+
+        for (int j = 0; j < order; ++j)   
+        {   
+            //Evaluate dot products to make the reflection
+            dotProdVel = 0.0; dotProdForce = 0.0;
+            for (int i = 0; i < particle.m_dim; ++i)
+            {        
+                dotProdVel += particle.m_particleVelocity[j][i] 
+                            * minNormal[i];
+                dotProdForce += particle.m_force[j][i] * minNormal[i];
+            }
+            
+            // Update velocites and forces
+            for (int i = 0; i < particle.m_dim; ++i)
+            {            
+                particle.m_particleVelocity[j][i] -= dotProdVel * 2
+                                                   * minNormal[i];
+                particle.m_force[j][i] -= dotProdForce * 2
+                                        * minNormal[i];
+            }
         }
         
-        // Update coordinates, velocites, and forces
+        // Evaluate the angle
+        dotProd = 0.0; absVel = 0.0; 
         for (int i = 0; i < particle.m_dim; ++i)
-        {            
-            particle.m_particleVelocity[j][i] -=dotProdVel * 2 * minNormal[i];
-                
-            particle.m_force[j][i] -= dotProdForce * 2 * minNormal[i];
-        }
-    }
-      
-    UpdateLocCoord(pFields, particle);
-    
-     // Evaluate the angle
-    dotProd = 0.0; absVel = 0.0; 
-    for (int i = 0; i < particle.m_dim; ++i)
-            {
-                dotProd += (particle.m_gloCoord[i]
-                           -   particle.m_oldCoord[i])
-                           * minNormal[i];
-                
-                
-                absVel += pow(particle.m_gloCoord[i]
-                           -   particle.m_oldCoord[i],2);
-            }
-            dotProd /= sqrt(absVel);
-            dotProd = asinf(dotProd);
+                {
+                    dotProd += (particle.m_gloCoord[i]
+                               -   particle.m_oldCoord[i])
+                               * minNormal[i];
+                    absVel += pow(particle.m_gloCoord[i]
+                               -   particle.m_oldCoord[i],2);
+                }
+                dotProd /= sqrt(absVel);
+                dotProd = asinf(dotProd);
 
 
-    //Output the collision information
-    //m_collisionStream << boost::format("%25.19e") % time;
-    m_collisionStream << particle.m_id;
+        //Output the collision information
+        //m_collisionStream << boost::format("%25.19e") % time;
+        m_collisionStream << particle.m_id;
 
-    for(int n = 0; n < 3; ++n)
-    {
-        m_collisionStream << ", " << boost::format("%25.19e") %
-                                    collPnt[n];
-    }
-
-    for(int n = 0; n < particle.m_dim; ++n)
-    {
-        m_collisionStream << ", " << boost::format("%25.19e") %
-                                    particle.m_particleVelocity[0][n];
-    }
-
-    m_collisionStream << ", " << boost::format("%25.19e") %
-                                    dotProd;
-
-    m_collisionStream << endl; 
-    
-    
-    
-    //Evaluate the change in the collision position
-    distN = 0.0;
-    for (int i = 0; i < particle.m_dim; ++i)
-    {
-        distN +=   pow(collPnt[i]-collPntOLD[i],2);
-    }
-    
-    if (distN < 1E-3)
-    {
-        cout << "Particle " << particle.m_id << " is unused." << endl; 
-        particle.m_used = false;
-        particle.m_advanceCalls = 0;      
-    }
-    else
-    {
-         for (int i = 0; i < particle.m_dim; ++i)
+        for(int n = 0; n < 3; ++n)
         {
-            collPntOLD[i] = collPnt[i];
+            m_collisionStream <<", "<< boost::format("%25.19e") %
+                                        collPnt[n];
         }
-    }
+
+        for(int n = 0; n < particle.m_dim; ++n)
+        {
+            m_collisionStream <<", "<< boost::format("%25.19e") %
+                                      particle.m_particleVelocity[0][n];
+        }
+
+        m_collisionStream <<", "<< boost::format("%25.19e") %
+                                        dotProd;
+
+        m_collisionStream << endl; 
+        
+        
+        //Evaluate the change in the collision position
+        distN = 0.0;
+        for (int i = 0; i < particle.m_dim; ++i)
+        {
+            distN +=   pow(collPnt[i]-collPntOLD[i],2);
+        }
+        
+        if (distN < 1E-3)
+        {
+            cout << "Particle " << particle.m_id 
+                 << " is stalled." << endl; 
+            particle.m_used = false;
+            particle.m_advanceCalls = 0;      
+        }
+        else
+        {
+             for (int i = 0; i < particle.m_dim; ++i)
+            {
+                collPntOLD[i] = collPnt[i];
+            }
+        }
     
+    }
+    else 
+    {
+         cout << "Particle " << particle.m_id 
+              << " is unused because left the domain."<<endl; 
+         particle.m_used = false;
+         particle.m_advanceCalls = 0;   
+    }
 }
-else 
-{
-     cout << "Particle " << particle.m_id << 
-     " is unused because left the domain."<<endl; 
-     particle.m_used = false;
-     particle.m_advanceCalls = 0;   
-}
-   
-//
-//particle.m_advanceCalls = 0;  
-}
-
-
 }
 
 /**
