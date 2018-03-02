@@ -71,6 +71,7 @@ FilterParticlesTracking::FilterParticlesTracking(
     const ParamMap &pParams):
     Filter(pSession)
 {
+    cout<<"Tracking Particles..."<<endl;
     // Read parameters
     ParamMap::const_iterator it;
 
@@ -171,25 +172,13 @@ FilterParticlesTracking::FilterParticlesTracking(
         m_timestep *= m_updateFrequency;
     }
 
-      
-    // Determine if gravity has effect
-    it = pParams.find("Gravity");
-    if (it == pParams.end())
-    {
-        m_gravity = 0.0;// By default the value of gravity is zero 
-    }
-    else
-    {
-        LibUtilities::Equation equ(m_session, it->second);
-        m_gravity = equ.Evaluate();
-    }
-    
     // Determine if we are tracking fluid or solid particles
     it = pParams.find("Diameter");
     if (it == pParams.end())
     {
         // By default track fluid particles
         m_fluidParticles = true;
+        cout<<" - Working with fluid particles"<<endl;
     }
     else
     {
@@ -203,12 +192,27 @@ FilterParticlesTracking::FilterParticlesTracking(
         if (it == pParams.end())
         {
             m_SG = 1.0;         // By default SG = 1
+            cout<<"- Particles with density of fluid"<<endl;  
         }
         else
         {
             LibUtilities::Equation equ2(m_session, it->second);
             m_SG = equ2.Evaluate();
         }
+        
+        // Determine if gravity has effect
+        it = pParams.find("Gravity");
+        if (it == pParams.end())
+        {
+            m_gravity = 0.0;// By default the value of gravity is zero
+            cout<<"- Working without Gravity"<<endl;  
+        }
+        else
+        {
+            LibUtilities::Equation equ(m_session, it->second);
+            m_gravity = equ.Evaluate();
+        }
+        
     }
 
     // Read variables for output
@@ -392,15 +396,15 @@ void FilterParticlesTracking::v_Initialise(
     // Add seed points to m_particles
     AddSeedPoints(pFields);
 
-    // Write initial particle results
-    if( m_postProc)
-    {
-        OutputParticles(0.0);
-    }
-    else
-    {
-        OutputParticles(time);
-    }
+    //// Write initial particle results
+    //if( m_postProc)
+    //{
+        //OutputParticles(0.0);
+    //}
+    //else
+    //{
+        //OutputParticles(time);
+    //}
 
     // Advance particles
     v_Update(pFields, time);
@@ -725,11 +729,14 @@ void FilterParticlesTracking::CalculateForce(Particle &particle)
                   -particle.m_particleVelocity[0][i],2.0);
     }
     Re = sqrt(Re)*m_diameter/m_kinvis;
+    
+    
 
     //Calcule Drag coeficient Crowe et al. (1998), Lain et al. (2009) 
     if (Re < 0.01)
     {
-        Cd = 2400;
+        Cd = 2400.0;
+//        Re = 0.01;
     }
     else if (Re < 0.5  )
     {
@@ -755,8 +762,10 @@ void FilterParticlesTracking::CalculateForce(Particle &particle)
     //Add gravity and buoyancy effects on -y direction
         particle.m_force[0][1] += m_gravity * (1.0 - 1.0 / m_SG); 
         
-    std::cout<<"Re "<<Re<<", "<<"Cd "<<Cd<<", "<<
-    "Fd "<<particle.m_force[0][0]<<", "<<particle.m_force[0][1]<<std::endl;
+    cout<<"Re "<<Re<<", "<<"Cd "<<Cd<<", "<<endl<<
+    "Up: "<<particle.m_particleVelocity[0][0]<<", "<<
+    particle.m_particleVelocity[0][1]<<", "<<endl<<
+    "Fd "<<particle.m_force[0][0]<<", "<<particle.m_force[0][1]<<endl<<endl;
 }
 
 /**
