@@ -294,7 +294,7 @@ namespace Nektar
             new_factors = factors;
             NekDouble lambda = new_factors[StdRegions::eFactorLambda];
 
-            StdRegions::VarCoeffMap varcoeff2 = varfactors;
+            StdRegions::VarCoeffMap varcoeff2 = varcoeff;
 
             for(n = 0; n < m_planes.num_elements(); ++n)
             {
@@ -336,7 +336,7 @@ namespace Nektar
                     m_planes[n]->HelmSolve(wfce,
                                            e_out = outarray + cnt1,
                                            flags, new_factors, varcoeff2,
-                                           dirForcing,
+                                           varfactors, dirForcing,
                                            PhysSpaceForcing);
                 }
                 

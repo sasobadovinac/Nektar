@@ -41,6 +41,7 @@
 
 #include <SpatialDomains/SegGeom.h>
 #include <SpatialDomains/GeomFactors.h>
+#include <SpatialDomains/GeomFactorsCyl.h>
 
 using namespace std;
 

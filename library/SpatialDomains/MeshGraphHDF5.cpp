@@ -368,12 +368,12 @@ void MeshGraphHDF5::ReadFaces()
                 if(it == m_curvedFaces.end())
                 {
                     tri = MemoryManager<TriGeom>::AllocateSharedPtr(
-                        ids[i], edges);
+                        ids[i], edges, m_coordSys);
                 }
                 else
                 {
                     tri = MemoryManager<TriGeom>::AllocateSharedPtr(
-                        ids[i], edges, it->second);
+                        ids[i], edges, m_coordSys, it->second);
                 }
 
                 m_triGeoms[ids[i]] = tri;
@@ -418,12 +418,12 @@ void MeshGraphHDF5::ReadFaces()
                 if(it == m_curvedFaces.end())
                 {
                     quad = MemoryManager<QuadGeom>::AllocateSharedPtr(
-                        ids[i], edges);
+                        ids[i], edges, m_coordSys);
                 }
                 else
                 {
                     quad = MemoryManager<QuadGeom>::AllocateSharedPtr(
-                        ids[i], edges, it->second);
+                        ids[i], edges, m_coordSys, it->second);
                 }
 
                 m_quadGeoms[ids[i]] = quad;

@@ -33,6 +33,9 @@
 //
 ////////////////////////////////////////////////////////////////////////////////
 
+#ifndef NEKTAR_SPATIALDOMAINS_GEOMFACTORSCYL_H
+#define NEKTAR_SPATIALDOMAINS_GEOMFACTORSCYL_H
+
 #include <SpatialDomains/GeomFactors.h>
 
 namespace Nektar
@@ -70,3 +73,5 @@ protected:
 
 }
 }
+
+#endif

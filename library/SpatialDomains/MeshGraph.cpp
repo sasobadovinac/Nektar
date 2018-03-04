@@ -130,29 +130,8 @@ MeshGraphSharedPtr MeshGraph::Read(
     MeshGraphSharedPtr mesh = GetMeshGraphFactory().CreateInstance(geomType);
     mesh->PartitionMesh(session);
 
-<<<<<<< HEAD
-            TiXmlElement* geometry_tag = pSession->GetElement("NEKTAR/GEOMETRY");
-            TiXmlAttribute *attr = geometry_tag->FirstAttribute();
-            int meshDim = 0;
-			while (attr)
-            {
-                std::string attrName(attr->Name());
-                if (attrName == "DIM")
-                {
-                    int err = attr->QueryIntValue(&meshDim);
-                    ASSERTL0(err==TIXML_SUCCESS, "Unable to read mesh dimension.");
-                    break;
-                }
-                else
-                {
-                    std::string errstr("Unknown attribute: ");
-                    errstr += attrName;
-                    ASSERTL0(false, errstr.c_str());
-                }
-=======
     // Finally, read the geometry information.
     mesh->ReadGeometry(rng, fillGraph);
->>>>>>> upstream/master
 
     return mesh;
 }
@@ -271,20 +250,10 @@ bool MeshGraph::CheckRange(Geometry2D &geom)
 {
     bool returnval = true;
 
-<<<<<<< HEAD
-            // Initialize the mesh and space dimensions to 3 dimensions.
-            // We want to do this each time we read a file, so it should
-            // be done here and not just during class initialization.
-            m_meshPartitioned = false;
-            m_meshDimension = 3;
-            m_spaceDimension = 3;
-            m_coordSys = eCartesian;
-=======
     if (m_domainRange != NullDomainRangeShPtr)
     {
         int nverts  = geom.GetNumVerts();
         int coordim = geom.GetCoordim();
->>>>>>> upstream/master
 
         // exclude elements outside x range if all vertices not in region
         if (m_domainRange->m_doXrange)
@@ -298,30 +267,8 @@ bool MeshGraph::CheckRange(Geometry2D &geom)
                 {
                     ncnt_low++;
                 }
-<<<<<<< HEAD
-                else if(attrName=="COORDINATE")
-                {
-                    string CoordSystem = attr->Value();
-                    if(CoordSystem == "CYLINDRICAL")
-                    {
-                        m_coordSys = eCylindrical;
-                    }
-                    else if (CoordSystem != "CARTESIAN")
-                    {
-                        ASSERTL0(false, "Unsupported coordinate system: " + CoordSystem);
-                    }
-                }
-                else if (attrName == "PARTITION")
-                {
-                    err = attr->QueryIntValue(&m_partition);
-                    ASSERTL1(err==TIXML_SUCCESS, "Unable to read partition.");
-                    m_meshPartitioned = true;
-                }
-                else
-=======
 
                 if (xval > m_domainRange->m_xmax)
->>>>>>> upstream/master
                 {
                     ncnt_up++;
                 }
@@ -1929,57 +1876,20 @@ LibUtilities::BasisKeyVector MeshGraph::DefineBasisKeyFromExpansionType(
             {
                 case LibUtilities::eSegment:
                 {
-<<<<<<< HEAD
-                    int ncnt_low = 0;
-                    int ncnt_up = 0;
-
-                    for(int i = 0; i < nverts; ++i)
-                    {
-                        NekDouble xval = (*geom.GetVertex(i))[0];
-                        if(xval < m_domainRange->m_xmin)
-                        {
-                            ncnt_low++;
-                        }
-
-                        if(xval > m_domainRange->m_xmax)
-                        {
-                            ncnt_up++;
-                        }
-                        }
-=======
                     const LibUtilities::PointsKey pkey(
                         nummodes, LibUtilities::eGaussLobattoLegendre);
                     LibUtilities::BasisKey bkey(LibUtilities::eGLL_Lagrange,
                                                 nummodes, pkey);
->>>>>>> upstream/master
 
                     returnval.push_back(bkey);
                 }
                 break;
                 case LibUtilities::eQuadrilateral:
                 {
-<<<<<<< HEAD
-                    int ncnt_low = 0;
-                    int ncnt_up = 0;
-                    for(int i = 0; i < nverts; ++i)
-                    {
-                        NekDouble yval = (*geom.GetVertex(i))[1];
-                        if(yval < m_domainRange->m_ymin)
-                        {
-                            ncnt_low++;
-                        }
-
-                        if(yval > m_domainRange->m_ymax)
-                        {
-                            ncnt_up++;
-                        }
-                        }
-=======
                     const LibUtilities::PointsKey pkey(
                         nummodes, LibUtilities::eGaussLobattoLegendre);
                     LibUtilities::BasisKey bkey(LibUtilities::eGLL_Lagrange,
                                                 nummodes, pkey);
->>>>>>> upstream/master
 
                     returnval.push_back(bkey);
                     returnval.push_back(bkey);
@@ -1987,29 +1897,10 @@ LibUtilities::BasisKeyVector MeshGraph::DefineBasisKeyFromExpansionType(
                 break;
                 case LibUtilities::eHexahedron:
                 {
-<<<<<<< HEAD
-                    int ncnt_low = 0;
-                    int ncnt_up  = 0;
-                    for(int i = 0; i < nverts; ++i)
-                    {
-                        NekDouble zval = (*geom.GetVertex(i))[2];
-
-                        if(zval < m_domainRange->m_zmin)
-                        {
-                            ncnt_low++;
-                        }
-
-                        if(zval > m_domainRange->m_zmax)
-                        {
-                            ncnt_up++;
-                        }
-                        }
-=======
                     const LibUtilities::PointsKey pkey(
                         nummodes, LibUtilities::eGaussLobattoLegendre);
                     LibUtilities::BasisKey bkey(LibUtilities::eGLL_Lagrange,
                                                 nummodes, pkey);
->>>>>>> upstream/master
 
                     returnval.push_back(bkey);
                     returnval.push_back(bkey);
@@ -2023,11 +1914,6 @@ LibUtilities::BasisKeyVector MeshGraph::DefineBasisKeyFromExpansionType(
                 }
                 break;
             }
-<<<<<<< HEAD
-            
-            return returnval;
-=======
->>>>>>> upstream/master
         }
         break;
 
@@ -3089,19 +2975,8 @@ void MeshGraph::ReadExpansions()
                     const std::string *expStr =
                         std::find(begStr, endStr, typeStr);
 
-<<<<<<< HEAD
-        /**
-         *
-         */
-        TriGeomSharedPtr MeshGraph::AddTriangle(SegGeomSharedPtr edges[], StdRegions::Orientation orient[])
-        {
-            int indx = m_triGeoms.rbegin()->first + 1;
-            TriGeomSharedPtr trigeom(MemoryManager<TriGeom>::AllocateSharedPtr(indx, edges, orient, m_coordSys));
-            trigeom->SetGlobalID(indx);
-=======
                     ASSERTL0(expStr != endStr, "Invalid expansion type.");
                     expansion_type_z = (ExpansionType)(expStr - begStr);
->>>>>>> upstream/master
 
                     const char *nStr = expansion->Attribute("NUMMODES-Z");
                     ASSERTL0(nStr, "NUMMODES-Z was not defined in EXPANSION "
@@ -3133,16 +3008,6 @@ void MeshGraph::ReadExpansions()
                              expVecIter != expansionMap->end(); ++expVecIter)
                         {
 
-<<<<<<< HEAD
-        /**
-         *
-         */
-        QuadGeomSharedPtr MeshGraph::AddQuadrilateral(SegGeomSharedPtr edges[], StdRegions::Orientation orient[])
-        {
-            int indx = m_quadGeoms.rbegin()->first + 1;
-            QuadGeomSharedPtr quadgeom(MemoryManager<QuadGeom>::AllocateSharedPtr(indx, edges, orient, m_coordSys));
-            quadgeom->SetGlobalID(indx);
-=======
                             (expVecIter->second)->m_basisKeyVector =
                                 DefineBasisKeyFromExpansionTypeHomo(
                                     *geomVecIter, expansion_type_x,
@@ -3151,7 +3016,6 @@ void MeshGraph::ReadExpansions()
                         }
                     }
                 }
->>>>>>> upstream/master
 
                 expansion = expansion->NextSiblingElement("H");
             }
