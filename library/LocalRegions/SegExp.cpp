@@ -137,7 +137,7 @@ namespace Nektar
             //ival = StdSegExp::Integral(tmp);
             return ival;
         }
-		
+
         //-----------------------------
         // Differentiation Methods
         //-----------------------------
@@ -781,12 +781,6 @@ cout<<"deps/dx ="<<inarray_d0[i]<<"  deps/dy="<<inarray_d1[i]<<endl;
                 }
             }
         }
-
-        StdRegions::Orientation SegExp::v_GetPorient(int point)
-        {
-            return m_geom->GetPorient(point);
-        }
-
 
         StdRegions::StdExpansionSharedPtr SegExp::v_GetStdExp() const
         {

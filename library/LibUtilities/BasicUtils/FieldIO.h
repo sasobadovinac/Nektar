@@ -38,7 +38,6 @@
 
 #include <LibUtilities/BasicUtils/SessionReader.h>
 #include <LibUtilities/Communication/Comm.h>
-#include <LibUtilities/BasicUtils/ParseUtils.hpp>
 #include <LibUtilities/BasicUtils/ShapeType.hpp>
 #include <LibUtilities/Foundations/Basis.h>
 #include <LibUtilities/Foundations/Points.h>
@@ -259,16 +258,15 @@ public:
     LIB_UTILITIES_EXPORT static std::shared_ptr<FieldIO> CreateForFile(
         const LibUtilities::SessionReaderSharedPtr session,
         const std::string &filename);
+    LIB_UTILITIES_EXPORT static void AddInfoTag(
+        TagWriterSharedPtr      root,
+        const FieldMetaDataMap &fieldmetadatamap);
 
 protected:
     /// Communicator to use when writing parallel format
     LibUtilities::CommSharedPtr m_comm;
     /// Boolean dictating whether we are on a shared filesystem.
     bool                        m_sharedFilesystem;
-
-    LIB_UTILITIES_EXPORT void AddInfoTag(
-        TagWriterSharedPtr      root,
-        const FieldMetaDataMap &fieldmetadatamap);
 
     LIB_UTILITIES_EXPORT int CheckFieldDefinition(
         const FieldDefinitionsSharedPtr &fielddefs);

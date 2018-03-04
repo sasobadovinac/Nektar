@@ -139,6 +139,11 @@ namespace Nektar
             cnt = 0;
             for(i = 0; i < nbnd; ++i)
             {
+                if (bndCond[i]->GetBoundaryConditionType() ==
+                        SpatialDomains::ePeriodic)
+                {
+                    continue;
+                }
                 cnt += bndCondExp[i]->GetExpSize();
             }
 
@@ -147,7 +152,6 @@ namespace Nektar
             m_numLocalDirBndCoeffs = 0;
             m_numDirichletBndPhys  = 0;
 
-            cnt = 0;
             for(i = 0; i < bndCondExp.num_elements(); ++i)
             {
                 for(j = 0; j < bndCondExp[i]->GetExpSize(); ++j)
@@ -164,8 +168,6 @@ namespace Nektar
                         dirTrace.insert(id);
                     }
                 }
-
-                cnt += j;
             }
 
             // Set up integer mapping array and sign change for each degree of
@@ -445,6 +447,11 @@ namespace Nektar
             cnt = 0;
             for(i = 0; i < nbnd; ++i)
             {
+                if (bndCond[i]->GetBoundaryConditionType() ==
+                    SpatialDomains::ePeriodic)
+                {
+                    continue;
+                }
                 cnt += bndCondExp[i]->GetNcoeffs();
             }
 
@@ -454,6 +461,12 @@ namespace Nektar
             int nbndexp = 0, bndOffset, bndTotal = 0;
             for(cnt = i = 0; i < nbnd; ++i)
             {
+                if (bndCond[i]->GetBoundaryConditionType() ==
+                    SpatialDomains::ePeriodic)
+                {
+                    continue;
+                }
+
                 for(j = 0; j < bndCondExp[i]->GetExpSize(); ++j)
                 {
                     bndExp    = bndCondExp[i]->GetExp(j);
@@ -483,6 +496,12 @@ namespace Nektar
             m_bndCondTraceToGlobalTraceMap = Array<OneD, int>(nbndexp);
             for(i = 0; i < bndCondExp.num_elements(); ++i)
             {
+                if (bndCond[i]->GetBoundaryConditionType() ==
+                    SpatialDomains::ePeriodic)
+                {
+                    continue;
+                }
+
                 for(j = 0; j < bndCondExp[i]->GetExpSize(); ++j)
                 {
                     bndExp    = bndCondExp[i]->GetExp(j);
@@ -498,26 +517,26 @@ namespace Nektar
             SetUpUniversalDGMap   (locExp);
             SetUpUniversalTraceMap(locExp, tr, periodicTrace);
 
-			if ((m_solnType == eDirectMultiLevelStaticCond ||
-				m_solnType == eIterativeMultiLevelStaticCond ||
-				m_solnType == eXxtMultiLevelStaticCond ||
-				m_solnType == ePETScMultiLevelStaticCond)
-				&& nGraphVerts)
-			{
-				if (m_staticCondLevel < (bottomUpGraph->GetNlevels() - 1))
-				{
-					Array<OneD, int> vwgts_perm(nGraphVerts);
+            if ((m_solnType == eDirectMultiLevelStaticCond ||
+                 m_solnType == eIterativeMultiLevelStaticCond ||
+                 m_solnType == eXxtMultiLevelStaticCond ||
+                 m_solnType == ePETScMultiLevelStaticCond)
+                && nGraphVerts)
+            {
+                if (m_staticCondLevel < (bottomUpGraph->GetNlevels() - 1))
+                {
+                    Array<OneD, int> vwgts_perm(nGraphVerts);
 
-					for (int i = 0; i < nGraphVerts; i++)
-					{
-						vwgts_perm[i] = vwgts[perm[i]];
-					}
+                    for (int i = 0; i < nGraphVerts; i++)
+                    {
+                        vwgts_perm[i] = vwgts[perm[i]];
+                    }
 
-					bottomUpGraph->ExpandGraphWithVertexWeights(vwgts_perm);
-					m_nextLevelLocalToGlobalMap = MemoryManager<AssemblyMap>::
-						AllocateSharedPtr(this, bottomUpGraph);
-				}
-			}
+                    bottomUpGraph->ExpandGraphWithVertexWeights(vwgts_perm);
+                    m_nextLevelLocalToGlobalMap = MemoryManager<AssemblyMap>::
+                        AllocateSharedPtr(this, bottomUpGraph);
+                }
+            }
 
             m_hash = hash_range(m_localToGlobalBndMap.begin(),
                                 m_localToGlobalBndMap.end());
@@ -611,7 +630,7 @@ namespace Nektar
                         LocalRegions::SegExpSharedPtr locSegExp =
                             m_elmtToTrace[eid][j]->as<LocalRegions::SegExp>();
 
-                        id  = locSegExp->GetGeom1D()->GetEid();
+                        id  = locSegExp->GetGeom()->GetGlobalID();
                         order_e = locExpansion->GetEdgeNcoeffs(j);
 
                         map<int,int> orientMap;
@@ -656,7 +675,7 @@ namespace Nektar
                                 m_elmtToTrace[eid][j]
                                            ->as<LocalRegions::Expansion2D>();
 
-                        id  = locFaceExp->GetGeom2D()->GetFid();
+                        id  = locFaceExp->GetGeom()->GetGlobalID();
                         order_e = locExpansion->GetFaceNcoeffs(j);
 
                         map<int,int> orientMap;

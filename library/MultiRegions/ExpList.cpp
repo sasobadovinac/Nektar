@@ -1964,6 +1964,25 @@ namespace Nektar
             return err;
         }
 
+        NekDouble ExpList::v_VectorFlux(const Array<OneD, Array<OneD, NekDouble> > &inarray)
+        {
+            NekDouble flux = 0.0;
+            int       i    = 0;
+            int       j;
+
+            for (i = 0; i < (*m_exp).size(); ++i)
+            {
+                Array<OneD, Array<OneD, NekDouble> > tmp(inarray.num_elements());
+                for (j = 0; j < inarray.num_elements(); ++j)
+                {
+                    tmp[j] = Array<OneD, NekDouble>(inarray[j] + m_phys_offset[i]);
+                }
+                flux += (*m_exp)[i]->VectorFlux(tmp);
+            }
+
+            return flux;
+        }
+
         Array<OneD, const NekDouble> ExpList::v_HomogeneousEnergy (void)
         {
             ASSERTL0(false,
@@ -2537,6 +2556,7 @@ namespace Nektar
                 const FlagList &flags,
                 const StdRegions::ConstFactorMap &factors,
                 const StdRegions::VarCoeffMap &varcoeff,
+                const MultiRegions::VarFactorsMap &varfactors,
                 const Array<OneD, const NekDouble> &dirForcing,
                 const bool PhysSpaceForcing)
         {
@@ -2842,13 +2862,13 @@ namespace Nektar
         
         /**
          */
-        void ExpList::v_ExtractElmtToBndPhys(int i,
-                            Array<OneD, NekDouble> &element,
-                            Array<OneD, NekDouble> &boundary)
+        void ExpList::v_ExtractElmtToBndPhys(const int i,
+                                             const Array<OneD, NekDouble> &element,
+                                             Array<OneD, NekDouble> &boundary)
         {
             int n, cnt;
             Array<OneD, NekDouble> tmp1, tmp2;
-            StdRegions::StdExpansionSharedPtr elmt;
+            LocalRegions::ExpansionSharedPtr elmt;
             
             Array<OneD, int> ElmtID,EdgeID;
             GetBoundaryToElmtMap(ElmtID,EdgeID);
@@ -2881,12 +2901,11 @@ namespace Nektar
         
         /**
          */
-        void ExpList::v_ExtractPhysToBndElmt(int i,
+        void ExpList::v_ExtractPhysToBndElmt(const int i,
                             const Array<OneD, const NekDouble> &phys,
                             Array<OneD, NekDouble> &bndElmt)
         {
             int n, cnt, nq;
-            Array<OneD, NekDouble> tmp1, tmp2;
             
             Array<OneD, int> ElmtID,EdgeID;
             GetBoundaryToElmtMap(ElmtID,EdgeID);
@@ -2914,8 +2933,8 @@ namespace Nektar
             {
                 nq = GetExp(ElmtID[cnt+n])->GetTotPoints();
                 offsetPhys = GetPhys_Offset(ElmtID[cnt+n]);
-                Vmath::Vcopy(nq, tmp1 = phys    + offsetPhys, 1,
-                                 tmp2 = bndElmt + offsetElmt, 1);
+                Vmath::Vcopy(nq, &phys[offsetPhys],    1,
+                                 &bndElmt[offsetElmt], 1);
                 offsetElmt += nq;
             }
         }
@@ -2927,7 +2946,7 @@ namespace Nektar
                             Array<OneD, NekDouble> &bnd)
         {
             int n, cnt;
-            Array<OneD, NekDouble> tmp1, tmp2;
+            Array<OneD, NekDouble> tmp1;
             StdRegions::StdExpansionSharedPtr elmt;
 
             Array<OneD, int> ElmtID,EdgeID;
@@ -2953,8 +2972,8 @@ namespace Nektar
                 elmt   = GetExp(ElmtID[cnt+n]);
                 elmt->GetTracePhysVals(EdgeID[cnt+n],
                                       GetBndCondExpansions()[i]->GetExp(n),
-                                      tmp1 = phys + offsetPhys,
-                                      tmp2 = bnd + offsetBnd);
+                                      phys + offsetPhys,
+                                      tmp1 = bnd + offsetBnd);
             }
         }
 
@@ -2966,7 +2985,7 @@ namespace Nektar
             int j, n, cnt, nq;
             int coordim = GetCoordim(0);
             Array<OneD, NekDouble> tmp;
-            StdRegions::StdExpansionSharedPtr elmt;
+            LocalRegions::ExpansionSharedPtr elmt;
             
             Array<OneD, int> ElmtID,EdgeID;
             GetBoundaryToElmtMap(ElmtID,EdgeID);
@@ -3102,73 +3121,6 @@ namespace Nektar
             ASSERTL0(false,
                      "This method is not defined or valid for this class type");
             return NullExpListSharedPtr;
-        }
-
-
-        StdRegions::StdExpansionSharedPtr GetStdExp(StdRegions::StdExpansionSharedPtr exp)
-        {
-
-            StdRegions::StdExpansionSharedPtr stdExp;
-
-            switch(exp->DetShapeType())
-            {
-            case LibUtilities::eSegment:
-                stdExp = MemoryManager<StdRegions::StdSegExp>
-                    ::AllocateSharedPtr(exp->GetBasis(0)->GetBasisKey());
-                break;
-            case LibUtilities::eTriangle:
-                {
-                    StdRegions::StdNodalTriExpSharedPtr nexp;
-                    if((nexp = exp->as<StdRegions::StdNodalTriExp>()))
-                    {
-                        stdExp = MemoryManager<StdRegions::StdNodalTriExp>
-                            ::AllocateSharedPtr(exp->GetBasis(0)->GetBasisKey(),
-                                                exp->GetBasis(1)->GetBasisKey(),
-                                                nexp->GetNodalPointsKey().GetPointsType());
-                    }
-                    else
-                    {
-                        stdExp = MemoryManager<StdRegions::StdTriExp>
-                            ::AllocateSharedPtr(exp->GetBasis(0)->GetBasisKey(),
-                                                exp->GetBasis(1)->GetBasisKey());
-                    }
-                }
-                break;
-            case LibUtilities::eQuadrilateral:
-                stdExp = MemoryManager<StdRegions::StdQuadExp>
-                    ::AllocateSharedPtr(exp->GetBasis(0)->GetBasisKey(),
-                                        exp->GetBasis(1)->GetBasisKey());
-                break;
-            case LibUtilities::eTetrahedron:
-                    stdExp = MemoryManager<StdRegions::StdTetExp>
-                        ::AllocateSharedPtr(exp->GetBasis(0)->GetBasisKey(),
-                                            exp->GetBasis(1)->GetBasisKey(),
-                                            exp->GetBasis(2)->GetBasisKey());
-                    break;
-            case LibUtilities::ePyramid:
-                stdExp = MemoryManager<StdRegions::StdPyrExp>
-                    ::AllocateSharedPtr(exp->GetBasis(0)->GetBasisKey(),
-                                        exp->GetBasis(1)->GetBasisKey(),
-                                        exp->GetBasis(2)->GetBasisKey());
-                break;
-            case LibUtilities::ePrism:
-                stdExp = MemoryManager<StdRegions::StdPrismExp>
-                    ::AllocateSharedPtr(exp->GetBasis(0)->GetBasisKey(),
-                                        exp->GetBasis(1)->GetBasisKey(),
-                                        exp->GetBasis(2)->GetBasisKey());
-                break;
-            case LibUtilities::eHexahedron:
-                    stdExp = MemoryManager<StdRegions::StdHexExp>
-                        ::AllocateSharedPtr(exp->GetBasis(0)->GetBasisKey(),
-                                            exp->GetBasis(1)->GetBasisKey(),
-                                            exp->GetBasis(2)->GetBasisKey());
-                    break;
-            default:
-                ASSERTL0(false,"Shape type not setup");
-                break;
-            }
-
-            return stdExp;
         }
 
         /**

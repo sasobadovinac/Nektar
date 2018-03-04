@@ -4,7 +4,6 @@ ADD_UTILITIES_EXECUTABLE(FieldConvert
 #ADD_NEKTAR_TEST(chan3D_tec)  # This test is covered in bfs_tec
 #ADD_NEKTAR_TEST(chan3D_vtu)  # This does not currently work -- hash metric
 #ADD_NEKTAR_TEST(chan3D_vort) # This is covered by bfs_vort
-#ADD_NEKTAR_TEST(chan3D_pts)  # This does not currently work -- hash metric
 
 ADD_NEKTAR_TEST(chan3D_tec_n10)
 ADD_NEKTAR_TEST(chan3D_interppointsplane)
@@ -16,13 +15,14 @@ ADD_NEKTAR_TEST(bfs_tec_rng)
 ADD_NEKTAR_TEST(bfs_vort)
 ADD_NEKTAR_TEST(bfs_vort_rng)
 ADD_NEKTAR_TEST(pointdatatofld)
-# ADD_NEKTAR_TEST(chan3D_pts)
+ADD_NEKTAR_TEST(chan3D_csv)
+ADD_NEKTAR_TEST(chan3D_pts)
 ADD_NEKTAR_TEST(chan3DH1D_meanmode)
 ADD_NEKTAR_TEST(chan3DH1D_plane)
 ADD_NEKTAR_TEST(chan3DH1D_stretch)
+ADD_NEKTAR_TEST(chan3D_modp)
 ADD_NEKTAR_TEST(chan3D_probe)
 ADD_NEKTAR_TEST(cube_prismhex)
-# ADD_NEKTAR_TEST(outflow_pointdatatofld) # need to redefine outflow.pts since GetOffsetElmtId
 ADD_NEKTAR_TEST(cube_prismhex_range)
 ADD_NEKTAR_TEST(chan3D_equispacedoutput)
 ADD_NEKTAR_TEST(chan3D_isocontour)
@@ -31,6 +31,8 @@ ADD_NEKTAR_TEST(naca0012_bnd_equispacedoutput)
 ADD_NEKTAR_TEST(smallmesh_isocontour)
 ADD_NEKTAR_TEST(kovas2)
 ADD_NEKTAR_TEST(chan3D_interppointdatatofld)
+ADD_NEKTAR_TEST(chan3D_ptsTocsv)
+ADD_NEKTAR_TEST(chan3D_csvTopts)
 
 IF (NEKTAR_USE_MPI)
     ADD_NEKTAR_TEST(chan3D_tec_par)

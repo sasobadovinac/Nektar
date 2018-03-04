@@ -255,6 +255,7 @@ namespace Nektar
                 const FlagList &flags,
                 const StdRegions::ConstFactorMap &factors,
                 const StdRegions::VarCoeffMap &varcoeff,
+                const MultiRegions::VarFactorsMap &varfactors,
                 const Array<OneD, const NekDouble> &dirForcing,
                 const bool PhysSpaceForcing)
         {
@@ -293,7 +294,7 @@ namespace Nektar
             new_factors = factors;
             NekDouble lambda = new_factors[StdRegions::eFactorLambda];
 
-            StdRegions::VarCoeffMap varcoeff2 = varcoeff;
+            StdRegions::VarCoeffMap varcoeff2 = varfactors;
 
             for(n = 0; n < m_planes.num_elements(); ++n)
             {

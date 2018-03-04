@@ -671,6 +671,21 @@ but the basic usage is:
 where type can be \texttt{hyperelastic}, \texttt{linearelastic},
 \texttt{winslow} or \texttt{roca}.
 
+\subsection{Mesh projection}
+This module can take any linear mesh, providing that it is a close
+representation of the CAD and project the boundary of the mesh onto the CAD.
+This will curve the surface of the mesh. The method has a number of failsafes
+ensuring that even bad CAD or poor linear meshes should be able to be curved to
+some degree. If the method encounters an issue, such as the linear mesh being a
+large distance from the CAD, it will simply leave that element straight sided. A
+well made CAD model and accurate linear mesh should be curved with little issue.
+
+The module needs to be informed of the CAD file to project the mesh to and the
+order at which to curve the surface:
+\begin{lstlisting}[style=BashInputStyle]
+  NekMesh -m projectcad:file=cadfile.step:order=x inital.xml optimised.xml
+\end{lstlisting}
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -938,10 +953,20 @@ range of geometrical features.
 For a full description of the GEO format the user should refer to Gmsh's
 documentation. The following commands are currently supported:
 \begin{itemize}
-  \item \inltt{//} (comments)
+  \item \inltt{//} (i.e. comments)
   \item \inltt{Point}
   \item \inltt{Line}
-  \item \inltt{Spline}
+  \item \inltt{Spline} (through points)
+  \item \inltt{BSpline} (i.e. a B\'{e}zier curve)
+  \item \inltt{Ellipse} (arc): as defined in Gmsh's OpenCASCADE kernel, the first
+    point defines the start of the arc, the second point the centre and the fourth
+    point the end. The third point is not used. The start point along with the centre
+    point form the major axis and the minor axis is then computed so that the end
+    point falls onto the arc. The major axis must always be greater or equal to the
+    minor axis.
+  \item \inltt{Circle} (arc): the circle is a special case of the ellipse where the
+    third point is skipped. The distances between the start and end points and the
+    centre point must be equal or an error will be thrown.
   \item \inltt{Line Loop}
   \item \inltt{Plane Surface}
 \end{itemize}
@@ -950,7 +975,7 @@ At the present time, NekMesh does not support the full scripting capabilities of
 GEO format. The used GEO files should be a straightforward succession of entity
 creations (see list above). This should however allow for the creation of quite
 a wide range of 2D geometries by transformation of arbitrary curves into generic
-splines.
+splines and arcs.
 
 
 %%% Local Variables:

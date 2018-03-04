@@ -34,12 +34,12 @@
 //
 ////////////////////////////////////////////////////////////////////////////////
 
+#include <FieldUtils/Interpolator.h>
 #include <SolverUtils/Core/SessionFunction.h>
 
 #include <LibUtilities/BasicUtils/VmathArray.hpp>
 
 #include <boost/format.hpp>
-#include <boost/function.hpp>
 
 using namespace std;
 
@@ -178,7 +178,8 @@ void SessionFunction::Evaluate(std::string pFieldName,
         std::string filename =
             m_session->GetFunctionFilename(m_name, pFieldName, domain);
 
-        if (boost::filesystem::path(filename).extension() == ".pts")
+        if (boost::filesystem::path(filename).extension() == ".pts" ||
+            boost::filesystem::path(filename).extension() == ".csv")
         {
             EvaluatePts(pFieldName, pArray, pTime, domain);
         }
@@ -186,6 +187,10 @@ void SessionFunction::Evaluate(std::string pFieldName,
         {
             EvaluateFld(pFieldName, pArray, pTime, domain);
         }
+    }
+    else
+    {
+        ASSERTL0(false, "unknown eFunctionType");
     }
 
     if (m_toCache)
@@ -216,11 +221,15 @@ std::string SessionFunction::Describe(std::string pFieldName, const int domain)
         retVal = ffunc->GetExpression();
     }
     else if (vType == LibUtilities::eFunctionTypeFile ||
-             LibUtilities::eFunctionTypeTransientFile)
+             vType == LibUtilities::eFunctionTypeTransientFile)
     {
         std::string filename =
             m_session->GetFunctionFilename(m_name, pFieldName, domain);
         retVal = "from file " + filename;
+    }
+    else
+    {
+        ASSERTL0(false, "unknown eFunctionType");
     }
 
     return retVal;
@@ -425,8 +434,21 @@ void SessionFunction::EvaluatePts(string pFieldName,
         m_session->GetFunctionFilename(m_name, pFieldName, domain);
 
     LibUtilities::PtsFieldSharedPtr inPts;
-    LibUtilities::PtsIO ptsIO(m_session->GetComm());
-    ptsIO.Import(filename, inPts);
+    if (boost::filesystem::path(filename).extension() == ".pts")
+    {
+        LibUtilities::PtsIO ptsIO(m_session->GetComm());
+        ptsIO.Import(filename, inPts);
+    }
+    else if (boost::filesystem::path(filename).extension() == ".csv")
+    {
+        LibUtilities::CsvIO csvIO(m_session->GetComm());
+        csvIO.Import(filename, inPts);
+    }
+    else
+    {
+        ASSERTL1(false, "Unsupported file type");
+    }
+
 
     Array<OneD, Array<OneD, NekDouble> > pts(inPts->GetDim() +
             inPts->GetNFields());
@@ -485,7 +507,7 @@ void SessionFunction::EvaluatePts(string pFieldName,
     vector<string> fieldNames = outPts->GetFieldNames();
     for (fieldInd = 0; fieldInd < fieldNames.size(); ++fieldInd)
     {
-        if (outPts->GetFieldName(fieldInd) == pFieldName)
+        if (outPts->GetFieldName(fieldInd) == fileVar)
         {
             break;
         }

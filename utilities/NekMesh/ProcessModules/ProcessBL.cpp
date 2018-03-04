@@ -35,7 +35,7 @@
 
 #include <string>
 
-#include <LibUtilities/BasicUtils/ParseUtils.hpp>
+#include <LibUtilities/BasicUtils/ParseUtils.h>
 #include <LibUtilities/BasicUtils/SharedArray.hpp>
 #include <LibUtilities/Foundations/BLPoints.h>
 #include <LibUtilities/Foundations/ManagerAccess.h>
@@ -197,7 +197,7 @@ void ProcessBL::BoundaryLayer2D()
     if (surf.size() > 0)
     {
         vector<unsigned int> surfs;
-        ParseUtils::GenerateSeqVector(surf.c_str(), surfs);
+        ParseUtils::GenerateVector(surf, surfs);
         sort(surfs.begin(), surfs.end());
 
         // If surface is defined, process list of elements to find those
@@ -339,9 +339,9 @@ void ProcessBL::BoundaryLayer2D()
         }
 
         // Grab co-ordinates.
-        Array<OneD, NekDouble> x(nq*(nl+1));
-        Array<OneD, NekDouble> y(nq*(nl+1));
-        Array<OneD, NekDouble> z(nq*(nl+1));
+        Array<OneD, NekDouble> x(nq*(nl+1), 0.0);
+        Array<OneD, NekDouble> y(nq*(nl+1), 0.0);
+        Array<OneD, NekDouble> z(nq*(nl+1), 0.0);
         q->GetCoords(x,y,z);
 
         vector<vector<NodeSharedPtr> > edgeNodes(2);
@@ -729,7 +729,7 @@ void ProcessBL::BoundaryLayer3D()
     if (surf.size() > 0)
     {
         vector<unsigned int> surfs;
-        ParseUtils::GenerateSeqVector(surf.c_str(), surfs);
+        ParseUtils::GenerateVector(surf, surfs);
         sort(surfs.begin(), surfs.end());
 
         // If surface is defined, process list of elements to find those

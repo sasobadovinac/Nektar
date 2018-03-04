@@ -44,7 +44,6 @@
 
 #include <LibUtilities/BasicUtils/SharedArray.hpp>
 #include <LibUtilities/BasicUtils/Timer.h>
-#include <LibUtilities/BasicUtils/ParseUtils.hpp>
 #include <LibUtilities/BasicUtils/Progressbar.hpp>
 #include <boost/math/special_functions/fpclassify.hpp>
 
@@ -83,11 +82,11 @@ ProcessIsoContour::ProcessIsoContour(FieldSharedPtr f) :
     m_config["fieldvalue"]         = ConfigOption(false, "NotSet",
                                         "field value to extract");
 
-    m_config["globalcondense"]     = ConfigOption(true, "NotSet",
+    m_config["globalcondense"]     = ConfigOption(true, "0",
                                         "Globally condense contour to unique "
                                         "values");
 
-    m_config["smooth"]             = ConfigOption(true, "NotSet",
+    m_config["smooth"]             = ConfigOption(true, "0",
                                         "Smooth isocontour (might require "
                                                   "globalcondense)");
 
@@ -198,8 +197,8 @@ void ProcessIsoContour::Process(po::variables_map &vm)
     }
 
     // Process isocontour
-    bool smoothing      = m_config["smooth"].m_beenSet;
-    bool globalcondense = m_config["globalcondense"].m_beenSet;
+    bool smoothing      = m_config["smooth"].as<bool>();
+    bool globalcondense = m_config["globalcondense"].as<bool>();
     if(globalcondense)
     {
         if(verbose)
@@ -406,6 +405,7 @@ vector<IsoSharedPtr> ProcessIsoContour::ExtractContour(
 
     vector<Array<OneD, int> > ptsConn;
     m_f->m_fieldPts->GetConnectivity(ptsConn);
+    
     for(int zone = 0; zone < ptsConn.size(); ++zone)
     {
         IsoSharedPtr iso;
@@ -529,13 +529,18 @@ vector<IsoSharedPtr> ProcessIsoContour::ExtractContour(
                 }
             }
         }
-        iso->SetNTris(n);
+        
+        if(n)
+        {   
+            iso->SetNTris(n);
 
-        // condense the information in this elemental extraction.
-        iso->Condense();
-        returnval.push_back(iso);
+            // condense the information in this elemental extraction.
+            iso->Condense();
+        
+            returnval.push_back(iso);
+        }
     }
-
+    
     return returnval;
 }
 
@@ -869,7 +874,7 @@ void Iso::GlobalCondense(vector<IsoSharedPtr> &iso, bool verbose)
             for(id1 = 0; id1 < result.size(); ++id1)
             {
                 NekDouble dist = bg::distance(queryPoint, result[id1].first);
-                if(dist*dist<SQ_PNT_TOL) // same point
+                if(dist*dist < NekConstants::kNekZeroTol) // same point
                 {
                     id2 = result[id1].second;
                     samept.insert(id2);
@@ -951,14 +956,14 @@ void Iso::GlobalCondense(vector<IsoSharedPtr> &iso, bool verbose)
 bool operator == (const IsoVertex& x, const IsoVertex& y)
 {
     return ((x.m_x-y.m_x)*(x.m_x-y.m_x) + (x.m_y-y.m_y)*(x.m_y-y.m_y) +
-            (x.m_z-y.m_z)*(x.m_z-y.m_z) < SQ_PNT_TOL)? true:false;
+            (x.m_z-y.m_z)*(x.m_z-y.m_z) < NekConstants::kNekZeroTol)? true:false;
 }
 
 // define != if point is outside 1e-8
 bool operator != (const IsoVertex& x, const IsoVertex& y)
 {
     return ((x.m_x-y.m_x)*(x.m_x-y.m_x) + (x.m_y-y.m_y)*(x.m_y-y.m_y) +
-            (x.m_z-y.m_z)*(x.m_z-y.m_z) < SQ_PNT_TOL)? 0:1;
+            (x.m_z-y.m_z)*(x.m_z-y.m_z) < NekConstants::kNekZeroTol)? 0:1;
 }
 
 void Iso::Smooth(int n_iter, NekDouble lambda, NekDouble mu)

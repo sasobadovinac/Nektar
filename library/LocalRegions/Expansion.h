@@ -85,8 +85,7 @@ namespace Nektar
 
                 LOCAL_REGIONS_EXPORT void Reset();
 
-                LOCAL_REGIONS_EXPORT virtual const
-                    SpatialDomains::GeomFactorsSharedPtr& v_GetMetricInfo() const;
+                LOCAL_REGIONS_EXPORT const SpatialDomains::GeomFactorsSharedPtr& GetMetricInfo() const;
 
                 LOCAL_REGIONS_EXPORT DNekMatSharedPtr BuildTransformationMatrix(
                     const DNekScalMatSharedPtr &r_bnd, 
@@ -122,6 +121,8 @@ namespace Nektar
                           Array<OneD, ExpansionSharedPtr>      &EdgeExp,
                           Array<OneD, Array<OneD, NekDouble> > &coeffs,
                           Array<OneD,             NekDouble>   &outarray);
+                LOCAL_REGIONS_EXPORT NekDouble VectorFlux(
+                    const Array<OneD, Array<OneD, NekDouble > > &vec);
 
             protected:
                 SpatialDomains::GeometrySharedPtr  m_geom;
@@ -177,6 +178,8 @@ namespace Nektar
                           Array<OneD, ExpansionSharedPtr>      &EdgeExp,
                           Array<OneD, Array<OneD, NekDouble> > &coeffs,
                           Array<OneD,             NekDouble>   &outarray);
+                virtual NekDouble v_VectorFlux(
+                    const Array<OneD, Array<OneD, NekDouble > > &vec);
 
             private:
 

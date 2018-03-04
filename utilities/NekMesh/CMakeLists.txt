@@ -45,10 +45,7 @@ ENDIF (NEKTAR_USE_VTK)
 IF (NEKTAR_USE_MESHGEN)
     SET(NekMeshSources ${NekMeshSources}
             ProcessModules/ProcessVarOpti/NodeOptiCAD.cpp
-            ProcessModules/ProcessVarOpti/ProcessVarOpti.cpp
-            ProcessModules/ProcessVarOpti/PreProcessing.cpp
-            ProcessModules/ProcessVarOpti/NodeOpti.cpp
-            ProcessModules/ProcessVarOpti/ElUtil.cpp
+            ProcessModules/ProcessProjectCAD.cpp
             InputModules/InputMCF.cpp)
 ENDIF (NEKTAR_USE_MESHGEN)
 
@@ -106,6 +103,7 @@ IF(NEKTAR_USE_MESHGEN)
     ADD_NEKTAR_TEST(MeshGen/2d-cad)
     ADD_NEKTAR_TEST(MeshGen/2d-naca)
     ADD_NEKTAR_TEST(MeshGen/geo)
+    ADD_NEKTAR_TEST(MeshGen/t106c)
     ADD_NEKTAR_TEST(MeshGen/t106step)
     ADD_NEKTAR_TEST(MeshGen/rev LENGTHY)
 ENDIF()
