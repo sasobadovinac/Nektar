@@ -72,6 +72,7 @@ FilterParticlesTracking::FilterParticlesTracking(
     Filter(pSession)
 {
     cout<<"Tracking Particles..."<<endl;
+    
     // Read parameters
     ParamMap::const_iterator it;
 
@@ -728,15 +729,13 @@ void FilterParticlesTracking::CalculateForce(Particle &particle)
         Re += pow(particle.m_fluidVelocity[i]
                   -particle.m_particleVelocity[0][i],2.0);
     }
-    Re = sqrt(Re)*m_diameter/m_kinvis;
-    
-    
+    Re = sqrt(Re) * m_diameter / m_kinvis;
 
-    //Calcule Drag coeficient Crowe et al. (1998), Lain et al. (2009) 
-    if (Re < 0.01)
+    //Calcule Drag coeficient: Crowe et al. (1998), Lain et al. (2009) 
+    if (Re < 1e-5)
     {
-        Cd = 2400.0;
-//        Re = 0.01;
+        Re = 1e-5;
+        Cd = 24.0 / Re;
     }
     else if (Re < 0.5  )
     {
@@ -753,6 +752,7 @@ void FilterParticlesTracking::CalculateForce(Particle &particle)
     //Evaluate the drag force
     Fd = (3.0 * m_kinvis * Cd * Re) / (4.0 * m_SG * pow(m_diameter,2.0));
     
+    
     for (int i = 0; i < particle.m_dim; ++i)
     {
         particle.m_force[0][i] = Fd * ( particle.m_fluidVelocity[i]
@@ -762,10 +762,10 @@ void FilterParticlesTracking::CalculateForce(Particle &particle)
     //Add gravity and buoyancy effects on -y direction
         particle.m_force[0][1] += m_gravity * (1.0 - 1.0 / m_SG); 
         
-    cout<<"Re "<<Re<<", "<<"Cd "<<Cd<<", "<<endl<<
-    "Up: "<<particle.m_particleVelocity[0][0]<<", "<<
-    particle.m_particleVelocity[0][1]<<", "<<endl<<
-    "Fd "<<particle.m_force[0][0]<<", "<<particle.m_force[0][1]<<endl<<endl;
+    //cout<<"Re "<<Re<<", "<<"Cd "<<Cd<<", "<<endl<<
+    //"Up: "<<particle.m_particleVelocity[0][0]<<", "<<
+    //particle.m_particleVelocity[0][1]<<", "<<endl<<
+    //"Fd "<<particle.m_force[0][0]<<", "<<particle.m_force[0][1]<<endl<<endl;
 }
 
 /**
@@ -866,7 +866,7 @@ while( particle.m_eId == -1 && particle.m_used == true)
     {   
         cout << "Particle " << particle.m_id << " collisioned."<<endl;
         
-        //// Collision point cordinates
+        // Collision point cordinates
         Array<OneD, NekDouble> collPnt(3,0.0);
         NekDouble absVel = 0.0;
 
@@ -877,7 +877,6 @@ while( particle.m_eId == -1 && particle.m_used == true)
         }
         absVel = sqrt(absVel);
         
-        //cout<<"Punto collision: {";
         for (int i = 0; i < particle.m_dim; ++i)
         {
             collPnt[i] = particle.m_oldCoord[i]
