@@ -106,7 +106,7 @@ As an example, consider:
       <PARAM NAME="OutputFile">MyAverageField</PARAM>
       <PARAM NAME="RestartFile">MyRestartAvg.fld</PARAM>
       <PARAM NAME="OutputFrequency">100</PARAM>
-      <PARAM NAME="SampleFrequency"> 10 </PARAM>		
+      <PARAM NAME="SampleFrequency"> 10 </PARAM>        
   </FILTER>
 \end{lstlisting}
 
@@ -440,7 +440,7 @@ An example is given below:
   <FILTER TYPE="AeroForces">
       <PARAM NAME="OutputFile">DragLift.frc</PARAM>
       <PARAM NAME="OutputFrequency">10</PARAM>
-      <PARAM NAME="Boundary"> B[1,2] </PARAM>		
+      <PARAM NAME="Boundary"> B[1,2] </PARAM>       
   </FILTER>
 \end{lstlisting}
 
@@ -489,4 +489,65 @@ To enable the filter, add the following to the \inltt{FILTERS} tag:
   <FILTER TYPE="Energy">
       <PARAM NAME="OutputFrequency"> 1 </PARAM>
   </FILTER>
+\end{lstlisting}
+
+\subsection{Particle Tracking}
+
+\begin{notebox}
+  This filter is only supported for the \textbf{serial} incompressible 
+  Navier-Stokes solvers in two and three dimensions.
+\end{notebox}
+
+This filter is use to solve transport of particles by an established 
+velocity field. The implementation evaluate the forces (drag, gravity, 
+and buoyancy.) over the particles and integrate their positions using an ODE
+solver in time method. 
+
+The following parameters are supported:
+
+\begin{center}
+  \begin{tabularx}{0.99\textwidth}{lllX}
+    \toprule
+    \textbf{Option name} & \textbf{Required} & \textbf{Default} & 
+    \textbf{Description} \\    
+    \midrule
+%    \inltt{OutputFile}      & \xmark   & \texttt{session} &
+%    Output file with the particle information. The extension \textit{.csv}
+%     is used for the particles, and \textit{.cll.csv} for the collision.\\
+    \inltt{DeltaT} & \cmark   &  &
+    Delta time used to the integration of particles trajectories. 
+    For solid particles it is precise check the particle time reaction.\\
+    \inltt{NumSteps} & \cmark   &  &
+    Number of steps to evaluate.\\
+    \inltt{TimeIntegrationOrder} & \xmark   & 1  &
+    Determine the time integration order, must be between 1 and 4.\\
+    \inltt{Diameter} & \xmark   &  0 &
+    Diameter of the particles, if it is not presence, it is assumed fluid particle.\\
+    \inltt{SpecifigGravity} & \xmark   & 1 &
+    Specifig Gravity of the particles relative to the fluid.\\
+    \inltt{Gravity} & \xmark   &  0 &
+    Gravity magnitud applied on the "y" direction.   \\
+    \inltt{WallBoundary} & \cmark   &  &
+    Boundary to evaluate the collision. \\
+    \inltt{SeedPoints} & \cmark   &  &
+    Particles seed points.  \\
+    \bottomrule
+  \end{tabularx}
+\end{center}
+
+As an example, consider:
+
+\begin{lstlisting}[style=XMLStyle,gobble=2]
+  <FILTER TYPE="ParticlesTracking">
+        <PARAM NAME="DeltaT" >  0.001</PARAM>
+        <PARAM NAME="NumSteps"> 100000</PARAM>
+        <PARAM NAME="TimeIntegrationOrder">1</PARAM>
+        <PARAM NAME="Diameter"> 5.0e-4 </PARAM>
+        <PARAM NAME="SpecifigGravity"> 2 </PARAM>
+         <PARAM NAME="Gravity"> -10 </PARAM>
+        <PARAM NAME="WallBoundary"> B[10] </PARAM> 
+        <PARAM NAME="SeedPoints"> 
+         0.5 1 0.0 
+        </PARAM>
+  </FILTER>    
 \end{lstlisting}

@@ -1,0 +1,269 @@
+\BOOKMARK [0][-]{chapter*.1}{Introduction}{}% 1
+\BOOKMARK [-1][-]{part.1}{Getting Started}{}% 2
+\BOOKMARK [0][-]{chapter.1}{Installation}{part.1}% 3
+\BOOKMARK [1][-]{section.1.1}{Installing Debian/Ubuntu Packages}{chapter.1}% 4
+\BOOKMARK [1][-]{section.1.2}{Installing Redhat/Fedora Packages}{chapter.1}% 5
+\BOOKMARK [1][-]{section.1.3}{Installing from Source}{chapter.1}% 6
+\BOOKMARK [2][-]{subsection.1.3.1}{Obtaining the source code}{section.1.3}% 7
+\BOOKMARK [2][-]{subsection.1.3.2}{Linux}{section.1.3}% 8
+\BOOKMARK [2][-]{subsection.1.3.3}{OS X}{section.1.3}% 9
+\BOOKMARK [2][-]{subsection.1.3.4}{Windows}{section.1.3}% 10
+\BOOKMARK [2][-]{subsection.1.3.5}{CMake Option Reference}{section.1.3}% 11
+\BOOKMARK [1][-]{section.1.4}{Compiling Documentation}{chapter.1}% 12
+\BOOKMARK [2][-]{subsection.1.4.1}{Dependencies}{section.1.4}% 13
+\BOOKMARK [2][-]{subsection.1.4.2}{Compiling the User Guide}{section.1.4}% 14
+\BOOKMARK [2][-]{subsection.1.4.3}{Compiling the code documentation}{section.1.4}% 15
+\BOOKMARK [1][-]{section.1.5}{Compiling Tutorials}{chapter.1}% 16
+\BOOKMARK [0][-]{chapter.2}{Mathematical Formulation}{part.1}% 17
+\BOOKMARK [1][-]{section.2.1}{Background}{chapter.2}% 18
+\BOOKMARK [1][-]{section.2.2}{Methods overview}{chapter.2}% 19
+\BOOKMARK [2][-]{subsection.2.2.1}{The finite element method \(FEM\)}{section.2.2}% 20
+\BOOKMARK [2][-]{subsection.2.2.2}{High-order finite element methods}{section.2.2}% 21
+\BOOKMARK [2][-]{subsection.2.2.3}{The Galerkin formulation}{section.2.2}% 22
+\BOOKMARK [0][-]{chapter.3}{XML Session File}{part.1}% 23
+\BOOKMARK [1][-]{section.3.1}{Geometry}{chapter.3}% 24
+\BOOKMARK [2][-]{subsection.3.1.1}{Vertices}{section.3.1}% 25
+\BOOKMARK [2][-]{subsection.3.1.2}{Edges}{section.3.1}% 26
+\BOOKMARK [2][-]{subsection.3.1.3}{Faces}{section.3.1}% 27
+\BOOKMARK [2][-]{subsection.3.1.4}{Element}{section.3.1}% 28
+\BOOKMARK [2][-]{subsection.3.1.5}{Curved Edges and Faces}{section.3.1}% 29
+\BOOKMARK [2][-]{subsection.3.1.6}{Composites}{section.3.1}% 30
+\BOOKMARK [2][-]{subsection.3.1.7}{Domain}{section.3.1}% 31
+\BOOKMARK [1][-]{section.3.2}{Expansions}{chapter.3}% 32
+\BOOKMARK [1][-]{section.3.3}{Conditions}{chapter.3}% 33
+\BOOKMARK [2][-]{subsection.3.3.1}{Parameters}{section.3.3}% 34
+\BOOKMARK [2][-]{subsection.3.3.2}{Solver Information}{section.3.3}% 35
+\BOOKMARK [2][-]{subsection.3.3.3}{Variables}{section.3.3}% 36
+\BOOKMARK [2][-]{subsection.3.3.4}{Global System Solution Information}{section.3.3}% 37
+\BOOKMARK [2][-]{subsection.3.3.5}{Boundary Regions and Conditions}{section.3.3}% 38
+\BOOKMARK [2][-]{subsection.3.3.6}{Functions}{section.3.3}% 39
+\BOOKMARK [2][-]{subsection.3.3.7}{Quasi-3D approach}{section.3.3}% 40
+\BOOKMARK [1][-]{section.3.4}{Filters}{chapter.3}% 41
+\BOOKMARK [2][-]{subsection.3.4.1}{FieldConvert checkpoints}{section.3.4}% 42
+\BOOKMARK [2][-]{subsection.3.4.2}{Time-averaged fields}{section.3.4}% 43
+\BOOKMARK [2][-]{subsection.3.4.3}{Moving average of fields}{section.3.4}% 44
+\BOOKMARK [2][-]{subsection.3.4.4}{Reynolds stresses}{section.3.4}% 45
+\BOOKMARK [2][-]{subsection.3.4.5}{Checkpoint fields}{section.3.4}% 46
+\BOOKMARK [2][-]{subsection.3.4.6}{History points}{section.3.4}% 47
+\BOOKMARK [2][-]{subsection.3.4.7}{ThresholdMax}{section.3.4}% 48
+\BOOKMARK [2][-]{subsection.3.4.8}{ThresholdMin value}{section.3.4}% 49
+\BOOKMARK [2][-]{subsection.3.4.9}{One-dimensional energy}{section.3.4}% 50
+\BOOKMARK [2][-]{subsection.3.4.10}{Modal energy}{section.3.4}% 51
+\BOOKMARK [2][-]{subsection.3.4.11}{Aerodynamic forces}{section.3.4}% 52
+\BOOKMARK [2][-]{subsection.3.4.12}{Kinetic energy and enstrophy}{section.3.4}% 53
+\BOOKMARK [2][-]{subsection.3.4.13}{Particle Tracking}{section.3.4}% 54
+\BOOKMARK [1][-]{section.3.5}{Forcing}{chapter.3}% 55
+\BOOKMARK [2][-]{subsection.3.5.1}{Absorption}{section.3.5}% 56
+\BOOKMARK [2][-]{subsection.3.5.2}{Body}{section.3.5}% 57
+\BOOKMARK [2][-]{subsection.3.5.3}{Programmatic}{section.3.5}% 58
+\BOOKMARK [2][-]{subsection.3.5.4}{Noise}{section.3.5}% 59
+\BOOKMARK [1][-]{section.3.6}{Analytic Expressions}{chapter.3}% 60
+\BOOKMARK [2][-]{subsection.3.6.1}{Variables and coordinate systems}{section.3.6}% 61
+\BOOKMARK [2][-]{subsection.3.6.2}{Performance considerations}{section.3.6}% 62
+\BOOKMARK [-1][-]{part.2}{Preprocessing \046 Postprocessing}{}% 63
+\BOOKMARK [0][-]{chapter.4}{NekMesh}{part.2}% 64
+\BOOKMARK [1][-]{section.4.1}{Exporting a mesh from Gmsh}{chapter.4}% 65
+\BOOKMARK [1][-]{section.4.2}{Defining physical surfaces and volumes}{chapter.4}% 66
+\BOOKMARK [1][-]{section.4.3}{Converting the MSH to Nektar++ format}{chapter.4}% 67
+\BOOKMARK [1][-]{section.4.4}{NekMesh modules}{chapter.4}% 68
+\BOOKMARK [2][-]{subsection.4.4.1}{Input modules}{section.4.4}% 69
+\BOOKMARK [2][-]{subsection.4.4.2}{Output modules}{section.4.4}% 70
+\BOOKMARK [2][-]{subsection.4.4.3}{Extract surfaces from a mesh}{section.4.4}% 71
+\BOOKMARK [2][-]{subsection.4.4.4}{Negative Jacobian detection}{section.4.4}% 72
+\BOOKMARK [2][-]{subsection.4.4.5}{Spherigon patches}{section.4.4}% 73
+\BOOKMARK [2][-]{subsection.4.4.6}{Periodic boundary condition alignment}{section.4.4}% 74
+\BOOKMARK [2][-]{subsection.4.4.7}{Boundary layer splitting}{section.4.4}% 75
+\BOOKMARK [2][-]{subsection.4.4.8}{High-order cylinder generation}{section.4.4}% 76
+\BOOKMARK [2][-]{subsection.4.4.9}{Linearisation}{section.4.4}% 77
+\BOOKMARK [2][-]{subsection.4.4.10}{Extracting interface between tetrahedra and prismatic elements}{section.4.4}% 78
+\BOOKMARK [2][-]{subsection.4.4.11}{Boundary identification}{section.4.4}% 79
+\BOOKMARK [2][-]{subsection.4.4.12}{Scalar function curvature}{section.4.4}% 80
+\BOOKMARK [2][-]{subsection.4.4.13}{Link Checking}{section.4.4}% 81
+\BOOKMARK [2][-]{subsection.4.4.14}{2D mesh extrusion}{section.4.4}% 82
+\BOOKMARK [2][-]{subsection.4.4.15}{Variational Optimisation}{section.4.4}% 83
+\BOOKMARK [2][-]{subsection.4.4.16}{Mesh projection}{section.4.4}% 84
+\BOOKMARK [1][-]{section.4.5}{Mesh generation}{chapter.4}% 85
+\BOOKMARK [2][-]{subsection.4.5.1}{Methodology}{section.4.5}% 86
+\BOOKMARK [2][-]{subsection.4.5.2}{Mesh generation manual}{section.4.5}% 87
+\BOOKMARK [0][-]{chapter.5}{FieldConvert}{part.2}% 88
+\BOOKMARK [1][-]{section.5.1}{Basic usage}{chapter.5}% 89
+\BOOKMARK [2][-]{subsection.5.1.1}{Input formats}{section.5.1}% 90
+\BOOKMARK [1][-]{section.5.2}{Convert .fld / .chk files into Paraview, VisIt or Tecplot format}{chapter.5}% 91
+\BOOKMARK [1][-]{section.5.3}{Convert field files between XML and HDF5 format}{chapter.5}% 92
+\BOOKMARK [1][-]{section.5.4}{Range option -r}{chapter.5}% 93
+\BOOKMARK [1][-]{section.5.5}{FieldConvert modules -m}{chapter.5}% 94
+\BOOKMARK [2][-]{subsection.5.5.1}{Smooth the data: C0Projection module}{section.5.5}% 95
+\BOOKMARK [2][-]{subsection.5.5.2}{Calculate Q-Criterion: QCriterion module}{section.5.5}% 96
+\BOOKMARK [2][-]{subsection.5.5.3}{Add composite ID: addcompositeid module}{section.5.5}% 97
+\BOOKMARK [2][-]{subsection.5.5.4}{Sum two .fld files: addFld module}{section.5.5}% 98
+\BOOKMARK [2][-]{subsection.5.5.5}{Combine two .fld files containing time averages: combineAvg module}{section.5.5}% 99
+\BOOKMARK [2][-]{subsection.5.5.6}{Concatenate two files: concatenate module}{section.5.5}% 100
+\BOOKMARK [2][-]{subsection.5.5.7}{Equi-spaced output of data: equispacedoutput module}{section.5.5}% 101
+\BOOKMARK [2][-]{subsection.5.5.8}{Extract a boundary region: extract module}{section.5.5}% 102
+\BOOKMARK [2][-]{subsection.5.5.9}{Compute the gradient of a field: gradient module}{section.5.5}% 103
+\BOOKMARK [2][-]{subsection.5.5.10}{Extract a plane from 3DH1D expansion: homplane module}{section.5.5}% 104
+\BOOKMARK [2][-]{subsection.5.5.11}{Stretch a 3DH1D expansion: homstretch module}{section.5.5}% 105
+\BOOKMARK [2][-]{subsection.5.5.12}{Inner Product of a single or series of fields with respect to a single or series of fields: innerproduct module}{section.5.5}% 106
+\BOOKMARK [2][-]{subsection.5.5.13}{Interpolate one field to another: interpfield module}{section.5.5}% 107
+\BOOKMARK [2][-]{subsection.5.5.14}{Interpolate scattered point data to a field: interppointdatatofld module}{section.5.5}% 108
+\BOOKMARK [2][-]{subsection.5.5.15}{Interpolate a field to a series of points: interppoints module}{section.5.5}% 109
+\BOOKMARK [2][-]{subsection.5.5.16}{Interpolate a set of points to another: interpptstopts module}{section.5.5}% 110
+\BOOKMARK [2][-]{subsection.5.5.17}{Isocontour extraction: iscontour module}{section.5.5}% 111
+\BOOKMARK [2][-]{subsection.5.5.18}{Show high frequency energy of the Jacobian: jacobianenergy module}{section.5.5}% 112
+\BOOKMARK [2][-]{subsection.5.5.19}{Calculate mesh quality: qualitymetric module}{section.5.5}% 113
+\BOOKMARK [2][-]{subsection.5.5.20}{Extract mean mode of 3DH1D expansion: meanmode module}{section.5.5}% 114
+\BOOKMARK [2][-]{subsection.5.5.21}{ Project point data to a field: pointdatatofld module}{section.5.5}% 115
+\BOOKMARK [2][-]{subsection.5.5.22}{Print L2 and LInf norms: printfldnorms module}{section.5.5}% 116
+\BOOKMARK [2][-]{subsection.5.5.23}{Computes the scalar gradient: scalargrad module}{section.5.5}% 117
+\BOOKMARK [2][-]{subsection.5.5.24}{Scale a given .fld: scaleinputfld module}{section.5.5}% 118
+\BOOKMARK [2][-]{subsection.5.5.25}{Time-averaged shear stress metrics: shear module}{section.5.5}% 119
+\BOOKMARK [2][-]{subsection.5.5.26}{Stream function of a 2D incompressible flow: streamfunction module}{section.5.5}% 120
+\BOOKMARK [2][-]{subsection.5.5.27}{Boundary layer height calculation: surfdistance module}{section.5.5}% 121
+\BOOKMARK [2][-]{subsection.5.5.28}{Calculate vorticity: vorticity module}{section.5.5}% 122
+\BOOKMARK [2][-]{subsection.5.5.29}{Computing the wall shear stress: wss module}{section.5.5}% 123
+\BOOKMARK [2][-]{subsection.5.5.30}{Manipulating meshes with FieldConvert}{section.5.5}% 124
+\BOOKMARK [1][-]{section.5.6}{FieldConvert in parallel}{chapter.5}% 125
+\BOOKMARK [1][-]{section.5.7}{Processing large files in serial}{chapter.5}% 126
+\BOOKMARK [2][-]{subsection.5.7.1}{Using the nparts options}{section.5.7}% 127
+\BOOKMARK [2][-]{subsection.5.7.2}{Running in parallel with the \040nparts option}{section.5.7}% 128
+\BOOKMARK [2][-]{subsection.5.7.3}{Using the \040part-only and \040part-only-overlapping options}{section.5.7}% 129
+\BOOKMARK [-1][-]{part.3}{Solver Applications}{}% 130
+\BOOKMARK [0][-]{chapter.6}{Advection-Diffusion-Reaction Solver}{part.3}% 131
+\BOOKMARK [1][-]{section.6.1}{Synopsis}{chapter.6}% 132
+\BOOKMARK [1][-]{section.6.2}{Usage}{chapter.6}% 133
+\BOOKMARK [1][-]{section.6.3}{Session file configuration}{chapter.6}% 134
+\BOOKMARK [2][-]{subsection.6.3.1}{Solver Info}{section.6.3}% 135
+\BOOKMARK [2][-]{subsection.6.3.2}{Parameters}{section.6.3}% 136
+\BOOKMARK [2][-]{subsection.6.3.3}{Functions}{section.6.3}% 137
+\BOOKMARK [1][-]{section.6.4}{Examples}{chapter.6}% 138
+\BOOKMARK [2][-]{subsection.6.4.1}{1D Advection equation}{section.6.4}% 139
+\BOOKMARK [2][-]{subsection.6.4.2}{2D Helmholtz Problem}{section.6.4}% 140
+\BOOKMARK [2][-]{subsection.6.4.3}{Advection dominated mass transport in a pipe}{section.6.4}% 141
+\BOOKMARK [0][-]{chapter.7}{Acoustic Perturbation Equations Solver}{part.3}% 142
+\BOOKMARK [1][-]{section.7.1}{Synopsis}{chapter.7}% 143
+\BOOKMARK [1][-]{section.7.2}{Usage}{chapter.7}% 144
+\BOOKMARK [1][-]{section.7.3}{Session file configuration}{chapter.7}% 145
+\BOOKMARK [2][-]{subsection.7.3.1}{Solver Info}{section.7.3}% 146
+\BOOKMARK [2][-]{subsection.7.3.2}{Parameters}{section.7.3}% 147
+\BOOKMARK [2][-]{subsection.7.3.3}{Functions}{section.7.3}% 148
+\BOOKMARK [1][-]{section.7.4}{Examples}{chapter.7}% 149
+\BOOKMARK [2][-]{subsection.7.4.1}{Aeroacoustic Wave Propagation}{section.7.4}% 150
+\BOOKMARK [0][-]{chapter.8}{Cardiac Electrophysiology Solver}{part.3}% 151
+\BOOKMARK [1][-]{section.8.1}{Synopsis}{chapter.8}% 152
+\BOOKMARK [2][-]{subsection.8.1.1}{Bidomain Model}{section.8.1}% 153
+\BOOKMARK [2][-]{subsection.8.1.2}{Monodomain Model}{section.8.1}% 154
+\BOOKMARK [2][-]{subsection.8.1.3}{Cell Models}{section.8.1}% 155
+\BOOKMARK [1][-]{section.8.2}{Usage}{chapter.8}% 156
+\BOOKMARK [1][-]{section.8.3}{Session file configuration}{chapter.8}% 157
+\BOOKMARK [2][-]{subsection.8.3.1}{Solver Info}{section.8.3}% 158
+\BOOKMARK [2][-]{subsection.8.3.2}{Parameters}{section.8.3}% 159
+\BOOKMARK [2][-]{subsection.8.3.3}{Functions}{section.8.3}% 160
+\BOOKMARK [2][-]{subsection.8.3.4}{Filters}{section.8.3}% 161
+\BOOKMARK [2][-]{subsection.8.3.5}{Stimuli}{section.8.3}% 162
+\BOOKMARK [0][-]{chapter.9}{Compressible Flow Solver}{part.3}% 163
+\BOOKMARK [1][-]{section.9.1}{Synopsis}{chapter.9}% 164
+\BOOKMARK [2][-]{subsection.9.1.1}{Euler equations}{section.9.1}% 165
+\BOOKMARK [2][-]{subsection.9.1.2}{Compressible Navier-Stokes equations}{section.9.1}% 166
+\BOOKMARK [2][-]{subsection.9.1.3}{Numerical discretisation}{section.9.1}% 167
+\BOOKMARK [1][-]{section.9.2}{Usage}{chapter.9}% 168
+\BOOKMARK [1][-]{section.9.3}{Session file configuration}{chapter.9}% 169
+\BOOKMARK [1][-]{section.9.4}{Examples}{chapter.9}% 170
+\BOOKMARK [2][-]{subsection.9.4.1}{Shock capturing}{section.9.4}% 171
+\BOOKMARK [2][-]{subsection.9.4.2}{Variable polynomial order}{section.9.4}% 172
+\BOOKMARK [2][-]{subsection.9.4.3}{De-Aliasing Techniques}{section.9.4}% 173
+\BOOKMARK [0][-]{chapter.10}{Incompressible Navier-Stokes Solver}{part.3}% 174
+\BOOKMARK [1][-]{section.10.1}{Synopsis}{chapter.10}% 175
+\BOOKMARK [2][-]{subsection.10.1.1}{Velocity Correction Scheme}{section.10.1}% 176
+\BOOKMARK [2][-]{subsection.10.1.2}{Direct solver \(coupled approach\)}{section.10.1}% 177
+\BOOKMARK [2][-]{subsection.10.1.3}{Linear Stability Analysis}{section.10.1}% 178
+\BOOKMARK [2][-]{subsection.10.1.4}{Steady-state solver using Selective Frequency Damping}{section.10.1}% 179
+\BOOKMARK [1][-]{section.10.2}{Usage}{chapter.10}% 180
+\BOOKMARK [1][-]{section.10.3}{Session file configuration}{chapter.10}% 181
+\BOOKMARK [2][-]{subsection.10.3.1}{Solver Info}{section.10.3}% 182
+\BOOKMARK [2][-]{subsection.10.3.2}{Parameters}{section.10.3}% 183
+\BOOKMARK [2][-]{subsection.10.3.3}{Womersley Boundary Condition}{section.10.3}% 184
+\BOOKMARK [2][-]{subsection.10.3.4}{Forcing}{section.10.3}% 185
+\BOOKMARK [1][-]{section.10.4}{Stability analysis Session file configuration}{chapter.10}% 186
+\BOOKMARK [2][-]{subsection.10.4.1}{Solver Info}{section.10.4}% 187
+\BOOKMARK [2][-]{subsection.10.4.2}{Parameters}{section.10.4}% 188
+\BOOKMARK [2][-]{subsection.10.4.3}{Functions}{section.10.4}% 189
+\BOOKMARK [1][-]{section.10.5}{Steady-state solver Session file configuration}{chapter.10}% 190
+\BOOKMARK [2][-]{subsection.10.5.1}{Execution of the classical steady-state solver}{section.10.5}% 191
+\BOOKMARK [2][-]{subsection.10.5.2}{Execution of the adaptive steady-state solver}{section.10.5}% 192
+\BOOKMARK [1][-]{section.10.6}{Coordinate transformations Session file configuration}{chapter.10}% 193
+\BOOKMARK [2][-]{subsection.10.6.1}{Solver Info}{section.10.6}% 194
+\BOOKMARK [2][-]{subsection.10.6.2}{Parameters}{section.10.6}% 195
+\BOOKMARK [2][-]{subsection.10.6.3}{Mapping}{section.10.6}% 196
+\BOOKMARK [2][-]{subsection.10.6.4}{Functions}{section.10.6}% 197
+\BOOKMARK [2][-]{subsection.10.6.5}{Boundary conditions}{section.10.6}% 198
+\BOOKMARK [1][-]{section.10.7}{Adaptive polynomial order Session file configuration}{chapter.10}% 199
+\BOOKMARK [2][-]{subsection.10.7.1}{Solver Info}{section.10.7}% 200
+\BOOKMARK [2][-]{subsection.10.7.2}{Parameters}{section.10.7}% 201
+\BOOKMARK [2][-]{subsection.10.7.3}{Functions}{section.10.7}% 202
+\BOOKMARK [2][-]{subsection.10.7.4}{Restarting the simulation}{section.10.7}% 203
+\BOOKMARK [1][-]{section.10.8}{Advecting extra passive scalar fields}{chapter.10}% 204
+\BOOKMARK [1][-]{section.10.9}{Examples}{chapter.10}% 205
+\BOOKMARK [2][-]{subsection.10.9.1}{Kovasznay Flow 2D}{section.10.9}% 206
+\BOOKMARK [2][-]{subsection.10.9.2}{Kovasznay Flow 2D using high-order outflow boundary conditions}{section.10.9}% 207
+\BOOKMARK [2][-]{subsection.10.9.3}{Steady Kovasznay Oseen Flow using the direct solver}{section.10.9}% 208
+\BOOKMARK [2][-]{subsection.10.9.4}{Laminar Channel Flow 2D}{section.10.9}% 209
+\BOOKMARK [2][-]{subsection.10.9.5}{Laminar Channel Flow 3D}{section.10.9}% 210
+\BOOKMARK [2][-]{subsection.10.9.6}{Laminar Channel Flow Quasi-3D}{section.10.9}% 211
+\BOOKMARK [2][-]{subsection.10.9.7}{Turbulent Channel Flow}{section.10.9}% 212
+\BOOKMARK [2][-]{subsection.10.9.8}{Turbulent Pipe Flow}{section.10.9}% 213
+\BOOKMARK [2][-]{subsection.10.9.9}{Aortic Blood Flow}{section.10.9}% 214
+\BOOKMARK [2][-]{subsection.10.9.10}{finite-strip modeling of flow past flexible cables}{section.10.9}% 215
+\BOOKMARK [2][-]{subsection.10.9.11}{2D direct stability analysis of the channel flow}{section.10.9}% 216
+\BOOKMARK [2][-]{subsection.10.9.12}{2D adjoint stability analysis of the channel flow}{section.10.9}% 217
+\BOOKMARK [2][-]{subsection.10.9.13}{2D Transient Growth analysis of a flow past a backward-facing step}{section.10.9}% 218
+\BOOKMARK [2][-]{subsection.10.9.14}{BiGlobal Floquet analysis of a of flow past a cylinder}{section.10.9}% 219
+\BOOKMARK [0][-]{chapter.11}{Linear elasticity solver}{part.3}% 220
+\BOOKMARK [1][-]{section.11.1}{Synopsis}{chapter.11}% 221
+\BOOKMARK [2][-]{subsection.11.1.1}{The linear elasticity equations}{section.11.1}% 222
+\BOOKMARK [1][-]{section.11.2}{Usage}{chapter.11}% 223
+\BOOKMARK [1][-]{section.11.3}{Session file configuration}{chapter.11}% 224
+\BOOKMARK [2][-]{subsection.11.3.1}{Solver Info}{section.11.3}% 225
+\BOOKMARK [2][-]{subsection.11.3.2}{Parameters}{section.11.3}% 226
+\BOOKMARK [1][-]{section.11.4}{Examples}{chapter.11}% 227
+\BOOKMARK [2][-]{subsection.11.4.1}{L-shaped domain}{section.11.4}% 228
+\BOOKMARK [2][-]{subsection.11.4.2}{Boundary layer deformation}{section.11.4}% 229
+\BOOKMARK [0][-]{chapter.12}{Pulse Wave Solver}{part.3}% 230
+\BOOKMARK [1][-]{section.12.1}{Synopsis}{chapter.12}% 231
+\BOOKMARK [1][-]{section.12.2}{Usage}{chapter.12}% 232
+\BOOKMARK [1][-]{section.12.3}{Session file configuration}{chapter.12}% 233
+\BOOKMARK [2][-]{subsection.12.3.1}{Pulse Wave Sovler mesh connectivity}{section.12.3}% 234
+\BOOKMARK [2][-]{subsection.12.3.2}{Session Info}{section.12.3}% 235
+\BOOKMARK [2][-]{subsection.12.3.3}{Parameters}{section.12.3}% 236
+\BOOKMARK [2][-]{subsection.12.3.4}{Boundary conditions}{section.12.3}% 237
+\BOOKMARK [2][-]{subsection.12.3.5}{Functions}{section.12.3}% 238
+\BOOKMARK [1][-]{section.12.4}{Examples}{chapter.12}% 239
+\BOOKMARK [2][-]{subsection.12.4.1}{Human Vascular Network}{section.12.4}% 240
+\BOOKMARK [2][-]{subsection.12.4.2}{Stented Artery}{section.12.4}% 241
+\BOOKMARK [2][-]{subsection.12.4.3}{Stented Artery}{section.12.4}% 242
+\BOOKMARK [1][-]{section.12.5}{Further Information}{chapter.12}% 243
+\BOOKMARK [1][-]{section.12.6}{Future Development}{chapter.12}% 244
+\BOOKMARK [0][-]{chapter.13}{Shallow Water Solver}{part.3}% 245
+\BOOKMARK [1][-]{section.13.1}{Synopsis}{chapter.13}% 246
+\BOOKMARK [2][-]{subsection.13.1.1}{The Shallow Water Equations}{section.13.1}% 247
+\BOOKMARK [1][-]{section.13.2}{Usage}{chapter.13}% 248
+\BOOKMARK [1][-]{section.13.3}{Session file configuration}{chapter.13}% 249
+\BOOKMARK [2][-]{subsection.13.3.1}{Solver Info}{section.13.3}% 250
+\BOOKMARK [2][-]{subsection.13.3.2}{Parameters}{section.13.3}% 251
+\BOOKMARK [2][-]{subsection.13.3.3}{Functions}{section.13.3}% 252
+\BOOKMARK [1][-]{section.13.4}{Examples}{chapter.13}% 253
+\BOOKMARK [2][-]{subsection.13.4.1}{Rossby modon case}{section.13.4}% 254
+\BOOKMARK [-1][-]{part.4}{Reference}{}% 255
+\BOOKMARK [0][-]{chapter.14}{Optimisation}{part.4}% 256
+\BOOKMARK [1][-]{section.14.1}{Operator evaluation strategies}{chapter.14}% 257
+\BOOKMARK [2][-]{subsection.14.1.1}{Selecting an operator strategy}{section.14.1}% 258
+\BOOKMARK [2][-]{subsection.14.1.2}{XML syntax}{section.14.1}% 259
+\BOOKMARK [2][-]{subsection.14.1.3}{Selecting different operator strategies}{section.14.1}% 260
+\BOOKMARK [1][-]{section.14.2}{Collections}{chapter.14}% 261
+\BOOKMARK [2][-]{subsection.14.2.1}{Default implementation}{section.14.2}% 262
+\BOOKMARK [2][-]{subsection.14.2.2}{Auto-tuning}{section.14.2}% 263
+\BOOKMARK [2][-]{subsection.14.2.3}{Manual selection}{section.14.2}% 264
+\BOOKMARK [2][-]{subsection.14.2.4}{Collection size}{section.14.2}% 265
+\BOOKMARK [0][-]{chapter.15}{Command-line Options}{part.4}% 266
+\BOOKMARK [0][-]{chapter.16}{Frequently Asked Questions}{part.4}% 267
+\BOOKMARK [1][-]{section.16.1}{Compilation and Testing}{chapter.16}% 268
+\BOOKMARK [1][-]{section.16.2}{Usage}{chapter.16}% 269
