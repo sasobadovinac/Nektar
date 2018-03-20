@@ -32,6 +32,7 @@
 // Description: Main wrapper class for Advection Diffusion Reaction Solver
 //
 ///////////////////////////////////////////////////////////////////////////////
+#define LOKI_CLASS_LEVEL_THREADING
 
 #include <FieldUtils/Interpolator.h>
 #include <SolverUtils/EquationSystem.h>
