@@ -988,19 +988,70 @@ This force type allows the user to solve the interaction system of an incompress
 </FORCE>
 \end{lstlisting}
 
+For linear problems, Discrete Fourier Transform (DFT) is applied to reach the solution of Tensioned Euler Beam, whereas for geometrically nonlinear problems, a third-party open source code, named as 'SHARPy', which is developed for Simulation of High-Aspect-Ratio Planes in aeroelastics, can be employed for the nonlinear dynamic solutions of flexible bodies.  
+
+An example of \inltt{SOLVERINFO} for 'DFT' is given as follows:
+\begin{lstlisting}[style=XMLStyle]
+<SOLVERINFO>
+	<I PROPERTY="StructDynSolver" VALUE="DFT"/>
+	<I PROPERTY="SupportType"     VALUE="PINNED-PINNED"/>
+</SOLVERINFO>
+\end{lstlisting}
+ 
+An example of \inltt{SOLVERINFO} for 'SHARPy' is given as follows:
+\begin{lstlisting}[style=XMLStyle]
+<SOLVERINFO>
+	<I PROPERTY="StructDynSolver"      VALUE="SHARPy"/>
+    <I PROPERTY="BeamBConds"           VALUE="SS"/>
+	<I PROPERTY="IsBeamGravity" 	   VALUE="TRUE"/>
+    <I PROPERTY="BeamFollowerForce"    VALUE="True"/>
+    <I PROPERTY="BeamFollowerForceRig" VALUE="True"/>
+    <I PROPERTY="BeamPrintInfo"        VALUE="False"/>
+</SOLVERINFO>
+\end{lstlisting}
+
+The parameters to describe the structural properties in two different solvers of 'DFT' and 'SHARPy' are a little bit different, for example:
+
+\begin{lstlisting}[style=XMLStyle]
+<PARAMETERS>
+	<P> StructStiff   = 0.0     </P> <!--DFT-->
+    <P> StructRho     = 6.0     </P> <!--DFT-->
+    <P> StructDamp    = 0.0     </P> <!--DFT-->
+    <P> CableTension  = 200.0   </P> <!--DFT-->
+    <P> BendingStiff  = 300.0   </P> <!--DFT-->
+</PARAMETERS>
+\end{lstlisting}
+
+\begin{lstlisting}[style=XMLStyle]
+<PARAMETERS>
+    <P> BeamLength    = 10*PI   </P> <!--SHARPy-->
+    <P> BeamI         = PI/64.0 </P> <!--SHARPy-->
+    <P> BeamA         = PI/4.0  </P> <!--SHARPy-->
+    <P> BeamE         = 1.1e4   </P> <!--SHARPy-->
+    <P> BeamMu        = 0.3     </P> <!--SHARPy-->
+    <P> BeamRho       = 6       </P> <!--SHARPy-->
+    <P> BeamDT        = 0.005   </P> <!--SHARPy-->
+    <P> BeamNumNodesElem = 2    </P> <!--SHARPy-->
+    <P> BeamNumElems  = 64      </P> <!--SHARPy-->
+    <P> BeamDiameter  = 1.0     </P> <!--SHARPy-->
+    <P> Velocity\_Infinity = 1.0</P> <!--SHARPy-->
+    <P> Density\_Fluid = 1000   </P> <!--SHARPy-->
+</PARAMETERS>
+\end{lstlisting}
+
 Available options of the motion type for the moving body include free, constrained and forced vibrations, which can be specified in the \inltt{SOLVERINFO} section. The free type of motion allows the body to move in both streamwise and crossflow directions, while the constrained type limits the motion only in the crossflow direction. For the forced type, the vibration profiles of the body should be specified as a given function or read from input file in \inltt{MovingBody} section. here an example,
 
 \begin{lstlisting}[style=XMLStyle]
 <SOLVERINFO>
-    <I PROPERTY="EQTYPE"    VALUE="UnsteadyNavierStokes" />
-    <I PROPERTY="SolverType"    VALUE="VelocityCorrectionScheme" />
-    <I PROPERTY="EvolutionOperator"    VALUE="SkewSymmetric" />
-    <I PROPERTY="Projection"    VALUE="Galerkin" />
-    <I PROPERTY="GlobalSysSoln"    VALUE="DirectStaticCond"/>
-    <I PROPERTY="TimeIntegrationMethod"    VALUE="IMEXOrder2" />
-    <I PROPERTY="HOMOGENEOUS"    VALUE="1D"/>
-    <I PROPERTY="USEFFT"    VALUE="FFTW"/>
-    <I PROPERTY="VibrationType"    VALUE="FREE"/>
+    <I PROPERTY="EQTYPE"                VALUE="UnsteadyNavierStokes" />
+    <I PROPERTY="SolverType"            VALUE="VelocityCorrectionScheme" />
+    <I PROPERTY="EvolutionOperator"     VALUE="SkewSymmetric" />
+    <I PROPERTY="Projection"            VALUE="Galerkin" />
+    <I PROPERTY="GlobalSysSoln"         VALUE="DirectStaticCond"/>
+    <I PROPERTY="TimeIntegrationMethod" VALUE="IMEXOrder2" />
+    <I PROPERTY="HOMOGENEOUS"           VALUE="1D"/>
+    <I PROPERTY="USEFFT"                VALUE="FFTW"/>
+    <I PROPERTY="VibrationType"         VALUE="FREE"/>
 </SOLVERINFO>
 \end{lstlisting}
 
@@ -1011,23 +1062,23 @@ A moving body type boundary condition should be specified in \inltt{BOUNDARYCOND
     <REGION REF="0">
         <D VAR="u" USERDEFINEDTYPE="MovingBody" VALUE="0" />
         <D VAR="v" USERDEFINEDTYPE="MovingBody" VALUE="0" />
-        <D VAR="w" VALUE="0" />
-        <N VAR="p" USERDEFINEDTYPE="H" VALUE="0" />
+        <D VAR="w"                              VALUE="0" />
+        <N VAR="p" USERDEFINEDTYPE="H"          VALUE="0" />
      </REGION>
 </BOUNDARYCONDITIONS>
 \end{lstlisting}
 
-For the simulation of low mass ratio, there is an option to activate fictitious mass method for stabilizing explicit coupling between the fluid solver and structural dynamic solver. Here we need to specify the values of fictitious mass and damping in \inltt{PARAMETERS}, for example,
+%For the simulation of low mass ratio, there is an option to activate fictitious mass method for stabilizing explicit coupling between the fluid solver and structural dynamic solver. Here we need to specify the values of fictitious mass and damping in \inltt{PARAMETERS}, for example,
 
-\begin{lstlisting}[style=XMLStyle]
-<SOLVERINFO>
-    <I PROPERTY="FictitiousMassMethod"    VALUE="True"/>
-</SOLVERINFO>
-<PARAMETERS>
-    <P> FictDamp      = 1000    </P>
-    <P> FictMass       = 1.5       </P>
-</PARAMETERS>
-\end{lstlisting}
+%\begin{lstlisting}[style=XMLStyle]
+%<SOLVERINFO>
+%    <I PROPERTY="FictitiousMassMethod"    VALUE="True"/>
+%</SOLVERINFO>
+%<PARAMETERS>
+%    <P> FictDamp      = 1000    </P>
+%    <P> FictMass       = 1.5       </P>
+%</PARAMETERS>
+%\end{lstlisting}
 
 A filter calles as \inltt{MovingBody} is encapsulated in this module to evaluate the aerodynamic forces along the moving body surface. The
 forces for each computational plane are projected along the Cartesian axes and the pressure and viscous

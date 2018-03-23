@@ -126,7 +126,7 @@ void ForcingMovingBody::v_Apply(
 
         // Get original coordinates
         pFields[0]->GetCoords(coords[0], coords[1], coords[2]);
-	
+
 	
         // Add displacement to coordinates
         Vmath::Vadd(physTot, coords[0], 1, m_zta[0], 1, coords[0], 1);
@@ -293,12 +293,12 @@ void ForcingMovingBody::EvaluateVibrationModel(
 
     	std::string StructDynSolver =
             m_session->GetSolverInfo("StructDynSolver");
-    	if(boost::iequals(StructDynSolver, "ModalDecomposition"))
+    	if(boost::iequals(StructDynSolver, "DFT"))
     	{
         	// Linear tensioned cable model is solved in Modal Decomposition Method
         	for(int n = 0, cn = 1; n < m_vdim; n++, cn--)
         	{
-            	ModalDecompositionMethod(HydFCoeffs[cn], m_motions[cn]);
+            	DFT(HydFCoeffs[cn], m_motions[cn]);
         	}
     	}
     	else if(boost::iequals(StructDynSolver, "SHARPy"))
@@ -306,7 +306,7 @@ void ForcingMovingBody::EvaluateVibrationModel(
 			// Nonlinear Beam model is solved in Third-Party solver, SHARPy
     		if(m_movingBodyCalls == 1)
     		{
-        		// 1. Solve the static solution of the beam model
+        		// 1. Solve the static solution of the nonlinear beam model
         		m_beam.SolvenlnStatic(m_session, HydFCoeffs);
 
         		// 2. Initialise the dynamic solver
@@ -425,7 +425,7 @@ void ForcingMovingBody::EvaluateVibrationModel(
 /**
  *
  */
-void ForcingMovingBody::ModalDecompositionMethod(
+void ForcingMovingBody::DFT(
      	const Array<OneD, NekDouble> &HydroForces,
               Array<OneD, Array<OneD, NekDouble> > &motions)
 {  
@@ -469,7 +469,7 @@ void ForcingMovingBody::ModalDecompositionMethod(
                 {
                     fft_o[var][i] +=
                         fft_i[var][k]*
-						sin(M_PI/(N)*(k+1/2)*(i+1));
+						sin(M_PI/(N)*(k)*(i));
                 }
             }
         }
@@ -480,9 +480,50 @@ void ForcingMovingBody::ModalDecompositionMethod(
                     "Unrecognized support type for cable's motion");
     }
 
+    /*// load the structural dynamic parameters from xml file
+    NekDouble cabletension;
+    NekDouble bendingstiff;
+    NekDouble structstiff;
+    m_session->LoadParameter("StructStiff",  structstiff,  0.0);
+    m_session->LoadParameter("CableTension", cabletension, 0.0);
+    m_session->LoadParameter("BendingStiff", bendingstiff, 0.0);
+
+    NekDouble beta,gamma;
+	beta = 0.5;
+	gamma = 0.25;
+    NekDouble alfa0, alfa1,alfa2,alfa3,alfa4,alfa5,alfa6,alfa7;
+    alfa0 = 1.0/gamma/m_timestep/m_timestep;
+    alfa1 = beta/gamma/m_timestep;
+    alfa2 = 1.0/gamma/m_timestep;
+    alfa3 = 1.0/2.0/gamma-1.0;
+    alfa4 = beta/gamma-1.0;
+    alfa5 = m_timestep/2.0*(beta/gamma-2.0);
+    alfa6 = m_timestep*(1.0-beta);
+    alfa7 = beta*m_timestep;*/
+
     // solve the ODE in the wave space
     for(int i = 0; i < m_nv; ++i)
     {
+		/*
+		NekDouble tmp  = (M_PI*NekDouble(i)/m_length);
+		NekDouble  K = tmp * tmp * cabletension +  tmp * tmp * tmp * tmp * bendingstiff;
+
+		NekDouble EffectiveK = K+alfa0*m_structrho+alfa1*m_structdamp;
+		fft_o[0][i] += m_structrho*(alfa0*fft_o[1][i]+alfa2*fft_o[2][i]+alfa3*fft_o[3][i])
+					+  m_structdamp*(alfa1*fft_o[1][i]+alfa4*fft_o[2][i]+alfa5*fft_o[3][i]);
+		
+		NekDouble temp0  = fft_o[1][i];
+		fft_o[1][i] = fft_o[0][i]/EffectiveK;
+		NekDouble temp1 = fft_o[3][i];
+		fft_o[3][i] = alfa0*(fft_o[1][i]-temp0)-alfa2*fft_o[2][i]-alfa3*fft_o[3][i];
+		fft_o[2][i]+= alfa6*temp1 + alfa7*fft_o[3][i];
+		*/
+
+	    for(int var = 1; var < 4; var++)
+        {
+            fft_i[var-1][i] =fft_o[var][i];
+        }
+
         int nrows = 3;
 
         Array<OneD, NekDouble> tmp0,tmp1,tmp2;
@@ -536,7 +577,7 @@ void ForcingMovingBody::ModalDecompositionMethod(
                 {
                     fft_o[var][i] +=
                         fft_i[var][k]*
-						sin(M_PI/(N)*(k+1)*(i+1/2))*2/N;
+						sin(M_PI/(N)*(k)*(i))*2/(N);
                 }
             }
         }
@@ -550,7 +591,6 @@ void ForcingMovingBody::ModalDecompositionMethod(
 	for(int i = 0; i < 3; i++)
 	{
 		Vmath::Vcopy(m_nv,fft_o[i],1,motions[i],1);
-		motions[i][m_nv] = fft_o[i][0];
 	}
 }
 
@@ -565,17 +605,8 @@ void ForcingMovingBody::InitialiseVibrationModel(
     m_session->LoadParameter("VibModesZ", m_nv);
     m_session->LoadParameter("HomModesZ", m_nz);
     m_session->LoadParameter("LC", m_length);
-  
-	m_motions = Array<OneD, Array<OneD, Array<OneD, NekDouble> > > (2);
-	for (int i = 0; i < m_motion.num_elements(); i++)
-	{
-		m_motions[i] = Array<OneD, Array<OneD, NekDouble> > (3);
-		for (int j = 0; j < 3; j++)
-		{
-			m_motions[i][j] = Array<OneD, NekDouble> (m_nv+1, 0.0);
-		}
-	}
 
+	int nnodes;
     Array<OneD, unsigned int> ZIDs;
     ZIDs = pFields[0]->GetZIDs();
     m_np = ZIDs.num_elements();
@@ -601,90 +632,119 @@ void ForcingMovingBody::InitialiseVibrationModel(
 	// Get the matrices for struct solvers
     std::string StructDynSolver = 
             m_session->GetSolverInfo("StructDynSolver");
-    if(boost::iequals(StructDynSolver, "ModalDecomposition"))
+    if(boost::iequals(StructDynSolver, "DFT"))
     {
     	SetModeMatrix();
 
     	m_FFT = 
             LibUtilities::GetNektarFFTFactory().CreateInstance(
                                                "NekFFTW", m_nv);
-	}
-	else if(boost::iequals(StructDynSolver, "SHARPy"))
-	{
-        m_beam.InitialiseStatic(m_session);
-	}
+    	// Set initial condition for cable's motion
+    	int cnt = 0;
+    	LibUtilities::CommSharedPtr vcomm = pFields[0]->GetComm();
+    	int colrank = vcomm->GetColumnComm()->GetRank();
+   		for(int j = 0; j < m_funcName.num_elements(); j++)
+    	{
+        	// loading from the specified files through inputstream
+        	if(m_IsFromFile[cnt] && m_IsFromFile[cnt+1])
+        	{
+            	std::ifstream inputStream;
 
-
-    // Set initial condition for cable's motion
-    int cnt = 0;
-    LibUtilities::CommSharedPtr vcomm = pFields[0]->GetComm();
-    int colrank = vcomm->GetColumnComm()->GetRank();
-    for(int j = 0; j < m_funcName.num_elements(); j++)
-    {
-        // loading from the specified files through inputstream
-        if(m_IsFromFile[cnt] && m_IsFromFile[cnt+1])
-        {
-            std::ifstream inputStream;
-
-            if (vcomm->GetRank() == 0)
-            {
-                std::string filename = m_session->GetFunctionFilename(
-                    m_funcName[j], m_motion[0]);
+            	if (vcomm->GetRank() == 0)
+            	{
+                	std::string filename = m_session->GetFunctionFilename(
+                    	m_funcName[j], m_motion[0]);
                 
-                // Open intputstream for cable motions
-                inputStream.open(filename.c_str());
+                	// Open intputstream for cable motions
+                	inputStream.open(filename.c_str());
 
-                // Import the head string from the file
-                Array<OneD, std::string> tmp(9);
-                for(int n = 0; n < tmp.num_elements(); n++)
-                {
-                    inputStream >> tmp[n];
-                }
+                	// Import the head string from the file
+                	Array<OneD, std::string> tmp(9);
+                	for(int n = 0; n < tmp.num_elements(); n++)
+                	{
+                    	inputStream >> tmp[n];
+                	}
 
-                NekDouble time, z_cds;
-                // Import the motion variables from the file
-                for (int n = 0; n < m_nv+1; n++)
-                {
-                    inputStream >> setprecision(6) >> time;
-                    inputStream >> setprecision(6) >> z_cds;
+                	NekDouble time, z_cds;
+               		// Import the motion variables from the file
+                	for (int n = 0; n < m_nv+1; n++)
+                	{
+                    	inputStream >> setprecision(6) >> time;
+                    	inputStream >> setprecision(6) >> z_cds;
+						for(int i = 0; i < 2; i++)
+						{
+							for (int j = 0; j < 3; j++)
+							{
+                    			inputStream >> setprecision(8) >> m_motions[i][j][n];
+							}
+						}
+                	}
+                	// Close inputstream for cable motions
+                	inputStream.close();
+            	}
+            	cnt = cnt + 2;
+        	}
+       		else //Evaluate from the functions specified in xml file
+       		{
+            	if(colrank == 0)
+            	{	
+                	Array<OneD, NekDouble> x0(m_nv+1, 0.0);
+                	Array<OneD, NekDouble> x1(m_nv+1, 0.0);
+                	Array<OneD, NekDouble> x2(m_nv+1, 0.0);
+                	Array<OneD, NekDouble> tmp(m_nv+1,0.0);
+
+                	for (int p = 0; p < m_nv+1; p++)
+                	{
+                    	x2[p] = m_length/m_nv*p;
+                	}
+
+                	Array<OneD, LibUtilities::EquationSharedPtr> ffunc(2);
 					for(int i = 0; i < 2; i++)
 					{
-						for (int j = 0; j < 3; j++)
-						{
-                    		inputStream >> setprecision(8) >> m_motions[i][j][n];
-						}
-					}
-                }
-                // Close inputstream for cable motions
-                inputStream.close();
-            }
-            cnt = cnt + 2;
-        }
-        else //Evaluate from the functions specified in xml file
-        {
-            if(colrank == 0)
-            {	
-                Array<OneD, NekDouble> x0(m_nv+1, 0.0);
-                Array<OneD, NekDouble> x1(m_nv+1, 0.0);
-                Array<OneD, NekDouble> x2(m_nv+1, 0.0);
-                Array<OneD, NekDouble> tmp(m_nv+1,0.0);
+                		ffunc[i] = m_session->GetFunction(m_funcName[j], m_motion[i]);
+                		ffunc[i]->Evaluate(x0, x1, x2, 0.0, m_motions[i][j]);
+            		}
+				}
 
-                for (int p = 0; p < m_nv+1; p++)
-                {
-                    x2[p] = m_length/m_nv*p;
-                }
-
-                Array<OneD, LibUtilities::EquationSharedPtr> ffunc(2);
-				for(int i = 0; i < 2; i++)
-				{
-                	ffunc[i] = m_session->GetFunction(m_funcName[j], m_motion[i]);
-                	ffunc[i]->Evaluate(x0, x1, x2, 0.0, m_motions[i][j]);
-            	}
-			}
-
-            cnt = cnt + 2;
-        }
+            	cnt = cnt + 2;
+        	}
+    	}
+	
+		nnodes = m_nv+1;
     }
+    else if(boost::iequals(StructDynSolver, "SHARPy"))
+    {
+        m_beam.InitialiseStatic(m_session);
+		int NNodesElem,NElems;
+		m_session->LoadParameter("BeamNumNodesElem", NNodesElem,2);
+		m_session->LoadParameter("BeamNumElems", NElems);
+	
+		if(NNodesElem == 2)
+		{
+			nnodes = NElems+1;
+		}
+		else if (NNodesElem == 3)
+		{
+			nnodes = 2*NElems+1;
+		}
+		else
+		{
+			ASSERTL0(false,
+                        "Number of nodes for each element should be 2 or 3");
+	
+		}
+    }
+
+  
+	m_motions = Array<OneD, Array<OneD, Array<OneD, NekDouble> > > (2);
+	for (int i = 0; i < m_motion.num_elements(); i++)
+	{
+		m_motions[i] = Array<OneD, Array<OneD, NekDouble> > (3);
+		for (int j = 0; j < 3; j++)
+		{
+			m_motions[i][j] = Array<OneD, NekDouble> (nnodes, 0.0);
+		}
+	}
 }
 
 
@@ -744,7 +804,7 @@ void ForcingMovingBody::SetModeMatrix()
         }
         else if(boost::iequals(supptype, "Pinned-Pinned"))
         {
-            K = plane+1;
+          	K = plane;
             beta = M_PI/m_length;
         }
         else

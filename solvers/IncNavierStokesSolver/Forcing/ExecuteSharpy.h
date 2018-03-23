@@ -29,7 +29,8 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 //
-// Description: *****.
+// Description: Third-parity code SHARPy is execuated for the solution of
+// structural dynamics of long flexible beam.
 //
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -78,7 +79,7 @@ namespace Sharpy
 
             void Input_node(const LibUtilities::SessionReaderSharedPtr& pSession);
 
-            void AddGravityLoad(const LibUtilities::SessionReaderSharedPtr& pSession);
+            void AddGravityLoad(const LibUtilities::SessionReaderSharedPtr& pSession, Array<OneD, NekDouble> &gForces);
 
             void Skew(const Array<OneD, NekDouble> &Vector,
                     Array<OneD, Array<OneD, NekDouble> > &SkewMat);
@@ -94,14 +95,14 @@ namespace Sharpy
             bool m_OutInaframe;          // Print velocities in body-fixed-frame (if not, use inertial frame)
 
             int m_MaxElNod;              // Max number of nodes per element.
-            int m_NumElems;              // Elements discreising the beam
+            int m_NElems;              // Elements discreising the beam
             int m_ElemProj;              // Element info computed in (1) global frame (2) fixed element frame (3) moving element frame.
             int m_MaxIterations;         // Newton-Raphson iterations for nonlinear solution
             int m_NumLoadSteps;          // Number of load increments
             int m_NumGauss;              // Gauss points in element integration
             int m_Solution;              // 902/912: cbeam3 linear/nonlinear flexible-body dynamic
             int m_NumNodesElem;
-            int m_NumNodes_tot;
+            int m_tNNodes;
             int m_NumDof;
             int m_DimMat;
             int m_ms;
@@ -131,17 +132,14 @@ namespace Sharpy
             Array<OneD, int> m_NumNodes;
             Array<OneD, int> m_MemNo;
             Array<OneD, int> m_Conn;
-            Array<OneD, int> m_Master_Array;
+            Array<OneD, int> m_Master_Elem;
             Array<OneD, int> m_BoundConds;
-            Array<OneD, int> m_Nod_Master;
-            Array<OneD, int> m_Nod_Vdof;
-            Array<OneD, int> m_Nod_Fdof;
-            Array<OneD, int> m_Nod_Sflag;
-            Array<OneD, int> m_Master;
+            Array<OneD, int> m_Master_Node;
             Array<OneD, int> m_Vdof;
             Array<OneD, int> m_Fdof;
+            Array<OneD, int> m_Sdof;
             Array<OneD, int> m_ListIN;
-            Array<OneD, int> m_NodeForcedDisp_Array;
+            Array<OneD, int> m_NodeForcedDisp;
 
             Array<OneD, char>m_OutFile;
 
@@ -150,46 +148,46 @@ namespace Sharpy
             Array<OneD, NekDouble> m_PreCurv;
             Array<OneD, NekDouble> m_Psi;
             Array<OneD, NekDouble> m_Vector;
-            Array<OneD, NekDouble> m_Mass_Array;
-            Array<OneD, NekDouble> m_Stiff_Array;
-            Array<OneD, NekDouble> m_InvStiff_Array;
-            Array<OneD, NekDouble> m_RBMass_Array;
-            Array<OneD, NekDouble> m_PosIni_Array;
-            Array<OneD, NekDouble> m_ForceStatic_Array;
+            Array<OneD, NekDouble> m_Mass;
+            Array<OneD, NekDouble> m_Stiff;
+            Array<OneD, NekDouble> m_InvStiff;
+            Array<OneD, NekDouble> m_RBMass;
+            Array<OneD, NekDouble> m_PosIni;
+            Array<OneD, NekDouble> m_ForceStatic;
             Array<OneD, NekDouble> m_PhiNodes;
-            Array<OneD, NekDouble> m_PsiIni_Array;
-            Array<OneD, NekDouble> m_AppForces_Array;
-            Array<OneD, NekDouble> m_PosDefor_Array;
-            Array<OneD, NekDouble> m_PsiDefor_Array;
-            Array<OneD, NekDouble> m_PosDeforDot_Array;
-            Array<OneD, NekDouble> m_PsiDeforDot_Array;
+            Array<OneD, NekDouble> m_PsiIni;
+            Array<OneD, NekDouble> m_AppForces;
+            Array<OneD, NekDouble> m_PosDefor;
+            Array<OneD, NekDouble> m_PsiDefor;
+            Array<OneD, NekDouble> m_PosDeforDot;
+            Array<OneD, NekDouble> m_PsiDeforDot;
             Array<OneD, NekDouble> m_X;
             Array<OneD, NekDouble> m_DX;
             Array<OneD, NekDouble> m_DXdt;
             Array<OneD, NekDouble> m_DXddt;
-            Array<OneD, NekDouble> m_Force_Array;
+            Array<OneD, NekDouble> m_Force;
             Array<OneD, NekDouble> m_Vrel;
             Array<OneD, NekDouble> m_VrelDot;
-            Array<OneD, NekDouble> m_Mglobal_Array;
-            Array<OneD, NekDouble> m_Mvel_Array;
-            Array<OneD, NekDouble> m_Cglobal_Array;
-            Array<OneD, NekDouble> m_Cvel_Array;
-            Array<OneD, NekDouble> m_Kglobal_Array;
-            Array<OneD, NekDouble> m_Fglobal_Array;
+            Array<OneD, NekDouble> m_Mglobal;
+            Array<OneD, NekDouble> m_Mvel;
+            Array<OneD, NekDouble> m_Cglobal;
+            Array<OneD, NekDouble> m_Cvel;
+            Array<OneD, NekDouble> m_Kglobal;
+            Array<OneD, NekDouble> m_Fglobal;
             Array<OneD, NekDouble> m_Qglobal;
-            Array<OneD, NekDouble> m_PosDeforDDot_Array;
-            Array<OneD, NekDouble> m_PsiDeforDDot_Array;
-            Array<OneD, NekDouble> m_Quat_Array;
-            Array<OneD, NekDouble> m_Cao_Array;
-            Array<OneD, NekDouble> m_Asys_Array;
+            Array<OneD, NekDouble> m_PosDeforDDot;
+            Array<OneD, NekDouble> m_PsiDeforDDot;
+            Array<OneD, NekDouble> m_Quat;
+            Array<OneD, NekDouble> m_Cao;
+            Array<OneD, NekDouble> m_Asys;
             Array<OneD, NekDouble> m_F0;
             Array<OneD, NekDouble> m_Fa;
             Array<OneD, NekDouble> m_FTime;
             Array<OneD, NekDouble> m_Time;
             Array<OneD, NekDouble> m_ForcedVel;
             Array<OneD, NekDouble> m_ForcedVelDot;
-            Array<OneD, NekDouble> m_PosForcedDisp_Array;
-            Array<OneD, NekDouble> m_PsiA_G_Array;
+            Array<OneD, NekDouble> m_PosForcedDisp;
+            Array<OneD, NekDouble> m_PsiA_G;
     };
 }
 }

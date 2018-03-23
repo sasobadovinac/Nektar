@@ -101,7 +101,7 @@ class ForcingMovingBody : public SolverUtils::Forcing
             const Array<OneD, MultiRegions::ExpListSharedPtr> &pFields,
             const TiXmlElement* pForce);
 
-        void ModalDecompositionMethod(
+        void DFT(
             const Array<OneD, NekDouble> &Hydroforces,
                   Array<OneD, Array<OneD, NekDouble> > &motions);
 
