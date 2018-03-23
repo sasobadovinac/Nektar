@@ -34,6 +34,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <LibUtilities/Memory/NekMemoryManager.hpp>
+#include <LibUtilities/BasicUtils/ParseUtils.h>
 #include <iomanip>
 #include <LocalRegions/Expansion1D.h>
 #include <LocalRegions/Expansion2D.h>
@@ -93,8 +94,9 @@ FilterMovingBody::FilterMovingBody(
     }
     else
     {
-        LibUtilities::Equation equ(m_session, it->second);
-        m_outputFrequency = floor(equ.Evaluate());
+        LibUtilities::Equation equ(
+            m_session->GetExpressionEvaluator(), it->second);
+        m_outputFrequency = round(equ.Evaluate());
     }
 
     pSession->MatchSolverInfo("Homogeneous", "1D", m_isHomogeneous1D, false);
@@ -139,7 +141,7 @@ void FilterMovingBody::v_Initialise(
     std::string IndString = m_BoundaryString.substr(FirstInd,
                                                     LastInd - FirstInd + 1);
 
-    bool parseGood = ParseUtils::GenerateSeqVector(IndString.c_str(),
+    bool parseGood = ParseUtils::GenerateSeqVector(IndString,
                                                    m_boundaryRegionsIdList);
 
     ASSERTL0(parseGood && !m_boundaryRegionsIdList.empty(),

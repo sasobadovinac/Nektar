@@ -43,6 +43,7 @@
 #include <MultiRegions/ExpList3D.h>    
 #include <MultiRegions/ExpList3DHomogeneous1D.h>
 #include <SolverUtils/Filters/FilterAeroForces.h>
+#include <LibUtilities/BasicUtils/ParseUtils.h>
 
 using namespace std;
 
@@ -87,7 +88,8 @@ FilterAeroForces::FilterAeroForces(
     }
     else
     {
-        LibUtilities::Equation equ(m_session, it->second);
+        LibUtilities::Equation equ(
+            m_session->GetExpressionEvaluator(), it->second);
         m_outputFrequency = round(equ.Evaluate());
     }
     
@@ -99,7 +101,8 @@ FilterAeroForces::FilterAeroForces(
     }
     else
     {
-        LibUtilities::Equation equ(m_session, it->second);
+        LibUtilities::Equation equ(
+            m_session->GetExpressionEvaluator(), it->second);
         m_startTime = equ.Evaluate();
     }
 
@@ -168,7 +171,8 @@ FilterAeroForces::FilterAeroForces(
                 directionStream >> directionString;
                 if (!directionString.empty())
                 {
-                    LibUtilities::Equation equ(m_session, directionString);
+                    LibUtilities::Equation equ(
+                        m_session->GetExpressionEvaluator(), directionString);
                     m_directions[i][j] = equ.Evaluate();
                     norm += m_directions[i][j]*m_directions[i][j];
                 }
@@ -215,8 +219,8 @@ void FilterAeroForces::v_Initialise(
 
     std::string IndString =
             m_BoundaryString.substr(FirstInd, LastInd - FirstInd + 1);
-    bool parseGood = ParseUtils::GenerateSeqVector(IndString.c_str(),
-                                               m_boundaryRegionsIdList);
+    bool parseGood = ParseUtils::GenerateSeqVector(IndString,
+                                                   m_boundaryRegionsIdList);
     ASSERTL0(parseGood && !m_boundaryRegionsIdList.empty(),
              (std::string("Unable to read boundary regions index "
               "range for FilterAeroForces: ") + IndString).c_str());
