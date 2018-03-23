@@ -111,6 +111,7 @@ namespace SHARPy
                       							    const double* InvStiff_Array, 	const double* RBMass_Array,           
 												    const int& NumNodes_tot, 		const int* Master, 
 												    const int* Vdof, 				const int* Fdof,       //for pack_xbnode
+												    const int* Sdof,
                    								    const double* AppForces_Array,	const double*  Coords_Array,
 												    const double* Psi0_Array,		double* PosDefor_Array, 
 												    double* PsiDefor_Array,		    const bool& FollowerForce, 
@@ -150,7 +151,8 @@ namespace SHARPy
                                                    const double* Mass_Array,         const double* Stiff_Array,
                                                    const double* InvStiff_Array,     const double* RBMass_Array,
                                                    const int* Nod_Master,            const int* Nod_Vdof,
-                                                   const int* Nod_Fdof,              const double* Coords_Array,
+                                                   const int* Nod_Fdof,              
+												   const int* Nod_Sdof,				 const double* Coords_Array,
                                                    const double* Psi0_Array,         const double* PosDefor_Array,
                                                    const double* PsiDefor_Array,     const double* PosDeforDot_Array,
                                                    const double* PsiDeforDot_Array,  const double* PosDeforDDot_Array,
@@ -334,6 +336,7 @@ namespace SHARPy
                                                   const double* InvStiff_Array, const double* RBMass_Array,
                                                   const int& NumNodes_tot,      const int* Master,
                                                   const int* Vdof,              const int* Fdof,       //for pack_xbnode
+												  const	int* Sdof,
                                                   const double* AppForces_Array,const double*  Coords_Array,
                                                   const double* Psi0_Array,     double* PosDefor_Array,
                                                   double* PsiDefor_Array,       const bool& FollowerForce,
@@ -348,7 +351,7 @@ namespace SHARPy
 	{
 		__test_MOD_wrap_cbeam3_solv_nlnstatic (NumDof,NumElems, NumNodes, MemNo, Conn,       
                    Master_Array,Length, PreCurv,Psi, Vector, Mass_Array,               
-                   Stiff_Array,InvStiff_Array, RBMass_Array,NumNodes_tot, Master, Vdof, Fdof,  
+                   Stiff_Array,InvStiff_Array, RBMass_Array,NumNodes_tot, Master, Vdof, Fdof, Sdof,
                    AppForces_Array,Coords_Array,Psi0_Array,PosDefor_Array,PsiDefor_Array,
                    FollowerForce, FollowerForceRig,PrintInfo, OutInBframe, OutInaframe,  
                    ElemProj, MaxIterations, NumLoadSteps,NumGauss, Solution, DeltaCurved, 
@@ -394,7 +397,8 @@ namespace SHARPy
 												  const double* Mass_Array,			const double* Stiff_Array,
 												  const double* InvStiff_Array,		const double* RBMass_Array,
                									  const int* Nod_Master,			const int* Nod_Vdof,
-												  const int* Nod_Fdof,				const double* Coords_Array,
+												  const int* Nod_Fdof,				
+												  const int* Nod_Sdof, 				const double* Coords_Array,
 												  const double* Psi0_Array,			const double* PosDefor_Array,
 												  const double* PsiDefor_Array,		const double* PosDeforDot_Array,
 												  const double* PsiDeforDot_Array, 	const double* PosDeforDDot_Array,
@@ -417,7 +421,7 @@ namespace SHARPy
 	{
 		__test_MOD_wrap_cbeam3_asbly_dynamic (NumElems,NumNodes_tot,NumNodes,
                MemNo,Conn,Master_Array,Length,PreCurv,Psi,Vector,Mass_Array,
-               Stiff_Array,InvStiff_Array,RBMass_Array,Nod_Master,Nod_Vdof,Nod_Fdof,
+               Stiff_Array,InvStiff_Array,RBMass_Array,Nod_Master,Nod_Vdof,Nod_Fdof,Nod_Sdof,
                Coords_Array,Psi0_Array,PosDefor_Array,PsiDefor_Array,
                PosDeforDot_Array,PsiDeforDot_Array,PosDeforDDot_Array,PsiDeforDDot_Array,
                Force_Array,Vrel,VrelDot,NumDof,DimMat,ms,Mglobal_Array,Mvel_Array,
