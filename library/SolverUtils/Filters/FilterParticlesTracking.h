@@ -196,8 +196,8 @@ private:
     std::string                             m_outputFile;
     std::ofstream                           m_outputStream;
     unsigned int                            m_outputFrequency;
-    std::string                             m_collisionFile;
-    std::ofstream                           m_collisionStream;
+    std::string                             m_WearFile;
+    std::ofstream                           m_WearStream;
     
     /// Variables for output file
     std::string                     m_BoundaryString;

@@ -218,23 +218,23 @@ FilterParticlesTracking::FilterParticlesTracking(
     if (it == pParams.end())
     {
         m_outputFile    = m_session->GetSessionName();
-        m_collisionFile = m_session->GetSessionName() + ".cll";
+        m_WearFile = m_session->GetSessionName() + ".wear";
     }
     else
     {
         ASSERTL0(it->second.length() > 0, "Missing parameter 'OutputFile'.");
         m_outputFile    = it->second;
-        m_collisionFile = it->second;
+        m_WearFile = it->second;
     }
     if (!(m_outputFile.length() >= 4 &&
           m_outputFile.substr(m_outputFile.length() - 4) == ".csv"))
     {
         m_outputFile += ".csv";
     }
-    if (!(m_collisionFile.length() >= 4 &&
-          m_collisionFile.substr(m_collisionFile.length() - 4) == ".csv"))
+    if (!(m_WearFile.length() >= 4 &&
+          m_WearFile.substr(m_WearFile.length() - 4) == ".csv"))
     {
-        m_collisionFile += ".csv";
+        m_WearFile += ".pts";
     }
 
     it = pParams.find("OutputFrequency");
@@ -276,9 +276,9 @@ FilterParticlesTracking::FilterParticlesTracking(
     m_index = 0;
 
     // Boundary (to evaluate colision)
-    it = pParams.find("WallBoundary");
-    ASSERTL0(it != pParams.end(), "Missing parameter 'WallBoundary'");
-    ASSERTL0(it->second.length() > 0, "Empty parameter 'WallBoundary'.");
+    it = pParams.find("BoundaryID");
+    ASSERTL0(it != pParams.end(), "Missing parameter 'BoundaryID'");
+    ASSERTL0(it->second.length() > 0, "Empty parameter 'BoundaryID'.");
     m_BoundaryString = it->second;
 }
 
@@ -341,15 +341,21 @@ void FilterParticlesTracking::v_Initialise(
     int dim = pFields[0]->GetGraph()->GetSpaceDimension();
     // Open output stream
     m_outputStream.open(m_outputFile.c_str());
-    m_collisionStream.open(m_collisionFile.c_str());
+    m_WearStream.open(m_WearFile.c_str());
 
     m_outputStream << "Time, Id, x, y, z, particleU, particleV";
-    m_collisionStream << " Id, x, y, z, particleU, particleV";
+    
+    m_WearStream << "<?xml version=\"1.0\" encoding=\"utf-8\"?>"<<endl
+                 << "<NEKTAR>"<<endl;
 
+    if (dim == 2)
+    {
+        m_WearStream<<"   <POINTS DIM=\"2\" FIELDS=\"Ux,Uy,alfa\">"<<endl;
+    }
     if (dim == 3)
     {
         m_outputStream << ", particleW";
-        m_collisionStream << ", particleW";
+        m_WearStream<<"   <POINTS DIM=\"3\" FIELDS=\"Ux,Uy,Uz,alfa\">"<<endl;
     }
     for (int n = 0; n < pFields.num_elements(); ++n)
     {
@@ -361,8 +367,6 @@ void FilterParticlesTracking::v_Initialise(
         m_outputStream << ", Fz";
     }
     m_outputStream << endl;
-
-    m_collisionStream << ", alpha" << endl;
 
     // Read seed points
     Array<OneD, NekDouble> gloCoord(3, 0.0);
@@ -462,7 +466,8 @@ void FilterParticlesTracking::v_Finalise(
     if (pFields[0]->GetComm()->GetRank() == 0)
     {
         m_outputStream.close();
-        m_collisionStream.close();
+        m_WearStream<<"</POINTS>"<<endl<<"</NEKTAR>"<<endl;
+        m_WearStream.close();
     }
 }
 
@@ -800,11 +805,11 @@ void FilterParticlesTracking::HandleCollision(
                 distN = 0.0;
                 for (int i = 0; i < particle.m_dim; ++i)
                 {
-                    dist +=
-                        (coords[i][j] - particle.m_oldCoord[i]) * normals[i][j];
+                    dist += (coords[i][j] - particle.m_oldCoord[i])
+                            * normals[i][j];
 
-                    distN +=
-                        (coords[i][j] - particle.m_gloCoord[i]) * normals[i][j];
+                    distN += (coords[i][j] - particle.m_gloCoord[i])
+                             * normals[i][j];
                 }
                 // Check if the wall is crossed
                 if (dist * distN < 0.0 ||
@@ -844,25 +849,25 @@ void FilterParticlesTracking::HandleCollision(
         // Check is the particle collision or leave the domain
         if (m_boundaryRegionIsInList[minBnd] == 1)
         {
-            cout << "Particle " << particle.m_id << " collisioned." << endl;
-
+            //Particle collisioned
+            
             // Collision point cordinates
             Array<OneD, NekDouble> collPnt(3, 0.0);
             NekDouble absVel = 0.0;
 
             for (int i = 0; i < particle.m_dim; ++i)
             {
-                absVel +=
-                    pow((particle.m_gloCoord[i] - particle.m_oldCoord[i]) *
-                            minNormal[i],
-                        2);
+                absVel +=  pow((particle.m_gloCoord[i]
+                              - particle.m_oldCoord[i]) *
+                            minNormal[i],2);
             }
             absVel = sqrt(absVel);
 
             for (int i = 0; i < particle.m_dim; ++i)
             {
                 collPnt[i] = particle.m_oldCoord[i] +
-                             (particle.m_gloCoord[i] - particle.m_oldCoord[i]) *
+                             (particle.m_gloCoord[i] -
+                              particle.m_oldCoord[i]) *
                                  minDist / absVel;
             }
 
@@ -877,7 +882,6 @@ void FilterParticlesTracking::HandleCollision(
                 dotProdCoord +=
                     (particle.m_gloCoord[i] - collPnt[i]) * minNormal[i];
             }
-
             // Update coordinates
             for (int i = 0; i < particle.m_dim; ++i)
             {
@@ -898,6 +902,7 @@ void FilterParticlesTracking::HandleCollision(
                 {
                     dotProdVel +=
                         particle.m_particleVelocity[j][i] * minNormal[i];
+                        
                     dotProdForce += particle.m_force[j][i] * minNormal[i];
                 }
 
@@ -906,11 +911,12 @@ void FilterParticlesTracking::HandleCollision(
                 {
                     particle.m_particleVelocity[j][i] -=
                         dotProdVel * 2 * minNormal[i];
+
                     particle.m_force[j][i] -= dotProdForce * 2 * minNormal[i];
                 }
             }
 
-            // Evaluate the angle
+            // Evaluate the contact angle
             dotProd = 0.0;
             absVel  = 0.0;
             for (int i = 0; i < particle.m_dim; ++i)
@@ -923,27 +929,24 @@ void FilterParticlesTracking::HandleCollision(
             dotProd /= sqrt(absVel);
             dotProd = asinf(dotProd);
 
-            // Output the collision information
-            // m_collisionStream << boost::format("%25.19e") % time;
-            m_collisionStream << particle.m_id;
 
-            for (int n = 0; n < 3; ++n)
+            // Output the collision information
+            for (int n = 0; n < particle.m_dim; ++n)
             {
-                m_collisionStream << ", "
-                                  << boost::format("%25.19e") % collPnt[n];
+                m_WearStream << " "
+                             << boost::format("%25.19e") % collPnt[n];
             }
 
             for (int n = 0; n < particle.m_dim; ++n)
             {
-                m_collisionStream << ", "
-                                  << boost::format("%25.19e") %
-                                         particle.m_particleVelocity[0][n];
+                m_WearStream << " "
+                             << boost::format("%25.19e") %
+                             particle.m_particleVelocity[0][n];
             }
 
-            m_collisionStream << ", " << boost::format("%25.19e") % dotProd;
-
-            m_collisionStream << endl;
-
+            m_WearStream << " " << boost::format("%25.19e") % dotProd
+                         << endl;
+            
             // Evaluate the change in the collision position
             distN = 0.0;
             for (int i = 0; i < particle.m_dim; ++i)
@@ -953,7 +956,7 @@ void FilterParticlesTracking::HandleCollision(
 
             if (distN < 1E-3)
             {
-                cout << "Particle " << particle.m_id << " is stalled." << endl;
+                // Particle  is stalled
                 particle.m_used         = false;
                 particle.m_advanceCalls = 0;
             }
@@ -967,8 +970,7 @@ void FilterParticlesTracking::HandleCollision(
         }
         else
         {
-            cout << "Particle " << particle.m_id
-                 << " is unused because left the domain." << endl;
+            // Particle is unused because left the domain
             particle.m_used         = false;
             particle.m_advanceCalls = 0;
         }
