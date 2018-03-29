@@ -183,6 +183,8 @@ private:
 
     /// Flag marking if tracking fluid or solid particles
     bool                                    m_fluidParticles;
+    /// Flag marking for wear evaluation
+    bool                                    m_wear;
     /// Particles specific gravity (for solid particles)
     NekDouble                               m_SG;
     /// Particles Gravity (for solid particles)

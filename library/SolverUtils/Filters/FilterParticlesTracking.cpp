@@ -186,8 +186,8 @@ FilterParticlesTracking::FilterParticlesTracking(
         m_diameter       = equ1.Evaluate();
         m_fluidParticles = false;
 
-        // Determine if SpecifigGravity has effect
-        it = pParams.find("SpecifigGravity");
+        // Determine if SpecificGravity has effect
+        it = pParams.find("SpecificGravity");
         if (it == pParams.end())
         {
             m_SG = 1.0; // By default SG = 1
@@ -211,6 +211,20 @@ FilterParticlesTracking::FilterParticlesTracking(
             LibUtilities::Equation equ(m_session, it->second);
             m_gravity = equ.Evaluate();
         }
+    }
+    
+    // Set Wear evaluation
+    it = pParams.find("Wear");
+    if (it == pParams.end())
+    {
+        // By default track fluid particles
+        m_wear = false;
+    }
+    else
+    {
+        std::string sOption = it->second.c_str();
+        m_wear          = (boost::iequals(sOption, "true")) ||
+                              (boost::iequals(sOption, "yes" ));
     }
 
     // Read variables for output
@@ -341,22 +355,13 @@ void FilterParticlesTracking::v_Initialise(
     int dim = pFields[0]->GetGraph()->GetSpaceDimension();
     // Open output stream
     m_outputStream.open(m_outputFile.c_str());
-    m_WearStream.open(m_WearFile.c_str());
-
     m_outputStream << "Time, Id, x, y, z, particleU, particleV";
-    
-    m_WearStream << "<?xml version=\"1.0\" encoding=\"utf-8\"?>"<<endl
-                 << "<NEKTAR>"<<endl;
-
-    if (dim == 2)
-    {
-        m_WearStream<<"   <POINTS DIM=\"2\" FIELDS=\"Ux,Uy,alfa\">"<<endl;
-    }
+   
     if (dim == 3)
     {
         m_outputStream << ", particleW";
-        m_WearStream<<"   <POINTS DIM=\"3\" FIELDS=\"Ux,Uy,Uz,alfa\">"<<endl;
     }
+    
     for (int n = 0; n < pFields.num_elements(); ++n)
     {
         m_outputStream << ", " << m_session->GetVariables()[n];
@@ -367,6 +372,24 @@ void FilterParticlesTracking::v_Initialise(
         m_outputStream << ", Fz";
     }
     m_outputStream << endl;
+    
+    if (m_wear)
+   {
+    m_WearStream.open(m_WearFile.c_str()); 
+    m_WearStream << "<?xml version=\"1.0\" encoding=\"utf-8\"?>"<<endl
+                 << "<NEKTAR>"<<endl;
+
+    if (dim == 2)
+    {
+        m_WearStream<<"   <POINTS DIM=\"2\" FIELDS=\"Wear\">"<<endl;
+    }
+    
+    if (dim == 3)
+    {
+        m_outputStream << ", particleW";
+        m_WearStream<<"   <POINTS DIM=\"3\" FIELDS=\"Wear\">"<<endl;
+    }
+    }
 
     // Read seed points
     Array<OneD, NekDouble> gloCoord(3, 0.0);
@@ -466,8 +489,12 @@ void FilterParticlesTracking::v_Finalise(
     if (pFields[0]->GetComm()->GetRank() == 0)
     {
         m_outputStream.close();
+        
+        if(m_wear)
+        {
         m_WearStream<<"</POINTS>"<<endl<<"</NEKTAR>"<<endl;
         m_WearStream.close();
+        }
     }
 }
 
@@ -916,36 +943,41 @@ void FilterParticlesTracking::HandleCollision(
                 }
             }
 
-            // Evaluate the contact angle
-            dotProd = 0.0;
-            absVel  = 0.0;
+        // Evaluate the erosion
+        if (m_wear)
+        {
+            NekDouble angle = 0.0, Vel = 0.0, Wear = 0.0;
+            
             for (int i = 0; i < particle.m_dim; ++i)
             {
-                dotProd += (particle.m_gloCoord[i] - particle.m_oldCoord[i]) *
+                angle += (particle.m_gloCoord[i] - particle.m_oldCoord[i]) *
                            minNormal[i];
-                absVel +=
+                Vel +=
                     pow(particle.m_gloCoord[i] - particle.m_oldCoord[i], 2);
             }
-            dotProd /= sqrt(absVel);
-            dotProd = asinf(dotProd);
-
-
+            Vel = sqrt(Vel); angle = asinf( angle / Vel);
+            
+            NekDouble A = -0.396;
+            NekDouble B = 8.380;
+            NekDouble C = -16.92;
+            NekDouble D = 10.747;
+            NekDouble E = -1.765;
+            NekDouble F = 0.434;            
+            
+            Wear = pow(Vel,2)*(A*pow(sin(angle),4)+B*pow(sin(angle),3)+
+                    C*pow(sin(angle),2)+D*sin(angle)+E)*F;
+                    
+            // Wear = pow(Vel,3)*cos(angle)*1E6;
+          
             // Output the collision information
             for (int n = 0; n < particle.m_dim; ++n)
             {
-                m_WearStream << " "
+                m_WearStream << "   "
                              << boost::format("%25.19e") % collPnt[n];
             }
-
-            for (int n = 0; n < particle.m_dim; ++n)
-            {
-                m_WearStream << " "
-                             << boost::format("%25.19e") %
-                             particle.m_particleVelocity[0][n];
-            }
-
-            m_WearStream << " " << boost::format("%25.19e") % dotProd
-                         << endl;
+            m_WearStream <<"   "<< boost::format("%25.19e") % Wear<< endl;
+         }
+            
             
             // Evaluate the change in the collision position
             distN = 0.0;

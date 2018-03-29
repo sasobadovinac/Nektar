@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 //
-//  File: ProcessWear.cpp
+//  File: ProcessErosionWear.cpp
 //
 //  For more information, please see: http://www.nektar.info/
 //
@@ -29,7 +29,7 @@
 //  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 //  DEALINGS IN THE SOFTWARE.
 //
-//  Description: Computes Erosion Wear field.
+//  Description: Computes erosion wear field.
 //
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -39,7 +39,7 @@
 using namespace std;
 
 #include <boost/geometry.hpp>
-#include "ProcessWear.h"
+#include "ProcessInterpPointDataToFld.h"
 
 #include <FieldUtils/Interpolator.h>
 #include <LibUtilities/BasicUtils/PtsField.h>
@@ -56,33 +56,34 @@ namespace Nektar
 namespace FieldUtils
 {
 
-ModuleKey ProcessWear::className =
+ModuleKey ProcessInterpPointDataToFld::className =
     GetModuleFactory().RegisterCreatorFunction(
-        ModuleKey(eProcessModule, "wear"),
-        ProcessWear::create,
-       "Computes Erosion Wear field.");
+        ModuleKey(eProcessModule, "interppointdatatofld"),
+        ProcessInterpPointDataToFld::create,
+        "Interpolates given discrete data using a finite difference "
+        "approximation to a fld file given a xml file");
 
-ProcessWear::ProcessWear(FieldSharedPtr f)
+ProcessInterpPointDataToFld::ProcessInterpPointDataToFld(FieldSharedPtr f)
     : ProcessModule(f)
 {
-        m_config["frompts"] = ConfigOption(
+    m_config["frompts"] = ConfigOption(
         false, "NotSet", "Pts file from which to interpolate field");
 
     m_config["interpcoord"] =
         ConfigOption(false, "-1", "coordinate id to use for interpolation");
 }
 
-ProcessWear::~ProcessWear()
+ProcessInterpPointDataToFld::~ProcessInterpPointDataToFld()
 {
 }
 
-void ProcessWear::Process(po::variables_map &vm)
+void ProcessInterpPointDataToFld::Process(po::variables_map &vm)
 {
-    int i, j, k;
+    int i, j;
     LibUtilities::PtsFieldSharedPtr fieldPts;
     // Load pts file
     ASSERTL0( m_config["frompts"].as<string>().compare("NotSet") != 0,
-            "ProcessWear requires frompts parameter");
+            "ProcessInterpPointDataToFld requires frompts parameter");
     string inFile = m_config["frompts"].as<string>().c_str();
 
     if (boost::filesystem::path(inFile).extension() == ".pts")
@@ -106,74 +107,10 @@ void ProcessWear::Process(po::variables_map &vm)
 
     int nFields = fieldPts->GetNFields();
     ASSERTL0(nFields > 0, "No field values provided in input");
-       
+
     // Define new expansions.
     ASSERTL0(m_f->m_numHomogeneousDir == 0,
-        "ProcessWear does not support homogeneous expansion");
+        "ProcessInterpPointDataToFld does not support homogeneous expansion");
 
     m_f->m_exp.resize(nFields);
-    for (i = 1; i < nFields; ++i)
-    {
-        m_f->m_exp[i] = m_f->AppendExpList(m_f->m_numHomogeneousDir);
-    }
-
-    //Create variables for the data generation
-    int totpoints = m_f->m_exp[0]->GetTotPoints();
-    Array<OneD, Array<OneD, NekDouble> > intFields(3 + nFields);
-    for (int i = 0; i < 3 + nFields; ++i)
-    {
-        intFields[i] = Array<OneD, NekDouble>(totpoints,0.0);
-    }
-    //Load the quadrature point information
-    m_f->m_exp[0]->GetCoords(intFields[0], intFields[1], intFields[2]);
     
-    
-    Array<OneD, Array<OneD, NekDouble> > pts; fieldPts->GetPts(pts);
-    int dim = fieldPts->GetDim();
-    NekDouble ONE_OVER_SQRT_2PI = 0.39894228040143267793994605993438;
-    NekDouble  dist2 = 0.0, Sigma =0.01;
-
-
-   
-   for ( k = 0; k < pts[0].num_elements() ; ++k)
-   {
-       for (i = 0; i < totpoints; ++i)
-       {
-            dist2 = 0.0;
-            for (int j = 0; j < dim; ++j)
-            {
-                dist2 += pow(intFields[j][i] - pts[j][k],2);
-            }
-            intFields[dim+1][i] +=  ONE_OVER_SQRT_2PI / Sigma
-                              * exp(-0.5*dist2/pow(Sigma,2))
-                              * pts[dim][k];
-        }
-    } 
-    
-
-    for (i = 0; i < totpoints; ++i)
-    {
-        for (j = 0; j < nFields; ++j)
-        {
-            m_f->m_exp[j]->SetPhys(i, intFields[3+j][i]);
-        }
-    }
-
-    // forward transform fields
-    for (i = 0; i < nFields; ++i)
-    {
-        m_f->m_exp[i]->FwdTrans_IterPerExp(m_f->m_exp[i]->GetPhys(),
-                                           m_f->m_exp[i]->UpdateCoeffs());
-    }
-
-    // save field names
-    for (int j = 0; j < fieldPts->GetNFields(); ++j)
-    {
-        m_f->m_variables.push_back(fieldPts->GetFieldName(j));
-    }
-}
-
-}
-}
-
-

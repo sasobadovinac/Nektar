@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 //
-//  File: ProcessWear.h
+//  File: ProcessErosionWear.h
 //
 //  For more information, please see: http://www.nektar.info/
 //
@@ -29,12 +29,12 @@
 //  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 //  DEALINGS IN THE SOFTWARE.
 //
-//  Description: Computes Erosive Wear field.
+//  Description: Computes erosion wear field.
 //
 ////////////////////////////////////////////////////////////////////////////////
 
-#ifndef FIELDUTILS_PROCESSWEAR
-#define FIELDUTILS_PROCESSWEAR
+#ifndef FIELDUTILS_PROCESSINTERPDATATOFLD
+#define FIELDUTILS_PROCESSINTERPDATATOFLD
 
 #include <LibUtilities/BasicUtils/Progressbar.hpp>
 
@@ -48,30 +48,30 @@ namespace FieldUtils
 /**
  * @brief This processing module interpolates one field to another
  */
-class ProcessWear : public ProcessModule
+class ProcessInterpPointDataToFld : public ProcessModule
 {
 public:
     /// Creates an instance of this class
     static std::shared_ptr<Module> create(FieldSharedPtr f)
     {
-        return MemoryManager<ProcessWear>::AllocateSharedPtr(f);
+        return MemoryManager<ProcessInterpPointDataToFld>::AllocateSharedPtr(f);
     }
     static ModuleKey className;
 
-    ProcessWear(FieldSharedPtr f);
-    virtual ~ProcessWear();
+    ProcessInterpPointDataToFld(FieldSharedPtr f);
+    virtual ~ProcessInterpPointDataToFld();
 
     /// Write mesh to output file.
     virtual void Process(po::variables_map &vm);
 
     virtual std::string GetModuleName()
     {
-        return "ProcessWear";
+        return "ProcessInterpPointDataToFld";
     }
 
     virtual std::string GetModuleDescription()
     {
-        return "Computes Erosive Wear field.";
+        return "Interpolating data to field";
     }
 
     virtual ModulePriority GetModulePriority()
@@ -81,11 +81,12 @@ public:
 
     void PrintProgressbar(const int position, const int goal) const
     {
-        LibUtilities::PrintProgressbar(position, goal, "Evaluating Wear");
+        LibUtilities::PrintProgressbar(position, goal, "Interpolating");
     }
 
 private:
 };
 }
 }
+
 #endif
