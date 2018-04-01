@@ -30,6 +30,7 @@ IF( NEKTAR_SOLVER_INCNAVIERSTOKES )
         ./AdvectionTerms/NoAdvection.cpp
         ./Filters/FilterEnergy.cpp
         ./Filters/FilterReynoldsStresses.cpp
+	./Filters/FilterCleanReynoldsStresses.cpp
         ./Filters/FilterMovingBody.cpp
         ./Forcing/ForcingMovingBody.cpp
         ./Forcing/ForcingStabilityCoupledLNS.cpp
