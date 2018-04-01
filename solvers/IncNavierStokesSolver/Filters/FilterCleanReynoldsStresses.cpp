@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File FilterAverageField.cpp
+// File FilterCleanReynoldsStresses.cpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -93,7 +93,6 @@ void FilterCleanReynoldsStresses::v_Initialise(
 		        const NekDouble &time)
 {
     v_FillVariablesName(pFields);
-    // m_variables need to be filled by a derived class
     m_avgFields.resize(origFields);
     m_avgFields_phys.resize(origFields);
     m_outFields.resize(m_variables.size());
@@ -109,7 +108,6 @@ void FilterCleanReynoldsStresses::v_Initialise(
     }
     for (int n = 0; n < origFields; n++ )
     {
-        //nfield = (n < pFields.num_elements())? n: 0;
 	m_avgFields[n]       = Array<OneD, NekDouble>(pFields[n]->GetNcoeffs(), 0.0);
 	m_avgFields_phys[n]  = Array<OneD, NekDouble>(pFields[n]->GetTotPoints(), 0.0);
     }
@@ -292,7 +290,6 @@ void FilterCleanReynoldsStresses::v_PrepareOutput(
     // Set wavespace to false, as calculations were performed in physical space
     bool waveSpace = pFields[0]->GetWaveSpace();
     pFields[0]->SetWaveSpace(false);
-    // Forward transform and put into m_outFields (except pressure)
     for (int i = 0; i < m_outFields.size(); ++i)
     {
         if (i != dim)
