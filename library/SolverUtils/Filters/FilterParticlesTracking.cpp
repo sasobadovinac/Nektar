@@ -68,11 +68,10 @@ NekDouble FilterParticlesTracking::AdamsMoulton_coeffs[4][4] = {
  */
 FilterParticlesTracking::FilterParticlesTracking(
     const LibUtilities::SessionReaderSharedPtr &pSession,
-    const ParamMap &pParams)
-    : Filter(pSession)
+    const std::weak_ptr<EquationSystem>      &pEquation,
+    const ParamMap &pParams) :
+    Filter(pSession, pEquation)
 {
-    cout << "Tracking Particles..." << endl;
-
     // Read parameters
     ParamMap::const_iterator it;
 
@@ -93,7 +92,8 @@ FilterParticlesTracking::FilterParticlesTracking(
     }
     else
     {
-        LibUtilities::Equation equ(m_session, it->second);
+        LibUtilities::Equation equ(
+        m_session->GetExpressionEvaluator(), it->second);
         m_seedFrequency = round(equ.Evaluate());
     }
 
@@ -120,8 +120,9 @@ FilterParticlesTracking::FilterParticlesTracking(
     }
     else
     {
-        LibUtilities::Equation equ(m_session, it->second);
-        m_intOrder = round(equ.Evaluate());
+        LibUtilities::Equation equ1(
+            m_session->GetExpressionEvaluator(), it->second);
+        m_intOrder = round(equ1.Evaluate());
         ASSERTL0(m_intOrder >= 1 && m_intOrder <= 4,
                  "TimeIntegrationOrder must be between 1 and 4.");
     }
@@ -132,14 +133,16 @@ FilterParticlesTracking::FilterParticlesTracking(
         it = pParams.find("NumSteps");
         ASSERTL0(it != pParams.end(),
                  "Missing parameter 'NumSteps' for FilterParticleTracking.");
-        LibUtilities::Equation equ(m_session, it->second);
-        m_numSteps = round(equ.Evaluate());
+        LibUtilities::Equation equ2(
+            m_session->GetExpressionEvaluator(), it->second);
+        m_numSteps = round(equ2.Evaluate());
 
         it = pParams.find("DeltaT");
         ASSERTL0(it != pParams.end(),
                  "Missing parameter 'DeltaT' for FilterParticleTracking.");
-        LibUtilities::Equation equ2(m_session, it->second);
-        m_timestep = equ2.Evaluate();
+        LibUtilities::Equation equ3(
+            m_session->GetExpressionEvaluator(), it->second);
+        m_timestep = equ3.Evaluate();
 
         it = pParams.find("InfoSteps");
         if (it == pParams.end())
@@ -148,8 +151,9 @@ FilterParticlesTracking::FilterParticlesTracking(
         }
         else
         {
-            LibUtilities::Equation equ3(m_session, it->second);
-            m_infoSteps = round(equ3.Evaluate());
+            LibUtilities::Equation equ4(
+            m_session->GetExpressionEvaluator(), it->second);
+            m_infoSteps = round(equ4.Evaluate());
         }
 
         // Use m_updateFrequency = 0 to avoid running during the simulation
@@ -164,8 +168,9 @@ FilterParticlesTracking::FilterParticlesTracking(
         }
         else
         {
-            LibUtilities::Equation equ(m_session, it->second);
-            m_updateFrequency = round(equ.Evaluate());
+            LibUtilities::Equation equ5(
+            m_session->GetExpressionEvaluator(), it->second);
+            m_updateFrequency = round(equ5.Evaluate());
         }
 
         m_session->LoadParameter("TimeStep", m_timestep);
@@ -182,8 +187,9 @@ FilterParticlesTracking::FilterParticlesTracking(
     }
     else
     {
-        LibUtilities::Equation equ1(m_session, it->second);
-        m_diameter       = equ1.Evaluate();
+        LibUtilities::Equation equ6(
+        m_session->GetExpressionEvaluator(), it->second);
+        m_diameter       = equ6.Evaluate();
         m_fluidParticles = false;
 
         // Determine if SpecificGravity has effect
@@ -195,8 +201,9 @@ FilterParticlesTracking::FilterParticlesTracking(
         }
         else
         {
-            LibUtilities::Equation equ2(m_session, it->second);
-            m_SG = equ2.Evaluate();
+            LibUtilities::Equation equ7(
+                m_session->GetExpressionEvaluator(), it->second);
+            m_SG = equ7.Evaluate();
         }
 
         // Determine if gravity has effect
@@ -208,8 +215,9 @@ FilterParticlesTracking::FilterParticlesTracking(
         }
         else
         {
-            LibUtilities::Equation equ(m_session, it->second);
-            m_gravity = equ.Evaluate();
+            LibUtilities::Equation equ8(
+                m_session->GetExpressionEvaluator(), it->second);
+            m_gravity = equ8.Evaluate();
         }
     }
     
@@ -224,7 +232,7 @@ FilterParticlesTracking::FilterParticlesTracking(
     {
         std::string sOption = it->second.c_str();
         m_wear          = (boost::iequals(sOption, "true")) ||
-                              (boost::iequals(sOption, "yes" ));
+                          (boost::iequals(sOption, "yes" ));
     }
 
     // Read variables for output
@@ -265,8 +273,9 @@ FilterParticlesTracking::FilterParticlesTracking(
     }
     else
     {
-        LibUtilities::Equation equ(m_session, it->second);
-        m_outputFrequency = round(equ.Evaluate());
+        LibUtilities::Equation equ9(
+           m_session->GetExpressionEvaluator(), it->second);
+        m_outputFrequency = round(equ9.Evaluate());
     }
 
     // Read bounding box, if defined
@@ -310,6 +319,8 @@ void FilterParticlesTracking::v_Initialise(
     const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
     const NekDouble &time)
 {
+    cout << "Tracking Particles..." << endl;
+
     // Parse the boundary regions into a list.
     std::string::size_type FirstInd = m_BoundaryString.find_first_of('[') + 1;
     std::string::size_type LastInd  = m_BoundaryString.find_last_of(']') - 1;
@@ -375,20 +386,20 @@ void FilterParticlesTracking::v_Initialise(
     
     if (m_wear)
    {
-    m_WearStream.open(m_WearFile.c_str()); 
-    m_WearStream << "<?xml version=\"1.0\" encoding=\"utf-8\"?>"<<endl
-                 << "<NEKTAR>"<<endl;
+        m_WearStream.open(m_WearFile.c_str()); 
+        m_WearStream << "<?xml version=\"1.0\" encoding=\"utf-8\"?>"<<endl
+                     << "<NEKTAR>"<<endl;
 
-    if (dim == 2)
-    {
-        m_WearStream<<"   <POINTS DIM=\"2\" FIELDS=\"Wear\">"<<endl;
-    }
-    
-    if (dim == 3)
-    {
-        m_outputStream << ", particleW";
-        m_WearStream<<"   <POINTS DIM=\"3\" FIELDS=\"Wear\">"<<endl;
-    }
+        if (dim == 2)
+        {
+            m_WearStream<<"   <POINTS DIM=\"2\" FIELDS=\"Velocity, angle\">"
+            <<endl;
+        }
+        if (dim == 3)
+        {
+            m_WearStream<<"   <POINTS DIM=\"3\" FIELDS=\"Velocity, angle\">"
+            <<endl;
+        }
     }
 
     // Read seed points
@@ -946,7 +957,7 @@ void FilterParticlesTracking::HandleCollision(
         // Evaluate the erosion
         if (m_wear)
         {
-            NekDouble angle = 0.0, Vel = 0.0, Wear = 0.0;
+            NekDouble angle = 0.0, Vel = 0.0;
             
             for (int i = 0; i < particle.m_dim; ++i)
             {
@@ -957,17 +968,9 @@ void FilterParticlesTracking::HandleCollision(
             }
             Vel = sqrt(Vel); angle = asinf( angle / Vel);
             
-            NekDouble A = -0.396;
-            NekDouble B = 8.380;
-            NekDouble C = -16.92;
-            NekDouble D = 10.747;
-            NekDouble E = -1.765;
-            NekDouble F = 0.434;            
-            
-            Wear = pow(Vel,2)*(A*pow(sin(angle),4)+B*pow(sin(angle),3)+
-                    C*pow(sin(angle),2)+D*sin(angle)+E)*F;
                     
             // Wear = pow(Vel,3)*cos(angle)*1E6;
+          
           
             // Output the collision information
             for (int n = 0; n < particle.m_dim; ++n)
@@ -975,7 +978,8 @@ void FilterParticlesTracking::HandleCollision(
                 m_WearStream << "   "
                              << boost::format("%25.19e") % collPnt[n];
             }
-            m_WearStream <<"   "<< boost::format("%25.19e") % Wear<< endl;
+            m_WearStream <<"   "<< boost::format("%25.19e") % Vel
+                         <<"   "<< boost::format("%25.19e") % angle <<endl;
          }
             
             

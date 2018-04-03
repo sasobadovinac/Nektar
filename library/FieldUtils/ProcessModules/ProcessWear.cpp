@@ -105,22 +105,21 @@ void ProcessWear::Process(po::variables_map &vm)
     }
 
     int nFields = fieldPts->GetNFields();
-    ASSERTL0(nFields > 0, "No field values provided in input");
+    ASSERTL0( nFields == 2, 
+        "Velocity and collision angle are required input fields");
        
     // Define new expansions.
     ASSERTL0(m_f->m_numHomogeneousDir == 0,
         "ProcessWear does not support homogeneous expansion");
 
-    m_f->m_exp.resize(nFields);
-    for (i = 1; i < nFields; ++i)
-    {
-        m_f->m_exp[i] = m_f->AppendExpList(m_f->m_numHomogeneousDir);
-    }
+    m_f->m_exp.resize(1);
+    //m_f->m_exp[1] = m_f->AppendExpList(m_f->m_numHomogeneousDir);
+  
 
     //Create variables for the data generation
     int totpoints = m_f->m_exp[0]->GetTotPoints();
-    Array<OneD, Array<OneD, NekDouble> > intFields(3 + nFields);
-    for (int i = 0; i < 3 + nFields; ++i)
+    Array<OneD, Array<OneD, NekDouble> > intFields(4);
+    for (int i = 0; i < 4 ; ++i)
     {
         intFields[i] = Array<OneD, NekDouble>(totpoints,0.0);
     }
@@ -130,13 +129,23 @@ void ProcessWear::Process(po::variables_map &vm)
     
     Array<OneD, Array<OneD, NekDouble> > pts; fieldPts->GetPts(pts);
     int dim = fieldPts->GetDim();
-    NekDouble ONE_OVER_SQRT_2PI = 0.39894228040143267793994605993438;
-    NekDouble  dist2 = 0.0, Sigma =0.01;
-
-
    
+    NekDouble A = -0.396;
+    NekDouble B = 8.380;
+    NekDouble C = -16.92;
+    NekDouble D = 10.747;
+    NekDouble E = -1.765;
+    NekDouble F = 0.434;            
+            
+    NekDouble ONE_OVER_SQRT_2PI = 0.39894228040143267793994605993438;
+    NekDouble dist2 = 0.0, Sigma = 0.01, Wear = 0.0, Vel = 0.0, angle = 0.0;
    for ( k = 0; k < pts[0].num_elements() ; ++k)
    {
+        Vel   = pts[dim][k]; angle = -pts[dim+1][k];
+        
+        Wear  = pow(Vel,2)*(A*pow(sin(angle),4)+B*pow(sin(angle),3)+
+                    C*pow(sin(angle),2)+D*sin(angle)+E)*F;
+                    
        for (i = 0; i < totpoints; ++i)
        {
             dist2 = 0.0;
@@ -144,33 +153,29 @@ void ProcessWear::Process(po::variables_map &vm)
             {
                 dist2 += pow(intFields[j][i] - pts[j][k],2);
             }
-            intFields[dim+1][i] +=  ONE_OVER_SQRT_2PI / Sigma
-                              * exp(-0.5*dist2/pow(Sigma,2))
-                              * pts[dim][k];
+            
+            //if (dist2,0.01)
+            //{
+             intFields[3][i] +=  ONE_OVER_SQRT_2PI / Sigma
+                                   * exp(-0.5*dist2/pow(Sigma,2))* Wear;
+            //}
         }
     } 
     
 
-    for (i = 0; i < totpoints; ++i)
+   for (i = 0; i < totpoints; ++i)
     {
-        for (j = 0; j < nFields; ++j)
-        {
-            m_f->m_exp[j]->SetPhys(i, intFields[3+j][i]);
-        }
+            m_f->m_exp[0]->SetPhys(i, intFields[3][i]);
     }
 
     // forward transform fields
-    for (i = 0; i < nFields; ++i)
-    {
-        m_f->m_exp[i]->FwdTrans_IterPerExp(m_f->m_exp[i]->GetPhys(),
-                                           m_f->m_exp[i]->UpdateCoeffs());
-    }
+        m_f->m_exp[0]->FwdTrans_IterPerExp(m_f->m_exp[0]->GetPhys(),
+                                           m_f->m_exp[0]->UpdateCoeffs());
+
 
     // save field names
-    for (int j = 0; j < fieldPts->GetNFields(); ++j)
-    {
-        m_f->m_variables.push_back(fieldPts->GetFieldName(j));
-    }
+    m_f->m_variables.push_back("Wear");
+
 }
 
 }
