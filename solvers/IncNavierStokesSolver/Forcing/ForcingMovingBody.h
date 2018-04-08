@@ -39,6 +39,7 @@
 #include <LibUtilities/BasicUtils/NekFactory.hpp>
 #include <LibUtilities/BasicUtils/SharedArray.hpp>
 #include <LibUtilities/FFT/NektarFFT.h>
+#include <LibUtilities/SHARPy/NektarSHARPy.h>
 #include <SolverUtils/SolverUtilsDeclspec.h>
 #include <SolverUtils/Forcing/Forcing.h>
 #include <IncNavierStokesSolver/Filters/FilterMovingBody.h>
@@ -133,6 +134,9 @@ class ForcingMovingBody : public SolverUtils::Forcing
         ///
         LibUtilities::NektarFFTSharedPtr m_FFT;
         ///
+        LibUtilities::NektarSHARPySharedPtr m_SHARPy;
+					
+        ///
         Nektar::FilterMovingBodySharedPtr m_MovBodyfilter;
         /// storage for the cable's motion(x,y) variables
         Array<OneD, Array<OneD, Array<OneD, NekDouble> > > m_motions;
@@ -158,10 +162,6 @@ class ForcingMovingBody : public SolverUtils::Forcing
         std::string                     m_outputFile_fce;
         std::string                     m_outputFile_mot;
         bool                            m_IsHomostrip;
-        bool                            m_IsFictmass;
-
-
-        Sharpy::Beam m_beam;
 };
 
 }

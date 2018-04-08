@@ -307,14 +307,14 @@ void ForcingMovingBody::EvaluateVibrationModel(
     		if(m_movingBodyCalls == 1)
     		{
         		// 1. Solve the static solution of the nonlinear beam model
-        		m_beam.SolvenlnStatic(m_session, HydFCoeffs);
+        		m_SHARPy->SolvenlnStatic(m_session, HydFCoeffs);
 
         		// 2. Initialise the dynamic solver
-        		m_beam.InitialiseDynamic(m_session, HydFCoeffs);
+        		m_SHARPy->InitialiseDynamic(m_session, HydFCoeffs);
     		}
 
     		// 3. Solve the dynamic solution of the beam model
-    		m_beam.SolvenlnDynamic(m_session, HydFCoeffs, m_motions);
+    		m_SHARPy->SolvenlnDynamic(m_session, HydFCoeffs, m_motions);
 
     	}
 		else
@@ -714,7 +714,12 @@ void ForcingMovingBody::InitialiseVibrationModel(
     }
     else if(boost::iequals(StructDynSolver, "SHARPy"))
     {
-        m_beam.InitialiseStatic(m_session);
+		m_SHARPy =
+            LibUtilities::GetNektarSHARPyFactory().CreateInstance(
+                                                   "NektarSHARPy");
+		//Initialise the static solver in SHARPy
+        m_SHARPy->InitialiseStatic(m_session);
+
 		int NNodesElem,NElems;
 		m_session->LoadParameter("BeamNumNodesElem", NNodesElem,2);
 		m_session->LoadParameter("BeamNumElems", NElems);
@@ -1155,4 +1160,5 @@ void ForcingMovingBody::AverageForceCoefficients(const Array<OneD, Array <OneD, 
         HydFCoeffs[cn][m_nv]=HydFCoeffs[cn][0];
     }
 }
+
 }

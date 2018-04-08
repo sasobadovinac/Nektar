@@ -101,6 +101,19 @@ IF(NEKTAR_USE_FFTW)
     SET(FFTSources ${FFTSources} ./FFT/NekFFTW.cpp)
 ENDIF(NEKTAR_USE_FFTW)
 
+SET(SHARPyHeaders
+       ./SHARPy/NektarSHARPy.h
+)
+
+SET(SHARPySources
+       ./SHARPy/NektarSHARPy.cpp
+)
+
+IF(NEKTAR_USE_SHARPY)
+    SET(SHARPyHeaders ${SHARPyHeaders} ./SHARPy/NekSHARPy.h)
+    SET(SHARPySources ${SHARPySources} ./SHARPy/NekSHARPy.cpp)
+ENDIF(NEKTAR_USE_SHARPY)
+
 SET(FoundationHeaders
     ./Foundations/Basis.h
     ./Foundations/BasisType.h
@@ -290,6 +303,9 @@ SOURCE_GROUP("TimeIntegration Sources" FILES ${TimeIntegrationSources})
 SOURCE_GROUP("FFT Headers" FILES ${FFTHeaders})
 SOURCE_GROUP("FFT Sources" FILES ${FFTSources})
 
+SOURCE_GROUP("SHARPy Headers" FILES ${SHARPyHeaders})
+SOURCE_GROUP("SHARPy Sources" FILES ${SHARPySources})
+
 SOURCE_GROUP("Base" FILES ${BaseHeaders})
 
 SET(LibUtilityHeaders
@@ -305,6 +321,7 @@ SET(LibUtilityHeaders
     ${KernelHeaders}
     ${TimeIntegrationHeaders}
     ${FFTHeaders}
+    ${SHARPyHeaders}
     ${BaseHeaders}
 )
 
@@ -326,6 +343,7 @@ SET(LibUtilitySources
     ${KernelSources}
     ${TimeIntegrationSources}
     ${FFTSources}
+    ${SHARPySources}
     ${MemorySources}
     ${GitRevisionFile}
 )
@@ -345,9 +363,9 @@ ADD_DEPENDENCIES(LibUtilities boost tinyxml-2.6.2 zlib-1.2.7)
 # FFTW
 IF( NEKTAR_USE_FFTW )
     TARGET_LINK_LIBRARIES(LibUtilities LINK_PUBLIC ${FFTW_LIBRARY})
-    ADD_DEPENDENCIES(LibUtilities fftw-3.2.2)
-    SET_SOURCE_FILES_PROPERTIES(./FFT/NekFFTW.cpp
-        PROPERTY COMPILE_FLAGS "-I${FFTW_INCLUDE_DIR}")
+    #ADD_DEPENDENCIES(LibUtilities fftw-3.2.2)
+    #SET_SOURCE_FILES_PROPERTIES(./FFT/NekFFTW.cpp
+    #    PROPERTY COMPILE_FLAGS "-I${FFTW_INCLUDE_DIR}")
 ENDIF( NEKTAR_USE_FFTW )
 
 # ARPACK
@@ -359,6 +377,9 @@ ENDIF( NEKTAR_USE_ARPACK )
 # SHARPY
 IF( NEKTAR_USE_SHARPY )
     TARGET_LINK_LIBRARIES(LibUtilities LINK_PUBLIC ${SHARPY_LIBRARY} gfortran)
+    #ADD_DEPENDENCIES(LibUtilities fftw-3.2.2)
+    #SET_SOURCE_FILES_PROPERTIES(./FFT/NekFFTW.cpp
+    #    PROPERTY COMPILE_FLAGS "-I${FFTW_INCLUDE_DIR}")
 ENDIF( NEKTAR_USE_SHARPY )
 
 # Boost
