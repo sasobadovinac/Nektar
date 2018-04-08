@@ -37,6 +37,7 @@
 #include <MultiRegions/ExpList.h>
 #include <IncNavierStokesSolver/Forcing/spline.h>
 #include <LibUtilities/LinearAlgebra/Lapack.hpp>
+
 using namespace std;
 
 namespace Nektar

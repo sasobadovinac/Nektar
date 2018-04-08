@@ -36,15 +36,11 @@
 #ifndef NEKTAR_SOLVERUTILS_FORCINGMOVINGBODY
 #define NEKTAR_SOLVERUTILS_FORCINGMOVINGBODY
 
-#include <LibUtilities/BasicUtils/NekFactory.hpp>
-#include <LibUtilities/BasicUtils/SharedArray.hpp>
 #include <LibUtilities/FFT/NektarFFT.h>
 #include <LibUtilities/SHARPy/NektarSHARPy.h>
-#include <SolverUtils/SolverUtilsDeclspec.h>
 #include <SolverUtils/Forcing/Forcing.h>
 #include <IncNavierStokesSolver/Filters/FilterMovingBody.h>
 #include <GlobalMapping/Mapping.h>
-#include <IncNavierStokesSolver/Forcing/ExecuteSharpy.h>
 
 namespace Nektar
 {
