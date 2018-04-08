@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File ExecuteSharpy.h
+// File NekSHARPy.h
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -29,73 +29,82 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 //
-// Description: Third-parity code SHARPy is execuated for the solution of
-// structural dynamics of long flexible beam.
+// Description: Header file for the SHARPy class in Nektar++
 //
 ///////////////////////////////////////////////////////////////////////////////
 
+#ifndef NEKTAR_LIB_UTILIITIES_SHARPY_NEKSHARPY_H
+#define NEKTAR_LIB_UTILIITIES_SHARPY_NEKSHARPY_H
 
-#ifndef NEKTAR_EXECUTESHARPY_H
-#define NEKTAR_EXECUTESHARPY_H
-
-#include <LibUtilities/BasicUtils/NekFactory.hpp>
-#include <LibUtilities/BasicUtils/SharedArray.hpp>
-#include <SolverUtils/SolverUtilsDeclspec.h>
-#include <SolverUtils/Forcing/Forcing.h>
-#include <LibUtilities/SHARPy/SHARPy.hpp>
-
+#include <LibUtilities/SHARPy/NektarSHARPy.h>
 
 namespace Nektar
 {
-namespace Sharpy
-{
-    class Beam;
+    template <typename Dim, typename DataType>
+    class Array;
+    
+	namespace LibUtilities
+	{
+		/**
+		 * The NektarSHARPy class manages the use of the third-party code SHARPy to solve nonlinear structural dynamics.
+		 * The function here defined will link to a proper implementation of the SHARPy routine.
+		 * Depending on the user definition the functions can link to a class which is a wrapper around the SHARPy
+		 * library or to a specific SHARPy implementation.
+		 */
+		class NekSHARPy;
+		
+		// A shared pointer to the NektarSHARPy object
+		typedef std::shared_ptr<NekSHARPy>  NekSHARPySharedPtr;
+		
+		class NekSHARPy: public NektarSHARPy
+		{
+		public:
+			/// Creates an instance of this class
+            static NektarSHARPySharedPtr create()
+            {
+                return MemoryManager<NekSHARPy>::AllocateSharedPtr();
+            }
 
+            /// Name of class
+            static std::string className;
 
-    class Beam
-    {
-        public:
+			/// Initialises NektarFFT class members.
+			NekSHARPy();
+			
+			// Distructor
+			virtual  ~NekSHARPy();
+			
+		protected:
+			
+			virtual void v_InitialiseStatic(const LibUtilities::SessionReaderSharedPtr &pSession);
 
-            Beam(){};
+			virtual void v_InitialiseDynamic(const LibUtilities::SessionReaderSharedPtr& pSession, const Array<OneD, Array<OneD, NekDouble> >& CdCl);
 
-            ~Beam(){};
+			virtual void v_SolvenlnStatic(const LibUtilities::SessionReaderSharedPtr& pSession, const Array<OneD, Array<OneD, NekDouble> >& CdCl);
 
-            void InitialiseStatic(const LibUtilities::SessionReaderSharedPtr& pSession);
-
-            void InitialiseDynamic(const LibUtilities::SessionReaderSharedPtr& pSession,
-                    const Array<OneD, Array<OneD, NekDouble> >& HydCoeffs);
-
-            void SolvenlnStatic(const LibUtilities::SessionReaderSharedPtr& pSession,
-                    const Array<OneD, Array<OneD, NekDouble> > &HydroForces);
-
-            void SolvenlnDynamic(const LibUtilities::SessionReaderSharedPtr& pSession,
-                    const Array<OneD, Array<OneD, NekDouble> > &HydroForces,
-                    Array<OneD, Array<OneD, Array<OneD, NekDouble> > > &motions);
-
-
-        private:
-
+	        virtual void v_SolvenlnDynamic(const LibUtilities::SessionReaderSharedPtr& pSession,const Array<OneD, Array<OneD, NekDouble> > &CdCl, Array<OneD, Array<OneD, Array<OneD, NekDouble> > > &Vmotions);
+			
+		private:
+		
             void Input_elem(const LibUtilities::SessionReaderSharedPtr& pSession);
 
             void Input_node(const LibUtilities::SessionReaderSharedPtr& pSession);
 
-            void AddGravityLoad(const LibUtilities::SessionReaderSharedPtr& pSession, Array<OneD, NekDouble> &gForces);
+			void AddGravityLoad(const LibUtilities::SessionReaderSharedPtr& pSession, Array<OneD,NekDouble> &gForces);
 
-            void Skew(const Array<OneD, NekDouble> &Vector,
-                    Array<OneD, Array<OneD, NekDouble> > &SkewMat);
+			void RotCRV(const Array<OneD, NekDouble> &Psi, Array<OneD, Array<OneD, NekDouble> > &C);
 
-            void RotCRV(const Array<OneD, NekDouble> &Psi,
-                    Array<OneD, Array<OneD, NekDouble> > &C);
+			void Skew(const Array<OneD, NekDouble> &Vector, Array<OneD, Array<OneD, NekDouble> > &SkewMat);
 
-            ///SHARPy Variables
-            bool m_FollowerForce;        // Forces follow local deflections
+
+			bool m_FollowerForce;        // Forces follow local deflections
             bool m_FollowerForceRig;     // Forces follow the body-fixed frame
-            bool m_PrintInfo;            // ???
+            bool m_PrintInfo;            // Print informations about the solving process
             bool m_OutInBframe;          // Print velocities in local-frame (if not, use body-attached frame)
             bool m_OutInaframe;          // Print velocities in body-fixed-frame (if not, use inertial frame)
 
             int m_MaxElNod;              // Max number of nodes per element.
-            int m_NElems;              // Elements discreising the beam
+            int m_NElems;              	 // Elements discreising the beam
             int m_ElemProj;              // Element info computed in (1) global frame (2) fixed element frame (3) moving element frame.
             int m_MaxIterations;         // Newton-Raphson iterations for nonlinear solution
             int m_NumLoadSteps;          // Number of load increments
@@ -143,7 +152,6 @@ namespace Sharpy
 
             Array<OneD, char>m_OutFile;
 
-
             Array<OneD, NekDouble> m_Length;
             Array<OneD, NekDouble> m_PreCurv;
             Array<OneD, NekDouble> m_Psi;
@@ -188,9 +196,7 @@ namespace Sharpy
             Array<OneD, NekDouble> m_ForcedVelDot;
             Array<OneD, NekDouble> m_PosForcedDisp;
             Array<OneD, NekDouble> m_PsiA_G;
-    };
-}
-}
-
-#endif
-
+		};
+	}//end namespace LibUtilities
+}//end of namespace Nektar
+#endif //NEKTAR_LIB_UTILIITIES_SHARPY_NEKSHARPY_H
