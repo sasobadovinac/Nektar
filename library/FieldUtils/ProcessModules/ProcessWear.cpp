@@ -138,13 +138,13 @@ void ProcessWear::Process(po::variables_map &vm)
     NekDouble F = 0.434;            
             
     NekDouble ONE_OVER_SQRT_2PI = 0.39894228040143267793994605993438;
-    NekDouble dist2 = 0.0, Sigma = 0.01, Wear = 0.0, Vel = 0.0, angle = 0.0;
+    NekDouble dist2 = 0.0, Sigma = 0.001, Wear = 0.0, Vel = 0.0, angle = 0.0;
    for ( k = 0; k < pts[0].num_elements() ; ++k)
    {
         Vel   = pts[dim][k]; angle = -pts[dim+1][k];
         
-        Wear  = pow(Vel,2)*(A*pow(sin(angle),4)+B*pow(sin(angle),3)+
-                    C*pow(sin(angle),2)+D*sin(angle)+E)*F;
+        Wear  = fabs(pow(Vel,2)*(A*pow(sin(angle),4)+B*pow(sin(angle),3)+
+                    C*pow(sin(angle),2)+D*sin(angle)+E)*F);
                     
        for (i = 0; i < totpoints; ++i)
        {
