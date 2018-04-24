@@ -99,7 +99,7 @@ int main(int argc, char *argv[])
     cout<< nplanes << endl;
     // nplanes + 1 points
     const LibUtilities::PointsKey Pkey(nplanes,LibUtilities::ePolyEvenlySpaced);
-    const LibUtilities::BasisKey  Bkey(field3ddef[0]->m_basis[2],nplanes,Pkey);
+    const LibUtilities::BasisKey  Bkey(LibUtilities::eFourier,nplanes,Pkey);
     NekDouble lz = field3ddef[0]->m_homogeneousLengths[0];
     Exp3DH1 = MemoryManager<MultiRegions::ExpList3DHomogeneous1D>::AllocateSharedPtr(vSession3d,Bkey,lz,useFFT,dealiasing,graphShPt3d);
     Exp3d[0] = Exp3DH1;
