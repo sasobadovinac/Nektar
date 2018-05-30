@@ -220,13 +220,13 @@ public:
     LIB_UTILITIES_EXPORT virtual ~FieldIOXml()
     {
     }
-
-    LIB_UTILITIES_EXPORT void ImportFieldDefs(
+    
+    LIB_UTILITIES_EXPORT uint64_t ImportFieldDefs(
         DataSourceSharedPtr dataSource,
         std::vector<FieldDefinitionsSharedPtr> &fielddefs,
         bool expChild);
 
-    LIB_UTILITIES_EXPORT void ImportFieldData(
+    LIB_UTILITIES_EXPORT uint64_t ImportFieldData(
         DataSourceSharedPtr dataSource,
         const std::vector<FieldDefinitionsSharedPtr> &fielddefs,
         std::vector<std::vector<NekDouble> > &fielddata);
@@ -240,21 +240,21 @@ public:
     LIB_UTILITIES_EXPORT void SetUpFieldMetaData(
         const std::string &outname,
         const std::vector<FieldDefinitionsSharedPtr> &fielddefs,
-        const FieldMetaDataMap &fieldmetadatamap);
-
-    LIB_UTILITIES_EXPORT void ImportMultiFldFileIDs(
-        const std::string &inFile,
-        std::vector<std::string> &fileNames,
-        std::vector<std::vector<unsigned int> > &elementList,
-        FieldMetaDataMap &fieldmetadatamap);
-
-    LIB_UTILITIES_EXPORT void v_Import(
+        const FieldMetaDataMap &fieldmetadatamap);    
+        
+    LIB_UTILITIES_EXPORT virtual uint64_t v_Import(
         const std::string &infilename,
         std::vector<FieldDefinitionsSharedPtr> &fielddefs,
         std::vector<std::vector<NekDouble> > &fielddata =
             NullVectorNekDoubleVector,
         FieldMetaDataMap &fieldinfomap = NullFieldMetaDataMap,
-        const Array<OneD, int> &ElementIDs = NullInt1DArray);
+        const Array<OneD, int> &ElementiDs = NullInt1DArray);
+        
+    LIB_UTILITIES_EXPORT virtual void v_ImportMultiFldFileIDs(
+        const std::string &inFile,
+        std::vector<std::string> &fileNames,
+        std::vector<std::vector<unsigned int> > &elementList,
+        FieldMetaDataMap &fieldmetadatamap);
 
     /// Returns the class name.
     inline virtual const std::string &GetClassName() const
@@ -262,8 +262,8 @@ public:
         return className;
     }
 
-private:
-    LIB_UTILITIES_EXPORT virtual void v_Write(
+private:  
+    LIB_UTILITIES_EXPORT virtual uint64_t v_Write(
         const std::string &outFile,
         std::vector<FieldDefinitionsSharedPtr> &fielddefs,
         std::vector<std::vector<NekDouble> > &fielddata,

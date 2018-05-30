@@ -41,6 +41,7 @@
 
 namespace Nektar
 {
+    typedef unsigned char NekByte;
     typedef double NekDouble;
 
     typedef std::int32_t  NekInt;

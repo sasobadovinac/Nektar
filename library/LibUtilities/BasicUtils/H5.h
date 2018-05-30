@@ -326,6 +326,7 @@ public:
 
     void Close();
     void SelectRange(const hsize_t start, const hsize_t count);
+    void SelectRange(const H5S_seloper_t op, const hsize_t start, const hsize_t count);
 
     hsize_t GetSize();
     std::vector<hsize_t> GetDims();

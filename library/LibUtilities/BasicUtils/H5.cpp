@@ -465,6 +465,12 @@ void DataSpace::SelectRange(const hsize_t start, const hsize_t count)
             (m_Id, H5S_SELECT_SET, &start, NULL, &count, NULL));
 }
 
+void DataSpace::SelectRange(const H5S_seloper_t op, const hsize_t start, const hsize_t count)
+{
+    H5_CALL(H5Sselect_hyperslab,
+            (m_Id, op, &start, NULL, &count, NULL));
+}
+
 hsize_t DataSpace::GetSize()
 {
     return H5Sget_simple_extent_npoints(m_Id);

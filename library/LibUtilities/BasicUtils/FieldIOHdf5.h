@@ -227,55 +227,55 @@ public:
 
 private:
     struct OffsetHelper {
-        OffsetHelper() : data(0), order(0), homy(0), homz(0), homs(0) {}
+        OffsetHelper() : ids(0), data(0), order(0), homy(0), homz(0), homs(0) {}
         OffsetHelper(const OffsetHelper &in) :
-            data(in.data), order(in.order), homy(in.homy), homz(in.homz),
-            homs(in.homs)
+            ids(in.ids), data(in.data), order(in.order),
+                homy(in.homy), homz(in.homz), homs(in.homs)
         {
         }
 
-        uint64_t data, order, homy, homz, homs;
+      uint64_t ids, data, order, homy, homz, homs;
     };
-
-    LIB_UTILITIES_EXPORT virtual void v_Write(
+    
+    LIB_UTILITIES_EXPORT virtual uint64_t v_Write(
         const std::string &outFile,
         std::vector<FieldDefinitionsSharedPtr> &fielddefs,
         std::vector<std::vector<NekDouble> > &fielddata,
         const FieldMetaDataMap &fieldinfomap = NullFieldMetaDataMap,
         const bool backup = false);
 
-    LIB_UTILITIES_EXPORT virtual void v_Import(
-        const std::string &infilename,
+    template <class T>
+    LIB_UTILITIES_EXPORT uint64_t WriteFieldDataInd(std::size_t nFields,
+        H5::DataSpaceSharedPtr &fspace, H5::DataSetSharedPtr &dset,
+        uint64_t data_i, std::vector<std::vector<T> > &data);
+    
+    template <class T>
+    LIB_UTILITIES_EXPORT uint64_t WriteFieldData(std::size_t nMinFields, std::size_t nFields,
+        H5::DataSpaceSharedPtr &fspace, H5::DataSetSharedPtr &dset,
+        uint64_t data_i, std::vector<std::vector<T> > &data);
+
+    LIB_UTILITIES_EXPORT virtual uint64_t v_Import(const std::string &infilename,
         std::vector<FieldDefinitionsSharedPtr> &fielddefs,
-        std::vector<std::vector<NekDouble> > &fielddata =
-                                                      NullVectorNekDoubleVector,
+        std::vector<std::vector<NekDouble> > &fielddata = NullVectorNekDoubleVector,
         FieldMetaDataMap &fieldinfomap = NullFieldMetaDataMap,
         const Array<OneD, int> &ElementIDs = NullInt1DArray);
 
+    template <class T>
+    LIB_UTILITIES_EXPORT uint64_t ImportFieldDataInd(H5::GroupSharedPtr root,
+        std::string dsetName, std::string dataTag, uint64_t nDataItems,
+        uint64_t offset, std::vector<T> &data);
+
+    LIB_UTILITIES_EXPORT uint64_t ImportFieldDef(H5::GroupSharedPtr root,
+        std::string               group,
+        FieldDefinitionsSharedPtr def);
+    
     LIB_UTILITIES_EXPORT virtual DataSourceSharedPtr v_ImportFieldMetaData(
         const std::string &filename, FieldMetaDataMap &fieldmetadatamap);
 
     LIB_UTILITIES_EXPORT void ImportHDF5FieldMetaData(
         DataSourceSharedPtr dataSource, FieldMetaDataMap &fieldmetadatamap);
 
-    LIB_UTILITIES_EXPORT void ImportFieldDef(
-        H5::PListSharedPtr        readPL,
-        H5::GroupSharedPtr        root,
-        std::vector<uint64_t>    &decomps,
-        uint64_t                  decomp,
-        OffsetHelper              offset,
-        std::string               group,
-        FieldDefinitionsSharedPtr def);
-
-    LIB_UTILITIES_EXPORT void ImportFieldData(
-        H5::PListSharedPtr               readPL,
-        H5::DataSetSharedPtr             data_dset,
-        H5::DataSpaceSharedPtr           data_fspace,
-        uint64_t                         data_i,
-        std::vector<uint64_t>           &decomps,
-        uint64_t                         decomp,
-        const FieldDefinitionsSharedPtr  fielddef,
-        std::vector<NekDouble>          &fielddata);
+    
 };
 }
 }

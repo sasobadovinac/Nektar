@@ -64,6 +64,15 @@ IF( NEKTAR_USE_HDF5 )
         ./BasicUtils/FieldIOHdf5.cpp)
 ENDIF( NEKTAR_USE_HDF5 )
 
+# SIONlib
+IF( NEKTAR_USE_SIONLIB )
+    SET(BasicUtilsHeaders ${BasicUtilsHeaders}
+        ./BasicUtils/SIONlib.h
+        ./BasicUtils/FieldIOSIONlib.h)
+    SET(BasicUtilsSources ${BasicUtilsSources}
+        ./BasicUtils/SIONlib.cpp
+        ./BasicUtils/FieldIOSIONlib.cpp)
+ENDIF( NEKTAR_USE_SIONLIB )
 
 SET(CommunicationHeaders
     ./Communication/Comm.h
@@ -423,6 +432,13 @@ IF( NEKTAR_USE_HDF5 )
     TARGET_LINK_LIBRARIES(LibUtilities LINK_PUBLIC ${HDF5_LIBRARIES})
     ADD_DEPENDENCIES(LibUtilities hdf5-1.8.16)
 ENDIF( NEKTAR_USE_HDF5 )
+
+# SIONlib
+IF( NEKTAR_USE_SIONLIB )
+    SET_SOURCE_FILES_PROPERTIES(./BasicUtils/FieldIOSIONlib.cpp
+        PROPERTY COMPILE_FLAGS "${SIONLIB_COMPILE_FLAGS}")
+    TARGET_LINK_LIBRARIES(LibUtilities LINK_PRIVATE ${SIONLIB_LIBRARIES})
+ENDIF( NEKTAR_USE_SIONLIB )
 
 INSTALL(DIRECTORY ./
     DESTINATION ${NEKTAR_INCLUDE_DIR}/LibUtilities
