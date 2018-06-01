@@ -771,7 +771,8 @@ namespace Nektar
                                          .c_str());
 
                                 BoundaryConditionShPtr periodicCondition(
-                                        MemoryManager<PeriodicBoundaryCondition>::AllocateSharedPtr(
+                                    MemoryManager<PeriodicBoundaryCondition>::
+                                    AllocateSharedPtr(
                                                 periodicBndRegionIndex[0]));
                                 (*boundaryConditions)[varName] =
                                         periodicCondition;
@@ -782,6 +783,15 @@ namespace Nektar
                                         "Periodic boundary conditions should be explicitely defined");
                             }
                         }
+                    }
+                    else if (conditionType == "E")
+                    {
+                        BoundaryConditionShPtr NoCondition(
+                                 MemoryManager<BoundaryConditionBase>::
+                                 AllocateSharedPtr(eNotDefined));
+                        (*boundaryConditions)[varName] =
+                            NoCondition;
+
                     }
                     else if (conditionType == "C")
                     {

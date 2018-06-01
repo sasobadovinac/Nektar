@@ -648,7 +648,10 @@ namespace Nektar
             {
                 bc = GetBoundaryCondition(bconditions, it.first, variable);
                 
-                if (bc->GetBoundaryConditionType() != SpatialDomains::ePeriodic)
+                if ((bc->GetBoundaryConditionType() !=
+                     SpatialDomains::ePeriodic) &&
+                    (bc->GetBoundaryConditionType() !=
+                     SpatialDomains::eNotDefined))
                 {
                     cnt++;
                 }
@@ -666,7 +669,10 @@ namespace Nektar
             {
                 bc = GetBoundaryCondition(bconditions, it.first, variable);
 
-                if (bc->GetBoundaryConditionType() != SpatialDomains::ePeriodic)
+                if ((bc->GetBoundaryConditionType()
+                     != SpatialDomains::ePeriodic) &&
+                    (bc->GetBoundaryConditionType()
+                     != SpatialDomains::eNotDefined))
                 {
                     locExpList = MemoryManager<MultiRegions::ExpList1D>
                         ::AllocateSharedPtr(m_session, *it.second, graph2D,
