@@ -590,19 +590,25 @@ namespace Nektar
             int i;
             bool returnval = true;
 
-            for(i = 0; i < m_bndConditions.num_elements(); ++i)
+            if(m_bndConditions.num_elements() != In.m_bndConditions.num_elements())
             {
-
-                // check to see if boundary condition type is the same
-                // and there are the same number of boundary
-                // conditions in the boundary definition.
-                if((m_bndConditions[i]->GetBoundaryConditionType()
-                    != In.m_bndConditions[i]->GetBoundaryConditionType())||
-                   (m_bndCondExpansions[i]->GetExpSize()
-                    != In.m_bndCondExpansions[i]->GetExpSize()))
+                returnval = false;
+            }
+            else
+            {
+                for(i = 0; i < m_bndConditions.num_elements(); ++i)
                 {
-                    returnval = false;
-                    break;
+                    // check to see if boundary condition type is the same
+                    // and there are the same number of boundary
+                    // conditions in the boundary definition.
+                    if((m_bndConditions[i]->GetBoundaryConditionType()
+                        != In.m_bndConditions[i]->GetBoundaryConditionType())||
+                       (m_bndCondExpansions[i]->GetExpSize()
+                        != In.m_bndCondExpansions[i]->GetExpSize()))
+                    {
+                        returnval = false;
+                        break;
+                    }
                 }
             }
 
