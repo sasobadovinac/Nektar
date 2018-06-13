@@ -97,6 +97,7 @@ public:
     template <class T>
     void SendRecvReplace(int pSendProc, int pRecvProc, T &pData);
 
+    template <class T> void Reduce(T &pSendData, T &pRecvData, enum ReduceOperator pOp, int root);
     template <class T> void AllReduce(T &pData, enum ReduceOperator pOp);
 
     template <class T> void AlltoAll(T &pSendData, T &pRecvData);
@@ -155,6 +156,8 @@ protected:
                             CommDataType recvtype, int source) = 0;
     virtual void v_SendRecvReplace(void *buf, int count, CommDataType dt,
                                    int pSendProc, int pRecvProc) = 0;
+    virtual void v_Reduce(void *sendbuf, void *recvbuf, int count, CommDataType dt,
+                          enum ReduceOperator pOp, int root) = 0;
     virtual void v_AllReduce(void *buf, int count, CommDataType dt,
                              enum ReduceOperator pOp) = 0;
     virtual void v_AlltoAll(void *sendbuf, int sendcount, CommDataType sendtype,
@@ -278,6 +281,17 @@ void Comm::SendRecvReplace(int pSendProc, int pRecvProc, T &pData)
                       CommDataTypeTraits<T>::GetCount(pData),
                       CommDataTypeTraits<T>::GetDataType(), pSendProc,
                       pRecvProc);
+}
+
+/**
+ *
+ */
+template <class T> void Comm::Reduce(T &pSendData, T &pRecvData, enum ReduceOperator pOp, int root)
+{
+    v_Reduce(CommDataTypeTraits<T>::GetPointer(pSendData),
+	     CommDataTypeTraits<T>::GetPointer(pRecvData),
+             CommDataTypeTraits<T>::GetCount(pSendData),
+             CommDataTypeTraits<T>::GetDataType(), pOp, root);
 }
 
 /**

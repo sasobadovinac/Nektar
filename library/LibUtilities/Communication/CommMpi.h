@@ -97,6 +97,8 @@ protected:
                             CommDataType recvtype, int source);
     virtual void v_SendRecvReplace(void *buf, int count, CommDataType dt,
                                    int pSendProc, int pRecvProc);
+    virtual void v_Reduce(void *sendbuf, void *recvbuf, int count, CommDataType dt,
+                          enum ReduceOperator pOp, int root);
     virtual void v_AllReduce(void *buf, int count, CommDataType dt,
                              enum ReduceOperator pOp);
     virtual void v_AlltoAll(void *sendbuf, int sendcount, CommDataType sendtype,

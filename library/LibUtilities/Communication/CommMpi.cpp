@@ -219,6 +219,36 @@ void CommMpi::v_SendRecvReplace(void *buf, int count, CommDataType dt,
 /**
  *
  */
+void CommMpi::v_Reduce(void *sendbuf, void *recvbuf, int count, CommDataType dt,
+                       enum ReduceOperator pOp, int root)
+{
+    if (GetSize() == 1)
+    {
+        return;
+    }
+
+    MPI_Op vOp;
+    switch (pOp)
+    {
+        case ReduceMax:
+            vOp = MPI_MAX;
+            break;
+        case ReduceMin:
+            vOp = MPI_MIN;
+            break;
+        case ReduceSum:
+        default:
+            vOp = MPI_SUM;
+            break;
+    }
+    int retval = MPI_Reduce(sendbuf, recvbuf, count, dt, vOp, root, m_comm);
+
+    ASSERTL0(retval == MPI_SUCCESS, "MPI error performing Reduce.");
+}
+  
+/**
+ *
+ */
 void CommMpi::v_AllReduce(void *buf, int count, CommDataType dt,
                           enum ReduceOperator pOp)
 {

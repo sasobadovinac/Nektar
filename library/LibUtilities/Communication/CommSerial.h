@@ -85,6 +85,10 @@ protected:
                                                         CommDataType dt,
                                                         int pSendProc,
                                                         int pRecvProc);
+    LIB_UTILITIES_EXPORT virtual void v_Reduce(void *sendbuf, void *recvbuf, int count,
+                                               CommDataType dt,
+                                               enum ReduceOperator pOp,
+					       int root);
     LIB_UTILITIES_EXPORT virtual void v_AllReduce(void *buf, int count,
                                                   CommDataType dt,
                                                   enum ReduceOperator pOp);

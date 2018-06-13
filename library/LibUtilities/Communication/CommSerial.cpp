@@ -134,6 +134,14 @@ void CommSerial::v_SendRecvReplace(void *buf, int count, CommDataType dt,
 /**
  *
  */
+void CommSerial::v_Reduce(void *sendbuf, void *recvbuf, int count, CommDataType dt,
+                          enum ReduceOperator pOp, int root)
+{
+}
+  
+/**
+ *
+ */
 void CommSerial::v_AllReduce(void *buf, int count, CommDataType dt,
                              enum ReduceOperator pOp)
 {
