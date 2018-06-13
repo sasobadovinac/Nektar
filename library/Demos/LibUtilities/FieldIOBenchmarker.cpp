@@ -91,6 +91,7 @@ struct Experiment
     CommSharedPtr comm;
 };
 
+IOSettingsSharedPtr hdf5_settings(new IOSettings);
 IOSettingsSharedPtr sionlib_settings(new IOSettings);
 
 typedef std::vector<double> Results;
@@ -114,6 +115,8 @@ int main(int argc, char *argv[])
     exp.n       = 3;
     exp.comm    = GetCommFactory().CreateInstance("ParallelMPI", argc, argv);
 
+    hdf5_settings->insert( IOSettings::value_type("Reformatting", "1") );
+    
     sionlib_settings->insert( IOSettings::value_type("IOBlockSize", "65536") );
     sionlib_settings->insert( IOSettings::value_type("IOBlocksPerChunk", SIONlib_GetIOBlocksPerChunk(exp.comm->GetSize(), AORTIC_ARCH)) );
     sionlib_settings->insert( IOSettings::value_type("IOReadMode", "br,collective,collsize=-1") );
@@ -431,6 +434,10 @@ Results TestRead(Experiment &exp)
     {
         fio->InitFromBenchmarker(sionlib_settings);
     }
+    else if (exp.hdf)
+    {
+        fio->InitFromBenchmarker(hdf5_settings);
+    }
     
     Array<OneD, int> ElementIDs = ReadIDsForThisRank(exp);
         
@@ -491,6 +498,10 @@ Results TestWrite(Experiment &exp)
     if (exp.sionlib)
     {
         fio->InitFromBenchmarker(sionlib_settings);
+    }
+    else if (exp.hdf)
+    {
+        fio->InitFromBenchmarker(hdf5_settings);
     }
     
     Array<OneD, int> ElementIDs = ReadIDsForThisRank(exp);

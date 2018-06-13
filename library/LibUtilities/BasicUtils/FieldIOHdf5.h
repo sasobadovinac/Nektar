@@ -175,31 +175,34 @@ class FieldIOHdf5 : public FieldIO
 public:
     static const unsigned int FORMAT_VERSION;
 
-    static const unsigned int ELEM_DCMP_IDX;
-    static const unsigned int VAL_DCMP_IDX;
-    static const unsigned int ORDER_DCMP_IDX;
-    static const unsigned int HOMY_DCMP_IDX;
-    static const unsigned int HOMZ_DCMP_IDX;
-    static const unsigned int HOMS_DCMP_IDX;
-    static const unsigned int HASH_DCMP_IDX;
-    static const unsigned int MAX_DCMPS;
+    static const unsigned int FIELD_COUNT_IDS;
+    static const unsigned int FIELD_COUNT_DATA;
+    static const unsigned int FIELD_COUNT_HOMY;
+    static const unsigned int FIELD_COUNT_HOMZ;
+    static const unsigned int FIELD_COUNT_HOMS;
+    static const unsigned int FIELD_COUNT_ORDER;
+    static const unsigned int FIELD_COUNT_SIZE;
 
-    static const unsigned int ELEM_CNT_IDX;
-    static const unsigned int VAL_CNT_IDX;
-    static const unsigned int ORDER_CNT_IDX;
-    static const unsigned int HOMY_CNT_IDX;
-    static const unsigned int HOMZ_CNT_IDX;
-    static const unsigned int HOMS_CNT_IDX;
-    static const unsigned int MAX_CNTS;
+    static const unsigned int FIELD_DECOMP_OFF;
+    static const unsigned int FIELD_DECOMP_CNT;
+    static const unsigned int FIELD_DECOMP_SIZE;
 
-    static const unsigned int IDS_IDX_IDX;
-    static const unsigned int DATA_IDX_IDX;
-    static const unsigned int ORDER_IDX_IDX;
-    static const unsigned int HOMY_IDX_IDX;
-    static const unsigned int HOMZ_IDX_IDX;
-    static const unsigned int HOMS_IDX_IDX;
-    static const unsigned int MAX_IDXS;
-
+    static const unsigned int DATA_DECOMP_FIELD_HASH;
+    static const unsigned int DATA_DECOMP_IDS_OFF;
+    static const unsigned int DATA_DECOMP_IDS_CNT;
+    static const unsigned int DATA_DECOMP_DATA_OFF;
+    static const unsigned int DATA_DECOMP_DATA_CNT;
+    static const unsigned int DATA_DECOMP_HOMY_OFF;
+    static const unsigned int DATA_DECOMP_HOMY_CNT;
+    static const unsigned int DATA_DECOMP_HOMZ_OFF;
+    static const unsigned int DATA_DECOMP_HOMZ_CNT;
+    static const unsigned int DATA_DECOMP_HOMS_OFF;
+    static const unsigned int DATA_DECOMP_HOMS_CNT;
+    static const unsigned int DATA_DECOMP_ORDER_OFF;
+    static const unsigned int DATA_DECOMP_ORDER_CNT;
+    static const unsigned int DATA_DECOMP_SIZE;
+      
+    
     /// Creates an instance of this class
     LIB_UTILITIES_EXPORT static FieldIOSharedPtr create(
         LibUtilities::CommSharedPtr pComm, bool sharedFilesystem)
@@ -226,40 +229,80 @@ public:
     }
 
 private:
-    struct OffsetHelper {
-        OffsetHelper() : ids(0), data(0), order(0), homy(0), homz(0), homs(0) {}
-        OffsetHelper(const OffsetHelper &in) :
-            ids(in.ids), data(in.data), order(in.order),
-                homy(in.homy), homz(in.homz), homs(in.homs)
-        {
-        }
 
-      uint64_t ids, data, order, homy, homz, homs;
-    };
+    bool reformatting;
+    
+    LIB_UTILITIES_EXPORT virtual void v_Init(
+        const LibUtilities::SessionReaderSharedPtr session);
+
+    LIB_UTILITIES_EXPORT virtual void v_InitFromBenchmarker(
+        const LibUtilities::IOSettingsSharedPtr iosettings);
     
     LIB_UTILITIES_EXPORT virtual uint64_t v_Write(
-        const std::string &outFile,
-        std::vector<FieldDefinitionsSharedPtr> &fielddefs,
-        std::vector<std::vector<NekDouble> > &fielddata,
-        const FieldMetaDataMap &fieldinfomap = NullFieldMetaDataMap,
+        const std::string &outFilename,
+        std::vector<FieldDefinitionsSharedPtr> &fieldDefs,
+        std::vector<std::vector<NekDouble> > &fieldData,
+        const FieldMetaDataMap &fieldMetaDataMap = NullFieldMetaDataMap,
         const bool backup = false);
 
+    LIB_UTILITIES_EXPORT int GetFormattingRank(const uint64_t nFields, const uint64_t nMaxFields);
+    LIB_UTILITIES_EXPORT uint64_t CreateDataSets(const std::string &outFilename,
+        const int rkFormatter,
+        const std::size_t nMaxFields,
+        const std::size_t nTotFields,
+        std::vector<uint64_t> allFieldHashes,
+        std::vector<uint64_t> &allFieldCounts,
+        std::vector<uint64_t> &allFieldDecomps,
+	std::vector<uint64_t> &allFirstDataDecomps,
+        std::vector<uint64_t> &allDataDecomps,
+        std::vector<FieldDefinitionsSharedPtr> &fieldDefs,
+        std::vector<std::vector<unsigned int> > &homoYIDs,
+        std::vector<std::vector<unsigned int> > &homoZIDs,
+        std::vector<std::vector<unsigned int> > &homoSIDs,
+        std::vector<std::vector<unsigned int> > &numModesPerDirVar,
+	std::vector<std::vector<NekDouble> > &fieldData,
+        const FieldMetaDataMap &fieldMetaDataMap);
+    LIB_UTILITIES_EXPORT uint64_t WriteDecompositionData(const std::string &outFilename,
+        const int rkFormatter,
+        std::vector<uint64_t> &allFieldDecomps,
+	std::vector<uint64_t> &allDataDecomps);
+    LIB_UTILITIES_EXPORT uint64_t WriteFieldAttributes(const std::string &outFilename,
+        const uint64_t nFields,
+	const int varOrder,
+        std::vector<uint64_t> &writeFieldHashes,
+        std::vector<FieldDefinitionsSharedPtr> &fieldDefs,
+	std::vector<std::string> &fieldNames,
+	std::vector<std::string> &shapeStrings,
+	std::vector<std::vector<NekDouble> > &homoLengths,
+	std::vector<std::string> &numModesPerDirUni);
+    LIB_UTILITIES_EXPORT uint64_t WriteData(
+        const std::string &outFilename,
+	const std::size_t nFields,
+	std::vector<uint64_t> &totalFieldCounts,
+	std::vector<uint64_t> &firstDataDecomps,
+        std::vector<FieldDefinitionsSharedPtr> &fieldDefs,
+	std::vector<std::vector<unsigned int> > &homoYIDs,
+        std::vector<std::vector<unsigned int> > &homoZIDs,
+        std::vector<std::vector<unsigned int> > &homoSIDs,
+        std::vector<std::vector<unsigned int> > &numModesPerDirVar,
+        std::vector<std::vector<NekDouble> > &fieldData);
+      
     template <class T>
     LIB_UTILITIES_EXPORT uint64_t WriteFieldDataInd(std::size_t nFields,
-        H5::DataSpaceSharedPtr &fspace, H5::DataSetSharedPtr &dset,
+        H5::DataSpaceSharedPtr &space, H5::DataSetSharedPtr &dset,
         uint64_t data_i, std::vector<std::vector<T> > &data);
     
     template <class T>
     LIB_UTILITIES_EXPORT uint64_t WriteFieldData(std::size_t nMinFields, std::size_t nFields,
-        H5::DataSpaceSharedPtr &fspace, H5::DataSetSharedPtr &dset,
+        H5::DataSpaceSharedPtr &space, H5::DataSetSharedPtr &dset,
         uint64_t data_i, std::vector<std::vector<T> > &data);
 
-    LIB_UTILITIES_EXPORT virtual uint64_t v_Import(const std::string &infilename,
-        std::vector<FieldDefinitionsSharedPtr> &fielddefs,
-        std::vector<std::vector<NekDouble> > &fielddata = NullVectorNekDoubleVector,
-        FieldMetaDataMap &fieldinfomap = NullFieldMetaDataMap,
-        const Array<OneD, int> &ElementIDs = NullInt1DArray);
-
+    LIB_UTILITIES_EXPORT virtual uint64_t v_Import(const std::string &inFilename,
+        std::vector<FieldDefinitionsSharedPtr> &fieldDefs,
+        std::vector<std::vector<NekDouble> > &fieldData = NullVectorNekDoubleVector,
+        FieldMetaDataMap &fieldMetaInfoMap = NullFieldMetaDataMap,
+        const Array<OneD, int> &elementIDs = NullInt1DArray);
+    
     template <class T>
     LIB_UTILITIES_EXPORT uint64_t ImportFieldDataInd(H5::GroupSharedPtr root,
         std::string dsetName, std::string dataTag, uint64_t nDataItems,
