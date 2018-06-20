@@ -800,8 +800,9 @@ void FilterParticlesTracking::HandleCollision(
     Particle &particle)
 {
     Array<OneD, NekDouble> collPntOLD(3);
-
-    while (particle.m_eId == -1 && particle.m_used == true)
+	
+	//cout<<"Particle ID: "<<particle.m_id<<" Cross: "<<particle.m_eId<<endl;
+	while (particle.m_eId == -1 && particle.m_used == true)
     {
         // cout << "Particle " << particle.m_id << " collisioned." << endl;
         // particle.m_used = false;
@@ -815,11 +816,11 @@ void FilterParticlesTracking::HandleCollision(
 
         Array<OneD, double> minNormal(3);
         int minBnd = -1;
-
+        // Check is the particle collision or leave the domain
         // Loop over each boundary finding cross point
         for (int nb = 0; nb < bndExp.num_elements(); ++nb)
         {
-            // Boundary normals on each quadrature points
+    	    // Boundary normals on each quadrature points
             // normals[dir][point]
             Array<OneD, Array<OneD, double>> normals;
             pFields[0]->GetBoundaryNormals(nb, normals);
@@ -879,13 +880,16 @@ void FilterParticlesTracking::HandleCollision(
                         {
                             minNormal[i] = normals[i][j];
                         }
-                    }
-                }
+                    }              
+                  }
             }
         }
-
-        // Check is the particle collision or leave the domain
-        if (m_boundaryRegionIsInList[minBnd] == 1)
+         /////////////////////////////////       
+		// Check is the particle collision or leave the domain
+        //cout<<"Boundary: "<<minBnd<<endl; 
+        if (minBnd != -1 )
+		{	
+        if (m_boundaryRegionIsInList[minBnd] == 1 )
         {
             //Particle collisioned
             
@@ -990,7 +994,7 @@ void FilterParticlesTracking::HandleCollision(
                 distN += pow(collPnt[i] - collPntOLD[i], 2);
             }
 
-            if (distN < 1E-3)
+            if (distN < m_diameter)
             {
                 // Particle  is stalled
                 particle.m_used         = false;
@@ -1007,9 +1011,22 @@ void FilterParticlesTracking::HandleCollision(
         else
         {
             // Particle is unused because left the domain
+           	cout<<"Particle unused ID: "<<particle.m_id<<" Cross: "<<particle.m_eId<<endl;
             particle.m_used         = false;
             particle.m_advanceCalls = 0;
+        
         }
+	}
+        else
+        {
+            // Particle is unused because I wanna know why
+           	cout<<"Particle unused  because I wanna know why ID: "<<particle.m_id<<" Cross: "<<particle.m_eId<<endl;
+            particle.m_used         = false;
+            particle.m_advanceCalls = 0;
+        } 
+       ////////////////////////////////////
+		                
+        
     }
 }
 
@@ -1025,8 +1042,7 @@ void FilterParticlesTracking::CheckBoundingBox(Particle &particle)
             if (particle.m_gloCoord[i] < m_boundingBox[2 * i] ||
                 particle.m_gloCoord[i] > m_boundingBox[2 * i + 1])
             {
-                cout << "Particle " << particle.m_id
-                     << " left the bounding box." << endl;
+               // "Particle left the bounding box." 
                 particle.m_used         = false;
                 particle.m_advanceCalls = 0;
             }
