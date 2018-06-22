@@ -245,12 +245,10 @@ private:
         const FieldMetaDataMap &fieldMetaDataMap = NullFieldMetaDataMap,
         const bool backup = false);
 
-    LIB_UTILITIES_EXPORT int GetFormattingRank(const uint64_t nFields, const uint64_t nMaxFields);
     LIB_UTILITIES_EXPORT uint64_t CreateDataSets(const std::string &outFilename,
         const int rkFormatter,
-        const std::size_t nMaxFields,
         const std::size_t nTotFields,
-        std::vector<uint64_t> allFieldHashes,
+        std::vector<uint64_t> &allFieldHashes,
         std::vector<uint64_t> &allFieldCounts,
         std::vector<uint64_t> &allFieldDecomps,
 	std::vector<uint64_t> &allFirstDataDecomps,
