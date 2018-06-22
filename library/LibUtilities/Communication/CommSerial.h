@@ -117,6 +117,7 @@ protected:
     LIB_UTILITIES_EXPORT virtual void v_Exscan(
         Array<OneD, unsigned long long> &pData, const enum ReduceOperator pOp,
         Array<OneD, unsigned long long> &ans);
+    
     LIB_UTILITIES_EXPORT virtual void v_Gather(void *sendbuf, int sendcount,
                                                CommDataType sendtype,
                                                void *recvbuf, int recvcount,
@@ -127,6 +128,17 @@ protected:
                                                 CommDataType recvtype,
                                                 int root);
 
+    LIB_UTILITIES_EXPORT virtual void v_Gatherv(void *sendbuf, int sendcount,
+						CommDataType sendtype,
+			                        void *recvbuf, int recvcounts[],
+						int rdispls[], CommDataType recvtype,
+                                                int root);
+    LIB_UTILITIES_EXPORT virtual void v_Scatterv(void *sendbuf, int sendcounts[],
+						 int sdispls[], CommDataType sendtype,
+                                                 void *recvbuf, int recvcount,
+						 CommDataType recvtype,
+                                                 int root);
+    
     LIB_UTILITIES_EXPORT virtual void v_SplitComm(int pRows, int pColumns);
     LIB_UTILITIES_EXPORT virtual CommSharedPtr v_CommCreateIf(int flag);
 };

@@ -385,6 +385,28 @@ void CommMpi::v_Scatter(void *sendbuf, int sendcount, CommDataType sendtype,
     ASSERTL0(retval == MPI_SUCCESS, "MPI error performing Scatter.");
 }
 
+
+void CommMpi::v_Gatherv(void *sendbuf, int sendcount, CommDataType sendtype,
+			void *recvbuf, int recvcounts[], int rdispls[], CommDataType recvtype,
+                        int root)
+{
+    int retval = MPI_Gatherv(sendbuf, sendcount, sendtype,
+			     recvbuf, recvcounts, rdispls, recvtype,
+			     root, m_comm);
+    ASSERTL0(retval == MPI_SUCCESS, "MPI error performing Gatherv.");
+}
+
+void CommMpi::v_Scatterv(void *sendbuf, int sendcounts[], int sdispls[], CommDataType sendtype,
+                         void *recvbuf, int recvcount, CommDataType recvtype,
+                         int root)
+{
+    int retval = MPI_Scatterv(sendbuf, sendcounts, sdispls, sendtype,
+			      recvbuf, recvcount, recvtype,
+			      root, m_comm);
+    ASSERTL0(retval == MPI_SUCCESS, "MPI error performing Scatterv.");
+}
+
+
 /**
  * Processes are considered as a grid of size pRows*pColumns. Comm
  * objects are created corresponding to the rows and columns of this

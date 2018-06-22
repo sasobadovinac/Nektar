@@ -207,6 +207,21 @@ void CommSerial::v_Scatter(void *sendbuf, int sendcount, CommDataType sendtype,
 {
     std::memcpy(recvbuf, sendbuf, sendcount * CommDataTypeGetSize(sendtype));
 }
+
+void CommSerial::v_Gatherv(void *sendbuf, int sendcount, CommDataType sendtype,
+			   void *recvbuf, int recvcounts[], int rdispls[], CommDataType recvtype,
+                           int root)
+{
+    std::memcpy(recvbuf, sendbuf, sendcount * CommDataTypeGetSize(sendtype));
+}
+  
+void CommSerial::v_Scatterv(void *sendbuf, int sendcounts[], int sdispls[], CommDataType sendtype,
+                            void *recvbuf, int recvcount, CommDataType recvtype,
+                            int root)
+{
+    std::memcpy(recvbuf, sendbuf, sendcounts[0] * CommDataTypeGetSize(sendtype));
+}
+  
 /**
  *
  */
