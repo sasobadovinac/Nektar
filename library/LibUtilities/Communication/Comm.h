@@ -459,7 +459,7 @@ template <class T> T Comm::Gather(const int rootProc, T &val)
     return ans;
 }
 /**
- * Scatter pData across ranks in chunks of len(pData)/num_ranks
+ * Scatter pData across ranks in chunks of recvcnt
  */
 template <class T> T Comm::Scatter(const int rootProc, T &pData,
 				   const unsigned int recvcnt)
@@ -478,8 +478,6 @@ template <class T> T Comm::Scatter(const int rootProc, T &pData,
     
     return ans;
 }
-
-
 
 template <class T> T Comm::Gatherv(const int rootProc, T &val,
 				   std::vector<int> &recvDataSizes,
