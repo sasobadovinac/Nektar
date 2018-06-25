@@ -196,7 +196,7 @@ uint64_t FieldIOHdf5::v_Write(const std::string &outFilename,
         homoYIDs(nFields), homoZIDs(nFields);
     std::vector<std::vector<unsigned int> > numModesPerDirVar(nFields);
     std::vector<std::string> numModesPerDirUni(nFields);
-    
+
     int homDim = -1;
     int varOrder = 0;
     for (std::size_t f = 0; f < nFields; ++f)
@@ -385,7 +385,7 @@ uint64_t FieldIOHdf5::v_Write(const std::string &outFilename,
 	std::vector<int> sizeMap2, offsetMap2;
 	std::vector<int> vnFields(1, nFields);
         std::vector<int> allnFields = m_comm->Gather(rkFormatter, vnFields);
-	
+
 	if (rkFormatter == rk)
 	{
 	    sizeMap.resize(nranks, 0);
@@ -417,13 +417,12 @@ uint64_t FieldIOHdf5::v_Write(const std::string &outFilename,
 	}
         std::vector<uint64_t> allFieldCounts = m_comm->Gatherv(rkFormatter, fieldCounts, sizeMap2, offsetMap2);
 
-        std::vector<uint64_t> allFirstDataDecomps;
+	std::vector<uint64_t> allFirstDataDecomps;
 	
 	if (rkFormatter == rk)
         {
             std::vector<uint64_t> allDataDecomps(DATA_DECOMP_SIZE*nTotFields);
-	    allFirstDataDecomps.resize(DATA_DECOMP_SIZE*nranks);
-
+	    
 	    nWritten += CreateDataSets(outFilename, rkFormatter, nTotFields,
 	        allFieldHashes, allFieldCounts, allFieldDecomps,
 	        allFirstDataDecomps, allDataDecomps,
@@ -460,13 +459,13 @@ uint64_t FieldIOHdf5::v_Write(const std::string &outFilename,
 
 	// Scatter those field hashes that indicate which the field definitions that each process writes to file.
         std::vector<uint64_t> writeFieldHashes = m_comm->Scatterv(rkFormatter, allFieldHashes, sizeMap, offsetMap, nFields);
-        
+
 	// Write field definitions to checkpoint file.
 	nWritten += WriteFieldAttributes(outFilename, nFields, varOrder, writeFieldHashes, fieldDefs,
             fieldNames, shapeStrings, homoLengths, numModesPerDirUni);
 
 	firstDataDecomps = m_comm->Scatter(rkFormatter, allFirstDataDecomps, DATA_DECOMP_SIZE);
-
+        
     } // end of <if (reformatting)> clause
 
     nWritten = WriteData(outFilename, nFields, totalFieldCounts,
