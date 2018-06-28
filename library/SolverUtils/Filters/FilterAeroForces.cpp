@@ -40,6 +40,7 @@
 #include <MultiRegions/ExpList3D.h>
 #include <MultiRegions/ExpList3DHomogeneous1D.h>
 #include <SolverUtils/Filters/FilterAeroForces.h>
+#include <SolverUtils/Filters/FilterInterfaces.hpp>
 #include <LibUtilities/BasicUtils/ParseUtils.h>
 
 using namespace std;
@@ -57,8 +58,9 @@ std::string FilterAeroForces::className =
  */
 FilterAeroForces::FilterAeroForces(
     const LibUtilities::SessionReaderSharedPtr &pSession,
+    const std::weak_ptr<EquationSystem>      &pEquation,
     const ParamMap &pParams) :
-    Filter(pSession)
+    Filter(pSession, pEquation)
 {
     // OutputFile
     auto it = pParams.find("OutputFile");
@@ -967,6 +969,22 @@ void FilterAeroForces::CalculateForcesStandard(
                     fields[n] = pFields[n];
                 }
             }
+<<<<<<< HEAD
+=======
+
+            // Get velocity and pressure values
+            for(n = 0; n < physfields.num_elements(); ++n)
+            {
+                physfields[n] = fields[n]->GetPhys();
+            }
+            for(n = 0; n < nVel; ++n)
+            {
+                velocity[n] = Array<OneD, NekDouble>(fields[n]->GetTotPoints());
+            }
+            pressure = Array<OneD, NekDouble>(fields[0]->GetTotPoints());
+            fluidEqu->GetVelocity(physfields, velocity);
+            fluidEqu->GetPressure(physfields, pressure);
+>>>>>>> master
 
             //Loop all the Boundary Regions
             int cnt = 0;
@@ -987,7 +1005,7 @@ void FilterAeroForces::CalculateForcesStandard(
                         {
                             vel[j] = fields[j]->GetPhys() + offset;
                         }
-                        P = fields[nVel]->GetPhys() + offset;
+                        pElmt = pressure + offset;
 
                         // Compute the velocity gradients
                         for ( int j = 0; j < expdim; ++j)
@@ -999,6 +1017,8 @@ void FilterAeroForces::CalculateForcesStandard(
                                 elmt->PhysDeriv(k, vel[j], grad[j*expdim+k]);
                             }
                         }
+                        // Scale div by lambda (for compressible flows)
+                        Vmath::Smul(nq, lambda, div, 1, div, 1);
 
                         // Get coordinates
                         for ( int j = 0; j < 3; ++j)

@@ -1431,6 +1431,7 @@ void MeshGraph::SetExpansionsToEvenlySpacedPoints(int npoints)
                 {
                     npts = bkeyold.GetNumModes();
                 }
+                npts = max(npts, 2);
 
                 const LibUtilities::PointsKey pkey(
                     npts, LibUtilities::ePolyEvenlySpaced);
@@ -2067,6 +2068,7 @@ LibUtilities::BasisKeyVector MeshGraph::DefineBasisKeyFromExpansionType(
         {
             switch (shape)
             {
+                case LibUtilities::eSegment:
                 {
                     const LibUtilities::PointsKey pkey(
                         nummodes, LibUtilities::eFourierSingleModeSpaced);
