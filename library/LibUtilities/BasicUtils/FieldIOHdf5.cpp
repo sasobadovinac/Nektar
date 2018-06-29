@@ -609,14 +609,14 @@ uint64_t FieldIOHdf5::CreateDataSets(const std::string &outFilename,
     } // end of <for (int r = 0; r < nranks; ++r)> loop
 
     // Create FIELD_DECOMPOSITION dataset: basic field info for each MPI process.
-    H5::DataTypeSharedPtr fieldDecompsType = H5::CompoundDataType::OfObject(allFieldDecomps[0]);
+    H5::DataTypeSharedPtr fieldDecompsType = H5::DataType::OfObject(allFieldDecomps[0]);
     H5::DataSpaceSharedPtr fieldDecompsSpace = H5::DataSpace::OneD(FIELD_DECOMP_SIZE*nranks);
     H5::DataSetSharedPtr fieldDecompsDset =
         root->CreateDataSet("FIELD_DECOMPOSITION", fieldDecompsType, fieldDecompsSpace);
     ASSERTL1(fieldDecompsDset, prfx.str() + "cannot create FIELD_DECOMPOSITION dataset.");
 	
     // Create DATA_DECOMPOSITION dataset: basic info for each field handled by each MPI process.
-    H5::DataTypeSharedPtr dataDecompsType = H5::CompoundDataType::OfObject(allDataDecomps[0]);
+    H5::DataTypeSharedPtr dataDecompsType = H5::DataType::OfObject(allDataDecomps[0]);
     H5::DataSpaceSharedPtr dataDecompsSpace = H5::DataSpace::OneD(DATA_DECOMP_SIZE*nTotFields);
     H5::DataSetSharedPtr dataDecompsDset =
         root->CreateDataSet("DATA_DECOMPOSITION", dataDecompsType, dataDecompsSpace);
@@ -1115,7 +1115,7 @@ uint64_t FieldIOHdf5::v_Import(const std::string &inFilename,
     int rk = m_comm->GetRank();
         
     std::stringstream prfx;
-    prfx << rk << ": FieldIOHdf5::v_Import2(): ";
+    prfx << rk << ": FieldIOHdf5::v_Import(): ";
     
     /*
     double tm0 = 0.0;
