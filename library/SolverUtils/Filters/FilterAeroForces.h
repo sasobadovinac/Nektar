@@ -38,6 +38,8 @@
 
 #include <SolverUtils/Filters/Filter.h>
 #include <LocalRegions/Expansion3D.h>
+#include <LocalRegions/Expansion2D.h>
+#include <LocalRegions/Expansion1D.h>
 #include <GlobalMapping/Mapping.h>
 
 namespace Nektar
