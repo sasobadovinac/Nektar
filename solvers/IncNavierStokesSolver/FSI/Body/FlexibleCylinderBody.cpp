@@ -49,8 +49,8 @@ std::string FlexibleCylinderBody::className =
  */
 FlexibleCylinderBody::FlexibleCylinderBody(
         const LibUtilities::SessionReaderSharedPtr          &pSession,
-        const Array<OneD, MultiRegions::ExpListSharedPtr>   &pFields)
-    : FSIBody(pSession, pFields)
+         const std::weak_ptr<SolverUtils::EquationSystem>   &pEquation)
+    : FSIBody(pSession, pEquation)
 {
 }
 
@@ -231,7 +231,7 @@ void FlexibleCylinderBody::v_InitObject(
         vParams["OutputAllPlanes"] = "True";
     }
     m_filterForces = MemoryManager<SolverUtils::FilterAeroForces>::
-                                AllocateSharedPtr(m_session, vParams);
+        AllocateSharedPtr(m_session, m_equ, vParams);
     m_filterForces->Initialise(pFields, 0.0);
 
     // check if the motion is determined by an equation or is 

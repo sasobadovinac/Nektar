@@ -47,8 +47,8 @@ std::string ForcedBody::className =
  */
 ForcedBody::ForcedBody(
         const LibUtilities::SessionReaderSharedPtr          &pSession,
-        const Array<OneD, MultiRegions::ExpListSharedPtr>   &pFields)
-    : FSIBody(pSession, pFields)
+         const std::weak_ptr<SolverUtils::EquationSystem>   &pEquation)
+    : FSIBody(pSession, pEquation)
 {
 }
 

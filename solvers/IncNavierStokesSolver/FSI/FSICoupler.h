@@ -55,10 +55,11 @@ class FSICoupler;
 typedef std::shared_ptr<FSICoupler> FSICouplerSharedPtr;
 
 /// Declaration of the FSICoupler factory
-typedef LibUtilities::NekFactory<std::string, FSICoupler,
-        const LibUtilities::SessionReaderSharedPtr&,
-        const Array<OneD, MultiRegions::ExpListSharedPtr>&,
-              TiXmlElement*> FSICouplerFactory;
+typedef LibUtilities::NekFactory<
+    std::string,  FSICoupler,
+    const LibUtilities::SessionReaderSharedPtr&,
+    const std::weak_ptr<SolverUtils::EquationSystem>&,
+    TiXmlElement*> FSICouplerFactory;
 
 /// Declaration of the FSICoupler factory singleton
 FSICouplerFactory& GetFSICouplerFactory();
@@ -92,6 +93,8 @@ public:
 protected:
     /// Session reader
     LibUtilities::SessionReaderSharedPtr        m_session;
+    /// Soft pointer to original equation system 
+    const std::weak_ptr<SolverUtils::EquationSystem> m_equ;
     /// Vector of moving bodies
     std::vector<FSIBodySharedPtr>               m_bodies;
     /// Explist for the displacement of the coordinates
@@ -123,7 +126,7 @@ protected:
     /// @brief Constructor
     FSICoupler(
         const LibUtilities::SessionReaderSharedPtr&          pSession,
-        const Array<OneD, MultiRegions::ExpListSharedPtr>&   pFields);
+        const std::weak_ptr<SolverUtils::EquationSystem>   &pEquation);
 
     ///
     void CreateDisplacementFields(

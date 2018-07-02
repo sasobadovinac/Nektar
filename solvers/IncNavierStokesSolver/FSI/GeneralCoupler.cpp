@@ -47,8 +47,8 @@ std::string GeneralCoupler::className =
  */
 GeneralCoupler::GeneralCoupler(
         const LibUtilities::SessionReaderSharedPtr          &pSession,
-        const Array<OneD, MultiRegions::ExpListSharedPtr>   &pFields)
-    : FSICoupler(pSession, pFields)
+        const std::weak_ptr<SolverUtils::EquationSystem>   &pEquation)
+    : FSICoupler(pSession, pEquation)
 {
 }
 

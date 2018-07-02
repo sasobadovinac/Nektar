@@ -48,8 +48,8 @@ std::string RigidPlaneCoupler::className =
  */
 RigidPlaneCoupler::RigidPlaneCoupler(
         const LibUtilities::SessionReaderSharedPtr          &pSession,
-        const Array<OneD, MultiRegions::ExpListSharedPtr>   &pFields)
-    : FSICoupler(pSession, pFields)
+         const std::weak_ptr<SolverUtils::EquationSystem>   &pEquation)
+    : FSICoupler(pSession, pEquation)
 {
 }
 

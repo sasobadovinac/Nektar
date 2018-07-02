@@ -51,13 +51,13 @@ public:
     /// Creates an instance of this class
     static FSICouplerSharedPtr create(
         const LibUtilities::SessionReaderSharedPtr        &pSession,
-        const Array<OneD, MultiRegions::ExpListSharedPtr> &pFields,
+        const std::weak_ptr<SolverUtils::EquationSystem>   &pEquation,
               TiXmlElement                                *pFSI)
     {
         FSICouplerSharedPtr p =
                 MemoryManager<GeneralCoupler>::AllocateSharedPtr(pSession,
-                                                                 pFields);
-        p->InitObject(pFields, pFSI);
+                                                                 pEquation);
+        p->InitObject(pEquation.lock()->UpdateFields(), pFSI);
         return p;
     }
 
@@ -66,8 +66,8 @@ public:
 
 protected:
     // Constructor
-    GeneralCoupler(const LibUtilities::SessionReaderSharedPtr        &pSession,
-                   const Array<OneD, MultiRegions::ExpListSharedPtr> &pFields);
+    GeneralCoupler(const LibUtilities::SessionReaderSharedPtr     &pSession,
+               const std::weak_ptr<SolverUtils::EquationSystem>   &pEquation);
 
     // Virtual functions
     virtual void v_CalculateDisplacement();

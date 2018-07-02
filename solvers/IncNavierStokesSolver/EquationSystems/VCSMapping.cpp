@@ -190,7 +190,7 @@ namespace Nektar
             TiXmlElement* vFSI  = m_session->GetElement("Nektar/FSI");
             string        vType = vFSI->Attribute("TYPE");;
             m_fsi = GetFSICouplerFactory().CreateInstance(
-                            vType, m_session, m_fields, vFSI);
+                              vType, m_session, shared_from_this(), vFSI);
         }
     }
 

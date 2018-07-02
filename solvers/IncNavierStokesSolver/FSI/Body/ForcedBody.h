@@ -51,13 +51,14 @@ public:
     /// Creates an instance of this class
     static FSIBodySharedPtr create(
         const LibUtilities::SessionReaderSharedPtr        &pSession,
-        const Array<OneD, MultiRegions::ExpListSharedPtr> &pFields,
+        const std::weak_ptr<SolverUtils::EquationSystem>   &pEquation,
         const std::map<std::string, std::string>          &pParams)
     {
         FSIBodySharedPtr p =
                 MemoryManager<ForcedBody>::AllocateSharedPtr(pSession,
-                                                            pFields);
-        p->InitObject(pFields, pParams);
+                                                            pEquation);
+        
+        p->InitObject(pEquation.lock()->UpdateFields(), pParams);
         return p;
     }
 
@@ -69,7 +70,7 @@ protected:
 
     // Constructor
     ForcedBody(const LibUtilities::SessionReaderSharedPtr        &pSession,
-              const Array<OneD, MultiRegions::ExpListSharedPtr> &pFields);
+               const std::weak_ptr<SolverUtils::EquationSystem>   &pEquation);
 
     // Virtual functions
     virtual void v_InitObject(

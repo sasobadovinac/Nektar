@@ -59,13 +59,14 @@ FSICouplerFactory& GetFSICouplerFactory()
 
 FSICoupler::FSICoupler(
         const LibUtilities::SessionReaderSharedPtr         &pSession,
-        const Array<OneD, MultiRegions::ExpListSharedPtr>  &pFields)
-    : m_session(pSession)
+        const std::weak_ptr<SolverUtils::EquationSystem>   &pEquation)
+    : m_session(pSession), m_equ(pEquation)
 {
     // Get timestep
     m_session->LoadParameter("TimeStep", m_timestep);
 
-    switch (pFields[0]->GetExpType())
+    std::shared_ptr<SolverUtils::EquationSystem> eqn = pEquation.lock();
+    switch (eqn->UpdateFields()[0]->GetExpType())
     {
         case MultiRegions::e2D:
         {
@@ -349,7 +350,7 @@ void FSICoupler::ReadBodies(
 
         m_bodies.push_back(
             GetFSIBodyFactory().CreateInstance(
-                        typeStr, m_session, pFields, vParams));
+                        typeStr, m_session, m_equ, vParams));
 
         body = body->NextSiblingElement("BODY");
     }

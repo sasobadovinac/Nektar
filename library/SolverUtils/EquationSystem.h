@@ -274,6 +274,9 @@ class Interpolator;
             
             SOLVER_UTILS_EXPORT inline NekDouble GetTimeStep();
             
+            SOLVER_UTILS_EXPORT inline MultiRegions::ExpansionType
+                GetExpType(int nfield);
+
             SOLVER_UTILS_EXPORT inline void CopyFromPhysField(const int i,
                     Array<OneD, NekDouble> &output);
             
@@ -723,6 +726,11 @@ class Interpolator;
             return m_timestep;
         }
         
+        inline MultiRegions::ExpansionType EquationSystem::GetExpType(int nfield)
+        {
+            return m_fields[nfield]->GetExpType();
+        }
+
         inline void EquationSystem::SetSteps(const int steps)
         {
             m_steps = steps;
@@ -739,6 +747,7 @@ class Interpolator;
         {
             Vmath::Vcopy(output.num_elements(), output, 1, m_fields[i]->UpdatePhys(), 1 );
         }
+
     }
 }
 

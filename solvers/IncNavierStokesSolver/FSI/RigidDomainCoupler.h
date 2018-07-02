@@ -51,13 +51,13 @@ public:
     /// Creates an instance of this class
     static FSICouplerSharedPtr create(
         const LibUtilities::SessionReaderSharedPtr        &pSession,
-        const Array<OneD, MultiRegions::ExpListSharedPtr> &pFields,
+        const std::weak_ptr<SolverUtils::EquationSystem>  &pEquation,
               TiXmlElement                                *pFSI)
     {
         FSICouplerSharedPtr p =
                 MemoryManager<RigidDomainCoupler>::AllocateSharedPtr(pSession,
-                                                                 pFields);
-        p->InitObject(pFields, pFSI);
+                                                                     pEquation);
+        p->InitObject(pEquation.lock()->UpdateFields(), pFSI);
         return p;
     }
 
@@ -71,7 +71,7 @@ protected:
     int     m_bndId;
     // Constructor
     RigidDomainCoupler(const LibUtilities::SessionReaderSharedPtr        &pSession,
-                   const Array<OneD, MultiRegions::ExpListSharedPtr> &pFields);
+               const std::weak_ptr<SolverUtils::EquationSystem>   &pEquation);
 
     // Virtual functions
     virtual void v_InitObject(

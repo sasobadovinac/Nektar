@@ -49,8 +49,8 @@ FSIBodyFactory& GetFSIBodyFactory()
 
 FSIBody::FSIBody(
         const LibUtilities::SessionReaderSharedPtr         &pSession,
-        const Array<OneD, MultiRegions::ExpListSharedPtr>  &pFields)
-    : m_session(pSession)
+        const std::weak_ptr<SolverUtils::EquationSystem> &pEquation)
+        : m_session(pSession), m_equ(pEquation)
 {
 }
 

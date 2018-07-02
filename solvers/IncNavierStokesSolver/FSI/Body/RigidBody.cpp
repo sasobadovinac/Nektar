@@ -59,8 +59,8 @@ NekDouble RigidBody::AdamsMoulton_coeffs[3][3] = {
  */
 RigidBody::RigidBody(
         const LibUtilities::SessionReaderSharedPtr          &pSession,
-        const Array<OneD, MultiRegions::ExpListSharedPtr>   &pFields)
-    : FSIBody(pSession, pFields)
+         const std::weak_ptr<SolverUtils::EquationSystem>   &pEquation)
+    : FSIBody(pSession, pEquation)
 {
 }
 
@@ -255,7 +255,7 @@ void RigidBody::v_InitObject(
     ASSERTL0(it != pParams.end(), "Missing parameter 'Boundary'.");
     vParams[it->first] = it->second;
     m_filterForces = MemoryManager<SolverUtils::FilterAeroForces>::
-                                AllocateSharedPtr(m_session, vParams);
+        AllocateSharedPtr(m_session, m_equ, vParams);
     m_filterForces->Initialise(pFields, 0.0);
 
     // Determine time integration order

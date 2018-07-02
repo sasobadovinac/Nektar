@@ -40,21 +40,23 @@
 
 #include <LibUtilities/BasicUtils/NekFactory.hpp>
 #include <LibUtilities/BasicUtils/SharedArray.hpp>
+#include <SolverUtils/EquationSystem.h>
 #include <MultiRegions/ExpList.h>
 
 namespace Nektar
 {
 
-//  Forward declaration
-class FSIBody;
+    //  Forward declaration
+    class FSIBody;
 
-/// A shared pointer to a FSIBody object
-typedef std::shared_ptr<FSIBody> FSIBodySharedPtr;
+    /// A shared pointer to a FSIBody object
+    typedef std::shared_ptr<FSIBody> FSIBodySharedPtr;
 
-/// Declaration of the FSIBody factory
-typedef LibUtilities::NekFactory<std::string, FSIBody,
+    /// Declaration of the FSIBody factory
+    typedef LibUtilities::NekFactory<
+        std::string, FSIBody,
         const LibUtilities::SessionReaderSharedPtr&,
-        const Array<OneD, MultiRegions::ExpListSharedPtr>&,
+        const std::weak_ptr<SolverUtils::EquationSystem>&,
         const std::map<std::string, std::string>&> FSIBodyFactory;
 
 /// Declaration of the FSIBody factory singleton
@@ -84,6 +86,8 @@ public:
 protected:
     /// Session reader
     LibUtilities::SessionReaderSharedPtr m_session;
+    /// Soft pointer to original equation system 
+    const std::weak_ptr<SolverUtils::EquationSystem> m_equ;
     /// Determines if a given Boundary Region is part of this body
     std::vector<int>                     m_boundaryRegionIsInList;
     /// String containing the list of boundary regions in this body
@@ -92,7 +96,8 @@ protected:
     /// @brief Constructor
     FSIBody(
         const LibUtilities::SessionReaderSharedPtr           &pSession,
-        const Array<OneD, MultiRegions::ExpListSharedPtr>    &pFields);
+        const std::weak_ptr<SolverUtils::EquationSystem>     &pEquation);
+
 
     // Virtual functions
     virtual void v_InitObject(
