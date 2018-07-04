@@ -32,6 +32,9 @@ v4.4.2
 **Utilities**
 - Fix VtkToPng to account for deprecated VTK API for VTK version > 8.1 (!925)
 
+**Tester**
+- Fix build with boost 1.67 (!947)
+
 v4.4.1
 ------
 **Library**
