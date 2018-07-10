@@ -78,7 +78,6 @@ ProcessWear::~ProcessWear()
 
 void ProcessWear::Process(po::variables_map &vm)
 {
-    int i, j, k;
     LibUtilities::PtsFieldSharedPtr fieldPts;
     // Load pts file
     ASSERTL0( m_config["frompts"].as<string>().compare("NotSet") != 0,
@@ -126,44 +125,37 @@ void ProcessWear::Process(po::variables_map &vm)
     //Load the quadrature point information
     m_f->m_exp[0]->GetCoords(intFields[0], intFields[1], intFields[2]);
     
-    
     Array<OneD, Array<OneD, NekDouble> > pts; fieldPts->GetPts(pts);
     int dim = fieldPts->GetDim();
-   
-    NekDouble A = -0.396;
-    NekDouble B = 8.380;
-    NekDouble C = -16.92;
-    NekDouble D = 10.747;
-    NekDouble E = -1.765;
-    NekDouble F = 0.434;            
-            
-    NekDouble ONE_OVER_SQRT_2PI = 0.39894228040143267793994605993438;
-    NekDouble dist2 = 0.0, Sigma = 0.001, Wear = 0.0, Vel = 0.0, angle = 0.0;
-   for ( k = 0; k < pts[0].num_elements() ; ++k)
-   {
-        Vel   = pts[dim][k]; angle = -pts[dim+1][k];
-        
-        Wear  = fabs(pow(Vel,2)*(A*pow(sin(angle),4)+B*pow(sin(angle),3)+
-                    C*pow(sin(angle),2)+D*sin(angle)+E)*F);
-                    
-       for (i = 0; i < totpoints; ++i)
-       {
-            dist2 = 0.0;
-            for (int j = 0; j < dim; ++j)
-            {
-                dist2 += pow(intFields[j][i] - pts[j][k],2);
-            }
-            
-            //if (dist2,0.01)
-            //{
-             intFields[3][i] +=  ONE_OVER_SQRT_2PI / Sigma
-                                   * exp(-0.5*dist2/pow(Sigma,2))* Wear;
-            //}
-        }
-    } 
-    
 
-   for (i = 0; i < totpoints; ++i)
+   NekDouble ONE_OVER_SQRT_2PI = 0.39894228040143267793994605993438;
+   NekDouble dist2 = 0.0, Sigma = 0.01/3, Wear = 0.0;
+   for (int  k = 0; k < pts[0].num_elements() ; ++k)
+   {
+        //Wear  = Model1wear(pts[dim][k],fabs(pts[dim+1][k]));
+        Wear  = ECRCwear(pts[dim][k],(pts[dim+1][k]));
+        cout<<"Wear: "<< Wear <<endl;
+    
+        // Sum Gauss function
+        for ( int i = 0; i < totpoints; ++i)
+           {
+                dist2 = 0.0;
+                for (int j = 0; j < dim; ++j)
+                {
+                    dist2 += pow(intFields[j][i] - pts[j][k],2);
+                }
+                
+                //~ if (dist2,0.1)
+                //~ {
+                 intFields[3][i] +=  ONE_OVER_SQRT_2PI / Sigma
+                                   * exp(-0.5*dist2/pow(Sigma,2))
+                                   * Wear;
+                //~ }
+            }
+    }    
+
+//Interpolate data
+   for (int i = 0; i < totpoints; ++i)
     {
             m_f->m_exp[0]->SetPhys(i, intFields[3][i]);
     }
@@ -177,6 +169,41 @@ void ProcessWear::Process(po::variables_map &vm)
     m_f->m_variables.push_back("Wear");
 
 }
+
+NekDouble ProcessWear::ECRCwear(NekDouble Vel, NekDouble angle)
+{
+    // Angle function variables
+    NekDouble n1 = 0.15;
+    NekDouble n2 = 0.85;
+    NekDouble n3 = 0.65;
+    NekDouble Hv = 1.83;
+    NekDouble f  = 1.53;
+    NekDouble K  = 2.16E-8;
+    NekDouble C  = 4.62E-7;
+    NekDouble BH = 178.9;
+    NekDouble fs = 1.0;
+    
+    return    K * fs * pow(Vel,2.41)
+            * (1/f * pow(sin(angle),n1)) 
+            * pow(1 + pow(Hv,n3) * (1-sin(angle)),n2); 
+}
+
+NekDouble ProcessWear::Model1wear(NekDouble Vel, NekDouble angle)
+{
+    // Angle function variables
+    NekDouble A = -0.396;
+    NekDouble B = 8.380;
+    NekDouble C = -16.92;
+    NekDouble D = 10.747;
+    NekDouble E = -1.765;
+    NekDouble F = 0.434; 
+    
+    return fabs(pow(Vel,2)*(A*pow(sin(angle),4)+B*pow(sin(angle),3)+
+                    C*pow(sin(angle),2)+D*sin(angle)+E)*F);
+    
+}
+
+
 
 }
 }

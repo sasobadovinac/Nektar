@@ -85,6 +85,11 @@ public:
     }
 
 private:
+/// 
+    NekDouble ECRCwear(NekDouble Vel, NekDouble angle);
+/// 
+    NekDouble Model1wear(NekDouble Vel, NekDouble angle);
+    
 };
 }
 }

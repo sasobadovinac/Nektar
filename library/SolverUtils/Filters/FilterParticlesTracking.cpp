@@ -799,28 +799,46 @@ void FilterParticlesTracking::HandleCollision(
     const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
     Particle &particle)
 {
-    Array<OneD, NekDouble> collPntOLD(3);
+	Array<OneD, NekDouble> collPntOLD(3);
 	
 	//cout<<"Particle ID: "<<particle.m_id<<" Cross: "<<particle.m_eId<<endl;
 	while (particle.m_eId == -1 && particle.m_used == true)
     {
-        // cout << "Particle " << particle.m_id << " collisioned." << endl;
-        // particle.m_used = false;
-
+		
+		particle.m_eId =
+            pFields[0]->GetExpIndex(particle.m_oldCoord, particle.m_locCoord,
+                                    NekConstants::kNekZeroTol);
+		cout<<endl<<"OP: ";
+     for (int j = 0; j < 3; ++j)
+            {
+              cout<< particle.m_oldCoord[j]<< " ";   
+            }
+      cout<< particle.m_eId <<endl;
+     
+     particle.m_eId =
+            pFields[0]->GetExpIndex(particle.m_gloCoord, particle.m_locCoord,
+                                    NekConstants::kNekZeroTol);
+     
+     cout<<"NP: ";
+     for (int j = 0; j < 3; ++j)
+            {
+              cout<< particle.m_gloCoord[j]<< " ";   
+            }
+      cout<<  particle.m_eId  <<endl<<endl;
+		
         // Boundary Expansion:  Boundary list
         Array<OneD, const MultiRegions::ExpListSharedPtr> bndExp;
         bndExp = pFields[0]->GetBndCondExpansions();
 
         NekDouble minDist = 0.0, dist = 0.0, distN = 0.0;
         NekDouble maxDotProd = 0.0, dotProd = 0.0, ScaleDP = 0.0;
-
         Array<OneD, double> minNormal(3);
         int minBnd = -1;
-        // Check is the particle collision or leave the domain
+        
         // Loop over each boundary finding cross point
         for (int nb = 0; nb < bndExp.num_elements(); ++nb)
         {
-    	    // Boundary normals on each quadrature points
+    	    // Boundary normals on each quadrature points in each nb
             // normals[dir][point]
             Array<OneD, Array<OneD, double>> normals;
             pFields[0]->GetBoundaryNormals(nb, normals);
@@ -833,15 +851,13 @@ void FilterParticlesTracking::HandleCollision(
                 coords[j] = Array<OneD, NekDouble>(npoints);
             }
             bndExp[nb]->GetCoords(coords[0], coords[1], coords[2]);
-
+				
             // Loop for each integration point on  any boundary
             // Evaluating if the point cross the boundary at each
             // quadrature point
-
             for (int j = 0; j < npoints; ++j)
             {
-                dist  = 0.0;
-                distN = 0.0;
+                dist  = 0.0; distN = 0.0;
                 for (int i = 0; i < particle.m_dim; ++i)
                 {
                     dist += (coords[i][j] - particle.m_oldCoord[i])
@@ -850,13 +866,14 @@ void FilterParticlesTracking::HandleCollision(
                     distN += (coords[i][j] - particle.m_gloCoord[i])
                              * normals[i][j];
                 }
+                //~ cout<<"dist: "<<dist<<"    distN: "<<distN<<endl; 
+                
                 // Check if the wall is crossed
                 if (dist * distN < 0.0 ||
                     abs(dist) < NekConstants::kNekZeroTol ||
                     abs(distN) < NekConstants::kNekZeroTol)
                 {
-                    dotProd = 0.0;
-                    ScaleDP = 0.0;
+                    dotProd = 0.0; ScaleDP = 0.0;
                     // Evaluate the dot Product
                     for (int i = 0; i < particle.m_dim; ++i)
                     {
@@ -865,10 +882,12 @@ void FilterParticlesTracking::HandleCollision(
                             (coords[i][j] - particle.m_oldCoord[i]);
 
                         ScaleDP +=
-                            pow(particle.m_oldCoord[i] - coords[i][j], 2);
+                         pow(coords[i][j] - particle.m_oldCoord[i], 2);
                     }
                     dotProd /= sqrt(ScaleDP);
-
+					
+					//~ cout<<"DotProd: "<<dotProd<<endl; 
+                    
                     // Save the max dot Product data
                     if (abs(dotProd) > maxDotProd)
                     {
@@ -886,39 +905,51 @@ void FilterParticlesTracking::HandleCollision(
         }
          /////////////////////////////////       
 		// Check is the particle collision or leave the domain
-        //cout<<"Boundary: "<<minBnd<<endl; 
+        cout<<"Boundary: "<<minBnd<<endl; 
+        cout<<"maxDotProd: "<<maxDotProd<<endl; 
         if (minBnd != -1 )
 		{	
         if (m_boundaryRegionIsInList[minBnd] == 1 )
         {
             //Particle collisioned
             
+            // Magnitude and directions of incident vector
+            NekDouble VecMag = 0.0;
+            Array<OneD, NekDouble> VecDir(3, 0.0);          
+            for (int i = 0; i < particle.m_dim; ++i)
+            {
+                VecMag +=  pow(particle.m_gloCoord[i]
+                           - particle.m_oldCoord[i],2);
+            }
+            VecMag = sqrt(VecMag);
+            for (int i = 0; i < particle.m_dim; ++i)
+            {
+                VecDir[i] =  (particle.m_gloCoord[i]
+                              - particle.m_oldCoord[i])/VecMag;
+            } 
+                    
             // Collision point cordinates
             Array<OneD, NekDouble> collPnt(3, 0.0);
-            NekDouble absVel = 0.0;
 
             for (int i = 0; i < particle.m_dim; ++i)
             {
-                absVel +=  pow((particle.m_gloCoord[i]
-                              - particle.m_oldCoord[i]) *
-                            minNormal[i],2);
-            }
-            absVel = sqrt(absVel);
-
-            for (int i = 0; i < particle.m_dim; ++i)
-            {
-                collPnt[i] = particle.m_oldCoord[i] +
-                             (particle.m_gloCoord[i] -
-                              particle.m_oldCoord[i]) *
-                                 minDist / absVel;
+              collPnt[i] = particle.m_oldCoord[i] + VecDir[i] * minDist; 
             }
 
             // New coordinates and Velocities
             // Evaluation of the restitution coeficients
             int order              = min(particle.m_advanceCalls, m_intOrder);
             NekDouble dotProdCoord = 0.0, dotProdVel = 0.0, dotProdForce = 0.0;
-
-            // Evaluate dot products to make the reflection
+            NekDouble angle = 0.0, Vel = 0.0;
+ 
+            for (int i = 0; i < particle.m_dim; ++i)
+            {
+                angle +=  abs(VecDir[i] * minNormal[i]);
+                Vel += pow(particle.m_particleVelocity[0][i],2);
+            }
+            angle = asinf(angle); Vel = sqrt(Vel); 
+            
+			// Evaluate dot products to make the reflection
             for (int i = 0; i < particle.m_dim; ++i)
             {
                 dotProdCoord +=
@@ -927,7 +958,7 @@ void FilterParticlesTracking::HandleCollision(
             // Update coordinates
             for (int i = 0; i < particle.m_dim; ++i)
             {
-                particle.m_oldCoord[i] = collPnt[i];
+                //~ particle.m_oldCoord[i] = collPnt[i];
 
                 particle.m_gloCoord[i] = collPnt[i] +
                                          (particle.m_gloCoord[i] - collPnt[i]) -
@@ -961,21 +992,6 @@ void FilterParticlesTracking::HandleCollision(
         // Evaluate the erosion
         if (m_wear)
         {
-            NekDouble angle = 0.0, Vel = 0.0;
-            
-            for (int i = 0; i < particle.m_dim; ++i)
-            {
-                angle += (particle.m_gloCoord[i] - particle.m_oldCoord[i]) *
-                           minNormal[i];
-                Vel +=
-                    pow(particle.m_gloCoord[i] - particle.m_oldCoord[i], 2);
-            }
-            Vel = sqrt(Vel); angle = asinf( angle / Vel);
-            
-                    
-            // Wear = pow(Vel,3)*cos(angle)*1E6;
-          
-          
             // Output the collision information
             for (int n = 0; n < particle.m_dim; ++n)
             {
@@ -983,7 +999,8 @@ void FilterParticlesTracking::HandleCollision(
                              << boost::format("%25.19e") % collPnt[n];
             }
             m_WearStream <<"   "<< boost::format("%25.19e") % Vel
-                         <<"   "<< boost::format("%25.19e") % angle <<endl;
+                         <<"   "<< boost::format("%25.19e") % angle 
+                         <<endl;
          }
             
             
@@ -997,6 +1014,7 @@ void FilterParticlesTracking::HandleCollision(
             if (distN < m_diameter)
             {
                 // Particle  is stalled
+                cout<<"Particle staller ID: "<<particle.m_id<<endl;
                 particle.m_used         = false;
                 particle.m_advanceCalls = 0;
             }
