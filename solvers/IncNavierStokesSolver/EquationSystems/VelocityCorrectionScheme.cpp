@@ -375,6 +375,8 @@ namespace Nektar
 
             for (int i = 0; i < m_spacedim; ++i)
             {
+                boundary[i] = Array<OneD, NekDouble> (m_fields[i]->
+                 GetBndCondExpansions()[m_flowrateBndID]->GetTotPoints(),0.0);
                 m_fields[i]->ExtractPhysToBnd(
                     m_flowrateBndID, inarray[i], boundary[i]);
             }
