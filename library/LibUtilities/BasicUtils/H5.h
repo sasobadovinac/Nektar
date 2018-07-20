@@ -463,6 +463,7 @@ public:
     ~File();
     void Close();
     virtual hsize_t GetNumElements();
+    void Flush();
 
 private:
     File(hid_t id);

@@ -633,6 +633,10 @@ hsize_t File::GetNumElements()
     GroupSharedPtr root = OpenGroup("/");
     return root->GetNumElements();
 }
+void File::Flush()
+{
+    H5_CALL(H5Fflush, (m_Id, H5F_SCOPE_GLOBAL));
+}
 Group::Group(hid_t id) : Object(id)
 {
 }
