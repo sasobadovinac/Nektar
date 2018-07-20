@@ -961,31 +961,33 @@ uint64_t FieldIOHdf5::WriteData(const std::string &outFilename,
     }
 
 
-    std::size_t nMinFields = nFields;
-    m_comm->AllReduce(nMinFields, LibUtilities::ReduceMin);    
-    
-    // All HDF5 groups have now been created. Open the IDS dataset and
-    // associated data space.
-    H5::DataSetSharedPtr elemIdsDset = root->OpenDataSet("ELEM_IDS");
-    ASSERTL1(elemIdsDset, prfx.str() + "cannot open ELEM_IDS dataset.");
-    H5::DataSpaceSharedPtr elemIdsSpace = elemIdsDset->GetSpace();
-    ASSERTL1(elemIdsSpace, prfx.str() + "cannot open ELEM_IDS filespace.");
+    if (reformatting)
+    {
+        // Open the element ids dataset.
+        H5::DataSetSharedPtr elemIdsDset = root->OpenDataSet("ELEM_IDS");
+        ASSERTL1(elemIdsDset, prfx.str() + "cannot open ELEM_IDS dataset.");
+        H5::DataSpaceSharedPtr elemIdsSpace = elemIdsDset->GetSpace();
+        ASSERTL1(elemIdsSpace, prfx.str() + "cannot open ELEM_IDS filespace.");
 
-    // Open the DATA dataset and associated data space.
+        // Write all the element IDs and element data collectively, taking into account the fact that
+        // different processes maybe handling different numbers of fields.
+        std::vector<std::vector<unsigned int> > elemIDs(nFields);
+        for (std::size_t f = 0; f < nFields; ++f)
+        {
+            elemIDs[f] = fieldDefs[f]->m_elementIDs;
+        }
+
+        nWritten += WriteFieldData(nFields, elemIdsSpace, elemIdsDset, firstDataDecomps[DATA_DECOMP_IDS_OFF], elemIDs);
+    }
+
+    
+    // Open the element data dataset and associated data space.
     H5::DataSetSharedPtr elemDataDset = root->OpenDataSet("ELEM_DATA");
     ASSERTL1(elemDataDset, prfx.str() + "cannot open ELEM_DATA dataset.");
     H5::DataSpaceSharedPtr elemDataSpace = elemDataDset->GetSpace();
     ASSERTL1(elemDataSpace, prfx.str() + "cannot open ELEM_DATA filespace.");
-
-    // Write all the element IDs and element data collectively, taking into account the fact that
-    // different processes maybe handling different numbers of fields.
-    std::vector<std::vector<unsigned int> > elemIDs(nFields);
-    for (std::size_t f = 0; f < nFields; ++f)
-    {
-        elemIDs[f] = fieldDefs[f]->m_elementIDs;
-    }
-    nWritten += WriteFieldData(nMinFields, nFields, elemIdsSpace, elemIdsDset, firstDataDecomps[DATA_DECOMP_IDS_OFF], elemIDs);
-    nWritten += WriteFieldData(nMinFields, nFields, elemDataSpace, elemDataDset, firstDataDecomps[DATA_DECOMP_DATA_OFF], fieldData);
+    
+    nWritten += WriteFieldData(nFields, elemDataSpace, elemDataDset, firstDataDecomps[DATA_DECOMP_DATA_OFF], fieldData);
 
     return nWritten;
 }
@@ -1036,7 +1038,6 @@ uint64_t FieldIOHdf5::WriteFieldDataInd(std::size_t nFields,
  * The data are written collectively; hence, this method allows for the fact that
  * different processes might be handling different numbers of fields.
  *
- * @param nMinFields the lowest number of fields handled by any process
  * @param nFields    the number of fields handled by this process
  * @param space      hdf5 file space
  * @param dset       hdf5 data set
@@ -1045,50 +1046,31 @@ uint64_t FieldIOHdf5::WriteFieldDataInd(std::size_t nFields,
  * @return The number of bytes written.
  */
 template <class T>
-uint64_t FieldIOHdf5::WriteFieldData(std::size_t nMinFields, std::size_t nFields,
+uint64_t FieldIOHdf5::WriteFieldData(std::size_t nFields,
                                      H5::DataSpaceSharedPtr &space, H5::DataSetSharedPtr &dset,
                                      uint64_t data_i, std::vector<std::vector<T> > &data)
 {
     if (!space || !dset) return 0;
 
-    bool concatenate_last_fields = nMinFields < nFields;
-    std::size_t nFirstFields = concatenate_last_fields ? nMinFields-1 : nFields;
-    std::size_t nDataItems = 0;
-    std::size_t f = 0;
-    uint64_t nWritten = 0;
-
     H5::PListSharedPtr writePL = H5::PList::DatasetXfer();
     writePL->SetDxMpioCollective();
 
-    for (; f < nFirstFields; ++f)
-    {
-        nDataItems = data[f].size();
-        space->SelectRange(data_i, nDataItems);
-        dset->Write(data[f], space, writePL);
-        data_i += nDataItems;
-        nWritten += nDataItems*sizeof(T);
-    }
-
-    if (!concatenate_last_fields) return nWritten;
-
     std::vector<T> last_data;
-
-    nDataItems = data[f].size();
-    space->SelectRange(H5S_SELECT_SET, data_i, nDataItems);
-    last_data.insert(last_data.end(), data[f].begin(), data[f].end());
-    data_i += nDataItems;
-    f++;
-        
-    for (; f < nFields; ++f)
+    H5S_seloper_t h5_select = H5S_SELECT_SET;
+    
+    for (std::size_t f = 0; f < nFields; ++f)
     {
-        nDataItems = data[f].size();
-        space->SelectRange(H5S_SELECT_OR, data_i, nDataItems);
-        last_data.insert(last_data.end(), data[f].begin(), data[f].end());
-        data_i += nDataItems;
+        std::size_t nDataItems = data[f].size();
+        space->SelectRange(h5_select, data_i, nDataItems);
+	data_i += nDataItems;
+	
+	last_data.insert(last_data.end(), data[f].begin(), data[f].end());
+
+	h5_select = H5S_SELECT_OR;
     }
 
     dset->Write(last_data, space, writePL);
-    return nWritten + last_data.size()*sizeof(T);
+    return last_data.size()*sizeof(T);
 }
 
 

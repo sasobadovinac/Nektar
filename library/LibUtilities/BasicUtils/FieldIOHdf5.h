@@ -291,7 +291,7 @@ private:
         uint64_t data_i, std::vector<std::vector<T> > &data);
     
     template <class T>
-    LIB_UTILITIES_EXPORT uint64_t WriteFieldData(std::size_t nMinFields, std::size_t nFields,
+    LIB_UTILITIES_EXPORT uint64_t WriteFieldData(std::size_t nFields,
         H5::DataSpaceSharedPtr &space, H5::DataSetSharedPtr &dset,
         uint64_t data_i, std::vector<std::vector<T> > &data);
 
