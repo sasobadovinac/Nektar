@@ -533,7 +533,7 @@ Results TestWrite(Experiment &exp)
         }
         
         res[i] = (nWritten/MB) / t1;
-        /*
+        
         if (exp.comm->GetRank() == 0)
         {
             try
@@ -550,7 +550,7 @@ Results TestWrite(Experiment &exp)
                     "Filesystem error: " + string(e.what()));
             }
         }
-        */
+        
         exp.comm->Block();
     }
     return res;
