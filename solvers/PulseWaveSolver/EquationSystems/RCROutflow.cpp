@@ -87,7 +87,7 @@ namespace Nektar
            boundary conditions */
 
         NekDouble RT=((vessel[0]->GetBndCondExpansions())[n])->GetCoeffs()[0];
-        NekDouble C=((vessel[1]->GetBndCondExpansions())[n])->GetCoeffs()[0];
+        NekDouble C =((vessel[1]->GetBndCondExpansions())[n])->GetCoeffs()[0];
 
         m_session->LoadParameter("pout", m_pout);
 
@@ -123,18 +123,18 @@ namespace Nektar
         (vessel[1]->UpdateBndCondExpansion(n))->UpdatePhys()[0] = u_r;
     }
 
-    void RCROutflow::R_RiemannSolver(NekDouble R,NekDouble A_l,NekDouble u_l,NekDouble A_0, 
-                                               NekDouble beta, NekDouble pout,
-                                               NekDouble &A_u,NekDouble &u_u)
+    void RCROutflow::R_RiemannSolver(NekDouble R,   NekDouble A_l,
+                                     NekDouble u_l, NekDouble A_0,
+                                     NekDouble beta,NekDouble pout,
+                                     NekDouble &A_u,NekDouble &u_u)
    {		
-        NekDouble W1 = 0.0;
-        NekDouble c_l = 0.0;
+        NekDouble W1   = 0.0;
         NekDouble pext = m_pext;
         NekDouble A_calc = 0.0;
-        NekDouble fa = 0.0;
-        NekDouble dfa = 0.0;
+        NekDouble fa   = 0.0;
+        NekDouble dfa  = 0.0;
         NekDouble delta_A_calc = 0.0;
-        NekDouble rho = m_rho;
+        NekDouble rho   = m_rho;
         
         int proceed = 1;
         int iter = 0;
@@ -143,34 +143,52 @@ namespace Nektar
         // Tolerances for the algorithm
         NekDouble Tol = 1.0e-10;
         
-        // Calculate the wave speed
-        c_l = sqrt(beta/(2*rho))*sqrt(sqrt(A_l));
-	
-        // Riemann invariant \f$W_1(Al,ul)\f$
-        W1 = u_l + 4*c_l;
+
+        NekDouble A0_sqrt = sqrt(A_0);
+        NekDouble A0_sqrtsqrt = sqrt(A0_sqrt);
+        NekDouble sqrt_beta_2rho = sqrt(beta/(2*rho));
         
+        // Riemann invariant \f$W_1(Al,ul)\f$
+        W1 = u_l + 4*sqrt_beta_2rho*sqrt(sqrt(A_l));
+
         // Newton Iteration (Area only)
         A_calc = A_l;
         while ((proceed) && (iter < MAX_ITER))
         {	
             iter =iter+1;
+            NekDouble A_sqrt     = sqrt(A_calc);
+            NekDouble A_sqrtsqrt = sqrt(A_sqrt);
 	    
-            fa = R*W1*A_calc-4*R*sqrt(beta/(2*rho))*A_calc*sqrt(sqrt(A_calc))-pext-beta*(sqrt(A_calc)-sqrt(A_0))+pout;
-            dfa = R*W1-5*R*sqrt(beta/(2*rho))*sqrt(sqrt(A_calc))-beta/(2*sqrt(A_calc));
+            // fa =  R*A_calc*u_l - p(A) - p_ext + p_out (note: A_l = A_r)
+            fa = R*A_calc*(W1 - 4*sqrt_beta_2rho*(A_sqrtsqrt-A0_sqrtsqrt)) -
+                beta*(A_sqrt-A0_sqrt) - pext + pout;
+
+            dfa = R*(W1 - 4*sqrt_beta_2rho*(A_sqrtsqrt-A0_sqrtsqrt)) 
+                - R*A_calc*sqrt_beta_2rho*A_sqrtsqrt/A_calc                
+                - beta/(2*A_sqrt);
+            
             delta_A_calc = fa/dfa;
             A_calc = A_calc - delta_A_calc;
             
             if (sqrt(delta_A_calc*delta_A_calc) < Tol)
+            {
                 proceed = 0;
+            }
         }
+
+        ASSERTL0(iter < MAX_ITER,"Failed to converge Newton "
+                 "iteration in RCR-Terminal boundary condition");
         
 	// Obtain u_u and A_u
 	//u_u = W1 - 4*sqrt(beta/(2*rho))*(sqrt(sqrt(A_calc))); 
-        u_u=(pext+beta*(sqrt(A_calc)-sqrt(A_0))-pout)/(R*A_calc);
+        u_u=(pext+beta*(sqrt(A_calc)-A0_sqrt)-pout)/(R*A_calc);
         A_u = A_calc;
     }
 
-
+    // W1  = u_l + 4*sqrt(beta/(2*rho))*sqrt(sqrt(A_l))
+    // W2  = u_2 - 4*sqrt(beta/(2*rho))*sqrt(sqrt(A_r))
+    //  u_u = (W1 + w2)/2 if (A_l = A_r)
+        
 
 
 }
