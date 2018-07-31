@@ -11,6 +11,7 @@ IF( NEKTAR_SOLVER_ADR )
         ./ADRSolver.cpp 
         ./EquationSystems/Helmholtz.cpp
         ./EquationSystems/Laplace.cpp
+        ./EquationSystems/CrossField.cpp
         ./EquationSystems/Poisson.cpp
         ./EquationSystems/Projection.cpp
         ./EquationSystems/SteadyAdvectionDiffusion.cpp
