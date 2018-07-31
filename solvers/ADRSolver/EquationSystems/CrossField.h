@@ -64,7 +64,7 @@ protected:
     CrossField(const LibUtilities::SessionReaderSharedPtr &pSession,
                const SpatialDomains::MeshGraphSharedPtr &pGraph);
 
-    virtual void CrossField::v_DoSolve();
+    virtual void v_InitObject();
 };
 }
 

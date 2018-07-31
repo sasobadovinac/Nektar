@@ -53,8 +53,8 @@ CrossField::~CrossField()
 {
 }
 
-void CrossField::v_DoSolve()
+void CrossField::v_InitObject()
 {
-    Laplace::v_DoSolve();
+    Laplace::v_InitObject();
 }
 }
