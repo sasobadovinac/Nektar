@@ -56,5 +56,42 @@ CrossField::~CrossField()
 void CrossField::v_InitObject()
 {
     Laplace::v_InitObject();
+
+    ASSERTL0(m_expdim == 2, "Only 2D supported with cross fields.")
+
+    for (int bcRegion = 0;
+         bcRegion < m_fields[0]->GetBndConditions().num_elements(); ++bcRegion)
+    {
+        MultiRegions::ExpListSharedPtr exps =
+            m_fields[0]->GetBndCondExpansions()[bcRegion];
+
+        for (int e = 0; e < exps->GetExpSize(); ++e)
+        {
+            LocalRegions::ExpansionSharedPtr exp = exps->GetExp(e);
+            Array<OneD, Array<OneD, Array<OneD, NekDouble>>> deriv =
+                exp->GetGeom()->GetGeomFactors()->GetDeriv(
+                    exp->GetPointsKeys());
+
+            int npts = exps->GetExp(e)->GetNumPoints(0);
+            int id1  = exps->GetPhys_Offset(e);
+
+            Array<OneD, NekDouble> u(npts);
+            Array<OneD, NekDouble> v(npts);
+
+            for (int i = 0; i < npts; ++i)
+            {
+                NekDouble theta = atan2(deriv[0][1][i], deriv[0][0][i]);
+                NekDouble t     = fmod(4 * theta, 2 * M_PI);
+
+                u[i] = cos(t);
+                v[i] = sin(t);
+
+                // cout << u[i] << "\t" << v[i] << endl;
+            }
+
+            Vmath::Vcopy(npts, &u[0], 1, &(exps->UpdatePhys())[id1], 1);
+            Vmath::Vcopy(npts, &v[0], 1, &(exps->UpdatePhys())[id1], 1);
+        }
+    }
 }
 }
