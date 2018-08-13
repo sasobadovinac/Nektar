@@ -90,30 +90,4 @@ void CrossField::v_InitObject()
             m_fields[1]->GetBndCondExpansions()[bcRegion]->UpdateCoeffs());
     }
 }
-
-void CrossField::v_ExtraFldOutput(
-    std::vector<Array<OneD, NekDouble>> &fieldcoeffs,
-    std::vector<std::string> &variables)
-{
-    const int nPhys   = m_fields[0]->GetNpoints();
-    const int nCoeffs = m_fields[0]->GetNcoeffs();
-
-    Array<OneD, Array<OneD, NekDouble>> tmp(m_fields.num_elements());
-    for (int i = 0; i < m_fields.num_elements(); ++i)
-    {
-        tmp[i] = m_fields[i]->GetPhys();
-    }
-
-    Array<OneD, NekDouble> psi(nPhys);
-    for (int i = 0; i < psi.num_elements(); ++i)
-    {
-        psi[i] = fmod(atan2(tmp[1][i], tmp[0][i]) / 4.0, 2.0 * M_PI);
-    }
-
-    Array<OneD, NekDouble> psiFwd(nCoeffs);
-    m_fields[0]->FwdTrans_IterPerExp(psi, psiFwd);
-
-    variables.push_back("psi");
-    fieldcoeffs.push_back(psiFwd);
-}
 }

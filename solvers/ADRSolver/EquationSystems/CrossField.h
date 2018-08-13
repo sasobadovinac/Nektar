@@ -65,10 +65,6 @@ protected:
                const SpatialDomains::MeshGraphSharedPtr &pGraph);
 
     virtual void v_InitObject();
-
-    virtual void v_ExtraFldOutput(
-        std::vector<Array<OneD, NekDouble>> &fieldcoeffs,
-        std::vector<std::string> &variables);
 };
 }
 
