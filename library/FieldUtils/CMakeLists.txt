@@ -23,6 +23,7 @@ SET(FieldUtilsHeaders
     ProcessModules/ProcessCombineAvg.h
     ProcessModules/ProcessConcatenateFld.h
     ProcessModules/ProcessCreateExp.h
+    ProcessModules/ProcessCrossField.h
     ProcessModules/ProcessDeform.h
     ProcessModules/ProcessDisplacement.h
     ProcessModules/ProcessDOF.h
@@ -80,6 +81,7 @@ SET(FieldUtilsSources
     ProcessModules/ProcessCombineAvg.cpp
     ProcessModules/ProcessConcatenateFld.cpp
     ProcessModules/ProcessCreateExp.cpp
+    ProcessModules/ProcessCrossField.cpp
     ProcessModules/ProcessDeform.cpp
     ProcessModules/ProcessDisplacement.cpp
     ProcessModules/ProcessDOF.cpp
