@@ -33,6 +33,8 @@
 //
 ////////////////////////////////////////////////////////////////////////////////
 
+#include <SpatialDomains/Geometry.h>
+
 using namespace std;
 
 #include "ProcessCrossField.h"
@@ -57,6 +59,36 @@ ProcessCrossField::~ProcessCrossField()
 
 void ProcessCrossField::Process(po::variables_map &vm)
 {
+    ASSERTL0(m_f->m_graph->GetSpaceDimension() == 2,
+             "Cross field post-processing only possible in 2D.")
+
+    vector<set<shared_ptr<SpatialDomains::Geometry>>> isoElmts(2);
+
+    for (int i = 0; i < 2; ++i)
+    {
+        Array<OneD, NekDouble> phys = m_f->m_exp[i]->GetPhys();
+
+        for (int elmt = 0; elmt < m_f->m_exp[i]->GetNumElmts(); ++elmt)
+        {
+            int offset  = m_f->m_exp[i]->GetPhys_Offset(elmt);
+            int npoints = m_f->m_exp[i]->GetTotPoints(elmt);
+
+            auto mm = minmax_element(phys.begin() + offset,
+                                     phys.begin() + offset + npoints);
+
+            if (*(mm.first) * *(mm.second) < 0.0)
+            {
+                isoElmts[i].insert(m_f->m_exp[i]->GetExp(elmt)->GetGeom());
+            }
+        }
+    }
+
+    vector<shared_ptr<SpatialDomains::Geometry>> intElmts(
+        min(isoElmts[0].size(), isoElmts[1].size()));
+    auto it = set_intersection(isoElmts[0].begin(), isoElmts[0].end(),
+                               isoElmts[1].begin(), isoElmts[1].end(),
+                               intElmts.begin());
+    intElmts.resize(it - intElmts.begin());
 }
 }
 }
