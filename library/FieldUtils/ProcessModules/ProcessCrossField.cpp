@@ -49,7 +49,7 @@ ModuleKey ProcessCrossField::className =
         ModuleKey(eProcessModule, "crossfield"), ProcessCrossField::create,
         "Post-processes cross field simulation results.");
 
-ProcessCrossField::ProcessCrossField(FieldSharedPtr f) : ProcessModule(f)
+ProcessCrossField::ProcessCrossField(FieldSharedPtr f) : ProcessGrad(f)
 {
 }
 
@@ -62,7 +62,11 @@ void ProcessCrossField::Process(po::variables_map &vm)
     ASSERTL0(m_f->m_graph->GetSpaceDimension() == 2,
              "Cross field post-processing only possible in 2D.")
 
-    vector<set<shared_ptr<SpatialDomains::Geometry>>> isoElmts(2);
+    // Calculate the Jacobian of (u, v)
+    ProcessGrad::Process(vm);
+
+    // Find all elements containing u = 0 and v = 0
+    vector<set<LocalRegions::ExpansionSharedPtr>> isoElmts(2);
 
     for (int i = 0; i < 2; ++i)
     {
@@ -78,17 +82,129 @@ void ProcessCrossField::Process(po::variables_map &vm)
 
             if (*(mm.first) * *(mm.second) < 0.0)
             {
-                isoElmts[i].insert(m_f->m_exp[i]->GetExp(elmt)->GetGeom());
+                isoElmts[i].insert(m_f->m_exp[i]->GetExp(elmt));
             }
         }
     }
 
-    vector<shared_ptr<SpatialDomains::Geometry>> intElmts(
-        min(isoElmts[0].size(), isoElmts[1].size()));
-    auto it = set_intersection(isoElmts[0].begin(), isoElmts[0].end(),
-                               isoElmts[1].begin(), isoElmts[1].end(),
-                               intElmts.begin());
-    intElmts.resize(it - intElmts.begin());
+    // Find intersection of u = 0 and v = 0 element sets
+    vector<LocalRegions::ExpansionSharedPtr> intElmts;
+    set_intersection(isoElmts[0].begin(), isoElmts[0].end(),
+                     isoElmts[1].begin(), isoElmts[1].end(),
+                     back_inserter(intElmts));
+
+    // Find exact location of each singularity
+    // We assume there is at most 1 singularity per element
+    for (auto &elmt : intElmts)
+    {
+        int id = elmt->GetElmtId();
+
+        int offset  = m_f->m_exp[0]->GetPhys_Offset(id);
+        int npoints = m_f->m_exp[0]->GetTotPoints(id);
+
+        // Find nearest quadrature point to u = v = 0
+        Array<OneD, NekDouble> costFun(npoints, 0.0);
+        for (int i = 0; i < 2; ++i)
+        {
+            for (int j = 0; j < npoints; ++j)
+            {
+                costFun[j] += fabs(m_f->m_exp[i]->GetPhys()[offset + j]);
+            }
+        }
+
+        auto point = min_element(costFun.begin(), costFun.end());
+
+        Array<OneD, NekDouble> x, y;
+        elmt->GetCoords(x, y);
+
+        // Starting point for Newton's method
+        Array<OneD, NekDouble> coords(3, 0.0);
+        coords[0] = x[point - costFun.begin()];
+        coords[1] = y[point - costFun.begin()];
+
+        Array<OneD, NekDouble> vals(m_f->m_exp.size());
+        Array<OneD, NekDouble> delta(2, numeric_limits<NekDouble>::max());
+
+        // Copy of local phys for evaluation at point
+        Array<OneD, Array<OneD, NekDouble>> locPhys(m_f->m_exp.size());
+        for (int i = 0; i < m_f->m_exp.size(); ++i)
+        {
+            locPhys[i] = Array<OneD, NekDouble>(npoints);
+            Vmath::Vcopy(npoints, &m_f->m_exp[i]->GetPhys()[offset], 1,
+                         &locPhys[i][0], 1);
+        }
+
+        // cout << "Initial coords: " << coords[0] << "\t" << coords[1] << endl;
+
+        bool out = false;
+
+        // Newton's method to find point where u = v = 0
+        while (sqrt(delta[0] * delta[0] + delta[1] * delta[1]) > 1.0e-6)
+        {
+            // Check if point is inside element
+            // If not, we dismiss it
+            if (m_f->m_exp[0]->GetExpIndex(coords) != id)
+            {
+                // cout << "Out of element" << endl;
+                out = true;
+                break;
+            }
+
+            // Evaluate all fields at current point
+            for (int i = 0; i < m_f->m_exp.size(); ++i)
+            {
+                vals[i] = elmt->PhysEvaluate(coords, locPhys[i]);
+            }
+
+            // vals
+            // 0 -> u
+            // 1 -> v
+            // 2 -> u_x
+            // 3 -> u_y
+            // 4 -> v_x
+            // 5 -> v_y
+
+            /*
+            cout << "Eval: " << vals[0] << "\t" << vals[1] << "\t" << vals[2]
+                 << "\t" << vals[3] << "\t" << vals[4] << "\t" << vals[5]
+                 << endl;
+            */
+
+            // Invert the jacobian
+            iter_swap(vals.begin() + 2, vals.begin() + 5);
+            Vmath::Neg(2, &vals[3], 1);
+            Vmath::Smul(4, 1.0 / (vals[2] * vals[5] - vals[3] * vals[4]),
+                        &vals[2], 1, &vals[2], 1);
+
+            /*
+            cout << "Inv jac: " << vals[2] << "\t" << vals[3] << "\t" << vals[4]
+                 << "\t" << vals[5] << endl;
+            */
+
+            // vals
+            // 2 -> x_u
+            // 3 -> x_v
+            // 4 -> y_u
+            // 5 -> y_v
+
+            // J^(-1) * u(x_n)
+            delta[0] = vals[2] * vals[0] + vals[3] * vals[1];
+            delta[1] = vals[4] * vals[0] + vals[5] * vals[1];
+
+            // x_(n+1) = x_n - J^(-1) * u(x_n)
+            coords[0] -= delta[0];
+            coords[1] -= delta[1];
+
+            // cout << "Deltas: " << delta[0] << "\t" << delta[1] << endl;
+        }
+
+        if (out)
+        {
+            continue;
+        }
+
+        cout << coords[0] << "\t" << coords[1] << endl;
+    }
 }
 }
 }

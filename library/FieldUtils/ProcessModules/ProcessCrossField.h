@@ -36,7 +36,7 @@
 #ifndef FIELDUTILS_PROCESSCROSSFIELD
 #define FIELDUTILS_PROCESSCROSSFIELD
 
-#include "../Module.h"
+#include "ProcessGrad.h"
 
 namespace Nektar
 {
@@ -45,7 +45,7 @@ namespace FieldUtils
 /**
  * @brief This processing module post-processes cross field simulation results.
  */
-class ProcessCrossField : public ProcessModule
+class ProcessCrossField : public ProcessGrad
 {
 public:
     /// Creates an instance of this class
