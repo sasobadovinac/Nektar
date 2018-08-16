@@ -80,9 +80,13 @@ void ProcessCrossField::Process(po::variables_map &vm)
             auto mm = minmax_element(phys.begin() + offset,
                                      phys.begin() + offset + npoints);
 
-            if (*(mm.first) * *(mm.second) < 0.0)
+            if (*(mm.first) <= 0.0 && *(mm.second) >= 0.0)
             {
                 isoElmts[i].insert(m_f->m_exp[i]->GetExp(elmt));
+            }
+            else
+            {
+                // TODO: check collapsed vertex
             }
         }
     }
@@ -114,7 +118,8 @@ void ProcessCrossField::Process(po::variables_map &vm)
 
         auto point = min_element(costFun.begin(), costFun.end());
 
-        Array<OneD, NekDouble> x, y;
+        Array<OneD, NekDouble> x(npoints);
+        Array<OneD, NekDouble> y(npoints);
         elmt->GetCoords(x, y);
 
         // Starting point for Newton's method
@@ -134,22 +139,9 @@ void ProcessCrossField::Process(po::variables_map &vm)
                          &locPhys[i][0], 1);
         }
 
-        // cout << "Initial coords: " << coords[0] << "\t" << coords[1] << endl;
-
-        bool out = false;
-
         // Newton's method to find point where u = v = 0
         while (sqrt(delta[0] * delta[0] + delta[1] * delta[1]) > 1.0e-6)
         {
-            // Check if point is inside element
-            // If not, we dismiss it
-            if (m_f->m_exp[0]->GetExpIndex(coords) != id)
-            {
-                // cout << "Out of element" << endl;
-                out = true;
-                break;
-            }
-
             // Evaluate all fields at current point
             for (int i = 0; i < m_f->m_exp.size(); ++i)
             {
@@ -164,22 +156,11 @@ void ProcessCrossField::Process(po::variables_map &vm)
             // 4 -> v_x
             // 5 -> v_y
 
-            /*
-            cout << "Eval: " << vals[0] << "\t" << vals[1] << "\t" << vals[2]
-                 << "\t" << vals[3] << "\t" << vals[4] << "\t" << vals[5]
-                 << endl;
-            */
-
             // Invert the jacobian
             iter_swap(vals.begin() + 2, vals.begin() + 5);
             Vmath::Neg(2, &vals[3], 1);
             Vmath::Smul(4, 1.0 / (vals[2] * vals[5] - vals[3] * vals[4]),
                         &vals[2], 1, &vals[2], 1);
-
-            /*
-            cout << "Inv jac: " << vals[2] << "\t" << vals[3] << "\t" << vals[4]
-                 << "\t" << vals[5] << endl;
-            */
 
             // vals
             // 2 -> x_u
@@ -194,11 +175,12 @@ void ProcessCrossField::Process(po::variables_map &vm)
             // x_(n+1) = x_n - J^(-1) * u(x_n)
             coords[0] -= delta[0];
             coords[1] -= delta[1];
-
-            // cout << "Deltas: " << delta[0] << "\t" << delta[1] << endl;
         }
 
-        if (out)
+        // Check if point is inside element
+        // If not, we dismiss it
+        // It's most likely been detected by adjacent element
+        if (m_f->m_exp[0]->GetExpIndex(coords) != id)
         {
             continue;
         }
