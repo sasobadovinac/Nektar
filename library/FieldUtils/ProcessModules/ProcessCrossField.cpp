@@ -78,13 +78,37 @@ void ProcessCrossField::Process(po::variables_map &vm)
             auto mm = minmax_element(phys.begin() + offset,
                                      phys.begin() + offset + npoints);
 
-            if (*(mm.first) <= 0.0 && *(mm.second) >= 0.0)
+            LocalRegions::ExpansionSharedPtr expansion =
+                m_f->m_exp[i]->GetExp(elmt);
+
+            NekDouble minV = *(mm.first);
+            NekDouble maxV = *(mm.second);
+
+            // Check value at collapsed vertex of triangles
+            if (expansion->DetShapeType() == LibUtilities::eTriangle)
             {
-                isoElmts[i].insert(m_f->m_exp[i]->GetExp(elmt));
+                if (minV > 0.0 || maxV < 0.0)
+                {
+                    Array<OneD, NekDouble> lcoords(3);
+                    lcoords[0] = 0.0;
+                    lcoords[1] = 1.0;
+                    lcoords[2] = 0.0;
+
+                    Array<OneD, NekDouble> locPhys(npoints);
+                    Vmath::Vcopy(npoints, &m_f->m_exp[i]->GetPhys()[offset], 1,
+                                 &locPhys[0], 1);
+
+                    NekDouble colVal =
+                        expansion->StdPhysEvaluate(lcoords, locPhys);
+
+                    minV = min(minV, colVal);
+                    maxV = max(maxV, colVal);
+                }
             }
-            else
+
+            if (minV <= 0.0 && maxV >= 0.0)
             {
-                // TODO: check collapsed vertex
+                isoElmts[i].insert(expansion);
             }
         }
     }
