@@ -94,12 +94,8 @@ void ProcessCrossField::Process(po::variables_map &vm)
                     lcoords[1] = 1.0;
                     lcoords[2] = 0.0;
 
-                    Array<OneD, NekDouble> locPhys(npoints);
-                    Vmath::Vcopy(npoints, &m_f->m_exp[i]->GetPhys()[offset], 1,
-                                 &locPhys[0], 1);
-
-                    NekDouble colVal =
-                        expansion->StdPhysEvaluate(lcoords, locPhys);
+                    NekDouble colVal = expansion->StdPhysEvaluate(
+                        lcoords, m_f->m_exp[i]->GetPhys() + offset);
 
                     minV = min(minV, colVal);
                     maxV = max(maxV, colVal);
@@ -130,12 +126,11 @@ void ProcessCrossField::Process(po::variables_map &vm)
 
         // Find nearest quadrature point to u = v = 0
         Array<OneD, NekDouble> costFun(npoints, 0.0);
+        Array<OneD, NekDouble> tmp(npoints);
         for (int i = 0; i < 2; ++i)
         {
-            for (int j = 0; j < npoints; ++j)
-            {
-                costFun[j] += fabs(m_f->m_exp[i]->GetPhys()[offset + j]);
-            }
+            Vmath::Vabs(npoints, m_f->m_exp[i]->GetPhys() + offset, 1, tmp, 1);
+            Vmath::Vadd(npoints, costFun, 1, tmp, 1, costFun, 1);
         }
 
         auto point = min_element(costFun.begin(), costFun.end());
@@ -152,22 +147,14 @@ void ProcessCrossField::Process(po::variables_map &vm)
         Array<OneD, NekDouble> vals(m_f->m_exp.size());
         Array<OneD, NekDouble> delta(2, numeric_limits<NekDouble>::max());
 
-        // Copy of local phys for evaluation at point
-        Array<OneD, Array<OneD, NekDouble>> locPhys(m_f->m_exp.size());
-        for (int i = 0; i < m_f->m_exp.size(); ++i)
-        {
-            locPhys[i] = Array<OneD, NekDouble>(npoints);
-            Vmath::Vcopy(npoints, &m_f->m_exp[i]->GetPhys()[offset], 1,
-                         &locPhys[i][0], 1);
-        }
-
         // Newton's method to find point where u = v = 0
         while (sqrt(delta[0] * delta[0] + delta[1] * delta[1]) > 1.0e-6)
         {
             // Evaluate all fields at current point
             for (int i = 0; i < m_f->m_exp.size(); ++i)
             {
-                vals[i] = elmt->PhysEvaluate(coords, locPhys[i]);
+                vals[i] = elmt->PhysEvaluate(coords,
+                                             m_f->m_exp[i]->GetPhys() + offset);
             }
 
             // vals
