@@ -64,7 +64,7 @@ void ProcessCrossField::Process(po::variables_map &vm)
     ProcessGrad::Process(vm);
 
     // Find all elements containing u = 0 and v = 0
-    vector<set<LocalRegions::ExpansionSharedPtr>> isoElmts(2);
+    vector<set<int>> isoElmts(2);
 
     for (int i = 0; i < 2; ++i)
     {
@@ -89,6 +89,7 @@ void ProcessCrossField::Process(po::variables_map &vm)
             {
                 if (minV > 0.0 || maxV < 0.0)
                 {
+                    // Is it possible to do aggregate initialisation?
                     Array<OneD, NekDouble> lcoords(3);
                     lcoords[0] = 0.0;
                     lcoords[1] = 1.0;
@@ -104,13 +105,13 @@ void ProcessCrossField::Process(po::variables_map &vm)
 
             if (minV <= 0.0 && maxV >= 0.0)
             {
-                isoElmts[i].insert(expansion);
+                isoElmts[i].insert(elmt);
             }
         }
     }
 
     // Find intersection of u = 0 and v = 0 element sets
-    vector<LocalRegions::ExpansionSharedPtr> intElmts;
+    vector<int> intElmts;
     set_intersection(isoElmts[0].begin(), isoElmts[0].end(),
                      isoElmts[1].begin(), isoElmts[1].end(),
                      back_inserter(intElmts));
@@ -119,10 +120,11 @@ void ProcessCrossField::Process(po::variables_map &vm)
     // We assume there is at most 1 singularity per element
     for (auto &elmt : intElmts)
     {
-        int id = elmt->GetElmtId();
+        LocalRegions::ExpansionSharedPtr expansion =
+            m_f->m_exp[0]->GetExp(elmt);
 
-        int offset  = m_f->m_exp[0]->GetPhys_Offset(id);
-        int npoints = m_f->m_exp[0]->GetTotPoints(id);
+        int offset  = m_f->m_exp[0]->GetPhys_Offset(elmt);
+        int npoints = m_f->m_exp[0]->GetTotPoints(elmt);
 
         // Find nearest quadrature point to u = v = 0
         Array<OneD, NekDouble> costFun(npoints, 0.0);
@@ -137,7 +139,7 @@ void ProcessCrossField::Process(po::variables_map &vm)
 
         Array<OneD, NekDouble> x(npoints);
         Array<OneD, NekDouble> y(npoints);
-        elmt->GetCoords(x, y);
+        expansion->GetCoords(x, y);
 
         // Starting point for Newton's method
         Array<OneD, NekDouble> coords(3, 0.0);
@@ -153,8 +155,8 @@ void ProcessCrossField::Process(po::variables_map &vm)
             // Evaluate all fields at current point
             for (int i = 0; i < m_f->m_exp.size(); ++i)
             {
-                vals[i] = elmt->PhysEvaluate(coords,
-                                             m_f->m_exp[i]->GetPhys() + offset);
+                vals[i] = expansion->PhysEvaluate(
+                    coords, m_f->m_exp[i]->GetPhys() + offset);
             }
 
             // vals
@@ -189,7 +191,7 @@ void ProcessCrossField::Process(po::variables_map &vm)
         // Check if point is inside element
         // If not, we dismiss it
         // It's most likely been detected by adjacent element
-        if (m_f->m_exp[0]->GetExpIndex(coords) != id)
+        if (m_f->m_exp[0]->GetExpIndex(coords) != elmt)
         {
             continue;
         }
