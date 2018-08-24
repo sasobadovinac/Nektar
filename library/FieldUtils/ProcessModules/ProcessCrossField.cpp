@@ -47,7 +47,7 @@ ModuleKey ProcessCrossField::className =
         ModuleKey(eProcessModule, "crossfield"), ProcessCrossField::create,
         "Post-processes cross field simulation results.");
 
-ProcessCrossField::ProcessCrossField(FieldSharedPtr f) : ProcessGrad(f)
+ProcessCrossField::ProcessCrossField(FieldSharedPtr f) : ProcessModule(f)
 {
 }
 
@@ -59,9 +59,6 @@ void ProcessCrossField::Process(po::variables_map &vm)
 {
     ASSERTL0(m_f->m_graph->GetSpaceDimension() == 2,
              "Cross field post-processing only possible in 2D.")
-
-    // Calculate the Jacobian of (u, v)
-    ProcessGrad::Process(vm);
 
     // Find all elements containing u = 0 and v = 0
     vector<set<int>> isoElmts(2);
@@ -116,6 +113,9 @@ void ProcessCrossField::Process(po::variables_map &vm)
                      isoElmts[1].begin(), isoElmts[1].end(),
                      back_inserter(intElmts));
 
+    // Count the number of singularities
+    int cnt = 0;
+
     // Find exact location of each singularity
     // We assume there is at most 1 singularity per element
     for (auto &elmt : intElmts)
@@ -125,6 +125,12 @@ void ProcessCrossField::Process(po::variables_map &vm)
 
         int offset  = m_f->m_exp[0]->GetPhys_Offset(elmt);
         int npoints = m_f->m_exp[0]->GetTotPoints(elmt);
+
+        /*
+        // This commented part is not guaranteed to work if starting point is on
+        // the boundary
+        // I might need to re-use it if I have to find multiple signularities
+        // inside a single element
 
         // Find nearest quadrature point to u = v = 0
         Array<OneD, NekDouble> costFun(npoints, 0.0);
@@ -137,66 +143,121 @@ void ProcessCrossField::Process(po::variables_map &vm)
 
         auto point = min_element(costFun.begin(), costFun.end());
 
-        Array<OneD, NekDouble> x(npoints);
-        Array<OneD, NekDouble> y(npoints);
-        expansion->GetCoords(x, y);
+        Array<OneD, Array<OneD, NekDouble>> quadEta(2);
+        for (int i = 0; i < 2; ++i)
+        {
+            quadEta[i] = Array<OneD, NekDouble>(npoints);
+        }
+        expansion->StdExpansion::GetCoords(quadEta[0], quadEta[1]);
 
         // Starting point for Newton's method
-        Array<OneD, NekDouble> coords(3, 0.0);
-        coords[0] = x[point - costFun.begin()];
-        coords[1] = y[point - costFun.begin()];
+        Array<OneD, NekDouble> eta(2, 0.0);
+        eta[0] = quadEta[0][point - costFun.begin()];
+        eta[1] = quadEta[1][point - costFun.begin()];
+        */
 
-        Array<OneD, NekDouble> vals(m_f->m_exp.size());
+        // Starting point for Newton's method
+        Array<OneD, NekDouble> eta(2, expansion->GetGeom()->GetShapeType() ==
+                                              LibUtilities::eTriangle
+                                          ? -1.0 / 3.0
+                                          : 0.0);
+
+        // Variables for iterations
+        Array<OneD, NekDouble> u(2);
+        Array<OneD, NekDouble> u_eta(4);
         Array<OneD, NekDouble> delta(2, numeric_limits<NekDouble>::max());
 
-        // Newton's method to find point where u = v = 0
-        while (sqrt(delta[0] * delta[0] + delta[1] * delta[1]) > 1.0e-6)
+        // Hold u_eta at quadrature points
+        Array<OneD, Array<OneD, NekDouble>> deriv(4);
+        for (int i = 0; i < 4; ++i)
         {
-            // Evaluate all fields at current point
-            for (int i = 0; i < m_f->m_exp.size(); ++i)
+            deriv[i] = Array<OneD, NekDouble>(npoints);
+        }
+        for (int i = 0; i < 2; ++i)
+        {
+            expansion->StdPhysDeriv(m_f->m_exp[i]->GetPhys() + offset,
+                                    deriv[2 * i], deriv[2 * i + 1]);
+        }
+
+        // Newton's method to find point where u = v = 0
+        while (sqrt(pow(delta[0], 2) + pow(delta[1], 2)) > 1.0e-9)
+        {
+            // Evaluate u and u_eta at current point
+            for (int i = 0; i < 2; ++i)
             {
-                vals[i] = expansion->PhysEvaluate(
-                    coords, m_f->m_exp[i]->GetPhys() + offset);
+                u[i] = expansion->StdPhysEvaluate(
+                    eta, m_f->m_exp[i]->GetPhys() + offset);
+            }
+            for (int i = 0; i < 4; ++i)
+            {
+                u_eta[i] = expansion->StdPhysEvaluate(eta, deriv[i]);
             }
 
-            // vals
+            // u
             // 0 -> u
             // 1 -> v
-            // 2 -> u_x
-            // 3 -> u_y
-            // 4 -> v_x
-            // 5 -> v_y
+
+            // u_eta
+            // 0 -> u_eta0
+            // 1 -> u_eta1
+            // 2 -> v_eta0
+            // 3 -> v_eta1
 
             // Invert the jacobian
-            iter_swap(vals.begin() + 2, vals.begin() + 5);
-            Vmath::Neg(2, &vals[3], 1);
-            Vmath::Smul(4, 1.0 / (vals[2] * vals[5] - vals[3] * vals[4]),
-                        &vals[2], 1, &vals[2], 1);
+            iter_swap(u_eta.begin() + 0, u_eta.begin() + 3);
+            Vmath::Neg(2, &u_eta[1], 1);
+            Vmath::Smul(4, 1.0 / (u_eta[0] * u_eta[3] - u_eta[1] * u_eta[2]),
+                        &u_eta[0], 1, &u_eta[0], 1);
 
-            // vals
-            // 2 -> x_u
-            // 3 -> x_v
-            // 4 -> y_u
-            // 5 -> y_v
+            // u_eta
+            // 2 -> eta0_u
+            // 3 -> eta0_v
+            // 4 -> eta0_u
+            // 5 -> eta0_v
 
-            // J^(-1) * u(x_n)
-            delta[0] = vals[2] * vals[0] + vals[3] * vals[1];
-            delta[1] = vals[4] * vals[0] + vals[5] * vals[1];
+            // delta = J^(-1) * u(x_n)
+            delta[0] = u_eta[0] * u[0] + u_eta[1] * u[1];
+            delta[1] = u_eta[2] * u[0] + u_eta[3] * u[1];
 
-            // x_(n+1) = x_n - J^(-1) * u(x_n)
-            coords[0] -= delta[0];
-            coords[1] -= delta[1];
+            // x_(n+1) = x_n - delta
+            eta[0] -= delta[0];
+            eta[1] -= delta[1];
         }
 
-        // Check if point is inside element
-        // If not, we dismiss it
-        // It's most likely been detected by adjacent element
-        if (m_f->m_exp[0]->GetExpIndex(coords) != elmt)
+        NekDouble tol = 0.0;
+
+        // Check if point is still inside the element
+        // If not, we dismiss it;
+        // it's most likely been detected by adjacent element
+        switch (expansion->GetGeom()->GetShapeType())
         {
-            continue;
+            case LibUtilities::eTriangle:
+                if (!(eta[0] >= -(1.0 + tol) && eta[1] >= -(1.0 + tol) &&
+                      eta[0] + eta[1] <= tol))
+                {
+                    // cout << "Outside!\t\t" << eta[0] << "\t\t" << eta[1] <<
+                    // endl;
+                    // cout << "Element #" << elmt << endl;
+                    continue;
+                }
+                break;
+
+            case LibUtilities::eQuadrilateral:
+                if (!(eta[0] >= -(1.0 + tol) && eta[1] >= -(1.0 + tol) &&
+                      eta[0] <= (1.0 + tol) && eta[1] <= (1.0 + tol)))
+                {
+                    continue;
+                }
+                break;
+
+            default:
+                ASSERTL0(false, "Unexpected shape type");
         }
 
-        cout << coords[0] << "\t" << coords[1] << endl;
+        Array<OneD, NekDouble> x(2);
+        expansion->GetCoord(eta, x);
+
+        cout << ++cnt << "\t\t" << x[0] << "\t\t" << x[1] << endl;
     }
 }
 }
