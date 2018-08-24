@@ -49,6 +49,7 @@ ModuleKey ProcessCrossField::className =
 
 ProcessCrossField::ProcessCrossField(FieldSharedPtr f) : ProcessModule(f)
 {
+    m_config["outfile"] = ConfigOption(false, "", "Output filename.");
 }
 
 ProcessCrossField::~ProcessCrossField()
@@ -57,6 +58,9 @@ ProcessCrossField::~ProcessCrossField()
 
 void ProcessCrossField::Process(po::variables_map &vm)
 {
+    ofstream file;
+    file.open(m_config["outfile"].as<string>());
+    
     int dim = m_f->m_graph->GetSpaceDimension();
 
     ASSERTL0(dim == 2, "Cross field post-processing only possible in 2D.")
@@ -286,7 +290,62 @@ void ProcessCrossField::Process(po::variables_map &vm)
 
         cout << "Singularity #" << singularities.size() << " with " << nbranches
              << " branches at (" << x[0] << ", " << x[1] << ")" << endl;
+        
+        file << x[0] << "," << x[1] << endl;
     }
+
+    for (auto &s : singularities)
+    {
+        int dim = m_f->m_graph->GetSpaceDimension();
+
+        // I can make dist the first stage of RK based on |U|=1
+        NekDouble dist = 1.0e-2;
+
+        int elmt      = s.first;
+        int nbranches = s.second.first;
+        Array<OneD, NekDouble> eta = s.second.second;
+
+        Array<OneD, NekDouble> x(dim);
+        m_f->m_exp[0]->GetExp(elmt)->GetCoord(eta, x);
+
+        NekDouble angle = 0.0;
+
+        for (int i = 0; i < nbranches; ++i)
+        {
+            angle += 2.0 * M_PI / nbranches;
+            angle = fmod(angle, 2.0 * M_PI);
+
+            NekDouble delta;
+            Array<OneD, NekDouble> point(dim);
+            Array<OneD, NekDouble> lpoint(dim);
+
+            do
+            {
+                point[0] = x[0] + dist * cos(angle);
+                point[1] = x[1] + dist * sin(angle);
+
+                int id     = m_f->m_exp[0]->GetExpIndex(point, lpoint);
+                int offset = m_f->m_exp[0]->GetPhys_Offset(id);
+
+                NekDouble psi =
+                    atan2(m_f->m_exp[0]->GetExp(id)->StdPhysEvaluate(
+                              lpoint, m_f->m_exp[1]->GetPhys() + offset),
+                          m_f->m_exp[0]->GetExp(id)->StdPhysEvaluate(
+                              lpoint, m_f->m_exp[0]->GetPhys() + offset)) /
+                    4.0;
+
+                delta =
+                    angle -
+                    (psi + round((angle - psi) / (M_PI / 2.0)) * (M_PI / 2.0));
+                angle -= delta;
+
+            } while (fabs(delta) < 1.0e-9);
+
+            file << point[0] << "," << point[1] << endl;
+        }
+    }
+
+    file.close();
 }
 }
 }
