@@ -167,7 +167,7 @@ void ProcessCrossField::Process(po::variables_map &vm)
         // Variables for iterations
         Array<OneD, NekDouble> u(dim);
         Array<OneD, NekDouble> u_eta(pow(dim, 2));
-        Array<OneD, NekDouble> delta(dim, numeric_limits<NekDouble>::max());
+        Array<OneD, NekDouble> delta(dim);
 
         // Hold u_eta at quadrature points
         Array<OneD, Array<OneD, NekDouble>> deriv(pow(dim, 2));
@@ -182,7 +182,7 @@ void ProcessCrossField::Process(po::variables_map &vm)
         }
 
         // Newton's method to find point where u = v = 0
-        while (sqrt(pow(delta[0], 2) + pow(delta[1], 2)) > 1.0e-9)
+        do
         {
             // Evaluate u and u_eta at current point
             for (int i = 0; i < dim; ++i)
@@ -224,7 +224,8 @@ void ProcessCrossField::Process(po::variables_map &vm)
             // x_(n+1) = x_n - delta
             eta[0] -= delta[0];
             eta[1] -= delta[1];
-        }
+
+        } while (sqrt(pow(delta[0], 2) + pow(delta[1], 2)) > 1.0e-9);
 
         // Check if point is still inside the element
         // If not, we dismiss it;
