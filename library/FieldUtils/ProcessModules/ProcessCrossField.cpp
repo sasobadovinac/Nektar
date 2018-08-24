@@ -113,8 +113,8 @@ void ProcessCrossField::Process(po::variables_map &vm)
                      isoElmts[1].begin(), isoElmts[1].end(),
                      back_inserter(intElmts));
 
-    // Count the number of singularities
-    int cnt = 0;
+    // Store singularities and their starting element
+    map<int, Array<OneD, NekDouble>> singularities;
 
     // Find exact location of each singularity
     // We assume there is at most 1 singularity per element
@@ -251,10 +251,13 @@ void ProcessCrossField::Process(po::variables_map &vm)
                 ASSERTL0(false, "Unexpected shape type");
         }
 
+        singularities[elmt] = eta;
+
         Array<OneD, NekDouble> x(dim);
         expansion->GetCoord(eta, x);
 
-        cout << ++cnt << "\t\t" << x[0] << "\t\t" << x[1] << endl;
+        cout << singularities.size() << "\t\t" << x[0] << "\t\t" << x[1]
+             << endl;
     }
 }
 }
