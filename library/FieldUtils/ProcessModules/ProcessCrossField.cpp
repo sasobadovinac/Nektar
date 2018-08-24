@@ -262,12 +262,8 @@ void ProcessCrossField::Process(po::variables_map &vm)
         NekDouble oldPsi, newPsi;
         for (int i = 0; i <= ncquads; ++i)
         {
-            cquad[0] =
-                eta[0] +
-                dist * cos(2.0 * M_PI * NekDouble(i) / NekDouble(ncquads));
-            cquad[1] =
-                eta[1] +
-                dist * sin(2.0 * M_PI * NekDouble(i) / NekDouble(ncquads));
+            cquad[0] = eta[0] + dist * cos(2.0 * M_PI * i / ncquads);
+            cquad[1] = eta[1] + dist * sin(2.0 * M_PI * i / ncquads);
 
             newPsi = atan2(expansion->StdPhysEvaluate(
                                cquad, m_f->m_exp[1]->GetPhys() + offset),
