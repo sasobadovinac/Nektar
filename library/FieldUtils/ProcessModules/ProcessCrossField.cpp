@@ -60,7 +60,7 @@ void ProcessCrossField::Process(po::variables_map &vm)
 {
     ofstream file;
     file.open(m_config["outfile"].as<string>());
-    
+
     int dim = m_f->m_graph->GetSpaceDimension();
 
     ASSERTL0(dim == 2, "Cross field post-processing only possible in 2D.")
@@ -263,24 +263,35 @@ void ProcessCrossField::Process(po::variables_map &vm)
         int ncquads    = 100;
         NekDouble dist = 1.0e-6;
         Array<OneD, NekDouble> cquad(dim);
-        int nbranches = 4;
-        NekDouble oldPsi, newPsi;
+        int nbranches  = 4;
+        NekDouble oldV = 0.0;
+
         for (int i = 0; i <= ncquads; ++i)
         {
             cquad[0] = eta[0] + dist * cos(2.0 * M_PI * i / ncquads);
             cquad[1] = eta[1] + dist * sin(2.0 * M_PI * i / ncquads);
 
-            newPsi = atan2(expansion->StdPhysEvaluate(
-                               cquad, m_f->m_exp[1]->GetPhys() + offset),
-                           expansion->StdPhysEvaluate(
-                               cquad, m_f->m_exp[0]->GetPhys() + offset));
-
-            if (i != 0)
+            // Condition: u < 0 and v changes sign, i.e. +-\pi
+            if (expansion->StdPhysEvaluate(cquad, m_f->m_exp[0]->GetPhys() +
+                                                      offset) < 0.0)
             {
-                nbranches += round((newPsi - oldPsi) / (2.0 * M_PI));
+                NekDouble v = expansion->StdPhysEvaluate(
+                    cquad, m_f->m_exp[1]->GetPhys() + offset);
+
+                if (oldV * v < 0.0)
+                {
+                    if (v < 0.0)
+                    {
+                        --nbranches;
+                    }
+                    else
+                    {
+                        ++nbranches;
+                    }
+                }
             }
 
-            oldPsi = newPsi;
+            oldV = v;
         }
 
         singularities[elmt] = make_pair(nbranches, eta);
@@ -290,7 +301,7 @@ void ProcessCrossField::Process(po::variables_map &vm)
 
         cout << "Singularity #" << singularities.size() << " with " << nbranches
              << " branches at (" << x[0] << ", " << x[1] << ")" << endl;
-        
+
         file << x[0] << "," << x[1] << endl;
     }
 
