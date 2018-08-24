@@ -114,7 +114,7 @@ void ProcessCrossField::Process(po::variables_map &vm)
                      back_inserter(intElmts));
 
     // Store singularities and their starting element
-    map<int, Array<OneD, NekDouble>> singularities;
+    map<int, pair<int, Array<OneD, NekDouble>>> singularities;
 
     // Find exact location of each singularity
     // We assume there is at most 1 singularity per element
@@ -251,13 +251,44 @@ void ProcessCrossField::Process(po::variables_map &vm)
                 ASSERTL0(false, "Unexpected shape type");
         }
 
-        singularities[elmt] = eta;
+        // Determine the number of branches
+        // In theory, we should be doing:
+        // \( nbranches = 4 - \int_\pi {\psi'(\theta)} \)
+        // In practice, we check for jumps of atan2(v, u) at +-\pi
+        int ncquads    = 100;
+        NekDouble dist = 1.0e-6;
+        Array<OneD, NekDouble> cquad(dim);
+        int nbranches = 4;
+        NekDouble oldPsi, newPsi;
+        for (int i = 0; i <= ncquads; ++i)
+        {
+            cquad[0] =
+                eta[0] +
+                dist * cos(2.0 * M_PI * NekDouble(i) / NekDouble(ncquads));
+            cquad[1] =
+                eta[1] +
+                dist * sin(2.0 * M_PI * NekDouble(i) / NekDouble(ncquads));
+
+            newPsi = atan2(expansion->StdPhysEvaluate(
+                               cquad, m_f->m_exp[1]->GetPhys() + offset),
+                           expansion->StdPhysEvaluate(
+                               cquad, m_f->m_exp[0]->GetPhys() + offset));
+
+            if (i != 0)
+            {
+                nbranches += round((newPsi - oldPsi) / (2.0 * M_PI));
+            }
+
+            oldPsi = newPsi;
+        }
+
+        singularities[elmt] = make_pair(nbranches, eta);
 
         Array<OneD, NekDouble> x(dim);
         expansion->GetCoord(eta, x);
 
-        cout << singularities.size() << "\t\t" << x[0] << "\t\t" << x[1]
-             << endl;
+        cout << "Singularity #" << singularities.size() << " with " << nbranches
+             << " branches at (" << x[0] << ", " << x[1] << ")" << endl;
     }
 }
 }
