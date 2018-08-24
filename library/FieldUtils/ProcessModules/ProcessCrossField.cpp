@@ -57,13 +57,14 @@ ProcessCrossField::~ProcessCrossField()
 
 void ProcessCrossField::Process(po::variables_map &vm)
 {
-    ASSERTL0(m_f->m_graph->GetSpaceDimension() == 2,
-             "Cross field post-processing only possible in 2D.")
+    int dim = m_f->m_graph->GetSpaceDimension();
+
+    ASSERTL0(dim == 2, "Cross field post-processing only possible in 2D.")
 
     // Find all elements containing u = 0 and v = 0
-    vector<set<int>> isoElmts(2);
+    vector<set<int>> isoElmts(dim);
 
-    for (int i = 0; i < 2; ++i)
+    for (int i = 0; i < dim; ++i)
     {
         Array<OneD, NekDouble> phys = m_f->m_exp[i]->GetPhys();
 
@@ -87,10 +88,9 @@ void ProcessCrossField::Process(po::variables_map &vm)
                 if (minV > 0.0 || maxV < 0.0)
                 {
                     // Is it possible to do aggregate initialisation?
-                    Array<OneD, NekDouble> lcoords(3);
+                    Array<OneD, NekDouble> lcoords(dim);
                     lcoords[0] = 0.0;
                     lcoords[1] = 1.0;
-                    lcoords[2] = 0.0;
 
                     NekDouble colVal = expansion->StdPhysEvaluate(
                         lcoords, m_f->m_exp[i]->GetPhys() + offset);
@@ -135,7 +135,7 @@ void ProcessCrossField::Process(po::variables_map &vm)
         // Find nearest quadrature point to u = v = 0
         Array<OneD, NekDouble> costFun(npoints, 0.0);
         Array<OneD, NekDouble> tmp(npoints);
-        for (int i = 0; i < 2; ++i)
+        for (int i = 0; i < dim; ++i)
         {
             Vmath::Vabs(npoints, m_f->m_exp[i]->GetPhys() + offset, 1, tmp, 1);
             Vmath::Vadd(npoints, costFun, 1, tmp, 1, costFun, 1);
@@ -144,51 +144,53 @@ void ProcessCrossField::Process(po::variables_map &vm)
         auto point = min_element(costFun.begin(), costFun.end());
 
         Array<OneD, Array<OneD, NekDouble>> quadEta(2);
-        for (int i = 0; i < 2; ++i)
+        for (int i = 0; i < dim; ++i)
         {
             quadEta[i] = Array<OneD, NekDouble>(npoints);
         }
         expansion->StdExpansion::GetCoords(quadEta[0], quadEta[1]);
 
         // Starting point for Newton's method
-        Array<OneD, NekDouble> eta(2, 0.0);
-        eta[0] = quadEta[0][point - costFun.begin()];
-        eta[1] = quadEta[1][point - costFun.begin()];
+        Array<OneD, NekDouble> eta(dim, 0.0);
+        for (int i = 0; i < dim; ++i)
+        {
+            eta[i] = quadEta[i][point - costFun.begin()];
+        }
         */
 
         // Starting point for Newton's method
-        Array<OneD, NekDouble> eta(2, expansion->GetGeom()->GetShapeType() ==
-                                              LibUtilities::eTriangle
-                                          ? -1.0 / 3.0
-                                          : 0.0);
+        Array<OneD, NekDouble> eta(dim, expansion->GetGeom()->GetShapeType() ==
+                                                LibUtilities::eTriangle
+                                            ? -1.0 / 3.0
+                                            : 0.0);
 
         // Variables for iterations
-        Array<OneD, NekDouble> u(2);
-        Array<OneD, NekDouble> u_eta(4);
-        Array<OneD, NekDouble> delta(2, numeric_limits<NekDouble>::max());
+        Array<OneD, NekDouble> u(dim);
+        Array<OneD, NekDouble> u_eta(pow(dim, 2));
+        Array<OneD, NekDouble> delta(dim, numeric_limits<NekDouble>::max());
 
         // Hold u_eta at quadrature points
-        Array<OneD, Array<OneD, NekDouble>> deriv(4);
-        for (int i = 0; i < 4; ++i)
+        Array<OneD, Array<OneD, NekDouble>> deriv(pow(dim, 2));
+        for (int i = 0; i < pow(dim, 2); ++i)
         {
             deriv[i] = Array<OneD, NekDouble>(npoints);
         }
-        for (int i = 0; i < 2; ++i)
+        for (int i = 0; i < dim; ++i)
         {
             expansion->StdPhysDeriv(m_f->m_exp[i]->GetPhys() + offset,
-                                    deriv[2 * i], deriv[2 * i + 1]);
+                                    deriv[dim * i], deriv[dim * i + 1]);
         }
 
         // Newton's method to find point where u = v = 0
         while (sqrt(pow(delta[0], 2) + pow(delta[1], 2)) > 1.0e-9)
         {
             // Evaluate u and u_eta at current point
-            for (int i = 0; i < 2; ++i)
+            for (int i = 0; i < dim; ++i)
             {
                 u[i] = expansion->StdPhysEvaluate(
                     eta, m_f->m_exp[i]->GetPhys() + offset);
             }
-            for (int i = 0; i < 4; ++i)
+            for (int i = 0; i < pow(dim, 2); ++i)
             {
                 u_eta[i] = expansion->StdPhysEvaluate(eta, deriv[i]);
             }
@@ -203,7 +205,7 @@ void ProcessCrossField::Process(po::variables_map &vm)
             // 2 -> v_eta0
             // 3 -> v_eta1
 
-            // Invert the jacobian
+            // Invert the 2x2 jacobian
             iter_swap(u_eta.begin() + 0, u_eta.begin() + 3);
             Vmath::Neg(2, &u_eta[1], 1);
             Vmath::Smul(4, 1.0 / (u_eta[0] * u_eta[3] - u_eta[1] * u_eta[2]),
@@ -224,27 +226,22 @@ void ProcessCrossField::Process(po::variables_map &vm)
             eta[1] -= delta[1];
         }
 
-        NekDouble tol = 0.0;
-
         // Check if point is still inside the element
         // If not, we dismiss it;
         // it's most likely been detected by adjacent element
         switch (expansion->GetGeom()->GetShapeType())
         {
             case LibUtilities::eTriangle:
-                if (!(eta[0] >= -(1.0 + tol) && eta[1] >= -(1.0 + tol) &&
-                      eta[0] + eta[1] <= tol))
+                if (!(eta[0] >= -1.0 && eta[1] >= -1.0 &&
+                      eta[0] + eta[1] <= 0.0))
                 {
-                    // cout << "Outside!\t\t" << eta[0] << "\t\t" << eta[1] <<
-                    // endl;
-                    // cout << "Element #" << elmt << endl;
                     continue;
                 }
                 break;
 
             case LibUtilities::eQuadrilateral:
-                if (!(eta[0] >= -(1.0 + tol) && eta[1] >= -(1.0 + tol) &&
-                      eta[0] <= (1.0 + tol) && eta[1] <= (1.0 + tol)))
+                if (!(eta[0] >= -1.0 && eta[1] >= -1.0 && eta[0] <= 1.0 &&
+                      eta[1] <= 1.0))
                 {
                     continue;
                 }
@@ -254,7 +251,7 @@ void ProcessCrossField::Process(po::variables_map &vm)
                 ASSERTL0(false, "Unexpected shape type");
         }
 
-        Array<OneD, NekDouble> x(2);
+        Array<OneD, NekDouble> x(dim);
         expansion->GetCoord(eta, x);
 
         cout << ++cnt << "\t\t" << x[0] << "\t\t" << x[1] << endl;
