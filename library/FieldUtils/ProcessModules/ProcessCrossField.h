@@ -74,6 +74,10 @@ public:
     {
         return eModifyExp;
     }
+
+private:
+    // Coefficients for the Adams-Bashforth method
+    static NekDouble AdamsBashforth_coeffs[4][4];
 };
 }
 }

@@ -47,6 +47,12 @@ ModuleKey ProcessCrossField::className =
         ModuleKey(eProcessModule, "crossfield"), ProcessCrossField::create,
         "Post-processes cross field simulation results.");
 
+NekDouble ProcessCrossField::AdamsBashforth_coeffs[4][4] = {
+    {1.0, 0.0, 0.0, 0.0},
+    {3.0 / 2.0, -1.0 / 2.0, 0.0, 0.0},
+    {23.0 / 12.0, -4.0 / 3.0, 5.0 / 12.0, 0.0},
+    {55.0 / 24.0, -59.0 / 24.0, 37.0 / 24.0, -3.0 / 8.0}};
+
 ProcessCrossField::ProcessCrossField(FieldSharedPtr f) : ProcessModule(f)
 {
     m_config["outfile"] = ConfigOption(false, "", "Output filename.");
@@ -271,13 +277,14 @@ void ProcessCrossField::Process(po::variables_map &vm)
             cquad[0] = eta[0] + dist * cos(2.0 * M_PI * i / ncquads);
             cquad[1] = eta[1] + dist * sin(2.0 * M_PI * i / ncquads);
 
-            // Condition: u < 0 and v changes sign, i.e. +-\pi
-            if (expansion->StdPhysEvaluate(cquad, m_f->m_exp[0]->GetPhys() +
-                                                      offset) < 0.0)
-            {
-                NekDouble v = expansion->StdPhysEvaluate(
-                    cquad, m_f->m_exp[1]->GetPhys() + offset);
+            NekDouble u = expansion->StdPhysEvaluate(
+                cquad, m_f->m_exp[0]->GetPhys() + offset);
+            NekDouble v = expansion->StdPhysEvaluate(
+                cquad, m_f->m_exp[1]->GetPhys() + offset);
 
+            // Condition: u < 0 and v changes sign, i.e. +-\pi
+            if (u < 0.0)
+            {
                 if (oldV * v < 0.0)
                 {
                     if (v < 0.0)
@@ -319,40 +326,112 @@ void ProcessCrossField::Process(po::variables_map &vm)
         Array<OneD, NekDouble> x(dim);
         m_f->m_exp[0]->GetExp(elmt)->GetCoord(eta, x);
 
-        NekDouble angle = 0.0;
+        vector<vector<pair<Array<OneD, NekDouble>, NekDouble>>> fullHist;
 
         for (int i = 0; i < nbranches; ++i)
         {
-            angle += 2.0 * M_PI / nbranches;
-            angle = fmod(angle, 2.0 * M_PI);
+            vector<pair<Array<OneD, NekDouble>, NekDouble>> history;
+
+            NekDouble dir;
+            if (i == 0)
+            {
+                dir = 0.0;
+            }
+            else
+            {
+                dir = fullHist.back().front().second + 2.0 * M_PI / nbranches;
+            }
 
             NekDouble delta;
             Array<OneD, NekDouble> point(dim);
             Array<OneD, NekDouble> lpoint(dim);
+            int rot;
+            bool uneg, vneg;
 
             do
             {
-                point[0] = x[0] + dist * cos(angle);
-                point[1] = x[1] + dist * sin(angle);
+                point[0] = x[0] + dist * cos(dir);
+                point[1] = x[1] + dist * sin(dir);
 
                 int id     = m_f->m_exp[0]->GetExpIndex(point, lpoint);
                 int offset = m_f->m_exp[0]->GetPhys_Offset(id);
 
-                NekDouble psi =
-                    atan2(m_f->m_exp[0]->GetExp(id)->StdPhysEvaluate(
-                              lpoint, m_f->m_exp[1]->GetPhys() + offset),
-                          m_f->m_exp[0]->GetExp(id)->StdPhysEvaluate(
-                              lpoint, m_f->m_exp[0]->GetPhys() + offset)) /
-                    4.0;
+                NekDouble u = m_f->m_exp[0]->GetExp(id)->StdPhysEvaluate(
+                    lpoint, m_f->m_exp[0]->GetPhys() + offset);
+                NekDouble v = m_f->m_exp[0]->GetExp(id)->StdPhysEvaluate(
+                    lpoint, m_f->m_exp[1]->GetPhys() + offset);
+
+                NekDouble psi = atan2(v, u) / 4.0;
 
                 delta =
-                    angle -
-                    (psi + round((angle - psi) / (M_PI / 2.0)) * (M_PI / 2.0));
-                angle -= delta;
+                    dir -
+                    (psi + round((dir - psi) / (M_PI / 2.0)) * (M_PI / 2.0));
+                dir -= delta;
+
+                rot  = round((dir - psi) / (M_PI / 2.0));
+                uneg = u < 0.0;
+                vneg = v < 0.0;
 
             } while (fabs(delta) < 1.0e-9);
 
             file << point[0] << "," << point[1] << endl;
+
+            history.push_back(make_pair(x, dir));     // singularity itself
+            history.push_back(make_pair(point, dir)); // first point
+
+            while (true)
+            {
+                int numIte = history.size();
+                int order  = min(numIte, 4);
+
+                Array<OneD, NekDouble> newPoint(2);
+                newPoint[0] = history.back().first[0];
+                newPoint[1] = history.back().first[1];
+
+                for (int j = 0; j < order; ++j)
+                {
+                    newPoint[0] += dist * AdamsBashforth_coeffs[order - 1][j] *
+                                   cos(history[history.size() - 1 - j].second);
+                    newPoint[1] += dist * AdamsBashforth_coeffs[order - 1][j] *
+                                   sin(history[history.size() - 1 - j].second);
+                }
+
+                file << newPoint[0] << "," << newPoint[1] << endl;
+
+                int id = m_f->m_exp[0]->GetExpIndex(newPoint, lpoint);
+
+                if (id == -1)
+                {
+                    break;
+                }
+
+                int offset = m_f->m_exp[0]->GetPhys_Offset(id);
+
+                NekDouble u = m_f->m_exp[0]->GetExp(id)->StdPhysEvaluate(
+                    lpoint, m_f->m_exp[0]->GetPhys() + offset);
+                NekDouble v = m_f->m_exp[0]->GetExp(id)->StdPhysEvaluate(
+                    lpoint, m_f->m_exp[1]->GetPhys() + offset);
+
+                if (uneg)
+                {
+                    if (vneg && v > 0.0)
+                    {
+                        --rot;
+                    }
+                    else if (!vneg && v < 0.0)
+                    {
+                        ++rot;
+                    }
+                }
+
+                uneg = u < 0.0;
+                vneg = v < 0.0;
+
+                history.push_back(
+                    make_pair(newPoint, atan2(v, u) / 4.0 + rot * M_PI / 2.0));
+            }
+
+            fullHist.push_back(history);
         }
     }
 
