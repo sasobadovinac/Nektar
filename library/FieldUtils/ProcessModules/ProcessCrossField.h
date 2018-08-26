@@ -76,8 +76,21 @@ public:
     }
 
 private:
+    // Find all singularities and their number of branches
+    vector<pair<Array<OneD, NekDouble>, int>> FindAllSingularities();
+    // Find all elements on isocontour lines
+    vector<set<int>> FindIsocontourElements();
+    // Find singularity if any
+    Array<OneD, NekDouble> FindSingularityInElmt(int id);
+    // Calculate the number of branches around the singularity
+    int CalculateNumberOfBranches(int id, Array<OneD, NekDouble> eta);
+
     // Coefficients for the Adams-Bashforth method
     static NekDouble AdamsBashforth_coeffs[4][4];
+    // Space dimension
+    int m_dim;
+    // Output CSV file for streamlines
+    ofstream m_csvfile;
 };
 }
 }
