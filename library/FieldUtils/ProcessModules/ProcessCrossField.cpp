@@ -55,7 +55,8 @@ NekDouble ProcessCrossField::AdamsBashforth_coeffs[4][4] = {
 
 ProcessCrossField::ProcessCrossField(FieldSharedPtr f) : ProcessModule(f)
 {
-    m_config["outfile"] = ConfigOption(false, "", "Output filename.");
+    m_config["outcsv"] = ConfigOption(false, "", "Output filename.");
+    m_config["step"]   = ConfigOption(false, "", "Streamline step size.");
 }
 
 ProcessCrossField::~ProcessCrossField()
@@ -64,8 +65,10 @@ ProcessCrossField::~ProcessCrossField()
 
 void ProcessCrossField::Process(po::variables_map &vm)
 {
+    ASSERTL0(m_config["outcsv"].m_beenSet, "An output CSV file must be set.")
+
     ofstream file;
-    file.open(m_config["outfile"].as<string>());
+    file.open(m_config["outcsv"].as<string>());
 
     int dim = m_f->m_graph->GetSpaceDimension();
 
@@ -312,12 +315,12 @@ void ProcessCrossField::Process(po::variables_map &vm)
         file << x[0] << "," << x[1] << endl;
     }
 
+    NekDouble step =
+        m_config["step"].m_beenSet ? m_config["step"].as<NekDouble>() : 1.0e-2;
+
     for (auto &s : singularities)
     {
         int dim = m_f->m_graph->GetSpaceDimension();
-
-        // I can make dist the first stage of RK based on |U|=1
-        NekDouble dist = 1.0e-2;
 
         int elmt      = s.first;
         int nbranches = s.second.first;
@@ -350,8 +353,8 @@ void ProcessCrossField::Process(po::variables_map &vm)
 
             do
             {
-                point[0] = x[0] + dist * cos(dir);
-                point[1] = x[1] + dist * sin(dir);
+                point[0] = x[0] + step * cos(dir);
+                point[1] = x[1] + step * sin(dir);
 
                 int id     = m_f->m_exp[0]->GetExpIndex(point, lpoint);
                 int offset = m_f->m_exp[0]->GetPhys_Offset(id);
@@ -390,9 +393,9 @@ void ProcessCrossField::Process(po::variables_map &vm)
 
                 for (int j = 0; j < order; ++j)
                 {
-                    newPoint[0] += dist * AdamsBashforth_coeffs[order - 1][j] *
+                    newPoint[0] += step * AdamsBashforth_coeffs[order - 1][j] *
                                    cos(history[history.size() - 1 - j].second);
-                    newPoint[1] += dist * AdamsBashforth_coeffs[order - 1][j] *
+                    newPoint[1] += step * AdamsBashforth_coeffs[order - 1][j] *
                                    sin(history[history.size() - 1 - j].second);
                 }
 
