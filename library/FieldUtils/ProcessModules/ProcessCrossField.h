@@ -99,7 +99,7 @@ public:
     // Default constructor
     Streamline(FieldSharedPtr f, Array<OneD, NekDouble> singularity,
                NekDouble step, ofstream &csvfile)
-        : m_dim(2), m_f(f), m_step(step), m_csvfile(csvfile)
+        : m_dim(2), m_f(f), m_csvfile(csvfile), m_step(step), m_locked(false)
     {
         AddPoint(singularity);
     }
@@ -111,6 +111,16 @@ public:
         m_angles.push_back(angle);
 
         m_csvfile << point[0] << "," << point[1] << endl;
+    }
+
+    const Array<OneD, NekDouble> &GetLastPoint()
+    {
+        return m_points.back();
+    }
+
+    const NekDouble &GetLastAngle()
+    {
+        return m_angles.back();
     }
 
     // Find first point of nearest branch based on angle
@@ -136,6 +146,8 @@ private:
     int m_rot;
     // Negative values for u and v of last point
     pair<bool, bool> m_neg;
+    // Reached out of domain
+    bool m_locked;
 
     // Coefficients for the Adams-Bashforth method
     static NekDouble AdamsBashforth_coeffs[4][4];

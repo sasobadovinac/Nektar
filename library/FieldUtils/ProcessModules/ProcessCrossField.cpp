@@ -71,6 +71,8 @@ void ProcessCrossField::Process(po::variables_map &vm)
     m_step =
         m_config["step"].m_beenSet ? m_config["step"].as<NekDouble>() : 1.0e-2;
 
+    vector<Streamline> allSl;
+
     for (auto &s : singularities)
     {
         Array<OneD, NekDouble> x = s.first;
@@ -82,15 +84,21 @@ void ProcessCrossField::Process(po::variables_map &vm)
         {
             Streamline sl = Streamline(m_f, x, m_step, m_csvfile);
             sl.Initialise(dir);
-
-            bool cont = true;
-
-            while (cont)
-            {
-                cont = cont && sl.Advance();
-            }
+            allSl.push_back(sl);
 
             dir += 2.0 * M_PI / nbranches;
+        }
+    }
+
+    bool allLocked = false;
+
+    while (!allLocked)
+            {
+        allLocked = true;
+
+        for (int i = 0; i < allSl.size(); ++i)
+        {
+            allLocked = allLocked && !allSl[i].Advance();
         }
     }
 
@@ -423,6 +431,11 @@ void Streamline::Initialise(NekDouble &angle)
 
 bool Streamline::Advance()
 {
+    if (m_locked)
+    {
+        return false;
+    }
+
     int numPoints = m_points.size();
     int order     = min(numPoints, 4);
 
@@ -445,6 +458,7 @@ bool Streamline::Advance()
     if (id == -1)
     {
         AddPoint(point);
+        m_locked = true;
         return false;
     }
 
