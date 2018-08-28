@@ -123,11 +123,19 @@ public:
         return m_angles.back();
     }
 
+    bool IsLocked()
+    {
+        return m_locked;
+    }
+
     // Find first point of nearest branch based on angle
     void Initialise(NekDouble &angle);
 
     // Make one step
     bool Advance();
+
+    // Check if it should be merged with another streamline
+    int CheckMerge(Streamline sl);
 
 private:
     // Dimensions

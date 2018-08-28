@@ -93,12 +93,46 @@ void ProcessCrossField::Process(po::variables_map &vm)
     bool allLocked = false;
 
     while (!allLocked)
-            {
+    {
         allLocked = true;
 
         for (int i = 0; i < allSl.size(); ++i)
         {
             allLocked = allLocked && !allSl[i].Advance();
+        }
+
+        for (int i = 0; i < allSl.size(); ++i)
+        {
+            for (int j = 0; j < allSl.size(); ++j)
+            {
+                if (i == j || allSl[i].IsLocked() || allSl[j].IsLocked())
+                {
+                    continue;
+                }
+
+                int n = allSl[i].CheckMerge(allSl[j]);
+
+                if (n == -1)
+                {
+                    continue;
+                }
+
+                int n2 = allSl[j].CheckMerge(allSl[i]);
+                if (n2 != -1)
+                {
+                    n = min(n, n2);
+                }
+
+                for (int k = 0; k < n; ++k)
+                {
+                    // We assume we won't get out of the domain
+                    allSl[i].Advance();
+                    allSl[j].Advance();
+                }
+
+                // TODO: do the merge
+                // TODO: remove merged streamlines
+            }
         }
     }
 
@@ -488,6 +522,30 @@ bool Streamline::Advance()
     AddPoint(point, atan2(v, u) / 4.0 + m_rot * M_PI / 2.0);
 
     return true;
+}
+
+int Streamline::CheckMerge(Streamline sl)
+{
+    const Array<OneD, NekDouble> point = sl.GetLastPoint();
+    const NekDouble angle = sl.GetLastAngle();
+
+    int i;
+
+    for (i = 0; i < m_points.size(); ++i)
+    {
+        // Check distance
+        if (sqrt(pow(m_points[i][0] - point[0], 2) +
+                 pow(m_points[i][1] - point[1], 2)) < m_step)
+        {
+            // Check opposite directions
+            if (int(round((m_angles[i] - angle) / (M_PI / 2.0))) % 4 == 2)
+            {
+                break;
+            }
+        }
+    }
+
+    return i == m_points.size() ? -1 : i;
 }
 }
 }
