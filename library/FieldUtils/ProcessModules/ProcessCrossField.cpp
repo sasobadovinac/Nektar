@@ -47,12 +47,6 @@ ModuleKey ProcessCrossField::className =
         ModuleKey(eProcessModule, "crossfield"), ProcessCrossField::create,
         "Post-processes cross field simulation results.");
 
-NekDouble ProcessCrossField::AdamsBashforth_coeffs[4][4] = {
-    {1.0, 0.0, 0.0, 0.0},
-    {3.0 / 2.0, -1.0 / 2.0, 0.0, 0.0},
-    {23.0 / 12.0, -4.0 / 3.0, 5.0 / 12.0, 0.0},
-    {55.0 / 24.0, -59.0 / 24.0, 37.0 / 24.0, -3.0 / 8.0}};
-
 ProcessCrossField::ProcessCrossField(FieldSharedPtr f) : ProcessModule(f)
 {
     m_config["outcsv"] = ConfigOption(false, "", "Output filename.");
@@ -74,7 +68,7 @@ void ProcessCrossField::Process(po::variables_map &vm)
     vector<pair<Array<OneD, NekDouble>, int>> singularities =
         FindAllSingularities();
 
-    NekDouble step =
+    m_step =
         m_config["step"].m_beenSet ? m_config["step"].as<NekDouble>() : 1.0e-2;
 
     for (auto &s : singularities)
@@ -82,112 +76,21 @@ void ProcessCrossField::Process(po::variables_map &vm)
         Array<OneD, NekDouble> x = s.first;
         int nbranches = s.second;
 
-        vector<vector<pair<Array<OneD, NekDouble>, NekDouble>>> fullHist;
+        NekDouble dir = 0.0;
 
         for (int i = 0; i < nbranches; ++i)
         {
-            vector<pair<Array<OneD, NekDouble>, NekDouble>> history;
+            Streamline sl = Streamline(m_f, x, m_step, m_csvfile);
+            sl.Initialise(dir);
 
-            NekDouble dir;
-            if (i == 0)
+            bool cont = true;
+
+            while (cont)
             {
-                dir = 0.0;
-            }
-            else
-            {
-                dir = fullHist.back().front().second + 2.0 * M_PI / nbranches;
+                cont = cont && sl.Advance();
             }
 
-            NekDouble delta;
-            Array<OneD, NekDouble> point(m_dim);
-            Array<OneD, NekDouble> lpoint(m_dim);
-            int rot;
-            bool uneg, vneg;
-
-            do
-            {
-                point[0] = x[0] + step * cos(dir);
-                point[1] = x[1] + step * sin(dir);
-
-                int id     = m_f->m_exp[0]->GetExpIndex(point, lpoint);
-                int offset = m_f->m_exp[0]->GetPhys_Offset(id);
-
-                NekDouble u = m_f->m_exp[0]->GetExp(id)->StdPhysEvaluate(
-                    lpoint, m_f->m_exp[0]->GetPhys() + offset);
-                NekDouble v = m_f->m_exp[0]->GetExp(id)->StdPhysEvaluate(
-                    lpoint, m_f->m_exp[1]->GetPhys() + offset);
-
-                NekDouble psi = atan2(v, u) / 4.0;
-
-                delta =
-                    dir -
-                    (psi + round((dir - psi) / (M_PI / 2.0)) * (M_PI / 2.0));
-                dir -= delta;
-
-                rot  = round((dir - psi) / (M_PI / 2.0));
-                uneg = u < 0.0;
-                vneg = v < 0.0;
-
-            } while (fabs(delta) < 1.0e-9);
-
-            m_csvfile << point[0] << "," << point[1] << endl;
-
-            history.push_back(make_pair(x, dir));     // singularity itself
-            history.push_back(make_pair(point, dir)); // first point
-
-            while (true)
-            {
-                int numIte = history.size();
-                int order  = min(numIte, 4);
-
-                Array<OneD, NekDouble> newPoint(2);
-                newPoint[0] = history.back().first[0];
-                newPoint[1] = history.back().first[1];
-
-                for (int j = 0; j < order; ++j)
-                {
-                    newPoint[0] += step * AdamsBashforth_coeffs[order - 1][j] *
-                                   cos(history[history.size() - 1 - j].second);
-                    newPoint[1] += step * AdamsBashforth_coeffs[order - 1][j] *
-                                   sin(history[history.size() - 1 - j].second);
-                }
-
-                m_csvfile << newPoint[0] << "," << newPoint[1] << endl;
-
-                int id = m_f->m_exp[0]->GetExpIndex(newPoint, lpoint);
-
-                if (id == -1)
-                {
-                    break;
-                }
-
-                int offset = m_f->m_exp[0]->GetPhys_Offset(id);
-
-                NekDouble u = m_f->m_exp[0]->GetExp(id)->StdPhysEvaluate(
-                    lpoint, m_f->m_exp[0]->GetPhys() + offset);
-                NekDouble v = m_f->m_exp[0]->GetExp(id)->StdPhysEvaluate(
-                    lpoint, m_f->m_exp[1]->GetPhys() + offset);
-
-                if (uneg)
-                {
-                    if (vneg && v > 0.0)
-                    {
-                        --rot;
-                    }
-                    else if (!vneg && v < 0.0)
-                    {
-                        ++rot;
-                    }
-                }
-
-                uneg = u < 0.0;
-                vneg = v < 0.0;
-
-                history.push_back(
-                    make_pair(newPoint, atan2(v, u) / 4.0 + rot * M_PI / 2.0));
-            }
-
-            fullHist.push_back(history);
+            dir += 2.0 * M_PI / nbranches;
         }
     }
 
@@ -468,6 +371,109 @@ int ProcessCrossField::CalculateNumberOfBranches(int id,
     }
 
     return nbranches;
+}
+
+NekDouble Streamline::AdamsBashforth_coeffs[4][4] = {
+    {1.0, 0.0, 0.0, 0.0},
+    {3.0 / 2.0, -1.0 / 2.0, 0.0, 0.0},
+    {23.0 / 12.0, -4.0 / 3.0, 5.0 / 12.0, 0.0},
+    {55.0 / 24.0, -59.0 / 24.0, 37.0 / 24.0, -3.0 / 8.0}};
+
+void Streamline::Initialise(NekDouble &angle)
+{
+    ASSERTL0(m_points.size() == 1, "Streamline cannot be intialised twice.")
+
+    NekDouble delta;
+    Array<OneD, NekDouble> point(m_dim);
+    Array<OneD, NekDouble> lpoint(m_dim);
+    NekDouble u, v;
+
+    do
+    {
+        // Maybe use a smaller value than m_step?
+        point[0] = m_points[0][0] + m_step * cos(angle);
+        point[1] = m_points[0][1] + m_step * sin(angle);
+
+        int id     = m_f->m_exp[0]->GetExpIndex(point, lpoint);
+        int offset = m_f->m_exp[0]->GetPhys_Offset(id);
+
+        u = m_f->m_exp[0]->GetExp(id)->StdPhysEvaluate(
+            lpoint, m_f->m_exp[0]->GetPhys() + offset);
+        v = m_f->m_exp[0]->GetExp(id)->StdPhysEvaluate(
+            lpoint, m_f->m_exp[1]->GetPhys() + offset);
+
+        NekDouble psi = atan2(v, u) / 4.0;
+
+        m_rot = round((angle - psi) / (M_PI / 2.0));
+
+        delta = angle - (psi + m_rot * (M_PI / 2.0));
+        angle -= delta;
+
+    } while (fabs(delta) < 1.0e-9);
+
+    // Over-write angle of singularity
+    m_angles.back() = angle;
+
+    // First point
+    AddPoint(point, angle);
+
+    m_neg.first  = u < 0.0;
+    m_neg.second = v < 0.0;
+}
+
+bool Streamline::Advance()
+{
+    int numPoints = m_points.size();
+    int order     = min(numPoints, 4);
+
+    Array<OneD, NekDouble> point(2);
+    point[0] = m_points.back()[0];
+    point[1] = m_points.back()[1];
+
+    for (int j = 0; j < order; ++j)
+    {
+        point[0] += m_step * AdamsBashforth_coeffs[order - 1][j] *
+                    cos(m_angles[numPoints - 1 - j]);
+        point[1] += m_step * AdamsBashforth_coeffs[order - 1][j] *
+                    sin(m_angles[numPoints - 1 - j]);
+    }
+
+    Array<OneD, NekDouble> lpoint(2);
+    int id = m_f->m_exp[0]->GetExpIndex(point, lpoint);
+
+    // We got out of the domain
+    if (id == -1)
+    {
+        AddPoint(point);
+        return false;
+    }
+
+    // We are still inside the domain and can continue
+    int offset = m_f->m_exp[0]->GetPhys_Offset(id);
+
+    NekDouble u = m_f->m_exp[0]->GetExp(id)->StdPhysEvaluate(
+        lpoint, m_f->m_exp[0]->GetPhys() + offset);
+    NekDouble v = m_f->m_exp[0]->GetExp(id)->StdPhysEvaluate(
+        lpoint, m_f->m_exp[1]->GetPhys() + offset);
+
+    if (m_neg.first)
+    {
+        if (m_neg.second && v > 0.0)
+        {
+            --m_rot;
+        }
+        else if (!m_neg.second && v < 0.0)
+        {
+            ++m_rot;
+        }
+    }
+
+    m_neg.first  = u < 0.0;
+    m_neg.second = v < 0.0;
+
+    AddPoint(point, atan2(v, u) / 4.0 + m_rot * M_PI / 2.0);
+
+    return true;
 }
 }
 }

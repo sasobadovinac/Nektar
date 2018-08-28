@@ -85,12 +85,60 @@ private:
     // Calculate the number of branches around the singularity
     int CalculateNumberOfBranches(int id, Array<OneD, NekDouble> eta);
 
-    // Coefficients for the Adams-Bashforth method
-    static NekDouble AdamsBashforth_coeffs[4][4];
     // Space dimension
     int m_dim;
     // Output CSV file for streamlines
     ofstream m_csvfile;
+    // Step size for streamline marching
+    NekDouble m_step;
+};
+
+class Streamline
+{
+public:
+    // Default constructor
+    Streamline(FieldSharedPtr f, Array<OneD, NekDouble> singularity,
+               NekDouble step, ofstream &csvfile)
+        : m_dim(2), m_f(f), m_step(step), m_csvfile(csvfile)
+    {
+        AddPoint(singularity);
+    }
+
+    // Add point to history
+    void AddPoint(Array<OneD, NekDouble> point, NekDouble angle = 0.0)
+    {
+        m_points.push_back(point);
+        m_angles.push_back(angle);
+
+        m_csvfile << point[0] << "," << point[1] << endl;
+    }
+
+    // Find first point of nearest branch based on angle
+    void Initialise(NekDouble &angle);
+
+    // Make one step
+    bool Advance();
+
+private:
+    // Dimensions
+    int m_dim;
+    // Field object
+    FieldSharedPtr m_f;
+    // Output CSV file for streamlines
+    ofstream &m_csvfile;
+    // History of points
+    vector<Array<OneD, NekDouble>> m_points;
+    // History of directions
+    vector<NekDouble> m_angles;
+    // Step size
+    NekDouble m_step;
+    // Number of pi/2 adjustment rotations of last point
+    int m_rot;
+    // Negative values for u and v of last point
+    pair<bool, bool> m_neg;
+
+    // Coefficients for the Adams-Bashforth method
+    static NekDouble AdamsBashforth_coeffs[4][4];
 };
 }
 }
