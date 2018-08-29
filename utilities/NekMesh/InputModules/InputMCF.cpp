@@ -35,6 +35,7 @@
 
 #include <LibUtilities/BasicUtils/SessionReader.h>
 #include <NekMeshUtils/CADSystem/CADCurve.h>
+#include <NekMeshUtils/CADSystem/CADVert.h>
 
 #include <boost/thread.hpp>
 
@@ -364,7 +365,7 @@ void InputMCF::Process()
     module->Process();
 
     // Export vertices for cross field processing
-    if (m_config["vertices"].m_beenSet)
+    if (m_config["vertices"].beenSet)
     {
         ofstream outfile;
         outfile.open(m_config["vertices"].as<string>());
