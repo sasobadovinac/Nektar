@@ -451,9 +451,9 @@ void Streamline::Initialise(NekDouble &angle)
 
     do
     {
-        // Maybe use a smaller value than m_step?
-        point[0] = m_points[0][0] + m_step * cos(angle);
-        point[1] = m_points[0][1] + m_step * sin(angle);
+        // 1000 arbitrarily chosen; must just be a small step
+        point[0] = m_points[0][0] + m_step * cos(angle) / 1000;
+        point[1] = m_points[0][1] + m_step * sin(angle) / 1000;
 
         int id     = m_f->m_exp[0]->GetExpIndex(point, lpoint);
         int offset = m_f->m_exp[0]->GetPhys_Offset(id);
@@ -474,9 +474,6 @@ void Streamline::Initialise(NekDouble &angle)
 
     // Over-write angle of singularity
     m_angles.back() = angle;
-
-    // First point
-    AddPoint(point, angle);
 
     m_neg.first  = u < 0.0;
     m_neg.second = v < 0.0;
