@@ -59,6 +59,8 @@ ModuleKey InputMCF::className = GetModuleFactory().RegisterCreatorFunction(
  */
 InputMCF::InputMCF(MeshSharedPtr m) : InputModule(m)
 {
+    m_config["vertices"] =
+        ConfigOption(false, "", "Output filename to export vertices.");
 }
 
 InputMCF::~InputMCF()
@@ -360,6 +362,21 @@ void InputMCF::Process()
 
     module->SetDefaults();
     module->Process();
+
+    // Export vertices for cross field processing
+    if (m_config["vertices"].m_beenSet)
+    {
+        ofstream outfile;
+        outfile.open(m_config["vertices"].as<string>());
+
+        for (auto &vert : m_mesh->m_cad->GetVerts())
+        {
+            outfile << vert.second->GetLoc()[0] << ","
+                    << vert.second->GetLoc()[0] << endl;
+        }
+
+        outfile.close();
+    }
 
     if (!m_cfiMesh)
     {
