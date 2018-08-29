@@ -98,10 +98,20 @@ class Streamline
 public:
     // Default constructor
     Streamline(FieldSharedPtr f, Array<OneD, NekDouble> singularity,
-               NekDouble step, ofstream &csvfile)
-        : m_dim(2), m_f(f), m_csvfile(csvfile), m_step(step), m_locked(false)
+               NekDouble step)
+        : m_dim(2), m_f(f), m_step(step), m_locked(false)
     {
         AddPoint(singularity);
+    }
+
+    // Merged streamline constructor
+    Streamline(vector<Array<OneD, NekDouble>> points)
+        : m_dim(2), m_step(0.0), m_locked(true)
+    {
+        for (auto &it : points)
+        {
+            AddPoint(it);
+        }
     }
 
     // Add point to history
@@ -109,13 +119,21 @@ public:
     {
         m_points.push_back(point);
         m_angles.push_back(angle);
+    }
 
-        m_csvfile << point[0] << "," << point[1] << endl;
+    const Array<OneD, NekDouble> &GetFirstPoint()
+    {
+        return m_points.front();
     }
 
     const Array<OneD, NekDouble> &GetLastPoint()
     {
         return m_points.back();
+    }
+
+    const vector<Array<OneD, NekDouble>> &GetAllPoints()
+    {
+        return m_points;
     }
 
     const NekDouble &GetLastAngle()
@@ -137,13 +155,17 @@ public:
     // Check if it should be merged with another streamline
     int CheckMerge(Streamline sl);
 
+    // Merge the 2 streamlines and return the new one
+    Streamline MergeWith(Streamline sl);
+
+    // Write out all points to a CSV file for use in NekMesh
+    void WritePoints(ofstream &csvfile);
+
 private:
     // Dimensions
     int m_dim;
     // Field object
     FieldSharedPtr m_f;
-    // Output CSV file for streamlines
-    ofstream &m_csvfile;
     // History of points
     vector<Array<OneD, NekDouble>> m_points;
     // History of directions

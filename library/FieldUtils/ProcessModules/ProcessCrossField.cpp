@@ -82,7 +82,7 @@ void ProcessCrossField::Process(po::variables_map &vm)
 
         for (int i = 0; i < nbranches; ++i)
         {
-            Streamline sl = Streamline(m_f, x, m_step, m_csvfile);
+            Streamline sl = Streamline(m_f, x, m_step);
             sl.Initialise(dir);
             allSl.push_back(sl);
 
@@ -96,17 +96,20 @@ void ProcessCrossField::Process(po::variables_map &vm)
     {
         allLocked = true;
 
-        for (int i = 0; i < allSl.size(); ++i)
+        for (auto &sl : allSl)
         {
-            allLocked = allLocked && !allSl[i].Advance();
+            allLocked = !sl.Advance() && allLocked;
         }
 
         for (int i = 0; i < allSl.size(); ++i)
         {
-            for (int j = 0; j < allSl.size(); ++j)
+            for (int j = 0; j < allSl.size();)
             {
-                if (i == j || allSl[i].IsLocked() || allSl[j].IsLocked())
+                if (i == j ||
+                    allSl[i].GetFirstPoint() == allSl[j].GetFirstPoint() ||
+                    allSl[i].IsLocked() || allSl[j].IsLocked())
                 {
+                    ++j;
                     continue;
                 }
 
@@ -114,6 +117,7 @@ void ProcessCrossField::Process(po::variables_map &vm)
 
                 if (n == -1)
                 {
+                    ++j;
                     continue;
                 }
 
@@ -130,10 +134,27 @@ void ProcessCrossField::Process(po::variables_map &vm)
                     allSl[j].Advance();
                 }
 
-                // TODO: do the merge
-                // TODO: remove merged streamlines
+                allSl.push_back(allSl[i].MergeWith(allSl[j]));
+
+                if (i > j)
+                {
+                    allSl.erase(allSl.begin() + i--);
+                    allSl.erase(allSl.begin() + j);
+                }
+                else
+                {
+                    allSl.erase(allSl.begin() + j);
+                    allSl.erase(allSl.begin() + i);
+                }
+
+                j = 0;
             }
         }
+    }
+
+    for (auto &sl : allSl)
+    {
+        sl.WritePoints(m_csvfile);
     }
 
     m_csvfile.close();
@@ -173,8 +194,6 @@ vector<pair<Array<OneD, NekDouble>, int>> ProcessCrossField::
 
         cout << "Singularity #" << ret.size() << " with " << nbranches
              << " branches at (" << x[0] << ", " << x[1] << ")" << endl;
-
-        m_csvfile << x[0] << "," << x[1] << endl;
     }
 
     return ret;
@@ -526,6 +545,11 @@ bool Streamline::Advance()
 
 int Streamline::CheckMerge(Streamline sl)
 {
+    if (m_locked || sl.IsLocked())
+    {
+        return -1;
+    }
+
     const Array<OneD, NekDouble> point = sl.GetLastPoint();
     const NekDouble angle = sl.GetLastAngle();
 
@@ -538,7 +562,7 @@ int Streamline::CheckMerge(Streamline sl)
                  pow(m_points[i][1] - point[1], 2)) < m_step)
         {
             // Check opposite directions
-            if (int(round((m_angles[i] - angle) / (M_PI / 2.0))) % 4 == 2)
+            if (abs(int(round((m_angles[i] - angle) / (M_PI / 2.0)))) % 4 == 2)
             {
                 break;
             }
@@ -546,6 +570,40 @@ int Streamline::CheckMerge(Streamline sl)
     }
 
     return i == m_points.size() ? -1 : i;
+}
+
+Streamline Streamline::MergeWith(Streamline sl)
+{
+    vector<Array<OneD, NekDouble>> points = sl.GetAllPoints();
+
+    ASSERTL0(m_points.size() == points.size(),
+             "Problem with the number of points to merge.");
+
+    int npoints = m_points.size();
+    vector<Array<OneD, NekDouble>> mergedPoints(npoints);
+
+    int nweights = npoints - 1;
+
+    for (int i = 0; i < npoints; ++i)
+    {
+        mergedPoints[i] = Array<OneD, NekDouble>(m_dim, 0.0);
+        mergedPoints[i][0] =
+            (m_points[i][0] * (nweights - i) + points[nweights - i][0] * i) /
+            nweights;
+        mergedPoints[i][1] =
+            (m_points[i][1] * (nweights - i) + points[nweights - i][1] * i) /
+            nweights;
+    }
+
+    return Streamline(mergedPoints);
+}
+
+void Streamline::WritePoints(ofstream &csvfile)
+{
+    for (auto &p : m_points)
+    {
+        csvfile << p[0] << "," << p[1] << endl;
+    }
 }
 }
 }
