@@ -59,105 +59,27 @@ ProcessCrossField::~ProcessCrossField()
 
 void ProcessCrossField::Process(po::variables_map &vm)
 {
-    m_dim = m_f->m_graph->GetSpaceDimension();
-    ASSERTL0(m_dim == 2, "Cross field post-processing only possible in 2D.")
-
-    ASSERTL0(m_config["outcsv"].m_beenSet, "An output CSV file must be set.")
-    m_csvfile.open(m_config["outcsv"].as<string>());
+    Initialise();
 
     vector<pair<Array<OneD, NekDouble>, int>> singularities =
         FindAllSingularities();
 
+    vector<Streamline> allSls = CreateStreamlines(singularities);
+
+    AdvanceStreamlines(allSls);
+
+    Finalise(allSls);
+}
+
+void ProcessCrossField::Initialise()
+{
+    m_dim = m_f->m_graph->GetSpaceDimension();
+    ASSERTL0(m_dim == 2, "Cross field post-processing only possible in 2D.")
+
+    ASSERTL0(m_config["outcsv"].m_beenSet, "An output CSV file must be set.")
+
     m_step =
         m_config["step"].m_beenSet ? m_config["step"].as<NekDouble>() : 1.0e-2;
-
-    vector<Streamline> allSl;
-
-    for (auto &s : singularities)
-    {
-        Array<OneD, NekDouble> x = s.first;
-        int nbranches = s.second;
-
-        NekDouble dir = 0.0;
-
-        for (int i = 0; i < nbranches; ++i)
-        {
-            Streamline sl = Streamline(m_f, x, m_step);
-            sl.Initialise(dir);
-            allSl.push_back(sl);
-
-            dir += 2.0 * M_PI / nbranches;
-        }
-    }
-
-    bool allLocked = false;
-
-    while (!allLocked)
-    {
-        allLocked = true;
-
-        for (auto &sl : allSl)
-        {
-            allLocked = !sl.Advance() && allLocked;
-        }
-
-        for (int i = 0; i < allSl.size(); ++i)
-        {
-            for (int j = 0; j < allSl.size();)
-            {
-                if (i == j ||
-                    allSl[i].GetFirstPoint() == allSl[j].GetFirstPoint() ||
-                    allSl[i].IsLocked() || allSl[j].IsLocked())
-                {
-                    ++j;
-                    continue;
-                }
-
-                int n = allSl[i].CheckMerge(allSl[j]);
-
-                if (n == -1)
-                {
-                    ++j;
-                    continue;
-                }
-
-                int n2 = allSl[j].CheckMerge(allSl[i]);
-                if (n2 != -1)
-                {
-                    n = min(n, n2);
-                }
-
-                for (int k = 0; k < n; ++k)
-                {
-                    // We assume we won't get out of the domain
-                    allSl[i].Advance();
-                    allSl[j].Advance();
-                }
-
-                allSl.push_back(allSl[i].MergeWith(allSl[j]));
-
-                if (i > j)
-                {
-                    allSl.erase(allSl.begin() + i--);
-                    allSl.erase(allSl.begin() + j);
-                }
-                else
-                {
-                    allSl.erase(allSl.begin() + j);
-                    allSl.erase(allSl.begin() + i);
-                }
-
-                j = 0;
-            }
-        }
-    }
-
-    for (auto &sl : allSl)
-    {
-        sl.WritePoints(m_csvfile);
-    }
-
-    m_csvfile.close();
 }
 
 vector<pair<Array<OneD, NekDouble>, int>> ProcessCrossField::
@@ -197,6 +119,111 @@ vector<pair<Array<OneD, NekDouble>, int>> ProcessCrossField::
     }
 
     return ret;
+}
+
+vector<Streamline> ProcessCrossField::CreateStreamlines(
+    vector<pair<Array<OneD, NekDouble>, int>> &singularities)
+{
+    vector<Streamline> ret;
+
+    for (auto &s : singularities)
+    {
+        Array<OneD, NekDouble> x = s.first;
+        int nbranches = s.second;
+
+        NekDouble dir = 0.0;
+
+        for (int i = 0; i < nbranches; ++i)
+        {
+            Streamline sl = Streamline(m_f, x, m_step);
+            sl.Initialise(dir);
+            ret.push_back(sl);
+
+            dir += 2.0 * M_PI / nbranches;
+        }
+    }
+
+    return ret;
+}
+
+void ProcessCrossField::AdvanceStreamlines(vector<Streamline> &sls)
+{
+    bool allLocked = false;
+
+    while (!allLocked)
+    {
+        allLocked = true;
+
+        for (auto &sl : sls)
+        {
+            allLocked = !sl.Advance() && allLocked;
+        }
+
+        for (int i = 0; i < sls.size(); ++i)
+        {
+            for (int j = 0; j < sls.size();)
+            {
+                if (i == j ||
+                    sls[i].GetFirstPoint() == sls[j].GetFirstPoint() ||
+                    sls[i].IsLocked() || sls[j].IsLocked())
+                {
+                    ++j;
+                    continue;
+                }
+
+                int n = sls[i].CheckMerge(sls[j]);
+
+                if (n == -1)
+                {
+                    ++j;
+                    continue;
+                }
+
+                int n2 = sls[j].CheckMerge(sls[i]);
+                if (n2 != -1)
+                {
+                    n = min(n, n2);
+                }
+
+                for (int k = 0; k < n; ++k)
+                {
+                    // We assume we won't get out of the domain
+                    sls[i].Advance();
+                    sls[j].Advance();
+                }
+
+                sls.push_back(sls[i].MergeWith(sls[j]));
+
+                if (i > j)
+                {
+                    sls.erase(sls.begin() + i--);
+                    sls.erase(sls.begin() + j);
+                }
+                else
+                {
+                    sls.erase(sls.begin() + j);
+                    sls.erase(sls.begin() + i);
+                }
+
+                j = 0;
+            }
+        }
+    }
+
+    cout << "Final number of streamlines (after merging): " << sls.size()
+         << endl;
+}
+
+void ProcessCrossField::Finalise(vector<Streamline> &sls)
+{
+    m_csvfile.open(m_config["outcsv"].as<string>());
+
+    for (auto &sl : sls)
+    {
+        sl.WritePoints(m_csvfile);
+    }
+
+    m_csvfile.close();
 }
 
 vector<set<int>> ProcessCrossField::FindIsocontourElements()

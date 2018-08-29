@@ -43,56 +43,8 @@ namespace Nektar
 namespace FieldUtils
 {
 /**
- * @brief This processing module post-processes cross field simulation results.
+ * @brief This class handles streamline tracing.
  */
-class ProcessCrossField : public ProcessModule
-{
-public:
-    /// Creates an instance of this class
-    static std::shared_ptr<Module> create(FieldSharedPtr f)
-    {
-        return MemoryManager<ProcessCrossField>::AllocateSharedPtr(f);
-    }
-    static ModuleKey className;
-
-    ProcessCrossField(FieldSharedPtr f);
-    virtual ~ProcessCrossField();
-
-    virtual void Process(po::variables_map &vm);
-
-    virtual std::string GetModuleName()
-    {
-        return "ProcessCrossField";
-    }
-
-    virtual std::string GetModuleDescription()
-    {
-        return "Post-processing cross field simulation results";
-    }
-
-    virtual ModulePriority GetModulePriority()
-    {
-        return eModifyExp;
-    }
-
-private:
-    // Find all singularities and their number of branches
-    vector<pair<Array<OneD, NekDouble>, int>> FindAllSingularities();
-    // Find all elements on isocontour lines
-    vector<set<int>> FindIsocontourElements();
-    // Find singularity if any
-    Array<OneD, NekDouble> FindSingularityInElmt(int id);
-    // Calculate the number of branches around the singularity
-    int CalculateNumberOfBranches(int id, Array<OneD, NekDouble> eta);
-
-    // Space dimension
-    int m_dim;
-    // Output CSV file for streamlines
-    ofstream m_csvfile;
-    // Step size for streamline marching
-    NekDouble m_step;
-};
-
 class Streamline
 {
 public:
@@ -181,6 +133,67 @@ private:
 
     // Coefficients for the Adams-Bashforth method
     static NekDouble AdamsBashforth_coeffs[4][4];
+};
+
+/**
+ * @brief This processing module post-processes cross field simulation results.
+ */
+class ProcessCrossField : public ProcessModule
+{
+public:
+    /// Creates an instance of this class
+    static std::shared_ptr<Module> create(FieldSharedPtr f)
+    {
+        return MemoryManager<ProcessCrossField>::AllocateSharedPtr(f);
+    }
+    static ModuleKey className;
+
+    ProcessCrossField(FieldSharedPtr f);
+    virtual ~ProcessCrossField();
+
+    virtual void Process(po::variables_map &vm);
+
+    virtual std::string GetModuleName()
+    {
+        return "ProcessCrossField";
+    }
+
+    virtual std::string GetModuleDescription()
+    {
+        return "Post-processing cross field simulation results";
+    }
+
+    virtual ModulePriority GetModulePriority()
+    {
+        return eModifyExp;
+    }
+
+private:
+    // Initialise process
+    void Initialise();
+    // Find all singularities and their number of branches
+    vector<pair<Array<OneD, NekDouble>, int>> FindAllSingularities();
+    // Create each streamline starting from singularities and initialise them
+    vector<Streamline> CreateStreamlines(
+        vector<pair<Array<OneD, NekDouble>, int>> &singularities);
+    // Advance streamlines and merge them if necessary
+    void AdvanceStreamlines(vector<Streamline> &sls);
+    // Finalise process (incl. output)
+    void Finalise(vector<Streamline> &sls);
+
+    // Find all elements on isocontour lines
+    vector<set<int>> FindIsocontourElements();
+    // Find singularity if any
+    Array<OneD, NekDouble> FindSingularityInElmt(int id);
+    // Calculate the number of branches around the singularity
+    int CalculateNumberOfBranches(int id, Array<OneD, NekDouble> eta);
+
+    // Space dimension
+    int m_dim;
+    // Output CSV file for streamlines
+    ofstream m_csvfile;
+    // Step size for streamline marching
+    NekDouble m_step;
 };
 }
 }
