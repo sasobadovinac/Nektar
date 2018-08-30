@@ -373,7 +373,7 @@ void InputMCF::Process()
         for (auto &vert : m_mesh->m_cad->GetVerts())
         {
             outfile << vert.second->GetLoc()[0] << ","
-                    << vert.second->GetLoc()[0] << endl;
+                    << vert.second->GetLoc()[1] << endl;
         }
 
         outfile.close();
