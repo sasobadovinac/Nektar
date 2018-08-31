@@ -177,6 +177,7 @@ private:
     vector<pair<Array<OneD, NekDouble>, int>> AnalyseVertices();
     // Create each streamline starting from singularities and initialise them
     vector<Streamline> CreateStreamlines(
+        vector<pair<Array<OneD, NekDouble>, int>> &vertices,
         vector<pair<Array<OneD, NekDouble>, int>> &singularities);
     // Advance streamlines and merge them if necessary
     void AdvanceStreamlines(vector<Streamline> &sls);

@@ -69,7 +69,7 @@ void ProcessCrossField::Process(po::variables_map &vm)
     vector<pair<Array<OneD, NekDouble>, int>> singularities =
         FindAllSingularities();
 
-    vector<Streamline> allSls = CreateStreamlines(singularities);
+    vector<Streamline> allSls = CreateStreamlines(vertices, singularities);
 
     AdvanceStreamlines(allSls);
 
@@ -169,10 +169,10 @@ vector<pair<Array<OneD, NekDouble>, int>> ProcessCrossField::AnalyseVertices()
         NekDouble dist = m_step / 1000;
         Array<OneD, NekDouble> quad(m_dim);
         Array<OneD, NekDouble> lcoords(m_dim);
-        int i            = 0;
+        int i = 0;
 
         bool wasInside = false;
-        bool first = true;
+        bool first     = true;
 
         while (true)
         {
@@ -200,14 +200,14 @@ vector<pair<Array<OneD, NekDouble>, int>> ProcessCrossField::AnalyseVertices()
                 {
                     break;
                 }
-                
+
                 --i;
                 wasInside = true;
             }
 
             first = false;
         }
-        
+
         // Determine the number of branches
         // We adjust the total angle of the corner by the difference in psi
         // We take into account jumps of atan2(v, u) at +-\pi too
@@ -288,9 +288,34 @@ vector<pair<Array<OneD, NekDouble>, int>> ProcessCrossField::AnalyseVertices()
 }
 
 vector<Streamline> ProcessCrossField::CreateStreamlines(
+    vector<pair<Array<OneD, NekDouble>, int>> &vertices,
     vector<pair<Array<OneD, NekDouble>, int>> &singularities)
 {
     vector<Streamline> ret;
+
+    for (auto &v : vertices)
+    {
+        Array<OneD, NekDouble> x(m_dim);
+        x[0] = v.first[0];
+        x[1] = v.first[1];
+
+        NekDouble anglei = v.first[2];
+        NekDouble anglef = v.first[3];
+
+        // Number of streamline to trace
+        int nbranches = v.second - 2;
+
+        NekDouble dir = anglei;
+
+        for (int i = 0; i < nbranches; ++i)
+        {
+            dir += (anglef - anglei) / (nbranches + 1);
+
+            Streamline sl = Streamline(m_f, x, m_step);
+            sl.Initialise(dir);
+            ret.push_back(sl);
+        }
+    }
 
     for (auto &s : singularities)
     {
