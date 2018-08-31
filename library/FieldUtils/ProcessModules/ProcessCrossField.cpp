@@ -37,6 +37,8 @@ using namespace std;
 
 #include "ProcessCrossField.h"
 
+#include <library/SpatialDomains/Geometry.h>
+
 namespace Nektar
 {
 namespace FieldUtils
@@ -49,8 +51,9 @@ ModuleKey ProcessCrossField::className =
 
 ProcessCrossField::ProcessCrossField(FieldSharedPtr f) : ProcessModule(f)
 {
-    m_config["outcsv"] = ConfigOption(false, "", "Output filename.");
-    m_config["step"]   = ConfigOption(false, "", "Streamline step size.");
+    m_config["vertices"] = ConfigOption(false, "", "Vertices filename.");
+    m_config["outcsv"]   = ConfigOption(false, "", "Output filename.");
+    m_config["step"]     = ConfigOption(false, "", "Streamline step size.");
 }
 
 ProcessCrossField::~ProcessCrossField()
@@ -60,6 +63,8 @@ ProcessCrossField::~ProcessCrossField()
 void ProcessCrossField::Process(po::variables_map &vm)
 {
     Initialise();
+
+    vector<pair<Array<OneD, NekDouble>, int>> vertices = AnalyseVertices();
 
     vector<pair<Array<OneD, NekDouble>, int>> singularities =
         FindAllSingularities();
@@ -76,6 +81,7 @@ void ProcessCrossField::Initialise()
     m_dim = m_f->m_graph->GetSpaceDimension();
     ASSERTL0(m_dim == 2, "Cross field post-processing only possible in 2D.")
 
+    ASSERTL0(m_config["vertices"].m_beenSet, "A vertices file must be set.")
     ASSERTL0(m_config["outcsv"].m_beenSet, "An output CSV file must be set.")
 
     m_step =
@@ -114,8 +120,168 @@ vector<pair<Array<OneD, NekDouble>, int>> ProcessCrossField::
 
         ret.push_back(make_pair(x, nbranches));
 
-        cout << "Singularity #" << ret.size() << " with " << nbranches
+        cout << "Singularity #" << ret.size() << " has " << nbranches
              << " branches at (" << x[0] << ", " << x[1] << ")" << endl;
+    }
+
+    return ret;
+}
+
+vector<pair<Array<OneD, NekDouble>, int>> ProcessCrossField::AnalyseVertices()
+{
+    ifstream file;
+    file.open(m_config["vertices"].as<string>());
+    ASSERTL0(file.is_open(), "Could not open the vertices file.")
+
+    vector<pair<Array<OneD, NekDouble>, int>> ret;
+
+    string line;
+    while (getline(file, line))
+    {
+        int pos = line.find(",");
+
+        Array<OneD, NekDouble> data(m_dim);
+        data[0] = stod(line.substr(0, pos));
+        data[1] = stod(line.substr(pos + 1));
+
+        NekDouble delta = numeric_limits<NekDouble>::max();
+        Array<OneD, NekDouble> point(m_dim + 2);
+        SpatialDomains::PointGeomSharedPtr geom;
+
+        // Find closest point to the coordinates
+        for (int i = 0; i < m_f->m_graph->GetNvertices(); ++i)
+        {
+            m_f->m_graph->GetVertex(i)->GetCoords(point);
+            NekDouble newDelta =
+                sqrt(pow(data[0] - point[0], 2) + pow(data[1] - point[1], 2));
+
+            if (newDelta < delta)
+            {
+                delta = newDelta;
+                geom  = m_f->m_graph->GetVertex(i);
+            }
+        }
+
+        geom->GetCoords(point);
+
+        // Find starting i for sweeping angle inside the domain ccw
+        int nquads     = 100;
+        NekDouble dist = m_step / 1000;
+        Array<OneD, NekDouble> quad(m_dim);
+        Array<OneD, NekDouble> lcoords(m_dim);
+        int i            = 0;
+
+        bool wasInside = false;
+        bool first = true;
+
+        while (true)
+        {
+            quad[0] = point[0] + dist * cos(2.0 * M_PI * i / nquads);
+            quad[1] = point[1] + dist * sin(2.0 * M_PI * i / nquads);
+
+            int id = m_f->m_exp[0]->GetExpIndex(quad, lcoords);
+
+            // outside
+            if (id == -1)
+            {
+                ++i;
+
+                if (!first && wasInside)
+                {
+                    break;
+                }
+
+                wasInside = false;
+            }
+            // inside
+            else
+            {
+                if (!first && !wasInside)
+                {
+                    break;
+                }
+                
+                --i;
+                wasInside = true;
+            }
+
+            first = false;
+        }
+        
+        // Determine the number of branches
+        // We adjust the total angle of the corner by the difference in psi
+        // We take into account jumps of atan2(v, u) at +-\pi too
+        NekDouble oldV   = 0.0;
+        NekDouble anglei = 0.0;
+        NekDouble anglef = 0.0;
+        NekDouble psii   = 0.0;
+        NekDouble psif   = 0.0;
+        int adj          = 0;
+
+        first = true;
+
+        while (true)
+        {
+            quad[0] = point[0] + dist * cos(2.0 * M_PI * i / nquads);
+            quad[1] = point[1] + dist * sin(2.0 * M_PI * i / nquads);
+
+            ++i;
+
+            int id = m_f->m_exp[0]->GetExpIndex(quad, lcoords);
+
+            if (id == -1)
+            {
+                break;
+            }
+
+            int offset = m_f->m_exp[0]->GetPhys_Offset(id);
+
+            NekDouble u = m_f->m_exp[0]->GetExp(id)->StdPhysEvaluate(
+                lcoords, m_f->m_exp[0]->GetPhys() + offset);
+            NekDouble v = m_f->m_exp[0]->GetExp(id)->StdPhysEvaluate(
+                lcoords, m_f->m_exp[1]->GetPhys() + offset);
+
+            psif   = atan2(v, u) / 4.0;
+            anglef = 2.0 * M_PI * (i - 1) / nquads;
+
+            if (u < 0.0)
+            {
+                if (oldV * v < 0.0)
+                {
+                    if (v < 0.0)
+                    {
+                        --adj;
+                    }
+                    else
+                    {
+                        ++adj;
+                    }
+                }
+            }
+
+            oldV = v;
+
+            if (first)
+            {
+                psii   = psif;
+                anglei = anglef;
+                first  = false;
+            }
+        }
+
+        point[2] = anglei;
+        point[3] = anglef;
+
+        NekDouble fullAngle = point[3] - point[2];
+        NekDouble dpsi      = psif - psii - adj * M_PI / 2.0;
+
+        // Number of pi/2 quarters + 1
+        int nbranches = int(round((fullAngle - dpsi) / (M_PI / 2.0))) + 1;
+
+        ret.push_back(make_pair(point, nbranches));
+
+        cout << "Vertex #" << ret.size() << " has " << nbranches
+             << " branches at (" << point[0] << ", " << point[1] << ")" << endl;
     }
 
     return ret;

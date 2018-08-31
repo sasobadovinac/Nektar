@@ -173,6 +173,8 @@ private:
     void Initialise();
     // Find all singularities and their number of branches
     vector<pair<Array<OneD, NekDouble>, int>> FindAllSingularities();
+    // Analyse vertices
+    vector<pair<Array<OneD, NekDouble>, int>> AnalyseVertices();
     // Create each streamline starting from singularities and initialise them
     vector<Streamline> CreateStreamlines(
         vector<pair<Array<OneD, NekDouble>, int>> &singularities);
