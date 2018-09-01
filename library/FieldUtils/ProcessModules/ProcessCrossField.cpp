@@ -688,7 +688,7 @@ void Streamline::Initialise(NekDouble &angle)
         delta = angle - (psi + m_rot * (M_PI / 2.0));
         angle -= delta;
 
-    } while (fabs(delta) < 1.0e-9);
+    } while (fabs(delta) > 1.0e-9);
 
     // Over-write angle of singularity
     m_angles.back() = angle;
