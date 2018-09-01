@@ -51,11 +51,11 @@ struct Particle
         int                     dim,
         int                     numFields,
         int                     intOrder,
-        Array<OneD, NekDouble>  gloCoord)
+        Array<OneD, NekDouble>  newCoord)
         : m_dim(dim), m_eId(-1), m_used(true)
     {
         // Initialise arrays
-        m_gloCoord          = Array<OneD, NekDouble> (3, 0.0);
+        m_newCoord          = Array<OneD, NekDouble> (3, 0.0);
         m_oldCoord          = Array<OneD, NekDouble> (3, 0.0);
         m_locCoord          = Array<OneD, NekDouble> (3, 0.0);
         m_fluidVelocity     = Array<OneD, NekDouble> (m_dim, 0.0);
@@ -70,7 +70,7 @@ struct Particle
         }
 
         // Store coordinates
-        SetCoord(gloCoord);
+        SetCoord(newCoord);
 
         // Obtain a unique id
         SetNewId();
@@ -85,11 +85,11 @@ struct Particle
     }
 
     /// Function to assign a new id to the particle
-    void SetCoord(Array<OneD, NekDouble>  gloCoord)
+    void SetCoord(Array<OneD, NekDouble>  newCoord)
     {
-        m_gloCoord[0] = gloCoord[0];
-        m_gloCoord[1] = gloCoord[1];
-        m_gloCoord[2] = gloCoord[2];
+        m_newCoord[0] = newCoord[0];
+        m_newCoord[1] = newCoord[1];
+        m_newCoord[2] = newCoord[2];
     }
 
     /// Static counter for numbering particles
@@ -99,7 +99,7 @@ struct Particle
     /// Spatial dimension
     int                             m_dim;
     /// Global coordinate
-    Array<OneD, NekDouble>          m_gloCoord;
+    Array<OneD, NekDouble>          m_newCoord;
     /// Previous coordinates
     Array<OneD, NekDouble>          m_oldCoord;
     /// Coordinate in the standard element
@@ -164,6 +164,8 @@ private:
     unsigned int                            m_index;
     /// Location(s) where new points are created
     SpatialDomains::PointGeomVector         m_seedPoints;
+    /// Location(s) of crossing points are created
+    SpatialDomains::PointGeomVector         m_crossPoints;
     /// Stringstream for temporarily holding seed points coordinates
     std::stringstream                       m_seedPointStream;
     /// Frequency for adding new points
@@ -228,6 +230,9 @@ private:
     /// Add seed points to m_particles
     void AddSeedPoints(
         const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields);
+	/// Add cross points to m_particles
+    void AddCrossPoints(
+        const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields);
     /// Update location of particle (eId and locCoords)
     void UpdateLocCoord(
         const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
@@ -251,7 +256,8 @@ private:
     /// Check if particle left the domain of interest
     void CheckBoundingBox(Particle &particle);
     /// Write output information
-    void OutputParticles(const NekDouble &time);
+    void OutputParticles(const NekDouble &time,
+		 const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields);
     /// Rotate array for high order time integration
     void RollOver(Array<OneD, Array<OneD, NekDouble> > &input);
 };
