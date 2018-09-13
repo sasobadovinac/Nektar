@@ -102,7 +102,12 @@ int main(int argc, char * argv[])
 #else
     mapper->SetInputData(data);
 #endif
+
+#if VTK_MAJOR_VERSION < 8 || (VTK_MAJOR_VERSION == 8 && VTK_MINOR_VERSION <= 1)
+    //deprecated as of vtk 8.1
     mapper->ImmediateModeRenderingOn();
+#endif
+    
     mapper->ScalarVisibilityOn();
     mapper->SetScalarModeToUsePointData();
     mapper->UseLookupTableScalarRangeOn();
@@ -139,7 +144,13 @@ int main(int argc, char * argv[])
     vtkSmartPointer<vtkWindowToImageFilter> windowToImageFilter =
             vtkSmartPointer<vtkWindowToImageFilter>::New();
     windowToImageFilter->SetInput(renderWindow);
+
+#if VTK_MAJOR_VERSION < 8 || (VTK_MAJOR_VERSION == 8 && VTK_MINOR_VERSION <= 1)
+    //deprecated as of vtk 8.1
     windowToImageFilter->SetMagnification(4);
+#else
+    windowToImageFilter->SetScale(4, 4);
+#endif
     windowToImageFilter->Update();
 
     // Write image to PNG

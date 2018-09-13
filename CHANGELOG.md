@@ -1,10 +1,45 @@
 Changelog
 =========
 
+v4.4.2
+------
+**Library**
+- Fix evaluation of points (e.g. HistoryPoints, Interpolation to pts) close to
+  the interface of two elements (!836)
+- Fix deadlock in Hdf5 with homogeneous expansions (!858)
+- Fix petsc compile without MPI (!873)
+- Fix a crash when Interpolator is called on an empty field (!869)
+- Fix uninitialised coefficients in DirectFull solver (!898)
+- Fix a few memory leaks in polylib (!863)
+- Fix deadlock in DiffusionLDG (!885)
+- Fix calculation of BLPoints (!892)
+- Updated PETSc to 3.7.7 (!916)
+- Fix typcase to an integer which set Lz < 1 to zero when postprocess hdf5 output (!9922)
+
+**NekMesh**
+- Fix missing periodic boundary meshing and boundary layer mesh adjustment
+  configurations in 2D (!859)
+- Fix 2D BL splitting where out-of-plane nodes would be created (!887)
+
+**Documentation**:
+- Fix sign of the viscous term in the velocity correction scheme equations in
+  the user guide (!856)
+- Fixed anonymous clone URL (!909)
+
+**FieldConvert**
+- Allow passing input name with trailing separator (!879)
+- Fix the interpcoord option  of the interppointdatatofld module (!952)
+
+**Utilities**
+- Fix VtkToPng to account for deprecated VTK API for VTK version > 8.1 (!925)
+
+**Tester**
+- Fix build with boost 1.67 (!947)
+
 v4.4.1
 ------
 **Library**
-- Remove m_offset_elmt_id and GetOffsetElmtId which fixed problems in 2D when 
+- Remove m_offset_elmt_id and GetOffsetElmtId which fixed problems in 2D when
   quad elements are listed before tri elements (!758)
 - Remove the duplicate output of errorutil (!756)
 - Fix BLAS CMake dependencies (!763)
@@ -15,28 +50,27 @@ v4.4.1
 - Fix Hdf5 output in FilterFieldConvert (!781)
 - Fixed extreme memory consumption of Interpolator when interpolating from pts
   to fld or between different meshes (!783)
-- Fix missing entriess in LibUtilities::kPointsTypeStr (!792)
-- Fix compiler warnings with CommDataType (!793)
 - Fix deadlock with HDF5 input (!786)
 - Fix missing entriess in LibUtilities::kPointsTypeStr (!792)
 - Fix compiler warnings with CommDataType (!793)
-- Fix ability to set default implementation in Collections and added an option 
+- Fix ability to set default implementation in Collections and added an option
   to set eNoCollections in FieldConvert as default (!789)
 - Fix performance issue in ProcessIsoContour in relation to memory consumption
   (!821)
 - Fix performance issue with ExtractPhysToBndElmt (!796)
 - Fix available classes being listed multiple times (!817)
-- Fix overwriting and backup of chk/fld files on slow file systes (!741)
 - Fix Intel compiler warnings (!837)
+- Fix overwriting and backup of chk/fld files on slow file systes (!741)
+- Fix DriverAdaptive with second order IMEX (!850)
 - Fixed typo in eIMEXGear part (!854)
 - Added regression tests for IMEXOrder1, IMEXOrder2, IMEXOrder3, MCNAB,
   IMEXGear, CNAB, 2nd order IMEX-DIRK, 3rd order IMEX-DIRK (!854)
-- Fix DriverAdaptive with second order IMEX (!850)
 - Fix bug due to subtractive cancellation in polylib routines (!778)
 
 **FieldConvert:**
 - Fix issue with field ordering in the interppointdatatofld module (!754)
 - Fix issue with FieldConvert when range flag used (!761)
+- Fix issue when using output-points combined with noequispaced (!775)
 - Fix equispacedoutput for 3DH1D with triangles (!787)
 
 **NekMesh**:
@@ -107,6 +141,7 @@ v4.4.0
 - Fix bug in FieldUtils when using half mode expansions (!734)
 - Do not read the same fld/pts files again for every variable (!670)
 - Fix bug in CMake PETSc detection for Ubuntu 16.04/Debian 9 (!735)
+- Fix warnings with Intel compiler (!742)
 
 **ADRSolver:**
 - Add a projection equation system for C^0 projections (!675)
@@ -160,14 +195,15 @@ v4.4.0
   (!712)
 - 2D to 3D mesh extrusion module (!715)
 - Add new two-dimensional mesher from NACA code or step file (!720)
+- Add basic gmsh cad (.geo) reader to the meshing system (!731)
 - Fix inverted boundary layer in 2D (!736)
 - More sensible element sizing with boundary layers in 2D (!736)
 - Change variable names in mcf file to make more sense (!736)
 - Fix issues in varopti module so that in can be compiled without meshgen on
   (!736)
-- Replace LAPACK Eigenvalue calculation with handwritten function in 
+- Replace LAPACK Eigenvalue calculation with handwritten function in
   varopti (!738)
-- Improved node-colouring algorithm for better load-balancing 
+- Improved node-colouring algorithm for better load-balancing
   in varopti (!738)
 - Simplified calculation of the energy functional in varopti for improved
   performance (!738)

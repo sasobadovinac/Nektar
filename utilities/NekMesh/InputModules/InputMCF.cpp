@@ -206,6 +206,18 @@ void InputMCF::ParseFile(string nm)
             it         = parameters.find("BndLayerProgression");
             m_blprog   = it != parameters.end() ? it->second : "2.0";
         }
+
+        it = parameters.find("BndLayerAdjustment");
+        if (it != parameters.end())
+        {
+            m_adjust     = true;
+            m_adjustment = it->second;
+        }
+        else
+        {
+            m_adjust = false;
+        }
+
     }
 
     m_naca = false;
@@ -311,6 +323,20 @@ void InputMCF::Process()
         {
             module->RegisterConfig("blcurves", m_blsurfs);
             module->RegisterConfig("blthick", m_blthick);
+
+            if (m_adjust)
+            {
+                module->RegisterConfig("bltadjust", m_adjustment);
+
+                if (m_adjustall)
+                {
+                    module->RegisterConfig("adjustblteverywhere", "");
+                }
+            }
+        }
+        if (m_periodic.size())
+        {
+            module->RegisterConfig("periodic", m_periodic);
         }
 
         try
@@ -472,7 +498,26 @@ void InputMCF::Process()
         }
     }
 
+    ////**** Peralign ****////
+    if (m_2D && m_periodic.size())
+    {
+        vector<string> lines;
+        boost::split(lines, m_periodic, boost::is_any_of(":"));
 
+        for (int i = 0; i < lines.size(); i++)
+        {
+            module = GetModuleFactory().CreateInstance(
+                ModuleKey(eProcessModule, "peralign"), m_mesh);
+
+            vector<string> tmp(2);
+            boost::split(tmp, lines[i], boost::is_any_of(","));
+            module->RegisterConfig("surf1", tmp[0]);
+            module->RegisterConfig("surf2", tmp[1]);
+
+            module->SetDefaults();
+            module->Process();
+        }
+    }
 }
 }
 }
