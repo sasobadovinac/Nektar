@@ -819,6 +819,8 @@ void Streamline::WritePoints(ofstream &csvfile)
     {
         csvfile << p[0] << "," << p[1] << endl;
     }
+
+    csvfile << endl;
 }
 }
 }
