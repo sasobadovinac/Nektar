@@ -51,6 +51,10 @@
 #include <MultiRegions/AssemblyMap/AssemblyMap.h>
 #include <tinyxml.h>
 
+#ifdef WITH_PYTHON
+#include <string>
+#endif
+
 namespace Nektar
 {
     namespace MultiRegions
@@ -194,6 +198,12 @@ namespace Nektar
             /// values \f$\boldsymbol{u}_l\f$ (implemented as #m_phys) is
             /// filled or not.
             inline void SetPhysState(const bool physState);
+
+            /// This function returns the memory address of the array data of 
+            /// m_phys array.
+            #ifdef WITH_PYTHON
+            inline std::string GetPhysAddress();
+            #endif
 
             /// This function indicates whether the array of physical values
             /// \f$\boldsymbol{u}_l\f$ (implemented as #m_phys) is filled or
@@ -2064,6 +2074,17 @@ namespace Nektar
         {
             return m_phys;
         }
+
+        /**
+         * Prints out the memory address of the data in m_phys.
+         * Originally written for test and debug purposes for NekPy.
+         */
+        #ifdef WITH_PYTHON
+        inline std::string ExpList::GetPhysAddress ()
+        {
+            return m_phys.GetDataAddress();
+        }
+        #endif
 
         /**
          * @return  \f$N_{\mathrm{el}}\f$, the number of elements in the
