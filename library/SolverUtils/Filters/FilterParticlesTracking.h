@@ -231,7 +231,7 @@ private:
     void AddSeedPoints(
         const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields);
 	/// Add cross points to m_particles
-    void AddCrossPoints(
+    void AddCrossParticles(
         const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields);
     /// Update location of particle (eId and locCoords)
     void UpdateLocCoord(
@@ -245,6 +245,8 @@ private:
     void UpdatePosition(Particle &particle);
     /// Set the particle velocity to match the fluid velocity
     void SetToFluidVelocity(Particle &particle);
+    /// Set the particle velocity and force for crossing particles
+    void SetToVelForce(Particle &particle,const Array<OneD, NekDouble>  VelForce);
     /// Update particle velocity
     void UpdateVelocity(Particle &particle);
     /// Calculate force (for solid particles)
