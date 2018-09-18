@@ -833,11 +833,8 @@ TopTools_ListOfShape CADSystemOCE::SplitFace(TopoDS_Shape shape)
             continue;
         }
 
-        int pos = line.find(",");
-
-        Array<OneD, NekDouble> data(2);
-        data[0] = stod(line.substr(0, pos));
-        data[1] = stod(line.substr(pos + 1));
+        vector<NekDouble> data;
+        ParseUtils::GenerateVector(line, data);
 
         streamlines.back().push_back(points.size());
         points.emplace_back(data[0] * 1000.0, data[1] * 1000.0, 0.0);

@@ -37,6 +37,7 @@ using namespace std;
 
 #include "ProcessCrossField.h"
 
+#include <LibUtilities/BasicUtils/ParseUtils.h>
 #include <library/SpatialDomains/Geometry.h>
 
 namespace Nektar
@@ -138,11 +139,8 @@ vector<pair<Array<OneD, NekDouble>, int>> ProcessCrossField::AnalyseVertices()
     string line;
     while (getline(file, line))
     {
-        int pos = line.find(",");
-
-        Array<OneD, NekDouble> data(m_dim);
-        data[0] = stod(line.substr(0, pos));
-        data[1] = stod(line.substr(pos + 1));
+        vector<NekDouble> data;
+        ParseUtils::GenerateVector(line, data);
 
         NekDouble delta = numeric_limits<NekDouble>::max();
         Array<OneD, NekDouble> point(m_dim + 2);
