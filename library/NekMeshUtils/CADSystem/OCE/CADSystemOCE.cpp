@@ -44,6 +44,9 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/filesystem.hpp>
 
+#include <queue>
+#include <set>
+
 using namespace std;
 
 namespace Nektar
@@ -122,6 +125,11 @@ bool CADSystemOCE::LoadCAD()
     else
     {
         shape = BuildNACA(m_name);
+    }
+
+    if (m_streamlines.size())
+    {
+        TopTools_ListOfShape splitFaces = SplitFace(shape);
     }
 
     TopExp_Explorer explr;
@@ -802,6 +810,182 @@ TopoDS_Shape CADSystemOCE::BuildGeo(string geo)
     sf.FixOrientation();
 
     return sf.Face();
+}
+
+TopTools_ListOfShape CADSystemOCE::SplitFace(TopoDS_Shape shape)
+{
+    ifstream file;
+    file.open(m_streamlines);
+    ASSERTL0(file.is_open(), "Could not open the streamline file.")
+
+    vector<gp_Pnt> points;
+    vector<vector<int>> streamlines;
+    streamlines.emplace_back();
+
+    // Read in all points
+    string line;
+    while (getline(file, line))
+    {
+        // End of streamline
+        if (!line.size())
+        {
+            streamlines.emplace_back();
+            continue;
+        }
+
+        int pos = line.find(",");
+
+        Array<OneD, NekDouble> data(2);
+        data[0] = stod(line.substr(0, pos));
+        data[1] = stod(line.substr(pos + 1));
+
+        streamlines.back().push_back(points.size());
+        points.emplace_back(data[0] * 1000.0, data[1] * 1000.0, 0.0);
+    }
+
+    if (!streamlines.back().size())
+    {
+        streamlines.pop_back();
+    }
+
+    // Check duplicate end points
+    NekDouble tol = 1.0e-12;
+
+    for (int i = 0; i < streamlines.size(); ++i)
+    {
+        for (int j = 0; j < i; ++j)
+        {
+            if (points[streamlines[i].front()].IsEqual(
+                    points[streamlines[j].front()], tol))
+            {
+                streamlines[i].front() = streamlines[j].front();
+            }
+            else if (points[streamlines[i].front()].IsEqual(
+                         points[streamlines[j].back()], tol))
+            {
+                streamlines[i].front() = streamlines[j].back();
+            }
+
+            if (points[streamlines[i].back()].IsEqual(
+                    points[streamlines[j].front()], tol))
+            {
+                streamlines[i].back() = streamlines[j].front();
+            }
+            else if (points[streamlines[i].back()].IsEqual(
+                         points[streamlines[j].back()], tol))
+            {
+                streamlines[i].back() = streamlines[j].back();
+            }
+        }
+    }
+
+    // Make splines
+    vector<TopoDS_Edge> splines;
+
+    for (auto &sl : streamlines)
+    {
+        TColgp_Array1OfPnt pointArray(0, sl.size() - 1);
+
+        for (int i = 0; i < sl.size(); i++)
+        {
+            pointArray.SetValue(i, points[sl[i]]);
+        }
+
+        GeomAPI_PointsToBSpline spline(pointArray);
+        Handle(Geom_BSplineCurve) curve = spline.Curve();
+
+        BRepBuilderAPI_MakeEdge em(curve);
+
+        splines.push_back(em.Edge());
+    }
+
+    // Make minimum number of wires
+    set<int> toProcess;
+    for (int i = 0; i < splines.size(); ++i)
+    {
+        toProcess.insert(i);
+    }
+
+    vector<TopoDS_Wire> wires;
+
+    while (toProcess.size())
+    {
+        BRepBuilderAPI_MakeWire mw;
+
+        queue<int> q;
+        q.push(*(toProcess.begin()));
+        toProcess.erase(toProcess.begin());
+
+        while (q.size())
+        {
+            // Add current edge to wire
+            mw.Add(splines[q.front()]);
+
+            // Add connected edges to queue
+            int start1 = streamlines[q.front()].front();
+            int end1   = streamlines[q.front()].back();
+
+            for (auto it = toProcess.begin(); it != toProcess.end();)
+            {
+                int start2 = streamlines[*it].front();
+                int end2   = streamlines[*it].back();
+
+                if (start1 == start2 || start1 == end2 || end1 == start2 ||
+                    end1 == end2)
+                {
+                    q.push(*it);
+                    it = toProcess.erase(it);
+                }
+                else
+                {
+                    ++it;
+                }
+            }
+
+            // Remove current edge from queue
+            q.pop();
+        }
+
+        ASSERTL0(mw.IsDone(), "Wire not constructed")
+        wires.push_back(mw.Wire());
+    }
+
+    ASSERTL0(wires.size() == 1, "Only 1 wire supported at the moment")
+
+    TopExp_Explorer explr;
+    explr.Init(shape, TopAbs_FACE);
+    TopoDS_Face face = TopoDS::Face(explr.Current());
+
+    BRepFeat_SplitShape splitter(shape);
+    splitter.Add(wires[0], face);
+    splitter.Build();
+    TopTools_ListOfShape splitFace = splitter.Modified(shape);
+
+    // For visualisation purposes
+    TopoDS_Builder builder;
+    TopoDS_Compound comp;
+    builder.MakeCompound(comp);
+
+    int i = 0;
+
+    while (!splitFace.IsEmpty())
+    {
+        builder.Add(comp, splitFace.First());
+        splitFace.RemoveFirst();
+        ++i;
+    }
+
+    cout << "There are " << i << " faces after splitting" << endl;
+
+    STEPControl_Writer aWriter;
+    IFSelect_ReturnStatus aStat = aWriter.Transfer(comp, STEPControl_AsIs);
+    aStat                       = aWriter.Write("test.stp");
+    if (aStat != IFSelect_RetDone)
+    {
+        cout << "Writing error" << endl;
+    }
+
+    return splitFace;
 }
 }
 }

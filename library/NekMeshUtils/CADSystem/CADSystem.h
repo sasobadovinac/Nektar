@@ -101,6 +101,11 @@ public:
         return m_2d;
     }
 
+    void SetStreamlines(std::string i)
+    {
+        m_streamlines = i;
+    }
+
     void SetNACA(std::string i)
     {
         m_naca = i;
@@ -223,6 +228,8 @@ protected:
     bool m_cfiMesh;
     /// string of 4 digit NACA code to be created
     std::string m_naca;
+    /// file with streamlines for partitioning
+    std::string m_streamlines;
 
     /**
      * @brief Reports basic properties to screen.

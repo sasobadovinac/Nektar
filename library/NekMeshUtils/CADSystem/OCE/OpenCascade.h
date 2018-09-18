@@ -94,6 +94,8 @@
 #include <TCollection_HAsciiString.hxx>
 
 /// CORE SHAPE classes
+#include <TopoDS_Builder.hxx>
+#include <TopoDS_Compound.hxx>
 #include <TopoDS_Shape.hxx>
 #include <TopoDS_Shell.hxx>
 #include <TopoDS_Face.hxx>
@@ -113,5 +115,8 @@
 #include <Geom_Ellipse.hxx>
 #include <gp_Circ.hxx>
 #include <gp_Elips.hxx>
+#include <BRepFeat_SplitShape.hxx>
+
+#include <STEPControl_Writer.hxx>
 
 #endif

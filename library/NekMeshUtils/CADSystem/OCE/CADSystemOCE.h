@@ -81,6 +81,7 @@ private:
 
     TopoDS_Shape BuildNACA(std::string naca);
     TopoDS_Shape BuildGeo(std::string geo);
+    TopTools_ListOfShape SplitFace(TopoDS_Shape face);
     /// OCC master object
     TopoDS_Shape shape;
     TopTools_IndexedMapOfShape mapOfVerts, mapOfEdges, mapOfFaces;

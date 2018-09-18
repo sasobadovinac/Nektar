@@ -183,10 +183,20 @@ void InputMCF::ParseFile(string nm)
     it = information.find("MeshType");
     ASSERTL0(it != information.end(), "no meshtype defined");
 
-    m_cfiMesh  = it->second == "CFI";
-    m_makeBL   = it->second == "3DBndLayer";
-    m_2D       = it->second == "2D";
-    m_manifold = it->second == "Manifold";
+    m_cfiMesh    = it->second == "CFI";
+    m_makeBL     = it->second == "3DBndLayer";
+    m_2D         = it->second == "2D";
+    m_manifold   = it->second == "Manifold";
+    m_crossfield = it->second == "CrossField";
+
+    if (m_crossfield)
+    {
+        m_2D = true; // Currently only 2D supported
+
+        auto it2 = information.find("StreamlineFile");
+        ASSERTL0(it2 != information.end(), "no streamline file defined");
+        m_streamlines = it2->second;
+    }
 
     if (it->second == "2DBndLayer")
     {
@@ -350,6 +360,10 @@ void InputMCF::Process()
     if (m_2D)
     {
         module->RegisterConfig("2D", "");
+    }
+    if (m_crossfield)
+    {
+        module->RegisterConfig("streamlines", m_streamlines);
     }
     if (m_naca)
     {

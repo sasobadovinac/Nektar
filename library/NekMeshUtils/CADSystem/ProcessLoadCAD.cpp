@@ -62,6 +62,8 @@ ProcessLoadCAD::ProcessLoadCAD(MeshSharedPtr m) : ProcessModule(m)
         ConfigOption(false, "", "naca domain");
     m_config["verbose"] =
         ConfigOption(true, "", "verbose output from cadsystem");
+    m_config["streamlines"] =
+        ConfigOption(false, "", "streamlines used to partition the surface");
 }
 
 ProcessLoadCAD::~ProcessLoadCAD()
@@ -91,6 +93,11 @@ void ProcessLoadCAD::Process()
     if(m_config["2D"].beenSet)
     {
         m_mesh->m_cad->Set2D();
+    }
+
+    if(m_config["streamlines"].beenSet)
+    {
+        m_mesh->m_cad->SetStreamlines(m_config["streamlines"].as<string>());
     }
 
     if(m_config["NACA"].beenSet)
