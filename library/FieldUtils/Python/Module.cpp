@@ -42,8 +42,10 @@ using namespace Nektar;
 using namespace Nektar::FieldUtils;
 
 void export_Module() {
-	py::class_<Module,
-               std::shared_ptr<Module>,
-               boost::noncopyable>(
-                   "Module", py::no_init);
+	// py::class_<Module,
+ //               std::shared_ptr<Module>,
+ //               boost::noncopyable>(
+ //                   "Module", py::no_init);
+
+	NEKPY_WRAP_ENUM(ModuleType, ModuleTypeMap);
 }
