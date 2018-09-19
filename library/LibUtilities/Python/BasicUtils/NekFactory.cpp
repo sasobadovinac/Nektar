@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File: LibUtilities.cpp
+// File: NekFactory.cpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -29,33 +29,19 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 //
-// Description: Python wrapper for LibUtilities classes.
+// Description: Python wrapper for NekFactory.
 //
 ///////////////////////////////////////////////////////////////////////////////
 
+#include <LibUtilities/BasicUtils/NekFactory.hpp>
 #include <LibUtilities/Python/NekPyConfig.hpp>
 
-void export_Basis();
-void export_NekFactory();
-void export_Points();
-void export_SessionReader();
-void export_ShapeType();
+using namespace Nektar::LibUtilities;
 
-template<typename T>
-void export_SharedArray();
-
-template<typename T>
-void export_NekMatrix();
-
-BOOST_PYTHON_MODULE(_LibUtilities)
+void export_NekFactory()
 {
-    np::initialize();
-
-    export_Basis();
-    export_Points();
-    export_NekFactory();
-    export_SessionReader();
-    export_ShapeType();
-    export_SharedArray<double>();
-    export_NekMatrix<double>();
+	// py::class_<NekFactory,
+ //           std::shared_ptr<NekFactory>,
+ //           boost::noncopyable>(
+ //               "NekFactory", py::no_init);
 }
