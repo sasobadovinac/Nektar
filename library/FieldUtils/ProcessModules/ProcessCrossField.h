@@ -105,7 +105,7 @@ public:
     bool Advance();
 
     // Check if it should be merged with another streamline
-    int CheckMerge(Streamline sl);
+    int CheckMerge(Streamline sl, NekDouble tol);
 
     // Merge the 2 streamlines and return the new one
     Streamline MergeWith(Streamline sl);
@@ -197,6 +197,8 @@ private:
     ofstream m_csvfile;
     // Step size for streamline marching
     NekDouble m_step;
+    // Tolerance for merging streamlines
+    NekDouble m_mergeTol;
 };
 }
 }

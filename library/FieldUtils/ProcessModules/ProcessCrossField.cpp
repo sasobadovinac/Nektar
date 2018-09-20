@@ -55,6 +55,7 @@ ProcessCrossField::ProcessCrossField(FieldSharedPtr f) : ProcessModule(f)
     m_config["vertices"] = ConfigOption(false, "", "Vertices filename.");
     m_config["outcsv"]   = ConfigOption(false, "", "Output filename.");
     m_config["step"]     = ConfigOption(false, "", "Streamline step size.");
+    m_config["mergetol"] = ConfigOption(false, "", "Tolerance for merging.");
 }
 
 ProcessCrossField::~ProcessCrossField()
@@ -87,6 +88,10 @@ void ProcessCrossField::Initialise()
 
     m_step =
         m_config["step"].m_beenSet ? m_config["step"].as<NekDouble>() : 1.0e-2;
+
+    m_mergeTol = m_config["mergetol"].m_beenSet
+                     ? m_config["mergetol"].as<NekDouble>()
+                     : 1.0;
 }
 
 vector<pair<Array<OneD, NekDouble>, int>> ProcessCrossField::
@@ -360,7 +365,7 @@ void ProcessCrossField::AdvanceStreamlines(vector<Streamline> &sls)
                     continue;
                 }
 
-                int n = sls[i].CheckMerge(sls[j]);
+                int n = sls[i].CheckMerge(sls[j], m_step * m_mergeTol);
 
                 if (n == -1)
                 {
@@ -368,7 +373,7 @@ void ProcessCrossField::AdvanceStreamlines(vector<Streamline> &sls)
                     continue;
                 }
 
-                int n2 = sls[j].CheckMerge(sls[i]);
+                int n2 = sls[j].CheckMerge(sls[i], m_step * m_mergeTol);
                 if (n2 != -1)
                 {
                     n = min(n, n2);
@@ -756,7 +761,7 @@ bool Streamline::Advance()
     return true;
 }
 
-int Streamline::CheckMerge(Streamline sl)
+int Streamline::CheckMerge(Streamline sl, NekDouble tol)
 {
     if (m_locked || sl.IsLocked())
     {
@@ -772,7 +777,7 @@ int Streamline::CheckMerge(Streamline sl)
     {
         // Check distance
         if (sqrt(pow(m_points[i][0] - point[0], 2) +
-                 pow(m_points[i][1] - point[1], 2)) < m_step)
+                 pow(m_points[i][1] - point[1], 2)) < tol)
         {
             // Check opposite directions
             if (abs(int(round((m_angles[i] - angle) / (M_PI / 2.0)))) % 4 == 2)
