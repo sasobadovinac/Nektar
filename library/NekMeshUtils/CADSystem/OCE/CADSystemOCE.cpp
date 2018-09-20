@@ -845,33 +845,62 @@ TopTools_ListOfShape CADSystemOCE::SplitFace(TopoDS_Shape shape)
         streamlines.pop_back();
     }
 
-    // Check duplicate end points
-    NekDouble tol = 1.0e-12;
+    // Check connecting end points
+    // We don't connect those meeting at existing vertices
+    NekDouble tol = 1.0e-6;
 
     for (int i = 0; i < streamlines.size(); ++i)
     {
-        for (int j = 0; j < i; ++j)
+        bool foundFront = false;
+        bool foundBack  = false;
+
+        TopExp_Explorer explr;
+        for (explr.Init(shape, TopAbs_VERTEX);
+             explr.More() && !(foundFront && foundBack); explr.Next())
         {
-            if (points[streamlines[i].front()].IsEqual(
-                    points[streamlines[j].front()], tol))
+            if (!foundFront &&
+                points[streamlines[i].front()].IsEqual(
+                    BRep_Tool::Pnt(TopoDS::Vertex(explr.Current())), tol))
             {
-                streamlines[i].front() = streamlines[j].front();
-            }
-            else if (points[streamlines[i].front()].IsEqual(
-                         points[streamlines[j].back()], tol))
-            {
-                streamlines[i].front() = streamlines[j].back();
+                foundFront = true;
             }
 
-            if (points[streamlines[i].back()].IsEqual(
-                    points[streamlines[j].front()], tol))
+            if (!foundBack &&
+                points[streamlines[i].back()].IsEqual(
+                    BRep_Tool::Pnt(TopoDS::Vertex(explr.Current())), tol))
             {
-                streamlines[i].back() = streamlines[j].front();
+                foundBack = true;
             }
-            else if (points[streamlines[i].back()].IsEqual(
-                         points[streamlines[j].back()], tol))
+        }
+
+        for (int j = 0; j < i; ++j)
+        {
+            if (!foundFront)
             {
-                streamlines[i].back() = streamlines[j].back();
+                if (points[streamlines[i].front()].IsEqual(
+                        points[streamlines[j].front()], tol))
+                {
+                    streamlines[i].front() = streamlines[j].front();
+                }
+                else if (points[streamlines[i].front()].IsEqual(
+                             points[streamlines[j].back()], tol))
+                {
+                    streamlines[i].front() = streamlines[j].back();
+                }
+            }
+
+            if (!foundBack)
+            {
+                if (points[streamlines[i].back()].IsEqual(
+                        points[streamlines[j].front()], tol))
+                {
+                    streamlines[i].back() = streamlines[j].front();
+                }
+                else if (points[streamlines[i].back()].IsEqual(
+                             points[streamlines[j].back()], tol))
+                {
+                    streamlines[i].back() = streamlines[j].back();
+                }
             }
         }
     }
@@ -947,32 +976,54 @@ TopTools_ListOfShape CADSystemOCE::SplitFace(TopoDS_Shape shape)
         wires.push_back(mw.Wire());
     }
 
-    ASSERTL0(wires.size() == 1, "Only 1 wire supported at the moment")
+    TopTools_ListOfShape listShapes;
+    listShapes.Append(shape);
 
-    TopExp_Explorer explr;
-    explr.Init(shape, TopAbs_FACE);
-    TopoDS_Face face = TopoDS::Face(explr.Current());
+    cout << wires.size() << " wires" << endl;
 
-    BRepFeat_SplitShape splitter(shape);
-    splitter.Add(wires[0], face);
-    splitter.Build();
-    TopTools_ListOfShape splitFace = splitter.Modified(shape);
+    // Split for each wire
+    for (auto &w : wires)
+    {
+        int n = listShapes.Extent();
+
+        for (int i = 0; i < n; ++i)
+        {
+            BRepFeat_SplitShape splitter(listShapes.First());
+
+            TopExp_Explorer explr;
+            for (explr.Init(listShapes.First(), TopAbs_FACE); explr.More();
+                 explr.Next())
+            {
+                splitter.Add(w, TopoDS::Face(explr.Current()));
+            }
+
+            splitter.Build();
+            TopTools_ListOfShape splitFace =
+                splitter.Modified(listShapes.First());
+
+            while (!splitFace.IsEmpty())
+            {
+                listShapes.Append(splitFace.First());
+                splitFace.RemoveFirst();
+            }
+
+            listShapes.RemoveFirst();
+        }
+    }
 
     // For visualisation purposes
     TopoDS_Builder builder;
     TopoDS_Compound comp;
     builder.MakeCompound(comp);
 
-    int i = 0;
+    cout << "There are " << listShapes.Extent() << " faces after splitting"
+         << endl;
 
-    while (!splitFace.IsEmpty())
+    while (!listShapes.IsEmpty())
     {
-        builder.Add(comp, splitFace.First());
-        splitFace.RemoveFirst();
-        ++i;
+        builder.Add(comp, listShapes.First());
+        listShapes.RemoveFirst();
     }
-
-    cout << "There are " << i << " faces after splitting" << endl;
 
     STEPControl_Writer aWriter;
     IFSelect_ReturnStatus aStat = aWriter.Transfer(comp, STEPControl_AsIs);
@@ -982,7 +1033,7 @@ TopTools_ListOfShape CADSystemOCE::SplitFace(TopoDS_Shape shape)
         cout << "Writing error" << endl;
     }
 
-    return splitFace;
+    return listShapes;
 }
 }
 }
