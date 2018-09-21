@@ -129,14 +129,14 @@ bool CADSystemOCE::LoadCAD()
 
     if (m_streamlines.size())
     {
-        TopTools_ListOfShape splitFaces = SplitFace(shape);
+        SplitFace(shape);
     }
 
     TopExp_Explorer explr;
 
     TopTools_DataMapOfShapeShape modShape;
 
-    if(!m_2d)
+    if (!m_2d || m_streamlines.size())
     {
         BRepBuilderAPI_Sewing sew(1e-1);
 
@@ -157,14 +157,17 @@ bool CADSystemOCE::LoadCAD()
 
         shape = sew.SewedShape();
 
-        int shell = 0;
-        for (explr.Init(shape, TopAbs_SHELL); explr.More(); explr.Next())
+        if (!m_2d)
         {
-            shell++;
-        }
+            int shell = 0;
+            for (explr.Init(shape, TopAbs_SHELL); explr.More(); explr.Next())
+            {
+                shell++;
+            }
 
-        ASSERTL0(shell == 1,
-             "Was not able to form a topological water tight shell");
+            ASSERTL0(shell == 1,
+                     "Was not able to form a topological water tight shell");
+        }
     }
 
     // build map of verticies
@@ -812,7 +815,7 @@ TopoDS_Shape CADSystemOCE::BuildGeo(string geo)
     return sf.Face();
 }
 
-TopTools_ListOfShape CADSystemOCE::SplitFace(TopoDS_Shape shape)
+void CADSystemOCE::SplitFace(TopoDS_Shape &shape)
 {
     ifstream file;
     file.open(m_streamlines);
@@ -1011,29 +1014,29 @@ TopTools_ListOfShape CADSystemOCE::SplitFace(TopoDS_Shape shape)
         }
     }
 
-    // For visualisation purposes
-    TopoDS_Builder builder;
-    TopoDS_Compound comp;
-    builder.MakeCompound(comp);
-
     cout << "There are " << listShapes.Extent() << " faces after splitting"
          << endl;
 
+    TopoDS_Builder builder;
+    TopoDS_Shell shell;
+    builder.MakeShell(shell);
+
     while (!listShapes.IsEmpty())
     {
-        builder.Add(comp, listShapes.First());
+        builder.Add(shell, listShapes.First());
         listShapes.RemoveFirst();
     }
 
+    shape = shell;
+
+    // For visualisation purposes
     STEPControl_Writer aWriter;
-    IFSelect_ReturnStatus aStat = aWriter.Transfer(comp, STEPControl_AsIs);
+    IFSelect_ReturnStatus aStat = aWriter.Transfer(shape, STEPControl_AsIs);
     aStat                       = aWriter.Write("test.stp");
     if (aStat != IFSelect_RetDone)
     {
         cout << "Writing error" << endl;
     }
-
-    return listShapes;
 }
 }
 }
