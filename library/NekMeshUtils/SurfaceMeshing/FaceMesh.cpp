@@ -148,71 +148,78 @@ void FaceMesh::Mesh()
     Stretching();
     OrientateCurves();
 
-    int numPoints = 0;
-    for (int i = 0; i < orderedLoops.size(); i++)
+    if (!m_quad)
     {
-        numPoints += orderedLoops[i].size();
-        for (int j = 0; j < orderedLoops[i].size(); j++)
+        int numPoints = 0;
+        for (int i = 0; i < orderedLoops.size(); i++)
         {
-            m_inBoundary.insert(orderedLoops[i][j]);
+            numPoints += orderedLoops[i].size();
+            for (int j = 0; j < orderedLoops[i].size(); j++)
+            {
+                m_inBoundary.insert(orderedLoops[i][j]);
+            }
         }
-    }
 
-    stringstream ss;
-    ss << "3 points required for triangulation, " << numPoints << " in loop"
-       << endl;
-    ss << "curves: ";
-    for (int i = 0; i < m_edgeloops.size(); i++)
-    {
-        for (int j = 0; j < m_edgeloops[i]->edges.size(); j++)
+        stringstream ss;
+        ss << "3 points required for triangulation, " << numPoints << " in loop"
+           << endl;
+        ss << "curves: ";
+        for (int i = 0; i < m_edgeloops.size(); i++)
         {
-            ss << m_edgeloops[i]->edges[j]->GetId() << " ";
+            for (int j = 0; j < m_edgeloops[i]->edges.size(); j++)
+            {
+                ss << m_edgeloops[i]->edges[j]->GetId() << " ";
+            }
         }
-    }
 
-    ASSERTL0(numPoints > 2, "number of verts in face is less than 3");
+        ASSERTL0(numPoints > 2, "number of verts in face is less than 3");
 
-    // create interface to triangle thirdparty library
-    TriangleInterfaceSharedPtr pplanemesh =
-        MemoryManager<TriangleInterface>::AllocateSharedPtr();
+        // create interface to triangle thirdparty library
+        TriangleInterfaceSharedPtr pplanemesh =
+            MemoryManager<TriangleInterface>::AllocateSharedPtr();
 
-    vector<Array<OneD, NekDouble> > centers;
-    for (int i = 0; i < m_edgeloops.size(); i++)
-    {
-        centers.push_back(m_edgeloops[i]->center);
-    }
-
-    pplanemesh->Assign(orderedLoops, centers, m_id, m_str);
-
-    pplanemesh->Mesh();
-
-    pplanemesh->Extract(m_connec);
-
-    bool repeat     = true;
-    int meshcounter = 1;
-
-    // continuously remesh until all triangles conform to the spacing in the
-    // octree
-    while (repeat)
-    {
-        repeat = Validate();
-        if (!repeat)
+        vector<Array<OneD, NekDouble> > centers;
+        for (int i = 0; i < m_edgeloops.size(); i++)
         {
-            break;
+            centers.push_back(m_edgeloops[i]->center);
         }
-        m_connec.clear();
-        pplanemesh->AssignStiener(m_stienerpoints);
+
+        pplanemesh->Assign(orderedLoops, centers, m_id, m_str);
+
         pplanemesh->Mesh();
+
         pplanemesh->Extract(m_connec);
-        meshcounter++;
-        //    break;
+
+        bool repeat     = true;
+        int meshcounter = 1;
+
+        // continuously remesh until all triangles conform to the spacing in the
+        // octree
+        while (repeat)
+        {
+            repeat = Validate();
+            if (!repeat)
+            {
+                break;
+            }
+            m_connec.clear();
+            pplanemesh->AssignStiener(m_stienerpoints);
+            pplanemesh->Mesh();
+            pplanemesh->Extract(m_connec);
+            meshcounter++;
+            //    break;
+        }
     }
 
     // build a local version of the mesh (one set of triangles).  this is done
     // so edge connectivity infomration can be used for optimisation
+    // build single quad in cross-field case
     BuildLocalMesh();
 
-    OptimiseLocalMesh();
+    if (!m_quad)
+    {
+        OptimiseLocalMesh();
+    }
 
     // make new elements and add to list from list of nodes and connectivity
     // from triangle removing unnesercary infomration from the elements
@@ -901,19 +908,31 @@ void FaceMesh::DiagonalSwap()
 
 void FaceMesh::BuildLocalMesh()
 {
-    /*************************
-    // build a local set of nodes edges and elemenets for optimstaion prior to
-    putting them into m_mesh
-    */
-
-    for (int i = 0; i < m_connec.size(); i++)
+    if (m_quad)
     {
-        ElmtConfig conf(LibUtilities::eTriangle, 1, false, false);
+        // Build single quad
+        ASSERTL0(orderedLoops.size() == 1,
+                 "The face shouldn't have a hole for quad meshing")
+        ASSERTL0(orderedLoops[0].size() == 4,
+                 "The face should have 4 nodes for quad meshing")
+
+        /*
+        // Needed?
+        for (int i = 0; i < orderedLoops.size(); i++)
+        {
+            for (int j = 0; j < orderedLoops[i].size(); j++)
+            {
+                m_inBoundary.insert(orderedLoops[i][j]);
+            }
+        }
+        */
+
+        ElmtConfig conf(LibUtilities::eQuadrilateral, 1, false, false);
 
         vector<int> tags;
         tags.push_back(m_compId);
         ElementSharedPtr E = GetElementFactory().CreateInstance(
-            LibUtilities::eTriangle, conf, m_connec[i], tags);
+            LibUtilities::eQuadrilateral, conf, orderedLoops[0], tags);
         E->m_parentCAD = m_cadsurf;
 
         vector<NodeSharedPtr> nods = E->GetVertexList();
@@ -925,6 +944,34 @@ void FaceMesh::BuildLocalMesh()
 
         E->SetId(m_localElements.size());
         m_localElements.push_back(E);
+    }
+    else
+    {
+        /*************************
+        // build a local set of nodes edges and elemenets for optimstaion prior
+        // to putting them into m_mesh
+        */
+
+        for (int i = 0; i < m_connec.size(); i++)
+        {
+            ElmtConfig conf(LibUtilities::eTriangle, 1, false, false);
+
+            vector<int> tags;
+            tags.push_back(m_compId);
+            ElementSharedPtr E = GetElementFactory().CreateInstance(
+                LibUtilities::eTriangle, conf, m_connec[i], tags);
+            E->m_parentCAD = m_cadsurf;
+
+            vector<NodeSharedPtr> nods = E->GetVertexList();
+            for (int j = 0; j < nods.size(); j++)
+            {
+                // nodes are already unique some will insert some wont
+                m_localNodes.insert(nods[j]);
+            }
+
+            E->SetId(m_localElements.size());
+            m_localElements.push_back(E);
+        }
     }
 
     for (int i = 0; i < m_localElements.size(); ++i)

@@ -211,15 +211,17 @@ void InputMCF::ParseFile(string nm)
 
     it = parameters.find("MinDelta");
     ASSERTL0(it != parameters.end(), "no mindelta defined");
-    m_minDelta = it->second;
+    m_minDelta =
+        m_crossfield ? to_string(numeric_limits<NekDouble>::max()) : it->second;
 
     it = parameters.find("MaxDelta");
     ASSERTL0(it != parameters.end(), "no maxdelta defined");
-    m_maxDelta = it->second;
+    m_maxDelta =
+        m_crossfield ? to_string(numeric_limits<NekDouble>::max()) : it->second;
 
     it = parameters.find("EPS");
     ASSERTL0(it != parameters.end(), "no eps defined");
-    m_eps = it->second;
+    m_eps = m_crossfield ? "0.5" : it->second;
 
     it = parameters.find("Order");
     ASSERTL0(it != parameters.end(), "no order defined");
@@ -401,7 +403,7 @@ void InputMCF::Process()
         module->RegisterConfig("mindel", m_minDelta);
         module->RegisterConfig("maxdel", m_maxDelta);
         module->RegisterConfig("eps", m_eps);
-        if (m_refine)
+        if (m_refine && !m_crossfield)
         {
             module->RegisterConfig("refinement", m_refinement);
         }
@@ -422,35 +424,43 @@ void InputMCF::Process()
         m_mesh->m_spaceDim = 2;
         module             = GetModuleFactory().CreateInstance(
             ModuleKey(eProcessModule, "2dgenerator"), m_mesh);
-        if (m_makeBL)
+
+        if (m_crossfield)
         {
-            module->RegisterConfig("blcurves", m_blsurfs);
-            module->RegisterConfig("blthick", m_blthick);
-
-            if (m_adjust)
+            module->RegisterConfig("crossfield", "");
+        }
+        else
+        {
+            if (m_makeBL)
             {
-                module->RegisterConfig("bltadjust", m_adjustment);
+                module->RegisterConfig("blcurves", m_blsurfs);
+                module->RegisterConfig("blthick", m_blthick);
 
-                if (m_adjustall)
+                if (m_adjust)
                 {
-                    module->RegisterConfig("adjustblteverywhere", "");
+                    module->RegisterConfig("bltadjust", m_adjustment);
+
+                    if (m_adjustall)
+                    {
+                        module->RegisterConfig("adjustblteverywhere", "");
+                    }
+                }
+
+                if (m_smoothbl)
+                {
+                    module->RegisterConfig("smoothbl", "");
+                }
+
+                if (m_spaceoutbl)
+                {
+                    module->RegisterConfig("spaceoutbl", m_spaceoutblthr);
+                    module->RegisterConfig("nospaceoutsurf", m_nospaceoutsurf);
                 }
             }
-
-            if (m_smoothbl)
+            if (m_periodic.size())
             {
-                module->RegisterConfig("smoothbl", "");
+                module->RegisterConfig("periodic", m_periodic);
             }
-
-            if (m_spaceoutbl)
-            {
-                module->RegisterConfig("spaceoutbl", m_spaceoutblthr);
-                module->RegisterConfig("nospaceoutsurf", m_nospaceoutsurf);
-            }
-        }
-        if (m_periodic.size())
-        {
-            module->RegisterConfig("periodic", m_periodic);
         }
 
         try

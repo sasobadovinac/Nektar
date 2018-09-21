@@ -60,8 +60,10 @@ public:
     FaceMesh(const int                                id,
              MeshSharedPtr                            m,
              const std::map<int, CurveMeshSharedPtr> &cmeshes,
-             const int                                comp)
-        : m_mesh(m), m_curvemeshes(cmeshes), m_id(id), m_compId(comp)
+             const int                                comp,
+             bool                                     quad = false)
+        : m_mesh(m), m_curvemeshes(cmeshes), m_id(id), m_compId(comp),
+          m_quad(quad)
 
     {
         m_cadsurf = m_mesh->m_cad->GetSurf(m_id);
@@ -161,6 +163,8 @@ private:
     NodeSet m_inBoundary;
     /// identity to put into element tags
     int m_compId;
+    /// this face is a quad and should be meshed with a single quad element
+    bool m_quad;
 };
 
 typedef std::shared_ptr<FaceMesh> FaceMeshSharedPtr;

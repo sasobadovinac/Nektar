@@ -73,6 +73,8 @@ Generator2D::Generator2D(MeshSharedPtr m) : ProcessModule(m)
         false, "0.5", "Threshold to space out BL according to Delta");
     m_config["nospaceoutsurf"] =
         ConfigOption(false, "", "Surfaces where spacing out shouldn't be used");
+    m_config["crossfield"] =
+        ConfigOption(true, "0", "Cross-field based quad mesh");
 }
 
 Generator2D::~Generator2D()
@@ -211,7 +213,7 @@ void Generator2D::Process()
         }
 
         m_facemeshes[i] = MemoryManager<FaceMesh>::AllocateSharedPtr(
-            i, m_mesh, m_curvemeshes, 99 + i);
+            i, m_mesh, m_curvemeshes, 99 + i, m_config["crossfield"].beenSet);
         m_facemeshes[i]->Mesh();
     }
 
