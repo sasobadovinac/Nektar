@@ -46,10 +46,10 @@ template <typename tKey,        // reference tag (e.g. string, int)
           typename... tParam>
 void export_NekFactory()
 {
-	// py::class_<NekFactory,
- //        std::shared_ptr<NekFactory>,
- //            boost::noncopyable>(
- //               "NekFactory", py::no_init);
+	py::class_<NekFactory<ModuleKey, Module, FieldSharedPtr>,
+        std::shared_ptr<NekFactory<ModuleKey, Module, FieldSharedPtr>>,
+            boost::noncopyable>(
+               "NekFactory", py::no_init);
 }
 
 template void export_NekFactory<ModuleKey, Module, FieldSharedPtr>();
