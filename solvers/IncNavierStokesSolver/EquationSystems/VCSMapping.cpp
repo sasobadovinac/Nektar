@@ -1000,4 +1000,9 @@ namespace Nektar
             m_mapping->VelocityLaplacian(velPhys, outarray, 1.0);
         }
 
+        bool VCSMapping::v_GlobalMappingSolver(void)
+        {
+            return true; 
+        }
+
 } //end of namespace

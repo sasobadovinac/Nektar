@@ -231,7 +231,9 @@ class Interpolator;
             
             SOLVER_UTILS_EXPORT inline Array<
             OneD, MultiRegions::ExpListSharedPtr> &UpdateFields();
-            
+
+            SOLVER_UTILS_EXPORT inline Array<
+            OneD, MultiRegions::ExpListSharedPtr> &UpdateXMappingFields();            
 
             /// Get hold of FieldInfoMap so it can be updated
             SOLVER_UTILS_EXPORT inline LibUtilities::FieldMetaDataMap 
@@ -253,6 +255,9 @@ class Interpolator;
             
             SOLVER_UTILS_EXPORT inline const std::string 
             GetVariable(unsigned int i);
+
+            SOLVER_UTILS_EXPORT inline const std::string 
+            GetXMappingVariable(unsigned int i);
             
             SOLVER_UTILS_EXPORT inline int GetTraceTotPoints();
             
@@ -330,6 +335,10 @@ class Interpolator;
             /// Virtual function to identify if operator is negated in DoSolve
             SOLVER_UTILS_EXPORT virtual bool v_NegatedOp();
 
+            /// Virtual function to identify if solver is using global mappings 
+            SOLVER_UTILS_EXPORT virtual bool v_GlobalMappingSolver();
+            
+            
         protected:
             /// Communicator
             LibUtilities::CommSharedPtr                 m_comm;
@@ -638,6 +647,12 @@ class Interpolator;
         {
             return m_fields;
         }
+
+        /// 
+        inline Array<OneD, MultiRegions::ExpListSharedPtr> &EquationSystem::UpdateXMappingFields(void)
+        {
+            return m_fields;
+        }
         
         /// Return final time
         inline NekDouble EquationSystem::GetFinalTime()
@@ -675,7 +690,12 @@ class Interpolator;
         {
             return m_session->GetVariable(i);
         }
-        
+    
+        inline const std::string EquationSystem::GetXMappingVariable(unsigned int i)
+        {
+            return m_session->GetVariable(i);
+        }
+
         inline int EquationSystem::GetTraceTotPoints(void)
         {
             return GetTraceNpoints();

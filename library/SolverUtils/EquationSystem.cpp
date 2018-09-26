@@ -272,11 +272,20 @@ namespace Nektar
             m_checkIfSystemSingular = v_GetSystemSingularChecks();
 
             int i;
-            int nvariables = m_session->GetVariables().size();
+
+            if(m_nMappingFields)
+                {
+                    int nvariables = m_session->GetXMappingVariables().size();
+                }
+            else
+                {
+                    int nvariables = m_session->GetVariables().size();
+                }
+                
             bool DeclareCoeffPhysArrays = true;
 
-
             m_fields   = Array<OneD, MultiRegions::ExpListSharedPtr>(nvariables);
+
             m_spacedim = m_graph->GetSpaceDimension()+m_HomoDirec;
             m_expdim   = m_graph->GetMeshDimension();
 
@@ -1012,6 +1021,11 @@ namespace Nektar
          * only used in Arnoldi solves. Default is false.
          */
         bool EquationSystem::v_NegatedOp(void)
+        {
+            return false; 
+        }
+
+        bool EquationSystem::v_GlobalMappingSolver(void)
         {
             return false; 
         }

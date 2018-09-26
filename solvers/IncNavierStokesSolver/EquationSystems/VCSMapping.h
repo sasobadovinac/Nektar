@@ -74,6 +74,9 @@ namespace Nektar
 
         virtual void v_InitObject();
 
+        /// Virtual function to identify if solver is using global mappings 
+        virtual bool v_GlobalMappingSolver();
+          
     protected:
         // Mapping object
         GlobalMapping::MappingSharedPtr             m_mapping;

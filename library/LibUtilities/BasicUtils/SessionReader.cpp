@@ -1104,6 +1104,16 @@ namespace Nektar
             return m_variables[idx];
         }
 
+        /**
+         * TO DO ROBIN
+         */
+        const std::string& SessionReader::GetXMappingVariable(
+            const unsigned int &idx) const
+        {
+            ASSERTL0(idx < m_variables.size(), "Variable index out of range.");
+            return m_variables[idx];
+        }
+
 
 
         /**
@@ -1121,6 +1131,15 @@ namespace Nektar
          *
          */
         std::vector<std::string> SessionReader::GetVariables() const
+        {
+            return m_variables;
+        }
+
+
+        /**
+         * TO DO ROBIN
+         */
+        std::vector<std::string> SessionReader::GetXMappingVariables() const
         {
             return m_variables;
         }

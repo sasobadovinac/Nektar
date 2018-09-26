@@ -107,7 +107,13 @@ void DriverModifiedArnoldi::v_Execute(ostream &out)
     int i               = 0;
     int j               = 0;
     int nq              = m_equ[0]->UpdateFields()[0]->GetNcoeffs();
-    int ntot            = m_nfields*nq;
+
+    if(m_nMappingFields)
+    {
+        int nq = m_equ[0]->UpdateXMappingFields()[0]->GetNcoeffs();
+    }
+
+    int ntot            = m_nTotFields*nq;
     int converged       = 0;
     NekDouble resnorm   = 0.0;
     ofstream evlout;

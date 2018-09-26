@@ -330,6 +330,9 @@ namespace Nektar
             /// Returns the names of all variables.
             LIB_UTILITIES_EXPORT std::vector<std::string> GetVariables() const;
 
+            /// Returns the names of all mapping variables.
+            LIB_UTILITIES_EXPORT std::vector<std::string> GetXMappingVariables() const;
+
             /* ------ FUNCTIONS ------*/
             /// Checks if a specified function is defined in the XML document.
             LIB_UTILITIES_EXPORT bool DefinesFunction(

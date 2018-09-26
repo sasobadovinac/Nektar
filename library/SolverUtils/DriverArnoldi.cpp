@@ -66,6 +66,7 @@ DriverArnoldi::~DriverArnoldi()
 /**
  * Arnoldi driver initialisation
  */
+// Spencer
 void DriverArnoldi::v_InitObject(ostream &out)
 {
     Driver::v_InitObject(out);
@@ -77,13 +78,24 @@ void DriverArnoldi::v_InitObject(ostream &out)
     {
         m_period  = m_session->GetParameter("TimeStep")
                   * m_session->GetParameter("NumSteps");
-        m_nfields = m_equ[0]->UpdateFields().num_elements() - 1;
+        m_nFields = m_equ[0]->UpdateFields().num_elements() - 1;
 
+        if(m_equ[0]->v_GlobalMappingSolver())
+        {
+            // Change to DOF's Mapping
+            m_nMappingFields = 2;
+        }
+        else
+        {
+            m_nMappingFields = 0;
+        }
+
+        m_nTotFields = m_nFields + m_nMappingFields; 
     }
     else
     {
         m_period  = 1.0;
-        m_nfields = m_equ[0]->UpdateFields().num_elements();
+        m_nTotFields = m_nFields = m_equ[0]->UpdateFields().num_elements();
     }
 
     if(m_session->DefinesSolverInfo("ModeType") &&
@@ -92,7 +104,7 @@ void DriverArnoldi::v_InitObject(ostream &out)
         boost::iequals(m_session->GetSolverInfo("ModeType"),
                        "HalfMode")))
     {
-        for(int i = 0; i < m_nfields; ++i)
+        for(int i = 0; i < m_nFields; ++i)
         {
             m_equ[0]->UpdateFields()[i]->SetWaveSpace(true);
         }
@@ -184,10 +196,21 @@ void DriverArnoldi::CopyArnoldiArrayToField(Array<OneD, NekDouble> &array)
     Array<OneD, MultiRegions::ExpListSharedPtr>& fields = m_equ[0]->UpdateFields();
     int nq = fields[0]->GetNcoeffs();
 
-    for (int k = 0; k < m_nfields; ++k)
+    for (int k = 0; k < m_nFields; ++k)
     {
         Vmath::Vcopy(nq, &array[k*nq], 1, &fields[k]->UpdateCoeffs()[0], 1);
         fields[k]->SetPhysState(false);
+    }
+
+    if(m_nMappingFields)
+    {
+        Array<OneD, MultiRegions::ExpListSharedPtr>& Xfields = m_equ[0]->UpdateXMappingFields();
+
+        for(int k = 0; k < m_nMappingFields; ++k)
+        {
+            Vmath::Vcopy(nq, &array[(k+m_nFields)*nq], 1, &Xfields[k]->UpdateCoeffs()[0], 1);
+            Xfields[k]->SetPhysState(false);
+        }
     }
 };
 
@@ -195,6 +218,7 @@ void DriverArnoldi::CopyArnoldiArrayToField(Array<OneD, NekDouble> &array)
  * Copy field variables which depend from either the m_fields
  * or m_forces array the Arnoldi array
  */
+// Robin
 void DriverArnoldi::CopyFieldToArnoldiArray(Array<OneD, NekDouble> &array)
 {
 
@@ -212,12 +236,23 @@ void DriverArnoldi::CopyFieldToArnoldiArray(Array<OneD, NekDouble> &array)
         fields = m_equ[m_nequ-1]->UpdateFields();
     }
 
-    for (int k = 0; k < m_nfields; ++k)
+    for (int k = 0; k < m_nFields; ++k)
     {
         int nq = fields[0]->GetNcoeffs();
         Vmath::Vcopy(nq,  &fields[k]->GetCoeffs()[0], 1, &array[k*nq], 1);
         fields[k]->SetPhysState(false);
+    }
 
+    if(m_nMappingFields)
+    {
+        fields = m_equ[0]->UpdateXMappingFields();
+
+        for (int k = 0; k < m_nMappingFields; ++k)
+        {       
+            int nq = fields[0]->GetNcoeffs();
+            Vmath::Vcopy(nq,  &fields[k]->GetCoeffs()[0], 1, &array[(k+m_nFields)*nq], 1);
+            fields[k]->SetPhysState(false);
+        }       
     }
 };
 
@@ -234,7 +269,7 @@ void DriverArnoldi::CopyFwdToAdj()
         fields = m_equ[0]->UpdateFields();
         int nq = fields[0]->GetNcoeffs();
 
-        for (int k=0 ; k < m_nfields; ++k)
+        for (int k=0 ; k < m_nFields; ++k)
         {
             Vmath::Vcopy(nq,
                          &fields[k]->GetCoeffs()[0],                      1,
@@ -249,37 +284,63 @@ void DriverArnoldi::CopyFwdToAdj()
     }
 };
 
+// Robin
 void DriverArnoldi::WriteFld(std::string file, std::vector<Array<OneD, NekDouble> > coeffs)
 {
 
-    std::vector<std::string>  variables(m_nfields);
+    std::vector<std::string>  variables(m_nFields);
 
-    ASSERTL1(coeffs.size() >= m_nfields, "coeffs is not of the correct length");
-    for(int i = 0; i < m_nfields; ++i)
+    ASSERTL1(coeffs.size() >= m_nFields, "coeffs is not of the correct length");
+    for(int i = 0; i < m_nFields; ++i)
     {
         variables[i] = m_equ[0]->GetVariable(i);
     }
 
     m_equ[0]->WriteFld(file,m_equ[0]->UpdateFields()[0], coeffs, variables);
+
+    if(m_nMappingFields)
+    {
+        ASSERTL1(coeffs.size() >= m_nTotFields, "coeffs is not of the correct length");
+        for(int i = m_nFields; i < m_nMappingFields; ++i)
+        {
+            variables[i] = m_equ[0]->GetXMappingVariable(i);
+        }
+
+        m_equ[0]->WriteFld(file,m_equ[0]->UpdateFields()[0], coeffs, variables);
+    }
 }
 
-
+// Robin
 void DriverArnoldi::WriteFld(std::string file, Array<OneD, NekDouble> coeffs)
 {
 
-    std::vector<std::string>  variables(m_nfields);
-    std::vector<Array<OneD, NekDouble> > fieldcoeffs(m_nfields);
+    std::vector<std::string>  variables(m_nFields);
+    std::vector<Array<OneD, NekDouble> > fieldcoeffs(m_nFields);
 
     int ncoeffs = m_equ[0]->UpdateFields()[0]->GetNcoeffs();
     ASSERTL1(coeffs.num_elements() >= ncoeffs*m_nfields,"coeffs is not of sufficient size");
 
-    for(int i = 0; i < m_nfields; ++i)
+    for(int i = 0; i < m_nFields; ++i)
     {
         variables[i] = m_equ[0]->GetVariable(i);
         fieldcoeffs[i] = coeffs + i*ncoeffs;
     }
 
     m_equ[0]->WriteFld(file,m_equ[0]->UpdateFields()[0], fieldcoeffs, variables);
+
+    if(m_nMappingFields)
+    {
+        ncoeffs = m_equ[0]->UpdateXMappingFields()[0]->GetNcoeffs();
+        ASSERTL1(coeffs.num_elements() >= ncoeffs*m_nTotFields,"coeffs is not of sufficient size");
+
+        for(int i = m_nFields; i < m_nTotFields; ++i)
+        {
+            variables[i] = m_equ[0]->GetXMappingVariable(i);
+            fieldcoeffs[i] = coeffs + i*ncoeffs;
+        }
+
+        m_equ[0]->WriteFld(file,m_equ[0]->UpdateXMappingFields()[0], fieldcoeffs, variables);
+    }
 }
 
 void DriverArnoldi::WriteEvs(

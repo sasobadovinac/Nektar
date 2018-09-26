@@ -61,7 +61,9 @@ protected:
 
     int       m_infosteps; /// interval to dump information if required.
 
-    int       m_nfields;
+    int       m_nTotFields; // Total number of fields for Arnoldi solver = m_nFields+m_nMappingFields
+    int       m_nFields;    // Number of solution fields to be used from equationsystem
+    int       m_nMappingFields; // Number of mapping fields 
     NekDouble m_realShift;
     NekDouble m_imagShift;
     int       m_negatedOp;   /// Operator in solve call is negated
