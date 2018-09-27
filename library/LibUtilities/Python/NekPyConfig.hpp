@@ -35,14 +35,6 @@
 
 #include <boost/version.hpp>
 
-#include <FieldUtils/Field.hpp>
-#include <FieldUtils/Module.h>
-
-#include <LibUtilities/BasicUtils/NekFactory.hpp>
-
-using namespace Nektar::LibUtilities;
-using namespace Nektar::FieldUtils;
-
 #ifdef BOOST_HAS_NUMPY
 
 #include <boost/python.hpp>
@@ -119,12 +111,3 @@ namespace np = boost::numpy;
 #define NEKPY_SHPTR_FIX(SOURCE,TARGET)
 #endif
 
-template <typename tKey,     
-          typename tBase,
-          typename... tParam>
-void export_NekFactory() {
-    py::class_<NekFactory<ModuleKey, Module, FieldSharedPtr>,
-        std::shared_ptr<NekFactory<ModuleKey, Module, FieldSharedPtr>>,
-            boost::noncopyable>(
-               "ModuleFactory", py::no_init);
-}

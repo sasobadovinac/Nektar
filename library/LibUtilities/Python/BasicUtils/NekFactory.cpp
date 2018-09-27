@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File: Expansion.cpp
+// File: NekFactory.cpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -29,25 +29,27 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 //
-// Description: Python wrapper for Expansion.
+// Description: Python wrapper for NekFactory.
 //
 ///////////////////////////////////////////////////////////////////////////////
 
+#include <FieldUtils/Field.hpp>
+#include <FieldUtils/Module.h>
+#include <LibUtilities/BasicUtils/NekFactory.hpp>
 #include <LibUtilities/Python/NekPyConfig.hpp>
-#include <LocalRegions/Expansion.h>
 
-using namespace Nektar;
-using namespace Nektar::StdRegions;
-using namespace Nektar::LocalRegions;
-using namespace Nektar::SpatialDomains;
+using namespace Nektar::LibUtilities;
+using namespace Nektar::FieldUtils;
 
-void export_Expansion()
+template <typename tKey,        // reference tag (e.g. string, int)
+          typename tBase,       // base class
+          typename... tParam>
+void export_NekFactory()
 {
-    py::class_<Expansion,
-               std::shared_ptr<Expansion>, py::bases<StdExpansion>,
-               boost::noncopyable>(
-                   "Expansion", py::no_init)
-
-        .def("GetGeom", &Expansion::GetGeom)
-        ;
+	py::class_<NekFactory<ModuleKey, Module, FieldSharedPtr>,
+        std::shared_ptr<NekFactory<ModuleKey, Module, FieldSharedPtr>>,
+            boost::noncopyable>(
+               "NekFactory", py::no_init);
 }
+
+template void export_NekFactory<ModuleKey, Module, FieldSharedPtr>();
