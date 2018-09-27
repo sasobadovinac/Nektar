@@ -33,23 +33,15 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#include <FieldUtils/Field.hpp>
-#include <FieldUtils/Module.h>
 #include <LibUtilities/BasicUtils/NekFactory.hpp>
 #include <LibUtilities/Python/NekPyConfig.hpp>
 
 using namespace Nektar::LibUtilities;
-using namespace Nektar::FieldUtils;
 
-template <typename tKey,        // reference tag (e.g. string, int)
-          typename tBase,       // base class
-          typename... tParam>
 void export_NekFactory()
 {
 	// py::class_<NekFactory,
- //        std::shared_ptr<NekFactory>,
- //            boost::noncopyable>(
+ //           std::shared_ptr<NekFactory>,
+ //           boost::noncopyable>(
  //               "NekFactory", py::no_init);
 }
-
-template void export_NekFactory<ModuleKey, Module, FieldSharedPtr>();

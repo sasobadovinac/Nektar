@@ -33,19 +33,10 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#include <FieldUtils/Field.hpp>
-#include <FieldUtils/Module.h>
 #include <LibUtilities/Python/NekPyConfig.hpp>
 
-using namespace Nektar::FieldUtils;
-
 void export_Basis();
-
-template<typename tKey,        // reference tag (e.g. string, int)
-         typename tBase,       // base class
-         typename... tParam>
 void export_NekFactory();
-
 void export_Points();
 void export_SessionReader();
 void export_ShapeType();
@@ -62,7 +53,7 @@ BOOST_PYTHON_MODULE(_LibUtilities)
 
     export_Basis();
     export_Points();
-    export_NekFactory<ModuleKey, Module, FieldSharedPtr>();
+    export_NekFactory();
     export_SessionReader();
     export_ShapeType();
     export_SharedArray<double>();
