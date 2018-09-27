@@ -35,6 +35,9 @@
 
 #include <boost/version.hpp>
 
+#include <LibUtilities/BasicUtils/NekFactory.hpp>
+#include <FieldUtils/Field.hpp>
+
 #ifdef BOOST_HAS_NUMPY
 
 #include <boost/python.hpp>

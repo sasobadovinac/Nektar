@@ -43,11 +43,11 @@ using namespace Nektar::SpatialDomains;
 
 void export_Expansion()
 {
-    py::class_<Expansion,
-               std::shared_ptr<Expansion>, py::bases<StdExpansion>,
+    py::class_<LocalRegions::Expansion,
+               std::shared_ptr<LocalRegions::Expansion>, py::bases<StdExpansion>,
                boost::noncopyable>(
                    "Expansion", py::no_init)
 
-        .def("GetGeom", &Expansion::GetGeom)
+        .def("GetGeom", &LocalRegions::Expansion::GetGeom)
         ;
 }
