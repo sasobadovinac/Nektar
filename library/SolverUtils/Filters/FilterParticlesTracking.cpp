@@ -602,7 +602,7 @@ void FilterParticlesTracking::AdvanceParticles(
 		{
 			crossParticles[i][j+particleOffsets[vRank]] =  particle.m_newCoord[i];
 		}
-		particle.m_used = false;
+		//particle.m_used = false;
 		j++;
 	    }
 	}
@@ -661,6 +661,7 @@ void FilterParticlesTracking::AdvanceParticles(
 					VelForce[(dim*order)+i+k*dim] = particle.m_force[k][i];
 					}
 				    }
+				particle.m_used = false;
 				vComm->GetRowComm()->Send(crossRankRecv[j], VelForce);
 				break;
 			    }	
@@ -721,11 +722,22 @@ void FilterParticlesTracking::AdvanceParticles(
 	    }
 	    else
 	    {
-		cout<<"Parcticle "<<crossParticlesId[j]<<" collide in rank "<<vRank<<endl;
-		//~ // Handle collisions if particle left the domain
-		//HandleCollision(pFields, particle);
+		// Just the rank with the particle evaluate collision
+		if (crossRankSend[j]==vRank)
+		{
+		    cout<<"Parcticle "<<crossParticlesId[j]<<" collide in rank "<<vRank<<endl;
+		    
+		    for (auto &particle : m_particles)
+		    {	
+			if (particle.m_id == crossParticlesId[j])
+			{   
+			//  Handle collisions if particle left the domain
+			    HandleCollision(pFields, particle);
+			}	
+		    }
+		}
 	    }
-	}
+	}	
     }					
 }
 
@@ -1092,32 +1104,31 @@ void FilterParticlesTracking::HandleCollision(
     const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
     Particle &particle)
 {
-	Array<OneD, NekDouble> collPntOLD(3);
-	
-	//cout<<"Particle ID: "<<particle.m_id<<" Cross: "<<particle.m_eId<<endl;
-	while (particle.m_eId == -1 && particle.m_used == true)
+    Array<OneD, NekDouble> collPntOLD(3);
+    //cout<<"Particle ID: "<<particle.m_id<<" Cross: "<<particle.m_eId<<endl;
+
+    while (particle.m_eId == -1 && particle.m_used == true)
     {
-		
-		particle.m_eId =
-            pFields[0]->GetExpIndex(particle.m_oldCoord, particle.m_locCoord,
-                                    NekConstants::kNekZeroTol);
-		cout<<endl<<"OP: ";
-     for (int j = 0; j < 3; ++j)
-            {
-              cout<< particle.m_oldCoord[j]<< " ";   
-            }
-      cout<< particle.m_eId <<endl;
+		//~ particle.m_eId =
+            //~ pFields[0]->GetExpIndex(particle.m_oldCoord, particle.m_locCoord,
+                                    //~ NekConstants::kNekZeroTol);
+		//~ cout<<endl<<"OP: ";
+     //~ for (int j = 0; j < 3; ++j)
+            //~ {
+              //~ cout<< particle.m_oldCoord[j]<< " ";   
+            //~ }
+      //~ cout<< particle.m_eId <<endl;
      
-     particle.m_eId =
-            pFields[0]->GetExpIndex(particle.m_newCoord, particle.m_locCoord,
-                                    NekConstants::kNekZeroTol);
+     //~ particle.m_eId =
+            //~ pFields[0]->GetExpIndex(particle.m_newCoord, particle.m_locCoord,
+                                    //~ NekConstants::kNekZeroTol);
     
-     cout<<"NP: ";
-     for (int j = 0; j < 3; ++j)
-            {
-              cout<< particle.m_newCoord[j]<< " ";   
-            }
-      cout<<  particle.m_eId  <<endl<<endl;
+     //~ cout<<"NP: ";
+     //~ for (int j = 0; j < 3; ++j)
+            //~ {
+              //~ cout<< particle.m_newCoord[j]<< " ";   
+            //~ }
+      //~ cout<<  particle.m_eId  <<endl<<endl;
 		
         // Boundary Expansion:  Boundary list
         Array<OneD, const MultiRegions::ExpListSharedPtr> bndExp;
@@ -1196,14 +1207,16 @@ void FilterParticlesTracking::HandleCollision(
                   }
             }
         }
+	
+	
          /////////////////////////////////       
-		// Check is the particle collision or leave the domain
+	// Check is the particle collision or leave the domain
         //~ cout<<"Boundary: "<<minBnd<<endl; 
         //~ cout<<"maxDotProd: "<<maxDotProd<<endl; 
         if (minBnd != -1 )
-		{	
-        if (m_boundaryRegionIsInList[minBnd] == 1 )
-        {
+	{	
+        //~ if (m_boundaryRegionIsInList[minBnd] == 1 )
+        //~ {
             //Particle collisioned
             
             // Magnitude and directions of incident vector
@@ -1230,20 +1243,19 @@ void FilterParticlesTracking::HandleCollision(
             }
 		
 		
-			int CPeId =
-            pFields[0]->GetExpIndex(collPnt, particle.m_locCoord,
-                                    NekConstants::kNekZeroTol);
+	    int CPeId = pFields[0]->GetExpIndex(collPnt, 
+			particle.m_locCoord, NekConstants::kNekZeroTol);
 
-			cout<<"CP: ";
-			for (int j = 0; j < 3; ++j)
-            {
-              cout<< collPnt[j]<< " ";   
-            }
-			cout<<  CPeId <<endl<<endl;
+		//~ cout<<"CP: ";
+		//~ for (int j = 0; j < 3; ++j)
+		//~ {
+		//~ 	cout<< collPnt[j]<< " ";   
+		//~ }
+		//~ cout<<  CPeId <<endl<<endl;
 
-	//~ xr2=[-2*u(1)*u(2)*x(2) - 2*u(1)*u(3)*x(3) + (-2*u(1)*u(1)+1)*x(1)
-     //~ -2*u(2)*u(1)*x(1) - 2*u(2)*u(3)*x(3) + (-2*u(2)*u(2)+1)*x(2)
-     //~ -2*u(3)*u(1)*x(1) - 2*u(3)*u(2)*x(2) + (-2*u(3)*u(3)+1)*x(3)]
+		//~ xr2=[-2*u(1)*u(2)*x(2) - 2*u(1)*u(3)*x(3) + (-2*u(1)*u(1)+1)*x(1)
+		//~ -2*u(2)*u(1)*x(1) - 2*u(2)*u(3)*x(3) + (-2*u(2)*u(2)+1)*x(2)
+		//~ -2*u(3)*u(1)*x(1) - 2*u(3)*u(2)*x(2) + (-2*u(3)*u(3)+1)*x(3)]
 
             // New coordinates and Velocities
             // Evaluation of the restitution coeficients
@@ -1296,20 +1308,19 @@ void FilterParticlesTracking::HandleCollision(
                 }
             }
 
-        // Evaluate the erosion
-        if (m_wear)
-        {
-            // Output the collision information
-            for (int n = 0; n < particle.m_dim; ++n)
-            {
-                m_WearStream << "   "
-                             << boost::format("%25.19e") % collPnt[n];
-            }
-            m_WearStream <<"   "<< boost::format("%25.19e") % Vel
-                         <<"   "<< boost::format("%25.19e") % angle 
-                         <<endl;
-         }
-            
+	    // Evaluate the erosion
+	    if (m_wear)
+	    {
+		// Output the collision information
+		for (int n = 0; n < particle.m_dim; ++n)
+		{
+		    m_WearStream << "   "
+				 << boost::format("%25.19e") % collPnt[n];
+		}
+		m_WearStream <<"   "<< boost::format("%25.19e") % Vel
+			     <<"   "<< boost::format("%25.19e") % angle 
+			     <<endl;
+	     }
             
             // Evaluate the change in the collision position
             distN = 0.0;
@@ -1332,15 +1343,15 @@ void FilterParticlesTracking::HandleCollision(
                     collPntOLD[i] = collPnt[i];
                 }
             }
-        }
-        else
-        {
-            // Particle is unused because left the domain
-           	cout<<"Particle unused ID: "<<particle.m_id<<" Cross: "<<particle.m_eId<<endl;
-            particle.m_used         = false;
-            particle.m_advanceCalls = 0;
+        //~ }
+        //~ else
+        //~ {
+            //~ // Particle is unused because left the domain
+           	//~ cout<<"Particle unused ID: "<<particle.m_id<<" Cross: "<<particle.m_eId<<endl;
+            //~ particle.m_used         = false;
+            //~ particle.m_advanceCalls = 0;
         
-        }
+        //~ }
 	}
         else
         {
