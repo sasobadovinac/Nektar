@@ -105,7 +105,7 @@ vector<pair<Array<OneD, NekDouble>, int>> ProcessCrossField::
                      isoElmts[1].begin(), isoElmts[1].end(),
                      back_inserter(intElmts));
 
-    // Store singularities and their number of branches
+    // Store singularities and their number of quadrants
     vector<pair<Array<OneD, NekDouble>, int>> ret;
 
     // Find exact location of each singularity
@@ -119,15 +119,15 @@ vector<pair<Array<OneD, NekDouble>, int>> ProcessCrossField::
             continue;
         }
 
-        int nbranches = CalculateNumberOfBranches(elmt, eta);
+        int nQuadrants = CalculateNumberOfQuadrants(elmt, eta);
 
         Array<OneD, NekDouble> x(m_dim);
         m_f->m_exp[0]->GetExp(elmt)->GetCoord(eta, x);
 
-        ret.push_back(make_pair(x, nbranches));
+        ret.push_back(make_pair(x, nQuadrants));
 
-        cout << "Singularity #" << ret.size() << " has " << nbranches
-             << " branches at (" << x[0] << ", " << x[1] << ")" << endl;
+        cout << "Singularity #" << ret.size() << " has " << nQuadrants
+             << " quadrants at (" << x[0] << ", " << x[1] << ")" << endl;
     }
 
     return ret;
@@ -211,7 +211,7 @@ vector<pair<Array<OneD, NekDouble>, int>> ProcessCrossField::AnalyseVertices()
             first = false;
         }
 
-        // Determine the number of branches
+        // Determine the number of quadrants
         // We adjust the total angle of the corner by the difference in psi
         // We take into account jumps of atan2(v, u) at +-\pi too
         NekDouble oldV   = 0.0;
@@ -278,13 +278,13 @@ vector<pair<Array<OneD, NekDouble>, int>> ProcessCrossField::AnalyseVertices()
         NekDouble fullAngle = point[3] - point[2];
         NekDouble dpsi      = psif - psii - adj * M_PI / 2.0;
 
-        // Number of pi/2 quarters + 1
-        int nbranches = int(round((fullAngle - dpsi) / (M_PI / 2.0))) + 1;
+        // Number of pi/2 quadrants
+        int nQuadrants = int(round((fullAngle - dpsi) / (M_PI / 2.0)));
 
-        ret.push_back(make_pair(point, nbranches));
+        ret.push_back(make_pair(point, nQuadrants));
 
-        cout << "Vertex #" << ret.size() << " has " << nbranches
-             << " branches at (" << point[0] << ", " << point[1] << ")" << endl;
+        cout << "Vertex #" << ret.size() << " has " << nQuadrants
+             << " quadrants at (" << point[0] << ", " << point[1] << ")" << endl;
     }
 
     return ret;
@@ -305,8 +305,9 @@ vector<Streamline> ProcessCrossField::CreateStreamlines(
         NekDouble anglei = v.first[2];
         NekDouble anglef = v.first[3];
 
-        // Number of streamline to trace
-        int nbranches = v.second - 2;
+        // Number of streamlines to trace
+        // No need to trace exterior streamlines: they correspond to CAD curves
+        int nbranches = v.second - 1;
 
         NekDouble dir = anglei;
 
@@ -323,6 +324,8 @@ vector<Streamline> ProcessCrossField::CreateStreamlines(
     for (auto &s : singularities)
     {
         Array<OneD, NekDouble> x = s.first;
+
+        // Number of streamlines to trace
         int nbranches = s.second;
 
         NekDouble dir = 0.0;
@@ -607,17 +610,17 @@ Array<OneD, NekDouble> ProcessCrossField::FindSingularityInElmt(int id)
     return eta;
 }
 
-int ProcessCrossField::CalculateNumberOfBranches(int id,
+int ProcessCrossField::CalculateNumberOfQuadrants(int id,
                                                  Array<OneD, NekDouble> eta)
 {
-    // Determine the number of branches
+    // Determine the number of quadrants
     // In theory, we should be doing:
-    // \( nbranches = 4 - \int_\pi {\psi'(\theta)} \)
+    // \( nQuadrants = 4 - \int_\pi {\psi'(\theta)} \)
     // In practice, we check for jumps of atan2(v, u) at +-\pi
     int ncquads    = 100;
     NekDouble dist = 1.0e-6;
     Array<OneD, NekDouble> cquad(m_dim);
-    int nbranches  = 4;
+    int nQuadrants  = 4;
     NekDouble oldV = 0.0;
 
     LocalRegions::ExpansionSharedPtr expansion = m_f->m_exp[0]->GetExp(id);
@@ -640,11 +643,11 @@ int ProcessCrossField::CalculateNumberOfBranches(int id,
             {
                 if (v < 0.0)
                 {
-                    --nbranches;
+                    --nQuadrants;
                 }
                 else
                 {
-                    ++nbranches;
+                    ++nQuadrants;
                 }
             }
         }
@@ -652,7 +655,7 @@ int ProcessCrossField::CalculateNumberOfBranches(int id,
         oldV = v;
     }
 
-    return nbranches;
+    return nQuadrants;
 }
 
 NekDouble Streamline::AdamsBashforth_coeffs[4][4] = {

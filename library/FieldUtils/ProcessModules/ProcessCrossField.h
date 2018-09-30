@@ -171,9 +171,9 @@ public:
 private:
     // Initialise process
     void Initialise();
-    // Find all singularities and their number of branches
+    // Find all singularities and their number of quadrants
     vector<pair<Array<OneD, NekDouble>, int>> FindAllSingularities();
-    // Analyse vertices
+    // Analyse vertices and find their number of quadrants
     vector<pair<Array<OneD, NekDouble>, int>> AnalyseVertices();
     // Create each streamline starting from singularities and initialise them
     vector<Streamline> CreateStreamlines(
@@ -189,7 +189,7 @@ private:
     // Find singularity if any
     Array<OneD, NekDouble> FindSingularityInElmt(int id);
     // Calculate the number of branches around the singularity
-    int CalculateNumberOfBranches(int id, Array<OneD, NekDouble> eta);
+    int CalculateNumberOfQuadrants(int id, Array<OneD, NekDouble> eta);
 
     // Space dimension
     int m_dim;
