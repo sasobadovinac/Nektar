@@ -310,7 +310,7 @@ void FilterParticlesTracking::v_Initialise(
     const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
     const NekDouble &time)
 {
-	// Parse the boundary regions into a list.
+    // Parse the boundary regions into a list.
     std::string::size_type FirstInd = m_BoundaryString.find_first_of('[') + 1;
     std::string::size_type LastInd  = m_BoundaryString.find_last_of(']') - 1;
 
@@ -342,6 +342,9 @@ void FilterParticlesTracking::v_Initialise(
     const SpatialDomains::BoundaryRegionCollection &bregions =
         bcs.GetBoundaryRegions();
 
+
+
+   
     cnt = 0;
     for (auto &it : bregions)
     {
@@ -353,6 +356,8 @@ void FilterParticlesTracking::v_Initialise(
         }
         cnt++;
     }
+    // Create map for element and edge/face of each boundary expansion
+    //~ pFields[0]->GetBoundaryToElmtMap(m_BCtoElmtID,m_BCtoTraceID);
 
     // Read seed points
     Array<OneD, NekDouble> newCoord(3, 0.0);
@@ -375,8 +380,7 @@ void FilterParticlesTracking::v_Initialise(
     }
     	
     //Parallel Comm
-	int vRank  = pFields[0]->GetComm()->GetRowComm()->GetRank();
-
+    int vRank  = pFields[0]->GetComm()->GetRowComm()->GetRank();
 
     if (!(m_outputFile.length() >= 4 &&
           m_outputFile.substr(m_outputFile.length() - 4) == ".csv"))
@@ -1211,14 +1215,16 @@ void FilterParticlesTracking::HandleCollision(
 	
          /////////////////////////////////       
 	// Check is the particle collision or leave the domain
-        //~ cout<<"Boundary: "<<minBnd<<endl; 
-        //~ cout<<"maxDotProd: "<<maxDotProd<<endl; 
+	//~ cout<<"maxDotProd: "<<maxDotProd<<endl; 
         if (minBnd != -1 )
-	{	
-        //~ if (m_boundaryRegionIsInList[minBnd] == 1 )
-        //~ {
+	{
+        if (m_boundaryRegionIsInList[minBnd] == 1 )
+        {
             //Particle collisioned
-            
+	    int vRank  = pFields[0]->GetComm()->GetRowComm()->GetRank();
+            cout<<"Rank: "<<vRank<<", MinBnd: "<<minBnd<<endl;
+
+	    
             // Magnitude and directions of incident vector
             NekDouble VecMag = 0.0;
             Array<OneD, NekDouble> VecDir(3, 0.0);          
@@ -1243,8 +1249,8 @@ void FilterParticlesTracking::HandleCollision(
             }
 		
 		
-	    int CPeId = pFields[0]->GetExpIndex(collPnt, 
-			particle.m_locCoord, NekConstants::kNekZeroTol);
+		//~ int CPeId = pFields[0]->GetExpIndex(collPnt, 
+			//~ particle.m_locCoord, NekConstants::kNekZeroTol);
 
 		//~ cout<<"CP: ";
 		//~ for (int j = 0; j < 3; ++j)
@@ -1286,7 +1292,7 @@ void FilterParticlesTracking::HandleCollision(
                                          dotProdCoord * 2 * minNormal[i];
             }
             UpdateLocCoord(pFields, particle);
-
+	    
             for (int j = 0; j < order; ++j)
             {
                 // Evaluate dot products to make the reflection
@@ -1332,7 +1338,7 @@ void FilterParticlesTracking::HandleCollision(
             if (distN < m_diameter)
             {
                 // Particle  is stalled
-                cout<<"Particle staller ID: "<<particle.m_id<<endl;
+                cout<<"Particle stalled ID: "<<particle.m_id<<endl;
                 particle.m_used         = false;
                 particle.m_advanceCalls = 0;
             }
@@ -1343,20 +1349,22 @@ void FilterParticlesTracking::HandleCollision(
                     collPntOLD[i] = collPnt[i];
                 }
             }
-        //~ }
-        //~ else
-        //~ {
-            //~ // Particle is unused because left the domain
-           	//~ cout<<"Particle unused ID: "<<particle.m_id<<" Cross: "<<particle.m_eId<<endl;
-            //~ particle.m_used         = false;
-            //~ particle.m_advanceCalls = 0;
+        cout<<" ACTUALIZO LAS TODO"<<endl;
+
+        }
+        else
+        {
+            // Particle is unused because left the domain
+           	cout<<"Particle unused ID: "<<particle.m_id<<" Cross: "<<particle.m_eId<<endl;
+            particle.m_used         = false;
+            particle.m_advanceCalls = 0;
         
-        //~ }
+        }
 	}
         else
         {
             // Particle is unused because I wanna know why
-           	cout<<"Particle unused  because I wanna know why ID: "<<particle.m_id<<" Cross: "<<particle.m_eId<<endl;
+	    cout<<"Particle unused  because I wanna know why ID: "<<particle.m_id<<" Cross: "<<particle.m_eId<<endl;
             particle.m_used         = false;
             particle.m_advanceCalls = 0;
         } 
