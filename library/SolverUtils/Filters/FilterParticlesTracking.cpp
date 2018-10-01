@@ -606,7 +606,6 @@ void FilterParticlesTracking::AdvanceParticles(
 		{
 			crossParticles[i][j+particleOffsets[vRank]] =  particle.m_newCoord[i];
 		}
-		//particle.m_used = false;
 		j++;
 	    }
 	}
@@ -682,6 +681,7 @@ void FilterParticlesTracking::AdvanceParticles(
 			bool endInsert = true;
 			// Found a space inside the particle list 
 			//to  include points in unused positions of m_particles
+			
 			for (auto &particle : m_particles)
 			{
 			    if (particle.m_used == false)
@@ -696,15 +696,8 @@ void FilterParticlesTracking::AdvanceParticles(
 				UpdateLocCoord(pFields, particle);
 				// Initialise particle velocity to match fluid velocity
 				InterpSolution(pFields, particle);
-				int order = min(particle.m_advanceCalls, m_intOrder);
-				for (int k = 0; k < order; ++k)
-				{
-				    for (int i = 0; i < dim; ++i)
-				    {
-				    particle.m_particleVelocity[k][i]=VelForce[i+k*dim];
-				    particle.m_force[k][i]= VelForce[(dim*order)+i+k*dim];
-				    }
-				}
+				// Initialise particle velocity to match fluid velocity
+				SetToVelForce(VelForce, particle);
 				endInsert = false; 
 				break;
 			    }	
@@ -719,7 +712,8 @@ void FilterParticlesTracking::AdvanceParticles(
 			    UpdateLocCoord(pFields, m_particles.back());
 			    // Initialise particle velocity to match fluid velocity
 			    InterpSolution(pFields, m_particles.back());
-			    SetToVelForce(m_particles.back(),VelForce);
+			    // Initialise particle velocity to match fluid velocity
+			    SetToVelForce(VelForce, m_particles.back());
 			}
 		    }	
 		}	
@@ -1001,7 +995,7 @@ void FilterParticlesTracking::SetToFluidVelocity(Particle &particle)
     }
 }
 
-void FilterParticlesTracking::SetToVelForce(Particle &particle, Array<OneD, NekDouble>  VelForce)
+void FilterParticlesTracking::SetToVelForce(Array<OneD, NekDouble> VelForce, Particle &particle)
 {
     int order = min(particle.m_advanceCalls, m_intOrder);
     int dim = particle.m_dim;

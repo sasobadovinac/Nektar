@@ -246,7 +246,7 @@ private:
     /// Set the particle velocity to match the fluid velocity
     void SetToFluidVelocity(Particle &particle);
     /// Set the particle velocity and force for crossing particles
-    void SetToVelForce(Particle &particle,const Array<OneD, NekDouble>  VelForce);
+    void SetToVelForce(const Array<OneD, NekDouble>  VelForce, Particle &particle);
     /// Update particle velocity
     void UpdateVelocity(Particle &particle);
     /// Calculate force (for solid particles)
