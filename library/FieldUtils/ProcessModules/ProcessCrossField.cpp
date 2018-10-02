@@ -284,7 +284,8 @@ vector<pair<Array<OneD, NekDouble>, int>> ProcessCrossField::AnalyseVertices()
         ret.push_back(make_pair(point, nQuadrants));
 
         cout << "Vertex #" << ret.size() << " has " << nQuadrants
-             << " quadrants at (" << point[0] << ", " << point[1] << ")" << endl;
+             << " quadrants at (" << point[0] << ", " << point[1] << ")"
+             << endl;
     }
 
     return ret;
@@ -316,6 +317,17 @@ vector<Streamline> ProcessCrossField::CreateStreamlines(
             dir += (anglef - anglei) / (nbranches + 1);
 
             Streamline sl = Streamline(m_f, x, m_step);
+            sl.Initialise(dir);
+            ret.push_back(sl);
+        }
+
+        // Collapsed cross-field at this vertex: need a splitting streamline
+        if (nbranches == -1)
+        {
+            dir += anglef;
+            dir *= 0.5;
+
+            Streamline sl = Streamline(m_f, x, m_step, true);
             sl.Initialise(dir);
             ret.push_back(sl);
         }
@@ -360,15 +372,17 @@ void ProcessCrossField::AdvanceStreamlines(vector<Streamline> &sls)
         {
             for (int j = 0; j < sls.size();)
             {
-                if (i == j ||
-                    sls[i].GetFirstPoint() == sls[j].GetFirstPoint() ||
-                    sls[i].IsLocked() || sls[j].IsLocked())
+                if (i == j || sls[i].GetFirstPoint() == sls[j].GetFirstPoint())
                 {
                     ++j;
                     continue;
                 }
 
-                int n = sls[i].CheckMerge(sls[j], m_step * m_mergeTol);
+                int n = sls[i].CheckMerge(
+                    sls[j],
+                    m_step * ((sls[i].IsSplitter() || sls[j].IsSplitter())
+                                  ? 1.0
+                                  : m_mergeTol));
 
                 if (n == -1)
                 {
@@ -376,33 +390,52 @@ void ProcessCrossField::AdvanceStreamlines(vector<Streamline> &sls)
                     continue;
                 }
 
-                int n2 = sls[j].CheckMerge(sls[i], m_step * m_mergeTol);
-                if (n2 != -1)
+                if (!sls[i].IsSplitter() && !sls[j].IsSplitter())
                 {
-                    n = min(n, n2);
-                }
+                    int n2 = sls[j].CheckMerge(sls[i], m_step * m_mergeTol);
+                    if (n2 != -1)
+                    {
+                        n = min(n, n2);
+                    }
 
-                for (int k = 0; k < n; ++k)
-                {
-                    // We assume we won't get out of the domain
-                    sls[i].Advance();
-                    sls[j].Advance();
-                }
+                    for (int k = 0; k < n; ++k)
+                    {
+                        // We assume we won't get out of the domain
+                        sls[i].Advance();
+                        sls[j].Advance();
+                    }
 
-                sls.push_back(sls[i].MergeWith(sls[j]));
+                    sls.push_back(sls[i].MergeWith(sls[j]));
 
-                if (i > j)
-                {
-                    sls.erase(sls.begin() + i--);
-                    sls.erase(sls.begin() + j);
+                    if (i > j)
+                    {
+                        sls.erase(sls.begin() + i--);
+                        sls.erase(sls.begin() + j);
+                    }
+                    else
+                    {
+                        sls.erase(sls.begin() + j);
+                        sls.erase(sls.begin() + i);
+                    }
+
+                    j = 0;
                 }
                 else
                 {
-                    sls.erase(sls.begin() + j);
-                    sls.erase(sls.begin() + i);
-                }
+                    vector<Streamline> tmp;
 
-                j = 0;
+                    if (sls[j].IsSplitter())
+                    {
+                        tmp = sls[j].ConvertSplitter(
+                            sls[j].GetAllPoints().size());
+                    }
+                    else
+                    {
+                        tmp = sls[i].ConvertSplitter(n);
+                    }
+
+                    sls.insert(sls.end(), tmp.begin(), tmp.end());
+                }
             }
         }
     }
@@ -611,7 +644,7 @@ Array<OneD, NekDouble> ProcessCrossField::FindSingularityInElmt(int id)
 }
 
 int ProcessCrossField::CalculateNumberOfQuadrants(int id,
-                                                 Array<OneD, NekDouble> eta)
+                                                  Array<OneD, NekDouble> eta)
 {
     // Determine the number of quadrants
     // In theory, we should be doing:
@@ -620,7 +653,7 @@ int ProcessCrossField::CalculateNumberOfQuadrants(int id,
     int ncquads    = 100;
     NekDouble dist = 1.0e-6;
     Array<OneD, NekDouble> cquad(m_dim);
-    int nQuadrants  = 4;
+    int nQuadrants = 4;
     NekDouble oldV = 0.0;
 
     LocalRegions::ExpansionSharedPtr expansion = m_f->m_exp[0]->GetExp(id);
@@ -766,7 +799,7 @@ bool Streamline::Advance()
 
 int Streamline::CheckMerge(Streamline sl, NekDouble tol)
 {
-    if (m_locked || sl.IsLocked())
+    if ((m_locked || sl.IsLocked()) && !(m_splitter || sl.IsSplitter()))
     {
         return -1;
     }
@@ -782,6 +815,11 @@ int Streamline::CheckMerge(Streamline sl, NekDouble tol)
         if (sqrt(pow(m_points[i][0] - point[0], 2) +
                  pow(m_points[i][1] - point[1], 2)) < tol)
         {
+            if (m_splitter || sl.IsSplitter())
+            {
+                break;
+            }
+
             // Check opposite directions
             if (abs(int(round((m_angles[i] - angle) / (M_PI / 2.0)))) % 4 == 2)
             {
@@ -817,6 +855,47 @@ Streamline Streamline::MergeWith(Streamline sl)
     }
 
     return Streamline(mergedPoints);
+}
+
+vector<Streamline> Streamline::ConvertSplitter(int n)
+{
+    m_splitter = false;
+
+    vector<Streamline> ret;
+
+    m_points.erase(m_points.begin(), m_points.begin() + 2 * n / 3);
+    m_angles.erase(m_angles.begin(), m_angles.begin() + 2 * n / 3);
+
+    Array<OneD, NekDouble> p0 = m_points[0];
+    Array<OneD, NekDouble> p1 = m_points[1];
+
+    NekDouble angle = atan2(p1[1] - p0[1], p1[0] - p0[0]);
+
+    for (int i = 0; i < 2; ++i)
+    {
+        vector<Array<OneD, NekDouble>> points(2);
+
+        points[0]    = Array<OneD, NekDouble>(m_dim);
+        points[0][0] = p0[0];
+        points[0][1] = p0[1];
+
+        points[1]    = Array<OneD, NekDouble>(m_dim);
+        points[1][0] = p0[0];
+        points[1][1] = p0[1];
+
+        Array<OneD, NekDouble> vec(m_dim);
+        vec[0] = m_step * cos(angle + (i + 1) / 3.0 * 2.0 * M_PI);
+        vec[1] = m_step * sin(angle + (i + 1) / 3.0 * 2.0 * M_PI);
+
+        do
+        {
+            Vmath::Vadd(m_dim, points[1], 1, vec, 1, points[1], 1);
+        } while (m_f->m_exp[0]->GetExpIndex(points[1]) != -1);
+
+        ret.emplace_back(points);
+    }
+
+    return ret;
 }
 
 void Streamline::WritePoints(ofstream &csvfile)

@@ -50,15 +50,15 @@ class Streamline
 public:
     // Default constructor
     Streamline(FieldSharedPtr f, Array<OneD, NekDouble> singularity,
-               NekDouble step)
-        : m_dim(2), m_f(f), m_step(step), m_locked(false)
+               NekDouble step, bool splitter = false)
+        : m_dim(2), m_f(f), m_step(step), m_locked(false), m_splitter(splitter)
     {
         AddPoint(singularity);
     }
 
     // Merged streamline constructor
     Streamline(vector<Array<OneD, NekDouble>> points)
-        : m_dim(2), m_step(0.0), m_locked(true)
+        : m_dim(2), m_step(0.0), m_locked(true), m_splitter(false)
     {
         for (auto &it : points)
         {
@@ -98,6 +98,11 @@ public:
         return m_locked;
     }
 
+    bool IsSplitter()
+    {
+        return m_splitter;
+    }
+
     // Find first point of nearest branch based on angle
     void Initialise(NekDouble &angle);
 
@@ -109,6 +114,9 @@ public:
 
     // Merge the 2 streamlines and return the new one
     Streamline MergeWith(Streamline sl);
+
+    // Convert splitter into normal streamline and return the other 2 branches
+    vector<Streamline> ConvertSplitter(int n);
 
     // Write out all points to a CSV file for use in NekMesh
     void WritePoints(ofstream &csvfile);
@@ -130,6 +138,8 @@ private:
     pair<bool, bool> m_neg;
     // Reached out of domain
     bool m_locked;
+    // Streamline used for splitting a collapsed quad
+    bool m_splitter;
 
     // Coefficients for the Adams-Bashforth method
     static NekDouble AdamsBashforth_coeffs[4][4];
