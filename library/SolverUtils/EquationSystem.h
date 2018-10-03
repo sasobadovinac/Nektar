@@ -479,10 +479,16 @@ class Interpolator;
             // Get pressure field if available
             SOLVER_UTILS_EXPORT virtual MultiRegions::ExpListSharedPtr v_GetPressure(void); 
 
+            // Get Mapping field if available
+            SOLVER_UTILS_EXPORT virtual
+                Array<OneD, MultiRegions::ExpListSharedPtr>
+                &v_UpdateXMappingFields(void);
+            
             SOLVER_UTILS_EXPORT virtual void v_ExtraFldOutput(
                 std::vector<Array<OneD, NekDouble> > &fieldcoeffs,
                 std::vector<std::string>             &variables);
             
+
         private:
             
             SOLVER_UTILS_EXPORT virtual Array<OneD, bool> v_GetSystemSingularChecks();
@@ -651,7 +657,7 @@ class Interpolator;
         /// 
         inline Array<OneD, MultiRegions::ExpListSharedPtr> &EquationSystem::UpdateXMappingFields(void)
         {
-            return m_fields;
+            return v_UpdateXMappingFields(); 
         }
         
         /// Return final time

@@ -127,6 +127,9 @@ namespace Nektar
                     Array<OneD, Array<OneD, NekDouble> > &outarray,
                     const NekDouble time);
     
+        // Get Mapping field if available
+        virtual Array<OneD, MultiRegions::ExpListSharedPtr>
+            &v_UpdateXMappingFields(void);
     private:        
         Array<OneD, Array<OneD, NekDouble> >    m_presForcingCorrection;
         

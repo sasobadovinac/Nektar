@@ -1005,4 +1005,9 @@ namespace Nektar
             return true; 
         }
 
+        Array<OneD, MultiRegions::ExpListSharedPtr> &VCSMapping::v_UpdateXMappingFields()
+        {
+            return m_mapping->UpdateXMappingFields(); 
+        }
+
 } //end of namespace

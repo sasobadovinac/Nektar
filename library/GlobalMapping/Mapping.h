@@ -405,8 +405,10 @@ class Mapping
             v_UpdateGeomInfo();
         }
 
-
-    protected:
+        
+        Array<OneD, MultiRegions::ExpListSharedPtr> &UpdateXMappingFields();
+            
+     protected:
         /// Session reader
         LibUtilities::SessionReaderSharedPtr        m_session;
         // FieldIO object used to output mapping

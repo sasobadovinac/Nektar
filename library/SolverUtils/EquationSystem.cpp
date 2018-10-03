@@ -273,14 +273,7 @@ namespace Nektar
 
             int i;
 
-            if(m_nMappingFields)
-                {
-                    int nvariables = m_session->GetXMappingVariables().size();
-                }
-            else
-                {
-                    int nvariables = m_session->GetVariables().size();
-                }
+            int nvariables = m_session->GetVariables().size();
                 
             bool DeclareCoeffPhysArrays = true;
 
@@ -1481,6 +1474,14 @@ namespace Nektar
         {
             ASSERTL0(false, "This function is not valid for the Base class");
             MultiRegions::ExpListSharedPtr null;
+            return null;
+        }
+
+        Array<OneD, MultiRegions::ExpListSharedPtr> &EquationSystem::
+        v_UpdateXMappingFields(void)
+        {
+            ASSERTL0(false, "This function is not valid for the Base class");
+            Array<OneD, MultiRegions::ExpListSharedPtr>  null;
             return null;
         }
 

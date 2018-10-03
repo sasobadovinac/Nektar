@@ -82,7 +82,7 @@ void DriverArnoldi::v_InitObject(ostream &out)
 
         if(m_equ[0]->v_GlobalMappingSolver())
         {
-            // Change to DOF's Mapping
+            // Change to DOF's Mapping - needs to be made dimnesion dependent
             m_nMappingFields = 2;
         }
         else
@@ -139,140 +139,140 @@ void DriverArnoldi::v_InitObject(ostream &out)
 
 }
 
-void DriverArnoldi::ArnoldiSummary(std::ostream &out)
-{
-    if (m_comm->GetRank() == 0)
+    void DriverArnoldi::ArnoldiSummary(std::ostream &out)
     {
-        if(m_session->DefinesSolverInfo("ModeType") &&
-           boost::iequals(m_session->GetSolverInfo("ModeType"),
-                          "SingleMode"))
+        if (m_comm->GetRank() == 0)
         {
-            out << "\tSingle Fourier mode    : true " << endl;
-            ASSERTL0(m_session->DefinesSolverInfo("Homogeneous"),
-                     "Expected a homogeneous expansion to be defined "
-                     "with single mode");
-        }
-        else
-        {
-            out << "\tSingle Fourier mode    : false " << endl;
-        }
-        if(m_session->DefinesSolverInfo("BetaZero"))
-        {
-            out << "\tBeta set to Zero       : true (overrides LHom)"
+            if(m_session->DefinesSolverInfo("ModeType") &&
+               boost::iequals(m_session->GetSolverInfo("ModeType"),
+                              "SingleMode"))
+            {
+                out << "\tSingle Fourier mode    : true " << endl;
+                ASSERTL0(m_session->DefinesSolverInfo("Homogeneous"),
+                         "Expected a homogeneous expansion to be defined "
+                         "with single mode");
+            }
+            else
+            {
+                out << "\tSingle Fourier mode    : false " << endl;
+            }
+            if(m_session->DefinesSolverInfo("BetaZero"))
+            {
+                out << "\tBeta set to Zero       : true (overrides LHom)"
+                    << endl;
+            }
+            else
+            {
+                out << "\tBeta set to Zero       : false " << endl;
+            }
+
+            if(m_timeSteppingAlgorithm)
+            {
+                out << "\tEvolution operator     : "
+                    << m_session->GetSolverInfo("EvolutionOperator")
+                    << endl;
+            }
+            else
+            {
+                out << "\tShift (Real,Imag)      : " << m_realShift
+                    << "," << m_imagShift <<  endl;
+            }
+            out << "\tKrylov-space dimension : " << m_kdim << endl;
+            out << "\tNumber of vectors      : " << m_nvec << endl;
+            out << "\tMax iterations         : " << m_nits << endl;
+            out << "\tEigenvalue tolerance   : " << m_evtol << endl;
+            out << "======================================================"
                 << endl;
         }
+    }
+
+    /**
+     * Copy Arnoldi array to field variables which depend from
+     * either the m_fields or m_forces
+     */
+    void DriverArnoldi::CopyArnoldiArrayToField(Array<OneD, NekDouble> &array)
+    {
+
+        Array<OneD, MultiRegions::ExpListSharedPtr>& fields = m_equ[0]->UpdateFields();
+        int nq = fields[0]->GetNcoeffs();
+
+        for (int k = 0; k < m_nFields; ++k)
+        {
+            Vmath::Vcopy(nq, &array[k*nq], 1, &fields[k]->UpdateCoeffs()[0], 1);
+            fields[k]->SetPhysState(false);
+        }
+
+        if(m_nMappingFields)
+        {
+            Array<OneD, MultiRegions::ExpListSharedPtr>& Xfields = m_equ[0]->UpdateXMappingFields();
+
+            for(int k = 0; k < m_nMappingFields; ++k)
+            {
+                Vmath::Vcopy(nq, &array[(k+m_nFields)*nq], 1, &Xfields[k]->UpdateCoeffs()[0], 1);
+                Xfields[k]->SetPhysState(false);
+            }
+        }
+    };
+
+    /**
+     * Copy field variables which depend from either the m_fields
+     * or m_forces array the Arnoldi array
+     */
+    // Robin
+    void DriverArnoldi::CopyFieldToArnoldiArray(Array<OneD, NekDouble> &array)
+    {
+
+        Array<OneD, MultiRegions::ExpListSharedPtr> fields;
+
+        if (m_EvolutionOperator == eAdaptiveSFD)
+        {
+            // This matters for the Adaptive SFD method because
+            // m_equ[1] is the nonlinear problem with non
+            // homogeneous BCs.
+            fields = m_equ[0]->UpdateFields();
+        }
         else
         {
-            out << "\tBeta set to Zero       : false " << endl;
+            fields = m_equ[m_nequ-1]->UpdateFields();
         }
+
+        for (int k = 0; k < m_nFields; ++k)
+        {
+            int nq = fields[0]->GetNcoeffs();
+            Vmath::Vcopy(nq,  &fields[k]->GetCoeffs()[0], 1, &array[k*nq], 1);
+            fields[k]->SetPhysState(false);
+        }
+
+        if(m_nMappingFields)
+        {
+            fields = m_equ[0]->UpdateXMappingFields();
+
+            for (int k = 0; k < m_nMappingFields; ++k)
+            {       
+                int nq = fields[0]->GetNcoeffs();
+                Vmath::Vcopy(nq,  &fields[k]->GetCoeffs()[0], 1, &array[(k+m_nFields)*nq], 1);
+                fields[k]->SetPhysState(false);
+            }       
+        }
+    };
+
+
+    /**
+     * Initialisation for the transient growth
+     */
+    void DriverArnoldi::CopyFwdToAdj()
+    {
+        Array<OneD, MultiRegions::ExpListSharedPtr> fields;
 
         if(m_timeSteppingAlgorithm)
         {
-            out << "\tEvolution operator     : "
-                << m_session->GetSolverInfo("EvolutionOperator")
-                << endl;
-        }
-        else
-        {
-            out << "\tShift (Real,Imag)      : " << m_realShift
-                << "," << m_imagShift <<  endl;
-        }
-        out << "\tKrylov-space dimension : " << m_kdim << endl;
-        out << "\tNumber of vectors      : " << m_nvec << endl;
-        out << "\tMax iterations         : " << m_nits << endl;
-        out << "\tEigenvalue tolerance   : " << m_evtol << endl;
-        out << "======================================================"
-            << endl;
-    }
-}
-
-/**
- * Copy Arnoldi array to field variables which depend from
- * either the m_fields or m_forces
- */
-void DriverArnoldi::CopyArnoldiArrayToField(Array<OneD, NekDouble> &array)
-{
-
-    Array<OneD, MultiRegions::ExpListSharedPtr>& fields = m_equ[0]->UpdateFields();
-    int nq = fields[0]->GetNcoeffs();
-
-    for (int k = 0; k < m_nFields; ++k)
-    {
-        Vmath::Vcopy(nq, &array[k*nq], 1, &fields[k]->UpdateCoeffs()[0], 1);
-        fields[k]->SetPhysState(false);
-    }
-
-    if(m_nMappingFields)
-    {
-        Array<OneD, MultiRegions::ExpListSharedPtr>& Xfields = m_equ[0]->UpdateXMappingFields();
-
-        for(int k = 0; k < m_nMappingFields; ++k)
-        {
-            Vmath::Vcopy(nq, &array[(k+m_nFields)*nq], 1, &Xfields[k]->UpdateCoeffs()[0], 1);
-            Xfields[k]->SetPhysState(false);
-        }
-    }
-};
-
-/**
- * Copy field variables which depend from either the m_fields
- * or m_forces array the Arnoldi array
- */
-// Robin
-void DriverArnoldi::CopyFieldToArnoldiArray(Array<OneD, NekDouble> &array)
-{
-
-    Array<OneD, MultiRegions::ExpListSharedPtr> fields;
-
-    if (m_EvolutionOperator == eAdaptiveSFD)
-    {
-        // This matters for the Adaptive SFD method because
-        // m_equ[1] is the nonlinear problem with non
-        // homogeneous BCs.
-        fields = m_equ[0]->UpdateFields();
-    }
-    else
-    {
-        fields = m_equ[m_nequ-1]->UpdateFields();
-    }
-
-    for (int k = 0; k < m_nFields; ++k)
-    {
-        int nq = fields[0]->GetNcoeffs();
-        Vmath::Vcopy(nq,  &fields[k]->GetCoeffs()[0], 1, &array[k*nq], 1);
-        fields[k]->SetPhysState(false);
-    }
-
-    if(m_nMappingFields)
-    {
-        fields = m_equ[0]->UpdateXMappingFields();
-
-        for (int k = 0; k < m_nMappingFields; ++k)
-        {       
+            fields = m_equ[0]->UpdateFields();
             int nq = fields[0]->GetNcoeffs();
-            Vmath::Vcopy(nq,  &fields[k]->GetCoeffs()[0], 1, &array[(k+m_nFields)*nq], 1);
-            fields[k]->SetPhysState(false);
-        }       
-    }
-};
 
-
-/**
- * Initialisation for the transient growth
- */
-void DriverArnoldi::CopyFwdToAdj()
-{
-    Array<OneD, MultiRegions::ExpListSharedPtr> fields;
-
-    if(m_timeSteppingAlgorithm)
-    {
-        fields = m_equ[0]->UpdateFields();
-        int nq = fields[0]->GetNcoeffs();
-
-        for (int k=0 ; k < m_nFields; ++k)
-        {
-            Vmath::Vcopy(nq,
-                         &fields[k]->GetCoeffs()[0],                      1,
+            for (int k=0 ; k < m_nFields; ++k)
+            {
+                Vmath::Vcopy(nq,
+                             &fields[k]->GetCoeffs()[0],                      1,
                          &m_equ[1]->UpdateFields()[k]->UpdateCoeffs()[0], 1);
 
         }
@@ -284,7 +284,7 @@ void DriverArnoldi::CopyFwdToAdj()
     }
 };
 
-// Robin
+
 void DriverArnoldi::WriteFld(std::string file, std::vector<Array<OneD, NekDouble> > coeffs)
 {
 
@@ -298,19 +298,8 @@ void DriverArnoldi::WriteFld(std::string file, std::vector<Array<OneD, NekDouble
 
     m_equ[0]->WriteFld(file,m_equ[0]->UpdateFields()[0], coeffs, variables);
 
-    if(m_nMappingFields)
-    {
-        ASSERTL1(coeffs.size() >= m_nTotFields, "coeffs is not of the correct length");
-        for(int i = m_nFields; i < m_nMappingFields; ++i)
-        {
-            variables[i] = m_equ[0]->GetXMappingVariable(i);
-        }
-
-        m_equ[0]->WriteFld(file,m_equ[0]->UpdateFields()[0], coeffs, variables);
-    }
 }
 
-// Robin
 void DriverArnoldi::WriteFld(std::string file, Array<OneD, NekDouble> coeffs)
 {
 
@@ -318,7 +307,7 @@ void DriverArnoldi::WriteFld(std::string file, Array<OneD, NekDouble> coeffs)
     std::vector<Array<OneD, NekDouble> > fieldcoeffs(m_nFields);
 
     int ncoeffs = m_equ[0]->UpdateFields()[0]->GetNcoeffs();
-    ASSERTL1(coeffs.num_elements() >= ncoeffs*m_nfields,"coeffs is not of sufficient size");
+    ASSERTL1(coeffs.num_elements() >= ncoeffs*m_nFields,"coeffs is not of sufficient size");
 
     for(int i = 0; i < m_nFields; ++i)
     {
@@ -328,19 +317,6 @@ void DriverArnoldi::WriteFld(std::string file, Array<OneD, NekDouble> coeffs)
 
     m_equ[0]->WriteFld(file,m_equ[0]->UpdateFields()[0], fieldcoeffs, variables);
 
-    if(m_nMappingFields)
-    {
-        ncoeffs = m_equ[0]->UpdateXMappingFields()[0]->GetNcoeffs();
-        ASSERTL1(coeffs.num_elements() >= ncoeffs*m_nTotFields,"coeffs is not of sufficient size");
-
-        for(int i = m_nFields; i < m_nTotFields; ++i)
-        {
-            variables[i] = m_equ[0]->GetXMappingVariable(i);
-            fieldcoeffs[i] = coeffs + i*ncoeffs;
-        }
-
-        m_equ[0]->WriteFld(file,m_equ[0]->UpdateXMappingFields()[0], fieldcoeffs, variables);
-    }
 }
 
 void DriverArnoldi::WriteEvs(
