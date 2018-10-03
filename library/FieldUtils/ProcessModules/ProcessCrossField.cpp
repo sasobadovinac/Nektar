@@ -846,12 +846,24 @@ Streamline Streamline::MergeWith(Streamline sl)
     for (int i = 0; i < npoints; ++i)
     {
         mergedPoints[i] = Array<OneD, NekDouble>(m_dim, 0.0);
+
+        /*
+        // Linear interpolation
         mergedPoints[i][0] =
             (m_points[i][0] * (nweights - i) + points[nweights - i][0] * i) /
             nweights;
         mergedPoints[i][1] =
             (m_points[i][1] * (nweights - i) + points[nweights - i][1] * i) /
             nweights;
+        */
+       
+        // Trigonometric interpolation
+        mergedPoints[i][0] =
+            m_points[i][0] * pow(cos(i / nweights * M_PI / 2.0), 2) +
+            points[nweights - i][0] * pow(sin(i / nweights * M_PI / 2.0), 2);
+        mergedPoints[i][1] =
+            m_points[i][1] * pow(cos(i / nweights * M_PI / 2.0), 2) +
+            points[nweights - i][1] * pow(sin(i / nweights * M_PI / 2.0), 2);
     }
 
     return Streamline(mergedPoints);
