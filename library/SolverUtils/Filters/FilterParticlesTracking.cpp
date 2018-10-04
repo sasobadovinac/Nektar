@@ -183,7 +183,7 @@ FilterParticlesTracking::FilterParticlesTracking(
     {
         // By default track fluid particles
         m_fluidParticles = true;
-        cout << " - Working with fluid particles" << endl;
+        //cout << " - Working with fluid particles" << endl;
     }
     else
     {
@@ -197,7 +197,7 @@ FilterParticlesTracking::FilterParticlesTracking(
         if (it == pParams.end())
         {
             m_SG = 1.0; // By default SG = 1
-            cout << "- Particles with density of fluid" << endl;
+            //cout << "- Particles with density of fluid" << endl;
         }
         else
         {
@@ -211,7 +211,7 @@ FilterParticlesTracking::FilterParticlesTracking(
         if (it == pParams.end())
         {
             m_gravity = 0.0; // By default the value of gravity is zero
-            cout << "- Working without Gravity" << endl;
+            //cout << "- Working without Gravity" << endl;
         }
         else
         {
@@ -388,9 +388,9 @@ void FilterParticlesTracking::v_Initialise(
         m_outputFile = m_outputFile +"."+to_string(vRank*0.000001).substr(2)+".csv";
     }
     if (!(m_WearFile.length() >= 4 &&
-          m_WearFile.substr(m_WearFile.length() - 4) == ".pts"))
+          m_WearFile.substr(m_WearFile.length() - 4) == ".csv"))
     {
-        m_WearFile = m_WearFile+"."+to_string(vRank*0.000001).substr(2)+".pts";
+        m_WearFile = m_WearFile+"."+to_string(vRank*0.000001).substr(2)+".csv";
     }
 
 	m_outputStream.open(m_outputFile.c_str());
@@ -425,19 +425,13 @@ void FilterParticlesTracking::v_Initialise(
 		
 		if (m_wear)
 	    {
-			m_WearStream.open(m_WearFile.c_str()); 
-			m_WearStream << "<?xml version=\"1.0\" encoding=\"utf-8\"?>"<<endl
-						 << "<NEKTAR>"<<endl;
-
 			if (dim == 2)
 			{
-				m_WearStream<<"   <POINTS DIM=\"2\" FIELDS=\"Velocity, angle\">"
-				<<endl;
+				m_WearStream<<"x, y, Velocity, angle"<<endl;
 			}
 			if (dim == 3)
 			{
-				m_WearStream<<"   <POINTS DIM=\"3\" FIELDS=\"Velocity, angle\">"
-				<<endl;
+				m_WearStream<<"x, y, z, Velocity, angle"<<endl;
 			}
 		}
 	}
@@ -512,10 +506,8 @@ void FilterParticlesTracking::v_Finalise(
     if (pFields[0]->GetComm()->GetRank() == 0)
     {
         m_outputStream.close();
-        
         if(m_wear)
         {
-        m_WearStream<<"</POINTS>"<<endl<<"</NEKTAR>"<<endl;
         m_WearStream.close();
         }
     }
@@ -655,18 +647,18 @@ void FilterParticlesTracking::AdvanceParticles(
 			{	
 			    if (particle.m_id == crossParticlesId[j])
 			    {   
-				int order = min(particle.m_advanceCalls, m_intOrder);
+                    int order = min(particle.m_advanceCalls, m_intOrder);
 				    for (int k = 0; k < order; ++k)
 				    {
-					for (int i = 0; i < dim; ++i)
-					{
-					VelForce[i+k*dim] = particle.m_particleVelocity[k][i];
-					VelForce[(dim*order)+i+k*dim] = particle.m_force[k][i];
-					}
+                        for (int i = 0; i < dim; ++i)
+                        {
+                            VelForce[i+k*dim] = particle.m_particleVelocity[k][i];
+                            VelForce[(dim*order)+i+k*dim] = particle.m_force[k][i];
+                        }
 				    }
-				particle.m_used = false;
-				vComm->GetRowComm()->Send(crossRankRecv[j], VelForce);
-				break;
+                    particle.m_used = false;
+                    vComm->GetRowComm()->Send(crossRankRecv[j], VelForce);
+                    break;
 			    }	
 			}
 		    }
@@ -723,8 +715,6 @@ void FilterParticlesTracking::AdvanceParticles(
 		// Just the rank with the particle evaluate collision
 		if (crossRankSend[j]==vRank)
 		{
-		    cout<<"Parcticle "<<crossParticlesId[j]<<" collide in rank "<<vRank<<endl;
-		    
 		    for (auto &particle : m_particles)
 		    {	
 			if (particle.m_id == crossParticlesId[j])
@@ -997,16 +987,17 @@ void FilterParticlesTracking::SetToFluidVelocity(Particle &particle)
 
 void FilterParticlesTracking::SetToVelForce(Array<OneD, NekDouble> VelForce, Particle &particle)
 {
-    int order = min(particle.m_advanceCalls, m_intOrder);
     int dim = particle.m_dim;
+    int order = m_intOrder;
     for (int k = 0; k < order; ++k)
     {
-	for (int i = 0; i < dim; ++i)
-	{
-	particle.m_particleVelocity[k][i]=VelForce[i+k*dim];
-	particle.m_force[k][i]= VelForce[(dim*order)+i+k*dim];
-	}
+        for (int i = 0; i < dim; ++i)
+        {
+            particle.m_particleVelocity[k][i] = VelForce[i+k*dim];
+            particle.m_force[k][i] = VelForce[(dim*order)+i+k*dim];
+        }
     }
+   //particle.m_advanceCalls = order;
 }
 
 
@@ -1209,16 +1200,11 @@ void FilterParticlesTracking::HandleCollision(
 	
          /////////////////////////////////       
 	// Check is the particle collision or leave the domain
-	//~ cout<<"maxDotProd: "<<maxDotProd<<endl; 
         if (minBnd != -1 )
 	{
         if (m_boundaryRegionIsInList[minBnd] == 1 )
         {
             //Particle collisioned
-	    int vRank  = pFields[0]->GetComm()->GetRowComm()->GetRank();
-            cout<<"Rank: "<<vRank<<", MinBnd: "<<minBnd<<endl;
-
-	    
             // Magnitude and directions of incident vector
             NekDouble VecMag = 0.0;
             Array<OneD, NekDouble> VecDir(3, 0.0);          
@@ -1343,13 +1329,11 @@ void FilterParticlesTracking::HandleCollision(
                     collPntOLD[i] = collPnt[i];
                 }
             }
-        cout<<" ACTUALIZO LAS TODO"<<endl;
-
         }
         else
         {
             // Particle is unused because left the domain
-           	cout<<"Particle unused ID: "<<particle.m_id<<" Cross: "<<particle.m_eId<<endl;
+           	cout<<"Particle left domain ID: "<<particle.m_id<<endl;
             particle.m_used         = false;
             particle.m_advanceCalls = 0;
         
