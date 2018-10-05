@@ -405,9 +405,11 @@ class Mapping
             v_UpdateGeomInfo();
         }
 
-        
-        Array<OneD, MultiRegions::ExpListSharedPtr> &UpdateXMappingFields();
-            
+        GLOBAL_MAPPING_EXPORT int GetNConvectiveFields()
+        {
+            return m_nConvectiveFields;
+        }
+
      protected:
         /// Session reader
         LibUtilities::SessionReaderSharedPtr        m_session;

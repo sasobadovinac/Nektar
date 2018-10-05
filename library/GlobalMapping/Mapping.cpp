@@ -1294,11 +1294,5 @@ void Mapping::v_UpdateMappingCoordsVel(
     }
 }
 
-Array<OneD, MultiRegions::ExpListSharedPtr> &Mapping::UpdateXMappingFields()
-{
-    return m_fields; 
-}
-
-
 }
 }

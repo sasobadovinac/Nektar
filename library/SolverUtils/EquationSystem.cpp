@@ -1477,14 +1477,6 @@ namespace Nektar
             return null;
         }
 
-        Array<OneD, MultiRegions::ExpListSharedPtr> &EquationSystem::
-        v_UpdateXMappingFields(void)
-        {
-            ASSERTL0(false, "This function is not valid for the Base class");
-            Array<OneD, MultiRegions::ExpListSharedPtr>  null;
-            return null;
-        }
-
         void EquationSystem::v_ExtraFldOutput(
             std::vector<Array<OneD, NekDouble> > &fieldcoeffs,
             std::vector<std::string>             &variables)

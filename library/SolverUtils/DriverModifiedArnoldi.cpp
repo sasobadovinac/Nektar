@@ -108,11 +108,6 @@ void DriverModifiedArnoldi::v_Execute(ostream &out)
     int j               = 0;
     int nq              = m_equ[0]->UpdateFields()[0]->GetNcoeffs();
 
-    if(m_nMappingFields)
-    {
-        int nq = m_equ[0]->UpdateXMappingFields()[0]->GetNcoeffs();
-    }
-
     int ntot            = m_nTotFields*nq;
     int converged       = 0;
     NekDouble resnorm   = 0.0;
@@ -263,7 +258,7 @@ void DriverModifiedArnoldi::v_Execute(ostream &out)
             }
         }
     }
-
+    
     m_equ[0]->Output();
 
     // Evaluate and output computation time and solution accuracy.

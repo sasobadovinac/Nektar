@@ -1000,14 +1000,4 @@ namespace Nektar
             m_mapping->VelocityLaplacian(velPhys, outarray, 1.0);
         }
 
-        bool VCSMapping::v_GlobalMappingSolver(void)
-        {
-            return true; 
-        }
-
-        Array<OneD, MultiRegions::ExpListSharedPtr> &VCSMapping::v_UpdateXMappingFields()
-        {
-            return m_mapping->UpdateXMappingFields(); 
-        }
-
 } //end of namespace

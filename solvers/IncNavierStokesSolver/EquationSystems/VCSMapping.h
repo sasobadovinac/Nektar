@@ -74,9 +74,6 @@ namespace Nektar
 
         virtual void v_InitObject();
 
-        /// Virtual function to identify if solver is using global mappings 
-        virtual bool v_GlobalMappingSolver();
-          
     protected:
         // Mapping object
         GlobalMapping::MappingSharedPtr             m_mapping;
@@ -126,10 +123,6 @@ namespace Nektar
                     const Array<OneD, const Array<OneD, NekDouble> > &inarray,
                     Array<OneD, Array<OneD, NekDouble> > &outarray,
                     const NekDouble time);
-    
-        // Get Mapping field if available
-        virtual Array<OneD, MultiRegions::ExpListSharedPtr>
-            &v_UpdateXMappingFields(void);
     private:        
         Array<OneD, Array<OneD, NekDouble> >    m_presForcingCorrection;
         

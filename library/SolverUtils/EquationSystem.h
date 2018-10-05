@@ -232,9 +232,6 @@ class Interpolator;
             SOLVER_UTILS_EXPORT inline Array<
             OneD, MultiRegions::ExpListSharedPtr> &UpdateFields();
 
-            SOLVER_UTILS_EXPORT inline Array<
-            OneD, MultiRegions::ExpListSharedPtr> &UpdateXMappingFields();            
-
             /// Get hold of FieldInfoMap so it can be updated
             SOLVER_UTILS_EXPORT inline LibUtilities::FieldMetaDataMap 
                 &UpdateFieldMetaDataMap();
@@ -479,10 +476,6 @@ class Interpolator;
             // Get pressure field if available
             SOLVER_UTILS_EXPORT virtual MultiRegions::ExpListSharedPtr v_GetPressure(void); 
 
-            // Get Mapping field if available
-            SOLVER_UTILS_EXPORT virtual
-                Array<OneD, MultiRegions::ExpListSharedPtr>
-                &v_UpdateXMappingFields(void);
             
             SOLVER_UTILS_EXPORT virtual void v_ExtraFldOutput(
                 std::vector<Array<OneD, NekDouble> > &fieldcoeffs,
@@ -654,11 +647,6 @@ class Interpolator;
             return m_fields;
         }
 
-        /// 
-        inline Array<OneD, MultiRegions::ExpListSharedPtr> &EquationSystem::UpdateXMappingFields(void)
-        {
-            return v_UpdateXMappingFields(); 
-        }
         
         /// Return final time
         inline NekDouble EquationSystem::GetFinalTime()

@@ -38,6 +38,8 @@
 
 #include <SolverUtils/Driver.h>
 
+#include <GlobalMapping/Mapping.h>
+
 namespace Nektar
 {
 namespace SolverUtils
@@ -70,7 +72,8 @@ protected:
 
     Array<OneD, NekDouble> m_real_evl;
     Array<OneD, NekDouble> m_imag_evl;
-
+    
+    GlobalMapping::MappingSharedPtr m_mapping;
 
     /// Constructor
     DriverArnoldi(const LibUtilities::SessionReaderSharedPtr pSession,

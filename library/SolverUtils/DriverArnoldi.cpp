@@ -80,17 +80,21 @@ void DriverArnoldi::v_InitObject(ostream &out)
                   * m_session->GetParameter("NumSteps");
         m_nFields = m_equ[0]->UpdateFields().num_elements() - 1;
 
-        if(m_equ[0]->v_GlobalMappingSolver())
+        // initialisae mapping array if required
+        m_mapping = GlobalMapping::Mapping::Load(m_session, m_equ[0]->UpdateFields());
+        
+        if(m_mapping)
         {
-            // Change to DOF's Mapping - needs to be made dimnesion dependent
-            m_nMappingFields = 2;
+            // Determine number of mapping fields the solve is supporting;
+            m_nMappingFields = m_mapping->GetNConvectiveFields(); 
         }
         else
         {
             m_nMappingFields = 0;
         }
 
-        m_nTotFields = m_nFields + m_nMappingFields; 
+        // increae tot field by 2*m_nMappingFields (i.e. one for x and one for mesh velocity). 
+        m_nTotFields = m_nFields + 2*m_nMappingFields; 
     }
     else
     {
@@ -204,13 +208,17 @@ void DriverArnoldi::v_InitObject(ostream &out)
 
         if(m_nMappingFields)
         {
-            Array<OneD, MultiRegions::ExpListSharedPtr>& Xfields = m_equ[0]->UpdateXMappingFields();
-
+            Array<OneD, Array<OneD, NekDouble> > coords(m_nMappingFields);
+            Array<OneD, Array<OneD, NekDouble> > coordsvel(m_nMappingFields);
+            
             for(int k = 0; k < m_nMappingFields; ++k)
             {
-                Vmath::Vcopy(nq, &array[(k+m_nFields)*nq], 1, &Xfields[k]->UpdateCoeffs()[0], 1);
-                Xfields[k]->SetPhysState(false);
+                coords[k]    = array + (k+m_nFields)*nq;
+                coordsvel[k] = array + (k+m_nFields+m_nMappingFields)*nq;
             }
+
+            m_mapping->UpdateMappingCoords(0.0,coords);
+            m_mapping->UpdateMappingCoordsVel(0.0,coordsvel);
         }
     };
 
@@ -236,23 +244,26 @@ void DriverArnoldi::v_InitObject(ostream &out)
             fields = m_equ[m_nequ-1]->UpdateFields();
         }
 
+        int nq = fields[0]->GetNcoeffs();
         for (int k = 0; k < m_nFields; ++k)
         {
-            int nq = fields[0]->GetNcoeffs();
             Vmath::Vcopy(nq,  &fields[k]->GetCoeffs()[0], 1, &array[k*nq], 1);
             fields[k]->SetPhysState(false);
         }
 
         if(m_nMappingFields)
         {
-            fields = m_equ[0]->UpdateXMappingFields();
+            Array<OneD, Array<OneD, NekDouble> > coords(m_nMappingFields);
+            Array<OneD, Array<OneD, NekDouble> > coordsvel(m_nMappingFields);
+            
+            for(int k = 0; k < m_nMappingFields; ++k)
+            {
+                coords[k]    = array + (k+m_nFields)*nq;
+                coordsvel[k] = array + (k+m_nFields+m_nMappingFields)*nq;
+            }
 
-            for (int k = 0; k < m_nMappingFields; ++k)
-            {       
-                int nq = fields[0]->GetNcoeffs();
-                Vmath::Vcopy(nq,  &fields[k]->GetCoeffs()[0], 1, &array[(k+m_nFields)*nq], 1);
-                fields[k]->SetPhysState(false);
-            }       
+            m_mapping->GetCartesianCoordinates(coords[0],coords[1],coords[2]);
+            m_mapping->GetCoordVelocity(coordsvel);
         }
     };
 
