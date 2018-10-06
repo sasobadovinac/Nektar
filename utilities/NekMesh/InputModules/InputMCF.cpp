@@ -196,6 +196,12 @@ void InputMCF::ParseFile(string nm)
         auto it2 = information.find("StreamlineFile");
         ASSERTL0(it2 != information.end(), "no streamline file defined");
         m_streamlines = it2->second;
+
+        it2 = information.find("CADExport");
+        if (it2 != parameters.end())
+        {
+            m_cadexport = it2->second;
+        }
     }
 
     if (it->second == "2DBndLayer")
@@ -366,6 +372,10 @@ void InputMCF::Process()
     if (m_crossfield)
     {
         module->RegisterConfig("streamlines", m_streamlines);
+        if (m_cadexport.size())
+        {
+            module->RegisterConfig("cadexport", m_cadexport);
+        }
     }
     if (m_naca)
     {

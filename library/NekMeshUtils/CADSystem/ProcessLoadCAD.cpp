@@ -64,6 +64,8 @@ ProcessLoadCAD::ProcessLoadCAD(MeshSharedPtr m) : ProcessModule(m)
         ConfigOption(true, "", "verbose output from cadsystem");
     m_config["streamlines"] =
         ConfigOption(false, "", "streamlines used to partition the surface");
+    m_config["cadexport"] =
+        ConfigOption(false, "", "File to export split CAD to");
 }
 
 ProcessLoadCAD::~ProcessLoadCAD()
@@ -98,6 +100,11 @@ void ProcessLoadCAD::Process()
     if(m_config["streamlines"].beenSet)
     {
         m_mesh->m_cad->SetStreamlines(m_config["streamlines"].as<string>());
+    }
+
+    if(m_config["cadexport"].beenSet)
+    {
+        m_mesh->m_cad->SetCADExport(m_config["cadexport"].as<string>());
     }
 
     if(m_config["NACA"].beenSet)

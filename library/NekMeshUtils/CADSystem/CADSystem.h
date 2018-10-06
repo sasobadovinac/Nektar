@@ -106,6 +106,11 @@ public:
         m_streamlines = i;
     }
 
+    void SetCADExport(std::string i)
+    {
+        m_cadexport = i;
+    }
+
     void SetNACA(std::string i)
     {
         m_naca = i;
@@ -230,6 +235,8 @@ protected:
     std::string m_naca;
     /// file with streamlines for partitioning
     std::string m_streamlines;
+    /// file to export the split CAD to
+    std::string m_cadexport;
 
     /**
      * @brief Reports basic properties to screen.

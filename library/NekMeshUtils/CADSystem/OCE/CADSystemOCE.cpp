@@ -168,6 +168,18 @@ bool CADSystemOCE::LoadCAD()
             ASSERTL0(shell == 1,
                      "Was not able to form a topological water tight shell");
         }
+
+        if (m_cadexport.size())
+        {
+            STEPControl_Writer aWriter;
+            IFSelect_ReturnStatus aStat =
+                aWriter.Transfer(shape, STEPControl_AsIs);
+            aStat = aWriter.Write(m_cadexport.c_str());
+            if (aStat != IFSelect_RetDone)
+            {
+                cout << "Could not export the CAD" << endl;
+            }
+        }
     }
 
     // build map of verticies
@@ -1078,15 +1090,6 @@ void CADSystemOCE::SplitFace(TopoDS_Shape &shape)
     }
 
     shape = shell;
-
-    // For visualisation purposes
-    STEPControl_Writer aWriter;
-    IFSelect_ReturnStatus aStat = aWriter.Transfer(shape, STEPControl_AsIs);
-    aStat                       = aWriter.Write("test.stp");
-    if (aStat != IFSelect_RetDone)
-    {
-        cout << "Writing error" << endl;
-    }
 }
 }
 }
