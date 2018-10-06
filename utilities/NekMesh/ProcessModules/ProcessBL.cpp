@@ -115,6 +115,8 @@ ProcessBL::ProcessBL(MeshSharedPtr m) : ProcessModule(m)
         ConfigOption(false, "5", "Number of points in high order elements.");
     m_config["surf"] =
         ConfigOption(false, "", "Tag identifying surface connected to prism.");
+    m_config["surf2"] =
+        ConfigOption(false, "", "Tag identifying surface connected to prism.");
     m_config["r"] =
         ConfigOption(false, "2.0", "Ratio to use in geometry progression.");
 }
@@ -186,6 +188,7 @@ void ProcessBL::BoundaryLayer2D()
     // Map which takes element ID to edge on surface. This enables
     // splitting to occur in either y-direction of the prism.
     map<int, int> splitEls;
+    set<int> splitEls2;
 
     // edgeMap associates geometry edge IDs to the (nl+1) vertices which
     // are generated along that edge when a prism is split, and is used
@@ -193,12 +196,15 @@ void ProcessBL::BoundaryLayer2D()
     // unordered map for speed.
     std::unordered_map<int, vector<NodeSharedPtr> > edgeMap;
 
-    string surf = m_config["surf"].as<string>();
+    string surf  = m_config["surf"].as<string>();
+    string surf2 = m_config["surf2"].as<string>();
     if (surf.size() > 0)
     {
-        vector<unsigned int> surfs;
+        vector<unsigned int> surfs, surfs2;
         ParseUtils::GenerateSeqVector(surf, surfs);
         sort(surfs.begin(), surfs.end());
+        ParseUtils::GenerateSeqVector(surf2, surfs2);
+        sort(surfs2.begin(), surfs2.end());
 
         // If surface is defined, process list of elements to find those
         // that are connected to it.
@@ -245,12 +251,45 @@ void ProcessBL::BoundaryLayer2D()
 
                     splitEls[el->GetId()] = j;
                 }
+
+                if (surfs2.size())
+                {
+                    vector<int> inter2;
+                    set_intersection(surfs2.begin(), surfs2.end(),
+                                     tags.  begin(),   tags  .end(),
+                                     back_inserter(inter2));
+                    ASSERTL0(inter2.size() <= 1,
+                         "Intersection of surfaces wrong");
+
+                    if (inter2.size() == 1)
+                    {
+                        splitEls2.insert(el->GetId());
+                    }
+                }
             }
         }
     }
     else
     {
         ASSERTL0(false, "Surface must be specified.");
+    }
+
+    cout << splitEls.size() << "\t" << splitEls2.size() << endl;
+
+    // In case of a control surface 2, find intersection
+    if (splitEls2.size())
+    {
+        map<int, int> tmp;
+        
+        for (auto &it : splitEls)
+        {
+            if (splitEls2.count(it.first))
+            {
+                tmp.insert(it);
+            }
+        }
+
+        splitEls.swap(tmp);
     }
 
     if (splitEls.size() == 0)
@@ -626,6 +665,7 @@ void ProcessBL::BoundaryLayer3D()
     // Map which takes element ID to face on surface. This enables
     // splitting to occur in either y-direction of the prism.
     std::unordered_map<int, int> splitEls;
+    set<int> splitEls2;
 
     // Set up maps which takes an edge (in nektar++ ordering) and return
     // their offset and stride in the 3d array of collapsed quadrature
@@ -725,12 +765,15 @@ void ProcessBL::BoundaryLayer3D()
     // unordered map for speed.
     std::unordered_map<int, vector<NodeSharedPtr> > edgeMap;
 
-    string surf = m_config["surf"].as<string>();
+    string surf  = m_config["surf"].as<string>();
+    string surf2 = m_config["surf2"].as<string>();
     if (surf.size() > 0)
     {
-        vector<unsigned int> surfs;
+        vector<unsigned int> surfs, surfs2;
         ParseUtils::GenerateVector(surf, surfs);
         sort(surfs.begin(), surfs.end());
+        ParseUtils::GenerateVector(surf2, surfs2);
+        sort(surfs2.begin(), surfs2.end());
 
         // If surface is defined, process list of elements to find those
         // that are connected to it.
@@ -788,6 +831,21 @@ void ProcessBL::BoundaryLayer3D()
                         continue;
                     }
                 }
+
+                if (surfs2.size())
+                {
+                    vector<int> inter2;
+                    set_intersection(surfs2.begin(), surfs2.end(),
+                                     tags  .begin(), tags  .end(),
+                                     back_inserter(inter2));
+                    ASSERTL0(inter2.size() <= 1,
+                         "Intersection of surfaces wrong");
+
+                    if (inter2.size() == 1)
+                    {
+                        splitEls2.insert(el->GetId());
+                    }
+                }
             }
         }
     }
@@ -818,6 +876,22 @@ void ProcessBL::BoundaryLayer3D()
     {
         cerr << "WARNING: No elements detected to split." << endl;
         return;
+    }
+
+    // In case of a control surface 2, find intersection
+    if (splitEls2.size())
+    {
+        unordered_map<int, int> tmp;
+        
+        for (auto &it : splitEls)
+        {
+            if (splitEls2.count(it.first))
+            {
+                tmp.insert(it);
+            }
+        }
+
+        splitEls.swap(tmp);
     }
 
     // Erase all elements from the element list. Elements will be

@@ -916,8 +916,6 @@ void FaceMesh::BuildLocalMesh()
         ASSERTL0(orderedLoops[0].size() == 4,
                  "The face should have 4 nodes for quad meshing")
 
-        /*
-        // Needed?
         for (int i = 0; i < orderedLoops.size(); i++)
         {
             for (int j = 0; j < orderedLoops[i].size(); j++)
@@ -925,7 +923,6 @@ void FaceMesh::BuildLocalMesh()
                 m_inBoundary.insert(orderedLoops[i][j]);
             }
         }
-        */
 
         ElmtConfig conf(LibUtilities::eQuadrilateral, 1, false, false);
 
