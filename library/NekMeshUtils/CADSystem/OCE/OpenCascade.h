@@ -69,6 +69,9 @@
 #include <BRepBndLib.hxx>
 #include <BRepExtrema_DistShapeShape.hxx>
 #include <GCPnts_AbscissaPoint.hxx>
+#include <IntTools_EdgeEdge.hxx>
+#include <IntTools_SequenceOfCommonPrts.hxx>
+#include <IntTools_CommonPrt.hxx>
 
 /// Shape fixing classes
 #include <ShapeFix_Face.hxx>

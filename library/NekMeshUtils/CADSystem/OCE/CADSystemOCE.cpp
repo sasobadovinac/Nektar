@@ -945,8 +945,56 @@ void CADSystemOCE::SplitFace(TopoDS_Shape &shape)
         q.push(*(toProcess.begin()));
         toProcess.erase(toProcess.begin());
 
+        set<int> reject;
+
         while (q.size())
         {
+            // Test for intersection
+            if (mw.IsDone())
+            {
+                bool intersect = false;
+
+                TopExp_Explorer explr;
+                for (explr.Init(mw.Wire(), TopAbs_EDGE); explr.More();
+                     explr.Next())
+                {
+                    IntTools_EdgeEdge ee(splines[q.front()],
+                                         TopoDS::Edge(explr.Current()));
+                    ee.Perform();
+
+                    if (!ee.IsDone())
+                    {
+                        continue;
+                    }
+
+                    IntTools_SequenceOfCommonPrts prts = ee.CommonParts();
+
+                    for (int i = 1; i <= prts.Length(); ++i)
+                    {
+                        if ((prts(i).VertexParameter1() > 1.0e-9 &&
+                             prts(i).VertexParameter1() < (1.0 - 1.0e-9)) ||
+                            (prts(i).VertexParameter2() > 1.0e-9 &&
+                             prts(i).VertexParameter2() < (1.0 - 1.0e-9)))
+                        {
+                            intersect = true;
+                            break;
+                        }
+                    }
+
+                    if (intersect)
+                    {
+                        break;
+                    }
+                }
+
+                if (intersect)
+                {
+                    reject.insert(q.front());
+                    q.pop();
+                    continue;
+                }
+            }
+
             // Add current edge to wire
             mw.Add(splines[q.front()]);
 
@@ -977,6 +1025,8 @@ void CADSystemOCE::SplitFace(TopoDS_Shape &shape)
 
         ASSERTL0(mw.IsDone(), "Wire not constructed")
         wires.push_back(mw.Wire());
+
+        toProcess.insert(reject.begin(), reject.end());
     }
 
     TopTools_ListOfShape listShapes;
