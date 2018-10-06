@@ -859,11 +859,11 @@ Streamline Streamline::MergeWith(Streamline sl)
        
         // Trigonometric interpolation
         mergedPoints[i][0] =
-            m_points[i][0] * pow(cos(i / nweights * M_PI / 2.0), 2) +
-            points[nweights - i][0] * pow(sin(i / nweights * M_PI / 2.0), 2);
+            m_points[i][0] * pow(cos(M_PI / 2.0 * i / nweights), 2) +
+            points[nweights - i][0] * pow(sin(M_PI / 2.0 * i / nweights), 2);
         mergedPoints[i][1] =
-            m_points[i][1] * pow(cos(i / nweights * M_PI / 2.0), 2) +
-            points[nweights - i][1] * pow(sin(i / nweights * M_PI / 2.0), 2);
+            m_points[i][1] * pow(cos(M_PI / 2.0 * i / nweights), 2) +
+            points[nweights - i][1] * pow(sin(M_PI / 2.0 * i / nweights), 2);
     }
 
     return Streamline(mergedPoints);
