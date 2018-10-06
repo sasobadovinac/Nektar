@@ -119,7 +119,7 @@ void DriverArpack::v_Execute(ostream &out)
     Array<OneD, NekDouble> tmpworkd;
 
     int nq     = m_equ[0]->UpdateFields()[0]->GetNcoeffs(); // Number of points in the mesh
-    int n      = m_nfields*nq;    // Number of points in eigenvalue calculation
+    int n      = m_nTotFields*nq;    // Number of points in eigenvalue calculation
     int lworkl = 3*m_kdim*(m_kdim+2); // Size of work array
     int ido ;     //REVERSE COMMUNICATION parameter. At the first call must be initialised at 0
     int info;     // do not set initial vector (info=0 random initial vector, info=1 read initial vector from session file)
