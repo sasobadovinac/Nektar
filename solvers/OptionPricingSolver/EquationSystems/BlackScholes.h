@@ -82,7 +82,7 @@ namespace Nektar
         
         SolverUtils::RiemannSolverSharedPtr  m_riemannSolver;
         SolverUtils::DiffusionSharedPtr      m_diffusion;
-        Array<OneD, Array<OneD, NekDouble> > m_stockPrice;
+        Array<OneD, Array<OneD, NekDouble> > m_advVel;
         Array<OneD, NekDouble>               m_traceSn;
 
         // Plane (used only for Discontinous projection with 3DHomogenoeus1D)
@@ -126,11 +126,11 @@ namespace Nektar
             NekDouble time,
             NekDouble lambda);
         
-        /// Get the normal stock price based on m_stockPrice
-        Array<OneD, NekDouble> &GetNormalStockPrice();
+        /// Get the normal stock price based on m_advVel
+        Array<OneD, NekDouble> &GetNormalAdvVel();
 
         /// Get the normal stock based on input stock price
-        Array<OneD, NekDouble> &GetNormalStock(
+        Array<OneD, NekDouble> &GetNormalAdv(
             const Array<OneD, const Array<OneD, NekDouble> > &stockField);
         
         /// Initialise the object

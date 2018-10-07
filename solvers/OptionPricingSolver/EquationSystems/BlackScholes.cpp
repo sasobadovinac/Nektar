@@ -69,19 +69,12 @@ namespace Nektar
         
         // Define Velocity fields
         const int nq = m_fields[0]->GetNpoints();
-        m_stockPrice = Array<OneD, Array<OneD, NekDouble> >(m_spacedim);
-#if 0 
-        std::vector<std::string> stock;
-        stock.push_back("Vx");
-        stock.push_back("Vy");
-        stock.push_back("Vz");
-        stock.resize(m_spacedim);
-        EvaluateFunction(stock, m_stockPrice, "AdvectionFactor");
-#else
-        // Load local coords into stockprice
+        m_advVel = Array<OneD, Array<OneD, NekDouble> >(m_spacedim);
+
+        // Load local coords into advVel
         Array<OneD, Array<OneD, NekDouble> > coords(m_spacedim);
-        m_stockPrice[0] = Array<OneD, NekDouble> (nq);
-        coords[0]       = Array<OneD, NekDouble> (nq);
+        m_advVel[0] = Array<OneD, NekDouble> (nq);
+        coords[0]   = Array<OneD, NekDouble> (nq);
         
         switch (m_spacedim)
         {
@@ -89,25 +82,23 @@ namespace Nektar
                 m_fields[0]->GetCoords(coords[0]);
                 break;
             case 2:
-                m_stockPrice[1] = Array<OneD, NekDouble> (nq);
+                m_advVel[1] = Array<OneD, NekDouble> (nq);
                 coords[1]       = Array<OneD, NekDouble> (nq);
                 m_fields[0]->GetCoords(coords[0], coords[1]);
                 break;
             case 3:
-                m_stockPrice[2] = Array<OneD, NekDouble> (nq);
+                m_advVel[2] = Array<OneD, NekDouble> (nq);
                 coords[2]       = Array<OneD, NekDouble> (nq);
                 m_fields[0]->GetCoords(coords[0], coords[1], coords[3]);
             default:
                 break;
         }
-#endif
         
         // Multiply the underlying stock price at time \tau = T - t
         // by the free-risk interest-rate, that is: r * S
         for (int i = 0; i < m_spacedim; ++i)
         {
-            Vmath::Smul(m_stockPrice[0].num_elements(), m_interest,
-                        coords[i], 1, m_stockPrice[i], 1);
+            Vmath::Smul(nq, m_interest, coords[i], 1, m_advVel[i], 1);
         }
         
         // Define diffusion variable containers
@@ -118,8 +109,6 @@ namespace Nektar
         };
 
         std::string varCoeffString[3] = {"xx","xy","yy"};
-
-        const int nVarDiffCmpts = m_spacedim * (m_spacedim + 1) / 2;
 
         // Allocate storage for variable coeffs and initialize to 1
         for (int i = 0, k = 0; i < m_spacedim; ++i)
@@ -145,11 +134,9 @@ namespace Nektar
         {
             case 1:
                 // Set up variable diffusivity as 0.5 * volatility^2 * S^2
-                Vmath::Smul(m_stockPrice[0].num_elements(),
-                            0.5*m_volatility*m_volatility,
+                Vmath::Smul(nq,0.5*m_volatility*m_volatility,
                             coords[0],1,m_vardiff[varCoeffEnum[0]],1);
-                Vmath::Vmul(m_stockPrice[0].num_elements(),
-                            coords[0],1,m_vardiff[varCoeffEnum[0]],1,
+                Vmath::Vmul(nq, coords[0],1,m_vardiff[varCoeffEnum[0]],1,
                             m_vardiff[varCoeffEnum[0]],1);
                 break;
             case 2:
@@ -183,7 +170,8 @@ namespace Nektar
                     CreateInstance(riemName);
                 
                 // Set additional parameters for numerical flux
-                m_riemannSolver->SetScalar("Vn", &BlackScholes::GetNormalStockPrice, this);
+                m_riemannSolver->SetScalar("Vn",
+                                   &BlackScholes::GetNormalAdvVel, this);
                 
                 // Set explicit advection strategy
                 m_session->LoadSolverInfo("AdvectionType", advName, "WeakDG");
@@ -191,7 +179,8 @@ namespace Nektar
                     CreateInstance(advName, advName);
                 
                 // Set additional parameters for explicit advection
-                m_advObject->SetFluxVector   (&BlackScholes::GetFluxVectorAdv, this);
+                m_advObject->SetFluxVector
+                    (&BlackScholes::GetFluxVectorAdv, this);
                 m_advObject->SetRiemannSolver(m_riemannSolver);
                 m_advObject->InitObject      (m_session, m_fields);
                 
@@ -232,11 +221,10 @@ namespace Nektar
                 // diffusion oeprator
                 for (int i = 0; i < m_spacedim; ++i)
                 {
-                    Vmath::Svtvp(m_stockPrice[0].num_elements(),
-                                -1.0*m_volatility*m_volatility,
-                                coords[i],1,m_stockPrice[i], 1, m_stockPrice[i], 1);
+                    Vmath::Svtvp(nq, -1.0*m_volatility*m_volatility,
+                                 coords[i],1,m_advVel[i], 1,
+                                 m_advVel[i], 1);
                 }
-
 
                 if (advName.compare("WeakDG") == 0)
                 {
@@ -245,7 +233,7 @@ namespace Nektar
                     m_riemannSolver = SolverUtils::GetRiemannSolverFactory().
                         CreateInstance(riemName);
                     m_riemannSolver->SetScalar(
-                        "Vn", &BlackScholes::GetNormalStockPrice, this);
+                        "Vn", &BlackScholes::GetNormalAdvVel, this);
                     m_advObject->SetRiemannSolver(m_riemannSolver);
                     m_advObject->InitObject      (m_session, m_fields);
                 }
@@ -289,16 +277,16 @@ namespace Nektar
     /**
      * @brief Get the normal stock price for the B-S equation.
      */
-    Array<OneD, NekDouble> &BlackScholes::GetNormalStockPrice()
+    Array<OneD, NekDouble> &BlackScholes::GetNormalAdvVel()
     {
-        return GetNormalStock(m_stockPrice);
+        return GetNormalAdv(m_advVel);
     }
 
 
     /**
      * @brief Get the normal stock price for the B-S equation.
      */
-    Array<OneD, NekDouble> &BlackScholes::GetNormalStock(
+    Array<OneD, NekDouble> &BlackScholes::GetNormalAdv(
         const Array<OneD, const Array<OneD, NekDouble> > &stockField)
     {
         // Auxiliary variable to compute the normal velocity
@@ -332,7 +320,7 @@ namespace Nektar
     {
         // Calculate explicit advection term a(x) * (\nabla u)
         m_advObject->Advect(inarray.num_elements(), m_fields,
-                            m_stockPrice, inarray, outarray, time);
+                            m_advVel, inarray, outarray, time);
         
         // Add forcing terms
         std::vector<SolverUtils::ForcingSharedPtr>::const_iterator x;
@@ -467,7 +455,7 @@ namespace Nektar
         const Array<OneD, Array<OneD, NekDouble> >               &physfield,
               Array<OneD, Array<OneD, Array<OneD, NekDouble> > > &flux)
     {
-        ASSERTL1(flux[0].num_elements() == m_stockPrice.num_elements(),
+        ASSERTL1(flux[0].num_elements() == m_advVel.num_elements(),
                  "Dimension of flux array and velocity array do not match");
 
         for (int i = 0; i < flux.num_elements(); ++i)
@@ -475,7 +463,7 @@ namespace Nektar
             for (int j = 0; j < flux[0].num_elements(); ++j)
             {
                 Vmath::Vmul(m_fields[0]->GetNpoints(), physfield[i], 1,
-                            m_stockPrice[j], 1, flux[i][j], 1);
+                            m_advVel[j], 1, flux[i][j], 1);
             }
         }
     }
@@ -603,7 +591,7 @@ namespace Nektar
         Array<OneD, NekDouble> tstep      (n_element, 0.0);
         Array<OneD, NekDouble> stdVelocity(n_element, 0.0);
 
-        stdVelocity = GetMaxStdVelocity(m_stockPrice);
+        stdVelocity = GetMaxStdVelocity(m_advVel);
         
         for (int el = 0; el < n_element; ++el)
         {
@@ -681,7 +669,7 @@ namespace Nektar
         // Currently assume velocity field is time independent
         // and does not therefore need extrapolating.
         // RHS computation using the advection base class
-        m_advObject->Advect(nVariables, m_fields, m_stockPrice,
+        m_advObject->Advect(nVariables, m_fields, m_advVel,
                             inarray, outarray, time);
 
         for (int i = 0; i < nVariables; ++i)
@@ -692,7 +680,7 @@ namespace Nektar
             Vmath::Neg(ncoeffs, WeakAdv[i], 1);
         }
         
-        AddAdvectionPenaltyFlux(m_stockPrice, inarray, WeakAdv);
+        AddAdvectionPenaltyFlux(m_advVel, inarray, WeakAdv);
 
         
         /// Operations to compute the RHS
@@ -751,7 +739,7 @@ namespace Nektar
         Array<OneD, NekDouble> numflux = Bwd + nTracePts;
         
         /// Normal velocity array
-        Array<OneD, NekDouble> Sn  = GetNormalStock(velfield);
+        Array<OneD, NekDouble> Sn  = GetNormalAdv(velfield);
         
         for (int i = 0; i < physfield.num_elements(); ++i)
         {

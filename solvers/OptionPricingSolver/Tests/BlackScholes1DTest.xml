@@ -63,8 +63,7 @@
 
         <BOUNDARYCONDITIONS>
             <REGION REF="0">
-                <D VAR="u" VALUE="-0.5 * Volatility * Volatility * x * PI 
-                                  * cos(PI * x)"/>
+                <D VAR="u" VALUE="sin(PI * x)"/>
             </REGION>
             <REGION REF="1">
                 <D VAR="u" VALUE="sin(PI * x)"/>
@@ -81,8 +80,8 @@
 
         <FUNCTION NAME="ExactForce">
             <E VAR="u"
-             VALUE="Interest * x * PI*cos(PI*x) +
-                    (0.5 * Volatility * Volatility * x * PI * PI
+             VALUE="-Interest * x * PI*cos(PI*x) +
+                    (0.5 * Volatility * Volatility * x *x * PI * PI
                     + Interest) * sin(PI * x)" />
         </FUNCTION>
 
