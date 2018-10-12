@@ -38,7 +38,7 @@
 
 #include <LibUtilities/BasicUtils/Progressbar.hpp>
 
-#include "../Module.h"
+#include "ProcessBoundaryExtract.h"
 
 namespace Nektar
 {
@@ -48,7 +48,7 @@ namespace FieldUtils
 /**
  * @brief This processing module interpolates one field to another
  */
-class ProcessWear : public ProcessModule
+class ProcessWear : public ProcessBoundaryExtract
 {
 public:
     /// Creates an instance of this class
@@ -74,15 +74,15 @@ public:
         return "Computes Erosive Wear field.";
     }
 
-    virtual ModulePriority GetModulePriority()
-    {
-        return eFillExp;
-    }
+    // virtual ModulePriority GetModulePriority()
+    // {
+    //     return eFillExp;
+    // }
 
-    void PrintProgressbar(const int position, const int goal) const
-    {
-        LibUtilities::PrintProgressbar(position, goal, "Evaluating Wear");
-    }
+    // void PrintProgressbar(const int position, const int goal) const
+    // {
+    //     LibUtilities::PrintProgressbar(position, goal, "Evaluating Wear");
+    // }
 
 private:
 /// 

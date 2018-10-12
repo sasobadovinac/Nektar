@@ -63,7 +63,7 @@ ModuleKey ProcessWear::className =
        "Computes Erosion Wear field.");
 
 ProcessWear::ProcessWear(FieldSharedPtr f)
-    : ProcessModule(f)
+    : ProcessBoundaryExtract(f)
 {
         m_config["frompts"] = ConfigOption(
         false, "NotSet", "Pts file from which to interpolate field");
@@ -78,6 +78,8 @@ ProcessWear::~ProcessWear()
 
 void ProcessWear::Process(po::variables_map &vm)
 {
+    ProcessBoundaryExtract::Process(vm);
+
     LibUtilities::PtsFieldSharedPtr fieldPts;
     // Load pts file
     ASSERTL0( m_config["frompts"].as<string>().compare("NotSet") != 0,
@@ -112,6 +114,7 @@ void ProcessWear::Process(po::variables_map &vm)
         "ProcessWear does not support homogeneous expansion");
 
     m_f->m_exp.resize(1);
+    m_f->m_variables.push_back("wear");
     //m_f->m_exp[1] = m_f->AppendExpList(m_f->m_numHomogeneousDir);
  
 	
@@ -119,12 +122,12 @@ void ProcessWear::Process(po::variables_map &vm)
     Array<OneD, Array<OneD, NekDouble> > pts; fieldPts->GetPts(pts);
     int dim = fieldPts->GetDim();
 
-   NekDouble ONE_OVER_SQRT_2PI = 0.39894228040143267793994605993438;
-   NekDouble dist2 = 0.0, Sigma = 0.01/3, Wear = 0.0;
-    
-	// Create map of boundary ids for partitioned domains
-	 SpatialDomains::BoundaryConditions bcs(m_f->m_session,
-                                              m_f->m_exp[0]->GetGraph());
+    NekDouble ONE_OVER_SQRT_2PI = 0.39894228040143267793994605993438;
+    NekDouble dist2 = 0.0, Sigma = 0.01/3, Wear = 0.0;
+
+    // Create map of boundary ids for partitioned domains
+    SpatialDomains::BoundaryConditions bcs(m_f->m_session,
+                                           m_f->m_exp[0]->GetGraph());
     const SpatialDomains::BoundaryRegionCollection bregions =
                                                  bcs.GetBoundaryRegions();
     Array<OneD, MultiRegions::ExpListSharedPtr> BndExp(1);
@@ -134,7 +137,57 @@ void ProcessWear::Process(po::variables_map &vm)
     {
        BndRegionMap[breg_it.first] = cnt++;
     }
-	 
+
+    for (int b = 0; b < m_f->m_bndRegionsToWrite.size(); ++b)
+    {
+        // Get expansion list for boundary and for elements containing this bnd
+        BndExp[0] = m_f->m_exp[0]->UpdateBndCondExpansion(b);
+
+        Array<OneD, int> elmtCounts(BndExp[0]->GetExpSize(), 0);
+
+        for (int k = 0; k < pts[0].num_elements(); ++k)
+        {
+            Array<OneD, NekDouble> pt(3);
+            pt[0] = pts[0][k];
+            pt[1] = pts[1][k];
+            pt[2] = 0.0;
+            int eId = BndExp[0]->GetExpIndex(pt);
+
+            if (eId > -1)
+            {
+                elmtCounts[eId]++;
+            }
+        }
+
+        const int nBndPts = BndExp[0]->GetNpoints();
+        Array<OneD, NekDouble> wearBnd(nBndPts, 0.0);
+
+        for (int i = 0; i < BndExp[0]->GetExpSize(); ++i)
+        {
+            LocalRegions::ExpansionSharedPtr elmt = BndExp[0]->GetExp(i);
+
+            int nElmtPts = elmt->GetTotPoints();
+            Array<OneD, NekDouble> wear(nElmtPts, elmtCounts[i]);
+
+            // Calculate area
+            Array<OneD, NekDouble> tmp(nElmtPts, 1.0);
+            NekDouble area = elmt->Integral(tmp);
+
+            for (int j = 0; j < nElmtPts; ++j)
+            {
+                wear[j] /= area;
+            }
+
+            Vmath::Vcopy(nElmtPts, &wear[0], 1, &wearBnd[BndExp[0]->GetPhys_Offset(i)], 1);
+        }
+
+        BndExp[0]->FwdTrans_IterPerExp(wearBnd, BndExp[0]->UpdateCoeffs());
+    }
+
+        
+    
+#if 0
+    
 	 
 	
    for (int b = 0; b < m_f->m_bndRegionsToWrite.size(); ++b)
@@ -187,6 +240,7 @@ void ProcessWear::Process(po::variables_map &vm)
 		}
 		 // save field names
 		 m_f->m_variables.push_back("Wear");
+#endif
 }
 
 NekDouble ProcessWear::ECRCwear(NekDouble Vel, NekDouble angle)
