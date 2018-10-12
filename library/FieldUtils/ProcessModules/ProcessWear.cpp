@@ -113,61 +113,80 @@ void ProcessWear::Process(po::variables_map &vm)
 
     m_f->m_exp.resize(1);
     //m_f->m_exp[1] = m_f->AppendExpList(m_f->m_numHomogeneousDir);
-  
-
-    //Create variables for the data generation
-    int totpoints = m_f->m_exp[0]->GetTotPoints();
-    Array<OneD, Array<OneD, NekDouble> > intFields(4);
-    for (int i = 0; i < 4 ; ++i)
-    {
-        intFields[i] = Array<OneD, NekDouble>(totpoints,0.0);
-    }
-    //Load the quadrature point information
-    m_f->m_exp[0]->GetCoords(intFields[0], intFields[1], intFields[2]);
+ 
+	
     
     Array<OneD, Array<OneD, NekDouble> > pts; fieldPts->GetPts(pts);
     int dim = fieldPts->GetDim();
 
    NekDouble ONE_OVER_SQRT_2PI = 0.39894228040143267793994605993438;
    NekDouble dist2 = 0.0, Sigma = 0.01/3, Wear = 0.0;
-   for (int  k = 0; k < pts[0].num_elements() ; ++k)
-   {
-        //Wear  = Model1wear(pts[dim][k],fabs(pts[dim+1][k]));
-        Wear  = ECRCwear(pts[dim][k],(pts[dim+1][k]));
-        cout<<"Wear: "<< Wear <<endl;
     
-        // Sum Gauss function
-        for ( int i = 0; i < totpoints; ++i)
-           {
-                dist2 = 0.0;
-                for (int j = 0; j < dim; ++j)
-                {
-                    dist2 += pow(intFields[j][i] - pts[j][k],2);
-                }
-                
-                //~ if (dist2,0.1)
-                //~ {
-                 intFields[3][i] +=  ONE_OVER_SQRT_2PI / Sigma
-                                   * exp(-0.5*dist2/pow(Sigma,2))
-                                   * Wear;
-                //~ }
-            }
-    }    
-
-//Interpolate data
-   for (int i = 0; i < totpoints; ++i)
+	// Create map of boundary ids for partitioned domains
+	 SpatialDomains::BoundaryConditions bcs(m_f->m_session,
+                                              m_f->m_exp[0]->GetGraph());
+    const SpatialDomains::BoundaryRegionCollection bregions =
+                                                 bcs.GetBoundaryRegions();
+    Array<OneD, MultiRegions::ExpListSharedPtr> BndExp(1);
+    map<int, int> BndRegionMap;
+    int cnt = 0;
+    for (auto &breg_it : bregions)
     {
-            m_f->m_exp[0]->SetPhys(i, intFields[3][i]);
+       BndRegionMap[breg_it.first] = cnt++;
     }
+	 
+	 
+	
+   for (int b = 0; b < m_f->m_bndRegionsToWrite.size(); ++b)
+	{	
+		// Get expansion list for boundary and for elements containing this bnd
+		BndExp[0] = m_f->m_exp[0]->UpdateBndCondExpansion(b);
+		
+		 //Create variables for the data generation
+		 int totpoints = BndExp[0]->GetTotPoints();
+		 Array<OneD, Array<OneD, NekDouble> > intFields(4);
+		 for (int i = 0; i < 4 ; ++i)
+		 {
+			  intFields[i] = Array<OneD, NekDouble>(totpoints,0.0);
+		 }
+		 //Load the quadrature point information
+		 BndExp[0]->GetCoords(intFields[0], intFields[1], intFields[2]);
 
-    // forward transform fields
-        m_f->m_exp[0]->FwdTrans_IterPerExp(m_f->m_exp[0]->GetPhys(),
-                                           m_f->m_exp[0]->UpdateCoeffs());
+		for (int  k = 0; k < pts[0].num_elements() ; ++k)
+		{
+			  //Wear  = Model1wear(pts[dim][k],fabs(pts[dim+1][k]));
+			  Wear  = ECRCwear(pts[dim][k],(pts[dim+1][k]));
+			  cout<<"Wear: "<< Wear <<endl;
+		 
+			  // Sum Gauss function
+			  for ( int i = 0; i < totpoints; ++i)
+				  {
+						 dist2 = 0.0;
+						 for (int j = 0; j < dim; ++j)
+						 {
+							  dist2 += pow(intFields[j][i] - pts[j][k],2);
+						 }
+						 
+						 //~ if (dist2,0.1)
+						 //~ {
+						  intFields[3][i] +=  ONE_OVER_SQRT_2PI / Sigma
+												  * exp(-0.5*dist2/pow(Sigma,2))
+												  * Wear;
+						 //~ }
+					}
+		 }    
+		//Interpolate data
+		for (int i = 0; i < totpoints; ++i)
+		{
+					BndExp[0]->SetPhys(i, intFields[3][i]);
+		}
+		// forward transform fields
+		BndExp[0]->FwdTrans_IterPerExp(BndExp[0]->GetPhys(),
+												 BndExp[0]->UpdateCoeffs());
 
-
-    // save field names
-    m_f->m_variables.push_back("Wear");
-
+		}
+		 // save field names
+		 m_f->m_variables.push_back("Wear");
 }
 
 NekDouble ProcessWear::ECRCwear(NekDouble Vel, NekDouble angle)
@@ -207,5 +226,6 @@ NekDouble ProcessWear::Model1wear(NekDouble Vel, NekDouble angle)
 
 }
 }
+
 
 
