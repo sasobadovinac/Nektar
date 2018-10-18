@@ -248,8 +248,11 @@ void Module::ProcessEdges(bool ReprocessEdges)
         elmt->SetEdgeLink(*it);
 
         // Update 2D element boundary map.
-        pair<ElementSharedPtr, int> eMap = (*it)->m_elLink.at(0);
-        eMap.first->SetBoundaryLink(eMap.second, i);
+        for (int j = 0; j < (*it)->m_elLink.size(); ++j)
+        {
+            pair<ElementSharedPtr, int> eMap = (*it)->m_elLink.at(j);
+            eMap.first->SetBoundaryLink(eMap.second, i);
+        }
 
         // Update vertices
         elmt->SetVertex(0, (*it)->m_n1, false);
