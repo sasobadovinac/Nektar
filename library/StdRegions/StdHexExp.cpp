@@ -2481,15 +2481,18 @@ namespace Nektar
                     {
                         for(k =  0; k < nmodes_c; ++k)
                         {
-                            if((i >= cutoff)||(j >= cutoff)||(k >= cutoff))
+                            if(i + j + k >= cutoff)
                             {
-                                orthocoeffs[i*nmodes_a*nmodes_b +
-                                            j*nmodes_c + k] *=
-                                    (SvvDiffCoeff*exp(-(fac[i]+fac[j]+fac[k])));
+                             orthocoeffs[k*nmodes_a*nmodes_b +
+                                            j*nmodes_a + i] *=
+                               (SvvDiffCoeff*exp(-(i+j+k-nmodes)*(i+j+k-nmodes)/
+                                                 ((NekDouble)((i+j+k-cutoff+1)*
+                                                       (i+j+k-cutoff+1)))));
                             }
                             else
                             {
-                                orthocoeffs[i*nmodes_a*nmodes_b + j*nmodes_c + k] *= 0.0;
+                                orthocoeffs[k*nmodes_a*nmodes_b+j*nmodes_c+i]
+                                    *= 0.0;
                             }
                         }
                     }
