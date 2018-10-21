@@ -31,7 +31,6 @@ ADD_NEKTAR_TEST(interpfield)
 ADD_NEKTAR_TEST(naca0012_bnd_equispacedoutput)
 ADD_NEKTAR_TEST(smallmesh_isocontour)
 ADD_NEKTAR_TEST(chan3D_interppointdatatofld)
-ADD_NEKTAR_TEST(chan3D_interppointdatatofld_interpcoord)
 
 IF (NEKTAR_USE_MPI)
     ADD_NEKTAR_TEST(chan3D_tec_par)
