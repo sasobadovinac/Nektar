@@ -120,6 +120,7 @@
 #include <gp_Elips.hxx>
 #include <BRepFeat_SplitShape.hxx>
 
+#include <BRep_Builder.hxx>
 #include <STEPControl_Writer.hxx>
 
 #endif

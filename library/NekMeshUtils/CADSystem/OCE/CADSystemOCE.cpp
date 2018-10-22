@@ -168,18 +168,6 @@ bool CADSystemOCE::LoadCAD()
             ASSERTL0(shell == 1,
                      "Was not able to form a topological water tight shell");
         }
-
-        if (m_cadexport.size())
-        {
-            STEPControl_Writer aWriter;
-            IFSelect_ReturnStatus aStat =
-                aWriter.Transfer(shape, STEPControl_AsIs);
-            aStat = aWriter.Write(m_cadexport.c_str());
-            if (aStat != IFSelect_RetDone)
-            {
-                cout << "Could not export the CAD" << endl;
-            }
-        }
     }
 
     // build map of verticies
@@ -193,6 +181,10 @@ bool CADSystemOCE::LoadCAD()
         int i = mapOfVerts.Add(v);
         AddVert(i, v);
     }
+
+    BRep_Builder aB;
+    TopoDS_Compound aResComp;
+    aB.MakeCompound(aResComp);
 
     // For each face of the geometry, get the local edges which bound it. If
     // they are valid (their type != 7), then add them to an edge map. This
@@ -209,6 +201,19 @@ bool CADSystemOCE::LoadCAD()
         {
             int i = mapOfEdges.Add(e);
             AddCurve(i, e);
+            aB.Add(aResComp, e);
+        }
+    }
+
+    if (m_cadexport.size())
+    {
+        STEPControl_Writer aWriter;
+        IFSelect_ReturnStatus aStat =
+            aWriter.Transfer(aResComp, STEPControl_AsIs);
+        aStat = aWriter.Write(m_cadexport.c_str());
+        if (aStat != IFSelect_RetDone)
+        {
+            cout << "Could not export the CAD" << endl;
         }
     }
 
