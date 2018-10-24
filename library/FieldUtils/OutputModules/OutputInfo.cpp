@@ -124,7 +124,7 @@ void OutputInfo::Process(po::variables_map &vm)
     SpatialDomains::MeshPartitionSharedPtr vMeshPartition =
         SpatialDomains::GetMeshPartitionFactory().CreateInstance(
             vPartitionerName, vSession, mesh);
-    mesh->ReadGeometry(SpatialDomains::NullDomainRangeShPtr, false);
+    mesh->ReadGeometry(false);
 
     vMeshPartition->PartitionMesh(nparts, true);
 

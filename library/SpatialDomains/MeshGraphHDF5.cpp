@@ -65,7 +65,6 @@ std::string MeshGraphHDF5::className =
         "HDF5", MeshGraphHDF5::create, "IO with HDF5 geometry");
 
 void MeshGraphHDF5::ReadGeometry(
-    DomainRangeShPtr rng,
     bool fillGraph)
 {
     ReadComposites();
@@ -531,6 +530,42 @@ void MeshGraphHDF5::PartitionMesh(LibUtilities::SessionReaderSharedPtr session)
     t.Stop();
     if (rank == 0) cout << "construct 0D: " << t.TimePerTest(1) << endl;
 
+
+    // impose range conditions if any are provided.
+
+    if(m_domainRange != NullDomainRangeShPtr)
+    {
+        // calculate Face to Vertex maps
+        std::map<int,std::unordered_set<int>> FaceToVertIDs;
+        for(auto t : triIDs)
+        {
+            std::unordered_set<int> vIDs;
+            for(int i = 0; i < 3; ++i)
+            {
+                vIDs.insert(segData[2*triData[3*t+i]]);
+                vIDs.insert(segData[2*triData[3*t+i]+1]);
+            }
+            FaceToVertIDs[t] = vIDs;
+        }
+
+        for(auto t : quadIDs)
+        {
+            std::unordered_set<int> vIDs;
+            for(int i = 0; i < 4; ++i)
+            {
+                vIDs.insert(segData[2*quadData[4*t+i]]);
+                vIDs.insert(segData[2*quadData[4*t+i]+1]);
+            }
+            FaceToVertIDs[t] = vIDs;
+        }
+
+        // reset 3D shapes to range
+        ResetGeometryDataForRange(m_tetGeoms,  FaceToVertIDs,tetIDs,tetData);
+        ResetGeometryDataForRange(m_pyrGeoms,  FaceToVertIDs,pyrIDs,pyrData);
+        ResetGeometryDataForRange(m_prismGeoms,FaceToVertIDs,prismIDs,prismData);
+        ResetGeometryDataForRange(m_hexGeoms,  FaceToVertIDs,hexIDs,hexData);
+    }
+
     if (m_meshDimension >= 1)
     {
         // Read curves
@@ -774,6 +809,8 @@ void MeshGraphHDF5::ReadGeometryData(
     // Read selected data.
     data->Read(geomData, space, m_readPL);
 }
+
+
 
 void MeshGraphHDF5::ReadCurveMap(
     CurveMap                      &curveMap,
@@ -1077,6 +1114,41 @@ template<class T, typename std::enable_if<T::kDim == 3, int>::type = 0>
 inline int GetGeomData(std::shared_ptr<T> &geom, int i)
 {
     return geom->GetFid(i);
+}
+
+template<class T>
+void MeshGraphHDF5::ResetGeometryDataForRange(
+    std::map<int, std::shared_ptr<T>>      &geomMap,
+    std::map<int,std::unordered_set<int> > &facetVertIDs,
+    std::vector<int>                       &ids,
+    std::vector<int>                       &geomData)
+{
+    const int nGeomData = GetGeomDataDim(geomMap);
+
+    std::vector<int> newid;
+    std::vector<int> newdata;
+    
+    int cnt = 0; 
+    for(auto id : ids)
+    {
+        for(int i = 0; i < nGeomData; ++i)
+        {
+            if(CheckRange(facetVertIDs[geomData[cnt*nGeomData+i]]))
+            {
+                // keep element
+                newid.push_back(id);
+                for(int j = 0; j < nGeomData; ++j)
+                {
+                    newdata.push_back(geomData[cnt*nGeomData+j]);
+                }
+                break; 
+            }
+        }
+        ++cnt;
+    }
+
+    ids      = newid;
+    geomData = newdata;
 }
 
 template<class T>

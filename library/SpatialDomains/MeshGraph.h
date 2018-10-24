@@ -221,12 +221,21 @@ public:
         NekDouble zmin = NekConstants::kNekUnsetDouble,
         NekDouble zmax = NekConstants::kNekUnsetDouble);
 
+    SPATIAL_DOMAINS_EXPORT void SetDomainRange(DomainRangeShPtr &rng)
+    {
+        m_domainRange = rng;
+    }
+    
     /// Check if goemetry is in range definition if activated
     SPATIAL_DOMAINS_EXPORT bool CheckRange(Geometry2D &geom);
 
     /// Check if goemetry is in range definition if activated
     SPATIAL_DOMAINS_EXPORT bool CheckRange(Geometry3D &geom);
 
+    /// Check if goemetry is in range definition if activated
+    SPATIAL_DOMAINS_EXPORT bool CheckRange(std::unordered_set<int> &vDIs);
+
+    
     /* ---- Composites and Domain ---- */
     CompositeSharedPtr GetComposite(int whichComposite)
     {
@@ -415,7 +424,6 @@ public:
 
     /*an inital read which loads a very light weight data structure*/
     SPATIAL_DOMAINS_EXPORT virtual void ReadGeometry(
-        DomainRangeShPtr rng,
         bool             fillGraph) = 0;
     SPATIAL_DOMAINS_EXPORT virtual void PartitionMesh(
         LibUtilities::SessionReaderSharedPtr session) = 0;

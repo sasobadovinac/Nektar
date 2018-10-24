@@ -77,7 +77,6 @@ public:
 
 protected:
     SPATIAL_DOMAINS_EXPORT virtual void ReadGeometry(
-        DomainRangeShPtr rng,
         bool             fillGraph);
     SPATIAL_DOMAINS_EXPORT virtual void PartitionMesh(
         LibUtilities::SessionReaderSharedPtr session);
@@ -109,6 +108,12 @@ private:
     template<class T, typename DataType> void ConstructGeomObject(
         std::map<int, std::shared_ptr<T>> &geomMap, int id,
         DataType *data, CurveSharedPtr curve);
+
+    template<class T>  void ResetGeometryDataForRange(
+        std::map<int, std::shared_ptr<T>>      &geomMap,
+        std::map<int,std::unordered_set<int>>  &facetVertIDs,
+        std::vector<int>                       &ids,
+        std::vector<int>                       &geomData);
 
     void WriteCurveMap(CurveMap &curves,
                        std::string dsName,

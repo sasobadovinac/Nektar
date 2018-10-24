@@ -167,7 +167,7 @@ void MeshGraphXml::PartitionMesh(
                 if (isRoot)
                 {
                     // Read 'lite' geometry information
-                    ReadGeometry(NullDomainRangeShPtr, false);
+                    ReadGeometry(false);
 
                     // Create mesh partitioner.
                     MeshPartitionSharedPtr partitioner =
@@ -269,7 +269,7 @@ void MeshGraphXml::PartitionMesh(
             else
             {
                 m_session->InitSession();
-                ReadGeometry(NullDomainRangeShPtr, false);
+                ReadGeometry(false);
 
                 // Partitioner now operates in parallel. Each process receives
                 // partitioning over interconnect and writes its own session
@@ -314,7 +314,6 @@ void MeshGraphXml::PartitionMesh(
 }
 
 void MeshGraphXml::ReadGeometry(
-    DomainRangeShPtr rng,
     bool             fillGraph)
 {
     // Reset member variables.
@@ -335,7 +334,6 @@ void MeshGraphXml::ReadGeometry(
     m_geomInfo.clear();
     m_faceToElMap.clear();
 
-    m_domainRange = rng;
     m_xmlGeom     = m_session->GetElement("NEKTAR/GEOMETRY");
 
     int err; /// Error value returned by TinyXML.

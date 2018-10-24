@@ -128,10 +128,14 @@ MeshGraphSharedPtr MeshGraph::Read(
     // the PartitionMesh function so that we can support different options for
     // XML and HDF5.
     MeshGraphSharedPtr mesh = GetMeshGraphFactory().CreateInstance(geomType);
+
+    // Set up range parameters if defined 
+    mesh->SetDomainRange(rng);
+    
     mesh->PartitionMesh(session);
 
     // Finally, read the geometry information.
-    mesh->ReadGeometry(rng, fillGraph);
+    mesh->ReadGeometry(fillGraph);
 
     return mesh;
 }
@@ -450,6 +454,104 @@ bool MeshGraph::CheckRange(Geometry3D &geom)
 
     return returnval;
 }
+
+
+/* Domain checker for list of verts  */
+bool MeshGraph::CheckRange(std::unordered_set<int> &vIDs)
+{
+    bool returnval = true;
+
+    if (m_domainRange != NullDomainRangeShPtr)
+    {
+        int nverts = vIDs.size();
+
+        if (m_domainRange->m_doXrange)
+        {
+            int ncnt_low = 0;
+            int ncnt_up  = 0;
+
+            for(auto &i : vIDs) 
+            {
+                NekDouble xval = (*GetVertex(i))[0];
+                if (xval < m_domainRange->m_xmin)
+                {
+                    ncnt_low++;
+                }
+
+                if (xval > m_domainRange->m_xmax)
+                {
+                    ncnt_up++;
+                }
+            }
+
+            // check for all verts to be less or greater than
+            // range so that if element spans thin range then
+            // it is still included
+            if ((ncnt_up == nverts) || (ncnt_low == nverts))
+            {
+                returnval = false;
+            }
+        }
+
+        if (m_domainRange->m_doYrange)
+        {
+            int ncnt_low = 0;
+            int ncnt_up  = 0;
+
+            for(auto &i : vIDs) 
+            {
+                NekDouble yval = (*GetVertex(i))[1];
+                if (yval < m_domainRange->m_ymin)
+                {
+                    ncnt_low++;
+                }
+
+                if (yval > m_domainRange->m_ymax)
+                {
+                    ncnt_up++;
+                }
+            }
+
+            // check for all verts to be less or greater than
+            // range so that if element spans thin range then
+            // it is still included
+            if ((ncnt_up == nverts) || (ncnt_low == nverts))
+            {
+                returnval = false;
+            }
+        }
+
+        if (m_domainRange->m_doZrange)
+        {
+            int ncnt_low = 0;
+            int ncnt_up  = 0;
+            for(auto &i : vIDs) 
+            {
+                NekDouble zval = (*GetVertex(i))[2];
+                if (zval < m_domainRange->m_zmin)
+                {
+                    ncnt_low++;
+                }
+
+                if (zval > m_domainRange->m_zmax)
+                {
+                    ncnt_up++;
+                }
+            }
+
+            // check for all verts to be less or greater than
+            // range so that if element spans thin range then
+            // it is still included
+            if ((ncnt_up == nverts) || (ncnt_low == nverts))
+            {
+                returnval = false;
+            }
+        }
+    }
+
+    return returnval;
+}
+
 
 /**
  *
