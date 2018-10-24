@@ -89,6 +89,8 @@ private:
     NekDouble ECRCwear(NekDouble Vel, NekDouble angle);
 /// 
     NekDouble Model1wear(NekDouble Vel, NekDouble angle);
+///
+    NekDouble TulsaAnsys(NekDouble Vel, NekDouble angle);
     
 };
 }

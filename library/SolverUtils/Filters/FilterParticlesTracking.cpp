@@ -1082,8 +1082,11 @@ void FilterParticlesTracking::CalculateForce(Particle &particle)
                                        particle.m_particleVelocity[0][i]);
     }
 
-    // Add gravity and buoyancy effects on -y direction
-    particle.m_force[0][1] += m_gravity * (1.0 - 1.0 / m_SG);
+    // Add gravity and buoyancy effects on y direction
+    /* particle.m_force[0][1] += m_gravity * (1.0 - 1.0 / m_SG); */
+    
+    // Add gravity and buoyancy effects on x direction
+    particle.m_force[0][0] += m_gravity * (1.0 - 1.0 / m_SG);
 }
 
 /**
