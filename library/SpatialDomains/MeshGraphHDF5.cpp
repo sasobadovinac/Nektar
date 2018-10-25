@@ -536,20 +536,22 @@ void MeshGraphHDF5::PartitionMesh(LibUtilities::SessionReaderSharedPtr session)
     if(m_domainRange != NullDomainRangeShPtr)
     {
         unordered_set<int> AllIDs; 
+        int cnt;
 
         if(m_meshDimension == 2)
         {
             // calculate Face to Vertex maps
             std::map<int,std::unordered_set<int>> EdgeToVertIDs;
-            for(auto t : segIDs)
+            cnt = 0; 
+            for(auto edg : segIDs)
             {
                 std::unordered_set<int> vIDs;
-                vIDs.insert(segData[2*t]);
-                vIDs.insert(segData[2*t+1]);
-                EdgeToVertIDs[t] = vIDs;
+                vIDs.insert(segData[2*cnt]);
+                vIDs.insert(segData[2*cnt+1]);
+                EdgeToVertIDs[edg] = vIDs;
             }
             
-            // reset 3D shapes to range
+            // resetza 3D shapes to range
             ResetGeometryDataForRange(m_triGeoms,  EdgeToVertIDs,triIDs,triData);
             ResetGeometryDataForRange(m_quadGeoms, EdgeToVertIDs,quadIDs,quadData);
         }
@@ -557,26 +559,28 @@ void MeshGraphHDF5::PartitionMesh(LibUtilities::SessionReaderSharedPtr session)
         {
             // calculate Face to Vertex maps
             std::map<int,std::unordered_set<int>> FaceToVertIDs;
-            for(auto t : triIDs)
+            cnt = 0; 
+            for(auto &face : triIDs)
             {
                 std::unordered_set<int> vIDs;
                 for(int i = 0; i < 3; ++i)
                 {
-                    vIDs.insert(segData[2*triData[3*t+i]]);
-                    vIDs.insert(segData[2*triData[3*t+i]+1]);
+                    vIDs.insert(segData[2*triData[3*cnt+i]]);
+                    vIDs.insert(segData[2*triData[3*cnt+i]+1]);
                 }
-                FaceToVertIDs[t] = vIDs;
+                FaceToVertIDs[face] = vIDs;
             }
-            
-            for(auto t : quadIDs)
+
+            cnt = 0; 
+            for(auto &face : quadIDs)
             {
                 std::unordered_set<int> vIDs;
                 for(int i = 0; i < 4; ++i)
                 {
-                    vIDs.insert(segData[2*quadData[4*t+i]]);
-                    vIDs.insert(segData[2*quadData[4*t+i]+1]);
+                    vIDs.insert(segData[2*quadData[4*cnt+i]]);
+                    vIDs.insert(segData[2*quadData[4*cnt+i]+1]);
                 }
-                FaceToVertIDs[t] = vIDs;
+                FaceToVertIDs[face] = vIDs;
             }
             
             // reset 3D shapes to range
