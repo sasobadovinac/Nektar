@@ -110,7 +110,7 @@ void ProcessInterpPoints::Process(po::variables_map &vm)
     ParseUtils::GenerateVector(m_config["fromxml"].as<string>(), files);
     // set up session file for from field
     fromField->m_session =
-        LibUtilities::SessionReader::CreateInstance(0, 0, files);
+        LibUtilities::SessionReader::CreateInstance(0, 0, files, m_f->m_comm);
     // Set up range based on min and max of local parallel partition
     SpatialDomains::DomainRangeShPtr rng =
         MemoryManager<SpatialDomains::DomainRange>::AllocateSharedPtr();
