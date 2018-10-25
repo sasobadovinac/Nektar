@@ -549,6 +549,7 @@ void MeshGraphHDF5::PartitionMesh(LibUtilities::SessionReaderSharedPtr session)
                 vIDs.insert(segData[2*cnt]);
                 vIDs.insert(segData[2*cnt+1]);
                 EdgeToVertIDs[edg] = vIDs;
+                ++cnt;
             }
             
             // resetza 3D shapes to range
@@ -569,6 +570,7 @@ void MeshGraphHDF5::PartitionMesh(LibUtilities::SessionReaderSharedPtr session)
                     vIDs.insert(segData[2*triData[3*cnt+i]+1]);
                 }
                 FaceToVertIDs[face] = vIDs;
+                ++cnt;
             }
 
             cnt = 0; 
@@ -581,6 +583,7 @@ void MeshGraphHDF5::PartitionMesh(LibUtilities::SessionReaderSharedPtr session)
                     vIDs.insert(segData[2*quadData[4*cnt+i]+1]);
                 }
                 FaceToVertIDs[face] = vIDs;
+                ++cnt;
             }
             
             // reset 3D shapes to range
