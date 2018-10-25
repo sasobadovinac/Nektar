@@ -115,7 +115,13 @@ private:
         std::vector<int>                       &ids,
         std::vector<int>                       &geomData);
 
-    void WriteCurveMap(CurveMap &curves,
+    template<class T> void ResetFacet(
+        std::map<int, std::shared_ptr<T>>      &geomMap,
+        std::unordered_set<int>                &facetIDs,
+        std::vector<int>                       &ids,
+        std::vector<int>                       &geomData);
+
+void WriteCurveMap(CurveMap &curves,
                        std::string dsName,
                        MeshCurvedPts &curvedPts,
                        int &ptOffset,

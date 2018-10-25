@@ -535,35 +535,69 @@ void MeshGraphHDF5::PartitionMesh(LibUtilities::SessionReaderSharedPtr session)
 
     if(m_domainRange != NullDomainRangeShPtr)
     {
-        // calculate Face to Vertex maps
-        std::map<int,std::unordered_set<int>> FaceToVertIDs;
-        for(auto t : triIDs)
-        {
-            std::unordered_set<int> vIDs;
-            for(int i = 0; i < 3; ++i)
-            {
-                vIDs.insert(segData[2*triData[3*t+i]]);
-                vIDs.insert(segData[2*triData[3*t+i]+1]);
-            }
-            FaceToVertIDs[t] = vIDs;
-        }
+        unordered_set<int> AllIDs; 
 
-        for(auto t : quadIDs)
+        if(m_meshDimension == 2)
         {
-            std::unordered_set<int> vIDs;
-            for(int i = 0; i < 4; ++i)
+            // calculate Face to Vertex maps
+            std::map<int,std::unordered_set<int>> EdgeToVertIDs;
+            for(auto t : segIDs)
             {
-                vIDs.insert(segData[2*quadData[4*t+i]]);
-                vIDs.insert(segData[2*quadData[4*t+i]+1]);
+                std::unordered_set<int> vIDs;
+                vIDs.insert(segData[2*t]);
+                vIDs.insert(segData[2*t+1]);
+                EdgeToVertIDs[t] = vIDs;
             }
-            FaceToVertIDs[t] = vIDs;
+            
+            // reset 3D shapes to range
+            ResetGeometryDataForRange(m_triGeoms,  EdgeToVertIDs,triIDs,triData);
+            ResetGeometryDataForRange(m_quadGeoms, EdgeToVertIDs,quadIDs,quadData);
         }
+        else if(m_meshDimension == 3)
+        {
+            // calculate Face to Vertex maps
+            std::map<int,std::unordered_set<int>> FaceToVertIDs;
+            for(auto t : triIDs)
+            {
+                std::unordered_set<int> vIDs;
+                for(int i = 0; i < 3; ++i)
+                {
+                    vIDs.insert(segData[2*triData[3*t+i]]);
+                    vIDs.insert(segData[2*triData[3*t+i]+1]);
+                }
+                FaceToVertIDs[t] = vIDs;
+            }
+            
+            for(auto t : quadIDs)
+            {
+                std::unordered_set<int> vIDs;
+                for(int i = 0; i < 4; ++i)
+                {
+                    vIDs.insert(segData[2*quadData[4*t+i]]);
+                    vIDs.insert(segData[2*quadData[4*t+i]+1]);
+                }
+                FaceToVertIDs[t] = vIDs;
+            }
+            
+            // reset 3D shapes to range
+            ResetGeometryDataForRange(m_tetGeoms,  FaceToVertIDs,tetIDs,tetData);
+            ResetGeometryDataForRange(m_pyrGeoms,  FaceToVertIDs,pyrIDs,pyrData);
+            ResetGeometryDataForRange(m_prismGeoms,FaceToVertIDs,prismIDs,prismData);
+            ResetGeometryDataForRange(m_hexGeoms,  FaceToVertIDs,hexIDs,hexData);
+            
+            UniqueValues(AllIDs, tetData, pyrData, prismData, hexData);
+            ResetFacet(m_triGeoms,AllIDs,triIDs,triData);
+            ResetFacet(m_quadGeoms,AllIDs,quadIDs,quadData);            
+            AllIDs.clear();
+        }
+        else
+        {
+            WARNINGL0(false,"Range is not set up for 1D expansions"); 
+        }
+        
+        UniqueValues(AllIDs,triData,quadData);
 
-        // reset 3D shapes to range
-        ResetGeometryDataForRange(m_tetGeoms,  FaceToVertIDs,tetIDs,tetData);
-        ResetGeometryDataForRange(m_pyrGeoms,  FaceToVertIDs,pyrIDs,pyrData);
-        ResetGeometryDataForRange(m_prismGeoms,FaceToVertIDs,prismIDs,prismData);
-        ResetGeometryDataForRange(m_hexGeoms,  FaceToVertIDs,hexIDs,hexData);
+        ResetFacet(m_segGeoms,AllIDs,segIDs,segData);
     }
 
     if (m_meshDimension >= 1)
@@ -1150,6 +1184,43 @@ void MeshGraphHDF5::ResetGeometryDataForRange(
     ids      = newid;
     geomData = newdata;
 }
+
+
+template<class T>
+void MeshGraphHDF5::ResetFacet(
+    std::map<int, std::shared_ptr<T>>      &geomMap,
+    std::unordered_set<int>                &facetIDs,
+    std::vector<int>                       &ids,
+    std::vector<int>                       &geomData)
+{
+    const int nGeomData = GetGeomDataDim(geomMap);
+
+    std::vector<int> newid;
+    std::vector<int> newdata;
+    
+    int cnt = 0; 
+    for(auto id : ids)
+    {
+        for(int i = 0; i < nGeomData; ++i)
+        {
+            if(facetIDs.find(id) != facetIDs.end())
+            {
+                // keep element
+                newid.push_back(id);
+                for(int j = 0; j < nGeomData; ++j)
+                {
+                    newdata.push_back(geomData[cnt*nGeomData+j]);
+                }
+                break; 
+            }
+        }
+        ++cnt;
+    }
+
+    ids      = newid;
+    geomData = newdata;
+}
+        
 
 template<class T>
 void MeshGraphHDF5::WriteGeometryMap(std::map<int, std::shared_ptr<T>> &geomMap,
