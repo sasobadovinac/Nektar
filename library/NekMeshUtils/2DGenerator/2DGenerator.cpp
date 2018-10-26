@@ -233,6 +233,7 @@ void Generator2D::Process()
         tags.push_back(it->m_parentCAD->GetId());
         ElementSharedPtr E2 = GetElementFactory().CreateInstance(
             LibUtilities::eSegment, conf, ns, tags);
+        E2->m_parentCAD = it->m_parentCAD;
         m_mesh->m_element[1].push_back(E2);
     }
 

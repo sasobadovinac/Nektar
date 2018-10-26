@@ -157,6 +157,9 @@ void ProcessBL::Process()
     ProcessFaces();
     ProcessElements();
     ProcessComposites();
+
+    m_mesh->MakeOrder(m_config["nq"].as<int>() - 1,
+                      LibUtilities::ePolyEvenlySpaced);
 }
 
 void ProcessBL::BoundaryLayer2D()
@@ -274,8 +277,6 @@ void ProcessBL::BoundaryLayer2D()
         ASSERTL0(false, "Surface must be specified.");
     }
 
-    cout << splitEls.size() << "\t" << splitEls2.size() << endl;
-
     // In case of a control surface 2, find intersection
     if (splitEls2.size())
     {
@@ -319,7 +320,7 @@ void ProcessBL::BoundaryLayer2D()
         for (int j = 0; j < 4; j++)
         {
             int bl = el[i]->GetBoundaryLink(j);
-            if ( (bl != -1) && ( j != splitEls[el[i]->GetId()]) )
+            if (bl != -1) //&& ( j != splitEls[el[i]->GetId()]) )
             {
                 bLink[j] = bl;
             }
@@ -585,7 +586,17 @@ void ProcessBL::BoundaryLayer2D()
                 int eid = it.first;
                 int bl  = it.second;
 
-                if (j == 0)
+                if (abs(eid - splitEls[el[i]->GetId()]) % 2 == 0)
+                {
+                    if ((j == 0 && (eid == 0 || eid == 3)) ||
+                        (j == nl - 1 && (eid == 1 || eid == 2)))
+                    {
+                        elmt->GetEdge(eid)->m_parentCAD =
+                            m_mesh->m_element[m_mesh->m_expDim - 1][bl]
+                                ->m_parentCAD;
+                    }
+                }
+                else if (j == 0)
                 {
                     // For first layer reuse existing 2D element.
                     ElementSharedPtr e = m_mesh->m_element[m_mesh->m_expDim-1][bl];
@@ -594,6 +605,10 @@ void ProcessBL::BoundaryLayer2D()
                         e->SetVertex(
                             k, nodeList[(eid+k)%4]);
                     }
+
+                    elmt->GetEdge(eid)->m_parentCAD =
+                        m_mesh->m_element[m_mesh->m_expDim - 1][bl]
+                            ->m_parentCAD;
                 }
                 else
                 {
@@ -610,6 +625,10 @@ void ProcessBL::BoundaryLayer2D()
                         CreateInstance(LibUtilities::eSegment,bconf,
                                        qNodeList,tagBE);
                     m_mesh->m_element[m_mesh->m_expDim-1].push_back(boundaryElmt);
+
+                    elmt->GetEdge(eid)->m_parentCAD =
+                        m_mesh->m_element[m_mesh->m_expDim - 1][bl]
+                            ->m_parentCAD;
                 }
             }
 
