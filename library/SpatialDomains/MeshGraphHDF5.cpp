@@ -402,83 +402,97 @@ void MeshGraphHDF5::PartitionMesh(LibUtilities::SessionReaderSharedPtr session)
         cout << "\t Setup graph: " << t.TimePerTest(1) << endl;
     }
 
-    t.Start();
 
-    LibUtilities::CommMpiSharedPtr mpiComm = std::static_pointer_cast<
-        LibUtilities::CommMpi>(comm);
-    SCOTCH_Dgraph scGraph;
-    SCOTCH_CALL(SCOTCH_dgraphInit, (&scGraph, mpiComm->GetComm()));
-    SCOTCH_CALL(SCOTCH_dgraphBuild,
-                (&scGraph, 0, nLocal, nLocal, &xadj[0], &xadj[1], NULL,
-                 NULL, adjncy.size(), adjncy.size(), &adjncy[0], NULL, NULL));
-    SCOTCH_CALL(SCOTCH_dgraphCheck, (&scGraph));
-
-    SCOTCH_Strat strat;
-    SCOTCH_CALL(SCOTCH_stratInit, (&strat));
-
-    vector<int> partElmts(nLocal);
-    SCOTCH_CALL(SCOTCH_dgraphPart, (&scGraph, nproc, &strat, &partElmts[0]));
-
-    // Now we need to distribute vertex IDs to all the different processors.
-
-    // Figure out how many vertices we're going to get from each processor.
-    std::vector<int> numToSend(nproc, 0), numToRecv(nproc);
-    std::map<int, std::vector<int>> procMap;
-
-    for (int i = 0; i < nLocal; ++i)
+    std::unordered_set<int> toRead;
+    if(nproc > 1)
     {
-        int toProc = partElmts[i];
-        numToSend[toProc]++;
-        procMap[toProc].push_back(elmts[graph[i]].id);
-    }
+        t.Start();
 
-    comm->AlltoAll(numToSend, numToRecv);
+        LibUtilities::CommMpiSharedPtr mpiComm = std::static_pointer_cast<
+            LibUtilities::CommMpi>(comm);
+        SCOTCH_Dgraph scGraph;
+        SCOTCH_CALL(SCOTCH_dgraphInit, (&scGraph, mpiComm->GetComm()));
+        SCOTCH_CALL(SCOTCH_dgraphBuild,
+               (&scGraph, 0, nLocal, nLocal, &xadj[0], &xadj[1], NULL,
+                NULL, adjncy.size(), adjncy.size(), &adjncy[0], NULL, NULL));
+        SCOTCH_CALL(SCOTCH_dgraphCheck, (&scGraph));
+        
+        SCOTCH_Strat strat;
+        SCOTCH_CALL(SCOTCH_stratInit, (&strat));
+        
+        vector<int> partElmts(nLocal);
+        SCOTCH_CALL(SCOTCH_dgraphPart,
+                    (&scGraph, nproc, &strat, &partElmts[0]));
 
-    // Build our offsets
-    vector<int> sendOffsetMap(nproc), recvOffsetMap(nproc);
+        // Now we need to distribute vertex IDs to all the different processors.
 
-    sendOffsetMap[0] = 0;
-    recvOffsetMap[0] = 0;
-    for (int i = 1; i < nproc; ++i)
-    {
-        sendOffsetMap[i] = sendOffsetMap[i-1] + numToSend[i-1];
-        recvOffsetMap[i] = recvOffsetMap[i-1] + numToRecv[i-1];
-    }
-
-    // Build data to send
-    int totalSend = Vmath::Vsum(nproc, &numToSend[0], 1);
-    int totalRecv = Vmath::Vsum(nproc, &numToRecv[0], 1);
-
-    vector<int> sendData(totalSend), recvData(totalRecv);
-
-    int cnt = 0;
-    for (auto &verts : procMap)
-    {
-        for (auto &vert : verts.second)
+        // Figure out how many vertices we're going to get from each processor.
+        std::vector<int> numToSend(nproc, 0), numToRecv(nproc);
+        std::map<int, std::vector<int>> procMap;
+        
+        for (int i = 0; i < nLocal; ++i)
         {
-            sendData[cnt++] = vert;
+            int toProc = partElmts[i];
+            numToSend[toProc]++;
+            procMap[toProc].push_back(elmts[graph[i]].id);
+        }
+        
+        comm->AlltoAll(numToSend, numToRecv);
+        
+        // Build our offsets
+        vector<int> sendOffsetMap(nproc), recvOffsetMap(nproc);
+        
+        sendOffsetMap[0] = 0;
+        recvOffsetMap[0] = 0;
+        for (int i = 1; i < nproc; ++i)
+        {
+            sendOffsetMap[i] = sendOffsetMap[i-1] + numToSend[i-1];
+            recvOffsetMap[i] = recvOffsetMap[i-1] + numToRecv[i-1];
+        }
+        
+        // Build data to send
+        int totalSend = Vmath::Vsum(nproc, &numToSend[0], 1);
+        int totalRecv = Vmath::Vsum(nproc, &numToRecv[0], 1);
+        
+        vector<int> sendData(totalSend), recvData(totalRecv);
+        
+        int cnt = 0;
+        for (auto &verts : procMap)
+        {
+            for (auto &vert : verts.second)
+            {
+                sendData[cnt++] = vert;
+            }
+        }
+        
+        comm->AlltoAllv(sendData, numToSend, sendOffsetMap,
+                        recvData, numToRecv, recvOffsetMap);
+
+        t.Stop();
+        if (rank == 0)
+        {
+            cout << "\t Partitioning: " << t.TimePerTest(1) << endl;
+        }
+
+        // Each process now knows which rows of the dataset it needs to read for the
+        // elements of dimension m_meshDimension.
+        t.Start();
+        UniqueValues(toRead, recvData);
+        t.Stop();
+        if (rank == 0)
+        {
+            cout << "\t Insert values: " << t.TimePerTest(1) << endl;
+        }
+    }
+    else
+    {
+        for(int i = 0; i < numElmt; ++i)
+        {
+            toRead.insert(i);
         }
     }
 
-    comm->AlltoAllv(sendData, numToSend, sendOffsetMap,
-                    recvData, numToRecv, recvOffsetMap);
 
-    t.Stop();
-    if (rank == 0)
-    {
-        cout << "\t Partitioning: " << t.TimePerTest(1) << endl;
-    }
-
-    // Each process now knows which rows of the dataset it needs to read for the
-    // elements of dimension m_meshDimension.
-    std::unordered_set<int> toRead;
-    t.Start();
-    UniqueValues(toRead, recvData);
-    t.Stop();
-    if (rank == 0)
-    {
-        cout << "\t Insert values: " << t.TimePerTest(1) << endl;
-    }
 
     // Since objects are going to be constructed starting from vertices, we now
     // need to recurse down the geometry facet dimensions to figure out which
