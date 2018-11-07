@@ -386,6 +386,11 @@ void LinearisedAdvection::v_SetBaseFlow(
     }
 }
 
+const Array<OneD, const Array<OneD, NekDouble> >  &LinearisedAdvection::v_GetBaseFlow(void)
+{
+    return m_baseflow; 
+}
+
 
 /**
  * Import field from infile and load into \a m_fields. This routine will

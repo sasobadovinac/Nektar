@@ -88,6 +88,8 @@ namespace Nektar
         bool                                        m_implicitPressure;
         bool                                        m_implicitViscous;
         bool                                        m_neglectViscous;
+        bool                                        m_isLinearAdvection;
+        
         // Tolerance and relaxation parameters for pressure and viscous
         //       systems (when solved iteratively)
         NekDouble                                   m_pressureTolerance;

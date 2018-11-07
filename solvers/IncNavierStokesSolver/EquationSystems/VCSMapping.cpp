@@ -120,6 +120,8 @@ namespace Nektar
                                                     m_implicitViscous,false);
         m_session->MatchSolverInfo("MappingNeglectViscous","True",
                                                     m_neglectViscous,false);
+        m_session->MatchSolverInfo("EvolutionOperator","Direct",
+                                                    m_isLinearAdvection,false);
         
         if (m_neglectViscous)
         {
@@ -220,8 +222,15 @@ namespace Nektar
         }
         
         // Add mapping terms
-        ApplyIncNSMappingForcing( inarray, outarray);
-
+        if(m_isLinearAdvection)
+        {
+            ApplyIncNSMappingForcing( m_advObject->GetBaseFlow(), outarray);
+        }
+        else
+        {
+            ApplyIncNSMappingForcing( inarray, outarray);
+        }
+ 
         // Update mapping vel and deal with Dirichlet boundary conditions
         if (m_mapping->IsTimeDependent())
         {

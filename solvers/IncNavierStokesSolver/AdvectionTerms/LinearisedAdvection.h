@@ -127,6 +127,8 @@ protected:
         const Array<OneD, Array<OneD, NekDouble> >        &inarray,
         const Array<OneD, MultiRegions::ExpListSharedPtr> &fields);
 
+    virtual const Array<OneD, const Array<OneD, NekDouble> >  &v_GetBaseFlow(void);
+    
     void UpdateBase(
         const NekDouble                                    m_slices,
         const Array<OneD, const NekDouble>                &inarray,

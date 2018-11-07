@@ -129,5 +129,14 @@ void Advection::v_SetBaseFlow(
             "A baseflow is not appropriate for this advection type.");
 }
 
+const Array<OneD, const Array<OneD, NekDouble> > &Advection::v_GetBaseFlow(void)
+{
+    
+    ASSERTL0(false,
+            "A baseflow is not appropriate for this advection type.");
+    Array<OneD, const Array<OneD, NekDouble> >  val;
+    return val;
+}
+    
 }
 }

@@ -135,6 +135,11 @@ public:
         v_SetBaseFlow(inarray, fields);
     }
 
+    inline const Array<OneD, const Array<OneD, NekDouble> > &GetBaseFlow()
+    {
+        return v_GetBaseFlow();
+    }
+
 protected:
     /// Callback function to the flux vector (set when advection is in
     /// conservative form).
@@ -164,6 +169,9 @@ protected:
     SOLVER_UTILS_EXPORT virtual void v_SetBaseFlow(
         const Array<OneD, Array<OneD, NekDouble> >        &inarray,
         const Array<OneD, MultiRegions::ExpListSharedPtr> &fields);
+
+    SOLVER_UTILS_EXPORT virtual const Array<OneD, const Array<OneD, NekDouble> > &v_GetBaseFlow(void);
+
 };
 
 /// A shared pointer to an Advection object.
