@@ -169,7 +169,7 @@ vector<pair<Array<OneD, NekDouble>, int>> ProcessCrossField::AnalyseVertices()
 
         // Find starting i for sweeping angle inside the domain ccw
         int nquads     = 100;
-        NekDouble dist = m_step / 1000;
+        NekDouble dist = m_step / 100;
         Array<OneD, NekDouble> quad(m_dim);
         Array<OneD, NekDouble> lcoords(m_dim);
         int i = 0;

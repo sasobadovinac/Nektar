@@ -867,7 +867,7 @@ void CADSystemOCE::SplitFace(TopoDS_Shape &shape)
 
     // Check connecting end points
     // We don't connect those meeting at existing vertices
-    NekDouble tol = 1.0e-6;
+    NekDouble tol = 1.0e-2;
 
     for (int i = 0; i < streamlines.size(); ++i)
     {
@@ -988,10 +988,10 @@ void CADSystemOCE::SplitFace(TopoDS_Shape &shape)
 
                     for (int i = 1; i <= prts.Length(); ++i)
                     {
-                        if ((prts(i).VertexParameter1() > 1.0e-9 &&
-                             prts(i).VertexParameter1() < (1.0 - 1.0e-9)) ||
-                            (prts(i).VertexParameter2() > 1.0e-9 &&
-                             prts(i).VertexParameter2() < (1.0 - 1.0e-9)))
+                        if ((prts(i).VertexParameter1() > 1.0e-2 &&
+                             prts(i).VertexParameter1() < (1.0 - 1.0e-2)) ||
+                            (prts(i).VertexParameter2() > 1.0e-2 &&
+                             prts(i).VertexParameter2() < (1.0 - 1.0e-2)))
                         {
                             intersect = true;
                             break;
