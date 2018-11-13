@@ -79,6 +79,12 @@ private:
                                 string &line,
                                 Array<OneD, Array<OneD, NekDouble> > &pts,
                                 vector<Array<OneD, int> > &ptsConn);
+    
+    void ReadTecplotDatZone(std::ifstream &datFile,
+                            string &line,
+                            LibUtilities::PtsType &ptype,
+                            vector<int> &ptsPerEdge,
+                            Array<OneD, Array<OneD, NekDouble> > &pts);
 };
 }
 }

@@ -120,30 +120,54 @@ void InputDat::Process(po::variables_map &vm)
         }
     }
 
+
     // set up basic parameters
     int nfields = fieldNames.size();
     int totvars = dim + nfields;
     Array<OneD, Array<OneD, NekDouble> > pts(totvars);
     vector<Array<OneD, int> > ptsConn;
-
+    vector< int> ptsPerEdge;
+    LibUtilities::PtsType ptype;
+    
     // read zones
     while (!datFile.eof())
     {
         getline(datFile, line);
         string linetest = line;
         boost::to_upper(linetest);
+        // Read data from all zones
         if ((linetest.find("ZONE") != string::npos))
         {
-            ReadTecplotFEBlockZone(datFile, line, pts, ptsConn);
+            if(line.find(""))
+            {
+                ReadTecplotFEBlockZone(datFile, line, pts, ptsConn);
+                ptype = LibUtilities::ePtsTriBlock;
+            }
+            else if(line.find("POINT"))
+            {
+                ReadTecplotDatZone(datFile, line, ptype, ptsPerEdge,pts);
+            }
+            else
+            {
+                ASSERTL0(false,"Unrecognised zone format");
+            }
         }
     }
 
     datFile.close();
 
+    // These are set after reading in case of multiple files.
     m_f->m_fieldPts = MemoryManager<LibUtilities::PtsField>::AllocateSharedPtr(
         dim, fieldNames, pts);
-    m_f->m_fieldPts->SetPtsType(LibUtilities::ePtsTriBlock);
-    m_f->m_fieldPts->SetConnectivity(ptsConn);
+    m_f->m_fieldPts->SetPtsType(ptype);
+    if(ptype == LibUtilities::ePtsTriBlock)
+    {
+        m_f->m_fieldPts->SetConnectivity(ptsConn);
+    }
+    else
+    {
+        m_f->m_fieldPts->SetPointsPerEdge(ptsPerEdge);
+    }
 
     // save field names
     m_f->m_variables = fieldNames;
@@ -162,7 +186,6 @@ void InputDat::ReadTecplotFEBlockZone(std::ifstream &datFile,
     ASSERTL0(line.find("ET") != string::npos, "Routine only set up TRIANLES");
 
     // read the number of nodes
-
     stringstream s;
     string tag;
     int start, end;
@@ -218,6 +241,70 @@ void InputDat::ReadTecplotFEBlockZone(std::ifstream &datFile,
     ptsConn.push_back(conn);
 
     getline(datFile, line);
+}
+
+    
+void InputDat::ReadTecplotDatZone(std::ifstream &datFile,
+                                  string &line,
+                                  LibUtilities::PtsType  &ptype,
+                                  vector<int> &ptsperedge,
+                                  Array<OneD, Array<OneD, NekDouble> > &pts)
+{
+    // read the number of nodes
+    stringstream s;
+    string tag;
+    int start, end;
+    int nj = 1;
+    int nk = 1;
+    
+    s.clear();
+    s.str(line);
+    tag = s.str();
+
+    // read the number of I Points
+    start  = tag.find("I=");
+    end    = tag.find_first_of(',', start);
+    int ni = atoi(tag.substr(start + 2, end).c_str());
+    ptsperedge.push_back(ni);
+    ptype = LibUtilities::ePtsLine; 
+    
+    // read the number of J points
+    start     = tag.find("J=");
+    if(start != std::string::npos)
+    {
+        end = tag.find_first_of(',', start);
+        nj  = atoi(tag.substr(start + 2, end).c_str());
+        ptsperedge.push_back(nj);
+        ptype = LibUtilities::ePtsPlane; 
+    }
+
+    // read the number of K points
+    start     = tag.find("K=");
+    if(start != std::string::npos)
+    {
+        end = tag.find_first_of(',', start);
+        nk  = atoi(tag.substr(start + 2, end).c_str());
+        ptsperedge.push_back(nk);
+        ptype = LibUtilities::ePtsBox; 
+    }
+
+    // set-up or extend m_pts array;
+    int npts  = ni*nj*nk;
+    int totfields = pts.num_elements();
+    for (int i = 0; i < totfields; ++i)
+    {
+        pts[i] = Array<OneD, NekDouble>(npts);
+    }
+    
+    NekDouble value;
+    for (int i = 0; i < npts; ++i)
+    {
+        for (int n = 0; n < totfields; ++n)
+        {
+            datFile >> value;
+            pts[n][i] = value;
+        }
+    }
 }
 }
 }
