@@ -18,6 +18,7 @@ SET(FieldUtilsHeaders
     OutputModules/OutputXml.h
     ProcessModules/ProcessAddCompositeID.h
     ProcessModules/ProcessFieldFromString.h
+    ProcessModules/ProcessAddDat.h
     ProcessModules/ProcessAddFld.h
     ProcessModules/ProcessBoundaryExtract.h
     ProcessModules/ProcessCombineAvg.h
@@ -75,6 +76,7 @@ SET(FieldUtilsSources
     OutputModules/OutputXml.cpp
     ProcessModules/ProcessAddCompositeID.cpp
     ProcessModules/ProcessFieldFromString.cpp
+    ProcessModules/ProcessAddDat.cpp
     ProcessModules/ProcessAddFld.cpp
     ProcessModules/ProcessBoundaryExtract.cpp
     ProcessModules/ProcessCombineAvg.cpp

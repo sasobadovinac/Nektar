@@ -42,7 +42,6 @@ namespace Nektar
 {
 namespace FieldUtils
 {
-
 /// Input module for Xml files.
 class InputDat : public InputModule
 {
@@ -73,19 +72,21 @@ public:
     {
         return eCreatePts;
     }
-
-private:
-    void ReadTecplotFEBlockZone(std::ifstream &datFile,
-                                string &line,
-                                Array<OneD, Array<OneD, NekDouble> > &pts,
-                                vector<Array<OneD, int> > &ptsConn);
-    
-    void ReadTecplotDatZone(std::ifstream &datFile,
-                            string &line,
-                            LibUtilities::PtsType &ptype,
-                            vector<int> &ptsPerEdge,
-                            Array<OneD, Array<OneD, NekDouble> > &pts);
 };
+
+void InputDatFile(string fname, LibUtilities::PtsFieldSharedPtr &fieldPts);
+
+void ReadTecplotFEBlockZone (std::ifstream &datFile,
+                             string &line,
+                             Array<OneD, Array<OneD, NekDouble> > &pts,
+                             vector<Array<OneD, int> > &ptsConn);
+
+void ReadTecplotDatZone (std::ifstream &datFile,
+                         string &line,
+                         LibUtilities::PtsType &ptype,
+                         vector<int> &ptsPerEdge,
+                         Array<OneD, Array<OneD, NekDouble> > &pts);
+
 }
 }
 #endif

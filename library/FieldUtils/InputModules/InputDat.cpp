@@ -54,7 +54,8 @@ ModuleKey InputDat::m_className[1] = {
     GetModuleFactory().RegisterCreatorFunction(
         ModuleKey(eInputModule, "dat"),
         InputDat::create,
-        "Reads Tecplot dat file for FE block triangular format.")
+        "Reads Tecplot dat file for FE block triangular, PtsLine, "
+        "PtsPlane and PtsBox format.")
 };
 
 /**
@@ -78,12 +79,18 @@ InputDat::~InputDat()
  */
 void InputDat::Process(po::variables_map &vm)
 {
-    string line;
-    std::ifstream datFile;
-
     // Open the file stream.
     string fname = m_f->m_inputfiles["dat"][0];
 
+    InputDatFile(fname,m_f->m_fieldPts);
+    m_f->m_variables = m_f->m_fieldPts->GetFieldNames();
+}
+
+void InputDatFile(string fname, LibUtilities::PtsFieldSharedPtr &fieldPts)
+{
+    string line;
+    std::ifstream datFile;
+    
     datFile.open(fname.c_str());
     if (!datFile.good())
     {
@@ -138,12 +145,12 @@ void InputDat::Process(po::variables_map &vm)
         // Read data from all zones
         if ((linetest.find("ZONE") != string::npos))
         {
-            if(line.find(""))
+            if(line.find("FEBlock") != std::string::npos)
             {
                 ReadTecplotFEBlockZone(datFile, line, pts, ptsConn);
                 ptype = LibUtilities::ePtsTriBlock;
             }
-            else if(line.find("POINT"))
+            else if(line.find("POINT") != std::string::npos)
             {
                 ReadTecplotDatZone(datFile, line, ptype, ptsPerEdge,pts);
             }
@@ -157,32 +164,29 @@ void InputDat::Process(po::variables_map &vm)
     datFile.close();
 
     // These are set after reading in case of multiple files.
-    m_f->m_fieldPts = MemoryManager<LibUtilities::PtsField>::AllocateSharedPtr(
+    fieldPts = MemoryManager<LibUtilities::PtsField>::AllocateSharedPtr(
         dim, fieldNames, pts);
-    m_f->m_fieldPts->SetPtsType(ptype);
+    fieldPts->SetPtsType(ptype);
     if(ptype == LibUtilities::ePtsTriBlock)
     {
-        m_f->m_fieldPts->SetConnectivity(ptsConn);
+        fieldPts->SetConnectivity(ptsConn);
     }
     else
     {
-        m_f->m_fieldPts->SetPointsPerEdge(ptsPerEdge);
+        fieldPts->SetPointsPerEdge(ptsPerEdge);
     }
 
-    // save field names
-    m_f->m_variables = fieldNames;
+    fieldPts->SetFieldNames(fieldNames);
 }
 
 /**
  *
  */
-void InputDat::ReadTecplotFEBlockZone(std::ifstream &datFile,
+void ReadTecplotFEBlockZone(std::ifstream &datFile,
                                       string &line,
                                       Array<OneD, Array<OneD, NekDouble> > &pts,
                                       vector<Array<OneD, int> > &ptsConn)
 {
-    ASSERTL0(line.find("FEBlock") != string::npos,
-             "Routine only set up for FEBLock format");
     ASSERTL0(line.find("ET") != string::npos, "Routine only set up TRIANLES");
 
     // read the number of nodes
@@ -244,11 +248,11 @@ void InputDat::ReadTecplotFEBlockZone(std::ifstream &datFile,
 }
 
     
-void InputDat::ReadTecplotDatZone(std::ifstream &datFile,
-                                  string &line,
-                                  LibUtilities::PtsType  &ptype,
-                                  vector<int> &ptsperedge,
-                                  Array<OneD, Array<OneD, NekDouble> > &pts)
+void ReadTecplotDatZone(std::ifstream &datFile,
+                        string &line,
+                        LibUtilities::PtsType  &ptype,
+                        vector<int> &ptsperedge,
+                        Array<OneD, Array<OneD, NekDouble> > &pts)
 {
     // read the number of nodes
     stringstream s;
