@@ -128,9 +128,10 @@ namespace Nektar
     private:        
         Array<OneD, Array<OneD, NekDouble> >    m_presForcingCorrection;
         
-        // Correction needed for convective terms = N(u) - ( -(u \nabla) u)
+        // Correction needed for convective terms = N(u) - ( -(U \nabla) u)
         //     velPhys is the velocity field (transformed for physical space)
         void MappingAdvectionCorrection(
+            const Array<OneD, const Array<OneD, NekDouble> >  &AdvVelPhys,
             const Array<OneD, const Array<OneD, NekDouble> >  &velPhys,
             Array<OneD, Array<OneD, NekDouble> >              &outarray);
 

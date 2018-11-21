@@ -222,14 +222,7 @@ namespace Nektar
         }
         
         // Add mapping terms
-        if(m_isLinearAdvection)
-        {
-            ApplyIncNSMappingForcing( m_advObject->GetBaseFlow(), outarray);
-        }
-        else
-        {
-            ApplyIncNSMappingForcing( inarray, outarray);
-        }
+        ApplyIncNSMappingForcing( inarray, outarray);
  
         // Update mapping vel and deal with Dirichlet boundary conditions
         if (m_mapping->IsTimeDependent())
@@ -822,12 +815,28 @@ namespace Nektar
         }
 
         //Advection contribution
-        MappingAdvectionCorrection(velPhys, Forcing);
+        if(m_isLinearAdvection)
+        {
+            MappingAdvectionCorrection(m_advObject->GetBaseFlow(), velPhys, Forcing);
+            MappingAdvectionCorrection(velPhys, m_advObject->GetBaseFlow(), Forcing);
+        }
+        else
+        {
+            MappingAdvectionCorrection(velPhys, velPhys, Forcing);
+        }
         
         // Time-derivative contribution
         if ( m_mapping->IsTimeDependent() )
         {
-            MappingAccelerationCorrection(vel, velPhys, tmp);
+            if(m_isLinearAdvection)
+            {
+                MappingAccelerationCorrection(m_advObject->GetBaseFlow(), m_advObject->GetBaseFlow(), tmp);
+            }
+            else
+            {
+                MappingAccelerationCorrection(vel, velPhys, tmp);
+            }
+            
             for (int i = 0; i < m_nConvectiveFields; ++i)
             {
                 Vmath::Vadd(physTot, tmp[i], 1, Forcing[i], 1, Forcing[i], 1);
@@ -871,6 +880,7 @@ namespace Nektar
     }
     
         void VCSMapping::MappingAdvectionCorrection(
+            const Array<OneD, const Array<OneD, NekDouble> >  &advVelPhys,
             const Array<OneD, const Array<OneD, NekDouble> >  &velPhys,
             Array<OneD, Array<OneD, NekDouble> >              &outarray)
         {
@@ -888,7 +898,7 @@ namespace Nektar
                 Vmath::Zero(physTot,outarray[i],1);
                 for (int j = 0; j< nvel; j++)
                 {
-                        Vmath::Vvtvp(physTot,wk[i*nvel+j],1,velPhys[j],1,
+                        Vmath::Vvtvp(physTot,wk[i*nvel+j],1,advVelPhys[j],1,
                                         outarray[i],1,outarray[i],1);
                 }    
                 Vmath::Neg(physTot, outarray[i], 1);
@@ -927,7 +937,7 @@ namespace Nektar
                     if (j == 2)
                     {
                         m_fields[0]->PhysDeriv(MultiRegions::DirCartesianMap[j],
-                                        vel[i], tmp[2]);
+                                               vel[i], tmp[2]);
                         if (m_fields[0]->GetWaveSpace())
                         {
                             m_fields[0]->HomogeneousBwdTrans(tmp[2],tmp[2]);
