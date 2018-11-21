@@ -80,11 +80,12 @@ void DriverArnoldi::v_InitObject(ostream &out)
                   * m_session->GetParameter("NumSteps");
         m_nFields = m_equ[0]->UpdateFields().num_elements() - 1;
 
-        // initialisae mapping array if required
-        m_mapping = GlobalMapping::Mapping::Load(m_session, m_equ[0]->UpdateFields());
-        
-        if(m_mapping)
+        // Check to see if a mapping is defined 
+        if(m_session->DefinesElement("Nektar/Mapping"))
         {
+            // initialisae mapping array 
+            m_mapping = GlobalMapping::Mapping::Load(m_session, m_equ[0]->UpdateFields());
+
             // Determine number of mapping fields the solve is supporting;
             m_nMappingFields = m_mapping->GetNConvectiveFields(); 
         }
