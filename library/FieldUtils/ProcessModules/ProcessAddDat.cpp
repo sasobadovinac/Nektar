@@ -55,6 +55,7 @@ ModuleKey ProcessAddDat::className = GetModuleFactory().RegisterCreatorFunction(
 ProcessAddDat::ProcessAddDat(FieldSharedPtr f) : ProcessModule(f)
 {
     m_config["scale"] = ConfigOption(false, "1.0", "scale factor");
+    m_config["scale1"] = ConfigOption(false, "1.0", "scale factor for second dat file");
 
     m_config["fromdat"] =
         ConfigOption(false, "NotSet", "Dat file form which to add dat");
@@ -70,6 +71,8 @@ void ProcessAddDat::Process(po::variables_map &vm)
 {
     string scalestr = m_config["scale"].as<string>();
     NekDouble scale = boost::lexical_cast<NekDouble>(scalestr);
+    string scalestr1 = m_config["scale1"].as<string>();
+    NekDouble scale1 = boost::lexical_cast<NekDouble>(scalestr1);
 
     ASSERTL0(m_config["fromdat"].as<string>().compare("NotSet") != 0,
              "Need to specify fromdat=file.dat ");
@@ -88,8 +91,8 @@ void ProcessAddDat::Process(po::variables_map &vm)
         for (int i = 0; i < m_f->m_fieldPts->GetNpoints(); ++i)
         {
             m_f->m_fieldPts->SetPointVal(dim+n,i,
-                                         m_f->m_fieldPts->GetPointVal(dim+n,i)
-                                         + scale*fromFieldPts->GetPointVal(dim+n,i));
+                                         scale*fromFieldPts->GetPointVal(dim+n,i)
+                                         + scale1*m_f->m_fieldPts->GetPointVal(dim+n,i));
         }
     }
 }
