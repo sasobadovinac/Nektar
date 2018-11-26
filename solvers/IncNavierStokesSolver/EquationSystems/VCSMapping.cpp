@@ -788,13 +788,11 @@ namespace Nektar
         Array<OneD, Array<OneD, NekDouble> >       vel(m_nConvectiveFields);
         Array<OneD, Array<OneD, NekDouble> >       velPhys(m_nConvectiveFields);
         Array<OneD, Array<OneD, NekDouble> >       Forcing(m_nConvectiveFields);
-	Array<OneD, Array<OneD, NekDouble> >       ForcingTmp(m_nConvectiveFields);
         Array<OneD, Array<OneD, NekDouble> >       tmp(m_nConvectiveFields);
         for (int i = 0; i < m_nConvectiveFields; ++i)
         {
             velPhys[i] = Array<OneD, NekDouble> (physTot, 0.0);
             Forcing[i] = Array<OneD, NekDouble> (physTot, 0.0);
-	    ForcingTmp[i] = Array<OneD, NekDouble> (physTot, 0.0);
             tmp[i] = Array<OneD, NekDouble> (physTot, 0.0);
         }
         
@@ -820,10 +818,11 @@ namespace Nektar
         if(m_isLinearAdvection)
         {
             MappingAdvectionCorrection(m_advObject->GetBaseFlow(), velPhys, Forcing);
-            MappingAdvectionCorrection(velPhys, m_advObject->GetBaseFlow(), ForcingTmp);
+
+            MappingAdvectionCorrection(velPhys, m_advObject->GetBaseFlow(), tmp);
 	    for (int i = 0; i < m_nConvectiveFields; ++i)
 	    {
-		    Vmath::Vadd(physTot, Forcing[i], 1, ForcingTmp[i], 1, Forcing[i], 1);
+                Vmath::Vadd(physTot, Forcing[i], 1, tmp[i], 1, Forcing[i], 1);
 	    }
         }
         else
