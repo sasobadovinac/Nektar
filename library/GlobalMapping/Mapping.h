@@ -139,6 +139,20 @@ class Mapping
             v_GetCartesianCoordinates( out0, out1, out2);
         }
 
+        /** 
+         * @brief Get the Cartesian coordinates in the field 
+         * 
+         * This function is used to obtain the Cartesian coordinates 
+         * associated withthe Mapping
+         *  
+         * @param outarray  Coordinates
+         */
+        GLOBAL_MAPPING_EXPORT void GetCartesianCoordinates(
+            Array<OneD, Array<OneD, NekDouble> >              &outarray)
+        {
+            v_GetCartesianCoordinates( outarray);
+        }
+
         /////////////////////////////////////////////////////////////
         //
         //   Basic tensor calculus functions

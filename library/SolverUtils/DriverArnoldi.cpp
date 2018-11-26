@@ -263,7 +263,7 @@ void DriverArnoldi::v_InitObject(ostream &out)
                 coordsvel[k] = array + (k+m_nFields+m_nMappingFields)*nq;
             }
 
-            m_mapping->GetCartesianCoordinates(coords[0],coords[1],coords[2]);
+            m_mapping->GetCartesianCoordinates(coords);
             m_mapping->GetCoordVelocity(coordsvel);
         }
     };
