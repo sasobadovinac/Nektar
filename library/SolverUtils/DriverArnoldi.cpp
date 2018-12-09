@@ -70,9 +70,22 @@ DriverArnoldi::~DriverArnoldi()
 void DriverArnoldi::v_InitObject(ostream &out)
 {
     Driver::v_InitObject(out);
+
+    // Check to see if a time stepping solver
     m_session->MatchSolverInfo("SolverType",
                                "VelocityCorrectionScheme",
                                m_timeSteppingAlgorithm, false);
+
+    // Check to see if a VCS Time stepping algorithm
+    bool IsMappingSolver = false;
+    
+    if(m_timeSteppingAlgorithm == false)
+    {
+        m_session->MatchSolverInfo("SolverType",
+                                   "VCSMapping",
+                                   m_timeSteppingAlgorithm, false);
+        IsMappingSolver = true;
+    }
 
     if (m_timeSteppingAlgorithm)
     {
@@ -81,10 +94,11 @@ void DriverArnoldi::v_InitObject(ostream &out)
         m_nFields = m_equ[0]->UpdateFields().num_elements() - 1;
 
         // Check to see if a mapping is defined 
-        if(m_session->DefinesElement("Nektar/Mapping"))
+        if(IsMappingSolver)
         {
             // initialisae mapping array 
-            m_mapping = GlobalMapping::Mapping::Load(m_session, m_equ[0]->UpdateFields());
+            m_mapping = GlobalMapping::Mapping::Load(m_session,
+                                                     m_equ[0]->UpdateFields());
 
             // Determine number of mapping fields the solve is supporting;
             m_nMappingFields = m_mapping->GetNConvectiveFields(); 
