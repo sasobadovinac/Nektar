@@ -222,7 +222,7 @@ namespace Nektar
         }
         
         // Add mapping terms
-        ApplyIncNSMappingForcing( inarray, outarray);
+        ApplyIncNSMappingForcing(inarray, outarray);
  
         // Update mapping vel and deal with Dirichlet boundary conditions
         if (m_mapping->IsTimeDependent())

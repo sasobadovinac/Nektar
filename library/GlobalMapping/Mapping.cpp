@@ -1263,7 +1263,7 @@ void Mapping::v_UpdateMappingCoords(
     {
         int physTot = m_fields[0]->GetTotPoints();
         // Copy coordinates
-        for(int i = 0; i < 3; i++)
+        for(int i = 0; i < m_nConvectiveFields; i++)
         {
             Vmath::Vcopy(physTot, coords[i], 1, m_coords[i], 1);
         }

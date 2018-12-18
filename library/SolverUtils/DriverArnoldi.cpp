@@ -223,17 +223,26 @@ void DriverArnoldi::v_InitObject(ostream &out)
 
         if(m_nMappingFields)
         {
-            Array<OneD, Array<OneD, NekDouble> > coords(m_nMappingFields);
-            Array<OneD, Array<OneD, NekDouble> > coordsvel(m_nMappingFields);
+            int nphys = fields[0]->GetTotPoints();
+            Array<OneD, Array<OneD, NekDouble> > ctmp(m_nMappingFields);
+            Array<OneD, NekDouble > tmp;
             
             for(int k = 0; k < m_nMappingFields; ++k)
             {
-                coords[k]    = array + (k+m_nFields)*nq;
-                coordsvel[k] = array + (k+m_nFields+m_nMappingFields)*nq;
+                ctmp[k] = Array<OneD, NekDouble> (nphys); 
             }
 
-            m_mapping->UpdateMappingCoords(0.0,coords);
-            m_mapping->UpdateMappingCoordsVel(0.0,coordsvel);
+            m_mapping->UpdateMappingCoords(0.0,ctmp);
+            for(int k = 0; k < m_nMappingFields; ++k)
+            {
+                fields[0]->FwdTrans_IterPerExp(ctmp[k],tmp = array + (k+m_nFields)*nq);
+            }            
+            m_mapping->UpdateMappingCoordsVel(0.0,ctmp);
+            for(int k = 0; k < m_nMappingFields; ++k)
+            {
+                fields[0]->FwdTrans_IterPerExp(ctmp[k],tmp = array +
+                                              (k+m_nFields+m_nMappingFields)*nq);
+            }
         }
     };
 
@@ -268,13 +277,18 @@ void DriverArnoldi::v_InitObject(ostream &out)
 
         if(m_nMappingFields)
         {
+            int nphys = fields[0]->GetTotPoints(); 
             Array<OneD, Array<OneD, NekDouble> > coords(m_nMappingFields);
             Array<OneD, Array<OneD, NekDouble> > coordsvel(m_nMappingFields);
             
             for(int k = 0; k < m_nMappingFields; ++k)
             {
-                coords[k]    = array + (k+m_nFields)*nq;
-                coordsvel[k] = array + (k+m_nFields+m_nMappingFields)*nq;
+                coords[k] = Array<OneD, NekDouble>(nphys);
+                fields[0]->BwdTrans(array + (k+m_nFields)*nq, coords[k]);
+
+                coordsvel[k] = Array<OneD, NekDouble>(nphys);
+                fields[0]->BwdTrans(array + (k+m_nFields+m_nMappingFields)*nq,
+                                    coordsvel[k]);
             }
 
             m_mapping->GetCartesianCoordinates(coords);
