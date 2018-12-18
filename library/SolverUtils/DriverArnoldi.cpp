@@ -232,17 +232,18 @@ void DriverArnoldi::v_InitObject(ostream &out)
                 ctmp[k] = Array<OneD, NekDouble> (nphys); 
             }
 
-            m_mapping->UpdateMappingCoords(0.0,ctmp);
             for(int k = 0; k < m_nMappingFields; ++k)
             {
-                fields[0]->FwdTrans_IterPerExp(ctmp[k],tmp = array + (k+m_nFields)*nq);
+                fields[0]->BwdTrans(array + (k+m_nFields)*nq, ctmp[k]);
             }            
-            m_mapping->UpdateMappingCoordsVel(0.0,ctmp);
+            m_mapping->UpdateMappingCoords(0.0,ctmp);
+
             for(int k = 0; k < m_nMappingFields; ++k)
             {
-                fields[0]->FwdTrans_IterPerExp(ctmp[k],tmp = array +
-                                              (k+m_nFields+m_nMappingFields)*nq);
+                fields[0]->BwdTrans(array + (k+m_nFields+m_nMappingFields)*nq,
+                                    ctmp[k]);
             }
+            m_mapping->UpdateMappingCoordsVel(0.0,ctmp);
         }
     };
 
@@ -280,19 +281,25 @@ void DriverArnoldi::v_InitObject(ostream &out)
             int nphys = fields[0]->GetTotPoints(); 
             Array<OneD, Array<OneD, NekDouble> > coords(m_nMappingFields);
             Array<OneD, Array<OneD, NekDouble> > coordsvel(m_nMappingFields);
+            Array<OneD, NekDouble> tmp;
             
             for(int k = 0; k < m_nMappingFields; ++k)
             {
-                coords[k] = Array<OneD, NekDouble>(nphys);
-                fields[0]->BwdTrans(array + (k+m_nFields)*nq, coords[k]);
-
+                coords   [k] = Array<OneD, NekDouble>(nphys);
                 coordsvel[k] = Array<OneD, NekDouble>(nphys);
-                fields[0]->BwdTrans(array + (k+m_nFields+m_nMappingFields)*nq,
-                                    coordsvel[k]);
             }
 
             m_mapping->GetCartesianCoordinates(coords);
             m_mapping->GetCoordVelocity(coordsvel);
+
+            for(int k = 0; k < m_nMappingFields; ++k)
+            {
+                fields[0]->FwdTrans_IterPerExp(coords[k],
+                            tmp = array + (k+m_nFields)*nq);
+                fields[0]->FwdTrans_IterPerExp(coordsvel[k],
+                            tmp = array + (k+m_nFields+m_nMappingFields)*nq);
+            }
+
         }
     };
 

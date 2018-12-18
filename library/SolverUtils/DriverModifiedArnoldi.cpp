@@ -165,12 +165,19 @@ void DriverModifiedArnoldi::v_Execute(ostream &out)
         out << "Iteration: " << 0 <<  endl;
     }
 
-    // Normalise first vector in sequence
-    alpha[0] = Blas::Ddot(ntot, &Kseq[0][0], 1, &Kseq[0][0], 1);
+    // Normalise first vector in sequence based on vel field
+    alpha[0] = Blas::Ddot(m_nFields*nq, &Kseq[0][0], 1, &Kseq[0][0], 1);
     m_comm->AllReduce(alpha[0], Nektar::LibUtilities::ReduceSum);
     alpha[0] = std::sqrt(alpha[0]);
     Vmath::Smul(ntot, 1.0/alpha[0], Kseq[0], 1, Kseq[0], 1);
 
+    if(m_nMappingFields)
+    {
+        alpha[0] = Blas::Ddot(ntot, &Kseq[0][0], 1, &Kseq[0][0], 1);
+        m_comm->AllReduce(alpha[0], Nektar::LibUtilities::ReduceSum);
+        alpha[0] = std::sqrt(alpha[0]);
+    }
+    
     // Fill initial krylov sequence
     NekDouble resid0;
     for (i = 1; !converged && i <= m_kdim; ++i)
@@ -178,14 +185,19 @@ void DriverModifiedArnoldi::v_Execute(ostream &out)
         // Compute next vector
         EV_update(Kseq[i-1], Kseq[i]);
 
-        // Normalise
-        alpha[i] = Blas::Ddot(ntot, &Kseq[i][0], 1, &Kseq[i][0], 1);
+        // Normalise based on nfields
+        alpha[i] = Blas::Ddot(m_nFields*nq, &Kseq[i][0], 1, &Kseq[i][0], 1);
         m_comm->AllReduce(alpha[i], Nektar::LibUtilities::ReduceSum);
         alpha[i] = std::sqrt(alpha[i]);
-
-        //alpha[i] = std::sqrt(alpha[i]);
         Vmath::Smul(ntot, 1.0/alpha[i], Kseq[i], 1, Kseq[i], 1);
 
+        if(m_nMappingFields)
+        {
+            alpha[i] = Blas::Ddot(ntot, &Kseq[i][0], 1, &Kseq[i][0], 1);
+            m_comm->AllReduce(alpha[i], Nektar::LibUtilities::ReduceSum);
+            alpha[i] = std::sqrt(alpha[i]);
+        }
+        
         // Copy Krylov sequence into temporary storage
         for (int k = 0; k < i + 1; ++k)
         {
