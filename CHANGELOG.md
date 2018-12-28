@@ -17,6 +17,7 @@ v4.4.2
 - Fix typecast to an integer which set Lz < 1 to zero when postprocess hdf5 output (!922)
 - Fix a number of regressions in the release branch (!967)
 - Fix program options errors on Windows in debug mode (!986)
+- Fix potential clobbered output of ModArnoldi EVs when run in parallel (!983)
 
 **IncNavierStokesSolver**
 - Add a test for imaginary shift to be only used with Homogenous and SingleMode on. (!928)
