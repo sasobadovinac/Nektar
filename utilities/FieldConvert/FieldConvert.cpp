@@ -290,9 +290,9 @@ int main(int argc, char* argv[])
 
                 // Remove trailing separator from extension to allow
                 //    folder inputs using file.fld/
-                if(ext.back() == fs::path::preferred_separator)
+                if(ext[ext.length() - 1] == fs::path::preferred_separator)
                 {
-                    ext.pop_back();
+                    ext.erase(ext.size()-1);
                 }
 
                 if(ext == "gz")
