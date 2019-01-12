@@ -16,6 +16,11 @@ v4.4.2
 - Updated PETSc to 3.7.7 (!916)
 - Fix typecast to an integer which set Lz < 1 to zero when postprocess hdf5 output (!922)
 - Fix a number of regressions in the release branch (!967)
+- Fix program options errors on Windows in debug mode (!986)
+
+**IncNavierStokesSolver**
+- Add a test for imaginary shift to be only used with Homogenous and SingleMode on. (!928)
+
 **NekMesh**
 - Fix missing periodic boundary meshing and boundary layer mesh adjustment
   configurations in 2D (!859)
