@@ -47,6 +47,24 @@ TARGET_LINK_LIBRARIES(Tester
 ADD_DEPENDENCIES(Tester boost tinyxml-2.6.2)
 
 IF( ${CMAKE_SYSTEM} MATCHES "Linux.*")
+  # The boost thread library needs pthread on linux.
+  GET_TARGET_PROPERTY(THE_COMPILE_FLAGS Tester COMPILE_FLAGS)
+  GET_TARGET_PROPERTY(THE_LINK_FLAGS Tester LINK_FLAGS)
+
+  # It is possible these flags have not been set yet.
+  IF(NOT THE_COMPILE_FLAGS)
+      SET(THE_COMPILE_FLAGS "")
+  ENDIF(NOT THE_COMPILE_FLAGS)
+
+  IF(NOT THE_LINK_FLAGS )
+      SET(THE_LINK_FLAGS "")
+  ENDIF(NOT THE_LINK_FLAGS)
+
+  SET_TARGET_PROPERTIES(Tester
+          PROPERTIES COMPILE_FLAGS "${THE_COMPILE_FLAGS} -pthread")
+  SET_TARGET_PROPERTIES(Tester
+          PROPERTIES LINK_FLAGS "${THE_LINK_FLAGS} -pthread")
+
   TARGET_LINK_LIBRARIES(Tester optimized rt debug rt)
 ENDIF()
 

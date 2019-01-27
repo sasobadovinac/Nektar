@@ -41,6 +41,9 @@ v4.4.2
 **Tester**
 - Fix build with boost 1.67 (!947)
 
+**Build system**:
+- Fix missing pthread when linking on some systems (!961)
+
 v4.4.1
 ------
 **Library**
