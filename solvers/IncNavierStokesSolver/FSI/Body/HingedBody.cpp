@@ -564,7 +564,7 @@ void HingedBody::GetInitialCondition(
         // The magnitude of the angular velocity is abs(V) / R
         NekDouble radius = sqrt( rCartBnd[0][pt]*rCartBnd[0][pt] +
                                  rCartBnd[1][pt]*rCartBnd[1][pt]);
-        m_velocity[0]    = (velBnd[0][pt]*velBnd[0][pt] +
+        m_velocity[0]    = sqrt(velBnd[0][pt]*velBnd[0][pt] +
                             velBnd[1][pt]*velBnd[1][pt]) / radius;
         // Now check the sign
         //    (check both conditions in case either x or y is zero)
