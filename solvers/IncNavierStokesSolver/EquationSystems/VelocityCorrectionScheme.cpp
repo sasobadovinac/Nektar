@@ -44,7 +44,7 @@ using namespace std;
 
 namespace Nektar
 {
-    using namespace MultiRegions;
+     using namespace MultiRegions;
 
     string VelocityCorrectionScheme::className =
         SolverUtils::GetEquationSystemFactory().RegisterCreatorFunction(
