@@ -11,3 +11,4 @@ ThirdParty
 *.pdf
 # Kdevelop project files
 *.kdev4
+cmake-build-debug

@@ -1,5 +1,6 @@
 SET(SPATIAL_DOMAINS_SOURCES
 Conditions.cpp
+Interface.cpp
 GeomFactors.cpp
 Geometry0D.cpp
 Geometry1D.cpp
@@ -22,6 +23,7 @@ TriGeom.cpp
 
 SET(SPATIAL_DOMAINS_HEADERS
 Conditions.h
+Interface.h
 Curve.hpp
 GeomFactors.h
 Geometry0D.h
