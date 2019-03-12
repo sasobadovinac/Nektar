@@ -357,7 +357,7 @@ void HingedBody::v_Apply(
         }
 
         // Account for torsional spring and damping contributions
-        m_moment[0] -= m_K * m_angle - m_C * m_velocity[0];
+        m_moment[0] -= m_K * m_angle + m_C * m_velocity[0];
 
         // Shift velocity storage
         for(int n = m_intSteps-1; n > 0; --n)
