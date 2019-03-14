@@ -66,19 +66,20 @@ namespace Nektar
 
             if (interfacesTag)
             {
-                ReadInterface(interfacesTag);
+                ReadInterfaces(interfacesTag);
             }
         }
 
-        std::string ReadTag(std::string domainStr)
+        std::string ReadTag(std::string tagStr)
         {
-            std::string::size_type indxBeg = domainStr.find_first_of('[') + 1;
-            std::string::size_type indxEnd = domainStr.find_last_of(']') - 1;
+            std::string::size_type indxBeg = tagStr.find_first_of('[') + 1;
+            std::string::size_type indxEnd = tagStr.find_last_of(']') - 1;
 
             ASSERTL0(indxBeg <= indxEnd,
-                     (std::string("Error reading boundary region definition:") + domainStr).c_str());
+                     (std::string("Error reading boundary region definition:")
+                     + tagStr).c_str());
 
-            std::string indxStr = domainStr.substr(indxBeg, indxEnd - indxBeg + 1);
+            std::string indxStr = tagStr.substr(indxBeg, indxEnd - indxBeg + 1);
 
             return indxStr;
         }
@@ -86,36 +87,89 @@ namespace Nektar
         void Interfaces::ReadInterfaces(TiXmlElement *interfacesTag)
         {
             TiXmlElement *interfaceElementTag = interfacesTag->FirstChildElement();
-            std::string interfaceType = interfaceElementTag->Value();
-
-            int err; //variable to check attributes are read correctly
-            int indx; //value that holds interface ID
-            err = interfaceElementTag->QueryIntAttribute("ID", &indx);
-            ASSERTL0(err == TIXML_SUCCESS, "Unable to read interface ID.");
-
-            std::string interfaceMovingDomainStr;
-            err = interfaceElementTag->QueryStringAttribute("DOMAIN", &interfaceMovingDomainStr);
-            ASSERTL0(err == TIXML_SUCCESS, "Unable to read moving interface domain.");
-            CompositeMap movingDomain = m_meshGraph->GetDomain(stoi(ReadTag(interfaceMovingDomainStr)));
-
-            std::string interfaceFixedDomainStr;
-            err = interfaceElementTag->QueryStringAttribute("FIXED", &interfaceFixedDomainStr);
-            ASSERTL0(err == TIXML_SUCCESS, "Unable to read fixed interface domain.");
-            CompositeMap fixedDomain = m_meshGraph->GetDomain(stoi(ReadTag(interfaceFixedDomainStr)));
-
-            std::string interfaceEdgeStr;
-            err = interfaceElementTag->QueryStringAttribute("INTERFACE", &interfaceEdgeStr);
-            ASSERTL0(err == TIXML_SUCCESS, "Unable to read interface composite.");
-
-            InterfaceEdgeShPtr interfaceEdge;
-            m_meshGraph->GetCompositeList(ReadTag(interfaceEdgeStr), *interfaceEdge);
-
-            TiXmlAttribute *attr = interfaceElementTag->FirstAttribute();
-
-            if (interfaceType == "R")
+            while(interfaceElementTag)
             {
+                std::vector<std::string>::iterator iter;
+                std::string interfaceType = interfaceElementTag->Value();
 
+                int err; //variable to check attributes are read correctly
+                int indx; //value that holds interface ID
+                err = interfaceElementTag->QueryIntAttribute("ID", &indx);
+                ASSERTL0(err == TIXML_SUCCESS, "Unable to read interface ID.");
+
+                std::string interfaceMovingDomainStr;
+                err = interfaceElementTag->QueryStringAttribute("DOMAIN",
+                                                                &interfaceMovingDomainStr);
+                ASSERTL0(err == TIXML_SUCCESS,
+                         "Unable to read moving interface domain.");
+                CompositeMap movingDomain = m_meshGraph->GetDomain(
+                        stoi(ReadTag(interfaceMovingDomainStr)));
+
+                std::string interfaceFixedDomainStr;
+                err = interfaceElementTag->QueryStringAttribute("FIXED",
+                                                                &interfaceFixedDomainStr);
+                ASSERTL0(err == TIXML_SUCCESS,
+                         "Unable to read fixed interface domain.");
+                CompositeMap fixedDomain = m_meshGraph->GetDomain(
+                        stoi(ReadTag(interfaceFixedDomainStr)));
+
+                std::string interfaceEdgeStr;
+                err = interfaceElementTag->QueryStringAttribute("INTERFACE",
+                                                                &interfaceEdgeStr);
+                ASSERTL0(err == TIXML_SUCCESS,
+                         "Unable to read interface composite.");
+
+                InterfaceEdgeShPtr interfaceEdge(
+                        MemoryManager<InterfaceEdge>::AllocateSharedPtr());
+
+                interfaceEdgeStr = ReadTag(interfaceEdgeStr);
+                m_meshGraph->GetCompositeList(interfaceEdgeStr, *interfaceEdge);
+
+                if (interfaceType == "R")
+                {
+
+                    std::string originStr;
+                    err = interfaceElementTag->QueryStringAttribute("ORIGIN",
+                                                                    &originStr);
+
+                    ASSERTL0(err == TIXML_SUCCESS,
+                             "Unable to read origin.");
+
+                    std::vector<NekDouble> originVec;
+                    ParseUtils::GenerateVector(originStr, originVec);
+                    PointGeomSharedPtr origin = MemoryManager<PointGeom>::
+                            AllocateSharedPtr(PointGeom(3, 0, originVec[0], originVec[1], originVec[2]));
+
+                    std::string axisStr;
+                    err = interfaceElementTag->QueryStringAttribute("AXIS",
+                                                                    &axisStr);
+
+                    ASSERTL0(err == TIXML_SUCCESS,
+                             "Unable to read axis.");
+
+                    std::vector<NekDouble> axis;
+                    ParseUtils::GenerateVector(originStr, axis);
+
+                    std::string angularVelStr;
+                    err = interfaceElementTag->QueryStringAttribute("ANGVEL",
+                                                                    &angularVelStr);
+
+                    ASSERTL0(err == TIXML_SUCCESS,
+                             "Unable to read angular velocity.");
+
+                    NekDouble angularVel = stod(angularVelStr);
+
+                    InterfaceShPtr rotatingInterface(
+                            MemoryManager<RotatingInterface>::AllocateSharedPtr(
+                                    m_session, movingDomain, fixedDomain,
+                                    interfaceEdge, origin, axis, angularVel));
+
+                    m_interfaces[indx] = rotatingInterface;
+                }
+
+                interfaceElementTag = interfaceElementTag->NextSiblingElement();
             }
+            //
         }
     }
 }

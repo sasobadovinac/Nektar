@@ -7,23 +7,21 @@
 #include <SpatialDomains/Interface.h>
 
 using namespace Nektar;
+using namespace SpatialDomains;
 
 int main(int argc, char *argv[])
 {
-    LibUtilities::SessionReaderSharedPtr session =
-            LibUtilities::SessionReader::CreateInstance(argc, argv);
+    LibUtilities::SessionReaderSharedPtr session = LibUtilities::SessionReader::CreateInstance(argc, argv);
 
-    SpatialDomains::MeshGraphSharedPtr graph =
-            SpatialDomains::MeshGraph::Read(session);
+    SpatialDomains::MeshGraphSharedPtr graph = SpatialDomains::MeshGraph::Read(session);
+    Interfaces interfaceCollection = SpatialDomains::Interfaces(session, graph);
 
-    Interface conds = SpatialDomains::Interface(session, graph);
-    auto regions = conds.GetInterfaceRegions();
+    auto regions = interfaceCollection.GetInterfaces();
 
-    /*for (auto &region : regions)
+    for (auto &region : regions)
     {
-        std::cout << region->GetInterfaceConditionType() << std::endl;
-        region->AdjustMeshGraph(graph);
-    }*/
-
-
+        cout << std::to_string(region.second->GetInterfaceType()) << endl; //<--- works
+        // cout << std::to_string(region.second->GetAngularVel()) << endl; <--- doesn't work
+    }
+    cout << "All read" << endl;
 }

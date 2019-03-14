@@ -114,12 +114,27 @@ namespace Nektar
                     const InterfaceEdgeShPtr interfaceEdge,
                     const PointGeomSharedPtr origin,
                     const std::vector<NekDouble> axis,
-                    const NekDouble angularVel):
-                    InterfaceBase(eRotating, movingDomain, fixedDomain, interfaceEdge),
-                    m_origin(origin),
-                    m_axis(axis),
-                    m_angularVel(angularVel)
+                    const NekDouble angularVel)
+                    : InterfaceBase(eRotating, movingDomain, fixedDomain, interfaceEdge),
+                      m_origin(origin),
+                      m_axis(axis),
+                      m_angularVel(angularVel)
             {
+            }
+
+            PointGeomSharedPtr GetOrigin() const
+            {
+                return m_origin;
+            }
+
+            std::vector<NekDouble> GetAxis() const
+            {
+                return m_axis;
+            }
+
+            NekDouble GetAngularVel() const
+            {
+                return m_angularVel;
             }
 
             PointGeomSharedPtr      m_origin;
@@ -128,10 +143,11 @@ namespace Nektar
         };
 
         typedef std::shared_ptr<InterfaceBase> InterfaceShPtr;
-        typedef std::map<std::string,InterfaceShPtr>  InterfaceMap;
-        typedef std::shared_ptr<InterfaceMap>  InterfaceMapShPtr;
-        typedef std::map<int, InterfaceMapShPtr> InterfaceCollection;
         typedef std::shared_ptr<RotatingInterface> RotatingInterfaceShPtr;
+
+        typedef std::map<int, InterfaceShPtr> InterfaceCollection;
+
+
 
         class Interfaces
         {
@@ -161,8 +177,6 @@ namespace Nektar
             void Read(TiXmlElement *interfaceTag);
             void ReadInterfaces(TiXmlElement *interfaceTag);
         };
-
-        typedef std::shared_ptr<Interfaces> InterfaceSharedPtr;
     }
 }
 
