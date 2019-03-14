@@ -328,12 +328,42 @@ void HingedBody::v_Apply(
         ++intCalls;
         int order = min(intCalls, m_intSteps);
 
-        int expdim = pFields[0]->GetGraph()->GetMeshDimension();
+        int expdim  = pFields[0]->GetGraph()->GetMeshDimension();
+	int nfields = pFields.num_elements();
+	int ncoeffs = pFields[0]->GetNcoeffs();
+	int totPts  = pFields[0]->GetTotPoints();
+	Array<OneD, Array<OneD, NekDouble> > BaseFlow(expdim);
+
+	Array<OneD, Array<OneD, NekDouble> > SaveCoeffs(nfields);
+
+	// Get hold base flow in physical space
+	for (int i = 0; i < expdim; ++i)
+       	{
+		BaseFlow[i] = Array<OneD, NekDouble> (totPts, 0.0);
+	}
+
+	m_VCSMap->ReturnBaseFlow(BaseFlow);
+
+	// Transform base flow to coefficient in pField and add pert field
+        for(int i = 0; i < nfields; ++i)
+	{
+		SaveCoeffs[i] = Array<OneD, NekDouble>(ncoeffs);
+	        Vmath::Vcopy(ncoeffs,pFields[i]->GetCoeffs(),1,SaveCoeffs[i],1);
+		pFields[i]->FwdTrans_IterPerExp(BaseFlow[i],pFields[i]->UpdateCoeffs());
+		Vmath::Vadd(ncoeffs,SaveCoeffs[i],1,pFields[i]->GetCoeffs(),1,pFields[i]->UpdateCoeffs(),1);
+	}
 
         // Get aerodynamic forces
         Array<OneD, NekDouble> moments(expdim, 0.0);
         m_filterForces->GetTotalMoments(pFields, moments, newTime);
 
+	// Copy back perturbation field to pField. 
+        for(int i = 0; i < nfields; ++i)
+	{
+		Vmath::Vcopy(ncoeffs,SaveCoeffs[i],1,pFields[i]->UpdateCoeffs(),1);
+		pFields[i]->SetPhysState(false);
+	}
+	                                            
         // Shift moment storage
         for(int n = m_intSteps-1; n > 0; --n)
         {

@@ -74,6 +74,8 @@ namespace Nektar
 
         virtual void v_InitObject();
 
+	void ReturnBaseFlow(Array<OneD, Array<OneD, NekDouble> > &outarray);
+
     protected:
         // Mapping object
         GlobalMapping::MappingSharedPtr             m_mapping;

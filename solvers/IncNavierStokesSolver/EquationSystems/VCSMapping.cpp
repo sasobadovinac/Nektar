@@ -1024,4 +1024,12 @@ namespace Nektar
             m_mapping->VelocityLaplacian(velPhys, outarray, 1.0);
         }
 
+	void VCSMapping::ReturnBaseFlow(Array<OneD, Array<OneD, NekDouble> > &outarray)
+	{
+		int physTot = m_fields[0]->GetTotPoints();
+		for (int i = 0; i < m_nConvectiveFields; ++i)
+		{
+			Vmath::Vcopy(physTot, m_advObject->GetBaseFlow()[i], 1, outarray[i], 1);
+		}
+	}
 } //end of namespace

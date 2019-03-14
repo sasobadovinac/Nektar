@@ -39,6 +39,7 @@
 #include <string>
 #include <IncNavierStokesSolver/FSI/Body/FSIBody.h>
 #include <SolverUtils/Filters/FilterAeroForces.h>
+#include <IncNavierStokesSolver/EquationSystems/VCSMapping.h>
 
 namespace Nektar
 {
@@ -78,6 +79,9 @@ protected:
     Array<OneD, NekDouble>                  m_axis;
     // AeroForces filter
     SolverUtils::FilterAeroForcesSharedPtr  m_filterForces;
+
+    // VCSMaopping shared pointer
+    VCSMappingSharedPtr                     m_VCSMap;
 
     /// Time step
     NekDouble                               m_timestep;
