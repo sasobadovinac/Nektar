@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 //
-//  File:  Conditions.h
+//  File:  s.h
 //
 //  For more information, please see: http://www.nektar.info/
 //
@@ -16,7 +16,7 @@
 //  to deal in the Software without restriction, including without limitation
 //  the rights to use, copy, modify, merge, publish, distribute, sublicense,
 //  and/or sell copies of the Software, and to permit persons to whom the
-//  Software is furnished to do so, subject to the following conditions:
+//  Software is furnished to do so, subject to the following s:
 //
 //  The above copyright notice and this permission notice shall be included
 //  in all copies or substantial portions of the Software.
@@ -33,8 +33,8 @@
 //
 //
 ////////////////////////////////////////////////////////////////////////////////
-#ifndef NEKTAR_SPATIALDOMAINS_INTERFACECONDITIONS_H
-#define NEKTAR_SPATIALDOMAINS_BOUNDARYCONDITIONS_H
+#ifndef NEKTAR_SPATIALDOMAINS_INTERFACES_H
+#define NEKTAR_SPATIALDOMAINS_INTERFACES_H
 
 #include <string>
 #include <map>
@@ -49,134 +49,121 @@ namespace Nektar
 
     namespace SpatialDomains
     {
-        enum InterfaceConditionType
+        enum InterfaceType
         {
             eFixed,
             eRotating,
             eSliding,
-            eNotDefinedInterface
+            eNotDefined
         };
 
-        struct InterfaceConditionBase
+        typedef std::map<int, CompositeSharedPtr> InterfaceEdge;
+        typedef std::shared_ptr<InterfaceEdge> InterfaceEdgeShPtr;
+
+        struct InterfaceBase
         {
-            InterfaceConditionBase(
-                    InterfaceConditionType type,
-                    LibUtilities::CommSharedPtr comm = LibUtilities::CommSharedPtr()):
-                    m_interfaceConditionType(type),
-                    m_comm(comm)
+            InterfaceBase(
+                    InterfaceType type,
+                    CompositeMap movingDomain,
+                    CompositeMap fixedDomain,
+                    InterfaceEdgeShPtr interfaceEdge):
+                    m_interfaceType(type),
+                    m_movingDomain(movingDomain),
+                    m_fixedDomain(fixedDomain),
+                    m_interfaceEdge(interfaceEdge)
+
             {
             }
 
-            virtual ~InterfaceConditionBase()
+            virtual ~InterfaceBase()
             {};
 
-            InterfaceConditionType GetInterfaceConditionType() const
+            InterfaceType GetInterfaceType() const
             {
-                return m_interfaceConditionType;
+                return m_interfaceType;
             }
 
-            void SetInterfaceConditionType(InterfaceConditionType interfaceType)
+            CompositeMap GetMovingDomain() const
             {
-                m_interfaceConditionType = interfaceType;
+                return m_movingDomain;
             }
 
-            LibUtilities::CommSharedPtr GetComm()
+            CompositeMap GetFixedDomain() const
             {
-                return m_comm;
+                return m_fixedDomain;
+            }
+
+            InterfaceEdgeShPtr GetInterfaceEdge() const
+            {
+                return m_interfaceEdge;
             }
 
         protected:
-            InterfaceConditionType      m_interfaceConditionType;
-            std::vector<NekDouble>      m_origin;
-            std::vector<NekDouble>      m_axis;
-            NekDouble                   m_angularVel;
-            LibUtilities::CommSharedPtr m_comm;
+            InterfaceType      m_interfaceType;
+            CompositeMap       m_movingDomain;
+            CompositeMap       m_fixedDomain;
+            InterfaceEdgeShPtr m_interfaceEdge;
         };
 
-        struct RotatingInterfaceCondition : public InterfaceConditionBase
+        struct RotatingInterface : public InterfaceBase
         {
-            RotatingInterfaceCondition(
-                    const unsigned int n,
+            RotatingInterface(
                     const LibUtilities::SessionReaderSharedPtr &pSession,
-                    const std::vector<NekDouble> origin,
+                    const CompositeMap movingDomain,
+                    const CompositeMap fixedDomain,
+                    const InterfaceEdgeShPtr interfaceEdge,
+                    const PointGeomSharedPtr origin,
                     const std::vector<NekDouble> axis,
-                    const NekDouble angularVel,
-                    const LibUtilities::CommSharedPtr comm=LibUtilities::CommSharedPtr()):
-                    InterfaceConditionBase(eRotating, comm),
-                    m_connectedInterfaceRegion(n)
+                    const NekDouble angularVel):
+                    InterfaceBase(eRotating, movingDomain, fixedDomain, interfaceEdge),
+                    m_origin(origin),
+                    m_axis(axis),
+                    m_angularVel(angularVel)
             {
             }
 
-            unsigned int m_connectedInterfaceRegion;
-
+            PointGeomSharedPtr      m_origin;
+            std::vector<NekDouble>  m_axis;
+            NekDouble               m_angularVel;
         };
 
-        typedef std::map<int, CompositeSharedPtr> InterfaceRegion;
-        typedef std::shared_ptr<InterfaceRegion> InterfaceRegionShPtr;
-        typedef std::shared_ptr<const InterfaceRegion> ConstInterfaceRegionShPtr;
-        typedef std::map<int, InterfaceRegionShPtr> InterfaceRegionCollection;
+        typedef std::shared_ptr<InterfaceBase> InterfaceShPtr;
+        typedef std::map<std::string,InterfaceShPtr>  InterfaceMap;
+        typedef std::shared_ptr<InterfaceMap>  InterfaceMapShPtr;
+        typedef std::map<int, InterfaceMapShPtr> InterfaceCollection;
+        typedef std::shared_ptr<RotatingInterface> RotatingInterfaceShPtr;
 
-        typedef std::shared_ptr<InterfaceConditionBase> InterfaceConditionShPtr;
-        typedef std::shared_ptr<RotatingInterfaceCondition> RotatingInterfaceShPtr;
-
-        typedef std::map<std::string,InterfaceConditionShPtr>  InterfaceConditionMap;
-        typedef std::shared_ptr<InterfaceConditionMap>  InterfaceConditionMapShPtr;
-        typedef std::map<int, InterfaceConditionMapShPtr> InterfaceConditionCollection;
-
-        const static Array<OneD, InterfaceConditionShPtr> NullInterfaceConditionShPtrArray;
-
-        class InterfaceConditions
+        class Interfaces
         {
         public:
-            SPATIAL_DOMAINS_EXPORT InterfaceConditions(const LibUtilities::SessionReaderSharedPtr &pSession, const MeshGraphSharedPtr &meshGraph);
+            SPATIAL_DOMAINS_EXPORT Interfaces(
+                    const LibUtilities::SessionReaderSharedPtr &pSession,
+                    const MeshGraphSharedPtr &meshGraph);
 
-            SPATIAL_DOMAINS_EXPORT InterfaceConditions(void);
-            SPATIAL_DOMAINS_EXPORT ~InterfaceConditions(void);
+            SPATIAL_DOMAINS_EXPORT Interfaces(void);
+            SPATIAL_DOMAINS_EXPORT ~Interfaces(void);
 
-            const InterfaceRegionCollection &GetInterfaceRegions(void) const
+            const InterfaceCollection &GetInterfaces(void) const
             {
-                return m_interfaceRegions;
+                return m_interfaces;
             }
 
-            void AddInterfaceRegions(const int regionID, InterfaceRegionShPtr &iRegion)
-            {
-                m_interfaceRegions[regionID] = iRegion;
-            }
-
-            const InterfaceConditionCollection &GetInterfaceConditions(void) const
-            {
-                return m_interfaceConditions;
-            }
-
-
-            void AddInterfaceConditions(const int regionID, InterfaceConditionMapShPtr &iCond)
-            {
-                m_interfaceConditions[regionID] = iCond;
-            }
-
-            const std::string GetVariable(unsigned int indx)
-            {
-                return m_session->GetVariable(indx);
-            }
 
         protected:
             /// The mesh graph to use for referencing geometry info.
             MeshGraphSharedPtr                      m_meshGraph;
             LibUtilities::SessionReaderSharedPtr    m_session;
 
-            InterfaceRegionCollection                m_interfaceRegions;
-            InterfaceConditionCollection             m_interfaceConditions;
-            std::map<int, LibUtilities::CommSharedPtr> m_interfaceCommunicators;
-
+            InterfaceCollection                     m_interfaces;
         private:
 
             /// Read segments (and general MeshGraph) given TiXmlDocument.
-            void Read(TiXmlElement *conditions);
-            void ReadInterfaceRegions(TiXmlElement *regions);
-            void ReadInterfaceConditions(TiXmlElement *conditions);
-            void CreateInterfaceComms();
+            void Read(TiXmlElement *interfaceTag);
+            void ReadInterfaces(TiXmlElement *interfaceTag);
         };
+
+        typedef std::shared_ptr<Interfaces> InterfaceSharedPtr;
     }
 }
 
-#endif //NEKTAR_SPATIALDOMAINS_INTERFACECONDITIONS_H
+#endif //NEKTAR_SPATIALDOMAINS_INTERFACES_H
