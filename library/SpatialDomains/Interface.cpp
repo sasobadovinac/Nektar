@@ -119,11 +119,10 @@ namespace Nektar
                 ASSERTL0(err == TIXML_SUCCESS,
                          "Unable to read interface composite.");
 
-                InterfaceEdgeShPtr interfaceEdge(
-                        MemoryManager<InterfaceEdge>::AllocateSharedPtr());
+                InterfaceEdgeMap interfaceEdge;
 
                 interfaceEdgeStr = ReadTag(interfaceEdgeStr);
-                m_meshGraph->GetCompositeList(interfaceEdgeStr, *interfaceEdge);
+                m_meshGraph->GetCompositeList(interfaceEdgeStr, interfaceEdge);
 
                 if (interfaceType == "R")
                 {
@@ -137,8 +136,7 @@ namespace Nektar
 
                     std::vector<NekDouble> originVec;
                     ParseUtils::GenerateVector(originStr, originVec);
-                    PointGeomSharedPtr origin = MemoryManager<PointGeom>::
-                            AllocateSharedPtr(PointGeom(3, 0, originVec[0], originVec[1], originVec[2]));
+                    PointGeom origin = PointGeom(3, 0, originVec[0], originVec[1], originVec[2]);
 
                     std::string axisStr;
                     err = interfaceElementTag->QueryStringAttribute("AXIS",
@@ -148,7 +146,7 @@ namespace Nektar
                              "Unable to read axis.");
 
                     std::vector<NekDouble> axis;
-                    ParseUtils::GenerateVector(originStr, axis);
+                    ParseUtils::GenerateVector(axisStr, axis);
 
                     std::string angularVelStr;
                     err = interfaceElementTag->QueryStringAttribute("ANGVEL",
@@ -167,9 +165,18 @@ namespace Nektar
                     m_interfaces[indx] = rotatingInterface;
                 }
 
+                if (interfaceType == "F")
+                {
+                    InterfaceShPtr fixedInterface(
+                            MemoryManager<InterfaceBase>::AllocateSharedPtr(
+                                    eFixed, movingDomain, fixedDomain,
+                                    interfaceEdge));
+
+                    m_interfaces[indx] = fixedInterface;
+                }
+
                 interfaceElementTag = interfaceElementTag->NextSiblingElement();
             }
-            //
         }
     }
 }

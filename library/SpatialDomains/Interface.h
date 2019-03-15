@@ -57,8 +57,16 @@ namespace Nektar
             eNotDefined
         };
 
-        typedef std::map<int, CompositeSharedPtr> InterfaceEdge;
-        typedef std::shared_ptr<InterfaceEdge> InterfaceEdgeShPtr;
+        const char* const InterfaceTypeMap[] =
+        {
+            "Fixed",
+            "Rotating",
+            "Sliding",
+            "NotDefined"
+        };
+
+        typedef std::map<int, CompositeSharedPtr> InterfaceEdgeMap;
+        typedef std::shared_ptr<InterfaceEdgeMap> InterfaceEdgeShPtr;
 
         struct InterfaceBase
         {
@@ -66,7 +74,7 @@ namespace Nektar
                     InterfaceType type,
                     CompositeMap movingDomain,
                     CompositeMap fixedDomain,
-                    InterfaceEdgeShPtr interfaceEdge):
+                    InterfaceEdgeMap interfaceEdge):
                     m_interfaceType(type),
                     m_movingDomain(movingDomain),
                     m_fixedDomain(fixedDomain),
@@ -93,16 +101,36 @@ namespace Nektar
                 return m_fixedDomain;
             }
 
-            InterfaceEdgeShPtr GetInterfaceEdge() const
+            InterfaceEdgeMap GetInterfaceEdge() const
             {
                 return m_interfaceEdge;
+            }
+
+            virtual PointGeom GetOrigin() const
+            {
+                return m_origin;
+            }
+
+            virtual std::vector<NekDouble> GetAxis() const
+            {
+                return m_axis;
+            }
+
+            virtual NekDouble GetAngularVel() const
+            {
+                return m_angularVel;
             }
 
         protected:
             InterfaceType      m_interfaceType;
             CompositeMap       m_movingDomain;
             CompositeMap       m_fixedDomain;
-            InterfaceEdgeShPtr m_interfaceEdge;
+            InterfaceEdgeMap   m_interfaceEdge;
+
+        private:
+            PointGeom               m_origin;
+            std::vector<NekDouble>  m_axis;
+            NekDouble               m_angularVel;
         };
 
         struct RotatingInterface : public InterfaceBase
@@ -111,8 +139,8 @@ namespace Nektar
                     const LibUtilities::SessionReaderSharedPtr &pSession,
                     const CompositeMap movingDomain,
                     const CompositeMap fixedDomain,
-                    const InterfaceEdgeShPtr interfaceEdge,
-                    const PointGeomSharedPtr origin,
+                    const InterfaceEdgeMap interfaceEdge,
+                    const PointGeom origin,
                     const std::vector<NekDouble> axis,
                     const NekDouble angularVel)
                     : InterfaceBase(eRotating, movingDomain, fixedDomain, interfaceEdge),
@@ -122,7 +150,7 @@ namespace Nektar
             {
             }
 
-            PointGeomSharedPtr GetOrigin() const
+            PointGeom GetOrigin() const
             {
                 return m_origin;
             }
@@ -137,7 +165,7 @@ namespace Nektar
                 return m_angularVel;
             }
 
-            PointGeomSharedPtr      m_origin;
+            PointGeom      m_origin;
             std::vector<NekDouble>  m_axis;
             NekDouble               m_angularVel;
         };

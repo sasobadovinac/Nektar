@@ -1,6 +1,5 @@
 SET(SPATIAL_DOMAINS_SOURCES
 Conditions.cpp
-Interface.cpp
 GeomFactors.cpp
 Geometry0D.cpp
 Geometry1D.cpp
@@ -8,6 +7,8 @@ Geometry2D.cpp
 Geometry3D.cpp
 Geometry.cpp
 HexGeom.cpp
+Interface.cpp
+        ../Demos/SpatialDomains/InterfaceDuplicateEdge.cpp
 MeshGraph.cpp
 MeshGraphXml.cpp
 MeshGraphXmlCompressed.cpp
@@ -23,7 +24,6 @@ TriGeom.cpp
 
 SET(SPATIAL_DOMAINS_HEADERS
 Conditions.h
-Interface.h
 Curve.hpp
 GeomFactors.h
 Geometry0D.h
@@ -32,6 +32,7 @@ Geometry2D.h
 Geometry3D.h
 Geometry.h
 HexGeom.h
+Interface.h
 MeshEntities.hpp
 MeshGraph.h
 MeshGraphXml.h
