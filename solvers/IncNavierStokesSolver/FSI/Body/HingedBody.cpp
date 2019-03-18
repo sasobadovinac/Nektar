@@ -534,6 +534,8 @@ void HingedBody::GetInitialCondition(
     GlobalMapping::MappingSharedPtr mapping =
         GlobalMapping::Mapping::Load(m_session, pFields);
 
+    m_VCSMap = mapping;
+    
     // Process bcastRank calculates the initial conditions
     if( comm->GetRank() == bcastRank)
     {
