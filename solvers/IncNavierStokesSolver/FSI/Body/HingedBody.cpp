@@ -60,8 +60,12 @@ NekDouble HingedBody::AdamsMoulton_coeffs[3][3] = {
 HingedBody::HingedBody(
         const LibUtilities::SessionReaderSharedPtr          &pSession,
          const std::weak_ptr<SolverUtils::EquationSystem>   &pEquation)
-    : FSIBody(pSession, pEquation)
+    : FSIBody(pSession, pEquation),
+      m_VCSMap(m_equ.lock())
 {
+    //    ASSERTL0(m_VCSMap = std::dynamic_pointer_cast<VCSMapping> (m_equ.lock()),
+    //             "Failed to dynamically case equation system to VCSMap"); 
+    
 }
 
 /**
@@ -342,7 +346,7 @@ void HingedBody::v_Apply(
 		BaseFlow[i] = Array<OneD, NekDouble> (totPts, 0.0);
 	}
 
-	m_VCSMap->ReturnBaseFlow(BaseFlow);
+	m_VCSMap.lock()->ReturnBaseFlow(BaseFlow);
 
 	// Transform base flow to coefficient in pField and add pert field
         for(int i = 0; i < nfields; ++i)
@@ -534,8 +538,6 @@ void HingedBody::GetInitialCondition(
     GlobalMapping::MappingSharedPtr mapping =
         GlobalMapping::Mapping::Load(m_session, pFields);
 
-    m_VCSMap = mapping;
-    
     // Process bcastRank calculates the initial conditions
     if( comm->GetRank() == bcastRank)
     {

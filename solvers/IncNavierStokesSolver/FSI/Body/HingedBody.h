@@ -81,7 +81,7 @@ protected:
     SolverUtils::FilterAeroForcesSharedPtr  m_filterForces;
 
     // VCSMaopping shared pointer
-    VCSMappingSharedPtr                     m_VCSMap;
+    const std::weak_ptr<VCSMapping>         m_VCSMap;
 
     /// Time step
     NekDouble                               m_timestep;
