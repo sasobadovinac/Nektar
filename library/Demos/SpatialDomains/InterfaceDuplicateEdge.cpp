@@ -6,56 +6,268 @@
 using namespace Nektar;
 using namespace Nektar::SpatialDomains;
 
+bool ContainsElement(CompositeMap &domain, int edgeID)
+{
+    for (auto &comp : domain)
+    {
+        for (auto &geom : comp.second->m_geomVec)
+        {
+            if (edgeID == geom->GetGlobalID())
+            {
+                return true;
+            }
+        }
+    }
+
+    return false;
+}
+
+std::vector<GeometrySharedPtr>
+VertexToElmt(CompositeMap &domain, int vertId1, int vertId2)
+{
+    std::vector<GeometrySharedPtr> ret;
+
+    for (auto &comp : domain)
+    {
+        for (auto &geom : comp.second->m_geomVec)
+        {
+            for (int i = 0; i < geom->GetNumVerts(); ++i)
+            {
+                if (geom->GetVid(i) == vertId1 || geom->GetVid(i) == vertId2)
+                {
+                    ret.push_back(geom);
+                    break;
+                }
+            }
+        }
+    }
+
+    return ret;
+}
+
 int main(int argc, char *argv[])
 {
-    LibUtilities::SessionReaderSharedPtr session = LibUtilities::SessionReader::CreateInstance(argc, argv);
+    LibUtilities::SessionReaderSharedPtr session = LibUtilities::SessionReader::CreateInstance(
+            argc, argv);
 
     MeshGraphSharedPtr graph = MeshGraph::Read(session);
-    Interfaces interface = Interfaces(session, graph);
-    std::map<int, InterfaceShPtr> interfaces = interface.GetInterfaces();
+    Interfaces interfaceCollection = Interfaces(session, graph);
+
+    std::map<int, InterfaceShPtr> interfaces = interfaceCollection.GetInterfaces();
 
     for (auto &interface : interfaces)
     {
         int indx = interface.first;
         auto interfaceProperties = interface.second;
 
-        InterfaceEdgeMap interfaceEdgeCompositeCollection = interfaceProperties->GetInterfaceEdge();
-        std::vector<int> interfaceVertexIds;
-        std::vector<int> interfaceEdgeIds;
-        for (auto &interfaceEdgeCompositeMap : interfaceEdgeCompositeCollection)
+        auto movingDomain = interfaceProperties->GetMovingDomain();
+        auto interfaceEdge = interfaceProperties->GetInterfaceEdge();
+
+        int maxVertId = -1;
+        for (auto &vert : graph->GetAllPointGeoms())
         {
-            CompositeSharedPtr interfaceEdgeComposite = interfaceEdgeCompositeMap.second;
-            std::vector<GeometrySharedPtr> geomVec = interfaceEdgeComposite->m_geomVec;
-            for (GeometrySharedPtr &geom : geomVec)
+            maxVertId = std::max(maxVertId, vert.first);
+        }
+
+        int maxEdgeId = -1;
+        for (auto &edge : graph->GetAllSegGeoms())
+        {
+            maxEdgeId = std::max(maxEdgeId, edge.first);
+        }
+
+        ++maxVertId;
+        ++maxEdgeId;
+
+        // Map that stores existing renumbered vertices.
+        std::map<int, int> vertDone;
+        std::map<int, SegGeomSharedPtr> edgeDone;
+        std::map<int, GeometrySharedPtr> elementToDo;
+
+        for (auto &comp : interfaceEdge)
+        {
+            for (auto &geom : comp.second->m_geomVec)
             {
-                interfaceEdgeIds.emplace_back(geom->GetGlobalID());
-                interfaceVertexIds.emplace_back (geom->GetVertex(0)->GetGlobalID());
-                interfaceVertexIds.emplace_back (geom->GetVertex(1)->GetGlobalID());
+                std::cout << "Processing edge ID = " << geom->GetGlobalID()
+                          << std::endl;
+                ASSERTL0(geom->GetShapeType() == LibUtilities::eSegment,
+                         "Unexpected geometry type in composite");
+
+                GeometryLinkSharedPtr elmtLink = graph->GetElementsFromEdge(
+                        std::static_pointer_cast<Geometry1D>(geom));
+
+                size_t numElmts = elmtLink->size();
+                if (numElmts == 1)
+                {
+                    continue;
+                }
+
+                int vid[2] = {geom->GetVid(0), geom->GetVid(1)};
+                PointGeomSharedPtr newVerts[2];
+
+                for (int i = 0; i < 2; ++i)
+                {
+                    auto it = vertDone.find(vid[i]);
+                    if (it == vertDone.end())
+                    {
+                        // Create a new vertex
+                        newVerts[i] = MemoryManager<PointGeom>::AllocateSharedPtr(
+                                *geom->GetVertex(i));
+                        newVerts[i]->SetGlobalID(maxVertId);
+                        graph->GetAllPointGeoms()[maxVertId] = newVerts[i];
+                        vertDone[vid[i]] = maxVertId++;
+                        std::cout << "Replacing vert " << vid[i] << " with "
+                                  << maxVertId - 1 << std::endl;
+                    }
+                    else
+                    {
+                        newVerts[i] = graph->GetVertex(it->second);
+                    }
+                }
+
+                SegGeomSharedPtr oldEdge = std::static_pointer_cast<SegGeom>(
+                        geom);
+
+                CurveSharedPtr newCurve;
+                if (oldEdge->GetCurve())
+                {
+                    newCurve = MemoryManager<Curve>::AllocateSharedPtr(
+                            maxEdgeId,
+                            oldEdge->GetCurve()->m_ptype);
+                }
+
+                auto newEdge = MemoryManager<SegGeom>::AllocateSharedPtr(
+                        maxEdgeId, newVerts[0]->GetCoordim(), newVerts,
+                        newCurve);
+                std::cout << "Creating new edge " << maxEdgeId << ": "
+                          << newVerts[0]->GetGlobalID() << " "
+                          << newVerts[1]->GetGlobalID() << std::endl;
+                graph->GetAllSegGeoms()[maxEdgeId] = newEdge;
+                edgeDone[geom->GetGlobalID()] = newEdge;
+                maxEdgeId++;
+
+                auto toProcess = VertexToElmt(movingDomain, vid[0], vid[1]);
+                for (auto &elementToProcess : toProcess)
+                {
+                    elementToDo[elementToProcess->GetGlobalID()] = elementToProcess;
+                }
             }
         }
 
-        sort(interfaceVertexIds.begin(), interfaceVertexIds.end());
-        interfaceVertexIds.erase(unique(interfaceVertexIds.begin(), interfaceVertexIds.end()), interfaceVertexIds.end());
 
-        std::vector<std::map<int, CompositeSharedPtr>> domains = graph->GetDomain();
-        std::map<int, CompositeSharedPtr> movingDomain;
-        std::map<int, CompositeSharedPtr> fixedDomain;
-
-        for (auto domain : domains)
+        for (auto &elementMap : elementToDo)
         {
-            if (domain == interfaceProperties->GetMovingDomain())
+            auto movingGeom = elementMap.second;
+
+            cout << endl << "Looking at element: " << movingGeom->GetGlobalID()
+                 << endl;
+            std::vector<SegGeomSharedPtr> newEdges(
+                    movingGeom->GetNumEdges());
+
+            // Loop over edges
+            for (int j = 0; j < newEdges.size(); ++j)
             {
-                domain = movingDomain;
+                auto edge = std::static_pointer_cast<SegGeom>(
+                        movingGeom->GetEdge(j));
+                cout << "Looking at edge: " << edge->GetGlobalID() << endl;
+                auto edgeIt = edgeDone.find(edge->GetGlobalID());
+                if (edgeIt != edgeDone.end())
+                {
+                    newEdges[j] = edgeIt->second;
+                    cout << "Edge: " << edge->GetGlobalID()
+                         << " has already been replaced" << endl;
+                    continue;
+                }
+
+                int edgeVids[2] = {edge->GetVid(0), edge->GetVid(1)};
+
+                cout << "Edge: " << edge->GetGlobalID() << " has vertices :"
+                     << edge->GetVid(0) << " " << edge->GetVid(1) << endl;
+
+                PointGeomSharedPtr newEdgeVerts[2];
+                bool create = false;
+
+                for (int k = 0; k < 2; ++k)
+                {
+                    auto vertIt = vertDone.find(edgeVids[k]);
+                    if (vertIt != vertDone.end())
+                    {
+                        newEdgeVerts[k] = graph->GetVertex(vertIt->second);
+                        create = true;
+                    }
+                    else newEdgeVerts[k] = graph->GetVertex(edgeVids[k]);
+                }
+
+                cout << "New edge :" << newEdgeVerts[0]->GetGlobalID() << " "
+                     << newEdgeVerts[1]->GetGlobalID() << endl;
+
+                if (create)
+                {
+                    auto newEdge = MemoryManager<SegGeom>::AllocateSharedPtr(
+                            edge->GetGlobalID(),
+                            edge->GetVertex(0)->GetCoordim(),
+                            newEdgeVerts, edge->GetCurve());
+                    graph->GetAllSegGeoms()[edge->GetGlobalID()] = newEdge;
+                    edgeDone[edge->GetGlobalID()] = newEdge;
+                    newEdges[j] = newEdge;
+                    std::cout << "replacing edge " << edge->GetGlobalID()
+                              << " old = " << edgeVids[0] << " " << edgeVids[1]
+                              << "  new = " << newEdgeVerts[0]->GetGlobalID()
+                              << " " << newEdgeVerts[1]->GetGlobalID()
+                              << std::endl;
+                }
+                else
+                {
+                    std::cout << "Using old edge " << edge->GetGlobalID()
+                              << " old = " << edgeVids[0] << " " << edgeVids[1]
+                              << std::endl;
+                    newEdges[j] = edge;
+                }
             }
-            else if (domain == interfaceProperties->GetFixedDomain())
+
+            if (movingGeom->GetShapeType() == LibUtilities::eQuadrilateral)
             {
-                domain = fixedDomain;
+                // Create a new quad
+                QuadGeomSharedPtr quad = std::static_pointer_cast<QuadGeom>(
+                        movingGeom);
+                QuadGeomSharedPtr newQuad = MemoryManager<QuadGeom>::AllocateSharedPtr(
+                        quad->GetGlobalID(), &newEdges[0], quad->GetCurve());
+                graph->GetAllQuadGeoms()[quad->GetGlobalID()] = newQuad;
+                std::cout << "Replacing quad " << quad->GetGlobalID()
+                          << std::endl;
+            }
+            else if (movingGeom->GetShapeType() == LibUtilities::eTriangle)
+            {
+                // Create a new tri
+                TriGeomSharedPtr tri = std::static_pointer_cast<TriGeom>(
+                        movingGeom);
+                TriGeomSharedPtr newTri = MemoryManager<TriGeom>::AllocateSharedPtr(
+                        tri->GetGlobalID(), &newEdges[0], tri->GetCurve());
+                graph->GetAllTriGeoms()[tri->GetGlobalID()] = newTri;
             }
         }
 
-        for (auto composite : movingDomain)
+        std::set<int> seenVerts, seenEdges;
+        for (auto &comp : interfaceProperties->GetMovingDomain())
         {
-            //
+            for (auto &geom : comp.second->m_geomVec)
+            {
+                auto newGeom = graph->GetGeometry2D(geom->GetGlobalID());
+                for (int i = 0; i < newGeom->GetNumVerts(); ++i)
+                {
+                    PointGeomSharedPtr vert = newGeom->GetVertex(i);
+
+                    if (seenVerts.find(vert->GetGlobalID()) != seenVerts.end())
+                    {
+                        continue;
+                    }
+f
+                    (*vert)(1) += 10.0;
+                    seenVerts.insert(vert->GetGlobalID());
+                }
+            }
         }
     }
+
+    std::string filename = "out.xml";
+    graph->WriteGeometry(filename, true);
 }

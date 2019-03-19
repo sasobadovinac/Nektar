@@ -2696,20 +2696,36 @@ void MeshGraphXml::WriteComposites(TiXmlElement *geomTag, CompositeMap &comps)
 }
 
 void MeshGraphXml::WriteDomain(TiXmlElement *geomTag,
-                               vector<CompositeMap> &domain)
+                               vector<CompositeMap> &domainVector)
 {
     TiXmlElement *domTag = new TiXmlElement("DOMAIN");
     stringstream domString;
+    int domainIt =0;
 
-    // @todo Fix this to accomodate multi domain output
+    // @todo Fix this to accomodate multi domain output properly (need the domain input to be a map for ID)
     vector<unsigned int> idxList;
-    for (auto cIt = domain[0].begin(); cIt != domain[0].end(); ++cIt)
+    for (CompositeMap &domain : domainVector)
     {
-        idxList.push_back(cIt->first);
+        TiXmlElement *c = new TiXmlElement("D");
+        idxList.clear();
+        stringstream s;
+        s << " " << "C" << "[";
+
+        CompositeMap::iterator it = domain.begin();
+        while (it != domain.end())
+        {
+            cout << it->first << endl;
+            idxList.push_back(it->first);
+            it++;
+        }
+
+        s << ParseUtils::GenerateSeqString(idxList) << "] ";
+        c->SetAttribute("ID", domainIt);
+        c->LinkEndChild(new TiXmlText(s.str()));
+        domTag->LinkEndChild(c);
+        domainIt ++;
     }
 
-    domString << " C[" << ParseUtils::GenerateSeqString(idxList) << "] ";
-    domTag->LinkEndChild(new TiXmlText(domString.str()));
     geomTag->LinkEndChild(domTag);
 }
 

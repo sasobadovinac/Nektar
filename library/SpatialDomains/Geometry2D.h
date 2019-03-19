@@ -73,6 +73,11 @@ public:
     SPATIAL_DOMAINS_EXPORT Geometry2D(const int coordim, CurveSharedPtr curve);
     SPATIAL_DOMAINS_EXPORT virtual ~Geometry2D();
 
+    SPATIAL_DOMAINS_EXPORT CurveSharedPtr GetCurve()
+    {
+        return m_curve;
+    }
+
 protected:
     PointGeomVector                      m_verts;
     SegGeomVector                        m_edges;

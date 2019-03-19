@@ -106,21 +106,6 @@ namespace Nektar
                 return m_interfaceEdge;
             }
 
-            virtual PointGeom GetOrigin() const
-            {
-                return m_origin;
-            }
-
-            virtual std::vector<NekDouble> GetAxis() const
-            {
-                return m_axis;
-            }
-
-            virtual NekDouble GetAngularVel() const
-            {
-                return m_angularVel;
-            }
-
         protected:
             InterfaceType      m_interfaceType;
             CompositeMap       m_movingDomain;
@@ -170,8 +155,24 @@ namespace Nektar
             NekDouble               m_angularVel;
         };
 
+        struct FixedInterface : public InterfaceBase
+        {
+            FixedInterface(
+                    const LibUtilities::SessionReaderSharedPtr &pSession,
+                    const CompositeMap movingDomain,
+                    const CompositeMap fixedDomain,
+                    const InterfaceEdgeMap interfaceEdge,
+                    const PointGeom origin,
+                    const std::vector<NekDouble> axis,
+                    const NekDouble angularVel)
+                    : InterfaceBase(eRotating, movingDomain, fixedDomain, interfaceEdge)
+            {
+            }
+        };
+
         typedef std::shared_ptr<InterfaceBase> InterfaceShPtr;
         typedef std::shared_ptr<RotatingInterface> RotatingInterfaceShPtr;
+        typedef std::shared_ptr<FixedInterface> FixedInterfaceShPtr;
 
         typedef std::map<int, InterfaceShPtr> InterfaceCollection;
 

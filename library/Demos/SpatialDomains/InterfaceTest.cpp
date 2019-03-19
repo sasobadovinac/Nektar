@@ -21,27 +21,27 @@ int main(int argc, char *argv[])
 
     for (auto &interface : interfaces)
     {
+        InterfaceShPtr movingInterface = interface.second;
+        auto type = movingInterface->GetInterfaceType();
         int indx = interface.first;
+
         cout << "INTERFACE INDEX: " + std::to_string(indx) << endl;
 
-        auto interfaceProperties = interface.second;
-
-        InterfaceType type = interfaceProperties->GetInterfaceType();
         cout << "Type: " << InterfaceTypeMap[type] << endl;
 
-        CompositeMap movingDomainComposites = interfaceProperties->GetMovingDomain();
+        CompositeMap movingDomainComposites = movingInterface->GetMovingDomain();
         for (auto &movingDomainComposite : movingDomainComposites)
         {
             cout << "Moving domain composite: " << movingDomainComposite.first << endl;
         }
 
-        CompositeMap fixedDomainComposites = interfaceProperties->GetFixedDomain();
+        CompositeMap fixedDomainComposites = movingInterface->GetFixedDomain();
         for (auto &fixedDomainComposite : fixedDomainComposites)
         {
             cout << "Fixed domain composite: " << fixedDomainComposite.first << endl;
         }
 
-        InterfaceEdgeMap interfaceEdgeComposites = interfaceProperties->GetInterfaceEdge();
+        InterfaceEdgeMap interfaceEdgeComposites = movingInterface->GetInterfaceEdge();
         std::vector<unsigned> interfaceEdgeCompositeList;
         for (auto &interfaceEdgeComposite : interfaceEdgeComposites)
         {
@@ -52,14 +52,22 @@ int main(int argc, char *argv[])
 
         if(type == eRotating)
         {
-            cout << "Angular vel: " << std::to_string(interfaceProperties->GetAngularVel()) << endl;
+            RotatingInterfaceShPtr movingInterface = static_pointer_cast<RotatingInterface>(interface.second);
+
+            cout << "Angular vel: " << std::to_string(movingInterface->GetAngularVel()) << endl;
 
             std::vector<NekDouble> origin(3,0);
-            interfaceProperties->GetOrigin().GetCoords(origin[0], origin[1], origin[2]);
+            movingInterface->GetOrigin().GetCoords(origin[0], origin[1], origin[2]);
             cout << "Origin: (" << std::to_string(origin[0]) << ", " << std::to_string(origin[1]) << ", "<< std::to_string(origin[2]) << ")" << endl;
 
-            std::vector<NekDouble> axis = interfaceProperties->GetAxis();
+            std::vector<NekDouble> axis = movingInterface->GetAxis();
             cout << "Axis: (" << std::to_string(axis[0]) << ", " << std::to_string(axis[1]) << ", "<< std::to_string(axis[2]) << ")" << endl << endl;
         }
+
+        if(type == eFixed)
+        {
+            FixedInterfaceShPtr movingInterface = static_pointer_cast<FixedInterface>(interface.second);
+        }
+
     }
 }
