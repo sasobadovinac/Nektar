@@ -80,16 +80,16 @@ protected:
     // AeroForces filter
     SolverUtils::FilterAeroForcesSharedPtr  m_filterForces;
 
-    // VCSMaopping shared pointer
-    const std::weak_ptr<VCSMapping>         m_VCSMap;
-
+    /// Get base flow if linearised solver
+    Array<OneD, const Array<OneD, NekDouble> > m_baseFlow;
+        
     /// Time step
     NekDouble                               m_timestep;
     /// Number of sub steps (i.e. ratio of structure timestep to fluid timestep)
     int                                     m_subSteps;
     /// Time integration order
     int                                     m_intSteps;
-    /// Initial time when the body is fixed, to prevent instability in startup
+    /// Initial time when the body is fixed,a to prevent instability in startup
     NekDouble                               m_startTime;
 
     // Output information

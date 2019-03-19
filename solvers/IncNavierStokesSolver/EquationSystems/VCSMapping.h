@@ -74,7 +74,10 @@ namespace Nektar
 
         virtual void v_InitObject();
 
-	void ReturnBaseFlow(Array<OneD, Array<OneD, NekDouble> > &outarray);
+        inline bool IsLinearAdvection()
+        {
+            return m_isLinearAdvection;
+        }
 
     protected:
         // Mapping object

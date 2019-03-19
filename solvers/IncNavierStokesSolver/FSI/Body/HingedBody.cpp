@@ -60,12 +60,8 @@ NekDouble HingedBody::AdamsMoulton_coeffs[3][3] = {
 HingedBody::HingedBody(
         const LibUtilities::SessionReaderSharedPtr          &pSession,
          const std::weak_ptr<SolverUtils::EquationSystem>   &pEquation)
-    : FSIBody(pSession, pEquation),
-      m_VCSMap(m_equ.lock())
+    : FSIBody(pSession, pEquation)
 {
-    //    ASSERTL0(m_VCSMap = std::dynamic_pointer_cast<VCSMapping> (m_equ.lock()),
-    //             "Failed to dynamically case equation system to VCSMap"); 
-    
 }
 
 /**
@@ -307,6 +303,17 @@ void HingedBody::v_InitObject(
             m_outputStream << endl;
         }
     }
+
+    VCSMappingSharedPtr VCSMap; 
+
+    ASSERTL0(VCSMap = std::dynamic_pointer_cast<VCSMapping> (m_equ.lock()),
+             "Failed to dynamically case equation system to VCSMap"); 
+
+    if(VCSMap->IsLinearAdvection())
+    {
+        m_baseFlow = VCSMap->GetAdvObject()->GetBaseFlow();
+    }
+
 }
 
 void HingedBody::v_Apply(
@@ -336,38 +343,38 @@ void HingedBody::v_Apply(
 	int nfields = pFields.num_elements();
 	int ncoeffs = pFields[0]->GetNcoeffs();
 	int totPts  = pFields[0]->GetTotPoints();
-	Array<OneD, Array<OneD, NekDouble> > BaseFlow(expdim);
 
 	Array<OneD, Array<OneD, NekDouble> > SaveCoeffs(nfields);
-
-	// Get hold base flow in physical space
-	for (int i = 0; i < expdim; ++i)
-       	{
-		BaseFlow[i] = Array<OneD, NekDouble> (totPts, 0.0);
-	}
-
-	m_VCSMap.lock()->ReturnBaseFlow(BaseFlow);
-
-	// Transform base flow to coefficient in pField and add pert field
-        for(int i = 0; i < nfields; ++i)
-	{
+	// If linear advection then base flow is defined and so
+	// replace coeffs with base flow plus perturbaiton field
+        if(m_baseFlow.num_elements())
+        {
+            // Transform base flow to coefficient in pField and add pert field
+            for(int i = 0; i < nfields; ++i)
+            {
 		SaveCoeffs[i] = Array<OneD, NekDouble>(ncoeffs);
 	        Vmath::Vcopy(ncoeffs,pFields[i]->GetCoeffs(),1,SaveCoeffs[i],1);
-		pFields[i]->FwdTrans_IterPerExp(BaseFlow[i],pFields[i]->UpdateCoeffs());
-		Vmath::Vadd(ncoeffs,SaveCoeffs[i],1,pFields[i]->GetCoeffs(),1,pFields[i]->UpdateCoeffs(),1);
-	}
+		pFields[i]->FwdTrans_IterPerExp(m_baseFlow[i],
+                                                pFields[i]->UpdateCoeffs());
+		Vmath::Vadd(ncoeffs,SaveCoeffs[i],1,
+                            pFields[i]->GetCoeffs(),1,pFields[i]->UpdateCoeffs(),1);
+            }
+        }
 
         // Get aerodynamic forces
         Array<OneD, NekDouble> moments(expdim, 0.0);
         m_filterForces->GetTotalMoments(pFields, moments, newTime);
 
-	// Copy back perturbation field to pField. 
-        for(int i = 0; i < nfields; ++i)
-	{
+        if(m_baseFlow.num_elements())
+        {
+            // Copy back perturbation field to pField. 
+            for(int i = 0; i < nfields; ++i)
+            {
 		Vmath::Vcopy(ncoeffs,SaveCoeffs[i],1,pFields[i]->UpdateCoeffs(),1);
 		pFields[i]->SetPhysState(false);
-	}
-	                                            
+            }
+
+        }
         // Shift moment storage
         for(int n = m_intSteps-1; n > 0; --n)
         {
