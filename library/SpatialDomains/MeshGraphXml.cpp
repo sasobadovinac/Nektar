@@ -2702,7 +2702,7 @@ void MeshGraphXml::WriteDomain(TiXmlElement *geomTag,
     stringstream domString;
     int domainIt =0;
 
-    // @todo Fix this to accomodate multi domain output properly (need the domain input to be a map for ID)
+    // @todo Fix this to accomodate multi domain output properly (need the domain input to be a map for ID instead of just incrementing domainIt++)
     vector<unsigned int> idxList;
     for (CompositeMap &domain : domainVector)
     {
@@ -2711,19 +2711,16 @@ void MeshGraphXml::WriteDomain(TiXmlElement *geomTag,
         stringstream s;
         s << " " << "C" << "[";
 
-        CompositeMap::iterator it = domain.begin();
-        while (it != domain.end())
+        for(const auto &elem : domain)
         {
-            cout << it->first << endl;
-            idxList.push_back(it->first);
-            it++;
+            idxList.push_back(elem.first);
         }
 
         s << ParseUtils::GenerateSeqString(idxList) << "] ";
         c->SetAttribute("ID", domainIt);
         c->LinkEndChild(new TiXmlText(s.str()));
         domTag->LinkEndChild(c);
-        domainIt ++;
+        domainIt++;
     }
 
     geomTag->LinkEndChild(domTag);

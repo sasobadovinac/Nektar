@@ -78,9 +78,10 @@ int main(int argc, char *argv[])
         ++maxVertId;
         ++maxEdgeId;
 
-        // Map that stores existing renumbered vertices.
+        // Map that stores existing renumbered geometry.
         std::map<int, int> vertDone;
         std::map<int, SegGeomSharedPtr> edgeDone;
+        //Map that stores elements to process for renumbered edges and points
         std::map<int, GeometrySharedPtr> elementToDo;
 
         for (auto &comp : interfaceEdge)
@@ -140,7 +141,7 @@ int main(int argc, char *argv[])
                         newCurve);
                 std::cout << "Creating new edge " << maxEdgeId << ": "
                           << newVerts[0]->GetGlobalID() << " "
-                          << newVerts[1]->GetGlobalID() << std::endl;
+                          << newVerts[1]->GetGlobalID() << std::endl << endl;
                 graph->GetAllSegGeoms()[maxEdgeId] = newEdge;
                 edgeDone[geom->GetGlobalID()] = newEdge;
                 maxEdgeId++;
@@ -168,20 +169,16 @@ int main(int argc, char *argv[])
             {
                 auto edge = std::static_pointer_cast<SegGeom>(
                         movingGeom->GetEdge(j));
-                cout << "Looking at edge: " << edge->GetGlobalID() << endl;
+                cout << "Looking at edge: " << edge->GetGlobalID();
                 auto edgeIt = edgeDone.find(edge->GetGlobalID());
                 if (edgeIt != edgeDone.end())
                 {
+                    cout << " - already redefined to edge " << edgeIt->second->GetGlobalID() << endl;
                     newEdges[j] = edgeIt->second;
-                    cout << "Edge: " << edge->GetGlobalID()
-                         << " has already been replaced" << endl;
                     continue;
                 }
 
                 int edgeVids[2] = {edge->GetVid(0), edge->GetVid(1)};
-
-                cout << "Edge: " << edge->GetGlobalID() << " has vertices :"
-                     << edge->GetVid(0) << " " << edge->GetVid(1) << endl;
 
                 PointGeomSharedPtr newEdgeVerts[2];
                 bool create = false;
@@ -193,12 +190,10 @@ int main(int argc, char *argv[])
                     {
                         newEdgeVerts[k] = graph->GetVertex(vertIt->second);
                         create = true;
+                        cout << " - redefine edge vertex " << vertIt->first << " to "<< vertIt->second << endl;
                     }
                     else newEdgeVerts[k] = graph->GetVertex(edgeVids[k]);
                 }
-
-                cout << "New edge :" << newEdgeVerts[0]->GetGlobalID() << " "
-                     << newEdgeVerts[1]->GetGlobalID() << endl;
 
                 if (create)
                 {
@@ -209,18 +204,11 @@ int main(int argc, char *argv[])
                     graph->GetAllSegGeoms()[edge->GetGlobalID()] = newEdge;
                     edgeDone[edge->GetGlobalID()] = newEdge;
                     newEdges[j] = newEdge;
-                    std::cout << "replacing edge " << edge->GetGlobalID()
-                              << " old = " << edgeVids[0] << " " << edgeVids[1]
-                              << "  new = " << newEdgeVerts[0]->GetGlobalID()
-                              << " " << newEdgeVerts[1]->GetGlobalID()
-                              << std::endl;
                 }
                 else
                 {
-                    std::cout << "Using old edge " << edge->GetGlobalID()
-                              << " old = " << edgeVids[0] << " " << edgeVids[1]
-                              << std::endl;
                     newEdges[j] = edge;
+                    cout << " - keep old edge vertices" << endl;
                 }
             }
 
@@ -232,7 +220,7 @@ int main(int argc, char *argv[])
                 QuadGeomSharedPtr newQuad = MemoryManager<QuadGeom>::AllocateSharedPtr(
                         quad->GetGlobalID(), &newEdges[0], quad->GetCurve());
                 graph->GetAllQuadGeoms()[quad->GetGlobalID()] = newQuad;
-                std::cout << "Replacing quad " << quad->GetGlobalID()
+                std::cout << "Redefining element: " << quad->GetGlobalID()
                           << std::endl;
             }
             else if (movingGeom->GetShapeType() == LibUtilities::eTriangle)
@@ -260,7 +248,7 @@ int main(int argc, char *argv[])
                     {
                         continue;
                     }
-f
+
                     (*vert)(1) += 10.0;
                     seenVerts.insert(vert->GetGlobalID());
                 }
