@@ -490,10 +490,8 @@ namespace Nektar
         {
             if(m_hbcType[n] == eConvectiveOBC)
             {
-                int nqb = m_PBndExp[n]->GetTotPoints();
-                int ncb = m_PBndExp[n]->GetNcoeffs();
-                
                 m_pressure->FillBndCondFromField(n);
+                int nqb = m_PBndExp[n]->GetTotPoints();
                 Array<OneD, NekDouble> pbc(nqb);
 
                 m_PBndExp[n]->BwdTrans(m_PBndExp[n]->GetCoeffs(), pbc);
@@ -504,6 +502,8 @@ namespace Nektar
                 }
 
                 Array<OneD, NekDouble> wk(nqb);
+
+                int ncb = m_houtflow->m_UBndExp[0][n]->GetNcoeffs();
                 Array<OneD, NekDouble> wk1(ncb);
            
                 // Get normal vector
