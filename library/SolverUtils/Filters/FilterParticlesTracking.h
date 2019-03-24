@@ -193,6 +193,8 @@ private:
     NekDouble                               m_SG;
     /// Particles Gravity (for solid particles)
     NekDouble                               m_gravity;
+    /// Particles Seeding Velocity  (for solid particles)
+    NekDouble                               m_SV;
     /// Particles diameter (for solid particles)
     NekDouble                               m_diameter;
     /// Kinematic viscosity
