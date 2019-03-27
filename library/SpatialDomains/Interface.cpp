@@ -266,9 +266,12 @@ namespace Nektar
                                 // Create a new vertex
                                 newVerts[i] = MemoryManager<PointGeom>::AllocateSharedPtr(
                                         *geom->GetVertex(i));
+                                if (abs((*newVerts[i])(1)-0.5) < 1e-8)
+                                    (*newVerts[i])(1) += 0.1;
                                 newVerts[i]->SetGlobalID(maxVertId);
                                 graph->GetAllPointGeoms()[maxVertId] = newVerts[i];
                                 vertDone[vid[i]] = maxVertId++;
+
                             }
                             else
                             {
