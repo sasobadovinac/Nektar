@@ -372,6 +372,7 @@ namespace Nektar
                         }
                     }
 
+                    GeometrySharedPtr newGeom;
                     if (rightGeom->GetShapeType() ==
                         LibUtilities::eQuadrilateral)
                     {
@@ -382,6 +383,7 @@ namespace Nektar
                                 quad->GetGlobalID(), &newEdges[0],
                                 quad->GetCurve());
                         graph->GetAllQuadGeoms()[quad->GetGlobalID()] = newQuad;
+                        newGeom = newQuad;
                     }
                     else if (rightGeom->GetShapeType() ==
                              LibUtilities::eTriangle)
@@ -393,6 +395,20 @@ namespace Nektar
                                 tri->GetGlobalID(), &newEdges[0],
                                 tri->GetCurve());
                         graph->GetAllTriGeoms()[tri->GetGlobalID()] = newTri;
+                        newGeom = newTri;
+                    }
+
+                    // Replace this geometry in any composites.
+                    for (auto &comp : graph->GetComposites())
+                    {
+                        for (int n = 0; n < comp.second->m_geomVec.size(); ++n)
+                        {
+                            if (comp.second->m_geomVec[n]->GetGlobalID() == newGeom->GetGlobalID() &&
+                                comp.second->m_geomVec[n]->GetShapeType() == newGeom->GetShapeType())
+                            {
+                                comp.second->m_geomVec[n] = newGeom;
+                            }
+                        }
                     }
                 }
         };

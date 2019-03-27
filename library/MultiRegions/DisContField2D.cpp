@@ -92,7 +92,7 @@ namespace Nektar
             NekDouble fxp = 2.0 * (xc_der * (xc - xs[0]) + yc_der * (yc - xs[1]));
             NekDouble fxp2 = 2.0 * (xc_der2 * (xc - xs[0]) + xc_der * xc_der + yc_der2 * (yc - xs[1]) + yc_der * yc_der);
 
-            std::cout <<"iteration = " << i << "\t xi = " << xi[0] << "\t fx = " << fx << "\t grad = " << fxp << "\t hess = " << fxp2 << std::endl;
+            //std::cout <<"iteration = " << i << "\t xi = " << xi[0] << "\t fx = " << fx << "\t grad = " << fxp << "\t hess = " << fxp2 << std::endl;
 
             // Check for convergence
             if (fx < 1e-16)
@@ -224,17 +224,6 @@ namespace Nektar
 
             if (variable.compare("DefaultVar") != 0) // do not set up BCs if default variable
             {
-                SpatialDomains::Interfaces interfaceCollection(m_session, m_graph);
-                m_interfaces = interfaceCollection.GetInterfaces();
-                for (auto &inter : m_interfaces)
-                {
-                    inter.second->SeparateGraph(m_graph);
-                }
-
-                m_interfaces = SpatialDomains::Interfaces().GetInterfaces(); // Blanks interface to skip code
-                std::string filename = "out.xml";
-                m_graph->WriteGeometry(filename, true);                   // Write split geometry to use when creating VTU
-
                 SpatialDomains::BoundaryConditions bcs(m_session, graph2D);
                 GenerateBoundaryConditionExpansion(graph2D, bcs, variable,
                                                    DeclareCoeffPhysArrays);
@@ -537,6 +526,7 @@ namespace Nektar
             //adjoining elements which do not lie in a plane.
             for (int i = 0; i < m_exp->size(); ++i)
             {
+                std::cout << "ELMT " << i << ": ";
                 for (int j = 0; j < (*m_exp)[i]->GetNedges(); ++j)
                 {
                     LocalRegions::Expansion2DSharedPtr exp2d =
@@ -546,7 +536,10 @@ namespace Nektar
                     LocalRegions::ExpansionSharedPtr exp = elmtToTrace[i][j];;
                     exp2d->SetEdgeExp           (j, exp1d);
                     exp1d->SetAdjacentElementExp(j, exp2d);
+                    std::cout << " " << j << "<->" << exp1d->GetGeom()->GetGlobalID();
                 }
+
+                std::cout << std::endl;
             }
                 
             // Set up physical normals
@@ -586,6 +579,7 @@ namespace Nektar
             // and exterior interface components.
             for (auto &interface : m_interfaces)
             {
+                std::cout << "what" << std::endl;
                 for (auto id : interface.second->GetEdgeRight())
                 {
                     auto traceEl = std::dynamic_pointer_cast<

@@ -139,6 +139,20 @@ namespace Nektar
         {
             SetExpType(e2D);
 
+            // Split up our mesh graph along interfaces if necessary.
+            SpatialDomains::Interfaces interfaceCollection(m_session, m_graph);
+            m_interfaces = interfaceCollection.GetInterfaces();
+            for (auto &inter : m_interfaces)
+            {
+                inter.second->SeparateGraph(m_graph);
+            }
+
+            std::string filename = "out.xml";
+            m_graph->WriteGeometry(filename, true);                   // Write split geometry to use when creating VTU
+
+            // Re-read expansion maps to break our expansions appropriately!
+            m_graph->ReadExpansions();
+
             int elmtid=0;
             LocalRegions::TriExpSharedPtr      tri;
             LocalRegions::NodalTriExpSharedPtr Ntri;
