@@ -8,7 +8,6 @@ Geometry3D.cpp
 Geometry.cpp
 HexGeom.cpp
 Interface.cpp
-        ../Demos/SpatialDomains/InterfaceDuplicateEdge.cpp
 MeshGraph.cpp
 MeshGraphXml.cpp
 MeshGraphXmlCompressed.cpp

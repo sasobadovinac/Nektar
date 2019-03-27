@@ -39,8 +39,9 @@
 #include <LocalRegions/Expansion2D.h>
 #include <LocalRegions/Expansion.h> 
 #include <LocalRegions/QuadExp.h>   
-#include <LocalRegions/TriExp.h>    
+#include <LocalRegions/TriExp.h>
 #include <SpatialDomains/MeshGraph.h>
+#include <SpatialDomains/Interface.h>
 #include <LibUtilities/LinearAlgebra/NekTypeDefs.hpp>
 #include <LibUtilities/LinearAlgebra/NekMatrix.hpp>
 
@@ -50,6 +51,113 @@ namespace Nektar
 {
     namespace MultiRegions
     {
+
+    double SearchForPoint(NekDouble xs[2], SpatialDomains::SegGeomSharedPtr &seg)
+    {
+
+        Array<OneD, NekDouble> xi(1, 0.0);
+        const NekDouble c1 = 1e-4, c2 = 0.9;
+
+        auto xmap = seg->GetXmap();
+        int nq = xmap->GetTotPoints();
+
+        Array<OneD, NekDouble> x(nq), y(nq);
+        xmap->BwdTrans(seg->GetCoeffs(0), x);
+        xmap->BwdTrans(seg->GetCoeffs(1), y);
+
+        Array<OneD, NekDouble> xder(nq), yder(nq);
+        xmap->PhysDeriv(x, xder);
+        xmap->PhysDeriv(y, yder);
+
+        Array<OneD, NekDouble> xder2(nq), yder2(nq);
+        xmap->PhysDeriv(xder, xder2);
+        xmap->PhysDeriv(yder, yder2);
+
+        bool opt_succeed = false;
+
+        for (int i = 0; i < 15; ++i)
+        {
+
+            // Compute f(x_k) and its derivatives
+            NekDouble xc = xmap->PhysEvaluate(xi, x);
+            NekDouble yc = xmap->PhysEvaluate(xi, y);
+
+            NekDouble xc_der = xmap->PhysEvaluate(xi, xder);
+            NekDouble yc_der = xmap->PhysEvaluate(xi, yder);
+
+            NekDouble xc_der2 = xmap->PhysEvaluate(xi, xder2);
+            NekDouble yc_der2 = xmap->PhysEvaluate(xi, yder2);
+
+            NekDouble fx = (xc - xs[0])*(xc - xs[0]) + (yc - xs[1])*(yc - xs[1]);
+            NekDouble fxp = 2.0 * (xc_der * (xc - xs[0]) + yc_der * (yc - xs[1]));
+            NekDouble fxp2 = 2.0 * (xc_der2 * (xc - xs[0]) + xc_der * xc_der + yc_der2 * (yc - xs[1]) + yc_der * yc_der);
+
+            std::cout <<"iteration = " << i << "\t xi = " << xi[0] << "\t fx = " << fx << "\t grad = " << fxp << "\t hess = " << fxp2 << std::endl;
+
+            // Check for convergence
+            if (fx < 1e-16)
+            {
+                opt_succeed = true;
+                break;
+            }
+
+
+            NekDouble gamma = 1.0;
+            bool conv = false;
+
+            // Search direction: quasi-Newton
+            NekDouble pk = - fxp / fxp2;
+
+            // Backtracking line search
+            while (gamma > 1e-10)
+            {
+                Array<OneD, NekDouble> xi_pk(1);
+                xi_pk[0] = xi[0] + pk * gamma;
+
+                if (xi_pk[0] < -1.0 || xi_pk[0] > 1.0)
+                {
+                    gamma /= 2.0;
+                    continue;
+                }
+
+                NekDouble xc_pk = xmap->PhysEvaluate(xi_pk, x);
+                NekDouble yc_pk = xmap->PhysEvaluate(xi_pk, y);
+
+                NekDouble xc_der_pk = xmap->PhysEvaluate(xi_pk, xder);
+                NekDouble yc_der_pk = xmap->PhysEvaluate(xi_pk, yder);
+
+                NekDouble fx_pk = (xc_pk - xs[0])*(xc_pk - xs[0]) + (yc_pk - xs[1])*(yc_pk - xs[1]);
+                NekDouble fxp_pk = 2.0 * (xc_der_pk * (xc_pk - xs[0]) + yc_der_pk * (yc_pk - xs[1]));
+
+                // Check Wolfe conditions
+                if (fx_pk <= fx + c1 * gamma * pk * fxp && -pk * fxp_pk <= - c2 * pk * fxp)
+                {
+                    conv = true;
+                    break;
+                }
+
+                gamma /= 2.0;
+            }
+
+            if (!conv)
+            {
+                opt_succeed = false;
+                break;
+            }
+
+            xi[0] += gamma * pk;
+        }
+
+        if (opt_succeed)
+        {
+            return xi[0];
+        }
+        else
+        {
+            return std::numeric_limits<NekDouble>::max();
+        }
+    }
+
         /**
          * @class DisContField2D
          * Abstraction of a global discontinuous two-dimensional spectral/hp
@@ -116,10 +224,21 @@ namespace Nektar
 
             if (variable.compare("DefaultVar") != 0) // do not set up BCs if default variable
             {
+                SpatialDomains::Interfaces interfaceCollection(m_session, m_graph);
+                m_interfaces = interfaceCollection.GetInterfaces();
+                for (auto &inter : m_interfaces)
+                {
+                    inter.second->SeparateGraph(m_graph);
+                }
+
+                m_interfaces = SpatialDomains::Interfaces().GetInterfaces(); // Blanks interface to skip code
+                std::string filename = "out.xml";
+                m_graph->WriteGeometry(filename, true);                   // Write split geometry to use when creating VTU
+
                 SpatialDomains::BoundaryConditions bcs(m_session, graph2D);
                 GenerateBoundaryConditionExpansion(graph2D, bcs, variable,
                                                    DeclareCoeffPhysArrays);
-                
+
                 if (DeclareCoeffPhysArrays)
                 {
                     EvaluateBoundaryConditions(0.0, variable);
@@ -432,6 +551,8 @@ namespace Nektar
                 
             // Set up physical normals
             SetUpPhysNormals();
+
+            std::unordered_map<int, int> traceIdToElmt;
             
             // Set up information for parallel and periodic problems. 
             for (int i = 0; i < m_trace->GetExpSize(); ++i)
@@ -442,6 +563,8 @@ namespace Nektar
                 int offset      = m_trace->GetPhys_Offset(i);
                 int traceGeomId = traceEl->GetGeom1D()->GetGlobalID();
                 auto pIt = m_periodicEdges.find(traceGeomId);
+
+                traceIdToElmt[traceGeomId] = i;
 
                 if (pIt != m_periodicEdges.end() && !pIt->second[0].isLocal)
                 {
@@ -457,7 +580,33 @@ namespace Nektar
                         traceEl->GetLeftAdjacentElementEdge());
                 }
             }
-                
+
+            // Loop over all interface edges and then negate edge normals
+            // corresponding to the 'moving' side. Keep track of both interior
+            // and exterior interface components.
+            for (auto &interface : m_interfaces)
+            {
+                for (auto id : interface.second->GetEdgeRight())
+                {
+                    auto traceEl = std::dynamic_pointer_cast<
+                        LocalRegions::Expansion1D>(
+                            m_trace->GetExp(traceIdToElmt[id]));
+                    traceEl->GetLeftAdjacentElementExp()->NegateEdgeNormal(
+                            traceEl->GetLeftAdjacentElementEdge());
+                    m_traceEdgeRight[interface.first].push_back(traceEl);
+                    m_interfaceEdgeRight.insert(id);
+                }
+
+                for (auto id : interface.second->GetEdgeLeft())
+                {
+                    auto traceEl = std::dynamic_pointer_cast<
+                            LocalRegions::Expansion1D>(
+                            m_trace->GetExp(traceIdToElmt[id]));
+                    m_traceEdgeLeft[interface.first].push_back(traceEl);
+                    m_interfaceEdgeLeft.insert(id);
+                }
+            }
+
             int cnt, n, e;
                 
             // Identify boundary edges
@@ -1259,21 +1408,33 @@ namespace Nektar
             
             
             bool fwd = true;
+
             if (traceEl->GetLeftAdjacentElementEdge () == -1 ||
                 traceEl->GetRightAdjacentElementEdge() == -1)
             {
+
                 // Boundary edge (1 connected element). Do nothing in
                 // serial.
                 auto it = m_boundaryEdges.find(traceEl->GetElmtId());
-                
+
                 // If the edge does not have a boundary condition set on
                 // it, then assume it is a partition edge.
                 if (it == m_boundaryEdges.end())
                 {
                     int traceGeomId = traceEl->GetGeom1D()->GetGlobalID();
                     auto pIt = m_periodicEdges.find(traceGeomId);
+                    auto intIt1 = m_interfaceEdgeLeft.find(traceEl->GetGeom()->GetGlobalID());
+                    auto intIt2 = m_interfaceEdgeRight.find(traceEl->GetGeom()->GetGlobalID());
 
-                    if (pIt != m_periodicEdges.end() && !pIt->second[0].isLocal)
+                    if (intIt1 != m_interfaceEdgeLeft.end())
+                    {
+                        fwd = true;
+                    }
+                    else if (intIt2 != m_interfaceEdgeRight.end())
+                    {
+                        fwd = false;
+                    }
+                    else if (pIt != m_periodicEdges.end() && !pIt->second[0].isLocal)
                     {
                         fwd = traceGeomId == min(traceGeomId,pIt->second[0].id);
                     }
@@ -1453,6 +1614,111 @@ namespace Nektar
             {
                 Bwd[m_periodicBwdCopy[n]] = Fwd[m_periodicFwdCopy[n]];
             }
+
+            // Interpolate from each side of the interface to the other.
+
+            for (auto &interface : m_traceEdgeLeft)
+            {
+                auto &edgeOneExps = interface.second;
+                auto &edgeTwoExps = m_traceEdgeRight[interface.first];
+
+                // Edge one -> two interpolation
+                for (n = 0; n < edgeOneExps.size(); ++n)
+                {
+                    auto elmt = edgeOneExps[n];
+                    int nq = elmt->GetTotPoints();
+                    Array<OneD, NekDouble> xc(nq), yc(nq);
+                    elmt->GetCoords(xc, yc);
+
+                    for (int i = 0; i < nq; ++i)
+                    {
+                        bool found = false;
+                        for (int m = 0; m < edgeTwoExps.size(); ++m)
+                        {
+                            LocalRegions::Expansion1DSharedPtr searchEdge = edgeTwoExps[m];
+                            searchEdge->GetNcoeffs();
+
+                            SpatialDomains::SegGeomSharedPtr searchEdgeSeg = std::static_pointer_cast<SpatialDomains::SegGeom>(searchEdge->GetGeom1D()); //Change by Ed
+                            NekDouble xs[2] = {xc[i], yc[i]};
+                            auto foundPoint = SearchForPoint(xs, searchEdgeSeg);
+                            if (foundPoint == std::numeric_limits<double>::max())
+                            {
+                                continue;
+                            }
+                            Array<OneD, NekDouble> edgePhys = Fwd + m_trace->GetPhys_Offset(m);
+                            Array<OneD, NekDouble> foundPointArray(1, foundPoint); //Change by Ed
+                            Bwd[m_trace->GetPhys_Offset(n) + i] = searchEdge->StdPhysEvaluate(foundPointArray, Fwd);
+                            found = true;
+                            break;
+                        }
+                        ASSERTL1(found, "Couldn't interpolate across interface");
+                    }
+                }
+
+                // Edge two -> one interpolation
+                for (n = 0; n < edgeTwoExps.size(); ++n)
+                {
+                    auto elmt = edgeTwoExps[n];
+                    int nq = elmt->GetTotPoints();
+                    Array<OneD, NekDouble> xc(nq), yc(nq);
+                    elmt->GetCoords(xc, yc);
+
+                    for (int i = 0; i < nq; ++i)
+                    {
+                        bool found = false;
+                        for (int m = 0; m < edgeOneExps.size(); ++m)
+                        {
+                            LocalRegions::Expansion1DSharedPtr searchEdge = edgeOneExps[m];
+                            searchEdge->GetNcoeffs();
+
+                            SpatialDomains::SegGeomSharedPtr searchEdgeSeg = std::static_pointer_cast<SpatialDomains::SegGeom>(searchEdge->GetGeom1D()); //Change by Ed
+                            NekDouble xs[2] = {xc[i], yc[i]};
+                            auto foundPoint = SearchForPoint(xs, searchEdgeSeg);
+                            if (foundPoint == std::numeric_limits<double>::max())
+                            {
+                                continue;
+                            }
+                            Array<OneD, NekDouble> edgePhys = Fwd + m_trace->GetPhys_Offset(m);
+                            Array<OneD, NekDouble> foundPointArray(1, foundPoint); //Change by Ed
+                            Bwd[m_trace->GetPhys_Offset(n) + i] = searchEdge->StdPhysEvaluate(foundPointArray, Fwd);
+                            found = true;
+                            break;
+                        }
+                        ASSERTL1(found, "Couldn't interpolate across interface");
+                    }
+                }
+
+                // Edge two -> one interpolation
+                for (n = 0; n < edgeTwoExps.size(); ++n)
+                {
+                    auto elmt = edgeTwoExps[n];
+                    int nq = elmt->GetTotPoints();
+                    Array<OneD, NekDouble> xc(nq), yc(nq);
+                    elmt->GetCoords(xc, yc);
+
+                    for (int i = 0; i < nq; ++i)
+                    {
+                        for (int m = 0; m < edgeOneExps.size(); ++m)
+                        {
+                            LocalRegions::Expansion1DSharedPtr searchEdge = edgeOneExps[m];
+                            searchEdge->GetNcoeffs();
+
+                            SpatialDomains::SegGeomSharedPtr searchEdgeSeg = std::static_pointer_cast<SpatialDomains::SegGeom>(searchEdge->GetGeom1D()); //Change by Ed
+                            NekDouble xs[2] = {xc[i], yc[i]};
+                            auto foundPoint = SearchForPoint(xs, searchEdgeSeg);
+                            if (foundPoint == std::numeric_limits<double>::max())
+                            {
+                                continue;
+                            }
+                            Array<OneD, NekDouble> edgePhys = Fwd + m_trace->GetPhys_Offset(m);
+                            Array<OneD, NekDouble> foundPointArray(1, foundPoint); //Change by Ed
+                            Bwd[m_trace->GetPhys_Offset(n) + i] = searchEdge->StdPhysEvaluate(foundPointArray, Fwd);
+
+                        }
+                    }
+                }
+            }
+
 
             // Do parallel exchange for forwards/backwards spaces.
             m_traceMap->UniversalTraceAssemble(Fwd);

@@ -4,4 +4,4 @@ ADD_NEKTAR_EXECUTABLE(InterfaceTest
         COMPONENT demos DEPENDS SpatialDomains SOURCES InterfaceTest.cpp)
 
 ADD_NEKTAR_EXECUTABLE(InterfaceDuplicateEdge
-        COMPONENT demos DEPENDS SpatialDomains SOURCES InterfaceDuplicateEdge.cpp)
+        COMPONENT demos DEPENDS MultiRegions SOURCES InterfaceDuplicateEdge.cpp)

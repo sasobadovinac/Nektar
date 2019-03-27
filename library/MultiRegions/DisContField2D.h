@@ -44,6 +44,7 @@
 #include <MultiRegions/AssemblyMap/AssemblyMapDG.h>
 #include <MultiRegions/AssemblyMap/LocTraceToTraceMap.h>
 #include <SpatialDomains/Conditions.h>
+#include <SpatialDomains/Interface.h>
 
 namespace Nektar
 {
@@ -145,6 +146,11 @@ namespace Nektar
              * the boundary condition on the different boundary regions.
              */
             Array<OneD,SpatialDomains::BoundaryConditionShPtr> m_bndConditions;
+
+            SpatialDomains::InterfaceCollection m_interfaces;
+            std::map<int, std::vector<LocalRegions::Expansion1DSharedPtr>> m_traceEdgeLeft;
+            std::map<int, std::vector<LocalRegions::Expansion1DSharedPtr>> m_traceEdgeRight;
+            std::unordered_set<int> m_interfaceEdgeLeft, m_interfaceEdgeRight;
 
             GlobalLinSysMapShPtr   m_globalBndMat;
             ExpListSharedPtr       m_trace;
