@@ -51,7 +51,6 @@ Currently, only \inltt{APEUpwind} supported.
 \subsection{Functions}
 \begin{itemize}
 \item \inltt{BaseFlow} Baseflow $(\overline{u}_i, \overline{p}, \overline{\rho})$ defined by the variables \inltt{u0,v0,w0,p0,rho0}
-\item \inltt{Source} Source term $\overline{c}^2 q_c$
 \item \inltt{InitialConditions}
 \end{itemize}
 
@@ -95,10 +94,9 @@ ambient pressure.
 \end{lstlisting}
 
 Let us note that to solve efficiently this problem a discontinuous Garlerkin
-approach was used. The
-system is excited via the initial conditions putting a Gaussian pulse for pulse
-fluctuations.  Finally, it is necessary to specify the base flow and the
-eventual source terms using the following functions:
+approach was used. The system is excited via the initial conditions putting
+a Gaussian pulse for pulse fluctuations.  Finally, it is necessary to specify
+the base flow using the following functions:
 
 \begin{lstlisting}[style=XmlStyle]
 <FUNCTION NAME="Baseflow"> 
@@ -107,11 +105,6 @@ eventual source terms using the following functions:
     <E VAR="p0"   VALUE="Pinfinity" />
     <E VAR="rho0" VALUE="Rho0" />
 </FUNCTION>
-
-<FUNCTION NAME="Source"> 
-    <E VAR="S"  VALUE="0" />
-</FUNCTION>
-
 <!-- Gaussian pulse located at the origin -->
 <FUNCTION NAME="InitialConditions">
     <E VAR="p" VALUE="100*exp(-32*(((x)*(x))+((y)*(y))))" />
@@ -119,6 +112,9 @@ eventual source terms using the following functions:
     <E VAR="v" VALUE="0" />
 </FUNCTION>
 \end{lstlisting}
+
+By default, the right hand sides $\overline{c}^2 q_c$ and $U_i$ are zero and
+has to be specified by an appropriate forcing.
 
 \subsubsection{Running the code}
 \begin{lstlisting}[style=BashInputStyle]
