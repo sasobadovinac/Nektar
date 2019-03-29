@@ -53,7 +53,7 @@ namespace Nektar
         {
             eFixed,
             eRotating,
-            eSliding,
+            eSliding
         };
 
         const char* const InterfaceTypeMap[] =
@@ -68,15 +68,39 @@ namespace Nektar
         {
             InterfaceBase(
                     InterfaceType type,
-                    CompositeMap rightDomain,
                     CompositeMap leftDomain,
+                    CompositeMap rightDomain,
                     std::map<int, CompositeSharedPtr> interfaceEdge):
                     m_interfaceType(type),
-                    m_rightDomain(rightDomain),
                     m_leftDomain(leftDomain),
+                    m_rightDomain(rightDomain),
                     m_interfaceEdge(interfaceEdge)
 
             {
+            }
+
+            InterfaceBase(
+                InterfaceType type,
+                CompositeMap leftDomain,
+                CompositeMap rightDomain,
+                CompositeMap leftEdge,
+                CompositeMap rightEdge):
+                m_interfaceType(type),
+                m_leftDomain(leftDomain),
+                m_rightDomain(rightDomain),
+                m_leftEdge(leftEdge),
+                m_rightEdge(rightEdge)
+
+            {
+                for (auto &it : m_leftEdge)
+                {
+                    m_leftEdgeVector.push_back(it.first);
+                }
+
+                for (auto &it : m_rightEdge)
+                {
+                    m_rightEdgeVector.push_back(it.first);
+                }
             }
 
             InterfaceType GetInterfaceType() const
@@ -99,41 +123,62 @@ namespace Nektar
                 return m_interfaceEdge;
             }
 
-            std::vector<int> const &GetEdgeLeft() const
+            std::vector<int> const &GetEdgeLeftVector() const
             {
-                return m_leftEdge;
+                return m_leftEdgeVector;
             }
 
-            std::vector<int> const &GetEdgeRight() const
+            std::vector<int> const &GetEdgeRightVector() const
             {
-                return m_rightEdge;
+                return m_rightEdgeVector;
             }
 
             void SeparateGraph(MeshGraphSharedPtr &graph);
 
         protected:
-            InterfaceType      m_interfaceType;
-            CompositeMap       m_rightDomain;
-            CompositeMap       m_leftDomain;
-            std::vector<int>   m_leftEdge;
-            std::vector<int>   m_rightEdge;
-            CompositeMap       m_interfaceEdge;
+            InterfaceType                       m_interfaceType;
+            CompositeMap                        m_leftDomain;
+            CompositeMap                        m_rightDomain;
+            CompositeMap                        m_leftEdge;
+            CompositeMap                        m_rightEdge;
+            std::vector<int>                    m_leftEdgeVector;
+            std::vector<int>                    m_rightEdgeVector;
+            CompositeMap                        m_interfaceEdge;
 
         };
 
         struct RotatingInterface : public InterfaceBase
         {
             RotatingInterface(
-                    const CompositeMap rightDomain,
                     const CompositeMap leftDomain,
+                    const CompositeMap rightDomain,
                     const std::map<int, CompositeSharedPtr> interfaceEdge,
                     const PointGeom origin,
                     const std::vector<NekDouble> axis,
                     const NekDouble angularVel)
-                    : InterfaceBase(eRotating, rightDomain, leftDomain, interfaceEdge),
+                    : InterfaceBase(eRotating, leftDomain, rightDomain, interfaceEdge),
                       m_origin(origin),
                       m_axis(axis),
                       m_angularVel(angularVel)
+
+
+            {
+            }
+
+            RotatingInterface(
+                const CompositeMap leftDomain,
+                const CompositeMap rightDomain,
+                const std::map<int, CompositeSharedPtr> leftEdge,
+                const std::map<int, CompositeSharedPtr> rightEdge,
+                const PointGeom origin,
+                const std::vector<NekDouble> axis,
+                const NekDouble angularVel)
+                : InterfaceBase(eRotating, leftDomain, rightDomain, leftEdge, rightEdge),
+                  m_origin(origin),
+                  m_axis(axis),
+                  m_angularVel(angularVel)
+
+
             {
             }
 

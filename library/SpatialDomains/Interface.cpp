@@ -49,7 +49,10 @@ namespace Nektar
                 const MeshGraphSharedPtr &meshGraph) :
                 m_meshGraph(meshGraph), m_session(pSession)
         {
-            ReadInterfaces(m_session->GetElement("NEKTAR/CONDITIONS/INTERFACES"));
+            if(m_session->DefinesElement("NEKTAR/CONDITIONS/INTERFACES"))
+            {
+                ReadInterfaces(m_session->GetElement("NEKTAR/CONDITIONS/INTERFACES"));
+            }
         }
 
     std::string ReadTag(std::string &tagStr)
@@ -107,14 +110,14 @@ namespace Nektar
                     ASSERTL0(err == TIXML_SUCCESS, "Unable to read interface ID.");
 
                     std::string interfaceRightDomainStr;
-                    err = interfaceElement->QueryStringAttribute("RIGHT",
+                    err = interfaceElement->QueryStringAttribute("RIGHTDOMAIN",
                                                                  &interfaceRightDomainStr);
                     ASSERTL0(err == TIXML_SUCCESS,
                              "Unable to read right interface domain.");
                     auto rightDomain = m_meshGraph->GetDomain(stoi(ReadTag(interfaceRightDomainStr)));
 
                     std::string interfaceLeftDomainStr;
-                    err = interfaceElement->QueryStringAttribute("LEFT",
+                    err = interfaceElement->QueryStringAttribute("LEFTDOMAIN",
                                                                  &interfaceLeftDomainStr);
                     ASSERTL0(err == TIXML_SUCCESS,
                              "Unable to read left interface domain.");
@@ -139,6 +142,7 @@ namespace Nektar
                     {
                         std::string indxStr = ReadTag(leftEdgeStr);
                         m_meshGraph->GetCompositeList(indxStr, leftEdge);
+                        cout << leftEdgeStr << endl;
                     }
 
                     std::string rightEdgeStr;
@@ -149,15 +153,16 @@ namespace Nektar
                     {
                         std::string indxStr = ReadTag(rightEdgeStr);
                         m_meshGraph->GetCompositeList(indxStr, rightEdge);
+                        cout << rightEdgeStr << endl;
                     }
 
-                    if(interfaceErr == TIXML_SUCCESS)
+                    /*if(interfaceErr == TIXML_SUCCESS)
                     {
                         ASSERTL0(leftEdgeErr !=TIXML_SUCCESS && rightEdgeErr !=TIXML_SUCCESS,
                                  "Choose to define either INTERFACE or both LEFTEDGE "
                                  "and RIGHTEDGE.")
                     }
-                    else if(leftEdgeErr ==TIXML_SUCCESS && rightEdgeErr ==TIXML_SUCCESS)
+                    else if(leftEdgeErr == TIXML_SUCCESS && rightEdgeErr == TIXML_SUCCESS)
                     {
                         ASSERTL0(interfaceErr !=TIXML_SUCCESS,
                                  "Choose to define either INTERFACE or both LEFTEDGE "
@@ -168,7 +173,7 @@ namespace Nektar
                         ASSERTL0((interfaceErr + 1) * (leftEdgeErr +1) * (rightEdgeErr +1 ) == 1,
                                  "Choose to define either INTERFACE or both LEFTEDGE "
                                  "and RIGHTEDGE.")
-                    }
+                    }*/
 
                     if (interfaceType == "R")
                     {
@@ -198,12 +203,25 @@ namespace Nektar
 
                         NekDouble angularVel = stod(angularVelStr);
 
-                        InterfaceShPtr rotatingInterface(
-                            MemoryManager<RotatingInterface>::AllocateSharedPtr(
-                                rightDomain, leftDomain, interfaceEdge,
-                                origin, axis, angularVel));
+                        if (interfaceErr == TIXML_SUCCESS)
+                        {
+                            InterfaceShPtr rotatingInterface(
+                                MemoryManager<RotatingInterface>::
+                                    AllocateSharedPtr(leftDomain, rightDomain,
+                                                      interfaceEdge, origin,
+                                                      axis, angularVel));
+                            m_interfaces[indx] = rotatingInterface;
+                        }
+                        else
+                        {
+                            InterfaceShPtr rotatingInterface(
+                                MemoryManager<RotatingInterface>::
+                                AllocateSharedPtr(leftDomain, rightDomain,
+                                                  leftEdge, rightEdge, origin,
+                                                  axis, angularVel));
+                            m_interfaces[indx] = rotatingInterface;
+                        }
 
-                        m_interfaces[indx] = rotatingInterface;
                     }
 
                     interfaceElement = interfaceElement->NextSiblingElement();
@@ -212,7 +230,6 @@ namespace Nektar
 
         void InterfaceBase::SeparateGraph(MeshGraphSharedPtr &graph)
         {
-
                 auto rightDomain = GetRightDomain();
                 auto interfaceEdge = GetInterfaceEdge();
 
@@ -304,8 +321,8 @@ namespace Nektar
                                 maxEdgeId, newVerts[0]->GetCoordim(), newVerts,
                                 newCurve);
 
-                        m_leftEdge.push_back(oldEdge->GetGlobalID());
-                        m_rightEdge.push_back(maxEdgeId);
+                        m_leftEdgeVector.push_back(oldEdge->GetGlobalID());
+                        m_rightEdgeVector.push_back(maxEdgeId);
 
                         graph->GetAllSegGeoms()[maxEdgeId] = newEdge;
                         edgeDone[geom->GetGlobalID()] = newEdge;
