@@ -93,6 +93,27 @@ ENDIF (NEKTAR_USE_MESHGEN)
 # LocalRegions.
 ADD_EXECUTABLE(NekMesh ${NekMeshSources})
 SET_COMMON_PROPERTIES(NekMesh)
+
+IF( ${CMAKE_SYSTEM} MATCHES "Linux.*" )
+    # The boost thread library needs pthread on linux.
+    GET_TARGET_PROPERTY(THE_COMPILE_FLAGS NekMesh COMPILE_FLAGS)
+    GET_TARGET_PROPERTY(THE_LINK_FLAGS NekMesh LINK_FLAGS)
+
+    # It is possible these flags have not been set yet.
+    IF(NOT THE_COMPILE_FLAGS)
+        SET(THE_COMPILE_FLAGS "")
+    ENDIF(NOT THE_COMPILE_FLAGS)
+
+    IF(NOT THE_LINK_FLAGS )
+        SET(THE_LINK_FLAGS "")
+    ENDIF(NOT THE_LINK_FLAGS)
+
+    SET_TARGET_PROPERTIES(NekMesh
+            PROPERTIES COMPILE_FLAGS "${THE_COMPILE_FLAGS} -pthread")
+        SET_TARGET_PROPERTIES(NekMesh
+            PROPERTIES LINK_FLAGS "${THE_LINK_FLAGS} -pthread")
+ENDIF( ${CMAKE_SYSTEM} MATCHES "Linux.*" )
+
 TARGET_LINK_LIBRARIES(NekMesh NekMeshUtils FieldUtils)
 SET_PROPERTY(TARGET NekMesh PROPERTY FOLDER util)
 INSTALL(TARGETS NekMesh

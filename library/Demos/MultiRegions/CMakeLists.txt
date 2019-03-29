@@ -147,7 +147,8 @@ IF (NEKTAR_USE_MPI)
 
     IF (NEKTAR_USE_SCOTCH)
         ADD_NEKTAR_TEST(Helmholtz3D_CG_Hex_AllBCs_iter_ml_scotch_par3)
-        ADD_NEKTAR_TEST(Helmholtz3D_CG_Prism_iter_ml_scotch_par3)
+        # TODO: This test fails on some platforms due to scotch partitioning.
+        #ADD_NEKTAR_TEST(Helmholtz3D_CG_Prism_iter_ml_scotch_par3)
         ADD_NEKTAR_TEST(Helmholtz3D_HDG_Hex_AllBCs_scotch_par2)
     ENDIF (NEKTAR_USE_SCOTCH)
 

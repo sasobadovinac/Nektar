@@ -14,7 +14,13 @@ v4.4.2
 - Fix deadlock in DiffusionLDG (!885)
 - Fix calculation of BLPoints (!892)
 - Updated PETSc to 3.7.7 (!916)
-- Fix typcase to an integer which set Lz < 1 to zero when postprocess hdf5 output (!9922)
+- Fix typecast to an integer which set Lz < 1 to zero when postprocess hdf5 output (!922)
+- Fix a number of regressions in the release branch (!967)
+- Fix program options errors on Windows in debug mode (!986)
+- Fix potential clobbered output of ModArnoldi EVs when run in parallel (!983)
+
+**IncNavierStokesSolver**
+- Add a test for imaginary shift to be only used with Homogenous and SingleMode on. (!928)
 
 **NekMesh**
 - Fix missing periodic boundary meshing and boundary layer mesh adjustment
@@ -35,6 +41,9 @@ v4.4.2
 
 **Tester**
 - Fix build with boost 1.67 (!947)
+
+**Build system**:
+- Fix missing pthread when linking on some systems (!961)
 
 v4.4.1
 ------
