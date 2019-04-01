@@ -430,6 +430,17 @@ void LinearisedAdvection::ImportFldBase(
     int nSessionConvVar = nSessionVar - 1;
     int nFileVar        = FieldDef[0]->m_fields.size();
     int nFileConvVar    = nFileVar - 1; // Ignore pressure
+
+    if(m_session->DefinesSolverInfo("RequirePressureBaseFlow"))
+    {
+        if(boost::iequals(m_session->GetSolverInfo("RequirePressureBaseFlow"),"TRUE"))
+        {
+            // In the FSI solver for hinged rotating body the base flow
+            // pressure is required when using a linearised solver
+            nFileConvVar +=  1;
+        }
+    }
+
     if (m_halfMode)
     {
         ASSERTL0(nFileVar == 3, "For half mode, expect 2D2C base flow.");
