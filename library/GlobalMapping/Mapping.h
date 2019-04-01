@@ -445,6 +445,8 @@ class Mapping
         /// Name of the function containing the velocity of the coordinates
         std::string                                 m_velFuncName;
 
+	MultiRegions::ExpListSharedPtr              m_ExpList;
+
 
         // Flags to help the solver
         /// Flag defining if the Jacobian is constant

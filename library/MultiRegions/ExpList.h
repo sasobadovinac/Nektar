@@ -974,6 +974,12 @@ namespace Nektar
 
             MULTI_REGIONS_EXPORT void ClearGlobalLinSysManager(void);
 
+
+            void ExtractFileBCs(const std::string                &fileName,
+                                LibUtilities::CommSharedPtr       comm,
+                                const std::string                &varName,
+                                const std::shared_ptr<ExpList>  locExpList);
+
         protected:
             /// Definition of the total number of degrees of freedom and
             /// quadrature points and offsets to access data
@@ -1441,10 +1447,10 @@ namespace Nektar
 
             virtual void v_ClearGlobalLinSysManager(void);
 
-            void ExtractFileBCs(const std::string                &fileName,
-                                LibUtilities::CommSharedPtr       comm,
-                                const std::string                &varName,
-                                const std::shared_ptr<ExpList>  locExpList);
+//            void ExtractFileBCs(const std::string                &fileName,
+//                                LibUtilities::CommSharedPtr       comm,
+//                                const std::string                &varName,
+//                                const std::shared_ptr<ExpList>  locExpList);
             
             // Utility function for a common case of retrieving a
             // BoundaryCondition from a boundary condition collection.

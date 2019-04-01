@@ -1084,6 +1084,9 @@ void Mapping::v_UpdateBCs( const NekDouble time)
     int nvel = m_nConvectiveFields;
     int nfields = m_fields.num_elements();
     int nbnds    = m_fields[0]->GetBndConditions().num_elements();
+    ////////////////////////////////////
+    const std::string varName;
+    ////////////////////////////////////
 
     // Declare variables
     Array<OneD, const SpatialDomains::BoundaryConditionShPtr> BndConds;
@@ -1146,16 +1149,37 @@ void Mapping::v_UpdateBCs( const NekDouble time)
                 // Check if bc is time-dependent
                 ASSERTL0( !BndConds[n]->IsTimeDependent(),
                     "Time-dependent Dirichlet boundary conditions not supported with mapping yet.");
+/////////////////////////////////////////////////////////////////
+                // Get boundary condition from file
+		SpatialDomains::DirichletBCShPtr bcPtr
+			= std::static_pointer_cast<
+			SpatialDomains::DirichletBoundaryCondition>(
+					BndConds[n]);
+		string filebcs = bcPtr->m_filename;
 
-                // Get boundary condition 
-                LibUtilities::Equation condition =
-                    std::static_pointer_cast<
-                        SpatialDomains::DirichletBoundaryCondition>
-                            (BndConds[n])->
-                                m_dirichletCondition;
+	
+		if (filebcs != "")
+		{
+			m_ExpList->ExtractFileBCs(filebcs, bcPtr->GetComm(), varName, BndExp[n]);
+		}
+		else
+		{
+		// Get boundary condition 
+		LibUtilities::Equation condition =
+			std::static_pointer_cast<SpatialDomains::DirichletBoundaryCondition>
+			(BndConds[n])->m_dirichletCondition;                                                                                                               //Evaluate
+		condition.Evaluate(coords[0], coords[1], coords[2], time, values[i]);
+		}
+/////////////////////////////////////////////////////////////////
+                // Get boundary condition
+                //LibUtilities::Equation condition =
+                //    std::static_pointer_cast<
+                //        SpatialDomains::DirichletBoundaryCondition>
+                //            (BndConds[n])->
+                //              m_dirichletCondition;
                 // Evaluate
-                condition.Evaluate(coords[0], coords[1], coords[2],
-                                                time, values[i]);
+                // condition.Evaluate(coords[0], coords[1], coords[2],
+                //                                time, values[i]);
             }
             else
             {
