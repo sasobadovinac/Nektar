@@ -330,6 +330,8 @@ namespace Nektar
 
             // Set Radiation conditions if required
             SetRadiationBoundaryForcing(i);
+
+            SetSpecialisedBoundaryCondition(i);
         }
 
         SetZeroNormalVelocity();
@@ -398,7 +400,15 @@ namespace Nektar
         }
     }
 
-
+    void IncNavierStokes::SetSpecialisedBoundaryCondition(int fieldid)
+    {
+        v_SetSpecialisedBoundaryCondition(fieldid);
+    }
+    
+    void IncNavierStokes::v_SetSpecialisedBoundaryCondition(int fieldid)
+    {
+    }
+    
     void IncNavierStokes::SetZeroNormalVelocity()
     {
         // use static trip since cannot use UserDefinedTag for zero

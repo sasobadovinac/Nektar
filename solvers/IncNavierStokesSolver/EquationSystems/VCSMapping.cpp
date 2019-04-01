@@ -1023,5 +1023,55 @@ namespace Nektar
             // L(U) - 1.0*d^2(u^i)/dx^jdx^j
             m_mapping->VelocityLaplacian(velPhys, outarray, 1.0);
         }
+    
+
+        void VCSMapping::v_SetSpecialisedBoundaryCondition(int fieldid)
+        {
+            static bool init = false;
+            int  n;
+
+            Array<OneD, const SpatialDomains::BoundaryConditionShPtr > BndConds;
+            Array<OneD, MultiRegions::ExpListSharedPtr>                BndExp;
+            
+            BndConds = m_fields[fieldid]->GetBndConditions();
+            BndExp   = m_fields[fieldid]->GetBndCondExpansions();
+            
+
+            if(init == false) // save existing BCs
+            {
+                init = true;
+
+                m_savSpecialisedBCs = Array<OneD, Array<OneD, NekDouble> >
+                    (BndConds.num_elements());
+
+                for(n = 0; n < BndConds.num_elements(); ++n)
+                {
+                    if((boost::iequals(BndConds[n]->GetUserDefined(),"MySpecialCondiiton")))
+                    {
+                        int nbcoeffs = BndExp[n]->GetNcoeffs();
+
+                        m_savSpecialisedBCs[n] = Array<OneD, NekDouble> (nbcoeffs,0.0);
+
+                        Vmath::Vcopy(nbcoeffs,BndExp[n]->GetCoeffs(),1,
+                                     m_savSpecialisedBCs[n],1);
+                    }
+                }
+            }
+
+            for(n = 0; n < BndConds.num_elements(); ++n)
+            {
+                std::string type = BndConds[n]->GetUserDefined();
+                
+                if((boost::iequals(type,"MySpecialCondiiton")))
+                {
+                    NekDouble Rot = 1.0;
+                    int nbcoeffs = BndExp[n]->GetNcoeffs();
+                    
+                    Vmath::Smul(nbcoeffs,Rot,m_savSpecialisedBCs[n],1,
+                                BndExp[n]->UpdateCoeffs(),1);
+                }
+            }
+        }
+
 
 } //end of namespace

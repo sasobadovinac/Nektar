@@ -235,6 +235,9 @@ namespace Nektar
         /// Set Radiation forcing term
         void SetRadiationBoundaryForcing(int fieldid);
 
+        /// Set Specialised Boundary Condition
+        void SetSpecialisedBoundaryCondition(int fieldid);
+        
         /// Set Normal Velocity Component to Zero
         void SetZeroNormalVelocity();
 
@@ -268,6 +271,7 @@ namespace Nektar
 
         virtual bool v_PreIntegrate(int step);
 
+        virtual void v_SetSpecialisedBoundaryCondition(int fieldid);
     private:
 
     };

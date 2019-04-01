@@ -130,8 +130,11 @@ namespace Nektar
                     const Array<OneD, const Array<OneD, NekDouble> > &inarray,
                     Array<OneD, Array<OneD, NekDouble> > &outarray,
                     const NekDouble time);
+
+        virtual void v_SetSpecialisedBoundaryCondition(int fieldid);
     private:        
         Array<OneD, Array<OneD, NekDouble> >    m_presForcingCorrection;
+        Array<OneD, Array<OneD, NekDouble> >    m_savSpecialisedBCs;
         
         // Correction needed for convective terms = N(u) - ( -(U \nabla) u)
         //     velPhys is the velocity field (transformed for physical space)
@@ -172,3 +175,4 @@ namespace Nektar
 
 
 #endif //VELOCITY_CORRECTION_SCHEME_H
+
