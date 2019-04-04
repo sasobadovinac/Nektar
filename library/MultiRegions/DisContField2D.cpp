@@ -579,18 +579,20 @@ namespace Nektar
             // and exterior interface components.
             for (auto &interface : m_interfaces)
             {
-                for (int id : interface.second->GetEdgeRightVector())
+                for (auto id : interface.second->GetEdgeRight())
                 {
                     auto traceEl = std::dynamic_pointer_cast<
                         LocalRegions::Expansion1D>(
                             m_trace->GetExp(traceIdToElmt[id]));
-
                     std::cout << "Negating normal on edge " << traceEl->GetGeom()->GetGlobalID() << std::endl;
+                    std::cout << "Connect to elmt " << traceEl->GetLeftAdjacentElementExp()->GetGeom()->GetGlobalID() << " edge " << traceEl->GetLeftAdjacentElementEdge() << std::endl;
+                    traceEl->GetLeftAdjacentElementExp()->NegateEdgeNormal(
+                            traceEl->GetLeftAdjacentElementEdge());
                     m_traceEdgeRight[interface.first].push_back(traceEl);
                     m_interfaceEdgeRight.insert(id);
                 }
 
-                for (int id : interface.second->GetEdgeLeftVector())
+                for (auto id : interface.second->GetEdgeLeft())
                 {
                     auto traceEl = std::dynamic_pointer_cast<
                             LocalRegions::Expansion1D>(
@@ -1645,7 +1647,7 @@ namespace Nektar
                         for (int m = 0; m < edgeTwoExps.size(); ++m)
                         {
                             LocalRegions::Expansion1DSharedPtr searchEdge = edgeTwoExps[m];
-                            SpatialDomains::SegGeomSharedPtr searchEdgeSeg = std::static_pointer_cast<SpatialDomains::SegGeom>(searchEdge->GetGeom1D());
+                            SpatialDomains::SegGeomSharedPtr searchEdgeSeg = std::static_pointer_cast<SpatialDomains::SegGeom>(searchEdge->GetGeom1D()); //Change by Ed
                             NekDouble xs[2] = {xc[i], yc[i]};
                             auto foundPoint = SearchForPoint(xs, searchEdgeSeg);
                             if (foundPoint == std::numeric_limits<double>::max())
@@ -1653,10 +1655,10 @@ namespace Nektar
                                 continue;
                             }
                             Array<OneD, NekDouble> edgePhys = Bwd + m_trace->GetPhys_Offset(searchEdge->GetElmtId());
-                            Array<OneD, NekDouble> foundPointArray(1, foundPoint);
+                            Array<OneD, NekDouble> foundPointArray(1, foundPoint); //Change by Ed
                             Bwd[m_trace->GetPhys_Offset(elmt->GetElmtId()) + i] = searchEdge->StdPhysEvaluate(foundPointArray, edgePhys);
                             found = true;
-                            //std::cout << "2->1 ELMT " << elmt->GetGeom()->GetGlobalID() << " found " << searchEdgeSeg->GetGlobalID() << " loc = " << foundPoint << std::endl;
+                            //std::cout << "2->1 ELMT " << elmt->GetGeom()->GetGlobalID() << " found " << searchEdgeSeg->GetGlobalID() << " loc = " << foundPoint << std::endl;s
                             //std::cout << "COPYING BWD TRACE " << searchEdgeSeg->GetGlobalID() << " OFFSET " << m_trace->GetPhys_Offset(searchEdge->GetElmtId()) << " -> TRACE " << elmt->GetGeom()->GetGlobalID() << " OFFSET " << m_trace->GetPhys_Offset(elmt->GetElmtId()) << std::endl;
                             break;
                         }
@@ -1678,7 +1680,7 @@ namespace Nektar
                         for (int m = 0; m < edgeOneExps.size(); ++m)
                         {
                             LocalRegions::Expansion1DSharedPtr searchEdge = edgeOneExps[m];
-                            SpatialDomains::SegGeomSharedPtr searchEdgeSeg = std::static_pointer_cast<SpatialDomains::SegGeom>(searchEdge->GetGeom1D());
+                            SpatialDomains::SegGeomSharedPtr searchEdgeSeg = std::static_pointer_cast<SpatialDomains::SegGeom>(searchEdge->GetGeom1D()); //Change by Ed
                             NekDouble xs[2] = {xc[i], yc[i]};
                             auto foundPoint = SearchForPoint(xs, searchEdgeSeg);
                             if (foundPoint == std::numeric_limits<double>::max())
@@ -1686,7 +1688,7 @@ namespace Nektar
                                 continue;
                             }
                             Array<OneD, NekDouble> edgePhys = Fwd + m_trace->GetPhys_Offset(searchEdge->GetElmtId());
-                            Array<OneD, NekDouble> foundPointArray(1, foundPoint);
+                            Array<OneD, NekDouble> foundPointArray(1, foundPoint); //Change by Ed
                             Fwd[m_trace->GetPhys_Offset(elmt->GetElmtId()) + i] = searchEdge->StdPhysEvaluate(foundPointArray, edgePhys);
                             //std::cout << "(" << xc[i] << "," << yc[i] << ") -> " << searchEdge->StdPhysEvaluate(foundPointArray, edgePhys) << std::endl;
                             // std::cout << "1->2 ELMT " << elmt->GetGeom()->GetGlobalID() << " found " << searchEdgeSeg->GetGlobalID() << " loc = " << foundPoint << std::endl;
