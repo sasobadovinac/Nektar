@@ -257,6 +257,14 @@ bool Geometry::v_ContainsPoint(const Array<OneD, const NekDouble> &gloCoord,
     return false;
 }
 
+NekDouble Geometry::v_FindDistance(const Array<OneD, const NekDouble> &xs,
+                                   NekDouble &xi)
+{
+    NEKERROR(ErrorUtil::efatal,
+             "This function has not been defined for this geometry");
+    return false;
+}
+
 /**
  * @copydoc Geometry::GetVertexEdgeMap()
  */

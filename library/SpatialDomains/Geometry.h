@@ -155,6 +155,9 @@ public:
         Array<OneD, NekDouble> &Lcoords);
     SPATIAL_DOMAINS_EXPORT inline NekDouble GetCoord(
         const int i, const Array<OneD, const NekDouble> &Lcoord);
+    SPATIAL_DOMAINS_EXPORT inline NekDouble FindDistance(
+        const Array<OneD, const NekDouble> &xs,
+        NekDouble &xi);
 
     //---------------------------------------
     // Misc. helper functions
@@ -220,6 +223,8 @@ protected:
                                  const Array<OneD, const NekDouble> &Lcoord);
     virtual NekDouble v_GetLocCoords(const Array<OneD, const NekDouble> &coords,
                                      Array<OneD, NekDouble> &Lcoords);
+    virtual NekDouble v_FindDistance(const Array<OneD, const NekDouble> &xs,
+                                     NekDouble &xi);
 
     virtual int v_GetVertexEdgeMap(int i, int j) const;
     virtual int v_GetVertexFaceMap(int i, int j) const;
@@ -538,6 +543,12 @@ inline NekDouble Geometry::GetCoord(const int i,
                                     const Array<OneD, const NekDouble> &Lcoord)
 {
     return v_GetCoord(i, Lcoord);
+}
+
+inline NekDouble Geometry::FindDistance(const Array<OneD, const NekDouble> &xs,
+                                        NekDouble &xi)
+{
+    return v_FindDistance(xs, xi);
 }
 
 /**

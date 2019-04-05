@@ -103,6 +103,10 @@ protected:
         NekDouble tol,
         NekDouble &resid);
 
+    virtual NekDouble v_FindDistance(const Array<OneD, const NekDouble> &xs,
+                                     NekDouble &xi);
+
+
 private:
     /// Boolean indicating whether object owns the data
     CurveSharedPtr m_curve;

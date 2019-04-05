@@ -107,14 +107,14 @@ namespace Nektar
                     ASSERTL0(err == TIXML_SUCCESS, "Unable to read interface ID.");
 
                     std::string interfaceRightDomainStr;
-                    err = interfaceElement->QueryStringAttribute("RIGHT",
+                    err = interfaceElement->QueryStringAttribute("RIGHTDOMAIN",
                                                                  &interfaceRightDomainStr);
                     ASSERTL0(err == TIXML_SUCCESS,
                              "Unable to read right interface domain.");
                     auto rightDomain = m_meshGraph->GetDomain(stoi(ReadTag(interfaceRightDomainStr)));
 
                     std::string interfaceLeftDomainStr;
-                    err = interfaceElement->QueryStringAttribute("LEFT",
+                    err = interfaceElement->QueryStringAttribute("LEFTDOMAIN",
                                                                  &interfaceLeftDomainStr);
                     ASSERTL0(err == TIXML_SUCCESS,
                              "Unable to read left interface domain.");
@@ -172,7 +172,6 @@ namespace Nektar
 
                     if (interfaceType == "R")
                     {
-
                         std::string originStr;
                         err = interfaceElement->QueryStringAttribute("ORIGIN",
                                                                      &originStr);
@@ -200,8 +199,17 @@ namespace Nektar
 
                         InterfaceShPtr rotatingInterface(
                             MemoryManager<RotatingInterface>::AllocateSharedPtr(
-                                rightDomain, leftDomain, interfaceEdge,
-                                origin, axis, angularVel));
+                                rightDomain, leftDomain, origin, axis, angularVel));
+
+                        if(interfaceErr == TIXML_SUCCESS)
+                        {
+                            rotatingInterface->SetInterfaceEdge(interfaceEdge);
+                        }
+                        else
+                        {
+                            rotatingInterface->SetEdgeRight(rightEdge);
+                            rotatingInterface->SetEdgeLeft(leftEdge);
+                        }
 
                         m_interfaces[indx] = rotatingInterface;
                     }
@@ -266,12 +274,9 @@ namespace Nektar
                                 // Create a new vertex
                                 newVerts[i] = MemoryManager<PointGeom>::AllocateSharedPtr(
                                         *geom->GetVertex(i));
-                                if (abs((*newVerts[i])(1)-0.5) < 1e-8)
-                                    (*newVerts[i])(1) += 0.1;
                                 newVerts[i]->SetGlobalID(maxVertId);
                                 graph->GetAllPointGeoms()[maxVertId] = newVerts[i];
                                 vertDone[vid[i]] = maxVertId++;
-
                             }
                             else
                             {
@@ -304,11 +309,11 @@ namespace Nektar
                                 maxEdgeId, newVerts[0]->GetCoordim(), newVerts,
                                 newCurve);
 
-                        m_leftEdge.push_back(oldEdge->GetGlobalID());
-                        m_rightEdge.push_back(maxEdgeId);
-
                         graph->GetAllSegGeoms()[maxEdgeId] = newEdge;
                         edgeDone[geom->GetGlobalID()] = newEdge;
+
+                        m_leftEdge[oldEdge->GetGlobalID()] = oldEdge;
+                        m_rightEdge[maxEdgeId] = newEdge;
                         maxEdgeId++;
 
                         auto toProcess =

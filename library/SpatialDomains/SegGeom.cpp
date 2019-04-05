@@ -34,12 +34,17 @@
 //
 ////////////////////////////////////////////////////////////////////////////////
 
-#include <SpatialDomains/SegGeom.h>
 #include <SpatialDomains/GeomFactors.h>
+#include <SpatialDomains/SegGeom.h>
 
+#include <LibUtilities/Foundations/ManagerAccess.h> // for PointsManager, etc
 #include <StdRegions/StdRegions.hpp>
 #include <StdRegions/StdSegExp.h>
-#include <LibUtilities/Foundations/ManagerAccess.h> // for PointsManager, etc
+
+#include <boost/geometry.hpp>
+#include <boost/geometry/algorithms/distance.hpp>
+#include <boost/geometry/geometries/linestring.hpp>
+#include <boost/geometry/geometries/point_xy.hpp>
 
 namespace Nektar
 {
@@ -50,16 +55,14 @@ SegGeom::SegGeom()
     m_shapeType = LibUtilities::eSegment;
 }
 
-SegGeom::SegGeom(int id,
-                 const int coordim,
-                 const PointGeomSharedPtr vertex[],
+SegGeom::SegGeom(int id, const int coordim, const PointGeomSharedPtr vertex[],
                  const CurveSharedPtr curve)
     : Geometry1D(coordim)
 {
     m_shapeType = LibUtilities::eSegment;
-    m_globalID = id;
-    m_state = eNotFilled;
-    m_curve = curve;
+    m_globalID  = id;
+    m_state     = eNotFilled;
+    m_curve     = curve;
 
     m_verts[0] = vertex[0];
     m_verts[1] = vertex[1];
@@ -72,11 +75,11 @@ SegGeom::SegGeom(const SegGeom &in)
 
     // info from EdgeComponent class
     m_globalID = in.m_globalID;
-    m_xmap = in.m_xmap;
+    m_xmap     = in.m_xmap;
     SetUpCoeffs(m_xmap->GetNcoeffs());
 
     // info from SegGeom class
-    m_coordim = in.m_coordim;
+    m_coordim  = in.m_coordim;
     m_verts[0] = in.m_verts[0];
     m_verts[1] = in.m_verts[1];
 
@@ -96,8 +99,7 @@ void SegGeom::SetUpXmap()
     else
     {
         const LibUtilities::BasisKey B(
-            LibUtilities::eModified_A,
-            2,
+            LibUtilities::eModified_A, 2,
             LibUtilities::PointsKey(2, LibUtilities::eGaussLobattoLegendre));
         m_xmap = MemoryManager<StdRegions::StdSegExp>::AllocateSharedPtr(B);
     }
@@ -116,8 +118,8 @@ SegGeomSharedPtr SegGeom::GenerateOneSpaceDimGeom(void)
     returnval->m_globalID = m_globalID;
 
     // geometric information.
-    returnval->m_coordim = 1;
-    NekDouble x0 = (*m_verts[0])[0];
+    returnval->m_coordim     = 1;
+    NekDouble x0             = (*m_verts[0])[0];
     PointGeomSharedPtr vert0 = MemoryManager<PointGeom>::AllocateSharedPtr(
         1, m_verts[0]->GetGlobalID(), x0, 0.0, 0.0);
     vert0->SetGlobalID(vert0->GetGlobalID());
@@ -140,7 +142,7 @@ SegGeomSharedPtr SegGeom::GenerateOneSpaceDimGeom(void)
     else
     {
         Array<OneD, const NekDouble> w0 = base[0]->GetW();
-        len = 0.0;
+        len                             = 0.0;
 
         for (int i = 0; i < jac.num_elements(); ++i)
         {
@@ -223,7 +225,7 @@ StdRegions::Orientation SegGeom::GetEdgeOrientation(const SegGeom &edge1,
 
 void SegGeom::v_GenGeomFactors()
 {
-    if(!m_setupState)
+    if (!m_setupState)
     {
         SegGeom::v_Setup();
     }
@@ -328,7 +330,7 @@ void SegGeom::v_Reset(CurveMap &curvedEdges, CurveMap &curvedFaces)
 
 void SegGeom::v_Setup()
 {
-    if(!m_setupState)
+    if (!m_setupState)
     {
         SetUpXmap();
         SetUpCoeffs(m_xmap->GetNcoeffs());
@@ -347,7 +349,7 @@ NekDouble SegGeom::v_GetLocCoords(const Array<OneD, const NekDouble> &coords,
     if (GetMetricInfo()->GetGtype() == eRegular)
     {
         NekDouble len = 0.0;
-        NekDouble xi = 0.0;
+        NekDouble xi  = 0.0;
 
         const int npts = m_xmap->GetTotPoints();
         Array<OneD, NekDouble> pts(npts);
@@ -360,7 +362,7 @@ NekDouble SegGeom::v_GetLocCoords(const Array<OneD, const NekDouble> &coords,
         }
 
         len = sqrt(len);
-        xi = sqrt(xi);
+        xi  = sqrt(xi);
 
         Lcoords[0] = 2 * xi / len - 1.0;
     }
@@ -373,8 +375,7 @@ NekDouble SegGeom::v_GetLocCoords(const Array<OneD, const NekDouble> &coords,
 }
 
 bool SegGeom::v_ContainsPoint(const Array<OneD, const NekDouble> &gloCoord,
-                              Array<OneD, NekDouble> &stdCoord,
-                              NekDouble tol,
+                              Array<OneD, NekDouble> &stdCoord, NekDouble tol,
                               NekDouble &resid)
 {
     resid = GetLocCoords(gloCoord, stdCoord);
@@ -405,6 +406,145 @@ int SegGeom::v_GetNumVerts() const
 int SegGeom::v_GetNumEdges() const
 {
     return kNedges;
+}
+
+NekDouble SegGeom::v_FindDistance(const Array<OneD, const NekDouble> &xs,
+                                  NekDouble &xiOut)
+{
+    ASSERTL0(m_coordim == 2, "Need to rewrite for m_coordim != 2");
+
+    if (m_geomFactors->GetGtype() == eRegular)
+    {
+        // Geometry is linear, so use analytic BOOST function to compute distance.
+        std::vector<NekDouble> edgeVertexOne(3,0), edgeVertexTwo(3,0);
+        m_verts[0]->GetCoords(edgeVertexOne[0], edgeVertexOne[1], edgeVertexOne[2]);
+        m_verts[1]->GetCoords(edgeVertexTwo[0], edgeVertexTwo[1], edgeVertexTwo[2]);
+        NekDouble xc = (xs[0]-edgeVertexOne[0])/(edgeVertexTwo[0]-edgeVertexOne[0]);
+        NekDouble yc = (xs[1]-edgeVertexOne[1])/(edgeVertexTwo[1]-edgeVertexOne[1]);
+        xiOut = 2 * (((isnan(xc)) ? 0 : xc) + ((isnan(yc)) ? 0 : yc)) - 1;
+
+        typedef boost::geometry::model::d2::point_xy<NekDouble> point_type;
+        typedef boost::geometry::model::linestring<point_type> linestring_type;
+        point_type p(xs[0],xs[1]);
+        linestring_type line;
+        line.push_back(point_type(edgeVertexOne[0],edgeVertexOne[1]));
+        line.push_back(point_type(edgeVertexTwo[0],edgeVertexTwo[1]));
+        return boost::geometry::distance(p, line);
+    }
+    else if (m_geomFactors->GetGtype() == eDeformed)
+    {
+        Array<OneD, NekDouble> xi(1, 0.0);
+        const NekDouble c1 = 1e-4, c2 = 0.9;
+
+        int nq = m_xmap->GetTotPoints();
+
+        Array<OneD, NekDouble> x(nq), y(nq);
+        m_xmap->BwdTrans(m_coeffs[0], x);
+        m_xmap->BwdTrans(m_coeffs[1], y);
+
+        Array<OneD, NekDouble> xder(nq), yder(nq);
+        m_xmap->PhysDeriv(x, xder);
+        m_xmap->PhysDeriv(y, yder);
+
+        Array<OneD, NekDouble> xder2(nq), yder2(nq);
+        m_xmap->PhysDeriv(xder, xder2);
+        m_xmap->PhysDeriv(yder, yder2);
+
+        bool opt_succeed = false;
+
+        NekDouble fx_prev = std::numeric_limits<NekDouble>::max();
+
+        for (int i = 0; i < 15; ++i)
+        {
+            // Compute f(x_k) and its derivatives
+            NekDouble xc = m_xmap->PhysEvaluate(xi, x);
+            NekDouble yc = m_xmap->PhysEvaluate(xi, y);
+
+            NekDouble xc_der = m_xmap->PhysEvaluate(xi, xder);
+            NekDouble yc_der = m_xmap->PhysEvaluate(xi, yder);
+
+            NekDouble xc_der2 = m_xmap->PhysEvaluate(xi, xder2);
+            NekDouble yc_der2 = m_xmap->PhysEvaluate(xi, yder2);
+
+            NekDouble fx =
+                (xc - xs[0]) * (xc - xs[0]) + (yc - xs[1]) * (yc - xs[1]);
+            NekDouble fxp =
+                2.0 * (xc_der * (xc - xs[0]) + yc_der * (yc - xs[1]));
+            NekDouble fxp2 = 2.0 * (xc_der2 * (xc - xs[0]) + xc_der * xc_der +
+                                    yc_der2 * (yc - xs[1]) + yc_der * yc_der);
+
+            // Check for convergence
+            if (abs(fx - fx_prev) < 1e-16)
+            {
+                opt_succeed = true;
+                fx_prev     = fx;
+                break;
+            }
+            else
+            {
+                fx_prev = fx;
+            }
+
+            NekDouble gamma = 1.0;
+            bool conv       = false;
+
+            // Search direction: quasi-Newton
+            NekDouble pk = -fxp / fxp2;
+
+            // Backtracking line search
+            while (gamma > 1e-10)
+            {
+                Array<OneD, NekDouble> xi_pk(1);
+                xi_pk[0] = xi[0] + pk * gamma;
+
+                if (xi_pk[0] < -1.0 || xi_pk[0] > 1.0)
+                {
+                    gamma /= 2.0;
+                    continue;
+                }
+
+                NekDouble xc_pk = m_xmap->PhysEvaluate(xi_pk, x);
+                NekDouble yc_pk = m_xmap->PhysEvaluate(xi_pk, y);
+
+                NekDouble xc_der_pk = m_xmap->PhysEvaluate(xi_pk, xder);
+                NekDouble yc_der_pk = m_xmap->PhysEvaluate(xi_pk, yder);
+
+                NekDouble fx_pk = (xc_pk - xs[0]) * (xc_pk - xs[0]) +
+                                  (yc_pk - xs[1]) * (yc_pk - xs[1]);
+                NekDouble fxp_pk = 2.0 * (xc_der_pk * (xc_pk - xs[0]) +
+                                          yc_der_pk * (yc_pk - xs[1]));
+
+                // Check Wolfe conditions
+                if (fx_pk <= fx + c1 * gamma * pk * fxp &&
+                    -pk * fxp_pk <= -c2 * pk * fxp)
+                {
+                    conv = true;
+                    break;
+                }
+
+                gamma /= 2.0;
+            }
+
+            if (!conv)
+            {
+                opt_succeed = false;
+                break;
+            }
+
+            xi[0] += gamma * pk;
+        }
+
+        if (opt_succeed)
+        {
+            xiOut = xi[0];
+            return fx_prev;
+        }
+        else
+        {
+            xiOut = std::numeric_limits<NekDouble>::max();
+            return std::numeric_limits<NekDouble>::max();
+        }
+    }
 }
 
 }

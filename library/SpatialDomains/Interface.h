@@ -69,13 +69,10 @@ namespace Nektar
             InterfaceBase(
                     InterfaceType type,
                     CompositeMap rightDomain,
-                    CompositeMap leftDomain,
-                    std::map<int, CompositeSharedPtr> interfaceEdge):
+                    CompositeMap leftDomain):
                     m_interfaceType(type),
                     m_rightDomain(rightDomain),
-                    m_leftDomain(leftDomain),
-                    m_interfaceEdge(interfaceEdge)
-
+                    m_leftDomain(leftDomain)
             {
             }
 
@@ -99,14 +96,55 @@ namespace Nektar
                 return m_interfaceEdge;
             }
 
-            std::vector<int> const &GetEdgeLeft() const
+            void SetInterfaceEdge(const CompositeMap &interfaceEdge)
+            {
+                m_interfaceEdge = interfaceEdge;
+            }
+
+            std::map<int, SegGeomSharedPtr> const &GetEdgeLeft() const
             {
                 return m_leftEdge;
             }
 
-            std::vector<int> const &GetEdgeRight() const
+            void SetEdgeLeft(const std::map<int, SegGeomSharedPtr> &leftEdge)
+            {
+                m_leftEdge = leftEdge;
+            }
+
+            void SetEdgeLeft(const CompositeMap &leftEdge)
+            {
+                for (auto &compIt : leftEdge)
+                {
+                    for (auto &elmtIt : compIt.second->m_geomVec)
+                    {
+                        SegGeomSharedPtr elmt = std::dynamic_pointer_cast<SegGeom>(elmtIt);
+                        ASSERTL0(elmt, "Composite for left edge should only contain segments");
+                        m_leftEdge[elmt->GetGlobalID()] = elmt;
+                    }
+                }
+            }
+
+            std::map<int, SegGeomSharedPtr> const &GetEdgeRight() const
             {
                 return m_rightEdge;
+            }
+
+            void SetEdgeRight(const std::map<int, SegGeomSharedPtr> &rightEdge)
+            {
+                m_rightEdge = rightEdge;
+            }
+
+            void SetEdgeRight(const CompositeMap &rightEdge)
+            {
+                for (auto &compIt : rightEdge)
+                {
+                    for (auto &elmtIt : compIt.second->m_geomVec)
+                    {
+                        SegGeomSharedPtr elmt = std::dynamic_pointer_cast<SegGeom>(elmtIt);
+                        ASSERTL0(elmt, "Composite for right edge should only contain segments");
+                        m_rightEdge[elmt->GetGlobalID()] = elmt;
+                    }
+                }
             }
 
             void SeparateGraph(MeshGraphSharedPtr &graph);
@@ -115,8 +153,8 @@ namespace Nektar
             InterfaceType      m_interfaceType;
             CompositeMap       m_rightDomain;
             CompositeMap       m_leftDomain;
-            std::vector<int>   m_leftEdge;
-            std::vector<int>   m_rightEdge;
+            std::map<int, SegGeomSharedPtr>   m_leftEdge;
+            std::map<int, SegGeomSharedPtr>   m_rightEdge;
             CompositeMap       m_interfaceEdge;
 
         };
@@ -126,11 +164,10 @@ namespace Nektar
             RotatingInterface(
                     const CompositeMap rightDomain,
                     const CompositeMap leftDomain,
-                    const std::map<int, CompositeSharedPtr> interfaceEdge,
                     const PointGeom origin,
                     const std::vector<NekDouble> axis,
                     const NekDouble angularVel)
-                    : InterfaceBase(eRotating, rightDomain, leftDomain, interfaceEdge),
+                    : InterfaceBase(eRotating, rightDomain, leftDomain),
                       m_origin(origin),
                       m_axis(axis),
                       m_angularVel(angularVel)
