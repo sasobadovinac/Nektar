@@ -73,6 +73,7 @@ public:
     SPATIAL_DOMAINS_EXPORT Geometry2D(const int coordim, CurveSharedPtr curve);
     SPATIAL_DOMAINS_EXPORT virtual ~Geometry2D();
 
+    SPATIAL_DOMAINS_EXPORT static const int kDim = 2;
     SPATIAL_DOMAINS_EXPORT CurveSharedPtr GetCurve()
     {
         return m_curve;
