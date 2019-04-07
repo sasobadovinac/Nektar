@@ -1,6 +1,6 @@
 /////////////////////////////////////////////////////////////////////////////
 //
-// File UnsteadyAdvection.cpp
+// File GalkerinBoltzmann.cpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -34,18 +34,19 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <iostream>
-#include <ADRSolver/EquationSystems/UnsteadyAdvection.h>
+#include <GalerkinBoltzmannSolver/EquationSystems/GalerkinBoltzmann.h>
 
 using namespace std;
 
 namespace Nektar
 {
-    string UnsteadyAdvection::className = SolverUtils::GetEquationSystemFactory().
-        RegisterCreatorFunction("UnsteadyAdvection",
-                                UnsteadyAdvection::create,
-                                "Unsteady Advection equation.");
+    string GalkerinBoltzmann::className =
+        SolverUtils::GetEquationSystemFactory().
+        RegisterCreatorFunction("GalkerinBoltzmann",
+                                GalkerinBoltzmann::create,
+                                "Galerkin Boltzmann equation.");
 
-    UnsteadyAdvection::UnsteadyAdvection(
+    GalkerinBoltzmann::GalkerinBoltzmann(
         const LibUtilities::SessionReaderSharedPtr& pSession,
         const SpatialDomains::MeshGraphSharedPtr& pGraph)
         : UnsteadySystem(pSession, pGraph),
@@ -55,51 +56,16 @@ namespace Nektar
     }
 
     /**
-     * @brief Initialisation object for the unsteady linear advection equation.
+     * @brief Initialisation object for the Galkerin Boltzmann equation.
      */
-    void UnsteadyAdvection::v_InitObject()
+    void GalkerinBoltzmann::v_InitObject()
     {
         // Call to the initialisation object of UnsteadySystem
         AdvectionSystem::v_InitObject();
 
-        m_session->LoadParameter("wavefreq",   m_waveFreq, 0.0);
-        // Read the advection velocities from session file
-
-        std::vector<std::string> vel;
-        vel.push_back("Vx");
-        vel.push_back("Vy");
-        vel.push_back("Vz");
-
-        // Resize the advection velocities vector to dimension of the problem
-        vel.resize(m_spacedim);
-
-        // Store in the global variable m_velocity the advection velocities
-        m_velocity = Array<OneD, Array<OneD, NekDouble> >(m_spacedim);
-        GetFunction( "AdvectionVelocity")->Evaluate(vel,  m_velocity);
-
         // Type of advection class to be used
         switch(m_projectionType)
         {
-            // Continuous field
-            case MultiRegions::eGalerkin:
-            {
-                string advName;
-                m_session->LoadSolverInfo(
-                    "AdvectionType", advName, "NonConservative");
-                m_advObject = SolverUtils::
-                    GetAdvectionFactory().CreateInstance(advName, advName);
-                if (m_specHP_dealiasing)
-                {
-                    m_advObject->SetFluxVector(
-                        &UnsteadyAdvection::GetFluxVectorDeAlias, this);
-                }
-                else
-                {
-                    m_advObject->SetFluxVector(
-                        &UnsteadyAdvection::GetFluxVector, this);
-                }
-                break;
-            }
             // Discontinuous field
             case MultiRegions::eDiscontinuous:
             {
@@ -114,27 +80,28 @@ namespace Nektar
 
                 string advName;
                 string riemName;
-                m_session->LoadSolverInfo(
-                    "AdvectionType", advName, "WeakDG");
+                m_session->LoadSolverInfo("AdvectionType", advName, "WeakDG");
                 m_advObject = SolverUtils::
                     GetAdvectionFactory().CreateInstance(advName, advName);
+
                 if (m_specHP_dealiasing)
                 {
                     m_advObject->SetFluxVector(
-                        &UnsteadyAdvection::GetFluxVectorDeAlias, this);
+                        &GalkerinBoltzmann::GetFluxVectorDeAlias, this);
                 }
                 else
                 {
                     m_advObject->SetFluxVector(
-                        &UnsteadyAdvection::GetFluxVector, this);
+                        &GalkerinBoltzmann::GetFluxVector, this);
                 }
+
                 m_session->LoadSolverInfo(
                     "UpwindType", riemName, "Upwind");
                 m_riemannSolver = SolverUtils::
                     GetRiemannSolverFactory().CreateInstance(
                         riemName, m_session);
                 m_riemannSolver->SetScalar(
-                    "Vn", &UnsteadyAdvection::GetNormalVelocity, this);
+                    "Vn", &GalkerinBoltzmann::GetNormalVelocity, this);
 
                 m_advObject->SetRiemannSolver(m_riemannSolver);
                 m_advObject->InitObject(m_session, m_fields);
@@ -150,8 +117,8 @@ namespace Nektar
         // If explicit it computes RHS and PROJECTION for the time integration
         if (m_explicitAdvection)
         {
-            m_ode.DefineOdeRhs     (&UnsteadyAdvection::DoOdeRhs,        this);
-            m_ode.DefineProjection (&UnsteadyAdvection::DoOdeProjection, this);
+            m_ode.DefineOdeRhs     (&GalkerinBoltzmann::DoOdeRhs,        this);
+            m_ode.DefineProjection (&GalkerinBoltzmann::DoOdeProjection, this);
         }
         // Otherwise it gives an error (no implicit integration)
         else
@@ -161,16 +128,16 @@ namespace Nektar
     }
 
     /**
-     * @brief Unsteady linear advection equation destructor.
+     * @brief Galkerin Boltzmann destructor.
      */
-    UnsteadyAdvection::~UnsteadyAdvection()
+    GalkerinBoltzmann::~GalkerinBoltzmann()
     {
     }
 
     /**
      * @brief Get the normal velocity for the linear advection equation.
      */
-    Array<OneD, NekDouble> &UnsteadyAdvection::GetNormalVelocity()
+    Array<OneD, NekDouble> &GalkerinBoltzmann::GetNormalVelocity()
     {
         // Number of trace (interface) points
         int i;
@@ -203,7 +170,7 @@ namespace Nektar
      * @param outarray   Calculated solution.
      * @param time       Time.
      */
-    void UnsteadyAdvection::DoOdeRhs(
+    void GalkerinBoltzmann::DoOdeRhs(
         const Array<OneD, const  Array<OneD, NekDouble> >&inarray,
               Array<OneD,        Array<OneD, NekDouble> >&outarray,
         const NekDouble time)
@@ -235,7 +202,7 @@ namespace Nektar
      * @param outarray   Calculated solution.
      * @param time       Time.
      */
-    void UnsteadyAdvection::DoOdeProjection(
+    void GalkerinBoltzmann::DoOdeProjection(
         const Array<OneD, const Array<OneD, NekDouble> >&inarray,
               Array<OneD,       Array<OneD, NekDouble> >&outarray,
         const NekDouble time)
@@ -292,7 +259,7 @@ namespace Nektar
      * @param physfield   Fields.
      * @param flux        Resulting flux.
      */
-    void UnsteadyAdvection::GetFluxVector(
+    void GalkerinBoltzmann::GetFluxVector(
         const Array<OneD, Array<OneD, NekDouble> >               &physfield,
               Array<OneD, Array<OneD, Array<OneD, NekDouble> > > &flux)
     {
@@ -320,7 +287,7 @@ namespace Nektar
      * @param physfield   Fields.
      * @param flux        Resulting flux.
      */
-    void UnsteadyAdvection::GetFluxVectorDeAlias(
+    void GalkerinBoltzmann::GetFluxVectorDeAlias(
         const Array<OneD, Array<OneD, NekDouble> >               &physfield,
               Array<OneD, Array<OneD, Array<OneD, NekDouble> > > &flux)
     {
@@ -389,7 +356,7 @@ namespace Nektar
         }
     }
 
-    void UnsteadyAdvection::v_GenerateSummary(SolverUtils::SummaryList& s)
+    void GalkerinBoltzmann::v_GenerateSummary(SolverUtils::SummaryList& s)
     {
         AdvectionSystem::v_GenerateSummary(s);
     }

@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File UnsteadyAdvection.h
+// File GalkerinBoltzmann.h
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -42,10 +42,10 @@
 
 namespace Nektar
 {
-    class UnsteadyAdvection : public SolverUtils::AdvectionSystem
+    class GalkerinBoltzmann : public SolverUtils::AdvectionSystem
     {
     public:
-        friend class MemoryManager<UnsteadyAdvection>;
+        friend class MemoryManager<GalkerinBoltzmann>;
 
         /// Creates an instance of this class
         static SolverUtils::EquationSystemSharedPtr create(
@@ -53,7 +53,7 @@ namespace Nektar
             const SpatialDomains::MeshGraphSharedPtr& pGraph)
         {
             SolverUtils::EquationSystemSharedPtr p = MemoryManager<
-                UnsteadyAdvection>::AllocateSharedPtr(pSession, pGraph);
+                GalkerinBoltzmann>::AllocateSharedPtr(pSession, pGraph);
             p->InitObject();
             return p;
         }
@@ -61,7 +61,7 @@ namespace Nektar
         static std::string className;
 
         /// Destructor
-        virtual ~UnsteadyAdvection();
+        virtual ~GalkerinBoltzmann();
 
     protected:
         SolverUtils::RiemannSolverSharedPtr     m_riemannSolver;
@@ -75,7 +75,7 @@ namespace Nektar
         int                                     m_planeNumber;
 
         /// Session reader
-        UnsteadyAdvection(const LibUtilities::SessionReaderSharedPtr& pSession,
+        GalkerinBoltzmann(const LibUtilities::SessionReaderSharedPtr& pSession,
                           const SpatialDomains::MeshGraphSharedPtr& pGraph);
 
         /// Evaluate the flux at each solution point
@@ -110,7 +110,6 @@ namespace Nektar
         virtual void v_GenerateSummary(SolverUtils::SummaryList& s);
 
     private:
-        NekDouble m_waveFreq;
     };
 }
 
