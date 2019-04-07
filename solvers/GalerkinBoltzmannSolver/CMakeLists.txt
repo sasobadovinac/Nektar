@@ -11,6 +11,8 @@ IF( NEKTAR_SOLVER_GALERKINBOLTZMANN )
         SOURCES ./GalerkinBoltzmannSolver.cpp
         LIBRARY_SOURCES
         ./EquationSystems/GalerkinBoltzmann.cpp
+        ./RiemannSolvers/BoltzmannSolver.cpp
+        ./RiemannSolvers/UpwindSolver.cpp
         )       
 
 ENDIF( NEKTAR_SOLVER_GALERKINBOLTZMANN )

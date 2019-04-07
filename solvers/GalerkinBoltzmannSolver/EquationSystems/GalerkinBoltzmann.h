@@ -66,9 +66,6 @@ namespace Nektar
     protected:
         SolverUtils::RiemannSolverSharedPtr     m_riemannSolver;
 
-        /// Advection velocity
-        Array<OneD, Array<OneD, NekDouble> >    m_velocity;
-
         // Plane (used only for Discontinous projection
         //        with 3DHomogenoeus1D expansion)
         int                                     m_planeNumber;
@@ -99,9 +96,6 @@ namespace Nektar
                   Array<OneD,         Array<OneD, NekDouble> > &outarray,
             const NekDouble time);
 
-        /// Get the normal velocity
-        Array<OneD, NekDouble> &GetNormalVelocity();
-
         /// Initialise the object
         virtual void v_InitObject();
 
@@ -111,6 +105,7 @@ namespace Nektar
     private:
         /// Square Rood of RT
         NekDouble m_sqrtRT;
+        NekDouble m_tau;
     };
 }
 

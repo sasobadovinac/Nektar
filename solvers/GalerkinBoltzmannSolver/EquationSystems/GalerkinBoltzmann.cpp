@@ -69,6 +69,9 @@ namespace Nektar
         
         ASSERTL0(m_session->DefinesParameter("RT"),"Must define parameter RT");
         m_sqrtRT = sqrt(m_session->GetParameter("RT"));
+
+        ASSERTL0(m_session->DefinesParameter("tau"),"Must define parameter tau");
+        m_tau    = m_session->GetParameter("tau");
         
         // Type of advection class to be used
         switch(m_projectionType)
@@ -98,12 +101,10 @@ namespace Nektar
                 }
 
                 m_session->LoadSolverInfo(
-                    "UpwindType", riemName, "Upwind");
+                    "UpwindType", riemName, "BoltzmannUpwind");
                 m_riemannSolver = SolverUtils::
                     GetRiemannSolverFactory().CreateInstance(
                         riemName, m_session);
-                m_riemannSolver->SetScalar(
-                    "Vn", &GalkerinBoltzmann::GetNormalVelocity, this);
 
                 m_advObject->SetRiemannSolver(m_riemannSolver);
                 m_advObject->InitObject(m_session, m_fields);
@@ -134,19 +135,6 @@ namespace Nektar
      */
     GalkerinBoltzmann::~GalkerinBoltzmann()
     {
-    }
-
-    /**
-     * @brief Get the normal velocity 
-     */
-    Array<OneD, NekDouble> &GalkerinBoltzmann::GetNormalVelocity()
-    {
-        // Number of trace (interface) points
-        int nTracePts = GetTraceNpoints();
-
-        // Auxiliary variable to compute the normal velocity
-        Array<OneD, NekDouble> tmp(nTracePts);
-
     }
 
     /**
@@ -185,6 +173,32 @@ namespace Nektar
         // Add "source terms"
         // Input and output in physical space
         //-------------------------------------------------
+        Array<OneD, NekDouble> force(nq);
+        
+        NekDouble invsqrt_2 = 1.0/sqrt(2);
+        NekDouble invtau = -1.0/m_tau;
+        // outarray[3] = -1/tau (a[3] - a[1] a[2]/a[0])
+        Vmath::Vmul(nq,inarray[1],1,inarray[2],1,force,1);
+        Vmath::Vdiv(nq,force,1,inarray[0],1,force,1);
+        Vmath::Vsub(nq,inarray[3],1,force,1,force,1);
+        Vmath::Smul(nq,invtau,force,1,force,1);
+        Vmath::Vadd(nq,outarray[3],1,force,1,outarray[3],1);
+
+        // outarray[4] = -1/tau (a[4] - 1/sqrt(2) x a[1] a[1]/a[0])
+        Vmath::Vmul(nq,inarray[1],1,inarray[1],1,force,1);
+        Vmath::Vdiv(nq,force,1,inarray[0],1,force,1);
+        Vmath::Smul(nq,invsqrt_2,force,1,force,1);
+        Vmath::Vsub(nq,inarray[4],1,force,1,force,1);
+        Vmath::Smul(nq,invtau,force,1,force,1);
+        Vmath::Vadd(nq,outarray[4],1,force,1,outarray[4],1);
+
+        // outarray[5] = -1/tau (a[5] - 1/sqrt(2) x a[2] a[2]/a[0])
+        Vmath::Vmul(nq,inarray[2],1,inarray[2],1,force,1);
+        Vmath::Vdiv(nq,force,1,inarray[0],1,force,1);
+        Vmath::Smul(nq,invsqrt_2,force,1,force,1);
+        Vmath::Vsub(nq,inarray[5],1,force,1,force,1);
+        Vmath::Smul(nq,invtau,force,1,force,1);
+        Vmath::Vadd(nq,outarray[5],1,force,1,outarray[5],1);
     }
 
     /**
@@ -230,7 +244,7 @@ namespace Nektar
         const Array<OneD, Array<OneD, NekDouble> >               &physfield,
               Array<OneD, Array<OneD, Array<OneD, NekDouble> > > &flux)
     {
-        ASSERTL1(flux[0].num_elements() == m_velocity.num_elements(),
+        ASSERTL1(flux[0].num_elements() == physfield.num_elements(),
                  "Dimension of flux array and velocity array do not match");
 
         int nq = physfield[0].num_elements();
