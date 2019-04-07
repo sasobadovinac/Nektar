@@ -68,7 +68,6 @@ namespace Nektar
 
         /// Advection velocity
         Array<OneD, Array<OneD, NekDouble> >    m_velocity;
-        Array<OneD, NekDouble>                  m_traceVn;
 
         // Plane (used only for Discontinous projection
         //        with 3DHomogenoeus1D expansion)
@@ -110,6 +109,8 @@ namespace Nektar
         virtual void v_GenerateSummary(SolverUtils::SummaryList& s);
 
     private:
+        /// Square Rood of RT
+        NekDouble m_sqrtRT;
     };
 }
 
