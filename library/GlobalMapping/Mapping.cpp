@@ -1081,11 +1081,12 @@ void Mapping::v_CurlCurlField(
 void Mapping::v_UpdateBCs( const NekDouble time)
 {
     int physTot = m_fields[0]->GetTotPoints();
-    int nvel = m_nConvectiveFields;
+    int nvel    = m_nConvectiveFields;
     int nfields = m_fields.num_elements();
-    int nbnds    = m_fields[0]->GetBndConditions().num_elements();
+    int nbnds   = m_fields[0]->GetBndConditions().num_elements();
     ////////////////////////////////////
-    const std::string varName;
+    std::string varName;
+    int bndTotPts;
     ////////////////////////////////////
 
     // Declare variables
@@ -1093,19 +1094,23 @@ void Mapping::v_UpdateBCs( const NekDouble time)
     Array<OneD, MultiRegions::ExpListSharedPtr>  BndExp;
 
     Array<OneD, bool>  isDirichlet(nfields);
+    Array<OneD, bool>  isFromFile(nfields);
 
     Array<OneD, Array<OneD, NekDouble> > values(nfields);
+    Array<OneD, Array<OneD, NekDouble> > valuesF(nfields);
     for (int i=0; i < nfields; i++)
     {
         values[i] = Array<OneD, NekDouble> (physTot, 0.0);
     }
 
     Array<OneD, Array<OneD, NekDouble> > tmp(nvel);
+    Array<OneD, Array<OneD, NekDouble> > tmpF(nvel);
     Array<OneD, Array<OneD, NekDouble> > tmp2(nvel);
+    Array<OneD, Array<OneD, NekDouble> > tmp2F(nvel);
     Array<OneD, Array<OneD, NekDouble> > coordVel(nvel);
     for (int i = 0; i< nvel; i++)
     {
-        tmp[i] = Array<OneD, NekDouble> (physTot, 0.0);
+        tmp[i] = Array<OneD, NekDouble> (physTot, 0.0);    
         tmp2[i] = Array<OneD, NekDouble> (physTot, 0.0);
         coordVel[i] = Array<OneD, NekDouble> (physTot, 0.0);
     }
@@ -1128,8 +1133,9 @@ void Mapping::v_UpdateBCs( const NekDouble time)
         // Evaluate original Dirichlet boundary conditions in whole domain
         for (int i = 0; i < nfields; ++i)
         {
-            BndConds   = m_fields[i]->GetBndConditions();
-            BndExp     = m_fields[i]->GetBndCondExpansions();
+            BndConds     = m_fields[i]->GetBndConditions();
+            BndExp       = m_fields[i]->GetBndCondExpansions(); 
+
             if ( BndConds[n]->GetBoundaryConditionType() == 
                                 SpatialDomains::eDirichlet)
             {
@@ -1150,57 +1156,71 @@ void Mapping::v_UpdateBCs( const NekDouble time)
                 ASSERTL0( !BndConds[n]->IsTimeDependent(),
                     "Time-dependent Dirichlet boundary conditions not supported with mapping yet.");
 /////////////////////////////////////////////////////////////////
-                // Get boundary condition from file
 		SpatialDomains::DirichletBCShPtr bcPtr
 			= std::static_pointer_cast<
-			SpatialDomains::DirichletBoundaryCondition>(
-					BndConds[n]);
+			SpatialDomains::DirichletBoundaryCondition>(BndConds[n]);
 		string filebcs = bcPtr->m_filename;
 
-	
+	   // Get boundary condition from file
 		if (filebcs != "")
 		{
-			m_ExpList->ExtractFileBCs(filebcs, bcPtr->GetComm(), varName, BndExp[n]);
-		}
+            isFromFile[i] = true;
+            varName = m_session->GetVariable(i);
+			m_fields[i]->ExtractFileBCs(filebcs, bcPtr->GetComm(), varName, BndExp[n]);
+
+            bndTotPts = BndExp[n]->GetPhys().num_elements();
+            tmpF[i] = Array<OneD, NekDouble> (bndTotPts, 0.0);
+            tmp2F[i] = Array<OneD, NekDouble> (bndTotPts, 0.0);
+            valuesF[i] = Array<OneD, NekDouble> (bndTotPts, 0.0);
+
+            Vmath::Vcopy(bndTotPts, BndExp[n]->GetPhys(), 1, valuesF[i], 1);
+ 		}
+        // Evaluate complete field including boundary conditions 
 		else
 		{
-		// Get boundary condition 
+            isFromFile[i] = false;
 		LibUtilities::Equation condition =
 			std::static_pointer_cast<SpatialDomains::DirichletBoundaryCondition>
 			(BndConds[n])->m_dirichletCondition;                                                                                                               //Evaluate
 		condition.Evaluate(coords[0], coords[1], coords[2], time, values[i]);
 		}
-/////////////////////////////////////////////////////////////////
-                // Get boundary condition
-                //LibUtilities::Equation condition =
-                //    std::static_pointer_cast<
-                //        SpatialDomains::DirichletBoundaryCondition>
-                //            (BndConds[n])->
-                //              m_dirichletCondition;
-                // Evaluate
-                // condition.Evaluate(coords[0], coords[1], coords[2],
-                //                                time, values[i]);
+///////////////////////////////////////////////////////////////////
             }
             else
             {
                 isDirichlet[i] = false;
             }
         }
-        // Convert velocity vector to transformed system
+        // Convert velocity vector (or boundaries values) to transformed system
         if ( isDirichlet[0])
         {
-            for (int i = 0; i < nvel; ++i)
+            if (isFromFile[0])
             {
-                Vmath::Vcopy(physTot, values[i], 1, tmp[i], 1);
+                for (int i = 0; i < nvel; ++i)
+                {
+                    Vmath::Vcopy(bndTotPts, valuesF[i], 1, tmpF[i], 1);
+                }
+                //ContravarFromCartesian(tmpF, tmp2F);
+                // for (int i = 0; i < nvel; ++i)
+                // {
+                //     Vmath::Vcopy(bndTotPts, tmp2F[i], 1, valuesF[i], 1);
+                // }
             }
-            ContravarFromCartesian(tmp, tmp2);
-            for (int i = 0; i < nvel; ++i)
+            else
             {
-                Vmath::Vcopy(physTot, tmp2[i], 1, values[i], 1);
+                for (int i = 0; i < nvel; ++i)
+                {
+                    Vmath::Vcopy(physTot, values[i], 1, tmp[i], 1);
+                }
+                ContravarFromCartesian(tmp, tmp2);
+                for (int i = 0; i < nvel; ++i)
+                {
+                    Vmath::Vcopy(physTot, tmp2[i], 1, values[i], 1);
+                }
             }
         }
 
-        // Now, project result to boundary
+        // Now, project result to boundary if not from file
         for (int i = 0; i < nfields; ++i)
         {
             BndConds   = m_fields[i]->GetBndConditions();
@@ -1208,8 +1228,15 @@ void Mapping::v_UpdateBCs( const NekDouble time)
             if( BndConds[n]->GetUserDefined() =="" ||
                 BndConds[n]->GetUserDefined() =="MovingBody")
             {
+                if (isFromFile[i])
+                {
+                    Vmath::Vcopy(bndTotPts, valuesF[i], 1, BndExp[n]->UpdatePhys(), 1);
+                }
+                else
+                {
                 m_fields[i]->ExtractPhysToBnd(n,
                         values[i], BndExp[n]->UpdatePhys());
+                }
 
                 // Apply MovingBody correction
                 if (  (i<nvel) &&
