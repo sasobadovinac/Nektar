@@ -1477,7 +1477,7 @@ namespace Nektar
             // Get the list of elements whose bounding box contains the desired
             // point.
             std::vector<SpatialDomains::BgRtreeValue> elmts =
-                    m_graph->GetElementsContainingPoint(p);
+                    m_graph->GetRegionsContainingPoint(p, m_graph->GetMeshDimension());
 
             NekDouble nearpt     = 1e6;
             NekDouble nearpt_min = 1e6;

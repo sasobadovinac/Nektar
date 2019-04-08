@@ -420,7 +420,6 @@ namespace Nektar
             //adjoining elements which do not lie in a plane.
             for (int i = 0; i < m_exp->size(); ++i)
             {
-                std::cout << "ELMT " << i << ": ";
                 for (int j = 0; j < (*m_exp)[i]->GetNedges(); ++j)
                 {
                     LocalRegions::Expansion2DSharedPtr exp2d =
@@ -430,10 +429,7 @@ namespace Nektar
                     LocalRegions::ExpansionSharedPtr exp = elmtToTrace[i][j];;
                     exp2d->SetEdgeExp           (j, exp1d);
                     exp1d->SetAdjacentElementExp(j, exp2d);
-                    std::cout << " " << j << "<->" << exp1d->GetGeom()->GetGlobalID();
                 }
-
-                std::cout << std::endl;
             }
                 
             // Set up physical normals
@@ -479,8 +475,6 @@ namespace Nektar
                     auto traceEl = std::dynamic_pointer_cast<
                         LocalRegions::Expansion1D>(
                             m_trace->GetExp(traceIdToElmt[id]));
-                    std::cout << "Negating normal on edge " << traceEl->GetGeom()->GetGlobalID() << std::endl;
-                    std::cout << "Connect to elmt " << traceEl->GetLeftAdjacentElementExp()->GetGeom()->GetGlobalID() << " edge " << traceEl->GetLeftAdjacentElementEdge() << std::endl;
                     traceEl->GetLeftAdjacentElementExp()->NegateEdgeNormal(
                             traceEl->GetLeftAdjacentElementEdge());
                     m_traceEdgeRight[interface.first].push_back(traceEl);
@@ -497,22 +491,6 @@ namespace Nektar
                     m_interfaceEdgeLeft.insert(id);
                 }
             }
-
-            for (auto &it : m_traceEdgeLeft)
-            {
-                std::cout << "LEFT EDGES: ";
-                for (int i = 0; i < m_traceEdgeLeft[it.first].size(); ++i)
-                {
-                    std::cout << m_traceEdgeLeft[it.first][i]->GetGeom()->GetGlobalID() << " ";
-                }
-
-                std::cout << std::endl << "RIGHT EDGES: ";
-                for (int i = 0; i < m_traceEdgeRight[it.first].size(); ++i)
-                {
-                    std::cout << m_traceEdgeRight[it.first][i]->GetGeom()->GetGlobalID() << " ";
-                }
-            }
-            std::cout << std::endl;
 
             int cnt, n, e;
 
@@ -1532,39 +1510,58 @@ namespace Nektar
                 for (n = 0; n < edgeOneExps.size(); ++n)
                 {
                     auto elmt = edgeOneExps[n];
-                    int nq = elmt->GetTotPoints();
+                    int nq    = elmt->GetTotPoints();
                     Array<OneD, NekDouble> xc(nq), yc(nq);
                     elmt->GetCoords(xc, yc);
 
                     for (int i = 0; i < nq; ++i)
                     {
-                        bool found = false;
                         NekDouble zero = 0.0;
-                        auto vals = m_graph->GetElementsContainingPoint(xc[i], yc[i], zero);
-                        cout << edgeTwoExps.size() << endl;
-                        for (int m = 0; m < edgeTwoExps.size(); ++m)
+                        std::vector<LocalRegions::Expansion1DSharedPtr>
+                            searchEdge;
+                        auto BgRtree = m_graph->GetRegionsContainingPoint(
+                            xc[i], yc[i], zero, 1);
+                        bool found = false;
+                        for (auto boundaryBoxElement : BgRtree)
                         {
-                            LocalRegions::Expansion1DSharedPtr searchEdge = edgeTwoExps[m];
-                            SpatialDomains::SegGeomSharedPtr searchEdgeSeg = std::static_pointer_cast<SpatialDomains::SegGeom>(searchEdge->GetGeom1D()); //Change by Ed
-                            Array<OneD, NekDouble> xs(2);
-                            xs[0] = xc[i];
-                            xs[1] = yc[i];
-
-                            NekDouble foundPoint;
-                            NekDouble dist = searchEdgeSeg->FindDistance(xs, foundPoint);
-                            if (dist > 1e-8)
+                            for (int m = 0; m < edgeTwoExps.size(); ++m)
                             {
-                                continue;
+                                auto geom = edgeTwoExps[m];
+                                SpatialDomains::SegGeomSharedPtr geomSeg =
+                                    std::static_pointer_cast<
+                                        SpatialDomains::SegGeom>(
+                                        geom->GetGeom1D());
+                                if (boundaryBoxElement.second ==
+                                    geomSeg->GetGlobalID())
+                                {
+                                    Array<OneD, NekDouble> xs(2);
+                                    xs[0] = xc[i];
+                                    xs[1] = yc[i];
+
+                                    NekDouble foundPoint;
+                                    NekDouble dist =
+                                        geomSeg->FindDistance(xs, foundPoint);
+                                    if (dist > 1e-8)
+                                    {
+                                        continue;
+                                    }
+                                    Array<OneD, NekDouble> edgePhys =
+                                        Bwd + m_trace->GetPhys_Offset(
+                                                  geom->GetElmtId());
+                                    Array<OneD, NekDouble> foundPointArray(
+                                        1, foundPoint);
+                                    Bwd[m_trace->GetPhys_Offset(
+                                            elmt->GetElmtId()) +
+                                        i] =
+                                        geom->StdPhysEvaluate(foundPointArray,
+                                                              edgePhys);
+                                    found = true;
+                                    break;
+                                }
                             }
-                            Array<OneD, NekDouble> edgePhys = Bwd + m_trace->GetPhys_Offset(searchEdge->GetElmtId());
-                            Array<OneD, NekDouble> foundPointArray(1, foundPoint); //Change by Ed
-                            Bwd[m_trace->GetPhys_Offset(elmt->GetElmtId()) + i] = searchEdge->StdPhysEvaluate(foundPointArray, edgePhys);
-                            found = true;
-                            //std::cout << "2->1 ELMT " << elmt->GetGeom()->GetGlobalID() << " found " << searchEdgeSeg->GetGlobalID() << " loc = " << foundPoint << std::endl;
-                            //std::cout << "COPYING BWD TRACE " << searchEdgeSeg->GetGlobalID() << " OFFSET " << m_trace->GetPhys_Offset(searchEdge->GetElmtId()) << " -> TRACE " << elmt->GetGeom()->GetGlobalID() << " OFFSET " << m_trace->GetPhys_Offset(elmt->GetElmtId()) << std::endl;
-                            break;
                         }
-                        ASSERTL1(found, "Couldn't interpolate across interface from right to left (bwd)");
+                        ASSERTL1(found, "Couldn't interpolate across interface "
+                                        "from right to left (bwd)");
                     }
                 }
 
@@ -1572,37 +1569,58 @@ namespace Nektar
                 for (n = 0; n < edgeTwoExps.size(); ++n)
                 {
                     auto elmt = edgeTwoExps[n];
-                    int nq = elmt->GetTotPoints();
+                    int nq    = elmt->GetTotPoints();
                     Array<OneD, NekDouble> xc(nq), yc(nq);
                     elmt->GetCoords(xc, yc);
 
                     for (int i = 0; i < nq; ++i)
                     {
+                        NekDouble zero = 0.0;
+                        std::vector<LocalRegions::Expansion1DSharedPtr>
+                            searchEdge;
+                        auto BgRtree = m_graph->GetRegionsContainingPoint(
+                            xc[i], yc[i], zero, 1);
                         bool found = false;
-                        for (int m = 0; m < edgeOneExps.size(); ++m)
+                        for (auto boundaryBoxElement : BgRtree)
                         {
-                            LocalRegions::Expansion1DSharedPtr searchEdge = edgeOneExps[m];
-                            SpatialDomains::SegGeomSharedPtr searchEdgeSeg = std::static_pointer_cast<SpatialDomains::SegGeom>(searchEdge->GetGeom1D()); //Change by Ed
-                            Array<OneD, NekDouble> xs(2);
-                            xs[0] = xc[i];
-                            xs[1] = yc[i];
-
-                            NekDouble foundPoint;
-                            NekDouble dist = searchEdgeSeg->FindDistance(xs, foundPoint);
-                            if (dist > 1e-8)
+                            for (int m = 0; m < edgeOneExps.size(); ++m)
                             {
-                                continue;
+                                auto geom = edgeOneExps[m];
+                                SpatialDomains::SegGeomSharedPtr geomSeg =
+                                    std::static_pointer_cast<
+                                        SpatialDomains::SegGeom>(
+                                        geom->GetGeom1D());
+                                if (boundaryBoxElement.second ==
+                                    geomSeg->GetGlobalID())
+                                {
+                                    Array<OneD, NekDouble> xs(2);
+                                    xs[0] = xc[i];
+                                    xs[1] = yc[i];
+
+                                    NekDouble foundPoint;
+                                    NekDouble dist =
+                                        geomSeg->FindDistance(xs, foundPoint);
+                                    if (dist > 1e-8)
+                                    {
+                                        continue;
+                                    }
+                                    Array<OneD, NekDouble> edgePhys =
+                                        Fwd + m_trace->GetPhys_Offset(
+                                                  geom->GetElmtId());
+                                    Array<OneD, NekDouble> foundPointArray(
+                                        1, foundPoint);
+                                    Fwd[m_trace->GetPhys_Offset(
+                                            elmt->GetElmtId()) +
+                                        i] =
+                                        geom->StdPhysEvaluate(foundPointArray,
+                                                              edgePhys);
+                                    found = true;
+                                    break;
+                                }
                             }
-                            Array<OneD, NekDouble> edgePhys = Fwd + m_trace->GetPhys_Offset(searchEdge->GetElmtId());
-                            Array<OneD, NekDouble> foundPointArray(1, foundPoint); //Change by Ed
-                            Fwd[m_trace->GetPhys_Offset(elmt->GetElmtId()) + i] = searchEdge->StdPhysEvaluate(foundPointArray, edgePhys);
-                            //std::cout << "(" << xc[i] << "," << yc[i] << ") -> " << searchEdge->StdPhysEvaluate(foundPointArray, edgePhys) << std::endl;
-                            // std::cout << "1->2 ELMT " << elmt->GetGeom()->GetGlobalID() << " found " << searchEdgeSeg->GetGlobalID() << " loc = " << foundPoint << std::endl;
-                            //std::cout << "COPYING FWD TRACE " << searchEdgeSeg->GetGlobalID() << " OFFSET " << m_trace->GetPhys_Offset(searchEdge->GetElmtId()) << " -> TRACE " << elmt->GetGeom()->GetGlobalID() << " OFFSET " << m_trace->GetPhys_Offset(elmt->GetElmtId()) << std::endl;
-                            found = true;
-                            break;
                         }
-                        ASSERTL1(found, "Couldn't interpolate across interface from left to right (fwd)");
+                        ASSERTL1(found, "Couldn't interpolate across interface "
+                                        "from left to right (fwd)");
                     }
                 }
             }
