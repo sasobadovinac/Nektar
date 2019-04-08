@@ -1539,6 +1539,9 @@ namespace Nektar
                     for (int i = 0; i < nq; ++i)
                     {
                         bool found = false;
+                        NekDouble zero = 0.0;
+                        auto vals = m_graph->GetElementsContainingPoint(xc[i], yc[i], zero);
+                        cout << edgeTwoExps.size() << endl;
                         for (int m = 0; m < edgeTwoExps.size(); ++m)
                         {
                             LocalRegions::Expansion1DSharedPtr searchEdge = edgeTwoExps[m];

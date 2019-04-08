@@ -236,19 +236,14 @@ void MeshGraph::FillBoundingBoxTree()
 }
 
 std::vector<BgRtreeValue> MeshGraph::GetElementsContainingPoint(
-            PointGeomSharedPtr p)
+    NekDouble &x, NekDouble &y, NekDouble &z)
 {
     if (m_boundingBoxTree.empty())
     {
         FillBoundingBoxTree();
     }
 
-    NekDouble x = 0.0;
-    NekDouble y = 0.0;
-    NekDouble z = 0.0;
     std::vector<BgRtreeValue> vals;
-
-    p->GetCoords(x, y, z);
 
     BgBox b( BgPoint(x, y, z), BgPoint(x, y, z) );
 
@@ -2615,7 +2610,7 @@ std::string MeshGraph::GetCompositeString(CompositeSharedPtr comp)
 void MeshGraph::ReadExpansions()
 {
     // Hack?
-    m_expansionMapShPtrMap.clear();;
+    m_expansionMapShPtrMap.clear();
 
     // Find the Expansions tag
     TiXmlElement *expansionTypes = m_session->GetElement("NEKTAR/EXPANSIONS");

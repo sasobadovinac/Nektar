@@ -410,7 +410,7 @@ NekDouble SegGeom::v_FindDistance(const Array<OneD, const NekDouble> &xs,
 {
     ASSERTL0(m_coordim == 2, "Need to rewrite for m_coordim != 2");
 
-    if (m_geomFactors->GetGtype() == eRegular)
+    if (m_geomFactors->GetGtype() == eDeformed) //eRegular)
     {
         // Geometry is linear, so use analytic BOOST function to compute distance.
         std::vector<NekDouble> edgeVertexOne(3,0), edgeVertexTwo(3,0);
@@ -428,7 +428,7 @@ NekDouble SegGeom::v_FindDistance(const Array<OneD, const NekDouble> &xs,
         line.push_back(point_type(edgeVertexTwo[0],edgeVertexTwo[1]));
         return boost::geometry::distance(p, line);
     }
-    else if (m_geomFactors->GetGtype() == eDeformed)
+    else
     {
         Array<OneD, NekDouble> xi(1, 0.0);
         const NekDouble c1 = 1e-4, c2 = 0.9;

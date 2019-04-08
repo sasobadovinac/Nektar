@@ -202,7 +202,19 @@ public:
     SPATIAL_DOMAINS_EXPORT void FillBoundingBoxTree();
 
     SPATIAL_DOMAINS_EXPORT std::vector<BgRtreeValue> GetElementsContainingPoint(
-            PointGeomSharedPtr p);
+        PointGeomSharedPtr p)
+        {
+            NekDouble x = 0.0;
+            NekDouble y = 0.0;
+            NekDouble z = 0.0;
+
+            p->GetCoords(x, y, z);
+
+            return GetElementsContainingPoint(x, y, z);
+        };
+
+    SPATIAL_DOMAINS_EXPORT std::vector<BgRtreeValue> GetElementsContainingPoint(
+        NekDouble &x, NekDouble &y, NekDouble &z);
 
     ////////////////////
     ////////////////////
