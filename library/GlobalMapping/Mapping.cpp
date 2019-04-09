@@ -1230,6 +1230,8 @@ void Mapping::v_UpdateBCs( const NekDouble time)
             {
                 if (isFromFile[i])
                 {
+		    double theta = (0.00001/(0.0132+0.1023))*(exp(0.0132*time)-exp(-0.1023*time));
+		    Vmath::Smul(bndTotPts, theta, valuesF[i], 1, valuesF[i], 1);
                     Vmath::Vcopy(bndTotPts, valuesF[i], 1, BndExp[n]->UpdatePhys(), 1);
                 }
                 else
