@@ -1510,6 +1510,9 @@ namespace Nektar
                 for (n = 0; n < edgeOneExps.size(); ++n)
                 {
                     auto elmt = edgeOneExps[n];
+                    std::cout << std::fixed;
+                    std::cout << std::setprecision(5);
+                    cout << "BWD EDGE ID: " << std::static_pointer_cast<SpatialDomains::SegGeom>(elmt->GetGeom1D())->GetGlobalID() << " - (" << n+1 << " / " << edgeOneExps.size() << ")" << endl;
                     int nq    = elmt->GetTotPoints();
                     Array<OneD, NekDouble> xc(nq), yc(nq);
                     elmt->GetCoords(xc, yc);
@@ -1521,42 +1524,48 @@ namespace Nektar
                             searchEdge;
                         auto BgRtree = m_graph->GetRegionsContainingPoint(
                             xc[i], yc[i], zero, 1);
+                        cout << "\tGLOBAL POINT: (" << xc[i] << ", " << yc[i] << ")";
                         bool found = false;
                         for (auto boundaryBoxElement : BgRtree)
                         {
-                            for (int m = 0; m < edgeTwoExps.size(); ++m)
+                            if (found == false)
                             {
-                                auto geom = edgeTwoExps[m];
-                                SpatialDomains::SegGeomSharedPtr geomSeg =
-                                    std::static_pointer_cast<
-                                        SpatialDomains::SegGeom>(
-                                        geom->GetGeom1D());
-                                if (boundaryBoxElement.second ==
-                                    geomSeg->GetGlobalID())
+                                for (int m = 0; m < edgeTwoExps.size(); ++m)
                                 {
-                                    Array<OneD, NekDouble> xs(2);
-                                    xs[0] = xc[i];
-                                    xs[1] = yc[i];
-
-                                    NekDouble foundPoint;
-                                    NekDouble dist =
-                                        geomSeg->FindDistance(xs, foundPoint);
-                                    if (dist > 1e-8)
+                                    auto geom = edgeTwoExps[m];
+                                    SpatialDomains::SegGeomSharedPtr geomSeg =
+                                        std::static_pointer_cast<
+                                            SpatialDomains::SegGeom>(
+                                            geom->GetGeom1D());
+                                    if (boundaryBoxElement.second ==
+                                        geomSeg->GetGlobalID())
                                     {
-                                        continue;
+                                        Array<OneD, NekDouble> xs(2);
+                                        xs[0] = xc[i];
+                                        xs[1] = yc[i];
+
+                                        NekDouble foundPoint;
+                                        NekDouble dist = geomSeg->FindDistance(
+                                            xs, foundPoint);
+                                        cout << "EDGE " << geomSeg->GetGlobalID() << " | LOCAL FOUND: " << foundPoint << " | Distance: " << dist;
+                                        if (dist > 1e-8)
+                                        {
+                                            continue;
+                                        }
+                                        Array<OneD, NekDouble> edgePhys =
+                                            Bwd + m_trace->GetPhys_Offset(
+                                                      geom->GetElmtId());
+                                        Array<OneD, NekDouble> foundPointArray(
+                                            1, foundPoint);
+                                        Bwd[m_trace->GetPhys_Offset(
+                                                elmt->GetElmtId()) +
+                                            i] =
+                                            geom->StdPhysEvaluate(
+                                                foundPointArray, edgePhys);
+                                        found = true;
+                                        cout << " | BWD SUCCESS" << endl;
+                                        break;
                                     }
-                                    Array<OneD, NekDouble> edgePhys =
-                                        Bwd + m_trace->GetPhys_Offset(
-                                                  geom->GetElmtId());
-                                    Array<OneD, NekDouble> foundPointArray(
-                                        1, foundPoint);
-                                    Bwd[m_trace->GetPhys_Offset(
-                                            elmt->GetElmtId()) +
-                                        i] =
-                                        geom->StdPhysEvaluate(foundPointArray,
-                                                              edgePhys);
-                                    found = true;
-                                    break;
                                 }
                             }
                         }
@@ -1569,6 +1578,7 @@ namespace Nektar
                 for (n = 0; n < edgeTwoExps.size(); ++n)
                 {
                     auto elmt = edgeTwoExps[n];
+                    cout << "FWD EDGE ID: " << std::static_pointer_cast<SpatialDomains::SegGeom>(elmt->GetGeom1D())->GetGlobalID() << " - (" << n+1 << " / " << edgeTwoExps.size() << ")" << endl;
                     int nq    = elmt->GetTotPoints();
                     Array<OneD, NekDouble> xc(nq), yc(nq);
                     elmt->GetCoords(xc, yc);
@@ -1580,42 +1590,48 @@ namespace Nektar
                             searchEdge;
                         auto BgRtree = m_graph->GetRegionsContainingPoint(
                             xc[i], yc[i], zero, 1);
+                        cout << "\tGLOBAL POINT: (" << xc[i] << ", " << yc[i] << ")";
                         bool found = false;
                         for (auto boundaryBoxElement : BgRtree)
                         {
-                            for (int m = 0; m < edgeOneExps.size(); ++m)
+                            if (found == false)
                             {
-                                auto geom = edgeOneExps[m];
-                                SpatialDomains::SegGeomSharedPtr geomSeg =
-                                    std::static_pointer_cast<
-                                        SpatialDomains::SegGeom>(
-                                        geom->GetGeom1D());
-                                if (boundaryBoxElement.second ==
-                                    geomSeg->GetGlobalID())
+                                for (int m = 0; m < edgeOneExps.size(); ++m)
                                 {
-                                    Array<OneD, NekDouble> xs(2);
-                                    xs[0] = xc[i];
-                                    xs[1] = yc[i];
-
-                                    NekDouble foundPoint;
-                                    NekDouble dist =
-                                        geomSeg->FindDistance(xs, foundPoint);
-                                    if (dist > 1e-8)
+                                    auto geom = edgeOneExps[m];
+                                    SpatialDomains::SegGeomSharedPtr geomSeg =
+                                        std::static_pointer_cast<
+                                            SpatialDomains::SegGeom>(
+                                            geom->GetGeom1D());
+                                    if (boundaryBoxElement.second ==
+                                        geomSeg->GetGlobalID())
                                     {
-                                        continue;
+                                        Array<OneD, NekDouble> xs(2);
+                                        xs[0] = xc[i];
+                                        xs[1] = yc[i];
+
+                                        NekDouble foundPoint;
+                                        NekDouble dist = geomSeg->FindDistance(
+                                            xs, foundPoint);
+                                        cout << "EDGE " << geomSeg->GetGlobalID() << " | LOCAL FOUND: " << foundPoint << "\t| Distance: " << dist;
+                                        if (dist > 1e-8)
+                                        {
+                                            continue;
+                                        }
+                                        Array<OneD, NekDouble> edgePhys =
+                                            Fwd + m_trace->GetPhys_Offset(
+                                                      geom->GetElmtId());
+                                        Array<OneD, NekDouble> foundPointArray(
+                                            1, foundPoint);
+                                        Fwd[m_trace->GetPhys_Offset(
+                                                elmt->GetElmtId()) +
+                                            i] =
+                                            geom->StdPhysEvaluate(
+                                                foundPointArray, edgePhys);
+                                        found = true;
+                                        cout << " | FWD SUCCESS" << endl;
+                                        break;
                                     }
-                                    Array<OneD, NekDouble> edgePhys =
-                                        Fwd + m_trace->GetPhys_Offset(
-                                                  geom->GetElmtId());
-                                    Array<OneD, NekDouble> foundPointArray(
-                                        1, foundPoint);
-                                    Fwd[m_trace->GetPhys_Offset(
-                                            elmt->GetElmtId()) +
-                                        i] =
-                                        geom->StdPhysEvaluate(foundPointArray,
-                                                              edgePhys);
-                                    found = true;
-                                    break;
                                 }
                             }
                         }

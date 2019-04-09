@@ -185,7 +185,7 @@ void MeshGraph::FillGraph()
     }
 }
 
-void MeshGraph::FillBoundingBoxTree(int &dimension)
+void MeshGraph::FillBoundingBoxTree(int dimension)
 {
     ASSERTL0(dimension<=m_meshDimension, "Unknown dim, must be less than or equal to mesh dimension");
     m_boundingBoxTree[dimension].clear();
