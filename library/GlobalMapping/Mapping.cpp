@@ -1179,7 +1179,7 @@ void Mapping::v_UpdateBCs( const NekDouble time)
 
                     if(m_params.count("ScaleFileBC"))
                     {
-                        fac = m_params("ScaleFileBC");
+                        fac = m_params["ScaleFileBC"];
                     }
 
                     Vmath::Smul(bndTotPts, fac, BndExp[n]->GetPhys(), 1,

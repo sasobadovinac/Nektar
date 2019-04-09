@@ -427,14 +427,14 @@ public:
     // Set up double parameter with key of str
     GLOBAL_MAPPING_EXPORT void SetParam(std::string str, NekDouble val)
     {
-        m__params[str] = val;
+        m_params[str] = val;
     }
 
     // get value of double parameter defined by str
     GLOBAL_MAPPING_EXPORT NekDouble  GetParam(std::string str)
     {
         ASSERTL0(m_params.count(str),"Mapping was not set up in m_params");
-        m__params[str];
+        return m_params[str];
     }
 
      protected:
