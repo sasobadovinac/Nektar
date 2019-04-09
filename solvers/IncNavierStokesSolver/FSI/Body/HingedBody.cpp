@@ -517,6 +517,13 @@ void HingedBody::v_Apply(
             }
         }
     }
+    // Get mapping, which will have the initial coordinates and velocities
+    GlobalMapping::MappingSharedPtr mapping =
+        GlobalMapping::Mapping::Load(m_session, pFields);
+    // set ScaleFileBC in mapping parameter list so that it can scale
+    // the BCs from a file
+    mapping->SetParam("ScaleFileBC",m_angle);
+    cout << "m_angle= " << m_angle << endl;
 }
 
 void HingedBody::GetInitialCondition(
@@ -618,10 +625,6 @@ void HingedBody::GetInitialCondition(
     // Broadcast the initial conditions
     comm->Bcast(m_angle, bcastRank);
     comm->Bcast(m_velocity[0] , bcastRank);
-
-    // set ScaleFileBC in mapping parameter list so that it can scale
-    // the BCs from a file
-    mapping->SetParam("ScaleFileBC",m_angle);
 }
 
 }

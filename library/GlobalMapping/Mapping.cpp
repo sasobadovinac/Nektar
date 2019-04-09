@@ -1084,10 +1084,8 @@ void Mapping::v_UpdateBCs( const NekDouble time)
     int nvel    = m_nConvectiveFields;
     int nfields = m_fields.num_elements();
     int nbnds   = m_fields[0]->GetBndConditions().num_elements();
-    ////////////////////////////////////
     std::string varName;
     int bndTotPts;
-    ////////////////////////////////////
 
     // Declare variables
     Array<OneD, const SpatialDomains::BoundaryConditionShPtr> BndConds;
@@ -1180,6 +1178,7 @@ void Mapping::v_UpdateBCs( const NekDouble time)
                     if(m_params.count("ScaleFileBC"))
                     {
                         fac = m_params["ScaleFileBC"];
+                        cout << "fac= " << fac << endl;
                     }
 
                     Vmath::Smul(bndTotPts, fac, BndExp[n]->GetPhys(), 1,
@@ -1240,8 +1239,8 @@ void Mapping::v_UpdateBCs( const NekDouble time)
             {
                 if (isFromFile[i])
                 {
-		    double theta = (0.00001/(0.0132+0.1023))*(exp(0.0132*time)-exp(-0.1023*time));
-		    Vmath::Smul(bndTotPts, theta, valuesF[i], 1, valuesF[i], 1);
+		    //double theta = (0.00001/(0.0132+0.1023))*(exp(0.0132*time)-exp(-0.1023*time));
+		    //Vmath::Smul(bndTotPts, theta, valuesF[i], 1, valuesF[i], 1);
                     Vmath::Vcopy(bndTotPts, valuesF[i], 1, BndExp[n]->UpdatePhys(), 1);
                 }
                 else
