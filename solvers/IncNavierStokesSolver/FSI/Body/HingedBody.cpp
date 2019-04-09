@@ -523,7 +523,6 @@ void HingedBody::v_Apply(
     // set ScaleFileBC in mapping parameter list so that it can scale
     // the BCs from a file
     mapping->SetParam("ScaleFileBC",m_angle);
-    cout << "m_angle= " << m_angle << endl;
 }
 
 void HingedBody::GetInitialCondition(
@@ -625,11 +624,6 @@ void HingedBody::GetInitialCondition(
     // Broadcast the initial conditions
     comm->Bcast(m_angle, bcastRank);
     comm->Bcast(m_velocity[0] , bcastRank);
-
-    // set ScaleFileBC in mapping parameter list so that it can scale
-    // the BCs from a file
-    mapping->SetParam("ScaleFileBC",m_angle);
-    cout << "m_angle= " << m_angle << endl;
 }
 
 }

@@ -1178,7 +1178,6 @@ void Mapping::v_UpdateBCs( const NekDouble time)
                     if(m_params.count("ScaleFileBC"))
                     {
                         fac = m_params["ScaleFileBC"];
-                        cout << "fac= " << fac << endl;
                     }
 
                     Vmath::Smul(bndTotPts, fac, BndExp[n]->GetPhys(), 1,
@@ -1190,7 +1189,7 @@ void Mapping::v_UpdateBCs( const NekDouble time)
                     isFromFile[i] = false;
                     LibUtilities::Equation condition =
 			std::static_pointer_cast<SpatialDomains::DirichletBoundaryCondition>
-			(BndConds[n])->m_dirichletCondition;                                                                                                               //Evaluate
+			(BndConds[n])->m_dirichletCondition;
                     condition.Evaluate(coords[0], coords[1], coords[2], time, values[i]);
 		}
                 ///////////////////////////////////////////////////////////////////
