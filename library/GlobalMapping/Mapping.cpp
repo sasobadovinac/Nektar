@@ -1152,39 +1152,49 @@ void Mapping::v_UpdateBCs( const NekDouble time)
                             "Mapping only supported when all velocity components have the same type of boundary conditions");
                     }
                 }
+
                 // Check if bc is time-dependent
                 ASSERTL0( !BndConds[n]->IsTimeDependent(),
-                    "Time-dependent Dirichlet boundary conditions not supported with mapping yet.");
-/////////////////////////////////////////////////////////////////
+                          "Time-dependent Dirichlet boundary conditions not supported with mapping yet.");
+                /////////////////////////////////////////////////////////////////
 		SpatialDomains::DirichletBCShPtr bcPtr
-			= std::static_pointer_cast<
+                    = std::static_pointer_cast<
 			SpatialDomains::DirichletBoundaryCondition>(BndConds[n]);
 		string filebcs = bcPtr->m_filename;
-
-	   // Get boundary condition from file
+                
+                // Get boundary condition from file
 		if (filebcs != "")
 		{
-            isFromFile[i] = true;
-            varName = m_session->GetVariable(i);
-			m_fields[i]->ExtractFileBCs(filebcs, bcPtr->GetComm(), varName, BndExp[n]);
+                    isFromFile[i] = true;
+                    varName = m_session->GetVariable(i);
+                    m_fields[i]->ExtractFileBCs(filebcs,
+                                                bcPtr->GetComm(), varName, BndExp[n]);
+                    
+                    bndTotPts = BndExp[n]->GetPhys().num_elements();
+                    tmpF[i]    = Array<OneD, NekDouble> (bndTotPts, 0.0);
+                    tmp2F[i]   = Array<OneD, NekDouble> (bndTotPts, 0.0);
+                    valuesF[i] = Array<OneD, NekDouble> (bndTotPts, 0.0);
+                    
+                    NekDouble fac = 1.0;
 
-            bndTotPts = BndExp[n]->GetPhys().num_elements();
-            tmpF[i] = Array<OneD, NekDouble> (bndTotPts, 0.0);
-            tmp2F[i] = Array<OneD, NekDouble> (bndTotPts, 0.0);
-            valuesF[i] = Array<OneD, NekDouble> (bndTotPts, 0.0);
+                    if(m_params.count("ScaleFileBC"))
+                    {
+                        fac = m_params("ScaleFileBC");
+                    }
 
-            Vmath::Vcopy(bndTotPts, BndExp[n]->GetPhys(), 1, valuesF[i], 1);
+                    Vmath::Smul(bndTotPts, fac, BndExp[n]->GetPhys(), 1,
+                                valuesF[i], 1);
  		}
-        // Evaluate complete field including boundary conditions 
+                // Evaluate complete field including boundary conditions 
 		else
 		{
-            isFromFile[i] = false;
-		LibUtilities::Equation condition =
+                    isFromFile[i] = false;
+                    LibUtilities::Equation condition =
 			std::static_pointer_cast<SpatialDomains::DirichletBoundaryCondition>
 			(BndConds[n])->m_dirichletCondition;                                                                                                               //Evaluate
-		condition.Evaluate(coords[0], coords[1], coords[2], time, values[i]);
+                    condition.Evaluate(coords[0], coords[1], coords[2], time, values[i]);
 		}
-///////////////////////////////////////////////////////////////////
+                ///////////////////////////////////////////////////////////////////
             }
             else
             {
@@ -1236,7 +1246,7 @@ void Mapping::v_UpdateBCs( const NekDouble time)
                 }
                 else
                 {
-                m_fields[i]->ExtractPhysToBnd(n,
+                    m_fields[i]->ExtractPhysToBnd(n,
                         values[i], BndExp[n]->UpdatePhys());
                 }
 
