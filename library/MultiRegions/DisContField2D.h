@@ -147,8 +147,8 @@ namespace Nektar
              */
             Array<OneD,SpatialDomains::BoundaryConditionShPtr> m_bndConditions;
 
-            std::map<int, std::vector<LocalRegions::Expansion1DSharedPtr>> m_traceEdgeLeft;
-            std::map<int, std::vector<LocalRegions::Expansion1DSharedPtr>> m_traceEdgeRight;
+            std::map<int, std::map<int, LocalRegions::Expansion1DSharedPtr>> m_traceEdgeLeft;
+            std::map<int, std::map<int, LocalRegions::Expansion1DSharedPtr>> m_traceEdgeRight;
             std::unordered_set<int> m_interfaceEdgeLeft, m_interfaceEdgeRight;
 
             GlobalLinSysMapShPtr   m_globalBndMat;

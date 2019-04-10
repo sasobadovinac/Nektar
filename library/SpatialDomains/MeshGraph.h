@@ -199,11 +199,11 @@ public:
     /*transfers the minial data structure to full meshgraph*/
     SPATIAL_DOMAINS_EXPORT void FillGraph();
 
-    SPATIAL_DOMAINS_EXPORT void FillBoundingBoxTree(int dimension);
+    SPATIAL_DOMAINS_EXPORT void FillBoundingBoxTree();
 
 
-    SPATIAL_DOMAINS_EXPORT std::vector<BgRtreeValue> GetRegionsContainingPoint(
-        PointGeomSharedPtr &p, int dimension)
+    SPATIAL_DOMAINS_EXPORT std::vector<BgRtreeValue> GetElementsContainingPoint(
+        PointGeomSharedPtr p)
         {
             NekDouble x = 0.0;
             NekDouble y = 0.0;
@@ -211,11 +211,11 @@ public:
 
             p->GetCoords(x, y, z);
 
-            return GetRegionsContainingPoint(x, y, z, dimension);
+            return GetElementsContainingPoint(x, y, z);
         };
 
-    SPATIAL_DOMAINS_EXPORT std::vector<BgRtreeValue> GetRegionsContainingPoint(
-        NekDouble &x, NekDouble &y, NekDouble &z, int dimension);
+    SPATIAL_DOMAINS_EXPORT std::vector<BgRtreeValue> GetElementsContainingPoint(
+        NekDouble x, NekDouble y, NekDouble z);
 
     ////////////////////
     ////////////////////
@@ -490,7 +490,7 @@ protected:
     CompositeOrdering m_compOrder;
     BndRegionOrdering m_bndRegOrder;
 
-    std::map<int, BgRtree> m_boundingBoxTree;
+    BgRtree m_boundingBoxTree;
 };
 typedef std::shared_ptr<MeshGraph> MeshGraphSharedPtr;
 typedef LibUtilities::NekFactory<std::string, MeshGraph> MeshGraphFactory;
