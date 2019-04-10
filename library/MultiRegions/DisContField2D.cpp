@@ -1453,45 +1453,48 @@ void DisContField2D::v_GetFwdBwdTracePhys(
     }
 
     // Interpolate from each side of the interface to the other.
+    // Edge two -> one interpolation
     for (auto &interface : m_traceEdgeLeft)
     {
-        // Edge two -> one interpolation
         for (auto edges : interface.second)
         {
             auto elmt = edges.second;
-            cout << "BWD EDGE ID: " << edges.first << endl;
-            int nq = elmt->GetTotPoints();
+            int nq    = elmt->GetTotPoints();
             Array<OneD, NekDouble> xc(nq), yc(nq);
             elmt->GetCoords(xc, yc);
 
             for (int i = 0; i < nq; ++i)
             {
                 NekDouble zero = 0.0;
-                auto BgRtree = m_interfaces[interface.first]->GetRightEdgesContainingPoint(xc[i], yc[i], zero);
-                cout << "\tGLOBAL POINT: (" << xc[i] << ", " << yc[i] << ")";
+                auto BgRtree =
+                    m_interfaces[interface.first]->GetRightEdgesContainingPoint(
+                        xc[i], yc[i], zero);
                 bool found = false;
                 for (auto boundaryBoxElement : BgRtree)
                 {
                     if (found == false)
                     {
-                        auto geom = m_traceEdgeRight[interface.first][boundaryBoxElement.second];
-                        SpatialDomains::SegGeomSharedPtr geomSeg = std::static_pointer_cast<SpatialDomains::SegGeom>(geom->GetGeom1D());
+                        auto geom = m_traceEdgeRight[interface.first]
+                                                    [boundaryBoxElement.second];
+                        SpatialDomains::SegGeomSharedPtr geomSeg =
+                            std::static_pointer_cast<SpatialDomains::SegGeom>(
+                                geom->GetGeom1D());
 
                         Array<OneD, NekDouble> xs(2);
                         xs[0] = xc[i];
                         xs[1] = yc[i];
                         NekDouble foundPoint;
                         NekDouble dist = geomSeg->FindDistance(xs, foundPoint);
-                        cout << "EDGE " << geomSeg->GetGlobalID() << " | LOCAL FOUND: " << foundPoint << " | Distance: " << dist;
                         if (dist > 1e-8)
                         {
                             continue;
                         }
-                        Array<OneD, NekDouble> edgePhys = Bwd + m_trace->GetPhys_Offset(geom->GetElmtId());
+                        Array<OneD, NekDouble> edgePhys =
+                            Bwd + m_trace->GetPhys_Offset(geom->GetElmtId());
                         Array<OneD, NekDouble> foundPointArray(1, foundPoint);
-                        Bwd[m_trace->GetPhys_Offset(elmt->GetElmtId()) + i] = geom->StdPhysEvaluate(foundPointArray, edgePhys);
+                        Bwd[m_trace->GetPhys_Offset(elmt->GetElmtId()) + i] =
+                            geom->StdPhysEvaluate(foundPointArray, edgePhys);
                         found = true;
-                        cout << " | BWD SUCCESS" << endl;
                         break;
                     }
                 }
@@ -1500,46 +1503,48 @@ void DisContField2D::v_GetFwdBwdTracePhys(
             }
         }
     }
-
+    // Edge one -> two interpolation
     for (auto &interface : m_traceEdgeRight)
     {
-        // Edge one -> two interpolation
         for (auto edges : interface.second)
         {
             auto elmt = edges.second;
-            cout << "FWD EDGE ID: " << edges.first << endl;
-            int nq = elmt->GetTotPoints();
+            int nq    = elmt->GetTotPoints();
             Array<OneD, NekDouble> xc(nq), yc(nq);
             elmt->GetCoords(xc, yc);
 
             for (int i = 0; i < nq; ++i)
             {
                 NekDouble zero = 0.0;
-                auto BgRtree = m_interfaces[interface.first]->GetLeftEdgesContainingPoint(xc[i], yc[i], zero);
-                cout << "\tGLOBAL POINT: (" << xc[i] << ", " << yc[i] << ")";
+                auto BgRtree =
+                    m_interfaces[interface.first]->GetLeftEdgesContainingPoint(
+                        xc[i], yc[i], zero);
                 bool found = false;
                 for (auto boundaryBoxElement : BgRtree)
                 {
                     if (found == false)
                     {
-                        auto geom = m_traceEdgeLeft[interface.first][boundaryBoxElement.second];
-                        SpatialDomains::SegGeomSharedPtr geomSeg = std::static_pointer_cast<SpatialDomains::SegGeom>(geom->GetGeom1D());
+                        auto geom = m_traceEdgeLeft[interface.first]
+                                                   [boundaryBoxElement.second];
+                        SpatialDomains::SegGeomSharedPtr geomSeg =
+                            std::static_pointer_cast<SpatialDomains::SegGeom>(
+                                geom->GetGeom1D());
 
                         Array<OneD, NekDouble> xs(2);
                         xs[0] = xc[i];
                         xs[1] = yc[i];
                         NekDouble foundPoint;
                         NekDouble dist = geomSeg->FindDistance(xs, foundPoint);
-                        cout << "EDGE " << geomSeg->GetGlobalID() << " | LOCAL FOUND: " << foundPoint << "\t| Distance: " << dist;
                         if (dist > 1e-8)
                         {
                             continue;
                         }
-                        Array<OneD, NekDouble> edgePhys = Fwd + m_trace->GetPhys_Offset(geom->GetElmtId());
+                        Array<OneD, NekDouble> edgePhys =
+                            Fwd + m_trace->GetPhys_Offset(geom->GetElmtId());
                         Array<OneD, NekDouble> foundPointArray(1, foundPoint);
-                        Fwd[m_trace->GetPhys_Offset(elmt->GetElmtId()) + i] = geom->StdPhysEvaluate(foundPointArray, edgePhys);
+                        Fwd[m_trace->GetPhys_Offset(elmt->GetElmtId()) + i] =
+                            geom->StdPhysEvaluate(foundPointArray, edgePhys);
                         found = true;
-                        cout << " | FWD SUCCESS" << endl;
                         break;
                     }
                 }

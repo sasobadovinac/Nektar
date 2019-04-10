@@ -412,14 +412,13 @@ NekDouble SegGeom::v_FindDistance(const Array<OneD, const NekDouble> &xs,
 
     if (m_geomFactors->GetGtype() == eRegular)
     {
-        cout << " | LINEAR ";
         // Geometry is linear, so use analytic BOOST function to compute distance.
         std::vector<NekDouble> edgeVertexOne(3,0), edgeVertexTwo(3,0);
         m_verts[0]->GetCoords(edgeVertexOne[0], edgeVertexOne[1], edgeVertexOne[2]);
         m_verts[1]->GetCoords(edgeVertexTwo[0], edgeVertexTwo[1], edgeVertexTwo[2]);
         NekDouble xc = (xs[0]-edgeVertexOne[0])/(edgeVertexTwo[0]-edgeVertexOne[0]);
         NekDouble yc = (xs[1]-edgeVertexOne[1])/(edgeVertexTwo[1]-edgeVertexOne[1]);
-        xiOut = 2 * (((isnan(xc)) ? 0 : xc) + ((isnan(yc)) ? 0 : yc)) - 1;
+        xiOut = 2 * (isnan(xc) ? yc : xc) - 1;
 
         typedef boost::geometry::model::d2::point_xy<NekDouble> point_type;
         typedef boost::geometry::model::linestring<point_type> linestring_type;
@@ -431,7 +430,6 @@ NekDouble SegGeom::v_FindDistance(const Array<OneD, const NekDouble> &xs,
     }
     else if (m_geomFactors->GetGtype() == eDeformed)
     {
-        cout << " | NON-LINEAR ";
         Array<OneD, NekDouble> xi(1, 0.0);
         const NekDouble c1 = 1e-4, c2 = 0.9;
 
