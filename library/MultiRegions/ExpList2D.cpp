@@ -144,7 +144,10 @@ namespace Nektar
             m_interfaces = interfaceCollection.GetInterfaces();
             for (auto &inter : m_interfaces)
             {
-                inter.second->SeparateGraph(m_graph);
+                if (inter.second->GetEdgeRight().empty())
+                {
+                    inter.second->SeparateGraph(m_graph);
+                }
             }
 
             std::string filename = "out.xml";
