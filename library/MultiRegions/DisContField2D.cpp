@@ -1268,14 +1268,10 @@ bool DisContField2D::IsLeftAdjacentEdge(const int n, const int e)
 
             if (intIt1 != m_interfaceEdgeLeft.end())
             {
-                std::cout << "ELMT " << n << " EDGE " << e << " left adjacent"
-                          << std::endl;
                 fwd = true;
             }
             else if (intIt2 != m_interfaceEdgeRight.end())
             {
-                std::cout << "ELMT " << n << " EDGE " << e << " right adjacent"
-                          << std::endl;
                 fwd = false;
             }
             else if (pIt != m_periodicEdges.end() && !pIt->second[0].isLocal)
@@ -1480,9 +1476,10 @@ void DisContField2D::v_GetFwdBwdTracePhys(
                             std::static_pointer_cast<SpatialDomains::SegGeom>(
                                 geom->GetGeom1D());
 
-                        Array<OneD, NekDouble> xs(2);
+                        Array<OneD, NekDouble> xs(3);
                         xs[0] = xc[i];
                         xs[1] = yc[i];
+                        xs[2] = 0;
                         NekDouble foundPoint;
                         NekDouble dist = geomSeg->FindDistance(xs, foundPoint);
                         if (dist > 1e-8)
@@ -1503,6 +1500,7 @@ void DisContField2D::v_GetFwdBwdTracePhys(
             }
         }
     }
+
     // Edge one -> two interpolation
     for (auto &interface : m_traceEdgeRight)
     {
@@ -1512,7 +1510,6 @@ void DisContField2D::v_GetFwdBwdTracePhys(
             int nq    = elmt->GetTotPoints();
             Array<OneD, NekDouble> xc(nq), yc(nq);
             elmt->GetCoords(xc, yc);
-
             for (int i = 0; i < nq; ++i)
             {
                 NekDouble zero = 0.0;
@@ -1530,9 +1527,10 @@ void DisContField2D::v_GetFwdBwdTracePhys(
                             std::static_pointer_cast<SpatialDomains::SegGeom>(
                                 geom->GetGeom1D());
 
-                        Array<OneD, NekDouble> xs(2);
+                        Array<OneD, NekDouble> xs(3);
                         xs[0] = xc[i];
                         xs[1] = yc[i];
+                        xs[2] = 0;
                         NekDouble foundPoint;
                         NekDouble dist = geomSeg->FindDistance(xs, foundPoint);
                         if (dist > 1e-8)

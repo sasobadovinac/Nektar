@@ -15,13 +15,14 @@ using namespace Nektar::SpatialDomains;
 int main(int argc, char *argv[])
 {
     PointGeomSharedPtr verts[2];
-    verts[0]  = MemoryManager<PointGeom>::AllocateSharedPtr(2, 0, 3, 2, 0);
+    verts[0]  = MemoryManager<PointGeom>::AllocateSharedPtr(2, 0, 2, 2, 0);
     verts[1]  = MemoryManager<PointGeom>::AllocateSharedPtr(2, 0, 3, 3, 0);
     SegGeomSharedPtr seg = MemoryManager<SegGeom>::AllocateSharedPtr(0, 2, verts);
 
-    Array<OneD, NekDouble> xs(2);
-    xs[0] = 3.00000012;
-    xs[1] = 2.5;
+    Array<OneD, NekDouble> xs(3);
+    xs[0] = 2;
+    xs[1] = 3;
+    xs[2] = 0;
 
     NekDouble foundPoint;
     NekDouble dist = seg->FindDistance(xs, foundPoint);

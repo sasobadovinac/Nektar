@@ -12,3 +12,6 @@ ThirdParty
 # Kdevelop project files
 *.kdev4
 cmake-build-debug
+cmake-build-release
+cmake-build-minsizerel
+cmake-build-relwithdebinfo

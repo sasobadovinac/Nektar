@@ -358,7 +358,7 @@ NekDouble SegGeom::v_GetLocCoords(const Array<OneD, const NekDouble> &coords,
         {
             m_xmap->BwdTrans(m_coeffs[i], pts);
             len += (pts[npts - 1] - pts[0]) * (pts[npts - 1] - pts[0]);
-            xi += (coords[i] - pts[0]) * (pts[npts-1] - pts[0]);
+            xi += (coords[i] - pts[0]) * (pts[npts - 1] - pts[0]);
         }
 
         Lcoords[0] = 2 * xi / len - 1.0;
@@ -410,23 +410,45 @@ NekDouble SegGeom::v_FindDistance(const Array<OneD, const NekDouble> &xs,
 {
     ASSERTL0(m_coordim == 2, "Need to rewrite for m_coordim != 2");
 
-    if (m_geomFactors->GetGtype() == eRegular)
+    if (true) //m_geomFactors->GetGtype() == eRegular)
     {
-        // Geometry is linear, so use analytic BOOST function to compute distance.
-        std::vector<NekDouble> edgeVertexOne(3,0), edgeVertexTwo(3,0);
-        m_verts[0]->GetCoords(edgeVertexOne[0], edgeVertexOne[1], edgeVertexOne[2]);
-        m_verts[1]->GetCoords(edgeVertexTwo[0], edgeVertexTwo[1], edgeVertexTwo[2]);
-        NekDouble xc = (xs[0]-edgeVertexOne[0])/(edgeVertexTwo[0]-edgeVertexOne[0]);
-        NekDouble yc = (xs[1]-edgeVertexOne[1])/(edgeVertexTwo[1]-edgeVertexOne[1]);
-        xiOut = 2 * (isnan(xc) ? yc : xc) - 1;
+        std::vector<NekDouble> edgeVertexOne(3, 0), edgeVertexTwo(3, 0);
+        m_verts[0]->GetCoords(
+            edgeVertexOne[0], edgeVertexOne[1], edgeVertexOne[2]);
+        m_verts[1]->GetCoords(
+            edgeVertexTwo[0], edgeVertexTwo[1], edgeVertexTwo[2]);
 
-        typedef boost::geometry::model::d2::point_xy<NekDouble> point_type;
-        typedef boost::geometry::model::linestring<point_type> linestring_type;
-        point_type p(xs[0],xs[1]);
-        linestring_type line;
-        line.push_back(point_type(edgeVertexOne[0],edgeVertexOne[1]));
-        line.push_back(point_type(edgeVertexTwo[0],edgeVertexTwo[1]));
-        return boost::geometry::distance(p, line);
+        NekDouble px = edgeVertexTwo[0] - edgeVertexOne[0];
+        NekDouble py = edgeVertexTwo[1] - edgeVertexOne[1];
+        NekDouble pz = edgeVertexTwo[2] - edgeVertexOne[2];
+
+        NekDouble norm = px * px + py * py + pz * pz;
+
+        NekDouble u =
+            ((xs[0] - edgeVertexOne[0]) * px +
+             (xs[1] - edgeVertexOne[1]) * py +
+             (xs[2] - edgeVertexOne[2]) * pz) / norm;
+
+        if (u > 1)
+        {
+            u = 1;
+        }
+        else if (u < 0)
+        {
+            u = 0;
+        }
+
+        xiOut = 2 * u - 1; // Local coordinate between -1 and 1
+
+        NekDouble x = edgeVertexOne[0] + u * px;
+        NekDouble y = edgeVertexOne[1] + u * py;
+        NekDouble z = edgeVertexOne[2] + u * pz;
+
+        NekDouble dx = x - xs[0];
+        NekDouble dy = y - xs[1];
+        NekDouble dz = z - xs[2];
+
+        return sqrt(dx * dx + dy * dy + dz * dz);
     }
     else if (m_geomFactors->GetGtype() == eDeformed)
     {
@@ -548,5 +570,5 @@ NekDouble SegGeom::v_FindDistance(const Array<OneD, const NekDouble> &xs,
     }
 }
 
-}
-}
+} // namespace SpatialDomains
+} // namespace Nektar

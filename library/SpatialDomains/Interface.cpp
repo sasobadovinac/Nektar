@@ -435,15 +435,21 @@ void InterfaceBase::SetEdgeRight(const CompositeMap &rightEdge)
 
 void InterfaceBase::FillInterfaceBoundingBoxTree()
 {
-    for (auto &x : m_rightEdge)
+    if (m_boundingInterfaceRight.empty())
     {
-        BgBox b = x.second->GetBoundingBox();
-        m_boundingInterfaceRight.insert(std::make_pair(b, x.first));
+        for (auto &x : m_rightEdge)
+        {
+            BgBox b = x.second->GetBoundingBox();
+            m_boundingInterfaceRight.insert(std::make_pair(b, x.first));
+        }
     }
-    for (auto &x : m_leftEdge)
+    if (m_boundingInterfaceLeft.empty())
     {
-        BgBox b = x.second->GetBoundingBox();
-        m_boundingInterfaceLeft.insert(std::make_pair(b, x.first));
+        for (auto &x : m_leftEdge)
+        {
+            BgBox b = x.second->GetBoundingBox();
+            m_boundingInterfaceLeft.insert(std::make_pair(b, x.first));
+        }
     }
 }
 

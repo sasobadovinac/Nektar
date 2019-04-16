@@ -56,8 +56,7 @@ enum InterfaceType
     eSliding,
 };
 
-const char *const InterfaceTypeMap[] = {"Fixed", "Rotating", "Sliding",
-                                        "NotDefined"};
+const char *const InterfaceTypeMap[] = {"Fixed", "Rotating", "Sliding"};
 
 struct InterfaceBase
 {
