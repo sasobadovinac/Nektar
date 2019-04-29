@@ -410,7 +410,7 @@ NekDouble SegGeom::v_FindDistance(const Array<OneD, const NekDouble> &xs,
 {
     ASSERTL0(m_coordim == 2, "Need to rewrite for m_coordim != 2");
 
-    if (true) //m_geomFactors->GetGtype() == eRegular)
+    if (m_geomFactors->GetGtype() == eRegular)
     {
         std::vector<NekDouble> edgeVertexOne(3, 0), edgeVertexTwo(3, 0);
         m_verts[0]->GetCoords(
@@ -473,7 +473,9 @@ NekDouble SegGeom::v_FindDistance(const Array<OneD, const NekDouble> &xs,
 
         NekDouble fx_prev = std::numeric_limits<NekDouble>::max();
 
-        for (int i = 0; i < 15; ++i)
+        std::cout << "First seg point: " << x[0] <<" " << y[0] << endl;
+        std::cout << "Last seg point: " << x[6] <<" " << y[6] << endl;
+        for (int i = 0; i < 100; ++i)
         {
             // Compute f(x_k) and its derivatives
             NekDouble xc = m_xmap->PhysEvaluate(xi, x);
@@ -534,6 +536,8 @@ NekDouble SegGeom::v_FindDistance(const Array<OneD, const NekDouble> &xs,
                                           yc_der_pk * (yc_pk - xs[1]));
 
                 // Check Wolfe conditions
+                cout << "Condition 1: " << fx_pk << " <= " << fx + c1 * gamma * pk * fxp << endl;
+                cout << "Condition 2: " << -pk * fxp_pk << " <= " << -c2 * pk * fxp << endl;
                 if (fx_pk <= fx + c1 * gamma * pk * fxp &&
                     -pk * fxp_pk <= -c2 * pk * fxp)
                 {
