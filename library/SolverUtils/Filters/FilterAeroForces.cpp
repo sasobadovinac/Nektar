@@ -228,6 +228,10 @@ void FilterAeroForces::v_Initialise(
     m_session->LoadParameter("rho", m_rho, 1.0);
     m_mu = m_rho*m_session->GetParameter("Kinvis");
 
+    // Determine if we are using direct solver
+    m_session->MatchSolverInfo("EvolutionOperator","Direct",
+                                                    m_isLinearAdvection,false);
+
     // Parse the boundary regions into a list.
     std::string::size_type FirstInd = m_BoundaryString.find_first_of('[') + 1;
     std::string::size_type LastInd  = m_BoundaryString.find_last_of(']') - 1;
@@ -409,6 +413,7 @@ void FilterAeroForces::v_Initialise(
     m_lastTime = -1;
     m_index = 0;
     v_Update(pFields, time);
+
 }
 
 /**
@@ -783,7 +788,14 @@ void FilterAeroForces::CalculateForces(
     //         it is only used when actually required
     if (m_mapping->IsDefined())
     {
-        CalculateForcesMapping( pFields, time);
+        if (m_isLinearAdvection)
+        {
+            CalculateForcesLinear( pFields, time);
+        }
+        else
+        {
+            CalculateForcesMapping( pFields, time);
+        }
     }
     else
     {
@@ -1569,6 +1581,600 @@ void FilterAeroForces::CalculateForcesMapping(
                                         normals[k], 1, fv[j], 1, fv[j], 1);
                                 Vmath::Vvtvp (nbc,gradBnd[j*nVel+k],1,
                                         normals[k], 1, fv[j], 1, fv[j], 1);
+                            }
+                            Vmath::Smul(nbc, -m_mu, fv[j], 1, fv[j], 1);
+                        }
+
+                        // Multiply by Jacobian
+                        for ( int k = 0; k < nVel; ++k )
+                        {
+                            Vmath::Vmul(nbc, JacBnd, 1, fp[k], 1, fp[k], 1);
+                            Vmath::Vmul(nbc, JacBnd, 1, fv[k], 1, fv[k], 1);
+                        }
+
+                        // Convert to Cartesian system
+                        for ( int k = 0; k < nVel; ++k )
+                        {
+                            wk[k] = Array<OneD, NekDouble>(physTot,0.0);
+                            for ( int j = 0; j < nVel; ++j )
+                            {
+                                Vmath::Vvtvp(nbc, CBnd[k*nVel+j], 1,
+                                        fp[j], 1, wk[k], 1, wk[k], 1);
+                            }
+                        }
+                        for ( int k = 0; k < nVel; ++k )
+                        {
+                            Vmath::Vcopy(nbc, wk[k], 1, fp[k], 1);
+                        }
+
+                        for ( int k = 0; k < nVel; ++k )
+                        {
+                            wk[k] = Array<OneD, NekDouble>(physTot,0.0);
+                            for ( int j = 0; j < nVel; ++j )
+                            {
+                                Vmath::Vvtvp(nbc, CBnd[k*nVel+j], 1,
+                                        fv[j], 1, wk[k], 1, wk[k], 1);
+                            }
+                        }
+                        for ( int k = 0; k < nVel; ++k )
+                        {
+                            Vmath::Vcopy(nbc, wk[k], 1, fv[k], 1);
+                        }
+
+                        // Calculate moments per unit length
+                        if( momdim == 1)
+                        {
+                            mp[0] = Array<OneD, NekDouble> (nbc,0.0);
+                            mv[0] = Array<OneD, NekDouble> (nbc,0.0);
+                            // Mz = Fy * x - Fx * y
+                            Vmath::Vvtvvtm(nbc, fp[1], 1, coordsBnd[0], 1,
+                                                fp[0], 1, coordsBnd[1], 1,
+                                                mp[0], 1);
+                            Vmath::Vvtvvtm(nbc, fv[1], 1, coordsBnd[0], 1,
+                                                fv[0], 1, coordsBnd[1], 1,
+                                                mv[0], 1);
+                        }
+                        else
+                        {
+                            // Mx = Fz * y - Fy * z
+                            mp[0] = Array<OneD, NekDouble> (nbc,0.0);
+                            mv[0] = Array<OneD, NekDouble> (nbc,0.0);
+                            Vmath::Vvtvvtm(nbc, fp[2], 1, coordsBnd[1], 1,
+                                                fp[1], 1, coordsBnd[2], 1,
+                                                mp[0], 1);
+                            Vmath::Vvtvvtm(nbc, fv[2], 1, coordsBnd[1], 1,
+                                                fv[1], 1, coordsBnd[2], 1,
+                                                mv[0], 1);
+                            // My = Fx * z - Fz * x
+                            mp[1] = Array<OneD, NekDouble> (nbc,0.0);
+                            mv[1] = Array<OneD, NekDouble> (nbc,0.0);
+                            Vmath::Vvtvvtm(nbc, fp[0], 1, coordsBnd[2], 1,
+                                                fp[2], 1, coordsBnd[0], 1,
+                                                mp[1], 1);
+                            Vmath::Vvtvvtm(nbc, fv[0], 1, coordsBnd[2], 1,
+                                                fv[2], 1, coordsBnd[0], 1,
+                                                mv[1], 1);
+                            // Mz = Fy * x - Fx * y
+                            mp[2] = Array<OneD, NekDouble> (nbc,0.0);
+                            mv[2] = Array<OneD, NekDouble> (nbc,0.0);
+                            Vmath::Vvtvvtm(nbc, fp[1], 1, coordsBnd[0], 1,
+                                                fp[0], 1, coordsBnd[1], 1,
+                                                mp[2], 1);
+                            Vmath::Vvtvvtm(nbc, fv[1], 1, coordsBnd[0], 1,
+                                                fv[0], 1, coordsBnd[1], 1,
+                                                mv[2], 1);
+                        }
+
+                        // Integrate to obtain force
+                        for ( int j = 0; j < expdim; ++j)
+                        {
+                            m_Fpplane[j][plane] += BndExp[n]->GetExp(i)->
+                                                    Integral(fp[j]);
+                            m_Fvplane[j][plane] += BndExp[n]->GetExp(i)->
+                                                    Integral(fv[j]);
+                        }
+                        for ( int j = 0; j < momdim; ++j)
+                        {
+                            m_Mpplane[j][plane] += BndExp[n]->GetExp(i)->
+                                                    Integral(mp[j]);
+                            m_Mvplane[j][plane] += BndExp[n]->GetExp(i)->
+                                                    Integral(mv[j]);
+                        }
+                    }
+                }
+                else
+                {
+                    cnt += BndExp[n]->GetExpSize();
+                }
+            }
+        }
+    }
+}
+
+/**
+ *     This function calculates the forces when we have a mapping
+ *         defining a coordinate system transformation and if we 
+ *     use the direct solver.
+ */
+void FilterAeroForces::CalculateForcesLinear(
+                          const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
+                          const NekDouble &time)
+{
+    // Get number of quadrature points and dimensions
+    int physTot = pFields[0]->GetNpoints();
+    int expdim = pFields[0]->GetGraph()->GetMeshDimension();
+    int momdim = (expdim == 2) ? 1 : 3;
+    int nVel = expdim;
+    if( m_isHomogeneous1D )
+    {
+        nVel = nVel + 1;
+    }
+    ///////////// MODIFY HERE
+    VCSMappingSharedPtr VCSMap;
+    m_baseFlow = VCSMap->GetAdvObject()->GetBaseFlow();
+
+    const Array<OneD, const MultiRegions::ExpListSharedPtr> pBase = pFields;
+    for ( int i = 0; i < nVel; ++i)
+    {
+        Vmath::Vcopy(physTot, m_baseFlow[i], 1, pBase[i]->UpdatePhys(), 1);
+    }
+
+    // Pressure stress tensor 
+    //    (global, in a plane, in element and boundary)
+    Array<OneD, MultiRegions::ExpListSharedPtr>  P      ( nVel*nVel);
+    Array<OneD, MultiRegions::ExpListSharedPtr>  PPlane ( nVel*nVel);
+    Array<OneD, Array<OneD, NekDouble> >         PElmt  ( nVel*nVel);
+    Array<OneD, Array<OneD, NekDouble> >         PBnd   ( nVel*nVel);
+    //    Base flow component
+    Array<OneD, MultiRegions::ExpListSharedPtr>  PBase      ( nVel*nVel);
+    Array<OneD, MultiRegions::ExpListSharedPtr>  PPlaneBase ( nVel*nVel);
+    Array<OneD, Array<OneD, NekDouble> >         PElmtBase  ( nVel*nVel);
+    Array<OneD, Array<OneD, NekDouble> >         PBndBase   ( nVel*nVel);
+    // Velocity gradient
+    Array<OneD, MultiRegions::ExpListSharedPtr>  grad     ( nVel*nVel);
+    Array<OneD, MultiRegions::ExpListSharedPtr>  gradPlane( nVel*nVel);
+    Array<OneD, Array<OneD, NekDouble> >         gradElmt ( nVel*nVel);
+    Array<OneD, Array<OneD, NekDouble> >         gradBnd  ( nVel*nVel);
+    //    Base flow component
+    Array<OneD, MultiRegions::ExpListSharedPtr>  gradBase     ( nVel*nVel);
+    Array<OneD, MultiRegions::ExpListSharedPtr>  gradPlaneBase( nVel*nVel);
+    Array<OneD, Array<OneD, NekDouble> >         gradElmtBase ( nVel*nVel);
+    Array<OneD, Array<OneD, NekDouble> >         gradBndBase  ( nVel*nVel);
+    // Coordinates
+    Array<OneD, MultiRegions::ExpListSharedPtr>  coords     (3);
+    Array<OneD, MultiRegions::ExpListSharedPtr>  coordsPlane(3);
+    Array<OneD, Array<OneD, NekDouble> >         coordsElmt (3);
+    Array<OneD, Array<OneD, NekDouble> >         coordsBnd  (3);
+
+    // Transformation to cartesian system
+    Array<OneD, MultiRegions::ExpListSharedPtr>  C     ( nVel*nVel);
+    Array<OneD, MultiRegions::ExpListSharedPtr>  CPlane( nVel*nVel);
+    Array<OneD, Array<OneD, NekDouble> >         CElmt ( nVel*nVel);
+    Array<OneD, Array<OneD, NekDouble> >         CBnd  ( nVel*nVel);
+
+    // Jacobian
+    MultiRegions::ExpListSharedPtr  Jac;
+    MultiRegions::ExpListSharedPtr  JacPlane;
+    Array<OneD, NekDouble>          JacElmt;
+    Array<OneD, NekDouble>          JacBnd;
+
+    // Forces per element length in a boundary
+    Array<OneD, Array<OneD, NekDouble> >  fp( nVel );
+    Array<OneD, Array<OneD, NekDouble> >  fv( nVel );
+
+    // Moments per element length in a boundary
+    Array<OneD, Array<OneD, NekDouble> >  mp( nVel );
+    Array<OneD, Array<OneD, NekDouble> >  mv( nVel );
+
+    // Define boundary expansions
+    Array<OneD, const SpatialDomains::BoundaryConditionShPtr > BndConds;
+    Array<OneD, MultiRegions::ExpListSharedPtr>  BndExp;
+    if(m_isHomogeneous1D)
+    {
+        BndConds = pFields[0]->GetPlane(0)->GetBndConditions();
+        BndExp   = pFields[0]->GetPlane(0)->GetBndCondExpansions();
+    }
+    else
+    {
+        BndConds = pFields[0]->GetBndConditions();
+        BndExp   = pFields[0]->GetBndCondExpansions();
+    }
+
+    //
+    // Calculate pressure stress tensor, velocity gradient
+    //      and get informations about the mapping
+
+    // Initialise variables
+    switch (expdim)
+    {
+        case 2:
+        {
+            if (m_isHomogeneous1D)
+            {
+                MultiRegions::ExpList3DHomogeneous1DSharedPtr Exp3DH1;
+                Exp3DH1 = std::dynamic_pointer_cast
+                        <MultiRegions::ExpList3DHomogeneous1D> (pFields[0]);
+                for( int i = 0; i < nVel*nVel; ++i)
+                {
+                    grad[i] =
+                        MemoryManager<MultiRegions::ExpList3DHomogeneous1D>::
+                            AllocateSharedPtr(*Exp3DH1);
+                    gradBase[i] =
+                        MemoryManager<MultiRegions::ExpList3DHomogeneous1D>::
+                            AllocateSharedPtr(*Exp3DH1);
+
+                    P[i] =
+                        MemoryManager<MultiRegions::ExpList3DHomogeneous1D>::
+                            AllocateSharedPtr(*Exp3DH1);
+                    PBase[i] =
+                        MemoryManager<MultiRegions::ExpList3DHomogeneous1D>::
+                            AllocateSharedPtr(*Exp3DH1);
+
+                    C[i] =
+                        MemoryManager<MultiRegions::ExpList3DHomogeneous1D>::
+                            AllocateSharedPtr(*Exp3DH1);
+                }
+                for( int i = 0; i < 3; ++i)
+                {
+                    coords[i] =
+                        MemoryManager<MultiRegions::ExpList3DHomogeneous1D>::
+                            AllocateSharedPtr(*Exp3DH1);
+                }
+                Jac = MemoryManager<MultiRegions::ExpList3DHomogeneous1D>::
+                            AllocateSharedPtr(*Exp3DH1);
+            }
+            else
+            {
+                MultiRegions::ExpList2DSharedPtr Exp2D;
+                Exp2D = std::dynamic_pointer_cast
+                                <MultiRegions::ExpList2D>
+                                                    (pFields[0]);
+                for( int i = 0; i < nVel*nVel; ++i)
+                {
+                    grad[i] = MemoryManager<MultiRegions::ExpList2D>::
+                                AllocateSharedPtr(*Exp2D);
+                    gradBase[i] = MemoryManager<MultiRegions::ExpList2D>::
+                                AllocateSharedPtr(*Exp2D);
+
+                    P[i] = MemoryManager<MultiRegions::ExpList2D>::
+                                AllocateSharedPtr(*Exp2D);
+                    PBase[i] = MemoryManager<MultiRegions::ExpList2D>::
+                                AllocateSharedPtr(*Exp2D);
+
+                    C[i] = MemoryManager<MultiRegions::ExpList2D>::
+                                AllocateSharedPtr(*Exp2D);
+                }
+                for( int i = 0; i < 3; ++i)
+                {
+                    coords[i] = MemoryManager<MultiRegions::ExpList2D>::
+                                AllocateSharedPtr(*Exp2D);
+                }
+                Jac = MemoryManager<MultiRegions::ExpList2D>::
+                                AllocateSharedPtr(*Exp2D);
+            }
+            break;
+        }
+        case 3:
+        {
+            MultiRegions::ExpList3DSharedPtr Exp3D;
+            Exp3D = std::dynamic_pointer_cast
+                            <MultiRegions::ExpList3D>
+                                                (pFields[0]);
+            for( int i = 0; i < nVel*nVel; ++i)
+            {
+                grad[i] = MemoryManager<MultiRegions::ExpList3D>::
+                            AllocateSharedPtr(*Exp3D);
+                gradBase[i] = MemoryManager<MultiRegions::ExpList3D>::
+                            AllocateSharedPtr(*Exp3D);
+
+                P[i] = MemoryManager<MultiRegions::ExpList3D>::
+                            AllocateSharedPtr(*Exp3D);
+                PBase[i] = MemoryManager<MultiRegions::ExpList3D>::
+                            AllocateSharedPtr(*Exp3D);
+
+                C[i] = MemoryManager<MultiRegions::ExpList3D>::
+                            AllocateSharedPtr(*Exp3D);
+            }
+            for( int i = 0; i < 3; ++i)
+            {
+                coords[i] = MemoryManager<MultiRegions::ExpList3D>::
+                            AllocateSharedPtr(*Exp3D);
+            }
+            Jac = MemoryManager<MultiRegions::ExpList3D>::
+                            AllocateSharedPtr(*Exp3D);
+
+            break;
+        }
+        default:
+            ASSERTL0(false,
+                    "Expansion dimension not supported by FilterAeroForces");
+            break;
+    }
+
+    // Get g^ij
+    Array<OneD, Array<OneD, NekDouble> > tmp( nVel*nVel );
+    m_mapping->GetInvMetricTensor(tmp);
+
+    // Get Cartesian coordinates
+    m_mapping->GetCartesianCoordinates(coords[0]->UpdatePhys(),
+            coords[1]->UpdatePhys(), coords[2]->UpdatePhys());
+
+    // Calculate P^ij = g^ij*p
+    for ( int i = 0; i < nVel*nVel; ++i)
+    {
+        Vmath::Vmul(physTot, tmp[i], 1, pFields[nVel]->GetPhys(), 1,
+                    P[i]->UpdatePhys(), 1);
+    }
+    // Calculate PBase^ij = g^ij*P
+    for ( int i = 0; i < nVel*nVel; ++i)
+    {
+        Vmath::Vmul(physTot, tmp[i], 1, pBase[nVel]->GetPhys(), 1,
+                    PBase[i]->UpdatePhys(), 1);/////////////////// MODIFED
+    }
+
+    // Calculate covariant derivatives of U = u^i_,k
+    Array<OneD, Array<OneD, NekDouble> > wk( nVel );
+    for ( int i = 0; i < nVel; ++i)
+    {
+        wk[i] = Array<OneD, NekDouble>(physTot, 0.0);
+        Vmath::Vcopy(physTot, pFields[i]->GetPhys(), 1, wk[i], 1);
+    }
+    m_mapping->ApplyChristoffelContravar(wk, tmp);
+    for ( int i = 0; i < nVel; ++i)
+    {
+        for ( int k = 0; k < nVel; ++k)
+        {
+            pFields[0]->PhysDeriv(MultiRegions::DirCartesianMap[k],
+                                   wk[i], grad[i*nVel+k]->UpdatePhys());
+
+            Vmath::Vadd(physTot,tmp[i*nVel+k],1,
+                                grad[i*nVel+k]->UpdatePhys(), 1,
+                                grad[i*nVel+k]->UpdatePhys(), 1);
+        }
+    }
+    // Raise index to obtain Grad^ij = g^jk u^i_,k
+    for ( int i = 0; i < nVel; ++i)
+    {
+        for ( int k =0 ; k < nVel; ++k)
+        {
+            Vmath::Vcopy(physTot, grad[i*nVel+k]->GetPhys(), 1, wk[k], 1);
+        }
+        m_mapping->RaiseIndex(wk, wk);
+        for ( int j = 0; j < nVel; ++j)
+        {
+            Vmath::Vcopy(physTot, wk[j], 1, grad[i*nVel+j]->UpdatePhys(), 1);
+        }
+    } 
+    // Calculate covariant derivatives of UBase = uBase^i_,k
+    Array<OneD, Array<OneD, NekDouble> > wkBase( nVel );
+    for ( int i = 0; i < nVel; ++i)
+    {
+        wkBase[i] = Array<OneD, NekDouble>(physTot, 0.0);
+        Vmath::Vcopy(physTot, pBase[i]->GetPhys(), 1, wkBase[i], 1);/////////// MODIFED
+    }
+    m_mapping->ApplyChristoffelContravar(wkBase, tmp);
+    for ( int i = 0; i < nVel; ++i)
+    {
+        for ( int k = 0; k < nVel; ++k)
+        {
+            pFields[0]->PhysDeriv(MultiRegions::DirCartesianMap[k],
+                                   wkBase[i], gradBase[i*nVel+k]->UpdatePhys());
+
+            Vmath::Vadd(physTot,tmp[i*nVel+k],1,
+                                gradBase[i*nVel+k]->UpdatePhys(), 1,
+                                gradBase[i*nVel+k]->UpdatePhys(), 1);
+        }
+    }
+    // Raise index to obtain GradBase^ij = g^jk uBase^i_,k
+    for ( int i = 0; i < nVel; ++i)
+    {
+        for ( int k =0 ; k < nVel; ++k)
+        {
+            Vmath::Vcopy(physTot, gradBase[i*nVel+k]->GetPhys(), 1, wkBase[k], 1);
+        }
+        m_mapping->RaiseIndex(wkBase, wkBase);
+        for ( int j = 0; j < nVel; ++j)
+        {
+            Vmath::Vcopy(physTot, wkBase[j], 1, gradBase[i*nVel+j]->UpdatePhys(), 1);
+        }
+    } 
+
+    // Get Jacobian
+    m_mapping->GetJacobian( Jac->UpdatePhys());
+
+    // Get transformation to Cartesian system
+    for ( int i = 0; i < nVel; ++i)
+    {
+        // Zero wk storage
+        for ( int k = 0; k < nVel; ++k)
+        {
+            wk[k] = Array<OneD, NekDouble>(physTot, 0.0);
+        }
+        // Make wk[i] = 1
+        wk[i] = Array<OneD, NekDouble>(physTot, 1.0);
+        // Transform wk to Cartesian
+        m_mapping->ContravarToCartesian(wk,wk);
+        // Copy result to a column in C
+        for ( int k = 0; k < nVel; ++k)
+        {
+            Vmath::Vcopy(physTot, wk[k], 1, C[k*nVel+i]->UpdatePhys(), 1);
+        }
+    }
+
+    //
+    // Calculate forces
+    //
+
+    // For Homogeneous, calculate force on each 2D plane
+    // Otherwise, m_nPlanes = 1, and loop only runs once
+    for( int plane = 0; plane < m_nPlanes; ++plane )
+    {
+        // Check if plane is in this proc
+        if( m_planesID[plane] != -1 )
+        {
+            // For Homogeneous, consider the 2D expansion
+            //      on the current plane
+            if(m_isHomogeneous1D)
+            {
+                for( int n = 0; n < nVel*nVel; ++n)
+                {
+                    PPlane[n]        = P[n]->GetPlane(m_planesID[plane]);
+                    PPlaneBase[n]    = PBase[n]->GetPlane(m_planesID[plane]);
+                    gradPlane[n]     = grad[n]->GetPlane(m_planesID[plane]);
+                    gradPlaneBase[n] = gradBase[n]->GetPlane(m_planesID[plane]);
+                    CPlane[n]    = C[n]->GetPlane(m_planesID[plane]);
+                }
+                for( int n = 0; n < 3; ++n)
+                {
+                    coordsPlane[n] = coords[n]->GetPlane(m_planesID[plane]);
+                }
+                JacPlane = Jac->GetPlane(m_planesID[plane]);
+            }
+            else
+            {
+                for( int n = 0; n < nVel*nVel; ++n)
+                {
+                    PPlane[n]        = P[n];
+                    PPlaneBase[n]    = PBase[n];
+                    gradPlane[n]     = grad[n];
+                    gradPlaneBase[n] = gradBase[n];
+                    CPlane[n]        = C[n];
+                }
+                for( int n = 0; n < 3; ++n)
+                {
+                    coordsPlane[n] = coords[n];
+                }
+                JacPlane = Jac;
+            }
+
+            //Loop all the Boundary Regions
+            int cnt = 0;
+            for( int n = 0; n < BndConds.num_elements(); ++n)
+            {
+                if(m_boundaryRegionIsInList[n] == 1)
+                {
+                    for (int i = 0; i < BndExp[n]->GetExpSize(); ++i, ++cnt)
+                    {
+                        int elmtid = m_BCtoElmtID[cnt];
+                        int offset = PPlane[0]->GetPhys_Offset(elmtid);
+                        StdRegions::StdExpansionSharedPtr elmt =
+                                PPlane[0]->GetExp(elmtid);
+                        StdRegions::StdExpansionSharedPtr elmtBase =
+                                PPlaneBase[0]->GetExp(elmtid);
+
+                        // Extract fields on this element
+                        for( int j = 0; j < nVel*nVel; ++j)
+                        {
+                            PElmt[j]        = PPlane[j]->GetPhys()        + offset;
+                            PElmtBase[j]    = PPlaneBase[j]->GetPhys()    + offset;
+                            gradElmt[j]     = gradPlane[j]->GetPhys()     + offset;
+                            gradElmtBase[j] = gradPlaneBase[j]->GetPhys() + offset;
+                            CElmt[j]        = CPlane[j]->GetPhys()        + offset;
+                        }
+                        for( int j = 0; j < 3; ++j)
+                        {
+                            coordsElmt[j] = coordsPlane[j]->GetPhys() + offset;
+                        }
+                        JacElmt = JacPlane->GetPhys() + offset;
+
+                        // identify boundary of element
+                        int boundary = m_BCtoTraceID[cnt];
+
+                        // Get boundary element
+                        LocalRegions::ExpansionSharedPtr bc =
+                                BndExp[n]->GetExp(i);
+
+                        // Get number of points on the boundary
+                        int nbc = bc->GetTotPoints();
+
+                        // Get normals
+                        Array<OneD, Array<OneD, NekDouble> > normals =
+                            elmt->GetTraceNormal(boundary);
+                        Array<OneD, Array<OneD, NekDouble> > normalsInit =
+                            elmtBase->GetTraceNormal(boundary);
+                        Array<OneD, Array<OneD, NekDouble> > normalsPert =
+                            elmtBase->GetTraceNormal(boundary);
+                        for ( int k = 0; k < expdim; ++k)
+                        {
+                            Vmath::Svtvp (nbc, -1.0, normalsInit[k], 1,
+                                    normals[k], 1, normalsPert[k], 1);
+                        }
+
+                        // Extract values at boundary
+                        for(int j = 0; j < nVel*nVel; ++j)
+                        {
+                            gradBnd[j] = Array<OneD, NekDouble> (nbc,0.0);
+                            elmt->GetTracePhysVals(boundary,
+                                    bc, gradElmt[j], gradBnd[j]);
+                            gradBndBase[j] = Array<OneD, NekDouble> (nbc,0.0);
+                            elmtBase->GetTracePhysVals(boundary,
+                                    bc, gradElmtBase[j], gradBndBase[j]);
+
+                            PBnd[j] = Array<OneD, NekDouble> (nbc,0.0);
+                            elmt->GetTracePhysVals(boundary,
+                                    bc, PElmt[j], PBnd[j]);
+                            PBndBase[j] = Array<OneD, NekDouble> (nbc,0.0);
+                            elmtBase->GetTracePhysVals(boundary,
+                                    bc, PElmtBase[j], PBndBase[j]);
+
+                            CBnd[j] = Array<OneD, NekDouble> (nbc,0.0);
+                            elmt->GetTracePhysVals(boundary,
+                                    bc, CElmt[j], CBnd[j]);
+                        }
+                        for(int j = 0; j < 3; ++j)
+                        {
+                            coordsBnd[j] = Array<OneD, NekDouble> (nbc,0.0);
+                            elmt->GetTracePhysVals(boundary,
+                                    bc, coordsElmt[j], coordsBnd[j]);
+                            // Subtract m_momPoint
+                            Vmath::Sadd (nbc, -1.0*m_momPoint[j],
+                                        coordsBnd[j], 1, coordsBnd[j], 1);
+                        }
+                        JacBnd = Array<OneD, NekDouble> (nbc,0.0);
+                        elmt->GetTracePhysVals(boundary, bc, JacElmt, JacBnd);
+
+                        // Calculate forces per unit length
+
+                        // Pressure component: fp[j] = rho*(P[j,k]*n[k] + p[j,k]*N[k])
+                        for ( int j = 0; j < nVel; ++j)
+                        {
+                            fp[j] = Array<OneD, NekDouble> (nbc,0.0);
+                            // Normals only has expdim elements
+                            // fp[j] = p[j,k]*N[k]
+                            for ( int k = 0; k < expdim; ++k)
+                            {
+                                Vmath::Vvtvp (nbc, PBnd[ j*nVel + k], 1,
+                                        normalsInit[k], 1, fp[j], 1, fp[j], 1);
+                            }
+                            // fp[j] = fp[j] + P[j,k]*n[k]
+                            for ( int k = 0; k < expdim; ++k)
+                            {
+                                Vmath::Vvtvp (nbc, PBndBase[ j*nVel + k], 1,
+                                        normalsPert[k], 1, fp[j], 1, fp[j], 1);
+                            }
+                            Vmath::Smul(nbc, m_rho, fp[j], 1, fp[j], 1);
+                        }
+                        // Viscous component:
+                        //     fv[j] = -mu*{(gradBase[k,j]+gradBase[j,k]) * n[k]
+                        //             + (grad[k,j]+grad[j,k]) * N[k]}
+                        for ( int j = 0; j < nVel; ++j )
+                        {
+                            fv[j] = Array<OneD, NekDouble> (nbc,0.0);
+                            //     fv[j] = (gradBase[k,j]+gradBase[j,k]) * n[k]
+                            for ( int k = 0; k < expdim; ++k )
+                            {
+                                Vmath::Vvtvp (nbc,gradBndBase[k*nVel+j],1,
+                                        normalsPert[k], 1, fv[j], 1, fv[j], 1);
+                                Vmath::Vvtvp (nbc,gradBndBase[j*nVel+k],1,
+                                        normalsPert[k], 1, fv[j], 1, fv[j], 1);
+                            }
+                            //     fv[j] = fv[j] + (grad[k,j]+grad[j,k]) * N[k]
+                            for ( int k = 0; k < expdim; ++k )
+                            {
+                                Vmath::Vvtvp (nbc,gradBnd[k*nVel+j],1,
+                                        normalsInit[k], 1, fv[j], 1, fv[j], 1);
+                                Vmath::Vvtvp (nbc,gradBnd[j*nVel+k],1,
+                                        normalsInit[k], 1, fv[j], 1, fv[j], 1);
                             }
                             Vmath::Smul(nbc, -m_mu, fv[j], 1, fv[j], 1);
                         }

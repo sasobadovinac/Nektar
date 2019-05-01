@@ -41,6 +41,7 @@
 #include <LocalRegions/Expansion2D.h>
 #include <LocalRegions/Expansion1D.h>
 #include <GlobalMapping/Mapping.h>
+#include <IncNavierStokesSolver/EquationSystems/VCSMapping.h>
 
 namespace Nektar
 {
@@ -92,6 +93,12 @@ protected:
     virtual void v_Initialise(
         const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
         const NekDouble &time);
+
+    inline bool IsLinearAdvection()
+        {
+            return m_isLinearAdvection;
+        }
+
     virtual void v_Update(
         const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
         const NekDouble &time);
@@ -148,6 +155,11 @@ private:
     NekDouble                               m_rho;
     NekDouble                               m_mu;
 
+    // Determine if direct solver is used
+    bool                                       m_isLinearAdvection;
+    /// Get base flow if linearised solver
+    Array<OneD, const Array<OneD, NekDouble> > m_baseFlow;
+
     void CalculateForces(
         const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
         const NekDouble &time);
@@ -157,6 +169,10 @@ private:
         const NekDouble &time);
 
     void CalculateForcesMapping(
+        const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
+        const NekDouble &time);
+
+    void CalculateForcesLinear(
         const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
         const NekDouble &time);
 };
