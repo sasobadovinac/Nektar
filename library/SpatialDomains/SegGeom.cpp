@@ -473,8 +473,6 @@ NekDouble SegGeom::v_FindDistance(const Array<OneD, const NekDouble> &xs,
 
         NekDouble fx_prev = std::numeric_limits<NekDouble>::max();
 
-        std::cout << "First seg point: " << x[0] <<" " << y[0] << endl;
-        std::cout << "Last seg point: " << x[6] <<" " << y[6] << endl;
         for (int i = 0; i < 100; ++i)
         {
             // Compute f(x_k) and its derivatives
@@ -509,7 +507,7 @@ NekDouble SegGeom::v_FindDistance(const Array<OneD, const NekDouble> &xs,
             NekDouble gamma = 1.0;
             bool conv       = false;
 
-            // Search direction: quasi-Newton
+            // Search direction: Newton's method
             NekDouble pk = -fxp / fxp2;
 
             // Backtracking line search
@@ -536,10 +534,10 @@ NekDouble SegGeom::v_FindDistance(const Array<OneD, const NekDouble> &xs,
                                           yc_der_pk * (yc_pk - xs[1]));
 
                 // Check Wolfe conditions
-                cout << "Condition 1: " << fx_pk << " <= " << fx + c1 * gamma * pk * fxp << endl;
-                cout << "Condition 2: " << -pk * fxp_pk << " <= " << -c2 * pk * fxp << endl;
-                if (fx_pk <= fx + c1 * gamma * pk * fxp &&
-                    -pk * fxp_pk <= -c2 * pk * fxp)
+                //cout << "Condition 1: " << fx_pk << " <= " << fx + c1 * gamma * pk * fxp << endl;
+                //cout << "Condition 2: " << -pk * fxp_pk << " <= " << -c2 * pk * fxp << endl;
+                if ((fx_pk  - (fx + c1 * gamma * pk * fxp)) < std::numeric_limits<NekDouble>::epsilon() &&
+                    (-pk * fxp_pk + c2 * pk * fxp) < std::numeric_limits<NekDouble>::epsilon())
                 {
                     conv = true;
                     break;

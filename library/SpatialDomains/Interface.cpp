@@ -48,7 +48,15 @@ Interfaces::Interfaces(const LibUtilities::SessionReaderSharedPtr &pSession,
                        const MeshGraphSharedPtr &meshGraph)
     : m_meshGraph(meshGraph), m_session(pSession)
 {
-    ReadInterfaces(m_session->GetElement("NEKTAR/CONDITIONS/INTERFACES"));
+    TiXmlElement *xmlDoc = m_session->GetElement("NEKTAR");
+    if(xmlDoc->FirstChild("CONDITIONS") != nullptr)
+    {
+        if(xmlDoc->FirstChild("CONDITIONS")->FirstChild("INTERFACES") != nullptr)
+        {
+            ReadInterfaces(
+                m_session->GetElement("NEKTAR/CONDITIONS/INTERFACES"));
+        }
+    }
 }
 
 std::string ReadTag(std::string &tagStr)
@@ -402,6 +410,57 @@ void InterfaceBase::SeparateGraph(MeshGraphSharedPtr &graph)
                 }
             }
         }
+
+        //Offset right domain for visualisation
+#if 0
+        std::set<int> seenVerts, seenEdges;
+        for (auto &comp : GetRightDomain())
+        {
+            for (auto &geom : comp.second->m_geomVec)
+            {
+                auto newGeom = graph->GetGeometry2D(geom->GetGlobalID());
+                for (int i = 0; i < newGeom->GetNumVerts(); ++i)
+                {
+                    PointGeomSharedPtr vert = newGeom->GetVertex(i);
+
+                    if (seenVerts.find(vert->GetGlobalID()) != seenVerts.end())
+                    {
+                        continue;
+                    }
+
+                    (*vert)(1) += 0.5;
+                    seenVerts.insert(vert->GetGlobalID());
+
+                }
+
+                for (int i = 0; i < newGeom->GetNumEdges(); ++i)
+                {
+                    SegGeomSharedPtr edge =
+                        std::static_pointer_cast<SegGeom>(newGeom->GetEdge(i));
+
+                    // move curve points
+                    if (seenEdges.find(edge->GetGlobalID()) != seenEdges.end())
+                    {
+                        continue;
+                    }
+
+                    CurveSharedPtr curve = edge->GetCurve();
+                    if (!curve)
+                    {
+                        continue;
+                    }
+
+                    for (auto &pt : curve->m_points)
+                    {
+                        (*pt)(1) += 0.5;
+                    }
+
+                    seenEdges.insert(edge->GetGlobalID());
+                }
+            }
+        }
+#endif
+
     }
 };
 

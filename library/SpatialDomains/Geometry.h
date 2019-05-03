@@ -212,6 +212,8 @@ protected:
     /// Generates the bounding box of the element.
     void                              GenBoundingBox();
 
+    NekDouble                         FindMinCoord(int, NekDouble);
+
     //---------------------------------------
     // Helper functions
     //---------------------------------------

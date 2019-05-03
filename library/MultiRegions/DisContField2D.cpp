@@ -1481,11 +1481,7 @@ void DisContField2D::v_GetFwdBwdTracePhys(
                         xs[1] = yc[i];
                         xs[2] = 0;
                         NekDouble foundPoint;
-                        std::cout << "Seg ID in: " << geomSeg->GetGlobalID() << endl;
-                        std::cout << "Point coords in: " << xs[0] << ' ' << xs[1] << endl;
                         NekDouble dist = geomSeg->FindDistance(xs, foundPoint);
-                        std::cout << "Dist out: " << dist << endl;
-                        std::cout << "Local coord out: " << foundPoint << endl << endl;
                         if (dist > 1e-8)
                         {
                             continue;
