@@ -431,143 +431,43 @@ void Geometry::GenBoundingBox()
 
 NekDouble Geometry::FindMinCoord(int coordDir, NekDouble xcEst)
 {
-    Array<OneD, NekDouble> xi(1, 0.5);
-    const NekDouble c1 = 1e-4, c2 = 0.9;
-
-    const int nq = GetXmap()->GetTotPoints();
-
-    Array<OneD, NekDouble> x(nq);
+    const int nq = m_xmap->GetTotPoints();
+    Array<OneD, NekDouble> x(nq, 0.0), xder(nq, 0.0);
     m_xmap->BwdTrans(m_coeffs[coordDir], x);
+    m_xmap->PhysDeriv(x, xder);
+    std::vector<NekDouble> roots;
 
-    Array<OneD, NekDouble> xder(nq, 0.0), yder(nq, 0.0);
-    m_xmap->PhysDeriv(x, xder);//, yder);
-
-    Array<OneD, NekDouble> xder2(nq, 0.0), xdery(nq, 0.0);
-    Array<OneD, NekDouble> yder2(nq, 0.0), yderx(nq, 0.0);
-    m_xmap->PhysDeriv(xder, xder2);//, xdery);
-    //m_xmap->PhysDeriv(yder, yderx, yder2);
-
-    // cout << "Shape type: " << LibUtilities::ShapeTypeMap[m_shapeType] << endl;
-    // cout << "Shape dim: " << GetShapeDim() << endl;
-    // cout << "xder: " << xder[0] << endl;
-    // cout << "yder: " << yder[0] << endl;
-    // cout << "xder2: " << xder2[0] << endl;
-    // cout << "xdery: " << xdery[0] << endl;
-    // cout << "yderx: " << yderx[0] << endl;
-    // cout << "yder2: " << yder2[0] << endl;
-
-    bool opt_succeed = false;
-
-    NekDouble xc_prev = std::numeric_limits<NekDouble>::max();
-
-    for (int i = 0; i < 100; ++i)
+    const int n = 10;
+    Array<OneD, NekDouble> points(n+1, 0.0);
+    for (int i = 0; i < n+1; ++i)
     {
+        points[i] = i * (2.0 / n) - 1.0;
 
-        // Compute f(x_k) and its derivatives
-        NekDouble xc       = m_xmap->PhysEvaluate(xi, x);
-        NekDouble xc_derx  = m_xmap->PhysEvaluate(xi, xder);
-        //NekDouble xc_dery  = m_xmap->PhysEvaluate(xi, yder);
-        NekDouble xc_derxx = m_xmap->PhysEvaluate(xi, xder2);
-        //NekDouble xc_derxy = m_xmap->PhysEvaluate(xi, xdery);
-        //NekDouble xc_deryx = m_xmap->PhysEvaluate(xi, yderx);
-        //NekDouble xc_deryy = m_xmap->PhysEvaluate(xi, yder2);
-
-        cout << "Iteration: " << i << "| xc: " << xc << endl;
-        // cout << "xc_derx: " << xc_derx << endl;
-        // cout << "xc_dery: " << xc_dery << endl;
-        // cout << "xc_derxx: " << xc_derxx << endl;
-        // cout << "xc_deryy: " << xc_derxy << endl;
-        // cout << "xc_deryx: " << xc_deryx << endl;
-        // cout << "xc_deryy: " << xc_deryy << endl;
-
-        // Check for convergence
-        if (abs(xc - xc_prev) < 1e-16)
+        Array<OneD, NekDouble> xi(1, points[i]);
+        NekDouble xi_prev = xi[0];
+        bool conv;
+        cout << "LOCAL COORD IN: " << points[i] << endl;
+        for (int j = 0; j < 15; ++j)
         {
-            opt_succeed = true;
-            xc_prev     = xc;
-            break;
-        }
-        else
-        {
-            xc_prev = xc;
-        }
+            NekDouble xc = m_xmap->PhysEvaluate(xi, x);
+            NekDouble xc_derx  = m_xmap->PhysEvaluate(xi, xder);
 
-        NekDouble gamma = 1.0;
-        bool conv       = false;
-
-        // Search direction: quasi-Newton, H^{-1}f . \nabla f
-        NekDouble pk[1];
-        NekDouble det;
-        if (GetShapeDim() == 1)
-        {
-            pk[0] = -xc_derx / xc_derxx;
-            //pk[1] = 0;
-        }
-        /*
-        else if (GetShapeDim() == 2)
-        {
-            det   = xc_derxx * xc_deryy - xc_derxy * xc_deryx;
-            pk[0] = (1 / det) * (xc_deryy * xc_derx - xc_derxy * xc_dery);
-            pk[1] = (1 / det) * (xc_derxx * xc_dery - xc_deryx * xc_derx);
-        }
-        else
-        {
-            ASSERTL0(false, "Shape dimension is not supported")
-        }
-         */
-
-        // Backtracking line search
-        while (gamma > 1e-10)
-        {
-            Array<OneD, NekDouble> xi_pk(1);
-            xi_pk[0] = xi[0] + pk[0] * gamma;
-            //xi_pk[1] = xi[1] + pk[1] * gamma;
-
-            if (xi_pk[0] < -1.0 || xi_pk[0] > 1.0)// || xi_pk[1] < -1.0 ||
-                //xi_pk[1] > 1.0)
+            xi[0] = xi_prev - xc / xc_derx;
+            cout << "ITERATION: " << j << " | xc = " << xc << " | xc_derx = " << xc_derx << " | xi_prev = " << xi_prev << " | xi[0] = " << xi[0] << endl;
+            if (abs(xi[0] - xi_prev) < 1e-16)
             {
-                gamma /= 2.0;
-                continue;
-            }
-
-            NekDouble xc_pk      = m_xmap->PhysEvaluate(xi_pk, x);
-            NekDouble xc_pk_derx = m_xmap->PhysEvaluate(xi_pk, xder);
-            //NekDouble xc_pk_dery = m_xmap->PhysEvaluate(xi_pk, yder);
-
-            // Check Wolfe conditions
-            //cout << "Condition 1: " << (xc_pk - (xc + c1 * gamma * pk[0] * xc_derx)) << endl;
-            //cout << "Condition 2: " << (-pk[0] * xc_pk_derx + c2 * pk[0] * xc_derx) << endl;
-            //if ((xc_pk - (xc + c1 * gamma * (pk[0] * xc_derx + pk[1] * xc_dery)) < std::numeric_limits<NekDouble>::epsilon()) &&
-            //    (-(pk[0] * xc_pk_derx + pk[1] * xc_pk_dery) + c2 * (pk[0] * xc_derx + pk[1] * xc_dery) < std::numeric_limits<NekDouble>::epsilon()))
-            if ((xc_pk - (xc + c1 * gamma * pk[0] * xc_derx) < std::numeric_limits<NekDouble>::epsilon()) &&
-                (-pk[0] * xc_pk_derx + c2 * pk[0] * xc_derx) < std::numeric_limits<NekDouble>::epsilon())
-            {
+                cout << "CONVERGED AT LOCAL COORDINATE = " << xi[0] << endl;
                 conv = true;
                 break;
             }
 
-            gamma /= 2.0;
+            xi_prev = xi[0];
         }
 
-        if (!conv)
+        if (xi[0] >= -1 && xi[0] <= 1 && conv == true)
         {
-            opt_succeed = false;
-            break;
+            roots.emplace_back(xi[0]);
         }
-
-        xi[0] += gamma * pk[0];
-        //xi[1] += gamma * pk[1];
-    }
-
-    if (opt_succeed)
-    {
-        std::cout << " success " << xc_prev << std::endl;
-        return xc_prev;
-    }
-    else
-    {
-        std::cout << "failed " << std::endl;
-        return std::numeric_limits<NekDouble>::max();
     }
 }
 
