@@ -212,7 +212,7 @@ protected:
     /// Generates the bounding box of the element.
     void                              GenBoundingBox();
 
-    NekDouble                         FindMinCoord(int, NekDouble);
+    std::pair<NekDouble, NekDouble>   FindMinMaxCoord(int);
 
     //---------------------------------------
     // Helper functions

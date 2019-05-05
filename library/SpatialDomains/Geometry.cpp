@@ -383,44 +383,11 @@ void Geometry::GenBoundingBox()
     }
     else
     {
-        const int nq = GetXmap()->GetTotPoints();
-        Array<OneD, Array<OneD, NekDouble>> x(3);
-        for (int j = 0; j < 3; ++j)
-        {
-            x[j] = Array<OneD, NekDouble>(nq, 0.0);
-        }
         for (int j = 0; j < GetCoordim(); ++j)
         {
-            GetXmap()->BwdTrans(m_coeffs[j], x[j]);
-        }
-        for (int j = 0; j < 3; ++j)
-        {
-            min[j] = x[j][0] - NekConstants::kGeomFactorsTol;
-            max[j] = x[j][0] + NekConstants::kGeomFactorsTol;
-
-            for (int i = 1; i < nq; ++i)
-            {
-                min[j] = (x[j][i] < min[j] ? x[j][i] : min[j]);
-                max[j] = (x[j][i] > max[j] ? x[j][i] : max[j]);
-            }
-
-            // Add 10% margin to bounding box in case elements have
-            // convex boundaries.
-            const int len = max[j] - min[j];
-            max[j] += 0.1 * len;
-            min[j] -= 0.1 * len;
-        }
-
-        for (int j = 0; j < GetCoordim(); ++j)
-        {
-            //cout << "Dimension: " << j <<  " | Estimate min coord:" << min[j] << endl;
-            //cout << "Dimension: " << j <<  "| Estimate max coord: " << max[j] << endl;
-
-            min[j] = FindMinCoord(j, min[j]);
-            //max[j] = FindMinCoord(j, max[j]);
-
-            //cout << "Dimension: " << j <<  " | Real min coord:" << min[j] << endl << endl;
-            //cout << "Dimension: " << j <<  "| Real max coord: " << max[j] << endl;
+            auto minMax = FindMinMaxCoord(j);
+            min[j] = minMax.first;
+            max[j] = minMax.second;
         }
     }
 
@@ -429,46 +396,50 @@ void Geometry::GenBoundingBox()
     m_boundingBox = BgBox(pmin, pmax);
 }
 
-NekDouble Geometry::FindMinCoord(int coordDir, NekDouble xcEst)
+std::pair<NekDouble, NekDouble> Geometry::FindMinMaxCoord(int coordDir)
 {
     const int nq = m_xmap->GetTotPoints();
-    Array<OneD, NekDouble> x(nq, 0.0), xder(nq, 0.0);
-    m_xmap->BwdTrans(m_coeffs[coordDir], x);
-    m_xmap->PhysDeriv(x, xder);
-    std::vector<NekDouble> roots;
+    Array<OneD, NekDouble> x(nq, 0.0), xder(nq, 0.0), xder2(nq, 0.0);
+    std::unordered_set<NekDouble> values;
 
     const int n = 10;
     Array<OneD, NekDouble> points(n+1, 0.0);
+
+    m_xmap->BwdTrans(m_coeffs[coordDir], x);
+    m_xmap->PhysDeriv(x, xder);
+    m_xmap->PhysDeriv(xder, xder2);
+
     for (int i = 0; i < n+1; ++i)
     {
         points[i] = i * (2.0 / n) - 1.0;
-
         Array<OneD, NekDouble> xi(1, points[i]);
         NekDouble xi_prev = xi[0];
-        bool conv;
-        cout << "LOCAL COORD IN: " << points[i] << endl;
-        for (int j = 0; j < 15; ++j)
+
+        for (int j = 0; j < 20; ++j)
         {
             NekDouble xc = m_xmap->PhysEvaluate(xi, x);
             NekDouble xc_derx  = m_xmap->PhysEvaluate(xi, xder);
+            NekDouble xc_derxx  = m_xmap->PhysEvaluate(xi, xder2);
 
-            xi[0] = xi_prev - xc / xc_derx;
-            cout << "ITERATION: " << j << " | xc = " << xc << " | xc_derx = " << xc_derx << " | xi_prev = " << xi_prev << " | xi[0] = " << xi[0] << endl;
-            if (abs(xi[0] - xi_prev) < 1e-16)
+            xi[0] = xi_prev - xc_derx / xc_derxx;
+
+            if ((abs(xi[0] - xi_prev) < 1e-16) && (xi[0] >= -1) && (xi[0] <= 1))
             {
-                cout << "CONVERGED AT LOCAL COORDINATE = " << xi[0] << endl;
-                conv = true;
+                values.insert(xc);
                 break;
             }
 
             xi_prev = xi[0];
         }
-
-        if (xi[0] >= -1 && xi[0] <= 1 && conv == true)
-        {
-            roots.emplace_back(xi[0]);
-        }
     }
+
+    const Array<OneD, NekDouble> minusOne(1, -1);
+    const Array<OneD, NekDouble> plusOne(1, 1);
+    values.insert(m_xmap->PhysEvaluate(minusOne, x));
+    values.insert(m_xmap->PhysEvaluate(plusOne, x));
+
+    const auto res = std::minmax_element(std::begin(values), std::end(values));
+    return std::make_pair(*res.first, *res.second);
 }
 
 } // namespace SpatialDomains
