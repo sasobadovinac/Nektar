@@ -398,47 +398,54 @@ void Geometry::GenBoundingBox()
 
 std::pair<NekDouble, NekDouble> Geometry::FindMinMaxCoord(int coordDir)
 {
-    const int nq = m_xmap->GetTotPoints();
-    Array<OneD, NekDouble> x(nq, 0.0), xder(nq, 0.0), xder2(nq, 0.0);
     std::unordered_set<NekDouble> values;
 
-    const int n = 10;
-    Array<OneD, NekDouble> points(n+1, 0.0);
-
-    m_xmap->BwdTrans(m_coeffs[coordDir], x);
-    m_xmap->PhysDeriv(x, xder);
-    m_xmap->PhysDeriv(xder, xder2);
-
-    for (int i = 0; i < n+1; ++i)
+    for (int edgeID = 0; edgeID < GetNumEdges(); ++edgeID)
     {
-        points[i] = i * (2.0 / n) - 1.0;
-        Array<OneD, NekDouble> xi(1, points[i]);
-        NekDouble xi_prev = xi[0];
+        auto edge = GetEdge(edgeID);
+        const int nq = edge->GetXmap()->GetTotPoints();
+        Array<OneD, NekDouble> x(nq, 0.0), xder(nq, 0.0), xder2(nq, 0.0);
 
-        for (int j = 0; j < 20; ++j)
+        const int n = 3;
+        Array<OneD, NekDouble> points(n + 1, 0.0);
+
+        edge->GetXmap()->BwdTrans(edge->GetCoeffs(coordDir), x);
+        edge->GetXmap()->PhysDeriv(x, xder);
+        edge->GetXmap()->PhysDeriv(xder, xder2);
+
+        for (int i = 0; i < n + 1; ++i)
         {
-            NekDouble xc = m_xmap->PhysEvaluate(xi, x);
-            NekDouble xc_derx  = m_xmap->PhysEvaluate(xi, xder);
-            NekDouble xc_derxx  = m_xmap->PhysEvaluate(xi, xder2);
+            Array<OneD, NekDouble> xi(1, (i * (2.0 / n) - 1.0));
+            NekDouble xi_prev = xi[0];
 
-            xi[0] = xi_prev - xc_derx / xc_derxx;
-
-            if ((abs(xi[0] - xi_prev) < 1e-16) && (xi[0] >= -1) && (xi[0] <= 1))
+            for (int j = 0; j < 10; ++j)
             {
-                values.insert(xc);
-                break;
-            }
+                NekDouble xc       = edge->GetXmap()->PhysEvaluate(xi, x);
+                NekDouble xc_derx  = edge->GetXmap()->PhysEvaluate(xi, xder);
+                NekDouble xc_derxx = edge->GetXmap()->PhysEvaluate(xi, xder2);
 
-            xi_prev = xi[0];
+
+                xi[0] = xi_prev - xc_derx / xc_derxx;
+
+                if ((abs(xi[0] - xi_prev) < 1e-10) && (xi[0] >= -1) && (xi[0] <= 1))
+                {
+                    cout << "EDGE: " << edge->GetGlobalID() << " iteration: " << j << " xc: " << xc << " xi: " << xi[0] << " xi_prev:" << xi_prev << endl;
+                    values.insert(xc);
+                    break;
+                }
+
+                xi_prev = xi[0];
+            }
         }
+
+        const Array<OneD, NekDouble> minusOne(1, -1);
+        const Array<OneD, NekDouble> plusOne(1, 1);
+        values.insert(edge->GetXmap()->PhysEvaluate(minusOne, x));
+        values.insert(edge->GetXmap()->PhysEvaluate(plusOne, x));
     }
 
-    const Array<OneD, NekDouble> minusOne(1, -1);
-    const Array<OneD, NekDouble> plusOne(1, 1);
-    values.insert(m_xmap->PhysEvaluate(minusOne, x));
-    values.insert(m_xmap->PhysEvaluate(plusOne, x));
-
-    const auto res = std::minmax_element(std::begin(values), std::end(values));
+    const auto res =
+        std::minmax_element(std::begin(values), std::end(values));
     return std::make_pair(*res.first, *res.second);
 }
 

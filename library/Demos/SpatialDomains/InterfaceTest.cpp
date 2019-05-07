@@ -14,19 +14,20 @@ using namespace Nektar::SpatialDomains;
 
 int main(int argc, char *argv[])
 {
-    PointGeomSharedPtr verts[2];
-    verts[0]  = MemoryManager<PointGeom>::AllocateSharedPtr(2, 0, 2, 2, 0);
-    verts[1]  = MemoryManager<PointGeom>::AllocateSharedPtr(2, 0, 3, 3, 0);
-    SegGeomSharedPtr seg = MemoryManager<SegGeom>::AllocateSharedPtr(0, 2, verts);
+    LibUtilities::SessionReaderSharedPtr session = LibUtilities::SessionReader::CreateInstance(argc, argv);
+    MeshGraphSharedPtr graph = MeshGraph::Read(session);
 
-    Array<OneD, NekDouble> xs(3);
-    xs[0] = 2;
-    xs[1] = 3;
-    xs[2] = 0;
+    auto bbox = graph->GetAllQuadGeoms()[0]->GetBoundingBox();
 
-    NekDouble foundPoint;
-    NekDouble dist = seg->FindDistance(xs, foundPoint);
+    Array<OneD, NekDouble> min(2), max(2);
 
-    cout << "LOCAL POINT: "<< foundPoint << " | DISTANCE FROM SEG: " << dist << endl;
+    min[0] = boost::geometry::get<boost::geometry::min_corner, 0>(bbox);
+    min[1] = boost::geometry::get<boost::geometry::min_corner, 1>(bbox);
+
+    max[0] = boost::geometry::get<boost::geometry::max_corner, 0>(bbox);
+    max[1] = boost::geometry::get<boost::geometry::max_corner, 1>(bbox);
+
+    cout << "MINIMUM CORNER IS: (" << min[0] << ", " << min[1] << ")" << endl;
+    cout << "MAXIMUM CORNER IS: (" << max[0] << ", " << max[1] << ")" << endl;
 
 }
