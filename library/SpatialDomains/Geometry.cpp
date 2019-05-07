@@ -429,7 +429,6 @@ std::pair<NekDouble, NekDouble> Geometry::FindMinMaxCoord(int coordDir)
 
                 if ((abs(xi[0] - xi_prev) < 1e-10) && (xi[0] >= -1) && (xi[0] <= 1))
                 {
-                    cout << "EDGE: " << edge->GetGlobalID() << " iteration: " << j << " xc: " << xc << " xi: " << xi[0] << " xi_prev:" << xi_prev << endl;
                     values.insert(xc);
                     break;
                 }
