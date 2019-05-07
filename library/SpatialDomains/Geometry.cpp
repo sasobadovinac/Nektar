@@ -398,20 +398,48 @@ void Geometry::GenBoundingBox()
 
 std::pair<NekDouble, NekDouble> Geometry::FindMinMaxCoord(int coordDir)
 {
+    int numEdges = 0;
+    if (GetShapeDim() == 1)
+    {
+        numEdges = 1;
+    }
+    else if (GetShapeDim() == 2)
+    {
+        numEdges = GetNumEdges();
+    }
+
+    ASSERTL0(numEdges != 0, "Shape dimension is not supported.")
+
+    Array<OneD, Array<OneD, const NekDouble>> coeffs(numEdges);
+    Array<OneD, StdRegions::StdExpansionSharedPtr> xmaps(numEdges);
+
+    if (GetShapeDim() == 1)
+    {
+        coeffs[0] = m_coeffs[coordDir];
+        xmaps[0] = m_xmap;
+    }
+    else if (GetShapeDim() == 2)
+    {
+        for (int edgeID = 0; edgeID < numEdges; ++edgeID)
+        {
+            coeffs[edgeID] = GetEdge(edgeID)->GetCoeffs(coordDir);
+            xmaps[edgeID] = GetEdge(edgeID)->GetXmap();
+        }
+    }
+
     std::unordered_set<NekDouble> values;
 
-    for (int edgeID = 0; edgeID < GetNumEdges(); ++edgeID)
+    for (int edgeID = 0; edgeID < numEdges; ++edgeID)
     {
-        auto edge = GetEdge(edgeID);
-        const int nq = edge->GetXmap()->GetTotPoints();
+        const int nq = xmaps[edgeID]->GetTotPoints();
         Array<OneD, NekDouble> x(nq, 0.0), xder(nq, 0.0), xder2(nq, 0.0);
 
         const int n = 3;
         Array<OneD, NekDouble> points(n + 1, 0.0);
 
-        edge->GetXmap()->BwdTrans(edge->GetCoeffs(coordDir), x);
-        edge->GetXmap()->PhysDeriv(x, xder);
-        edge->GetXmap()->PhysDeriv(xder, xder2);
+        xmaps[edgeID]->BwdTrans(coeffs[edgeID], x);
+        xmaps[edgeID]->PhysDeriv(x, xder);
+        xmaps[edgeID]->PhysDeriv(xder, xder2);
 
         for (int i = 0; i < n + 1; ++i)
         {
@@ -420,9 +448,9 @@ std::pair<NekDouble, NekDouble> Geometry::FindMinMaxCoord(int coordDir)
 
             for (int j = 0; j < 10; ++j)
             {
-                NekDouble xc       = edge->GetXmap()->PhysEvaluate(xi, x);
-                NekDouble xc_derx  = edge->GetXmap()->PhysEvaluate(xi, xder);
-                NekDouble xc_derxx = edge->GetXmap()->PhysEvaluate(xi, xder2);
+                NekDouble xc       = xmaps[edgeID]->PhysEvaluate(xi, x);
+                NekDouble xc_derx  = xmaps[edgeID]->PhysEvaluate(xi, xder);
+                NekDouble xc_derxx = xmaps[edgeID]->PhysEvaluate(xi, xder2);
 
 
                 xi[0] = xi_prev - xc_derx / xc_derxx;
@@ -439,8 +467,8 @@ std::pair<NekDouble, NekDouble> Geometry::FindMinMaxCoord(int coordDir)
 
         const Array<OneD, NekDouble> minusOne(1, -1);
         const Array<OneD, NekDouble> plusOne(1, 1);
-        values.insert(edge->GetXmap()->PhysEvaluate(minusOne, x));
-        values.insert(edge->GetXmap()->PhysEvaluate(plusOne, x));
+        values.insert(xmaps[edgeID]->PhysEvaluate(minusOne, x));
+        values.insert(xmaps[edgeID]->PhysEvaluate(plusOne, x));
     }
 
     const auto res =
