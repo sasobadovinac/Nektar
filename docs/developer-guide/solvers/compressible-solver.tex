@@ -3,6 +3,41 @@
 
 In this chapter, we walk the reader through our 2D and 3D compressible Navier-Stokes Solver (CompressibleFlowSolver). 
 \section{Fundamental Theories of CompressibleFlowSolver}
+The governing equation systems includes continuity equation, momentum equations and energy equation. Write in conservative form 
+\begin{equation}
+  \frac{\partial U}{\partial t}+
+  \sum\limits_{i=1}^{d}{\frac{\partial F_{i}(U)}{\partial x_{i}}}
+  =\sum\limits_{i=1}^{d}{\frac{\partial G_{i}(U,\nabla U)}{\partial x_{i}}}
+\end{equation}
+where $U=[\rho,\rho u_{1} \hdots \rho u_{d},E]^{T}$
+
+Invisid flux F in i direction is
+\begin{equation}
+  F_{i}=
+\begin{bmatrix}
+  \rho u_{i}\\
+  \rho u_{1}u_{i}+\delta_{1,i}P\\
+  \vdots\\
+  \rho u_{d}u_{i}+\delta_{d,i}P\\
+  u_{i}(E+P)
+\end{bmatrix}
+\end{equation}
+where total energy $E=\rho (c_{v}T+|\textbf{u}^{2}|/2)$, pressure $P=(\gamma-1)(E-\rho |\textbf{u}^{2}|/2)$
+
+Viscous flux G in i direction is
+\begin{equation}
+  G_{i}=
+\begin{bmatrix}
+  0\\
+  \tau_{i1}\\
+  \vdots\\
+  \tau_{id}\\
+  \sum\limits_{j=1}^{d}{u_{j}\tau_{ij}}-q_{i}
+\end{bmatrix}
+\end{equation}
+where viscous term $\tau_{ij}=\mu(\frac{\partial u_{i}}{\partial x_{j}}+\frac{\partial u_{j}}{\partial x_{i}}-\frac{2}{3}\nabla \cdot\textbf{u}\delta_{ij})$ and heat flux $\textbf{q}=-\kappa \nabla T$
+
+
 \clearpage
 \section{Data Structure of CompressibleFlowSolver}
    \begin{figure}
