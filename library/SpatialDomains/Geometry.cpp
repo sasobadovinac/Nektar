@@ -386,8 +386,8 @@ void Geometry::GenBoundingBox()
         for (int j = 0; j < GetCoordim(); ++j)
         {
             auto minMax = FindMinMaxCoord(j);
-            min[j] = minMax.first;
-            max[j] = minMax.second;
+            min[j]      = minMax.first;
+            max[j]      = minMax.second;
         }
     }
 
@@ -398,7 +398,7 @@ void Geometry::GenBoundingBox()
 
 std::pair<NekDouble, NekDouble> Geometry::FindMinMaxCoord(int coordDir)
 {
-    int numEdges = 0;
+    int numEdges = -1;
     if (GetShapeDim() == 1)
     {
         numEdges = 1;
@@ -408,27 +408,25 @@ std::pair<NekDouble, NekDouble> Geometry::FindMinMaxCoord(int coordDir)
         numEdges = GetNumEdges();
     }
 
-    ASSERTL0(numEdges != 0, "Shape dimension is not supported.")
+    ASSERTL0(numEdges != -1, "Shape dimension is not supported.")
 
     Array<OneD, Array<OneD, const NekDouble>> coeffs(numEdges);
     Array<OneD, StdRegions::StdExpansionSharedPtr> xmaps(numEdges);
-
     if (GetShapeDim() == 1)
     {
         coeffs[0] = m_coeffs[coordDir];
-        xmaps[0] = m_xmap;
+        xmaps[0]  = m_xmap;
     }
     else if (GetShapeDim() == 2)
     {
         for (int edgeID = 0; edgeID < numEdges; ++edgeID)
         {
             coeffs[edgeID] = GetEdge(edgeID)->GetCoeffs(coordDir);
-            xmaps[edgeID] = GetEdge(edgeID)->GetXmap();
+            xmaps[edgeID]  = GetEdge(edgeID)->GetXmap();
         }
     }
 
     std::unordered_set<NekDouble> values;
-
     for (int edgeID = 0; edgeID < numEdges; ++edgeID)
     {
         const int nq = xmaps[edgeID]->GetTotPoints();
@@ -445,17 +443,16 @@ std::pair<NekDouble, NekDouble> Geometry::FindMinMaxCoord(int coordDir)
         {
             Array<OneD, NekDouble> xi(1, (i * (2.0 / n) - 1.0));
             NekDouble xi_prev = xi[0];
-
             for (int j = 0; j < 10; ++j)
             {
                 NekDouble xc       = xmaps[edgeID]->PhysEvaluate(xi, x);
                 NekDouble xc_derx  = xmaps[edgeID]->PhysEvaluate(xi, xder);
                 NekDouble xc_derxx = xmaps[edgeID]->PhysEvaluate(xi, xder2);
 
-
                 xi[0] = xi_prev - xc_derx / xc_derxx;
 
-                if ((abs(xi[0] - xi_prev) < 1e-10) && (xi[0] >= -1) && (xi[0] <= 1))
+                if ((abs(xi[0] - xi_prev) < 1e-10) && (xi[0] >= -1) &&
+                    (xi[0] <= 1))
                 {
                     values.insert(xc);
                     break;
@@ -471,8 +468,7 @@ std::pair<NekDouble, NekDouble> Geometry::FindMinMaxCoord(int coordDir)
         values.insert(xmaps[edgeID]->PhysEvaluate(plusOne, x));
     }
 
-    const auto res =
-        std::minmax_element(std::begin(values), std::end(values));
+    const auto res = std::minmax_element(std::begin(values), std::end(values));
     return std::make_pair(*res.first, *res.second);
 }
 
