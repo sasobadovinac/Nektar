@@ -17,7 +17,7 @@ int main(int argc, char *argv[])
     LibUtilities::SessionReaderSharedPtr session = LibUtilities::SessionReader::CreateInstance(argc, argv);
     MeshGraphSharedPtr graph = MeshGraph::Read(session);
 
-    auto bbox = graph->GetAllQuadGeoms()[0]->GetBoundingBox();
+    auto bbox = graph->GetGeometry2D(0)->GetBoundingBox();
 
     Array<OneD, NekDouble> min(2), max(2);
 
