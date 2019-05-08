@@ -2,11 +2,213 @@
 \chapter{CompressibleFlowSolver: Solving the Compressible Navier-Stokes Equations}
 
 In this chapter, we walk the reader through our 2D and 3D compressible Navier-Stokes Solver (CompressibleFlowSolver). 
-\section{Fundamental Theories of CompressibleFlowSolver}
+\section{Fundamental Theory of CompressibleFlowSolver}
+The governing equation systems include continuity equation, momentum equations and energy equation. Written in conservative form 
+\begin{equation}\label{eq1}
+  \frac{d \textbf{U}}{d t}+
+  \frac{\partial \textbf{F}_{i}(U)}{\partial x_{i}}+
+  \frac{\partial \textbf{G}_{i}(U,\nabla U)}{\partial x_{i}}
+  =0
+\end{equation}
+where $\textbf{U}=[\rho,\rho u_{1} \hdots \rho u_{d},E]^{T}$ is the vector of conservative variables.
+
+And the inviscid flux $\textbf{F}$ in $i^{th}$ direction is
+\begin{equation}
+  \textbf{F}_{i}=
+\begin{bmatrix}
+  \rho u_{i}\\
+  \rho u_{1}u_{i}+\delta_{1,i}p\\
+  \vdots\\
+  \rho u_{d}u_{i}+\delta_{d,i}p\\
+  u_{i}(E+p)
+\end{bmatrix}
+\end{equation}
+where total energy $E=\rho (c_{v}T+u_{i}u_{i}/2)$, pressure $p=(\gamma-1)(E-\rho u_{i}u_{i}/2)$
+
+The viscous flux $\textbf{G}$ in $i^{th}$ direction is
+\begin{equation}\label{eq7}
+  \textbf{G}_{i}=
+\begin{bmatrix}
+  0\\
+  -\tau_{i1}\\
+  \vdots\\
+  -\tau_{id}\\
+  q_{i}-\sum\limits_{j=1}^{d}{u_{j}\tau_{ij}}
+\end{bmatrix}
+\end{equation}
+where the viscous tensor $\tau_{ij}=\mu(\frac{\partial u_{i}}{\partial x_{j}}+\frac{\partial u_{j}}{\partial x_{i}}-\frac{2}{3}\frac{\partial u_{i}}{\partial x_{i}}\delta_{ij})$ and heat flux $q_{i}=-\kappa \frac{\partial T_{i}}{\partial x_{i}}$
+
+In Nektar++, after the spatial discretization utilizing dicountinous Galerkin formulation, multiplied by a test function $\phi$, integrating inside an element $K\in \Omega_{h}$, we obtain Eequation \eqref{eq4}, , where $\Omega_{h}$ is the total computational region
+\begin{equation}\label{eq4}
+\int_{K}{\frac{d \textbf{U}^{e}}{d t}\phi^{e} dx}+I_{inv}+I_{vis}=0
+\end{equation}
+where
+\begin{equation}\label{eq2}
+I_{inv}={\int_{\partial K}{\sum\limits_{i=1}^{d}{\widetilde{\textbf{F}^{e}_{i}}(U)n_{i}\phi^{e}}}dS}-
+{\int_{K}{\sum\limits_{i=1}^{d}{\textbf{F}^{e}_{i}(U)\frac{\partial \phi^{e}}{\partial x_{i}}dx}}}
+\end{equation}
+\begin{equation}\label{eq3}
+I_{vis}= {\int_{\partial K}{\sum\limits_{i=1}^{d}{\widetilde{\textbf{G}}^{e}_{i}(U,\nabla U)n_{i}\phi^{e}}}dS}-
+{\int_{K}{\sum\limits_{i=1}^{d}{\textbf{G}^{e}_{i}(U,\nabla U)\frac{\partial \phi^{e}}{\partial x_{i}}dx}}}
+\end{equation}
+are the inviscid and viscus fluxes.
+
+Different flux terms such as Equation \eqref{eq2} and \eqref{eq3} and source terms are treated separately and transferred through member variables as shown in the diagram \ref{fig5}.
+Various advection flux $\widetilde{\textbf{F}}$ and diffusion flux $\widetilde{\textbf{G}}(U,\nabla U)$ are supported in Nektar++ CompressibleSolver. And each specific type of flux such as LDG (DiffusionLDGNS) and Interior Penalty (DiffusionIP) diffusion fluxes inherit from their general flux class (Diffison).
+
+\section{Advection flux $\textbf{F}_{i}$}
+The following section takes AdvectionWeakDG.cpp as an example to demonstrate how the advection flux is calculated in Nektar++, where we have adopted the matrix notation from \cite{KaSh05} and a summary is proivded in Table \ref{table2}
+
+Separate the advection flux from Equation \eqref{eq4}.
+\begin{equation}
+\int_{K}{\frac{d \textbf{U}^{e}}{d t}\phi^{e} dx}+I_{inv}=0
+\end{equation}
+
+Transforming Equation \eqref{eq4} into elemental matrix form, we obtain
+\begin{equation}\label{eq5}
+(B^{e})^{T}W^{e}B^{e}\frac{d \hat{\textbf{U}}^{e}}{d t}
+-\sum\limits_{i=1}^{d}{(D^{e}_{x_{i}} B^{e})^{T}}W^{e}B^{e}\hat{\textbf{F}}^{e}_{i}+
+b^{e}
+=0
+\end{equation}
+where the integration of elemental trace flux is denoted by $b^{e}=\sum\limits_{i=1}^{d}{B^{e}\widetilde{\textbf{F}}^{e}_{i}}n_{i}$ and this further involves the evaluation of a Riemann flux $\widetilde{\textbf{F}_{i}}=\textbf{F}^{e}_{i}(U^{+},U^{-})$.
+
+\begin {table}[H]
+\caption {Item explanation} \label{table2} 
+\begin{center}
+\scalebox{0.9}[1.]{
+\begin{tabular}{| c|c|c|c|}
+  \hline      
+$\phi^{e}$ & $\frac{\partial \phi^{e}}{\partial x_{i}}$& Diagonal weight matrix & Coefficients\\
+  \hline
+$B^{e}$ &$(D^{e}_{x_{i}} B^{e})^{T}$& $W^{e}$& $\hat{U}^{e}$,$\hat{F}^{e}$\\
+  \hline
+\end{tabular}
+}
+\end{center}
+\end{table}
+
+Now writing Equation \eqref{eq5} in semi-discretization form.
+\begin{equation}\label{eq8}
+\frac{d \hat{\textbf{U}}^{e}}{d t}
+=((B^{e})^{T}W^{e}B^{e})^{-1}(\sum\limits_{i=1}^{d}{(D^{e}_{x_{i}} B^{e})^{T}}W^{e}B^{e}\hat{\textbf{F}}^{e}_{i}-
+b^{e})
+\end{equation}
+where we note the elemental mass matrix is mass matrix $M^{e}=(B^{e})^{T}W^{e}B^{e}$.
+
+Table \ref{table1} lists some functions that the process to calculate the advection term and provides a mapping from the Nektar++ compressible flow solver name to the mathematical operations they perofrm 
+\begin {table}[h]
+\caption {Table of variable and function mapping used in the compressible flow solver to their mathemaitcal operations} \label{table1} 
+\begin{center}
+\scalebox{0.9}[1.]{
+\begin{tabular}{ | c | c|}
+  \hline      
+Variable/Function name & Physical meaning \\  
+  \hline
+  fluxVector  & Advection volume flux: $\textbf{F}_{i}$\\
+  \hline
+  numflux  & Advection (Riemann) numerical flux at trace: $\widetilde{\textbf{F}}_{i}$\\
+   \hline
+  IProductWRTDerivBase &  Volume flux integration: $\sum\limits_{i=1}^{d}{(D^{e}_{x_{i}} B^{e})^{T}}W^{e}B^{e}\hat{\textbf{F}}^{e}_{i}$ \\
+   \hline
+   AddTraceIntegral &  Add surface flux into volume flux interation: $+b^{e}$\\ 
+  \hline
+  MultiplyByElmImvMass& Multiply the inverse of mass matrix to get the flux coefficients $ \hat{\textbf{U}}$\\
+ \hline
+\end{tabular}
+}
+\end{center}
+\end{table}
+
+
+\section{Diffusion flux $\textbf{G}_{i}$}
+The following section takes DiffusionLDGNS.cpp as an example to demonstrate how the diffusion flux is calculated in Nektar++. 
+
+Separate the diffusion flux from Equation \eqref{eq4}.
+\begin{equation}\label{eq6}
+\int_{K}{\frac{d \textbf{U}^{e}}{d t}\phi^{e} dx}+I_{vis}=0
+\end{equation}
+
+As the resolution of diffusion flux is to solve a $2^{nd}$ PDE, it needs two equations to resolve the problem. LDG separates the resolution into two $1^{st}$ PDE.
+
+From Equation \eqref{eq7}, diffusion derivatives $\textbf{G}_{i}(V,\nabla V)$ so that can reduce the computation using primitive variables $\textbf{V}=[u_{1}\hdots u_{d}, T]^{T}$. Therefore, the first step is to calculate the derivatives $\textbf{Q}_{i}=\frac{\partial V}{\partial x_{i}}$
+\begin{equation}\label{eq9}
+\int_{K}{\textbf{Q}^{e}_{i} \phi^{e} dx}=
+{\int_{\partial K}{\widetilde{\textbf{V}}^{e}n_{i}\phi^{e}}dS}-
+\int_{K}{\textbf{V}^{e}\frac{\partial \phi^{e}}{\partial x_{i}}dx}
+\end{equation}
+
+Transforming Equation \eqref{eq9} into elemental matrix form, we obtain
+\begin{equation}\label{eq10}
+\hat{\textbf{Q}}_{i}^{e}
+=((B^{e})^{T}W^{e}B^{e})^{-1}
+((D^{e}_{x_{i}} B^{e})^{T}W^{e}B^{e}\hat{\textbf{V}}^{e}-
+b_{1,i}^{e})
+\end{equation}
+where the integration of elemental trace flux is denoted by $b_{1,i}^{e}=B^{e}\widetilde{\textbf{V}}n_{i}$, which involves the LDG numerical flux $\widetilde{\textbf{V}}=\textbf{V}^{e}_{i}(P^{+},P^{-})$.
+
+When we get the diffusion derivatives $\textbf{G}_{i}$, the process to solve Equation \eqref{eq6} is simliar to the process of Equation \eqref{eq8}.
+\begin{equation}\label{eq8}
+\frac{d \hat{\textbf{U}}^{e}}{d t}
+=((B^{e})^{T}W^{e}B^{e})^{-1}(\sum\limits_{i=1}^{d}{(D^{e}_{x_{i}} B^{e})^{T}}W^{e}B^{e}\hat{\textbf{G}}^{e}_{i}-
+b_{2}^{e})
+\end{equation}
+where the integration of elemental trace flux is denoted by $b_{2}^{e}=\sum\limits_{i=1}^{d}{B^{e}\widetilde{\textbf{G}}^{e}_{i}}n_{i}$, which involves the LDG numerical flux $\widetilde{\textbf{G}_{i}}=\textbf{G}^{e}_{i}(G^{+},G^{-})$.
+
+LDG numerical fluxes in Equations \eqref{eq9} and \eqref{eq8} satisfy
+
+\begin{equation}
+\tilde{\textbf{V}}=\{\textbf{V}\}+C_{12}\cdot [\textbf{V} n]
+\end{equation}
+where $C_{12}$ is a coefficient vector.
+\begin{equation}
+\tilde{\textbf{G}}=\{\textbf{G}\}-C_{12} [\textbf{G} \cdot n]
+\end{equation}
+where $[\quad]$ represents the jump while $\{\quad \}$ represents the average. In Nektar++, $C_{12}=\frac{1}{2}$, $C_{11}$=0
+
+
+Table \ref{table3} lists some functions that the process to calculate the diffusion term and provides a mapping from the Nektar++ compressible flow solver name to the mathematical operations they perofrm.
+\begin {table}[h]
+\caption {Table of variable and function mapping used in the compressible flow solver to their mathemaitcal operations} \label{table3} 
+\begin{center}
+\scalebox{0.9}[1.]{
+\begin{tabular}{ | c | c|}
+\hline      
+Variable/Function name & Physical meaning \\  
+\hline
+v\_NumericalFluxO1  &  Numerical flux $\tilde{\textbf{V}}^{e}$ \\
+\hline
+First IProductWRTDerivBase & Volume flux $(D^{e}_{x_{i}} B^{e})^{T}W^{e}B^{e}\hat{\textbf{V}}^{e}$\\
+\hline
+First AddTraceIntegral& Add numerical flux integration $+b_{1,i}^{e}$ \\
+\hline
+MultiplyByElmImvMass& Multiply the inverse of mass matrix to get the flux coefficients $\textbf{Q}$\\
+\hline
+m\_fluxVectorNS  & Diffusion volume flux: $\textbf{G}_{i}$\\
+\hline
+v\_NumericalFluxO2 & Diffusion numerical flux : $\widetilde{\textbf{G}}_{i}$\\
+ \hline
+Second IProductWRTDerivBase &  Volume flux integration: $\sum\limits_{i=1}^{d}{(D^{e}_{x_{i}} B^{e})^{T}}W^{e}B^{e}\hat{\textbf{G}}^{e}_{i}$ \\
+ \hline
+Second AddTraceIntegral &  Add surface flux into volume flux interation: $+b_{2}^{e}$\\ 
+\hline
+MultiplyByElmImvMass& Multiply the inverse of mass matrix to get the flux coefficients $\hat{\textbf{U}}$\\
+\hline
+\end{tabular}
+}
+\end{center}
+\end{table}
+
+
+
+
+
+
+
 \clearpage
 \section{Data Structure of CompressibleFlowSolver}
    \begin{figure}
-          \caption{CompressibleFlowSolver DataStructure}
+          \caption{CompressibleFlowSolver DataStructure}\label{fig5}
         \centering
         \begin{turn}{90}
         \includestandalone[width=1.2\linewidth]{DataStructure}
