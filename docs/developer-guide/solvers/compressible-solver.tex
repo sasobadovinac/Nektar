@@ -3,15 +3,15 @@
 
 In this chapter, we walk the reader through our 2D and 3D compressible Navier-Stokes Solver (CompressibleFlowSolver). 
 \section{Fundamental Theories of CompressibleFlowSolver}
-The governing equation systems includes continuity equation, momentum equations and energy equation. Write in conservative form 
+The governing equation systems include continuity equation, momentum equations and energy equation. Write in conservative form 
 \begin{equation}\label{eq1}
   \frac{\partial U}{\partial t}+
-  \sum\limits_{i=1}^{d}{\frac{\partial F_{i}(U)}{\partial x_{i}}}
-  =\sum\limits_{i=1}^{d}{\frac{\partial G_{i}(U,\nabla U)}{\partial x_{i}}}
+  \frac{\partial F_{i}(U)}{\partial x_{i}}
+  =\frac{\partial G_{i}(U,\nabla U)}{\partial x_{i}}
 \end{equation}
 where $U=[\rho,\rho u_{1} \hdots \rho u_{d},E]^{T}$
 
-Invisid flux F in i direction is
+Inviscid flux F in i direction is
 \begin{equation}
   F_{i}=
 \begin{bmatrix}
@@ -22,7 +22,7 @@ Invisid flux F in i direction is
   u_{i}(E+P)
 \end{bmatrix}
 \end{equation}
-where total energy $E=\rho (c_{v}T+|\textbf{u}^{2}|/2)$, pressure $P=(\gamma-1)(E-\rho |\textbf{u}^{2}|/2)$
+where total energy $E=\rho (c_{v}T+u_{i}u_{i}/2)$, pressure $P=(\gamma-1)(E-\rho u_{i}u_{i}/2)$
 
 Viscous flux G in i direction is
 \begin{equation}
@@ -37,21 +37,49 @@ Viscous flux G in i direction is
 \end{equation}
 where viscous term $\tau_{ij}=\mu(\frac{\partial u_{i}}{\partial x_{j}}+\frac{\partial u_{j}}{\partial x_{i}}-\frac{2}{3}\nabla \cdot\textbf{u}\delta_{ij})$ and heat flux $\textbf{q}=-\kappa \nabla T$
 
-In Nektar++ current compressible flow solver, DG spatial discretization is in default. Mutiply a test function $\phi$, integrate inside an element $K\in \Omega_{h}$ and sum over all the elements.
+In Nektar++ current compressible flow solver, DG spatial discretization is in default. Multiply a test function $\phi$, integrate inside an element $K\in \Omega_{h}$ and sum over all the elements.
 \begin{equation}
   \sum\limits_{K\in \Omega_{h}}{\int_{K}{\frac{\partial U}{\partial t}\phi dx}}+I_{inv}=I_{vis}
 \end{equation}
 where
+\begin{equation}\label{eq2}
+I_{inv}= \sum\limits_{K\in \Omega_{h}}{\int_{\partial K}{\sum\limits_{i=1}^{d}{\widetilde{F}_{i}(U)n_{i}\phi}}dS}-
+\sum\limits_{K\in \Omega_{h}}{\int_{K}{\sum\limits_{i=1}^{d}{F_{i}(U)\frac{\partial \phi}{\partial x_{i}}dx}}}
+\end{equation}
+\begin{equation}\label{eq3}
+I_{inv}= \sum\limits_{K\in \Omega_{h}}{\int_{\partial K}{\sum\limits_{i=1}^{d}{\widetilde{G}_{i}(U,\nabla U)n_{i}\phi}}dS}-
+\sum\limits_{K\in \Omega_{h}}{\int_{K}{\sum\limits_{i=1}^{d}{G_{i}(U,\nabla U)\frac{\partial \phi}{\partial x_{i}}dx}}}
+\end{equation}
 
-$$I_{inv}= \sum\limits_{K\in \Omega_{h}}{\int_{\partial K}{\sum\limits_{i=1}^{d}{\widetilde{F}_{i}(U)n_{i}\phi}}dS}-
-\sum\limits_{K\in \Omega_{h}}{\int_{K}{\sum\limits_{i=1}^{d}{F_{i}(U)\frac{\partial \phi}{\partial x_{i}}dx}}}$$
-$$I_{inv}= \sum\limits_{K\in \Omega_{h}}{\int_{\partial K}{\sum\limits_{i=1}^{d}{\widetilde{G}_{i}(U,\nabla U)n_{i}\phi}}dS}-
-\sum\limits_{K\in \Omega_{h}}{\int_{K}{\sum\limits_{i=1}^{d}{G_{i}(U,\nabla U)\frac{\partial \phi}{\partial x_{i}}dx}}}$$
+Different flux terms such as Equation \eqref{eq2} and \eqref{eq3} and source terms are treated separated and transfered through member variables as the sketch \ref{fig1} shows.
+Various advection flux $\widetilde{F}$ and diffsion flux $\widetilde{G}(U,\nabla U)$ are supported in Nektar++ CompressibleSolver. And each specific flux such as LDG diffusion flux (LDGNS) inherits from its general flux type (Diffison).
 
-Various numerical advection flux $\widetilde{F}$ and diffsion flux $\widetilde{G}(U,\nabla U)$ are supported in Nektar++ CompressibleSolver.
+Usually inside one specific flux type, the codes includes the following simliar process to caculate the flux. Take AdvectionWeakDG.cpp as an example.
+\begin {table}[!h]
+\caption {AdvectionWeakDG.cpp} \label{table1} 
+\begin{center}
+\scalebox{0.9}[1.]{
+\begin{tabular}{ | c | c|}
+  \hline      
+Variable/Function name & Physical meaning \\  
+  \hline
+  m$\_$fluxVector  & Advection volume flux: $F_{i}$\\
+  \hline
+  numflux  & Advection numerical flux at trace: $\widetilde{F}_{i}$\\
+   \hline
+  IProductWRTDerivBase &  Volume flux integration: $\sum\limits_{K\in \Omega_{h}}{\int_{K}{\sum\limits_{i=1}^{d}{F_{i}(U)\frac{\partial \phi}{\partial x_{i}}dx}}}$ \\
+   \hline
+   AddTraceIntegral &  Add Surface flux into volume flux interation: $+\sum\limits_{K\in \Omega_{h}}{\int_{\partial K}{\sum\limits_{i=1}^{d}{\widetilde{F}_{i}(U)n_{i}\phi}}dS}$\\ 
+  \hline
+  MultiplyByElmImvMass& Multiply the inverse of mass matrix to get the flux coefficients\\
+ \hline
+\end{tabular}
+}
+\end{center}
+\end{table}
 \clearpage
 \section{Data Structure of CompressibleFlowSolver}
-   \begin{figure}
+   \begin{figure}\label{fig1}
           \caption{CompressibleFlowSolver DataStructure}
         \centering
         \begin{turn}{90}
