@@ -112,7 +112,7 @@ FilterParticlesTracking::FilterParticlesTracking(
                      (boost::iequals(sOption, "yes"));
     }
 
-    // Determine if tracking is performed during or after the simulation
+    // Determine order of the time integration
     it = pParams.find("TimeIntegrationOrder");
     if (it == pParams.end())
     {
@@ -219,19 +219,6 @@ FilterParticlesTracking::FilterParticlesTracking(
                 m_session->GetExpressionEvaluator(), it->second);
             m_gravity = equ8.Evaluate();
         }
-        // Determine if InitialVelocity 
-        it = pParams.find("SeedingVelocity");
-        if (it == pParams.end())
-        {
-            m_SV = 1.0; // By default the value of gravity is zero
-            //cout << "- Working without Gravity" << endl;
-        }
-        else
-        {
-            LibUtilities::Equation equ9(
-                m_session->GetExpressionEvaluator(), it->second);
-            m_SV = equ9.Evaluate();
-        }
         
          // Boundary (to evaluate colision)
          it = pParams.find("BoundaryID");
@@ -240,6 +227,20 @@ FilterParticlesTracking::FilterParticlesTracking(
          m_BoundaryString = it->second;
     }
     
+     // Determine if InitialVelocity 
+     it = pParams.find("SeedingVelocity");
+     if (it == pParams.end())
+     {
+         m_SV = 1.0; // By default the value of gravity is zero
+         //cout << "- Working without Gravity" << endl;
+     }
+     else
+     {
+         LibUtilities::Equation equ9(
+             m_session->GetExpressionEvaluator(), it->second);
+         m_SV = equ9.Evaluate();
+     }
+
     // Set Wear evaluation
     it = pParams.find("Wear");
     if (it == pParams.end())
@@ -414,40 +415,41 @@ void FilterParticlesTracking::v_Initialise(
 	
     if (vRank == 0)
     {
-		cout << "Tracking Particles..." <<endl;
-		
-		//Write headers in the csv file
-		m_outputStream << "Time, Rank, Id, x, y, z, particleU, particleV";
-	   
-		if (dim == 3)
-		{
-			m_outputStream << ", particleW";
-		}
-		
-		for (int n = 0; n < pFields.num_elements(); ++n)
-		{
-			m_outputStream << ", " << m_session->GetVariables()[n];
-		}
-		m_outputStream << ", Fx, Fy";
-		if (dim == 3)
-		{
-			m_outputStream << ", Fz";
-		}
-		m_outputStream << endl;
-		
-		
-		if (m_wear)
-	    {
-			if (dim == 2)
-			{
-				m_WearStream<<"x, y, Velocity, angle"<<endl;
-			}
-			if (dim == 3)
-			{
-				m_WearStream<<"x, y, z, Velocity, angle"<<endl;
-			}
-		}
-	}
+         cout << "Tracking Particles..." <<endl;
+         
+         //Write headers in the csv file
+         m_outputStream << "Time, Rank, Id, x, y, z";
+
+        // m_outputStream << "Time, Rank, Id, x, y, z, particleU, particleV";
+        //if (dim == 3)
+        // {
+        //    m_outputStream << ", particleW";
+        // }
+        // 
+        // for (int n = 0; n < pFields.num_elements(); ++n)
+        // {
+        //    m_outputStream << ", " << m_session->GetVariables()[n];
+        // }
+        // m_outputStream << ", Fx, Fy";
+        // if (dim == 3)
+        // {
+        //    m_outputStream << ", Fz";
+        // }
+        m_outputStream << endl;
+         
+         
+         if (m_wear)
+         {
+            if (dim == 2)
+            {
+               m_WearStream<<"x, y, Velocity, angle"<<endl;
+            }
+            if (dim == 3)
+            {
+               m_WearStream<<"x, y, z, Velocity, angle"<<endl;
+            }
+         }
+	 }
 
 
   // Add seed points to m_particles
@@ -521,7 +523,7 @@ void FilterParticlesTracking::v_Finalise(
         m_outputStream.close();
         if(m_wear)
         {
-        m_WearStream.close();
+            m_WearStream.close();
         }
     }
 }
@@ -555,6 +557,7 @@ void FilterParticlesTracking::AdvanceParticles(
         if (particle.m_used)
         {
       	   particle.m_advanceCalls++;
+
             // Store original position of the particle
             for (int i = 0; i < particle.m_dim; ++i)
             {
@@ -574,9 +577,9 @@ void FilterParticlesTracking::AdvanceParticles(
             //~ CheckBoundingBox(particle);
             //~ // Handle collisions if particle left the domain
             HandleCollision(pFields, particle);
-            if (particle.m_eId ==-1)
+            if (particle.m_eId == -1 && particle.m_used == true)
 	         {
-      		    particleCounts[vRank]++; 
+      		    particleCounts[vRank]++;
 	         }
          }	
     }
@@ -603,15 +606,15 @@ void FilterParticlesTracking::AdvanceParticles(
       int j = 0;
       for (auto &particle : m_particles)
       {	
-          if (particle.m_eId==-1 && particle.m_used)
+          if (particle.m_eId == -1 && particle.m_used == true)
           {
-         crossRankSend[j+particleOffsets[vRank]] = vRank;
-         crossParticlesId[j+particleOffsets[vRank]] = particle.m_id;
-         for (int i = 0; i < 3; ++i)
-         {
-            crossParticles[i][j+particleOffsets[vRank]] =  particle.m_newCoord[i];
-         }
-         j++;
+             crossRankSend[j+particleOffsets[vRank]] = vRank;
+             crossParticlesId[j+particleOffsets[vRank]] = particle.m_id;
+             for (int i = 0; i < 3; ++i)
+             {
+                crossParticles[i][j+particleOffsets[vRank]] =  particle.m_newCoord[i];
+             }
+             j++;
           }
       }
        
@@ -651,75 +654,77 @@ void FilterParticlesTracking::AdvanceParticles(
       {
           if (listId[j]>=0)
           {
-           if (crossRankSend[j]>=0 && crossRankRecv[j]>=0)
-           {   
-             Array<OneD, NekDouble> VelForce(2*dim*order, 0.0); 
-             if(vRank == crossRankSend[j])
-             {
-                for (auto &particle : m_particles)
-                {	
-                   if(particle.m_id == crossParticlesId[j])
-                   {   
-                       int order = min(particle.m_advanceCalls, m_intOrder);
-                       for (int k = 0; k < order; ++k)
+              if (crossRankSend[j]>=0 && crossRankRecv[j]>=0)
+              {   
+                Array<OneD, NekDouble> VelForce(2*dim*order, 0.0); 
+                
+                if(vRank == crossRankSend[j])
+                {
+                   for (auto &particle : m_particles)
+                   {	
+                      if(particle.m_id == crossParticlesId[j])
+                      {   
+                         int order = min(particle.m_advanceCalls, m_intOrder);
+                         for (int k = 0; k < order; ++k)
+                         {
+                              for (int i = 0; i < dim; ++i)
+                              {
+                                  VelForce[i+k*dim] = particle.m_particleVelocity[k][i];
+                                  VelForce[(dim*order)+i+k*dim] = particle.m_force[k][i];
+                              }
+                          }
+                          particle.m_used = false;
+                          vComm->GetRowComm()->Send(crossRankRecv[j], VelForce);
+                          break;
+                       }	
+                    }
+                 }
+
+                if(vRank == crossRankRecv[j])
+                {
+                     vComm->GetRowComm()->Recv(crossRankSend[j], VelForce);
+                  
+                     newCoord[0] = crossParticles[0][j];
+                     newCoord[1] = crossParticles[1][j];
+                     newCoord[2] = crossParticles[2][j];
+                   
+                     bool endInsert = true;
+                     // Found a space inside the particle list 
+                     //to  include points in unused positions of m_particles
+                  
+                    for (auto &particle : m_particles)
+                    {
+                       if (particle.m_used == false)
                        {
-                           for (int i = 0; i < dim; ++i)
-                           {
-                               VelForce[i+k*dim] = particle.m_particleVelocity[k][i];
-                               VelForce[(dim*order)+i+k*dim] = particle.m_force[k][i];
-                           }
-                       }
-                    particle.m_used = false;
-                    vComm->GetRowComm()->Send(crossRankRecv[j], VelForce);
-                    break;
-                   }	
-                }
-             }
-             if(vRank == crossRankRecv[j])
-             {
-               vComm->GetRowComm()->Recv(crossRankSend[j], VelForce);
-            
-               newCoord[0] = crossParticles[0][j];
-               newCoord[1] = crossParticles[1][j];
-               newCoord[2] = crossParticles[2][j];
-             
-               bool endInsert = true;
-               // Found a space inside the particle list 
-               //to  include points in unused positions of m_particles
-            
-              for (auto &particle : m_particles)
-              {
-                 if (particle.m_used == false)
-                 {
-                  // Change coordinates of particle
-                  particle.SetCoord(newCoord);
-                  // Obtain new id for particle
-                  particle.SetNewId();
-                  // Change m_used flag
-                  particle.m_used = true;
-                  // Find location of new particle
-                  UpdateLocCoord(pFields, particle);
-                  // Initialise particle velocity to match fluid velocity
-                  InterpSolution(pFields, particle);
-                  // Initialise particle velocity to match fluid velocity
-                  SetToVelForce(VelForce, particle);
-                  endInsert = false; 
-                  break;
-                }	
-              }
-              // Add particle to the end of m_particles
-              if (endInsert)
-              {
-                m_particles.reserve(1);
-                m_particles.emplace_back(dim,pFields.num_elements(),m_intOrder, newCoord);
-                // Find location of new particle	
-                UpdateLocCoord(pFields, m_particles.back());
-                // Initialise particle velocity to match fluid velocity
-                InterpSolution(pFields, m_particles.back());
-                // Initialise particle velocity to match fluid velocity
-                SetToVelForce(VelForce, m_particles.back());
-               }
-             }	
+                        // Change coordinates of particle
+                        particle.SetCoord(newCoord);
+                        // Obtain new id for particle
+                        particle.SetNewId();
+                        // Change m_used flag
+                        particle.m_used = true;
+                        // Find location of new particle
+                        UpdateLocCoord(pFields, particle);
+                        // Initialise particle velocity to match fluid velocity
+                        InterpSolution(pFields, particle);
+                        // Initialise particle velocity to match fluid velocity
+                        SetToVelForce(VelForce, particle);
+                        endInsert = false; 
+                        break;
+                      }	
+                    }
+                    // Add particle to the end of m_particles
+                    if (endInsert)
+                    {
+                      m_particles.reserve(1);
+                      m_particles.emplace_back(dim,pFields.num_elements(),m_intOrder, newCoord);
+                      // Find location of new particle	
+                      UpdateLocCoord(pFields, m_particles.back());
+                      // Initialise particle velocity to match fluid velocity
+                      InterpSolution(pFields, m_particles.back());
+                      // Initialise particle velocity to match fluid velocity
+                      SetToVelForce(VelForce, m_particles.back());
+                     }
+                 }	
             }
           }
           else
@@ -731,15 +736,14 @@ void FilterParticlesTracking::AdvanceParticles(
                    {	
                         if(particle.m_id == crossParticlesId[j])
                         {   
-                           // Handle collisions if particle left the domain
-                           // HandleCollision(pFields, particle);
-
-                            // Particle is unused because I wanna know why
-                            cout<<"Particle unused  because I wanna know why ID: "
-                                <<particle.m_id<<" Cross: "<<particle.m_eId<<endl;
-                            particle.m_used         = false;
-                            particle.m_advanceCalls = 0;
-
+                          //Handle collisions if particle left the domain
+                          HandleCollision(pFields, particle);
+                           if (particle.m_eId == -1 && particle.m_used == true)
+                           {
+                              cout<<"740 Particle unused ID: "<<particle.m_id<<endl;
+                              particle.m_used         = false;
+                              particle.m_advanceCalls = 0;
+                           }
                         }	
                    }
                }
@@ -936,25 +940,35 @@ void FilterParticlesTracking::InterpSolution(
     Particle &particle)
 {
 	if (particle.m_used == true)
-     {	
-    	Array<OneD, NekDouble> physvals;
+   {	
+      int nq = pFields[0]->GetExp(particle.m_eId)->GetTotPoints();
+    	Array<OneD, NekDouble > grad(nq);
+    	Array<OneD, Array<OneD, NekDouble> > physvals(pFields.num_elements());
+
 		for (int i = 0; i < pFields.num_elements(); ++i)
 		{
-			physvals = pFields[i]->UpdatePhys() +
+			physvals[i] = pFields[i]->UpdatePhys() +
 					   pFields[i]->GetPhys_Offset(particle.m_eId);
 
-			particle.m_fields[i] =
-				pFields[i]
-					->GetExp(particle.m_eId)
-					->StdPhysEvaluate(particle.m_locCoord, physvals);
+			particle.m_fields[i] = pFields[i] ->GetExp(particle.m_eId)
+                     ->StdPhysEvaluate(particle.m_locCoord, physvals[i]);
 		}
+      for (int j=0; j<particle.m_dim; j++)
+      {
+          for (int k=0; k<particle.m_dim; k++)
+          {
+             pFields[k] ->GetExp(particle.m_eId)->
+                 PhysDeriv(k,physvals[j], grad);
+        
+             particle.m_grad[k][j] = 
+                  pFields[k] ->GetExp(particle.m_eId)
+                   ->StdPhysEvaluate(particle.m_locCoord, grad);
+          }
+         // TO DO: This could be changed later to allow solvers using different
+	   	//        variables (e.g. compressible flow solver)
+			particle.m_fluidVelocity[j] = particle.m_fields[j];
+      }
 
-		// TO DO: This could be changed later to allow solvers using different
-		//        variables (e.g. compressible flow solver)
-		for (int i = 0; i < particle.m_dim; ++i)
-		{
-			particle.m_fluidVelocity[i] = particle.m_fields[i];
-		}
 	}	
 }
 
@@ -999,7 +1013,7 @@ void FilterParticlesTracking::SetToFluidVelocity(Particle &particle)
 {
     for (int i = 0; i < particle.m_dim; ++i)
     {
-        particle.m_particleVelocity[0][i] = m_SV *particle.m_fluidVelocity[i];
+       particle.m_particleVelocity[0][i] = m_SV * particle.m_fluidVelocity[i];
     }
 }
 
@@ -1065,11 +1079,12 @@ void FilterParticlesTracking::CalculateForce(Particle &particle)
 
     // Particular Re evaluation
     NekDouble Re = 0.0, Cd = 0.0, Fd = 0.0;
+    Array<OneD, NekDouble> VelRel(particle.m_dim);
+    
     for (int i = 0; i < particle.m_dim; ++i)
     {
-        Re +=
-            pow(particle.m_fluidVelocity[i] - particle.m_particleVelocity[0][i],
-                2.0);
+       VelRel[i] = particle.m_fluidVelocity[i] - particle.m_particleVelocity[0][i];
+       Re += pow(VelRel[i], 2.0);
     }
     Re = sqrt(Re) * m_diameter / m_kinvis;
 
@@ -1088,17 +1103,37 @@ void FilterParticlesTracking::CalculateForce(Particle &particle)
         Cd = (24.0 / Re) * (1.0 + 0.15 * pow(Re, 0.687));
     }
     else
-    {
+    {   
         Cd = 0.44;
     }
     // Evaluate the drag force
     Fd = (3.0 * m_kinvis * Cd * Re) / (4.0 * m_SG * pow(m_diameter, 2.0));
-
     for (int i = 0; i < particle.m_dim; ++i)
     {
-        particle.m_force[0][i] = Fd * (particle.m_fluidVelocity[i] -
-                                       particle.m_particleVelocity[0][i]);
+        particle.m_force[0][i] = Fd * VelRel[i];
     }
+
+    /* // Evaluate lift force */
+    /* // */
+    /* if (particle.m_dim=3) */
+    /* { */
+    /*  Fl[0] = VelRel[1]*(particle.m_grad[1][0]-particle.m_grad[0][1]) */
+    /*        - VelRel[2]*(particle.m_grad[0][2]-particle.m_grad[2][0]); */
+     
+    /*  Fl[1] = VelRel[2]*(particle.m_grad[2][1]-particle.m_grad[1][2]); */
+    /*        - VelRel[0]*(particle.m_grad[1][0]-particle.m_grad[0][1]); */
+
+    /*  Fl[2] = VelRel[0]*(particle.m_grad[0][2]-particle.m_grad[2][0]); */
+    /*        - VelRel[1]*(particle.m_grad[2][1]-particle.m_grad[1][2]); */
+    /* } */
+    /* if (particle.m_dim=2) */
+    /* { */
+    /*  Fl[0] =  VelRel[1]*(particle.m_grad[1][0]-particle.m_grad[0][1]); */
+     
+    /*  Fl[1] = -VelRel[0]*(particle.m_grad[1][0]-particle.m_grad[0][1]); */
+    /* } */
+
+
 
     // Add gravity and buoyancy effects on y direction
     /* particle.m_force[0][1] += m_gravity * (1.0 - 1.0 / m_SG); */
@@ -1116,8 +1151,8 @@ void FilterParticlesTracking::HandleCollision(
 {
     NekDouble distN = 0.0;
 //    while (particle.m_eId == -1 && particle.m_used == true)
-    if (particle.m_eId == -1 && particle.m_used == true)
-    {
+if (particle.m_eId == -1 && particle.m_used == true && m_fluidParticles == false)
+{
         // Boundary Expansion:  Boundary list
         Array<OneD, const MultiRegions::ExpListSharedPtr> bndExp;
         bndExp = pFields[0]->GetBndCondExpansions();
@@ -1126,7 +1161,6 @@ void FilterParticlesTracking::HandleCollision(
         NekDouble maxDotProd = 0.0, dotProd = 0.0, ScaleDP = 0.0;
         Array<OneD, double> minNormal(3);
         int minBnd = -1;
-        
         // Loop over each boundary finding cross point
         for (int nb = 0; nb < bndExp.num_elements(); ++nb)
         {
@@ -1194,10 +1228,10 @@ void FilterParticlesTracking::HandleCollision(
 	
         // Check is the particle collision or leave the domain
         if (minBnd != -1 )
-         {
+        {
               if (m_boundaryRegionIsInList[minBnd] == 1 )
-              {
-                  //Particle collisioned
+              {   
+                  // Particle collisioned
                   // Magnitude and directions of incident vector
                   NekDouble VecMag = 0.0;
                   Array<OneD, NekDouble> VecDir(3, 0.0);          
@@ -1207,6 +1241,7 @@ void FilterParticlesTracking::HandleCollision(
                                  - particle.m_oldCoord[i],2);
                   }
                   VecMag = sqrt(VecMag);
+                  
                   for (int i = 0; i < particle.m_dim; ++i)
                   {
                       VecDir[i] =  (particle.m_newCoord[i]
@@ -1257,7 +1292,7 @@ void FilterParticlesTracking::HandleCollision(
                   // Update coordinates
                   for (int i = 0; i < particle.m_dim; ++i)
                   {
-                      //particle.m_oldCoord[i] = collPnt[i];
+                     // particle.m_oldCoord[i] = collPnt[i];
 
                       particle.m_newCoord[i] = collPnt[i] +
                                                (particle.m_newCoord[i] - collPnt[i]) -
@@ -1300,46 +1335,50 @@ void FilterParticlesTracking::HandleCollision(
                   }
                   
                   // Evaluate the change in the collision position
-                  distN = 1.0;
+                  distN = 0.0;
                   for (int i = 0; i < particle.m_dim; ++i)
                   {
                       //distN += pow(collPnt[i] - collPntOLD[i], 2);
                       distN += pow(collPnt[i] - particle.m_newCoord[i], 2);
                   }
 
-                  if (distN < m_diameter / 2.0)
+                  if (distN < m_diameter / 1000.0)
                   {
-                      // Particle  is stalled
+                     //Particle  is stalled
                      cout<<"Particle stalled after collision ID: "<<particle.m_id<<" distance: "<<distN <<endl;
                      particle.m_used         = false;
                      particle.m_advanceCalls = 0;
                   }
               }
-         }
-     }
-     else
-     {
-         // Evaluate the change in the position when the parcticle no collisioned
-         if (particle.m_advanceCalls == -1 )
+        }
+        else
+        {
+            // Evaluate the change in the position when the parcticle no collisioned
+            //cout<<" Particle is not in the domain but we can't found the edge ID: "<<particle.m_id<<endl;
+            //particle.m_used         = false;
+            //particle.m_advanceCalls = 0;
+            
+            if (particle.m_advanceCalls > 100 )
             {
-               distN = 0.0;
-               for (int i = 0; i < particle.m_dim; ++i)
-               {
-                   //distN += pow(collPnt[i] - collPntOLD[i], 2);
-                   distN += pow(particle.m_oldCoord[i] - particle.m_newCoord[i], 2);
-                   //cout<<" ID: "<<particle.m_id<<" distance: "<<distN <<endl;
-               }
+                  distN = 0.0;
+                  for (int i = 0; i < particle.m_dim; ++i)
+                  {
+                      //distN += pow(collPnt[i] - collPntOLD[i], 2);
+                      distN += pow(particle.m_oldCoord[i] - particle.m_newCoord[i], 2);
+                      //cout<<" ID: "<<particle.m_id<<" distance: "<<distN <<endl;
+                  }
 
-               if (distN <m_diameter)
-               {
-                   // Particle  is stalled
-                   cout<<" Particle stalled without collision ID: "<<particle.m_id<<" distance: "<<distN <<endl;
-                   cout<<" iter "<<particle.m_advanceCalls<<endl;
-                particle.m_used         = false;
-                particle.m_advanceCalls = 0;
+                  if (distN < m_diameter / 1000.0)
+                  {
+                      // Particle  is stalled
+                     cout<<" Particle stalled without collision ID: "<<particle.m_id<<" distance: "<<distN <<endl;
+                     cout<<" iter "<<particle.m_advanceCalls<<endl;
+                     particle.m_used         = false;
+                     particle.m_advanceCalls = 0;
+                  }
             }
-         }
-     } 
+        } 
+}
 }
 
 /**
@@ -1384,24 +1423,24 @@ const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields)
                     << boost::format("%25.19e") % particle.m_newCoord[n];
             }
 
-            for (int n = 0; n < particle.m_dim; ++n)
-            {
-                m_outputStream << ", "
-                               << boost::format("%25.19e") %
-                                      particle.m_particleVelocity[0][n];
-            }
+            /* for (int n = 0; n < particle.m_dim; ++n) */
+            /* { */
+            /*     m_outputStream << ", " */
+            /*                    << boost::format("%25.19e") % */
+            /*                           particle.m_particleVelocity[0][n]; */
+            /* } */
 
-            for (int n = 0; n < particle.m_fields.num_elements(); ++n)
-            {
-                m_outputStream
-                    << ", " << boost::format("%25.19e") % particle.m_fields[n];
-            }
-            for (int n = 0; n < particle.m_dim; ++n)
-            {
-                m_outputStream
-                    << ", "
-                    << boost::format("%25.19e") % particle.m_force[0][n];
-            }
+            /* for (int n = 0; n < particle.m_fields.num_elements(); ++n) */
+            /* { */
+            /*     m_outputStream */
+            /*         << ", " << boost::format("%25.19e") % particle.m_fields[n]; */
+            /* } */
+            /* for (int n = 0; n < particle.m_dim; ++n) */
+            /* { */
+            /*     m_outputStream */
+            /*         << ", " */
+            /*         << boost::format("%25.19e") % particle.m_force[0][n]; */
+            /* } */
             m_outputStream << endl;
         }
     }

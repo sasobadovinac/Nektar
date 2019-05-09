@@ -68,6 +68,11 @@ struct Particle
             m_force[i]         = Array<OneD, NekDouble> (m_dim, 0.0);
             m_particleVelocity[i] = Array<OneD, NekDouble> (m_dim, 0.0);
         }
+        m_grad = Array<OneD,Array<OneD,NekDouble> >(m_dim*m_dim);
+        for (int i = 0; i < m_dim*m_dim; ++i)
+        {
+            m_grad[i] = Array<OneD, NekDouble> (m_dim, 0.0);
+        }
 
         // Store coordinates
         SetCoord(newCoord);
@@ -116,8 +121,10 @@ struct Particle
     Array<OneD, NekDouble>          m_fields;
     /// Force acting on the particle
     Array<OneD, Array<OneD, NekDouble>> m_force;
+    /// Gradiend acting on the particle
+    Array<OneD, Array<OneD, NekDouble>> m_grad;
     /// Counter of times particles were advanced
-    unsigned int                            m_advanceCalls;
+    unsigned int                    m_advanceCalls;
 };
 
 
