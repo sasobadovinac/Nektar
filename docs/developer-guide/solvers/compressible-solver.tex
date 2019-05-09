@@ -51,7 +51,7 @@ I_{inv}= \sum\limits_{K\in \Omega_{h}}{\int_{\partial K}{\sum\limits_{i=1}^{d}{\
 \sum\limits_{K\in \Omega_{h}}{\int_{K}{\sum\limits_{i=1}^{d}{G_{i}(U,\nabla U)\frac{\partial \phi}{\partial x_{i}}dx}}}
 \end{equation}
 
-Different flux terms such as Equation \eqref{eq2} and \eqref{eq3} and source terms are treated separated and transfered through member variables as the sketch \ref{fig1} shows.
+Different flux terms such as Equation \eqref{eq2} and \eqref{eq3} and source terms are treated separated and transferred through member variables as the sketch \ref{fig1} shows.
 Various advection flux $\widetilde{F}$ and diffsion flux $\widetilde{G}(U,\nabla U)$ are supported in Nektar++ CompressibleSolver. And each specific flux such as LDG diffusion flux (LDGNS) inherits from its general flux type (Diffison).
 
 Usually inside one specific flux type, the codes includes the following simliar process to caculate the flux. Take AdvectionWeakDG.cpp as an example.
