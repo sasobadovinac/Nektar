@@ -79,6 +79,8 @@ namespace Nektar
 
         private:
 
+            Array<OneD, NekDouble> m_bcweights;
+
             // Virtual Functions ----------------------------------------
 
             virtual int v_GetCoordim(void)
