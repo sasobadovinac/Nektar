@@ -104,7 +104,12 @@ namespace Nektar
         m_fields  = Array<OneD, MultiRegions::ExpListSharedPtr> (m_nVariables);
         m_vessels = Array<OneD, MultiRegions::ExpListSharedPtr> (m_nVariables*m_nDomains);
 
-        const std::vector<SpatialDomains::CompositeMap> domain = m_graph->GetDomain();
+        const std::map<int, SpatialDomains::CompositeMap> domainMap = m_graph->GetDomain(); //@todo rewrite all so domain is from map, not vector - Ed)
+        std::vector<SpatialDomains::CompositeMap> domain;
+        for (auto i : domainMap)
+        {
+            domain.emplace_back(i.second);
+        }
 			
         SpatialDomains::BoundaryConditions Allbcs(m_session, m_graph);
 

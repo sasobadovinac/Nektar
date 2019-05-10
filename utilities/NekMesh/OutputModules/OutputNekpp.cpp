@@ -593,14 +593,15 @@ void OutputNekpp::TransferComposites(MeshGraphSharedPtr graph)
     }
 }
 
-void OutputNekpp::TransferDomain(MeshGraphSharedPtr graph)
+void OutputNekpp::TransferDomain(MeshGraphSharedPtr graph) //@todo Need to have a m_domain in the Mesh class to keep track of numbering - Ed
 {
-    vector<SpatialDomains::CompositeMap> &domain = graph->GetDomain();
-
-    string list;
+    std::map<int, SpatialDomains::CompositeMap> &domain = graph->GetDomain();
+    int cnt = 0;
 
     for(auto &it : m_mesh->m_composite)
     {
+
+        string list;
         if(it.second->m_items[0]->GetDim() == m_mesh->m_expDim)
         {
             if(list.length() > 0)
@@ -608,12 +609,13 @@ void OutputNekpp::TransferDomain(MeshGraphSharedPtr graph)
                 list += ",";
             }
             list += boost::lexical_cast<string>(it.second->m_id);
+
+            SpatialDomains::CompositeMap fullDomain;
+            graph->GetCompositeList(list, fullDomain);
+            domain[cnt] = fullDomain;
+            cnt++;
         }
     }
-
-    SpatialDomains::CompositeMap fullDomain;
-    graph->GetCompositeList(list, fullDomain);
-    domain.push_back(fullDomain);
 }
 
 }
