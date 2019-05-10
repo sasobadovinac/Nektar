@@ -49,10 +49,29 @@ namespace Nektar
     StdExpansion1D::StdExpansion1D(int numcoeffs, const LibUtilities::BasisKey &Ba):
         StdExpansion(numcoeffs,1,Ba)
     {
+        int nq = m_base[0]->GetNumPoints();
+        Array<OneD, NekDouble> z = m_base[0]->GetZ();
+        m_bcweights = Array<OneD, NekDouble>(nq, 1.0);
+
+        for (int i = 0; i < nq; ++i)
+        {
+            for (int j = 0; j < nq; ++j)
+            {
+                if (i == j)
+                {
+                    continue;
+                }
+
+                m_bcweights[i] *= (z[i] - z[j]);
+            }
+
+            m_bcweights[i] = 1.0 / m_bcweights[i];
+        }
     }
 
     StdExpansion1D::StdExpansion1D(const StdExpansion1D &T):StdExpansion(T)
     {
+        m_bcweights = T.m_bcweights;
     }
 
     StdExpansion1D::~StdExpansion1D()
@@ -88,16 +107,34 @@ namespace Nektar
                 const Array<OneD, const NekDouble>& Lcoord,
                 const Array<OneD, const NekDouble>& physvals)
         {
-        int    nquad = GetTotPoints();
-        NekDouble  val;
-        DNekMatSharedPtr I = m_base[0]->GetI(Lcoord);
+            int    nquad = GetTotPoints();
+            /*
+            NekDouble  val;
+            DNekMatSharedPtr I = m_base[0]->GetI(Lcoord);
 
-        ASSERTL2(Lcoord[0] >= -1 - NekConstants::kNekZeroTol,"Lcoord[0] < -1");
-        ASSERTL2(Lcoord[0] <=  1 + NekConstants::kNekZeroTol,"Lcoord[0] >  1");
+            ASSERTL2(Lcoord[0] >= -1 - NekConstants::kNekZeroTol,"Lcoord[0] < -1");
+            ASSERTL2(Lcoord[0] <=  1 + NekConstants::kNekZeroTol,"Lcoord[0] >  1");
+            val = Blas::Ddot(nquad, I->GetPtr(), 1, physvals, 1);
+            */
 
-        val = Blas::Ddot(nquad, I->GetPtr(), 1, physvals, 1);
+            NekDouble numer = 0.0, denom = 0.0;
 
-        return val;
+            const Array<OneD, const NekDouble> z = m_base[0]->GetZ();
+
+            for (int i = 0; i < nquad; ++i)
+            {
+                NekDouble xdiff = z[i] - Lcoord[0];
+                if (xdiff == 0.0)
+                {
+                    return physvals[i];
+                }
+
+                NekDouble tmp = m_bcweights[i] / xdiff;
+                numer += tmp * physvals[i];
+                denom += tmp;
+            }
+
+            return numer / denom;
     }
 	
 	void StdExpansion1D::v_SetUpPhysNormals(const int vertex)
