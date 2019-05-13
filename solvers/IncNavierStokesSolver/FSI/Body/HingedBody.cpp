@@ -340,40 +340,58 @@ void HingedBody::v_Apply(
         int order = min(intCalls, m_intSteps);
 
         int expdim  = pFields[0]->GetGraph()->GetMeshDimension();
-	int nfields = pFields.num_elements();
-	int ncoeffs = pFields[0]->GetNcoeffs();
+        int nfields = pFields.num_elements();
+        int ncoeffs = pFields[0]->GetNcoeffs();
 
-	// Array<OneD, Array<OneD, NekDouble> > SaveCoeffs(nfields);
-	// // If linear advection then base flow is defined and so
-	// // replace coeffs with base flow plus perturbaiton field
- //        if(m_baseFlow.num_elements())
- //        {
- //            // Transform base flow to coefficient in pField and add pert field
- //            for(int i = 0; i < nfields; ++i)
- //            {
-	// 	SaveCoeffs[i] = Array<OneD, NekDouble>(ncoeffs);
-	//         Vmath::Vcopy(ncoeffs,pFields[i]->GetCoeffs(),1,SaveCoeffs[i],1);
-	// 	pFields[i]->FwdTrans_IterPerExp(m_baseFlow[i],
- //                                                pFields[i]->UpdateCoeffs());
-	// 	Vmath::Vadd(ncoeffs,SaveCoeffs[i],1,
- //                            pFields[i]->GetCoeffs(),1,pFields[i]->UpdateCoeffs(),1);
- //            }
- //        }
+        // Array<OneD, Array<OneD, NekDouble> > SaveCoeffs(nfields);
+        // // If linear advection then base flow is defined and so
+        // // replace coeffs with base flow plus perturbaiton field
+        // if(m_baseFlow.num_elements())
+        // {
+        //     // Transform base flow to coefficient in pField and add pert field
+        //     for(int i = 0; i < nfields; ++i)
+        //     {
+        //         SaveCoeffs[i] = Array<OneD, NekDouble>(ncoeffs);
+        //         Vmath::Vcopy(ncoeffs,pFields[i]->GetCoeffs(),1,SaveCoeffs[i],1);
+        //         pFields[i]->FwdTrans_IterPerExp(m_baseFlow[i],
+        //                                         pFields[i]->UpdateCoeffs());
+        //         Vmath::Vadd(ncoeffs,SaveCoeffs[i],1,
+        //                     pFields[i]->GetCoeffs(),1,pFields[i]->UpdateCoeffs(),1);
+        //     }
+        // }
 
         // Get aerodynamic forces
         Array<OneD, NekDouble> moments(expdim, 0.0);
         m_filterForces->GetTotalMoments(pFields, moments, newTime);
 
-  //       if(m_baseFlow.num_elements())
-  //       {
-  //           // Copy back perturbation field to pField. 
-  //           for(int i = 0; i < nfields; ++i)
-  //           {
-		// Vmath::Vcopy(ncoeffs,SaveCoeffs[i],1,pFields[i]->UpdateCoeffs(),1);
-		// pFields[i]->SetPhysState(false);
-  //           }
-  //       }
-        
+        // if(m_baseFlow.num_elements())
+        // {
+        //     // Substract perturbation from base flow
+        //     for(int i = 0; i < nfields; ++i)
+        //     {
+        //         // pFields[i]->FwdTrans_IterPerExp(m_baseFlow[i],
+        //         // pFields[i]->UpdateCoeffs());
+        //         Vmath::Vcopy(ncoeffs,m_baseFlow[i],1,pFields[i]->UpdateCoeffs(),1);
+        //         // Vmath::Vsub(ncoeffs,
+        //         //            pFields[i]->GetCoeffs(),1,SaveCoeffs[i],1,
+        //         //            pFields[i]->UpdateCoeffs(),1);
+        //     }
+
+        //     // calculate forces based on N (transformed mesh)
+        //     Array<OneD, NekDouble> moments1(expdim, 0.0);
+        //     m_filterForces->GetTotalMoments(pFields, moments1, newTime, true);
+
+        //     // Substract moment from base flow to moment from base flow + pert
+        //     Vmath::Vsub(expdim,moments,1,moments1,1,moments,1);
+
+        //     // Copy back perturbation field to pField. 
+        //     for(int i = 0; i < nfields; ++i)
+        //     {
+		      // Vmath::Vcopy(ncoeffs,SaveCoeffs[i],1,pFields[i]->UpdateCoeffs(),1);
+		      // pFields[i]->SetPhysState(false);
+        //     }
+        // }
+
         // Shift moment storage
         for(int n = m_intSteps-1; n > 0; --n)
         {

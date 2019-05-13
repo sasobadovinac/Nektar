@@ -204,6 +204,19 @@ FilterAeroForces::FilterAeroForces(
             }
         }
     }
+
+    // Determine if we are using direct solver
+    m_session->MatchSolverInfo("EvolutionOperator","Direct",
+                                                    m_isLinearAdvection,false);
+
+    /// Get base flow
+    if (m_isLinearAdvection)
+        {
+            AdvectionSystemSharedPtr AdvSys;
+            ASSERTL0(AdvSys = std::dynamic_pointer_cast<AdvectionSystem> (m_equ.lock()),
+            "Failed to dynamically case equation system to AdvSys"); 
+            m_baseFlow = AdvSys->GetAdvObject()->GetBaseFlow();
+        }
 }
 
 /**
@@ -227,10 +240,6 @@ void FilterAeroForces::v_Initialise(
     // Get density and viscosity
     m_session->LoadParameter("rho", m_rho, 1.0);
     m_mu = m_rho*m_session->GetParameter("Kinvis");
-
-    // Determine if we are using direct solver
-    m_session->MatchSolverInfo("EvolutionOperator","Direct",
-                                                    m_isLinearAdvection,false);
 
     // Parse the boundary regions into a list.
     std::string::size_type FirstInd = m_BoundaryString.find_first_of('[') + 1;
@@ -413,7 +422,6 @@ void FilterAeroForces::v_Initialise(
     m_lastTime = -1;
     m_index = 0;
     v_Update(pFields, time);
-
 }
 
 /**
@@ -786,6 +794,7 @@ void FilterAeroForces::CalculateForces(
     //   Note: CalculateForcesMapping should work without a mapping,
     //         but since it is not very efficient the way it is now,
     //         it is only used when actually required
+
     if (m_mapping->IsDefined())
     {
         if (m_isLinearAdvection)
@@ -801,6 +810,15 @@ void FilterAeroForces::CalculateForces(
     {
         CalculateForcesStandard( pFields, time);
     }
+
+    // if (m_mapping->IsDefined()&&(DoStandardForces == false))
+    // {
+    //     CalculateForcesMapping( pFields, time);
+    // }
+    // else
+    // {
+    //     CalculateForcesStandard( pFields, time);
+    // }
     
     // Communicators to exchange results
     LibUtilities::CommSharedPtr vComm = pFields[0]->GetComm();
@@ -1528,6 +1546,7 @@ void FilterAeroForces::CalculateForcesMapping(
                         // Get normals
                         Array<OneD, Array<OneD, NekDouble> > normals =
                             elmt->GetTraceNormal(boundary);
+
                         // Extract values at boundary
                         for(int j = 0; j < nVel*nVel; ++j)
                         {
@@ -1708,15 +1727,6 @@ void FilterAeroForces::CalculateForcesLinear(
     if( m_isHomogeneous1D )
     {
         nVel = nVel + 1;
-    }
-    ///////////// MODIFY HERE
-    VCSMappingSharedPtr VCSMap;
-    m_baseFlow = VCSMap->GetAdvObject()->GetBaseFlow();
-
-    const Array<OneD, const MultiRegions::ExpListSharedPtr> pBase = pFields;
-    for ( int i = 0; i < nVel; ++i)
-    {
-        Vmath::Vcopy(physTot, m_baseFlow[i], 1, pBase[i]->UpdatePhys(), 1);
     }
 
     // Pressure stress tensor 
@@ -1908,7 +1918,7 @@ void FilterAeroForces::CalculateForcesLinear(
     // Calculate PBase^ij = g^ij*P
     for ( int i = 0; i < nVel*nVel; ++i)
     {
-        Vmath::Vmul(physTot, tmp[i], 1, pBase[nVel]->GetPhys(), 1,
+        Vmath::Vmul(physTot, tmp[i], 1, m_baseFlow[nVel], 1,
                     PBase[i]->UpdatePhys(), 1);/////////////////// MODIFED
     }
 
@@ -1950,7 +1960,7 @@ void FilterAeroForces::CalculateForcesLinear(
     for ( int i = 0; i < nVel; ++i)
     {
         wkBase[i] = Array<OneD, NekDouble>(physTot, 0.0);
-        Vmath::Vcopy(physTot, pBase[i]->GetPhys(), 1, wkBase[i], 1);/////////// MODIFED
+        Vmath::Vcopy(physTot, m_baseFlow[i], 1, wkBase[i], 1);/////////// MODIFED
     }
     m_mapping->ApplyChristoffelContravar(wkBase, tmp);
     for ( int i = 0; i < nVel; ++i)
@@ -1958,7 +1968,7 @@ void FilterAeroForces::CalculateForcesLinear(
         for ( int k = 0; k < nVel; ++k)
         {
             pFields[0]->PhysDeriv(MultiRegions::DirCartesianMap[k],
-                                   wkBase[i], gradBase[i*nVel+k]->UpdatePhys());
+                                   wkBase[i], gradBase[i*nVel+k]->UpdatePhys());/////// ???????
 
             Vmath::Vadd(physTot,tmp[i*nVel+k],1,
                                 gradBase[i*nVel+k]->UpdatePhys(), 1,
@@ -2022,7 +2032,7 @@ void FilterAeroForces::CalculateForcesLinear(
                     PPlaneBase[n]    = PBase[n]->GetPlane(m_planesID[plane]);
                     gradPlane[n]     = grad[n]->GetPlane(m_planesID[plane]);
                     gradPlaneBase[n] = gradBase[n]->GetPlane(m_planesID[plane]);
-                    CPlane[n]    = C[n]->GetPlane(m_planesID[plane]);
+                    CPlane[n]        = C[n]->GetPlane(m_planesID[plane]);
                 }
                 for( int n = 0; n < 3; ++n)
                 {
@@ -2053,14 +2063,16 @@ void FilterAeroForces::CalculateForcesLinear(
             {
                 if(m_boundaryRegionIsInList[n] == 1)
                 {
+                    //cout << endl;
                     for (int i = 0; i < BndExp[n]->GetExpSize(); ++i, ++cnt)
                     {
-                        int elmtid = m_BCtoElmtID[cnt];
-                        int offset = PPlane[0]->GetPhys_Offset(elmtid);
+                        int elmtid     = m_BCtoElmtID[cnt];
+                        int offset     = PPlane[0]->GetPhys_Offset(elmtid);
+                        //int offsetBase = PPlaneBase[0]->GetPhys_Offset(elmtid);
                         StdRegions::StdExpansionSharedPtr elmt =
                                 PPlane[0]->GetExp(elmtid);
-                        StdRegions::StdExpansionSharedPtr elmtBase =
-                                PPlaneBase[0]->GetExp(elmtid);
+                        //StdRegions::StdExpansionSharedPtr elmtBase =
+                        //        PPlaneBase[0]->GetExp(elmtid);
 
                         // Extract fields on this element
                         for( int j = 0; j < nVel*nVel; ++j)
@@ -2087,19 +2099,6 @@ void FilterAeroForces::CalculateForcesLinear(
                         // Get number of points on the boundary
                         int nbc = bc->GetTotPoints();
 
-                        // Get normals
-                        Array<OneD, Array<OneD, NekDouble> > normals =
-                            elmt->GetTraceNormal(boundary);
-                        Array<OneD, Array<OneD, NekDouble> > normalsInit =
-                            elmtBase->GetTraceNormal(boundary);
-                        Array<OneD, Array<OneD, NekDouble> > normalsPert =
-                            elmtBase->GetTraceNormal(boundary);
-                        for ( int k = 0; k < expdim; ++k)
-                        {
-                            Vmath::Svtvp (nbc, -1.0, normalsInit[k], 1,
-                                    normals[k], 1, normalsPert[k], 1);
-                        }
-
                         // Extract values at boundary
                         for(int j = 0; j < nVel*nVel; ++j)
                         {
@@ -2107,14 +2106,14 @@ void FilterAeroForces::CalculateForcesLinear(
                             elmt->GetTracePhysVals(boundary,
                                     bc, gradElmt[j], gradBnd[j]);
                             gradBndBase[j] = Array<OneD, NekDouble> (nbc,0.0);
-                            elmtBase->GetTracePhysVals(boundary,
+                            elmt->GetTracePhysVals(boundary,
                                     bc, gradElmtBase[j], gradBndBase[j]);
 
                             PBnd[j] = Array<OneD, NekDouble> (nbc,0.0);
                             elmt->GetTracePhysVals(boundary,
                                     bc, PElmt[j], PBnd[j]);
                             PBndBase[j] = Array<OneD, NekDouble> (nbc,0.0);
-                            elmtBase->GetTracePhysVals(boundary,
+                            elmt->GetTracePhysVals(boundary,
                                     bc, PElmtBase[j], PBndBase[j]);
 
                             CBnd[j] = Array<OneD, NekDouble> (nbc,0.0);
@@ -2133,6 +2132,22 @@ void FilterAeroForces::CalculateForcesLinear(
                         JacBnd = Array<OneD, NekDouble> (nbc,0.0);
                         elmt->GetTracePhysVals(boundary, bc, JacElmt, JacBnd);
 
+                        // Get normals
+                        Array<OneD, Array<OneD, NekDouble> > normals =
+                            elmt->GetTraceNormal(boundary);
+                        Array<OneD, Array<OneD, NekDouble> > normalsPert(nVel);
+
+                        //Get \tilde n = n-N = JN-N
+                        for ( int j = 0; j < nVel; ++j)
+                        {
+                            normalsPert[j] = Array<OneD, NekDouble> (nbc,0.0);
+                            Vmath::Vmul(nbc, JacBnd, 1, normals[j], 1,
+                                        normalsPert[j], 1);
+                            Vmath::Vsub(nbc, normalsPert[j], 1, normals[j], 1,
+                                        normalsPert[j], 1);
+                        }
+                        //cout << "normals[1][1] = " << normals[1][1] << endl;
+
                         // Calculate forces per unit length
 
                         // Pressure component: fp[j] = rho*(P[j,k]*n[k] + p[j,k]*N[k])
@@ -2140,20 +2155,24 @@ void FilterAeroForces::CalculateForcesLinear(
                         {
                             fp[j] = Array<OneD, NekDouble> (nbc,0.0);
                             // Normals only has expdim elements
-                            // fp[j] = p[j,k]*N[k]
-                            for ( int k = 0; k < expdim; ++k)
-                            {
-                                Vmath::Vvtvp (nbc, PBnd[ j*nVel + k], 1,
-                                        normalsInit[k], 1, fp[j], 1, fp[j], 1);
-                            }
-                            // fp[j] = fp[j] + P[j,k]*n[k]
+                            // fp[j] = P[j,k]*n[k]
                             for ( int k = 0; k < expdim; ++k)
                             {
                                 Vmath::Vvtvp (nbc, PBndBase[ j*nVel + k], 1,
                                         normalsPert[k], 1, fp[j], 1, fp[j], 1);
                             }
+                            // Multiply by Jacobian
+                            Vmath::Vmul(nbc, JacBnd, 1, fp[j], 1, fp[j], 1);
+
+                            // fp[j] = fp[j] + p[j,k]*N[k]
+                            for ( int k = 0; k < expdim; ++k)
+                            {
+                                Vmath::Vvtvp (nbc, PBnd[ j*nVel + k], 1,
+                                        normals[k], 1, fp[j], 1, fp[j], 1);
+                            }
                             Vmath::Smul(nbc, m_rho, fp[j], 1, fp[j], 1);
                         }
+
                         // Viscous component:
                         //     fv[j] = -mu*{(gradBase[k,j]+gradBase[j,k]) * n[k]
                         //             + (grad[k,j]+grad[j,k]) * N[k]}
@@ -2168,22 +2187,18 @@ void FilterAeroForces::CalculateForcesLinear(
                                 Vmath::Vvtvp (nbc,gradBndBase[j*nVel+k],1,
                                         normalsPert[k], 1, fv[j], 1, fv[j], 1);
                             }
+                            // Multiply by Jacobian
+                            Vmath::Vmul(nbc, JacBnd, 1, fv[j], 1, fv[j], 1);
+
                             //     fv[j] = fv[j] + (grad[k,j]+grad[j,k]) * N[k]
                             for ( int k = 0; k < expdim; ++k )
                             {
                                 Vmath::Vvtvp (nbc,gradBnd[k*nVel+j],1,
-                                        normalsInit[k], 1, fv[j], 1, fv[j], 1);
+                                        normals[k], 1, fv[j], 1, fv[j], 1);
                                 Vmath::Vvtvp (nbc,gradBnd[j*nVel+k],1,
-                                        normalsInit[k], 1, fv[j], 1, fv[j], 1);
+                                        normals[k], 1, fv[j], 1, fv[j], 1);
                             }
                             Vmath::Smul(nbc, -m_mu, fv[j], 1, fv[j], 1);
-                        }
-
-                        // Multiply by Jacobian
-                        for ( int k = 0; k < nVel; ++k )
-                        {
-                            Vmath::Vmul(nbc, JacBnd, 1, fp[k], 1, fp[k], 1);
-                            Vmath::Vmul(nbc, JacBnd, 1, fv[k], 1, fv[k], 1);
                         }
 
                         // Convert to Cartesian system

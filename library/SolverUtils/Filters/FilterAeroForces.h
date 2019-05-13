@@ -41,7 +41,7 @@
 #include <LocalRegions/Expansion2D.h>
 #include <LocalRegions/Expansion1D.h>
 #include <GlobalMapping/Mapping.h>
-#include <IncNavierStokesSolver/EquationSystems/VCSMapping.h>
+#include <SolverUtils/AdvectionSystem.h>
 
 namespace Nektar
 {
@@ -157,8 +157,8 @@ private:
 
     // Determine if direct solver is used
     bool                                       m_isLinearAdvection;
-    /// Get base flow if linearised solver
-    Array<OneD, const Array<OneD, NekDouble> > m_baseFlow;
+    // Base flow
+    Array<OneD, Array<OneD, NekDouble> >       m_baseFlow;
 
     void CalculateForces(
         const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
