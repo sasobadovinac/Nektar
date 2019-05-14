@@ -1721,7 +1721,6 @@ void FilterAeroForces::CalculateForcesLinear(
 {
     // Get number of quadrature points and dimensions
     int physTot = pFields[0]->GetNpoints();
-    int totPts = pFields[0]->GetTotPoints();
     int expdim = pFields[0]->GetGraph()->GetMeshDimension();
     int momdim = (expdim == 2) ? 1 : 3;
     int nVel = expdim;
@@ -2086,7 +2085,6 @@ void FilterAeroForces::CalculateForcesLinear(
             {
                 if(m_boundaryRegionIsInList[n] == 1)
                 {
-                    cout << endl;
                     for (int i = 0; i < BndExp[n]->GetExpSize(); ++i, ++cnt)
                     {
                         int elmtid     = m_BCtoElmtID[cnt];
@@ -2268,33 +2266,41 @@ void FilterAeroForces::CalculateForcesLinear(
                             Vmath::Smul(nbc, -m_mu, fvBase[j], 1, fvBase[j], 1);
                         }
 
-                        // Convert F' to Cartesian system
+                        // Convert to Cartesian system
                         for ( int k = 0; k < nVel; ++k )
                         {
-                            wk[k] = Array<OneD, NekDouble>(physTot,0.0);
+                            wk[k]     = Array<OneD, NekDouble>(physTot,0.0);
+                            wkBase[k] = Array<OneD, NekDouble>(physTot,0.0);
                             for ( int j = 0; j < nVel; ++j )
                             {
                                 Vmath::Vvtvp(nbc, CBnd[k*nVel+j], 1,
                                         fp[j], 1, wk[k], 1, wk[k], 1);
+                                Vmath::Vvtvp(nbc, CBnd[k*nVel+j], 1,
+                                        fpBase[j], 1, wkBase[k], 1, wkBase[k], 1);
                             }
                         }
                         for ( int k = 0; k < nVel; ++k )
                         {
                             Vmath::Vcopy(nbc, wk[k], 1, fp[k], 1);
+                            Vmath::Vcopy(nbc, wkBase[k], 1, fpBase[k], 1);
                         }
 
                         for ( int k = 0; k < nVel; ++k )
                         {
                             wk[k] = Array<OneD, NekDouble>(physTot,0.0);
+                            wkBase[k] = Array<OneD, NekDouble>(physTot,0.0);
                             for ( int j = 0; j < nVel; ++j )
                             {
                                 Vmath::Vvtvp(nbc, CBnd[k*nVel+j], 1,
                                         fv[j], 1, wk[k], 1, wk[k], 1);
+                                Vmath::Vvtvp(nbc, CBnd[k*nVel+j], 1,
+                                        fvBase[j], 1, wkBase[k], 1, wkBase[k], 1);
                             }
                         }
                         for ( int k = 0; k < nVel; ++k )
                         {
                             Vmath::Vcopy(nbc, wk[k], 1, fv[k], 1);
+                            Vmath::Vcopy(nbc, wkBase[k], 1, fvBase[k], 1);
                         }
 
                         // Calculate moments per unit length (r0 x F') TO MODIFY
