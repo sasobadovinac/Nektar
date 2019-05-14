@@ -2184,8 +2184,6 @@ void FilterAeroForces::CalculateForcesLinear(
                             Vmath::Vsub(nbc, normalsPert[j], 1, normals[j], 1,
                                         normalsPert[j], 1);
                         }
-cout << "normals[1][1] = " << normals[1][1] << endl;
-cout << "normalsPert[1][1] = " << normalsPert[1][1] << endl;
 
                         // Calculate forces per unit length F'
                         // Pressure component: fp[j] = rho*(P[j,k]*n[k] + p[j,k]*N[k])
