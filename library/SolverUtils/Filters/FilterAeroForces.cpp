@@ -1721,6 +1721,7 @@ void FilterAeroForces::CalculateForcesLinear(
 {
     // Get number of quadrature points and dimensions
     int physTot = pFields[0]->GetNpoints();
+    int totPts = pFields[0]->GetTotPoints();
     int expdim = pFields[0]->GetGraph()->GetMeshDimension();
     int momdim = (expdim == 2) ? 1 : 3;
     int nVel = expdim;
@@ -1751,10 +1752,15 @@ void FilterAeroForces::CalculateForcesLinear(
     Array<OneD, Array<OneD, NekDouble> >         gradElmtBase ( nVel*nVel);
     Array<OneD, Array<OneD, NekDouble> >         gradBndBase  ( nVel*nVel);
     // Coordinates
-    Array<OneD, MultiRegions::ExpListSharedPtr>  coords     (3);
-    Array<OneD, MultiRegions::ExpListSharedPtr>  coordsPlane(3);
-    Array<OneD, Array<OneD, NekDouble> >         coordsElmt (3);
-    Array<OneD, Array<OneD, NekDouble> >         coordsBnd  (3);
+    Array<OneD, MultiRegions::ExpListSharedPtr>  coords         (3);
+    Array<OneD, MultiRegions::ExpListSharedPtr>  coordsMesh     (3);
+    Array<OneD, MultiRegions::ExpListSharedPtr>  coordsPlane    (3);
+    Array<OneD, MultiRegions::ExpListSharedPtr>  coordsPlaneMesh(3);
+    Array<OneD, Array<OneD, NekDouble> >         coordsElmt     (3);
+    Array<OneD, Array<OneD, NekDouble> >         coordsElmtMesh (3);
+    Array<OneD, Array<OneD, NekDouble> >         coordsBnd      (3);
+    Array<OneD, Array<OneD, NekDouble> >         coordsBndMesh  (3);
+    Array<OneD, Array<OneD, NekDouble> >         coordsBndPert  (3);
 
     // Transformation to cartesian system
     Array<OneD, MultiRegions::ExpListSharedPtr>  C     ( nVel*nVel);
@@ -1770,11 +1776,15 @@ void FilterAeroForces::CalculateForcesLinear(
 
     // Forces per element length in a boundary
     Array<OneD, Array<OneD, NekDouble> >  fp( nVel );
+    Array<OneD, Array<OneD, NekDouble> >  fpBase( nVel );
     Array<OneD, Array<OneD, NekDouble> >  fv( nVel );
+    Array<OneD, Array<OneD, NekDouble> >  fvBase( nVel );
 
     // Moments per element length in a boundary
     Array<OneD, Array<OneD, NekDouble> >  mp( nVel );
+    Array<OneD, Array<OneD, NekDouble> >  mpBase( nVel );
     Array<OneD, Array<OneD, NekDouble> >  mv( nVel );
+    Array<OneD, Array<OneD, NekDouble> >  mvBase( nVel );
 
     // Define boundary expansions
     Array<OneD, const SpatialDomains::BoundaryConditionShPtr > BndConds;
@@ -1829,6 +1839,9 @@ void FilterAeroForces::CalculateForcesLinear(
                     coords[i] =
                         MemoryManager<MultiRegions::ExpList3DHomogeneous1D>::
                             AllocateSharedPtr(*Exp3DH1);
+                    coordsMesh[i] =
+                        MemoryManager<MultiRegions::ExpList3DHomogeneous1D>::
+                            AllocateSharedPtr(*Exp3DH1);
                 }
                 Jac = MemoryManager<MultiRegions::ExpList3DHomogeneous1D>::
                             AllocateSharedPtr(*Exp3DH1);
@@ -1857,6 +1870,8 @@ void FilterAeroForces::CalculateForcesLinear(
                 for( int i = 0; i < 3; ++i)
                 {
                     coords[i] = MemoryManager<MultiRegions::ExpList2D>::
+                                AllocateSharedPtr(*Exp2D);
+                    coordsMesh[i] = MemoryManager<MultiRegions::ExpList2D>::
                                 AllocateSharedPtr(*Exp2D);
                 }
                 Jac = MemoryManager<MultiRegions::ExpList2D>::
@@ -1889,6 +1904,8 @@ void FilterAeroForces::CalculateForcesLinear(
             {
                 coords[i] = MemoryManager<MultiRegions::ExpList3D>::
                             AllocateSharedPtr(*Exp3D);
+                coordsMesh[i] = MemoryManager<MultiRegions::ExpList3D>::
+                            AllocateSharedPtr(*Exp3D);
             }
             Jac = MemoryManager<MultiRegions::ExpList3D>::
                             AllocateSharedPtr(*Exp3D);
@@ -1908,6 +1925,10 @@ void FilterAeroForces::CalculateForcesLinear(
     // Get Cartesian coordinates
     m_mapping->GetCartesianCoordinates(coords[0]->UpdatePhys(),
             coords[1]->UpdatePhys(), coords[2]->UpdatePhys());
+    
+    // Get mesh coordinates
+    pFields[0]->GetCoords(coordsMesh[0]->UpdatePhys(),
+            coordsMesh[1]->UpdatePhys(), coordsMesh[2]->UpdatePhys());
 
     // Calculate P^ij = g^ij*p
     for ( int i = 0; i < nVel*nVel; ++i)
@@ -2037,6 +2058,7 @@ void FilterAeroForces::CalculateForcesLinear(
                 for( int n = 0; n < 3; ++n)
                 {
                     coordsPlane[n] = coords[n]->GetPlane(m_planesID[plane]);
+                    coordsPlaneMesh[n] = coordsMesh[n]->GetPlane(m_planesID[plane]);
                 }
                 JacPlane = Jac->GetPlane(m_planesID[plane]);
             }
@@ -2053,6 +2075,7 @@ void FilterAeroForces::CalculateForcesLinear(
                 for( int n = 0; n < 3; ++n)
                 {
                     coordsPlane[n] = coords[n];
+                    coordsPlaneMesh[n] = coordsMesh[n];
                 }
                 JacPlane = Jac;
             }
@@ -2063,7 +2086,7 @@ void FilterAeroForces::CalculateForcesLinear(
             {
                 if(m_boundaryRegionIsInList[n] == 1)
                 {
-                    //cout << endl;
+                    cout << endl;
                     for (int i = 0; i < BndExp[n]->GetExpSize(); ++i, ++cnt)
                     {
                         int elmtid     = m_BCtoElmtID[cnt];
@@ -2086,6 +2109,7 @@ void FilterAeroForces::CalculateForcesLinear(
                         for( int j = 0; j < 3; ++j)
                         {
                             coordsElmt[j] = coordsPlane[j]->GetPhys() + offset;
+                            coordsElmtMesh[j] = coordsPlaneMesh[j]->GetPhys() + offset;
                         }
                         JacElmt = JacPlane->GetPhys() + offset;
 
@@ -2120,17 +2144,31 @@ void FilterAeroForces::CalculateForcesLinear(
                             elmt->GetTracePhysVals(boundary,
                                     bc, CElmt[j], CBnd[j]);
                         }
+
+                        JacBnd = Array<OneD, NekDouble> (nbc,0.0);
+                        elmt->GetTracePhysVals(boundary, bc, JacElmt, JacBnd);
+
+                        // Get bounadry coordinates
                         for(int j = 0; j < 3; ++j)
                         {
-                            coordsBnd[j] = Array<OneD, NekDouble> (nbc,0.0);
+                            coordsBnd[j]     = Array<OneD, NekDouble> (nbc,0.0);
+                            coordsBndMesh[j] = Array<OneD, NekDouble> (nbc,0.0);
+                            coordsBndPert[j] = Array<OneD, NekDouble> (nbc,0.0);
+                            // Get coordsBnd in cartesian space
                             elmt->GetTracePhysVals(boundary,
                                     bc, coordsElmt[j], coordsBnd[j]);
+                            // Get coordsBndMesh in mesh coordinate
+                            elmt->GetTracePhysVals(boundary,
+                                    bc, coordsElmtMesh[j], coordsBndMesh[j]);
                             // Subtract m_momPoint
                             Vmath::Sadd (nbc, -1.0*m_momPoint[j],
                                         coordsBnd[j], 1, coordsBnd[j], 1);
+                            Vmath::Sadd (nbc, -1.0*m_momPoint[j],
+                                        coordsBndMesh[j], 1, coordsBndMesh[j], 1);
+                            // Get coordsBndPert
+                            Vmath::Vsub (nbc, coordsBnd[j], 1,
+                                coordsBndMesh[j], 1, coordsBndPert[j], 1);
                         }
-                        JacBnd = Array<OneD, NekDouble> (nbc,0.0);
-                        elmt->GetTracePhysVals(boundary, bc, JacElmt, JacBnd);
 
                         // Get normals
                         Array<OneD, Array<OneD, NekDouble> > normals =
@@ -2146,10 +2184,10 @@ void FilterAeroForces::CalculateForcesLinear(
                             Vmath::Vsub(nbc, normalsPert[j], 1, normals[j], 1,
                                         normalsPert[j], 1);
                         }
-                        //cout << "normals[1][1] = " << normals[1][1] << endl;
+cout << "normals[1][1] = " << normals[1][1] << endl;
+cout << "normalsPert[1][1] = " << normalsPert[1][1] << endl;
 
-                        // Calculate forces per unit length
-
+                        // Calculate forces per unit length F'
                         // Pressure component: fp[j] = rho*(P[j,k]*n[k] + p[j,k]*N[k])
                         for ( int j = 0; j < nVel; ++j)
                         {
@@ -2201,7 +2239,38 @@ void FilterAeroForces::CalculateForcesLinear(
                             Vmath::Smul(nbc, -m_mu, fv[j], 1, fv[j], 1);
                         }
 
-                        // Convert to Cartesian system
+                        // Calculate forces per unit length F0
+                        // Pressure component: fpBase[j] = rho * P[j,k]*N[k]
+                        for ( int j = 0; j < nVel; ++j)
+                        {
+                            fpBase[j] = Array<OneD, NekDouble> (nbc,0.0);
+                            // Normals only has expdim elements
+                            // fpBase[j] = P[j,k]*N[k]
+                            for ( int k = 0; k < expdim; ++k)
+                            {
+                                Vmath::Vvtvp (nbc, PBndBase[ j*nVel + k], 1,
+                                        normals[k], 1, fpBase[j], 1, fpBase[j], 1);
+                            }
+                            Vmath::Smul(nbc, m_rho, fpBase[j], 1, fpBase[j], 1);
+                        }
+
+                        // Viscous component:
+                        //     fv[j] = -mu*{(gradBase[k,j]+gradBase[j,k]) * N[k]}
+                        for ( int j = 0; j < nVel; ++j )
+                        {
+                            fvBase[j] = Array<OneD, NekDouble> (nbc,0.0);
+                            //     fv[j] = (gradBase[k,j]+gradBase[j,k]) * N[k]
+                            for ( int k = 0; k < expdim; ++k )
+                            {
+                                Vmath::Vvtvp (nbc,gradBndBase[k*nVel+j],1,
+                                        normals[k], 1, fvBase[j], 1, fvBase[j], 1);
+                                Vmath::Vvtvp (nbc,gradBndBase[j*nVel+k],1,
+                                        normals[k], 1, fvBase[j], 1, fvBase[j], 1);
+                            }
+                            Vmath::Smul(nbc, -m_mu, fvBase[j], 1, fvBase[j], 1);
+                        }
+
+                        // Convert F' to Cartesian system
                         for ( int k = 0; k < nVel; ++k )
                         {
                             wk[k] = Array<OneD, NekDouble>(physTot,0.0);
@@ -2230,17 +2299,17 @@ void FilterAeroForces::CalculateForcesLinear(
                             Vmath::Vcopy(nbc, wk[k], 1, fv[k], 1);
                         }
 
-                        // Calculate moments per unit length
+                        // Calculate moments per unit length (r0 x F') TO MODIFY
                         if( momdim == 1)
                         {
                             mp[0] = Array<OneD, NekDouble> (nbc,0.0);
                             mv[0] = Array<OneD, NekDouble> (nbc,0.0);
                             // Mz = Fy * x - Fx * y
-                            Vmath::Vvtvvtm(nbc, fp[1], 1, coordsBnd[0], 1,
-                                                fp[0], 1, coordsBnd[1], 1,
+                            Vmath::Vvtvvtm(nbc, fp[1], 1, coordsBndMesh[0], 1,
+                                                fp[0], 1, coordsBndMesh[1], 1,
                                                 mp[0], 1);
-                            Vmath::Vvtvvtm(nbc, fv[1], 1, coordsBnd[0], 1,
-                                                fv[0], 1, coordsBnd[1], 1,
+                            Vmath::Vvtvvtm(nbc, fv[1], 1, coordsBndMesh[0], 1,
+                                                fv[0], 1, coordsBndMesh[1], 1,
                                                 mv[0], 1);
                         }
                         else
@@ -2248,30 +2317,81 @@ void FilterAeroForces::CalculateForcesLinear(
                             // Mx = Fz * y - Fy * z
                             mp[0] = Array<OneD, NekDouble> (nbc,0.0);
                             mv[0] = Array<OneD, NekDouble> (nbc,0.0);
-                            Vmath::Vvtvvtm(nbc, fp[2], 1, coordsBnd[1], 1,
-                                                fp[1], 1, coordsBnd[2], 1,
+                            Vmath::Vvtvvtm(nbc, fp[2], 1, coordsBndMesh[1], 1,
+                                                fp[1], 1, coordsBndMesh[2], 1,
                                                 mp[0], 1);
-                            Vmath::Vvtvvtm(nbc, fv[2], 1, coordsBnd[1], 1,
-                                                fv[1], 1, coordsBnd[2], 1,
+                            Vmath::Vvtvvtm(nbc, fv[2], 1, coordsBndMesh[1], 1,
+                                                fv[1], 1, coordsBndMesh[2], 1,
                                                 mv[0], 1);
                             // My = Fx * z - Fz * x
                             mp[1] = Array<OneD, NekDouble> (nbc,0.0);
                             mv[1] = Array<OneD, NekDouble> (nbc,0.0);
-                            Vmath::Vvtvvtm(nbc, fp[0], 1, coordsBnd[2], 1,
-                                                fp[2], 1, coordsBnd[0], 1,
+                            Vmath::Vvtvvtm(nbc, fp[0], 1, coordsBndMesh[2], 1,
+                                                fp[2], 1, coordsBndMesh[0], 1,
                                                 mp[1], 1);
-                            Vmath::Vvtvvtm(nbc, fv[0], 1, coordsBnd[2], 1,
-                                                fv[2], 1, coordsBnd[0], 1,
+                            Vmath::Vvtvvtm(nbc, fv[0], 1, coordsBndMesh[2], 1,
+                                                fv[2], 1, coordsBndMesh[0], 1,
                                                 mv[1], 1);
                             // Mz = Fy * x - Fx * y
                             mp[2] = Array<OneD, NekDouble> (nbc,0.0);
                             mv[2] = Array<OneD, NekDouble> (nbc,0.0);
-                            Vmath::Vvtvvtm(nbc, fp[1], 1, coordsBnd[0], 1,
-                                                fp[0], 1, coordsBnd[1], 1,
+                            Vmath::Vvtvvtm(nbc, fp[1], 1, coordsBndMesh[0], 1,
+                                                fp[0], 1, coordsBndMesh[1], 1,
                                                 mp[2], 1);
-                            Vmath::Vvtvvtm(nbc, fv[1], 1, coordsBnd[0], 1,
-                                                fv[0], 1, coordsBnd[1], 1,
+                            Vmath::Vvtvvtm(nbc, fv[1], 1, coordsBndMesh[0], 1,
+                                                fv[0], 1, coordsBndMesh[1], 1,
                                                 mv[2], 1);
+                        }
+
+                        // Calculate moments per unit length (r' x F0)
+                        if( momdim == 1)
+                        {
+                            mpBase[0] = Array<OneD, NekDouble> (nbc,0.0);
+                            mvBase[0] = Array<OneD, NekDouble> (nbc,0.0);
+                            // Mz = Fy * x - Fx * y
+                            Vmath::Vvtvvtm(nbc, fpBase[1], 1, coordsBndPert[0], 1,
+                                                fpBase[0], 1, coordsBndPert[1], 1,
+                                                mpBase[0], 1);
+                            Vmath::Vvtvvtm(nbc, fvBase[1], 1, coordsBndPert[0], 1,
+                                                fvBase[0], 1, coordsBndPert[1], 1,
+                                                mvBase[0], 1);
+                        }
+                        else
+                        {
+                            // Mx = Fz * y - Fy * z
+                            mpBase[0] = Array<OneD, NekDouble> (nbc,0.0);
+                            mvBase[0] = Array<OneD, NekDouble> (nbc,0.0);
+                            Vmath::Vvtvvtm(nbc, fpBase[2], 1, coordsBndPert[1], 1,
+                                                fpBase[1], 1, coordsBndPert[2], 1,
+                                                mpBase[0], 1);
+                            Vmath::Vvtvvtm(nbc, fvBase[2], 1, coordsBndPert[1], 1,
+                                                fvBase[1], 1, coordsBndPert[2], 1,
+                                                mvBase[0], 1);
+                            // My = Fx * z - Fz * x
+                            mpBase[1] = Array<OneD, NekDouble> (nbc,0.0);
+                            mvBase[1] = Array<OneD, NekDouble> (nbc,0.0);
+                            Vmath::Vvtvvtm(nbc, fpBase[0], 1, coordsBndPert[2], 1,
+                                                fpBase[2], 1, coordsBndPert[0], 1,
+                                                mpBase[1], 1);
+                            Vmath::Vvtvvtm(nbc, fvBase[0], 1, coordsBndPert[2], 1,
+                                                fvBase[2], 1, coordsBndPert[0], 1,
+                                                mvBase[1], 1);
+                            // Mz = Fy * x - Fx * y
+                            mpBase[2] = Array<OneD, NekDouble> (nbc,0.0);
+                            mvBase[2] = Array<OneD, NekDouble> (nbc,0.0);
+                            Vmath::Vvtvvtm(nbc, fpBase[1], 1, coordsBndPert[0], 1,
+                                                fpBase[0], 1, coordsBndPert[1], 1,
+                                                mpBase[2], 1);
+                            Vmath::Vvtvvtm(nbc, fvBase[1], 1, coordsBndPert[0], 1,
+                                                fvBase[0], 1, coordsBndPert[1], 1,
+                                                mvBase[2], 1);
+                        }
+
+                        // Moment = m + mBase
+                        for ( int j = 0; j < momdim; ++j)
+                        {
+                            Vmath::Vadd(nbc, mpBase[j], 1, mp[j], 1, mp[j], 1);
+                            Vmath::Vadd(nbc, mvBase[j], 1, mv[j], 1, mv[j], 1);
                         }
 
                         // Integrate to obtain force
