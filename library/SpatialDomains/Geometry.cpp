@@ -358,7 +358,7 @@ void Geometry::v_Setup()
 void Geometry::GenBoundingBox()
 {
     // NekDouble minx, miny, minz, maxx, maxy, maxz;
-    Array<OneD, NekDouble> min(3), max(3);
+    Array<OneD, NekDouble> min(3, 0.0), max(3, 0.0);
 
     if (GetGeomFactors()->GetGtype() == eRegular)
     {
@@ -386,8 +386,8 @@ void Geometry::GenBoundingBox()
         for (int j = 0; j < GetCoordim(); ++j)
         {
             auto minMax = FindMinMaxCoord(j);
-            min[j]      = minMax.first;
-            max[j]      = minMax.second;
+            min[j]      = minMax.first - NekConstants::kGeomFactorsTol;
+            max[j]      = minMax.second + NekConstants::kGeomFactorsTol;
         }
     }
 
@@ -398,78 +398,104 @@ void Geometry::GenBoundingBox()
 
 std::pair<NekDouble, NekDouble> Geometry::FindMinMaxCoord(int coordDir)
 {
-    int numEdges = -1;
-    if (GetShapeDim() == 1)
+    switch (m_shapeType)
     {
-        numEdges = 1;
-    }
-    else if (GetShapeDim() == 2)
-    {
-        numEdges = GetNumEdges();
-    }
-
-    ASSERTL0(numEdges != -1, "Shape dimension is not supported.")
-
-    Array<OneD, Array<OneD, const NekDouble>> coeffs(numEdges);
-    Array<OneD, StdRegions::StdExpansionSharedPtr> xmaps(numEdges);
-    if (GetShapeDim() == 1)
-    {
-        coeffs[0] = m_coeffs[coordDir];
-        xmaps[0]  = m_xmap;
-    }
-    else if (GetShapeDim() == 2)
-    {
-        for (int edgeID = 0; edgeID < numEdges; ++edgeID)
+        case LibUtilities::eSegment:
         {
-            coeffs[edgeID] = GetEdge(edgeID)->GetCoeffs(coordDir);
-            xmaps[edgeID]  = GetEdge(edgeID)->GetXmap();
-        }
-    }
+            std::unordered_set<NekDouble> values;
 
-    std::unordered_set<NekDouble> values;
-    for (int edgeID = 0; edgeID < numEdges; ++edgeID)
-    {
-        const int nq = xmaps[edgeID]->GetTotPoints();
-        Array<OneD, NekDouble> x(nq, 0.0), xder(nq, 0.0), xder2(nq, 0.0);
+            const int nq = m_xmap->GetTotPoints();
+            Array<OneD, NekDouble> x(nq, 0.0), xder(nq, 0.0), xder2(nq, 0.0);
 
-        const int n = 3;
-        Array<OneD, NekDouble> points(n + 1, 0.0);
+            const int n = 3;
+            Array<OneD, NekDouble> points(n + 1, 0.0);
 
-        xmaps[edgeID]->BwdTrans(coeffs[edgeID], x);
-        xmaps[edgeID]->PhysDeriv(x, xder);
-        xmaps[edgeID]->PhysDeriv(xder, xder2);
+            m_xmap->BwdTrans(m_coeffs[coordDir], x);
+            m_xmap->PhysDeriv(x, xder);
+            m_xmap->PhysDeriv(xder, xder2);
 
-        for (int i = 0; i < n + 1; ++i)
-        {
-            Array<OneD, NekDouble> xi(1, (i * (2.0 / n) - 1.0));
-            NekDouble xi_prev = xi[0];
-            for (int j = 0; j < 10; ++j)
+            for (int i = 0; i < n + 1; ++i)
             {
-                NekDouble xc       = xmaps[edgeID]->PhysEvaluate(xi, x);
-                NekDouble xc_derx  = xmaps[edgeID]->PhysEvaluate(xi, xder);
-                NekDouble xc_derxx = xmaps[edgeID]->PhysEvaluate(xi, xder2);
-
-                xi[0] = xi_prev - xc_derx / xc_derxx;
-
-                if ((abs(xi[0] - xi_prev) < 1e-10) && (xi[0] >= -1) &&
-                    (xi[0] <= 1))
+                Array<OneD, NekDouble> xi(1, (i * (2.0 / n) - 1.0));
+                NekDouble xi_prev = xi[0];
+                for (int j = 0; j < 10; ++j)
                 {
-                    values.insert(xc);
-                    break;
+                    NekDouble xc       = m_xmap->PhysEvaluate(xi, x);
+                    NekDouble xc_derx  = m_xmap->PhysEvaluate(xi, xder);
+                    NekDouble xc_derxx = m_xmap->PhysEvaluate(xi, xder2);
+
+                    xi[0] = xi_prev - xc_derx / xc_derxx;
+
+                    if ((abs(xi[0] - xi_prev) < 1e-10) && (xi[0] >= -1) &&
+                        (xi[0] <= 1))
+                    {
+                        values.insert(xc);
+                        break;
+                    }
+
+                    xi_prev = xi[0];
+                }
+            }
+
+            const Array<OneD, NekDouble> minusOne(1, -1);
+            const Array<OneD, NekDouble> plusOne(1, 1);
+            values.insert(m_xmap->PhysEvaluate(minusOne, x));
+            values.insert(m_xmap->PhysEvaluate(plusOne, x));
+
+            const auto res =
+                std::minmax_element(std::begin(values), std::end(values));
+            return std::make_pair(*res.first, *res.second);
+        }
+
+        case LibUtilities::eTriangle:
+        case LibUtilities::eQuadrilateral:
+        {
+            if (m_coordim == 2)
+            {
+                std::unordered_set<NekDouble> values;
+
+                for (int edgeID = 0; edgeID < GetNumEdges(); ++edgeID)
+                {
+                    auto edgeMinMax =
+                        GetEdge(edgeID)->FindMinMaxCoord(coordDir);
+                    values.insert(edgeMinMax.first);
+                    values.insert(edgeMinMax.second);
                 }
 
-                xi_prev = xi[0];
+                const auto res =
+                    std::minmax_element(std::begin(values), std::end(values));
+                return std::make_pair(*res.first, *res.second);
             }
         }
 
-        const Array<OneD, NekDouble> minusOne(1, -1);
-        const Array<OneD, NekDouble> plusOne(1, 1);
-        values.insert(xmaps[edgeID]->PhysEvaluate(minusOne, x));
-        values.insert(xmaps[edgeID]->PhysEvaluate(plusOne, x));
-    }
+        default: // @todo change default method so it solves numerically
+        {
+            std::unordered_set<NekDouble> values;
 
-    const auto res = std::minmax_element(std::begin(values), std::end(values));
-    return std::make_pair(*res.first, *res.second);
+            const int nq = m_xmap->GetTotPoints();
+            Array<OneD, NekDouble> x(nq, 0.0);
+
+            m_xmap->BwdTrans(m_coeffs[coordDir], x);
+
+            for (int i = 0; i < nq; ++i)
+            {
+                values.insert(x[i]);
+            }
+
+            const auto res =
+                std::minmax_element(std::begin(values), std::end(values));
+            auto minMax = std::make_pair(*res.first, *res.second);
+
+            // Add 10% margin to bounding box in case elements have
+            // convex boundaries.
+            const int len = minMax.second - minMax.first;
+
+            minMax.first -= 0.1 * len;
+            minMax.second += 0.1 * len;
+
+            return minMax;
+        }
+    }
 }
 
 } // namespace SpatialDomains
