@@ -56,6 +56,8 @@ namespace Nektar
         UpwindSolver(const LibUtilities::SessionReaderSharedPtr& pSession);
         
         virtual void v_PointSolve(
+                   const int nDim, const NekDouble sqrt_rt,
+                   NekDouble   nx, NekDouble   ny, NekDouble nz,
                    NekDouble  a0L, NekDouble  a1L, NekDouble a2L,
                    NekDouble  a3L, NekDouble  d4L, NekDouble a5L,
                    NekDouble  a0R, NekDouble  a1R, NekDouble a2R,
