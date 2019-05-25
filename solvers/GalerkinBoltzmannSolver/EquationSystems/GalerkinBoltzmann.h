@@ -64,7 +64,6 @@ namespace Nektar
         virtual ~GalkerinBoltzmann();
 
     protected:
-        SolverUtils::RiemannSolverSharedPtr     m_riemannSolver;
 
         // Plane (used only for Discontinous projection
         //        with 3DHomogenoeus1D expansion)
@@ -73,16 +72,6 @@ namespace Nektar
         /// Session reader
         GalkerinBoltzmann(const LibUtilities::SessionReaderSharedPtr& pSession,
                           const SpatialDomains::MeshGraphSharedPtr& pGraph);
-
-        /// Evaluate the flux at each solution point
-        void GetFluxVector(
-            const Array<OneD, Array<OneD, NekDouble> >               &physfield,
-                  Array<OneD, Array<OneD, Array<OneD, NekDouble> > > &flux);
-
-        /// Evaluate the flux at each solution point using dealiasing
-        void GetFluxVectorDeAlias(
-            const Array<OneD, Array<OneD, NekDouble> >               &physfield,
-                  Array<OneD, Array<OneD, Array<OneD, NekDouble> > > &flux);
 
         /// Compute the RHS
         void DoOdeRhs(
@@ -95,6 +84,17 @@ namespace Nektar
             const Array<OneD,  const  Array<OneD, NekDouble> > &inarray,
                   Array<OneD,         Array<OneD, NekDouble> > &outarray,
             const NekDouble time);
+
+        void EvaluateIProductWRTDerivBaseVolFlux
+              ( const Array<OneD, const  Array<OneD, NekDouble> >&physfield,
+                Array<OneD,        Array<OneD, NekDouble>        >&volflux);
+
+        void EvaluateNormalNumFlux(const Array<OneD, const Array<OneD, NekDouble> > &Fwd,
+                                   const Array<OneD, const Array<OneD, NekDouble> > &Bwd,
+                                   Array<OneD, Array<OneD, NekDouble> > &numflux);
+
+        void AddSourceTerms( const Array<OneD, const  Array<OneD, NekDouble> >&inarray,
+                             Array<OneD,        Array<OneD, NekDouble>        >&outarray);
 
         /// Initialise the object
         virtual void v_InitObject();
