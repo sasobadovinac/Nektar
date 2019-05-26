@@ -33,19 +33,18 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#ifndef NEKTAR_SOLVERS_ADRSOLVER_EQUATIONSYSTEMS_UNSTEADYADVECTION_H
-#define NEKTAR_SOLVERS_ADRSOLVER_EQUATIONSYSTEMS_UNSTEADYADVECTION_H
+#ifndef NEKTAR_SOLVERS_ADRSOLVER_EQUATIONSYSTEMS_GALERKINBOLTZMANN_H
+#define NEKTAR_SOLVERS_ADRSOLVER_EQUATIONSYSTEMS_GALERKINBOLTZMANN_H
 
 #include <SolverUtils/UnsteadySystem.h>
-#include <SolverUtils/RiemannSolvers/RiemannSolver.h>
 #include <SolverUtils/AdvectionSystem.h>
 
 namespace Nektar
 {
-    class GalkerinBoltzmann : public SolverUtils::AdvectionSystem
+    class GalerkinBoltzmann : public SolverUtils::AdvectionSystem
     {
     public:
-        friend class MemoryManager<GalkerinBoltzmann>;
+        friend class MemoryManager<GalerkinBoltzmann>;
 
         /// Creates an instance of this class
         static SolverUtils::EquationSystemSharedPtr create(
@@ -53,7 +52,7 @@ namespace Nektar
             const SpatialDomains::MeshGraphSharedPtr& pGraph)
         {
             SolverUtils::EquationSystemSharedPtr p = MemoryManager<
-                GalkerinBoltzmann>::AllocateSharedPtr(pSession, pGraph);
+                GalerkinBoltzmann>::AllocateSharedPtr(pSession, pGraph);
             p->InitObject();
             return p;
         }
@@ -61,7 +60,7 @@ namespace Nektar
         static std::string className;
 
         /// Destructor
-        virtual ~GalkerinBoltzmann();
+        virtual ~GalerkinBoltzmann();
 
     protected:
 
@@ -70,7 +69,7 @@ namespace Nektar
         int                                     m_planeNumber;
 
         /// Session reader
-        GalkerinBoltzmann(const LibUtilities::SessionReaderSharedPtr& pSession,
+        GalerkinBoltzmann(const LibUtilities::SessionReaderSharedPtr& pSession,
                           const SpatialDomains::MeshGraphSharedPtr& pGraph);
 
         /// Compute the RHS

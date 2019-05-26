@@ -1,6 +1,6 @@
 /////////////////////////////////////////////////////////////////////////////
 //
-// File GalkerinBoltzmann.cpp
+// File GalerkinBoltzmann.cpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -40,13 +40,13 @@ using namespace std;
 
 namespace Nektar
 {
-    string GalkerinBoltzmann::className =
+    string GalerkinBoltzmann::className =
         SolverUtils::GetEquationSystemFactory().
-        RegisterCreatorFunction("GalkerinBoltzmann",
-                                GalkerinBoltzmann::create,
+        RegisterCreatorFunction("GalerkinBoltzmann",
+                                GalerkinBoltzmann::create,
                                 "Galerkin Boltzmann equation.");
 
-    GalkerinBoltzmann::GalkerinBoltzmann(
+    GalerkinBoltzmann::GalerkinBoltzmann(
         const LibUtilities::SessionReaderSharedPtr& pSession,
         const SpatialDomains::MeshGraphSharedPtr& pGraph)
         : UnsteadySystem(pSession, pGraph),
@@ -56,9 +56,9 @@ namespace Nektar
     }
 
     /**
-     * @brief Initialisation object for the Galkerin Boltzmann equation.
+     * @brief Initialisation object for the Galerkin Boltzmann equation.
      */
-    void GalkerinBoltzmann::v_InitObject()
+    void GalerkinBoltzmann::v_InitObject()
     {
         // Call to the initialisation object of UnsteadySystem
         AdvectionSystem::v_InitObject();
@@ -93,8 +93,8 @@ namespace Nektar
         // If explicit it computes RHS and PROJECTION for the time integration
         if (m_explicitAdvection)
         {
-            m_ode.DefineOdeRhs     (&GalkerinBoltzmann::DoOdeRhs,        this);
-            m_ode.DefineProjection (&GalkerinBoltzmann::DoOdeProjection, this);
+            m_ode.DefineOdeRhs     (&GalerkinBoltzmann::DoOdeRhs,        this);
+            m_ode.DefineProjection (&GalerkinBoltzmann::DoOdeProjection, this);
         }
         // Otherwise it gives an error (no implicit integration)
         else
@@ -104,9 +104,9 @@ namespace Nektar
     }
 
     /**
-     * @brief Galkerin Boltzmann destructor.
+     * @brief Galerkin Boltzmann destructor.
      */
-    GalkerinBoltzmann::~GalkerinBoltzmann()
+    GalerkinBoltzmann::~GalerkinBoltzmann()
     {
     }
 
@@ -117,7 +117,7 @@ namespace Nektar
      * @param outarray   Calculated solution.
      * @param time       Time.
      */
-    void GalkerinBoltzmann::DoOdeRhs(
+    void GalerkinBoltzmann::DoOdeRhs(
         const Array<OneD, const  Array<OneD, NekDouble> >&inarray,
               Array<OneD,        Array<OneD, NekDouble> >&outarray,
         const NekDouble time)
@@ -126,18 +126,18 @@ namespace Nektar
 
         ASSERTL0(ndim == 2,"Method is not set up for 3D (or 1D) ");
 
-        int nFields = physfield.num_elements();
+        int nFields = inarray.num_elements();
         int ncoeffs = m_fields[0]->GetNcoeffs();
 
         // Calculate inner product with respect to derivative of basis of volume flux
 
         Array<OneD, Array<OneD, NekDouble> > volflux(nFields);
-        for(i = 0; i < nFields; ++i)
+        for(int i = 0; i < nFields; ++i)
         {
-            volflux = Array<OneD, NekDouble> (ncoeffs);
+            volflux[i] = Array<OneD, NekDouble> (ncoeffs);
         }
         
-        EvaluateIProductWRTDerivBaseVolFlux(inarray,tmp);
+        EvaluateIProductWRTDerivBaseVolFlux(inarray,volflux);
         
         // Calculate the normal numerical flux on trace boudaries
         // Add upwind normal flux component
@@ -148,12 +148,12 @@ namespace Nektar
         Array<OneD, Array<OneD, NekDouble> > Bwd    (nFields);
         Array<OneD, Array<OneD, NekDouble> > numflux(nFields);
 
-        for(i = 0; i < nFields; ++i)
+        for(int i = 0; i < nFields; ++i)
         {
             Fwd[i]     = Array<OneD, NekDouble>(nTracePointsTot, 0.0);
             Bwd[i]     = Array<OneD, NekDouble>(nTracePointsTot, 0.0);
             numflux[i] = Array<OneD, NekDouble>(nTracePointsTot, 0.0);
-            m_fields[i]->GetFwdBwdTracePhys(physfield[i], Fwd[i], Bwd[i]);
+            m_fields[i]->GetFwdBwdTracePhys(inarray[i], Fwd[i], Bwd[i]);
         }
 
         EvaluateNormalNumFlux(Fwd,Bwd,numflux);
@@ -161,7 +161,7 @@ namespace Nektar
         // Project back to physical space
         for(int i = 0; i < nFields; ++i)
         {
-            Vmath::Neg                        (ncoeffs, volflux[i], 1);
+            Vmath::Neg                        (ncoeffs,    volflux[i], 1);
             m_fields[i]->AddTraceIntegral     (numflux[i], volflux[i]);
             m_fields[i]->MultiplyByElmtInvMass(volflux[i], volflux[i]);
             m_fields[i]->BwdTrans             (volflux[i], outarray[i]);
@@ -169,7 +169,8 @@ namespace Nektar
 
         //-------------------------------------------------------
         // Negate the RHS 
-        for (int i = 0; i < nvariables; ++i)
+        int nq = m_fields[0]->GetTotPoints();
+        for (int i = 0; i < nFields; ++i)
         {
             Vmath::Neg(nq, outarray[i], 1);
         }
@@ -185,7 +186,7 @@ namespace Nektar
      * @param outarray   Calculated solution.
      * @param time       Time.
      */
-    void GalkerinBoltzmann::DoOdeProjection(
+    void GalerkinBoltzmann::DoOdeProjection(
         const Array<OneD, const Array<OneD, NekDouble> >&inarray,
               Array<OneD,       Array<OneD, NekDouble> >&outarray,
         const NekDouble time)
@@ -217,7 +218,7 @@ namespace Nektar
      * @param physfield   Fields.
      * @param flux        Resulting flux.
      */
-    void GalkerinBoltzmann::EvaluateIProductWRTDerivBaseVolFlux(
+    void GalerkinBoltzmann::EvaluateIProductWRTDerivBaseVolFlux(
         const Array<OneD, const  Array<OneD, NekDouble> >&physfield,
         Array<OneD,        Array<OneD, NekDouble> >&volflux)
 
@@ -318,7 +319,7 @@ namespace Nektar
                 
             }
 
-            ny = m_traceNormals[i][1];
+            NekDouble ny = m_traceNormals[i][1];
             if(ny > 0)
             {
                 numflux[0][i] += (sqrt3*Fwd[0][i] + 3*Fwd[2][i]
@@ -358,11 +359,11 @@ namespace Nektar
         }
     }
 
-    void GalerkinBoltzann::AddSourceTerms( const Array<OneD, const  Array<OneD, NekDouble> >&inarray,
+    void GalerkinBoltzmann::AddSourceTerms( const Array<OneD, const  Array<OneD, NekDouble> >&inarray,
                              Array<OneD,        Array<OneD, NekDouble>        >&outarray)
     {
 
-        int nq  m_fields[0]->GetTotPoints();
+        int nq = m_fields[0]->GetTotPoints();
         
         //-------------------------------------------------
         // Add "source terms"
@@ -394,8 +395,9 @@ namespace Nektar
         Vmath::Vsub(nq,inarray[5],1,force,1,force,1);
         Vmath::Smul(nq,invtau,force,1,force,1);
         Vmath::Vadd(nq,outarray[5],1,force,1,outarray[5],1);
-        }
-    void GalkerinBoltzmann::v_GenerateSummary(SolverUtils::SummaryList& s)
+    }
+    
+    void GalerkinBoltzmann::v_GenerateSummary(SolverUtils::SummaryList& s)
     {
         AdvectionSystem::v_GenerateSummary(s);
     }
