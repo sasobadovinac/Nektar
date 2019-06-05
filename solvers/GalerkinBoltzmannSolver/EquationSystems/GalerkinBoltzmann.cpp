@@ -72,7 +72,13 @@ namespace Nektar
 
         ASSERTL0(m_session->DefinesParameter("tau"),"Must define parameter tau");
         m_tau    = m_session->GetParameter("tau");
-        
+        m_traceNormals =  Array<OneD, Array<OneD, NekDouble> >(m_spacedim);
+        int nTracePointsTot = m_fields[0]->GetTrace()->GetTotPoints();
+        for(int i = 0; i < m_spacedim; ++i)
+        {
+            m_traceNormals[i] = Array<OneD, NekDouble> (nTracePointsTot);
+        }
+	m_fields[0]->GetTrace()->GetNormals(m_traceNormals);
         // Type of advection class to be used
         switch(m_projectionType)
         {
@@ -168,13 +174,14 @@ namespace Nektar
         }
 
         //-------------------------------------------------------
-        // Negate the RHS 
+        // Negate the RHS
+	/* 
         int nq = m_fields[0]->GetTotPoints();
         for (int i = 0; i < nFields; ++i)
         {
             Vmath::Neg(nq, outarray[i], 1);
         }
-
+	*/
         AddSourceTerms(inarray,outarray);
        
     }
@@ -281,7 +288,7 @@ namespace Nektar
         for(int i = 0 ; i < nTracePointsTot; ++i)
         {
 
-            NekDouble nx = m_traceNormals[i][0];
+            NekDouble nx = m_traceNormals[0][i];
             
             if(nx > 0)
             {
@@ -319,7 +326,7 @@ namespace Nektar
                 
             }
 
-            NekDouble ny = m_traceNormals[i][1];
+            NekDouble ny = m_traceNormals[1][i];
             if(ny > 0)
             {
                 numflux[0][i] += (sqrt3*Fwd[0][i] + 3*Fwd[2][i]
@@ -352,6 +359,7 @@ namespace Nektar
                                  - 2*sqrt3*Bwd[5][i])*ny/6.0 ;
 
             }
+	    cout << "(nx,ny) = " << "("<<nx<<", "<<ny<<")"<<endl;
             for(int j = 0; j < 6; ++j)
             {
                 numflux[j][i] *= m_sqrtRT;
