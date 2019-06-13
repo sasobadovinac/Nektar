@@ -151,6 +151,10 @@ namespace Nektar
             std::map<int, std::map<int, LocalRegions::Expansion1DSharedPtr>> m_traceEdgeRight;
             std::unordered_set<int> m_interfaceEdgeLeft, m_interfaceEdgeRight;
 
+            std::map<int, std::map<std::pair<NekDouble, NekDouble>, std::pair<int, NekDouble>>> m_rightToLeftMap;
+            std::map<int, std::map<std::pair<NekDouble, NekDouble>, std::pair<int, NekDouble>>> m_leftToRightMap;
+
+
             GlobalLinSysMapShPtr   m_globalBndMat;
             ExpListSharedPtr       m_trace;
             AssemblyMapDGSharedPtr m_traceMap;

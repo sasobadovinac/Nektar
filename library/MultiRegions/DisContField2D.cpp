@@ -1455,48 +1455,74 @@ void DisContField2D::v_GetFwdBwdTracePhys(
         for (auto edges : interface.second)
         {
             auto elmt = edges.second;
-            int nq    = elmt->GetTotPoints();
+            int nq = elmt->GetTotPoints();
+            LocalRegions::Expansion1DSharedPtr geom;
             Array<OneD, NekDouble> xc(nq), yc(nq);
             elmt->GetCoords(xc, yc);
 
             for (int i = 0; i < nq; ++i)
             {
-                NekDouble zero = 0.0;
-                auto BgRtree =
-                    m_interfaces[interface.first]->GetRightEdgesContainingPoint(
-                        xc[i], yc[i], zero);
                 bool found = false;
-                for (auto boundaryBoxElement : BgRtree)
-                {
-                    if (found == false)
-                    {
-                        auto geom = m_traceEdgeRight[interface.first]
-                                                    [boundaryBoxElement.second];
-                        SpatialDomains::SegGeomSharedPtr geomSeg =
-                            std::static_pointer_cast<SpatialDomains::SegGeom>(
-                                geom->GetGeom1D());
+                NekDouble foundPoint;
+                int segID;
+                auto coords = std::make_pair(xc[i], yc[i]);
 
-                        Array<OneD, NekDouble> xs(3);
-                        xs[0] = xc[i];
-                        xs[1] = yc[i];
-                        xs[2] = 0;
-                        NekDouble foundPoint;
-                        NekDouble dist = geomSeg->FindDistance(xs, foundPoint);
-                        if (dist > 1e-8)
+                auto itr = m_rightToLeftMap[interface.first].find(
+                        coords);
+                if (itr != m_rightToLeftMap[interface.first].end())
+                {
+                    segID = itr->second.first;
+                    foundPoint = itr->second.second;
+                    geom = m_traceEdgeRight[interface.first][segID];
+                    found = true;
+                }
+                else
+                {
+                    NekDouble zero = 0.0;
+                    auto BgRtree =
+                            m_interfaces[interface.first]->GetRightEdgesContainingPoint(
+                                    xc[i], yc[i], zero);
+                    for (auto boundaryBoxElement : BgRtree)
+                    {
+                        if (found == false)
                         {
-                            continue;
+                            geom = m_traceEdgeRight[interface.first]
+                            [boundaryBoxElement.second];
+                            SpatialDomains::SegGeomSharedPtr geomSeg =
+                                    std::static_pointer_cast<SpatialDomains::SegGeom>(
+                                            geom->GetGeom1D());
+
+                            Array<OneD, NekDouble> xs(3);
+                            xs[0] = xc[i];
+                            xs[1] = yc[i];
+                            xs[2] = 0;
+
+                            NekDouble dist = geomSeg->FindDistance(xs,
+                                                                   foundPoint);
+                            if (dist > 1e-8)
+                            {
+                                continue;
+                            }
+
+                            m_rightToLeftMap[interface.first][coords] = std::make_pair(
+                                    geomSeg->GetGlobalID(), foundPoint);
+
+                            found = true;
+                            break;
                         }
-                        Array<OneD, NekDouble> edgePhys =
-                            Bwd + m_trace->GetPhys_Offset(geom->GetElmtId());
-                        Array<OneD, NekDouble> foundPointArray(1, foundPoint);
-                        Bwd[m_trace->GetPhys_Offset(elmt->GetElmtId()) + i] =
-                            geom->StdPhysEvaluate(foundPointArray, edgePhys);
-                        found = true;
-                        break;
                     }
                 }
+
                 ASSERTL1(found, "Couldn't interpolate across interface "
                                 "from right to left (bwd)");
+
+                Array<OneD, NekDouble> edgePhys =
+                        Bwd +
+                        m_trace->GetPhys_Offset(geom->GetElmtId());
+                Array<OneD, NekDouble> foundPointArray(1, foundPoint);
+                Bwd[m_trace->GetPhys_Offset(elmt->GetElmtId()) + i] =
+                        geom->StdPhysEvaluate(foundPointArray,
+                                              edgePhys);
             }
         }
     }
@@ -1507,47 +1533,75 @@ void DisContField2D::v_GetFwdBwdTracePhys(
         for (auto edges : interface.second)
         {
             auto elmt = edges.second;
-            int nq    = elmt->GetTotPoints();
+            int nq = elmt->GetTotPoints();
+            LocalRegions::Expansion1DSharedPtr geom;
             Array<OneD, NekDouble> xc(nq), yc(nq);
             elmt->GetCoords(xc, yc);
+
             for (int i = 0; i < nq; ++i)
             {
-                NekDouble zero = 0.0;
-                auto BgRtree =
-                    m_interfaces[interface.first]->GetLeftEdgesContainingPoint(
-                        xc[i], yc[i], zero);
                 bool found = false;
-                for (auto boundaryBoxElement : BgRtree)
-                {
-                    if (found == false)
-                    {
-                        auto geom = m_traceEdgeLeft[interface.first]
-                                                   [boundaryBoxElement.second];
-                        SpatialDomains::SegGeomSharedPtr geomSeg =
-                            std::static_pointer_cast<SpatialDomains::SegGeom>(
-                                geom->GetGeom1D());
+                NekDouble foundPoint;
+                int segID;
+                auto coords = std::make_pair(xc[i], yc[i]);
 
-                        Array<OneD, NekDouble> xs(3);
-                        xs[0] = xc[i];
-                        xs[1] = yc[i];
-                        xs[2] = 0;
-                        NekDouble foundPoint;
-                        NekDouble dist = geomSeg->FindDistance(xs, foundPoint);
-                        if (dist > 1e-8)
+                auto itr = m_leftToRightMap[interface.first].find(
+                        coords);
+                if (itr != m_leftToRightMap[interface.first].end())
+                {
+                    segID = itr->second.first;
+                    foundPoint = itr->second.second;
+                    geom = m_traceEdgeLeft[interface.first][segID];
+                    found = true;
+                }
+                else
+                {
+                    NekDouble zero = 0.0;
+                    auto BgRtree =
+                            m_interfaces[interface.first]->GetLeftEdgesContainingPoint(
+                                    xc[i], yc[i], zero);
+                    for (auto boundaryBoxElement : BgRtree)
+                    {
+                        if (found == false)
                         {
-                            continue;
+                            geom = m_traceEdgeLeft[interface.first]
+                            [boundaryBoxElement.second];
+                            SpatialDomains::SegGeomSharedPtr geomSeg =
+                                    std::static_pointer_cast<SpatialDomains::SegGeom>(
+                                            geom->GetGeom1D());
+
+                            Array<OneD, NekDouble> xs(3);
+                            xs[0] = xc[i];
+                            xs[1] = yc[i];
+                            xs[2] = 0;
+
+                            NekDouble dist = geomSeg->FindDistance(xs,
+                                                                   foundPoint);
+                            if (dist > 1e-8)
+                            {
+                                continue;
+                            }
+
+                            m_leftToRightMap[interface.first][coords] = std::make_pair(
+                                    geomSeg->GetGlobalID(), foundPoint);
+
+                            found = true;
+                            break;
                         }
-                        Array<OneD, NekDouble> edgePhys =
-                            Fwd + m_trace->GetPhys_Offset(geom->GetElmtId());
-                        Array<OneD, NekDouble> foundPointArray(1, foundPoint);
-                        Fwd[m_trace->GetPhys_Offset(elmt->GetElmtId()) + i] =
-                            geom->StdPhysEvaluate(foundPointArray, edgePhys);
-                        found = true;
-                        break;
                     }
                 }
+
                 ASSERTL1(found, "Couldn't interpolate across interface "
                                 "from left to right (fwd)");
+
+                Array<OneD, NekDouble> edgePhys =
+                        Fwd +
+                        m_trace->GetPhys_Offset(geom->GetElmtId());
+                Array<OneD, NekDouble> foundPointArray(1, foundPoint);
+                Fwd[m_trace->GetPhys_Offset(elmt->GetElmtId()) + i] =
+                        geom->StdPhysEvaluate(foundPointArray,
+                                              edgePhys);
+
             }
         }
     }
