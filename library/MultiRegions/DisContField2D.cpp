@@ -1464,24 +1464,21 @@ void DisContField2D::v_GetFwdBwdTracePhys(
             {
                 bool found = false;
                 NekDouble foundPoint;
-                int segID;
                 auto coords = std::make_pair(xc[i], yc[i]);
 
-                auto itr = m_rightToLeftMap[interface.first].find(
-                        coords);
+                auto itr = m_rightToLeftMap[interface.first].find(coords);
                 if (itr != m_rightToLeftMap[interface.first].end())
                 {
-                    segID = itr->second.first;
                     foundPoint = itr->second.second;
-                    geom = m_traceEdgeRight[interface.first][segID];
+                    geom = m_traceEdgeRight[interface.first][itr->second.first];
                     found = true;
                 }
                 else
                 {
                     NekDouble zero = 0.0;
                     auto BgRtree =
-                            m_interfaces[interface.first]->GetRightEdgesContainingPoint(
-                                    xc[i], yc[i], zero);
+                            m_interfaces[interface.first]->
+                            GetRightEdgesContainingPoint(xc[i], yc[i], zero);
                     for (auto boundaryBoxElement : BgRtree)
                     {
                         if (found == false)
@@ -1542,24 +1539,21 @@ void DisContField2D::v_GetFwdBwdTracePhys(
             {
                 bool found = false;
                 NekDouble foundPoint;
-                int segID;
                 auto coords = std::make_pair(xc[i], yc[i]);
 
-                auto itr = m_leftToRightMap[interface.first].find(
-                        coords);
+                auto itr = m_leftToRightMap[interface.first].find(coords);
                 if (itr != m_leftToRightMap[interface.first].end())
                 {
-                    segID = itr->second.first;
                     foundPoint = itr->second.second;
-                    geom = m_traceEdgeLeft[interface.first][segID];
+                    geom = m_traceEdgeLeft[interface.first][itr->second.first];
                     found = true;
                 }
                 else
                 {
                     NekDouble zero = 0.0;
                     auto BgRtree =
-                            m_interfaces[interface.first]->GetLeftEdgesContainingPoint(
-                                    xc[i], yc[i], zero);
+                            m_interfaces[interface.first]->
+                            GetLeftEdgesContainingPoint(xc[i], yc[i], zero);
                     for (auto boundaryBoxElement : BgRtree)
                     {
                         if (found == false)
