@@ -151,8 +151,14 @@ namespace Nektar
             std::map<int, std::map<int, LocalRegions::Expansion1DSharedPtr>> m_traceEdgeRight;
             std::unordered_set<int> m_interfaceEdgeLeft, m_interfaceEdgeRight;
 
-            std::map<int, std::map<std::pair<NekDouble, NekDouble>, std::pair<int, NekDouble>>> m_rightToLeftMap;
-            std::map<int, std::map<std::pair<NekDouble, NekDouble>, std::pair<int, NekDouble>>> m_leftToRightMap;
+            // first key is interface ID; contains a vector with each quadrature point
+            // in the left hand side of seg ID and local coordinate found
+            typedef std::map<int, std::vector<std::pair<int, double>>> EdgeCacheMap;
+            EdgeCacheMap m_rightToLeftMap;
+            EdgeCacheMap m_leftToRightMap;
+
+            //Flag true if interface cache has been created
+            bool m_interfaceCacheFlag = false;
 
 
             GlobalLinSysMapShPtr   m_globalBndMat;
