@@ -144,9 +144,9 @@ namespace Nektar
             m_interfaces = interfaceCollection.GetInterfaces();
             for (auto &inter : m_interfaces)
             {
-                if (inter.second->GetEdgeRight().empty())
+                if (inter.second.second->GetEdge().empty())
                 {
-                    inter.second->SeparateGraph(m_graph);
+                    interfaceCollection.SeparateGraph(m_graph, inter.first);
                 }
             }
 

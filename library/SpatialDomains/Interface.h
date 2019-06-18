@@ -41,7 +41,6 @@
 
 #include <LibUtilities/BasicUtils/Equation.h>
 #include <LibUtilities/BasicUtils/SessionReader.h>
-#include <SpatialDomains/MeshGraph.h>
 
 namespace Nektar
 {
@@ -58,28 +57,24 @@ enum InterfaceType
 
 const char *const InterfaceTypeMap[] = {"Fixed", "Rotating", "Sliding"};
 
+struct Composite;
+typedef std::map<int, std::shared_ptr<Composite>> CompositeMap;
+
 struct InterfaceBase
 {
-    InterfaceBase(InterfaceType type, CompositeMap rightDomain,
-                  CompositeMap leftDomain)
-        : m_interfaceType(type), m_rightDomain(rightDomain),
-          m_leftDomain(leftDomain)
+    InterfaceBase(InterfaceType type, CompositeMap domain)
+        : m_type(type), m_domain(domain)
     {
     }
 
     InterfaceType GetInterfaceType() const
     {
-        return m_interfaceType;
+        return m_type;
     }
 
-    CompositeMap GetRightDomain() const
+    CompositeMap GetDomain() const
     {
-        return m_rightDomain;
-    }
-
-    CompositeMap GetLeftDomain() const
-    {
-        return m_leftDomain;
+        return m_domain;
     }
 
     CompositeMap GetInterfaceEdge() const
@@ -92,60 +87,37 @@ struct InterfaceBase
         m_interfaceEdge = interfaceEdge;
     }
 
-    std::map<int, SegGeomSharedPtr> const &GetEdgeLeft() const
+    std::map<int, SegGeomSharedPtr> const &GetEdge() const
     {
-        return m_leftEdge;
+        return m_edge;
     }
 
-    void SetEdgeLeft(const std::map<int, SegGeomSharedPtr> &leftEdge)
+    void SetEdge(const SegGeomSharedPtr &edge)
     {
-        m_leftEdge = leftEdge;
+        m_edge[edge->GetGlobalID()] = edge;
     }
 
-    void SetEdgeLeft(const CompositeMap &leftEdge);
-
-    std::map<int, SegGeomSharedPtr> const &GetEdgeRight() const
-    {
-        return m_rightEdge;
-    }
-
-    void SetEdgeRight(const std::map<int, SegGeomSharedPtr> &rightEdge)
-    {
-        m_rightEdge = rightEdge;
-    }
-
-    void SetEdgeRight(const CompositeMap &rightEdge);
-
-    void SeparateGraph(MeshGraphSharedPtr &graph);
+    void SetEdge(const CompositeMap &edge);
 
     void FillInterfaceBoundingBoxTree();
 
-    std::vector<BgRtreeValue> GetLeftEdgesContainingPoint(NekDouble x,
-                                                          NekDouble y,
+    std::vector<BgRtreeValue> GetEdgesContainingPoint(NekDouble x, NekDouble y,
                                                           NekDouble z);
 
-    std::vector<BgRtreeValue> GetRightEdgesContainingPoint(NekDouble x,
-                                                           NekDouble y,
-                                                           NekDouble z);
-
 protected:
-    InterfaceType m_interfaceType;
-    CompositeMap m_rightDomain;
-    CompositeMap m_leftDomain;
-    std::map<int, SegGeomSharedPtr> m_leftEdge;
-    std::map<int, SegGeomSharedPtr> m_rightEdge;
+    InterfaceType m_type;
+    CompositeMap m_domain;
+    std::map<int, SegGeomSharedPtr> m_edge;
     CompositeMap m_interfaceEdge;
-    BgRtree m_boundingInterfaceLeft;
-    BgRtree m_boundingInterfaceRight;
+    BgRtree m_boundingInterface;
 };
 
 struct RotatingInterface : public InterfaceBase
 {
-    RotatingInterface(const CompositeMap rightDomain,
-                      const CompositeMap leftDomain, const PointGeom origin,
+    RotatingInterface(const CompositeMap domain, const PointGeom origin,
                       const std::vector<NekDouble> axis,
                       const NekDouble angularVel)
-        : InterfaceBase(eRotating, rightDomain, leftDomain), m_origin(origin),
+        : InterfaceBase(eRotating, domain), m_origin(origin),
           m_axis(axis), m_angularVel(angularVel)
     {
     }
@@ -171,9 +143,19 @@ protected:
     NekDouble m_angularVel;
 };
 
+struct FixedInterface : public InterfaceBase
+{
+    FixedInterface(const CompositeMap domain)
+            : InterfaceBase(eFixed, domain)
+    {
+    }
+};
+
 typedef std::shared_ptr<InterfaceBase> InterfaceShPtr;
 typedef std::shared_ptr<RotatingInterface> RotatingInterfaceShPtr;
-typedef std::map<int, InterfaceShPtr> InterfaceCollection;
+typedef std::shared_ptr<FixedInterface> FixedInterfaceShPtr;
+
+typedef std::map<int, std::pair<InterfaceShPtr, InterfaceShPtr>> InterfaceCollection;
 
 class Interfaces
 {
@@ -189,11 +171,12 @@ public:
         return m_interfaces;
     }
 
+    void SeparateGraph(MeshGraphSharedPtr &graph, int indx);
+
 protected:
     /// The mesh graph to use for referencing geometry info.
     MeshGraphSharedPtr m_meshGraph;
     LibUtilities::SessionReaderSharedPtr m_session;
-
     InterfaceCollection m_interfaces;
 
 private:

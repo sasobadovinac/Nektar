@@ -444,7 +444,7 @@ void DisContField2D::SetUpDG(const std::string variable)
     // and exterior interface components.
     for (auto &interface : m_interfaces)
     {
-        for (auto &iter : interface.second->GetEdgeRight())
+        for (auto &iter : interface.second.second->GetEdge())
         {
             int id       = iter.first;
             auto traceEl = std::dynamic_pointer_cast<LocalRegions::Expansion1D>(
@@ -455,7 +455,7 @@ void DisContField2D::SetUpDG(const std::string variable)
             m_interfaceEdgeRight.insert(id);
         }
 
-        for (auto &iter : interface.second->GetEdgeLeft())
+        for (auto &iter : interface.second.first->GetEdge())
         {
             int id       = iter.first;
             auto traceEl = std::dynamic_pointer_cast<LocalRegions::Expansion1D>(
@@ -1480,8 +1480,8 @@ void DisContField2D::v_GetFwdBwdTracePhys(
                     Array<OneD, NekDouble> xc(nq), yc(nq);
                     elmt->GetCoords(xc, yc);
                     NekDouble zero = 0.0;
-                    auto BgRtree = interfacesCache->
-                            GetRightEdgesContainingPoint(xc[i], yc[i], zero);
+                    auto BgRtree = interfacesCache.second->
+                            GetEdgesContainingPoint(xc[i], yc[i], zero);
                     for (auto boundaryBoxElement : BgRtree)
                     {
                         geom = traceEdgeCache[boundaryBoxElement.second];
@@ -1499,7 +1499,7 @@ void DisContField2D::v_GetFwdBwdTracePhys(
                             continue;
                         }
 
-                        mapCache.push_back(std::make_pair(geomSeg->
+                        mapCache.emplace_back(std::make_pair(geomSeg->
                         GetGlobalID(), foundPoint));
                         found = true;
                         break;
@@ -1549,8 +1549,8 @@ void DisContField2D::v_GetFwdBwdTracePhys(
                     Array<OneD, NekDouble> xc(nq), yc(nq);
                     elmt->GetCoords(xc, yc);
                     NekDouble zero = 0.0;
-                    auto BgRtree = interfacesCache->
-                            GetLeftEdgesContainingPoint(xc[i], yc[i], zero);
+                    auto BgRtree = interfacesCache.first->
+                            GetEdgesContainingPoint(xc[i], yc[i], zero);
                     for (auto boundaryBoxElement : BgRtree)
                     {
                         geom = traceEdgeCache[boundaryBoxElement.second];
@@ -1568,7 +1568,7 @@ void DisContField2D::v_GetFwdBwdTracePhys(
                             continue;
                         }
 
-                        mapCache.push_back(std::make_pair(geomSeg->
+                        mapCache.emplace_back(std::make_pair(geomSeg->
                         GetGlobalID(), foundPoint));
                         found = true;
                         break;

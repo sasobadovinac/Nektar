@@ -35,6 +35,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 #include <LibUtilities/BasicUtils/ParseUtils.h>
+#include <SpatialDomains/MeshGraph.h>
 #include <SpatialDomains/Interface.h>
 #include <tinyxml.h>
 
@@ -102,6 +103,8 @@ void Interfaces::ReadInterfaces(TiXmlElement *interfaces)
 
     TiXmlElement *interfaceElement = interfaces->FirstChildElement();
 
+    std::map<int, std::vector<InterfaceShPtr>> tmpInterfaceMap;
+
     while (interfaceElement)
     {
         std::string interfaceType = interfaceElement->Value();
@@ -112,24 +115,18 @@ void Interfaces::ReadInterfaces(TiXmlElement *interfaces)
         err = interfaceElement->QueryIntAttribute("ID", &indx);
         ASSERTL0(err == TIXML_SUCCESS, "Unable to read interface ID.");
 
-        std::string interfaceRightDomainStr;
-        err = interfaceElement->QueryStringAttribute("RIGHTDOMAIN",
-                                                     &interfaceRightDomainStr);
+        std::string interfaceDomainStr;
+        err = interfaceElement->QueryStringAttribute("DOMAIN",
+                                                     &interfaceDomainStr);
         ASSERTL0(err == TIXML_SUCCESS,
-                 "Unable to read right interface domain.");
-        auto rightDomain =
-            m_meshGraph->GetDomain(stoi(ReadTag(interfaceRightDomainStr)));
+                 "Unable to read interface domain.");
+        auto domain =
+            m_meshGraph->GetDomain(stoi(ReadTag(interfaceDomainStr)));
 
-        std::string interfaceLeftDomainStr;
-        err = interfaceElement->QueryStringAttribute("LEFTDOMAIN",
-                                                     &interfaceLeftDomainStr);
-        ASSERTL0(err == TIXML_SUCCESS, "Unable to read left interface domain.");
-        auto leftDomain =
-            m_meshGraph->GetDomain(stoi(ReadTag(interfaceLeftDomainStr)));
 
         std::string interfaceEdgeStr;
         int interfaceErr = interfaceElement->QueryStringAttribute(
-            "INTERFACE", &interfaceEdgeStr);
+            "INTERFACEEDGE", &interfaceEdgeStr);
         map<int, CompositeSharedPtr> interfaceEdge;
         if (interfaceErr == TIXML_SUCCESS)
         {
@@ -137,47 +134,29 @@ void Interfaces::ReadInterfaces(TiXmlElement *interfaces)
             m_meshGraph->GetCompositeList(indxStr, interfaceEdge);
         }
 
-        std::string leftEdgeStr;
-        int leftEdgeErr =
-            interfaceElement->QueryStringAttribute("LEFTEDGE", &leftEdgeStr);
-        map<int, CompositeSharedPtr> leftEdge;
-        if (leftEdgeErr == TIXML_SUCCESS)
+        std::string domainEdgeStr;
+        int domainEdgeErr =
+            interfaceElement->QueryStringAttribute("EDGE", &domainEdgeStr);
+        map<int, CompositeSharedPtr> domainEdge;
+        if (domainEdgeErr == TIXML_SUCCESS)
         {
-            std::string indxStr = ReadTag(leftEdgeStr);
-            m_meshGraph->GetCompositeList(indxStr, leftEdge);
-        }
-
-        std::string rightEdgeStr;
-        int rightEdgeErr =
-            interfaceElement->QueryStringAttribute("RIGHTEDGE", &rightEdgeStr);
-        map<int, CompositeSharedPtr> rightEdge;
-        if (rightEdgeErr == TIXML_SUCCESS)
-        {
-            std::string indxStr = ReadTag(rightEdgeStr);
-            m_meshGraph->GetCompositeList(indxStr, rightEdge);
+            std::string indxStr = ReadTag(domainEdgeStr);
+            m_meshGraph->GetCompositeList(indxStr, domainEdge);
         }
 
         if (interfaceErr == TIXML_SUCCESS)
         {
-            ASSERTL0(leftEdgeErr != TIXML_SUCCESS &&
-                         rightEdgeErr != TIXML_SUCCESS,
-                     "Choose to define either INTERFACE or both LEFTEDGE "
-                     "and RIGHTEDGE.")
+            ASSERTL0(domainEdgeErr != TIXML_SUCCESS,
+                     "Choose to define either INTERFACEEDGE or EDGE")
         }
-        else if (leftEdgeErr == TIXML_SUCCESS && rightEdgeErr == TIXML_SUCCESS)
+        else if (domainEdgeErr == TIXML_SUCCESS)
         {
             ASSERTL0(interfaceErr != TIXML_SUCCESS,
-                     "Choose to define either INTERFACE or both LEFTEDGE "
-                     "and RIGHTEDGE.")
+                     "Choose to define either INTERFACEEDGE or EDGE")
+
         }
-        else
-        {
-            ASSERTL0((interfaceErr + 1) * (leftEdgeErr + 1) *
-                             (rightEdgeErr + 1) ==
-                         1,
-                     "Choose to define either INTERFACE or both LEFTEDGE "
-                     "and RIGHTEDGE.")
-        }
+
+        InterfaceShPtr interface;
 
         if (interfaceType == "R")
         {
@@ -202,32 +181,42 @@ void Interfaces::ReadInterfaces(TiXmlElement *interfaces)
 
             NekDouble angularVel = stod(angularVelStr);
 
-            InterfaceShPtr rotatingInterface(
-                MemoryManager<RotatingInterface>::AllocateSharedPtr(
-                    rightDomain, leftDomain, origin, axis, angularVel));
-
-            if (interfaceErr == TIXML_SUCCESS)
-            {
-                rotatingInterface->SetInterfaceEdge(interfaceEdge);
-            }
-            else
-            {
-                rotatingInterface->SetEdgeRight(rightEdge);
-                rotatingInterface->SetEdgeLeft(leftEdge);
-            }
-
-            m_interfaces[indx] = rotatingInterface;
+            interface = RotatingInterfaceShPtr(MemoryManager<RotatingInterface>::AllocateSharedPtr(domain,  origin, axis, angularVel));
         }
+        else if (interfaceType == "F")
+        {
+            interface = FixedInterfaceShPtr(MemoryManager<FixedInterface>::AllocateSharedPtr(domain));
+        }
+
+        if (interfaceErr == TIXML_SUCCESS)
+        {
+            interface->SetInterfaceEdge(interfaceEdge);
+        }
+        else
+        {
+            interface->SetEdge(domainEdge);
+        }
+
+        tmpInterfaceMap[indx].emplace_back(interface);
 
         interfaceElement = interfaceElement->NextSiblingElement();
     }
+
+    for (auto interfacePair : tmpInterfaceMap)
+    {
+        ASSERTL0(interfacePair.second.size() == 2, "Every interface ID must have two domains associated with it")
+
+           m_interfaces[interfacePair.first] = std::make_pair(
+                   interfacePair.second[0], interfacePair.second[1]);
+    }
 }
 
-void InterfaceBase::SeparateGraph(MeshGraphSharedPtr &graph)
+void Interfaces::SeparateGraph(MeshGraphSharedPtr &graph, int indx)
 {
-
-    auto rightDomain   = GetRightDomain();
-    auto interfaceEdge = GetInterfaceEdge();
+    auto &keepInterface = m_interfaces[indx].first;
+    auto &changeInterface = m_interfaces[indx].second;
+    auto rightDomain   = changeInterface->GetDomain();
+    auto interfaceEdge = changeInterface->GetInterfaceEdge();
 
     int maxVertId = -1;
     for (auto &vert : graph->GetAllPointGeoms())
@@ -312,8 +301,8 @@ void InterfaceBase::SeparateGraph(MeshGraphSharedPtr &graph)
             graph->GetAllSegGeoms()[maxEdgeId] = newEdge;
             edgeDone[geom->GetGlobalID()]      = newEdge;
 
-            m_leftEdge[oldEdge->GetGlobalID()] = oldEdge;
-            m_rightEdge[maxEdgeId]             = newEdge;
+            keepInterface->SetEdge(oldEdge);
+            changeInterface->SetEdge(newEdge);
             maxEdgeId++;
 
             auto toProcess = GetElementsFromVertex(rightDomain, vid[0], vid[1]);
@@ -399,7 +388,8 @@ void InterfaceBase::SeparateGraph(MeshGraphSharedPtr &graph)
         // Replace this geometry in any composites.
         for (auto &comp : graph->GetComposites())
         {
-            for (int n = 0; n < comp.second->m_geomVec.size(); ++n)
+            auto tmp = comp.second->m_geomVec.size();
+            for (int n = 0; n < tmp; ++n)
             {
                 if (comp.second->m_geomVec[n]->GetGlobalID() ==
                         newGeom->GetGlobalID() &&
@@ -464,58 +454,36 @@ void InterfaceBase::SeparateGraph(MeshGraphSharedPtr &graph)
     }
 };
 
-void InterfaceBase::SetEdgeLeft(const CompositeMap &leftEdge)
+void InterfaceBase::SetEdge(const CompositeMap &edge)
 {
-    for (auto &compIt : leftEdge)
+    for (auto &compIt : edge)
     {
         for (auto &elmtIt : compIt.second->m_geomVec)
         {
             SegGeomSharedPtr elmt = std::dynamic_pointer_cast<SegGeom>(elmtIt);
             ASSERTL0(elmt,
                      "Composite for left edge should only contain segments");
-            m_leftEdge[elmt->GetGlobalID()] = elmt;
-        }
-    }
-}
-
-void InterfaceBase::SetEdgeRight(const CompositeMap &rightEdge)
-{
-    for (auto &compIt : rightEdge)
-    {
-        for (auto &elmtIt : compIt.second->m_geomVec)
-        {
-            SegGeomSharedPtr elmt = std::dynamic_pointer_cast<SegGeom>(elmtIt);
-            ASSERTL0(elmt,
-                     "Composite for right edge should only contain segments");
-            m_rightEdge[elmt->GetGlobalID()] = elmt;
+            m_edge[elmt->GetGlobalID()] = elmt;
         }
     }
 }
 
 void InterfaceBase::FillInterfaceBoundingBoxTree()
 {
-    if (m_boundingInterfaceRight.empty())
+    if (m_boundingInterface.empty())
     {
-        for (auto &x : m_rightEdge)
+        for (auto &x : m_edge)
         {
             BgBox b = x.second->GetBoundingBox();
-            m_boundingInterfaceRight.insert(std::make_pair(b, x.first));
-        }
-    }
-    if (m_boundingInterfaceLeft.empty())
-    {
-        for (auto &x : m_leftEdge)
-        {
-            BgBox b = x.second->GetBoundingBox();
-            m_boundingInterfaceLeft.insert(std::make_pair(b, x.first));
+            m_boundingInterface.insert(std::make_pair(b, x.first));
         }
     }
 }
 
-std::vector<BgRtreeValue> InterfaceBase::GetLeftEdgesContainingPoint(
-    NekDouble x, NekDouble y, NekDouble z)
+std::vector<BgRtreeValue> InterfaceBase::GetEdgesContainingPoint(NekDouble x,
+        NekDouble y, NekDouble z)
 {
-    if (m_boundingInterfaceLeft.empty())
+    if (m_boundingInterface.empty())
     {
         FillInterfaceBoundingBoxTree();
     }
@@ -524,28 +492,10 @@ std::vector<BgRtreeValue> InterfaceBase::GetLeftEdgesContainingPoint(
 
     BgBox b(BgPoint(x, y, z), BgPoint(x, y, z));
 
-    m_boundingInterfaceLeft.query(bg::index::intersects(b),
+    m_boundingInterface.query(bg::index::intersects(b),
                                   std::back_inserter(vals));
 
     return vals;
 }
-
-std::vector<BgRtreeValue> InterfaceBase::GetRightEdgesContainingPoint(
-    NekDouble x, NekDouble y, NekDouble z)
-{
-    if (m_boundingInterfaceRight.empty())
-    {
-        FillInterfaceBoundingBoxTree();
-    }
-
-    std::vector<BgRtreeValue> vals;
-
-    BgBox b(BgPoint(x, y, z), BgPoint(x, y, z));
-
-    m_boundingInterfaceRight.query(bg::index::intersects(b),
-                                   std::back_inserter(vals));
-
-    return vals;
 }
-} // namespace SpatialDomains
-} // namespace Nektar
+}
