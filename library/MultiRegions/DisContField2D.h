@@ -147,19 +147,20 @@ namespace Nektar
              */
             Array<OneD,SpatialDomains::BoundaryConditionShPtr> m_bndConditions;
 
+            //typedef std::map<int, LocalRegions::Expansion1DSharedPtr> TraceEdge;
+            //std::map<int, std::pair<TraceEdge,TraceEdge>> m_traceEdge;
             std::map<int, std::map<int, LocalRegions::Expansion1DSharedPtr>> m_traceEdgeLeft;
             std::map<int, std::map<int, LocalRegions::Expansion1DSharedPtr>> m_traceEdgeRight;
-            std::unordered_set<int> m_interfaceEdgeLeft, m_interfaceEdgeRight;
 
-            // first key is interface ID; contains a vector with each quadrature point
-            // in the left hand side of seg ID and local coordinate found
-            typedef std::map<int, std::vector<std::pair<int, double>>> EdgeCacheMap;
-            EdgeCacheMap m_rightToLeftMap;
-            EdgeCacheMap m_leftToRightMap;
+            std::pair<std::unordered_set<int>,std::unordered_set<int>> m_interfaceEdge;
+
+            // first key is interface ID; contains a pair of vectors with each
+            // quadrature point giving seg ID and local coordinate found
+            typedef std::vector<std::pair<int, double>> EdgeCacheMap;
+            std::map<int, std::pair<EdgeCacheMap, EdgeCacheMap>> m_edgeCacheMap;
 
             //Flag true if interface cache has been created
-            bool m_interfaceCacheFlag = false;
-
+            std::map<int, std::pair<bool,bool>> m_interfaceCacheFlag;
 
             GlobalLinSysMapShPtr   m_globalBndMat;
             ExpListSharedPtr       m_trace;

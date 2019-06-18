@@ -441,9 +441,11 @@ void DisContField2D::SetUpDG(const std::string variable)
 
     // Loop over all interface edges and then negate edge normals
     // corresponding to the 'moving' side. Keep track of both interior
-    // and exterior interface components.
+    // and exterior interface components. Setup cache flag.
     for (auto &interface : m_interfaces)
     {
+        const int indx = interface.first;
+
         for (auto &iter : interface.second.second->GetEdge())
         {
             int id       = iter.first;
@@ -451,8 +453,8 @@ void DisContField2D::SetUpDG(const std::string variable)
                 m_trace->GetExp(traceIdToElmt[id]));
             traceEl->GetLeftAdjacentElementExp()->NegateEdgeNormal(
                 traceEl->GetLeftAdjacentElementEdge());
-            m_traceEdgeRight[interface.first][id] = traceEl;
-            m_interfaceEdgeRight.insert(id);
+            m_traceEdgeRight[indx][id] = traceEl;
+            m_interfaceEdge.second.insert(id);
         }
 
         for (auto &iter : interface.second.first->GetEdge())
@@ -460,9 +462,11 @@ void DisContField2D::SetUpDG(const std::string variable)
             int id       = iter.first;
             auto traceEl = std::dynamic_pointer_cast<LocalRegions::Expansion1D>(
                 m_trace->GetExp(traceIdToElmt[id]));
-            m_traceEdgeLeft[interface.first][id] = traceEl;
-            m_interfaceEdgeLeft.insert(id);
+            m_traceEdgeLeft[indx][id] = traceEl;
+            m_interfaceEdge.first.insert(id);
         }
+
+        m_interfaceCacheFlag[indx] = make_pair(false, false);
     }
 
     int cnt, n, e;
@@ -1262,15 +1266,15 @@ bool DisContField2D::IsLeftAdjacentEdge(const int n, const int e)
             int traceGeomId = traceEl->GetGeom1D()->GetGlobalID();
             auto pIt        = m_periodicEdges.find(traceGeomId);
             auto intIt1 =
-                m_interfaceEdgeLeft.find(traceEl->GetGeom()->GetGlobalID());
+                m_interfaceEdge.first.find(traceEl->GetGeom()->GetGlobalID());
             auto intIt2 =
-                m_interfaceEdgeRight.find(traceEl->GetGeom()->GetGlobalID());
+                m_interfaceEdge.second.find(traceEl->GetGeom()->GetGlobalID());
 
-            if (intIt1 != m_interfaceEdgeLeft.end())
+            if (intIt1 != m_interfaceEdge.first.end())
             {
                 fwd = true;
             }
-            else if (intIt2 != m_interfaceEdgeRight.end())
+            else if (intIt2 != m_interfaceEdge.second.end())
             {
                 fwd = false;
             }
@@ -1452,11 +1456,13 @@ void DisContField2D::v_GetFwdBwdTracePhys(
     // Edge two -> one interpolation
     for (auto &interface : m_traceEdgeLeft)
     {
-        int cnt = 0;
-        auto &mapCache = m_rightToLeftMap[interface.first];
-        auto &traceEdgeCache = m_traceEdgeRight[interface.first];
-        auto &interfacesCache = m_interfaces[interface.first];
+        const int indx = interface.first;
+        auto &mapCache = m_edgeCacheMap[indx].first;
+        auto &traceEdgeCache = m_traceEdgeRight[indx];
+        auto &interfacesCache = m_interfaces[indx].second;
+        bool flag = m_interfaceCacheFlag[indx].first;
 
+        int cnt = 0;
         for (auto edges : interface.second)
         {
             auto elmt = edges.second;
@@ -1468,7 +1474,7 @@ void DisContField2D::v_GetFwdBwdTracePhys(
                 NekDouble foundPoint;
                 LocalRegions::Expansion1DSharedPtr geom;
 
-                if (m_interfaceCacheFlag)
+                if (flag)
                 {
                     auto tmp = mapCache[cnt];
                     foundPoint = tmp.second;
@@ -1480,7 +1486,7 @@ void DisContField2D::v_GetFwdBwdTracePhys(
                     Array<OneD, NekDouble> xc(nq), yc(nq);
                     elmt->GetCoords(xc, yc);
                     NekDouble zero = 0.0;
-                    auto BgRtree = interfacesCache.second->
+                    auto BgRtree = interfacesCache->
                             GetEdgesContainingPoint(xc[i], yc[i], zero);
                     for (auto boundaryBoxElement : BgRtree)
                     {
@@ -1516,16 +1522,22 @@ void DisContField2D::v_GetFwdBwdTracePhys(
                         StdPhysEvaluate(foundPointArray, edgePhys);
             }
         }
+
+        //Flag that cache has been created
+        m_interfaceCacheFlag[indx].first = true;
+
     }
 
     // Edge one -> two interpolation
     for (auto &interface : m_traceEdgeRight)
     {
-        int cnt = 0;
-        auto &mapCache = m_leftToRightMap[interface.first];
-        auto &traceEdgeCache = m_traceEdgeLeft[interface.first];
-        auto &interfacesCache = m_interfaces[interface.first];
+        const int indx = interface.first;
+        auto &mapCache = m_edgeCacheMap[indx].second;
+        auto &traceEdgeCache = m_traceEdgeLeft[indx];
+        auto &interfacesCache = m_interfaces[indx].first;
+        bool flag = m_interfaceCacheFlag[indx].second;
 
+        int cnt = 0;
         for (auto edges : interface.second)
         {
             auto elmt = edges.second;
@@ -1537,7 +1549,7 @@ void DisContField2D::v_GetFwdBwdTracePhys(
                 NekDouble foundPoint;
                 LocalRegions::Expansion1DSharedPtr geom;
 
-                if (m_interfaceCacheFlag)
+                if (flag)
                 {
                     auto tmp = mapCache[cnt];
                     foundPoint = tmp.second;
@@ -1549,7 +1561,7 @@ void DisContField2D::v_GetFwdBwdTracePhys(
                     Array<OneD, NekDouble> xc(nq), yc(nq);
                     elmt->GetCoords(xc, yc);
                     NekDouble zero = 0.0;
-                    auto BgRtree = interfacesCache.first->
+                    auto BgRtree = interfacesCache->
                             GetEdgesContainingPoint(xc[i], yc[i], zero);
                     for (auto boundaryBoxElement : BgRtree)
                     {
@@ -1585,10 +1597,12 @@ void DisContField2D::v_GetFwdBwdTracePhys(
                         StdPhysEvaluate(foundPointArray, edgePhys);
             }
         }
+
+        //Flag that cache has been created
+        m_interfaceCacheFlag[indx].second = true;
+
     }
 
-    //Flag that cache has been created
-    m_interfaceCacheFlag = true;
 
     // Do parallel exchange for forwards/backwards spaces.
     m_traceMap->UniversalTraceAssemble(Fwd);
