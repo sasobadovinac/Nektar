@@ -126,7 +126,7 @@ void Interfaces::ReadInterfaces(TiXmlElement *interfaces)
 
         std::string interfaceEdgeStr;
         int interfaceErr = interfaceElement->QueryStringAttribute(
-            "INTERFACEEDGE", &interfaceEdgeStr);
+            "INTERFACE", &interfaceEdgeStr);
         map<int, CompositeSharedPtr> interfaceEdge;
         if (interfaceErr == TIXML_SUCCESS)
         {
@@ -135,8 +135,8 @@ void Interfaces::ReadInterfaces(TiXmlElement *interfaces)
         }
 
         std::string domainEdgeStr;
-        int domainEdgeErr =
-            interfaceElement->QueryStringAttribute("EDGE", &domainEdgeStr);
+        int domainEdgeErr = interfaceElement->QueryStringAttribute(
+                "EDGE", &domainEdgeStr);
         map<int, CompositeSharedPtr> domainEdge;
         if (domainEdgeErr == TIXML_SUCCESS)
         {
@@ -147,13 +147,17 @@ void Interfaces::ReadInterfaces(TiXmlElement *interfaces)
         if (interfaceErr == TIXML_SUCCESS)
         {
             ASSERTL0(domainEdgeErr != TIXML_SUCCESS,
-                     "Choose to define either INTERFACEEDGE or EDGE")
+                     "Choose to define either INTERFACE or EDGE")
         }
         else if (domainEdgeErr == TIXML_SUCCESS)
         {
             ASSERTL0(interfaceErr != TIXML_SUCCESS,
-                     "Choose to define either INTERFACEEDGE or EDGE")
+                     "Choose to define either INTERFACE or EDGE")
 
+        }
+        else
+        {
+            ASSERTL0(false, "Choose to define either INTERFACE or EDGE")
         }
 
         InterfaceShPtr interface;
@@ -181,7 +185,7 @@ void Interfaces::ReadInterfaces(TiXmlElement *interfaces)
 
             NekDouble angularVel = stod(angularVelStr);
 
-            interface = RotatingInterfaceShPtr(MemoryManager<RotatingInterface>::AllocateSharedPtr(domain,  origin, axis, angularVel));
+            interface = RotatingInterfaceShPtr(MemoryManager<RotatingInterface>::AllocateSharedPtr(domain, origin, axis, angularVel));
         }
         else if (interfaceType == "F")
         {
@@ -400,59 +404,115 @@ void Interfaces::SeparateGraph(MeshGraphSharedPtr &graph, int indx)
                 }
             }
         }
-
-        //Offset right domain for visualisation
-#if 0
-        std::set<int> seenVerts, seenEdges;
-        for (auto &comp : GetRightDomain())
-        {
-            for (auto &geom : comp.second->m_geomVec)
-            {
-                auto newGeom = graph->GetGeometry2D(geom->GetGlobalID());
-                for (int i = 0; i < newGeom->GetNumVerts(); ++i)
-                {
-                    PointGeomSharedPtr vert = newGeom->GetVertex(i);
-
-                    if (seenVerts.find(vert->GetGlobalID()) != seenVerts.end())
-                    {
-                        continue;
-                    }
-
-                    (*vert)(1) += 0.5;
-                    seenVerts.insert(vert->GetGlobalID());
-
-                }
-
-                for (int i = 0; i < newGeom->GetNumEdges(); ++i)
-                {
-                    SegGeomSharedPtr edge =
-                        std::static_pointer_cast<SegGeom>(newGeom->GetEdge(i));
-
-                    // move curve points
-                    if (seenEdges.find(edge->GetGlobalID()) != seenEdges.end())
-                    {
-                        continue;
-                    }
-
-                    CurveSharedPtr curve = edge->GetCurve();
-                    if (!curve)
-                    {
-                        continue;
-                    }
-
-                    for (auto &pt : curve->m_points)
-                    {
-                        (*pt)(1) += 0.5;
-                    }
-
-                    seenEdges.insert(edge->GetGlobalID());
-                }
-            }
-        }
-#endif
-
     }
 };
+
+void Interfaces::GenerateMortars(int indx)
+{
+    //iterate over 'right' edge points
+    auto &iterateEdge = m_interfaces[indx].second->GetEdge();
+    std::unordered_set<PointGeomSharedPtr> points;
+
+    for (auto &seg : iterateEdge)
+    {
+        auto vert0 = MemoryManager<PointGeom>::AllocateSharedPtr(
+                *seg.second->GetVertex(0));
+        auto vert1 = MemoryManager<PointGeom>::AllocateSharedPtr(
+                *seg.second->GetVertex(1));
+
+        points.insert(vert0);
+        points.insert(vert1);
+    }
+
+    NekDouble x;
+    NekDouble y;
+    NekDouble z;
+
+    //mortars begin as copy of left side edges, change to vector and increment global ID
+    auto tmp = m_interfaces[indx].first->GetEdge();
+    std::vector<SegGeomSharedPtr> mortars(tmp.size());
+    int cnt = 0;
+    for (auto iter : tmp)
+    {
+        auto edge = MemoryManager<SegGeom>::AllocateSharedPtr(*iter.second);
+        edge->SetGlobalID(cnt);
+        mortars[cnt] = edge;
+        cnt++;
+    }
+
+    //
+    for (auto &vert : points)
+    {
+        vert->GetCoords(x, y, z);
+
+        for (int indx = 0; indx < mortars.size(); ++indx)
+        {
+            auto geomSeg = mortars[indx];
+            NekDouble foundPoint;
+            Array<OneD, NekDouble> xs(3);
+            xs[0] = x;
+            xs[1] = y;
+            xs[2] = z;
+
+            geomSeg->GetGeomFactors()->GetGtype(); //populate Gtype for FindDistance
+            NekDouble dist = geomSeg->FindDistance(xs, foundPoint);
+            if (dist > 1e-8)
+            {
+                continue;
+            }
+
+            mortars.erase(mortars.begin() +
+                          indx); //remove old split segment from mortar
+
+            //create two new mortars splitting found seg around trial point
+            bool indxFlag = false; //flag for if old mortar global ID has already been replaced
+            for (int k = 0; k < 2; ++k)
+            {
+                PointGeomSharedPtr newEdgeVerts[2];
+                newEdgeVerts[0] = MemoryManager<PointGeom>::AllocateSharedPtr(
+                        *vert);
+                newEdgeVerts[1] = MemoryManager<PointGeom>::AllocateSharedPtr(
+                        *geomSeg->GetVertex(k));
+
+                NekDouble xOld, yOld, xNew, yNew, zOld, zNew;
+                newEdgeVerts[0]->GetCoords(xOld, yOld, zOld);
+                newEdgeVerts[1]->GetCoords(xNew, yNew, zNew);
+
+                int id;
+                if (!(xOld == xNew && yOld == yNew &&
+                      zOld == zNew)) //check that verts aren't same
+                {
+                    if (!indxFlag)
+                    {
+                        id = geomSeg->GetGlobalID();
+                        indxFlag = true;
+                    }
+                    else
+                    {
+                        id = cnt;
+                        cnt++;
+                    }
+
+                    auto newMortar = MemoryManager<SegGeom>::AllocateSharedPtr(
+                            id, 2, newEdgeVerts, geomSeg->GetCurve());
+                    mortars.emplace_back(newMortar);
+                }
+            }
+
+            break;
+        }
+    }
+
+    for (auto it : mortars)
+    {
+        NekDouble x, y, z, a, b, c;
+        it->GetVertex(0)->GetCoords(x, y, z);
+        it->GetVertex(1)->GetCoords(a, b, c);
+
+        cout << "Seg: " << it->GetGlobalID() <<  " | Point 1 = (" << x << ", " << y << ")" << endl;
+        cout << "Seg: " << it->GetGlobalID() <<  " | Point 2 = (" << a << ", " << b << ")" << endl;
+    }
+}
 
 void InterfaceBase::SetEdge(const CompositeMap &edge)
 {

@@ -173,6 +173,8 @@ public:
 
     void SeparateGraph(MeshGraphSharedPtr &graph, int indx);
 
+    void GenerateMortars(int indx);
+
 protected:
     /// The mesh graph to use for referencing geometry info.
     MeshGraphSharedPtr m_meshGraph;
