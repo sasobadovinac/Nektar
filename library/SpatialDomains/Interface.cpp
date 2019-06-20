@@ -409,7 +409,7 @@ void Interfaces::SeparateGraph(MeshGraphSharedPtr &graph, int indx)
 
 void Interfaces::GenerateMortars(int indx)
 {
-    //iterate over 'right' edge points
+    //set up 'right' edge points set
     auto &iterateEdge = m_interfaces[indx].second->GetEdge();
     std::unordered_set<PointGeomSharedPtr> points;
 
@@ -429,23 +429,24 @@ void Interfaces::GenerateMortars(int indx)
     NekDouble z;
 
     //mortars begin as copy of left side edges, change to vector and increment global ID
-    auto tmp = m_interfaces[indx].first->GetEdge();
-    std::vector<SegGeomSharedPtr> mortars(tmp.size());
+    auto &otherEdge = m_interfaces[indx].first->GetEdge();
+    std::vector<SegGeomSharedPtr> mortars(otherEdge.size());
     int cnt = 0;
-    for (auto iter : tmp)
+    for (auto iter : otherEdge)
     {
         auto edge = MemoryManager<SegGeom>::AllocateSharedPtr(*iter.second);
         edge->SetGlobalID(cnt);
+        edge->GetGeomFactors()->GetGtype(); //populate Gtype for FindDistance
         mortars[cnt] = edge;
         cnt++;
     }
 
-    //
+    //iterate over 'right' points and find matching seg in 'left' side
     for (auto &vert : points)
     {
         vert->GetCoords(x, y, z);
 
-        for (int indx = 0; indx < mortars.size(); ++indx)
+        for (int i = 0; i < mortars.size(); ++i)
         {
             auto geomSeg = mortars[indx];
             NekDouble foundPoint;
@@ -454,15 +455,13 @@ void Interfaces::GenerateMortars(int indx)
             xs[1] = y;
             xs[2] = z;
 
-            geomSeg->GetGeomFactors()->GetGtype(); //populate Gtype for FindDistance
             NekDouble dist = geomSeg->FindDistance(xs, foundPoint);
             if (dist > 1e-8)
             {
                 continue;
             }
 
-            mortars.erase(mortars.begin() +
-                          indx); //remove old split segment from mortar
+            mortars.erase(mortars.begin() + i); //remove old split segment from mortar
 
             //create two new mortars splitting found seg around trial point
             bool indxFlag = false; //flag for if old mortar global ID has already been replaced
@@ -504,7 +503,7 @@ void Interfaces::GenerateMortars(int indx)
         }
     }
 
-    m_mortars = mortars;
+    m_mortars[indx] = mortars;
 
     //Debugging output mortar coords
     for (auto it : mortars)
@@ -519,8 +518,9 @@ void Interfaces::GenerateMortars(int indx)
     //iterate over mortar and identify left and right corresponding edge
     //by evaluating center of standard element into Cartesian
     Array<OneD, NekDouble> xi(1, 0.0);
-    for (auto it : mortars)
+    for (const auto it : mortars)
     {
+        cout << endl << "Mortar: " << it->GetGlobalID() << endl;
         int nq = it->GetXmap()->GetTotPoints();
         Array<OneD, NekDouble> x(nq), y(nq);
         it->GetXmap()->BwdTrans(it->GetCoeffs(0),x);
@@ -529,8 +529,37 @@ void Interfaces::GenerateMortars(int indx)
         NekDouble xc = it->GetXmap()->PhysEvaluate(xi, x);
         NekDouble yc = it->GetXmap()->PhysEvaluate(xi, y);
 
-        cout << "Center of mortar: " << it->GetGlobalID() << " | (" << xc << ", " << yc << ")" << endl;
+        cout << "Centre: (" << xc << ", " << yc << ")" << endl;
 
+        NekDouble foundPoint;
+        Array<OneD, NekDouble> xs(3);
+        xs[0] = xc;
+        xs[1] = yc;
+        xs[2] = 0.0;
+
+        for (const auto edge: iterateEdge)
+        {
+            edge.second->GetGeomFactors()->GetGtype(); //populate Gtype for FindDistance
+            NekDouble dist = edge.second->FindDistance(xs, foundPoint);
+            if (dist > 1e-8)
+            {
+                continue;
+            }
+
+            cout << "'Right' edge | Segment ID: " << edge.second->GetGlobalID() << endl;
+        }
+
+        for (const auto edge: otherEdge)
+        {
+            edge.second->GetGeomFactors()->GetGtype(); //populate Gtype for FindDistance
+            NekDouble dist = edge.second->FindDistance(xs, foundPoint);
+            if (dist > 1e-8)
+            {
+                continue;
+            }
+
+            cout << "'Left' edge | Segment ID: " << edge.second->GetGlobalID() << endl;
+        }
     }
 }
 
