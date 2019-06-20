@@ -1460,8 +1460,8 @@ void DisContField2D::v_GetFwdBwdTracePhys(
             const int indx = interface.first;
             auto &traceEdge = (n == 0 ? interface.second.first
                                       : interface.second.second);
-            auto &traceEdgeCache (n == 0 ? interface.second.second
-                                         : interface.second.first);
+            auto &traceEdgeCache = (n == 0 ? interface.second.second
+                                           : interface.second.first);
             bool &flag = (n == 0 ? m_interfaceCacheFlag[indx].first
                                  : m_interfaceCacheFlag[indx].second);
             auto &mapCache = (n == 0 ? m_edgeCacheMap[indx].first
@@ -1551,7 +1551,6 @@ void DisContField2D::v_GetFwdBwdTracePhys(
 
             //Flag that cache has been created
             flag = true;
-
         }
     }
 
