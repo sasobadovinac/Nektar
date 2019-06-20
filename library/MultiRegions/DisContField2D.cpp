@@ -453,7 +453,7 @@ void DisContField2D::SetUpDG(const std::string variable)
                 m_trace->GetExp(traceIdToElmt[id]));
             traceEl->GetLeftAdjacentElementExp()->NegateEdgeNormal(
                 traceEl->GetLeftAdjacentElementEdge());
-            m_traceEdgeRight[indx][id] = traceEl;
+            m_traceEdge[indx].second[id] = traceEl;
             m_interfaceEdge.second.insert(id);
         }
 
@@ -462,7 +462,7 @@ void DisContField2D::SetUpDG(const std::string variable)
             int id       = iter.first;
             auto traceEl = std::dynamic_pointer_cast<LocalRegions::Expansion1D>(
                 m_trace->GetExp(traceIdToElmt[id]));
-            m_traceEdgeLeft[indx][id] = traceEl;
+            m_traceEdge[indx].first[id] = traceEl;
             m_interfaceEdge.first.insert(id);
         }
 
@@ -1455,18 +1455,22 @@ void DisContField2D::v_GetFwdBwdTracePhys(
     // Interpolate from each side of the interface to the other.
     for (n = 0; n < 2; ++n)
     {
-        auto &traceEdge = (n == 0 ? m_traceEdgeLeft : m_traceEdgeRight);
-
-        for (auto &interface : traceEdge)
+        for (auto &interface : m_traceEdge)
         {
             const int indx = interface.first;
-            bool &flag = (n == 0 ? m_interfaceCacheFlag[indx].first : m_interfaceCacheFlag[indx].second);
-            auto &mapCache= (n == 0 ? m_edgeCacheMap[indx].first : m_edgeCacheMap[indx].second);
-            auto &traceEdgeCache = (n == 0 ? m_traceEdgeRight[indx] : m_traceEdgeLeft[indx]);
-            auto &interfacesCache = (n == 0 ? m_interfaces[indx].second : m_interfaces[indx].first);
+            auto &traceEdge = (n == 0 ? interface.second.first
+                                      : interface.second.second);
+            auto &traceEdgeCache (n == 0 ? interface.second.second
+                                         : interface.second.first);
+            bool &flag = (n == 0 ? m_interfaceCacheFlag[indx].first
+                                 : m_interfaceCacheFlag[indx].second);
+            auto &mapCache = (n == 0 ? m_edgeCacheMap[indx].first
+                                     : m_edgeCacheMap[indx].second);
+            auto &interfacesCache = (n == 0 ? m_interfaces[indx].second
+                                            : m_interfaces[indx].first);
 
             int cnt = 0;
-            for (auto edges : interface.second)
+            for (auto edges : traceEdge)
             {
                 auto elmt = edges.second;
                 int nq = elmt->GetTotPoints();
@@ -1495,14 +1499,16 @@ void DisContField2D::v_GetFwdBwdTracePhys(
                         {
                             geom = traceEdgeCache[boundaryBoxElement.second];
                             SpatialDomains::SegGeomSharedPtr geomSeg =
-                                    std::static_pointer_cast<SpatialDomains::SegGeom>(geom->GetGeom1D());
+                                    std::static_pointer_cast<SpatialDomains::SegGeom>(
+                                            geom->GetGeom1D());
 
                             Array<OneD, NekDouble> xs(3);
                             xs[0] = xc[i];
                             xs[1] = yc[i];
                             xs[2] = 0;
 
-                            NekDouble dist = geomSeg->FindDistance(xs,foundPoint);
+                            NekDouble dist = geomSeg->FindDistance(xs,
+                                                                   foundPoint);
                             if (dist > 1e-8)
                             {
                                 continue;
@@ -1536,7 +1542,8 @@ void DisContField2D::v_GetFwdBwdTracePhys(
                         Array<OneD, NekDouble> edgePhys = Fwd + m_trace->
                                 GetPhys_Offset(geom->GetElmtId());
                         Array<OneD, NekDouble> foundPointArray(1, foundPoint);
-                        Fwd[m_trace->GetPhys_Offset(elmt->GetElmtId()) + i] = geom->
+                        Fwd[m_trace->GetPhys_Offset(elmt->GetElmtId()) +
+                            i] = geom->
                                 StdPhysEvaluate(foundPointArray, edgePhys);
                     }
                 }
