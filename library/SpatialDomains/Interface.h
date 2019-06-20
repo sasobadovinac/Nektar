@@ -180,6 +180,7 @@ protected:
     MeshGraphSharedPtr m_meshGraph;
     LibUtilities::SessionReaderSharedPtr m_session;
     InterfaceCollection m_interfaces;
+    std::vector<SegGeomSharedPtr> m_mortars;
 
 private:
     /// Read segments (and general MeshGraph) given TiXmlDocument.

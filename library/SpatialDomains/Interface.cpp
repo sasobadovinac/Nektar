@@ -495,6 +495,7 @@ void Interfaces::GenerateMortars(int indx)
 
                     auto newMortar = MemoryManager<SegGeom>::AllocateSharedPtr(
                             id, 2, newEdgeVerts, geomSeg->GetCurve());
+                    newMortar->GetGeomFactors()->GetGtype(); //populate new
                     mortars.emplace_back(newMortar);
                 }
             }
@@ -503,14 +504,33 @@ void Interfaces::GenerateMortars(int indx)
         }
     }
 
+    m_mortars = mortars;
+
+    //Debugging output mortar coords
     for (auto it : mortars)
     {
         NekDouble x, y, z, a, b, c;
         it->GetVertex(0)->GetCoords(x, y, z);
         it->GetVertex(1)->GetCoords(a, b, c);
 
-        cout << "Seg: " << it->GetGlobalID() <<  " | Point 1 = (" << x << ", " << y << ")" << endl;
-        cout << "Seg: " << it->GetGlobalID() <<  " | Point 2 = (" << a << ", " << b << ")" << endl;
+        cout << "Coords for mortar: " << it->GetGlobalID() <<  " | (" << x << ", " << y << ")" << " -> (" << a << ", " << b << ")" << endl;
+    }
+
+    //iterate over mortar and identify left and right corresponding edge
+    //by evaluating center of standard element into Cartesian
+    Array<OneD, NekDouble> xi(1, 0.0);
+    for (auto it : mortars)
+    {
+        int nq = it->GetXmap()->GetTotPoints();
+        Array<OneD, NekDouble> x(nq), y(nq);
+        it->GetXmap()->BwdTrans(it->GetCoeffs(0),x);
+        it->GetXmap()->BwdTrans(it->GetCoeffs(1),y);
+
+        NekDouble xc = it->GetXmap()->PhysEvaluate(xi, x);
+        NekDouble yc = it->GetXmap()->PhysEvaluate(xi, y);
+
+        cout << "Center of mortar: " << it->GetGlobalID() << " | (" << xc << ", " << yc << ")" << endl;
+
     }
 }
 
