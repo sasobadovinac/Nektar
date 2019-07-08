@@ -419,6 +419,7 @@ void FilterParticlesTracking::v_Initialise(
          
          //Write headers in the csv file
          m_outputStream << "Time, Rank, Id, x, y, z";
+         m_outputStream << ", Fx, Fy, OmegaX, OmegaY, OmegaZ ";
 
         // m_outputStream << "Time, Rank, Id, x, y, z, particleU, particleV";
         //if (dim == 3)
@@ -957,12 +958,11 @@ void FilterParticlesTracking::InterpSolution(
       {
           for (int k=0; k<particle.m_dim; k++)
           {
-             pFields[k] ->GetExp(particle.m_eId)->
-                 PhysDeriv(k,physvals[j], grad);
+             pFields[0] -> GetExp(particle.m_eId)
+                -> e(k,physvals[j], grad);
         
-             particle.m_grad[k][j] = 
-                  pFields[k] ->GetExp(particle.m_eId)
-                   ->StdPhysEvaluate(particle.m_locCoord, grad);
+             particle.m_grad[j][k] = pFields[0] -> GetExp(particle.m_eId)
+                             ->StdPhysEvaluate(particle.m_locCoord, grad);
           }
          // TO DO: This could be changed later to allow solvers using different
 	   	//        variables (e.g. compressible flow solver)
@@ -1047,9 +1047,11 @@ void FilterParticlesTracking::UpdateVelocity(Particle &particle)
     {
         // Rotate force array
         RollOver(particle.m_force);
+        RollOver(particle.m_torque);
         CalculateForce(particle);
 
         RollOver(particle.m_particleVelocity);
+        RollOver(particle.m_angularVelocity);
 
         int order = min(particle.m_advanceCalls, m_intOrder);
         for (int i = 0; i < particle.m_dim; ++i)
@@ -1067,6 +1069,22 @@ void FilterParticlesTracking::UpdateVelocity(Particle &particle)
                     particle.m_force[j][i];
             }
         }
+        
+        for (int i = 0; i < 3; ++i)
+        {
+            if (order != 1)
+            {
+                particle.m_angularVelocity[0][i] =
+                    particle.m_angularVelocity[1][i];
+            }
+
+            for (int j = 0; j < order; ++j)
+            {
+                particle.m_angularVelocity[0][i] +=
+                    m_timestep * AdamsBashforth_coeffs[order - 1][j] *
+                    particle.m_torque[j][i];
+            }
+        }
     }
 }
 
@@ -1076,29 +1094,35 @@ void FilterParticlesTracking::UpdateVelocity(Particle &particle)
 void FilterParticlesTracking::CalculateForce(Particle &particle)
 {
     // Update particle.m_force[0][i] with force per unit mass
+    // Update particle.m_torque[0][i] with torque per unit mass
 
     // Particular Re evaluation
-    NekDouble Re = 0.0, Cd = 0.0, Fd = 0.0;
+    NekDouble Re = 0.0, Cd = 0.0, Fd = 0.0,Rr = 0.0, phi= 0.0, Cl = 0.0, Clr = 0.0, Cr = 0.0, Omega = 0.0, Vel = 0.0;
     Array<OneD, NekDouble> VelRel(particle.m_dim);
+    Array<OneD, NekDouble> Fl(particle.m_dim);
+    Array<OneD, NekDouble> Flr(particle.m_dim);
+    Array<OneD, NekDouble> OmegaVec(3);
     
     for (int i = 0; i < particle.m_dim; ++i)
     {
        VelRel[i] = particle.m_fluidVelocity[i] - particle.m_particleVelocity[0][i];
-       Re += pow(VelRel[i], 2.0);
+       Vel += pow(VelRel[i], 2.0);
     }
-    Re = sqrt(Re) * m_diameter / m_kinvis;
+    Vel = sqrt(Vel);
+    Re = Vel * m_diameter / m_kinvis;
 
     // Calcule Drag coeficient: Crowe et al. (1998), Lain et al. (2009)
-    if (Re < 0.1)
-    {
-        Re = 0.1;
-        Cd = 240.0;
-    }
-    else if (Re < 0.5)
-    {
-        Cd = 24.0 / Re;
-    }
-    else if (Re < 1000.0)
+    /* if (Re < 0.1) */
+    /* { */
+    /*     Re = 0.1; */
+    /*     Cd = 240.0; */
+    /* } */
+    /* else if (Re < 0.5) */
+    /* { */
+    /*     Cd = 24.0 / Re; */
+    /* } */
+    /* else if (Re < 1000.0) */
+    if (Re < 1000.0)
     {
         Cd = (24.0 / Re) * (1.0 + 0.15 * pow(Re, 0.687));
     }
@@ -1106,14 +1130,61 @@ void FilterParticlesTracking::CalculateForce(Particle &particle)
     {   
         Cd = 0.44;
     }
+    
     // Evaluate the drag force
     Fd = (3.0 * m_kinvis * Cd * Re) / (4.0 * m_SG * pow(m_diameter, 2.0));
+    
     for (int i = 0; i < particle.m_dim; ++i)
     {
         particle.m_force[0][i] = Fd * VelRel[i];
     }
+    
+    // Evaluate lift force
+    if ( particle.m_dim == 2 )
+    {
+        //Rotational Reynolds
+        Rr = abs(particle.m_grad[1][0]-particle.m_grad[0][1]) * pow(m_diameter,2.0) / m_kinvis;
+       
+       /* phi = Re*Rr; */ 
+       /* if (phi <= 6000) */
+       /* { */
+       /*     Cl = 0.0767; */
+       /* } */
+       /* else if (phi < 5E7) */
+       /* { */
+       /*     Cl = -(0.12 - 0.2 * exp(-phi * 1E-5/3.6)) * exp(phi*1E-7/3); */
+       /* } */
+       /* else */
+       /* { */   
+       /*     Cl = -0.6353; */
+       /* } */
+       /*   Fl[0] =  Cl * VelRel[1]*(particle.m_grad[1][0]-particle.m_grad[0][1]); */
+       /*   Fl[1] = -Cl * VelRel[0]*(particle.m_grad[1][0]-particle.m_grad[0][1]); */
+       
+       phi = 0.5 * Rr / Re; 
 
-    /* // Evaluate lift force */
+       if (Re <= 40)
+       {
+           Cl = ( 1.0 - 0.3314 * sqrt(phi) ) * exp( -Re / 10.0 ) + ( 0.3314 * sqrt(phi) ) ;
+       }
+       else
+       {   
+           Cl = 0.0524 * sqrt( phi*Re );
+       }
+
+       Cl *= 4.1126 / sqrt(Rr);    
+
+       Fl[0] = ( 0.75 / m_SG ) * Cl *  VelRel[1]*(particle.m_grad[1][0]-particle.m_grad[0][1]);
+       Fl[1] = ( 0.75 / m_SG ) * Cl * -VelRel[0]*(particle.m_grad[1][0]-particle.m_grad[0][1]);
+      //  cout<<"Fl: "<< Fl[0]<<", "<<Fl[1]<<endl;
+    }
+    
+    for (int i = 0; i < particle.m_dim; ++i)
+    {
+        particle.m_force[0][i] += Fl[i];
+    }
+
+
     /* // */
     /* if (particle.m_dim=3) */
     /* { */
@@ -1133,13 +1204,65 @@ void FilterParticlesTracking::CalculateForce(Particle &particle)
     /*  Fl[1] = -VelRel[0]*(particle.m_grad[1][0]-particle.m_grad[0][1]); */
     /* } */
 
+    // Evaluate Magnus force
+    if ( particle.m_dim == 2 )
+    {
+       OmegaVec[2] = 0.5 * ( particle.m_grad[1][0]-particle.m_grad[0][1] ) - particle.m_angularVelocity[0][2];
+       Omega = abs(OmegaVec[2]);
 
+       Rr = Omega * pow(m_diameter,2.0) / m_kinvis; 
+       //phi = 0.5 *  Rr / Re; 
+       
+       if (Re <= 140)
+       {
+          //Clr = ( 0.45 +( Rr/Re - 0.45 ) * exp(-0.075 * pow(Rr,0.4) * pow(Re,0.3) ) );
+          Clr = ( 0.45 +( Rr/Re - 0.45 ) * exp(-0.05684 * pow(Rr,0.4) * pow(Re,0.3) ) );
+       }
+       else
+       {   
+          Clr = Rr / Re;   
+       }
+       /* cout<<"Re:"<<Re <<", Rr:"<<Cl<<", Omega:"<<Omega  <<endl; */ 
+       
+       Flr[0] = ( 0.75 / ( m_SG * m_diameter) * Clr * Vel * (- VelRel[1] * OmegaVec[2]) / Omega);
+       Flr[1] = ( 0.75 / ( m_SG * m_diameter) * Clr * Vel * (  VelRel[0] * OmegaVec[2]) / Omega);
+    }
+    
+    for (int i = 0; i < particle.m_dim; ++i)
+    {
+         particle.m_force[0][i] += Flr[i]; 
+    }
+
+    //Update torque 
+       if (Rr < 32)
+       {
+           Cr = 64 * M_PI / Rr; 
+       }
+       else
+       {   
+           Cr = 12.9 / sqrt(Rr) + 128.4 / Rr;
+       }
+
+    /* for (int i = 0; i < particle.m_dim; ++i) */
+    /* { */
+          particle.m_torque[0][2] = 15 / (16 * m_SG * M_PI) * Cr * Omega * OmegaVec[2];
+          /* cout<<"Omega: "<<particle.m_angularVelocity[0][2]<<endl; */ 
+          /*  cout<<"Torque: "<<particle.m_torque[0][2]<<endl; */ 
+    /* } */
+
+    
 
     // Add gravity and buoyancy effects on y direction
     /* particle.m_force[0][1] += m_gravity * (1.0 - 1.0 / m_SG); */
     
     // Add gravity and buoyancy effects on x direction
     particle.m_force[0][0] += m_gravity * (1.0 - 1.0 / m_SG);
+    
+    // Add  virtual mass effects, if the velocity field is constant
+    for (int i = 0; i < particle.m_dim; ++i)
+    {
+        particle.m_force[0][i] /= (1 + 0.5 / m_SG);
+    }
 }
 
 /**
@@ -1424,8 +1547,8 @@ const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields)
             }
 
             /* for (int n = 0; n < particle.m_dim; ++n) */
-            /* { */
-            /*     m_outputStream << ", " */
+         /* { */
+         /*     m_outputStream << ", " */
             /*                    << boost::format("%25.19e") % */
             /*                           particle.m_particleVelocity[0][n]; */
             /* } */
@@ -1435,12 +1558,18 @@ const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields)
             /*     m_outputStream */
             /*         << ", " << boost::format("%25.19e") % particle.m_fields[n]; */
             /* } */
-            /* for (int n = 0; n < particle.m_dim; ++n) */
-            /* { */
-            /*     m_outputStream */
-            /*         << ", " */
-            /*         << boost::format("%25.19e") % particle.m_force[0][n]; */
-            /* } */
+            for (int n = 0; n < particle.m_dim; ++n)
+            {
+                m_outputStream
+                    << ", "
+                    << boost::format("%25.19e") % particle.m_force[0][n];
+            }
+            for (int n = 0; n < 3; ++n)
+            {
+                m_outputStream
+                    << ", "
+                    << boost::format("%25.19e") % particle.m_angularVelocity[0][n];
+            }
             m_outputStream << endl;
         }
     }

@@ -60,14 +60,19 @@ struct Particle
         m_locCoord          = Array<OneD, NekDouble> (3, 0.0);
         m_fluidVelocity     = Array<OneD, NekDouble> (m_dim, 0.0);
         m_fields            = Array<OneD, NekDouble> (numFields, 0.0);
-        // Force and velocity with intOrder entries
+        // Force, Velocity, Torque and Angular velocity with intOrder entries
         m_force            = Array<OneD, Array<OneD,NekDouble>> (intOrder);
         m_particleVelocity = Array<OneD, Array<OneD,NekDouble>> (intOrder);
+        m_torque           = Array<OneD, Array<OneD,NekDouble>> (intOrder);
+        m_angularVelocity  = Array<OneD, Array<OneD,NekDouble>> (intOrder);
         for (int i = 0; i < intOrder; ++i)
         {
-            m_force[i]         = Array<OneD, NekDouble> (m_dim, 0.0);
+            m_force[i]            = Array<OneD, NekDouble> (m_dim, 0.0);
             m_particleVelocity[i] = Array<OneD, NekDouble> (m_dim, 0.0);
+            m_torque[i]           = Array<OneD, NekDouble> (3, 0.0);
+            m_angularVelocity[i]  = Array<OneD, NekDouble> (3, 0.0);
         }
+        // gradient array  
         m_grad = Array<OneD,Array<OneD,NekDouble> >(m_dim*m_dim);
         for (int i = 0; i < m_dim*m_dim; ++i)
         {
@@ -111,6 +116,8 @@ struct Particle
     Array<OneD, NekDouble>          m_locCoord;
     /// Velocity of the particle
     Array<OneD, Array<OneD, NekDouble>> m_particleVelocity;
+    /// Angular Velocity of the particle
+    Array<OneD, Array<OneD, NekDouble>> m_angularVelocity;
     /// Fluid velocity
     Array<OneD, NekDouble>          m_fluidVelocity;
     /// Id of the element currently holding the particle
@@ -121,6 +128,8 @@ struct Particle
     Array<OneD, NekDouble>          m_fields;
     /// Force acting on the particle
     Array<OneD, Array<OneD, NekDouble>> m_force;
+    /// Torque acting on the particle
+    Array<OneD, Array<OneD, NekDouble>> m_torque;
     /// Gradiend acting on the particle
     Array<OneD, Array<OneD, NekDouble>> m_grad;
     /// Counter of times particles were advanced
