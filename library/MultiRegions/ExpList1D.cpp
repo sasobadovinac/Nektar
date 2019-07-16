@@ -678,8 +678,11 @@ namespace Nektar
                 (*m_exp).push_back(seg);
             }
 
+            cout << endl << "Before mortar expansion list size: " << m_exp->size() << endl;
+            m_nonMortars = m_exp->size();
+
             auto basisKey = locexp[0]->DetEdgeBasisKey(0);
-            cout << endl << "Basis type: " << LibUtilities::BasisTypeMap[basisKey.GetBasisType()] << endl;
+            cout << "Basis type: " << LibUtilities::BasisTypeMap[basisKey.GetBasisType()] << endl;
             cout << "Number of modes: " << basisKey.GetNumModes() << endl;
             cout << "Points type: " << LibUtilities::kPointsTypeStr[basisKey.GetPointsType()] << endl;
             cout << "Number of points: " << basisKey.GetNumPoints() << endl;
@@ -691,10 +694,14 @@ namespace Nektar
                 {
                     seg = MemoryManager<LocalRegions::SegExp>
                     ::AllocateSharedPtr(basisKey, geom);
+                    geom->SetGlobalID(elmtid);
                     seg->SetElmtId(elmtid++);
                     (*m_exp).push_back(seg);
                 }
             }
+
+            cout << "After mortar expansion list size: " << m_exp->size() << endl << endl;
+
 
             // Setup Default optimisation information.
             int nel = GetExpSize();
@@ -1073,7 +1080,7 @@ namespace Nektar
                      "Output vector does not have sufficient dimensions to "
                      "match coordim");
 
-            for (i = 0; i < m_exp->size(); ++i)
+            for (i = 0; i < m_nonMortars; ++i)
             {
                 LocalRegions::Expansion1DSharedPtr loc_exp = (*m_exp)[i]->as<LocalRegions::Expansion1D>();
                 
@@ -1161,6 +1168,18 @@ namespace Nektar
                             normals[k][offset + j] = locnormals[k][j];
                         }
                     }
+                }
+            }
+
+            for (int i = m_nonMortars; i < m_exp->size(); ++i)
+            {
+                offset = m_phys_offset[i];
+                e_npoints = (*m_exp)[i]->GetTotPoints();
+                // This is a complete hack: fix n = (1,0), i.e. x-direction
+                for (int j = 0; j < e_npoints; ++j)
+                {
+                    normals[0][offset + j] = 1.0;
+                    normals[1][offset + j] = 0.0;
                 }
             }
         }

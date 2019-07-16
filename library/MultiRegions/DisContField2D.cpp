@@ -387,6 +387,15 @@ void DisContField2D::SetUpDG(const std::string variable)
     Array<OneD, Array<OneD, LocalRegions::ExpansionSharedPtr>> &elmtToTrace =
         m_traceMap->GetElmtToTrace();
 
+    for (int i = 0; i < m_exp->size(); ++i)
+    {
+        for (int j = 0; j < (*m_exp)[i]->GetNedges(); ++j)
+        {
+            cout << "ELMT " << i << " EDGE " << j << ": "
+                 << " -> trace ID: " << elmtToTrace[i][j]->GetGeom()->GetGlobalID() << endl;
+        }
+    }
+
     // Scatter trace segments to 2D elements. For each element,
     // we find the trace segment associated to each edge. The
     // element then retains a pointer to the trace space segments,

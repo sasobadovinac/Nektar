@@ -193,6 +193,7 @@ namespace Nektar
             void v_GetNormals(Array<OneD, Array<OneD, NekDouble> > &normals);
 
         private:
+            int m_nonMortars;
             virtual void v_ReadGlobalOptimizationParameters();
             
             /// Set up the normals on each expansion.
