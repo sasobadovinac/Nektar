@@ -467,6 +467,7 @@ namespace Nektar
          *                      instead of just normal segment expansions.
          */
         ExpList1D::ExpList1D(
+            const SpatialDomains::MortarCollection &mortars,
             const LibUtilities::SessionReaderSharedPtr &pSession,
             const Array<OneD,const ExpListSharedPtr>  &bndConstraint,
             const Array<OneD, const SpatialDomains::BoundaryConditionShPtr>  &bndCond,
@@ -675,6 +676,24 @@ namespace Nektar
                     ::AllocateSharedPtr(it.second.second, it.second.first);
                 seg->SetElmtId(elmtid++);
                 (*m_exp).push_back(seg);
+            }
+
+            auto basisKey = locexp[0]->DetEdgeBasisKey(0);
+            cout << endl << "Basis type: " << LibUtilities::BasisTypeMap[basisKey.GetBasisType()] << endl;
+            cout << "Number of modes: " << basisKey.GetNumModes() << endl;
+            cout << "Points type: " << LibUtilities::kPointsTypeStr[basisKey.GetPointsType()] << endl;
+            cout << "Number of points: " << basisKey.GetNumPoints() << endl;
+
+
+            for (auto &it : mortars)
+            {
+                for (auto &geom : it.second)
+                {
+                    seg = MemoryManager<LocalRegions::SegExp>
+                    ::AllocateSharedPtr(basisKey, geom);
+                    seg->SetElmtId(elmtid++);
+                    (*m_exp).push_back(seg);
+                }
             }
 
             // Setup Default optimisation information.

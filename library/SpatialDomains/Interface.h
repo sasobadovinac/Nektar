@@ -156,6 +156,7 @@ typedef std::shared_ptr<RotatingInterface> RotatingInterfaceShPtr;
 typedef std::shared_ptr<FixedInterface> FixedInterfaceShPtr;
 
 typedef std::map<int, std::pair<InterfaceShPtr, InterfaceShPtr>> InterfaceCollection;
+typedef std::map<int, std::vector<SegGeomSharedPtr>> MortarCollection;
 
 class Interfaces
 {
@@ -171,6 +172,11 @@ public:
         return m_interfaces;
     }
 
+    const MortarCollection &GetMortars(void) const
+    {
+        return m_mortars;
+    }
+
     void SeparateGraph(MeshGraphSharedPtr &graph, int indx);
 
     void GenerateMortars(int indx);
@@ -180,13 +186,15 @@ protected:
     MeshGraphSharedPtr m_meshGraph;
     LibUtilities::SessionReaderSharedPtr m_session;
     InterfaceCollection m_interfaces;
-    std::map<int, std::vector<SegGeomSharedPtr>> m_mortars;
+    MortarCollection m_mortars;
 
 private:
     /// Read segments (and general MeshGraph) given TiXmlDocument.
     void Read(TiXmlElement *interfaceTag);
     void ReadInterfaces(TiXmlElement *interfaceTag);
 };
+
+typedef std::shared_ptr<Interfaces> InterfacesSharedPtr;
 
 } // namespace SpatialDomains
 } // namespace Nektar

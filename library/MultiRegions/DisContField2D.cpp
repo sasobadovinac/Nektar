@@ -370,7 +370,7 @@ void DisContField2D::SetUpDG(const std::string variable)
     m_globalBndMat = MemoryManager<GlobalLinSysMap>::AllocateSharedPtr();
 
     // Set up trace space
-    trace = MemoryManager<ExpList1D>::AllocateSharedPtr(
+    trace = MemoryManager<ExpList1D>::AllocateSharedPtr(m_mortars,
         m_session, m_bndCondExpansions, m_bndConditions, *m_exp, m_graph,
         m_periodicEdges);
 

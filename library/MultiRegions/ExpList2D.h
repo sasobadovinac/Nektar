@@ -135,6 +135,7 @@ namespace Nektar
 
         protected:
             SpatialDomains::InterfaceCollection m_interfaces;
+            SpatialDomains::MortarCollection m_mortars;
 
             /// Upwind the \a Fwd and \a Bwd states based on the one-
             /// dimensional normal velocity field given by \a Vn.
