@@ -187,6 +187,9 @@ protected:
     LibUtilities::SessionReaderSharedPtr m_session;
     InterfaceCollection m_interfaces;
     MortarCollection m_mortars;
+    std::map<int, std::vector<int>> m_mortarToRightEdgeMap;
+    std::map<int, std::vector<int>> m_mortarToLeftEdgeMap;
+
 
 private:
     /// Read segments (and general MeshGraph) given TiXmlDocument.

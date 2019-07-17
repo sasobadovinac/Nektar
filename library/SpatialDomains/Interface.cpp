@@ -546,6 +546,8 @@ void Interfaces::GenerateMortars(int indx)
                 continue;
             }
 
+            m_mortarToRightEdgeMap[indx].emplace_back(edge.second->GetGlobalID());
+
             cout << "'Right' edge | Segment ID: " << edge.second->GetGlobalID() << endl;
         }
 
@@ -558,9 +560,20 @@ void Interfaces::GenerateMortars(int indx)
                 continue;
             }
 
+            m_mortarToLeftEdgeMap[indx].emplace_back(edge.second->GetGlobalID());
+
             cout << "'Left' edge | Segment ID: " << edge.second->GetGlobalID() << endl;
         }
     }
+
+    cout << endl << "Number of mortars: " << m_mortars[indx].size() << endl;
+
+    ASSERTL0(m_mortarToLeftEdgeMap[indx].size() == m_mortars[indx].size(),
+            "Length of mortar to left edge map is not equal to number of mortars.");
+
+    ASSERTL0(m_mortarToRightEdgeMap[indx].size() == m_mortars[indx].size(),
+            "Length of mortar to right edge map is not equal to number of mortars.");
+
 }
 
 void InterfaceBase::SetEdge(const CompositeMap &edge)
