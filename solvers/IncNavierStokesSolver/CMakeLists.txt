@@ -15,6 +15,7 @@ IF( NEKTAR_SOLVER_INCNAVIERSTOKES )
         ./EquationSystems/IncNavierStokes.cpp
         ./EquationSystems/VelocityCorrectionScheme.cpp
         ./EquationSystems/VelocityCorrectionSchemeWeakPressure.cpp
+        ./EquationSystems/SmoothedProfileMethod.cpp
         ./EquationSystems/VCSMapping.cpp
         ./EquationSystems/Extrapolate.cpp
         ./EquationSystems/StandardExtrapolate.cpp
