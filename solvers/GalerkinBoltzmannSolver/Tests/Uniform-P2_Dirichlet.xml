@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<NEKTAR>
+    <GEOMETRY DIM="2" SPACE="2">
+        <VERTEX COMPRESSED="B64Z-LittleEndian" BITSIZE="64">eJxjYMAGHtjDWIxoMv///79/bbn4PhifCUqLGfqEhYZ+tQfybyDLM6PJo5vPAqUDF1wKDQ1ldUDXz4omj66fDcV1Ag7o7mNHk0fXz8GADTzYD2NxYnc/XJ4Lu/vg8tzY7YfLAwBkizBJ</VERTEX>
+        <EDGE COMPRESSED="B64Z-LittleEndian" BITSIZE="64">eJx1j0EOgCAMBFFRRFD8/2u5OAcnaS+babYLm9J/lkDXQLdAmSw/vAd8iMkr8uM7xfiqmLzrU3px38TcdzE9bu3JfcT8d2jPe6+YHhOzKAE7</EDGE>
+        <ELEMENT>
+            <Q COMPRESSED="B64Z-LittleEndian" BITSIZE="64">eJxjYEAFjFCaCUoz4xBngdKsUJoNTR4mzg6lOaA0J5q5XFCaG0rzoNnHgibOC6X5cLgDJs4PpQXQ3AEAQ1AAxQAA</Q>
+        </ELEMENT>
+        <COMPOSITE>
+            <C ID="1"> E[0,10] </C>
+            <C ID="2"> E[3,6,9] </C>
+            <C ID="3"> E[11,13,15] </C>
+            <C ID="4"> E[8,16] </C>
+            <C ID="5"> Q[0-5] </C>
+        </COMPOSITE>
+        <DOMAIN> C[5] </DOMAIN>
+    </GEOMETRY>
+    <EXPANSIONS>
+        <E COMPOSITE="C[5]" NUMMODES="2" FIELDS="a0,a1,a2,a3,a4,a5" TYPE="MODIFIED" />
+    </EXPANSIONS>
+
+  <CONDITIONS>
+    <SOLVERINFO>
+            <I PROPERTY="EQTYPE"                VALUE="GalerkinBoltzmann"    />
+            <I PROPERTY="Projection"            VALUE="DisContinuous"        />
+            <!--I PROPERTY="UpwindType"            VALUE="Upwind"               /-->
+            <I PROPERTY="TimeIntegrationMethod" VALUE="ClassicalRungeKutta4" />
+            <!--I PROPERTY="TimeIntegrationMethod" VALUE="ClassicalRungeKutta2" /-->
+    </SOLVERINFO>
+    <PARAMETERS>
+            <P> TimeStep      = 0.00001                 </P>
+            <P> NumSteps      = 10000                    </P>
+            <P> IO_CheckSteps = 1000                     </P>
+            <P> IO_InfoSteps  = 1000                     </P>
+            <P> RT            = 1                       </P>
+            <P> tau           = 0.0001                  </P>
+            <P> rho           = 1                       </P>
+            <P> u             = 0.01                    </P>
+            <P> v             = 0                       </P>
+    </PARAMETERS>
+    <VARIABLES>
+            <V ID="0"> a0 </V>
+            <V ID="1"> a1 </V>
+            <V ID="2"> a2 </V>
+            <V ID="3"> a3 </V>
+            <V ID="4"> a4 </V>
+            <V ID="5"> a5 </V>
+    </VARIABLES>
+    <BOUNDARYREGIONS>
+      <B ID="0"> C[1] </B> // Inlet
+      <B ID="1"> C[2] </B> // Upwall
+      <B ID="2"> C[3] </B> // Botwall
+      <B ID="3"> C[4] </B> // Outlet
+    </BOUNDARYREGIONS>
+    <BOUNDARYCONDITIONS>
+      <REGION REF="0">
+        <D VAR="a0" VALUE="rho" />
+        <D VAR="a1" VALUE="u" />
+        <D VAR="a2" VALUE="0" />
+        <D VAR="a3" VALUE="0" />
+        <D VAR="a4" VALUE="0" />
+        <D VAR="a5" VALUE="0" />
+      </REGION>
+      <REGION REF="1">
+        <P VAR="a0" VALUE="[2]" />
+        <P VAR="a1" VALUE="[2]" />
+        <P VAR="a2" VALUE="[2]" />
+        <P VAR="a3" VALUE="[2]" />
+        <P VAR="a4" VALUE="[2]" />
+        <P VAR="a5" VALUE="[2]" />
+      </REGION>
+      <REGION REF="2">
+        <P VAR="a0" VALUE="[1]" />
+        <P VAR="a1" VALUE="[1]" />
+        <P VAR="a2" VALUE="[1]" />
+        <P VAR="a3" VALUE="[1]" />
+        <P VAR="a4" VALUE="[1]" />
+        <P VAR="a5" VALUE="[1]" />
+      </REGION>
+      <REGION REF="3">
+        <N VAR="a0" VALUE="0" />
+        <N VAR="a1" VALUE="0" />
+        <N VAR="a2" VALUE="0" />
+        <N VAR="a3" VALUE="0" />
+        <N VAR="a4" VALUE="0" />
+        <N VAR="a5" VALUE="0" />
+      </REGION>
+    </BOUNDARYCONDITIONS>
+    <FUNCTION NAME="InitialConditions">
+            <E VAR="a0" VALUE="rho" />
+            <E VAR="a1" VALUE="u" />
+            <E VAR="a2" VALUE="0" />
+            <E VAR="a3" VALUE="0" />
+            <E VAR="a4" VALUE="0" />
+            <E VAR="a5" VALUE="0" />
+    </FUNCTION>
+  </CONDITIONS>
+
+</NEKTAR>
