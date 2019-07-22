@@ -128,6 +128,8 @@ protected:
         const Array<OneD, MultiRegions::ExpListSharedPtr> &fields);
 
     virtual const Array<OneD, const Array<OneD, NekDouble> >  &v_GetBaseFlow(void);
+
+    virtual const Array<OneD, const Array<OneD, NekDouble> >  &v_GetGradBase(void);
     
     void UpdateBase(
         const NekDouble                                    m_slices,

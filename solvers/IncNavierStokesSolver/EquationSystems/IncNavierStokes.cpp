@@ -204,7 +204,9 @@ namespace Nektar
                     radpts += BndExp[n]->GetTotPoints();
                 }
                 if(boost::iequals(BndConds[n]->GetUserDefined(),
-                        "ZeroNormalComponent"))
+                        "ZeroNormalComponent") || boost::istarts_with
+                        (m_fields[i]->GetBndConditions()[n]->GetUserDefined(),
+                        "BlowingSuction"))
                 {
                     ASSERTL0(BndConds[n]->GetBoundaryConditionType() ==
                             SpatialDomains::eDirichlet,
@@ -227,7 +229,6 @@ namespace Nektar
             {
                 if(boost::iequals(BndConds[n]->GetUserDefined(),"Radiation"))
                 {
-
                     int npoints    = BndExp[n]->GetNpoints();
                     Array<OneD, NekDouble> x0(npoints,0.0);
                     Array<OneD, NekDouble> x1(npoints,0.0);
@@ -250,6 +251,7 @@ namespace Nektar
         }
 
         // Set up maping for womersley BC - and load variables
+        int var;
         for (int i = 0; i < m_fields.num_elements(); ++i)
         {
             for(int n = 0; n < m_fields[i]->GetBndConditions().num_elements(); ++n)
@@ -267,7 +269,18 @@ namespace Nektar
                     m_fields[i]->GetBoundaryToElmtMap(m_fieldsBCToElmtID[i],m_fieldsBCToTraceID[i]);
 
                 }
+                else if(boost::istarts_with(m_fields[i]->GetBndConditions()[n]->GetUserDefined(),"BlowingSuction"))
+                {
+                    m_BlowingSuction = true;
+                    var = i;
+                }
             }
+        }
+
+        if(m_BlowingSuction)
+        {
+            m_bsbcParams = MemoryManager<BlowingSuctionParams>::AllocateSharedPtr();
+            SetUpBlowingSuction(m_fields[var]->GetBndConditions()[0]->GetUserDefined());
         }
 
         // Set up Field Meta Data for output files
@@ -331,6 +344,8 @@ namespace Nektar
             // Set Radiation conditions if required
             SetRadiationBoundaryForcing(i);
         }
+
+        //////////////////////////////////////////////////////////////////////////////////////////////
 
         SetZeroNormalVelocity();
     }
@@ -559,7 +574,9 @@ namespace Nektar
         }
     }
 
-
+    /**
+     *  Womersley boundary condition init
+     */
     void IncNavierStokes::SetUpWomersley(const int fldid, const int bndid, std::string womStr)
     {
         std::string::size_type indxBeg = womStr.find_first_of(':') + 1;
@@ -771,6 +788,471 @@ namespace Nektar
                             m_womersleyParams[fldid][bndid]->m_wom_vel[k] *
                             (z1 - (zJ0r / zJ0[k]));
                 }
+            }
+        }
+    }
+
+    /**
+     *  Solve structural equation and get m_angle and m_angleVel
+     */
+    void IncNavierStokes::SolveStructural(NekDouble time)
+    {
+        static int totalCalls = -1;
+        ++totalCalls;
+
+        // Determine order for this time step
+        static int intCalls = 0;
+        ++intCalls;
+        int order = min(intCalls, m_bsbcParams->m_intSteps);
+
+        int expdim = m_fields[0]->GetGraph()->GetMeshDimension();
+
+        // Get aerodynamic forces
+        Array<OneD, NekDouble> moments(expdim, 0.0);
+        m_bsbcParams->m_filterForces->GetTotalMoments(m_fields, moments, time);
+
+        // Shift moment storage
+        for(int n = m_bsbcParams->m_intSteps-1; n > 0; --n)
+        {
+            m_bsbcParams->m_moment[n] = m_bsbcParams->m_moment[n-1];
+        }
+
+        // Calculate total moment
+        if( expdim == 2)
+        {
+            // Only have moment in z-direction
+            m_bsbcParams->m_moment[0] = moments[0];
+        }
+        else
+        {
+            // Project to axis direction
+            m_bsbcParams->m_moment[0] = 0;
+            for(int j = 0; j < 3; ++j)
+            {
+                m_bsbcParams->m_moment[0] += moments[j] * m_bsbcParams->m_axis[j];
+            }
+        }
+
+        // Account for torsional spring and damping contributions
+        m_bsbcParams->m_moment[0] -= m_bsbcParams->m_K * m_bsbcParams->m_angle
+         + m_bsbcParams->m_C * m_bsbcParams->m_angleVel[0];
+
+        // Shift velocity storage
+        for(int n = m_bsbcParams->m_intSteps-1; n > 0; --n)
+        {
+            m_bsbcParams->m_angleVel[n] = m_bsbcParams->m_angleVel[n-1];
+        }
+
+        // Update velocity
+        for(int j = 0; j < order; ++j)
+        {
+            m_bsbcParams->m_angleVel[0] += m_timestep *
+                m_bsbcParams->AdamsBashforth_coeffs[order-1][j] 
+                * m_bsbcParams->m_moment[j] / m_bsbcParams->m_I;
+        }
+        // Update position
+        m_bsbcParams->m_previousAngle = m_bsbcParams->m_angle;
+        for(int j = 0; j < order; ++j)
+        {
+            m_bsbcParams->m_angle += m_timestep *
+                m_bsbcParams->AdamsMoulton_coeffs[order-1][j] * m_bsbcParams->m_angleVel[j];
+        }
+
+        if( m_bsbcParams->m_doOutput )
+        {
+            m_bsbcParams->m_filterForces->Update(m_fields, time);
+            ++m_bsbcParams->m_index;
+            if ( !(m_bsbcParams->m_index % m_bsbcParams->m_outputFrequency) )
+            {
+                if ( m_fields[0]->GetComm()->GetRank() == 0)
+                {
+                    m_bsbcParams->m_outputStream.width(8);
+                    m_bsbcParams->m_outputStream << setprecision(6) << time;
+                    m_bsbcParams->m_outputStream.width(15);
+                    m_bsbcParams->m_outputStream << setprecision(8) << m_bsbcParams->m_angleVel[0];
+                    m_bsbcParams->m_outputStream.width(15);
+                    m_bsbcParams->m_outputStream << setprecision(8) << m_bsbcParams->m_angle;
+                    m_bsbcParams->m_outputStream << endl;
+                }
+            }
+        }
+    }
+
+    /**
+     *  Scale boundary conditions by m_angle and m_angleVel
+     */
+    void IncNavierStokes::ScaleBSBC()
+    {
+        int physTot = m_fields[0]->GetTotPoints();
+        int nfields = m_fields.num_elements();
+        int nvel = nfields - 1;
+        int nbnds    = m_fields[0]->GetBndConditions().num_elements();
+
+        // Declare variables
+        Array<OneD, const SpatialDomains::BoundaryConditionShPtr> BndConds;
+        Array<OneD, MultiRegions::ExpListSharedPtr>  BndExp;
+
+        Array<OneD, bool>  isBlowingSuction(nfields);
+
+        Array<OneD, Array<OneD, NekDouble> > deltaGrad(nvel);
+        Array<OneD, Array<OneD, NekDouble> > deltaGamma(nvel);
+        for (int i = 0; i< nvel; i++)
+        {
+            deltaGrad[i] = Array<OneD, NekDouble> (physTot, 0.0);
+            deltaGamma[i] = Array<OneD, NekDouble> (physTot, 0.0);
+        }
+
+        // Get Cartesian coordinates for evaluating boundary conditions    
+        Array<OneD, Array<OneD, NekDouble> > coords(3);
+        for (int dir=0; dir < 3; dir++)
+        {
+            coords[dir] = Array<OneD, NekDouble> (physTot, 0.0);
+        }
+        m_fields[0]->GetCoords(coords[0],coords[1],coords[2]);
+
+        for(int j = 0; j < 3; ++j)
+            {
+                // Subtract m_momPoint
+                Vmath::Sadd (physTot, -1.0*m_bsbcParams->m_hingePoint[j],
+                             coords[j], 1, coords[j], 1);
+            }
+
+        // Loop boundary conditions looking for Dirichlet bc's
+        for(int n = 0 ; n < nbnds ; ++n)
+        {
+            // Evaluate original Dirichlet boundary conditions in whole domain
+            for (int i = 0; i < nfields; ++i)
+            {
+                BndConds   = m_fields[i]->GetBndConditions();
+                BndExp     = m_fields[i]->GetBndCondExpansions();
+                if ( BndConds[n]->GetBoundaryConditionType() == 
+                                    SpatialDomains::eDirichlet && 
+                                    boost::istarts_with(BndConds[n]->GetUserDefined(),"BlowingSuction"))
+                {
+                    isBlowingSuction[i] = true;
+                    // If we have the a velocity component
+                    //      check if all vel bc's are also Dirichlet
+                    if ( i<nvel )
+                    {
+                        for (int j = 0; j < nvel; ++j)
+                        {
+                            ASSERTL0(m_fields[j]->GetBndConditions()[n]->
+                                                  GetBoundaryConditionType() == 
+                                                    SpatialDomains::eDirichlet,
+                                "BSBC only supported when all velocity components have the same type of boundary conditions");
+                        }
+                    }
+                    // Check if bc is time-dependent
+                    ASSERTL0( !BndConds[n]->IsTimeDependent(),
+                        "Time-dependent Dirichlet boundary conditions not supported with BSBC yet.");
+                }
+                else
+                {
+                    isBlowingSuction[i] = false;
+                }
+            }
+
+            if (isBlowingSuction[0])
+            {
+                // Compute delta Gamma:
+                Vmath::Vcopy(physTot, coords[0], 1, deltaGamma[1], 1);
+                Vmath::Neg(physTot, coords[1], 1);
+                Vmath::Vcopy(physTot, coords[1], 1, deltaGamma[0], 1);
+                Vmath::Neg(physTot, coords[1], 1);
+
+                // Compute delta Gamma times base-flow gradient:
+                // u = y.du/dx - x.du/dy
+                Vmath::Vmul(physTot, coords[1], 1, m_advObject->GetGradBase()[0],
+                    1 , deltaGrad[0], 1);
+
+                Vmath::Neg(physTot, coords[0], 1);
+
+                Vmath::Vvtvp(physTot, coords[0], 1, m_advObject->GetGradBase()[1],
+                    1, deltaGrad[0], 1, deltaGrad[0], 1);
+
+                // v = y.dv/dx - x.dv/dy
+                Vmath::Vmul(physTot, coords[1], 1, m_advObject->GetGradBase()[2],
+                    1 , deltaGrad[1], 1);
+
+                Vmath::Vvtvp(physTot, coords[0], 1, m_advObject->GetGradBase()[3],
+                    1, deltaGrad[1], 1, deltaGrad[1], 1);
+            }
+
+            // Now, project result to boundary
+            for (int i = 0; i < nfields; ++i)
+            {
+                BndConds   = m_fields[i]->GetBndConditions();
+                BndExp     = m_fields[i]->GetBndCondExpansions();
+                if(boost::istarts_with(BndConds[n]->GetUserDefined(),"BlowingSuction"))
+                {
+                    // Apply BSBC correction
+                    if (i<nvel)
+                    {
+                        // Get coordinate and values on boundary
+                        Array<OneD, NekDouble> deltaGradBnd(BndExp[n]->GetTotPoints());
+                        Array<OneD, NekDouble> deltaGammaBnd(BndExp[n]->GetTotPoints());
+                        m_fields[i]->ExtractPhysToBnd(n, deltaGrad[i], deltaGradBnd);
+                        m_fields[i]->ExtractPhysToBnd(n, deltaGamma[i], deltaGammaBnd);
+
+                        // Scale file with new m_angle and m_angleVel
+                        // Compute base flow gradient times angle:
+                        Vmath::Smul(BndExp[n]->GetTotPoints(), m_bsbcParams->m_angle, 
+                            deltaGradBnd, 1, BndExp[n]->UpdatePhys(), 1);
+
+                        // Add angular velocity:
+                        Vmath::Svtvp(BndExp[n]->GetTotPoints(), m_bsbcParams->m_angleVel[0], 
+                            deltaGammaBnd, 1, BndExp[n]->GetPhys(), 1, BndExp[n]->UpdatePhys(), 1);
+                    
+                    }
+                }
+            }
+        }
+
+        // Finally, perform FwdTrans in all fields
+        for (int i = 0; i < m_fields.num_elements(); ++i)
+        {
+            // Get boundary condition information
+            BndConds   = m_fields[i]->GetBndConditions();
+            BndExp     = m_fields[i]->GetBndCondExpansions();
+            for(int n = 0 ; n < BndConds.num_elements(); ++n)
+            {   
+                if ( BndConds[n]->GetBoundaryConditionType() == 
+                        SpatialDomains::eDirichlet)
+                {
+                    if( boost::istarts_with(BndConds[n]->GetUserDefined(),"BlowingSuction"))
+                    {
+                        BndExp[n]->FwdTrans_BndConstrained(BndExp[n]->GetPhys(),
+                                                    BndExp[n]->UpdateCoeffs());
+                        if (m_fields[i]->GetExpType() == MultiRegions::e3DH1D)
+                        {
+                            BndExp[n]->HomogeneousFwdTrans(BndExp[n]->GetCoeffs(),
+                                                    BndExp[n]->UpdateCoeffs());
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     *  Blowing suction boundary condition initialisation
+     */
+    void IncNavierStokes::SetUpBlowingSuction(std::string BSBCStr)
+    {
+        // Parameter list for creating FilterAeroForces
+        std::map<std::string, std::string> vParams;
+        std::stringstream                  sStream;
+
+        // Enter file containing BC parameters
+        std::string::size_type indxBeg = BSBCStr.find_first_of(':') + 1;
+        string filename = BSBCStr.substr(indxBeg,string::npos);
+
+        TiXmlDocument doc(filename);
+
+        bool loadOkay = doc.LoadFile();
+        ASSERTL0(loadOkay,(std::string("Failed to load file: ") +
+                           filename).c_str());
+
+        TiXmlHandle docHandle(&doc);
+
+        int err;    /// Error value returned by TinyXML.
+
+        TiXmlElement *nektar = doc.FirstChildElement("NEKTAR");
+        ASSERTL0(nektar, "Unable to find NEKTAR tag in file.");
+
+        TiXmlElement *bsbc = nektar->FirstChildElement("BLOWINGSUCTIONBC");
+        ASSERTL0(bsbc, "Unable to find BLOWINGSUCTIONBC tag in file.");
+
+        // read blowing suction parameters
+        TiXmlElement *bsparam = bsbc->FirstChildElement("BLOWINGSUCTIONPARAMS");
+        ASSERTL0(bsparam, "Unable to find BLOWINGSUCTIONPARAMS tag in file.");
+
+        // Input coefficients
+        TiXmlElement *params = bsparam->FirstChildElement("P");
+        map<std::string,std::string> BSparams;
+
+        // read parameter list
+        while (params)
+        {
+
+            std::string propstr;
+            propstr = params->Attribute("PROPERTY");
+
+            ASSERTL0(!propstr.empty(),
+                    "Failed to read PROPERTY value Blowing Suction BC Parameter");
+
+            std::string valstr;
+            valstr = params->Attribute("VALUE");
+
+            ASSERTL0(!valstr.empty(),
+                    "Failed to read VALUE value Blowing Suction BC Parameter");
+
+            std::transform(propstr.begin(),propstr.end(),propstr.begin(),
+                           ::toupper);
+            BSparams[propstr] = valstr;
+
+            params = params->NextSiblingElement("P");
+        }
+        bool parseGood;
+
+        // Read parameters
+        // Inertia
+        ASSERTL0(BSparams.count("I") == 1,
+          "Failed to find Inertia parameter in Blowing Suction boundary conditions");
+        std::vector<NekDouble> mass;
+        ParseUtils::GenerateVector(BSparams["I"],mass);
+        m_bsbcParams->m_I = mass[0];
+        
+        // Damping
+        ASSERTL0(BSparams.count("C") == 1,
+          "Failed to find Damping parameter in Blowing Suction boundary conditions");
+        std::vector<NekDouble> damp;
+        ParseUtils::GenerateVector(BSparams["C"],damp);
+        m_bsbcParams->m_C = damp[0];
+
+        // Stiffness
+        ASSERTL0(BSparams.count("K") == 1,
+          "Failed to find Stiffness parameter in Blowing Suction boundary conditions");
+        std::vector<NekDouble> stiff;
+        ParseUtils::GenerateVector(BSparams["K"],stiff);
+        m_bsbcParams->m_K = stiff[0];
+
+        // Rotation axis
+        m_bsbcParams->m_axis = Array<OneD, NekDouble> (3, 0.0);
+        ASSERTL0(BSparams.count("AXIS") == 1,
+          "Failed to find axis parameter in Blowing Suction boundary conditions");
+        std::vector<NekDouble> axis;
+        parseGood = ParseUtils::GenerateVector(BSparams["AXIS"],axis);
+        m_bsbcParams->m_axis[0] = axis[0];
+        m_bsbcParams->m_axis[1] = axis[1];
+        m_bsbcParams->m_axis[2] = axis[2];
+
+        // Output frequency 1st vParams
+        ASSERTL0(BSparams.count("OUTPUTFREQUENCY") == 1,
+          "Failed to find output frequency parameter in Blowing Suction boundary conditions");
+        std::vector<NekDouble> freq;
+        ParseUtils::GenerateVector(BSparams["OUTPUTFREQUENCY"],freq);
+        m_bsbcParams->m_outputFrequency = freq[0];
+        vParams["OutputFrequency"] = m_bsbcParams->m_outputFrequency;
+
+        // File name 2nd vParams
+        ASSERTL0(BSparams.count("OUTPUTFILE") == 1,
+          "Failed to find output file name in Blowing Suction boundary conditions");
+        std::vector<std::string> outfile;
+        ParseUtils::GenerateVector(BSparams["OUTPUTFILE"],outfile);
+        m_bsbcParams->m_outputFile = outfile[0];
+        vParams["OutputFile"] = m_bsbcParams->m_outputFile;
+        m_bsbcParams->m_doOutput = true;
+
+        if (!(m_bsbcParams->m_outputFile.length() >= 4
+              && m_bsbcParams->m_outputFile.substr(m_bsbcParams->m_outputFile.length() - 4) == ".mot"))
+        {
+            m_bsbcParams->m_outputFile += ".mot";
+        }
+
+        // Hinge point 3rd vParams
+        m_bsbcParams->m_hingePoint = Array<OneD, NekDouble> (3, 0.0);
+        ASSERTL0(BSparams.count("HINGEPOINT") == 1,
+          "Failed to find hinge point parameter in Blowing Suction boundary conditions");
+        std::vector<NekDouble> hinge;
+        parseGood = ParseUtils::GenerateVector(BSparams["HINGEPOINT"],hinge);
+        m_bsbcParams->m_hingePoint[0] = hinge[0];
+        m_bsbcParams->m_hingePoint[1] = hinge[1];
+        m_bsbcParams->m_hingePoint[2] = hinge[2];
+
+        // Convert all but the last element to avoid a trailing ","
+        std::copy(hinge.begin(), hinge.end()-1,std::ostream_iterator<int>(sStream, " "));
+        // Now add the last element with no delimiter
+        sStream << hinge.back();
+        vParams["MomentPoint"] = sStream.str();
+
+        // Boundary ID (modify to be able to read numerous boundary regions)
+        ASSERTL0(BSparams.count("BOUNDARYID") == 1,
+          "Failed to find Boundary parameter in Blowing Suction boundary conditions");
+        std::vector<std::string> bnd;
+        ParseUtils::GenerateVector(BSparams["BOUNDARYID"],bnd);
+        m_bsbcParams->m_boundaryList = bnd[0];
+        vParams["Boundary"]  = m_bsbcParams->m_boundaryList;
+
+        // Create FilterAeroForces object 
+        m_bsbcParams->m_filterForces = MemoryManager<SolverUtils::FilterAeroForces>::
+        AllocateSharedPtr(m_session, shared_from_this(), vParams);
+        m_bsbcParams->m_filterForces->Initialise(m_fields, 0.0);
+
+        // Determine time integration order
+        std::string intMethod = m_session->GetSolverInfo("TIMEINTEGRATIONMETHOD");
+        if(boost::iequals(intMethod, "IMEXOrder1"))
+        {
+            m_bsbcParams->m_intSteps = 1;
+        }
+        else if (boost::iequals(intMethod, "IMEXOrder2"))
+        {
+            m_bsbcParams->m_intSteps = 2;
+        }
+        else if (boost::iequals(intMethod, "IMEXOrder3"))
+        {
+            m_bsbcParams->m_intSteps = 3;
+        }
+        else
+        {
+            ASSERTL0(false, "Time integration method not supported.");
+        }
+
+        // Initialise variables
+        m_bsbcParams->m_angle    = 0.0;
+        m_bsbcParams->m_angleVel = Array<OneD,NekDouble> (m_intSteps, 0.00001);
+        m_bsbcParams->m_moment   = Array<OneD,NekDouble> (m_intSteps, 0.0);
+
+        // Get base flow and base flow gradient
+        // m_bsbcParams->m_baseFlow = m_advObject->GetBaseFlow();
+        // m_bsbcParams->m_gradBase = m_advObject->GetGradBase();
+
+        // Open outputstream and write header
+        if( m_bsbcParams->m_doOutput)
+        {
+            m_bsbcParams->m_index = 0;
+            if ( m_fields[0]->GetComm()->GetRank() == 0)
+            {
+                // Open output stream
+                bool adaptive;
+                m_session->MatchSolverInfo("Driver", "Adaptive", adaptive, false);
+                if (adaptive)
+                {
+                    m_bsbcParams->m_outputStream.open(m_bsbcParams->m_outputFile.c_str(), ofstream::app);
+                }
+                else
+                {
+                    m_bsbcParams->m_outputStream.open(m_bsbcParams->m_outputFile.c_str());
+                }
+                // Write header
+                m_bsbcParams->m_outputStream << "# Angular velocity and angle of hinged bodies"
+                               << endl;
+                m_bsbcParams->m_outputStream << "#" << " Hinge Position = " << " (";
+                m_bsbcParams->m_outputStream.width(8);
+                m_bsbcParams->m_outputStream << setprecision(4) << m_bsbcParams->m_hingePoint[0];
+                m_bsbcParams->m_outputStream.width(8);
+                m_bsbcParams->m_outputStream << setprecision(4) << m_bsbcParams->m_hingePoint[1];
+                m_bsbcParams->m_outputStream.width(8);
+                m_bsbcParams->m_outputStream << setprecision(4) << m_bsbcParams->m_hingePoint[2];
+                m_bsbcParams->m_outputStream << ")" << endl;
+                m_bsbcParams->m_outputStream << "#" << " Rotation  Axis = " << " (";
+                m_bsbcParams->m_outputStream.width(8);
+                m_bsbcParams->m_outputStream << setprecision(4) << m_bsbcParams->m_axis[0];
+                m_bsbcParams->m_outputStream.width(8);
+                m_bsbcParams->m_outputStream << setprecision(4) << m_bsbcParams->m_axis[1];
+                m_bsbcParams->m_outputStream.width(8);
+                m_bsbcParams->m_outputStream << setprecision(4) << m_bsbcParams->m_axis[2];
+                m_bsbcParams->m_outputStream << ")" << endl;
+                m_bsbcParams->m_outputStream << "# Boundary regions: "
+                               << m_bsbcParams->m_boundaryList.c_str() << endl;
+                m_bsbcParams->m_outputStream << "#";
+                m_bsbcParams->m_outputStream.width(7);
+                m_bsbcParams->m_outputStream << "Time";
+                m_bsbcParams->m_outputStream.width(15);
+                m_bsbcParams->m_outputStream <<  "Angular_Vel";
+                m_bsbcParams->m_outputStream.width(15);
+                m_bsbcParams->m_outputStream <<  "Angle";
+                m_bsbcParams->m_outputStream << endl;
             }
         }
     }

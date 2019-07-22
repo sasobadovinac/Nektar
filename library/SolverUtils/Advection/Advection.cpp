@@ -137,6 +137,15 @@ const Array<OneD, const Array<OneD, NekDouble> > &Advection::v_GetBaseFlow(void)
     Array<OneD, const Array<OneD, NekDouble> >  val;
     return val;
 }
+
+const Array<OneD, const Array<OneD, NekDouble> > &Advection::v_GetGradBase(void)
+{
+    
+    ASSERTL0(false,
+            "A baseflow gradient is not appropriate for this advection type.");
+    Array<OneD, const Array<OneD, NekDouble> >  val;
+    return val;
+}
     
 }
 }

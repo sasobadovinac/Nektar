@@ -112,6 +112,8 @@ namespace Nektar
         }
 
     protected:
+        // bool to check if BSBC needed
+        bool m_BlowingSuction = false;
         /// bool to identify if spectral vanishing viscosity is active.
         bool m_useHomo1DSpecVanVisc;
         /// bool to identify if spectral vanishing viscosity is active.

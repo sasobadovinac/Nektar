@@ -121,6 +121,18 @@ namespace Nektar
         // Set up bits for flowrate.
         m_session->LoadParameter("Flowrate", m_flowrate, 0.0);
         m_session->LoadParameter("IO_FlowSteps", m_flowrateSteps, 0);
+
+        // Set up tag BSBC
+        for (int i = 0; i < m_fields.num_elements(); ++i)
+        {
+            for(int n = 0; n < m_fields[i]->GetBndConditions().num_elements(); ++n)
+            {
+                if(boost::istarts_with(m_fields[i]->GetBndConditions()[n]->GetUserDefined(),"BlowingSuction"))
+                {
+                    m_BlowingSuction = true;
+                }
+            }
+        }
     }
 
     void VelocityCorrectionScheme::SetUpExtrapolation()
@@ -777,6 +789,12 @@ namespace Nektar
                                    NullFlagList,  factors, varCoeffMap,
                                    varFactorsMap);
             m_fields[i]->BwdTrans(m_fields[i]->GetCoeffs(),outarray[i]);
+        }
+
+        if (m_BlowingSuction)
+        {
+            ScaleBSBC();
+            SolveStructural(m_time);
         }
     }
 

@@ -45,6 +45,9 @@
 #include <SolverUtils/Filters/FilterInterfaces.hpp>
 #include <complex>
 
+#include <SolverUtils/Filters/FilterAeroForces.h>
+#include <SolverUtils/EquationSystem.h>
+
 namespace Nektar
 {
     enum EquationType
@@ -130,6 +133,69 @@ namespace Nektar
     };
     typedef std::shared_ptr<WomersleyParams> WomersleyParamsSharedPtr;
 
+    struct BlowingSuctionParams
+    {
+        virtual ~BlowingSuctionParams()
+        {};
+
+        //Mass
+        NekDouble                                        m_I;
+        // Spring coefficient
+        NekDouble                                        m_K;
+        // Damping coefficient
+        NekDouble                                        m_C;
+        // Hinge point 
+        Array<OneD, NekDouble>                           m_hingePoint;
+        // Rotation axis 
+        Array<OneD, NekDouble>                           m_axis;
+        // AeroForces filter
+        SolverUtils::FilterAeroForcesSharedPtr           m_filterForces;
+        /// Soft pointer to original equation system 
+        const std::weak_ptr<SolverUtils::EquationSystem> m_equ;
+
+        // Boundary regions
+        std::string                             m_boundaryList;
+
+        /// Time integration order
+        int                                     m_intSteps;
+        /// Initial time when the body is fixed, to prevent instability in startup
+        NekDouble                               m_startTime;
+
+        // Output information
+        unsigned int                            m_outputFrequency;
+        std::string                             m_outputFile;
+        std::ofstream                           m_outputStream;
+        bool                                    m_doOutput;
+        unsigned int                            m_index;
+
+
+        // Variables for time integration
+        NekDouble                               m_angle;
+        NekDouble                               m_previousAngle;
+        Array<OneD, NekDouble>                  m_angleVel;
+        Array<OneD, NekDouble>                  m_moment;
+
+        /// Storage for base flow
+        Array<OneD, Array<OneD, NekDouble> >    m_baseFlow;
+        Array<OneD, Array<OneD, NekDouble> >    m_gradBase;
+
+
+        // Coefficients for Adams time-integration
+        // NekDouble AdamsBashforth_coeffs[3][3];
+        // NekDouble AdamsMoulton_coeffs[3][3];
+
+        NekDouble AdamsBashforth_coeffs[3][3] = {
+        { 1.0       , 0.0       , 0.0     },
+        { 3.0/2.0   ,-1.0/2.0   , 0.0     },
+        { 23.0/12.0 ,-4.0/3.0   , 5.0/12.0}};
+        NekDouble AdamsMoulton_coeffs[3][3] = {
+        { 1.0       ,  0.0      , 0.0     },
+        { 1.0/2.0   ,  1.0/2.0  , 0.0     },
+        { 5.0/12.0  ,  2.0/3.0  ,-1.0/12.0}};
+
+    };
+    typedef std::shared_ptr<BlowingSuctionParams> BlowingSuctionParamsSharedPtr;
+
     /**
      * \brief This class is the base class for Navier Stokes problems
      *
@@ -174,8 +240,10 @@ namespace Nektar
 
     protected:
 
-        // pointer to the extrapolation class for sub-stepping and HOPBS
+        // bool to check if BSBC needed
+        bool m_BlowingSuction = false;
 
+        // pointer to the extrapolation class for sub-stepping and HOPBS
         ExtrapolateSharedPtr m_extrapolation;
 
         /// modal energy file
@@ -241,11 +309,23 @@ namespace Nektar
         /// Set Womersley Profile if specified
         void SetWomersleyBoundary(const int fldid, const int bndid);
 
+        /// Solve structural equation and obtain theta and theta dot
+        void SolveStructural(NekDouble time);
+
+        /// Scale BCs by theta and theta dot
+        void ScaleBSBC();
+
         /// Set Up Womersley details
         void SetUpWomersley(const int fldid, const int bndid, std::string womstr);
 
+        /// Set up Blowing suction boundary conditions
+        void SetUpBlowingSuction(std::string BSBCStr);
+
         /// Womersley parameters if required
         std::map<int, std::map<int,WomersleyParamsSharedPtr> > m_womersleyParams;
+
+        /// Blowing suction parameters if required
+        BlowingSuctionParamsSharedPtr                          m_bsbcParams;
 
         virtual MultiRegions::ExpListSharedPtr v_GetPressure()
         {

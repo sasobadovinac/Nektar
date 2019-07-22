@@ -66,7 +66,6 @@ DriverArnoldi::~DriverArnoldi()
 /**
  * Arnoldi driver initialisation
  */
-// Spencer
 void DriverArnoldi::v_InitObject(ostream &out)
 {
     Driver::v_InitObject(out);
@@ -251,7 +250,6 @@ void DriverArnoldi::v_InitObject(ostream &out)
      * Copy field variables which depend from either the m_fields
      * or m_forces array the Arnoldi array
      */
-    // Robin
     void DriverArnoldi::CopyFieldToArnoldiArray(Array<OneD, NekDouble> &array)
     {
 

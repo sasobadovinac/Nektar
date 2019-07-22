@@ -391,6 +391,10 @@ const Array<OneD, const Array<OneD, NekDouble> >  &LinearisedAdvection::v_GetBas
     return m_baseflow; 
 }
 
+const Array<OneD, const Array<OneD, NekDouble> >  &LinearisedAdvection::v_GetGradBase(void)
+{
+    return m_gradBase; 
+}
 
 /**
  * Import field from infile and load into \a m_fields. This routine will

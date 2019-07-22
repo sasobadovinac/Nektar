@@ -140,6 +140,11 @@ public:
         return v_GetBaseFlow();
     }
 
+    inline const Array<OneD, const Array<OneD, NekDouble> > &GetGradBase()
+    {
+        return v_GetGradBase();
+    }
+
 protected:
     /// Callback function to the flux vector (set when advection is in
     /// conservative form).
@@ -171,6 +176,8 @@ protected:
         const Array<OneD, MultiRegions::ExpListSharedPtr> &fields);
 
     SOLVER_UTILS_EXPORT virtual const Array<OneD, const Array<OneD, NekDouble> > &v_GetBaseFlow(void);
+
+    SOLVER_UTILS_EXPORT virtual const Array<OneD, const Array<OneD, NekDouble> > &v_GetGradBase(void);
 
 };
 
