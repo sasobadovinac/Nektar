@@ -1416,7 +1416,6 @@ void DisContField2D::v_GetFwdBwdTracePhys(
     std::map<int, int> edgeToTraceId;
     for (int i = 0; i < m_trace->GetExpSize(); ++i)
     {
-        cout << "inserting: " << m_trace->GetExp(i)->GetGeom()->GetGlobalID() << " " << i << endl;
             edgeToTraceId[m_trace->GetExp(i)->GetGeom()->GetGlobalID()] = i;
     }
 
@@ -1428,7 +1427,6 @@ void DisContField2D::v_GetFwdBwdTracePhys(
         int nq = traceElMortar->GetTotPoints();
 
         int right = m_mortarToRightEdgeMap[i];
-        ASSERTL0(edgeToTraceId.count(right) == 1, "couldn't find in map");
         auto traceElRight = m_trace->GetExp(edgeToTraceId[right])->as<LocalRegions::Expansion1D>();
         for (int j = 0; j < nq; ++j)
         {
