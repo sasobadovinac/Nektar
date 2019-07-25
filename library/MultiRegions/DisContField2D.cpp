@@ -1412,16 +1412,71 @@ void DisContField2D::v_GetFwdBwdTracePhys(
     // Evaluate mortar points using Fwd and Bwd entries extracted above
     // loop over all mortars, get left and right trace edges, then use the
     // finddistance etc to work out where to evaluate in those trace edges
+
+    auto mortarStart = m_trace->GetExpSize() - m_mortars.size();
     for (int i = 0; i < m_mortars.size(); ++i)
     {
-        auto mortarEdge = m_mortars[i];
+        int mortarId = mortarStart + i;
+        auto traceElMortar = m_trace->GetExp(mortarId)->as<LocalRegions::Expansion1D>();
+        int nq = traceElMortar->GetTotPoints();
+
         int right = m_mortarToRightEdgeMap[i];
+        //NEED A MAP HERE FOR GLOBAL EDGE ID TO TRACE ID FOR GetExp
+        auto traceElRight = m_trace->GetExp(right)->as<LocalRegions::Expansion1D>();
+        for (int j = 0; j < nq; ++j)
+        {
+            Array<OneD, NekDouble> xc(nq), yc(nq);
+            traceElMortar->GetCoords(xc, yc);
+
+            SpatialDomains::SegGeomSharedPtr geomSeg =
+                    std::static_pointer_cast<SpatialDomains::SegGeom>(
+                            traceElRight->GetGeom1D());
+
+            Array<OneD, NekDouble> xs(3);
+            xs[0] = xc[j];
+            xs[1] = yc[j];
+            xs[2] = 0;
+
+            NekDouble foundPoint;
+            NekDouble dist = geomSeg->FindDistance(xs, foundPoint);
+
+            cout << "point: " << j << " x: " << xs[0] << " y: " << xs[1] << " dist: " << dist << endl << endl;
+
+            ASSERTL0(dist < 1e-8, "Couldn't interpolate to mortar from right (bwd)");
+
+            Array<OneD, NekDouble> edgePhys = Bwd + m_trace->GetPhys_Offset(right);
+            Array<OneD, NekDouble> foundPointArray(1, foundPoint);
+            Bwd[m_trace->GetPhys_Offset(mortarId) + j] = traceElRight->StdPhysEvaluate(foundPointArray, edgePhys);
+        }
+
         int left = m_mortarToLeftEdgeMap[i];
+        //NEED A MAP HERE FOR GLOBAL EDGE ID TO TRACE ID FOR GetExp
+        auto traceElLeft = m_trace->GetExp(left)->as<LocalRegions::Expansion1D>();
+        for (int j = 0; j < nq; ++j)
+        {
+            Array<OneD, NekDouble> xc(nq), yc(nq);
+            traceElMortar->GetCoords(xc, yc);
 
-        cout << i << endl;
-        cout << right << endl;
-        cout << left << endl << endl;
+            SpatialDomains::SegGeomSharedPtr geomSeg =
+                    std::static_pointer_cast<SpatialDomains::SegGeom>(
+                            traceElLeft->GetGeom1D());
 
+            Array<OneD, NekDouble> xs(3);
+            xs[0] = xc[j];
+            xs[1] = yc[j];
+            xs[2] = 0;
+
+            NekDouble foundPoint;
+            NekDouble dist = geomSeg->FindDistance(xs, foundPoint);
+
+            cout << "point: " << j << " x: " << xs[0] << " y: " << xs[1] << " dist: " << dist << endl << endl;
+
+            ASSERTL0(dist < 1e-8, "Couldn't interpolate to mortar from left (fwd)");
+
+            Array<OneD, NekDouble> edgePhys = Fwd + m_trace->GetPhys_Offset(left);
+            Array<OneD, NekDouble> foundPointArray(1, foundPoint);
+            Fwd[m_trace->GetPhys_Offset(mortarId) + j] = traceElLeft->StdPhysEvaluate(foundPointArray, edgePhys);
+        }
     }
 
 
