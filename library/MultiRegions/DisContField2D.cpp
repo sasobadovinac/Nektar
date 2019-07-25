@@ -1447,8 +1447,6 @@ void DisContField2D::v_GetFwdBwdTracePhys(
             NekDouble foundPoint;
             NekDouble dist = geomSeg->FindDistance(xs, foundPoint);
 
-            cout << "point: " << j << " x: " << xs[0] << " y: " << xs[1] << " dist: " << dist << endl << endl;
-
             ASSERTL0(dist < 1e-8, "Couldn't interpolate to mortar from right (bwd)");
 
             Array<OneD, NekDouble> edgePhys = Bwd + m_trace->GetPhys_Offset(right);
@@ -1474,8 +1472,6 @@ void DisContField2D::v_GetFwdBwdTracePhys(
 
             NekDouble foundPoint;
             NekDouble dist = geomSeg->FindDistance(xs, foundPoint);
-
-            cout << "point: " << j << " x: " << xs[0] << " y: " << xs[1] << " dist: " << dist << endl << endl;
 
             ASSERTL0(dist < 1e-8, "Couldn't interpolate to mortar from left (fwd)");
 

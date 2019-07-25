@@ -473,13 +473,12 @@ void Interfaces::GenerateMortars(int indx)
                 newEdgeVerts[1] = MemoryManager<PointGeom>::AllocateSharedPtr(
                         *geomSeg->GetVertex(k));
 
-                NekDouble xOld, yOld, xNew, yNew, zOld, zNew;
+                NekDouble xOld = 0, yOld = 0, xNew = 0, yNew = 0, zOld = 0, zNew = 0;
                 newEdgeVerts[0]->GetCoords(xOld, yOld, zOld);
                 newEdgeVerts[1]->GetCoords(xNew, yNew, zNew);
 
                 int id;
-                if (!(xOld == xNew && yOld == yNew &&
-                      zOld == zNew)) //check that verts aren't same
+                if (!(xOld == xNew && yOld == yNew)) //check that verts aren't same
                 {
                     if (!indxFlag)
                     {

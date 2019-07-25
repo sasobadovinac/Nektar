@@ -420,14 +420,12 @@ NekDouble SegGeom::v_FindDistance(const Array<OneD, const NekDouble> &xs,
 
         NekDouble px = edgeVertexTwo[0] - edgeVertexOne[0];
         NekDouble py = edgeVertexTwo[1] - edgeVertexOne[1];
-        NekDouble pz = edgeVertexTwo[2] - edgeVertexOne[2];
 
-        NekDouble norm = px * px + py * py + pz * pz;
+        NekDouble norm = px * px + py * py;
 
         NekDouble u =
             ((xs[0] - edgeVertexOne[0]) * px +
-             (xs[1] - edgeVertexOne[1]) * py +
-             (xs[2] - edgeVertexOne[2]) * pz) / norm;
+             (xs[1] - edgeVertexOne[1]) * py)  / norm;
 
         if (u > 1)
         {
@@ -442,13 +440,11 @@ NekDouble SegGeom::v_FindDistance(const Array<OneD, const NekDouble> &xs,
 
         NekDouble x = edgeVertexOne[0] + u * px;
         NekDouble y = edgeVertexOne[1] + u * py;
-        NekDouble z = edgeVertexOne[2] + u * pz;
 
         NekDouble dx = x - xs[0];
         NekDouble dy = y - xs[1];
-        NekDouble dz = z - xs[2];
 
-        return sqrt(dx * dx + dy * dy + dz * dz);
+        return sqrt(dx * dx + dy * dy);
     }
     else if (m_geomFactors->GetGtype() == eDeformed)
     {
