@@ -1413,16 +1413,23 @@ void DisContField2D::v_GetFwdBwdTracePhys(
     // loop over all mortars, get left and right trace edges, then use the
     // finddistance etc to work out where to evaluate in those trace edges
 
-    auto mortarStart = m_trace->GetExpSize() - m_mortars.size();
+    std::map<int, int> edgeToTraceId;
+    for (int i = 0; i < m_trace->GetExpSize(); ++i)
+    {
+        cout << "inserting: " << m_trace->GetExp(i)->GetGeom()->GetGlobalID() << " " << i << endl;
+            edgeToTraceId[m_trace->GetExp(i)->GetGeom()->GetGlobalID()] = i;
+    }
+
+    auto mortarOffset = m_trace->GetExpSize() - m_mortars.size();
     for (int i = 0; i < m_mortars.size(); ++i)
     {
-        int mortarId = mortarStart + i;
+        int mortarId = mortarOffset + i;
         auto traceElMortar = m_trace->GetExp(mortarId)->as<LocalRegions::Expansion1D>();
         int nq = traceElMortar->GetTotPoints();
 
         int right = m_mortarToRightEdgeMap[i];
-        //NEED A MAP HERE FOR GLOBAL EDGE ID TO TRACE ID FOR GetExp
-        auto traceElRight = m_trace->GetExp(right)->as<LocalRegions::Expansion1D>();
+        ASSERTL0(edgeToTraceId.count(right) == 1, "couldn't find in map");
+        auto traceElRight = m_trace->GetExp(edgeToTraceId[right])->as<LocalRegions::Expansion1D>();
         for (int j = 0; j < nq; ++j)
         {
             Array<OneD, NekDouble> xc(nq), yc(nq);
@@ -1450,8 +1457,7 @@ void DisContField2D::v_GetFwdBwdTracePhys(
         }
 
         int left = m_mortarToLeftEdgeMap[i];
-        //NEED A MAP HERE FOR GLOBAL EDGE ID TO TRACE ID FOR GetExp
-        auto traceElLeft = m_trace->GetExp(left)->as<LocalRegions::Expansion1D>();
+        auto traceElLeft = m_trace->GetExp(edgeToTraceId[left])->as<LocalRegions::Expansion1D>();
         for (int j = 0; j < nq; ++j)
         {
             Array<OneD, NekDouble> xc(nq), yc(nq);
