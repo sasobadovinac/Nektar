@@ -155,6 +155,8 @@ namespace Nektar
             }
 
             m_mortars = interfaceCollection.GetMortars();
+            m_mortarToRightEdgeMap = interfaceCollection.GetMortarToRightEdgeMap();
+            m_mortarToLeftEdgeMap = interfaceCollection.GetMortarToLeftEdgeMap();
 
             std::string filename = "out.xml";
             m_graph->WriteGeometry(filename, true);                   // Write split geometry to use when creating VTU

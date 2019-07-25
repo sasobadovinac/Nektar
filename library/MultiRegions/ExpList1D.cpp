@@ -687,17 +687,13 @@ namespace Nektar
             cout << "Points type: " << LibUtilities::kPointsTypeStr[basisKey.GetPointsType()] << endl;
             cout << "Number of points: " << basisKey.GetNumPoints() << endl;
 
-
-            for (auto &it : mortars)
+            for (auto &geom : mortars)
             {
-                for (auto &geom : it.second)
-                {
-                    seg = MemoryManager<LocalRegions::SegExp>
-                    ::AllocateSharedPtr(basisKey, geom);
-                    geom->SetGlobalID(elmtid);
-                    seg->SetElmtId(elmtid++);
-                    (*m_exp).push_back(seg);
-                }
+                seg = MemoryManager<LocalRegions::SegExp>
+                ::AllocateSharedPtr(basisKey, geom);
+                geom->SetGlobalID(elmtid);
+                seg->SetElmtId(elmtid++);
+                (*m_exp).push_back(seg);
             }
 
             cout << "After mortar expansion list size: " << m_exp->size() << endl << endl;

@@ -156,7 +156,7 @@ typedef std::shared_ptr<RotatingInterface> RotatingInterfaceShPtr;
 typedef std::shared_ptr<FixedInterface> FixedInterfaceShPtr;
 
 typedef std::map<int, std::pair<InterfaceShPtr, InterfaceShPtr>> InterfaceCollection;
-typedef std::map<int, std::vector<SegGeomSharedPtr>> MortarCollection;
+typedef std::vector<SegGeomSharedPtr> MortarCollection;
 
 class Interfaces
 {
@@ -177,6 +177,16 @@ public:
         return m_mortars;
     }
 
+    const std::vector<int> &GetMortarToRightEdgeMap(void) const
+    {
+        return m_mortarToRightEdgeMap;
+    }
+
+    const std::vector<int> &GetMortarToLeftEdgeMap(void) const
+    {
+        return m_mortarToLeftEdgeMap;
+    }
+
     void SeparateGraph(MeshGraphSharedPtr &graph, int indx);
 
     void GenerateMortars(int indx);
@@ -185,10 +195,12 @@ protected:
     /// The mesh graph to use for referencing geometry info.
     MeshGraphSharedPtr m_meshGraph;
     LibUtilities::SessionReaderSharedPtr m_session;
+
     InterfaceCollection m_interfaces;
+
     MortarCollection m_mortars;
-    std::map<int, std::vector<int>> m_mortarToRightEdgeMap;
-    std::map<int, std::vector<int>> m_mortarToLeftEdgeMap;
+    std::vector<int> m_mortarToRightEdgeMap;
+    std::vector<int> m_mortarToLeftEdgeMap;
 
 
 private:

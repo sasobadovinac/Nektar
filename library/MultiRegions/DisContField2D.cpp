@@ -387,14 +387,14 @@ void DisContField2D::SetUpDG(const std::string variable)
     Array<OneD, Array<OneD, LocalRegions::ExpansionSharedPtr>> &elmtToTrace =
         m_traceMap->GetElmtToTrace();
 
-    /*for (int i = 0; i < m_exp->size(); ++i)
+    for (int i = 0; i < m_exp->size(); ++i)
     {
         for (int j = 0; j < (*m_exp)[i]->GetNedges(); ++j)
         {
             cout << "ELMT " << i << " EDGE " << j << ": "
                  << " -> trace ID: " << elmtToTrace[i][j]->GetGeom()->GetGlobalID() << endl;
         }
-    }*/
+    }
 
     // Scatter trace segments to 2D elements. For each element,
     // we find the trace segment associated to each edge. The
@@ -1408,6 +1408,22 @@ void DisContField2D::v_GetFwdBwdTracePhys(
             }
         }
     }
+
+    // Evaluate mortar points using Fwd and Bwd entries extracted above
+    // loop over all mortars, get left and right trace edges, then use the
+    // finddistance etc to work out where to evaluate in those trace edges
+    for (int i = 0; i < m_mortars.size(); ++i)
+    {
+        auto mortarEdge = m_mortars[i];
+        int right = m_mortarToRightEdgeMap[i];
+        int left = m_mortarToLeftEdgeMap[i];
+
+        cout << i << endl;
+        cout << right << endl;
+        cout << left << endl << endl;
+
+    }
+
 
     // Fill boundary conditions into missing elements
     int id1, id2 = 0;
