@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<NEKTAR>
+    <EXPANSIONS>
+        <E COMPOSITE="C[5]" NUMMODES="4" FIELDS="a0,a1,a2,a3,a4,a5" TYPE="MODIFIED" />
+    </EXPANSIONS>
+  <CONDITIONS>
+    <SOLVERINFO>
+            <I PROPERTY="EQTYPE"                VALUE="GalerkinBoltzmann"    />
+            <I PROPERTY="Projection"            VALUE="DisContinuous"        />
+            <!--I PROPERTY="UpwindType"            VALUE="Upwind"               /-->
+            <I PROPERTY="TimeIntegrationMethod" VALUE="ClassicalRungeKutta4" />
+            <!--I PROPERTY="TimeIntegrationMethod" VALUE="ClassicalRungeKutta2" /-->
+    </SOLVERINFO>
+    <PARAMETERS>
+            <P> TimeStep      = 0.0001                  </P>
+            <P> NumSteps      = 20                      </P>
+            <P> IO_CheckSteps = 2                       </P>
+            <P> IO_InfoSteps  = 1                       </P>
+            <P> RT            = 1                       </P>
+            <P> tau           = 0.01                    </P>
+            <P> rho           = 1                       </P>
+            <P> eps           = 0.01                    </P>
+    </PARAMETERS>
+    <VARIABLES>
+            <V ID="0"> a0 </V>
+            <V ID="1"> a1 </V>
+            <V ID="2"> a2 </V>
+            <V ID="3"> a3 </V>
+            <V ID="4"> a4 </V>
+            <V ID="5"> a5 </V>
+    </VARIABLES>
+    <BOUNDARYREGIONS>
+      <B ID="0"> C[1] </B> // Inlet
+      <B ID="1"> C[2] </B> // Upwall
+      <B ID="2"> C[3] </B> // Botwall
+      <B ID="3"> C[4] </B> // Outlet
+    </BOUNDARYREGIONS>
+    <BOUNDARYCONDITIONS>
+      <REGION REF="0">
+        <D VAR="a0" VALUE="1" />
+        <D VAR="a1" VALUE="eps*(y+0.5)*(y-0.5)" />
+        <D VAR="a2" VALUE="0" />
+        <D VAR="a3" VALUE="-eps*0.02*y" />
+        <D VAR="a4" VALUE="sqrt(2.)/2*(eps*eps*(y+0.5)*(y-0.5)*(y+0.5)*(y-0.5))" />
+        <D VAR="a5" VALUE="0" />
+      </REGION>
+      <REGION REF="1">
+        <D VAR="a0" VALUE="1" />
+        <D VAR="a1" VALUE="eps*(y+0.5)*(y-0.5)" />
+        <D VAR="a2" VALUE="0" />
+        <D VAR="a3" VALUE="-eps*0.02*y" />
+        <D VAR="a4" VALUE="sqrt(2.)/2*(eps*eps*(y+0.5)*(y-0.5)*(y+0.5)*(y-0.5))" />
+        <D VAR="a5" VALUE="0" />
+      </REGION>
+      <REGION REF="2">
+        <D VAR="a0" VALUE="1" />
+        <D VAR="a1" VALUE="eps*(y+0.5)*(y-0.5)" />
+        <D VAR="a2" VALUE="0" />
+        <D VAR="a3" VALUE="-eps*0.02*y" />
+        <D VAR="a4" VALUE="sqrt(2.)/2*(eps*eps*(y+0.5)*(y-0.5)*(y+0.5)*(y-0.5))" />
+        <D VAR="a5" VALUE="0" />
+      </REGION>
+      <REGION REF="3">
+        <D VAR="a0" VALUE="1" />
+        <D VAR="a1" VALUE="eps*(y+0.5)*(y-0.5)" />
+        <D VAR="a2" VALUE="0" />
+        <D VAR="a3" VALUE="-eps*0.02*y" />
+        <D VAR="a4" VALUE="sqrt(2.)/2*(eps*eps*(y+0.5)*(y-0.5)*(y+0.5)*(y-0.5))" />
+        <D VAR="a5" VALUE="0" />
+      </REGION>
+    </BOUNDARYCONDITIONS>
+    <FUNCTION NAME="InitialConditions">
+            <E VAR="a0" VALUE="1" />
+            <E VAR="a1" VALUE="eps*(y+0.5)*(y-0.5)" />
+            <E VAR="a2" VALUE="0" />
+            <E VAR="a3" VALUE="-eps*0.02*y" />
+            <E VAR="a4" VALUE="sqrt(2.)/2*(eps*eps*(y+0.5)*(y-0.5)*(y+0.5)*(y-0.5))" />
+            <E VAR="a5" VALUE="0" />
+    </FUNCTION>
+  </CONDITIONS>
+</NEKTAR>
