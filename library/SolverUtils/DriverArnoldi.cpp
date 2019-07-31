@@ -75,40 +75,27 @@ void DriverArnoldi::v_InitObject(ostream &out)
                                "VelocityCorrectionScheme",
                                m_timeSteppingAlgorithm, false);
 
-    // Check to see if a VCS Time stepping algorithm
-    bool IsMappingSolver = false;
-    
-    if(m_timeSteppingAlgorithm == false)
-    {
-        m_session->MatchSolverInfo("SolverType",
-                                   "VCSMapping",
-                                   m_timeSteppingAlgorithm, false);
-        IsMappingSolver = true;
-    }
-
     if (m_timeSteppingAlgorithm)
     {
         m_period  = m_session->GetParameter("TimeStep")
                   * m_session->GetParameter("NumSteps");
         m_nFields = m_equ[0]->UpdateFields().num_elements() - 1;
 
-        // Check to see if a mapping is defined 
-        if(IsMappingSolver)
-        {
-            // initialisae mapping array 
-            m_mapping = GlobalMapping::Mapping::Load(m_session,
-                                                     m_equ[0]->UpdateFields());
+        m_BlowingSuction = m_equ[0]->v_CheckBSBC();
 
-            // Determine number of mapping fields the solve is supporting;
-            m_nMappingFields = m_mapping->GetNConvectiveFields(); 
+        // Check to see if a BS-BC is defined 
+        if(m_BlowingSuction == true)
+        {
+            // Determine number of BS-BC fields the solve is supporting;
+            m_nBSBCFields = 2; 
         }
         else
         {
-            m_nMappingFields = 0;
+            m_nBSBCFields = 0;
         }
 
-        // increae tot field by 2*m_nMappingFields (i.e. one for x and one for mesh velocity). 
-        m_nTotFields = m_nFields + 2*m_nMappingFields; 
+        // increae tot field by 2 + m_nBSBCFields (i.e. one for theta and one for theta velocity). 
+        m_nTotFields = m_nFields + m_nBSBCFields; 
     }
     else
     {
@@ -154,7 +141,6 @@ void DriverArnoldi::v_InitObject(ostream &out)
             NEKERROR(ErrorUtil::efatal, "Imaginary shift only supported with HOMOGENEOUS expansion and ModeType set to SingleMode");
         }
     }
-
 }
 
     void DriverArnoldi::ArnoldiSummary(std::ostream &out)
@@ -195,6 +181,16 @@ void DriverArnoldi::v_InitObject(ostream &out)
                 out << "\tShift (Real,Imag)      : " << m_realShift
                     << "," << m_imagShift <<  endl;
             }
+
+            if (m_BlowingSuction == true)
+            {
+                out << "\tBlowing/Suction BC's   : true" << endl;
+            }
+            else
+            {
+                out << "\tBlowing/Suction BC's   : false" << endl;
+            }
+            
             out << "\tKrylov-space dimension : " << m_kdim << endl;
             out << "\tNumber of vectors      : " << m_nvec << endl;
             out << "\tMax iterations         : " << m_nits << endl;
@@ -220,35 +216,18 @@ void DriverArnoldi::v_InitObject(ostream &out)
             fields[k]->SetPhysState(false);
         }
 
-        if(m_nMappingFields)
+        if(m_BlowingSuction == true)
         {
-            int nphys = fields[0]->GetTotPoints();
-            Array<OneD, Array<OneD, NekDouble> > ctmp(m_nMappingFields);
-            Array<OneD, NekDouble > tmp;
-            
-            for(int k = 0; k < m_nMappingFields; ++k)
-            {
-                ctmp[k] = Array<OneD, NekDouble> (nphys); 
-            }
+            NekDouble theta = array[m_nFields*nq];
+            NekDouble thetadot = array[(m_nFields+1)*nq];
 
-            for(int k = 0; k < m_nMappingFields; ++k)
-            {
-                fields[0]->BwdTrans(array + (k+m_nFields)*nq, ctmp[k]);
-            }            
-            m_mapping->UpdateMappingCoords(0.0,ctmp);
-
-            for(int k = 0; k < m_nMappingFields; ++k)
-            {
-                fields[0]->BwdTrans(array + (k+m_nFields+m_nMappingFields)*nq,
-                                    ctmp[k]);
-            }
-            m_mapping->UpdateMappingCoordsVel(0.0,ctmp);
+            m_equ[0]->v_SetStruct(theta, thetadot);
         }
     };
 
     /**
      * Copy field variables which depend from either the m_fields
-     * or m_forces array the Arnoldi array
+     * or m_forces array to the Arnoldi array
      */
     void DriverArnoldi::CopyFieldToArnoldiArray(Array<OneD, NekDouble> &array)
     {
@@ -270,34 +249,20 @@ void DriverArnoldi::v_InitObject(ostream &out)
         int nq = fields[0]->GetNcoeffs();
         for (int k = 0; k < m_nFields; ++k)
         {
-            Vmath::Vcopy(nq,  &fields[k]->GetCoeffs()[0], 1, &array[k*nq], 1);
+            Vmath::Vcopy(nq, &fields[k]->GetCoeffs()[0], 1, &array[k*nq], 1);
             fields[k]->SetPhysState(false);
         }
 
-        if(m_nMappingFields)
+        if(m_BlowingSuction == true)
         {
-            int nphys = fields[0]->GetTotPoints(); 
-            Array<OneD, Array<OneD, NekDouble> > coords(m_nMappingFields);
-            Array<OneD, Array<OneD, NekDouble> > coordsvel(m_nMappingFields);
-            Array<OneD, NekDouble> tmp;
+            NekDouble theta = 0.0;
+            NekDouble thetadot = 0.0;
+            m_equ[0]->v_GetStruct(theta, thetadot);
+            Array<OneD, NekDouble> tmp1(nq, theta);
+            Array<OneD, NekDouble> tmp2(nq, thetadot);
             
-            for(int k = 0; k < m_nMappingFields; ++k)
-            {
-                coords   [k] = Array<OneD, NekDouble>(nphys);
-                coordsvel[k] = Array<OneD, NekDouble>(nphys);
-            }
-
-            m_mapping->GetCartesianCoordinates(coords);
-            m_mapping->GetCoordVelocity(coordsvel);
-
-            for(int k = 0; k < m_nMappingFields; ++k)
-            {
-                fields[0]->FwdTrans_IterPerExp(coords[k],
-                            tmp = array + (k+m_nFields)*nq);
-                fields[0]->FwdTrans_IterPerExp(coordsvel[k],
-                            tmp = array + (k+m_nFields+m_nMappingFields)*nq);
-            }
-
+            Vmath::Vcopy(nq, &tmp1[0], 1, &array[m_nFields*nq], 1);
+            Vmath::Vcopy(nq, &tmp2[0], 1, &array[(m_nFields+1)*nq], 1);
         }
     };
 

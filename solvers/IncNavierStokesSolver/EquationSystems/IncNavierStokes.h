@@ -175,9 +175,13 @@ namespace Nektar
         Array<OneD, NekDouble>                  m_angleVel;
         Array<OneD, NekDouble>                  m_moment;
 
-        /// Storage for base flow
-        Array<OneD, Array<OneD, NekDouble> >    m_baseFlow;
-        Array<OneD, Array<OneD, NekDouble> >    m_gradBase;
+        /// Storage for constants of scaling
+        Array<OneD, Array<OneD, NekDouble> >    m_deltaGrad;
+        Array<OneD, Array<OneD, NekDouble> >    m_deltaGamma;
+        Array<OneD, Array<OneD, NekDouble> >    m_coords;
+
+        Array<OneD, bool>                       m_isBlowingSuction;
+
 
 
         // Coefficients for Adams time-integration
@@ -192,7 +196,6 @@ namespace Nektar
         { 1.0       ,  0.0      , 0.0     },
         { 1.0/2.0   ,  1.0/2.0  , 0.0     },
         { 5.0/12.0  ,  2.0/3.0  ,-1.0/12.0}};
-
     };
     typedef std::shared_ptr<BlowingSuctionParams> BlowingSuctionParamsSharedPtr;
 
@@ -238,10 +241,31 @@ namespace Nektar
             const Array<OneD, const Array<OneD, NekDouble> > &physfield,
                   Array<OneD, Array<OneD, NekDouble> >       &velocity);
 
-    protected:
+        /// Return theta and theta dot
+        virtual void v_GetStruct(NekDouble &angle, NekDouble &angleVel);
+
+        /// Return theta and theta dot
+        virtual void v_SetStruct(NekDouble &angle, NekDouble &angleVel);
+
+        /// Set BSBC flag
+        virtual bool v_CheckBSBC();
 
         // bool to check if BSBC needed
         bool m_BlowingSuction = false;
+
+        /// Blowing suction parameters if required
+        BlowingSuctionParamsSharedPtr                          m_bsbcParams;
+
+        /// Number of steps for Arnoldi solver
+        int                                                    m_numSteps;
+
+        /// Iteration for Arnoldi solver
+        int                                                    m_iteration;
+
+        /// Period for Arnoldi solver
+        NekDouble                                              m_finTime;
+
+    protected:
 
         // pointer to the extrapolation class for sub-stepping and HOPBS
         ExtrapolateSharedPtr m_extrapolation;
@@ -323,9 +347,6 @@ namespace Nektar
 
         /// Womersley parameters if required
         std::map<int, std::map<int,WomersleyParamsSharedPtr> > m_womersleyParams;
-
-        /// Blowing suction parameters if required
-        BlowingSuctionParamsSharedPtr                          m_bsbcParams;
 
         virtual MultiRegions::ExpListSharedPtr v_GetPressure()
         {

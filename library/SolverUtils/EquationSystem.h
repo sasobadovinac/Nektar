@@ -334,7 +334,15 @@ class Interpolator;
 
             /// Virtual function to identify if solver is using global mappings 
             SOLVER_UTILS_EXPORT virtual bool v_GlobalMappingSolver();
-            
+
+            /// Virtual function to get structural variables in BS-BC's type
+            SOLVER_UTILS_EXPORT virtual void v_GetStruct(NekDouble &angle, NekDouble &angleVel);
+
+            /// Virtual function to set structural variables in BS-BC's type
+            SOLVER_UTILS_EXPORT virtual void v_SetStruct(NekDouble &angle, NekDouble &angleVel);
+
+            /// Virtual function to get BS-BC flag
+            SOLVER_UTILS_EXPORT virtual bool v_CheckBSBC();
             
         protected:
             /// Communicator
@@ -646,7 +654,6 @@ class Interpolator;
         {
             return m_fields;
         }
-
         
         /// Return final time
         inline NekDouble EquationSystem::GetFinalTime()

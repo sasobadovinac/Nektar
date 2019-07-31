@@ -166,17 +166,18 @@ void DriverModifiedArnoldi::v_Execute(ostream &out)
     }
 
     // Normalise first vector in sequence based on vel field
-    alpha[0] = Blas::Ddot(m_nFields*nq, &Kseq[0][0], 1, &Kseq[0][0], 1);
+    //alpha[0] = Blas::Ddot(m_nFields*nq, &Kseq[0][0], 1, &Kseq[0][0], 1);
+    alpha[0] = Blas::Ddot(ntot, &Kseq[0][0], 1, &Kseq[0][0], 1);
     m_comm->AllReduce(alpha[0], Nektar::LibUtilities::ReduceSum);
     alpha[0] = std::sqrt(alpha[0]);
     Vmath::Smul(ntot, 1.0/alpha[0], Kseq[0], 1, Kseq[0], 1);
 
-    if(m_nMappingFields)
-    {
-        alpha[0] = Blas::Ddot(ntot, &Kseq[0][0], 1, &Kseq[0][0], 1);
-        m_comm->AllReduce(alpha[0], Nektar::LibUtilities::ReduceSum);
-        alpha[0] = std::sqrt(alpha[0]);
-    }
+    // if(m_nBSBCFields)
+    // {
+    //     alpha[0] = Blas::Ddot(ntot, &Kseq[0][0], 1, &Kseq[0][0], 1);
+    //     m_comm->AllReduce(alpha[0], Nektar::LibUtilities::ReduceSum);
+    //     alpha[0] = std::sqrt(alpha[0]);
+    // }
     
     // Fill initial krylov sequence
     NekDouble resid0;
@@ -186,17 +187,18 @@ void DriverModifiedArnoldi::v_Execute(ostream &out)
         EV_update(Kseq[i-1], Kseq[i]);
 
         // Normalise based on nfields
-        alpha[i] = Blas::Ddot(m_nFields*nq, &Kseq[i][0], 1, &Kseq[i][0], 1);
+        //alpha[i] = Blas::Ddot(m_nFields*nq, &Kseq[i][0], 1, &Kseq[i][0], 1);
+        alpha[i] = Blas::Ddot(ntot, &Kseq[i][0], 1, &Kseq[i][0], 1);
         m_comm->AllReduce(alpha[i], Nektar::LibUtilities::ReduceSum);
         alpha[i] = std::sqrt(alpha[i]);
         Vmath::Smul(ntot, 1.0/alpha[i], Kseq[i], 1, Kseq[i], 1);
 
-        if(m_nMappingFields)
-        {
-            alpha[i] = Blas::Ddot(ntot, &Kseq[i][0], 1, &Kseq[i][0], 1);
-            m_comm->AllReduce(alpha[i], Nektar::LibUtilities::ReduceSum);
-            alpha[i] = std::sqrt(alpha[i]);
-        }
+        // if(m_nBSBCFields)
+        // {
+        //     alpha[i] = Blas::Ddot(ntot, &Kseq[i][0], 1, &Kseq[i][0], 1);
+        //     m_comm->AllReduce(alpha[i], Nektar::LibUtilities::ReduceSum);
+        //     alpha[i] = std::sqrt(alpha[i]);
+        // }
         
         // Copy Krylov sequence into temporary storage
         for (int k = 0; k < i + 1; ++k)
