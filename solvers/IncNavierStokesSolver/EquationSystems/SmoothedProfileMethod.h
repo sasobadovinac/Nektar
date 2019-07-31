@@ -86,31 +86,37 @@ namespace Nektar
         Array<OneD, NekDouble> m_up;
         /// Stiffly-stable scheme \gamma_0 coefficient
         NekDouble m_gamma0;
+        /// Shape function 'phi' as expansion list
+        MultiRegions::ExpListSharedPtr m_phi;
 
         // Calculates the shape function values
         // (only for non-moving boundaries)
         void CalcPhi(const MultiRegions::ExpListSharedPtr &expansion,
-                    Array<OneD, NekDouble> &phi);
+                    NekDouble time,
+                    bool timeDependent);
         // Calculates the virtual force 'fs'
         void IBForcing(const Array<OneD, const Array<OneD, NekDouble> > &fields,
+                    NekDouble time,
                     NekDouble dt,
                     Array<OneD, Array<OneD, NekDouble> > &f_s);
         // Calculates the virtual force 'fs' in the boundary 'BndExp'
         void IBForcingBC(int bndInd,
-                         const MultiRegions::ExpListSharedPtr &BndExp,
-                         NekDouble dt,
-                         Array<OneD, Array<OneD, NekDouble> > &f_s);
+                    const MultiRegions::ExpListSharedPtr &BndExp,
+                    NekDouble time,
+                    NekDouble dt,
+                    Array<OneD, Array<OneD, NekDouble> > &f_s);
         // Interface for 'v_SolveUnsteadyStokesSystem'
         virtual void v_SolveUnsteadyStokesSystem(
                     const Array<OneD, const Array<OneD, NekDouble> > &inarray,
                     Array<OneD, Array<OneD, NekDouble> > &outarray,
-                    const NekDouble time,
-                    const NekDouble a_iixDt);
+                    NekDouble time,
+                    NekDouble a_iixDt);
         // Sets the parameters and BCs for the Poisson equation
         virtual void v_SetUpCorrectionPressure(
                     const Array<OneD, const Array<OneD, NekDouble> > &fields,
                     Array<OneD, Array<OneD, NekDouble> > &Forcing,
-                    const NekDouble aii_Dt);
+                    NekDouble time,
+                    NekDouble aii_Dt);
         // Solves the Poisson equation for the correction pressure
         virtual void v_SolveCorrectionPressure(
                     const Array<OneD, NekDouble> &Forcing);
@@ -118,9 +124,10 @@ namespace Nektar
         virtual void v_SolveCorrectedVelocity(
                     Array<OneD, Array<OneD, NekDouble> > &Forcing,
                     Array<OneD, Array<OneD, NekDouble> > &fields,
-                    const NekDouble dt);
+                    NekDouble time,
+                    NekDouble dt);
         // Set proper BCs for the corrected pressure 'p_p'
-        virtual void v_SetCorrectionPressureBCs(NekDouble dt);
+        virtual void v_SetCorrectionPressureBCs(NekDouble time, NekDouble dt);
 
     private:
     };

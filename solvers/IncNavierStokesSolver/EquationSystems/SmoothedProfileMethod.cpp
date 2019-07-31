@@ -88,6 +88,13 @@ namespace Nektar
         m_pressureP = MemoryManager<ContField2D>::
             AllocateSharedPtr(*dynamic_pointer_cast<ContField2D>(m_pressure));
 
+        // DEBUG: define chi as an expansion list and use functions 'UpdatePhys' and
+        // 'UpdateBndCondExpansion' to get the coefficients in each point
+        m_phi = MemoryManager<ContField2D>::
+            AllocateSharedPtr(*dynamic_pointer_cast<ContField2D>(m_pressure));
+        // Call it at the begining to make sure 'm_phi' is defined
+        CalcPhi(m_pressureP, 0.0, false);
+
         // Virtual velocity array
         int nvel = m_velocity.num_elements();
 
@@ -140,9 +147,9 @@ namespace Nektar
         int physTot = m_pressureP->GetTotPoints();
 
         // SPM correction of velocity
-        v_SetUpCorrectionPressure(outarray, m_F, a_iixDt);
+        v_SetUpCorrectionPressure(outarray, m_F, time, a_iixDt);
         v_SolveCorrectionPressure(m_F[0]);
-        v_SolveCorrectedVelocity(m_F, outarray, a_iixDt);
+        v_SolveCorrectedVelocity(m_F, outarray, time, a_iixDt);
 
         Vmath::Vadd(physTot, m_pressure->GetPhys(), 1,
                              m_pressureP->GetPhys(), 1,
@@ -162,17 +169,18 @@ namespace Nektar
     void SmoothedProfileMethod::v_SetUpCorrectionPressure(
                     const Array<OneD, const Array<OneD, NekDouble> > &fields,
                     Array<OneD, Array<OneD, NekDouble> > &Forcing,
-                    const NekDouble aii_Dt)
+                    NekDouble time,
+                    NekDouble aii_Dt)
     {
         int physTot = m_pressureP->GetTotPoints();
         int nvel    = m_velocity.num_elements();
 
         // DEBUG: Set boundary conditions
-        v_SetCorrectionPressureBCs(aii_Dt);
+        v_SetCorrectionPressureBCs(time, aii_Dt);
 
         // Virtual force 'fs'
         Array<OneD, Array<OneD, NekDouble> > f_s;
-        IBForcing(fields, aii_Dt, f_s);
+        IBForcing(fields, time, aii_Dt, f_s);
         m_fields[0]->PhysDeriv(eX, f_s[0], Forcing[0]);
 
         // Using 'Forcing[1]' as storage
@@ -218,7 +226,8 @@ namespace Nektar
     void SmoothedProfileMethod::v_SolveCorrectedVelocity(
                     Array<OneD, Array<OneD, NekDouble> > &Forcing,
                     Array<OneD, Array<OneD, NekDouble> > &fields,
-                    const NekDouble dt)
+                    NekDouble time,
+                    NekDouble dt)
     {
         int physTot = m_fields[0]->GetTotPoints();
 
@@ -240,7 +249,7 @@ namespace Nektar
 
         // Virtual force 'fs'
         Array<OneD, Array<OneD, NekDouble> > f_s;
-        IBForcing(fields, dt, f_s);
+        IBForcing(fields, time, dt, f_s);
 
         // Velocity correction
         for (int i = 0; i < nvel; ++i)
@@ -261,7 +270,8 @@ namespace Nektar
      *
      * @param dt
      */
-    void SmoothedProfileMethod::v_SetCorrectionPressureBCs(NekDouble dt)
+    void SmoothedProfileMethod::v_SetCorrectionPressureBCs(NekDouble time,
+                                                           NekDouble dt)
     {
         Array<OneD, ExpListSharedPtr> BndExp;
 
@@ -273,7 +283,7 @@ namespace Nektar
         {
             // Calculate f_s values
             Array<OneD, Array<OneD, NekDouble> > f_s;
-            IBForcingBC(b, BndExp[b], dt, f_s);
+            IBForcingBC(b, BndExp[b], time, dt, f_s);
 
             // BC is f_s * n
             BndExp[b]->NormVectorIProductWRTBase(f_s, BndExp[b]->UpdatePhys());
@@ -284,22 +294,29 @@ namespace Nektar
      * @brief DEBUG: Calculates the values of the shape function
      *
      * @param expansion
+     * @param t
      * @param phi
      */
     void SmoothedProfileMethod::CalcPhi(const ExpListSharedPtr &expansion,
-                                        Array<OneD, NekDouble> &phi)
+                                        NekDouble t,
+                                        bool timeDependent)
     {
-        int physTot = expansion->GetTotPoints();
-        Array<OneD, NekDouble> coord_0(physTot);
-        Array<OneD, NekDouble> coord_1(physTot);
-        Array<OneD, NekDouble> coord_2(physTot);
-        phi = Array<OneD, NekDouble>(physTot);
-
-        expansion->GetCoords(coord_0, coord_1, coord_2);
-        for (int i = 0; i < physTot; ++i)
+        // Calculate only once if not time-dependent
+        if (timeDependent || t <= 0.0)
         {
-            phi[i] = -0.5 * (tanh(((coord_0[i]-5.0)*(coord_0[i]-5.0) +
-                     (coord_1[i]-5.0)*(coord_1[i]-5.0) - 0.25)/0.047386) - 1.0);
+            int physTot = expansion->GetTotPoints();
+            Array<OneD, NekDouble> coord_0(physTot);
+            Array<OneD, NekDouble> coord_1(physTot);
+            Array<OneD, NekDouble> coord_2(physTot);
+
+            expansion->GetCoords(coord_0, coord_1, coord_2);
+            for (int i = 0; i < physTot; ++i)
+            {
+                m_phi->UpdatePhys()[i] = -0.5 * (tanh(
+                        ((coord_0[i]-5.0)*(coord_0[i]-5.0) +
+                        (coord_1[i]-5.0)*(coord_1[i]-5.0) - 0.25)/0.047386)
+                        - 1.0);
+            }
         }
     }
 
@@ -316,6 +333,7 @@ namespace Nektar
      */
     void SmoothedProfileMethod::IBForcing(
                     const Array<OneD, const Array<OneD, NekDouble> > &fields,
+                    NekDouble time,
                     NekDouble dt,
                     Array<OneD, Array<OneD, NekDouble> > &f_s)
     {
@@ -323,8 +341,7 @@ namespace Nektar
         int nq   = m_pressureP->GetTotPoints();
 
         // Vector phi
-        Array<OneD, NekDouble> phi;
-        CalcPhi(m_pressureP, phi);
+        CalcPhi(m_pressureP, time, false);
 
         // Vector f_s
         f_s = Array<OneD, Array<OneD, NekDouble> >(nvel);
@@ -338,7 +355,7 @@ namespace Nektar
             Vmath::Sadd(nq, -m_up[m_velocity[i]],
                         fields[m_velocity[i]], 1,
                         f_s[i], 1);
-            Vmath::Vmul(nq, phi, 1, f_s[i], 1, f_s[i], 1);
+            Vmath::Vmul(nq, m_phi->GetPhys(), 1, f_s[i], 1, f_s[i], 1);
             Vmath::Smul(nq, -m_gamma0/dt, f_s[i], 1, f_s[i], 1);
         }
     }
@@ -355,6 +372,7 @@ namespace Nektar
      */
     void SmoothedProfileMethod::IBForcingBC(int bndInd,
                                 const ExpListSharedPtr &BndExp,
+                                NekDouble time,
                                 NekDouble dt,
                                 Array<OneD, Array<OneD, NekDouble> > &f_s)
     {
@@ -362,8 +380,7 @@ namespace Nektar
         int nq   = BndExp->GetTotPoints();
 
         // Vector phi
-        Array<OneD, NekDouble> phi;
-        CalcPhi(BndExp, phi);
+        CalcPhi(BndExp, time, false);
 
         // Vector f_s
         f_s = Array<OneD, Array<OneD, NekDouble> >(nvel);
@@ -379,7 +396,7 @@ namespace Nektar
             Vmath::Sadd(nq, -m_up[m_velocity[i]],
                         velExp->GetPhys(), 1,
                         f_s[i], 1);
-            Vmath::Vmul(nq, phi, 1, f_s[i], 1, f_s[i], 1);
+            Vmath::Vmul(nq, m_phi->GetBndCondExpansions()[bndInd]->GetPhys(), 1, f_s[i], 1, f_s[i], 1);
             Vmath::Smul(nq, -m_gamma0/dt, f_s[i], 1, f_s[i], 1);
         }
     }
