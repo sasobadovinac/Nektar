@@ -82,21 +82,135 @@ namespace Nektar
         // Update implicit time-intregration class operators
         m_ode.DefineImplicitSolve(
             &SmoothedProfileMethod::SolveUnsteadyStokesSystem, this);
+        
+        // Number of dims as number of velocity vectors
+        int nvel = m_velocity.num_elements();
 
-        // Correction pressure initialization for SPM (DEBUG: check dimensions)
-        // DEBUG: Same field as p*
-        m_pressureP = MemoryManager<ContField2D>::
-            AllocateSharedPtr(*dynamic_pointer_cast<ContField2D>(m_pressure));
+        // Initialization of correction pressure and shape function
+        switch (nvel)
+        {
+            case 1:
+                if (m_projectionType == eGalerkin)
+                {
+                    m_pressureP = MemoryManager<ContField1D>::
+                        AllocateSharedPtr(
+                            *dynamic_pointer_cast<ContField1D>(m_pressure));
+                    m_phi = MemoryManager<ContField1D>::
+                        AllocateSharedPtr(
+                            *dynamic_pointer_cast<ContField1D>(m_pressure));
+                }
+                else if (m_projectionType == eDiscontinuous)
+                {
+                    m_pressureP = MemoryManager<DisContField1D>::
+                        AllocateSharedPtr(
+                            *dynamic_pointer_cast<DisContField1D>(m_pressure));
+                    m_phi = MemoryManager<DisContField1D>::
+                        AllocateSharedPtr(
+                            *dynamic_pointer_cast<DisContField1D>(m_pressure));
+                }
+                break;
 
-        // DEBUG: define chi as an expansion list and use functions 'UpdatePhys' and
-        // 'UpdateBndCondExpansion' to get the coefficients in each point
-        m_phi = MemoryManager<ContField2D>::
-            AllocateSharedPtr(*dynamic_pointer_cast<ContField2D>(m_pressure));
+            case 2:
+                if (m_projectionType == eGalerkin)
+                {
+                    m_pressureP = MemoryManager<ContField2D>::
+                        AllocateSharedPtr(
+                            *dynamic_pointer_cast<ContField2D>(m_pressure));
+                    m_phi = MemoryManager<ContField2D>::
+                        AllocateSharedPtr(
+                            *dynamic_pointer_cast<ContField2D>(m_pressure));
+                }
+                else if (m_projectionType == eDiscontinuous)
+                {
+                    m_pressureP = MemoryManager<DisContField2D>::
+                        AllocateSharedPtr(
+                            *dynamic_pointer_cast<DisContField2D>(m_pressure));
+                    m_phi = MemoryManager<DisContField2D>::
+                        AllocateSharedPtr(
+                            *dynamic_pointer_cast<DisContField2D>(m_pressure));
+                }
+                break;
+            
+            case 3:
+                if (m_projectionType == eGalerkin)
+                {
+                    if (m_HomogeneousType == EquationSystem::eNotHomogeneous)
+                    {
+                        m_pressureP = MemoryManager<ContField3D>::
+                            AllocateSharedPtr(
+                                *dynamic_pointer_cast<ContField3D>(
+                                    m_pressure));
+                        m_phi = MemoryManager<ContField3D>::
+                            AllocateSharedPtr(
+                                *dynamic_pointer_cast<ContField3D>(
+                                    m_pressure));
+                    }
+                    else if (m_HomogeneousType == EquationSystem::eHomogeneous1D)
+                    {
+                        m_pressureP = MemoryManager<ContField3DHomogeneous1D>::
+                            AllocateSharedPtr(
+                                *dynamic_pointer_cast<ContField3DHomogeneous1D>(
+                                    m_pressure));
+                        m_phi = MemoryManager<ContField3DHomogeneous1D>::
+                            AllocateSharedPtr(
+                                *dynamic_pointer_cast<ContField3DHomogeneous1D>(
+                                    m_pressure));
+                    }
+                    else if (m_HomogeneousType == EquationSystem::eHomogeneous2D
+                          || m_HomogeneousType == EquationSystem::eHomogeneous3D)
+                    {
+                        m_pressureP = MemoryManager<ContField3DHomogeneous2D>::
+                            AllocateSharedPtr(
+                                *dynamic_pointer_cast<ContField3DHomogeneous2D>(
+                                    m_pressure));
+                        m_phi = MemoryManager<ContField3DHomogeneous2D>::
+                            AllocateSharedPtr(
+                                *dynamic_pointer_cast<ContField3DHomogeneous2D>(
+                                    m_pressure));
+                    }
+                }
+                else if (m_projectionType == eDiscontinuous)
+                {
+                    if (m_HomogeneousType == EquationSystem::eNotHomogeneous)
+                    {
+                        m_pressureP = MemoryManager<DisContField3D>::
+                            AllocateSharedPtr(
+                                *dynamic_pointer_cast<DisContField3D>(
+                                    m_pressure));
+                        m_phi = MemoryManager<DisContField3D>::
+                            AllocateSharedPtr(
+                                *dynamic_pointer_cast<DisContField3D>(
+                                    m_pressure));
+                    }
+                    else if (m_HomogeneousType == EquationSystem::eHomogeneous1D)
+                    {
+                        m_pressureP = MemoryManager<
+                            DisContField3DHomogeneous1D>::AllocateSharedPtr(
+                                *dynamic_pointer_cast<
+                                    DisContField3DHomogeneous1D>(m_pressure));
+                        m_phi = MemoryManager<DisContField3DHomogeneous1D>::
+                            AllocateSharedPtr(
+                                *dynamic_pointer_cast<
+                                    DisContField3DHomogeneous1D>(m_pressure));
+                    }
+                    else if (m_HomogeneousType == EquationSystem::eHomogeneous2D
+                          || m_HomogeneousType == EquationSystem::eHomogeneous3D)
+                    {
+                        m_pressureP = MemoryManager<
+                            DisContField3DHomogeneous2D>::AllocateSharedPtr(
+                                *dynamic_pointer_cast<
+                                    DisContField3DHomogeneous2D>(m_pressure));
+                        m_phi = MemoryManager<DisContField3DHomogeneous2D>::
+                            AllocateSharedPtr(
+                                *dynamic_pointer_cast<
+                                    DisContField3DHomogeneous2D>(m_pressure));
+                    }
+                }
+                break;
+        }
+        
         // Call it at the begining to make sure 'm_phi' is defined
         CalcPhi(m_pressureP, 0.0, false);
-
-        // Virtual velocity array
-        int nvel = m_velocity.num_elements();
 
         // DEBUG: 'm_up' equal to 0 at all times
         m_up = Array<OneD, NekDouble>(nvel, 0.0);
