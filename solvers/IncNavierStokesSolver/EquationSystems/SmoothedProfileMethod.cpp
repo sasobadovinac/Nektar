@@ -212,10 +212,37 @@ namespace Nektar
         // Call it at the begining to make sure 'm_phi' is defined
         CalcPhi(m_pressureP, 0.0, false);
 
-        // DEBUG: 'm_up' equal to 0 at all times
-        m_up = Array<OneD, NekDouble>(nvel, 0.0);
+        // Read 'u_p' from session file, 0 if undefined
+        int physTot = m_pressureP->GetTotPoints();
+        vector<string> velName;
+        velName.push_back("Up");
+        if (nvel > 1)
+        {
+            velName.push_back("Vp");
+        }
+        if (nvel > 2)
+        {
+            velName.push_back("Wp");
+        }
 
-        // DEGUB: select m_gamma0 depending on IMEX order
+        m_up = Array<OneD, Array<OneD, NekDouble> >(nvel);
+        if (m_session->DefinesFunction("ParticleVelocity"))
+        {
+            for (int i = 0; i < nvel; ++i)
+            {
+                m_up[i] = Array<OneD, NekDouble>(physTot);
+            }
+            GetFunction("ParticleVelocity")->Evaluate(velName, m_up);
+        }
+        else
+        {
+            for (int i = 0; i < nvel; ++i)
+            {
+                m_up[i] = Array<OneD, NekDouble>(physTot, 0.0);
+            }
+        }
+
+        // Select m_gamma0 depending on IMEX order
         string type = m_session->GetSolverInfo("TimeIntegrationMethod");
         switch (type.back()-'0')
         {
@@ -466,11 +493,9 @@ namespace Nektar
 
         for (int i = 0; i < nvel; ++i)
         {
-            Vmath::Sadd(nq, -m_up[m_velocity[i]],
-                        fields[m_velocity[i]], 1,
-                        f_s[i], 1);
+            Vmath::Vsub(nq, m_up[i], 1, fields[m_velocity[i]], 1, f_s[i], 1);
             Vmath::Vmul(nq, m_phi->GetPhys(), 1, f_s[i], 1, f_s[i], 1);
-            Vmath::Smul(nq, -m_gamma0/dt, f_s[i], 1, f_s[i], 1);
+            Vmath::Smul(nq, m_gamma0/dt, f_s[i], 1, f_s[i], 1);
         }
     }
 
@@ -507,11 +532,9 @@ namespace Nektar
         {
             ExpListSharedPtr velExp =
                 (m_fields[m_velocity[i]]->GetBndCondExpansions())[bndInd];
-            Vmath::Sadd(nq, -m_up[m_velocity[i]],
-                        velExp->GetPhys(), 1,
-                        f_s[i], 1);
+            Vmath::Vsub(nq, m_up[i], 1, velExp->GetPhys(), 1, f_s[i], 1);
             Vmath::Vmul(nq, m_phi->GetBndCondExpansions()[bndInd]->GetPhys(), 1, f_s[i], 1, f_s[i], 1);
-            Vmath::Smul(nq, -m_gamma0/dt, f_s[i], 1, f_s[i], 1);
+            Vmath::Smul(nq, m_gamma0/dt, f_s[i], 1, f_s[i], 1);
         }
     }
 

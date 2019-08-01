@@ -82,8 +82,8 @@ namespace Nektar
     protected:
         /// Correction pressure field for SPM
         MultiRegions::ExpListSharedPtr m_pressureP;
-        /// DEBUG: u_p constant and equal to 0
-        Array<OneD, NekDouble> m_up;
+        /// Velocity of the immersed body(ies)
+        Array<OneD, Array<OneD, NekDouble> > m_up;
         /// Stiffly-stable scheme \gamma_0 coefficient
         NekDouble m_gamma0;
         /// Shape function 'phi' as expansion list
