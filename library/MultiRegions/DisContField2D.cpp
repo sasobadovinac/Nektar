@@ -1443,9 +1443,9 @@ void DisContField2D::v_GetFwdBwdTracePhys(
             NekDouble foundPoint;
             NekDouble dist = geomSeg->FindDistance(xs, foundPoint);
 
-            ASSERTL0(dist < 1e-8, "Couldn't interpolate to mortar from right (bwd)");
+            ASSERTL0(dist < 1e-8, "Couldn't interpolate from right to mortar (bwd)");
 
-            Array<OneD, NekDouble> edgePhys = Bwd + m_trace->GetPhys_Offset(right);
+            Array<OneD, NekDouble> edgePhys = Bwd + m_trace->GetPhys_Offset(edgeToTraceId[right]);
             Array<OneD, NekDouble> foundPointArray(1, foundPoint);
             Bwd[m_trace->GetPhys_Offset(mortarId) + j] = traceElRight->StdPhysEvaluate(foundPointArray, edgePhys);
         }
@@ -1469,16 +1469,114 @@ void DisContField2D::v_GetFwdBwdTracePhys(
             NekDouble foundPoint;
             NekDouble dist = geomSeg->FindDistance(xs, foundPoint);
 
-            ASSERTL0(dist < 1e-8, "Couldn't interpolate to mortar from left (fwd)");
+            ASSERTL0(dist < 1e-8, "Couldn't interpolate from left to mortar (fwd)");
 
-            Array<OneD, NekDouble> edgePhys = Fwd + m_trace->GetPhys_Offset(left);
+            Array<OneD, NekDouble> edgePhys = Fwd + m_trace->GetPhys_Offset(edgeToTraceId[left]);
             Array<OneD, NekDouble> foundPointArray(1, foundPoint);
             Fwd[m_trace->GetPhys_Offset(mortarId) + j] = traceElLeft->StdPhysEvaluate(foundPointArray, edgePhys);
         }
     }
 
-    //Interpolate from mortars to edges
+    // Put continuity stuff
+    // In here
+    // Maybe
+    // Edit Fwd/Bwd trace on mortars?????
 
+
+    //Interpolate from mortars to edges
+    for (auto rightEdgeMap : m_rightEdgeToMortarMap)
+    {
+        int right = rightEdgeMap.first;
+        auto traceElRight = m_trace->GetExp(edgeToTraceId[right])->as<LocalRegions::Expansion1D>();
+        int nq = traceElRight->GetTotPoints();
+        Array<OneD, NekDouble> xc(nq), yc(nq);
+        traceElRight->GetCoords(xc, yc);
+
+        auto mortars = rightEdgeMap.second;
+
+        for (int j = 0; j < nq; ++j)
+        {
+            Array<OneD, NekDouble> xs(3);
+            xs[0] = xc[j];
+            xs[1] = yc[j];
+            xs[2] = 0;
+
+            bool found = false;
+            for (auto mortarId : mortars)
+            {
+                mortarId += mortarOffset;
+                auto traceElMortar = m_trace->GetExp(mortarId)->as<LocalRegions::Expansion1D>();
+
+                SpatialDomains::SegGeomSharedPtr geomSeg =
+                        std::static_pointer_cast<SpatialDomains::SegGeom>(
+                                traceElMortar->GetGeom1D());
+
+                NekDouble foundPoint;
+                NekDouble dist = geomSeg->FindDistance(xs, foundPoint);
+
+                if (dist > 1e-8)
+                {
+                    continue;
+                }
+
+                Array<OneD, NekDouble> edgePhys = Fwd + m_trace->GetPhys_Offset(mortarId);
+                Array<OneD, NekDouble> foundPointArray(1, foundPoint);
+                Fwd[m_trace->GetPhys_Offset(edgeToTraceId[right]) + j] = traceElMortar->StdPhysEvaluate(foundPointArray, edgePhys);
+
+                found = true;
+                break;
+            }
+
+            ASSERTL0(found, "Couldn't interpolate from mortar to right (fwd)");
+        }
+    }
+
+    for (auto leftEdgeMap : m_leftEdgeToMortarMap)
+    {
+        int left = leftEdgeMap.first;
+        auto traceElLeft = m_trace->GetExp(edgeToTraceId[left])->as<LocalRegions::Expansion1D>();
+        int nq = traceElLeft->GetTotPoints();
+        Array<OneD, NekDouble> xc(nq), yc(nq);
+        traceElLeft->GetCoords(xc, yc);
+
+        auto mortars = leftEdgeMap.second;
+
+        for (int j = 0; j < nq; ++j)
+        {
+            Array<OneD, NekDouble> xs(3);
+            xs[0] = xc[j];
+            xs[1] = yc[j];
+            xs[2] = 0;
+
+            bool found = false;
+            for (auto mortarId : mortars)
+            {
+                mortarId += mortarOffset;
+                auto traceElMortar = m_trace->GetExp(mortarId)->as<LocalRegions::Expansion1D>();
+
+                SpatialDomains::SegGeomSharedPtr geomSeg =
+                        std::static_pointer_cast<SpatialDomains::SegGeom>(
+                                traceElMortar->GetGeom1D());
+
+                NekDouble foundPoint;
+                NekDouble dist = geomSeg->FindDistance(xs, foundPoint);
+
+                if (dist > 1e-8)
+                {
+                    continue;
+                }
+
+                Array<OneD, NekDouble> edgePhys = Bwd + m_trace->GetPhys_Offset(mortarId);
+                Array<OneD, NekDouble> foundPointArray(1, foundPoint);
+                Bwd[m_trace->GetPhys_Offset(edgeToTraceId[left]) + j] = traceElMortar->StdPhysEvaluate(foundPointArray, edgePhys);
+
+                found = true;
+                break;
+            }
+
+            ASSERTL0(found, "Couldn't interpolate from mortar to left (bwd)");
+        }
+    }
 
     // Fill boundary conditions into missing elements
     int id1, id2 = 0;
@@ -1530,108 +1628,6 @@ void DisContField2D::v_GetFwdBwdTracePhys(
     for (n = 0; n < m_periodicFwdCopy.size(); ++n)
     {
         Bwd[m_periodicBwdCopy[n]] = Fwd[m_periodicFwdCopy[n]];
-    }
-
-    // Interpolate from each side of the interface to the other.
-    for (n = 0; n < 2; ++n)
-    {
-        for (auto &interface : m_traceEdge)
-        {
-            const int indx = interface.first;
-            auto &traceEdge = (n == 0 ? interface.second.first
-                                      : interface.second.second);
-            auto &traceEdgeCache = (n == 0 ? interface.second.second
-                                           : interface.second.first);
-            bool &flag = (n == 0 ? m_interfaceCacheFlag[indx].first
-                                 : m_interfaceCacheFlag[indx].second);
-            auto &mapCache = (n == 0 ? m_edgeCacheMap[indx].first
-                                     : m_edgeCacheMap[indx].second);
-            auto &interfacesCache = (n == 0 ? m_interfaces[indx].second
-                                            : m_interfaces[indx].first);
-
-            int cnt = 0;
-            for (auto edges : traceEdge)
-            {
-                auto elmt = edges.second;
-                int nq = elmt->GetTotPoints();
-
-                for (int i = 0; i < nq; ++i, ++cnt)
-                {
-                    bool found = false;
-                    NekDouble foundPoint;
-                    LocalRegions::Expansion1DSharedPtr geom;
-
-                    if (flag)
-                    {
-                        auto tmp = mapCache[cnt];
-                        foundPoint = tmp.second;
-                        geom = traceEdgeCache[tmp.first];
-                        found = true;
-                    }
-                    else
-                    {
-                        Array<OneD, NekDouble> xc(nq), yc(nq);
-                        elmt->GetCoords(xc, yc);
-                        NekDouble zero = 0.0;
-                        auto BgRtree = interfacesCache->
-                                GetEdgesContainingPoint(xc[i], yc[i], zero);
-                        for (auto boundaryBoxElement : BgRtree)
-                        {
-                            geom = traceEdgeCache[boundaryBoxElement.second];
-                            SpatialDomains::SegGeomSharedPtr geomSeg =
-                                    std::static_pointer_cast<SpatialDomains::SegGeom>(
-                                            geom->GetGeom1D());
-
-                            Array<OneD, NekDouble> xs(3);
-                            xs[0] = xc[i];
-                            xs[1] = yc[i];
-                            xs[2] = 0;
-
-                            NekDouble dist = geomSeg->FindDistance(xs,
-                                                                   foundPoint);
-                            if (dist > 1e-8)
-                            {
-                                continue;
-                            }
-
-                            mapCache.emplace_back(std::make_pair(geomSeg->
-                                    GetGlobalID(), foundPoint));
-                            found = true;
-                            break;
-                        }
-                    }
-
-                    if (n == 0)
-                    {
-
-                        ASSERTL0(found, "Couldn't interpolate across interface "
-                                        "from right to left (bwd)");
-
-                        Array<OneD, NekDouble> edgePhys = Bwd + m_trace->
-                                GetPhys_Offset(geom->GetElmtId());
-                        Array<OneD, NekDouble> foundPointArray(1, foundPoint);
-                        Bwd[m_trace->GetPhys_Offset(elmt->GetElmtId()) +
-                            i] = geom->
-                                StdPhysEvaluate(foundPointArray, edgePhys);
-                    }
-                    else
-                    {
-                        ASSERTL0(found, "Couldn't interpolate across interface "
-                                        "from left to right (fwd)");
-
-                        Array<OneD, NekDouble> edgePhys = Fwd + m_trace->
-                                GetPhys_Offset(geom->GetElmtId());
-                        Array<OneD, NekDouble> foundPointArray(1, foundPoint);
-                        Fwd[m_trace->GetPhys_Offset(elmt->GetElmtId()) +
-                            i] = geom->
-                                StdPhysEvaluate(foundPointArray, edgePhys);
-                    }
-                }
-            }
-
-            //Flag that cache has been created
-            flag = true;
-        }
     }
 
     // Do parallel exchange for forwards/backwards spaces.
