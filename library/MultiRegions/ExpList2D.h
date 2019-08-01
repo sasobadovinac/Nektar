@@ -138,6 +138,8 @@ namespace Nektar
             SpatialDomains::MortarCollection m_mortars;
             std::vector<int> m_mortarToRightEdgeMap;
             std::vector<int> m_mortarToLeftEdgeMap;
+            std::map<int, std::vector<int>> m_rightEdgeToMortarMap;
+            std::map<int, std::vector<int>> m_leftEdgeToMortarMap;
 
             /// Upwind the \a Fwd and \a Bwd states based on the one-
             /// dimensional normal velocity field given by \a Vn.

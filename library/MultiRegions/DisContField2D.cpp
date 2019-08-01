@@ -1409,16 +1409,14 @@ void DisContField2D::v_GetFwdBwdTracePhys(
         }
     }
 
-    // Evaluate mortar points using Fwd and Bwd entries extracted above
-    // loop over all mortars, get left and right trace edges, then use the
-    // finddistance etc to work out where to evaluate in those trace edges
-
+    //Set up global edge to local trace ID for mortar interpolation
     std::map<int, int> edgeToTraceId;
     for (int i = 0; i < m_trace->GetExpSize(); ++i)
     {
             edgeToTraceId[m_trace->GetExp(i)->GetGeom()->GetGlobalID()] = i;
     }
 
+    //Interpolate from edges to mortars
     auto mortarOffset = m_trace->GetExpSize() - m_mortars.size();
     for (int i = 0; i < m_mortars.size(); ++i)
     {
@@ -1478,6 +1476,8 @@ void DisContField2D::v_GetFwdBwdTracePhys(
             Fwd[m_trace->GetPhys_Offset(mortarId) + j] = traceElLeft->StdPhysEvaluate(foundPointArray, edgePhys);
         }
     }
+
+    //Interpolate from mortars to edges
 
 
     // Fill boundary conditions into missing elements

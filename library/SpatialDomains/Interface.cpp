@@ -517,6 +517,7 @@ void Interfaces::GenerateMortars(int indx)
     //iterate over mortar and identify left and right corresponding edge
     //by evaluating center of standard element into Cartesian
     Array<OneD, NekDouble> xi(1, 0.0);
+    cnt = 0;
     for (const auto it : mortars)
     {
         cout << endl << "Mortar: " << it->GetGlobalID() << endl;
@@ -546,6 +547,7 @@ void Interfaces::GenerateMortars(int indx)
             }
 
             m_mortarToRightEdgeMap.emplace_back(edge.second->GetGlobalID());
+            m_rightEdgeToMortarMap[edge.second->GetGlobalID()].emplace_back(cnt);
 
             cout << "'Right' edge | Segment ID: " << edge.second->GetGlobalID() << endl;
         }
@@ -560,12 +562,14 @@ void Interfaces::GenerateMortars(int indx)
             }
 
             m_mortarToLeftEdgeMap.emplace_back(edge.second->GetGlobalID());
+            m_leftEdgeToMortarMap[edge.second->GetGlobalID()].emplace_back(cnt);
 
             cout << "'Left' edge | Segment ID: " << edge.second->GetGlobalID() << endl;
         }
+
+        cnt++;
     }
 
-    cout << endl << "Number of mortars: " << m_mortars.size() << endl;
 
     ASSERTL0(m_mortarToLeftEdgeMap.size() == m_mortars.size(),
             "Length of mortar to left edge map is not equal to number of mortars.");
@@ -573,6 +577,28 @@ void Interfaces::GenerateMortars(int indx)
     ASSERTL0(m_mortarToRightEdgeMap.size() == m_mortars.size(),
             "Length of mortar to right edge map is not equal to number of mortars.");
 
+    cout << endl << "Number of mortars: " << m_mortars.size() << endl << endl;
+
+    for (auto tmp : m_rightEdgeToMortarMap)
+    {
+        cout << "Right edge " << tmp.first << " -> ";
+        for (auto tmp2: tmp.second)
+        {
+            cout << tmp2 << ' ';
+        }
+        cout << endl;
+    }
+
+    cout << endl;
+    for (auto tmp : m_leftEdgeToMortarMap)
+    {
+        cout << "Left edge " << tmp.first << " -> ";
+        for (auto tmp2: tmp.second)
+        {
+            cout << tmp2 << ' ';
+        }
+        cout << endl;
+    }
 }
 
 void InterfaceBase::SetEdge(const CompositeMap &edge)

@@ -187,6 +187,16 @@ public:
         return m_mortarToLeftEdgeMap;
     }
 
+    const std::map<int, std::vector<int>> &GetRightEdgeToMortarMap(void) const
+    {
+        return m_rightEdgeToMortarMap;
+    }
+
+    const std::map<int, std::vector<int>> &GetLeftEdgeToMortarMap(void) const
+    {
+        return m_leftEdgeToMortarMap;
+    }
+
     void SeparateGraph(MeshGraphSharedPtr &graph, int indx);
 
     void GenerateMortars(int indx);
@@ -201,7 +211,8 @@ protected:
     MortarCollection m_mortars;
     std::vector<int> m_mortarToRightEdgeMap;
     std::vector<int> m_mortarToLeftEdgeMap;
-
+    std::map<int, std::vector<int>> m_rightEdgeToMortarMap;
+    std::map<int, std::vector<int>> m_leftEdgeToMortarMap;
 
 private:
     /// Read segments (and general MeshGraph) given TiXmlDocument.
