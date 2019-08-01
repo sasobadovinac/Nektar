@@ -88,12 +88,12 @@ namespace Nektar
         NekDouble m_gamma0;
         /// Shape function 'phi' as expansion list
         MultiRegions::ExpListSharedPtr m_phi;
+        /// Function that evaluates the values of \Phi
+        SolverUtils::SessionFunctionSharedPtr m_phiEvaluator;
 
         // Calculates the shape function values
         // (only for non-moving boundaries)
-        void CalcPhi(const MultiRegions::ExpListSharedPtr &expansion,
-                    NekDouble time,
-                    bool timeDependent);
+        void CalcPhi(NekDouble time, bool timeDependent);
         // Calculates the virtual force 'fs'
         void IBForcing(const Array<OneD, const Array<OneD, NekDouble> > &fields,
                     NekDouble time,

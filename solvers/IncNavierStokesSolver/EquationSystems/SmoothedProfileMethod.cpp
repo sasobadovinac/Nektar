@@ -209,8 +209,11 @@ namespace Nektar
                 break;
         }
         
+        // Get function evaluator for 'm_phi' from the session file
+        m_phiEvaluator = GetFunction("ShapeFunction");
+
         // Call it at the begining to make sure 'm_phi' is defined
-        CalcPhi(m_pressureP, 0.0, false);
+        CalcPhi(0.0, false);
 
         // Read 'u_p' from session file, 0 if undefined
         int physTot = m_pressureP->GetTotPoints();
@@ -287,11 +290,17 @@ namespace Nektar
 
         int physTot = m_pressureP->GetTotPoints();
 
-        // SPM correction of velocity
+        /* SPM correction of velocity */
+        // Update 'm_phi' if needed
+        CalcPhi(time, false);
+        // Set BC conditions for pressure p_p
         v_SetUpCorrectionPressure(outarray, m_F, time, a_iixDt);
+        // Solve Poisson equation for pressure p_p
         v_SolveCorrectionPressure(m_F[0]);
+        // Solve velocity in the next step with IB
         v_SolveCorrectedVelocity(m_F, outarray, time, a_iixDt);
 
+        // Add pressures to get final value
         Vmath::Vadd(physTot, m_pressure->GetPhys(), 1,
                              m_pressureP->GetPhys(), 1,
                              m_pressure->UpdatePhys(), 1);
@@ -438,26 +447,12 @@ namespace Nektar
      * @param t
      * @param phi
      */
-    void SmoothedProfileMethod::CalcPhi(const ExpListSharedPtr &expansion,
-                                        NekDouble t,
-                                        bool timeDependent)
+    void SmoothedProfileMethod::CalcPhi(NekDouble t, bool timeDependent)
     {
         // Calculate only once if not time-dependent
         if (timeDependent || t <= 0.0)
         {
-            int physTot = expansion->GetTotPoints();
-            Array<OneD, NekDouble> coord_0(physTot);
-            Array<OneD, NekDouble> coord_1(physTot);
-            Array<OneD, NekDouble> coord_2(physTot);
-
-            expansion->GetCoords(coord_0, coord_1, coord_2);
-            for (int i = 0; i < physTot; ++i)
-            {
-                m_phi->UpdatePhys()[i] = -0.5 * (tanh(
-                        ((coord_0[i]-5.0)*(coord_0[i]-5.0) +
-                        (coord_1[i]-5.0)*(coord_1[i]-5.0) - 0.25)/0.047386)
-                        - 1.0);
-            }
+            m_phiEvaluator->Evaluate("Phi", m_phi->UpdatePhys(), t);
         }
     }
 
@@ -480,9 +475,6 @@ namespace Nektar
     {
         int nvel = m_velocity.num_elements();
         int nq   = m_pressureP->GetTotPoints();
-
-        // Vector phi
-        CalcPhi(m_pressureP, time, false);
 
         // Vector f_s
         f_s = Array<OneD, Array<OneD, NekDouble> >(nvel);
@@ -517,9 +509,6 @@ namespace Nektar
     {
         int nvel = m_velocity.num_elements();
         int nq   = BndExp->GetTotPoints();
-
-        // Vector phi
-        CalcPhi(BndExp, time, false);
 
         // Vector f_s
         f_s = Array<OneD, Array<OneD, NekDouble> >(nvel);
