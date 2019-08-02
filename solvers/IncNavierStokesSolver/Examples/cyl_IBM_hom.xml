@@ -17,13 +17,13 @@
         </COMPOSITE>
         <DOMAIN> C[5-7] </DOMAIN>
     </GEOMETRY>
-	
+
     <EXPANSIONS>
         <E COMPOSITE="C[5]" NUMMODES="3" TYPE="MODIFIED" FIELDS="u,v,w,p" />  <!-- Domain -->
         <E COMPOSITE="C[6]" NUMMODES="3" TYPE="MODIFIED" FIELDS="u,v,w,p" />  <!-- Body   -->
 		<E COMPOSITE="C[7]" NUMMODES="3" TYPE="MODIFIED" FIELDS="u,v,w,p" />  <!-- Wake   -->
     </EXPANSIONS>
-	
+
     <CONDITIONS>
         <SOLVERINFO>
             <I PROPERTY="SolverType"              VALUE="SmoothedProfileMethod"   />
@@ -38,10 +38,10 @@
         <PARAMETERS>
             <P> TimeStep      = 0.01   </P>
             <P> NumSteps      = 10000  </P>
-            <P> IO_CheckSteps = 250    </P>
-            <P> IO_InfoSteps  = 10     </P>
-            <P> IO_CFLSteps   = 10     </P>
-            <P> Re            = 130    </P>
+            <!--P> IO_CheckSteps = 1000   </P-->
+            <P> IO_InfoSteps  = 250    </P>
+            <P> IO_CFLSteps   = 250    </P>
+            <P> Re            = 200    </P>
             <P> Kinvis        = 1.0/Re </P>
 			<P> HomModesZ     = 16     </P>
 			<P> Lz            = 5.0    </P>
@@ -92,13 +92,13 @@
         </FUNCTION>
 		<!-- Must be defined when using SPM -->
 		<FUNCTION NAME="ParticleVelocity">
-		    <E VAR="Up" VALUE="rad((x-5.0),(y-5.0))*sin(ang((x-5.0),(y-5.0)))" />
-			<E VAR="Vp" VALUE="-rad((x-5.0),(y-5.0))*cos(ang((x-5.0),(y-5.0)))" />
+		    <E VAR="Up" VALUE="0" />
+			<E VAR="Vp" VALUE="0" />
 			<E VAR="Wp" VALUE="0" />
 		</FUNCTION>
 		<!-- If not defined, u_p = 0 -->
 		<FUNCTION NAME="ShapeFunction">
-		    <E VAR="Phi" VALUE="-0.5*(tanh((rad((x-5.0),(y-5.0))-0.5)/0.047386)-1.0)" />
+		    <E VAR="Phi" VALUE="-0.5*(tanh((rad((x-5.0),(y-5.0))-0.5)/0.01)-1.0)" />
 		</FUNCTION>
     </CONDITIONS>
 </NEKTAR>
