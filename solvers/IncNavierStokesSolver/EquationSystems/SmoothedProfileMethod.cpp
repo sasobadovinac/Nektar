@@ -209,7 +209,7 @@ namespace Nektar
                 break;
         }
         
-        // Get function evaluator for 'm_phi' from the session file...
+        // Get function evaluator for 'm_phi' from the session file
         if (m_session->DefinesFunction("ShapeFunction"))
         {
             m_phiEvaluator = GetFunction("ShapeFunction");
@@ -225,20 +225,17 @@ namespace Nektar
             ASSERTL0(true, (string("ShapeFunction or VariableShapeFunction ") +
                      string("must be defined in the session file")).c_str());
         }
-        cout << m_timeDependentPhi << endl;
-        UpdatePhi(0.0);
 
-        // Read 'u_p' from session file, 0 if undefined
+        // Read 'u_p' from session file
         int physTot = m_pressureP->GetTotPoints();
-        vector<string> velName;
-        velName.push_back("Up");
+        m_velName.push_back("Up");
         if (nvel > 1)
         {
-            velName.push_back("Vp");
+            m_velName.push_back("Vp");
         }
         if (nvel > 2)
         {
-            velName.push_back("Wp");
+            m_velName.push_back("Wp");
         }
 
         m_up = Array<OneD, Array<OneD, NekDouble> >(nvel);
@@ -248,15 +245,27 @@ namespace Nektar
             {
                 m_up[i] = Array<OneD, NekDouble>(physTot);
             }
-            GetFunction("ParticleVelocity")->Evaluate(velName, m_up);
+            m_upEvaluator = GetFunction("ParticleVelocity");
+            m_timeDependentUp = false;
         }
-        else
+        else if (m_session->DefinesFunction("VariableParticleVelocity"))
         {
             for (int i = 0; i < nvel; ++i)
             {
-                m_up[i] = Array<OneD, NekDouble>(physTot, 0.0);
+                m_up[i] = Array<OneD, NekDouble>(physTot);
             }
+            m_upEvaluator = GetFunction("VariableParticleVelocity");
+            m_timeDependentPhi = true;
         }
+        else
+        {
+            ASSERTL0(true,
+                    (string("ParticleVelocity or VariableParticleVelocity ") +
+                     string("must be defined in the session file")).c_str());
+        }
+
+        // Make sure that m_phi and m_up are defined
+        UpdatePhiUp(0.0);
 
         // Select m_gamma0 depending on IMEX order
         string type = m_session->GetSolverInfo("TimeIntegrationMethod");
@@ -304,8 +313,8 @@ namespace Nektar
         int physTot = m_pressureP->GetTotPoints();
 
         /* SPM correction of velocity */
-        // Update 'm_phi' if needed (DEBUG: Only constant values now)
-        UpdatePhi(time);
+        // Update 'm_phi' and 'm_up' if needed
+        UpdatePhiUp(time);
         // Set BC conditions for pressure p_p
         v_SetUpCorrectionPressure(outarray, m_F, time, a_iixDt);
         // Solve Poisson equation for pressure p_p
@@ -344,12 +353,13 @@ namespace Nektar
         // Virtual force 'fs'
         Array<OneD, Array<OneD, NekDouble> > f_s;
         IBForcing(fields, time, aii_Dt, f_s);
-        m_fields[0]->PhysDeriv(eX, f_s[0], Forcing[0]);
+        m_fields[m_velocity[0]]->PhysDeriv(eX, f_s[0], Forcing[0]);
 
         // Using 'Forcing[1]' as storage
         for (int i = 1; i < nvel; ++i)
         {
-            m_fields[i]->PhysDeriv(DirCartesianMap[i], f_s[i], Forcing[1]);
+            int ind = m_velocity[i];
+            m_fields[ind]->PhysDeriv(DirCartesianMap[i], f_s[i], Forcing[1]);
             Vmath::Vadd(physTot, Forcing[1], 1, Forcing[0], 1, Forcing[0], 1);
         }
     }
@@ -399,15 +409,15 @@ namespace Nektar
         if (nvel == 2)
         {
             m_pressureP->PhysDeriv(m_pressureP->GetPhys(),
-                                  Forcing[m_velocity[0]],
-                                  Forcing[m_velocity[1]]);
+                                   Forcing[0],
+                                   Forcing[1]);
         }
         else
         {
             m_pressureP->PhysDeriv(m_pressureP->GetPhys(),
-                                  Forcing[m_velocity[0]],
-                                  Forcing[m_velocity[1]],
-                                  Forcing[m_velocity[2]]);
+                                   Forcing[0],
+                                   Forcing[1],
+                                   Forcing[2]);
         }
 
         // Virtual force 'fs'
@@ -418,8 +428,8 @@ namespace Nektar
         for (int i = 0; i < nvel; ++i)
         {
             int ind = m_velocity[i];
-            Vmath::Vsub(physTot, f_s[ind], 1, Forcing[ind], 1, Forcing[ind], 1);
-            Blas::Daxpy(physTot, dt/m_gamma0, Forcing[ind], 1, fields[i], 1);
+            Vmath::Vsub(physTot, f_s[i], 1, Forcing[i], 1, Forcing[i], 1);
+            Blas::Daxpy(physTot, dt/m_gamma0, Forcing[i], 1, fields[ind], 1);
         }
 
         // DEBUG: What about other convective fields?
@@ -454,18 +464,22 @@ namespace Nektar
     }
 
     /**
-     * @brief DEBUG: Calculates the values of the shape function
+     * @brief Calculates the values of the shape function
      *
      * @param expansion
      * @param t
      * @param phi
      */
-    void SmoothedProfileMethod::UpdatePhi(NekDouble t)
+    void SmoothedProfileMethod::UpdatePhiUp(NekDouble t)
     {
-        // Calculate only once if not time-dependent
+        // Calculate at least once (more times if m_phi or m_up depend on time)
         if (m_timeDependentPhi || t <= 0.0)
         {
             m_phiEvaluator->Evaluate("Phi", m_phi->UpdatePhys(), t);
+        }
+        if (m_timeDependentUp || t <= 0.0)
+        {
+            m_upEvaluator->Evaluate(m_velName, m_up, t);
         }
     }
 
@@ -535,7 +549,9 @@ namespace Nektar
             ExpListSharedPtr velExp =
                 (m_fields[m_velocity[i]]->GetBndCondExpansions())[bndInd];
             Vmath::Vsub(nq, m_up[i], 1, velExp->GetPhys(), 1, f_s[i], 1);
-            Vmath::Vmul(nq, m_phi->GetBndCondExpansions()[bndInd]->GetPhys(), 1, f_s[i], 1, f_s[i], 1);
+            Vmath::Vmul(nq, m_phi->GetBndCondExpansions()[bndInd]->GetPhys(),
+                        1, f_s[i],
+                        1, f_s[i], 1);
             Vmath::Smul(nq, m_gamma0/dt, f_s[i], 1, f_s[i], 1);
         }
     }
