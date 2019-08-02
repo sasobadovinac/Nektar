@@ -882,130 +882,23 @@ namespace Nektar
     }
 
     /**
-     *  
-     */
-    void IncNavierStokes::v_GetStruct(NekDouble &angle, NekDouble &angleVel)
-    {
-        angle = m_bsbcParams->m_angle;
-        angleVel = m_bsbcParams->m_angleVel[0];
-    }
-
-    /**
-     *  
-     */
-    void IncNavierStokes::v_SetStruct(NekDouble &angle, NekDouble &angleVel)
-    {
-        m_bsbcParams->m_angle = angle;
-        m_bsbcParams->m_angleVel[0] = angleVel;
-    }
-
-    /**
-     *  
-     */
-    bool IncNavierStokes::v_CheckBSBC()
-    {
-        return m_BlowingSuction;
-    }
-
-    /**
      *  Scale boundary conditions by m_angle and m_angleVel
      */
     void IncNavierStokes::ScaleBSBC()
     {
-        int physTot = m_fields[0]->GetTotPoints();
         int nfields = m_fields.num_elements();
-        int nvel = nfields - 1;
-        int nbnds    = m_fields[0]->GetBndConditions().num_elements();
+        int nvel    = nfields - 1;
+        int nbnds   = m_fields[0]->GetBndConditions().num_elements();
 
         // Declare variables
         Array<OneD, const SpatialDomains::BoundaryConditionShPtr> BndConds;
         Array<OneD, MultiRegions::ExpListSharedPtr>  BndExp;
 
-        Array<OneD, bool>  isBlowingSuction(nfields);
-
-        Array<OneD, Array<OneD, NekDouble> > deltaGrad(nvel);
-        Array<OneD, Array<OneD, NekDouble> > deltaGamma(nvel);
-        for (int i = 0; i< nvel; i++)
-        {
-            deltaGrad[i] = Array<OneD, NekDouble> (physTot, 0.0);
-            deltaGamma[i] = Array<OneD, NekDouble> (physTot, 0.0);
-        }
-
-        // Get Cartesian coordinates for evaluating boundary conditions    
-        Array<OneD, Array<OneD, NekDouble> > coords(3);
-        for (int dir=0; dir < 3; dir++)
-        {
-            coords[dir] = Array<OneD, NekDouble> (physTot, 0.0);
-        }
-        m_fields[0]->GetCoords(coords[0],coords[1],coords[2]);
-
-        for(int j = 0; j < 3; ++j)
-            {
-                // Subtract m_momPoint
-                Vmath::Sadd (physTot, -1.0*m_bsbcParams->m_hingePoint[j],
-                             coords[j], 1, coords[j], 1);
-            }
-
         // Loop boundary conditions looking for BS-BC's
         for(int n = 0 ; n < nbnds ; ++n)
         {
-            // Evaluate original Dirichlet boundary conditions in whole domain
-            for (int i = 0; i < nfields; ++i)
-            {
-                BndConds   = m_fields[i]->GetBndConditions();
-                BndExp     = m_fields[i]->GetBndCondExpansions();
-                if ( BndConds[n]->GetBoundaryConditionType() == 
-                                    SpatialDomains::eDirichlet && 
-                                    boost::istarts_with(BndConds[n]->GetUserDefined(),"BlowingSuction"))
-                {
-                    isBlowingSuction[i] = true;
-                    // If we have the a velocity component
-                    //      check if all vel bc's are also Dirichlet
-                    if ( i<nvel )
-                    {
-                        for (int j = 0; j < nvel; ++j)
-                        {
-                            ASSERTL0(m_fields[j]->GetBndConditions()[n]->
-                                                  GetBoundaryConditionType() == 
-                                                    SpatialDomains::eDirichlet,
-                                "BSBC only supported when all velocity components have the same type of boundary conditions");
-                        }
-                    }
-                    // Check if bc is time-dependent
-                    ASSERTL0( !BndConds[n]->IsTimeDependent(),
-                        "Time-dependent Dirichlet boundary conditions not supported with BSBC yet.");
-                }
-                else
-                {
-                    isBlowingSuction[i] = false;
-                }
-            }
-
             if (m_bsbcParams->m_isBlowingSuction[0])
             {
-                // Compute delta Gamma:
-                Vmath::Vcopy(physTot, coords[0], 1, deltaGamma[1], 1);
-                Vmath::Neg(physTot, coords[1], 1);
-                Vmath::Vcopy(physTot, coords[1], 1, deltaGamma[0], 1);
-                Vmath::Neg(physTot, coords[1], 1);
-
-                // Compute delta Gamma times base-flow gradient:
-                // u = y.du/dx - x.du/dy
-                Vmath::Vmul(physTot, coords[1], 1, m_advObject->GetGradBase()[0],
-                    1 , deltaGrad[0], 1);
-
-                Vmath::Neg(physTot, coords[0], 1);
-
-                Vmath::Vvtvp(physTot, coords[0], 1, m_advObject->GetGradBase()[1],
-                    1, deltaGrad[0], 1, deltaGrad[0], 1);
-
-                // v = y.dv/dx - x.dv/dy
-                Vmath::Vmul(physTot, coords[1], 1, m_advObject->GetGradBase()[2],
-                    1 , deltaGrad[1], 1);
-
-                Vmath::Vvtvp(physTot, coords[0], 1, m_advObject->GetGradBase()[3],
-                    1, deltaGrad[1], 1, deltaGrad[1], 1);
-
                 // Now, project result to boundary
                 for (int i = 0; i < nfields; ++i)
                 {
@@ -1016,27 +909,22 @@ namespace Nektar
                         // Apply BSBC correction
                         if (i<nvel)
                         {
-                            // Get coordinate and values on boundary
-                            Array<OneD, NekDouble> deltaGradBnd(BndExp[n]->GetTotPoints());
-                            Array<OneD, NekDouble> deltaGammaBnd(BndExp[n]->GetTotPoints());
-                            m_fields[i]->ExtractPhysToBnd(n, deltaGrad[i], deltaGradBnd);
-                            m_fields[i]->ExtractPhysToBnd(n, deltaGamma[i], deltaGammaBnd);
-
                             // Scale file with new m_angle and m_angleVel
                             // Compute base flow gradient times angle:
                             Vmath::Smul(BndExp[n]->GetTotPoints(), m_bsbcParams->m_angle, 
-                                deltaGradBnd, 1, BndExp[n]->UpdatePhys(), 1);
+                                m_bsbcParams->m_deltaGradBnd[i], 1, 
+                                BndExp[n]->UpdatePhys(), 1);
 
                             // Add angular velocity:
                             Vmath::Svtvp(BndExp[n]->GetTotPoints(), m_bsbcParams->m_angleVel[0], 
-                                deltaGammaBnd, 1, BndExp[n]->GetPhys(), 1, BndExp[n]->UpdatePhys(), 1);
-                        
+                                m_bsbcParams->m_deltaGammaBnd[i], 1, 
+                                BndExp[n]->GetPhys(), 1, 
+                                BndExp[n]->UpdatePhys(), 1);
                         }
                     }
                 }
             }
         }
-
         // Finally, perform FwdTrans in all fields
         for (int i = 0; i < m_fields.num_elements(); ++i)
         {
@@ -1062,6 +950,163 @@ namespace Nektar
             }
         }
     }
+
+    /**
+     *  Scale boundary conditions by m_angle and m_angleVel
+     */
+    // void IncNavierStokes::ScaleBSBC_TEST()
+    // {
+    //     int physTot = m_fields[0]->GetTotPoints();
+    //     int nfields = m_fields.num_elements();
+    //     int nvel = nfields - 1;
+    //     int nbnds    = m_fields[0]->GetBndConditions().num_elements();
+
+    //     // Declare variables
+    //     Array<OneD, const SpatialDomains::BoundaryConditionShPtr> BndConds;
+    //     Array<OneD, MultiRegions::ExpListSharedPtr>  BndExp;
+
+    //     Array<OneD, bool>  isBlowingSuction(nfields);
+
+    //     Array<OneD, Array<OneD, NekDouble> > deltaGrad(nvel);
+    //     Array<OneD, Array<OneD, NekDouble> > deltaGamma(nvel);
+
+    //     for (int i = 0; i< nvel; i++)
+    //     {
+    //         deltaGrad[i] = Array<OneD, NekDouble> (physTot, 0.0);
+    //         deltaGamma[i] = Array<OneD, NekDouble> (physTot, 0.0);
+    //     }
+
+    //     // Get Cartesian coordinates for evaluating boundary conditions    
+    //     Array<OneD, Array<OneD, NekDouble> > coords(3);
+    //     for (int dir=0; dir < 3; dir++)
+    //     {
+    //         coords[dir] = Array<OneD, NekDouble> (physTot, 0.0);
+    //     }
+    //     m_fields[0]->GetCoords(coords[0],coords[1],coords[2]);
+
+    //     for(int j = 0; j < 3; ++j)
+    //         {
+    //             // Subtract m_momPoint
+    //             Vmath::Sadd (physTot, -1.0*m_bsbcParams->m_hingePoint[j],
+    //                          coords[j], 1, coords[j], 1);
+    //         }
+
+    //     // Loop boundary conditions looking for BS-BC's
+    //     for(int n = 0 ; n < nbnds ; ++n)
+    //     {
+    //         // Evaluate original Dirichlet boundary conditions in whole domain
+    //         for (int i = 0; i < nfields; ++i)
+    //         {
+    //             BndConds   = m_fields[i]->GetBndConditions();
+    //             BndExp     = m_fields[i]->GetBndCondExpansions();
+    //             if ( BndConds[n]->GetBoundaryConditionType() == 
+    //                                 SpatialDomains::eDirichlet && 
+    //                                 boost::istarts_with(BndConds[n]->GetUserDefined(),"BlowingSuction"))
+    //             {
+    //                 isBlowingSuction[i] = true;
+    //                 // If we have the a velocity component
+    //                 //      check if all vel bc's are also Dirichlet
+    //                 if ( i<nvel )
+    //                 {
+    //                     for (int j = 0; j < nvel; ++j)
+    //                     {
+    //                         ASSERTL0(m_fields[j]->GetBndConditions()[n]->
+    //                                               GetBoundaryConditionType() == 
+    //                                                 SpatialDomains::eDirichlet,
+    //                             "BSBC only supported when all velocity components have the same type of boundary conditions");
+    //                     }
+    //                 }
+    //                 // Check if bc is time-dependent
+    //                 ASSERTL0( !BndConds[n]->IsTimeDependent(),
+    //                     "Time-dependent Dirichlet boundary conditions not supported with BSBC yet.");
+    //             }
+    //             else
+    //             {
+    //                 isBlowingSuction[i] = false;
+    //             }
+    //         }
+
+    //         if (isBlowingSuction[0])
+    //         {
+    //             // Compute delta Gamma:
+    //             Vmath::Vcopy(physTot, coords[0], 1, deltaGamma[1], 1);
+    //             Vmath::Neg(physTot, coords[1], 1);
+    //             Vmath::Vcopy(physTot, coords[1], 1, deltaGamma[0], 1);
+    //             Vmath::Neg(physTot, coords[1], 1);
+
+    //             // Compute delta Gamma times base-flow gradient:
+    //             // u = y.du/dx - x.du/dy
+    //             Vmath::Vmul(physTot, coords[1], 1, m_advObject->GetGradBase()[0],
+    //                 1 , deltaGrad[0], 1);
+
+    //             Vmath::Neg(physTot, coords[0], 1);
+
+    //             Vmath::Vvtvp(physTot, coords[0], 1, m_advObject->GetGradBase()[1],
+    //                 1, deltaGrad[0], 1, deltaGrad[0], 1);
+
+    //             // v = y.dv/dx - x.dv/dy
+    //             Vmath::Vmul(physTot, coords[1], 1, m_advObject->GetGradBase()[2],
+    //                 1 , deltaGrad[1], 1);
+
+    //             Vmath::Vvtvp(physTot, coords[0], 1, m_advObject->GetGradBase()[3],
+    //                 1, deltaGrad[1], 1, deltaGrad[1], 1);
+
+    //             // Now, project result to boundary
+    //             for (int i = 0; i < nfields; ++i)
+    //             {
+    //                 BndConds   = m_fields[i]->GetBndConditions();
+    //                 BndExp     = m_fields[i]->GetBndCondExpansions();
+    //                 if(boost::istarts_with(BndConds[n]->GetUserDefined(),"BlowingSuction"))
+    //                 {
+    //                     // Apply BSBC correction
+    //                     if (i<nvel)
+    //                     {
+    //                         // Get coordinate and values on boundary
+    //                         Array<OneD, NekDouble> deltaGradBnd(BndExp[n]->GetTotPoints());
+    //                         Array<OneD, NekDouble> deltaGammaBnd(BndExp[n]->GetTotPoints());
+    //                         m_fields[i]->ExtractPhysToBnd(n, deltaGrad[i], deltaGradBnd);
+    //                         m_fields[i]->ExtractPhysToBnd(n, deltaGamma[i], deltaGammaBnd);
+
+    //                         // Scale file with new m_angle and m_angleVel
+    //                         // Compute base flow gradient times angle:
+    //                         Vmath::Smul(BndExp[n]->GetTotPoints(), m_bsbcParams->m_angle, 
+    //                             deltaGradBnd, 1, BndExp[n]->UpdatePhys(), 1);
+
+    //                         // Add angular velocity:
+    //                         Vmath::Svtvp(BndExp[n]->GetTotPoints(), m_bsbcParams->m_angleVel[0], 
+    //                             deltaGammaBnd, 1, BndExp[n]->GetPhys(), 1, BndExp[n]->UpdatePhys(), 1);
+                        
+    //                     }
+    //                 }
+    //             }
+    //         }
+    //     }
+
+    //     // Finally, perform FwdTrans in all fields
+    //     for (int i = 0; i < m_fields.num_elements(); ++i)
+    //     {
+    //         // Get boundary condition information
+    //         BndConds   = m_fields[i]->GetBndConditions();
+    //         BndExp     = m_fields[i]->GetBndCondExpansions();
+    //         for(int n = 0 ; n < BndConds.num_elements(); ++n)
+    //         {   
+    //             if ( BndConds[n]->GetBoundaryConditionType() == 
+    //                     SpatialDomains::eDirichlet)
+    //             {
+    //                 if( boost::istarts_with(BndConds[n]->GetUserDefined(),"BlowingSuction"))
+    //                 {
+    //                     BndExp[n]->FwdTrans_BndConstrained(BndExp[n]->GetPhys(),
+    //                                                 BndExp[n]->UpdateCoeffs());
+    //                     if (m_fields[i]->GetExpType() == MultiRegions::e3DH1D)
+    //                     {
+    //                         BndExp[n]->HomogeneousFwdTrans(BndExp[n]->GetCoeffs(),
+    //                                                 BndExp[n]->UpdateCoeffs());
+    //                     }
+    //                 }
+    //             }
+    //         }
+    //     }
+    // }
 
     /**
      *  Blowing suction boundary condition initialisation
@@ -1232,114 +1277,9 @@ namespace Nektar
         m_bsbcParams->m_angleVel = Array<OneD,NekDouble> (m_intSteps, 0.0);
         m_bsbcParams->m_moment   = Array<OneD,NekDouble> (m_intSteps, 0.0);
 
-        // Get base flow and base flow gradient
-        // m_bsbcParams->m_baseFlow = m_advObject->GetBaseFlow();
-        // m_bsbcParams->m_gradBase = m_advObject->GetGradBase();
+        // Initialise constants for the BC sclaing
+        SetStructConsts();
 
-////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        // int physTot = m_fields[0]->GetTotPoints();
-        // int nfields = m_fields.num_elements();
-        // int nvel = nfields - 1;
-        // int nbnds    = m_fields[0]->GetBndConditions().num_elements();
-
-        // // Declare variables
-        // Array<OneD, const SpatialDomains::BoundaryConditionShPtr> BndConds;
-        // Array<OneD, MultiRegions::ExpListSharedPtr>  BndExp;
-
-        // m_bsbcParams->m_deltaGrad;
-        // m_bsbcParams->m_deltaGamma;
-
-        // for (int i = 0; i< nvel; i++)
-        // {
-        //     m_bsbcParams->m_deltaGrad[i] = Array<OneD, NekDouble> (physTot, 0.0);
-        //     m_bsbcParams->m_deltaGamma[i] = Array<OneD, NekDouble> (physTot, 0.0);
-        // }
-
-        // // Get Cartesian coordinates for evaluating boundary conditions    
-        // for (int dir=0; dir < 3; dir++)
-        // {
-        //     m_bsbcParams->m_coords[dir] = Array<OneD, NekDouble> (physTot, 0.0);
-        // }
-        // m_fields[0]->GetCoords(m_bsbcParams->m_coords[0], m_bsbcParams->m_coords[1],
-        //     m_bsbcParams->m_coords[2]);
-
-        // for(int j = 0; j < 3; ++j)
-        //     {
-        //         // Subtract m_momPoint
-        //         Vmath::Sadd (physTot, -1.0*m_bsbcParams->m_hingePoint[j],
-        //                      m_bsbcParams->m_coords[j], 1, m_bsbcParams->m_coords[j], 1);
-        //     }
-
-        // // Loop boundary conditions looking for BS-BC's
-        // for(int n = 0 ; n < nbnds ; ++n)
-        // {
-        //     // Evaluate original Dirichlet boundary conditions in whole domain
-        //     for (int i = 0; i < nfields; ++i)
-        //     {
-        //         BndConds   = m_fields[i]->GetBndConditions();
-        //         BndExp     = m_fields[i]->GetBndCondExpansions();
-        //         if ( BndConds[n]->GetBoundaryConditionType() == 
-        //                             SpatialDomains::eDirichlet && 
-        //                             boost::istarts_with(BndConds[n]->GetUserDefined(),"BlowingSuction"))
-        //         {
-        //             m_bsbcParams->m_isBlowingSuction[i] = true;
-        //             // If we have the a velocity component
-        //             //      check if all vel bc's are also Dirichlet
-        //             if ( i<nvel )
-        //             {
-        //                 for (int j = 0; j < nvel; ++j)
-        //                 {
-        //                     ASSERTL0(m_fields[j]->GetBndConditions()[n]->
-        //                                           GetBoundaryConditionType() == 
-        //                                             SpatialDomains::eDirichlet,
-        //                         "BSBC only supported when all velocity components have the same type of boundary conditions");
-        //                 }
-        //             }
-        //             // Check if bc is time-dependent
-        //             ASSERTL0( !BndConds[n]->IsTimeDependent(),
-        //                 "Time-dependent Dirichlet boundary conditions not supported with BSBC yet.");
-        //         }
-        //         else
-        //         {
-        //             m_bsbcParams->m_isBlowingSuction[i] = false;
-        //         }
-        //     }
-
-        //     if (m_bsbcParams->m_isBlowingSuction[0])
-        //     {
-        //         // Compute delta Gamma:
-        //         Vmath::Vcopy(physTot, m_bsbcParams->m_coords[0], 1, 
-        //             m_bsbcParams->m_deltaGamma[1], 1);
-        //         Vmath::Neg(physTot, m_bsbcParams->m_coords[1], 1);
-        //         Vmath::Vcopy(physTot, m_bsbcParams->m_coords[1], 1,
-        //             m_bsbcParams->m_deltaGamma[0], 1);
-        //         Vmath::Neg(physTot, m_bsbcParams->m_coords[1], 1);
-
-        //         // Compute delta Gamma times base-flow gradient:
-        //         // u = y.du/dx - x.du/dy
-        //         Vmath::Vmul(physTot, m_bsbcParams->m_coords[1], 1,
-        //             m_advObject->GetGradBase()[0], 1 ,
-        //             m_bsbcParams->m_deltaGrad[0], 1);
-
-        //         Vmath::Neg(physTot, m_bsbcParams->m_coords[0], 1);
-
-        //         Vmath::Vvtvp(physTot, m_bsbcParams->m_coords[0], 1,
-        //             m_advObject->GetGradBase()[1], 1,
-        //             m_bsbcParams->m_deltaGrad[0], 1,
-        //             m_bsbcParams->m_deltaGrad[0], 1);
-
-        //         // v = y.dv/dx - x.dv/dy
-        //         Vmath::Vmul(physTot, m_bsbcParams->m_coords[1], 1,
-        //             m_advObject->GetGradBase()[2], 1 ,
-        //             m_bsbcParams->m_deltaGrad[1], 1);
-
-        //         Vmath::Vvtvp(physTot, m_bsbcParams->m_coords[0], 1,
-        //             m_advObject->GetGradBase()[3], 1,
-        //             m_bsbcParams->m_deltaGrad[1], 1,
-        //             m_bsbcParams->m_deltaGrad[1], 1);
-        //     }
-        // }
-////////////////////////////////////////////////////////////////////////////////////////////////////////////
         // Open outputstream and write header
         if( m_bsbcParams->m_doOutput)
         {
@@ -1388,6 +1328,162 @@ namespace Nektar
                 m_bsbcParams->m_outputStream << endl;
             }
         }
+    }
+
+    /**
+    * Define values on the boundary of delta Gamma and 
+    * delta Gamma times base flow gradient
+    * for boundary conditions scaling
+    */
+    void IncNavierStokes::SetStructConsts()
+    {
+        int physTot = m_fields[0]->GetTotPoints();
+        int nfields = m_fields.num_elements();
+        int nvel = nfields - 1;
+        int nbnds    = m_fields[0]->GetBndConditions().num_elements();
+
+        // Declare variables
+        Array<OneD, const SpatialDomains::BoundaryConditionShPtr> BndConds;
+        Array<OneD, MultiRegions::ExpListSharedPtr>  BndExp;
+
+        Array<OneD, Array<OneD, NekDouble> > deltaGrad(nvel);
+        Array<OneD, Array<OneD, NekDouble> > deltaGamma(nvel);
+
+        m_bsbcParams->m_deltaGammaBnd = Array<OneD, Array<OneD, NekDouble> >(nvel);
+        m_bsbcParams->m_deltaGradBnd = Array<OneD, Array<OneD, NekDouble> >(nvel);
+
+        m_bsbcParams->m_isBlowingSuction = Array<OneD, bool> (nfields);
+
+        for (int i = 0; i < nfields; ++i)
+        {
+            m_bsbcParams->m_isBlowingSuction[i] = false;
+        }
+
+        for (int i = 0; i< nvel; i++)
+        {
+            deltaGrad[i] = Array<OneD, NekDouble> (physTot, 0.0);
+            deltaGamma[i] = Array<OneD, NekDouble> (physTot, 0.0);
+        }
+
+        // Get Cartesian coordinates for evaluating boundary conditions    
+        Array<OneD, Array<OneD, NekDouble> > coords(3);
+        for (int dir=0; dir < 3; dir++)
+        {
+            coords[dir] = Array<OneD, NekDouble> (physTot, 0.0);
+        }
+        m_fields[0]->GetCoords(coords[0],coords[1],coords[2]);
+
+        for(int j = 0; j < 3; ++j)
+            {
+                // Subtract m_momPoint
+                Vmath::Sadd (physTot, -1.0*m_bsbcParams->m_hingePoint[j],
+                             coords[j], 1, coords[j], 1);
+            }
+
+        // Loop boundary conditions looking for BS-BC's
+        for(int n = 0 ; n < nbnds ; ++n)
+        {
+            // Evaluate original Dirichlet boundary conditions in whole domain
+            for (int i = 0; i < nfields; ++i)
+            {
+                BndConds   = m_fields[i]->GetBndConditions();
+                BndExp     = m_fields[i]->GetBndCondExpansions();
+                if ( BndConds[n]->GetBoundaryConditionType() == 
+                                    SpatialDomains::eDirichlet && 
+                                    boost::istarts_with(BndConds[n]->GetUserDefined(),"BlowingSuction"))
+                {
+                    m_bsbcParams->m_isBlowingSuction[i] = true;
+                    // If we have the a velocity component
+                    //      check if all vel bc's are also Dirichlet
+                    if ( i<nvel )
+                    {
+                        for (int j = 0; j < nvel; ++j)
+                        {
+                            ASSERTL0(m_fields[j]->GetBndConditions()[n]->
+                                                  GetBoundaryConditionType() == 
+                                                    SpatialDomains::eDirichlet,
+                                "BSBC only supported when all velocity components have the same type of boundary conditions");
+                        }
+                    }
+                    // Check if bc is time-dependent
+                    ASSERTL0( !BndConds[n]->IsTimeDependent(),
+                        "Time-dependent Dirichlet boundary conditions not supported with BSBC yet.");
+                }
+            }
+
+            if (m_bsbcParams->m_isBlowingSuction[0])
+            {
+                // Compute delta Gamma:
+                Vmath::Vcopy(physTot, coords[0], 1, deltaGamma[1], 1);
+                Vmath::Neg(physTot, coords[1], 1);
+                Vmath::Vcopy(physTot, coords[1], 1, deltaGamma[0], 1);
+                Vmath::Neg(physTot, coords[1], 1);
+
+                // Compute delta Gamma times base-flow gradient:
+                // u = y.du/dx - x.du/dy
+                Vmath::Vmul(physTot, coords[1], 1, m_advObject->GetGradBase()[0],
+                    1 , deltaGrad[0], 1);
+
+                Vmath::Neg(physTot, coords[0], 1);
+
+                Vmath::Vvtvp(physTot, coords[0], 1, m_advObject->GetGradBase()[1],
+                    1, deltaGrad[0], 1, deltaGrad[0], 1);
+
+                // v = y.dv/dx - x.dv/dy
+                Vmath::Vmul(physTot, coords[1], 1, m_advObject->GetGradBase()[2],
+                    1 , deltaGrad[1], 1);
+
+                Vmath::Vvtvp(physTot, coords[0], 1, m_advObject->GetGradBase()[3],
+                    1, deltaGrad[1], 1, deltaGrad[1], 1);
+
+                // Now, project result to boundary
+                for (int i = 0; i < nfields; ++i)
+                {
+                    BndConds   = m_fields[i]->GetBndConditions();
+                    BndExp     = m_fields[i]->GetBndCondExpansions();
+
+                    if(boost::istarts_with(BndConds[n]->GetUserDefined(),"BlowingSuction"))
+                    {
+                        // Apply BSBC correction
+                        if (i<nvel)
+                        {
+                            m_bsbcParams->m_deltaGammaBnd[i] = Array<OneD, NekDouble> (BndExp[n]->GetTotPoints());
+                            m_bsbcParams->m_deltaGradBnd[i] = Array<OneD, NekDouble> (BndExp[n]->GetTotPoints());
+
+                            // Get coordinate and values on boundary
+                            m_fields[i]->ExtractPhysToBnd(n, deltaGrad[i], m_bsbcParams->m_deltaGradBnd[i]);
+                            m_fields[i]->ExtractPhysToBnd(n, deltaGamma[i], m_bsbcParams->m_deltaGammaBnd[i]);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     *  
+     */
+    void IncNavierStokes::v_GetStruct(NekDouble &angle, NekDouble &angleVel)
+    {
+        angle = m_bsbcParams->m_angle;
+        angleVel = m_bsbcParams->m_angleVel[0];
+    }
+
+    /**
+     *  
+     */
+    void IncNavierStokes::v_SetStruct(NekDouble &angle, NekDouble &angleVel)
+    {
+        m_bsbcParams->m_angle = angle;
+        m_bsbcParams->m_angleVel[0] = angleVel;
+    }
+
+    /**
+     *  
+     */
+    bool IncNavierStokes::v_CheckBSBC()
+    {
+        return m_BlowingSuction;
     }
 
     /**

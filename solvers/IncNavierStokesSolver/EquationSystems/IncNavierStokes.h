@@ -176,12 +176,10 @@ namespace Nektar
         Array<OneD, NekDouble>                  m_moment;
 
         /// Storage for constants of scaling
-        Array<OneD, Array<OneD, NekDouble> >    m_deltaGrad;
-        Array<OneD, Array<OneD, NekDouble> >    m_deltaGamma;
-        Array<OneD, Array<OneD, NekDouble> >    m_coords;
+        Array<OneD, Array<OneD, NekDouble> >    m_deltaGradBnd;
+        Array<OneD, Array<OneD, NekDouble> >    m_deltaGammaBnd;
 
         Array<OneD, bool>                       m_isBlowingSuction;
-
 
 
         // Coefficients for Adams time-integration
@@ -339,11 +337,17 @@ namespace Nektar
         /// Scale BCs by theta and theta dot
         void ScaleBSBC();
 
+        /// Scale BCs by theta and theta dot
+        // void ScaleBSBC_TEST();
+
         /// Set Up Womersley details
         void SetUpWomersley(const int fldid, const int bndid, std::string womstr);
 
         /// Set up Blowing suction boundary conditions
         void SetUpBlowingSuction(std::string BSBCStr);
+
+        /// Initialise structural scaling constants
+        void SetStructConsts();
 
         /// Womersley parameters if required
         std::map<int, std::map<int,WomersleyParamsSharedPtr> > m_womersleyParams;
