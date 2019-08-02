@@ -209,11 +209,24 @@ namespace Nektar
                 break;
         }
         
-        // Get function evaluator for 'm_phi' from the session file
-        m_phiEvaluator = GetFunction("ShapeFunction");
-
-        // Call it at the begining to make sure 'm_phi' is defined
-        CalcPhi(0.0, false);
+        // Get function evaluator for 'm_phi' from the session file...
+        if (m_session->DefinesFunction("ShapeFunction"))
+        {
+            m_phiEvaluator = GetFunction("ShapeFunction");
+            m_timeDependentPhi = false;
+        }
+        else if (m_session->DefinesFunction("VariableShapeFunction"))
+        {
+            m_phiEvaluator = GetFunction("VariableShapeFunction");
+            m_timeDependentPhi = true;
+        }
+        else
+        {
+            ASSERTL0(true, (string("ShapeFunction or VariableShapeFunction ") +
+                     string("must be defined in the session file")).c_str());
+        }
+        cout << m_timeDependentPhi << endl;
+        UpdatePhi(0.0);
 
         // Read 'u_p' from session file, 0 if undefined
         int physTot = m_pressureP->GetTotPoints();
@@ -291,8 +304,8 @@ namespace Nektar
         int physTot = m_pressureP->GetTotPoints();
 
         /* SPM correction of velocity */
-        // Update 'm_phi' if needed
-        CalcPhi(time, false);
+        // Update 'm_phi' if needed (DEBUG: Only constant values now)
+        UpdatePhi(time);
         // Set BC conditions for pressure p_p
         v_SetUpCorrectionPressure(outarray, m_F, time, a_iixDt);
         // Solve Poisson equation for pressure p_p
@@ -447,10 +460,10 @@ namespace Nektar
      * @param t
      * @param phi
      */
-    void SmoothedProfileMethod::CalcPhi(NekDouble t, bool timeDependent)
+    void SmoothedProfileMethod::UpdatePhi(NekDouble t)
     {
         // Calculate only once if not time-dependent
-        if (timeDependent || t <= 0.0)
+        if (m_timeDependentPhi || t <= 0.0)
         {
             m_phiEvaluator->Evaluate("Phi", m_phi->UpdatePhys(), t);
         }

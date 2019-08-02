@@ -82,7 +82,7 @@ namespace Nektar
     protected:
         /// Correction pressure field for SPM
         MultiRegions::ExpListSharedPtr m_pressureP;
-        /// Velocity of the immersed body(ies)
+        /// Velocity of the immersed body(ies) (DEBUG: still constant with time)
         Array<OneD, Array<OneD, NekDouble> > m_up;
         /// Stiffly-stable scheme \gamma_0 coefficient
         NekDouble m_gamma0;
@@ -90,10 +90,12 @@ namespace Nektar
         MultiRegions::ExpListSharedPtr m_phi;
         /// Function that evaluates the values of \Phi
         SolverUtils::SessionFunctionSharedPtr m_phiEvaluator;
+        /// Flag that is true when phi depends on time
+        bool m_timeDependentPhi;
 
         // Calculates the shape function values
         // (only for non-moving boundaries)
-        void CalcPhi(NekDouble time, bool timeDependent);
+        void UpdatePhi(NekDouble time);
         // Calculates the virtual force 'fs'
         void IBForcing(const Array<OneD, const Array<OneD, NekDouble> > &fields,
                     NekDouble time,
