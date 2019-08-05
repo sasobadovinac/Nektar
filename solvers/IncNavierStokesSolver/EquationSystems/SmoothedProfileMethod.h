@@ -136,6 +136,8 @@ namespace Nektar
                     NekDouble dt);
         // Set proper BCs for the corrected pressure 'p_p'
         virtual void v_SetCorrectionPressureBCs(NekDouble time, NekDouble dt);
+        // Get time-dependence information from the first elmt of 'name'
+        bool GetFunctionTimeDependence(string name, string type);
 
     private:
     };

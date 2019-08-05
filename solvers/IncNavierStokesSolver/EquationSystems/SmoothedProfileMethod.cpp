@@ -208,22 +208,19 @@ namespace Nektar
                 }
                 break;
         }
-        
+
         // Get function evaluator for 'm_phi' from the session file
         if (m_session->DefinesFunction("ShapeFunction"))
         {
+            // Get the evaluator
             m_phiEvaluator = GetFunction("ShapeFunction");
-            m_timeDependentPhi = false;
-        }
-        else if (m_session->DefinesFunction("VariableShapeFunction"))
-        {
-            m_phiEvaluator = GetFunction("VariableShapeFunction");
-            m_timeDependentPhi = true;
+            m_timeDependentPhi = GetFunctionTimeDependence("ShapeFunction",
+                                                           "E");
         }
         else
         {
-            ASSERTL0(true, (string("ShapeFunction or VariableShapeFunction ") +
-                     string("must be defined in the session file")).c_str());
+            ASSERTL0(true, "ShapeFunction must be defined in "
+                           "the session file.");
         }
 
         // Read 'u_p' from session file
@@ -239,29 +236,21 @@ namespace Nektar
         }
 
         m_up = Array<OneD, Array<OneD, NekDouble> >(nvel);
+        for (int i = 0; i < nvel; ++i)
+        {
+            m_up[i] = Array<OneD, NekDouble>(physTot);
+        }
         if (m_session->DefinesFunction("ParticleVelocity"))
         {
-            for (int i = 0; i < nvel; ++i)
-            {
-                m_up[i] = Array<OneD, NekDouble>(physTot);
-            }
+            // Get the evaluator
             m_upEvaluator = GetFunction("ParticleVelocity");
-            m_timeDependentUp = false;
-        }
-        else if (m_session->DefinesFunction("VariableParticleVelocity"))
-        {
-            for (int i = 0; i < nvel; ++i)
-            {
-                m_up[i] = Array<OneD, NekDouble>(physTot);
-            }
-            m_upEvaluator = GetFunction("VariableParticleVelocity");
-            m_timeDependentPhi = true;
+            m_timeDependentUp = GetFunctionTimeDependence("ParticleVelocity",
+                                                          "E");
         }
         else
         {
-            ASSERTL0(true,
-                    (string("ParticleVelocity or VariableParticleVelocity ") +
-                     string("must be defined in the session file")).c_str());
+            ASSERTL0(true, "ParticleVelocity must be defined in "
+                           "the session file.");
         }
 
         // Make sure that m_phi and m_up are defined
@@ -553,6 +542,45 @@ namespace Nektar
                         1, f_s[i],
                         1, f_s[i], 1);
             Vmath::Smul(nq, m_gamma0/dt, f_s[i], 1, f_s[i], 1);
+        }
+    }
+
+    /**
+     * @brief True if the function is timedependent, false otherwise
+     * 
+     * @param name 
+     * @param type 
+     * @param attribute 
+     * @return string 
+     */
+    bool SmoothedProfileMethod::GetFunctionTimeDependence(string name,
+                                                          string type)
+    {
+        // Get the handler of first function block
+        TiXmlElement *conds = m_session->GetElement("Nektar/Conditions");
+        TiXmlElement *function = conds->FirstChildElement("FUNCTION");
+
+        // Loop over functions until 'name' block
+        string functionType = function->Attribute("NAME");
+        while (function && !boost::iequals(functionType, name))
+        {
+            function = function->NextSiblingElement("FUNCTION");
+            functionType = function->Attribute("NAME");
+        }
+
+        // Go to the first element
+        TiXmlElement *functionDef = function->FirstChildElement(type.c_str());
+        ASSERTL0(functionDef,"At least one element must be defined in" + name);
+
+        // And return the value of TIMEDEPENDENT
+        bool output;
+        int err = functionDef->QueryBoolAttribute("TIMEDEPENDENT", &output);
+        ASSERTL0(err != TIXML_WRONG_TYPE, "TIMEDEPENDENT must be 1/0, "
+                                          "true/false or yes/no.")
+        if (err == TIXML_NO_ATTRIBUTE)
+        {
+            // Set output to 'false' if no time-dependence specified
+            output = false;
         }
     }
 
