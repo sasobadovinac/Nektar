@@ -68,6 +68,8 @@ namespace Nektar
 
         virtual void v_InitObject();
 
+        void v_GenerateSummary(SolverUtils::SummaryList& s);
+
         // Solves the linear part of the velocity correction scheme incluiding
         // the SPM method calculation for 'fs'
         void SolveUnsteadyStokesSystem(

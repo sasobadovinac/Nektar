@@ -275,6 +275,18 @@ namespace Nektar
     }
 
     /**
+     * @brief Generates the summary of the current simulation
+     * 
+     * @param s 
+     */
+    void SmoothedProfileMethod::v_GenerateSummary(SolverUtils::SummaryList& s)
+    {
+        VelocityCorrectionScheme::v_GenerateSummary(s);
+        SolverUtils::AddSummaryItem(s, "IB formulation",
+                                       "Smoothed Profile Method (SPM)");
+    }
+
+    /**
      * @brief Linear terms due to pressure and visosity are calculated here.
      * After solving the velocity filed without taking into account the
      * immersed boundaries, a new correction is applied through the force
@@ -582,6 +594,8 @@ namespace Nektar
             // Set output to 'false' if no time-dependence specified
             output = false;
         }
+
+        return output;
     }
 
 } // end of namespace
