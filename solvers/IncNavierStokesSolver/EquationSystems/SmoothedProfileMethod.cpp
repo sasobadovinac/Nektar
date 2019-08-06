@@ -433,11 +433,15 @@ namespace Nektar
         for (int i = 0; i < nvel; ++i)
         {
             int ind = m_velocity[i];
+
+            // DEBUG: Try adding -(1-m_phi)*grad(p_p) instead of -grad(p_p)
+            // Vmath::Vvtvm(physTot, m_phi->GetPhys(), 1, Forcing[i], 1,
+            //                                            Forcing[i], 1,
+            //                                            Forcing[i], 1);
+            // Vmath::Vadd(physTot, f_s[i], 1, Forcing[i], 1, Forcing[i], 1);
             Vmath::Vsub(physTot, f_s[i], 1, Forcing[i], 1, Forcing[i], 1);
             Blas::Daxpy(physTot, dt/m_gamma0, Forcing[i], 1, fields[ind], 1);
         }
-
-        // DEBUG: What about other convective fields?
     }
 
     /**
