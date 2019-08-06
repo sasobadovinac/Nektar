@@ -160,6 +160,10 @@ namespace Nektar
             //Flag true if interface cache has been created
             std::map<int, std::pair<bool,bool>> m_interfaceCacheFlag;
 
+            //Mortar global edge to local trace ID
+            std::map<int, int> m_edgeToTraceId;
+
+
             GlobalLinSysMapShPtr   m_globalBndMat;
             ExpListSharedPtr       m_trace;
             AssemblyMapDGSharedPtr m_traceMap;

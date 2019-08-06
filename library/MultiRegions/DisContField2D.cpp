@@ -478,6 +478,12 @@ void DisContField2D::SetUpDG(const std::string variable)
         m_interfaceCacheFlag[indx] = make_pair(false, false);
     }
 
+    //Set up global edge to local trace ID for mortar interpolation
+    for (int i = 0; i < m_trace->GetExpSize(); ++i)
+    {
+        m_edgeToTraceId[m_trace->GetExp(i)->GetGeom()->GetGlobalID()] = i;
+    }
+
     int cnt, n, e;
 
     // Identify boundary edges
@@ -1360,7 +1366,7 @@ void DisContField2D::v_GetFwdBwdTracePhys(
 
     // Basis definition on each element
     LibUtilities::BasisSharedPtr basis = (*m_exp)[0]->GetBasis(0);
-    if (basis->GetBasisType() != LibUtilities::eGauss_Lagrange && false)
+    if (basis->GetBasisType() != LibUtilities::eGauss_Lagrange)
     {
         // blocked routine
         Array<OneD, NekDouble> edgevals(
@@ -1409,13 +1415,6 @@ void DisContField2D::v_GetFwdBwdTracePhys(
         }
     }
 
-    //Set up global edge to local trace ID for mortar interpolation
-    std::map<int, int> edgeToTraceId;
-    for (int i = 0; i < m_trace->GetExpSize(); ++i)
-    {
-            edgeToTraceId[m_trace->GetExp(i)->GetGeom()->GetGlobalID()] = i;
-    }
-
     //Interpolate from edges to mortars
     auto mortarOffset = m_trace->GetExpSize() - m_mortars.size();
     for (int i = 0; i < m_mortars.size(); ++i)
@@ -1425,7 +1424,7 @@ void DisContField2D::v_GetFwdBwdTracePhys(
         int nq = traceElMortar->GetTotPoints();
 
         int right = m_mortarToRightEdgeMap[i];
-        auto traceElRight = m_trace->GetExp(edgeToTraceId[right])->as<LocalRegions::Expansion1D>();
+        auto traceElRight = m_trace->GetExp(m_edgeToTraceId[right])->as<LocalRegions::Expansion1D>();
         for (int j = 0; j < nq; ++j)
         {
             Array<OneD, NekDouble> xc(nq), yc(nq);
@@ -1445,13 +1444,13 @@ void DisContField2D::v_GetFwdBwdTracePhys(
 
             ASSERTL0(dist < 1e-8, "Couldn't interpolate from right to mortar (bwd)");
 
-            Array<OneD, NekDouble> edgePhys = Bwd + m_trace->GetPhys_Offset(edgeToTraceId[right]);
+            Array<OneD, NekDouble> edgePhys = Bwd + m_trace->GetPhys_Offset(m_edgeToTraceId[right]);
             Array<OneD, NekDouble> foundPointArray(1, foundPoint);
             Bwd[m_trace->GetPhys_Offset(mortarId) + j] = traceElRight->StdPhysEvaluate(foundPointArray, edgePhys);
         }
 
         int left = m_mortarToLeftEdgeMap[i];
-        auto traceElLeft = m_trace->GetExp(edgeToTraceId[left])->as<LocalRegions::Expansion1D>();
+        auto traceElLeft = m_trace->GetExp(m_edgeToTraceId[left])->as<LocalRegions::Expansion1D>();
         for (int j = 0; j < nq; ++j)
         {
             Array<OneD, NekDouble> xc(nq), yc(nq);
@@ -1471,7 +1470,7 @@ void DisContField2D::v_GetFwdBwdTracePhys(
 
             ASSERTL0(dist < 1e-8, "Couldn't interpolate from left to mortar (fwd)");
 
-            Array<OneD, NekDouble> edgePhys = Fwd + m_trace->GetPhys_Offset(edgeToTraceId[left]);
+            Array<OneD, NekDouble> edgePhys = Fwd + m_trace->GetPhys_Offset(m_edgeToTraceId[left]);
             Array<OneD, NekDouble> foundPointArray(1, foundPoint);
             Fwd[m_trace->GetPhys_Offset(mortarId) + j] = traceElLeft->StdPhysEvaluate(foundPointArray, edgePhys);
         }
@@ -1481,13 +1480,14 @@ void DisContField2D::v_GetFwdBwdTracePhys(
     // In here
     // Maybe
     // Edit Fwd/Bwd trace on mortars?????
+    // Set up mass matrix,
 
 
     //Interpolate from mortars to edges
-    for (auto rightEdgeMap : m_rightEdgeToMortarMap)
+    for (auto const &rightEdgeMap : m_rightEdgeToMortarMap)
     {
         int right = rightEdgeMap.first;
-        auto traceElRight = m_trace->GetExp(edgeToTraceId[right])->as<LocalRegions::Expansion1D>();
+        auto traceElRight = m_trace->GetExp(m_edgeToTraceId[right])->as<LocalRegions::Expansion1D>();
         int nq = traceElRight->GetTotPoints();
         Array<OneD, NekDouble> xc(nq), yc(nq);
         traceElRight->GetCoords(xc, yc);
@@ -1521,7 +1521,7 @@ void DisContField2D::v_GetFwdBwdTracePhys(
 
                 Array<OneD, NekDouble> edgePhys = Fwd + m_trace->GetPhys_Offset(mortarId);
                 Array<OneD, NekDouble> foundPointArray(1, foundPoint);
-                Fwd[m_trace->GetPhys_Offset(edgeToTraceId[right]) + j] = traceElMortar->StdPhysEvaluate(foundPointArray, edgePhys);
+                Fwd[m_trace->GetPhys_Offset(m_edgeToTraceId[right]) + j] = traceElMortar->StdPhysEvaluate(foundPointArray, edgePhys);
 
                 found = true;
                 break;
@@ -1534,7 +1534,7 @@ void DisContField2D::v_GetFwdBwdTracePhys(
     for (auto leftEdgeMap : m_leftEdgeToMortarMap)
     {
         int left = leftEdgeMap.first;
-        auto traceElLeft = m_trace->GetExp(edgeToTraceId[left])->as<LocalRegions::Expansion1D>();
+        auto traceElLeft = m_trace->GetExp(m_edgeToTraceId[left])->as<LocalRegions::Expansion1D>();
         int nq = traceElLeft->GetTotPoints();
         Array<OneD, NekDouble> xc(nq), yc(nq);
         traceElLeft->GetCoords(xc, yc);
@@ -1568,7 +1568,7 @@ void DisContField2D::v_GetFwdBwdTracePhys(
 
                 Array<OneD, NekDouble> edgePhys = Bwd + m_trace->GetPhys_Offset(mortarId);
                 Array<OneD, NekDouble> foundPointArray(1, foundPoint);
-                Bwd[m_trace->GetPhys_Offset(edgeToTraceId[left]) + j] = traceElMortar->StdPhysEvaluate(foundPointArray, edgePhys);
+                Bwd[m_trace->GetPhys_Offset(m_edgeToTraceId[left]) + j] = traceElMortar->StdPhysEvaluate(foundPointArray, edgePhys);
 
                 found = true;
                 break;
