@@ -317,10 +317,9 @@ namespace Nektar
         // Update 'm_phi' and 'm_up' if needed (evaluated at next time step)
         UpdatePhiUp(time + a_iixDt);
         // DEBUG: Test EstimateForces function
-        // int nvel = m_velocity.num_elements();
-        // Array<OneD, NekDouble> F(nvel);
-        // EstimateForces(outarray, F, a_iixDt);
-        // cout << F[0] << ", " << F[1] << endl;
+        int nvel = m_velocity.num_elements();
+        Array<OneD, NekDouble> F(nvel);
+        EstimateForces(outarray, F, a_iixDt);
         // Set BC conditions for pressure p_p
         SetUpCorrectionPressure(outarray, m_F, time, a_iixDt);
         // Solve Poisson equation for pressure p_p
@@ -655,13 +654,13 @@ namespace Nektar
             Vmath::Vsub(nq, velocity[m_velocity[i]], 1, m_upPrev[i], 1,
                         tmp, 1);
             Vmath::Vmul(nq, m_phi->GetPhys(), 1, tmp, 1, tmp, 1);
-            Vmath::Smul(nq, 1.0/dt, tmp, 1, tmp, 1);
 
             // Integration over the whole domain
             for (int j = 0; j < m_pressureP->GetExpSize(); ++j)
             {
                 F[i] += m_pressureP->GetExp(j)->Integral(tmp);
             }
+            F[i] /= dt;
         }
     }
 
