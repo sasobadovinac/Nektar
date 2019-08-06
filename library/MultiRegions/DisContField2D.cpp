@@ -1416,7 +1416,7 @@ void DisContField2D::v_GetFwdBwdTracePhys(
     }
 
     //Interpolate from edges to mortars
-    auto mortarOffset = m_trace->GetExpSize() - m_mortars.size();
+    int mortarOffset = m_trace->GetExpSize() - m_mortars.size();
     for (int i = 0; i < m_mortars.size(); ++i)
     {
         int mortarId = mortarOffset + i;
@@ -1481,6 +1481,52 @@ void DisContField2D::v_GetFwdBwdTracePhys(
     // Maybe
     // Edit Fwd/Bwd trace on mortars?????
     // Set up mass matrix,
+
+    for (int i = 0; i < m_mortars.size(); ++i)
+    {
+        int mortarId = mortarOffset + i;
+        SpatialDomains::SegGeomSharedPtr geomSegMortar = std::static_pointer_cast<SpatialDomains::SegGeom>(m_trace->GetExp(mortarId)->as<LocalRegions::Expansion1D>()->GetGeom1D());
+        NekDouble edgeVerticesMortar[2][3];
+        geomSegMortar->GetVertex(0)->GetCoords(edgeVerticesMortar[0][0], edgeVerticesMortar[0][1], edgeVerticesMortar[0][2]);
+        geomSegMortar->GetVertex(1)->GetCoords(edgeVerticesMortar[1][0], edgeVerticesMortar[1][1], edgeVerticesMortar[1][2]);
+
+        int left = m_mortarToLeftEdgeMap[i];
+        SpatialDomains::SegGeomSharedPtr geomSegLeft = std::static_pointer_cast<SpatialDomains::SegGeom>(m_trace->GetExp(m_edgeToTraceId[left])->as<LocalRegions::Expansion1D>()->GetGeom1D());
+        NekDouble localCoordsLeft[2];
+        for (int j = 0; j < 2; ++j)
+        {
+            NekDouble foundPoint;
+            Array<OneD, NekDouble> xs(3);
+            xs[0] = edgeVerticesMortar[j][0];
+            xs[1] = edgeVerticesMortar[j][1];
+            xs[2] = 0;
+
+            auto dist = geomSegLeft->FindDistance(xs, foundPoint);
+            ASSERTL0(dist < 1e-8, "Local coordinate found falls outside of -1 -> 1 range");
+
+            localCoordsLeft[j] = foundPoint;
+        }
+
+        int right = m_mortarToRightEdgeMap[i];
+        SpatialDomains::SegGeomSharedPtr geomSegRight = std::static_pointer_cast<SpatialDomains::SegGeom>(m_trace->GetExp(m_edgeToTraceId[right])->as<LocalRegions::Expansion1D>()->GetGeom1D());
+        NekDouble localCoordsRight[2];
+        for (int j = 0; j < 2; ++j)
+        {
+            NekDouble foundPoint;
+            Array<OneD, NekDouble> xs(3);
+            xs[0] = edgeVerticesMortar[j][0];
+            xs[1] = edgeVerticesMortar[j][1];
+            xs[2] = 0;
+
+            auto dist = geomSegRight->FindDistance(xs, foundPoint);
+            ASSERTL0(dist < 1e-8, "Local coordinate found falls outside of -1 -> 1 range");
+
+            localCoordsRight[j] = foundPoint;
+        }
+
+        //use local coords for integration!
+
+    }
 
 
     //Interpolate from mortars to edges
