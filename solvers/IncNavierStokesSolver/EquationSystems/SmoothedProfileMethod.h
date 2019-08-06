@@ -68,7 +68,7 @@ namespace Nektar
 
         virtual void v_InitObject();
 
-        void v_GenerateSummary(SolverUtils::SummaryList& s);
+        virtual void v_GenerateSummary(SolverUtils::SummaryList& s);
 
         // Solves the linear part of the velocity correction scheme incluiding
         // the SPM method calculation for 'fs'
@@ -102,6 +102,29 @@ namespace Nektar
         /// Flag that is true when phi depends on time
         bool m_timeDependentPhi;
 
+        // Interface for 'v_SolveUnsteadyStokesSystem'
+        virtual void v_SolveUnsteadyStokesSystem(
+                    const Array<OneD, const Array<OneD, NekDouble> > &inarray,
+                    Array<OneD, Array<OneD, NekDouble> > &outarray,
+                    NekDouble time,
+                    NekDouble a_iixDt);
+        // Sets the parameters and BCs for the Poisson equation
+        void SetUpCorrectionPressure(
+                    const Array<OneD, const Array<OneD, NekDouble> > &fields,
+                    Array<OneD, Array<OneD, NekDouble> > &Forcing,
+                    NekDouble time,
+                    NekDouble aii_Dt);
+        // Solves the Poisson equation for the correction pressure
+        void SolveCorrectionPressure(
+                    const Array<OneD, NekDouble> &Forcing);
+        // Explicitly corrects the velocity by using the force 'fs'
+        void SolveCorrectedVelocity(
+                    Array<OneD, Array<OneD, NekDouble> > &Forcing,
+                    Array<OneD, Array<OneD, NekDouble> > &fields,
+                    NekDouble time,
+                    NekDouble dt);
+        // Set proper BCs for the corrected pressure 'p_p'
+        void SetCorrectionPressureBCs(NekDouble time, NekDouble dt);
         // Calculates the shape function values
         // (only for non-moving boundaries)
         void UpdatePhiUp(NekDouble time);
@@ -116,31 +139,13 @@ namespace Nektar
                     NekDouble time,
                     NekDouble dt,
                     Array<OneD, Array<OneD, NekDouble> > &f_s);
-        // Interface for 'v_SolveUnsteadyStokesSystem'
-        virtual void v_SolveUnsteadyStokesSystem(
-                    const Array<OneD, const Array<OneD, NekDouble> > &inarray,
-                    Array<OneD, Array<OneD, NekDouble> > &outarray,
-                    NekDouble time,
-                    NekDouble a_iixDt);
-        // Sets the parameters and BCs for the Poisson equation
-        virtual void v_SetUpCorrectionPressure(
-                    const Array<OneD, const Array<OneD, NekDouble> > &fields,
-                    Array<OneD, Array<OneD, NekDouble> > &Forcing,
-                    NekDouble time,
-                    NekDouble aii_Dt);
-        // Solves the Poisson equation for the correction pressure
-        virtual void v_SolveCorrectionPressure(
-                    const Array<OneD, NekDouble> &Forcing);
-        // Explicitly corrects the velocity by using the force 'fs'
-        virtual void v_SolveCorrectedVelocity(
-                    Array<OneD, Array<OneD, NekDouble> > &Forcing,
-                    Array<OneD, Array<OneD, NekDouble> > &fields,
-                    NekDouble time,
-                    NekDouble dt);
-        // Set proper BCs for the corrected pressure 'p_p'
-        virtual void v_SetCorrectionPressureBCs(NekDouble time, NekDouble dt);
         // Get time-dependence information from the first elmt of 'name'
         bool GetFunctionTimeDependence(string name, string type);
+        // Calculates the forces and torques on the body(ies)
+        void EstimateForces(
+                    const Array<OneD, const Array<OneD, NekDouble> > &velocity,
+                    Array<OneD, NekDouble> &F,
+                    NekDouble dt);
 
     private:
     };

@@ -316,12 +316,17 @@ namespace Nektar
         /* SPM correction of velocity */
         // Update 'm_phi' and 'm_up' if needed (evaluated at next time step)
         UpdatePhiUp(time + a_iixDt);
+        // DEBUG: Test EstimateForces function
+        // int nvel = m_velocity.num_elements();
+        // Array<OneD, NekDouble> F(nvel);
+        // EstimateForces(outarray, F, a_iixDt);
+        // cout << F[0] << ", " << F[1] << endl;
         // Set BC conditions for pressure p_p
-        v_SetUpCorrectionPressure(outarray, m_F, time, a_iixDt);
+        SetUpCorrectionPressure(outarray, m_F, time, a_iixDt);
         // Solve Poisson equation for pressure p_p
-        v_SolveCorrectionPressure(m_F[0]);
+        SolveCorrectionPressure(m_F[0]);
         // Solve velocity in the next step with IB
-        v_SolveCorrectedVelocity(m_F, outarray, time, a_iixDt);
+        SolveCorrectedVelocity(m_F, outarray, time, a_iixDt);
 
         // Add pressures to get final value
         Vmath::Vadd(physTot, m_pressure->GetPhys(), 1,
@@ -339,7 +344,7 @@ namespace Nektar
      * @param Forcing
      * @param aii_Dt
      */
-    void SmoothedProfileMethod::v_SetUpCorrectionPressure(
+    void SmoothedProfileMethod::SetUpCorrectionPressure(
                     const Array<OneD, const Array<OneD, NekDouble> > &fields,
                     Array<OneD, Array<OneD, NekDouble> > &Forcing,
                     NekDouble time,
@@ -349,7 +354,7 @@ namespace Nektar
         int nvel    = m_velocity.num_elements();
 
         // DEBUG: Set boundary conditions
-        v_SetCorrectionPressureBCs(time, aii_Dt);
+        SetCorrectionPressureBCs(time, aii_Dt);
 
         // Virtual force 'fs'
         Array<OneD, Array<OneD, NekDouble> > f_s;
@@ -373,7 +378,7 @@ namespace Nektar
      *
      * @param Forcing
      */
-    void SmoothedProfileMethod::v_SolveCorrectionPressure(
+    void SmoothedProfileMethod::SolveCorrectionPressure(
                     const Array<OneD, NekDouble> &Forcing)
     {
         StdRegions::ConstFactorMap factors;
@@ -397,7 +402,7 @@ namespace Nektar
      * @param fields
      * @param dt
      */
-    void SmoothedProfileMethod::v_SolveCorrectedVelocity(
+    void SmoothedProfileMethod::SolveCorrectedVelocity(
                     Array<OneD, Array<OneD, NekDouble> > &Forcing,
                     Array<OneD, Array<OneD, NekDouble> > &fields,
                     NekDouble time,
@@ -440,12 +445,12 @@ namespace Nektar
      * @brief DEBUG: Updates the BCs for boundaries with Dirichlet BCs in the
      * velocity:
      *
-     * \f[ \frac{\partial p_p}{\partial\mathbf{n}} = 
+     * \f[ \frac{\partial p_p}{\partial\mathbf{n}} =
      *     \mathbf{f_s}\cdot\mathbf{n} \f]
      *
      * @param dt
      */
-    void SmoothedProfileMethod::v_SetCorrectionPressureBCs(NekDouble time,
+    void SmoothedProfileMethod::SetCorrectionPressureBCs(NekDouble time,
                                                            NekDouble dt)
     {
         Array<OneD, ExpListSharedPtr> BndExp;
@@ -507,7 +512,7 @@ namespace Nektar
 
     /**
      * @brief For a body with a constant velocity \f[\mathbf{u_p}\f], the force
-     * \f[\mathbf{f_s}\f] applied to the fluid ensures that the IBC are met
+     * \f[\mathbf{f_s}\f] applied to the fluid ensures that the IBC are met:
      *
      * \f[ \mathbf{f_s} = \frac{\Phi^{n+1}\left(\mathbf{u_p} -
      * \mathbf{u^*}\right)}{\Delta t} \f]
@@ -617,6 +622,47 @@ namespace Nektar
         }
 
         return output;
+    }
+
+    /**
+     * @brief Determine the total force on the body defined by \f[\Phi\f]
+     * (note that if the shape function represents more than one
+     * body, this function calculates the value of the final force after adding
+     * up the values for each body). This value must be scaled with the
+     * density to get the real force vector
+     *
+     * @param inarray
+     * @param F
+     * @param dt
+     */
+    void SmoothedProfileMethod::EstimateForces(
+                    const Array<OneD, const Array<OneD, NekDouble> > &velocity,
+                    Array<OneD, NekDouble> &F,
+                    NekDouble dt)
+    {
+        // DEBUG: Example of integration in FilterAeroForces.cpp
+        // DEBUG: Only when forcing terms are added via Filters
+        int nq   = m_pressureP->GetTotPoints();
+        int nvel = m_velocity.num_elements();
+        Array<OneD, NekDouble> tmp(nq);
+
+        for (int i = 0; i < nvel; ++i)
+        {
+            // Initialisation
+            F[i] = 0.0;
+
+            // "Scalar" field to be integrated
+            Vmath::Vsub(nq, velocity[m_velocity[i]], 1, m_upPrev[i], 1,
+                        tmp, 1);
+            Vmath::Vmul(nq, m_phi->GetPhys(), 1, tmp, 1, tmp, 1);
+            Vmath::Smul(nq, 1.0/dt, tmp, 1, tmp, 1);
+
+            // Integration over the whole domain
+            for (int j = 0; j < m_pressureP->GetExpSize(); ++j)
+            {
+                F[i] += m_pressureP->GetExp(j)->Integral(tmp);
+            }
+        }
     }
 
 } // end of namespace
