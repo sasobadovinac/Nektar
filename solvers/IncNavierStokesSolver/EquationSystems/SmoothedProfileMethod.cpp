@@ -314,8 +314,8 @@ namespace Nektar
         int physTot = m_pressureP->GetTotPoints();
 
         /* SPM correction of velocity */
-        // Update 'm_phi' and 'm_up' if needed
-        UpdatePhiUp(time);
+        // Update 'm_phi' and 'm_up' if needed (evaluated at next time step)
+        UpdatePhiUp(time + a_iixDt);
         // Set BC conditions for pressure p_p
         v_SetUpCorrectionPressure(outarray, m_F, time, a_iixDt);
         // Solve Poisson equation for pressure p_p
