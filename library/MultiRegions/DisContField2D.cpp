@@ -1351,7 +1351,7 @@ void DisContField2D::v_GetFwdBwdTracePhys(
 
     // Basis definition on each element
     LibUtilities::BasisSharedPtr basis = (*m_exp)[0]->GetBasis(0);
-    if (basis->GetBasisType() != LibUtilities::eGauss_Lagrange && false)
+    if (basis->GetBasisType() != LibUtilities::eGauss_Lagrange)
     {
         // blocked routine
         Array<OneD, NekDouble> edgevals(
