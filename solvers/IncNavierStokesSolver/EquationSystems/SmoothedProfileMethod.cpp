@@ -490,7 +490,18 @@ namespace Nektar
         }
         if (m_timeDependentUp || t <= 0.0)
         {
-            m_upEvaluator->Evaluate(m_velName, m_up, t);
+            if (t <= 0.0)
+            {
+                // Initialize both variables for the first step
+                m_upEvaluator->Evaluate(m_velName, m_up, t);
+                m_upPrev = m_up;
+            }
+            else
+            {
+                // Store previous value of u_p during simulation
+                m_upPrev = m_up;
+                m_upEvaluator->Evaluate(m_velName, m_up, t);
+            }
         }
     }
 

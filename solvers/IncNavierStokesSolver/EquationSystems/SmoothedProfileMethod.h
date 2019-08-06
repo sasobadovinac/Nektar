@@ -86,6 +86,7 @@ namespace Nektar
         MultiRegions::ExpListSharedPtr m_pressureP;
         /// Velocity of the immersed body(ies)
         Array<OneD, Array<OneD, NekDouble> > m_up;
+        Array<OneD, Array<OneD, NekDouble> > m_upPrev;
         /// Function that evaluates the values of \u_p
         SolverUtils::SessionFunctionSharedPtr m_upEvaluator;
         /// Vector storing the names of the components of \u_p
