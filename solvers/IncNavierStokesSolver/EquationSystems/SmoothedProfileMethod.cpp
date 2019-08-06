@@ -68,7 +68,7 @@ namespace Nektar
 
     /**
      * @brief Destroy the Smoothed Profile Method object
-     * 
+     *
      */
     SmoothedProfileMethod::~SmoothedProfileMethod(void)
     {
@@ -82,7 +82,7 @@ namespace Nektar
         // Update implicit time-intregration class operators
         m_ode.DefineImplicitSolve(
             &SmoothedProfileMethod::SolveUnsteadyStokesSystem, this);
-        
+
         // Number of dims as number of velocity vectors
         int nvel = m_velocity.num_elements();
 
@@ -130,7 +130,7 @@ namespace Nektar
                             *dynamic_pointer_cast<DisContField2D>(m_pressure));
                 }
                 break;
-            
+
             case 3:
                 if (m_projectionType == eGalerkin)
                 {
@@ -276,8 +276,8 @@ namespace Nektar
 
     /**
      * @brief Generates the summary of the current simulation
-     * 
-     * @param s 
+     *
+     * @param s
      */
     void SmoothedProfileMethod::v_GenerateSummary(SolverUtils::SummaryList& s)
     {
@@ -440,7 +440,8 @@ namespace Nektar
      * @brief DEBUG: Updates the BCs for boundaries with Dirichlet BCs in the
      * velocity:
      *
-     * \f[ \frac{\partial p_p}{\partial\mathbf{n}} = \mathbf{f_s}\cdot\mathbf{n} \f]
+     * \f[ \frac{\partial p_p}{\partial\mathbf{n}} = 
+     *     \mathbf{f_s}\cdot\mathbf{n} \f]
      *
      * @param dt
      */
@@ -448,13 +449,22 @@ namespace Nektar
                                                            NekDouble dt)
     {
         Array<OneD, ExpListSharedPtr> BndExp;
+         Array<OneD, SpatialDomains::BoundaryConditionShPtr> BndCond;
 
         // Get the BC expansions
-        BndExp = m_pressureP->GetBndCondExpansions();
+        BndExp  = m_pressureP->GetBndCondExpansions();
+        BndCond = m_pressureP->GetBndConditions();
 
         // For each boundary...
         for (int b = 0; b < BndExp.num_elements(); ++b)
         {
+            // Skip this step for non Neumann BCs
+            if (BndCond[b]->GetBoundaryConditionType() !=
+                SpatialDomains::eNeumann)
+            {
+                continue;
+            }
+
             // Calculate f_s values
             Array<OneD, Array<OneD, NekDouble> > f_s;
             IBForcingBC(b, BndExp[b], time, dt, f_s);
@@ -559,11 +569,11 @@ namespace Nektar
 
     /**
      * @brief True if the function is timedependent, false otherwise
-     * 
-     * @param name 
-     * @param type 
-     * @param attribute 
-     * @return string 
+     *
+     * @param name
+     * @param type
+     * @param attribute
+     * @return string
      */
     bool SmoothedProfileMethod::GetFunctionTimeDependence(string name,
                                                           string type)
