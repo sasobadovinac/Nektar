@@ -1493,6 +1493,11 @@ void DisContField2D::v_GetFwdBwdTracePhys(
         int left = m_mortarToLeftEdgeMap[i];
         SpatialDomains::SegGeomSharedPtr geomSegLeft = std::static_pointer_cast<SpatialDomains::SegGeom>(m_trace->GetExp(m_edgeToTraceId[left])->as<LocalRegions::Expansion1D>()->GetGeom1D());
         NekDouble localCoordsLeft[2];
+
+        int right = m_mortarToRightEdgeMap[i];
+        SpatialDomains::SegGeomSharedPtr geomSegRight = std::static_pointer_cast<SpatialDomains::SegGeom>(m_trace->GetExp(m_edgeToTraceId[right])->as<LocalRegions::Expansion1D>()->GetGeom1D());
+        NekDouble localCoordsRight[2];
+
         for (int j = 0; j < 2; ++j)
         {
             NekDouble foundPoint;
@@ -1502,30 +1507,32 @@ void DisContField2D::v_GetFwdBwdTracePhys(
             xs[2] = 0;
 
             auto dist = geomSegLeft->FindDistance(xs, foundPoint);
-            ASSERTL0(dist < 1e-8, "Local coordinate found falls outside of -1 -> 1 range");
+            ASSERTL0(dist < 1e-8, "Local coordinate found for left falls outside of -1 -> 1 range");
 
             localCoordsLeft[j] = foundPoint;
-        }
 
-        int right = m_mortarToRightEdgeMap[i];
-        SpatialDomains::SegGeomSharedPtr geomSegRight = std::static_pointer_cast<SpatialDomains::SegGeom>(m_trace->GetExp(m_edgeToTraceId[right])->as<LocalRegions::Expansion1D>()->GetGeom1D());
-        NekDouble localCoordsRight[2];
-        for (int j = 0; j < 2; ++j)
-        {
-            NekDouble foundPoint;
-            Array<OneD, NekDouble> xs(3);
-            xs[0] = edgeVerticesMortar[j][0];
-            xs[1] = edgeVerticesMortar[j][1];
-            xs[2] = 0;
-
-            auto dist = geomSegRight->FindDistance(xs, foundPoint);
-            ASSERTL0(dist < 1e-8, "Local coordinate found falls outside of -1 -> 1 range");
+            dist = geomSegRight->FindDistance(xs, foundPoint);
+            ASSERTL0(dist < 1e-8, "Local coordinate found for right falls outside of -1 -> 1 range");
 
             localCoordsRight[j] = foundPoint;
         }
 
-        //use local coords for integration!
+        int nq = m_trace->GetExp(0)->GetTotPoints();
+        auto &z = m_trace->GetExp(0)->GetBasis(0)->GetZ();
+        auto &w = m_trace->GetExp(0)->GetBasis(0)->GetW();
 
+        auto scaleFactorLeft = std::abs(localCoordsLeft[0] - localCoordsLeft[1])/2;
+        auto shiftLeft = (localCoordsLeft[0] + localCoordsLeft[1])/2;
+
+        auto scaleFactorRight = std::abs(localCoordsRight[0] - localCoordsRight[1])/2;
+        auto shiftRight = (localCoordsRight[0] + localCoordsRight[1])/2;
+
+        Array<OneD, NekDouble> mortarZLeft(nq), mortarZRight(nq);
+        for (int j = 0; j < nq; ++j)
+        {
+            mortarZLeft[j] = z[j] * scaleFactorLeft + shiftLeft;
+            mortarZRight[j] = z[j] * scaleFactorRight + shiftRight;
+        }
     }
 
 
