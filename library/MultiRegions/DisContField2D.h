@@ -167,6 +167,9 @@ namespace Nektar
             std::vector<DNekMat> m_SRight;
             std::vector<DNekMat> m_M;
 
+            //Flag true if rebuilding SMatrices
+            bool  m_matricesFlag = true;
+
             GlobalLinSysMapShPtr   m_globalBndMat;
             ExpListSharedPtr       m_trace;
             AssemblyMapDGSharedPtr m_traceMap;
