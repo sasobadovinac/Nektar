@@ -10,6 +10,7 @@
 // Department of Aeronautics, Imperial College London (UK), and Scientific
 // Computing and Imaging Institute, University of Utah (USA).
 //
+// License for the specific language governing rights and limitations under
 // Permission is hereby granted, free of charge, to any person obtaining a
 // copy of this software and associated documentation files (the "Software"),
 // to deal in the Software without restriction, including without limitation
@@ -575,6 +576,32 @@ namespace Nektar
             m_locTraceToTraceMap = MemoryManager<LocTraceToTraceMap>::
                 AllocateSharedPtr(*this, m_trace, elmtToTrace,
                                   m_leftAdjacentEdges);
+        }
+
+        void DisContField2D::v_ChangeToNeumann(std::string variable,
+                                               NekDouble value,
+                                               int idx,
+                                               bool DeclareCoeffPhysArrays)
+        {
+            if (variable.compare("DefaultVar") != 0) // do not set up BCs if default variable
+            {
+                SpatialDomains::BoundaryConditions bcs(m_session, m_graph);
+                bcs.ChangeToNeumannVariable(variable, value);
+
+                SpatialDomains::BoundaryConditionShPtr bc;
+                const SpatialDomains::BoundaryConditionCollection &bconditions =
+                        bcs.GetBoundaryConditions();
+                bc = GetBoundaryCondition(bconditions, idx, variable);
+                m_bndConditions[idx] = bc;
+
+                if (DeclareCoeffPhysArrays)
+                {
+                    EvaluateBoundaryConditions(0.0, variable);
+                }
+
+                // Find periodic edges for this variable.
+                FindPeriodicEdges(bcs, variable);
+            }
         }
         
         /**

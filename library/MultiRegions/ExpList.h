@@ -10,6 +10,7 @@
 // Department of Aeronautics, Imperial College London (UK), and Scientific
 // Computing and Imaging Institute, University of Utah (USA).
 //
+// License for the specific language governing rights and limitations under
 // Permission is hereby granted, free of charge, to any person obtaining a
 // copy of this software and associated documentation files (the "Software"),
 // to deal in the Software without restriction, including without limitation
@@ -800,6 +801,14 @@ namespace Nektar
                 const Array<OneD, const NekDouble> &inarray,
                       Array<OneD,NekDouble> &outarray);
 
+            inline void ChangeToNeumann(std::string variable,
+                NekDouble value,
+                int idx,
+                bool DeclareCoeffPhysArrays)
+            {
+                v_ChangeToNeumann(variable, idx, value, DeclareCoeffPhysArrays);
+            }
+
             inline const Array<OneD, const SpatialDomains::
                 BoundaryConditionShPtr>& GetBndConditions();
 
@@ -1156,6 +1165,11 @@ namespace Nektar
             {
                 return (*m_exp).size();
             }
+
+            virtual void v_ChangeToNeumann(std::string variable,
+                int idx,
+                NekDouble value,
+                bool DeclareCoeffPhysArrays);
 
             virtual const Array<OneD,const std::shared_ptr<ExpList> >
                 &v_GetBndCondExpansions(void);
