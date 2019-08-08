@@ -163,12 +163,12 @@ namespace Nektar
             //Mortar global edge to local trace ID
             std::map<int, int> m_edgeToTraceId;
 
-            std::vector<DNekMat> m_SLeft;
-            std::vector<DNekMat> m_SRight;
-            std::vector<DNekMat> m_M;
+            DNekMat m_MInv;
+            std::vector<DNekMat> m_MInvSLeft;
+            std::vector<DNekMat> m_MInvSRight;
 
             //Flag true if rebuilding SMatrices
-            bool  m_matricesFlag = true;
+            bool  m_SMatricesFlag = true;
 
             GlobalLinSysMapShPtr   m_globalBndMat;
             ExpListSharedPtr       m_trace;

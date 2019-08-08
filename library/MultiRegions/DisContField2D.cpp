@@ -485,6 +485,55 @@ void DisContField2D::SetUpDG(const std::string variable)
         m_edgeToTraceId[m_trace->GetExp(i)->GetGeom()->GetGlobalID()] = i;
     }
 
+    //Set up m_MInv matrix for mortar interpolation
+    int nq = m_trace->GetExp(0)->GetTotPoints();
+    int np = m_trace->GetExp(0)->GetBasisNumModes(0);
+    auto &bdata = m_trace->GetExp(0)->GetBasis(0)->GetBdata();
+    auto &w = m_trace->GetExp(0)->GetBasis(0)->GetW();
+    DNekMat M(np, np);
+
+    for (int p = 0; p < np; ++p)
+    {
+        for (int q = 0; q < np; ++q)
+        {
+            M(p, q) = 0.0;
+            for (int j = 0; j < nq; ++j)
+            {
+                M(p, q) += w[j] * bdata[j + p * nq] * bdata[j + q * nq];
+            }
+        }
+    }
+
+    //Visualise M matrix
+    cout << endl << "M matrix:" << endl;
+    for (int p = 0; p < np; ++p)
+    {
+        cout << "| ";
+        for (int q = 0; q < np; ++q)
+        {
+            cout << std::showpos << std::scientific << std::setprecision(3) <<
+                 M(p, q) << ", \t";
+        }
+        cout << "\b\b\b\b |" << endl;
+    }
+
+    //Invert M matrix
+    M.Invert();
+    m_MInv = M;
+
+    //Visualise m_MInv matrix
+    cout << endl << "MInv matrix:" << endl;
+    for (int p = 0; p < np; ++p)
+    {
+        cout << "| ";
+        for (int q = 0; q < np; ++q)
+        {
+            cout << std::showpos << std::scientific << std::setprecision(3) <<
+            M(p, q) << ", \t";
+        }
+        cout << "\b\b\b\b |" << endl;
+    }
+
     int cnt, n, e;
 
     // Identify boundary edges
@@ -1416,68 +1465,11 @@ void DisContField2D::v_GetFwdBwdTracePhys(
         }
     }
 
-    //Interpolate from edges to mortars
+    // Set up S matrices
     int mortarOffset = m_trace->GetExpSize() - m_mortars.size();
-    for (int i = 0; i < m_mortars.size(); ++i)
-    {
-        int mortarId = mortarOffset + i;
-        auto traceElMortar = m_trace->GetExp(mortarId)->as<LocalRegions::Expansion1D>();
-        int nq = traceElMortar->GetTotPoints();
-
-        int right = m_mortarToRightEdgeMap[i];
-        auto traceElRight = m_trace->GetExp(m_edgeToTraceId[right])->as<LocalRegions::Expansion1D>();
-        for (int j = 0; j < nq; ++j)
-        {
-            Array<OneD, NekDouble> xc(nq), yc(nq);
-            traceElMortar->GetCoords(xc, yc);
-
-            SpatialDomains::SegGeomSharedPtr geomSeg =
-                    std::static_pointer_cast<SpatialDomains::SegGeom>(
-                            traceElRight->GetGeom1D());
-
-            Array<OneD, NekDouble> xs(3);
-            xs[0] = xc[j];
-            xs[1] = yc[j];
-            xs[2] = 0;
-
-            NekDouble foundPoint;
-            NekDouble dist = geomSeg->FindDistance(xs, foundPoint);
-
-            ASSERTL0(dist < 1e-8, "Couldn't interpolate from right to mortar (bwd)");
-
-            Array<OneD, NekDouble> edgePhys = Bwd + m_trace->GetPhys_Offset(m_edgeToTraceId[right]);
-            Array<OneD, NekDouble> foundPointArray(1, foundPoint);
-            Bwd[m_trace->GetPhys_Offset(mortarId) + j] = traceElRight->StdPhysEvaluate(foundPointArray, edgePhys);
-        }
-
-        int left = m_mortarToLeftEdgeMap[i];
-        auto traceElLeft = m_trace->GetExp(m_edgeToTraceId[left])->as<LocalRegions::Expansion1D>();
-        for (int j = 0; j < nq; ++j)
-        {
-            Array<OneD, NekDouble> xc(nq), yc(nq);
-            traceElMortar->GetCoords(xc, yc);
-
-            SpatialDomains::SegGeomSharedPtr geomSeg =
-                    std::static_pointer_cast<SpatialDomains::SegGeom>(
-                            traceElLeft->GetGeom1D());
-
-            Array<OneD, NekDouble> xs(3);
-            xs[0] = xc[j];
-            xs[1] = yc[j];
-            xs[2] = 0;
-
-            NekDouble foundPoint;
-            NekDouble dist = geomSeg->FindDistance(xs, foundPoint);
-
-            ASSERTL0(dist < 1e-8, "Couldn't interpolate from left to mortar (fwd)");
-
-            Array<OneD, NekDouble> edgePhys = Fwd + m_trace->GetPhys_Offset(m_edgeToTraceId[left]);
-            Array<OneD, NekDouble> foundPointArray(1, foundPoint);
-            Fwd[m_trace->GetPhys_Offset(mortarId) + j] = traceElLeft->StdPhysEvaluate(foundPointArray, edgePhys);
-        }
-    }
-
-    if (m_matricesFlag)
+    int nq = m_trace->GetExp(0)->GetTotPoints();
+    int np = m_trace->GetExp(0)->GetBasisNumModes(0);
+    if (m_SMatricesFlag)
     {
         for (int i = 0; i < m_mortars.size(); ++i)
         {
@@ -1522,8 +1514,6 @@ void DisContField2D::v_GetFwdBwdTracePhys(
                 localCoordsRight[j] = foundPoint;
             }
 
-            int nq = m_trace->GetExp(0)->GetTotPoints();
-            int np = m_trace->GetExp(0)->GetBasisNumModes(0);
             auto &z = m_trace->GetExp(0)->GetBasis(0)->GetZ();
             auto &w = m_trace->GetExp(0)->GetBasis(0)->GetW();
             auto &bdata = m_trace->GetExp(0)->GetBasis(0)->GetBdata();
@@ -1558,7 +1548,6 @@ void DisContField2D::v_GetFwdBwdTracePhys(
             NekDouble *modeLeft = &mortarBasisLeft[2 * nq];
             NekDouble *modeRight = &mortarBasisRight[2 * nq];
 
-
             for (int p = 2; p < np; ++p, modeLeft += nq)
             {
                 Polylib::jacobfd(nq, mortarZLeft.data(), modeLeft, NULL,
@@ -1568,14 +1557,12 @@ void DisContField2D::v_GetFwdBwdTracePhys(
 
                 for (int j = 0; j < nq; ++j)
                 {
-                    modeLeft[i] *=
-                            mortarBasisLeft[i] * mortarBasisLeft[nq + i];
-                    modeRight[i] *=
-                            mortarBasisRight[i] * mortarBasisRight[nq + i];
+                    modeLeft[j] *= mortarBasisLeft[j] * mortarBasisLeft[nq + j];
+                    modeRight[j] *= mortarBasisRight[j] * mortarBasisRight[nq + j];
                 }
             }
 
-            DNekMat SLeft(np, np), SRight(np, np), M(np, np);
+            DNekMat SLeft(np, np), SRight(np, np);
             for (int p = 0; p < np; ++p)
             {
                 for (int q = 0; q < np; ++q)
@@ -1588,19 +1575,36 @@ void DisContField2D::v_GetFwdBwdTracePhys(
                                         bdata[j + q * nq];
                         SRight(p, q) += w[j] * mortarBasisRight[j + p * nq] *
                                         bdata[j + q * nq];
-                        M(p, q) += w[j] * bdata[j + p * nq] *
-                                        bdata[j + q * nq];
                     }
                 }
             }
 
-            m_SLeft.emplace_back(SLeft);
-            m_SRight.emplace_back(SRight);
-            m_M.emplace_back(M);
+            m_MInvSLeft.emplace_back(m_MInv * SLeft);
+            m_MInvSRight.emplace_back(m_MInv * SRight);
         }
 
-        m_matricesFlag = false;
+        m_SMatricesFlag = false;
     }
+
+    //Interpolate from edges to mortars
+    for (int i = 0; i < m_mortars.size(); ++i)
+    {
+        int mortarId = mortarOffset + i;
+        auto traceElLeft = m_trace->GetExp(m_edgeToTraceId[m_mortarToLeftEdgeMap[i]])->as<LocalRegions::Expansion1D>();
+
+        //Edge Sol left (Q)??? Coeffs?
+
+        //DNekVec edgeSolLeft(np, edgeSolLeft);
+        //DNekVec mortarEdgeSolLeft = m_MInvSLeft[i] * edgeSolVecLeft;
+
+        for (int j = 0; j < nq; ++j)
+        {
+            //Fwd[m_trace->GetPhys_Offset(mortarId) + j] = mortarEdgePhysLeft(j);
+            //Bwd[m_trace->GetPhys_Offset(mortarId) + j] = mortarEdgePhysRight(j);
+        }
+    }
+
+
 
     //Interpolate from mortars to edges
     for (auto const &rightEdgeMap : m_rightEdgeToMortarMap)
