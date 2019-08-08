@@ -1550,69 +1550,51 @@ void DisContField2D::v_GetFwdBwdTracePhys(
         }
 
         Array<OneD, NekDouble> mortarBasisLeft(nq * np);
-        for(i = 0; i < nq; ++i)
+        Array<OneD, NekDouble> mortarBasisRight(nq * np);
+
+        for (int j = 0; j < nq; ++j)
         {
-            mortarBasisLeft[i] = 0.5*(1-mortarZLeft[i]);
-            mortarBasisLeft[nq + i] = 0.5*(1+mortarZLeft[i]);
+            mortarBasisLeft[j] = 0.5*(1-mortarZLeft[j]);
+            mortarBasisLeft[nq + j] = 0.5*(1+mortarZLeft[j]);
+            mortarBasisRight[j] = 0.5*(1-mortarZRight[j]);
+            mortarBasisRight[nq + j] = 0.5*(1+mortarZRight[j]);
         }
 
         NekDouble *modeLeft = &mortarBasisLeft[2*nq];
+        NekDouble *modeRight = &mortarBasisRight[2*nq];
 
-        for(int p = 2; p < np; ++p, modeLeft += nq)
+
+        for (int p = 2; p < np; ++p, modeLeft += nq)
         {
             Polylib::jacobfd(nq, mortarZLeft.data(), modeLeft, NULL, p-2, 1.0, 1.0);
+            Polylib::jacobfd(nq, mortarZRight.data(), modeRight, NULL, p-2, 1.0, 1.0);
 
-            for(i = 0; i < nq; ++i)
+            for (int j = 0; j < nq; ++j)
             {
                 modeLeft[i] *= mortarBasisLeft[i] * mortarBasisLeft[nq+i];
+                modeRight[i] *= mortarBasisRight[i] * mortarBasisRight[nq+i];
             }
         }
 
-        DNekMat SLeft(np, np);
+        DNekMat SLeft(np, np), SRight(np, np), M(np, np);
         for (int p = 0; p < np; ++p)
         {
             for (int q = 0; q < np; ++q)
             {
                 SLeft(p, q) = 0.0;
-                for (int j = 0; j < nq; ++j)
-                {
-                    SLeft(p, q) += w[j] * mortarBasisLeft[j + p*nq] * bdata[j + q*nq];
-                }
-            }
-        }
-
-        Array<OneD, NekDouble> mortarBasisRight(nq * np);
-        for(i = 0; i < nq; ++i)
-        {
-            mortarBasisRight[i] = 0.5*(1-mortarZRight[i]);
-            mortarBasisRight[nq + i] = 0.5*(1+mortarZRight[i]);
-        }
-
-        NekDouble *modeRight = &mortarBasisRight[2*nq];
-
-        for(int p = 2; p < np; ++p, modeRight += nq)
-        {
-            Polylib::jacobfd(nq, mortarZRight.data(), modeRight, NULL, p-2, 1.0, 1.0);
-
-            for(i = 0; i < nq; ++i)
-            {
-                modeRight[i] *= mortarBasisRight[i] * mortarBasisRight[nq+i];
-            }
-        }
-
-        DNekMat SRight(np, np);
-        for (int p = 0; p < np; ++p)
-        {
-            for (int q = 0; q < np; ++q)
-            {
                 SRight(p, q) = 0.0;
                 for (int j = 0; j < nq; ++j)
                 {
+                    SLeft(p, q) += w[j] * mortarBasisLeft[j + p*nq] * bdata[j + q*nq];
                     SRight(p, q) += w[j] * mortarBasisRight[j + p*nq] * bdata[j + q*nq];
+                    M(p, q) += w[j] * bdata[j + p*nq] * bdata[j + q*nq];
                 }
-                cout << SRight(p,q) << endl;
             }
         }
+
+        m_SLeft.emplace_back(SLeft);
+        m_SRight.emplace_back(SRight);
+        m_M.emplace_back(M);
     }
 
 

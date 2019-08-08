@@ -448,7 +448,7 @@ void Interfaces::GenerateMortars(int indx)
 
         for (int i = 0; i < mortars.size(); ++i)
         {
-            auto geomSeg = mortars[indx];
+            auto geomSeg = mortars[i];
             NekDouble foundPoint;
             Array<OneD, NekDouble> xs(3);
             xs[0] = x;
