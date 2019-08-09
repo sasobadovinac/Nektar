@@ -514,7 +514,7 @@ void DisContField2D::SetUpDG(const std::string variable)
             cout << std::showpos << std::scientific << std::setprecision(3) <<
                  M(p, q) << ", \t";
         }
-        cout << "\b\b\b\b |" << endl;
+        cout << "\b\b\b |" << endl;
     }
 
     //Invert M matrix
@@ -531,7 +531,7 @@ void DisContField2D::SetUpDG(const std::string variable)
             cout << std::showpos << std::scientific << std::setprecision(3) <<
             M(p, q) << ", \t";
         }
-        cout << "\b\b\b\b |" << endl;
+        cout << "\b\b\b |" << endl;
     }
 
     int cnt, n, e;
@@ -1603,8 +1603,6 @@ void DisContField2D::v_GetFwdBwdTracePhys(
             //Bwd[m_trace->GetPhys_Offset(mortarId) + j] = mortarEdgePhysRight(j);
         }
     }
-
-
 
     //Interpolate from mortars to edges
     for (auto const &rightEdgeMap : m_rightEdgeToMortarMap)
