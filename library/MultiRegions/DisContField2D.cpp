@@ -1593,10 +1593,10 @@ void DisContField2D::v_GetFwdBwdTracePhys(
                     SRight(p, q) = 0.0;
                     for (int j = 0; j < nq; ++j)
                     {
-                        SLeft(p, q) += w[j] * mortarBasisLeft[j + p * nq] *
-                                        bdata[j + q * nq];
-                        SRight(p, q) += w[j] * mortarBasisRight[j + p * nq] *
-                                        bdata[j + q * nq];
+                        SLeft(p, q) += w[j] * mortarBasisLeft[j + q * nq] *
+                            bdata[j + p * nq];
+                        SRight(p, q) += w[j] * mortarBasisRight[j + q * nq] *
+                            bdata[j + p * nq];
                     }
                 }
             }
@@ -1629,7 +1629,7 @@ void DisContField2D::v_GetFwdBwdTracePhys(
             std::cout << xc[j] << " " << yc[j] << " " << tracePhys[j] << std::endl;
         }
 
-        traceElLeft->IProductWRTBase(tracePhys, tmpCoeffs);
+        traceElLeft->FwdTrans(tracePhys, tmpCoeffs);
         //Edge Sol left (Q)??? Coeffs?
 
         //DNekVec edgeSolLeft(np, edgeSolLeft);
