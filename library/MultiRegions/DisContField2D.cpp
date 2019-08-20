@@ -486,58 +486,10 @@ void DisContField2D::SetUpDG(const std::string variable)
     }
 
     //Set up m_MInv matrix for mortar interpolation
-    int nq = m_trace->GetExp(0)->GetTotPoints();
-    int np = m_trace->GetExp(0)->GetBasisNumModes(0);
-    auto &bdata = m_trace->GetExp(0)->GetBasis(0)->GetBdata();
-    auto &w = m_trace->GetExp(0)->GetBasis(0)->GetW();
-    DNekMat M(np, np);
-
-    for (int p = 0; p < np; ++p)
-    {
-        for (int q = 0; q < np; ++q)
-        {
-            M(p, q) = 0.0;
-            for (int j = 0; j < nq; ++j)
-            {
-                M(p, q) += w[j] * bdata[j + p * nq] * bdata[j + q * nq];
-            }
-        }
-    }
-
-    //Visualise M matrix
-    cout << endl << "M matrix:" << endl;
-    for (int p = 0; p < np; ++p)
-    {
-        cout << "| ";
-        for (int q = 0; q < np; ++q)
-        {
-            cout << std::showpos << std::scientific << std::setprecision(3) <<
-                 M(p, q) << ", \t";
-        }
-        cout << "\b\b\b |" << endl;
-    }
-
     auto traceExp = m_trace->GetExp(0);
-    StdRegions::StdMatrixKey stdMass(
-            StdRegions::eMass, traceExp->DetShapeType(), *traceExp);
-    std::cout << *(traceExp->GetStdMatrix(stdMass)) << std::endl;
+    StdRegions::StdMatrixKey stdMass(StdRegions::eInvMass, traceExp->DetShapeType(), *traceExp);
+    m_MInv = *(traceExp->GetStdMatrix(stdMass));
 
-    //Invert M matrix
-    M.Invert();
-    m_MInv = M;
-
-    //Visualise m_MInv matrix
-    cout << endl << "MInv matrix:" << endl;
-    for (int p = 0; p < np; ++p)
-    {
-        cout << "| ";
-        for (int q = 0; q < np; ++q)
-        {
-            cout << std::showpos << std::scientific << std::setprecision(3) <<
-            M(p, q) << ", \t";
-        }
-        cout << "\b\b\b |" << endl;
-    }
 
     int cnt, n, e;
 
@@ -1571,19 +1523,6 @@ void DisContField2D::v_GetFwdBwdTracePhys(
                 }
             }
 
-            /*
-            for (int p = 0; p < np; ++p)
-            {
-                for (int j = 0; j < nq; ++j)
-                {
-                    std::cout << z[j] << " " << bdata[j + p*nq] << " "
-                              << mortarZLeft[j] << " " << mortarBasisLeft[j + p*nq]
-                              << std::endl;
-                }
-                std::cout << std::endl;
-            }
-             */
-
             DNekMat SLeft(np, np), SRight(np, np);
             for (int p = 0; p < np; ++p)
             {
@@ -1614,41 +1553,31 @@ void DisContField2D::v_GetFwdBwdTracePhys(
         int mortarId = mortarOffset + i;
         auto mortarExp = m_trace->GetExp(mortarId);
         auto traceElLeft = m_trace->GetExp(m_edgeToTraceId[m_mortarToLeftEdgeMap[i]])->as<LocalRegions::Expansion1D>();
+        auto traceElRight = m_trace->GetExp(m_edgeToTraceId[m_mortarToRightEdgeMap[i]])->as<LocalRegions::Expansion1D>();
 
         Array<OneD, NekDouble> tmpCoeffs(traceElLeft->GetNcoeffs());
-        Array<OneD, NekDouble> tmpPhys(nq);
+        Array<OneD, NekDouble> tracePhys;
 
-        Array<OneD, NekDouble> tracePhys =
-                Fwd + m_trace->GetPhys_Offset(traceElLeft->GetElmtId());
-
-        Array<OneD, NekDouble> xc(nq), yc(nq);
-        traceElLeft->GetCoords(xc, yc);
-        std::cout << "NOT MORTAR" << std::endl;
-        for (int j = 0; j < nq; ++j)
-        {
-            std::cout << xc[j] << " " << yc[j] << " " << tracePhys[j] << std::endl;
-        }
-
+        tracePhys = Fwd + m_trace->GetPhys_Offset(traceElLeft->GetElmtId());
         traceElLeft->FwdTrans(tracePhys, tmpCoeffs);
-        //Edge Sol left (Q)??? Coeffs?
+        DNekVec tmpCoeffVecLeft(tmpCoeffs.num_elements(), tmpCoeffs, eWrapper);
+        DNekVec mortarEdgeSolLeft = m_MInvSLeft[i] * tmpCoeffVecLeft;
 
-        //DNekVec edgeSolLeft(np, edgeSolLeft);
-        DNekVec tmpCoeffVec(tmpCoeffs.num_elements(), tmpCoeffs, eWrapper);
-        DNekVec mortarEdgeSolLeft = m_MInvSLeft[i] * tmpCoeffVec;
+        tracePhys = Bwd + m_trace->GetPhys_Offset(traceElRight->GetElmtId());
+        traceElRight->FwdTrans(tracePhys, tmpCoeffs);
+        DNekVec tmpCoeffVecRight(tmpCoeffs.num_elements(), tmpCoeffs, eWrapper);
+        DNekVec mortarEdgeSolRight = m_MInvSRight[i] * tmpCoeffVecRight;
 
         // FROM VECTOR
-        mortarExp->BwdTrans(mortarEdgeSolLeft.GetPtr(), tmpPhys);
-        mortarExp->GetCoords(xc, yc);
+        Array<OneD, NekDouble> mortarEdgePhysLeft(nq), mortarEdgePhysRight(nq);
+        mortarExp->BwdTrans(mortarEdgeSolLeft.GetPtr(), mortarEdgePhysLeft);
+        mortarExp->BwdTrans(mortarEdgeSolRight.GetPtr(), mortarEdgePhysRight);
 
-        std::cout << "MORTAR" << std::endl;
         for (int j = 0; j < nq; ++j)
         {
-            std::cout << xc[j] << " " << yc[j] << " " << tmpPhys[j] << std::endl;
-
-            //Fwd[m_trace->GetPhys_Offset(mortarId) + j] = mortarEdgePhysLeft(j);
-            //Bwd[m_trace->GetPhys_Offset(mortarId) + j] = mortarEdgePhysRight(j);
+            Fwd[m_trace->GetPhys_Offset(mortarId) + j] = mortarEdgePhysLeft[j];
+            Bwd[m_trace->GetPhys_Offset(mortarId) + j] = mortarEdgePhysRight[j];
         }
-        std::cout << std::endl;
     }
 
     //Interpolate from mortars to edges
