@@ -411,7 +411,7 @@ void Interfaces::GenerateMortars(int indx)
 {
     //set up 'right' edge points set
     auto &iterateEdge = m_interfaces[indx].second->GetEdge();
-    std::unordered_set<PointGeomSharedPtr> points;
+    std::map<int, PointGeomSharedPtr> points;
 
     for (auto &seg : iterateEdge)
     {
@@ -420,13 +420,14 @@ void Interfaces::GenerateMortars(int indx)
         auto vert1 = MemoryManager<PointGeom>::AllocateSharedPtr(
                 *seg.second->GetVertex(1));
 
-        points.insert(vert0);
-        points.insert(vert1);
+        points[vert0->GetVid()] = vert0;
+        points[vert1->GetVid()] = vert1;
     }
 
-    NekDouble x;
-    NekDouble y;
-    NekDouble z;
+    for (auto tmp : points)
+    {
+        cout << tmp.first << endl;
+    }
 
     //mortars begin as copy of left side edges, change to vector and increment global ID
     auto &otherEdge = m_interfaces[indx].first->GetEdge();
@@ -442,20 +443,16 @@ void Interfaces::GenerateMortars(int indx)
     }
 
     //iterate over 'right' points and find matching seg in 'left' side
+    Array<OneD, NekDouble> xs(3);
     for (auto &vert : points)
     {
-        vert->GetCoords(x, y, z);
-
+        vert.second->GetCoords(xs);
+        NekDouble foundPoint;
         for (int i = 0; i < mortars.size(); ++i)
         {
             auto geomSeg = mortars[i];
-            NekDouble foundPoint;
-            Array<OneD, NekDouble> xs(3);
-            xs[0] = x;
-            xs[1] = y;
-            xs[2] = z;
-
             NekDouble dist = geomSeg->FindDistance(xs, foundPoint);
+
             if (dist > 1e-8)
             {
                 continue;
@@ -465,17 +462,22 @@ void Interfaces::GenerateMortars(int indx)
 
             //create two new mortars splitting found seg around trial point
             bool indxFlag = false; //flag for if old mortar global ID has already been replaced
+            NekDouble xOld = 0, yOld = 0, xNew = 0, yNew = 0, zOld = 0, zNew = 0;
             for (int k = 0; k < 2; ++k)
             {
                 PointGeomSharedPtr newEdgeVerts[2];
                 newEdgeVerts[0] = MemoryManager<PointGeom>::AllocateSharedPtr(
-                        *vert);
+                        *vert.second);
                 newEdgeVerts[1] = MemoryManager<PointGeom>::AllocateSharedPtr(
                         *geomSeg->GetVertex(k));
 
-                NekDouble xOld = 0, yOld = 0, xNew = 0, yNew = 0, zOld = 0, zNew = 0;
                 newEdgeVerts[0]->GetCoords(xOld, yOld, zOld);
                 newEdgeVerts[1]->GetCoords(xNew, yNew, zNew);
+
+                if (yOld > yNew)
+                {
+                    std::swap(newEdgeVerts[0], newEdgeVerts[1]);
+                }
 
                 int id;
                 if (!(xOld == xNew && yOld == yNew)) //check that verts aren't same

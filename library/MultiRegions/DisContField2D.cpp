@@ -1488,10 +1488,6 @@ void DisContField2D::v_GetFwdBwdTracePhys(
             for (int j = 0; j < nq; ++j)
             {
                 mortarZLeft[j] = z[j] * scaleFactorLeft + shiftLeft;
-                if (i == 0)
-                {
-                    std::cout << mortarZLeft[j] << std::endl;
-                }
                 mortarZRight[j] = z[j] * scaleFactorRight + shiftRight;
             }
 
