@@ -1572,7 +1572,7 @@ void DisContField2D::v_GetFwdBwdTracePhys(
         for (int j = 0; j < nq; ++j)
         {
             Fwd[m_trace->GetPhys_Offset(mortarId) + j] = mortarEdgePhysLeft[j];
-            Bwd[m_trace->GetPhys_Offset(mortarId) + j] = mortarEdgePhysRight[j];
+            Bwd[m_trace->GetPhys_Offset(mortarId) + j] = mortarEdgePhysRight[nq - j - 1];
         }
     }
 
