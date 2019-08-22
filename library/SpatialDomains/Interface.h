@@ -213,6 +213,8 @@ protected:
     std::vector<int> m_mortarToLeftEdgeMap;
     std::map<int, std::vector<int>> m_rightEdgeToMortarMap;
     std::map<int, std::vector<int>> m_leftEdgeToMortarMap;
+    std::set<int> m_interfaceElementRight;
+    std::set<int> m_interfaceElementLeft;
 
 private:
     /// Read segments (and general MeshGraph) given TiXmlDocument.

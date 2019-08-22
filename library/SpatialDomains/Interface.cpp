@@ -548,8 +548,12 @@ void Interfaces::GenerateMortars(int indx)
                 continue;
             }
 
-            m_mortarToRightEdgeMap.emplace_back(edge.second->GetGlobalID());
-            m_rightEdgeToMortarMap[edge.second->GetGlobalID()].emplace_back(cnt);
+            int edgeId = edge.second->GetGlobalID();
+            m_mortarToRightEdgeMap.emplace_back(edgeId);
+            m_rightEdgeToMortarMap[edgeId].emplace_back(cnt);
+
+            int elementId = m_meshGraph->GetElementsFromEdge(edge.second)->at(0).first->GetGlobalID();
+            m_interfaceElementRight.insert(elementId);
 
             cout << "'Right' edge | Segment ID: " << edge.second->GetGlobalID() << endl;
         }
@@ -563,8 +567,12 @@ void Interfaces::GenerateMortars(int indx)
                 continue;
             }
 
-            m_mortarToLeftEdgeMap.emplace_back(edge.second->GetGlobalID());
-            m_leftEdgeToMortarMap[edge.second->GetGlobalID()].emplace_back(cnt);
+            int edgeId = edge.second->GetGlobalID();
+            m_mortarToLeftEdgeMap.emplace_back(edgeId);
+            m_leftEdgeToMortarMap[edgeId].emplace_back(cnt);
+
+            int elementId = m_meshGraph->GetElementsFromEdge(edge.second)->at(0).first->GetGlobalID();
+            m_interfaceElementLeft.insert(elementId);
 
             cout << "'Left' edge | Segment ID: " << edge.second->GetGlobalID() << endl;
         }
@@ -601,6 +609,20 @@ void Interfaces::GenerateMortars(int indx)
         }
         cout << endl;
     }
+
+    cout << endl << "Left elements: ";
+    for (auto tmp : m_interfaceElementLeft)
+    {
+        cout << tmp << ", ";
+    }
+    cout << "\b\b" << endl;
+
+    cout << endl << "Right elements: ";
+    for (auto tmp : m_interfaceElementRight)
+    {
+        cout << tmp << ", ";
+    }
+    cout << "\b\b" << endl;
 }
 
 void InterfaceBase::SetEdge(const CompositeMap &edge)
