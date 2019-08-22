@@ -166,6 +166,8 @@ namespace Nektar
             DNekMat m_MInv;
             std::vector<DNekMat> m_MInvSLeft;
             std::vector<DNekMat> m_MInvSRight;
+            std::vector<DNekMat> m_MInvSTLeft;
+            std::vector<DNekMat> m_MInvSTRight;
 
             //Flag true if rebuilding SMatrices
             bool  m_SMatricesFlag = true;

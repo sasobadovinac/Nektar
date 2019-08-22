@@ -1538,6 +1538,12 @@ void DisContField2D::v_GetFwdBwdTracePhys(
 
             m_MInvSLeft.emplace_back(m_MInv * SLeft);
             m_MInvSRight.emplace_back(m_MInv * SRight);
+
+            SLeft.Transpose();
+            SRight.Transpose();
+
+            m_MInvSTLeft.emplace_back(m_MInv * SLeft);
+            m_MInvSTRight.emplace_back(m_MInv * SRight);
         }
 
         m_SMatricesFlag = false;
