@@ -140,6 +140,8 @@ namespace Nektar
             std::vector<int> m_mortarToLeftEdgeMap;
             std::map<int, std::vector<int>> m_rightEdgeToMortarMap;
             std::map<int, std::vector<int>> m_leftEdgeToMortarMap;
+            std::map<int, int> m_interfaceElementRight;
+            std::map<int, int> m_interfaceElementLeft;
 
             /// Upwind the \a Fwd and \a Bwd states based on the one-
             /// dimensional normal velocity field given by \a Vn.

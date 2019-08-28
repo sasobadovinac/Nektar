@@ -1536,14 +1536,14 @@ void DisContField2D::v_GetFwdBwdTracePhys(
                 }
             }
 
-            m_MInvSLeft.emplace_back(m_MInv * SLeft);
-            m_MInvSRight.emplace_back(m_MInv * SRight);
+            m_MInvSLeft[geomSegMortar->GetGlobalID()] = m_MInv * SLeft;
+            m_MInvSRight[geomSegMortar->GetGlobalID()] = m_MInv * SRight;
 
             SLeft.Transpose();
             SRight.Transpose();
 
-            m_MInvSTLeft.emplace_back(m_MInv * SLeft);
-            m_MInvSTRight.emplace_back(m_MInv * SRight);
+            m_MInvSTLeft[geomSegMortar->GetGlobalID()] = m_MInv * SLeft;
+            m_MInvSTRight[geomSegMortar->GetGlobalID()] = m_MInv * SRight;
         }
 
         m_SMatricesFlag = false;
@@ -1554,6 +1554,8 @@ void DisContField2D::v_GetFwdBwdTracePhys(
     {
         int mortarId = mortarOffset + i;
         auto mortarExp = m_trace->GetExp(mortarId);
+        auto geomSegMortar = std::static_pointer_cast<SpatialDomains::SegGeom>(
+                m_trace->GetExp(mortarId)->as<LocalRegions::Expansion1D>()->GetGeom1D());
         auto traceElLeft = m_trace->GetExp(m_edgeToTraceId[m_mortarToLeftEdgeMap[i]])->as<LocalRegions::Expansion1D>();
         auto traceElRight = m_trace->GetExp(m_edgeToTraceId[m_mortarToRightEdgeMap[i]])->as<LocalRegions::Expansion1D>();
 
@@ -1563,12 +1565,12 @@ void DisContField2D::v_GetFwdBwdTracePhys(
         tracePhys = Fwd + m_trace->GetPhys_Offset(traceElLeft->GetElmtId());
         traceElLeft->FwdTrans(tracePhys, tmpCoeffs);
         DNekVec tmpCoeffVecLeft(tmpCoeffs.num_elements(), tmpCoeffs, eWrapper);
-        DNekVec mortarEdgeSolLeft = m_MInvSLeft[i] * tmpCoeffVecLeft;
+        DNekVec mortarEdgeSolLeft = m_MInvSLeft[geomSegMortar->GetGlobalID()] * tmpCoeffVecLeft;
 
         tracePhys = Bwd + m_trace->GetPhys_Offset(traceElRight->GetElmtId());
         traceElRight->FwdTrans(tracePhys, tmpCoeffs);
         DNekVec tmpCoeffVecRight(tmpCoeffs.num_elements(), tmpCoeffs, eWrapper);
-        DNekVec mortarEdgeSolRight = m_MInvSRight[i] * tmpCoeffVecRight;
+        DNekVec mortarEdgeSolRight = m_MInvSRight[geomSegMortar->GetGlobalID()] * tmpCoeffVecRight;
 
         // FROM VECTOR
         Array<OneD, NekDouble> mortarEdgePhysLeft(nq), mortarEdgePhysRight(nq);
@@ -1748,7 +1750,7 @@ void DisContField2D::v_AddTraceIntegral(const Array<OneD, const NekDouble> &Fn,
 {
     // Basis definition on each element
     LibUtilities::BasisSharedPtr basis = (*m_exp)[0]->GetBasis(0);
-    if (basis->GetBasisType() != LibUtilities::eGauss_Lagrange)
+    if (basis->GetBasisType() != LibUtilities::eGauss_Lagrange && false)
     {
         Array<OneD, NekDouble> Fcoeffs(m_trace->GetNcoeffs());
         m_trace->IProductWRTBase(Fn, Fcoeffs);
@@ -1762,16 +1764,38 @@ void DisContField2D::v_AddTraceIntegral(const Array<OneD, const NekDouble> &Fn,
         Array<OneD, Array<OneD, LocalRegions::ExpansionSharedPtr>>
             &elmtToTrace = m_traceMap->GetElmtToTrace();
 
+        int mortarOffset = m_trace->GetExpSize() - m_mortars.size();
+
         for (n = 0; n < GetExpSize(); ++n)
         {
+            auto element = (*m_exp)[n]->GetGeom();
+            int elementId = element->GetGlobalID();
+            auto iterLeft = m_interfaceElementLeft.find(elementId);
+            auto iterRight = m_interfaceElementRight.find(elementId);
+
             offset = GetCoeff_Offset(n);
             for (e = 0; e < (*m_exp)[n]->GetNedges(); ++e)
             {
-                t_offset =
-                    GetTrace()->GetPhys_Offset(elmtToTrace[n][e]->GetElmtId());
-                (*m_exp)[n]->AddEdgeNormBoundaryInt(
-                    e, elmtToTrace[n][e], Fn + t_offset,
-                    e_outarray = outarray + offset);
+                if (iterLeft != m_interfaceElementLeft.end() && iterLeft->second == e)
+                {
+                    std::vector<int> mortarIds = m_leftEdgeToMortarMap[element->GetEid(iterLeft->second)];
+                    for (auto mortarId : mortarIds)
+                    {
+                        m_MInvSTLeft[mortarId];
+                    }
+
+                    //Sum mortar coefficients using S trans
+                    //Add coefficients into AddEdgeNormBoundaryInt
+                }
+                else if (iterRight != m_interfaceElementRight.end() && iterRight->second == e)
+                {
+                    std::vector<int> mortarId = m_rightEdgeToMortarMap[element->GetEid(iterRight->second)];
+                }
+                else
+                {
+                    t_offset = GetTrace()->GetPhys_Offset(elmtToTrace[n][e]->GetElmtId());
+                    (*m_exp)[n]->AddEdgeNormBoundaryInt(e, elmtToTrace[n][e], Fn + t_offset, e_outarray = outarray + offset);
+                }
             }
         }
     }

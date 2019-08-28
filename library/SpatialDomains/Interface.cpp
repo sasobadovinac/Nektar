@@ -424,11 +424,6 @@ void Interfaces::GenerateMortars(int indx)
         points[vert1->GetVid()] = vert1;
     }
 
-    for (auto tmp : points)
-    {
-        cout << tmp.first << endl;
-    }
-
     //mortars begin as copy of left side edges, change to vector and increment global ID
     auto &otherEdge = m_interfaces[indx].first->GetEdge();
     std::vector<SegGeomSharedPtr> mortars(otherEdge.size());
@@ -552,8 +547,16 @@ void Interfaces::GenerateMortars(int indx)
             m_mortarToRightEdgeMap.emplace_back(edgeId);
             m_rightEdgeToMortarMap[edgeId].emplace_back(cnt);
 
-            int elementId = m_meshGraph->GetElementsFromEdge(edge.second)->at(0).first->GetGlobalID();
-            m_interfaceElementRight.insert(elementId);
+            auto element = m_meshGraph->GetElementsFromEdge(edge.second)->at(0).first;
+            int elementId = element->GetGlobalID();
+
+            for (int i = 0; i < element->GetNumEdges(); ++i)
+            {
+                if (element->GetEid(i) == edgeId)
+                {
+                    m_interfaceElementRight[elementId] = i;
+                }
+            }
 
             cout << "'Right' edge | Segment ID: " << edge.second->GetGlobalID() << endl;
         }
@@ -571,8 +574,16 @@ void Interfaces::GenerateMortars(int indx)
             m_mortarToLeftEdgeMap.emplace_back(edgeId);
             m_leftEdgeToMortarMap[edgeId].emplace_back(cnt);
 
-            int elementId = m_meshGraph->GetElementsFromEdge(edge.second)->at(0).first->GetGlobalID();
-            m_interfaceElementLeft.insert(elementId);
+            auto element = m_meshGraph->GetElementsFromEdge(edge.second)->at(0).first;
+            int elementId = element->GetGlobalID();
+
+            for (int i = 0; i < element->GetNumEdges(); ++i)
+            {
+                if (element->GetEid(i) == edgeId)
+                {
+                    m_interfaceElementLeft[elementId] = i;
+                }
+            }
 
             cout << "'Left' edge | Segment ID: " << edge.second->GetGlobalID() << endl;
         }
@@ -613,14 +624,14 @@ void Interfaces::GenerateMortars(int indx)
     cout << endl << "Left elements: ";
     for (auto tmp : m_interfaceElementLeft)
     {
-        cout << tmp << ", ";
+        cout << tmp.first << "(" << tmp.second << ")" << ", ";
     }
     cout << "\b\b" << endl;
 
     cout << endl << "Right elements: ";
     for (auto tmp : m_interfaceElementRight)
     {
-        cout << tmp << ", ";
+        cout << tmp.first << "(" << tmp.second << ")" << ", ";
     }
     cout << "\b\b" << endl;
 }
