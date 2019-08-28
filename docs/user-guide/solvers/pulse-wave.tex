@@ -2,7 +2,7 @@
 
 \section{Synopsis}
 
-1D modelling of the vasculature (arterial network) represents and insightful and efficient tool for tackling problems encountered in arterial biomechanics as well as other engineering problems. In particular, 3D modelling of the vasculature is relatively expensive. 1D modelling provides an alternative in which the modelling assumptions provide a good balance between physiological accuracy and computational efficiency.To describe the flow and pressure in this network we consider the conservation of mass and momentum applied to an impermeable, deformable tube filled with an incompressible fluid, the nonlinear system of partial differential equations presented in non-conservative form is given by
+1D modelling of the vasculature (arterial network) represents and insightful and efficient tool for tackling problems encountered in arterial biomechanics as well as other engineering problems. In particular, 3D modelling of the vasculature is relatively expensive. 1D modelling provides an alternative in which the modelling assumptions provide a good balance between physiological accuracy and computational efficiency. To describe the flow and pressure in this network we consider the conservation of mass and momentum applied to an impermeable, deformable tube filled with an incompressible fluid, the nonlinear system of partial differential equations presented in non-conservative form is given by
 
 \begin{equation}
 \frac{\partial \mathbf{U}}{\partial{t}} + \mathbf{H}\frac{\partial{\mathbf{U}}}{\partial{x}} 
@@ -14,16 +14,27 @@
 \mathbf{U}=\begin{bmatrix} U \\ A \end{bmatrix}, \quad \mathbf{H}=\begin{bmatrix} U & A \\ \rho\frac{\partial{p}}{\partial{A}} & U\end{bmatrix}, \quad \mathbf{S}=\begin{bmatrix} 0 \\ \frac{1}{\rho}\left(\frac{f}{A}-s\right) \end{bmatrix} \nonumber
 \end{equation}
 
-in which $A$ is the Area (related to pressure), $x$ is the axial coordinate along the vessel, $U(x,t)$ the axial velocity, $P(x,t)$ is the pressure in the tube,  $\rho$ is the density and finally $f$ the frictional force per unit length. The unknowns in equation \ref{eqn:1DContMom} are $u, A$ and $p$; hence we must provide an explicit algebraic relationship to close this system. Typically, closure is provided by an algebraic relationship between $A$ and $p$. For a thin elastic tube this is given by
+in which $A$ is the Area (related to pressure), $x$ is the axial coordinate along the vessel, $U(x,t)$ the axial velocity, $P(x,t)$ is the pressure in the tube,  $\rho$ is the density and finally $f$ the frictional force per unit length. The unknowns in equation \ref{eqn:1DContMom} are $u, A$ and $p$; hence we must provide an explicit algebraic relationship to close this system. Typically, closure is provided by an algebraic relationship between $A$ and $p$. The PulseWaveSolver currently has two tube laws implemented: a Voigt type viscoelastic law
 
 \begin{equation}
-p=p_{0}+\beta\left(\sqrt{A}-\sqrt{A_{0}}\right), \quad \beta=\frac{\sqrt{\pi h E}}{(1-\nu^{2})A_{0}}
+p=p_{0}+\beta\left(\sqrt{A}-\sqrt{A_{0}}\right) + \frac{\Gamma}{\sqrt{A}}\frac{\partial A}{\partial t},
 \label{eqn:PA}
 \end{equation}
 
-where $p_{0}$ is the external pressure, $A_{0}$ is the initial cross-sectional area, $E$ is the Young's modulus, $h$ is the vessel wall thickness and $\nu$ is the Poisson's ratio. Other more elaborate pressure - area relationships are currently being implemented into the framework. Application of Riemann's method of characteristics to equations \ref{eqn:1DContMom} and \ref{eqn:PA} indicates that velocity and area are propagated through the system by forward and backward travelling waves. These waves are reflected and within the network by appropriate treatment of interfaces and boundaries. In the following, we will explain
-the usage of the blood flow solver on the basis of a single-artery problem and
-also on an arterial network consisting of $55$ arteries.
+\begin{equation}
+    \beta=\frac{\sqrt{\pi} Eh}{(1-\nu^{2})A_{0}}, \quad \Gamma = \frac{2\sqrt{\pi} \varphi h}{3A_{0}},
+\end{equation}
+
+where $p_{0}$ is the reference pressure, $A_{0}$ is the reference cross-sectional area, $E$ is the Young's modulus, $h$ is the vessel wall thickness, $\nu$ is the Poisson's ratio, and $\varphi$ is the wall viscosity; and the power law
+
+\begin{equation}
+    \label{eqn:Power}
+    p = p_{0} + \frac{2\rho c^{2}_{0}}{b}\left[\left(\frac{A}{A_{0}}\right)^{b/2} - 1\right] + \frac{\Gamma}{\sqrt{A}}\frac{\partial A}{\partial t},
+\end{equation}
+
+where $b$ is a paramater that varies between each artery, and $c_{0}$ is the wave speed at the reference pressure.
+
+Application of Riemann's method of characteristics to the system of equations indicates that velocity and area are propagated through the system by forward and backward travelling waves. These waves are reflected and within the network by appropriate treatment of interfaces and boundaries. In the following, we will explain the usage of the blood flow solver on the basis of a single-artery problem and also on an arterial network consisting of $55$ arteries.
 
 \section{Usage}
 \begin{lstlisting}[style=BashInputStyle]
@@ -32,7 +43,7 @@ PulseWaveSolver session.xml
 
 \section{Session file configuration}
 
-\subsection{Pulse Wave Sovler mesh connectivity}
+\subsection{Pulse Wave Solver mesh connectivity}
 Typically 1D arterial networks are made up of a connection of different base units: segments, bifurcations and merging junctions. The input format in the PulseWaveSolver means these connections are handle naturally from the mesh topology; hence care must be taken when designing the 1D domain. The figure below outlines the structure of a bifurcation, which is a common reoccurring structure in the vasculature.
 
 \begin{figure}
@@ -117,7 +128,7 @@ Each of the segments can be then represented under the section \inltt{DOMAIN} by
 We will use the different domains later to define variable material properties and cross-sectional areas.
 
 \subsection{Session Info}
-The PulseWaveSolver is sqpecified through the \inltt{EquationType}
+The PulseWaveSolver is specified through the \inltt{EquationType}
 option in the session file. This can be set as follows:
 \begin{itemize}
 \item \inltt{Projection}: Only a discontinuous projection can be specified
@@ -129,6 +140,15 @@ using the following option:
 \item \inltt{UpwindTypePulse}:
     \begin{itemize}
     \item \inltt{UpwindPulse}
+    \end{itemize}
+\item \inltt{PressureArea}:
+    \begin{itemize}
+    \item \inltt{Beta (default) uses the Voigt-type viscoelastic law}
+    \item \inltt{Power uses the power law}
+    \end{itemize}
+\item \inltt{OutputExtraFields}:
+    \begin{itemize}
+    \item \inltt{True returns the wave speed and both characteristics}
     \end{itemize}
 \end{itemize}
 
@@ -145,7 +165,7 @@ physical final time the number of time-steps is defined;
 to screen;
 \item \inltt{rho} density of the fluid. Default value = 1.0;
 \item \inltt{nue} Poisson's ratio. Default value = 0.5 ;
-\item \inltt{pest} external pressure. Default value = 0;
+\item \inltt{pext} external pressure. Default value = 0;
 \item \inltt{h0} wall thickness Default value = 1.0;
 \end{itemize}
 
@@ -196,8 +216,9 @@ Where \inltt{RT} is the total peripheral resistance  used in the the  \inltt{R-t
 The following functions can be specified inside the \inltt{CONDITIONS} section
 of the session file:
 \begin{itemize}
-\item  \inltt{MaterialProperties}: specifies the material properties for each domain.
-\item  \inltt{A\textunderscore0}: Initial area of each domain.
+\item \inltt{MaterialProperties}: specifies the value of $\beta$ for each domain.
+\item \inltt{A\textunderscore0}: specifies $A_{0}$ for each domain as used in the tube law.
+\item \inltt{Viscoelasticity}: specifies the value of $\Gamma$ for each domain.
 \item \inltt{AdvectionVelocity}: specifies the advection velocity $v$.
 \item \inltt{InitialConditions}: specifies the initial condition for unsteady
  problems.
@@ -212,7 +233,6 @@ As an example to specify the material properties for each domain in the previous
    <E VAR="beta" DOMAIN="2" VALUE="233" />
 </FUNCTION>
 \end{lstlisting}
-The values of \inltt{beta} are used in the pressure-area relationship (equation \ref{eqn:PA}). 
 
 \section{Examples}
 
@@ -393,8 +413,8 @@ RCR and Time-Dependant outflow.
 
 Again, for the initial conditions we start our simulation from static
 equilibrium conditions $A = A_0$ and for $u$ being initially at rest. The
-following lines show how we specify $A_0$ and $\beta$ for different arterial
-segments.
+following lines show how we specify $A_0$, $\beta$ and $\Gamma$ for different arterial
+segments. Note that $\Gamma$ is set to 0 for each segment by default, and so does not need to be specified for elastic simulations.
 \begin{lstlisting}[style=XmlStyle]
 <FUNCTION NAME="InitialConditions">
     <E VAR="A" DOMAIN="0" VALUE="5.983" />
@@ -416,6 +436,12 @@ segments.
     <E VAR="beta" DOMAIN="0" VALUE="97" />
       ...
     <E VAR="beta" DOMAIN="54" VALUE="9243" />
+</FUNCTION>
+
+<FUNCTION NAME="Viscoelasticity"> 
+    <E VAR="gamma" DOMAIN="0" VALUE="1" />
+      ...
+    <E VAR="gamma" DOMAIN="54" VALUE="1" />
 </FUNCTION>
 \end{lstlisting}
 
@@ -441,8 +467,6 @@ PulseWaveSolver and show that results such as luminal area and pressure within
 the artery can be simulated. These results can contribute to understanding the
 physiology of the human vascular system and they can be used for
 patient-specific planning of medical interventions.
-
-
 
 \subsection{Stented Artery}
 \subsection{Stented Artery}
@@ -608,9 +632,6 @@ and defined in the xml file by
 
 \subsubsection{Simulation}
 The simulation is started by running
-\begin{lstlisting}[style=BashInputStyle]
-PulseWaveSolver Test_1.xml
-\end{lstlisting}
 It will take about 60 seconds on a 2.4GHz Intel Core 2 Duo processor and 
 therefore is computationally realisable at every clinical site.
 
@@ -621,12 +642,7 @@ case of the stent, the rigid metal mesh will restrict the deformation of the
 area in that specific part of the artery compared to the normal vessel
 (Fig.~\ref{f:pulsewave:stented:vessels}).
 
-\begin{figure}
-	\includegraphics[width=0.49\linewidth]{img/normal_vessel.jpg}
-	\includegraphics[width=0.49\linewidth]{img/stented_vessel.jpg}
-	\caption{}
-	\label{f:pulsewave:stented:vessels}
-\end{figure}
+
 
 Also, if we look at the pressure at three points within the artery (P, M, D) we
 will recognize that there are major differences between the stented and normal
@@ -635,13 +651,9 @@ inflow is propagated without any losses, this does not hold for the stented
 artery (right). Here, the stiffening at the stent causes reflections and thus
 there are losses for total pressure at the medial (M) and distal (D) point.
 
-\begin{figure}
-	\includegraphics[width=0.49\linewidth]{img/pressure_normal_vessel.jpg}
-	\includegraphics[width=0.49\linewidth]{img/pressure_stented_vessel.jpg}
-\end{figure}
 
 \section{Further Information}
-The PulseWaveSolver has beqen developed with contributions by various students
+The PulseWaveSolver has been developed with contributions by various students
 and researchers at the Department of Aeronautics, Imperial College London. 
 Further information on the solver and its underlying mathematical framework 
 can be found in \cite{Ro12,Pi12}.
@@ -665,3 +677,4 @@ venous flow.
 % N. Westerhof et al., Anatomic studies of the human systemic arterial tree, J.
 % Biomech. 2:121-143, 1969 Three-dimensional blood flow profile in a rabbit aorta done with Nektar++,
 % courtesy of Véronique Peiffer 
+% J. Mynard, One-dimensional haemodynamic modeling and wave dynamics in the entire adult circulation, (2015).
