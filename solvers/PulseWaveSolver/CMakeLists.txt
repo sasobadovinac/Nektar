@@ -32,8 +32,6 @@ IF( NEKTAR_SOLVER_PULSEWAVE )
         EquationSystems/UndefinedInOutflow.cpp
         EquationSystems/BetaPressureArea.h
         EquationSystems/BetaPressureArea.cpp
-        EquationSystems/EmpiricalPressureArea.h
-        EquationSystems/EmpiricalPressureArea.cpp
         EquationSystems/PowerPressureArea.h
         EquationSystems/PowerPressureArea.cpp
         EquationSystems/AInflow.h
@@ -57,6 +55,5 @@ IF( NEKTAR_SOLVER_PULSEWAVE )
     ADD_NEKTAR_TEST(AInflow)
     ADD_NEKTAR_TEST(UInflow)
     ADD_NEKTAR_TEST(Viscoelasticity)
-    ADD_NEKTAR_TEST(EmpiricalPressure)
     ADD_NEKTAR_TEST(PowerPressure)
 ENDIF( NEKTAR_SOLVER_PULSEWAVE )
