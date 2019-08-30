@@ -186,6 +186,18 @@ namespace Nektar
         {
             m_fields[0]->ExtractTracePhys(m_velocity[i], tmp);
 
+            for (auto &z : tmp)
+            {
+                if (i == 0)
+                {
+                    z = 1;
+                }
+                else
+                {
+                    z = 0;
+                }
+            }
+
             Vmath::Vvtvp(nTracePts,
                          m_traceNormals[i], 1,
                          tmp,               1,
