@@ -149,7 +149,6 @@ namespace Nektar
 
             typedef std::map<int, LocalRegions::Expansion1DSharedPtr> TraceEdge;
             std::map<int, std::pair<TraceEdge,TraceEdge>> m_traceEdge;
-
             std::pair<std::unordered_set<int>,std::unordered_set<int>> m_interfaceEdge;
 
             // first key is interface ID; contains a pair of vectors with each
@@ -162,6 +161,9 @@ namespace Nektar
 
             //Mortar global edge to local trace ID
             std::map<int, int> m_edgeToTraceId;
+
+            //Mortar offset in trace exp list
+            int m_mortarOffset;
 
             DNekMat m_MInv;
             std::map<int, DNekMat> m_MInvSLeft;
