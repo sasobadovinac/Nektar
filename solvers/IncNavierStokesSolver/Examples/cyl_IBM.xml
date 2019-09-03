@@ -89,6 +89,8 @@
 		<FUNCTION NAME="ShapeFunction">
 			<E VAR="Phi" TIMEDEPENDENT="0" VALUE="-0.5*(tanh((rad((x-5.0),(y-8.0))-1.0)/0.01)-1.0)" />
 		</FUNCTION>
+
+		<FUNCTION NAME="FluidForces" />
     </CONDITIONS>
 
     <FILTERS>
