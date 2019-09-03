@@ -457,7 +457,7 @@ namespace Nektar
                                                            NekDouble dt)
     {
         Array<OneD, ExpListSharedPtr> BndExp;
-         Array<OneD, SpatialDomains::BoundaryConditionShPtr> BndCond;
+        Array<OneD, SpatialDomains::BoundaryConditionShPtr> BndCond;
 
         // Get the BC expansions
         BndExp  = m_pressureP->GetBndCondExpansions();
@@ -659,11 +659,8 @@ namespace Nektar
                         tmp, 1);
             Vmath::Vmul(nq, m_phi->GetPhys(), 1, tmp, 1, tmp, 1);
 
-            // Integration over the whole domain
-            for (int j = 0; j < m_pressureP->GetExpSize(); ++j)
-            {
-                F[i] += m_pressureP->GetExp(j)->Integral(tmp);
-            }
+            // Integration of force throughout the domain
+            m_pressureP->Integral(tmp);
             F[i] /= dt;
         }
     }
