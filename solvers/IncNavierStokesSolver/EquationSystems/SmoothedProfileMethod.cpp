@@ -320,6 +320,7 @@ namespace Nektar
         int nvel = m_velocity.num_elements();
         Array<OneD, NekDouble> F(nvel);
         EstimateForces(outarray, F, a_iixDt);
+        cout << F[0] << " " << F[1] << endl << "------" << endl;
         // Set BC conditions for pressure p_p
         SetUpCorrectionPressure(outarray, m_F, time, a_iixDt);
         // Solve Poisson equation for pressure p_p
@@ -660,7 +661,7 @@ namespace Nektar
             Vmath::Vmul(nq, m_phi->GetPhys(), 1, tmp, 1, tmp, 1);
 
             // Integration of force throughout the domain
-            m_pressureP->Integral(tmp);
+            F[i] = m_pressureP->Integral(tmp);
             F[i] /= dt;
         }
     }
