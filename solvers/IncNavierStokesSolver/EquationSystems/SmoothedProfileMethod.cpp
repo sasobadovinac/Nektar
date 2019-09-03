@@ -317,10 +317,7 @@ namespace Nektar
         // Update 'm_phi' and 'm_up' if needed (evaluated at next time step)
         UpdatePhiUp(time + a_iixDt);
         // DEBUG: Test EstimateForces function
-        int nvel = m_velocity.num_elements();
-        Array<OneD, NekDouble> F(nvel);
-        EstimateForces(outarray, F, a_iixDt);
-        cout << F[0] << " " << F[1] << endl << "------" << endl;
+        EstimateForces(outarray, a_iixDt);
         // Set BC conditions for pressure p_p
         SetUpCorrectionPressure(outarray, m_F, time, a_iixDt);
         // Solve Poisson equation for pressure p_p
@@ -633,15 +630,15 @@ namespace Nektar
      * (note that if the shape function represents more than one
      * body, this function calculates the value of the final force after adding
      * up the values for each body). This value must be scaled with the
-     * density to get the real force vector
+     * density to get the real force vector.
+     * 
+     * SHOULD BE IMPLEMENTED AS A FILTER!!
      *
      * @param inarray
-     * @param F
      * @param dt
      */
     void SmoothedProfileMethod::EstimateForces(
                     const Array<OneD, const Array<OneD, NekDouble> > &velocity,
-                    Array<OneD, NekDouble> &F,
                     NekDouble dt)
     {
         // DEBUG: Example of integration in FilterAeroForces.cpp
@@ -649,21 +646,20 @@ namespace Nektar
         int nq   = m_pressureP->GetTotPoints();
         int nvel = m_velocity.num_elements();
         Array<OneD, NekDouble> tmp(nq);
+        Array<OneD, NekDouble> forceTmp(nvel, 0.0);
 
         for (int i = 0; i < nvel; ++i)
         {
-            // Initialisation
-            F[i] = 0.0;
-
             // "Scalar" field to be integrated
             Vmath::Vsub(nq, velocity[m_velocity[i]], 1, m_upPrev[i], 1,
                         tmp, 1);
             Vmath::Vmul(nq, m_phi->GetPhys(), 1, tmp, 1, tmp, 1);
 
             // Integration of force throughout the domain
-            F[i] = m_pressureP->Integral(tmp);
-            F[i] /= dt;
+            forceTmp[i] = m_pressureP->Integral(tmp);
+            forceTmp[i] /= dt;
         }
+        m_Forces.push_back(forceTmp);
     }
 
 } // end of namespace

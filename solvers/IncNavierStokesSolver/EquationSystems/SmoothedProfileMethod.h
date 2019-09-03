@@ -101,6 +101,8 @@ namespace Nektar
         SolverUtils::SessionFunctionSharedPtr m_phiEvaluator;
         /// Flag that is true when phi depends on time
         bool m_timeDependentPhi;
+        /// Array storing the time-history of the aerodynamic forces
+        vector<Array<OneD, NekDouble> > m_Forces;
 
         // Interface for 'v_SolveUnsteadyStokesSystem'
         virtual void v_SolveUnsteadyStokesSystem(
@@ -144,7 +146,6 @@ namespace Nektar
         // Calculates the forces and torques on the body(ies)
         void EstimateForces(
                     const Array<OneD, const Array<OneD, NekDouble> > &velocity,
-                    Array<OneD, NekDouble> &F,
                     NekDouble dt);
 
     private:
