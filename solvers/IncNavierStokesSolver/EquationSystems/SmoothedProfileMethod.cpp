@@ -316,8 +316,11 @@ namespace Nektar
         /* SPM correction of velocity */
         // Update 'm_phi' and 'm_up' if needed (evaluated at next time step)
         UpdatePhiUp(time + a_iixDt);
-        // DEBUG: Test EstimateForces function
-        EstimateForces(outarray, a_iixDt);
+        // DEBUG: Estimate forces only if requested
+        if (m_session->DefinesFunction("FluidForces"))
+        {
+            EstimateForces(outarray, a_iixDt);
+        }
         // Set BC conditions for pressure p_p
         SetUpCorrectionPressure(outarray, m_F, time, a_iixDt);
         // Solve Poisson equation for pressure p_p
@@ -659,7 +662,10 @@ namespace Nektar
             forceTmp[i] = m_pressureP->Integral(tmp);
             forceTmp[i] /= dt;
         }
+
+        // DEBUG: Only for testing purposes
         m_Forces.push_back(forceTmp);
+        cout << forceTmp[0] << "\t" << forceTmp[1] << endl;
     }
 
 } // end of namespace
