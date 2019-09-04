@@ -37,6 +37,7 @@
 #define NEKTAR_SOLVERS_SMOOTHEDPROFILEMETHOD_H
 
 #include <IncNavierStokesSolver/EquationSystems/VelocityCorrectionScheme.h>
+#include <fstream>
 
 namespace Nektar
 {
@@ -103,6 +104,8 @@ namespace Nektar
         bool m_timeDependentPhi;
         /// Array storing the time-history of the aerodynamic forces
         vector<Array<OneD, NekDouble> > m_Forces;
+        /// DEBUG: File handler to save the estimated forces
+        ofstream m_forceFile;
 
         // Interface for 'v_SolveUnsteadyStokesSystem'
         virtual void v_SolveUnsteadyStokesSystem(

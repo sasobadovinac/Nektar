@@ -272,6 +272,12 @@ namespace Nektar
             m_gamma0 = 11.0/6.0;
             break;
         }
+
+        // DEBUG: Open file for aero forces if requested
+        if (m_session->DefinesFunction("FluidForces"))
+        {
+            m_forceFile.open("forces.dat");
+        }
     }
 
     /**
@@ -665,7 +671,7 @@ namespace Nektar
 
         // DEBUG: Only for testing purposes
         m_Forces.push_back(forceTmp);
-        cout << forceTmp[0] << "\t" << forceTmp[1] << endl;
+        m_forceFile << forceTmp[0] << "\t" << forceTmp[1] << endl;
     }
 
 } // end of namespace
