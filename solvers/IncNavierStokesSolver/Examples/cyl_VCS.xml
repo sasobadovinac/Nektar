@@ -47,8 +47,8 @@
         <BOUNDARYREGIONS>
             <B ID="0"> C[1] </B>  <!-- Inlet          -->
             <B ID="1"> C[2] </B>  <!-- Lower periodic -->
-            <B ID="2"> C[3] </B>  <!-- Upper periodic -->
-            <B ID="3"> C[4] </B>  <!-- Outlet         -->
+            <B ID="2"> C[3] </B>  <!-- Outlet         -->
+            <B ID="3"> C[4] </B>  <!-- Upper periodic -->
 			<B ID="4"> C[5] </B>  <!-- Body wall      -->
         </BOUNDARYREGIONS>
         <BOUNDARYCONDITIONS>
@@ -63,14 +63,14 @@
                 <N VAR="p" VALUE="0" />
             </REGION>
             <REGION REF="2">
-                <D VAR="u" VALUE="1" />
-                <D VAR="v" VALUE="0" />
-                <N VAR="p" VALUE="0" />
-            </REGION>
-            <REGION REF="3">
                 <N VAR="u" VALUE="0" />
                 <N VAR="v" VALUE="0" />
                 <D VAR="p" VALUE="0" />
+            </REGION>
+            <REGION REF="3">
+                <D VAR="u" VALUE="1" />
+                <D VAR="v" VALUE="0" />
+                <N VAR="p" VALUE="0" />
             </REGION>
 			<REGION REF="4">
                 <D VAR="u" VALUE="0" />
