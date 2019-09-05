@@ -338,6 +338,8 @@ namespace Nektar
         Vmath::Vadd(physTot, m_pressure->GetPhys(), 1,
                              m_pressureP->GetPhys(), 1,
                              m_pressure->UpdatePhys(), 1);
+        m_pressure->FwdTrans(m_pressure->GetPhys(),
+                             m_pressure->UpdateCoeffs());
     }
 
     /**
