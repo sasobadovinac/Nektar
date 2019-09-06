@@ -102,8 +102,6 @@ namespace Nektar
         SolverUtils::SessionFunctionSharedPtr m_phiEvaluator;
         /// Flag that is true when phi depends on time
         bool m_timeDependentPhi;
-        /// Array storing the time-history of the aerodynamic forces
-        vector<Array<OneD, NekDouble> > m_Forces;
         /// DEBUG: File handler to save the estimated forces
         ofstream m_forceFile;
 

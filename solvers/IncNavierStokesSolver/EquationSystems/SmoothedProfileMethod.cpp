@@ -672,7 +672,6 @@ namespace Nektar
         }
 
         // DEBUG: Only for testing purposes
-        m_Forces.push_back(forceTmp);
         m_forceFile << forceTmp[0] << "\t" << forceTmp[1] << endl;
     }
 
