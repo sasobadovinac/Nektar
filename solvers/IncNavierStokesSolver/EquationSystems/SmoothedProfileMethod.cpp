@@ -34,6 +34,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <IncNavierStokesSolver/EquationSystems/SmoothedProfileMethod.h>
+#include <IncNavierStokesSolver/Filters/FilterAeroForcesSPM.h>
 #include <MultiRegions/ContField1D.h>
 #include <MultiRegions/ContField2D.h>
 #include <MultiRegions/ContField3D.h>
@@ -273,10 +274,14 @@ namespace Nektar
             break;
         }
 
-        // DEBUG: Open file for aero forces if requested
-        if (m_session->DefinesFunction("FluidForces"))
+        // Check if the aeroforces filter is active, negative if inactive
+        m_forcesFilter = -1;
+        for (int i = 0; i < m_session->GetFilters().size(); ++i)
         {
-            m_forceFile.open("forces.dat");
+            if (m_session->GetFilters()[i].first == "AeroForcesSPM")
+            {
+                m_forcesFilter = i;
+            }
         }
     }
 
@@ -322,10 +327,12 @@ namespace Nektar
         /* SPM correction of velocity */
         // Update 'm_phi' and 'm_up' if needed (evaluated at next time step)
         UpdatePhiUp(time + a_iixDt);
-        // DEBUG: Estimate forces only if requested
-        if (m_session->DefinesFunction("FluidForces"))
+        // Estimate forces only if requested
+        if (m_forcesFilter >= 0)
         {
-            EstimateForces(outarray, a_iixDt);
+            dynamic_pointer_cast<FilterAeroForcesSPM>(
+                m_filters[m_forcesFilter])->CalculateForces(outarray, m_upPrev,
+                                            m_phi, time, a_iixDt);
         }
         // Set BC conditions for pressure p_p
         SetUpCorrectionPressure(outarray, m_F, time, a_iixDt);
@@ -634,45 +641,6 @@ namespace Nektar
         }
 
         return output;
-    }
-
-    /**
-     * @brief Determine the total force on the body defined by \f[\Phi\f]
-     * (note that if the shape function represents more than one
-     * body, this function calculates the value of the final force after adding
-     * up the values for each body). This value must be scaled with the
-     * density to get the real force vector.
-     * 
-     * SHOULD BE IMPLEMENTED AS A FILTER!!
-     *
-     * @param inarray
-     * @param dt
-     */
-    void SmoothedProfileMethod::EstimateForces(
-                    const Array<OneD, const Array<OneD, NekDouble> > &velocity,
-                    NekDouble dt)
-    {
-        // DEBUG: Example of integration in FilterAeroForces.cpp
-        // DEBUG: Only when forcing terms are added via Filters
-        int nq   = m_pressureP->GetTotPoints();
-        int nvel = m_velocity.num_elements();
-        Array<OneD, NekDouble> tmp(nq);
-        Array<OneD, NekDouble> forceTmp(nvel, 0.0);
-
-        for (int i = 0; i < nvel; ++i)
-        {
-            // "Scalar" field to be integrated
-            Vmath::Vsub(nq, velocity[m_velocity[i]], 1, m_upPrev[i], 1,
-                        tmp, 1);
-            Vmath::Vmul(nq, m_phi->GetPhys(), 1, tmp, 1, tmp, 1);
-
-            // Integration of force throughout the domain
-            forceTmp[i] = m_pressureP->Integral(tmp);
-            forceTmp[i] /= dt;
-        }
-
-        // DEBUG: Only for testing purposes
-        m_forceFile << forceTmp[0] << "\t" << forceTmp[1] << endl;
     }
 
 } // end of namespace

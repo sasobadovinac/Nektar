@@ -102,8 +102,8 @@ namespace Nektar
         SolverUtils::SessionFunctionSharedPtr m_phiEvaluator;
         /// Flag that is true when phi depends on time
         bool m_timeDependentPhi;
-        /// DEBUG: File handler to save the estimated forces
-        ofstream m_forceFile;
+        /// Position of "AeroForcesSPM" filter in 'm_session->GetFilters()'
+        int m_forcesFilter;
 
         // Interface for 'v_SolveUnsteadyStokesSystem'
         virtual void v_SolveUnsteadyStokesSystem(
@@ -144,10 +144,6 @@ namespace Nektar
                     Array<OneD, Array<OneD, NekDouble> > &f_s);
         // Get time-dependence information from the first elmt of 'name'
         bool GetFunctionTimeDependence(string name, string type);
-        // Calculates the forces and torques on the body(ies)
-        void EstimateForces(
-                    const Array<OneD, const Array<OneD, NekDouble> > &velocity,
-                    NekDouble dt);
 
     private:
     };
