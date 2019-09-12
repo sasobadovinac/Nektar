@@ -1502,6 +1502,20 @@ void DisContField2D::v_GetFwdBwdTracePhys(
                 mortarBasisRight[nq + j] = 0.5 * (1 + mortarZRight[j]);
             }
 
+            std::cout << "LEFT: ";
+            for (int j = 0; j < nq; ++j)
+            {
+                std::cout << mortarZLeft[j] << " ";
+            }
+
+            std::cout << std::endl;
+            std::cout << "RIGHT: ";
+            for (int j = 0; j < nq; ++j)
+            {
+                std::cout << mortarZRight[j] << " ";
+            }
+            std::cout << std::endl;
+
             NekDouble *modeLeft = &mortarBasisLeft[2 * nq];
             NekDouble *modeRight = &mortarBasisRight[2 * nq];
 
@@ -1538,12 +1552,15 @@ void DisContField2D::v_GetFwdBwdTracePhys(
 
             m_MInvSLeft[mortarId] = m_MInv * SLeft;
             m_MInvSRight[mortarId] = m_MInv * SRight;
+            m_MInvSTLeft[mortarId] = m_MInv * Transpose(SLeft);
+            m_MInvSTRight[mortarId] = m_MInv * Transpose(SRight);
 
-            SLeft.Transpose();
-            SRight.Transpose();
-
-            m_MInvSTLeft[mortarId] = m_MInv * SLeft;
-            m_MInvSTRight[mortarId] = m_MInv * SRight;
+            std::cout << "MINV = " << std::endl;
+            std::cout << m_MInv << std::endl;
+            std::cout << "MINV lEFT = " << std::endl;
+            std::cout << m_MInvSRight[mortarId] << std::endl;
+            std::cout << "MINV RIGHT = " << std::endl;
+            std::cout << m_MInvSTRight[mortarId] << std::endl;
         }
 
         m_SMatricesFlag = false;
@@ -1785,7 +1802,10 @@ void DisContField2D::v_AddTraceIntegral(const Array<OneD, const NekDouble> &Fn,
 
                         Array<OneD, NekDouble> mortarFn(traceExp->GetNcoeffs());
                         Array<OneD, NekDouble> mortarFnOut(traceExp->GetTotPoints());
-                        m_trace->GetExp(traceLoc)->FwdTrans(Fn + t_offset, mortarFn);
+                        //m_trace->GetExp(traceLoc)->FwdTrans(Fn + t_offset, mortarFn);
+
+                        StdRegions::StdSegExp tmpSeg(traceExp->GetBasis(0)->GetBasisKey());
+                        tmpSeg.FwdTrans(Fn + t_offset, mortarFn);
 
                         DNekVec mortarFnVec(traceExp->GetNcoeffs(), mortarFn, eWrapper);
                         DNekVec mortarProjVec = m_MInvSTLeft[traceLoc] * mortarFnVec;
@@ -1810,8 +1830,18 @@ void DisContField2D::v_AddTraceIntegral(const Array<OneD, const NekDouble> &Fn,
                         DNekVec mortarFnVec(traceExp->GetNcoeffs(), mortarFn, eWrapper);
                         DNekVec mortarProjVec = m_MInvSTRight[traceLoc] * mortarFnVec;
 
+                        std::cout << m_MInvSTRight[traceLoc] << std::endl;
+                        exit(0);
+
                         traceExp->BwdTrans(mortarProjVec.GetPtr(), mortarFnOut);
                         std::reverse(mortarFnOut.begin(), mortarFnOut.end());
+
+                        int nq = traceExp->GetTotPoints();
+                        for (int q = 0; q < nq; ++q)
+                        {
+                            mortarFnOut[q] = Fn[t_offset + nq - q - 1];
+                        }
+
                         (*m_exp)[n]->AddEdgeNormBoundaryInt(e, elmtToTrace[n][e], mortarFnOut, e_outarray = outarray + offset);
                     }
                 }

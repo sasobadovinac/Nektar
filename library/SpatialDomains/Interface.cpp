@@ -558,7 +558,10 @@ void Interfaces::GenerateMortars(int indx)
                 }
             }
 
-            cout << "'Right' edge | Segment ID: " << edge.second->GetGlobalID() << endl;
+            NekDouble x1, y1, z1, x2, y2, z2;
+            edge.second->GetVertex(0)->GetCoords(x1, y1, z1);
+            edge.second->GetVertex(1)->GetCoords(x2, y2, z2);
+            cout << "'Right' edge | Segment ID: " << edge.second->GetGlobalID() << " | (" << x1 << ", " << y1 << ") -> (" << x2 << ", " << y2 << ")" << endl;
         }
 
         for (const auto edge: otherEdge)
@@ -585,7 +588,10 @@ void Interfaces::GenerateMortars(int indx)
                 }
             }
 
-            cout << "'Left' edge | Segment ID: " << edge.second->GetGlobalID() << endl;
+            NekDouble x1, y1, z1, x2, y2, z2;
+            edge.second->GetVertex(0)->GetCoords(x1, y1, z1);
+            edge.second->GetVertex(1)->GetCoords(x2, y2, z2);
+            cout << "'Left' edge | Segment ID: " << edge.second->GetGlobalID() << " | (" << x1 << ", " << y1 << ") -> (" << x2 << ", " << y2 << ")" << endl;
         }
 
         cnt++;

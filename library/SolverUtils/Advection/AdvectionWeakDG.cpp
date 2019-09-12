@@ -144,6 +144,27 @@ namespace Nektar
 
             m_riemann->Solve(m_spaceDim, Fwd, Bwd, numflux);
 
+            cout << "BWD:  ";
+            for (int i = 88; i < 104; ++i)
+            {
+                cout << Bwd[0][i] << " ";
+            }
+            cout << endl;
+
+            cout << "FWD:  ";
+            for (int i = 88; i < 104; ++i)
+            {
+                cout << Fwd[0][i] << " ";
+            }
+            cout << endl;
+
+            cout << "FLUX: ";
+            for (int i = 88; i < 104; ++i)
+            {
+                cout << numflux[0][i] << " ";
+            }
+            cout << endl << endl;
+
             // Evaulate <\phi, \hat{F}\cdot n> - OutField[i]
             for(i = 0; i < nConvectiveFields; ++i)
             {
