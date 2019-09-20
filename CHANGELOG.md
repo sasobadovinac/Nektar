@@ -285,9 +285,10 @@ v4.4.1
 - Fix UnsteadyAdvectionDiffusion with DG (!855)
 
 **PulseWaveSolver:**
-- Code tidying (!1062)
-- Taken tube law out of hard code (!1062)
-- Added viscoelasticity (!1062)
+- Code tidying (!1075)
+- Taken tube law out of hard code (!1075)
+- Added viscoelasticity (!1075)
+- Added Mynard's Power law (!1075)
 
 v4.4.0
 ------
