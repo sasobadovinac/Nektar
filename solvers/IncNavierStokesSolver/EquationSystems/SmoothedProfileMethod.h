@@ -102,6 +102,8 @@ namespace Nektar
         bool m_timeDependentPhi;
         /// Flag indicating that phi was defined in a file
         bool m_filePhi;
+        /// Scaling coefficient used in the definition of 'm_phi' from a file
+        NekDouble m_scaleCoeff;
         /// Position of "AeroForcesSPM" filter in 'm_session->GetFilters()'
         int m_forcesFilter;
         /// Object representing a 3D triangle
@@ -148,13 +150,11 @@ namespace Nektar
         void UpdatePhiUp(NekDouble time);
         // Calculates the virtual force 'fs'
         void IBForcing(const Array<OneD, const Array<OneD, NekDouble> > &fields,
-                    NekDouble time,
                     NekDouble dt,
                     Array<OneD, Array<OneD, NekDouble> > &f_s);
         // Calculates the virtual force 'fs' in the boundary 'BndExp'
         void IBForcingBC(int bndInd,
                     const MultiRegions::ExpListSharedPtr &BndExp,
-                    NekDouble time,
                     NekDouble dt,
                     Array<OneD, Array<OneD, NekDouble> > &f_s);
         // Gets time-dependence information from the first elmt of 'name'

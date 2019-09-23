@@ -314,7 +314,7 @@ namespace Nektar
         // Estimate forces only if requested
         if (m_forcesFilter >= 0)
         {
-            dynamic_pointer_cast<FilterAeroForcesSPM>(
+            static_pointer_cast<FilterAeroForcesSPM>(
                 m_filters[m_forcesFilter])->CalculateForces(outarray, m_upPrev,
                                             m_phi, time, a_iixDt);
         }
@@ -357,7 +357,7 @@ namespace Nektar
 
         // Virtual force 'fs'
         Array<OneD, Array<OneD, NekDouble> > f_s;
-        IBForcing(fields, time, aii_Dt, f_s);
+        IBForcing(fields, aii_Dt, f_s);
         m_fields[m_velocity[0]]->PhysDeriv(eX, f_s[0], Forcing[0]);
 
         // Using 'Forcing[1]' as storage
@@ -428,7 +428,7 @@ namespace Nektar
 
         // Virtual force 'fs'
         Array<OneD, Array<OneD, NekDouble> > f_s;
-        IBForcing(fields, time, dt, f_s);
+        IBForcing(fields, dt, f_s);
 
         // Velocity correction
         for (int i = 0; i < nvel; ++i)
@@ -468,19 +468,19 @@ namespace Nektar
         // For each boundary...
         for (int b = 0; b < BndExp.num_elements(); ++b)
         {
-            // Skip this step for non Neumann BCs
-            if (BndCond[b]->GetBoundaryConditionType() !=
-                SpatialDomains::eNeumann)
+            // Only for BCs based on the derivative
+            if (BndCond[b]->GetBoundaryConditionType() ==
+                SpatialDomains::eNeumann ||
+                BndCond[b]->GetBoundaryConditionType() ==
+                SpatialDomains::ePeriodic)
             {
-                continue;
+                // Calculate f_s values
+                Array<OneD, Array<OneD, NekDouble> > f_s;
+                IBForcingBC(b, BndExp[b], dt, f_s);
+
+                // BC is f_s * n
+                BndExp[b]->NormVectorIProductWRTBase(f_s, BndExp[b]->UpdatePhys());
             }
-
-            // Calculate f_s values
-            Array<OneD, Array<OneD, NekDouble> > f_s;
-            IBForcingBC(b, BndExp[b], time, dt, f_s);
-
-            // BC is f_s * n
-            BndExp[b]->NormVectorIProductWRTBase(f_s, BndExp[b]->UpdatePhys());
         }
     }
 
@@ -550,7 +550,6 @@ namespace Nektar
      */
     void SmoothedProfileMethod::IBForcing(
                     const Array<OneD, const Array<OneD, NekDouble> > &fields,
-                    NekDouble time,
                     NekDouble dt,
                     Array<OneD, Array<OneD, NekDouble> > &f_s)
     {
@@ -584,7 +583,6 @@ namespace Nektar
      */
     void SmoothedProfileMethod::IBForcingBC(int bndInd,
                                 const ExpListSharedPtr &BndExp,
-                                NekDouble time,
                                 NekDouble dt,
                                 Array<OneD, Array<OneD, NekDouble> > &f_s)
     {
@@ -843,7 +841,11 @@ namespace Nektar
             }
 
             // Get corresponding value of Phi
-            m_phi->UpdatePhys()[i] = PhiFunction(dist, 0.01);
+            ASSERTL0(m_session->DefinesParameter("SCALINGCOEFF"),
+                     "'ScalingCoeff' must be defined when using a file-defined"
+                     "shape function");
+            m_scaleCoeff = m_session->GetParameter("SCALINGCOEFF");
+            m_phi->UpdatePhys()[i] = PhiFunction(dist, m_scaleCoeff);
         }
     }
 
