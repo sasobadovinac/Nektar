@@ -189,8 +189,11 @@ v5.0.0
 **APESolver:**
 - APESolver was replaced with AcousticSolver (!918)
 
-**PulseWaveSolver**
-- Added two new boundary conditions: AInflow and UInflow
+**PulseWaveSolver:**
+- Code tidying (!1076)
+- Taken tube law out of hard code (!1076)
+- Added viscoelasticity (!1076)
+- Added Mynard's Power law (!1076)
 
 **CardiacEPSolver**
 - Converted FentonKarma model to dimensional form and added variants (!1011)
@@ -307,12 +310,6 @@ v4.4.1
 
 **ADRSolver:**
 - Fix UnsteadyAdvectionDiffusion with DG (!855)
-
-**PulseWaveSolver:**
-- Code tidying (!1075)
-- Taken tube law out of hard code (!1075)
-- Added viscoelasticity (!1075)
-- Added Mynard's Power law (!1075)
 
 v4.4.0
 ------
