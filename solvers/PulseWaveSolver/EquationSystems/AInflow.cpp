@@ -38,7 +38,7 @@
 namespace Nektar
 {
 
-string AInflow::className = GetBoundaryFactory().RegisterCreatorFunction(
+std::string AInflow::className = GetBoundaryFactory().RegisterCreatorFunction(
     "A-inflow", AInflow::create, "Area inflow boundary condition");
 
 AInflow::AInflow(Array<OneD, MultiRegions::ExpListSharedPtr> pVessel,

@@ -38,7 +38,7 @@
 namespace Nektar
 {
 
-string UInflow::className = GetBoundaryFactory().RegisterCreatorFunction(
+std::string UInflow::className = GetBoundaryFactory().RegisterCreatorFunction(
     "U-inflow", UInflow::create, "Velocity inflow boundary condition");
 
 UInflow::UInflow(Array<OneD, MultiRegions::ExpListSharedPtr> pVessel,
