@@ -132,7 +132,6 @@ namespace Nektar
         void SetUpCorrectionPressure(
                     const Array<OneD, const Array<OneD, NekDouble> > &fields,
                     Array<OneD, Array<OneD, NekDouble> > &Forcing,
-                    NekDouble time,
                     NekDouble aii_Dt);
         // Solves the Poisson equation for the correction pressure
         void SolveCorrectionPressure(
@@ -141,10 +140,9 @@ namespace Nektar
         void SolveCorrectedVelocity(
                     Array<OneD, Array<OneD, NekDouble> > &Forcing,
                     Array<OneD, Array<OneD, NekDouble> > &fields,
-                    NekDouble time,
                     NekDouble dt);
         // Set proper BCs for the corrected pressure 'p_p'
-        void SetCorrectionPressureBCs(NekDouble time, NekDouble dt);
+        void SetCorrectionPressureBCs(NekDouble dt);
         // Calculates the shape function values
         // (only for non-moving boundaries)
         void UpdatePhiUp(NekDouble time);

@@ -211,15 +211,10 @@ namespace Nektar
         }
 
         // Read 'm_phi' and its velocity
-        if (m_session->DefinesFunction("ShapeFunction"))
-        {
-            ReadPhi();
-        }
-        else
-        {
-            ASSERTL0(false, "ShapeFunction must be defined in "
-                            "the session file.")
-        }
+        ASSERTL0(m_session->DefinesFunction("ShapeFunction"),
+                 "ShapeFunction must be defined in the session file.")
+        ReadPhi();
+
         // Allocate the vector 'm_up'
         int physTot = m_pressureP->GetTotPoints();
         m_velName.push_back("Up");
@@ -274,7 +269,7 @@ namespace Nektar
      *
      * @param s
      */
-    void SmoothedProfileMethod::v_GenerateSummary(SolverUtils::SummaryList& s)
+    void SmoothedProfileMethod::v_GenerateSummary(SolverUtils::SummaryList &s)
     {
         VelocityCorrectionScheme::v_GenerateSummary(s);
         SolverUtils::AddSummaryItem(s, "IB formulation",
@@ -314,16 +309,16 @@ namespace Nektar
         // Estimate forces only if requested
         if (m_forcesFilter >= 0)
         {
-            static_pointer_cast<FilterAeroForcesSPM>(
+            dynamic_pointer_cast<FilterAeroForcesSPM>(
                 m_filters[m_forcesFilter])->CalculateForces(outarray, m_upPrev,
                                             m_phi, time, a_iixDt);
         }
         // Set BC conditions for pressure p_p
-        SetUpCorrectionPressure(outarray, m_F, time, a_iixDt);
+        SetUpCorrectionPressure(outarray, m_F, a_iixDt);
         // Solve Poisson equation for pressure p_p
         SolveCorrectionPressure(m_F[0]);
         // Solve velocity in the next step with IB
-        SolveCorrectedVelocity(m_F, outarray, time, a_iixDt);
+        SolveCorrectedVelocity(m_F, outarray, a_iixDt);
 
         // Add pressures to get final value
         Vmath::Vadd(physTot, m_pressure->GetPhys(), 1,
@@ -346,14 +341,13 @@ namespace Nektar
     void SmoothedProfileMethod::SetUpCorrectionPressure(
                     const Array<OneD, const Array<OneD, NekDouble> > &fields,
                     Array<OneD, Array<OneD, NekDouble> > &Forcing,
-                    NekDouble time,
                     NekDouble aii_Dt)
     {
         int physTot = m_pressureP->GetTotPoints();
         int nvel    = m_velocity.num_elements();
 
         // DEBUG: Set boundary conditions
-        SetCorrectionPressureBCs(time, aii_Dt);
+        SetCorrectionPressureBCs(aii_Dt);
 
         // Virtual force 'fs'
         Array<OneD, Array<OneD, NekDouble> > f_s;
@@ -399,13 +393,11 @@ namespace Nektar
      *
      * @param Forcing
      * @param fields
-     * @param time
      * @param dt
      */
     void SmoothedProfileMethod::SolveCorrectedVelocity(
                     Array<OneD, Array<OneD, NekDouble> > &Forcing,
                     Array<OneD, Array<OneD, NekDouble> > &fields,
-                    NekDouble time,
                     NekDouble dt)
     {
         int physTot = m_fields[0]->GetTotPoints();
@@ -435,13 +427,21 @@ namespace Nektar
         {
             int ind = m_velocity[i];
 
-            // DEBUG: Try adding -(1-m_phi)*grad(p_p) instead of -grad(p_p)
-            // Vmath::Vvtvm(physTot, m_phi->GetPhys(), 1, Forcing[i], 1,
-            //                                            Forcing[i], 1,
-            //                                            Forcing[i], 1);
-            // Vmath::Vadd(physTot, f_s[i], 1, Forcing[i], 1, Forcing[i], 1);
-            Vmath::Vsub(physTot, f_s[i], 1, Forcing[i], 1, Forcing[i], 1);
-            Blas::Daxpy(physTot, dt/m_gamma0, Forcing[i], 1, fields[ind], 1);
+            // Adding -(1-m_phi)*grad(p_p) instead of -grad(p_p) reduces the
+            // flux through the walls, but the flow is not incompressible
+            if (m_session->DefinesSolverInfo("ForceBoundary") &&
+                boost::iequals(m_session->GetSolverInfo("ForceBoundary"), "1"))
+            {
+                Vmath::Vvtvm(physTot, m_phi->GetPhys(), 1, Forcing[i], 1,
+                                                        Forcing[i], 1,
+                                                        Forcing[i], 1);
+                Vmath::Vadd(physTot, f_s[i], 1, Forcing[i], 1, Forcing[i], 1);
+            }
+            else
+            {
+                Vmath::Vsub(physTot, f_s[i], 1, Forcing[i], 1, Forcing[i], 1);
+                Blas::Daxpy(physTot, dt/m_gamma0, Forcing[i], 1, fields[ind], 1);
+            }
         }
     }
 
@@ -452,11 +452,9 @@ namespace Nektar
      * \f[ \frac{\partial p_p}{\partial\mathbf{n}} =
      *     \mathbf{f_s}\cdot\mathbf{n} \f]
      *
-     * @param time
      * @param dt
      */
-    void SmoothedProfileMethod::SetCorrectionPressureBCs(NekDouble time,
-                                                           NekDouble dt)
+    void SmoothedProfileMethod::SetCorrectionPressureBCs(NekDouble dt)
     {
         Array<OneD, ExpListSharedPtr> BndExp;
         Array<OneD, SpatialDomains::BoundaryConditionShPtr> BndCond;
