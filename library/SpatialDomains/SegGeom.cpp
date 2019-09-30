@@ -393,6 +393,53 @@ bool SegGeom::v_ContainsPoint(const Array<OneD, const NekDouble> &gloCoord,
     return false;
 }
 
+bool SegGeom::v_FindRobustBBoxCoords(int coordDir, std::pair<NekDouble, NekDouble> &minMax)
+{
+    std::unordered_set<NekDouble> values;
+    const int nq = m_xmap->GetTotPoints();
+    Array<OneD, NekDouble> x(nq, 0.0), xder(nq, 0.0), xder2(nq, 0.0);
+
+    //Points to sample for Newton-Raphson solver
+    const int n = 4;
+    Array<OneD, NekDouble> points(n, 0.0);
+
+    m_xmap->BwdTrans(m_coeffs[coordDir], x);
+    m_xmap->PhysDeriv(x, xder);
+    m_xmap->PhysDeriv(xder, xder2);
+
+    for (int i = 0; i < n; ++i)
+    {
+        Array<OneD, NekDouble> xi(1, (i * (2.0 / (n-1)) - 1.0));
+        for (int j = 0; j < 10; ++j)
+        {
+            NekDouble xi_prev = xi[0];
+            NekDouble xc       = m_xmap->PhysEvaluate(xi, x);
+            NekDouble xc_derx  = m_xmap->PhysEvaluate(xi, xder);
+            NekDouble xc_derxx = m_xmap->PhysEvaluate(xi, xder2);
+
+            xi[0] = xi_prev - xc_derx / xc_derxx;
+
+            if ((abs(xi[0] - xi_prev) < 1e-10) && (xi[0] >= -1) && (xi[0] <= 1))
+            {
+                values.insert(xc);
+                break;
+            }
+        }
+    }
+
+    if(values.empty())
+    {
+        return false;
+    }
+    else
+    {
+        const auto res = std::minmax_element(std::begin(values), std::end(values));
+        minMax.first = *res.first;
+        minMax.second = *res.second;
+        return true;
+    }
+}
+
 PointGeomSharedPtr SegGeom::v_GetVertex(const int i) const
 {
     PointGeomSharedPtr returnval;

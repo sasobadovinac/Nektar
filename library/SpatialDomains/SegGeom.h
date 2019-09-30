@@ -102,6 +102,8 @@ protected:
         NekDouble tol,
         NekDouble &resid);
 
+    virtual bool v_FindRobustBBoxCoords(int coordDir, std::pair<NekDouble, NekDouble> &minMax);
+
 private:
     /// Boolean indicating whether object owns the data
     CurveSharedPtr m_curve;

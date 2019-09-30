@@ -138,7 +138,9 @@ public:
     //---------------------------------------
     // Point lookups
     //---------------------------------------
-    SPATIAL_DOMAINS_EXPORT std::array<NekDouble, 6> GetBoundingBox();
+    SPATIAL_DOMAINS_EXPORT std::array<NekDouble, 6> GetBoundingBox(
+            bool robustFlag = false);
+    SPATIAL_DOMAINS_EXPORT bool FindRobustBBoxCoords(int coordDir, std::pair<NekDouble, NekDouble> &minMax);
 
     SPATIAL_DOMAINS_EXPORT inline bool ContainsPoint(
         const Array<OneD, const NekDouble> &gloCoord,
@@ -223,6 +225,8 @@ protected:
                                  Array<OneD, NekDouble> &locCoord,
                                  NekDouble tol,
                                  NekDouble &resid);
+
+    virtual bool v_FindRobustBBoxCoords(int coordDir, std::pair<NekDouble, NekDouble> &minMax);
 
     virtual NekDouble v_GetCoord(const int i,
                                  const Array<OneD, const NekDouble> &Lcoord);
@@ -510,6 +514,12 @@ inline bool Geometry::ContainsPoint(
 {
     return v_ContainsPoint(gloCoord, locCoord, tol, resid);
 }
+
+inline bool Geometry::FindRobustBBoxCoords(int coordDir, std::pair<NekDouble, NekDouble> &minMax)
+{
+    return v_FindRobustBBoxCoords(coordDir, minMax);
+}
+
 
 /**
  * @brief Determine the local collapsed coordinates that correspond to a

@@ -86,6 +86,8 @@ protected:
                                     Array<OneD, NekDouble> &Lcoords,
                                     NekDouble &resid);
 
+    virtual bool v_FindRobustBBoxCoords(int coordDir, std::pair<NekDouble, NekDouble> &minMax);
+
 private:
     //---------------------------------------
     // Helper functions

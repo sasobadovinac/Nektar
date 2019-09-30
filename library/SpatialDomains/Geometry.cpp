@@ -256,6 +256,13 @@ bool Geometry::v_ContainsPoint(const Array<OneD, const NekDouble> &gloCoord,
     return false;
 }
 
+bool Geometry::v_FindRobustBBoxCoords(int coordDir, std::pair<NekDouble, NekDouble> &minMax)
+{
+    NEKERROR(ErrorUtil::efatal,
+             "This function has not been defined for this geometry");
+    return false;
+}
+
 /**
  * @copydoc Geometry::GetVertexEdgeMap()
  */
@@ -346,7 +353,7 @@ void Geometry::v_Setup()
  * region to account for convex hull elements where the true extent of the
  * element may extend slightly beyond the quadrature points.
  */
-std::array<NekDouble, 6> Geometry::GetBoundingBox()
+std::array<NekDouble, 6> Geometry::GetBoundingBox(bool robustFlag)
 {
     //NekDouble minx, miny, minz, maxx, maxy, maxz;
     Array<OneD, NekDouble> min(3), max(3);
@@ -370,34 +377,51 @@ std::array<NekDouble, 6> Geometry::GetBoundingBox()
             max[j] = (x[j] > max[j] ? x[j] : max[j]);
         }
     }
+
     // If element is deformed loop over quadrature points
     if (GetGeomFactors()->GetGtype() != eRegular)
     {
-        const int nq = GetXmap()->GetTotPoints();
-        Array<OneD, Array<OneD, NekDouble>> x(3);
-        for (int j = 0; j < 3; ++j)
+        if (!robustFlag)
         {
-            x[j] = Array<OneD, NekDouble>(nq, 0.0);
-        }
-        for (int j = 0; j < GetCoordim(); ++j)
-        {
-            GetXmap()->BwdTrans(m_coeffs[j], x[j]);
-        }
-        for (int j = 0; j < 3; ++j)
-        {
-            for (int i = 0; i < nq; ++i)
+            const int nq = GetXmap()->GetTotPoints();
+            Array<OneD, Array<OneD, NekDouble>> x(3);
+            for (int j = 0; j < 3; ++j)
             {
-                min[j] = (x[j][i] < min[j] ? x[j][i] : min[j]);
-                max[j] = (x[j][i] > max[j] ? x[j][i] : max[j]);
+                x[j] = Array<OneD, NekDouble>(nq, 0.0);
             }
+            for (int j = 0; j < GetCoordim(); ++j)
+            {
+                GetXmap()->BwdTrans(m_coeffs[j], x[j]);
+            }
+            for (int j = 0; j < 3; ++j)
+            {
+                for (int i = 0; i < nq; ++i)
+                {
+                    min[j] = (x[j][i] < min[j] ? x[j][i] : min[j]);
+                    max[j] = (x[j][i] > max[j] ? x[j][i] : max[j]);
+                }
 
-            // Add 10% margin to bounding box in case elements have
-            // convex boundaries.
-            const NekDouble len = max[j] - min[j];
-            max[j] += 0.1*len;
-            min[j] -= 0.1*len;
+                // Add 10% margin to bounding box in case elements have
+                // convex boundaries.
+                const NekDouble len = max[j] - min[j];
+                max[j] += 0.1 * len;
+                min[j] -= 0.1 * len;
+            }
+        }
+        else
+        {
+            std::pair<NekDouble, NekDouble> minMax;
+            for (int j = 0; j < GetCoordim(); ++j)
+            {
+                if(FindRobustBBoxCoords(j, minMax))
+                {
+                    min[j] = (minMax.first < min[j] ? minMax.first : min[j]);
+                    max[j] = (minMax.second > max[j] ? minMax.second : max[j]);
+                }
+            }
         }
     }
+
     // Add geometric tolerance
     for (int j = 0; j < 3; ++j)
     {
