@@ -178,16 +178,17 @@ void Geometry2D::NewtonIterationForLocCoord(
 bool Geometry2D::v_FindRobustBBoxCoords(int coordDir, std::pair<NekDouble, NekDouble> &minMax)
 {
     std::unordered_set<NekDouble> values;
-
-    for (int edgeID = 0; edgeID < GetNumEdges(); ++edgeID)
+    if (m_coordim == 2)
     {
-        std::pair<NekDouble, NekDouble> minMax;
-        if(GetEdge(edgeID)->FindRobustBBoxCoords(coordDir, minMax))
+        for (int edgeID = 0; edgeID < GetNumEdges(); ++edgeID)
         {
-            values.insert(minMax.first);
-            values.insert(minMax.second);
+            std::pair<NekDouble, NekDouble> minMax;
+            if(GetEdge(edgeID)->FindRobustBBoxCoords(coordDir, minMax))
+            {
+                values.insert(minMax.first);
+                values.insert(minMax.second);
+            }
         }
-    }
 
     if(values.empty())
     {

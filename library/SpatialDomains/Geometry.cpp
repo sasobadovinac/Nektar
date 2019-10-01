@@ -379,7 +379,7 @@ std::array<NekDouble, 6> Geometry::GetBoundingBox(bool robustFlag)
     }
 
     // If element is deformed loop over quadrature points
-    if (GetGeomFactors()->GetGtype() != eRegular)
+    if (m_geomType != eRegular)
     {
         if(robustFlag)
         {
