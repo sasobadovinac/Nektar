@@ -381,7 +381,30 @@ std::array<NekDouble, 6> Geometry::GetBoundingBox(bool robustFlag)
     // If element is deformed loop over quadrature points
     if (GetGeomFactors()->GetGtype() != eRegular)
     {
-        if (!robustFlag)
+        if(robustFlag)
+        {
+            for (int j = 0; j < GetCoordim(); ++j)
+            {
+                std::pair<NekDouble, NekDouble> minMax;
+                if(FindRobustBBoxCoords(j, minMax))
+                {
+                    min[j] = (minMax.first < min[j] ? minMax.first : min[j]);
+                    max[j] = (minMax.second > max[j] ? minMax.second : max[j]);
+                }
+                else
+                {
+                    NEKERROR(ErrorUtil::ewarning,
+                             "Robust bounding box generation failed for: " +
+                             static_cast<std::string>(LibUtilities::ShapeTypeMap[m_shapeType]) +
+                             " " + std::to_string(m_globalID) +
+                             ", falling back to the non-robust method for this element.");
+
+                    //Fall back to non-robust box for failed element
+                    return GetBoundingBox(false);
+                }
+            }
+        }
+        else
         {
             const int nq = GetXmap()->GetTotPoints();
             Array<OneD, Array<OneD, NekDouble>> x(3);
@@ -406,18 +429,6 @@ std::array<NekDouble, 6> Geometry::GetBoundingBox(bool robustFlag)
                 const NekDouble len = max[j] - min[j];
                 max[j] += 0.1 * len;
                 min[j] -= 0.1 * len;
-            }
-        }
-        else
-        {
-            std::pair<NekDouble, NekDouble> minMax;
-            for (int j = 0; j < GetCoordim(); ++j)
-            {
-                if(FindRobustBBoxCoords(j, minMax))
-                {
-                    min[j] = (minMax.first < min[j] ? minMax.first : min[j]);
-                    max[j] = (minMax.second > max[j] ? minMax.second : max[j]);
-                }
             }
         }
     }

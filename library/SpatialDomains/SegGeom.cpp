@@ -418,8 +418,9 @@ bool SegGeom::v_FindRobustBBoxCoords(int coordDir, std::pair<NekDouble, NekDoubl
             NekDouble xc_derxx = m_xmap->PhysEvaluate(xi, xder2);
 
             xi[0] = xi_prev - xc_derx / xc_derxx;
+            ClampLocCoords(xi, 0);
 
-            if ((abs(xi[0] - xi_prev) < 1e-10) && (xi[0] >= -1) && (xi[0] <= 1))
+            if ((abs(xi[0] - xi_prev) < 1e-10))
             {
                 values.insert(xc);
                 break;
