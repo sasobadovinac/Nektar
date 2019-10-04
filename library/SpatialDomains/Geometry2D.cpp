@@ -178,25 +178,12 @@ void Geometry2D::NewtonIterationForLocCoord(
 bool Geometry2D::v_FindRobustBBoxCoords(int coordDir, std::pair<NekDouble, NekDouble> &minMax)
 {
     std::unordered_set<NekDouble> values;
-    //If 2D then can calculate min/max by looping over edges as segments
-    if (m_coordim == 2)
-    {
-        for (int edgeID = 0; edgeID < GetNumEdges(); ++edgeID)
-        {
-            std::pair<NekDouble, NekDouble> minMax;
-            if (GetEdge(edgeID)->FindRobustBBoxCoords(coordDir, minMax))
-            {
-                values.insert(minMax.first);
-                values.insert(minMax.second);
-            }
-        }
-    }
-    else
+    if(m_curve)
     {
         const int nq = m_xmap->GetTotPoints();
         Array<OneD, NekDouble> x(nq, 0.0), y(nq, 0.0), xder(nq, 0.0),
-                               yder(nq, 0.0), xder2(nq, 0.0), yder2(nq, 0.0),
-                               xdery(nq, 0.0), yderx(nq, 0.0);
+                yder(nq, 0.0), xder2(nq, 0.0), yder2(nq, 0.0),
+                xdery(nq, 0.0), yderx(nq, 0.0);
 
         //Points to sample for Newton-Raphson solver
         const int n = 4;
@@ -209,6 +196,20 @@ bool Geometry2D::v_FindRobustBBoxCoords(int coordDir, std::pair<NekDouble, NekDo
         //Put bi-variate newton implementation here!
 
     }
+    //If not curved then can calculate min/max by looping over edges as segments
+    else
+    {
+        for (int edgeID = 0; edgeID < GetNumEdges(); ++edgeID)
+        {
+            std::pair<NekDouble, NekDouble> minMax;
+            if (GetEdge(edgeID)->FindRobustBBoxCoords(coordDir, minMax))
+            {
+                values.insert(minMax.first);
+                values.insert(minMax.second);
+            }
+        }
+    }
+
 
     if(values.empty())
     {

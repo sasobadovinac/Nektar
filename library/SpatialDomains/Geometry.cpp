@@ -379,7 +379,7 @@ std::array<NekDouble, 6> Geometry::GetBoundingBox(bool robustFlag)
     }
 
     //If element is deformed solve for min/max using iterative solver
-    if (m_geomType != eRegular)
+    if (GetGeomFactors()->GetGtype() != eRegular)
     {
         if(robustFlag)
         {
@@ -394,7 +394,7 @@ std::array<NekDouble, 6> Geometry::GetBoundingBox(bool robustFlag)
                 else
                 {
                     NEKERROR(ErrorUtil::ewarning,
-                             "Robust bounding box generation failed for: " +
+                             "Robust bounding box generation failed for " +
                              static_cast<std::string>(LibUtilities::ShapeTypeMap[m_shapeType]) +
                              " " + std::to_string(m_globalID) +
                              ", falling back to the non-robust method for this element.");
