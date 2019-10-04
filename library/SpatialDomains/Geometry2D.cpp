@@ -178,6 +178,7 @@ void Geometry2D::NewtonIterationForLocCoord(
 bool Geometry2D::v_FindRobustBBoxCoords(int coordDir, std::pair<NekDouble, NekDouble> &minMax)
 {
     std::unordered_set<NekDouble> values;
+    //If 2D then can calculate min/max by looping over edges as segments
     if (m_coordim == 2)
     {
         for (int edgeID = 0; edgeID < GetNumEdges(); ++edgeID)
@@ -189,6 +190,24 @@ bool Geometry2D::v_FindRobustBBoxCoords(int coordDir, std::pair<NekDouble, NekDo
                 values.insert(minMax.second);
             }
         }
+    }
+    else
+    {
+        const int nq = m_xmap->GetTotPoints();
+        Array<OneD, NekDouble> x(nq, 0.0), y(nq, 0.0), xder(nq, 0.0),
+                               yder(nq, 0.0), xder2(nq, 0.0), yder2(nq, 0.0),
+                               xdery(nq, 0.0), yderx(nq, 0.0);
+
+        //Points to sample for Newton-Raphson solver
+        const int n = 4;
+        Array<OneD, NekDouble> points(n, 0.0);
+
+        m_xmap->BwdTrans(m_coeffs[coordDir], x);
+        m_xmap->PhysDeriv(x, xder, yder);
+        m_xmap->PhysDeriv(xder, xder2, xdery);
+
+        //Put bi-variate newton implementation here!
+
     }
 
     if(values.empty())
