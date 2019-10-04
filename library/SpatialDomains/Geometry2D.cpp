@@ -183,12 +183,13 @@ bool Geometry2D::v_FindRobustBBoxCoords(int coordDir, std::pair<NekDouble, NekDo
         for (int edgeID = 0; edgeID < GetNumEdges(); ++edgeID)
         {
             std::pair<NekDouble, NekDouble> minMax;
-            if(GetEdge(edgeID)->FindRobustBBoxCoords(coordDir, minMax))
+            if (GetEdge(edgeID)->FindRobustBBoxCoords(coordDir, minMax))
             {
                 values.insert(minMax.first);
                 values.insert(minMax.second);
             }
         }
+    }
 
     if(values.empty())
     {

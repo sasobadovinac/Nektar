@@ -378,7 +378,7 @@ std::array<NekDouble, 6> Geometry::GetBoundingBox(bool robustFlag)
         }
     }
 
-    // If element is deformed loop over quadrature points
+    //If element is deformed solve for min/max using iterative solver
     if (m_geomType != eRegular)
     {
         if(robustFlag)
@@ -404,6 +404,7 @@ std::array<NekDouble, 6> Geometry::GetBoundingBox(bool robustFlag)
                 }
             }
         }
+        // Fallback is loop over quadrature points
         else
         {
             const int nq = GetXmap()->GetTotPoints();
