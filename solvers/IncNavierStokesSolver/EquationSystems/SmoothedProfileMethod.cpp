@@ -218,13 +218,12 @@ namespace Nektar
         // Allocate the vector 'm_up'
         int physTot = m_pressureP->GetTotPoints();
         m_velName.push_back("Up");
-        if (nvel > 1)
+        switch (nvel)
         {
-            m_velName.push_back("Vp");
-        }
-        if (nvel > 2)
-        {
-            m_velName.push_back("Wp");
+            case (3):
+                m_velName.push_back("Wp");
+            case (2):
+                m_velName.push_back("Vp");
         }
 
         m_up = Array<OneD, Array<OneD, NekDouble> >(nvel);
@@ -636,16 +635,14 @@ namespace Nektar
         ASSERTL0(functionDef, "Variable " + elemName + " must be defined in " +
                               funcName + ".");
 
-        // And return the value of TIMEDEPENDENT
-        bool output;
-        int err = functionDef->QueryBoolAttribute("TIMEDEPENDENT", &output);
-        ASSERTL0(err != TIXML_WRONG_TYPE, "TIMEDEPENDENT must be 1/0, "
-                                          "true/false or yes/no.")
-        if (err == TIXML_NO_ATTRIBUTE)
-        {
-            // Set output to 'false' if no time-dependence specified
-            output = false;
-        }
+        // And return the value of USERDEFINEDTYPE
+        string attr;
+        int err = functionDef->QueryStringAttribute("USERDEFINEDTYPE", &attr);
+        bool output = boost::iequals(attr, "TimeDependent");
+
+        ASSERTL0((err == TIXML_NO_ATTRIBUTE) ||
+                 (err == TIXML_SUCCESS && output), "USERDEFINEDTYPE in " +
+                 elemName + " must be TimeDependent if defined");
 
         return output;
     }
@@ -706,6 +703,13 @@ namespace Nektar
 
         // If so, check if its velocity changes as well
         m_timeDependentUp = GetVarTimeDependence("ShapeFunction", "Up");
+        switch (m_velocity.num_elements())
+        {
+            case 3:
+                m_timeDependentUp |= GetVarTimeDependence("ShapeFunction", "Wp");
+            case 2:
+                m_timeDependentUp |= GetVarTimeDependence("ShapeFunction", "Vp");
+        }
     }
 
     /**

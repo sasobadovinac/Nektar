@@ -20,7 +20,7 @@ Immersed Boundary Methods may turn very useful in these situations, where the de
 
 The definition of this term depends on the method but, for the Smoothed Profile Method (SPM), is related to a \emph{shape function} $\Phi(\BM{x}, t)$ valued 0 in the fluid domain and 1 outside. It is usually defined as:
 
-\begin{equation}
+\begin{equation} \label{spm:eq:mask}
     \Phi(\BM{x}, t) = \frac{1}{2}\left[\tanh\left(\frac{d(\BM{x}, t)}{\xi}\right)+1\right],
 \end{equation}
 
@@ -101,10 +101,10 @@ The session file follows the same rules as any other incompressible Navies-Stoke
 
 \begin{lstlisting}[style=XMLStyle]
 <SOLVERINFO>
-    <I PROPERTY="SolverType"                    VALUE="SmoothedProfileMethod" />
+    <I PROPERTY="SolverType"                 VALUE="SmoothedProfileMethod"    />
     <I PROPERTY="TimeIntegrationMethod" VALUE="IMEXOrder3"                   />
     ...
-    <I PROPERTY="ForceBoundary"              VALUE="0"                                    />
+    <I PROPERTY="ForceBoundary"            VALUE="0"                                 />
 </SOLVERINFO>
 \end{lstlisting}
 
@@ -112,17 +112,23 @@ In addition, somewhere in the \inltt{CONDITIONS} section this function must appe
 
 \begin{lstlisting}[style=XMLStyle]
 <FUNCTION NAME="ShapeFunction">
-    <E VAR="Phi" TIMEDEPENDENT="0" VALUE="..." />
-    <E VAR="Up"  TIMEDEPENDENT="0" VALUE="..." />
-    <E VAR="Vp"  TIMEDEPENDENT="0" VALUE="..." />
+    <E VAR="Phi" USERDEFINEDTYPE="TimeDependent" VALUE="..." />
+    <E VAR="Up" VALUE="..." />
+    <E VAR="Vp" VALUE="..." />
     ...
 </FUNCTION>
+\end{lstlisting}
+
+As a brief guideline, to define a cylinder of radius 1 and center at the point (0,0) according to expression \eqref{spm:eq:mask}, the \inltt{"Phi"} field in the \inltt{ShapeFunction} function should be:
+
+\begin{lstlisting}[style=XMLStyle]
+    <E VAR="Phi" USERDEFINEDTYPE="TimeDependent" VALUE="0.5*(tanh((rad(x,y)-1.0)/0.04)+1.0)" />
 \end{lstlisting}
 
 The line \inltt{<E VAR="Phi" ... />} indicates that the immersed bodies are defined by the function introduced in\inltt{VALUE}, while a line like the following:
 
 \begin{lstlisting}[style=XMLStyle]
-    <F VAR="Phi" TIMEDEPENDENT="0" FILE="..." />
+    <F VAR="Phi" FILE="..." />
 \end{lstlisting}
 
-must be used instead when the shape of the boundaries is given in an STL file. The variable names are compulsory, being \inltt{Phi} the shape of the bodies, and \inltt{Up}, \inltt{Vp} and \inltt{Wp} functions representing the velocity field inside them. The attribute \inltt{TIMEDEPENDENT} is compulsory only if the functions depend on time, when it has to be set to \inltt{1}, otherwise it can be left unspedified or set to \inltt{0}.
+must be used instead when the shape of the boundaries is given in an STL file. The variable names are compulsory, being \inltt{Phi} the shape of the bodies, and \inltt{Up}, \inltt{Vp} and \inltt{Wp} functions representing the velocity field inside them. The attribute \inltt{USERDEFINEDTYPE} is compulsory only if the functions depend on time, when it has to be set to \inltt{"TimeDependent"}.

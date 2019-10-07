@@ -17,7 +17,7 @@
     </GEOMETRY>
 
     <EXPANSIONS>
-        <E COMPOSITE="C[5]" NUMMODES="5" TYPE="MODIFIED" FIELDS="u,v,p" />
+        <E COMPOSITE="C[5]" NUMMODES="5" TYPE="MODIFIED" FIELDS="u,v,w,p" />
     </EXPANSIONS>
 
     <CONDITIONS>
@@ -28,6 +28,7 @@
             <I PROPERTY="EvolutionOperator"       VALUE="Nonlinear"               />
             <I PROPERTY="Projection"              VALUE="Continuous"              />
             <I PROPERTY="Driver"                  VALUE="Standard"                />
+            <I PROPERTY="Homogeneous"             VALUE="1D"                      />
             <I PROPERTY="ForceBoundary"           VALUE="0"                       />
         </SOLVERINFO>
         <PARAMETERS>
@@ -38,11 +39,14 @@
             <P> IO_CFLSteps   = 250    </P>
             <P> Re            = 40     </P>
             <P> Kinvis        = 1.0/Re </P>
+            <P> HomModesZ     = 8      </P>
+            <P> LZ            = 10     </P>
         </PARAMETERS>
         <VARIABLES>
             <V ID="0"> u </V>
             <V ID="1"> v </V>
-            <V ID="2"> p </V>
+            <V ID="2"> w </V>
+            <V ID="3"> p </V>
         </VARIABLES>
         <BOUNDARYREGIONS>
             <B ID="0"> C[1] </B>  <!-- Inlet          -->
@@ -54,33 +58,39 @@
             <REGION REF="0">
                 <D VAR="u" VALUE="1" />
                 <D VAR="v" VALUE="0" />
+                <D VAR="w" VALUE="0" />
                 <N VAR="p" VALUE="0" />
             </REGION>
             <REGION REF="1">
                 <P VAR="u" VALUE="[3]" />
                 <P VAR="v" VALUE="[3]" />
+                <P VAR="w" VALUE="[3]" />
                 <P VAR="p" VALUE="[3]" />
             </REGION>
             <REGION REF="2">
                 <N VAR="u" VALUE="0" />
                 <N VAR="v" VALUE="0" />
+                <N VAR="w" VALUE="0" />
                 <D VAR="p" VALUE="0" />
             </REGION>
             <REGION REF="3">
                 <P VAR="u" VALUE="[1]" />
                 <P VAR="v" VALUE="[1]" />
+                <P VAR="w" VALUE="[1]" />
                 <P VAR="p" VALUE="[1]" />
             </REGION>
         </BOUNDARYCONDITIONS>
         <FUNCTION NAME="InitialConditions">
             <E VAR="u" VALUE="1" />
             <E VAR="v" VALUE="0" />
+            <E VAR="w" VALUE="0" />
             <E VAR="p" VALUE="0" />
         </FUNCTION>
         <FUNCTION NAME="ShapeFunction">
             <E VAR="Phi" USERDEFINEDTYPE="TimeDependent" VALUE="-0.5*(tanh((rad((x-8.0-t),(y-8.0))-1.0)/0.04)-1.0)" />
             <E VAR="Up" VALUE="1.0" />
             <E VAR="Vp" VALUE="0" />
+            <E VAR="Wp" VALUE="0" />
         </FUNCTION>
     </CONDITIONS>
     
