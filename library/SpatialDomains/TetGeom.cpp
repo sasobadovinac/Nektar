@@ -90,7 +90,7 @@ bool TetGeom::v_ContainsPoint(const Array<OneD, const NekDouble> &gloCoord,
                               NekDouble &resid)
 {
     //Rough check if within twice min/max point
-    if (m_geomType != eRegular)
+    if (GetMetricInfo()->GetGtype() != eRegular)
     {
         if (!MinMaxCheck(gloCoord))
         {
@@ -358,7 +358,7 @@ void TetGeom::SetUpLocalEdges()
             ASSERTL0(false, errstrm.str());
         }
     }
-};
+}
 
 void TetGeom::SetUpLocalVertices()
 {
@@ -436,7 +436,7 @@ void TetGeom::SetUpLocalVertices()
                 << m_edges[2]->GetGlobalID();
         ASSERTL0(false, errstrm.str());
     }
-};
+}
 
 void TetGeom::SetUpEdgeOrientation()
 {
@@ -463,7 +463,7 @@ void TetGeom::SetUpEdgeOrientation()
             ASSERTL0(false, "Could not find matching vertex for the edge");
         }
     }
-};
+}
 
 void TetGeom::SetUpFaceOrientation()
 {

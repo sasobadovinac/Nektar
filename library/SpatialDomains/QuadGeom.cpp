@@ -86,6 +86,7 @@ QuadGeom::QuadGeom(const int id,
 }
 
 QuadGeom::QuadGeom(const QuadGeom &in)
+    : Geometry2D(in)
 {
     // From Geometry
     m_shapeType = in.m_shapeType;
@@ -483,7 +484,7 @@ bool QuadGeom::v_ContainsPoint(const Array<OneD, const NekDouble> &gloCoord,
                                NekDouble &resid)
 {
     //Rough check if within twice min/max point
-    if (m_geomType != eRegular)
+    if (GetMetricInfo()->GetGtype() != eRegular)
     {
         if (!MinMaxCheck(gloCoord))
         {
@@ -540,5 +541,5 @@ void QuadGeom::v_Setup()
     }
 }
 
-}; // end of namespace
-}; // end of namespace
+} // end of namespace
+} // end of namespace

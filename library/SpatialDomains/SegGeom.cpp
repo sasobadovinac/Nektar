@@ -65,6 +65,7 @@ SegGeom::SegGeom(int id,
 }
 
 SegGeom::SegGeom(const SegGeom &in)
+    : Geometry1D(in)
 {
     // From Geometry class
     m_shapeType = in.m_shapeType;
@@ -374,7 +375,7 @@ bool SegGeom::v_ContainsPoint(const Array<OneD, const NekDouble> &gloCoord,
                               NekDouble &resid)
 {
     //Rough check if within twice min/max point
-    if (m_geomType != eRegular)
+    if (GetMetricInfo()->GetGtype() != eRegular)
     {
         if (!MinMaxCheck(gloCoord))
         {
