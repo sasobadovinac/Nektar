@@ -285,105 +285,107 @@ namespace Nektar
         {
             NekDouble nx = m_traceNormals[0][i];
             NekDouble ny = m_traceNormals[1][i];
-	    // Interior matrix
+	    // Exterior matrix
             //[ -3^(1/2)/6, nx/2, ny/2, -(3^(1/2)*nx*ny)/3, -(6^(1/2)*nx^2)/6, -(6^(1/2)*ny^2)/6]
-            Interior[0][0] = -sqrt(3.0)/6.;          
-            Interior[0][1] =  nx/2.;              
-            Interior[0][2] =  ny/2.; 
-            Interior[0][3] = -sqrt(3.)*nx*ny/3.0;   
-            Interior[0][4] = -sqrt(6.)*nx*nx/6.0; 
-            Interior[0][5] = -sqrt(6.)*ny*ny/6.0;
+            Exterior[0][0] = -sqrt(3.0)/6.;          
+            Exterior[0][1] =  nx/2.;              
+            Exterior[0][2] =  ny/2.; 
+            Exterior[0][3] = -sqrt(3.)*nx*ny/3.0;   
+            Exterior[0][4] = -sqrt(6.)*nx*nx/6.0; 
+            Exterior[0][5] = -sqrt(6.)*ny*ny/6.0;
 	    //[ nx/2, - ny^2/2 - (3^(1/2)*nx^2)/2, -(nx*ny*(3^(1/2) - 1))/2, ny/2, (2^(1/2)*nx)/2, 0] 
-            Interior[1][0] =  nx/2.;  
-            Interior[1][1] = -sqrt(3.)*nx*nx/2. - ny*ny/2;  
-            Interior[1][2] = -(nx*ny*(sqrt(3.) - 1))/2; 
-            Interior[1][3] =  ny/2.; 
-            Interior[1][4] =  sqrt(2.)*nx/2.0;               
-            Interior[1][5] =  0;
+            Exterior[1][0] =  nx/2.;  
+            Exterior[1][1] = -sqrt(3.)*nx*nx/2. - ny*ny/2;  
+            Exterior[1][2] = -(nx*ny*(sqrt(3.) - 1))/2; 
+            Exterior[1][3] =  ny/2.; 
+            Exterior[1][4] =  sqrt(2.)*nx/2.0;               
+            Exterior[1][5] =  0;
             //[ ny/2, -(nx*ny*(3^(1/2) - 1))/2, - nx^2/2 - (3^(1/2)*ny^2)/2, nx/2, 0, (2^(1/2)*ny)/2]
-            Interior[2][0] = ny/2.;  
-            Interior[2][1] = -(nx*ny*(sqrt(3.) - 1))/2.;  
-            Interior[2][2] = -nx*nx/2.-(sqrt(3.)*ny*ny)/2.;    
-            Interior[2][3] = nx/2.0; 
-            Interior[2][4] = 0;                           
-            Interior[2][5] = sqrt(2.)*ny/2.0;
+            Exterior[2][0] = ny/2.;  
+            Exterior[2][1] = -(nx*ny*(sqrt(3.) - 1))/2.;  
+            Exterior[2][2] = -nx*nx/2.-(sqrt(3.)*ny*ny)/2.;    
+            Exterior[2][3] = nx/2.0; 
+            Exterior[2][4] = 0;                           
+            Exterior[2][5] = sqrt(2.)*ny/2.0;
 	    //[ -(3^(1/2)*nx*ny)/3, ny/2, nx/2, nx^2*ny^2 - ny^4/2 - nx^4/2 - (2*3^(1/2)*nx^2*ny^2)/3, -(2^(1/2)*nx*ny*(2*3^(1/2)*nx^2 - 3*nx^2 + 3*ny^2))/6, -(2^(1/2)*nx*ny*(2*3^(1/2)*ny^2 + 3*nx^2 - 3*ny^2))/6]
-            Interior[3][0] = -(sqrt(3.)*nx*ny)/3.;  
-            Interior[3][1] = ny/2.;  
-            Interior[3][2] = nx/2.;   
-            Interior[3][3] = nx*nx*ny*ny - ny*ny*ny*ny/2. - nx*nx*nx*nx/2. - (2*sqrt(3.)*nx*nx*ny*ny)/3.; 
-            Interior[3][4] = -(sqrt(2.)*nx*ny*(2*sqrt(3.)*nx*nx - 3*nx*nx + 3*ny*ny))/6.;
+            Exterior[3][0] = -(sqrt(3.)*nx*ny)/3.;  
+            Exterior[3][1] = ny/2.;  
+            Exterior[3][2] = nx/2.;   
+            Exterior[3][3] = nx*nx*ny*ny - ny*ny*ny*ny/2. - nx*nx*nx*nx/2. - (2*sqrt(3.)*nx*nx*ny*ny)/3.; 
+            Exterior[3][4] = -(sqrt(2.)*nx*ny*(2*sqrt(3.)*nx*nx - 3*nx*nx + 3*ny*ny))/6.;
             Interior[3][5] = -(sqrt(2.)*nx*ny*(2*sqrt(3.)*ny*ny + 3*nx*nx - 3*ny*ny))/6.;
             //[ -(6^(1/2)*nx^2)/6, (2^(1/2)*nx)/2, 0, -(2^(1/2)*nx*ny*(2*3^(1/2)*nx^2 - 3*nx^2 + 3*ny^2))/6, - (3^(1/2)*nx^4)/3 - nx^2*ny^2, -(nx^2*ny^2*(3^(1/2) - 3))/3]
-	    Interior[4][0] = -(sqrt(6.)*nx*nx)/6.;
-            Interior[4][1] =  (sqrt(2.)*nx)/2.;
-            Interior[4][2] =  0;
-            Interior[4][3] = -(sqrt(2.)*nx*ny*(2*sqrt(3.)*nx*nx-3*nx*nx+3*ny*ny))/6.;
-            Interior[4][4] = -(sqrt(3.)*nx*nx*nx*nx)/3.-nx*nx*ny*ny;
-            Interior[4][5] = -(nx*nx*ny*ny*(sqrt(3.)-3))/3.;
+	    Exterior[4][0] = -(sqrt(6.)*nx*nx)/6.;
+            Exterior[4][1] =  (sqrt(2.)*nx)/2.;
+            Exterior[4][2] =  0;
+            Exterior[4][3] = -(sqrt(2.)*nx*ny*(2*sqrt(3.)*nx*nx-3*nx*nx+3*ny*ny))/6.;
+            Exterior[4][4] = -(sqrt(3.)*nx*nx*nx*nx)/3.-nx*nx*ny*ny;
+            Exterior[4][5] = -(nx*nx*ny*ny*(sqrt(3.)-3))/3.;
 	    //[ -(6^(1/2)*ny^2)/6, 0, (2^(1/2)*ny)/2, -(2^(1/2)*nx*ny*(2*3^(1/2)*ny^2 + 3*nx^2 - 3*ny^2))/6, -(nx^2*ny^2*(3^(1/2) - 3))/3, - nx^2*ny^2 - (3^(1/2)*ny^4)/3]
-            Interior[5][0] = -(sqrt(6.)*ny*ny)/6.;
-            Interior[5][1] =  0;
-            Interior[5][2] =  (sqrt(2.)*ny)/2.;
-            Interior[5][3] = -(sqrt(2.)*nx*ny*(2*sqrt(3.)*ny*ny+3*nx*nx-3*ny*ny))/6.;
-            Interior[5][4] = -(nx*nx*ny*ny*(sqrt(3.)-3.))/3.;
-            Interior[5][5] = - nx*nx*ny*ny-(sqrt(3)*ny*ny*ny*ny)/3.;
+            Exterior[5][0] = -(sqrt(6.)*ny*ny)/6.;
+            Exterior[5][1] =  0;
+            Exterior[5][2] =  (sqrt(2.)*ny)/2.;
+            Exterior[5][3] = -(sqrt(2.)*nx*ny*(2*sqrt(3.)*ny*ny+3*nx*nx-3*ny*ny))/6.;
+            Exterior[5][4] = -(nx*nx*ny*ny*(sqrt(3.)-3.))/3.;
+            Exterior[5][5] = - nx*nx*ny*ny-(sqrt(3)*ny*ny*ny*ny)/3.;
 
        
-            // Exterior matrix
+            // Interior matrix
 	    //[ 3^(1/2)/6, nx/2, ny/2, (3^(1/2)*nx*ny)/3, (6^(1/2)*nx^2)/6, (6^(1/2)*ny^2)/6]
-            Exterior[0][0] = sqrt(3.)/6.;   
-            Exterior[0][1] = nx/2.;
-	    Exterior[0][2] = ny/2.;
-	    Exterior[0][3] = sqrt(3.)*nx*ny/3.0;
-	    Exterior[0][4] = sqrt(6.)*nx*nx/6.0;
-	    Exterior[0][5] = sqrt(6.)*ny*ny/6.0;
+            Interior[0][0] = sqrt(3.)/6.;   
+            Interior[0][1] = nx/2.;
+	    Interior[0][2] = ny/2.;
+	    Interior[0][3] = sqrt(3.)*nx*ny/3.0;
+	    Interior[0][4] = sqrt(6.)*nx*nx/6.0;
+	    Interior[0][5] = sqrt(6.)*ny*ny/6.0;
             //[ nx/2, (3^(1/2)*nx^2)/2 + ny^2/2, (nx*ny*(3^(1/2) - 1))/2, ny/2, (2^(1/2)*nx)/2, 0]
-            Exterior[1][0] = nx/2.;
-	    Exterior[1][1] = sqrt(3.)*nx*nx/2.0+ny*ny/2.;
-	    Exterior[1][2] = (nx*ny*(sqrt(3.) - 1))/2.;
-	    Exterior[1][3] = ny/2.0;
-	    Exterior[1][4] = sqrt(2.)*nx/2.0;
-	    Exterior[1][5] = 0;
+            Interior[1][0] = nx/2.;
+	    Interior[1][1] = sqrt(3.)*nx*nx/2.0+ny*ny/2.;
+	    Interior[1][2] = (nx*ny*(sqrt(3.) - 1))/2.;
+	    Interior[1][3] = ny/2.0;
+	    Interior[1][4] = sqrt(2.)*nx/2.0;
+	    Interior[1][5] = 0;
             //[ ny/2, (nx*ny*(3^(1/2) - 1))/2, nx^2/2 + (3^(1/2)*ny^2)/2, nx/2, 0, (2^(1/2)*ny)/2]
-            Exterior[2][0] = ny/2.;
-	    Exterior[2][1] = (nx*ny*(sqrt(3.)-1))/2.;
-	    Exterior[2][2] = nx*nx/2.-(sqrt(3.)*ny*ny)/2.;
-	    Exterior[2][3] = nx/2.;
-	    Exterior[2][4] = 0;
-	    Exterior[2][5] = sqrt(2.)*ny/2.;
+            Interior[2][0] = ny/2.;
+	    Interior[2][1] = (nx*ny*(sqrt(3.)-1))/2.;
+	    Interior[2][2] = nx*nx/2.-(sqrt(3.)*ny*ny)/2.;
+	    Interior[2][3] = nx/2.;
+	    Interior[2][4] = 0;
+	    Interior[2][5] = sqrt(2.)*ny/2.;
 	    //[ (3^(1/2)*nx*ny)/3, ny/2, nx/2, nx^4/2 + ny^4/2 - nx^2*ny^2 + (2*3^(1/2)*nx^2*ny^2)/3, (2^(1/2)*nx*ny*(2*3^(1/2)*nx^2 - 3*nx^2 + 3*ny^2))/6, (2^(1/2)*nx*ny*(2*3^(1/2)*ny^2 + 3*nx^2 - 3*ny^2))/6]
- 	    Exterior[3][0] = (sqrt(3.)*nx*ny)/3.; 
-	    Exterior[3][1] = ny/2.;
-	    Exterior[3][2] = nx/2.;
-	    Exterior[3][3] = nx*nx*nx*nx/2 + ny*ny*ny*ny/2 - nx*nx*ny*ny + (2*sqrt(3.)*nx*nx*ny*ny)/3.;
-	    Exterior[3][4] = (sqrt(2.)*nx*ny*(2*sqrt(3.)*nx*nx - 3*nx*nx + 3*ny*ny))/6.;
-	    Exterior[3][5] = (sqrt(2.)*nx*ny*(2*sqrt(3.)*ny*ny + 3*nx*nx - 3*ny*ny))/6.;
+ 	    Interior[3][0] = (sqrt(3.)*nx*ny)/3.; 
+	    Interior[3][1] = ny/2.;
+	    Interior[3][2] = nx/2.;
+	    Interior[3][3] = nx*nx*nx*nx/2 + ny*ny*ny*ny/2 - nx*nx*ny*ny + (2*sqrt(3.)*nx*nx*ny*ny)/3.;
+	    Interior[3][4] = (sqrt(2.)*nx*ny*(2*sqrt(3.)*nx*nx - 3*nx*nx + 3*ny*ny))/6.;
+	    Interior[3][5] = (sqrt(2.)*nx*ny*(2*sqrt(3.)*ny*ny + 3*nx*nx - 3*ny*ny))/6.;
             //[ (6^(1/2)*nx^2)/6, (2^(1/2)*nx)/2, 0, (2^(1/2)*nx*ny*(2*3^(1/2)*nx^2 - 3*nx^2 + 3*ny^2))/6, (3^(1/2)*nx^4)/3 + nx^2*ny^2, (nx^2*ny^2*(3^(1/2) - 3))/3]
-            Exterior[4][0] = (sqrt(6.)*nx*nx)/6.;
-	    Exterior[4][1] = (sqrt(2.)*nx)/2.;
-	    Exterior[4][2] = 0; 
-	    Exterior[4][3] = (sqrt(2.)*nx*ny*(2*sqrt(3.)*nx*nx-3*nx*nx+3*ny*ny))/6.;
-	    Exterior[4][4] = (sqrt(3.)*nx*nx*nx*nx)/3.+nx*nx*ny*ny;
-	    Exterior[4][5] = (nx*nx*ny*ny*(sqrt(3.)-3))/3.;
+            Interior[4][0] = (sqrt(6.)*nx*nx)/6.;
+	    Interior[4][1] = (sqrt(2.)*nx)/2.;
+	    Interior[4][2] = 0; 
+	    Interior[4][3] = (sqrt(2.)*nx*ny*(2*sqrt(3.)*nx*nx-3*nx*nx+3*ny*ny))/6.;
+	    Interior[4][4] = (sqrt(3.)*nx*nx*nx*nx)/3.+nx*nx*ny*ny;
+	    Interior[4][5] = (nx*nx*ny*ny*(sqrt(3.)-3))/3.;
 	    //[ (6^(1/2)*ny^2)/6, 0, (2^(1/2)*ny)/2, (2^(1/2)*nx*ny*(2*3^(1/2)*ny^2 + 3*nx^2 - 3*ny^2))/6, (nx^2*ny^2*(3^(1/2) - 3))/3, nx^2*ny^2 + (3^(1/2)*ny^4)/3]
-            Exterior[5][0] = (sqrt(6.)*ny*ny)/6.;
-	    Exterior[5][1] = 0;
-	    Exterior[5][2] = (sqrt(2.)*ny)/2.;
-	    Exterior[5][3] = (sqrt(2.)*nx*ny*(2*sqrt(3.)*ny*ny+3*nx*nx-3*ny*ny))/6.;
-	    Exterior[5][4] = (nx*nx*ny*ny*(sqrt(3.)-3.))/3.;
-	    Exterior[5][5] =  nx*nx*ny*ny+(sqrt(3)*ny*ny*ny*ny)/3.;
+            Interior[5][0] = (sqrt(6.)*ny*ny)/6.;
+	    Interior[5][1] = 0;
+	    Interior[5][2] = (sqrt(2.)*ny)/2.;
+	    Interior[5][3] = (sqrt(2.)*nx*ny*(2*sqrt(3.)*ny*ny+3*nx*nx-3*ny*ny))/6.;
+	    Interior[5][4] = (nx*nx*ny*ny*(sqrt(3.)-3.))/3.;
+	    Interior[5][5] =  nx*nx*ny*ny+(sqrt(3)*ny*ny*ny*ny)/3.;
 
        
-            // Fwd exter
-            // Bwd inter
+            // Fwd from inter
+            // Bwd fron exter
 
             for(int j = 0; j < 6; ++j)
             {
                  
-		numflux[j][i] = Interior[j][0]*Bwd[0][i]+Interior[j][1]*Bwd[1][i]+Interior[j][2]*Bwd[2][i]+Interior[j][3]*Bwd[3][i]+Interior[j][4]*Bwd[4][i]+Interior[j][5]*Bwd[5][i]+
-           		        Exterior[j][0]*Fwd[0][i]+Exterior[j][1]*Fwd[1][i]+Exterior[j][2]*Fwd[2][i]+Exterior[j][3]*Fwd[3][i]+Exterior[j][4]*Fwd[4][i]+Exterior[j][5]*Fwd[5][i];
-                numflux[j][i] *= (m_sqrtRT);
+		//numflux[j][i] = Interior[j][0]*Bwd[0][i]+Interior[j][1]*Bwd[1][i]+Interior[j][2]*Bwd[2][i]+Interior[j][3]*Bwd[3][i]+Interior[j][4]*Bwd[4][i]+Interior[j][5]*Bwd[5][i]+
+           	//	        Exterior[j][0]*Fwd[0][i]+Exterior[j][1]*Fwd[1][i]+Exterior[j][2]*Fwd[2][i]+Exterior[j][3]*Fwd[3][i]+Exterior[j][4]*Fwd[4][i]+Exterior[j][5]*Fwd[5][i];
+		numflux[j][i] = Exterior[j][0]*Bwd[0][i]+Exterior[j][1]*Bwd[1][i]+Exterior[j][2]*Bwd[2][i]+Exterior[j][3]*Bwd[3][i]+Exterior[j][4]*Bwd[4][i]+Exterior[j][5]*Bwd[5][i]+
+                 	        Interior[j][0]*Fwd[0][i]+Interior[j][1]*Fwd[1][i]+Interior[j][2]*Fwd[2][i]+Interior[j][3]*Fwd[3][i]+Interior[j][4]*Fwd[4][i]+Interior[j][5]*Fwd[5][i];
+                numflux[j][i] *= m_sqrtRT;
             }
             //cout << nx << "\t" << ny <<"\t" <<endl; 
         }
