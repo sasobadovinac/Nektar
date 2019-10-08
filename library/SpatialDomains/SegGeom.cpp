@@ -405,7 +405,6 @@ bool SegGeom::v_FindRobustBBoxCoords(int coordDir, std::pair<NekDouble, NekDoubl
 
     //Points to sample for Newton-Raphson solver
     const int n = 4;
-    Array<OneD, NekDouble> points(n, 0.0);
 
     m_xmap->BwdTrans(m_coeffs[coordDir], x);
     m_xmap->PhysDeriv(x, xder);

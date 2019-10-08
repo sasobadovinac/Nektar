@@ -178,7 +178,7 @@ void Geometry2D::NewtonIterationForLocCoord(
 bool Geometry2D::v_FindRobustBBoxCoords(int coordDir, std::pair<NekDouble, NekDouble> &minMax)
 {
     std::unordered_set<NekDouble> values;
-    if(m_curve)
+    if(true) //put check if curved how?)
     {
         const int nq = m_xmap->GetTotPoints();
         Array<OneD, NekDouble> x(nq, 0.0), y(nq, 0.0), xder(nq, 0.0),
@@ -186,15 +186,63 @@ bool Geometry2D::v_FindRobustBBoxCoords(int coordDir, std::pair<NekDouble, NekDo
                 xdery(nq, 0.0), yderx(nq, 0.0);
 
         //Points to sample for Newton-Raphson solver
-        const int n = 4;
-        Array<OneD, NekDouble> points(n, 0.0);
+        const int n = 2;
 
         m_xmap->BwdTrans(m_coeffs[coordDir], x);
         m_xmap->PhysDeriv(x, xder, yder);
         m_xmap->PhysDeriv(xder, xder2, xdery);
+        m_xmap->PhysDeriv(yder, yder2, yderx);
+        for (int i = 0; i < n; ++i)
+        {
+            for (int j = 0; j < n; ++j)
+            {
+                Array<OneD, NekDouble> xi(2, 0.0);
+                xi[0] = (i * (2.0 / (n-1)) - 1.0);
+                xi[1] = (j * (2.0 / (n-1)) - 1.0);
+                for (int j = 0; j < 100; ++j)
+                {
+                    Array<OneD, NekDouble> xi_prev = xi;
+                    NekDouble xc = m_xmap->PhysEvaluate(xi, x);
+                    NekDouble xc_derx = m_xmap->PhysEvaluate(xi, xder);
+                    NekDouble xc_dery = m_xmap->PhysEvaluate(xi, yder);
+                    NekDouble xc_derxx = m_xmap->PhysEvaluate(xi, xder2);
+                    NekDouble xc_deryy = m_xmap->PhysEvaluate(xi, yder2);
+                    NekDouble xc_derxy = m_xmap->PhysEvaluate(xi, xdery);
+                    NekDouble xc_deryx = m_xmap->PhysEvaluate(xi, yderx);
 
-        //Put bi-variate newton implementation here!
+                    //Create Jac using NekMatrix, invert and multiply with {xc_derx, xc_dery}
+                    //i.e. xi = xi_prev - J^-1 * [xc_derx, xc_dery]
+                    DNekVec f(2);
+                    f(0) = xc_derx;
+                    f(1) = xc_dery;
 
+                    DNekMat J(2, 2);
+                    J(0, 0) = xc_derxx;
+                    J(0, 1) = xc_derxy;
+                    J(1, 0) = xc_deryx;
+                    J(1, 1) = xc_deryy;
+                    J.Invert();
+
+                    DNekVec xiVec(xi.num_elements(), xi,
+                                  eWrapper);
+                    DNekVec xi_prevVec(xi_prev.num_elements(), xi_prev,
+                                       eWrapper);
+
+                    xiVec = xi_prevVec - (J * f);
+
+                    xi[0] = xiVec(0);
+                    xi[1] = xiVec(1);
+
+                    //ClampLocCoords(xi, 0);
+
+                    if ((abs(xi[0] - xi_prev[0]) < 1e-10) && (abs(xi[1] - xi_prev[1]) < 1e-10))
+                    {
+                        values.insert(xc);
+                        break;
+                    }
+                }
+            }
+        }
     }
     //If not curved then can calculate min/max by looping over edges as segments
     else
