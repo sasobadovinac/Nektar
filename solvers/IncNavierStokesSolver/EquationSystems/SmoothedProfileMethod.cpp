@@ -380,10 +380,13 @@ namespace Nektar
         // Solve the Poisson equation
         m_pressureP->HelmSolve(Forcing, m_pressureP->UpdateCoeffs(),
                                NullFlagList, factors);
-        // Update node values from coefficients
-        m_pressureP->BwdTrans(m_pressureP->GetCoeffs(),
-                              m_pressureP->UpdatePhys());
 
+        // Update node values from coefficients only if not in homogeneous case
+        if (m_HomogeneousType == EquationSystem::eNotHomogeneous)
+        {
+            m_pressureP->BwdTrans(m_pressureP->GetCoeffs(),
+                                  m_pressureP->UpdatePhys());
+        }
         // DEBUG: AddPressureToOutflowBCs?
     }
 
