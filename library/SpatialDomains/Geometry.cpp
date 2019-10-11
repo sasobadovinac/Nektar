@@ -265,6 +265,7 @@ bool Geometry::v_ContainsPoint(const Array<OneD, const NekDouble> &gloCoord,
 
 bool Geometry::v_FindRobustBBoxCoords(int coordDir, std::pair<NekDouble, NekDouble> &minMax)
 {
+    boost::ignore_unused(minMax, coordDir);
     NEKERROR(ErrorUtil::efatal,
              "This function has not been defined for this geometry");
     return false;

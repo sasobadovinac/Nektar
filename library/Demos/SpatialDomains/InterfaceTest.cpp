@@ -19,7 +19,7 @@ int main(int argc, char *argv[])
     for (int i = 0; i < graph->GetNumElements(); ++i)
     {
         auto quad = graph->GetAllQuadGeoms()[i];
-        auto bbox = quad->GetBoundingBox(false);
+        auto bbox = quad->GetBoundingBox(true);
         cout << "Min X, Min Y, Min Z, Max X, Max Y, Max Z" << endl;
         cout << "Global ID: " << quad->GetGlobalID() << endl;
         cout << bbox.at(0) << endl;
