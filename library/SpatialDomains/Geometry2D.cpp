@@ -175,14 +175,14 @@ void Geometry2D::NewtonIterationForLocCoord(
     }
 }
 
-bool Geometry2D::v_FindRobustBBoxCoords(int coordDir, std::pair<NekDouble, NekDouble> &minMax)
+bool Geometry2D::v_FindRobustBBoxCoords(int coordDir,
+                                        std::pair<NekDouble, NekDouble> &minMax)
 {
     std::unordered_set<NekDouble> values;
 
     const int nq = m_xmap->GetTotPoints();
-    Array<OneD, NekDouble> x(nq, 0.0), y(nq, 0.0), xder(nq, 0.0),
-            yder(nq, 0.0), xder2(nq, 0.0), yder2(nq, 0.0),
-            xdery(nq, 0.0), yderx(nq, 0.0);
+    Array<OneD, NekDouble> x(nq, 0.0), y(nq, 0.0), xder(nq, 0.0), yder(nq, 0.0),
+                xder2(nq, 0.0), yder2(nq, 0.0), xdery(nq, 0.0), yderx(nq, 0.0);
 
     //Points to sample for Newton-Raphson solver
     const int n = 5;
@@ -210,17 +210,14 @@ bool Geometry2D::v_FindRobustBBoxCoords(int coordDir, std::pair<NekDouble, NekDo
                 NekDouble xc_derxy = m_xmap->PhysEvaluate(xi, xdery);
                 NekDouble xc_deryx = m_xmap->PhysEvaluate(xi, yderx);
 
-                std::cout << "Coord dir: " << coordDir << "| Iteration: " << k << " | Value found: " << xc << " at (" << xi[0] << ", " << xi[1] << ")";
-                std::cout << " | xc_derx: " << xc_derx << "| xc_dery: " << xc_dery << " | xc_derxx: " << xc_derxx << " | xc_deryy: " << xc_deryy << " | xc_derxy: " << xc_derxy << " | xc_deryx: " << xc_deryx << std::endl;
-
-                //Create Jac using NekMatrix, invert and multiply with {xc_derx, xc_dery}
-                //i.e. xi = xi_prev - J^-1 * [xc_derx, xc_dery]
+                //Newton's method for 2 variables
+                // i.e. xi = xi_prev - J^-1 * [xc_derx, xc_dery]
                 DNekVec f(2);
                 f(0) = xc_derx;
                 f(1) = xc_dery;
 
                 DNekMat J(2, 2);
-                NekDouble det =  1 / (xc_derxx * xc_deryy - xc_derxy * xc_deryx);
+                NekDouble det =  1/(xc_derxx * xc_deryy - xc_derxy * xc_deryx);
                 J(0, 0) =  det * xc_deryy;
                 J(0, 1) =  det * -xc_derxy;
                 J(1, 0) =  det * -xc_deryx;
@@ -236,7 +233,8 @@ bool Geometry2D::v_FindRobustBBoxCoords(int coordDir, std::pair<NekDouble, NekDo
 
                 ClampLocCoords(xi, 0);
 
-                if ((abs(xi[0] - xi_prevVec[0]) < 1e-10) && (abs(xi[1] - xi_prevVec[1]) < 1e-10))
+                if ((abs(xi[0] - xi_prevVec[0]) < 1e-10)
+                    && (abs(xi[1] - xi_prevVec[1]) < 1e-10))
                 {
                     values.insert(xc);
                     break;
@@ -245,7 +243,8 @@ bool Geometry2D::v_FindRobustBBoxCoords(int coordDir, std::pair<NekDouble, NekDo
         }
     }
 
-    //If 2D newton failed then resort to checking the edges for min/max values
+    //If 2D newton failed then resort to checking the edges for min/max values,
+    //because there is no curvature in that coordinate direction.
     if(values.empty())
     {
         for (int edgeID = 0; edgeID < GetNumEdges(); ++edgeID)
@@ -265,7 +264,8 @@ bool Geometry2D::v_FindRobustBBoxCoords(int coordDir, std::pair<NekDouble, NekDo
     }
     else
     {
-        const auto res = std::minmax_element(std::begin(values), std::end(values));
+        const auto res = std::minmax_element(std::begin(values),
+                std::end(values));
         minMax.first = *res.first;
         minMax.second = *res.second;
         return true;
