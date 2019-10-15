@@ -99,6 +99,9 @@ protected:
                                     Array<OneD, NekDouble> &Lcoords,
                                     NekDouble &resid);
 
+    virtual bool v_FindRobustBBoxCoords(int coordDir, std::pair<NekDouble, NekDouble> &minMax);
+
+
     virtual void v_FillGeom();
     virtual NekDouble v_GetCoord(const int i,
                                  const Array<OneD, const NekDouble> &Lcoord);

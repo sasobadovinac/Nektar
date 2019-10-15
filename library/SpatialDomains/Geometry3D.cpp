@@ -224,6 +224,35 @@ void Geometry3D::NewtonIterationForLocCoord(
     }
 }
 
+bool Geometry3D::v_FindRobustBBoxCoords(int coordDir,
+                                        std::pair<NekDouble, NekDouble> &minMax)
+{
+    std::unordered_set<NekDouble> values;
+
+    for (int faceID = 0; faceID < GetNumFaces(); ++faceID)
+    {
+        std::pair<NekDouble, NekDouble> minMax;
+        if (GetFace(faceID)->FindRobustBBoxCoords(coordDir, minMax))
+        {
+            values.insert(minMax.first);
+            values.insert(minMax.second);
+        }
+    }
+
+    if(values.empty())
+    {
+        return false;
+    }
+    else
+    {
+        const auto res = std::minmax_element(std::begin(values),
+                                             std::end(values));
+        minMax.first = *res.first;
+        minMax.second = *res.second;
+        return true;
+    }
+}
+
 /**
  * @brief Put all quadrature information into face/edge structure and
  * backward transform.
