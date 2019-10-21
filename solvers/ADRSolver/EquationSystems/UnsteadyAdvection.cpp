@@ -186,16 +186,10 @@ namespace Nektar
         {
             m_fields[0]->ExtractTracePhys(m_velocity[i], tmp);
 
+            //Hack: force velocity in correct direction for mortars
             for (auto &z : tmp)
             {
-                if (i == 0)
-                {
-                    z = 1;
-                }
-                else
-                {
-                    z = 0;
-                }
+                z = tmp[0];
             }
 
             Vmath::Vvtvp(nTracePts,
