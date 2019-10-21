@@ -1865,19 +1865,19 @@ void DisContField2D::v_AddTraceIntegral(const Array<OneD, const NekDouble> &Fn,
                         }
 
                         ASSERTL0(found, "Couldn't interpolate from mortar to left.");
-                        std::cout << "  x coord: " <<  xc[i] << " | y coord: " << yc[i] << " | mortar ID: " << foundId << " | local point:  " << foundPoint << " | fn value: " << mortarFnOut[i] << std:: endl;
+                        std::cout << "      L INTERP | x coord: " <<  xc[i] << " | y coord: " << yc[i] << " | fn value: " << mortarFnOut[i] << std::endl;
                     }
 
                     (*m_exp)[n]->AddEdgeNormBoundaryInt(e, elmtToTrace[n][e], mortarFnOut, e_outarray = outarray + offset);
 
-                    /*std::vector<int> mortarIds = m_leftEdgeToMortarMap[element->GetEid(iterLeft->second)];
+                    //std::vector<int> mortarIds = m_leftEdgeToMortarMap[element->GetEid(iterLeft->second)];
                     Array<OneD, NekDouble> tmpSum(elmtToTrace[n][e]->GetTotPoints(), 0.0);
                     for (auto mortarId : mortarIds)
                     {
                         int traceLoc = m_mortarOffset + mortarId;
                         t_offset = m_trace->GetPhys_Offset(traceLoc);
                         auto traceExp = m_trace->GetExp(traceLoc);
-                        std::cout << "  MORTAR  " << mortarId << " t_offset = " << t_offset << std::endl;
+                        //std::cout << "  MORTAR  " << mortarId << " t_offset = " << t_offset << std::endl;
 
                         Array<OneD, NekDouble> mortarFn(traceExp->GetNcoeffs());
                         Array<OneD, NekDouble> mortarFnOut(traceExp->GetTotPoints());
@@ -1890,9 +1890,14 @@ void DisContField2D::v_AddTraceIntegral(const Array<OneD, const NekDouble> &Fn,
                         DNekVec mortarProjVec = m_MInvSTLeft[traceLoc] * mortarFnVec;
                         traceExp->BwdTrans(mortarProjVec.GetPtr(), mortarFnOut);
 
-                        (*m_exp)[n]->AddEdgeNormBoundaryInt(
-                            e, elmtToTrace[n][e], mortarFnOut, e_outarray = outarray + offset);
-                    }*/
+                        traceExp->GetCoords(xc, yc);
+                        for (int y = 0; y < nq; ++y)
+                        {
+                            std::cout << "      L MATRIX | x coord: " <<  xc[y] << " | y coord: " << yc[y] << " | fn value: " << mortarFnOut[y] << std:: endl;
+                        }
+
+                        /*(*m_exp)[n]->AddEdgeNormBoundaryInt(e, elmtToTrace[n][e], mortarFnOut, e_outarray = outarray + offset);*/
+                    }
 
                 }
                 else if (iterRight != m_interfaceElementRight.end() && iterRight->second == e)
@@ -1940,9 +1945,9 @@ void DisContField2D::v_AddTraceIntegral(const Array<OneD, const NekDouble> &Fn,
 
 
                         ASSERTL0(found, "Couldn't interpolate from mortar to right.");
-                        std::cout << "  x coord: " <<  xc[i] << " | y coord: " << yc[i] << " | mortar ID: " << foundId << " | local point:  " << foundPoint << " | fn value: " << mortarFnOut[i] << std:: endl;
+                        std::cout << "      R INTERP | coord: " <<  xc[i] << " | y coord: " << yc[i] << " | fn value: " << mortarFnOut[i] << std::endl;
                     }
-                    /*std::vector<int> mortarIds = m_rightEdgeToMortarMap[element->GetEid(iterRight->second)];
+                    //std::vector<int> mortarIds = m_rightEdgeToMortarMap[element->GetEid(iterRight->second)];
                     for (auto mortarId : mortarIds)
                     {
                         int traceLoc = m_mortarOffset + mortarId;
@@ -1961,10 +1966,10 @@ void DisContField2D::v_AddTraceIntegral(const Array<OneD, const NekDouble> &Fn,
                         Array<OneD, NekDouble> xc(nq), yc(nq);
                         traceExp->GetCoords(xc, yc);
 
-                        for (int q = 0; q < nq; ++q)
+                        /*for (int q = 0; q < nq; ++q)
                         {
                             std::cout << xc[q] << " " << yc[q] << " " << Fn[t_offset + q] << std::endl;
-                        }
+                        }*/
 
                         DNekVec mortarFnVec(traceExp->GetNcoeffs(), mortarFn, eWrapper);
                         DNekVec mortarProjVec = m_MInvSTRight[traceLoc] * mortarFnVec;
@@ -1972,17 +1977,24 @@ void DisContField2D::v_AddTraceIntegral(const Array<OneD, const NekDouble> &Fn,
                         traceExp->BwdTrans(mortarProjVec.GetPtr(), mortarFnOut);
 
 
-                        NekDouble err = 0.0;
+                        /*NekDouble err = 0.0;
                         for (int q = 0; q < mortarFnOut.num_elements(); ++q)
                         {
                             err += std::abs(mortarFnOut[q] - Fn[t_offset + q]);
                         }
-                        std::cout << err << std::endl;
+                        std::cout << err << std::endl;*/
 
                         std::reverse(mortarFnOut.begin(), mortarFnOut.end());
 
-                        (*m_exp)[n]->AddEdgeNormBoundaryInt(e, elmtToTrace[n][e], mortarFnOut, e_outarray = outarray + offset);
-                    }*/
+                        traceExp->GetCoords(xc, yc);
+                        std::reverse(xc.begin(), xc.end());
+                        std::reverse(yc.begin(), yc.end());
+                        for (int y = 0; y < nq; ++y)
+                        {
+                            std::cout << "      R MATRIX | coord: " <<  xc[y] << " | y coord: " << yc[y] << " | fn value: " << mortarFnOut[y] << std:: endl;
+                        }
+                        //(*m_exp)[n]->AddEdgeNormBoundaryInt(e, elmtToTrace[n][e], mortarFnOut, e_outarray = outarray + offset);
+                    }
                 }
                 else
                 {
@@ -1993,6 +2005,8 @@ void DisContField2D::v_AddTraceIntegral(const Array<OneD, const NekDouble> &Fn,
             }
         }
     }
+
+    std::cout << "\b-----------------------------------------------------------------------" << std::endl;
 }
 
 /**
