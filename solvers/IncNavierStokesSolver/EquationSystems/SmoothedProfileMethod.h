@@ -102,25 +102,8 @@ namespace Nektar
         bool m_timeDependentPhi;
         /// Flag indicating that phi was defined in a file
         bool m_filePhi;
-        /// Scaling coefficient used in the definition of 'm_phi' from a file
-        NekDouble m_scaleCoeff;
         /// Position of "AeroForcesSPM" filter in 'm_session->GetFilters()'
         int m_forcesFilter;
-        /// Object representing a 3D triangle
-        struct triangle
-        {
-            Array<OneD, NekDouble> normal = Array<OneD, NekDouble>(3);
-            Array<OneD, NekDouble> v0 = Array<OneD, NekDouble>(3);
-            Array<OneD, NekDouble> v1 = Array<OneD, NekDouble>(3);
-            Array<OneD, NekDouble> v2 = Array<OneD, NekDouble>(3);
-        };
-        /// STL file object
-        struct STLfile
-        {
-            std::string header;
-            unsigned int numTri;
-            Array<OneD, triangle> triangles;
-        };
 
         // Interface for 'v_SolveUnsteadyStokesSystem'
         virtual void v_SolveUnsteadyStokesSystem(
@@ -162,38 +145,6 @@ namespace Nektar
         TiXmlElement* GetFunctionHdl(std::string functionName);
         // Reads and set the values of Phi from an analyitic func. or a file
         void ReadPhi();
-        // Reads one vector from a binary STL file
-        Array<OneD, NekDouble> ReadVector(std::ifstream &in);
-        // Reads an STL file and returns an 'STLfile' struct
-        STLfile ReadSTL(std::string filename);
-        // Smoothing function
-        double PhiFunction(double dist, double coeff);
-        // Calculates the values of Phi in the nodes
-        void GetPhifromSTL(const STLfile &file);
-        // Checks if a ray hits a specific 3D triangle
-        bool CheckHit(const triangle &tri,
-                      const Array<OneD, NekDouble> &Origin,
-                      const Array<OneD, NekDouble> &Dvec,
-                      double &distance, double &u, double &v);
-        // Returns true if the point is inside the 3D STL object
-        bool IsInterior(const STLfile &file, const Array<OneD, NekDouble> &x);
-        // Shortest distance from a point to a 3D geometry
-        void FindShortestDist(const STLfile &file,
-                              const Array<OneD, NekDouble> &x,
-                              double &dist);
-        // Utility to find if a double equals zero
-        bool IsZero(double x);
-        // Utility to calculate the cross-product of two 3D vectors
-        Array<OneD, NekDouble> Cross(const Array<OneD, NekDouble> &v0,
-                                     const Array<OneD, NekDouble> &v1);
-        // Utility to calculate the distance between two points
-        double Distance2point(const Array<OneD, NekDouble> &v0,
-                              const Array<OneD, NekDouble> &v1);
-        // Utility to measure shortest distance to a segment
-        double Distance2edge(const Array<OneD, NekDouble> &x,
-                             const Array<OneD, NekDouble> &e1,
-                             const Array<OneD, NekDouble> &e2);
-
 
     private:
     };

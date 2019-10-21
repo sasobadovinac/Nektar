@@ -43,6 +43,7 @@ SET(FieldUtilsHeaders
     ProcessModules/ProcessNumModes.h
     ProcessModules/ProcessMean.h
     ProcessModules/ProcessMeanMode.h
+    ProcessModules/ProcessPhiFromFile.h
     ProcessModules/ProcessPointDataToFld.h
     ProcessModules/ProcessPrintFldNorms.h
     ProcessModules/ProcessRemoveField.h
@@ -102,6 +103,7 @@ SET(FieldUtilsSources
     ProcessModules/ProcessNumModes.cpp
     ProcessModules/ProcessMean.cpp
     ProcessModules/ProcessMeanMode.cpp
+    ProcessModules/ProcessPhiFromFile.cpp
     ProcessModules/ProcessPointDataToFld.cpp
     ProcessModules/ProcessPrintFldNorms.cpp
     ProcessModules/ProcessRemoveField.cpp    
