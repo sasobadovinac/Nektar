@@ -196,6 +196,9 @@ void ProcessPhiFromFile::GetPhifromSTL(const ProcessPhiFromFile::STLfile &file)
     int nDims = m_f->m_exp[0]->GetCoordim(0);
     int nVars = m_f->m_variables.size();
 
+    // Add new variable
+    m_f->m_variables.push_back("phi");
+
     // Number of homogeneous strips
     int nStrips;
     m_f->m_session->LoadParameter("Strip_Z", nStrips, 1);
@@ -211,7 +214,7 @@ void ProcessPhiFromFile::GetPhifromSTL(const ProcessPhiFromFile::STLfile &file)
         {
             coords[i] = Array<OneD, NekDouble>(nPts);
         }
-        m_f->m_exp[0]->GetCoords(coords[0], coords[1], coords[2]);
+        m_f->m_exp[s*nVars]->GetCoords(coords[0], coords[1], coords[2]);
 
         // Parallelisation is highly recommended here
         for (int i = 0; i < nPts; ++i)
@@ -243,7 +246,7 @@ void ProcessPhiFromFile::GetPhifromSTL(const ProcessPhiFromFile::STLfile &file)
 
         // Append Phi expansion to 'm_f'
         MultiRegions::ExpListSharedPtr Exp;
-        Exp = m_f->AppendExpList(m_f->m_numHomogeneousDir, "Phi");
+        Exp = m_f->AppendExpList(m_f->m_numHomogeneousDir);
         Vmath::Vcopy(nPts, phi, 1, Exp->UpdatePhys(), 1);
         Exp->FwdTrans(phi, Exp->UpdateCoeffs());
 
