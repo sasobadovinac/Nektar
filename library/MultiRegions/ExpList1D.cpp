@@ -680,18 +680,19 @@ namespace Nektar
 
             cout << endl << "Before mortar expansion list size: " << m_exp->size() << endl;
             m_nonMortars = m_exp->size();
-
             auto basisKey = locexp[0]->DetEdgeBasisKey(0);
             cout << "Basis type: " << LibUtilities::BasisTypeMap[basisKey.GetBasisType()] << endl;
             cout << "Number of modes: " << basisKey.GetNumModes() << endl;
             cout << "Points type: " << LibUtilities::kPointsTypeStr[basisKey.GetPointsType()] << endl;
             cout << "Number of points: " << basisKey.GetNumPoints() << endl;
 
+            //Loop over mortars and create trace element
+            //Also renumber mortar global ID to avoid repeated values
             for (auto &geom : mortars)
             {
                 seg = MemoryManager<LocalRegions::SegExp>
                 ::AllocateSharedPtr(basisKey, geom);
-                geom->SetGlobalID(elmtid);
+                geom->SetGlobalID(m_nonMortars + geom->GetGlobalID());
                 seg->SetElmtId(elmtid++);
                 (*m_exp).push_back(seg);
             }
@@ -1079,7 +1080,7 @@ namespace Nektar
             for (i = 0; i < m_nonMortars; ++i)
             {
                 LocalRegions::Expansion1DSharedPtr loc_exp = (*m_exp)[i]->as<LocalRegions::Expansion1D>();
-                
+
                 LocalRegions::Expansion2DSharedPtr loc_elmt =
                     loc_exp->GetLeftAdjacentElementExp();
 		
@@ -1087,7 +1088,7 @@ namespace Nektar
             
                 // Get the number of points and normals for this expansion.
                 e_npoints  = (*m_exp)[i]->GetNumPoints(0);
-                
+
                 locnormals = loc_elmt->GetEdgeNormal(edgeNumber);
 		int e_nmodes   = loc_exp->GetBasis(0)->GetNumModes();
                 int loc_nmodes = loc_elmt->GetBasis(0)->GetNumModes();

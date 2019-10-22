@@ -1466,9 +1466,9 @@ void DisContField2D::v_GetFwdBwdTracePhys(
             auto &w = m_trace->GetExp(0)->GetBasis(0)->GetW();
             auto &bdata = m_trace->GetExp(0)->GetBasis(0)->GetBdata();
 
-            NekDouble scaleFactorLeft =
+            m_scaleFactorLeft[i] =
                     std::abs(localCoordsLeft[0] - localCoordsLeft[1]) / 2;
-            NekDouble scaleFactorRight =
+            m_scaleFactorRight[i] =
                     std::abs(localCoordsRight[0] - localCoordsRight[1]) / 2;
             NekDouble shiftRight =
                     (localCoordsRight[0] + localCoordsRight[1]) / 2;
@@ -1478,8 +1478,8 @@ void DisContField2D::v_GetFwdBwdTracePhys(
             Array<OneD, NekDouble> mortarZLeft(nq), mortarZRight(nq);
             for (int j = 0; j < nq; ++j)
             {
-                mortarZLeft[j] = z[j] * scaleFactorLeft + shiftLeft;
-                mortarZRight[j] = z[j] * scaleFactorRight + shiftRight;
+                mortarZLeft[j] = z[j] * m_scaleFactorLeft[i] + shiftLeft;
+                mortarZRight[j] = z[j] * m_scaleFactorRight[i] + shiftRight;
             }
 
             Array<OneD, NekDouble> mortarBasisLeft(nq * np);
@@ -1549,24 +1549,12 @@ void DisContField2D::v_GetFwdBwdTracePhys(
         Array<OneD, NekDouble> tmpCoeffs(traceElLeft->GetNcoeffs());
         Array<OneD, NekDouble> tracePhys(nq);
 
-
-        // Left -> mortar Fwd
-        for (int j = 0; j < nq; ++j)
-        {
-            int off = m_trace->GetPhys_Offset(traceElLeft->GetElmtId());
-            tracePhys[j] = Fwd[off + j];
-        }
+        tracePhys = Fwd + m_trace->GetPhys_Offset(traceElLeft->GetElmtId());
         traceElLeft->FwdTrans(tracePhys, tmpCoeffs);
         DNekVec tmpCoeffVecLeft(tmpCoeffs.num_elements(), tmpCoeffs, eWrapper);
         DNekVec mortarEdgeSolLeft = m_MInvSLeft[mortarId] * tmpCoeffVecLeft;
 
-        // Hacky hack hack: Right -> mortar Bwd
-        for (int j = 0; j < nq; ++j)
-        {
-            int off = m_trace->GetPhys_Offset(traceElRight->GetElmtId());
-            tracePhys[j] = Bwd[off + nq - j - 1];
-        }
-
+        tracePhys = Bwd + m_trace->GetPhys_Offset(traceElRight->GetElmtId());
         traceElRight->FwdTrans(tracePhys, tmpCoeffs);
         DNekVec tmpCoeffVecRight(tmpCoeffs.num_elements(), tmpCoeffs, eWrapper);
         DNekVec mortarEdgeSolRight = m_MInvSRight[mortarId] * tmpCoeffVecRight;
@@ -1581,7 +1569,7 @@ void DisContField2D::v_GetFwdBwdTracePhys(
         for (int j = 0; j < nq; ++j)
         {
             Fwd[m_trace->GetPhys_Offset(mortarId) + j] = mortarEdgePhysLeft[j];
-            Bwd[m_trace->GetPhys_Offset(mortarId) + j] = mortarEdgePhysRight[j];
+            Bwd[m_trace->GetPhys_Offset(mortarId) + j] = mortarEdgePhysRight[nq - j - 1];
         }
     }
 
@@ -1792,7 +1780,7 @@ void DisContField2D::v_AddTraceIntegral(const Array<OneD, const NekDouble> &Fn,
                         m_trace->GetExp(traceLoc)->FwdTrans(Fn + t_offset, mortarFn);
                         DNekVec mortarFnVec(traceExp->GetNcoeffs(), mortarFn, eWrapper);
                         DNekVec mortarProjVec = m_MInvSTLeft[traceLoc] *
-                                mortarFnVec / mortarIds.size();
+                                mortarFnVec * m_scaleFactorLeft[mortarId];
                         traceExp->BwdTrans(mortarProjVec.GetPtr(), mortarFnOut);
 
                         (*m_exp)[n]->AddEdgeNormBoundaryInt(
@@ -1817,7 +1805,7 @@ void DisContField2D::v_AddTraceIntegral(const Array<OneD, const NekDouble> &Fn,
                         m_trace->GetExp(traceLoc)->FwdTrans(Fn + t_offset, mortarFn);
                         DNekVec mortarFnVec(traceExp->GetNcoeffs(), mortarFn, eWrapper);
                         DNekVec mortarProjVec = m_MInvSTRight[traceLoc] *
-                                mortarFnVec / mortarIds.size();
+                                mortarFnVec * m_scaleFactorRight[mortarId];
                         traceExp->BwdTrans(mortarProjVec.GetPtr(), mortarFnOut);
 
                         std::reverse(mortarFnOut.begin(), mortarFnOut.end());
