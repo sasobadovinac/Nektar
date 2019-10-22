@@ -104,7 +104,9 @@ protected:
     STLfile ReadSTL(std::string filename);
     // Smoothing function
     double PhiFunction(double dist, double coeff);
-    // Calculates the values of Phi in the nodes
+    // Calculates Phi from 'ShapeFunction' in the session file
+    void GetPhifromSession();
+    // Calculates Phi from an external STL binary file
     void GetPhifromSTL(const STLfile &file);
     // Checks if a ray hits a specific 3D triangle
     bool CheckHit(const triangle &tri,

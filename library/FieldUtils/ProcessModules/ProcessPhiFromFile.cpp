@@ -35,6 +35,7 @@
 
 #include "ProcessPhiFromFile.h"
 #include <LibUtilities/BasicUtils/SharedArray.hpp>
+#include <LibUtilities/BasicUtils/SessionReader.h>
 
 using namespace Nektar;
 using namespace std;
@@ -78,10 +79,7 @@ void ProcessPhiFromFile::Process(po::variables_map &vm)
     // Check if required params are defined
     ASSERTL0(m_f->m_graph, "A session file file must be provided before the "
                            "STL file.");
-    
-    ASSERTL0(m_config["file"].as<string>().compare("NotSet") != 0,
-             "Need to specify file=file.stl");
-    
+
     ASSERTL0(m_config["scale"].as<string>().compare("NotSet") != 0,
              "Need to specify a scale coefficient, scale=value");
 
@@ -96,17 +94,25 @@ void ProcessPhiFromFile::Process(po::variables_map &vm)
     m_rng   = mt19937(dev());
     m_uDist = uniform_real_distribution<NekDouble>(-1.0, 1.0);
     
-    // Read STL file and append Phi values to the existing expansions
-    STLfile phiFile = ReadSTL(m_config["file"].as<string>());
-    GetPhifromSTL(phiFile);
+    // Read Phi function from the session file...
+    if (m_config["file"].as<string>().compare("NotSet") == 0)
+    {
+        GetPhifromSession();
+    }
+    // ...or Read STL file and append Phi values to the existing expansions
+    else
+    {
+        STLfile phiFile = ReadSTL(m_config["file"].as<string>());
+        GetPhifromSTL(phiFile);
+    }
 }
 
 /**
  * @brief Read one 3D vector from a STL file, starting from the next line
  * of the input 'ifstream'. Numbers in ifstream are defined as 'float'
  * 
- * @param in 
- * @return Array<OneD, NekDouble> 
+ * @param in
+ * @return Array<OneD, NekDouble>
  */
 Array<OneD, NekDouble> ProcessPhiFromFile::ReadVector(ifstream &in)
 {
@@ -127,8 +133,8 @@ Array<OneD, NekDouble> ProcessPhiFromFile::ReadVector(ifstream &in)
  * @brief Read an STL binary file and returns a struct of type 'STLfile'
  * containing the parsed data
  * 
- * @param filename 
- * @return ProcessPhiFromFile::STLfile 
+ * @param filename
+ * @return ProcessPhiFromFile::STLfile
  */
 ProcessPhiFromFile::STLfile ProcessPhiFromFile::ReadSTL(string filename)
 {
@@ -179,9 +185,9 @@ ProcessPhiFromFile::STLfile ProcessPhiFromFile::ReadSTL(string filename)
  * @brief Smoothing function for the SPM method given a distance value
  * and a scaling coefficient
  * 
- * @param dist 
- * @param coeff 
- * @return double 
+ * @param dist
+ * @param coeff
+ * @return double
  */
 double ProcessPhiFromFile::PhiFunction(double dist, double coeff)
 {
@@ -189,16 +195,61 @@ double ProcessPhiFromFile::PhiFunction(double dist, double coeff)
 }
 
 /**
+ * @brief 
+ * 
+ */
+void ProcessPhiFromFile::GetPhifromSession()
+{
+    // Check that 'ShapeFunction' appears in the session file
+    ASSERTL0(m_f->m_session->DefinesFunction("ShapeFunction"),
+             "If file=file.stl is not supplied as an argument, a "
+             "'ShapeFunction' block must be provided in the session "
+             "file.")
+
+    // Phi function in session file
+    LibUtilities::EquationSharedPtr phiFunction =
+        m_f->m_session->GetFunction("ShapeFunction", "Phi");
+
+    // Get info about the domain
+    int nPts  = m_f->m_exp[0]->GetNpoints();
+    int nVars = m_f->m_variables.size();
+    int nStrips;
+    m_f->m_session->LoadParameter("Strip_Z", nStrips, 1);
+
+    // Add new variable
+    m_f->m_variables.push_back("phi");
+
+    for (int s = 0; s < nStrips; ++s)
+    {
+        // Get current coords of the point
+        Array<OneD, Array<OneD, NekDouble> > coords(3);
+        for (int i = 0; i < 3; ++i)
+        {
+            coords[i] = Array<OneD, NekDouble>(nPts, 0.0);
+        }
+        m_f->m_exp[s*nVars]->GetCoords(coords[0], coords[1], coords[2]);
+
+        // Append Phi expansion to 'm_f'
+        MultiRegions::ExpListSharedPtr Exp;
+        Exp = m_f->AppendExpList(m_f->m_numHomogeneousDir);
+        phiFunction->Evaluate(coords[0], coords[1], coords[2],
+                              Exp->UpdatePhys());
+        Exp->FwdTrans_IterPerExp(Exp->GetPhys(), Exp->UpdateCoeffs());
+
+        auto it = m_f->m_exp.begin() + s * (nVars + 1) + nVars;
+        m_f->m_exp.insert(it, Exp);
+    }
+}
+
+/**
  * @brief Assigns to 'm_phi' the corresponding values of Phi
  * 
- * @param file 
- * @param phi 
+ * @param file
  */
 void ProcessPhiFromFile::GetPhifromSTL(const ProcessPhiFromFile::STLfile &file)
 {
     // Get info about the domain
     int nPts  = m_f->m_exp[0]->GetNpoints();
-    int nDims = m_f->m_exp[0]->GetCoordim(0);
     int nVars = m_f->m_variables.size();
 
     // Add new variable
@@ -217,7 +268,7 @@ void ProcessPhiFromFile::GetPhifromSTL(const ProcessPhiFromFile::STLfile &file)
         Array<OneD, Array<OneD, NekDouble> > coords(3);
         for (int i = 0; i < 3; ++i)
         {
-            coords[i] = Array<OneD, NekDouble>(nPts);
+            coords[i] = Array<OneD, NekDouble>(nPts, 0.0);
         }
         m_f->m_exp[s*nVars]->GetCoords(coords[0], coords[1], coords[2]);
 
@@ -225,16 +276,10 @@ void ProcessPhiFromFile::GetPhifromSTL(const ProcessPhiFromFile::STLfile &file)
         for (int i = 0; i < nPts; ++i)
         {
             // Get coordinates of each point
-            Array<OneD, NekDouble> tmpCoords(3, 0.0);
-            switch (nDims)
-            {
-            case 3:
-                tmpCoords[2] = coords[2][i];
-            case 2:
-                tmpCoords[1] = coords[1][i];
-            case 1:
-                tmpCoords[0] = coords[0][i];
-            }
+            Array<OneD, NekDouble> tmpCoords(3);
+            tmpCoords[2] = coords[2][i];
+            tmpCoords[1] = coords[1][i];
+            tmpCoords[0] = coords[0][i];
 
             // Find the shortest distance to the body(ies)
             double dist;
@@ -253,7 +298,7 @@ void ProcessPhiFromFile::GetPhifromSTL(const ProcessPhiFromFile::STLfile &file)
         MultiRegions::ExpListSharedPtr Exp;
         Exp = m_f->AppendExpList(m_f->m_numHomogeneousDir);
         Vmath::Vcopy(nPts, phi, 1, Exp->UpdatePhys(), 1);
-        Exp->FwdTrans(phi, Exp->UpdateCoeffs());
+        Exp->FwdTrans_IterPerExp(phi, Exp->UpdateCoeffs());
 
         auto it = m_f->m_exp.begin() + s * (nVars + 1) + nVars;
         m_f->m_exp.insert(it, Exp);
@@ -266,14 +311,14 @@ void ProcessPhiFromFile::GetPhifromSTL(const ProcessPhiFromFile::STLfile &file)
  * defined by 'tri' in any case. A negative distance means that the hit
  * happend in the direction oposite that of the ray
  * 
- * @param tri 
- * @param Origin 
- * @param Dvec 
- * @param distance 
- * @param u 
- * @param v 
- * @return true 
- * @return false 
+ * @param tri
+ * @param Origin
+ * @param Dvec
+ * @param distance
+ * @param u
+ * @param v
+ * @return true
+ * @return false
  */
 bool ProcessPhiFromFile::CheckHit(const ProcessPhiFromFile::triangle &tri,
                                   const Array<OneD, NekDouble> &Origin,
@@ -332,10 +377,10 @@ bool ProcessPhiFromFile::CheckHit(const ProcessPhiFromFile::triangle &tri,
  * surface will go through an odd number of surfaces, no matter how complex
  * the geometry is
  * 
- * @param file 
- * @param x 
- * @return true 
- * @return false 
+ * @param file
+ * @param x
+ * @return true
+ * @return false
  */
 bool ProcessPhiFromFile::IsInterior(const STLfile &file,
                                     const Array<OneD, NekDouble> &x)
@@ -379,6 +424,14 @@ bool ProcessPhiFromFile::IsInterior(const STLfile &file,
     }
 }
 
+/**
+ * @brief Calculates the shortest distance from a point \f[x\f] to the closed
+ * body contained in the STL file
+ * 
+ * @param file
+ * @param x
+ * @param dist
+ */
 void ProcessPhiFromFile::FindShortestDist(
                                 const ProcessPhiFromFile::STLfile &file,
                                 const Array<OneD, NekDouble> &x,
@@ -423,9 +476,9 @@ void ProcessPhiFromFile::FindShortestDist(
  * @brief Returns true if the argument is CLOSE to zero. Tuned for
  * the STL parsing module, do not use for other purposes
  * 
- * @param x 
- * @return true 
- * @return false 
+ * @param x
+ * @return true
+ * @return false
  */
 bool ProcessPhiFromFile::IsZero(double x)
 {
@@ -449,9 +502,9 @@ Array<OneD, NekDouble> ProcessPhiFromFile::Cross(
 /**
  * @brief Calculates the distance between two n-dimensional points
  * 
- * @param v0 
- * @param v1 
- * @return double 
+ * @param v0
+ * @param v1
+ * @return double
  */
 double ProcessPhiFromFile::Distance2point(
                                 const Array<OneD, NekDouble> &v0,
@@ -473,10 +526,10 @@ double ProcessPhiFromFile::Distance2point(
  * defined by the points 'e1' and 'e2'. Note that this distance may be
  * equal to that to one of the end points
  * 
- * @param x 
- * @param e1 
- * @param e2 
- * @return double 
+ * @param x
+ * @param e1
+ * @param e2
+ * @return double
  */
 double ProcessPhiFromFile::Distance2edge(
                                 const Array<OneD, NekDouble> &x,
