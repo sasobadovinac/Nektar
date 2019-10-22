@@ -37,6 +37,7 @@
 #define FIELDUTILS_PROCESSPHIFROMFILE
 
 #include "../Module.h"
+#include <random>
 
 namespace Nektar
 {
@@ -77,6 +78,10 @@ public:
     }
 
 protected:
+    /// Random number generator
+    std::mt19937 m_rng;
+    /// Uniform distribution mapper
+    std::uniform_real_distribution<NekDouble> m_uDist;
     /// Object representing a 3D triangle
     struct triangle
     {

@@ -90,6 +90,11 @@ void ProcessPhiFromFile::Process(po::variables_map &vm)
     {
         return;
     }
+
+    // Setup the random number generator
+    std::random_device dev;
+    m_rng   = mt19937(dev());
+    m_uDist = uniform_real_distribution<NekDouble>(-1.0, 1.0);
     
     // Read STL file and append Phi values to the existing expansions
     STLfile phiFile = ReadSTL(m_config["file"].as<string>());
@@ -270,11 +275,11 @@ void ProcessPhiFromFile::GetPhifromSTL(const ProcessPhiFromFile::STLfile &file)
  * @return true 
  * @return false 
  */
-bool ProcessPhiFromFile::CheckHit(
-                                const ProcessPhiFromFile::triangle &tri,
-                                const Array<OneD, NekDouble> &Origin,
-                                const Array<OneD, NekDouble> &Dvec,
-                                double &distance, double &u, double &v)
+bool ProcessPhiFromFile::CheckHit(const ProcessPhiFromFile::triangle &tri,
+                                  const Array<OneD, NekDouble> &Origin,
+                                  const Array<OneD, NekDouble> &Dvec,
+                                  double &distance, double &u, double &v)
+                                
 {
     // Edge vectors
     Array<OneD, NekDouble> E1(3);
@@ -333,13 +338,13 @@ bool ProcessPhiFromFile::CheckHit(
  * @return false 
  */
 bool ProcessPhiFromFile::IsInterior(const STLfile &file,
-                                        const Array<OneD, NekDouble> &x)
+                                    const Array<OneD, NekDouble> &x)
 {
-    // Direction does not matter
+    // Choose a random direction
     Array<OneD, NekDouble> dir(3);
-    dir[0]   = 1.0;
-    dir[1]   = 0.0;
-    dir[2]   = 0.0;
+    dir[0]   = m_uDist(m_rng);
+    dir[1]   = m_uDist(m_rng);
+    dir[2]   = sqrt(1.0 - dir[0]*dir[0] - dir[1]*dir[1]);
     int hits = 0;
 
     // Stores the distances of the hits with each surface
