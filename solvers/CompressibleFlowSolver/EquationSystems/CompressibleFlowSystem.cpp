@@ -372,6 +372,7 @@ namespace Nektar
 
         if (m_shockCaptureType != "Off")
         {
+            m_artificialDiffusion->SetElmtHP(GetElmtMinHP());
             m_artificialDiffusion->DoArtificialDiffusion(inarray, outarray);
         }
     }
@@ -526,7 +527,7 @@ namespace Nektar
                         flux_interp[i+1][i], 1);
         }
 
-        // Galerkin project solution back to origianl space
+        // Galerkin project solution back to original space
         for (i = 0; i < m_spacedim; ++i)
         {
             for (j = 0; j < m_spacedim; ++j)
@@ -545,7 +546,7 @@ namespace Nektar
             Vmath::Vmul(nq, velocity[j], 1, pressure, 1,
                         flux_interp[m_spacedim+1][j], 1);
 
-            // Galerkin project solution back to origianl space
+            // Galerkin project solution back to original space
             m_fields[0]->PhysGalerkinProjection1DScaled(
                 OneDptscale,
                 flux_interp[m_spacedim+1][j],
@@ -913,6 +914,9 @@ namespace Nektar
 
             if (m_artificialDiffusion)
             {
+                // Get min h/p
+                m_artificialDiffusion->SetElmtHP(GetElmtMinHP());
+
                 Array<OneD, NekDouble> sensorFwd(nCoeffs);
                 // reuse pressure
                 m_artificialDiffusion->GetArtificialViscosity(tmp, pressure);
@@ -953,4 +957,67 @@ namespace Nektar
     {
         m_varConv->GetVelocityVector(physfield, velocity);
     }
+
+    /**
+     * @brief Compute an estimate of minimum h/p
+     * for each element of the expansion.
+     */
+    Array<OneD, NekDouble>  CompressibleFlowSystem::GetElmtMinHP(void)
+    {
+        int nElements               = m_fields[0]->GetExpSize();
+        Array<OneD, NekDouble> hOverP(nElements, 1.0);
+
+        // Determine h/p scaling
+        Array<OneD, int> pOrderElmt = m_fields[0]->EvalBasisNumModesMaxPerExp();
+        for (int e = 0; e < nElements; e++)
+        {
+            NekDouble h = 1.0e+10;
+            switch(m_expdim)
+            {
+                case 3:
+                {
+                    LocalRegions::Expansion3DSharedPtr exp3D;
+                    exp3D = m_fields[0]->GetExp(e)->as<LocalRegions::Expansion3D>();
+                    for(int i = 0; i < exp3D->GetNedges(); ++i)
+                    {
+                        h = min(h, exp3D->GetGeom3D()->GetEdge(i)->GetVertex(0)->
+                            dist(*(exp3D->GetGeom3D()->GetEdge(i)->GetVertex(1))));
+                    }
+                break;
+                }
+
+                case 2:
+                {
+                    LocalRegions::Expansion2DSharedPtr exp2D;
+                    exp2D = m_fields[0]->GetExp(e)->as<LocalRegions::Expansion2D>();
+                    for(int i = 0; i < exp2D->GetNedges(); ++i)
+                    {
+                        h = min(h, exp2D->GetGeom2D()->GetEdge(i)->GetVertex(0)->
+                            dist(*(exp2D->GetGeom2D()->GetEdge(i)->GetVertex(1))));
+                    }
+                break;
+                }
+                case 1:
+                {
+                    LocalRegions::Expansion1DSharedPtr exp1D;
+                    exp1D = m_fields[0]->GetExp(e)->as<LocalRegions::Expansion1D>();
+
+                    h = min(h, exp1D->GetGeom1D()->GetVertex(0)->
+                        dist(*(exp1D->GetGeom1D()->GetVertex(1))));
+
+                break;
+                }
+                default:
+                {
+                    ASSERTL0(false,"Dimension out of bound.")
+                }
+            }
+
+            // Determine h/p scaling
+            hOverP[e] = h/max(pOrderElmt[e]-1,1);
+
+        }
+        return hOverP;
+    }
+
 }
