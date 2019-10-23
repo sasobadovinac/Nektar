@@ -4,7 +4,7 @@ Changelog
 v5.0.0
 ------
 **Library**
-- Added passive scalar transport equations to Compressible Flow Solver.
+- Added passive scalar transport equations to Compressible Flow Solver (!1090)
 - Added in sum factorisation version for pyramid expansions and orthogonal
   expansion in pyramids (!750)
 - Added detection of 'abort' file to cleanly terminate simulation early (!772)
