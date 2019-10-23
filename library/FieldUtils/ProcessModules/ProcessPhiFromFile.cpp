@@ -425,7 +425,6 @@ bool ProcessPhiFromFile::IsInterior(const STLfile &file,
         // Solid angle
         solidAngle += 2.0*atan2(num, den);
     }
-    cout << x[0] << '\t' << x[1] << '\t' << x[2] << '\t' << solidAngle << '\n';
 
     // Low values of 'solidAngle' correspond to an EXTERIOR point
     return (solidAngle > 0.1);
