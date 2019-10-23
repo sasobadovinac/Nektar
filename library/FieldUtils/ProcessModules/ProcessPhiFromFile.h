@@ -85,8 +85,6 @@ protected:
         Array<OneD, NekDouble> v0 = Array<OneD, NekDouble>(3);
         Array<OneD, NekDouble> v1 = Array<OneD, NekDouble>(3);
         Array<OneD, NekDouble> v2 = Array<OneD, NekDouble>(3);
-        Array<OneD, NekDouble> centre = Array<OneD, NekDouble>(3);
-        NekDouble surf;
     };
     /// STL file object
     struct STLfile

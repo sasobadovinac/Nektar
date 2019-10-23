@@ -88,7 +88,7 @@ void ProcessPhiFromFile::Process(po::variables_map &vm)
     {
         return;
     }
-    
+
     // Read Phi function from the session file...
     if (m_config["file"].as<string>().compare("NotSet") == 0)
     {
@@ -164,23 +164,6 @@ ProcessPhiFromFile::STLfile ProcessPhiFromFile::ReadSTL(string filename)
         tmpTri.v0 = ReadVector(fileStl);
         tmpTri.v1 = ReadVector(fileStl);
         tmpTri.v2 = ReadVector(fileStl);
-
-        // Calculate barycentre
-        for (int j = 0; j < 3; ++j)
-        {
-            tmpTri.centre[j] = tmpTri.v0[j]/3.0 +
-                               tmpTri.v1[j]/3.0 +
-                               tmpTri.v2[j]/3.0;
-        }
-
-        // Calculate surface
-        Array<OneD, NekDouble> side1(3);
-        Array<OneD, NekDouble> side2(3);
-        Vmath::Vsub(3, tmpTri.v1, 1, tmpTri.v0, 1, side1, 1);
-        Vmath::Vsub(3, tmpTri.v2, 1, tmpTri.v0, 1, side2, 1);
-        tmpTri.surf = 0.5*sqrt(
-                      Vmath::Dot(3, side1, side1)*Vmath::Dot(3, side2, side2) -
-                      Vmath::Dot(3, side1, side2)*Vmath::Dot(3, side1, side2));
         out.triangles[i] = tmpTri;
 
         // Dump triangle type
@@ -270,7 +253,7 @@ void ProcessPhiFromFile::GetPhifromSTL(const ProcessPhiFromFile::STLfile &file)
     // Number of homogeneous strips
     int nStrips;
     m_f->m_session->LoadParameter("Strip_Z", nStrips, 1);
-    
+
     for (int s = 0; s < nStrips; ++s)
     {
         // Append Phi expansion to 'm_f'
@@ -337,7 +320,6 @@ bool ProcessPhiFromFile::CheckHit(const ProcessPhiFromFile::triangle &tri,
                                   const Array<OneD, NekDouble> &Origin,
                                   const Array<OneD, NekDouble> &Dvec,
                                   double &distance, double &u, double &v)
-                                
 {
     // Edge vectors
     Array<OneD, NekDouble> E1(3);
@@ -421,13 +403,13 @@ bool ProcessPhiFromFile::IsInterior(const STLfile &file,
         NekDouble num = Det3(tmpMat);
         NekDouble den = v0mag*v1mag*v2mag + Vmath::Dot(3, v0, v1)*v2mag +
                     Vmath::Dot(3, v0, v2)*v1mag + Vmath::Dot(3, v1, v2)*v0mag;
-        
+
         // Solid angle
         solidAngle += 2.0*atan2(num, den);
     }
 
     // Low values of 'solidAngle' correspond to an EXTERIOR point
-    return (solidAngle > 0.1);
+    return (solidAngle > 2.0*M_PI);
 }
 
 /**
@@ -455,7 +437,7 @@ void ProcessPhiFromFile::FindShortestDist(
         if (!hit)
         {
             /* No need to check this if the shape is closed */
-            
+
             // // The minimum has to be in one of the edges
             // if (v < 0)   // Edge V0-V1
             // {
@@ -539,7 +521,7 @@ NekDouble ProcessPhiFromFile::Distance2point(const Array<OneD, NekDouble> &v0,
     {
         out += (v1[i]-v0[i]) * (v1[i]-v0[i]);
     }
-    
+
     return sqrt(out);
 }
 
