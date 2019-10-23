@@ -958,6 +958,7 @@ namespace Nektar
         m_varConv->GetVelocityVector(physfield, velocity);
     }
 
+
     /**
      * @brief Compute an estimate of minimum h/p
      * for each element of the expansion.
@@ -1019,5 +1020,6 @@ namespace Nektar
         }
         return hOverP;
     }
+
 
 }
