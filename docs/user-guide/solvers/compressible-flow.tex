@@ -442,6 +442,49 @@ Under the two following sections it is possible to define the initial conditions
 </FUNCTION>
 \end{lstlisting}
 
+\section{Scalar transport equation}
+Passive scalar transport equations can be added to Euler or compressible Navier-Stokes equations in the following form:
+\begin{equation}
+\dfrac{\partial \rho C }{\partial t} + \nabla \cdot (\rho \mathbf{u} C ) = \nabla \cdot \left(\dfrac{\mu}{Sc} \nabla C \right)
+\end{equation}
+where $Sc$ is Schmidt number. 
+
+In the input file, the extra field variables that are being advected need to be defined after the variables
+representing the velocity components and energy. For example, for
+a 2D simulation the expansions and variables would be defined as:
+\begin{lstlisting}[style=XMLStyle]
+<EXPANSIONS>
+    <E COMPOSITE="C[0]" NUMMODES="3" FIELDS="rho,rhou,rhov,E,rhoC,rhoD" TYPE="MODIFIED" />
+</EXPANSIONS>
+
+<VARIABLES>
+    <V ID="0"> rho  </V>
+    <V ID="1"> rhou </V>
+    <V ID="2"> rhov </V>
+    <V ID="3"> E    </V>
+    <V ID="4"> rhoC </V>
+    <V ID="5"> rhoD </V>
+</VARIABLES>
+\end{lstlisting}
+
+Boundary conditions for the extra fields are set up in the same way as the rest of the equations:
+\begin{lstlisting}[style=XMLStyle]
+<BOUNDARYCONDITIONS>
+  <REGION REF="0">
+    <D VAR="rho"  USERDEFINEDTYPE="PressureOutflow" VALUE="0" />
+    <D VAR="rhou" USERDEFINEDTYPE="PressureOutflow" VALUE="0" />
+    <D VAR="rhov" USERDEFINEDTYPE="PressureOutflow" VALUE="0" />
+    <D VAR="E"    USERDEFINEDTYPE="PressureOutflow" VALUE="0" />
+    <D VAR="rhoC" USERDEFINEDTYPE="PressureOutflow" VALUE="0" />
+    <D VAR="rhoD" USERDEFINEDTYPE="PressureOutflow" VALUE="0" />
+  </REGION>
+</BOUNDARYCONDITIONS>
+\end{lstlisting}
+In this case PressureOutflow boundary condition is used, but one may use any other boundary condition.
+
+Note that not all of the Riemann solvers are currently supported. 
+
+
 \section{Examples}
 \subsection{Shock capturing}
 Compressible flows can be characterised by abrupt changes in density within the flow domain often referred to as shocks. These discontinuities can lead to numerical instabilities (Gibbs phenomena). This problem is prevented by locally adding a diffusion term to the equations to damp the numerical oscillations.
