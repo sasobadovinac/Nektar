@@ -47,9 +47,6 @@
 #include <SolverUtils/Diffusion/Diffusion.h>
 #include <SolverUtils/Forcing/Forcing.h>
 #include <SolverUtils/Filters/FilterInterfaces.hpp>
-#include <LocalRegions/Expansion3D.h>
-#include <LocalRegions/Expansion2D.h>
-
 
 namespace Nektar
 {
@@ -72,9 +69,6 @@ namespace Nektar
         /// (a vector of them).
         Array<OneD, NekDouble> GetStabilityLimitVector(
             const Array<OneD,int> &ExpOrder);
-
-        /// Function to get estimate of min h/p factor per element
-        Array<OneD, NekDouble>  GetElmtMinHP(void);
 
         virtual void GetPressure(
             const Array<OneD, const Array<OneD, NekDouble> > &physfield,
@@ -202,7 +196,6 @@ namespace Nektar
         }
 
         virtual Array<OneD, NekDouble> v_GetMaxStdVelocity();
-
     };
 }
 #endif

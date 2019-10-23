@@ -150,4 +150,176 @@ namespace Nektar
                      tmp2 * (ER - EL)) * tmp1;
         }
     }
+
+    void HLLSolver::v_ArraySolve(
+        const Array<OneD, const Array<OneD, NekDouble> > &Fwd,
+        const Array<OneD, const Array<OneD, NekDouble> > &Bwd,
+              Array<OneD,       Array<OneD, NekDouble> > &flux,
+        const int nDim)
+    {
+        for (int i = 0; i < Fwd[0].num_elements(); i++)
+        {
+            NekDouble  rhoL = 0; 
+            NekDouble  rhouL = 0; 
+            NekDouble  rhovL = 0; 
+            NekDouble  rhowL = 0; 
+            NekDouble  EL = 0;
+
+                    
+            NekDouble  rhoR = 0; 
+            NekDouble  rhouR = 0; 
+            NekDouble  rhovR = 0; 
+            NekDouble  rhowR = 0; 
+            NekDouble  ER = 0;
+
+            if(nDim == 1)
+            {
+                rhoL = Fwd[0][i]; 
+                rhouL = Fwd[1][i]; 
+                EL = Fwd[2][i];
+
+                        
+                rhoR = Bwd[0][i]; 
+                rhouR = Bwd[1][i]; 
+                ER = Bwd[2][i];
+            }
+            else if(nDim == 2)
+            {
+                rhoL = Fwd[0][i]; 
+                rhouL = Fwd[1][i]; 
+                rhovL = Fwd[2][i]; 
+                EL = Fwd[3][i];
+
+                        
+                rhoR = Bwd[0][i]; 
+                rhouR = Bwd[1][i]; 
+                rhovR = Bwd[2][i]; 
+                ER = Bwd[3][i];
+            }
+            else if(nDim == 3)
+            {
+                rhoL = Fwd[0][i]; 
+                rhouL = Fwd[1][i]; 
+                rhovL = Fwd[2][i]; 
+                rhowL = Fwd[3][i]; 
+                EL = Fwd[4][i];
+
+                        
+                rhoR = Bwd[0][i]; 
+                rhouR = Bwd[1][i]; 
+                rhovR = Bwd[2][i]; 
+                rhowR = Bwd[3][i]; 
+                ER = Bwd[4][i];
+            }
+
+            // Left and Right velocities
+            NekDouble uL = rhouL / rhoL;
+            NekDouble vL = rhovL / rhoL;
+            NekDouble wL = rhowL / rhoL;
+            NekDouble uR = rhouR / rhoR;
+            NekDouble vR = rhovR / rhoR;
+            NekDouble wR = rhowR / rhoR;
+
+            // Internal energy (per unit mass)
+            NekDouble eL =
+                    (EL - 0.5 * (rhouL * uL + rhovL * vL + rhowL * wL)) / rhoL;
+            NekDouble eR =
+                    (ER - 0.5 * (rhouR * uR + rhovR * vR + rhowR * wR)) / rhoR;
+            // Pressure
+            NekDouble pL = m_eos->GetPressure(rhoL, eL);
+            NekDouble pR = m_eos->GetPressure(rhoR, eR);
+            // Speed of sound
+            NekDouble cL = m_eos->GetSoundSpeed(rhoL, eL);
+            NekDouble cR = m_eos->GetSoundSpeed(rhoR, eR);
+
+            // Left and right total enthalpy
+            NekDouble HL = (EL + pL) / rhoL;
+            NekDouble HR = (ER + pR) / rhoR;
+
+            // Square root of rhoL and rhoR.
+            NekDouble srL  = sqrt(rhoL);
+            NekDouble srR  = sqrt(rhoR);
+            NekDouble srLR = srL + srR;
+            
+            // Roe average state
+            NekDouble uRoe   = (srL * uL + srR * uR) / srLR;
+            NekDouble vRoe   = (srL * vL + srR * vR) / srLR;
+            NekDouble wRoe   = (srL * wL + srR * wR) / srLR;
+            NekDouble URoe2  = uRoe*uRoe + vRoe*vRoe + wRoe*wRoe;
+            NekDouble HRoe   = (srL * HL + srR * HR) / srLR;
+            NekDouble cRoe   = GetRoeSoundSpeed(
+                                    rhoL, pL, eL, HL, srL,
+                                    rhoR, pR, eR, HR, srR,
+                                    HRoe, URoe2, srLR);
+
+            // Maximum wave speeds
+            NekDouble SL = std::min(uL-cL, uRoe-cRoe);
+            NekDouble SR = std::max(uR+cR, uRoe+cRoe);
+
+            // HLLC Riemann fluxes (positive case)
+            if (SL >= 0)
+            {
+                for(int k=0; k<Fwd.num_elements(); k++)
+                {
+                    flux[k][i] = Fwd[k][i]*uL;
+                }
+
+                flux[1][i] = Fwd[1][i]*uL+pL;
+                flux[nDim+1][i] = (Fwd[nDim+1][i]+pL)*uL;
+            }
+            // HLLC Riemann fluxes (negative case)
+            else if (SR <= 0)
+            {
+                for(int k=0; k<Bwd.num_elements(); k++)
+                {
+                    flux[k][i] = Bwd[k][i]*uR;
+                }
+
+                flux[1][i] = Bwd[1][i]*uR+pR;
+                flux[nDim+1][i] = (Bwd[nDim+1][i]+pL)*uR;
+            }
+            // HLLC Riemann fluxes (general case (SL < 0 | SR > 0)
+            else
+            {
+                NekDouble tmp1 = 1.0 / (SR - SL);
+                NekDouble tmp2 = SR * SL;
+                NekDouble rhof  = (SR * rhouL - SL * rhouR + tmp2 * (rhoR - rhoL)) * tmp1;
+                NekDouble rhouf = (SR * (rhouL * uL + pL) - SL * (rhouR * uR + pR) +
+                                   tmp2 * (rhouR - rhouL)) * tmp1;
+                NekDouble rhovf = (SR * rhouL * vL - SL * rhouR * vR +
+                                   tmp2 * (rhovR - rhovL)) * tmp1;
+                NekDouble rhowf = (SR * rhouL * wL - SL * rhouR * wR +
+                                   tmp2 * (rhowR - rhowL)) * tmp1;
+                NekDouble Ef    = (SR * uL * (EL + pL) - SL * uR * (ER + pR) + 
+                                   tmp2 * (ER - EL)) * tmp1;
+
+                for(int k=nDim+2; k<Fwd.num_elements(); k++)
+                {
+                    flux[k][i] = (SR*Fwd[k][i]*uL - SL*Bwd[k][i]*uR + tmp2 * (Bwd[k][i] - Fwd[k][i])) * tmp1;
+                }
+
+                if(nDim == 1)
+                {
+                    flux[0][i] = rhof; 
+                    flux[1][i] = rhouf; 
+                    flux[2][i] = Ef; 
+                }
+                else if(nDim == 2)
+                {
+                    flux[0][i] = rhof; 
+                    flux[1][i] = rhouf; 
+                    flux[2][i] = rhovf; 
+                    flux[3][i] = Ef; 
+                }
+                else if(nDim == 3)
+                {
+                    flux[0][i] = rhof; 
+                    flux[1][i] = rhouf; 
+                    flux[2][i] = rhovf; 
+                    flux[3][i] = rhowf; 
+                    flux[4][i] = Ef; 
+                }
+            }
+        }
+    }
 }

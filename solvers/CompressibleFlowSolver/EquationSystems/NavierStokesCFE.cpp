@@ -88,6 +88,8 @@ namespace Nektar
             m_thermalConductivity = m_Cp * m_mu / m_Prandtl;
         }
 
+        m_session->LoadParameter ("Sc", m_Schmidt, 0.6);
+
         string diffName;
         m_session->LoadSolverInfo("DiffusionType", diffName, "LDGNS");
 
@@ -139,15 +141,17 @@ namespace Nektar
             inBwd[i]       = Array<OneD, NekDouble>(nTracePts);
         }
 
-        // Extract pressure
-        //    (use inarrayDiff[0] as a temporary storage for the pressure)
-        m_varConv->GetPressure(inarray, inarrayDiff[0]);
-
         // Extract temperature
-        m_varConv->GetTemperature(inarray, inarrayDiff[nvariables-2]);
+        m_varConv->GetTemperature(inarray, inarrayDiff[m_spacedim]);
 
         // Extract velocities
         m_varConv->GetVelocityVector(inarray, inarrayDiff);
+
+        // Extract scalars
+        for(i=m_spacedim+2; i<nvariables; i++)
+        {
+            Vmath::Vdiv(npoints, inarray[i], 1, inarray[0], 1,  inarrayDiff[i-1], 1);
+        }
 
         // Repeat calculation for trace space
         if (pFwd == NullNekDoubleArrayofArray || 
@@ -158,14 +162,17 @@ namespace Nektar
         }
         else
         {
-            m_varConv->GetPressure(pFwd,    inFwd[0]);
-            m_varConv->GetPressure(pBwd,    inBwd[0]);
-
-            m_varConv->GetTemperature(pFwd, inFwd[nvariables-2]);
-            m_varConv->GetTemperature(pBwd, inBwd[nvariables-2]);
+            m_varConv->GetTemperature(pFwd, inFwd[m_spacedim]);
+            m_varConv->GetTemperature(pBwd, inBwd[m_spacedim]);
 
             m_varConv->GetVelocityVector(pFwd, inFwd);
             m_varConv->GetVelocityVector(pBwd, inBwd);
+
+            for(i=m_spacedim+2; i<nvariables; i++)
+            {
+                Vmath::Vdiv(nTracePts, pFwd[i], 1, pFwd[0], 1,  inFwd[i-1], 1);
+                Vmath::Vdiv(nTracePts, pBwd[i], 1, pBwd[0], 1,  inBwd[i-1], 1);
+            }
         }
 
         // Diffusion term in physical rhs form
@@ -200,12 +207,13 @@ namespace Nektar
         // Auxiliary variables
         Array<OneD, NekDouble > mu                 (nPts, 0.0);
         Array<OneD, NekDouble > thermalConductivity(nPts, 0.0);
+        Array<OneD, NekDouble > diffusivity        (nPts, 0.0);
         Array<OneD, NekDouble > divVel             (nPts, 0.0);
 
         // Variable viscosity through the Sutherland's law
         if (m_ViscosityType == "Variable")
         {
-            m_varConv->GetDynamicViscosity(physfield[nVariables-2], mu);
+            m_varConv->GetDynamicViscosity(physfield[m_spacedim], mu);
             NekDouble tRa = m_Cp / m_Prandtl;
             Vmath::Smul(nPts, tRa, mu, 1, thermalConductivity, 1);
         }
@@ -215,6 +223,8 @@ namespace Nektar
             Vmath::Fill(nPts, m_thermalConductivity,
                         thermalConductivity, 1);
         }
+
+        Vmath::Smul(nPts, 1.0/m_Schmidt, mu, 1, diffusivity, 1);
 
         // Velocity divergence
         for (j = 0; j < m_spacedim; ++j)
@@ -280,6 +290,23 @@ namespace Nektar
                                viscousTensor[i][m_spacedim+1], 1,
                                viscousTensor[i][m_spacedim+1], 1);
         }
+
+
+        // Terms for the scalars
+        for (i = 0; i < m_spacedim; ++i)
+        {
+            for(j=m_spacedim+2; j<nVariables; ++j)
+            {
+                Vmath::Zero(nPts, viscousTensor[i][j], 1);
+
+                // Add D*Yj_i
+                Vmath::Vvtvp(nPts, diffusivity, 1,
+                                   derivativesO1[i][j-1], 1,
+                                   viscousTensor[i][j], 1,
+                                   viscousTensor[i][j], 1);
+
+            }
+        }
     }
 
     /**
@@ -305,12 +332,13 @@ namespace Nektar
         // Auxiliary variables
         Array<OneD, NekDouble > mu                 (nPts, 0.0);
         Array<OneD, NekDouble > thermalConductivity(nPts, 0.0);
+        Array<OneD, NekDouble > diffusivity        (nPts, 0.0);
         Array<OneD, NekDouble > divVel             (nPts, 0.0);
 
         // Variable viscosity through the Sutherland's law
         if (m_ViscosityType == "Variable")
         {
-            m_varConv->GetDynamicViscosity(physfield[nVariables-2], mu);
+            m_varConv->GetDynamicViscosity(physfield[m_spacedim], mu);
             NekDouble tRa = m_Cp / m_Prandtl;
             Vmath::Smul(nPts, tRa, mu, 1, thermalConductivity, 1);
         }
@@ -320,6 +348,8 @@ namespace Nektar
             Vmath::Fill(nPts, m_thermalConductivity,
                         thermalConductivity, 1);
         }
+
+        Vmath::Smul(nPts, 1.0/m_Schmidt, mu, 1, diffusivity, 1);
 
         // Interpolate inputs and initialise interpolated output
         Array<OneD, Array<OneD, NekDouble> > vel_interp(m_spacedim);
@@ -413,6 +443,21 @@ namespace Nektar
                                deriv_interp[i][m_spacedim], 1,
                                out_interp[i][m_spacedim+1], 1,
                                out_interp[i][m_spacedim+1], 1);
+        }
+
+        // Terms for the scalars
+        for (i = 0; i < m_spacedim; ++i)
+        {
+            for(j=m_spacedim+2; j<nVariables; ++j)
+            {
+                Vmath::Zero(nPts, out_interp[i][j], 1);
+
+                // Add D*Yj_i
+                Vmath::Vvtvp(nPts, diffusivity, 1,
+                                   deriv_interp[i][j-1], 1,
+                                   out_interp[i][j], 1,
+                                   out_interp[i][j], 1);
+            }
         }
 
         // Project to original space

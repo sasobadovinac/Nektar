@@ -63,9 +63,10 @@ namespace Nektar
         virtual void v_ArraySolve(
             const Array<OneD, const Array<OneD, NekDouble> > &Fwd,
             const Array<OneD, const Array<OneD, NekDouble> > &Bwd,
-                  Array<OneD,       Array<OneD, NekDouble> > &flux)
+                  Array<OneD,       Array<OneD, NekDouble> > &flux,
+            const int nDim)
         {
-            boost::ignore_unused(Fwd, Bwd, flux);
+            boost::ignore_unused(Fwd, Bwd, flux, nDim);
             NEKERROR(ErrorUtil::efatal,
                      "This function should be defined by subclasses.");
         }
@@ -78,18 +79,6 @@ namespace Nektar
             boost::ignore_unused(rhoL, rhouL, rhovL, rhowL, EL,
                                  rhoR, rhouR, rhovR, rhowR, ER,
                                  rhof, rhouf, rhovf, rhowf, Ef);
-            NEKERROR(ErrorUtil::efatal,
-                     "This function should be defined by subclasses.");
-        }
-        
-        virtual void v_PointSolveVisc(
-            NekDouble  rhoL, NekDouble  rhouL, NekDouble  rhovL, NekDouble  rhowL, NekDouble  EL, NekDouble EpsL,
-            NekDouble  rhoR, NekDouble  rhouR, NekDouble  rhovR, NekDouble  rhowR, NekDouble  ER, NekDouble EpsR,
-            NekDouble &rhof, NekDouble &rhouf, NekDouble &rhovf, NekDouble &rhowf, NekDouble &Ef, NekDouble &Epsf)
-        {
-            boost::ignore_unused(rhoL, rhouL, rhovL, rhowL, EL, EpsL,
-                                 rhoR, rhouR, rhovR, rhowR, ER, EpsR,
-                                 rhof, rhouf, rhovf, rhowf, Ef, Epsf);
             NEKERROR(ErrorUtil::efatal,
                      "This function should be defined by subclasses.");
         }

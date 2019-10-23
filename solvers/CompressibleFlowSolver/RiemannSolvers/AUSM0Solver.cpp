@@ -124,6 +124,130 @@ namespace Nektar
             Ef    = cA * Mbar * (ER + pR);
         }
     }
+
+    void AUSM0Solver::v_ArraySolve(
+        const Array<OneD, const Array<OneD, NekDouble> > &Fwd,
+        const Array<OneD, const Array<OneD, NekDouble> > &Bwd,
+              Array<OneD,       Array<OneD, NekDouble> > &flux,
+        const int nDim)
+    {
+        for (int i = 0; i < Fwd[0].num_elements(); i++)
+        {
+            NekDouble  rhoL = 0; 
+            NekDouble  rhouL = 0; 
+            NekDouble  rhovL = 0; 
+            NekDouble  rhowL = 0; 
+            NekDouble  EL = 0;
+
+                    
+            NekDouble  rhoR = 0; 
+            NekDouble  rhouR = 0; 
+            NekDouble  rhovR = 0; 
+            NekDouble  rhowR = 0; 
+            NekDouble  ER = 0;
+
+            if(nDim == 1)
+            {
+                rhoL = Fwd[0][i]; 
+                rhouL = Fwd[1][i]; 
+                EL = Fwd[2][i];
+
+                        
+                rhoR = Bwd[0][i]; 
+                rhouR = Bwd[1][i]; 
+                ER = Bwd[2][i];
+            }
+            else if(nDim == 2)
+            {
+                rhoL = Fwd[0][i]; 
+                rhouL = Fwd[1][i]; 
+                rhovL = Fwd[2][i]; 
+                EL = Fwd[3][i];
+
+                        
+                rhoR = Bwd[0][i]; 
+                rhouR = Bwd[1][i]; 
+                rhovR = Bwd[2][i]; 
+                ER = Bwd[3][i];
+            }
+            else if(nDim == 3)
+            {
+                rhoL = Fwd[0][i]; 
+                rhouL = Fwd[1][i]; 
+                rhovL = Fwd[2][i]; 
+                rhowL = Fwd[3][i]; 
+                EL = Fwd[4][i];
+
+                        
+                rhoR = Bwd[0][i]; 
+                rhouR = Bwd[1][i]; 
+                rhovR = Bwd[2][i]; 
+                rhowR = Bwd[3][i]; 
+                ER = Bwd[4][i];
+            }
+
+            // Left and Right velocities
+            NekDouble uL = rhouL / rhoL;
+            NekDouble vL = rhovL / rhoL;
+            NekDouble wL = rhowL / rhoL;
+            NekDouble uR = rhouR / rhoR;
+            NekDouble vR = rhovR / rhoR;
+            NekDouble wR = rhowR / rhoR;
+
+            // Internal energy (per unit mass)
+            NekDouble eL =
+                    (EL - 0.5 * (rhouL * uL + rhovL * vL + rhowL * wL)) / rhoL;
+            NekDouble eR =
+                    (ER - 0.5 * (rhouR * uR + rhovR * vR + rhowR * wR)) / rhoR;
+            // Pressure
+            NekDouble pL = m_eos->GetPressure(rhoL, eL);
+            NekDouble pR = m_eos->GetPressure(rhoR, eR);
+            // Speed of sound
+            NekDouble cL = m_eos->GetSoundSpeed(rhoL, eL);
+            NekDouble cR = m_eos->GetSoundSpeed(rhoR, eR);
+            
+            // Average speeds of sound
+            NekDouble cA = 0.5 * (cL + cR);
+            
+            // Local Mach numbers
+            NekDouble ML = uL / cA;
+            NekDouble MR = uR / cA;
+            
+            // Parameters for specify the upwinding
+            NekDouble beta  = 0.0;
+            NekDouble alpha = 0.0;
+            NekDouble Mbar  = M4Function(0, beta, ML) + M4Function(1, beta, MR);
+            NekDouble pbar  = pL * P5Function(0, alpha, ML) + 
+                              pR * P5Function(1, alpha, MR);
+            
+            if (Mbar >= 0.0)
+            {
+                NekDouble mdot = cA * Mbar * rhoL;
+                flux[0][i] = mdot;
+                flux[1][i] = mdot * Fwd[1][i]/Fwd[0][i] + pbar;
+
+                for(int k=2; k<Fwd.num_elements(); k++)
+                {
+                    flux[k][i] = mdot * Fwd[k][i]/Fwd[0][i];
+                }
+
+                flux[nDim+1][i] = mdot * (Fwd[nDim+1][i] + pL)/Fwd[0][i];
+            }
+            else
+            {
+                NekDouble mdot = cA * Mbar * rhoR;
+                flux[0][i] = mdot;
+                flux[1][i] = mdot * Bwd[1][i]/Bwd[0][i] + pbar;
+
+                for(int k=2; k<Bwd.num_elements(); k++)
+                {
+                    flux[k][i] = mdot * Bwd[k][i]/Bwd[0][i];
+                }
+
+                flux[nDim+1][i] = mdot * (Bwd[nDim+1][i] + pR)/Bwd[0][i];
+            }
+        }
+    }
     
     double AUSM0Solver::M1Function(int A, double M)
     {

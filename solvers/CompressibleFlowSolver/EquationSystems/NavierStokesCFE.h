@@ -69,6 +69,7 @@ namespace Nektar
     NekDouble                           m_thermalConductivity;
     NekDouble                           m_Cp;
     NekDouble                           m_Prandtl;
+    NekDouble                           m_Schmidt;
 
     NavierStokesCFE(const LibUtilities::SessionReaderSharedPtr& pSession,
                     const SpatialDomains::MeshGraphSharedPtr& pGraph);

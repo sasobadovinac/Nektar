@@ -83,11 +83,8 @@ class PressureOutflowNonReflectiveBC : public CFSBndCond
                const int pSpaceDim,
                const int bcRegion,
                const int cnt);
-
+        
         virtual ~PressureOutflowNonReflectiveBC(void){};
-
-        // Field storage for PressureOutflow
-        Array<OneD, NekDouble> m_pressureStorage;
 };
 
 }

@@ -7,7 +7,7 @@ IF (NOT NEKTAR_BUILD_SOLVERS)
 ENDIF()
 
 IF( NEKTAR_SOLVER_COMPRESSIBLE_FLOW )
-    SET(CompressibleFlowSolverSource
+    SET(CompressibleFlowSolverSource 
        ./ArtificialDiffusion/ArtificialDiffusion.cpp
        ./ArtificialDiffusion/NonSmoothShockCapture.cpp
        ./BoundaryConditions/CFSBndCond.cpp
@@ -56,7 +56,7 @@ IF( NEKTAR_SOLVER_COMPRESSIBLE_FLOW )
     ADD_SOLVER_EXECUTABLE(CompressibleFlowSolver SOURCES ${CompressibleFlowSolverSource})
 
     SUBDIRS(Utilities)
-
+   
     ADD_NEKTAR_TEST(CylinderSubsonic_FRDG_SEM)
     ADD_NEKTAR_TEST(CylinderSubsonic_FRDG_GAUSS)
     ADD_NEKTAR_TEST(CylinderSubsonic_FRHU_SEM LENGTHY)
@@ -107,7 +107,6 @@ IF( NEKTAR_SOLVER_COMPRESSIBLE_FLOW )
     ADD_NEKTAR_TEST(hump3D_GLL)
     ADD_NEKTAR_TEST(hump3D_SEM)
     ADD_NEKTAR_TEST(Rarefaction_vanderWaals LENGTHY)
-    ADD_NEKTAR_TEST(ShockTube_2D_mixedMesh_Lap)
 
     IF (NEKTAR_USE_MPI)
         #ADD_NEKTAR_TEST(Perturbation_M05_square_CBC_par LENGTHY)

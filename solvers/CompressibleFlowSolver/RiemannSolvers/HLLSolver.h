@@ -58,6 +58,12 @@ namespace Nektar
             double  rhoL, double  rhouL, double  rhovL, double  rhowL, double  EL,
             double  rhoR, double  rhouR, double  rhovR, double  rhowR, double  ER,
             double &rhof, double &rhouf, double &rhovf, double &rhowf, double &Ef);
+
+        virtual void v_ArraySolve(
+            const Array<OneD, const Array<OneD, NekDouble> > &Fwd,
+            const Array<OneD, const Array<OneD, NekDouble> > &Bwd,
+                  Array<OneD,       Array<OneD, NekDouble> > &flux,
+            const int nDim); 
     };
 }
 

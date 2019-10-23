@@ -31,7 +31,6 @@
 // Description: Symmetry boundary condition
 //
 ///////////////////////////////////////////////////////////////////////////////
-
 #include <boost/core/ignore_unused.hpp>
 
 #include "SymmetryBC.h"

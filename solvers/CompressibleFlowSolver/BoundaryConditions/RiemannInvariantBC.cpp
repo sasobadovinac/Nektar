@@ -31,7 +31,6 @@
 // Description: Riemann invariant boundary condition
 //
 ///////////////////////////////////////////////////////////////////////////////
-
 #include <boost/core/ignore_unused.hpp>
 
 #include "RiemannInvariantBC.h"
@@ -80,6 +79,7 @@ void RiemannInvariantBC::v_Apply(
     int i, j;
     int nTracePts = m_fields[0]->GetTrace()->GetNpoints();
     int nDimensions = m_spacedim;
+    int nVariables = physarray.num_elements();
 
     const Array<OneD, const int> &traceBndMap
         = m_fields[0]->GetTraceBndMap();
@@ -200,6 +200,12 @@ void RiemannInvariantBC::v_Apply(
                 (m_fields[nDimensions+1]->GetBndCondExpansions()[m_bcRegion]->
                  UpdatePhys())[id1+i] = EBC;
 
+                // Setting up bcs for scalars (possible bug)
+                for (j = nDimensions+2; j <nVariables; ++j)
+                {
+                    (m_fields[j]->GetBndCondExpansions()[m_bcRegion]->
+                     UpdatePhys())[id1+i] = rhoBC;
+                }
             }
             else // Impose outflow Riemann invariant
             {
@@ -260,6 +266,13 @@ void RiemannInvariantBC::v_Apply(
                 }
                 (m_fields[nDimensions+1]->GetBndCondExpansions()[m_bcRegion]->
                  UpdatePhys())[id1+i] = EBC;
+
+        		// Scalars
+                for (j = nDimensions+2; j < nVariables; ++j)
+                {
+                    (m_fields[j]->GetBndCondExpansions()[m_bcRegion]->
+                     UpdatePhys())[id1+i] = Fwd[j][pnt];
+                }
             }
         }
     }

@@ -93,6 +93,7 @@ namespace Nektar
         boost::ignore_unused(physfield, derivatives, viscousTensor);
         NEKERROR(ErrorUtil::efatal,
                  "Dealiased flux not implemented for axisymmetric case");
+
     }
   };
 }

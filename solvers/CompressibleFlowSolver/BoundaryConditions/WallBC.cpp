@@ -31,7 +31,6 @@
 // Description: Slip wall boundary condition
 //
 ///////////////////////////////////////////////////////////////////////////////
-
 #include <boost/core/ignore_unused.hpp>
 
 #include "WallBC.h"

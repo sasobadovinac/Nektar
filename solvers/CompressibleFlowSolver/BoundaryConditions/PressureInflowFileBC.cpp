@@ -31,7 +31,6 @@
 // Description: Pressure inflow boundary condition
 //
 ///////////////////////////////////////////////////////////////////////////////
-
 #include <boost/core/ignore_unused.hpp>
 
 #include "PressureInflowFileBC.h"

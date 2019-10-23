@@ -31,7 +31,6 @@
 // Description: Extrapolation of order 0 boundary condition
 //
 ///////////////////////////////////////////////////////////////////////////////
-
 #include <boost/core/ignore_unused.hpp>
 
 #include "ExtrapOrder0BC.h"
@@ -67,7 +66,6 @@ void ExtrapOrder0BC::v_Apply(
     int e, pnt;
     int id1, id2, nBCEdgePts;
     int nVariables = physarray.num_elements();
-    int nDimensions = m_spacedim;
 
     const Array<OneD, const int> &traceBndMap
         = m_fields[0]->GetTraceBndMap();
@@ -90,16 +88,12 @@ void ExtrapOrder0BC::v_Apply(
         {
             pnt = id2+i;
 
-            // Setting up bcs for density and velocities
-            for (j = 0; j <=nDimensions; ++j)
+            // Setting up bcs for density, velocities, energy and scalars
+            for (j = 0; j <nVariables; ++j)
             {
                 (m_fields[j]->GetBndCondExpansions()[m_bcRegion]->
                  UpdatePhys())[id1+i] = Fwd[j][pnt];
             }
-
-            // Setting up bcs for energy
-            (m_fields[nVariables-1]->GetBndCondExpansions()[m_bcRegion]->
-                UpdatePhys())[id1+i] = Fwd[nVariables-1][pnt];
         }
     }
 }

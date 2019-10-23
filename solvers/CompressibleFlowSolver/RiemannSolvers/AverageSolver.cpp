@@ -32,6 +32,8 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
+#include <boost/core/ignore_unused.hpp>
+
 #include <CompressibleFlowSolver/RiemannSolvers/AverageSolver.h>
 
 using namespace std;
@@ -73,8 +75,11 @@ namespace Nektar
     void AverageSolver::v_ArraySolve(
         const Array<OneD, const Array<OneD, NekDouble> > &Fwd,
         const Array<OneD, const Array<OneD, NekDouble> > &Bwd,
-              Array<OneD,       Array<OneD, NekDouble> > &flux)
+              Array<OneD,       Array<OneD, NekDouble> > &flux,
+        const int nDim)
     {
+        boost::ignore_unused(nDim);
+
         int expDim = Fwd.num_elements()-2;
         int i, j;
         

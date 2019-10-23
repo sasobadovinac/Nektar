@@ -32,7 +32,6 @@
 //              and temperature
 //
 ///////////////////////////////////////////////////////////////////////////////
-
 #include <boost/core/ignore_unused.hpp>
 
 #include "PressureMachTemperatureBC.h"

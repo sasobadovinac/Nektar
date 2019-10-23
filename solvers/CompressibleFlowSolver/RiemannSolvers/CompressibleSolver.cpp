@@ -60,11 +60,16 @@ namespace Nektar
         const Array<OneD, const Array<OneD, NekDouble> > &Bwd,
               Array<OneD,       Array<OneD, NekDouble> > &flux)
     {
-        if (m_pointSolve)
+        int expDim      = nDim;
+        int nvariables  = Fwd.num_elements();
+
+        if(nvariables > expDim+2)
         {
-            int expDim      = nDim;
-            int nvariables  = Fwd.num_elements();
-            
+            m_pointSolve = false;
+        }
+
+        if (m_pointSolve)
+        {           
             NekDouble rhouf, rhovf;
             
             // Check if PDE-based SC is used
@@ -90,18 +95,6 @@ namespace Nektar
                             flux[0][i], flux[1][i], flux[2][i], rhovf, flux[3][i]);
                     }
                 }
-                
-                if (nvariables > expDim+2)
-                {
-                    for (int i = 0; i < Fwd[0].num_elements(); ++i)
-                    {
-                        v_PointSolveVisc(
-                            Fwd [0][i], Fwd [1][i], Fwd [2][i], 0.0, Fwd [3][i], Fwd [4][i],
-                            Bwd [0][i], Bwd [1][i], Bwd [2][i], 0.0, Bwd [3][i], Bwd [4][i],
-                            flux[0][i], flux[1][i], flux[2][i], rhovf, flux[3][i], flux[4][i]);
-                    }
-                }
-                
             }
             else if (expDim == 3)
             {
@@ -112,21 +105,11 @@ namespace Nektar
                         Bwd [0][i], Bwd [1][i], Bwd [2][i], Bwd [3][i], Bwd [4][i],
                         flux[0][i], flux[1][i], flux[2][i], flux[3][i], flux[4][i]);
                 }
-                if (nvariables > expDim+2)
-                {
-                    for (int i = 0; i < Fwd[0].num_elements(); ++i)
-                    {
-                        v_PointSolveVisc(
-                            Fwd [0][i], Fwd [1][i], Fwd [2][i], Fwd [3][i], Fwd [4][i], Fwd [5][i],
-                            Bwd [0][i], Bwd [1][i], Bwd [2][i], Bwd [3][i], Bwd [4][i], Bwd [5][i],
-                            flux[0][i], flux[1][i], flux[2][i], flux[3][i], flux[4][i], flux[5][i]);
-                    }
-                }
             }
         }
         else
         {
-            v_ArraySolve(Fwd, Bwd, flux);
+            v_ArraySolve(Fwd, Bwd, flux, nDim);
         }
     }
 

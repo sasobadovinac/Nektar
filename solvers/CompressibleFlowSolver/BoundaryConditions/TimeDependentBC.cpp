@@ -31,7 +31,6 @@
 // Description: Time dependent boundary condition
 //
 ///////////////////////////////////////////////////////////////////////////////
-
 #include <boost/core/ignore_unused.hpp>
 
 #include "TimeDependentBC.h"
