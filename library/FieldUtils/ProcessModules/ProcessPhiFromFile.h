@@ -78,10 +78,6 @@ public:
     }
 
 protected:
-    /// Random number generator
-    std::mt19937 m_rng;
-    /// Uniform distribution mapper
-    std::uniform_real_distribution<NekDouble> m_uDist;
     /// Object representing a 3D triangle
     struct triangle
     {
@@ -89,6 +85,8 @@ protected:
         Array<OneD, NekDouble> v0 = Array<OneD, NekDouble>(3);
         Array<OneD, NekDouble> v1 = Array<OneD, NekDouble>(3);
         Array<OneD, NekDouble> v2 = Array<OneD, NekDouble>(3);
+        Array<OneD, NekDouble> centre = Array<OneD, NekDouble>(3);
+        NekDouble surf;
     };
     /// STL file object
     struct STLfile
@@ -103,7 +101,7 @@ protected:
     // Reads an STL file and returns an 'STLfile' struct
     STLfile ReadSTL(std::string filename);
     // Smoothing function
-    double PhiFunction(double dist, double coeff);
+    NekDouble PhiFunction(double dist, double coeff);
     // Calculates Phi from 'ShapeFunction' in the session file
     void GetPhifromSession();
     // Calculates Phi from an external STL binary file
@@ -124,11 +122,13 @@ protected:
     // Utility to calculate the cross-product of two 3D vectors
     Array<OneD, NekDouble> Cross(const Array<OneD, NekDouble> &v0,
                                  const Array<OneD, NekDouble> &v1);
+    // Utilit to calculate the determinant of a 3x3 matrix
+    NekDouble Det3(const Array<OneD, Array<OneD, NekDouble> > &mat);
     // Utility to calculate the distance between two points
-    double Distance2point(const Array<OneD, NekDouble> &v0,
+    NekDouble Distance2point(const Array<OneD, NekDouble> &v0,
                           const Array<OneD, NekDouble> &v1);
     // Utility to measure shortest distance to a segment
-    double Distance2edge(const Array<OneD, NekDouble> &x,
+    NekDouble Distance2edge(const Array<OneD, NekDouble> &x,
                          const Array<OneD, NekDouble> &e1,
                          const Array<OneD, NekDouble> &e2);
 

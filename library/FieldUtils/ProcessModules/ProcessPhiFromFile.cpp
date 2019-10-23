@@ -88,11 +88,6 @@ void ProcessPhiFromFile::Process(po::variables_map &vm)
     {
         return;
     }
-
-    // Setup the random number generator
-    std::random_device dev;
-    m_rng   = mt19937(dev());
-    m_uDist = uniform_real_distribution<NekDouble>(-1.0, 1.0);
     
     // Read Phi function from the session file...
     if (m_config["file"].as<string>().compare("NotSet") == 0)
@@ -169,6 +164,23 @@ ProcessPhiFromFile::STLfile ProcessPhiFromFile::ReadSTL(string filename)
         tmpTri.v0 = ReadVector(fileStl);
         tmpTri.v1 = ReadVector(fileStl);
         tmpTri.v2 = ReadVector(fileStl);
+
+        // Calculate barycentre
+        for (int j = 0; j < 3; ++j)
+        {
+            tmpTri.centre[j] = tmpTri.v0[j]/3.0 +
+                               tmpTri.v1[j]/3.0 +
+                               tmpTri.v2[j]/3.0;
+        }
+
+        // Calculate surface
+        Array<OneD, NekDouble> side1(3);
+        Array<OneD, NekDouble> side2(3);
+        Vmath::Vsub(3, tmpTri.v1, 1, tmpTri.v0, 1, side1, 1);
+        Vmath::Vsub(3, tmpTri.v2, 1, tmpTri.v0, 1, side2, 1);
+        tmpTri.surf = 0.5*sqrt(
+                      Vmath::Dot(3, side1, side1)*Vmath::Dot(3, side2, side2) -
+                      Vmath::Dot(3, side1, side2)*Vmath::Dot(3, side1, side2));
         out.triangles[i] = tmpTri;
 
         // Dump triangle type
@@ -187,15 +199,15 @@ ProcessPhiFromFile::STLfile ProcessPhiFromFile::ReadSTL(string filename)
  * 
  * @param dist
  * @param coeff
- * @return double
+ * @return NekDouble
  */
-double ProcessPhiFromFile::PhiFunction(double dist, double coeff)
+NekDouble ProcessPhiFromFile::PhiFunction(double dist, double coeff)
 {
     return -0.5*(std::tanh(dist/coeff)-1.0);
 }
 
 /**
- * @brief 
+ * @brief Assigns to 'phi' the values indicated by 'ShapeFunction'
  * 
  */
 void ProcessPhiFromFile::GetPhifromSession()
@@ -234,7 +246,7 @@ void ProcessPhiFromFile::GetPhifromSession()
         Exp = m_f->AppendExpList(m_f->m_numHomogeneousDir);
         phiFunction->Evaluate(coords[0], coords[1], coords[2],
                               Exp->UpdatePhys());
-        Exp->FwdTrans_IterPerExp(Exp->GetPhys(), Exp->UpdateCoeffs());
+        Exp->FwdTrans(Exp->GetPhys(), Exp->UpdateCoeffs());
 
         auto it = m_f->m_exp.begin() + s * (nVars + 1) + nVars;
         m_f->m_exp.insert(it, Exp);
@@ -242,7 +254,7 @@ void ProcessPhiFromFile::GetPhifromSession()
 }
 
 /**
- * @brief Assigns to 'm_phi' the corresponding values of Phi
+ * @brief Assigns to 'phi' the corresponding values of Phi
  * 
  * @param file
  */
@@ -261,8 +273,9 @@ void ProcessPhiFromFile::GetPhifromSTL(const ProcessPhiFromFile::STLfile &file)
     
     for (int s = 0; s < nStrips; ++s)
     {
-        // Phi array allocation
-        Array<OneD, NekDouble> phi(nPts);
+        // Append Phi expansion to 'm_f'
+        MultiRegions::ExpListSharedPtr phi;
+        phi = m_f->AppendExpList(m_f->m_numHomogeneousDir);
 
         // Get current coords of the point
         Array<OneD, Array<OneD, NekDouble> > coords(3);
@@ -270,7 +283,7 @@ void ProcessPhiFromFile::GetPhifromSTL(const ProcessPhiFromFile::STLfile &file)
         {
             coords[i] = Array<OneD, NekDouble>(nPts, 0.0);
         }
-        m_f->m_exp[s*nVars]->GetCoords(coords[0], coords[1], coords[2]);
+        phi->GetCoords(coords[0], coords[1], coords[2]);
 
         // Parallelisation is highly recommended here
         for (int i = 0; i < nPts; ++i)
@@ -291,17 +304,13 @@ void ProcessPhiFromFile::GetPhifromSTL(const ProcessPhiFromFile::STLfile &file)
             }
 
             // Get corresponding value of Phi
-            phi[i] = PhiFunction(dist, m_config["scale"].as<double>());
+            phi->UpdatePhys()[i] = PhiFunction(dist, m_config["scale"].as<double>());
         }
 
-        // Append Phi expansion to 'm_f'
-        MultiRegions::ExpListSharedPtr Exp;
-        Exp = m_f->AppendExpList(m_f->m_numHomogeneousDir);
-        Vmath::Vcopy(nPts, phi, 1, Exp->UpdatePhys(), 1);
-        Exp->FwdTrans_IterPerExp(phi, Exp->UpdateCoeffs());
-
+        // Update vector of expansions
+        phi->FwdTrans(phi->GetPhys(), phi->UpdateCoeffs());
         auto it = m_f->m_exp.begin() + s * (nVars + 1) + nVars;
-        m_f->m_exp.insert(it, Exp);
+        m_f->m_exp.insert(it, phi);
     }
 }
 
@@ -309,7 +318,11 @@ void ProcessPhiFromFile::GetPhifromSTL(const ProcessPhiFromFile::STLfile &file)
  * @brief Checks if a ray traced from 'Origin' with direction 'Dvec' hits
  * the triangle defined by 'tri'. Returns the distance to the plane
  * defined by 'tri' in any case. A negative distance means that the hit
- * happend in the direction oposite that of the ray
+ * happened in the direction oposite that of the ray. Approach to calculate
+ * the intersection point found in:
+ * 
+ * Fast, minimum storage ray/triangle intersection,
+ * Tomas Moeller, Ben Trumbore
  * 
  * @param tri
  * @param Origin
@@ -329,11 +342,8 @@ bool ProcessPhiFromFile::CheckHit(const ProcessPhiFromFile::triangle &tri,
     // Edge vectors
     Array<OneD, NekDouble> E1(3);
     Array<OneD, NekDouble> E2(3);
-    for (int i = 0; i < 3; ++i)
-    {
-        E1[i] = tri.v1[i]-tri.v0[i];
-        E2[i] = tri.v2[i]-tri.v0[i];
-    }
+    Vmath::Vsub(3, tri.v1, 1, tri.v0, 1, E1, 1);
+    Vmath::Vsub(3, tri.v2, 1, tri.v0, 1, E2, 1);
 
     // If det == 0, ray parallel to triangle
     Array<OneD, NekDouble> Pvec = Cross(Dvec, E2);
@@ -341,18 +351,15 @@ bool ProcessPhiFromFile::CheckHit(const ProcessPhiFromFile::triangle &tri,
     double inv_det = 1.0 / det;
     if (IsZero(det))
     {
-        distance = std::numeric_limits<double>::infinity();
-        u        = std::numeric_limits<double>::infinity();
-        v        = std::numeric_limits<double>::infinity();
+        distance = numeric_limits<double>::infinity();
+        u        = numeric_limits<double>::infinity();
+        v        = numeric_limits<double>::infinity();
         return false;
     }
 
     // Vector T and parameter u = (0.0, 1.0)
     Array<OneD, NekDouble> Tvec(3);
-    for (int i = 0; i < 3; ++i)
-    {
-        Tvec[i] = Origin[i]-tri.v0[i];
-    }
+    Vmath::Vsub(3, Origin, 1, tri.v0, 1, Tvec, 1);
     u = Vmath::Dot(3, Pvec, Tvec) * inv_det;
 
     // Vector Q and parameter v = (0.0, 1.0)
@@ -373,9 +380,12 @@ bool ProcessPhiFromFile::CheckHit(const ProcessPhiFromFile::triangle &tri,
 
 /**
  * @brief Returns true if a point is inside the 3D object defined in the
- * STL file. It is based in the idea that a ray traced from inside a closed
- * surface will go through an odd number of surfaces, no matter how complex
- * the geometry is
+ * STL file. Based on the idea that the solid angle covered by the
+ * 3D shape for inner points should be 4*Pi, whereas it is 0 for points
+ * lying outside. Formula for the solid angle found in:
+ * 
+ * The solid angle of a plane triangle
+ * A. Van Oosterom and J. Strackee
  * 
  * @param file
  * @param x
@@ -385,43 +395,40 @@ bool ProcessPhiFromFile::CheckHit(const ProcessPhiFromFile::triangle &tri,
 bool ProcessPhiFromFile::IsInterior(const STLfile &file,
                                     const Array<OneD, NekDouble> &x)
 {
-    // Choose a random direction
-    Array<OneD, NekDouble> dir(3);
-    dir[0]   = m_uDist(m_rng);
-    dir[1]   = m_uDist(m_rng);
-    dir[2]   = sqrt(1.0 - dir[0]*dir[0] - dir[1]*dir[1]);
-    int hits = 0;
-
-    // Stores the distances of the hits with each surface
-    // It has to be a dynamic container, it will always be small
-    vector<NekDouble> distVec;
-
-    // Check hits with all the triangles
+    // Add up the solid angle covered by each triangle
+    NekDouble solidAngle = 0.0;
     for (triangle tri : file.triangles)
     {
-        double dist;
-        double u, v;
-        bool hit = CheckHit(tri, x, dir, dist, u, v);
+        // Relative position of triangle vertices
+        Array<OneD, NekDouble> v0(3);
+        Vmath::Vsub(3, tri.v0, 1, x, 1, v0, 1);
+        NekDouble v0mag = sqrt(Vmath::Dot(3, v0, v0));
 
-        if (hit && dist > 0.0 &&
-            std::find_if(distVec.begin(), distVec.end(),
-                [&](double x){ return IsZero(x-dist); }) == distVec.end())
-        {
-            distVec.push_back(dist);
-            hits++;
-        }
-    }
+        Array<OneD, NekDouble> v1(3);
+        Vmath::Vsub(3, tri.v1, 1, x, 1, v1, 1);
+        NekDouble v1mag = sqrt(Vmath::Dot(3, v1, v1));
 
-    // Odd number of hits -> the point lies INSIDE
-    if (hits % 2)
-    {
-        return true;
+        Array<OneD, NekDouble> v2(3);
+        Vmath::Vsub(3, tri.v2, 1, x, 1, v2, 1);
+        NekDouble v2mag = sqrt(Vmath::Dot(3, v2, v2));
+
+        // Some calculations for the solid angle formula
+        Array<OneD, Array<OneD, NekDouble> > tmpMat(3);
+        tmpMat[0] = v0;
+        tmpMat[1] = v1;
+        tmpMat[2] = v2;
+
+        NekDouble num = Det3(tmpMat);
+        NekDouble den = v0mag*v1mag*v2mag + Vmath::Dot(3, v0, v1)*v2mag +
+                    Vmath::Dot(3, v0, v2)*v1mag + Vmath::Dot(3, v1, v2)*v0mag;
+        
+        // Solid angle
+        solidAngle += 2.0*atan2(num, den);
     }
-    // Otherwise, it falls OUTSIDE
-    else
-    {
-        return false;
-    }
+    cout << x[0] << '\t' << x[1] << '\t' << x[2] << '\t' << solidAngle << '\n';
+
+    // Low values of 'solidAngle' correspond to an EXTERIOR point
+    return (solidAngle > 0.1);
 }
 
 /**
@@ -445,29 +452,33 @@ void ProcessPhiFromFile::FindShortestDist(
         double tmpDist;
         double u, v;
         bool hit = CheckHit(tri, x, tri.normal, tmpDist, u, v);
-        tmpDist  = abs(tmpDist);
 
         if (!hit)
         {
-            // The minimum has to be in one of the edges
-            if (v < 0)   // Edge V0-V1
-            {
-                tmpDist = Distance2edge(x, tri.v0, tri.v1);
-            }
-            else if (u < 0)   // Edge V0-V2
-            {
-                tmpDist = Distance2edge(x, tri.v0, tri.v2);
-            }
-            else   // Edge V1-V2
-            {
-                tmpDist = Distance2edge(x, tri.v1, tri.v2);
-            }
+            /* No need to check this if the shape is closed */
+            
+            // // The minimum has to be in one of the edges
+            // if (v < 0)   // Edge V0-V1
+            // {
+            //     tmpDist = Distance2edge(x, tri.v0, tri.v1);
+            // }
+            // else if (u < 0)   // Edge V0-V2
+            // {
+            //     tmpDist = Distance2edge(x, tri.v0, tri.v2);
+            // }
+            // else   // Edge V1-V2
+            // {
+            //     tmpDist = Distance2edge(x, tri.v1, tri.v2);
+            // }
         }
-
-        // Update 'dist'
-        if (tmpDist < dist)
+        else
         {
-            dist = tmpDist;
+            // Update 'dist'
+            tmpDist = abs(tmpDist);
+            if (tmpDist < dist)
+            {
+                dist = tmpDist;
+            }
         }
     }
 }
@@ -482,7 +493,7 @@ void ProcessPhiFromFile::FindShortestDist(
  */
 bool ProcessPhiFromFile::IsZero(double x)
 {
-    double EPS = 0.000001;
+    double EPS = numeric_limits<double>::epsilon();
     return (x > -EPS && x < EPS);
 }
 
@@ -500,15 +511,27 @@ Array<OneD, NekDouble> ProcessPhiFromFile::Cross(
 }
 
 /**
+ * @brief Calculates the determinant of a 3x3 matrix
+ * 
+ * @param mat
+ * @return NekDouble
+ */
+NekDouble ProcessPhiFromFile::Det3(const Array<OneD, Array<OneD, NekDouble> > &mat)
+{
+    return mat[0][0] * (mat[1][1] * mat[2][2] - mat[2][1] * mat[1][2]) -
+           mat[0][1] * (mat[1][0] * mat[2][2] - mat[1][2] * mat[2][0]) +
+           mat[0][2] * (mat[1][0] * mat[2][1] - mat[1][1] * mat[2][0]);
+}
+
+/**
  * @brief Calculates the distance between two n-dimensional points
  * 
  * @param v0
  * @param v1
- * @return double
+ * @return NekDouble
  */
-double ProcessPhiFromFile::Distance2point(
-                                const Array<OneD, NekDouble> &v0,
-                                const Array<OneD, NekDouble> &v1)
+NekDouble ProcessPhiFromFile::Distance2point(const Array<OneD, NekDouble> &v0,
+                                          const Array<OneD, NekDouble> &v1)
 {
     size_t n   = v0.num_elements();
     double out = 0.0;
@@ -529,21 +552,17 @@ double ProcessPhiFromFile::Distance2point(
  * @param x
  * @param e1
  * @param e2
- * @return double
+ * @return NekDouble
  */
-double ProcessPhiFromFile::Distance2edge(
-                                const Array<OneD, NekDouble> &x,
-                                const Array<OneD, NekDouble> &e1,
-                                const Array<OneD, NekDouble> &e2)
+NekDouble ProcessPhiFromFile::Distance2edge(const Array<OneD, NekDouble> &x,
+                                         const Array<OneD, NekDouble> &e1,
+                                         const Array<OneD, NekDouble> &e2)
 {
     size_t n = x.num_elements();
     Array<OneD, NekDouble> e1x(n);
     Array<OneD, NekDouble> e1e2(n);
-    for (size_t i = 0; i < n; ++i)
-    {
-        e1x[i]  = x[i]-e1[i];
-        e1e2[i] = e2[i]-e1[i];
-    }
+    Vmath::Vsub(n, x, 1, e1, 1, e1x, 1);
+    Vmath::Vsub(n, e2, 1, e1, 1, e1e2, 1);
     double norm = sqrt(Vmath::Dot(n, e1e2, e1e2));
     for (size_t i = 0; i < n; ++i)
     {
@@ -561,10 +580,7 @@ double ProcessPhiFromFile::Distance2edge(
     }
 
     Array<OneD, NekDouble> distVec(n);
-    for (size_t i = 0; i < n; ++i)
-    {
-        distVec[i] = e1x[i]-proj*e1e2[i];
-    }
+    Vmath::Svtsvtp(n, 1.0, e1x, 1, -proj, e1e2, 1, distVec, 1);
 
     return sqrt(Vmath::Dot(n, distVec, distVec));
 }
