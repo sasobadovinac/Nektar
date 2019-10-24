@@ -404,8 +404,15 @@ bool ProcessPhiFromFile::IsInterior(const STLfile &file,
         NekDouble den = v0mag*v1mag*v2mag + Vmath::Dot(3, v0, v1)*v2mag +
                     Vmath::Dot(3, v0, v2)*v1mag + Vmath::Dot(3, v1, v2)*v0mag;
 
-        // Solid angle
-        solidAngle += 2.0*atan2(num, den);
+        // Solid angle, equals 2*Pi if 'x' is coplanar to the triangle vertices
+        if (!IsZero(den))
+        {
+            solidAngle += 2.0*atan2(num, den);
+        }
+        else
+        {
+            solidAngle += 2.0*M_PI;
+        }
     }
 
     // Low values of 'solidAngle' correspond to an EXTERIOR point
