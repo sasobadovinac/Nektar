@@ -434,25 +434,7 @@ void ProcessPhiFromFile::FindShortestDist(
         double u, v;
         bool hit = CheckHit(tri, x, tri.normal, tmpDist, u, v);
 
-        if (!hit)
-        {
-            /* No need to check this if the shape is closed */
-
-            // // The minimum has to be in one of the edges
-            // if (v < 0)   // Edge V0-V1
-            // {
-            //     tmpDist = Distance2edge(x, tri.v0, tri.v1);
-            // }
-            // else if (u < 0)   // Edge V0-V2
-            // {
-            //     tmpDist = Distance2edge(x, tri.v0, tri.v2);
-            // }
-            // else   // Edge V1-V2
-            // {
-            //     tmpDist = Distance2edge(x, tri.v1, tri.v2);
-            // }
-        }
-        else
+        if (hit)
         {
             // Update 'dist'
             tmpDist = abs(tmpDist);
@@ -461,6 +443,23 @@ void ProcessPhiFromFile::FindShortestDist(
                 dist = tmpDist;
             }
         }
+        /* No need to check this if the shape is closed */
+        // else
+        // {
+        //     // The minimum has to be in one of the edges
+        //     if (v < 0)   // Edge V0-V1
+        //     {
+        //         tmpDist = Distance2edge(x, tri.v0, tri.v1);
+        //     }
+        //     else if (u < 0)   // Edge V0-V2
+        //     {
+        //         tmpDist = Distance2edge(x, tri.v0, tri.v2);
+        //     }
+        //     else   // Edge V1-V2
+        //     {
+        //         tmpDist = Distance2edge(x, tri.v1, tri.v2);
+        //     }
+        // }
     }
 }
 
