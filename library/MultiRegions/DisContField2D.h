@@ -165,6 +165,10 @@ namespace Nektar
             //Mortar offset in trace exp list
             int m_mortarOffset;
 
+            //Store scale factors for mortars to edges
+            std::map<int, NekDouble> m_scaleFactorLeft;
+            std::map<int, NekDouble> m_scaleFactorRight;
+
             DNekMat m_MInv;
             std::map<int, DNekMat> m_MInvSLeft;
             std::map<int, DNekMat> m_MInvSRight;

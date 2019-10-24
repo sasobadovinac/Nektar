@@ -503,7 +503,7 @@ void Interfaces::GenerateMortars(int indx)
     m_mortars.insert(m_mortars.end(), mortars.begin(), mortars.end());
 
     //Debugging output mortar coords
-    for (auto it : mortars)
+    for (auto it : m_mortars)
     {
         NekDouble x, y, z, a, b, c;
         it->GetVertex(0)->GetCoords(x, y, z);
@@ -516,7 +516,7 @@ void Interfaces::GenerateMortars(int indx)
     //by evaluating center of standard element into Cartesian
     Array<OneD, NekDouble> xi(1, 0.0);
     cnt = 0;
-    for (const auto it : mortars)
+    for (const auto it : m_mortars)
     {
         cout << endl << "Mortar: " << it->GetGlobalID() << endl;
         int nq = it->GetXmap()->GetTotPoints();
@@ -595,6 +595,7 @@ void Interfaces::GenerateMortars(int indx)
             cout << "'Left' edge | Segment ID: " << edge.second->GetGlobalID() << " | (" << x1 << ", " << y1 << ") -> (" << x2 << ", " << y2 << ")" << endl;
         }
 
+        //Leave as cnt as it is referring to mortar index in m_mortars rather than the mortars global ID
         cnt++;
     }
 
@@ -612,7 +613,7 @@ void Interfaces::GenerateMortars(int indx)
         cout << "Right edge " << tmp.first << " -> ";
         for (auto tmp2: tmp.second)
         {
-            cout << tmp2 << ' ';
+            cout << m_mortars[tmp2]->GetGlobalID() << ' ';
         }
         cout << endl;
     }
@@ -623,7 +624,7 @@ void Interfaces::GenerateMortars(int indx)
         cout << "Left edge " << tmp.first << " -> ";
         for (auto tmp2: tmp.second)
         {
-            cout << tmp2 << ' ';
+            cout << m_mortars[tmp2]->GetGlobalID() << ' ';
         }
         cout << endl;
     }
