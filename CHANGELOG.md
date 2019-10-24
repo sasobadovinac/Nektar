@@ -4,7 +4,6 @@ Changelog
 v5.0.0
 ------
 **Library**
-- Added passive scalar transport equations to Compressible Flow Solver (!1090)
 - Added in sum factorisation version for pyramid expansions and orthogonal
   expansion in pyramids (!750)
 - Added detection of 'abort' file to cleanly terminate simulation early (!772)
@@ -167,6 +166,7 @@ v5.0.0
 - Fix unsteady Stokes solver (!1074)
 
 **CompressibleFlowSolver**
+- Added passive scalar transport equations to Compressible Flow Solver (!1090)
 - Add 3D regression tests (!567)
 - Introduce forcing for quasi-1D Euler simulations (!771)
 - Allow performing axi-symmetric Euler and NS simulations (!771, !866)
