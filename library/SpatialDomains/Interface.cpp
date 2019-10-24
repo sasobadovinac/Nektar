@@ -469,6 +469,7 @@ void Interfaces::GenerateMortars(int indx)
                 newEdgeVerts[0]->GetCoords(xOld, yOld, zOld);
                 newEdgeVerts[1]->GetCoords(xNew, yNew, zNew);
 
+                //Ensure that the mortar is pointing upwards
                 if (yOld > yNew)
                 {
                     std::swap(newEdgeVerts[0], newEdgeVerts[1]);
