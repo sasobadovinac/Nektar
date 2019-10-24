@@ -229,7 +229,7 @@ namespace Nektar
         m_up = Array<OneD, Array<OneD, NekDouble> >(nvel);
         for (int i = 0; i < nvel; ++i)
         {
-            m_up[i] = Array<OneD, NekDouble>(physTot);
+            m_up[i] = Array<OneD, NekDouble>(physTot, 0.0);
         }
         
         // Make sure that m_phi and m_up are defined
@@ -494,45 +494,29 @@ namespace Nektar
         // Initialise 'm_up' and 'm_phi' during first step
         if (t <= 0.0)
         {
-            // Update 'm_phi' only if it was provided as an analytical function
             if (!m_filePhi)
             {
+                // Update 'm_phi' only if it was provided as an analytical function
                 m_phiEvaluator->Evaluate("Phi", m_phi->UpdatePhys(), t);
+
+                // Initialize both variables for the first step
+                m_phiEvaluator->Evaluate(m_velName, m_up, t);
             }
-            // Initialize both variables for the first step
-            m_phiEvaluator->Evaluate(m_velName, m_up, t);
+            // Initialise 'm_upPrev' in all cases
             m_upPrev = m_up;
         }
-        // If timedependent 'm_phi'...
+        // If timedependent 'm_phi'
+        // Phi functions from files are not timedependent
         else if (m_timeDependentPhi)
         {
-            // ...and not loaded from an external file
-            if (!m_filePhi)
+            m_phiEvaluator->Evaluate("Phi", m_phi->UpdatePhys(), t);
+
+            // And if velocities are timedependent as well
+            if (m_timeDependentUp)
             {
-                m_phiEvaluator->Evaluate("Phi", m_phi->UpdatePhys(), t);
-                // And if velocities are timedependent as well
-                if (m_timeDependentUp)
-                {
-                    // Store previous value of u_p during simulation
-                    m_upPrev = m_up;
-                    m_phiEvaluator->Evaluate(m_velName, m_up, t);
-                }
-            }
-            // DEBUG ...and loaded from a file
-            else
-            {
-                // With constant velocity, the new position of the IBs is just
-                // x = v*dt
-                if (!m_timeDependentUp)
-                {
-                    
-                }
-                // Otherwise, the values must be integrated in time by means of
-                // an algorithm such as RK...
-                else
-                {
-                    
-                }
+                // Store previous value of u_p during simulation
+                m_upPrev = m_up;
+                m_phiEvaluator->Evaluate(m_velName, m_up, t);
             }
         }
     }
@@ -689,10 +673,10 @@ namespace Nektar
             // Get name of STL file
             string fileName;
             int status = child->QueryStringAttribute("FILE", &fileName);
-            ASSERTL0(status == TIXML_SUCCESS, "An STL file with the geometry "
-                     "of the immersed bodies has to be supplied.")
+            ASSERTL0(status == TIXML_SUCCESS, "An FLD file with the values "
+                     "of the phi function has to be supplied.")
             ASSERTL0(boost::iequals(fileName.substr(fileName.length()-4),
-                     ".stl"), "A valid STL file must be supplied in the "
+                     ".fld"), "A valid FLD file must be supplied in the "
                      "'ShapeFunction' field.")
             
             // Get phi values from XML file (after "FieldConvert" the STL file)
@@ -704,30 +688,33 @@ namespace Nektar
                 LibUtilities::FieldIO::CreateForFile(m_session, fileName);
             phiFile->Import(fileName, fieldDef, fieldData, fieldMetaData);
 
+            // Only Phi field should be defined in the file
+            ASSERTL0(fieldData.size() == 1, "Only one field (phi) must be "
+                                            "defined in the FLD file.")
+
             // Extract Phi field to output
-            string tmp("Phi");
-            for (int i = 0; i < fieldData.size(); ++i)
-            {
-                m_phi->ExtractDataToCoeffs(
-                    fieldDef[i],
-                    fieldData[i],
-                    tmp,
-                    m_phi->UpdateCoeffs());
-            }
+            string tmp("phi");
+            m_phi->ExtractDataToCoeffs(fieldDef[0], fieldData[0],
+                                       tmp, m_phi->UpdateCoeffs());
+            m_phi->BwdTrans(m_phi->GetCoeffs(), m_phi->UpdatePhys());
             m_filePhi = true;
+            m_timeDependentPhi = false;
+            m_timeDependentUp  = false;
         }
-
-        // Check if Phi is timedependent
-        m_timeDependentPhi = GetVarTimeDependence("ShapeFunction", "Phi");
-
-        // If so, check if its velocity changes as well
-        m_timeDependentUp = GetVarTimeDependence("ShapeFunction", "Up");
-        switch (m_velocity.num_elements())
+        else
         {
-            case 3:
-                m_timeDependentUp |= GetVarTimeDependence("ShapeFunction", "Wp");
-            case 2:
-                m_timeDependentUp |= GetVarTimeDependence("ShapeFunction", "Vp");
+            // Check if Phi is timedependent
+            m_timeDependentPhi = GetVarTimeDependence("ShapeFunction", "Phi");
+
+            // If so, check if its velocity changes as well
+            m_timeDependentUp = GetVarTimeDependence("ShapeFunction", "Up");
+            switch (m_velocity.num_elements())
+            {
+                case 3:
+                    m_timeDependentUp |= GetVarTimeDependence("ShapeFunction", "Wp");
+                case 2:
+                    m_timeDependentUp |= GetVarTimeDependence("ShapeFunction", "Vp");
+            }
         }
     }
 
