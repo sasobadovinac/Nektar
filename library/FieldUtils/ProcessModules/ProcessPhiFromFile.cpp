@@ -84,9 +84,6 @@ void ProcessPhiFromFile::Process(po::variables_map &vm)
     ASSERTL0(m_f->m_graph, "A session file file must be provided before the "
                            "STL file.");
 
-    ASSERTL0(m_config["scale"].as<string>().compare("NotSet") != 0,
-             "Need to specify a scale coefficient, scale=value");
-
     // Skip in case of empty partition
     if (m_f->m_exp[0]->GetNumElmts() == 0)
     {
@@ -101,6 +98,9 @@ void ProcessPhiFromFile::Process(po::variables_map &vm)
     // ...or Read STL file and append Phi values to the existing expansions
     else
     {
+        ASSERTL0(m_config["scale"].as<string>().compare("NotSet") != 0,
+                 "Need to specify a scale coefficient, scale=value");
+
         STLfile phiFile = ReadSTL(m_config["file"].as<string>());
         GetPhifromSTL(phiFile);
     }
