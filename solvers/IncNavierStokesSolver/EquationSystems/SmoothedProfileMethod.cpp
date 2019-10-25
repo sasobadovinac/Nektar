@@ -308,8 +308,8 @@ namespace Nektar
         // Estimate forces only if requested
         if (m_forcesFilter >= 0)
         {
-            dynamic_pointer_cast<FilterAeroForcesSPM>(
-                m_filters[m_forcesFilter])->CalculateForces(outarray, m_upPrev,
+            static_pointer_cast<FilterAeroForcesSPM>(
+                m_filters[m_forcesFilter].second)->CalculateForces(outarray, m_upPrev,
                                             m_phi, time, a_iixDt);
         }
         // Set BC conditions for pressure p_p

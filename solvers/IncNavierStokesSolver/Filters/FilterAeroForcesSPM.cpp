@@ -78,7 +78,7 @@ FilterAeroForcesSPM::FilterAeroForcesSPM(
     else
     {
         LibUtilities::Equation equ(
-            m_session->GetExpressionEvaluator(), it->second);
+            m_session->GetInterpreter(), it->second);
         m_outputFrequency = round(equ.Evaluate());
     }
 
@@ -91,7 +91,7 @@ FilterAeroForcesSPM::FilterAeroForcesSPM(
     else
     {
         LibUtilities::Equation equ(
-            m_session->GetExpressionEvaluator(), it->second);
+            m_session->GetInterpreter(), it->second);
         m_startTime = equ.Evaluate();
     }
 }
