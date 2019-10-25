@@ -435,15 +435,14 @@ namespace Nektar
                 boost::iequals(m_session->GetSolverInfo("ForceBoundary"), "1"))
             {
                 Vmath::Vvtvm(physTot, m_phi->GetPhys(), 1, Forcing[i], 1,
-                                                        Forcing[i], 1,
-                                                        Forcing[i], 1);
+                             Forcing[i], 1, Forcing[i], 1);
                 Vmath::Vadd(physTot, f_s[i], 1, Forcing[i], 1, Forcing[i], 1);
             }
             else
             {
                 Vmath::Vsub(physTot, f_s[i], 1, Forcing[i], 1, Forcing[i], 1);
-                Blas::Daxpy(physTot, dt/m_gamma0, Forcing[i], 1, fields[ind], 1);
             }
+            Blas::Daxpy(physTot, dt/m_gamma0, Forcing[i], 1, fields[ind], 1);
         }
     }
 
