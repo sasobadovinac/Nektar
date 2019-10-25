@@ -34,6 +34,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 #include "ProcessPhiFromFile.h"
+#include <boost/core/ignore_unused.hpp>
 #include <LibUtilities/BasicUtils/SharedArray.hpp>
 #include <LibUtilities/BasicUtils/SessionReader.h>
 
@@ -76,6 +77,9 @@ ProcessPhiFromFile::~ProcessPhiFromFile()
  */
 void ProcessPhiFromFile::Process(po::variables_map &vm)
 {
+    // Ignore warnings due to 'vm'
+    boost::ignore_unused(vm);
+
     // Check if required params are defined
     ASSERTL0(m_f->m_graph, "A session file file must be provided before the "
                            "STL file.");
