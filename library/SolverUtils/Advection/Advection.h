@@ -58,6 +58,12 @@ typedef std::function<void (
     Array<OneD, Array<OneD, Array<OneD, NekDouble> > >&)>
     AdvectionFluxVecCB;
 
+typedef std::function<void (
+    const Array<OneD, Array<OneD, NekDouble> >&,
+    const Array<OneD, Array<OneD, NekDouble> >&,
+    Array<OneD, Array<OneD, NekDouble> >&)>
+    AdvectionFluxVecCBTraceNormal;
+
 /**
  * @brief An abstract base class encapsulating the concept of advection
  * of a vector field.
@@ -135,6 +141,20 @@ public:
     {
         m_fluxVector = std::bind(
             func, obj, std::placeholders::_1, std::placeholders::_2);
+    }
+
+    template<typename FuncPointerT, typename ObjectPointerT>
+    void SetFluxVectorMF(FuncPointerT func, ObjectPointerT obj)
+    {
+        m_fluxVectorMF = std::bind(
+            func, obj, std::placeholders::_1, std::placeholders::_2);
+    }
+
+    template<typename FuncPointerT, typename ObjectPointerT>
+    void SetFluxVectortraceMF(FuncPointerT func, ObjectPointerT obj)
+    {
+        m_fluxVectortraceMF = std::bind(
+            func, obj, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
     }
 
     /**
@@ -245,6 +265,8 @@ protected:
     /// Callback function to the flux vector (set when advection is in
     /// conservative form).
     AdvectionFluxVecCB     m_fluxVector;
+    AdvectionFluxVecCB     m_fluxVectorMF;
+    AdvectionFluxVecCBTraceNormal m_fluxVectortraceMF;
     /// Riemann solver for DG-type schemes.
     RiemannSolverSharedPtr m_riemann;
     /// Storage for space dimension. Used for homogeneous extension.

@@ -145,8 +145,8 @@ namespace Nektar
 
             m_maxLinItePerNewton = m_linsol->GetMaxLinIte()*m_MaxNonlinIte+m_MaxNonlinIte;
             // m_linsol    =   NekLinSysIterative(m_session,v_Comm);
-            // m_LinSysOprtors.DefineMatrixMultiply(&CompressibleFlowSystem::MatrixMultiply_MatrixFree_coeff, this);
-            m_LinSysOprtors.DefineMatrixMultiply(&CompressibleFlowSystem::MatrixMultiply_MatrixFree_coeff_dualtimestep, this);
+            // m_LinSysOprtors.DefineMatrixMultiply(&CompressibleFlowSystem::MatrixMultiply_JacobianFree_coeff, this);
+            m_LinSysOprtors.DefineMatrixMultiply(&CompressibleFlowSystem::MatrixMultiply_JacobianFree_coeff_dualtimestep, this);
             m_LinSysOprtors.DefinePrecond(&CompressibleFlowSystem::preconditioner_BlkSOR_coeff, this);
             // m_LinSysOprtors.DefinePrecond(&CompressibleFlowSystem::preconditioner_BlkDiag, this);
             // m_LinSysOprtors.DefinePrecond(&CompressibleFlowSystem::preconditioner, this);
@@ -327,6 +327,11 @@ namespace Nektar
             m_advObject->SetFluxVector  (&CompressibleFlowSystem::
                                           GetFluxVector, this);
         }
+
+        m_advObject->SetFluxVectorMF  (&CompressibleFlowSystem::
+                                          GetFluxVectorMF, this);
+        m_advObject->SetFluxVectorTraceMF (&CompressibleFlowSystem::
+                                          GetFluxVectorTraceMF, this);
 
         // Setting up Riemann solver for advection operator
         m_session->LoadSolverInfo("UpwindType", riemName, "Average");
@@ -948,6 +953,29 @@ namespace Nektar
             }
         }
         return;
+    }
+
+    void CompressibleFlowSystem::CalcFluxJacVolBnd(
+        const Array<OneD, const Array<OneD, NekDouble> >                &inarray,
+        const Array<OneD, const Array<OneD, Array<OneD, NekDouble> > >  &qfield,
+        Array<OneD, Array<OneD, DNekBlkMatSharedPtr > >                 &ElmtFluxJacArray)
+    {
+        int nSpaceDim = m_graph->GetSpaceDimension();
+
+        for(int nfluxDir = 0; nfluxDir < nSpaceDim; nfluxDir++)
+        {
+            if(m_DEBUG_ADVECTION_JAC_MAT)
+            {
+                GetFluxVectorJacDirctnMat(nfluxDir,inarray, ElmtFluxJacArray);
+            }
+
+            if(m_DEBUG_VISCOUS_JAC_MAT)
+            {
+                MinusDiffusionFluxJacDirctnMat(nfluxDir,inarray,qfield, ElmtFluxJacArray);
+            }
+        }
+
+        GetTraceJac(inarray,qfield,m_TraceJac,m_TraceJacDeriv,m_TraceJacDerivSign);
     }
 
     void CompressibleFlowSystem::AddMatNSBlkDiag_volume(
@@ -1645,7 +1673,7 @@ namespace Nektar
 
         // //TODO: NekLinSysIterative as a member to avoid repeted initialization
         // NekLinSysIterative linsol(m_session,v_Comm);
-        // m_LinSysOprtors.DefineMatrixMultiply(&CompressibleFlowSystem::MatrixMultiply_MatrixFree_coeff, this);
+        // m_LinSysOprtors.DefineMatrixMultiply(&CompressibleFlowSystem::MatrixMultiply_JacobianFree_coeff, this);
         // m_LinSysOprtors.DefinePrecond(&CompressibleFlowSystem::preconditioner_BlkSOR_coeff, this);
         // // m_LinSysOprtors.DefinePrecond(&CompressibleFlowSystem::preconditioner_BlkDiag, this);
         // // m_LinSysOprtors.DefinePrecond(&CompressibleFlowSystem::preconditioner, this);
@@ -2023,7 +2051,7 @@ namespace Nektar
         return;
     }
 
-    void CompressibleFlowSystem::MatrixMultiply_MatrixFree_coeff(
+    void CompressibleFlowSystem::MatrixMultiply_JacobianFree_coeff(
                                                  const  Array<OneD, NekDouble> &inarray,
                                                         Array<OneD, NekDouble >&out)
     {
@@ -2064,7 +2092,7 @@ namespace Nektar
         return;
     }
 
-    void CompressibleFlowSystem::MatrixMultiply_MatrixFree_coeff_central(
+    void CompressibleFlowSystem::MatrixMultiply_JacobianFree_coeff_central(
                                                  const  Array<OneD, NekDouble> &inarray,
                                                         Array<OneD, NekDouble >&out)
     {
@@ -2113,18 +2141,54 @@ namespace Nektar
         return;
     }
 
-    void CompressibleFlowSystem::MatrixMultiply_MatrixFree_coeff_dualtimestep(
+    void CompressibleFlowSystem::MatrixMultiply_MatrixFree_coeff(
+                                                 const  Array<OneD, NekDouble> &inarray,
+                                                        Array<OneD, NekDouble >&out)
+    {
+        unsigned int nvariables = m_TimeIntegtSol_n.num_elements();
+        unsigned int npoints    = m_TimeIntegtSol_n[0].num_elements();
+
+        // m_TimeIntegtSol_k
+        // m_TimeIntegtPnt_k
+
+        Array<OneD, Array<OneD, NekDouble> > sol_n;
+        sol_n                  = m_TimeIntegtSol_n;
+        //inforc = m_TimeIntegForce;
+        unsigned int nvariable  = inarray.num_elements();
+        unsigned int ncoeffs    = inarray[nvariable-1].num_elements();
+        unsigned int npoints    = m_fields[0]->GetNpoints();
+
+        Array<OneD, Array<OneD, NekDouble> > inpnts(nvariable);
+
+        for(int i = 0; i < nvariable; i++)
+        {
+            inpnts[i]   =   Array<OneD, NekDouble>(npoints,0.0);
+            m_fields[i]->BwdTrans(inarray[i], inpnts[i]);
+        }
+
+        DoOdeRhs_coeffMF(m_TimeIntegtPnt_k,inpnts,out,m_BndEvaluateTime);
+
+        for (int i = 0; i < nvariable; i++)
+        {
+            Vmath::Svtvp(ncoeffs,m_TimeIntegLambda,out[i],1,sol_n[i],1,out[i],1);
+            Vmath::Vsub(ncoeffs,inarray[i],1,out[i],1,out[i],1);
+        }
+        return;
+    }
+
+    void CompressibleFlowSystem::MatrixMultiply_JacobianFree_coeff_dualtimestep(
                                                  const  Array<OneD, NekDouble> &inarray,
                                                         Array<OneD, NekDouble >&out,
                                                 const  bool                   &controlFlag)
     {
         if(controlFlag)
         {
-            MatrixMultiply_MatrixFree_coeff_central(inarray,out);
+            // MatrixMultiply_JacobianFree_coeff_central(inarray,out);
+            MatrixMultiply_MatrixFree_coeff(inarray,out);
         }
         else
         {
-            MatrixMultiply_MatrixFree_coeff(inarray,out);
+            MatrixMultiply_JacobianFree_coeff(inarray,out);
         }
 
         if(m_cflLocTimestep>0.0)
@@ -2189,6 +2253,98 @@ namespace Nektar
             Vmath::Vsub(ncoeffs,inarray[i],1,out[i],1,out[i],1);
         }
         return;
+    }
+
+    /**
+     * @brief Compute the right-hand side.
+     */
+    void CompressibleFlowSystem::DoOdeRhs_coeffMF(
+        const Array<OneD, const Array<OneD, NekDouble> > &inarrayJac,
+        const Array<OneD, const Array<OneD, NekDouble> > &inarrayVec,
+              Array<OneD,       Array<OneD, NekDouble> > &outarray,
+        const NekDouble                                   time)
+    {
+        int nvariables = inarrayJac.num_elements();
+        int nTracePts  = GetTraceTotPoints();
+        int ncoeffs    = GetNcoeffs();
+        // Store forwards/backwards space along trace space
+        Array<OneD, Array<OneD, NekDouble> > Fwd    (nvariables);
+        Array<OneD, Array<OneD, NekDouble> > Bwd    (nvariables);
+
+        if (m_HomogeneousType == eHomogeneous1D)
+        {
+            Fwd = NullNekDoubleArrayofArray;
+            Bwd = NullNekDoubleArrayofArray;
+        }
+        else
+        {
+            for(int i = 0; i < nvariables; ++i)
+            {
+                Fwd[i]     = Array<OneD, NekDouble>(nTracePts, 0.0);
+                Bwd[i]     = Array<OneD, NekDouble>(nTracePts, 0.0);
+                m_fields[i]->GetFwdBwdTracePhys(inarrayVec[i], Fwd[i], Bwd[i]);
+            }
+        }
+ 
+         // Calculate advection
+        DoAdvection_coeff(inarray, outarray, time, Fwd, Bwd);
+        // Negate results
+        
+        for (int i = 0; i < nvariables; ++i)
+        {
+            Vmath::Neg(ncoeffs, outarray[i], 1);
+        }
+#ifdef CFS_DEBUGMODE
+        if(2==m_DebugAdvDiffSwitch)
+        {
+            for (int i = 0; i < nvariables; ++i)
+            {
+                Vmath::Zero(ncoeffs, outarray[i], 1);
+            }
+        }
+#endif
+
+#ifdef CFS_DEBUGMODE
+        if(1!=m_DebugAdvDiffSwitch)
+        {
+#endif
+        // Add diffusion t
+        // DoDiffusion(inarray, outarray, Fwd, Bwd);
+        DoDiffusion_coeff(inarray, outarray, Fwd, Bwd);
+#ifdef CFS_DEBUGMODE
+        }
+#endif
+        // Add forcing terms
+        for (auto &x : m_forcing)
+        {
+            ASSERTL0(false,"forcing not coded for DoOdeRhs_coeffMF");
+            // x->Apply(m_fields, inarray, outarray, time);
+            x->Apply_coeff(m_fields, inarray, outarray, time);
+        }
+
+        if (m_useLocalTimeStep)
+        {
+            int nElements = m_fields[0]->GetExpSize();
+            int nq, offset;
+            NekDouble fac;
+            Array<OneD, NekDouble> tmp;
+
+            Array<OneD, NekDouble> tstep (nElements, 0.0);
+            GetElmtTimeStep(inarray, tstep);
+
+            // Loop over elements
+            for(int n = 0; n < nElements; ++n)
+            {
+                nq     = m_fields[0]->GetExp(n)->GetTotPoints();
+                offset = m_fields[0]->GetPhys_Offset(n);
+                fac    = tstep[n] / m_timestep;
+                for(int i = 0; i < nvariables; ++i)
+                {
+                    Vmath::Smul(nq, fac, outarray[i] + offset, 1,
+                                         tmp = outarray[i] + offset, 1);
+                }
+            }
+        }
     }
 
     /**
@@ -2363,7 +2519,7 @@ namespace Nektar
             for (int npnt = 0; npnt < nElmtcoef; npnt++)
             {
                 tmpinn[i][nElmtOffset+npnt] = 1.0;
-                MatrixMultiply_MatrixFree_coeff_central(tmpinn_1d,tmpout_1d);
+                MatrixMultiply_JacobianFree_coeff_central(tmpinn_1d,tmpout_1d);
                 
                 for (int j = 0; j < nvariables; j++)
                 {
@@ -2555,7 +2711,7 @@ namespace Nektar
             {
                 tmpinn[i][nColumnElmtOffset + npts] = ScaledmagnitdEstimat[i];
                 
-                MatrixMultiply_MatrixFree_coeff_central(tmpinn_1d, tmpout_1d);
+                MatrixMultiply_JacobianFree_coeff_central(tmpinn_1d, tmpout_1d);
                 
                 for (int j = 0; j < nvariables; j++)
                 {
@@ -2805,6 +2961,63 @@ namespace Nektar
                         ElmtJacArray[m][n][nDirctn][nelmt][npnt] = (*pointJac)(m,n);
                     }   
                 }
+            }
+        }
+        return ;
+    }
+
+    void CompressibleFlowSystem::GetFluxVectorJacDirctnMat(
+        const int                                           nDirctn,
+        const Array<OneD, const Array<OneD, NekDouble> >    &inarray,
+        Array<OneD, Array<OneD, DNekBlkMatSharedPtr > >     &ElmtFluxJacArray)
+
+    {
+        int nConvectiveFields   = inarray.num_elements();
+        std::shared_ptr<LocalRegions::ExpansionVector> expvect =    m_fields[0]->GetExp();
+        int ntotElmt            = (*expvect).size();
+        LocalRegions::ExpansionSharedPtr pexp = (*expvect)[0];
+        // int nElmtPnt            = pexp->GetTotPoints();
+        // int nElmtCoef           = pexp->GetNcoeffs();
+        Array<OneD, NekDouble> normals;
+        Array<OneD, Array<OneD, NekDouble> > normal3D(3);
+        for(int i = 0; i < 3; i++)
+        {
+            normal3D[i] = Array<OneD, NekDouble>(3,0.0);
+        }
+        normal3D[0][0] = 1.0;
+        normal3D[1][1] = 1.0;
+        normal3D[2][2] = 1.0;
+        normals =   normal3D[nDirctn];
+
+        Array<OneD, NekDouble> pointVar(nConvectiveFields,0.0);
+        Array<OneD, Array<OneD, NekDouble> > locVars(nConvectiveFields);
+        DNekMatSharedPtr pointJac = MemoryManager<DNekMat>::AllocateSharedPtr(nConvectiveFields,nConvectiveFields,0.0);
+        Array<OneD, NekDouble> pointJacData = pointJac->GetPtr();
+        Array<OneD, NekDouble> ElmtFluxJacData;
+
+        int nMatMemoSize = nConvectiveFields*nConvectiveFields;
+
+        for(int  nelmt = 0; nelmt < ntotElmt; nelmt++)
+        {
+            // nElmtCoef           = (*expvect)[nelmt]->GetNcoeffs();
+            int nElmtPnt            = (*expvect)[nelmt]->GetTotPoints();
+    
+            for(int j = 0; j < nConvectiveFields; j++)
+            {   
+                locVars[j] = inarray[j]+GetPhys_Offset(nelmt);
+            }
+
+            for(int npnt = 0; npnt < nElmtPnt; npnt++)
+            {
+                for(int j = 0; j < nConvectiveFields; j++)
+                {
+                    pointVar[j] = locVars[j][npnt];
+                }
+
+                GetFluxVectorJacPoint(pointVar,normals,pointJac);
+
+                ElmtFluxJacData = (*ElmtFluxJacArray[nDirctn][nelmt])(npnt,npnt)->GetPtr();
+                Vmath::Vcopy(nMatMemoSize,pointJacData,1,ElmtFluxJacData,1);
             }
         }
         return ;
@@ -3734,7 +3947,7 @@ namespace Nektar
             const Array<OneD, NekDouble>                        &normals, 
                   DNekMatSharedPtr                              &fluxJac)
     {
-        ASSERTL0(false, "not coded");
+        ASSERTL0(false, "v_GetDiffusionFluxJacPoint not coded");
     }
 
     void CompressibleFlowSystem::v_MinusDiffusionFluxJacDirctn(
@@ -3743,7 +3956,16 @@ namespace Nektar
             const Array<OneD, const Array<OneD, Array<OneD, NekDouble>> >   &qfields,
             Array<OneD, Array<OneD, Array<OneD, Array<OneD, Array<OneD, NekDouble> > > > > &ElmtJacArray)
     {
-        ASSERTL0(false, "not coded");
+        ASSERTL0(false, "v_MinusDiffusionFluxJacDirctn not coded");
+    }
+
+    void CompressibleFlowSystem::v_MinusDiffusionFluxJacDirctnMat(
+            const int                                                       nDirctn,
+            const Array<OneD, const Array<OneD, NekDouble> >                &inarray,
+            const Array<OneD, const Array<OneD, Array<OneD, NekDouble>> >   &qfields,
+            Array<OneD, Array<OneD, DNekBlkMatSharedPtr > >                 &ElmtFluxJacArray)
+    {
+        ASSERTL0(false, "v_MinusDiffusionFluxJacDirctnMat not coded");
     }
 
 #endif
