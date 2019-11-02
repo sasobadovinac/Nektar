@@ -127,7 +127,9 @@ public:
         Array<OneD, Array<OneD, NekDouble> >              &outarray,
         const NekDouble                                   &time,
         const Array<OneD, Array<OneD, NekDouble> > &pFwd = NullNekDoubleArrayofArray,
-        const Array<OneD, Array<OneD, NekDouble> > &pBwd = NullNekDoubleArrayofArray);
+        const Array<OneD, Array<OneD, NekDouble> > &pBwd = NullNekDoubleArrayofArray,
+        const bool                                       &flagFreezeJac=false);
+
 
     /**
      * @brief Set the flux vector callback function.

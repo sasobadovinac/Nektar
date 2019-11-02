@@ -2149,7 +2149,7 @@ namespace Nektar
         unsigned int npoints    = m_TimeIntegtSol_n[0].num_elements();
 
         // m_TimeIntegtSol_k
-        // m_TimeIntegtPnt_k
+        m_TimeIntegtPnt_k
 
         Array<OneD, Array<OneD, NekDouble> > sol_n;
         sol_n                  = m_TimeIntegtSol_n;
@@ -2166,7 +2166,7 @@ namespace Nektar
             m_fields[i]->BwdTrans(inarray[i], inpnts[i]);
         }
 
-        DoOdeRhs_coeffMF(m_TimeIntegtPnt_k,inpnts,out,m_BndEvaluateTime);
+        DoOdeRhs_coeffFreezeJac(inpnts,out,m_BndEvaluateTime);
 
         for (int i = 0; i < nvariable; i++)
         {
@@ -2258,9 +2258,8 @@ namespace Nektar
     /**
      * @brief Compute the right-hand side.
      */
-    void CompressibleFlowSystem::DoOdeRhs_coeffMF(
-        const Array<OneD, const Array<OneD, NekDouble> > &inarrayJac,
-        const Array<OneD, const Array<OneD, NekDouble> > &inarrayVec,
+    void CompressibleFlowSystem::DoOdeRhs_coeffFreezeJac(
+        const Array<OneD, const Array<OneD, NekDouble> > &inarray,
               Array<OneD,       Array<OneD, NekDouble> > &outarray,
         const NekDouble                                   time)
     {
@@ -2282,7 +2281,7 @@ namespace Nektar
             {
                 Fwd[i]     = Array<OneD, NekDouble>(nTracePts, 0.0);
                 Bwd[i]     = Array<OneD, NekDouble>(nTracePts, 0.0);
-                m_fields[i]->GetFwdBwdTracePhys(inarrayVec[i], Fwd[i], Bwd[i]);
+                m_fields[i]->GetFwdBwdTracePhysNoBndFill(inarrayVec[i], Fwd[i], Bwd[i]);
             }
         }
  
@@ -2442,6 +2441,25 @@ namespace Nektar
      * @brief Compute the advection terms for the right-hand side
      */
     void CompressibleFlowSystem::DoAdvection_coeff(
+        const Array<OneD, const Array<OneD, NekDouble> > &inarray,
+              Array<OneD,       Array<OneD, NekDouble> > &outarray,
+        const NekDouble                                   time,
+        const Array<OneD, Array<OneD, NekDouble> >       &pFwd,
+        const Array<OneD, Array<OneD, NekDouble> >       &pBwd,
+        const bool                                       &flagFreezeJac)
+    {
+        int nvariables = inarray.num_elements();
+        Array<OneD, Array<OneD, NekDouble> > advVel(m_spacedim);
+
+        m_advObject->Advect_coeff(nvariables, m_fields, advVel, inarray,
+                            outarray, time, pFwd, pBwd,flagFreezeJac);
+    }
+
+
+    /**
+     * @brief Compute the advection terms for the right-hand side
+     */
+    void CompressibleFlowSystem::DoAdvection_coeffMF(
         const Array<OneD, const Array<OneD, NekDouble> > &inarray,
               Array<OneD,       Array<OneD, NekDouble> > &outarray,
         const NekDouble                                   time,

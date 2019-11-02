@@ -309,7 +309,8 @@ namespace Nektar
                 Array<OneD,       Array<OneD, NekDouble> > &outarray,
             const NekDouble                                   time,
             const Array<OneD, Array<OneD, NekDouble> >       &pFwd,
-            const Array<OneD, Array<OneD, NekDouble> >       &pBwd);
+            const Array<OneD, Array<OneD, NekDouble> >       &pBwd,
+            const bool                                       &flagFreezeJac=false);
 
         void MultiplyElmtInvMass_PlusSource(
             Array<OneD, Array<OneD, DNekBlkMatSharedPtr> > &gmtxarray,const NekDouble dtlamda);

@@ -111,7 +111,8 @@ namespace Nektar
                   Array<OneD, Array<OneD, NekDouble> >        &outarray,
             const NekDouble                                   &time,
             const Array<OneD, Array<OneD, NekDouble> >        &pFwd,
-            const Array<OneD, Array<OneD, NekDouble> >        &pBwd)
+            const Array<OneD, Array<OneD, NekDouble> >        &pBwd,
+            const bool                                        &flagFreezeJac)
         {
             int nPointsTot      = fields[0]->GetTotPoints();
             int nCoeffs         = fields[0]->GetNcoeffs();
