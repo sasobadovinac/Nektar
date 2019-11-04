@@ -182,14 +182,33 @@ namespace Nektar
         // Reset the normal velocity
         Vmath::Zero(nTracePts, m_traceVn, 1);
 
+        MultiRegions::ExpListSharedPtr traceExp = m_fields[0]->GetTrace();
+        Array<OneD, NekDouble> xc(nTracePts), yc(nTracePts);
+        traceExp->GetCoords(xc, yc);
+
         for (i = 0; i < m_velocity.num_elements(); ++i)
-        {
-            m_fields[0]->ExtractTracePhys(m_velocity[i], tmp);
+        {p
+            //m_fields[0]->ExtractTracePhys(m_velocity[i], tmp);
 
             //Hack: force velocity in correct direction for mortars
-            for (auto &z : tmp)
+            //for (auto &z : tmp)
+            //{
+             //z = tmp[0];
+            //}
+
+            if (i == 0)
             {
-                z = tmp[0];
+                for (int j = 0; j < nTracePts; ++j)
+                {
+                    tmp[j] = -yc[j];
+                }
+            }
+            else
+            {
+                for (int j = 0; j < nTracePts; ++j)
+                {
+                    tmp[j] = xc[j];
+                }
             }
 
             Vmath::Vvtvp(nTracePts,
