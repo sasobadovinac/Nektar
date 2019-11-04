@@ -178,6 +178,10 @@ namespace Nektar
             //Flag true if rebuilding SMatrices
             bool  m_SMatricesFlag = true;
 
+            //Variable output file
+            std::ofstream m_outfile;
+            int m_timestepCount = 0;
+
             GlobalLinSysMapShPtr   m_globalBndMat;
             ExpListSharedPtr       m_trace;
             AssemblyMapDGSharedPtr m_traceMap;

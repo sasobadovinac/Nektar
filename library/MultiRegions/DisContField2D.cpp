@@ -599,6 +599,9 @@ void DisContField2D::SetUpDG(const std::string variable)
 
     m_locTraceToTraceMap = MemoryManager<LocTraceToTraceMap>::AllocateSharedPtr(
         *this, m_trace, elmtToTrace, m_leftAdjacentEdges);
+
+    remove( "maxU.txt" );
+    m_outfile.open("maxU.txt", std::ios_base::app);
 }
 
 /**
@@ -1823,6 +1826,36 @@ void DisContField2D::v_AddTraceIntegral(const Array<OneD, const NekDouble> &Fn,
             }
         }
     }
+
+    //Find maximum phys value for graphing of decay
+    NekDouble max = 0;
+    int n = 100;     //Number of points to check in each quad
+    int t = 400; //Number of timesteps before checking for max (RK4 multiply by 4)
+
+    if (m_timestepCount % t == 0 || m_timestepCount == 0)
+    {
+        for (int el = 0; el < GetExpSize(); ++el)
+        {
+            for (int i = 0; i < n; ++i)
+            {
+                for (int j = 0; j < n; ++j)
+                {
+                    Array<OneD, NekDouble> xi(2, 0.0);
+                    xi[0] = (i * (2.0 / (n - 1)) - 1.0);
+                    xi[1] = (j * (2.0 / (n - 1)) - 1.0);
+
+                    NekDouble u = GetExp(el)->StdPhysEvaluate(xi, GetPhys() + GetPhys_Offset(el));
+
+                    // Finds maximum value in quadrature points
+                    max = (u > max) ? u : max;
+                }
+            }
+        }
+
+        m_outfile << max << std::endl;
+    }
+
+    m_timestepCount++;
 }
 
 /**

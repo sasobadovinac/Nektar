@@ -187,7 +187,7 @@ namespace Nektar
         traceExp->GetCoords(xc, yc);
 
         for (i = 0; i < m_velocity.num_elements(); ++i)
-        {p
+        {
             //m_fields[0]->ExtractTracePhys(m_velocity[i], tmp);
 
             //Hack: force velocity in correct direction for mortars
