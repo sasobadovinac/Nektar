@@ -37,6 +37,7 @@
 #define FIELDUTILS_PROCESSPHIFROMFILE
 
 #include "../Module.h"
+#include "../Octree.h"
 #include <random>
 
 namespace Nektar
@@ -85,34 +86,37 @@ protected:
         Array<OneD, NekDouble> v0 = Array<OneD, NekDouble>(3);
         Array<OneD, NekDouble> v1 = Array<OneD, NekDouble>(3);
         Array<OneD, NekDouble> v2 = Array<OneD, NekDouble>(3);
+        Array<OneD, NekDouble> centroid = Array<OneD, NekDouble>(3);
+
     };
     /// STL file object
-    struct STLfile
+    struct STLobject
     {
-        std::string header;
+        // Number of triangles
         unsigned int numTri;
+        // Triangles definition
         Array<OneD, triangle> triangles;
     };
+    /// Octree object
+    octree m_tree;
 
     // Reads one vector from a binary STL file
     Array<OneD, NekDouble> ReadVector(std::ifstream &in);
-    // Reads an STL file and returns an 'STLfile' struct
-    STLfile ReadSTL(std::string filename);
+    // Reads an STL file and returns an 'STLobject' struct
+    STLobject ReadSTL(std::string filename);
     // Smoothing function
     NekDouble PhiFunction(double dist, double coeff);
     // Calculates Phi from 'ShapeFunction' in the session file
     void GetPhifromSession();
     // Calculates Phi from an external STL binary file
-    void GetPhifromSTL(const STLfile &file);
+    void GetPhifromSTL(const STLobject &file);
     // Checks if a ray hits a specific 3D triangle
     bool CheckHit(const triangle &tri,
                   const Array<OneD, NekDouble> &Origin,
                   const Array<OneD, NekDouble> &Dvec,
                   double &distance, double &u, double &v);
-    // Returns true if the point is inside the 3D STL object
-    bool IsInterior(const STLfile &file, const Array<OneD, NekDouble> &x);
     // Shortest distance from a point to a 3D geometry
-    void FindShortestDist(const STLfile &file,
+    void FindShortestDist(const STLobject &file,
                           const Array<OneD, NekDouble> &x,
                           double &dist);
     // Utility to find if a double equals zero
@@ -126,9 +130,9 @@ protected:
     NekDouble Distance2point(const Array<OneD, NekDouble> &v0,
                           const Array<OneD, NekDouble> &v1);
     // Utility to measure shortest distance to a segment
-    NekDouble Distance2edge(const Array<OneD, NekDouble> &x,
-                         const Array<OneD, NekDouble> &e1,
-                         const Array<OneD, NekDouble> &e2);
+    Array<OneD, NekDouble> Vector2edge(const Array<OneD, NekDouble> &x,
+                                       const Array<OneD, NekDouble> &e1,
+                                       const Array<OneD, NekDouble> &e2);
 
 private:
 };
