@@ -272,7 +272,7 @@ void ProcessPhiFromFile::GetPhifromSTL(const ProcessPhiFromFile::STLobject &file
     int nStrips;
     m_f->m_session->LoadParameter("Strip_Z", nStrips, 1);
 
-    // Initialise octree
+    // Find bounds of the mesh
     Array<OneD, NekDouble> bounds(6);
     bounds[0] = coords[0][0];
     bounds[1] = coords[0][0];
@@ -289,13 +289,25 @@ void ProcessPhiFromFile::GetPhifromSTL(const ProcessPhiFromFile::STLobject &file
         bounds[4] = (bounds[4] < coords[2][i]) ? bounds[4] : coords[2][i];
         bounds[5] = (bounds[5] > coords[2][i]) ? bounds[5] : coords[2][i];
     }
+    // and add a margin to avoid rounding errors
+    bounds[0] -= fabs(bounds[0])*0.01;
+    bounds[1] += fabs(bounds[1])*0.01;
+    bounds[2] -= fabs(bounds[2])*0.01;
+    bounds[3] += fabs(bounds[3])*0.01;
+    bounds[4] -= fabs(bounds[4])*0.01;
+    bounds[5] += fabs(bounds[5])*0.01;
+    
+    // Array of centroids of triangles in the STL object
     Array<OneD, Array<OneD, NekDouble> > centroids(file.numTri);
     for (int i = 0; i < file.numTri; ++i)
     {
         centroids[i] = file.triangles[i].centroid;
     }
+
+    // Initialise octree
     m_tree = octree(centroids, 10, bounds);
 
+    // For each strip...
     for (int s = 0; s < nStrips; ++s)
     {
         // Append Phi expansion to 'm_f'
@@ -406,13 +418,13 @@ void ProcessPhiFromFile::FindShortestDist(
     // First, use the ones in the node of 'x'
     int node = m_tree.QueryNode(x);
 
-    // If the node's depth is 1 the point is far from the object
+    // Set 'dist' to an unreal value
+    dist = numeric_limits<double>::max();
+
+    // If the node's depth is less than 3 the point is far from the object
     int depth = m_tree.QueryDepth(node);
-    if (depth <= 1)
-    {
-        dist = numeric_limits<double>::max();
-    }
-    else
+
+    if (depth > 2)
     {
         vector<int> treeTriangles;
         vector<int> tmpTriangles = m_tree.QueryPoints(node);
@@ -431,9 +443,6 @@ void ProcessPhiFromFile::FindShortestDist(
                 treeTriangles.push_back(point);
             }
         }
-
-        // Set 'dist' to an unreal value
-        dist = numeric_limits<double>::max();
 
         // Keep the sign (interior or exterior),
         int distSign = 1;

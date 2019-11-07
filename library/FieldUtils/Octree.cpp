@@ -43,6 +43,7 @@ octree::octree(const Array<OneD, Array<OneD, NekDouble> > &pts, int maxPts,
 
 octree::octree(const Array<OneD, Array<OneD, NekDouble> > &pts, int maxPts)
 {
+    // Find coordinates of the bounding box
     Array<OneD, NekDouble> bounds(6);
     bounds[0] = pts[0][0];
     bounds[1] = pts[0][0];
@@ -59,6 +60,16 @@ octree::octree(const Array<OneD, Array<OneD, NekDouble> > &pts, int maxPts)
         bounds[4] = (bounds[4] < pts[i][2]) ? bounds[4] : pts[i][2];
         bounds[5] = (bounds[5] > pts[i][2]) ? bounds[5] : pts[i][2];
     }
+
+    // Add a small margin
+    bounds[0] -= fabs(bounds[0])*0.01;
+    bounds[1] += fabs(bounds[1])*0.01;
+    bounds[2] -= fabs(bounds[2])*0.01;
+    bounds[3] += fabs(bounds[3])*0.01;
+    bounds[4] -= fabs(bounds[4])*0.01;
+    bounds[5] += fabs(bounds[5])*0.01;
+
+    // Call the octree constructor
     octree(pts, maxPts, bounds);
 }
 
