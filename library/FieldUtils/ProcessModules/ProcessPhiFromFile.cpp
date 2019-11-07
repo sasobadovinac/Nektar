@@ -372,7 +372,7 @@ bool ProcessPhiFromFile::CheckHit(const ProcessPhiFromFile::triangle &tri,
     Array<OneD, NekDouble> Pvec = Cross(Dvec, E2);
     double det = Vmath::Dot(3, Pvec, E1);
     double inv_det = 1.0 / det;
-    if (IsZero(det))
+    if (IsEqual(0.0, det, 1e-10))
     {
         distance = numeric_limits<double>::max();
         u        = numeric_limits<double>::max();
@@ -497,8 +497,8 @@ void ProcessPhiFromFile::FindShortestDist(
             // closer to 'x'. Otherwise, some exterior points will be treated
             // as interior and viceversa
             if (dist-currentDist > 1e-5*currentDist ||
-                (fabs(dist-currentDist) <= 1e-5*currentDist &&  // Same point
-                 Vmath::Dot(3, triNormal, tri.normal) < 0.0 &&  // Sharp corner
+                (IsEqual(dist, currentDist, 1e-5) &&
+                 IsNegative(Vmath::Dot(3, triNormal, tri.normal), 1e-5) &&
                  fabs(currentTparam) > fabs(tParam)))
             {
                 dist      = currentDist;
@@ -514,19 +514,51 @@ void ProcessPhiFromFile::FindShortestDist(
 }
 
 /**
- * @brief Returns true if the argument is CLOSE to zero. Tuned for
- * the STL parsing module, do not use for other purposes
+ * @brief Returns true if \f[x=y\f] within the relative tolerance 'relTol'
+ * (relative to 'y')
  * 
  * @param x
  * @return true
  * @return false
  */
-bool ProcessPhiFromFile::IsZero(double x)
+bool ProcessPhiFromFile::IsEqual(double x, double y, double relTol)
 {
-    double EPS = numeric_limits<double>::epsilon();
-    return (x > -EPS && x < EPS);
+    return (fabs(x-y) <= relTol*y);
 }
 
+/**
+ * @brief Returns true if \f[x>tol\f]
+ * 
+ * @param x
+ * @param relTol
+ * @return true
+ * @return false
+ */
+bool ProcessPhiFromFile::IsPositive(double x, double tol)
+{
+    return (x > tol);
+}
+
+/**
+ * @brief Returns true if \f[x<tol\f]
+ * 
+ * @param x
+ * @param relTol
+ * @return true
+ * @return false
+ */
+bool ProcessPhiFromFile::IsNegative(double x, double tol)
+{
+    return (x < tol);
+}
+
+/**
+ * @brief Returns the cross product of vectors 'v0' y 'v1'
+ * 
+ * @param v0
+ * @param v1
+ * @return Array<OneD, NekDouble>
+ */
 Array<OneD, NekDouble> ProcessPhiFromFile::Cross(
                                 const Array<OneD, NekDouble> &v0,
                                 const Array<OneD, NekDouble> &v1)

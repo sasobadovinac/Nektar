@@ -119,8 +119,12 @@ protected:
     void FindShortestDist(const STLobject &file,
                           const Array<OneD, NekDouble> &x,
                           double &dist);
-    // Utility to find if a double equals zero
-    bool IsZero(double x);
+    // Utility to find if two doubles are equal
+    bool IsEqual(double x, double y, double relTol);
+    // Utility to find if a double is positive with a certain tolerance
+    bool IsPositive(double x, double tol);
+    // Utility to find if a double is negative with a certain tolerance
+    bool IsNegative(double x, double tol);
     // Utility to calculate the cross-product of two 3D vectors
     Array<OneD, NekDouble> Cross(const Array<OneD, NekDouble> &v0,
                                  const Array<OneD, NekDouble> &v1);
