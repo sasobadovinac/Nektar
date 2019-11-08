@@ -7,11 +7,22 @@ namespace Nektar
 namespace FieldUtils
 {
 
+/**
+ * @brief Construct a new octree object
+ *
+ */
 octree::octree() : m_maxPts(0), m_nMshPts(0), m_nNodes(0), m_nLeaves(0),
                    m_maxDepth(0), m_root(nullptr)
 {
 }
 
+/**
+ * @brief Construct a new octree object
+ *
+ * @param pts
+ * @param maxPts
+ * @param bounds
+ */
 octree::octree(const Array<OneD, Array<OneD, NekDouble> > &pts, int maxPts,
                const Array<OneD, NekDouble> &bounds)
 {
@@ -41,6 +52,12 @@ octree::octree(const Array<OneD, Array<OneD, NekDouble> > &pts, int maxPts,
     SetNeighbours(m_root->GetID());
 }
 
+/**
+ * @brief Construct a new octree object
+ *
+ * @param pts
+ * @param maxPts
+ */
 octree::octree(const Array<OneD, Array<OneD, NekDouble> > &pts, int maxPts)
 {
     // Find coordinates of the bounding box
@@ -73,6 +90,16 @@ octree::octree(const Array<OneD, Array<OneD, NekDouble> > &pts, int maxPts)
     octree(pts, maxPts, bounds);
 }
 
+/**
+ * @brief Given the coordinates 'coords' of a point, returns the leaf octant
+ * that contains it. If 'depth' is specified, returs the node that contains the
+ * point such that its depth is lower or equal to the one indicated. If the
+ * point lies outside the tree, it returns -1
+ *
+ * @param coords
+ * @param depth
+ * @return int
+ */
 int octree::QueryNode(const Array<OneD, NekDouble> &coords, int depth)
 {
     int nodeID = -1;
@@ -102,6 +129,16 @@ int octree::QueryNode(const Array<OneD, NekDouble> &coords, int depth)
     return nodeID;
 }
 
+/**
+ * @brief Finds the ID of the closest point in 'pts' to the one specified by
+ * 'coords'. It also returns the distance between both points in 'distance'
+ *
+ * @param pts
+ * @param coords
+ * @param distance
+ * @param pointInd
+ * @return int
+ */
 int octree::QueryClosest(const Array<OneD, Array<OneD, NekDouble> > &pts,
                          const Array<OneD, NekDouble> &coords,
                          double &distance, int pointInd)
@@ -155,11 +192,27 @@ int octree::QueryClosest(const Array<OneD, Array<OneD, NekDouble> > &pts,
     return index;
 }
 
+/**
+ * @brief Returns the indices of the points of the mesh contained in the tree
+ *
+ * @param nodeID
+ * @return std::vector<int>
+ */
 std::vector<int> octree::QueryPoints(int nodeID)
 {
     return m_nodes[nodeID]->GetIndices();
 }
 
+/**
+ * @brief Returns the IDs of the octants that surround the queried node. First,
+ * it finds the neighbouring nodes with the same or lower depth and, if they
+ * are not leaf nodes, return all the leaf octants contained in them. This
+ * means that, for octants of depth 2, this function returns all the leaf nodes
+ * in the tree except those lying inside the queried octant
+ *
+ * @param nodeID
+ * @return std::vector<int>
+ */
 std::vector<int> octree::QueryNeighbours(int nodeID)
 {
     std::vector<int> indices;
@@ -170,6 +223,15 @@ std::vector<int> octree::QueryNeighbours(int nodeID)
     return indices;
 }
 
+/**
+ * @brief Returns some characteristic values of the tree.
+ *
+ * @param maxPts
+ * @param nPts
+ * @param nNodes
+ * @param nLeaves
+ * @param depth
+ */
 void octree::GetStats(int &maxPts, int &nPts, int &nNodes,
                       int &nLeaves, int &depth)
 {
@@ -180,6 +242,12 @@ void octree::GetStats(int &maxPts, int &nPts, int &nNodes,
     depth   = m_maxDepth;
 }
 
+/**
+ * @brief Goes through all the nodes of the octree counting the number of
+ * octants and the maximum depth reached
+ * 
+ * @param nodeID 
+ */
 void octree::AdvanceToStats(int nodeID)
 {
     // Update stats if we reached the end of the branch
@@ -200,6 +268,12 @@ void octree::AdvanceToStats(int nodeID)
     }
 }
 
+/**
+ * @brief Once the nodes of the octree are created, sets their neighbours as
+ * explained in 'octree::QueryNeighbours'
+ *
+ * @param nodeID
+ */
 void octree::SetNeighbours(int nodeID)
 {
     // Array with the different steps
@@ -241,11 +315,23 @@ void octree::SetNeighbours(int nodeID)
     }
 }
 
+/**
+ * @brief Construct a new octree::octant object
+ *
+ */
 octree::octant::octant() : m_nPts(-1), m_loc(-1), m_depth(-1), m_id(-1),
                            m_delta(-1), m_centre(3), m_bounds(6), m_isLeaf(true)
 {
 }
 
+/**
+ * @brief Construct a new octree::octant object
+ *
+ * @param loc
+ * @param depth
+ * @param id
+ * @param bounds
+ */
 octree::octant::octant(int loc, int depth, int id,
                        const Array<OneD, NekDouble> &bounds) :
                             m_nPts(0), m_loc(loc), m_depth(depth),
@@ -282,6 +368,12 @@ octree::octant::octant(int loc, int depth, int id,
     }
 }
 
+/**
+ * @brief Construct a new octree::octant object
+ *
+ * @param loc
+ * @param parent
+ */
 octree::octant::octant(int loc, octant &parent) : m_nPts(0), m_loc(loc),
                                                   m_id(-1), m_isLeaf(true)
 {
@@ -355,6 +447,12 @@ octree::octant::octant(int loc, octant &parent) : m_nPts(0), m_loc(loc),
     }
 }
 
+/**
+ * @brief Updates 'leaves' so that it contains all the leaf nodes belonging to
+ * the octant
+ *
+ * @param leaves
+ */
 void octree::octant::GetLeaves(std::vector<octantSharedPtr>& leaves)
 {
     if (m_isLeaf)
@@ -370,6 +468,11 @@ void octree::octant::GetLeaves(std::vector<octantSharedPtr>& leaves)
     }
 }
 
+/**
+ * @brief Sets the values of 'm_pointInd' to those in 'indices'
+ *
+ * @param indices
+ */
 void octree::octant::SetIndices(const std::vector<int> &indices)
 {
     for (int i : indices)
@@ -379,6 +482,11 @@ void octree::octant::SetIndices(const std::vector<int> &indices)
     m_nPts = indices.size();
 }
 
+/**
+ * @brief Adds to 'm_neighbours' the octants that are not already in the list
+ *
+ * @param neighbours
+ */
 void octree::octant::AddNeighbours(const std::vector<octantSharedPtr> &neighbours)
 {
     for (const octantSharedPtr neighbour : neighbours)
@@ -399,6 +507,13 @@ void octree::octant::AddNeighbours(const std::vector<octantSharedPtr> &neighbour
     }
 }
 
+/**
+ * @brief Adds to 'm_pointInd' the IDs of the points in 'pts' that fall inside
+ * the octant
+ *
+ * @param pts
+ * @param indices
+ */
 void octree::octant::AddPoints(const Array<OneD, Array<OneD, NekDouble> > &pts,
                                const std::vector<int> &indices)
 {
@@ -428,6 +543,14 @@ void octree::octant::AddPoints(const Array<OneD, Array<OneD, NekDouble> > &pts,
     }
 }
 
+/**
+ * @brief Recursively divides the octant into 8 children and fills the leaf
+ * nodes with their corresponding points. Does NOT add neighbours
+ *
+ * @param maxPts
+ * @param pts
+ * @param nodes
+ */
 void octree::octant::Subdivide(int maxPts,
                                const Array<OneD, Array<OneD, NekDouble> > &pts,
                                std::vector<octantSharedPtr> &nodes)
@@ -459,10 +582,22 @@ void octree::octant::Subdivide(int maxPts,
     }    
 }
 
+/**
+ * @brief Returns the position inside an octant in the range (1-8). The name
+ * convention is as follows: let \f[\Delta\f] be half the length of the
+ * father octant side, and \f[x_c,y_c,z_c\f] be the coordinates of the centre
+ * of the father node. Then, position 1 corresponds to \f[x=x_c-\Delta\f],
+ * \f[y=y_c-\Delta\f] and \f[y=y_c-\Delta\f]. The next positions are obtained
+ * by rotating counter-clockwise around the Z axis and then, making the same
+ * rotation for \f[z=z_c+\Delta\f]
+ *
+ * @param coords
+ * @return int
+ */
 int octree::octant::GetLocInNode(const Array<OneD, NekDouble> &coords)
 {
     // Different positions as bits in 'posByte'
-    // MSB <--------> LSB
+    // MSB <==> LSB
     unsigned char posByte;
 
     if (coords[0] <= m_centre[0])  // x-

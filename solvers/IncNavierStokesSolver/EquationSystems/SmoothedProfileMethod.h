@@ -90,9 +90,9 @@ namespace Nektar
         Array<OneD, Array<OneD, NekDouble> > m_upPrev;
         /// Vector storing the names of the components of \u_p
         std::vector<std::string> m_velName;
-        /// Flag signaling if \u_p depends on time
+        /// Flag signaling if \f[\u_p\f] depends on time
         bool m_timeDependentUp;
-        /// Stiffly-stable scheme \gamma_0 coefficient
+        /// Stiffly-stable scheme \f[\gamma_0\f] coefficient
         NekDouble m_gamma0;
         /// Shape function 'phi' as expansion list
         MultiRegions::ExpListSharedPtr m_phi;
