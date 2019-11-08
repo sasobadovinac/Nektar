@@ -128,27 +128,22 @@ void ProcessHomogeneousPlane::Process(po::variables_map &vm)
         //  to change m_session->m_comm to prevent mpi from hanging
         //  (RowComm will only be used when creating the new expansion,
         //   since in other places we use m_f->m_comm)
-        std::vector<std::string> files;
-        for (int i = 0; i < m_f->m_inputfiles["xml"].size(); ++i)
-        {
-            files.push_back(m_f->m_inputfiles["xml"][i]);
-        }
-        for (int j = 0; j < m_f->m_inputfiles["xml.gz"].size(); ++j)
-        {
-            files.push_back(m_f->m_inputfiles["xml.gz"][j]);
-        }
+        vector<string> files = m_f->m_session->GetFilenames();
+
         vector<string> cmdArgs;
         cmdArgs.push_back("FieldConvert");
         if (m_f->m_verbose)
         {
             cmdArgs.push_back("--verbose");
         }
+
         int argc          = cmdArgs.size();
         const char **argv = new const char *[argc];
         for (int i = 0; i < argc; ++i)
         {
             argv[i] = cmdArgs[i].c_str();
         }
+
         m_f->m_session = LibUtilities::SessionReader::CreateInstance(
             argc, (char **)argv, files, m_f->m_comm->GetRowComm());
         m_f->m_session->InitSession();
