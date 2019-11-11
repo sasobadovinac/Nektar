@@ -1828,8 +1828,9 @@ void DisContField2D::v_AddTraceIntegral(const Array<OneD, const NekDouble> &Fn,
     }
 
     //Find maximum phys value for graphing of decay
-    int n = 3;     //Number of points to check in each quad (n x n)
+    int n = 5;     //Number of points to check in each quad (n x n)
     int t = 400; //Number of timesteps before checking for max (RK4 multiply by 4)
+    int itAll = 20; //Maximum iterations in newton raphson loop
 
     if (m_timestepCount % t == 0 || m_timestepCount == 0)
     {
@@ -1857,7 +1858,7 @@ void DisContField2D::v_AddTraceIntegral(const Array<OneD, const NekDouble> &Fn,
                     xi[0] = (i * (2.0 / (n - 1)) - 1.0);
                     xi[1] = (j * (2.0 / (n - 1)) - 1.0);
 
-                    for (int k = 0; k < 20; ++k)
+                    for (int k = 0; k < itAll; ++k)
                     {
                         CopyArray(xi, xi_prev);
 
@@ -1900,9 +1901,8 @@ void DisContField2D::v_AddTraceIntegral(const Array<OneD, const NekDouble> &Fn,
             }
         }
 
-        std::cout << "Max U found: " <<  max << " in element " <<
-        GetExp(maxEl)->GetGeom()->GetGlobalID() << " at local coord  = (" <<
-        maxXi[0] << ", " << maxXi[1] << ") at iteration " << maxIt << std::endl;
+        std::cout << "Max U found: " <<  max << " in element " <<GetExp(maxEl)->GetGeom()->GetGlobalID() << " at iteration " << maxIt + 1 << std::endl;
+        ASSERTL0((maxIt + 1) != itAll, "Maximum iterations of " + std::to_string(itAll) + " reached while finding Max U")
 
         m_outfile << max << std::endl;
     }
