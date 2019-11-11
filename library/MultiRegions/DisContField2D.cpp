@@ -1836,7 +1836,6 @@ void DisContField2D::v_AddTraceIntegral(const Array<OneD, const NekDouble> &Fn,
     {
         NekDouble max = std::numeric_limits<NekDouble>::min();
         int maxEl = -1;
-        Array<OneD, NekDouble> maxXi(2, 0.0);
         int maxIt = -1;
         for (int el = 0; el < GetExpSize(); ++el)
         {
@@ -1891,7 +1890,6 @@ void DisContField2D::v_AddTraceIntegral(const Array<OneD, const NekDouble> &Fn,
                             {
                                 max = xc;
                                 maxEl = el;
-                                maxXi = xi_prev;
                                 maxIt = k;
                             }
                             break;
