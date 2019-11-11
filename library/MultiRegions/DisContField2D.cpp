@@ -1828,29 +1828,81 @@ void DisContField2D::v_AddTraceIntegral(const Array<OneD, const NekDouble> &Fn,
     }
 
     //Find maximum phys value for graphing of decay
-    NekDouble max = 0;
-    int n = 100;     //Number of points to check in each quad
+    int n = 3;     //Number of points to check in each quad (n x n)
     int t = 400; //Number of timesteps before checking for max (RK4 multiply by 4)
 
     if (m_timestepCount % t == 0 || m_timestepCount == 0)
     {
+        NekDouble max = std::numeric_limits<NekDouble>::min();
+        int maxEl = -1;
+        Array<OneD, NekDouble> maxXi(2, 0.0);
+        int maxIt = -1;
         for (int el = 0; el < GetExpSize(); ++el)
         {
+            const int nq = GetExp(el)->GetTotPoints();
+            Array<OneD, NekDouble> x(nq, 0.0), y(nq, 0.0), xder(nq, 0.0), yder(nq, 0.0),
+                    xder2(nq, 0.0), yder2(nq, 0.0), xdery(nq, 0.0), yderx(nq, 0.0);
+
+            x = GetPhys() + GetPhys_Offset(el);
+            GetExp(el)->StdPhysDeriv(x, xder, yder);
+            GetExp(el)->StdPhysDeriv(xder, xder2, xdery);
+            GetExp(el)->StdPhysDeriv(yder, yderx, yder2);
+
             for (int i = 0; i < n; ++i)
             {
                 for (int j = 0; j < n; ++j)
                 {
-                    Array<OneD, NekDouble> xi(2, 0.0);
+                    Array<OneD, NekDouble> xi(2, 0.0), xi_prev(2, std::numeric_limits<NekDouble>::min());
+
                     xi[0] = (i * (2.0 / (n - 1)) - 1.0);
                     xi[1] = (j * (2.0 / (n - 1)) - 1.0);
 
-                    NekDouble u = GetExp(el)->StdPhysEvaluate(xi, GetPhys() + GetPhys_Offset(el));
+                    for (int k = 0; k < 20; ++k)
+                    {
+                        CopyArray(xi, xi_prev);
 
-                    // Finds maximum value in quadrature points
-                    max = (u > max) ? u : max;
+                        NekDouble xc = GetExp(el)->StdPhysEvaluate(xi, x);
+                        NekDouble xc_derx = GetExp(el)->StdPhysEvaluate(xi, xder);
+                        NekDouble xc_dery = GetExp(el)->StdPhysEvaluate(xi, yder);
+                        NekDouble xc_derxx = GetExp(el)->StdPhysEvaluate(xi, xder2);
+                        NekDouble xc_deryy = GetExp(el)->StdPhysEvaluate(xi, yder2);
+                        NekDouble xc_derxy = GetExp(el)->StdPhysEvaluate(xi, xdery);
+                        NekDouble xc_deryx = GetExp(el)->StdPhysEvaluate(xi, yderx);
+
+                        //Newton's method for 2 variables
+                        // i.e. xi = xi_prev - J^-1 * [xc_derx, xc_dery]
+                        NekDouble det =
+                                1 / (xc_derxx * xc_deryy - xc_derxy * xc_deryx);
+                        xi[0] = xi_prev[0] - ((det * xc_deryy) * xc_derx +
+                                              (det * -xc_derxy) * xc_dery);
+                        xi[1] = xi_prev[1] - ((det * -xc_deryx) * xc_derx +
+                                              (det * xc_derxx) * xc_dery);
+
+                        xi[0] = (xi[0] < -1) ? -1 : xi[0];
+                        xi[1] = (xi[1] < -1) ? -1 : xi[1];
+                        xi[0] = (xi[0] > 1) ? 1 : xi[0];
+                        xi[1] = (xi[1] > 1) ? 1 : xi[1];
+
+                        if ((abs(xi[0] - xi_prev[0]) < 1e-10)
+                            && (abs(xi[1] - xi_prev[1]) < 1e-10))
+                        {
+                            if (xc > max)
+                            {
+                                max = xc;
+                                maxEl = el;
+                                maxXi = xi_prev;
+                                maxIt = k;
+                            }
+                            break;
+                        }
+                    }
                 }
             }
         }
+
+        std::cout << "Max U found: " <<  max << " in element " <<
+        GetExp(maxEl)->GetGeom()->GetGlobalID() << " at local coord  = (" <<
+        maxXi[0] << ", " << maxXi[1] << ") at iteration " << maxIt << std::endl;
 
         m_outfile << max << std::endl;
     }

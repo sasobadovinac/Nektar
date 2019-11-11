@@ -476,7 +476,7 @@ void Interfaces::GenerateMortars(int indx)
                 }
 
                 int id;
-                if (!(xOld == xNew && yOld == yNew)) //check that verts aren't same
+                if (!(abs((xOld - xNew) < 1e-10) && abs((yOld - yNew) < 1e-10))) //check that verts aren't same
                 {
                     if (!indxFlag)
                     {
