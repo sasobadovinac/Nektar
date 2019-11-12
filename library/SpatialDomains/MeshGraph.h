@@ -419,6 +419,9 @@ public:
     SPATIAL_DOMAINS_EXPORT LibUtilities::BasisKey GetEdgeBasisKey(
         SegGeomSharedPtr edge, const std::string variable = "DefaultVar");
 
+    SPATIAL_DOMAINS_EXPORT GeometryLinkSharedPtr GetElementsFromVertex(
+            PointGeomSharedPtr vertex);
+
     SPATIAL_DOMAINS_EXPORT GeometryLinkSharedPtr GetElementsFromEdge(
         Geometry1DSharedPtr edge);
 

@@ -3169,6 +3169,35 @@ void MeshGraph::ReadExpansions()
     }
 }
 
+GeometryLinkSharedPtr MeshGraph::GetElementsFromVertex(PointGeomSharedPtr vertex)
+{
+    // Search segments
+    GeometryLinkSharedPtr ret =
+        GeometryLinkSharedPtr(new vector<pair<GeometrySharedPtr, int>>);
+
+    SegGeomSharedPtr segGeomShPtr;
+
+    for (auto segMapPair : m_segGeoms)
+    {
+        segGeomShPtr = std::dynamic_pointer_cast<SegGeom>(segMapPair.second);
+
+        if (segGeomShPtr)
+        {
+            for (int i = 0; i < 2; i++)
+            {
+                if (segGeomShPtr->GetVertex(i)->GetGlobalID() ==
+                    vertex->GetGlobalID())
+                {
+                    ret->push_back(make_pair(segGeomShPtr, i));
+                    break;
+                }
+            }
+        }
+    }
+
+    return ret;
+}
+
 GeometryLinkSharedPtr MeshGraph::GetElementsFromEdge(Geometry1DSharedPtr edge)
 {
     // Search tris and quads
