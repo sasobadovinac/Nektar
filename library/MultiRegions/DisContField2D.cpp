@@ -1830,18 +1830,81 @@ void DisContField2D::v_AddTraceIntegral(const Array<OneD, const NekDouble> &Fn,
     //Find maximum phys value for graphing of decay
     int n = 5;     //Number of points to check in each quad (n x n)
     int t = 400; //Number of timesteps before checking for max (RK4 multiply by 4)
-    int itAll = 20; //Maximum iterations in newton raphson loop
+    int itAll = 15; //Maximum iterations in newton raphson loop
 
     if (m_timestepCount % t == 0 || m_timestepCount == 0)
     {
+        //Searches for element containing maximum value at quad point
         NekDouble max = std::numeric_limits<NekDouble>::min();
         int maxEl = -1;
-        int maxIt = -1;
         for (int el = 0; el < GetExpSize(); ++el)
         {
+            Array<OneD, NekDouble> physVals(GetExp(el)->GetTotPoints(),
+                GetPhys() + GetPhys_Offset(el));
+
+            for (NekDouble maxQPoint : physVals)
+            {
+                if (maxQPoint > max)
+                {
+                    max = maxQPoint;
+                    maxEl = el;
+                }
+            }
+        }
+
+        //Finds the stencil of elements surrounding that containing the maximum quad point
+        //Just quads (could generalise for quads + tris)
+        //Does not work across interface (need to add check for if segment is on interface,
+        // then include elements across from it also, got mappings for this ...
+        // m_leftEdgeToMortar then m_mortarToRightEdge or other way.)
+        std::unordered_set<int> stencilElementIDs;
+        SpatialDomains::QuadGeomSharedPtr quadMax =
+            std::dynamic_pointer_cast<SpatialDomains::QuadGeom>(
+                    GetExp(maxEl)->GetGeom());
+
+        for (int i = 0; i < 4; ++i)
+        {
+            SpatialDomains::PointGeomSharedPtr vertex = quadMax->GetVertex(i);
+            SpatialDomains::GeometryLinkSharedPtr edgesLink =
+                m_graph->GetElementsFromVertex(vertex);
+
+            for (std::pair<SpatialDomains::GeometrySharedPtr, int> edge
+                : *edgesLink)
+            {
+                SpatialDomains::Geometry1DSharedPtr edge1DGeom =
+                    std::dynamic_pointer_cast<SpatialDomains::Geometry1D>(
+                            edge.first);
+                SpatialDomains::GeometryLinkSharedPtr elementsLink =
+                    m_graph->GetElementsFromEdge(edge1DGeom);
+
+                for (std::pair<SpatialDomains::GeometrySharedPtr, int> element
+                    : *elementsLink)
+                {
+                    stencilElementIDs.insert(element.first->GetGlobalID());
+                }
+            }
+        }
+
+        //**********************************
+        // Output debug for stencil
+        std::cout << "Quad max U found: " <<  max << " in element " << maxEl <<
+        " giving stencil for Newton-Raphson of " << stencilElementIDs.size() <<
+        " elements: ";
+        for (auto i : stencilElementIDs)
+        {
+            std::cout << i << ", ";
+        }
+        std::cout << "\b\b." << std::endl;
+        //**********************************
+
+        int maxIt = -1;
+        max = std::numeric_limits<NekDouble>::min(); //reset max value to try and remove spikes
+        for (int el : stencilElementIDs)
+        {
             const int nq = GetExp(el)->GetTotPoints();
-            Array<OneD, NekDouble> x(nq, 0.0), y(nq, 0.0), xder(nq, 0.0), yder(nq, 0.0),
-                    xder2(nq, 0.0), yder2(nq, 0.0), xdery(nq, 0.0), yderx(nq, 0.0);
+            Array<OneD, NekDouble> x(nq, 0.0), y(nq, 0.0), xder(nq, 0.0),
+                yder(nq, 0.0), xder2(nq, 0.0), yder2(nq, 0.0), xdery(nq, 0.0),
+                yderx(nq, 0.0);
 
             x = GetPhys() + GetPhys_Offset(el);
             GetExp(el)->StdPhysDeriv(x, xder, yder);
@@ -1852,7 +1915,8 @@ void DisContField2D::v_AddTraceIntegral(const Array<OneD, const NekDouble> &Fn,
             {
                 for (int j = 0; j < n; ++j)
                 {
-                    Array<OneD, NekDouble> xi(2, 0.0), xi_prev(2, std::numeric_limits<NekDouble>::min());
+                    Array<OneD, NekDouble> xi(2, 0.0),
+                        xi_prev(2, std::numeric_limits<NekDouble>::min());
 
                     xi[0] = (i * (2.0 / (n - 1)) - 1.0);
                     xi[1] = (j * (2.0 / (n - 1)) - 1.0);
@@ -1899,8 +1963,11 @@ void DisContField2D::v_AddTraceIntegral(const Array<OneD, const NekDouble> &Fn,
             }
         }
 
-        std::cout << "Max U found: " <<  max << " in element " <<GetExp(maxEl)->GetGeom()->GetGlobalID() << " at iteration " << maxIt + 1 << std::endl;
-        ASSERTL0((maxIt + 1) != itAll, "Maximum iterations of " + std::to_string(itAll) + " reached while finding Max U")
+        std::cout << "Exact max U found: " <<  max << " in element " << maxEl <<
+        " at iteration " << maxIt + 1  << "." << std::endl;
+        ASSERTL0((maxIt + 1) != itAll,
+            "Maximum iterations of " + std::to_string(itAll) +
+            " reached while finding Max U.");
 
         m_outfile << max << std::endl;
     }
