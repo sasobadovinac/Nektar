@@ -109,7 +109,11 @@ namespace Nektar
         /// Print Summary
         virtual void v_GenerateSummary(SolverUtils::SummaryList& s);
 
+        virtual bool v_PostIntegrate(int step);
+
     private:
+        //Out file for U value
+        std::ofstream m_outfile;
         NekDouble m_waveFreq;
     };
 }
