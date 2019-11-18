@@ -235,9 +235,11 @@ namespace Nektar
         // Make sure that m_phi and m_up are defined
         UpdatePhiUp(0.0);
 
-        // Select m_gamma0 depending on IMEX order
-        string type = m_session->GetSolverInfo("TimeIntegrationMethod");
-        switch (type.back()-'0')
+        // Select 'm_gamma0' depending on IMEX order
+        string intType = m_session->GetSolverInfo("TimeIntegrationMethod");
+        ASSERTL0(boost::iequals(intType.substr(0, 9), "IMEXOrder"),
+                 "TimeIntegrationMethod must be 'IMEXOrder1' to '4'.")
+        switch (intType.back()-'0')
         {
         case 1:
             m_gamma0 = 1.0;
@@ -250,13 +252,18 @@ namespace Nektar
         case 3:
             m_gamma0 = 11.0/6.0;
             break;
+
+        case 4:
+            m_gamma0 = 25.0/12.0;
+            break;
         }
 
         // Check if the aeroforces filter is active, negative if inactive
         m_forcesFilter = -1;
         for (int i = 0; i < m_session->GetFilters().size(); ++i)
         {
-            if (m_session->GetFilters()[i].first == "AeroForcesSPM")
+            if (boost::iequals(m_session->GetFilters()[i].first,
+                               "AeroForcesSPM"))
             {
                 m_forcesFilter = i;
             }
