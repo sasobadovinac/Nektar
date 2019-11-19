@@ -316,8 +316,8 @@ namespace Nektar
         if (m_forcesFilter >= 0)
         {
             static_pointer_cast<FilterAeroForcesSPM>(
-                m_filters[m_forcesFilter].second)->CalculateForces(outarray, m_upPrev,
-                                            m_phi, time, a_iixDt);
+                m_filters[m_forcesFilter].second)->CalculateForces(
+                    outarray, m_upPrev, m_phi, time, a_iixDt);
         }
         // Set BC conditions for pressure p_p
         SetUpCorrectionPressure(outarray, m_F, a_iixDt);
@@ -485,7 +485,8 @@ namespace Nektar
                 IBForcingBC(b, BndExp[b], dt, f_s);
 
                 // BC is f_s * n
-                BndExp[b]->NormVectorIProductWRTBase(f_s, BndExp[b]->UpdatePhys());
+                BndExp[b]->NormVectorIProductWRTBase(f_s,
+                    BndExp[b]->UpdatePhys());
             }
         }
     }
@@ -502,7 +503,7 @@ namespace Nektar
         {
             if (!m_filePhi)
             {
-                // Update 'm_phi' only if it was provided as an analytical function
+                // Update 'm_phi' only if it was provided as a function
                 m_phiEvaluator->Evaluate("Phi", m_phi->UpdatePhys(), t);
 
                 // Initialize both variables for the first step
