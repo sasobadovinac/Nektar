@@ -352,7 +352,7 @@ namespace Nektar
         int physTot = m_pressureP->GetTotPoints();
         int nvel    = m_velocity.num_elements();
 
-        // DEBUG: Set boundary conditions
+        // Set boundary conditions
         SetCorrectionPressureBCs(aii_Dt);
 
         // Virtual force 'fs'
@@ -394,7 +394,6 @@ namespace Nektar
             m_pressureP->BwdTrans(m_pressureP->GetCoeffs(),
                                   m_pressureP->UpdatePhys());
         }
-        // DEBUG: AddPressureToOutflowBCs?
     }
 
     /**
@@ -454,7 +453,7 @@ namespace Nektar
     }
 
     /**
-     * @brief DEBUG: Updates the BCs for boundaries with Dirichlet BCs in the
+     * @brief Updates the BCs for boundaries with Dirichlet BCs in the
      * velocity:
      *
      * \f[ \frac{\partial p_p}{\partial\mathbf{n}} =
