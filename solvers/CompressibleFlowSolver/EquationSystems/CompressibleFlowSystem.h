@@ -82,6 +82,10 @@ namespace Nektar
         NekDouble                           m_filterCutoff;
 
         NekDouble                           m_JFEps;
+
+        Array<OneD, Array<OneD, Array<OneD, NekDouble> > >  m_qfield;
+        Array<OneD, Array<OneD, NekDouble> >                m_MatrixFreeRefFields;
+        Array<OneD, Array<OneD, DNekBlkMatSharedPtr> >      m_ElmtFluxJacArray;
         
         bool                                m_useFiltering;
 
@@ -100,6 +104,7 @@ namespace Nektar
        // 1: Con; 2: Deriv; Default: all
         int                                 m_DebugConsDerivSwitch; 
 #endif
+        int                                 m_LiniearizationMethod;
 
         // Auxiliary object to convert variables
         VariableConverterSharedPtr          m_varConv;
@@ -285,7 +290,7 @@ namespace Nektar
         void MatrixMultiply_JacobianFree_coeff_central(
             const  Array<OneD, NekDouble> &inarray,
                 Array<OneD, NekDouble >&out);
-        void MatrixMultiply_MatrixFree_coeff_central(
+        void MatrixMultiply_MatrixFree_coeff(
             const  Array<OneD, NekDouble> &inarray,
                 Array<OneD, NekDouble >&out);
 
@@ -299,10 +304,10 @@ namespace Nektar
                 Array<OneD, Array<OneD, NekDouble> > &out);
 
         void DoOdeRhs_coeff(
-            const Array<OneD, const Array<OneD, NekDouble> > &inarray,
-                Array<OneD,       Array<OneD, NekDouble> > &outarray,
-            const NekDouble                                   time);
-
+            const Array<OneD, const Array<OneD, NekDouble> >    &inarray,
+            Array<OneD,       Array<OneD, NekDouble> >          &outarray,
+            const NekDouble                                     time,
+            const bool                                          flagFreezeJac = false);
         
         void DoAdvection_coeff(
             const Array<OneD, const Array<OneD, NekDouble> > &inarray,
@@ -314,6 +319,19 @@ namespace Nektar
 
         void MultiplyElmtInvMass_PlusSource(
             Array<OneD, Array<OneD, DNekBlkMatSharedPtr> > &gmtxarray,const NekDouble dtlamda);
+
+        void CalcFluxJacVolBnd(
+            const Array<OneD, const Array<OneD, NekDouble> >                &inarray,
+            const Array<OneD, const Array<OneD, Array<OneD, NekDouble> > >  &qfield);
+
+        void GetFluxVectorMF(
+            const Array<OneD, Array<OneD, NekDouble> >               &physfield,
+                  Array<OneD, Array<OneD, Array<OneD, NekDouble> > > &flux);
+        
+        void GetFluxVectorTraceMF(
+            const Array<OneD, Array<OneD, NekDouble> >              &pFwd,
+            const Array<OneD, Array<OneD, NekDouble> >              &pBwd,
+            Array<OneD, Array<OneD, NekDouble> >                    &flux);
 
         void GetFluxVectorJacDirctn(
             const int                                           nDirctn,
@@ -441,8 +459,9 @@ namespace Nektar
         void DoDiffusion_coeff(
             const Array<OneD, const Array<OneD, NekDouble> > &inarray,
                   Array<OneD,       Array<OneD, NekDouble> > &outarray,
-            const Array<OneD, Array<OneD, NekDouble> >   &pFwd,
-            const Array<OneD, Array<OneD, NekDouble> >   &pBwd);
+            const Array<OneD, Array<OneD, NekDouble> >       &pFwd,
+            const Array<OneD, Array<OneD, NekDouble> >       &pBwd,
+            const bool                                       &flagFreezeJac = false);
 
         void GetFluxVector(
             const Array<OneD, Array<OneD, NekDouble> >               &physfield,
@@ -522,7 +541,8 @@ namespace Nektar
             const Array<OneD, const Array<OneD, NekDouble> > &inarray,
                   Array<OneD,       Array<OneD, NekDouble> > &outarray,
             const Array<OneD, Array<OneD, NekDouble> >       &pFwd,
-            const Array<OneD, Array<OneD, NekDouble> >       &pBwd)
+            const Array<OneD, Array<OneD, NekDouble> >       &pBwd,
+            const bool                                       &flagFreezeJac)
         {
             // Do nothing by default
         }
@@ -596,6 +616,7 @@ namespace Nektar
             const int                                                       nDervDir,
             const Array<OneD, const Array<OneD, NekDouble> >                &inarray,
                   Array<OneD, Array<OneD, DNekMatSharedPtr> >               &ElmtJac);
+        
 
         // virtual void v_GetFluxDerivJacDirctn(
         //     const MultiRegions::ExpListSharedPtr                            &explist,

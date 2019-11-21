@@ -139,10 +139,11 @@ namespace Nektar
             const Array<OneD, Array<OneD, NekDouble> >   &pFwd,
             const Array<OneD, Array<OneD, NekDouble> >   &pBwd);
     virtual void v_DoDiffusion_coeff(
-        const Array<OneD, const Array<OneD, NekDouble> > &inarray,
-               Array<OneD,       Array<OneD, NekDouble> > &outarray,
-            const Array<OneD, Array<OneD, NekDouble> >   &pFwd,
-            const Array<OneD, Array<OneD, NekDouble> >   &pBwd);
+        const Array<OneD, const Array<OneD, NekDouble> >    &inarray,
+        Array<OneD,       Array<OneD, NekDouble> >          &outarray,
+        const Array<OneD, Array<OneD, NekDouble> >          &pFwd,
+        const Array<OneD, Array<OneD, NekDouble> >          &pBwd,
+        const bool                                          &flagFreezeJac);
     
     virtual void v_DoDiffusionFlux(
             const Array<OneD, const Array<OneD, NekDouble> > &inarray,

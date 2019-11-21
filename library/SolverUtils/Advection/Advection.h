@@ -153,7 +153,7 @@ public:
     }
 
     template<typename FuncPointerT, typename ObjectPointerT>
-    void SetFluxVectortraceMF(FuncPointerT func, ObjectPointerT obj)
+    void SetFluxVectorTraceMF(FuncPointerT func, ObjectPointerT obj)
     {
         m_fluxVectortraceMF = std::bind(
             func, obj, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
@@ -273,6 +273,7 @@ protected:
     RiemannSolverSharedPtr m_riemann;
     /// Storage for space dimension. Used for homogeneous extension.
     int                    m_spaceDim;
+    bool                   m_flagFreezeJac = false;
 
     /// Initialises the advection object.
     SOLVER_UTILS_EXPORT virtual void v_InitObject(
@@ -320,7 +321,7 @@ protected:
         const Array<OneD, Array<OneD, NekDouble> > &pFwd = NullNekDoubleArrayofArray,
         const Array<OneD, Array<OneD, NekDouble> > &pBwd = NullNekDoubleArrayofArray);
 
-    
+        
 
     /// Overrides the base flow used during linearised advection
     SOLVER_UTILS_EXPORT virtual void v_SetBaseFlow(

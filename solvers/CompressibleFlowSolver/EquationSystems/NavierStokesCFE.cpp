@@ -321,7 +321,8 @@ namespace Nektar
         const Array<OneD, const Array<OneD, NekDouble> > &inarray,
               Array<OneD,       Array<OneD, NekDouble> > &outarray,
             const Array<OneD, Array<OneD, NekDouble> >   &pFwd,
-            const Array<OneD, Array<OneD, NekDouble> >   &pBwd)
+            const Array<OneD, Array<OneD, NekDouble> >   &pBwd,
+            const bool                                   &flagFreezeJac)
     {
         int i;
         int nvariables = inarray.num_elements();
@@ -2196,7 +2197,7 @@ namespace Nektar
         }
     }
 
-    void v_MinusDiffusionFluxJacDirctnMat(
+    void NavierStokesCFE::v_MinusDiffusionFluxJacDirctnMat(
             const int                                                       nDirctn,
             const Array<OneD, const Array<OneD, NekDouble> >                &inarray,
             const Array<OneD, const Array<OneD, Array<OneD, NekDouble>> >   &qfields,
@@ -2252,6 +2253,7 @@ namespace Nektar
         DNekMatSharedPtr PointFJac = MemoryManager<DNekMat>
                                 ::AllocateSharedPtr(nConvectiveFields-1, nConvectiveFields,0.0);
         Array<OneD, NekDouble > PointFJac_data = PointFJac->GetPtr();
+        Array<OneD, NekDouble> ElmtFluxJacData;
 
         for(int  nelmt = 0; nelmt < ntotElmt; nelmt++)
         {
@@ -2291,20 +2293,15 @@ namespace Nektar
 
                 GetDiffusionFluxJacPoint(nelmt,pointVar,pointDerv,pointmu,pointDmuDT,normals,PointFJac);
 
-                ElmtFluxJacData =  (*ElmtFluxJacArray[nDirctn][nelmt])(npnt,npnt)->GetPtr();
+                ElmtFluxJacData = ElmtFluxJacArray[nelmt][nDirctn]->GetBlock(npnt,npnt)->GetPtr();
                 for (int j =0; j < nConvectiveFields; j++)
                 {
                     int noffsetElm  = j*nConvectiveFields+1;
                     int noffsetPnt  = noffsetElm-j-1;
                     Vmath::Vsub(nConvectiveFields-1,
-                                ElmtFluxJacData[noffsetElm],1,
-                                PointFJac_data[noffsetPnt],1,
-                                ElmtFluxJacData[noffsetElm],1);
-
-                    // for (int i =0; i < nConvectiveFields-1; i++)
-                    // {
-                    //     ElmtJacArray[i+1][j][nDirctn][nelmt][npnt] -= PointFJac_data[noffset+i];
-                    // }
+                                &ElmtFluxJacData[noffsetElm],1,
+                                &PointFJac_data[noffsetPnt],1,
+                                &ElmtFluxJacData[noffsetElm],1);
                 }
             }
         }

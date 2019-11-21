@@ -106,6 +106,17 @@ namespace Nektar
                   Array< OneD, int >                                        &,    
             const Array<OneD, Array<OneD, NekDouble> >                      &,           
             const Array<OneD, NekDouble>                                    &)> DiffusionFluxCons;
+        
+        typedef std::function<void (
+            const Array<OneD, Array<OneD, Array<OneD, NekDouble> > >        &,
+                  Array<OneD, Array<OneD, Array<OneD, NekDouble> > >        &,
+                  Array< OneD, int >                                        &)> DiffusionFluxConsMF;
+        
+        typedef std::function<void (
+            const Array<OneD, const Array<OneD, Array<OneD, NekDouble> > >  &,
+            const Array<OneD, const Array<OneD, Array<OneD, NekDouble> > >  &,
+                  Array<OneD, Array<OneD, NekDouble> >                      &,
+                  Array< OneD, int >                                        &)> DiffusionTraceFluxConsMF;
 
         /**
          * Parameter list meaning:
@@ -195,8 +206,10 @@ namespace Nektar
                 const Array<OneD, Array<OneD, NekDouble> >                  &vFwd,
                 const Array<OneD, Array<OneD, NekDouble> >                  &vBwd,
                 Array<OneD, Array<OneD, Array<OneD, NekDouble> > >          &qfield,
-                Array< OneD, int >                                          &nonZeroIndex)
+                Array< OneD, int >                                          &nonZeroIndex,
+                const bool                                                  &flagFreezeJac = false)
             {
+                m_flagFreezeJac = flagFreezeJac;
                 v_Diffuse_coeff(nConvectiveFields, fields, inarray, outarray, vFwd, vBwd,qfield,nonZeroIndex);
             }
             
@@ -338,6 +351,32 @@ namespace Nektar
             }
 
             template<typename FuncPointerT, typename ObjectPointerT>
+            void SetDiffusionFluxConsMF(FuncPointerT func, ObjectPointerT obj)
+            {
+                m_FunctorDiffusionfluxConsMF = std::bind(
+                    func, obj, std::placeholders::_1, std::placeholders::_2,
+                               std::placeholders::_3);
+            }
+            
+            void SetDiffusionFluxConsMF(DiffusionFluxConsMF flux)
+            {
+                m_FunctorDiffusionfluxConsMF =   flux;
+            }
+
+            template<typename FuncPointerT, typename ObjectPointerT>
+            void SetDiffusionTraceFluxConsMF(FuncPointerT func, ObjectPointerT obj)
+            {
+                m_FunctorDiffusionTraceFluxConsMF = std::bind(
+                    func, obj, std::placeholders::_1, std::placeholders::_2,
+                               std::placeholders::_3);
+            }
+            
+            void SetDiffusionFluxConsMF(DiffusionTraceFluxConsMF flux)
+            {
+                m_FunctorDiffusionTraceFluxConsMF =   flux;
+            }
+
+            template<typename FuncPointerT, typename ObjectPointerT>
             void SetFunctorDerivBndCond(FuncPointerT func, ObjectPointerT obj)
             {
                 m_FunctorDerivBndCond = std::bind(
@@ -424,12 +463,16 @@ namespace Nektar
             DiffusionFluxVecCBNS            m_fluxVectorNS;
             DiffusionArtificialDiffusion    m_ArtificialDiffusionVector;
             DiffusionFluxCons               m_FunctorDiffusionfluxCons;
+            DiffusionFluxConsMF             m_FunctorDiffusionfluxConsMF;
+            DiffusionTraceFluxConsMF        m_FunctorDiffusionTraceFluxConsMF;
             FunctorDerivBndCond             m_FunctorDerivBndCond;
             SpecialBndTreat                 m_SpecialBndTreat;
             CalcViscosity                   m_CalcViscosity;
             DiffusionSymmFluxCons           m_FunctorSymmetricfluxCons;
 
             NekDouble                       m_time=0.0;
+
+            bool                            m_flagFreezeJac = false;
 
             virtual void v_InitObject(
                 LibUtilities::SessionReaderSharedPtr              pSession,
