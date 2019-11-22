@@ -95,6 +95,7 @@ namespace Nektar
         bool                                m_DEBUG_VISCOUS_TRACE_DERIV_JAC_MAT;
         bool                                m_DEBUG_VISCOUS_JAC_MAT;
         bool                                m_DEBUG_ADVECTION_JAC_MAT;
+        bool                                m_centralDiffTracJac;
 
 #ifdef CFS_DEBUGMODE
        // 1: Adv; 2: Dif; Default: all
@@ -315,7 +316,7 @@ namespace Nektar
             const NekDouble                                   time,
             const Array<OneD, Array<OneD, NekDouble> >       &pFwd,
             const Array<OneD, Array<OneD, NekDouble> >       &pBwd,
-            const bool                                       &flagFreezeJac=false);
+            const bool                                       flagFreezeJac=false);
 
         void MultiplyElmtInvMass_PlusSource(
             Array<OneD, Array<OneD, DNekBlkMatSharedPtr> > &gmtxarray,const NekDouble dtlamda);
@@ -461,7 +462,7 @@ namespace Nektar
                   Array<OneD,       Array<OneD, NekDouble> > &outarray,
             const Array<OneD, Array<OneD, NekDouble> >       &pFwd,
             const Array<OneD, Array<OneD, NekDouble> >       &pBwd,
-            const bool                                       &flagFreezeJac = false);
+            const bool                                       flagFreezeJac = false);
 
         void GetFluxVector(
             const Array<OneD, Array<OneD, NekDouble> >               &physfield,
@@ -542,7 +543,7 @@ namespace Nektar
                   Array<OneD,       Array<OneD, NekDouble> > &outarray,
             const Array<OneD, Array<OneD, NekDouble> >       &pFwd,
             const Array<OneD, Array<OneD, NekDouble> >       &pBwd,
-            const bool                                       &flagFreezeJac)
+            const bool                                       flagFreezeJac)
         {
             // Do nothing by default
         }

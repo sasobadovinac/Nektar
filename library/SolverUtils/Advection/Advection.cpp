@@ -131,11 +131,12 @@ void Advection::Advect_coeff(
     const NekDouble                                   &pTime,
     const Array<OneD, Array<OneD, NekDouble> >        &pFwd,
     const Array<OneD, Array<OneD, NekDouble> >        &pBwd,
-    const bool                                       &flagFreezeJac)
+    const bool                                       flagFreezeJac)
 {
+    m_flagFreezeJac  = flagFreezeJac;
     v_Advect_coeff(nConvectiveFields, pFields, pAdvVel, pInarray,
             pOutarray, pTime, pFwd, pBwd);
-    m_flagFreezeJac  = flagFreezeJac;
+    // cout << " m_flagFreezeJac= "<<m_flagFreezeJac<<endl;
 }
 
 /**

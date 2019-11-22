@@ -207,7 +207,7 @@ namespace Nektar
                 const Array<OneD, Array<OneD, NekDouble> >                  &vBwd,
                 Array<OneD, Array<OneD, Array<OneD, NekDouble> > >          &qfield,
                 Array< OneD, int >                                          &nonZeroIndex,
-                const bool                                                  &flagFreezeJac = false)
+                const bool                                                  flagFreezeJac = false)
             {
                 m_flagFreezeJac = flagFreezeJac;
                 v_Diffuse_coeff(nConvectiveFields, fields, inarray, outarray, vFwd, vBwd,qfield,nonZeroIndex);

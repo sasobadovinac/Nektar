@@ -322,7 +322,7 @@ namespace Nektar
               Array<OneD,       Array<OneD, NekDouble> > &outarray,
             const Array<OneD, Array<OneD, NekDouble> >   &pFwd,
             const Array<OneD, Array<OneD, NekDouble> >   &pBwd,
-            const bool                                   &flagFreezeJac)
+            const bool                                   flagFreezeJac)
     {
         int i;
         int nvariables = inarray.num_elements();

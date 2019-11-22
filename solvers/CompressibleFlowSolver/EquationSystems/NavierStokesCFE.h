@@ -143,7 +143,7 @@ namespace Nektar
         Array<OneD,       Array<OneD, NekDouble> >          &outarray,
         const Array<OneD, Array<OneD, NekDouble> >          &pFwd,
         const Array<OneD, Array<OneD, NekDouble> >          &pBwd,
-        const bool                                          &flagFreezeJac);
+        const bool                                          flagFreezeJac);
     
     virtual void v_DoDiffusionFlux(
             const Array<OneD, const Array<OneD, NekDouble> > &inarray,

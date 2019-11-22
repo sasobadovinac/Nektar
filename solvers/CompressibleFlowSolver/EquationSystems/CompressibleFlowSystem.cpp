@@ -342,6 +342,13 @@ namespace Nektar
         m_session->LoadParameter("DebugVolTraceSwitch",                m_DebugVolTraceSwitch      ,    0);
         m_session->LoadParameter("DebugConsDerivSwitch",               m_DebugConsDerivSwitch      ,    0);
 
+        m_session->LoadParameter("centralDiffTracJac",     ntmp      ,    0);
+        m_centralDiffTracJac = false;
+        if(1==ntmp)
+        {
+            m_centralDiffTracJac = true;
+        }
+
 #endif
     }
 
@@ -1358,12 +1365,6 @@ namespace Nektar
             muvar       =   NullNekDouble1DArray;       
         }
 
-        Array<OneD, Array<OneD, NekDouble> > numflux(nvariables);
-        for(int i = 0; i < nvariables; ++i)
-        {
-            numflux[i] = Array<OneD, NekDouble>(nTracePts, 0.0);
-        }
-
         const MultiRegions::AssemblyMapDGSharedPtr  TraceMap=fields[0]->GetTraceMap();
         Array<OneD, Array<OneD, Array<OneD, NekDouble> > >    qBwd(nDim);
         Array<OneD, Array<OneD, Array<OneD, NekDouble> > >    qFwd(nDim);
@@ -1382,29 +1383,42 @@ namespace Nektar
             }
         }
 
-        CalTraceNumericalFlux(nConvectiveFields,nDim,npoints,nTracePts,PenaltyFactor2,
-                        fields,AdvVel,inarray,time,qfield,Fwd,Bwd,qFwd,qBwd,MuVarTrace,nonZeroIndex,numflux);
-
         int nFields = nvariables;
         // int nPts    = nTracePts;
         Array<OneD,       Array<OneD, NekDouble> >  plusFwd(nFields),plusBwd(nFields);
         Array<OneD,       Array<OneD, NekDouble> >  Jacvect(nFields);
         Array<OneD,       Array<OneD, NekDouble> >  FwdBnd(nFields);
         Array<OneD,       Array<OneD, NekDouble> >  plusflux(nFields);
+        Array<OneD,       Array<OneD, NekDouble> >  minsflux(nFields);
         for(int i = 0; i < nFields; i++)
         {
             Jacvect[i]      =    Array<OneD, NekDouble>(nTracePts,0.0);
-            plusFwd[i]      =    Array<OneD, NekDouble>(nTracePts,0.0);
-            plusBwd[i]      =    Array<OneD, NekDouble>(nTracePts,0.0);
+            plusFwd[i]      =    Array<OneD, NekDouble>(nTracePts);
+            plusBwd[i]      =    Array<OneD, NekDouble>(nTracePts);
             plusflux[i]     =    Array<OneD, NekDouble>(nTracePts,0.0);
+            minsflux[i]     =    Array<OneD, NekDouble>(nTracePts,0.0);
             FwdBnd[i]       =    Array<OneD, NekDouble>(nTracePts,0.0);
-        }
-
-
-        for(int i = 0; i < nFields; i++)
-        {
             Vmath::Vcopy(nTracePts, Fwd[i],1,plusFwd[i],1);
             Vmath::Vcopy(nTracePts, Bwd[i],1,plusBwd[i],1);
+        }
+
+        Array<OneD,       Array<OneD, NekDouble> >  minsFwd,minsBwd;
+        if(m_centralDiffTracJac)
+        {
+            minsFwd  = Array<OneD,       Array<OneD, NekDouble> > (nFields);
+            minsBwd  = Array<OneD,       Array<OneD, NekDouble> > (nFields);
+            for(int i = 0; i < nFields; i++)
+            {
+                minsFwd[i]      =    Array<OneD, NekDouble>(nTracePts,0.0);
+                minsBwd[i]      =    Array<OneD, NekDouble>(nTracePts,0.0);
+                Vmath::Vcopy(nTracePts, Fwd[i],1,minsFwd[i],1);
+                Vmath::Vcopy(nTracePts, Bwd[i],1,minsBwd[i],1);
+            }
+        }
+        else
+        {
+            CalTraceNumericalFlux(nConvectiveFields,nDim,npoints,nTracePts,PenaltyFactor2,
+                            fields,AdvVel,inarray,time,qfield,Fwd,Bwd,qFwd,qBwd,MuVarTrace,nonZeroIndex,minsflux);
         }
 
         // NekDouble eps   =   1.0E-6;
@@ -1416,7 +1430,7 @@ namespace Nektar
         {
             NekDouble epsvar = eps*m_magnitdEstimat[i];
             NekDouble oepsvar   =   1.0/epsvar;
-            Vmath::Sadd(nTracePts,epsvar,Fwd[i],1,plusFwd[i],1);
+            Vmath::Sadd(nTracePts, epsvar,Fwd[i],1,plusFwd[i],1);
             
             if (m_bndConds.size())
             {
@@ -1438,10 +1452,38 @@ namespace Nektar
 
             CalTraceNumericalFlux(nConvectiveFields,nDim,npoints,nTracePts,PenaltyFactor2,
                         fields,AdvVel,inarray,time,qfield,plusFwd,plusBwd,qFwd,qBwd,MuVarTrace,nonZeroIndex,plusflux);
+            
+            if(m_centralDiffTracJac)
+            {
+                Vmath::Sadd(nTracePts, -epsvar,Fwd[i],1,minsFwd[i],1);
+                
+                if (m_bndConds.size())
+                {
+                    for(int i = 0; i < nFields; i++)
+                    {
+                        Vmath::Vcopy(nTracePts, minsFwd[i],1,FwdBnd[i],1);
+                    }
+                    // Loop over user-defined boundary conditions
+                    for (auto &x : m_bndConds)
+                    {
+                        x->Apply(FwdBnd, tmpinarry, time);
+                    }
+                }
 
+                for(int j = 0; j < nFields; j++)
+                {
+                    m_fields[j]->FillBwdWITHBound(minsFwd[j], minsBwd[j]);
+                }
+
+                CalTraceNumericalFlux(nConvectiveFields,nDim,npoints,nTracePts,PenaltyFactor2,
+                            fields,AdvVel,inarray,time,qfield,minsFwd,minsBwd,qFwd,qBwd,MuVarTrace,nonZeroIndex,minsflux);
+
+                oepsvar   *=   0.5;
+            }
+            
             for (int n = 0; n < nFields; n++)
             {
-                Vmath::Vsub(nTracePts,&plusflux[n][0],1,&numflux[n][0],1,&Jacvect[n][0],1);
+                Vmath::Vsub(nTracePts,&plusflux[n][0],1,&minsflux[n][0],1,&Jacvect[n][0],1);
                 Vmath::Smul(nTracePts, oepsvar ,&Jacvect[n][0],1,&Jacvect[n][0],1);
             }
             for(int j = 0; j < nTracePts; j++)
@@ -1454,6 +1496,10 @@ namespace Nektar
             }
             
             Vmath::Vcopy(nTracePts, Fwd[i],1,plusFwd[i],1);
+            if(m_centralDiffTracJac)
+            {
+                Vmath::Vcopy(nTracePts, Fwd[i],1,minsFwd[i],1);
+            }
         }
 
         // Reset the boundary conditions
@@ -1474,6 +1520,13 @@ namespace Nektar
         {
             Vmath::Vcopy(nTracePts, Bwd[i],1,plusBwd[i],1);
         }
+        if(m_centralDiffTracJac)
+        {
+            for(int i = 0; i < nFields; i++)
+            {
+                Vmath::Vcopy(nTracePts, Bwd[i],1,minsBwd[i],1);
+            }
+        }
 
         for(int i = 0; i < nFields; i++)
         {
@@ -1489,10 +1542,25 @@ namespace Nektar
 
             CalTraceNumericalFlux(nConvectiveFields,nDim,npoints,nTracePts,PenaltyFactor2,
                         fields,AdvVel,inarray,time,qfield,Fwd,plusBwd,qFwd,qBwd,MuVarTrace,nonZeroIndex,plusflux);
+            
+            if(m_centralDiffTracJac)
+            {
+                Vmath::Sadd(nTracePts,-epsvar,Bwd[i],1,minsBwd[i],1);
+
+                for(int j = 0; j < nFields; j++)
+                {
+                    m_fields[j]->FillBwdWITHBound(Fwd[j], minsBwd[j]);
+                }
+
+                CalTraceNumericalFlux(nConvectiveFields,nDim,npoints,nTracePts,PenaltyFactor2,
+                            fields,AdvVel,inarray,time,qfield,Fwd,minsBwd,qFwd,qBwd,MuVarTrace,nonZeroIndex,minsflux);
+
+                oepsvar   *=   0.5;
+            }
 
             for (int n = 0; n < nFields; n++)
             {
-                Vmath::Vsub(nTracePts,&plusflux[n][0],1,&numflux[n][0],1,&Jacvect[n][0],1);
+                Vmath::Vsub(nTracePts,&plusflux[n][0],1,&minsflux[n][0],1,&Jacvect[n][0],1);
                 Vmath::Smul(nTracePts, oepsvar ,&Jacvect[n][0],1,&Jacvect[n][0],1);
             }
             for(int j = 0; j < nTracePts; j++)
@@ -1505,6 +1573,10 @@ namespace Nektar
             }
             
             Vmath::Vcopy(nTracePts, Bwd[i],1,plusBwd[i],1);
+            if(m_centralDiffTracJac)
+            {
+                Vmath::Vcopy(nTracePts, Bwd[i],1,minsBwd[i],1);
+            }
         }
 
         // int nwidthcolm =23;
@@ -1784,8 +1856,16 @@ namespace Nektar
             NonlinSysEvaluator_coeff(m_TimeIntegtSol_k,m_SysEquatResid_k);
             if(2==m_LiniearizationMethod)
             {
-                CalphysDeriv(inarray,m_qfield);
-                CalcFluxJacVolBnd(inpnts,m_qfield);
+                CalphysDeriv(m_TimeIntegtSol_k,m_qfield);
+
+                Array<OneD, Array<OneD, NekDouble> > pnts(nvariables);
+                int nphspnt = inpnts[0].num_elements();
+                for(int i = 0; i < nvariables; i++)
+                {
+                    pnts[i]   =   Array<OneD, NekDouble>(nphspnt,0.0);
+                    m_fields[i]->BwdTrans(m_TimeIntegtSol_k[i], pnts[i]);
+                }
+                CalcFluxJacVolBnd(pnts,m_qfield);
             }
             // NonlinSysEvaluator_coeff_out(m_TimeIntegtSol_k,m_SysEquatResid_k);
             NtotDoOdeRHS++;
@@ -2212,7 +2292,9 @@ namespace Nektar
             m_fields[i]->BwdTrans(in2D[i], inpnts[i]);
         }
 
-        DoOdeRhs_coeff(inpnts,out2D,m_BndEvaluateTime,true);
+        DoOdeProjection(inpnts,inpnts,m_BndEvaluateTime);
+        bool flag = true;
+        DoOdeRhs_coeff(inpnts,out2D,m_BndEvaluateTime,flag);
 
         Vmath::Smul(nvariable*ncoeffs,m_TimeIntegLambda,out,1,out,1);
         Vmath::Vsub(nvariable*ncoeffs,inarray,1,out,1,out,1);
@@ -2239,11 +2321,13 @@ namespace Nektar
             MatrixMultiply_JacobianFree_coeff(inarray,out);
             break;
         } 
-for(int i=0;i<out.num_elements();i++)
-{
-    cout << " out["<<i<<"]= "<<out[i]<<endl;
-}
-ASSERTL0(false, "DebugStop");
+// int nwidthcolm = 16;
+// for(int i=0;i<out.num_elements();i++)
+// {
+//     cout <<std::scientific<<std::setw(nwidthcolm)<<std::setprecision(nwidthcolm-8) 
+//          << " out["<<i<<"]= "<<out[i]<<endl;
+// }
+// ASSERTL0(false, "DebugStop");
 
         if(m_cflLocTimestep>0.0)
         {
@@ -2332,24 +2416,24 @@ ASSERTL0(false, "DebugStop");
         }
         else
         {
-            if(flagFreezeJac)
-            {
-                for(int i = 0; i < nvariables; ++i)
-                {
-                    Fwd[i]     = Array<OneD, NekDouble>(nTracePts, 0.0);
-                    Bwd[i]     = Array<OneD, NekDouble>(nTracePts, 0.0);
-                    m_fields[i]->GetFwdBwdTracePhysNoBndFill(inarray[i], Fwd[i], Bwd[i]);
-                }
-            }
-            else
-            {
+            // if(flagFreezeJac)
+            // {
+            //     for(int i = 0; i < nvariables; ++i)
+            //     {
+            //         Fwd[i]     = Array<OneD, NekDouble>(nTracePts, 0.0);
+            //         Bwd[i]     = Array<OneD, NekDouble>(nTracePts, 0.0);
+            //         m_fields[i]->GetFwdBwdTracePhysNoBndFill(inarray[i], Fwd[i], Bwd[i]);
+            //     }
+            // }
+            // else
+            // {
                 for(int i = 0; i < nvariables; ++i)
                 {
                     Fwd[i]     = Array<OneD, NekDouble>(nTracePts, 0.0);
                     Bwd[i]     = Array<OneD, NekDouble>(nTracePts, 0.0);
                     m_fields[i]->GetFwdBwdTracePhys(inarray[i], Fwd[i], Bwd[i]);
                 }
-            }
+            // }
         }
  
          // Calculate advection
@@ -2423,7 +2507,7 @@ ASSERTL0(false, "DebugStop");
         const NekDouble                                   time,
         const Array<OneD, Array<OneD, NekDouble> >       &pFwd,
         const Array<OneD, Array<OneD, NekDouble> >       &pBwd,
-        const bool                                       &flagFreezeJac)
+        const bool                                       flagFreezeJac)
     {
         int nvariables = inarray.num_elements();
         Array<OneD, Array<OneD, NekDouble> > advVel(m_spacedim);
@@ -3208,7 +3292,7 @@ ASSERTL0(false, "DebugStop");
         Array<OneD,       Array<OneD, NekDouble> >          &outarray,
         const Array<OneD, Array<OneD, NekDouble> >          &pFwd,
         const Array<OneD, Array<OneD, NekDouble> >          &pBwd,
-        const bool                                          &flagFreezeJac)
+        const bool                                          flagFreezeJac)
     {
         v_DoDiffusion_coeff(inarray, outarray, pFwd, pBwd,flagFreezeJac);
     }
@@ -3400,6 +3484,7 @@ ASSERTL0(false, "DebugStop");
             for(int ndir=0;ndir<m_spacedim;ndir++)
             {
                 Fluxvector  = (*m_ElmtFluxJacArray[nelmt][ndir])*elmtalvector;
+
                 for(int j = 0; j < nConvectiveFields; j++)
                 {   
                     Vmath::Vcopy(nElmtPnt,&elmtalFlux[0]+j, nConvectiveFields, &flux[j][ndir][0]+noffset,1);
