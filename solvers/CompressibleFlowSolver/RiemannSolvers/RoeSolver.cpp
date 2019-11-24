@@ -83,12 +83,14 @@ namespace Nektar
         static NekDouble gamma = m_params["gamma"]();
         
         // Left and right velocities
-        NekDouble uL = rhouL / rhoL;
-        NekDouble vL = rhovL / rhoL;
-        NekDouble wL = rhowL / rhoL;
-        NekDouble uR = rhouR / rhoR;
-        NekDouble vR = rhovR / rhoR;
-        NekDouble wR = rhowR / rhoR;
+        NekDouble orhoL = 1.0/rhoL;
+        NekDouble orhoR = 1.0/rhoR;
+        NekDouble uL = rhouL * orhoL;
+        NekDouble vL = rhovL * orhoL;
+        NekDouble wL = rhowL * orhoL;
+        NekDouble uR = rhouR * orhoR;
+        NekDouble vR = rhovR * orhoR;
+        NekDouble wR = rhowR * orhoR;
 
         // Left and right pressures
         NekDouble pL = (gamma - 1.0) *
@@ -97,21 +99,23 @@ namespace Nektar
             (ER - 0.5 * (rhouR * uR + rhovR * vR + rhowR * wR));
         
         // Left and right enthalpy
-        NekDouble hL = (EL + pL) / rhoL;
-        NekDouble hR = (ER + pR) / rhoR;
+        NekDouble hL = (EL + pL) * orhoL;
+        NekDouble hR = (ER + pR) * orhoR;
 
         // Square root of rhoL and rhoR.
         NekDouble srL  = sqrt(rhoL);
         NekDouble srR  = sqrt(rhoR);
         NekDouble srLR = srL + srR;
+        NekDouble osrLR = 1.0/srLR;
         
         // Velocity, enthalpy and sound speed Roe averages (equation 11.60).
-        NekDouble uRoe   = (srL * uL + srR * uR) / srLR;
-        NekDouble vRoe   = (srL * vL + srR * vR) / srLR;
-        NekDouble wRoe   = (srL * wL + srR * wR) / srLR;
-        NekDouble hRoe   = (srL * hL + srR * hR) / srLR;
+        NekDouble uRoe   = (srL * uL + srR * uR) * osrLR;
+        NekDouble vRoe   = (srL * vL + srR * vR) * osrLR;
+        NekDouble wRoe   = (srL * wL + srR * wR) * osrLR;
+        NekDouble hRoe   = (srL * hL + srR * hR) * osrLR;
         NekDouble URoe   = (uRoe * uRoe + vRoe * vRoe + wRoe * wRoe);
         NekDouble cRoe   = sqrt((gamma - 1.0)*(hRoe - 0.5 * URoe));
+        NekDouble ocRoe  = 1.0/cRoe;
         
         // Compute eigenvectors (equation 11.59).
         NekDouble k[5][5] = {
@@ -138,17 +142,17 @@ namespace Nektar
         // Compute wave amplitudes (equations 11.68, 11.69).
         NekDouble alpha[5];
         alpha[1] = (gamma-1.0)*(jump[0]*(hRoe - uRoe*uRoe) + uRoe*jump[1] -
-                                jumpbar)/(cRoe*cRoe);
-        alpha[0] = (jump[0]*(uRoe + cRoe) - jump[1] - cRoe*alpha[1])/(2.0*cRoe);
+                                jumpbar)*ocRoe*ocRoe;
+        alpha[0] = (jump[0]*(uRoe + cRoe) - jump[1] - cRoe*alpha[1])*0.5*ocRoe;
         alpha[4] = jump[0] - (alpha[0] + alpha[1]);
         alpha[2] = jump[2] - vRoe * jump[0];
         alpha[3] = jump[3] - wRoe * jump[0];
         
         // Compute average of left and right fluxes needed for equation 11.29.
-        rhof  = 0.5*(rhoL*uL + rhoR*uR);
-        rhouf = 0.5*(pL + rhoL*uL*uL + pR + rhoR*uR*uR);
-        rhovf = 0.5*(rhoL*uL*vL + rhoR*uR*vR);
-        rhowf = 0.5*(rhoL*uL*wL + rhoR*uR*wR);
+        rhof  = 0.5*(rhouL + rhouR);
+        rhouf = 0.5*(pL + rhouL*uL + pR + rhouR*uR);
+        rhovf = 0.5*(rhouL*vL + rhouR*vR);
+        rhowf = 0.5*(rhouL*wL + rhouR*wR);
         Ef    = 0.5*(uL*(EL + pL) + uR*(ER + pR));
 
         // Compute eigenvalues \lambda_i (equation 11.58).

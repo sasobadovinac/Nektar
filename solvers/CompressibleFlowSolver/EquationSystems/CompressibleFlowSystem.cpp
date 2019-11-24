@@ -1149,28 +1149,40 @@ namespace Nektar
         Array<OneD, Array<OneD, NekDouble> > Fwd    (nvariables);
         Array<OneD, Array<OneD, NekDouble> > Bwd    (nvariables);
 
+        DNekMatSharedPtr tmpMat;
+        DNekBlkMatSharedPtr FJac,BJac;
         Array<OneD, unsigned int> n_blks1(nTracePts);
         for(int i=0;i<nTracePts;i++)
         {
             n_blks1[i]    = nvariables;
         }
-        DNekBlkMatSharedPtr FJac = MemoryManager<DNekBlkMat>
-            ::AllocateSharedPtr(n_blks1, n_blks1, eDIAGONAL);
-        DNekBlkMatSharedPtr BJac = MemoryManager<DNekBlkMat>
-            ::AllocateSharedPtr(n_blks1, n_blks1, eDIAGONAL);
-        // Allocate the Jacobian matrix
-        DNekMatSharedPtr tmpMat;
-        for(int i=0;i<nTracePts;i++)
+        if(TraceJac.num_elements()>0)
         {
-            tmpMat = MemoryManager<DNekMat>
-                    ::AllocateSharedPtr(nvariables, nvariables);
-            FJac->SetBlock(i,i,tmpMat);
-
-            tmpMat = MemoryManager<DNekMat>
-                    ::AllocateSharedPtr(nvariables, nvariables);
-            BJac->SetBlock(i,i,tmpMat);
+            FJac = TraceJac[0];
+            BJac = TraceJac[1];
         }
+        else
+        {
+            TraceJac    =   Array<OneD, DNekBlkMatSharedPtr>(2);
+            
+            FJac = MemoryManager<DNekBlkMat>
+                ::AllocateSharedPtr(n_blks1, n_blks1, eDIAGONAL);
+            BJac = MemoryManager<DNekBlkMat>
+                ::AllocateSharedPtr(n_blks1, n_blks1, eDIAGONAL);
+            // Allocate the Jacobian matrix
+            for(int i=0;i<nTracePts;i++)
+            {
+                tmpMat = MemoryManager<DNekMat>
+                        ::AllocateSharedPtr(nvariables, nvariables);
+                FJac->SetBlock(i,i,tmpMat);
 
+                tmpMat = MemoryManager<DNekMat>
+                        ::AllocateSharedPtr(nvariables, nvariables);
+                BJac->SetBlock(i,i,tmpMat);
+            }
+        }
+        
+        
         if (m_HomogeneousType == eHomogeneous1D)
         {
             Fwd = NullNekDoubleArrayofArray;
@@ -1196,7 +1208,6 @@ namespace Nektar
         // m_advObject->NumCalRiemFluxJac(nvariables, m_fields, advVel, inarray,
         //                     Fwd, Bwd, FJac, BJac);
 
-        TraceJac    =   Array<OneD, DNekBlkMatSharedPtr>(2);
         TraceJac[0] = FJac;
         TraceJac[1] = BJac;
         if(m_DEBUG_VISCOUS_JAC_MAT)
@@ -1425,6 +1436,7 @@ namespace Nektar
         NekDouble eps   =   1.0E-6;
         
         DNekMatSharedPtr tmpMat;
+        Array<OneD, NekDouble> tmpMatData;
         // Fwd Jacobian
         for(int i = 0; i < nFields; i++)
         {
@@ -1488,10 +1500,15 @@ namespace Nektar
             }
             for(int j = 0; j < nTracePts; j++)
             {
-                tmpMat  =   FJac->GetBlock(j,j);
+                // tmpMat  =   FJac->GetBlock(j,j);
+                // for (int n = 0; n < nFields; n++)
+                // {
+                //     (*tmpMat)(n,i) = Jacvect[n][j];
+                // }
+                tmpMatData = FJac->GetBlock(j,j)->GetPtr();
                 for (int n = 0; n < nFields; n++)
                 {
-                    (*tmpMat)(n,i) = Jacvect[n][j];
+                    tmpMatData[n+i*nFields] = Jacvect[n][j];
                 }
             }
             
@@ -1565,10 +1582,15 @@ namespace Nektar
             }
             for(int j = 0; j < nTracePts; j++)
             {
-                tmpMat  =   BJac->GetBlock(j,j);
+                // tmpMat  =   BJac->GetBlock(j,j);
+                // for (int n = 0; n < nFields; n++)
+                // {
+                //     (*tmpMat)(n,i) = Jacvect[n][j];
+                // }
+                tmpMatData = BJac->GetBlock(j,j)->GetPtr();
                 for (int n = 0; n < nFields; n++)
                 {
-                    (*tmpMat)(n,i) = Jacvect[n][j];
+                    tmpMatData[n+i*nFields] = Jacvect[n][j];
                 }
             }
             
@@ -1867,6 +1889,27 @@ namespace Nektar
                 }
                 CalcFluxJacVolBnd(pnts,m_qfield);
             }
+
+            // if(2==m_LiniearizationMethod)
+            // {
+            //     CalphysDeriv(m_TimeIntegtSol_k,m_qfield);
+
+            //     Array<OneD, Array<OneD, NekDouble> > pnts(nvariables);
+            //     int nphspnt = GetTotPoints();
+            //     for(int i = 0; i < nvariables; i++)
+            //     {
+            //         pnts[i]   =   Array<OneD, NekDouble>(nphspnt,0.0);
+            //         m_fields[i]->BwdTrans(m_TimeIntegtSol_k[i], pnts[i]);
+            //     }
+            //     GetTraceJac(pnts,m_qfield,m_TraceJac,m_TraceJacDeriv,m_TraceJacDerivSign);
+        
+            //     for(int j = 0; j< nvariables; j++)
+            //     {
+            //         Vmath::Vcopy(nphspnt, inarray[j],1,m_MatrixFreeRefFields[j],1);
+            //     }
+            // }
+
+          
             // NonlinSysEvaluator_coeff_out(m_TimeIntegtSol_k,m_SysEquatResid_k);
             NtotDoOdeRHS++;
             // NonlinSysRes_1D and m_SysEquatResid_k share the same storage
@@ -3057,29 +3100,63 @@ namespace Nektar
         Array<OneD, NekDouble> ElmtFluxJacData;
 
         int nMatMemoSize = nConvectiveFields*nConvectiveFields;
+        NekDouble fsw,efix_StegerWarming;
+        efix_StegerWarming = 0.0;
+        fsw = 0.0;
 
-        for(int  nelmt = 0; nelmt < ntotElmt; nelmt++)
+        switch (m_spacedim)
         {
-            // nElmtCoef           = (*expvect)[nelmt]->GetNcoeffs();
-            int nElmtPnt            = (*expvect)[nelmt]->GetTotPoints();
-    
-            for(int j = 0; j < nConvectiveFields; j++)
-            {   
-                locVars[j] = inarray[j]+GetPhys_Offset(nelmt);
-            }
-
-            for(int npnt = 0; npnt < nElmtPnt; npnt++)
+        case 3:
+            for(int  nelmt = 0; nelmt < ntotElmt; nelmt++)
             {
+                int nElmtPnt            = (*expvect)[nelmt]->GetTotPoints();
+        
                 for(int j = 0; j < nConvectiveFields; j++)
-                {
-                    pointVar[j] = locVars[j][npnt];
+                {   
+                    locVars[j] = inarray[j]+GetPhys_Offset(nelmt);
                 }
 
-                GetFluxVectorJacPoint(pointVar,normals,pointJac);
+                for(int npnt = 0; npnt < nElmtPnt; npnt++)
+                {
+                    for(int j = 0; j < nConvectiveFields; j++)
+                    {
+                        pointVar[j] = locVars[j][npnt];
+                    }
 
-                ElmtFluxJacData = ElmtFluxJacArray[nelmt][nDirctn]->GetBlock(npnt,npnt)->GetPtr();
-                Vmath::Vcopy(nMatMemoSize,pointJacData,1,ElmtFluxJacData,1);
+                    PointFluxJacobian_pn(pointVar,normals,pointJac,efix_StegerWarming,fsw);
+
+                    ElmtFluxJacData = ElmtFluxJacArray[nelmt][nDirctn]->GetBlock(npnt,npnt)->GetPtr();
+                    Vmath::Vcopy(nMatMemoSize,pointJacData,1,ElmtFluxJacData,1);
+                }
             }
+            break;
+        case 2:
+            for(int  nelmt = 0; nelmt < ntotElmt; nelmt++)
+            {
+                int nElmtPnt            = (*expvect)[nelmt]->GetTotPoints();
+        
+                for(int j = 0; j < nConvectiveFields; j++)
+                {   
+                    locVars[j] = inarray[j]+GetPhys_Offset(nelmt);
+                }
+
+                for(int npnt = 0; npnt < nElmtPnt; npnt++)
+                {
+                    for(int j = 0; j < nConvectiveFields; j++)
+                    {
+                        pointVar[j] = locVars[j][npnt];
+                    }
+
+                    PointFluxJacobian_pn2D(pointVar,normals,pointJac,efix_StegerWarming,fsw);
+
+                    ElmtFluxJacData = ElmtFluxJacArray[nelmt][nDirctn]->GetBlock(npnt,npnt)->GetPtr();
+                    Vmath::Vcopy(nMatMemoSize,pointJacData,1,ElmtFluxJacData,1);
+                }
+            }
+            break;
+        default:
+            ASSERTL0(false, "GetFluxVectorJacDirctnMat not coded");
+            break;
         }
         return ;
     }
@@ -3147,113 +3224,251 @@ namespace Nektar
                   DNekMatSharedPtr       &FJac,
             const NekDouble efix,   const NekDouble fsw)
     {
-            NekDouble ro,vx,vy,vz,ps,gama,ae ;
-            NekDouble a,a2,h,h0,v2,vn,eps,eps2;
-            NekDouble nx,ny,nz;
-            NekDouble sn,osn,nxa,nya,nza,vna;
-            NekDouble l1,l4,l5,al1,al4,al5,x1,x2,x3,y1;
-            NekDouble c1,d1,c2,d2,c3,d3,c4,d4,c5,d5;
-            NekDouble sml_ssf= 1.0E-12;
+        int Nvar = 5;
+        NekDouble ro,vx,vy,vz,ps,gama,ae ;
+        NekDouble a,a2,h,h0,v2,vn,eps,eps2;
+        NekDouble nx,ny,nz;
+        NekDouble sn,osn,nxa,nya,nza,vna;
+        NekDouble l1,l4,l5,al1,al4,al5,x1,x2,x3,y1;
+        NekDouble c1,d1,c2,d2,c3,d3,c4,d4,c5,d5;
+        NekDouble sml_ssf= 1.0E-12;
 
-            NekDouble fExactorSplt = 2.0-abs(fsw); // if fsw=+-1 calculate 
+        NekDouble fExactorSplt = 2.0-abs(fsw); // if fsw=+-1 calculate 
 
-            NekDouble   rhoL  = Fwd[0];
-            NekDouble   rhouL = Fwd[1];
-            NekDouble   rhovL = Fwd[2];
-            NekDouble   rhowL = Fwd[3];
-            NekDouble   EL    = Fwd[4];
+        NekDouble   rhoL  = Fwd[0];
+        NekDouble   rhouL = Fwd[1];
+        NekDouble   rhovL = Fwd[2];
+        NekDouble   rhowL = Fwd[3];
+        NekDouble   EL    = Fwd[4];
 
-            ro = rhoL;
-            vx = rhouL / rhoL;
-            vy = rhovL / rhoL;
-            vz = rhowL / rhoL;
+        Array<OneD, NekDouble> JacData;
+        JacData = FJac->GetPtr();
 
-            // Internal energy (per unit mass)
-            NekDouble eL =
-                    (EL - 0.5 * (rhouL * vx + rhovL * vy + rhowL * vz)) / rhoL;
-            // TODO:
-            // ps = m_eos->GetPressure(rhoL, eL);
-            // gama = m_eos->GetGamma();
-            ps      = m_varConv->Geteos()->GetPressure(rhoL, eL);
-            gama    = m_varConv->Geteos()->GetGamma();
+        NekDouble oro;
+        ro  = rhoL;
+        oro = 1.0/ro;
+        vx = rhouL*oro;
+        vy = rhovL*oro;
+        vz = rhowL*oro;
 
-            ae = gama - 1.0;
-            v2 = vx*vx + vy*vy + vz*vz;
-            a2 = gama*ps/ro;
-            h = a2/ae;
+        // Internal energy (per unit mass)
+        NekDouble eL =
+                (EL - 0.5 * (rhouL * vx + rhovL * vy + rhowL * vz)) *oro;
+        // TODO:
+        // ps = m_eos->GetPressure(rhoL, eL);
+        // gama = m_eos->GetGamma();
+        ps      = m_varConv->Geteos()->GetPressure(rhoL, eL);
+        gama    = m_varConv->Geteos()->GetGamma();
 
-            h0 = h + 0.5*v2;
-            a = sqrt(a2);
+        ae = gama - 1.0;
+        v2 = vx*vx + vy*vy + vz*vz;
+        a2 = gama*ps/ro;
+        h = a2/ae;
 
-            nx = normals[0];
-            ny = normals[1];
-            nz = normals[2];
-            vn = nx*vx + ny*vy + nz*vz;
-            sn = std::max(sqrt(nx*nx + ny*ny + nz*nz),sml_ssf);
-            osn = 1.0/sn;
+        h0 = h + 0.5*v2;
+        a = sqrt(a2);
 
-            nxa = nx * osn;
-            nya = ny * osn;
-            nza = nz * osn;
-            vna = vn * osn;
-            l1 = vn;
-            l4 = vn + sn*a;
-            l5 = vn - sn*a;
+        nx = normals[0];
+        ny = normals[1];
+        nz = normals[2];
+        vn = nx*vx + ny*vy + nz*vz;
+        sn = std::max(sqrt(nx*nx + ny*ny + nz*nz),sml_ssf);
+        osn = 1.0/sn;
 
-            eps = efix*sn;
-            eps2 = eps*eps;
+        nxa = nx * osn;
+        nya = ny * osn;
+        nza = nz * osn;
+        vna = vn * osn;
+        l1 = vn;
+        l4 = vn + sn*a;
+        l5 = vn - sn*a;
 
-            al1 = sqrt(l1*l1 + eps2);
-            al4 = sqrt(l4*l4 + eps2);
-            al5 = sqrt(l5*l5 + eps2);
+        eps = efix*sn;
+        eps2 = eps*eps;
 
-            l1 = 0.5*(fExactorSplt*l1 + fsw*al1);
-            l4 = 0.5*(fExactorSplt*l4 + fsw*al4);
-            l5 = 0.5*(fExactorSplt*l5 + fsw*al5);
+        al1 = sqrt(l1*l1 + eps2);
+        al4 = sqrt(l4*l4 + eps2);
+        al5 = sqrt(l5*l5 + eps2);
 
-            x1 = 0.5*(l4 + l5);
-            x2 = 0.5*(l4 - l5);
-            x3 = x1 - l1;
-            y1 = 0.5*v2;
-            c1 = ae*x3/a2;
-            d1 = x2/a;
+        l1 = 0.5*(fExactorSplt*l1 + fsw*al1);
+        l4 = 0.5*(fExactorSplt*l4 + fsw*al4);
+        l5 = 0.5*(fExactorSplt*l5 + fsw*al5);
 
-            int nsf = 0;
-            (*FJac)(nsf  ,nsf  ) = c1*y1 - d1*vna + l1;
-            (*FJac)(nsf  ,nsf+1) = -c1*vx + d1*nxa;
-            (*FJac)(nsf  ,nsf+2) = -c1*vy + d1*nya;
-            (*FJac)(nsf  ,nsf+3) = -c1*vz + d1*nza;
-            (*FJac)(nsf  ,nsf+4) = c1;
-            c2 = c1*vx + d1*nxa*ae;
-            d2 = x3*nxa + d1*vx;
-            (*FJac)(nsf+1,nsf  ) = c2*y1 - d2*vna;
-            (*FJac)(nsf+1,nsf+1) = -c2*vx + d2*nxa + l1;
-            (*FJac)(nsf+1,nsf+2) = -c2*vy + d2*nya;
-            (*FJac)(nsf+1,nsf+3) = -c2*vz + d2*nza;
-            (*FJac)(nsf+1,nsf+4) = c2;
-            c3 = c1*vy + d1*nya*ae;
-            d3 = x3*nya + d1*vy;
-            (*FJac)(nsf+2,nsf  ) = c3*y1 - d3*vna;
-            (*FJac)(nsf+2,nsf+1) = -c3*vx + d3*nxa;
-            (*FJac)(nsf+2,nsf+2) = -c3*vy + d3*nya + l1;
-            (*FJac)(nsf+2,nsf+3) = -c3*vz + d3*nza;
-            (*FJac)(nsf+2,nsf+4) = c3;
-            c4 = c1*vz + d1*nza*ae;
-            d4 = x3*nza + d1*vz;
-            (*FJac)(nsf+3,nsf  ) = c4*y1 - d4*vna;
-            (*FJac)(nsf+3,nsf+1) = -c4*vx + d4*nxa;
-            (*FJac)(nsf+3,nsf+2) = -c4*vy + d4*nya;
-            (*FJac)(nsf+3,nsf+3) = -c4*vz + d4*nza + l1;
-            (*FJac)(nsf+3,nsf+4) = c4;
-            c5 = c1*h0 + d1*vna*ae;
-            d5 = x3*vna + d1*h0;
-            (*FJac)(nsf+4,nsf  ) = c5*y1 - d5*vna;
-            (*FJac)(nsf+4,nsf+1) = -c5*vx + d5*nxa;
-            (*FJac)(nsf+4,nsf+2) = -c5*vy + d5*nya;
-            (*FJac)(nsf+4,nsf+3) = -c5*vz + d5*nza;
-            (*FJac)(nsf+4,nsf+4) = c5 + l1;
+        x1 = 0.5*(l4 + l5);
+        x2 = 0.5*(l4 - l5);
+        x3 = x1 - l1;
+        y1 = 0.5*v2;
+        c1 = ae*x3/a2;
+        d1 = x2/a;
 
+        int ncl0    = 0;
+        int ncl1    = Nvar;
+        int ncl2    = 2*Nvar;
+        int ncl3    = 3*Nvar;
+        int ncl4    = 4*Nvar;
+
+        JacData[     ncl0] = c1*y1 - d1*vna + l1;
+        JacData[     ncl1] = -c1*vx + d1*nxa;
+        JacData[     ncl2] = -c1*vy + d1*nya;
+        JacData[     ncl3] = -c1*vz + d1*nza;
+        JacData[     ncl4] = c1;
+
+        c2 = c1*vx + d1*nxa*ae;
+        d2 = x3*nxa + d1*vx;
+        JacData[ 1 + ncl0] = c2*y1 - d2*vna;
+        JacData[ 1 + ncl1] = -c2*vx + d2*nxa + l1;
+        JacData[ 1 + ncl2] = -c2*vy + d2*nya;
+        JacData[ 1 + ncl3] = -c2*vz + d2*nza;
+        JacData[ 1 + ncl4] = c2;
+
+        c3 = c1*vy + d1*nya*ae;
+        d3 = x3*nya + d1*vy;
+        JacData[ 2 + ncl0] = c3*y1 - d3*vna;
+        JacData[ 2 + ncl1] = -c3*vx + d3*nxa;
+        JacData[ 2 + ncl2] = -c3*vy + d3*nya + l1;
+        JacData[ 2 + ncl3] = -c3*vz + d3*nza;
+        JacData[ 2 + ncl4] = c3;
+
+        c4 = c1*vz + d1*nza*ae;
+        d4 = x3*nza + d1*vz;
+        JacData[ 3 + ncl0] = c4*y1 - d4*vna;
+        JacData[ 3 + ncl1] = -c4*vx + d4*nxa;
+        JacData[ 3 + ncl2] = -c4*vy + d4*nya;
+        JacData[ 3 + ncl3] = -c4*vz + d4*nza + l1;
+        JacData[ 3 + ncl4] = c4;
+
+        c5 = c1*h0 + d1*vna*ae;
+        d5 = x3*vna + d1*h0;
+        JacData[ 4 + ncl0] = c5*y1 - d5*vna;
+        JacData[ 4 + ncl1] = -c5*vx + d5*nxa;
+        JacData[ 4 + ncl2] = -c5*vy + d5*nya;
+        JacData[ 4 + ncl3] = -c5*vz + d5*nza;
+        JacData[ 4 + ncl4] = c5 + l1;
     }
+
+    void CompressibleFlowSystem::PointFluxJacobian_pn2D(
+            const Array<OneD, NekDouble> &Fwd,
+            const Array<OneD, NekDouble> &normals,
+                  DNekMatSharedPtr       &FJac,
+            const NekDouble efix,   const NekDouble fsw)
+    {
+        int Nvar = 4;
+        NekDouble ro,vx,vy,vz,ps,gama,ae ;
+        NekDouble a,a2,h,h0,v2,vn,eps,eps2;
+        NekDouble nx,ny,nz;
+        NekDouble sn,osn,nxa,nya,nza,vna;
+        NekDouble l1,l4,l5,al1,al4,al5,x1,x2,x3,y1;
+        NekDouble c1,d1,c2,d2,c3,d3,c4,d4,c5,d5;
+        NekDouble sml_ssf= 1.0E-12;
+
+        NekDouble fExactorSplt = 2.0-abs(fsw); // if fsw=+-1 calculate 
+
+        NekDouble   rhoL  = Fwd[0];
+        NekDouble   rhouL = Fwd[1];
+        NekDouble   rhovL = Fwd[2];
+        NekDouble   rhowL = 0.0;
+        NekDouble   EL    = Fwd[Nvar-1];
+
+        Array<OneD, NekDouble> JacData;
+        JacData = FJac->GetPtr();
+
+        NekDouble oro;
+        ro  = rhoL;
+        oro = 1.0/ro;
+        vx = rhouL*oro;
+        vy = rhovL*oro;
+        vz = rhowL*oro;
+
+        // Internal energy (per unit mass)
+        NekDouble eL =
+                (EL - 0.5 * (rhouL * vx + rhovL * vy + rhowL * vz)) *oro;
+        // TODO:
+        // ps = m_eos->GetPressure(rhoL, eL);
+        // gama = m_eos->GetGamma();
+        ps      = m_varConv->Geteos()->GetPressure(rhoL, eL);
+        gama    = m_varConv->Geteos()->GetGamma();
+
+        ae = gama - 1.0;
+        v2 = vx*vx + vy*vy + vz*vz;
+        a2 = gama*ps/ro;
+        h = a2/ae;
+
+        h0 = h + 0.5*v2;
+        a = sqrt(a2);
+
+        nx = normals[0];
+        ny = normals[1];
+        nz = normals[2];
+        vn = nx*vx + ny*vy + nz*vz;
+        sn = std::max(sqrt(nx*nx + ny*ny + nz*nz),sml_ssf);
+        osn = 1.0/sn;
+
+        nxa = nx * osn;
+        nya = ny * osn;
+        nza = nz * osn;
+        vna = vn * osn;
+        l1 = vn;
+        l4 = vn + sn*a;
+        l5 = vn - sn*a;
+
+        eps = efix*sn;
+        eps2 = eps*eps;
+
+        al1 = sqrt(l1*l1 + eps2);
+        al4 = sqrt(l4*l4 + eps2);
+        al5 = sqrt(l5*l5 + eps2);
+
+        l1 = 0.5*(fExactorSplt*l1 + fsw*al1);
+        l4 = 0.5*(fExactorSplt*l4 + fsw*al4);
+        l5 = 0.5*(fExactorSplt*l5 + fsw*al5);
+
+        x1 = 0.5*(l4 + l5);
+        x2 = 0.5*(l4 - l5);
+        x3 = x1 - l1;
+        y1 = 0.5*v2;
+        c1 = ae*x3/a2;
+        d1 = x2/a;
+
+        int ncl0    = 0;
+        int ncl1    = Nvar;
+        int ncl2    = 2*Nvar;
+        int ncl4    = (Nvar-1)*Nvar;
+
+        JacData[     ncl0] = c1*y1 - d1*vna + l1;
+        JacData[     ncl1] = -c1*vx + d1*nxa;
+        JacData[     ncl2] = -c1*vy + d1*nya;
+        JacData[     ncl4] = c1;
+
+        c2 = c1*vx + d1*nxa*ae;
+        d2 = x3*nxa + d1*vx;
+        JacData[ 1 + ncl0] = c2*y1 - d2*vna;
+        JacData[ 1 + ncl1] = -c2*vx + d2*nxa + l1;
+        JacData[ 1 + ncl2] = -c2*vy + d2*nya;
+        JacData[ 1 + ncl4] = c2;
+
+        c3 = c1*vy + d1*nya*ae;
+        d3 = x3*nya + d1*vy;
+        JacData[ 2 + ncl0] = c3*y1 - d3*vna;
+        JacData[ 2 + ncl1] = -c3*vx + d3*nxa;
+        JacData[ 2 + ncl2] = -c3*vy + d3*nya + l1;
+        JacData[ 2 + ncl4] = c3;
+
+        // c4 = c1*vz + d1*nza*ae;
+        // d4 = x3*nza + d1*vz;
+        // JacData[ 3 + ncl0] = c4*y1 - d4*vna;
+        // JacData[ 3 + ncl1] = -c4*vx + d4*nxa;
+        // JacData[ 3 + ncl2] = -c4*vy + d4*nya;
+        // JacData[ 3 + ncl3] = -c4*vz + d4*nza + l1;
+        // JacData[ 3 + ncl4] = c4;
+
+        c5 = c1*h0 + d1*vna*ae;
+        d5 = x3*vna + d1*h0;
+        JacData[ Nvar-1 + ncl0] = c5*y1 - d5*vna;
+        JacData[ Nvar-1 + ncl1] = -c5*vx + d5*nxa;
+        JacData[ Nvar-1 + ncl2] = -c5*vy + d5*nya;
+        JacData[ Nvar-1 + ncl4] = c5 + l1;
+    }
+
 #endif
     /**
      * @brief Compute the advection terms for the right-hand side
@@ -3504,41 +3719,31 @@ namespace Nektar
         int ntotTrac            = (*traceExp).size();
         int nTracePnts          = tracelist->GetTotPoints();
 
-        Array<OneD, NekDouble> elmtalArray;
-        Array<OneD, NekDouble> elmtalFlux;
-
-        NekVector<NekDouble> VFwd(nConvectiveFields),VBwd(nConvectiveFields);
-        NekVector<NekDouble> VFlux(nConvectiveFields);
-        DNekMatSharedPtr    PJacFwd,PJacBwd;
-
-        for(int  n = 0; n < nTracePnts; n++)
+        int nTraceVars          = nTracePnts*nConvectiveFields;
+        Array<OneD, NekDouble> elmtalArray(nTraceVars);
+        Array<OneD, NekDouble> elmtalFwd(nTraceVars);
+        Array<OneD, NekDouble> elmtalBwd(nTraceVars);
+        for(int i = 0; i < nConvectiveFields; ++i)
         {
-            for(int i = 0; i < nConvectiveFields; ++i)
-            {
-                VFwd[i] =   Fwd[i][n];
-                VBwd[i] =   Bwd[i][n];
-            }   
-            PJacFwd =  m_TraceJac[0]->GetBlock(n,n); 
-            PJacBwd =  m_TraceJac[1]->GetBlock(n,n); 
+            Vmath::Vcopy(nTracePnts, &Fwd[i][0],1, &elmtalArray[0]+i,nConvectiveFields);
+        }   
+        NekVector<NekDouble> Varray(nTraceVars,elmtalArray, eWrapper);
+        NekVector<NekDouble> VfluxFwd (nTraceVars,elmtalFwd, eWrapper);
+        VfluxFwd = (*m_TraceJac[0])*Varray;
 
-            VFlux   =   (*PJacFwd)*VFwd;
+        for(int i = 0; i < nConvectiveFields; ++i)
+        {
+            Vmath::Vcopy(nTracePnts, &Bwd[i][0],1, &elmtalArray[0]+i,nConvectiveFields);
+        }   
+        NekVector<NekDouble> VfluxBwd (nTraceVars,elmtalBwd, eWrapper);
+        VfluxBwd = (*m_TraceJac[1])*Varray;
 
-            for(int i = 0; i < nConvectiveFields; ++i)
-            {
-                flux[i][n] =   VFlux[i];
-            }  
+        Vmath::Vadd(nTraceVars,&elmtalFwd[0],1,&elmtalBwd[0],1,&elmtalFwd[0],1);
 
-            VFlux   =   (*PJacBwd)*VBwd;
-
-            for(int i = 0; i < nConvectiveFields; ++i)
-            {
-                flux[i][n] +=   VFlux[i];
-            }  
-            //  for(int i = 0; i < nConvectiveFields; ++i)
-            // {
-            //     flux[i][n] =   0.0;
-            // }  
-        }
+        for(int i = 0; i < nConvectiveFields; ++i)
+        {
+            Vmath::Vcopy(nTracePnts, &elmtalFwd[0]+i,nConvectiveFields, &flux[i][0],1);
+        }  
     }
 
     /**

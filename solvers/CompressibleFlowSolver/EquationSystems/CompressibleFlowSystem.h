@@ -208,6 +208,12 @@ namespace Nektar
                   DNekMatSharedPtr       &FJac,
             const NekDouble efix,   const NekDouble fsw);
 
+        void PointFluxJacobian_pn2D(
+            const Array<OneD, NekDouble> &Fwd,
+            const Array<OneD, NekDouble> &normals,
+                  DNekMatSharedPtr       &FJac,
+            const NekDouble efix,   const NekDouble fsw);
+
 #ifdef CFS_DEBUGMODE
 
         void NumJacElemental(
