@@ -94,6 +94,8 @@ namespace Nektar
         bool m_timeDependentUp;
         /// Stiffly-stable scheme \f[\gamma_0\f] coefficient
         NekDouble m_gamma0;
+        /// Forcing function 'f_s'
+        Array<OneD, MultiRegions::ExpListSharedPtr> m_fs;
         /// Shape function 'phi' as expansion list
         MultiRegions::ExpListSharedPtr m_phi;
         /// Function that evaluates the values of \Phi
@@ -114,8 +116,7 @@ namespace Nektar
         // Sets the parameters and BCs for the Poisson equation
         void SetUpCorrectionPressure(
                     const Array<OneD, const Array<OneD, NekDouble> > &fields,
-                    Array<OneD, Array<OneD, NekDouble> > &Forcing,
-                    NekDouble aii_Dt);
+                    Array<OneD, Array<OneD, NekDouble> > &Forcing);
         // Solves the Poisson equation for the correction pressure
         void SolveCorrectionPressure(
                     const Array<OneD, NekDouble> &Forcing);
@@ -125,26 +126,49 @@ namespace Nektar
                     Array<OneD, Array<OneD, NekDouble> > &fields,
                     NekDouble dt);
         // Set proper BCs for the corrected pressure 'p_p'
-        void SetCorrectionPressureBCs(NekDouble dt);
+        void SetCorrectionPressureBCs();
         // Calculates the shape function values
         // (only for non-moving boundaries)
         void UpdatePhiUp(NekDouble time);
         // Calculates the virtual force 'fs'
-        void IBForcing(const Array<OneD, const Array<OneD, NekDouble> > &fields,
-                    NekDouble dt,
-                    Array<OneD, Array<OneD, NekDouble> > &f_s);
-        // Calculates the virtual force 'fs' in the boundary 'BndExp'
-        void IBForcingBC(int bndInd,
-                    const MultiRegions::ExpListSharedPtr &BndExp,
-                    NekDouble dt,
-                    Array<OneD, Array<OneD, NekDouble> > &f_s);
-        // Gets time-dependence information from the first elmt of 'name'
+        void UpdateForcing(const Array<OneD, const Array<OneD, NekDouble> > &fields,
+                    NekDouble dt);
+        // Gets time-dependence information from the first elment of 'name'
         bool GetVarTimeDependence(std::string funcName,
                                   std::string attrName);
         // Returns a Tinyxml handle of the requested function element
         TiXmlElement* GetFunctionHdl(std::string functionName);
         // Reads and set the values of Phi from an analyitic func. or a file
         void ReadPhi();
+
+        /// Initialises the expansions for the intermediate pressure, the 'Phi'
+        /// function and the IB forcing
+        template <typename T>
+        void SetUpExpansions(int nvel)
+        {
+            m_pressureP = MemoryManager<T>::AllocateSharedPtr(
+                          *std::dynamic_pointer_cast<T>(m_pressure));
+            m_phi = MemoryManager<T>::AllocateSharedPtr(
+                    *std::dynamic_pointer_cast<T>(m_pressure));
+
+            m_fs = Array<OneD, MultiRegions::ExpListSharedPtr>(nvel);
+            for (int i = 0; i < nvel; ++i)
+            {
+                m_fs[i] = MemoryManager<T>::AllocateSharedPtr(
+                          *std::dynamic_pointer_cast<T>(m_pressure));
+            }
+
+            // Set to wave space if homogeneous case
+            if (m_HomogeneousType != EquationSystem::eNotHomogeneous)
+            {
+                m_pressureP->SetWaveSpace(true);
+                m_phi->SetWaveSpace(true);
+                for (int i = 0; i < nvel; ++i)
+                {
+                    m_fs[i]->SetWaveSpace(true);
+                }
+            }
+        }
 
     private:
     };

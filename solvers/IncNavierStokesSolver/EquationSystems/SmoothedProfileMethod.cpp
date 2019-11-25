@@ -93,42 +93,22 @@ namespace Nektar
             case 1:
                 if (m_projectionType == eGalerkin)
                 {
-                    m_pressureP = MemoryManager<ContField1D>::
-                        AllocateSharedPtr(
-                            *dynamic_pointer_cast<ContField1D>(m_pressure));
-                    m_phi = MemoryManager<ContField1D>::
-                        AllocateSharedPtr(
-                            *dynamic_pointer_cast<ContField1D>(m_pressure));
+                    SetUpExpansions<ContField1D>(nvel);
                 }
                 else if (m_projectionType == eDiscontinuous)
                 {
-                    m_pressureP = MemoryManager<DisContField1D>::
-                        AllocateSharedPtr(
-                            *dynamic_pointer_cast<DisContField1D>(m_pressure));
-                    m_phi = MemoryManager<DisContField1D>::
-                        AllocateSharedPtr(
-                            *dynamic_pointer_cast<DisContField1D>(m_pressure));
+                    SetUpExpansions<DisContField1D>(nvel);
                 }
                 break;
 
             case 2:
                 if (m_projectionType == eGalerkin)
                 {
-                    m_pressureP = MemoryManager<ContField2D>::
-                        AllocateSharedPtr(
-                            *dynamic_pointer_cast<ContField2D>(m_pressure));
-                    m_phi = MemoryManager<ContField2D>::
-                        AllocateSharedPtr(
-                            *dynamic_pointer_cast<ContField2D>(m_pressure));
+                    SetUpExpansions<ContField2D>(nvel);
                 }
                 else if (m_projectionType == eDiscontinuous)
                 {
-                    m_pressureP = MemoryManager<DisContField2D>::
-                        AllocateSharedPtr(
-                            *dynamic_pointer_cast<DisContField2D>(m_pressure));
-                    m_phi = MemoryManager<DisContField2D>::
-                        AllocateSharedPtr(
-                            *dynamic_pointer_cast<DisContField2D>(m_pressure));
+                    SetUpExpansions<DisContField2D>(nvel);
                 }
                 break;
 
@@ -137,84 +117,35 @@ namespace Nektar
                 {
                     if (m_HomogeneousType == EquationSystem::eNotHomogeneous)
                     {
-                        m_pressureP = MemoryManager<ContField3D>::
-                            AllocateSharedPtr(
-                                *dynamic_pointer_cast<ContField3D>(
-                                    m_pressure));
-                        m_phi = MemoryManager<ContField3D>::
-                            AllocateSharedPtr(
-                                *dynamic_pointer_cast<ContField3D>(
-                                    m_pressure));
+                        SetUpExpansions<ContField3D>(nvel);
                     }
                     else if (m_HomogeneousType == EquationSystem::eHomogeneous1D)
                     {
-                        m_pressureP = MemoryManager<ContField3DHomogeneous1D>::
-                            AllocateSharedPtr(
-                                *dynamic_pointer_cast<ContField3DHomogeneous1D>(
-                                    m_pressure));
-                        m_phi = MemoryManager<ContField3DHomogeneous1D>::
-                            AllocateSharedPtr(
-                                *dynamic_pointer_cast<ContField3DHomogeneous1D>(
-                                    m_pressure));
+                        SetUpExpansions<ContField3DHomogeneous1D>(nvel);
                     }
                     else if (m_HomogeneousType == EquationSystem::eHomogeneous2D
                           || m_HomogeneousType == EquationSystem::eHomogeneous3D)
                     {
-                        m_pressureP = MemoryManager<ContField3DHomogeneous2D>::
-                            AllocateSharedPtr(
-                                *dynamic_pointer_cast<ContField3DHomogeneous2D>(
-                                    m_pressure));
-                        m_phi = MemoryManager<ContField3DHomogeneous2D>::
-                            AllocateSharedPtr(
-                                *dynamic_pointer_cast<ContField3DHomogeneous2D>(
-                                    m_pressure));
+                        SetUpExpansions<ContField3DHomogeneous2D>(nvel);
                     }
                 }
                 else if (m_projectionType == eDiscontinuous)
                 {
                     if (m_HomogeneousType == EquationSystem::eNotHomogeneous)
                     {
-                        m_pressureP = MemoryManager<DisContField3D>::
-                            AllocateSharedPtr(
-                                *dynamic_pointer_cast<DisContField3D>(
-                                    m_pressure));
-                        m_phi = MemoryManager<DisContField3D>::
-                            AllocateSharedPtr(
-                                *dynamic_pointer_cast<DisContField3D>(
-                                    m_pressure));
+                        SetUpExpansions<DisContField3D>(nvel);
                     }
                     else if (m_HomogeneousType == EquationSystem::eHomogeneous1D)
                     {
-                        m_pressureP = MemoryManager<
-                            DisContField3DHomogeneous1D>::AllocateSharedPtr(
-                                *dynamic_pointer_cast<
-                                    DisContField3DHomogeneous1D>(m_pressure));
-                        m_phi = MemoryManager<DisContField3DHomogeneous1D>::
-                            AllocateSharedPtr(
-                                *dynamic_pointer_cast<
-                                    DisContField3DHomogeneous1D>(m_pressure));
+                        SetUpExpansions<DisContField3DHomogeneous1D>(nvel);
                     }
                     else if (m_HomogeneousType == EquationSystem::eHomogeneous2D
                           || m_HomogeneousType == EquationSystem::eHomogeneous3D)
                     {
-                        m_pressureP = MemoryManager<
-                            DisContField3DHomogeneous2D>::AllocateSharedPtr(
-                                *dynamic_pointer_cast<
-                                    DisContField3DHomogeneous2D>(m_pressure));
-                        m_phi = MemoryManager<DisContField3DHomogeneous2D>::
-                            AllocateSharedPtr(
-                                *dynamic_pointer_cast<
-                                    DisContField3DHomogeneous2D>(m_pressure));
+                        SetUpExpansions<DisContField3DHomogeneous2D>(nvel);
                     }
                 }
                 break;
-        }
-
-        // Set to wave space if homogeneous case
-        if (m_HomogeneousType != EquationSystem::eNotHomogeneous)
-        {
-            m_pressureP->SetWaveSpace(true);
-            m_phi->SetWaveSpace(true);
         }
 
         // Read 'm_phi' and its velocity
@@ -320,6 +251,8 @@ namespace Nektar
         /* SPM correction of velocity */
         // Update 'm_phi' and 'm_up' if needed (evaluated at next time step)
         UpdatePhiUp(time + a_iixDt);
+        // Update calculation of IB forcing 'm_fs'
+        UpdateForcing(outarray, a_iixDt);
         // Estimate forces only if requested
         if (m_forcesFilter >= 0)
         {
@@ -328,7 +261,7 @@ namespace Nektar
                     outarray, m_upPrev, m_phi, time, a_iixDt);
         }
         // Set BC conditions for pressure p_p
-        SetUpCorrectionPressure(outarray, m_F, a_iixDt);
+        SetUpCorrectionPressure(outarray, m_F);
         // Solve Poisson equation for pressure p_p
         SolveCorrectionPressure(m_F[0]);
         // Solve velocity in the next step with IB
@@ -353,29 +286,26 @@ namespace Nektar
      *
      * @param fields
      * @param Forcing
-     * @param aii_Dt
      */
     void SmoothedProfileMethod::SetUpCorrectionPressure(
                     const Array<OneD, const Array<OneD, NekDouble> > &fields,
-                    Array<OneD, Array<OneD, NekDouble> > &Forcing,
-                    NekDouble aii_Dt)
+                    Array<OneD, Array<OneD, NekDouble> > &Forcing)
     {
         int physTot = m_pressureP->GetNpoints();
         int nvel    = m_velocity.num_elements();
 
         // Set boundary conditions
-        SetCorrectionPressureBCs(aii_Dt);
+        SetCorrectionPressureBCs();
 
-        // Virtual force 'fs'
-        Array<OneD, Array<OneD, NekDouble> > f_s;
-        IBForcing(fields, aii_Dt, f_s);
-        m_fields[m_velocity[0]]->PhysDeriv(eX, f_s[0], Forcing[0]);
+        // Divergence of 'fs'
+        m_fields[m_velocity[0]]->PhysDeriv(eX, m_fs[0]->GetPhys(), Forcing[0]);
 
         // Using 'Forcing[1]' as storage
         for (int i = 1; i < nvel; ++i)
         {
             int ind = m_velocity[i];
-            m_fields[ind]->PhysDeriv(DirCartesianMap[i], f_s[i], Forcing[1]);
+            m_fields[ind]->PhysDeriv(DirCartesianMap[i],
+                                     m_fs[i]->GetPhys(), Forcing[1]);
             Vmath::Vadd(physTot, Forcing[1], 1, Forcing[0], 1, Forcing[0], 1);
         }
     }
@@ -407,7 +337,7 @@ namespace Nektar
     /**
      * @brief Corrects the velocity field so that the IBs are taken into
      * account. Solves the explicit equation:
-     * 
+     *
      * \f[ \frac{\gamma_0(\mathbf{u_p}^{n+1} - \mathbf{u}^*)}{\Delta t} =
      *     \mathbf{f_s} - \nabla p_p \f]
      *
@@ -438,10 +368,6 @@ namespace Nektar
                                    Forcing[2]);
         }
 
-        // Virtual force 'fs'
-        Array<OneD, Array<OneD, NekDouble> > f_s;
-        IBForcing(fields, dt, f_s);
-
         // Velocity correction
         for (int i = 0; i < nvel; ++i)
         {
@@ -452,11 +378,13 @@ namespace Nektar
             {
                 Vmath::Vvtvm(physTot, m_phi->GetPhys(), 1, Forcing[i], 1,
                              Forcing[i], 1, Forcing[i], 1);
-                Vmath::Vadd(physTot, f_s[i], 1, Forcing[i], 1, Forcing[i], 1);
+                Vmath::Vadd(physTot, m_fs[i]->GetPhys(), 1, Forcing[i], 1,
+                            Forcing[i], 1);
             }
             else
             {
-                Vmath::Vsub(physTot, f_s[i], 1, Forcing[i], 1, Forcing[i], 1);
+                Vmath::Vsub(physTot, m_fs[i]->GetPhys(), 1, Forcing[i], 1,
+                            Forcing[i], 1);
             }
             Blas::Daxpy(physTot, dt/m_gamma0, Forcing[i], 1, fields[i], 1);
         }
@@ -468,11 +396,10 @@ namespace Nektar
      *
      * \f[ \frac{\partial p_p}{\partial\mathbf{n}} =
      *     \mathbf{f_s}\cdot\mathbf{n} \f]
-     *
-     * @param dt
      */
-    void SmoothedProfileMethod::SetCorrectionPressureBCs(NekDouble dt)
+    void SmoothedProfileMethod::SetCorrectionPressureBCs()
     {
+        int nvel = m_velocity.num_elements();
         Array<OneD, ExpListSharedPtr> BndExp;
         Array<OneD, SpatialDomains::BoundaryConditionShPtr> BndCond;
 
@@ -490,8 +417,11 @@ namespace Nektar
                 SpatialDomains::ePeriodic)
             {
                 // Calculate f_s values
-                Array<OneD, Array<OneD, NekDouble> > f_s;
-                IBForcingBC(b, BndExp[b], dt, f_s);
+                Array<OneD, Array<OneD, NekDouble> > f_s(nvel);
+                for (int i = 0; i < nvel; ++i)
+                {
+                    f_s[i] = m_fs[0]->GetBndCondExpansions()[b]->GetPhys();
+                }
 
                 // BC is f_s * n
                 BndExp[b]->NormVectorIProductWRTBase(f_s,
@@ -548,20 +478,12 @@ namespace Nektar
      * @param dt
      * @param f_s
      */
-    void SmoothedProfileMethod::IBForcing(
+    void SmoothedProfileMethod::UpdateForcing(
                     const Array<OneD, const Array<OneD, NekDouble> > &fields,
-                    NekDouble dt,
-                    Array<OneD, Array<OneD, NekDouble> > &f_s)
+                    NekDouble dt)
     {
         int nvel = m_velocity.num_elements();
         int nq   = m_pressureP->GetNpoints();
-
-        // Vector f_s
-        f_s = Array<OneD, Array<OneD, NekDouble> >(nvel);
-        for (int i = 0; i < nvel; ++i)
-        {
-            f_s[i] = Array<OneD, NekDouble>(nq);
-        }
 
         for (int i = 0; i < nvel; ++i)
         {
@@ -573,80 +495,26 @@ namespace Nektar
                 m_fields[ind]->GetWaveSpace())
             {
                 m_fields[ind]->HomogeneousBwdTrans(fields[i], tmpField);
+                m_fs[i]->HomogeneousBwdTrans(m_fs[i]->GetPhys(),
+                                             m_fs[i]->UpdatePhys());
             }
             else
             {
                 tmpField = fields[i];
             }
 
-            Vmath::Vsub(nq, m_up[i], 1, tmpField, 1, f_s[i], 1);
-            Vmath::Vmul(nq, m_phi->GetPhys(), 1, f_s[i], 1, f_s[i], 1);
-            Vmath::Smul(nq, m_gamma0/dt, f_s[i], 1, f_s[i], 1);
+            Vmath::Vsub(nq, m_up[i], 1, tmpField, 1, m_fs[i]->UpdatePhys(), 1);
+            Vmath::Vmul(nq, m_phi->GetPhys(), 1, m_fs[i]->GetPhys(), 1,
+                        m_fs[i]->UpdatePhys(), 1);
+            Vmath::Smul(nq, m_gamma0/dt, m_fs[i]->GetPhys(), 1,
+                        m_fs[i]->UpdatePhys(), 1);
 
             // And go back to wave space if the 'if' was executed
             if (m_HomogeneousType != EquationSystem::eNotHomogeneous &&
                 m_fields[ind]->GetWaveSpace())
             {
-                m_fields[ind]->HomogeneousFwdTrans(f_s[i], f_s[i]);
-            }
-        }
-    }
-
-    /**
-     * @brief For a body with a velocity \f[\mathbf{u_p}\f], the force
-     * \f[\mathbf{f_s}\f] applied to the fluid ensures that the IBC are met.
-     * Calculated in the boundary defined by 'BndExp'
-     *
-     * @param bndInd
-     * @param BndExp
-     * @param dt
-     * @param f_s
-     */
-    void SmoothedProfileMethod::IBForcingBC(int bndInd,
-                                const ExpListSharedPtr &BndExp,
-                                NekDouble dt,
-                                Array<OneD, Array<OneD, NekDouble> > &f_s)
-    {
-        int nvel = m_velocity.num_elements();
-        int nq   = BndExp->GetTotPoints();
-
-        // Vector f_s
-        f_s = Array<OneD, Array<OneD, NekDouble> >(nvel);
-        for (int i = 0; i < nvel; ++i)
-        {
-            f_s[i] = Array<OneD, NekDouble>(nq);
-        }
-
-        for (int i = 0; i < nvel; ++i)
-        {
-            // In homogeneous cases, switch out of wave space
-            Array<OneD, NekDouble> tmpField(nq);
-            int ind = m_velocity[i];
-
-            ExpListSharedPtr velExp =
-                (m_fields[ind]->GetBndCondExpansions())[bndInd];
-
-            if (m_HomogeneousType != EquationSystem::eNotHomogeneous &&
-                velExp->GetWaveSpace())
-            {
-                velExp->HomogeneousBwdTrans(velExp->GetPhys(), tmpField);
-            }
-            else
-            {
-                tmpField = velExp->GetPhys();
-            }
-
-            Vmath::Vsub(nq, m_up[i], 1, tmpField, 1, f_s[i], 1);
-            Vmath::Vmul(nq, m_phi->GetBndCondExpansions()[bndInd]->GetPhys(),
-                        1, f_s[i],
-                        1, f_s[i], 1);
-            Vmath::Smul(nq, m_gamma0/dt, f_s[i], 1, f_s[i], 1);
-
-            // And go back to wave space if the 'if' was executed
-            if (m_HomogeneousType != EquationSystem::eNotHomogeneous &&
-                velExp->GetWaveSpace())
-            {
-                velExp->HomogeneousFwdTrans(f_s[i], f_s[i]);
+                m_fs[i]->HomogeneousFwdTrans(m_fs[i]->GetPhys(),
+                                             m_fs[i]->UpdatePhys());
             }
         }
     }
