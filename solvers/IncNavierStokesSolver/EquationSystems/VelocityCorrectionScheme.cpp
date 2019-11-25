@@ -791,10 +791,16 @@ namespace Nektar
             m_fields[i]->BwdTrans(m_fields[i]->GetCoeffs(),outarray[i]);
         }
 
-        if (m_BlowingSuction)
+        // Update BC for blowing/suction simulations:
+        if (m_BlowingSuction && m_session->GetSolverInfo("EvolutionOperator") == "Direct")
         {
-            ScaleBSBC();
-            SolveStructural(m_time);
+            ScaleBSBCDirect();
+            SolveStructuralDirect(m_time);
+        }
+        if (m_BlowingSuction && m_session->GetSolverInfo("EvolutionOperator") == "Adjoint")
+        {
+            ScaleBSBCAdjoint();
+            SolveStructuralAdjoint(m_time);
         }
     }
 

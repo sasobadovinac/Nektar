@@ -332,13 +332,16 @@ namespace Nektar
         void SetWomersleyBoundary(const int fldid, const int bndid);
 
         /// Solve structural equation and obtain theta and theta dot
-        void SolveStructural(NekDouble time);
+        void SolveStructuralDirect(NekDouble time);
+
+        /// Solve structural equation and obtain theta and theta dot
+        void SolveStructuralAdjoint(NekDouble time);
 
         /// Scale BCs by theta and theta dot
-        void ScaleBSBC();
+        void ScaleBSBCDirect();
 
-        /// Scale BCs by theta and theta dot
-        // void ScaleBSBC_TEST();
+        /// Scale BCs fo adjoint
+        void ScaleBSBCAdjoint();
 
         /// Set Up Womersley details
         void SetUpWomersley(const int fldid, const int bndid, std::string womstr);
