@@ -210,6 +210,13 @@ namespace Nektar
                 break;
         }
 
+        // Set to wave space if homogeneous case
+        if (m_HomogeneousType != EquationSystem::eNotHomogeneous)
+        {
+            m_pressureP->SetWaveSpace(true);
+            m_phi->SetWaveSpace(true);
+        }
+
         // Read 'm_phi' and its velocity
         ASSERTL0(m_session->DefinesFunction("ShapeFunction"),
                  "ShapeFunction must be defined in the session file.")
@@ -218,12 +225,13 @@ namespace Nektar
         // Allocate the vector 'm_up'
         int physTot = m_pressureP->GetTotPoints();
         m_velName.push_back("Up");
-        switch (nvel)
+        if (nvel > 1)
         {
-            case (3):
-                m_velName.push_back("Wp");
-            case (2):
-                m_velName.push_back("Vp");
+            m_velName.push_back("Vp");
+        }
+        if (nvel == 3)
+        {
+            m_velName.push_back("Wp");
         }
 
         m_up = Array<OneD, Array<OneD, NekDouble> >(nvel);
@@ -307,7 +315,7 @@ namespace Nektar
                                                             time,
                                                             a_iixDt);
 
-        int physTot = m_pressureP->GetTotPoints();
+        int physTot = m_pressureP->GetNpoints();
 
         /* SPM correction of velocity */
         // Update 'm_phi' and 'm_up' if needed (evaluated at next time step)
@@ -332,6 +340,9 @@ namespace Nektar
                              m_pressure->UpdatePhys(), 1);
         m_pressure->FwdTrans(m_pressure->GetPhys(),
                              m_pressure->UpdateCoeffs());
+
+        // Add presure to outflow bc if using convective like BCs
+        m_extrapolation->AddPressureToOutflowBCs(m_kinvis);
     }
 
     /**
@@ -349,7 +360,7 @@ namespace Nektar
                     Array<OneD, Array<OneD, NekDouble> > &Forcing,
                     NekDouble aii_Dt)
     {
-        int physTot = m_pressureP->GetTotPoints();
+        int physTot = m_pressureP->GetNpoints();
         int nvel    = m_velocity.num_elements();
 
         // Set boundary conditions
@@ -388,16 +399,17 @@ namespace Nektar
         m_pressureP->HelmSolve(Forcing, m_pressureP->UpdateCoeffs(),
                                NullFlagList, factors);
 
-        // Update node values from coefficients only if not in homogeneous case
-        if (m_HomogeneousType == EquationSystem::eNotHomogeneous)
-        {
-            m_pressureP->BwdTrans(m_pressureP->GetCoeffs(),
-                                  m_pressureP->UpdatePhys());
-        }
+        // Update node values from coefficients
+        m_pressureP->BwdTrans(m_pressureP->GetCoeffs(),
+                              m_pressureP->UpdatePhys());
     }
 
     /**
-     * @brief
+     * @brief Corrects the velocity field so that the IBs are taken into
+     * account. Solves the explicit equation:
+     * 
+     * \f[ \frac{\gamma_0(\mathbf{u_p}^{n+1} - \mathbf{u}^*)}{\Delta t} =
+     *     \mathbf{f_s} - \nabla p_p \f]
      *
      * @param Forcing
      * @param fields
@@ -408,7 +420,7 @@ namespace Nektar
                     Array<OneD, Array<OneD, NekDouble> > &fields,
                     NekDouble dt)
     {
-        int physTot = m_fields[0]->GetTotPoints();
+        int physTot = m_phi->GetNpoints();
 
         // Gradient of p_p
         int nvel = m_velocity.num_elements();
@@ -433,8 +445,6 @@ namespace Nektar
         // Velocity correction
         for (int i = 0; i < nvel; ++i)
         {
-            int ind = m_velocity[i];
-
             // Adding -(1-m_phi)*grad(p_p) instead of -grad(p_p) reduces the
             // flux through the walls, but the flow is not incompressible
             if (m_session->DefinesSolverInfo("ForceBoundary") &&
@@ -448,13 +458,13 @@ namespace Nektar
             {
                 Vmath::Vsub(physTot, f_s[i], 1, Forcing[i], 1, Forcing[i], 1);
             }
-            Blas::Daxpy(physTot, dt/m_gamma0, Forcing[i], 1, fields[ind], 1);
+            Blas::Daxpy(physTot, dt/m_gamma0, Forcing[i], 1, fields[i], 1);
         }
     }
 
     /**
-     * @brief Updates the BCs for boundaries with Dirichlet BCs in the
-     * velocity:
+     * @brief Updates the BCs for boundaries with Neumann or periodic BCs in
+     * the pressure:
      *
      * \f[ \frac{\partial p_p}{\partial\mathbf{n}} =
      *     \mathbf{f_s}\cdot\mathbf{n} \f]
@@ -528,10 +538,10 @@ namespace Nektar
     }
 
     /**
-     * @brief For a body with a constant velocity \f[\mathbf{u_p}\f], the force
+     * @brief For a body with a velocity \f[\mathbf{u_p}\f], the force
      * \f[\mathbf{f_s}\f] applied to the fluid ensures that the IBC are met:
      *
-     * \f[ \mathbf{f_s} = \frac{\Phi^{n+1}\left(\mathbf{u_p} -
+     * \f[ \mathbf{f_s} = \frac{\Phi^{n+1}\left(\mathbf{u_p}^{n+1} -
      * \mathbf{u^*}\right)}{\Delta t} \f]
      *
      * @param fields
@@ -544,7 +554,7 @@ namespace Nektar
                     Array<OneD, Array<OneD, NekDouble> > &f_s)
     {
         int nvel = m_velocity.num_elements();
-        int nq   = m_pressureP->GetTotPoints();
+        int nq   = m_pressureP->GetNpoints();
 
         // Vector f_s
         f_s = Array<OneD, Array<OneD, NekDouble> >(nvel);
@@ -555,14 +565,35 @@ namespace Nektar
 
         for (int i = 0; i < nvel; ++i)
         {
-            Vmath::Vsub(nq, m_up[i], 1, fields[m_velocity[i]], 1, f_s[i], 1);
+            // In homogeneous cases, switch out of wave space
+            Array<OneD, NekDouble> tmpField(nq);
+            int ind = m_velocity[i];
+
+            if (m_HomogeneousType != EquationSystem::eNotHomogeneous &&
+                m_fields[ind]->GetWaveSpace())
+            {
+                m_fields[ind]->HomogeneousBwdTrans(fields[i], tmpField);
+            }
+            else
+            {
+                tmpField = fields[i];
+            }
+
+            Vmath::Vsub(nq, m_up[i], 1, tmpField, 1, f_s[i], 1);
             Vmath::Vmul(nq, m_phi->GetPhys(), 1, f_s[i], 1, f_s[i], 1);
             Vmath::Smul(nq, m_gamma0/dt, f_s[i], 1, f_s[i], 1);
+
+            // And go back to wave space if the 'if' was executed
+            if (m_HomogeneousType != EquationSystem::eNotHomogeneous &&
+                m_fields[ind]->GetWaveSpace())
+            {
+                m_fields[ind]->HomogeneousFwdTrans(f_s[i], f_s[i]);
+            }
         }
     }
 
     /**
-     * @brief For a body with a constant velocity \f[\mathbf{u_p}\f], the force
+     * @brief For a body with a velocity \f[\mathbf{u_p}\f], the force
      * \f[\mathbf{f_s}\f] applied to the fluid ensures that the IBC are met.
      * Calculated in the boundary defined by 'BndExp'
      *
@@ -588,13 +619,35 @@ namespace Nektar
 
         for (int i = 0; i < nvel; ++i)
         {
+            // In homogeneous cases, switch out of wave space
+            Array<OneD, NekDouble> tmpField(nq);
+            int ind = m_velocity[i];
+
             ExpListSharedPtr velExp =
-                (m_fields[m_velocity[i]]->GetBndCondExpansions())[bndInd];
-            Vmath::Vsub(nq, m_up[i], 1, velExp->GetPhys(), 1, f_s[i], 1);
+                (m_fields[ind]->GetBndCondExpansions())[bndInd];
+
+            if (m_HomogeneousType != EquationSystem::eNotHomogeneous &&
+                velExp->GetWaveSpace())
+            {
+                velExp->HomogeneousBwdTrans(velExp->GetPhys(), tmpField);
+            }
+            else
+            {
+                tmpField = velExp->GetPhys();
+            }
+
+            Vmath::Vsub(nq, m_up[i], 1, tmpField, 1, f_s[i], 1);
             Vmath::Vmul(nq, m_phi->GetBndCondExpansions()[bndInd]->GetPhys(),
                         1, f_s[i],
                         1, f_s[i], 1);
             Vmath::Smul(nq, m_gamma0/dt, f_s[i], 1, f_s[i], 1);
+
+            // And go back to wave space if the 'if' was executed
+            if (m_HomogeneousType != EquationSystem::eNotHomogeneous &&
+                velExp->GetWaveSpace())
+            {
+                velExp->HomogeneousFwdTrans(f_s[i], f_s[i]);
+            }
         }
     }
 
