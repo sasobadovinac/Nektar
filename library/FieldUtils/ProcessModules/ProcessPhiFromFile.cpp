@@ -115,15 +115,16 @@ void ProcessPhiFromFile::Process(po::variables_map &vm)
  */
 Array<OneD, NekDouble> ProcessPhiFromFile::ReadVector(ifstream &in)
 {
-    Array<OneD, NekDouble> out(3);
+    Array<OneD, NekDouble> out(3, 0.0);
+    float tmp;
     char buf[4];
 
-    in.read(buf, 4);
-    out[0] = *((float*) buf);
-    in.read(buf, 4);
-    out[1] = *((float*) buf);
-    in.read(buf, 4);
-    out[2] = *((float*) buf);
+    in.read(buf, sizeof(buf));
+    memcpy(&tmp, buf, sizeof(buf)); out[0] = tmp;
+    in.read(buf, sizeof(buf));
+    memcpy(&tmp, buf, sizeof(buf)); out[1] = tmp;
+    in.read(buf, sizeof(buf));
+    memcpy(&tmp, buf, sizeof(buf)); out[2] = tmp;
 
     return out;
 }
@@ -149,14 +150,13 @@ ProcessPhiFromFile::STLobject ProcessPhiFromFile::ReadSTL(string filename)
     char dumpBuf[2];
 
     // Read header and num of triangles
-    fileStl.read(headerBuf, 80);
-    fileStl.read(numTriBuf, 4);
-    unsigned int numTri = *((unsigned int*) numTriBuf);
-    out.numTri = numTri;
+    fileStl.read(headerBuf, sizeof(headerBuf));
+    fileStl.read(numTriBuf, sizeof(numTriBuf));
+    memcpy(&out.numTri, numTriBuf, sizeof(numTriBuf));
 
     // Read triangle data
-    out.triangles  = Array<OneD, triangle>(numTri);
-    for (unsigned int i = 0; i < numTri; ++i)
+    out.triangles  = Array<OneD, triangle>(out.numTri);
+    for (NekUInt32 i = 0; i < out.numTri; ++i)
     {
         // Read normal vector
         triangle tmpTri;
@@ -177,7 +177,7 @@ ProcessPhiFromFile::STLobject ProcessPhiFromFile::ReadSTL(string filename)
         out.triangles[i] = tmpTri;
 
         // Dump triangle type
-        fileStl.read(dumpBuf, 2);
+        fileStl.read(dumpBuf, sizeof(dumpBuf));
     }
 
     // Close the file

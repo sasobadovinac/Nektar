@@ -82,18 +82,19 @@ protected:
     /// Object representing a 3D triangle
     struct triangle
     {
-        Array<OneD, NekDouble> normal = Array<OneD, NekDouble>(3);
-        Array<OneD, NekDouble> v0 = Array<OneD, NekDouble>(3);
-        Array<OneD, NekDouble> v1 = Array<OneD, NekDouble>(3);
-        Array<OneD, NekDouble> v2 = Array<OneD, NekDouble>(3);
-        Array<OneD, NekDouble> centroid = Array<OneD, NekDouble>(3);
+        Array<OneD, NekDouble> normal;
+        Array<OneD, NekDouble> v0;
+        Array<OneD, NekDouble> v1;
+        Array<OneD, NekDouble> v2;
+        Array<OneD, NekDouble> centroid;
 
+        triangle() : normal(3, 0.0), v0(3, 0.0), v1(3, 0.0), v2(3, 0.0) {}
     };
     /// STL file object
     struct STLobject
     {
         // Number of triangles
-        unsigned int numTri;
+        NekUInt32 numTri;
         // Triangles definition
         Array<OneD, triangle> triangles;
     };
