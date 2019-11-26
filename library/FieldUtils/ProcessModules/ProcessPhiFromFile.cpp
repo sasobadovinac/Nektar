@@ -156,7 +156,7 @@ ProcessPhiFromFile::STLobject ProcessPhiFromFile::ReadSTL(string filename)
 
     // Read triangle data
     out.triangles  = Array<OneD, triangle>(numTri);
-    for (uint i = 0; i < numTri; ++i)
+    for (unsigned int i = 0; i < numTri; ++i)
     {
         // Read normal vector
         triangle tmpTri;
