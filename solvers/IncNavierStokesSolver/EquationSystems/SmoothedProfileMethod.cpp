@@ -205,6 +205,7 @@ namespace Nektar
                                "AeroForcesSPM"))
             {
                 m_forcesFilter = i;
+                break;
             }
         }
     }
