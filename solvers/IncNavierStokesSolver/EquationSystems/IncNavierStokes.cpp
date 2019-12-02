@@ -892,12 +892,14 @@ namespace Nektar
         ////////// TEST angleVel = sigma * exp(sigma * t) ///////
         NekDouble sigma = 6.7256e-02;
         NekDouble timeCopy = time;
+
         while (timeCopy > m_finTime)
         {
             timeCopy -= m_finTime;
         }
-        m_bsbcParams->m_angleVel[0] = sigma * exp(sigma * timeCopy);
-        m_bsbcParams->m_angle = exp(sigma * timeCopy);
+
+        m_bsbcParams->m_angleVel[0] = 0.04 * sigma * exp(sigma * timeCopy);
+        m_bsbcParams->m_angle =  exp(sigma * timeCopy);
         ////////////////////////////////////////////////////////
 
         if( m_bsbcParams->m_doOutput )

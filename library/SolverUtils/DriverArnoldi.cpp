@@ -84,10 +84,10 @@ void DriverArnoldi::v_InitObject(ostream &out)
         m_BlowingSuction = m_equ[0]->v_CheckBSBC();
 
         // Check to see if a BS-BC is defined 
-        if(m_BlowingSuction == true)
+        if(m_BlowingSuction == true && m_session->GetSolverInfo("EvolutionOperator") == "Direct")
         {
             // Determine number of BS-BC fields the solve is supporting;
-            m_nBSBCFields = 2; 
+            m_nBSBCFields = 0; 
         }
         else
         {
@@ -151,50 +151,51 @@ void DriverArnoldi::v_InitObject(ostream &out)
                boost::iequals(m_session->GetSolverInfo("ModeType"),
                               "SingleMode"))
             {
-                out << "\tSingle Fourier mode    : true " << endl;
+                out << "\tSingle Fourier mode        : true " << endl;
                 ASSERTL0(m_session->DefinesSolverInfo("Homogeneous"),
                          "Expected a homogeneous expansion to be defined "
                          "with single mode");
             }
             else
             {
-                out << "\tSingle Fourier mode    : false " << endl;
+                out << "\tSingle Fourier mode        : false " << endl;
             }
             if(m_session->DefinesSolverInfo("BetaZero"))
             {
-                out << "\tBeta set to Zero       : true (overrides LHom)"
+                out << "\tBeta set to Zero           : true (overrides LHom)"
                     << endl;
             }
             else
             {
-                out << "\tBeta set to Zero       : false " << endl;
+                out << "\tBeta set to Zero           : false " << endl;
             }
 
             if(m_timeSteppingAlgorithm)
             {
-                out << "\tEvolution operator     : "
+                out << "\tEvolution operator         : "
                     << m_session->GetSolverInfo("EvolutionOperator")
                     << endl;
             }
             else
             {
-                out << "\tShift (Real,Imag)      : " << m_realShift
+                out << "\tShift (Real,Imag)          : " << m_realShift
                     << "," << m_imagShift <<  endl;
             }
 
             if (m_BlowingSuction == true)
             {
-                out << "\tBlowing/Suction BC's   : true" << endl;
+                out << "\tBlowing/Suction BC's       : true" << endl;
             }
             else
             {
-                out << "\tBlowing/Suction BC's   : false" << endl;
+                out << "\tBlowing/Suction BC's       : false" << endl;
             }
-            
-            out << "\tKrylov-space dimension : " << m_kdim << endl;
-            out << "\tNumber of vectors      : " << m_nvec << endl;
-            out << "\tMax iterations         : " << m_nits << endl;
-            out << "\tEigenvalue tolerance   : " << m_evtol << endl;
+
+            out << "\tArnoldi iteration's period : " << m_period << endl;
+            out << "\tKrylov-space dimension     : " << m_kdim << endl;
+            out << "\tNumber of vectors          : " << m_nvec << endl;
+            out << "\tMax iterations             : " << m_nits << endl;
+            out << "\tEigenvalue tolerance       : " << m_evtol << endl;
             out << "======================================================"
                 << endl;
         }
@@ -216,13 +217,13 @@ void DriverArnoldi::v_InitObject(ostream &out)
             fields[k]->SetPhysState(false);
         }
 
-        if(m_BlowingSuction == true)
-        {
-            NekDouble theta = array[m_nFields*nq];
-            NekDouble thetadot = array[(m_nFields+1)*nq];
+        // if(m_BlowingSuction == true && m_session->GetSolverInfo("EvolutionOperator") == "Direct")
+        // {
+        //     NekDouble theta = array[m_nFields*nq];
+        //     NekDouble thetadot = array[(m_nFields+1)*nq];
 
-            m_equ[0]->v_SetStruct(theta, thetadot);
-        }
+        //     m_equ[0]->v_SetStruct(theta, thetadot);
+        // }
     };
 
     /**
@@ -253,17 +254,17 @@ void DriverArnoldi::v_InitObject(ostream &out)
             fields[k]->SetPhysState(false);
         }
 
-        if(m_BlowingSuction == true)
-        {
-            NekDouble theta = 0.0;
-            NekDouble thetadot = 0.0;
-            m_equ[0]->v_GetStruct(theta, thetadot);
-            Array<OneD, NekDouble> tmp1(nq, theta);
-            Array<OneD, NekDouble> tmp2(nq, thetadot);
+        // if(m_BlowingSuction == true && m_session->GetSolverInfo("EvolutionOperator") == "Direct")
+        // {
+        //     NekDouble theta = 0.0;
+        //     NekDouble thetadot = 0.0;
+        //     m_equ[0]->v_GetStruct(theta, thetadot);
+        //     Array<OneD, NekDouble> tmp1(nq, theta);
+        //     Array<OneD, NekDouble> tmp2(nq, thetadot);
             
-            Vmath::Vcopy(nq, &tmp1[0], 1, &array[m_nFields*nq], 1);
-            Vmath::Vcopy(nq, &tmp2[0], 1, &array[(m_nFields+1)*nq], 1);
-        }
+        //     Vmath::Vcopy(nq, &tmp1[0], 1, &array[m_nFields*nq], 1);
+        //     Vmath::Vcopy(nq, &tmp2[0], 1, &array[(m_nFields+1)*nq], 1);
+        // }
     };
 
 

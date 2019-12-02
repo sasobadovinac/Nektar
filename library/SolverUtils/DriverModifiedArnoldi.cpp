@@ -124,6 +124,8 @@ void DriverModifiedArnoldi::v_Execute(ostream &out)
     Array<OneD, NekDouble> wr    = Array<OneD, NekDouble> (m_kdim,        0.0);
     Array<OneD, NekDouble> wi    = Array<OneD, NekDouble> (m_kdim,        0.0);
     Array<OneD, NekDouble> zvec  = Array<OneD, NekDouble> (m_kdim*m_kdim, 0.0);
+    NekDouble theta = 0.0;
+    NekDouble thetadot = 0.0;
 
     Array<OneD, Array<OneD, NekDouble> > Kseq
             = Array<OneD, Array<OneD, NekDouble> > (m_kdim + 1);
@@ -166,18 +168,20 @@ void DriverModifiedArnoldi::v_Execute(ostream &out)
     }
 
     // Normalise first vector in sequence based on vel field
-    //alpha[0] = Blas::Ddot(m_nFields*nq, &Kseq[0][0], 1, &Kseq[0][0], 1);
     alpha[0] = Blas::Ddot(ntot, &Kseq[0][0], 1, &Kseq[0][0], 1);
     m_comm->AllReduce(alpha[0], Nektar::LibUtilities::ReduceSum);
     alpha[0] = std::sqrt(alpha[0]);
     Vmath::Smul(ntot, 1.0/alpha[0], Kseq[0], 1, Kseq[0], 1);
 
-    // if(m_nBSBCFields)
-    // {
-    //     alpha[0] = Blas::Ddot(ntot, &Kseq[0][0], 1, &Kseq[0][0], 1);
-    //     m_comm->AllReduce(alpha[0], Nektar::LibUtilities::ReduceSum);
-    //     alpha[0] = std::sqrt(alpha[0]);
-    // }
+    // Scale angle if needed
+    if(m_BlowingSuction)
+    {
+        m_equ[0]->v_GetStruct(theta, thetadot);
+        theta = theta/alpha[0];
+        thetadot = thetadot/alpha[0];
+        // Send back the angle values to time marching solver
+        m_equ[0]->v_SetStruct(theta, thetadot);
+    }
     
     // Fill initial krylov sequence
     NekDouble resid0;
@@ -187,18 +191,20 @@ void DriverModifiedArnoldi::v_Execute(ostream &out)
         EV_update(Kseq[i-1], Kseq[i]);
 
         // Normalise based on nfields
-        //alpha[i] = Blas::Ddot(m_nFields*nq, &Kseq[i][0], 1, &Kseq[i][0], 1);
         alpha[i] = Blas::Ddot(ntot, &Kseq[i][0], 1, &Kseq[i][0], 1);
         m_comm->AllReduce(alpha[i], Nektar::LibUtilities::ReduceSum);
         alpha[i] = std::sqrt(alpha[i]);
         Vmath::Smul(ntot, 1.0/alpha[i], Kseq[i], 1, Kseq[i], 1);
 
-        // if(m_nBSBCFields)
-        // {
-        //     alpha[i] = Blas::Ddot(ntot, &Kseq[i][0], 1, &Kseq[i][0], 1);
-        //     m_comm->AllReduce(alpha[i], Nektar::LibUtilities::ReduceSum);
-        //     alpha[i] = std::sqrt(alpha[i]);
-        // }
+        // Scale angle if needed
+        if(m_BlowingSuction)
+        {
+            m_equ[0]->v_GetStruct(theta, thetadot);
+            theta = theta/alpha[i];
+            thetadot = thetadot/alpha[i];
+            // Send back the angle values to time marching solver
+            m_equ[0]->v_SetStruct(theta, thetadot);
+        }
         
         // Copy Krylov sequence into temporary storage
         for (int k = 0; k < i + 1; ++k)
@@ -251,6 +257,15 @@ void DriverModifiedArnoldi::v_Execute(ostream &out)
             alpha[m_kdim] = std::sqrt(alpha[m_kdim]);
             Vmath::Smul(ntot, 1.0/alpha[m_kdim], Kseq[m_kdim], 1,
                                                  Kseq[m_kdim], 1);
+            // Scale angle if needed
+            if(m_BlowingSuction)
+            {
+                m_equ[0]->v_GetStruct(theta, thetadot);
+                theta = theta/alpha[m_kdim];
+                thetadot = thetadot/alpha[m_kdim];
+                // Send back the angle values to time marching solver
+                m_equ[0]->v_SetStruct(theta, thetadot);
+            }
 
             // Copy Krylov sequence into temporary storage
             for (int k = 0; k < m_kdim + 1; ++k)

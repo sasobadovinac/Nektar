@@ -794,13 +794,13 @@ namespace Nektar
         // Update BC for blowing/suction simulations:
         if (m_BlowingSuction && m_session->GetSolverInfo("EvolutionOperator") == "Direct")
         {
-            ScaleBSBCDirect();
             SolveStructuralDirect(m_time);
+            ScaleBSBCDirect();
         }
         if (m_BlowingSuction && m_session->GetSolverInfo("EvolutionOperator") == "Adjoint")
         {
-            ScaleBSBCAdjoint();
             SolveStructuralAdjoint(m_time);
+            ScaleBSBCAdjoint();
         }
     }
 
