@@ -181,6 +181,9 @@ namespace Nektar
 
         Array<OneD, bool>                       m_isBlowingSuction;
 
+        NekDouble                               m_alpha;
+        int                                     m_iter;
+
 
         // Coefficients for Adams time-integration
         // NekDouble AdamsBashforth_coeffs[3][3];
