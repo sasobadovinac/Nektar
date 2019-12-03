@@ -182,8 +182,6 @@ namespace Nektar
         Array<OneD, bool>                       m_isBlowingSuction;
 
         NekDouble                               m_alpha;
-        int                                     m_iter;
-
 
         // Coefficients for Adams time-integration
         // NekDouble AdamsBashforth_coeffs[3][3];
@@ -247,6 +245,9 @@ namespace Nektar
 
         /// Return theta and theta dot
         virtual void v_SetStruct(NekDouble &angle, NekDouble &angleVel);
+
+        /// Return scaling factor
+        virtual void v_SetScalingFactor(NekDouble &alpha);
 
         /// Set BSBC flag
         virtual bool v_CheckBSBC();

@@ -179,8 +179,9 @@ void DriverModifiedArnoldi::v_Execute(ostream &out)
         m_equ[0]->v_GetStruct(theta, thetadot);
         theta = theta/alpha[0];
         thetadot = thetadot/alpha[0];
-        // Send back the angle values to time marching solver
+        // Send back the angle values and scaling factor to time marching solver
         m_equ[0]->v_SetStruct(theta, thetadot);
+        m_equ[0]->v_SetScalingFactor(alpha[0]);
     }
     
     // Fill initial krylov sequence
@@ -204,6 +205,7 @@ void DriverModifiedArnoldi::v_Execute(ostream &out)
             thetadot = thetadot/alpha[i];
             // Send back the angle values to time marching solver
             m_equ[0]->v_SetStruct(theta, thetadot);
+            m_equ[0]->v_SetScalingFactor(alpha[i]);
         }
         
         // Copy Krylov sequence into temporary storage
@@ -265,6 +267,7 @@ void DriverModifiedArnoldi::v_Execute(ostream &out)
                 thetadot = thetadot/alpha[m_kdim];
                 // Send back the angle values to time marching solver
                 m_equ[0]->v_SetStruct(theta, thetadot);
+                m_equ[0]->v_SetScalingFactor(alpha[m_kdim]);
             }
 
             // Copy Krylov sequence into temporary storage

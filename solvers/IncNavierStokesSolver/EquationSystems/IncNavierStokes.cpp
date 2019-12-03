@@ -892,20 +892,7 @@ namespace Nektar
         ////////// TEST angleVel = sigma * exp(sigma * t) ///////
         NekDouble sigma = 6.7256e-02;
         NekDouble timeCopy = time;
-        m_bsbcParams->m_iter += 1;
 
-        while (timeCopy > m_finTime)
-        {
-            timeCopy -= m_finTime;
-        }
-        if ((m_bsbcParams->m_iter % m_numSteps) == 0)
-        {
-            m_bsbcParams->m_previousAngle = m_bsbcParams->m_angle;
-        }
-        if ((m_bsbcParams->m_iter % m_numSteps) == 1)
-        {
-            m_bsbcParams->m_alpha = m_bsbcParams->m_previousAngle/m_bsbcParams->m_angle;
-        }
         m_bsbcParams->m_angleVel[0] = (1/m_bsbcParams->m_alpha) * sigma * exp(sigma * time);
         m_bsbcParams->m_angle       = (1/m_bsbcParams->m_alpha) * exp(sigma * time);
         ////////////////////////////////////////////////////////
@@ -1229,12 +1216,11 @@ namespace Nektar
         }
 
         // Initialise variables
-        m_bsbcParams->m_angle         = 0.001;
-        m_bsbcParams->m_previousAngle = 0.001;
-        m_bsbcParams->m_angleVel      = Array<OneD,NekDouble> (m_intSteps, 0.001);
+        m_bsbcParams->m_angle         = 0.0;
+        m_bsbcParams->m_previousAngle = 0.0;
+        m_bsbcParams->m_angleVel      = Array<OneD,NekDouble> (m_intSteps, 0.0);
         m_bsbcParams->m_moment        = Array<OneD,NekDouble> (m_intSteps, 0.0);
         m_bsbcParams->m_alpha         = 1;
-        m_bsbcParams->m_iter          = 0;
 
         // Initialise constants for the BC sclaing
         SetStructConsts();
@@ -1435,6 +1421,14 @@ namespace Nektar
     {
         m_bsbcParams->m_angle = angle;
         m_bsbcParams->m_angleVel[0] = angleVel;
+    }
+
+    /**
+     *  
+     */
+    void IncNavierStokes::v_SetScalingFactor(NekDouble &alpha)
+    {
+        m_bsbcParams->m_alpha = alpha;
     }
 
     /**
