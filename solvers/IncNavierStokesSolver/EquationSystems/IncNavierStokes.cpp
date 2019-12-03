@@ -893,8 +893,20 @@ namespace Nektar
         NekDouble sigma = 6.7256e-02;
         NekDouble timeCopy = time;
 
-        m_bsbcParams->m_angleVel[0] = (1/m_bsbcParams->m_alpha) * sigma * exp(sigma * time);
-        m_bsbcParams->m_angle       = (1/m_bsbcParams->m_alpha) * exp(sigma * time);
+        while (timeCopy > m_finTime)
+        {
+            timeCopy -= m_finTime;
+        }
+        // if ((m_bsbcParams->m_iter % m_numSteps) == 0)
+        // {
+        //     m_bsbcParams->m_previousAngle = m_bsbcParams->m_angle;
+        // }
+        // if ((m_bsbcParams->m_iter % m_numSteps) == 1)
+        // {
+        //     m_bsbcParams->m_alpha = m_bsbcParams->m_previousAngle/m_bsbcParams->m_angle;
+        // }
+        m_bsbcParams->m_angleVel[0] = (1/m_bsbcParams->m_alpha) * sigma * exp(sigma * timeCopy);
+        m_bsbcParams->m_angle       = (1/m_bsbcParams->m_alpha) * exp(sigma * timeCopy);
         ////////////////////////////////////////////////////////
 
         if( m_bsbcParams->m_doOutput )
