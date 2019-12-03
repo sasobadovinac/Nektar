@@ -909,7 +909,7 @@ namespace Nektar
         m_bsbcParams->m_angleVel[0] = (1/m_bsbcParams->m_alpha) * sigma * exp(sigma * time);
         m_bsbcParams->m_angle       = (1/m_bsbcParams->m_alpha) * exp(sigma * time);
         ////////////////////////////////////////////////////////
-cout<<"alpha = "<<m_bsbcParams->m_alpha<<endl;
+
         if( m_bsbcParams->m_doOutput )
         {
             //m_bsbcParams->m_filterForces->Update(m_fields, time);
