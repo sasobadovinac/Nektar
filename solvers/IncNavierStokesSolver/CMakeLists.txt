@@ -124,6 +124,9 @@ IF( NEKTAR_SOLVER_INCNAVIERSTOKES )
     ADD_NEKTAR_TEST(ChanFlow_m8_Flowrate)
     ADD_NEKTAR_TEST(ChanFlow_3DH1D_FlowrateExplicit_MVM)
     ADD_NEKTAR_TEST(PhaseSampling)
+    ADD_NEKTAR_TEST(CylFlow2D_SPM)
+    ADD_NEKTAR_TEST(CylFlow3DH1D_SPM)
+    ADD_NEKTAR_TEST(SphFlow3D_SPM)
 
     IF (NEKTAR_USE_SCOTCH)
         # This tests exhibits sensitivity to the choice of DirectStaticCond
