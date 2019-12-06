@@ -118,12 +118,6 @@ namespace Nektar
                                                const NekDouble> &inarray,
                                                Array<OneD,NekDouble> &outarray);
 
-            /// Performs the backward transformation of the spectral/hp
-            /// element expansion.
-            inline void BwdTrans(
-                            const Array<OneD, const NekDouble> &inarray,
-                            Array<OneD,       NekDouble> &outarray);
-
             /// Multiply a solution by the inverse mass matrix.
             MULTI_REGIONS_EXPORT void MultiplyByInvMassMatrix(
                                 const Array<OneD, const NekDouble> &inarray,
@@ -194,7 +188,7 @@ namespace Nektar
             MULTI_REGIONS_EXPORT GlobalLinSysSharedPtr
                 GenGlobalLinSys(const GlobalLinSysKey &mkey);
 
-            /// Impose the Dirichlet Boundary Conditions on outarray 
+            /// Impose the Dirichlet Boundary Conditions on outarray
             MULTI_REGIONS_EXPORT virtual void
                 v_ImposeDirichletConditions(Array<OneD,NekDouble>& outarray);
 
@@ -212,7 +206,7 @@ namespace Nektar
                 bool useComm);
 
             MULTI_REGIONS_EXPORT virtual void v_LocalToGlobal(bool useComm);
-            
+
             /// Scatters from the global coefficients
             /// \f$\boldsymbol{\hat{u}}_g\f$ to the local coefficients
             /// \f$\boldsymbol{\hat{u}}_l\f$.
@@ -221,12 +215,6 @@ namespace Nektar
                 Array<OneD,NekDouble> &outarray);
 
             MULTI_REGIONS_EXPORT virtual void v_GlobalToLocal(void);
-
-            /// Template method virtual forwarder for FwdTrans().
-            MULTI_REGIONS_EXPORT virtual void v_BwdTrans(
-                                const Array<OneD, const NekDouble> &inarray,
-                                Array<OneD,       NekDouble> &outarray);
-
 
             /// Template method virtual forwarder for FwdTrans().
             MULTI_REGIONS_EXPORT virtual void v_FwdTrans(
@@ -385,27 +373,6 @@ namespace Nektar
 
         {
             IProductWRTBase_IterPerExp(inarray,outarray);
-        }
-
-        /**
-         * Given the coefficients of an expansion, this function evaluates the
-         * spectral/hp expansion \f$u^{\delta}(\boldsymbol{x})\f$ at the
-         * quadrature points \f$\boldsymbol{x}_i\f$. This operation is
-         * evaluated locally by the function ExpList#BwdTrans.
-         *
-         * The coefficients of the expansion should be contained in the variable
-         * #m_coeffs of the ExpList object \a In. The resulting physical values
-         * at the quadrature points \f$u^{\delta}(\boldsymbol{x}_i)\f$ are
-         * stored in the array #m_phys.
-         *
-         * @param   In          An ExpList, containing the local coefficients
-         *                      \f$\hat{u}_n^e\f$ in its array #m_coeffs.
-         */
-        inline void ContField::BwdTrans(
-                                const Array<OneD, const NekDouble> &inarray,
-                                Array<OneD,       NekDouble> &outarray)
-        {
-            BwdTrans_IterPerExp(inarray,outarray);
         }
 
         inline const Array<OneD,const MultiRegions::ExpListSharedPtr>&
