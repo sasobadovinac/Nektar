@@ -886,9 +886,6 @@ namespace Nektar
      */
     void IncNavierStokes::SolveStructuralAdjoint(NekDouble time)
     {
-        static int totalCalls = -1;
-        ++totalCalls;
-
         ////////// TEST angleVel = sigma * exp(sigma * t) ///////
         NekDouble sigma = 6.7256e-02;
         NekDouble timeCopy = time;

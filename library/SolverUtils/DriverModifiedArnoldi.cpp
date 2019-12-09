@@ -121,11 +121,12 @@ void DriverModifiedArnoldi::v_Execute(ostream &out)
 
     // Allocate memory
     Array<OneD, NekDouble> alpha = Array<OneD, NekDouble> (m_kdim+1,      0.0);
+    m_alpha                      = 1.0;
     Array<OneD, NekDouble> wr    = Array<OneD, NekDouble> (m_kdim,        0.0);
     Array<OneD, NekDouble> wi    = Array<OneD, NekDouble> (m_kdim,        0.0);
     Array<OneD, NekDouble> zvec  = Array<OneD, NekDouble> (m_kdim*m_kdim, 0.0);
-    NekDouble theta = 0.0;
-    NekDouble thetadot = 0.0;
+    NekDouble m_theta = 0.0;
+    NekDouble m_thetadot = 0.0;
 
     Array<OneD, Array<OneD, NekDouble> > Kseq
             = Array<OneD, Array<OneD, NekDouble> > (m_kdim + 1);
@@ -176,14 +177,15 @@ void DriverModifiedArnoldi::v_Execute(ostream &out)
     // Scale angle if needed
     if(m_BlowingSuction)
     {
-        m_equ[0]->v_GetStruct(theta, thetadot);
-        theta = theta/alpha[0];
-        thetadot = thetadot/alpha[0];
-        // Send back the angle values and scaling factor to time marching solver
-        m_equ[0]->v_SetStruct(theta, thetadot);
-        m_equ[0]->v_SetScalingFactor(alpha[0]);
+        m_equ[0]->v_GetStruct(m_theta, m_thetadot);
+        m_theta = m_theta/alpha[0];
+        m_thetadot = m_thetadot/alpha[0];
+        m_alpha = alpha[0];
+        m_equ[0]->v_SetStruct(m_theta, m_thetadot);
+        m_equ[0]->v_SetScalingFactor(m_alpha);
     }
-    
+cout<<"m_alpha = "<<m_alpha<< endl;
+
     // Fill initial krylov sequence
     NekDouble resid0;
     for (i = 1; !converged && i <= m_kdim; ++i)
@@ -198,16 +200,17 @@ void DriverModifiedArnoldi::v_Execute(ostream &out)
         Vmath::Smul(ntot, 1.0/alpha[i], Kseq[i], 1, Kseq[i], 1);
 
         // Scale angle if needed
-        if(m_BlowingSuction)
-        {
-            m_equ[0]->v_GetStruct(theta, thetadot);
-            theta = theta/alpha[i];
-            thetadot = thetadot/alpha[i];
-            // Send back the angle values to time marching solver
-            m_equ[0]->v_SetStruct(theta, thetadot);
-            m_equ[0]->v_SetScalingFactor(alpha[i]);
-        }
-        
+    if(m_BlowingSuction)
+    {
+        m_equ[0]->v_GetStruct(m_theta, m_thetadot);
+        m_theta = m_theta/alpha[i];
+        m_thetadot = m_thetadot/alpha[i];
+        m_alpha = alpha[i];
+        m_equ[0]->v_SetStruct(m_theta, m_thetadot);
+        m_equ[0]->v_SetScalingFactor(m_alpha);
+    }
+cout<<"m_alpha = "<<m_alpha<< endl;
+
         // Copy Krylov sequence into temporary storage
         for (int k = 0; k < i + 1; ++k)
         {
@@ -262,13 +265,14 @@ void DriverModifiedArnoldi::v_Execute(ostream &out)
             // Scale angle if needed
             if(m_BlowingSuction)
             {
-                m_equ[0]->v_GetStruct(theta, thetadot);
-                theta = theta/alpha[m_kdim];
-                thetadot = thetadot/alpha[m_kdim];
-                // Send back the angle values to time marching solver
-                m_equ[0]->v_SetStruct(theta, thetadot);
-                m_equ[0]->v_SetScalingFactor(alpha[m_kdim]);
+                m_equ[0]->v_GetStruct(m_theta, m_thetadot);
+                m_theta = m_theta/alpha[m_kdim];
+                m_thetadot = m_thetadot/alpha[m_kdim];
+                m_alpha = alpha[m_kdim];
+                m_equ[0]->v_SetStruct(m_theta, m_thetadot);
+                m_equ[0]->v_SetScalingFactor(m_alpha);
             }
+cout<<"m_alpha = "<<m_alpha<< endl;
 
             // Copy Krylov sequence into temporary storage
             for (int k = 0; k < m_kdim + 1; ++k)
@@ -340,6 +344,7 @@ void DriverModifiedArnoldi::EV_update(
 {
     // Copy starting vector into first sequence element.
     CopyArnoldiArrayToField(src);
+
     m_equ[0]->TransCoeffToPhys();
 
     m_equ[0]->DoSolve();

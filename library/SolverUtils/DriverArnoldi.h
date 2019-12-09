@@ -78,8 +78,10 @@ protected:
     
     GlobalMapping::MappingSharedPtr m_mapping;
 
-    /// Pointer to IncNavierStokes
-    //std::shared_ptr<IncNavierStokes> m_BSBC;
+    // test scaling factor
+    NekDouble m_alpha;
+    NekDouble m_theta;
+    NekDouble m_thetadot;
 
     // bool to check if BSBC needed
     bool m_BlowingSuction;

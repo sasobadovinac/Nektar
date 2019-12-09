@@ -5,6 +5,11 @@ RelWithDebInfo MinSizeRel.")
 
 PROJECT(Nektar++ C CXX)
 
+if(POLICY CMP0074)
+  cmake_policy(SET CMP0074 NEW)
+endif()
+
+
 # Nektar++ requires C++11. Try to infer this for older CMake versions (less than
 # 3.1.0)
 IF ("${CMAKE_VERSION}" VERSION_LESS "3.1")
