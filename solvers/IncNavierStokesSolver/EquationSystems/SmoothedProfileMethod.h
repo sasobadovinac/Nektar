@@ -146,16 +146,17 @@ namespace Nektar
         template <typename T>
         void SetUpExpansions(int nvel)
         {
+            int iVel = m_velocity[0];
             m_pressureP = MemoryManager<T>::AllocateSharedPtr(
                           *std::dynamic_pointer_cast<T>(m_pressure));
             m_phi = MemoryManager<T>::AllocateSharedPtr(
-                    *std::dynamic_pointer_cast<T>(m_pressure));
+                    *std::dynamic_pointer_cast<T>(m_fields[iVel]));
 
             m_fs = Array<OneD, MultiRegions::ExpListSharedPtr>(nvel);
             for (int i = 0; i < nvel; ++i)
             {
                 m_fs[i] = MemoryManager<T>::AllocateSharedPtr(
-                          *std::dynamic_pointer_cast<T>(m_pressure));
+                          *std::dynamic_pointer_cast<T>(m_fields[iVel]));
             }
 
             // Set to wave space if homogeneous case

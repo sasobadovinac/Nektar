@@ -154,7 +154,7 @@ namespace Nektar
         ReadPhi();
 
         // Allocate the vector 'm_up'
-        int physTot = m_pressureP->GetTotPoints();
+        int physTot = m_phi->GetTotPoints();
         m_velName.push_back("Up");
         if (nvel > 1)
         {
@@ -292,7 +292,7 @@ namespace Nektar
                     const Array<OneD, const Array<OneD, NekDouble> > &fields,
                     Array<OneD, Array<OneD, NekDouble> > &Forcing)
     {
-        int physTot = m_pressureP->GetNpoints();
+        int physTot = m_fs[0]->GetNpoints();
         int nvel    = m_velocity.num_elements();
 
         // Set boundary conditions
@@ -484,7 +484,7 @@ namespace Nektar
                     NekDouble dt)
     {
         int nvel = m_velocity.num_elements();
-        int nq   = m_pressureP->GetNpoints();
+        int nq   = m_phi->GetNpoints();
 
         for (int i = 0; i < nvel; ++i)
         {
