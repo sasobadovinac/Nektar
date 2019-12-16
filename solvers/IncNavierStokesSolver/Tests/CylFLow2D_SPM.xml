@@ -74,7 +74,6 @@
             <E VAR="p" VALUE="0" />
         </FUNCTION>
         <FUNCTION NAME="ShapeFunction">
-            <!--F VAR="Phi" FILE="cyl_IBM_phi.fld" /-->
             <E VAR="Phi" VALUE="-0.5*(tanh((x^2+y^2-0.25)/0.04)-1.0)" />
             <E VAR="Up" VALUE="0" />
             <E VAR="Vp" VALUE="0" />

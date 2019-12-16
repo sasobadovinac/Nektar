@@ -2,9 +2,9 @@
 <test>
     <description>2D cylinder flow, P=3, cylinder defined via IB SPM function</description>    
     <executable>IncNavierStokesSolver</executable>
-    <parameters>CylFlow2D_SPM.xml</parameters>
+    <parameters>CylFlow2DMov_SPM.xml</parameters>
     <files>
-        <file description="Session File">CylFlow2D_SPM.xml</file>
+        <file description="Session File">CylFlow2DMov_SPM.xml</file>
     </files>
     <metrics>
         <metric type="L2" id="1">
