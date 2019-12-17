@@ -39,6 +39,7 @@ SET(FieldUtilsHeaders
     ProcessModules/ProcessIsoContour.h
     ProcessModules/ProcessJacobianEnergy.h
     ProcessModules/ProcessL2Criterion.h
+    ProcessModules/ProcessLSIAC.h
     ProcessModules/ProcessMapping.h
     ProcessModules/ProcessNumModes.h
     ProcessModules/ProcessMean.h
@@ -98,6 +99,7 @@ SET(FieldUtilsSources
     ProcessModules/ProcessIsoContour.cpp
     ProcessModules/ProcessJacobianEnergy.cpp
     ProcessModules/ProcessL2Criterion.cpp
+    ProcessModules/ProcessLSIAC.cpp
     ProcessModules/ProcessMapping.cpp
     ProcessModules/ProcessNumModes.cpp
     ProcessModules/ProcessMean.cpp
@@ -122,6 +124,6 @@ ADD_NEKTAR_LIBRARY(FieldUtils
     DESCRIPTION "Collection of post-processing modules for the FieldConvert utility and filter"
     SOURCES ${FieldUtilsSources}
     HEADERS ${FieldUtilsHeaders}
-    DEPENDS GlobalMapping)
+    DEPENDS GlobalMapping LSIAC)
 
 ADD_DEFINITIONS(-DFIELD_UTILS_EXPORTS)

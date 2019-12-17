@@ -219,8 +219,10 @@ INCLUDE (NektarCommon)
 OPTION(THIRDPARTY_USE_SSL "Use secure HTTP connection to download third-party files." OFF)
 IF (THIRDPARTY_USE_SSL)
     SET(TPURL https://www.nektar.info/thirdparty)
+    SET(TPURL2 https://gitlab.com/libeigen/eigen/-/archive/3.3.7)
 ELSE()
     SET(TPURL http://www.nektar.info/thirdparty)
+    SET(TPURL2 https://gitlab.com/libeigen/eigen/-/archive/3.3.7)
 ENDIF()
 
 # Find ThirdParty libraries and headers.
@@ -244,6 +246,7 @@ INCLUDE (ThirdPartyTetGen)
 INCLUDE (ThirdPartyCCM)
 INCLUDE (ThirdPartyBlasLapack)
 INCLUDE (ThirdPartyCwipi)
+INCLUDE (ThirdPartyEigen)
 INCLUDE (FindCFI)
 
 INCLUDE (Doxygen)
