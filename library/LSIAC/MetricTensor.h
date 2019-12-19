@@ -40,11 +40,12 @@ public:
     // 			3.	Bool for 1D,2D,3D
     // 				4.	Array<OneD,NekDouble>  Ne* Nq* Nm
     // 					5.	Array<OneD, NekDouble> 
-    // Ne*Nq*Neig1 						6.	Array<OneD, NekDouble> 
+    // Ne*Nq*Neig1 						6.	Array<OneD,
+    // NekDouble> 
     // Ne*Nq*Neig2 							7.
     // Array<OneD, NekDouble>
-    // Ne*Nq*Nlam 								8.	Array<OneD,
-    // NekDouble> 
+    // Ne*Nq*Nlam 								8.
+    // Array<OneD, NekDouble> 
     // Ne*Nq*Neig3 									9.
     // Array<OneD,NekDouble>  Metric tensor
     int m_nOfQPE; // Assumption that there only one type of element and all ...

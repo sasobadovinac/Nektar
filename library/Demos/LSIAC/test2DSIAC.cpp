@@ -5,8 +5,8 @@
 #include <LSIAC/CentralBSplines.h>
 #include <LSIAC/GeneralBSplines.h>
 #include <LSIAC/HandleNekMesh.h>
-#include <LSIAC/HandleNekMesh1D.h>
-#include <LSIAC/SmoothieSIAC1D.h>
+#include <LSIAC/HandleNekMesh2D.h>
+#include <LSIAC/SmoothieSIAC2D.h>
 #include <LSIAC/SymmetricSIAC.h>
 #include <LibUtilities/BasicUtils/SessionReader.h>
 #include <LibUtilities/Memory/NekMemoryManager.hpp>
@@ -30,38 +30,38 @@ int main(int argc, char *argv[])
     argc = 2;
     LibUtilities::SessionReaderSharedPtr vSession =
         LibUtilities::SessionReader::CreateInstance(argc, argv);
-    HandleNekMesh1D *HNM1D = new HandleNekMesh1D(vSession);
+    HandleNekMesh2D *HNM2D = new HandleNekMesh2D(vSession);
     vector<string> var     = vSession->GetVariables();
-    HNM1D->LoadMesh(var[0]);
+    HNM2D->LoadMesh(var[0]);
     string fname = vSession->GetSessionName();
 
-    SpatialDomains::MeshGraphSharedPtr graph1D =
+    SpatialDomains::MeshGraphSharedPtr graph2D =
         SpatialDomains::MeshGraph::Read(vSession);
-    graph1D->SetExpansionsToPolyOrder(2 * (atoi(argv[2]) - 1) + 2);
+    //	graph2D->SetExpansionsToPolyOrder( 2*(atoi(argv[2])-1)+2);
     MultiRegions::ExpListSharedPtr Exp_u =
-        MemoryManager<MultiRegions::DisContField1D>::AllocateSharedPtr(
-            vSession, graph1D, vSession->GetVariable(0));
+        MemoryManager<MultiRegions::DisContField2D>::AllocateSharedPtr(
+            vSession, graph2D, vSession->GetVariable(0));
 
-    HNM1D->CalculateDynamicScaling();
+    HNM2D->CalculateDynamicScaling();
 
-    int tNquadPts = HNM1D->m_expansions[0]->GetTotPoints();
+    int tNquadPts = HNM2D->m_expansions[0]->GetTotPoints();
     Array<OneD, NekDouble> xc0(tNquadPts);
     Array<OneD, NekDouble> xc1(tNquadPts);
     Array<OneD, NekDouble> xc2(tNquadPts);
 
-    switch (HNM1D->m_expansions[0]->GetCoordim(0))
+    switch (HNM2D->m_expansions[0]->GetCoordim(0))
     {
         case 1:
-            HNM1D->m_expansions[0]->GetCoords(xc0);
+            HNM2D->m_expansions[0]->GetCoords(xc0);
             Vmath::Zero(tNquadPts, &xc1[0], 1);
             Vmath::Zero(tNquadPts, &xc2[0], 1);
             break;
         case 2:
-            HNM1D->m_expansions[0]->GetCoords(xc0, xc1);
+            HNM2D->m_expansions[0]->GetCoords(xc0, xc1);
             Vmath::Zero(tNquadPts, &xc2[0], 1);
             break;
         case 3:
-            HNM1D->m_expansions[0]->GetCoords(xc0, xc1, xc2);
+            HNM2D->m_expansions[0]->GetCoords(xc0, xc1, xc2);
             break;
         default:
             assert(false && "looks dim not taken into account");
@@ -77,18 +77,19 @@ int main(int argc, char *argv[])
 
     for (int i = 0; i < tNquadPts; i++)
     {
-        fce[i] = std::cos(2.0 * M_PI * (xc0[i]));
+        fce[i] = std::cos(2.0 * M_PI * (xc0[i] + xc1[i]));
     }
 
-    HNM1D->m_expansions[0]->FwdTrans(fce,
-                                     HNM1D->m_expansions[0]->UpdateCoeffs());
-    HNM1D->m_expansions[0]->BwdTrans(HNM1D->m_expansions[0]->GetCoeffs(),
-                                     HNM1D->m_expansions[0]->UpdatePhys());
-    ece                               = HNM1D->m_expansions[0]->GetPhys();
-    Array<OneD, NekDouble> ece_Coeffs = HNM1D->m_expansions[0]->GetCoeffs();
+    HNM2D->m_expansions[0]->FwdTrans(fce,
+                                     HNM2D->m_expansions[0]->UpdateCoeffs());
+    HNM2D->m_expansions[0]->BwdTrans(HNM2D->m_expansions[0]->GetCoeffs(),
+                                     HNM2D->m_expansions[0]->UpdatePhys());
+    ece                               = HNM2D->m_expansions[0]->GetPhys();
+    Array<OneD, NekDouble> ece_Coeffs = HNM2D->m_expansions[0]->GetCoeffs();
 
-    HNM1D->m_Arrays.push_back(ece);
-    // HNM1D->LoadExpListIntoRTree();
+    HNM2D->m_Arrays.push_back(ece);
+	// Not loading Rtree since, it is already included in code.
+ 	//HNM2D->LoadExpListIntoRTree();  
 
     // Second Target.
     int new_tNquadPts = Exp_u->GetTotPoints();
@@ -99,7 +100,7 @@ int main(int argc, char *argv[])
         xcN2(new_tNquadPts);
     Array<OneD, NekDouble> fceN(new_tNquadPts), eceN(new_tNquadPts),
         eIDN(new_tNquadPts);
-    SmoothieSIAC1D sm(SIACUtilities::eSYM_2kp1_1SIDED_2kp2, HNM1D,
+    SmoothieSIAC2D sm(SIACUtilities::eSYM_2kp1_1SIDED_2kp2, HNM2D,
                       atoi(argv[2]), 0.1);
     NekDouble valY, valZ;
     Exp_u->GetCoords(xcN0, xcN1, xcN2);
@@ -108,17 +109,17 @@ int main(int argc, char *argv[])
     {
         int physOffsetN = Exp_u->GetPhys_Offset(elmID);
         LocalRegions::ExpansionSharedPtr lexp =
-            HNM1D->m_expansions[0]->GetExp(elmID);
+            HNM2D->m_expansions[0]->GetExp(elmID);
         Array<OneD, NekDouble> u_phys_old = ece.CreateWithOffset(
-            ece, HNM1D->m_expansions[0]->GetPhys_Offset(elmID));
+            ece, HNM2D->m_expansions[0]->GetPhys_Offset(elmID));
         for (int j = 0; j < Exp_u->GetExp(elmID)->GetTotPoints(); j++)
         {
             int index  = j + physOffsetN;
             glCoord[0] = xcN0[index];
-            sm.EvaluateAt(xcN0[index], 0.0, 0.0, sceN[index], valY, valZ,
-                          direction, HNM1D->GetDynamicScaling(glCoord, elmID),
-                          0);
-            fceN[index] = std::cos(2.0 * M_PI * (xcN0[index]));
+			NekDouble dynScaling = HNM2D->GetDynamicScaling(glCoord,elmID);
+            sm.EvaluateAt(xcN0[index], xcN1[index], 0.0, sceN[index], valY,
+                          valZ, direction, dynScaling, 0);
+            fceN[index] = std::cos(2.0 * M_PI * (xcN0[index] + xcN1[index]));
             eceN[index] = lexp->PhysEvaluate(glCoord, u_phys_old);
             eIDN[index] = elmID;
         }

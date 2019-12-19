@@ -382,7 +382,8 @@ bool OneSidedSIAC::v_EvaluateCoefficients(const NekDouble kernelShift)
                 // m_knotMatrix, m_coeffs);
             }
             //			else{
-            //				assert((std::abs(kernelShifted) >TOLERENCE)
+            //				assert((std::abs(kernelShifted)
+            //>TOLERENCE)
             //&&"you should be using symmetric filter. Somthing is not right.");
             // retValue = false;
             //			}

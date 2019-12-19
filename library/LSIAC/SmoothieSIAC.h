@@ -86,7 +86,6 @@ public:
                     const NekDouble ptsZ, NekDouble &valX, NekDouble &valY,
                     NekDouble &valZ)
     {
-        //	cout << "at SmoothieSIAC::EvaluateAt(x,y,z,vx,vy,vz) " << endl;
         return v_EvaluateAt(ptsX, ptsY, ptsZ, valX, valY, valZ);
     }
 
@@ -94,7 +93,6 @@ public:
                           const NekDouble ptsZ, NekDouble &valX,
                           NekDouble &valY, NekDouble &valZ)
     {
-        //	cout << "at SmoothieSIAC::EvaluateAt(x,y,z,vx,vy,vz) " << endl;
         return v_EvaluateNonSymAt(ptsX, ptsY, ptsZ, valX, valY, valZ);
     }
 
@@ -117,7 +115,6 @@ public:
         Array<OneD, NekDouble> &direction, NekDouble meshSpacing = -1.0,
         int varNum = 0)
     {
-        //	cout << "at SmoothieSIAC::EvaluateAt(x,y,z,vx,vy,vz) " << endl;
         return v_EvaluateAt_NSK_GivenFilterLength_v1(
             ptsX, ptsY, ptsZ, valX, valY, valZ, direction, meshSpacing, varNum);
     }
@@ -128,7 +125,6 @@ public:
         Array<OneD, NekDouble> &direction, NekDouble meshSpacing = -1.0,
         int varNum = 0)
     {
-        //	cout << "at SmoothieSIAC::EvaluateAt(x,y,z,vx,vy,vz) " << endl;
         return v_EvaluateAt_NSK_GivenFilterLength_v2(
             ptsX, ptsY, ptsZ, valX, valY, valZ, direction, meshSpacing, varNum);
     }
@@ -138,7 +134,6 @@ public:
                     NekDouble &valZ, Array<OneD, NekDouble> &direction,
                     NekDouble meshSpacing = -1.0, int varNum = 0)
     {
-        //	cout << "at SmoothieSIAC::EvaluateAt(x,y,z,vx,vy,vz) " << endl;
         return v_EvaluateAt(ptsX, ptsY, ptsZ, valX, valY, valZ, direction,
                             meshSpacing, varNum);
     }
@@ -148,7 +143,6 @@ public:
                     NekDouble &valZ, vector<Array<OneD, NekDouble>> &directions,
                     NekDouble meshSpacing = -1.0, int varNum = 0)
     {
-        //	cout << "at SmoothieSIAC::EvaluateAt(x,y,z,vx,vy,vz) " << endl;
         return v_EvaluateAt(ptsX, ptsY, ptsZ, valX, valY, valZ, directions,
                             meshSpacing, varNum);
     }
@@ -160,7 +154,6 @@ public:
                                      NekDouble meshSpacing = -1.0,
                                      int varNum            = 0)
     {
-        //	cout << "at SmoothieSIAC::EvaluateAt(x,y,z,vx,vy,vz) " << endl;
         return v_EvaluateAt_NSK_FixedNumBSpl(ptsX, ptsY, ptsZ, valX, valY, valZ,
                                              direction, meshSpacing, varNum);
     }
@@ -179,7 +172,6 @@ public:
                          NekDouble &valZ, Array<OneD, NekDouble> &direction,
                          NekDouble meshSpacing = -1.0, int varNum = 0)
     {
-        //	cout << "at SmoothieSIAC::EvaluateAt(x,y,z,vx,vy,vz) " << endl;
         return v_EvaluateAt_SymY(ptsX, ptsY, ptsZ, valX, valY, valZ, direction,
                                  meshSpacing, varNum);
     }

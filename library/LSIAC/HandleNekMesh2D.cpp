@@ -15,14 +15,22 @@ NekDouble HandleNekMesh2D::v_GetElLargestEdgeSize(const NekDouble ptsx,
                                                   const NekDouble ptsz,
                                                   int Elid)
 {
+    boost::ignore_unused(ptsz); // used in case of 3D data.
     if (Elid < 0)
     {
         // Find Element Id.
-        Array<OneD, NekDouble> glCord(3, 0.0);
+        Array<OneD, NekDouble> glCord(2, 0.0);
         glCord[0] = ptsx;
         glCord[1] = ptsy;
-        glCord[2] = ptsz;
-        Elid      = m_expansions[0]->GetExpIndex(glCord);
+        // glCord[2] = ptsz;
+        if (m_useRTree)
+        {
+            Elid = GetExpansionIndexUsingRTree(glCord);
+        }
+        else
+        {
+            Elid = m_expansions[0]->GetExpIndex(glCord);
+        }
         assert(Elid > 0 && "Something wrong. Point outside boundary");
     }
 
@@ -234,16 +242,17 @@ bool HandleNekMesh2D::v_CanTRangebeAppliedWOMeshShift(
     const Array<OneD, NekDouble> &direction, const NekDouble tmin,
     const NekDouble tmax)
 {
+    boost::ignore_unused(ptsZ); // used in case of 3D data.
     // pointer to expansion list.
     // Claculate left point.
-    Array<OneD, NekDouble> pl(3), pr(3);
+    Array<OneD, NekDouble> pl(2), pr(2);
     vector<NekDouble> tPos;
     pl[0] = ptsX + direction[0] * tmin;
     pl[1] = ptsY + direction[1] * tmin;
-    pl[2] = ptsZ + direction[2] * tmin;
+    // pl[2] = ptsZ + direction[2] * tmin;
     pr[0] = ptsX + direction[0] * tmax;
     pr[1] = ptsY + direction[1] * tmax;
-    pr[2] = ptsZ + direction[2] * tmax;
+    // pr[2] = ptsZ + direction[2] * tmax;
 
     int pl_index, pr_index;
     if (m_useRTree)
@@ -257,8 +266,6 @@ bool HandleNekMesh2D::v_CanTRangebeAppliedWOMeshShift(
         pr_index = m_expansions[0]->GetExpIndex(pr, TOLERENCE);
     }
 
-    // cout << pl_index << endl;
-    // cout << pr_index << endl;
     if ((0 > pl_index) || (0 > pr_index))
     { // goes out of boundary
         return false;
@@ -271,14 +278,14 @@ bool HandleNekMesh2D::v_WhatIsTRange(const NekDouble PtsX, const NekDouble PtsY,
                                      const Array<OneD, NekDouble> &direction,
                                      NekDouble &tmin, NekDouble &tmax, int &num)
 {
-    Array<OneD, NekDouble> pl(3), pr(3);
+    Array<OneD, NekDouble> pl(2), pr(2);
     vector<NekDouble> tPos;
     pl[0] = PtsX + direction[0] * tmin;
     pl[1] = PtsY + direction[1] * tmin;
-    pl[2] = PtsZ + direction[2] * tmin;
+    // pl[2] = PtsZ + direction[2] * tmin;
     pr[0] = PtsX + direction[0] * tmax;
     pr[1] = PtsY + direction[1] * tmax;
-    pr[2] = PtsZ + direction[2] * tmax;
+    // pr[2] = PtsZ + direction[2] * tmax;
 
     int pl_index, pr_index;
     if (m_useRTree)
@@ -326,14 +333,14 @@ bool HandleNekMesh2D::v_CanTRangebeApplied(
 {
     // pointer to expansion list.
     // Claculate left point.
-    Array<OneD, NekDouble> pl(3), pr(3);
+    Array<OneD, NekDouble> pl(2), pr(2);
     vector<NekDouble> tPos;
     pl[0] = PtsX + direction[0] * tmin;
     pl[1] = PtsY + direction[1] * tmin;
-    pl[2] = PtsZ + direction[2] * tmin;
+    // pl[2] = PtsZ + direction[2] * tmin;
     pr[0] = PtsX + direction[0] * tmax;
     pr[1] = PtsY + direction[1] * tmax;
-    pr[2] = PtsZ + direction[2] * tmax;
+    // pr[2] = PtsZ + direction[2] * tmax;
 
     int pl_index, pr_index;
     if (m_useRTree)
@@ -403,11 +410,11 @@ bool HandleNekMesh2D::v_EvaluateAt(const NekDouble xPos, const NekDouble yPos,
                                    const NekDouble zPos, int gID, int eID,
                                    NekDouble &value, int varNum)
 {
-    boost::ignore_unused(gID); // reserved for global id if implemented.
-    Array<OneD, NekDouble> lcoord(3, 0.0);
+    boost::ignore_unused(gID, zPos); // reserved for global id if implemented.
+    Array<OneD, NekDouble> lcoord(2, 0.0);
     lcoord[0] = xPos;
     lcoord[1] = yPos;
-    lcoord[2] = zPos;
+    // lcoord[2] = zPos;
     if (eID < 0)
     {
         if (m_useRTree)
@@ -470,10 +477,10 @@ bool HandleNekMesh2D::v_GetListOfGIDs(
         t_GIDs[i]         = -1;
         t_EIDs[i]         = -1;
         NekDouble t_break = (t_breaks[i] + t_breaks[i + 1]) / 2.0;
-        Array<OneD, NekDouble> locCoord(3, 0.0);
+        Array<OneD, NekDouble> locCoord(2, 0.0);
         locCoord[0] = xPos + t_break * direction[0];
         locCoord[1] = yPos + t_break * direction[1];
-        locCoord[2] = zPos + t_break * direction[2];
+        // locCoord[2] = zPos + t_break * direction[2];
         if (m_useRTree)
         {
             t_GIDs[i] = GetExpansionIndexUsingRTree(locCoord);
@@ -1000,10 +1007,10 @@ int HandleNekMesh2D::v_GetExpansionIndexUsingRTree(
     // BoundingBoxOfLineSeg( dir, pt, t1, t2,b);
     Boostg::set<Boostg::min_corner, 0>(b, point[0] - TOLERENCE_MESH_COMP);
     Boostg::set<Boostg::min_corner, 1>(b, point[1] - TOLERENCE_MESH_COMP);
-    Boostg::set<Boostg::min_corner, 2>(b, point[2] - TOLERENCE_MESH_COMP);
+    Boostg::set<Boostg::min_corner, 2>(b, 0.0 - TOLERENCE_MESH_COMP);
     Boostg::set<Boostg::max_corner, 0>(b, point[0] + TOLERENCE_MESH_COMP);
     Boostg::set<Boostg::max_corner, 1>(b, point[1] + TOLERENCE_MESH_COMP);
-    Boostg::set<Boostg::max_corner, 2>(b, point[2] + TOLERENCE_MESH_COMP);
+    Boostg::set<Boostg::max_corner, 2>(b, 0.0 + TOLERENCE_MESH_COMP);
 
     vector<unsigned> res;
     MySearchCallback2 callback(res);
@@ -1118,10 +1125,24 @@ bool HandleNekMesh2D::v_InitializeMetricTensor()
 NekDouble HandleNekMesh2D::v_GetDynamicScaling(Array<OneD, NekDouble> glCoord,
                                                int eid, NekDouble mu)
 {
+
     // if eid <0 find a elid.
     if (eid < 0)
     {
-        eid = GetExpansionIndexUsingRTree(glCoord);
+        if (m_useRTree)
+        {
+            Array<OneD, NekDouble> dup_glCoord(2, 0.0); // glCoord--3D--Array
+            dup_glCoord[0] = glCoord[0];
+            dup_glCoord[1] = glCoord[1];
+            eid            = GetExpansionIndexUsingRTree(dup_glCoord);
+        }
+        else
+        {
+            Array<OneD, NekDouble> dup_glCoord(2, 0.0); // glCoord--3D--Array
+            dup_glCoord[0] = glCoord[0];
+            dup_glCoord[1] = glCoord[1];
+            eid = m_expansions[0]->GetExpIndex(dup_glCoord, TOLERENCE);
+        }
     }
     assert(eid >= 0 && "Point out of mesh");
     NekDouble result = -1.0;
@@ -1130,7 +1151,7 @@ NekDouble HandleNekMesh2D::v_GetDynamicScaling(Array<OneD, NekDouble> glCoord,
     // use locCoordinates as barycentric coordinates
     SpatialDomains::GeometrySharedPtr geomSPtr =
         m_expansions[0]->GetExp(eid)->GetGeom();
-    Array<OneD, NekDouble> lCoord(3, 0.0);
+    Array<OneD, NekDouble> lCoord(2, 0.0);
     geomSPtr->GetLocCoords(glCoord, lCoord);
     if (geomSPtr->GetShapeType() == Nektar::LibUtilities::eTriangle)
     {

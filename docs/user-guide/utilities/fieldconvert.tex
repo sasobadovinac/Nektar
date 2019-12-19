@@ -1123,6 +1123,47 @@ LinearElasticSolver mesh-linear.xml conditions.xml
 FieldConvert-g -m deform mesh-linear.xml mesh-linear.fld mesh-deformed.xml
 \end{lstlisting}
 
+\subsection{Postprocessing the data using the \textit{L-SIAC} filter}
+The module implemented in this work, the Line-Smoothness Increasing Accuracy 
+Conserving filter or L-SIAC filter, is derived from Jallepalli et al.
+\cite{jallepalli2019adaptive,jallepalli2019efficient,jallepalli2017treatment}
+. The L-SIAC filter can be applied using the following command:
+
+\begin{lstlisting}[style=BashInputStyle]
+FieldConvert -m LSIAC:config=config.xml input.xml input.fld output.fld
+\end{lstlisting}
+
+This command constructs the L-SIAC filter using the parameters defined in 
+\inltt{config.xml}, postprocesses the fields defined by \inltt{input.xml} and 
+\inltt{input.fld}, and writes them to \inltt{output.fld}.
+
+An example of a \inltt{config.xml} file is shown here:
+\begin{lstlisting}[style=XMLStyle]
+<?xml version="1.0" encoding="utf-8" ?>
+<LSIAC>
+  <SET>
+    <INVARIABLES> u,v,w </INVARIABLES>
+    <OUTVARIABLES> Lu,Lv,Lw </OUTVARIABLES>
+    <DIRECTION> 1.0, 0.0, 0.0 </DIRECTION>
+    <ORDER> 2 </ORDER>
+    <DERIVATIVE> 2 </DERIVATIVE>
+  </SET>
+</LSIAC>
+\end{lstlisting}
+Using this config.xml file, the user can apply the L-SIAC filter on the fields 
+u, v, w, and write them to Lu, Lv, and Lw, respectively. The rest of the values 
+specify the parameters for the L-SIAC filter.
+
+\begin{enumerate}
+  \item \inltt{ORDER}: Specifies the polynomial order of the L-SIAC filter.
+  \item \inltt{DIRECTION}: The default value is [1.0,0.0,0.0], which specifies 
+the direction of the L-SIAC filter.
+  \item \inltt{DERIVATIVE}: The default value is 0 (no derivative). It specifies
+the order of the derivative to apply to the L-SIAC filter. The L-SIAC filter is 
+implemented using the convolution operator; hence, the derivative is 
+automatically applied to the fields.
+\end{enumerate}
+
 \section{FieldConvert in parallel}
 To run FieldConvert in parallel the user needs to compile
 \nekpp with MPI support and can employ the following

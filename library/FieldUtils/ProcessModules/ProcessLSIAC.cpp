@@ -146,7 +146,7 @@ void ProcessLSIAC::ApplyLSIAC(LSIACParams set1)
     int nfields = m_f->m_variables.size();
 
     // int addfields = (m_spacedim == 2) ? 1 : 3;
-    int addfields = nfields;
+    int addfields = set1.outVar.size();
 
     // Skip in case of empty partition
     if (m_f->m_exp[0]->GetNumElmts() == 0)
@@ -225,7 +225,7 @@ void ProcessLSIAC::ApplyLSIAC(LSIACParams set1)
     // Initializing
     vector<Array<OneD, NekDouble>> LSIAC_Fields;
     HNM->CalculateDynamicScaling();
-    HNM->LoadExpListIntoRTree();
+    // HNM->LoadExpListIntoRTree();
 
     for (int i_f = 0; i_f < nfields; i_f++)
     {
@@ -298,36 +298,39 @@ void ProcessLSIAC::Process(po::variables_map &vm)
         TiXmlHandle hRoot(0);
 
         hRoot = hDoc.FirstChild("LSIAC");
-        for (pChild = hRoot.FirstChild("Set").Node(); pChild != 0;
-             pChild = pChild->NextSibling("Set"))
+        for (pChild = hRoot.FirstChild("SET").Node(); pChild != 0;
+             pChild = pChild->NextSibling("SET"))
         {
+            cout << "Applying LSIAC with" << endl;
             LSIACParams set1;
-            pElem = pChild->FirstChild("Invariables")->ToElement();
+            pElem = pChild->FirstChild("INVARIABLES")->ToElement();
             vector<string> varIn = this->getVecFromStr(pElem->GetText());
             set1.inVar           = varIn;
 
-            pElem = pChild->FirstChild("Outvariables")->ToElement();
+            pElem = pChild->FirstChild("OUTVARIABLES")->ToElement();
             vector<string> varOut = this->getVecFromStr(pElem->GetText());
             set1.outVar           = varOut;
 
-            pElem = pChild->FirstChild("Direction")->ToElement();
+            pElem = pChild->FirstChild("DIRECTION")->ToElement();
             Array<OneD, NekDouble> direction =
                 this->getDirFromStr(pElem->GetText());
             set1.direction = direction;
 
-            string str      = this->getStrFromNode(pChild, "Derivative");
+            string str      = this->getStrFromNode(pChild, "DERIVATIVE");
             int derivative  = (!str.empty()) ? atoi(str.c_str()) : 0;
             set1.derivative = derivative;
 
-            str             = this->getStrFromNode(pChild, "Order");
+            str             = this->getStrFromNode(pChild, "ORDER");
             int filterOrder = (!str.empty()) ? atoi(str.c_str()) : 2;
             set1.order      = filterOrder;
 
-            str                = this->getStrFromNode(pChild, "MaxChLength");
+            // Advanced option not exposed to user yet.
+            str                = this->getStrFromNode(pChild, "MAXCHLENGTH");
             double maxChLength = (!str.empty()) ? atof(str.c_str()) : 1e10;
             set1.maxChLen      = maxChLength;
 
-            str = this->getStrFromNode(pChild, "Type");
+            // Advanced option not exposed to user yet.
+            str = this->getStrFromNode(pChild, "TYPE");
             if (str.empty() && derivative == 0)
             {
                 set1.filterType = 0; // Simple filter

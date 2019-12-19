@@ -316,7 +316,7 @@ bool MetricTensor::LoadMetricTensor(HandleNekMesh *HNM)
                 m_metricTensorAtElm[eid] = Metric.pow(-0.5);
 
                 //			    //cout << "eigen values are:" <<
-                //endl
+                // endl
                 //<< es.eigenvalues() << endl;
 
                 // cout << "eigen values are:

@@ -33,12 +33,12 @@ protected:
 
 public:
     HandleNekMesh2D(FieldUtils::FieldSharedPtr fldSharedPtr)
-        : HandleNekMesh(fldSharedPtr)
+        : HandleNekMesh(fldSharedPtr), m_useRTree(false)
     {
     }
 
     HandleNekMesh2D(LibUtilities::SessionReaderSharedPtr sessionPtr)
-        : HandleNekMesh(sessionPtr)
+        : HandleNekMesh(sessionPtr), m_useRTree(false)
     {
     }
 

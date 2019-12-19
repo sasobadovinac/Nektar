@@ -1,16 +1,9 @@
 #ifndef LSIACPOSTPROC_H
 #define LSIACPOSTPROC_H
 
-//#define NEKTAR_USING_LAPACK
-//#define NEKTAR_USING_BLAS
 // Note TOLERENCE should always be smaller than TOLERENCE_MESH_COMP
-#define TOLERENCE 1e-8
-#define TOLERENCE_MESH_COMP 1e-9
-//#define TOLERENCE 1e-13
-//#define TOLERENCE_MESH_COMP 1e-12
-// TO test SpeedLSIAC V2
-//#define TOLERENCE 1e-15
-//#define TOLERENCE_MESH_COMP 1e-13
+#define TOLERENCE 1e-9
+#define TOLERENCE_MESH_COMP 1e-8
 
 #include <LibUtilities/BasicUtils/SessionReader.h>
 #include <LibUtilities/BasicUtils/VmathArray.hpp>
@@ -41,7 +34,6 @@ public:
     void writeNekArray(vector<NekDouble> &ar, string filename) const;
     void writeNekArray(Array<OneD, NekDouble> &ar, string filename) const;
     void writeNekArrayBin(Array<OneD, NekDouble> &ar, string filename) const;
-    //	void readNekArray(vector<NekDouble> &ar, string filename) const;
     void readNekArray(Array<OneD, NekDouble> &ar, string filename) const;
     void readNekArray(vector<NekDouble> &ar, string filename) const;
     void readNekArray(vector<int> &ar, string filename) const;

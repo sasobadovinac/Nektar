@@ -23,8 +23,8 @@ public:
         // endl;
         //			m_expansions.push_back(MemoryManager<MultiRegions::ContField1D>::
         //					AllocateSharedPtr(m_session,m_graph,
-        // m_session->GetVariable(0)) ); 			cout << "Expansion
-        // Type: " << m_expansions[0]->GetExpType() << endl;
+        // m_session->GetVariable(0)) ); 			cout <<
+        // "Expansion Type: " << m_expansions[0]->GetExpType() << endl;
     }
 
 protected:

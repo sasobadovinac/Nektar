@@ -283,21 +283,13 @@ bool SmoothieSIAC2D::v_EvaluateAt(const NekDouble PtsX, const NekDouble PtsY,
 
     bool b_symMesh = m_meshHandlePtr->CanTRangebeApplied(
         PtsX, PtsY, PtsZ, direction, tmin, tmax, meshTShift);
-    // Made an assumtion that a symmetric filter can be applied ???
-    // return List of mesh breakpoints in that range.
-    // call SSS/SSO
     if (b_symMesh)
     {
-        //	cout << "into symmetric condition loop" << endl;
         m_siacFilterPtrs[m_SymID]->GetBreakPts(
             meshSpacing, SvalT); //"??? specify parameters"
     }
     else
     {
-        // cout << "PtsX: "<< PtsX << " before tmin : " << tmin;
-        // cout << " tmax : " << tmax << endl;
-        // cout << "after tmin : " << tmin;
-        // cout << " tmax : " << tmax << endl;
         SvalT.clear();
         if (m_OneID >= 0)
         { // OneSided Filter is defined and given by .
@@ -321,11 +313,8 @@ bool SmoothieSIAC2D::v_EvaluateAt(const NekDouble PtsX, const NekDouble PtsY,
         }
         else
         { // OneSided Filter is not defined.
-            // cout << "Symmetric filter does not fit and OneSided is not
-            // defined here." << endl; cout << "Ideally keep the original value.
-            // -1 is returned at end " << endl;
-            // m_meshHandlePtr->EvaluateAt(PtsX,PtsY,PtsZ,-1,-1,valX,varNum);
-            valX = -1;
+          // valX = -1;
+            m_meshHandlePtr->EvaluateAt(PtsX, PtsY, PtsZ, -1, -1, valX, varNum);
             return false;
         }
     }
@@ -638,18 +627,11 @@ bool SmoothieSIAC2D::v_EvaluateAt_NSK_GivenFilterLength_v2(
     // For getting the local gauss quadrature use the getCoords fo StdRegions
     // objects.
 
-    // cout << "////////Working till here////////" <<endl;
     int quadratureOfMesh =
         m_meshHandlePtr->m_expansions[0]->GetExp(0)->GetBasisNumModes(0) +
         m_meshHandlePtr->m_expansions[0]->GetExp(0)->GetBasisNumModes(1);
-    //	m_meshHandlePtr->m_expansions[0]->GetExp(0)->GetBasisNumModes(2);
 
     int quad_npoints = ceil((m_order + quadratureOfMesh + 1.0) / 2.0);
-    // int quad_npoints = ceil((m_order+3)/2) +
-    // m_meshHandlePtr->m_expansions[0]->GetExp(0)->GetTotPoints()+2; cout <<
-    // "quad_npoints" << quad_npoints << endl;
-    // LibUtilities::PointsKey quadPointsKey(quad_npoints,
-    //						m_meshHandlePtr->m_expansions[0]->GetExp(0)->GetPointsType(0));
     LibUtilities::PointsKey quadPointsKey(
         quad_npoints, LibUtilities::PointsType::eGaussGaussLegendre);
 
