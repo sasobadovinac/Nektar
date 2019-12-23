@@ -33,14 +33,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 #include "SmoothieSIAC.h"
 #include <algorithm>
-/*
-SmoothieSIAC::SmoothieSIAC( const SmoothieSIAC::FilterType filter,const
-HandleMesh meshHandle, const int Order, Array<OneD,NekDouble> &direction):
-                                                                        m_fitlerType(filter),
-m_MeshHandle(meshHandle), m_order(order)
-{
-}
-*/
 
 namespace Nektar
 {
@@ -84,7 +76,6 @@ bool SmoothieSIAC::mergeBreakPtsAdv(const vector<NekDouble> &HvalT,
     for (int i = 0; i < TvalT.size() - 1; i++)
     {
         NekDouble tval = (TvalT[i] + TvalT[i + 1]) / 2.0;
-        // cout << tval << endl;
         for (int j = 0; j < HvalT.size() - 1; j++)
         {
             if (tval > HvalT[j] && tval < HvalT[j + 1])
@@ -94,14 +85,7 @@ bool SmoothieSIAC::mergeBreakPtsAdv(const vector<NekDouble> &HvalT,
                 continue;
             }
         }
-        assert(true && "Something is wrong. Should never come till here.");
     }
-    /*
-            cout << "t_GIDs "<< endl;
-            printNekArray(t_GIDs,0);
-            cout << "t_EIDs "<< endl;
-            printNekArray(t_EIDs,0);
-    */
     return true;
 }
 
@@ -129,7 +113,7 @@ bool SmoothieSIAC::v_EvaluateLineForLSIAC_v1_dynScaling(
         m_siacFilterPtrs[m_SymID]->GetFilterRange(meshSpacing, t_min, t_max);
         if (t + t_min < t_mesh_min && t + t_max > t_mesh_max)
         {
-            assert("No filter can be applied");
+            NEKERROR(ErrorUtil : efatal, "No filter can be applied");
             return false;
         }
         if (t + t_min < t_mesh_min)
@@ -151,36 +135,23 @@ bool SmoothieSIAC::v_EvaluateLineForLSIAC_v1_dynScaling(
                                                       meshTShift);
         }
 
-        // cout << "for parameter t " << t << "\t tmin: \t" << t_min << "\t
-        // tmax: \t" << t_max << endl;
-
-        assert(t + t_min + TOLERENCE > t_mesh_min &&
-               "Above code should have fixed this issue");
-        assert(t + t_max - TOLERENCE < t_mesh_max &&
-               "Above code should have fixed this issue");
+        ASSERTL0(t + t_min + TOLERENCE > t_mesh_min &&
+                 "Above code should have fixed this issue");
+        ASSERTL0(t + t_max - TOLERENCE < t_mesh_max &&
+                 "Above code should have fixed this issue");
         // if symmetric mesh. Could be true for both.
         int startElmIndex, endElmIndex;
         // start ElementId and End Element Id;
-        // const std::vector<NekDouble>::iterator
         const auto low =
             std::lower_bound(HvalT.begin(), HvalT.end(), t + t_min + TOLERENCE);
         const auto up =
             std::upper_bound(HvalT.begin(), HvalT.end(), t + t_max - TOLERENCE);
-        // int stIndex = low - HvalT.begin()-1;
-        // int edIndex = up -HvalT.begin()-1;
         int stIndex   = std::distance(HvalT.begin(), low);
         int edIndex   = std::distance(HvalT.begin(), up);
         startElmIndex = stIndex;
         endElmIndex   = edIndex;
-        //		if (startElmIndex != stIndex)
-        //		cout << "startElmIndex =\t" << startElmIndex <<
-        //"\tstIndex
-        //=\t" <<stIndex <<endl; 	if (endElmIndex != edIndex)
-        // cout << "endElmIndex =\t" << endElmIndex << "\tedIndex =\t" <<edIndex
-        //<<endl; 	cout << "for parameter t " << t << "\t sElIndex: \t" <<
-        // startElmIndex<< "\t tmax: \t" << endElmIndex<< endl;
 
-        assert(startElmIndex <= endElmIndex && "Wrong");
+        ASSERTL0(startElmIndex <= endElmIndex && "Wrong");
         NekDouble sum = 0.0;
         for (int el = startElmIndex; el <= endElmIndex; el++)
         {
@@ -221,12 +192,9 @@ bool SmoothieSIAC::v_EvaluateLineForLSIAC_v1(
     // Set up one more array for quadrature weights or jacobian values.
     // tW_LineElm
     // tJ_LineElm
-    // NekDouble meshSpacing = 0.1; // NekDouble.
     NekDouble t_min, t_max, meshTShift;
     LibUtilities::PointsKey quadPointsKey(
         n_quadPts, Nektar::LibUtilities::eGaussGaussLegendre);
-    // Array<OneD,NekDouble> quad_points =
-    // LibUtilities::PointsManager()[quadPointsKey]->GetZ();
     Array<OneD, NekDouble> t_quad_weights =
         LibUtilities::PointsManager()[quadPointsKey]->GetW();
     Array<OneD, NekDouble> t_quadPts(n_quadPts), t_quad_vals(n_quadPts);
@@ -239,7 +207,7 @@ bool SmoothieSIAC::v_EvaluateLineForLSIAC_v1(
         m_siacFilterPtrs[m_SymID]->GetFilterRange(meshSpacing, t_min, t_max);
         if (t + t_min < t_mesh_min && t + t_max > t_mesh_max)
         {
-            assert("No filter can be applied");
+            NEKERROR(ErrorUtil : efatal, "No filter can be applied");
             return false;
         }
         if (t + t_min < t_mesh_min)
@@ -261,37 +229,22 @@ bool SmoothieSIAC::v_EvaluateLineForLSIAC_v1(
                                                       meshTShift);
         }
 
-        // cout << "for parameter t " << t << "\t tmin: \t" << t_min << "\t
-        // tmax: \t" << t_max << endl;
-
-        assert(t + t_min + TOLERENCE > t_mesh_min &&
-               "Above code should have fixed this issue");
-        assert(t + t_max - TOLERENCE < t_mesh_max &&
-               "Above code should have fixed this issue");
+        ASSERTL0(t + t_min + TOLERENCE > t_mesh_min &&
+                 "Above code should have fixed this issue");
+        ASSERTL0(t + t_max - TOLERENCE < t_mesh_max &&
+                 "Above code should have fixed this issue");
         // if symmetric mesh. Could be true for both.
         int startElmIndex, endElmIndex;
-        // start ElementId and End Element Id;
-        // const std::vector<NekDouble>::iterator
         const auto low =
             std::lower_bound(HvalT.begin(), HvalT.end(), t + t_min + TOLERENCE);
         const auto up =
             std::upper_bound(HvalT.begin(), HvalT.end(), t + t_max - TOLERENCE);
-        // int stIndex = low - HvalT.begin()-1;
-        // int edIndex = up -HvalT.begin()-1;
         int stIndex   = std::distance(HvalT.begin(), low);
         int edIndex   = std::distance(HvalT.begin(), up);
         startElmIndex = stIndex;
         endElmIndex   = edIndex;
-        //		if (startElmIndex != stIndex)
-        //		cout << "startElmIndex =\t" << startElmIndex <<
-        //"\tstIndex
-        //=\t" <<stIndex <<endl; 	if (endElmIndex != edIndex)
-        // cout << "endElmIndex =\t" << endElmIndex << "\tedIndex =\t" <<edIndex
-        //<<endl;
-        // cout << "for parameter t " << t << "\t sElIndex: \t" <<
-        // startElmIndex<< "\t tmax: \t" << endElmIndex<< endl;
 
-        assert(startElmIndex <= endElmIndex && "Wrong");
+        ASSERTL0(startElmIndex <= endElmIndex && "Wrong");
         NekDouble sum = 0.0;
         for (int el = startElmIndex; el <= endElmIndex; el++)
         {
@@ -361,7 +314,7 @@ bool SmoothieSIAC::v_EvaluateLineForLSIAC_v3_dynScaling(
         m_siacFilterPtrs[m_SymID]->GetFilterRange(meshSpacing, t_min, t_max);
         if (t + t_min < t_mesh_min && t + t_max > t_mesh_max)
         {
-            assert("No filter can be applied");
+            NEKERROR(ErrorUtil : efatal, "No filter can be applied");
             return false;
         }
         if (t + t_min < t_mesh_min)
@@ -383,13 +336,10 @@ bool SmoothieSIAC::v_EvaluateLineForLSIAC_v3_dynScaling(
                                                       meshTShift);
         }
 
-        // cout << "for parameter t " << t << "\t tmin: \t" << t_min << "\t
-        // tmax: \t" << t_max << endl;
-
-        assert(t + t_min + TOLERENCE > t_mesh_min &&
-               "Above code should have fixed this issue");
-        assert(t + t_max - TOLERENCE < t_mesh_max &&
-               "Above code should have fixed this issue");
+        ASSERTL0(t + t_min + TOLERENCE > t_mesh_min &&
+                 "Above code should have fixed this issue");
+        ASSERTL0(t + t_max - TOLERENCE < t_mesh_max &&
+                 "Above code should have fixed this issue");
 
         // if symmetric mesh. Could be true for both.
         // start ElementId and End Element Id;
@@ -398,17 +348,12 @@ bool SmoothieSIAC::v_EvaluateLineForLSIAC_v3_dynScaling(
             std::lower_bound(HvalT.begin(), HvalT.end(), t + t_min + TOLERENCE);
         const auto up =
             std::upper_bound(HvalT.begin(), HvalT.end(), t + t_max - TOLERENCE);
-        // int stIndex = low - HvalT.begin()-1;
-        // int edIndex = up -HvalT.begin()-1;
         int stIndex   = std::distance(HvalT.begin(), low);
         int edIndex   = std::distance(HvalT.begin(), up);
         startElmIndex = stIndex;
         endElmIndex   = edIndex;
 
-        // cout << "for parameter t " << t << "\t sElIndex: \t" <<
-        // startElmIndex<< "\t tmax: \t" << endElmIndex<< endl;
-
-        assert(startElmIndex <= endElmIndex && "Wrong");
+        ASSERTL0(startElmIndex <= endElmIndex && "Wrong");
         NekDouble sum = 0.0;
         vector<NekDouble> SvalT, LvalT, TvalT;
         if (b_symMesh)
@@ -435,14 +380,10 @@ bool SmoothieSIAC::v_EvaluateLineForLSIAC_v3_dynScaling(
         LvalT.push_back(t_max);
         mergeBreakPts(SvalT, LvalT, TvalT);
 
-        // m_meshHandlePtr->GetListOfGIDs(PtsX,PtsY,PtsZ, diretion, TvalT,
-        // t_GIDs,t_EIDs); Need to be done.
         for (int i = 0; i < TvalT.size() - 1; i++)
         {
             NekDouble a = TvalT[i];
             NekDouble b = TvalT[i + 1];
-            //	int gID = t_GIDs[i]; need elmIndex on line. Hence code below.
-            //	int eID = t_EIDs[i];
             int elmIndex = -1;
             for (int j = startElmIndex; j <= endElmIndex + 1; j++)
             {
@@ -452,7 +393,7 @@ bool SmoothieSIAC::v_EvaluateLineForLSIAC_v3_dynScaling(
                     break;
                 }
             }
-            assert(elmIndex != -1 && "Elm Index is wrong");
+            ASSERTL0(elmIndex != -1 && "Elm Index is wrong");
             for (int j = 0; j < n_quadPts_resample; j++)
             {
                 t_quadPts[j] = (b - a) * (q_quadR_Pts[j] + 1.0) / 2.0 + a;
@@ -467,7 +408,6 @@ bool SmoothieSIAC::v_EvaluateLineForLSIAC_v3_dynScaling(
                 m_siacFilterPtrs[m_OneID]->EvaluateFilter(
                     t_quadPts, t_quad_vals, meshSpacing, meshTShift, true);
             }
-            //	m_meshHandlePtr->EvaluateAt(t_xyz_vals);
 
             NekDouble integral = 0.0;
             Array<OneD, NekDouble> elv =
@@ -476,8 +416,6 @@ bool SmoothieSIAC::v_EvaluateLineForLSIAC_v3_dynScaling(
             {
                 // need to calcuate value of t_xyz_vals.
                 // scaling of HvalT[j-1] to -1 and HvalT[j] to +1
-                //	lcoord[0] = (t+ t_quadPts[k] - HvalT[elmIndex-1])/
-                //(HvalT[elmIndex]-HvalT[elmIndex-1])*2.0 -1.0;
                 lcoord[0] = (t + t_quadPts[k] - HvalT[elmIndex]) /
                                 (HvalT[elmIndex + 1] - HvalT[elmIndex]) * 2.0 -
                             1.0;
@@ -516,7 +454,6 @@ bool SmoothieSIAC::v_EvaluateLineForLSIAC_v3(
         LibUtilities::PointsManager()[quadPointsKey_resample]->GetZ();
     Array<OneD, NekDouble> t_quadPts(n_quadPts_resample),
         t_quad_vals(n_quadPts_resample);
-    //	Array<OneD,NekDouble> t_quad(n_quadPts_resample);
 
     Array<OneD, NekDouble> lcoord(3, 0.0);
 
@@ -529,7 +466,7 @@ bool SmoothieSIAC::v_EvaluateLineForLSIAC_v3(
         m_siacFilterPtrs[m_SymID]->GetFilterRange(meshSpacing, t_min, t_max);
         if (t + t_min < t_mesh_min && t + t_max > t_mesh_max)
         {
-            assert("No filter can be applied");
+            NEKERROR(ErrorUtil : efatal, "No filter can be applied");
             return false;
         }
         if (t + t_min < t_mesh_min)
@@ -551,13 +488,10 @@ bool SmoothieSIAC::v_EvaluateLineForLSIAC_v3(
                                                       meshTShift);
         }
 
-        // cout << "for parameter t " << t << "\t tmin: \t" << t_min << "\t
-        // tmax: \t" << t_max << endl;
-
-        assert(t + t_min + TOLERENCE > t_mesh_min &&
-               "Above code should have fixed this issue");
-        assert(t + t_max - TOLERENCE < t_mesh_max &&
-               "Above code should have fixed this issue");
+        ASSERTL0(t + t_min + TOLERENCE > t_mesh_min &&
+                 "Above code should have fixed this issue");
+        ASSERTL0(t + t_max - TOLERENCE < t_mesh_max &&
+                 "Above code should have fixed this issue");
 
         // if symmetric mesh. Could be true for both.
         // start ElementId and End Element Id;
@@ -566,17 +500,12 @@ bool SmoothieSIAC::v_EvaluateLineForLSIAC_v3(
             std::lower_bound(HvalT.begin(), HvalT.end(), t + t_min + TOLERENCE);
         const auto up =
             std::upper_bound(HvalT.begin(), HvalT.end(), t + t_max - TOLERENCE);
-        // int stIndex = low - HvalT.begin()-1;
-        // int edIndex = up -HvalT.begin()-1;
         int stIndex   = std::distance(HvalT.begin(), low);
         int edIndex   = std::distance(HvalT.begin(), up);
         startElmIndex = stIndex;
         endElmIndex   = edIndex;
 
-        // cout << "for parameter t " << t << "\t sElIndex: \t" <<
-        // startElmIndex<< "\t tmax: \t" << endElmIndex<< endl;
-
-        assert(startElmIndex <= endElmIndex && "Wrong");
+        ASSERTL0(startElmIndex <= endElmIndex && "Wrong");
         NekDouble sum = 0.0;
         vector<NekDouble> SvalT, LvalT, TvalT;
         if (b_symMesh)
@@ -603,14 +532,10 @@ bool SmoothieSIAC::v_EvaluateLineForLSIAC_v3(
         LvalT.push_back(t_max);
         mergeBreakPts(SvalT, LvalT, TvalT);
 
-        // m_meshHandlePtr->GetListOfGIDs(PtsX,PtsY,PtsZ, diretion, TvalT,
-        // t_GIDs,t_EIDs); Need to be done.
         for (int i = 0; i < TvalT.size() - 1; i++)
         {
             NekDouble a = TvalT[i];
             NekDouble b = TvalT[i + 1];
-            //	int gID = t_GIDs[i]; need elmIndex on line. Hence code below.
-            //	int eID = t_EIDs[i];
             int elmIndex = -1;
             for (int j = startElmIndex; j <= endElmIndex + 1; j++)
             {
@@ -620,7 +545,7 @@ bool SmoothieSIAC::v_EvaluateLineForLSIAC_v3(
                     break;
                 }
             }
-            assert(elmIndex != -1 && "Elm Index is wrong");
+            ASSERTL0(elmIndex != -1 && "Elm Index is wrong");
             for (int j = 0; j < n_quadPts_resample; j++)
             {
                 t_quadPts[j] = (b - a) * (q_quadR_Pts[j] + 1.0) / 2.0 + a;
@@ -635,7 +560,6 @@ bool SmoothieSIAC::v_EvaluateLineForLSIAC_v3(
                 m_siacFilterPtrs[m_OneID]->EvaluateFilter(
                     t_quadPts, t_quad_vals, meshSpacing, meshTShift, true);
             }
-            //	m_meshHandlePtr->EvaluateAt(t_xyz_vals);
 
             NekDouble integral = 0.0;
             Array<OneD, NekDouble> elv =
@@ -644,8 +568,6 @@ bool SmoothieSIAC::v_EvaluateLineForLSIAC_v3(
             {
                 // need to calcuate value of t_xyz_vals.
                 // scaling of HvalT[j-1] to -1 and HvalT[j] to +1
-                //	lcoord[0] = (t+ t_quadPts[k] - HvalT[elmIndex-1])/
-                //(HvalT[elmIndex]-HvalT[elmIndex-1])*2.0 -1.0;
                 lcoord[0] = (t + t_quadPts[k] - HvalT[elmIndex]) /
                                 (HvalT[elmIndex + 1] - HvalT[elmIndex]) * 2.0 -
                             1.0;
@@ -693,10 +615,6 @@ bool SmoothieSIAC::v_EvaluateUsingLineAt_v1DynScaling(
     EvaluateLineForLSIAC_v1_dynScaling(n_quadPts, tparams, t_dynScaling,
                                        t_mesh_min, t_mesh_max, t_LineElm,
                                        tv_LineElm, HvalT, tvals);
-    // EvaluateLineForLSIAC_v1(n_quadPts, tparams, meshSpacing, t_mesh_min,
-    // t_mesh_max, 						t_LineElm, tv_LineElm,
-    // HvalT, tvals
-    // );
 
     return true;
 }
@@ -796,8 +714,6 @@ bool SmoothieSIAC::v_EvaluateUsingLineAt_v2DynScaling(
                           meshSpacing, 1.0);
 
     // Set up the quadrature.
-    // SetupLineForLSIAC( direction, stPoint, t_mesh_min, t_mesh_max,n_quadPts,
-    // HvalT, Gids, Eids, t_LineElm);
     // Get the values of quadrature.
     EvaluateLineForLSIAC_v1_dynScaling(
         n_quadPts_resample, tparams, t_dynScaling, t_mesh_min, t_mesh_max,
@@ -832,9 +748,6 @@ bool SmoothieSIAC::v_EvaluateUsingLineAt_v2(
                               t_LineElm_resample, tv_LineElm_resample, varNum);
 
     // Set up the quadrature.
-    // SetupLineForLSIAC( direction, stPoint, t_mesh_min, t_mesh_max,n_quadPts,
-    // HvalT, Gids, Eids, t_LineElm);
-
     // Get the values of quadrature.
     EvaluateLineForLSIAC_v1(n_quadPts_resample, tparams, meshSpacing,
                             t_mesh_min, t_mesh_max, t_LineElm_resample,
@@ -877,8 +790,6 @@ bool SmoothieSIAC::v_EvaluateUsingLineAt_v3DynScaling(
     EvaluateLineForLSIAC_v3_dynScaling(n_quadPts, n_quadPts_resample, tparams,
                                        t_dynScaling, t_mesh_min, t_mesh_max,
                                        t_LineElm, tv_LineElm, HvalT, tvals);
-    // std::cout.precision(5);
-    // cout << "part3\t" << el1 << "\t" << el2 << "\t" << el3 << "\t" << endl;
     return true;
 }
 
@@ -962,11 +873,8 @@ bool SmoothieSIAC::v_SetupLineForLSIAC_ReSamp(
     vector<NekDouble> HvalX, HvalY, HvalZ;
     m_meshHandlePtr->GetBreakPts(stPoint[0], stPoint[1], stPoint[2], direction,
                                  tmin, tmax, HvalX, HvalY, HvalZ, HvalT);
-    // printNekArray(HvalT,0.0);
     m_meshHandlePtr->GetListOfGIDs(stPoint[0], stPoint[1], stPoint[2],
                                    direction, HvalT, t_GIDs, t_EIDs);
-    // Number of quadrature points should be input.
-    // int n_quadPts = 4;
     {
         LibUtilities::PointsKey quadPointsKey(
             n_quadPts, Nektar::LibUtilities::eGaussGaussLegendre);
@@ -1040,7 +948,6 @@ bool SmoothieSIAC::v_GetVLineForLSIAC(
         elx = tx_LineElm.CreateWithOffset(tx_LineElm, i * n_quadPts);
         ely = ty_LineElm.CreateWithOffset(ty_LineElm, i * n_quadPts);
         elz = tz_LineElm.CreateWithOffset(tz_LineElm, i * n_quadPts);
-        //	elv = tz_LineElm.CreateWithOffset( tv_LineElm, i*n_quadPts);
         m_meshHandlePtr->EvaluateAt(elx, ely, elz, t_GIDs[i], t_EIDs[i], elv,
                                     varNum);
         memcpy(&tv_LineElm[i * n_quadPts], &elv[0],
@@ -1083,15 +990,6 @@ bool SmoothieSIAC::v_GetVLineForLSIAC_resample(
 
     // Create a STD element.
     // create Basiskey
-    // m_meshHandlePtr->m_expansions[0]->GetExp(0)->GetPointsType(0);
-    // Array<OneD,NekDouble> quad_points =
-    // LibUtilities::PointsManager()[quadPointsKey]->GetZ();
-    // Array<OneD,NekDouble> quad_weights  =
-    // LibUtilities::PointsManager()[quadPointsKey]->GetW();
-    // LibUtilities::PointsKey pk = LibUtilities::PointsKey( n_quadpts_resample,
-    //				m_meshHandlePtr->m_expansions[0]->GetExp(0)->GetPointsType(0)
-    //)
-    //;
     LibUtilities::PointsKey quadPointsKey(
         n_quadPts, Nektar::LibUtilities::eGaussGaussLegendre);
     LibUtilities::BasisKey bk = LibUtilities::BasisKey(
@@ -1111,19 +1009,10 @@ bool SmoothieSIAC::v_GetVLineForLSIAC_resample(
     // Create new quandrature points.
     // 1. First for loop for each element.
     // 2. Second for loop to evaluate at new quadrature points.
-
-    // cout << "test1" << segExp_std->GetNcoeffs() << "ptstest2" <<
-    // segExp_std->GetTotPoints() << endl; return true;
-
     Array<OneD, NekDouble> Lcoord(3, 0.0);
     for (int i = 0; i < t_EIDs.size() - 1; i++)
     {
-        // for each element get the values and evaluate at more points.
-
-        //	elx = tx_LineElm.CreateWithOffset( tx_LineElm, i*n_quadPts);
         elv = tv_LineElm.CreateWithOffset(tv_LineElm, i * n_quadPts);
-        // memcpy( &elv[0], &tv_LineElm[i*n_quadPts],
-        // sizeof(NekDouble)*n_quadPts);
         for (int j = 0; j < n_quadPts_resample; j++)
         {
             Lcoord[0]       = quad_points_resample[j];
@@ -1184,10 +1073,6 @@ bool SmoothieSIAC::v_EvaluatePt_vNonSymKnots(
     vector<NekDouble> tparams;
     tparams.push_back(0.0);
 
-    // NekDouble t_mesh_min = *(std::min_element( tparams.begin(),
-    // tparams.end())); NekDouble t_mesh_max = *(std::max_element(
-    // tparams.begin(), tparams.end()));
-
     vector<NekDouble> HvalT;
     vector<int> Gids, Eids;
     Array<OneD, NekDouble> t_LineElm;
@@ -1217,7 +1102,6 @@ bool SmoothieSIAC::v_EvaluatePt_vNonSymKnots(
         LibUtilities::PointsManager()[quadPointsKey_resample]->GetZ();
     Array<OneD, NekDouble> t_quadPts(n_quadPts_resample),
         t_quad_vals(n_quadPts_resample);
-    //	Array<OneD,NekDouble> t_quad(n_quadPts_resample);
 
     Array<OneD, NekDouble> lcoord(3, 0.0);
 
@@ -1250,8 +1134,6 @@ bool SmoothieSIAC::v_EvaluatePt_vNonSymKnots(
             std::lower_bound(HvalT.begin(), HvalT.end(), t + t_min + TOLERENCE);
         const auto up =
             std::upper_bound(HvalT.begin(), HvalT.end(), t + t_max - TOLERENCE);
-        // int stIndex = low - HvalT.begin()-1;
-        // int edIndex = up -HvalT.begin()-1;
         int stIndex   = std::distance(HvalT.begin(), low);
         int edIndex   = std::distance(HvalT.begin(), up);
         startElmIndex = stIndex;
@@ -1261,7 +1143,6 @@ bool SmoothieSIAC::v_EvaluatePt_vNonSymKnots(
         // HvalT into LvalT
         LvalT.clear();
         LvalT.push_back(t_min);
-        // for ( int j= startElmIndex; j <= endElmIndex+1; j++)
         for (int j = startElmIndex; j < endElmIndex; j++)
         {
             if ((HvalT[j] > t + t_min) && (HvalT[j] < t + t_max))
@@ -1289,7 +1170,7 @@ bool SmoothieSIAC::v_EvaluatePt_vNonSymKnots(
                     break;
                 }
             }
-            assert(elmIndex != -1 && "Elm Index is wrong");
+            ASSERTL0(elmIndex != -1 && "Elm Index is wrong");
             for (int j = 0; j < n_quadPts_resample; j++)
             {
                 t_quadPts[j] = (b - a) * (q_quadR_Pts[j] + 1.0) / 2.0 + a;
@@ -1301,11 +1182,8 @@ bool SmoothieSIAC::v_EvaluatePt_vNonSymKnots(
             }
             else
             {
-                // m_siacFilterPtrs[m_OneID]->EvaluateFilter(t_quadPts,t_quad_vals,
-                // meshSpacing, meshTShift, true);
-                assert(false && "Should no be here.");
+                ASSERTL0(false && "Should no be here.");
             }
-            //	m_meshHandlePtr->EvaluateAt(t_xyz_vals);
 
             NekDouble integral = 0.0;
             Array<OneD, NekDouble> elv =
@@ -1314,8 +1192,6 @@ bool SmoothieSIAC::v_EvaluatePt_vNonSymKnots(
             {
                 // need to calcuate value of t_xyz_vals.
                 // scaling of HvalT[j-1] to -1 and HvalT[j] to +1
-                //	lcoord[0] = (t+ t_quadPts[k] - HvalT[elmIndex-1])/
-                //(HvalT[elmIndex]-HvalT[elmIndex-1])*2.0 -1.0;
                 lcoord[0] = (t + t_quadPts[k] - HvalT[elmIndex]) /
                                 (HvalT[elmIndex + 1] - HvalT[elmIndex]) * 2.0 -
                             1.0;
@@ -1369,7 +1245,6 @@ bool SmoothieSIAC::v_EvaluateUsingLineAt_vNonSymKnots(
         LibUtilities::PointsManager()[quadPointsKey_resample]->GetZ();
     Array<OneD, NekDouble> t_quadPts(n_quadPts_resample),
         t_quad_vals(n_quadPts_resample);
-    //	Array<OneD,NekDouble> t_quad(n_quadPts_resample);
 
     Array<OneD, NekDouble> lcoord(3, 0.0);
 
@@ -1386,7 +1261,6 @@ bool SmoothieSIAC::v_EvaluateUsingLineAt_vNonSymKnots(
 
         if (b_symMesh)
         {
-            // SvalT.resize(knotVec.num_elements());
             SvalT.insert(SvalT.end(), &knotVec[0],
                          &knotVec[3 * (m_order - 1) + 2]);
             t_min = SvalT.front();
@@ -1403,8 +1277,6 @@ bool SmoothieSIAC::v_EvaluateUsingLineAt_vNonSymKnots(
             std::lower_bound(HvalT.begin(), HvalT.end(), t + t_min + TOLERENCE);
         const auto up =
             std::upper_bound(HvalT.begin(), HvalT.end(), t + t_max - TOLERENCE);
-        // int stIndex = low - HvalT.begin()-1;
-        // int edIndex = up -HvalT.begin()-1;
         int stIndex   = std::distance(HvalT.begin(), low);
         int edIndex   = std::distance(HvalT.begin(), up);
         startElmIndex = stIndex;
@@ -1414,7 +1286,6 @@ bool SmoothieSIAC::v_EvaluateUsingLineAt_vNonSymKnots(
         // HvalT into LvalT
         LvalT.clear();
         LvalT.push_back(t_min);
-        // for ( int j= startElmIndex; j <= endElmIndex+1; j++)
         for (int j = startElmIndex; j < endElmIndex; j++)
         {
             if ((HvalT[j] > t + t_min) && (HvalT[j] < t + t_max))
@@ -1425,14 +1296,10 @@ bool SmoothieSIAC::v_EvaluateUsingLineAt_vNonSymKnots(
         LvalT.push_back(t_max);
         mergeBreakPts(SvalT, LvalT, TvalT);
 
-        // m_meshHandlePtr->GetListOfGIDs(PtsX,PtsY,PtsZ, diretion, TvalT,
-        // t_GIDs,t_EIDs); Need to be done.
         for (int i = 0; i < TvalT.size() - 1; i++)
         {
             NekDouble a = TvalT[i];
             NekDouble b = TvalT[i + 1];
-            //	int gID = t_GIDs[i]; need elmIndex on line. Hence code below.
-            //	int eID = t_EIDs[i];
             int elmIndex = -1;
             for (int j = startElmIndex; j <= endElmIndex + 1; j++)
             {
@@ -1442,7 +1309,7 @@ bool SmoothieSIAC::v_EvaluateUsingLineAt_vNonSymKnots(
                     break;
                 }
             }
-            assert(elmIndex != -1 && "Elm Index is wrong");
+            ASSERTL0(elmIndex != -1 && "Elm Index is wrong");
             for (int j = 0; j < n_quadPts_resample; j++)
             {
                 t_quadPts[j] = (b - a) * (q_quadR_Pts[j] + 1.0) / 2.0 + a;
@@ -1454,11 +1321,8 @@ bool SmoothieSIAC::v_EvaluateUsingLineAt_vNonSymKnots(
             }
             else
             {
-                // m_siacFilterPtrs[m_OneID]->EvaluateFilter(t_quadPts,t_quad_vals,
-                // meshSpacing, meshTShift, true);
-                assert(false && "Should no be here.");
+                NEKERROR(ErrorUtil : efatal, "Should no be here.");
             }
-            //	m_meshHandlePtr->EvaluateAt(t_xyz_vals);
 
             NekDouble integral = 0.0;
             Array<OneD, NekDouble> elv =
@@ -1467,8 +1331,6 @@ bool SmoothieSIAC::v_EvaluateUsingLineAt_vNonSymKnots(
             {
                 // need to calcuate value of t_xyz_vals.
                 // scaling of HvalT[j-1] to -1 and HvalT[j] to +1
-                //	lcoord[0] = (t+ t_quadPts[k] - HvalT[elmIndex-1])/
-                //(HvalT[elmIndex]-HvalT[elmIndex-1])*2.0 -1.0;
                 lcoord[0] = (t + t_quadPts[k] - HvalT[elmIndex]) /
                                 (HvalT[elmIndex + 1] - HvalT[elmIndex]) * 2.0 -
                             1.0;
@@ -1526,27 +1388,14 @@ bool SmoothieSIAC::CalculateKnotVec(NekDouble t, vector<NekDouble> &HvalT,
             return false;
         }
 
-        /*
-                        // Contant in each line segment.
-                NekDouble diff = *low;
-                for(int i =0; i< 3*degree+2; i++)
-                {
-                    //knotVec[i] = *(startIt+i)-diff;
-                    knotVec[i] = *(startIt+i);
-                }
-                shift= t-diff;
-        */
-        // variable with each line segment.
         NekDouble ratio = (t - *low) / (*(low + 1) - *low);
         for (int i = 0; i < 3 * degree + 2; i++)
         {
-            // knotVec[i] = *(startIt+i)-diff;
             NekDouble frontknot = *(startIt + i);
             NekDouble backknot  = *(startIt + i + 1);
             knotVec[i] = frontknot + ratio * (backknot - frontknot) - t;
         }
         shift = t - *low;
-        // knotVec[2] = ratio; // Debug purpose
     }
     else
     {
@@ -1555,21 +1404,11 @@ bool SmoothieSIAC::CalculateKnotVec(NekDouble t, vector<NekDouble> &HvalT,
         {
             return false;
         }
-        /*
-                NekDouble diff = (*low+*(low+1))/2.0;
-                for(int i =0; i< 3*degree+2; i++)
-                        {
-                    //knotVec[i] = *(startIt+i)-diff;
-                    knotVec[i] = *(startIt+i);
-                }
-                shift= t-diff;
-        */
         NekDouble ratio = (t - *low) / (*(low + 1) - *low);
         if (ratio > 0.5)
         {
             for (int i = 0; i < 3 * degree + 2; i++)
             {
-                // knotVec[i] = *(startIt+i)-diff;
                 NekDouble frontknot = *(startIt + i);
                 NekDouble backknot  = *(startIt + i + 1);
                 knotVec[i] =
@@ -1580,7 +1419,6 @@ bool SmoothieSIAC::CalculateKnotVec(NekDouble t, vector<NekDouble> &HvalT,
         {
             for (int i = 0; i < 3 * degree + 2; i++)
             {
-                // knotVec[i] = *(startIt+i)-diff;
                 NekDouble frontknot = *(startIt + i - 1);
                 NekDouble backknot  = *(startIt + i);
                 knotVec[i] =
@@ -1588,7 +1426,6 @@ bool SmoothieSIAC::CalculateKnotVec(NekDouble t, vector<NekDouble> &HvalT,
             }
         }
         shift = t - *low;
-        // knotVec[2] = ratio; // Debug purpose
     }
 
     return true;

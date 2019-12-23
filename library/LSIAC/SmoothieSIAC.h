@@ -690,8 +690,6 @@ public:
             stPoint, direction, n_quadPts, meshSpacing, tparams, tvals, varNum);
     }
 
-    //		bool b_symMesh = m_meshHandlePtr->GetKnotVec(m_order-1,
-    // t,HvaT,knotVec, nonSymShift); TBD
     bool CalculateKnotVec(NekDouble t, vector<NekDouble> &HvalT,
                           Array<OneD, NekDouble> &knotVec,
                           NekDouble &nonSymShift);

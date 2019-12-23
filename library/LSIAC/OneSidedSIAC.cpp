@@ -111,10 +111,8 @@ OneSidedSIAC::OneSidedSIAC(const int Order,
             m_cenBSplinePtr =
                 std::make_shared<CentralBSplines>(Order + Derivative);
         default:
-            cout << "OneSidedSIAC::Constructor 1st.";
             break;
     }
-    //	EvaluateCoefficients();
 }
 
 bool OneSidedSIAC::v_GetBreakPts(const NekDouble scaling,
@@ -169,8 +167,9 @@ bool OneSidedSIAC::v_GetBreakPts(const NekDouble scaling,
             }
             break;
         default:
-            assert(false &&
-                   "Missed all switch cases. Something is not right..");
+            NEKERROR(ErrorUtil
+                     : efatal,
+                       "Missed all switch cases. Something is not right..");
     }
     return true;
 }
@@ -210,16 +209,13 @@ bool OneSidedSIAC::v_GetFilterRange(NekDouble scaling, NekDouble &tmin,
             }
             break;
         default:
-            assert(false &&
-                   "Missed all switch cases. Something is not right..");
+            NEKERROR(ErrorUtil
+                     : efatal,
+                       "Missed all switch cases. Something is not right..");
     }
     return true;
 }
 
-/*
- *
- *
- */
 bool OneSidedSIAC::v_EvaluateFilter(const Array<OneD, NekDouble> &x_pos,
                                     Array<OneD, NekDouble> &t_vals,
                                     const NekDouble meshScaling,
@@ -251,7 +247,6 @@ bool OneSidedSIAC::v_EvaluateFilter(const Array<OneD, NekDouble> &x_pos,
                 NekDouble it = -(m_nBSpl - 1.0) / 2.0 + i;
                 // Some kind of mesh shifting needs to be done while evaluating
                 // the Bsplines. Currently this is to be done when necessary.
-                // ???
                 m_cenBSplinePtr->EvaluateBSplines(
                     x_pos, t_valTemp,
                     (((NekDouble)it) * meshScaling + meshShift), meshScaling);
@@ -271,12 +266,9 @@ bool OneSidedSIAC::v_EvaluateFilter(const Array<OneD, NekDouble> &x_pos,
                 NekDouble it = -(m_nBSpl - 1.0) / 2.0 + i;
                 // Some kind of mesh shifting needs to be done while evaluating
                 // the Bsplines. Currently this is to be done when necessary.
-                // ???
                 m_cenBSplinePtr->EvaluateBSplines(
                     x_pos, t_valTemp,
                     (((NekDouble)it) * meshScaling + meshShift), meshScaling);
-                //		Vmath::Smul(nq,
-                // m_coeffs[m_nBSpl-1-i]/meshScaling , t_valTemp,1,t_valTemp,1);
                 Vmath::Smul(nq,
                             m_coeffs[m_nBSpl - 1 - i] /
                                 std::pow(meshScaling, 1 + m_nthDer),
@@ -310,9 +302,9 @@ bool OneSidedSIAC::v_EvaluateFilter(const Array<OneD, NekDouble> &x_pos,
             }
             break;
         default:
-            assert(false &&
-                   "Missed all switch cases. Something is not right..");
-            cout << "Assert here, OneSidedFilter::v_EvaluateFilter" << endl;
+            NEKERROR(ErrorUtil
+                     : efatal,
+                       "Missed all switch cases. Something is not right..");
     }
     return true;
 }
@@ -331,7 +323,6 @@ bool OneSidedSIAC::v_EvaluateCoefficients(const NekDouble kernelShift)
         case (OneSidedFilterType::VAN_SIAC_4kp1):
             CalCoeffForWideSymKernel(m_order - 1, m_nBSpl, m_coeffs,
                                      kernelShift);
-            // cout << "kernelShift" << kernelShift << endl;
             break;
         case (OneSidedFilterType::Der_SMOOTH_BASIC_SIAC_2kp1):
         case (OneSidedFilterType::Der_BASIC_SIAC_2kp1):
@@ -339,14 +330,10 @@ bool OneSidedSIAC::v_EvaluateCoefficients(const NekDouble kernelShift)
         case (OneSidedFilterType::Der_BASIC_SIAC_4kp1):
             CalCoeffForWideSymKernel(m_order - 1 + m_nthDer, m_nthDer, m_nBSpl,
                                      m_coeffs, kernelShift);
-            // printNekArray(m_coeffs,0);
             CalCoeffForCenBSplDerivatives(m_order - 1 + m_nthDer, m_nthDer,
                                           m_nBSpl, m_coeffs);
-            // printNekArray(m_coeffs,0);
-            // cout << "No of BSplines: " <<m_nBSpl << endl;
             break;
         case (OneSidedFilterType::XLi_SIAC_2kp2):
-            //			if (TOLERENCE < std::abs(kernelShifted) )
             {
                 int numKnotsPvec = (m_order - 1) + 2;
                 int nBSpl        = 2 * (m_order - 1) + 2;
@@ -411,17 +398,7 @@ bool OneSidedSIAC::v_EvaluateCoefficients(const NekDouble kernelShift)
                 // CalCoeffForKnotMatrixVec(m_order-1, m_knotMatrix, m_coeffs);
                 CalCoeffForKnotMatrixVec_Hanieh(m_order - 1, m_knotMatrix,
                                                 m_coeffs);
-                // CalDerivativesForKnotMatrixVec_Hanieh(m_order-1,m_nthDer,
-                // m_knotMatrix, m_coeffs);
             }
-            //			else{
-            //				assert((std::abs(kernelShifted)
-            //>TOLERENCE)
-            //&&"you should be using symmetric filter. Somthing is not right.");
-            // retValue = false;
-            //			}
-            break;
-        case (OneSidedFilterType::Der_XLi_SIAC_2kp2):
         {
             NekDouble leftknotOfsym =
                 -1.0 * ((m_order) / 2.0 + (m_order - 1.0));
@@ -492,99 +469,18 @@ bool OneSidedSIAC::v_EvaluateCoefficients(const NekDouble kernelShift)
             // CalCoeffForKnotMatrixVec(m_order-1, m_knotMatrix, m_coeffs);
             CalCoeffForKnotMatrixVec_Hanieh(m_order - 1 + m_nthDer,
                                             m_knotMatrix, m_coeffs);
-            // printNekArray(m_coeffs,0);
             CalDerivativesForKnotMatrixVec_Hanieh(m_order - 1, m_nthDer,
                                                   m_knotMatrix, m_coeffs);
-            // printNekArray(m_coeffs,0);
         }
-        // assert("Need to code this.");
         break;
         case (OneSidedFilterType::N_Der_SMOOTH_BASIC_SIAC_2kp1):
             CalCoeffForWideSymKernel(m_order - 1, m_nBSpl, m_coeffs,
                                      kernelShift);
             break;
-            /*
-                            case (OneSidedFilterType::Der_XLi_SIAC_2kp2):
-                                    {
-                                            int numKnotsPvec =
-               (m_order-1)+2+m_nthDer; int nBSpl = 2*(m_order-1) +2; NekDouble
-               leftknotOfsym = -1.0*( (m_order)/2.0 + (m_order-1.0) +m_nthDer);
-                                            NekDouble rightknotOfsym = (
-               (m_order)/2.0 + (m_order-1.0) + m_nthDer );
-                                            // create and fill KnotMatrix.
-                                            if( kernelShift>0 )
-                                            { // Right shift.
-                                                    // The first one is general
-               B-Spline. All the others are central bsplines.
-                                                    m_knotMatrix.clear();
-                                                    for ( int tm = 0; tm <
-               nBSpl;tm++)
-                                                    {
-                                                            if ( 0 == tm)
-                                                            { // for tm=0; i.e.
-               first generalB-Spline. std::vector<NekDouble>
-               genVec(numKnotsPvec,leftknotOfsym+kernelShift); for (int tv=0; tv
-               < numKnotsPvec;tv++)
-                                                                    {
-                                                                            genVec[tv]
-               = kernelShift+ std::max(0.0, leftknotOfsym +kernelShift+tv);
-                                                                    }
-                                                                    genVec[numKnotsPvec-1]
-               = leftknotOfsym+kernelShift +1.0; m_knotMatrix.push_back(genVec);
-                                                            }
-                                                            else
-                                                            {
-                                                                    std::vector<NekDouble>
-               genVec(numKnotsPvec); for (int tv =0; tv < numKnotsPvec; tv++)
-                                                                    {
-                                                                            genVec[tv]
-               = leftknotOfsym + kernelShift + tv + (tm-1);
-                                                                    }
-                                                                    m_knotMatrix.push_back(genVec);
-                                                            }
-                                                    }
-                                            }
-                                            else // KernelShift < 0
-                                            { //leftshift
-                                                    m_knotMatrix.clear();
-                                                    for ( int tm = 0; tm <
-               nBSpl;tm++)
-                                                    {
-                                                            if (
-               (2*(m_order-1)+1 ) == tm ) { // for tm=0; i.e. first
-               generalB-Spline. std::vector<NekDouble>
-               genVec(numKnotsPvec,rightknotOfsym+kernelShift); genVec[0] =
-               rightknotOfsym+kernelShift - 1.0; for (int tv=0; tv <
-               numKnotsPvec;tv++)
-                                                                    {
-                                                                            genVec[tv]
-               = std::min(0.0, rightknotOfsym+kernelShift +tv);
-                                                                    }
-                                                                    m_knotMatrix.push_back(genVec);
-                                                            }
-                                                            else
-                                                            {
-                                                                    std::vector<NekDouble>
-               genVec(numKnotsPvec); for (int tv =0; tv < numKnotsPvec; tv++)
-                                                                    {
-                                                                            genVec[tv]
-               = leftknotOfsym + kernelShift + tv + tm;
-                                                                    }
-                                                                    m_knotMatrix.push_back(genVec);
-                                                            }
-                                                    }
-                                            }
-                                            // Evaluate the coefficents and
-               store in m_coeff array.
-                            //CalCoeffForKnotMatrixVec(m_order-1, m_knotMatrix,
-               m_coeffs); CalCoeffForKnotMatrixVec_Hanieh(m_order-1+m_nthDer,
-               m_knotMatrix, m_coeffs);
-                                    }
-                                    //assert("Need to code this.");
-                                    break;
-             */
         default:
-            assert("Missed all switch cases. Something is not right..");
+            NEKERROR(ErrorUtil
+                     : efatal,
+                       "Missed all switch cases. Something is not right..");
             retValue = false;
             break;
     }

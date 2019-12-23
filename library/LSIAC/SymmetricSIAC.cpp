@@ -55,19 +55,9 @@ SymmetricSIAC::SymmetricSIAC(int order)
             m_coeffs = Array<OneD, NekDouble>((2 * (order - 1) + 1), 0.0);
             break;
         default:
-            assert(false && "something is wrong");
-            cout << "Should not come here assert here actually." << endl;
+            ASSERTL0(false && "something is wrong");
             break;
     }
-    /*
-            if (0 == m_nthDer){
-                    //m_coeffs(2*(order-1)+1,0.0);
-                    m_R = 2*(order-1) ; // intializeR
-            }else{
-                    //m_coeffs(2*(order+nthDer-1)+1,0.0);
-                    m_R = 2*(order+m_nthDer-1) ; // need to be re-checked ???
-            }
-    */
     EvaluateCoefficients();
 }
 
@@ -87,7 +77,7 @@ SymmetricSIAC::SymmetricSIAC(int Order, int nBSpl, int nthDerivative)
             m_coeffs = Array<OneD, NekDouble>(nBSpl, 0.0);
             break;
         default:
-            cout << "Assert, Somthing is wrong. F: SymmetricSIAC" << endl;
+            NEKERROR(ErrorUtil : efatal, "Symmetric SIAC Constructor");
     }
     EvaluateCoefficients();
 }
@@ -102,13 +92,11 @@ SymmetricSIAC::SymmetricSIAC(int Order, SymFilterType filterType, int nthDer)
             m_order  = Order;
             m_nBSpl  = 2 * (m_order - 1) + 1 + nthDer;
             m_coeffs = Array<OneD, NekDouble>(m_nBSpl, 0.0);
-            // cout << "coming into this case" << endl;
             break;
         case (SymFilterType::CUSTOM_Derivative_SIAC):
             m_order  = Order;
             m_nBSpl  = 2 * (m_order - 1) + 1;
             m_coeffs = Array<OneD, NekDouble>(m_nBSpl, 0.0);
-            // cout << "came into 3rd case" << endl;
             break;
         case (SymFilterType::CUSTOM_SMOOTH_Derivative_SIAC_WOUT_DIVDIFF):
             m_order      = Order + nthDer;
@@ -116,10 +104,9 @@ SymmetricSIAC::SymmetricSIAC(int Order, SymFilterType filterType, int nthDer)
             m_nBSpl      = 2 * (Order - 1) + 1;
             m_coeffs     = Array<OneD, NekDouble>(m_nBSpl, 0.0);
             m_cenBSpline = CentralBSplines(m_order);
-            // cout << "coming into this case" << endl;
             break;
         default:
-            cout << "@#$Assert, Something is wrong. F: SymmetricSIAC" << endl;
+            NEKERROR(ErrorUtil : efatal, "Filter type not defined");
     }
     EvaluateCoefficients();
 }
@@ -138,27 +125,16 @@ bool SymmetricSIAC::v_EvaluateCoefficients(const NekDouble kernelShift)
             m_splines.Initialize(m_order - 1, m_nBSpl, m_coeffs);
             break;
         case (SymFilterType::CUSTOM_SMOOTH_Derivative_SIAC):
-            // case(SymFilterType::CUSTOM_Derivative_SIAC):
             CalCoeffForWideSymKernel(m_order - 1 + m_nthDer, m_nthDer, m_nBSpl,
                                      m_coeffs);
-            //	cout << "n_BSpl "<< m_nBSpl << endl;
-            //	printNekArray(m_coeffs,0);
             CalCoeffForCenBSplDerivatives(m_order - 1 + m_nthDer, m_nthDer,
                                           m_nBSpl, m_coeffs);
-            //	cout << "n_BSpl "<< m_nBSpl << endl;
-            //	printNekArray(m_coeffs,0);
-            m_splines.Initialize(m_order - 1, m_nBSpl, m_coeffs);
             break;
         case (SymFilterType::CUSTOM_Derivative_SIAC):
-            // case(SymFilterType::CUSTOM_Derivative_SIAC):
             CalCoeffForWideSymKernel(m_order - 1 + m_nthDer, m_nthDer, m_nBSpl,
                                      m_coeffs);
-            //	cout << "n_BSpl "<< m_nBSpl << endl;
-            //	printNekArray(m_coeffs,0);
             CalCoeffForCenBSplDerivatives(m_order - 1 + m_nthDer, m_nthDer,
                                           m_nBSpl, m_coeffs);
-            //	cout << "n_BSpl "<< m_nBSpl << endl;
-            //	printNekArray(m_coeffs,0);
             m_splines.Initialize(m_order - 1, m_nBSpl, m_coeffs);
             break;
         case (SymFilterType::CUSTOM_SMOOTH_Derivative_SIAC_WOUT_DIVDIFF):
@@ -166,8 +142,7 @@ bool SymmetricSIAC::v_EvaluateCoefficients(const NekDouble kernelShift)
             m_splines.Initialize(m_order - 1, m_nBSpl, m_coeffs);
             break;
         default:
-            cout << "Assert or add code for all the other cases Sig:ajiso876af"
-                 << endl;
+            NEKERROR(ErrorUtil : efatal, "New filter type. Not accounted for");
     }
 
     return true;
@@ -177,10 +152,6 @@ bool SymmetricSIAC::EvaluateFilterUsingSplines(
     const Array<OneD, NekDouble> &x_pos, Array<OneD, NekDouble> &t_vals,
     const NekDouble meshScaling, const NekDouble meshShift,
     const bool evalCoeff)
-// bool SymmetricSIAC::v_EvaluateFilter( const Array<OneD,NekDouble> &x_pos,
-// Array<OneD,NekDouble> &t_vals, 				 const NekDouble
-// meshScaling, const NekDouble
-// meshShift, const bool evalCoeff)
 {
     boost::ignore_unused(
         meshShift,
@@ -193,7 +164,6 @@ bool SymmetricSIAC::EvaluateFilterUsingSplines(
     Array<OneD, NekDouble> t_valTemp(nq);
     for (int i = 0; i < m_nBSpl; i++)
     {
-        //	NekDouble it = -m_R*0.5 + i;
         NekDouble it = -(m_nBSpl - 1.0) / 2.0 + i;
         m_cenBSpline.EvaluateBSplines(
             x_pos, t_valTemp, ((NekDouble)it) * meshScaling, meshScaling);
@@ -210,9 +180,6 @@ bool SymmetricSIAC::v_EvaluateFilter(const Array<OneD, NekDouble> &x_pos,
                                      const NekDouble meshScaling,
                                      const NekDouble meshShift,
                                      const bool evalCoeff)
-// bool SymmetricSIAC::EvaluateFilterUsingSplines( const Array<OneD,NekDouble>
-// &x_pos, Array<OneD,NekDouble> &t_vals, 				const
-// NekDouble meshScaling, const NekDouble meshShift, const bool evalCoeff)
 {
     boost::ignore_unused(
         meshShift,
@@ -249,7 +216,7 @@ bool SymmetricSIAC::v_GetBreakPts(const NekDouble scaling,
             tmax = ((m_order) / 2.0 + (m_nBSpl - 1.0) / 2.0) * scaling;
             break;
         default:
-            cout << "This case not coded yet. GetBreakPts" << endl;
+            NEKERROR(ErrorUtil : efatal, "Filter out of scope");
     }
 
     valT.clear();
@@ -276,7 +243,7 @@ bool SymmetricSIAC::v_GetFilterRange(NekDouble scaling, NekDouble &tmin,
             tmax = ((m_order) / 2.0 + (m_nBSpl - 1.0) / 2.0) * scaling;
             break;
         default:
-            cout << "This case not coded yet. GetFilterRange" << endl;
+            NEKERROR(ErrorUtil : efatal, "Filter out of scope");
     }
     return true;
 }

@@ -33,7 +33,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 #pragma once
 #include "HandleNekMesh.h"
-// libraries for rTrees
 #include <boost/foreach.hpp>
 #include <boost/function_output_iterator.hpp>
 #include <boost/geometry.hpp>
@@ -47,8 +46,6 @@ namespace Boostgi = boost::geometry::index;
 typedef Boostg::model::point<NekDouble, 3, Boostg::cs::cartesian> RPoint;
 typedef Boostg::model::box<RPoint> RBox;
 typedef std::tuple<RBox, unsigned, unsigned> RValue;
-// typedef std::pair<RBox,unsigned,unsigned> RValue;
-// typedef Boostgi::rtree<RValue, Boostgi::rstar<16> > RTree;
 typedef Boostgi::rtree<RValue, Boostgi::quadratic<10, 3>> RTree;
 
 namespace Nektar
@@ -56,32 +53,14 @@ namespace Nektar
 namespace LSIAC
 {
 
-/*
-// used with Boost.Geometry R-tree
-struct MySearchCallback2
-{
-        MySearchCallback2(vector<unsigned> &res)
-                :m_res(&res)
-        {}
-
-    template <typename Value>
-    void operator()(Value const& v)
-    {
-        m_res->push_back(std::get<1>(v));
-    }
-
-        vector<unsigned>* m_res;
-
-};
-*/
-
-/// Handles Nektar 2D meshes.
+/**
+ * @brief Handles Nektar 2D meshes.
+ */
 class HandleNekMesh3D : public HandleNekMesh
 {
 
 private:
     bool m_useRTree;
-    //		static vector<unsigned> m_res;
 protected:
     SpatialDomains::TriGeomMap m_triMap;
     SpatialDomains::QuadGeomMap m_quadMap;
@@ -198,7 +177,6 @@ private:
         const Array<OneD, NekDouble> &dir, const Array<OneD, NekDouble> &point,
         const NekDouble t1, const NekDouble t2, vector<NekDouble> &tvalT);
 
-    // functions used by RTree
     void BoundingBoxOfLineSeg(const Array<OneD, NekDouble> &dir,
                               const Array<OneD, NekDouble> &pt,
                               const NekDouble t1, const NekDouble t2, RBox &b);
@@ -226,8 +204,6 @@ private:
             return b;
     }
 
-    // virtual bool v_CalculateDynamicScaling();
-    // virtual NekDouble v_GetJacobian(const int eID);
     virtual NekDouble v_GetDynamicScaling(Array<OneD, NekDouble> glCoord,
                                           int eid = -1, NekDouble mu = 1.0);
 };

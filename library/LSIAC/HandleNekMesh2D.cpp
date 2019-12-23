@@ -64,7 +64,7 @@ NekDouble HandleNekMesh2D::v_GetElLargestEdgeSize(const NekDouble ptsx,
         {
             Elid = m_expansions[0]->GetExpIndex(glCord);
         }
-        assert(Elid > 0 && "Something wrong. Point outside boundary");
+        NEKERROR(ErrorUtil : efatal, "Something wrong. Point outside boundary");
     }
 
     SpatialDomains::GeometrySharedPtr gEl =
@@ -72,19 +72,14 @@ NekDouble HandleNekMesh2D::v_GetElLargestEdgeSize(const NekDouble ptsx,
 
     int numEdges        = gEl->GetNumEdges();
     NekDouble maxLength = -1.0;
-    // Array<OneD,NekDouble> p1loc(3,0.0),p1loc(3,0.0);
     for (int i = 0; i < numEdges; i++)
     {
         int Eid = gEl->GetEid(i);
-        // int Vid0  = m_segMap.find(Eid)->second->GetVid(0);
-        // int Vid1  = m_segMap.find(Eid)->second->GetVid(1);
         SpatialDomains::PointGeomSharedPtr p0 =
             m_segMap.find(Eid)->second->GetVertex(0);
         SpatialDomains::PointGeomSharedPtr p1 =
             m_segMap.find(Eid)->second->GetVertex(1);
         SpatialDomains::PointGeom p2(*p1);
-        // PointGeomSharedPtr p0 = m_pointMap.find(Vid0);
-        // PointGeomSharedPtr p1 = m_pointMap.find(Vid1);
         NekDouble len = p0->dist(p2);
         if (len > maxLength)
         {
@@ -92,14 +87,15 @@ NekDouble HandleNekMesh2D::v_GetElLargestEdgeSize(const NekDouble ptsx,
         }
     }
 
-    assert(maxLength > 0 && "max Length > 0 ");
+    ASSERTL0(maxLength > 0 && "max Length > 0 ");
     return maxLength;
 }
 
 //! This function given range of tmin and tmax returns the element break points.
 /*
-        \param xcen_offset,ycen_offset,zcen_offset,direction,t_offsetmin
-   t_offset_max \param [out] xPos,yPos,zPos,tPos This function makes few
+    \param xcen_offset,ycen_offset,zcen_offset,direction,t_offsetmin
+   t_offset_max
+    \param [out] xPos,yPos,zPos,tPos This function makes few
    assumptions for simplicity.
         -> This function does not gaurentee if all of breakpoints tmin and tmax
    are returned.
@@ -112,8 +108,6 @@ NekDouble HandleNekMesh2D::v_GetElLargestEdgeSize(const NekDouble ptsx,
 bool HandleNekMesh2D::v_LoadMesh(string var)
 {
     SpatialDomains::ExpansionMap expansions = m_graph->GetExpansions();
-    //	cout << "expansion size: " <<expansions.size() << endl;
-    // m_expansions.push_back(MemoryManager<MultiRegions::ContField2D>
     m_expansions.push_back(
         MemoryManager<MultiRegions::DisContField2D>::AllocateSharedPtr(
             m_session, m_graph, var));
@@ -123,10 +117,8 @@ bool HandleNekMesh2D::v_LoadMesh(string var)
 bool HandleNekMesh2D::v_LoadData(string filename, vector<string> &variables)
 {
     SpatialDomains::ExpansionMap expansions = m_graph->GetExpansions();
-    //	cout << "expansion size: " <<expansions.size() << endl;
     for (int i = 0; i < variables.size(); i++)
     {
-        // m_expansions.push_back(MemoryManager<MultiRegions::ContField2D>
         m_expansions.push_back(
             MemoryManager<MultiRegions::DisContField2D>::AllocateSharedPtr(
                 m_session, m_graph, variables[i]));
@@ -159,29 +151,6 @@ bool HandleNekMesh2D::v_LoadData(string filename, vector<string> &variables)
         exp->BwdTrans(exp->GetCoeffs(), exp->UpdatePhys());
         m_Arrays.push_back(exp->GetPhys());
     }
-    /*
-            // want to check if the file was loaded successfully.
-            cout << "variables.size: " << variables.size()<< endl;
-            for ( int i =0; i < variables.size(); i++)
-            {
-                    cout << variables[i] << endl;
-            }
-            Array<OneD,NekDouble> uExp_Coeffs =  m_expansions[0]->GetCoeffs();
-            Array<OneD,NekDouble> uExp_Phys =  m_expansions[0]->GetPhys();
-
-            cout << "coefficients" << endl;
-            for ( auto c : uExp_Coeffs)
-            {
-                    cout << c <<"\t" ;
-            }
-            cout << endl;
-            cout << "Phys" << endl;
-            for (auto c: uExp_Phys)
-            {
-                    cout << c << "\t";
-            }
-            cout << endl;
-    */
     return true;
 }
 
@@ -193,7 +162,6 @@ bool HandleNekMesh2D::v_GetBreakPts(
     const NekDouble tmin, const NekDouble tmax, vector<NekDouble> &xPos,
     vector<NekDouble> &yPos, vector<NekDouble> &zPos, vector<NekDouble> &tPos)
 {
-    //	assert( false && "Need more coding" );
     boost::ignore_unused(xPos, yPos, zPos); // Only returning tPos for now.
     Array<OneD, NekDouble> point(3);
     point[0] = xcen_offset;
@@ -210,7 +178,6 @@ bool HandleNekMesh2D::v_GetBreakPts(
         IntersectWithEdges(m_segMap, m_pointMap, direction, point, tmin, tmax,
                            tPos);
     }
-    // cout << tPos.size()<< endl;
     if (0 != tPos.size())
     {
         if (!compare2NekDoublesH(tmin, tPos.front()))
@@ -237,7 +204,6 @@ bool HandleNekMesh2D::v_GetBreakPts_Without_Tmin_Tmax(
     const NekDouble tmin, const NekDouble tmax, vector<NekDouble> &xPos,
     vector<NekDouble> &yPos, vector<NekDouble> &zPos, vector<NekDouble> &tPos)
 {
-    //	assert( false && "Need more coding" );
     boost::ignore_unused(xPos, yPos, zPos); // Only returning tPos for now.
     Array<OneD, NekDouble> point(3);
     point[0] = xcen_offset;
@@ -254,7 +220,6 @@ bool HandleNekMesh2D::v_GetBreakPts_Without_Tmin_Tmax(
         IntersectWithEdges(m_segMap, m_pointMap, direction, point, tmin, tmax,
                            tPos);
     }
-    // cout << tPos.size()<< endl;
 
     return true;
 }
@@ -266,7 +231,7 @@ bool HandleNekMesh2D::v_CanTRangebeApplied(
 {
     boost::ignore_unused(ptsX, ptsY, ptsZ, scaling, tmin, tmax, tminUpdate,
                          tmaxUpdate);
-    assert(false && "Need more coding");
+    NEKERROR(ErrorUtil : efatal, "Not coded.");
     return false;
 }
 
@@ -282,10 +247,8 @@ bool HandleNekMesh2D::v_CanTRangebeAppliedWOMeshShift(
     vector<NekDouble> tPos;
     pl[0] = ptsX + direction[0] * tmin;
     pl[1] = ptsY + direction[1] * tmin;
-    // pl[2] = ptsZ + direction[2] * tmin;
     pr[0] = ptsX + direction[0] * tmax;
     pr[1] = ptsY + direction[1] * tmax;
-    // pr[2] = ptsZ + direction[2] * tmax;
 
     int pl_index, pr_index;
     if (m_useRTree)
@@ -315,10 +278,8 @@ bool HandleNekMesh2D::v_WhatIsTRange(const NekDouble PtsX, const NekDouble PtsY,
     vector<NekDouble> tPos;
     pl[0] = PtsX + direction[0] * tmin;
     pl[1] = PtsY + direction[1] * tmin;
-    // pl[2] = PtsZ + direction[2] * tmin;
     pr[0] = PtsX + direction[0] * tmax;
     pr[1] = PtsY + direction[1] * tmax;
-    // pr[2] = PtsZ + direction[2] * tmax;
 
     int pl_index, pr_index;
     if (m_useRTree)
@@ -370,11 +331,8 @@ bool HandleNekMesh2D::v_CanTRangebeApplied(
     vector<NekDouble> tPos;
     pl[0] = PtsX + direction[0] * tmin;
     pl[1] = PtsY + direction[1] * tmin;
-    // pl[2] = PtsZ + direction[2] * tmin;
     pr[0] = PtsX + direction[0] * tmax;
     pr[1] = PtsY + direction[1] * tmax;
-    // pr[2] = PtsZ + direction[2] * tmax;
-
     int pl_index, pr_index;
     if (m_useRTree)
     {
@@ -387,8 +345,6 @@ bool HandleNekMesh2D::v_CanTRangebeApplied(
         pr_index = m_expansions[0]->GetExpIndex(pr, TOLERENCE);
     }
 
-    // cout << pl_index << endl;
-    // cout << pr_index << endl;
     if ((0 > pl_index) || (0 > pr_index))
     { // goes out of boundary
         Array<OneD, NekDouble> point(3);
@@ -419,23 +375,9 @@ bool HandleNekMesh2D::v_CanTRangebeApplied(
         }
         if ((0 > pl_index) && (0 > pr_index))
         {
-            /*
-                    cout << std::setprecision(21)<< endl;
-                    cout << "tmin: "<<tmin<< " tmax: " << tmax<< endl;
-                    cout << "pl_index: "<<pl_index<< " pr_index: " << pr_index<<
-               endl; cout << "point pl" << endl; printNekArray(pl,0); cout <<
-               "point pr" << endl; printNekArray(pr,0); cout << "point" << endl;
-                    printNekArray(point,0);
-                    cout<< "tPos" << endl;
-                    printNekArray(tPos,0);
-                    cout<< "direction" << endl;
-                    printNekArray(direction,0);
-                    assert(false && "Not enough mesh size to apply.");
-            */
         }
         return false;
     }
-    // assert( false && "Need more coding" );
     return true;
 }
 
@@ -447,7 +389,6 @@ bool HandleNekMesh2D::v_EvaluateAt(const NekDouble xPos, const NekDouble yPos,
     Array<OneD, NekDouble> lcoord(2, 0.0);
     lcoord[0] = xPos;
     lcoord[1] = yPos;
-    // lcoord[2] = zPos;
     if (eID < 0)
     {
         if (m_useRTree)
@@ -458,9 +399,7 @@ bool HandleNekMesh2D::v_EvaluateAt(const NekDouble xPos, const NekDouble yPos,
         {
             eID = m_expansions[0]->GetExpIndex(lcoord, TOLERENCE);
         }
-        //				cout << "PTS:\t"<<xPos << "\t" << yPos
-        //<<"\t"<< zPos << "\t eid\t"<<eID<<endl;
-        assert(eID != -1 && "Input point is out of Mesh");
+        ASSERTL0(eID != -1 && "Input point is out of Mesh");
     }
     LocalRegions::ExpansionSharedPtr lexp = m_expansions[0]->GetExp(eID);
     const int phys_offset = m_expansions[0]->GetPhys_Offset(eID);
@@ -478,7 +417,7 @@ bool HandleNekMesh2D::v_EvaluateAt(const Array<OneD, NekDouble> &xPos,
                                    Array<OneD, NekDouble> &values, int varNum)
 {
     boost::ignore_unused(gID); // reserved for global id if implemented.
-    assert(gID >= 0 && eID >= 0 && "Input paramerters are out of scope;");
+    ASSERTL0(gID >= 0 && eID >= 0 && "Input paramerters are out of scope;");
     // The reason for asking gID will be useful if we are using MPI.
     LocalRegions::ExpansionSharedPtr lexp = m_expansions[0]->GetExp(eID);
     const int phys_offset = m_expansions[0]->GetPhys_Offset(eID);
@@ -513,64 +452,17 @@ bool HandleNekMesh2D::v_GetListOfGIDs(
         Array<OneD, NekDouble> locCoord(2, 0.0);
         locCoord[0] = xPos + t_break * direction[0];
         locCoord[1] = yPos + t_break * direction[1];
-        // locCoord[2] = zPos + t_break * direction[2];
         if (m_useRTree)
         {
             t_GIDs[i] = GetExpansionIndexUsingRTree(locCoord);
-            /*
-                                    int temp1, temp2;
-                                    temp1 =
-               GetExpansionIndexUsingRTree(locCoord); temp2 =
-               m_expansions[0]->GetExpIndex(locCoord,TOLERENCE); if ( temp1 !=
-               temp2)
-                                    {
-                                            cout << "Number dont match" << endl;
-                                            cout << "ExpIndexRtree " << temp1 <<
-               " ExpIndexDir" << temp2 << endl; cout <<  scientific<<
-               setprecision(29)<< "locPos0: "<< locCoord[0] << endl
-                                            << " locPos1: " << locCoord[1]<<
-               endl << " locPos2: " <<locCoord[2]<< endl;
-                                    }
-            */
         }
         else
         {
             t_GIDs[i] = m_expansions[0]->GetExpIndex(locCoord, TOLERENCE);
-            //	t_GIDs[i] = m_expansions[0]->GetExpIndex(locCoord);
         }
-
         t_EIDs[i] = t_GIDs[i];
-        if (t_GIDs[i] < 0)
-        {
-            cout << "Somehting is wrong" << endl;
-            cout << "t_breaks" << endl;
-            printNekArray(t_breaks);
-            cout << "t_break[i] " << scientific << setprecision(29)
-                 << t_breaks[i] << endl;
-            cout << scientific << setprecision(29) << "Pos: " << xPos
-                 << " yPos: " << yPos << " zPos: " << zPos << endl;
-            // cout <<  fixed<< setprecision(29)<< "locPos0: "<< locCoord[0] <<
-            // endl
-            cout << scientific << setprecision(29) << "locPos0: " << locCoord[0]
-                 << endl
-                 << " locPos1: " << locCoord[1] << endl
-                 << " locPos2: " << locCoord[2] << endl;
-            cout << "t_GIDs" << endl;
-            printNekArray(t_GIDs);
-        }
-        assert(t_GIDs[i] >= 0 && "Will fail down the line");
-        /*		for (int j=0; j < expansions.size();j++)
-                        {
-                                if (
-           expansions[j]->m_geomShPtr->ContainsPoint(locCoord,TOLERENCE) )
-                                {
-                                        t_GIDs[i] =
-           expansions[j]->m_geomShPtr->GetGlobalID(); t_EIDs[i] = j; break;
-                                }
-                        }
-        */
+        ASSERTL0(t_GIDs[i] >= 0 && "Cannot find element Id.");
     }
-
     return true;
 }
 
@@ -634,7 +526,6 @@ bool HandleNekMesh2D::intersect(vector<NekDouble> &p1, vector<NekDouble> &p2,
         }
         if (t0 < 0.0 && t1 < 0.0)
         { // ignore
-            // cout << "p7" << endl;
             return false;
         }
         else if (t0 <= 0.0 && t1 <= 1.0)
@@ -645,7 +536,6 @@ bool HandleNekMesh2D::intersect(vector<NekDouble> &p1, vector<NekDouble> &p2,
             i2.push_back(p1[0] + t1 * r[0]);
             i2.push_back(p1[1] + t1 * r[1]);
             i2.push_back(p1[2] + t1 * r[2]);
-            // cout << "p8" << endl;
             return true;
         }
         else if (t0 <= 0.0 && t1 >= 1.0)
@@ -655,7 +545,6 @@ bool HandleNekMesh2D::intersect(vector<NekDouble> &p1, vector<NekDouble> &p2,
             i1.push_back(p1[2]);
             i2.push_back(p2[0]);
             i2.push_back(p2[1]);
-            // cout << "p11" << endl;
             return true;
         }
         else if (t0 <= 1.0 && t1 >= 1.0)
@@ -666,18 +555,15 @@ bool HandleNekMesh2D::intersect(vector<NekDouble> &p1, vector<NekDouble> &p2,
             i2.push_back(p2[0]);
             i2.push_back(p2[1]);
             i2.push_back(p2[2]);
-            // cout << "p9" << endl;
             return true;
         }
         else // one case left t0>1 and t1>1
         {    // ignore
-            // cout << "p10" << endl;
             return false;
         }
     }
     if ((norm2_Math(rCs) < TOLERENCE) && (norm2_Math(pMq_Cr) > TOLERENCE))
     {
-        // cout << "p3" << endl;
         return false;
     }
     if (norm2_Math(rCs) > TOLERENCE)
@@ -700,17 +586,13 @@ bool HandleNekMesh2D::intersect(vector<NekDouble> &p1, vector<NekDouble> &p2,
             i1.push_back(p1[0] + t * r[0]);
             i1.push_back(p1[1] + t * r[1]);
             i1.push_back(p1[2] + t * r[2]);
-            //  cout << t << "\t" << u << "\t"<< r[0] << "\t" << r[1] << "\t" <<
-            //  r[2] << endl; cout << "p4" << endl;
             return true;
         }
         else
         {
-            //  cout << "p5" << endl;
             return false;
         }
     }
-    // cout << "p6" << endl;
     return true;
 }
 
@@ -729,8 +611,6 @@ void HandleNekMesh2D::IntersectWithEdges(
     p2[0]     = point[0] + t2 * dir[0];
     p2[1]     = point[1] + t2 * dir[1];
     p2[2]     = point[2] + t2 * dir[2];
-    // iterate through all the edges.
-    // pick a direction not zero.
     for (int i = 0; i < 3; i++)
     {
         if (std::abs(dir[i]) > TOLERENCE)
@@ -739,7 +619,7 @@ void HandleNekMesh2D::IntersectWithEdges(
             break;
         }
     }
-    assert(dirID >= 0 && "Direction is not right something is up ");
+    ASSERTL0(dirID >= 0 && "Direction is not right.");
     for (int s = 0; s < segMap.size(); s++)
     {
         SpatialDomains::SegGeomSharedPtr segPtr =
@@ -752,13 +632,11 @@ void HandleNekMesh2D::IntersectWithEdges(
         bool b = intersect(p1, p2, q1, q2, i1, i2);
         if (b)
         {
-            // nbc.printNekArray(i1,0);
             NekDouble t = 0;
             t           = (i1[dirID] - point[dirID]) / dir[dirID];
             tvalT.push_back(t);
             if (i2.size() > 0)
             {
-                //  nbc.printNekArray(i2,0);
                 NekDouble t = 0;
                 t           = (i2[dirID] - point[dirID]) / dir[dirID];
                 tvalT.push_back(t);
@@ -798,17 +676,12 @@ void HandleNekMesh2D::IntersectWithEdgesUsingRTree(
 
     BOOST_FOREACH (int eId, elIds)
     {
-        //   int eId = std::get<1>(v);
-        //   int gId = std::get<2>(v);
         SpatialDomains::GeometrySharedPtr geomSPtr =
             m_expansions[0]->GetExp(eId)->GetGeom();
         for (int l = 0; l < geomSPtr->GetNumEdges(); l++)
         {
             int edgeId = geomSPtr->GetEid(l);
             EdgeIds.push_back(edgeId);
-            // int eid = geomSPtr->GetEid(l);
-            // SpatialDomains::SegGeomSharedPtr segPtr =
-            // m_segMap.find(fid)->second;
         }
     }
 
@@ -829,8 +702,6 @@ void HandleNekMesh2D::IntersectWithFewEdges(
     p2[0]     = point[0] + t2 * dir[0];
     p2[1]     = point[1] + t2 * dir[1];
     p2[2]     = point[2] + t2 * dir[2];
-    // iterate through all the edges.
-    // pick a direction not zero.
     for (int i = 0; i < 3; i++)
     {
         if (std::abs(dir[i]) > TOLERENCE)
@@ -839,11 +710,11 @@ void HandleNekMesh2D::IntersectWithFewEdges(
             break;
         }
     }
-    assert(dirID >= 0 && "Direction is not right something is up ");
+    ASSERTL0(dirID >= 0 && "Direction is not right something is up ");
     for (int s = 0; s < EdgeIds.size(); s++)
     {
         SpatialDomains::SegGeomSharedPtr segPtr =
-            m_segMap.find(EdgeIds[s])->second; //->second;
+            m_segMap.find(EdgeIds[s])->second;
         vector<NekDouble> q1(3), q2(3);
         pointMap.find(segPtr->GetVid(0))
             ->second->GetCoords(q1[0], q1[1], q1[2]);
@@ -852,13 +723,11 @@ void HandleNekMesh2D::IntersectWithFewEdges(
         bool b = intersect(p1, p2, q1, q2, i1, i2);
         if (b)
         {
-            // nbc.printNekArray(i1,0);
             NekDouble t = 0;
             t           = (i1[dirID] - point[dirID]) / dir[dirID];
             tvalT.push_back(t);
             if (i2.size() > 0)
             {
-                //  nbc.printNekArray(i2,0);
                 NekDouble t = 0;
                 t           = (i2[dirID] - point[dirID]) / dir[dirID];
                 tvalT.push_back(t);
@@ -880,16 +749,6 @@ void HandleNekMesh2D::FindElementIDForLineSegs(
 {
     boost::ignore_unused(tvalT, point, dir, mesh_graph,
                          EIDs); // moved away from using geometry
-    /*
-        Array<OneD, NekDouble> temp(3);
-        // for every point iteration
-        for (int i = 0; i < tvalT.size() - 1; i++)
-        {
-            temp[0] = point[0] + 0.5 * (tvalT[i] + tvalT[i + 1]) * dir[0];
-            temp[1] = point[1] + 0.5 * (tvalT[i] + tvalT[i + 1]) * dir[1];
-            temp[2] = point[2] + 0.5 * (tvalT[i] + tvalT[i + 1]) * dir[2];
-        }
-    */
     NEKERROR(ErrorUtil::efatal, "Not Yet implemented");
 }
 
@@ -897,8 +756,8 @@ void HandleNekMesh2D::FindElementIDForLineSegs(
 void HandleNekMesh2D::v_LoadExpListIntoRTree()
 {
     // check if expansions are already loaded.
-    assert(m_expansions.size() > 0 &&
-           "should have loaded atleast one expansion");
+    ASSERTL0(m_expansions.size() > 0 &&
+             "should have loaded atleast one expansion");
     MultiRegions::ExpListSharedPtr expList = m_expansions[0];
     int expSize                            = expList->GetExpSize();
     for (int e = 0; e < expSize; ++e)
@@ -976,68 +835,13 @@ void HandleNekMesh2D::IntersectWithBoxUsingRTree(
         elIds.push_back(eId);
         glIds.push_back(gId);
     }
-    /*
-        //assert( false && "Not done developing yet :( ");
-            vector<int> EdgeIds;
-
-        BOOST_FOREACH( RValue const& v, result_s)
-        {
-            int eId = std::get<1>(v);
-            int gId = std::get<2>(v);
-                    SpatialDomains::GeometrySharedPtr geomSPtr =
-    m_expansions[0]->GetExp(eId)->GetGeom(); for (int l =0; l<
-    geomSPtr->GetNumEdges() ; l++)
-                    {
-                            EdgeIds.push_back(eid);
-                            //int eid = geomSPtr->GetEid(l);
-                            //SpatialDomains::SegGeomSharedPtr segPtr =
-    m_segMap.find(fid)->second;
-                    }
-            }
-
-
-            assert(false && "Not completly coded. ");
-            // This assert might not be needed. Verify if called.
-    \\ *
-        BOOST_FOREACH( RValue const& v, result_s)
-        {
-            int eId = std::get<1>(v);
-            int gId = std::get<2>(v);
-                    SpatialDomains::GeometrySharedPtr geomSPtr =
-    m_expansions[0]->GetExp(eId)->GetGeom(); for (int l =0; l<
-    geomSPtr->GetNumEdges() ; l++)
-                    {
-                            int eid = geomSPtr->GetEid(l);
-                            SpatialDomains::SegGeomSharedPtr segPtr =
-    m_segMap.find(fid)->second;
-
-                    }
-                    SpatialDomains::SegGeomSharedPtr segPtr
-            }
-    */
 }
-
-/*
-int HandleNekMesh2D::GetExpansionIndexUsingRTree( const Array<OneD,NekDouble>
-&point) const
-{
-        assert( false && "Do not use. Need to recode.");
-    std::vector<RValue> result_s;
-    m_rtree.query(Boostgi::nearest(RPoint(point[0],point[1],point[2]),1),std::back_inserter(result_s));
-    assert( result_s.size() ==1 && "no element found. Something is cleraly
-wrong");
-    // Can write better code using within.
-    RValue v = result_s[0];
-    return std::get<1>(v); // <2> is global ID.
-}
-*/
 
 int HandleNekMesh2D::v_GetExpansionIndexUsingRTree(
     const Array<OneD, NekDouble> &point) const
 {
     int returnEid = -1;
     RBox b;
-    // BoundingBoxOfLineSeg( dir, pt, t1, t2,b);
     Boostg::set<Boostg::min_corner, 0>(b, point[0] - TOLERENCE_MESH_COMP);
     Boostg::set<Boostg::min_corner, 1>(b, point[1] - TOLERENCE_MESH_COMP);
     Boostg::set<Boostg::min_corner, 2>(b, 0.0 - TOLERENCE_MESH_COMP);
@@ -1047,11 +851,8 @@ int HandleNekMesh2D::v_GetExpansionIndexUsingRTree(
 
     vector<unsigned> res;
     MySearchCallback2 callback(res);
-    // boost::timer t;
     m_rtree.query(Boostgi::intersects(b),
                   boost::make_function_output_iterator(callback));
-    // double s = t.elapsed();
-    //    std::cout <<"time elapsed \t "<< s << std::endl;
     std::sort(res.begin(), res.end());
     BOOST_FOREACH (unsigned const &eId, res)
     {
@@ -1062,90 +863,8 @@ int HandleNekMesh2D::v_GetExpansionIndexUsingRTree(
             break;
         }
     }
-    /*
-        std::vector<RValue> result_s;
-        m_rtree.query( Boostgi::intersects(b),std::back_inserter(result_s) );
-
-        //assert( false && "Not done developing yet :( ");
-        BOOST_FOREACH( RValue const& v, result_s)
-        {
-            int eId = std::get<1>(v);
-            int gId = std::get<2>(v);
-            if(
-       m_expansions[0]->GetExp(eId)->GetGeom()->ContainsPoint(point,TOLERENCE) )
-            {
-                returnEid = eId;
-                break;
-            }
-        }
-    */
     return returnEid;
 }
-
-/* // Defined in baseclass hence removing  here.
-NekDouble HandleNekMesh2D::v_GetLargestEdgeLength(const int eid)
-{
-        // Run through all seg geom in the element and find largest. Will be
-easier.
-
-                NekDouble max = 0.0;
-                SpatialDomains::GeometrySharedPtr geomSPtr =
-m_expansions[0]->GetExp(eid)->GetGeom(); for( int edgeid=0; edgeid <
-geomSPtr->GetNumEdges(); edgeid++)
-                {
-                        NekDouble edgeLength =
-m_segMap[geomSPtr->GetEid(edgeid)]->GetVertex(0)->dist(*(m_segMap[geomSPtr->GetEid(edgeid)]->GetVertex(1)));
-                        max = std::max(max,edgeLength);
-                }
-        return max;
-}
-*/
-
-/* // Defined in baseclass hence removing  here.
-NekDouble HandleNekMesh2D::v_CalculateDynamicScaling()
-{
-        // Can follow one of two algorithms.
-        // Loop through vertices and find trianlges or
-        // Loop through triangles and find vertices.
-
-        // For every Triangle/Quad find the largest edge length.
-        // Store it in an array.
-        //
-
-
-        // 1. Algorithm 2.
-        std::map<int, NekDouble> Sigma_m_a;
-        std::map<int, NekDouble> Sigma_a;
-        for (int eid=0; eid < m_expansions[0]->GetExpSize(); eid++)
-        {
-                SpatialDomains::GeometrySharedPtr geomSPtr =
-m_expansions[0]->GetExp(eid)->GetGeom(); NekDouble m =
-GetLargestEdgeLength(eid); NekDouble a = GetJacobian(eid); for (int vid=0; vid <
-geomSPtr->GetNumVerts(); vid++)
-                {
-                        int Vid = geomSPtr->GetVid(vid);
-                        if (Sigma_m_a.find(Vid)== Sigma_m_a.end())
-                        {
-                                Sigma_m_a.insert(std::make_pair(Vid,m*a));
-                                Sigma_a.insert(std::make_pair(Vid,a));
-                        }else{
-                                Sigma_m_a.find(Vid)->second+=m*a;
-                                Sigma_a.find(Vid)->second+=a;
-                        }
-                }
-        }
-
-        //Scaling at vertices
-        for( std::map<int,NekDouble>::iterator it = Sigma_m_a.begin();
-it!=Sigma_m_a.end(); it++)
-        {
-                NekDouble totalArea = Sigma_a.find(it->first)->second;
-                m_dynVertScaling.insert(std::make_pair(it->first,it->second/totalArea));
-                //cout << it->second/totalArea << endl;
-        }
-        //
-}
-*/
 
 bool HandleNekMesh2D::v_InitializeMetricTensor()
 {
@@ -1177,7 +896,7 @@ NekDouble HandleNekMesh2D::v_GetDynamicScaling(Array<OneD, NekDouble> glCoord,
             eid = m_expansions[0]->GetExpIndex(dup_glCoord, TOLERENCE);
         }
     }
-    assert(eid >= 0 && "Point out of mesh");
+    ASSERTL0(eid >= 0 && "Point out of mesh");
     NekDouble result = -1.0;
     // Get local coordinates.
     // Depending on number of vertices triangle or quad.
@@ -1215,7 +934,7 @@ NekDouble HandleNekMesh2D::v_GetDynamicScaling(Array<OneD, NekDouble> glCoord,
     }
     else
     {
-        assert("Shape not accounted for");
+        NEKERROR(ErrorUtil : efatal, "Shape not accounted for");
     }
 
     return mu * result;
@@ -1229,13 +948,11 @@ bool HandleNekMesh2D::v_GetMTScalingOfGIDs(vector<int> &t_GIDs,
     {
         this->InitializeMetricTensor();
     }
-    //
     NekDouble lambda;
     for (auto gid : t_GIDs)
     {
         m_metricTensor->GetScaleForDirection(gid, direction, lambda);
         scalings.push_back(lambda);
-        // scalings.push_back(0.1);
     }
     return true;
 }

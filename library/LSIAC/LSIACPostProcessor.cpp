@@ -146,7 +146,7 @@ void LSIACPostProcessor::readNekArray(Array<OneD, NekDouble> &ar,
 
     if (!source)
     {
-        assert(false && "file does not exist.");
+        NEKERROR(ErrorUtil : efatal, "file does not exist.");
     }
 
     std::string line;
@@ -156,7 +156,6 @@ void LSIACPostProcessor::readNekArray(Array<OneD, NekDouble> &ar,
     for (int i = 0; i < ar.num_elements(); i++)
     {
         in >> ar[i];
-        //		cout << std::setprecision(19)<<ar[i] << endl;
     }
 }
 
@@ -167,7 +166,7 @@ void LSIACPostProcessor::readNekArray(vector<int> &ar, string filename) const
 
     if (!source)
     {
-        assert(false && "file does not exist.");
+        NEKERROR(ErrorUtil : efatal, "file does not exist.");
     }
     std::string line;
     std::getline(source, line);
@@ -188,7 +187,7 @@ void LSIACPostProcessor::readNekArray(vector<NekDouble> &ar,
 
     if (!source)
     {
-        assert(false && "file does not exist.");
+        NEKERROR(ErrorUtil : efatal, "file does not exist.");
     }
     std::string line;
     while (!source.eof())

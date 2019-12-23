@@ -52,8 +52,8 @@ void Splines::Initialize(int deg, int n_Bspl,
     boost::ignore_unused(n_Bspl); // used only for debug purposes
     m_deg = deg;
     m_cpts.clear();
-    assert(n_Bspl == coeffs.num_elements() &&
-           "Calculation depends they being equal");
+    ASSERTL0(n_Bspl == coeffs.num_elements() &&
+             "Calculation depends they being equal");
     for (int i = 0; i < coeffs.num_elements(); i++)
     {
         m_cpts.push_back(coeffs[i]);
@@ -121,9 +121,9 @@ void Splines::EvaluateUArr(const vector<NekDouble> &uAr,
                            NekDouble meshShift, int m_nthDer)
 {
     boost::ignore_unused(meshShift); // For debug purpose.
-    assert(std::abs(meshShift) < TOLERENCE &&
-           "Meshshift != 0.0 means used by Onesided SIAC. Not calibrated for "
-           "OneSidedSIAC");
+    ASSERTL0(std::abs(meshShift) < TOLERENCE &&
+             "Meshshift != 0.0 means used by Onesided SIAC. Not calibrated for "
+             "OneSidedSIAC");
 
     int k, s;
     NekDouble u;
@@ -134,32 +134,24 @@ void Splines::EvaluateUArr(const vector<NekDouble> &uAr,
         u = uAr[i] / meshScaling;
         this->findks(u, k, s);
 
-        // debug
-        // cout << k << " and " << s << endl;
-
         // 2. Handle if  s = deg+1;
         if (m_deg + 1 == s)
         {
-            // cout << "u: " << u << "exit s= deg+1 k:"<<k << endl;
             if (k == m_knots.size() - 1)
             {
                 solAr[i] = m_cpts[k - m_deg - 1];
             }
             continue;
-            // return;
         }
 
         // 3. If k is invalid return 0.
         if (!this->validk(k, s))
         {
             solAr[i] = 0.0;
-            // return;
             continue;
         }
 
         // 4. Evaualte sol.
-        //		vector<NekDouble> pts_eval( m_cpts.begin()+ k - m_deg,
-        // m_cpts.begin()+k - s+1);
         memcpy(&pts_eval[0], &m_cpts[k - m_deg],
                (m_deg - s + 1) * sizeof(NekDouble));
         NekDouble alpha = 0.0;
@@ -206,8 +198,6 @@ void Splines::EvaluateUA(const NekDouble u, NekDouble &sol,
     }
 
     // 4. Evaualte sol.
-    //      vector<NekDouble> pts_eval( m_cpts.begin()+ k - m_deg,
-    //      m_cpts.begin()+k - s+1);
     memcpy(&pts_eval[0], &m_cpts[k - m_deg],
            (m_deg - s + 1) * sizeof(NekDouble));
     NekDouble alpha = 0.0;

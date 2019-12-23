@@ -61,11 +61,9 @@ NonSymmetricSIAC::NonSymmetricSIAC(int order)
             m_genBSplinePtr = std::make_shared<GeneralBSplines>(order);
             break;
         default:
-            assert(false && "something is wrong");
-            cout << "Should not come here assert here actually." << endl;
+            NEKERROR(ErrorUtil : efatal, "Filter not defined");
             break;
     }
-    // EvaluateCoefficients();
 }
 
 bool NonSymmetricSIAC::v_EvaluateCoefficients_GivenNumSplines(
@@ -74,8 +72,6 @@ bool NonSymmetricSIAC::v_EvaluateCoefficients_GivenNumSplines(
     boost::ignore_unused(kernelShift);
     // Changing knot vector to knot Matrix.
     int t_nBSpl = knotVec.num_elements() - m_order;
-    // m_coeffs = Array<OneD,NekDouble> (t_nBSpl);
-    // m_nBSpl = t_nBSpl;
     vector<vector<NekDouble>> kv_mat;
     for (int nb = 0; nb < t_nBSpl; nb++)
     {
@@ -92,14 +88,10 @@ bool NonSymmetricSIAC::v_EvaluateCoefficients_GivenNumSplines(
         case (SymFilterType::BASIC_SIAC_2kp1):
             CalCoeffForWideSymKernel(m_order - 1, knotVec, m_coeffs);
             m_splines.Initialize(m_order - 1, t_nBSpl, m_coeffs);
-            // printNekArray(m_coeffs);
             CalCoeffForKnotMatrixVec_Hanieh(m_order - 1, kv_mat, m_coeffs);
-            // cout << "calculating coeff using knot matrix: "<< endl;
-            // printNekArray(m_coeffs);
             break;
         default:
-            cout << "Assert or add code for all the other cases Sig:ajiso876af"
-                 << endl;
+            NEKERROR(ErrorUtil : efatal, " Filter type not defined");
     }
     return true;
 }
@@ -125,21 +117,17 @@ bool NonSymmetricSIAC::v_EvaluateCoefficients(
         case (SymFilterType::BASIC_SIAC_2kp1):
             CalCoeffForWideSymKernel(m_order - 1, knotVec, m_coeffs);
             m_splines.Initialize(m_order - 1, m_nBSpl, m_coeffs);
-            // printNekArray(m_coeffs);
             CalCoeffForKnotMatrixVec_Hanieh(m_order - 1, kv_mat, m_coeffs);
-            // cout << "calculating coeff using knot matrix: "<< endl;
-            // printNekArray(m_coeffs);
             break;
         default:
-            cout << "Assert or add code for all the other cases Sig:ajiso876af"
-                 << endl;
+            NEKERROR(ErrorUtil
+                     : efatal, "Assert or add code for all the other cases");
     }
     return true;
 }
 
 bool NonSymmetricSIAC::v_EvaluateCoefficients(const NekDouble kernelShift)
 {
-    //	cout << "Into Evalute coefficietns" << endl; //???
     boost::ignore_unused(kernelShift);
     switch (m_filterType)
     {
@@ -148,8 +136,8 @@ bool NonSymmetricSIAC::v_EvaluateCoefficients(const NekDouble kernelShift)
             m_splines.Initialize(m_order - 1, m_nBSpl, m_coeffs);
             break;
         default:
-            cout << "Assert or add code for all the other cases Sig:ajiso876af"
-                 << endl;
+            NEKERROR(ErrorUtil
+                     : efatal, "Assert or add code for all the other cases");
     }
     return true;
 }
@@ -158,10 +146,6 @@ bool NonSymmetricSIAC::EvaluateFilterUsingSplines(
     const Array<OneD, NekDouble> &x_pos, Array<OneD, NekDouble> &t_vals,
     const NekDouble meshScaling, const NekDouble meshShift,
     const bool evalCoeff)
-// bool NonSymmetricSIAC::v_EvaluateFilter( const Array<OneD,NekDouble> &x_pos,
-// Array<OneD,NekDouble> &t_vals, 				 const NekDouble
-// meshScaling, const NekDouble
-// meshShift, const bool evalCoeff)
 {
     boost::ignore_unused(meshShift, evalCoeff);
     // Always check if coeffecients have already been calculated.
@@ -189,10 +173,6 @@ bool NonSymmetricSIAC::v_EvaluateFilter(const Array<OneD, NekDouble> &x_pos,
                                         const NekDouble meshScaling,
                                         const NekDouble meshShift,
                                         const bool evalCoeff)
-// bool NonSymmetricSIAC::EvaluateFilterUsingSplines( const
-// Array<OneD,NekDouble> &x_pos, Array<OneD,NekDouble> &t_vals,
-// const NekDouble
-// meshScaling, const NekDouble meshShift, const bool evalCoeff)
 {
     boost::ignore_unused(meshShift, evalCoeff);
     vector<NekDouble> m_tempVector(10); // Need to fix this.
@@ -308,7 +288,7 @@ bool NonSymmetricSIAC::v_GetBreakPts(const NekDouble scaling,
             tmax    = ((m_order) / 2.0 + (t_nBSpl - 1.0) / 2.0) * scaling;
             break;
         default:
-            cout << "This case not coded yet. GetBreakPts" << endl;
+            NEKERROR(ErrorUtil : efatal, "Filter not defined yet");
     }
 
     valT.clear();
@@ -340,7 +320,7 @@ bool NonSymmetricSIAC::v_GetFilterRange(NekDouble scaling, NekDouble &tmin,
             tmax    = ((m_order) / 2.0 + (t_nBSpl - 1.0) / 2.0) * scaling;
             break;
         default:
-            cout << "This case not coded yet. GetFilterRange" << endl;
+            NEKERROR(ErrorUtil : efatal, "Filter not defined yet");
     }
     return true;
 }

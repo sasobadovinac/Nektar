@@ -49,15 +49,10 @@ public:
         : HandleNekMesh(fldSharedPtr)
     {
     }
+
     HandleNekMesh1D(LibUtilities::SessionReaderSharedPtr sessionPtr)
         : HandleNekMesh(sessionPtr)
     {
-        //			cout << "into HandleNekMesh1D constructor" <<
-        // endl;
-        //			m_expansions.push_back(MemoryManager<MultiRegions::ContField1D>::
-        //					AllocateSharedPtr(m_session,m_graph,
-        // m_session->GetVariable(0)) ); 			cout <<
-        // "Expansion Type: " << m_expansions[0]->GetExpType() << endl;
     }
 
 protected:
@@ -66,6 +61,7 @@ protected:
                               const Array<OneD, NekDouble> &direction,
                               Array<OneD, NekDouble> &knotVec,
                               NekDouble &shift);
+
     virtual bool v_Get1DVec(vector<NekDouble> &coords);
 
     virtual bool v_GetBreakPts(
@@ -86,15 +82,19 @@ protected:
         const NekDouble PtsX, const NekDouble PtsY, const NekDouble PtsZ,
         const NekDouble scaling, const NekDouble tmin, const NekDouble tmax,
         NekDouble &tminUpdate, NekDouble &tmaxUpdate);
+
     virtual bool v_CanTRangebeApplied(
         const NekDouble PtsX, const NekDouble PtsY, const NekDouble PtsZ,
         const Array<OneD, NekDouble> &direction, const NekDouble tmin,
         const NekDouble tmax, NekDouble &meshShift);
+
     virtual bool v_CanTRangebeAppliedWOMeshShift(
         const NekDouble PtsX, const NekDouble PtsY, const NekDouble PtsZ,
         const Array<OneD, NekDouble> &direction, const NekDouble tmin,
         const NekDouble tmax);
+
     virtual bool v_LoadData(string Filename, vector<string> &variables);
+
     virtual bool v_LoadMesh(string var);
 
     virtual bool v_EvaluateAt(const Array<OneD, NekDouble> &xPos,
@@ -115,10 +115,9 @@ protected:
                                  vector<int> &t_EIDs) const;
     virtual void v_LoadExpListIntoRTree()
     {
-        assert(false && "Not implemented, should not use it.");
+        NEKERROR(ErrorUtil::efatal, "Not implemented for 1D meshes.");
     }
 
-    // virtual NekDouble v_GetJacobian(const int eID);
     virtual NekDouble v_GetLargestEdgeLength(const int eid);
 
     virtual NekDouble v_GetDynamicScaling(Array<OneD, NekDouble> glCoord,

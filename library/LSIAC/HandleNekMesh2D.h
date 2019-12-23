@@ -46,7 +46,6 @@ namespace Boostgi = boost::geometry::index;
 typedef Boostg::model::point<NekDouble, 3, Boostg::cs::cartesian> RPoint;
 typedef Boostg::model::box<RPoint> RBox;
 typedef std::tuple<RBox, unsigned, unsigned> RValue;
-/// typedef Boostgi::rtree<RValue, Boostgi::rstar<4> > RTree;
 typedef Boostgi::rtree<RValue, Boostgi::quadratic<10, 3>> RTree;
 
 namespace Nektar
@@ -55,7 +54,7 @@ namespace LSIAC
 {
 
 /**
- * @Handles Nektar 2D meshes.
+ * @brief Handles Nektar 2D meshes.
  */
 class HandleNekMesh2D : public HandleNekMesh
 {
@@ -132,7 +131,6 @@ protected:
                                  const vector<NekDouble> t_breaks,
                                  vector<int> &t_GIDs,
                                  vector<int> &t_EIDs) const;
-    // functions used by RTree
     virtual void v_LoadExpListIntoRTree();
 
 private:
@@ -179,37 +177,6 @@ private:
                                              const NekDouble Ptsz = 0.0,
                                              int Elid             = -1);
 
-    /*
-                    // functions used by RTree
-            void BoundingBoxOfLineSeg( const Array<OneD,NekDouble> &dir,
-                const Array<OneD,NekDouble> &pt, const NekDouble t1, const
-       NekDouble t2, RBox &b );
-
-
-            void IntersectWithFacesUsingRTree( const Array<OneD,NekDouble> &dir,
-       const Array<OneD,NekDouble> &point, const NekDouble t1, const NekDouble
-       t2, vector<NekDouble> &tvalT );
-
-
-
-            void GetBoundingOfElement(SpatialDomains::GeometrySharedPtr elGeom,
-       RBox &b);
-
-            NekDouble getMax( NekDouble a, NekDouble b)
-            {
-                if (a<b)
-                    return b;
-                else
-                    return a;
-            }
-            NekDouble getMin( NekDouble a, NekDouble b)
-            {
-                if (a<b)
-                    return a;
-                else
-                    return b;
-            }
-    */
 
     virtual void GetBoundingOfElement(SpatialDomains::GeometrySharedPtr elGeom,
                                       RBox &b);
@@ -229,8 +196,6 @@ private:
             return b;
     }
 
-    // virtual bool v_CalculateDynamicScaling();
-    // virtual NekDouble v_GetJacobian(const int eID);
     virtual NekDouble v_GetDynamicScaling(Array<OneD, NekDouble> glCoord,
                                           int eid = -1, NekDouble mu = 1.0);
     virtual bool v_WhatIsTRange(const NekDouble PtsX, const NekDouble PtsY,

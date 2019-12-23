@@ -35,28 +35,15 @@
 #include "CentralBSplines.h"
 #include "SIACFilter.h"
 #include "Splines.h"
-/// This class evaluates symmetric siac filter and saves coeffecients for future
-/// use.
-/**
-        - This class is useful when post processing parts of the mesh where
-   Symmetric coeffecients are need multiple times.
-        - Not calculating coeffecients and filter knots everytime would save lot
-   of computation time.
-        - Usage: The user would initiate a class with the order,numberof Bspline
-   basis he needs.
-              - Since this is a symmetric filter knots can be calculated
-   directly from number of Bsplines.
-                  - The coefficient calculation for normal filters is different
-   from derivative filter.
-                  - There are different way to calcualte coeffecients. (Matrix
-   slove and direct.). We need to direct method in final version.
-        - This class assumes the use of only centralBSplines as basis.
-*/
 
 namespace Nektar
 {
 namespace LSIAC
 {
+
+/**
+ * @brief Research and development phase
+ */
 class NonSymmetricSIAC : public SIACFilter
 {
 
@@ -89,8 +76,6 @@ public:
     bool SetCoefficients(const Array<OneD, NekDouble> &coeff);
     bool GetCoefficients(const Array<OneD, NekDouble> &coeff) const;
     bool GetFilterBreakPoints(Array<OneD, NekDouble> &bPts) const;
-    //		bool GetFilterRange(const NekDouble scaling, NekDouble &tmin,
-    // NekDouble &tmax) const;
     bool EvaluateFilterUsingSplines(const Array<OneD, NekDouble> &x_pos,
                                     Array<OneD, NekDouble> &vals,
                                     const NekDouble meshScaling = 1.0,
@@ -124,9 +109,6 @@ protected:
                                   const NekDouble meshShift   = 0.0,
                                   const bool evalCoeff        = false);
 
-    //        virtual bool v_EvaluateFilter(const Array<OneD,NekDouble>
-    //        &x_pos,Array<OneD,NekDouble> &vals,
-    //                   const NekDouble meshScaling=1.0 ) const;
     virtual bool v_EvaluateCoefficients(const NekDouble kernelShift = 0.0);
     virtual bool v_EvaluateCoefficients(const Array<OneD, NekDouble> &knotVec,
                                         const NekDouble kernelShift);

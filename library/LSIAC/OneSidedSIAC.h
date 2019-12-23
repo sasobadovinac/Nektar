@@ -37,16 +37,17 @@
 #include "SIACFilter.h"
 #include <vector>
 
-/// This class implements OneSided SIAC at different locations.
-/** OneSided SIAC is useful when post processing near the boundaries of the
-   mesh. The coefficients need to be re-evaluated everytime a new point is been
-   requested. Re-usability of coefficients is possible in 2D and 3D meshes but
-   not been implented in this version yet.
-*/
 namespace Nektar
 {
 namespace LSIAC
 {
+
+/** @brief This class implements OneSided SIAC at different locations.
+ * OneSided SIAC is useful when post processing near the boundaries of the
+ * mesh. The coefficients need to be re-evaluated everytime a new point is been
+ * requested. Re-usability of coefficients is possible in 2D and 3D meshes but
+ * not been implented in this version yet.
+ */
 class OneSidedSIAC : public SIACFilter
 {
 public:

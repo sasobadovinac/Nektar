@@ -37,7 +37,6 @@
 #include "SmoothieSIAC.h"
 #include "SymmetricSIAC.h"
 
-/// This class can postprocess 1D Meshes.
 
 namespace Nektar
 {
@@ -48,10 +47,6 @@ class SmoothieSIAC1D : public SmoothieSIAC
 private:
 protected:
 public:
-    //	SmoothieSIAC1D( const FilterType filter,HandleNekMesh* meshHandle,
-    //								const int
-    // Order);
-
     SmoothieSIAC1D(const FilterType filter, HandleNekMesh *meshHandle,
                    const int Order, NekDouble meshSpacing = 1.0,
                    const int derivative = 0);

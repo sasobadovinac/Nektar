@@ -38,14 +38,15 @@
 #include <vector>
 using namespace std;
 
-/// This class has different SIAC filters as its subclasses.
-/** Currently all the filters have been classified into
-        Symmetric and OneSided.
-*/
 namespace Nektar
 {
 namespace LSIAC
 {
+/**
+ * @brief This class has different SIAC filters as its subclasses.
+ * Currently all the filters have been classified into
+ *       Symmetric and OneSided.
+ */
 class SIACFilter : public LSIACPostProcessor
 {
 public:

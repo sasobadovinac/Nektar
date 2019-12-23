@@ -102,8 +102,6 @@ bool GeneralBSplines::BSplinesBasis(const Array<OneD, NekDouble> &t_pos,
                                     const NekDouble meshScaling) const
 {
     // Note here Order of BSplines are k+1.
-    // This is done to follow the paper. Sorry if causes confusion.
-    //	cout << "came here" << endl;
     if (0 == k)
     {
         if (j >= 0 && j < m_knotVector.num_elements() - 1)

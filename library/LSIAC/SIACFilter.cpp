@@ -58,8 +58,6 @@ void SIACFilter::CalCoeffForKnotMatrixVec(
 {
     // Note shift is dummy variable in this function.
     int nBSpl = kMatrix.size();
-    // int jj=0;
-    // jj = tknots.num_elements() - 2* deg-2;
     Eigen::MatrixXd M0(nBSpl, nBSpl); // deg + jj+1, deg + jj+1);
     Eigen::VectorXd e1(nBSpl);        // (deg + jj+1);
     for (int r = 0; r < nBSpl; r++)
@@ -70,8 +68,6 @@ void SIACFilter::CalCoeffForKnotMatrixVec(
             int gamma = l;
             M0(r, l) =
                 dividedDiff(0, deg + 1, kMatrix[gamma], 0.0, deg + delta + 1);
-            // M0(r,l) = dividedDiff( gamma, gamma+deg+1, tknots, 0.0,
-            // deg+delta+1);
         }
     }
     for (int i = 0; i < nBSpl; i++)
@@ -99,8 +95,6 @@ void SIACFilter::CalCoeffForWideSymKernel(
         tknots[i] = -(deg + 1.0 - der) / 2.0 - (nSpl - 1.0) / 2.0 + i + shift;
     }
     CalCoeffForWideSymKernel(deg, tknots, coeffs, shift);
-    // cout << "CalCoeffForStandarkernel der" << endl;
-    // printNekArray(tknots,0);
 }
 
 void SIACFilter::CalCoeffForWideSymKernel(
@@ -222,11 +216,6 @@ void SIACFilter::CalCoeffForCenBSplDerivatives(const int degree,
                                                Array<OneD, NekDouble> &coeffs)
 {
     boost::ignore_unused(degree); // does not depend on degree;
-    // if(coeffs.num_elements() >= nBSpl+alpha)
-    //{
-    //	cout <<"Coeffs does not have enough capacity. Need do something" <<
-    // endl;
-    //}
     int tnBSpl = nBSpl - alpha;
     for (int a = 1; a <= alpha; a++)
     {
@@ -247,21 +236,8 @@ void SIACFilter::CalCoeffForKnotMatrixVec_Hanieh(
     int deg, const std::vector<std::vector<NekDouble>> &kMatrix,
     Nektar::Array<OneD, NekDouble> &coeffs)
 {
-    /*
-            for (int i =0; i < kMatrix.size();i++)
-            {
-                    std::vector<NekDouble> tempV = kMatrix[i];
-                    for (int j=0;j<tempV.size();j++)
-                    {
-                            cout << tempV[j]<< "\t" ;
-                    }
-                    cout << endl;
-            }
-    */
     // Note shift is dummy variable in this function.
     int nBSpl = kMatrix.size();
-    // int jj=0;
-    // jj = tknots.num_elements() - 2* deg-2;
     Eigen::MatrixXd M0(nBSpl, nBSpl); // deg + jj+1, deg + jj+1);
     Eigen::VectorXd e1(nBSpl);        // (deg + jj+1);
     for (int r = 0; r < nBSpl; r++)
@@ -287,8 +263,6 @@ void SIACFilter::CalCoeffForKnotMatrixVec_Hanieh(
                 {
                     xpos[i] = bgamma1 +
                               (quad_points[i] + 1) * (bgamma2 - bgamma1) / 2.0;
-                    // sum +=
-                    // quad_weights[i]*vals[i]*std::pow(quad_points[i],r);
                 }
                 gSPl.EvaluateBSplines(xpos, kMatrix[l], 0, vals);
                 NekDouble sum = 0;
@@ -300,7 +274,6 @@ void SIACFilter::CalCoeffForKnotMatrixVec_Hanieh(
                 M0(r, l) += sum;
             }
             // Calcualte the matrix given polynomial order and monomial order.
-            // M0(r,l) = sum;
         }
     }
     for (int i = 0; i < nBSpl; i++)
@@ -309,7 +282,6 @@ void SIACFilter::CalCoeffForKnotMatrixVec_Hanieh(
     }
     e1(0)             = 1.0;
     Eigen::VectorXd x = M0.colPivHouseholderQr().solve(e1);
-    // Eigen::VectorXd x = M0.fullPivLu().solve(e1);
     Eigen::VectorXd x1 = M0.colPivHouseholderQr().solve(e1);
     Eigen::VectorXd x2 = M0.colPivHouseholderQr().solve(e1 - M0 * x1);
     x                  = x1 + x2;
@@ -317,14 +289,6 @@ void SIACFilter::CalCoeffForKnotMatrixVec_Hanieh(
     {
         coeffs[i] = x(i);
     }
-    // cout << "coeffs " << endl;
-    // printNekArray(coeffs,0);
-    // cout << "M0" << M0 << endl;
-}
-
-void test()
-{
-    cout << "test" << endl;
 }
 
 bool AreVectorsEqual(vector<double> t1, vector<double> t2)
@@ -409,11 +373,8 @@ void SIACFilter::CalDerivativesForKnotMatrixVec_Hanieh(
             int deg_v = tempIn[0].size() - 2;
             // vector under derivative is tempIn[k]
             // Cal coefficients.
-            // printNekArray(tempIn[k],0);
             std::vector<NekDouble> tv1(tempIn[k].begin(), tempIn[k].end() - 1);
-            // printNekArray(tv1,0);
             std::vector<NekDouble> tv2(tempIn[k].begin() + 1, tempIn[k].end());
-            // printNekArray(tv2,0);
             if (TOLERENCE < std::abs(tv1.back() - tv1.front()))
             {
                 NekDouble coeff1 = tempIn_coeffs[k] * (NekDouble)(deg_v) /
@@ -431,11 +392,6 @@ void SIACFilter::CalDerivativesForKnotMatrixVec_Hanieh(
         tempIn        = tempOut;
         tempIn_coeffs = tempOut_coeffs;
     }
-    // cout << "tempIn coeff size: "<<tempIn_coeffs.size();
-    // cout << "coeffs given size: " <<coeffs.num_elements();
-
-    // assert( coeffs.num_elements() >= tempIn_coeffs.size());
-    //	coeffs.resize(tempIn_coeffs.size());
     kMatrix = tempIn;
     coeffs  = Array<OneD, NekDouble>(tempIn_coeffs.size());
     for (int i = 0; i < tempIn_coeffs.size(); i++)

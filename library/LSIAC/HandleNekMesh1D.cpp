@@ -35,16 +35,8 @@
 
 #include <MultiRegions/ContField1D.h>
 #include <MultiRegions/DisContField1D.h>
-//#include <SpatialDomains/MeshGraph1D.h>
 #include <cmath>
-/*
-HandleNekMesh1D::HandleNekMesh1D (const string meshFileName, const string
-fldFileName): HandleNekMesh(meshFileName,fldFileName)
-{
-        //LibUtilitites::SessionReader::CreateInstance
 
-}
-*/
 namespace Nektar
 {
 namespace LSIAC
@@ -66,7 +58,6 @@ namespace LSIAC
 bool HandleNekMesh1D::v_LoadMesh(string var)
 {
     SpatialDomains::ExpansionMap expansions = m_graph->GetExpansions();
-    //	cout << "expansion size: " <<expansions.size() << endl;
     m_expansions.push_back(
         MemoryManager<MultiRegions::DisContField1D>::AllocateSharedPtr(
             m_session, m_graph, var));
@@ -76,7 +67,6 @@ bool HandleNekMesh1D::v_LoadMesh(string var)
 bool HandleNekMesh1D::v_LoadData(string filename, vector<string> &variables)
 {
     SpatialDomains::ExpansionMap expansions = m_graph->GetExpansions();
-    //	cout << "expansion size: " <<expansions.size() << endl;
     for (int i = 0; i < variables.size(); i++)
     {
         m_expansions.push_back(
@@ -110,29 +100,6 @@ bool HandleNekMesh1D::v_LoadData(string filename, vector<string> &variables)
     {
         exp->BwdTrans(exp->GetCoeffs(), exp->UpdatePhys());
     }
-    /*
-            // want to check if the file was loaded successfully.
-            cout << "variables.size: " << variables.size()<< endl;
-            for ( int i =0; i < variables.size(); i++)
-            {
-                    cout << variables[i] << endl;
-            }
-            Array<OneD,NekDouble> uExp_Coeffs =  m_expansions[0]->GetCoeffs();
-            Array<OneD,NekDouble> uExp_Phys =  m_expansions[0]->GetPhys();
-
-            cout << "coefficients" << endl;
-            for ( auto c : uExp_Coeffs)
-            {
-                    cout << c <<"\t" ;
-            }
-            cout << endl;
-            cout << "Phys" << endl;
-            for (auto c: uExp_Phys)
-            {
-                    cout << c << "\t";
-            }
-            cout << endl;
-    */
     return true;
 }
 
@@ -148,8 +115,6 @@ bool HandleNekMesh1D::v_Get1DVec(vector<NekDouble> &coords)
     {
         ptGM_it->second->GetCoords(x, y, z);
         coords.push_back(x);
-        // cout << "Looping through points in mesh geometry" << endl;
-        // cout << "x: " << x<< "y: " << y << "z: " << z << endl;
     }
     std::sort(x_coords.begin(), x_coords.end());
     return true;
@@ -172,8 +137,6 @@ bool HandleNekMesh1D::v_GetKnotVec(const int degree,
     {
         ptGM_it->second->GetCoords(x, y, z);
         x_coords.push_back(x);
-        // cout << "Looping through points in mesh geometry" << endl;
-        // cout << "x: " << x<< "y: " << y << "z: " << z << endl;
     }
     std::sort(x_coords.begin(), x_coords.end());
     auto low = std::lower_bound(x_coords.begin(), x_coords.end(), coord[0]);
@@ -248,23 +211,17 @@ bool HandleNekMesh1D::v_GetBreakPts_Without_Tmin_Tmax(
     yPos.clear();
     zPos.clear();
     tPos.clear();
-    // Dont push the minimima
-    // xPos.push_back(xmin+TOLERENCE); yPos.push_back(ymin+TOLERENCE);
-    // zPos.push_back(zmin+TOLERENCE); tPos.push_back(tmin);
     SpatialDomains::PointGeomMap ptGM = m_graph->GetAllPointGeoms();
     for (std::map<int, SpatialDomains::PointGeomSharedPtr>::iterator ptGM_it =
              ptGM.begin();
          ptGM_it != ptGM.end(); ++ptGM_it)
     {
-        // cout << "Looping through points in mesh geometry" << endl;
         ptGM_it->second->GetCoords(x, y, z);
-        // cout << "x: " << x<< "y: " << y << "z: " << z << endl;
         switch (m_spacedim)
         {
             case 1:
                 if ((xmin < x && xmax > x))
                 {
-                    // cout << " pt in range 1d space" << endl;
                     if ((xmin + 2 * TOLERENCE > x) ||
                         (xmax - 2 * TOLERENCE < x))
                     { // ignore it is on of the end points.
@@ -279,7 +236,6 @@ bool HandleNekMesh1D::v_GetBreakPts_Without_Tmin_Tmax(
             case 2:
                 if ((xmin < x && xmax > x) && (ymin < y && ymax > y))
                 {
-                    // cout << " pt in range 2d space" << endl;
                     if (((xmin + 2 * TOLERENCE > x) ||
                          (xmax - 2 * TOLERENCE < x)) &&
                         ((ymin + 2 * TOLERENCE > y) ||
@@ -305,7 +261,6 @@ bool HandleNekMesh1D::v_GetBreakPts_Without_Tmin_Tmax(
                 if ((xmin < x && xmax > x) && (ymin < y && ymax > y) &&
                     (zmin < z && zmax > z))
                 {
-                    cout << " pt in range 3d space" << endl;
                     if (((xmin + 2 * TOLERENCE > x) ||
                          (xmax - 2 * TOLERENCE < x)) &&
                         ((ymin + 2 * TOLERENCE > y) ||
@@ -335,18 +290,9 @@ bool HandleNekMesh1D::v_GetBreakPts_Without_Tmin_Tmax(
                 }
                 break;
             default:
-                cout << " assert here. Should come here. " << endl;
                 break;
         }
     }
-    // xPos.push_back(xmax-TOLERENCE); yPos.push_back(ymax-TOLERENCE);
-    // zPos.push_back(zmax-TOLERENCE); tPos.push_back(tmax);
-
-    // Also check if creation of geometry works properly.
-    // loop through the mesh elments and check the geometry is present.
-    // if mesh element is present
-    // check for overlap and add vector list of x,y,z,t Pos
-    // order t Pos and return.
     return true;
 }
 
@@ -381,15 +327,12 @@ bool HandleNekMesh1D::v_GetBreakPts(
              ptGM.begin();
          ptGM_it != ptGM.end(); ++ptGM_it)
     {
-        // cout << "Looping through points in mesh geometry" << endl;
         ptGM_it->second->GetCoords(x, y, z);
-        // cout << "x: " << x<< "y: " << y << "z: " << z << endl;
         switch (m_spacedim)
         {
             case 1:
                 if ((xmin < x && xmax > x))
                 {
-                    // cout << " pt in range 1d space" << endl;
                     if ((xmin + 2 * TOLERENCE > x) ||
                         (xmax - 2 * TOLERENCE < x))
                     { // ignore it is on of the end points.
@@ -404,7 +347,6 @@ bool HandleNekMesh1D::v_GetBreakPts(
             case 2:
                 if ((xmin < x && xmax > x) && (ymin < y && ymax > y))
                 {
-                    // cout << " pt in range 2d space" << endl;
                     if (((xmin + 2 * TOLERENCE > x) ||
                          (xmax - 2 * TOLERENCE < x)) &&
                         ((ymin + 2 * TOLERENCE > y) ||
@@ -430,7 +372,6 @@ bool HandleNekMesh1D::v_GetBreakPts(
                 if ((xmin < x && xmax > x) && (ymin < y && ymax > y) &&
                     (zmin < z && zmax > z))
                 {
-                    cout << " pt in range 3d space" << endl;
                     if (((xmin + 2 * TOLERENCE > x) ||
                          (xmax - 2 * TOLERENCE < x)) &&
                         ((ymin + 2 * TOLERENCE > y) ||
@@ -460,7 +401,6 @@ bool HandleNekMesh1D::v_GetBreakPts(
                 }
                 break;
             default:
-                cout << " assert here. Should come here. " << endl;
                 break;
         }
     }
@@ -468,12 +408,6 @@ bool HandleNekMesh1D::v_GetBreakPts(
     yPos.push_back(ymax - TOLERENCE);
     zPos.push_back(zmax - TOLERENCE);
     tPos.push_back(tmax);
-
-    // Also check if creation of geometry works properly.
-    // loop through the mesh elments and check the geometry is present.
-    // if mesh element is present
-    // check for overlap and add vector list of x,y,z,t Pos
-    // order t Pos and return.
     return true;
 }
 
@@ -483,11 +417,8 @@ bool HandleNekMesh1D::v_CanTRangebeApplied(
     NekDouble &tminUpdate, NekDouble &tmaxUpdate)
 {
     boost::ignore_unused(ptsY, ptsZ); // since it is in 1D
-    cout << "in handleNekMesh1D::v_CanTRangeBeApplied" << endl;
     int nq = m_expansions[0]->GetTotPoints();
-    cout << "nq" << nq << endl;
     Array<OneD, NekDouble> xc0(nq), xc1(nq), xc2(nq);
-    cout << "dim" << m_expansions[0]->GetCoordim(0) << endl;
     switch (m_expansions[0]->GetCoordim(0))
     {
         case 1:
@@ -495,20 +426,11 @@ bool HandleNekMesh1D::v_CanTRangebeApplied(
             break;
         case 2:
             m_expansions[0]->GetCoords(xc0, xc1);
-            cout << " This might not be working if it is curved mesh or not "
-                    "straight line"
-                 << endl;
-            cout << " Ignored all dimension except x" << endl;
             break;
         case 3:
             m_expansions[0]->GetCoords(xc0, xc1, xc2);
-            cout << " This might not be working if it is curved mesh or not "
-                    "straight line"
-                 << endl;
-            cout << " Ignored all dimension except x" << endl;
             break;
         default:
-            cout << "Should assert here. Should not come here ???" << endl;
             break;
     }
 
@@ -529,8 +451,6 @@ bool HandleNekMesh1D::v_CanTRangebeApplied(
         }
         return false;
     }
-    // cout << "In HandleNekMesh1D.. overwritten successfully ??? (Need coding)"
-    // << endl; return true;
 }
 
 bool HandleNekMesh1D::v_CanTRangebeAppliedWOMeshShift(
@@ -549,12 +469,8 @@ bool HandleNekMesh1D::v_CanTRangebeApplied(
     const NekDouble tmax, NekDouble &meshTShift)
 {
     boost::ignore_unused(ptsY, ptsZ);
-    // NekDouble scaling = direction[0];
-    // cout << "in handleNekMesh1D::v_CanTRangeBeApplied" << endl;
     int nq = m_expansions[0]->GetTotPoints();
-    // cout << "nq" << nq << endl;
     Array<OneD, NekDouble> xc0(nq), xc1(nq), xc2(nq);
-    // cout << "dim" << m_expansions[0]->GetCoordim(0) << endl;
     switch (m_expansions[0]->GetCoordim(0))
     {
         case 1:
@@ -562,20 +478,11 @@ bool HandleNekMesh1D::v_CanTRangebeApplied(
             break;
         case 2:
             m_expansions[0]->GetCoords(xc0, xc1);
-            //	cout << " This might not be working if it is curved mesh or not
-            // straight line" << endl; 	cout << " Ignored all dimension except
-            // x"
-            //<< endl;
             break;
         case 3:
             m_expansions[0]->GetCoords(xc0, xc1, xc2);
-            //	cout << " This might not be working if it is curved mesh or not
-            // straight line" << endl; 	cout << " Ignored all dimension except
-            // x"
-            //<< endl;
             break;
         default:
-            cout << "Should assert here. Should not come here ???" << endl;
             break;
     }
     NekDouble xMeshMin = Vmath::Vmin(nq, xc0, 1);
@@ -606,21 +513,17 @@ bool HandleNekMesh1D::v_CanTRangebeApplied(
             if ((xMeshMin > ptsX + direction[0] * tmin) &&
                 (xMeshMax < ptsX + direction[0] * tmax))
             {
-                cout << "Kernel bigger than mesh. Can't filter at this point"
-                     << endl;
-                cout << "meshTShift is not valid. Assert here ??? " << endl;
+                NEKERROR(ErrorUtil : efatal, "Kernel bigger than mesh");
             }
             return false;
         }
     }
     else
     {
-        cout << "This function fails for this scenario. ??? Code more." << endl;
+        NEKERROR(ErrorUtil
+                 : efatal, "Only x-direction supported for 1D meshes");
         return false;
     }
-
-    // cout << "In HandleNekMesh1D.. overwritten successfully ??? (Need coding)"
-    // << endl; return true;
 }
 
 bool HandleNekMesh1D::v_EvaluateAt(const NekDouble xPos, const NekDouble yPos,
@@ -659,23 +562,6 @@ bool HandleNekMesh1D::v_EvaluateAt(const Array<OneD, NekDouble> &xPos,
         glCoord[1] = yPos[i];
         glCoord[2] = zPos[i];
         values[i]  = lexp->PhysEvaluate(glCoord, el_Phys);
-        /*
-                        lexp->GetCoord(glCoord,lCoord);
-                        if ( (lCoord[0] < -1.0) || (lCoord[0]> 1.0) )
-                        {
-                                if (lCoord[0] <-1.0)
-                                {
-                                        lCoord[0] = -1.0;
-                                }else
-                                {
-                                        lCoord[0] = 1.0;
-                                }
-                                values[i] =
-           lexp->StdPhysEvaluate(lCoord,el_Phys); }else
-                        {
-                                values[i] = lexp->PhysEvaluate(glCoord,el_Phys);
-                        }
-        */		//values[i] = 1.0; // Setup for testing.
     }
     return true;
 }
@@ -701,34 +587,13 @@ bool HandleNekMesh1D::v_GetListOfGIDs(
         locCoord[2] = zPos + t_break * direction[2];
         t_GIDs[i]   = m_expansions[0]->GetExpIndex(locCoord);
         t_EIDs[i]   = t_GIDs[i];
-        /*
-                        for (int j=0; j < expansions.size();j++)
-                        {
-                                if (
-           expansions[j]->m_geomShPtr->ContainsPoint(locCoord,TOLERENCE) )
-                                {
-                                        t_GIDs[i] =
-           expansions[j]->m_geomShPtr->GetGlobalID(); t_EIDs[i] = j; break;
-                                }
-                        }
-        */
     }
 
     return true;
 }
 
-/*
-NekDouble HandleNekMesh1D::v_GetJacobian(const int eID)
-{
-        assert(false && "The subclasses routine should be called.");
-        return 0.0;
-}
-*/
-
 NekDouble HandleNekMesh1D::v_GetLargestEdgeLength(const int eid)
 {
-    //			assert(false && "The subclasses routine should be
-    // called."); 			return 0.0;
     SpatialDomains::GeometrySharedPtr geomSPtr =
         m_expansions[0]->GetExp(eid)->GetGeom();
     // One Edge
@@ -746,7 +611,7 @@ NekDouble HandleNekMesh1D::v_GetDynamicScaling(Array<OneD, NekDouble> glCoord,
     {
         eid = GetExpansionIndexUsingRTree(glCoord);
     }
-    assert(eid >= 0 && "Point out of mesh");
+    ASSERTL0(eid >= 0 && "Point out of mesh");
     NekDouble result = -1.0;
     // Get local coordinates.
     // Depending on number of vertices triangle or quad.
@@ -783,7 +648,6 @@ bool HandleNekMesh1D::v_GetMTScalingOfGIDs(vector<int> &t_GIDs,
     {
         this->InitializeMetricTensor();
     }
-    //
     NekDouble lambda;
     for (auto gid : t_GIDs)
     {

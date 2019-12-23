@@ -52,9 +52,9 @@ Eigen::Matrix2d MetricTensor::GetDynamicMetricTensor(
     if (eid < 0)
     {
         eid = m_meshHandlePtr->GetExpansionIndexUsingRTree(glCoord);
-        assert(eid >= 0 && "Point out of mesh");
+        ASSERTL0(eid >= 0 && "Point out of mesh");
     }
-    assert(eid >= 0 && "Point out of mesh");
+    ASSERTL0(eid >= 0 && "Point out of mesh");
     Eigen::Matrix2d result;
     // Get local coordinates.
     // Depending on number of vertices triangle or quad.
@@ -78,11 +78,11 @@ Eigen::Matrix2d MetricTensor::GetDynamicMetricTensor(
     }
     else if (geomSPtr->GetShapeType() == Nektar::LibUtilities::eQuadrilateral)
     {
-        assert("Not designed for quadrilateral elements");
+        ASSERTL0("Not designed for quadrilateral elements");
     }
     else
     {
-        assert("Shape not accounted for");
+        ASSERTL0("Shape not accounted for");
     }
 
     return result.exp();
@@ -269,7 +269,6 @@ bool MetricTensor::LoadMetricTensor(HandleNekMesh *HNM)
                 aA << aA_x, aA_y;
                 aB << aB_x, aB_y;
                 aC << aC_x, aC_y;
-                //			cout << rA << endl;
                 Eigen::Matrix2d Tr_e, Tr_a;
 
                 Tr_e(0, 0) = eA(0) - eC(0);
@@ -301,14 +300,12 @@ bool MetricTensor::LoadMetricTensor(HandleNekMesh *HNM)
                         1 / std::sqrt(es.eigenvalues().col(0)(0).real());
                     m_lambda2[m_nOfQPE * eid] =
                         1 / std::sqrt(es.eigenvalues().col(0)(1).real());
-                    // setEigenVector(eigv0_0,eigv0_1);
                     m_eigenValue1[m_nOfQPE * 3 * eid + 0] =
                         es.eigenvectors().col(0)(0).real();
                     m_eigenValue1[m_nOfQPE * 3 * eid + 1] =
                         es.eigenvectors().col(0)(1).real();
                     m_eigenValue1[m_nOfQPE * 3 * eid + 2] = 0.0;
 
-                    // setEigenVector(eigv1_0,eigv1_1);
                     m_eigenValue2[m_nOfQPE * 3 * eid + 0] =
                         es.eigenvectors().col(1)(0).real();
                     m_eigenValue2[m_nOfQPE * 3 * eid + 1] =
@@ -322,14 +319,12 @@ bool MetricTensor::LoadMetricTensor(HandleNekMesh *HNM)
                     m_lambda2[m_nOfQPE * eid] =
                         1 / std::sqrt(es.eigenvalues().col(0)(0).real());
 
-                    // setEigenVector(eigv0_0,eigv0_1);
                     m_eigenValue1[m_nOfQPE * 3 * eid + 0] =
                         es.eigenvectors().col(1)(0).real();
                     m_eigenValue1[m_nOfQPE * 3 * eid + 1] =
                         es.eigenvectors().col(1)(1).real();
                     m_eigenValue1[m_nOfQPE * 3 * eid + 2] = 0.0;
 
-                    // setEigenVector(eigv1_0,eigv1_1);
                     m_eigenValue2[m_nOfQPE * 3 * eid + 0] =
                         es.eigenvectors().col(0)(0).real();
                     m_eigenValue2[m_nOfQPE * 3 * eid + 1] =
@@ -357,7 +352,7 @@ bool MetricTensor::LoadMetricTensor(HandleNekMesh *HNM)
                    // of variables such as aNEK.
             default:
             {
-                assert("Wrong");
+                NEKERROR(ErrorUtil : efatal, "Not accounted for");
             }
             break;
         }
@@ -380,7 +375,7 @@ bool MetricTensor::GetEigenPair(Array<OneD, NekDouble> coord, int eid,
     {
         // Find eid.
         eid = m_meshHandlePtr->GetExpansionIndexUsingRTree(coord);
-        assert(eid >= 0 && "Did not initialize Rtrees");
+        ASSERTL0(eid >= 0 && "Did not initialize Rtrees");
     }
     // Logically this should have been a quadrature point.
     // For now assume 1.
@@ -406,7 +401,7 @@ bool MetricTensor::GetEigenPair(Array<OneD, NekDouble> coord, int eid,
             eigen[2] = m_eigenValue3[eid * m_nOfQPE * 3 + quadId * 3 + 2];
             break;
         default:
-            assert("Wrong input value");
+            NEKERROR(ErrorUtil : efatal, "Wrong input value");
             return false;
     }
     return true;
@@ -425,10 +420,10 @@ bool MetricTensor::GetScaleForDirection(int eid,
                                         Array<OneD, NekDouble> direction,
                                         NekDouble &lambda) const
 {
-    assert(eid >= 0 && "Not valid element id");
-    assert(std::abs(direction[0] * direction[0] + direction[1] * direction[1] -
-                    1) < 1e-9 &&
-           "direction is not normallized");
+    ASSERTL0(eid >= 0 && "Not valid element id");
+    ASSERTL0(std::abs(direction[0] * direction[0] +
+                      direction[1] * direction[1] - 1) < 1e-9 &&
+             "direction is not normallized");
     int quadId = 0;
     // Assuming only 2D for now.
     NekDouble lambda1, lambda2;
@@ -455,7 +450,7 @@ bool MetricTensor::GetEigenPairAtTheta(int eid, NekDouble theta_degrees,
                                        NekDouble &lambda,
                                        Array<OneD, NekDouble> &eigen) const
 {
-    assert(eid >= 0 && "Not valid element id");
+    ASSERTL0(eid >= 0 && "Not valid element id");
     int quadId          = 0;
     NekDouble theta_rad = theta_degrees * PI / 180.0;
     // Assuming only 2D for now.
@@ -491,7 +486,7 @@ bool MetricTensor::GetEigenPairAtTheta(Array<OneD, NekDouble> coord, int eid,
     {
         // Find eid.
         eid = m_meshHandlePtr->GetExpansionIndexUsingRTree(coord);
-        assert(eid >= 0 && "Did not initialize Rtrees");
+        ASSERTL0(eid >= 0 && "Did not initialize Rtrees");
     }
     int quadId          = 0;
     NekDouble theta_rad = theta_degrees * PI / 180.0;
@@ -584,10 +579,9 @@ bool MetricTensor::GetEigenPairUsingIP(Array<OneD, NekDouble> coord, int eid,
             eigen  = eigen2;
             break;
         default:
-            assert("wrong input for eigNUM");
+            ASSERTL0("wrong input for eigNUM");
             break;
     }
-
     return true;
 }
 

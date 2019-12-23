@@ -638,8 +638,6 @@ protected:
 
     virtual NekDouble v_GetLargestEdgeLength(const int eid)
     {
-        //			assert(false && "The subclasses routine should
-        // be called."); 			return 0.0;
         NekDouble max = 0.0;
         SpatialDomains::GeometrySharedPtr geomSPtr =
             m_expansions[0]->GetExp(eid)->GetGeom();
@@ -687,8 +685,6 @@ protected:
             NekDouble totalArea = Sigma_a.find(it->first)->second;
             m_dynVertScaling.insert(
                 std::make_pair(it->first, it->second / totalArea));
-            // Currently in Debug mode
-            // m_dynVertScaling.insert(std::make_pair(it->first,it->first));
         }
         return true;
     };
