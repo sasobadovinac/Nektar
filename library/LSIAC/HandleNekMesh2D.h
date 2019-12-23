@@ -54,7 +54,9 @@ namespace Nektar
 namespace LSIAC
 {
 
-/// Handles Nektar 2D meshes.
+/**
+ * @Handles Nektar 2D meshes.
+ */
 class HandleNekMesh2D : public HandleNekMesh
 {
 

@@ -64,14 +64,10 @@ public:
     bool SetOrder(int Order);
     int GetOrder() const;
 
-    //	bool EvaluateBSplines( const Array<OneD,NekDouble> &t_pos,const
-    // NekDouble shift, Array<OneD,NekDouble> &t_vals)const;
     bool EvaluateBSplines(const Array<OneD, NekDouble> &t_pos,
                           Array<OneD, NekDouble> &t_vals,
                           const NekDouble shift       = 0.0,
                           const NekDouble meshScaling = 1.0) const;
-    //	bool EvaluateBSplines( Array<OneD,NekDouble> &t_pos,
-    // Array<OneD,NekDouble> &t_vals);
 };
 } // namespace LSIAC
 } // namespace Nektar

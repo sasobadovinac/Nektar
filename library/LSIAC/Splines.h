@@ -34,15 +34,16 @@
 #pragma once
 #include "LSIACPostProcessor.h"
 
-/// This class evaluates Splines.
-/*** This class is a base class implemented here to take advantage of de-boorg
-   algorithm to calcualte splines.
-*/
 
 namespace Nektar
 {
 namespace LSIAC
 {
+
+/** @This class evaluates Splines.
+ *
+ *This class implements De Boor's algorithm to calculate splines faster.
+ */
 class Splines : LSIACPostProcessor
 {
 public:

@@ -60,11 +60,20 @@ protected:
     SIACFilter(){};
 
 public:
+    /**
+     * @brief Returns the span of the filter after scaling it.
+     */
     bool GetFilterRange(NekDouble scaling, NekDouble &tmin, NekDouble &tmax,
                         const NekDouble shift = 0.0)
     {
         return v_GetFilterRange(scaling, tmin, tmax, shift);
     }
+
+    /**
+     * @brief Returns the knot positions across the SIAC kernel.
+     *
+     * The knot positions are scaled and shifted based on the inputs.
+     */
     bool GetBreakPts(
         const NekDouble scaling, vector<NekDouble> &valT,
         const NekDouble shift = 0.0) // This works for symmetric filter
@@ -73,6 +82,13 @@ public:
                              shift); // This works for symmetric filter.
     }
 
+    /**
+     * @brief Evaluates the value of the L-SIAC filter at given locations.
+     *
+     * The input should be in kernel space coordinates.
+     * If evalCoeff is true, the coefficients need to be recalculated before
+     * evaluating the kernel.
+     */
     bool EvaluateFilter(const Array<OneD, NekDouble> &x_pos,
                         Array<OneD, NekDouble> &vals,
                         const NekDouble meshScaling = 1.0,
@@ -81,17 +97,30 @@ public:
     {
         return v_EvaluateFilter(x_pos, vals, meshScaling, meshShift, evalCoeff);
     }
+    /**
+     * @brief This function evaluates the SIAC kernel coefficients.
+     */
     bool EvaluateCoefficients(const NekDouble kernelShift = 0.0)
     {
         return v_EvaluateCoefficients(kernelShift);
     }
 
+    /**
+     * @brief This function evaluates the SIAC kernel coefficients.
+     *
+     * The knotVec specifies the location of the knots w.r.t point of
+     * evaluation.
+     */
     bool EvaluateCoefficients(const Array<OneD, NekDouble> &knotVec,
                               const NekDouble kernelShift = 0.0)
     {
         return v_EvaluateCoefficients(knotVec, kernelShift);
     }
 
+    /**
+     * @brief This function evaluates the SIAC kernel coefficients, using the
+     * given knots in knotVec.
+     */
     bool EvaluateCoefficients_GivenNumSplines(
         const Array<OneD, NekDouble> &knotVec,
         const NekDouble kernelShift = 0.0)
@@ -99,6 +128,12 @@ public:
         return v_EvaluateCoefficients_GivenNumSplines(knotVec, kernelShift);
     }
 
+    /**
+     * @brief This function evaluates the SIAC kernel coefficients.
+     *
+     * The coefficients are calculated using the knotvec. The evaluated kernel
+     * is evaluated at x_pos and written to vals.
+     */
     bool EvaluateFilterWknots(const Array<OneD, NekDouble> &x_pos,
                               Array<OneD, NekDouble> &vals,
                               const Array<OneD, NekDouble> &knotVec,
@@ -110,6 +145,12 @@ public:
                                       meshShift, evalCoeff);
     }
 
+    /**
+     * @brief This function evaluates the SIAC kernel coefficients.
+     *
+     * The coefficients are calculated using the knotvec. The evaluated kernel
+     * is evaluated at x_pos and written to vals.
+     */
     bool EvaluateFilterWknots_GivenNumSplines(
         const Array<OneD, NekDouble> &x_pos, Array<OneD, NekDouble> &vals,
         const Array<OneD, NekDouble> &knotVec,

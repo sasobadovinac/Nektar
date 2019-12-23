@@ -28,7 +28,7 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 //
-// Description: SmoothieSIAC definition
+// Description: L-SIAC base class definition
 //
 ///////////////////////////////////////////////////////////////////////////////
 #include "SmoothieSIAC.h"
@@ -80,18 +80,7 @@ bool SmoothieSIAC::mergeBreakPtsAdv(const vector<NekDouble> &HvalT,
     t_EIDs.clear();
     t_GIDs.resize(TvalT.size(), -2);
     t_EIDs.resize(TvalT.size(), -2);
-    /*
-            cout << "HvalT "<< endl;
-            printNekArray(HvalT,0);
-            cout << "SvalT "<< endl;
-            printNekArray(SvalT,0);
-            cout << "TvalT "<< endl;
-            printNekArray(TvalT,0);
-            cout << "t_h_GIDs "<< endl;
-            printNekArray(t_h_GIDs,0);
-            cout << "t_h_EIDs "<< endl;
-            printNekArray(t_h_EIDs,0);
-    */
+
     for (int i = 0; i < TvalT.size() - 1; i++)
     {
         NekDouble tval = (TvalT[i] + TvalT[i + 1]) / 2.0;

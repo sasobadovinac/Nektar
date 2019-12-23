@@ -38,11 +38,6 @@
 #include <FieldUtils/FieldUtilsDeclspec.h>
 #include <SpatialDomains/Geometry.h>
 #include <memory>
-/// Class deals mesh queries of nektarMeshes.
-/** This class in particular can load an Save only NektarMeshes.
-        This class also help in selecting elements in the given neighbourhood.
-   etc.
-*/
 
 namespace Nektar
 {
@@ -52,6 +47,11 @@ namespace LSIAC
 // Forward declartion
 class MetricTensor;
 
+/**
+ * @brief This class deals with mesh queries of nektarMeshes
+ *
+ * This class, in particular, can load and save only meshes supported by Nektar.
+ */
 class HandleNekMesh : public HandleMesh
 {
 private:
@@ -89,6 +89,9 @@ public:
     MetricTensor *m_metricTensor;
     FieldUtils::FieldSharedPtr m_f;
 
+    /**
+     * @brief Constructor created using FieldShared pointer.
+     */
     HandleNekMesh(FieldUtils::FieldSharedPtr fldSharedPtr) : m_f(fldSharedPtr)
     {
         m_graph      = m_f->m_graph;
@@ -100,6 +103,9 @@ public:
         m_expansions = m_f->m_exp;
     };
 
+    /**
+     * @brief Constructor created using SessionReaderShared pointer.
+     */
     HandleNekMesh(LibUtilities::SessionReaderSharedPtr sessionPtr)
         : m_session(sessionPtr)
     {
@@ -114,54 +120,52 @@ public:
     };
 
     HandleNekMesh();
+    /**
+     * @brief Adds an expansion the fields using the field name.
+     */
     bool LoadMesh(string var)
     {
         return v_LoadMesh(var);
     }
+
+    /**
+     * @brief Loads the data fields from the specified.
+     */
     bool LoadData(string FileName, vector<string> &variables)
     {
         return v_LoadData(FileName, variables);
     }
 
+    /**
+     * @brief Load expansions into Rtree for speed up.
+     */
     void LoadExpListIntoRTree()
     {
         v_LoadExpListIntoRTree();
     }
 
+    /**
+     * @brief Get element ID given a point in the mesh using RTree lookup.
+     */
     int GetExpansionIndexUsingRTree(const Array<OneD, NekDouble> &point) const
     {
         return v_GetExpansionIndexUsingRTree(point);
     }
 
-    //		bool SaveData(string FileName,
-    // vector<nektar::MultiRegions::ExpList> expList);
-    //! This function gives break points for one particular point in the mesh.
-    /*! This function is optimized to work faster when arbitrary points need to
-       be evaluated. Please do not use this function in a for loop to process a
-       bunch of points. It can be really slow.
+    /**
+     * @brief Evaluates the value of the field at various points on the mesh.
+     *
+     * \param xPos Array of x-coordinates for the given points.
+     * \param yPos Array of y-coordinates for the given points.
+     * \param zPos Array of z-coordinates for the given points.
+     * \param gID Global element id of the element.
+     * \param eID Local element id of the element.
+     * \param values Evaluations are written to this array.
+     * \param varNum The index of the field to be evaluated.
+     *
+     * Note: All the points passed should be present in a single element given
+     * by eID and gID.
      */
-    bool GetFilterOverlapElemIds(const NekDouble xcen_offset,
-                                 const NekDouble ycen_offset,
-                                 const NekDouble zcen_offset,
-                                 const NekDouble *direction,
-                                 const NekDouble t_offset_min,
-                                 const NekDouble t_offset_max,
-                                 vector<int> &Elid_list);
-    //! This function gives break points for list of points in the mesh, which
-    //! are close to each other.
-    /*! This function is optimized to work faster when large number of points
-       need to be evaluated for finding break points. This function tries to
-       take advantage that there are points close to each other which needs to
-       be evaluated. It can help reducing the computation time.
-     */
-    bool GetFilterOverlapElemIds(const Array<OneD, NekDouble> xcen_offset,
-                                 const Array<OneD, NekDouble> ycen_offset,
-                                 const Array<OneD, NekDouble> zcen_offset,
-                                 const NekDouble *direction,
-                                 const NekDouble t_offset_min,
-                                 const NekDouble t_offset_max,
-                                 vector<vector<int>> &Elid_list);
-    //! To evaluate values of variables at different points on the mesh.
     bool EvaluateAt(const Array<OneD, NekDouble> &xPos,
                     const Array<OneD, NekDouble> &yPos,
                     const Array<OneD, NekDouble> &zPos, const int gID,
@@ -171,7 +175,17 @@ public:
         return v_EvaluateAt(xPos, yPos, zPos, gID, eID, values, varNum);
     }
 
-    //! To evaluate values of variables at a single point in the mesh.
+    /**
+     * @brief Evaluates the value of the field at a given point in the mesh.
+     *
+     * \param xPos x-coordinate for the given points.
+     * \param yPos y-coordinate for the given points.
+     * \param zPos z-coordinate for the given points.
+     * \param gID Global element id of the element.
+     * \param eID Local element id of the element.
+     * \param values Evaluation is written to this variable.
+     * \param varNum The index of the field to be evaluated.
+     */
     bool EvaluateAt(const NekDouble xPos, const NekDouble yPos,
                     const NekDouble zPos, int gID, int eID, NekDouble &value,
                     int varNum = 0)
@@ -179,6 +193,19 @@ public:
         return v_EvaluateAt(xPos, yPos, zPos, gID, eID, value, varNum);
     }
 
+    /**
+     * @brief Evaluate mesh intersection with the line segment.
+     *
+     * This function evaluates points at which the given line segment
+     * intersects the element boundaries of the mesh.
+     * The point (xcen_offset, ycen_offset, zcen_offset), direction, and bounds
+     * (t_offset_min, t_offset_max) define the line segment. The intersections
+     * are returned in the parametrized form (tPos) and global locations (xPos,
+     * yPos, and zPos).
+     *
+     * Note: The endpoint tmin and tmax are not included in the set of
+     * intersections unless they exist on the mesh boundaries.
+     */
     bool GetBreakPts_Without_Tmin_Tmax(
         const NekDouble xcen_offset, const NekDouble ycen_offset,
         const NekDouble zcen_offset, const Array<OneD, NekDouble> &direction,
@@ -192,10 +219,18 @@ public:
             t_offset_max, xPos, yPos, zPos, tPos);
     };
 
-    //! This function gives break points for one particular point in the mesh.
-    /*! This function is optimized to work faster when arbitrary points need to
-       be evaluated. Please do not use this function in a for loop to process a
-       bunch of points. It can be really slow.
+    /**
+     * @brief Evaluate mesh intersection with the line segment.
+     *
+     * This function evaluates points at which the given line segment
+     * intersects the element boundaries of the mesh.
+     * The point (xcen_offset, ycen_offset, zcen_offset), direction, and bounds
+     * (t_offset_min, t_offset_max) define the line segment. The intersections
+     * are returned in the parametrized form (tPos) and global locations (xPos,
+     * yPos, and zPos).
+     *
+     * Note: The endpoint tmin and tmax are included in the set of
+     * intersections even if they are not located at the mesh boundaries.
      */
     bool GetBreakPts(const NekDouble xcen_offset, const NekDouble ycen_offset,
                      const NekDouble zcen_offset,
@@ -209,22 +244,15 @@ public:
                              t_offset_min, t_offset_max, xPos, yPos, zPos,
                              tPos);
     };
-    //! This function gives break points for list of points in the mesh, which
-    //! are close to each other.
-    /*! This function is optimized to work faster when large number of points
-       need to be evaluated for finding break points. This function tries to
-       take advantage that there are points close to each other which needs to
-       be evaluated. It can help reducing the computation time.
-     */
-    bool GetBreakPts(const Array<OneD, NekDouble> xcen_offset,
-                     const Array<OneD, NekDouble> ycen_offset,
-                     const Array<OneD, NekDouble> zcen_offset,
-                     const NekDouble *direction, const NekDouble t_offset_min,
-                     const NekDouble t_offset_max,
-                     vector<Array<OneD, NekDouble>> &xPos,
-                     vector<Array<OneD, NekDouble>> &yPos,
-                     vector<Array<OneD, NekDouble>> &zPos);
 
+    /**
+     * @brief This function determines if the symmetric kernel can be applied.
+     *
+     * Returns true if the symmetric kernel can be applied. Returns false if
+     * the symmetric kernel cannot be used. If returned false, The tminUpdate
+     * and tmaxUpdate will contain the closest value to tmin and tmax,
+     * respectively, for which the function can return true.
+     */
     bool CanTRangebeApplied(const NekDouble ptsX, const NekDouble ptsY,
                             const NekDouble ptsZ, const NekDouble scaling,
                             const NekDouble tmin, const NekDouble tmax,
@@ -234,11 +262,14 @@ public:
                                     tminUpdate, tmaxUpdate);
     };
 
-    //! This function determines if Symmetric kernel can be applied.
-    /*! Returns true if Symmetric Kernel can be applied.
-     *  Returns false if Symmetric Kernek cannot be applied.
-     *  If returned false. Meshshift will contain shift requried by Meshknots
-     *  Note: Meshknots are Kernelknots*meshScaling.
+    /**
+     * @brief This function determines if the symmetric kernel can be applied.
+     *
+     * Returns true if the symmetric kernel can be applied. Returns false if
+     * the symmetric kernel cannot be applied. If returned false, Meshshift
+     * will contain shift required by Meshknots
+     *
+     * Note: Meshknots are Kernelknots*meshScaling.
      */
     bool CanTRangebeApplied(const NekDouble ptsX, const NekDouble ptsY,
                             const NekDouble ptsZ,
@@ -249,6 +280,13 @@ public:
         return v_CanTRangebeApplied(ptsX, ptsY, ptsZ, direction, tmin, tmax,
                                     meshShift);
     };
+
+    /**
+     * @brief This function determines if the symmetric kernel can be applied.
+     *
+     * Returns true if the symmetric kernel can be applied. Returns false if
+     * the symmetric kernel cannot be used.
+     * */
     bool CanTRangebeAppliedWOMeshShift(const NekDouble ptsX,
                                        const NekDouble ptsY,
                                        const NekDouble ptsZ,
@@ -260,6 +298,12 @@ public:
                                                tmin, tmax);
     };
 
+    /**
+     * @brief Research Phase.
+     *
+     * In the reserach phase, behavior may change in time.
+     *
+     */
     bool GetMTScalingOfGIDs(vector<int> &t_GIDs,
                             Array<OneD, NekDouble> &direction,
                             vector<NekDouble> &scalings)
@@ -267,6 +311,15 @@ public:
         return v_GetMTScalingOfGIDs(t_GIDs, direction, scalings);
     };
 
+    /**
+     * @brief Get the list of element ids across a given line from the mesh.
+     *
+     * The line is defined by the point (xPos, yPos, and zPos) and direction.
+     * The parameter t_breaks represent the line segments across the elements,
+     * such that each line segment is located entirely within a single element.
+     * The t_GIDs and t_EIDs return the global and local element ids of the
+     * line segments.
+     */
     bool GetListOfGIDs(const NekDouble xPos, const NekDouble yPos,
                        const NekDouble zPos,
                        const Array<OneD, NekDouble> &direction,
@@ -277,6 +330,13 @@ public:
                                t_EIDs);
     };
 
+    /**
+     * @brief This function returns the length of the largest edge within an
+     * element.
+     *
+     * If the  Elid <0, then it finds the element which contains the given
+     * point.
+     */
     NekDouble GetElLargestEdgeSize(const NekDouble ptsx,
                                    const NekDouble ptsy = 0.0,
                                    const NekDouble ptsz = 0.0, int Elid = -1)
@@ -284,31 +344,64 @@ public:
         return v_GetElLargestEdgeSize(ptsx, ptsy, ptsz, Elid);
     };
 
+    /**
+     * @brief Returns the jacobian determinant for an element.
+     *
+     * This function returns jacobian determinant for an element. It also
+     * assumes that the jacobian is constant across the element.
+     */
     NekDouble GetJacobian(const int eID)
     {
         return v_GetJacobian(eID);
     };
 
+    /**
+     * @brief This function returns the length of the largest edge within an
+     * element.
+     *
+     * If the  Elid <0, then it finds the element which contains the given
+     * point.
+     */
     NekDouble GetLargestEdgeLength(const int eID)
     {
         return v_GetLargestEdgeLength(eID);
     };
 
+    /**
+     * @brief This function returns the length of the largest edge in the mesh.
+     */
     NekDouble GetMeshLargestEdgeLength()
     {
         return v_GetMeshLargestEdgeLength();
     };
+
+    /**
+     * @brief This function performs the preprocessing tasks required to
+     * calculate adaptive scaling at any point in the mesh.
+     */
     bool CalculateDynamicScaling()
     {
         return v_CalculateDynamicScaling();
     };
 
+    /**
+     * @brief This function returns the adaptive characteristic length at a
+     * point.
+     *
+     * If eid <0, then the point (glCoord) is used to calculate the element id.
+     */
     NekDouble GetDynamicScaling(Array<OneD, NekDouble> &glCoord, int eid = -1,
                                 NekDouble mu = 1.0)
     {
         return v_GetDynamicScaling(glCoord, eid, mu);
     };
 
+    /**
+     * @brief Research Phase.
+     *
+     * In the reserach phase, behavior may change in time.
+     *
+     */
     bool GetKnotVec(const int degree, const Array<OneD, NekDouble> &coord,
                     const Array<OneD, NekDouble> &direction,
                     Array<OneD, NekDouble> &knotVec, NekDouble &shift)
@@ -316,11 +409,24 @@ public:
         return v_GetKnotVec(degree, coord, direction, knotVec, shift);
     }
 
+    /**
+     * @brief Research Phase.
+     *
+     * In the reserach phase, behavior may change in time.
+     *
+     */
     bool Get1DVec(vector<NekDouble> &coords)
     {
         return v_Get1DVec(coords);
     }
 
+    /**
+     * @brief Return the boundaries of the line segments with the mesh.
+     *
+     * The function returns the boundaries of the line segment in the
+     * parametrized form (tmin, tmax), such that the line segment is within the
+     * mesh boundaries.
+     */
     bool WhatIsTRange(const NekDouble ptsX, const NekDouble ptsY,
                       const NekDouble ptsZ,
                       const Array<OneD, NekDouble> &direction, NekDouble &tmin,

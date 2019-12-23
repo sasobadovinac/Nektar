@@ -35,26 +35,12 @@
 #include <math.h>
 
 #define PI 3.14159265
-/*
-        int m_nOfQPE; // Assumption that there only one type of element and all
-   ...
-                                                          //  of them have same
-   number of quadrature points. Array<OneD,NekDouble> m_locOfquadPts; // in
-   reference space. unsigned int dimension; // 1,2,3 corresponds to dimension
-        bool m_constTensor; // If true, We store one Metric tensor per element.
-   Hence ...
-                                                // Discontinous .i.e
-   m_noOfQpts=1; Array<OneD,NekDouble> m_metricTensor; // Ne*Nq*Nm;
-        Array<OneD,NekDouble> m_EigenValue1; // Ne*Nq*3;
-        Array<OneD,NekDouble> m_EigenValue2; // Ne*Nq*3;
-        Array<OneD,NekDouble> m_EigenValue3; // Ne*Nq*3;
-        Array<OneD,NekDouble> m_Lambda; // Ne*Nq*2 or Ne*Nq*3
-        HandleNekMesh* m_meshHandlePtr;
-*/
+
 namespace Nektar
 {
 namespace LSIAC
 {
+
 MetricTensor::MetricTensor()
 {
 }
@@ -85,46 +71,14 @@ Eigen::Matrix2d MetricTensor::GetDynamicMetricTensor(
         NekDouble lambda1 = (lCoord[0] + 1.0) / 2.0;
         NekDouble lambda2 = (lCoord[1] + 1.0) / 2.0;
         NekDouble lambda0 = 1.0 - lambda1 - lambda2;
-        // result = lambda0*m_dynVertScaling[Vid0] +
-        // lambda1*m_dynVertScaling[Vid1] + lambda2*m_dynVertScaling[Vid2];
         Eigen::Matrix2d temp0 = m_metricTensorLogAtNode[Vid0];
         Eigen::Matrix2d temp1 = m_metricTensorLogAtNode[Vid1];
         Eigen::Matrix2d temp2 = m_metricTensorLogAtNode[Vid2];
         result = lambda0 * temp0 + lambda1 * temp1 + lambda2 * temp2;
-        //	  lambda1*m_metricTensorLogAtNode.find(Vid1)->second() +
-        //	  lambda2*m_metricTensorLogAtNode.find(Vid2)->second();
-
-        // cout << eid<<":\t"<<lCoord[0] << "\t" << lCoord[1] << "\t" <<
-        // lCoord[2] << endl; cout <<"\t\t\t\t\t"<< lambda0 << "\t" << lambda1
-        // <<
-        // "\t" << lambda2 << endl;
-        // debug
-        /*m_pointMap[Vid0]->GetCoords(glCoord);
-        geomSPtr->GetLocCoords(glCoord,lCoord);
-        cout <<"v0:\t "<< lCoord[0] << "\t" << lCoord[1] <<"\t"<< lCoord[2]<<
-        endl; m_pointMap[Vid1]->GetCoords(glCoord);
-        geomSPtr->GetLocCoords(glCoord,lCoord);
-        cout <<"v1:\t "<< lCoord[0] << "\t" << lCoord[1] <<"\t"<< lCoord[2]<<
-        endl; m_pointMap[Vid2]->GetCoords(glCoord);
-        geomSPtr->GetLocCoords(glCoord,lCoord);
-        cout <<"v2:\t "<< lCoord[0] << "\t" << lCoord[1] <<"\t"<< lCoord[2]<<
-        endl;
-        */
     }
     else if (geomSPtr->GetShapeType() == Nektar::LibUtilities::eQuadrilateral)
     {
         assert("Not designed for quadrilateral elements");
-        /*		int Vid0 = geomSPtr->GetVid(0);
-                        NekDouble v0 = m_dynVertScaling[Vid0];
-                        int Vid1 = geomSPtr->GetVid(1);
-                        NekDouble v1 = m_dynVertScaling[Vid1];
-                        int Vid2 = geomSPtr->GetVid(2);
-                        NekDouble v2 = m_dynVertScaling[Vid2];
-                        int Vid3 = geomSPtr->GetVid(3);
-                        NekDouble v3 = m_dynVertScaling[Vid3];
-                        NekDouble a = (lCoord[0]+1.0)/2.0;
-                        NekDouble b = (lCoord[1]+1.0)/2.0;
-                        result = (a*v1+(1-a)*v0)*(1-b)+(a*v2+(1-a)*v3)*b;*/
     }
     else
     {
@@ -328,39 +282,17 @@ bool MetricTensor::LoadMetricTensor(HandleNekMesh *HNM)
                 Tr_a(0, 1) = aB(0) - aC(0);
                 Tr_a(1, 1) = aB(1) - aC(1);
 
-                //			cout << "Tr_e="<<endl << Tr_e << endl;
-                //			cout << "Tr_a="<<endl << Tr_a << endl;
                 Eigen::Matrix2d Te_a =
                     Tr_e.transpose().inverse() * (Tr_a.transpose());
                 Te_a.transposeInPlace();
-                //  			cout << "Te_a="<<endl << Te_a << endl;
 
                 Eigen::Matrix2d Ta_e =
                     Tr_a.transpose().inverse() * (Tr_e.transpose());
-                //    Ta_e.transposeInPlace();
-                //			    cout << "Ta_e="<<endl << Ta_e <<
-                // endl;
 
                 Eigen::Matrix2d Metric = Ta_e * Ta_e.transpose();
-                //			    cout << "Metric= "<< endl << Metric
-                //<< endl;
 
                 Eigen::EigenSolver<Eigen::Matrix2d> es(Metric);
                 m_metricTensorAtElm[eid] = Metric.pow(-0.5);
-
-                //			    //cout << "eigen values are:" <<
-                // endl
-                //<< es.eigenvalues() << endl;
-
-                // cout << "eigen values are:
-                // "<<es.eigenvalues().col(0)(0).real() << "\t"<<
-                // es.eigenvalues().col(0)(1).real() << endl;
-                // cout << "The matrix of eigenvectors, V1, is:\t" <<
-                // es.eigenvectors().col(0)(0).real() << "\t"; cout <<
-                // es.eigenvectors().col(0)(1).real() << endl; cout << "The
-                // matrix of eigenvectors, V2, is:\t" <<
-                // es.eigenvectors().col(1)(0).real() << "\t"; cout <<
-                // es.eigenvectors().col(1)(1).real() << endl;
 
                 if ((es.eigenvectors().col(0)(0).real()) <
                     (es.eigenvectors().col(0)(1).real()))
@@ -511,17 +443,12 @@ bool MetricTensor::GetScaleForDirection(int eid,
     eigen2[1] = m_eigenValue2[eid * m_nOfQPE * 3 + quadId * 3 + 1];
     eigen2[2] = m_eigenValue2[eid * m_nOfQPE * 3 + quadId * 3 + 2];
 
-    // NekDouble vecX = lambda1*eigen1[0]*direction[0] +
-    // lambda2*eigen2[0]*direction[1] ; NekDouble vecY =
-    // lambda1*eigen1[1]*direction[0] + lambda2*eigen2[1]*direction[1] ;
     NekDouble vecX =
         lambda1 * (eigen1[0] * direction[0] + eigen1[1] * direction[1]);
     NekDouble vecY =
         lambda2 * (eigen2[0] * direction[0] + eigen2[1] * direction[1]);
 
     lambda = sqrt(vecX * vecX + vecY * vecY);
-    //	eigen[0] = vecX/lambda;
-    //	eigen[1] = vecY/lambda;
     return true;
 }
 bool MetricTensor::GetEigenPairAtTheta(int eid, NekDouble theta_degrees,
@@ -543,13 +470,6 @@ bool MetricTensor::GetEigenPairAtTheta(int eid, NekDouble theta_degrees,
     eigen2[0] = m_eigenValue2[eid * m_nOfQPE * 3 + quadId * 3 + 0];
     eigen2[1] = m_eigenValue2[eid * m_nOfQPE * 3 + quadId * 3 + 1];
     eigen2[2] = m_eigenValue2[eid * m_nOfQPE * 3 + quadId * 3 + 2];
-    // NekDouble vecX = lambda1*eigen1[0]*cos(theta_rad) +
-    // lambda2*eigen2[0]*sin(theta_rad) ; NekDouble vecY =
-    // lambda1*eigen1[1]*cos(theta_rad) + lambda2*eigen2[1]*sin(theta_rad) ;
-
-    // lambda = sqrt(vecX*vecX+vecY*vecY);
-    // eigen[0] = vecX/lambda;
-    // eigen[1] = vecY/lambda;
 
     NekDouble vecX =
         lambda1 * (eigen1[0] * cos(theta_rad) + eigen1[1] * sin(theta_rad));
@@ -587,13 +507,6 @@ bool MetricTensor::GetEigenPairAtTheta(Array<OneD, NekDouble> coord, int eid,
     eigen2[0] = m_eigenValue2[eid * m_nOfQPE * 3 + quadId * 3 + 0];
     eigen2[1] = m_eigenValue2[eid * m_nOfQPE * 3 + quadId * 3 + 1];
     eigen2[2] = m_eigenValue2[eid * m_nOfQPE * 3 + quadId * 3 + 2];
-    // NekDouble vecX = lambda1*eigen1[0]*cos(theta_rad) +
-    // lambda2*eigen2[0]*sin(theta_rad) ; NekDouble vecY =
-    // lambda1*eigen1[1]*cos(theta_rad) + lambda2*eigen2[1]*sin(theta_rad) ;
-
-    // lambda = sqrt(vecX*vecX+vecY*vecY);
-    // eigen[0] = vecX/lambda;
-    // eigen[1] = vecY/lambda;
 
     NekDouble vecX =
         lambda1 * (eigen1[0] * cos(theta_rad) + eigen1[1] * sin(theta_rad));
@@ -640,8 +553,6 @@ bool MetricTensor::GetEigenPairUsingIP(Array<OneD, NekDouble> coord, int eid,
 
     NekDouble lambda1, lambda2;
     Array<OneD, NekDouble> eigen1(3, 0.0), eigen2(3, 0.0);
-    // if ( abs((es.eigenvectors().col(0)(0).real())) >
-    // abs((es.eigenvectors().col(0)(1).real())) )
     if ((es.eigenvectors().col(0)(0).real()) >
         (es.eigenvectors().col(0)(1).real()))
     {

@@ -50,12 +50,11 @@ namespace LSIAC
 
 // forward declaration
 class HandleNekMesh;
-/// This subclasses of the class can be used to postprocess any point on a given
-/// mesh.
-/** This class and its subclasses enable users to post process different points
-   the mesh. These classes contain methods which are used by the end user of the
-   tool.
-*/
+/** @brief These class helps evaluate metric tensor for a given mesh.
+ *
+ * Note: This class is still in the research and development phase. Use with
+ * caution.
+ */
 class MetricTensor : public LSIACPostProcessor
 {
 private:
@@ -67,20 +66,6 @@ protected:
 public:
     MetricTensor();
 
-    // First iteration Everthing under public
-    // 	1.	No of  Quadrature points.
-    // 		2.	Location of Quadrature points.
-    // 			3.	Bool for 1D,2D,3D
-    // 				4.	Array<OneD,NekDouble>  Ne* Nq* Nm
-    // 					5.	Array<OneD, NekDouble> 
-    // Ne*Nq*Neig1 						6.	Array<OneD,
-    // NekDouble> 
-    // Ne*Nq*Neig2 							7.
-    // Array<OneD, NekDouble>
-    // Ne*Nq*Nlam 								8.
-    // Array<OneD, NekDouble> 
-    // Ne*Nq*Neig3 									9.
-    // Array<OneD,NekDouble>  Metric tensor
     int m_nOfQPE; // Assumption that there only one type of element and all ...
                   //  of them have same number of quadrature points.
     Array<OneD, NekDouble> m_locOfquadPts; // in reference space.
@@ -103,12 +88,7 @@ public:
                                            int eid);
 
     bool CalculateMetricTensorAtNodes();
-    // What functions do we need ?
-    // Input: Given a point, eld ID?
-    // Input: Gven a point only ?
-    // Output: Get only Lambda1 and eigen1.
-    // Output: Get only lambda2 and eigen2.
-    // Output: Get only scaling given a direction ?
+
     bool GetEigenPair(Array<OneD, NekDouble> coord, int EigNum,
                       NekDouble &lambda, Array<OneD, NekDouble> &eigen) const;
     bool GetEigenPair(Array<OneD, NekDouble> coord, int eid, int EigNum,

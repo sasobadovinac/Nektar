@@ -45,15 +45,14 @@
 #include <algorithm>
 #include <boost/timer.hpp>
 
-/// High level class that can apply pre-determined filters.
-/** All the pre-determined filters can be used by specifing
-        enums. */
 using namespace Nektar::LSIAC::SIACUtilities;
 
 namespace Nektar
 {
 namespace LSIAC
 {
+/** @brief High level class that can apply pre-determined filters.
+ */
 class SmoothieSIAC : public Smoothie
 {
 public:
@@ -95,25 +94,23 @@ public:
     int m_OneID = 1; // These should not be set until intitalization. Ideal for
                      // extra check.
 public:
-    //! A constructor.
-    /*!
-            This constructor takes all the required parameters to construct the
-       SIAC filter.
-    */
     SmoothieSIAC(FilterType filter, int order)
         : m_filterType(filter), m_order(order),
           m_symSIACptr(new SymmetricSIAC(order)){};
+
     SmoothieSIAC(const FilterType filter, const HandleMesh &meshHandle,
                  const int Order, Array<OneD, NekDouble> &direction);
 
-    //! Post process at a specified location.
-    /*!
-            \param ptsX x-coordinate.
-            \param ptsY y-coordinate.
-            \param ptsZ z-coordinate.
-            \param valX scalar/vector1st(X) result.
-            \param valY vector2nd(Y)  result.
-            \param valZ vector3rd(Z)  result.
+    /**
+     * @brief Apply L-SIAC at a given point in the mesh.
+     *
+     * This function takes the input location using ptsX, ptsY, ptsZ and output
+     * variables in valX, valY, valZ.
+     *
+     * Note:
+     * 1) Currently, the L-SIAC filter can only be applied to scalar fields and
+     * produce scalar outputs; hence only valX, is being used, and valY and valZ
+     * always result in 0.0.
      */
     bool EvaluateAt(const NekDouble ptsX, const NekDouble ptsY,
                     const NekDouble ptsZ, NekDouble &valX, NekDouble &valY,
@@ -122,6 +119,12 @@ public:
         return v_EvaluateAt(ptsX, ptsY, ptsZ, valX, valY, valZ);
     }
 
+    /**
+     * @brief Research Phase.
+     *
+     * In the research phase, the behavior may change in time.
+     *
+     */
     bool EvaluateNonSymAt(const NekDouble ptsX, const NekDouble ptsY,
                           const NekDouble ptsZ, NekDouble &valX,
                           NekDouble &valY, NekDouble &valZ)
@@ -129,6 +132,12 @@ public:
         return v_EvaluateNonSymAt(ptsX, ptsY, ptsZ, valX, valY, valZ);
     }
 
+    /**
+     * @brief Research Phase.
+     *
+     * In the research phase, the behavior may change in time.
+     *
+     */
     bool EvaluateRecursiveAt(
         const NekDouble ptsX, const NekDouble ptsY, const NekDouble ptsZ,
         NekDouble &valX, NekDouble &valY, NekDouble &valZ,
@@ -142,6 +151,12 @@ public:
                                      curLevel);
     }
 
+    /**
+     * @brief Research Phase.
+     *
+     * In the research phase, the behavior may change in time.
+     *
+     */
     bool EvaluateAt_NSK_GivenFilterLength_v1(
         const NekDouble ptsX, const NekDouble ptsY, const NekDouble ptsZ,
         NekDouble &valX, NekDouble &valY, NekDouble &valZ,
@@ -152,6 +167,11 @@ public:
             ptsX, ptsY, ptsZ, valX, valY, valZ, direction, meshSpacing, varNum);
     }
 
+    /**
+     * @brief Apply L-SIAC using non uniform knot sequence.
+     *
+     * In the research phase, the behavior may change in time.
+     */
     bool EvaluateAt_NSK_GivenFilterLength_v2(
         const NekDouble ptsX, const NekDouble ptsY, const NekDouble ptsZ,
         NekDouble &valX, NekDouble &valY, NekDouble &valZ,
@@ -162,6 +182,21 @@ public:
             ptsX, ptsY, ptsZ, valX, valY, valZ, direction, meshSpacing, varNum);
     }
 
+    /**
+     * @brief Apply L-SIAC at a given point the mesh.
+     *
+     * This function takes the input location using ptsX, ptsY, ptsZ and output
+     * variables in valX, valY, valZ.
+     * The L-SIAC parameters direction and characteristic lengths can be set
+     * using direction and meshSpacing.
+     *
+     * Note:
+     * 1) Currently L-SIAC filter can only be applied to scalar fields and
+     * produce scalar outputs; hence only valX is being used and valY and valZ
+     * always result 0.0.
+     * 2) If meshSpacing is negative, the meshSpacing specified along with the
+     * constructor is used.
+     */
     bool EvaluateAt(const NekDouble ptsX, const NekDouble ptsY,
                     const NekDouble ptsZ, NekDouble &valX, NekDouble &valY,
                     NekDouble &valZ, Array<OneD, NekDouble> &direction,
@@ -171,6 +206,24 @@ public:
                             meshSpacing, varNum);
     }
 
+    /**
+     * @brief Apply L-SIAC at a given point in the mesh.
+     *
+     * This function takes the input location using ptsX, ptsY, ptsZ and output
+     * variables in valX, valY, valZ.
+     * The L-SIAC parameters direction and characteristic lengths can be set
+     * using directions and meshSpacing. This function
+     * loops through an array of directions to find a direction in which the
+     * symmetric L-SIAC filter can be applied. If the symmetric filter cannot be
+     * applied, then the last direction is used to apply a one-sided filter.
+     *
+     * Note:
+     * 1) Currently, the L-SIAC filter can only be applied to scalar fields and
+     * produce scalar outputs; hence only valX is being used and valY and valZ
+     * always result in 0.0.
+     * 2) If meshSpacing is negative, the meshSpacing specified along with the
+     * constructor is used.
+     */
     bool EvaluateAt(const NekDouble ptsX, const NekDouble ptsY,
                     const NekDouble ptsZ, NekDouble &valX, NekDouble &valY,
                     NekDouble &valZ, vector<Array<OneD, NekDouble>> &directions,
@@ -180,6 +233,11 @@ public:
                             meshSpacing, varNum);
     }
 
+    /**
+     * @brief Apply L-SIAC using non uniform knot sequence.
+     *
+     * In the research phase, the behavior may change in time.
+     */
     bool EvaluateAt_NSK_FixedNumBSpl(const NekDouble ptsX, const NekDouble ptsY,
                                      const NekDouble ptsZ, NekDouble &valX,
                                      NekDouble &valY, NekDouble &valZ,
@@ -190,6 +248,12 @@ public:
         return v_EvaluateAt_NSK_FixedNumBSpl(ptsX, ptsY, ptsZ, valX, valY, valZ,
                                              direction, meshSpacing, varNum);
     }
+
+    /**
+     * @brief Apply L-SIAC using non uniform knot sequence.
+     *
+     * In the research phase, the behavior may change in time.
+     */
     bool EvaluateAt_NUK_MetricTensor(const NekDouble ptsX, const NekDouble ptsY,
                                      const NekDouble ptsZ, NekDouble &valX,
                                      NekDouble &valY, NekDouble &valZ,
@@ -200,6 +264,12 @@ public:
         return v_EvaluateAt_NUK_MetricTensor(ptsX, ptsY, ptsZ, valX, valY, valZ,
                                              direction, meshSpacing, varNum);
     }
+
+    /**
+     * @brief Apply L-SIAC using non uniform knot sequence.
+     *
+     * In the research phase, the behavior may change in time.
+     */
     bool EvaluateAt_SymY(const NekDouble ptsX, const NekDouble ptsY,
                          const NekDouble ptsZ, NekDouble &valX, NekDouble &valY,
                          NekDouble &valZ, Array<OneD, NekDouble> &direction,
@@ -209,17 +279,13 @@ public:
                                  meshSpacing, varNum);
     }
 
-    //! Post process at list of specified locations.
-    /*!
-            \param listPtsX list of x-coordinates.
-            \param listPtsY list of y-coordinates.
-            \param listPtsZ list of z-coordinates.
-            \param valX list of scalar/vector1st(X) results.
-            \param valY list of vector2nd(Y)  result.
-            \param valZ list of vector3rd(Z)  result.
-            This function is useful to design a better algorithm at post
-       processing all locations at once, instead of calculating one point at a
-       time.
+    /**
+     * @brief Research Phase. Post process at list of specified locations.
+     *
+     * In the research phase, the behavior may change in time.
+     * This function is useful to design a better algorithm at post
+     * processing all locations at once, instead of calculating one point at a
+     * time.
      */
     bool EvaluateAt(const Array<OneD, NekDouble> &listPtsX,
                     const Array<OneD, NekDouble> &listPtsY,
@@ -227,33 +293,22 @@ public:
                     Array<OneD, NekDouble> &valX, Array<OneD, NekDouble> &valY,
                     Array<OneD, NekDouble> &valZ);
 
-    //! Post process at all quadrature points on the mesh.
-    /*!
-            \param valX list of scalar/vector1st(X) results.
-            \param valY list of vector2nd(Y)  result.
-            \param valZ list of vector3rd(Z)  result.
-            This function is useful to design a better algorithm at find fast
-       neighbourhoods at all quadrature points at once.
+    /**
+     * @brief Construct a 1D mesh using a line and the given mesh.
+     *
+     * Applicable only for 2D and 3D meshes. This function constructs a 1D mesh
+     * across the line specified by the parameters (stPoint, direction) over
+     * the higher dimensional mesh. The vertices of the 1D mesh are the
+     * intersections of the line with the higher dimensional mesh.
+     *
+     * Output:
+     * The HvalT has the locations of the vertices for the 1D mesh.
+     * The element ids of the higher dimensional mesh are stored in t_EIDs.
+     * The global element ids of the higher dimensional mesh are stored in
+     * t_GIDs (currently t_EIDs are t_GIDs are the same).
+     * The location of the quadrature points in each 1D element is stored in
+     * t_LineElm and each element as t_quadPts.
      */
-    bool EvaluateAtQuadruature(Array<OneD, NekDouble> &valX,
-                               Array<OneD, NekDouble> &valY,
-                               Array<OneD, NekDouble> &valZ);
-
-    //! Post process at all uniform points on the mesh.
-    /*!
-            \param valX list of scalar/vector1st(X) results.
-            \param valY list of vector2nd(Y)  result.
-            \param valZ list of vector3rd(Z)  result.
-            This function is useful to design a better algorithm at find fast
-       neighbourhoods at all points at once. The sampling of the points is done
-       by bounding box of mesh extreme vectices. So might not work for all kind
-       of meshes. This function is mostly used for visuzalizing results.
-     */
-    bool EvaluateAtUniformSampling(const int resolution,
-                                   Array<OneD, NekDouble> &valX,
-                                   Array<OneD, NekDouble> &valY,
-                                   Array<OneD, NekDouble> &valZ);
-
     bool SetupLineForLSIAC(const Array<OneD, NekDouble> &direction,
                            const vector<NekDouble> &stPoint,
                            const NekDouble tmin, const NekDouble tmax,
@@ -265,6 +320,23 @@ public:
                                    HvalT, t_GIDs, t_EIDs, t_LineElm);
     }
 
+    /**
+     * @brief Construct a 1D mesh using a line and the given mesh.
+     *
+     * Applicable only for 2D and 3D meshes. This function constructs a 1D mesh
+     * across the line specified by the parameters (stPoint, direction) over
+     * the higher dimensional mesh. The vertices of the 1D mesh are the
+     * intersections of the line with the higher dimensional mesh.
+     *
+     * Output:
+     * The HvalT has the locations of the vertices for the 1D mesh.
+     * The element ids of the higher dimensional mesh are stored in t_EIDs.
+     * The global element ids of the higher dimensional mesh are stored in
+     * t_GIDs (currently t_EIDs are t_GIDs are the same).
+     * The locations of quadrature points with t_quadPts and t_quadPts_Resample
+     * points for each element are stored in t_LineElm, and t_LineElm_Resample,
+     * respectively.
+     */
     bool SetupLineForLSIAC_ReSamp(const Array<OneD, NekDouble> &direction,
                                   const vector<NekDouble> &stPoint,
                                   const NekDouble tmin, const NekDouble tmax,
@@ -280,6 +352,17 @@ public:
             HvalT, t_GIDs, t_EIDs, t_LineElm, t_LineElm_Resample);
     }
 
+    /**
+     * @brief Project the higher dimension field on the 1D mesh.
+     *
+     * Applicable only for 2D and 3D meshes. This function projects the fields
+     * (varNUM) across the line specified by the parameters (stPoint,
+     * direction).
+     *
+     * Output:
+     * The value of the field at the locations specified by t_LineElm are
+     * stored in tv_LineELm.
+     */
     bool GetVLineForLSIAC(const int n_quadPts, const vector<NekDouble> &stPoint,
                           const Array<OneD, NekDouble> &direction,
                           const vector<NekDouble> &HvalT,
@@ -291,6 +374,17 @@ public:
                                   t_EIDs, t_LineElm, tv_LineElm, varNum);
     }
 
+    /**
+     * @brief Project the higher dimension field on the 1D mesh.
+     *
+     * Applicable only for 2D and 3D meshes. This function projects the fields
+     * (varNUM) across the line specified by the parameters (stPoint,
+     * direction).
+     *
+     * Output:
+     * The value of the field at the locations specified by t_LineElm_resample
+     * are stored in tv_LineELm_resample_resample.
+     */
     bool GetVLineForLSIAC_resample(
         const int n_quadPts, const int n_quadPts_resample,
         const vector<NekDouble> &stPoint,
@@ -307,6 +401,9 @@ public:
             tv_LineElm_resample, varNum);
     }
 
+    /**
+     *  @brief Return the adaptive characteristic lengths for a set of ponits.
+     */
     bool GetDynScalingForLSIAC(const vector<NekDouble> &stPoint,
                                const Array<OneD, NekDouble> &direction,
                                const vector<NekDouble> &tparams,
@@ -317,6 +414,24 @@ public:
                                        t_dynScaling, meshSpacing, mu);
     }
 
+    /**
+     *  @brief Evaluate LSIAC filter at a set of points across a line.
+     *
+     *  \param n_quadPts Number of quadrature points used for integration.
+     *  \param tparams Locations of the points for evaluation.
+     *  \param t_dynScaling The adaptive characteristic lenghts at the points.
+     *  \param t_mesh_min The minimum value of line parameter within the mesh
+     *  boundary.
+     *  \param t_mesh_max The maximum value of line parameter within the mesh
+     *  boundary.
+     *  \param t_LineElm The locations of quadrature points across the line for
+     *  each element.
+     *  \param t_vLineElm The value of the field at the quadrature points
+     *  specified by t_LineElm.
+     *  \param HvalT The locations of vertices across the line.
+     *  \param tvals The postprocessed values at locations tparams are written
+     *  to this variable.
+     */
     bool EvaluateLineForLSIAC_v1_dynScaling(
         const int n_quadPts, const vector<NekDouble> &tparams,
         const vector<NekDouble> &t_dynScaling, const NekDouble t_mesh_min,
@@ -328,6 +443,26 @@ public:
             n_quadPts, tparams, t_dynScaling, t_mesh_min, t_mesh_max, t_LineElm,
             tv_LineElm, HvalT, tvals);
     }
+
+    /**
+     *  @brief Evaluate LSIAC filter at a set of points across a line.
+     *
+     *  \param n_quadPts Number of quadrature points used for integration.
+     *  \param tparams Locations of the points for evaluation.
+     *  \param meshSpacing This characteristic length is used for all the
+     *  points .
+     *  \param t_mesh_min The minimum value of line parameter within the mesh
+     *  boundary.
+     *  \param t_mesh_max The maximum value of line parameter within the mesh
+     *  boundary.
+     *  \param t_LineElm The locations of quadrature points across the line for
+     *  each element.
+     *  \param t_vLineElm The value of the field at the quadrature points
+     *  specified by t_LineElm.
+     *  \param HvalT The locations of vertices across the line.
+     *  \param tvals The postprocessed values at locations tparams are written
+     *  to this variable.
+     */
     bool EvaluateLineForLSIAC_v1(
         const int n_quadPts, const vector<NekDouble> &tparams,
         const NekDouble meshSpacing, const NekDouble t_mesh_min,
@@ -340,6 +475,28 @@ public:
                                          tv_LineElm, HvalT, tvals);
     }
 
+    /**
+     *  @brief Evaluate LSIAC filter at a set of points across a line.
+     *
+     *  \param n_quadPts Number of quadrature points at which the field is
+     *  defined for element.
+     *  \param n_quadPts_resample Number of quadrature points used for
+     *  integration.
+     *  \param tparams Locations of the points for evaluation.
+     *  \param meshSpacing This characteristic length is used for all the
+     *  points .
+     *  \param t_mesh_min The minimum value of line parameter within the mesh
+     *  boundary.
+     *  \param t_mesh_max The maximum value of line parameter within the mesh
+     *  boundary.
+     *  \param t_LineElm The locations of quadrature points across the line for
+     *  each element.
+     *  \param t_vLineElm The value of the field at the quadrature points
+     *  specified by t_LineElm.
+     *  \param HvalT The locations of vertices across the line.
+     *  \param tvals The postprocessed values at locations tparams are written
+     *  to this variable.
+     */
     bool EvaluateLineForLSIAC_v3(
         const int n_quadPts, const int n_quadPts_resample,
         const vector<NekDouble> &tparams, const NekDouble meshSpacing,
@@ -353,6 +510,27 @@ public:
                                          t_LineElm, tv_LineElm, HvalT, tvals);
     }
 
+    /**
+     *  @brief Evaluate LSIAC filter at a set of points across a line.
+     *
+     *  \param n_quadPts Number of quadrature points at which the field is
+     *  defined for element.
+     *  \param n_quadPts_resample Number of quadrature points used for
+     *  integration.
+     *  \param tparams Locations of the points for evaluation.
+     *  \param t_dynScaling The adaptive characteristic lenghts at the points.
+     *  \param t_mesh_min The minimum value of line parameter within the mesh
+     *  boundary.
+     *  \param t_mesh_max The maximum value of line parameter within the mesh
+     *  boundary.
+     *  \param t_LineElm The locations of quadrature points across the line for
+     *  each element.
+     *  \param t_vLineElm The value of the field at the quadrature points
+     *  specified by t_LineElm.
+     *  \param HvalT The locations of vertices across the line.
+     *  \param tvals The postprocessed values at locations tparams are written
+     *  to this variable.
+     */
     bool EvaluateLineForLSIAC_v3_dynScaling(
         const int n_quadPts, const int n_quadPts_resample,
         const vector<NekDouble> &tparams, const vector<NekDouble> &t_dynScaling,
@@ -366,6 +544,11 @@ public:
             t_mesh_max, t_LineElm, tv_LineElm, HvalT, tvals);
     }
 
+    /**
+     * @brief Research Phase.
+     *
+     * In the research phase, the behavior may change in time.
+     */
     bool EvaluateUsingLineAt(const vector<NekDouble> &stPoint,
                              const Array<OneD, NekDouble> &direction,
                              const int n_quadPts, const NekDouble meshScaling,
@@ -376,6 +559,11 @@ public:
                                      tparams, tvals, varNum);
     }
 
+    /**
+     * @brief Research Phase.
+     *
+     * In the research phase, the behavior may change in time.
+     */
     bool EvaluateUsingLineAt_v1DynScaling(
         const vector<NekDouble> &stPoint,
         const Array<OneD, NekDouble> &direction, const int n_quadPts,
@@ -386,6 +574,11 @@ public:
             stPoint, direction, n_quadPts, meshScaling, tparams, tvals, varNum);
     }
 
+    /**
+     * @brief Research Phase.
+     *
+     * In the research phase, the behavior may change in time.
+     */
     bool EvaluateL2UsingLineAt(const vector<NekDouble> &stPoint,
                                const Array<OneD, NekDouble> &direction,
                                const int n_quadPts, const NekDouble meshScaling,
@@ -396,6 +589,11 @@ public:
                                        meshScaling, tparams, tvals, varNum);
     }
 
+    /**
+     * @brief Research Phase.
+     *
+     * In the research phase, the behavior may change in time.
+     */
     bool EvaluateUsingLineAt_v2DynScaling(
         const vector<NekDouble> &stPoint,
         const Array<OneD, NekDouble> &direction, const int n_quadPts,
@@ -406,6 +604,12 @@ public:
             stPoint, direction, n_quadPts, n_quadPts_resample, meshScaling,
             tparams, tvals, varNum);
     }
+
+    /**
+     * @brief Research Phase.
+     *
+     * In the research phase, the behavior may change in time.
+     */
     bool EvaluateUsingLineAt_v2(const vector<NekDouble> &stPoint,
                                 const Array<OneD, NekDouble> &direction,
                                 const int n_quadPts,
@@ -419,6 +623,11 @@ public:
                                         tparams, tvals, varNum);
     }
 
+    /**
+     * @brief Research Phase.
+     *
+     * In the research phase, the behavior may change in time.
+     */
     bool EvaluateUsingLineAt_v3DynScaling(
         const vector<NekDouble> &stPoint,
         const Array<OneD, NekDouble> &direction, const int n_quadPts,
@@ -429,6 +638,12 @@ public:
             stPoint, direction, n_quadPts, n_quadPts_resample, meshScaling,
             tparams, tvals, varNum);
     }
+
+    /**
+     * @brief Research Phase.
+     *
+     * In the research phase, the behavior may change in time.
+     */
     bool EvaluateUsingLineAt_v3(const vector<NekDouble> &stPoint,
                                 const Array<OneD, NekDouble> &direction,
                                 const int n_quadPts,
@@ -442,6 +657,11 @@ public:
                                         tparams, tvals, varNum);
     }
 
+    /**
+     * @brief Research Phase.
+     *
+     * In the research phase, the behavior may change in time.
+     */
     bool EvaluateL2UsingLineAt_v3(const vector<NekDouble> &stPoint,
                                   const Array<OneD, NekDouble> &direction,
                                   const int n_quadPts,
@@ -455,6 +675,11 @@ public:
                                           tparams, tvals, varNum);
     }
 
+    /**
+     * @brief Research Phase.
+     *
+     * In the research phase, the behavior may change in time.
+     */
     bool EvaluateUsingLineAt_vNonSymKnots(
         const vector<NekDouble> &stPoint,
         const Array<OneD, NekDouble> &direction, const int n_quadPts,
@@ -471,6 +696,11 @@ public:
                           Array<OneD, NekDouble> &knotVec,
                           NekDouble &nonSymShift);
 
+    /**
+     * @brief Research Phase.
+     *
+     * In the research phase, the behavior may change in time.
+     */
     bool EvaluatePt_vNonSymKnots(const vector<NekDouble> &stPoint,
                                  const Array<OneD, NekDouble> &direction,
                                  const int n_quadPts,
@@ -481,6 +711,11 @@ public:
                                          meshSpacing, tvals, varNum);
     }
 
+    /**
+     * @brief Research Phase.
+     *
+     * In the research phase, the behavior may change in time.
+     */
     bool Cal_NUK_ConstMetricTensor(const NekDouble ptsX, const NekDouble ptsY,
                                    const NekDouble ptsZ,
                                    const NekDouble meshSpacing,
@@ -560,6 +795,7 @@ protected:
         NEKERROR(ErrorUtil::efatal, "Not yet coded");
         return false;
     }
+
     virtual bool v_EvaluateAt_NUK_MetricTensor(
         const NekDouble ptsX, const NekDouble ptsY, const NekDouble ptsZ,
         NekDouble &valX, NekDouble &valY, NekDouble &valZ,
@@ -571,6 +807,7 @@ protected:
         NEKERROR(ErrorUtil::efatal, "Not yet coded");
         return false;
     }
+
     virtual bool v_EvaluateRecursiveAt(
         const NekDouble ptsX, const NekDouble ptsY, const NekDouble ptsZ,
         NekDouble &valX, NekDouble &valY, NekDouble &valZ,

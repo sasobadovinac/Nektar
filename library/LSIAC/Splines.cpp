@@ -37,7 +37,12 @@ namespace Nektar
 {
 namespace LSIAC
 {
+
 Splines::Splines(int deg) : m_deg(deg)
+{
+}
+
+Splines::Splines()
 {
 }
 
@@ -64,24 +69,6 @@ void Splines::Initialize(int deg, int n_Bspl,
                           (NekDouble)i);
     }
     this->expandSupport();
-}
-
-Splines::Splines()
-{
-    // Need to comment and write own stuff;
-    m_deg = 3;
-    m_knots.push_back(0.0);
-    m_knots.push_back(0.0);
-    m_knots.push_back(0.0);
-    m_knots.push_back(0.0);
-    m_knots.push_back(1.0);
-    m_knots.push_back(1.0);
-    m_knots.push_back(1.0);
-    m_knots.push_back(1.0);
-    m_cpts.push_back(0.0);
-    m_cpts.push_back(0.0);
-    m_cpts.push_back(0.0);
-    m_cpts.push_back(1.0);
 }
 
 void Splines::findks(const NekDouble u, int &k, int &s) const
@@ -186,8 +173,6 @@ void Splines::EvaluateUArr(const vector<NekDouble> &uAr,
                 ptIndex           = i - k + m_deg - r;
                 pts_eval[ptIndex] = (1 - alpha) * pts_eval[ptIndex] +
                                     alpha * pts_eval[ptIndex + 1];
-                //                  cout << "r: "<<r << " i:"<<i<< " ptIndex:"
-                //                  << ptIndex << endl;
             }
         }
         solAr[i] = pts_eval[0] * mulfactorForCpts;
@@ -201,14 +186,11 @@ void Splines::EvaluateUA(const NekDouble u, NekDouble &sol,
     int k, s;
     this->findks(u, k, s);
 
-    // debug
-    // cout << k << " and " << s << endl;
 
     // 2. Handle if  s = deg+1;
     if (m_deg + 1 == s)
     {
         sol = m_cpts[k - m_deg];
-        // cout << "u: " << u << "exit s= deg+1 k:"<<k << endl;
         if (k == m_knots.size() - 1)
         {
             sol = m_cpts[k - m_deg - 1];
@@ -239,8 +221,6 @@ void Splines::EvaluateUA(const NekDouble u, NekDouble &sol,
             ptIndex = i - k + m_deg - r;
             pts_eval[ptIndex] =
                 (1 - alpha) * pts_eval[ptIndex] + alpha * pts_eval[ptIndex + 1];
-            //              cout << "r: "<<r << " i:"<<i<< " ptIndex:" <<
-            //              ptIndex << endl;
         }
     }
     sol = pts_eval[0];
@@ -252,14 +232,10 @@ void Splines::EvaluateU(const NekDouble u, NekDouble &sol)
     int k, s;
     this->findks(u, k, s);
 
-    // debug
-    // cout << k << " and " << s << endl;
-
     // 2. Handle if  s = deg+1;
     if (m_deg + 1 == s)
     {
         sol = m_cpts[k - m_deg];
-        // cout << "u: " << u << "exit s= deg+1 k:"<<k << endl;
         if (k == m_knots.size() - 1)
         {
             sol = m_cpts[k - m_deg - 1];
@@ -288,8 +264,6 @@ void Splines::EvaluateU(const NekDouble u, NekDouble &sol)
             ptIndex = i - k + m_deg - r;
             pts_eval[ptIndex] =
                 (1 - alpha) * pts_eval[ptIndex] + alpha * pts_eval[ptIndex + 1];
-            //              cout << "r: "<<r << " i:"<<i<< " ptIndex:" <<
-            //              ptIndex << endl;
         }
     }
     sol = pts_eval[0];
