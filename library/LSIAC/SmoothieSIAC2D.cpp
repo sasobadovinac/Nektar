@@ -75,8 +75,8 @@ SmoothieSIAC2D::SmoothieSIAC2D(const FilterType filter,
         case eSYM_4kp1:
             m_siacFilterPtrs.emplace_back(new SymmetricSIAC(order, 4 * order));
             m_OneID = -1;
-            NEKERROR(ErrorUtil
-                     : efatal, "symmetric 4k+1 filter is some how screwed up.");
+            NEKERROR(ErrorUtil::efatal,
+                     "symmetric 4k+1 filter is some how screwed up.");
             break;
         case eSYM_DER_2kp1_1SIDED_2kp1:
             m_siacFilterPtrs.emplace_back(new SymmetricSIAC(
@@ -127,6 +127,8 @@ SmoothieSIAC2D::SmoothieSIAC2D(const FilterType filter,
             m_OneID = -1;
             break;
         default:
+            NEKERROR(ErrorUtil::efatal, "Filter not defined.");
+            break;
     }
 }
 
@@ -332,8 +334,8 @@ bool SmoothieSIAC2D::v_EvaluateAt_NSK_FixedNumBSpl(
     }
     else
     {
-        NEKERROR(ErrorUtil
-                 : efatal, "Should have been returned before coming here.");
+        NEKERROR(ErrorUtil::efatal,
+                 "Should have been returned before coming here.");
     }
 
     m_meshHandlePtr->GetBreakPts(PtsX, PtsY, PtsZ, direction, tmin, tmax, HvalX,
@@ -624,7 +626,7 @@ bool SmoothieSIAC2D::v_EvaluateRecursiveAt(
     const int curLevel)
 {
     int totLevels = directions.size();
-    ASSERTL0((totLevels > curLevel) && (curLevel >= 0) &&
+    ASSERTL0((totLevels > curLevel) && (curLevel >= 0),
              "Some parameters are not right.");
     NekDouble meshSpacing            = meshSpacings[curLevel];
     Array<OneD, NekDouble> direction = directions[curLevel];
@@ -824,7 +826,7 @@ bool SmoothieSIAC2D::v_EvaluateL2UsingLineAt(
         }
         else
         {
-            ASSERTL0(false && "Should not be using one sided filter. ");
+            ASSERTL1(false, "Should not be using one sided filter. ");
             return false;
         }
     }
@@ -869,7 +871,7 @@ bool SmoothieSIAC2D::v_EvaluateL2UsingLineAt(
         m_siacFilterPtrs[m_SymID]->GetFilterRange(meshSpacing, t_min, t_max);
         if (t + t_min < t_mesh_min && t + t_max > t_mesh_max)
         {
-            ASSERTL0("No filter can be applied");
+            ASSERTL1(false, "No filter can be applied");
             return false;
         }
         if (t + t_min < t_mesh_min)
@@ -891,12 +893,12 @@ bool SmoothieSIAC2D::v_EvaluateL2UsingLineAt(
                                                       meshTShift);
         }
 
-        ASSERTL0(t + t_min + TOLERENCE > t_mesh_min &&
+        ASSERTL0(t + t_min + TOLERENCE > t_mesh_min,
                  "Above code should have fixed this issue");
-        ASSERTL0(t + t_max - TOLERENCE < t_mesh_max &&
+        ASSERTL0(t + t_max - TOLERENCE < t_mesh_max,
                  "Above code should have fixed this issue");
         // if symmetric mesh. Could be true for both.
-        int startElmIndex, endElmIndex;
+        int startElmIndex = -1, endElmIndex = -1;
         // start ElementId and End Element Id;
         for (int j = 0; j < HvalT.size(); j++)
         {
@@ -916,7 +918,7 @@ bool SmoothieSIAC2D::v_EvaluateL2UsingLineAt(
             }
         }
 
-        ASSERTL0(startElmIndex <= endElmIndex && "Wrong");
+        ASSERTL0(startElmIndex <= endElmIndex, "Wrong");
         NekDouble sum = 0.0;
         for (int el = startElmIndex; el <= endElmIndex; el++)
         {
@@ -979,7 +981,7 @@ bool SmoothieSIAC2D::v_EvaluateL2UsingLineAt_v3(
         }
         else
         {
-            ASSERTL0(false && "Should not be using one sided filter. ");
+            ASSERTL1(false, "Should not be using one sided filter. ");
             return false;
         }
     }
@@ -1027,7 +1029,7 @@ bool SmoothieSIAC2D::v_EvaluateL2UsingLineAt_v3(
         m_siacFilterPtrs[m_SymID]->GetFilterRange(meshSpacing, t_min, t_max);
         if (t + t_min < t_mesh_min && t + t_max > t_mesh_max)
         {
-            ASSERTL0("No filter can be applied");
+            ASSERTL1(false, "No filter can be applied");
             return false;
         }
         if (t + t_min < t_mesh_min)
@@ -1049,9 +1051,9 @@ bool SmoothieSIAC2D::v_EvaluateL2UsingLineAt_v3(
                                                       meshTShift);
         }
 
-        ASSERTL0(t + t_min + TOLERENCE > t_mesh_min &&
+        ASSERTL0(t + t_min + TOLERENCE > t_mesh_min,
                  "Above code should have fixed this issue");
-        ASSERTL0(t + t_max - TOLERENCE < t_mesh_max &&
+        ASSERTL0(t + t_max - TOLERENCE < t_mesh_max,
                  "Above code should have fixed this issue");
 
         // if symmetric mesh. Could be true for both.
@@ -1074,7 +1076,7 @@ bool SmoothieSIAC2D::v_EvaluateL2UsingLineAt_v3(
                 break;
             }
         }
-        ASSERTL0(startElmIndex <= endElmIndex && "Wrong");
+        ASSERTL0(startElmIndex <= endElmIndex, "Wrong");
         NekDouble sum = 0.0;
         vector<NekDouble> SvalT, LvalT, TvalT;
         if (b_symMesh)
@@ -1114,7 +1116,7 @@ bool SmoothieSIAC2D::v_EvaluateL2UsingLineAt_v3(
                     break;
                 }
             }
-            ASSERTL0(elmIndex != -1 && "Elm Index is wrong");
+            ASSERTL0(elmIndex != -1, "Elm Index is wrong");
             for (int j = 0; j < n_quadPts_resample; j++)
             {
                 t_quadPts[j] = (b - a) * (q_quadR_Pts[j] + 1.0) / 2.0 + a;
@@ -1182,7 +1184,7 @@ bool SmoothieSIAC2D::v_Cal_NUK_ConstMetricTensor(
     {
         return false;
     }
-    ASSERTL0(HvalT.size() > 0 && "Make sure more neightbourhood is searched");
+    ASSERTL0(HvalT.size() > 0, "Make sure more neightbourhood is searched");
     vector<int> t_GIDs, t_EIDs;
 
     HvalT.insert(HvalT.begin(),
@@ -1297,7 +1299,7 @@ bool SmoothieSIAC2D::v_Cal_NUK_ConstMetricTensor(
     {
         return false;
     }
-    ASSERTL0(HvalT.size() > 0 && "Make sure more neightbourhood is searched");
+    ASSERTL0(HvalT.size() > 0, "Make sure more neightbourhood is searched");
     t_GIDs.clear();
     t_EIDs.clear();
 
@@ -1450,7 +1452,7 @@ bool SmoothieSIAC2D::v_EvaluateAt_NUK_MetricTensor(
     }
     else
     {
-        ASSERTL0("Should have been returned before coming here.");
+        ASSERTL2(false, "Should have been returned before coming here.");
         valX = -1;
         return false;
     }

@@ -113,7 +113,7 @@ bool SmoothieSIAC::v_EvaluateLineForLSIAC_v1_dynScaling(
         m_siacFilterPtrs[m_SymID]->GetFilterRange(meshSpacing, t_min, t_max);
         if (t + t_min < t_mesh_min && t + t_max > t_mesh_max)
         {
-            NEKERROR(ErrorUtil : efatal, "No filter can be applied");
+            NEKERROR(ErrorUtil::efatal, "No filter can be applied");
             return false;
         }
         if (t + t_min < t_mesh_min)
@@ -135,9 +135,9 @@ bool SmoothieSIAC::v_EvaluateLineForLSIAC_v1_dynScaling(
                                                       meshTShift);
         }
 
-        ASSERTL0(t + t_min + TOLERENCE > t_mesh_min &&
+        ASSERTL0(t + t_min + TOLERENCE > t_mesh_min,
                  "Above code should have fixed this issue");
-        ASSERTL0(t + t_max - TOLERENCE < t_mesh_max &&
+        ASSERTL0(t + t_max - TOLERENCE < t_mesh_max,
                  "Above code should have fixed this issue");
         // if symmetric mesh. Could be true for both.
         int startElmIndex, endElmIndex;
@@ -151,7 +151,7 @@ bool SmoothieSIAC::v_EvaluateLineForLSIAC_v1_dynScaling(
         startElmIndex = stIndex;
         endElmIndex   = edIndex;
 
-        ASSERTL0(startElmIndex <= endElmIndex && "Wrong");
+        ASSERTL0(startElmIndex <= endElmIndex, "Wrong");
         NekDouble sum = 0.0;
         for (int el = startElmIndex; el <= endElmIndex; el++)
         {
@@ -207,7 +207,7 @@ bool SmoothieSIAC::v_EvaluateLineForLSIAC_v1(
         m_siacFilterPtrs[m_SymID]->GetFilterRange(meshSpacing, t_min, t_max);
         if (t + t_min < t_mesh_min && t + t_max > t_mesh_max)
         {
-            NEKERROR(ErrorUtil : efatal, "No filter can be applied");
+            NEKERROR(ErrorUtil::efatal, "No filter can be applied");
             return false;
         }
         if (t + t_min < t_mesh_min)
@@ -229,9 +229,9 @@ bool SmoothieSIAC::v_EvaluateLineForLSIAC_v1(
                                                       meshTShift);
         }
 
-        ASSERTL0(t + t_min + TOLERENCE > t_mesh_min &&
+        ASSERTL0(t + t_min + TOLERENCE > t_mesh_min,
                  "Above code should have fixed this issue");
-        ASSERTL0(t + t_max - TOLERENCE < t_mesh_max &&
+        ASSERTL0(t + t_max - TOLERENCE < t_mesh_max,
                  "Above code should have fixed this issue");
         // if symmetric mesh. Could be true for both.
         int startElmIndex, endElmIndex;
@@ -244,7 +244,7 @@ bool SmoothieSIAC::v_EvaluateLineForLSIAC_v1(
         startElmIndex = stIndex;
         endElmIndex   = edIndex;
 
-        ASSERTL0(startElmIndex <= endElmIndex && "Wrong");
+        ASSERTL0(startElmIndex <= endElmIndex, "Wrong");
         NekDouble sum = 0.0;
         for (int el = startElmIndex; el <= endElmIndex; el++)
         {
@@ -314,7 +314,7 @@ bool SmoothieSIAC::v_EvaluateLineForLSIAC_v3_dynScaling(
         m_siacFilterPtrs[m_SymID]->GetFilterRange(meshSpacing, t_min, t_max);
         if (t + t_min < t_mesh_min && t + t_max > t_mesh_max)
         {
-            NEKERROR(ErrorUtil : efatal, "No filter can be applied");
+            NEKERROR(ErrorUtil::efatal, "No filter can be applied");
             return false;
         }
         if (t + t_min < t_mesh_min)
@@ -336,9 +336,9 @@ bool SmoothieSIAC::v_EvaluateLineForLSIAC_v3_dynScaling(
                                                       meshTShift);
         }
 
-        ASSERTL0(t + t_min + TOLERENCE > t_mesh_min &&
+        ASSERTL0(t + t_min + TOLERENCE > t_mesh_min,
                  "Above code should have fixed this issue");
-        ASSERTL0(t + t_max - TOLERENCE < t_mesh_max &&
+        ASSERTL0(t + t_max - TOLERENCE < t_mesh_max,
                  "Above code should have fixed this issue");
 
         // if symmetric mesh. Could be true for both.
@@ -353,7 +353,7 @@ bool SmoothieSIAC::v_EvaluateLineForLSIAC_v3_dynScaling(
         startElmIndex = stIndex;
         endElmIndex   = edIndex;
 
-        ASSERTL0(startElmIndex <= endElmIndex && "Wrong");
+        ASSERTL0(startElmIndex <= endElmIndex, "Wrong");
         NekDouble sum = 0.0;
         vector<NekDouble> SvalT, LvalT, TvalT;
         if (b_symMesh)
@@ -393,7 +393,7 @@ bool SmoothieSIAC::v_EvaluateLineForLSIAC_v3_dynScaling(
                     break;
                 }
             }
-            ASSERTL0(elmIndex != -1 && "Elm Index is wrong");
+            ASSERTL0(elmIndex != -1, "Elm Index is wrong");
             for (int j = 0; j < n_quadPts_resample; j++)
             {
                 t_quadPts[j] = (b - a) * (q_quadR_Pts[j] + 1.0) / 2.0 + a;
@@ -466,7 +466,7 @@ bool SmoothieSIAC::v_EvaluateLineForLSIAC_v3(
         m_siacFilterPtrs[m_SymID]->GetFilterRange(meshSpacing, t_min, t_max);
         if (t + t_min < t_mesh_min && t + t_max > t_mesh_max)
         {
-            NEKERROR(ErrorUtil : efatal, "No filter can be applied");
+            NEKERROR(ErrorUtil::efatal, "No filter can be applied");
             return false;
         }
         if (t + t_min < t_mesh_min)
@@ -488,9 +488,9 @@ bool SmoothieSIAC::v_EvaluateLineForLSIAC_v3(
                                                       meshTShift);
         }
 
-        ASSERTL0(t + t_min + TOLERENCE > t_mesh_min &&
+        ASSERTL0(t + t_min + TOLERENCE > t_mesh_min,
                  "Above code should have fixed this issue");
-        ASSERTL0(t + t_max - TOLERENCE < t_mesh_max &&
+        ASSERTL0(t + t_max - TOLERENCE < t_mesh_max,
                  "Above code should have fixed this issue");
 
         // if symmetric mesh. Could be true for both.
@@ -505,7 +505,7 @@ bool SmoothieSIAC::v_EvaluateLineForLSIAC_v3(
         startElmIndex = stIndex;
         endElmIndex   = edIndex;
 
-        ASSERTL0(startElmIndex <= endElmIndex && "Wrong");
+        ASSERTL0(startElmIndex <= endElmIndex, "Wrong");
         NekDouble sum = 0.0;
         vector<NekDouble> SvalT, LvalT, TvalT;
         if (b_symMesh)
@@ -545,7 +545,7 @@ bool SmoothieSIAC::v_EvaluateLineForLSIAC_v3(
                     break;
                 }
             }
-            ASSERTL0(elmIndex != -1 && "Elm Index is wrong");
+            ASSERTL0(elmIndex != -1, "Elm Index is wrong");
             for (int j = 0; j < n_quadPts_resample; j++)
             {
                 t_quadPts[j] = (b - a) * (q_quadR_Pts[j] + 1.0) / 2.0 + a;
@@ -1170,7 +1170,7 @@ bool SmoothieSIAC::v_EvaluatePt_vNonSymKnots(
                     break;
                 }
             }
-            ASSERTL0(elmIndex != -1 && "Elm Index is wrong");
+            ASSERTL0(elmIndex != -1, "Elm Index is wrong");
             for (int j = 0; j < n_quadPts_resample; j++)
             {
                 t_quadPts[j] = (b - a) * (q_quadR_Pts[j] + 1.0) / 2.0 + a;
@@ -1182,7 +1182,7 @@ bool SmoothieSIAC::v_EvaluatePt_vNonSymKnots(
             }
             else
             {
-                ASSERTL0(false && "Should no be here.");
+                ASSERTL1(false, "Should no be here.");
             }
 
             NekDouble integral = 0.0;
@@ -1309,7 +1309,7 @@ bool SmoothieSIAC::v_EvaluateUsingLineAt_vNonSymKnots(
                     break;
                 }
             }
-            ASSERTL0(elmIndex != -1 && "Elm Index is wrong");
+            ASSERTL0(elmIndex != -1, "Elm Index is wrong");
             for (int j = 0; j < n_quadPts_resample; j++)
             {
                 t_quadPts[j] = (b - a) * (q_quadR_Pts[j] + 1.0) / 2.0 + a;
@@ -1321,7 +1321,7 @@ bool SmoothieSIAC::v_EvaluateUsingLineAt_vNonSymKnots(
             }
             else
             {
-                NEKERROR(ErrorUtil : efatal, "Should no be here.");
+                NEKERROR(ErrorUtil::efatal, "Should no be here.");
             }
 
             NekDouble integral = 0.0;

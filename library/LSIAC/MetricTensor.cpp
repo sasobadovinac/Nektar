@@ -52,9 +52,9 @@ Eigen::Matrix2d MetricTensor::GetDynamicMetricTensor(
     if (eid < 0)
     {
         eid = m_meshHandlePtr->GetExpansionIndexUsingRTree(glCoord);
-        ASSERTL0(eid >= 0 && "Point out of mesh");
+        ASSERTL0(eid >= 0, "Point out of mesh");
     }
-    ASSERTL0(eid >= 0 && "Point out of mesh");
+    ASSERTL0(eid >= 0, "Point out of mesh");
     Eigen::Matrix2d result;
     // Get local coordinates.
     // Depending on number of vertices triangle or quad.
@@ -78,11 +78,11 @@ Eigen::Matrix2d MetricTensor::GetDynamicMetricTensor(
     }
     else if (geomSPtr->GetShapeType() == Nektar::LibUtilities::eQuadrilateral)
     {
-        ASSERTL0("Not designed for quadrilateral elements");
+        NEKERROR(ErrorUtil::efatal, "Not designed for quadrilateral elements");
     }
     else
     {
-        ASSERTL0("Shape not accounted for");
+        NEKERROR(ErrorUtil::efatal, "Shape not accounted for");
     }
 
     return result.exp();
@@ -352,7 +352,7 @@ bool MetricTensor::LoadMetricTensor(HandleNekMesh *HNM)
                    // of variables such as aNEK.
             default:
             {
-                NEKERROR(ErrorUtil : efatal, "Not accounted for");
+                NEKERROR(ErrorUtil::efatal, "Not accounted for");
             }
             break;
         }
@@ -375,7 +375,7 @@ bool MetricTensor::GetEigenPair(Array<OneD, NekDouble> coord, int eid,
     {
         // Find eid.
         eid = m_meshHandlePtr->GetExpansionIndexUsingRTree(coord);
-        ASSERTL0(eid >= 0 && "Did not initialize Rtrees");
+        ASSERTL0(eid >= 0, "Did not initialize Rtrees");
     }
     // Logically this should have been a quadrature point.
     // For now assume 1.
@@ -401,7 +401,7 @@ bool MetricTensor::GetEigenPair(Array<OneD, NekDouble> coord, int eid,
             eigen[2] = m_eigenValue3[eid * m_nOfQPE * 3 + quadId * 3 + 2];
             break;
         default:
-            NEKERROR(ErrorUtil : efatal, "Wrong input value");
+            NEKERROR(ErrorUtil::efatal, "Wrong input value");
             return false;
     }
     return true;
@@ -420,9 +420,9 @@ bool MetricTensor::GetScaleForDirection(int eid,
                                         Array<OneD, NekDouble> direction,
                                         NekDouble &lambda) const
 {
-    ASSERTL0(eid >= 0 && "Not valid element id");
+    ASSERTL0(eid >= 0, "Not valid element id");
     ASSERTL0(std::abs(direction[0] * direction[0] +
-                      direction[1] * direction[1] - 1) < 1e-9 &&
+                      direction[1] * direction[1] - 1) < 1e-9,
              "direction is not normallized");
     int quadId = 0;
     // Assuming only 2D for now.
@@ -450,7 +450,7 @@ bool MetricTensor::GetEigenPairAtTheta(int eid, NekDouble theta_degrees,
                                        NekDouble &lambda,
                                        Array<OneD, NekDouble> &eigen) const
 {
-    ASSERTL0(eid >= 0 && "Not valid element id");
+    ASSERTL0(eid >= 0, "Not valid element id");
     int quadId          = 0;
     NekDouble theta_rad = theta_degrees * PI / 180.0;
     // Assuming only 2D for now.
@@ -486,7 +486,7 @@ bool MetricTensor::GetEigenPairAtTheta(Array<OneD, NekDouble> coord, int eid,
     {
         // Find eid.
         eid = m_meshHandlePtr->GetExpansionIndexUsingRTree(coord);
-        ASSERTL0(eid >= 0 && "Did not initialize Rtrees");
+        ASSERTL0(eid >= 0, "Did not initialize Rtrees");
     }
     int quadId          = 0;
     NekDouble theta_rad = theta_degrees * PI / 180.0;
@@ -579,7 +579,7 @@ bool MetricTensor::GetEigenPairUsingIP(Array<OneD, NekDouble> coord, int eid,
             eigen  = eigen2;
             break;
         default:
-            ASSERTL0("wrong input for eigNUM");
+            NEKERROR(ErrorUtil::efatal, "wrong input for eigNUM");
             break;
     }
     return true;

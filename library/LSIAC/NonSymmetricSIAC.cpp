@@ -61,7 +61,7 @@ NonSymmetricSIAC::NonSymmetricSIAC(int order)
             m_genBSplinePtr = std::make_shared<GeneralBSplines>(order);
             break;
         default:
-            NEKERROR(ErrorUtil : efatal, "Filter not defined");
+            NEKERROR(ErrorUtil::efatal, "Filter not defined");
             break;
     }
 }
@@ -91,7 +91,7 @@ bool NonSymmetricSIAC::v_EvaluateCoefficients_GivenNumSplines(
             CalCoeffForKnotMatrixVec_Hanieh(m_order - 1, kv_mat, m_coeffs);
             break;
         default:
-            NEKERROR(ErrorUtil : efatal, " Filter type not defined");
+            NEKERROR(ErrorUtil::efatal, " Filter type not defined");
     }
     return true;
 }
@@ -120,8 +120,8 @@ bool NonSymmetricSIAC::v_EvaluateCoefficients(
             CalCoeffForKnotMatrixVec_Hanieh(m_order - 1, kv_mat, m_coeffs);
             break;
         default:
-            NEKERROR(ErrorUtil
-                     : efatal, "Assert or add code for all the other cases");
+            NEKERROR(ErrorUtil::efatal,
+                     "Assert or add code for all the other cases");
     }
     return true;
 }
@@ -136,8 +136,8 @@ bool NonSymmetricSIAC::v_EvaluateCoefficients(const NekDouble kernelShift)
             m_splines.Initialize(m_order - 1, m_nBSpl, m_coeffs);
             break;
         default:
-            NEKERROR(ErrorUtil
-                     : efatal, "Assert or add code for all the other cases");
+            NEKERROR(ErrorUtil ::efatal,
+                     "Assert or add code for all the other cases");
     }
     return true;
 }
@@ -288,7 +288,7 @@ bool NonSymmetricSIAC::v_GetBreakPts(const NekDouble scaling,
             tmax    = ((m_order) / 2.0 + (t_nBSpl - 1.0) / 2.0) * scaling;
             break;
         default:
-            NEKERROR(ErrorUtil : efatal, "Filter not defined yet");
+            NEKERROR(ErrorUtil::efatal, "Filter not defined yet");
     }
 
     valT.clear();
@@ -320,7 +320,7 @@ bool NonSymmetricSIAC::v_GetFilterRange(NekDouble scaling, NekDouble &tmin,
             tmax    = ((m_order) / 2.0 + (t_nBSpl - 1.0) / 2.0) * scaling;
             break;
         default:
-            NEKERROR(ErrorUtil : efatal, "Filter not defined yet");
+            NEKERROR(ErrorUtil::efatal, "Filter not defined yet");
     }
     return true;
 }

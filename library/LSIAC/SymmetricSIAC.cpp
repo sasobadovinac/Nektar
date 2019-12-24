@@ -55,7 +55,7 @@ SymmetricSIAC::SymmetricSIAC(int order)
             m_coeffs = Array<OneD, NekDouble>((2 * (order - 1) + 1), 0.0);
             break;
         default:
-            ASSERTL0(false && "something is wrong");
+            ASSERTL0(false, "something is wrong");
             break;
     }
     EvaluateCoefficients();
@@ -77,7 +77,7 @@ SymmetricSIAC::SymmetricSIAC(int Order, int nBSpl, int nthDerivative)
             m_coeffs = Array<OneD, NekDouble>(nBSpl, 0.0);
             break;
         default:
-            NEKERROR(ErrorUtil : efatal, "Symmetric SIAC Constructor");
+            NEKERROR(ErrorUtil::efatal, "Symmetric SIAC Constructor");
     }
     EvaluateCoefficients();
 }
@@ -106,7 +106,7 @@ SymmetricSIAC::SymmetricSIAC(int Order, SymFilterType filterType, int nthDer)
             m_cenBSpline = CentralBSplines(m_order);
             break;
         default:
-            NEKERROR(ErrorUtil : efatal, "Filter type not defined");
+            NEKERROR(ErrorUtil::efatal, "Filter type not defined");
     }
     EvaluateCoefficients();
 }
@@ -142,7 +142,7 @@ bool SymmetricSIAC::v_EvaluateCoefficients(const NekDouble kernelShift)
             m_splines.Initialize(m_order - 1, m_nBSpl, m_coeffs);
             break;
         default:
-            NEKERROR(ErrorUtil : efatal, "New filter type. Not accounted for");
+            NEKERROR(ErrorUtil::efatal, "New filter type. Not accounted for");
     }
 
     return true;
@@ -216,7 +216,7 @@ bool SymmetricSIAC::v_GetBreakPts(const NekDouble scaling,
             tmax = ((m_order) / 2.0 + (m_nBSpl - 1.0) / 2.0) * scaling;
             break;
         default:
-            NEKERROR(ErrorUtil : efatal, "Filter out of scope");
+            NEKERROR(ErrorUtil::efatal, "Filter out of scope");
     }
 
     valT.clear();
@@ -243,7 +243,7 @@ bool SymmetricSIAC::v_GetFilterRange(NekDouble scaling, NekDouble &tmin,
             tmax = ((m_order) / 2.0 + (m_nBSpl - 1.0) / 2.0) * scaling;
             break;
         default:
-            NEKERROR(ErrorUtil : efatal, "Filter out of scope");
+            NEKERROR(ErrorUtil::efatal, "Filter out of scope");
     }
     return true;
 }

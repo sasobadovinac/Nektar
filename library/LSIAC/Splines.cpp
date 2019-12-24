@@ -52,7 +52,7 @@ void Splines::Initialize(int deg, int n_Bspl,
     boost::ignore_unused(n_Bspl); // used only for debug purposes
     m_deg = deg;
     m_cpts.clear();
-    ASSERTL0(n_Bspl == coeffs.num_elements() &&
+    ASSERTL0(n_Bspl == coeffs.num_elements(),
              "Calculation depends they being equal");
     for (int i = 0; i < coeffs.num_elements(); i++)
     {
@@ -121,7 +121,7 @@ void Splines::EvaluateUArr(const vector<NekDouble> &uAr,
                            NekDouble meshShift, int m_nthDer)
 {
     boost::ignore_unused(meshShift); // For debug purpose.
-    ASSERTL0(std::abs(meshShift) < TOLERENCE &&
+    ASSERTL0(std::abs(meshShift) < TOLERENCE,
              "Meshshift != 0.0 means used by Onesided SIAC. Not calibrated for "
              "OneSidedSIAC");
 

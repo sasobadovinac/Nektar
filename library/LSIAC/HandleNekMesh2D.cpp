@@ -64,7 +64,7 @@ NekDouble HandleNekMesh2D::v_GetElLargestEdgeSize(const NekDouble ptsx,
         {
             Elid = m_expansions[0]->GetExpIndex(glCord);
         }
-        NEKERROR(ErrorUtil : efatal, "Something wrong. Point outside boundary");
+        NEKERROR(ErrorUtil::efatal, "Something wrong. Point outside boundary");
     }
 
     SpatialDomains::GeometrySharedPtr gEl =
@@ -87,7 +87,7 @@ NekDouble HandleNekMesh2D::v_GetElLargestEdgeSize(const NekDouble ptsx,
         }
     }
 
-    ASSERTL0(maxLength > 0 && "max Length > 0 ");
+    ASSERTL0(maxLength > 0, "max Length > 0 ");
     return maxLength;
 }
 
@@ -231,7 +231,7 @@ bool HandleNekMesh2D::v_CanTRangebeApplied(
 {
     boost::ignore_unused(ptsX, ptsY, ptsZ, scaling, tmin, tmax, tminUpdate,
                          tmaxUpdate);
-    NEKERROR(ErrorUtil : efatal, "Not coded.");
+    NEKERROR(ErrorUtil::efatal, "Not coded.");
     return false;
 }
 
@@ -399,7 +399,7 @@ bool HandleNekMesh2D::v_EvaluateAt(const NekDouble xPos, const NekDouble yPos,
         {
             eID = m_expansions[0]->GetExpIndex(lcoord, TOLERENCE);
         }
-        ASSERTL0(eID != -1 && "Input point is out of Mesh");
+        ASSERTL0(eID != -1, "Input point is out of Mesh");
     }
     LocalRegions::ExpansionSharedPtr lexp = m_expansions[0]->GetExp(eID);
     const int phys_offset = m_expansions[0]->GetPhys_Offset(eID);
@@ -417,7 +417,7 @@ bool HandleNekMesh2D::v_EvaluateAt(const Array<OneD, NekDouble> &xPos,
                                    Array<OneD, NekDouble> &values, int varNum)
 {
     boost::ignore_unused(gID); // reserved for global id if implemented.
-    ASSERTL0(gID >= 0 && eID >= 0 && "Input paramerters are out of scope;");
+    ASSERTL0(gID >= 0 && eID >= 0, "Input paramerters are out of scope;");
     // The reason for asking gID will be useful if we are using MPI.
     LocalRegions::ExpansionSharedPtr lexp = m_expansions[0]->GetExp(eID);
     const int phys_offset = m_expansions[0]->GetPhys_Offset(eID);
@@ -440,6 +440,7 @@ bool HandleNekMesh2D::v_GetListOfGIDs(
     const Array<OneD, NekDouble> &direction, const vector<NekDouble> t_breaks,
     vector<int> &t_GIDs, vector<int> &t_EIDs) const
 {
+    boost::ignore_unused(zPos); // Not used in 2D
     t_GIDs.clear();
     t_EIDs.clear();
     t_GIDs.resize(t_breaks.size());
@@ -461,7 +462,7 @@ bool HandleNekMesh2D::v_GetListOfGIDs(
             t_GIDs[i] = m_expansions[0]->GetExpIndex(locCoord, TOLERENCE);
         }
         t_EIDs[i] = t_GIDs[i];
-        ASSERTL0(t_GIDs[i] >= 0 && "Cannot find element Id.");
+        ASSERTL0(t_GIDs[i] >= 0, "Cannot find element Id.");
     }
     return true;
 }
@@ -619,7 +620,7 @@ void HandleNekMesh2D::IntersectWithEdges(
             break;
         }
     }
-    ASSERTL0(dirID >= 0 && "Direction is not right.");
+    ASSERTL0(dirID >= 0, "Direction is not right.");
     for (int s = 0; s < segMap.size(); s++)
     {
         SpatialDomains::SegGeomSharedPtr segPtr =
@@ -710,7 +711,7 @@ void HandleNekMesh2D::IntersectWithFewEdges(
             break;
         }
     }
-    ASSERTL0(dirID >= 0 && "Direction is not right something is up ");
+    ASSERTL0(dirID >= 0, "Direction is not right something is up ");
     for (int s = 0; s < EdgeIds.size(); s++)
     {
         SpatialDomains::SegGeomSharedPtr segPtr =
@@ -756,7 +757,7 @@ void HandleNekMesh2D::FindElementIDForLineSegs(
 void HandleNekMesh2D::v_LoadExpListIntoRTree()
 {
     // check if expansions are already loaded.
-    ASSERTL0(m_expansions.size() > 0 &&
+    ASSERTL0(m_expansions.size() > 0,
              "should have loaded atleast one expansion");
     MultiRegions::ExpListSharedPtr expList = m_expansions[0];
     int expSize                            = expList->GetExpSize();
@@ -896,7 +897,7 @@ NekDouble HandleNekMesh2D::v_GetDynamicScaling(Array<OneD, NekDouble> glCoord,
             eid = m_expansions[0]->GetExpIndex(dup_glCoord, TOLERENCE);
         }
     }
-    ASSERTL0(eid >= 0 && "Point out of mesh");
+    ASSERTL0(eid >= 0, "Point out of mesh");
     NekDouble result = -1.0;
     // Get local coordinates.
     // Depending on number of vertices triangle or quad.
@@ -934,7 +935,7 @@ NekDouble HandleNekMesh2D::v_GetDynamicScaling(Array<OneD, NekDouble> glCoord,
     }
     else
     {
-        NEKERROR(ErrorUtil : efatal, "Shape not accounted for");
+        NEKERROR(ErrorUtil::efatal, "Shape not accounted for");
     }
 
     return mu * result;

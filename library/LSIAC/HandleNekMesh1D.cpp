@@ -513,15 +513,14 @@ bool HandleNekMesh1D::v_CanTRangebeApplied(
             if ((xMeshMin > ptsX + direction[0] * tmin) &&
                 (xMeshMax < ptsX + direction[0] * tmax))
             {
-                NEKERROR(ErrorUtil : efatal, "Kernel bigger than mesh");
+                NEKERROR(ErrorUtil::efatal, "Kernel bigger than mesh");
             }
             return false;
         }
     }
     else
     {
-        NEKERROR(ErrorUtil
-                 : efatal, "Only x-direction supported for 1D meshes");
+        NEKERROR(ErrorUtil::efatal, "Only x-direction supported for 1D meshes");
         return false;
     }
 }
@@ -611,7 +610,7 @@ NekDouble HandleNekMesh1D::v_GetDynamicScaling(Array<OneD, NekDouble> glCoord,
     {
         eid = GetExpansionIndexUsingRTree(glCoord);
     }
-    ASSERTL0(eid >= 0 && "Point out of mesh");
+    ASSERTL0(eid >= 0, "Point out of mesh");
     NekDouble result = -1.0;
     // Get local coordinates.
     // Depending on number of vertices triangle or quad.

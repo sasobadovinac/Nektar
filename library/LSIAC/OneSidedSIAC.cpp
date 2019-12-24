@@ -167,9 +167,8 @@ bool OneSidedSIAC::v_GetBreakPts(const NekDouble scaling,
             }
             break;
         default:
-            NEKERROR(ErrorUtil
-                     : efatal,
-                       "Missed all switch cases. Something is not right..");
+            NEKERROR(ErrorUtil ::efatal,
+                     "Missed all switch cases. Something is not right..");
     }
     return true;
 }
@@ -209,9 +208,8 @@ bool OneSidedSIAC::v_GetFilterRange(NekDouble scaling, NekDouble &tmin,
             }
             break;
         default:
-            NEKERROR(ErrorUtil
-                     : efatal,
-                       "Missed all switch cases. Something is not right..");
+            NEKERROR(ErrorUtil ::efatal,
+                     "Missed all switch cases. Something is not right..");
     }
     return true;
 }
@@ -302,9 +300,8 @@ bool OneSidedSIAC::v_EvaluateFilter(const Array<OneD, NekDouble> &x_pos,
             }
             break;
         default:
-            NEKERROR(ErrorUtil
-                     : efatal,
-                       "Missed all switch cases. Something is not right..");
+            NEKERROR(ErrorUtil ::efatal,
+                     "Missed all switch cases. Something is not right..");
     }
     return true;
 }
@@ -399,88 +396,91 @@ bool OneSidedSIAC::v_EvaluateCoefficients(const NekDouble kernelShift)
                 CalCoeffForKnotMatrixVec_Hanieh(m_order - 1, m_knotMatrix,
                                                 m_coeffs);
             }
-        {
-            NekDouble leftknotOfsym =
-                -1.0 * ((m_order) / 2.0 + (m_order - 1.0));
-            NekDouble rightknotOfsym = ((m_order) / 2.0 + (m_order - 1.0));
-            int numKnotsPvec         = (m_order - 1) + 2 + m_nthDer;
-            int nBSpl                = 2 * (m_order - 1) + 2;
-            // create and fill KnotMatrix.
-            if (kernelShift < 0)
-            { // Right shift.
-                // The first one is general B-Spline. All the others are central
-                // bsplines.
-                m_knotMatrix.clear();
-                for (int tm = 0; tm < nBSpl; tm++)
-                {
-                    if (0 == tm)
-                    { // for tm=0; i.e. first generalB-Spline.
-                        std::vector<NekDouble> genVec(numKnotsPvec, -10.0);
-                        for (int tv = 0; tv < numKnotsPvec; tv++)
-                        {
-                            genVec[tv] =
-                                (leftknotOfsym - kernelShift) +
-                                std::max(0.0, (NekDouble)(tv - (m_order - 1)));
-                        }
-                        m_knotMatrix.push_back(genVec);
-                    }
-                    else
+            break;
+            case (OneSidedFilterType::Der_XLi_SIAC_2kp2):
+            {
+                NekDouble leftknotOfsym =
+                    -1.0 * ((m_order) / 2.0 + (m_order - 1.0));
+                NekDouble rightknotOfsym = ((m_order) / 2.0 + (m_order - 1.0));
+                int numKnotsPvec         = (m_order - 1) + 2 + m_nthDer;
+                int nBSpl                = 2 * (m_order - 1) + 2;
+                // create and fill KnotMatrix.
+                if (kernelShift < 0)
+                { // Right shift.
+                    // The first one is general B-Spline. All the others are
+                    // central bsplines.
+                    m_knotMatrix.clear();
+                    for (int tm = 0; tm < nBSpl; tm++)
                     {
-                        std::vector<NekDouble> genVec(numKnotsPvec);
-                        for (int tv = 0; tv < numKnotsPvec; tv++)
-                        {
-                            genVec[tv] =
-                                -1.0 + tv + tm + (leftknotOfsym - kernelShift);
+                        if (0 == tm)
+                        { // for tm=0; i.e. first generalB-Spline.
+                            std::vector<NekDouble> genVec(numKnotsPvec, -10.0);
+                            for (int tv = 0; tv < numKnotsPvec; tv++)
+                            {
+                                genVec[tv] =
+                                    (leftknotOfsym - kernelShift) +
+                                    std::max(0.0,
+                                             (NekDouble)(tv - (m_order - 1)));
+                            }
+                            m_knotMatrix.push_back(genVec);
                         }
-                        m_knotMatrix.push_back(genVec);
+                        else
+                        {
+                            std::vector<NekDouble> genVec(numKnotsPvec);
+                            for (int tv = 0; tv < numKnotsPvec; tv++)
+                            {
+                                genVec[tv] = -1.0 + tv + tm +
+                                             (leftknotOfsym - kernelShift);
+                            }
+                            m_knotMatrix.push_back(genVec);
+                        }
                     }
                 }
-            }
-            else // KernelShift > 0
-            {    // leftshift
-                m_knotMatrix.clear();
-                for (int tm = 0; tm < nBSpl; tm++)
-                {
-                    if ((2 * (m_order - 1) + 1) == tm)
-                    { // for tm=0; i.e. first generalB-Spline.
-                        std::vector<NekDouble> genVec(numKnotsPvec, -10.0);
-                        for (int tv = 0; tv < numKnotsPvec; tv++)
-                        {
-                            genVec[tv] =
-                                (rightknotOfsym - kernelShift) +
-                                std::min(0.0, (NekDouble)(tv - m_nthDer - 1));
-                        }
-                        m_knotMatrix.push_back(genVec);
-                    }
-                    else
+                else // KernelShift > 0
+                {    // leftshift
+                    m_knotMatrix.clear();
+                    for (int tm = 0; tm < nBSpl; tm++)
                     {
-                        std::vector<NekDouble> genVec(numKnotsPvec);
-                        for (int tv = 0; tv < numKnotsPvec; tv++)
-                        {
-                            genVec[tv] = -3 * (m_order - 1) - 1.0 - m_nthDer +
-                                         tv + tm +
-                                         (rightknotOfsym - kernelShift);
+                        if ((2 * (m_order - 1) + 1) == tm)
+                        { // for tm=0; i.e. first generalB-Spline.
+                            std::vector<NekDouble> genVec(numKnotsPvec, -10.0);
+                            for (int tv = 0; tv < numKnotsPvec; tv++)
+                            {
+                                genVec[tv] =
+                                    (rightknotOfsym - kernelShift) +
+                                    std::min(0.0,
+                                             (NekDouble)(tv - m_nthDer - 1));
+                            }
+                            m_knotMatrix.push_back(genVec);
                         }
-                        m_knotMatrix.push_back(genVec);
+                        else
+                        {
+                            std::vector<NekDouble> genVec(numKnotsPvec);
+                            for (int tv = 0; tv < numKnotsPvec; tv++)
+                            {
+                                genVec[tv] = -3 * (m_order - 1) - 1.0 -
+                                             m_nthDer + tv + tm +
+                                             (rightknotOfsym - kernelShift);
+                            }
+                            m_knotMatrix.push_back(genVec);
+                        }
                     }
                 }
+                // Evaluate the coefficents and store in m_coeff array.
+                // CalCoeffForKnotMatrixVec(m_order-1, m_knotMatrix, m_coeffs);
+                CalCoeffForKnotMatrixVec_Hanieh(m_order - 1 + m_nthDer,
+                                                m_knotMatrix, m_coeffs);
+                CalDerivativesForKnotMatrixVec_Hanieh(m_order - 1, m_nthDer,
+                                                      m_knotMatrix, m_coeffs);
             }
-            // Evaluate the coefficents and store in m_coeff array.
-            // CalCoeffForKnotMatrixVec(m_order-1, m_knotMatrix, m_coeffs);
-            CalCoeffForKnotMatrixVec_Hanieh(m_order - 1 + m_nthDer,
-                                            m_knotMatrix, m_coeffs);
-            CalDerivativesForKnotMatrixVec_Hanieh(m_order - 1, m_nthDer,
-                                                  m_knotMatrix, m_coeffs);
-        }
         break;
         case (OneSidedFilterType::N_Der_SMOOTH_BASIC_SIAC_2kp1):
             CalCoeffForWideSymKernel(m_order - 1, m_nBSpl, m_coeffs,
                                      kernelShift);
             break;
         default:
-            NEKERROR(ErrorUtil
-                     : efatal,
-                       "Missed all switch cases. Something is not right..");
+            NEKERROR(ErrorUtil ::efatal,
+                     "Missed all switch cases. Something is not right..");
             retValue = false;
             break;
     }

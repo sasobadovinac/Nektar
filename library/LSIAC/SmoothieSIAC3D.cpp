@@ -73,8 +73,8 @@ SmoothieSIAC3D::SmoothieSIAC3D(const FilterType filter,
         case eSYM_4kp1:
             m_siacFilterPtrs.emplace_back(new SymmetricSIAC(order, 4 * order));
             m_OneID = -1;
-            NEKERROR(ErrorUtil
-                     : efatal, "symmetric 4k+1 filter is some how screwed up.");
+            NEKERROR(ErrorUtil::efatal,
+                     "symmetric 4k+1 filter is some how screwed up.");
             break;
         case eSYM_DER_2kp1_1SIDED_2kp1:
             m_siacFilterPtrs.emplace_back(new SymmetricSIAC(
@@ -114,6 +114,8 @@ SmoothieSIAC3D::SmoothieSIAC3D(const FilterType filter,
             m_OneID = -1;
             break;
         default:
+            NEKERROR(ErrorUtil::efatal, "Filter not defined.");
+            break;
     }
 }
 
@@ -258,7 +260,7 @@ bool SmoothieSIAC3D::v_EvaluateRecursiveAt(
     const int curLevel)
 {
     int totLevels = directions.size();
-    ASSERTL0((totLevels > curLevel) && (curLevel >= 0) &&
+    ASSERTL0((totLevels > curLevel) && (curLevel >= 0),
              "Some parameters are not right.");
     NekDouble meshSpacing            = meshSpacings[curLevel];
     Array<OneD, NekDouble> direction = directions[curLevel];

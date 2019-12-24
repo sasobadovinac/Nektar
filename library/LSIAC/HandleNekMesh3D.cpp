@@ -54,7 +54,7 @@ NekDouble HandleNekMesh3D::v_GetElLargestEdgeSize(const NekDouble ptsx,
         glCord[1] = ptsy;
         glCord[2] = ptsz;
         Elid      = m_expansions[0]->GetExpIndex(glCord, TOLERENCE);
-        ASSERTL0(Elid > 0 && "Something wrong. Point outside boundary");
+        ASSERTL0(Elid > 0, "Something wrong. Point outside boundary");
     }
 
     SpatialDomains::GeometrySharedPtr gEl =
@@ -76,7 +76,7 @@ NekDouble HandleNekMesh3D::v_GetElLargestEdgeSize(const NekDouble ptsx,
             maxLength = len;
         }
     }
-    ASSERTL0(maxLength > 0 && "max Length > 0 ");
+    ASSERTL0(maxLength > 0, "max Length > 0 ");
     return maxLength;
 }
 
@@ -281,7 +281,7 @@ bool HandleNekMesh3D::v_CanTRangebeApplied(
         }
         if ((0 > pl_index) && (0 > pr_index))
         {
-            NEKERROR(ErrorUtil : efatal, "Not enough mesh size to apply.");
+            NEKERROR(ErrorUtil::efatal, "Not enough mesh size to apply.");
         }
         return false;
     }
@@ -305,7 +305,7 @@ bool HandleNekMesh3D::v_EvaluateAt(const Array<OneD, NekDouble> &xPos,
 {
     // The reason for asking gID will be useful if we are using MPI.
     boost::ignore_unused(gID); // reserved for global id if implemented.
-    ASSERTL0(gID >= 0 && eID >= 0 && "Input paramerters are out of scope;");
+    ASSERTL0(gID >= 0 && eID >= 0, "Input paramerters are out of scope;");
     LocalRegions::ExpansionSharedPtr lexp = m_expansions[0]->GetExp(eID);
     const int phys_offset = m_expansions[0]->GetPhys_Offset(eID);
 
@@ -354,7 +354,7 @@ bool HandleNekMesh3D::v_GetListOfGIDs(
             t_GIDs[i] = m_expansions[0]->GetExpIndex(locCoord, TOLERENCE);
         }
         t_EIDs[i] = t_GIDs[i];
-        ASSERTL0(t_GIDs[i] >= 0 && "Will fail down the line");
+        ASSERTL0(t_GIDs[i] >= 0, "Will fail down the line");
     }
 
     return true;
@@ -515,7 +515,7 @@ void HandleNekMesh3D::IntersectWithEdges(
             break;
         }
     }
-    ASSERTL0(dirID >= 0 && "Direction is not right something is up ");
+    ASSERTL0(dirID >= 0, "Direction is not right something is up ");
     for (int s = 0; s < segMap.size(); s++)
     {
         SpatialDomains::SegGeomSharedPtr segPtr =
@@ -684,7 +684,7 @@ void HandleNekMesh3D::IntersectLineSegWithFace(
                 break;
             }
         }
-        ASSERTL0(dirID >= 0 && "Direction is not right something is up ");
+        ASSERTL0(dirID >= 0, "Direction is not right something is up ");
 
         for (int e = 0; e < numE; e++)
         {
@@ -718,7 +718,7 @@ void HandleNekMesh3D::IntersectLineSegWithFace(
 void HandleNekMesh3D::v_LoadExpListIntoRTree()
 {
     // check if expansions are already loaded.
-    ASSERTL0(m_expansions.size() > 0 &&
+    ASSERTL0(m_expansions.size() > 0,
              "should have loaded atleast one expansion");
     MultiRegions::ExpListSharedPtr expList = m_expansions[0];
     int expSize                            = expList->GetExpSize();
@@ -889,7 +889,7 @@ NekDouble HandleNekMesh3D::v_GetDynamicScaling(Array<OneD, NekDouble> glCoord,
         eid = GetExpansionIndexUsingRTree(glCoord);
     }
 
-    ASSERTL0(eid >= 0 && "Point out of mesh");
+    ASSERTL0(eid >= 0, "Point out of mesh");
     NekDouble result = 0;
 
     SpatialDomains::GeometrySharedPtr geomSPtr =

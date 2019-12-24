@@ -72,7 +72,7 @@ SmoothieSIAC1D::SmoothieSIAC1D(const FilterType filter,
         case eSYM_4kp1:
             m_siacFilterPtrs.emplace_back(new SymmetricSIAC(order, 4 * order));
             m_OneID = -1;
-            ASSERTL0(false && "symmetric 4k+1 filter is some how screwed up.");
+            ASSERTL1(false, "symmetric 4k+1 filter is some how screwed up.");
             break;
         case eSYM_DER_2kp1_1SIDED_2kp1:
             m_siacFilterPtrs.emplace_back(new SymmetricSIAC(
@@ -112,7 +112,7 @@ SmoothieSIAC1D::SmoothieSIAC1D(const FilterType filter,
             m_OneID = -1;
             break;
         default:
-            NEKERROR(ErrorUtil : efatal, << "Filter not defined");
+            NEKERROR(ErrorUtil::efatal, "Filter not defined");
     }
 }
 
@@ -582,7 +582,7 @@ bool SmoothieSIAC1D::v_Cal_NUK_ConstMetricTensor(
     {
         return false;
     }
-    ASSERTL0(HvalT.size() > 0 && "Make sure more neightbourhood is searched");
+    ASSERTL0(HvalT.size() > 0, "Make sure more neightbourhood is searched");
     vector<int> t_GIDs, t_EIDs;
 
     HvalT.insert(HvalT.begin(),
@@ -697,7 +697,7 @@ bool SmoothieSIAC1D::v_Cal_NUK_ConstMetricTensor(
     {
         return false;
     }
-    ASSERTL0(HvalT.size() > 0 && "Make sure more neightbourhood is searched");
+    ASSERTL0(HvalT.size() > 0, "Make sure more neightbourhood is searched");
     t_GIDs.clear();
     t_EIDs.clear();
 
