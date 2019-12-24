@@ -263,7 +263,6 @@ void ProcessLSIAC::ApplyLSIAC(LSIACParams set1)
                 (dynScaling > set1.maxChLen) ? set1.maxChLen : dynScaling;
             sm->EvaluateAt(xc0[q], xc1[q], xc2[q], LSIAC_Fields[i_f][q], valY,
                            valZ, direction, dynScaling, outVarVal[i_f]);
-            cout << "q:" << q << "\t" << npoints << endl;
         }
     }
 
@@ -301,7 +300,6 @@ void ProcessLSIAC::Process(po::variables_map &vm)
         for (pChild = hRoot.FirstChild("SET").Node(); pChild != 0;
              pChild = pChild->NextSibling("SET"))
         {
-            cout << "Applying LSIAC with" << endl;
             LSIACParams set1;
             pElem = pChild->FirstChild("INVARIABLES")->ToElement();
             vector<string> varIn = this->getVecFromStr(pElem->GetText());
