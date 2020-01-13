@@ -355,7 +355,7 @@ int main(int argc, char *argv[])
     //
     for (int timeStepNum = 0; timeStepNum < nTimesteps; timeStepNum++)
     {
-        double time = t0 + (timeStepNum * dt);
+        double time = t0 + (timeStepNum + 1) * dt;
 
         fidifsol = tiScheme->TimeIntegrate(
             timeStepNum, dt, sol, ode); // Time-integration for 1 time-step

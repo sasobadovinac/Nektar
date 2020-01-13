@@ -4,6 +4,8 @@ ADD_NEKTAR_EXECUTABLE(NodalDemo
     COMPONENT demos DEPENDS LibUtilities SOURCES NodalDemo.cpp)
 ADD_NEKTAR_EXECUTABLE(TimeIntegrationDemo
     COMPONENT demos DEPENDS LibUtilities SOURCES TimeIntegrationDemo.cpp)
+ADD_NEKTAR_EXECUTABLE(TimeIntegrationDemoDefectCorrection
+    COMPONENT demos DEPENDS LibUtilities SOURCES TimeIntegrationDemoDefectCorrection.cpp)
 ADD_NEKTAR_EXECUTABLE(ErrorStream
     COMPONENT demos DEPENDS LibUtilities SOURCES ErrorStream.cpp)
 
