@@ -1,6 +1,11 @@
 Changelog
 =========
 
+v5.1.0
+------
+**Library**
+- Refactored time integration code using factory pattern (!1034)
+
 v5.0.0
 ------
 **Library**
@@ -214,7 +219,8 @@ v5.0.0
 - Extend to support MPI tests with multiple executables (!1085)
 
 **Packaging:**
-- Add Dockerfiles and gitlab CI configuration for automatic builds (!1021)
+- Add Dockerfiles and gitlab CI configuration for automatic builds (!1021,
+  !1092, !1098)
 
 v4.4.2
 ------
