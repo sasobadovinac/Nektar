@@ -362,7 +362,7 @@ public:
 }; // end class IMEXOrder3TimeIntegrationScheme
 
 ///////////////////////////////////////////////////////////////////////////////
-// IMEX Order 3
+// IMEX Order 4
 
 class IMEXOrder4TimeIntegrationScheme : public TimeIntegrationScheme
 {
@@ -469,7 +469,7 @@ public:
         phase->m_V[0][7] = -12 * twentyfifth;
         phase->m_V[1][0] = 1.0;
         phase->m_V[2][1] = 1.0;
-        phase->m_V[4][3] = 1.0;
+        phase->m_V[3][2] = 1.0;
         phase->m_V[5][4] = 1.0;
         phase->m_V[6][5] = 1.0;
         phase->m_V[7][6] = 1.0;
