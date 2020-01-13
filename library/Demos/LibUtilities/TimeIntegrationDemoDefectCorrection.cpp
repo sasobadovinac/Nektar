@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File TimeIntegrationDemo.cpp
+// File TimeIntegrationDemoDefectCorrection.cpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -76,7 +76,7 @@
 //    gnuplot OneDfinDiffAdvDiffSolverOutput.p
 //
 // To run this code in perfect setting type, e.g., in the terminal:
-// > TimeIntegrationOrderDemo -p 100 -t 100  -m 2
+// > TimeIntegrationOrderDemoDefectCorrection -p 100 -t 100  -m 2
 //-------------------------------------------------------------------------------------------------
 #include <fstream>
 #include <iomanip>
