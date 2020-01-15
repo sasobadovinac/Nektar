@@ -226,7 +226,7 @@ int main(int argc, char *argv[])
         "- 7: 2nd order IMEX Gear (Extrapolated Gear/SBDF-2)\n"
         "- 8: 2nd order Crank-Nicolson/Adams-Bashforth (CNAB)\n"
         "- 9: 2nd order Modified Crank-Nicolson/Adams-Bashforth\n"
-        "     (MCNAB)"
+        "     (MCNAB)\n"
         "-10: 2nd order Defect Correction IMEX scheme\n"
         "-11: 3rd order Defect Correction IMEX scheme\n");
 
