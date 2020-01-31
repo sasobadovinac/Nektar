@@ -87,6 +87,9 @@ protected:
     LibUtilities::SessionReaderSharedPtr  m_session;
     const std::weak_ptr<EquationSystem> m_equ;
 
+// get copy of m_equ in shared pointer
+    const std::shared_ptr<EquationSystem> m_equShared = m_equ.lock();
+
     virtual void v_Initialise(
             const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
             const NekDouble &time) = 0;

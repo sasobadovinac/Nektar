@@ -882,33 +882,92 @@ namespace Nektar
     }
 
     /**
-     *  Solve structural equation and get m_angle and m_angleVel
+     *  Solve structural adjoint equation and get m_angle and m_angleVel
      */
     void IncNavierStokes::SolveStructuralAdjoint(NekDouble time)
     {
-        ////////// TEST angleVel = sigma * exp(sigma * t) ///////
-        NekDouble sigma = 6.7256e-02;
-        NekDouble timeCopy = time;
+        static int totalCalls = -1;
+        ++totalCalls;
 
-        while (timeCopy > m_finTime)
+        // Determine order for this time step
+        static int intCalls = 0;
+        ++intCalls;
+        int order = min(intCalls, m_bsbcParams->m_intSteps);
+
+        int expdim = m_fields[0]->GetGraph()->GetMeshDimension();
+
+        // Get aerodynamic forces
+        Array<OneD, NekDouble> momentsA(expdim, 0.0);
+        Array<OneD, NekDouble> momentsB(expdim, 0.0);
+
+        m_bsbcParams->m_filterForcesA->GetTotalMoments(m_fields, momentsA, time);
+
+        m_bsbcParams->m_filterForcesB->GetTotalMoments(m_fields, momentsB, time);
+
+        // Shift moment storage
+        for(int n = m_bsbcParams->m_intSteps-1; n > 0; --n)
         {
-            timeCopy -= m_finTime;
+            m_bsbcParams->m_momentA[n] = m_bsbcParams->m_momentA[n-1];
+            m_bsbcParams->m_momentB[n] = m_bsbcParams->m_momentB[n-1];
         }
-        // if ((m_bsbcParams->m_iter % m_numSteps) == 0)
-        // {
-        //     m_bsbcParams->m_previousAngle = m_bsbcParams->m_angle;
-        // }
-        // if ((m_bsbcParams->m_iter % m_numSteps) == 1)
-        // {
-        //     m_bsbcParams->m_alpha = m_bsbcParams->m_previousAngle/m_bsbcParams->m_angle;
-        // }
-        m_bsbcParams->m_angleVel[0] = (1/m_bsbcParams->m_alpha) * sigma * exp(sigma * timeCopy);
-        m_bsbcParams->m_angle       = (1/m_bsbcParams->m_alpha) * exp(sigma * timeCopy);
-        ////////////////////////////////////////////////////////
+
+        // Calculate total moment
+        if( expdim == 2)
+        {
+            // Only have moment in z-direction
+            m_bsbcParams->m_momentA[0] = momentsA[0];
+            m_bsbcParams->m_momentB[0] = momentsB[0];
+        }
+        else
+        {
+            // Project to axis direction
+            m_bsbcParams->m_momentA[0] = 0;
+            m_bsbcParams->m_momentB[0] = 0;
+            for(int j = 0; j < 3; ++j)
+            {
+                m_bsbcParams->m_momentA[0] += momentsA[j] * m_bsbcParams->m_axis[j];
+                m_bsbcParams->m_momentB[0] += momentsB[j] * m_bsbcParams->m_axis[j];
+            }
+        }
+
+        // Account for torsional spring and damping contributions
+        if(m_bsbcParams->m_K == 0.0)
+        {
+            m_bsbcParams->m_momentA[0] = - m_bsbcParams->m_angleVel[0];
+        }
+        else
+        {
+            m_bsbcParams->m_momentA[0] = - m_bsbcParams->m_momentA[0] / m_bsbcParams->m_K -
+            m_bsbcParams->m_angleVel[0];
+        }
+        
+        m_bsbcParams->m_momentB[0] = (- m_bsbcParams->m_momentB[0] -
+        m_bsbcParams->m_C * m_bsbcParams->m_angleVel[0] + 
+        m_bsbcParams->m_K * m_bsbcParams->m_angleAdj[0]) / m_bsbcParams->m_I;
+
+        // Shift velocity and position storage
+        for(int n = m_bsbcParams->m_intSteps-1; n > 0; --n)
+        {
+            m_bsbcParams->m_angleVel[n] = m_bsbcParams->m_angleVel[n-1];
+            m_bsbcParams->m_angleAdj[n] = m_bsbcParams->m_angleAdj[n-1];
+        }
+
+        // Update velocity and position
+        for(int j = 0; j < order; ++j)
+        {
+            m_bsbcParams->m_angleVel[0] += m_timestep *
+            m_bsbcParams->AdamsBashforth_coeffs[order-1][j] 
+                * m_bsbcParams->m_momentB[j];
+
+            m_bsbcParams->m_angleAdj[0] += m_timestep * 
+                m_bsbcParams->AdamsBashforth_coeffs[order-1][j] *
+                    m_bsbcParams->m_momentA[j];
+        }
 
         if( m_bsbcParams->m_doOutput )
         {
-            //m_bsbcParams->m_filterForces->Update(m_fields, time);
+            m_bsbcParams->m_filterForcesA->Update(m_fields, time);
+            m_bsbcParams->m_filterForcesB->Update(m_fields, time);
             ++m_bsbcParams->m_index;
             if ( !(m_bsbcParams->m_index % m_bsbcParams->m_outputFrequency) )
             {
@@ -919,11 +978,59 @@ namespace Nektar
                     m_bsbcParams->m_outputStream.width(15);
                     m_bsbcParams->m_outputStream << setprecision(8) << m_bsbcParams->m_angleVel[0];
                     m_bsbcParams->m_outputStream.width(15);
-                    m_bsbcParams->m_outputStream << setprecision(8) << m_bsbcParams->m_angle;
+                    m_bsbcParams->m_outputStream << setprecision(8) << m_bsbcParams->m_angleAdj[0];
                     m_bsbcParams->m_outputStream << endl;
                 }
             }
         }
+    }
+
+    /**
+     *  Force structural adjoint equation and get m_angle and m_angleVel
+     */
+    void IncNavierStokes::ForceStructuralAdjoint(NekDouble time)
+    {
+            ////////// TEST angleVel = sigma * exp(sigma * t) ///////
+            NekDouble sigma = 0.0667398;
+            NekDouble timeCopy = time;
+            NekDouble offset = 1.0;
+
+            // while (timeCopy > m_finTime)
+            // {
+            //     timeCopy -= m_finTime;
+            // }
+            // if ((m_bsbcParams->m_iter % m_numSteps) == 0)
+            // {
+            //     m_bsbcParams->m_previousAngle = m_bsbcParams->m_angle;
+            // }
+            // if ((m_bsbcParams->m_iter % m_numSteps) == 1)
+            // {
+            //     m_bsbcParams->m_alpha = m_bsbcParams->m_previousAngle/m_bsbcParams->m_angle;
+            // }
+            m_bsbcParams->m_angleVel[0] = offset / m_bsbcParams->m_alpha * 
+            sigma * exp(sigma * timeCopy);
+            m_bsbcParams->m_angleAdj[0] = offset / m_bsbcParams->m_alpha 
+            * exp(sigma * timeCopy);
+            ////////////////////////////////////////////////////////
+
+            if( m_bsbcParams->m_doOutput )
+            {
+                //m_bsbcParams->m_filterForces->Update(m_fields, time);
+                ++m_bsbcParams->m_index;
+                if ( !(m_bsbcParams->m_index % m_bsbcParams->m_outputFrequency) )
+                {
+                    if ( m_fields[0]->GetComm()->GetRank() == 0)
+                    {
+                        m_bsbcParams->m_outputStream.width(8);
+                        m_bsbcParams->m_outputStream << setprecision(6) << time;
+                        m_bsbcParams->m_outputStream.width(15);
+                        m_bsbcParams->m_outputStream << setprecision(8) << m_bsbcParams->m_angleVel[0];
+                        m_bsbcParams->m_outputStream.width(15);
+                        m_bsbcParams->m_outputStream << setprecision(8) << m_bsbcParams->m_angleAdj[0];
+                        m_bsbcParams->m_outputStream << endl;
+                    }
+                }
+            }
     }
 
     /**
@@ -1001,9 +1108,10 @@ namespace Nektar
      */
     void IncNavierStokes::ScaleBSBCAdjoint()
     {
-        int nfields = m_fields.num_elements();
-        int nvel    = nfields - 1;
-        int nbnds   = m_fields[0]->GetBndConditions().num_elements();
+        int nfields    = m_fields.num_elements();
+        int nvel       = nfields - 1;
+        int nbnds      = m_fields[0]->GetBndConditions().num_elements();
+        double angleVcp =  (-1) * m_bsbcParams->m_angleVel[0];
 
         // Declare variables
         Array<OneD, const SpatialDomains::BoundaryConditionShPtr> BndConds;
@@ -1025,7 +1133,7 @@ namespace Nektar
                         if (i<nvel)
                         {
                             // Scale BC with m_angleVel times deltaGamma:
-                            Vmath::Smul(BndExp[n]->GetTotPoints(), m_bsbcParams->m_angleVel[0], 
+                            Vmath::Smul(BndExp[n]->GetTotPoints(), angleVcp, 
                                 m_bsbcParams->m_deltaGammaBnd[i], 1, 
                                 BndExp[n]->UpdatePhys(), 1);
                         }
@@ -1205,6 +1313,21 @@ namespace Nektar
         AllocateSharedPtr(m_session, shared_from_this(), vParams);
         m_bsbcParams->m_filterForces->Initialise(m_fields, 0.0);
 
+        // For Adjoint
+        // Create FilterAeroForces object -----> A
+        m_bsbcParams->m_isMomentA = true;
+        m_bsbcParams->m_isMomentB = false;
+        m_bsbcParams->m_filterForcesA = MemoryManager<SolverUtils::FilterAeroForces>::
+        AllocateSharedPtr(m_session, shared_from_this(), vParams);
+        m_bsbcParams->m_filterForcesA->Initialise(m_fields, 0.0);
+        m_bsbcParams->m_isMomentA = false;
+        // Create FilterAeroForces object -----> B
+        m_bsbcParams->m_isMomentB = true;
+        m_bsbcParams->m_filterForcesB = MemoryManager<SolverUtils::FilterAeroForces>::
+        AllocateSharedPtr(m_session, shared_from_this(), vParams);
+        m_bsbcParams->m_filterForcesB->Initialise(m_fields, 0.0);
+        m_bsbcParams->m_isMomentB = false;
+
         // Determine time integration order
         std::string intMethod = m_session->GetSolverInfo("TIMEINTEGRATIONMETHOD");
         if(boost::iequals(intMethod, "IMEXOrder1"))
@@ -1228,7 +1351,11 @@ namespace Nektar
         m_bsbcParams->m_angle         = 0.0;
         m_bsbcParams->m_previousAngle = 0.0;
         m_bsbcParams->m_angleVel      = Array<OneD,NekDouble> (m_intSteps, 0.0);
+        m_bsbcParams->m_angleAdj      = Array<OneD,NekDouble> (m_intSteps, 0.0);
+        m_bsbcParams->m_angleAdjPrev  = Array<OneD,NekDouble> (m_intSteps, 0.0);
         m_bsbcParams->m_moment        = Array<OneD,NekDouble> (m_intSteps, 0.0);
+        m_bsbcParams->m_momentA       = Array<OneD,NekDouble> (m_intSteps, 0.0);
+        m_bsbcParams->m_momentB       = Array<OneD,NekDouble> (m_intSteps, 0.0);
         m_bsbcParams->m_alpha         = 1;
 
         // Initialise constants for the BC sclaing
@@ -1304,9 +1431,13 @@ namespace Nektar
         Array<OneD, Array<OneD, NekDouble> > deltaGamma(nvel);
 
         m_bsbcParams->m_deltaGammaBnd = Array<OneD, Array<OneD, NekDouble> >(nvel);
-        m_bsbcParams->m_deltaGradBnd = Array<OneD, Array<OneD, NekDouble> >(nvel);
+        m_bsbcParams->m_deltaGradBnd  = Array<OneD, Array<OneD, NekDouble> >(nvel);
+        m_bsbcParams->m_deltaGrad     = Array<OneD, Array<OneD, NekDouble> >(nvel);
 
         m_bsbcParams->m_isBlowingSuction = Array<OneD, bool> (nfields);
+
+        m_bsbcParams->m_isMomentA = false;
+        m_bsbcParams->m_isMomentB = false;
 
         for (int i = 0; i < nfields; ++i)
         {
@@ -1317,6 +1448,7 @@ namespace Nektar
         {
             deltaGrad[i] = Array<OneD, NekDouble> (physTot, 0.0);
             deltaGamma[i] = Array<OneD, NekDouble> (physTot, 0.0);
+            m_bsbcParams->m_deltaGrad[i] = Array<OneD, NekDouble> (physTot, 0.0);
         }
 
         // Get Cartesian coordinates for evaluating boundary conditions    
@@ -1373,7 +1505,7 @@ namespace Nektar
                 Vmath::Vcopy(physTot, coords[1], 1, deltaGamma[0], 1);
                 Vmath::Neg(physTot, coords[1], 1);
 
-                // Compute delta Gamma times base-flow gradient:
+                // Compute - delta Gamma times base-flow gradient (=-Ju delta Gamma):
                 // u = y.du/dx - x.du/dy
                 Vmath::Vmul(physTot, coords[1], 1, m_advObject->GetGradBase()[0],
                     1 , deltaGrad[0], 1);
@@ -1389,6 +1521,11 @@ namespace Nektar
 
                 Vmath::Vvtvp(physTot, coords[0], 1, m_advObject->GetGradBase()[3],
                     1, deltaGrad[1], 1, deltaGrad[1], 1);
+
+                // store deltaGrad in m_deltaGrad (such as v_GetDeltaGrad returns 
+                // - Ju delta Gamma):
+                Vmath::Vcopy(physTot, deltaGrad[0], 1, m_bsbcParams->m_deltaGrad[0], 1);
+                Vmath::Vcopy(physTot, deltaGrad[1], 1, m_bsbcParams->m_deltaGrad[1], 1);
 
                 // Now, project result to boundary
                 for (int i = 0; i < nfields; ++i)
@@ -1420,7 +1557,22 @@ namespace Nektar
     void IncNavierStokes::v_GetStruct(NekDouble &angle, NekDouble &angleVel)
     {
         angle = m_bsbcParams->m_angle;
+        if(m_session->GetSolverInfo("EvolutionOperator") == "Adjoint")
+        {
+            angle = m_bsbcParams->m_angleAdj[0];
+        }
         angleVel = m_bsbcParams->m_angleVel[0];
+    }
+
+    /**
+     *  
+     */
+    void IncNavierStokes::v_GetDeltaGrad(Array<OneD, Array<OneD, NekDouble> > &deltaGrad)
+    {
+        Vmath::Vcopy(m_fields[0]->GetTotPoints(), m_bsbcParams->m_deltaGrad[0], 1, 
+            deltaGrad[0], 1);
+        Vmath::Vcopy(m_fields[0]->GetTotPoints(), m_bsbcParams->m_deltaGrad[1], 1, 
+            deltaGrad[1], 1);
     }
 
     /**
@@ -1429,6 +1581,7 @@ namespace Nektar
     void IncNavierStokes::v_SetStruct(NekDouble &angle, NekDouble &angleVel)
     {
         m_bsbcParams->m_angle = angle;
+        m_bsbcParams->m_angleAdj[0] = angle;
         m_bsbcParams->m_angleVel[0] = angleVel;
     }
 
@@ -1446,6 +1599,15 @@ namespace Nektar
     bool IncNavierStokes::v_CheckBSBC()
     {
         return m_BlowingSuction;
+    }
+
+    /**
+     *  
+     */
+    bool IncNavierStokes::v_SetMoment(bool &isMomentA, bool &isMomentB)
+    {
+        isMomentA = m_bsbcParams->m_isMomentA;
+        isMomentB = m_bsbcParams->m_isMomentB;
     }
 
     /**

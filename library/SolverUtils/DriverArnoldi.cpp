@@ -84,10 +84,11 @@ void DriverArnoldi::v_InitObject(ostream &out)
         m_BlowingSuction = m_equ[0]->v_CheckBSBC();
 
         // Check to see if a BS-BC is defined 
-        if(m_BlowingSuction == true && m_session->GetSolverInfo("EvolutionOperator") == "Direct")
+        if(m_BlowingSuction == true)
         {
             // Determine number of BS-BC fields the solve is supporting;
-            m_nBSBCFields = 0; 
+            // = 0 if uncommented functions in DriverModifiedArnoldi.cpp
+            m_nBSBCFields = 2; 
         }
         else
         {
@@ -217,13 +218,13 @@ void DriverArnoldi::v_InitObject(ostream &out)
             fields[k]->SetPhysState(false);
         }
 
-        // if(m_BlowingSuction == true && m_session->GetSolverInfo("EvolutionOperator") == "Direct")
-        // {
-        //     NekDouble theta = array[m_nFields*nq];
-        //     NekDouble thetadot = array[(m_nFields+1)*nq];
+        if(m_BlowingSuction)
+        {
+            NekDouble theta = array[m_nFields*nq];
+            NekDouble thetadot = array[(m_nFields+1)*nq];
 
-        //     m_equ[0]->v_SetStruct(theta, thetadot);
-        // }
+            m_equ[0]->v_SetStruct(theta, thetadot);
+        }
     };
 
     /**
@@ -254,17 +255,17 @@ void DriverArnoldi::v_InitObject(ostream &out)
             fields[k]->SetPhysState(false);
         }
 
-        // if(m_BlowingSuction == true && m_session->GetSolverInfo("EvolutionOperator") == "Direct")
-        // {
-        //     NekDouble theta = 0.0;
-        //     NekDouble thetadot = 0.0;
-        //     m_equ[0]->v_GetStruct(theta, thetadot);
-        //     Array<OneD, NekDouble> tmp1(nq, theta);
-        //     Array<OneD, NekDouble> tmp2(nq, thetadot);
+        if(m_BlowingSuction)
+        {
+            NekDouble theta = 0.0;
+            NekDouble thetadot = 0.0;
+            m_equ[0]->v_GetStruct(theta, thetadot);
+            Array<OneD, NekDouble> tmp1(nq, theta);
+            Array<OneD, NekDouble> tmp2(nq, thetadot);
             
-        //     Vmath::Vcopy(nq, &tmp1[0], 1, &array[m_nFields*nq], 1);
-        //     Vmath::Vcopy(nq, &tmp2[0], 1, &array[(m_nFields+1)*nq], 1);
-        // }
+            Vmath::Vcopy(nq, &tmp1[0], 1, &array[m_nFields*nq], 1);
+            Vmath::Vcopy(nq, &tmp2[0], 1, &array[(m_nFields+1)*nq], 1);
+        }
     };
 
 

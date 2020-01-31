@@ -224,6 +224,14 @@ void FilterAeroForces::v_Initialise(
     // Load mapping
     m_mapping = GlobalMapping::Mapping::Load(m_session, pFields);
 
+    // Get blowing suction flag
+    m_BlowingSuction = m_equShared->v_CheckBSBC();
+
+    if(m_BlowingSuction)
+    {
+        m_equShared->v_SetMoment(m_isMomentA, m_isMomentB);
+    }
+
     // Get density and viscosity
     m_session->LoadParameter("rho", m_rho, 1.0);
     m_mu = m_rho*m_session->GetParameter("Kinvis");
@@ -930,11 +938,13 @@ void FilterAeroForces::CalculateForcesStandard(
     Array<OneD, Array<OneD, NekDouble> > physfields(pFields.num_elements());
 
     Array<OneD, Array<OneD, NekDouble> > velocity(nVel);
+    Array<OneD, Array<OneD, NekDouble> > deltaGrad(nVel);
     Array<OneD, NekDouble>               pressure;
 
     // Arrays of variables in the element
     Array<OneD, Array<OneD, NekDouble> >  velElmt(expdim);
     Array<OneD, NekDouble>                pElmt(physTot);
+    Array<OneD, Array<OneD, NekDouble> >  deltaElmt(expdim);
 
     // Velocity gradient
     Array<OneD, Array<OneD, NekDouble> >  grad( expdim*expdim);
@@ -944,6 +954,7 @@ void FilterAeroForces::CalculateForcesStandard(
 
     // Values at the boundary
     Array<OneD, NekDouble>                Pb;
+    Array<OneD, Array<OneD, NekDouble> >  deltab(expdim);
     Array<OneD, Array<OneD, NekDouble> >  gradb( expdim*expdim);
     Array<OneD, Array<OneD, NekDouble> >  coordsb(3);
 
@@ -1015,10 +1026,12 @@ void FilterAeroForces::CalculateForcesStandard(
             for(n = 0; n < nVel; ++n)
             {
                 velocity[n] = Array<OneD, NekDouble>(fields[n]->GetTotPoints());
+                deltaGrad[n] = Array<OneD, NekDouble>(fields[0]->GetTotPoints());
             }
             pressure = Array<OneD, NekDouble>(fields[0]->GetTotPoints());
             fluidEqu->GetVelocity(physfields, velocity);
             fluidEqu->GetPressure(physfields, pressure);
+            m_equShared->v_GetDeltaGrad(deltaGrad);
 
             //Loop all the Boundary Regions
             for(cnt = n = 0; n < BndConds.num_elements(); ++n)
@@ -1038,6 +1051,7 @@ void FilterAeroForces::CalculateForcesStandard(
                             for( j=0; j<expdim; j++)
                             {
                                 velElmt[j] = velocity[j] + offset;
+                                deltaElmt[j] = deltaGrad[j] + offset;
                             }
                             pElmt = pressure + offset;
 
@@ -1082,9 +1096,15 @@ void FilterAeroForces::CalculateForcesStandard(
                             // Get normals
                             Array<OneD, Array<OneD, NekDouble> > normals =
                                 elmt->GetTraceNormal(boundary);
+
                             // Extract values at boundary
                             Pb = Array<OneD, NekDouble>(nbc,0.0);
                             elmt->GetTracePhysVals(boundary, bc, pElmt, Pb);
+                            for(int j = 0; j < expdim; ++j)
+                            {
+                                deltab[j] = Array<OneD, NekDouble>(nbc,0.0);
+                                elmt->GetTracePhysVals(boundary, bc, deltaElmt[j], deltab[j]);
+                            }
                             for(int j = 0; j < expdim*expdim; ++j)
                             {
                                 gradb[j] = Array<OneD, NekDouble> (nbc,0.0);
@@ -1130,15 +1150,47 @@ void FilterAeroForces::CalculateForcesStandard(
                             // Calculate moments per unit length
                             if( momdim == 1)
                             {
-                                mp[0] = Array<OneD, NekDouble> (nbc,0.0);
-                                mv[0] = Array<OneD, NekDouble> (nbc,0.0);
-                                // Mz = Fy * x - Fx * y
-                                Vmath::Vvtvvtm(nbc, fp[1], 1, coordsb[0], 1,
+                                if(m_BlowingSuction && m_session->GetSolverInfo("EvolutionOperator") == "Adjoint")
+                                {
+                                    mp[0] = Array<OneD, NekDouble> (nbc,0.0);
+                                    mv[0] = Array<OneD, NekDouble> (nbc,0.0);
+
+                                    if(m_isMomentA == true)
+                                    {
+                                        // here compute (-y*dU/dx + x*dU/dy)*Fx + (-y*dV/dx + x*dV/dy)*Fy
+                                        // = deltaGrad[0]*Fx + deltaGrad[1]*Fy -----> A
+                                        Vmath::Vvtvvtp(nbc, fp[0], 1, deltab[0], 1,
+                                                   fp[1], 1, deltab[1], 1,
+                                                   mp[0], 1);
+                                        Vmath::Vvtvvtp(nbc, fv[0], 1, deltab[0], 1,
+                                                   fv[1], 1, deltab[1], 1,
+                                                   mv[0], 1);
+                                    }
+
+                                    if(m_isMomentB == true)
+                                    {
+                                        // here compute (-y)*Fx + x*Fy
+                                        // = x*Fy - y*Fx -----> B
+                                        Vmath::Vvtvvtm(nbc, fp[1], 1, coordsb[0], 1,
+                                                   fp[0], 1, coordsb[1], 1,
+                                                   mp[0], 1);
+                                        Vmath::Vvtvvtm(nbc, fv[1], 1, coordsb[0], 1,
+                                                   fv[0], 1, coordsb[1], 1,
+                                                   mv[0], 1);
+                                    }
+                                }
+                                else
+                                {
+                                    mp[0] = Array<OneD, NekDouble> (nbc,0.0);
+                                    mv[0] = Array<OneD, NekDouble> (nbc,0.0);
+                                    // Mz = Fy * x - Fx * y
+                                    Vmath::Vvtvvtm(nbc, fp[1], 1, coordsb[0], 1,
                                                fp[0], 1, coordsb[1], 1,
                                                mp[0], 1);
-                                Vmath::Vvtvvtm(nbc, fv[1], 1, coordsb[0], 1,
+                                    Vmath::Vvtvvtm(nbc, fv[1], 1, coordsb[0], 1,
                                                fv[0], 1, coordsb[1], 1,
                                                mv[0], 1);
+                                }
                             }
                             else
                             {

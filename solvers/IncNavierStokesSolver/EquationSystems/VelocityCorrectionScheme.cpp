@@ -800,6 +800,7 @@ namespace Nektar
         if (m_BlowingSuction && m_session->GetSolverInfo("EvolutionOperator") == "Adjoint")
         {
             SolveStructuralAdjoint(m_time);
+            //ForceStructuralAdjoint(m_time);
             ScaleBSBCAdjoint();
         }
     }

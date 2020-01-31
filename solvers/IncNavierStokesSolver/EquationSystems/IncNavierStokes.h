@@ -150,6 +150,10 @@ namespace Nektar
         Array<OneD, NekDouble>                           m_axis;
         // AeroForces filter
         SolverUtils::FilterAeroForcesSharedPtr           m_filterForces;
+        // AeroForces filter
+        SolverUtils::FilterAeroForcesSharedPtr           m_filterForcesA;
+        // AeroForces filter
+        SolverUtils::FilterAeroForcesSharedPtr           m_filterForcesB;
         /// Soft pointer to original equation system 
         const std::weak_ptr<SolverUtils::EquationSystem> m_equ;
 
@@ -173,13 +177,20 @@ namespace Nektar
         NekDouble                               m_angle;
         NekDouble                               m_previousAngle;
         Array<OneD, NekDouble>                  m_angleVel;
+        Array<OneD, NekDouble>                  m_angleAdj;
+        Array<OneD, NekDouble>                  m_angleAdjPrev;
         Array<OneD, NekDouble>                  m_moment;
+        Array<OneD, NekDouble>                  m_momentA;
+        Array<OneD, NekDouble>                  m_momentB;
 
         /// Storage for constants of scaling
         Array<OneD, Array<OneD, NekDouble> >    m_deltaGradBnd;
+        Array<OneD, Array<OneD, NekDouble> >    m_deltaGrad;
         Array<OneD, Array<OneD, NekDouble> >    m_deltaGammaBnd;
 
         Array<OneD, bool>                       m_isBlowingSuction;
+        bool                                    m_isMomentA;
+        bool                                    m_isMomentB;
 
         NekDouble                               m_alpha;
 
@@ -243,6 +254,9 @@ namespace Nektar
         /// Return theta and theta dot
         virtual void v_GetStruct(NekDouble &angle, NekDouble &angleVel);
 
+        /// Return value of deltagrad on boundary
+        virtual void v_GetDeltaGrad(Array<OneD, Array<OneD, NekDouble> > &deltaGrad);
+
         /// Return theta and theta dot
         virtual void v_SetStruct(NekDouble &angle, NekDouble &angleVel);
 
@@ -251,6 +265,9 @@ namespace Nektar
 
         /// Set BSBC flag
         virtual bool v_CheckBSBC();
+
+        /// Set moments flags
+        virtual bool v_SetMoment(bool &isMomentA, bool &isMomentB);
 
         // bool to check if BSBC needed
         bool m_BlowingSuction = false;
@@ -340,6 +357,9 @@ namespace Nektar
 
         /// Solve structural equation and obtain theta and theta dot
         void SolveStructuralAdjoint(NekDouble time);
+
+        /// Force structural equation and obtain theta and theta dot
+        void ForceStructuralAdjoint(NekDouble time);
 
         /// Scale BCs by theta and theta dot
         void ScaleBSBCDirect();

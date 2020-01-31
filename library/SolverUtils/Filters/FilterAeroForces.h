@@ -100,6 +100,11 @@ protected:
         const NekDouble &time);
     virtual bool v_IsTimeDependent();
 
+    // bool to check if BSBC needed
+    bool m_BlowingSuction;
+    bool m_isMomentA;
+    bool m_isMomentB;
+
 private:
     /// Determines if a given Boundary Region is in
     /// m_boundaryRegionsIdList
