@@ -939,12 +939,14 @@ void FilterAeroForces::CalculateForcesStandard(
 
     Array<OneD, Array<OneD, NekDouble> > velocity(nVel);
     Array<OneD, Array<OneD, NekDouble> > deltaGrad(nVel);
+    //Array<OneD, Array<OneD, NekDouble> > deltaGamma(nVel);
     Array<OneD, NekDouble>               pressure;
 
     // Arrays of variables in the element
     Array<OneD, Array<OneD, NekDouble> >  velElmt(expdim);
     Array<OneD, NekDouble>                pElmt(physTot);
     Array<OneD, Array<OneD, NekDouble> >  deltaElmt(expdim);
+    //Array<OneD, Array<OneD, NekDouble> >  deltaGamElmt(expdim);
 
     // Velocity gradient
     Array<OneD, Array<OneD, NekDouble> >  grad( expdim*expdim);
@@ -955,6 +957,7 @@ void FilterAeroForces::CalculateForcesStandard(
     // Values at the boundary
     Array<OneD, NekDouble>                Pb;
     Array<OneD, Array<OneD, NekDouble> >  deltab(expdim);
+    //Array<OneD, Array<OneD, NekDouble> >  deltaGamb(expdim);
     Array<OneD, Array<OneD, NekDouble> >  gradb( expdim*expdim);
     Array<OneD, Array<OneD, NekDouble> >  coordsb(3);
 
@@ -1026,12 +1029,15 @@ void FilterAeroForces::CalculateForcesStandard(
             for(n = 0; n < nVel; ++n)
             {
                 velocity[n] = Array<OneD, NekDouble>(fields[n]->GetTotPoints());
-                deltaGrad[n] = Array<OneD, NekDouble>(fields[0]->GetTotPoints());
+                deltaGrad[n] = Array<OneD, NekDouble>(fields[n]->GetTotPoints());
+                //deltaGamma[n] = Array<OneD, NekDouble>(fields[0]->GetTotPoints());
             }
             pressure = Array<OneD, NekDouble>(fields[0]->GetTotPoints());
             fluidEqu->GetVelocity(physfields, velocity);
             fluidEqu->GetPressure(physfields, pressure);
             m_equShared->v_GetDeltaGrad(deltaGrad);
+            //m_equShared->v_GetDeltaGamma(deltaGamma);
+            //fluidEqu->v_GetDeltaGrad(deltaGrad);
 
             //Loop all the Boundary Regions
             for(cnt = n = 0; n < BndConds.num_elements(); ++n)
@@ -1052,6 +1058,7 @@ void FilterAeroForces::CalculateForcesStandard(
                             {
                                 velElmt[j] = velocity[j] + offset;
                                 deltaElmt[j] = deltaGrad[j] + offset;
+                                //deltaGamElmt[j] = deltaGamma[j] + offset;
                             }
                             pElmt = pressure + offset;
 
@@ -1103,7 +1110,9 @@ void FilterAeroForces::CalculateForcesStandard(
                             for(int j = 0; j < expdim; ++j)
                             {
                                 deltab[j] = Array<OneD, NekDouble>(nbc,0.0);
+                                //deltaGamb[j] = Array<OneD, NekDouble>(nbc,0.0);
                                 elmt->GetTracePhysVals(boundary, bc, deltaElmt[j], deltab[j]);
+                                //elmt->GetTracePhysVals(boundary, bc, deltaGamElmt[j], deltaGamb[j]);
                             }
                             for(int j = 0; j < expdim*expdim; ++j)
                             {
@@ -1157,7 +1166,7 @@ void FilterAeroForces::CalculateForcesStandard(
 
                                     if(m_isMomentA == true)
                                     {
-                                        // here compute (-y*dU/dx + x*dU/dy)*Fx + (-y*dV/dx + x*dV/dy)*Fy
+                                        // here compute (y*dU/dx - x*dU/dy)*Fx + (y*dV/dx - x*dV/dy)*Fy
                                         // = deltaGrad[0]*Fx + deltaGrad[1]*Fy -----> A
                                         Vmath::Vvtvvtp(nbc, fp[0], 1, deltab[0], 1,
                                                    fp[1], 1, deltab[1], 1,
@@ -1167,22 +1176,31 @@ void FilterAeroForces::CalculateForcesStandard(
                                                    mv[0], 1);
                                     }
 
-                                    if(m_isMomentB == true)
+                                    else if(m_isMomentB == true)
                                     {
                                         // here compute (-y)*Fx + x*Fy
                                         // = x*Fy - y*Fx -----> B
+
                                         Vmath::Vvtvvtm(nbc, fp[1], 1, coordsb[0], 1,
-                                                   fp[0], 1, coordsb[1], 1,
-                                                   mp[0], 1);
+                                               fp[0], 1, coordsb[1], 1,
+                                               mp[0], 1);
                                         Vmath::Vvtvvtm(nbc, fv[1], 1, coordsb[0], 1,
-                                                   fv[0], 1, coordsb[1], 1,
-                                                   mv[0], 1);
+                                               fv[0], 1, coordsb[1], 1,
+                                               mv[0], 1);
+
+                                        // Vmath::Vvtvvtp(nbc, fp[1], 1, deltaGamb[1], 1,
+                                        //            fp[0], 1, deltaGamb[0], 1,
+                                        //            mp[0], 1);
+                                        // Vmath::Vvtvvtp(nbc, fv[1], 1, deltaGamb[1], 1,
+                                        //            fv[0], 1, deltaGamb[0], 1,
+                                        //            mv[0], 1);
                                     }
                                 }
                                 else
                                 {
                                     mp[0] = Array<OneD, NekDouble> (nbc,0.0);
                                     mv[0] = Array<OneD, NekDouble> (nbc,0.0);
+                                    
                                     // Mz = Fy * x - Fx * y
                                     Vmath::Vvtvvtm(nbc, fp[1], 1, coordsb[0], 1,
                                                fp[0], 1, coordsb[1], 1,

@@ -175,15 +175,15 @@ void DriverModifiedArnoldi::v_Execute(ostream &out)
     Vmath::Smul(ntot, 1.0/alpha[0], Kseq[0], 1, Kseq[0], 1);
 
     // // Scale angle if needed
-     if(m_BlowingSuction)
-     {
-        // m_equ[0]->v_GetStruct(m_theta, m_thetadot);
-        // m_theta = m_theta/alpha[0];
-        // m_thetadot = m_thetadot/alpha[0];
-        m_alpha = alpha[0];
-        // m_equ[0]->v_SetStruct(m_theta, m_thetadot);
-        m_equ[0]->v_SetScalingFactor(m_alpha);
-     }
+     // if(m_BlowingSuction)
+     // {
+     //    m_equ[0]->v_GetStruct(m_theta, m_thetadot);
+     //    m_theta = m_theta/alpha[0];
+     //    m_thetadot = m_thetadot/alpha[0];
+     //    m_alpha = alpha[0];
+     //    m_equ[0]->v_SetStruct(m_theta, m_thetadot);
+     //    m_equ[0]->v_SetScalingFactor(m_alpha);
+     // }
 
     // Fill initial krylov sequence
     NekDouble resid0;
@@ -199,15 +199,15 @@ void DriverModifiedArnoldi::v_Execute(ostream &out)
         Vmath::Smul(ntot, 1.0/alpha[i], Kseq[i], 1, Kseq[i], 1);
 
         // Scale angle if needed
-     if(m_BlowingSuction)
-     {
-        // m_equ[0]->v_GetStruct(m_theta, m_thetadot);
-        // m_theta = m_theta/alpha[i];
-        // m_thetadot = m_thetadot/alpha[i];
-        m_alpha = alpha[i];
-        // m_equ[0]->v_SetStruct(m_theta, m_thetadot);
-        m_equ[0]->v_SetScalingFactor(m_alpha);
-     }
+     // if(m_BlowingSuction)
+     // {
+     //    m_equ[0]->v_GetStruct(m_theta, m_thetadot);
+     //    m_theta = m_theta/alpha[i];
+     //    m_thetadot = m_thetadot/alpha[i];
+     //    m_alpha = alpha[i];
+     //    m_equ[0]->v_SetStruct(m_theta, m_thetadot);
+     //    m_equ[0]->v_SetScalingFactor(m_alpha);
+     // }
 
         // Copy Krylov sequence into temporary storage
         for (int k = 0; k < i + 1; ++k)
@@ -260,16 +260,16 @@ void DriverModifiedArnoldi::v_Execute(ostream &out)
             alpha[m_kdim] = std::sqrt(alpha[m_kdim]);
             Vmath::Smul(ntot, 1.0/alpha[m_kdim], Kseq[m_kdim], 1,
                                                  Kseq[m_kdim], 1);
-            // // Scale angle if needed
-             if(m_BlowingSuction)
-             {
-                // m_equ[0]->v_GetStruct(m_theta, m_thetadot);
-                // m_theta = m_theta/alpha[m_kdim];
-                // m_thetadot = m_thetadot/alpha[m_kdim];
-                m_alpha = alpha[m_kdim];
-                //  m_equ[0]->v_SetStruct(m_theta, m_thetadot);
-                 m_equ[0]->v_SetScalingFactor(m_alpha);
-             }
+            // Scale angle if needed
+             // if(m_BlowingSuction)
+             // {
+             //    m_equ[0]->v_GetStruct(m_theta, m_thetadot);
+             //    m_theta = m_theta/alpha[m_kdim];
+             //    m_thetadot = m_thetadot/alpha[m_kdim];
+             //    m_alpha = alpha[m_kdim];
+             //    m_equ[0]->v_SetStruct(m_theta, m_thetadot);
+             //     m_equ[0]->v_SetScalingFactor(m_alpha);
+             // }
 
             // Copy Krylov sequence into temporary storage
             for (int k = 0; k < m_kdim + 1; ++k)

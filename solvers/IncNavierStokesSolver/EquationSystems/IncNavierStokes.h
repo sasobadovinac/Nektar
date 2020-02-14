@@ -186,6 +186,7 @@ namespace Nektar
         /// Storage for constants of scaling
         Array<OneD, Array<OneD, NekDouble> >    m_deltaGradBnd;
         Array<OneD, Array<OneD, NekDouble> >    m_deltaGrad;
+        Array<OneD, Array<OneD, NekDouble> >    m_deltaGamma;
         Array<OneD, Array<OneD, NekDouble> >    m_deltaGammaBnd;
 
         Array<OneD, bool>                       m_isBlowingSuction;
@@ -256,6 +257,9 @@ namespace Nektar
 
         /// Return value of deltagrad on boundary
         virtual void v_GetDeltaGrad(Array<OneD, Array<OneD, NekDouble> > &deltaGrad);
+
+        /// Return value of deltagamma on boundary
+        virtual void v_GetDeltaGamma(Array<OneD, Array<OneD, NekDouble> > &deltaGamma);
 
         /// Return theta and theta dot
         virtual void v_SetStruct(NekDouble &angle, NekDouble &angleVel);
