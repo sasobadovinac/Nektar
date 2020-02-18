@@ -793,6 +793,10 @@ void FilterAeroForces::CalculateForces(
     {
         CalculateForcesMapping( pFields, time);
     }
+    else if (m_BlowingSuction)
+    {
+        CalculateForcesBSBC( pFields, time);
+    }
     else
     {
         CalculateForcesStandard( pFields, time);
@@ -906,6 +910,314 @@ void FilterAeroForces::CalculateForces(
  *     This function calculates the forces when we do not have a mapping
  */
 void FilterAeroForces::CalculateForcesStandard(
+                                               const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
+                                               const NekDouble &time)
+{
+
+    // Lock equation system weak pointer
+    auto equ = m_equ.lock();
+    ASSERTL0(equ, "Weak pointer expired");
+
+    auto fluidEqu = std::dynamic_pointer_cast<FluidInterface>(equ);
+    ASSERTL0(fluidEqu, "Aero forces filter is incompatible with this solver.");
+
+    int i, j, k, n, cnt, elmtid, nq, offset, boundary, plane;
+    // Get number of quadrature points and dimensions
+    int physTot = pFields[0]->GetNpoints();
+    int expdim = pFields[0]->GetGraph()->GetMeshDimension();
+    int momdim = (expdim == 2) ? 1 : 3;
+    int nVel = expdim;
+    if( m_isHomogeneous1D )
+    {
+        nVel = nVel + 1;
+    }
+
+    StdRegions::StdExpansionSharedPtr elmt;
+
+    // Fields used to calculate forces (a single plane for 3DH1D )
+    Array<OneD, MultiRegions::ExpListSharedPtr>
+        fields( pFields.num_elements());
+
+    // Arrays of variables in field
+    Array<OneD, Array<OneD, NekDouble> > physfields(pFields.num_elements());
+
+    Array<OneD, Array<OneD, NekDouble> > velocity(nVel);
+    Array<OneD, NekDouble>               pressure;
+
+    // Arrays of variables in the element
+    Array<OneD, Array<OneD, NekDouble> >  velElmt(expdim);
+    Array<OneD, NekDouble>                pElmt(physTot);
+
+    // Velocity gradient
+    Array<OneD, Array<OneD, NekDouble> >  grad( expdim*expdim);
+    Array<OneD, NekDouble>                div;
+
+    Array<OneD, Array<OneD, NekDouble> >  coords(3);
+
+    // Values at the boundary
+    Array<OneD, NekDouble>                Pb;
+    Array<OneD, Array<OneD, NekDouble> >  gradb( expdim*expdim);
+    Array<OneD, Array<OneD, NekDouble> >  coordsb(3);
+
+    // Forces per element length in a boundary
+    Array<OneD, Array<OneD, NekDouble> >  fp( expdim );
+    Array<OneD, Array<OneD, NekDouble> >  fv( expdim );
+
+    // Moments per element length in a boundary
+    Array<OneD, Array<OneD, NekDouble> >  mp( momdim );
+    Array<OneD, Array<OneD, NekDouble> >  mv( momdim );
+
+    // Get viscosity
+    NekDouble mu;
+    if(m_session->DefinesParameter("Kinvis"))
+    {
+        NekDouble rho = (m_session->DefinesParameter("rho"))
+            ? (m_session->GetParameter("rho")) : 1;
+        mu = rho * m_session->GetParameter("Kinvis");
+    }
+    else
+    {
+        mu = m_session->GetParameter("mu");
+    }
+    NekDouble lambda = -2.0/3.0;
+
+    // Define boundary expansions
+    Array<OneD, const SpatialDomains::BoundaryConditionShPtr > BndConds;
+    Array<OneD, MultiRegions::ExpListSharedPtr>  BndExp;
+    if(m_isHomogeneous1D)
+    {
+        BndConds = pFields[0]->GetPlane(0)->GetBndConditions();
+        BndExp   = pFields[0]->GetPlane(0)->GetBndCondExpansions();
+    }
+    else
+    {
+        BndConds = pFields[0]->GetBndConditions();
+        BndExp   = pFields[0]->GetBndCondExpansions();
+    }
+
+    // For Homogeneous, calculate force on each 2D plane
+    // Otherwise, m_nPlanes = 1, and loop only runs once
+    for(plane = 0; plane < m_nPlanes; ++plane )
+    {
+        // Check if plane is in this proc
+        if( m_planesID[plane] != -1 )
+        {
+            // For Homogeneous, consider the 2D expansion
+            //      on the current plane
+            if(m_isHomogeneous1D)
+            {
+                for( int n = 0; n < pFields.num_elements(); ++n)
+                {
+                    fields[n] = pFields[n]->GetPlane(m_planesID[plane]);
+                }
+            }
+            else
+            {
+                for( int n = 0; n < pFields.num_elements(); ++n)
+                {
+                    fields[n] = pFields[n];
+                }
+            }
+
+            // Get velocity and pressure values
+            for(n = 0; n < physfields.num_elements(); ++n)
+            {
+                physfields[n] = fields[n]->GetPhys();
+            }
+            for(n = 0; n < nVel; ++n)
+            {
+                velocity[n] = Array<OneD, NekDouble>(fields[n]->GetTotPoints());
+            }
+            pressure = Array<OneD, NekDouble>(fields[0]->GetTotPoints());
+            fluidEqu->GetVelocity(physfields, velocity);
+            fluidEqu->GetPressure(physfields, pressure);
+
+            //Loop all the Boundary Regions
+            for(cnt = n = 0; n < BndConds.num_elements(); ++n)
+            {
+                for( cnt = n = 0; n < BndConds.num_elements(); n++)
+                {
+                    if(m_boundaryRegionIsInList[n] == 1)
+                    {
+                        for (i=0; i < BndExp[n]->GetExpSize(); ++i,cnt++)
+                        {
+                            elmtid = m_BCtoElmtID[cnt];
+                            elmt   = fields[0]->GetExp(elmtid);
+                            nq     = elmt->GetTotPoints();
+                            offset = fields[0]->GetPhys_Offset(elmtid);
+
+                            // Extract  fields on this element
+                            for( j=0; j<expdim; j++)
+                            {
+                                velElmt[j] = velocity[j] + offset;
+                            }
+                            pElmt = pressure + offset;
+
+                            // Compute the velocity gradients
+                            div = Array<OneD, NekDouble>(nq,0.0);
+                            for (j=0; j<expdim; j++)
+                            {
+                                for (k=0; k<expdim; k++)
+                                {
+                                    grad[j*expdim+k] = 
+                                        Array<OneD, NekDouble>(nq,0.0);
+                                    elmt->PhysDeriv(k,velElmt[j],
+                                                    grad[j*expdim+k]);
+
+                                    if( j == k)
+                                    {
+                                        Vmath::Vadd(nq, grad[j*expdim+k], 1,
+                                                    div, 1, div, 1);
+                                    }
+                                }
+                            }
+                            // Scale div by lambda (for compressible flows)
+                            Vmath::Smul(nq, lambda, div, 1, div, 1);
+
+                            // Get coordinates
+                            for ( int j = 0; j < 3; ++j)
+                            {
+                                coords[j] = Array<OneD, NekDouble>(nq, 0.0);
+                            }
+                            elmt->GetCoords(coords[0], coords[1], coords[2]);
+
+                            // identify boundary of element
+                            boundary = m_BCtoTraceID[cnt];
+
+                            // Get boundary element
+                            LocalRegions::ExpansionSharedPtr bc =
+                                BndExp[n]->GetExp(i);
+
+                            // Get number of points on the boundary
+                            int nbc = bc->GetTotPoints();
+
+                            // Get normals
+                            Array<OneD, Array<OneD, NekDouble> > normals =
+                                elmt->GetTraceNormal(boundary);
+
+                            // Extract values at boundary
+                            Pb = Array<OneD, NekDouble>(nbc,0.0);
+                            elmt->GetTracePhysVals(boundary, bc, pElmt, Pb);
+                            
+                            for(int j = 0; j < expdim*expdim; ++j)
+                            {
+                                gradb[j] = Array<OneD, NekDouble> (nbc,0.0);
+                                elmt->GetTracePhysVals(boundary,
+                                                       bc, grad[j], gradb[j]);
+                            }
+                            for(int j = 0; j < 3; ++j)
+                            {
+                                coordsb[j] = Array<OneD, NekDouble> (nbc,0.0);
+                                elmt->GetTracePhysVals(boundary,
+                                                       bc, coords[j], coordsb[j]);
+                                // Subtract m_momPoint
+                                Vmath::Sadd (nbc, -1.0*m_momPoint[j],
+                                             coordsb[j], 1, coordsb[j], 1);
+                            }
+
+                            // Calculate forces per unit length
+
+                            // Pressure component: fp[j] = rho*p*n[j]
+                            for ( int j = 0; j < expdim; ++j)
+                            {
+                                fp[j] = Array<OneD, NekDouble> (nbc,0.0);
+                                Vmath::Vmul (nbc, Pb, 1, normals[j], 1,
+                                             fp[j], 1);
+                                Vmath::Smul(nbc, m_rho, fp[j], 1, fp[j], 1);
+                            }
+
+                            // Viscous component:
+                            //     fv[j] = -mu*{(grad[k,j]+grad[j,k]) *n[k]}
+                            for ( int j = 0; j < expdim; ++j )
+                            {
+                                fv[j] = Array<OneD, NekDouble> (nbc,0.0);
+                                for ( int k = 0; k < expdim; ++k )
+                                {
+                                    Vmath::Vvtvp (nbc, gradb[k*expdim+j], 1,
+                                                  normals[k], 1, fv[j], 1, fv[j], 1);
+                                    Vmath::Vvtvp (nbc, gradb[j*expdim+k], 1,
+                                                  normals[k], 1, fv[j], 1, fv[j], 1);
+                                }
+                                Vmath::Smul(nbc, -m_mu, fv[j], 1, fv[j], 1);
+                            }
+
+                            // Calculate moments per unit length
+                            if( momdim == 1)
+                            {
+                            
+                                mp[0] = Array<OneD, NekDouble> (nbc,0.0);
+                                mv[0] = Array<OneD, NekDouble> (nbc,0.0);
+                                
+                                // Mz = Fy * x - Fx * y
+                                Vmath::Vvtvvtm(nbc, fp[1], 1, coordsb[0], 1,
+                                           fp[0], 1, coordsb[1], 1,
+                                           mp[0], 1);
+                                Vmath::Vvtvvtm(nbc, fv[1], 1, coordsb[0], 1,
+                                           fv[0], 1, coordsb[1], 1,
+                                           mv[0], 1);
+                            }
+                            else
+                            {
+                                // Mx = Fz * y - Fy * z
+                                mp[0] = Array<OneD, NekDouble> (nbc,0.0);
+                                mv[0] = Array<OneD, NekDouble> (nbc,0.0);
+                                Vmath::Vvtvvtm(nbc, fp[2], 1, coordsb[1], 1,
+                                               fp[1], 1, coordsb[2], 1,
+                                               mp[0], 1);
+                                Vmath::Vvtvvtm(nbc, fv[2], 1, coordsb[1], 1,
+                                               fv[1], 1, coordsb[2], 1,
+                                               mv[0], 1);
+                                // My = Fx * z - Fz * x
+                                mp[1] = Array<OneD, NekDouble> (nbc,0.0);
+                                mv[1] = Array<OneD, NekDouble> (nbc,0.0);
+                                Vmath::Vvtvvtm(nbc, fp[0], 1, coordsb[2], 1,
+                                               fp[2], 1, coordsb[0], 1,
+                                               mp[1], 1);
+                                Vmath::Vvtvvtm(nbc, fv[0], 1, coordsb[2], 1,
+                                               fv[2], 1, coordsb[0], 1,
+                                               mv[1], 1);
+                                // Mz = Fy * x - Fx * y
+                                mp[2] = Array<OneD, NekDouble> (nbc,0.0);
+                                mv[2] = Array<OneD, NekDouble> (nbc,0.0);
+                                Vmath::Vvtvvtm(nbc, fp[1], 1, coordsb[0], 1,
+                                               fp[0], 1, coordsb[1], 1,
+                                               mp[2], 1);
+                                Vmath::Vvtvvtm(nbc, fv[1], 1, coordsb[0], 1,
+                                               fv[0], 1, coordsb[1], 1,
+                                               mv[2], 1);
+                            }
+
+                            // Integrate to obtain force
+                            for ( int j = 0; j < expdim; ++j)
+                            {
+                                m_Fpplane[j][plane] += BndExp[n]->GetExp(i)->
+                                    Integral(fp[j]);
+                                m_Fvplane[j][plane] += BndExp[n]->GetExp(i)->
+                                    Integral(fv[j]);
+                            }
+                            for ( int j = 0; j < momdim; ++j)
+                            {
+                                m_Mpplane[j][plane] += BndExp[n]->GetExp(i)->
+                                    Integral(mp[j]);
+                                m_Mvplane[j][plane] += BndExp[n]->GetExp(i)->
+                                    Integral(mv[j]);
+                            }
+                        }
+                    }
+                    else
+                    {
+                        cnt += BndExp[n]->GetExpSize();
+                    }
+                }
+            }
+        }
+    }
+}
+
+/**
+ *     This function calculates the forces when we have Blowing suction BC's
+ */
+void FilterAeroForces::CalculateForcesBSBC(
                                                const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
                                                const NekDouble &time)
 {
@@ -1159,7 +1471,7 @@ void FilterAeroForces::CalculateForcesStandard(
                             // Calculate moments per unit length
                             if( momdim == 1)
                             {
-                                if(m_BlowingSuction && m_session->GetSolverInfo("EvolutionOperator") == "Adjoint")
+                                if(m_session->GetSolverInfo("EvolutionOperator") == "Adjoint")
                                 {
                                     mp[0] = Array<OneD, NekDouble> (nbc,0.0);
                                     mv[0] = Array<OneD, NekDouble> (nbc,0.0);
