@@ -127,7 +127,11 @@ As a brief guideline, to define a cylinder of radius 1 and center at the point (
 
 where, the scaling coefficient has been set to 0.04. The variable names are compulsory, being \inltt{Phi} the shape of the bodies, and \inltt{Up}, \inltt{Vp} and \inltt{Wp} functions representing the velocity field inside them. The attribute \inltt{USERDEFINEDTYPE} is compulsory only if the functions depend on time, when it has to be set to \inltt{"TimeDependent"}.
 
-For immersed boundaries with geometries that cannot be represented by means of analytical functions, an STL binary file can be supplied as well. However, the geometry file must be first converted to FLD format with the \texttt{phifile} module of \texttt{FieldConvert}. The simplest way to proceed is by using the command \texttt{FieldConvert -m phifile:file=geometry.stl:scale=value session\_file.xml geometry.fld}, where the value of \texttt{scale} corresponds to the coefficient $\xi$ in equation \eqref{spm:eq:mask}. The output file can be changed to an VTU or DAT file in order to get a graphical representation of the Phi field. It is also possible to call the \texttt{phifile} module without arguments to output the Phi field if it has been defined in the session file as an analytical function. In any case, it is important to remark that this functionality is still under development and needs to be improved.
+For immersed boundaries with geometries that cannot be represented by means of analytical functions, an STL binary file can be supplied as well. However, the geometry file must be first converted to FLD format with the \texttt{phifile} module of \texttt{FieldConvert}. The simplest way to proceed is by using the command:
+
+\texttt{FieldConvert -m phifile:file=geom.stl:scale=value session.xml geom.fld}
+
+where the value of \texttt{scale} corresponds to the coefficient $\xi$ in equation \eqref{spm:eq:mask}. The output file can be changed to an VTU or DAT file in order to get a graphical representation of the Phi field. It is also possible to call the \texttt{phifile} module without arguments to output the Phi field if it has been defined in the session file as an analytical function. In any case, it is important to remark that this functionality is still under development and needs to be improved.
 
 In the \inltt{ShapeFunction} block of the session file, the line \inltt{<E VAR="Phi" ... />} indicates that the immersed bodies are defined by the function introduced in\inltt{VALUE}, while a line like the following:
 
