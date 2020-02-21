@@ -78,24 +78,38 @@ namespace Nektar
             m_pressure,
             m_velocity,
             m_advObject); 
-        m_extrapolation->SubSteppingTimeIntegration(m_intScheme);
+        m_extrapolation->SubSteppingTimeIntegration(
+                            m_intScheme->GetIntegrationMethod(), m_intScheme);
         m_extrapolation->GenerateHOPBCMap(m_session);
 
        // Storage to extrapolate pressure forcing
         int physTot = m_fields[0]->GetTotPoints();
         int intSteps = 1;
-
-        if ( m_intScheme->GetName() == "IMEX" ||
-             m_intScheme->GetName() == "IMEXGear" )
+        int intMethod = m_intScheme->GetIntegrationMethod();
+        switch(intMethod)
         {
-            m_intSteps = m_intScheme->GetOrder();
-        }
-        else
-        {
-            NEKERROR(ErrorUtil::efatal, "Integration method not suitable: "
-                     "Options include IMEXGear or IMEXOrder{1,2,3,4}");
-        }
-
+            case LibUtilities::eIMEXOrder1:
+            {
+                intSteps = 1;
+            }
+            break;
+            case LibUtilities::eIMEXOrder2:
+            case LibUtilities::eIMEXGear:
+            {
+                intSteps = 2;
+            }
+            break;
+            case LibUtilities::eIMEXOrder3:
+            {
+                intSteps = 3;
+            }
+            break;
+            case LibUtilities::eIMEXOrder4:
+            {
+                intSteps = 4;
+            }
+            break;
+        }        
         m_presForcingCorrection= Array<OneD, Array<OneD, NekDouble> >(intSteps);
         for(int i = 0; i < m_presForcingCorrection.num_elements(); i++)
         {
@@ -126,7 +140,19 @@ namespace Nektar
                                             m_pressureRelaxation,1.0);
         m_session->LoadParameter("MappingViscousRelaxation",
                                             m_viscousRelaxation,1.0);
-        
+        if(m_useEntropyViscosity)
+        {
+           m_use_evm_mapping = true;
+           int nfields = m_fields.num_elements();
+           m_evm_mapping_force = Array<OneD, Array<OneD, NekDouble> >(nfields);
+
+           for(int i=0; i<nfields; ++i)
+           m_evm_mapping_force[i] = Array<OneD, NekDouble>(physTot);
+           
+           for(int i=0; i<nfields; ++i)
+           Vmath::Zero(physTot, m_evm_mapping_force[i], 1);
+        }
+
     }
     
     /**
@@ -804,6 +830,14 @@ namespace Nektar
                 Vmath::Vadd(physTot, tmp[i], 1, Forcing[i], 1, Forcing[i], 1);
             }
         }        
+        
+        if(m_useEntropyViscosity)
+        {
+           int VelDim = m_velocity.num_elements();
+           for(int i=0; i<VelDim; ++i)
+             Vmath::Vcopy(physTot, Forcing[i], 1, m_evm_mapping_force[i], 1);
+        }
+
 
         // If necessary, transform to wavespace
         if(m_fields[0]->GetWaveSpace())
