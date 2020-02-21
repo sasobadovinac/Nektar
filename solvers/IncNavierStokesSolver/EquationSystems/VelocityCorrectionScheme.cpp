@@ -107,6 +107,8 @@ namespace Nektar
         SetUpExtrapolation();
         SetUpSVV();
 
+        SetUpEVM();
+
         m_session->MatchSolverInfo("SmoothAdvection", "True",
                                     m_SmoothAdvection, false);
 
@@ -143,7 +145,8 @@ namespace Nektar
                 m_velocity,
                 m_advObject);
 
-            m_extrapolation->SubSteppingTimeIntegration(m_intScheme);
+            m_extrapolation->SubSteppingTimeIntegration(
+                m_intScheme->GetIntegrationMethod(), m_intScheme);
             m_extrapolation->GenerateHOPBCMap(m_session);
         }
     }
@@ -489,10 +492,12 @@ namespace Nektar
         SolverUtils::AddSummaryItem(s,
                 "Splitting Scheme", "Velocity correction (strong press. form)");
 
-        if( m_extrapolation->GetSubStepName().size() )
+        if (m_extrapolation->GetSubStepIntegrationMethod() !=
+            LibUtilities::eNoTimeIntegrationMethod)
         {
-            SolverUtils::AddSummaryItem( s, "Substepping",
-                                         m_extrapolation->GetSubStepName() );
+            SolverUtils::AddSummaryItem(s, "Substepping",
+                             LibUtilities::TimeIntegrationMethodMap[
+                              m_extrapolation->GetSubStepIntegrationMethod()]);
         }
 
         string dealias = m_homogen_dealiasing ? "Homogeneous1D" : "";
@@ -683,6 +688,9 @@ namespace Nektar
             SetupFlowrate(aii_Dt);
         }
 
+        if(m_useEntropyViscosity)
+           BackUpSolution(inarray);
+
         int physTot = m_fields[0]->GetTotPoints();
 
         // Substep the pressure boundary condition if using substepping
@@ -696,6 +704,18 @@ namespace Nektar
 
         // Set up forcing term for Helmholtz problems
         SetUpViscousForcing(inarray, m_F, aii_Dt);
+
+
+        if(m_useEntropyViscosity)
+        {
+//           BackUpSolution();
+
+          if(m_step_counter>m_evm_start_step)
+           {
+             SetUpEntropyViscosity(inarray, m_F);
+           }
+           m_step_counter ++;
+        }
 
         // Solve velocity system
         SolveViscous( m_F, outarray, aii_Dt);
@@ -982,6 +1002,7 @@ namespace Nektar
 
     }
 
+
     void VelocityCorrectionScheme::SVVVarDiffCoeff(
                      const NekDouble velmag,
                      Array<OneD, NekDouble> &diffcoeff,
@@ -1100,5 +1121,1438 @@ namespace Nektar
             }
         }
 
+    }
+
+    void  VelocityCorrectionScheme::SetUpEVM(void)
+    {
+
+        m_session->MatchSolverInfo("EntropyViscosityMethod",
+                                   "True", m_useEntropyViscosity, false);
+        m_session->MatchSolverInfo("DynamicEVM",
+                                   "True", m_use_dynamic_alpha, false);
+      
+       // Get EVM paramter
+       m_session->LoadParameter("evm_alpha", m_evm_alpha, 0.1);
+       m_session->LoadParameter("evm_beta", m_evm_beta, 0.1);
+       m_session->LoadParameter("evm_start_step", m_evm_start_step, 2);
+       m_session->LoadParameter("evm_reduced_order", m_evm_reduced_order, 1);
+
+       m_step_counter = 0;
+
+       m_use_evm_mapping = false;
+       
+       int nfields = m_fields.num_elements();
+       int phystot = m_fields[0]->GetTotPoints();
+
+        m_solution     = Array<OneD, Array<OneD, NekDouble> >(nfields);
+        m_old_solution = Array<OneD, Array<OneD, NekDouble> >(nfields);
+   
+        if(m_useEntropyViscosity)
+         {
+          for(int i=0; i<nfields; ++i)
+           {
+            m_solution[i] = Array<OneD, NekDouble>(phystot);
+            m_old_solution[i] = Array<OneD, NekDouble>(phystot);
+
+            Vmath::Zero(phystot, m_solution[i], 1);
+            Vmath::Zero(phystot, m_old_solution[i], 1);
+           }
+            m_evm_visc = Array<OneD, NekDouble>(phystot);
+            Vmath::Zero(phystot, m_evm_visc, 1);
+          
+           if(m_use_dynamic_alpha)
+            {
+              m_evm_sensor = Array<OneD, NekDouble>(phystot);
+              Vmath::Zero(phystot, m_evm_sensor, 1);
+           }
+        }
+
+   }
+
+   void VelocityCorrectionScheme:: v_BackUpSolution( 
+            const Array<OneD, const Array<OneD, NekDouble> > &inarray) 
+    {
+       int nfields = m_fields.num_elements();
+       int phystot = m_fields[0]->GetTotPoints();
+       int VelDim  = inarray.num_elements();
+
+       for(int i=0; i<nfields; ++i)
+         Vmath::Vcopy(phystot, m_solution[i], 1, m_old_solution[i], 1);
+         
+//       for(int i=0; i<nfields; ++i)
+//         Vmath::Vcopy(phystot, m_fields[i]->GetPhys(), 1, m_solution[i], 1);
+
+        for(int i=0; i<VelDim; ++i)
+         Vmath::Vcopy(phystot, inarray[i], 1, m_solution[i], 1);
+         
+        m_pressure->BwdTrans(m_pressure->GetCoeffs(), m_solution[VelDim]);
+//         Vmath::Vcopy(phystot, m_pressure, 1, m_solution[VelDim], 1);
+     }
+
+    std::pair<NekDouble, NekDouble >
+    VelocityCorrectionScheme::
+    v_EvaluateVelocityRange(const Array<OneD, const Array<OneD, NekDouble> > &velocity)
+    {
+        int nqtot      = m_fields[0]->GetTotPoints();
+        int VelDim     = m_velocity.num_elements();
+
+        NekDouble max_velocity,min_velocity;
+        
+        max_velocity = -numeric_limits<double>::max();
+        min_velocity =  numeric_limits<double>::max();
+
+        for(unsigned int j = 0; j < nqtot; ++j)
+          {
+             NekDouble velocity_mag = 0.;
+            for(unsigned int i = 0; i < VelDim; ++i)
+                velocity_mag += velocity[i][j]*velocity[i][j];
+            velocity_mag = sqrt(velocity_mag);
+
+            max_velocity = max(velocity_mag,max_velocity);
+            min_velocity = min(velocity_mag,min_velocity);
+          }
+
+         min_velocity *=-1.;
+
+         m_session->GetComm()->AllReduce(max_velocity,LibUtilities::ReduceMax);
+         m_session->GetComm()->AllReduce(min_velocity,LibUtilities::ReduceMax);
+         
+         min_velocity *=-1.;
+
+        return std::make_pair(min_velocity,max_velocity);
+
+    }
+
+    NekDouble VelocityCorrectionScheme::
+    v_EvaluateVelocityEntropyVariation(const Array<OneD, const Array<OneD, NekDouble> > &velocity)
+    {
+        int VelDim     = m_velocity.num_elements();
+        StdRegions::StdExpansionSharedPtr elmt;
+        
+        NekDouble mean_velocity;
+
+        const std::pair<NekDouble, NekDouble> & velocity_range = EvaluateVelocityRange(velocity);
+
+        mean_velocity = 0.5*(velocity_range.first+velocity_range.second);
+
+        double entropy_integrate = 0.,
+               element_volume = 0.;
+        double max_entropy = -numeric_limits<double>::max();
+        double min_entropy =  numeric_limits<double>::max();
+
+        switch(VelDim)
+        {
+         case 1:
+            ASSERTL0(false,"EVM not implemented for one dimensional problem");
+           break;
+         case 2:
+          {
+              int nel =  m_fields[0]->GetExpSize();
+              int nq  =  m_fields[0]->GetExp(0)->GetTotPoints();
+
+              int cnt = 0;
+              for(int i=0; i<nel; ++i,++cnt)
+                {
+                  elmt   = m_fields[0]->GetExp(i);
+                  int offset = m_fields[0]->GetPhys_Offset(cnt);
+
+                  Array<OneD, NekDouble>  entropy_list(nq,0.0);
+                  Array<OneD, NekDouble>  one_list(nq,1.);
+
+                  for(int q=0; q<nq; ++q)
+                    {
+                         NekDouble velocity_mag = 0.;
+                         for(unsigned int d = 0; d < VelDim; ++d)
+                             velocity_mag += velocity[d][offset+q]*velocity[d][offset+q];
+                         velocity_mag = sqrt(velocity_mag);
+
+                      entropy_list[q] = (velocity_mag-mean_velocity)*(velocity_mag-mean_velocity);
+
+                      max_entropy = max(max_entropy,entropy_list[q]);
+                      min_entropy = min(min_entropy,entropy_list[q]);
+                    }
+                  
+                  entropy_integrate += elmt->Integral(entropy_list);
+                  element_volume  += elmt->Integral(one_list);
+
+                }
+           break;
+          }
+         case 3:
+          if( m_fields[0]->GetWaveSpace() == false )
+           {
+              int nel =  m_fields[0]->GetExpSize();
+              int nq  =  m_fields[0]->GetExp(0)->GetTotPoints();
+
+              int cnt = 0;
+              for(int i=0; i<nel; ++i,++cnt)
+                {
+                  elmt   = m_fields[0]->GetExp(i);
+                  int offset = m_fields[0]->GetPhys_Offset(cnt);
+
+                  Array<OneD, NekDouble>  entropy_list(nq,0.0);
+                  Array<OneD, NekDouble>  one_list(nq,1.);
+
+                  for(int q=0; q<nq; ++q)
+                    {
+                         NekDouble velocity_mag = 0.;
+                         for(unsigned int d = 0; d < VelDim; ++d)
+                             velocity_mag += velocity[d][offset+q]*velocity[d][offset+q];
+                         velocity_mag = sqrt(velocity_mag);
+
+                      entropy_list[q] = (velocity_mag-mean_velocity)*(velocity_mag-mean_velocity);
+
+                      max_entropy = max(max_entropy,entropy_list[q]);
+                      min_entropy = min(min_entropy,entropy_list[q]);
+                    }
+                  
+                  entropy_integrate += elmt->Integral(entropy_list);
+                  element_volume  += elmt->Integral(one_list);
+                }
+           }
+          else
+           {
+            if( m_fields[0]->GetExpType() == MultiRegions::e3DH1D )
+             {
+              Array<OneD, unsigned int> planes;
+              planes = m_fields[0]->GetZIDs();
+
+              int num_planes = planes.num_elements();
+
+              //int nt  =  m_fields[0]->GetPlane(0)->GetNpoints();
+              int nel =  m_fields[0]->GetPlane(0)->GetExpSize();
+              int nq  =  m_fields[0]->GetPlane(0)->GetExp(0)->GetTotPoints();
+
+              int cnt = 0;
+              for(unsigned int n=0; n<num_planes; ++n)
+               {
+                for(int i=0; i<nel; ++i,++cnt)
+                 {
+                  elmt   = m_fields[0]->GetPlane(n)->GetExp(i);
+                  int offset = m_fields[0]->GetPhys_Offset(cnt);
+
+                  Array<OneD, NekDouble>  entropy_list(nq,0.0);
+                  Array<OneD, NekDouble>  one_list(nq,1.);
+
+                  for(int q=0; q<nq; ++q)
+                    {
+                         NekDouble velocity_mag = 0.;
+                         for(unsigned int d = 0; d < VelDim; ++d)
+                             velocity_mag += velocity[d][offset+q]*velocity[d][offset+q];
+                         velocity_mag = sqrt(velocity_mag);
+
+                      entropy_list[q] = (velocity_mag-mean_velocity)*(velocity_mag-mean_velocity);
+
+                      max_entropy = max(max_entropy,entropy_list[q]);
+                      min_entropy = min(min_entropy,entropy_list[q]);
+                    }
+                  
+                  entropy_integrate += elmt->Integral(entropy_list);
+                  element_volume  += elmt->Integral(one_list);
+
+                 }
+               }
+             }
+            else
+             {
+                 ASSERTL0(false,"only fully 3D and 3DH1D are implemented ");
+             }
+           }
+
+           break;
+        default:
+          {
+              ASSERTL1(false,"Not Implemented !");
+          }
+        }
+
+
+        
+         m_session->GetComm()->AllReduce(entropy_integrate,LibUtilities::ReduceSum);
+         m_session->GetComm()->AllReduce(element_volume,LibUtilities::ReduceSum);
+
+         double mean_entropy = entropy_integrate/element_volume;
+         m_session->GetComm()->AllReduce(max_entropy,LibUtilities::ReduceMax);
+
+         min_entropy = -min_entropy;
+         m_session->GetComm()->AllReduce(min_entropy,LibUtilities::ReduceMax);
+    //     min_entropy =-min_entropy;
+
+         return  max(max_entropy-mean_entropy, mean_entropy-(-min_entropy)); 
+
+
+    }
+    
+    void
+    VelocityCorrectionScheme::
+    v_SetUpEntropyViscosity(const Array<OneD, const Array<OneD, NekDouble> > &inarray,
+                                  Array<OneD, Array<OneD, NekDouble> > &outarray)
+    {     
+//          int num_processes = m_session->GetComm()->GetSize();
+          int VelDim  = m_velocity.num_elements();
+          int ndim    = m_velocity.num_elements();
+
+          NekDouble BBeta[3][3] = {{ 1.0,  0.0, 0.0},{ 2.0, -1.0, 0.0},{ 3.0, -3.0, 1.0}};
+          
+         // int type = (int) flow_type;
+         // Timer     timer;
+          NekDouble A = 26.;
+          NekDouble damping_length = 50;
+          NekDouble damping_factor = 1.;
+          NekDouble y_plus = 0.;
+          NekDouble max_viscosity = 0.0, max_alpha = 0.0;
+          NekDouble max_velocity  = 0.0;
+
+          int nqtots     =  m_fields[0]->GetNpoints();
+          int nctots     =  m_fields[0]->GetNcoeffs();
+          int nElmts     =  m_fields[0]->GetExpSize();
+          int nqElmts    =  m_fields[0]->GetExp(0)->GetTotPoints();
+
+          int nqPtots    =  m_fields[0]->GetNpoints();
+          int ncPtots    =  m_fields[0]->GetNcoeffs();
+           
+          Array<OneD, int> expOrderElement; 
+         if(m_fields[0]->GetWaveSpace())
+            expOrderElement = m_fields[0]->GetPlane(0)->EvalBasisNumModesMaxPerExp();
+         else
+            expOrderElement = m_fields[0]->EvalBasisNumModesMaxPerExp();
+
+          int evm_reduced_order = m_evm_reduced_order;
+
+          NekDouble m_homoLen ;
+          LibUtilities::TranspositionSharedPtr m_trans;
+          Array<OneD, unsigned int> planes;
+          int NZ;
+         if(m_fields[0]->GetWaveSpace())
+           {
+            planes     =  m_fields[0]->GetZIDs();
+            NZ         =  planes.num_elements();
+
+            nElmts     =  m_fields[0]->GetPlane(0)->GetExpSize();
+            nqElmts    =  m_fields[0]->GetPlane(0)->GetExp(0)->GetTotPoints();
+            nqPtots    =  m_fields[0]->GetPlane(0)->GetNpoints();
+            ncPtots    =  m_fields[0]->GetPlane(0)->GetNcoeffs();
+             
+            m_trans    =  m_fields[0]->GetTransposition();
+            m_homoLen  =  m_fields[0]->GetHomoLen();
+           }
+
+
+
+         // bool use_van_driest_damping = false;
+         // m_session->MatchSolverInfo("VanDriestDamping","True",use_van_driest_damping,false);
+         // m_session->LoadParameter("DampingLength", damping_length, 50.);
+         // m_session->LoadParameter("HomModesZ", num_points_z, 32);
+
+          Array<OneD, Array<OneD, NekDouble> > velocity_solution(VelDim),old_velocity_solution(VelDim) ;
+          Array<OneD, Array<OneD, NekDouble> > velocity(VelDim),old_velocity(VelDim);
+          Array<OneD, NekDouble> pressure_solution, old_pressure_solution;
+          Array<OneD, NekDouble> pressure, old_pressure;
+
+        
+
+        
+         for(int d = 0; d < VelDim; ++d)
+          {
+            velocity_solution[d] = Array<OneD, NekDouble>(nqtots,0.0);
+            old_velocity_solution[d] = Array<OneD, NekDouble>(nqtots,0.0);
+            
+            Vmath::Vcopy(nqtots, m_solution[d], 1, velocity_solution[d], 1);
+            Vmath::Vcopy(nqtots, m_old_solution[d], 1, old_velocity_solution[d], 1);
+
+  //           m_fields[d]->BwdTrans(m_intSoln->GetValue(0)[d],velocity_solution[d]);
+  //           m_fields[d]->BwdTrans(m_intSoln->GetValue(1)[d],old_velocity_solution[d]);
+          }
+
+          {
+             pressure_solution = Array<OneD, NekDouble>(nqtots,0.0);
+             old_pressure_solution = Array<OneD, NekDouble>(nqtots,0.0);
+
+            Vmath::Vcopy(nqtots, m_solution[VelDim], 1, pressure_solution, 1);
+            Vmath::Vcopy(nqtots, m_old_solution[VelDim], 1, old_pressure_solution, 1);
+//             m_fields[VelDim]->BwdTrans(m_intSoln->GetValue(0)[VelDim],pressure_solution);
+//             m_fields[VelDim]->BwdTrans(m_intSoln->GetValue(1)[VelDim],old_pressure_solution);
+          }
+
+
+         if(m_fields[0]->GetWaveSpace())
+          {
+            for(int d = 0; d < VelDim; ++d)
+             {
+              velocity[d] = Array<OneD, NekDouble>(nqtots,0.0);
+              old_velocity[d] = Array<OneD, NekDouble>(nqtots,0.0);
+
+              m_fields[d]->HomogeneousBwdTrans(velocity_solution[d],velocity[d]);
+              m_fields[d]->HomogeneousBwdTrans(old_velocity_solution[d],old_velocity[d]);
+             }
+
+              pressure = Array<OneD, NekDouble>(nqtots,0.0);
+              old_pressure = Array<OneD, NekDouble>(nqtots,0.0);
+
+              m_fields[0]->HomogeneousBwdTrans(pressure_solution,pressure);
+              m_fields[0]->HomogeneousBwdTrans(old_pressure_solution,old_pressure);
+             
+          }
+         else
+          {
+             for(int d = 0; d < VelDim; ++d)
+              {
+               velocity[d] = velocity_solution[d];
+               old_velocity[d] = old_velocity_solution[d];
+              }
+
+              pressure = pressure_solution;
+              old_pressure = old_pressure_solution;
+          }
+       
+       // NOTE upon here 
+       // velocity[], old_velocity[], pressure and old_pressure store velocity and pressure in (Q,P)-space 
+       //
+
+       //additional working space
+        Array<OneD, NekDouble> wkSp0,wkSp1,wkSp2;
+        wkSp0 = Array<OneD, NekDouble>(nqtots,0.0);
+        wkSp1 = Array<OneD, NekDouble>(nqtots,0.0);
+        wkSp2 = Array<OneD, NekDouble>(nqtots,0.0);
+
+        Array<OneD, NekDouble> Grad0,Grad1,Grad2;
+        Array<OneD, NekDouble> wkCoef0,wkCoef1,wkCoef2;
+
+        Array<OneD, NekDouble> entropy_residual;
+        entropy_residual = Array<OneD, NekDouble>(nqtots,0.0);
+        Vmath::Zero(nqtots, entropy_residual, 1);
+
+  
+        switch(ndim)
+        {
+         case 1:
+            ASSERTL0(false,"EVM not implemented for one dimensional problem");
+            //U = 0.5*(u*u)   
+
+            Vmath::Vmul(nqtots,velocity[0],1,velocity[0],1, wkSp0,1);
+            Vmath::Smul(nqtots, 0.5, wkSp0, 1, wkSp0, 1); // U
+
+            Vmath::Vmul(nqtots, old_velocity[0],1, old_velocity[0],1, wkSp1,1);
+            Vmath::Smul(nqtots, 0.5, wkSp1, 1, wkSp1,1); // U at previous time step
+
+            Vmath::Vsub(nqtots, wkSp0,1, wkSp1,1,entropy_residual,1);
+            Vmath::Smul(nqtots,1./m_timestep,entropy_residual,1,entropy_residual,1); // dU/dt
+
+            Vmath::Vadd(nqtots, wkSp0, 1, wkSp1, 1, wkSp2,1);
+            Vmath::Smul(nqtots, 0.5, wkSp2, 1, wkSp2,1); // U at (n+1/2)
+            
+            Vmath::Vadd(nqtots, pressure, 1, old_pressure, 1, wkSp0,1); //p at (n+1/2)
+            Vmath::Vadd(nqtots, wkSp0, 1, wkSp2, 1, wkSp0,1); //(p+U)
+
+            //wkSp1 is free to use
+            Vmath::Vadd(nqtots, velocity[0], 1, old_velocity[0], 1, wkSp1,1);
+            Vmath::Smul(nqtots, 0.5, wkSp1, 1, wkSp1,1); // u at (n+1/2)
+
+            Vmath::Vmul(nqtots, wkSp0,1, wkSp1,1, wkSp0,1); //(U+p)*u
+
+            break;
+        case 2:
+          {
+            Grad0 = Array<OneD, NekDouble>(nqtots,0.0);
+            Grad1 = Array<OneD, NekDouble>(nqtots,0.0);
+            //U = 0.5*(u*u)   
+            Vmath::Vmul(nqtots,velocity[0], 1, velocity[0], 1, wkSp0, 1);
+            Vmath::Vvtvp(nqtots,velocity[1], 1, velocity[1], 1, wkSp0, 1, wkSp0, 1); //U
+            Vmath::Smul(nqtots, 0.5, wkSp0, 1, wkSp0, 1); // U at (n+1)
+
+            Vmath::Vmul(nqtots, old_velocity[0],1, old_velocity[0],1, wkSp1,1);
+            Vmath::Vvtvp(nqtots, old_velocity[1], 1, old_velocity[1], 1, wkSp1, 1, wkSp1, 1); //U
+            Vmath::Smul(nqtots, 0.5, wkSp1, 1, wkSp1,1); // U at (n)
+
+            Vmath::Vsub(nqtots, wkSp0,1, wkSp1,1,entropy_residual,1);
+            Vmath::Smul(nqtots,1./m_timestep,entropy_residual,1,entropy_residual,1); // dU/dt
+            
+            Vmath::Vadd(nqtots, wkSp0, 1, wkSp1, 1, wkSp2,1);
+            Vmath::Smul(nqtots, 0.5, wkSp2, 1, wkSp2,1); // U at (n+1/2)
+
+            Vmath::Vadd(nqtots, pressure, 1, old_pressure, 1, wkSp0,1); 
+            Vmath::Smul(nqtots, 0.5, wkSp0, 1, wkSp0,1); // P at (n+1/2)
+            Vmath::Vadd(nqtots, wkSp0, 1, wkSp2, 1, wkSp0,1); //(p+U) at (n+1/2)
+
+            //wkSp1 is free to use
+            Vmath::Vadd(nqtots, velocity[0], 1, old_velocity[0], 1, wkSp1,1);
+            Vmath::Smul(nqtots, 0.5, wkSp1, 1, wkSp1,1); // u at (n+1/2)
+            Vmath::Vmul(nqtots, wkSp0,1, wkSp1,1, wkSp1, 1); //(U+p)*u
+             
+            m_fields[0]->PhysDeriv(MultiRegions::DirCartesianMap[0], wkSp1, Grad0);
+
+            Vmath::Vadd(nqtots, velocity[1], 1, old_velocity[1], 1, wkSp1,1);
+            Vmath::Smul(nqtots, 0.5, wkSp1, 1, wkSp1,1); // v at (n+1/2)
+            Vmath::Vmul(nqtots, wkSp0,1, wkSp1,1, wkSp1, 1); //(U+p)*v
+            m_fields[0]->PhysDeriv(MultiRegions::DirCartesianMap[1], wkSp1, Grad1);
+
+            Vmath::Vadd(nqtots, entropy_residual,1,  Grad0,1, entropy_residual, 1);
+            Vmath::Vadd(nqtots, entropy_residual,1,  Grad1,1, entropy_residual, 1);
+
+            m_fields[0]->PhysDeriv(MultiRegions::DirCartesianMap[0], wkSp2, wkSp1);
+            m_fields[0]->PhysDeriv(MultiRegions::DirCartesianMap[0], wkSp1, Grad0);
+
+            m_fields[0]->PhysDeriv(MultiRegions::DirCartesianMap[1], wkSp2, wkSp1);
+            m_fields[0]->PhysDeriv(MultiRegions::DirCartesianMap[1], wkSp1, Grad1);
+
+            Vmath::Vadd(nqtots, Grad0, 1,  Grad1, 1, Grad0, 1);
+            Vmath::Smul(nqtots,m_kinvis, Grad0, 1, Grad0,1); // laplacian term
+            Vmath::Vsub(nqtots, entropy_residual,1,  Grad0, 1, entropy_residual, 1);
+
+            //
+            Vmath::Vadd(nqtots, velocity[0], 1, old_velocity[0], 1, wkSp0,1);
+            Vmath::Smul(nqtots, 0.5, wkSp0, 1, wkSp0,1); // u at (n+1/2)
+            m_fields[0]->PhysDeriv(wkSp0, Grad0, Grad1);
+            Vmath::Vmul(nqtots, Grad0,1,  Grad0, 1, wkSp0, 1);
+            Vmath::Vvtvp(nqtots, Grad1, 1, Grad1, 1, wkSp0, 1, wkSp0, 1); //
+            Vmath::Smul(nqtots, m_kinvis, wkSp0, 1, wkSp0,1); // 
+            Vmath::Vadd(nqtots, entropy_residual,1,  wkSp0, 1, entropy_residual, 1);
+
+            Vmath::Vadd(nqtots, velocity[1], 1, old_velocity[1], 1, wkSp1,1);
+            Vmath::Smul(nqtots, 0.5, wkSp1, 1, wkSp1,1); // v at (n+1/2)
+            m_fields[0]->PhysDeriv(wkSp1, Grad0, Grad1);
+            Vmath::Vmul(nqtots, Grad0,1,  Grad0, 1, wkSp0, 1);
+            Vmath::Vvtvp(nqtots, Grad1, 1, Grad1, 1, wkSp0, 1, wkSp0, 1); //
+            Vmath::Smul(nqtots, m_kinvis, wkSp0, 1, wkSp0,1); // 
+            Vmath::Vadd(nqtots, entropy_residual,1,  wkSp0, 1, entropy_residual, 1);
+              
+            
+            //body force
+            //wkSp0 wkSp1 wkSp2 are free to use
+            Vmath::Vadd(nqtots, velocity[0], 1, old_velocity[0], 1, wkSp0,1);
+            Vmath::Smul(nqtots, 0.5, wkSp0, 1, wkSp0,1); // u at (n+1/2)
+            Vmath::Vadd(nqtots, velocity[1], 1, old_velocity[1], 1, wkSp1,1);
+            Vmath::Smul(nqtots, 0.5, wkSp1, 1, wkSp1,1); // v at (n+1/2)
+
+            Array<OneD, Array<OneD, NekDouble> > velocity_tmp(VelDim);
+            velocity_tmp[0] = Grad0;
+            velocity_tmp[1] = Grad1;
+           
+            /*
+            std::vector<SolverUtils::ForcingSharedPtr>::const_iterator x;
+            for (x = m_forcing.begin(); x != m_forcing.end(); ++x)
+              {
+                 Vmath::Zero(nqtots, Grad0, 1);
+                 Vmath::Zero(nqtots, Grad1, 1);
+
+                 (*x)->Apply(m_fields, velocity_solution, velocity_tmp, m_time);
+                 
+                 Vmath::Vmul(nqtots,  wkSp0,1, velocity_tmp[0],1,wkSp2,1);
+                 Vmath::Vvtvp(nqtots, wkSp1,1, velocity_tmp[1],1,wkSp2,1, wkSp2,1);
+
+                 Vmath::Vsub(nqtots, entropy_residual,1, wkSp2,1, entropy_residual,1); // subract the forcing 
+              }
+            */
+
+            break;
+          }
+        case 3:
+          {
+            Grad0 = Array<OneD, NekDouble>(nqtots,0.0);
+            Grad1 = Array<OneD, NekDouble>(nqtots,0.0);
+            Grad2 = Array<OneD, NekDouble>(nqtots,0.0);
+
+            
+            //U = 0.5*(u*u)   
+            Vmath::Vmul(nqtots,velocity[0], 1, velocity[0], 1, wkSp0, 1);
+            Vmath::Vvtvp(nqtots,velocity[1], 1, velocity[1], 1, wkSp0, 1, wkSp0, 1); 
+            Vmath::Vvtvp(nqtots,velocity[2], 1, velocity[2], 1, wkSp0, 1, wkSp0, 1); //U
+            Vmath::Smul(nqtots, 0.5, wkSp0, 1, wkSp0, 1); // U at (n+1)
+
+            Vmath::Vmul(nqtots, old_velocity[0],1, old_velocity[0],1, wkSp1,1);
+            Vmath::Vvtvp(nqtots, old_velocity[1], 1, old_velocity[1], 1, wkSp1, 1, wkSp1, 1); //U
+            Vmath::Vvtvp(nqtots, old_velocity[2], 1, old_velocity[2], 1, wkSp1, 1, wkSp1, 1); //U
+            Vmath::Smul(nqtots, 0.5, wkSp1, 1, wkSp1,1); // U at (n)
+
+            Vmath::Vsub(nqtots, wkSp0,1, wkSp1,1,entropy_residual,1);
+            Vmath::Smul(nqtots,1./m_timestep,entropy_residual,1,entropy_residual,1); // dU/dt
+            
+            Vmath::Vadd(nqtots, wkSp0, 1, wkSp1, 1, wkSp2,1);
+            Vmath::Smul(nqtots, 0.5, wkSp2, 1, wkSp2,1); // U at (n+1/2)
+
+            Vmath::Vadd(nqtots, pressure, 1, old_pressure, 1, wkSp0,1); 
+            Vmath::Smul(nqtots, 0.5, wkSp0, 1, wkSp0,1); // P at (n+1/2)
+            Vmath::Vadd(nqtots, wkSp0, 1, wkSp2, 1, wkSp0,1); //(p+U)
+
+            //wkSp1 is free to use
+            Vmath::Vadd(nqtots, velocity[0], 1, old_velocity[0], 1, wkSp1,1);
+            Vmath::Smul(nqtots, 0.5, wkSp1, 1, wkSp1,1); // u at (n+1/2)
+            Vmath::Vmul(nqtots, wkSp0,1, wkSp1,1, wkSp1, 1); //(U+p)*u
+             
+            m_fields[0]->PhysDeriv(MultiRegions::DirCartesianMap[0], wkSp1, Grad0);
+
+            Vmath::Vadd(nqtots, velocity[1], 1, old_velocity[1], 1, wkSp1,1);
+            Vmath::Smul(nqtots, 0.5, wkSp1, 1, wkSp1,1); // v at (n+1/2)
+            Vmath::Vmul(nqtots, wkSp0,1, wkSp1,1, wkSp1, 1); //(U+p)*v
+            m_fields[0]->PhysDeriv(MultiRegions::DirCartesianMap[1], wkSp1, Grad1);
+
+            Vmath::Vadd(nqtots, entropy_residual, 1,  Grad0,1, entropy_residual, 1);
+            Vmath::Vadd(nqtots, entropy_residual, 1,  Grad1,1, entropy_residual, 1);
+
+            Vmath::Vadd(nqtots, velocity[2], 1, old_velocity[2], 1, wkSp1,1);
+            Vmath::Smul(nqtots, 0.5, wkSp1, 1, wkSp1,1); // w at (n+1/2)
+            Vmath::Vmul(nqtots, wkSp0,1, wkSp1,1, wkSp1, 1); //(U+p)*w
+            //wkSp0 is free to use
+           if ( m_fields[0]->GetWaveSpace() == false )
+               m_fields[0]->PhysDeriv(MultiRegions::DirCartesianMap[2], wkSp1,Grad2);
+           else 
+            {
+             if( m_fields[0]->GetExpType() == MultiRegions::e3DH1D )
+              {
+               m_fields[0]->HomogeneousFwdTrans(wkSp1, wkSp0);
+               m_fields[0]->PhysDeriv(MultiRegions::DirCartesianMap[2], wkSp0, wkSp1);
+               m_fields[0]->HomogeneousBwdTrans(wkSp1, Grad2);
+              }
+             else
+              {
+                 ASSERTL0(false,"only fully 3D and 3DH1D are implemented ");
+              }
+            } 
+
+            Vmath::Vadd(nqtots, entropy_residual, 1,  Grad2,1, entropy_residual, 1);
+
+            //wkSp2 still has U at (n+1/2)
+            //wkSp0 and wkSp1 are free to use
+            m_fields[0]->PhysDeriv(MultiRegions::DirCartesianMap[0], wkSp2, wkSp1);
+            m_fields[0]->PhysDeriv(MultiRegions::DirCartesianMap[0], wkSp1, Grad0);
+
+            m_fields[0]->PhysDeriv(MultiRegions::DirCartesianMap[1], wkSp2, wkSp1);
+            m_fields[0]->PhysDeriv(MultiRegions::DirCartesianMap[1], wkSp1, Grad1);
+
+            if( m_fields[0]->GetWaveSpace() == false )
+             {
+               m_fields[0]->PhysDeriv(MultiRegions::DirCartesianMap[2], wkSp2, wkSp1);
+               m_fields[0]->PhysDeriv(MultiRegions::DirCartesianMap[2], wkSp1, Grad2);
+             }
+            else 
+            {
+              if( m_fields[0]->GetExpType() == MultiRegions::e3DH1D )
+               {
+                m_fields[0]->HomogeneousFwdTrans(wkSp2, wkSp0);
+                m_fields[0]->PhysDeriv(MultiRegions::DirCartesianMap[2], wkSp0,wkSp1);
+                m_fields[0]->PhysDeriv(MultiRegions::DirCartesianMap[2], wkSp1,wkSp0);
+                m_fields[0]->HomogeneousBwdTrans(wkSp0, Grad2);
+               }
+             else
+               {
+                 ASSERTL0(false,"only fully 3D and 3DH1D are implemented ");
+               }
+            } 
+
+            Vmath::Vadd(nqtots, Grad0, 1,  Grad1, 1, Grad0, 1);
+            Vmath::Vadd(nqtots, Grad2, 1,  Grad0, 1, Grad0, 1);
+            Vmath::Smul(nqtots,m_kinvis, Grad0, 1, Grad0,1); // laplacian term
+            Vmath::Vsub(nqtots, entropy_residual,1,  Grad0, 1, entropy_residual, 1);
+
+            //
+            Vmath::Vadd(nqtots, velocity[0], 1, old_velocity[0], 1, wkSp0,1);
+            Vmath::Smul(nqtots, 0.5, wkSp0, 1, wkSp0,1); // u at (n+1/2)
+            m_fields[0]->PhysDeriv(wkSp0, Grad0, Grad1);
+            Vmath::Vmul(nqtots, Grad0,1,  Grad0, 1, wkSp2, 1);
+            Vmath::Vvtvp(nqtots, Grad1, 1, Grad1, 1, wkSp2, 1, wkSp2, 1); //
+            Vmath::Smul(nqtots, m_kinvis, wkSp2,  1, Grad0,1); // 
+            Vmath::Vadd(nqtots, entropy_residual, 1,  Grad0, 1, entropy_residual, 1);
+
+            Vmath::Vadd(nqtots, velocity[1], 1, old_velocity[1], 1, wkSp1,1);
+            Vmath::Smul(nqtots, 0.5, wkSp1, 1, wkSp1,1); // v at (n+1/2)
+            m_fields[0]->PhysDeriv(wkSp1, Grad0, Grad1);
+            Vmath::Vmul(nqtots, Grad0,1,  Grad0, 1, wkSp2, 1);
+            Vmath::Vvtvp(nqtots, Grad1, 1, Grad1, 1, wkSp2, 1, wkSp2, 1); //
+            Vmath::Smul(nqtots, m_kinvis, wkSp2, 1, Grad0, 1); // 
+            Vmath::Vadd(nqtots, entropy_residual, 1,  Grad0, 1, entropy_residual, 1);
+
+            if( m_fields[0]->GetWaveSpace() == false )
+             {
+              m_fields[0]->PhysDeriv(MultiRegions::DirCartesianMap[2], wkSp0, Grad2);
+              Vmath::Vmul(nqtots, Grad2, 1, Grad2, 1, wkSp2, 1);
+              Vmath::Smul(nqtots, m_kinvis, wkSp2, 1, Grad0, 1); // 
+              Vmath::Vadd(nqtots, entropy_residual, 1,  Grad0, 1, entropy_residual, 1);
+
+              m_fields[0]->PhysDeriv(MultiRegions::DirCartesianMap[2], wkSp1, Grad2);
+              Vmath::Vmul(nqtots, Grad2, 1, Grad2, 1, wkSp2, 1);
+              Vmath::Smul(nqtots, m_kinvis, wkSp2, 1, Grad0,1); // 
+              Vmath::Vadd(nqtots, entropy_residual,1,  Grad0, 1, entropy_residual, 1);
+
+              Vmath::Vadd(nqtots, velocity[2], 1, old_velocity[2], 1, wkSp2,1);
+              Vmath::Smul(nqtots, 0.5, wkSp2, 1, wkSp2,1); // w at (n+1/2)
+              m_fields[0]->PhysDeriv(wkSp2, Grad0, Grad1);
+              Vmath::Vmul(nqtots, Grad0, 1,  Grad0, 1, wkSp0, 1);
+              Vmath::Vvtvp(nqtots, Grad1, 1, Grad1, 1, wkSp0, 1, wkSp0, 1); //
+              Vmath::Smul(nqtots, m_kinvis, wkSp0,  1, Grad0,1); // 
+              Vmath::Vadd(nqtots, entropy_residual, 1,  Grad0, 1, entropy_residual, 1);
+              
+              m_fields[0]->PhysDeriv(MultiRegions::DirCartesianMap[2], wkSp2, Grad2);
+              Vmath::Vmul(nqtots, Grad2, 1, Grad2,  1, wkSp0, 1);
+              Vmath::Smul(nqtots, m_kinvis, wkSp0,  1, Grad0,1); // 
+              Vmath::Vadd(nqtots, entropy_residual, 1,  Grad0, 1, entropy_residual, 1);
+             }
+            else
+             {
+              if( m_fields[0]->GetExpType() == MultiRegions::e3DH1D )
+               {
+                
+                 //u transforms to Fourier space
+                 m_fields[0]->HomogeneousFwdTrans(wkSp0, wkSp2);
+                 m_fields[0]->PhysDeriv(MultiRegions::DirCartesianMap[2], wkSp2, wkSp0);
+                 m_fields[0]->HomogeneousBwdTrans(wkSp0, Grad2);
+                 Vmath::Vmul(nqtots, Grad2, 1, Grad2, 1, wkSp2, 1);
+                 Vmath::Smul(nqtots, m_kinvis, wkSp2, 1, Grad0,1); // 
+                 Vmath::Vadd(nqtots, entropy_residual, 1,  Grad0, 1, entropy_residual, 1);
+
+                 //v transforms to Fourier space
+                 m_fields[0]->HomogeneousFwdTrans(wkSp1, wkSp2);
+                 m_fields[0]->PhysDeriv(MultiRegions::DirCartesianMap[2], wkSp2, wkSp0);
+                 m_fields[0]->HomogeneousBwdTrans(wkSp0, Grad2);
+                 Vmath::Vmul(nqtots, Grad2, 1, Grad2, 1, wkSp2, 1);
+                 Vmath::Smul(nqtots, m_kinvis, wkSp2, 1, Grad0,1); // 
+                 Vmath::Vadd(nqtots, entropy_residual, 1,  Grad0, 1, entropy_residual, 1);
+
+                 //bellow for w component
+                 Vmath::Vadd(nqtots, velocity[2], 1, old_velocity[2], 1, wkSp1,1);
+                 Vmath::Smul(nqtots, 0.5, wkSp1, 1, wkSp1,1); // w at (n+1/2)
+                 m_fields[0]->PhysDeriv(wkSp1, Grad0, Grad1);
+
+                 Vmath::Vmul(nqtots, Grad0, 1,  Grad0, 1, wkSp0, 1);
+                 Vmath::Vvtvp(nqtots, Grad1, 1, Grad1, 1, wkSp0, 1, wkSp0, 1); //
+                 Vmath::Smul(nqtots, m_kinvis, wkSp0,  1, Grad0,1); // 
+                 Vmath::Vadd(nqtots, entropy_residual, 1,  Grad0, 1, entropy_residual, 1);
+
+                 m_fields[0]->HomogeneousFwdTrans(wkSp1, wkSp2);
+                 m_fields[0]->PhysDeriv(MultiRegions::DirCartesianMap[2], wkSp2, wkSp0);
+                 m_fields[0]->HomogeneousBwdTrans(wkSp0, Grad2);
+                 //d/dz transformed into (Q,P)-space
+                 Vmath::Vmul(nqtots, Grad2, 1, Grad2,  1, wkSp0, 1);
+                 Vmath::Smul(nqtots, m_kinvis, wkSp0,  1, Grad0,1); // 
+                 Vmath::Vadd(nqtots, entropy_residual, 1,  Grad0, 1, entropy_residual, 1);
+            
+               }
+              else
+               {
+                 ASSERTL0(false,"only fully 3D and 3DH1D are implemented ");
+               }
+             }
+              
+              //body force
+                //wkSp0 wkSp1 wkSp2 are free to use
+                 Vmath::Vadd(nqtots, velocity[0], 1, old_velocity[0], 1, wkSp0,1);
+                 Vmath::Smul(nqtots, 0.5, wkSp0, 1, wkSp0,1); // u at (n+1/2)
+
+                 Vmath::Vadd(nqtots, velocity[1], 1, old_velocity[1], 1, wkSp1,1);
+                 Vmath::Smul(nqtots, 0.5, wkSp1, 1, wkSp1,1); // v at (n+1/2)
+
+                 Vmath::Vadd(nqtots, velocity[2], 1, old_velocity[2], 1, wkSp2,1);
+                 Vmath::Smul(nqtots, 0.5, wkSp2, 1, wkSp2,1); // w at (n+1/2)
+
+                 Array<OneD, Array<OneD, NekDouble> > velocity_tmp(VelDim);
+                 velocity_tmp[0] = Grad0;
+                 velocity_tmp[1] = Grad1;
+                 velocity_tmp[2] = Grad2;
+               
+                 /*
+              
+                 std::vector<SolverUtils::ForcingSharedPtr>::const_iterator x;
+                 for (x = m_forcing.begin(); x != m_forcing.end(); ++x)
+                  {
+                     for(int d=0; d<VelDim; ++d)
+                         Vmath::Zero(nqtots, velocity_tmp[d], 1);
+
+                        (*x)->Apply(m_fields, velocity, velocity_tmp, m_time);
+                 
+                          Vmath::Vmul(nqtots,  Grad0,1, wkSp0,1,Grad0,1);
+                          Vmath::Vvtvp(nqtots, Grad1,1, wkSp1,1,Grad0,1,Grad0,1);
+                          Vmath::Vvtvp(nqtots, Grad2,1, wkSp2,1,Grad0,1,Grad0,1);
+
+                    Vmath::Vsub(nqtots, entropy_residual,1, Grad0,1, entropy_residual,1); // subract the forcing 
+                  }
+                */
+                
+                 if(m_use_evm_mapping)
+                  {
+                      Vmath::Vmul(nqtots,  m_evm_mapping_force[0],1, wkSp0,1,Grad0,1);
+                      Vmath::Vvtvp(nqtots, m_evm_mapping_force[1],1, wkSp1,1,Grad0,1,Grad0,1);
+                      Vmath::Vvtvp(nqtots, m_evm_mapping_force[2],1, wkSp2,1,Grad0,1,Grad0,1);
+                      
+                      Vmath::Vsub(nqtots, entropy_residual,1, Grad0,1, entropy_residual,1); // subract the forcing 
+                  }
+            break;
+          }
+         default:
+            ASSERTL0(false,"dimension unknown");
+        }
+
+              
+
+        //const std::pair<NekDouble, NekDouble> & velocity_range = EvaluateVelocityRange(velocity);
+        const NekDouble VelocityEntropyVariation = EvaluateVelocityEntropyVariation(velocity);
+
+//        if ( m_session->GetComm()->GetRank() == 0 )
+//           cout<<"entropy = "<<VelocityEntropyVariation<<endl;
+
+  //      if ( (m_session->GetComm()->GetRank() == 0 )
+  //         && ( ! ((m_step_counter + 1)%m_infosteps )) )
+  //           cout<<"Maximal Velocity    : "<<setw(8)<<left<<velocity_range.second<<endl;
+
+            LibUtilities::PointsType stdPointsType
+              = m_fields[0]->GetExp(0)->GetPointsType(0);
+            int nQuadPoints = m_fields[0]->GetExp(0)->GetNumPoints(0);
+            const LibUtilities::PointsKey quadPointsKey(nQuadPoints, stdPointsType);
+                  Array<OneD, NekDouble> quadZeros(nQuadPoints);
+            quadZeros   = (LibUtilities::PointsManager()[quadPointsKey])->GetZ();
+
+
+        Array<OneD, NekDouble> hOverP;
+        hOverP = Array<OneD, NekDouble>(nElmts,0.0);
+
+        switch(ndim)
+        {
+         case 1:
+            ASSERTL0(false,"EVM not implemented for one dimensional problem");
+            break;
+         case 2:
+           {
+              wkCoef0 = Array<OneD, NekDouble>(nctots,0.0);
+              wkCoef1 = Array<OneD, NekDouble>(nctots,0.0);
+               
+              Vmath::Smul(nqtots, BBeta[1][0], velocity[0], 1, wkSp0,1);
+              Vmath::Svtvp(nqtots, BBeta[1][1], old_velocity[0], 1, wkSp0,1, wkSp0, 1);
+              
+              Vmath::Smul(nqtots, BBeta[1][0], velocity[1], 1, wkSp1,1);
+              Vmath::Svtvp(nqtots, BBeta[1][1], old_velocity[1], 1, wkSp1,1, wkSp1, 1);
+              
+              Vmath::Vmul(nqtots,wkSp0,1, wkSp0,1, wkSp2,1);
+              Vmath::Vvtvp(nqtots, wkSp1, 1, wkSp1, 1, wkSp2, 1, wkSp2, 1); 
+              Vmath::Smul(nqtots, 0.5, wkSp2, 1, wkSp2,1); //0.5*(u^2+v^2)
+                 
+              max_viscosity = 0.0;
+              max_alpha = 0.0;
+              max_velocity = 0.0;
+             for(int e=0; e<nElmts; ++e)
+              {
+                 int offset = m_fields[0]->GetPhys_Offset(e);
+                 Array<OneD, NekDouble> tmp;
+                 NekDouble elmtSensor = m_evm_alpha;
+                if(m_use_dynamic_alpha) 
+                 {
+                  int numModesElement = expOrderElement[e];
+                  int nElmtCoeffs     = m_fields[0]->GetExp(e)->GetNcoeffs();
+                  int numCutOff       = numModesElement - evm_reduced_order;
+                
+                  Array<OneD, NekDouble> elmtPhys(nqElmts);
+                  Vmath::Vcopy(nqElmts, tmp = wkSp2+offset, 1, elmtPhys, 1);
+
+                  // Compute coefficients
+                  Array<OneD, NekDouble> elmtCoeffs(nElmtCoeffs, 0.0);
+                  m_fields[0]->GetExp(e)->FwdTrans(elmtPhys, elmtCoeffs);
+
+                  Array<OneD, NekDouble> reducedElmtCoeffs(nElmtCoeffs, 0.0);
+                  m_fields[0]->GetExp(e)->ReduceOrderCoeffs(numCutOff, elmtCoeffs,
+                                                         reducedElmtCoeffs);
+
+                  Array<OneD, NekDouble> reducedElmtPhys(nqElmts, 0.0);
+                  m_fields[0]->GetExp(e)->BwdTrans(reducedElmtCoeffs, reducedElmtPhys);
+               
+
+                  NekDouble numerator   = 0.0;
+                  NekDouble denominator = 0.0;
+
+                // Determining the norm of the numerator of the Sensor
+                  Array<OneD, NekDouble> difference(nqElmts, 0.0);
+                  Vmath::Vsub(nqElmts, elmtPhys, 1, reducedElmtPhys, 1, difference, 1);
+
+                  numerator = Vmath::Dot(nqElmts, difference, difference);
+                  denominator = Vmath::Dot(nqElmts, elmtPhys, elmtPhys);
+
+                  elmtSensor = sqrt(numerator / denominator);
+   //              elmtSensor = log10(max(elmtSensor, NekConstants::kNekSqrtTol));
+                  max_alpha = max(max_alpha, elmtSensor);
+                 
+                  Vmath::Fill(nqElmts,elmtSensor, tmp = m_evm_sensor+offset,1);
+                }
+
+                NekDouble h = 1.0e+10;
+                LocalRegions::Expansion2DSharedPtr exp2D;
+                exp2D = m_fields[0]->GetExp(e)->as<LocalRegions::Expansion2D>();
+                for(int i = 0; i < exp2D->GetNedges(); ++i)
+                {
+                    h = min(h, exp2D->GetGeom2D()->GetEdge(i)->GetVertex(0)->
+                        dist(*(exp2D->GetGeom2D()->GetEdge(i)->GetVertex(1))));
+                }
+
+                h *= (0.5*(quadZeros[1]-quadZeros[0]));
+              
+                
+                NekDouble first_order_viscosity = 0.0;
+                for(int q=0; q<nqElmts; ++q)
+                  {
+                    NekDouble velocity_magnitude = 0.;
+                   for(int d=0; d<VelDim; ++d)
+                      velocity_magnitude += velocity[d][offset+q]*velocity[d][offset+q];
+
+                     first_order_viscosity = max(first_order_viscosity, m_evm_beta*h*sqrt(velocity_magnitude));
+
+                     max_velocity = max(max_velocity,sqrt(velocity_magnitude));
+                  }
+
+                NekDouble evm_alpha = m_evm_alpha;
+                if(m_use_dynamic_alpha)
+                  evm_alpha = elmtSensor;
+
+                NekDouble elmt_entropy_viscosity = 0.0;
+                for(int q=0; q<nqElmts; ++q)
+                 {
+                   NekDouble absResidual = fabs(entropy_residual[offset+q]);
+                   
+                   elmt_entropy_viscosity = max(elmt_entropy_viscosity,
+//                                  m_evm_alpha*h*h*absResidual/VelocityEntropyVariation);
+                                    evm_alpha*h*h*absResidual/VelocityEntropyVariation);
+                   
+                 //  if(elmt_entropy_viscosity>0.1)
+                 //  cout<<"elmt_entropy_viscosity = "<<elmt_entropy_viscosity<<" absResidual = "<<absResidual<<" entropy variation = "
+                 //     <<VelocityEntropyVariation<<" first order viscosity = "<<first_order_viscosity<<" h = "<<h<<endl;
+                 }
+                  
+                   elmt_entropy_viscosity = min(first_order_viscosity, elmt_entropy_viscosity);
+
+                   Vmath::Fill(nqElmts,elmt_entropy_viscosity, tmp = m_evm_visc+offset,1);
+
+                   max_viscosity = max(max_viscosity, elmt_entropy_viscosity);
+
+                   elmt_entropy_viscosity /= m_kinvis;
+
+                   Array<OneD, NekDouble> tmp0,tmp1;
+                   Vmath::Smul(nqElmts, elmt_entropy_viscosity,  tmp0 = wkSp0 + offset, 1, tmp1 = wkSp0 + offset, 1);
+                   Vmath::Smul(nqElmts, elmt_entropy_viscosity,  tmp0 = wkSp1 + offset, 1, tmp1 = wkSp1 + offset, 1);
+               }
+                   
+                   
+             //       bool waveSpace = m_fields[0]->GetWaveSpace();
+             //       m_fields[0]->SetWaveSpace(true);
+
+                    m_fields[0]->PhysDeriv(wkSp0, Grad0, Grad1);
+
+                    m_fields[0]->IProductWRTDerivBase(0, Grad0, wkCoef0);
+                    m_fields[0]->IProductWRTDerivBase(1, Grad1, wkCoef1);
+                    Vmath::Vadd(nctots, wkCoef0, 1,  wkCoef1, 1, wkCoef0, 1);
+
+                    m_fields[0]->SetPhysState (false);
+                    m_fields[0]->MultiplyByElmtInvMass(wkCoef0, wkCoef0);
+                    m_fields[0]->BwdTrans(wkCoef0, Grad0);
+                    Vmath::Vadd(nqtots, outarray[0], 1,  Grad0, 1, outarray[0], 1);
+                    
+                   
+//                    m_fields[0]->SetWaveSpace(true);
+                    m_fields[0]->PhysDeriv(wkSp1, Grad0, Grad1);
+                    m_fields[0]->IProductWRTDerivBase(0, Grad0, wkCoef0);
+                    m_fields[0]->IProductWRTDerivBase(1, Grad1, wkCoef1);
+                    Vmath::Vadd(nctots, wkCoef0, 1,  wkCoef1, 1, wkCoef0, 1);
+
+                    m_fields[0]->SetPhysState (false);
+                    m_fields[0]->MultiplyByElmtInvMass(wkCoef0, wkCoef1);
+                    m_fields[0]->BwdTrans(wkCoef1, Grad1);
+                    Vmath::Vadd(nqtots, outarray[1], 1,  Grad1, 1, outarray[1], 1);
+
+           //         m_fields[0]->SetWaveSpace(waveSpace);
+
+             break;
+          }
+         case 3:
+          {
+              wkCoef0 = Array<OneD, NekDouble>(nctots,0.0);
+              wkCoef1 = Array<OneD, NekDouble>(nctots,0.0);
+              wkCoef2 = Array<OneD, NekDouble>(nctots,0.0);
+
+              Vmath::Smul(nqtots, BBeta[1][0], velocity[0], 1, wkSp0,1);
+              Vmath::Svtvp(nqtots, BBeta[1][1], old_velocity[0], 1, wkSp0,1, wkSp0, 1);
+              
+              Vmath::Smul(nqtots, BBeta[1][0], velocity[1], 1, wkSp1,1);
+              Vmath::Svtvp(nqtots, BBeta[1][1], old_velocity[1], 1, wkSp1,1, wkSp1, 1);
+
+              Vmath::Smul(nqtots, BBeta[1][0], velocity[2], 1, wkSp2,1);
+              Vmath::Svtvp(nqtots, BBeta[1][1], old_velocity[2], 1, wkSp2,1, wkSp2, 1);
+            
+              Vmath::Vmul(nqtots,wkSp0,1, wkSp0,1, Grad0,1);
+              Vmath::Vvtvp(nqtots, wkSp1, 1, wkSp1, 1, Grad0, 1, Grad0, 1); 
+              Vmath::Vvtvp(nqtots, wkSp2, 1, wkSp2, 1, Grad0, 1, Grad0, 1); 
+              Vmath::Smul(nqtots, 0.5, Grad0, 1, Grad0,1); //0.5*(u^2+v^2)
+
+            if( m_fields[0]->GetWaveSpace() == false )
+             {
+               max_viscosity = 0.0;
+               max_alpha = 0.0;
+               max_velocity = 0.0;
+              for(int e=0; e<nElmts; ++e)
+               {
+
+                Array<OneD, NekDouble> tmp;
+                int offset = m_fields[0]->GetPhys_Offset(e);
+                NekDouble elmtSensor = m_evm_alpha;
+                if(m_use_dynamic_alpha) 
+                 {
+                  int numModesElement = expOrderElement[e];
+                  int nElmtCoeffs     = m_fields[0]->GetExp(e)->GetNcoeffs();
+                  int numCutOff       = numModesElement - evm_reduced_order;
+                
+                  Array<OneD, NekDouble> elmtPhys(nqElmts);
+                  Vmath::Vcopy(nqElmts, tmp = Grad0+offset, 1, elmtPhys, 1);
+
+                  // Compute coefficients
+                  Array<OneD, NekDouble> elmtCoeffs(nElmtCoeffs, 0.0);
+                  m_fields[0]->GetExp(e)->FwdTrans(elmtPhys, elmtCoeffs);
+
+                  Array<OneD, NekDouble> reducedElmtCoeffs(nElmtCoeffs, 0.0);
+                  m_fields[0]->GetExp(e)->ReduceOrderCoeffs(numCutOff, elmtCoeffs,
+                                                         reducedElmtCoeffs);
+
+                  Array<OneD, NekDouble> reducedElmtPhys(nqElmts, 0.0);
+                  m_fields[0]->GetExp(e)->BwdTrans(reducedElmtCoeffs, reducedElmtPhys);
+               
+
+                  NekDouble numerator   = 0.0;
+                  NekDouble denominator = 0.0;
+
+                  // Determining the norm of the numerator of the Sensor
+                  Array<OneD, NekDouble> difference(nqElmts, 0.0);
+                  Vmath::Vsub(nqElmts, elmtPhys, 1, reducedElmtPhys, 1, difference, 1);
+
+                  numerator = Vmath::Dot(nqElmts, difference, difference);
+                  denominator = Vmath::Dot(nqElmts, elmtPhys, elmtPhys);
+
+                  NekDouble elmtSensor = sqrt(numerator / denominator);
+   //              elmtSensor = log10(max(elmtSensor, NekConstants::kNekSqrtTol));
+                  max_alpha = max(max_alpha, elmtSensor);
+                 
+                  Vmath::Fill(nqElmts,elmtSensor, tmp = m_evm_sensor+offset,1);
+                }
+
+                  NekDouble h = 1.0e+10;
+                  LocalRegions::Expansion3DSharedPtr exp3D;
+                  exp3D = m_fields[0]->GetExp(e)->as<LocalRegions::Expansion3D>();
+                for(int i = 0; i < exp3D->GetNedges(); ++i)
+                {
+                    h = min(h, exp3D->GetGeom3D()->GetEdge(i)->GetVertex(0)->
+                        dist(*(exp3D->GetGeom3D()->GetEdge(i)->GetVertex(1))));
+                }
+
+                h *= (0.5*(quadZeros[1]-quadZeros[0]));
+                
+//                int offset = m_fields[0]->GetPhys_Offset(e);
+                NekDouble first_order_viscosity = 0.0;
+                for(int q=0; q<nqElmts; ++q)
+                  {
+                    NekDouble velocity_magnitude = 0.;
+                   for(int d=0; d<VelDim; ++d)
+                      velocity_magnitude += velocity[d][offset+q]*velocity[d][offset+q];
+
+                     first_order_viscosity = max(first_order_viscosity, m_evm_beta*h*sqrt(velocity_magnitude));
+                     
+                     max_velocity = max(max_velocity,sqrt(velocity_magnitude));
+                  }
+
+                NekDouble evm_alpha = m_evm_alpha;
+                if(m_use_dynamic_alpha)
+                  evm_alpha = elmtSensor;
+
+                NekDouble elmt_entropy_viscosity = 0.0;
+                for(int q=0; q<nqElmts; ++q)
+                 {
+                   NekDouble absResidual = fabs(entropy_residual[offset+q]);
+                   
+                   elmt_entropy_viscosity = max(elmt_entropy_viscosity,
+                                  evm_alpha*h*h*absResidual/VelocityEntropyVariation);
+                 }
+                  
+                   elmt_entropy_viscosity = min(first_order_viscosity, elmt_entropy_viscosity);
+                   
+                   Vmath::Fill(nqElmts,elmt_entropy_viscosity, tmp = m_evm_visc+offset,1);
+
+                   max_viscosity = max(max_viscosity, elmt_entropy_viscosity);
+
+                   elmt_entropy_viscosity /= m_kinvis;
+
+                   Array<OneD, NekDouble> tmp0,tmp1;
+                   Vmath::Smul(nqElmts, elmt_entropy_viscosity,  tmp0 = wkSp0 + offset, 1, tmp1 = wkSp0 + offset, 1);
+                   Vmath::Smul(nqElmts, elmt_entropy_viscosity,  tmp0 = wkSp1 + offset, 1, tmp1 = wkSp1 + offset, 1);
+                   Vmath::Smul(nqElmts, elmt_entropy_viscosity,  tmp0 = wkSp2 + offset, 1, tmp1 = wkSp2 + offset, 1);
+               }
+                    //Grad0,Grad1,Grad2 are safe to use
+                    m_fields[0]->PhysDeriv(wkSp0, Grad0, Grad1, Grad2);
+
+                    m_fields[0]->IProductWRTDerivBase(0, Grad0, wkCoef0);
+                    m_fields[0]->IProductWRTDerivBase(1, Grad1, wkCoef1);
+                    m_fields[0]->IProductWRTDerivBase(2, Grad2, wkCoef2);
+                    Vmath::Vadd(nctots, wkCoef0, 1,  wkCoef1, 1, wkCoef0, 1);
+                    Vmath::Vadd(nctots, wkCoef0, 1,  wkCoef2, 1, wkCoef0, 1);
+
+                    m_fields[0]->SetPhysState (false);
+                    m_fields[0]->MultiplyByElmtInvMass(wkCoef0, wkCoef0);
+                    m_fields[0]->BwdTrans(wkCoef0, Grad0);
+                    Vmath::Vadd(nqtots, outarray[0], 1,  Grad0, 1, outarray[0], 1);
+                    
+                   
+                    m_fields[0]->PhysDeriv(wkSp1, Grad0, Grad1, Grad2);
+                    m_fields[0]->IProductWRTDerivBase(0, Grad0, wkCoef0);
+                    m_fields[0]->IProductWRTDerivBase(1, Grad1, wkCoef1);
+                    m_fields[0]->IProductWRTDerivBase(2, Grad2, wkCoef2);
+                    Vmath::Vadd(nctots, wkCoef0, 1,  wkCoef1, 1, wkCoef0, 1);
+                    Vmath::Vadd(nctots, wkCoef0, 1,  wkCoef2, 1, wkCoef0, 1);
+
+                    m_fields[0]->SetPhysState (false);
+                    m_fields[0]->MultiplyByElmtInvMass(wkCoef0, wkCoef1);
+                    m_fields[0]->BwdTrans(wkCoef1, Grad1);
+                    Vmath::Vadd(nqtots, outarray[1], 1,  Grad1, 1, outarray[1], 1);
+
+                   // m_fields[0]->SetWaveSpace(true);
+                    m_fields[0]->PhysDeriv(wkSp2, Grad0, Grad1, Grad2);
+                    m_fields[0]->IProductWRTDerivBase(0, Grad0, wkCoef0);
+                    m_fields[0]->IProductWRTDerivBase(1, Grad1, wkCoef1);
+                    m_fields[0]->IProductWRTDerivBase(2, Grad2, wkCoef2);
+                    Vmath::Vadd(nctots, wkCoef0, 1,  wkCoef1, 1, wkCoef0, 1);
+                    Vmath::Vadd(nctots, wkCoef0, 1,  wkCoef2, 1, wkCoef0, 1);
+
+                    m_fields[0]->SetPhysState (false);
+                    m_fields[0]->MultiplyByElmtInvMass(wkCoef0, wkCoef1);
+                    m_fields[0]->BwdTrans(wkCoef1, Grad1);
+                    Vmath::Vadd(nqtots, outarray[2], 1,  Grad1, 1, outarray[2], 1);
+
+
+                }//fully 3D
+            else
+            {
+             
+              if( m_fields[0]->GetExpType() == MultiRegions::e3DH1D )
+               {
+              
+
+                Array<OneD, NekDouble> visc_tmp, visc_ave;
+
+                visc_tmp = Array<OneD, NekDouble>(nElmts*NZ,0.0);
+                visc_ave = Array<OneD, NekDouble>(nElmts,0.0);
+
+                int cnt = 0;
+                max_velocity = 0.0;
+               for(int k=0; k<NZ; ++k)
+                {
+
+                 for(int e=0; e<nElmts; ++e, ++cnt)
+                  {
+                    Array<OneD, NekDouble> tmp;
+                    int offset = m_fields[0]->GetPhys_Offset(cnt);
+                    NekDouble elmtSensor = m_evm_alpha;
+                   if(m_use_dynamic_alpha) 
+                    {
+                      int numModesElement = expOrderElement[e];
+                      int nElmtCoeffs     = m_fields[0]->GetPlane(0)->GetExp(e)->GetNcoeffs();
+                      int numCutOff       = numModesElement - evm_reduced_order;
+
+                      Array<OneD, NekDouble> elmtPhys(nqElmts);
+                      Vmath::Vcopy(nqElmts, tmp = Grad0+offset, 1, elmtPhys, 1);
+
+                     // Compute coefficients
+                      Array<OneD, NekDouble> elmtCoeffs(nElmtCoeffs, 0.0);
+                      m_fields[0]->GetPlane(0)->GetExp(e)->FwdTrans(elmtPhys, elmtCoeffs);
+
+                      Array<OneD, NekDouble> reducedElmtCoeffs(nElmtCoeffs, 0.0);
+                      m_fields[0]->GetPlane(0)->GetExp(e)->ReduceOrderCoeffs(numCutOff, elmtCoeffs,
+                                                         reducedElmtCoeffs);
+
+                      Array<OneD, NekDouble> reducedElmtPhys(nqElmts, 0.0);
+                      m_fields[0]->GetPlane(0)->GetExp(e)->BwdTrans(reducedElmtCoeffs, reducedElmtPhys);
+
+                      NekDouble numerator   = 0.0;
+                      NekDouble denominator = 0.0;
+
+                     // Determining the norm of the numerator of the Sensor
+                      Array<OneD, NekDouble> difference(nqElmts, 0.0);
+                      Vmath::Vsub(nqElmts, elmtPhys, 1, reducedElmtPhys, 1, difference, 1);
+
+                      numerator = Vmath::Dot(nqElmts, difference, difference);
+                      denominator = Vmath::Dot(nqElmts, elmtPhys, elmtPhys);
+
+                      NekDouble elmtSensor = sqrt(numerator / denominator);
+                      max_alpha = max(max_alpha, elmtSensor);
+                 
+                      Vmath::Fill(nqElmts,elmtSensor, tmp = m_evm_sensor+offset,1);
+                   }
+
+                    NekDouble h = 1.0e+10;
+                    LocalRegions::Expansion2DSharedPtr exp2D;
+                    exp2D = m_fields[0]->GetPlane(0)->GetExp(e)->as<LocalRegions::Expansion2D>();
+                 
+                   for(int i = 0; i < exp2D->GetNedges(); ++i)
+                    {
+                       h = min(h, exp2D->GetGeom2D()->GetEdge(i)->GetVertex(0)->
+                           dist(*(exp2D->GetGeom2D()->GetEdge(i)->GetVertex(1))));
+                    }
+
+                    h *= (0.5*(quadZeros[1]-quadZeros[0]));
+                
+                    NekDouble first_order_viscosity = 0.0;
+                   for(int q=0; q<nqElmts; ++q)
+                     {
+                         NekDouble velocity_magnitude = 0.;
+                       for(int d=0; d<VelDim; ++d)
+                         velocity_magnitude += velocity[d][offset+q]*velocity[d][offset+q];
+
+                          first_order_viscosity = max(first_order_viscosity, m_evm_beta*h*sqrt(velocity_magnitude));
+                          
+                          max_velocity = max(max_velocity, sqrt(velocity_magnitude));
+                     }
+
+                    NekDouble evm_alpha = m_evm_alpha;
+                    if(m_use_dynamic_alpha)
+                       evm_alpha = elmtSensor;
+
+                   NekDouble elmt_entropy_viscosity = 0.0;
+                  for(int q=0; q<nqElmts; ++q)
+                    {
+                      NekDouble absResidual = fabs(entropy_residual[offset+q]);
+                   
+                      elmt_entropy_viscosity = max(elmt_entropy_viscosity,
+                                  evm_alpha*h*h*absResidual/VelocityEntropyVariation);
+//                                  elmtSensor*h*h*absResidual/VelocityEntropyVariation);
+//                       if(elmt_entropy_viscosity>0.1)
+//                      cout<<" elmt_entropy_viscosity = "<<elmt_entropy_viscosity<<" residual = "<<absResidual<<" entropy_variation = "
+//                        <<VelocityEntropyVariation<<" h = "<<h<<" sensor = "<<elmtSensor<<endl;
+                    }
+                  
+                      elmt_entropy_viscosity = min(first_order_viscosity, elmt_entropy_viscosity);
+
+                      Vmath::Fill(nqElmts,elmt_entropy_viscosity, tmp = m_evm_visc+offset,1);
+
+                      elmt_entropy_viscosity /= m_kinvis;
+                      
+                      visc_tmp[k*nElmts+e] = elmt_entropy_viscosity;
+                  }
+               }//end of NZ planes
+                   
+
+                     for(int e=0; e<nElmts; ++e)
+                       visc_ave[e] = visc_tmp[e];
+                       
+                     for(int k=1; k<NZ; ++k)
+                      for(int e=0; e<nElmts; ++e)
+                        visc_ave[e] = max(visc_ave[e], visc_tmp[k*nElmts+e]);
+//
+
+                     for(int e=0; e<nElmts; ++e)
+                        m_comm->GetColumnComm()->AllReduce(visc_ave[e], LibUtilities::ReduceMax);
+
+                      max_viscosity = 0.0;
+                      for(int e=0; e<nElmts; ++e) max_viscosity = max(max_viscosity, visc_ave[e]);
+
+                      max_viscosity *=m_kinvis;
+
+                  // if (m_session->GetComm()->GetRank() == 0 )
+                  //   for(int e=0; e<nElmts; ++e)
+                  //   cout<<"visc["<<e<<"] = "<<visc_ave[e]*m_kinvis<<endl;
+
+                     cnt = 0;
+                    for(int k=0; k<NZ; ++k)
+                    for(int e=0; e<nElmts; ++e, ++cnt)
+                     {
+                       int offset = m_fields[0]->GetPhys_Offset(cnt);
+
+                       Array<OneD, NekDouble> tmp0,tmp1;
+                       Vmath::Smul(nqElmts, visc_ave[e],  tmp0 = wkSp0 + offset, 1, tmp1 = wkSp0 + offset, 1);
+                       Vmath::Smul(nqElmts, visc_ave[e],  tmp0 = wkSp1 + offset, 1, tmp1 = wkSp1 + offset, 1);
+                       Vmath::Smul(nqElmts, visc_ave[e],  tmp0 = wkSp2 + offset, 1, tmp1 = wkSp2 + offset, 1);
+                     }
+
+
+                    m_fields[0]->HomogeneousFwdTrans(wkSp0, Grad2);
+                    m_fields[0]->PhysDeriv(Grad2, Grad0, Grad1);
+
+                    //u transforms to Fourier space
+                    for(int k=0; k<NZ; ++k)
+//                    if(k != 1 || m_trans->GetK(k) != 0)
+                     {
+                      Array<OneD, NekDouble> tmp0,tmp1;
+                      m_fields[0]->GetPlane(k)->IProductWRTDerivBase(0, tmp0 = Grad0+k*nqPtots, tmp1 = wkCoef0+k*ncPtots);
+                      m_fields[0]->GetPlane(k)->IProductWRTDerivBase(1, tmp0 = Grad1+k*nqPtots, tmp1 = wkCoef1+k*ncPtots);
+                     }
+
+                    Vmath::Vadd(nctots, wkCoef0, 1,  wkCoef1, 1, wkCoef0, 1);
+
+                    for(int k=0; k<NZ; ++k)
+//                    if(k != 1 || m_trans->GetK(k) != 0)
+                     {
+                      Array<OneD, NekDouble> tmp0,tmp1;
+                      bool physState = m_fields[0]->GetPhysState();
+                      m_fields[0]->GetPlane(k)->SetPhysState (false);
+                      m_fields[0]->GetPlane(k)->MultiplyByElmtInvMass(tmp0 = wkCoef0+k*ncPtots, tmp1 =wkCoef0+k*ncPtots);
+                      m_fields[0]->GetPlane(k)->SetPhysState (physState);
+                     }
+
+                     m_fields[0]->BwdTrans(wkCoef0, Grad0);
+
+                     Vmath::Vadd(nqtots, outarray[0], 1,  Grad0, 1, outarray[0], 1);
+                    
+                     for (int k = 0; k <NZ; ++k)
+//                    if(k != 1 || m_trans->GetK(k) != 0)
+                       {
+                          Array<OneD, NekDouble> tmp1,tmp2; 
+                          double beta  = 2*M_PI*m_trans->GetK(k)/m_homoLen;
+                          beta *= beta;
+                          Vmath::Smul(nqPtots, beta, tmp1 = Grad2 + k*nqPtots, 1, tmp2 = wkSp0 + k*nqPtots, 1);
+                       }
+                       Vmath::Vadd(nqtots, outarray[0], 1, wkSp0, 1, outarray[0], 1);
+                      
+                   //
+                   //
+                   //
+                    //v transforms to Fourier space
+                    m_fields[0]->HomogeneousFwdTrans(wkSp1, Grad2);
+                    m_fields[0]->PhysDeriv(Grad2, Grad0, Grad1);
+
+                    for(int k=0; k<NZ; ++k)
+//                    if(k != 1 || m_trans->GetK(k) != 0)
+                     {
+                      Array<OneD, NekDouble> tmp0,tmp1;
+                      m_fields[0]->GetPlane(k)->IProductWRTDerivBase(0, tmp0 = Grad0+k*nqPtots, tmp1 = wkCoef0+k*ncPtots);
+                      m_fields[0]->GetPlane(k)->IProductWRTDerivBase(1, tmp0 = Grad1+k*nqPtots, tmp1 = wkCoef1+k*ncPtots);
+                     }
+
+                    Vmath::Vadd(nctots, wkCoef0, 1,  wkCoef1, 1, wkCoef0, 1);
+
+          //          m_fields[0]->SetPhysState (false);
+                    for(int k=0; k<NZ; ++k)
+//                    if(k != 1 || m_trans->GetK(k) != 0)
+                     {
+                      Array<OneD, NekDouble> tmp0,tmp1;
+                      bool physState = m_fields[0]->GetPhysState();
+                      m_fields[0]->GetPlane(k)->SetPhysState (false);
+                      m_fields[0]->GetPlane(k)->MultiplyByElmtInvMass(tmp0 = wkCoef0+k*ncPtots, tmp1 =wkCoef0+k*ncPtots);
+                      m_fields[0]->GetPlane(k)->SetPhysState (physState);
+                     }
+
+                     m_fields[0]->BwdTrans(wkCoef0, Grad0);
+                     
+                     Vmath::Vadd(nqtots, outarray[1], 1,  Grad0, 1, outarray[1], 1);
+                   //
+                     for (int k = 0; k <NZ; ++k)
+//                     if(k != 1 || m_trans->GetK(k) != 0)
+                       {
+                          Array<OneD, NekDouble> tmp1,tmp2; 
+                          double beta  = 2*M_PI*m_trans->GetK(k)/m_homoLen;
+                          beta *= beta;
+                          Vmath::Smul(nqPtots, beta, tmp1 = Grad2 + k*nqPtots, 1, tmp2 = wkSp0 + k*nqPtots, 1);
+                       }
+                        Vmath::Vadd(nqtots, outarray[1], 1, wkSp0, 1, outarray[1], 1);
+                   //
+                   //
+                   //
+                     //w transforms to Fourier space
+                    m_fields[0]->HomogeneousFwdTrans(wkSp2, Grad2);
+                    m_fields[0]->PhysDeriv(Grad2, Grad0, Grad1);
+
+                    for(int k=0; k<NZ; ++k)
+//                    if(k != 1 || m_trans->GetK(k) != 0)
+                     {
+                      Array<OneD, NekDouble> tmp0,tmp1;
+                      m_fields[0]->GetPlane(k)->IProductWRTDerivBase(0, tmp0 = Grad0+k*nqPtots, tmp1 = wkCoef0+k*ncPtots);
+                      m_fields[0]->GetPlane(k)->IProductWRTDerivBase(1, tmp0 = Grad1+k*nqPtots, tmp1 = wkCoef1+k*ncPtots);
+                     }
+
+                    Vmath::Vadd(nctots, wkCoef0, 1,  wkCoef1, 1, wkCoef0, 1);
+
+                   // m_fields[0]->SetPhysState (false);
+                    for(int k=0; k<NZ; ++k)
+//                    if(k != 1 || m_trans->GetK(k) != 0)
+                     {
+                      Array<OneD, NekDouble> tmp0,tmp1;
+                      bool physState = m_fields[0]->GetPhysState();
+                      m_fields[0]->GetPlane(k)->SetPhysState (false);
+                      m_fields[0]->GetPlane(k)->MultiplyByElmtInvMass(tmp0 = wkCoef0+k*ncPtots, tmp1 =wkCoef0+k*ncPtots);
+                      m_fields[0]->GetPlane(k)->SetPhysState (physState);
+                     }
+
+                     m_fields[0]->BwdTrans(wkCoef0, Grad0);
+                     
+                     Vmath::Vadd(nqtots, outarray[2], 1,  Grad0, 1, outarray[2], 1);
+                   
+                     for (int k = 0; k <NZ; ++k)
+ //                      if(k != 1 || m_trans->GetK(k) != 0)
+                       {
+                          Array<OneD, NekDouble> tmp1,tmp2; 
+                          double beta  = 2*M_PI*m_trans->GetK(k)/m_homoLen;
+                          beta *= beta;
+                          Vmath::Smul(nqPtots, beta, tmp1 = Grad2 + k*nqPtots, 1, tmp2 = wkSp0 + k*nqPtots, 1);
+                       }
+                      Vmath::Vadd(nqtots, outarray[2], 1, wkSp0, 1, outarray[2], 1);
+
+
+               }
+              else
+               {
+                 ASSERTL0(false,"only fully 3D and 3DH1D are implemented ");
+               }
+             }
+
+            break;
+          }
+         default:
+            ASSERTL0(false,"dimension unknown");
+        }
+
+             
+               if( m_fields[0]->GetExpType() == MultiRegions::e3DH1D )
+                {
+                   m_comm->GetColumnComm()->AllReduce(max_velocity, LibUtilities::ReduceMax);
+                   m_comm->GetColumnComm()->AllReduce(max_viscosity, LibUtilities::ReduceMax);
+                   m_comm->GetColumnComm()->AllReduce(max_alpha, LibUtilities::ReduceMax);
+                   m_comm->GetRowComm()->AllReduce(max_velocity, LibUtilities::ReduceMax);
+                   m_comm->GetRowComm()->AllReduce(max_viscosity, LibUtilities::ReduceMax);
+                   m_comm->GetRowComm()->AllReduce(max_alpha, LibUtilities::ReduceMax);
+                }
+               else
+                {
+                  m_comm->AllReduce(max_viscosity,LibUtilities::ReduceMax);
+                  m_comm->AllReduce(max_alpha,LibUtilities::ReduceMax);
+                  m_comm->AllReduce(max_velocity,LibUtilities::ReduceMax);
+                }
+              
+              
+             if(!m_use_dynamic_alpha) max_alpha = m_evm_alpha;
+
+             if ( (m_session->GetComm()->GetRank() == 0 )
+                 && ( ! (m_step_counter%m_infosteps )) )
+                 cout<<" Max Velocity  : "<<setw(12)<<left<<max_velocity<<"Max EVM Viscosity   : "<<setw(12)<<left
+                       <<max_viscosity<<" Max EVM alpha  :"<<setw(12)<<left<<max_alpha<<endl;
+
+    }
+
+
+    void VelocityCorrectionScheme::
+      v_ExtraFldOutput(
+        std::vector<Array<OneD, NekDouble> > &fieldcoeffs,
+        std::vector<std::string>             &variables)
+    {
+        bool extraFields;
+        m_session->MatchSolverInfo("OutputExtraFields","True",
+                                   extraFields, true);
+        if (extraFields)
+        {
+          
+            const int nPhys   = m_fields[0]->GetNpoints();
+            const int nCoeffs = m_fields[0]->GetNcoeffs();
+          if(m_useEntropyViscosity)
+           {
+
+            Array<OneD, NekDouble> evm_visc_Fwd(nCoeffs);
+
+            m_fields[0]->FwdTrans_IterPerExp(m_evm_visc,   evm_visc_Fwd);
+            variables.push_back  ("visco");
+            fieldcoeffs.push_back(evm_visc_Fwd);
+
+            if(m_use_dynamic_alpha)
+             {
+              Array<OneD, NekDouble> evm_sensor_Fwd(nCoeffs);
+              m_fields[0]->FwdTrans_IterPerExp(m_evm_sensor,  evm_sensor_Fwd);
+              variables.push_back  ("alpha");
+              fieldcoeffs.push_back(evm_sensor_Fwd);
+             }
+          }
+
+        }
     }
 } //end of namespace

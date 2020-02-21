@@ -110,11 +110,54 @@ namespace Nektar
             v_EvaluateAdvection_SetPressureBCs( inarray, outarray, time);
         }
 
+        void BackUpSolution(
+            const Array<OneD, const Array<OneD, NekDouble> > &inarray)
+        {
+            v_BackUpSolution(inarray);
+//            v_BackUpSolution();
+        }
+
+        void SetUpEntropyViscosity(
+            const Array<OneD, const Array<OneD, NekDouble> > &inarray,
+            Array<OneD, Array<OneD, NekDouble> > &outarray)
+        {
+            v_SetUpEntropyViscosity(inarray,outarray);
+        }
+        
+        NekDouble EvaluateVelocityEntropyVariation(
+                    const Array<OneD, const Array<OneD, NekDouble> > &velocity)
+         {
+             return v_EvaluateVelocityEntropyVariation(velocity);
+         }
+
+        std::pair<NekDouble, NekDouble >
+                    EvaluateVelocityRange(
+                    const Array<OneD, const Array<OneD, NekDouble> > &velocity)
+         {
+                   return v_EvaluateVelocityRange(velocity);
+         }
+
     protected:
         /// bool to identify if spectral vanishing viscosity is active.
         bool m_useHomo1DSpecVanVisc;
         /// bool to identify if spectral vanishing viscosity is active.
         bool m_useSpecVanVisc;
+
+        bool m_useEntropyViscosity;
+        bool m_use_dynamic_alpha;
+        int  m_step_counter;
+        int  m_evm_start_step;
+        int  m_evm_reduced_order;
+        bool m_use_evm_mapping;
+
+        NekDouble m_evm_alpha;
+        NekDouble m_evm_beta;
+        
+        Array<OneD, Array<OneD, NekDouble> > m_solution;
+        Array<OneD, Array<OneD, NekDouble> > m_old_solution;
+        Array<OneD, NekDouble>               m_evm_visc;
+        Array<OneD, NekDouble>               m_evm_sensor;
+        Array<OneD, Array<OneD, NekDouble> > m_evm_mapping_force;
         /// cutt off ratio from which to start decayhing modes
         NekDouble m_sVVCutoffRatio;
         /// Diffusion coefficient of SVV modes
@@ -197,6 +240,26 @@ namespace Nektar
                     const Array<OneD, const Array<OneD, NekDouble> > &inarray,
                     Array<OneD, Array<OneD, NekDouble> > &outarray,
                     const NekDouble time);
+
+        void SetUpEVM(void);
+
+        virtual void v_BackUpSolution(
+            const Array<OneD, const Array<OneD, NekDouble> > &inarray);
+
+        virtual void v_SetUpEntropyViscosity( 
+                    const Array<OneD, const Array<OneD, NekDouble> > &inarray,
+                    Array<OneD, Array<OneD, NekDouble> > &outarray);
+
+        virtual NekDouble v_EvaluateVelocityEntropyVariation(
+                    const Array<OneD, const Array<OneD, NekDouble> > &velocity);
+
+        virtual std::pair<NekDouble, NekDouble >
+                     v_EvaluateVelocityRange(
+                    const Array<OneD, const Array<OneD, NekDouble> > &velocity);
+
+        virtual void v_ExtraFldOutput(
+            std::vector<Array<OneD, NekDouble> > &fieldcoeffs,
+            std::vector<std::string>             &variables);
 
         virtual bool v_RequireFwdTrans()
         {
