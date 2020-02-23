@@ -79,18 +79,6 @@ void ProcessVorticity::Process(po::variables_map &vm)
              "Error: Vorticity for a 1D problem cannot be computed");
     int addfields = (m_spacedim == 2) ? 1 : 3;
 
-    // Append field names
-    if (addfields == 1)
-    {
-        m_f->m_variables.push_back("W_z");
-    }
-    else
-    {
-        m_f->m_variables.push_back("W_x");
-        m_f->m_variables.push_back("W_y");
-        m_f->m_variables.push_back("W_z");
-    }
-
     // Skip in case of empty partition
     if (m_f->m_exp[0]->GetNumElmts() == 0)
     {
@@ -204,6 +192,18 @@ void ProcessVorticity::Process(po::variables_map &vm)
             Vmath::Vcopy(npoints, outfield[i], 1, Exp[n]->UpdatePhys(), 1);
             Exp[n]->FwdTrans_IterPerExp(outfield[i], Exp[n]->UpdateCoeffs());
         }
+    }
+
+    // Append field names
+    if (addfields == 1)
+    {
+        m_f->m_variables.push_back("W_z");
+    }
+    else
+    {
+        m_f->m_variables.push_back("W_x");
+        m_f->m_variables.push_back("W_y");
+        m_f->m_variables.push_back("W_z");
     }
 
     for (s = 0; s < nstrips; ++s)
