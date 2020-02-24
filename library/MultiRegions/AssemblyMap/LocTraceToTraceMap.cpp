@@ -70,7 +70,7 @@ LocTraceToTraceMap::LocTraceToTraceMap(
     const LocalRegions::ExpansionVector &locExpVector = *(locExp.GetExp());
 
     // Assume that all the elements have same dimension
-    int m_expdim = locExpVector[0]->GetShapeDimension();
+    m_expdim = locExpVector[0]->GetShapeDimension();
 
     // Switch between 1D, 2D and 3D
     switch (m_expdim)
@@ -237,12 +237,12 @@ void LocTraceToTraceMap::Setup2D(
             int order_f = edge->GetNcoeffs();
             int foffset = trace->GetCoeff_Offset(edge->GetElmtId());
 
-            double fac = (*exp)[n]->EdgeNormalNegated(e) ? -1.0 : 1.0;
+            double fac = (*exp)[n]->TraceNormalNegated(e) ? -1.0 : 1.0;
 
             LocalRegions::Expansion1DSharedPtr locExp1d =
                 elmtToTrace[n][e]->as<LocalRegions::Expansion1D>();
 
-            if (exp2d->GetEdgeExp(e)->GetRightAdjacentElementExp())
+            if (exp2d->GetTraceExp(e)->GetRightAdjacentElementExp())
             {
                 if (locExp1d->GetRightAdjacentElementExp()
                         ->GetGeom()
@@ -577,14 +577,13 @@ void LocTraceToTraceMap::Setup3D(
             int order_f = face->GetNcoeffs();
             int foffset = trace->GetCoeff_Offset(face->GetElmtId());
 
-            int fac = (*exp)[n]->FaceNormalNegated(e) ? -1.0 : 1.0;
+            int fac = (*exp)[n]->TraceNormalNegated(e) ? -1.0 : 1.0;
 
-            if (exp3d->GetFaceExp(e)->GetRightAdjacentElementExp())
+            if (exp3d->GetTraceExp(e)->GetRightAdjacentElementExp())
             {
-                if (exp3d->GetFaceExp(e)
-                        ->GetRightAdjacentElementExp()
-                        ->GetGeom3D()
-                        ->GetGlobalID() == exp3d->GetGeom3D()->GetGlobalID())
+                if (exp3d->GetTraceExp(e)
+                        ->GetRightAdjacentElementExp()->GetGeom()
+                        ->GetGlobalID() == exp3d->GetGeom()->GetGlobalID())
                 {
                     fac = -1.0;
                 }
@@ -868,6 +867,26 @@ void LocTraceToTraceMap::FwdLocTracesFromField(
     Vmath::Gathr(m_nFwdLocTracePts, field, m_fieldToLocTraceMap, faces);
 }
 
+
+void LocTraceToTraceMap::InterpLocTracesToTrace(
+    const int dir,
+    const Array<OneD, const NekDouble> &loctraces,
+    Array<OneD, NekDouble> traces)
+{
+    switch(m_expdim)
+    {
+    case 2:
+        InterpLocEdgesToTrace(dir,loctraces,traces);
+        break;
+    case 3:
+        InterpLocFacesToTrace(dir,loctraces,traces);
+        break;
+    default:
+        ASSERTL0(false,"Not set up");
+        break;
+    }
+}
+            
 /**
  * @brief Interpolate local trace edges to global trace edge point distributions
  * where required.

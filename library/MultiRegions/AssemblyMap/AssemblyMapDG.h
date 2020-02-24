@@ -37,9 +37,7 @@
 
 #include <MultiRegions/MultiRegionsDeclspec.h>
 #include <MultiRegions/AssemblyMap/AssemblyMap.h>
-#include <MultiRegions/ExpList2D.h>
-#include <MultiRegions/ExpList1D.h>
-#include <MultiRegions/ExpList0D.h>
+#include <MultiRegions/ExpList.h>
 
 namespace Nektar
 {
@@ -128,12 +126,7 @@ namespace Nektar
             virtual void v_LocalToGlobal(
                     const Array<OneD, const NekDouble>& loc,
                     Array<OneD,       NekDouble>& global,
-                    bool useComm) const;
-
-            virtual void v_LocalToGlobal(
-                    const NekVector<NekDouble>& loc,
-                    NekVector<      NekDouble>& global,
-                    bool useComm) const;
+                    bool useComm = false) const;
 
             virtual void v_GlobalToLocal(
                     const Array<OneD, const NekDouble>& global,

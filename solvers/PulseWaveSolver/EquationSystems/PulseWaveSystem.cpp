@@ -34,7 +34,7 @@
 
 #include <iostream>
 
-#include <MultiRegions/ContField1D.h>
+#include <MultiRegions/ContField.h>
 #include <LibUtilities/TimeIntegration/TimeIntegrationScheme.h>
 #include <PulseWaveSolver/EquationSystems/PulseWaveSystem.h>
 #include <LibUtilities/BasicUtils/Timer.h>
@@ -124,7 +124,7 @@ namespace Nektar
         {
             for(int j = 0; j < m_nVariables; ++j)
             {
-                m_vessels[cnt++] = MemoryManager<MultiRegions::DisContField1D>
+                m_vessels[cnt++] = MemoryManager<MultiRegions::DisContField>
                     ::AllocateSharedPtr(m_session, m_graph, domain[i],
                                         Allbcs,
                                         m_session->GetVariable(j),

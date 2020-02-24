@@ -39,7 +39,6 @@
 #include <tinyxml.h>
 #include <SpatialDomains/MeshGraph.h>
 #include <MultiRegions/ExpList.h>
-#include <MultiRegions/ExpList2D.h>
 #include <LibUtilities/BasicUtils/ParseUtils.h>
 
 using namespace std;
@@ -188,7 +187,7 @@ void GetStreakLocation(LibUtilities::SessionReaderSharedPtr &vSession,
     // Define Streak Expansion   
     MultiRegions::ExpListSharedPtr streak;   
     
-    streak = MemoryManager<MultiRegions::ExpList2D>
+    streak = MemoryManager<MultiRegions::ExpList>
         ::AllocateSharedPtr(vSession,mesh);
     //---------------------------------------------------------------
 

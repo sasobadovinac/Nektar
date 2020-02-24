@@ -679,6 +679,11 @@ namespace Nektar
                 ::AllocateSharedPtr( bkey0, bkey1, m_nodalPointsKey.GetPointsType());
         }
 
+        StdRegions::Orientation NodalTriExp::v_GetEorient(int edge)
+        {
+            return GetGeom2D()->GetEorient(edge);
+        }
+
         DNekMatSharedPtr NodalTriExp::v_GenMatrix(const StdRegions::StdMatrixKey &mkey)
         {
             DNekMatSharedPtr returnval;
@@ -700,7 +705,7 @@ namespace Nektar
             return returnval;
         }
 
-        void NodalTriExp::v_ComputeEdgeNormal(const int edge)
+        void NodalTriExp::v_ComputeTraceNormal(const int edge)
         {
             int i;
             const SpatialDomains::GeomFactorsSharedPtr & geomFactors = GetGeom()->GetMetricInfo();

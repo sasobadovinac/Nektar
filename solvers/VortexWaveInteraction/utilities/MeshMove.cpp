@@ -42,26 +42,12 @@
 
 //#include <sstream>
 #include <MultiRegions/ExpList.h>
-#include <MultiRegions/ExpList1D.h>
-//#include <MultiRegions/ExpList0D.h>
-//#include <MultiRegions/ExpList2D.h>
-//#include <MultiRegions/ExpList3D.h>
-//#include <MultiRegions/ExpList2DHomogeneous1D.h>
-//#include <MultiRegions/ExpList3DHomogeneous1D.h>
-//#include <MultiRegions/ExpList1DHomogeneous2D.h>
-//#include <MultiRegions/ExpList3DHomogeneous2D.h>
-#include <MultiRegions/ContField1D.h>
-#include <MultiRegions/ContField2D.h>
-//#include <MultiRegions/ContField3D.h>
-//#include <MultiRegions/ContField3DHomogeneous1D.h>
-//#include <MultiRegions/ContField3DHomogeneous2D.h>
+#include <MultiRegions/ContField.h>
 #include <LocalRegions/SegExp.h>
 #include <LocalRegions/QuadExp.h>
 #include <LocalRegions/TriExp.h>
-//#include </PreProcessing/NekMesh/Convert.h>
 #include <LibUtilities/LinearAlgebra/Lapack.hpp>
 #include <LibUtilities/BasicConst/NektarUnivTypeDefs.hpp>
-//#include <LibUtilities/Foundations/GaussPoints.h>
 #include <boost/lexical_cast.hpp>
 #include <tinyxml.h>
 
@@ -210,7 +196,7 @@ int main(int argc, char *argv[])
     //the mesh file should have 2 component: set output fields
     //fields has to be of the SAME dimension of the mesh (that's why there is
     //the changefile as an input)
-    //a contfield2D is needed to extract boundary conditions!!!
+    //a contfield is needed to extract boundary conditions!!!
 
     // store name of the file to change
     string changefile(argv[argc-2]);
@@ -229,7 +215,7 @@ int main(int argc, char *argv[])
     //----------------------------------------------
 
     MultiRegions::ExpListSharedPtr streak;
-    streak = MemoryManager<MultiRegions::ContField2D>
+    streak = MemoryManager<MultiRegions::ContField>
           ::AllocateSharedPtr(vSession, graphShPt, "w",true);
 
     LibUtilities::Import(fieldfile,fielddef,fielddata);
@@ -420,12 +406,12 @@ int main(int argc, char *argv[])
 
     //fieds to force continuity:
     const SpatialDomains::BoundaryRegionCollection    &bregions = bcs.GetBoundaryRegions();
-    MultiRegions::ContField1DSharedPtr  Cont_y;
-    MultiRegions::ExpList1DSharedPtr yexp;
+    MultiRegions::ContFieldSharedPtr  Cont_y;
+    MultiRegions::ExpListSharedPtr yexp;
 
-    yexp = MemoryManager<MultiRegions::ExpList1D>
+    yexp = MemoryManager<MultiRegions::ExpList>
         ::AllocateSharedPtr(vSession,*(bregions.find(lastIregion)->second), graphShPt, true);
-    Cont_y = MemoryManager<MultiRegions::ContField1D>
+    Cont_y = MemoryManager<MultiRegions::ContField>
                                 ::AllocateSharedPtr(vSession, *yexp);
     //--------------------------------------
     /*@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@*/

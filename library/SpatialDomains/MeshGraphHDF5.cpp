@@ -74,7 +74,7 @@ void MeshGraphHDF5::ReadGeometry(
 
     ReadComposites();
     ReadDomain();
-    ReadExpansions();
+    ReadExpansionInfos();
 
     // Close up shop.
     m_mesh->Close();

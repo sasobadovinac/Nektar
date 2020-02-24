@@ -720,7 +720,7 @@ namespace Nektar
             }
         }
         
-        void PyrExp::v_ComputeFaceNormal(const int face)
+        void PyrExp::v_ComputeTraceNormal(const int face)
         {
             const SpatialDomains::GeomFactorsSharedPtr &geomFactors =
                 GetGeom()->GetMetricInfo();

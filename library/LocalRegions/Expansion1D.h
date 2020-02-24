@@ -110,7 +110,8 @@ namespace Nektar
             virtual void v_AddRobinEdgeContribution(
                     const int                            vert,
                     const Array<OneD, const NekDouble > &primCoeffs,
-                          Array<OneD, NekDouble>        &coeffs);
+                    const Array<OneD, NekDouble>        &incoeffs,
+                    Array<OneD, NekDouble>        &coeffs);
 
             virtual NekDouble v_VectorFlux(
                     const Array<OneD, Array<OneD, NekDouble> > &vec);
@@ -119,6 +120,8 @@ namespace Nektar
 
             virtual bool v_VertexNormalNegated(const int vertex);
 
+            virtual const NormalVector &v_GetTraceNormal(const int edge) const;
+
         private:
             Expansion2DWeakPtr m_elementLeft;
             Expansion2DWeakPtr m_elementRight;
@@ -126,52 +129,6 @@ namespace Nektar
             int                m_elementEdgeRight;
             
         };
-        
-        inline Expansion2DSharedPtr Expansion1D::
-            GetLeftAdjacentElementExp() const
-        {
-            ASSERTL1(m_elementLeft.lock().get(),
-                     "Left adjacent element not set.");
-            return m_elementLeft.lock();
-        }
-
-        inline Expansion2DSharedPtr Expansion1D::
-            GetRightAdjacentElementExp() const
-        {
-            ASSERTL1(m_elementLeft.lock().get(),
-                     "Right adjacent element not set.");
-            
-            return m_elementRight.lock();
-        }
-
-        inline int Expansion1D::GetLeftAdjacentElementEdge() const
-        {
-            return m_elementEdgeLeft;
-        }
-
-        inline int Expansion1D::GetRightAdjacentElementEdge() const
-        {
-            return m_elementEdgeRight;
-        }
-
-        inline void Expansion1D::SetAdjacentElementExp(
-            int                  edge,
-            Expansion2DSharedPtr &e)
-        {
-            if (m_elementLeft.lock().get())
-            {
-                ASSERTL1(!m_elementRight.lock().get(),
-                         "Both adjacent elements already set.");
-                
-                m_elementRight     = e;
-                m_elementEdgeRight = edge;
-            }
-            else
-            {
-                m_elementLeft     = e;
-                m_elementEdgeLeft = edge;
-            }
-        }
 
         inline SpatialDomains::Geometry1DSharedPtr Expansion1D
             ::GetGeom1D() const

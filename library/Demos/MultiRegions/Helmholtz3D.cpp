@@ -38,7 +38,7 @@
 #include <LibUtilities/Memory/NekMemoryManager.hpp>
 #include <LibUtilities/BasicUtils/SessionReader.h>
 #include <LibUtilities/Communication/Comm.h>
-#include <MultiRegions/ContField3D.h>
+#include <MultiRegions/ContField.h>
 #include <SpatialDomains/MeshGraph.h>
 
 using namespace std;
@@ -61,14 +61,13 @@ int main(int argc, char *argv[])
             = LibUtilities::SessionReader::CreateInstance(argc, argv);
 
     LibUtilities::CommSharedPtr vComm = vSession->GetComm();
-    MultiRegions::ContField3DSharedPtr Exp, Fce;
+    MultiRegions::ContFieldSharedPtr Exp, Fce;
     MultiRegions::ExpListSharedPtr DerExp1, DerExp2, DerExp3;
     int     i, nq,  coordim;
     Array<OneD,NekDouble>  fce;
     Array<OneD,NekDouble>  xc0,xc1,xc2;
     StdRegions::ConstFactorMap factors;
     StdRegions::VarCoeffMap varcoeffs;
-    FlagList flags;
 #ifdef TIMING
     NekDouble st;
     NekDouble cps = (double)CLOCKS_PER_SEC;
@@ -93,11 +92,10 @@ int main(int argc, char *argv[])
 
         //----------------------------------------------
         // Print summary of solution details
-        flags.set(eUseGlobal, true);
         factors[StdRegions::eFactorLambda]             = 
             vSession->GetParameter("Lambda");
-        const SpatialDomains::ExpansionMap &expansions = 
-            graph3D->GetExpansions();
+        const SpatialDomains::ExpansionInfoMap &expansions = 
+            graph3D->GetExpansionInfos();
         LibUtilities::BasisKey              bkey0      = 
             expansions.begin()->second->m_basisKeyVector[0];
         
@@ -120,7 +118,7 @@ int main(int argc, char *argv[])
 
         //----------------------------------------------
         // Define Expansion
-        Exp = MemoryManager<MultiRegions::ContField3D>
+        Exp = MemoryManager<MultiRegions::ContField>
             ::AllocateSharedPtr(vSession, graph3D, vSession->GetVariable(0));
         //----------------------------------------------
 
@@ -185,7 +183,7 @@ int main(int argc, char *argv[])
 
         //----------------------------------------------
         // Setup expansion containing the  forcing function
-        Fce = MemoryManager<MultiRegions::ContField3D>::AllocateSharedPtr(*Exp);
+        Fce = MemoryManager<MultiRegions::ContField>::AllocateSharedPtr(*Exp);
         Fce->SetPhys(fce);
         //----------------------------------------------
 
@@ -193,7 +191,7 @@ int main(int argc, char *argv[])
         //Helmholtz solution taking physical forcing after setting
         //initial condition to zero
         Vmath::Zero(Exp->GetNcoeffs(),Exp->UpdateCoeffs(),1);
-        Exp->HelmSolve(Fce->GetPhys(), Exp->UpdateCoeffs(), flags, factors,
+        Exp->HelmSolve(Fce->GetPhys(), Exp->UpdateCoeffs(), NullFlagList, factors,
                        varcoeffs);
         //----------------------------------------------
         Timing("Helmholtz Solve ..");
@@ -202,7 +200,7 @@ int main(int argc, char *argv[])
         for(i = 0; i < 20; ++i)
         {
             Vmath::Zero(Exp->GetNcoeffs(),Exp->UpdateCoeffs(),1);
-            Exp->HelmSolve(Fce->GetPhys(), Exp->UpdateCoeffs(), flags, factors);
+            Exp->HelmSolve(Fce->GetPhys(), Exp->UpdateCoeffs(), NullFlagList, factors);
         }
 
         Timing("20 Helmholtz Solves:... ");
@@ -211,7 +209,7 @@ int main(int argc, char *argv[])
         //----------------------------------------------
         // Backward Transform Solution to get solved values at
         Exp->BwdTrans(
-            Exp->GetCoeffs(), Exp->UpdatePhys(), MultiRegions::eGlobal);
+            Exp->GetCoeffs(), Exp->UpdatePhys());
         //----------------------------------------------
 
         //----------------------------------------------
@@ -227,7 +225,6 @@ int main(int argc, char *argv[])
             Exp->GetFieldDefinitions();
         std::vector<std::vector<NekDouble> > FieldData(FieldDef.size());
 
-        Exp->GlobalToLocal(Exp->GetCoeffs(),Exp->UpdateCoeffs());
         for(i = 0; i < FieldDef.size(); ++i)
         {
             FieldDef[i]->m_fields.push_back("u");

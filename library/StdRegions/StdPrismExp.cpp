@@ -796,6 +796,12 @@ namespace Nektar
             return 5;
         }
 
+
+        int StdPrismExp::v_GetNtraces() const
+        {
+            return 5;
+        }
+
         /**
          * \brief Return Shape of region, using ShapeType enum list;
          * i.e. prism.

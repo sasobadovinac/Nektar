@@ -37,7 +37,8 @@
 
 #include <MultiRegions/ExpList2DHomogeneous1D.h>
 #include <MultiRegions/DisContField3DHomogeneous1D.h>
-#include <MultiRegions/DisContField2D.h>
+#include <MultiRegions/DisContField.h>
+#include <LocalRegions/Expansion1D.h>
 
 
 namespace Nektar
@@ -73,13 +74,13 @@ namespace Nektar
         {
             if (DeclarePlanesSetCoeffPhys)
             {
-                DisContField2DSharedPtr zero_plane =
-                    std::dynamic_pointer_cast<DisContField2D> (In.m_planes[0]);
+                DisContFieldSharedPtr zero_plane =
+                    std::dynamic_pointer_cast<DisContField> (In.m_planes[0]);
 
                 for(int n = 0; n < m_planes.num_elements(); ++n)
                 {
                     m_planes[n] =
-                        MemoryManager<DisContField2D>::
+                        MemoryManager<DisContField>::
                           AllocateSharedPtr(*zero_plane, false);
                 }
 
@@ -102,11 +103,11 @@ namespace Nektar
               m_bndConditions()
         {
             int i, n, nel;
-            DisContField2DSharedPtr plane_zero;
+            DisContFieldSharedPtr plane_zero;
             SpatialDomains::BoundaryConditions bcs(m_session, graph2D);
 
             // note that nzplanes can be larger than nzmodes
-            m_planes[0] = plane_zero = MemoryManager<DisContField2D>::
+            m_planes[0] = plane_zero = MemoryManager<DisContField>::
                 AllocateSharedPtr(pSession, graph2D, variable, true, false,
                                   ImpType);
 
@@ -122,7 +123,7 @@ namespace Nektar
 
             for (n = 1; n < m_planes.num_elements(); ++n)
             {
-                m_planes[n] = MemoryManager<DisContField2D>::
+                m_planes[n] = MemoryManager<DisContField>::
                     AllocateSharedPtr(*plane_zero, graph2D,
                                       variable, true, false);
                 for(i = 0; i < nel; ++i)
@@ -144,9 +145,6 @@ namespace Nektar
 
             // Setup default optimisation information
             nel = GetExpSize();
-
-            m_globalOptParam = MemoryManager<NekOptimize::GlobalOptParam>::
-                                AllocateSharedPtr(nel);
 
             SetCoeffPhys();
 
@@ -694,7 +692,7 @@ namespace Nektar
                 
                 elmt   = GetExp(ElmtID[cnt+n]);
                 const Array<OneD, const Array<OneD, NekDouble> > normalsElmt
-                            = elmt->GetSurfaceNormal(EdgeID[cnt+n]);
+                            = elmt->GetTraceNormal(EdgeID[cnt+n]);
                 // Copy to result
                 for (int j = 0; j < expdim; ++j)
                 {
@@ -715,7 +713,7 @@ namespace Nektar
             // Get trace map from first plane.
             AssemblyMapDGSharedPtr traceMap = m_planes[0]->GetTraceMap();
             const Array<OneD, const int> &traceBndMap
-                = traceMap->GetBndCondTraceToGlobalTraceMap();
+                = traceMap->GetBndCondIDToGlobalTraceID();
             int mapSize = traceBndMap.num_elements();
 
             // Set up trace boundary map

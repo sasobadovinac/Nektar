@@ -45,7 +45,7 @@ namespace Nektar
     {
         // Forward declaration for typedefs
         ExpList1DHomogeneous2D::ExpList1DHomogeneous2D():
-            ExpListHomogeneous2D()
+            ExpListHomogeneous2D(eNoType)
         {
         }
 
@@ -58,9 +58,9 @@ namespace Nektar
                                                        const bool useFFT,
                                                        const bool dealiasing,
                                                        const Array<OneD, ExpListSharedPtr> &points):
-            ExpListHomogeneous2D(pSession,HomoBasis_y,HomoBasis_z,lhom_y,lhom_z,useFFT,dealiasing)
+            ExpListHomogeneous2D(eNoType, pSession,HomoBasis_y,HomoBasis_z,lhom_y,lhom_z,useFFT,dealiasing)
         {
-            int n,nel;
+            int n;
 
             ASSERTL1(m_ny*m_nz == points.num_elements(),
                     "Size of basis number of points and number of lines are "
@@ -71,11 +71,6 @@ namespace Nektar
                 m_lines[n] = points[n];
                 (*m_exp).push_back(points[n]->GetExp(0));
             }
-
-            // Setup Default optimisation information.
-            nel = 1;
-            m_globalOptParam = MemoryManager<NekOptimize::GlobalOptParam>
-                ::AllocateSharedPtr(nel);
 
             SetCoeffPhys();
         }

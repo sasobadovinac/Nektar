@@ -61,8 +61,6 @@ namespace Nektar
             LOCAL_REGIONS_EXPORT Expansion3D(SpatialDomains::Geometry3DSharedPtr pGeom): Expansion(pGeom), StdExpansion3D(), m_requireNeg() {}
             LOCAL_REGIONS_EXPORT virtual ~Expansion3D() {}
             
-            LOCAL_REGIONS_EXPORT void SetFaceExp(const int face, Expansion2DSharedPtr &f);                
-            LOCAL_REGIONS_EXPORT Expansion2DSharedPtr GetFaceExp(const int face);            
             LOCAL_REGIONS_EXPORT void SetTraceToGeomOrientation(Array<OneD, NekDouble> &inout);
             LOCAL_REGIONS_EXPORT void SetFaceToGeomOrientation(const int face, Array<OneD, NekDouble> &inout);
             inline void AddHDGHelmholtzFaceTerms(
@@ -105,6 +103,9 @@ namespace Nektar
                       Array<OneD,       NekDouble>               &outarray);
 
         protected:
+            std::map<int, NormalVector> m_faceNormals;
+            std::map<int, bool> m_negatedNormals;
+
             virtual void v_DGDeriv(
                 const int                            dir,
                 const Array<OneD, const NekDouble>  &incoeffs,
@@ -176,6 +177,15 @@ namespace Nektar
             LOCAL_REGIONS_EXPORT virtual DNekMatSharedPtr v_BuildVertexMatrix(
                 const DNekScalMatSharedPtr &r_bnd); 
 
+            LOCAL_REGIONS_EXPORT const virtual NormalVector &v_GetTraceNormal
+                (const int face) const;
+
+            LOCAL_REGIONS_EXPORT virtual void v_NegateTraceNormal(
+                const int face);
+
+            LOCAL_REGIONS_EXPORT virtual bool v_TraceNormalNegated(
+                const int face);
+
             LOCAL_REGIONS_EXPORT void ReOrientTriFacePhysMap(const StdRegions::Orientation orient,
                                                              const int nq0,
                                                              const int nq1,
@@ -189,7 +199,6 @@ namespace Nektar
             // Do not add members here since it may lead to conflicts.
             // Only use this class for member functions
             
-            std::vector<Expansion2DWeakPtr> m_faceExp;
             std::vector<bool> m_requireNeg;
         };
         

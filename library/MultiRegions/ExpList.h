@@ -48,8 +48,8 @@
 #include <MultiRegions/GlobalMatrix.h>
 #include <MultiRegions/GlobalMatrixKey.h>
 #include <MultiRegions/GlobalLinSysKey.h>
-#include <MultiRegions/GlobalOptimizationParameters.h>
 #include <MultiRegions/AssemblyMap/AssemblyMap.h>
+#include <LibUtilities/Kernel/kernel.h>
 #include <tinyxml.h>
 
 namespace Nektar
@@ -57,6 +57,7 @@ namespace Nektar
     namespace MultiRegions
     {
         // Forward declarations
+        class ExpList;
         class GlobalLinSys;
         class AssemblyMapDG;
 
@@ -98,34 +99,84 @@ namespace Nektar
         /// A shared pointer to a BlockMatrixMap.
         typedef std::shared_ptr<BlockMatrixMap> BlockMatrixMapShPtr;
                    
+        /// Shared pointer to an ExpList object.
+        typedef std::shared_ptr<ExpList>      ExpListSharedPtr;
 
         /// Base class for all multi-elemental spectral/hp expansions.
         class ExpList: public std::enable_shared_from_this<ExpList>
         {
         public:
-            /// The default constructor.
-            MULTI_REGIONS_EXPORT ExpList();
-            
-            /// The default constructor.
+            /// The default constructor using a type
             MULTI_REGIONS_EXPORT ExpList(
-                    const LibUtilities::SessionReaderSharedPtr &pSession);
-
-            /// The default constructor.
-            MULTI_REGIONS_EXPORT ExpList(
-                    const LibUtilities::SessionReaderSharedPtr &pSession,
-                    const SpatialDomains::MeshGraphSharedPtr &pGraph);
-            
-            /// Constructor copying only elements defined in eIds.
-            MULTI_REGIONS_EXPORT ExpList(
-                const ExpList &in,
-                const std::vector<unsigned int> &eIDs,
-                const bool DeclareCoeffPhysArrays = true);
+                const ExpansionType Type = eNoType);
 
             /// The copy constructor.
             MULTI_REGIONS_EXPORT ExpList(
                 const ExpList &in,
                 const bool DeclareCoeffPhysArrays = true);
+            
+            /// Constructor copying only elements defined in eIds.
+            MULTI_REGIONS_EXPORT ExpList(
+                const ExpList &in,
+                const std::vector<unsigned int> &eIDs,
+                const bool DeclareCoeffPhysArrays = true,
+                const Collections::ImplementationType ImpType
+                                             = Collections::eNoImpType);
 
+            /// Generate an ExpList from a meshgraph \a graph and session file
+            MULTI_REGIONS_EXPORT ExpList(
+                const LibUtilities::SessionReaderSharedPtr &pSession,
+                const SpatialDomains::MeshGraphSharedPtr &graph,
+                const bool DeclareCoeffPhysArrays = true,
+                const std::string &var = "DefaultVar",
+                const Collections::ImplementationType ImpType
+                                             = Collections::eNoImpType);
+            
+            /// Sets up a list of local expansions based on an expansion  Map
+            MULTI_REGIONS_EXPORT ExpList(
+                const LibUtilities::SessionReaderSharedPtr &pSession,
+                const SpatialDomains::ExpansionInfoMap &expansions,
+                const bool DeclareCoeffPhysArrays = true,
+                const Collections::ImplementationType ImpType
+                                             = Collections::eNoImpType);
+
+            //---------------------------------------------------------
+            // Specialised constructors in ExpListConstructor.cpp
+            //---------------------------------------------------------
+            /// Specialised constructors for 0D Expansions
+            /// Wrapper around LocalRegion::PointExp - used in PrePacing.cpp
+            MULTI_REGIONS_EXPORT ExpList(const
+                                SpatialDomains::PointGeomSharedPtr  &geom);
+            
+            /// Generate expansions for the trace space expansions used in
+            /// DisContField.
+            MULTI_REGIONS_EXPORT ExpList(
+                    const LibUtilities::SessionReaderSharedPtr &pSession,
+                    const Array<OneD,const ExpListSharedPtr>   &bndConstraint,
+                    const Array<OneD, const SpatialDomains
+                              ::BoundaryConditionShPtr>        &bndCond,
+                    const LocalRegions::ExpansionVector        &locexp,
+                    const SpatialDomains::MeshGraphSharedPtr   &graph,
+                    const bool                DeclareCoeffPhysArrays = true,
+                    const std::string         variable = "DefaultVar",
+                    const Collections::ImplementationType     ImpType
+                                             = Collections::eNoImpType);
+
+            /// Constructor based on domain information only for 1D &
+            /// 2D boundary conditions
+            MULTI_REGIONS_EXPORT ExpList(
+                    const LibUtilities::SessionReaderSharedPtr &pSession,
+                    const SpatialDomains::CompositeMap &domain,
+                    const SpatialDomains::MeshGraphSharedPtr &graph,
+                    const bool DeclareCoeffPhysArrays = true,
+                    const std::string variable = "DefaultVar",
+                    bool SetToOneSpaceDimension = false,
+                    const LibUtilities::CommSharedPtr comm
+                                         = LibUtilities::CommSharedPtr(),
+                    const Collections::ImplementationType ImpType
+                                         = Collections::eNoImpType);
+
+                       
             /// The default destructor.
             MULTI_REGIONS_EXPORT virtual ~ExpList();
             
@@ -221,8 +272,7 @@ namespace Nektar
             ///
             inline void IProductWRTBase(
                 const Array<OneD, const NekDouble> &inarray,
-                      Array<OneD,       NekDouble> &outarray,
-                      CoeffState coeffstate = eLocal);
+                Array<OneD,       NekDouble> &outarray);
 
             /// This function calculates the inner product of a function
             /// \f$f(\boldsymbol{x})\f$ with respect to the derivative (in
@@ -258,8 +308,7 @@ namespace Nektar
             inline void FwdTrans(
                 const Array<OneD,
                 const NekDouble> &inarray,
-                      Array<OneD,       NekDouble> &outarray,
-                      CoeffState coeffstate = eLocal);
+                Array<OneD,       NekDouble> &outarray);
 
             MULTI_REGIONS_EXPORT void   ExponentialFilter(
                 Array<OneD, NekDouble> &array,
@@ -277,8 +326,7 @@ namespace Nektar
             ///
             inline void MultiplyByInvMassMatrix(
                 const Array<OneD,const NekDouble> &inarray,
-                      Array<OneD,      NekDouble> &outarray,
-                      CoeffState coeffstate = eLocal);
+                Array<OneD,      NekDouble> &outarray);
 
             /// Smooth a field across elements
             inline void SmoothField(Array<OneD,NekDouble> &field);
@@ -303,7 +351,6 @@ namespace Nektar
                        const Array<OneD, const NekDouble> &inarray,
                        Array<OneD, NekDouble> &outarray,
                        const NekDouble lambda,
-                       CoeffState coeffstate = eLocal, 
                        const Array<OneD, const NekDouble>&
                        dirForcing = NullNekDouble1DArray);
 
@@ -314,7 +361,6 @@ namespace Nektar
                 const Array<OneD, const NekDouble> &inarray,
                       Array<OneD, NekDouble> &outarray,
                 const NekDouble lambda,
-                      CoeffState coeffstate = eLocal,
                 const Array<OneD, const NekDouble>&
                       dirForcing = NullNekDouble1DArray);
 
@@ -334,8 +380,7 @@ namespace Nektar
             inline void BwdTrans (
                 const Array<OneD,
                 const NekDouble> &inarray,
-                      Array<OneD,NekDouble> &outarray,
-                      CoeffState coeffstate = eLocal);
+                Array<OneD,NekDouble> &outarray);
 
             /// This function calculates the coordinates of all the elemental
             /// quadrature points \f$\boldsymbol{x}_i\f$.
@@ -348,28 +393,24 @@ namespace Nektar
             inline void HomogeneousFwdTrans(
                 const Array<OneD, const NekDouble> &inarray,
                       Array<OneD, NekDouble> &outarray,
-                      CoeffState coeffstate = eLocal,
                 bool Shuff = true,
                 bool UnShuff = true);
             
             inline void HomogeneousBwdTrans(
                 const Array<OneD, const NekDouble> &inarray,
                       Array<OneD, NekDouble> &outarray,
-                      CoeffState coeffstate = eLocal,
                 bool Shuff = true,
                 bool UnShuff = true);
             
             inline void DealiasedProd(
                 const Array<OneD, NekDouble> &inarray1,
                 const Array<OneD, NekDouble> &inarray2,
-                      Array<OneD, NekDouble> &outarray,
-                      CoeffState coeffstate = eLocal);
+                Array<OneD, NekDouble> &outarray);
 
             inline void DealiasedDotProd(
                 const Array<OneD, Array<OneD, NekDouble> > &inarray1,
                 const Array<OneD, Array<OneD, NekDouble> > &inarray2,
-                      Array<OneD, Array<OneD, NekDouble> > &outarray,
-                      CoeffState coeffstate = eLocal);
+                Array<OneD, Array<OneD, NekDouble> > &outarray);
 
             inline void GetBCValues(
                       Array<OneD, NekDouble> &BndVals,
@@ -755,17 +796,17 @@ namespace Nektar
             inline std::shared_ptr<ExpList> &UpdateBndCondExpansion(int i);
             
             inline void Upwind(
-                const Array<OneD, const Array<OneD,       NekDouble> > &Vec,
-                const Array<OneD,                   const NekDouble>   &Fwd,
-                const Array<OneD,                   const NekDouble>   &Bwd,
-                      Array<OneD,                         NekDouble>   &Upwind);
-
-            inline void Upwind(
                 const Array<OneD, const NekDouble> &Vn,
                 const Array<OneD, const NekDouble> &Fwd,
                 const Array<OneD, const NekDouble> &Bwd,
                       Array<OneD,       NekDouble> &Upwind);
             
+            inline void Upwind(
+                const Array<OneD, const Array<OneD,       NekDouble> > &Vec,
+                const Array<OneD,                   const NekDouble>   &Fwd,
+                const Array<OneD,                   const NekDouble>   &Bwd,
+                      Array<OneD,                         NekDouble>   &Upwind);
+
             /**
              * Return a reference to the trace space associated with this
              * expansion list.
@@ -828,8 +869,7 @@ namespace Nektar
             inline void GeneralMatrixOp(
                 const GlobalMatrixKey             &gkey,
                 const Array<OneD,const NekDouble> &inarray,
-                      Array<OneD,      NekDouble> &outarray,
-                      CoeffState coeffstate = eLocal);
+                Array<OneD,      NekDouble> &outarray);
 
             MULTI_REGIONS_EXPORT void GeneralMatrixOp_IterPerExp(
                 const GlobalMatrixKey      &gkey,
@@ -876,11 +916,6 @@ namespace Nektar
                     LibUtilities::NullUnsignedIntVector);
             
 
-            const NekOptimize::GlobalOptParamSharedPtr &GetGlobalOptParam(void)
-            {
-                return m_globalOptParam;
-            }
-
             std::map<int, RobinBCInfoSharedPtr> GetRobinBCInfo()
             {
                 return v_GetRobinBCInfo();
@@ -900,13 +935,10 @@ namespace Nektar
                 return v_GetFieldDefinitions();
             }
 
-
             void GetFieldDefinitions(std::vector<LibUtilities::FieldDefinitionsSharedPtr> &fielddef)
             {
                 v_GetFieldDefinitions(fielddef);
             }
-
-
 
             /// Append the element data listed in elements
             /// fielddef->m_ElementIDs onto fielddata
@@ -998,19 +1030,32 @@ namespace Nektar
                 return v_GetPlane(n);
             }
            
-            //expansion type
-            ExpansionType m_expType;
-
             MULTI_REGIONS_EXPORT void CreateCollections(
                     Collections::ImplementationType ImpType
                                                     = Collections::eNoImpType);
 
             MULTI_REGIONS_EXPORT void ClearGlobalLinSysManager(void);
 
+            /// Performs the post-processing on a specified element.
+            MULTI_REGIONS_EXPORT void PostProcess(
+                LibUtilities::KernelSharedPtr kernel,
+                Array<OneD,NekDouble> &inarray,
+                Array<OneD,NekDouble> &outarray,
+                NekDouble h,
+                int elmId = 0);
+
+            /// Evaluates the global spectral/hp expansion at some arbitray set
+            /// of points.
+            MULTI_REGIONS_EXPORT void PeriodicEval(
+                Array<OneD,NekDouble> &inarray1,
+                Array<OneD,NekDouble> &inarray2,
+                NekDouble h, int nmodes,
+                Array<OneD,NekDouble> &outarray);
+
         protected:
-            /// Definition of the total number of degrees of freedom and
-            /// quadrature points and offsets to access data
-            void SetCoeffPhysOffsets();
+            /// Exapnsion type
+            ExpansionType m_expType;
+
 
             std::shared_ptr<DNekMat> GenGlobalMatrixFull(
                 const GlobalLinSysKey &mkey,
@@ -1103,10 +1148,8 @@ namespace Nektar
             /// Offset of elemental data into the array #m_phys
             Array<OneD, int>  m_phys_offset;
 
-            NekOptimize::GlobalOptParamSharedPtr m_globalOptParam;
-
             BlockMatrixMapShPtr  m_blockMat;
-            
+
             //@todo should this be in ExpList or ExpListHomogeneous1D.cpp
             // it's a bool which determine if the expansion is in the wave space (coefficient space)
             // or not
@@ -1154,11 +1197,6 @@ namespace Nektar
                 const GlobalLinSysKey     &mkey,
                 const AssemblyMapSharedPtr &locToGloMap);
 
-            void ReadGlobalOptimizationParameters()
-            {
-                v_ReadGlobalOptimizationParameters();
-            }
-
             // Virtual prototypes
 
             virtual int v_GetNumElmts(void)
@@ -1189,6 +1227,7 @@ namespace Nektar
 
             virtual const Array<OneD, const int> &v_GetTraceBndMap();
 
+            /// Populate \a normals with the normals of all expansions.
             virtual void v_GetNormals(
                 Array<OneD, Array<OneD, NekDouble> > &normals);
 
@@ -1226,8 +1265,7 @@ namespace Nektar
 
             virtual void v_MultiplyByInvMassMatrix(
                 const Array<OneD,const NekDouble> &inarray,
-                      Array<OneD,      NekDouble> &outarray,
-                      CoeffState coeffstate);
+                Array<OneD,      NekDouble> &outarray);
 
             virtual void v_HelmSolve(
                 const Array<OneD, const NekDouble> &inarray,
@@ -1244,7 +1282,6 @@ namespace Nektar
                 const Array<OneD, const NekDouble> &inarray,
                       Array<OneD, NekDouble> &outarray,
                 const NekDouble lambda,
-                      CoeffState coeffstate = eLocal,
                 const Array<OneD, const NekDouble>&
                       dirForcing = NullNekDouble1DArray);
 
@@ -1253,7 +1290,6 @@ namespace Nektar
                 const Array<OneD, const NekDouble> &inarray,
                       Array<OneD, NekDouble> &outarray,
                 const NekDouble lambda,
-                      CoeffState coeffstate = eLocal,
                 const Array<OneD, const NekDouble>&
                       dirForcing = NullNekDouble1DArray);
 
@@ -1281,8 +1317,7 @@ namespace Nektar
 
             virtual void v_BwdTrans(
                 const Array<OneD,const NekDouble> &inarray,
-                      Array<OneD,      NekDouble> &outarray,
-                      CoeffState coeffstate);
+                Array<OneD,      NekDouble> &outarray);
             
             virtual void v_BwdTrans_IterPerExp(
                 const Array<OneD,const NekDouble> &inarray,
@@ -1290,8 +1325,7 @@ namespace Nektar
         
             virtual void v_FwdTrans(
                 const Array<OneD,const NekDouble> &inarray,
-                      Array<OneD,      NekDouble> &outarray,
-                      CoeffState coeffstate);
+                Array<OneD,      NekDouble> &outarray);
 
             virtual void v_FwdTrans_IterPerExp(
                 const Array<OneD,const NekDouble> &inarray,
@@ -1305,8 +1339,7 @@ namespace Nektar
 
             virtual void v_IProductWRTBase(
                 const Array<OneD, const NekDouble> &inarray,
-                      Array<OneD,       NekDouble> &outarray,
-                CoeffState                          coeffstate);
+                Array<OneD,       NekDouble> &outarray);
             
             virtual void v_IProductWRTBase_IterPerExp(
                 const Array<OneD,const NekDouble> &inarray,
@@ -1315,8 +1348,7 @@ namespace Nektar
             virtual void v_GeneralMatrixOp(
                 const GlobalMatrixKey             &gkey,
                 const Array<OneD,const NekDouble> &inarray,
-                      Array<OneD,      NekDouble> &outarray,
-                      CoeffState coeffstate);
+                Array<OneD,      NekDouble> &outarray);
             
             virtual void v_GetCoords(
                 Array<OneD, NekDouble> &coord_0,
@@ -1356,28 +1388,24 @@ namespace Nektar
             virtual void v_HomogeneousFwdTrans(
                 const Array<OneD, const NekDouble> &inarray,
                       Array<OneD, NekDouble> &outarray,
-                      CoeffState coeffstate = eLocal,
                 bool Shuff = true,
                 bool UnShuff = true);
             
             virtual void v_HomogeneousBwdTrans(
                 const Array<OneD, const NekDouble> &inarray,
                       Array<OneD, NekDouble> &outarray,
-                CoeffState coeffstate = eLocal,
                 bool Shuff = true,
                 bool UnShuff = true);
             
             virtual void v_DealiasedProd(
                 const Array<OneD, NekDouble> &inarray1,
                 const Array<OneD, NekDouble> &inarray2,
-                      Array<OneD, NekDouble> &outarray,
-                      CoeffState coeffstate = eLocal);
+                Array<OneD, NekDouble> &outarray);
 
             virtual void v_DealiasedDotProd(
                 const Array<OneD, Array<OneD, NekDouble> > &inarray1,
                 const Array<OneD, Array<OneD, NekDouble> > &inarray2,
-                      Array<OneD, Array<OneD, NekDouble> > &outarray,
-                      CoeffState coeffstate = eLocal);
+                Array<OneD, Array<OneD, NekDouble> > &outarray);
 
             virtual void v_GetBCValues(
                       Array<OneD, NekDouble> &BndVals,
@@ -1417,8 +1445,6 @@ namespace Nektar
 
             virtual void v_GetBoundaryNormals(int i,
                             Array<OneD, Array<OneD, NekDouble> > &normals);
-
-            virtual void v_ReadGlobalOptimizationParameters();
 
             virtual std::vector<LibUtilities::FieldDefinitionsSharedPtr>
                 v_GetFieldDefinitions(void);
@@ -1503,7 +1529,17 @@ namespace Nektar
 
         
         private:
-            virtual const Array<OneD, const SpatialDomains::BoundaryConditionShPtr> &v_GetBndConditions();
+            /// Definition of the total number of degrees of freedom and
+            /// quadrature points and offsets to access data
+            void SetupCoeffPhys(bool DeclareCoeffPhysArrays = true,
+                                bool SetupOffsets = true);
+
+            /// Define a list of elements using the geometry and basis
+            /// key information in expmap;
+            void InitialiseExpVector( const SpatialDomains::ExpansionInfoMap &expmap);
+                                      
+            virtual const Array<OneD,
+                const SpatialDomains::BoundaryConditionShPtr> &v_GetBndConditions();
             
             virtual Array<OneD, SpatialDomains::BoundaryConditionShPtr>
                 &v_UpdateBndConditions();
@@ -1543,11 +1579,9 @@ namespace Nektar
         };
 
 
-        /// Shared pointer to an ExpList object.
-        typedef std::shared_ptr<ExpList>      ExpListSharedPtr;
         /// An empty ExpList object.
         static ExpList NullExpList;
-        static ExpListSharedPtr NullExpListSharedPtr;
+        static ExpListSharedPtr NullExpListSharedPtr;        
 
         // Inline routines follow.
 
@@ -1713,10 +1747,9 @@ namespace Nektar
          */
         inline void ExpList::IProductWRTBase(
             const Array<OneD, const NekDouble> &inarray,
-                  Array<OneD, NekDouble> &outarray,
-                  CoeffState coeffstate)
+            Array<OneD, NekDouble> &outarray)
         {
-            v_IProductWRTBase(inarray,outarray, coeffstate);
+            v_IProductWRTBase(inarray,outarray);
         }
 
         /**
@@ -1734,10 +1767,9 @@ namespace Nektar
          */
         inline void ExpList::FwdTrans(
             const Array<OneD, const NekDouble> &inarray,
-                  Array<OneD,       NekDouble> &outarray,
-                  CoeffState coeffstate)
+            Array<OneD,       NekDouble> &outarray)
         {
-            v_FwdTrans(inarray,outarray,coeffstate);
+            v_FwdTrans(inarray,outarray);
         }
         
         /**
@@ -1774,10 +1806,9 @@ namespace Nektar
          */
         inline void ExpList::BwdTrans (
             const Array<OneD, const NekDouble> &inarray,
-                  Array<OneD,       NekDouble> &outarray,
-                  CoeffState coeffstate)
+            Array<OneD,       NekDouble> &outarray)
         {
-            v_BwdTrans(inarray,outarray,coeffstate);
+            v_BwdTrans(inarray,outarray);
         }
         
         /**
@@ -1796,10 +1827,9 @@ namespace Nektar
          */
         inline void ExpList::MultiplyByInvMassMatrix(
             const Array<OneD,const NekDouble> &inarray,
-                  Array<OneD,      NekDouble> &outarray,
-                  CoeffState coeffstate)
+            Array<OneD,      NekDouble> &outarray)
         {
-            v_MultiplyByInvMassMatrix(inarray,outarray,coeffstate);
+            v_MultiplyByInvMassMatrix(inarray,outarray);
         }
 
         /**
@@ -1829,11 +1859,10 @@ namespace Nektar
             const Array<OneD, const NekDouble> &inarray,
                   Array<OneD, NekDouble> &outarray,
             const NekDouble lambda,
-                  CoeffState coeffstate,
             const Array<OneD, const NekDouble>&  dirForcing)
         {
             v_LinearAdvectionDiffusionReactionSolve(velocity,inarray, outarray,
-                                                lambda, coeffstate,dirForcing);
+                                                lambda, dirForcing);
         }
         
         inline void ExpList::LinearAdvectionReactionSolve(
@@ -1841,11 +1870,10 @@ namespace Nektar
             const Array<OneD, const NekDouble> &inarray,
                   Array<OneD, NekDouble> &outarray,
             const NekDouble lambda,
-                  CoeffState coeffstate,
             const Array<OneD, const NekDouble>&  dirForcing)
         {
             v_LinearAdvectionReactionSolve(velocity,inarray, outarray,
-                                           lambda, coeffstate,dirForcing);
+                                           lambda, dirForcing);
         }
 
         /**
@@ -1932,11 +1960,10 @@ namespace Nektar
         inline void ExpList::HomogeneousFwdTrans(
             const Array<OneD, const NekDouble> &inarray,
                   Array<OneD, NekDouble> &outarray,
-                  CoeffState coeffstate,
             bool Shuff,
             bool UnShuff)
         {
-            v_HomogeneousFwdTrans(inarray,outarray,coeffstate,Shuff,UnShuff);
+            v_HomogeneousFwdTrans(inarray,outarray,Shuff,UnShuff);
         }
     
         /**
@@ -1945,11 +1972,10 @@ namespace Nektar
         inline void ExpList::HomogeneousBwdTrans(
             const Array<OneD, const NekDouble> &inarray,
                   Array<OneD, NekDouble> &outarray,
-                  CoeffState coeffstate,
             bool Shuff,
             bool UnShuff)
         {
-            v_HomogeneousBwdTrans(inarray,outarray,coeffstate,Shuff,UnShuff);
+            v_HomogeneousBwdTrans(inarray,outarray,Shuff,UnShuff);
         }
     
         /**
@@ -1958,10 +1984,9 @@ namespace Nektar
         inline void ExpList::DealiasedProd(
             const Array<OneD, NekDouble> &inarray1,
             const Array<OneD, NekDouble> &inarray2,
-                  Array<OneD, NekDouble> &outarray,
-                  CoeffState coeffstate)
+            Array<OneD, NekDouble> &outarray)
         {
-            v_DealiasedProd(inarray1,inarray2,outarray,coeffstate);
+            v_DealiasedProd(inarray1,inarray2,outarray);
         }
 
         /**
@@ -1970,10 +1995,9 @@ namespace Nektar
         inline void ExpList::DealiasedDotProd(
                 const Array<OneD, Array<OneD, NekDouble> > &inarray1,
                 const Array<OneD, Array<OneD, NekDouble> > &inarray2,
-                      Array<OneD, Array<OneD, NekDouble> > &outarray,
-                      CoeffState coeffstate)
+                Array<OneD, Array<OneD, NekDouble> > &outarray)
         {
-            v_DealiasedDotProd(inarray1,inarray2,outarray,coeffstate);
+            v_DealiasedDotProd(inarray1,inarray2,outarray);
         }
 
         /**
@@ -2394,10 +2418,9 @@ namespace Nektar
         inline void ExpList::GeneralMatrixOp(
                                 const GlobalMatrixKey             &gkey,
                                 const Array<OneD,const NekDouble> &inarray,
-                                      Array<OneD,      NekDouble> &outarray,
-                                CoeffState coeffstate)
+                                Array<OneD,      NekDouble> &outarray)
         {
-            v_GeneralMatrixOp(gkey,inarray,outarray,coeffstate);
+            v_GeneralMatrixOp(gkey,inarray,outarray);
         }
 
 

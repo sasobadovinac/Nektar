@@ -47,8 +47,8 @@ namespace Nektar
     namespace MultiRegions
     {
         // Forward declaration for typedefs
-        ExpListHomogeneous2D::ExpListHomogeneous2D():
-            ExpList(),
+        ExpListHomogeneous2D::ExpListHomogeneous2D(const ExpansionType type):
+            ExpList(type),
             m_homogeneousBasis_y(LibUtilities::NullBasisSharedPtr),
             m_homogeneousBasis_z(LibUtilities::NullBasisSharedPtr),
             m_lhom_y(1),
@@ -57,20 +57,25 @@ namespace Nektar
         {
         }
 
-        ExpListHomogeneous2D::ExpListHomogeneous2D(const LibUtilities::SessionReaderSharedPtr &pSession,
-                                                   const LibUtilities::BasisKey &HomoBasis_y,
-                                                   const LibUtilities::BasisKey &HomoBasis_z, 
-                                                   const NekDouble lhom_y,
-                                                   const NekDouble lhom_z,
-                                                   const bool useFFT,
-                                                   const bool dealiasing):
-            ExpList(pSession),
+        ExpListHomogeneous2D::ExpListHomogeneous2D(
+                const ExpansionType type,
+                const LibUtilities::SessionReaderSharedPtr &pSession,
+                const LibUtilities::BasisKey &HomoBasis_y,
+                const LibUtilities::BasisKey &HomoBasis_z, 
+                const NekDouble lhom_y,
+                const NekDouble lhom_z,
+                const bool useFFT,
+                const bool dealiasing):
+            ExpList(type),
             m_useFFT(useFFT),
             m_lhom_y(lhom_y),
             m_lhom_z(lhom_z),
             m_homogeneous2DBlockMat(MemoryManager<Homo2DBlockMatrixMap>::AllocateSharedPtr()),
             m_dealiasing(dealiasing)
         {
+            m_session = pSession;
+            m_comm    = pSession->GetComm();
+
             ASSERTL2(HomoBasis_y != LibUtilities::NullBasisKey,
                      "Homogeneous Basis in y direction is a null basis");
             ASSERTL2(HomoBasis_z != LibUtilities::NullBasisKey,
@@ -164,28 +169,25 @@ namespace Nektar
         
         void ExpListHomogeneous2D::v_HomogeneousFwdTrans(const Array<OneD, const NekDouble> &inarray, 
                                                          Array<OneD, NekDouble> &outarray, 
-                                                         CoeffState coeffstate,
                                                          bool Shuff,
                                                          bool UnShuff)
         {
             // Forwards trans
-            Homogeneous2DTrans(inarray,outarray,true,coeffstate,Shuff,UnShuff);
+            Homogeneous2DTrans(inarray,outarray,true,Shuff,UnShuff);
         }
     
         void ExpListHomogeneous2D::v_HomogeneousBwdTrans(const Array<OneD, const NekDouble> &inarray, 
                                                          Array<OneD, NekDouble> &outarray, 
-                                                         CoeffState coeffstate,
                                                          bool Shuff,
                                                          bool UnShuff)
         {
             // Backwards trans
-            Homogeneous2DTrans(inarray,outarray,false,coeffstate,Shuff,UnShuff);
+            Homogeneous2DTrans(inarray,outarray,false,Shuff,UnShuff);
         }
     
         void ExpListHomogeneous2D::v_DealiasedProd(const Array<OneD, NekDouble> &inarray1, 
                                                    const Array<OneD, NekDouble> &inarray2,
-                                                   Array<OneD, NekDouble> &outarray, 
-                                                   CoeffState coeffstate)
+                                                   Array<OneD, NekDouble> &outarray)
         {
             int npoints = outarray.num_elements(); // number of total physical points
             int nlines  = m_lines.num_elements();  // number of lines == number of Fourier modes = number of Fourier coeff = number of points per slab
@@ -205,8 +207,8 @@ namespace Nektar
             }
             else
             {
-                HomogeneousFwdTrans(inarray1,V1,coeffstate);
-                HomogeneousFwdTrans(inarray2,V2,coeffstate);
+                HomogeneousFwdTrans(inarray1,V1);
+                HomogeneousFwdTrans(inarray2,V2);
             }
 
             m_transposition->Transpose(V1,ShufV1,false,LibUtilities::eXtoYZ);
@@ -269,18 +271,15 @@ namespace Nektar
                 m_transposition->Transpose(ShufV1V2,V1V2,false,LibUtilities::eYZtoX);
                 
                 //Moving the results in physical space for the output
-                HomogeneousBwdTrans(V1V2,outarray,coeffstate);
+                HomogeneousBwdTrans(V1V2,outarray);
             }
         }
 
         void ExpListHomogeneous2D::v_DealiasedDotProd(
                         const Array<OneD, Array<OneD, NekDouble> > &inarray1,
                         const Array<OneD, Array<OneD, NekDouble> > &inarray2,
-                        Array<OneD, Array<OneD, NekDouble> > &outarray,
-                        CoeffState coeffstate)
+                        Array<OneD, Array<OneD, NekDouble> > &outarray)
         {
-            boost::ignore_unused(coeffstate);
-
             // TODO Proper implementation of this
             int ndim = inarray1.num_elements();
             ASSERTL1( inarray2.num_elements() % ndim == 0,
@@ -300,7 +299,7 @@ namespace Nektar
             }
         }
 
-        void ExpListHomogeneous2D::v_FwdTrans(const Array<OneD, const NekDouble> &inarray, Array<OneD, NekDouble> &outarray, CoeffState coeffstate)
+        void ExpListHomogeneous2D::v_FwdTrans(const Array<OneD, const NekDouble> &inarray, Array<OneD, NekDouble> &outarray)
         {
             int cnt = 0, cnt1 = 0;
             Array<OneD, NekDouble> tmparray;
@@ -308,14 +307,13 @@ namespace Nektar
 
             for(int n = 0; n < nlines; ++n)
             {
-                m_lines[n]->FwdTrans(inarray+cnt, tmparray = outarray + cnt1,
-                                     coeffstate);
+                m_lines[n]->FwdTrans(inarray+cnt, tmparray = outarray + cnt1);
                 cnt   += m_lines[n]->GetTotPoints();
                 cnt1  += m_lines[n]->GetNcoeffs();
             }
             if(!m_WaveSpace)
             {
-                HomogeneousFwdTrans(outarray,outarray,coeffstate);
+                HomogeneousFwdTrans(outarray,outarray);
             }
         }
     
@@ -338,7 +336,7 @@ namespace Nektar
             }
         }
         
-        void ExpListHomogeneous2D::v_BwdTrans(const Array<OneD, const NekDouble> &inarray, Array<OneD, NekDouble> &outarray, CoeffState coeffstate)
+        void ExpListHomogeneous2D::v_BwdTrans(const Array<OneD, const NekDouble> &inarray, Array<OneD, NekDouble> &outarray)
         {
             int cnt = 0, cnt1 = 0;
             Array<OneD, NekDouble> tmparray;
@@ -346,8 +344,7 @@ namespace Nektar
 
             for(int n = 0; n < nlines; ++n)
             {
-                m_lines[n]->BwdTrans(inarray+cnt, tmparray = outarray + cnt1,
-                                     coeffstate);
+                m_lines[n]->BwdTrans(inarray+cnt, tmparray = outarray + cnt1);
                 cnt    += m_lines[n]->GetNcoeffs();
                 cnt1   += m_lines[n]->GetTotPoints();
             }
@@ -377,7 +374,7 @@ namespace Nektar
         }
 
 
-        void ExpListHomogeneous2D::v_IProductWRTBase(const Array<OneD, const NekDouble> &inarray, Array<OneD, NekDouble> &outarray,  CoeffState coeffstate)
+        void ExpListHomogeneous2D::v_IProductWRTBase(const Array<OneD, const NekDouble> &inarray, Array<OneD, NekDouble> &outarray)
         {
             int cnt = 0, cnt1 = 0;
             Array<OneD, NekDouble> tmparray;
@@ -385,7 +382,7 @@ namespace Nektar
             
             for(int n = 0; n < nlines; ++n)
             {
-                m_lines[n]->IProductWRTBase(inarray+cnt, tmparray = outarray + cnt1,coeffstate);
+                m_lines[n]->IProductWRTBase(inarray+cnt, tmparray = outarray + cnt1);
 
                 cnt    += m_lines[n]->GetNcoeffs();
                 cnt1   += m_lines[n]->GetTotPoints();
@@ -410,7 +407,6 @@ namespace Nektar
         void ExpListHomogeneous2D::Homogeneous2DTrans(const Array<OneD, const NekDouble> &inarray, 
                                                       Array<OneD, NekDouble> &outarray, 
                                                       bool IsForwards, 
-                                                      CoeffState coeffstate,
                                                       bool Shuff,
                                                       bool UnShuff)        
         {
@@ -490,13 +486,13 @@ namespace Nektar
                 {
                     if(IsForwards)
                     {
-                        blkmatY = GetHomogeneous2DBlockMatrix(eForwardsCoeffSpaceY1D,coeffstate);
-                        blkmatZ = GetHomogeneous2DBlockMatrix(eForwardsCoeffSpaceZ1D,coeffstate);
+                        blkmatY = GetHomogeneous2DBlockMatrix(eForwardsCoeffSpaceY1D);
+                        blkmatZ = GetHomogeneous2DBlockMatrix(eForwardsCoeffSpaceZ1D);
                     }
                     else
                     {
-                        blkmatY = GetHomogeneous2DBlockMatrix(eBackwardsCoeffSpaceY1D,coeffstate);
-                        blkmatZ = GetHomogeneous2DBlockMatrix(eBackwardsCoeffSpaceZ1D,coeffstate);
+                        blkmatY = GetHomogeneous2DBlockMatrix(eBackwardsCoeffSpaceY1D);
+                        blkmatZ = GetHomogeneous2DBlockMatrix(eBackwardsCoeffSpaceZ1D);
                     }
                 }
         
@@ -532,14 +528,14 @@ namespace Nektar
             }
         }
         
-        DNekBlkMatSharedPtr ExpListHomogeneous2D::GetHomogeneous2DBlockMatrix(Homogeneous2DMatType mattype,  CoeffState coeffstate) const
+        DNekBlkMatSharedPtr ExpListHomogeneous2D::GetHomogeneous2DBlockMatrix(Homogeneous2DMatType mattype) const
         {
             auto matrixIter = m_homogeneous2DBlockMat->find(mattype);
 
             if(matrixIter == m_homogeneous2DBlockMat->end())
             {
                 return ((*m_homogeneous2DBlockMat)[mattype] =
-                        GenHomogeneous2DBlockMatrix(mattype,coeffstate));
+                        GenHomogeneous2DBlockMatrix(mattype));
             }
             else
             {
@@ -547,10 +543,8 @@ namespace Nektar
             }
         }
 
-        DNekBlkMatSharedPtr ExpListHomogeneous2D::GenHomogeneous2DBlockMatrix(Homogeneous2DMatType mattype, CoeffState coeffstate) const
+        DNekBlkMatSharedPtr ExpListHomogeneous2D::GenHomogeneous2DBlockMatrix(Homogeneous2DMatType mattype) const
         {
-            boost::ignore_unused(coeffstate);
-
             int i;
             int n_exp = 0;
             

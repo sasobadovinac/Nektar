@@ -56,7 +56,7 @@ namespace Nektar
             const StdRegions::VarCoeffMap     &varcoeffs,
             Array<OneD, NekDouble>            &outarray)
         {
-            ExpansionSharedPtr FaceExp = GetFaceExp(face);
+            ExpansionSharedPtr FaceExp = GetTraceExp(face);
             int i,j,n;
             int nquad_f = FaceExp->GetNumPoints(0)*FaceExp->GetNumPoints(1);
             int order_f = FaceExp->GetNcoeffs();
@@ -70,7 +70,7 @@ namespace Nektar
             Array<OneD, NekDouble> tmpcoeff(ncoeffs);
 
             const Array<OneD, const Array<OneD, NekDouble> > &normals
-                = GetFaceNormal(face);
+                = GetTraceNormal(face);
 
             DNekScalMat &invMass = *GetLocMatrix(StdRegions::eInvMass);
 
@@ -263,7 +263,7 @@ namespace Nektar
                 order_f = FaceExp[f]->GetNcoeffs();
                 nquad_f = FaceExp[f]->GetNumPoints(0)*FaceExp[f]->GetNumPoints(1);
 
-                const Array<OneD, const Array<OneD, NekDouble> > &normals = GetFaceNormal(f);
+                const Array<OneD, const Array<OneD, NekDouble> > &normals = GetTraceNormal(f);
                 Array<OneD, NekDouble> faceCoeffs(order_f);
                 Array<OneD, NekDouble> facePhys  (nquad_f);
 
@@ -334,7 +334,8 @@ namespace Nektar
                 order_f = FaceExp[f]->GetNcoeffs();
                 nquad_f = FaceExp[f]->GetNumPoints(0)*FaceExp[f]->GetNumPoints(1);
 
-                const Array<OneD, const Array<OneD, NekDouble> > &normals = GetFaceNormal(f);
+                const Array<OneD, const Array<OneD, NekDouble> > &normals =
+                    GetTraceNormal(f);
                 Array<OneD, NekDouble> facePhys(nquad_f);
 
                 cnt += order_f;
@@ -581,8 +582,9 @@ namespace Nektar
                     // Add tau*E_l using elemental mass matrices on each edge
                     for(i = 0; i < nfaces; ++i)
                     {
-                        FaceExp = GetFaceExp(i);
-                        order_f = FaceExp->GetNcoeffs();
+                        FaceExp = GetTraceExp(i);
+                        order_f = FaceExp->GetNcoeffs();  
+
                         StdRegions::IndexMapKey ikey(
                             StdRegions::eFaceToElement, DetShapeType(),
                             GetBasisNumModes(0), GetBasisNumModes(1),
@@ -652,12 +654,12 @@ namespace Nektar
                     int bndry_cnt = 0;
                     for(i = 0; i < nfaces; ++i)
                     {
-                        FaceExp = GetFaceExp(i);//temporary, need to rewrite AddHDGHelmholtzFaceTerms
+                        FaceExp = GetTraceExp(i);//temporary, need to rewrite AddHDGHelmholtzFaceTerms
                         int nface = GetFaceNcoeffs(i);
                         Array<OneD, NekDouble> face_lambda(nface);
 
                         const Array<OneD, const Array<OneD, NekDouble> > normals
-                            = GetFaceNormal(i);
+                            = GetTraceNormal(i);
 
                         for(j = 0; j < nface; ++j)
                         {
@@ -686,7 +688,7 @@ namespace Nektar
                     //// Set up face expansions from local geom info
                     //for(i = 0; i < nfaces; ++i)
                     //{
-                    //    FaceExp[i] = GetFaceExp(i);
+                    //    FaceExp[i] = GetTraceExp(i);
                     //}
                     //
                     //// for each degree of freedom of the lambda space
@@ -757,7 +759,7 @@ namespace Nektar
 
                     for(i = 0; i < nfaces; ++i)
                     {
-                        FaceExp[i] = GetFaceExp(i);
+                        FaceExp[i] = GetTraceExp(i);
                     }
 
                     //Weak Derivative matrix
@@ -894,7 +896,7 @@ namespace Nektar
                     const StdRegions::VarCoeffMap &varcoeffs = mkey.GetVarCoeffs();
                     for(i = 0; i < nfaces; ++i)
                     {
-                        FaceExp[i] = GetFaceExp(i);
+                        FaceExp[i] = GetTraceExp(i);
                     }
 
                     // Set up matrix derived from <mu, Q_lam.n - \tau (U_lam - Lam) >
@@ -908,10 +910,10 @@ namespace Nektar
 
                         for(f = 0; f < nfaces; ++f)
                         {
-                            order_f = FaceExp[f]->GetNcoeffs();
-                            nquad_f = FaceExp[f]->GetNumPoints(0)*FaceExp[f]->GetNumPoints(1);
-                            normals = GetFaceNormal(f);
-
+                            order_f = FaceExp[f]->GetNcoeffs();  
+                            nquad_f = FaceExp[f]->GetNumPoints(0)*FaceExp[f]->GetNumPoints(1);    
+                            normals = GetTraceNormal(f);
+                            
                             work = Array<OneD,NekDouble>(nquad_f);
                             varcoeff_work = Array<OneD, NekDouble>(nquad_f);
 
@@ -1119,22 +1121,6 @@ namespace Nektar
             return returnval;
         }
 
-        void Expansion3D::SetFaceExp(const int face, Expansion2DSharedPtr &f)
-        {
-            int nFaces = GetNfaces();
-            ASSERTL1(face < nFaces, "Face is out of range.");
-            if (m_faceExp.size() < nFaces)
-            {
-                m_faceExp.resize(nFaces);
-            }
-            m_faceExp[face] = f;
-        }
-
-        Expansion2DSharedPtr Expansion3D::GetFaceExp(const int face)
-        {
-            return m_faceExp[face].lock();
-        }
-
         void Expansion3D::v_AddFaceNormBoundaryInt(
             const int                           face,
             const ExpansionSharedPtr           &FaceExp,
@@ -1164,13 +1150,13 @@ namespace Nektar
                         m_requireNeg[i] = true;
                         continue;
                     }
-
-                    Expansion2DSharedPtr faceExp = m_faceExp[i].lock();
+                    
+                    ExpansionSharedPtr faceExp = m_traceExp[i].lock();
 
                     if (faceExp->GetRightAdjacentElementExp())
                     {
-                        if (faceExp->GetRightAdjacentElementExp()->GetGeom3D()
-                            ->GetGlobalID() == GetGeom3D()->GetGlobalID())
+                        if (faceExp->GetRightAdjacentElementExp()->GetGeom()
+                            ->GetGlobalID() == GetGeom()->GetGlobalID())
                         {
                             m_requireNeg[i] = true;
                         }
@@ -1323,7 +1309,7 @@ namespace Nektar
 
             int i,j;
             int id1,id2;
-            Expansion2DSharedPtr faceExp = m_faceExp[face].lock();
+            ExpansionSharedPtr faceExp = m_traceExp[face].lock();
             int order_f = faceExp->GetNcoeffs();
 
             Array<OneD, unsigned int> map;
@@ -2195,7 +2181,9 @@ namespace Nektar
                 }
                 break;
             default:
-                ASSERTL0(false, "Invalid shape type.");
+                {
+                    ASSERTL0(false, "Invalid shape type.");
+                }
                 break;
             }
 
@@ -2579,6 +2567,30 @@ namespace Nektar
             }
 
             return nFacecdotMF;
+        }
+
+        const NormalVector &Expansion3D::v_GetTraceNormal(const int face) const
+        {
+            auto x = m_faceNormals.find(face);
+            ASSERTL0 (x != m_faceNormals.end(),
+                      "face normal not computed.");
+            return x->second;
+        }
+
+        void Expansion3D::v_NegateTraceNormal(const int face)
+        {
+            m_negatedNormals[face] = true;
+            for (int i = 0; i < GetCoordim(); ++i)
+            {
+                Vmath::Neg(m_faceNormals[face][i].num_elements(), 
+                           m_faceNormals[face][i], 1);
+            }
+        }
+
+        bool Expansion3D::v_TraceNormalNegated(const int face)
+        {
+            return m_negatedNormals[face];
+
         }
     } //end of namespace
 } //end of namespace

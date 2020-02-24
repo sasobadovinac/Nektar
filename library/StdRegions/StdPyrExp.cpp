@@ -834,6 +834,11 @@ namespace Nektar
             return 5;
         }
 
+        int StdPyrExp::v_GetNtraces() const
+        {
+            return 5;
+        }
+
         LibUtilities::ShapeType StdPyrExp::v_DetShapeType() const
         {
             return LibUtilities::ePyramid;

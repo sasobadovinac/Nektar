@@ -923,7 +923,10 @@ namespace Nektar
             if(addDiffusionTerm)
             {
                 Array<OneD, NekDouble> lap(m_ncoeffs);
-                StdMatrixKey mkeylap(eLaplacian,DetShapeType(),*this);
+                StdMatrixKey mkeylap(eLaplacian,DetShapeType(),*this,
+                                     mkey.GetConstFactors(),
+                                     mkey.GetVarCoeffs(),
+                                     mkey.GetNodalPointsType());
                 LaplacianMatrixOp(inarray,lap,mkeylap);
 
                 v_IProductWRTBase(tmp_adv, outarray);
@@ -946,7 +949,10 @@ namespace Nektar
             NekDouble lambda = mkey.GetConstFactor(eFactorLambda);
             Array<OneD,NekDouble> tmp(m_ncoeffs);
             StdMatrixKey mkeymass(eMass,DetShapeType(),*this);
-            StdMatrixKey mkeylap(eLaplacian,DetShapeType(),*this);
+            StdMatrixKey mkeylap(eLaplacian,DetShapeType(),*this,
+                                 mkey.GetConstFactors(),
+                                 mkey.GetVarCoeffs(),
+                                 mkey.GetNodalPointsType());
 
             MassMatrixOp(inarray,tmp,mkeymass);
             LaplacianMatrixOp(inarray,outarray,mkeylap);
@@ -966,39 +972,10 @@ namespace Nektar
         }
 
         // VIRTUAL INLINE FUNCTIONS FROM HEADER FILE
-        void StdExpansion::SetUpPhysNormals(const int edge)
-        {
-            v_SetUpPhysNormals(edge);
-        }
-
         NekDouble StdExpansion::StdPhysEvaluate(const Array<OneD, const NekDouble> &Lcoord,
                                                 const Array<OneD, const NekDouble> &physvals)
         {
             return v_StdPhysEvaluate(Lcoord,physvals);
-        }
-
-        int StdExpansion::v_GetElmtId(void)
-        {
-            return m_elmt_id;
-        }
-
-        const Array<OneD, const NekDouble>& StdExpansion::v_GetPhysNormals(void)
-        {
-            NEKERROR(ErrorUtil::efatal, "This function is not valid for this class");
-            return NullNekDouble1DArray;
-        }
-
-
-        void StdExpansion::v_SetPhysNormals(Array<OneD, const NekDouble> &normal)
-        {
-            boost::ignore_unused(normal);
-            NEKERROR(ErrorUtil::efatal, "This function is not valid for this class");
-        }
-
-        void StdExpansion::v_SetUpPhysNormals(const int edge)
-        {
-            boost::ignore_unused(edge);
-            NEKERROR(ErrorUtil::efatal, "This function is not valid for this class");
         }
 
         int StdExpansion::v_CalcNumberOfCoefficients(const std::vector<unsigned int>  &nummodes, int &modes_offset)
@@ -1103,6 +1080,12 @@ namespace Nektar
         }
 
         int StdExpansion::v_GetNfaces() const
+        {
+            ASSERTL0(false, "This function is needs defining for this shape");
+            return 0;
+        }
+
+        int StdExpansion::v_GetNtraces() const
         {
             ASSERTL0(false, "This function is needs defining for this shape");
             return 0;
@@ -1311,9 +1294,12 @@ namespace Nektar
                      "specific element types");
         }
 
-        void StdExpansion::v_AddRobinEdgeContribution(const int edgeid, const Array<OneD, const NekDouble > &primCoeffs, Array<OneD, NekDouble> &coeffs)
+        void StdExpansion::v_AddRobinEdgeContribution(const int edgeid,
+                                        const Array<OneD, const NekDouble > &primCoeffs,
+                                        const Array<OneD, NekDouble> &incoeffs,
+                                        Array<OneD, NekDouble> &coeffs)
         {
-            boost::ignore_unused(edgeid, primCoeffs, coeffs);
+            boost::ignore_unused(edgeid, primCoeffs, incoeffs, coeffs);
             NEKERROR(ErrorUtil::efatal, "This function is only valid for "
                      "specific element types");
         }
@@ -1768,95 +1754,6 @@ namespace Nektar
             // If this function is not reimplemented on shape level, the function
             // below will be called
             HelmholtzMatrixOp_MatFree_GenericImpl(inarray,outarray,mkey);
-        }
-
-        const NormalVector & StdExpansion::v_GetEdgeNormal(const int edge) const
-        {
-            boost::ignore_unused(edge);
-            ASSERTL0(false, "Cannot get edge normals for this expansion.");
-            static NormalVector result;
-            return result;
-        }
-
-        void StdExpansion::v_ComputeEdgeNormal(const int edge)
-        {
-            boost::ignore_unused(edge);
-            ASSERTL0(false, "Cannot compute edge normal for this expansion.");
-        }
-
-        void StdExpansion::v_NegateEdgeNormal(const int edge)
-        {
-            boost::ignore_unused(edge);
-            ASSERTL0(false, "Not implemented.");
-        }
-
-        bool StdExpansion::v_EdgeNormalNegated(const int edge)
-        {
-            boost::ignore_unused(edge);
-            ASSERTL0(false, "Not implemented.");
-            return false;
-        }
-
-        void StdExpansion::v_ComputeFaceNormal(const int face)
-        {
-            boost::ignore_unused(face);
-            ASSERTL0(false, "Cannot compute face normal for this expansion.");
-        }
-
-        void StdExpansion::v_NegateFaceNormal(const int face)
-        {
-            boost::ignore_unused(face);
-            ASSERTL0(false, "Not implemented.");
-        }
-
-        bool StdExpansion::v_FaceNormalNegated(const int face)
-        {
-            boost::ignore_unused(face);
-            ASSERTL0(false, "Not implemented.");
-            return false;
-        }
-
-        void StdExpansion::v_ComputeVertexNormal(const int vertex)
-        {
-            boost::ignore_unused(vertex);
-            ASSERTL0(false, "Cannot compute vertex normal for this expansion.");
-        }
-
-        void StdExpansion::v_NegateVertexNormal(const int vertex)
-        {
-            boost::ignore_unused(vertex);
-            ASSERTL0(false, "Not implemented.");
-        }
-
-        bool StdExpansion::v_VertexNormalNegated(const int vertex)
-        {
-            boost::ignore_unused(vertex);
-            ASSERTL0(false, "Not implemented.");
-            return false;
-        }
-
-        const NormalVector & StdExpansion::v_GetFaceNormal(const int face) const
-        {
-            boost::ignore_unused(face);
-            ASSERTL0(false, "Cannot get face normals for this expansion.");
-            static NormalVector result;
-            return result;
-        }
-
-        const NormalVector & StdExpansion::v_GetVertexNormal(const int vertex) const
-        {
-            boost::ignore_unused(vertex);
-            ASSERTL0(false, "Cannot get vertex normals for this expansion.");
-            static NormalVector result;
-            return result;
-        }
-
-        const NormalVector & StdExpansion::v_GetSurfaceNormal(const int id) const
-        {
-            boost::ignore_unused(id);
-            ASSERTL0(false, "Cannot get face normals for this expansion.");
-            static NormalVector result;
-            return result;
         }
 
         Array<OneD, unsigned int>

@@ -37,7 +37,7 @@
 
 #include <MultiRegions/ExpList1DHomogeneous2D.h>
 #include <MultiRegions/DisContField3DHomogeneous2D.h>
-#include <MultiRegions/DisContField1D.h>
+#include <MultiRegions/DisContField.h>
 
 namespace Nektar
 {
@@ -73,11 +73,11 @@ namespace Nektar
         {
             if(DeclareLinesSetCoeffPhys)
             {
-                DisContField1DSharedPtr zero_line = std::dynamic_pointer_cast<DisContField1D> (In.m_lines[0]);
+                DisContFieldSharedPtr zero_line = std::dynamic_pointer_cast<DisContField> (In.m_lines[0]);
                 
                 for(int n = 0; n < m_lines.num_elements(); ++n)
                 {
-                    m_lines[n] = MemoryManager<DisContField1D>::AllocateSharedPtr(*zero_line);
+                    m_lines[n] = MemoryManager<DisContField>::AllocateSharedPtr(*zero_line);
                 }
                 
                 SetCoeffPhys();
@@ -100,11 +100,11 @@ namespace Nektar
             m_bndConditions()
         {
             int i,n,nel;
-            DisContField1DSharedPtr line_zero;
+            DisContFieldSharedPtr line_zero;
             SpatialDomains::BoundaryConditions bcs(pSession, graph1D);
 
             //  
-            m_lines[0] = line_zero = MemoryManager<DisContField1D>::AllocateSharedPtr(pSession,graph1D,variable,ImpType);
+            m_lines[0] = line_zero = MemoryManager<DisContField>::AllocateSharedPtr(pSession,graph1D,variable,ImpType);
 
             m_exp = MemoryManager<LocalRegions::ExpansionVector>::AllocateSharedPtr();
             nel = m_lines[0]->GetExpSize();
@@ -119,7 +119,7 @@ namespace Nektar
             
             for(n = 1; n < nylines*nzlines; ++n)
             {
-                m_lines[n] = MemoryManager<DisContField1D>::AllocateSharedPtr(pSession,graph1D,variable,ImpType);
+                m_lines[n] = MemoryManager<DisContField>::AllocateSharedPtr(pSession,graph1D,variable,ImpType);
                 for(i = 0; i < nel; ++i)
                 {
                     (*m_exp).push_back((*m_exp)[i]);
@@ -129,9 +129,6 @@ namespace Nektar
             // Setup Default optimisation information. 
             nel = GetExpSize();
 
-            m_globalOptParam = MemoryManager<NekOptimize::GlobalOptParam>
-                ::AllocateSharedPtr(nel);
-            
             SetCoeffPhys();
 
             SetupBoundaryConditions(HomoBasis_y,HomoBasis_z,lhom_y,lhom_z,bcs);
