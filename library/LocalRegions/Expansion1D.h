@@ -56,71 +56,75 @@ namespace Nektar
         class Expansion1D: virtual public Expansion,
             virtual public StdRegions::StdExpansion1D
         {
-            public:
-                LOCAL_REGIONS_EXPORT Expansion1D(SpatialDomains::
-                                                 Geometry1DSharedPtr pGeom)
-                                                 : Expansion(pGeom),
-                                                   StdExpansion1D()
-                {
-                    m_elementEdgeLeft  = -1;
-                    m_elementEdgeRight = -1;
-                }
+        public:
+            LOCAL_REGIONS_EXPORT Expansion1D(SpatialDomains::
+                                             Geometry1DSharedPtr pGeom)
+                : Expansion(pGeom),
+                  StdExpansion1D()
+            {
+                m_elementEdgeLeft  = -1;
+                m_elementEdgeRight = -1;
+            }
+            
+            LOCAL_REGIONS_EXPORT virtual ~Expansion1D() {}
+            
+            LOCAL_REGIONS_EXPORT void AddNormTraceInt
+            (const int dir,
+             Array<OneD, const NekDouble> &inarray,
+             Array<OneD,NekDouble> &outarray);
+            
+            LOCAL_REGIONS_EXPORT void AddNormTraceIntWRTDerivBase
+            (const Array<OneD, const NekDouble> &inarray,
+             Array<OneD,NekDouble> &outarray);
+            
+            inline Expansion2DSharedPtr GetLeftAdjacentElementExp() const;
 
-                LOCAL_REGIONS_EXPORT virtual ~Expansion1D() {}
+            inline Expansion2DSharedPtr GetRightAdjacentElementExp() const;
+            
+            inline int GetLeftAdjacentElementEdge() const;
+            
+            inline int GetRightAdjacentElementEdge() const;
+            
+            inline void SetAdjacentElementExp
+            (int                  edge,
+             Expansion2DSharedPtr &e);
+            
+            void AddHDGHelmholtzTraceTerms
+            (const NekDouble                      tau,
+             const Array<OneD, const NekDouble>  &inarray,
+             Array<OneD, NekDouble>        &outarray);
+            
+            inline SpatialDomains::Geometry1DSharedPtr GetGeom1D() const;
 
-                LOCAL_REGIONS_EXPORT void AddNormTraceInt(
-                        const int dir,
-                        Array<OneD, const NekDouble> &inarray,
-                        Array<OneD,NekDouble> &outarray);
-
-                inline Expansion2DSharedPtr GetLeftAdjacentElementExp() const;
-
-                inline Expansion2DSharedPtr GetRightAdjacentElementExp() const;
-
-                inline int GetLeftAdjacentElementEdge() const;
-
-                inline int GetRightAdjacentElementEdge() const;
-
-                inline void SetAdjacentElementExp(
-                    int                  edge,
-                    Expansion2DSharedPtr &e);
-
-                void AddHDGHelmholtzTraceTerms(
-                    const NekDouble                      tau,
-                    const Array<OneD, const NekDouble>  &inarray,
-                          Array<OneD, NekDouble>        &outarray);
-
-                inline SpatialDomains::Geometry1DSharedPtr GetGeom1D() const;
-
-            protected:
-                std::map<int, bool>                     m_negatedNormals;
-
-                virtual DNekMatSharedPtr v_GenMatrix(
+        protected:
+            std::map<int, bool>                     m_negatedNormals;
+            
+            virtual DNekMatSharedPtr v_GenMatrix(
                     const StdRegions::StdMatrixKey      &mkey);
 
-                virtual void v_AddRobinMassMatrix(
+            virtual void v_AddRobinMassMatrix(
                     const int                            vert,
                     const Array<OneD, const NekDouble > &primCoeffs,
                     DNekMatSharedPtr                    &inoutmat);
 
-                virtual void v_AddRobinEdgeContribution(
+            virtual void v_AddRobinEdgeContribution(
                     const int                            vert,
                     const Array<OneD, const NekDouble > &primCoeffs,
                           Array<OneD, NekDouble>        &coeffs);
 
-                virtual NekDouble v_VectorFlux(
+            virtual NekDouble v_VectorFlux(
                     const Array<OneD, Array<OneD, NekDouble> > &vec);
 
-                virtual void v_NegateVertexNormal (const int vertex);
+            virtual void v_NegateVertexNormal (const int vertex);
 
-                virtual bool v_VertexNormalNegated(const int vertex);
+            virtual bool v_VertexNormalNegated(const int vertex);
 
-            private:
-                Expansion2DWeakPtr m_elementLeft;
-                Expansion2DWeakPtr m_elementRight;
-                int                m_elementEdgeLeft;
-                int                m_elementEdgeRight;
-
+        private:
+            Expansion2DWeakPtr m_elementLeft;
+            Expansion2DWeakPtr m_elementRight;
+            int                m_elementEdgeLeft;
+            int                m_elementEdgeRight;
+            
         };
         
         inline Expansion2DSharedPtr Expansion1D::

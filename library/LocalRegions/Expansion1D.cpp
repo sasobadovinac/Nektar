@@ -300,6 +300,32 @@ namespace Nektar
             }
         }
 
+        /** @brief: This method adds the produce of the derivative of
+         * the basis with teh normal of the trace value supplied by
+         * the inarray integrated over the trace (which for this case
+         * is just a point value).
+         *
+         * inarray: Value of noral to trace to be added 
+         * outarray: expansion coefficients of element 
+         */
+        void Expansion1D::AddNormTraceIntWRTDerivBase
+        (const Array<OneD, const NekDouble> &inarray,
+         Array<OneD,NekDouble> &outarray) 
+        {
+            int nquad  = GetNumPoints(0);
+            const Array<OneD, const NekDouble>
+                &DerivBasis  = GetBasis(0)->GetDbdata();
+            
+            // add G \lambda term (can assume G is diagonal since one
+            // of the basis is zero at boundary otherwise)
+            for(int k = 0; k < m_ncoeffs; ++k)
+            {
+                outarray[k] += (DerivBasis[(k+1)*nquad-1]*inarray[1]
+                                - DerivBasis[k*nquad]*inarray[0]);
+            }
+        }
+        
+
         void Expansion1D::AddHDGHelmholtzTraceTerms(const NekDouble tau,
                                                  const Array<OneD,const NekDouble> &inarray,  Array<OneD,NekDouble> &outarray)
         {
