@@ -107,6 +107,13 @@ class ForcingMovingBody : public SolverUtils::Forcing
                   Array<OneD, NekDouble> &FcePhysinArray,
                   Array<OneD, NekDouble> &MotPhysinArray);
 
+        void Newmark_betaSolver_physSpace(
+            const Array<OneD, MultiRegions::ExpListSharedPtr> &pFields,
+                  Array<OneD, NekDouble> &FcePhysinArray,
+                  Array<OneD, NekDouble> &MotPhysinArray,
+                                const NekDouble   freq,
+                                const NekDouble   damp);
+
         void EvaluateStructDynModel(
             const Array<OneD, MultiRegions::ExpListSharedPtr> &pFields,
                   Array<OneD, NekDouble> &Hydroforces,

@@ -236,6 +236,9 @@ void ForcingMovingBody::EvaluateStructDynModel(
     bool homostrip;
     m_session->MatchSolverInfo("HomoStrip","True",homostrip,false);
 
+    bool rigidVibration;
+    m_session->MatchSolverInfo("RigidVibration","True",rigidVibration,false);
+
     //number of structral modes and number of strips
     int npts, nstrips;
     if(!homostrip) //full resolutions
@@ -366,7 +369,7 @@ void ForcingMovingBody::EvaluateStructDynModel(
                             m_fA[i][nint-1],    1,
                             m_fA[i][nlevels-1], 1);
 
-                for(int n = 0; n < nint-1; ++n)
+               for(int n = 0; n < nint-1; ++n)
                 {
                     Vmath::Svtvp(npts, 
                                  Betaq_Coeffs[nint-1][n],
@@ -390,10 +393,40 @@ void ForcingMovingBody::EvaluateStructDynModel(
     if(colrank == 0)
     {
         // Tensioned cable model is evaluated in wave space
+      if(!rigidVibration)
+       {
         for(int n = 0, cn = 1; n < m_vdim; n++, cn--)
         {
             Newmark_betaSolver(pFields, fces[cn], m_MotionVars[cn]);
         }
+       }
+        // model is evaluated in physical space
+     else
+      {
+            NekDouble freqx, freqy;
+            NekDouble damp;
+            m_session->LoadParameter("StructFreqX", freqx, 0.0);
+            m_session->LoadParameter("StructFreqy", freqy);
+            m_session->LoadParameter("StructDamp",  damp, 0.0);
+
+            damp /= m_structrho;
+            
+            if(m_vdim == 2)
+             {
+              Newmark_betaSolver_physSpace(pFields, fces[1], m_MotionVars[1], freqy, damp);
+              Newmark_betaSolver_physSpace(pFields, fces[0], m_MotionVars[0], freqx, damp);
+             }
+            else if (m_vdim == 1)
+             {
+              Newmark_betaSolver_physSpace(pFields, fces[1], m_MotionVars[1], freqy, damp);
+             }
+            else
+             {
+                ASSERTL0(false,
+                            "Unrecognized support type for cable's motion");
+             }
+
+      }
     }
 
     Array<OneD, NekDouble> Motvars(2*2*m_np);
@@ -580,8 +613,9 @@ void ForcingMovingBody::Newmark_betaSolver(
     {
         for(int j = 0 ; j < 4; ++j)
         {
-            m_FFT->FFTFwdTrans(fft_i[j], fft_o[j]);
+           m_FFT->FFTFwdTrans(fft_i[j], fft_o[j]);
         }
+        
     }
     else if(boost::iequals(supptype, "Pinned-Pinned"))
     {
@@ -626,6 +660,7 @@ void ForcingMovingBody::Newmark_betaSolver(
 
         tmp2[0] = fft_o[0][i];
 
+   
         Blas::Dgemv('N', nrows, nrows, 1.0,
                     &(m_CoeffMat_B[i]->GetPtr())[0],
                     nrows, &tmp0[0], 1,
@@ -634,6 +669,7 @@ void ForcingMovingBody::Newmark_betaSolver(
                     &(m_CoeffMat_A[i]->GetPtr())[0],
                     nrows, &tmp2[0], 1,
                     1.0,   &tmp1[0], 1);
+   
 
         for(int var = 0; var < 3; var++)
         {
@@ -684,6 +720,134 @@ void ForcingMovingBody::Newmark_betaSolver(
     }
 }
   
+
+void ForcingMovingBody::Newmark_betaSolver_physSpace(
+        const Array<OneD, MultiRegions::ExpListSharedPtr> &pFields,
+              Array<OneD, NekDouble> &HydroForces,
+              Array<OneD, NekDouble> &BodyMotions,
+                          const NekDouble   freq,
+                          const NekDouble   damp)
+{  
+    std::string supptype = m_session->GetSolverInfo("SupportType");
+
+    int npts = HydroForces.num_elements();
+        
+    Array<OneD, Array<OneD, NekDouble> > fft_i(4);
+    Array<OneD, Array<OneD, NekDouble> > fft_o(4);
+
+    for(int i = 0; i < 4; i++)
+    {
+        fft_i[i] = Array<OneD, NekDouble>(npts, 0.0);
+        fft_o[i] = Array<OneD, NekDouble>(npts, 0.0);
+    }
+
+    Vmath::Vcopy(npts, HydroForces, 1, fft_i[0], 1);
+    for(int i = 0; i < 3; i++)
+    {
+        Vmath::Vcopy(npts, BodyMotions+i*npts, 1, fft_i[i+1], 1);   
+    }
+    
+    // Implement Fourier transformation of the motion variables
+    if(boost::iequals(supptype, "Free-Free"))
+    {
+        for(int j = 0 ; j < 4; ++j) //in physical space
+         Vmath::Vcopy(npts, fft_i[j], 1, fft_o[j], 1);   
+    }
+    else if(boost::iequals(supptype, "Pinned-Pinned"))
+    {
+        //TODO:
+        int N = fft_i[0].num_elements();
+        ASSERTL0(false,
+                    "Unrecognized support type for cable's motion");
+    }
+    else
+    {
+        ASSERTL0(false,
+                    "Unrecognized support type for cable's motion");
+    }
+
+    // solve the ODE in the physical space
+    for(int i = 0; i < 1; ++i)
+    {
+        int nrows = 3;
+
+        Array<OneD, NekDouble> tmp0,tmp1,tmp2;
+        tmp0 = Array<OneD, NekDouble> (3,0.0);
+        tmp1 = Array<OneD, NekDouble> (3,0.0);
+        tmp2 = Array<OneD, NekDouble> (3,0.0);
+
+        for(int var = 0; var < 3; var++)
+        {
+            tmp0[var] = fft_o[var+1][i];
+        }
+
+        tmp2[0] = fft_o[0][i];
+        
+        NekDouble wn =  2.0*freq*M_PI;
+        NekDouble zeta = damp;
+        NekDouble d   =  m_timestep/2;
+        NekDouble k   =  wn*wn;
+        NekDouble c   =  2*zeta*wn;
+        NekDouble a11 =  1 + d*c;
+        NekDouble a12 = -d*d*c;
+        NekDouble a13 =  d*d;
+        NekDouble a21 = -d*k;
+        NekDouble a22 =  1 + d*d*k;
+        NekDouble a23 =  d;
+        NekDouble a31 = -k;
+        NekDouble a32 = -c;
+        NekDouble a33 =  1;
+        NekDouble det =  1 + d*d*k + d*c;
+  
+        NekDouble  x_ = tmp0[0] + m_timestep*(tmp0[1]) + (m_timestep*m_timestep/4)*tmp0[2];
+        NekDouble  v_ =           tmp0[1] +    (m_timestep/2)*tmp0[2];
+        NekDouble  a_ = tmp2[0]/m_structrho;
+  
+        tmp1[0] = (a11 * x_ + a12 * v_ + a13 * a_) / det;
+        tmp1[1] = (a21 * x_ + a22 * v_ + a23 * a_) / det;
+        tmp1[2] = (a31 * x_ + a32 * v_ + a33 * a_) / det;
+      
+
+        for(int var = 0; var < 3; var++)
+        {
+            fft_i[var][i] = tmp1[var];
+        }
+    }
+//zwang
+    for(int i = 1; i < npts; ++i)
+     {
+        for(int var = 0; var < 3; var++)
+        {
+            fft_i[var][i] = fft_i[var][0];
+        }
+     }
+
+    // get physical coeffients via Backward fourier transformation of wave
+    // coefficients
+    if(boost::iequals(supptype, "Free-Free"))
+    {
+        for(int j = 0 ; j < 4; ++j) //in physical space
+         Vmath::Vcopy(npts, fft_i[j], 1, fft_o[j], 1);   
+    }
+    else if(boost::iequals(supptype, "Pinned-Pinned"))
+    {
+        //TODO:
+        int N = fft_i[0].num_elements();
+    }
+    else
+    {
+        ASSERTL0(false,
+                    "Unrecognized support type for cable's motion");
+    }
+    
+
+    for(int i = 0; i < 3; i++)
+    {
+        Array<OneD, NekDouble> tmp(npts,0.0);
+        Vmath::Vcopy(npts, fft_o[i], 1, tmp = BodyMotions+i*npts, 1);
+    }
+}
+
 /**
  *
  */
@@ -1016,7 +1180,9 @@ void ForcingMovingBody::SetDynEqCoeffMatrix(
         tmp6 = beta * K;
         tmp6 = tmp6 * tmp6;
         tmp7 = tmp6 * tmp6;
-        tmp7 = tmp2 + tmp4 * tmp6 + tmp5 * tmp7;
+        tmp7 = tmp2 + tmp4 * tmp6 + tmp5 * tmp7; //k
+//        tmp7 = tmp4; //k
+
 
         (*m_CoeffMat_A[plane])(0,0) = tmp7;
         (*m_CoeffMat_A[plane])(0,1) = tmp3;
@@ -1027,6 +1193,7 @@ void ForcingMovingBody::SetDynEqCoeffMatrix(
         (*m_CoeffMat_A[plane])(2,0) = 1.0;
         (*m_CoeffMat_A[plane])(2,1) = 0.0;
         (*m_CoeffMat_A[plane])(2,2) =-tmp1/4.0;
+
         (*m_CoeffMat_B[plane])(0,0) = 0.0;
         (*m_CoeffMat_B[plane])(0,1) = 0.0;
         (*m_CoeffMat_B[plane])(0,2) = 0.0;
