@@ -709,7 +709,6 @@ namespace Nektar
         if(m_useEntropyViscosity)
         {
 //           BackUpSolution();
-
           if(m_step_counter>m_evm_start_step)
            {
              SetUpEntropyViscosity(inarray, m_F);
