@@ -809,56 +809,105 @@ namespace Nektar
 
         int expdim = m_fields[0]->GetGraph()->GetMeshDimension();
 
-        // Get aerodynamic forces
-        Array<OneD, NekDouble> moments(expdim, 0.0);
-        m_bsbcParams->m_filterForces->GetTotalMoments(m_fields, moments, time);
-
-        // Shift moment storage
-        for(int n = m_bsbcParams->m_intSteps-1; n > 0; --n)
+        for(int i=0 ; i<2 ; ++i)
         {
-            m_bsbcParams->m_moment[n] = m_bsbcParams->m_moment[n-1];
-        }
-
-        // Calculate total moment
-        if( expdim == 2)
-        {
-            // Only have moment in z-direction
-            m_bsbcParams->m_moment[0] = moments[0];
-        }
-        else
-        {
-            // Project to axis direction
-            m_bsbcParams->m_moment[0] = 0;
-            for(int j = 0; j < 3; ++j)
+            // Solve x-y wise structural
+            if(m_bsbcParams->m_DOF[i] == 1)
             {
-                m_bsbcParams->m_moment[0] += moments[j] * m_bsbcParams->m_axis[j];
+                // Get aerodynamic forces
+                Array<OneD, NekDouble> aeroForces(expdim, 0.0);
+                m_bsbcParams->m_filterForces->GetTotalForces(m_fields, aeroForces, time);
+
+                // Shift force storage
+                NekDouble tmp = m_bsbcParams->m_force[i][m_intSteps-1];
+                for(int n = m_bsbcParams->m_intSteps-1; n > 0; --n)
+                {
+                    m_bsbcParams->m_force[i][n] = m_bsbcParams->m_force[i][n-1];
+                }
+                m_bsbcParams->m_force[i][0] = tmp;
+
+                // Calculate total force
+                m_bsbcParams->m_force[i][0] = aeroForces[i] -
+                        m_bsbcParams->m_K[i] * m_bsbcParams->m_dof[i] 
+                        - m_bsbcParams->m_C[i] * m_bsbcParams->m_dofVel[i][0];
+
+                // Rotate velocity storage, keeping value of velocity[0]
+                m_bsbcParams->m_dofVel[i][m_intSteps-1] = m_bsbcParams->m_dofVel[i][0];
+                tmp = m_bsbcParams->m_dofVel[i][m_intSteps-1];
+                for(int n = m_bsbcParams->m_intSteps-1; n > 0; --n)
+                {
+                    m_bsbcParams->m_dofVel[i][n] = m_bsbcParams->m_dofVel[i][n-1];
+                }
+                m_bsbcParams->m_dofVel[i][0] = tmp;
+
+                // Update velocity
+                for(int j = 0; j < order; ++j)
+                {
+                    m_bsbcParams->m_dofVel[i][0] += m_timestep *
+                        m_bsbcParams->AdamsBashforth_coeffs[order-1][j] 
+                        * m_bsbcParams->m_force[i][j] / m_bsbcParams->m_M;
+
+                    // Update position
+                    m_bsbcParams->m_dof[i] +=  m_timestep *
+                        m_bsbcParams->AdamsMoulton_coeffs[order-1][j] 
+                        * m_bsbcParams->m_dofVel[i][j];
+                }
+            } 
+        }
+
+        if(m_bsbcParams->m_DOF[2] == 1)
+        {
+            // Get aerodynamic forces
+            Array<OneD, NekDouble> moments(expdim, 0.0);
+            m_bsbcParams->m_filterForces->GetTotalMoments(m_fields, moments, time);
+
+            // Shift moment storage
+            for(int n = m_bsbcParams->m_intSteps-1; n > 0; --n)
+            {
+                m_bsbcParams->m_moment[n] = m_bsbcParams->m_moment[n-1];
             }
-        }
 
-        // Account for torsional spring and damping contributions
-        m_bsbcParams->m_moment[0] -= m_bsbcParams->m_K * m_bsbcParams->m_angle
-         + m_bsbcParams->m_C * m_bsbcParams->m_angleVel[0];
+            // Calculate total moment
+            if( expdim == 2)
+            {
+                // Only have moment in z-direction
+                m_bsbcParams->m_moment[0] = moments[0];
+            }
+            else
+            {
+                // Project to axis direction
+                m_bsbcParams->m_moment[0] = 0;
+                for(int j = 0; j < 3; ++j)
+                {
+                    m_bsbcParams->m_moment[0] += moments[j] * m_bsbcParams->m_axis[j];
+                }
+            }
 
-        // Shift velocity storage
-        for(int n = m_bsbcParams->m_intSteps-1; n > 0; --n)
-        {
-            m_bsbcParams->m_angleVel[n] = m_bsbcParams->m_angleVel[n-1];
-        }
+            // Account for torsional spring and damping contributions
+            m_bsbcParams->m_moment[0] -= m_bsbcParams->m_K[2] * m_bsbcParams->m_dof[2]
+             + m_bsbcParams->m_C[2] * m_bsbcParams->m_dofVel[2][0];
 
-        // Update velocity
-        for(int j = 0; j < order; ++j)
-        {
-            m_bsbcParams->m_angleVel[0] += m_timestep *
-                m_bsbcParams->AdamsBashforth_coeffs[order-1][j] 
-                * m_bsbcParams->m_moment[j] / m_bsbcParams->m_I;
-        }
+            // Shift velocity storage
+            for(int n = m_bsbcParams->m_intSteps-1; n > 0; --n)
+            {
+                m_bsbcParams->m_dofVel[2][n] = m_bsbcParams->m_dofVel[2][n-1];
+            }
 
-        // Update position
-        m_bsbcParams->m_previousAngle = m_bsbcParams->m_angle;
-        for(int j = 0; j < order; ++j)
-        {
-            m_bsbcParams->m_angle += m_timestep *
-                m_bsbcParams->AdamsMoulton_coeffs[order-1][j] * m_bsbcParams->m_angleVel[j];
+            // Update velocity
+            for(int j = 0; j < order; ++j)
+            {
+                m_bsbcParams->m_dofVel[2][0] += m_timestep *
+                    m_bsbcParams->AdamsBashforth_coeffs[order-1][j] 
+                    * m_bsbcParams->m_moment[j] / m_bsbcParams->m_I;
+            }
+
+            // Update position
+            m_bsbcParams->m_previousAngle = m_bsbcParams->m_dof[2];
+            for(int j = 0; j < order; ++j)
+            {
+                m_bsbcParams->m_dof[2] += m_timestep *
+                    m_bsbcParams->AdamsMoulton_coeffs[order-1][j] * m_bsbcParams->m_dofVel[2][j];
+            }
         }
 
         if( m_bsbcParams->m_doOutput )
@@ -872,9 +921,13 @@ namespace Nektar
                     m_bsbcParams->m_outputStream.width(8);
                     m_bsbcParams->m_outputStream << setprecision(6) << time;
                     m_bsbcParams->m_outputStream.width(15);
-                    m_bsbcParams->m_outputStream << setprecision(8) << m_bsbcParams->m_angleVel[0];
-                    m_bsbcParams->m_outputStream.width(15);
-                    m_bsbcParams->m_outputStream << setprecision(8) << m_bsbcParams->m_angle;
+                    for(int p=0 ; p<3 ; ++p)
+                    {
+                        m_bsbcParams->m_outputStream << setprecision(8) << m_bsbcParams->m_dofVel[p][0];
+                        m_bsbcParams->m_outputStream.width(15);
+                        m_bsbcParams->m_outputStream << setprecision(8) << m_bsbcParams->m_dof[p];
+                        m_bsbcParams->m_outputStream.width(15);
+                    }
                     m_bsbcParams->m_outputStream << endl;
                 }
             }
@@ -933,19 +986,19 @@ namespace Nektar
         }
 
         // Account for torsional spring and damping contributions
-        if(m_bsbcParams->m_K == 0.0)
+        if(m_bsbcParams->m_K[2] == 0.0)
         {
             m_bsbcParams->m_momentA[0] = - m_bsbcParams->m_angleVel[0];
         }
         else
         {
-            m_bsbcParams->m_momentA[0] = - m_bsbcParams->m_momentA[0] / m_bsbcParams->m_K -
+            m_bsbcParams->m_momentA[0] = - m_bsbcParams->m_momentA[0] / m_bsbcParams->m_K[2] -
             m_bsbcParams->m_angleVel[0];
         }
         
         m_bsbcParams->m_momentB[0] = (- m_bsbcParams->m_momentB[0] - 
-            m_bsbcParams->m_C * m_bsbcParams->m_angleVel[0] + 
-            m_bsbcParams->m_K * m_bsbcParams->m_angleAdj[0]) / m_bsbcParams->m_I;
+            m_bsbcParams->m_C[2] * m_bsbcParams->m_angleVel[0] + 
+            m_bsbcParams->m_K[2] * m_bsbcParams->m_angleAdj[0]) / m_bsbcParams->m_I;
          ;
 
         // Shift velocity and position storage
@@ -1071,17 +1124,39 @@ namespace Nektar
                         // Apply BSBC correction
                         if (i<nvel)
                         {
-                            // Scale file with new m_angle and m_angleVel
-                            // Compute base flow gradient times angle:
-                            Vmath::Smul(BndExp[n]->GetTotPoints(), m_bsbcParams->m_angle, 
-                                m_bsbcParams->m_deltaGradBnd[i], 1, 
-                                BndExp[n]->UpdatePhys(), 1);
+                                // Scale file with new m_angle and m_angleVel
+                                // Compute (-1)* base flow gradient times angle:
+                                Vmath::Smul(BndExp[n]->GetTotPoints(), m_bsbcParams->m_dof[2], 
+                                    m_bsbcParams->m_deltaGradBnd[i], 1, 
+                                    BndExp[n]->UpdatePhys(), 1);
+                                // add base flow gradient times x-wise vel:
+                                Vmath::Svtvp(BndExp[n]->GetTotPoints(), -1 * m_bsbcParams->m_dof[0], 
+                                    m_bsbcParams->m_GradBaseBnd[2*i], 1, 
+                                    BndExp[n]->GetPhys(), 1, BndExp[n]->UpdatePhys(), 1);
+                                // Substract base flow gradient times y-wise vel:
+                                Vmath::Svtvp(BndExp[n]->GetTotPoints(), -1 * m_bsbcParams->m_dof[1], 
+                                    m_bsbcParams->m_GradBaseBnd[2*i+1], 1, 
+                                    BndExp[n]->GetPhys(), 1, BndExp[n]->UpdatePhys(), 1);
 
-                            // Add angular velocity:
-                            Vmath::Svtvp(BndExp[n]->GetTotPoints(), m_bsbcParams->m_angleVel[0], 
-                                m_bsbcParams->m_deltaGammaBnd[i], 1, 
-                                BndExp[n]->GetPhys(), 1, 
-                                BndExp[n]->UpdatePhys(), 1);
+                                // Add angular velocity:
+                                Vmath::Svtvp(BndExp[n]->GetTotPoints(), m_bsbcParams->m_dofVel[2][0], 
+                                    m_bsbcParams->m_deltaGammaBnd[i], 1, 
+                                    BndExp[n]->GetPhys(), 1, 
+                                    BndExp[n]->UpdatePhys(), 1);
+                                // Add x-wise velocity:
+                                if(i==0)
+                                {
+                                    Vmath::Sadd(BndExp[n]->GetTotPoints(), m_bsbcParams->m_dofVel[0][0], 
+                                    BndExp[n]->GetPhys(), 1, 
+                                    BndExp[n]->UpdatePhys(), 1);
+                                }
+                                // Add y-wise velocity:
+                                if(i==1)
+                                {
+                                    Vmath::Sadd(BndExp[n]->GetTotPoints(), m_bsbcParams->m_dofVel[1][0], 
+                                    BndExp[n]->GetPhys(), 1, 
+                                    BndExp[n]->UpdatePhys(), 1);
+                                } 
                         }
                     }
                 }
@@ -1239,27 +1314,51 @@ namespace Nektar
         bool parseGood;
 
         // Read parameters
+        // DOF [x trans ; y trans ; z hinge]
+        m_bsbcParams->m_DOF = Array<OneD, int> (3, 0);
+        ASSERTL0(BSparams.count("DOF") == 1,
+          "Failed to find DOF parameter in Blowing Suction boundary conditions");
+        std::vector<NekDouble> dof;
+        parseGood = ParseUtils::GenerateVector(BSparams["DOF"],dof);
+        m_bsbcParams->m_DOF[0] = dof[0];
+        m_bsbcParams->m_DOF[1] = dof[1];
+        m_bsbcParams->m_DOF[2] = dof[2];
+
         // Inertia
+        m_bsbcParams->m_I = 0.0;
         ASSERTL0(BSparams.count("I") == 1,
-          "Failed to find Inertia parameter in Blowing Suction boundary conditions");
+            "Failed to find Inertia parameter in Blowing Suction boundary conditions");
+        std::vector<NekDouble> inertia;
+        ParseUtils::GenerateVector(BSparams["I"],inertia);
+        m_bsbcParams->m_I = inertia[0];
+
+        // Mass
+        m_bsbcParams->m_M = 0.0;
+        ASSERTL0(BSparams.count("M") == 1,
+            "Failed to find mass parameter in Blowing Suction boundary conditions");
         std::vector<NekDouble> mass;
-        ParseUtils::GenerateVector(BSparams["I"],mass);
-        m_bsbcParams->m_I = mass[0];
-        
+        ParseUtils::GenerateVector(BSparams["M"],mass);
+        m_bsbcParams->m_M = mass[0];
+
         // Damping
+        m_bsbcParams->m_C = Array<OneD, NekDouble> (3, 0.0);
         ASSERTL0(BSparams.count("C") == 1,
           "Failed to find Damping parameter in Blowing Suction boundary conditions");
         std::vector<NekDouble> damp;
-        ParseUtils::GenerateVector(BSparams["C"],damp);
-        m_bsbcParams->m_C = damp[0];
+        parseGood = ParseUtils::GenerateVector(BSparams["C"],damp);
+        m_bsbcParams->m_C[0] = damp[0];
+        m_bsbcParams->m_C[1] = damp[1];
+        m_bsbcParams->m_C[2] = damp[2];
 
         // Stiffness
+        m_bsbcParams->m_K = Array<OneD, NekDouble> (3, 0.0);
         ASSERTL0(BSparams.count("K") == 1,
           "Failed to find Stiffness parameter in Blowing Suction boundary conditions");
         std::vector<NekDouble> stiff;
-        ParseUtils::GenerateVector(BSparams["K"],stiff);
-        m_bsbcParams->m_K = stiff[0];
-
+        parseGood = ParseUtils::GenerateVector(BSparams["K"],stiff);
+        m_bsbcParams->m_K[0] = stiff[0];
+        m_bsbcParams->m_K[1] = stiff[1];
+        m_bsbcParams->m_K[2] = stiff[2];
 
         // Rotation axis
         m_bsbcParams->m_axis = Array<OneD, NekDouble> (3, 0.0);
@@ -1368,6 +1467,16 @@ namespace Nektar
         m_bsbcParams->m_momentB       = Array<OneD,NekDouble> (m_intSteps, 0.0);
         m_bsbcParams->m_alpha         = 1;
 
+        // Position :
+        m_bsbcParams->m_dof           = Array<OneD,NekDouble> (3, 0.0);
+        m_bsbcParams->m_dofVel        = Array<OneD, Array<OneD, NekDouble> >(3);
+        m_bsbcParams->m_force         = Array<OneD, Array<OneD,NekDouble>> (3);
+        for (int i = 0; i < 3; ++i)
+        {
+            m_bsbcParams->m_force[i]  = Array<OneD, NekDouble> (m_intSteps , 0.0);
+            m_bsbcParams->m_dofVel[i] = Array<OneD,NekDouble> (m_intSteps, 0.0);
+        }
+
         // Initialise constants for the BC sclaing
         SetStructConsts();
 
@@ -1389,8 +1498,16 @@ namespace Nektar
                     m_bsbcParams->m_outputStream.open(m_bsbcParams->m_outputFile.c_str());
                 }
                 // Write header
-                m_bsbcParams->m_outputStream << "# Angular velocity and angle of hinged bodies"
+                m_bsbcParams->m_outputStream << "# Velocity and displacement of bodies"
                                << endl;
+                m_bsbcParams->m_outputStream << "# Degrees of freedom (x-wise y-wise z-rot): " << " (";
+                m_bsbcParams->m_outputStream.width(8);
+                m_bsbcParams->m_outputStream << setprecision(4) << m_bsbcParams->m_DOF[0];
+                m_bsbcParams->m_outputStream.width(8);
+                m_bsbcParams->m_outputStream << setprecision(4) << m_bsbcParams->m_DOF[1];
+                m_bsbcParams->m_outputStream.width(8);
+                m_bsbcParams->m_outputStream << setprecision(4) << m_bsbcParams->m_DOF[2];
+                m_bsbcParams->m_outputStream << ")" << endl;
                 m_bsbcParams->m_outputStream << "#" << " Hinge Position = " << " (";
                 m_bsbcParams->m_outputStream.width(8);
                 m_bsbcParams->m_outputStream << setprecision(4) << m_bsbcParams->m_hingePoint[0];
@@ -1413,9 +1530,17 @@ namespace Nektar
                 m_bsbcParams->m_outputStream.width(7);
                 m_bsbcParams->m_outputStream << "Time";
                 m_bsbcParams->m_outputStream.width(15);
-                m_bsbcParams->m_outputStream <<  "Angular_Vel";
+                m_bsbcParams->m_outputStream <<  "Surge_Vel";
                 m_bsbcParams->m_outputStream.width(15);
-                m_bsbcParams->m_outputStream <<  "Angle";
+                m_bsbcParams->m_outputStream <<  "Surge";
+                m_bsbcParams->m_outputStream.width(15);
+                m_bsbcParams->m_outputStream <<  "Sway_Vel";
+                m_bsbcParams->m_outputStream.width(15);
+                m_bsbcParams->m_outputStream <<  "Sway";
+                m_bsbcParams->m_outputStream.width(15);
+                m_bsbcParams->m_outputStream <<  "Pitch_Vel";
+                m_bsbcParams->m_outputStream.width(15);
+                m_bsbcParams->m_outputStream <<  "Pitch";
                 m_bsbcParams->m_outputStream << endl;
             }
         }
@@ -1443,7 +1568,8 @@ namespace Nektar
         m_bsbcParams->m_deltaGammaBnd = Array<OneD, Array<OneD, NekDouble> >(nvel);
         m_bsbcParams->m_deltaGradBnd  = Array<OneD, Array<OneD, NekDouble> >(nvel);
         m_bsbcParams->m_deltaGrad     = Array<OneD, Array<OneD, NekDouble> >(nvel);
-        m_bsbcParams->m_deltaGamma     = Array<OneD, Array<OneD, NekDouble> >(nvel);
+        m_bsbcParams->m_deltaGamma    = Array<OneD, Array<OneD, NekDouble> >(nvel);
+        m_bsbcParams->m_GradBaseBnd   = Array<OneD, Array<OneD, NekDouble> >(nvel*nvel);
 
         m_bsbcParams->m_isBlowingSuction = Array<OneD, bool> (nfields);
 
@@ -1560,9 +1686,17 @@ namespace Nektar
                             m_bsbcParams->m_deltaGammaBnd[i] = Array<OneD, NekDouble> (BndExp[n]->GetTotPoints());
                             m_bsbcParams->m_deltaGradBnd[i] = Array<OneD, NekDouble> (BndExp[n]->GetTotPoints());
 
+                            m_bsbcParams->m_GradBaseBnd[i] = Array<OneD, NekDouble> (BndExp[n]->GetTotPoints());
+                            m_fields[i]->ExtractPhysToBnd(n, m_advObject->GetGradBase()[i], m_bsbcParams->m_GradBaseBnd[i]);
+
                             // Get coordinate and values on boundary
                             m_fields[i]->ExtractPhysToBnd(n, deltaGrad[i], m_bsbcParams->m_deltaGradBnd[i]);
                             m_fields[i]->ExtractPhysToBnd(n, deltaGamma[i], m_bsbcParams->m_deltaGammaBnd[i]);
+                        }
+                        if (i<nvel*nvel)
+                        {
+                            m_bsbcParams->m_GradBaseBnd[i] = Array<OneD, NekDouble> (BndExp[n]->GetTotPoints());
+                            m_fields[i]->ExtractPhysToBnd(n, m_advObject->GetGradBase()[i], m_bsbcParams->m_GradBaseBnd[i]);
                         }
                     }
                 }
@@ -1571,16 +1705,29 @@ namespace Nektar
     }
 
     /**
-     *  
+     *  ONLY WORK FOR 1 DOF TO BE MODIFIED
      */
     void IncNavierStokes::v_GetStruct(NekDouble &angle, NekDouble &angleVel)
     {
-        angle = m_bsbcParams->m_angle;
-        if(m_session->GetSolverInfo("EvolutionOperator") == "Adjoint")
+        if(m_bsbcParams->m_DOF[0] == 1)
         {
-            angle = m_bsbcParams->m_angleAdj[0];
+            angle = m_bsbcParams->m_dof[0];
+            angleVel = m_bsbcParams->m_dofVel[0][0];
         }
-        angleVel = m_bsbcParams->m_angleVel[0];
+        if(m_bsbcParams->m_DOF[1] == 1)
+        {
+            angle = m_bsbcParams->m_dof[1];
+            angleVel = m_bsbcParams->m_dofVel[1][0];
+        }
+        if(m_bsbcParams->m_DOF[2] == 1)
+        {
+            angle = m_bsbcParams->m_dof[2];
+            if(m_session->GetSolverInfo("EvolutionOperator") == "Adjoint")
+            {
+                angle = m_bsbcParams->m_angleAdj[0];
+            }
+            angleVel = m_bsbcParams->m_dofVel[2][0];
+        }
     }
 
     /**
@@ -1606,13 +1753,26 @@ namespace Nektar
     }
 
     /**
-     *  
+     *  ONLY WORK FOR 1 DOF TO BE MODIFIED
      */
     void IncNavierStokes::v_SetStruct(NekDouble &angle, NekDouble &angleVel)
     {
-        m_bsbcParams->m_angle = angle;
-        m_bsbcParams->m_angleAdj[0] = angle;
-        m_bsbcParams->m_angleVel[0] = angleVel;
+        if(m_bsbcParams->m_DOF[0] == 1)
+        {
+            m_bsbcParams->m_dof[0] = angle;
+            m_bsbcParams->m_dofVel[0][0] = angleVel;
+        }
+        if(m_bsbcParams->m_DOF[1] == 1)
+        {
+            m_bsbcParams->m_dof[1] = angle;
+            m_bsbcParams->m_dofVel[1][0] = angleVel;
+        }
+        if(m_bsbcParams->m_DOF[2] == 1)
+        {
+            m_bsbcParams->m_dof[2] = angle;
+            m_bsbcParams->m_angleAdj[0] = angle;
+            m_bsbcParams->m_dofVel[2][0] = angleVel;
+        }
     }
 
     /**

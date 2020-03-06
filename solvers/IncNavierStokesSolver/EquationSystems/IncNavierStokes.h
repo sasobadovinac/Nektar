@@ -138,12 +138,16 @@ namespace Nektar
         virtual ~BlowingSuctionParams()
         {};
 
+        //DOF [x-trans ; y-trans ; z-rot]
+        Array<OneD, int>                                 m_DOF;
         //Mass
+        NekDouble                                        m_M;
+        //Inertia
         NekDouble                                        m_I;
         // Spring coefficient
-        NekDouble                                        m_K;
+        Array<OneD, NekDouble>                           m_K;
         // Damping coefficient
-        NekDouble                                        m_C;
+        Array<OneD, NekDouble>                           m_C;
         // Hinge point 
         Array<OneD, NekDouble>                           m_hingePoint;
         // Rotation axis 
@@ -179,7 +183,11 @@ namespace Nektar
         Array<OneD, NekDouble>                  m_angleVel;
         Array<OneD, NekDouble>                  m_angleAdj;
         Array<OneD, NekDouble>                  m_angleAdjPrev;
+
+        Array<OneD, NekDouble>                  m_dof;
+        Array<OneD, Array<OneD, NekDouble> >    m_dofVel;
         Array<OneD, NekDouble>                  m_moment;
+        Array<OneD, Array<OneD, NekDouble> >    m_force;
         Array<OneD, NekDouble>                  m_momentA;
         Array<OneD, NekDouble>                  m_momentB;
 
@@ -188,6 +196,8 @@ namespace Nektar
         Array<OneD, Array<OneD, NekDouble> >    m_deltaGrad;
         Array<OneD, Array<OneD, NekDouble> >    m_deltaGamma;
         Array<OneD, Array<OneD, NekDouble> >    m_deltaGammaBnd;
+        Array<OneD, Array<OneD, NekDouble> >    m_GradBaseBnd;
+
 
         Array<OneD, bool>                       m_isBlowingSuction;
         bool                                    m_isMomentA;

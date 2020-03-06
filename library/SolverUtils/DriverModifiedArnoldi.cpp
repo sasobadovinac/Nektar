@@ -159,10 +159,10 @@ void DriverModifiedArnoldi::v_Execute(ostream &out)
         NekDouble eps=0.0001;
         Vmath::FillWhiteNoise(ntot, eps , &Kseq[1][0], 1);
     }
-
     // Perform one iteration to enforce boundary conditions.
     // Set this as the initial value in the sequence.
     EV_update(Kseq[1], Kseq[0]);
+
     if (m_comm->GetRank() == 0)
     {
         out << "Iteration: " << 0 <<  endl;
