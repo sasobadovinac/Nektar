@@ -993,7 +993,10 @@ namespace Nektar
             int nzmodes = 1;
             int datalen = fielddata.size()/fielddef->m_fields.size();
             std::vector<unsigned int> fieldDefHomoZids;
-            
+
+            // Zero field since might not be filling in complete
+            // expansion into coeffs, i.e. load single mode
+	    Vmath::Zero(coeffs.num_elements(), coeffs,1);
             
             // Find data location according to field definition
             for(i = 0; i < fielddef->m_fields.size(); ++i)
