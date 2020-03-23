@@ -19,6 +19,7 @@ SET(SOLVER_UTILS_SOURCES
   DriverModifiedArnoldi.cpp
   DriverStandard.cpp
   DriverSteadyState.cpp	
+  DriverCFSAdaptive.cpp
   EquationSystem.cpp
   Filters/Filter.cpp
   Filters/FilterAeroForces.cpp
@@ -65,6 +66,7 @@ SET(SOLVER_UTILS_HEADERS
   DriverModifiedArnoldi.h
   DriverStandard.h
   DriverSteadyState.h
+  DriverCFSAdaptive.h
   EquationSystem.h
   Filters/Filter.h
   Filters/FilterAeroForces.h
