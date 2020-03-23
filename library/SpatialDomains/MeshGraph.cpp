@@ -136,9 +136,111 @@ MeshGraphSharedPtr MeshGraph::Read(
     return mesh;
 }
 
+MeshGraphSharedPtr MeshGraph::ReadHigherOrder(
+    const LibUtilities::SessionReaderSharedPtr session,
+    DomainRangeShPtr                           rng,
+    bool                                       fillGraph)
+{
+    LibUtilities::CommSharedPtr comm = session->GetComm();
+    ASSERTL0(comm.get(), "Communication not initialised.");
+
+    // Populate SessionReader. This should be done only on the root process so
+    // that we can partition appropriately without all processes having to read
+    // in the input file.
+    const bool isRoot = comm->TreatAsRankZero();
+    std::string geomType;
+
+    if (isRoot)
+    {
+        // Parse the XML document.
+        session->InitSession();
+
+        // Get geometry type, i.e. XML (compressed/uncompressed) or HDF5.
+        geomType = session->GetGeometryType();
+
+        // Convert to a vector of chars so that we can broadcast.
+        std::vector<char> v(geomType.c_str(),
+                            geomType.c_str() + geomType.length());
+
+        size_t length = v.size();
+        comm->Bcast(length, 0);
+        comm->Bcast(v, 0);
+    }
+    else
+    {
+        size_t length;
+        comm->Bcast(length, 0);
+
+        std::vector<char> v(length);
+        comm->Bcast(v, 0);
+
+        geomType = std::string(v.begin(),v.end());
+    }
+
+    // Every process then creates a mesh. Partitioning logic takes place inside
+    // the PartitionMesh function so that we can support different options for
+    // XML and HDF5.
+    MeshGraphSharedPtr mesh = GetMeshGraphFactory().CreateInstance(geomType);
+    mesh->PartitionMesh(session);
+
+    // Finally, read the geometry information.
+    mesh->ReadHigherOrderGeometry(rng, fillGraph);
+
+    return mesh;
+}
+
 void MeshGraph::FillGraph()
 {
     ReadExpansions();
+
+    switch (m_meshDimension)
+    {
+        case 3:
+        {
+            for (auto &x : m_pyrGeoms)
+            {
+                x.second->Setup();
+            }
+            for (auto &x : m_prismGeoms)
+            {
+                x.second->Setup();
+            }
+            for (auto &x : m_tetGeoms)
+            {
+                x.second->Setup();
+            }
+            for (auto &x : m_hexGeoms)
+            {
+                x.second->Setup();
+            }
+        }
+        break;
+        case 2:
+        {
+            for (auto &x : m_triGeoms)
+            {
+                x.second->Setup();
+            }
+            for (auto &x : m_quadGeoms)
+            {
+                x.second->Setup();
+            }
+        }
+        break;
+        case 1:
+        {
+            for (auto x : m_segGeoms)
+            {
+                x.second->Setup();
+            }
+        }
+        break;
+    }
+}
+
+void MeshGraph::FillHigherOrderGraph()
+{
+    ReadHigherOrderExpansions();
 
     switch (m_meshDimension)
     {
@@ -3056,6 +3158,569 @@ void MeshGraph::ReadExpansions()
         }
     }
 }
+
+void MeshGraph::ReadHigherOrderExpansions()
+{
+    // Find the Expansions tag
+    TiXmlElement *expansionTypes = m_session->GetElement("NEKTAR/EXPANSIONS");
+    ASSERTL0(expansionTypes, "Unable to find EXPANSIONS tag in file.");
+
+    if (expansionTypes)
+    {
+        // Find the Expansion type
+        TiXmlElement *expansion = expansionTypes->FirstChildElement();
+        std::string expType     = expansion->Value();
+
+        if (expType == "E")
+        {
+            int i;
+            ExpansionMapShPtr expansionMap;
+
+            /// Expansiontypes will contain composite,
+            /// nummodes, and expansiontype (eModified, or
+            /// eOrthogonal) Or a full list of data of
+            /// basistype, nummodes, pointstype, numpoints;
+
+            /// Expansiontypes may also contain a list of
+            /// fields that this expansion relates to. If this
+            /// does not exist the variable is only set to
+            /// "DefaultVar".
+
+            while (expansion)
+            {
+
+                const char *fStr = expansion->Attribute("FIELDS");
+                std::vector<std::string> fieldStrings;
+
+                if (fStr) // extract other fields.
+                {
+                    std::string fieldStr = fStr;
+                    bool valid = ParseUtils::GenerateVector(
+                        fieldStr.c_str(), fieldStrings);
+                    ASSERTL0(valid, "Unable to correctly parse the field "
+                                    "string in ExpansionTypes.");
+                }
+
+                // check to see if m_expasionVectorShPtrMap has
+                // already been intiailised and if not intiailse
+                // vector.
+                if (m_expansionMapShPtrMap.count("DefaultVar") ==
+                    0) // no previous definitions
+                {
+                    expansionMap = SetUpExpansionMap();
+
+                    m_expansionMapShPtrMap["DefaultVar"] = expansionMap;
+
+                    // make sure all fields in this search point
+                    // to same expansion vector;
+                    for (i = 0; i < fieldStrings.size(); ++i)
+                    {
+                        m_expansionMapShPtrMap[fieldStrings[i]] = expansionMap;
+                    }
+                }
+                else // default variable is defined
+                {
+
+                    if (fieldStrings.size()) // fields are defined
+                    {
+                        // see if field exists
+                        if (m_expansionMapShPtrMap.count(fieldStrings[0]))
+                        {
+                            expansionMap =
+                                m_expansionMapShPtrMap.find(fieldStrings[0])
+                                    ->second;
+                        }
+                        else
+                        {
+                            expansionMap = SetUpExpansionMap();
+                            // make sure all fields in this search point
+                            // to same expansion vector;
+                            for (i = 0; i < fieldStrings.size(); ++i)
+                            {
+                                if (m_expansionMapShPtrMap.count(
+                                        fieldStrings[i]) == 0)
+                                {
+                                    m_expansionMapShPtrMap[fieldStrings[i]] =
+                                        expansionMap;
+                                }
+                                else
+                                {
+                                    ASSERTL0(false, "Expansion vector for this "
+                                                    "field is already  setup");
+                                }
+                            }
+                        }
+                    }
+                    else // use default variable list
+                    {
+                        expansionMap =
+                            m_expansionMapShPtrMap.find("DefaultVar")->second;
+                    }
+                }
+
+                /// Mandatory components...optional are to follow later.
+                std::string compositeStr = expansion->Attribute("COMPOSITE");
+                ASSERTL0(compositeStr.length() > 3,
+                         "COMPOSITE must be specified in expansion definition");
+                int beg = compositeStr.find_first_of("[");
+                int end = compositeStr.find_first_of("]");
+                std::string compositeListStr =
+                    compositeStr.substr(beg + 1, end - beg - 1);
+
+                map<int, CompositeSharedPtr> compositeVector;
+                GetCompositeList(compositeListStr, compositeVector);
+
+                bool useExpansionType = false;
+                ExpansionType expansion_type;
+                int num_modes;
+
+                LibUtilities::BasisKeyVector basiskeyvec;
+                const char *tStr = expansion->Attribute("TYPE");
+
+                if (tStr) // use type string to define expansion
+                {
+                    std::string typeStr       = tStr;
+                    const std::string *begStr = kExpansionTypeStr;
+                    const std::string *endStr =
+                        kExpansionTypeStr + eExpansionTypeSize;
+                    const std::string *expStr =
+                        std::find(begStr, endStr, typeStr);
+
+                    ASSERTL0(expStr != endStr, "Invalid expansion type.");
+                    expansion_type = (ExpansionType)(expStr - begStr);
+
+                    /// \todo solvers break the pattern 'instantiate Session ->
+                    /// instantiate MeshGraph'
+                    /// and parse command line arguments by themselves; one
+                    /// needs to unify command
+                    /// line arguments handling.
+                    /// Solvers tend to call MeshGraph::Read statically ->
+                    /// m_session
+                    /// is not defined -> no info about command line arguments
+                    /// presented
+                    /// ASSERTL0(m_session != 0, "One needs to instantiate
+                    /// SessionReader first");
+
+                    const char *nStr = expansion->Attribute("NUMMODES");
+                    ASSERTL0(nStr, "NUMMODES was not defined in EXPANSION "
+                                   "section of input");
+                    std::string nummodesStr = nStr;
+
+                    // ASSERTL0(m_session,"Session should be defined to evaluate
+                    // nummodes ");
+                    if (m_session)
+                    {
+                        LibUtilities::Equation nummodesEqn(m_session->GetExpressionEvaluator(), nummodesStr);
+                        num_modes = (int)nummodesEqn.Evaluate();
+                    }
+                    else
+                    {
+                        num_modes = boost::lexical_cast<int>(nummodesStr);
+                    }
+                    //HigherOrder Expansion
+                    num_modes=num_modes+1;
+
+                    useExpansionType = true;
+                }
+                else // assume expansion is defined individually
+                {
+                    // Extract the attributes.
+                    const char *bTypeStr = expansion->Attribute("BASISTYPE");
+                    ASSERTL0(bTypeStr, "TYPE or BASISTYPE was not defined in "
+                                       "EXPANSION section of input");
+                    std::string basisTypeStr = bTypeStr;
+
+                    // interpret the basis type string.
+                    std::vector<std::string> basisStrings;
+                    std::vector<LibUtilities::BasisType> basis;
+                    bool valid = ParseUtils::GenerateVector(
+                        basisTypeStr.c_str(), basisStrings);
+                    ASSERTL0(valid,
+                             "Unable to correctly parse the basis types.");
+                    for (vector<std::string>::size_type i = 0;
+                         i < basisStrings.size(); i++)
+                    {
+                        valid = false;
+                        for (unsigned int j = 0;
+                             j < LibUtilities::SIZE_BasisType; j++)
+                        {
+                            if (LibUtilities::BasisTypeMap[j] ==
+                                basisStrings[i])
+                            {
+                                basis.push_back((LibUtilities::BasisType)j);
+                                valid = true;
+                                break;
+                            }
+                        }
+                        ASSERTL0(
+                            valid,
+                            std::string(
+                                "Unable to correctly parse the basis type: ")
+                                .append(basisStrings[i])
+                                .c_str());
+                    }
+                    const char *nModesStr = expansion->Attribute("NUMMODES");
+                    ASSERTL0(nModesStr, "NUMMODES was not defined in EXPANSION "
+                                        "section of input");
+
+                    std::string numModesStr = nModesStr;
+                    std::vector<unsigned int> numModes;
+                    valid = ParseUtils::GenerateVector(
+                        numModesStr.c_str(), numModes);
+                    ASSERTL0(valid,
+                             "Unable to correctly parse the number of modes.");
+                    ASSERTL0(numModes.size() == basis.size(),
+                             "information for num modes does not match the "
+                             "number of basis");
+
+                    const char *pTypeStr = expansion->Attribute("POINTSTYPE");
+                    ASSERTL0(pTypeStr, "POINTSTYPE was not defined in "
+                                       "EXPANSION section of input");
+                    std::string pointsTypeStr = pTypeStr;
+                    // interpret the points type string.
+                    std::vector<std::string> pointsStrings;
+                    std::vector<LibUtilities::PointsType> points;
+                    valid = ParseUtils::GenerateVector(
+                        pointsTypeStr.c_str(), pointsStrings);
+                    ASSERTL0(valid,
+                             "Unable to correctly parse the points types.");
+                    for (vector<std::string>::size_type i = 0;
+                         i < pointsStrings.size(); i++)
+                    {
+                        valid = false;
+                        for (unsigned int j = 0;
+                             j < LibUtilities::SIZE_PointsType; j++)
+                        {
+                            if (LibUtilities::kPointsTypeStr[j] ==
+                                pointsStrings[i])
+                            {
+                                points.push_back((LibUtilities::PointsType)j);
+                                valid = true;
+                                break;
+                            }
+                        }
+                        ASSERTL0(
+                            valid,
+                            std::string(
+                                "Unable to correctly parse the points type: ")
+                                .append(pointsStrings[i])
+                                .c_str());
+                    }
+
+                    const char *nPointsStr = expansion->Attribute("NUMPOINTS");
+                    ASSERTL0(nPointsStr, "NUMPOINTS was not defined in "
+                                         "EXPANSION section of input");
+                    std::string numPointsStr = nPointsStr;
+                    std::vector<unsigned int> numPoints;
+                    valid = ParseUtils::GenerateVector(
+                        numPointsStr.c_str(), numPoints);
+                    ASSERTL0(valid,
+                             "Unable to correctly parse the number of points.");
+                    ASSERTL0(numPoints.size() == numPoints.size(),
+                             "information for num points does not match the "
+                             "number of basis");
+
+                    for (int i = 0; i < basis.size(); ++i)
+                    {
+                        // Generate Basis key  using information
+                        const LibUtilities::PointsKey pkey(numPoints[i],
+                                                           points[i]);
+                        basiskeyvec.push_back(LibUtilities::BasisKey(
+                            basis[i], numModes[i], pkey));
+                    }
+                }
+
+                // Now have composite and basiskeys.  Cycle through
+                // all composites for the geomShPtrs and set the modes
+                // and types for the elements contained in the element
+                // list.
+                for (auto compVecIter = compositeVector.begin();
+                     compVecIter != compositeVector.end(); ++compVecIter)
+                {
+                    for (auto geomVecIter =
+                             compVecIter->second->m_geomVec.begin();
+                         geomVecIter != compVecIter->second->m_geomVec.end();
+                         ++geomVecIter)
+                    {
+                        auto x =
+                            expansionMap->find((*geomVecIter)->GetGlobalID());
+                        ASSERTL0(x != expansionMap->end(),
+                                 "Expansion not found!!");
+                        if (useExpansionType)
+                        {
+                            (x->second)->m_basisKeyVector =
+                                MeshGraph::DefineBasisKeyFromExpansionType(
+                                    *geomVecIter, expansion_type, num_modes);
+                        }
+                        else
+                        {
+                            ASSERTL0((*geomVecIter)->GetShapeDim() ==
+                                         basiskeyvec.size(),
+                                     " There is an incompatible expansion "
+                                     "dimension with geometry dimension");
+                            (x->second)->m_basisKeyVector = basiskeyvec;
+                        }
+                    }
+                }
+
+                expansion = expansion->NextSiblingElement("E");
+            }
+        }
+        else if (expType == "H")
+        {
+            int i;
+            ExpansionMapShPtr expansionMap;
+
+            while (expansion)
+            {
+
+                const char *fStr = expansion->Attribute("FIELDS");
+                std::vector<std::string> fieldStrings;
+
+                if (fStr) // extract other fields.
+                {
+                    std::string fieldStr = fStr;
+                    bool valid = ParseUtils::GenerateVector(
+                        fieldStr.c_str(), fieldStrings);
+                    ASSERTL0(valid, "Unable to correctly parse the field "
+                                    "string in ExpansionTypes.");
+                }
+
+                // check to see if m_expasionVectorShPtrMap has
+                // already been intiailised and if not intiailse
+                // vector.
+                if (m_expansionMapShPtrMap.count("DefaultVar") ==
+                    0) // no previous definitions
+                {
+                    expansionMap = SetUpExpansionMap();
+
+                    m_expansionMapShPtrMap["DefaultVar"] = expansionMap;
+
+                    // make sure all fields in this search point
+                    // to same expansion vector;
+                    for (i = 0; i < fieldStrings.size(); ++i)
+                    {
+                        m_expansionMapShPtrMap[fieldStrings[i]] = expansionMap;
+                    }
+                }
+                else // default variable is defined
+                {
+
+                    if (fieldStrings.size()) // fields are defined
+                    {
+                        // see if field exists
+                        if (m_expansionMapShPtrMap.count(fieldStrings[0]))
+                        {
+                            expansionMap =
+                                m_expansionMapShPtrMap.find(fieldStrings[0])
+                                    ->second;
+                        }
+                        else
+                        {
+                            expansionMap = SetUpExpansionMap();
+                            // make sure all fields in this search point
+                            // to same expansion vector;
+                            for (i = 0; i < fieldStrings.size(); ++i)
+                            {
+                                if (m_expansionMapShPtrMap.count(
+                                        fieldStrings[i]) == 0)
+                                {
+                                    m_expansionMapShPtrMap[fieldStrings[i]] =
+                                        expansionMap;
+                                }
+                                else
+                                {
+                                    ASSERTL0(false, "Expansion vector for this "
+                                                    "field is already  setup");
+                                }
+                            }
+                        }
+                    }
+                    else // use default variable list
+                    {
+                        expansionMap =
+                            m_expansionMapShPtrMap.find("DefaultVar")->second;
+                    }
+                }
+
+                /// Mandatory components...optional are to follow later.
+                std::string compositeStr = expansion->Attribute("COMPOSITE");
+                ASSERTL0(compositeStr.length() > 3,
+                         "COMPOSITE must be specified in expansion definition");
+                int beg = compositeStr.find_first_of("[");
+                int end = compositeStr.find_first_of("]");
+                std::string compositeListStr =
+                    compositeStr.substr(beg + 1, end - beg - 1);
+
+                map<int, CompositeSharedPtr> compositeVector;
+                GetCompositeList(compositeListStr, compositeVector);
+
+                ExpansionType expansion_type_x = eNoExpansionType;
+                ExpansionType expansion_type_y = eNoExpansionType;
+                ExpansionType expansion_type_z = eNoExpansionType;
+                int num_modes_x                = 0;
+                int num_modes_y                = 0;
+                int num_modes_z                = 0;
+
+                LibUtilities::BasisKeyVector basiskeyvec;
+
+                const char *tStr_x = expansion->Attribute("TYPE-X");
+
+                if (tStr_x) // use type string to define expansion
+                {
+                    std::string typeStr       = tStr_x;
+                    const std::string *begStr = kExpansionTypeStr;
+                    const std::string *endStr =
+                        kExpansionTypeStr + eExpansionTypeSize;
+                    const std::string *expStr =
+                        std::find(begStr, endStr, typeStr);
+
+                    ASSERTL0(expStr != endStr, "Invalid expansion type.");
+                    expansion_type_x = (ExpansionType)(expStr - begStr);
+
+                    const char *nStr = expansion->Attribute("NUMMODES-X");
+                    ASSERTL0(nStr, "NUMMODES-X was not defined in EXPANSION "
+                                   "section of input");
+                    std::string nummodesStr = nStr;
+
+                    // ASSERTL0(m_session,"Session should be defined to evaluate
+                    // nummodes ");
+
+                    if (m_session)
+                    {
+                        LibUtilities::Equation nummodesEqn(m_session->GetExpressionEvaluator(), nummodesStr);
+                        num_modes_x = (int)nummodesEqn.Evaluate();
+                    }
+                    else
+                    {
+                        num_modes_x = boost::lexical_cast<int>(nummodesStr);
+                    }
+                }
+
+                const char *tStr_y = expansion->Attribute("TYPE-Y");
+
+                if (tStr_y) // use type string to define expansion
+                {
+                    std::string typeStr       = tStr_y;
+                    const std::string *begStr = kExpansionTypeStr;
+                    const std::string *endStr =
+                        kExpansionTypeStr + eExpansionTypeSize;
+                    const std::string *expStr =
+                        std::find(begStr, endStr, typeStr);
+
+                    ASSERTL0(expStr != endStr, "Invalid expansion type.");
+                    expansion_type_y = (ExpansionType)(expStr - begStr);
+
+                    const char *nStr = expansion->Attribute("NUMMODES-Y");
+                    ASSERTL0(nStr, "NUMMODES-Y was not defined in EXPANSION "
+                                   "section of input");
+                    std::string nummodesStr = nStr;
+
+                    // ASSERTL0(m_session,"Session should be defined to evaluate
+                    // nummodes ");
+                    if (m_session)
+                    {
+                        LibUtilities::Equation nummodesEqn(m_session->GetExpressionEvaluator(), nummodesStr);
+                        num_modes_y = (int)nummodesEqn.Evaluate();
+                    }
+                    else
+                    {
+                        num_modes_y = boost::lexical_cast<int>(nummodesStr);
+                    }
+                }
+
+                const char *tStr_z = expansion->Attribute("TYPE-Z");
+
+                if (tStr_z) // use type string to define expansion
+                {
+                    std::string typeStr       = tStr_z;
+                    const std::string *begStr = kExpansionTypeStr;
+                    const std::string *endStr =
+                        kExpansionTypeStr + eExpansionTypeSize;
+                    const std::string *expStr =
+                        std::find(begStr, endStr, typeStr);
+
+                    ASSERTL0(expStr != endStr, "Invalid expansion type.");
+                    expansion_type_z = (ExpansionType)(expStr - begStr);
+
+                    const char *nStr = expansion->Attribute("NUMMODES-Z");
+                    ASSERTL0(nStr, "NUMMODES-Z was not defined in EXPANSION "
+                                   "section of input");
+                    std::string nummodesStr = nStr;
+
+                    // ASSERTL0(m_session,"Session should be defined to evaluate
+                    // nummodes ");
+                    if (m_session)
+                    {
+                        LibUtilities::Equation nummodesEqn(m_session->GetExpressionEvaluator(), nummodesStr);
+                        num_modes_z = (int)nummodesEqn.Evaluate();
+                    }
+                    else
+                    {
+                        num_modes_z = boost::lexical_cast<int>(nummodesStr);
+                    }
+                }
+
+                for (auto compVecIter = compositeVector.begin();
+                     compVecIter != compositeVector.end(); ++compVecIter)
+                {
+                    for (auto geomVecIter =
+                             compVecIter->second->m_geomVec.begin();
+                         geomVecIter != compVecIter->second->m_geomVec.end();
+                         ++geomVecIter)
+                    {
+                        for (auto expVecIter = expansionMap->begin();
+                             expVecIter != expansionMap->end(); ++expVecIter)
+                        {
+
+                            (expVecIter->second)->m_basisKeyVector =
+                                DefineBasisKeyFromExpansionTypeHomo(
+                                    *geomVecIter, expansion_type_x,
+                                    expansion_type_y, expansion_type_z,
+                                    num_modes_x, num_modes_y, num_modes_z);
+                        }
+                    }
+                }
+
+                expansion = expansion->NextSiblingElement("H");
+            }
+        }
+        else if (expType ==
+                 "ELEMENTS") // Reading a file with the expansion definition
+        {
+            std::vector<LibUtilities::FieldDefinitionsSharedPtr> fielddefs;
+
+            // This has to use the XML reader since we are treating the already
+            // parsed XML as a standard FLD file.
+            std::shared_ptr<LibUtilities::FieldIOXml> f =
+                make_shared<LibUtilities::FieldIOXml>(m_session->GetComm(), false);
+            f->ImportFieldDefs(LibUtilities::XmlDataSource::create(m_session->GetDocument()),
+                               fielddefs, true);
+            cout << "    Number of elements: " << fielddefs.size() << endl;
+            SetExpansions(fielddefs);
+        }
+        else if (expType == "F")
+        {
+            ASSERTL0(expansion->Attribute("FILE"),
+                     "Attribute FILE expected for type F expansion");
+            std::string filenameStr = expansion->Attribute("FILE");
+            ASSERTL0(!filenameStr.empty(),
+                     "A filename must be specified for the FILE "
+                     "attribute of expansion");
+
+            std::vector<LibUtilities::FieldDefinitionsSharedPtr> fielddefs;
+            LibUtilities::FieldIOSharedPtr f =
+                LibUtilities::FieldIO::CreateForFile(m_session, filenameStr);
+            f->Import(filenameStr, fielddefs);
+            SetExpansions(fielddefs);
+        }
+        else
+        {
+            ASSERTL0(false, "Expansion type not defined");
+        }
+    }
+}
+
 
 GeometryLinkSharedPtr MeshGraph::GetElementsFromEdge(Geometry1DSharedPtr edge)
 {

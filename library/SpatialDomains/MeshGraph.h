@@ -173,6 +173,11 @@ public:
         DomainRangeShPtr                           rng       = NullDomainRangeShPtr,
         bool                                       fillGraph = true);
 
+    SPATIAL_DOMAINS_EXPORT static MeshGraphSharedPtr ReadHigherOrder(
+        const LibUtilities::SessionReaderSharedPtr pSession,
+        DomainRangeShPtr                           rng       = NullDomainRangeShPtr,
+        bool                                       fillGraph = true);
+
     SPATIAL_DOMAINS_EXPORT virtual void WriteGeometry(
         std::string &outfilename,
         bool defaultExp = false,
@@ -193,12 +198,17 @@ public:
     /*transfers the minial data structure to full meshgraph*/
     SPATIAL_DOMAINS_EXPORT void FillGraph();
 
+    /*transfers the minial data structure to full meshgraph*/
+    SPATIAL_DOMAINS_EXPORT void FillHigherOrderGraph();
+
     ////////////////////
     ////////////////////
 
     SPATIAL_DOMAINS_EXPORT virtual ~MeshGraph();
 
     SPATIAL_DOMAINS_EXPORT void ReadExpansions();
+
+    SPATIAL_DOMAINS_EXPORT void ReadHigherOrderExpansions();
 
     /* ---- Helper functions ---- */
     /// Dimension of the mesh (can be a 1D curve in 3D space).
@@ -417,6 +427,11 @@ public:
     SPATIAL_DOMAINS_EXPORT virtual void ReadGeometry(
         DomainRangeShPtr rng,
         bool             fillGraph) = 0;
+    
+    SPATIAL_DOMAINS_EXPORT virtual void ReadHigherOrderGeometry(
+        DomainRangeShPtr rng,
+        bool             fillGraph) = 0;
+        
     SPATIAL_DOMAINS_EXPORT virtual void PartitionMesh(
         LibUtilities::SessionReaderSharedPtr session) = 0;
 

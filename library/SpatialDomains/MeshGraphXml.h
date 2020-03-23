@@ -76,6 +76,11 @@ public:
     SPATIAL_DOMAINS_EXPORT virtual void ReadGeometry(
         DomainRangeShPtr rng,
         bool             fillGraph);
+    
+    SPATIAL_DOMAINS_EXPORT virtual void ReadHigherOrderGeometry(
+        DomainRangeShPtr rng,
+        bool             fillGraph);
+
     SPATIAL_DOMAINS_EXPORT virtual void PartitionMesh(
         LibUtilities::SessionReaderSharedPtr session);
 
