@@ -51,9 +51,11 @@ int main(int argc, char *argv[])
     try
     {
         // Create session reader.
+        //Yu Pan Comment: allocate memory fpr session
         session = LibUtilities::SessionReader::CreateInstance(argc, argv);
 
         // Create MeshGraph.
+        //Yu Pan Comment: load xml file (ReadExpansions read nummodes and numpoints)
         graph = SpatialDomains::MeshGraph::Read(session);
 
         // Create driver
