@@ -1809,6 +1809,24 @@ namespace Nektar
             {
                 op.DoProjection(y_new[0],y_new[0],t_new[0]);
             }
+
+            if(m_IfExtractRhsFlag)
+            {
+                m_Rhs=Array<OneD,Array<OneD,NekDouble>>(m_nvar);
+                for(int i=0;i<m_nvar;i++)
+                {
+                    m_Rhs[i]=Array<OneD,NekDouble>(m_npoints,0.0);
+                }
+
+                for(int k= 0; k < m_numstages; k++)
+                {
+                    for(int i= 0; i < m_nvar; i++)
+                    {
+                        //To Do: Currently hae not considered multi-steps scheme
+                        Vmath::Svtvp(m_npoints,m_B[0][0][k],m_F[k][i],1,m_Rhs[i],1,m_Rhs[i],1);
+                    }
+                }
+            }
         }
         
         bool TimeIntegrationScheme::CheckIfFirstStageEqualsOldSolution(const Array<OneD, const Array<TwoD, NekDouble> >& A,

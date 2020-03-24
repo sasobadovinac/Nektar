@@ -294,6 +294,28 @@ namespace Nektar
             while (step   < m_steps ||
                    m_time < m_fintime - NekConstants::kNekZeroTol)
             {
+                if(m_IfHigherOrderFlag)
+                {
+                    ASSERTL0(!(m_ExtractRhsPerNTimeSteps>0 &&m_ExtractRhsPerNStages>0),"ExtractRhs PerNTimeSteps or PerNStages can only define one parameter");
+                    
+                    //Currently roughly Freeze per stages. Because it is not accurate curret stage, it is just steps*numstages
+                    int schemeStages=m_intScheme->GetIntegrationSchemeVector()[0]->GetNSchemeStages();
+                    ASSERTL0(schemeStages<m_ExtractRhsPerNStages,"Cannot Recognize, please increase NFreePerStages");
+                    if(m_ExtractRhsCalculator<m_ExtractRhsPerNTimeSteps ||m_ExtractRhsCalculator<(m_ExtractRhsPerNStages/schemeStages) )
+                    {
+                        m_intScheme->GetIntegrationSchemeVector()[0]->UpdateIfExtractRhsFlag(false);
+                        m_ExtractRhsCalculator++;
+                    }
+                    else
+                    {
+                        m_intScheme->GetIntegrationSchemeVector()[0]->UpdateIfExtractRhsFlag(true);
+                        m_ExtractRhsCalculator=0;
+                    }
+                    
+                  
+                    
+
+                }
                 restartStep++;
 
                 // cout    <<" m_TotLinItePerStep= "<<m_TotLinItePerStep

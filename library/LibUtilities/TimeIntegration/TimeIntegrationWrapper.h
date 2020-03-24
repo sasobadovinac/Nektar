@@ -97,6 +97,11 @@ namespace LibUtilities {
             return m_intSteps;
         }
 
+        LIB_UTILITIES_EXPORT std::vector<TimeIntegrationSchemeSharedPtr> GetIntegrationSchemeVector()
+        {
+            return m_intScheme;
+        }
+
     protected:
         TimeIntegrationMethod                       m_method;
         int                                         m_intSteps;

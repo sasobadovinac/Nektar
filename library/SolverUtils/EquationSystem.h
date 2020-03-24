@@ -400,6 +400,10 @@ class Interpolator;
                         
             int                                         m_PrcdMatFreezNumb;
 
+            int                                         m_ExtractRhsPerNTimeSteps;
+
+            int                                         m_ExtractRhsPerNStages;
+
             /// preconditioning steps
             int                                         m_JFNKPrecondStep;
 

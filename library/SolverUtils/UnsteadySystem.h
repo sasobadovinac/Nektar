@@ -72,6 +72,8 @@ namespace Nektar
 
 
         protected:
+            int  m_ExtractRhsCalculator=0;
+            
             /// Number of time steps between outputting status information.
             int                                             m_infosteps;
 

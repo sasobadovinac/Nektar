@@ -391,6 +391,21 @@ namespace Nektar
             {
             }
 
+            inline void  UpdateIfExtractRhsFlag(bool IfExtractRhsFlag) 
+            {
+                m_IfExtractRhsFlag=IfExtractRhsFlag;
+            }
+
+            Array<OneD,Array<OneD,NekDouble>>  ExtractRhs() 
+            {
+                return m_Rhs;
+            }
+
+            inline int  GetNSchemeStages() 
+            {
+                return m_numstages;
+            }
+
             inline const TimeIntegrationSchemeKey& GetIntegrationSchemeKey() const
             {
                 return m_schemeKey;
@@ -523,6 +538,8 @@ namespace Nektar
 
 
         protected:
+            bool                      m_IfExtractRhsFlag=false;
+            Array<OneD,Array<OneD,NekDouble>>     m_Rhs;
             TimeIntegrationSchemeKey  m_schemeKey; 
             TimeIntegrationSchemeType m_schemeType;
             unsigned int              m_numsteps;   //< Number of steps in multi-step component. 
