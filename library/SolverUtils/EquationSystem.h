@@ -79,6 +79,19 @@ class Interpolator;
         public:
             /// Destructor
             SOLVER_UTILS_EXPORT virtual ~EquationSystem();
+
+            ///////////////////////////////////////////////////////
+            //Yu Pan's Test codes
+            SOLVER_UTILS_EXPORT void SetIfHigherOrderFlag(bool IfHigherOrderFlag)
+            {
+                m_IfHigherOrderFlag=IfHigherOrderFlag;
+            }
+
+            SOLVER_UTILS_EXPORT bool GetIfHigherOrderFlag()
+            {
+                return m_IfHigherOrderFlag;
+            }
+            ///////////////////////////////////////////////////////
             
             // Set up trace normals if required
             SOLVER_UTILS_EXPORT void SetUpTraceNormals(void);
@@ -331,6 +344,10 @@ class Interpolator;
                 const  bool                             &flag = false);
 
         protected:
+            ////////////////////////////////////////////////////////////////////
+            //Yu Pan's Test codes
+            bool                                        m_IfHigherOrderFlag=false;
+            //////////////////////////////////////////////////////////////////////
             /// Temparary factor to determine whether strong/weak
             bool                                        m_useUnifiedWeakIntegration  =   false;
             /// Communicator
