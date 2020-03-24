@@ -14,6 +14,7 @@ SET(SOLVER_UTILS_SOURCES
   Diffusion/DiffusionLFRNS.cpp
   Diffusion/DiffusionIP.cpp
   Driver.cpp
+  DriverCFS.cpp
   DriverAdaptive.cpp
   DriverArnoldi.cpp
   DriverModifiedArnoldi.cpp
@@ -61,6 +62,7 @@ SET(SOLVER_UTILS_HEADERS
   Diffusion/DiffusionLFRNS.h
   Diffusion/DiffusionIP.h
   Driver.h
+  DriverCFS.h
   DriverAdaptive.h
   DriverArnoldi.h
   DriverModifiedArnoldi.h

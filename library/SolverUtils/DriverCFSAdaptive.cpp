@@ -43,7 +43,7 @@ namespace Nektar
 {
     namespace SolverUtils
     {
-        string DriverCFSAdaptive::className = GetDriverFactory().RegisterCreatorFunction("CFSAdaptive", DriverCFSAdaptive::create);
+        string DriverCFSAdaptive::className = GetDriverCFSFactory().RegisterCreatorFunction("CFSAdaptive", DriverCFSAdaptive::create);
         string DriverCFSAdaptive::driverLookupId = LibUtilities::SessionReader::RegisterEnumValue("Driver","CFSAdaptive",0);
 
         /**
@@ -51,8 +51,9 @@ namespace Nektar
          */
         DriverCFSAdaptive::DriverCFSAdaptive(
             const LibUtilities::SessionReaderSharedPtr pSession,
-            const SpatialDomains::MeshGraphSharedPtr pGraph)
-            : Driver(pSession, pGraph)
+            const SpatialDomains::MeshGraphSharedPtr pGraph,
+            const SpatialDomains::MeshGraphSharedPtr pHigherOrderGraph)
+            : DriverCFS(pSession, pGraph,pHigherOrderGraph)
         {
         }
     
@@ -70,7 +71,7 @@ namespace Nektar
          */
         void DriverCFSAdaptive::v_InitObject(ostream &out)
         {
-            Driver::v_InitObject(out);
+            DriverCFS::v_InitObject(out);
         }
     
     

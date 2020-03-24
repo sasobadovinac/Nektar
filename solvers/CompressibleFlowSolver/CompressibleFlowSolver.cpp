@@ -36,6 +36,7 @@
 #include <SolverUtils/Driver.h>
 #include <SolverUtils/EquationSystem.h>
 #include <LibUtilities/BasicUtils/SessionReader.h>
+#include <SolverUtils/DriverCFS.h>
 
 using namespace std;
 using namespace Nektar;
@@ -46,7 +47,7 @@ int main(int argc, char *argv[])
     LibUtilities::SessionReaderSharedPtr session;
     SpatialDomains::MeshGraphSharedPtr graph,HigherOrdergraph;
     string vDriverModule;
-    DriverSharedPtr drv;
+    DriverCFSSharedPtr drv;
 
     try
     {
@@ -61,7 +62,7 @@ int main(int argc, char *argv[])
 
         // Create driver
         session->LoadSolverInfo("Driver", vDriverModule, "CFSAdaptive");
-        drv = GetDriverFactory().CreateInstance(vDriverModule, session, graph);
+        drv = GetDriverCFSFactory().CreateInstance(vDriverModule, session, graph,HigherOrdergraph);
 
         // Execute driver
         drv->Execute();
