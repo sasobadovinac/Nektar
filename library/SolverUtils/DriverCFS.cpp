@@ -42,7 +42,7 @@ namespace Nektar
 namespace SolverUtils
 {
 
-std::string DriverCFS::evolutionOperatorLookupIds[6] = {
+std::string DriverCFS::evolutionOperatorLookupIds[7] = {
     LibUtilities::SessionReader::RegisterEnumValue(
             "EvolutionOperator","Nonlinear"      ,eNonlinear),
     LibUtilities::SessionReader::RegisterEnumValue(
@@ -54,7 +54,9 @@ std::string DriverCFS::evolutionOperatorLookupIds[6] = {
     LibUtilities::SessionReader::RegisterEnumValue(
             "EvolutionOperator","SkewSymmetric"  ,eSkewSymmetric),
     LibUtilities::SessionReader::RegisterEnumValue(
-            "EvolutionOperator","AdaptiveSFD"    ,eAdaptiveSFD)
+            "EvolutionOperator","AdaptiveSFD"    ,eAdaptiveSFD),
+    LibUtilities::SessionReader::RegisterEnumValue(
+            "EvolutionOperator","AdaptiveCFS"    ,eAdaptiveCFS)
 };
 std::string DriverCFS::evolutionOperatorDef =
     LibUtilities::SessionReader::RegisterDefaultSolverInfo(
@@ -115,7 +117,7 @@ void DriverCFS::v_InitObject(ostream &out)
                     "EvolutionOperator");
 
         m_nequ = ((m_EvolutionOperator == eTransientGrowth ||
-                   m_EvolutionOperator == eAdaptiveSFD) ? 2 : 1);
+                   m_EvolutionOperator == eAdaptiveSFD ||m_EvolutionOperator == eAdaptiveCFS) ? 2 : 1);
 
         m_equ = Array<OneD, EquationSystemSharedPtr>(m_nequ);
 
@@ -181,6 +183,15 @@ void DriverCFS::v_InitObject(ostream &out)
                 m_session->SetTag("AdvectiveType","Convective");
                 m_equ[1] = GetEquationSystemFactory().CreateInstance(
                     vEquation, m_session, m_graph);
+            }
+            break;
+            case eAdaptiveCFS:
+            {
+                m_session->SetTag("AdvectiveType", "Convective");
+                m_equ[0] = GetEquationSystemFactory().CreateInstance(
+                    vEquation, m_session, m_graph);
+                m_equ[1] = GetEquationSystemFactory().CreateInstance(
+                    vEquation, m_session, m_HigherOrdergraph);
             }
                 break;
             default:

@@ -41,7 +41,7 @@
 #include <LibUtilities/BasicUtils/NekFactory.hpp>
 #include <LibUtilities/BasicUtils/SharedArray.hpp>
 
-#include <SolverUtils/SolverUtils.hpp>
+#include <SolverUtils/CFSSolverUtils.hpp>
 #include <SolverUtils/EquationSystem.h>
 
 namespace Nektar
