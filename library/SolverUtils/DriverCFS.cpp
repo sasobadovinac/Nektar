@@ -61,7 +61,7 @@ std::string DriverCFS::evolutionOperatorDef =
             "EvolutionOperator","Nonlinear");
 std::string DriverCFS::driverDefault =
     LibUtilities::SessionReader::RegisterDefaultSolverInfo(
-            "DriverCFS",           "Standard");
+            "DriverCFS",           "DriverCFSAdaptive");
 
 DriverCFSFactory& GetDriverCFSFactory()
 {

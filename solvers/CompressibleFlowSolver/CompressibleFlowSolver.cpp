@@ -33,7 +33,7 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#include <SolverUtils/Driver.h>
+// #include <SolverUtils/Driver.h>
 #include <SolverUtils/EquationSystem.h>
 #include <LibUtilities/BasicUtils/SessionReader.h>
 #include <SolverUtils/DriverCFS.h>
@@ -61,7 +61,7 @@ int main(int argc, char *argv[])
         HigherOrdergraph = SpatialDomains::MeshGraph::ReadHigherOrder(session);
 
         // Create driver
-        session->LoadSolverInfo("Driver", vDriverModule, "CFSAdaptive");
+        session->LoadSolverInfo("CFSDriver", vDriverModule, "CFSAdaptive");
         drv = GetDriverCFSFactory().CreateInstance(vDriverModule, session, graph,HigherOrdergraph);
 
         // Execute driver
