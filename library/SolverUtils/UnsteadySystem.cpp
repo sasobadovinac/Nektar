@@ -296,12 +296,13 @@ namespace Nektar
             {
                 if(m_IfHigherOrderFlag)
                 {
-                    ASSERTL0(!(m_ExtractRhsPerNTimeSteps>0 &&m_ExtractRhsPerNStages>0),"ExtractRhs PerNTimeSteps or PerNStages can only define one parameter");
+                    //To do: currently only testing per time step.But this will lead to calculate higher order per step
+                    //Next step set an operator that can operate m_equ[1]'s DoRhs therefore saves much much costs
+                    ASSERTL0(m_ExtractRhsPerNStages>0,"Only support ExtractRhs PerNTimeSteps now");
                     
                     //Currently roughly Freeze per stages. Because it is not accurate curret stage, it is just steps*numstages
                     int schemeStages=m_intScheme->GetIntegrationSchemeVector()[0]->GetNSchemeStages();
-                    ASSERTL0(schemeStages<m_ExtractRhsPerNStages,"Cannot Recognize, please increase NFreePerStages");
-                    if(m_ExtractRhsCalculator<m_ExtractRhsPerNTimeSteps ||m_ExtractRhsCalculator<(m_ExtractRhsPerNStages/schemeStages) )
+                    if(m_ExtractRhsCalculator<m_ExtractRhsPerNTimeSteps)
                     {
                         m_intScheme->GetIntegrationSchemeVector()[0]->UpdateIfExtractRhsFlag(false);
                         m_ExtractRhsCalculator++;
