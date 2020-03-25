@@ -3317,8 +3317,9 @@ void MeshGraph::ReadHigherOrderExpansions()
                     {
                         num_modes = boost::lexical_cast<int>(nummodesStr);
                     }
-                    //HigherOrder Expansion
+                    //Yu Pan's Test: HigherOrder Expansion
                     num_modes=num_modes+1;
+                    ASSERTL0(false,"Cannot use nummodes default setting because if the Q+1 cannot satisfy higher order expansion's accuracy")
 
                     useExpansionType = true;
                 }
@@ -3367,6 +3368,12 @@ void MeshGraph::ReadHigherOrderExpansions()
                     std::vector<unsigned int> numModes;
                     valid = ParseUtils::GenerateVector(
                         numModesStr.c_str(), numModes);
+                    
+                    //Yu Pan's Test : Add higher order
+                    for(int i=0;i<numModes.size();i++)
+                    {
+                        numModes[i]=numModes[i]+1;
+                    }
                     ASSERTL0(valid,
                              "Unable to correctly parse the number of modes.");
                     ASSERTL0(numModes.size() == basis.size(),

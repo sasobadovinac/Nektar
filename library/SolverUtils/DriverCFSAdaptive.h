@@ -62,7 +62,22 @@ namespace Nektar
 	
             ///Name of the class
             static std::string className;
-	
+
+            //Set a functor that m_equ[0] can extract Rhs from m_equ[1]
+            template<typename FuncPointerT, typename ObjectPointerT> 
+            void DefineSetRhs(FuncPointerT func, ObjectPointerT obj)
+            {
+                std::function< void (int, Array<OneD, Array<OneD, NekDouble> >& )>  m_functor=  std::bind(
+                    func, obj, std::placeholders::_1, std::placeholders::_2);
+            }
+            
+            template<typename FuncPointerT, typename ObjectPointerT> 
+            void DefinegGetRhs(FuncPointerT func, ObjectPointerT obj)
+            {
+                std::function< void (int, Array<OneD, Array<OneD, NekDouble> > &)> m_functor=  std::bind(
+                    func, obj, std::placeholders::_1, std::placeholders::_2);
+            }
+
         protected:
             /// Constructor
             SOLVER_UTILS_EXPORT DriverCFSAdaptive(

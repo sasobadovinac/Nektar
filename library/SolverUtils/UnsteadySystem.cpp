@@ -294,29 +294,6 @@ namespace Nektar
             while (step   < m_steps ||
                    m_time < m_fintime - NekConstants::kNekZeroTol)
             {
-                if(m_IfHigherOrderFlag)
-                {
-                    //To do: currently only testing per time step.But this will lead to calculate higher order per step
-                    //Next step set an operator that can operate m_equ[1]'s DoRhs therefore saves much much costs
-                    ASSERTL0(m_ExtractRhsPerNStages>0,"Only support ExtractRhs PerNTimeSteps now");
-                    
-                    //Currently roughly Freeze per stages. Because it is not accurate curret stage, it is just steps*numstages
-                    int schemeStages=m_intScheme->GetIntegrationSchemeVector()[0]->GetNSchemeStages();
-                    if(m_ExtractRhsCalculator<m_ExtractRhsPerNTimeSteps)
-                    {
-                        m_intScheme->GetIntegrationSchemeVector()[0]->UpdateIfExtractRhsFlag(false);
-                        m_ExtractRhsCalculator++;
-                    }
-                    else
-                    {
-                        m_intScheme->GetIntegrationSchemeVector()[0]->UpdateIfExtractRhsFlag(true);
-                        m_ExtractRhsCalculator=0;
-                    }
-                    
-                  
-                    
-
-                }
                 restartStep++;
 
                 // cout    <<" m_TotLinItePerStep= "<<m_TotLinItePerStep

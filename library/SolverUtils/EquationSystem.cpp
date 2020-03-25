@@ -702,6 +702,18 @@ namespace Nektar
 
             m_FilterOperators.DefineExtraFldOutput (&EquationSystem::ExtraFldOutput, this);
 
+            ///////////////////////////////////////////////////////////
+            //Yu Pan's Test
+            if(m_IfHigherOrderFlag)
+            {
+                m_Rhs=Array<OneD,Array<OneD,NekDouble>>(nvariables);
+                int npoints=m_fields[0]->GetNpoints();
+                for(int i=0;i<nvariables;i++)
+                {
+                    m_Rhs[i]=Array<OneD,NekDouble>(npoints,0.0);
+                }
+            }
+
         }
 
         /**
