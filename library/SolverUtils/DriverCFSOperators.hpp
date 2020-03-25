@@ -33,56 +33,47 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#ifndef NEKTAR_SOLVERUTILS_DRIVERCFSADAPTIVE_H
-#define NEKTAR_SOLVERUTILS_DRIVERCFSADAPTIVE_H
+#ifndef NEKTAR_SOLVERUTILS_DRIVERCFSOPERATORS_HPP
+#define NEKTAR_SOLVERUTILS_DRIVERCFSOPERATORS_HPP
 
-#include <SolverUtils/DriverCFS.h>
+#include <LibUtilities/Communication/Comm.h>
+#include <LibUtilities/BasicUtils/SharedArray.hpp>
+
+#include <SolverUtils/DriverCFSOperators.hpp>
 
 namespace Nektar
 {
     namespace SolverUtils
     {
-        /// Base class for the development of solvers.
-        class DriverCFSAdaptive: public DriverCFS
+
+        class DriverOperators
         {
         public:
-            friend class MemoryManager<DriverCFSAdaptive>;
 
-            /// Creates an instance of this class
-            static DriverCFSSharedPtr create(
-                const LibUtilities::SessionReaderSharedPtr& pSession,
-                const SpatialDomains::MeshGraphSharedPtr& pGraph,
-                const SpatialDomains::MeshGraphSharedPtr& pHigherOrderGraph)
+            typedef const Array<OneD, const Array<OneD, NekDouble>> InArrayType;
+            typedef       Array<OneD, Array<OneD,NekDouble>>       OutArrayType;
+            
+            DriverOperators(void)
             {
-                DriverCFSSharedPtr p = MemoryManager<DriverCFSAdaptive>
-                    ::AllocateSharedPtr(pSession, pGraph,pHigherOrderGraph);
-                p->InitObject();
-                return p;
             }
-	
-            ///Name of the class
-            static std::string className;
+            DriverOperators(DriverOperators &in)
+            {
+                m_functors = in.m_functors;
+            }
+
+            //Set a functor that m_equ[0] can extract Rhs from m_equ[1]
+            template<typename FuncPointerT, typename ObjectPointerT> 
+            void DefineHigherOrderOdeRhs(FuncPointerT func, ObjectPointerT obj)
+            {
+                 m_functors=  std::bind(func, obj, std::placeholders::_1, std::placeholders::_2,std::placeholders::_3);
+            }
 
         protected:
-            /// Constructor
-            SOLVER_UTILS_EXPORT DriverCFSAdaptive(
-                const LibUtilities::SessionReaderSharedPtr pSession,
-                const SpatialDomains::MeshGraphSharedPtr pGraph,
-                const SpatialDomains::MeshGraphSharedPtr pHigherOrderGraph);
+            std::function< void (InArrayType&, OutArrayType&, const NekDouble )>  m_functors;
+        private:
 
-            /// Destructor
-            SOLVER_UTILS_EXPORT virtual ~DriverCFSAdaptive();
-        
-            /// Second-stage initialisation
-            SOLVER_UTILS_EXPORT virtual void v_InitObject(std::ostream &out = std::cout);
-
-            /// Virtual function for solve implementation.
-            SOLVER_UTILS_EXPORT virtual void v_Execute(std::ostream &out = std::cout);
-		
-            static std::string driverLookupId;
-	};
+        };
     }	
 } //end of namespace
 
-#endif //NEKTAR_SOLVERUTILS_DriverCFSAdaptive_H
-
+#endif //

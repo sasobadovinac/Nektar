@@ -136,6 +136,12 @@ namespace Nektar
             cnt += m_fields[0]->GetBndCondExpansions()[n]->GetExpSize();
         }
 
+        if(m_IfHigherOrderFlag)
+        {
+            m_driver.DefineHigherOrderOdeRhs(&CompressibleFlowSystem::DoOdeRhs, this);
+        }
+        
+
         if (m_explicitAdvection)
         {
             m_ode.DefineOdeRhs    (&CompressibleFlowSystem::DoOdeRhs, this);

@@ -39,6 +39,7 @@
 #include <LibUtilities/TimeIntegration/TimeIntegrationWrapper.h>
 #include <SolverUtils/EquationSystem.h>
 #include <SolverUtils/Filters/Filter.h>
+#include <SolverUtils/DriverCFSOperators.hpp>
 
 namespace Nektar
 {
@@ -82,6 +83,8 @@ namespace Nektar
             LibUtilities::TimeIntegrationWrapperSharedPtr   m_intScheme;
             /// The time integration scheme operators to use.
             LibUtilities::TimeIntegrationSchemeOperators    m_ode;
+
+            SolverUtils::DriverOperators                    m_driver;
             ///
             LibUtilities::TimeIntegrationSolutionSharedPtr  m_intSoln;
             ///

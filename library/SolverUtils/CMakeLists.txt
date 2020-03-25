@@ -87,6 +87,7 @@ SET(SOLVER_UTILS_HEADERS
   RiemannSolvers/UpwindSolver.h
   RiemannSolvers/UpwindLDGSolver.h
   SolverUtils.hpp
+  DriverCFSOperators.hpp
   SolverUtilsDeclspec.h
   UnsteadySystem.h
   Forcing/Forcing.h
