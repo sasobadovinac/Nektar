@@ -42,6 +42,34 @@ namespace Nektar
 {
     namespace SolverUtils
     {
+
+        class DriverOperators
+        {
+        public:
+
+            typedef const Array<OneD, NekDouble> InArrayType;
+            typedef       Array<OneD, NekDouble> OutArrayType;
+            
+            DriverOperators(void)
+            {
+            }
+            DriverOperators(DriverOperators &in)
+            {
+                m_functors = in.m_functors;
+            }
+
+            //Set a functor that m_equ[0] can extract Rhs from m_equ[1]
+            template<typename FuncPointerT, typename ObjectPointerT> 
+            void DefineHigherOrderOdeRhs(FuncPointerT func, ObjectPointerT obj)
+            {
+                 m_functors=  std::bind(func, obj, std::placeholders::_1, std::placeholders::_2,std::placeholders::_3);
+            }
+
+        protected:
+            std::function< void (InArrayType&, OutArrayType&, const NekDouble )>  m_functors;
+        private:
+
+        };
         /// Base class for the development of solvers.
         class DriverCFSAdaptive: public DriverCFS
         {
@@ -62,21 +90,6 @@ namespace Nektar
 	
             ///Name of the class
             static std::string className;
-
-            //Set a functor that m_equ[0] can extract Rhs from m_equ[1]
-            template<typename FuncPointerT, typename ObjectPointerT> 
-            void DefineSetRhs(FuncPointerT func, ObjectPointerT obj)
-            {
-                std::function< void (int, Array<OneD, Array<OneD, NekDouble> >& )>  m_functor=  std::bind(
-                    func, obj, std::placeholders::_1, std::placeholders::_2);
-            }
-            
-            template<typename FuncPointerT, typename ObjectPointerT> 
-            void DefinegGetRhs(FuncPointerT func, ObjectPointerT obj)
-            {
-                std::function< void (int, Array<OneD, Array<OneD, NekDouble> > &)> m_functor=  std::bind(
-                    func, obj, std::placeholders::_1, std::placeholders::_2);
-            }
 
         protected:
             /// Constructor

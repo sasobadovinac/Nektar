@@ -404,8 +404,6 @@ class Interpolator;
 
             int                                         m_ExtractRhsPerNStages;
 
-            Array<OneD,Array<OneD,NekDouble>>           m_Rhs;
-
             /// preconditioning steps
             int                                         m_JFNKPrecondStep;
 
