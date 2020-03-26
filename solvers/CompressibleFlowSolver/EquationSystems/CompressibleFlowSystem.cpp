@@ -137,18 +137,18 @@ namespace Nektar
         }
         
 
-        int tmp;
-        m_session->LoadParameter("IfHigherOrderFlag",    tmp   ,  0);
-        m_IfHigherOrderFlag=false;
-        if(1==tmp)
-        {
-            m_IfHigherOrderFlag=true;
-        }
+        // int tmp;
+        // m_session->LoadParameter("IfHigherOrderFlag",    tmp   ,  0);
+        // m_IfHigherOrderFlag=false;
+        // if(1==tmp)
+        // {
+        //     m_IfHigherOrderFlag=true;
+        // }
 
-        if(m_IfHigherOrderFlag)
-        {
-            m_driver.DefineHigherOrderOdeRhs(&CompressibleFlowSystem::DoOdeRhs, this);
-        }
+        // if(m_IfHigherOrderFlag)
+        // {
+        //     m_driver.DefineHigherOrderOdeRhs(&CompressibleFlowSystem::DoOdeRhs, this);
+        // }
         
 
         if (m_explicitAdvection)
