@@ -135,6 +135,15 @@ namespace Nektar
             }
             cnt += m_fields[0]->GetBndCondExpansions()[n]->GetExpSize();
         }
+        
+
+        int tmp;
+        m_session->LoadParameter("IfHigherOrderFlag",    tmp   ,  0);
+        m_IfHigherOrderFlag=false;
+        if(1==tmp)
+        {
+            m_IfHigherOrderFlag=true;
+        }
 
         if(m_IfHigherOrderFlag)
         {

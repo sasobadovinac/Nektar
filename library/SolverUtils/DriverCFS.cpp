@@ -190,10 +190,8 @@ void DriverCFS::v_InitObject(ostream &out)
                 m_session->SetTag("AdvectiveType", "Convective");
                 m_equ[0] = GetEquationSystemFactory().CreateInstance(
                     vEquation, m_session, m_graph);
-                m_equ[0]->SetIfHigherOrderFlag(false);
                 m_equ[1] = GetEquationSystemFactory().CreateInstance(
                     vEquation, m_session, m_HigherOrdergraph);
-                m_equ[1]->SetIfHigherOrderFlag(true);
             }
                 break;
             default:
