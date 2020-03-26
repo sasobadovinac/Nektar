@@ -396,9 +396,54 @@ namespace Nektar
 
                 m_StagesPerStep = 0;
                 m_TotLinItePerStep = 0;
+                m_CalculateDirectErrorCounter=0;
+
+                if(m_DirectErrorFreezNumber>0)
+                {
+                    if(0==step || m_CalculateDirectErrorCounter>=m_DirectErrorFreezNumber)
+                    {
+                        m_intScheme->GetIntegrationSchemeVector()[0]->UpdateDirectErrorState(true);
+                        m_CalculateDirectErrorCounter=0;
+                    }
+                    else
+                    {
+                        m_CalculateDirectErrorCounter++;
+                    }
+                }
 
                 fields = m_intScheme->TimeIntegrate(
                     stepCounter, m_timestep, m_intSoln, m_ode);
+                
+                ///////////////////////////////////////////////////////////////////////////////
+                //Calculate Direct TimeIntegration Error
+                //To Do: Assume currently only DIRK3 can be used because see the codes in TimeIntegrationScheme, the reference uses DIRK4 as accurate solution
+                //Direct error is between the comparison between DIRK3 and DIRK4
+                if(m_DirectErrorFreezNumber>0)
+                {
+                        m_DirectErrorNormArray=Array<OneD, NekDouble> (nvariables,0.0);
+                        for(int i = 0; i < nvariables; i++)
+                        {
+                            int npoints=m_fields[i]->GetNpoints();
+                            Array<OneD,NekDouble> tmp;
+                            //For time step, no need FwdTrans, but for Tolerance adaptivity, need transfer to coeffs space
+                            //m_fields[i]->FwdTrans(m_intScheme->GetIntegrationSchemeVector()[0]->GetLocalErrorVector()[i],tmp);
+                            tmp=m_intScheme->GetIntegrationSchemeVector()[0]->GetDirectErrorVector()[i];
+                            m_DirectErrorNormArray[i] = Vmath::Dot(npoints,tmp,tmp);
+                        }
+                        m_comm->AllReduce(m_DirectErrorNormArray, Nektar::LibUtilities::ReduceSum);
+                        NekDouble ErrorNorm =0.0;
+                        for(int i = 0; i < nvariables; i++)
+                        {
+                            ErrorNorm += m_DirectErrorNormArray[i];
+                        }
+                        ErrorNorm=sqrt(ErrorNorm);//To Do: No need sqrt if in NewtonTolerance use, q2<Norm2, can save computation
+                        for(int i=0;i<nvariables;i++)
+                        {
+                            m_DirectErrorNormArray[i]=sqrt(m_DirectErrorNormArray[i]);
+                        }
+                }
+              
+                ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
                 timer.Stop();
 
                 m_time  += m_timestep;

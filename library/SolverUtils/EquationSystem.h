@@ -347,6 +347,8 @@ class Interpolator;
             ////////////////////////////////////////////////////////////////////
             //Yu Pan's Test codes
             bool                                        m_IfHigherOrderFlag=false;
+
+            int                                         m_DirectErrorFreezNumber;
             //////////////////////////////////////////////////////////////////////
             /// Temparary factor to determine whether strong/weak
             bool                                        m_useUnifiedWeakIntegration  =   false;

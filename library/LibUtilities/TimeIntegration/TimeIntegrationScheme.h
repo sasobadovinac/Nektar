@@ -441,6 +441,26 @@ namespace Nektar
                 return m_V[i][j];
             }
 
+            inline NekDouble A_Paired(const unsigned int i, const unsigned int j) const
+            {
+                return m_A_Paired[0][i][j];
+            }
+
+            inline NekDouble B_Paired(const unsigned int i, const unsigned int j) const
+            {
+                return m_B_Paired[0][i][j];
+            }
+
+            inline NekDouble U_Paired(const unsigned int i, const unsigned int j) const
+            {
+                return m_U_Paired[i][j];
+            }
+
+            inline NekDouble V_Paired(const unsigned int i, const unsigned int j) const
+            {
+                return m_V_Paired[i][j];
+            }
+
             inline NekDouble A_IMEX(const unsigned int i, const unsigned int j) const
             {
                 return m_A[1][i][j];
@@ -469,6 +489,41 @@ namespace Nektar
             inline unsigned int GetNmultiStepDerivs(void) const
             {
                 return m_numMultiStepDerivs;
+            }
+
+            inline unsigned int GetTimeIntegrationSchemeOrder(void) const
+            {
+                unsigned int PairedOrder;
+                if(m_PairedOrder)
+                {
+                    PairedOrder=m_PairedOrder;
+                }
+                else
+                {
+                    ASSERTL0(false, "Have not give the order of TimeIntegrationScheme")
+                }
+                
+                return PairedOrder;
+            }
+
+            inline const DoubleArray& GetDirectErrorVector() const//Direct Error between DIRK3 and DIRK4 at scaled time step
+            {
+                return m_DirectError;
+            }
+			
+            inline bool IfDirectErrorState(void) const
+            {
+                return m_DirectErrorState;
+            }
+
+            inline void UpdateDirectErrorState(bool NewDirectErrorState) 
+            {
+                m_DirectErrorState=NewDirectErrorState;
+            }
+
+            inline bool IfRealTimeStepState(void) const
+            {
+                return m_RealTimeStepFlag;
             }
 
             /**
@@ -540,6 +595,15 @@ namespace Nektar
         protected:
             bool                      m_IfExtractRhsFlag=false;
             Array<OneD,Array<OneD,NekDouble>>     m_Rhs;
+			
+			unsigned int              m_PairedOrder;  //< Order of timeintegration scheme
+
+            bool m_DirectErrorInitialized=true;//Control the first step first assuming true, if finished initializing, change it to true
+            bool m_DirectErrorState=false;//Control the remaining steps except the first step
+
+            bool m_EmbeddedScheme=false;//Control if embedd scheme
+            bool m_EmbeddedInitialized=true;//Control the first step 
+            bool m_EmbeddedState=false;//Control the remaining steps  except the first step
             TimeIntegrationSchemeKey  m_schemeKey; 
             TimeIntegrationSchemeType m_schemeType;
             unsigned int              m_numsteps;   //< Number of steps in multi-step component. 
@@ -567,6 +631,23 @@ namespace Nektar
             Array<OneD, Array<TwoD,NekDouble> > m_B;
             Array<TwoD,NekDouble>               m_U;
             Array<TwoD,NekDouble>               m_V;
+            Array<OneD, Array<TwoD,NekDouble> > m_A_Paired;
+            Array<OneD, Array<TwoD,NekDouble> > m_B_Paired;
+            Array<TwoD,NekDouble>               m_U_Paired;
+            Array<TwoD,NekDouble>               m_V_Paired;
+            string                              m_PairedScheme;
+            TripleArray                         m_solVectortmp;
+            SingleArray                         m_ttmp;
+            Array<OneD, Array<TwoD,NekDouble> > m_B_embedded;
+            DoubleArray m_DirectError;
+            DoubleArray m_EmbeddedError;
+            DoubleArray m_LocalError;
+            
+            int  m_nvar_Paired;       
+            int  m_npoints_Paired; 
+            int  m_numsteps_Paired;
+            int  m_numstages_Paired;    
+            bool m_RealTimeStepFlag;
 
         private: 
             bool m_initialised;   /// bool to identify if array has been initialised 
@@ -597,6 +678,22 @@ namespace Nektar
             {
                 NEKERROR(ErrorUtil::efatal,"Copy Constructor for the TimeIntegrationScheme class should not be called");
             }
+
+            void InitializePairedImplicitScheme();
+
+            void AllocatePairedSolution();
+
+            void PairedExplicitTimeIntegrate(const NekDouble    timestep,
+                                    ConstTripleArray   &y_old  ,
+                                    ConstSingleArray   &t_old  ,
+                                    DoubleArray        &y_new  ,
+                                    const TimeIntegrationSchemeOperators &op);
+            
+            void PairedImplicitTimeIntegrate(const NekDouble    timestep,
+                        ConstTripleArray   &y_old  ,
+                        ConstSingleArray   &t_old  ,
+                        DoubleArray        &y_new  ,
+                        const TimeIntegrationSchemeOperators &op);
 
             LIB_UTILITIES_EXPORT bool VerifyIntegrationSchemeType(TimeIntegrationSchemeType type,
                                              const Array<OneD, const Array<TwoD, NekDouble> >& A,

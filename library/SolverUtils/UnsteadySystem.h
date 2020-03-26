@@ -176,6 +176,12 @@ namespace Nektar
             NekDouble   m_inArrayNorm=-1.0;
 
             bool m_CalcuPrecMatFlag     = true;
+            ////////////////////////////////////////////////////////////////////////////
+            //Paremeters to control the Direct Error
+            int m_CalculateDirectErrorCounter;
+            NekDouble m_DirectErrorNorm;
+            Array<OneD,NekDouble> m_DirectErrorNormArray;
+            ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
             int m_CalcuPrecMatCounter  = std::numeric_limits<int>::max();
 
@@ -248,6 +254,9 @@ namespace Nektar
 
             bool CheckSteadyState(int step);
             bool CheckSteadyState(int step, NekDouble totCPUTime);
+            NekDouble CalculateToleranceSafetyFactor();
+
+            NekDouble CalculateToleranceErrorNorm();
         };
 
     }

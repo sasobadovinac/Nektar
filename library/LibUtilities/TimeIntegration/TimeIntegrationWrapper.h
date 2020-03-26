@@ -106,6 +106,8 @@ namespace LibUtilities {
         TimeIntegrationMethod                       m_method;
         int                                         m_intSteps;
         std::vector<TimeIntegrationSchemeSharedPtr> m_intScheme;
+        std::vector<TimeIntegrationSchemeSharedPtr> m_intScheme1;
+        std::vector<TimeIntegrationSchemeSharedPtr> m_intScheme2;
 
         /// Constructor
         TimeIntegrationWrapper();
@@ -701,6 +703,28 @@ namespace LibUtilities {
         static std::string className;
 
         virtual ~TimeIntegrationDIRKOrder3Stage5() {}
+
+    protected:
+        virtual void v_InitObject();
+    };
+
+    class TimeIntegrationDIRKOrder3Stage5_NewtonTolerance : public TimeIntegrationWrapper
+    {
+    public:
+        friend class MemoryManager<TimeIntegrationDIRKOrder3Stage5_NewtonTolerance>;
+
+        /// Creates an instance of this class
+        static TimeIntegrationWrapperSharedPtr create()
+        {
+            TimeIntegrationWrapperSharedPtr p =
+                MemoryManager<TimeIntegrationDIRKOrder3Stage5_NewtonTolerance>::AllocateSharedPtr();
+            p->InitObject();
+            return p;
+        }
+        /// Name of class
+        static std::string className;
+
+        virtual ~TimeIntegrationDIRKOrder3Stage5_NewtonTolerance() {}
 
     protected:
         virtual void v_InitObject();
