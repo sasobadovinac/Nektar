@@ -178,7 +178,7 @@ namespace Nektar
             bool m_CalcuPrecMatFlag     = true;
             ////////////////////////////////////////////////////////////////////////////
             //Paremeters to control the Direct Error
-            int m_CalculateDirectErrorCounter;
+            int m_CalculateDirectErrorCounter=0;
             NekDouble m_DirectErrorNorm;
             Array<OneD,NekDouble> m_DirectErrorNormArray;
             ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

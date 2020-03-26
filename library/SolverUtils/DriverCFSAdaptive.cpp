@@ -88,7 +88,7 @@ namespace Nektar
             m_equ[0]->DoInitialise();   
             m_equ[0]->DoSolve();
             //Not sure if need initialize m_equ[1] becasue boundary conditions is also included in this function
-            m_equ[1]->DoInitialise();
+            //m_equ[1]->DoInitialise();
 
             time(&endtime);
 

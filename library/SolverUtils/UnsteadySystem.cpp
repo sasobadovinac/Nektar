@@ -396,11 +396,10 @@ namespace Nektar
 
                 m_StagesPerStep = 0;
                 m_TotLinItePerStep = 0;
-                m_CalculateDirectErrorCounter=0;
 
                 if(m_DirectErrorFreezNumber>0)
                 {
-                    if(0==step || m_CalculateDirectErrorCounter>=m_DirectErrorFreezNumber)
+                    if(0==step || m_CalculateDirectErrorCounter>=(m_DirectErrorFreezNumber-1))
                     {
                         m_intScheme->GetIntegrationSchemeVector()[0]->UpdateDirectErrorState(true);
                         m_CalculateDirectErrorCounter=0;
