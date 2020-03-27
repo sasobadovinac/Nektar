@@ -37,7 +37,6 @@
 #define NEKTAR_SOLVERUTILS_DRIVERCFSADAPTIVE_H
 
 #include <SolverUtils/DriverCFS.h>
-#include<SolverUtils/DriverCFSOperators.hpp>
 
 namespace Nektar
 {
@@ -63,8 +62,6 @@ namespace Nektar
 	
             ///Name of the class
             static std::string className;
-        
-            SolverUtils::DriverOperators                    m_driver;
 
         protected:
             /// Constructor

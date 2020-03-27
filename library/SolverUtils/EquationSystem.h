@@ -82,6 +82,15 @@ class Interpolator;
 
             ///////////////////////////////////////////////////////
             //Yu Pan's Test codes
+            /// Compute the RHS
+            SOLVER_UTILS_EXPORT void DoOdeRhs1(
+            const Array<OneD, const  Array<OneD, NekDouble> >&inarray,
+                  Array<OneD,        Array<OneD, NekDouble> >&outarray,
+                                                  const NekDouble time)
+            {
+                v_DoOdeRhs1(inarray,outarray,time);
+            }
+
             SOLVER_UTILS_EXPORT void SetIfHigherOrderFlag(bool IfHigherOrderFlag)
             {
                 m_IfHigherOrderFlag=IfHigherOrderFlag;
@@ -484,6 +493,15 @@ class Interpolator;
             SOLVER_UTILS_EXPORT EquationSystem(
                 const LibUtilities::SessionReaderSharedPtr& pSession,
                 const SpatialDomains::MeshGraphSharedPtr& pGraph);
+            
+            /// Compute the RHS
+            SOLVER_UTILS_EXPORT virtual void v_DoOdeRhs1(
+            const Array<OneD, const  Array<OneD, NekDouble> >&inarray,
+                  Array<OneD,        Array<OneD, NekDouble> >&outarray,
+                                                  const NekDouble time)
+            {
+                 ASSERTL0(false, "Not defined.");
+            }
             
             SOLVER_UTILS_EXPORT virtual void v_InitObject();
             

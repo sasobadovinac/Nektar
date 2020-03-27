@@ -71,6 +71,12 @@ public:
     /// Destructor
     virtual ~DriverCFS();
 
+    SOLVER_UTILS_EXPORT inline void DoMultiOrderOdeRhs(const Array<OneD,const Array<OneD, NekDouble>> &inarray,
+                                                                   Array<OneD, Array<OneD,NekDouble>> &outarray,
+                                                                                           const NekDouble time,
+                                                                              const int       EquationSystemID);
+        
+
     /// Initialise Object
     SOLVER_UTILS_EXPORT inline void InitObject(std::ostream &out = std::cout);
 

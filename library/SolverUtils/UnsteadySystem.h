@@ -38,8 +38,7 @@
 
 #include <LibUtilities/TimeIntegration/TimeIntegrationWrapper.h>
 #include <SolverUtils/EquationSystem.h>
-#include <SolverUtils/Filters/Filter.h>
-// #include <SolverUtils/DriverCFSOperators.hpp>
+#include <SolverUtils/Filters/Filter.h> 
 
 namespace Nektar
 {

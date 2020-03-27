@@ -45,7 +45,6 @@ namespace Nektar
 {
     namespace SolverUtils
     {
-
         class DriverOperators
         {
         public:
@@ -63,13 +62,22 @@ namespace Nektar
 
             //Set a functor that m_equ[0] can extract Rhs from m_equ[1]
             template<typename FuncPointerT, typename ObjectPointerT> 
-            void DefineHigherOrderOdeRhs(FuncPointerT func, ObjectPointerT obj)
+            void DefineMultiOrderOdeRhs(FuncPointerT func, ObjectPointerT obj)
             {
-                 m_functors=  std::bind(func, obj, std::placeholders::_1, std::placeholders::_2,std::placeholders::_3);
+                 m_functors=  std::bind(func, obj, std::placeholders::_1, std::placeholders::_2,std::placeholders::_3, std::placeholders::_4);
+            }
+
+            inline void DoMultiOrderOdeRhs(InArrayType     &inarray, 
+                                          OutArrayType    &outarray,
+                                               const NekDouble time,
+                                    const int  EquationSystemID) const
+            {
+                ASSERTL1(m_functors,"DoHigherOrderOdeRhs should be defined for this time integration scheme");
+                m_functors(inarray,outarray,time,EquationSystemID);
             }
 
         protected:
-            std::function< void (InArrayType&, OutArrayType&, const NekDouble )>  m_functors;
+            std::function< void (InArrayType&, OutArrayType&, const NekDouble, const int )>  m_functors;
         private:
 
         };
