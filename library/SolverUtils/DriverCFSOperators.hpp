@@ -51,10 +51,12 @@ namespace Nektar
 
             typedef const Array<OneD, const Array<OneD, NekDouble>> InArrayType;
             typedef       Array<OneD, Array<OneD,NekDouble>>       OutArrayType;
+            typedef std::function< void (InArrayType&, OutArrayType&, const NekDouble, const int )>  FunctorType;
             
             DriverOperators(void)
             {
             }
+
             DriverOperators(DriverOperators &in)
             {
                 m_functors = in.m_functors;
@@ -70,14 +72,14 @@ namespace Nektar
             inline void DoMultiOrderOdeRhs(InArrayType     &inarray, 
                                           OutArrayType    &outarray,
                                                const NekDouble time,
-                                    const int  EquationSystemID) const
+                                               const int  EquationSystemID) const
             {
                 ASSERTL1(m_functors,"DoHigherOrderOdeRhs should be defined for this time integration scheme");
                 m_functors(inarray,outarray,time,EquationSystemID);
             }
 
         protected:
-            std::function< void (InArrayType&, OutArrayType&, const NekDouble, const int )>  m_functors;
+            FunctorType m_functors;
         private:
 
         };
