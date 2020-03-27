@@ -323,7 +323,7 @@ namespace Nektar
             }
         }
 
-        m_driverOperator.DefineMultiOrderOdeRhs(&m_driver->DoMultiOrderOdeRhs, this);
+        //m_driverOperator.DefineMultiOrderOdeRhs(&m_driver->DoMultiOrderOdeRhs, this);
     }
 
     /**
@@ -466,7 +466,7 @@ namespace Nektar
     {
         /////////////////////////////////////////////////////////////
         //Yu Pan's Test: bind EquationSystem1's OdeRhs
-        m_driverOperator.DoMultiOrderOdeRhs(inarray,outarray,time,1);
+        m_driverOperator.DoMultiOrderOdeRhs(inarray,outarray,time);
         /////////////////////////////////////////////////////////////
         int i;
         int nvariables = inarray.num_elements();
@@ -5346,7 +5346,7 @@ Array<OneD, NekDouble>  CompressibleFlowSystem::GetElmtMinHP(void)
     void CompressibleFlowSystem::v_DoOdeRhs1(
         const Array<OneD, const Array<OneD, NekDouble> > &inarray,
               Array<OneD,       Array<OneD, NekDouble> > &outarray,
-        const NekDouble                                   time)
+              const NekDouble                             time)
     {
         DoOdeRhs(inarray,outarray,time);
     } 

@@ -67,11 +67,10 @@ namespace Nektar
 
         void DriverCFSAdaptive::v_DoMultiOrderOdeRhs(const Array<OneD,const Array<OneD, NekDouble>> &inarray,
                                                            Array<OneD, Array<OneD,NekDouble>> &outarray,
-                                                                        const NekDouble time,
-                                                                        const int       EquationSystemID)
+                                                                        const NekDouble time)
         {
-            ASSERTL1(m_equ[EquationSystemID],"Need to define EquationSystem");
-            m_equ[EquationSystemID]->DoOdeRhs1(inarray,outarray,time);
+            ASSERTL1(m_equ[1],"Need to define EquationSystem[1]");
+            m_equ[1]->DoOdeRhs1(inarray,outarray,time);
         }
     
     

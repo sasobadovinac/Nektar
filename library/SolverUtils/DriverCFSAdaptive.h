@@ -75,8 +75,7 @@ namespace Nektar
 
             SOLVER_UTILS_EXPORT virtual void v_DoMultiOrderOdeRhs(const Array<OneD,const Array<OneD, NekDouble>> &inarray,
                                                                         Array<OneD, Array<OneD,NekDouble>> &outarray,
-                                                                        const NekDouble time,
-                                                                        const int       EquationSystemID);
+                                                                        const NekDouble time);
         
             /// Second-stage initialisation
             SOLVER_UTILS_EXPORT virtual void v_InitObject(std::ostream &out = std::cout);

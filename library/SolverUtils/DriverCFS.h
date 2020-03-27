@@ -73,10 +73,9 @@ public:
 
     SOLVER_UTILS_EXPORT inline void DoMultiOrderOdeRhs(const Array<OneD,const Array<OneD, NekDouble>> &inarray,
                                                                    Array<OneD, Array<OneD,NekDouble>> &outarray,
-                                                                                           const NekDouble time,
-                                                                              const int       EquationSystemID)
+                                                                                           const NekDouble time)
     {
-        v_DoMultiOrderOdeRhs(inarray,outarray,time,EquationSystemID);
+        v_DoMultiOrderOdeRhs(inarray,outarray,time);
     }
         
 
@@ -122,8 +121,7 @@ protected:
 
     SOLVER_UTILS_EXPORT virtual void v_DoMultiOrderOdeRhs(const Array<OneD,const Array<OneD, NekDouble>> &inarray,
                                                                    Array<OneD, Array<OneD,NekDouble>> &outarray,
-                                                                              const NekDouble time,
-                                                                              const int       EquationSystemID)
+                                                                              const NekDouble time)
     {
          ASSERTL0(false,"This routine is not valid in this class");
     }
