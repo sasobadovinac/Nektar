@@ -323,7 +323,7 @@ namespace Nektar
             }
         }
 
-        // m_driverOperator.DefineHigherOrderOdeRhs(&m_driver->DoHigherOrderOdeRhs, this);
+        m_driverOperator.DefineMultiOrderOdeRhs(&m_driver->DoMultiOrderOdeRhs, this);
     }
 
     /**

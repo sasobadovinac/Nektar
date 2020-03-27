@@ -218,14 +218,6 @@ Array<OneD, NekDouble> DriverCFS::v_GetImagEvl(void)
     return NullNekDouble1DArray;
 }
 
-void DriverCFS::DoMultiOrderOdeRhs(const Array<OneD,const Array<OneD, NekDouble>> &inarray,
-                                                    Array<OneD, Array<OneD,NekDouble>> &outarray,
-                                                                        const NekDouble time,
-                                                                        const int       EquationSystemID)
-{
-    ASSERTL1(m_equ[EquationSystemID],"Need to define m_equ[1]");
-    m_equ[EquationSystemID]->DoOdeRhs1(inarray,outarray,time);
-}
 
 }
 }

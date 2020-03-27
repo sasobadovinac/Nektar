@@ -74,7 +74,10 @@ public:
     SOLVER_UTILS_EXPORT inline void DoMultiOrderOdeRhs(const Array<OneD,const Array<OneD, NekDouble>> &inarray,
                                                                    Array<OneD, Array<OneD,NekDouble>> &outarray,
                                                                                            const NekDouble time,
-                                                                              const int       EquationSystemID);
+                                                                              const int       EquationSystemID)
+    {
+        v_DoMultiOrderOdeRhs(inarray,outarray,time,EquationSystemID);
+    }
         
 
     /// Initialise Object
@@ -116,6 +119,14 @@ protected:
     DriverCFS(const LibUtilities::SessionReaderSharedPtr pSession,
            const SpatialDomains::MeshGraphSharedPtr   pGraph,
            const SpatialDomains::MeshGraphSharedPtr   pHigherOrderGraph);
+
+    SOLVER_UTILS_EXPORT virtual void v_DoMultiOrderOdeRhs(const Array<OneD,const Array<OneD, NekDouble>> &inarray,
+                                                                   Array<OneD, Array<OneD,NekDouble>> &outarray,
+                                                                              const NekDouble time,
+                                                                              const int       EquationSystemID)
+    {
+         ASSERTL0(false,"This routine is not valid in this class");
+    }
 
     SOLVER_UTILS_EXPORT virtual void v_InitObject(std::ostream &out = std::cout);
 
