@@ -43,6 +43,7 @@
 
 #include <SolverUtils/CFSSolverUtils.hpp>
 #include <SolverUtils/EquationSystem.h>
+#include<SolverUtils/DriverCFSOperators.hpp>
 
 namespace Nektar
 {
@@ -110,6 +111,8 @@ protected:
 
     ///number of equations
     int m_nequ;
+    
+    SolverUtils::DriverOperators                    m_driverOperator;
 
     ///Evolution Operator
     enum EvolutionOperatorType m_EvolutionOperator;

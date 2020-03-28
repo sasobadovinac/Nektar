@@ -48,8 +48,6 @@
 #include <MultiRegions/GlobalMatrixKey.h>
 #include <LocalRegions/Expansion3D.h>
 #include <LocalRegions/Expansion2D.h>
-#include<SolverUtils/DriverCFSOperators.hpp>  
-#include<SolverUtils/DriverCFS.h> 
 
 
 #define CFS_DEBUGMODE
@@ -77,10 +75,6 @@ namespace Nektar
         /// Function to get estimate of min h/p factor per element
         Array<OneD, NekDouble>  GetElmtMinHP(void);
     protected:
-
-        SolverUtils::DriverOperators                    m_driverOperator;
-
-        SolverUtils::DriverCFSSharedPtr                 m_driver;
 
         SolverUtils::DiffusionSharedPtr     m_diffusion;
         ArtificialDiffusionSharedPtr        m_artificialDiffusion;

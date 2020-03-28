@@ -80,6 +80,9 @@ namespace Nektar
         void DriverCFSAdaptive::v_InitObject(ostream &out)
         {
             DriverCFS::v_InitObject(out);
+
+            m_driverOperator.DefineMultiOrderOdeRhs(&DriverCFS::DoMultiOrderOdeRhs, this);
+            m_equ[0]->SetdriverOperator(m_driverOperator);
         }
     
     

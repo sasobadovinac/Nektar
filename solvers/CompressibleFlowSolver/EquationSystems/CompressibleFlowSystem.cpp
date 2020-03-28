@@ -322,8 +322,6 @@ namespace Nektar
                 }
             }
         }
-
-        m_driverOperator.DefineMultiOrderOdeRhs(&m_driver->DoMultiOrderOdeRhs, this);
     }
 
     /**
@@ -466,7 +464,8 @@ namespace Nektar
     {
         /////////////////////////////////////////////////////////////
         //Yu Pan's Test: bind EquationSystem1's OdeRhs
-        m_driverOperator.DoMultiOrderOdeRhs(inarray,outarray,time);
+        //Why use it here? use it in UnsteadySystem::v_DoSolve()
+        m_EqdriverOperator.DoMultiOrderOdeRhs(inarray,outarray,time);
         /////////////////////////////////////////////////////////////
         int i;
         int nvariables = inarray.num_elements();

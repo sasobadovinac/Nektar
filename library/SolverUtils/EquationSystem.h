@@ -51,6 +51,7 @@
 #include <SolverUtils/SolverUtilsDeclspec.h>
 #include <SolverUtils/Core/Misc.h>
 #include <SolverUtils/Filters/Filter.h>
+#include<SolverUtils/DriverCFSOperators.hpp>  
 
 namespace Nektar
 {
@@ -352,6 +353,11 @@ class Interpolator;
                 std::vector<std::string>                &variables,
                 const  bool                             &flag = false);
 
+            SOLVER_UTILS_EXPORT inline void SetdriverOperator(DriverOperators &in)
+            {
+                m_EqdriverOperator = DriverOperators(in);
+            }
+
         protected:
             ////////////////////////////////////////////////////////////////////
             //Yu Pan's Test codes
@@ -464,6 +470,8 @@ class Interpolator;
             NekLinSysIterativeSharedPtr                 m_linsol;
 
             FilterOperators                             m_FilterOperators;
+            
+            SolverUtils::DriverOperators                m_EqdriverOperator;
 
             /// Number of Quadrature points used to work out the error
             int  m_NumQuadPointsError;
