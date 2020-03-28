@@ -323,7 +323,11 @@ namespace Nektar
             }
         }
 
-        m_driverOperator.DefineMultiOrderOdeRhs(&m_driver->DoMultiOrderOdeRhs, this);
+        //m_driverOperator.DefineMultiOrderOdeRhs(&(m_driver->DoMultiOrderOdeRhs), this);wrong
+        //m_driverOperator.DefineMultiOrderOdeRhs(&CompressibleFlowSystem::v_DoOdeRhs1, this);Ok
+        //m_driverOperator.DefineMultiOrderOdeRhs(&EquationSystem::DoOdeRhs1, this);Ok
+        //m_driverOperator.DefineMultiOrderOdeRhs(m_diffusion->DoMultiOrderOdeRhs, this);wrong
+        m_driverOperator.DefineMultiOrderOdeRhs(&SolverUtils::DriverCFS::DoMultiOrderOdeRhs, m_driver);
     }
 
     /**
