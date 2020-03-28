@@ -180,6 +180,10 @@ namespace Nektar
             int m_CalculateDirectErrorCounter=0;
             NekDouble m_DirectErrorNorm;
             Array<OneD,NekDouble> m_DirectErrorNormArray;
+            Array<OneD,Array<OneD,NekDouble>> m_DirectError;
+            int m_CalculateSpatialErrorCounter=0;
+            bool m_CalculateSpatialErrorFlag=false;
+            Array<OneD,Array<OneD,NekDouble>> m_SpatialError;
             ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
             int m_CalcuPrecMatCounter  = std::numeric_limits<int>::max();

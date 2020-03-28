@@ -462,11 +462,6 @@ namespace Nektar
               Array<OneD,       Array<OneD, NekDouble> > &outarray,
         const NekDouble                                   time)
     {
-        /////////////////////////////////////////////////////////////
-        //Yu Pan's Test: bind EquationSystem1's OdeRhs
-        //Why use it here? use it in UnsteadySystem::v_DoSolve()
-        m_EqdriverOperator.DoMultiOrderOdeRhs(inarray,outarray,time);
-        /////////////////////////////////////////////////////////////
         int i;
         int nvariables = inarray.num_elements();
         int npoints    = GetNpoints();
@@ -603,6 +598,25 @@ namespace Nektar
                 }
             }
         }
+
+        /////////////////////////////////////////////////////////////
+        //Yu Pan's Test: bind EquationSystem1's OdeRhs
+        //Why use it here? use it in UnsteadySystem::v_DoSolve()
+        if( m_CalculateSpatialErrorFlag)
+        {
+             Array<OneD,Array<OneD,NekDouble>> MultiOrderRhs(nvariables);
+            for(int i=0;i<nvariables;i++)
+            {
+                //Multi order Quad points need to be the same
+                MultiOrderRhs[i]=Array<OneD,NekDouble>(npoints,0.0);
+            }
+            m_EqdriverOperator.DoMultiOrderOdeRhs(inarray,MultiOrderRhs,time);
+            for(int i=0;i<nvariables;i++)
+            {
+                Vmath::Vsub(npoints,outarray[i],1,MultiOrderRhs[i],1,m_SpatialError[i],1);   
+            }
+        }
+        /////////////////////////////////////////////////////////////
     }
 
     /**

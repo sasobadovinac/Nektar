@@ -364,6 +364,12 @@ class Interpolator;
             bool                                        m_IfHigherOrderFlag=false;
 
             int                                         m_DirectErrorFreezNumber;
+
+            int                                         m_SpatialErrorFreezNumber;
+
+            int                                         m_ExtractRhsPerNTimeSteps;
+
+            int                                         m_ExtractRhsPerNStages;
             //////////////////////////////////////////////////////////////////////
             /// Temparary factor to determine whether strong/weak
             bool                                        m_useUnifiedWeakIntegration  =   false;
@@ -416,10 +422,6 @@ class Interpolator;
             int                                        m_JFNKTimeAccurate;
                         
             int                                         m_PrcdMatFreezNumb;
-
-            int                                         m_ExtractRhsPerNTimeSteps;
-
-            int                                         m_ExtractRhsPerNStages;
 
             /// preconditioning steps
             int                                         m_JFNKPrecondStep;

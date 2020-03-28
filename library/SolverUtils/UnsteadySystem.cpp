@@ -152,6 +152,17 @@ namespace Nektar
                     GetFilterFactory().CreateInstance(
                         x.first, m_session, x.second));
             }
+            
+            if(m_SpatialErrorFreezNumber>0)
+            {
+                int nvariables=GetNvariables();
+                m_SpatialError=Array<OneD,Array<OneD,NekDouble>>(nvariables);
+                for(int i=0;i<nvariables;i++)
+                {
+                    int npoints=m_fields[i]->GetNpoints();
+                    m_SpatialError[i]=Array<OneD,NekDouble>(npoints,0.0);
+                }
+            }
         }
 
         /**
@@ -410,6 +421,20 @@ namespace Nektar
                     }
                 }
 
+                if(m_SpatialErrorFreezNumber>0)
+                {
+                    if(0==step || m_CalculateSpatialErrorCounter>=(m_SpatialErrorFreezNumber-1))
+                    {
+                        m_CalculateSpatialErrorFlag=true;
+                        m_CalculateSpatialErrorCounter=0;
+                    }
+                    else
+                    {
+                        m_CalculateSpatialErrorFlag=false;
+                        m_CalculateSpatialErrorCounter++;
+                    }
+                }
+
                 fields = m_intScheme->TimeIntegrate(
                     stepCounter, m_timestep, m_intSoln, m_ode);
                 
@@ -420,14 +445,14 @@ namespace Nektar
                 if(m_DirectErrorFreezNumber>0)
                 {
                         m_DirectErrorNormArray=Array<OneD, NekDouble> (nvariables,0.0);
+                        m_DirectError=Array<OneD,Array<OneD,NekDouble>>(nvariables);
                         for(int i = 0; i < nvariables; i++)
                         {
                             int npoints=m_fields[i]->GetNpoints();
-                            Array<OneD,NekDouble> tmp;
                             //For time step, no need FwdTrans, but for Tolerance adaptivity, need transfer to coeffs space
                             //m_fields[i]->FwdTrans(m_intScheme->GetIntegrationSchemeVector()[0]->GetLocalErrorVector()[i],tmp);
-                            tmp=m_intScheme->GetIntegrationSchemeVector()[0]->GetDirectErrorVector()[i];
-                            m_DirectErrorNormArray[i] = Vmath::Dot(npoints,tmp,tmp);
+                            m_DirectError[i]=m_intScheme->GetIntegrationSchemeVector()[0]->GetDirectErrorVector()[i];
+                            m_DirectErrorNormArray[i] = Vmath::Dot(npoints,m_DirectError[i],m_DirectError[i]);
                         }
                         m_comm->AllReduce(m_DirectErrorNormArray, Nektar::LibUtilities::ReduceSum);
                         NekDouble ErrorNorm =0.0;
@@ -441,7 +466,19 @@ namespace Nektar
                             m_DirectErrorNormArray[i]=sqrt(m_DirectErrorNormArray[i]);
                         }
                 }
-              
+
+                //Calculate Spatial Error:m_SpatialError
+                if(m_SpatialErrorFreezNumber>0&&m_DirectErrorFreezNumber>0)
+                {
+                    //To Do: compare spatial error and time integration error to adapt time step
+                    Array<OneD,NekDouble>tmp1;
+                    Array<OneD,NekDouble>tmp2;
+                    for(int i=0;i<nvariables;i++)
+                    {
+                        tmp1=m_DirectError[i];
+                        tmp2=m_SpatialError[i];
+                    }
+                }
                 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
                 timer.Stop();
 
