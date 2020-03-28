@@ -87,7 +87,7 @@ namespace Nektar
 
     NavierStokesCFE(const LibUtilities::SessionReaderSharedPtr& pSession,
                     const SpatialDomains::MeshGraphSharedPtr& pGraph);
-    
+
     void GetViscousFluxVectorConservVar(
         const int                                                       nConvectiveFields,
         const int                                                       nDim,

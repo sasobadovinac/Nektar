@@ -1031,6 +1031,8 @@ namespace Nektar
         {
             Vmath::Vcopy(npoints, inarray[j],1,m_MatrixFreeRefFields[j],1);
         }
+
+        m_diffusion->SetRefFields(m_MatrixFreeRefFields);
     }
 
     void CompressibleFlowSystem::AddMatNSBlkDiag_volume(
