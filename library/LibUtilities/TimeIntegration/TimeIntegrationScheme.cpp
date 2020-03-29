@@ -37,6 +37,8 @@
 #include <LibUtilities/BasicConst/NektarUnivConsts.hpp>
 #include <iostream>
 #include <math.h>
+#include <fstream>
+#include <iomanip>  
 
 namespace Nektar
 {
@@ -1999,7 +2001,16 @@ namespace Nektar
                     {
                         // cout << "(i==0) && m_firstStageEqualsOldSolution "<<i<<endl;
                         op.DoProjection(m_Y,m_Y,m_T);
-                        op.DoOdeRhs(m_Y, m_F[i], m_T);        
+                        op.DoOdeRhs(m_Y, m_F[i], m_T);      
+                        cout<<"$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$"<<endl;
+                        cout<<"Real Integrate"<<endl;  
+                        for(int m=0;m<m_nvar;m++)
+                        {    cout<<"Var["<<m<<"]"<<endl;
+                            for(int n=0;n<m_npoints;n++)
+                            {
+                                cout<<std::setprecision(16)<<m_F[0][m][n]<<endl;
+                            }
+                        }
                     }
                     else
                     {

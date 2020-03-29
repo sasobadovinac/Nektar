@@ -427,12 +427,58 @@ namespace Nektar
                 }
                 
                 //Need to be careful, separate the Realtime and PairedIntegration
+                //Do the calulation before TimeIntegrate, because in TimeIntegrate is also Dirk4-Dirk3 before RealTime Integrate
+                //To Do, check if DoOdeRhs1 is the same as the first stage derivative in TimeIntegrate
                 if(m_SpatialErrorFreezNumber>0)
                 {
                     if(0==step || m_CalculateSpatialErrorCounter>=(m_SpatialErrorFreezNumber-1))
                     {
+                        //Because only research on One Step Runge-Kutta scheme!!!, so [0]
+                        Array<OneD,Array<OneD,NekDouble>> IntegrationSolutiontmp=m_intSoln->GetSolutionVector()[0];
+                        Array<OneD,Array<OneD,NekDouble>> CurrentOrderRhs(nvariables);
+                        Array<OneD,Array<OneD,NekDouble>> MultiOrderRhs(nvariables);
+                        for(int i=0;i<nvariables;i++)
+                        {
+                            int npoints=m_fields[i]->GetNpoints();
+                            //Multi order Quad points need to be the same
+                            CurrentOrderRhs[i]=Array<OneD,NekDouble>(npoints,0.0);
+                            MultiOrderRhs[i]=Array<OneD,NekDouble>(npoints,0.0);
+                        }
+                        //To Do: be careful if high order m_equ calculate the repeated error.
+                        DoOdeRhs1(IntegrationSolutiontmp,CurrentOrderRhs,m_time);
+                        m_EqdriverOperator.DoMultiOrderOdeRhs(IntegrationSolutiontmp,MultiOrderRhs,m_time);
+                        for(int i=0;i<nvariables;i++)
+                        {
+                            int npoints=m_fields[i]->GetNpoints();
+                            Vmath::Vsub(npoints,CurrentOrderRhs[i],1,MultiOrderRhs[i],1,m_SpatialError[i],1);   
+                        }        
+                        // Seems no need to set this figure now        
                         m_CalculateSpatialErrorFlag=true;
                         m_CalculateSpatialErrorCounter=0;
+                        cout<<"$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$"<<endl;
+                        cout<<"Current Order"<<endl;  
+                        for(int m=0;m<nvariables;m++)
+                        {   
+                            cout<<"Var["<<m<<"]"<<endl;
+                            int npoints=m_fields[m]->GetNpoints();
+                            for(int n=0;n<npoints;n++)
+                            {
+                                cout<<std::setprecision(16)<<CurrentOrderRhs[m][n]<<endl;
+                            }
+                        }
+                        
+                        cout<<"$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$"<<endl;
+                        cout<<"Multi Order"<<endl;  
+                        for(int m=0;m<nvariables;m++)
+                        {   
+                            cout<<"Var["<<m<<"]"<<endl;
+                            int npoints=m_fields[m]->GetNpoints();
+                            ASSERTL0(npoints==MultiOrderRhs[m].num_elements(),"Wrong Quad setting");
+                            for(int n=0;n<npoints;n++)
+                            {
+                                cout<<std::setprecision(16)<<MultiOrderRhs[m][n]<<endl;
+                            }
+                        }
                     }
                     else
                     {
