@@ -407,7 +407,10 @@ namespace Nektar
 
                 m_StagesPerStep = 0;
                 m_TotLinItePerStep = 0;
+                
 
+                //////////////////////////////////////////////////////////////////////////
+                //Yu Pan's Test
                 if(m_DirectErrorFreezNumber>0)
                 {
                     if(0==step || m_CalculateDirectErrorCounter>=(m_DirectErrorFreezNumber-1))
@@ -417,10 +420,13 @@ namespace Nektar
                     }
                     else
                     {
+                        //To do: In time integration,it will be set false after calculating, no need update false,
+                        //but need check if repeated calculation
                         m_CalculateDirectErrorCounter++;
                     }
                 }
-
+                
+                //Need to be careful, separate the Realtime and PairedIntegration
                 if(m_SpatialErrorFreezNumber>0)
                 {
                     if(0==step || m_CalculateSpatialErrorCounter>=(m_SpatialErrorFreezNumber-1))
@@ -430,10 +436,10 @@ namespace Nektar
                     }
                     else
                     {
-                        m_CalculateSpatialErrorFlag=false;
                         m_CalculateSpatialErrorCounter++;
                     }
                 }
+                /////////////////////////////////////////////////////////////////////
 
                 fields = m_intScheme->TimeIntegrate(
                     stepCounter, m_timestep, m_intSoln, m_ode);
@@ -468,7 +474,7 @@ namespace Nektar
                 }
 
                 //Calculate Spatial Error:m_SpatialError
-                if(m_SpatialErrorFreezNumber>0&&m_DirectErrorFreezNumber>0)
+                if(m_SpatialErrorFreezNumber>0 && m_DirectErrorFreezNumber>0)
                 {
                     //To Do: compare spatial error and time integration error to adapt time step
                     Array<OneD,NekDouble>tmp1;

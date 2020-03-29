@@ -602,18 +602,24 @@ namespace Nektar
         /////////////////////////////////////////////////////////////
         //Yu Pan's Test: bind EquationSystem1's OdeRhs
         //Why use it here? use it in UnsteadySystem::v_DoSolve()
-        if( m_CalculateSpatialErrorFlag)
+        //Need to be careful, Use in RealTimeStep Simulation
+        bool RealTimeStepFlag=m_intScheme->GetIntegrationSchemeVector()[0]->IfRealTimeStepState();
+        if(RealTimeStepFlag)
         {
-             Array<OneD,Array<OneD,NekDouble>> MultiOrderRhs(nvariables);
-            for(int i=0;i<nvariables;i++)
+            if( m_CalculateSpatialErrorFlag)
             {
-                //Multi order Quad points need to be the same
-                MultiOrderRhs[i]=Array<OneD,NekDouble>(npoints,0.0);
-            }
-            m_EqdriverOperator.DoMultiOrderOdeRhs(inarray,MultiOrderRhs,time);
-            for(int i=0;i<nvariables;i++)
-            {
-                Vmath::Vsub(npoints,outarray[i],1,MultiOrderRhs[i],1,m_SpatialError[i],1);   
+                Array<OneD,Array<OneD,NekDouble>> MultiOrderRhs(nvariables);
+                for(int i=0;i<nvariables;i++)
+                {
+                    //Multi order Quad points need to be the same
+                    MultiOrderRhs[i]=Array<OneD,NekDouble>(npoints,0.0);
+                }
+                //To Do: be careful if high order m_equ calculate the repeated error.
+                m_EqdriverOperator.DoMultiOrderOdeRhs(inarray,MultiOrderRhs,time);
+                for(int i=0;i<nvariables;i++)
+                {
+                    Vmath::Vsub(npoints,outarray[i],1,MultiOrderRhs[i],1,m_SpatialError[i],1);   
+                }
             }
         }
         /////////////////////////////////////////////////////////////
