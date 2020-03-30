@@ -91,16 +91,6 @@ class Interpolator;
             {
                 v_DoOdeRhs1(inarray,outarray,time);
             }
-
-            SOLVER_UTILS_EXPORT void SetIfHigherOrderFlag(bool IfHigherOrderFlag)
-            {
-                m_IfHigherOrderFlag=IfHigherOrderFlag;
-            }
-
-            SOLVER_UTILS_EXPORT bool GetIfHigherOrderFlag()
-            {
-                return m_IfHigherOrderFlag;
-            }
             ///////////////////////////////////////////////////////
             
             // Set up trace normals if required
@@ -361,7 +351,7 @@ class Interpolator;
         protected:
             ////////////////////////////////////////////////////////////////////
             //Yu Pan's Test codes
-            bool                                        m_IfHigherOrderFlag=false;
+            bool                                        m_ErrorBasedAdaptedTimeStepFlag=false;
 
             int                                         m_DirectErrorFreezNumber;
 

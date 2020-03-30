@@ -1518,7 +1518,8 @@ namespace Nektar
                     ASSERTL0(1==solvector->GetSolutionVector().num_elements(),"Test for one-step scheme");
                     for(int i=0;i<m_DirectError.num_elements();i++)
                     {
-                        Vmath::Vsub(npoints,m_DirectError[i],1,solvector_new->GetSolutionVector()[0][i],1,m_DirectError[i],1);                       
+                        Vmath::Vsub(npoints,m_DirectError[i],1,solvector_new->GetSolutionVector()[0][i],1,m_DirectError[i],1);   
+                        Vmath::Vabs(npoints,m_DirectError[i],1,m_DirectError[i],1);                    
                         //To do: here is a method that calculate the scale of t, because currently there are two methods in plan, please check if confused use
                         //1.If choose the strategy direct using DirectError at scaled timestep multiply a scale
                         //Vmath::Smul(npoints,scale,m_DirectError[i],1,m_DirectError[i],1);

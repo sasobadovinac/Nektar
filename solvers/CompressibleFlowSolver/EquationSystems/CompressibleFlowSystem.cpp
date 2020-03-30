@@ -137,15 +137,6 @@ namespace Nektar
         }
         
 
-        // int tmp;
-        // m_session->LoadParameter("IfHigherOrderFlag",    tmp   ,  0);
-        // m_IfHigherOrderFlag=false;
-        // if(1==tmp)
-        // {
-        //     m_IfHigherOrderFlag=true;
-        // }
-        
-
         if (m_explicitAdvection)
         {
             m_ode.DefineOdeRhs    (&CompressibleFlowSystem::DoOdeRhs, this);

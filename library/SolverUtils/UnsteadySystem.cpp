@@ -156,6 +156,7 @@ namespace Nektar
             if(m_SpatialErrorFreezNumber>0)
             {
                 int nvariables=GetNvariables();
+                m_SpatialErrorNormArray=Array<OneD, NekDouble> (nvariables,0.0);
                 m_SpatialError=Array<OneD,Array<OneD,NekDouble>>(nvariables);
                 for(int i=0;i<nvariables;i++)
                 {
@@ -402,34 +403,60 @@ namespace Nektar
                ////////////////////////////////////////////////////////////////
                //Yu Pan's test
                //Do Time Adaptivity
-               //First step hav not calcualted error
-                if (m_initialStep!=step && m_SpatialErrorFreezNumber>0 && m_DirectErrorFreezNumber>0)
+               //First step have not calcualted error
+                    int tmp;
+                m_session->LoadParameter("ErrorBasedAdaptedTimeStepFlag",    tmp   ,  0);
+                m_ErrorBasedAdaptedTimeStepFlag=false;
+                if(1==tmp)
                 {
+                    m_ErrorBasedAdaptedTimeStepFlag=true;
+                }
+                if (m_ErrorBasedAdaptedTimeStepFlag && m_initialStep!=step && m_SpatialErrorFreezNumber>0 && m_DirectErrorFreezNumber>0)
+                {
+
+                    //////////////////////////////////////////////////////////////////////
+                    //This method too small!
+                    // int TemporalOrder=m_intScheme->GetIntegrationSchemeVector()[0]->GetTimeIntegrationSchemeOrder();
+                    // Array<OneD,NekDouble> timestepArray(nvariables,0.0);
+                    // //Compare spatial error and time integration error to adapt time step
+                    // NekDouble oTimeStep=1.0/m_timestep;
+                    // NekDouble oTimeStepPow=pow(m_timestep,TemporalOrder);
+                    // oTimeStepPow=1.0/oTimeStepPow;
+                    // NekDouble oTimeStepPow_PlusOne=pow(m_timestep,TemporalOrder+1);   
+                    // oTimeStepPow_PlusOne=1.0/oTimeStepPow_PlusOne;                
+                    // Array<OneD,NekDouble>tmp1;
+                    // Array<OneD,NekDouble>tmp2;
+
+                    // for(int i=0;i<nvariables;i++)
+                    // {
+                    //     int npoints=m_fields[i]->GetNpoints();
+                    //     tmp1=Array<OneD,NekDouble> (npoints,0.0);
+                    //     tmp2=Array<OneD,NekDouble> (npoints,0.0);
+                    //     Vmath::Smul(npoints,oTimeStep,m_SpatialError[i],1,tmp1,1);
+                    //     Vmath::Smul(npoints,oTimeStepPow_PlusOne,m_DirectError[i],1,tmp2,1);
+                    //     for(int j=0;j<npoints;j++)
+                    //     {
+                    //         tmp1[j]=pow(tmp1[j]/tmp2[j],1.0/TemporalOrder);
+                    //     }
+                    //     timestepArray[i]=Vmath::Vmin(npoints,tmp1,1);
+                    // }
+                    
+                    // m_timestep=Vmath::Vmin(nvariables,timestepArray,1);
+                    ///////////////////////////////////////////////////////////////////////
                     int TemporalOrder=m_intScheme->GetIntegrationSchemeVector()[0]->GetTimeIntegrationSchemeOrder();
                     Array<OneD,NekDouble> timestepArray(nvariables,0.0);
-                    //Compare spatial error and time integration error to adapt time step
                     NekDouble oTimeStep=1.0/m_timestep;
                     NekDouble oTimeStepPow=pow(m_timestep,TemporalOrder);
                     oTimeStepPow=1.0/oTimeStepPow;
                     NekDouble oTimeStepPow_PlusOne=pow(m_timestep,TemporalOrder+1);   
                     oTimeStepPow_PlusOne=1.0/oTimeStepPow_PlusOne;                
-                    Array<OneD,NekDouble>tmp1;
-                    Array<OneD,NekDouble>tmp2;
-
                     for(int i=0;i<nvariables;i++)
                     {
-                        int npoints=m_fields[i]->GetNpoints();
-                        tmp1=Array<OneD,NekDouble> (npoints,0.0);
-                        tmp2=Array<OneD,NekDouble> (npoints,0.0);
-                        Vmath::Smul(npoints,oTimeStep,m_SpatialError[i],1,tmp1,1);
-                        Vmath::Smul(npoints,oTimeStepPow_PlusOne,m_DirectError[i],1,tmp2,1);
-                        for(int j=0;j<npoints;j++)
-                        {
-                            tmp1[j]=pow(tmp1[j]/tmp2[j],1.0/TemporalOrder);
-                        }
-                        timestepArray[i]=Vmath::Vmin(npoints,tmp1,1);
+                        NekDouble tmp1,tmp2;
+                        tmp1=oTimeStep*m_SpatialErrorNormArray[i];
+                        tmp2=oTimeStepPow_PlusOne*m_DirectErrorNormArray[i];
+                        timestepArray[i]=pow(tmp1/tmp2,1.0/TemporalOrder);
                     }
-                    
                     m_timestep=Vmath::Vmin(nvariables,timestepArray,1);
 
                     if (m_time + m_timestep > m_fintime && m_fintime > 0.0)
@@ -499,7 +526,6 @@ namespace Nektar
                             Vmath::Vabs(npoints,m_SpatialError[i],1,m_SpatialError[i],1);
                         }        
 
-                        m_SpatialErrorNormArray=Array<OneD, NekDouble> (nvariables,0.0);
                         for(int i = 0; i < nvariables; i++)
                         {
                             int npoints=m_fields[i]->GetNpoints();
