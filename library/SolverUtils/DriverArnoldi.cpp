@@ -88,7 +88,8 @@ void DriverArnoldi::v_InitObject(ostream &out)
         {
             // Determine number of BS-BC fields the solve is supporting;
             // = 0 if uncommented functions in DriverModifiedArnoldi.cpp
-            m_nBSBCFields = 2; 
+            m_equ[0]->v_nDOF(m_nBSBCFields);
+            m_nBSBCFields = 2*m_nBSBCFields; 
         }
         else
         {

@@ -352,6 +352,9 @@ class Interpolator;
             /// Virtual function to get BS-BC flag
             SOLVER_UTILS_EXPORT virtual bool v_CheckBSBC();
 
+            /// Virtual function to get nb of DOF for BS-BC
+            SOLVER_UTILS_EXPORT virtual void v_nDOF(int &nDOF);
+
             /// Virtual function to get BS-BC flag
             SOLVER_UTILS_EXPORT virtual bool v_SetMoment(bool &isMomentA, bool &isMomentB);
             

@@ -280,6 +280,9 @@ namespace Nektar
         /// Set BSBC flag
         virtual bool v_CheckBSBC();
 
+        /// Get number of structural DOF for BSBC
+        virtual void v_nDOF(int &nDOF); 
+
         /// Set moments flags
         virtual bool v_SetMoment(bool &isMomentA, bool &isMomentB);
 

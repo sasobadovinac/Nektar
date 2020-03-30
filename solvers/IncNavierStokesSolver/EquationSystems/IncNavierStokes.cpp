@@ -819,12 +819,10 @@ namespace Nektar
                 m_bsbcParams->m_filterForces->GetTotalForces(m_fields, aeroForces, time);
 
                 // Shift force storage
-                NekDouble tmp = m_bsbcParams->m_force[i][m_intSteps-1];
                 for(int n = m_bsbcParams->m_intSteps-1; n > 0; --n)
                 {
                     m_bsbcParams->m_force[i][n] = m_bsbcParams->m_force[i][n-1];
                 }
-                m_bsbcParams->m_force[i][0] = tmp;
 
                 // Calculate total force
                 m_bsbcParams->m_force[i][0] = aeroForces[i] -
@@ -832,13 +830,10 @@ namespace Nektar
                         - m_bsbcParams->m_C[i] * m_bsbcParams->m_dofVel[i][0];
 
                 // Rotate velocity storage, keeping value of velocity[0]
-                m_bsbcParams->m_dofVel[i][m_intSteps-1] = m_bsbcParams->m_dofVel[i][0];
-                tmp = m_bsbcParams->m_dofVel[i][m_intSteps-1];
                 for(int n = m_bsbcParams->m_intSteps-1; n > 0; --n)
                 {
                     m_bsbcParams->m_dofVel[i][n] = m_bsbcParams->m_dofVel[i][n-1];
                 }
-                m_bsbcParams->m_dofVel[i][0] = tmp;
 
                 // Update velocity
                 for(int j = 0; j < order; ++j)
@@ -1124,39 +1119,38 @@ namespace Nektar
                         // Apply BSBC correction
                         if (i<nvel)
                         {
-                                // Scale file with new m_angle and m_angleVel
-                                // Compute (-1)* base flow gradient times angle:
-                                Vmath::Smul(BndExp[n]->GetTotPoints(), m_bsbcParams->m_dof[2], 
-                                    m_bsbcParams->m_deltaGradBnd[i], 1, 
-                                    BndExp[n]->UpdatePhys(), 1);
-                                // add base flow gradient times x-wise vel:
-                                Vmath::Svtvp(BndExp[n]->GetTotPoints(), -1 * m_bsbcParams->m_dof[0], 
-                                    m_bsbcParams->m_GradBaseBnd[2*i], 1, 
-                                    BndExp[n]->GetPhys(), 1, BndExp[n]->UpdatePhys(), 1);
-                                // Substract base flow gradient times y-wise vel:
-                                Vmath::Svtvp(BndExp[n]->GetTotPoints(), -1 * m_bsbcParams->m_dof[1], 
-                                    m_bsbcParams->m_GradBaseBnd[2*i+1], 1, 
-                                    BndExp[n]->GetPhys(), 1, BndExp[n]->UpdatePhys(), 1);
+                            // Scale file with new m_angle and m_angleVel
+                            // POSITION FACTOR
+                            // Compute [(-1)* delta_theta Gamma . base flow gradient] times angle:
+                            Vmath::Smul(BndExp[n]->GetTotPoints(), m_bsbcParams->m_dof[2], 
+                                m_bsbcParams->m_deltaGradBnd[i], 1, 
+                                BndExp[n]->UpdatePhys(), 1);
+                            // add [(-1)* delta_x Gamma . base flow gradient] times x-wise disp:
+                            Vmath::Svtvp(BndExp[n]->GetTotPoints(), -1 * m_bsbcParams->m_dof[0], 
+                                m_bsbcParams->m_GradBaseBnd[2*i], 1, 
+                                BndExp[n]->GetPhys(), 1, BndExp[n]->UpdatePhys(), 1);
+                            // add [(-1)* delta_y Gamma . base flow gradient] times y-wise disp:
+                            Vmath::Svtvp(BndExp[n]->GetTotPoints(), -1 * m_bsbcParams->m_dof[1], 
+                                m_bsbcParams->m_GradBaseBnd[2*i+1], 1, 
+                                BndExp[n]->GetPhys(), 1, BndExp[n]->UpdatePhys(), 1);
 
-                                // Add angular velocity:
-                                Vmath::Svtvp(BndExp[n]->GetTotPoints(), m_bsbcParams->m_dofVel[2][0], 
-                                    m_bsbcParams->m_deltaGammaBnd[i], 1, 
-                                    BndExp[n]->GetPhys(), 1, 
-                                    BndExp[n]->UpdatePhys(), 1);
-                                // Add x-wise velocity:
-                                if(i==0)
-                                {
-                                    Vmath::Sadd(BndExp[n]->GetTotPoints(), m_bsbcParams->m_dofVel[0][0], 
-                                    BndExp[n]->GetPhys(), 1, 
-                                    BndExp[n]->UpdatePhys(), 1);
-                                }
-                                // Add y-wise velocity:
-                                if(i==1)
-                                {
-                                    Vmath::Sadd(BndExp[n]->GetTotPoints(), m_bsbcParams->m_dofVel[1][0], 
-                                    BndExp[n]->GetPhys(), 1, 
-                                    BndExp[n]->UpdatePhys(), 1);
-                                } 
+                            // VELOCITY FACTOR
+                            // Add angular velocity:
+                            Vmath::Svtvp(BndExp[n]->GetTotPoints(), m_bsbcParams->m_dofVel[2][0], 
+                                m_bsbcParams->m_deltaGammaBnd[i], 1, 
+                                BndExp[n]->GetPhys(), 1, 
+                                BndExp[n]->UpdatePhys(), 1);
+                            // Add x-wise and y-wise velocity:
+                            Vmath::Sadd(BndExp[n]->GetTotPoints(), m_bsbcParams->m_dofVel[i][0], 
+                                BndExp[n]->GetPhys(), 1, 
+                                BndExp[n]->UpdatePhys(), 1);
+                            // Add y-wise velocity:
+                            // if(i==1)
+                            // {
+                            //     Vmath::Sadd(BndExp[n]->GetTotPoints(), m_bsbcParams->m_dofVel[1][0], 
+                            //     BndExp[n]->GetPhys(), 1, 
+                            //     BndExp[n]->UpdatePhys(), 1);
+                            // } 
                         }
                     }
                 }
@@ -1469,8 +1463,8 @@ namespace Nektar
 
         // Position :
         m_bsbcParams->m_dof           = Array<OneD,NekDouble> (3, 0.0);
-        m_bsbcParams->m_dofVel        = Array<OneD, Array<OneD, NekDouble> >(3);
-        m_bsbcParams->m_force         = Array<OneD, Array<OneD,NekDouble>> (3);
+        m_bsbcParams->m_dofVel        = Array<OneD, Array<OneD, NekDouble>> (3);
+        m_bsbcParams->m_force         = Array<OneD, Array<OneD, NekDouble>> (3);
         for (int i = 0; i < 3; ++i)
         {
             m_bsbcParams->m_force[i]  = Array<OneD, NekDouble> (m_intSteps , 0.0);
@@ -1686,18 +1680,23 @@ namespace Nektar
                             m_bsbcParams->m_deltaGammaBnd[i] = Array<OneD, NekDouble> (BndExp[n]->GetTotPoints());
                             m_bsbcParams->m_deltaGradBnd[i] = Array<OneD, NekDouble> (BndExp[n]->GetTotPoints());
 
-                            m_bsbcParams->m_GradBaseBnd[i] = Array<OneD, NekDouble> (BndExp[n]->GetTotPoints());
-                            m_fields[i]->ExtractPhysToBnd(n, m_advObject->GetGradBase()[i], m_bsbcParams->m_GradBaseBnd[i]);
+                            m_bsbcParams->m_GradBaseBnd[2*i] = Array<OneD, NekDouble> (BndExp[n]->GetTotPoints());
+                            m_bsbcParams->m_GradBaseBnd[2*i+1] = Array<OneD, NekDouble> (BndExp[n]->GetTotPoints());
+                            
+                            m_fields[i]->ExtractPhysToBnd(n, m_advObject->GetGradBase()[2*i], 
+                                m_bsbcParams->m_GradBaseBnd[2*i]);
+                            m_fields[i]->ExtractPhysToBnd(n, m_advObject->GetGradBase()[2*i+1], 
+                                m_bsbcParams->m_GradBaseBnd[2*i+1]);
 
                             // Get coordinate and values on boundary
                             m_fields[i]->ExtractPhysToBnd(n, deltaGrad[i], m_bsbcParams->m_deltaGradBnd[i]);
                             m_fields[i]->ExtractPhysToBnd(n, deltaGamma[i], m_bsbcParams->m_deltaGammaBnd[i]);
                         }
-                        if (i<nvel*nvel)
-                        {
-                            m_bsbcParams->m_GradBaseBnd[i] = Array<OneD, NekDouble> (BndExp[n]->GetTotPoints());
-                            m_fields[i]->ExtractPhysToBnd(n, m_advObject->GetGradBase()[i], m_bsbcParams->m_GradBaseBnd[i]);
-                        }
+                        // if (i<nvel*nvel)
+                        // {
+                        //     m_bsbcParams->m_GradBaseBnd[i] = Array<OneD, NekDouble> (BndExp[n]->GetTotPoints());
+                        //     m_fields[i]->ExtractPhysToBnd(n, m_advObject->GetGradBase()[i], m_bsbcParams->m_GradBaseBnd[i]);
+                        // }
                     }
                 }
             }
@@ -1790,6 +1789,18 @@ namespace Nektar
     {
         return m_BlowingSuction;
     }
+
+    /**
+     *  
+     */
+    void IncNavierStokes::v_nDOF(int &nDOF)
+    {
+        for(int i=0 ; i<3 ; ++i)
+        {
+            nDOF += m_bsbcParams->m_DOF[i];
+        }
+    }
+
 
     /**
      *  

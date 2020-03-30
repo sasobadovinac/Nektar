@@ -1093,6 +1093,17 @@ namespace Nektar
          * Virtual function defined in IncNavierStokes for 
          * Blowing/Suction boundary conditions type
          */
+        void EquationSystem::v_nDOF(int &nDOF)
+        {
+            bool condition = false;
+            ASSERTL0(condition,
+                "Blowing/Suction BS's only implemented to Direct solver yet.");
+        }
+
+         /**
+         * Virtual function defined in IncNavierStokes for 
+         * Blowing/Suction boundary conditions type
+         */
         bool EquationSystem::v_SetMoment(bool &isMomentA, bool &isMomentB)
         {
             bool condition = false;
