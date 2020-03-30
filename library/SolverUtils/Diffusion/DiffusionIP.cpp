@@ -393,12 +393,12 @@ namespace Nektar
                 inarraytmp = m_RefFields;
                 Array<OneD, Array<OneD, NekDouble> >    RefFwd(nConvectiveFields);
                 Array<OneD, Array<OneD, NekDouble> >    RefBwd(nConvectiveFields);
-                for (i = 0; i < nConvectiveFields; ++i)
+                for (int i = 0; i < nConvectiveFields; ++i)
                 {
                     RefFwd[i]    =   Array<OneD, NekDouble>(nTracePts,0.0);
                     RefBwd[i]    =   Array<OneD, NekDouble>(nTracePts,0.0);
                 }
-                for (i = 0; i < nConvectiveFields; ++i)
+                for (int i = 0; i < nConvectiveFields; ++i)
                 {
                     fields[i]->GetFwdBwdTracePhys(inarraytmp[i], RefFwd[i], RefBwd[i]);
                 }
