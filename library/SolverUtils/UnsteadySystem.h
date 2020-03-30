@@ -183,6 +183,8 @@ namespace Nektar
             Array<OneD,Array<OneD,NekDouble>> m_DirectError;
             int m_CalculateSpatialErrorCounter=0;
             bool m_CalculateSpatialErrorFlag=false;
+            NekDouble m_SpatialErrorNorm;
+            Array<OneD,NekDouble> m_SpatialErrorNormArray;
             Array<OneD,Array<OneD,NekDouble>> m_SpatialError;
             ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 

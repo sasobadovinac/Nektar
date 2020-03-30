@@ -402,7 +402,8 @@ namespace Nektar
                ////////////////////////////////////////////////////////////////
                //Yu Pan's test
                //Do Time Adaptivity
-                if (step>0 && m_SpatialErrorFreezNumber>0 && m_DirectErrorFreezNumber>0)
+               //First step hav not calcualted error
+                if (m_initialStep!=step && m_SpatialErrorFreezNumber>0 && m_DirectErrorFreezNumber>0)
                 {
                     int TemporalOrder=m_intScheme->GetIntegrationSchemeVector()[0]->GetTimeIntegrationSchemeOrder();
                     Array<OneD,NekDouble> timestepArray(nvariables,0.0);
@@ -414,7 +415,7 @@ namespace Nektar
                     oTimeStepPow_PlusOne=1.0/oTimeStepPow_PlusOne;                
                     Array<OneD,NekDouble>tmp1;
                     Array<OneD,NekDouble>tmp2;
-                    
+
                     for(int i=0;i<nvariables;i++)
                     {
                         int npoints=m_fields[i]->GetNpoints();
@@ -497,6 +498,27 @@ namespace Nektar
                             //Better to Abs, because DirectError also positive
                             Vmath::Vabs(npoints,m_SpatialError[i],1,m_SpatialError[i],1);
                         }        
+
+                        m_SpatialErrorNormArray=Array<OneD, NekDouble> (nvariables,0.0);
+                        for(int i = 0; i < nvariables; i++)
+                        {
+                            int npoints=m_fields[i]->GetNpoints();
+                            //For time step, no need FwdTrans, but for Tolerance adaptivity, need transfer to coeffs space
+                            //m_fields[i]->FwdTrans(m_intScheme->GetIntegrationSchemeVector()[0]->GetLocalErrorVector()[i],tmp);
+                            Array<OneD,NekDouble> tmp=m_SpatialError[i];
+                            m_SpatialErrorNormArray[i] = Vmath::Dot(npoints,m_SpatialError[i],m_SpatialError[i]);
+                        }
+                        m_comm->AllReduce(m_SpatialErrorNormArray, Nektar::LibUtilities::ReduceSum);
+                        m_SpatialErrorNorm =0.0;
+                        for(int i = 0; i < nvariables; i++)
+                        {
+                            m_SpatialErrorNorm += m_SpatialErrorNormArray[i];
+                        }
+                        m_SpatialErrorNorm=sqrt(m_SpatialErrorNorm);//To Do: No need sqrt if in NewtonTolerance use, q2<Norm2, can save computation
+                        for(int i=0;i<nvariables;i++)
+                        {
+                            m_SpatialErrorNormArray[i]=sqrt(m_SpatialErrorNormArray[i]);
+                        }
 
 
                         // Seems no need to set this flag now        
@@ -584,12 +606,12 @@ namespace Nektar
                             m_DirectErrorNormArray[i] = Vmath::Dot(npoints,m_DirectError[i],m_DirectError[i]);
                         }
                         m_comm->AllReduce(m_DirectErrorNormArray, Nektar::LibUtilities::ReduceSum);
-                        NekDouble ErrorNorm =0.0;
+                        m_DirectErrorNorm =0.0;
                         for(int i = 0; i < nvariables; i++)
                         {
-                            ErrorNorm += m_DirectErrorNormArray[i];
+                            m_DirectErrorNorm += m_DirectErrorNormArray[i];
                         }
-                        ErrorNorm=sqrt(ErrorNorm);//To Do: No need sqrt if in NewtonTolerance use, q2<Norm2, can save computation
+                        m_DirectErrorNorm=sqrt(m_DirectErrorNorm);//To Do: No need sqrt if in NewtonTolerance use, q2<Norm2, can save computation
                         for(int i=0;i<nvariables;i++)
                         {
                             m_DirectErrorNormArray[i]=sqrt(m_DirectErrorNormArray[i]);
@@ -597,6 +619,28 @@ namespace Nektar
                 }
 
                 timer.Stop();
+
+                ofstream outfile0;
+                outfile0.open("TimeStep.txt",ios::app);
+                outfile0<<"$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$"<<endl;
+                outfile0<<"Time="<<m_time<<", TimeStep="<<m_timestep<<endl;
+                outfile0<<endl;
+                for(int i=0;i<nvariables;i++)
+                {
+                    outfile0<<i<<"th SpatialError= "<<m_SpatialErrorNormArray[i]<<"     ";
+                }
+                outfile0<<endl;
+                for(int i=0;i<nvariables;i++)
+                {
+                    outfile0<<i<<"th DirectError= "<<m_DirectErrorNormArray[i]<<"     ";
+                }
+                outfile0<<endl;
+                for(int i=0;i<nvariables;i++)
+                {
+                    outfile0<<i<<"th Scale(Spatial/Direct)= "<<m_SpatialErrorNormArray[i]/m_DirectErrorNormArray[i]<<"     ";
+                }
+                outfile0<<endl;
+                outfile0.close();
 
                 m_time  += m_timestep;
                 elapsed  = timer.TimePerTest(1);

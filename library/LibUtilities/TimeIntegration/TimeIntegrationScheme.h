@@ -491,7 +491,7 @@ namespace Nektar
                 return m_numMultiStepDerivs;
             }
 
-            inline unsigned int GetTimeIntegrationSchemeOrder(void) const
+            inline unsigned int GetPairedTimeIntegrationSchemeOrder(void) const
             {
                 unsigned int PairedOrder;
                 if(m_PairedOrder)
@@ -500,10 +500,25 @@ namespace Nektar
                 }
                 else
                 {
-                    ASSERTL0(false, "Have not give the order of TimeIntegrationScheme")
+                    ASSERTL0(false, "Have not give the order of Paired TimeIntegrationScheme")
                 }
                 
                 return PairedOrder;
+            }
+
+            inline unsigned int GetTimeIntegrationSchemeOrder(void) const
+            {
+                unsigned int Order;
+                if(m_Order)
+                {
+                    Order=m_Order;
+                }
+                else
+                {
+                    ASSERTL0(false, "Have not give the order of TimeIntegrationScheme")
+                }
+                
+                return Order;
             }
 
             inline const DoubleArray& GetDirectErrorVector() const//Direct Error between DIRK3 and DIRK4 at scaled time step

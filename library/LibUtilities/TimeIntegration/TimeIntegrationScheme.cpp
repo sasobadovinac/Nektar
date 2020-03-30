@@ -1477,6 +1477,7 @@ namespace Nektar
                 /////////////////////////////////////////////////////////////////////////////////////
                 //Begin Calculating Error
                 //To do:Currently assume embedded scheme will di error control
+                cout<<"TimeStep="<<timestep<<endl;
                 m_RealTimeStepFlag=true;
                 if(m_DirectErrorState)
                 {
@@ -1550,7 +1551,7 @@ namespace Nektar
 		
          void TimeIntegrationScheme::InitializePairedImplicitScheme()
         {
-            int PairedOrder=GetTimeIntegrationSchemeOrder();
+            int PairedOrder=GetPairedTimeIntegrationSchemeOrder();
             
             switch(PairedOrder)
             {
