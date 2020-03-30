@@ -409,9 +409,9 @@ namespace Nektar
                     Array<OneD,NekDouble> timestepArray(nvariables,0.0);
                     //Compare spatial error and time integration error to adapt time step
                     NekDouble oTimeStep=1.0/m_timestep;
-                    NekDouble oTimeStepPow=(m_timestep,TemporalOrder);
+                    NekDouble oTimeStepPow=pow(m_timestep,TemporalOrder);
                     oTimeStepPow=1.0/oTimeStepPow;
-                    NekDouble oTimeStepPow_PlusOne=(m_timestep,TemporalOrder+1);   
+                    NekDouble oTimeStepPow_PlusOne=pow(m_timestep,TemporalOrder+1);   
                     oTimeStepPow_PlusOne=1.0/oTimeStepPow_PlusOne;                
                     Array<OneD,NekDouble>tmp1;
                     Array<OneD,NekDouble>tmp2;
@@ -425,7 +425,7 @@ namespace Nektar
                         Vmath::Smul(npoints,oTimeStepPow_PlusOne,m_DirectError[i],1,tmp2,1);
                         for(int j=0;j<npoints;j++)
                         {
-                            tmp1[j]=pow(tmp1[i]/tmp2[i],oTimeStepPow);
+                            tmp1[j]=pow(tmp1[j]/tmp2[j],1.0/TemporalOrder);
                         }
                         timestepArray[i]=Vmath::Vmin(npoints,tmp1,1);
                     }
