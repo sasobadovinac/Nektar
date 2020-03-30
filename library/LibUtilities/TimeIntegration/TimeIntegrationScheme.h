@@ -596,7 +596,9 @@ namespace Nektar
             bool                      m_IfExtractRhsFlag=false;
             Array<OneD,Array<OneD,NekDouble>>     m_Rhs;
 			
-			unsigned int              m_PairedOrder;  //< Order of timeintegration scheme
+			unsigned int              m_PairedOrder;  //< Order of Paired timeintegration scheme
+
+            unsigned int              m_Order; //< Order of timeintegration scheme
 
             bool m_DirectErrorInitialized=true;//Control the first step first assuming true, if finished initializing, change it to true
             bool m_DirectErrorState=false;//Control the remaining steps except the first step

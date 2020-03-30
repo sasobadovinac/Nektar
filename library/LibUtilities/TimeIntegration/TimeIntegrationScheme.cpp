@@ -615,6 +615,7 @@ namespace Nektar
                     m_numsteps = 1;
                     m_numstages = 5;
                     m_PairedOrder=4;
+                    m_Order=3;
 
                     m_A = Array<OneD, Array<TwoD,NekDouble> >(1);
                     m_B = Array<OneD, Array<TwoD,NekDouble> >(1);
@@ -665,6 +666,7 @@ namespace Nektar
                     // See Kennedey&Carpenter 2016, Table 16
                     m_numsteps = 1;
                     m_numstages = 6;
+                    m_Order=4;
 
                     m_A = Array<OneD, Array<TwoD,NekDouble> >(1);
                     m_B = Array<OneD, Array<TwoD,NekDouble> >(1);
@@ -2002,15 +2004,15 @@ namespace Nektar
                         // cout << "(i==0) && m_firstStageEqualsOldSolution "<<i<<endl;
                         op.DoProjection(m_Y,m_Y,m_T);
                         op.DoOdeRhs(m_Y, m_F[i], m_T);      
-                        cout<<"$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$"<<endl;
-                        cout<<"Real Integrate"<<endl;  
-                        for(int m=0;m<m_nvar;m++)
-                        {    cout<<"Var["<<m<<"]"<<endl;
-                            for(int n=0;n<m_npoints;n++)
-                            {
-                                cout<<std::setprecision(16)<<m_F[0][m][n]<<endl;
-                            }
-                        }
+                        // cout<<"$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$"<<endl;
+                        // cout<<"Real Integrate"<<endl;  
+                        // for(int m=0;m<m_nvar;m++)
+                        // {    cout<<"Var["<<m<<"]"<<endl;
+                        //     for(int n=0;n<m_npoints;n++)
+                        //     {
+                        //         cout<<std::setprecision(16)<<m_F[0][m][n]<<endl;
+                        //     }
+                        // }
                     }
                     else
                     {

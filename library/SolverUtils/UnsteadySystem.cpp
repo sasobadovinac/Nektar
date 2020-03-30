@@ -397,6 +397,47 @@ namespace Nektar
                 // m_CalcuPrecMatCounter++;
 
 #endif
+               
+
+               ////////////////////////////////////////////////////////////////
+               //Yu Pan's test
+               //Do Time Adaptivity
+                if (step>0 && m_SpatialErrorFreezNumber>0 && m_DirectErrorFreezNumber>0)
+                {
+                    int TemporalOrder=m_intScheme->GetIntegrationSchemeVector()[0]->GetTimeIntegrationSchemeOrder();
+                    Array<OneD,NekDouble> timestepArray(nvariables,0.0);
+                    //Compare spatial error and time integration error to adapt time step
+                    NekDouble oTimeStep=1.0/m_timestep;
+                    NekDouble oTimeStepPow=(m_timestep,TemporalOrder);
+                    oTimeStepPow=1.0/oTimeStepPow;
+                    NekDouble oTimeStepPow_PlusOne=(m_timestep,TemporalOrder+1);   
+                    oTimeStepPow_PlusOne=1.0/oTimeStepPow_PlusOne;                
+                    Array<OneD,NekDouble>tmp1;
+                    Array<OneD,NekDouble>tmp2;
+                    
+                    for(int i=0;i<nvariables;i++)
+                    {
+                        int npoints=m_fields[i]->GetNpoints();
+                        tmp1=Array<OneD,NekDouble> (npoints,0.0);
+                        tmp2=Array<OneD,NekDouble> (npoints,0.0);
+                        Vmath::Smul(npoints,oTimeStep,m_SpatialError[i],1,tmp1,1);
+                        Vmath::Smul(npoints,oTimeStepPow_PlusOne,m_DirectError[i],1,tmp2,1);
+                        for(int j=0;j<npoints;j++)
+                        {
+                            tmp1[j]=pow(tmp1[i]/tmp2[i],oTimeStepPow);
+                        }
+                        timestepArray[i]=Vmath::Vmin(npoints,tmp1,1);
+                    }
+                    
+                    m_timestep=Vmath::Vmin(nvariables,timestepArray,1);
+
+                    if (m_time + m_timestep > m_fintime && m_fintime > 0.0)
+                    {
+                        m_timestep = m_fintime - m_time;
+                    }
+                }
+
+               ////////////////////////////////////////////////////////////////
 
                 // Perform any solver-specific pre-integration steps
                 timer.Start();
@@ -451,41 +492,77 @@ namespace Nektar
                         {
                             int npoints=m_fields[i]->GetNpoints();
                             Vmath::Vsub(npoints,CurrentOrderRhs[i],1,MultiOrderRhs[i],1,m_SpatialError[i],1);   
+                            //Because from our derivatation, it need to muliply dt
+                            Vmath::Smul(npoints,m_timestep,m_SpatialError[i],1,m_SpatialError[i],1);
+                            //Better to Abs, because DirectError also positive
+                            Vmath::Vabs(npoints,m_SpatialError[i],1,m_SpatialError[i],1);
                         }        
-                        // Seems no need to set this figure now        
+
+
+                        // Seems no need to set this flag now        
                         m_CalculateSpatialErrorFlag=true;
                         m_CalculateSpatialErrorCounter=0;
-                        cout<<"$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$"<<endl;
-                        cout<<"Current Order"<<endl;  
-                        for(int m=0;m<nvariables;m++)
-                        {   
-                            cout<<"Var["<<m<<"]"<<endl;
-                            int npoints=m_fields[m]->GetNpoints();
-                            for(int n=0;n<npoints;n++)
-                            {
-                                cout<<std::setprecision(16)<<CurrentOrderRhs[m][n]<<endl;
-                            }
-                        }
+
+
+
+                        // ofstream outfile1;
+                        // outfile1.open("CurrentOrder.txt");
+                        // outfile1<<"$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$"<<endl;
+                        // outfile1<<"Current Order"<<endl;  
+                        // for(int m=0;m<nvariables;m++)
+                        // {   
+                        //     outfile1<<"Var["<<m<<"]"<<endl;
+                        //     int npoints=m_fields[m]->GetNpoints();
+                        //     for(int n=0;n<npoints;n++)
+                        //     {
+                        //         outfile1<<std::setprecision(1)<<n<<"    "<<std::setprecision(16)<<CurrentOrderRhs[m][n]<<endl;
+                        //     }
+                        // }
+                        // outfile1.close();
                         
-                        cout<<"$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$"<<endl;
-                        cout<<"Multi Order"<<endl;  
-                        for(int m=0;m<nvariables;m++)
-                        {   
-                            cout<<"Var["<<m<<"]"<<endl;
-                            int npoints=m_fields[m]->GetNpoints();
-                            ASSERTL0(npoints==MultiOrderRhs[m].num_elements(),"Wrong Quad setting");
-                            for(int n=0;n<npoints;n++)
-                            {
-                                cout<<std::setprecision(16)<<MultiOrderRhs[m][n]<<endl;
-                            }
-                        }
+                        // ofstream outfile2;
+                        // outfile2.open("MultiOrder.txt");
+                        // outfile2<<"$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$"<<endl;
+                        // outfile2<<"Multi Order"<<endl; 
+                        // for(int m=0;m<nvariables;m++)
+                        // {   
+                        //     outfile2<<"Var["<<m<<"]"<<endl;
+                        //     int npoints=m_fields[m]->GetNpoints();
+                        //     //ASSERTL0(npoints==MultiOrderRhs[m].num_elements(),"Wrong Quad setting");
+                        //     for(int n=0;n<npoints;n++)
+                        //     {
+                        //         outfile2<<std::setprecision(1)<<n<<"    "<<std::setprecision(16)<<MultiOrderRhs[m][n]<<endl;
+                        //     }
+                        // }
+                        // outfile2.close();
+
+                        // ofstream outfile3;
+                        // outfile3.open("SpatialError.txt");
+                        // outfile3<<"$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$"<<endl;
+                        // outfile3<<"SpatialError"<<endl; 
+                        // for(int m=0;m<nvariables;m++)
+                        // {   
+                        //     outfile3<<"Var["<<m<<"]"<<endl;
+                        //     int npoints=m_fields[m]->GetNpoints();
+                        //     Array<OneD,NekDouble> x(npoints,0.0);
+                        //     Array<OneD,NekDouble> y(npoints,0.0);
+                        //     Array<OneD,NekDouble> z(npoints,0.0);
+                        //     m_fields[0]->GetCoords(x,y,z);
+                        //     //ASSERTL0(npoints==MultiOrderRhs[m].num_elements(),"Wrong Quad setting");
+                        //     for(int n=0;n<npoints;n++)
+                        //     {
+                        //         outfile3<<std::setprecision(1)<<n<<"    "<<std::setprecision(16)<<x[n]<<"    "<<y[n]<<"    "<<m_SpatialError[m][n]<<endl;
+                        //     }
+                        // }
+                        // outfile3.close();
+
+                        // ASSERTL0(false, "Finsh Testing");
                     }
                     else
                     {
                         m_CalculateSpatialErrorCounter++;
                     }
                 }
-                /////////////////////////////////////////////////////////////////////
 
                 fields = m_intScheme->TimeIntegrate(
                     stepCounter, m_timestep, m_intSoln, m_ode);
@@ -519,19 +596,6 @@ namespace Nektar
                         }
                 }
 
-                //Calculate Spatial Error:m_SpatialError
-                if(m_SpatialErrorFreezNumber>0 && m_DirectErrorFreezNumber>0)
-                {
-                    //To Do: compare spatial error and time integration error to adapt time step
-                    Array<OneD,NekDouble>tmp1;
-                    Array<OneD,NekDouble>tmp2;
-                    for(int i=0;i<nvariables;i++)
-                    {
-                        tmp1=m_DirectError[i];
-                        tmp2=m_SpatialError[i];
-                    }
-                }
-                ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
                 timer.Stop();
 
                 m_time  += m_timestep;
