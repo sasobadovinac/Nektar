@@ -153,6 +153,8 @@ namespace Nektar
                         x.first, m_session, x.second));
             }
             
+            /////////////////////////////////////////////////////////////
+            //Yu Pan's Test
             if(m_SpatialErrorFreezNumber>0)
             {
                 int nvariables=GetNvariables();
@@ -163,7 +165,16 @@ namespace Nektar
                     int npoints=m_fields[i]->GetNpoints();
                     m_SpatialError[i]=Array<OneD,NekDouble>(npoints,0.0);
                 }
+
+                int tmp;
+                m_session->LoadParameter("ErrorBasedAdaptedTimeStepFlag",    tmp   ,  0);
+                m_ErrorBasedAdaptedTimeStepFlag=false;
+                if(1==tmp)
+                {
+                    m_ErrorBasedAdaptedTimeStepFlag=true;
+                }
             }
+            //////////////////////////////////////////////////////////////////////////////
         }
 
         /**
@@ -404,13 +415,6 @@ namespace Nektar
                //Yu Pan's test
                //Do Time Adaptivity
                //First step have not calcualted error
-                    int tmp;
-                m_session->LoadParameter("ErrorBasedAdaptedTimeStepFlag",    tmp   ,  0);
-                m_ErrorBasedAdaptedTimeStepFlag=false;
-                if(1==tmp)
-                {
-                    m_ErrorBasedAdaptedTimeStepFlag=true;
-                }
                 if (m_ErrorBasedAdaptedTimeStepFlag && m_initialStep!=step && m_SpatialErrorFreezNumber>0 && m_DirectErrorFreezNumber>0)
                 {
 
@@ -458,6 +462,10 @@ namespace Nektar
                         timestepArray[i]=pow(tmp1/tmp2,1.0/TemporalOrder);
                     }
                     m_timestep=Vmath::Vmin(nvariables,timestepArray,1);
+
+                    //Multiply a safety factor
+                    NekDouble gamma=0.9;
+                    m_timestep=0.9*m_timestep;
 
                     if (m_time + m_timestep > m_fintime && m_fintime > 0.0)
                     {
