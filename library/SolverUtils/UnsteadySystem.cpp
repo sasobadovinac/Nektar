@@ -415,11 +415,34 @@ namespace Nektar
                //Yu Pan's test
                //Do Time Adaptivity
                //First step have not calcualted error
-                if (m_ErrorBasedAdaptedTimeStepFlag && m_initialStep!=step && m_SpatialErrorFreezNumber>0 && m_DirectErrorFreezNumber>0)
+                if ( m_initialStep!=step && m_SpatialErrorFreezNumber>0 && m_DirectErrorFreezNumber>0)
                 {
-
+                  
                     //////////////////////////////////////////////////////////////////////
                     //This method is based on the minimum Error of each Quad Point
+                    //First Step: Manually set a minimum error
+                    //Because find some spatial errors are really small like when initially start with constant field
+                    // which will lead to too small adptive time step
+                    Array<OneD,NekDouble> MaxSpatialError(nvariables,0.0);
+                    Array<OneD,NekDouble> ManuallySetMinSpatialError(nvariables,0.0);
+                    for(int i=0;i<nvariables;i++)
+                    {
+                        int npoints=m_fields[i]->GetNpoints();
+                        MaxSpatialError[i]=Vmath::Vmax(npoints, m_SpatialError[i],1);   
+                        ManuallySetMinSpatialError[i]=1.0E-4*MaxSpatialError[i];
+                    }
+                    for(int i=0;i<nvariables;i++)
+                    {
+                        int npoints=m_fields[i]->GetNpoints();
+                        for(int j=0;j<npoints;j++)
+                        {
+                            if(m_SpatialError[i][j]<ManuallySetMinSpatialError[i])
+                            {
+                                m_SpatialError[i][j]=ManuallySetMinSpatialError[i];
+                            }
+                        }
+                    }
+                    //Step 2: from the theretical proof, use spatial error to control temporal error
                     int TemporalOrder=m_intScheme->GetIntegrationSchemeVector()[0]->GetTimeIntegrationSchemeOrder();
                     Array<OneD,NekDouble> timestepArray(nvariables,0.0);
                     //Compare spatial error and time integration error to adapt time step
@@ -445,7 +468,7 @@ namespace Nektar
                         timestepArray[i]=Vmath::Vmin(npoints,tmp1,1);
                     }
                     
-                    m_timestep=Vmath::Vmin(nvariables,timestepArray,1);
+                    m_AdaptiveTimeStep=Vmath::Vmin(nvariables,timestepArray,1);
                     ///////////////////////////////////////////////////////////////////////
                     //Based on ErrorNorm
                     // int TemporalOrder=m_intScheme->GetIntegrationSchemeVector()[0]->GetTimeIntegrationSchemeOrder();
@@ -463,15 +486,22 @@ namespace Nektar
                     //     timestepArray[i]=pow(tmp1/tmp2,1.0/TemporalOrder);
                     // }
                     // m_timestep=Vmath::Vmin(nvariables,timestepArray,1);
-
-                    //Multiply a safety factor
-                    NekDouble gamma=0.9;
-                    m_timestep=0.9*m_timestep;
-
-                    if (m_time + m_timestep > m_fintime && m_fintime > 0.0)
+                    
+                    if(m_ErrorBasedAdaptedTimeStepFlag)
                     {
-                        m_timestep = m_fintime - m_time;
+                        m_timestep=m_AdaptiveTimeStep;
+
+                        if (m_time + m_timestep > m_fintime && m_fintime > 0.0)
+                        {
+                            m_timestep = m_fintime - m_time;
+                        }
                     }
+                    else
+                    {
+                        cout<<"AdaptiveTimeStep="<<m_AdaptiveTimeStep<<", Scale(Ada/ConsTimeStep)="<<m_AdaptiveTimeStep/m_timestep<<endl;
+                    }
+                    
+
                 }
 
                ////////////////////////////////////////////////////////////////
@@ -534,28 +564,6 @@ namespace Nektar
                             //Better to Abs, because DirectError also positive
                             Vmath::Vabs(npoints,m_SpatialError[i],1,m_SpatialError[i],1);
                         }        
-
-                        //Because find some spatial errors are really small like when initially start with constant field
-                        // which will lead to too small adptive time step
-                        Array<OneD,NekDouble> MaxSpatialError(nvariables,0.0);
-                        Array<OneD,NekDouble> ManuallySetMinSpatialError(nvariables,0.0);
-                        for(int i=0;i<nvariables;i++)
-                        {
-                            int npoints=m_fields[i]->GetNpoints();
-                            MaxSpatialError[i]=Vmath::Vmax(npoints, m_SpatialError[i],1);   
-                            ManuallySetMinSpatialError[i]=10E-4*MaxSpatialError[i];
-                        }
-                        for(int i=0;i<nvariables;i++)
-                        {
-                            int npoints=m_fields[i]->GetNpoints();
-                            for(int j=0;j<npoints;j++)
-                            {
-                                if(m_SpatialError[i][j]<ManuallySetMinSpatialError[i])
-                                {
-                                    m_SpatialError[i][j]=ManuallySetMinSpatialError[i];
-                                }
-                            }
-                        }
 
                         for(int i = 0; i < nvariables; i++)
                         {
@@ -623,72 +631,78 @@ namespace Nektar
 
                 timer.Stop();
 
-                // ofstream outfile0;
-                // outfile0.open("TimeStep.txt",ios::app);
-                // outfile0<<"$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$"<<endl;
-                // outfile0<<"Time="<<m_time<<", TimeStep="<<m_timestep<<endl;
-                // outfile0<<endl;
-                // for(int i=0;i<nvariables;i++)
-                // {
-                //     outfile0<<i<<"th SpatialError= "<<m_SpatialErrorNormArray[i]<<"     ";
-                // }
-                // outfile0<<endl;
-                // for(int i=0;i<nvariables;i++)
-                // {
-                //     outfile0<<i<<"th DirectError= "<<m_DirectErrorNormArray[i]<<"     ";
-                // }
-                // outfile0<<endl;
-                // for(int i=0;i<nvariables;i++)
-                // {
-                //     outfile0<<i<<"th Scale(Spatial/Direct)= "<<m_SpatialErrorNormArray[i]/m_DirectErrorNormArray[i]<<"     ";
-                // }
-                // outfile0<<endl;
-                // outfile0.close();
-
-                ofstream outfile5;
-                outfile5.open("Error.txt");
-                int nwidthcolm=10;
-                outfile5<<right<<"x";
-                outfile5<<"    ";
-                outfile5<<right<<"y";
-                outfile5<<"    ";
+                ofstream outfile0;
+                outfile0.open("TimeStep.txt",ios::app);
+                outfile0<<"$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$"<<endl;
+                int nwidth=10;
+                outfile0<<"Time="<<m_time<<", AdaptiveTimeStep="<<m_AdaptiveTimeStep<<", TimeStep="<<m_timestep<<", Scale(AdaDt/ConsDt)="<<m_AdaptiveTimeStep/m_timestep;
+                outfile0<<endl;
                 for(int i=0;i<nvariables;i++)
                 {
-                    outfile5<<right<<"Var["<<i<<"]";
-                    outfile5<<"    ";
-                    outfile5<<"SpatialError["<<i<<"]";
-                    outfile5<<"    ";
-                    outfile5<<"DirectError["<<i<<"]";
-                    outfile5<<"    ";
-                    outfile5<<"Scale(Spatial/Temporal)["<<i<<"]";
-                    outfile5<<"    ";
+                    outfile0<<i<<"th SpatialError=   "<<right<<scientific<<setw(nwidthcolm)<<setprecision(nwidthcolm-6)<<m_SpatialErrorNormArray[i];
+                    outfile0<<"     ";
                 }
-                outfile5<<endl;
-                int npoints=m_fields[0]->GetNpoints();
-                Array<OneD,NekDouble> x(npoints,0.0);
-                Array<OneD,NekDouble> y(npoints,0.0);
-                Array<OneD,NekDouble> z(npoints,0.0);
-                m_fields[0]->GetCoords(x,y,z);
-                for(int j=0;j<npoints;j++)
+                outfile0<<endl;
+                for(int i=0;i<nvariables;i++)
                 {
-                    outfile5<<right<<scientific<<setw(nwidthcolm)<<setprecision(nwidthcolm-6)<<x[j];
-                    outfile5<<"    ";
-                    outfile5<<right<<scientific<<setw(nwidthcolm)<<setprecision(nwidthcolm-6)<<y[j];
-                    outfile5<<"    ";
-                    for(int i=0;i<nvariables;i++)
-                    {
-                        outfile5<<right<<scientific<<setw(nwidthcolm)<<setprecision(nwidthcolm-6)<<m_intSoln->GetSolutionVector()[0][i][j];
-                        outfile5<<"    ";
-                        outfile5<<right<<scientific<<setw(nwidthcolm)<<setprecision(nwidthcolm-6)<<m_SpatialError[i][j];
-                        outfile5<<"    ";
-                        outfile5<<right<<scientific<<setw(nwidthcolm)<<setprecision(nwidthcolm-6)<<m_DirectError[i][j];
-                        outfile5<<"    ";
-                        outfile5<<right<<scientific<<setw(nwidthcolm)<<setprecision(nwidthcolm-6)<<m_SpatialError[i][j]/m_DirectError[i][j];
-                        outfile5<<"    ";
-                    }
-                    outfile5<<endl;
+                    outfile0<<i<<"th DirectError=    "<<right<<scientific<<setw(nwidthcolm)<<setprecision(nwidthcolm-6)<<m_DirectErrorNormArray[i];
+                    outfile0<<"     ";
                 }
-                outfile5.close();
+                outfile0<<endl;
+                for(int i=0;i<nvariables;i++)
+                {
+                    outfile0<<i<<"th Scale(Spa/Dir)= "<<right<<scientific<<setw(nwidthcolm)<<setprecision(nwidthcolm-6)<<m_SpatialErrorNormArray[i]/m_DirectErrorNormArray[i];
+                    outfile0<<"     ";
+                }
+                outfile0<<endl;
+                outfile0.close();
+
+                // ofstream outfile5;
+                // outfile5.open("Error.txt");
+                // int nwidthcolm=10;
+                // outfile5<<right<<"x";
+                // outfile5<<"    ";
+                // outfile5<<right<<"y";
+                // outfile5<<"    ";
+                // for(int i=0;i<nvariables;i++)
+                // {
+                //     outfile5<<right<<"Var["<<i<<"]";
+                //     outfile5<<"    ";
+                //     outfile5<<"SpatialError["<<i<<"]";
+                //     outfile5<<"    ";
+                //     outfile5<<"DirectError["<<i<<"]";
+                //     outfile5<<"    ";
+                //     outfile5<<"Scale(Spatial/Temporal)["<<i<<"]";
+                //     outfile5<<"    ";
+                // }
+                // outfile5<<endl;
+
+
+                // int npoints=m_fields[0]->GetNpoints();
+                // Array<OneD,NekDouble> x(npoints,0.0);
+                // Array<OneD,NekDouble> y(npoints,0.0);
+                // Array<OneD,NekDouble> z(npoints,0.0);
+                // m_fields[0]->GetCoords(x,y,z);
+                // for(int j=0;j<npoints;j++)
+                // {
+                //     outfile5<<right<<scientific<<setw(nwidthcolm)<<setprecision(nwidthcolm-6)<<x[j];
+                //     outfile5<<"    ";
+                //     outfile5<<right<<scientific<<setw(nwidthcolm)<<setprecision(nwidthcolm-6)<<y[j];
+                //     outfile5<<"    ";
+                //     for(int i=0;i<nvariables;i++)
+                //     {
+                //         outfile5<<right<<scientific<<setw(nwidthcolm)<<setprecision(nwidthcolm-6)<<m_intSoln->GetSolutionVector()[0][i][j];
+                //         outfile5<<"    ";
+                //         outfile5<<right<<scientific<<setw(nwidthcolm)<<setprecision(nwidthcolm-6)<<m_SpatialError[i][j];
+                //         outfile5<<"    ";
+                //         outfile5<<right<<scientific<<setw(nwidthcolm)<<setprecision(nwidthcolm-6)<<m_DirectError[i][j];
+                //         outfile5<<"    ";
+                //         outfile5<<right<<scientific<<setw(nwidthcolm)<<setprecision(nwidthcolm-6)<<m_SpatialError[i][j]/m_DirectError[i][j];
+                //         outfile5<<"    ";
+                //     }
+                //     outfile5<<endl;
+                // }
+                // outfile5.close();
 
                 m_time  += m_timestep;
                 elapsed  = timer.TimePerTest(1);

@@ -387,6 +387,8 @@ class Interpolator;
             NekDouble                                   m_fintime;
             /// Time step size
             NekDouble                                   m_timestep;
+
+            NekDouble                                   m_AdaptiveTimeStep;
             /// Time step size
             NekDouble                                   m_timestepMax=-1.0;
             
