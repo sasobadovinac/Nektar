@@ -2953,6 +2953,22 @@ namespace Nektar
             return GetTraceMap()->GetBndCondIDToGlobalTraceID();
         }
 
+        LocTraceToTraceMapSharedPtr &ExpList::v_GetLocTraceToTraceMap(void)
+        {
+            NEKERROR(ErrorUtil::efatal,
+                     "This method is not defined or valid for this class type");
+            static LocTraceToTraceMapSharedPtr result;
+            return result;
+        }
+
+        std::vector<bool> &ExpList::v_GetLeftAdjacentTraces()
+        {
+            NEKERROR(ErrorUtil::efatal,
+                     "This method is not defined or valid for this class type");
+            static std::vector<bool> result;
+            return result;
+        }
+
         /**
          * @brief Helper function to re-align face to a given orientation.
          */
@@ -3276,19 +3292,21 @@ namespace Nektar
         }
 
         void ExpList::v_GetFwdBwdTracePhys(Array<OneD,NekDouble> &Fwd,
-                                           Array<OneD,NekDouble> &Bwd)
+                                           Array<OneD,NekDouble> &Bwd,
+                                           bool PutFwdInBwdOnBCs)
         {
-            boost::ignore_unused(Fwd, Bwd);
+            boost::ignore_unused(Fwd, Bwd,PutFwdInBwdOnBCs);
             NEKERROR(ErrorUtil::efatal,
                      "This method is not defined or valid for this class type");
         }
 
         void ExpList::v_GetFwdBwdTracePhys(
                                 const Array<OneD,const NekDouble>  &field,
-                                      Array<OneD,NekDouble> &Fwd,
-                                      Array<OneD,NekDouble> &Bwd)
+                                Array<OneD,NekDouble> &Fwd,
+                                Array<OneD,NekDouble> &Bwd,
+                                bool PutFwdInBwdOnBCs)
         {
-            boost::ignore_unused(field, Fwd, Bwd);
+            boost::ignore_unused(field, Fwd, Bwd, PutFwdInBwdOnBCs);
             NEKERROR(ErrorUtil::efatal,
                      "This method is not defined or valid for this class type");
         }

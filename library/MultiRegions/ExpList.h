@@ -49,6 +49,7 @@
 #include <MultiRegions/GlobalMatrixKey.h>
 #include <MultiRegions/GlobalLinSysKey.h>
 #include <MultiRegions/AssemblyMap/AssemblyMap.h>
+#include <MultiRegions/AssemblyMap/LocTraceToTraceMap.h>
 #include <LibUtilities/Kernel/kernel.h>
 #include <tinyxml.h>
 
@@ -59,9 +60,8 @@ namespace Nektar
         // Forward declarations
         class ExpList;
         class GlobalLinSys;
-        class AssemblyMapDG;
-
         class AssemblyMapCG;
+        class AssemblyMapDG;
         class GlobalLinSysKey;
         class GlobalMatrix;
 
@@ -817,6 +817,9 @@ namespace Nektar
             
             inline const Array<OneD, const int> &GetTraceBndMap(void);
 
+            inline std::shared_ptr<LocTraceToTraceMap>
+                      &GetLocTraceToTraceMap(void);
+
             inline void GetNormals(Array<OneD, Array<OneD, NekDouble> > &normals);
 
             inline void AddTraceIntegral(
@@ -835,12 +838,14 @@ namespace Nektar
 
             inline void GetFwdBwdTracePhys(
                 Array<OneD,NekDouble> &Fwd,
-                Array<OneD,NekDouble> &Bwd);
+                Array<OneD,NekDouble> &Bwd,
+                bool PutFwdInBwdOnBCs = false);
 
             inline void GetFwdBwdTracePhys(
                 const Array<OneD,const NekDouble> &field,
-                      Array<OneD,NekDouble> &Fwd,
-                      Array<OneD,NekDouble> &Bwd);
+                Array<OneD,NekDouble> &Fwd,
+                Array<OneD,NekDouble> &Bwd,
+                bool PutFwdInBwdOnBCs = false);
 
             inline const std::vector<bool> &GetLeftAdjacentFaces(void) const;
             
@@ -1052,6 +1057,11 @@ namespace Nektar
                 NekDouble h, int nmodes,
                 Array<OneD,NekDouble> &outarray);
 
+            // Return the internal vector which identifieds if trace
+            // is left adjacent definiing which trace the normal
+            // points otwards from
+            MULTI_REGIONS_EXPORT std::vector<bool> &GetLeftAdjacentTraces(void);
+
         protected:
             /// Exapnsion type
             ExpansionType m_expType;
@@ -1227,6 +1237,11 @@ namespace Nektar
 
             virtual const Array<OneD, const int> &v_GetTraceBndMap();
 
+            virtual std::shared_ptr<LocTraceToTraceMap>
+                 &v_GetLocTraceToTraceMap(void);
+            
+            virtual std::vector<bool> &v_GetLeftAdjacentTraces(void);
+
             /// Populate \a normals with the normals of all expansions.
             virtual void v_GetNormals(
                 Array<OneD, Array<OneD, NekDouble> > &normals);
@@ -1247,12 +1262,14 @@ namespace Nektar
 
             virtual void v_GetFwdBwdTracePhys(
                 Array<OneD,NekDouble> &Fwd,
-                Array<OneD,NekDouble> &Bwd);
+                Array<OneD,NekDouble> &Bwd,
+                bool PutFwdInBwdOnBCs = false);
 
             virtual void v_GetFwdBwdTracePhys(
                 const Array<OneD,const NekDouble>  &field,
-                      Array<OneD,NekDouble> &Fwd,
-                      Array<OneD,NekDouble> &Bwd);
+                Array<OneD,NekDouble> &Fwd,
+                Array<OneD,NekDouble> &Bwd,
+                bool PutFwdInBwdOnBCs = false);
 
             virtual const std::vector<bool> &v_GetLeftAdjacentFaces(void) const;
 
@@ -2303,6 +2320,14 @@ namespace Nektar
             return v_GetTraceBndMap();
         }
 
+
+        inline std::shared_ptr<LocTraceToTraceMap>
+            &ExpList::GetLocTraceToTraceMap()
+        {
+            return v_GetLocTraceToTraceMap();
+        }
+
+
         inline void ExpList::GetNormals(
             Array<OneD, Array<OneD, NekDouble> > &normals)
         {
@@ -2334,17 +2359,19 @@ namespace Nektar
 
         inline void ExpList::GetFwdBwdTracePhys(
             Array<OneD,NekDouble> &Fwd,
-            Array<OneD,NekDouble> &Bwd)
+            Array<OneD,NekDouble> &Bwd,
+            bool PutFwdInBwdOnBCs)
         {
-            v_GetFwdBwdTracePhys(Fwd,Bwd);
+            v_GetFwdBwdTracePhys(Fwd,Bwd,PutFwdInBwdOnBCs);
         }
 
         inline void ExpList::GetFwdBwdTracePhys(
             const Array<OneD,const NekDouble>  &field,
-                  Array<OneD,NekDouble> &Fwd,
-                  Array<OneD,NekDouble> &Bwd)
+            Array<OneD,NekDouble> &Fwd,
+            Array<OneD,NekDouble> &Bwd,
+            bool PutFwdInBwdOnBCs)
         {
-            v_GetFwdBwdTracePhys(field,Fwd,Bwd);
+            v_GetFwdBwdTracePhys(field,Fwd,Bwd,PutFwdInBwdOnBCs);
         }
 
         inline const std::vector<bool> &ExpList::GetLeftAdjacentFaces(void) const
@@ -2469,6 +2496,11 @@ namespace Nektar
             v_GetBoundaryNormals(i, normals);
         }
 
+        inline  std::vector<bool> &ExpList::GetLeftAdjacentTraces(void)
+        {
+            return v_GetLeftAdjacentTraces(); 
+        }
+        
         const static Array<OneD, ExpListSharedPtr> NullExpListSharedPtrArray;
         
     } //end of namespace

@@ -73,22 +73,7 @@ namespace Nektar
              Array<OneD, const NekDouble> &inarray,
              Array<OneD,NekDouble> &outarray);
             
-            LOCAL_REGIONS_EXPORT void AddNormTraceIntWRTDerivBase
-            (const Array<OneD, const NekDouble> &inarray,
-             Array<OneD,NekDouble> &outarray);
-            
-            inline Expansion2DSharedPtr GetLeftAdjacentElementExp() const;
-
-            inline Expansion2DSharedPtr GetRightAdjacentElementExp() const;
-            
-            inline int GetLeftAdjacentElementEdge() const;
-            
-            inline int GetRightAdjacentElementEdge() const;
-            
-            inline void SetAdjacentElementExp
-            (int                  edge,
-             Expansion2DSharedPtr &e);
-            
+                        
             void AddHDGHelmholtzTraceTerms
             (const NekDouble                      tau,
              const Array<OneD, const NekDouble>  &inarray,
@@ -96,7 +81,8 @@ namespace Nektar
             
             inline SpatialDomains::Geometry1DSharedPtr GetGeom1D() const;
 
-        protected:
+        protected: 
+            std::map<int, NormalVector>             m_vertexNormals;
             std::map<int, bool>                     m_negatedNormals;
             
             virtual DNekMatSharedPtr v_GenMatrix(
@@ -116,9 +102,12 @@ namespace Nektar
             virtual NekDouble v_VectorFlux(
                     const Array<OneD, Array<OneD, NekDouble> > &vec);
 
-            virtual void v_NegateVertexNormal (const int vertex);
+            virtual void v_NormalTraceDerivFactors
+            (Array<OneD, Array<OneD, NekDouble> > &factors);
 
-            virtual bool v_VertexNormalNegated(const int vertex);
+            virtual void v_NegateTraceNormal (const int vertex);
+
+            virtual bool v_TraceNormalNegated(const int vertex);
 
             virtual const NormalVector &v_GetTraceNormal(const int edge) const;
 

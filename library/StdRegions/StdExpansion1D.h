@@ -76,6 +76,10 @@ namespace Nektar
                     const Array<OneD, const NekDouble>& coords,
                     const Array<OneD, const NekDouble>& physvals);
 
+            STD_REGIONS_EXPORT virtual void v_DerivNormalBasisOnTrace
+            (Array<OneD, Array<OneD, NekDouble> > &dbasis,
+             Array<OneD, TraceCoeffSet > &TraceToCoeffMap);
+
         private:
 
             // Virtual Functions ----------------------------------------

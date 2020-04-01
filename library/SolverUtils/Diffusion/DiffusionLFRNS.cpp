@@ -1444,15 +1444,9 @@ namespace Nektar
 
                     id2 = fields[0]->GetTrace()->
                     GetPhys_Offset(fields[0]->GetTraceMap()->
-<<<<<<< HEAD
-                                   GetBndCondTraceToGlobalTraceMap(cnt++));
-
-                    // Imposing Temperature Twall at the wall
-=======
                                    GetBndCondIDToGlobalTraceID(cnt++));
                     
                     // Imposing Temperature Twall at the wall 
->>>>>>> feature/CollapseExpList
                     if (boost::iequals(fields[i]->GetBndConditions()[j]->
                                        GetUserDefined(),"WallViscous"))
                     {
@@ -1628,15 +1622,9 @@ namespace Nektar
 
                     id2 = fields[0]->GetTrace()->
                     GetPhys_Offset(fields[0]->GetTraceMap()->
-<<<<<<< HEAD
-                                   GetBndCondTraceToGlobalTraceMap(cnt++));
-
-
-=======
                                    GetBndCondIDToGlobalTraceID(cnt++));
                     
                     
->>>>>>> feature/CollapseExpList
                     // In case of Dirichlet bcs:
                     // uflux = gD
                     if(fields[var]->GetBndConditions()[i]->
@@ -1840,21 +1828,12 @@ namespace Nektar
                                                 elmtToTrace[n][e]->GetElmtId());
 
                     // Get the normals of edge 'e'
-<<<<<<< HEAD
                     //const Array<OneD, const Array<OneD, NekDouble> > &normals =
-                    //fields[0]->GetExp(n)->GetEdgeNormal(e);
+                    //fields[0]->GetExp(n)->GetTraceNormal(e);
 
                     // Extract the edge values of the volumetric fluxes
                     // on edge 'e' and order them accordingly to the order
                     // of the trace space
-=======
-                    //const Array<OneD, const Array<OneD, NekDouble> > &normals = 
-                    //fields[0]->GetExp(n)->GetTraceNormal(e);
-                    
-                    // Extract the edge values of the volumetric fluxes 
-                    // on edge 'e' and order them accordingly to the order 
-                    // of the trace space 
->>>>>>> feature/CollapseExpList
                     fields[0]->GetExp(n)->GetEdgePhysVals(
                                                     e, elmtToTrace[n][e],
                                                     flux + phys_offset,
@@ -2071,19 +2050,11 @@ namespace Nektar
                                                 elmtToTrace[n][e]->GetElmtId());
 
                     // Get the normals of edge e
-<<<<<<< HEAD
-                    const Array<OneD, const Array<OneD, NekDouble> > &normals =
-                    fields[0]->GetExp(n)->GetEdgeNormal(e);
-
-                    // Extract the edge values of flux-x on edge e and order
-                    // them accordingly to the order of the trace space
-=======
                     const Array<OneD, const Array<OneD, NekDouble> > &normals = 
                     fields[0]->GetExp(n)->GetTraceNormal(e);
                     
                     // Extract the edge values of flux-x on edge e and order 
                     // them accordingly to the order of the trace space 
->>>>>>> feature/CollapseExpList
                     fields[0]->GetExp(n)->GetEdgePhysVals(
                                                 e, elmtToTrace[n][e],
                                                 fluxX1 + phys_offset,
@@ -2117,13 +2088,8 @@ namespace Nektar
                                        auxArray1 = fluxJumps, 1,
                                        auxArray2 = fluxJumps, 1);
                     }
-<<<<<<< HEAD
 
-                    NekDouble fac = fields[0]->GetExp(n)->EdgeNormalNegated(e) ?
-=======
-                    
                     NekDouble fac = fields[0]->GetExp(n)->TraceNormalNegated(e) ?
->>>>>>> feature/CollapseExpList
                     -1.0 : 1.0;
 
                     for (i = 0; i < nEdgePts; ++i)
@@ -2283,13 +2249,8 @@ namespace Nektar
 
                     // Get the normals of edge e
                     const Array<OneD, const Array<OneD, NekDouble> > &normals =
-<<<<<<< HEAD
-                    fields[0]->GetExp(n)->GetEdgeNormal(e);
-
-=======
                     fields[0]->GetExp(n)->GetTraceNormal(e);
                     
->>>>>>> feature/CollapseExpList
                     // Extract the trasformed normal flux at each edge
                     switch (e)
                     {

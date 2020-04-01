@@ -158,9 +158,16 @@ namespace Nektar
             return v_VectorFlux(vec);
         }
 
-        DNekScalMatSharedPtr Expansion::GetLocMatrix(const StdRegions::MatrixType mtype,
-                    const StdRegions::ConstFactorMap &factors,
-                    const StdRegions::VarCoeffMap &varcoeffs)
+        void Expansion::NormalTraceDerivFactors
+        (Array<OneD, Array<OneD, NekDouble> > &factors)
+        {
+            return v_NormalTraceDerivFactors(factors);
+        }
+
+        DNekScalMatSharedPtr Expansion::GetLocMatrix
+              (const StdRegions::MatrixType      mtype,
+               const StdRegions::ConstFactorMap &factors,
+               const StdRegions::VarCoeffMap    &varcoeffs)
         {
             MatrixKey mkey(mtype, DetShapeType(), *this, factors, varcoeffs);
             return GetLocMatrix(mkey);
@@ -550,8 +557,17 @@ namespace Nektar
             const Array<OneD, Array<OneD, NekDouble > > &vec)
         {
             boost::ignore_unused(vec);
-            NEKERROR(ErrorUtil::efatal, "This function is only valid for LocalRegions");
+            NEKERROR(ErrorUtil::efatal, "This function is only valid for "
+                     "shape expansion in LocalRegions, not parant class");
             return 0.0;
+        }
+
+        void Expansion::v_NormalTraceDerivFactors
+             (Array<OneD, Array<OneD, NekDouble> > &factors)
+        {
+            boost::ignore_unused(factors);
+            NEKERROR(ErrorUtil::efatal, "This function is only valid for "
+                     "shape expansion in LocalRegions, not parant class");
         }
 
         const NormalVector & Expansion::v_GetTraceNormal(const int id) const

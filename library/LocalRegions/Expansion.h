@@ -128,6 +128,9 @@ namespace Nektar
                 LOCAL_REGIONS_EXPORT NekDouble VectorFlux(
                     const Array<OneD, Array<OneD, NekDouble > > &vec);
 
+                LOCAL_REGIONS_EXPORT  void NormalTraceDerivFactors
+                    (Array<OneD, Array<OneD, NekDouble> > &factors);
+
                 inline ExpansionSharedPtr GetLeftAdjacentElementExp() const;
 
                 inline ExpansionSharedPtr GetRightAdjacentElementExp() const;
@@ -259,6 +262,8 @@ namespace Nektar
                 virtual NekDouble v_VectorFlux(
                     const Array<OneD, Array<OneD, NekDouble > > &vec);
 
+                 virtual void v_NormalTraceDerivFactors
+                     (Array<OneD, Array<OneD, NekDouble> > &factors);
 
                 virtual const NormalVector & v_GetTraceNormal(const int id) const;
 

@@ -41,6 +41,7 @@
 #include <memory>
 
 #include <boost/core/ignore_unused.hpp>
+#include <set>
 
 #include <StdRegions/StdRegions.hpp>
 #include <StdRegions/StdRegionsDeclspec.h>
@@ -57,6 +58,8 @@ namespace Nektar
         class StdExpansion1D;
         class StdExpansion2D;
 
+
+        typedef Array<OneD, std::set<int> > TraceCoeffSet;
 
         /** \brief The base class for all shapes
          *
@@ -1166,6 +1169,13 @@ namespace Nektar
             }
 
 
+            void DerivNormalBasisOnTrace
+            (Array<OneD, Array<OneD, NekDouble> > &dbasis,
+             Array<OneD, TraceCoeffSet > &TraceToCoeffMap)
+            {
+                v_DerivNormalBasisOnTrace(dbasis,TraceToCoeffMap);
+            }
+        
             /**
              * \brief Convert local cartesian coordinate \a xi into local
              * collapsed coordinates \a eta
@@ -1629,8 +1639,12 @@ namespace Nektar
                                              const Array<OneD, const NekDouble> & physvals);
 
             STD_REGIONS_EXPORT virtual NekDouble v_PhysEvaluate(
-                                        const Array<OneD, DNekMatSharedPtr >& I,
-                                        const Array<OneD, const NekDouble> & physvals);
+                               const Array<OneD, DNekMatSharedPtr >& I,
+                               const Array<OneD, const NekDouble> & physvals);
+
+            STD_REGIONS_EXPORT virtual void v_DerivNormalBasisOnTrace
+              (Array<OneD, Array<OneD, NekDouble> > &dbasis,
+               Array<OneD, TraceCoeffSet > &TraceToCoeffMap);
 
             STD_REGIONS_EXPORT virtual void v_LocCoordToLocCollapsed(
                                         const Array<OneD, const NekDouble>& xi,

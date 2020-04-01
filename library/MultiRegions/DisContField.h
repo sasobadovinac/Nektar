@@ -114,8 +114,11 @@ namespace Nektar
             // Return the internal vector which directs whether the normal flux
             // at the trace defined by Left and Right Adjacent elements
             // is negated with respect to the segment normal
+            //
+            // Note: Should be deprecated or replaced with GetLeftAdjacentTrace
             MULTI_REGIONS_EXPORT std::vector<bool> &GetNegatedFluxNormal(void);
 
+            
             MULTI_REGIONS_EXPORT NekDouble L2_DGDeriv(
                 const int                           dir,
                 const Array<OneD, const NekDouble> &soln);
@@ -223,7 +226,18 @@ namespace Nektar
             {
                 return m_traceMap;
             }
+
+            virtual LocTraceToTraceMapSharedPtr &v_GetLocTraceToTraceMap(void)
+            {
+                return m_locTraceToTraceMap;
+            }
+
             
+            // Return the internal vector which identifieds if trace
+            // is left adjacent definiing which trace the normal
+            // points otwards from
+            virtual std::vector<bool> &v_GetLeftAdjacentTraces(void);
+
             virtual void v_AddTraceIntegral(
                 const Array<OneD, const NekDouble> &Fn,
                       Array<OneD,       NekDouble> &outarray);
@@ -233,11 +247,13 @@ namespace Nektar
                       Array<OneD,       NekDouble> &outarray);
             virtual void v_GetFwdBwdTracePhys(
                       Array<OneD,       NekDouble> &Fwd,
-                      Array<OneD,       NekDouble> &Bwd);
+                      Array<OneD,       NekDouble> &Bwd,
+                      bool PutFwdInBwdOnBCs = false);
             virtual void v_GetFwdBwdTracePhys(
-                const Array<OneD, const NekDouble> &field,
+                      const Array<OneD, const NekDouble> &field,
                       Array<OneD,       NekDouble> &Fwd,
-                      Array<OneD,       NekDouble> &Bwd);
+                      Array<OneD,       NekDouble> &Bwd,
+                      bool PutFwdInBwdOnBCs = false);
             virtual void v_ExtractTracePhys(
                       Array<OneD,       NekDouble> &outarray);
             virtual void v_ExtractTracePhys(
@@ -340,6 +356,11 @@ namespace Nektar
                              const std::string &variable);
         };
 
+        inline  std::vector<bool> &DisContField::v_GetLeftAdjacentTraces(void)
+        {
+            return m_leftAdjacentTraces; 
+        }
+        
         typedef std::shared_ptr<DisContField>   DisContFieldSharedPtr;
     } //end of namespace
 } //end of namespace

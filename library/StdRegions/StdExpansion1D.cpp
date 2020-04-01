@@ -99,5 +99,50 @@ namespace Nektar
         return val;
     }
 	
+    /** @brief: Thi smethod provide the value of the derivative of the
+        normal component of the basis along the trace. Note by
+        definition this is a constant value along the trace. In
+        addition it also provides a mapping ot the local coefficient
+        location of that trace coefficients for use in the GJP filter. 
+    */
+    void StdExpansion1D::v_DerivNormalBasisOnTrace
+    (Array<OneD, Array<OneD, NekDouble> > &dbasis,
+     Array<OneD, TraceCoeffSet > &TraceToCoeffMap)
+    {
+        int    nquad = GetTotPoints();
+
+        if(dbasis.num_elements() < 2)
+        {
+            dbasis = Array<OneD, Array<OneD, NekDouble> >(2);
+            TraceToCoeffMap = Array<OneD, TraceCoeffSet >(2);
+            TraceToCoeffMap[0] = TraceCoeffSet(1);
+            TraceToCoeffMap[1] = TraceCoeffSet(1);
+        }
+
+        if(dbasis[0].num_elements() < m_ncoeffs)
+        {
+            dbasis[0] = Array<OneD, NekDouble> (m_ncoeffs);
+            dbasis[1] = Array<OneD, NekDouble> (m_ncoeffs);
+        }
+        
+        const Array<OneD, const NekDouble> DerivBasis =  m_base[0]->GetDbdata();
+        
+        
+        for(int i = 0; i < m_ncoeffs; ++i)
+        {
+            dbasis[0][i] = DerivBasis[i*nquad];
+            dbasis[1][i] = DerivBasis[(i+1)*nquad-1];
+        }
+        
+        TraceToCoeffMap[0][0].clear();
+        TraceToCoeffMap[1][0].clear();
+        
+        for(int i = 0; i < m_ncoeffs; ++i)
+        {
+            TraceToCoeffMap[0][0].insert(i);
+            TraceToCoeffMap[1][0].insert(i);
+        }
+    }
+
     }//end namespace
 }//end namespace

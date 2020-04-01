@@ -310,31 +310,6 @@ namespace Nektar
             }
         }
 
-        /** @brief: This method adds the produce of the derivative of
-         * the basis with teh normal of the trace value supplied by
-         * the inarray integrated over the trace (which for this case
-         * is just a point value).
-         *
-         * inarray: Value of noral to trace to be added 
-         * outarray: expansion coefficients of element 
-         */
-        void Expansion1D::AddNormTraceIntWRTDerivBase
-        (const Array<OneD, const NekDouble> &inarray,
-         Array<OneD,NekDouble> &outarray) 
-        {
-            int nquad  = GetNumPoints(0);
-            const Array<OneD, const NekDouble>
-                &DerivBasis  = GetBasis(0)->GetDbdata();
-            
-            // add G \lambda term (can assume G is diagonal since one
-            // of the basis is zero at boundary otherwise)
-            for(int k = 0; k < m_ncoeffs; ++k)
-            {
-                outarray[k] += (DerivBasis[(k+1)*nquad-1]*inarray[1]
-                                - DerivBasis[k*nquad]*inarray[0]);
-            }
-        }
-        
 
         void Expansion1D::AddHDGHelmholtzTraceTerms(const NekDouble tau,
                                                  const Array<OneD,const NekDouble> &inarray,  Array<OneD,NekDouble> &outarray)
@@ -470,6 +445,53 @@ namespace Nektar
 
             return Integral(Fn);
         }
+
+        /** @brief: This method gets old of the factors which are
+            required as part of the Gradient Jump Penalty
+            stabilisation and involves the product of the normal and
+            geometric factors along the element trace.
+         */
+        void Expansion1D::v_NormalTraceDerivFactors
+        (Array<OneD, Array<OneD, NekDouble> > &factors) 
+        {
+            int nquad  = GetNumPoints(0);
+            Array<TwoD, const NekDouble> gmat =
+                                m_metricinfo->GetDerivFactors(GetPointsKeys());
+            const Array<OneD, const Array<OneD, NekDouble> >
+                 &normals =
+                    GetLeftAdjacentElementExp()->
+                        GetTraceNormal(GetLeftAdjacentElementTrace());
+
+            if(factors.num_elements() <=2)
+            {
+                factors = Array<OneD, Array<OneD, NekDouble> > (2); 
+                factors[0] = Array<OneD, NekDouble> (1);
+                factors[1] = Array<OneD, NekDouble> (1);
+            }
+
+
+            if(m_metricinfo->GetGtype() == SpatialDomains::eDeformed)
+            {
+                factors[0][0] = gmat[0][nquad-1]*normals[0][0]; 
+                factors[1][0] = gmat[0][0]*normals[1][0];
+                for(int n = 1; n < normals[0].num_elements(); ++n)
+                {
+                    factors[0][0] += gmat[n][0]*normals[0][n]; 
+                    factors[1][0] += gmat[n][nquad-1]*normals[1][n];
+                }
+            }
+            else
+            {
+                factors[0][0] = gmat[0][0]*normals[0][0]; 
+                factors[1][0] = gmat[0][0]*normals[1][0];
+                for(int n = 1; n < normals[0].num_elements(); ++n)
+                {
+                    factors[0][0] += gmat[n][0]*normals[0][n]; 
+                    factors[1][0] += gmat[n][0]*normals[1][n];
+                }
+            }
+        }
+        
     } //end of namespace
 } //end of namespace
 

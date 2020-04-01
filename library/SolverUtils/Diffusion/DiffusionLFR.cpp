@@ -1276,7 +1276,7 @@ namespace Nektar
                     // Offset of the trace space related to boundary expansion
                     id2 = fields[0]->GetTrace()->
                     GetPhys_Offset(fields[0]->GetTraceMap()->
-                                   GetBndCondTraceToGlobalTraceMap(cnt++));
+                                   GetBndCondIDToGlobalTraceID(cnt++));
 
                     // Dirichlet bcs ==> uflux = gD
                     if (fields[var]->GetBndConditions()[i]->
@@ -1439,15 +1439,9 @@ namespace Nektar
 
                     id2 = fields[0]->GetTrace()->
                     GetPhys_Offset(fields[0]->GetTraceMap()->
-<<<<<<< HEAD
-                                   GetBndCondTraceToGlobalTraceMap(cnt++));
-
-                    // For Dirichlet boundary condition:
-=======
                                    GetBndCondIDToGlobalTraceID(cnt++));
                     
                     // For Dirichlet boundary condition: 
->>>>>>> feature/CollapseExpList
                     //qflux = q+ - C_11 (u+ -    g_D) (nx, ny)
                     if (fields[var]->GetBndConditions()[i]->
                        GetBoundaryConditionType() == SpatialDomains::eDirichlet)
@@ -1659,21 +1653,12 @@ namespace Nektar
                                                 elmtToTrace[n][e]->GetElmtId());
 
                     // Get the normals of edge 'e'
-<<<<<<< HEAD
-                    //const Array<OneD, const Array<OneD, NekDouble> > &normals =
-                    //fields[0]->GetExp(n)->GetEdgeNormal(e);
-
-                    // Extract the edge values of the volumetric fluxes
-                    // on edge 'e' and order them accordingly to the order
-                    // of the trace space
-=======
                     //const Array<OneD, const Array<OneD, NekDouble> > &normals = 
                     //fields[0]->GetExp(n)->GetTraceNormal(e);
                     
                     // Extract the edge values of the volumetric fluxes 
                     // on edge 'e' and order them accordingly to the order 
                     // of the trace space 
->>>>>>> feature/CollapseExpList
                     fields[0]->GetExp(n)->GetEdgePhysVals(e, elmtToTrace[n][e],
                                                           flux + phys_offset,
                                                           auxArray1 = tmparray);
@@ -1883,19 +1868,11 @@ namespace Nektar
                                                 elmtToTrace[n][e]->GetElmtId());
 
                     // Get the normals of edge e
-<<<<<<< HEAD
-                    const Array<OneD, const Array<OneD, NekDouble> > &normals =
-                    fields[0]->GetExp(n)->GetEdgeNormal(e);
-
-                    // Extract the edge values of flux-x on edge e and order
-                    // them accordingly to the order of the trace space
-=======
                     const Array<OneD, const Array<OneD, NekDouble> > &normals = 
                     fields[0]->GetExp(n)->GetTraceNormal(e);
                     
                     // Extract the edge values of flux-x on edge e and order 
                     // them accordingly to the order of the trace space 
->>>>>>> feature/CollapseExpList
                     fields[0]->GetExp(n)->GetEdgePhysVals(
                                                     e, elmtToTrace[n][e],
                                                     fluxX1 + phys_offset,
@@ -2089,13 +2066,8 @@ namespace Nektar
 
                     // Get the normals of edge e
                     const Array<OneD, const Array<OneD, NekDouble> > &normals =
-<<<<<<< HEAD
-                    fields[0]->GetExp(n)->GetEdgeNormal(e);
-
-=======
                     fields[0]->GetExp(n)->GetTraceNormal(e);
                     
->>>>>>> feature/CollapseExpList
                     // Extract the trasformed normal flux at each edge
                     switch (e)
                     {

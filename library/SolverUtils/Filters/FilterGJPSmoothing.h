@@ -41,6 +41,9 @@ namespace Nektar
 {
 namespace SolverUtils
 {
+
+typedef std::tuple<int, int, NekDouble> TraceToCoeffMap;
+    
 class FilterGJPSmoothing : public Filter
 {
 public:
@@ -80,7 +83,25 @@ protected:
     SOLVER_UTILS_EXPORT virtual bool v_IsTimeDependent();
 private:
     int m_smoothingFrequency; 
-    int m_index; 
+    int m_shapeDim; 
+    int m_index;
+    /// Scale factor for phys values along trace involving the lcoal
+    /// normals and tangenet geometric factors on Fwd Trace
+    Array<OneD, NekDouble> m_scalFwd;
+    /// Scale factor for phys values along trace involving the lcoal
+    /// normals and tangenet geometric factors on Bwd Trace
+    Array<OneD, NekDouble> m_scalBwd;
+    /// Array for every coefficient on trace of a mapping form trace
+    /// coefficients to elemental coefficients with a scaling factor
+    /// of the derivative of the normal basis along that trace
+    Array<OneD, std::pair<NekDouble, std::set<int> > >m_fwdTraceToCoeffMap; 
+    /// Array for every coefficient on trace of a mapping form trace
+    /// coefficients to elemental coefficients with a scaling factor
+    /// of the derivative of the normal basis along that trace
+    Array<OneD, std::pair<NekDouble, std::set<int> > >m_bwdTraceToCoeffMap;
+
+    // Link to the trace normals 
+    Array<OneD, const Array<OneD, NekDouble> > m_traceNormals; 
 };
 }
 }
