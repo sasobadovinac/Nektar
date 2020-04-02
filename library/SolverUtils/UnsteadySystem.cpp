@@ -510,26 +510,6 @@ namespace Nektar
 
                     outfile5.close();
                     #endif
-
-                    Array<OneD,NekDouble> MaxTemporalError(nvariables,0.0);
-                    Array<OneD,NekDouble> ManuallySetMinTemporalError(nvariables,0.0);
-                    for(int i=0;i<nvariables;i++)
-                    {
-                        int npoints=m_fields[i]->GetNpoints();
-                        MaxTemporalError[i]=Vmath::Vmax(npoints, m_TemporalError[i],1);   
-                        ManuallySetMinTemporalError[i]=(1.0E-30)*MaxTemporalError[i];
-                    }
-                    for(int i=0;i<nvariables;i++)
-                    {
-                        int npoints=m_fields[i]->GetNpoints();
-                        for(int j=0;j<npoints;j++)
-                        {
-                            if(m_TemporalError[i][j]<ManuallySetMinTemporalError[i])
-                            {
-                                m_TemporalError[i][j]=ManuallySetMinTemporalError[i];
-                            }
-                        }
-                    }
                      
                     #ifdef outputMore
                     ofstream outfile6;
