@@ -174,6 +174,17 @@ namespace Nektar
                     m_ErrorBasedAdaptedTimeStepFlag=true;
                 }
             }
+
+            if(m_TemporalErrorFreezNumber>0)
+            {
+                int nvariables=GetNvariables();
+                m_TemporalError=Array<OneD,Array<OneD,NekDouble>>(nvariables);
+                for(int i=0;i<nvariables;i++)
+                {
+                    int npoints=m_fields[i]->GetNpoints();
+                    m_TemporalError[i]=Array<OneD,NekDouble>(npoints,0.0);
+                }
+            }
             //////////////////////////////////////////////////////////////////////////////
         }
 
@@ -423,6 +434,27 @@ namespace Nektar
                     //First Step: Manually set a minimum Spatial error
                     //Because find some spatial errors are really small like when initially start with constant field
                     // which will lead to too small adptive time step
+                    
+                    #define outputMore
+                    #ifdef outputMore
+                    ofstream outfile51;
+                    outfile51.open("SpatialError1.txt");
+                    int nwidthcolm=10;
+
+                    int npoints=m_fields[0]->GetNpoints();
+                    for(int j=0;j<npoints;j++)
+                    {
+                        outfile51<<setprecision(1)<<j<<"    ";
+                        for(int i=0;i<nvariables;i++)
+                        {
+                            outfile51<<right<<scientific<<setw(nwidthcolm)<<setprecision(nwidthcolm-6)<<m_SpatialError[i][j];
+                            outfile51<<"    ";
+                        }
+                        outfile51<<endl;
+                    }
+                    outfile51.close();
+                    #endif
+
                     Array<OneD,NekDouble> MaxSpatialError(nvariables,0.0);
                     Array<OneD,NekDouble> ManuallySetMinSpatialError(nvariables,0.0);
                     for(int i=0;i<nvariables;i++)
@@ -442,10 +474,43 @@ namespace Nektar
                             }
                         }
                     }
+                    
+                    #ifdef outputMore
+                    ofstream outfile52;
+                    outfile51.open("SpatialError2.txt");
+                    for(int j=0;j<npoints;j++)
+                    {
+                        outfile52<<setprecision(1)<<j<<"    ";
+                        for(int i=0;i<nvariables;i++)
+                        {
+                            outfile52<<right<<scientific<<setw(nwidthcolm)<<setprecision(nwidthcolm-6)<<m_SpatialError[i][j];
+                            outfile52<<"    ";
+                        }
+                        outfile52<<endl;
+                    }
+                    outfile52.close();
+                    #endif
 
                     //Second Step: Manually set a minimum Direct error
                     //Because find some spatial errors are really small like when initially start with constant field
                     // which will lead to too small adptive time step
+                    #ifdef outputMore
+                    ofstream outfile5;
+                    outfile5.open("TemporalError1.txt");
+                    for(int j=0;j<npoints;j++)
+                    {
+                        outfile5<<setprecision(1)<<j<<"    ";
+                        for(int i=0;i<nvariables;i++)
+                        {
+                            outfile5<<right<<scientific<<setw(nwidthcolm)<<setprecision(nwidthcolm-6)<<m_TemporalError[i][j];
+                            outfile5<<"    ";
+                        }
+                        outfile5<<endl;
+                    }
+
+                    outfile5.close();
+                    #endif
+
                     Array<OneD,NekDouble> MaxTemporalError(nvariables,0.0);
                     Array<OneD,NekDouble> ManuallySetMinTemporalError(nvariables,0.0);
                     for(int i=0;i<nvariables;i++)
@@ -465,6 +530,22 @@ namespace Nektar
                             }
                         }
                     }
+                     
+                    #ifdef outputMore
+                    ofstream outfile6;
+                    outfile6.open("TemporalError2.txt");;
+                    for(int j=0;j<npoints;j++)
+                    {
+                        outfile6<<setprecision(1)<<j<<"    ";
+                        for(int i=0;i<nvariables;i++)
+                        {
+                            outfile6<<right<<scientific<<setw(nwidthcolm)<<setprecision(nwidthcolm-6)<<m_TemporalError[i][j];
+                            outfile6<<"    ";
+                        }
+                        outfile6<<endl;
+                    }
+                    outfile6.close();
+                    #endif
                     
                     //////////////////////////////////////////////////////////////
                     //tmp
@@ -757,13 +838,13 @@ namespace Nektar
                 if(m_TemporalErrorFreezNumber>0)
                 {
                         m_TemporalErrorNormArray=Array<OneD, NekDouble> (nvariables,0.0);
-                        m_TemporalError=Array<OneD,Array<OneD,NekDouble>>(nvariables);
+
                         for(int i = 0; i < nvariables; i++)
                         {
                             int npoints=m_fields[i]->GetNpoints();
                             //For time step, no need FwdTrans, but for Tolerance adaptivity, need transfer to coeffs space
                             //m_fields[i]->FwdTrans(m_intScheme->GetIntegrationSchemeVector()[0]->GetLocalErrorVector()[i],tmp);
-                            m_TemporalError[i]=m_intScheme->GetIntegrationSchemeVector()[0]->GetTemporalErrorVector()[i];
+                            Vmath::Vcopy(npoints,m_intScheme->GetIntegrationSchemeVector()[0]->GetTemporalErrorVector()[i],1,m_TemporalError[i],1);
                             m_TemporalErrorNormArray[i] = Vmath::Dot(npoints,m_TemporalError[i],m_TemporalError[i]);
                         }
                         m_comm->AllReduce(m_TemporalErrorNormArray, Nektar::LibUtilities::ReduceSum);
