@@ -420,7 +420,7 @@ namespace Nektar
                   
                     //////////////////////////////////////////////////////////////////////
                     //This method is based on the minimum Error of each Quad Point
-                    //First Step: Manually set a minimum error
+                    //First Step: Manually set a minimum Spatial error
                     //Because find some spatial errors are really small like when initially start with constant field
                     // which will lead to too small adptive time step
                     Array<OneD,NekDouble> MaxSpatialError(nvariables,0.0);
@@ -439,6 +439,29 @@ namespace Nektar
                             if(m_SpatialError[i][j]<ManuallySetMinSpatialError[i])
                             {
                                 m_SpatialError[i][j]=ManuallySetMinSpatialError[i];
+                            }
+                        }
+                    }
+
+                    //Second Step: Manually set a minimum Direct error
+                    //Because find some spatial errors are really small like when initially start with constant field
+                    // which will lead to too small adptive time step
+                    Array<OneD,NekDouble> MaxTemporalError(nvariables,0.0);
+                    Array<OneD,NekDouble> ManuallySetMinTemporalError(nvariables,0.0);
+                    for(int i=0;i<nvariables;i++)
+                    {
+                        int npoints=m_fields[i]->GetNpoints();
+                        MaxTemporalError[i]=Vmath::Vmax(npoints, m_TemporalError[i],1);   
+                        ManuallySetMinTemporalError[i]=(1.0E-30)*MaxTemporalError[i];
+                    }
+                    for(int i=0;i<nvariables;i++)
+                    {
+                        int npoints=m_fields[i]->GetNpoints();
+                        for(int j=0;j<npoints;j++)
+                        {
+                            if(m_TemporalError[i][j]<ManuallySetMinTemporalError[i])
+                            {
+                                m_TemporalError[i][j]=ManuallySetMinTemporalError[i];
                             }
                         }
                     }
