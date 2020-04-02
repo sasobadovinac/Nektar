@@ -486,7 +486,7 @@ namespace Nektar
                     NekDouble oTimeStep=1.0/m_timestep;
                     NekDouble oTimeStepPow=pow(m_timestep,TemporalOrder);
                     oTimeStepPow=1.0/oTimeStepPow;
-                    // NekDouble Scale=0.1;// TimeIntegration error is assuemed to be much less than Spatial Error
+                    NekDouble Scale=0.1;// TimeIntegration error is assuemed to be much less than Spatial Error
                     NekDouble oTimeStepPow_PlusOne=pow(m_timestep,TemporalOrder+1);   
                     oTimeStepPow_PlusOne=1.0/oTimeStepPow_PlusOne;                
                     Array<OneD,NekDouble>tmp1;
