@@ -1479,7 +1479,7 @@ namespace Nektar
                 //To do:Currently assume embedded scheme will di error control
                 cout<<"TimeStep="<<timestep<<endl;
                 m_RealTimeStepFlag=true;
-                if(m_DirectErrorState)
+                if(m_TemporalErrorState)
                 {
                     //InitializePairedExplicitScheme();//To be conbined use with PairedExplicitTimeIntegrate
                     InitializePairedImplicitScheme();//To be conbined use with PairedImplicitTimeIntegrate
@@ -1506,7 +1506,7 @@ namespace Nektar
                     PairedImplicitTimeIntegrate(timesteptmp, 
                                         solvector->GetSolutionVector(),
                                         solvector->GetTimeVector(),
-                                        m_DirectError,op);
+                                        m_TemporalError,op);
                     m_RealTimeStepFlag=false;
                     //To do: if decide no scale in timestep, can use TimeIntegrate in RealTimeStep
                     TimeIntegrate(timesteptmp,solvector->GetSolutionVector(),
@@ -1516,16 +1516,16 @@ namespace Nektar
                     
                     //To Do: later consider if it is right
                     ASSERTL0(1==solvector->GetSolutionVector().num_elements(),"Test for one-step scheme");
-                    for(int i=0;i<m_DirectError.num_elements();i++)
+                    for(int i=0;i<m_TemporalError.num_elements();i++)
                     {
-                        Vmath::Vsub(npoints,m_DirectError[i],1,solvector_new->GetSolutionVector()[0][i],1,m_DirectError[i],1);   
-                        Vmath::Vabs(npoints,m_DirectError[i],1,m_DirectError[i],1);                    
+                        Vmath::Vsub(npoints,m_TemporalError[i],1,solvector_new->GetSolutionVector()[0][i],1,m_TemporalError[i],1);   
+                        Vmath::Vabs(npoints,m_TemporalError[i],1,m_TemporalError[i],1);                    
                         //To do: here is a method that calculate the scale of t, because currently there are two methods in plan, please check if confused use
-                        //1.If choose the strategy direct using DirectError at scaled timestep multiply a scale
-                        //Vmath::Smul(npoints,scale,m_DirectError[i],1,m_DirectError[i],1);
-                        //2. If use compare the DirectError and EmbeddedError and get a m_SafetyFactor in UnsteadySystem, no need to multiply the scale
+                        //1.If choose the strategy direct using TemporalError at scaled timestep multiply a scale
+                        //Vmath::Smul(npoints,scale,m_TemporalError[i],1,m_TemporalError[i],1);
+                        //2. If use compare the TemporalError and EmbeddedError and get a m_SafetyFactor in UnsteadySystem, no need to multiply the scale
                     }
-                    m_DirectErrorState=false;
+                    m_TemporalErrorState=false;
                     
                     Vmath::Vcopy(m_ttmp.num_elements(),m_ttmp,1,solvector->UpdateTimeVector(),1);
                     
@@ -1627,10 +1627,10 @@ namespace Nektar
             
             ASSERTL0(1== nsteps, "Currently test in MultiStage Schemes");
 
-            m_DirectError = Array<OneD, Array<OneD, NekDouble> >(nvar);
+            m_TemporalError = Array<OneD, Array<OneD, NekDouble> >(nvar);
             for(int i = 0; i < nvar; i++)
             {
-                m_DirectError[i] = Array<OneD,NekDouble>(npoints,0.0);
+                m_TemporalError[i] = Array<OneD,NekDouble>(npoints,0.0);
             }
             
             //For temporary store original scheme

@@ -521,19 +521,19 @@ namespace Nektar
                 return Order;
             }
 
-            inline const DoubleArray& GetDirectErrorVector() const//Direct Error between DIRK3 and DIRK4 at scaled time step
+            inline const DoubleArray& GetTemporalErrorVector() const//Direct Error between DIRK3 and DIRK4 at scaled time step
             {
-                return m_DirectError;
+                return m_TemporalError;
             }
 			
-            inline bool IfDirectErrorState(void) const
+            inline bool IfTemporalErrorState(void) const
             {
-                return m_DirectErrorState;
+                return m_TemporalErrorState;
             }
 
-            inline void UpdateDirectErrorState(bool NewDirectErrorState) 
+            inline void UpdateTemporalErrorState(bool NewTemporalErrorState) 
             {
-                m_DirectErrorState=NewDirectErrorState;
+                m_TemporalErrorState=NewTemporalErrorState;
             }
 
             inline bool IfRealTimeStepState(void) const
@@ -615,8 +615,8 @@ namespace Nektar
 
             unsigned int              m_Order; //< Order of timeintegration scheme
 
-            bool m_DirectErrorInitialized=true;//Control the first step first assuming true, if finished initializing, change it to true
-            bool m_DirectErrorState=false;//Control the remaining steps except the first step
+            bool m_TemporalErrorInitialized=true;//Control the first step first assuming true, if finished initializing, change it to true
+            bool m_TemporalErrorState=false;//Control the remaining steps except the first step
 
             bool m_EmbeddedScheme=false;//Control if embedd scheme
             bool m_EmbeddedInitialized=true;//Control the first step 
@@ -656,7 +656,7 @@ namespace Nektar
             TripleArray                         m_solVectortmp;
             SingleArray                         m_ttmp;
             Array<OneD, Array<TwoD,NekDouble> > m_B_embedded;
-            DoubleArray m_DirectError;
+            DoubleArray m_TemporalError;
             DoubleArray m_EmbeddedError;
             DoubleArray m_LocalError;
             

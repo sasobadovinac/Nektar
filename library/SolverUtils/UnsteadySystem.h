@@ -177,10 +177,10 @@ namespace Nektar
             bool m_CalcuPrecMatFlag     = true;
             ////////////////////////////////////////////////////////////////////////////
             //Paremeters to control the Direct Error
-            int m_CalculateDirectErrorCounter=0;
-            NekDouble m_DirectErrorNorm;
-            Array<OneD,NekDouble> m_DirectErrorNormArray;
-            Array<OneD,Array<OneD,NekDouble>> m_DirectError;
+            int m_CalculateTemporalErrorCounter=0;
+            NekDouble m_TemporalErrorNorm;
+            Array<OneD,NekDouble> m_TemporalErrorNormArray;
+            Array<OneD,Array<OneD,NekDouble>> m_TemporalError;
             int m_CalculateSpatialErrorCounter=0;
             bool m_CalculateSpatialErrorFlag=false;
             NekDouble m_SpatialErrorNorm;

@@ -415,7 +415,7 @@ namespace Nektar
                //Yu Pan's test
                //Do Time Adaptivity
                //First step have not calcualted error
-                if ( m_initialStep!=step && m_SpatialErrorFreezNumber>0 && m_DirectErrorFreezNumber>0)
+                if ( m_initialStep!=step && m_SpatialErrorFreezNumber>0 && m_TemporalErrorFreezNumber>0)
                 {
                   
                     //////////////////////////////////////////////////////////////////////
@@ -429,7 +429,7 @@ namespace Nektar
                     {
                         int npoints=m_fields[i]->GetNpoints();
                         MaxSpatialError[i]=Vmath::Vmax(npoints, m_SpatialError[i],1);   
-                        ManuallySetMinSpatialError[i]=1.0E-4*MaxSpatialError[i];
+                        ManuallySetMinSpatialError[i]=1.0E-3*MaxSpatialError[i];
                     }
                     for(int i=0;i<nvariables;i++)
                     {
@@ -467,12 +467,12 @@ namespace Nektar
                     for(int i=0;i<nvariables;i++)
                     {
                         int npoints=m_fields[i]->GetNpoints();
-                        NekDouble Maxtmp=m_DirectError[i][0];
+                        NekDouble Maxtmp=m_TemporalError[i][0];
                         for(int j=0;j<npoints;j++)
                         {
-                            if(m_DirectError[i][j]>Maxtmp)
+                            if(m_TemporalError[i][j]>Maxtmp)
                             {
-                                Maxtmp=m_DirectError[i][j];
+                                Maxtmp=m_TemporalError[i][j];
                                 index2[i]=j;
                             }
                         }
@@ -486,8 +486,7 @@ namespace Nektar
                     NekDouble oTimeStep=1.0/m_timestep;
                     NekDouble oTimeStepPow=pow(m_timestep,TemporalOrder);
                     oTimeStepPow=1.0/oTimeStepPow;
-                    NekDouble Scale=0.1;// TimeIntegration error is assuemed to be much less than Spatial Error
-                    NekDouble oScale=1.0/Scale;
+                    // NekDouble Scale=0.1;// TimeIntegration error is assuemed to be much less than Spatial Error
                     NekDouble oTimeStepPow_PlusOne=pow(m_timestep,TemporalOrder+1);   
                     oTimeStepPow_PlusOne=1.0/oTimeStepPow_PlusOne;                
                     Array<OneD,NekDouble>tmp1;
@@ -499,8 +498,9 @@ namespace Nektar
                         tmp1=Array<OneD,NekDouble> (npoints,0.0);
                         tmp2=Array<OneD,NekDouble> (npoints,0.0);
                         Vmath::Smul(npoints,oTimeStep,m_SpatialError[i],1,tmp1,1);
-                        Vmath::Smul(npoints,oTimeStepPow_PlusOne,m_DirectError[i],1,tmp2,1);
-                        Vmath::Smul(npoints,oScale,tmp2,1,tmp2,1);
+                        //Assume TemporalError much smaller than SpatialError
+                        Vmath::Smul(npoints,Scale,tmp1,1,tmp1,1);
+                        Vmath::Smul(npoints,oTimeStepPow_PlusOne,m_TemporalError[i],1,tmp2,1);
                         for(int j=0;j<npoints;j++)
                         {
                             tmp1[j]=pow(tmp1[j]/tmp2[j],1.0/TemporalOrder);
@@ -530,7 +530,8 @@ namespace Nektar
                     {
                         NekDouble tmp1,tmp2;
                         tmp1=oTimeStep*m_SpatialError[i][index1[i]];
-                        tmp2=oTimeStepPow_PlusOne*m_DirectError[i][index1[i]];
+                        tmp1=Scale*tmp1;
+                        tmp2=oTimeStepPow_PlusOne*m_TemporalError[i][index1[i]];
                         timestep1[i]=pow(tmp1/tmp2,1.0/TemporalOrder);
                     }
                     
@@ -538,7 +539,8 @@ namespace Nektar
                     {
                         NekDouble tmp1,tmp2;
                         tmp1=oTimeStep*m_SpatialError[i][index2[i]];
-                        tmp2=oTimeStepPow_PlusOne*m_DirectError[i][index2[i]];
+                        tmp1=Scale*tmp1;
+                        tmp2=oTimeStepPow_PlusOne*m_TemporalError[i][index2[i]];
                         timestep2[i]=pow(tmp1/tmp2,1.0/TemporalOrder);
                     }
 
@@ -547,7 +549,7 @@ namespace Nektar
                     outfile00<<"$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$"<<endl;
                     int nwidth=10;
                     outfile00<<"Time="<<m_time<<", TimeStep="<<m_timestep<<endl;
-                    outfile00<<"Group1: Max SpatialError situation (Spa;Dir;dt); Group2: Max DirectError situation (Spa;Dir;dt); Group3: Final Adaptive time situation (Spa;Dir;dt)"<<endl;;
+                    outfile00<<"Group1: Max SpatialError situation (SpatialError;TemporalError;dt)"<<endl;
                     for(int i=0;i<nvariables;i++)
                     {
                         outfile00<<right<<scientific<<setw(nwidthcolm)<<setprecision(nwidthcolm-6)<<m_SpatialError[i][index1[i]];
@@ -556,7 +558,7 @@ namespace Nektar
                     outfile00<<endl;
                     for(int i=0;i<nvariables;i++)
                     {
-                        outfile00<<right<<scientific<<setw(nwidthcolm)<<setprecision(nwidthcolm-6)<<m_DirectError[i][index1[i]];
+                        outfile00<<right<<scientific<<setw(nwidthcolm)<<setprecision(nwidthcolm-6)<<m_TemporalError[i][index1[i]];
                         outfile00<<"     ";
                     }
                     outfile00<<endl;
@@ -567,6 +569,7 @@ namespace Nektar
                     }
                     outfile00<<endl;
                     outfile00<<endl;
+                    outfile00<<"Group2: Max TemporalError situation (SpatialError;TemporalError;dt)"<<endl;
                     for(int i=0;i<nvariables;i++)
                     {
                         outfile00<<right<<scientific<<setw(nwidthcolm)<<setprecision(nwidthcolm-6)<<m_SpatialError[i][index2[i]];
@@ -575,7 +578,7 @@ namespace Nektar
                     outfile00<<endl;
                     for(int i=0;i<nvariables;i++)
                     {
-                        outfile00<<right<<scientific<<setw(nwidthcolm)<<setprecision(nwidthcolm-6)<<m_DirectError[i][index2[i]];
+                        outfile00<<right<<scientific<<setw(nwidthcolm)<<setprecision(nwidthcolm-6)<<m_TemporalError[i][index2[i]];
                         outfile00<<"     ";
                     }
                     outfile00<<endl;
@@ -586,6 +589,7 @@ namespace Nektar
                     }
                     outfile00<<endl;
                     outfile00<<endl;
+                    outfile00<<"Group3: Final used AdaptiveTimeStep situation (SpatialError;TemporalError;dt)"<<endl;
                     for(int i=0;i<nvariables;i++)
                     {
                         outfile00<<right<<scientific<<setw(nwidthcolm)<<setprecision(nwidthcolm-6)<<m_SpatialError[i][index3[i]];
@@ -594,7 +598,7 @@ namespace Nektar
                     outfile00<<endl;
                     for(int i=0;i<nvariables;i++)
                     {
-                        outfile00<<right<<scientific<<setw(nwidthcolm)<<setprecision(nwidthcolm-6)<<m_DirectError[i][index3[i]];
+                        outfile00<<right<<scientific<<setw(nwidthcolm)<<setprecision(nwidthcolm-6)<<m_TemporalError[i][index3[i]];
                         outfile00<<"     ";
                     }
                     outfile00<<endl;
@@ -642,18 +646,18 @@ namespace Nektar
 
                 //////////////////////////////////////////////////////////////////////////
                 //Yu Pan's Test
-                if(m_DirectErrorFreezNumber>0)
+                if(m_TemporalErrorFreezNumber>0)
                 {
-                    if(0==step || m_CalculateDirectErrorCounter>=(m_DirectErrorFreezNumber-1))
+                    if(0==step || m_CalculateTemporalErrorCounter>=(m_TemporalErrorFreezNumber-1))
                     {
-                        m_intScheme->GetIntegrationSchemeVector()[0]->UpdateDirectErrorState(true);
-                        m_CalculateDirectErrorCounter=0;
+                        m_intScheme->GetIntegrationSchemeVector()[0]->UpdateTemporalErrorState(true);
+                        m_CalculateTemporalErrorCounter=0;
                     }
                     else
                     {
                         //To do: In time integration,it will be set false after calculating, no need update false,
                         //but need check if repeated calculation
-                        m_CalculateDirectErrorCounter++;
+                        m_CalculateTemporalErrorCounter++;
                     }
                 }
                 
@@ -684,7 +688,7 @@ namespace Nektar
                             Vmath::Vsub(npoints,CurrentOrderRhs[i],1,MultiOrderRhs[i],1,m_SpatialError[i],1);   
                             //Because from our derivatation, it need to muliply dt
                             Vmath::Smul(npoints,m_timestep,m_SpatialError[i],1,m_SpatialError[i],1);
-                            //Better to Abs, because DirectError also positive
+                            //Better to Abs, because TemporalError also positive
                             Vmath::Vabs(npoints,m_SpatialError[i],1,m_SpatialError[i],1);
                         }        
 
@@ -727,28 +731,28 @@ namespace Nektar
                 //Calculate Direct TimeIntegration Error
                 //To Do: Assume currently only DIRK3 can be used because see the codes in TimeIntegrationScheme, the reference uses DIRK4 as accurate solution
                 //Direct error is between the comparison between DIRK3 and DIRK4
-                if(m_DirectErrorFreezNumber>0)
+                if(m_TemporalErrorFreezNumber>0)
                 {
-                        m_DirectErrorNormArray=Array<OneD, NekDouble> (nvariables,0.0);
-                        m_DirectError=Array<OneD,Array<OneD,NekDouble>>(nvariables);
+                        m_TemporalErrorNormArray=Array<OneD, NekDouble> (nvariables,0.0);
+                        m_TemporalError=Array<OneD,Array<OneD,NekDouble>>(nvariables);
                         for(int i = 0; i < nvariables; i++)
                         {
                             int npoints=m_fields[i]->GetNpoints();
                             //For time step, no need FwdTrans, but for Tolerance adaptivity, need transfer to coeffs space
                             //m_fields[i]->FwdTrans(m_intScheme->GetIntegrationSchemeVector()[0]->GetLocalErrorVector()[i],tmp);
-                            m_DirectError[i]=m_intScheme->GetIntegrationSchemeVector()[0]->GetDirectErrorVector()[i];
-                            m_DirectErrorNormArray[i] = Vmath::Dot(npoints,m_DirectError[i],m_DirectError[i]);
+                            m_TemporalError[i]=m_intScheme->GetIntegrationSchemeVector()[0]->GetTemporalErrorVector()[i];
+                            m_TemporalErrorNormArray[i] = Vmath::Dot(npoints,m_TemporalError[i],m_TemporalError[i]);
                         }
-                        m_comm->AllReduce(m_DirectErrorNormArray, Nektar::LibUtilities::ReduceSum);
-                        m_DirectErrorNorm =0.0;
+                        m_comm->AllReduce(m_TemporalErrorNormArray, Nektar::LibUtilities::ReduceSum);
+                        m_TemporalErrorNorm =0.0;
                         for(int i = 0; i < nvariables; i++)
                         {
-                            m_DirectErrorNorm += m_DirectErrorNormArray[i];
+                            m_TemporalErrorNorm += m_TemporalErrorNormArray[i];
                         }
-                        m_DirectErrorNorm=sqrt(m_DirectErrorNorm);//To Do: No need sqrt if in NewtonTolerance use, q2<Norm2, can save computation
+                        m_TemporalErrorNorm=sqrt(m_TemporalErrorNorm);//To Do: No need sqrt if in NewtonTolerance use, q2<Norm2, can save computation
                         for(int i=0;i<nvariables;i++)
                         {
-                            m_DirectErrorNormArray[i]=sqrt(m_DirectErrorNormArray[i]);
+                            m_TemporalErrorNormArray[i]=sqrt(m_TemporalErrorNormArray[i]);
                         }
                 }
 
@@ -770,14 +774,14 @@ namespace Nektar
                 outfile0<<"Direct Error"<<endl;
                 for(int i=0;i<nvariables;i++)
                 {
-                    outfile0<<right<<scientific<<setw(nwidthcolm)<<setprecision(nwidthcolm-6)<<m_DirectErrorNormArray[i];
+                    outfile0<<right<<scientific<<setw(nwidthcolm)<<setprecision(nwidthcolm-6)<<m_TemporalErrorNormArray[i];
                     outfile0<<"     ";
                 }
                 outfile0<<endl;
                 outfile0<<"Scale(Spatial/Direct)"<<endl;
                 for(int i=0;i<nvariables;i++)
                 {
-                    outfile0<<right<<scientific<<setw(nwidthcolm)<<setprecision(nwidthcolm-6)<<m_SpatialErrorNormArray[i]/m_DirectErrorNormArray[i];
+                    outfile0<<right<<scientific<<setw(nwidthcolm)<<setprecision(nwidthcolm-6)<<m_SpatialErrorNormArray[i]/m_TemporalErrorNormArray[i];
                     outfile0<<"     ";
                 }
                 outfile0<<endl;
