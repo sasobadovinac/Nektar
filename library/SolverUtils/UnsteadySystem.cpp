@@ -548,7 +548,7 @@ namespace Nektar
                     outfile00.open("MaxErrorTimeStep.txt",ios::app);
                     outfile00<<"$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$"<<endl;
                     int nwidth=10;
-                    outfile00<<"Time="<<m_time<<", TimeStep="<<m_timestep<<endl;
+                    outfile00<<"Time="<<m_time<<", TimeStep="<<m_timestep<<", AdaptiveTimeStep"<<m_AdaptiveTimeStep<<endl;
                     outfile00<<"Group1: Max SpatialError situation (SpatialError;TemporalError;dt)"<<endl;
                     for(int i=0;i<nvariables;i++)
                     {
