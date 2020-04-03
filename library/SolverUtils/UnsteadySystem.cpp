@@ -435,7 +435,7 @@ namespace Nektar
                     //Because find some spatial errors are really small like when initially start with constant field
                     // which will lead to too small adptive time step
                     
-                    #define outputMore
+                    //#define outputMore
                     #ifdef outputMore
                     ofstream outfile51;
                     outfile51.open("SpatialError1.txt");
@@ -572,7 +572,8 @@ namespace Nektar
                     oTimeStepPow=1.0/oTimeStepPow;
                     NekDouble Scale=0.1;// TimeIntegration error is assuemed to be much less than Spatial Error
                     NekDouble oTimeStepPow_PlusOne=pow(m_timestep,TemporalOrder+1);   
-                    oTimeStepPow_PlusOne=1.0/oTimeStepPow_PlusOne;                
+                    oTimeStepPow_PlusOne=1.0/oTimeStepPow_PlusOne;         
+                    int TemporalOrder_PlusOne=TemporalOrder+1;       
                     Array<OneD,NekDouble>tmp1;
                     Array<OneD,NekDouble>tmp2;
 
@@ -581,13 +582,12 @@ namespace Nektar
                         int npoints=m_fields[i]->GetNpoints();
                         tmp1=Array<OneD,NekDouble> (npoints,0.0);
                         tmp2=Array<OneD,NekDouble> (npoints,0.0);
-                        Vmath::Smul(npoints,oTimeStep,m_SpatialError[i],1,tmp1,1);
+                        Vmath::Smul(npoints,Scale,m_SpatialError[i],1,tmp1,1);
                         //Assume TemporalError much smaller than SpatialError
-                        Vmath::Smul(npoints,Scale,tmp1,1,tmp1,1);
-                        Vmath::Smul(npoints,oTimeStepPow_PlusOne,m_TemporalError[i],1,tmp2,1);
+                        Vmath::Vcopy(npoints,m_TemporalError[i],1,tmp2,1);
                         for(int j=0;j<npoints;j++)
                         {
-                            tmp1[j]=pow(tmp1[j]/tmp2[j],1.0/TemporalOrder);
+                            tmp1[j]=pow(tmp1[j]/tmp2[j],1.0/TemporalOrder_PlusOne);
                         }
                         //////////////////////////////////////////////////
                         //tmp
@@ -616,16 +616,15 @@ namespace Nektar
                         tmp1=oTimeStep*m_SpatialError[i][index1[i]];
                         tmp1=Scale*tmp1;
                         tmp2=oTimeStepPow_PlusOne*m_TemporalError[i][index1[i]];
-                        timestep1[i]=pow(tmp1/tmp2,1.0/TemporalOrder);
+                        timestep1[i]=pow(tmp1/tmp2,1.0/TemporalOrder_PlusOne);
                     }
                     
                     for(int i=0;i<nvariables;i++)
                     {
                         NekDouble tmp1,tmp2;
-                        tmp1=oTimeStep*m_SpatialError[i][index2[i]];
-                        tmp1=Scale*tmp1;
-                        tmp2=oTimeStepPow_PlusOne*m_TemporalError[i][index2[i]];
-                        timestep2[i]=pow(tmp1/tmp2,1.0/TemporalOrder);
+                        tmp1=Scale*m_SpatialError[i][index2[i]];
+                        tmp2=m_TemporalError[i][index2[i]];
+                        timestep2[i]=pow(tmp1/tmp2,1.0/TemporalOrder_PlusOne);
                     }
 
                     ofstream outfile00;
