@@ -435,7 +435,7 @@ namespace Nektar
                     //Because find some spatial errors are really small like when initially start with constant field
                     // which will lead to too small adptive time step
                     
-                    //#define outputMore
+                    #define outputMore
                     #ifdef outputMore
                     ofstream outfile51;
                     outfile51.open("SpatialError1.txt");
@@ -477,7 +477,7 @@ namespace Nektar
                     
                     #ifdef outputMore
                     ofstream outfile52;
-                    outfile51.open("SpatialError2.txt");
+                    outfile52.open("SpatialError2.txt");
                     for(int j=0;j<npoints;j++)
                     {
                         outfile52<<setprecision(1)<<j<<"    ";
@@ -525,6 +525,8 @@ namespace Nektar
                         outfile6<<endl;
                     }
                     outfile6.close();
+
+                    ASSERTL0(false,"Finsh Testing");
                     #endif
                     
                     //////////////////////////////////////////////////////////////
@@ -631,7 +633,7 @@ namespace Nektar
                     outfile00.open("MaxErrorTimeStep.txt",ios::app);
                     outfile00<<"$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$"<<endl;
                     int nwidth=10;
-                    outfile00<<"Time="<<m_time<<", TimeStep="<<m_timestep<<", AdaptiveTimeStep"<<m_AdaptiveTimeStep<<endl;
+                    outfile00<<"Time="<<m_time<<", TimeStep="<<m_timestep<<", AdaptiveTimeStep="<<m_AdaptiveTimeStep<<endl;
                     outfile00<<"Group1: Max SpatialError situation (SpatialError;TemporalError;dt)"<<endl;
                     for(int i=0;i<nvariables;i++)
                     {
