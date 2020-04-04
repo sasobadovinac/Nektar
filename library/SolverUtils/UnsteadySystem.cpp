@@ -813,7 +813,7 @@ namespace Nektar
                     stepCounter, m_timestep, m_intSoln, m_ode);
                 
                 ///////////////////////////////////////////////////////////////////////////////
-                //Calculate Direct TimeIntegration Error
+                //Calculate Temporal TimeIntegration Error
                 //To Do: Assume currently only DIRK3 can be used because see the codes in TimeIntegrationScheme, the reference uses DIRK4 as accurate solution
                 //Direct error is between the comparison between DIRK3 and DIRK4
                 if(m_TemporalErrorFreezNumber>0)
@@ -842,36 +842,6 @@ namespace Nektar
                 }
 
                 timer.Stop();
-
-                ofstream outfile0;
-                outfile0.open("TimeStep.txt",ios::app);
-                outfile0<<"$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$"<<endl;
-                int nwidth=10;
-                outfile0<<"Time="<<m_time<<", AdaptiveTimeStep="<<m_AdaptiveTimeStep<<", TimeStep="<<m_timestep<<", Scale(AdaDt/ConsDt)="<<m_AdaptiveTimeStep/m_timestep;
-                outfile0<<endl;
-                outfile0<<"Spatial Error(NonOperated)"<<endl;
-                for(int i=0;i<nvariables;i++)
-                {
-                    outfile0<<right<<scientific<<setw(nwidthcolm)<<setprecision(nwidthcolm-6)<<m_SpatialErrorNormArray[i];
-                    outfile0<<"     ";
-                }
-                outfile0<<endl;
-                outfile0<<"Direct Error"<<endl;
-                for(int i=0;i<nvariables;i++)
-                {
-                    outfile0<<right<<scientific<<setw(nwidthcolm)<<setprecision(nwidthcolm-6)<<m_TemporalErrorNormArray[i];
-                    outfile0<<"     ";
-                }
-                outfile0<<endl;
-                outfile0<<"Scale(Spatial/Direct)"<<endl;
-                for(int i=0;i<nvariables;i++)
-                {
-                    outfile0<<right<<scientific<<setw(nwidthcolm)<<setprecision(nwidthcolm-6)<<m_SpatialErrorNormArray[i]/m_TemporalErrorNormArray[i];
-                    outfile0<<"     ";
-                }
-                outfile0<<endl;
-                outfile0.close();
-
 
                 m_time  += m_timestep;
                 elapsed  = timer.TimePerTest(1);
