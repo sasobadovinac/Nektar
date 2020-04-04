@@ -589,7 +589,7 @@ namespace Nektar
                         Vmath::Vcopy(npoints,m_TemporalError[i],1,tmp2,1);
                         for(int j=0;j<npoints;j++)
                         {
-                            tmp1[j]=pow(tmp1[j]/tmp2[j],1.0/TemporalOrder_PlusOne);
+                            tmp1[j]=pow(tmp1[j]/tmp2[j],1.0/TemporalOrder_PlusOne)*m_timestep;
                         }
                         //////////////////////////////////////////////////
                         //tmp
@@ -615,10 +615,9 @@ namespace Nektar
                     for(int i=0;i<nvariables;i++)
                     {
                         NekDouble tmp1,tmp2;
-                        tmp1=oTimeStep*m_SpatialError[i][index1[i]];
-                        tmp1=Scale*tmp1;
-                        tmp2=oTimeStepPow_PlusOne*m_TemporalError[i][index1[i]];
-                        timestep1[i]=pow(tmp1/tmp2,1.0/TemporalOrder_PlusOne);
+                        tmp1=Scale*m_SpatialError[i][index1[i]];
+                        tmp2=m_TemporalError[i][index1[i]];
+                        timestep1[i]=pow(tmp1/tmp2,1.0/TemporalOrder_PlusOne)*m_timestep;
                     }
                     
                     for(int i=0;i<nvariables;i++)
@@ -626,7 +625,7 @@ namespace Nektar
                         NekDouble tmp1,tmp2;
                         tmp1=Scale*m_SpatialError[i][index2[i]];
                         tmp2=m_TemporalError[i][index2[i]];
-                        timestep2[i]=pow(tmp1/tmp2,1.0/TemporalOrder_PlusOne);
+                        timestep2[i]=pow(tmp1/tmp2,1.0/TemporalOrder_PlusOne)*m_timestep;
                     }
 
                     ofstream outfile00;
