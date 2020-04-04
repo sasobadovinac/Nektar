@@ -435,7 +435,7 @@ namespace Nektar
                     //Because find some spatial errors are really small like when initially start with constant field
                     // which will lead to too small adptive time step
                     
-                    #define outputMore
+                    //#define outputMore
                     #ifdef outputMore
                     ofstream outfile51;
                     outfile51.open("SpatialError1.txt");
