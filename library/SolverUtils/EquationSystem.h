@@ -83,6 +83,15 @@ class Interpolator;
 
             ///////////////////////////////////////////////////////
             //Yu Pan's Test codes
+            /// OdeProjection
+            SOLVER_UTILS_EXPORT void DoOdeProjection1(
+            const Array<OneD, const  Array<OneD, NekDouble> >&inarray,
+                  Array<OneD,        Array<OneD, NekDouble> >&outarray,
+                                                  const NekDouble time)
+            {
+                v_DoOdeProjection1(inarray,outarray,time);
+            }
+
             /// Compute the RHS
             SOLVER_UTILS_EXPORT void DoOdeRhs1(
             const Array<OneD, const  Array<OneD, NekDouble> >&inarray,
@@ -495,6 +504,15 @@ class Interpolator;
             SOLVER_UTILS_EXPORT EquationSystem(
                 const LibUtilities::SessionReaderSharedPtr& pSession,
                 const SpatialDomains::MeshGraphSharedPtr& pGraph);
+            
+            /// Do Ode Projection
+            SOLVER_UTILS_EXPORT virtual void v_DoOdeProjection1(
+            const Array<OneD, const  Array<OneD, NekDouble> >&inarray,
+                  Array<OneD,        Array<OneD, NekDouble> >&outarray,
+                                                  const NekDouble time)
+            {
+                 ASSERTL0(false, "Not defined.");
+            }
             
             /// Compute the RHS
             SOLVER_UTILS_EXPORT virtual void v_DoOdeRhs1(

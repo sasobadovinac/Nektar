@@ -5352,6 +5352,14 @@ Array<OneD, NekDouble>  CompressibleFlowSystem::GetElmtMinHP(void)
     }
     return hOverP;
 }
+    
+    void CompressibleFlowSystem::v_DoOdeProjection1(
+        const Array<OneD, const Array<OneD, NekDouble> > &inarray,
+              Array<OneD,       Array<OneD, NekDouble> > &outarray,
+              const NekDouble                             time)
+    {
+        DoOdeProjection(inarray,outarray,time);
+    } 
 
     void CompressibleFlowSystem::v_DoOdeRhs1(
         const Array<OneD, const Array<OneD, NekDouble> > &inarray,

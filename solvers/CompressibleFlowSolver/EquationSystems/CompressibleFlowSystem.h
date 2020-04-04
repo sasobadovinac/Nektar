@@ -154,6 +154,11 @@ namespace Nektar
             const LibUtilities::SessionReaderSharedPtr& pSession,
             const SpatialDomains::MeshGraphSharedPtr& pGraph);
         
+        void v_DoOdeProjection1(
+        const Array<OneD, const Array<OneD, NekDouble> > &inarray,
+              Array<OneD,       Array<OneD, NekDouble> > &outarray,
+              const NekDouble                              time);
+        
         void v_DoOdeRhs1(
         const Array<OneD, const Array<OneD, NekDouble> > &inarray,
               Array<OneD,       Array<OneD, NekDouble> > &outarray,

@@ -754,19 +754,26 @@ namespace Nektar
                     if(0==step || m_CalculateSpatialErrorCounter>=(m_SpatialErrorFreezNumber-1))
                     {
                         //Because only research on One Step Runge-Kutta scheme!!!, so [0]
-                        Array<OneD,Array<OneD,NekDouble>> IntegrationSolutiontmp=m_intSoln->GetSolutionVector()[0];
+                        Array<OneD,Array<OneD,NekDouble>> IntegrationSolutiontmp1(nvariables);
+                        Array<OneD,Array<OneD,NekDouble>> IntegrationSolutiontmp2(nvariables);
                         Array<OneD,Array<OneD,NekDouble>> CurrentOrderRhs(nvariables);
                         Array<OneD,Array<OneD,NekDouble>> MultiOrderRhs(nvariables);
                         for(int i=0;i<nvariables;i++)
                         {
                             int npoints=m_fields[i]->GetNpoints();
                             //Multi order Quad points need to be the same
+                            IntegrationSolutiontmp1[i]=Array<OneD,NekDouble>(npoints,0.0);
+                            Vmath::Vcopy(npoints,m_intSoln->GetSolutionVector()[0][i],1,IntegrationSolutiontmp1[i],1);
+                            IntegrationSolutiontmp2[i]=Array<OneD,NekDouble>(npoints,0.0);
+                            Vmath::Vcopy(npoints,m_intSoln->GetSolutionVector()[0][i],1,IntegrationSolutiontmp2[i],1);
                             CurrentOrderRhs[i]=Array<OneD,NekDouble>(npoints,0.0);
                             MultiOrderRhs[i]=Array<OneD,NekDouble>(npoints,0.0);
                         }
                         //To Do: be careful if high order m_equ calculate the repeated error.
-                        DoOdeRhs1(IntegrationSolutiontmp,CurrentOrderRhs,m_time);
-                        m_EqdriverOperator.DoMultiOrderOdeRhs(IntegrationSolutiontmp,MultiOrderRhs,m_time);
+                        DoOdeProjection1(IntegrationSolutiontmp1,IntegrationSolutiontmp1,m_time);
+                        DoOdeRhs1(IntegrationSolutiontmp1,CurrentOrderRhs,m_time);
+                        m_EqdriverOperator.DoMultiOrderProjection(IntegrationSolutiontmp2,IntegrationSolutiontmp2,m_time);
+                        m_EqdriverOperator.DoMultiOrderOdeRhs(IntegrationSolutiontmp2,MultiOrderRhs,m_time);
                         for(int i=0;i<nvariables;i++)
                         {
                             int npoints=m_fields[i]->GetNpoints();

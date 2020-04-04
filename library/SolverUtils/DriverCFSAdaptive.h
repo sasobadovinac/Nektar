@@ -73,6 +73,10 @@ namespace Nektar
             /// Destructor
             SOLVER_UTILS_EXPORT virtual ~DriverCFSAdaptive();
 
+            SOLVER_UTILS_EXPORT virtual void v_DoMultiOrderProjection(const Array<OneD,const Array<OneD, NekDouble>> &inarray,
+                                                            Array<OneD, Array<OneD,NekDouble>> &outarray,
+                                                            const NekDouble time);
+
             SOLVER_UTILS_EXPORT virtual void v_DoMultiOrderOdeRhs(const Array<OneD,const Array<OneD, NekDouble>> &inarray,
                                                                         Array<OneD, Array<OneD,NekDouble>> &outarray,
                                                                         const NekDouble time);

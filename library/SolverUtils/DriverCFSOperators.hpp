@@ -53,32 +53,52 @@ namespace Nektar
             typedef       Array<OneD, Array<OneD,NekDouble>>       OutArrayType;
             typedef std::function< void (InArrayType&, OutArrayType&, const NekDouble)>  FunctorType;
             
-            DriverOperators(void)
+            DriverOperators(void):
+            m_functors(2)
             {
             }
 
-            DriverOperators(DriverOperators &in)
+            DriverOperators(DriverOperators &in):
+            m_functors(2)
             {
-                m_functors = in.m_functors;
+                for (int i = 0; i < 2; i++)
+                {
+                    m_functors[i] = in.m_functors[i];
+                }
+            }
+
+            //Set a functor that m_equ[0] can do Projection
+            template<typename FuncPointerT, typename ObjectPointerT> 
+            void DefineMultiOrderProjection(FuncPointerT func, ObjectPointerT obj)
+            {
+                 m_functors[0]=  std::bind(func, obj, std::placeholders::_1, std::placeholders::_2,std::placeholders::_3);
+            }
+
+            inline void DoMultiOrderProjection(InArrayType     &inarray, 
+                                           OutArrayType    &outarray,
+                                               const NekDouble time) const
+            {
+                ASSERTL1(m_functors[0],"DoHigherOrderOdeRhs should be defined for this time integration scheme");
+                m_functors[0](inarray,outarray,time);
             }
 
             //Set a functor that m_equ[0] can extract Rhs from m_equ[1]
             template<typename FuncPointerT, typename ObjectPointerT> 
             void DefineMultiOrderOdeRhs(FuncPointerT func, ObjectPointerT obj)
             {
-                 m_functors=  std::bind(func, obj, std::placeholders::_1, std::placeholders::_2,std::placeholders::_3);
+                 m_functors[1]=  std::bind(func, obj, std::placeholders::_1, std::placeholders::_2,std::placeholders::_3);
             }
 
             inline void DoMultiOrderOdeRhs(InArrayType     &inarray, 
                                            OutArrayType    &outarray,
                                                const NekDouble time) const
             {
-                ASSERTL1(m_functors,"DoHigherOrderOdeRhs should be defined for this time integration scheme");
-                m_functors(inarray,outarray,time);
+                ASSERTL1(m_functors[1],"DoHigherOrderOdeRhs should be defined for this time integration scheme");
+                m_functors[1](inarray,outarray,time);
             }
 
         protected:
-            FunctorType m_functors;
+            Array<OneD,FunctorType> m_functors;
         private:
 
         };

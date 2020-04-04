@@ -65,6 +65,14 @@ namespace Nektar
         {
         }
 
+        void DriverCFSAdaptive::v_DoMultiOrderProjection(const Array<OneD,const Array<OneD, NekDouble>> &inarray,
+                                                           Array<OneD, Array<OneD,NekDouble>> &outarray,
+                                                                        const NekDouble time)
+        {
+            ASSERTL1(m_equ[1],"Need to define EquationSystem[1]");
+            m_equ[1]->DoOdeProjection1(inarray,outarray,time);
+        }
+
         void DriverCFSAdaptive::v_DoMultiOrderOdeRhs(const Array<OneD,const Array<OneD, NekDouble>> &inarray,
                                                            Array<OneD, Array<OneD,NekDouble>> &outarray,
                                                                         const NekDouble time)
@@ -80,7 +88,7 @@ namespace Nektar
         void DriverCFSAdaptive::v_InitObject(ostream &out)
         {
             DriverCFS::v_InitObject(out);
-
+            m_driverOperator.DefineMultiOrderProjection(&DriverCFS::DoMultiOrderProjection, this);
             m_driverOperator.DefineMultiOrderOdeRhs(&DriverCFS::DoMultiOrderOdeRhs, this);
             m_equ[0]->SetdriverOperator(m_driverOperator);
         }

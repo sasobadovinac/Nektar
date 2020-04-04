@@ -72,6 +72,13 @@ public:
     /// Destructor
     virtual ~DriverCFS();
 
+    SOLVER_UTILS_EXPORT inline void DoMultiOrderProjection(const Array<OneD,const Array<OneD, NekDouble>> &inarray,
+                                                                   Array<OneD, Array<OneD,NekDouble>> &outarray,
+                                                                                           const NekDouble time)
+    {
+        v_DoMultiOrderProjection(inarray,outarray,time);
+    }
+
     SOLVER_UTILS_EXPORT inline void DoMultiOrderOdeRhs(const Array<OneD,const Array<OneD, NekDouble>> &inarray,
                                                                    Array<OneD, Array<OneD,NekDouble>> &outarray,
                                                                                            const NekDouble time)
@@ -121,6 +128,13 @@ protected:
     DriverCFS(const LibUtilities::SessionReaderSharedPtr pSession,
            const SpatialDomains::MeshGraphSharedPtr   pGraph,
            const SpatialDomains::MeshGraphSharedPtr   pHigherOrderGraph);
+    
+    SOLVER_UTILS_EXPORT virtual void v_DoMultiOrderProjection(const Array<OneD,const Array<OneD, NekDouble>> &inarray,
+                                                                   Array<OneD, Array<OneD,NekDouble>> &outarray,
+                                                                              const NekDouble time)
+    {
+         ASSERTL0(false,"This routine is not valid in this class");
+    }
 
     SOLVER_UTILS_EXPORT virtual void v_DoMultiOrderOdeRhs(const Array<OneD,const Array<OneD, NekDouble>> &inarray,
                                                                    Array<OneD, Array<OneD,NekDouble>> &outarray,
