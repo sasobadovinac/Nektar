@@ -847,6 +847,38 @@ namespace Nektar
                         }
                 }
 
+                ofstream outfile0;
+                outfile0.open("ErrorNorm.txt",ios::app);
+                outfile0<<"$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$"<<endl;
+                int nwidth=10;
+                int npoints=m_fields[0]->GetNpoints();
+                outfile0<<"Time="<<m_time<<", AdaptiveTimeStep="<<m_AdaptiveTimeStep<<", TimeStep="<<m_timestep<<", Scale(AdaDt/ConsDt)="<<m_AdaptiveTimeStep/m_timestep;
+                outfile0<<endl;
+                outfile0<<"Spatial Error(NonOperated)"<<endl;
+                for(int i=0;i<nvariables;i++)
+                {
+                    outfile0<<right<<scientific<<setw(nwidthcolm)<<setprecision(nwidthcolm-6)<<m_SpatialErrorNormArray[i]/sqrt(npoints);//Because L2 norm is sqrt((x1^2+x2^2)/2)
+                    outfile0<<"     ";
+                }
+                outfile0<<endl;
+                outfile0<<"Temporal Error"<<endl;
+                for(int i=0;i<nvariables;i++)
+                {
+                    outfile0<<right<<scientific<<setw(nwidthcolm)<<setprecision(nwidthcolm-6)<<m_TemporalErrorNormArray[i]/sqrt(npoints);
+                    outfile0<<"     ";
+                }
+                outfile0<<endl;
+                outfile0<<"Scale(Spatial/Direct)"<<endl;
+                for(int i=0;i<nvariables;i++)
+                {
+                    outfile0<<right<<scientific<<setw(nwidthcolm)<<setprecision(nwidthcolm-6)<<m_SpatialErrorNormArray[i]/m_TemporalErrorNormArray[i];
+                    outfile0<<"     ";
+                }
+                outfile0<<endl;
+                outfile0.close();
+                //ASSERTL0(false,"Finish Testing");
+
+
                 timer.Stop();
 
                 m_time  += m_timestep;

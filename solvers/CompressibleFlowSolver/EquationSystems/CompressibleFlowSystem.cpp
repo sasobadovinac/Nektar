@@ -2952,25 +2952,26 @@ namespace Nektar
                 v_Comm->AllReduce(resmaxm, Nektar::LibUtilities::ReduceMax);
                 if((resmaxm<tol2Max)&&k>0)
                 {
-                    // if(l_verbose)
-                    // {
-                    //     cout    << " resratio= "<<resratio<< " tol2Ratio= "<<tol2Ratio
-                    //             << " resnorm= "<<resnorm<< " tol2= "<<tol2
-                    //             << " resmaxm= "<<resmaxm<< " tol2Max= "<<tol2Max<< endl;
-                    // }
+                    bool RealTimeStepFlag=m_intScheme->GetIntegrationSchemeVector()[0]->IfRealTimeStepState();
+                    if(m_TemporalErrorFreezNumber>0 && RealTimeStepFlag)//TemporalErrorControlTolerance
+                    {
 
-                // at least one Newton Iteration
-                // or else the flow field will not update
-                // if(k>0)
-                // {
-                    /// TODO: m_root
-                    // if(m_cflLocTimestep>0.0)
-                    // {
-                    //     m_cflLocTimestep *= pow(ratioSteps,0.35);
-                    // }
-                    // m_cflSafetyFactor *= pow(ratioSteps,0.35);
-
-                    converged = true;
+                        NekDouble ErrorNorm=m_TemporalErrorNorm;
+                        NekDouble Scale=0.1;//Newton iteration error << TemporalError
+                        NekDouble ResidualNorm=sqrt(resnorm);
+                        NekDouble ErrorAdaptiveTolerance=Scale*ErrorNorm;
+                        bool state=(ResidualNorm<ErrorAdaptiveTolerance);
+                        if(state)
+                        {
+                            converged = true;
+                            cout <<right<<scientific<<setw(nwidthcolm)<<setprecision(nwidthcolm-6)<<"AdaptiveNewtonTolerance="<<ErrorAdaptiveTolerance<<", ResidualNorm="<<ResidualNorm<<endl;
+                        }
+                    }
+                    else
+                    {
+                        converged = true;
+                    }
+                    
                     if(resratio>tol2Ratio&&l_root)
                     {
                         WARNINGL0(true,"     # resratio>tol2Ratio in CompressibleFlowSystem::DoImplicitSolve ");
