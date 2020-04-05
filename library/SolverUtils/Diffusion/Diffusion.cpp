@@ -94,10 +94,13 @@ namespace Nektar
             Array<OneD, Array<OneD, NekDouble> >              &outarray,
             NekDouble                                         time,
             const Array<OneD, Array<OneD, NekDouble> >        &pFwd,
-            const Array<OneD, Array<OneD, NekDouble> >        &pBwd)
+            const Array<OneD, Array<OneD, NekDouble> >        &pBwd,
+            const bool                                        flagFreezeJac)
         {
             m_time  =    time;
+            m_flagFreezeJac = flagFreezeJac;
             v_Diffuse_coeff(nConvectiveFields, fields, inarray, outarray, pFwd, pBwd);
+            m_flagFreezeJac = false;
         }
         void Diffusion::GetAVmu(
             const Array<OneD, MultiRegions::ExpListSharedPtr>           &fields,

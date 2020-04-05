@@ -136,7 +136,7 @@ void Advection::Advect_coeff(
     m_flagFreezeJac  = flagFreezeJac;
     v_Advect_coeff(nConvectiveFields, pFields, pAdvVel, pInarray,
             pOutarray, pTime, pFwd, pBwd);
-    // cout << " m_flagFreezeJac= "<<m_flagFreezeJac<<endl;
+    m_flagFreezeJac  = false;
 }
 
 /**

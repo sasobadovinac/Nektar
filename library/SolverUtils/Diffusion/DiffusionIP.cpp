@@ -201,7 +201,7 @@ namespace Nektar
             DiffuseCalculateDerivative(nConvectiveFields,fields,inarray,qfield,vFwd,vBwd);
 
             Array<OneD, int > nonZeroIndex;
-            Diffuse_coeff(nConvectiveFields, fields, inarray, outarray, vFwd, vBwd,qfield,nonZeroIndex);
+            Diffuse_coeff(nConvectiveFields, fields, inarray, outarray, vFwd, vBwd,qfield,nonZeroIndex,m_flagFreezeJac);
 
             for(i = 0; i < nonZeroIndex.num_elements(); ++i)
             {

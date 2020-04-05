@@ -191,7 +191,8 @@ namespace Nektar
                 Array<OneD, Array<OneD, NekDouble> >              &outarray,
                 NekDouble                                           time,
                 const Array<OneD, Array<OneD, NekDouble> >        &pFwd= NullNekDoubleArrayofArray,
-                const Array<OneD, Array<OneD, NekDouble> >        &pBwd= NullNekDoubleArrayofArray);
+                const Array<OneD, Array<OneD, NekDouble> >        &pBwd= NullNekDoubleArrayofArray,
+                const bool                                                  flagFreezeJac = false);
             
             SOLVER_UTILS_EXPORT void Diffuse_coeff(
                 const int                                                   nConvectiveFields,
@@ -206,6 +207,7 @@ namespace Nektar
             {
                 m_flagFreezeJac = flagFreezeJac;
                 v_Diffuse_coeff(nConvectiveFields, fields, inarray, outarray, vFwd, vBwd,qfield,nonZeroIndex);
+                m_flagFreezeJac = false;
             }
             
             // Diffusion Calculate the physical derivatives

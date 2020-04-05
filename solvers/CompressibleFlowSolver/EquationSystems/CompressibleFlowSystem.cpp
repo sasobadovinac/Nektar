@@ -1881,10 +1881,20 @@ namespace Nektar
         for (int k = 0; k < MaxNonlinIte; k++)
         {
             NonlinSysEvaluator_coeff(m_TimeIntegtSol_k,m_SysEquatResid_k);
+        // for(int i = 0; i < nvariables; i++)
+        // {
+
+        //     int nwidthcolm = 20;
+        //     int nphspnt = m_SysEquatResid_k[nvariables-1].num_elements();
+        //     for(int j = 0; j < nphspnt; j++)
+        //     {
+        //         cout <<right<<scientific<<setw(nwidthcolm)<<setprecision(nwidthcolm-6)
+        //             <<"RHS: ("<<i<<" "<<j<<") "<<m_SysEquatResid_k[i][j]
+        //             << endl;
+        //     }
+        // }
             if(2==m_LiniearizationMethod)
             {
-                CalphysDeriv(m_TimeIntegtSol_k,m_qfield);
-
                 Array<OneD, Array<OneD, NekDouble> > pnts(nvariables);
                 int nphspnt = inpnts[0].num_elements();
                 for(int i = 0; i < nvariables; i++)
@@ -1892,9 +1902,56 @@ namespace Nektar
                     pnts[i]   =   Array<OneD, NekDouble>(nphspnt,0.0);
                     m_fields[i]->BwdTrans(m_TimeIntegtSol_k[i], pnts[i]);
                 }
+
+                CalphysDeriv(pnts,m_qfield);
                 CalcFluxJacVolBnd(pnts,m_qfield);
             }
+        // int ncoefftmp = m_TimeIntegtSol_k[nvariables-1].num_elements();
+        // for(int i = 0; i < nvariables; i++)
+        // {
+        //     int noffset = ncoefftmp*i;
+        //     Vmath::Vcopy(ncoefftmp,&m_TimeIntegtSol_k[i][0],1,&dsol_1D[0]+noffset,1);
+        // }
 
+        // MatrixMultiply_JacobianFree_coeff(dsol_1D,sol_k_1D);
+        // ofstream outfileJF;
+        // outfileJF.open("MatrixMultiply_JacobianFree_coeff.dat");
+        // for(int i = 0; i < nvariables; i++)
+        // {
+
+        //     int nwidthcolm = 20;
+        //     int nphspnt = m_SysEquatResid_k[nvariables-1].num_elements();
+        //     for(int j = 0; j < nphspnt; j++)
+        //     {
+        //         outfileJF <<right<<scientific<<setw(nwidthcolm)<<setprecision(nwidthcolm-6)
+        //             <<"MF :("<<i<<" "<<j<<") "<<sol_k_1D[i*ncoefftmp+j]
+        //             << endl;
+        //     }
+        // }
+        // outfileJF.close();
+
+        // for(int i = 0; i < nvariables; i++)
+        // {
+        //     int noffset = ncoefftmp*i;
+        //     Vmath::Vcopy(ncoefftmp,&m_TimeIntegtSol_k[i][0],1,&dsol_1D[0]+noffset,1);
+        // }
+        // MatrixMultiply_MatrixFree_coeff(dsol_1D,sol_k_1D);
+        // ofstream outfileMF;
+        // outfileMF.open("MatrixMultiply_MatrixFree_coeff.dat");
+        // for(int i = 0; i < nvariables; i++)
+        // {
+
+        //     int nwidthcolm = 20;
+        //     int nphspnt = m_SysEquatResid_k[nvariables-1].num_elements();
+        //     for(int j = 0; j < nphspnt; j++)
+        //     {
+        //         outfileMF <<right<<scientific<<setw(nwidthcolm)<<setprecision(nwidthcolm-6)
+        //             <<"MF :("<<i<<" "<<j<<") "<<sol_k_1D[i*ncoefftmp+j]
+        //             << endl;
+        //     }
+        // }
+        // outfileMF.close();
+        // ASSERTL0(false,"debug stop");
             // if(2==m_LiniearizationMethod)
             // {
             //     CalphysDeriv(m_TimeIntegtSol_k,m_qfield);
