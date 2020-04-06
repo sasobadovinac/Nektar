@@ -339,6 +339,62 @@ namespace Nektar
 
             }
 
+            if(m_ErrorBasedAdaptedTimeStepFlag)
+            {
+                int nvariables=m_fields.num_elements();
+                if(m_SpatialErrorFreezNumber>0)
+                {
+                    Array<OneD,Array<OneD, NekDouble>> SpatialErrorFwd(nvariables);
+                    for(int i=0;i<nvariables;i++)
+                    {
+                        SpatialErrorFwd[i]=Array<OneD,NekDouble>(nCoeffs);
+                        m_fields[0]->FwdTrans_IterPerExp(m_SpatialError[i],SpatialErrorFwd[i]);
+                    }
+                    variables.push_back  ("SpatialError_rho");
+                    fieldcoeffs.push_back(SpatialErrorFwd[0]);
+                    variables.push_back  ("SpatialError_rhoU");
+                    fieldcoeffs.push_back(SpatialErrorFwd[1]);
+                    if(m_spacedim>1)
+                    {
+                        variables.push_back  ("SpatialError_rhoV");
+                        fieldcoeffs.push_back(SpatialErrorFwd[2]);   
+                    }
+                    if(m_spacedim>2)
+                    {
+                        variables.push_back  ("SpatialError_rhoW");
+                        fieldcoeffs.push_back(SpatialErrorFwd[3]);   
+                    }
+                    variables.push_back("SpatialError_rhoE");
+                    fieldcoeffs.push_back(SpatialErrorFwd[m_spacedim+1]);
+                }
+
+                if(m_TemporalErrorFreezNumber>0)
+                {
+                    Array<OneD,Array<OneD, NekDouble>> TemporalErrorFwd(nvariables);
+                    for(int i=0;i<nvariables;i++)
+                    {
+                        TemporalErrorFwd[i]=Array<OneD,NekDouble>(nCoeffs);
+                        m_fields[0]->FwdTrans_IterPerExp(m_TemporalError[i],TemporalErrorFwd[i]);
+                    }
+                    variables.push_back  ("TemporalError_rho");
+                    fieldcoeffs.push_back(TemporalErrorFwd[0]);
+                    variables.push_back  ("TemporalError_rhoU");
+                    fieldcoeffs.push_back(TemporalErrorFwd[1]);
+                    if(m_spacedim>1)
+                    {
+                        variables.push_back  ("TemporalError_rhoV");
+                        fieldcoeffs.push_back(TemporalErrorFwd[2]);   
+                    }
+                    if(m_spacedim>2)
+                    {
+                        variables.push_back  ("TemporalError_rhoW");
+                        fieldcoeffs.push_back(TemporalErrorFwd[3]);   
+                    }
+                    variables.push_back("TemporalError_rhoE");
+                    fieldcoeffs.push_back(TemporalErrorFwd[m_spacedim+1]);
+                }
+            }
+
             if (m_shockCaptureType == "Physical")
             {
                 // GetPhysicalAV(tmp);
