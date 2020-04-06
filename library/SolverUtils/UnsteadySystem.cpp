@@ -163,7 +163,9 @@ namespace Nektar
                 m_ErrorBasedAdaptedTimeStepFlag=true;
             }
 
-            if(m_ErrorBasedAdaptedTimeStepFlag)
+            bool testFlag=true;
+            //if(m_ErrorBasedAdaptedTimeStepFlag)
+            if(testFlag)
             {
                 int nvariables=GetNvariables();
                 m_OperatedAdaptiveTimeStepForOutput=Array<OneD,Array<OneD,NekDouble>>(nvariables);
