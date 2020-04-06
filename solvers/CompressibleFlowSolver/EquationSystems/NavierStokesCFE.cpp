@@ -339,7 +339,7 @@ namespace Nektar
 
             }
 
-            if(m_ErrorBasedAdaptedTimeStepFlag)
+                        if(m_ErrorBasedAdaptedTimeStepFlag)
             {
                 int nvariables=m_fields.num_elements();
                 if(m_SpatialErrorFreezNumber>0)
@@ -368,6 +368,32 @@ namespace Nektar
                     fieldcoeffs.push_back(SpatialErrorFwd[m_spacedim+1]);
                 }
 
+                if(m_SpatialErrorFreezNumber>0)
+                {
+                    Array<OneD,Array<OneD, NekDouble>> OperatedSpatialErrorFwd(nvariables);
+                    for(int i=0;i<nvariables;i++)
+                    {
+                        OperatedSpatialErrorFwd[i]=Array<OneD,NekDouble>(nCoeffs);
+                        m_fields[0]->FwdTrans_IterPerExp(m_OperatedSpatialError[i],OperatedSpatialErrorFwd[i]);
+                    }
+                    variables.push_back  ("OperatedSpatialError_rho");
+                    fieldcoeffs.push_back(OperatedSpatialErrorFwd[0]);
+                    variables.push_back  ("OperatedSpatialError_rhoU");
+                    fieldcoeffs.push_back(OperatedSpatialErrorFwd[1]);
+                    if(m_spacedim>1)
+                    {
+                        variables.push_back  ("OperatedSpatialError_rhoV");
+                        fieldcoeffs.push_back(OperatedSpatialErrorFwd[2]);   
+                    }
+                    if(m_spacedim>2)
+                    {
+                        variables.push_back  ("OperatedSpatialError_rhoW");
+                        fieldcoeffs.push_back(OperatedSpatialErrorFwd[3]);   
+                    }
+                    variables.push_back("OperatedSpatialError_rhoE");
+                    fieldcoeffs.push_back(OperatedSpatialErrorFwd[m_spacedim+1]);
+                }
+
                 if(m_TemporalErrorFreezNumber>0)
                 {
                     Array<OneD,Array<OneD, NekDouble>> TemporalErrorFwd(nvariables);
@@ -393,6 +419,55 @@ namespace Nektar
                     variables.push_back("TemporalError_rhoE");
                     fieldcoeffs.push_back(TemporalErrorFwd[m_spacedim+1]);
                 }
+
+                if(m_TemporalErrorFreezNumber>0)
+                {
+                    Array<OneD,Array<OneD, NekDouble>> OperatedTemporalErrorFwd(nvariables);
+                    for(int i=0;i<nvariables;i++)
+                    {
+                        OperatedTemporalErrorFwd[i]=Array<OneD,NekDouble>(nCoeffs);
+                        m_fields[0]->FwdTrans_IterPerExp(m_OperatedTemporalError[i],OperatedTemporalErrorFwd[i]);
+                    }
+                    variables.push_back  ("OperatedTemporalError_rho");
+                    fieldcoeffs.push_back(OperatedTemporalErrorFwd[0]);
+                    variables.push_back  ("OperatedTemporalError_rhoU");
+                    fieldcoeffs.push_back(OperatedTemporalErrorFwd[1]);
+                    if(m_spacedim>1)
+                    {
+                        variables.push_back  ("OperatedTemporalError_rhoV");
+                        fieldcoeffs.push_back(OperatedTemporalErrorFwd[2]);   
+                    }
+                    if(m_spacedim>2)
+                    {
+                        variables.push_back  ("OperatedTemporalError_rhoW");
+                        fieldcoeffs.push_back(OperatedTemporalErrorFwd[3]);   
+                    }
+                    variables.push_back("OperatedTemporalError_rhoE");
+                    fieldcoeffs.push_back(OperatedTemporalErrorFwd[m_spacedim+1]);
+                }
+
+                Array<OneD,Array<OneD, NekDouble>> OperatedAdaptiveTimeStepFwd(nvariables);
+                for(int i=0;i<nvariables;i++)
+                {
+                    OperatedAdaptiveTimeStepFwd[i]=Array<OneD,NekDouble>(nCoeffs);
+                    m_fields[0]->FwdTrans_IterPerExp(m_OperatedAdaptiveTimeStepForOutput[i],OperatedAdaptiveTimeStepFwd[i]);
+                }
+                variables.push_back  ("AdaptiveTimeStep_rho");
+                fieldcoeffs.push_back(OperatedAdaptiveTimeStepFwd[0]);
+                variables.push_back  ("AdaptiveTimeStep_rhoU");
+                fieldcoeffs.push_back(OperatedAdaptiveTimeStepFwd[1]);
+                if(m_spacedim>1)
+                {
+                    variables.push_back  ("AdaptiveTimeStep_rhoV");
+                    fieldcoeffs.push_back(OperatedAdaptiveTimeStepFwd[2]);   
+                }
+                if(m_spacedim>2)
+                {
+                    variables.push_back  ("AdaptiveTimeStep_rhoW");
+                    fieldcoeffs.push_back(OperatedAdaptiveTimeStepFwd[3]);   
+                }
+                variables.push_back("AdaptiveTimeStep_rhoE");
+                fieldcoeffs.push_back(OperatedAdaptiveTimeStepFwd[m_spacedim+1]);
             }
 
             if (m_shockCaptureType == "Physical")

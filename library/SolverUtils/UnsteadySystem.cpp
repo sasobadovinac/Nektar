@@ -155,34 +155,50 @@ namespace Nektar
             
             /////////////////////////////////////////////////////////////
             //Yu Pan's Test
+            int tmp;
+            m_session->LoadParameter("ErrorBasedAdaptedTimeStepFlag",    tmp   ,  0);
+            m_ErrorBasedAdaptedTimeStepFlag=false;
+            if(1==tmp)
+            {
+                m_ErrorBasedAdaptedTimeStepFlag=true;
+            }
+
+            if(m_ErrorBasedAdaptedTimeStepFlag)
+            {
+                int nvariables=GetNvariables();
+                m_OperatedAdaptiveTimeStepForOutput=Array<OneD,Array<OneD,NekDouble>>(nvariables);
+                for(int i=0;i<nvariables;i++)
+                {
+                    int npoints=m_fields[i]->GetNpoints();
+                    m_OperatedAdaptiveTimeStepForOutput[i]=Array<OneD,NekDouble>(npoints,0.0);
+                }
+            }
+
             if(m_SpatialErrorFreezNumber>0)
             {
                 int nvariables=GetNvariables();
                 m_SpatialErrorNormArray=Array<OneD, NekDouble> (nvariables,0.0);
                 m_SpatialError=Array<OneD,Array<OneD,NekDouble>>(nvariables);
+                m_OperatedSpatialError=Array<OneD,Array<OneD,NekDouble>>(nvariables);
                 for(int i=0;i<nvariables;i++)
                 {
                     int npoints=m_fields[i]->GetNpoints();
                     m_SpatialError[i]=Array<OneD,NekDouble>(npoints,0.0);
+                    m_OperatedSpatialError[i]=Array<OneD,NekDouble>(npoints,0.0);
                 }
 
-                int tmp;
-                m_session->LoadParameter("ErrorBasedAdaptedTimeStepFlag",    tmp   ,  0);
-                m_ErrorBasedAdaptedTimeStepFlag=false;
-                if(1==tmp)
-                {
-                    m_ErrorBasedAdaptedTimeStepFlag=true;
-                }
             }
 
             if(m_TemporalErrorFreezNumber>0)
             {
                 int nvariables=GetNvariables();
                 m_TemporalError=Array<OneD,Array<OneD,NekDouble>>(nvariables);
+                m_OperatedTemporalError=Array<OneD,Array<OneD,NekDouble>>(nvariables);
                 for(int i=0;i<nvariables;i++)
                 {
                     int npoints=m_fields[i]->GetNpoints();
                     m_TemporalError[i]=Array<OneD,NekDouble>(npoints,0.0);
+                    m_OperatedTemporalError[i]=Array<OneD,NekDouble>(npoints,0.0);
                 }
             }
             //////////////////////////////////////////////////////////////////////////////
@@ -430,15 +446,14 @@ namespace Nektar
                 {
                   
                     //////////////////////////////////////////////////////////////////////
-                    //This method is based on the minimum Error of each Quad Point
-                    //First Step: Manually set a minimum Spatial error
+                    //First Step: Manually modify Spatial Error: L2 norm of each Element
                     //Because find some spatial errors are really small like when initially start with constant field
                     // which will lead to too small adptive time step
                     
                     //#define outputMore
                     #ifdef outputMore
                     ofstream outfile51;
-                    outfile51.open("SpatialError1.txt");
+                    outfile51.open("SpatialError.txt");
                     int nwidthcolm=10;
 
                     int npoints=m_fields[0]->GetNpoints();
@@ -455,35 +470,35 @@ namespace Nektar
                     outfile51.close();
                     #endif
 
-                    Array<OneD,NekDouble> MaxSpatialError(nvariables,0.0);
-                    Array<OneD,NekDouble> ManuallySetMinSpatialError(nvariables,0.0);
+                    int nElements  = m_fields[0]->GetNumElmts();
+                    Array<OneD,Array<OneD,NekDouble>> OperatedSpatialErrortmp(nvariables);
+                    std::shared_ptr<LocalRegions::ExpansionVector> m_exp=m_fields[0]->GetExp();
                     for(int i=0;i<nvariables;i++)
                     {
-                        int npoints=m_fields[i]->GetNpoints();
-                        MaxSpatialError[i]=Vmath::Vmax(npoints, m_SpatialError[i],1);   
-                        ManuallySetMinSpatialError[i]=1.0E-3*MaxSpatialError[i];
-                    }
-                    for(int i=0;i<nvariables;i++)
-                    {
-                        int npoints=m_fields[i]->GetNpoints();
-                        for(int j=0;j<npoints;j++)
+                        OperatedSpatialErrortmp[i]=Array<OneD,NekDouble>(nElements);
+                        for(int k=0;k<nElements;k++)
                         {
-                            if(m_SpatialError[i][j]<ManuallySetMinSpatialError[i])
-                            {
-                                m_SpatialError[i][j]=ManuallySetMinSpatialError[i];
-                            }
+                            NekDouble sum=0.0;
+                            int nElementPoints= (*m_exp)[k]->GetTotPoints();
+                            int nElementOffset = m_fields[0]->GetPhys_Offset(k);
+                            sum=Vmath::Dot(nElementPoints,&m_SpatialError[i][nElementOffset],1,&m_SpatialError[i][nElementOffset],1);
+                            sum=sum/nElementPoints;
+                            sum=sqrt(sum);
+                            OperatedSpatialErrortmp[i][k]=sum;
+                            Vmath::Fill(nElementPoints,sum,&m_OperatedSpatialError[i][nElementOffset],1);
                         }
                     }
-                    
+
+
                     #ifdef outputMore
                     ofstream outfile52;
-                    outfile52.open("SpatialError2.txt");
+                    outfile52.open("OperatedSpatialError.txt");
                     for(int j=0;j<npoints;j++)
                     {
                         outfile52<<setprecision(1)<<j<<"    ";
                         for(int i=0;i<nvariables;i++)
                         {
-                            outfile52<<right<<scientific<<setw(nwidthcolm)<<setprecision(nwidthcolm-6)<<m_SpatialError[i][j];
+                            outfile52<<right<<scientific<<setw(nwidthcolm)<<setprecision(nwidthcolm-6)<<m_OperatedSpatialError[i][j];
                             outfile52<<"    ";
                         }
                         outfile52<<endl;
@@ -491,12 +506,11 @@ namespace Nektar
                     outfile52.close();
                     #endif
 
-                    //Second Step: Manually set a minimum Direct error
-                    //Because find some spatial errors are really small like when initially start with constant field
-                    // which will lead to too small adptive time step
+                    //Second Step: Manually operate Temporal Error
+                    // L2 norm smooth
                     #ifdef outputMore
                     ofstream outfile5;
-                    outfile5.open("TemporalError1.txt");
+                    outfile5.open("TemporalError.txt");
                     for(int j=0;j<npoints;j++)
                     {
                         outfile5<<setprecision(1)<<j<<"    ";
@@ -510,16 +524,33 @@ namespace Nektar
 
                     outfile5.close();
                     #endif
+
+                    Array<OneD,Array<OneD,NekDouble>> OperatedTemporalErrortmp(nvariables);
+                    for(int i=0;i<nvariables;i++)
+                    {
+                        OperatedTemporalErrortmp[i]=Array<OneD,NekDouble>(nElements);
+                        for(int k=0;k<nElements;k++)
+                        {
+                            NekDouble sum=0.0;
+                            int nElementPoints= (*m_exp)[k]->GetTotPoints();
+                            int nElementOffset = m_fields[0]->GetPhys_Offset(k);
+                            sum=Vmath::Dot(nElementPoints,&m_TemporalError[i][nElementOffset],1,&m_TemporalError[i][nElementOffset],1);
+                            sum=sum/nElementPoints;
+                            sum=sqrt(sum);
+                            OperatedTemporalErrortmp[i][k]=sum;
+                            Vmath::Fill(nElementPoints,sum,&m_OperatedTemporalError[i][nElementOffset],1);
+                        }
+                    }
                      
                     #ifdef outputMore
                     ofstream outfile6;
-                    outfile6.open("TemporalError2.txt");;
+                    outfile6.open("OperatedTemporalError.txt");;
                     for(int j=0;j<npoints;j++)
                     {
                         outfile6<<setprecision(1)<<j<<"    ";
                         for(int i=0;i<nvariables;i++)
                         {
-                            outfile6<<right<<scientific<<setw(nwidthcolm)<<setprecision(nwidthcolm-6)<<m_TemporalError[i][j];
+                            outfile6<<right<<scientific<<setw(nwidthcolm)<<setprecision(nwidthcolm-6)<<m_OperatedTemporalError[i][j];
                             outfile6<<"    ";
                         }
                         outfile6<<endl;
@@ -534,9 +565,11 @@ namespace Nektar
                     Array<OneD,int> index1(nvariables,0);//maximum Spatial Error consistent dt
                     Array<OneD,int> index2(nvariables,0);//maximum Direct Error consistent dt
                     Array<OneD,int> index3(nvariables,0);//AdaptiveTimeStep consistent dt
+                    Array<OneD,int> index4(nvariables,0);//OperatedAdaptiveTimeStep consistent dt
                     Array<OneD,NekDouble> timestep1(nvariables,0.0);
                     Array<OneD,NekDouble> timestep2(nvariables,0.0);
                     Array<OneD,NekDouble> timestep3(nvariables,0.0);
+                    Array<OneD,NekDouble> timestep4(nvariables,0.0);
                     for(int i=0;i<nvariables;i++)
                     {
                         int npoints=m_fields[i]->GetNpoints();
@@ -576,14 +609,12 @@ namespace Nektar
                     NekDouble oTimeStepPow_PlusOne=pow(m_timestep,TemporalOrder+1);   
                     oTimeStepPow_PlusOne=1.0/oTimeStepPow_PlusOne;         
                     int TemporalOrder_PlusOne=TemporalOrder+1;       
-                    Array<OneD,NekDouble>tmp1;
-                    Array<OneD,NekDouble>tmp2;
 
                     for(int i=0;i<nvariables;i++)
                     {
                         int npoints=m_fields[i]->GetNpoints();
-                        tmp1=Array<OneD,NekDouble> (npoints,0.0);
-                        tmp2=Array<OneD,NekDouble> (npoints,0.0);
+                        Array<OneD,NekDouble> tmp1(npoints,0.0);
+                        Array<OneD,NekDouble> tmp2(npoints,0.0);
                         Vmath::Smul(npoints,Scale,m_SpatialError[i],1,tmp1,1);
                         //Assume TemporalError much smaller than SpatialError
                         Vmath::Vcopy(npoints,m_TemporalError[i],1,tmp2,1);
@@ -627,12 +658,45 @@ namespace Nektar
                         tmp2=m_TemporalError[i][index2[i]];
                         timestep2[i]=pow(tmp1/tmp2,1.0/TemporalOrder_PlusOne)*m_timestep;
                     }
+                    
+                    Array<OneD,NekDouble> timestepArraytmp(nvariables);
+                    for(int i=0;i<nvariables;i++)
+                    {
+                        Array<OneD,NekDouble> tmp1(nElements,0.0);
+                        Array<OneD,NekDouble> tmp2(nElements,0.0);
+                        Vmath::Smul(nElements,Scale,OperatedSpatialErrortmp[i],1,tmp1,1);
+                        //Assume TemporalError much smaller than SpatialError
+                        Vmath::Vcopy(nElements,OperatedTemporalErrortmp[i],1,tmp2,1);
+                        for(int j=0;j<nElements;j++)
+                        {
+                            tmp1[j]=pow(tmp1[j]/tmp2[j],1.0/TemporalOrder_PlusOne)*m_timestep;
+                            int nElementPoints=(*m_exp)[j]->GetTotPoints();
+                            int nElementOffset=m_fields[0]->GetPhys_Offset(j);
+                            Vmath::Fill(nElementPoints,tmp1[j],&m_OperatedAdaptiveTimeStepForOutput[i][nElementOffset],1);
+                        }
+                        //////////////////////////////////////////////////
+                        //tmp
+                        NekDouble Mintmp=tmp1[0];
+                        for(int j=0;j<nElements;j++)
+                        {
+                            if(tmp1[j]<Mintmp)
+                            {
+                                Mintmp=tmp1[j];
+                                index4[i]=m_fields[0]->GetPhys_Offset(j);
+                            }
+                        }
+                        
+                        /////////////////////////////////////////////////
+                        timestepArraytmp[i]=Vmath::Vmin(nElements,tmp1,1);
+                        timestep4[i]=timestepArraytmp[i];
+                    }
+                    m_OperatedAdaptiveTimeStep=Vmath::Vmin(nvariables,timestepArraytmp,1);
 
                     ofstream outfile00;
                     outfile00.open("MaxErrorTimeStep.txt",ios::app);
                     outfile00<<"$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$"<<endl;
                     int nwidth=10;
-                    outfile00<<"Time="<<m_time<<", TimeStep="<<m_timestep<<", AdaptiveTimeStep="<<m_AdaptiveTimeStep<<endl;
+                    outfile00<<"Time="<<m_time<<", TimeStep="<<m_timestep<<", AdaptiveTimeStep="<<m_AdaptiveTimeStep<<", OperatedAdaptiveTimeStep="<<m_OperatedAdaptiveTimeStep<<endl;
                     outfile00<<"Group1: Max SpatialError situation (SpatialError;TemporalError;dt)"<<endl;
                     for(int i=0;i<nvariables;i++)
                     {
@@ -673,7 +737,7 @@ namespace Nektar
                     }
                     outfile00<<endl;
                     outfile00<<endl;
-                    outfile00<<"Group3: Final used AdaptiveTimeStep situation (SpatialError;TemporalError;dt)"<<endl;
+                    outfile00<<"Group3: AdaptiveTimeStep situation (SpatialError;TemporalError;dt)"<<endl;
                     for(int i=0;i<nvariables;i++)
                     {
                         outfile00<<right<<scientific<<setw(nwidthcolm)<<setprecision(nwidthcolm-6)<<m_SpatialError[i][index3[i]];
@@ -693,6 +757,25 @@ namespace Nektar
                     }
                     outfile00<<endl;
                     outfile00<<endl;
+                    outfile00<<"Group4: OperatedAdaptiveTimeStep situation (SpatialError;TemporalError;dt)"<<endl;
+                    for(int i=0;i<nvariables;i++)
+                    {
+                        outfile00<<right<<scientific<<setw(nwidthcolm)<<setprecision(nwidthcolm-6)<<m_OperatedSpatialError[i][index4[i]];
+                        outfile00<<"     ";
+                    }
+                    outfile00<<endl;
+                    for(int i=0;i<nvariables;i++)
+                    {
+                        outfile00<<right<<scientific<<setw(nwidthcolm)<<setprecision(nwidthcolm-6)<<m_OperatedTemporalError[i][index4[i]];
+                        outfile00<<"     ";
+                    }
+                    outfile00<<endl;
+                    for(int i=0;i<nvariables;i++)
+                    {
+                        outfile00<<right<<scientific<<setw(nwidthcolm)<<setprecision(nwidthcolm-6)<<timestep4[i];
+                        outfile00<<"     ";
+                    }
+                    outfile00<<endl;
                     outfile00.close();
 
 
@@ -700,7 +783,7 @@ namespace Nektar
                     
                     if(m_ErrorBasedAdaptedTimeStepFlag)
                     {
-                        m_timestep=m_AdaptiveTimeStep;
+                        m_timestep=m_OperatedAdaptiveTimeStep;
 
                         if (m_time + m_timestep > m_fintime && m_fintime > 0.0)
                         {
@@ -710,6 +793,7 @@ namespace Nektar
                     else
                     {
                         cout<<"AdaptiveTimeStep="<<m_AdaptiveTimeStep<<", Scale(Ada/ConsTimeStep)="<<m_AdaptiveTimeStep/m_timestep<<endl;
+                        cout<<"OperatedAdaptiveTimeStep="<<m_OperatedAdaptiveTimeStep<<", Scale(OpeAda/ConsTimeStep)="<<m_OperatedAdaptiveTimeStep/m_timestep<<endl;
                     }
                     
 
