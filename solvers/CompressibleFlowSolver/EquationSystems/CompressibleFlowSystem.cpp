@@ -2521,24 +2521,24 @@ namespace Nektar
         }
         else
         {
-            // if(flagFreezeJac)
-            // {
-            //     for(int i = 0; i < nvariables; ++i)
-            //     {
-            //         Fwd[i]     = Array<OneD, NekDouble>(nTracePts, 0.0);
-            //         Bwd[i]     = Array<OneD, NekDouble>(nTracePts, 0.0);
-            //         m_fields[i]->GetFwdBwdTracePhysNoBndFill(inarray[i], Fwd[i], Bwd[i]);
-            //     }
-            // }
-            // else
-            // {
+            if(flagFreezeJac)
+            {
+                for(int i = 0; i < nvariables; ++i)
+                {
+                    Fwd[i]     = Array<OneD, NekDouble>(nTracePts, 0.0);
+                    Bwd[i]     = Array<OneD, NekDouble>(nTracePts, 0.0);
+                    m_fields[i]->GetFwdBwdTracePhysNoBndFill(inarray[i], Fwd[i], Bwd[i]);
+                }
+            }
+            else
+            {
                 for(int i = 0; i < nvariables; ++i)
                 {
                     Fwd[i]     = Array<OneD, NekDouble>(nTracePts, 0.0);
                     Bwd[i]     = Array<OneD, NekDouble>(nTracePts, 0.0);
                     m_fields[i]->GetFwdBwdTracePhys(inarray[i], Fwd[i], Bwd[i]);
                 }
-            // }
+            }
         }
  
          // Calculate advection
