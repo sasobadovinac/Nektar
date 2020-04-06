@@ -2381,6 +2381,8 @@ namespace Nektar
                                                  const  Array<OneD, NekDouble> &inarray,
                                                         Array<OneD, NekDouble >&out)
     {
+        DoOdeProjection(m_MatrixFreeRefFields,m_MatrixFreeRefFields,m_BndEvaluateTime);
+
         unsigned int nvariable  = m_fields.num_elements();
         unsigned int ncoeffs    = m_fields[0]->GetNcoeffs();
         unsigned int npoints    = m_fields[0]->GetNpoints();
@@ -2388,7 +2390,7 @@ namespace Nektar
         Array<OneD, Array<OneD, NekDouble> > inpnts(nvariable);
         Array<OneD, Array<OneD, NekDouble> > in2D(nvariable);
         Array<OneD, Array<OneD, NekDouble> > out2D(nvariable);
-
+        
         for(int i = 0; i < nvariable; i++)
         {
             in2D[i]     = inarray + i*ncoeffs;
@@ -2397,7 +2399,6 @@ namespace Nektar
             m_fields[i]->BwdTrans(in2D[i], inpnts[i]);
         }
 
-        DoOdeProjection(inpnts,inpnts,m_BndEvaluateTime);
         bool flag = true;
         DoOdeRhs_coeff(inpnts,out2D,m_BndEvaluateTime,flag);
 
