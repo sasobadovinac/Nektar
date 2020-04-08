@@ -3,6 +3,9 @@ stages:
   - build-env-full
   - build-and-test
   - compiler-warnings
+  - build-env-dev
+  - dockerhub-test
+  - dockerhub-deploy
 
 .execution-conditions: &execution-conditions
   only:
@@ -397,21 +400,6 @@ osx-full-warnings:
 # #################  WINDOWS  ####################
 # ################################################
 
-#win7-default-build-and-test:
-#  <<: *build-and-test-template
-#  tags:
-#    - win7
-#  script:
-#    - $Env:path = "$CI_PROJECT_DIR\build\dist\bin;$CI_PROJECT_DIR\ThirdParty;" + $Env:path
-#    - echo $Env:path
-#    - mkdir build
-#    - cd build
-#    - cmake.exe -G "Visual Studio 12 2013 Win64" --config Debug ..
-#    - cmake.exe --build . --target ALL_BUILD --config Debug
-#    - cmake.exe --build . --target INSTALL --config Debug
-#    - ctest --output-on-failure -C Debug -j3
-
-
 win10-default-build-and-test:
   <<: *build-and-test-template
   tags:
@@ -428,3 +416,107 @@ win10-default-build-and-test:
   after_script:
     - Remove-Item -Recurse -Force build
   needs: []
+
+# ##################################################
+# #################  DOCKERHUB  ####################
+# ##################################################
+
+.dockerhub_build_template: &dockerhub_build_template
+  image: docker:stable
+  only:
+    - master
+    - /^docker\/.*$/
+    - tags
+  script:
+    - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
+    - docker pull ${image_name} || true
+    - docker build --pull -t ${image_name} -f ${dockerfile} .
+    - docker tag ${image_name} ${image_name}:$CI_COMMIT_SHORT_SHA
+    - docker push ${image_name}:$CI_COMMIT_SHORT_SHA
+    - docker push ${image_name}:latest
+
+.dockerhub-test-template: &dockerhub_test_template
+  image: ${image_name}
+  stage: dockerhub-test
+  only:
+    - master
+    - /^docker\/.*$/
+    - tags
+
+# nektarpp/nektar-env image
+dockerhub-build-env:
+  <<: *dockerhub_build_template
+  stage: build-env-full
+  variables:
+    image_name: nektarpp/nektar-env
+    dockerfile: docker/nektar-env/Dockerfile
+  only:
+    refs:
+      - master
+      - /^docker\/.*$/
+      - tags
+    changes:
+      - docker/nektar-env/Dockerfile
+
+# nektarpp/nektar image
+dockerhub-build-nektar:
+  <<: *dockerhub_build_template
+  stage: build-and-test
+  needs: [ "dockerhub-build-env" ]
+  variables:
+    image_name: nektarpp/nektar
+    dockerfile: docker/nektar/Dockerfile
+    GIT_SUBMODULE_STRATEGY: normal
+
+# nektarpp/nektar image
+dockerhub-build-workbook:
+  <<: *dockerhub_build_template
+  stage: build-and-test
+  needs: [ "dockerhub-build-env" ]
+  variables:
+    image_name: nektarpp/nektar-workbook
+    dockerfile: docker/nektar-workbook/Dockerfile
+
+# nektarpp/nektar-dev image
+dockerhub-build-dev:
+  <<: *dockerhub_build_template
+  stage: build-env-dev
+  needs: [ "dockerhub-build-nektar" ]
+  variables:
+    image_name: nektarpp/nektar-dev
+    dockerfile: docker/nektar-dev/Dockerfile
+
+# Test the dockerhub images
+dockerhub-test-nektar:
+  <<: *dockerhub_test_template
+  needs: [ "dockerhub-build-nektar" ]
+  variables:
+    image_name: nektarpp/nektar
+  script:
+    - mpirun -n 3 IncNavierStokesSolver $CI_PROJECT_DIR/solvers/IncNavierStokesSolver/Tests/ChanFlow_m3_par.xml
+
+dockerhub-test-nektar-dev:
+  <<: *dockerhub_test_template
+  needs: [ "dockerhub-build-dev" ]
+  variables:
+    image_name: nektarpp/nektar-dev
+  script:
+    - cd $CI_PROJECT_DIR/templates/executable
+    - ./test.sh /usr/local/lib64/nektar++/cmake 3
+
+# Deployment
+dockerhub-deploy:
+  stage: dockerhub-deploy
+  only:
+    - master
+    - tags
+  variables:
+    images: nektar nektar-dev nektar-workbook nektar-env
+  script:
+    - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
+    - for image in ${images}; do docker pull ${image}:$CI_COMMIT_SHORT_SHA; done
+    - docker logout
+    - docker login -u "$DOCKERIO_REGISTRY_USER" -p "$DOCKERIO_REGISTRY_PASSWORD" $DOCKERIO_REGISTRY
+    - if [ ! -z $CI_COMMIT_TAG ]; then for image in ${images}; docker tag ${image} ${image}:$CI_COMMIT_TAG; docker push ${image}:$CI_COMMIT_TAG; done; fi
+    - for image in ${images}; do docker push ${image}:$CI_COMMIT_SHORT_SHA; done
+    - for image in ${images}; do docker push ${image}:latest; done

@@ -1,6 +1,6 @@
 FROM nektarpp/nektar-env:latest AS build
 
-LABEL maintainer="David Moxey <d.moxey@exeter.ac.uk>"
+LABEL maintainer="Nektar++ Development Team <nektar-users@imperial.ac.uk>"
 
 ARG INSTALL_PREFIX=/usr/local
 
