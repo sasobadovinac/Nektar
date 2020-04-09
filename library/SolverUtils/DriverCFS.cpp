@@ -188,13 +188,10 @@ void DriverCFS::v_InitObject(ostream &out)
             case eAdaptiveCFS:
             {
                 m_session->SetTag("AdvectiveType", "Convective");
-                cout<<"Here 1"<<endl;
                 m_equ[0] = GetEquationSystemFactory().CreateInstance(
                     vEquation, m_session, m_graph);
-                cout<<"Here 2"<<endl;
                 m_equ[1] = GetEquationSystemFactory().CreateInstance(
                     vEquation, m_session, m_MultiOrdergraph);
-                    cout<<"Here 3"<<endl;
             }
                 break;
             default:
