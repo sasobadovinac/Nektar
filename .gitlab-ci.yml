@@ -508,6 +508,7 @@ dockerhub-test-nektar-dev:
 
 # Deployment
 dockerhub-deploy:
+  image: docker:stable
   stage: dockerhub-deploy
   only:
     - master
