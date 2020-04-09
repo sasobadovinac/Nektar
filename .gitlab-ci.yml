@@ -431,7 +431,7 @@ win10-default-build-and-test:
     - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
     - IMAGE=$CI_REGISTRY_IMAGE/${image_name}
     - docker pull $IMAGE || true
-    - docker build --pull -t $IMAGE -f ${dockerfile} .
+    - docker build ${args} --pull -t $IMAGE -f ${dockerfile} .
     - docker tag $IMAGE $IMAGE:$CI_COMMIT_SHORT_SHA
     - docker tag $IMAGE $IMAGE:latest
     - docker push $IMAGE:$CI_COMMIT_SHORT_SHA
@@ -466,6 +466,7 @@ dockerhub-build-nektar:
   variables:
     image_name: nektar
     dockerfile: docker/nektar/Dockerfile
+    args: --build-arg ENV_IMAGE=$CI_REGISTRY_IMAGE/nektar-env:$CI_COMMIT_SHORT_SHA
     GIT_SUBMODULE_STRATEGY: normal
 
 # nektarpp/nektar image
@@ -484,6 +485,7 @@ dockerhub-build-dev:
   needs: [ "dockerhub-build-nektar" ]
   variables:
     image_name: nektar-dev
+    args: --build-arg ENV_IMAGE=$CI_REGISTRY_IMAGE/nektar-env:$CI_COMMIT_SHORT_SHA --build-arg NEKTAR_IMAGE=$CI_REGISTRY_IMAGE/nektar:$CI_COMMIT_SHORT_SHA
     dockerfile: docker/nektar-dev/Dockerfile
 
 # Test the dockerhub images

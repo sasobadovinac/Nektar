@@ -1,4 +1,5 @@
-FROM nektarpp/nektar-env:latest AS build
+ARG ENV_IMAGE=nektarpp/nektar-env:latest
+FROM $ENV_IMAGE AS build
 
 LABEL maintainer="Nektar++ Development Team <nektar-users@imperial.ac.uk>"
 
