@@ -433,10 +433,12 @@ win10-default-build-and-test:
     - docker pull $IMAGE || true
     - docker build --pull -t $IMAGE -f ${dockerfile} .
     - docker tag $IMAGE $IMAGE:$CI_COMMIT_SHORT_SHA
+    - docker tag $IMAGE $IMAGE:latest
     - docker push $IMAGE:$CI_COMMIT_SHORT_SHA
+    - docker push $IMAGE:latest
 
 .dockerhub-test-template: &dockerhub_test_template
-  image: ${CI_REGISTRY_IMAGE}/${image_name}
+  image: ${CI_REGISTRY_IMAGE}/${image_name}:$CI_COMMIT_SHORT_SHA
   stage: dockerhub-test
   only:
     - master
