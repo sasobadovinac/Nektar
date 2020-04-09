@@ -424,9 +424,9 @@ win10-default-build-and-test:
 .dockerhub_build_template: &dockerhub_build_template
   image: docker:stable
   only:
-    - master
-    - /^docker\/.*$/
-    - tags
+    - master@nektar/nektar
+    - /^docker\/.*$/@nektar/nektar
+    - tags@nektar/nektar
   script:
     - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
     - IMAGE=$CI_REGISTRY_IMAGE/${image_name}
@@ -441,17 +441,16 @@ win10-default-build-and-test:
   image: ${CI_REGISTRY_IMAGE}/${image_name}:$CI_COMMIT_SHORT_SHA
   stage: dockerhub-test
   only:
-    - master
-    - /^docker\/.*$/
-    - tags
+    - master@nektar/nektar
+    - /^docker\/.*$/@nektar/nektar
+    - tags@nektar/nektar
 
 .dockerhub-deploy-template: &dockerhub_deploy_template
   image: docker:stable
   stage: dockerhub-deploy
   only:
-    - master
-    - /^docker\/.*$/
-    - tags
+    - master@nektar/nektar
+    - tags@nektar/nektar
   script:
     - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
     - CI_IMAGE=$CI_REGISTRY_IMAGE/${image_name}:$CI_COMMIT_SHORT_SHA
@@ -470,11 +469,6 @@ dockerhub-build-env:
   variables:
     image_name: nektar-env
     dockerfile: docker/nektar-env/Dockerfile
-  only:
-    refs:
-      - master
-      - /^docker\/.*$/
-      - tags
 
 # nektarpp/nektar image
 dockerhub-build-nektar:
