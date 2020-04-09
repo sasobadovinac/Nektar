@@ -2964,7 +2964,10 @@ namespace Nektar
                         if(state)
                         {
                             converged = true;
-                            cout <<right<<scientific<<setw(nwidthcolm)<<setprecision(nwidthcolm-6)<<"AdaptiveNewtonTolerance="<<ErrorAdaptiveTolerance<<", ResidualNorm="<<ResidualNorm<<endl;
+                            if(l_root)
+                            {
+                                 cout <<right<<scientific<<setw(nwidthcolm)<<setprecision(nwidthcolm-6)<<", ResidualNorm="<<ResidualNorm<<"AdaptiveNewtonTolerance="<<ErrorAdaptiveTolerance<<endl;
+                            }
                         }
                     }
                     else
@@ -5159,9 +5162,7 @@ namespace Nektar
                 fieldcoeffs.push_back(sensorFwd);
             }
             
-            bool testFlag=true;
-            if(testFlag)
-            //if(m_ErrorBasedAdaptedTimeStepFlag)
+            if(m_ErrorBasedAdaptedTimeStepFlag)
             {
                 int nvariables=m_fields.num_elements();
                 if(m_SpatialErrorFreezNumber>0)

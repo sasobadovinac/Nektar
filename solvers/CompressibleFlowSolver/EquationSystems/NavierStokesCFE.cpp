@@ -339,9 +339,7 @@ namespace Nektar
 
             }
 
-            bool testFlag=true;
-            if(testFlag)
-            //if(m_ErrorBasedAdaptedTimeStepFlag)
+            if(m_ErrorBasedAdaptedTimeStepFlag)
             {
                 int nvariables=m_fields.num_elements();
                 if(m_SpatialErrorFreezNumber>0)
