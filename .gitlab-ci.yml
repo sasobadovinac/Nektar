@@ -455,8 +455,6 @@ dockerhub-build-env:
       - master
       - /^docker\/.*$/
       - tags
-    changes:
-      - docker/nektar-env/Dockerfile
 
 # nektarpp/nektar image
 dockerhub-build-nektar:
@@ -505,19 +503,19 @@ dockerhub-test-nektar-dev:
     - ./test.sh /usr/local/lib64/nektar++/cmake 3
 
 # Deployment
-#dockerhub-deploy:
-#  stage: dockerhub-deploy
-#  only:
-#    - master
-#      - /^docker\/.*$/
-#    - tags
-#  variables:
-#    images: nektar nektar-dev nektar-workbook nektar-env
-#  script:
-#    - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
-#    - for image in ${images}; do docker pull ${image}:$CI_COMMIT_SHORT_SHA; done
-#    - docker logout
-#    - docker login -u "$DOCKERIO_REGISTRY_USER" -p "$DOCKERIO_REGISTRY_PASSWORD" $DOCKERIO_REGISTRY
-#    - if [ ! -z $CI_COMMIT_TAG ]; then for image in ${images}; docker tag ${image}:$CI_COMMIT_SHORT_SHA ${DOCKERIO_REGISTRY}/nektarpp/${image}:$CI_COMMIT_TAG; docker push nektarpp/${image}:$CI_COMMIT_TAG; done; fi
-#    - for image in ${images}; do docker tag ${image}:$CI_COMMIT_SHORT_SHA ${DOCKERIO_REGISTRY}/nektarpp/${image}:$CI_COMMIT_SHORT_SHA; docker push nektarpp/${image}:$CI_COMMIT_SHORT_SHA; done
-#    - for image in ${images}; do docker tag ${image}:$CI_COMMIT_SHORT_SHA ${DOCKERIO_REGISTRY}/nektarpp/${image}:latest; docker push nektarpp/${image}:latest; done
+dockerhub-deploy:
+  stage: dockerhub-deploy
+  only:
+    - master
+      - /^docker\/.*$/
+    - tags
+  variables:
+    images: nektar nektar-dev nektar-workbook nektar-env
+  script:
+    - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
+    - for image in ${images}; do docker pull ${image}:$CI_COMMIT_SHORT_SHA; done
+    - docker logout
+    - docker login -u "$DOCKERIO_REGISTRY_USER" -p "$DOCKERIO_REGISTRY_PASSWORD" $DOCKERIO_REGISTRY
+    - if [ ! -z $CI_COMMIT_TAG ]; then for image in ${images}; docker tag ${image}:$CI_COMMIT_SHORT_SHA ${DOCKERIO_REGISTRY}/nektarpp/${image}:$CI_COMMIT_TAG; docker push nektarpp/${image}:$CI_COMMIT_TAG; done; fi
+    - for image in ${images}; do docker tag ${image}:$CI_COMMIT_SHORT_SHA ${DOCKERIO_REGISTRY}/nektarpp/${image}:$CI_COMMIT_SHORT_SHA; docker push nektarpp/${image}:$CI_COMMIT_SHORT_SHA; done
+    - for image in ${images}; do docker tag ${image}:$CI_COMMIT_SHORT_SHA ${DOCKERIO_REGISTRY}/nektarpp/${image}:latest; docker push nektarpp/${image}:latest; done
