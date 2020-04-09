@@ -461,7 +461,7 @@ win10-default-build-and-test:
     - docker login -u "$DOCKERIO_REGISTRY_USER" -p "$DOCKERIO_REGISTRY_PASSWORD" $DOCKERIO_REGISTRY
     - if [ ! -z $CI_COMMIT_TAG ]; then docker tag $CI_IMAGE $DH_IMAGE:$CI_COMMIT_TAG; docker push $DH_IMAGE:$CI_COMMIT_TAG; fi
     - docker tag $CI_IMAGE ${DH_IMAGE}:$CI_COMMIT_SHORT_SHA; docker push ${DH_IMAGE}:$CI_COMMIT_SHORT_SHA
-    - docker tag $CI_IMAGE ${DH_IMAGE}:latest; docker push ${DH_IMAGE}:latest; done
+    - docker tag $CI_IMAGE ${DH_IMAGE}:latest; docker push ${DH_IMAGE}:latest
 
 # nektarpp/nektar-env image
 dockerhub-build-env:
