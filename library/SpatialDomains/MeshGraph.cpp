@@ -136,7 +136,7 @@ MeshGraphSharedPtr MeshGraph::Read(
     return mesh;
 }
 
-MeshGraphSharedPtr MeshGraph::ReadHigherOrder(
+MeshGraphSharedPtr MeshGraph::ReadMultiOrder(
     const LibUtilities::SessionReaderSharedPtr session,
     DomainRangeShPtr                           rng,
     bool                                       fillGraph)
@@ -184,7 +184,7 @@ MeshGraphSharedPtr MeshGraph::ReadHigherOrder(
     mesh->PartitionMesh(session);
 
     // Finally, read the geometry information.
-    mesh->ReadHigherOrderGeometry(rng, fillGraph);
+    mesh->ReadMultiOrderGeometry(rng, fillGraph);
 
     return mesh;
 }
@@ -238,9 +238,9 @@ void MeshGraph::FillGraph()
     }
 }
 
-void MeshGraph::FillHigherOrderGraph()
+void MeshGraph::FillMultiOrderGraph()
 {
-    ReadHigherOrderExpansions();
+    ReadMultiOrderExpansions();
 
     switch (m_meshDimension)
     {
@@ -3159,7 +3159,7 @@ void MeshGraph::ReadExpansions()
     }
 }
 
-void MeshGraph::ReadHigherOrderExpansions()
+void MeshGraph::ReadMultiOrderExpansions()
 {
     // Find the Expansions tag
     TiXmlElement *expansionTypes = m_session->GetElement("NEKTAR/EXPANSIONS");
@@ -3317,7 +3317,7 @@ void MeshGraph::ReadHigherOrderExpansions()
                     {
                         num_modes = boost::lexical_cast<int>(nummodesStr);
                     }
-                    //Yu Pan's Test: HigherOrder Expansion
+                    //Yu Pan's Test: MultiOrder Expansion
                     num_modes=num_modes+1;
                     ASSERTL0(false,"Cannot use nummodes default setting because if the Q+1 cannot satisfy higher order expansion's accuracy")
 

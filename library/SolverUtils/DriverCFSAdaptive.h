@@ -52,10 +52,10 @@ namespace Nektar
             static DriverCFSSharedPtr create(
                 const LibUtilities::SessionReaderSharedPtr& pSession,
                 const SpatialDomains::MeshGraphSharedPtr& pGraph,
-                const SpatialDomains::MeshGraphSharedPtr& pHigherOrderGraph)
+                const SpatialDomains::MeshGraphSharedPtr& pMultiOrderGraph)
             {
                 DriverCFSSharedPtr p = MemoryManager<DriverCFSAdaptive>
-                    ::AllocateSharedPtr(pSession, pGraph,pHigherOrderGraph);
+                    ::AllocateSharedPtr(pSession, pGraph,pMultiOrderGraph);
                 p->InitObject();
                 return p;
             }
@@ -68,7 +68,7 @@ namespace Nektar
             SOLVER_UTILS_EXPORT DriverCFSAdaptive(
                 const LibUtilities::SessionReaderSharedPtr pSession,
                 const SpatialDomains::MeshGraphSharedPtr pGraph,
-                const SpatialDomains::MeshGraphSharedPtr pHigherOrderGraph);
+                const SpatialDomains::MeshGraphSharedPtr pMultiOrderGraph);
 
             /// Destructor
             SOLVER_UTILS_EXPORT virtual ~DriverCFSAdaptive();

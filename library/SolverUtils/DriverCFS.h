@@ -111,7 +111,7 @@ protected:
 
     /// MeshGraph object
     SpatialDomains::MeshGraphSharedPtr          m_graph;
-    SpatialDomains::MeshGraphSharedPtr          m_HigherOrdergraph;
+    SpatialDomains::MeshGraphSharedPtr          m_MultiOrdergraph;
 
     /// Equation system to solve
     Array<OneD, EquationSystemSharedPtr>        m_equ;
@@ -127,7 +127,7 @@ protected:
     /// Initialises EquationSystem class members.
     DriverCFS(const LibUtilities::SessionReaderSharedPtr pSession,
            const SpatialDomains::MeshGraphSharedPtr   pGraph,
-           const SpatialDomains::MeshGraphSharedPtr   pHigherOrderGraph);
+           const SpatialDomains::MeshGraphSharedPtr   pMultiOrderGraph);
     
     SOLVER_UTILS_EXPORT virtual void v_DoMultiOrderProjection(const Array<OneD,const Array<OneD, NekDouble>> &inarray,
                                                                    Array<OneD, Array<OneD,NekDouble>> &outarray,

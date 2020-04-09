@@ -78,7 +78,7 @@ namespace Nektar
                                            OutArrayType    &outarray,
                                                const NekDouble time) const
             {
-                ASSERTL1(m_functors[0],"DoHigherOrderOdeRhs should be defined for this time integration scheme");
+                ASSERTL1(m_functors[0],"DoMultiOrderOdeRhs should be defined for this time integration scheme");
                 m_functors[0](inarray,outarray,time);
             }
 
@@ -93,7 +93,7 @@ namespace Nektar
                                            OutArrayType    &outarray,
                                                const NekDouble time) const
             {
-                ASSERTL1(m_functors[1],"DoHigherOrderOdeRhs should be defined for this time integration scheme");
+                ASSERTL1(m_functors[1],"DoMultiOrderOdeRhs should be defined for this time integration scheme");
                 m_functors[1](inarray,outarray,time);
             }
 

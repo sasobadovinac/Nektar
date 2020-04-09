@@ -52,8 +52,8 @@ namespace Nektar
         DriverCFSAdaptive::DriverCFSAdaptive(
             const LibUtilities::SessionReaderSharedPtr pSession,
             const SpatialDomains::MeshGraphSharedPtr pGraph,
-            const SpatialDomains::MeshGraphSharedPtr pHigherOrderGraph)
-            : DriverCFS(pSession, pGraph,pHigherOrderGraph)
+            const SpatialDomains::MeshGraphSharedPtr pMultiOrderGraph)
+            : DriverCFS(pSession, pGraph,pMultiOrderGraph)
         {
         }
     
@@ -105,7 +105,7 @@ namespace Nektar
             time(&starttime);
             ASSERTL0(m_equ[0]->GetNpoints()==m_equ[1]->GetNpoints(),"Quad Points Not the Same");
             m_equ[0]->DoInitialise();   
-            // m_driver.DefineHigherOrderOdeRhs(&m_equ[1]->GetDoOdeObj().DoOdeRhs,this);
+            // m_driver.DefineMultiOrderOdeRhs(&m_equ[1]->GetDoOdeObj().DoOdeRhs,this);
             m_equ[0]->DoSolve();
             //Not sure if need initialize m_equ[1] becasue boundary conditions is also included in this function
             //m_equ[1]->DoInitialise();

@@ -77,7 +77,7 @@ public:
         DomainRangeShPtr rng,
         bool             fillGraph);
     
-    SPATIAL_DOMAINS_EXPORT virtual void ReadHigherOrderGeometry(
+    SPATIAL_DOMAINS_EXPORT virtual void ReadMultiOrderGeometry(
         DomainRangeShPtr rng,
         bool             fillGraph);
 

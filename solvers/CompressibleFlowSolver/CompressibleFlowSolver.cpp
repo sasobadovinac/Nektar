@@ -45,7 +45,7 @@ using namespace Nektar::SolverUtils;
 int main(int argc, char *argv[])
 {
     LibUtilities::SessionReaderSharedPtr session;
-    SpatialDomains::MeshGraphSharedPtr graph,HigherOrdergraph;
+    SpatialDomains::MeshGraphSharedPtr graph,MultiOrdergraph;
     string vDriverModule;
     DriverCFSSharedPtr drv;
 
@@ -58,11 +58,11 @@ int main(int argc, char *argv[])
         // Create MeshGraph.
         //Yu Pan Comment: load xml file (ReadExpansions read nummodes and numpoints)
         graph = SpatialDomains::MeshGraph::Read(session);
-        HigherOrdergraph = SpatialDomains::MeshGraph::ReadHigherOrder(session);
+        MultiOrdergraph = SpatialDomains::MeshGraph::ReadMultiOrder(session);
 
         // Create driver
         session->LoadSolverInfo("CFSDriver", vDriverModule, "CFSAdaptive");
-        drv = GetDriverCFSFactory().CreateInstance(vDriverModule, session, graph,HigherOrdergraph);
+        drv = GetDriverCFSFactory().CreateInstance(vDriverModule, session, graph,MultiOrdergraph);
 
         // Execute driver
         drv->Execute();

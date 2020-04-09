@@ -173,7 +173,7 @@ public:
         DomainRangeShPtr                           rng       = NullDomainRangeShPtr,
         bool                                       fillGraph = true);
 
-    SPATIAL_DOMAINS_EXPORT static MeshGraphSharedPtr ReadHigherOrder(
+    SPATIAL_DOMAINS_EXPORT static MeshGraphSharedPtr ReadMultiOrder(
         const LibUtilities::SessionReaderSharedPtr pSession,
         DomainRangeShPtr                           rng       = NullDomainRangeShPtr,
         bool                                       fillGraph = true);
@@ -199,7 +199,7 @@ public:
     SPATIAL_DOMAINS_EXPORT void FillGraph();
 
     /*transfers the minial data structure to full meshgraph*/
-    SPATIAL_DOMAINS_EXPORT void FillHigherOrderGraph();
+    SPATIAL_DOMAINS_EXPORT void FillMultiOrderGraph();
 
     ////////////////////
     ////////////////////
@@ -208,7 +208,7 @@ public:
 
     SPATIAL_DOMAINS_EXPORT void ReadExpansions();
 
-    SPATIAL_DOMAINS_EXPORT void ReadHigherOrderExpansions();
+    SPATIAL_DOMAINS_EXPORT void ReadMultiOrderExpansions();
 
     /* ---- Helper functions ---- */
     /// Dimension of the mesh (can be a 1D curve in 3D space).
@@ -428,7 +428,7 @@ public:
         DomainRangeShPtr rng,
         bool             fillGraph) = 0;
     
-    SPATIAL_DOMAINS_EXPORT virtual void ReadHigherOrderGeometry(
+    SPATIAL_DOMAINS_EXPORT virtual void ReadMultiOrderGeometry(
         DomainRangeShPtr rng,
         bool             fillGraph) = 0;
         

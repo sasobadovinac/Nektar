@@ -76,11 +76,11 @@ DriverCFSFactory& GetDriverCFSFactory()
  */
 DriverCFS::DriverCFS(const LibUtilities::SessionReaderSharedPtr pSession,
                const SpatialDomains::MeshGraphSharedPtr pGraph,
-               const SpatialDomains::MeshGraphSharedPtr pHigherOrderGraph)
+               const SpatialDomains::MeshGraphSharedPtr pMultiOrderGraph)
     : m_comm(pSession->GetComm()),
       m_session(pSession),
       m_graph(pGraph),
-      m_HigherOrdergraph(pHigherOrderGraph)
+      m_MultiOrdergraph(pMultiOrderGraph)
 {
 }
 
@@ -188,10 +188,13 @@ void DriverCFS::v_InitObject(ostream &out)
             case eAdaptiveCFS:
             {
                 m_session->SetTag("AdvectiveType", "Convective");
+                cout<<"Here 1"<<endl;
                 m_equ[0] = GetEquationSystemFactory().CreateInstance(
                     vEquation, m_session, m_graph);
+                cout<<"Here 2"<<endl;
                 m_equ[1] = GetEquationSystemFactory().CreateInstance(
-                    vEquation, m_session, m_HigherOrdergraph);
+                    vEquation, m_session, m_MultiOrdergraph);
+                    cout<<"Here 3"<<endl;
             }
                 break;
             default:

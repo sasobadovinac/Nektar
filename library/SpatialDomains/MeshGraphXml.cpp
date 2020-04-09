@@ -402,7 +402,7 @@ void MeshGraphXml::ReadGeometry(
     }
 }
 
-void MeshGraphXml::ReadHigherOrderGeometry(
+void MeshGraphXml::ReadMultiOrderGeometry(
     DomainRangeShPtr rng,
     bool             fillGraph)
 {
@@ -487,7 +487,7 @@ void MeshGraphXml::ReadHigherOrderGeometry(
 
     if (fillGraph)
     {
-        MeshGraph::FillHigherOrderGraph();
+        MeshGraph::FillMultiOrderGraph();
     }
 }
 
