@@ -436,7 +436,7 @@ win10-default-build-and-test:
     - docker push $IMAGE:$CI_COMMIT_SHORT_SHA
 
 .dockerhub-test-template: &dockerhub_test_template
-  image: ${image_name}
+  image: ${CI_REGISTRY_IMAGE}/${image_name}
   stage: dockerhub-test
   only:
     - master
@@ -507,7 +507,7 @@ dockerhub-deploy:
   stage: dockerhub-deploy
   only:
     - master
-      - /^docker\/.*$/
+    - /^docker\/.*$/
     - tags
   variables:
     images: nektar nektar-dev nektar-workbook nektar-env
