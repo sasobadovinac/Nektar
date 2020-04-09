@@ -2964,7 +2964,7 @@ namespace Nektar
                         if(state)
                         {
                             converged = true;
-                            if(l_root)
+                            if(l_root && l_verbose)
                             {
                                  cout <<right<<scientific<<setw(nwidthcolm)<<setprecision(nwidthcolm-6)<<", ResidualNorm="<<ResidualNorm<<"AdaptiveNewtonTolerance="<<ErrorAdaptiveTolerance<<endl;
                             }
