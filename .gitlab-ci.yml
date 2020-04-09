@@ -521,6 +521,6 @@ dockerhub-deploy:
     - for image in ${images}; do docker pull $CI_REGISTRY_IMAGE/${image}:$CI_COMMIT_SHORT_SHA; done
     - docker logout
     - docker login -u "$DOCKERIO_REGISTRY_USER" -p "$DOCKERIO_REGISTRY_PASSWORD" $DOCKERIO_REGISTRY
-    - if [ ! -z $CI_COMMIT_TAG ]; then for image in ${images}; docker tag $CI_REGISTRY_IMAGE/${image}:$CI_COMMIT_SHORT_SHA ${DOCKERIO_REGISTRY}/nektarpp/${image}:$CI_COMMIT_TAG; docker push nektarpp/${image}:$CI_COMMIT_TAG; done; fi
+    - if [ ! -z $CI_COMMIT_TAG ]; then for image in ${images}; do docker tag $CI_REGISTRY_IMAGE/${image}:$CI_COMMIT_SHORT_SHA ${DOCKERIO_REGISTRY}/nektarpp/${image}:$CI_COMMIT_TAG; docker push nektarpp/${image}:$CI_COMMIT_TAG; done; fi
     - for image in ${images}; do docker tag $CI_REGISTRY_IMAGE/${image}:$CI_COMMIT_SHORT_SHA ${DOCKERIO_REGISTRY}/nektarpp/${image}:$CI_COMMIT_SHORT_SHA; docker push nektarpp/${image}:$CI_COMMIT_SHORT_SHA; done
     - for image in ${images}; do docker tag $CI_REGISTRY_IMAGE/${image}:$CI_COMMIT_SHORT_SHA ${DOCKERIO_REGISTRY}/nektarpp/${image}:latest; docker push nektarpp/${image}:latest; done
