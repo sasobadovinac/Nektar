@@ -186,8 +186,11 @@ namespace Nektar
 
         Array<OneD, NekDouble>                  m_dof;
         Array<OneD, Array<OneD, NekDouble> >    m_dofVel;
+        Array<OneD, Array<OneD, NekDouble> >    m_dofAdj;
         Array<OneD, NekDouble>                  m_moment;
         Array<OneD, Array<OneD, NekDouble> >    m_force;
+        Array<OneD, Array<OneD, NekDouble> >    m_forceA;
+        Array<OneD, Array<OneD, NekDouble> >    m_forceB;
         Array<OneD, NekDouble>                  m_momentA;
         Array<OneD, NekDouble>                  m_momentB;
 
@@ -267,6 +270,9 @@ namespace Nektar
 
         /// Return value of deltagrad on boundary
         virtual void v_GetDeltaGrad(Array<OneD, Array<OneD, NekDouble> > &deltaGrad);
+
+        /// Return value of base flow gradient
+        virtual void v_GetGradBase(Array<OneD, Array<OneD, NekDouble> > &gradBase);
 
         /// Return value of deltagamma on boundary
         virtual void v_GetDeltaGamma(Array<OneD, Array<OneD, NekDouble> > &deltaGamma);

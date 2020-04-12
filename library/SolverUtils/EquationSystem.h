@@ -340,6 +340,10 @@ class Interpolator;
 
             /// Virtual function to get structural variables in BS-BC's type
             SOLVER_UTILS_EXPORT virtual void v_GetDeltaGrad(Array<OneD, Array<OneD, NekDouble> > &deltaGrad);
+
+            /// Virtual function to get structural variables in BS-BC's type
+            SOLVER_UTILS_EXPORT virtual void v_GetGradBase(Array<OneD, Array<OneD, NekDouble> > &gradBase);
+
             /// Virtual function to get structural variables in BS-BC's type
             SOLVER_UTILS_EXPORT virtual void v_GetDeltaGamma(Array<OneD, Array<OneD, NekDouble> > &deltaGamma);
 
