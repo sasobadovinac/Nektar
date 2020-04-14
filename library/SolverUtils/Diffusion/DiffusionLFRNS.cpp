@@ -101,7 +101,7 @@ namespace Nektar
 
             // Initialising arrays
             int i, j;
-            int nConvectiveFields = pFields.num_elements();
+            int nConvectiveFields = pFields.size();
             int nScalars     = nConvectiveFields - 1;
             int nDim         = pFields[0]->GetCoordim(0);
             int nSolutionPts = pFields[0]->GetTotPoints();
@@ -296,13 +296,13 @@ namespace Nektar
                         m_Q2D_e3[n] = Array<OneD, NekDouble>(nquad1);
 
                         // Extract the Q factors at each edge point
-                        pFields[0]->GetExp(n)->GetEdgeQFactors(
+                        pFields[0]->GetExp(n)->GetTraceQFactors(
                             0, auxArray1 = m_Q2D_e0[n]);
-                        pFields[0]->GetExp(n)->GetEdgeQFactors(
+                        pFields[0]->GetExp(n)->GetTraceQFactors(
                             1, auxArray1 = m_Q2D_e1[n]);
-                        pFields[0]->GetExp(n)->GetEdgeQFactors(
+                        pFields[0]->GetExp(n)->GetTraceQFactors(
                             2, auxArray1 = m_Q2D_e2[n]);
-                        pFields[0]->GetExp(n)->GetEdgeQFactors(
+                        pFields[0]->GetExp(n)->GetTraceQFactors(
                             3, auxArray1 = m_Q2D_e3[n]);
 
                         ptsKeys = pFields[0]->GetExp(n)->GetPointsKeys();
@@ -925,7 +925,7 @@ namespace Nektar
 
             int nElements    = fields[0]->GetExpSize();
             int nDim         = fields[0]->GetCoordim(0);
-            int nScalars     = inarray.num_elements();
+            int nScalars     = inarray.size();
             int nSolutionPts = fields[0]->GetTotPoints();
             int nCoeffs      = fields[0]->GetNcoeffs();
 
@@ -1247,7 +1247,7 @@ namespace Nektar
         {
             int i, j;
             int nTracePts = fields[0]->GetTrace()->GetTotPoints();
-            int nScalars  = inarray.num_elements();
+            int nScalars  = inarray.size();
             int nDim      = fields[0]->GetCoordim(0);
 
             Array<OneD, NekDouble > Vn      (nTracePts, 0.0);
@@ -1276,7 +1276,7 @@ namespace Nektar
             }
 
             // Modify the values in case of boundary interfaces
-            if (fields[0]->GetBndCondExpansions().num_elements())
+            if (fields[0]->GetBndCondExpansions().size())
             {
                 v_WeakPenaltyO1(fields, inarray, numflux);
             }
@@ -1308,7 +1308,7 @@ namespace Nektar
             int nBndEdgePts, nBndEdges, nBndRegions;
 
             int nTracePts = fields[0]->GetTrace()->GetTotPoints();
-            int nScalars  = inarray.num_elements();
+            int nScalars  = inarray.size();
 
             Array<OneD, NekDouble> tmp1(nTracePts, 0.0);
             Array<OneD, NekDouble> tmp2(nTracePts, 0.0);
@@ -1333,7 +1333,7 @@ namespace Nektar
                 // and has to be reset to zero per each equation
                 cnt = 0;
                 nBndRegions = fields[i+1]->
-                GetBndCondExpansions().num_elements();
+                GetBndCondExpansions().size();
                 for (j = 0; j < nBndRegions; ++j)
                 {
                     if (fields[i+1]->GetBndConditions()[j]->
@@ -1355,7 +1355,7 @@ namespace Nektar
                         id2 = fields[0]->GetTrace()->
                         GetPhys_Offset(fields[0]->GetTraceMap()->
                                        GetBndCondIDToGlobalTraceID(cnt++));
-                        
+
                         // Reinforcing bcs for velocity in case of Wall bcs
                         if (boost::iequals(fields[i]->GetBndConditions()[j]->
                             GetUserDefined(),"WallViscous") ||
@@ -1422,7 +1422,7 @@ namespace Nektar
             // Compute boundary conditions  for temperature
             cnt = 0;
             nBndRegions = fields[nScalars]->
-            GetBndCondExpansions().num_elements();
+            GetBndCondExpansions().size();
             for (j = 0; j < nBndRegions; ++j)
             {
                 nBndEdges = fields[nScalars]->
@@ -1525,7 +1525,7 @@ namespace Nektar
         {
             int i, j;
             int nTracePts  = fields[0]->GetTrace()->GetTotPoints();
-            int nVariables = fields.num_elements();
+            int nVariables = fields.size();
             int nDim       = fields[0]->GetCoordim(0);
 
             Array<OneD, NekDouble > Fwd(nTracePts);
@@ -1563,7 +1563,7 @@ namespace Nektar
                                 qfluxtemp, 1);
 
                     // Impose weak boundary condition with flux
-                    if (fields[0]->GetBndCondExpansions().num_elements())
+                    if (fields[0]->GetBndCondExpansions().size())
                     {
                         v_WeakPenaltyO2(fields, i, j, qfield[j][i], qfluxtemp);
                     }
@@ -1593,7 +1593,7 @@ namespace Nektar
             int id2;
 
             int nTracePts   = fields[0]->GetTrace()->GetTotPoints();
-            int nBndRegions = fields[var]->GetBndCondExpansions().num_elements();
+            int nBndRegions = fields[var]->GetBndCondExpansions().size();
 
             Array<OneD, NekDouble > uterm(nTracePts);
             Array<OneD, NekDouble > qtemp(nTracePts);
@@ -1623,8 +1623,7 @@ namespace Nektar
                     id2 = fields[0]->GetTrace()->
                     GetPhys_Offset(fields[0]->GetTraceMap()->
                                    GetBndCondIDToGlobalTraceID(cnt++));
-                    
-                    
+
                     // In case of Dirichlet bcs:
                     // uflux = gD
                     if(fields[var]->GetBndConditions()[i]->
@@ -1707,24 +1706,29 @@ namespace Nektar
             Array<OneD, NekDouble>  JumpL(nElements);
             Array<OneD, NekDouble>  JumpR(nElements);
 
+            Array<OneD, Array<OneD, LocalRegions::ExpansionSharedPtr> >
+                &elmtToTrace = fields[0]->GetTraceMap()->GetElmtToTrace();
+
             for (n = 0; n < nElements; ++n)
             {
                 nLocalSolutionPts = fields[0]->GetExp(n)->GetTotPoints();
                 phys_offset = fields[0]->GetPhys_Offset(n);
 
                 Array<OneD, NekDouble> tmparrayX1(nLocalSolutionPts, 0.0);
-                NekDouble tmpFluxVertex = 0;
+                Array<OneD, NekDouble>  tmpFluxVertex(1,0.0);
                 Vmath::Vcopy(nLocalSolutionPts,
                              &flux[phys_offset], 1,
                              &tmparrayX1[0], 1);
 
-                fields[0]->GetExp(n)->GetVertexPhysVals(0, tmparrayX1,
-                                                        tmpFluxVertex);
-                JumpL[n] =  iFlux[n] - tmpFluxVertex;
+                fields[0]->GetExp(n)->GetTracePhysVals(0, elmtToTrace[n][0],
+                                                       tmparrayX1,
+                                                       tmpFluxVertex);
+                JumpL[n] =  iFlux[n] - tmpFluxVertex[0];
 
-                fields[0]->GetExp(n)->GetVertexPhysVals(1, tmparrayX1,
-                                                        tmpFluxVertex);
-                JumpR[n] =  iFlux[n+1] - tmpFluxVertex;
+                fields[0]->GetExp(n)->GetTracePhysVals(1, elmtToTrace[n][1],
+                                                       tmparrayX1,
+                                                       tmpFluxVertex);
+                JumpR[n] =  iFlux[n+1] - tmpFluxVertex[0];
             }
 
             for (n = 0; n < nElements; ++n)
@@ -1815,10 +1819,10 @@ namespace Nektar
                 Array<OneD, NekDouble> divCFluxE3(nLocalSolutionPts, 0.0);
 
                 // Loop on the edges
-                for (e = 0; e < fields[0]->GetExp(n)->GetNedges(); ++e)
+                for (e = 0; e < fields[0]->GetExp(n)->GetNtraces(); ++e)
                 {
                     // Number of edge points of edge 'e'
-                    nEdgePts = fields[0]->GetExp(n)->GetEdgeNumPoints(e);
+                    nEdgePts = fields[0]->GetExp(n)->GetTraceNumPoints(e);
 
                     // Array for storing volumetric fluxes on each edge
                     Array<OneD, NekDouble> tmparray(nEdgePts, 0.0);
@@ -1828,13 +1832,13 @@ namespace Nektar
                                                 elmtToTrace[n][e]->GetElmtId());
 
                     // Get the normals of edge 'e'
-                    //const Array<OneD, const Array<OneD, NekDouble> > &normals =
+                    //const Array<OneD, const Array<OneD, NekDouble> > &normals = 
                     //fields[0]->GetExp(n)->GetTraceNormal(e);
-
-                    // Extract the edge values of the volumetric fluxes
-                    // on edge 'e' and order them accordingly to the order
-                    // of the trace space
-                    fields[0]->GetExp(n)->GetEdgePhysVals(
+                    
+                    // Extract the edge values of the volumetric fluxes 
+                    // on edge 'e' and order them accordingly to the order 
+                    // of the trace space 
+                    fields[0]->GetExp(n)->GetTracePhysVals(
                                                     e, elmtToTrace[n][e],
                                                     flux + phys_offset,
                                                     auxArray1 = tmparray);
@@ -1852,7 +1856,7 @@ namespace Nektar
 
                     // Check the ordering of the fluxJumps and reverse
                     // it in case of backward definition of edge 'e'
-                    if (fields[0]->GetExp(n)->GetEorient(e) ==
+                    if (fields[0]->GetExp(n)->GetTraceOrient(e) ==
                         StdRegions::eBackwards)
                     {
                         Vmath::Reverse(nEdgePts,
@@ -1867,13 +1871,13 @@ namespace Nektar
                     {
                         // Extract the Jacobians along edge 'e'
                         Array<OneD, NekDouble> jacEdge(nEdgePts, 0.0);
-                        fields[0]->GetExp(n)->GetEdgePhysVals(
+                        fields[0]->GetExp(n)->GetTracePhysVals(
                                                     e, elmtToTrace[n][e],
                                                     jac, auxArray1 = jacEdge);
 
                         // Check the ordering of the fluxJumps and reverse
                         // it in case of backward definition of edge 'e'
-                        if (fields[0]->GetExp(n)->GetEorient(e) ==
+                        if (fields[0]->GetExp(n)->GetTraceOrient(e) ==
                             StdRegions::eBackwards)
                         {
                             Vmath::Reverse(nEdgePts, &jacEdge[0], 1,
@@ -2034,10 +2038,10 @@ namespace Nektar
                 Array<OneD, NekDouble> divCFluxE3(nLocalSolutionPts, 0.0);
 
                 // Loop on the edges
-                for(e = 0; e < fields[0]->GetExp(n)->GetNedges(); ++e)
+                for(e = 0; e < fields[0]->GetExp(n)->GetNtraces(); ++e)
                 {
                     // Number of edge points of edge e
-                    nEdgePts = fields[0]->GetExp(n)->GetEdgeNumPoints(e);
+                    nEdgePts = fields[0]->GetExp(n)->GetTraceNumPoints(e);
 
                     Array<OneD, NekDouble> tmparrayX1(nEdgePts, 0.0);
                     Array<OneD, NekDouble> tmparrayX2(nEdgePts, 0.0);
@@ -2055,14 +2059,14 @@ namespace Nektar
                     
                     // Extract the edge values of flux-x on edge e and order 
                     // them accordingly to the order of the trace space 
-                    fields[0]->GetExp(n)->GetEdgePhysVals(
+                    fields[0]->GetExp(n)->GetTracePhysVals(
                                                 e, elmtToTrace[n][e],
                                                 fluxX1 + phys_offset,
                                                 auxArray1 = tmparrayX1);
 
                     // Extract the edge values of flux-y on edge e and order
                     // them accordingly to the order of the trace space
-                    fields[0]->GetExp(n)->GetEdgePhysVals(
+                    fields[0]->GetExp(n)->GetTracePhysVals(
                                                 e, elmtToTrace[n][e],
                                                 fluxX2 + phys_offset,
                                                 auxArray1 = tmparrayX2);
@@ -2081,7 +2085,7 @@ namespace Nektar
                                 &fluxN[0], 1, &fluxJumps[0], 1);
 
                     // Check the ordering of the jump vectors
-                    if (fields[0]->GetExp(n)->GetEorient(e) ==
+                    if (fields[0]->GetExp(n)->GetTraceOrient(e) ==
                         StdRegions::eBackwards)
                     {
                         Vmath::Reverse(nEdgePts,
@@ -2232,10 +2236,10 @@ namespace Nektar
                 Array<OneD, NekDouble> divCFluxE3(nLocalSolutionPts, 0.0);
 
                 // Loop on the edges
-                for(e = 0; e < fields[0]->GetExp(n)->GetNedges(); ++e)
+                for(e = 0; e < fields[0]->GetExp(n)->GetNtraces(); ++e)
                 {
                     // Number of edge points of edge e
-                    nEdgePts = fields[0]->GetExp(n)->GetEdgeNumPoints(e);
+                    nEdgePts = fields[0]->GetExp(n)->GetTraceNumPoints(e);
 
                     Array<OneD, NekDouble> fluxN     (nEdgePts, 0.0);
                     Array<OneD, NekDouble> fluxT     (nEdgePts, 0.0);
@@ -2258,7 +2262,7 @@ namespace Nektar
                             // Extract the edge values of transformed flux-y on
                             // edge e and order them accordingly to the order of
                             // the trace space
-                            fields[0]->GetExp(n)->GetEdgePhysVals(
+                            fields[0]->GetExp(n)->GetTracePhysVals(
                                                 e, elmtToTrace[n][e],
                                                 fluxX2 + phys_offset,
                                                 auxArray1 = fluxN_D);
@@ -2271,7 +2275,7 @@ namespace Nektar
                                          &fluxN[0], 1);
 
                             // Check the ordering of vectors
-                            if (fields[0]->GetExp(n)->GetEorient(e) ==
+                            if (fields[0]->GetExp(n)->GetTraceOrient(e) ==
                                 StdRegions::eBackwards)
                             {
                                 Vmath::Reverse(nEdgePts,
@@ -2323,7 +2327,7 @@ namespace Nektar
                             // Extract the edge values of transformed flux-x on
                             // edge e and order them accordingly to the order of
                             // the trace space
-                            fields[0]->GetExp(n)->GetEdgePhysVals(
+                            fields[0]->GetExp(n)->GetTracePhysVals(
                                     e, elmtToTrace[n][e],
                                     fluxX1 + phys_offset,
                                     auxArray1 = fluxN_D);
@@ -2334,7 +2338,7 @@ namespace Nektar
                                          &fluxN[0], 1);
 
                             // Check the ordering of vectors
-                            if (fields[0]->GetExp(n)->GetEorient(e) ==
+                            if (fields[0]->GetExp(n)->GetTraceOrient(e) ==
                                 StdRegions::eBackwards)
                             {
                                 Vmath::Reverse(nEdgePts,
@@ -2388,7 +2392,7 @@ namespace Nektar
                             // edge e and order them accordingly to the order of
                             // the trace space
 
-                            fields[0]->GetExp(n)->GetEdgePhysVals(
+                            fields[0]->GetExp(n)->GetTracePhysVals(
                                     e, elmtToTrace[n][e],
                                     fluxX2 + phys_offset,
                                     auxArray1 = fluxN_D);
@@ -2399,7 +2403,7 @@ namespace Nektar
                                          &fluxN[0], 1);
 
                             // Check the ordering of vectors
-                            if (fields[0]->GetExp(n)->GetEorient(e) ==
+                            if (fields[0]->GetExp(n)->GetTraceOrient(e) ==
                                 StdRegions::eBackwards)
                             {
                                 Vmath::Reverse(nEdgePts,
@@ -2453,7 +2457,7 @@ namespace Nektar
                             // edge e and order them accordingly to the order of
                             // the trace space
 
-                            fields[0]->GetExp(n)->GetEdgePhysVals(
+                            fields[0]->GetExp(n)->GetTracePhysVals(
                                     e, elmtToTrace[n][e],
                                     fluxX1 + phys_offset,
                                     auxArray1 = fluxN_D);
@@ -2465,7 +2469,7 @@ namespace Nektar
                                          &fluxN[0], 1);
 
                             // Check the ordering of vectors
-                            if (fields[0]->GetExp(n)->GetEorient(e) ==
+                            if (fields[0]->GetExp(n)->GetTraceOrient(e) ==
                                 StdRegions::eBackwards)
                             {
                                 Vmath::Reverse(nEdgePts,

@@ -159,6 +159,9 @@ namespace Nektar
                         Array<OneD,       NekDouble> &outarray,
                         StdRegions::Orientation  orient);
 
+            LOCAL_REGIONS_EXPORT virtual void v_GetTracePhysMap(
+                         const int vertex,
+                         Array<OneD, int> &map);
             //-----------------------------
             // Helper functions
             //-----------------------------
@@ -169,10 +172,6 @@ namespace Nektar
                 StdRegions::StdExpansionSharedPtr v_GetLinStdExp(void) const;
             
             LOCAL_REGIONS_EXPORT virtual int v_GetCoordim();
-
-            LOCAL_REGIONS_EXPORT virtual void v_SetCoeffsToOrientation(
-                Array<OneD, NekDouble> &coeffs,
-                StdRegions::Orientation dir);
 
             LOCAL_REGIONS_EXPORT virtual void v_SetCoeffsToOrientation(
                 StdRegions::Orientation dir,

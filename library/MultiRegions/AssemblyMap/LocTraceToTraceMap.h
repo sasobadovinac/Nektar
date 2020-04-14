@@ -164,20 +164,13 @@ public:
     // Destructor
     MULTI_REGIONS_EXPORT virtual ~LocTraceToTraceMap();
 
-    MULTI_REGIONS_EXPORT void Setup2D(
+    MULTI_REGIONS_EXPORT void Setup(
         const ExpList &locExp,
         const ExpListSharedPtr &trace,
         const Array<OneD, Array<OneD, LocalRegions::ExpansionSharedPtr> >
-            &elmtToTrace,
+        &elmtToTrace,
         const std::vector<bool> &LeftAdjacents);
-
-    MULTI_REGIONS_EXPORT void Setup3D(
-        const ExpList &locExp,
-        const ExpListSharedPtr &trace,
-        const Array<OneD, Array<OneD, LocalRegions::ExpansionSharedPtr> >
-            &elmtToTrace,
-        const std::vector<bool> &LeftAdjacents);
-
+        
     MULTI_REGIONS_EXPORT void LocTracesFromField(
         const Array<OneD, const NekDouble> &field,
         Array<OneD, NekDouble> faces);
@@ -191,12 +184,12 @@ public:
         const Array<OneD, const NekDouble> &loctraces,
         Array<OneD, NekDouble> traces);
 
-    MULTI_REGIONS_EXPORT void InterpLocEdgesToTrace(
+    MULTI_REGIONS_EXPORT inline void InterpLocEdgesToTrace(
         const int dir,
         const Array<OneD, const NekDouble> &locfaces,
         Array<OneD, NekDouble> edges);
 
-    MULTI_REGIONS_EXPORT void InterpLocFacesToTrace(
+    MULTI_REGIONS_EXPORT inline void InterpLocFacesToTrace(
         const int dir,
         const Array<OneD, const NekDouble> &locfaces,
         Array<OneD, NekDouble> faces);

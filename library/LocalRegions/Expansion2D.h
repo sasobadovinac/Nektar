@@ -68,6 +68,9 @@ namespace Nektar
                 Array<OneD, ExpansionSharedPtr> &EdgeExp,
                 Array<OneD, NekDouble>          &inout);
 
+            LOCAL_REGIONS_EXPORT Array<OneD, unsigned int>
+                              GetTraceInverseBoundaryMap(int eid);
+
             inline void AddNormTraceInt(
                 const int                             dir,
                 Array<OneD, ExpansionSharedPtr>      &EdgeExp,
@@ -106,12 +109,6 @@ namespace Nektar
 
             inline SpatialDomains::Geometry2DSharedPtr GetGeom2D() const;
             
-            LOCAL_REGIONS_EXPORT void ReOrientEdgePhysMap(
-                const int                        nvert,
-                const StdRegions::Orientation    orient,
-                const int                        nq0,
-                Array<OneD, int>                &idmap);
-
         protected:
             std::vector<bool>                       m_requireNeg;
             std::map<int, NormalVector>             m_edgeNormals;
@@ -159,10 +156,10 @@ namespace Nektar
                 const Array<OneD, const NekDouble > &primCoeffs,
                 DNekMatSharedPtr                    &inoutmat);
 
-            virtual void v_AddRobinEdgeContribution(
-                const int edgeid,
+            virtual void v_AddRobinTraceContribution(
+                const int traceid,
                 const Array<OneD, const NekDouble> &primCoeffs,
-                const Array<OneD, NekDouble> &Incoeffs,
+                const Array<OneD, NekDouble> &incoeffs,
                 Array<OneD, NekDouble> &coeffs);
 
             virtual DNekMatSharedPtr v_BuildVertexMatrix(
@@ -181,12 +178,10 @@ namespace Nektar
                 const Array<OneD, const Array<OneD, NekDouble> > &normals,
                 const StdRegions::VarCoeffMap   &varcoeffs);
 
-            LOCAL_REGIONS_EXPORT void ReOrientQuadEdgePhysMap(
-                const StdRegions::Orientation    orient,
-                const int                        nq0,
-                Array<OneD, int>                &idmap);
-
-            Array<OneD, unsigned int> v_GetEdgeInverseBoundaryMap(int eid);
+             void  v_ReOrientTracePhysMap
+                              (const StdRegions::Orientation orient,
+                               Array<OneD, int> &idmap,
+                               const int nq0,  const int nq1);
 
             virtual void v_NegateTraceNormal (const int edge);
             virtual bool v_TraceNormalNegated(const int edge);

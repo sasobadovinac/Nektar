@@ -99,7 +99,7 @@ namespace Nektar
         return val;
     }
 	
-    /** @brief: Thi smethod provide the value of the derivative of the
+    /** @brief: This method provides the value of the derivative of the
         normal component of the basis along the trace. Note by
         definition this is a constant value along the trace. In
         addition it also provides a mapping ot the local coefficient

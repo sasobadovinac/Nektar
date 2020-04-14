@@ -111,6 +111,11 @@ namespace Nektar
 
             virtual const NormalVector &v_GetTraceNormal(const int edge) const;
 
+            
+            virtual void v_ReOrientTracePhysMap
+                    (const StdRegions::Orientation orient,
+                     Array<OneD, int> &idmap,
+                     const int nq0,  const int nq1);
         private:
             Expansion2DWeakPtr m_elementLeft;
             Expansion2DWeakPtr m_elementRight;
