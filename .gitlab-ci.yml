@@ -104,8 +104,7 @@ stages:
 
 .build-env-debian-template-default: &build-env-debian-template-default
   <<: *build-env-template
-  stage:
-    build-env-default
+  stage: build-env-default
   variables:
     OS_DISTRO: debian
   script:
@@ -120,8 +119,7 @@ stages:
 
 .build-env-debian-template-full: &build-env-debian-template-full
   <<: *build-env-debian-template-default
-  stage:
-    build-env-full
+  stage: build-env-full
 
 buster-default-build-env:
   <<: *build-env-debian-template-default
@@ -178,8 +176,7 @@ stretch-full-warnings:
 buster-documentation-build-env:
   <<: *execution-conditions
   image: docker:19.03.6
-  stage:
-    build-env-full
+  stage: build-env-full
   script:
     - export IMAGE=$CI_REGISTRY_IMAGE:env-documentation
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
@@ -242,8 +239,7 @@ tutorials-build:
 
 .build-env-ubuntu-template-full: &build-env-ubuntu-template-full
   <<: *build-env-ubuntu-template-default
-  stage:
-    build-env-full
+  stage: build-env-full
     
 bionic-default-build-env:
   <<: *build-env-ubuntu-template-default
@@ -329,8 +325,7 @@ trusty-full-warnings:
 
 .build-env-centos-template-full: &build-env-centos-template-full
   <<: *build-env-centos-template-default
-  stage:
-    build-env-full
+  stage: build-env-full
 
 centos7-default-build-env:
   <<: *build-env-centos-template-default
@@ -421,6 +416,13 @@ win10-default-build-and-test:
 # #################  DOCKERHUB  ####################
 # ##################################################
 
+# Docker Hub build template. We build images and push them into the gitlab
+# container registry first; this way, we can test the images before they are
+# deployed, modify images or test adjustments to the CI by using docker/*
+# branches on gitlab, and test the images before they are deployed.
+#
+# Images are tagged with both :latest and the short SHA commit, so that the
+# right image version can be grabbed from the container registry.
 .dockerhub_build_template: &dockerhub_build_template
   image: docker:stable
   only:
@@ -437,6 +439,8 @@ win10-default-build-and-test:
     - docker push $IMAGE:$CI_COMMIT_SHORT_SHA
     - docker push $IMAGE:latest
 
+# Docker Hub test template, which runs an image from the gitlab container
+# registry on a partical SHA commit.
 .dockerhub-test-template: &dockerhub_test_template
   image: ${CI_REGISTRY_IMAGE}/${image_name}:$CI_COMMIT_SHORT_SHA
   stage: dockerhub-test
@@ -445,6 +449,13 @@ win10-default-build-and-test:
     - /^docker\/.*$/@nektar/nektar
     - tags@nektar/nektar
 
+# Docker Hub deployment template. Only builds for master or tags on the main
+# Nektar repository. The strategy is to login to the container registry and pull
+# an image onto the runner; we then tag the image as appropriate (with :latest
+# and SHA commit, as well as the git tag if this happens to be a tagged commit),
+# then push the image up to Docker Hub. Note that cleanup of images on the
+# runners can be difficult if they are tagged multiple times, so we also perform
+# a quick rmi to make sure we only keep the images from the registry.
 .dockerhub-deploy-template: &dockerhub_deploy_template
   image: docker:stable
   stage: dockerhub-deploy
@@ -458,9 +469,12 @@ win10-default-build-and-test:
     - docker pull $CI_IMAGE
     - docker logout
     - docker login -u "$DOCKERIO_REGISTRY_USER" -p "$DOCKERIO_REGISTRY_PASSWORD" $DOCKERIO_REGISTRY
-    - if [ ! -z $CI_COMMIT_TAG ]; then docker tag $CI_IMAGE $DH_IMAGE:$CI_COMMIT_TAG; docker push $DH_IMAGE:$CI_COMMIT_TAG; fi
-    - docker tag $CI_IMAGE ${DH_IMAGE}:$CI_COMMIT_SHORT_SHA; docker push ${DH_IMAGE}:$CI_COMMIT_SHORT_SHA
-    - docker tag $CI_IMAGE ${DH_IMAGE}:latest; docker push ${DH_IMAGE}:latest
+    - if [ ! -z $CI_COMMIT_TAG ]; then docker tag $CI_IMAGE $DH_IMAGE:$CI_COMMIT_TAG; docker push $DH_IMAGE:$CI_COMMIT_TAG; docker rmi $DH_IMAGE:$CI_COMMIT_TAG; fi
+    - docker tag $CI_IMAGE $DH_IMAGE:$CI_COMMIT_SHORT_SHA
+    - docker tag $CI_IMAGE $DH_IMAGE:latest
+    - docker push $DH_IMAGE:$CI_COMMIT_SHORT_SHA
+    - docker push $DH_IMAGE:latest
+    - docker rmi $DH_IMAGE:$CI_COMMIT_SHORT_SHA $DH_IMAGE:latest
 
 # nektarpp/nektar-env image
 dockerhub-build-env:
