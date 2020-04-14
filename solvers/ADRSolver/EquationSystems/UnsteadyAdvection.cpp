@@ -81,6 +81,7 @@ namespace Nektar
         {
             // Continuous field
             case MultiRegions::eGalerkin:
+            case MultiRegions::eMixed_CG_Discontinuous:
             {
                 string advName;
                 m_session->LoadSolverInfo(
