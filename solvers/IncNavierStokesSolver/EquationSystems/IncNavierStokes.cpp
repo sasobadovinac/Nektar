@@ -905,6 +905,17 @@ namespace Nektar
             }
         }
 
+        // something inside the previous if statement change the values of m_dofVel[i] m_dofAdj[i]
+        // for other than i=2 ...
+        for(int i=0 ; i<3 ; ++i)
+        {
+            if(m_bsbcParams->m_DOF[i] != 1)
+            {
+                m_bsbcParams->m_dofVel[i][0]=0.0;
+                m_bsbcParams->m_dof[i]=0.0;
+            }
+        }
+
         if( m_bsbcParams->m_doOutput )
         {
             m_bsbcParams->m_filterForces->Update(m_fields, time);
@@ -1074,8 +1085,6 @@ namespace Nektar
 	            m_bsbcParams->AdamsBashforth_coeffs[order-1][j] *
 	                    m_bsbcParams->m_momentA[j];
 	        }
-//cout<<m_bsbcParams->m_dofAdj[2][0]<<endl;
-//cout<<m_bsbcParams->m_dofVel[2][0]<<endl;
         }
 // something inside the previous if statement change the values of m_dofVel[i] m_dofAdj[i]
 // for other than i=2 ...
