@@ -2931,7 +2931,7 @@ namespace Nektar
 
             // Basis definition on each element
             LibUtilities::BasisSharedPtr basis = (*m_exp)[0]->GetBasis(0);
-            if ((basis->GetBasisType() != LibUtilities::eGauss_Lagrange))
+            if((basis->GetBasisType() != LibUtilities::eGauss_Lagrange))
             {
                 // blocked routine
                 Array<OneD, NekDouble> tracevals(m_locTraceToTraceMap->
@@ -3086,7 +3086,7 @@ namespace Nektar
             Array<OneD,       NekDouble> &outarray)
         {
             LibUtilities::BasisSharedPtr basis = (*m_exp)[0]->GetBasis(0);
-            if (basis->GetBasisType() != LibUtilities::eGauss_Lagrange)
+            if( (basis->GetBasisType() != LibUtilities::eGauss_Lagrange))
             {
                 Vmath::Zero(outarray.size(), outarray, 1);
 
@@ -3123,7 +3123,7 @@ namespace Nektar
                                                     t_tmp = outarray +offset);
                     }
                 }
-            }		 
+            }
 	}
         
         /**
@@ -3266,7 +3266,8 @@ namespace Nektar
             {
                 // Basis definition on each element
                 LibUtilities::BasisSharedPtr basis = (*m_exp)[0]->GetBasis(0);
-                if (basis->GetBasisType() != LibUtilities::eGauss_Lagrange)
+                if((m_expType != e1D)&&
+                   (basis->GetBasisType() != LibUtilities::eGauss_Lagrange))
                 {
                     Array<OneD, NekDouble> Fcoeffs(m_trace->GetNcoeffs());
                     m_trace->IProductWRTBase(Fn, Fcoeffs);
