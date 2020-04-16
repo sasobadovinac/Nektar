@@ -2979,7 +2979,7 @@ namespace Nektar
             // Currently used in GJP filter
             if(PutFwdInBwdOnBCs)
             {
-                for (cnt = n = 0; n < m_bndCondExpansions.num_elements(); ++n)
+                for (cnt = n = 0; n < m_bndCondExpansions.size(); ++n)
                 {
                     for (e = 0; e < m_bndCondExpansions[n]->GetExpSize(); ++e)
                     {
@@ -2995,7 +2995,7 @@ namespace Nektar
             else
             {
                 // Fill boundary conditions into missing elements
-                for (cnt = n = 0; n < m_bndCondExpansions.num_elements(); ++n)
+                for (cnt = n = 0; n < m_bndCondExpansions.size(); ++n)
                 {
                     if (m_bndConditions[n]->GetBoundaryConditionType() == 
                         SpatialDomains::eDirichlet)

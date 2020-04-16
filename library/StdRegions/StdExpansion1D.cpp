@@ -111,7 +111,7 @@ namespace Nektar
     {
         int    nquad = GetTotPoints();
 
-        if(dbasis.num_elements() < 2)
+        if(dbasis.size() < 2)
         {
             dbasis = Array<OneD, Array<OneD, NekDouble> >(2);
             TraceToCoeffMap = Array<OneD, TraceCoeffSet >(2);
@@ -119,7 +119,7 @@ namespace Nektar
             TraceToCoeffMap[1] = TraceCoeffSet(1);
         }
 
-        if(dbasis[0].num_elements() < m_ncoeffs)
+        if(dbasis[0].size() < m_ncoeffs)
         {
             dbasis[0] = Array<OneD, NekDouble> (m_ncoeffs);
             dbasis[1] = Array<OneD, NekDouble> (m_ncoeffs);
