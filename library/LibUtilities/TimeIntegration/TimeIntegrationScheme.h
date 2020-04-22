@@ -511,18 +511,13 @@ namespace Nektar
             {
                 return m_TemporalError;
             }
-			
-            inline bool IfTemporalErrorState(void) const
-            {
-                return m_TemporalErrorState;
-            }
 
             inline void UpdateTemporalErrorState(bool NewTemporalErrorState) 
             {
                 m_TemporalErrorState=NewTemporalErrorState;
             }
 
-            inline bool IfRealTimeStepState(void) const
+            inline bool GetRealTimeStepState(void) const
             {
                 return m_RealTimeStepFlag;
             }
@@ -681,8 +676,6 @@ namespace Nektar
             {
                 NEKERROR(ErrorUtil::efatal,"Copy Constructor for the TimeIntegrationScheme class should not be called");
             }
-
-            void AllocatePairedSolution();
 
             void PairedExplicitTimeIntegrate(const NekDouble    timestep,
                                     ConstTripleArray   &y_old  ,

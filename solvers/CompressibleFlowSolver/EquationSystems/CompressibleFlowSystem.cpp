@@ -594,7 +594,7 @@ namespace Nektar
         //Yu Pan's Test: bind EquationSystem1's OdeRhs
         //Why use it here? use it in UnsteadySystem::v_DoSolve()
         //Need to be careful, Use in RealTimeStep Simulation
-        // bool RealTimeStepFlag=m_intScheme->GetIntegrationSchemeVector()[0]->IfRealTimeStepState();
+        // bool RealTimeStepFlag=m_intScheme->GetIntegrationSchemeVector()[0]->GetRealTimeStepState();
         // if(RealTimeStepFlag)
         // {
         //     if( m_CalculateSpatialErrorFlag)
@@ -2952,7 +2952,7 @@ namespace Nektar
                 v_Comm->AllReduce(resmaxm, Nektar::LibUtilities::ReduceMax);
                 if((resmaxm<tol2Max)&&k>0)
                 {
-                    bool RealTimeStepFlag=m_intScheme->GetIntegrationSchemeVector()[0]->IfRealTimeStepState();
+                    bool RealTimeStepFlag=m_intScheme->GetIntegrationSchemeVector()[0]->GetRealTimeStepState();
                     if(m_TemporalErrorFreezNumber>0 && RealTimeStepFlag)//TemporalErrorControlTolerance
                     {
 
