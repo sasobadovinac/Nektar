@@ -85,6 +85,7 @@ namespace Nektar
             eRungeKutta2,                     //!< Classical RungeKutta2 method (new name for eMidpoint)
             eDIRKOrder2,                      //!< Diagonally Implicit Runge Kutta scheme of order 3
             eDIRKOrder3,                      //!< Diagonally Implicit Runge Kutta scheme of order 3
+            eDIRKOrder3Stage4,                 //!< Diagonally Implicit Runge Kutta scheme of order 3 stage 4
             eDIRKOrder3Stage5,                 //!< Diagonally Implicit Runge Kutta scheme of order 3 stage 5
             eDIRKOrder4Stage6,                 //!< Diagonally Implicit Runge Kutta scheme of order 4 stage 6
             eCNAB,		                      //!< Crank-Nicolson/Adams-Bashforth Order 2 (CNAB)
@@ -491,21 +492,6 @@ namespace Nektar
                 return m_numMultiStepDerivs;
             }
 
-            inline unsigned int GetPairedTimeIntegrationSchemeOrder(void) const
-            {
-                unsigned int PairedOrder;
-                if(m_PairedOrder)
-                {
-                    PairedOrder=m_PairedOrder;
-                }
-                else
-                {
-                    ASSERTL0(false, "Have not give the order of Paired TimeIntegrationScheme")
-                }
-                
-                return PairedOrder;
-            }
-
             inline unsigned int GetTimeIntegrationSchemeOrder(void) const
             {
                 unsigned int Order;
@@ -610,11 +596,11 @@ namespace Nektar
         protected:
             bool                      m_IfExtractRhsFlag=false;
             Array<OneD,Array<OneD,NekDouble>>     m_Rhs;
-			
-			unsigned int              m_PairedOrder;  //< Order of Paired timeintegration scheme
 
-            unsigned int              m_Order; //< Order of timeintegration scheme
-
+            bool                      m_EmbeddedTemporalError=false;  
+            bool                      m_DirectTemporalError=false;  
+           
+           unsigned int              m_Order; //< Order of timeintegration scheme
             bool m_TemporalErrorInitialized=true;//Control the first step first assuming true, if finished initializing, change it to true
             bool m_TemporalErrorState=false;//Control the remaining steps except the first step
 
@@ -695,8 +681,6 @@ namespace Nektar
             {
                 NEKERROR(ErrorUtil::efatal,"Copy Constructor for the TimeIntegrationScheme class should not be called");
             }
-
-            void InitializePairedImplicitScheme();
 
             void AllocatePairedSolution();
 

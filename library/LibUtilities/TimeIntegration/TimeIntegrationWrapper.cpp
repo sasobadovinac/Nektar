@@ -318,6 +318,21 @@ namespace LibUtilities {
         m_intScheme[0] = TimeIntegrationSchemeManager()[IntKey0];
     }
 
+     // --------------
+    // DIRKOrder3Stage4
+    // --------------
+    string TimeIntegrationDIRKOrder3Stage4::className =
+        GetTimeIntegrationWrapperFactory().RegisterCreatorFunction(
+            "DIRKOrder3Stage4", TimeIntegrationDIRKOrder3Stage4::create);
+    void TimeIntegrationDIRKOrder3Stage4::v_InitObject()
+    {
+        TimeIntegrationSchemeKey IntKey0(eDIRKOrder3Stage4);
+        m_method       = eDIRKOrder3Stage4;
+        m_intSteps     = 1;
+        m_intScheme    = vector<TimeIntegrationSchemeSharedPtr>(m_intSteps);
+        m_intScheme[0] = TimeIntegrationSchemeManager()[IntKey0];
+    }
+
     // --------------
     // DIRKOrder3Stage5
     // --------------
