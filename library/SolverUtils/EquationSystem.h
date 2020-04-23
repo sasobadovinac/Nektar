@@ -362,6 +362,8 @@ class Interpolator;
             //Yu Pan's Test codes
             bool                                        m_ErrorBasedAdaptedTimeStepFlag=false;
 
+            bool                                        m_FirstStepErrorControlFlag;
+
             int                                         m_TemporalErrorFreezNumber;
 
             int                                         m_SpatialErrorFreezNumber;

@@ -2953,7 +2953,9 @@ namespace Nektar
                 if((resmaxm<tol2Max)&&k>0)
                 {
                     bool RealTimeStepFlag=m_intScheme->GetIntegrationSchemeVector()[0]->GetRealTimeStepState();
-                    if(m_TemporalErrorFreezNumber>0 && RealTimeStepFlag)//TemporalErrorControlTolerance
+                    bool FirstStepErrorControlFlag=m_FirstStepErrorControlFlag;//First step, there is no error control
+                    //!!! Wrong here, Error Norm need to transfer to Coeff Space
+                    if(m_TemporalErrorFreezNumber>0 && RealTimeStepFlag && FirstStepErrorControlFlag)//TemporalErrorControlTolerance
                     {
 
                         NekDouble ErrorNorm=m_TemporalErrorNorm;

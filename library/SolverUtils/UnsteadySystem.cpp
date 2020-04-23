@@ -445,7 +445,16 @@ namespace Nektar
                //Yu Pan's test
                //Time Step Adaptivity
                //First step have not calcualted error
-                if ( m_initialStep!=step && m_ErrorBasedAdaptedTimeStepFlag)
+               if(m_initialStep==step)
+               {
+                   m_FirstStepErrorControlFlag=false;
+               }
+               else
+               {
+                   m_FirstStepErrorControlFlag=true;
+               }
+               
+                if ( m_FirstStepErrorControlFlag && m_ErrorBasedAdaptedTimeStepFlag)
                 {
                   
                     //////////////////////////////////////////////////////////////////////
@@ -759,7 +768,8 @@ namespace Nektar
                         }
                 }
                 
-                if(m_ErrorBasedAdaptedTimeStepFlag && m_comm->GetRank() == 0)
+                // if(m_ErrorBasedAdaptedTimeStepFlag && m_comm->GetRank() == 0)
+                if( m_comm->GetRank() == 0)
                 {
                     ofstream outfile0;
                     outfile0.open("ErrorNorm.txt",ios::app);

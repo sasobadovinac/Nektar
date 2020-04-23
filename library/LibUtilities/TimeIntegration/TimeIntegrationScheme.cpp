@@ -615,7 +615,8 @@ namespace Nektar
                     // ESDIRK 4/3 with 5 stages
                     m_numsteps = 1;
                     m_numstages = 4;
-                    m_EmbeddedTemporalError=true;
+                     m_EmbeddedTemporalError=true;
+                    //m_DirectTemporalError=true;
                     m_Order=3;
 
                     m_A = Array<OneD, Array<TwoD,NekDouble> >(1);
@@ -673,6 +674,48 @@ namespace Nektar
                         m_B_Paired[0][0][2] = m_A_Paired[0][0][2];
                         m_B_Paired[0][0][3] = m_A_Paired[0][0][3];
                         m_B_Paired[0][0][4] = m_A_Paired[0][0][4];
+                    }
+                    
+
+                    //To Do: Here just help debuging, remove
+                    if(m_DirectTemporalError)
+                    {
+                        m_numsteps_Paired = 1;
+                        m_numstages_Paired = 5;
+
+                        m_A_Paired = Array<OneD, Array<TwoD,NekDouble> >(1);
+                        m_B_Paired = Array<OneD, Array<TwoD,NekDouble> >(1);
+
+                        m_A_Paired[0] = Array<TwoD,NekDouble>(m_numstages_Paired,m_numstages_Paired,0.0);
+                        m_B_Paired[0] = Array<TwoD,NekDouble>(m_numsteps_Paired, m_numstages_Paired,0.0);
+                        m_U_Paired    = Array<TwoD,NekDouble>(m_numstages_Paired,m_numsteps_Paired, 1.0);
+                        m_V_Paired    = Array<TwoD,NekDouble>(m_numsteps_Paired, m_numsteps_Paired, 1.0);
+                        
+                        m_A_Paired[0][0][0] = 0.0;
+                        m_A_Paired[0][1][0] = 0.43586652150846;
+                        m_A_Paired[0][2][0] = 0.14073777472471;
+                        m_A_Paired[0][3][0] = 0.10239940061991;
+                        m_A_Paired[0][4][0] = 0.15702489786032;
+
+                        m_A_Paired[0][1][1] = 0.43586652150846;
+                        m_A_Paired[0][2][1] = -0.10836555138132;
+                        m_A_Paired[0][3][1] = -0.37687845225556;
+                        m_A_Paired[0][4][1] = 0.11733044137044;
+
+                        m_A_Paired[0][2][2] = 0.43586652150846;
+                        m_A_Paired[0][3][2] = 0.83861253012719;
+                        m_A_Paired[0][4][2] = 0.61667803039212;
+
+                        m_A_Paired[0][3][3] = 0.43586652150846;
+                        m_A_Paired[0][4][3] = -0.32689989113134;
+
+                        m_A_Paired[0][4][4] = 0.43586652150846;
+
+                        m_B_Paired[0][0][0] = m_A_Paired[0][4][0];
+                        m_B_Paired[0][0][1] = m_A_Paired[0][4][1];
+                        m_B_Paired[0][0][2] = m_A_Paired[0][4][2];
+                        m_B_Paired[0][0][3] = m_A_Paired[0][4][3];
+                        m_B_Paired[0][0][4] = m_A_Paired[0][4][4];
                     }
                 }
                 break;
@@ -1756,10 +1799,10 @@ namespace Nektar
                     // previous time level
                     for(k = 0; k < nvar; k++)
                     {
+                        //U_Paired(i,0) is 1
                         Vmath::Svtvp(npoints,U_Paired(i,0),y_old[0][k],1,
                                         tmp[k],1,tmp[k],1);
                     }
-                    T += U_Paired(i,0)*t_old[0];
                 }
       
                 // Calculate the stage derivative based upon the stage value
@@ -2218,6 +2261,34 @@ namespace Nektar
                 {
                     F_Paired[k]= Array<OneD, NekDouble>(m_npoints,0.0);
                 }
+                
+                //Calculate Extra stage
+                for(int k = 0; k < m_nvar; k++)
+                {
+                    Vmath::Smul(m_npoints,timestep*A_Paired(0,0),m_F[0][k],1,
+                                m_tmp[k],1);
+                }
+                m_T = A_Paired(0,0)*timestep;
+
+                for( int j = 1; j < m_numstages; j++ )
+                {
+                    for(int k = 0; k < m_nvar; k++)
+                    {
+                        Vmath::Svtvp(m_npoints,timestep*A_Paired(0,j),m_F[j][k],1,
+                                        m_tmp[k],1,m_tmp[k],1);
+                    }          
+                    
+                    m_T += A_Paired(0,j)*timestep;
+                }
+
+                // 2: the imported multi-step solution of the
+                // previous time level
+                for(int k = 0; k < m_nvar; k++)
+                {
+                    //U_Paired(i,0) is 1
+                    Vmath::Svtvp(m_npoints,U_Paired(0,0),y_old[0][k],1,
+                                    m_tmp[k],1,m_tmp[k],1);
+                }
 
                 m_T= t_old[0];
                 for(int j=0; j<=m_numstages; ++j)
@@ -2228,24 +2299,26 @@ namespace Nektar
                 
                 op.DoImplicitSolve(m_tmp, m_Y, m_T, A_Paired(0,m_numstages)*timestep);
 
-                for(k = 0; k < m_nvar; k++)
+                for(int k = 0; k < m_nvar; k++)
                 {
                     Vmath::Vsub(m_npoints,m_Y[k],1,m_tmp[k],1,F_Paired[k],1);
-                    Vmath::Smul(m_npoints,1.0/(A_Paired(i,i)*timestep),F_Paired[k],1,F_Paired[k],1);
+                    Vmath::Smul(m_npoints,1.0/(A_Paired(0,m_numstages)*timestep),F_Paired[k],1,F_Paired[k],1);
                 }
 
                 for(int i= 0; i < m_numstages; i++)
                 {
-                    NekDouble diff=(m_B_embedded[0][0][i]-m_B[0][0][i])*timestep;
+                    NekDouble diff=(m_B_Paired[0][0][i]-m_B[0][0][i])*timestep;
                     for(k = 0; k < m_nvar; k++)
                     {
                         Vmath::Svtvp(m_npoints,diff,m_F[i][k],1,m_TemporalError[k],1,m_TemporalError[k],1);
                     }
                 }
-
+                
+                //Extra stage error
                 for(k = 0; k < m_nvar; k++)
                 {
-                    Vmath::Svtvp(m_npoints,m_B_embedded[0][0][m_numstages],F_Paired[k],1,m_TemporalError[k],1,m_TemporalError[k],1);
+                    NekDouble diff=m_B_Paired[0][0][m_numstages]*timestep;
+                    Vmath::Svtvp(m_npoints,diff,F_Paired[k],1,m_TemporalError[k],1,m_TemporalError[k],1);
                     Vmath::Vabs(m_npoints,m_TemporalError[k],1,m_TemporalError[k],1);
                 }
                 
