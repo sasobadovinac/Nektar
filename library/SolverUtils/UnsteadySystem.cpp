@@ -627,13 +627,14 @@ namespace Nektar
                     m_OperatedAdaptiveTimeStep=Vmath::Vmin(nvariables,timestepArray2,1);
                     m_comm->AllReduce(m_OperatedAdaptiveTimeStep,LibUtilities::ReduceMin);
                     
+                    //To Do:currently test const timestep
                     //Error based TimeStep Adaptivity
-                    m_timestep=m_OperatedAdaptiveTimeStep;
+                    // m_timestep=m_OperatedAdaptiveTimeStep;
 
-                    if (m_time + m_timestep > m_fintime && m_fintime > 0.0)
-                    {
-                        m_timestep = m_fintime - m_time;
-                    }
+                    // if (m_time + m_timestep > m_fintime && m_fintime > 0.0)
+                    // {
+                    //     m_timestep = m_fintime - m_time;
+                    // }
                 }
 
                ////////////////////////////////////////////////////////////////
@@ -772,8 +773,7 @@ namespace Nektar
                         }
                 }
                 
-                // if(m_ErrorBasedAdaptedTimeStepFlag && m_comm->GetRank() == 0)
-                if( m_comm->GetRank() == 0)
+                if(m_ErrorBasedAdaptedTimeStepFlag && m_comm->GetRank() == 0)
                 {
                     ofstream outfile0;
                     outfile0.open("ErrorNorm.txt",ios::app);
