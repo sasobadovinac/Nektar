@@ -2939,10 +2939,28 @@ namespace Nektar
 
             // cout << "   resratio=   "<<resratio<< "   resnorm0=   "<<resnorm0<< "   resnorm=   "<<resnorm<<endl;
 
-            //TODO: To further optimise the criteria. mainly use L1 norm!!
-            // think about the case in which change is limited to small zone.
-            // think about the steady state quadrature convergence requirement
-            if (resratio<tol2Ratio||resnorm<tol2)
+
+            bool RealTimeStepFlag=m_intScheme->GetIntegrationSchemeVector()[0]->GetRealTimeStepState();
+            bool FirstStepErrorControlFlag=m_FirstStepErrorControlFlag;//First step, there is no error control
+            //Error Norm need to transfer to Coeff Space
+            if(m_TemporalErrorFreezNumber>0 && RealTimeStepFlag && FirstStepErrorControlFlag)//TemporalErrorControlTolerance
+            {
+
+                NekDouble ErrorNorm=m_TemporalErrorNorm;
+                NekDouble Scale=0.1;//Newton iteration error << TemporalError
+                NekDouble ResidualNorm=sqrt(resnorm);
+                NekDouble ErrorAdaptiveTolerance=Scale*ErrorNorm;
+                bool state=(ResidualNorm<ErrorAdaptiveTolerance);
+                if(state)
+                {
+                    converged = true;
+                    if(l_root && l_verbose)
+                    {
+                            cout <<right<<scientific<<setw(nwidthcolm)<<setprecision(nwidthcolm-6)<<"Time="<<m_time<<",    ResidualNorm="<<ResidualNorm<<",    AdaptiveNewtonTolerance="<<ErrorAdaptiveTolerance<<endl;
+                    }
+                }
+            }
+            else if (resratio<tol2Ratio||resnorm<tol2)
             {
                 resmaxm = 0.0;
                 for(int i=0;i<ntotal;i++)
@@ -2952,35 +2970,13 @@ namespace Nektar
                 v_Comm->AllReduce(resmaxm, Nektar::LibUtilities::ReduceMax);
                 if((resmaxm<tol2Max)&&k>0)
                 {
-                    bool RealTimeStepFlag=m_intScheme->GetIntegrationSchemeVector()[0]->GetRealTimeStepState();
-                    bool FirstStepErrorControlFlag=m_FirstStepErrorControlFlag;//First step, there is no error control
-                    //!!! Wrong here, Error Norm need to transfer to Coeff Space
-                    if(m_TemporalErrorFreezNumber>0 && RealTimeStepFlag && FirstStepErrorControlFlag)//TemporalErrorControlTolerance
-                    {
+                   
+                    converged = true;
 
-                        NekDouble ErrorNorm=m_TemporalErrorNorm;
-                        NekDouble Scale=0.1;//Newton iteration error << TemporalError
-                        NekDouble ResidualNorm=sqrt(resnorm);
-                        NekDouble ErrorAdaptiveTolerance=Scale*ErrorNorm;
-                        bool state=(ResidualNorm<ErrorAdaptiveTolerance);
-                        if(state)
-                        {
-                            converged = true;
-                            if(l_root && l_verbose)
-                            {
-                                 cout <<right<<scientific<<setw(nwidthcolm)<<setprecision(nwidthcolm-6)<<"Time="<<m_time<<",    ResidualNorm="<<ResidualNorm<<",    AdaptiveNewtonTolerance="<<ErrorAdaptiveTolerance<<endl;
-                            }
-                        }
-                    }
-                    else
-                    {
-                        converged = true;
-                    }
-                    
                     if(resratio>tol2Ratio&&l_root)
                     {
                         WARNINGL0(true,"     # resratio>tol2Ratio in CompressibleFlowSystem::DoImplicitSolve ");
-                        cout <<right<<scientific<<setw(nwidthcolm)<<setprecision(nwidthcolm-6)
+                        cout <<right<<scientific<<setw(nwidthcolm)<<setprecision(nwidthcolm-6)<<" Time= "<<m_time
                              <<" resratio= "<<resratio<<" tol2Ratio= "<<tol2Ratio<<endl;
                     }
                     break;
@@ -5164,7 +5160,9 @@ namespace Nektar
                 fieldcoeffs.push_back(sensorFwd);
             }
             
-            if(m_ErrorBasedAdaptedTimeStepFlag)
+            
+            //if(m_ErrorBasedAdaptedTimeStepFlag)
+            if(false)
             {
                 int nvariables=m_fields.num_elements();
                 if(m_SpatialErrorFreezNumber>0)
