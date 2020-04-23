@@ -246,9 +246,10 @@ namespace Nektar
                 case LibUtilities::eBackwardEuler:
                 case LibUtilities::eDIRKOrder2:
                 case LibUtilities::eDIRKOrder3:
-                case LibUtilities::eDIRKOrder3Stage4:
+                case LibUtilities::eDIRKOrder3Stage4Embedded5:
                 case LibUtilities::eDIRKOrder3Stage5:
                 case LibUtilities::eDIRKOrder4Stage6:
+                case LibUtilities::eDIRKOrder4Stage6Embedded7:
                 {
                     TimeStability = 2.0;
                     break;
@@ -756,7 +757,7 @@ namespace Nektar
                             //For time step, no need FwdTrans, but for Tolerance adaptivity, need transfer to coeffs space
                             Vmath::Vcopy(npoints,m_intScheme->GetIntegrationSchemeVector()[0]->GetTemporalErrorVector()[i],1,m_TemporalError[i],1);
                             m_fields[i]->FwdTrans(m_TemporalError[i],tmp);
-                            m_TemporalErrorNormArray[i] = Vmath::Dot(ncoeffs,tmp[i],tmp[i]);
+                            m_TemporalErrorNormArray[i] = Vmath::Dot(ncoeffs,tmp,tmp);
                         }
                         m_comm->AllReduce(m_TemporalErrorNormArray, Nektar::LibUtilities::ReduceSum);
                         m_TemporalErrorNorm =0.0;

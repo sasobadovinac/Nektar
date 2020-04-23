@@ -686,27 +686,51 @@ namespace LibUtilities {
         virtual void v_InitObject();
     };
 
-    class TimeIntegrationDIRKOrder3Stage4 : public TimeIntegrationWrapper
+    class TimeIntegrationDIRKOrder3Stage4Embedded5 : public TimeIntegrationWrapper
     {
     public:
-        friend class MemoryManager<TimeIntegrationDIRKOrder3Stage4>;
+        friend class MemoryManager<TimeIntegrationDIRKOrder3Stage4Embedded5>;
 
         /// Creates an instance of this class
         static TimeIntegrationWrapperSharedPtr create()
         {
             TimeIntegrationWrapperSharedPtr p =
-                MemoryManager<TimeIntegrationDIRKOrder3Stage4>::AllocateSharedPtr();
+                MemoryManager<TimeIntegrationDIRKOrder3Stage4Embedded5>::AllocateSharedPtr();
             p->InitObject();
             return p;
         }
         /// Name of class
         static std::string className;
 
-        virtual ~TimeIntegrationDIRKOrder3Stage4() {}
+        virtual ~TimeIntegrationDIRKOrder3Stage4Embedded5() {}
 
     protected:
         virtual void v_InitObject();
     };
+
+   class TimeIntegrationDIRKOrder4Stage6Embedded7 : public TimeIntegrationWrapper
+    {
+    public:
+        friend class MemoryManager<TimeIntegrationDIRKOrder4Stage6Embedded7>;
+
+        /// Creates an instance of this class
+        static TimeIntegrationWrapperSharedPtr create()
+        {
+            TimeIntegrationWrapperSharedPtr p =
+                MemoryManager<TimeIntegrationDIRKOrder4Stage6Embedded7>::AllocateSharedPtr();
+            p->InitObject();
+            return p;
+        }
+        /// Name of class
+        static std::string className;
+
+        virtual ~TimeIntegrationDIRKOrder4Stage6Embedded7() {}
+
+    protected:
+        virtual void v_InitObject();
+    };
+
+
 
     class TimeIntegrationDIRKOrder3Stage5 : public TimeIntegrationWrapper
     {

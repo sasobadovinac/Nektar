@@ -609,7 +609,7 @@ namespace Nektar
                     m_timeLevelOffset[0] = 0;
                 }
                 break;
-             case eDIRKOrder3Stage4:
+             case eDIRKOrder3Stage4Embedded5:
                 {
                     // See "A FAMILY OF ESDIRK INTEGRATION METHODS" 
                     // ESDIRK 4/3 with 5 stages
@@ -881,6 +881,95 @@ namespace Nektar
                     m_timeLevelOffset[0] = 0;
                 }
                 break;
+            case eDIRKOrder4Stage6Embedded7:
+            {
+                // See "A FAMILY OF ESDIRK INTEGRATION METHODS" 
+                // ESDIRK 5/4 with 7 stages
+                //Or original paper "SINGLY DIAGONALLY IMPLICIT RUNGE–KUTTA METHODS WITH AN EXPLICIT FIRST STAGE"
+                m_numsteps = 1;
+                m_numstages = 6;
+                m_EmbeddedTemporalError=true;
+                //m_DirectTemporalError=true;
+                m_Order=4;
+
+                m_A = Array<OneD, Array<TwoD,NekDouble> >(1);
+                m_B = Array<OneD, Array<TwoD,NekDouble> >(1);
+
+                m_A[0] = Array<TwoD,NekDouble>(m_numstages,m_numstages,0.0);
+                m_B[0] = Array<TwoD,NekDouble>(m_numsteps, m_numstages,0.0);
+                m_U    = Array<TwoD,NekDouble>(m_numstages,m_numsteps, 1.0);
+                m_V    = Array<TwoD,NekDouble>(m_numsteps, m_numsteps, 1.0);
+
+                m_A[0][0][0] = 0.0;
+                m_A[0][1][0] =0.27000000000000000;
+                m_A[0][2][0] = 0.13500000000000000;
+                m_A[0][3][0] = 0.24814211234447322;
+                m_A[0][4][0] = 0.25494479822150471;
+                m_A[0][5][0] = 0.17549975523182941;
+
+                m_A[0][1][1] = 0.27000000000000000;
+                m_A[0][2][1] = 0.87265371804359686;
+                m_A[0][3][1] = 0.13282088522859322;
+                m_A[0][4][1] = 0.13106196422347200;
+                m_A[0][5][1] = 0.0;
+
+                m_A[0][2][2] = 0.27000000000000000;
+                m_A[0][3][2] = -0.03886686658917771;
+                m_A[0][4][2] = -0.04522093930235708;
+                m_A[0][5][2] = -0.01641725931492383;
+
+                m_A[0][3][3] = 0.27000000000000000;
+                m_A[0][4][3] = 0.03389121682051642;
+                m_A[0][5][3] = 3.59357175290010625;
+                
+                m_A[0][4][4] = 0.27000000000000000;
+                m_A[0][5][4] = -3.02265424881701182;
+
+                m_A[0][5][5] = 0.27000000000000000;
+
+
+                m_B[0][0][0] = m_A[0][5][0];
+                m_B[0][0][1] = m_A[0][5][1];
+                m_B[0][0][2] = m_A[0][5][2];
+                m_B[0][0][3] = m_A[0][5][3];
+                m_B[0][0][4] = m_A[0][5][4];
+                m_B[0][0][5] = m_A[0][5][5];
+
+                m_schemeType = eDiagonallyImplicit;
+                m_numMultiStepValues = 1;
+                m_numMultiStepDerivs = 0;
+                m_timeLevelOffset = Array<OneD,unsigned int>(m_numsteps);
+                m_timeLevelOffset[0] = 0;
+
+                //Extra stage for estimating third order error
+                if(m_EmbeddedTemporalError)
+                {
+                    m_A_Paired = Array<OneD, Array<TwoD,NekDouble> >(1);
+                    m_B_Paired = Array<OneD, Array<TwoD,NekDouble> >(1);
+                    //Extra one stage
+                    m_A_Paired[0] = Array<TwoD,NekDouble>(1,m_numstages+1,0.0);
+                    m_B_Paired[0] = Array<TwoD,NekDouble>(m_numsteps, m_numstages+1,0.0);
+                    m_U_Paired    = Array<TwoD,NekDouble>(1,m_numsteps, 1.0);
+                    //Unused 
+                    m_V_Paired    = Array<TwoD,NekDouble>(m_numsteps, m_numsteps, 1.0);
+        
+                    m_A_Paired[0][0][0] = 0.15847612643670410;
+                    m_A_Paired[0][0][1] = 0.0;
+                    m_A_Paired[0][0][2] = -0.07384703732094983;
+                    m_A_Paired[0][0][3] =  5.26056776397634893;
+                    m_A_Paired[0][0][4] = -4.83946947758407500;
+                    m_A_Paired[0][0][5] = 0.22427262449197180;
+                    m_A_Paired[0][0][6] = 0.27;
+                    m_B_Paired[0][0][0] = m_A_Paired[0][0][0];
+                    m_B_Paired[0][0][1] = m_A_Paired[0][0][1];
+                    m_B_Paired[0][0][2] = m_A_Paired[0][0][2];
+                    m_B_Paired[0][0][3] = m_A_Paired[0][0][3];
+                    m_B_Paired[0][0][4] = m_A_Paired[0][0][4];
+                    m_B_Paired[0][0][5] = m_A_Paired[0][0][5];
+                    m_B_Paired[0][0][6] = m_A_Paired[0][0][6];
+                }
+            }
+            break;
             case eIMEXdirk_2_3_2:
                 {
                     m_numsteps  = 1;

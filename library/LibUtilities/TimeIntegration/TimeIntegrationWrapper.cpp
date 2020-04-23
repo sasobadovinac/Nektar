@@ -319,19 +319,35 @@ namespace LibUtilities {
     }
 
      // --------------
-    // DIRKOrder3Stage4
+    // DIRKOrder3Stage4Embedded5
     // --------------
-    string TimeIntegrationDIRKOrder3Stage4::className =
+    string TimeIntegrationDIRKOrder3Stage4Embedded5::className =
         GetTimeIntegrationWrapperFactory().RegisterCreatorFunction(
-            "DIRKOrder3Stage4", TimeIntegrationDIRKOrder3Stage4::create);
-    void TimeIntegrationDIRKOrder3Stage4::v_InitObject()
+            "DIRKOrder3Stage4Embedded5", TimeIntegrationDIRKOrder3Stage4Embedded5::create);
+    void TimeIntegrationDIRKOrder3Stage4Embedded5::v_InitObject()
     {
-        TimeIntegrationSchemeKey IntKey0(eDIRKOrder3Stage4);
-        m_method       = eDIRKOrder3Stage4;
+        TimeIntegrationSchemeKey IntKey0(eDIRKOrder3Stage4Embedded5);
+        m_method       = eDIRKOrder3Stage4Embedded5;
         m_intSteps     = 1;
         m_intScheme    = vector<TimeIntegrationSchemeSharedPtr>(m_intSteps);
         m_intScheme[0] = TimeIntegrationSchemeManager()[IntKey0];
     }
+
+    // --------------
+    // DIRKOrder4Stage6Embedded7
+    // --------------
+    string TimeIntegrationDIRKOrder4Stage6Embedded7::className =
+        GetTimeIntegrationWrapperFactory().RegisterCreatorFunction(
+            "DIRKOrder4Stage6Embedded7", TimeIntegrationDIRKOrder4Stage6Embedded7::create);
+    void TimeIntegrationDIRKOrder4Stage6Embedded7::v_InitObject()
+    {
+        TimeIntegrationSchemeKey IntKey0(eDIRKOrder4Stage6Embedded7);
+        m_method       = eDIRKOrder4Stage6Embedded7;
+        m_intSteps     = 1;
+        m_intScheme    = vector<TimeIntegrationSchemeSharedPtr>(m_intSteps);
+        m_intScheme[0] = TimeIntegrationSchemeManager()[IntKey0];
+    }
+
 
     // --------------
     // DIRKOrder3Stage5
