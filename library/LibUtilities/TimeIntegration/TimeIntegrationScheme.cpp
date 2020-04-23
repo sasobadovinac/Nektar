@@ -613,6 +613,7 @@ namespace Nektar
                 {
                     // See "A FAMILY OF ESDIRK INTEGRATION METHODS" 
                     // ESDIRK 4/3 with 5 stages
+                    //Or original paper "SINGLY DIAGONALLY IMPLICIT RUNGE–KUTTA METHODS WITH AN EXPLICIT FIRST STAGE"
                     m_numsteps = 1;
                     m_numstages = 4;
                      m_EmbeddedTemporalError=true;

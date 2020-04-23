@@ -707,10 +707,11 @@ namespace Nektar
                         for(int i = 0; i < nvariables; i++)
                         {
                             int npoints=m_fields[i]->GetNpoints();
+                            int ncoeffs=m_fields[i]->GetNcoeffs();
+                            Array<OneD,NekDouble> tmp(ncoeffs,0.0);
                             //For time step, no need FwdTrans, but for Tolerance adaptivity, need transfer to coeffs space
-                            //m_fields[i]->FwdTrans(m_intScheme->GetIntegrationSchemeVector()[0]->GetLocalErrorVector()[i],tmp);
-                            Array<OneD,NekDouble> tmp=m_SpatialError[i];
-                            m_SpatialErrorNormArray[i] = Vmath::Dot(npoints,m_SpatialError[i],m_SpatialError[i]);
+                            m_fields[i]->FwdTrans(m_SpatialError[i],tmp);
+                            m_SpatialErrorNormArray[i] = Vmath::Dot(ncoeffs,tmp,tmp);
                         }
                         m_comm->AllReduce(m_SpatialErrorNormArray, Nektar::LibUtilities::ReduceSum);
                         m_SpatialErrorNorm =0.0;
@@ -750,10 +751,12 @@ namespace Nektar
                         for(int i = 0; i < nvariables; i++)
                         {
                             int npoints=m_fields[i]->GetNpoints();
+                            int ncoeffs=m_fields[i]->GetNcoeffs();
+                            Array<OneD,NekDouble> tmp(ncoeffs,0.0);
                             //For time step, no need FwdTrans, but for Tolerance adaptivity, need transfer to coeffs space
-                            //m_fields[i]->FwdTrans(m_intScheme->GetIntegrationSchemeVector()[0]->GetLocalErrorVector()[i],tmp);
                             Vmath::Vcopy(npoints,m_intScheme->GetIntegrationSchemeVector()[0]->GetTemporalErrorVector()[i],1,m_TemporalError[i],1);
-                            m_TemporalErrorNormArray[i] = Vmath::Dot(npoints,m_TemporalError[i],m_TemporalError[i]);
+                            m_fields[i]->FwdTrans(m_TemporalError[i],tmp);
+                            m_TemporalErrorNormArray[i] = Vmath::Dot(ncoeffs,tmp[i],tmp[i]);
                         }
                         m_comm->AllReduce(m_TemporalErrorNormArray, Nektar::LibUtilities::ReduceSum);
                         m_TemporalErrorNorm =0.0;
