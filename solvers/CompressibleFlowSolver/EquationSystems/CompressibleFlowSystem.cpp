@@ -205,7 +205,7 @@ namespace Nektar
 
             m_session->LoadParameter("LiniearizationMethod", m_LiniearizationMethod,    0); //0: Fwd Jacobian-Free; 1: Central Jacobian-free; 2: Matrix-free.
             
-            if(2==m_LiniearizationMethod)
+            if(2==m_LiniearizationMethod||3==m_LiniearizationMethod)
             {
                 int ntotElmt            = (*m_fields[0]->GetExp()).size();
                 m_ElmtFluxJacArray  =   Array<OneD, Array<OneD, DNekBlkMatSharedPtr > > (ntotElmt);
@@ -241,10 +241,15 @@ namespace Nektar
                 }
             }
 
+            int nTracePts  = GetTraceTotPoints();
             m_MatrixFreeRefFields  =   Array<OneD, Array<OneD, NekDouble> > (nvariables);
+            m_MatrixFreeRefFwd     =   Array<OneD, Array<OneD, NekDouble> > (nvariables);
+            m_MatrixFreeRefBwd     =   Array<OneD, Array<OneD, NekDouble> > (nvariables);
             for(int j = 0; j< nvariables; j++)
             {
-                m_MatrixFreeRefFields[j]   =   Array<OneD, NekDouble>(npoints);
+                m_MatrixFreeRefFields[j] = Array<OneD, NekDouble>(npoints);
+                m_MatrixFreeRefFwd[j]    = Array<OneD, NekDouble>(nTracePts, 0.0);
+                m_MatrixFreeRefBwd[j]    = Array<OneD, NekDouble>(nTracePts, 0.0);
             }
 #else
             ASSERTL0(false, "Implicit CFS not set up.");
@@ -1030,6 +1035,9 @@ namespace Nektar
         for(int j = 0; j< m_fields.num_elements(); j++)
         {
             Vmath::Vcopy(npoints, inarray[j],1,m_MatrixFreeRefFields[j],1);
+            m_fields[j]->GetFwdBwdTracePhys(m_MatrixFreeRefFields[j], 
+                                            m_MatrixFreeRefFwd[j], 
+                                            m_MatrixFreeRefBwd[j]);
         }
 
         if(m_DEBUG_VISCOUS_JAC_MAT)
@@ -1893,7 +1901,7 @@ namespace Nektar
         //             << endl;
         //     }
         // }
-            if(2==m_LiniearizationMethod)
+            if(2==m_LiniearizationMethod||3==m_LiniearizationMethod)
             {
                 Array<OneD, Array<OneD, NekDouble> > pnts(nvariables);
                 int nphspnt = inpnts[0].num_elements();
@@ -2421,6 +2429,7 @@ namespace Nektar
             MatrixMultiply_JacobianFree_coeff_central (inarray,out);
             break;
         case 2:
+        case 3:
             MatrixMultiply_MatrixFree_coeff (inarray,out);
             break;
         default:
@@ -3776,6 +3785,25 @@ namespace Nektar
         const Array<OneD, Array<OneD, NekDouble> >      &Bwd,
         Array<OneD, Array<OneD, NekDouble> >            &flux)
     {
+        switch (m_LiniearizationMethod)
+        {
+        case 2:
+            GetFluxVectorTraceMFNum(Fwd, Bwd, flux);
+            break;
+        case 3:
+            GetFluxVectorTraceMFAna(Fwd, Bwd, flux);
+            break;
+        default:
+            GetFluxVectorTraceMFNum(Fwd, Bwd, flux);
+            break;
+        }
+    }
+
+    void CompressibleFlowSystem::GetFluxVectorTraceMFNum(
+        const Array<OneD, Array<OneD, NekDouble> >      &Fwd,
+        const Array<OneD, Array<OneD, NekDouble> >      &Bwd,
+        Array<OneD, Array<OneD, NekDouble> >            &flux)
+    {
         int nConvectiveFields   = m_fields.num_elements();
         MultiRegions::ExpListSharedPtr tracelist = m_fields[0]->GetTrace();
         std::shared_ptr<LocalRegions::ExpansionVector> traceExp= tracelist->GetExp();
@@ -3807,6 +3835,19 @@ namespace Nektar
         {
             Vmath::Vcopy(nTracePnts, &elmtalFwd[0]+i,nConvectiveFields, &flux[i][0],1);
         }  
+    }
+
+    void CompressibleFlowSystem::GetFluxVectorTraceMFAna(
+        const Array<OneD, Array<OneD, NekDouble> >      &Fwd,
+        const Array<OneD, Array<OneD, NekDouble> >      &Bwd,
+        Array<OneD, Array<OneD, NekDouble> >            &flux)
+    {
+        m_advObject->GetRiemann()->Solve(m_spacedim, 
+                                         m_MatrixFreeRefFwd, 
+                                         m_MatrixFreeRefBwd, 
+                                         Fwd, 
+                                         Bwd, 
+                                         flux);
     }
 
     /**

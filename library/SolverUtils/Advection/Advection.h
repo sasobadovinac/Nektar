@@ -237,6 +237,11 @@ public:
         v_NumCalRiemFluxJac(nConvectiveFields,fields,AdvVel,inarray,pFwd,pBwd,FJac,BJac);
     }
 
+    SOLVER_UTILS_EXPORT RiemannSolverSharedPtr GetRiemann()
+    {
+        return m_riemann;
+    }
+
     void CoutBlkMat(
         DNekBlkMatSharedPtr &gmtx, 
         const unsigned int nwidthcolm=12);

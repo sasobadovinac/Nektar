@@ -85,6 +85,8 @@ namespace Nektar
 
         Array<OneD, Array<OneD, Array<OneD, NekDouble> > >  m_qfield;
         Array<OneD, Array<OneD, NekDouble> >                m_MatrixFreeRefFields;
+        Array<OneD, Array<OneD, NekDouble> >                m_MatrixFreeRefFwd;
+        Array<OneD, Array<OneD, NekDouble> >                m_MatrixFreeRefBwd;
         Array<OneD, Array<OneD, DNekBlkMatSharedPtr> >      m_ElmtFluxJacArray;
         
         bool                                m_useFiltering;
@@ -336,6 +338,14 @@ namespace Nektar
                   Array<OneD, Array<OneD, Array<OneD, NekDouble> > > &flux);
         
         void GetFluxVectorTraceMF(
+            const Array<OneD, Array<OneD, NekDouble> >              &pFwd,
+            const Array<OneD, Array<OneD, NekDouble> >              &pBwd,
+            Array<OneD, Array<OneD, NekDouble> >                    &flux);
+        void GetFluxVectorTraceMFNum(
+            const Array<OneD, Array<OneD, NekDouble> >              &pFwd,
+            const Array<OneD, Array<OneD, NekDouble> >              &pBwd,
+            Array<OneD, Array<OneD, NekDouble> >                    &flux);
+        void GetFluxVectorTraceMFAna(
             const Array<OneD, Array<OneD, NekDouble> >              &pFwd,
             const Array<OneD, Array<OneD, NekDouble> >              &pBwd,
             Array<OneD, Array<OneD, NekDouble> >                    &flux);

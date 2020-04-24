@@ -59,6 +59,17 @@ namespace Nektar
             double  rhoL, double  rhouL, double  rhovL, double  rhowL, double  EL,
             double  rhoR, double  rhouR, double  rhovR, double  rhowR, double  ER,
             double &rhof, double &rhouf, double &rhovf, double &rhowf, double &Ef);
+        virtual void v_PointSolve(
+            const Array<OneD, NekDouble> &Fwd, 
+            const Array<OneD, NekDouble> &Bwd, 
+            Array<OneD, NekDouble>       &flux, 
+            const Array<OneD, NekDouble> &FwdJ, 
+            const Array<OneD, NekDouble> &BwdJ);
+        void RoeAverage(
+            double rhoL, double rhouL, double rhovL, double rhowL, double EL,
+            double rhoR, double rhouR, double rhovR, double rhowR, double ER,
+            double &uRoe, double &vRoe, double &wRoe, double &hRoe, double &URoe,
+            double &cRoe, double &ocRoe);
     };
 }
 
