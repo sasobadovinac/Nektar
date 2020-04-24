@@ -739,8 +739,7 @@ namespace Nektar
                     }
                 }
 
-                fields = m_intScheme->TimeIntegrate(
-                    stepCounter, m_timestep, m_intSoln, m_ode);
+                fields = m_intScheme->TimeIntegrate(stepCounter, m_timestep, m_intSoln, m_ode);
                 
                 ///////////////////////////////////////////////////////////////////////////////
                 //Calculate Temporal TimeIntegration Error

@@ -2958,6 +2958,7 @@ namespace Nektar
                     {
                             cout <<right<<scientific<<setw(nwidthcolm)<<setprecision(nwidthcolm-6)<<"Time="<<m_time<<",    ResidualNorm="<<ResidualNorm<<",    AdaptiveNewtonTolerance="<<ErrorAdaptiveTolerance<<endl;
                     }
+                    break;
                 }
             }
             else if (resratio<tol2Ratio||resnorm<tol2)
