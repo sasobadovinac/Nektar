@@ -196,7 +196,6 @@ namespace Nektar
             // then retains a pointer to the elemental trace, to
             // ensure uniqueness of normals when retrieving from two
             // adjoining elements which do not lie in a plane.
-            
             for (int i = 0; i < m_exp->size(); ++i)
             {
                 for (int j = 0; j < (*m_exp)[i]->GetNtraces(); ++j)
@@ -450,6 +449,43 @@ namespace Nektar
         }
 
 
+
+        
+        /**
+         * @brief This routine determines if an element is to the "left"
+         * of the adjacent trace, which arises from the idea there is a local
+         * normal direction between two elements (i.e. on the trace)
+         * and one elements would then be the left.
+         * 
+         * This is typically required since we only define one normal
+         * direction along the trace which goes from the left adjacent
+         * element to the right adjacent element.  It is also useful
+         * in DG discretisations to set up a local Riemann problem
+         * where we need to have the concept of a local normal
+         * direction which is unique between two elements.
+         * 
+         * There are two cases to be checked:
+         *
+         * 1) First is the trace on a boundary condition (perioidic or
+         * otherwise) or on a partition boundary. If a partition
+         * boundary then trace is always considered to be the left
+         * adjacent trace and the normal is pointing outward of the
+         * soltuion domain. We have to perform an additional case for
+         * a periodic boundary where wer chose the element with the
+         * lowest global id. If the trace is on a parallel partition
+         * we use a member of the traceMap where one side is chosen to
+         * contribute to a unique map and have a value which is not
+         * -1 so this is the identifier for the left adjacent side
+         *
+         * 2) If the element is a elemental boundary on one element
+         * the left adjacent element is defined by a link to the left
+         * element from the trace expansion and this is consistent
+         * with the defitiion of the normal which is determined by the
+         * largest id (in contrast to the periodic boundary definition
+         * !). This reversal of convention does not really matter
+         * providing the normals are defined consistently.
+         */
+        
         bool DisContField::IsLeftAdjacentTrace(const int n, const int e)
         {
             LocalRegions::ExpansionSharedPtr traceEl = 
@@ -2835,50 +2871,6 @@ namespace Nektar
         }
 
 
-        vector<bool> &DisContField::GetNegatedFluxNormal(void)
-        {
-            if(m_negatedFluxNormal.size() == 0)
-            {
-                Array<OneD, Array<OneD, LocalRegions::ExpansionSharedPtr> >
-                    &elmtToTrace = m_traceMap->GetElmtToTrace();
-
-                m_negatedFluxNormal.resize(2*GetExpSize());
-                
-                for(int i = 0; i < GetExpSize(); ++i)
-                {
-
-                    for(int v = 0; v < 2; ++v)
-                    {
-                        
-                        LocalRegions::ExpansionSharedPtr vertExp =
-                            elmtToTrace[i][v]; 
-
-                        if(vertExp->GetLeftAdjacentElementExp()->
-                           GetGeom()->GetGlobalID() !=
-                               (*m_exp)[i]->GetGeom()->GetGlobalID())
-                        {
-                            m_negatedFluxNormal[2*i+v] = true;
-                        }
-                        else
-                        {
-                            m_negatedFluxNormal[2*i+v] = false;
-                        }
-
-                        if(vertExp->GetLeftAdjacentElementExp()->
-                           TraceNormalNegated
-                              (vertExp->GetLeftAdjacentElementTrace()))
-                        {
-                            m_negatedFluxNormal[2*i+v] =
-                                (!m_negatedFluxNormal[2*i+v]);
-                        }
-                    }
-                }
-
-            }
-
-            return m_negatedFluxNormal;
-        }
-
         /**
          * Generate the forward or backward state for each trace point.
          * @param   Fwd     Forward state.
@@ -2981,15 +2973,20 @@ namespace Nektar
             {
                 for (cnt = n = 0; n < m_bndCondExpansions.size(); ++n)
                 {
-                    for (e = 0; e < m_bndCondExpansions[n]->GetExpSize(); ++e)
+                    if (m_bndConditions[n]->GetBoundaryConditionType() != 
+                        SpatialDomains::ePeriodic)
                     {
-                        npts = m_bndCondExpansions[n]->GetExp(e)
+                        for (e = 0; e < m_bndCondExpansions[n]->GetExpSize();
+                             ++e)
+                        {
+                            npts = m_bndCondExpansions[n]->GetExp(e)
                                 ->GetTotPoints();
-                        id1 = m_trace->GetPhys_Offset(m_traceMap->
-                                                      GetBndCondIDToGlobalTraceID(cnt+e));
-                        Vmath::Vcopy(npts, &Fwd[id1], 1, &Bwd[id1], 1);
+                            id1 = m_trace->GetPhys_Offset(m_traceMap->
+                                                          GetBndCondIDToGlobalTraceID(cnt+e));
+                            Vmath::Vcopy(npts, &Fwd[id1], 1, &Bwd[id1], 1);
+                        }
+                        cnt += e;
                     }
-                    cnt += e;
                 }
             }
             else
@@ -3155,8 +3152,6 @@ namespace Nektar
                 Array<OneD, Array<OneD, LocalRegions::ExpansionSharedPtr> >
                     &elmtToTrace = m_traceMap->GetElmtToTrace();
 
-                vector<bool> negatedFluxNormal = GetNegatedFluxNormal();
-            
                 for (n = 0; n < GetExpSize(); ++n)
                 {
                     // Number of coefficients on each element
@@ -3170,13 +3165,13 @@ namespace Nektar
                     {
                         t_offset = GetTrace()->GetCoeff_Offset
                             (elmtToTrace[n][0]->GetElmtId());
-                        if(negatedFluxNormal[2*n])
+                        if(m_leftAdjacentTraces[2*n])
                         {
-                            outarray[offset] -= Fn[t_offset];
+                            outarray[offset] += Fn[t_offset];
                         }
                         else
                         {
-                            outarray[offset] += Fn[t_offset];
+                            outarray[offset] -= Fn[t_offset];
                         }
                         
                         t_offset = GetTrace()->GetCoeff_Offset
@@ -3184,12 +3179,12 @@ namespace Nektar
                         
                         if(m_leftAdjacentTraces[2*n+1])
                         {
-                            outarray[offset+(*m_exp)[n]->GetVertexMap(1)] -=
+                            outarray[offset+(*m_exp)[n]->GetVertexMap(1)] +=
                                 Fn[t_offset];
                         }
                         else
                         {
-                            outarray[offset+(*m_exp)[n]->GetVertexMap(1)] +=
+                            outarray[offset+(*m_exp)[n]->GetVertexMap(1)] -=
                                 Fn[t_offset];
                         }
                         
@@ -3223,15 +3218,7 @@ namespace Nektar
                         t_offset = GetTrace()->GetCoeff_Offset
                             (elmtToTrace[n][0]->GetElmtId());
 
-                        if(negatedFluxNormal[2*n])
-                        {
-                            for (j = 0; j < e_ncoeffs; j++)
-                            {
-                                outarray[offset + j]  -=
-                                    (m_Ixm->GetPtr())[j] * Fn[t_offset];
-                            }
-                        }
-                        else
+                        if(m_leftAdjacentTraces[2*n])
                         {
                             for (j = 0; j < e_ncoeffs; j++)
                             {
@@ -3239,15 +3226,23 @@ namespace Nektar
                                     (m_Ixm->GetPtr())[j] * Fn[t_offset];
                             }
                         }
+                        else
+                        {
+                            for (j = 0; j < e_ncoeffs; j++)
+                            {
+                                outarray[offset + j]  -=
+                                    (m_Ixm->GetPtr())[j] * Fn[t_offset];
+                            }
+                        }
                         
                         t_offset = GetTrace()->GetCoeff_Offset
                             (elmtToTrace[n][1]->GetElmtId());
 
-                        if (negatedFluxNormal[2*n+1])
+                        if(m_leftAdjacentTraces[2*n+1])
                         {
                             for (j = 0; j < e_ncoeffs; j++)
                             {
-                                outarray[offset + j] -=
+                                outarray[offset + j] +=
                                     (m_Ixp->GetPtr())[j] * Fn[t_offset];
                             }
                         }
@@ -3255,7 +3250,7 @@ namespace Nektar
                         {
                             for (j = 0; j < e_ncoeffs; j++)
                             {
-                                outarray[offset + j] +=
+                                outarray[offset + j] -=
                                     (m_Ixp->GetPtr())[j] * Fn[t_offset];
                             }
                         }

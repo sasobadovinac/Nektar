@@ -1,4 +1,4 @@
-///////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////
 //
 // File FilterGJPSmoothing.cpp
 //
@@ -67,6 +67,7 @@ FilterGJPSmoothing::FilterGJPSmoothing(
     }
 
     m_traceNormals = pEquation.lock()->GetTraceNormals();
+
 }
     
 
@@ -80,42 +81,64 @@ void FilterGJPSmoothing::v_Initialise
 {
     boost::ignore_unused(pFields,time);
 
-    // Check this is a Mixed CG-DG expansion
-    ASSERTL0(boost::iequals(m_session->GetSolverInfo("Projection"),
-                            "Mixed_CG_Discontinuous"),
-             "Currently the GJP is only set up for mixed CG/DG expansions");
+    // Not sure what variable we shoudl set this up based on? 
+    m_dgfield = MemoryManager<MultiRegions::DisContField>::AllocateSharedPtr
+        (m_session,pFields[0]->GetGraph(), m_session->GetVariable(0),
+         true,false);
+    
+    MultiRegions::ExpListSharedPtr      trace   = m_dgfield->GetTrace(); 
+    MultiRegions::AssemblyMapSharedPtr traceMap = m_dgfield->GetTraceMap(); 
 
-    MultiRegions::ExpListSharedPtr      trace = pFields[0]->GetTrace(); 
-    MultiRegions::AssemblyMapSharedPtr traceMap = pFields[0]->GetTraceMap(); 
+    m_expType  = m_dgfield->GetExpType();
+    m_coordDim = m_dgfield->GetCoordim(0);
 
-    m_shapeDim = pFields[0]->GetShapeDimension();
+    // check to see normals are declared. For CG this does not happen. 
+    if(m_traceNormals.size() == 0)
+    {
+        m_traceNormals = Array<OneD, Array<OneD, NekDouble> >(m_coordDim);
+        for(int i=0; i < m_coordDim; ++i)
+        {
+            m_traceNormals[i] = Array<OneD, NekDouble>(trace->GetNpoints()); 
+        }
+        
+        m_dgfield->GetTrace()->GetNormals(m_traceNormals);
+    }
+
     m_scalFwd = Array<OneD, NekDouble> (trace->GetNpoints());
     m_scalBwd = Array<OneD, NekDouble> (trace->GetNpoints());
 
+    m_fwdTraceToCoeffMap = Array<OneD,
+         std::set< std::pair<unsigned int, NekDouble> > >(trace->GetTotPoints());
+    m_bwdTraceToCoeffMap = Array<OneD,
+         std::set< std::pair<unsigned int, NekDouble> > >(trace->GetTotPoints());
+    
     Array<OneD, Array<OneD, NekDouble> > factors;
     Array<OneD, Array<OneD, LocalRegions::ExpansionSharedPtr> >
         &elmtToTrace = std::dynamic_pointer_cast<MultiRegions::AssemblyMapDG>
                 (traceMap)->GetElmtToTrace();
     
     MultiRegions::LocTraceToTraceMapSharedPtr locTraceToTraceMap
-        = pFields[0]->GetLocTraceToTraceMap();
+        = m_dgfield->GetLocTraceToTraceMap();
 
-    std::vector<bool> leftAdjacentTrace = pFields[0]->GetLeftAdjacentTraces();
+    std::vector<bool> leftAdjacentTrace = m_dgfield->GetLeftAdjacentTraces();
 
     Array<OneD, NekDouble> FwdLocTrace(locTraceToTraceMap->GetNLocTracePts());
     Array<OneD, NekDouble> BwdLocTrace(locTraceToTraceMap->GetNLocTracePts());
     Array<OneD, NekDouble> e_tmp;
 
-    const std::shared_ptr<LocalRegions::ExpansionVector> exp = pFields[0]->GetExp();
+    const std::shared_ptr<LocalRegions::ExpansionVector>
+        exp = m_dgfield->GetExp();
     
-    int cnt    = 0;
+    int cnt           = 0;
     int toffset_coeff = 0;
     int toffset_phys  = 0;
-    int coeff_offset = 0; 
-    Array<OneD, Array<OneD, NekDouble> > dbasis;
-    Array<OneD, StdRegions::TraceCoeffSet >traceToCoeffMap;
+    int coeff_offset  = 0; 
+    Array<OneD, Array<OneD, Array<OneD, NekDouble> > >dbasis;
+    Array<OneD, Array<OneD, Array<OneD, unsigned int> > >traceToCoeffMap;
 
-    for(int e = 0; e < pFields[0]->GetExpSize(); ++e)
+    int  expdim = m_dgfield->GetShapeDimension();
+    
+    for(int e = 0; e < m_dgfield->GetExpSize(); ++e)
     {
         (*exp)[e]->NormalTraceDerivFactors(factors);
 
@@ -126,47 +149,72 @@ void FilterGJPSmoothing::v_Initialise
         {
             int nptrace = (*exp)[e]->GetTraceExp(n)->GetTotPoints();
 
+            // Estimate h as average of adjacent elmeents
+            ASSERTL1((*exp)[e]->GetTraceExp(n)->GetLeftAdjacentElementTrace()
+                     != -1,
+                     "Left adjacent expansion not setup");
+            LocalRegions::ExpansionSharedPtr texp  = (*exp)[e]->GetTraceExp(n)->
+                GetLeftAdjacentElementExp();
+            int np = texp->GetTotPoints();
+            NekDouble p  = texp->GetBasisNumModes(0);
+            Array<OneD, NekDouble> one(np,1.0);
+            NekDouble h = texp->Integral(one);
+            h = pow(h,expdim);
+            
+            if((*exp)[e]->GetTraceExp(n)->GetRightAdjacentElementTrace() != -1)
+            {
+                texp  = (*exp)[e]->GetTraceExp(n)->GetRightAdjacentElementExp();
+                np = texp->GetTotPoints();
+                one = Array<OneD, NekDouble>(np,1.0);
+                NekDouble  h2 = texp->Integral(one);
+                h2 = pow(h,expdim);
+                h = (h + h2)*0.5;
+                NekDouble p2  = texp->GetBasisNumModes(0);
+                p = (p + p2)*0.5;
+            }            
+            NekDouble jumpScal = 0.7*pow(p,-4.0)*h*h; 
+            
             int eid = elmtToTrace[e][n]->GetElmtId();
+            toffset_phys  =  trace->GetPhys_Offset(eid);
             toffset_coeff = trace->GetCoeff_Offset(eid);
 
-            e_tmp = (leftAdjacentTrace[cnt])? FwdLocTrace + toffset_phys:
-                BwdLocTrace + toffset_phys; 
-            
-            Vmath::Vcopy(nptrace,factors[n],1,e_tmp,1);
-
             int nctrace = elmtToTrace[e][n]->GetNcoeffs();
+            // Note curretly doing the same thing so can liklely remove this if
             if(leftAdjacentTrace[cnt])
             {
+                Vmath::Smul(nptrace,jumpScal, factors[n], 1,
+                            e_tmp = FwdLocTrace + toffset_phys,1);
+                
+                ASSERTL1(dbasis[n].size() == nctrace,"The dimension of the "
+                    "normalderivtrace method do not match"
+                         " with the size of the trace"); 
                 for(int i = 0; i < nctrace; ++i)
                 {
-                    std::set<int> dbset; 
-                    for(auto &it : traceToCoeffMap[n][i])
+                    for(int j = 0; j < dbasis[n][i].size(); ++j)
                     {
-                        dbset.insert(coeff_offset+ it);
+                        std::pair<int, NekDouble>
+                            dbaseinfo(traceToCoeffMap[n][i][j] + coeff_offset,
+                                      dbasis[n][i][j]);
+                            
+                        m_fwdTraceToCoeffMap[i+toffset_coeff].insert(dbaseinfo);
                     }
-                    // make a pair containing the dervative of the
-                    // basis for a trace mode and teh set of
-                    // coefficients it should add
-                    std::pair<NekDouble, std::set<int> >  dbaseinfo(dbasis[n][i],dbset); 
-                    m_fwdTraceToCoeffMap[i+toffset_coeff] = dbaseinfo;
                 }
             }
             else
             {
+                Vmath::Smul(nptrace,jumpScal, factors[n], 1,
+                            e_tmp = BwdLocTrace + toffset_phys,1);
+
                 for(int i = 0; i < nctrace; ++i)
                 {
-                    std::set<int> dbset; 
-                    for(auto &it : traceToCoeffMap[n][i])
+                    for(int j = 0; j < dbasis[n][i].size(); ++j)
                     {
-                        dbset.insert(coeff_offset+it);
+                        std::pair<int, NekDouble> dbaseinfo
+                            (traceToCoeffMap[n][i][j] + coeff_offset,
+                             dbasis[n][i][j]);
+
+                        m_bwdTraceToCoeffMap[i+toffset_coeff].insert(dbaseinfo);
                     }
-                    // make a pair containing the dervative of the
-                    // basis for a trace mode and teh set of
-                    // coefficients it should add
-                    //
-                    // Minus sign is to to normal need to be negated on bwd trace
-                    std::pair<NekDouble, std::set<int> >  dbaseinfo(-1.0*dbasis[n][i],dbset); 
-                    m_bwdTraceToCoeffMap[i+toffset_coeff] = dbaseinfo;
                 }
 
             }
@@ -177,7 +225,7 @@ void FilterGJPSmoothing::v_Initialise
     }
 
     locTraceToTraceMap->InterpLocTracesToTrace(0,FwdLocTrace, m_scalFwd);
-    locTraceToTraceMap->InterpLocTracesToTrace(0,BwdLocTrace, m_scalBwd);
+    locTraceToTraceMap->InterpLocTracesToTrace(1,BwdLocTrace, m_scalBwd);
 }
 
 
@@ -185,7 +233,7 @@ void FilterGJPSmoothing::v_Update
 (const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
  const NekDouble &time)
 {
-    boost::ignore_unused(pFields,time);
+    boost::ignore_unused(time);
     
     m_index++;
     if (m_index % m_smoothingFrequency > 0)
@@ -193,78 +241,92 @@ void FilterGJPSmoothing::v_Update
         return;
     }
 
-    int ncoeffs   = pFields[0]->GetNcoeffs();
-    int nphys     = pFields[0]->GetNpoints();
-    int nTracePts = pFields[0]->GetTrace()->GetTotPoints();
-    int nTraceCoeffs = pFields[0]->GetTrace()->GetNcoeffs();
-
+    int ncoeffs   = m_dgfield->GetNcoeffs();
+    int nphys     = m_dgfield->GetNpoints();
+    int nTracePts = m_dgfield->GetTrace()->GetTotPoints();
+    int nTraceCoeffs = m_dgfield->GetTrace()->GetNcoeffs();
+    
     Array<OneD, NekDouble> FilterCoeffs(ncoeffs);
     Array<OneD, Array<OneD, NekDouble> > deriv(3,NullNekDouble1DArray);
-    for(int i = 0; i < m_shapeDim; ++i)
+    for(int i = 0; i < m_coordDim; ++i)
     {
         deriv[i] = Array<OneD, NekDouble> (nphys); 
     }
-
+    
     Array<OneD, NekDouble> Fwd(nTracePts), Bwd(nTracePts); 
     Array<OneD, NekDouble> GradJumpOnTrace(nTracePts,0.0); 
     
-    for(int f = 0; f < pFields.num_elements(); ++f)
+    for(int f = 0; f < pFields.size(); ++f)
     {
         // calculate derivative 
         pFields[f]->PhysDeriv(pFields[f]->GetPhys(),
                               deriv[0],deriv[1],deriv[2]);
-
+        
         // Evaluate the  normal derivative jump on the trace
-        for(int n = 0; n < m_shapeDim; ++n)
+        for(int n = 0; n < m_coordDim; ++n)
         {
-            pFields[f]->GetFwdBwdTracePhys(deriv[n],Fwd,Bwd,true);
-
+            m_dgfield->GetFwdBwdTracePhys(deriv[n],Fwd,Bwd,true);
+            
             // Multiply by normal and add to trace evaluation
             Vmath::Vsub(nTracePts,Fwd,1,Bwd,1,Fwd,1);
             Vmath::Vvtvp(nTracePts,Fwd,1,m_traceNormals[n],1,
                          GradJumpOnTrace,1,GradJumpOnTrace,1);
         }
-
+        
         // Add filter to coeffs to inner product of phys values and
         // then bwdtrans
         pFields[f]->IProductWRTBase(pFields[f]->GetPhys(),FilterCoeffs);
-
-        // Scale jump on fwd trace
-        Vmath::Vmul(nTracePts,m_scalFwd,1,GradJumpOnTrace,1,Fwd,1);
-
-        // Take inner product and put result into Fwd array
-        pFields[f]->GetTrace()->IProductWRTBase(Fwd,Bwd); 
-
+        
+        if(m_expType == MultiRegions::e1D)
+        {
+            // Scale jump on fwd trace
+            Vmath::Vmul(nTracePts,m_scalFwd,1,GradJumpOnTrace,1,Bwd,1);
+        }
+        else
+        {
+            // Scale jump on fwd trace
+            Vmath::Vmul(nTracePts,m_scalFwd,1,GradJumpOnTrace,1,Fwd,1);
+            // Take inner product and put result into Fwd array
+            m_dgfield->GetTrace()->IProductWRTBase(Fwd,Bwd);
+        }
+        
         // Add trace values to coeffs scaled by factor and sign. 
         for(int i = 0; i < nTraceCoeffs; ++i)
         {
-            NekDouble scal = m_fwdTraceToCoeffMap[i].first; 
-            for(auto &it:  m_fwdTraceToCoeffMap[i].second)
+            for(auto &it:  m_fwdTraceToCoeffMap[i])
             {
-                FilterCoeffs[it] += Bwd[i]*scal;
+                FilterCoeffs[it.first] -= Bwd[i]*(it.second);
             }
         }
-
-        // Scale jump on fwd trace
-        Vmath::Vmul(nTracePts,m_scalBwd,1,GradJumpOnTrace,1,Fwd,1);
-
-        // Take inner product and put result into Fwd array
-        pFields[f]->GetTrace()->IProductWRTBase(Fwd,Bwd); 
-
+        
+        if(m_expType == MultiRegions::e1D)
+        {
+            // Scale jump on fwd trace
+            Vmath::Vmul(nTracePts,m_scalBwd,1,GradJumpOnTrace,1,Bwd,1);
+        }
+        else
+        {
+            // Scale jump on fwd trace
+            Vmath::Vmul(nTracePts,m_scalBwd,1,GradJumpOnTrace,1,Fwd,1);
+            
+            // Take inner product and put result into Fwd array
+            m_dgfield->GetTrace()->IProductWRTBase(Fwd,Bwd);
+        }
+        
         // Add trace values to coeffs scaled by factor and sign. 
         for(int i = 0; i < nTraceCoeffs; ++i)
         {
-            NekDouble scal = m_bwdTraceToCoeffMap[i].first; 
-            for(auto &it:  m_bwdTraceToCoeffMap[i].second)
+            for(auto &it:  m_bwdTraceToCoeffMap[i])
             {
-                FilterCoeffs[it] += Bwd[i]*scal;
+                FilterCoeffs[it.first] -= Bwd[i]*(it.second);
             }
         }
-
-        pFields[f]->MultiplyByInvMassMatrix(FilterCoeffs,deriv[0]);
+        
+        pFields[f]->MultiplyByElmtInvMass(FilterCoeffs,deriv[0]);
         pFields[f]->BwdTrans(deriv[0],pFields[f]->UpdatePhys());
     }
 }
+
 
 void FilterGJPSmoothing::v_Finalise(
     const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,

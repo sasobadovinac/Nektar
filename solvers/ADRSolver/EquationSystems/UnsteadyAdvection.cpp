@@ -147,6 +147,10 @@ namespace Nektar
             }
         }
 
+        // Forcing terms
+        m_forcing = SolverUtils::Forcing::Load(m_session, shared_from_this(),
+                                    m_fields, m_fields.size());
+
         // If explicit it computes RHS and PROJECTION for the time integration
         if (m_explicitAdvection)
         {
@@ -225,6 +229,13 @@ namespace Nektar
         for (i = 0; i < nVariables; ++i)
         {
             Vmath::Neg(nSolutionPts, outarray[i], 1);
+        }
+
+        // Add forcing terms
+        for (auto &x : m_forcing)
+        {
+            // set up non-linear terms
+            x->Apply(m_fields, inarray, outarray, time);
         }
     }
 

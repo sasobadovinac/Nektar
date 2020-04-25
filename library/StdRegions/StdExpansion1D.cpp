@@ -99,48 +99,48 @@ namespace Nektar
         return val;
     }
 	
-    /** @brief: This method provides the value of the derivative of the
-        normal component of the basis along the trace. Note by
-        definition this is a constant value along the trace. In
-        addition it also provides a mapping ot the local coefficient
-        location of that trace coefficients for use in the GJP filter. 
+    /** @brief: This method provides the value of the derivative of
+        the normal component of the basis along the trace. (Note by
+        definition this is a constant value along the trace). In
+        addition it also provides an index of the elemental local
+        coefficient location of that trace coefficients (n) and hte
+        derivative of the basis (m)q.
     */
     void StdExpansion1D::v_DerivNormalBasisOnTrace
-    (Array<OneD, Array<OneD, NekDouble> > &dbasis,
-     Array<OneD, TraceCoeffSet > &TraceToCoeffMap)
+    (Array<OneD, Array<OneD, Array<OneD, NekDouble> > > &dbasis,
+     Array<OneD, Array<OneD, Array<OneD, unsigned int> > > &TraceToCoeffMap)
     {
         int    nquad = GetTotPoints();
 
         if(dbasis.size() < 2)
         {
-            dbasis = Array<OneD, Array<OneD, NekDouble> >(2);
-            TraceToCoeffMap = Array<OneD, TraceCoeffSet >(2);
-            TraceToCoeffMap[0] = TraceCoeffSet(1);
-            TraceToCoeffMap[1] = TraceCoeffSet(1);
+            dbasis = Array<OneD, Array<OneD, Array<OneD, NekDouble> > >(2);
+            TraceToCoeffMap = Array<OneD, Array<OneD, Array<OneD, unsigned int> > > (2);
+
+            // in 1D number of coefficients along trace is always 1
+            dbasis[0] = Array<OneD, Array<OneD, NekDouble> > (1);
+            dbasis[1] = Array<OneD, Array<OneD, NekDouble> > (1);
+            TraceToCoeffMap[0] = Array<OneD, Array<OneD, unsigned int> > (1);
+            TraceToCoeffMap[1] = Array<OneD, Array<OneD, unsigned int> > (1);
         }
 
-        if(dbasis[0].size() < m_ncoeffs)
+        if(dbasis[0][0].size() < m_ncoeffs)
         {
-            dbasis[0] = Array<OneD, NekDouble> (m_ncoeffs);
-            dbasis[1] = Array<OneD, NekDouble> (m_ncoeffs);
+            dbasis[0][0] = Array<OneD, NekDouble>(m_ncoeffs);
+            dbasis[1][0] = Array<OneD, NekDouble>(m_ncoeffs);
+            TraceToCoeffMap[0][0] = Array<OneD, unsigned int>(m_ncoeffs);
+            TraceToCoeffMap[1][0] = Array<OneD, unsigned int>(m_ncoeffs);
         }
         
         const Array<OneD, const NekDouble> DerivBasis =  m_base[0]->GetDbdata();
         
         
-        for(int i = 0; i < m_ncoeffs; ++i)
+        for(unsigned int i = 0; i < m_ncoeffs; ++i)
         {
-            dbasis[0][i] = DerivBasis[i*nquad];
-            dbasis[1][i] = DerivBasis[(i+1)*nquad-1];
-        }
-        
-        TraceToCoeffMap[0][0].clear();
-        TraceToCoeffMap[1][0].clear();
-        
-        for(int i = 0; i < m_ncoeffs; ++i)
-        {
-            TraceToCoeffMap[0][0].insert(i);
-            TraceToCoeffMap[1][0].insert(i);
+            dbasis[0][0][i] = DerivBasis[i*nquad];
+            dbasis[1][0][i] = DerivBasis[(i+1)*nquad-1];
+            TraceToCoeffMap[0][0][i] = i;
+            TraceToCoeffMap[1][0][i] = i; 
         }
     }
 

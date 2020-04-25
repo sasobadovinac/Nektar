@@ -1203,8 +1203,8 @@ namespace Nektar
         }
 
         void StdExpansion::v_DerivNormalBasisOnTrace
-              (Array<OneD, Array<OneD, NekDouble> > &dbasis,
-               Array<OneD, TraceCoeffSet > &TraceToCoeffMap)
+        (Array<OneD, Array<OneD, Array<OneD, NekDouble> > > &dbasis,
+         Array<OneD, Array<OneD, Array<OneD, unsigned int> > > &TraceToCoeffMap)
         {
             boost::ignore_unused(dbasis, TraceToCoeffMap);
             NEKERROR(ErrorUtil::efatal, "Method does not exist for this shape");

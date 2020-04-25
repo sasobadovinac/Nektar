@@ -27,7 +27,6 @@ SET(SOLVER_UTILS_SOURCES
   Filters/FilterCheckpoint.cpp
   Filters/FilterEnergy1D.cpp
   Filters/FilterEnergy.cpp
-  Filters/FilterGJPSmoothing.cpp
   Filters/FilterHistoryPoints.cpp
   Filters/FilterModalEnergy.cpp
   Filters/FilterMovingAverage.cpp
@@ -42,6 +41,7 @@ SET(SOLVER_UTILS_SOURCES
   Forcing/Forcing.cpp
   Forcing/ForcingAbsorption.cpp
   Forcing/ForcingBody.cpp
+  Forcing/ForcingGJPStabilisation.cpp
   Forcing/ForcingMovingReferenceFrame.cpp
   Forcing/ForcingNoise.cpp
   Forcing/ForcingProgrammatic.cpp
@@ -76,7 +76,6 @@ SET(SOLVER_UTILS_HEADERS
   Filters/FilterCheckpoint.h
   Filters/FilterEnergy1D.h
   Filters/FilterEnergy.h
-  Filters/FilterGJPSmoothing.h
   Filters/FilterHistoryPoints.h
   Filters/FilterModalEnergy.h
   Filters/FilterMovingAverage.h
@@ -92,6 +91,7 @@ SET(SOLVER_UTILS_HEADERS
   Forcing/Forcing.h
   Forcing/ForcingAbsorption.h
   Forcing/ForcingBody.h
+  Forcing/ForcingGJPStabilisation.h
   Forcing/ForcingMovingReferenceFrame.h
   Forcing/ForcingNoise.h
   Forcing/ForcingProgrammatic.h

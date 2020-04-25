@@ -110,14 +110,6 @@ namespace Nektar
 
             /// Check to see if expansion has the same BCs as In
             bool SameTypeOfBoundaryConditions(const DisContField &In);
-
-            // Return the internal vector which directs whether the normal flux
-            // at the trace defined by Left and Right Adjacent elements
-            // is negated with respect to the segment normal
-            //
-            // Note: Should be deprecated or replaced with GetLeftAdjacentTrace
-            MULTI_REGIONS_EXPORT std::vector<bool> &GetNegatedFluxNormal(void);
-
             
             MULTI_REGIONS_EXPORT NekDouble L2_DGDeriv(
                 const int                           dir,
@@ -346,8 +338,6 @@ namespace Nektar
             }
 
         private:
-
-            std::vector<bool> m_negatedFluxNormal;
 
             SpatialDomains::BoundaryConditionsSharedPtr
                 GetDomainBCs(const SpatialDomains::CompositeMap &domain,

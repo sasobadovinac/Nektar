@@ -38,6 +38,7 @@
 #include <SolverUtils/UnsteadySystem.h>
 #include <SolverUtils/RiemannSolvers/RiemannSolver.h>
 #include <SolverUtils/AdvectionSystem.h>
+#include <SolverUtils/Forcing/Forcing.h>
 
 namespace Nektar
 {
@@ -72,6 +73,9 @@ namespace Nektar
         // Plane (used only for Discontinous projection
         //        with 3DHomogenoeus1D expansion)
         int                                     m_planeNumber;
+
+        /// Forcing terms
+        std::vector<SolverUtils::ForcingSharedPtr>  m_forcing;
 
         /// Session reader
         UnsteadyAdvection(const LibUtilities::SessionReaderSharedPtr& pSession,

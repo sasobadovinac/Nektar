@@ -660,38 +660,39 @@ namespace Nektar
             // assume coord dimension defines the size of Deriv Base
             int dim = GetCoordim(0);
 
-            ASSERTL1(inarray.size() >= dim,"inarray is not of sufficient dimension");
+            ASSERTL1(inarray.size() >= dim,
+                     "inarray is not of sufficient dimension");
 
             switch(dim)
             {
             case 1:
                 for (int i = 0; i < m_collections.size(); ++i)
                 {
-                    m_collections[i].ApplyOperator(
-                                                   Collections::eIProductWRTDerivBase,
-                                                   inarray[0] + m_coll_phys_offset[i],
-                                                   tmp0 = outarray + m_coll_coeff_offset[i]);
+                    m_collections[i].ApplyOperator
+                        (Collections::eIProductWRTDerivBase,
+                         inarray[0] + m_coll_phys_offset[i],
+                         tmp0 = outarray + m_coll_coeff_offset[i]);
                 }
                 break;
             case 2:
                 for (int i = 0; i < m_collections.size(); ++i)
                 {
-                    m_collections[i].ApplyOperator(
-                                                   Collections::eIProductWRTDerivBase,
-                                                   inarray[0] + m_coll_phys_offset[i],
-                                                   tmp0 = inarray[1] + m_coll_phys_offset[i],
-                                                   tmp1 = outarray + m_coll_coeff_offset[i]);
+                    m_collections[i].ApplyOperator
+                        (Collections::eIProductWRTDerivBase,
+                         inarray[0] + m_coll_phys_offset[i],
+                         tmp0 = inarray[1] + m_coll_phys_offset[i],
+                         tmp1 = outarray + m_coll_coeff_offset[i]);
                 }
                 break;
             case 3:
                 for (int i = 0; i < m_collections.size(); ++i)
                 {
-                    m_collections[i].ApplyOperator(
-                                                   Collections::eIProductWRTDerivBase,
-                                                   inarray[0] + m_coll_phys_offset[i],
-                                                   tmp0 = inarray[1] + m_coll_phys_offset[i],
-                                                   tmp1 = inarray[2] + m_coll_phys_offset[i],
-                                                   tmp2 = outarray + m_coll_coeff_offset[i]);
+                    m_collections[i].ApplyOperator
+                        (Collections::eIProductWRTDerivBase,
+                         inarray[0] + m_coll_phys_offset[i],
+                         tmp0 = inarray[1] + m_coll_phys_offset[i],
+                         tmp1 = inarray[2] + m_coll_phys_offset[i],
+                         tmp2 = outarray + m_coll_coeff_offset[i]);
                 }
                 break;
             default:
@@ -764,8 +765,9 @@ namespace Nektar
             v_PhysDeriv(edir, inarray,out_d);
         }
 
-        void ExpList::v_PhysDeriv(Direction edir, const Array<OneD, const NekDouble> &inarray,
-                Array<OneD, NekDouble> &out_d)
+        void ExpList::v_PhysDeriv(Direction edir,
+                                  const Array<OneD, const NekDouble> &inarray,
+                                  Array<OneD, NekDouble> &out_d)
         {
             int i;
             if(edir==MultiRegions::eS)
@@ -936,8 +938,8 @@ namespace Nektar
          *                          containing the inner product.
          */
         void ExpList::MultiplyByElmtInvMass(
-                                            const Array<OneD, const NekDouble> &inarray,
-                                            Array<OneD, NekDouble> &outarray)
+                    const Array<OneD, const NekDouble> &inarray,
+                    Array<OneD, NekDouble> &outarray)
         {
             GlobalMatrixKey mkey(StdRegions::eInvMass);
             const DNekScalBlkMatSharedPtr& InvMass = GetBlockMatrix(mkey);
@@ -974,8 +976,9 @@ namespace Nektar
          *                          \f$\hat{u}_n^e\f$ will be stored in this
          *                          array of size \f$N_{\mathrm{eof}}\f$.
          */
-        void ExpList::v_FwdTrans_IterPerExp(const Array<OneD, const NekDouble> &inarray,
-                                            Array<OneD, NekDouble> &outarray)
+        void ExpList::v_FwdTrans_IterPerExp
+             (const Array<OneD, const NekDouble> &inarray,
+              Array<OneD, NekDouble> &outarray)
         {
             Array<OneD,NekDouble> f(m_ncoeffs);
 
@@ -984,9 +987,9 @@ namespace Nektar
 
         }
 
-        void ExpList::v_FwdTrans_BndConstrained(
-                                              const Array<OneD, const NekDouble>& inarray,
-                                              Array<OneD, NekDouble> &outarray)
+        void ExpList::v_FwdTrans_BndConstrained
+              (const Array<OneD, const NekDouble>& inarray,
+               Array<OneD, NekDouble> &outarray)
         {
             int i;
 
@@ -994,8 +997,9 @@ namespace Nektar
 
             for(i= 0; i < (*m_exp).size(); ++i)
             {
-                (*m_exp)[i]->FwdTrans_BndConstrained(inarray+m_phys_offset[i],
-                                                     e_outarray = outarray+m_coeff_offset[i]);
+                (*m_exp)[i]->FwdTrans_BndConstrained
+                    (inarray+m_phys_offset[i],
+                     e_outarray = outarray+m_coeff_offset[i]);
             }
         }
 
@@ -1049,8 +1053,8 @@ namespace Nektar
          * @param   scalar          an optional parameter
          * @param   constant        an optional parameter
          */
-        const DNekScalBlkMatSharedPtr ExpList::GenBlockMatrix(
-                                                              const GlobalMatrixKey &gkey)
+        const DNekScalBlkMatSharedPtr ExpList::GenBlockMatrix
+                                          (const GlobalMatrixKey &gkey)
         {
             int i,cnt1;
             int n_exp = 0;
@@ -1089,8 +1093,10 @@ namespace Nektar
                     // set up an array of integers for block matrix construction
                     for(i = 0; i < n_exp; ++i)
                     {
-                        nrows[i] = (*m_exp)[elmt_id.find(i)->second]->GetTotPoints();
-                        ncols[i] = (*m_exp)[elmt_id.find(i)->second]->GetNcoeffs();
+                        nrows[i] = (*m_exp)[elmt_id.find(i)->second]
+                            ->GetTotPoints();
+                        ncols[i] = (*m_exp)[elmt_id.find(i)->second]
+                            ->GetNcoeffs();
                     }
                 }
                 break;
@@ -1099,8 +1105,10 @@ namespace Nektar
                     // set up an array of integers for block matrix construction
                     for(i = 0; i < n_exp; ++i)
                     {
-                        nrows[i] = (*m_exp)[elmt_id.find(i)->second]->GetNcoeffs();
-                        ncols[i] = (*m_exp)[elmt_id.find(i)->second]->GetTotPoints();
+                        nrows[i] = (*m_exp)[elmt_id.find(i)->second]
+                            ->GetNcoeffs();
+                        ncols[i] = (*m_exp)[elmt_id.find(i)->second]
+                            ->GetTotPoints();
                     }
                 }
                 break;
@@ -1113,8 +1121,10 @@ namespace Nektar
                     // set up an array of integers for block matrix construction
                     for(i = 0; i < n_exp; ++i)
                     {
-                        nrows[i] = (*m_exp)[elmt_id.find(i)->second]->GetNcoeffs();
-                        ncols[i] = (*m_exp)[elmt_id.find(i)->second]->GetNcoeffs();
+                        nrows[i] = (*m_exp)[elmt_id.find(i)->second]
+                            ->GetNcoeffs();
+                        ncols[i] = (*m_exp)[elmt_id.find(i)->second]
+                            ->GetNcoeffs();
                     }
                 }
                 break;
@@ -1124,23 +1134,25 @@ namespace Nektar
                     // set up an array of integers for block matrix construction
                     for(i = 0; i < n_exp; ++i)
                     {
-                        nrows[i] = (*m_exp)[elmt_id.find(i)->second]->GetNcoeffs();
-                        ncols[i] = (*m_exp)[elmt_id.find(i)->second]->NumDGBndryCoeffs();
+                        nrows[i] = (*m_exp)[elmt_id.find(i)->second]
+                            ->GetNcoeffs();
+                        ncols[i] = (*m_exp)[elmt_id.find(i)->second]
+                            ->NumDGBndryCoeffs();
                     }
                 }
                 break;
-
             case StdRegions::eHybridDGHelmBndLam:
                 {
                     // set up an array of integers for block matrix construction
                     for(i = 0; i < n_exp; ++i)
                     {
-                        nrows[i] = (*m_exp)[elmt_id.find(i)->second]->NumDGBndryCoeffs();
-                        ncols[i] = (*m_exp)[elmt_id.find(i)->second]->NumDGBndryCoeffs();
+                        nrows[i] = (*m_exp)[elmt_id.find(i)->second]
+                            ->NumDGBndryCoeffs();
+                        ncols[i] = (*m_exp)[elmt_id.find(i)->second]
+                            ->NumDGBndryCoeffs();
                     }
                 }
                 break;
-
             default:
                 {
                     NEKERROR(ErrorUtil::efatal,
@@ -1185,8 +1197,8 @@ namespace Nektar
             return BlkMatrix;
         }
 
-        const DNekScalBlkMatSharedPtr& ExpList::GetBlockMatrix(
-                                                               const GlobalMatrixKey &gkey)
+        const DNekScalBlkMatSharedPtr& ExpList::GetBlockMatrix
+                                            (const GlobalMatrixKey &gkey)
         {
             auto matrixIter = m_blockMat->find(gkey);
 
@@ -1200,10 +1212,10 @@ namespace Nektar
             }
         }
 
-        void ExpList::GeneralMatrixOp_IterPerExp(
-                                                 const GlobalMatrixKey             &gkey,
-                                                 const Array<OneD,const NekDouble> &inarray,
-                                                 Array<OneD,      NekDouble> &outarray)
+        void ExpList::GeneralMatrixOp_IterPerExp
+                                     (const GlobalMatrixKey             &gkey,
+                                      const Array<OneD,const NekDouble> &inarray,
+                                      Array<OneD,      NekDouble> &outarray)
         {
             Array<OneD,NekDouble> tmp_outarray;
             int nvarcoeffs = gkey.GetNVarCoeffs();
@@ -1241,9 +1253,9 @@ namespace Nektar
          * @param   locToGloMap Local to global mapping.
          * @returns Shared pointer to the generated global matrix.
          */
-        GlobalMatrixSharedPtr ExpList::GenGlobalMatrix(
-                                                       const GlobalMatrixKey &mkey,
-                                                       const AssemblyMapCGSharedPtr &locToGloMap)
+        GlobalMatrixSharedPtr ExpList::GenGlobalMatrix
+                              (const GlobalMatrixKey &mkey,
+                               const AssemblyMapCGSharedPtr &locToGloMap)
         {
             int i,j,n,gid1,gid2,cntdim1,cntdim2;
             NekDouble sign1,sign2;
@@ -1306,7 +1318,8 @@ namespace Nektar
             // fill global matrix
             for(n = cntdim1 = cntdim2 = 0; n < (*m_exp).size(); ++n)
             {
-                // need to be initialised with zero size for non variable coefficient case
+                // need to be initialised with zero size for non
+                // variable coefficient case
                 StdRegions::VarCoeffMap varcoeffs;
 
                 eid = n;
@@ -1323,7 +1336,8 @@ namespace Nektar
                                               *((*m_exp)[eid]),
                                               mkey.GetConstFactors(),varcoeffs);
 
-                loc_mat = std::dynamic_pointer_cast<LocalRegions::Expansion>((*m_exp)[n])->GetLocMatrix(matkey);
+                loc_mat = std::dynamic_pointer_cast<LocalRegions::Expansion>
+                    ((*m_exp)[n])->GetLocMatrix(matkey);
 
                 loc_rows = loc_mat->GetRows();
                 loc_cols = loc_mat->GetColumns();
@@ -1377,7 +1391,9 @@ namespace Nektar
         }
 
 
-        DNekMatSharedPtr ExpList::GenGlobalMatrixFull(const GlobalLinSysKey &mkey, const AssemblyMapCGSharedPtr &locToGloMap)
+        DNekMatSharedPtr ExpList::GenGlobalMatrixFull
+                          (const GlobalLinSysKey &mkey,
+                           const AssemblyMapCGSharedPtr &locToGloMap)
         {
             int i,j,n,gid1,gid2,loc_lda,eid;
             NekDouble sign1,sign2,value;
@@ -1406,26 +1422,31 @@ namespace Nektar
                 if( (2*(bwidth+1)) < rows)
                 {
                     matStorage = ePOSITIVE_DEFINITE_SYMMETRIC_BANDED;
-                    Gmat = MemoryManager<DNekMat>::AllocateSharedPtr(rows,cols,zero,matStorage,bwidth,bwidth);
+                    Gmat = MemoryManager<DNekMat>::AllocateSharedPtr
+                        (rows,cols,zero,matStorage,bwidth,bwidth);
                 }
                 else
                 {
                     matStorage = ePOSITIVE_DEFINITE_SYMMETRIC;
-                    Gmat = MemoryManager<DNekMat>::AllocateSharedPtr(rows,cols,zero,matStorage);
+                    Gmat = MemoryManager<DNekMat>::AllocateSharedPtr
+                        (rows,cols,zero,matStorage);
                 }
 
                 break;
-            default: // Assume general matrix - currently only set up for full invert
+            default: // Assume general matrix - currently only set up
+                     // for full invert
                 {
                     matStorage = eFULL;
-                    Gmat = MemoryManager<DNekMat>::AllocateSharedPtr(rows,cols,zero,matStorage);
+                    Gmat = MemoryManager<DNekMat>::AllocateSharedPtr
+                        (rows,cols,zero,matStorage);
                 }
             }
 
             // fill global symmetric matrix
             for(n = 0; n < (*m_exp).size(); ++n)
             {
-                // need to be initialised with zero size for non variable coefficient case
+                // need to be initialised with zero size for non
+                // variable coefficient case
                 StdRegions::VarCoeffMap varcoeffs;
 
                 eid = n;
@@ -1442,7 +1463,8 @@ namespace Nektar
                                               *((*m_exp)[eid]),
                                               mkey.GetConstFactors(),varcoeffs);
 
-                loc_mat = std::dynamic_pointer_cast<LocalRegions::Expansion>((*m_exp)[n])->GetLocMatrix(matkey);
+                loc_mat = std::dynamic_pointer_cast<LocalRegions::Expansion>
+                    ((*m_exp)[n])->GetLocMatrix(matkey);
 
 
                 if(RobinBCInfo.count(n) != 0) // add robin mass matrix
@@ -1453,32 +1475,40 @@ namespace Nektar
                     int rows = loc_mat->GetRows();
                     int cols = loc_mat->GetColumns();
                     const NekDouble *dat = loc_mat->GetRawPtr();
-                    DNekMatSharedPtr new_mat = MemoryManager<DNekMat>::AllocateSharedPtr(rows,cols,dat);
-                    Blas::Dscal(rows*cols,loc_mat->Scale(),new_mat->GetRawPtr(),1);
+                    DNekMatSharedPtr new_mat = MemoryManager<DNekMat>::
+                        AllocateSharedPtr(rows,cols,dat);
+                    Blas::Dscal(rows*cols,loc_mat->Scale(),
+                                new_mat->GetRawPtr(),1);
 
                     // add local matrix contribution
                     for(rBC = RobinBCInfo.find(n)->second;rBC; rBC = rBC->next)
                     {
-                        (*m_exp)[n]->AddRobinMassMatrix(rBC->m_robinID,rBC->m_robinPrimitiveCoeffs,new_mat);
+                        (*m_exp)[n]->AddRobinMassMatrix(rBC->m_robinID,
+                                         rBC->m_robinPrimitiveCoeffs,new_mat);
                     }
 
                     NekDouble one = 1.0;
                     // redeclare loc_mat to point to new_mat plus the scalar.
-                    loc_mat = MemoryManager<DNekScalMat>::AllocateSharedPtr(one,new_mat);
+                    loc_mat = MemoryManager<DNekScalMat>::
+                        AllocateSharedPtr(one,new_mat);
                 }
 
                 loc_lda = loc_mat->GetColumns();
 
                 for(i = 0; i < loc_lda; ++i)
                 {
-                    gid1 = locToGloMap->GetLocalToGlobalMap(m_coeff_offset[n] + i) - NumDirBCs;
-                    sign1 =  locToGloMap->GetLocalToGlobalSign(m_coeff_offset[n] + i);
+                    gid1 = locToGloMap->GetLocalToGlobalMap(m_coeff_offset[n] + i)
+                        - NumDirBCs;
+                    sign1 =  locToGloMap->GetLocalToGlobalSign(m_coeff_offset[n]
+                                                               + i);
                     if(gid1 >= 0)
                     {
                         for(j = 0; j < loc_lda; ++j)
                         {
-                            gid2 = locToGloMap->GetLocalToGlobalMap(m_coeff_offset[n] + j) - NumDirBCs;
-                            sign2 = locToGloMap->GetLocalToGlobalSign(m_coeff_offset[n] + j);
+                            gid2 = locToGloMap->GetLocalToGlobalMap
+                                (m_coeff_offset[n] + j) - NumDirBCs;
+                            sign2 = locToGloMap->GetLocalToGlobalSign
+                                (m_coeff_offset[n] + j);
                             if(gid2 >= 0)
                             {
                                 // When global matrix is symmetric,
@@ -3643,6 +3673,9 @@ namespace Nektar
         }
 
         /**
+         * @brief: Set up a normal along the trace elements between
+         * two elements at elemental level 
+         *
          */
         void ExpList::v_SetUpPhysNormals()
         {

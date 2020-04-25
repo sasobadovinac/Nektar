@@ -62,8 +62,6 @@ namespace Nektar
                 : Expansion(pGeom),
                   StdExpansion1D()
             {
-                m_elementEdgeLeft  = -1;
-                m_elementEdgeRight = -1;
             }
             
             LOCAL_REGIONS_EXPORT virtual ~Expansion1D() {}
@@ -117,10 +115,6 @@ namespace Nektar
                      Array<OneD, int> &idmap,
                      const int nq0,  const int nq1);
         private:
-            Expansion2DWeakPtr m_elementLeft;
-            Expansion2DWeakPtr m_elementRight;
-            int                m_elementEdgeLeft;
-            int                m_elementEdgeRight;
             
         };
 

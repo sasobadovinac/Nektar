@@ -44,10 +44,10 @@ namespace Nektar
     namespace LocalRegions
     {
         const NormalVector &Expansion1D::v_GetTraceNormal(
-                    const int edge) const
+                    const int vert) const
         {
             std::map<int, NormalVector>::const_iterator x;
-            x = m_vertexNormals.find(edge);
+            x = m_vertexNormals.find(vert);
             ASSERTL1 (x != m_vertexNormals.end(),
                         "Vertex normal not computed.");
             return x->second;
@@ -435,8 +435,7 @@ namespace Nektar
             const Array<OneD, Array<OneD, NekDouble> > &vec)
         {
             const Array<OneD, const Array<OneD, NekDouble> >
-                &normals = GetLeftAdjacentElementExp()->
-                GetTraceNormal(GetLeftAdjacentElementTrace());
+                &normals = GetTraceNormal(GetLeftAdjacentElementTrace());
 
             int nq = m_base[0]->GetNumPoints();
             Array<OneD, NekDouble > Fn(nq);
@@ -446,7 +445,7 @@ namespace Nektar
             return Integral(Fn);
         }
         
-        /** @brief: This method gets old of the factors which are
+        /** @brief: This method gets all of the factors which are
             required as part of the Gradient Jump Penalty
             stabilisation and involves the product of the normal and
             geometric factors along the element trace.
@@ -457,10 +456,6 @@ namespace Nektar
             int nquad  = GetNumPoints(0);
             Array<TwoD, const NekDouble> gmat =
                                 m_metricinfo->GetDerivFactors(GetPointsKeys());
-            const Array<OneD, const Array<OneD, NekDouble> >
-                 &normals =
-                    GetLeftAdjacentElementExp()->
-                        GetTraceNormal(GetLeftAdjacentElementTrace());
 
             if(factors.size() <=2)
             {
@@ -469,25 +464,32 @@ namespace Nektar
                 factors[1] = Array<OneD, NekDouble> (1);
             }
 
+            // Outwards normal
+            const Array<OneD, const Array<OneD, NekDouble> >
+                &normal_0= GetTraceNormal(0);
+            const Array<OneD, const Array<OneD, NekDouble> >
+                &normal_1= GetTraceNormal(1);
 
             if(m_metricinfo->GetGtype() == SpatialDomains::eDeformed)
             {
-                factors[0][0] = gmat[0][nquad-1]*normals[0][0]; 
-                factors[1][0] = gmat[0][0]*normals[1][0];
-                for(int n = 1; n < normals[0].size(); ++n)
+                factors[0][0] = gmat[0][nquad-1]*normal_0[0][0]; 
+                factors[1][0] = gmat[0][0]*normal_1[0][0];
+
+                for(int n = 1; n < normal_0.size(); ++n)
                 {
-                    factors[0][0] += gmat[n][0]*normals[0][n]; 
-                    factors[1][0] += gmat[n][nquad-1]*normals[1][n];
+                    factors[0][0] += gmat[n][0]*normal_0[n][0]; 
+                    factors[1][0] += gmat[n][nquad-1]*normal_1[n][0];
                 }
             }
             else
             {
-                factors[0][0] = gmat[0][0]*normals[0][0]; 
-                factors[1][0] = gmat[0][0]*normals[1][0];
-                for(int n = 1; n < normals[0].size(); ++n)
+                factors[0][0] = gmat[0][0]*normal_0[0][0]; 
+                factors[1][0] = gmat[0][0]*normal_1[0][0];
+
+                for(int n = 1; n < normal_0.size(); ++n)
                 {
-                    factors[0][0] += gmat[n][0]*normals[0][n]; 
-                    factors[1][0] += gmat[n][0]*normals[1][n];
+                    factors[0][0] += gmat[n][0]*normal_0[n][0]; 
+                    factors[1][0] += gmat[n][0]*normal_1[n][0];
                 }
             }
         }
@@ -499,13 +501,12 @@ namespace Nektar
         {
             boost::ignore_unused(orient, nq0, nq1);
             
-            if (idmap.size() != 2)
+            if (idmap.size() != 1)
             {
-                idmap = Array<OneD, int>(2);
+                idmap = Array<OneD, int>(1);
             }
 
             idmap[0] = 0;
-            idmap[1] = 1;
         }
         
     } //end of namespace

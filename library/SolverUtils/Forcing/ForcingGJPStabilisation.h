@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File FilterGJPSmoothing.h
+// File: ForcingGJPStabilisaton.h
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -28,68 +28,72 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 //
-// Description: Average solution fields during time-stepping.
+// Description: Gradient Jump Penalty Stabilisation
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#ifndef NEKTAR_SOLVERUTILS_FILTERS_FILTERGJPSMOOTHING_H
-#define NEKTAR_SOLVERUTILS_FILTERS_FILTERGJPSMOOTHING_H
+#ifndef NEKTAR_SOLVERUTILS_FORCINGGJPSTABILSATION
+#define NEKTAR_SOLVERUTILS_FORCINGGJPSTABILSATION
 
-#include <SolverUtils/Filters/Filter.h>
+#include <string>
+
+#include <LibUtilities/BasicUtils/NekFactory.hpp>
+#include <LibUtilities/BasicUtils/SharedArray.hpp>
+#include <MultiRegions/ExpList.h>
+#include <SolverUtils/SolverUtilsDeclspec.h>
+#include <SolverUtils/Forcing/Forcing.h>
 #include <MultiRegions/DisContField.h>
+
 
 namespace Nektar
 {
 namespace SolverUtils
 {
-
-typedef std::tuple<int, int, NekDouble> TraceToCoeffMap;
-    
-class FilterGJPSmoothing : public Filter
+class ForcingGJPStabilisaton : public Forcing
 {
 public:
-    friend class MemoryManager<FilterGJPSmoothing>;
-
+    
+    friend class MemoryManager<ForcingGJPStabilisaton>;
+    
     /// Creates an instance of this class
-    static FilterSharedPtr create(
-        const LibUtilities::SessionReaderSharedPtr &pSession,
-        const std::weak_ptr<EquationSystem>      &pEquation,
-        const std::map<std::string, std::string>   &pParams)
+    SOLVER_UTILS_EXPORT static ForcingSharedPtr create
+        (const LibUtilities::SessionReaderSharedPtr &pSession,
+         const std::weak_ptr<EquationSystem>      &pEquation,
+         const Array<OneD, MultiRegions::ExpListSharedPtr>& pFields,
+         const unsigned int& pNumForcingFields,
+         const TiXmlElement* pForce)
     {
-        FilterSharedPtr p = MemoryManager<FilterGJPSmoothing>
-                            ::AllocateSharedPtr(pSession, pEquation, pParams);
+        ForcingSharedPtr p = MemoryManager<ForcingGJPStabilisaton>::
+            AllocateSharedPtr(pSession, pEquation);
+        p->InitObject(pFields, pNumForcingFields, pForce);
         return p;
     }
-
+    
     ///Name of the class
-    static std::string className;
-
-    SOLVER_UTILS_EXPORT FilterGJPSmoothing(
-        const LibUtilities::SessionReaderSharedPtr &pSession,
-        const std::weak_ptr<EquationSystem>      &pEquation,
-        const ParamMap &pParams);
-    SOLVER_UTILS_EXPORT virtual ~FilterGJPSmoothing();
-
+    static std::string classNameBody;
+    static std::string classNameField;
+    
 protected:
-    SOLVER_UTILS_EXPORT virtual void v_Initialise(
-        const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
-        const NekDouble &time);
-    SOLVER_UTILS_EXPORT virtual void v_Update(
-        const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
-        const NekDouble &time);
-    SOLVER_UTILS_EXPORT virtual void v_Finalise(
-        const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
-        const NekDouble &time);
-
-    SOLVER_UTILS_EXPORT virtual bool v_IsTimeDependent();
+    SOLVER_UTILS_EXPORT virtual void v_InitObject
+        (const Array<OneD, MultiRegions::ExpListSharedPtr>& pFields,
+         const unsigned int& pNumForcingFields,
+         const TiXmlElement* pForce);
+    
+    SOLVER_UTILS_EXPORT virtual void v_Apply
+        (const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
+         const Array<OneD, Array<OneD, NekDouble> > &inarray,
+         Array<OneD, Array<OneD, NekDouble> > &outarray,
+         const NekDouble &time);
+    
 private:
     MultiRegions::ExpansionType  m_expType; 
+    int m_numForcingFields; 
     int m_smoothingFrequency; 
     int m_coordDim; 
     int m_index;
     /// DG expansion for projection evalaution along trace
     MultiRegions::DisContFieldSharedPtr m_dgfield;
-        /// Scale factor for phys values along trace involving the lcoal
+    /// Scale factor for phys values along trace involving the lcoal
     /// normals and tangenet geometric factors on Fwd Trace
     Array<OneD, NekDouble> m_scalFwd;
     /// Scale factor for phys values along trace involving the lcoal
@@ -108,8 +112,15 @@ private:
 
     // Link to the trace normals 
     Array<OneD, Array<OneD, NekDouble> > m_traceNormals; 
+
+    ForcingGJPStabilisaton
+        (const LibUtilities::SessionReaderSharedPtr &pSession,
+         const std::weak_ptr<EquationSystem>      &pEquation);
+    
+    virtual ~ForcingGJPStabilisaton(void){};
 };
+
 }
 }
 
-#endif /* NEKTAR_SOLVERUTILS_FILTERS_FILTERGJPSMOOTHING_H */
+#endif

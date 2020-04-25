@@ -54,8 +54,6 @@ namespace Nektar
     namespace StdRegions
     {
 
-        typedef Array<OneD, std::set<int> > TraceCoeffSet;
-
         /** \brief The base class for all shapes
          *
          *  This is the lowest level basic class for all shapes and so
@@ -961,8 +959,8 @@ namespace Nektar
 
 
             void DerivNormalBasisOnTrace
-            (Array<OneD, Array<OneD, NekDouble> > &dbasis,
-             Array<OneD, TraceCoeffSet > &TraceToCoeffMap)
+            (Array<OneD, Array<OneD, Array<OneD, NekDouble> > > &dbasis,
+             Array<OneD, Array<OneD, Array<OneD, unsigned int> > > &TraceToCoeffMap)
             {
                 v_DerivNormalBasisOnTrace(dbasis,TraceToCoeffMap);
             }
@@ -1424,8 +1422,8 @@ namespace Nektar
              const Array<OneD, const NekDouble> & physvals);
             
             STD_REGIONS_EXPORT virtual void v_DerivNormalBasisOnTrace
-              (Array<OneD, Array<OneD, NekDouble> > &dbasis,
-               Array<OneD, TraceCoeffSet > &TraceToCoeffMap);
+            (Array<OneD, Array<OneD, Array<OneD, NekDouble> > > &dbasis,
+             Array<OneD, Array<OneD, Array<OneD, unsigned int> > > &TraceToCoeffMap);
 
             STD_REGIONS_EXPORT virtual void v_LocCoordToLocCollapsed(
                                         const Array<OneD, const NekDouble>& xi,

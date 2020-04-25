@@ -76,7 +76,7 @@ namespace MultiRegions
 
     /**
      * Store expansions for the trace space expansions used in
-     * DisContField2D
+     * DisContField
      *
      * @param  pSession      A session within information about expansion
      * @param  bndConstraint Array of ExpList1D objects each containing a

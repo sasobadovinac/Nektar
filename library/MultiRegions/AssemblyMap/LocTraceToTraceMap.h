@@ -234,7 +234,7 @@ private:
     Array<OneD, int> m_fieldToLocTraceMap;
     /// A mapping from local trace points to the global trace. Dimension 0 holds
     /// forward traces, dimension 1 backward.
-    Array<OneD, Array<OneD, int> > m_LocTraceToTraceMap;
+    Array<OneD, Array<OneD, int> > m_locTraceToTraceMap;
     /// A mapping holding the type of interpolation needed for each local trace.
     /// Dimension 0 holds forward traces, dimension 1 backward.
     Array<OneD, Array<OneD, InterpLocTraceToTrace> > m_interpTrace;
@@ -255,7 +255,7 @@ private:
     /// triangles
     Array<OneD, Array<OneD, Array<OneD, NekDouble> > > m_interpEndPtI1;
     /// Number of edges/faces on a 2D/3D element that require interpolation.
-    Array<OneD, Array<OneD, int> > m_interpNfaces;
+    Array<OneD, Array<OneD, int> > m_interpNtraces;
     /// Number of forwards/backwards trace coefficients.
     int m_nTraceCoeffs[2];
     /// Mapping from forwards/backwards trace coefficients to elemental
