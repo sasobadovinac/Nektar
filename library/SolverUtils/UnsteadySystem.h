@@ -183,15 +183,13 @@ namespace Nektar
             Array<OneD,Array<OneD,NekDouble>> m_TemporalError;
             int m_CalculateSpatialErrorCounter=0;
             bool m_CalculateSpatialErrorFlag=false;
+            bool m_CalculateTemporalErrorFlag=false;
             NekDouble m_SpatialErrorNorm;
             Array<OneD,NekDouble> m_SpatialErrorNormArray;
             Array<OneD,Array<OneD,NekDouble>> m_SpatialError;
-            Array<OneD,Array<OneD,NekDouble>> m_SpatialError_BeforeOperation;
-            Array<OneD,Array<OneD,NekDouble>> m_AdaptiveTimeStep_BeforeOperation;
-            Array<OneD,Array<OneD,NekDouble>> m_AdaptiveTimeStep_AfterOperation;
             Array<OneD,Array<OneD,NekDouble>> m_OperatedSpatialError;
             Array<OneD,Array<OneD,NekDouble>> m_OperatedTemporalError;
-            Array<OneD,Array<OneD,NekDouble>> m_OperatedAdaptiveTimeStepForOutput;
+            // Array<OneD,Array<OneD,NekDouble>> m_OperatedAdaptiveTimeStepForOutput;
             ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
             int m_CalcuPrecMatCounter  = std::numeric_limits<int>::max();

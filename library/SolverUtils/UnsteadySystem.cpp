@@ -165,16 +165,16 @@ namespace Nektar
             }
             
             //Current stage only define other two parameters together can calculate adaptive time step
-            if(m_ErrorBasedAdaptedTimeStepFlag)
-            {
-                int nvariables=GetNvariables();
-                m_OperatedAdaptiveTimeStepForOutput=Array<OneD,Array<OneD,NekDouble>>(nvariables);
-                for(int i=0;i<nvariables;i++)
-                {
-                    int npoints=m_fields[i]->GetNpoints();
-                    m_OperatedAdaptiveTimeStepForOutput[i]=Array<OneD,NekDouble>(npoints,0.0);
-                }
-            }
+            // if(m_ErrorBasedAdaptedTimeStepFlag)
+            // {
+            //     int nvariables=GetNvariables();
+            //     m_OperatedAdaptiveTimeStepForOutput=Array<OneD,Array<OneD,NekDouble>>(nvariables);
+            //     for(int i=0;i<nvariables;i++)
+            //     {
+            //         int npoints=m_fields[i]->GetNpoints();
+            //         m_OperatedAdaptiveTimeStepForOutput[i]=Array<OneD,NekDouble>(npoints,0.0);
+            //     }
+            // }
 
             if(m_SpatialErrorFreezNumber>0)
             {
@@ -457,175 +457,88 @@ namespace Nektar
                
                 if ( m_FirstStepErrorControlFlag && m_ErrorBasedAdaptedTimeStepFlag)
                 {
-                  
-                    //////////////////////////////////////////////////////////////////////
-                    //First Step: Manually modify Spatial Error: L2 norm of each Element
-                    //Because find some spatial errors are really small like when initially start with constant field
-                    // which will lead to too small adptive time step
-                    
-                    //#define outputMore
-                    #ifdef outputMore
-                    ofstream outfile51;
-                    outfile51.open("SpatialError.txt");
-                    int nwidthcolm=10;
-
-                    int npoints=m_fields[0]->GetNpoints();
-                    for(int j=0;j<npoints;j++)
+                    if(m_CalculateTemporalErrorFlag && m_CalculateSpatialErrorFlag)
                     {
-                        outfile51<<setprecision(1)<<j<<"    ";
+                        //Avoid reoperating of AdaptiveTimeStep.
+                        m_CalculateTemporalErrorFlag=false;
+                        m_CalculateSpatialErrorFlag=false;
+                        //////////////////////////////////////////////////////////////////////
+                        //First Step: Manually modify Spatial Error: L2 norm of each Element
+                        //Because find some spatial errors are really small like when initially start with constant field
+                        // which will lead to too small adptive time step
+
+                        int nElements  = m_fields[0]->GetNumElmts();
+                        Array<OneD,Array<OneD,NekDouble>> OperatedSpatialErrortmp(nvariables);
+                        std::shared_ptr<LocalRegions::ExpansionVector> m_exp=m_fields[0]->GetExp();
                         for(int i=0;i<nvariables;i++)
                         {
-                            outfile51<<right<<scientific<<setw(nwidthcolm)<<setprecision(nwidthcolm-6)<<m_SpatialError[i][j];
-                            outfile51<<"    ";
+                            OperatedSpatialErrortmp[i]=Array<OneD,NekDouble>(nElements);
+                            for(int k=0;k<nElements;k++)
+                            {
+                                NekDouble sum=0.0;
+                                int nElementPoints= (*m_exp)[k]->GetTotPoints();
+                                int nElementOffset = m_fields[0]->GetPhys_Offset(k);
+                                sum=Vmath::Dot(nElementPoints,&m_SpatialError[i][nElementOffset],1,&m_SpatialError[i][nElementOffset],1);
+                                //elemental dot, no need to AllReduce
+                                sum=sum/nElementPoints;
+                                sum=sqrt(sum);
+                                OperatedSpatialErrortmp[i][k]=sum;
+                                Vmath::Fill(nElementPoints,sum,&m_OperatedSpatialError[i][nElementOffset],1);
+                            }
                         }
-                        outfile51<<endl;
-                    }
-                    outfile51.close();
-                    #endif
 
-                    int nElements  = m_fields[0]->GetNumElmts();
-                    Array<OneD,Array<OneD,NekDouble>> OperatedSpatialErrortmp(nvariables);
-                    std::shared_ptr<LocalRegions::ExpansionVector> m_exp=m_fields[0]->GetExp();
-                    for(int i=0;i<nvariables;i++)
-                    {
-                        OperatedSpatialErrortmp[i]=Array<OneD,NekDouble>(nElements);
-                        for(int k=0;k<nElements;k++)
+                        //Second Step: Manually operate Temporal Error
+                        // L2 norm smooth
+                        Array<OneD,Array<OneD,NekDouble>> OperatedTemporalErrortmp(nvariables);
+                        for(int i=0;i<nvariables;i++)
                         {
-                            NekDouble sum=0.0;
-                            int nElementPoints= (*m_exp)[k]->GetTotPoints();
-                            int nElementOffset = m_fields[0]->GetPhys_Offset(k);
-                            sum=Vmath::Dot(nElementPoints,&m_SpatialError[i][nElementOffset],1,&m_SpatialError[i][nElementOffset],1);
+                            OperatedTemporalErrortmp[i]=Array<OneD,NekDouble>(nElements);
+                            for(int k=0;k<nElements;k++)
+                            {
+                                NekDouble sum=0.0;
+                                int nElementPoints= (*m_exp)[k]->GetTotPoints();
+                                int nElementOffset = m_fields[0]->GetPhys_Offset(k);
+                                sum=Vmath::Dot(nElementPoints,&m_TemporalError[i][nElementOffset],1,&m_TemporalError[i][nElementOffset],1);
                             //elemental dot, no need to AllReduce
-                            sum=sum/nElementPoints;
-                            sum=sqrt(sum);
-                            OperatedSpatialErrortmp[i][k]=sum;
-                            Vmath::Fill(nElementPoints,sum,&m_OperatedSpatialError[i][nElementOffset],1);
+                                sum=sum/nElementPoints;
+                                sum=sqrt(sum);
+                                OperatedTemporalErrortmp[i][k]=sum;
+                                Vmath::Fill(nElementPoints,sum,&m_OperatedTemporalError[i][nElementOffset],1);
+                            }
                         }
-                    }
-
-
-                    #ifdef outputMore
-                    ofstream outfile52;
-                    outfile52.open("OperatedSpatialError.txt");
-                    for(int j=0;j<npoints;j++)
-                    {
-                        outfile52<<setprecision(1)<<j<<"    ";
+                        
+                        //Step 2: from the theoretical proof, use spatial error to control temporal error
+                        int TemporalOrder=m_intScheme->GetIntegrationSchemeVector()[0]->GetTimeIntegrationSchemeOrder();
+                        //Compare spatial error and time integration error to adapt time step
+                        NekDouble Scale=0.1;// TimeIntegration error is assuemed to be much less than Spatial Error
+                        int TemporalOrder_PlusOne=TemporalOrder+1;  
+                        NekDouble oTemporalOrder_PlusOne=1.0/TemporalOrder_PlusOne; 
+                        
+                        Array<OneD,NekDouble> timestepArray(nvariables);
                         for(int i=0;i<nvariables;i++)
                         {
-                            outfile52<<right<<scientific<<setw(nwidthcolm)<<setprecision(nwidthcolm-6)<<m_OperatedSpatialError[i][j];
-                            outfile52<<"    ";
+                            Array<OneD,NekDouble> tmp1(nElements,0.0);
+                            Array<OneD,NekDouble> tmp2(nElements,0.0);
+                            Vmath::Smul(nElements,Scale,OperatedSpatialErrortmp[i],1,tmp1,1);
+                            //Assume TemporalError much smaller than SpatialError
+                            Vmath::Vcopy(nElements,OperatedTemporalErrortmp[i],1,tmp2,1);
+                            Vmath::Vdiv(nElements,tmp1,1,tmp2,1,tmp1,1);
+                            Vmath::Vpow(nElements,tmp1,1,oTemporalOrder_PlusOne,tmp1,1);
+                            Vmath::Smul(nElements,m_timestep,tmp1,1,tmp1,1);
+                            //To Do: if need min for each variable, need to AllReduce min here
+                            timestepArray[i]=Vmath::Vmin(nElements,tmp1,1);
+                            //To Do: for contour output, can remove after testing
+                            // for(int j=0;j<nElements;j++)
+                            // {
+                            //     int nElementPoints=(*m_exp)[j]->GetTotPoints();
+                            //     int nElementOffset=m_fields[0]->GetPhys_Offset(j);
+                            //     Vmath::Fill(nElementPoints,tmp1[j],&m_OperatedAdaptiveTimeStepForOutput[i][nElementOffset],1);
+                            // }
                         }
-                        outfile52<<endl;
-                    }
-                    outfile52.close();
-                    #endif
+                        m_OperatedAdaptiveTimeStep=Vmath::Vmin(nvariables,timestepArray,1);
+                        m_comm->AllReduce(m_OperatedAdaptiveTimeStep,LibUtilities::ReduceMin);
 
-                    //Second Step: Manually operate Temporal Error
-                    // L2 norm smooth
-                    #ifdef outputMore
-                    ofstream outfile5;
-                    outfile5.open("TemporalError.txt");
-                    for(int j=0;j<npoints;j++)
-                    {
-                        outfile5<<setprecision(1)<<j<<"    ";
-                        for(int i=0;i<nvariables;i++)
-                        {
-                            outfile5<<right<<scientific<<setw(nwidthcolm)<<setprecision(nwidthcolm-6)<<m_TemporalError[i][j];
-                            outfile5<<"    ";
-                        }
-                        outfile5<<endl;
                     }
-
-                    outfile5.close();
-                    #endif
-
-                    Array<OneD,Array<OneD,NekDouble>> OperatedTemporalErrortmp(nvariables);
-                    for(int i=0;i<nvariables;i++)
-                    {
-                        OperatedTemporalErrortmp[i]=Array<OneD,NekDouble>(nElements);
-                        for(int k=0;k<nElements;k++)
-                        {
-                            NekDouble sum=0.0;
-                            int nElementPoints= (*m_exp)[k]->GetTotPoints();
-                            int nElementOffset = m_fields[0]->GetPhys_Offset(k);
-                            sum=Vmath::Dot(nElementPoints,&m_TemporalError[i][nElementOffset],1,&m_TemporalError[i][nElementOffset],1);
-                           //elemental dot, no need to AllReduce
-                            sum=sum/nElementPoints;
-                            sum=sqrt(sum);
-                            OperatedTemporalErrortmp[i][k]=sum;
-                            Vmath::Fill(nElementPoints,sum,&m_OperatedTemporalError[i][nElementOffset],1);
-                        }
-                    }
-                     
-                    #ifdef outputMore
-                    ofstream outfile6;
-                    outfile6.open("OperatedTemporalError.txt");;
-                    for(int j=0;j<npoints;j++)
-                    {
-                        outfile6<<setprecision(1)<<j<<"    ";
-                        for(int i=0;i<nvariables;i++)
-                        {
-                            outfile6<<right<<scientific<<setw(nwidthcolm)<<setprecision(nwidthcolm-6)<<m_OperatedTemporalError[i][j];
-                            outfile6<<"    ";
-                        }
-                        outfile6<<endl;
-                    }
-                    outfile6.close();
-
-                    ASSERTL0(false,"Finsh Testing");
-                    #endif
-                    
-                   
-                    //Step 2: from the theoretical proof, use spatial error to control temporal error
-                    int TemporalOrder=m_intScheme->GetIntegrationSchemeVector()[0]->GetTimeIntegrationSchemeOrder();
-                    //Compare spatial error and time integration error to adapt time step
-                    NekDouble Scale=0.1;// TimeIntegration error is assuemed to be much less than Spatial Error
-                    int TemporalOrder_PlusOne=TemporalOrder+1;  
-                    NekDouble oTemporalOrder_PlusOne=1.0/TemporalOrder_PlusOne;
-                    
-                    //To Do: No Operated AdaptiveTimeStep, can remove if finish testing
-                    Array<OneD,NekDouble> timestepArray1(nvariables,0.0);
-                    for(int i=0;i<nvariables;i++)
-                    {
-                        int npoints=m_fields[i]->GetNpoints();
-                        Array<OneD,NekDouble> tmp1(npoints,0.0);
-                        Array<OneD,NekDouble> tmp2(npoints,0.0);
-                        Vmath::Smul(npoints,Scale,m_SpatialError[i],1,tmp1,1);
-                        //Assume TemporalError much smaller than SpatialError (<0.1*SpatialError)
-                        Vmath::Vcopy(npoints,m_TemporalError[i],1,tmp2,1);
-                        Vmath::Vdiv(npoints,tmp1,1,tmp2,1,tmp1,1);
-                        Vmath::Vpow(npoints,tmp1,1,oTemporalOrder_PlusOne,tmp1,1);
-                        Vmath::Smul(npoints,m_timestep,tmp1,1,tmp1,1);
-                        //To Do: if need min for each variable, need to AllReduce min here
-                        timestepArray1[i]=Vmath::Vmin(npoints,tmp1,1);
-                    }
-                    
-                    m_AdaptiveTimeStep=Vmath::Vmin(nvariables,timestepArray1,1);
-                    m_comm->AllReduce(m_AdaptiveTimeStep,LibUtilities::ReduceMin);  
-                    
-                    Array<OneD,NekDouble> timestepArray2(nvariables);
-                    for(int i=0;i<nvariables;i++)
-                    {
-                        Array<OneD,NekDouble> tmp1(nElements,0.0);
-                        Array<OneD,NekDouble> tmp2(nElements,0.0);
-                        Vmath::Smul(nElements,Scale,OperatedSpatialErrortmp[i],1,tmp1,1);
-                        //Assume TemporalError much smaller than SpatialError
-                        Vmath::Vcopy(nElements,OperatedTemporalErrortmp[i],1,tmp2,1);
-                        Vmath::Vdiv(nElements,tmp1,1,tmp2,1,tmp1,1);
-                        Vmath::Vpow(nElements,tmp1,1,oTemporalOrder_PlusOne,tmp1,1);
-                        Vmath::Smul(nElements,m_timestep,tmp1,1,tmp1,1);
-                        //To Do: if need min for each variable, need to AllReduce min here
-                        timestepArray2[i]=Vmath::Vmin(nElements,tmp1,1);
-                        //To Do: for contour output, can remove after testing
-                        for(int j=0;j<nElements;j++)
-                        {
-                            int nElementPoints=(*m_exp)[j]->GetTotPoints();
-                            int nElementOffset=m_fields[0]->GetPhys_Offset(j);
-                            Vmath::Fill(nElementPoints,tmp1[j],&m_OperatedAdaptiveTimeStepForOutput[i][nElementOffset],1);
-                        }
-                    }
-                    m_OperatedAdaptiveTimeStep=Vmath::Vmin(nvariables,timestepArray2,1);
-                    m_comm->AllReduce(m_OperatedAdaptiveTimeStep,LibUtilities::ReduceMin);
                     
                     //To Do:currently test const timestep
                     //Error based TimeStep Adaptivity
@@ -657,6 +570,8 @@ namespace Nektar
                     if(0==step || m_CalculateTemporalErrorCounter>=(m_TemporalErrorFreezNumber-1))
                     {
                         m_intScheme->GetIntegrationSchemeVector()[0]->UpdateTemporalErrorState(true);
+                        //Avoid reoperating TemporalError     
+                        m_CalculateTemporalErrorFlag=true;
                         m_CalculateTemporalErrorCounter=0;
                     }
                     else
@@ -706,6 +621,7 @@ namespace Nektar
                         }        
                         
                         //To Do: Spatial norm is maybe can used as Tolerance like Temporal Error
+                        //Can be removed after testing
                         for(int i = 0; i < nvariables; i++)
                         {
                             int npoints=m_fields[i]->GetNpoints();
@@ -728,7 +644,7 @@ namespace Nektar
                         }
 
 
-                        // Seems no need to set this flag now        
+                        //Avoid reoperating SpatialError     
                         m_CalculateSpatialErrorFlag=true;
                         m_CalculateSpatialErrorCounter=0;
 
@@ -772,31 +688,31 @@ namespace Nektar
                         }
                 }
                 
-                if(m_ErrorBasedAdaptedTimeStepFlag && m_comm->GetRank() == 0)
-                {
-                    ofstream outfile0;
-                    outfile0.open("ErrorNorm.txt",ios::app);
-                    outfile0<<"$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$"<<endl;
-                    int nwidth=10;
-                    int npoints=m_fields[0]->GetNpoints();
-                    outfile0<<"Time="<<m_time<<", TimeStep="<<m_timestep<<", AdaptiveTimeStep="<<m_AdaptiveTimeStep<<", OperatedAdaptiveTimeStep="<<m_OperatedAdaptiveTimeStep;
-                    outfile0<<endl;
-                    outfile0<<"Spatial Error (NonOperatedNorm and dived by Quad number)"<<endl;
-                    for(int i=0;i<nvariables;i++)
-                    {
-                        outfile0<<right<<scientific<<setw(nwidthcolm)<<setprecision(nwidthcolm-6)<<m_SpatialErrorNormArray[i]/sqrt(npoints);//Because L2 norm is sqrt((x1^2+x2^2)/2)
-                        outfile0<<"     ";
-                    }
-                    outfile0<<endl;
-                    outfile0<<"Temporal Error (NonOperatedNorm)"<<endl;
-                    for(int i=0;i<nvariables;i++)
-                    {
-                        outfile0<<right<<scientific<<setw(nwidthcolm)<<setprecision(nwidthcolm-6)<<m_TemporalErrorNormArray[i]/sqrt(npoints);
-                        outfile0<<"     ";
-                    }
-                    outfile0<<endl;
-                    outfile0.close();
-                }
+                // if(m_ErrorBasedAdaptedTimeStepFlag && m_comm->GetRank() == 0)
+                // {
+                //     ofstream outfile0;
+                //     outfile0.open("ErrorNorm.txt",ios::app);
+                //     outfile0<<"$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$"<<endl;
+                //     int nwidth=10;
+                //     int npoints=m_fields[0]->GetNpoints();
+                //     outfile0<<"Time="<<m_time<<", TimeStep="<<m_timestep<<", AdaptiveTimeStep="<<m_OperatedAdaptiveTimeStep;
+                //     outfile0<<endl;
+                //     outfile0<<"Spatial Error (NonOperatedNorm)"<<endl;
+                //     for(int i=0;i<nvariables;i++)
+                //     {
+                //         outfile0<<right<<scientific<<setw(nwidthcolm)<<setprecision(nwidthcolm-6)<<m_SpatialErrorNormArray[i]/sqrt(npoints);//Because L2 norm is sqrt((x1^2+x2^2)/2)
+                //         outfile0<<"     ";
+                //     }
+                //     outfile0<<endl;
+                //     outfile0<<"Temporal Error (NonOperatedNorm)"<<endl;
+                //     for(int i=0;i<nvariables;i++)
+                //     {
+                //         outfile0<<right<<scientific<<setw(nwidthcolm)<<setprecision(nwidthcolm-6)<<m_TemporalErrorNormArray[i]/sqrt(npoints);
+                //         outfile0<<"     ";
+                //     }
+                //     outfile0<<endl;
+                //     outfile0.close();
+                // }
 
 
                 timer.Stop();
