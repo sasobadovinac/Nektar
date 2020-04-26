@@ -249,7 +249,6 @@ namespace Nektar
             MultiRegions::ExpListSharedPtr explist = pFields[0];
                 std::shared_ptr<LocalRegions::ExpansionVector> pexp = explist->GetExp();
             int ntotElmt            = (*pexp).size();
-            int nElmtPnt,nElmtCoef;
 
             NekDouble tmp;
             DNekMatSharedPtr        tmpGmtx,ElmtMat;
@@ -262,8 +261,8 @@ namespace Nektar
             Array<OneD, int > elmtcoef(ntotElmt);
             for(int  nelmt = 0; nelmt < ntotElmt; nelmt++)
             {
-                nElmtCoef           = (*pexp)[nelmt]->GetNcoeffs();
-                nElmtPnt            = (*pexp)[nelmt]->GetTotPoints();
+                int nElmtCoef           = (*pexp)[nelmt]->GetNcoeffs();
+                int nElmtPnt            = (*pexp)[nelmt]->GetTotPoints();
                 elmtpnts[nelmt]     =   nElmtPnt;
                 elmtcoef[nelmt]     =   nElmtCoef;
                 mtxPerVar[nelmt]    =MemoryManager<DNekMat>
@@ -273,6 +272,7 @@ namespace Nektar
             Array<OneD, DNekMatSharedPtr>  mtxPerVarCoeff(ntotElmt);
             for(int  nelmt = 0; nelmt < ntotElmt; nelmt++)
             {
+                int nElmtCoef  = elmtcoef[nelmt];
                 mtxPerVarCoeff[nelmt]    =MemoryManager<DNekMat>
                                     ::AllocateSharedPtr(nElmtCoef, nElmtCoef);
             }
@@ -293,8 +293,8 @@ namespace Nektar
 
                     for(int  nelmt = 0; nelmt < ntotElmt; nelmt++)
                     {
-                        nElmtCoef       = elmtcoef[nelmt];
-                        nElmtPnt        = elmtpnts[nelmt];
+                        int nElmtCoef       = elmtcoef[nelmt];
+                        int nElmtPnt        = elmtpnts[nelmt];
 
                         tmpGmtx         = gmtxarray[m][n]->GetBlock(nelmt,nelmt);
                         ElmtMat         = mtxPerVarCoeff[nelmt];
