@@ -2890,11 +2890,12 @@ namespace Nektar
 
         bool converged       = false;
         bool steady_state    = false;
-        int nwidthcolm = 8;
+        int nwidthcolm = 10;
         int NtotDoOdeRHS = 0;
         int NtotGMRESIts = 0;
         NekDouble resnorm0 = 0.0;
         NekDouble resnorm  = 0.0;
+        NekDouble solnorm=0.0;
         NekDouble resmaxm  = 0.0;
         NekDouble resratio = 1.0;
         NekDouble ratioSteps = 1.0;
@@ -2908,6 +2909,11 @@ namespace Nektar
             resnorm = Vmath::Dot(ntotal,NonlinSysRes_1D,NonlinSysRes_1D);
 
             v_Comm->AllReduce(resnorm, Nektar::LibUtilities::ReduceSum);
+
+            solnorm = Vmath::Dot(ntotal,dsol_1D,dsol_1D);
+
+            v_Comm->AllReduce(solnorm, Nektar::LibUtilities::ReduceSum);
+
 
             if(0==k)
             {
@@ -2938,8 +2944,9 @@ namespace Nektar
             // }
 
             // cout << "   resratio=   "<<resratio<< "   resnorm0=   "<<resnorm0<< "   resnorm=   "<<resnorm<<endl;
-
-
+            
+            NekDouble tau;
+            m_session->LoadParameter("tau", tau,1.0E-3);
             bool RealTimeStepFlag=m_intScheme->GetIntegrationSchemeVector()[0]->GetRealTimeStepState();
             bool FirstStepErrorControlFlag=m_FirstStepErrorControlFlag;//First step, there is no error control
             //Error Norm need to transfer to Coeff Space
@@ -2948,20 +2955,24 @@ namespace Nektar
 
                 NekDouble ErrorNorm=m_TemporalErrorNorm;
                 NekDouble Scale=0.1;//Newton iteration error << TemporalError
+                //To Do: can remove repeated sqrt
                 NekDouble ResidualNorm=sqrt(resnorm);
+                NekDouble SolutionNorm=sqrt(solnorm);
+                NekDouble JumpOutValue=max(ResidualNorm,SolutionNorm);
                 NekDouble ErrorAdaptiveTolerance=Scale*ErrorNorm;
-                bool state=(ResidualNorm<ErrorAdaptiveTolerance);
+                bool state=(JumpOutValue<ErrorAdaptiveTolerance);
                 if(state)
                 {
                     converged = true;
                     if(l_root && l_verbose)
                     {
-                            cout <<right<<scientific<<setw(nwidthcolm)<<setprecision(nwidthcolm-6)<<"Time="<<m_time<<",    ResidualNorm="<<ResidualNorm<<",    AdaptiveNewtonTolerance="<<ErrorAdaptiveTolerance<<endl;
+                            cout <<right<<scientific<<setw(nwidthcolm)<<setprecision(nwidthcolm-6)<<"Time="<<m_time<<",    ResidualNorm="<<ResidualNorm<<",    SolutionNorm="<<SolutionNorm<<",    JumpOutValue="<<JumpOutValue<<",    AdaptiveNewtonTolerance="<<ErrorAdaptiveTolerance<<endl;
                     }
                     break;
                 }
             }
-            else if (resratio<tol2Ratio||resnorm<tol2)
+            // else if (resratio<tol2Ratio||resnorm<tol2)
+            else if (resnorm<(tau*tau))
             {
                 resmaxm = 0.0;
                 for(int i=0;i<ntotal;i++)
@@ -2973,6 +2984,7 @@ namespace Nektar
                 {
                    
                     converged = true;
+                    cout <<right<<scientific<<setw(nwidthcolm)<<setprecision(nwidthcolm-6)<<" Time= "<<m_time<<" ResidualNorm="<<sqrt(resnorm)<<",  AbsoluteTolerance="<<tau<<endl;
 
                     if(resratio>tol2Ratio&&l_root)
                     {
