@@ -886,7 +886,7 @@ namespace Nektar
                 // See "A FAMILY OF ESDIRK INTEGRATION METHODS" 
                 // ESDIRK 5/4 with 7 stages
                 //Or original paper "SINGLY DIAGONALLY IMPLICIT RUNGE–KUTTA METHODS WITH AN EXPLICIT FIRST STAGE"
-                m_numsteps = 1;
+                m_numsteps  = 1;
                 m_numstages = 6;
                 m_EmbeddedTemporalError=true;
                 //m_DirectTemporalError=true;
@@ -901,7 +901,7 @@ namespace Nektar
                 m_V    = Array<TwoD,NekDouble>(m_numsteps, m_numsteps, 1.0);
 
                 m_A[0][0][0] = 0.0;
-                m_A[0][1][0] =0.27000000000000000;
+                m_A[0][1][0] = 0.27000000000000000;
                 m_A[0][2][0] = 0.13500000000000000;
                 m_A[0][3][0] = 0.24814211234447322;
                 m_A[0][4][0] = 0.25494479822150471;
@@ -913,7 +913,7 @@ namespace Nektar
                 m_A[0][4][1] = 0.13106196422347200;
                 m_A[0][5][1] = 0.0;
 
-                m_A[0][2][2] = 0.27000000000000000;
+                m_A[0][2][2] =  0.27000000000000000;
                 m_A[0][3][2] = -0.03886686658917771;
                 m_A[0][4][2] = -0.04522093930235708;
                 m_A[0][5][2] = -0.01641725931492383;
@@ -967,6 +967,64 @@ namespace Nektar
                     m_B_Paired[0][0][4] = m_A_Paired[0][0][4];
                     m_B_Paired[0][0][5] = m_A_Paired[0][0][5];
                     m_B_Paired[0][0][6] = m_A_Paired[0][0][6];
+                }
+
+                //To Do: Here just help debuging, remove
+                if(m_DirectTemporalError)
+                {
+                    m_numsteps_Paired = 1;
+                    m_numstages_Paired = 7;
+
+                    m_A_Paired = Array<OneD, Array<TwoD,NekDouble> >(1);
+                    m_B_Paired = Array<OneD, Array<TwoD,NekDouble> >(1);
+
+                    m_A_Paired[0] = Array<TwoD,NekDouble>(m_numstages_Paired,m_numstages_Paired,0.0);
+                    m_B_Paired[0] = Array<TwoD,NekDouble>(m_numsteps_Paired, m_numstages_Paired,0.0);
+                    m_U_Paired    = Array<TwoD,NekDouble>(m_numstages_Paired,m_numsteps_Paired, 1.0);
+                    m_V_Paired    = Array<TwoD,NekDouble>(m_numsteps_Paired, m_numsteps_Paired, 1.0);
+                    
+                    m_A_Paired[0][0][0] = 0.0;
+                    m_A_Paired[0][1][0] = 0.27000000000000000;
+                    m_A_Paired[0][2][0] = 0.13500000000000000;
+                    m_A_Paired[0][3][0] = 0.24814211234447322;
+                    m_A_Paired[0][4][0] = 0.25494479822150471;
+                    m_A_Paired[0][5][0] = 0.17549975523182941;
+                    m_A_Paired[0][6][0] =  0.15847612643670410;
+
+                    m_A_Paired[0][1][1] = 0.27000000000000000;
+                    m_A_Paired[0][2][1] = 0.87265371804359686;
+                    m_A_Paired[0][3][1] = 0.13282088522859322;
+                    m_A_Paired[0][4][1] = 0.13106196422347200;
+                    m_A_Paired[0][5][1] = 0.0;
+                    m_A_Paired[0][6][1] = 0.0;
+
+                    m_A_Paired[0][2][2] =  0.27000000000000000;
+                    m_A_Paired[0][3][2] = -0.03886686658917771;
+                    m_A_Paired[0][4][2] = -0.04522093930235708;
+                    m_A_Paired[0][5][2] = -0.01641725931492383;
+                    m_A_Paired[0][6][2] = -0.07384703732094983;
+
+                    m_A_Paired[0][3][3] = 0.27000000000000000;
+                    m_A_Paired[0][4][3] = 0.03389121682051642;
+                    m_A_Paired[0][5][3] = 3.59357175290010625;
+                    m_A_Paired[0][6][3] =  5.26056776397634893;
+
+                    m_A_Paired[0][4][4] =  0.27000000000000000;
+                    m_A_Paired[0][5][4] = -3.02265424881701182;
+                    m_A_Paired[0][6][4] = -4.83946947758407500;
+
+                    m_A_Paired[0][5][5] =  0.27000000000000000;
+                    m_A_Paired[0][6][5] = 0.22427262449197180;
+
+                    m_A_Paired[0][6][6] =  0.27000000000000000;
+
+                    m_B_Paired[0][0][0] = m_A_Paired[0][6][0];
+                    m_B_Paired[0][0][1] = m_A_Paired[0][6][1];
+                    m_B_Paired[0][0][2] = m_A_Paired[0][6][2];
+                    m_B_Paired[0][0][3] = m_A_Paired[0][6][3];
+                    m_B_Paired[0][0][4] = m_A_Paired[0][6][4];
+                    m_B_Paired[0][0][5] = m_A_Paired[0][6][5];
+                    m_B_Paired[0][0][6] = m_A_Paired[0][6][6];
                 }
             }
             break;
