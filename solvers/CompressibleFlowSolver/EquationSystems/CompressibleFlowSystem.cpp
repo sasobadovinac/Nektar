@@ -2946,7 +2946,7 @@ namespace Nektar
             // cout << "   resratio=   "<<resratio<< "   resnorm0=   "<<resnorm0<< "   resnorm=   "<<resnorm<<endl;
             
             NekDouble tau;
-            m_session->LoadParameter("tau", tau,1.0E-3);
+            m_session->LoadParameter("tau", tau,1.0E-4);
             bool RealTimeStepFlag=m_intScheme->GetIntegrationSchemeVector()[0]->GetRealTimeStepState();
             bool FirstStepErrorControlFlag=m_FirstStepErrorControlFlag;//First step, there is no error control
             //Error Norm need to transfer to Coeff Space

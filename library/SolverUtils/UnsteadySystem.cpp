@@ -455,6 +455,7 @@ namespace Nektar
                    m_FirstStepErrorControlFlag=true;
                }
                
+               //To do: First step sometimes cannot get OoA, maybe consider restart first step
                 if ( m_FirstStepErrorControlFlag && m_ErrorBasedAdaptedTimeStepFlag)
                 {
                     if(m_CalculateTemporalErrorFlag && m_CalculateSpatialErrorFlag)
@@ -688,31 +689,46 @@ namespace Nektar
                         }
                 }
                 
-                // if(m_ErrorBasedAdaptedTimeStepFlag && m_comm->GetRank() == 0)
-                // {
-                //     ofstream outfile0;
-                //     outfile0.open("ErrorNorm.txt",ios::app);
-                //     outfile0<<"$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$"<<endl;
-                //     int nwidth=10;
-                //     int npoints=m_fields[0]->GetNpoints();
-                //     outfile0<<"Time="<<m_time<<", TimeStep="<<m_timestep<<", AdaptiveTimeStep="<<m_OperatedAdaptiveTimeStep;
-                //     outfile0<<endl;
-                //     outfile0<<"Spatial Error (NonOperatedNorm)"<<endl;
-                //     for(int i=0;i<nvariables;i++)
-                //     {
-                //         outfile0<<right<<scientific<<setw(nwidthcolm)<<setprecision(nwidthcolm-6)<<m_SpatialErrorNormArray[i]/sqrt(npoints);//Because L2 norm is sqrt((x1^2+x2^2)/2)
-                //         outfile0<<"     ";
-                //     }
-                //     outfile0<<endl;
-                //     outfile0<<"Temporal Error (NonOperatedNorm)"<<endl;
-                //     for(int i=0;i<nvariables;i++)
-                //     {
-                //         outfile0<<right<<scientific<<setw(nwidthcolm)<<setprecision(nwidthcolm-6)<<m_TemporalErrorNormArray[i]/sqrt(npoints);
-                //         outfile0<<"     ";
-                //     }
-                //     outfile0<<endl;
-                //     outfile0.close();
-                // }
+                if(m_ErrorBasedAdaptedTimeStepFlag && m_comm->GetRank() == 0)
+                {
+                    Array<OneD, NekDouble>  m_SpatialQuadErrorNormArray(nvariables,0.0);
+                    Array<OneD, NekDouble>  m_TemporalQuadErrorNormArray(nvariables,0.0);
+
+                    for(int i = 0; i < nvariables; i++)
+                    {
+                        int npoints=m_fields[i]->GetNpoints();
+                        m_TemporalQuadErrorNormArray[i] = Vmath::Dot(npoints,m_TemporalError[i],m_TemporalError[i]);
+                         m_TemporalQuadErrorNormArray[i] =sqrt( m_TemporalQuadErrorNormArray[i]);
+                    }
+                    for(int i = 0; i < nvariables; i++)
+                    {
+                        int npoints=m_fields[i]->GetNpoints();
+                        m_SpatialQuadErrorNormArray[i] = Vmath::Dot(npoints,m_SpatialError[i],m_SpatialError[i]);
+                        m_SpatialQuadErrorNormArray[i] =sqrt(m_SpatialQuadErrorNormArray[i] );
+                    }
+                    ofstream outfile0;
+                    outfile0.open("QuadErrorNorm.txt",ios::app);
+                    outfile0<<"$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$"<<endl;
+                    int nwidth=12;
+                    int npoints=m_fields[0]->GetNpoints();
+                    outfile0<<"Time="<<m_time<<", TimeStep="<<m_timestep<<", AdaptiveTimeStep="<<m_OperatedAdaptiveTimeStep;
+                    outfile0<<endl;
+                    outfile0<<"Spatial Error (NonOperatedNorm)"<<endl;
+                    for(int i=0;i<nvariables;i++)
+                    {
+                        outfile0<<right<<scientific<<setw(nwidthcolm)<<setprecision(nwidthcolm-6)<<m_SpatialQuadErrorNormArray[i]/sqrt(npoints);//Because L2 norm is sqrt((x1^2+x2^2)/2)
+                        outfile0<<"     ";
+                    }
+                    outfile0<<endl;
+                    outfile0<<"Temporal Error (NonOperatedNorm)"<<endl;
+                    for(int i=0;i<nvariables;i++)
+                    {
+                        outfile0<<right<<scientific<<setw(nwidthcolm)<<setprecision(nwidthcolm-6)<<m_TemporalQuadErrorNormArray[i]/sqrt(npoints);
+                        outfile0<<"     ";
+                    }
+                    outfile0<<endl;
+                    outfile0.close();
+                }
 
 
                 timer.Stop();
