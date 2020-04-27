@@ -2966,7 +2966,7 @@ namespace Nektar
                     converged = true;
                     if(l_root && l_verbose)
                     {
-                            cout <<right<<scientific<<setw(nwidthcolm)<<setprecision(nwidthcolm-6)<<"Time="<<m_time<<",    ResidualNorm="<<ResidualNorm<<",    ErrorNorm="<<ErrorNorm<<",    SafeFactor="<<scale<<",    AdaptiveNewtonTolerance="<<ErrorAdaptiveTolerance<<endl;
+                            cout <<right<<scientific<<setw(nwidthcolm)<<setprecision(nwidthcolm-6)<<"Time="<<m_time<<",    ResidualNorm="<<ResidualNorm<<",    ErrorNorm="<<ErrorNorm<<",    SafeFactor="<<Scale<<",    AdaptiveNewtonTolerance="<<ErrorAdaptiveTolerance<<endl;
                     }
                     break;
                 }
