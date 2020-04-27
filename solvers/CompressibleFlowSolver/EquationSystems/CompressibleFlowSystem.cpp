@@ -2972,7 +2972,7 @@ namespace Nektar
                 }
             }
             // else if (resratio<tol2Ratio||resnorm<tol2)
-            else if (resnorm<(tau*tau))
+            else if (resratio<tol2Ratio || resnorm<(tau*tau))
             {
                 resmaxm = 0.0;
                 for(int i=0;i<ntotal;i++)
