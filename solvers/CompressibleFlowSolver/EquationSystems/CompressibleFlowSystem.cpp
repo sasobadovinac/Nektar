@@ -2957,16 +2957,16 @@ namespace Nektar
                 NekDouble Scale=0.1;//Newton iteration error << TemporalError
                 //To Do: can remove repeated sqrt
                 NekDouble ResidualNorm=sqrt(resnorm);
-                NekDouble SolutionNorm=sqrt(solnorm);
-                NekDouble JumpOutValue=max(ResidualNorm,SolutionNorm);
+                //NekDouble SolutionNorm=sqrt(solnorm);
+                //NekDouble JumpOutValue=max(ResidualNorm,SolutionNorm);
                 NekDouble ErrorAdaptiveTolerance=Scale*ErrorNorm;
-                bool state=(JumpOutValue<ErrorAdaptiveTolerance);
+                bool state=(ResidualNorm<ErrorAdaptiveTolerance);
                 if(state)
                 {
                     converged = true;
                     if(l_root && l_verbose)
                     {
-                            cout <<right<<scientific<<setw(nwidthcolm)<<setprecision(nwidthcolm-6)<<"Time="<<m_time<<",    ResidualNorm="<<ResidualNorm<<",    SolutionNorm="<<SolutionNorm<<",    JumpOutValue="<<JumpOutValue<<",    AdaptiveNewtonTolerance="<<ErrorAdaptiveTolerance<<endl;
+                            cout <<right<<scientific<<setw(nwidthcolm)<<setprecision(nwidthcolm-6)<<"Time="<<m_time<<",    ResidualNorm="<<ResidualNorm<<",    ErrorNorm="<<ErrorNorm<<",    SafeFactor="<<scale<<",    AdaptiveNewtonTolerance="<<ErrorAdaptiveTolerance<<endl;
                     }
                     break;
                 }
