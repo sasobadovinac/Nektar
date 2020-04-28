@@ -2957,7 +2957,7 @@ namespace Nektar
                 NekDouble Scale=0.1;//Newton iteration error << TemporalError
                 //To Do: can remove repeated sqrt
                 NekDouble ResidualNorm=sqrt(resnorm);
-                //NekDouble SolutionNorm=sqrt(solnorm);
+                NekDouble SolutionNorm=sqrt(solnorm);
                 //NekDouble JumpOutValue=max(ResidualNorm,SolutionNorm);
                 NekDouble ErrorAdaptiveTolerance=Scale*ErrorNorm;
                 bool state=(ResidualNorm<ErrorAdaptiveTolerance);
@@ -2966,7 +2966,7 @@ namespace Nektar
                     converged = true;
                     if(l_root && l_verbose)
                     {
-                            cout <<right<<scientific<<setw(nwidthcolm)<<setprecision(nwidthcolm-6)<<"Time="<<m_time<<",    ResidualNorm="<<ResidualNorm<<",    ErrorNorm="<<ErrorNorm<<",    SafeFactor="<<Scale<<",    AdaptiveNewtonTolerance="<<ErrorAdaptiveTolerance<<endl;
+                            cout <<right<<scientific<<setw(nwidthcolm)<<setprecision(nwidthcolm-6)<<"Time="<<m_time<<",    SolutionNorm="<<SolutionNorm<<",    ResidualNorm="<<ResidualNorm<<",    ErrorNorm="<<ErrorNorm<<",    SafeFactor="<<Scale<<",    AdaptiveNewtonTolerance="<<ErrorAdaptiveTolerance<<endl;
                     }
                     break;
                 }
@@ -2980,21 +2980,19 @@ namespace Nektar
                     resmaxm = max(resmaxm,abs(NonlinSysRes_1D[i]));
                 }
                 v_Comm->AllReduce(resmaxm, Nektar::LibUtilities::ReduceMax);
-                if((resmaxm<tol2Max)&&k>0)
-                {
-                   
-                    converged = true;
-                    cout <<right<<scientific<<setw(nwidthcolm)<<setprecision(nwidthcolm-6)<<" Time= "<<m_time<<" ResidualNorm="<<sqrt(resnorm)<<",  AbsoluteTolerance="<<tau<<endl;
 
-                    if(resratio>tol2Ratio&&l_root)
-                    {
-                        WARNINGL0(true,"     # resratio>tol2Ratio in CompressibleFlowSystem::DoImplicitSolve ");
-                        cout <<right<<scientific<<setw(nwidthcolm)<<setprecision(nwidthcolm-6)<<" Time= "<<m_time
-                             <<" resratio= "<<resratio<<" tol2Ratio= "<<tol2Ratio<<endl;
-                    }
-                    break;
-                // }
+                   
+                converged = true;
+                cout <<right<<scientific<<setw(nwidthcolm)<<setprecision(nwidthcolm-6)<<" Time= "<<m_time<<" ResidualNorm="<<sqrt(resnorm)<<",  AbsoluteTolerance="<<tau<<endl;
+
+                if(resratio>tol2Ratio&&l_root)
+                {
+                    WARNINGL0(true,"     # resratio>tol2Ratio in CompressibleFlowSystem::DoImplicitSolve ");
+                    cout <<right<<scientific<<setw(nwidthcolm)<<setprecision(nwidthcolm-6)<<" Time= "<<m_time
+                            <<" resratio= "<<resratio<<" tol2Ratio= "<<tol2Ratio<<endl;
                 }
+                break;
+
             }
 
             //TODO: currently  NonlinSysRes is 2D array and SolveLinearSystem needs 1D array

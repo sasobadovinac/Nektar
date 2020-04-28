@@ -122,6 +122,8 @@ void DriverCFS::v_InitObject(ostream &out)
         m_equ = Array<OneD, EquationSystemSharedPtr>(m_nequ);
 
         // Set the AdvectiveType tag and create EquationSystem objects.
+
+        ASSERTL0(m_EvolutionOperator==eAdaptiveCFS,"This test solver only works for eAdaptiveSFD");
         switch (m_EvolutionOperator)
         {
             case eNonlinear:
