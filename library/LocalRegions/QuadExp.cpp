@@ -2382,12 +2382,20 @@ namespace Nektar
             const Array<TwoD, const NekDouble>&
                        df = m_metricinfo->GetDerivFactors(GetPointsKeys());
 
-            if(factors.size() <=4)
+            if(factors.size() !=4)
             {
                 factors = Array<OneD, Array<OneD, NekDouble> > (4); 
+            }
+
+            if(factors[0].size() != nquad0)
+            {
                 factors[0] = Array<OneD, NekDouble> (nquad0);
-                factors[1] = Array<OneD, NekDouble> (nquad1);
                 factors[2] = Array<OneD, NekDouble> (nquad0);
+            }
+
+            if(factors[1].size() != nquad1)
+            {
+                factors[1] = Array<OneD, NekDouble> (nquad1);
                 factors[3] = Array<OneD, NekDouble> (nquad1);
             }
 

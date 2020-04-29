@@ -88,9 +88,9 @@ protected:
 private:
     MultiRegions::ExpansionType  m_expType; 
     int m_numForcingFields; 
-    int m_smoothingFrequency; 
     int m_coordDim; 
-    int m_index;
+    /// Number of planes in expansion to be stabilised for Homgoeneous expansion
+    int m_nplanes;
     /// DG expansion for projection evalaution along trace
     MultiRegions::DisContFieldSharedPtr m_dgfield;
     /// Scale factor for phys values along trace involving the lcoal

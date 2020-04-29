@@ -1780,23 +1780,28 @@ namespace Nektar
             int ncoeff0 = m_base[0]->GetNumModes();
             int ncoeff1 = m_base[1]->GetNumModes();
             
-            if(dbasis.size() < 4)
+            if(dbasis.size() != 4)
             {
                 dbasis = Array<OneD, Array<OneD, Array<OneD, NekDouble> > >(4);
                 TraceToCoeffMap = Array<OneD,
                                  Array<OneD, Array<OneD, unsigned int> > > (4);
-                
+            }
+            if(dbasis[0].size() != ncoeff0)
+            {
                 // in 1D number of coefficients along trace is always 1
                 dbasis[0] = Array<OneD, Array<OneD, NekDouble> > (ncoeff0);
                 dbasis[2] = Array<OneD, Array<OneD, NekDouble> > (ncoeff0);
-
-                dbasis[1] = Array<OneD, Array<OneD, NekDouble> > (ncoeff1);
-                dbasis[3] = Array<OneD, Array<OneD, NekDouble> > (ncoeff1);
 
                 TraceToCoeffMap[0] = Array<OneD,
                                            Array<OneD, unsigned int> >(ncoeff0);
                 TraceToCoeffMap[2] = Array<OneD,
                                            Array<OneD, unsigned int> >(ncoeff0);
+            }
+
+            if(dbasis[1].size() != ncoeff1)
+            {
+                dbasis[1] = Array<OneD, Array<OneD, NekDouble> > (ncoeff1);
+                dbasis[3] = Array<OneD, Array<OneD, NekDouble> > (ncoeff1);
 
                 TraceToCoeffMap[1] = Array<OneD,
                                            Array<OneD, unsigned int> >(ncoeff1);
@@ -1804,7 +1809,7 @@ namespace Nektar
                                            Array<OneD, unsigned int> >(ncoeff1);
             }
             
-            if(dbasis[0][0].size() < ncoeff1)
+            if(dbasis[0][0].size() != ncoeff1)
             {
                 for(unsigned int i = 0; i < ncoeff0; ++i)
                 {
@@ -1816,7 +1821,7 @@ namespace Nektar
                 }
             }
             
-            if(dbasis[1][0].size() < ncoeff0)
+            if(dbasis[1][0].size() != ncoeff0)
             {
                 for(unsigned int i = 0; i < ncoeff1; ++i)
                 {

@@ -67,6 +67,17 @@ namespace SolverUtils
         boost::ignore_unused(pForce);
         
         m_numForcingFields = pNumForcingFields;
+
+        bool isHomogeneous1D;
+        m_session->MatchSolverInfo("Homogeneous", "1D", isHomogeneous1D, false);
+        if(isHomogeneous1D)
+        {
+            m_nplanes = pFields[0]->GetZIDs().size();
+        }
+        else
+        {
+            m_nplanes = 1;
+        }
         
         m_traceNormals = m_equ.lock()->GetTraceNormals();
             
@@ -127,7 +138,8 @@ namespace SolverUtils
         Array<OneD, Array<OneD, Array<OneD, NekDouble> > >dbasis;
         Array<OneD, Array<OneD, Array<OneD, unsigned int> > >traceToCoeffMap;
         
-        int  expdim = m_dgfield->GetShapeDimension();
+        int expdim = m_dgfield->GetShapeDimension();
+        int ncoeffs = m_dgfield->GetNcoeffs();
         
         for(int e = 0; e < m_dgfield->GetExpSize(); ++e)
         {
@@ -138,7 +150,6 @@ namespace SolverUtils
             
             for(int n = 0; n < (*exp)[e]->GetNtraces(); ++n, ++cnt)
             {
-                int nptrace = (*exp)[e]->GetTraceExp(n)->GetTotPoints();
                 
                 // Estimate h as average of adjacent elmeents
                 ASSERTL1((*exp)[e]->GetTraceExp(n)->GetLeftAdjacentElementTrace()
@@ -167,9 +178,11 @@ namespace SolverUtils
                 }            
                 NekDouble jumpScal = 0.7*pow(p,-4.0)*h*h; 
                 
+                unsigned long  nctrace = elmtToTrace[e][n]->GetNcoeffs();
                 int eid = elmtToTrace[e][n]->GetElmtId();
-                int nctrace = elmtToTrace[e][n]->GetNcoeffs();
                 toffset_coeff = trace->GetCoeff_Offset(eid);
+
+                int nptrace = (*exp)[e]->GetTraceNumPoints(n);
                 
                 // Note curretly doing the same thing so can liklely
                 // remove this if
@@ -179,18 +192,21 @@ namespace SolverUtils
                                 e_tmp = FwdLocTrace + fwd_offset_phys,1);
                     fwd_offset_phys += nptrace;
                     
-                    ASSERTL1(dbasis[n].size() == nctrace,"The dimension of the "
-                             "normalderivtrace method do not match"
-                             " with the size of the trace"); 
-                    for(int i = 0; i < nctrace; ++i)
+                    // note the min is for variable p expansions
+                    for(int i = 0; i < min(nctrace,dbasis[n].size()) ; ++i)
                     {
                         for(int j = 0; j < dbasis[n][i].size(); ++j)
                         {
-                            std::pair<int, NekDouble>
-                                dbaseinfo(traceToCoeffMap[n][i][j] +
-                                          coeff_offset,
-                                          dbasis[n][i][j]);
-                            
+                            int ncoeffid =traceToCoeffMap[n][i][j] +
+                                coeff_offset;
+                            if(ncoeffid >= ncoeffs)
+                            {
+                                cout << "here" << endl;
+                            }
+                            ASSERTL1(ncoeffid < ncoeffs, "Error in evaluating "
+                                     "which coefficient is being updated");
+                            std::pair<int, NekDouble> dbaseinfo(ncoeffid,
+                                                               dbasis[n][i][j]);
                             m_fwdTraceToCoeffMap[i+toffset_coeff].
                                 insert(dbaseinfo);
                         }
@@ -202,14 +218,14 @@ namespace SolverUtils
                                 e_tmp = BwdLocTrace + bwd_offset_phys,1);
                     bwd_offset_phys += nptrace;
                     
-                    for(int i = 0; i < nctrace; ++i)
+                    for(int i = 0; i < min(nctrace,dbasis[n].size()) ; ++i)
                     {
                         for(int j = 0; j < dbasis[n][i].size(); ++j)
                         {
-                            std::pair<int, NekDouble> dbaseinfo
-                                (traceToCoeffMap[n][i][j] + coeff_offset,
-                                 dbasis[n][i][j]);
-                            
+                            int ncoeffid =traceToCoeffMap[n][i][j] + coeff_offset;
+                            ASSERTL1(ncoeffid < ncoeffs, "Error in evaluating "
+                                     "which coefficient is being updated");
+                            std::pair<int, NekDouble> dbaseinfo(ncoeffid, dbasis[n][i][j]);
                             m_bwdTraceToCoeffMap[i+toffset_coeff].
                                 insert(dbaseinfo);
                         }
@@ -231,7 +247,7 @@ namespace SolverUtils
           Array<OneD, Array<OneD, NekDouble> > &outarray,
           const NekDouble &time)
     {
-        boost::ignore_unused(time);
+        boost::ignore_unused(time,pFields);
         
         int ncoeffs   = m_dgfield->GetNcoeffs();
         int nphys     = m_dgfield->GetNpoints();
@@ -244,78 +260,82 @@ namespace SolverUtils
             deriv[i] = Array<OneD, NekDouble> (nphys); 
         }
         
-        Array<OneD, NekDouble> Fwd(nTracePts), Bwd(nTracePts); 
+        Array<OneD, NekDouble> Fwd(nTracePts), Bwd(nTracePts), tmp; 
         Array<OneD, NekDouble> GradJumpOnTrace(nTracePts,0.0); 
 
         int nmax = max(ncoeffs,nphys);
         
         for(int f = 0; f < m_numForcingFields; ++f)
         {
-            Array<OneD, NekDouble> FilterCoeffs(nmax,0.0);
-
-            // calculate derivative 
-            pFields[f]->PhysDeriv(inarray[f],deriv[0],deriv[1],deriv[2]);
-        
-            // Evaluate the  normal derivative jump on the trace
-            for(int n = 0; n < m_coordDim; ++n)
+            for(int p = 0; p < m_nplanes; ++p)
             {
-                m_dgfield->GetFwdBwdTracePhys(deriv[n],Fwd,Bwd,true);
+                Array<OneD, NekDouble> FilterCoeffs(nmax,0.0);
                 
-                // Multiply by normal and add to trace evaluation
-                Vmath::Vsub(nTracePts,Fwd,1,Bwd,1,Fwd,1);
-                Vmath::Vvtvp(nTracePts,Fwd,1,m_traceNormals[n],1,
-                             GradJumpOnTrace,1,GradJumpOnTrace,1);
-            }
-            
-            if(m_expType == MultiRegions::e1D)
-            {
-                // Scale jump on fwd trace
-                Vmath::Vmul(nTracePts,m_scalFwd,1,GradJumpOnTrace,1,Bwd,1);
-            }
-            else
-            {
-                // Scale jump on fwd trace
-                Vmath::Vmul(nTracePts,m_scalFwd,1,GradJumpOnTrace,1,Fwd,1);
-                // Take inner product and put result into Fwd array
-                m_dgfield->GetTrace()->IProductWRTBase(Fwd,Bwd);
-            }
-            
-            // Add trace values to coeffs scaled by factor and sign. 
-            for(int i = 0; i < nTraceCoeffs; ++i)
-            {
-                for(auto &it:  m_fwdTraceToCoeffMap[i])
+                // calculate derivative 
+                m_dgfield->PhysDeriv(inarray[f] + p*nphys,deriv[0],deriv[1],deriv[2]);
+        
+                // Evaluate the  normal derivative jump on the trace
+                for(int n = 0; n < m_coordDim; ++n)
                 {
-                    FilterCoeffs[it.first] -= Bwd[i]*(it.second);
+                    m_dgfield->GetFwdBwdTracePhys(deriv[n],Fwd,Bwd,true);
+                    
+                    // Multiply by normal and add to trace evaluation
+                    Vmath::Vsub(nTracePts,Fwd,1,Bwd,1,Fwd,1);
+                    Vmath::Vvtvp(nTracePts,Fwd,1,m_traceNormals[n],1,
+                                 GradJumpOnTrace,1,GradJumpOnTrace,1);
                 }
-            }
-            
-            if(m_expType == MultiRegions::e1D)
-            {
-                // Scale jump on fwd trace
-                Vmath::Vmul(nTracePts,m_scalBwd,1,GradJumpOnTrace,1,Bwd,1);
-            }
-            else
-            {
-                // Scale jump on fwd trace
-                Vmath::Vmul(nTracePts,m_scalBwd,1,GradJumpOnTrace,1,Fwd,1);
                 
-            // Take inner product and put result into Fwd array
-                m_dgfield->GetTrace()->IProductWRTBase(Fwd,Bwd);
-            }
-        
-            // Add trace values to coeffs scaled by factor and sign. 
-            for(int i = 0; i < nTraceCoeffs; ++i)
-            {
-                for(auto &it:  m_bwdTraceToCoeffMap[i])
+                if(m_expType == MultiRegions::e1D)
                 {
-                    FilterCoeffs[it.first] -= Bwd[i]*(it.second);
+                    // Scale jump on fwd trace
+                    Vmath::Vmul(nTracePts,m_scalFwd,1,GradJumpOnTrace,1,Bwd,1);
                 }
+                else
+                {
+                    // Scale jump on fwd trace
+                    Vmath::Vmul(nTracePts,m_scalFwd,1,GradJumpOnTrace,1,Fwd,1);
+                    // Take inner product and put result into Fwd array
+                    m_dgfield->GetTrace()->IProductWRTBase(Fwd,Bwd);
+                }
+                
+                // Add trace values to coeffs scaled by factor and sign. 
+                for(int i = 0; i < nTraceCoeffs; ++i)
+                {
+                    for(auto &it:  m_fwdTraceToCoeffMap[i])
+                    {
+                        FilterCoeffs[it.first] -= Bwd[i]*(it.second);
+                    }
+                }
+                
+                if(m_expType == MultiRegions::e1D)
+                {
+                    // Scale jump on fwd trace
+                    Vmath::Vmul(nTracePts,m_scalBwd,1,GradJumpOnTrace,1,Bwd,1);
+                }
+                else
+                {
+                    // Scale jump on fwd trace
+                    Vmath::Vmul(nTracePts,m_scalBwd,1,GradJumpOnTrace,1,Fwd,1);
+                    
+                    // Take inner product and put result into Fwd array
+                    m_dgfield->GetTrace()->IProductWRTBase(Fwd,Bwd);
+                }
+                
+                // Add trace values to coeffs scaled by factor and sign. 
+                for(int i = 0; i < nTraceCoeffs; ++i)
+                {
+                    for(auto &it:  m_bwdTraceToCoeffMap[i])
+                    {
+                        FilterCoeffs[it.first] -= Bwd[i]*(it.second);
+                    }
+                }
+                
+                m_dgfield->MultiplyByElmtInvMass(FilterCoeffs,deriv[0]);
+                m_dgfield->BwdTrans(deriv[0],FilterCoeffs);
+                
+                Vmath::Vadd(nphys,outarray[f]+p*nphys,1,FilterCoeffs,1,
+                            tmp = outarray[f]+p*nphys,1);
             }
-        
-            pFields[f]->MultiplyByElmtInvMass(FilterCoeffs,deriv[0]);
-            pFields[f]->BwdTrans(deriv[0],FilterCoeffs);
-
-            Vmath::Vadd(nphys,outarray[f],1,FilterCoeffs,1,outarray[f],1);
         }
     }
 }
