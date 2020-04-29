@@ -92,8 +92,8 @@ namespace SolverUtils
             m_dgfield->GetTrace()->GetNormals(m_traceNormals);
         }
         
-        m_scalFwd = Array<OneD, NekDouble> (trace->GetNpoints());
-        m_scalBwd = Array<OneD, NekDouble> (trace->GetNpoints());
+        m_scalFwd = Array<OneD, NekDouble> (trace->GetNpoints(),0.0);
+        m_scalBwd = Array<OneD, NekDouble> (trace->GetNpoints(),0.0);
         
         m_fwdTraceToCoeffMap = Array<OneD,
         std::set< std::pair<unsigned int, NekDouble> > >(trace->GetTotPoints());
@@ -110,17 +110,20 @@ namespace SolverUtils
         
         std::vector<bool> leftAdjacentTrace = m_dgfield->GetLeftAdjacentTraces();
         
-        Array<OneD, NekDouble> FwdLocTrace(locTraceToTraceMap->GetNLocTracePts());
-        Array<OneD, NekDouble> BwdLocTrace(locTraceToTraceMap->GetNLocTracePts());
+        Array<OneD, NekDouble> FwdLocTrace(locTraceToTraceMap->
+                                           GetNLocTracePts());
+        Array<OneD, NekDouble> BwdLocTrace = FwdLocTrace +
+            locTraceToTraceMap->GetNFwdLocTracePts();
         Array<OneD, NekDouble> e_tmp;
         
         const std::shared_ptr<LocalRegions::ExpansionVector>
             exp = m_dgfield->GetExp();
         
-        int cnt           = 0;
-        int toffset_coeff = 0;
-        int toffset_phys  = 0;
-        int coeff_offset  = 0; 
+        int cnt              = 0;
+        int toffset_coeff    = 0;
+        int fwd_offset_phys  = 0;
+        int bwd_offset_phys  = 0;
+        int coeff_offset     = 0; 
         Array<OneD, Array<OneD, Array<OneD, NekDouble> > >dbasis;
         Array<OneD, Array<OneD, Array<OneD, unsigned int> > >traceToCoeffMap;
         
@@ -148,7 +151,7 @@ namespace SolverUtils
                 NekDouble p  = texp->GetBasisNumModes(0);
                 Array<OneD, NekDouble> one(np,1.0);
                 NekDouble h = texp->Integral(one);
-                h = pow(h,expdim);
+                h = pow(h,1.0/(NekDouble)expdim);
                 
                 if((*exp)[e]->GetTraceExp(n)->GetRightAdjacentElementTrace()!=-1)
                 {
@@ -157,7 +160,7 @@ namespace SolverUtils
                     np = texp->GetTotPoints();
                     one = Array<OneD, NekDouble>(np,1.0);
                     NekDouble  h2 = texp->Integral(one);
-                    h2 = pow(h,expdim);
+                    h2 = pow(h2,1.0/(NekDouble)expdim);
                     h = (h + h2)*0.5;
                     NekDouble p2  = texp->GetBasisNumModes(0);
                     p = (p + p2)*0.5;
@@ -165,16 +168,16 @@ namespace SolverUtils
                 NekDouble jumpScal = 0.7*pow(p,-4.0)*h*h; 
                 
                 int eid = elmtToTrace[e][n]->GetElmtId();
-                toffset_phys  =  trace->GetPhys_Offset(eid);
+                int nctrace = elmtToTrace[e][n]->GetNcoeffs();
                 toffset_coeff = trace->GetCoeff_Offset(eid);
                 
-                int nctrace = elmtToTrace[e][n]->GetNcoeffs();
                 // Note curretly doing the same thing so can liklely
                 // remove this if
                 if(leftAdjacentTrace[cnt])
                 {
                     Vmath::Smul(nptrace,jumpScal, factors[n], 1,
-                                e_tmp = FwdLocTrace + toffset_phys,1);
+                                e_tmp = FwdLocTrace + fwd_offset_phys,1);
+                    fwd_offset_phys += nptrace;
                     
                     ASSERTL1(dbasis[n].size() == nctrace,"The dimension of the "
                              "normalderivtrace method do not match"
@@ -184,7 +187,8 @@ namespace SolverUtils
                         for(int j = 0; j < dbasis[n][i].size(); ++j)
                         {
                             std::pair<int, NekDouble>
-                                dbaseinfo(traceToCoeffMap[n][i][j] + coeff_offset,
+                                dbaseinfo(traceToCoeffMap[n][i][j] +
+                                          coeff_offset,
                                           dbasis[n][i][j]);
                             
                             m_fwdTraceToCoeffMap[i+toffset_coeff].
@@ -195,7 +199,8 @@ namespace SolverUtils
                 else
                 {
                     Vmath::Smul(nptrace,jumpScal, factors[n], 1,
-                                e_tmp = BwdLocTrace + toffset_phys,1);
+                                e_tmp = BwdLocTrace + bwd_offset_phys,1);
+                    bwd_offset_phys += nptrace;
                     
                     for(int i = 0; i < nctrace; ++i)
                     {
@@ -211,7 +216,6 @@ namespace SolverUtils
                     }
                     
                 }
-                toffset_phys  += nptrace; 
             }
             
             coeff_offset += (*exp)[e]->GetNcoeffs();

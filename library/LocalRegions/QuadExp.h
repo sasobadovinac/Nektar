@@ -278,9 +278,14 @@ namespace Nektar
                     Array<OneD, NekDouble> &array,
                     const StdRegions::StdMatrixKey &mkey);
 
+            LOCAL_REGIONS_EXPORT virtual void v_NormalTraceDerivFactors
+                     (Array<OneD, Array<OneD, NekDouble> > &factors);
+
         private:
-            LibUtilities::NekManager<MatrixKey, DNekScalMat, MatrixKey::opLess> m_matrixManager;
-            LibUtilities::NekManager<MatrixKey, DNekScalBlkMat, MatrixKey::opLess> m_staticCondMatrixManager;
+            LibUtilities::NekManager<MatrixKey,
+                  DNekScalMat, MatrixKey::opLess> m_matrixManager;
+            LibUtilities::NekManager<MatrixKey,
+                  DNekScalBlkMat, MatrixKey::opLess> m_staticCondMatrixManager;
 
             QuadExp();
 

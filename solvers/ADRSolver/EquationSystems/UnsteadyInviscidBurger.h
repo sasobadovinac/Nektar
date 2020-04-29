@@ -38,6 +38,7 @@
 #include <SolverUtils/UnsteadySystem.h>
 #include <SolverUtils/RiemannSolvers/RiemannSolver.h>
 #include <SolverUtils/AdvectionSystem.h>
+#include <SolverUtils/Forcing/Forcing.h>
 
 namespace Nektar
 {
@@ -67,6 +68,9 @@ namespace Nektar
         SolverUtils::RiemannSolverSharedPtr     m_riemannSolver;
         Array<OneD, NekDouble>                  m_traceVn;
         
+        /// Forcing terms
+        std::vector<SolverUtils::ForcingSharedPtr>  m_forcing;
+
         /// Session reader
         UnsteadyInviscidBurger(
             const LibUtilities::SessionReaderSharedPtr& pSession,

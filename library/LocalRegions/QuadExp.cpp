@@ -2368,5 +2368,115 @@ namespace Nektar
             Vmath::Vdiv(nq,array,1,sqrt_jac,1,array,1);
         }
 
+        /** @brief: This method gets all of the factors which are
+            required as part of the Gradient Jump Penalty
+            stabilisation and involves the product of the normal and
+            geometric factors along the element trace.
+        */
+        void QuadExp::v_NormalTraceDerivFactors
+             (Array<OneD, Array<OneD, NekDouble> > &factors) 
+        {
+            int nquad0 = GetNumPoints(0);
+            int nquad1 = GetNumPoints(1);
+
+            const Array<TwoD, const NekDouble>&
+                       df = m_metricinfo->GetDerivFactors(GetPointsKeys());
+
+            if(factors.size() <=4)
+            {
+                factors = Array<OneD, Array<OneD, NekDouble> > (4); 
+                factors[0] = Array<OneD, NekDouble> (nquad0);
+                factors[1] = Array<OneD, NekDouble> (nquad1);
+                factors[2] = Array<OneD, NekDouble> (nquad0);
+                factors[3] = Array<OneD, NekDouble> (nquad1);
+            }
+
+            // Outwards normals
+            const Array<OneD, const Array<OneD, NekDouble> >
+                &normal_0= GetTraceNormal(0);
+            const Array<OneD, const Array<OneD, NekDouble> >
+                &normal_1= GetTraceNormal(1);
+            const Array<OneD, const Array<OneD, NekDouble> >
+                &normal_2= GetTraceNormal(2);
+            const Array<OneD, const Array<OneD, NekDouble> >
+                &normal_3= GetTraceNormal(3);
+
+            int ncoords = normal_0.size();
+            
+            if(m_metricinfo->GetGtype() == SpatialDomains::eDeformed)
+            {
+             
+                // d xi_2/dx n_x 
+                for(int i = 0; i < nquad0; ++i)
+                {
+                    factors[0][i] = df[1][i]*normal_0[0][i]; 
+                    factors[2][i] = df[1][nquad0*(nquad1-1)+i]*
+                    normal_2[0][i];
+                }
+
+                // d xi_1/dx n_x
+                for(int i = 0; i < nquad1; ++i)
+                {
+                    factors[1][i] = df[0][(i+1)*nquad0-1]*normal_1[0][i];
+                    factors[3][i] = df[0][i*nquad0]*normal_3[0][i];
+                }
+
+                for(int n = 1; n < ncoords; ++n)
+                {
+                    // d xi_2/dy n_y
+                    // needs checking for 3D coords
+                    for(int i = 0; i < nquad0; ++i)
+                    {
+                        factors[0][i] += df[2*n+1][i]*normal_0[n][i]; 
+                        factors[2][i] += df[2*n+1][nquad0*(nquad1-1)+i]
+                            *normal_2[n][i];
+                    }
+                    
+                    // d xi_1/dy n_y
+                    // needs checking for 3D coords
+                    for(int i = 0; i < nquad1; ++i)
+                    {
+                        factors[1][i] += df[2*n][(i+1)*nquad0-1]*normal_1[n][i];
+                        factors[3][i] += df[2*n][i*nquad0]*normal_3[n][i];
+                    }
+                }
+            }
+            else
+            {
+             
+                // d xi_2/dx n_x 
+                for(int i = 0; i < nquad0; ++i)
+                {
+                    factors[0][i] = df[1][0]*normal_0[0][i]; 
+                    factors[2][i] = df[1][0]*normal_2[0][i];
+                }
+
+                // d xi_1/dx n_x
+                for(int i = 0; i < nquad1; ++i)
+                {
+                    factors[1][i] = df[0][0]*normal_1[0][i];
+                    factors[3][i] = df[0][0]*normal_3[0][i];
+                }
+
+                for(int n = 1; n < ncoords; ++n)
+                {
+                    // d xi_2/dy n_y
+                    // needs checking for 3D coords
+                    for(int i = 0; i < nquad0; ++i)
+                    {
+                        factors[0][i] += df[2*n+1][0]*normal_0[n][i]; 
+                        factors[2][i] += df[2*n+1][0]*normal_2[n][i];
+                    }
+                    
+                    // d xi_1/dy n_y
+                    // needs checking for 3D coords
+                    for(int i = 0; i < nquad1; ++i)
+                    {
+                        factors[1][i] += df[2*n][0]*normal_1[n][i];
+                        factors[3][i] += df[2*n][0]*normal_3[n][i];
+                    }
+                }
+            }
+        }
     }//end of namespace
 }//end of namespace
