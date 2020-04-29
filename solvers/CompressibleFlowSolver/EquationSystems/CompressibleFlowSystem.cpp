@@ -2958,18 +2958,10 @@ namespace Nektar
                 //To Do: can remove repeated sqrt
                 NekDouble ResidualNorm=sqrt(resnorm);
                 NekDouble SolutionNorm=sqrt(solnorm);
-                NekDouble JumpOutValue=max(ResidualNorm,SolutionNorm);
+                NekDouble JumpOutValue=ResidualNorm;
                 NekDouble ErrorAdaptiveTolerance=Scale*ErrorNorm;
                 bool state=(JumpOutValue<ErrorAdaptiveTolerance);
-                // if(ResidualNorm>SolutionNorm)
-                // {
-                //     state=(ResidualNorm<ErrorAdaptiveTolerance);
-                // }
-                // else
-                // {
-                //     state=(SolutionNorm<ErrorAdaptiveTolerance);
-                // }
-                
+
                 if(state)
                 {
                     converged = true;
