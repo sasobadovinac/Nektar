@@ -260,16 +260,18 @@ namespace SolverUtils
             deriv[i] = Array<OneD, NekDouble> (nphys); 
         }
         
-        Array<OneD, NekDouble> Fwd(nTracePts), Bwd(nTracePts), tmp; 
-        Array<OneD, NekDouble> GradJumpOnTrace(nTracePts,0.0); 
-
         int nmax = max(ncoeffs,nphys);
+        Array<OneD, NekDouble> Fwd(nTracePts), Bwd(nTracePts), tmp; 
+        Array<OneD, NekDouble> FilterCoeffs(nmax);
+        Array<OneD, NekDouble> GradJumpOnTrace(nTracePts); 
+
         
         for(int f = 0; f < m_numForcingFields; ++f)
         {
             for(int p = 0; p < m_nplanes; ++p)
             {
-                Array<OneD, NekDouble> FilterCoeffs(nmax,0.0);
+                Vmath::Zero(nmax,FilterCoeffs,1);
+                Vmath::Zero(nTracePts,GradJumpOnTrace,1);
                 
                 // calculate derivative 
                 m_dgfield->PhysDeriv(inarray[f] + p*nphys,deriv[0],deriv[1],deriv[2]);
