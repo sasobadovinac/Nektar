@@ -42,7 +42,7 @@ namespace Nektar
 namespace SolverUtils
 {
 
-std::string Driver::evolutionOperatorLookupIds[6] = {
+std::string Driver::evolutionOperatorLookupIds[7] = {
     LibUtilities::SessionReader::RegisterEnumValue(
             "EvolutionOperator","Nonlinear"      ,eNonlinear),
     LibUtilities::SessionReader::RegisterEnumValue(
@@ -54,7 +54,9 @@ std::string Driver::evolutionOperatorLookupIds[6] = {
     LibUtilities::SessionReader::RegisterEnumValue(
             "EvolutionOperator","SkewSymmetric"  ,eSkewSymmetric),
     LibUtilities::SessionReader::RegisterEnumValue(
-            "EvolutionOperator","AdaptiveSFD"    ,eAdaptiveSFD)
+            "EvolutionOperator","AdaptiveSFD"    ,eAdaptiveSFD),
+    LibUtilities::SessionReader::RegisterEnumValue(
+            "EvolutionOperator","AdaptiveCFS"    ,eAdaptiveCFS)
 };
 std::string Driver::evolutionOperatorDef =
     LibUtilities::SessionReader::RegisterDefaultSolverInfo(
@@ -113,7 +115,7 @@ void Driver::v_InitObject(ostream &out)
                     "EvolutionOperator");
 
         m_nequ = ((m_EvolutionOperator == eTransientGrowth ||
-                   m_EvolutionOperator == eAdaptiveSFD) ? 2 : 1);
+                   m_EvolutionOperator == eAdaptiveSFD || m_EvolutionOperator == eAdaptiveCFS) ? 2 : 1);
 
         m_equ = Array<OneD, EquationSystemSharedPtr>(m_nequ);
 
@@ -179,6 +181,43 @@ void Driver::v_InitObject(ostream &out)
                 m_session->SetTag("AdvectiveType","Convective");
                 m_equ[1] = GetEquationSystemFactory().CreateInstance(
                     vEquation, m_session, m_graph);
+            }
+                break;
+            case eAdaptiveCFS:
+            {
+                // Coupling SFD method and Arnoldi algorithm
+                // For having 2 equation systems defined into 2 different
+                // session files (with the mesh into a file named 'session'.gz)
+                string          meshfile,condfile;
+                string          MultiOrderCondFile,MultiOrderMeshFile;
+                vector<string>  MultiOrderFilename;
+                meshfile = m_session->GetFilenames()[0];
+                if(m_session->GetFilenames().size()>0)
+                {
+                    condfile=m_session->GetFilenames()[1];
+                }
+                MultiOrderMeshFile=meshfile;
+                int index=MultiOrderMeshFile.find(".");
+                MultiOrderMeshFile.replace( index,4, "_MultiOrder.xml");
+                MultiOrderCondFile= condfile;
+                index=MultiOrderCondFile.find(".");
+                MultiOrderCondFile.replace( index,4, "_MultiOrder.xml");
+                MultiOrderFilename.push_back(MultiOrderMeshFile);
+                MultiOrderFilename.push_back(MultiOrderCondFile);
+                MultiOrderSession= LibUtilities::SessionReader::CreateInstance(
+                                0, NULL, MultiOrderFilename, m_session->GetComm());
+
+                SpatialDomains::MeshGraphSharedPtr MultiOrderGraph =
+                SpatialDomains::MeshGraph::Read(MultiOrderSession);
+                
+                m_session->SetTag("AdvectiveType","Convective");
+                m_equ[0] = GetEquationSystemFactory().CreateInstance(
+                    vEquation, m_session, m_graph);
+
+                //Run MultiOrder Solver
+                MultiOrderSession->SetTag("AdvectiveType","Convective");
+                m_equ[1] = GetEquationSystemFactory().CreateInstance(
+                    vEquation, MultiOrderSession, MultiOrderGraph);
             }
                 break;
             default:

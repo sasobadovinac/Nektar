@@ -33,10 +33,9 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-// #include <SolverUtils/Driver.h>
+#include <SolverUtils/Driver.h>
 #include <SolverUtils/EquationSystem.h>
 #include <LibUtilities/BasicUtils/SessionReader.h>
-#include <SolverUtils/DriverCFS.h>
 
 using namespace std;
 using namespace Nektar;
@@ -45,24 +44,21 @@ using namespace Nektar::SolverUtils;
 int main(int argc, char *argv[])
 {
     LibUtilities::SessionReaderSharedPtr session;
-    SpatialDomains::MeshGraphSharedPtr graph,MultiOrdergraph;
+    SpatialDomains::MeshGraphSharedPtr graph;
     string vDriverModule;
-    DriverCFSSharedPtr drv;
+    DriverSharedPtr drv;
 
     try
     {
         // Create session reader.
-        //Yu Pan Comment: allocate memory fpr session
         session = LibUtilities::SessionReader::CreateInstance(argc, argv);
 
         // Create MeshGraph.
-        //Yu Pan Comment: load xml file (ReadExpansions read nummodes and numpoints)
         graph = SpatialDomains::MeshGraph::Read(session);
-        MultiOrdergraph = SpatialDomains::MeshGraph::ReadMultiOrder(session);
 
         // Create driver
-        session->LoadSolverInfo("CFSDriver", vDriverModule, "CFSAdaptive");
-        drv = GetDriverCFSFactory().CreateInstance(vDriverModule, session, graph,MultiOrdergraph);
+        session->LoadSolverInfo("Driver", vDriverModule, "Standard");
+        drv = GetDriverFactory().CreateInstance(vDriverModule, session, graph);
 
         // Execute driver
         drv->Execute();

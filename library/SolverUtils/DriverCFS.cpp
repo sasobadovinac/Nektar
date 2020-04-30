@@ -174,7 +174,7 @@ void DriverCFS::v_InitObject(ostream &out)
                                 0, NULL, LinNSFilename, m_session->GetComm());
 
                 SpatialDomains::MeshGraphSharedPtr graph_linns =
-                    SpatialDomains::MeshGraph::Read(session_LinNS);
+                SpatialDomains::MeshGraph::Read(session_LinNS);
 
                 //For running stability analysis
                 session_LinNS->SetTag("AdvectiveType","Linearised");

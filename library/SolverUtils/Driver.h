@@ -43,6 +43,7 @@
 
 #include <SolverUtils/SolverUtils.hpp>
 #include <SolverUtils/EquationSystem.h>
+#include<SolverUtils/DriverCFSOperators.hpp>
 
 namespace Nektar
 {
@@ -70,6 +71,21 @@ public:
     /// Destructor
     virtual ~Driver();
 
+    SOLVER_UTILS_EXPORT inline void DoMultiOrderProjection(const Array<OneD,const Array<OneD, NekDouble>> &inarray,
+                                                                   Array<OneD, Array<OneD,NekDouble>> &outarray,
+                                                                                           const NekDouble time)
+    {
+        v_DoMultiOrderProjection(inarray,outarray,time);
+    }
+
+    SOLVER_UTILS_EXPORT inline void DoMultiOrderOdeRhs(const Array<OneD,const Array<OneD, NekDouble>> &inarray,
+                                                                   Array<OneD, Array<OneD,NekDouble>> &outarray,
+                                                                                           const NekDouble time)
+    {
+        v_DoMultiOrderOdeRhs(inarray,outarray,time);
+    }
+        
+
     /// Initialise Object
     SOLVER_UTILS_EXPORT inline void InitObject(std::ostream &out = std::cout);
 
@@ -92,6 +108,8 @@ protected:
     /// I the Coupling between SFD and arnoldi
     LibUtilities::SessionReaderSharedPtr        session_LinNS;
 
+    LibUtilities::SessionReaderSharedPtr        MultiOrderSession;
+
     /// MeshGraph object
     SpatialDomains::MeshGraphSharedPtr          m_graph;
 
@@ -101,12 +119,29 @@ protected:
     ///number of equations
     int m_nequ;
 
+    SolverUtils::DriverOperators                    m_driverOperator;
+
     ///Evolution Operator
     enum EvolutionOperatorType m_EvolutionOperator;
 
     /// Initialises EquationSystem class members.
     Driver(const LibUtilities::SessionReaderSharedPtr pSession,
            const SpatialDomains::MeshGraphSharedPtr   pGraph);
+    
+    SOLVER_UTILS_EXPORT virtual void v_DoMultiOrderProjection(const Array<OneD,const Array<OneD, NekDouble>> &inarray,
+                                                                   Array<OneD, Array<OneD,NekDouble>> &outarray,
+                                                                              const NekDouble time)
+    {
+         ASSERTL0(false,"This routine is not valid in this class");
+    }
+
+    SOLVER_UTILS_EXPORT virtual void v_DoMultiOrderOdeRhs(const Array<OneD,const Array<OneD, NekDouble>> &inarray,
+                                                                   Array<OneD, Array<OneD,NekDouble>> &outarray,
+                                                                              const NekDouble time)
+    {
+         ASSERTL0(false,"This routine is not valid in this class");
+    }
+
 
     SOLVER_UTILS_EXPORT virtual void v_InitObject(std::ostream &out = std::cout);
 

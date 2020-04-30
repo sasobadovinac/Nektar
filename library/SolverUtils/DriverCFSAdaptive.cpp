@@ -43,7 +43,7 @@ namespace Nektar
 {
     namespace SolverUtils
     {
-        string DriverCFSAdaptive::className = GetDriverCFSFactory().RegisterCreatorFunction("CFSAdaptive", DriverCFSAdaptive::create);
+        string DriverCFSAdaptive::className = GetDriverFactory().RegisterCreatorFunction("CFSAdaptive", DriverCFSAdaptive::create);
         string DriverCFSAdaptive::driverLookupId = LibUtilities::SessionReader::RegisterEnumValue("Driver","CFSAdaptive",0);
 
         /**
@@ -51,9 +51,8 @@ namespace Nektar
          */
         DriverCFSAdaptive::DriverCFSAdaptive(
             const LibUtilities::SessionReaderSharedPtr pSession,
-            const SpatialDomains::MeshGraphSharedPtr pGraph,
-            const SpatialDomains::MeshGraphSharedPtr pMultiOrderGraph)
-            : DriverCFS(pSession, pGraph,pMultiOrderGraph)
+            const SpatialDomains::MeshGraphSharedPtr pGraph)
+            : Driver(pSession, pGraph)
         {
         }
     
@@ -87,9 +86,9 @@ namespace Nektar
          */
         void DriverCFSAdaptive::v_InitObject(ostream &out)
         {
-            DriverCFS::v_InitObject(out);
-            m_driverOperator.DefineMultiOrderProjection(&DriverCFS::DoMultiOrderProjection, this);
-            m_driverOperator.DefineMultiOrderOdeRhs(&DriverCFS::DoMultiOrderOdeRhs, this);
+            Driver::v_InitObject(out);
+            m_driverOperator.DefineMultiOrderProjection(&Driver::DoMultiOrderProjection, this);
+            m_driverOperator.DefineMultiOrderOdeRhs(&Driver::DoMultiOrderOdeRhs, this);
             m_equ[0]->SetdriverOperator(m_driverOperator);
         }
     

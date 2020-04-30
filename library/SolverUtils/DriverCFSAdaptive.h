@@ -36,26 +36,25 @@
 #ifndef NEKTAR_SOLVERUTILS_DRIVERCFSADAPTIVE_H
 #define NEKTAR_SOLVERUTILS_DRIVERCFSADAPTIVE_H
 
-#include <SolverUtils/DriverCFS.h>
+#include <SolverUtils/Driver.h>
 
 namespace Nektar
 {
     namespace SolverUtils
     {
         /// Base class for the development of solvers.
-        class DriverCFSAdaptive: public DriverCFS
+        class DriverCFSAdaptive: public Driver
         {
         public:
             friend class MemoryManager<DriverCFSAdaptive>;
 
             /// Creates an instance of this class
-            static DriverCFSSharedPtr create(
+            static DriverSharedPtr create(
                 const LibUtilities::SessionReaderSharedPtr& pSession,
-                const SpatialDomains::MeshGraphSharedPtr& pGraph,
-                const SpatialDomains::MeshGraphSharedPtr& pMultiOrderGraph)
+                const SpatialDomains::MeshGraphSharedPtr& pGraph)
             {
-                DriverCFSSharedPtr p = MemoryManager<DriverCFSAdaptive>
-                    ::AllocateSharedPtr(pSession, pGraph,pMultiOrderGraph);
+                DriverSharedPtr p = MemoryManager<DriverCFSAdaptive>
+                    ::AllocateSharedPtr(pSession, pGraph);
                 p->InitObject();
                 return p;
             }
@@ -67,8 +66,7 @@ namespace Nektar
             /// Constructor
             SOLVER_UTILS_EXPORT DriverCFSAdaptive(
                 const LibUtilities::SessionReaderSharedPtr pSession,
-                const SpatialDomains::MeshGraphSharedPtr pGraph,
-                const SpatialDomains::MeshGraphSharedPtr pMultiOrderGraph);
+                const SpatialDomains::MeshGraphSharedPtr pGraph);
 
             /// Destructor
             SOLVER_UTILS_EXPORT virtual ~DriverCFSAdaptive();
