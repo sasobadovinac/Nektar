@@ -69,6 +69,10 @@ namespace Nektar
         bool m_useSpecVanVisc;
         NekDouble m_sVVCutoffRatio;   // cut off ratio from which to start decayhing modes
         NekDouble m_sVVDiffCoeff;     // Diffusion coefficient of SVV modes
+        
+        /// Array of coefficient if power kernel is used in SVV
+        Array<OneD, NekDouble> m_svvVarDiffCoeff;        
+        
         SolverUtils::RiemannSolverSharedPtr     m_riemannSolver;
         SolverUtils::DiffusionSharedPtr         m_diffusion;
         Array<OneD, Array<OneD, NekDouble> >    m_velocity;
@@ -159,6 +163,14 @@ namespace Nektar
         NekDouble m_cflSafetyFactor;
         int       m_infosteps;
         int       m_minsubsteps;
+
+        void SVVVarDiffCoeff(const NekDouble velmag, 
+                             Array<OneD, NekDouble> &diffcoeff,
+                             const Array<OneD, Array<OneD, NekDouble> >
+                             &vel = NullNekDoubleArrayofArray);
+        void AppendSVVFactors(
+                              StdRegions::ConstFactorMap &factors,
+                              MultiRegions::VarFactorsMap &varFactorsMap);
 
     private:
         NekDouble m_waveFreq;

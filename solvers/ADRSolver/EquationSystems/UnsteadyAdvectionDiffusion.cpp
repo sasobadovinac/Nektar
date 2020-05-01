@@ -33,7 +33,8 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <iostream>
-
+#include <LocalRegions/Expansion2D.h>
+#include <LocalRegions/Expansion3D.h>
 #include <boost/core/ignore_unused.hpp>
 
 #include <ADRSolver/EquationSystems/UnsteadyAdvectionDiffusion.h>
@@ -44,6 +45,9 @@ using namespace std;
 
 namespace Nektar
 {
+
+    using namespace MultiRegions;
+
     string UnsteadyAdvectionDiffusion::className
         = SolverUtils::GetEquationSystemFactory().RegisterCreatorFunction(
                 "UnsteadyAdvectionDiffusion",
@@ -83,15 +87,57 @@ namespace Nektar
 
         GetFunction( "AdvectionVelocity")->Evaluate(vel,  m_velocity);
 
-        m_session->MatchSolverInfo(
-            "SpectralVanishingViscosity", "True", m_useSpecVanVisc, false);
-
+        //set up varcoeff kernel if PowerKernel or DG is specified
+        m_session->MatchSolverInfo("SpectralVanishingViscosity","DGKernel",
+                            m_useSpecVanVisc, false);
         if(m_useSpecVanVisc)
         {
-            m_session->LoadParameter("SVVCutoffRatio",m_sVVCutoffRatio,0.75);
-            m_session->LoadParameter("SVVDiffCoeff",m_sVVDiffCoeff,0.1);
+            Array<OneD, Array<OneD, NekDouble> > SVVVelFields = NullNekDoubleArrayofArray;
+
+            // I suspect we might not need this for the time being - m_velocity
+            // would need to be redefined. keep things simple
+            // if(m_session->DefinesFunction("SVVVelocityMagnitude"))
+            // {
+            //     if (m_comm->GetRank() == 0)
+            //     {
+            //         cout << "Seting up SVV velocity from "
+            //             "SVVVelocityMagnitude section in session file" << endl;
+            //     }
+            //     int nvel = m_velocity.size();
+            //     int phystot = m_fields[0]->GetTotPoints();
+            //     SVVVelFields = Array<OneD, Array<OneD, NekDouble> >(nvel);
+            //     vector<string> vars;
+            //     for(int i = 0; i < nvel; ++i)
+            //     {
+            //         SVVVelFields[i] = Array<OneD, NekDouble>(phystot);
+            //         vars.push_back(m_session->GetVariable(m_velocity[i]));
+            //     }
+
+            //     // Load up files into  m_fields;
+            //     GetFunction("SVVVelocityMagnitude")
+            //         ->Evaluate(vars,SVVVelFields);
+            // }
+            cout << "Setting up DG Kernel" << endl;
+            m_svvVarDiffCoeff =
+                Array<OneD, NekDouble>(m_fields[0]->GetNumElmts());
+            SVVVarDiffCoeff(1.0,m_svvVarDiffCoeff,SVVVelFields);
+            m_session->LoadParameter("SVVDiffCoeff", m_sVVDiffCoeff, 1.0);
+        }
+        else
+        {
+            m_svvVarDiffCoeff = NullNekDouble1DArray;
+
+            m_session->MatchSolverInfo("SpectralVanishingViscosity",
+                                       "ExpKernel", m_useSpecVanVisc, false);
+            if (m_useSpecVanVisc)
+            {
+                cout << "Setting up Exp" << endl;
+                m_session->LoadParameter("SVVDiffCoeff", m_sVVDiffCoeff, 0.1);
+            }
         }
 
+        m_session->LoadParameter("SVVCutoffRatio", m_sVVCutoffRatio, 0.75);
+        
         // Type of advection and diffusion classes to be used
         switch(m_projectionType)
         {
@@ -349,12 +395,18 @@ namespace Nektar
 
         StdRegions::ConstFactorMap factors;
         factors[StdRegions::eFactorLambda] = 1.0/lambda/m_epsilon;
+        StdRegions::VarCoeffMap varCoeffMap = StdRegions::NullVarCoeffMap;
+        MultiRegions::VarFactorsMap varFactorsMap =
+            MultiRegions::NullVarFactorsMap;
 
         if(m_useSpecVanVisc)
         {
-            factors[StdRegions::eFactorSVVCutoffRatio] = m_sVVCutoffRatio;
-            factors[StdRegions::eFactorSVVDiffCoeff]   = m_sVVDiffCoeff/m_epsilon;
+            // factors[StdRegions::eFactorSVVCutoffRatio] = m_sVVCutoffRatio;
+            // factors[StdRegions::eFactorSVVDiffCoeff]   = m_sVVDiffCoeff/m_epsilon;
+            AppendSVVFactors(factors,varFactorsMap);
         }
+        
+        
         if(m_projectionType == MultiRegions::eDiscontinuous)
         {
             factors[StdRegions::eFactorTau] = 1.0;
@@ -383,7 +435,11 @@ namespace Nektar
         for (int i = 0; i < nvariables; ++i)
         {
             // Solve a system of equations with Helmholtz solver
-            m_fields[i]->HelmSolve(F[i], m_fields[i]->UpdateCoeffs(), factors);
+            // m_fields[i]->HelmSolve(F[i], m_fields[i]->UpdateCoeffs(),
+            // factors);
+            // Update here to allow for variable coefficient map
+            m_fields[i]->HelmSolve(F[i], m_fields[i]->UpdateCoeffs(), factors,
+                                   varCoeffMap, varFactorsMap);
 
             m_fields[i]->BwdTrans(m_fields[i]->GetCoeffs(), outarray[i]);
         }
@@ -870,4 +926,125 @@ namespace Nektar
 
         return maxV;
     }
+
+
+    void UnsteadyAdvectionDiffusion::SVVVarDiffCoeff(
+                        const NekDouble velmag,
+                        Array<OneD, NekDouble> &diffcoeff,
+                        const  Array<OneD, Array<OneD, NekDouble> >  &vel)
+    {
+        int phystot = m_fields[0]->GetTotPoints();
+        int nel = m_fields[0]->GetNumElmts();
+        int nvel,cnt;
+
+        Array<OneD, NekDouble> tmp;
+
+        Vmath::Fill(nel,velmag,diffcoeff,1);
+
+        if(vel != NullNekDoubleArrayofArray)
+        {
+            Array<OneD, NekDouble> Velmag(phystot);
+            nvel = vel.size();
+            // calculate magnitude of v
+            Vmath::Vmul(phystot,vel[0],1,vel[0],1,Velmag,1);
+            for(int n = 1; n < nvel; ++n)
+            {
+                Vmath::Vvtvp(phystot,vel[n],1,vel[n],1,Velmag,1,
+                                Velmag,1);
+            }
+            Vmath::Vsqrt(phystot,Velmag,1,Velmag,1);
+
+
+            cnt = 0;
+            Array<OneD, NekDouble> tmp;
+            // calculate mean value of vel mag.
+            for(int i = 0; i < nel; ++i)
+            {
+                int nq = m_fields[0]->GetExp(i)->GetTotPoints();
+                tmp = Velmag + cnt;
+                diffcoeff[i] = m_fields[0]->GetExp(i)->Integral(tmp);
+                Vmath::Fill(nq,1.0,tmp,1);
+                NekDouble area = m_fields[0]->GetExp(i)->Integral(tmp);
+                diffcoeff[i] = diffcoeff[i]/area;
+                cnt += nq;
+            }
+        }
+        else
+        {
+            nvel = m_expdim;
+        }
+
+        if(m_expdim == 3)
+        {
+            LocalRegions::Expansion3DSharedPtr exp3D;
+            for (int e = 0; e < nel; e++)
+            {
+                exp3D = m_fields[0]->GetExp(e)->as<LocalRegions::Expansion3D>();
+                NekDouble h = 0;
+                for(int i = 0; i < exp3D->GetNedges(); ++i)
+                {
+
+                    h = max(h, exp3D->GetGeom3D()->GetEdge(i)->GetVertex(0)->dist(
+                                *(exp3D->GetGeom3D()->GetEdge(i)->GetVertex(1))));
+                }
+
+                int p = 0;
+                for(int i = 0; i < 3; ++i)
+                {
+                    p = max(p,exp3D->GetBasisNumModes(i)-1);
+                }
+
+                diffcoeff[e] *= h/p;
+            }
+        }
+        else
+        {
+            LocalRegions::Expansion2DSharedPtr exp2D;
+            for (int e = 0; e < nel; e++)
+            {
+                exp2D = m_fields[0]->GetExp(e)->as<LocalRegions::Expansion2D>();
+                NekDouble h = 0;
+                for(int i = 0; i < exp2D->GetNedges(); ++i)
+                {
+
+                    h = max(h, exp2D->GetGeom2D()->GetEdge(i)->GetVertex(0)->dist(
+                                *(exp2D->GetGeom2D()->GetEdge(i)->GetVertex(1))));
+                }
+
+                int p = 0;
+                for(int i = 0; i < 2; ++i)
+                {
+                    p = max(p,exp2D->GetBasisNumModes(i)-1);
+                }
+
+                diffcoeff[e] *= h/p;
+            }
+        }
+    }
+
+
+    void UnsteadyAdvectionDiffusion::AppendSVVFactors(
+                                    StdRegions::ConstFactorMap &factors,
+                                    MultiRegions::VarFactorsMap &varFactorsMap)
+    {
+
+        if(m_useSpecVanVisc)
+        {
+            factors[StdRegions::eFactorSVVCutoffRatio] = m_sVVCutoffRatio;
+            // Diffusion coefficient for exponential kernel
+            factors[StdRegions::eFactorSVVDiffCoeff]   = m_sVVDiffCoeff/m_epsilon;
+            if(m_svvVarDiffCoeff != NullNekDouble1DArray)
+            {
+                cout << "Appending factors for DGKernel use" << endl;
+                
+                // I guess we should not be scaling this again? if we do not the
+                // solution is strongly smoothed
+                factors[StdRegions::eFactorSVVDiffCoeff]   = m_sVVDiffCoeff;
+                varFactorsMap[StdRegions::eFactorSVVDGKerDiffCoeff] =
+                    m_svvVarDiffCoeff;
+                        }
+        }
+
+    }
+
 }
