@@ -139,7 +139,6 @@ namespace SolverUtils
         Array<OneD, Array<OneD, Array<OneD, unsigned int> > >traceToCoeffMap;
         
         int expdim = m_dgfield->GetShapeDimension();
-        int ncoeffs = m_dgfield->GetNcoeffs();
 
         Array<OneD, unsigned int> map;
         Array<OneD, int> sign;
@@ -203,7 +202,7 @@ namespace SolverUtils
                         {
                             int ncoeffid =traceToCoeffMap[n][i][j] +
                                 coeff_offset;
-                            ASSERTL1(ncoeffid < ncoeffs, "Error in evaluating "
+                            ASSERTL1(ncoeffid < m_dgfield->GetNcoeffs(), "Error in evaluating "
                                      "which coefficient is being updated");
                             std::pair<int, NekDouble> dbaseinfo(ncoeffid,Sign*dbasis[n][i][j]);
                             m_fwdTraceToCoeffMap[loc+toffset_coeff].insert(dbaseinfo);
@@ -223,7 +222,7 @@ namespace SolverUtils
                         for(int j = 0; j < dbasis[n][i].size(); ++j)
                         {
                             int ncoeffid =traceToCoeffMap[n][i][j] + coeff_offset;
-                            ASSERTL1(ncoeffid < ncoeffs, "Error in evaluating "
+                            ASSERTL1(ncoeffid < m_dgfield->GetNcoeffs(), "Error in evaluating "
                                      "which coefficient is being updated");
                             std::pair<int, NekDouble> dbaseinfo(ncoeffid,Sign*dbasis[n][i][j]);
                             m_bwdTraceToCoeffMap[loc+toffset_coeff].insert(dbaseinfo);
