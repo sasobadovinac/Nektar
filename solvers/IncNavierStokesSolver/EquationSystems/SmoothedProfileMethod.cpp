@@ -445,10 +445,11 @@ namespace Nektar
             {
                 // Update 'm_phi' only if it was provided as a function
                 m_phiEvaluator->Evaluate("Phi", m_phi->UpdatePhys(), t);
-
-                // Initialize both variables for the first step
-                m_phiEvaluator->Evaluate(m_velName, m_up, t);
             }
+
+            // Initialize both variables for the first step
+            m_phiEvaluator->Evaluate(m_velName, m_up, t);
+
             // Initialise 'm_upPrev' in all cases
             m_upPrev = m_up;
         }
