@@ -882,7 +882,7 @@ namespace Nektar
             {
                 if (m_comm->GetRank() == 0)
                 {
-                    cout << "Seting up SVV velocity from "
+                    cout << "Setting up SVV velocity from "
                         "SVVVelocityMagnitude section in session file" << endl;
                 }
                 int nvel = m_velocity.size();
@@ -1100,6 +1100,7 @@ namespace Nektar
                 }
                 else
                 {
+                    factors[StdRegions::eFactorSVVDiffCoeff]   = m_sVVDiffCoeff;
                     varFactorsMap[StdRegions::eFactorSVVDGKerDiffCoeff] =
                         m_svvVarDiffCoeff;
                 }
