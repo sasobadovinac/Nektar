@@ -712,6 +712,23 @@ namespace Nektar
                 v_GetTraceToElementMap(tid,maparray,signarray,traceOrient,P,Q);
             }
 
+            void GetTraceCoeffMap(const unsigned  int       traceid,
+                                  Array<OneD, unsigned int>& maparray)
+            {
+                v_GetTraceToCoeffMap(traceid,maparray);
+            }
+
+            void GetElmtTraceToTraceMap(
+                    const unsigned int        tid,
+                    Array<OneD, unsigned int> &maparray,
+                    Array<OneD,          int> &signarray,
+                    Orientation                traceOrient = eForwards,
+                    int                        P = -1,
+                    int                        Q = -1)
+            {
+                v_GetElmtTraceToTraceMap(tid,maparray,signarray,traceOrient,P,Q);
+            }
+
             void GetTraceInteriorToElementMap(
                     const int                  tid,
                     Array<OneD, unsigned int> &maparray,
@@ -1466,6 +1483,18 @@ namespace Nektar
                  Orientation                traceOrient = eForwards,
                  int                        P = -1,
                  int                        Q = -1);
+
+            STD_REGIONS_EXPORT  virtual void v_GetTraceToCoeffMap
+                  (const unsigned  int       traceid,
+                   Array<OneD, unsigned int>& maparray);
+
+            STD_REGIONS_EXPORT  virtual void v_GetElmtTraceToTraceMap
+                  (const unsigned int        tid,
+                   Array<OneD, unsigned int> &maparray,
+                   Array<OneD,          int> &signarray,
+                   Orientation                traceOrient = eForwards,
+                   int                        P = -1,
+                   int                        Q = -1);
 
             STD_REGIONS_EXPORT  virtual void v_GetTraceInteriorToElementMap(
                 const int                  eid,

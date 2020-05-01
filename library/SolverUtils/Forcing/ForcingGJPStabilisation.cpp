@@ -81,7 +81,7 @@ namespace SolverUtils
         
         m_traceNormals = m_equ.lock()->GetTraceNormals();
             
-        // Not sure what variable we shoudl set this up based on? 
+        // Not sure what variable we should set this up based on? 
         m_dgfield = MemoryManager<MultiRegions::DisContField>::AllocateSharedPtr
             (m_session,pFields[0]->GetGraph(), m_session->GetVariable(0),
              true,false);
@@ -140,34 +140,34 @@ namespace SolverUtils
         
         int expdim = m_dgfield->GetShapeDimension();
         int ncoeffs = m_dgfield->GetNcoeffs();
-        
+
+        Array<OneD, unsigned int> map;
+        Array<OneD, int> sign;
+            
         for(int e = 0; e < m_dgfield->GetExpSize(); ++e)
         {
-            (*exp)[e]->NormalTraceDerivFactors(factors);
-            
-            (*exp)[e]->DerivNormalBasisOnTrace(dbasis,
-                                               traceToCoeffMap);
-            
-            for(int n = 0; n < (*exp)[e]->GetNtraces(); ++n, ++cnt)
+            LocalRegions::ExpansionSharedPtr elmt = (*exp)[e];
+
+            elmt->NormalTraceDerivFactors(factors);            
+            elmt->DerivNormalBasisOnTrace(dbasis, traceToCoeffMap);
+
+            for(int n = 0; n < elmt->GetNtraces(); ++n, ++cnt)
             {
-                
                 // Estimate h as average of adjacent elmeents
                 ASSERTL1((*exp)[e]->GetTraceExp(n)->GetLeftAdjacentElementTrace()
-                         != -1,
-                         "Left adjacent expansion not setup");
+                         != -1, "Left adjacent expansion not setup");
+                
                 LocalRegions::ExpansionSharedPtr texp  =
-                    (*exp)[e]->GetTraceExp(n)->
-                    GetLeftAdjacentElementExp();
+                    elmt->GetTraceExp(n)->GetLeftAdjacentElementExp();
                 int np = texp->GetTotPoints();
                 NekDouble p  = texp->GetBasisNumModes(0);
                 Array<OneD, NekDouble> one(np,1.0);
                 NekDouble h = texp->Integral(one);
                 h = pow(h,1.0/(NekDouble)expdim);
                 
-                if((*exp)[e]->GetTraceExp(n)->GetRightAdjacentElementTrace()!=-1)
+                if(elmt->GetTraceExp(n)->GetRightAdjacentElementTrace()!=-1)
                 {
-                    texp  = (*exp)[e]->GetTraceExp(n)->
-                        GetRightAdjacentElementExp();
+                    texp  = elmt->GetTraceExp(n)->GetRightAdjacentElementExp();
                     np = texp->GetTotPoints();
                     one = Array<OneD, NekDouble>(np,1.0);
                     NekDouble  h2 = texp->Integral(one);
@@ -182,9 +182,11 @@ namespace SolverUtils
                 int eid = elmtToTrace[e][n]->GetElmtId();
                 toffset_coeff = trace->GetCoeff_Offset(eid);
 
-                int nptrace = (*exp)[e]->GetTraceNumPoints(n);
+                int nptrace = elmt->GetTraceNumPoints(n);
+
+                elmt->GetElmtTraceToTraceMap(n,map,sign,elmt->GetTraceOrient(n),nctrace);
                 
-                // Note curretly doing the same thing so can liklely
+                // Note curretly doing the same thing so can likely
                 // remove this if
                 if(leftAdjacentTrace[cnt])
                 {
@@ -195,20 +197,16 @@ namespace SolverUtils
                     // note the min is for variable p expansions
                     for(int i = 0; i < min(nctrace,dbasis[n].size()) ; ++i)
                     {
+                        NekDouble Sign = sign[i];
+                        int loc = map[i]; 
                         for(int j = 0; j < dbasis[n][i].size(); ++j)
                         {
                             int ncoeffid =traceToCoeffMap[n][i][j] +
                                 coeff_offset;
-                            if(ncoeffid >= ncoeffs)
-                            {
-                                cout << "here" << endl;
-                            }
                             ASSERTL1(ncoeffid < ncoeffs, "Error in evaluating "
                                      "which coefficient is being updated");
-                            std::pair<int, NekDouble> dbaseinfo(ncoeffid,
-                                                               dbasis[n][i][j]);
-                            m_fwdTraceToCoeffMap[i+toffset_coeff].
-                                insert(dbaseinfo);
+                            std::pair<int, NekDouble> dbaseinfo(ncoeffid,Sign*dbasis[n][i][j]);
+                            m_fwdTraceToCoeffMap[loc+toffset_coeff].insert(dbaseinfo);
                         }
                     }
                 }
@@ -220,21 +218,21 @@ namespace SolverUtils
                     
                     for(int i = 0; i < min(nctrace,dbasis[n].size()) ; ++i)
                     {
+                        NekDouble Sign = sign[i];
+                        int loc = map[i]; 
                         for(int j = 0; j < dbasis[n][i].size(); ++j)
                         {
                             int ncoeffid =traceToCoeffMap[n][i][j] + coeff_offset;
                             ASSERTL1(ncoeffid < ncoeffs, "Error in evaluating "
                                      "which coefficient is being updated");
-                            std::pair<int, NekDouble> dbaseinfo(ncoeffid, dbasis[n][i][j]);
-                            m_bwdTraceToCoeffMap[i+toffset_coeff].
-                                insert(dbaseinfo);
+                            std::pair<int, NekDouble> dbaseinfo(ncoeffid,Sign*dbasis[n][i][j]);
+                            m_bwdTraceToCoeffMap[loc+toffset_coeff].insert(dbaseinfo);
                         }
                     }
-                    
                 }
             }
             
-            coeff_offset += (*exp)[e]->GetNcoeffs();
+            coeff_offset += elmt->GetNcoeffs();
         }
         
         locTraceToTraceMap->InterpLocTracesToTrace(0,FwdLocTrace, m_scalFwd);

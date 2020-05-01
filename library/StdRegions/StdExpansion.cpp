@@ -1287,6 +1287,25 @@ namespace Nektar
             NEKERROR(ErrorUtil::efatal,"Method does not exist for this shape" );
         }
         
+        void StdExpansion::v_GetTraceToCoeffMap
+                  (const unsigned  int       traceid,
+                   Array<OneD, unsigned int>& maparray)
+        {
+            boost::ignore_unused(traceid,maparray);
+            NEKERROR(ErrorUtil::efatal,"Method does not exist for this shape" );
+        }
+
+        void StdExpansion::v_GetElmtTraceToTraceMap
+                  (const unsigned int         tid,
+                   Array<OneD, unsigned int> &maparray,
+                   Array<OneD,          int> &signarray,
+                   Orientation                traceOrient, 
+                   int P ,int Q)
+        {
+            boost::ignore_unused(tid,maparray,signarray,traceOrient,P,Q);
+            NEKERROR(ErrorUtil::efatal,"Method does not exist for this shape" );
+        }
+
         void StdExpansion::v_GetTraceInteriorToElementMap(
                const int                  tid,
                Array<OneD, unsigned int> &maparray,

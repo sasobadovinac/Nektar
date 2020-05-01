@@ -318,5 +318,135 @@ namespace Nektar
             }
         }
 
+        void StdExpansion2D::v_GetTraceCoeffMap(const unsigned int         traceid,
+                                                Array<OneD, unsigned int>& maparray)
+        {
+            boost::ignore_unused(traceid,maparray);
+
+            ASSERTL0(false,"This method must be defined at the individual shape level");
+        }
+       
+        
+        /** \brief Determine the mapping to re-orientate the
+            coefficients along the element trace (assumed to align
+            with teh standard element) into the orientation of the
+            local trace given by edgeOrient. 
+         */
+        
+        void StdExpansion2D::v_GetElmtTraceToTraceMap(
+            const unsigned int          eid,
+            Array<OneD, unsigned int>& maparray,
+            Array<OneD, int>&          signarray,
+            Orientation                edgeOrient,
+            int P, int Q)
+        {
+            // Q is only used in 2D traces. 
+            boost::ignore_unused(Q);
+
+            unsigned int i;
+
+            int dir;
+            // determine basis direction for edge. 
+            if(DetShapeType() == LibUtilities::eTriangle)
+            {
+                dir = (eid==0)? 0:1;
+            }
+            else
+            {
+                dir = eid%2; 
+            }
+
+            int numModes = m_base[dir]->GetNumModes();
+
+            // P is the desired length of the map
+            P = (P == -1)? numModes: P; 
+
+            // decalare maparray 
+            if (maparray.size() != P)
+            {
+                maparray = Array<OneD, unsigned int>(P);
+            }
+
+            // fill default mapping as increasing index
+            for(i = 0; i < P; ++i)
+            {
+                maparray[i] = i;
+            }
+
+            if(signarray.size() != P)
+            {
+                signarray = Array<OneD, int>(P, 1);
+            }
+            else
+            {
+                std::fill(signarray.get(), signarray.get()+P, 1);
+            }
+
+            // Zero signmap and set maparray to zero if
+            // elemental modes are not as large as trace modes
+            for (i = numModes; i < P; ++i)
+            {
+                signarray[i] = 0.0;
+                maparray[i]  = maparray[0];
+            }
+        
+            if (edgeOrient == eBackwards)
+            {
+                const LibUtilities::BasisType bType = GetBasisType(dir);
+                
+                if( (bType == LibUtilities::eModified_A)||(bType == LibUtilities::eModified_B))
+                {
+                    std::swap(maparray[0], maparray[1]);
+                    
+                    for(i = 3; i < std::min(P,numModes); i+=2)
+                    {
+                        signarray[i] *= -1;
+                    }                    
+                }
+                else if(bType == LibUtilities::eGLL_Lagrange)
+                {
+                    ASSERTL1(P == numModes,"Different trace space edge dimension "
+                             "and element edge dimension not currently "
+                             "possible for GLL-Lagrange bases");
+
+                    std::reverse(maparray.get(), maparray.get()+P);
+                }
+                else
+                {
+                    ASSERTL0(false, "Mapping not defined for this type of basis");
+                }
+            }
+        }
+
+        void StdExpansion2D::v_GetTraceToElementMap(
+             const int                  eid,
+             Array<OneD, unsigned int>& maparray,
+             Array<OneD, int>&          signarray,
+             Orientation                edgeOrient,
+             int P,  int Q)
+        {
+            Array<OneD, unsigned int> map1, map2;
+            v_GetTraceCoeffMap(eid,map1);
+            v_GetElmtTraceToTraceMap(eid,map2,signarray,edgeOrient,P,Q);
+
+            if(maparray.size() != map2.size())
+            {
+                maparray = Array<OneD, unsigned int>(map2.size());
+            }
+            
+            for(int i = 0; i < map1.size(); ++i)
+            {
+                maparray[i] = map1[map2[i]];
+            }
+
+            // For variable p provide a mapping to a accessible point
+            // which is the first entry. Note the sign array has been
+            // zeroed so this does not actually do anything in teh
+            // code but must be within scope
+            for(int i = map1.size(); i < map2.size(); ++i)
+            {
+                maparray[i] = map1[0];
+            }
+        }
     } //end namespace
 } //end namespace

@@ -902,44 +902,33 @@ namespace Nektar
             }
         }
 
-        void StdSegExp::v_GetTraceToElementMap(
-             const int                  tid,
-             Array<OneD, unsigned int>& maparray,
-             Array<OneD, int>&          signarray,
-             Orientation                orient,
-             int P,  int Q)
+        /**  \brief Get the map of the coefficient location to teh
+         *    local trace coefficients 
+         */
+        
+        void StdSegExp::v_GetTraceCoeffMap(
+             const unsigned  int       traceid,
+             Array<OneD, unsigned int>& maparray)
         {
-            boost::ignore_unused(P,Q,orient);
             int order0 = m_base[0]->GetNumModes();
     
-            ASSERTL0(tid < 2,"eid must be between 0 and 1");
+            ASSERTL0(traceid < 2,"eid must be between 0 and 1");
 
-            if (maparray.size() != 2)
+            if (maparray.size() != 1)
             {
-                maparray = Array<OneD, unsigned int>(2);
-            }
-
-            if(signarray.size() != 2)
-            {
-                signarray = Array<OneD, int>(2, 1);
-            }
-            else
-            {
-                fill(signarray.get(), signarray.get()+2, 1);
+                maparray = Array<OneD, unsigned int>(1);
             }
 
             const LibUtilities::BasisType bType = GetBasisType(0);
 
             if (bType == LibUtilities::eModified_A)
             {
-                maparray[0] = 0;
-                maparray[1] = 1;
+                maparray[0] = (traceid==0)? 0: 1;
             }
             else if(bType == LibUtilities::eGLL_Lagrange ||
                     bType == LibUtilities::eGauss_Lagrange)
             {
-                maparray[0] = 0;
-                maparray[1] = order0-1;
+                maparray[0] = (traceid==0)? 0: order0-1;
             }
             else
             {
@@ -947,5 +936,53 @@ namespace Nektar
             }
         }
 
+        void StdSegExp::v_GetTraceToElementMap(
+             const int                  tid,
+             Array<OneD, unsigned int>& maparray,
+             Array<OneD, int>&          signarray,
+             Orientation                orient,
+             int P,  int Q)
+        {
+            boost::ignore_unused(orient,P,Q);
+            
+            v_GetTraceCoeffMap(tid,maparray);
+            
+            if(signarray.size() != 1)
+            {
+                signarray = Array<OneD, int>(1, 1);
+            }
+            else
+            {
+                signarray[0] = 1;
+            }
+        }
+
+        void StdSegExp::v_GetElmtTraceToTraceMap (const unsigned int          eid,
+                                                  Array<OneD, unsigned int>& maparray,
+                                                  Array<OneD, int>&          signarray,
+                                                  Orientation                orient,
+                                                  int P,
+                                                  int Q)
+        {
+            // parameters for higher dimnesion traces
+            boost::ignore_unused(eid,orient,P,Q);
+            if (maparray.size() != 1)
+            {
+                maparray = Array<OneD, unsigned int>(1);
+            }
+
+            maparray[0] = 0;
+
+
+            if(signarray.size() != 1)
+            {
+                signarray = Array<OneD, int>(1, 1);
+            }
+            else
+            {
+                signarray[0] = 1;
+            }
+        }
+        
     }//end namespace
 }//end namespace

@@ -191,6 +191,10 @@ namespace Nektar
             STD_REGIONS_EXPORT virtual void v_GetBoundaryMap(
                 Array<OneD, unsigned int>& outarray);
 
+            STD_REGIONS_EXPORT virtual void v_GetTraceCoeffMap
+                                     (const unsigned int         traceid,
+                                      Array<OneD, unsigned int>& maparray);
+#if 0 
             STD_REGIONS_EXPORT  virtual void v_GetTraceToElementMap(
                 const int                  eid,
                 Array<OneD, unsigned int>& maparray,
@@ -198,7 +202,8 @@ namespace Nektar
                 Orientation          edgeOrient = eForwards,
                 int P = -1,
                 int Q = -1);
-
+#endif
+            
             STD_REGIONS_EXPORT virtual  void v_GetTraceInteriorToElementMap(
                 const int                  eid,
                 Array<OneD, unsigned int>& maparray,

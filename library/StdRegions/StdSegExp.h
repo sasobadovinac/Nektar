@@ -241,6 +241,17 @@ namespace Nektar
                     const Array<OneD, const NekDouble> &inarray,
                     Array<OneD, NekDouble> &outarray);
 
+            STD_REGIONS_EXPORT virtual void v_GetTraceCoeffMap
+                                     (const unsigned int         traceid,
+                                      Array<OneD, unsigned int>& maparray);
+
+            STD_REGIONS_EXPORT virtual void v_GetElmtTraceToTraceMap
+                                     (const unsigned int          eid,
+                                      Array<OneD, unsigned int>& maparray,
+                                      Array<OneD, int>&          signarray,
+                                      Orientation                edgeOrient,
+                                      int P, int Q);
+            
             STD_REGIONS_EXPORT virtual void v_GetTraceToElementMap(
                     const int                  tid,
                     Array<OneD, unsigned int>& maparray,

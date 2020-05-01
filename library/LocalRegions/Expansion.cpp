@@ -244,7 +244,8 @@ namespace Nektar
                 }
             }
             
-            returnval = MemoryManager<IndexMapValues>::AllocateSharedPtr(map.size());
+            returnval = MemoryManager<IndexMapValues>::
+                AllocateSharedPtr(map.size());
             
             for(int i = 0; i < map.size(); i++)
             {
