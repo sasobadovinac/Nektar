@@ -595,7 +595,7 @@ NekDouble ProcessPhiFromFile::Det3(const Array<OneD, Array<OneD, NekDouble> > &m
 NekDouble ProcessPhiFromFile::Distance2point(const Array<OneD, NekDouble> &v0,
                                           const Array<OneD, NekDouble> &v1)
 {
-    size_t n   = v0.num_elements();
+    size_t n   = v0.size();
     double out = 0.0;
 
     for (size_t i = 0; i < n; ++i)
@@ -622,7 +622,7 @@ Array<OneD, NekDouble> ProcessPhiFromFile::Vector2edge(
                                         const Array<OneD, NekDouble> &e1,
                                         const Array<OneD, NekDouble> &e2)
 {
-    size_t n = x.num_elements();
+    size_t n = x.size();
     Array<OneD, NekDouble> e1x(n);
     Array<OneD, NekDouble> e1e2(n);
     Vmath::Vsub(n, x, 1, e1, 1, e1x, 1);

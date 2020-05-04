@@ -85,7 +85,7 @@ namespace Nektar
             &SmoothedProfileMethod::SolveUnsteadyStokesSystem, this);
 
         // Number of dims as number of velocity vectors
-        int nvel = m_velocity.num_elements();
+        int nvel = m_velocity.size();
 
         // Initialization of correction pressure and shape function
         switch (nvel)
@@ -293,7 +293,7 @@ namespace Nektar
                     Array<OneD, Array<OneD, NekDouble> > &Forcing)
     {
         int physTot = m_fs[0]->GetNpoints();
-        int nvel    = m_velocity.num_elements();
+        int nvel    = m_velocity.size();
 
         // Set boundary conditions
         SetCorrectionPressureBCs();
@@ -327,8 +327,7 @@ namespace Nektar
         factors[StdRegions::eFactorLambda] = 0.0;
 
         // Solve the Poisson equation
-        m_pressureP->HelmSolve(Forcing, m_pressureP->UpdateCoeffs(),
-                               NullFlagList, factors);
+        m_pressureP->HelmSolve(Forcing, m_pressureP->UpdateCoeffs(), factors);
 
         // Update node values from coefficients
         m_pressureP->BwdTrans(m_pressureP->GetCoeffs(),
@@ -354,7 +353,7 @@ namespace Nektar
         int physTot = m_phi->GetNpoints();
 
         // Gradient of p_p
-        int nvel = m_velocity.num_elements();
+        int nvel = m_velocity.size();
         if (nvel == 2)
         {
             m_pressureP->PhysDeriv(m_pressureP->GetPhys(),
@@ -400,7 +399,7 @@ namespace Nektar
      */
     void SmoothedProfileMethod::SetCorrectionPressureBCs()
     {
-        int nvel = m_velocity.num_elements();
+        int nvel = m_velocity.size();
         Array<OneD, ExpListSharedPtr> BndExp;
         Array<OneD, SpatialDomains::BoundaryConditionShPtr> BndCond;
 
@@ -409,7 +408,7 @@ namespace Nektar
         BndCond = m_pressureP->GetBndConditions();
 
         // For each boundary...
-        for (int b = 0; b < BndExp.num_elements(); ++b)
+        for (int b = 0; b < BndExp.size(); ++b)
         {
             // Only for BCs based on the derivative
             if (BndCond[b]->GetBoundaryConditionType() ==
@@ -484,7 +483,7 @@ namespace Nektar
                     const Array<OneD, const Array<OneD, NekDouble> > &fields,
                     NekDouble dt)
     {
-        int nvel = m_velocity.num_elements();
+        int nvel = m_velocity.size();
         int nq   = m_phi->GetNpoints();
 
         for (int i = 0; i < nvel; ++i)
@@ -637,7 +636,7 @@ namespace Nektar
 
             // If so, check if its velocity changes as well
             m_timeDependentUp = GetVarTimeDependence("ShapeFunction", "Up");
-            switch (m_velocity.num_elements())
+            switch (m_velocity.size())
             {
                 case 3:
                     m_timeDependentUp |= GetVarTimeDependence("ShapeFunction", "Wp");

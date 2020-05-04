@@ -28,7 +28,7 @@ octree::octree(const Array<OneD, Array<OneD, NekDouble> > &pts, int maxPts,
 {
     // Set some values
     m_maxPts  = maxPts;
-    m_nMshPts = pts.num_elements();
+    m_nMshPts = pts.size();
 
     // Create first (root) node
     std::vector<int> indices(m_nMshPts);
@@ -104,7 +104,7 @@ int octree::QueryNode(const Array<OneD, NekDouble> &coords, int depth)
 {
     int nodeID = -1;
 
-    if (coords.num_elements())
+    if (coords.size())
     {
         // First, check if inside the octree
         Array<OneD, NekDouble> bounds = m_root->GetBounds();
@@ -146,7 +146,7 @@ int octree::QueryClosest(const Array<OneD, Array<OneD, NekDouble> > &pts,
     int index = -1;
     distance  = std::numeric_limits<double>::max();
 
-    if (coords.num_elements())
+    if (coords.size())
     {
         // Find the corresponding node to 'coords'
         int nodeInd;
@@ -338,7 +338,7 @@ octree::octant::octant(int loc, int depth, int id,
                             m_id(id), m_isLeaf(true)
 {
     // Check the size of 'bounds'
-    if (bounds.num_elements() != 6)
+    if (bounds.size() != 6)
     {
         throw std::out_of_range("Size of bounds must be 6.");
     }
