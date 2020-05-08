@@ -2112,9 +2112,9 @@ namespace Nektar
                     // d xi_2/dy n_y
                     for(int i = 0; i < nquad0*nquad1; ++i)
                     {
-                        factors[0][i] = df[3*n+2][i]*normal_0[0][i]; 
-                        factors[5][i] = df[3*n+2][nquad0*nquad1*(nquad2-1)+i]*
-                            normal_5[0][i];
+                        factors[0][i] += df[3*n+2][i]*normal_0[n][i]; 
+                        factors[5][i] += df[3*n+2][nquad0*nquad1*(nquad2-1)+i]*
+                            normal_5[n][i];
                     }
 
 
@@ -2125,11 +2125,11 @@ namespace Nektar
                         for(int i = 0; i < nquad0; ++i)
                         {
                             factors[1][j*nquad0+i]
-                                = df[3*n+1][(j+1)*nquad0*nquad1 - nquad0 + i]*
-                                normal_1[0][j*nquad0+i];
+                                += df[3*n+1][(j+1)*nquad0*nquad1 - nquad0 + i]*
+                                normal_1[n][j*nquad0+i];
                             factors[3][j*nquad0+i]
-                                = df[3*n+1][j*nquad0*nquad1 + i]*
-                                normal_3[0][j*nquad0+i];
+                                += df[3*n+1][j*nquad0*nquad1 + i]*
+                                normal_3[n][j*nquad0+i];
                         }
                     }
 
@@ -2138,12 +2138,12 @@ namespace Nektar
                     {
                         for(int i = 0; i < nquad1; ++i)
                         {
-                            factors[2][j*nquad1+i] =
+                            factors[2][j*nquad1+i] +=
                                 df[3*n][(i+1)*nquad0-1 + j*nquad0*nquad1]*
-                                normal_2[0][j*nquad0+i];
-                            factors[4][j*nquad0+i] =
+                                normal_2[n][j*nquad0+i];
+                            factors[4][j*nquad0+i] +=
                                 df[3*n][i*nquad0 + j*nquad0*nquad1]*
-                                normal_4[0][j*nquad0+i];
+                                normal_4[n][j*nquad0+i];
                         }
                     }
                 }
@@ -2177,23 +2177,23 @@ namespace Nektar
                     // d xi_2/dx n_n 
                     for(int i = 0; i < nquad0*nquad1; ++i)
                     {
-                        factors[0][i] = df[3*n+2][0]*normal_0[0][i]; 
-                        factors[5][i] = df[3*n+2][0]*normal_5[0][i];
+                        factors[0][i] += df[3*n+2][0]*normal_0[n][i]; 
+                        factors[5][i] += df[3*n+2][0]*normal_5[n][i];
                     }
                     
                     
                     // d xi_1/dx n_n
                     for(int i = 0; i < nquad0*nquad2; ++i)
                     {
-                        factors[1][i] = df[3*n+1][0]*normal_1[0][i];
-                        factors[3][i] = df[3*n+1][0]*normal_3[0][i];
+                        factors[1][i] += df[3*n+1][0]*normal_1[n][i];
+                        factors[3][i] += df[3*n+1][0]*normal_3[n][i];
                     }
 
                     // d xi_0/dx n_n
                     for(int i = 0; i < nquad0*nquad2; ++i)
                     {
-                        factors[2][i] = df[3*n][0]*normal_2[0][i];
-                        factors[4][i] = df[3*n][0]*normal_4[0][i];
+                        factors[2][i] += df[3*n][0]*normal_2[n][i];
+                        factors[4][i] += df[3*n][0]*normal_4[n][i];
                     }
                 }
             }

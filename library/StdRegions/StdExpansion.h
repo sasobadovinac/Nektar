@@ -715,7 +715,7 @@ namespace Nektar
             void GetTraceCoeffMap(const unsigned  int       traceid,
                                   Array<OneD, unsigned int>& maparray)
             {
-                v_GetTraceToCoeffMap(traceid,maparray);
+                v_GetTraceCoeffMap(traceid,maparray);
             }
 
             void GetElmtTraceToTraceMap(
@@ -1484,7 +1484,7 @@ namespace Nektar
                  int                        P = -1,
                  int                        Q = -1);
 
-            STD_REGIONS_EXPORT  virtual void v_GetTraceToCoeffMap
+            STD_REGIONS_EXPORT  virtual void v_GetTraceCoeffMap
                   (const unsigned  int       traceid,
                    Array<OneD, unsigned int>& maparray);
 

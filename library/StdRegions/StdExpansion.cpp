@@ -1287,7 +1287,7 @@ namespace Nektar
             NEKERROR(ErrorUtil::efatal,"Method does not exist for this shape" );
         }
         
-        void StdExpansion::v_GetTraceToCoeffMap
+        void StdExpansion::v_GetTraceCoeffMap
                   (const unsigned  int       traceid,
                    Array<OneD, unsigned int>& maparray)
         {

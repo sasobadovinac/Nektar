@@ -1047,7 +1047,8 @@ namespace Nektar
                     break;
                 }
             }
-            else if(bType == LibUtilities::eGLL_Lagrange)
+            else if(bType == LibUtilities::eGLL_Lagrange
+                    ||bType == LibUtilities::eGauss_Lagrange)
             {
                 switch (traceid)
                 {

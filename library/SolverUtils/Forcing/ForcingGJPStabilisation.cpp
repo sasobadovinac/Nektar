@@ -177,14 +177,21 @@ namespace SolverUtils
                 }            
                 NekDouble jumpScal = 0.7*pow(p,-4.0)*h*h; 
                 
-                unsigned long  nctrace = elmtToTrace[e][n]->GetNcoeffs();
+                LocalRegions::ExpansionSharedPtr telmt = elmtToTrace[e][n];
+                unsigned long  nctrace = telmt->GetNcoeffs(); 
                 int eid = elmtToTrace[e][n]->GetElmtId();
                 toffset_coeff = trace->GetCoeff_Offset(eid);
 
                 int nptrace = elmt->GetTraceNumPoints(n);
 
-                elmt->GetElmtTraceToTraceMap(n,map,sign,elmt->GetTraceOrient(n),nctrace);
+                int P = (m_expType == MultiRegions::e1D)? -1:
+                    telmt->GetBasisNumModes(0);
+                int Q = (m_expType == MultiRegions::e3D)?
+                    telmt->GetBasisNumModes(1): -1;
                 
+                elmt->GetElmtTraceToTraceMap(n,map,sign,
+                                             elmt->GetTraceOrient(n),
+                                             P,Q);                 
                 // Note curretly doing the same thing so can likely
                 // remove this if
                 if(leftAdjacentTrace[cnt])

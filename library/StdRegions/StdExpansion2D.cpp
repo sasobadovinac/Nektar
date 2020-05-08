@@ -403,7 +403,8 @@ namespace Nektar
                         signarray[i] *= -1;
                     }                    
                 }
-                else if(bType == LibUtilities::eGLL_Lagrange)
+                else if(bType == LibUtilities::eGLL_Lagrange||
+                        bType == LibUtilities::eGauss_Lagrange)
                 {
                     ASSERTL1(P == numModes,"Different trace space edge dimension "
                              "and element edge dimension not currently "
@@ -434,18 +435,9 @@ namespace Nektar
                 maparray = Array<OneD, unsigned int>(map2.size());
             }
             
-            for(int i = 0; i < map1.size(); ++i)
+            for(int i = 0; i < map2.size(); ++i)
             {
                 maparray[i] = map1[map2[i]];
-            }
-
-            // For variable p provide a mapping to a accessible point
-            // which is the first entry. Note the sign array has been
-            // zeroed so this does not actually do anything in teh
-            // code but must be within scope
-            for(int i = map1.size(); i < map2.size(); ++i)
-            {
-                maparray[i] = map1[0];
             }
         }
     } //end namespace
