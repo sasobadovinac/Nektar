@@ -125,7 +125,7 @@ int octree::QueryNode(const Array<OneD, NekDouble> &coords, int depth)
             nodeID = node->GetID();
         }
     }
-    
+
     return nodeID;
 }
 
@@ -153,7 +153,7 @@ int octree::QueryClosest(const Array<OneD, Array<OneD, NekDouble> > &pts,
         if (pointInd > 0)
         {
             nodeInd = pointInd;
-        }   
+        }
         else
         {
             nodeInd = QueryNode(coords);
@@ -180,7 +180,7 @@ int octree::QueryClosest(const Array<OneD, Array<OneD, NekDouble> > &pts,
                 tmpDistance += sub * sub;
             }
             tmpDistance = std::sqrt(tmpDistance);
-            
+
             if (distance > tmpDistance)
             {
                 distance = tmpDistance;
@@ -245,8 +245,8 @@ void octree::GetStats(int &maxPts, int &nPts, int &nNodes,
 /**
  * @brief Goes through all the nodes of the octree counting the number of
  * octants and the maximum depth reached
- * 
- * @param nodeID 
+ *
+ * @param nodeID
  */
 void octree::AdvanceToStats(int nodeID)
 {
@@ -579,7 +579,7 @@ void octree::octant::Subdivide(int maxPts,
         m_pointInd.clear();
         m_nPts   = 0;
         m_isLeaf = false;
-    }    
+    }
 }
 
 /**

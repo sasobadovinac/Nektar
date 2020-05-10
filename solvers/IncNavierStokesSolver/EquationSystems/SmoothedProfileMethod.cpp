@@ -170,7 +170,7 @@ namespace Nektar
         {
             m_up[i] = Array<OneD, NekDouble>(physTot, 0.0);
         }
-        
+
         // Make sure that m_phi and m_up are defined
         UpdatePhiUp(0.0);
 
@@ -432,7 +432,7 @@ namespace Nektar
 
     /**
      * @brief Calculates the values of the shape function
-     * 
+     *
      * @param t
      */
     void SmoothedProfileMethod::UpdatePhiUp(NekDouble t)
@@ -565,9 +565,9 @@ namespace Nektar
     /**
      * @brief Returns a handle to the requested function. Returns NULL if it
      * does not exist
-     * 
-     * @param functionName 
-     * @return TiXmlElement* 
+     *
+     * @param functionName
+     * @return TiXmlElement*
      */
     TiXmlElement* SmoothedProfileMethod::GetFunctionHdl(string functionName)
     {
@@ -582,7 +582,7 @@ namespace Nektar
             function = function->NextSiblingElement("FUNCTION");
             functionType = function->Attribute("NAME");
         }
-        
+
         return function;
     }
 
@@ -606,7 +606,7 @@ namespace Nektar
             ASSERTL0(boost::iequals(fileName.substr(fileName.length()-4),
                      ".fld"), "A valid FLD file must be supplied in the "
                      "'ShapeFunction' field.")
-            
+
             // Get phi values from XML file (after "FieldConvert" the STL file)
             // First, load the data
             std::vector<LibUtilities::FieldDefinitionsSharedPtr> fieldDef;

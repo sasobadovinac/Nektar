@@ -396,19 +396,19 @@ where the solution is to be determined. Thus, for complex geometries, the
 meshing process may get cumbersome and, in any case, the solver will have to
 cope with deformed and skewed cells, at least to some point. In addition, when
 solving cases with moving boundaries, the mesh has to be updated every time step
-to follow the the shape of the boundaries, leading to a very resource and
+to follow the shape of the boundaries, leading to a very resource and
 time-consuming simulation that limits the capabilities of the solver.
 
-Immersed Boundary Methods may turn very useful in these situations, where the
-definition of the boundaries requires a very complex mesh to achieve
+Immersed Boundary Methods may be very useful in these situations, where the
+definition of the boundaries requires a very complex mesh to reach
 convergence. The main idea behind them is the use of a forcing term in the
 incompressible Navier-Stokes equations in such a way that the mesh does not
 necessariliy follow the boundaries. The solution in the regions falling outside
-the boundaries is simply that of the boundaries, forcing the the flow to behave
-as if there were a real object even if the mesh does not represent it. As shown
+the boundaries is simply that of the boundaries, forcing the flow to behave as
+if there were a real object even if the mesh does not represent it. As shown
 in \cite{LuoSPM}, the boundaries defined in this way are no-slip walls and, in
 any case, the flow is still incompressible. Starting from the usual equations,
-the term $\mathbf{f_s}$ is added in the right hand side:
+the term $\mathbf{f_s}$ is added to the right hand side:
 
 \begin{subequations}
 \begin{equation} \label{spm:eq:SPMeqmov}
@@ -421,8 +421,8 @@ the term $\mathbf{f_s}$ is added in the right hand side:
 \end{subequations}
 
 The definition of this term depends on the method but, for the Smoothed Profile
-Method (SPM), is related to a \emph{shape function} $\Phi(\mathbf{x}, t)$ valued
-0 in the fluid domain and 1 outside. It is usually defined as:
+Method (SPM), it is related to a \emph{shape function} $\Phi(\mathbf{x}, t)$
+valued 0 in the fluid domain and 1 outside. It is usually defined as:
 
 \begin{equation} \label{spm:eq:mask}
     \Phi(\mathbf{x}, t) = -\frac{1}{2} \left[ \tanh\left(\frac{d(\mathbf{x}, t)}
@@ -447,7 +447,7 @@ as long as they do not overlap:
     \Phi = \sum_i \Phi_i
 \end{equation}
 
-The approach followed during the implementation in \nek is an extension of the
+The approach followed during the implementation in \nekpp is an extension of the
 Velocity Correction Scheme, using the final velocity obtained with this method
 as an intermediate velocity to determine the value of the forcing term. The
 initial equation \eqref{spm:eq:SPMeqmov} is slightly modified and integrated in
@@ -540,7 +540,7 @@ the flow \cite{LuoSPM}:
         (1-\Phi) \nabla p_p
 \end{equation}
 
-\subsection{Input files}
+\subsubsection{Input files}
 
 The session file follows the same rules as any other incompressible
 Navies-Stokes solver. However, there are some additional parameters that must
@@ -590,10 +590,12 @@ on time, when it has to be set to \inltt{"TimeDependent"}.
 For immersed boundaries with geometries that cannot be represented by means of
 analytical functions, an STL binary file can be supplied as well. However, the
 geometry file must be first converted to FLD format with the \texttt{phifile}
-module of \texttt{FieldConvert}. The simplest way to proceed is by using the
+module of \texttt{FieldConvert}. The simplest way to proceed is by issuing the
 command:
 
-\texttt{FieldConvert -m phifile:file=geom.stl:scale=value session.xml geom.fld}
+\begin{lstlisting}[style=BashInputStyle]
+    FieldConvert -m phifile:file=geom.stl:scale=value session.xml geom.fld
+\end{lstlisting}
 
 where the value of \texttt{scale} corresponds to the coefficient $\xi$ in
 equation \eqref{spm:eq:mask}. The output file can be changed to an VTU or DAT
@@ -930,6 +932,7 @@ Possible values are:
 {Algorithm} & {\texttt{SolverType}} &{Dimensions}&{Projections} \\
 \midrule
 Velocity Correction Scheme (VCS) & \texttt{VelocityCorrectionScheme} & 2D, Quasi-3D, 3D & CG, CG-DG\\
+Smoothed Profile Method (SPM)    & \texttt{SmoothedProfileMethod}    & 2D, Quasi-3D, 3D & CG, CG-DG\\
 VCS with weak pressure & \texttt{VCSWeakPressure} & 2D, Quasi-3D, 3D & CG, CG-DG\\
 Direct solver & \texttt{CoupledLinearisedNS} & 2D, Quasi-3D, 3D &CG\\
 \bottomrule
