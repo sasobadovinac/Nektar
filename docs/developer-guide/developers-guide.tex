@@ -3,7 +3,6 @@
 \DeclareOldFontCommand{\bf}{\normalfont\bfseries}{\mathbf}
 
 \usepackage{makeidx}
-\usepackage{bm}
 \usepackage{hyperref}
 \hypersetup{
     colorlinks=true,
@@ -14,7 +13,7 @@
  
 \urlstyle{same}
  
-\makeindex
+ \makeindex
 
 \newcommand\nek{\emph{Nektar++}}
 \newcommand\shp{spectral/$hp$}
@@ -23,7 +22,7 @@
 \def\code#1{\texttt{#1}}
 \newcommand\hlink{\hyperlink}
 \newcommand\htarget{\hypertarget}%%%
-\newcommand{\BM}[1]{\boldsymbol{#1}}
+\newcommand{\BM}[1]{\mbox{\boldmath $#1$}}
 \newcommand{\BMB}[1]{\mbox{$\mathbb #1$}}
 
 %Yu Pan's commands
@@ -42,11 +41,6 @@
 \usepackage{standalone}
 \usepackage{rotating}
 %end of Yu Pan's commands
-
-% Andres' commands
-\newcommand\partf[2]{\frac{\partial #1}{\partial #2}}
-\newcommand\partff[3]{\frac{\partial^{#3} #1}{\partial #2^{#3}}}
-% End of Andres' commands
 
 \title{A Programmer's Guide to Nektar++}
 

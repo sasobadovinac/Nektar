@@ -197,6 +197,7 @@ possibly also Reynolds stresses) into single file;
 \item \inltt{surfdistance}: Computes height of a prismatic boundary layer mesh and projects onto the surface (for e.g. $y^+$ calculation).
 \item \inltt{vorticity}: Computes the vorticity field.
 \item \inltt{wss}: Computes wall shear stress field.
+\item \inltt{phifile}: Computes the $\Phi$ function representing a body in an STL file. Useful for the Smoothed Profile Method solver.
 \end{enumerate}
 The module list above can be seen by running the command
 %
@@ -1080,6 +1081,12 @@ are extracted to different fields. The \inltt{addnormals} is an optional command
 argument which, when turned on, outputs the normal vector of the extracted boundary
 region as well as the shear stress vector and magnitude. This option is off by default.
 To process the output file(s) you will need an xml file of the same region.
+%
+%
+%
+
+\subsection{Calculating the shape function $\Phi$ for an SPM case:
+\textit{phifile} module}
 %
 %
 %
