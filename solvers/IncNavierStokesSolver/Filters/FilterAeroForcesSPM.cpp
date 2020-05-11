@@ -244,7 +244,7 @@ void FilterAeroForcesSPM::CalculateForces(
         return;
     }
 
-    int nq = pIntVel[0].num_elements();
+    int nq = pIntVel[0].size();
     Array<OneD, NekDouble> tmp(nq);
 
     for (int i = 0; i < m_spaceDim; ++i)
