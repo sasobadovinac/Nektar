@@ -7,3 +7,5 @@ ADD_SOLVER_UTILITY(FldAddFalknerSkanBL IncNavierStokesSolver SOURCES FldAddFalkn
 ADD_SOLVER_UTILITY(AddModeTo2DFld IncNavierStokesSolver SOURCES AddModeTo2DFld.cpp)
 ADD_SOLVER_UTILITY(ExtractMeanModeFromHomo1DFld IncNavierStokesSolver
     SOURCES ExtractMeanModeFromHomo1DFld.cpp)
+
+ADD_SOLVER_UTILITY(TestEigen IncNavierStokesSolver SOURCES TestEigen.cpp)

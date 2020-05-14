@@ -246,6 +246,7 @@ INCLUDE (ThirdPartyTetGen)
 INCLUDE (ThirdPartyCCM)
 INCLUDE (ThirdPartyBlasLapack)
 INCLUDE (ThirdPartyCwipi)
+INCLUDE (ThirdPartyEigen)
 INCLUDE (FindCFI)
 
 INCLUDE (Doxygen)
