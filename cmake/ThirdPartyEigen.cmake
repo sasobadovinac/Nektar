@@ -6,11 +6,13 @@
 #
 ########################################################################
 
-# First search for system Eigen installs. Hint eigen3 for MacPorts.
-FIND_PACKAGE(Eigen3)
+# First search for system Eigen installs.
+IF (NOT THIRDPARTY_BUILD_EIGEN3)
+    FIND_PACKAGE(Eigen3)
+ENDIF()
 
 # If we have our library then don't build Eigen.
-IF (NOT EIGEN3_INCLUDE_DIR)
+IF (NOT EIGEN3_FOUND)
     SET(BUILD_EIGEN3 ON)
 ELSE()
     SET(BUILD_EIGEN3 OFF)
