@@ -2945,8 +2945,8 @@ namespace Nektar
 
             // cout << "   resratio=   "<<resratio<< "   resnorm0=   "<<resnorm0<< "   resnorm=   "<<resnorm<<endl;
             
-            NekDouble tau;
-            m_session->LoadParameter("tau", tau,1.0E-4);
+            //NekDouble tau;
+            //m_session->LoadParameter("tau", tau,1.0E-4);
             bool RealTimeStepFlag=m_intScheme->GetIntegrationSchemeVector()[0]->GetRealTimeStepState();
             bool FirstStepErrorControlFlag=m_FirstStepErrorControlFlag;//First step, there is no error control
             //Error Norm need to transfer to Coeff Space
@@ -2972,8 +2972,8 @@ namespace Nektar
                     break;
                 }
             }
-            // else if (resratio<tol2Ratio||resnorm<tol2)
-            else if (resratio<tol2Ratio || resnorm<(tau*tau))
+            else if (resratio<tol2Ratio||resnorm<tol2)
+            //else if (resratio<tol2Ratio || resnorm<(tau*tau))
             {
                 resmaxm = 0.0;
                 for(int i=0;i<ntotal;i++)
@@ -2984,7 +2984,7 @@ namespace Nektar
 
                    
                 converged = true;
-                cout <<right<<scientific<<setw(nwidthcolm)<<setprecision(nwidthcolm-6)<<" Time= "<<m_time<<" ResidualNorm="<<sqrt(resnorm)<<",  AbsoluteTolerance="<<tau<<endl;
+                cout <<right<<scientific<<setw(nwidthcolm)<<setprecision(nwidthcolm-6)<<" Time= "<<m_time<<" ResidualNorm="<<sqrt(resnorm)<<",  AbsoluteTolerance="<<sqrt(tol2)<<endl;
 
                 if(resratio>tol2Ratio&&l_root)
                 {

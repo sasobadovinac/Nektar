@@ -162,6 +162,7 @@ namespace Nektar
             {
                 m_ErrorBasedAdaptedTimeStepFlag=true;
                 ASSERTL0(m_SpatialErrorFreezNumber>0 && m_SpatialErrorFreezNumber>0,"Need to define the parameters to calculate SpatialError and TemporalError");
+                ASSERTL0(m_SpatialErrorFreezNumber= m_SpatialErrorFreezNumber,"Spatial Error and Temporal Error freezeNum Better to be the same");
             }
             
             //Current stage only define other two parameters together can calculate adaptive time step
@@ -543,12 +544,12 @@ namespace Nektar
                     
                     //To Do:currently test const timestep
                     //Error based TimeStep Adaptivity
-                    // m_timestep=m_OperatedAdaptiveTimeStep;
+                    m_timestep=m_OperatedAdaptiveTimeStep;
 
-                    // if (m_time + m_timestep > m_fintime && m_fintime > 0.0)
-                    // {
-                    //     m_timestep = m_fintime - m_time;
-                    // }
+                    if (m_time + m_timestep > m_fintime && m_fintime > 0.0)
+                    {
+                        m_timestep = m_fintime - m_time;
+                    }
                 }
 
                ////////////////////////////////////////////////////////////////
