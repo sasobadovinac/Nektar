@@ -1540,7 +1540,10 @@ using namespace std;
                 int perFaceId = allCompPairs[faceId];
 
                 // check to see if periodic boundary is rotated
-                ASSERTL1(fIdToCompId.count(faceId) > 0,"Face " +
+                ASSERTL1((rotComp.size() == 0) ||
+                         fIdToCompId.count(faceId) > 0,"Proc (" +
+                         boost::lexical_cast<string>(p) +  " of "+
+                         boost::lexical_cast<string>(n) + "): Face " +
                          boost::lexical_cast<string>(faceId) +
                          " not found in fIdtoCompId map");
                 if(rotComp.count(fIdToCompId[faceId]))
