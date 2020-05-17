@@ -395,8 +395,8 @@ The usual way to solve any PDE requires the definition of a well defined domain
 where the solution is to be determined. Thus, for complex geometries, the
 meshing process may get cumbersome and, in any case, the solver will have to
 cope with deformed and skewed cells, at least to some point. In addition, when
-solving cases with moving boundaries, the mesh has to be updated every time step
-to follow the shape of the boundaries, leading to a very resource and
+solving cases with moving boundaries, the mesh has to be updated every time
+step to follow the shape of the boundaries, leading to a very resource and
 time-consuming simulation that limits the capabilities of the solver.
 
 Immersed Boundary Methods may be very useful in these situations, where the
@@ -425,7 +425,7 @@ Method (SPM), it is related to a \emph{shape function} $\Phi(\mathbf{x}, t)$
 valued 0 in the fluid domain and 1 outside. It is usually defined as:
 
 \begin{equation} \label{spm:eq:mask}
-    \Phi(\mathbf{x}, t) = -\frac{1}{2} \left[ \tanh\left(\frac{d(\mathbf{x}, t)}
+    \Phi(\mathbf{x},t) = -\frac{1}{2} \left[ \tanh\left(\frac{d(\mathbf{x},t)}
         {\xi}\right)-1 \right],
 \end{equation}
 
@@ -440,19 +440,19 @@ valued 0 in the fluid domain and 1 outside. It is usually defined as:
 being $\xi$ a scaling factor \cite{WangSPM} and $d(\mathbf{x}, t)$ a function
 representing the distance to the boundary (positive inside the body, negative
 inside the fluid). If the case to be simulated includes more than one immersed
-boundaries, the final shape function is calculated by adding the individual ones
-as long as they do not overlap:
+boundaries, the final shape function is calculated by adding the individual
+ones as long as they do not overlap:
 
 \begin{equation}
     \Phi = \sum_i \Phi_i
 \end{equation}
 
-The approach followed during the implementation in \nekpp is an extension of the
-Velocity Correction Scheme, using the final velocity obtained with this method
-as an intermediate velocity to determine the value of the forcing term. The
-initial equation \eqref{spm:eq:SPMeqmov} is slightly modified and integrated in
-time by means of a \emph{stiffly-stable} scheme and, then, splitted into
-different smaller parts that are solved separately:
+The approach followed during the implementation in \nekpp is an extension of
+the Velocity Correction Scheme, using the final velocity obtained with this
+method as an intermediate velocity to determine the value of the forcing term.
+The initial equation \eqref{spm:eq:SPMeqmov} is slightly modified and
+integrated in time by means of a \emph{stiffly-stable} scheme and, then,
+splitted into different smaller parts that are solved separately:
 
 \begin{equation}
      \frac{\gamma_0\mathbf{u}^{n+1}-\sum_{q=0}^{J-1}\alpha_q~\mathbf{u}^{n-q}}
@@ -547,7 +547,7 @@ Navies-Stokes solver. However, there are some additional parameters that must
 be supplied when using this approach. First, the property \inltt{SolverType}
 must be set to \inltt{SmoothedProfileMethod}, while the immersed boundaries are
 defined in a function called \inltt{ShapeFunction}. Besides, the property
-\inltt{ForceBoundary} can be defined to \inltt{1} if equation
+\inltt{ForceBoundary} can be set to 1 if equation
 \eqref{eq:SPM:compressiblePressure} is preferred over
 \eqref{eq:SPM:incompressiblePressure}. Thus, the \inltt{SOLVERINFO} section
 could be similar to:
@@ -581,11 +581,11 @@ the \inltt{ShapeFunction} function should be:
     <E VAR="Phi" USERDEFINEDTYPE="TimeDependent" VALUE="-0.5*(tanh((rad(x,y)-1.0)/0.04)-1.0)" />
 \end{lstlisting}
 
-where, the scaling coefficient has been set to 0.04. The variable names are
+where the scaling coefficient has been set to 0.04. The variable names are
 compulsory, being \inltt{Phi} the shape of the bodies, and \inltt{Up},
-\inltt{Vp} and \inltt{Wp} functions representing the velocity field inside them.
-The attribute \inltt{USERDEFINEDTYPE} is compulsory only if the functions depend
-on time, when it has to be set to \inltt{"TimeDependent"}.
+\inltt{Vp} and \inltt{Wp} functions representing the velocity field inside
+them. The attribute \inltt{USERDEFINEDTYPE} is compulsory only if the functions
+depend on time, when it must be set to \inltt{"TimeDependent"}.
 
 For immersed boundaries with geometries that cannot be represented by means of
 analytical functions, an STL binary file can be supplied as well. However, the
@@ -600,21 +600,21 @@ command:
 where the value of \texttt{scale} corresponds to the coefficient $\xi$ in
 equation \eqref{spm:eq:mask}. The output file can be changed to an VTU or DAT
 file in order to get a graphical representation of the Phi field. It is also
-possible to call the \texttt{phifile} module without arguments to output the Phi
-field if it has been defined in the session file as an analytical function. In
-any case, it is important to remark that this functionality is still under
-development and needs to be improved.
+possible to call the \texttt{phifile} module without options to output the
+shape function if it has been defined in the session file as an analytical
+function. In any case, it is important to remark that this functionality is
+still under development and needs to be improved.
 
 In the \inltt{ShapeFunction} block of the session file, the line
 \inltt{<E VAR="Phi" ... />} indicates that the immersed bodies are defined by
-the function introduced in\inltt{VALUE}, while a line like the following:
+the function introduced in \inltt{VALUE}, while a line like the following:
 
 \begin{lstlisting}[style=XMLStyle]
     <F VAR="Phi" FILE="geometry.fld" />
 \end{lstlisting}
 
-must be used when the Phi field is defined in an STL previously converted to FLD
-format.
+must be used when the Phi field is defined in an STL file previously converted
+to FLD format.
 
 \subsection{Direct solver (coupled approach)}
 \label{DirectSolv}

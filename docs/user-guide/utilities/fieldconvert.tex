@@ -1087,6 +1087,36 @@ To process the output file(s) you will need an xml file of the same region.
 
 \subsection{Calculating the shape function $\Phi$ for an SPM case:
 \textit{phifile} module}
+
+This FieldConvert module converts a binary STL CAD file into FLD or VTU/DAT
+files that can be used as inputs for the Smoothed Profile Method solver.
+Running the command:
+
+\begin{lstlisting}[style=BashInputStyle]
+    FieldConvert -m phifile:file=geom.stl:scale=value session.xml geom.fld
+\end{lstlisting}
+
+will generate an output file \inltt{geom.fld} with all the information required
+to define a shape function $\Phi$ representing the geometry specified in
+\inltt{geom.stl}. The option \inltt{scale} sets the value of $\xi$ as it is
+described in the Synopsis chapter of the Incompressible N-S solver. If the
+output file gets the extension \inltt{.vtu} or \inltt{.dat}, the module will
+produce a graphical representation of the shape function; however, the
+recommended way to proceed is to generate an \inltt{.fld} file and then, use
+the default behavior of FieldConvert to get the VTU or DAT files if needed
+
+\begin{lstlisting}[style=BashInputStyle]
+    FieldConvert -m phifile:file=geom.stl:scale=value session.xml geom.fld
+    FieldConvert session.xml geom.fld geom.vtu
+\end{lstlisting}
+
+The algorithm computes an octree for the triangles in the STL file and then,
+loops over all the nodes of the mesh looking for the shortest distance to the
+3D object. Since the module is still under development and the process does
+not run in parallel yet, the computation of the shape function takes a
+considerable amount of time. In addition to this, it is recommended to make
+sure that the angles between triangles are not strictly equal to $90^\circ$,
+since the algorithm will probably fail to find the real $\Phi$ function.
 %
 %
 %
