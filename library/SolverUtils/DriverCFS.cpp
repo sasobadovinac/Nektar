@@ -192,8 +192,27 @@ void DriverCFS::v_InitObject(ostream &out)
                 m_session->SetTag("AdvectiveType", "Convective");
                 m_equ[0] = GetEquationSystemFactory().CreateInstance(
                     vEquation, m_session, m_graph);
+
+                LibUtilities::SessionReaderSharedPtr MultiOrdersession;
+                SpatialDomains::MeshGraphSharedPtr MultiOrdergraph;
+                string          meshfile;
+                string          LinNSCondFile;
+                vector<string>  LinNSFilename;
+
+                meshfile = "2_32_LinNS.xml";
+                LinNSCondFile = m_session->GetSessionName();
+                LinNSCondFile += "_LinNS.xml";
+                cout << " LinNSCondFile= " << LinNSCondFile << endl;
+                cout << " meshfile= " << meshfile << endl;
+                LinNSFilename.push_back(meshfile);
+                LinNSFilename.push_back(LinNSCondFile);
+                MultiOrdersession = LibUtilities::SessionReader::CreateInstance(0, NULL,
+                                LinNSFilename,
+                                m_session->GetComm());
+                                
+                MultiOrdergraph = SpatialDomains::MeshGraph::ReadMultiOrder(MultiOrdersession);
                 m_equ[1] = GetEquationSystemFactory().CreateInstance(
-                    vEquation, m_session, m_MultiOrdergraph);
+                    vEquation, MultiOrdersession, MultiOrdergraph);
             }
                 break;
             default:

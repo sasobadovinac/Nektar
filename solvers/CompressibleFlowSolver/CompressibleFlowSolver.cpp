@@ -54,11 +54,13 @@ int main(int argc, char *argv[])
         // Create session reader.
         //Yu Pan Comment: allocate memory fpr session
         session = LibUtilities::SessionReader::CreateInstance(argc, argv);
+        // MultiOrdersession = LibUtilities::SessionReader(argc, argv,
+        //                         session->GetSessionName(),
+        //                         session->GetComm());
 
         // Create MeshGraph.
         //Yu Pan Comment: load xml file (ReadExpansions read nummodes and numpoints)
         graph = SpatialDomains::MeshGraph::Read(session);
-        MultiOrdergraph = SpatialDomains::MeshGraph::ReadMultiOrder(session);
 
         // Create driver
         session->LoadSolverInfo("CFSDriver", vDriverModule, "CFSAdaptive");
