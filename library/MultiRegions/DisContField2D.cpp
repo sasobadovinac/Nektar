@@ -765,7 +765,7 @@ namespace Nektar
                     cId1 = bndRegOrder.find(region1ID)->second[0];
                     cId2 = bndRegOrder.find(region2ID)->second[0];
                 }
-                
+
                 ASSERTL0(it.second->size() == 1,
                          "Boundary region "+boost::lexical_cast<string>(
                              region1ID)+" should only contain 1 composite.");
@@ -971,7 +971,7 @@ namespace Nektar
             // vertices are copied into m_periodicVerts at the end of the
             // function.
             PeriodicMap periodicVerts;
-                
+
             for (auto &cIt : perComps)
             {
                 SpatialDomains::CompositeSharedPtr c[2];

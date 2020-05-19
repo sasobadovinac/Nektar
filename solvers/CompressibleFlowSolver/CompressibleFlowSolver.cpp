@@ -52,6 +52,9 @@ int main(int argc, char *argv[])
     {
         // Create session reader.
         session = LibUtilities::SessionReader::CreateInstance(argc, argv);
+        // MultiOrdersession = LibUtilities::SessionReader(argc, argv,
+        //                         session->GetSessionName(),
+        //                         session->GetComm());
 
         // Create MeshGraph.
         graph = SpatialDomains::MeshGraph::Read(session);
