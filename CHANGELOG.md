@@ -4,7 +4,10 @@ Changelog
 v5.1.0
 ------
 **Library**
-- Restructure library to use local coefficient storage down to the GlobalLinSys level. Removed GlobalCeoffs functionality (!963)
+- Restructure library to use local coefficient storage down to the GlobalLinSys
+  level. Removed GlobalCeoffs functionality (!963)
+- Add interior penalty method to DG framework (!1101)
+- Add an error filter for the time-evolution of the L2 and Linf errors (!1147)
 
 **FieldConvert**
 - Refactored time integration code using factory pattern (!1034)
