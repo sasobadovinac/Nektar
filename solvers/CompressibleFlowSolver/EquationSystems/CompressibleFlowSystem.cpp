@@ -2093,7 +2093,8 @@ namespace Nektar
             WARNINGL0(converged,"     # Nonlinear system solver not converge in CompressibleFlowSystem::DoImplicitSolve ");
             cout <<right<<scientific<<setw(nwidthcolm)<<setprecision(nwidthcolm-6)
                 <<"     * Newton-Its converged (RES=" 
-                << sqrt(resnorm)<<" Res/Q="<< sqrt(resnorm/m_inArrayNorm)
+                << sqrt(resnorm) << "RES0= " << sqrt(resnorm0) << "Q= " << sqrt(m_inArrayNorm)
+                <<" Res/Q="<< sqrt(resnorm/m_inArrayNorm) <<" Q= "<< sqrt(m_inArrayNorm)
                 <<" ResMax/QPerDOF="<< resmaxm*sqrt(ntotalDOF/m_inArrayNorm)<<" Res/(DtRHS): "<<sqrt(resratio)
                 <<" with "<<setw(3)<<NttlNonlinIte<<" Non-Its"<<" and "<<setw(4)<<NtotDoOdeRHS<<" Lin-Its)"<<endl;
 
