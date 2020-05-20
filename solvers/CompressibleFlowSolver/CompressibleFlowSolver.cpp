@@ -52,13 +52,10 @@ int main(int argc, char *argv[])
     {
         // Create session reader.
         session = LibUtilities::SessionReader::CreateInstance(argc, argv);
-        // MultiOrdersession = LibUtilities::SessionReader(argc, argv,
-        //                         session->GetSessionName(),
-        //                         session->GetComm());
 
-        // Create MeshGraph.
+        // Create MeshGraph: In read, generate a partitioned folder using m_session->GetSessionName() as folder's name
         graph = SpatialDomains::MeshGraph::Read(session);
-
+        
         // Create driver
         session->LoadSolverInfo("Driver", vDriverModule, "Standard");
         drv = GetDriverFactory().CreateInstance(vDriverModule, session, graph);

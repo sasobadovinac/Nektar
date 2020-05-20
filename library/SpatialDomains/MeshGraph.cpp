@@ -138,6 +138,7 @@ MeshGraphSharedPtr MeshGraph::Read(
 
 MeshGraphSharedPtr MeshGraph::ReadMultiOrder(
     const LibUtilities::SessionReaderSharedPtr session,
+    vector<string>                             Filename,
     DomainRangeShPtr                           rng,
     bool                                       fillGraph)
 {
@@ -153,7 +154,7 @@ MeshGraphSharedPtr MeshGraph::ReadMultiOrder(
     if (isRoot)
     {
         // Parse the XML document.
-        session->InitSession();
+        session->InitSession(Filename);
 
         // Get geometry type, i.e. XML (compressed/uncompressed) or HDF5.
         geomType = session->GetGeometryType();

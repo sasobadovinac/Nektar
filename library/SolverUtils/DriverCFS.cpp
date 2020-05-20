@@ -210,7 +210,7 @@ void DriverCFS::v_InitObject(ostream &out)
                                 LinNSFilename,
                                 m_session->GetComm());
                                 
-                MultiOrdergraph = SpatialDomains::MeshGraph::ReadMultiOrder(MultiOrdersession);
+                // MultiOrdergraph = SpatialDomains::MeshGraph::ReadMultiOrder(MultiOrdersession);
                 m_equ[1] = GetEquationSystemFactory().CreateInstance(
                     vEquation, MultiOrdersession, MultiOrdergraph);
             }

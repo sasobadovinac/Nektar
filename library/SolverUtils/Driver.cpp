@@ -188,31 +188,35 @@ void Driver::v_InitObject(ostream &out)
                 // Coupling SFD method and Arnoldi algorithm
                 // For having 2 equation systems defined into 2 different
                 // session files (with the mesh into a file named 'session'.gz)
-                string          meshfile,condfile;
-                string          MultiOrderCondFile,MultiOrderMeshFile;
+                m_session->SetTag("AdvectiveType","Convective");
+                m_equ[0] = GetEquationSystemFactory().CreateInstance(vEquation, m_session, m_graph);
+                string         TmpInputFile;
                 vector<string>  MultiOrderFilename;
-                meshfile = m_session->GetFilenames()[0];
-                if(m_session->GetFilenames().size()>0)
+
+                for(int i=0;i<m_session->GetFilenames().size();i++)
                 {
-                    condfile=m_session->GetFilenames()[1];
+                    TmpInputFile=m_session->GetFilenames()[i];
+                    int index,length;
+                    index=TmpInputFile.find("/");
+                    if((-1)!=index)
+                    {
+                        length=TmpInputFile.length()-index+5;
+                        TmpInputFile.replace( index-4,length, "_MultiOrder.xml");
+                        MultiOrderFilename.push_back(TmpInputFile);
+                    }
+                    else
+                    {
+                        index=TmpInputFile.find(".");
+                        TmpInputFile.replace( index,4, "_MultiOrder.xml");
+                        MultiOrderFilename.push_back(TmpInputFile);
+
+                    }
                 }
-                MultiOrderMeshFile=meshfile;
-                int index=MultiOrderMeshFile.find(".");
-                MultiOrderMeshFile.replace( index,4, "_MultiOrder.xml");
-                MultiOrderCondFile= condfile;
-                index=MultiOrderCondFile.find(".");
-                MultiOrderCondFile.replace( index,4, "_MultiOrder.xml");
-                MultiOrderFilename.push_back(MultiOrderMeshFile);
-                MultiOrderFilename.push_back(MultiOrderCondFile);
                 MultiOrderSession= LibUtilities::SessionReader::CreateInstance(
                                 0, NULL, MultiOrderFilename, m_session->GetComm());
 
                 SpatialDomains::MeshGraphSharedPtr MultiOrderGraph =
                 SpatialDomains::MeshGraph::Read(MultiOrderSession);
-                
-                m_session->SetTag("AdvectiveType","Convective");
-                m_equ[0] = GetEquationSystemFactory().CreateInstance(
-                    vEquation, m_session, m_graph);
 
                 //Run MultiOrder Solver
                 MultiOrderSession->SetTag("AdvectiveType","Convective");
