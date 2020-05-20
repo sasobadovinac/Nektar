@@ -162,7 +162,7 @@ namespace Nektar
             {
                 m_ErrorBasedAdaptedTimeStepFlag=true;
                 ASSERTL0(m_SpatialErrorFreezNumber>0 && m_SpatialErrorFreezNumber>0,"Need to define the parameters to calculate SpatialError and TemporalError");
-                ASSERTL0(m_SpatialErrorFreezNumber= m_SpatialErrorFreezNumber,"Spatial Error and Temporal Error freezeNum Better to be the same");
+                ASSERTL0(m_SpatialErrorFreezNumber== m_SpatialErrorFreezNumber,"Spatial Error and Temporal Error freezeNum Better to be the same");
             }
             
             //Current stage only define other two parameters together can calculate adaptive time step
@@ -541,6 +541,47 @@ namespace Nektar
                         m_comm->AllReduce(m_OperatedAdaptiveTimeStep,LibUtilities::ReduceMin);
 
                     }
+
+                    // if(m_ErrorBasedAdaptedTimeStepFlag && m_comm->GetRank() == 0)
+                    // {
+                    //     Array<OneD, NekDouble>  m_SpatialQuadErrorNormArray(nvariables,0.0);
+                    //     Array<OneD, NekDouble>  m_TemporalQuadErrorNormArray(nvariables,0.0);
+
+                    //     for(int i = 0; i < nvariables; i++)
+                    //     {
+                    //         int npoints=m_fields[i]->GetNpoints();
+                    //         m_TemporalQuadErrorNormArray[i] = Vmath::Dot(npoints,m_OperatedTemporalError[i],m_OperatedTemporalError[i]);
+                    //         m_TemporalQuadErrorNormArray[i] =sqrt( m_TemporalQuadErrorNormArray[i]);
+                    //     }
+                    //     for(int i = 0; i < nvariables; i++)
+                    //     {
+                    //         int npoints=m_fields[i]->GetNpoints();
+                    //         m_SpatialQuadErrorNormArray[i] = Vmath::Dot(npoints,m_OperatedSpatialError[i],m_OperatedSpatialError[i]);
+                    //         m_SpatialQuadErrorNormArray[i] =sqrt(m_SpatialQuadErrorNormArray[i] );
+                    //     }
+                    //     ofstream outfile1;
+                    //     outfile1.open("OperatedQuadErrorNorm.txt",ios::app);
+                    //     outfile1<<"$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$"<<endl;
+                    //     int nwidthcolm=12;
+                    //     int npoints=m_fields[0]->GetNpoints();
+                    //     outfile1<<"Time="<<m_time<<", TimeStep="<<m_timestep<<", AdaptiveTimeStep="<<m_OperatedAdaptiveTimeStep;
+                    //     outfile1<<endl;
+                    //     outfile1<<"Spatial Error (OperatedNorm)"<<endl;
+                    //     for(int i=0;i<nvariables;i++)
+                    //     {
+                    //         outfile1<<right<<scientific<<setw(nwidthcolm)<<setprecision(nwidthcolm-6)<<m_SpatialQuadErrorNormArray[i]/sqrt(npoints);//Because L2 norm is sqrt((x1^2+x2^2)/2)
+                    //         outfile1<<"     ";
+                    //     }
+                    //     outfile1<<endl;
+                    //     outfile1<<"Temporal Error (OperatedNorm)"<<endl;
+                    //     for(int i=0;i<nvariables;i++)
+                    //     {
+                    //         outfile1<<right<<scientific<<setw(nwidthcolm)<<setprecision(nwidthcolm-6)<<m_TemporalQuadErrorNormArray[i]/sqrt(npoints);
+                    //         outfile1<<"     ";
+                    //     }
+                    //     outfile1<<endl;
+                    //     outfile1.close();
+                    // }
                     
                     //To Do:currently test const timestep
                     //Error based TimeStep Adaptivity
@@ -566,7 +607,7 @@ namespace Nektar
                 
 
                 //////////////////////////////////////////////////////////////////////////
-                //For freeze
+                //For freeze: need to before TimeIntegrate because you send a bool flag to TimeIntegrationScheme
                 if(m_TemporalErrorFreezNumber>0)
                 {
                     if(0==step || m_CalculateTemporalErrorCounter>=(m_TemporalErrorFreezNumber-1))
@@ -584,9 +625,11 @@ namespace Nektar
                     }
                 }
                 
+
+                fields = m_intScheme->TimeIntegrate(stepCounter, m_timestep, m_intSoln, m_ode);
+
                 //Need to be careful, separate the Realtime and PairedIntegration
-                //Do the calulation before TimeIntegrate, because in TimeIntegrate is also Dirk4-Dirk3 before RealTime Integrate
-                //To Do, check if DoOdeRhs1 is the same as the first stage derivative in TimeIntegrate
+                //Do the calculation after TimeIntegrate, because in TimeIntegrate is also Dirk4-Dirk3 before RealTime Integrate
                 if(m_SpatialErrorFreezNumber>0)
                 {
                     if(0==step || m_CalculateSpatialErrorCounter>=(m_SpatialErrorFreezNumber-1))
@@ -656,8 +699,6 @@ namespace Nektar
                         m_CalculateSpatialErrorCounter++;
                     }
                 }
-
-                fields = m_intScheme->TimeIntegrate(stepCounter, m_timestep, m_intSoln, m_ode);
                 
                 ///////////////////////////////////////////////////////////////////////////////
                 //Calculate Temporal TimeIntegration Error
@@ -710,7 +751,7 @@ namespace Nektar
                     ofstream outfile0;
                     outfile0.open("QuadErrorNorm.txt",ios::app);
                     outfile0<<"$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$"<<endl;
-                    int nwidth=12;
+                    int nwidthcolm=12;
                     int npoints=m_fields[0]->GetNpoints();
                     outfile0<<"Time="<<m_time<<", TimeStep="<<m_timestep<<", AdaptiveTimeStep="<<m_OperatedAdaptiveTimeStep;
                     outfile0<<endl;

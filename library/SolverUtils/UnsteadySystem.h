@@ -189,7 +189,7 @@ namespace Nektar
             Array<OneD,Array<OneD,NekDouble>> m_SpatialError;
             Array<OneD,Array<OneD,NekDouble>> m_OperatedSpatialError;
             Array<OneD,Array<OneD,NekDouble>> m_OperatedTemporalError;
-            // Array<OneD,Array<OneD,NekDouble>> m_OperatedAdaptiveTimeStepForOutput;
+            //Array<OneD,Array<OneD,NekDouble>> m_OperatedAdaptiveTimeStepForOutput;
             ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
             int m_CalcuPrecMatCounter  = std::numeric_limits<int>::max();
