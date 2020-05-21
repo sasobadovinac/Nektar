@@ -2131,11 +2131,11 @@ namespace Nektar
                 NekDouble tmp = m_ForcingGama * pow(forcing, m_ForcingAlpha);
                 if (tmp > 0.1)
                 {
-                    forcing = min(0.1, max(tmp, tmpForc));
+                    forcing = min(m_GMRESRelativeIteTol, max(tmp, tmpForc));
                 }
                 else
                 {
-                    forcing = min(0.1, tmpForc);
+                    forcing = min(m_GMRESRelativeIteTol, tmpForc);
                 }
                 break;
             }
