@@ -175,7 +175,6 @@ public:
 
     SPATIAL_DOMAINS_EXPORT static MeshGraphSharedPtr ReadMultiOrder(
         const LibUtilities::SessionReaderSharedPtr pSession,
-        vector<string>                             Filename,
         DomainRangeShPtr                           rng       = NullDomainRangeShPtr,
         bool                                       fillGraph = true);
 

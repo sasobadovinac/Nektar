@@ -192,7 +192,8 @@ void Driver::v_InitObject(ostream &out)
                 m_equ[0] = GetEquationSystemFactory().CreateInstance(vEquation, m_session, m_graph);
                 string         TmpInputFile;
                 vector<string>  MultiOrderFilename;
-
+                
+                //Because file name will change to FileName_xml/P0000000.xml, so return back to original name
                 for(int i=0;i<m_session->GetFilenames().size();i++)
                 {
                     TmpInputFile=m_session->GetFilenames()[i];
@@ -201,22 +202,23 @@ void Driver::v_InitObject(ostream &out)
                     if((-1)!=index)
                     {
                         length=TmpInputFile.length()-index+5;
-                        TmpInputFile.replace( index-4,length, "_MultiOrder.xml");
+                        // TmpInputFile.replace( index-4,length, "_MultiOrder.xml");
+                        TmpInputFile.replace( index-4,length, ".xml");
                         MultiOrderFilename.push_back(TmpInputFile);
                     }
                     else
                     {
                         index=TmpInputFile.find(".");
-                        TmpInputFile.replace( index,4, "_MultiOrder.xml");
+                        TmpInputFile.replace( index,4, ".xml");
                         MultiOrderFilename.push_back(TmpInputFile);
 
                     }
                 }
-                MultiOrderSession= LibUtilities::SessionReader::CreateInstance(
-                                0, NULL, MultiOrderFilename, m_session->GetComm());
 
-                SpatialDomains::MeshGraphSharedPtr MultiOrderGraph =
-                SpatialDomains::MeshGraph::Read(MultiOrderSession);
+                int Order=1;
+                MultiOrderSession= LibUtilities::SessionReader::CreateInstance(
+                                0, NULL, MultiOrderFilename, m_session->GetComm(),Order);
+                SpatialDomains::MeshGraphSharedPtr MultiOrderGraph =SpatialDomains::MeshGraph::ReadMultiOrder(MultiOrderSession);
 
                 //Run MultiOrder Solver
                 MultiOrderSession->SetTag("AdvectiveType","Convective");
