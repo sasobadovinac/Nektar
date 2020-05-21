@@ -83,6 +83,9 @@ namespace Nektar
 
         NekDouble                           m_JFEps;
 
+        NekDouble                        m_ForcingGama  = 1.0;
+        NekDouble                        m_ForcingAlpha = 0.5 * (1.0 + sqrt(5));
+
         Array<OneD, Array<OneD, Array<OneD, NekDouble> > >  m_qfield;
         Array<OneD, Array<OneD, NekDouble> >                m_MatrixFreeRefFields;
         Array<OneD, Array<OneD, NekDouble> >                m_MatrixFreeRefFwd;
@@ -283,6 +286,10 @@ namespace Nektar
                 Array<OneD,       Array<OneD, NekDouble> >&out,
             const NekDouble time,
             const NekDouble lambda);
+        void CalcInexactNewtonForcing(
+            const NekDouble &resnormOld,
+            const NekDouble &resnorm,
+            NekDouble       &forcing);
 
         void AllocatePrecondBlkDiag_coeff(Array<OneD, Array<OneD, DNekBlkMatSharedPtr> > &gmtxarray);
 

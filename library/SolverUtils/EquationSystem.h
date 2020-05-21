@@ -387,6 +387,8 @@ class Interpolator;
             int                                         m_JFNKPrecondStep;
 
             int                                         m_MaxNonlinIte;
+
+            int                                         m_adapGMRESTol;
             
 #endif
             /// Number of checkpoints written so far

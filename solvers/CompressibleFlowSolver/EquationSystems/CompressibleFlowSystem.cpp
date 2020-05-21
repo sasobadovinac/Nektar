@@ -321,6 +321,7 @@ namespace Nektar
         }
 
         m_session->LoadParameter ("JFEps", m_JFEps, 5.0E-8);
+        m_session->LoadParameter ("JFEps", m_JFEps, 5.0E-8);
 
         int ntmp;
         m_session->LoadParameter("DEBUG_ADVECTION_JAC_MAT",     ntmp      ,    1);
@@ -1888,6 +1889,7 @@ namespace Nektar
         int NttlNonlinIte    = 0;
         for (int k = 0; k < MaxNonlinIte; k++)
         {
+            NekDouble GMRESRelativeIteTol;
             NonlinSysEvaluator_coeff(m_TimeIntegtSol_k,m_SysEquatResid_k);
         // for(int i = 0; i < nvariables; i++)
         // {
@@ -1986,11 +1988,13 @@ namespace Nektar
             resnorm = Vmath::Dot(ntotal,NonlinSysRes_1D,NonlinSysRes_1D);
 
             v_Comm->AllReduce(resnorm, Nektar::LibUtilities::ReduceSum);
-
+            NekDouble resnormOld = 1;
             if(0==k)
             {
                 resnorm0 = resnorm;
+                resnormOld = resnorm;
                 resratio = 1.0;
+                GMRESRelativeIteTol = m_GMRESRelativeIteTol;
 
                 if(m_Res0PreviousStep<0.0)
                 {
@@ -2007,6 +2011,8 @@ namespace Nektar
             else
             {
                 resratio = resnorm/resnorm0;
+                CalcInexactNewtonForcing(resnormOld, resnorm, GMRESRelativeIteTol);
+                resnormOld = resnorm;
             }
             // if(resnorm0<tol2)
             // {
@@ -2062,7 +2068,9 @@ namespace Nektar
 
             //TODO: currently  NonlinSysRes is 2D array and SolveLinearSystem needs 1D array
             // LinSysTol = sqrt(0.01*sqrt(ratioTol)*resnorm);
-            LinSysTol = m_GMRESRelativeIteTol*sqrt(resnorm);
+            LinSysTol = GMRESRelativeIteTol*sqrt(resnorm);
+
+            cout << " GMRESRelativeIteTol= " << GMRESRelativeIteTol << endl;
             // LinSysTol = 0.005*sqrt(resnorm)*(k+1);
             NtotDoOdeRHS  +=   m_linsol->SolveLinearSystem(ntotal,NonlinSysRes_1D,dsol_1D,0,LinSysTol);
             // cout << "NtotDoOdeRHS    = "<<NtotDoOdeRHS<<endl;
@@ -2100,6 +2108,36 @@ namespace Nektar
 
             // cout <<right<<scientific<<setw(nwidthcolm)<<setprecision(nwidthcolm-6)
             //         << "       m_cflSafetyFactor=   "<<m_cflSafetyFactor<<endl;
+        }
+    }
+
+    void CompressibleFlowSystem::CalcInexactNewtonForcing(
+        const NekDouble &resnormOld,
+        const NekDouble &resnorm,
+        NekDouble       &forcing)
+    {
+        switch(m_adapGMRESTol)
+        {
+        case 0:
+            {
+                forcing = m_GMRESRelativeIteTol;
+                break;
+            }
+        case 1: 
+            {
+                NekDouble tmpForc = m_ForcingGama * 
+                                    pow((resnorm / resnormOld), m_ForcingAlpha); 
+                NekDouble tmp = m_ForcingGama * pow(forcing, m_ForcingAlpha);
+                if (tmp > 0.1)
+                {
+                    forcing = min(0.1, max(tmp, tmpForc));
+                }
+                else
+                {
+                    forcing = min(0.1, tmpForc);
+                }
+                break;
+            }
         }
     }
 
