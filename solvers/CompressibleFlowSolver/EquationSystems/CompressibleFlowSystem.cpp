@@ -2068,10 +2068,6 @@ namespace Nektar
             //TODO: currently  NonlinSysRes is 2D array and SolveLinearSystem needs 1D array
             // LinSysTol = sqrt(0.01*sqrt(ratioTol)*resnorm);
             LinSysTol = GMRESRelativeIteTol*sqrt(resnorm);
-            if (l_root)
-            {
-                cout << " GMRESRelativeIteTol= " << GMRESRelativeIteTol << endl;
-            }
             // LinSysTol = 0.005*sqrt(resnorm)*(k+1);
             NtotDoOdeRHS  +=   m_linsol->SolveLinearSystem(ntotal,NonlinSysRes_1D,dsol_1D,0,LinSysTol);
             // cout << "NtotDoOdeRHS    = "<<NtotDoOdeRHS<<endl;
@@ -2117,6 +2113,15 @@ namespace Nektar
         const NekDouble &resnorm,
         NekDouble       &forcing)
     {
+        bool l_verbose      = m_session->DefinesCmdLineArgument("verbose");
+
+        LibUtilities::CommSharedPtr v_Comm  = m_fields[0]->GetComm()->GetRowComm();
+        bool l_root=false;
+        if(0==v_Comm->GetRank())
+        {
+            l_root =true;
+        }
+
         switch(m_adapGMRESTol)
         {
         case 0:
@@ -2137,8 +2142,20 @@ namespace Nektar
                 {
                     forcing = min(m_GMRESRelativeIteTol, tmpForc);
                 }
+                if (l_verbose&&l_root)
+                {
+                    cout << " resnormRatio= " 
+                         << resnorm / resnormOld 
+                         << " tmpForc= "
+                         << tmpForc;
+                }
                 break;
             }
+        }
+
+        if (l_verbose&&l_root)
+        {
+            cout << " GMRESRelativeIteTol= " << forcing << endl;
         }
     }
 
