@@ -131,6 +131,10 @@ namespace Nektar
                     // and few more custom functions
                     ("sign",	sign)
                     ("awgn",	awgn)
+		    ("blau",    blau)
+		    ("blav",    blav)
+                    ("blat",    blat)
+                    ("hump",    hump)
                     ;
             }
         } functions_p;
@@ -250,6 +254,10 @@ namespace Nektar
             m_functionMapNameToInstanceType["tanh"]  =  E_TANH;
             m_functionMapNameToInstanceType["sign"]  =  E_SIGN;
             m_functionMapNameToInstanceType["awgn"]  =  E_AWGN;
+	    	m_functionMapNameToInstanceType["blau"]  =  E_BLAU;
+	    	m_functionMapNameToInstanceType["blav"]  =  E_BLAV;
+			m_functionMapNameToInstanceType["blat"]  =  E_BLAT;
+            m_functionMapNameToInstanceType["hump"]  =  E_HUMP;
 
             m_function[ E_ABS  ] = std::abs;
             m_function[ E_ASIN ] = asin;
@@ -273,7 +281,10 @@ namespace Nektar
             m_function2[E_ANG]   = ang;
             m_function2[E_RAD]   = rad;
             m_function2[E_BESSEL]   = boost::math::cyl_bessel_j;
-
+			m_function[ E_BLAU ] = blau;
+            m_function[ E_BLAV ] = blav;
+            m_function[ E_BLAT ] = blat;
+            m_function[ E_HUMP ] = hump;
             // there is no entry to m_function that correspond to awgn function.
             // this is made in purpose. This function need not be pre-evaluated once!
         }
@@ -816,6 +827,18 @@ namespace Nektar
                         return std::make_pair(false,0);
                     case E_SIGN:
                         stack.push_back ( makeStep<EvalSign>( stateIndex, stateIndex ) );
+                        return std::make_pair(false,0);
+                    case E_BLAU:
+                        stack.push_back ( makeStep<EvalBlau>( stateIndex, stateIndex ) );
+                        return std::make_pair(false,0);
+                    case E_BLAV:
+                        stack.push_back ( makeStep<EvalBlav>( stateIndex, stateIndex ) );
+                        return std::make_pair(false,0);
+                    case E_BLAT:
+                        stack.push_back ( makeStep<EvalBlat>( stateIndex, stateIndex ) );
+                        return std::make_pair(false,0);
+                    case E_HUMP:
+                        stack.push_back ( makeStep<EvalHump>( stateIndex, stateIndex ) );
                         return std::make_pair(false,0);
                     default:
                         ASSERTL0(false, "Evaluation of " + valueStr + " is not implemented yet");

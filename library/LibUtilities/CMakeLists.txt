@@ -170,6 +170,8 @@ SET(FoundationSources
 
 SET(InterpreterHeaders
       ./Interpreter/AnalyticExpressionEvaluator.hpp
+      ./Interpreter/blasius.h
+      ./Interpreter/externalfuns.h
 )
 
 SET(InterpreterSources

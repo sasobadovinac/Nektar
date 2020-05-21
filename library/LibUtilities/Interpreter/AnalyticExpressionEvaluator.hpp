@@ -63,7 +63,7 @@ namespace boost_spirit = boost::spirit::classic;
 #else
 #include <cmath>
 #endif
-
+#include "externalfuns.h"
 namespace Nektar
 {
     namespace LibUtilities
@@ -473,7 +473,8 @@ namespace Nektar
                     E_ABS,    E_ASIN,  E_ACOS,  E_ATAN,  E_ATAN2, E_ANG,
                     E_CEIL,   E_COS,   E_COSH,  E_EXP,   E_FABS,  E_FLOOR,
                     E_LOG,    E_LOG10, E_POW,   E_RAD,   E_SIN,   E_SINH,
-                    E_SQRT,   E_TAN,   E_TANH,  E_SIGN,  E_AWGN, E_BESSEL
+                    E_SQRT,   E_TAN,   E_TANH,  E_SIGN,  E_AWGN,  E_BESSEL,
+		    E_BLAU,   E_BLAV,  E_BLAT,  E_HUMP
             };
 
 
@@ -743,7 +744,30 @@ namespace Nektar
                     state[storeIdx] = _normal();
                 }
             };
-
+	    	struct EvalBlau: public EvaluationStep
+            {
+                EvalBlau(rgt rn, vr s, cvr c, cvr p, cvr v, ci i, ci l, ci r): EvaluationStep(rn,i,l,r,s,c,p,v) {}
+                virtual void run_many(ci n) { for(int i=0;i<n;i++) state[storeIdx*n+i] = blau( state[argIdx1*n+i] ); }
+                virtual void run_once() { state[storeIdx] = blau( state[argIdx1] ); }
+            };	
+	    	struct EvalBlav: public EvaluationStep
+            {
+                EvalBlav(rgt rn, vr s, cvr c, cvr p, cvr v, ci i, ci l, ci r): EvaluationStep(rn,i,l,r,s,c,p,v) {}
+                virtual void run_many(ci n) { for(int i=0;i<n;i++) state[storeIdx*n+i] = blav( state[argIdx1*n+i] ); }
+                virtual void run_once() { state[storeIdx] = blav( state[argIdx1] ); }
+            };	
+            	struct EvalBlat: public EvaluationStep
+            {
+                EvalBlat(rgt rn, vr s, cvr c, cvr p, cvr v, ci i, ci l, ci r): EvaluationStep(rn,i,l,r,s,c,p,v) {}
+                virtual void run_many(ci n) { for(int i=0;i<n;i++) state[storeIdx*n+i] = blat( state[argIdx1*n+i] ); }
+                virtual void run_once() { state[storeIdx] = blat( state[argIdx1] ); }
+            };
+            struct EvalHump: public EvaluationStep
+            {
+                EvalHump(rgt rn, vr s, cvr c, cvr p, cvr v, ci i, ci l, ci r): EvaluationStep(rn,i,l,r,s,c,p,v) {}
+                virtual void run_many(ci n) { for(int i=0;i<n;i++) state[storeIdx*n+i] = hump( state[argIdx1*n+i] ); }
+                virtual void run_once() { state[storeIdx] = hump( state[argIdx1] ); }
+            };	
         };
     };
 };
