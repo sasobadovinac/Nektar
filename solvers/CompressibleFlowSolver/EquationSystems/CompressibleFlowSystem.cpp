@@ -321,7 +321,6 @@ namespace Nektar
         }
 
         m_session->LoadParameter ("JFEps", m_JFEps, 5.0E-8);
-        m_session->LoadParameter ("JFEps", m_JFEps, 5.0E-8);
 
         int ntmp;
         m_session->LoadParameter("DEBUG_ADVECTION_JAC_MAT",     ntmp      ,    1);
@@ -2069,8 +2068,10 @@ namespace Nektar
             //TODO: currently  NonlinSysRes is 2D array and SolveLinearSystem needs 1D array
             // LinSysTol = sqrt(0.01*sqrt(ratioTol)*resnorm);
             LinSysTol = GMRESRelativeIteTol*sqrt(resnorm);
-
-            cout << " GMRESRelativeIteTol= " << GMRESRelativeIteTol << endl;
+            if (l_root)
+            {
+                cout << " GMRESRelativeIteTol= " << GMRESRelativeIteTol << endl;
+            }
             // LinSysTol = 0.005*sqrt(resnorm)*(k+1);
             NtotDoOdeRHS  +=   m_linsol->SolveLinearSystem(ntotal,NonlinSysRes_1D,dsol_1D,0,LinSysTol);
             // cout << "NtotDoOdeRHS    = "<<NtotDoOdeRHS<<endl;
