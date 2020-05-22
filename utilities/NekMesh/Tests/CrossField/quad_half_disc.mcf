@@ -1,0 +1,19 @@
+<NEKTAR>
+    <MESHING>
+
+        <INFORMATION>
+            <I PROPERTY="CADFile"        VALUE="half_disc.geo"      />
+            <I PROPERTY="MeshType"       VALUE="CrossField"         />
+			<I PROPERTY="StreamlineFile" VALUE="quad_half_disc.csv" />
+			<I PROPERTY="CADExport"      VALUE="quad_half_disc.stp" />
+        </INFORMATION>
+
+        <PARAMETERS>
+            <P PARAM="MinDelta" VALUE="10.0" />
+            <P PARAM="MaxDelta" VALUE="10.0" />
+            <P PARAM="EPS"      VALUE="0.1"  />
+            <P PARAM="Order"    VALUE="4"    />
+        </PARAMETERS>
+
+    </MESHING>
+</NEKTAR>

@@ -2,8 +2,8 @@
     <MESHING>
 
         <INFORMATION>
-            <I PROPERTY="CADFile"  VALUE="vertices_half_disc.geo" />
-            <I PROPERTY="MeshType" VALUE="2D"                     />
+            <I PROPERTY="CADFile"  VALUE="half_disc.geo" />
+            <I PROPERTY="MeshType" VALUE="2D"            />
         </INFORMATION>
 
         <PARAMETERS>

@@ -5,7 +5,7 @@
     <parameters>-v vertices_half_disc.mcf:mcf:vertices=vertices.csv vertices_half_disc.xml</parameters>
     <files>
         <file description="Input File">vertices_half_disc.mcf</file>
-        <file description="Input File 2">vertices_half_disc.geo</file>
+        <file description="Input File 2">half_disc.geo</file>
     </files>
     <metrics>
         <metric type="regex" id="1">

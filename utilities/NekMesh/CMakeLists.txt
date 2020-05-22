@@ -100,6 +100,7 @@ IF(NEKTAR_USE_MESHGEN)
     ADD_NEKTAR_TEST(MeshGen/STEP/3d_sphere LENGTHY)
 
     ADD_NEKTAR_TEST(CrossField/vertices_half_disc)
+    ADD_NEKTAR_TEST(CrossField/quad_half_disc)
 
     IF(NEKTAR_USE_CCM)
         ADD_NEKTAR_TEST(MeshGen/StarCCM/projectcad_ahmed)
