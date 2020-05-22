@@ -1,0 +1,17 @@
+<NEKTAR>
+    <MESHING>
+
+        <INFORMATION>
+            <I PROPERTY="CADFile"  VALUE="vertices_half_disc.geo" />
+            <I PROPERTY="MeshType" VALUE="2D"                     />
+        </INFORMATION>
+
+        <PARAMETERS>
+            <P PARAM="MinDelta" VALUE="0.1" />
+            <P PARAM="MaxDelta" VALUE="0.1" />
+            <P PARAM="EPS"      VALUE="0.1" />
+            <P PARAM="Order"    VALUE="4"   />
+        </PARAMETERS>
+
+    </MESHING>
+</NEKTAR>
