@@ -43,6 +43,8 @@ ADD_NEKTAR_TEST(chan3D_npart_tec)
 ADD_NEKTAR_TEST(wss_3D_periodic)
 ADD_NEKTAR_TEST(scale_compressed_2D)
 
+ADD_NEKTAR_TEST(crossfield_half_disc)
+
 IF (NEKTAR_USE_METIS OR NEKTAR_USE_SCOTCH)
     ADD_NEKTAR_TEST(chan3D_part_only)
     ADD_NEKTAR_TEST(Tet_channel_npart_wss)
