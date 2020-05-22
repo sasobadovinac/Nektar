@@ -1,5 +1,6 @@
 #!/bin/bash -x
 
+if [[ $OS_VERSION != "osx" && ! -d $CCACHE_DIR ]]; then mkdir -p $CCACHE_DIR; fi
 [[ $OS_VERSION != "osx" ]] && ccache -s && ccache -M 5G
 
 if [[ $BUILD_TYPE == "default" ]]; then
