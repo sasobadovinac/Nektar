@@ -247,4 +247,7 @@ IF( NEKTAR_SOLVER_ADR )
         ENDIF()
         ADD_NEKTAR_TEST(RotPerBcs3D_Annulus LENGTHY)
     ENDIF (NEKTAR_USE_MPI)
+
+    # Cross field solver
+    ADD_NEKTAR_TEST(CrossField_half_disc)
 ENDIF( NEKTAR_SOLVER_ADR )
