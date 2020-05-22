@@ -60,17 +60,17 @@ void CrossField::v_InitObject()
     ASSERTL0(m_expdim == 2, "Only 2D supported with cross fields.")
 
     for (int bcRegion = 0;
-         bcRegion < m_fields[0]->GetBndConditions().num_elements(); ++bcRegion)
+         bcRegion < m_fields[0]->GetBndConditions().size(); ++bcRegion)
     {
         Array<OneD, Array<OneD, NekDouble>> normals;
         m_fields[0]->GetBoundaryNormals(bcRegion, normals);
-        int npts = normals[0].num_elements();
+        int npts = normals[0].size();
 
         Array<OneD, Array<OneD, NekDouble>> u(2);
         u[0] = Array<OneD, NekDouble>(npts);
         u[1] = Array<OneD, NekDouble>(npts);
 
-        for (int i = 0; i < normals[0].num_elements(); ++i)
+        for (int i = 0; i < normals[0].size(); ++i)
         {
             NekDouble theta = atan2(normals[1][i], normals[0][i]);
             NekDouble t     = fmod(4 * theta, 2 * M_PI);

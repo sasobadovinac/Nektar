@@ -1,9 +1,18 @@
-CMAKE_MINIMUM_REQUIRED(VERSION 2.8.8)
+CMAKE_MINIMUM_REQUIRED(VERSION 2.8.11)
 SET(CMAKE_BUILD_TYPE Release CACHE STRING "Choose the type of build,
 options are: None(CMAKE_CXX_FLAGS or CMAKE_C_FLAGS used) Debug Release
 RelWithDebInfo MinSizeRel.")
+# Toggleable build type
+SET_PROPERTY(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug;Release;RelWithDebInfo;MinSizeRel")
 
 PROJECT(Nektar++ C CXX)
+
+CMAKE_POLICY(SET CMP0022 NEW)
+
+# Defer to use _ROOT variables to avoid Zlib warning
+IF (POLICY CMP0074)
+    CMAKE_POLICY(SET CMP0074 OLD)
+ENDIF()
 
 # Nektar++ requires C++11. Try to infer this for older CMake versions (less than
 # 3.1.0)
@@ -63,7 +72,7 @@ IF (CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
 ENDIF()
 
 # Find default search paths for OS X; adapted from Stack Overflow question
-# 1487752
+# 1487752.
 IF (APPLE)
     EXECUTE_PROCESS(COMMAND which port
         RESULT_VARIABLE DETECT_MACPORTS
@@ -101,17 +110,30 @@ INCLUDE(GetGitRevisionDescription)
 get_git_head_revision(GIT_REFSPEC GIT_SHA1)
 
 # Set library, binary, include, share and doc paths.
-SET(LIB_DIR "lib/nektar++-${NEKTAR_VERSION}")
+SET(LIB_DIR "lib")
 IF( CMAKE_SYSTEM_PROCESSOR STREQUAL "x86_64" AND NOT APPLE )
-    SET(LIB_DIR "lib64/nektar++-${NEKTAR_VERSION}")
+    SET(LIB_DIR "lib64")
 ENDIF()
 SET(CMAKE_INCLUDE_SYSTEM_FLAG_CXX "-isystem ")
 
 SET(NEKTAR_BIN_DIR bin)
 SET(NEKTAR_LIB_DIR ${LIB_DIR})
-SET(NEKTAR_INCLUDE_DIR include/nektar++-${NEKTAR_VERSION})
-SET(NEKTAR_SHARE_DIR share/nektar++-${NEKTAR_VERSION})
-SET(NEKTAR_DOC_DIR share/doc/nektar++-${NEKTAR_VERSION})
+SET(NEKTAR_INCLUDE_DIR include/nektar++)
+SET(NEKTAR_SHARE_DIR share/nektar++)
+SET(NEKTAR_DOC_DIR share/doc/nektar++)
+SET(NEKTAR_CMAKE_DIR ${LIB_DIR}/nektar++/cmake)
+
+# Set ThirdParty locations.
+SET(TPSRC   ${CMAKE_SOURCE_DIR}/ThirdParty)
+SET(TPBUILD ${CMAKE_BINARY_DIR}/ThirdParty)
+SET(TPDIST  ${CMAKE_BINARY_DIR}/ThirdParty/dist)
+SET(TPINC   ${CMAKE_INSTALL_PREFIX}/include/ThirdParty)
+SET(TPLIB   ${CMAKE_INSTALL_PREFIX}/${NEKTAR_LIB_DIR}/nektar++/thirdparty)
+
+# Create ThirdParty source directory if it doesn't exist already.
+IF (NOT EXISTS ${TPSRC})
+    FILE(MAKE_DIRECTORY ${TPSRC})
+ENDIF ()
 
 # Build shared libraries.
 SET(NEKTAR_LIBRARY_TYPE "SHARED")
@@ -119,18 +141,18 @@ SET(NEKTAR_LIBRARY_TYPE "SHARED")
 # Set up RPATH
 SET(CMAKE_SKIP_BUILD_RPATH  FALSE)
 SET(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
-SET(CMAKE_INSTALL_NAME_DIR "${CMAKE_INSTALL_PREFIX}/${LIB_DIR}")
 LIST(FIND CMAKE_PLATFORM_IMPLICIT_LINK_DIRECTORIES
-	"${CMAKE_INSTALL_PREFIX}/${LIB_DIR}" isSystemDir)
+     "${CMAKE_INSTALL_PREFIX}/${LIB_DIR}" isSystemDir)
 IF("${isSystemDir}" STREQUAL "-1")
-	SET(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/${LIB_DIR}")
-ENDIF("${isSystemDir}" STREQUAL "-1")
+    SET(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/${LIB_DIR}" "${TPLIB}/")
+ELSE()
+    SET(CMAKE_INSTALL_RPATH "${TPLIB}")
+ENDIF()
 
-# Get rid of OS X RPATH warnings -- we should set this to 1 once we reach
-# required minimum cmake version of 3.0.0 and configure it in a more sane
-# fashion.
+# Enable the use of @rpath in macOS install names so that we can use multiple
+# third-party directories.
 IF(NOT DEFINED CMAKE_MACOSX_RPATH)
-    SET(CMAKE_MACOSX_RPATH 0)
+    SET(CMAKE_MACOSX_RPATH 1)
 ENDIF()
 
 # Components of the Nektar++ package to build
@@ -141,12 +163,14 @@ OPTION(NEKTAR_BUILD_UTILITIES  "Build utilities."               ON)
 OPTION(NEKTAR_BUILD_UNIT_TESTS "Build unit tests."              ON)
 OPTION(NEKTAR_BUILD_TESTS      "Build regression tests."        ON)
 OPTION(NEKTAR_BUILD_TIMINGS    "Build benchmark timing codes."  OFF)
-OPTION(NEKTAR_BUILD_PACKAGES   "Build Nektar++ binary packages" OFF)
-MARK_AS_ADVANCED(NEKTAR_BUILD_PACKAGES)
+OPTION(NEKTAR_BUILD_PYTHON     "Build Nektar++ Python bindings" OFF)
 
 OPTION(NEKTAR_TEST_ALL "Include full set of regression tests to this build." OFF)
 OPTION(NEKTAR_TEST_USE_HOSTFILE "Use a hostfile to explicitly specify number of
 slots." OFF)
+
+OPTION(NEKTAR_ERROR_ON_WARNINGS "Use -Werror to make warnings stop compilation." ON)
+MARK_AS_ADVANCED(NEKTAR_ERROR_ON_WARNINGS)
 
 # Meshing utilities and library
 IF (NOT WIN32)
@@ -166,6 +190,20 @@ ENDIF (${CMAKE_COMPILER_IS_GNUCXX})
 OPTION(NEKTAR_USE_MEMORY_POOLS
     "Use memory pools to accelerate memory allocation." ON)
 MARK_AS_ADVANCED(NEKTAR_USE_MEMORY_POOLS)
+
+# Thread safety
+OPTION(NEKTAR_USE_THREAD_SAFETY
+    "Guarantee thread safety in certain core Nektar++ classes." OFF)
+MARK_AS_ADVANCED(NEKTAR_USE_THREAD_SAFETY)
+IF (NEKTAR_USE_THREAD_SAFETY)
+    ADD_DEFINITIONS(-DNEKTAR_USE_THREAD_SAFETY)
+ENDIF()
+
+# Disable backups
+OPTION(NEKTAR_DISABLE_BACKUPS "Disable automatic backup file creation" OFF)
+IF (NEKTAR_DISABLE_BACKUPS)
+    ADD_DEFINITIONS(-DNEKTAR_DISABLE_BACKUPS)
+ENDIF()
 
 IF (MSVC)
     # Needed for M_PI to be visible in visual studio.
@@ -187,27 +225,20 @@ ELSE()
     SET(TPURL http://www.nektar.info/thirdparty)
 ENDIF()
 
-SET(TPSRC   ${CMAKE_SOURCE_DIR}/ThirdParty)
-SET(TPBUILD ${CMAKE_BINARY_DIR}/ThirdParty)
-SET(TPDIST  ${CMAKE_BINARY_DIR}/ThirdParty/dist)
-SET(TPINC   ${CMAKE_INSTALL_PREFIX}/include/ThirdParty)
-SET(TPLIB   ${CMAKE_INSTALL_PREFIX}/${NEKTAR_LIB_DIR})
-
-# Create ThirdParty source directory if it doesn't exist already.
-IF (NOT EXISTS ${TPSRC})
-    FILE(MAKE_DIRECTORY ${TPSRC})
-ENDIF ()
-
 # Find ThirdParty libraries and headers.
+# --------------------------------------
+
+# Need to find MPI first, as other packages depend on the compiler wrappers
+INCLUDE (ThirdPartyMPI)
 INCLUDE (ThirdPartyTinyxml)
 INCLUDE (ThirdPartyMetis)
 INCLUDE (ThirdPartyHDF5)
 INCLUDE (ThirdPartyScotch)
 INCLUDE (ThirdPartyZlib)
 INCLUDE (ThirdPartyBoost)
+INCLUDE (ThirdPartyPython)
 INCLUDE (ThirdPartyFFTW)
 INCLUDE (ThirdPartyArpack)
-INCLUDE (ThirdPartyMPI)
 INCLUDE (ThirdPartyVTK)
 INCLUDE (ThirdPartyOCE)
 INCLUDE (ThirdPartyTriangle)
@@ -267,7 +298,7 @@ IF (NEKTAR_BUILD_LIBRARY)
     SET(NEKTAR++_LIBRARIES "" CACHE INTERNAL "")
 
     ADD_SUBDIRECTORY(library)
-    INSTALL(EXPORT Nektar++Libraries DESTINATION ${LIB_DIR}/cmake COMPONENT dev)
+    INSTALL(EXPORT Nektar++Libraries DESTINATION ${NEKTAR_CMAKE_DIR} COMPONENT dev)
 ENDIF (NEKTAR_BUILD_LIBRARY)
 
 IF (NEKTAR_BUILD_TESTS)
@@ -295,8 +326,14 @@ CONFIGURE_FILE(${CMAKE_SOURCE_DIR}/cmake/Nektar++Config.cmake.in
 
 # Install Nektar++ CMake configuration file
 INSTALL(FILES ${CMAKE_BINARY_DIR}/Nektar++Config.cmake
-    DESTINATION ${NEKTAR_LIB_DIR}/cmake/
+    DESTINATION ${NEKTAR_CMAKE_DIR}
     COMPONENT dev)
+
+INSTALL(CODE "FILE(GLOB tplibs ${TPDIST}/lib/*${CMAKE_SHARED_LIBRARY_SUFFIX}*)
+    IF (NOT tplibs STREQUAL \"\")
+        FILE(INSTALL \${tplibs} DESTINATION ${TPLIB})
+    ENDIF()
+")
 
 # Install ThirdParty headers to subdirectory of ${NEKTAR_INCLUDE_DIR}
 INSTALL(DIRECTORY ${TPDIST}/include/
@@ -305,16 +342,4 @@ INSTALL(DIRECTORY ${TPDIST}/include/
     OPTIONAL
     )
 
-# Install ThirdParty libraries into ${NEKTAR_LIB_DIR}. These are shipped with
-# the LibUtilities library.
-INSTALL(DIRECTORY ${TPDIST}/lib/
-    DESTINATION ${NEKTAR_LIB_DIR}
-    COMPONENT libutilities
-    OPTIONAL
-    )
-
 ADD_SUBDIRECTORY(docs)
-
-IF(NEKTAR_BUILD_PACKAGES)
-    ADD_SUBDIRECTORY(pkg)
-ENDIF(NEKTAR_BUILD_PACKAGES)

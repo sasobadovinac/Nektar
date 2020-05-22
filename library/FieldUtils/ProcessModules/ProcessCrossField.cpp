@@ -64,6 +64,8 @@ ProcessCrossField::~ProcessCrossField()
 
 void ProcessCrossField::Process(po::variables_map &vm)
 {
+    boost::ignore_unused(vm);
+
     Initialise();
 
     vector<pair<Array<OneD, NekDouble>, int>> vertices = AnalyseVertices();
@@ -113,7 +115,7 @@ vector<pair<Array<OneD, NekDouble>, int>> ProcessCrossField::
     for (auto &elmt : intElmts)
     {
         Array<OneD, NekDouble> eta = FindSingularityInElmt(elmt);
-        if (!eta.num_elements())
+        if (!eta.size())
         {
             // No singularity found
             continue;

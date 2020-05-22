@@ -10,7 +10,6 @@
 // Department of Aeronautics, Imperial College London (UK), and Scientific
 // Computing and Imaging Institute, University of Utah (USA).
 //
-// License for the specific language governing rights and limitations under
 // Permission is hereby granted, free of charge, to any person obtaining a
 // copy of this software and associated documentation files (the "Software"),
 // to deal in the Software without restriction, including without limitation
@@ -124,32 +123,64 @@ namespace Nektar
                 LOCAL_REGIONS_EXPORT NekDouble VectorFlux(
                     const Array<OneD, Array<OneD, NekDouble > > &vec);
 
+                LOCAL_REGIONS_EXPORT const Array<OneD, const NekDouble > 
+                        &GetElmtBndNormDirElmtLen(const int nbnd) const;
+
             protected:
                 SpatialDomains::GeometrySharedPtr  m_geom;
                 SpatialDomains::GeomFactorsSharedPtr m_metricinfo;
                 MetricMap m_metrics;
 
+                /// the element length in the each element boundary(Vertex, edge
+                /// or face) normal direction calculated based on the local
+                /// m_metricinfo times the standard element length (which is
+                /// 2.0)
+                std::map<int, Array<OneD, NekDouble>> m_elmtBndNormDirElmtLen;
+
                 void ComputeLaplacianMetric();
                 void ComputeQuadratureMetric();
+                void ComputeGmatcdotMF(
+                    const Array<TwoD, const NekDouble> &df,
+                    const Array<OneD, const NekDouble> &direction,
+                          Array<OneD, Array<OneD, NekDouble> > &dfdir);
 
                 virtual void v_MultiplyByQuadratureMetric(
-                                const Array<OneD, const NekDouble> &inarray,
-                                      Array<OneD,       NekDouble> &outarray);
+                    const Array<OneD, const NekDouble> &inarray,
+                          Array<OneD,       NekDouble> &outarray);
+                virtual void v_DivideByQuadratureMetric(
+                                const Array<OneD, const NekDouble>  &inarray,
+                                      Array<OneD, NekDouble>        &outarray);
 
                 virtual void v_ComputeLaplacianMetric() {};
 
-                virtual void v_GetCoords(Array<OneD,NekDouble> &coords_1,
-                                         Array<OneD,NekDouble> &coords_2,
-                                         Array<OneD,NekDouble> &coords_3);
+                virtual void v_GetCoords(
+                    Array<OneD,NekDouble> &coords_1,
+                    Array<OneD,NekDouble> &coords_2,
+                    Array<OneD,NekDouble> &coords_3);
 
-                virtual DNekScalMatSharedPtr v_GetLocMatrix(const LocalRegions::MatrixKey &mkey);
+                Array<OneD, NekDouble> v_GetMF(
+                    const int dir,
+                    const int shapedim,
+                    const StdRegions::VarCoeffMap &varcoeffs);
+
+                Array<OneD, NekDouble> v_GetMFDiv(
+                    const int dir,
+                    const StdRegions::VarCoeffMap &varcoeffs);
+
+                Array<OneD, NekDouble> v_GetMFMag(
+                    const int dir,
+                    const StdRegions::VarCoeffMap &varcoeffs);
+
+                virtual DNekScalMatSharedPtr v_GetLocMatrix(
+                    const LocalRegions::MatrixKey &mkey);
 
                 virtual DNekMatSharedPtr v_BuildTransformationMatrix(
-                    const DNekScalMatSharedPtr &r_bnd, 
+                    const DNekScalMatSharedPtr &r_bnd,
                     const StdRegions::MatrixType matrixType);
 
                 virtual DNekMatSharedPtr v_BuildVertexMatrix(
-                    const DNekScalMatSharedPtr &r_bnd); 
+                    const DNekScalMatSharedPtr &r_bnd);
+
                 virtual void v_ExtractDataToCoeffs(
                     const NekDouble *data,
                     const std::vector<unsigned int > &nummodes,

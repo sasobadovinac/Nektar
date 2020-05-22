@@ -10,7 +10,6 @@
 //  Department of Aeronautics, Imperial College London (UK), and Scientific
 //  Computing and Imaging Institute, University of Utah (USA).
 //
-//  License for the specific language governing rights and limitations under
 //  Permission is hereby granted, free of charge, to any person obtaining a
 //  copy of this software and associated documentation files (the "Software"),
 //  to deal in the Software without restriction, including without limitation
@@ -43,6 +42,7 @@
 #include <SpatialDomains/GeomFactors.h>
 
 #include <unordered_map>
+#include <array>
 
 namespace Nektar
 {
@@ -138,6 +138,8 @@ public:
     //---------------------------------------
     // Point lookups
     //---------------------------------------
+    SPATIAL_DOMAINS_EXPORT std::array<NekDouble, 6> GetBoundingBox();
+
     SPATIAL_DOMAINS_EXPORT inline bool ContainsPoint(
         const Array<OneD, const NekDouble> &gloCoord,
         NekDouble tol = 0.0);
@@ -155,6 +157,11 @@ public:
         Array<OneD, NekDouble> &Lcoords);
     SPATIAL_DOMAINS_EXPORT inline NekDouble GetCoord(
         const int i, const Array<OneD, const NekDouble> &Lcoord);
+    SPATIAL_DOMAINS_EXPORT bool MinMaxCheck(
+        const Array<OneD, const NekDouble> &gloCoord);
+    SPATIAL_DOMAINS_EXPORT void ClampLocCoords(
+        Array<OneD, NekDouble> &locCoord,
+        NekDouble tol);
 
     //---------------------------------------
     // Misc. helper functions
@@ -192,6 +199,7 @@ protected:
     int                               m_globalID;
     /// Array containing expansion coefficients of @p m_xmap
     Array<OneD, Array<OneD, NekDouble> > m_coeffs;
+
     /// Handles generation of geometry factors.
     void                              GenGeomFactors();
 

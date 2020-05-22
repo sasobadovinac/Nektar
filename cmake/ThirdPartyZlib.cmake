@@ -6,13 +6,6 @@
 #
 ########################################################################
 
-# Attempt to identify Macports libraries, if they exist and we didn't override
-# ZLIB_ROOT on the command line or in ccmake. This prevents cmake warnings later
-# on.
-IF (NOT DEFINED ZLIB_ROOT)
-    SET(ZLIB_ROOT /opt/local/)
-ENDIF()
-
 # Find a system ZLIB library. If not found enable the THIRDPARTY_BUILD_ZLIB
 # option.
 FIND_PACKAGE(ZLIB QUIET)
@@ -53,16 +46,24 @@ IF (THIRDPARTY_BUILD_ZLIB)
 
     IF (WIN32)
         THIRDPARTY_LIBRARY(ZLIB_LIBRARIES STATIC zlib DESCRIPTION "Zlib library")
+        THIRDPARTY_LIBRARY(ZLIB_LIBRARIES_DEBUG STATIC zlibd DESCRIPTION "Zlib library")
     ELSE ()
         THIRDPARTY_LIBRARY(ZLIB_LIBRARIES SHARED z DESCRIPTION "Zlib library")
+        THIRDPARTY_LIBRARY(ZLIB_LIBRARIES_DEBUG SHARED z DESCRIPTION "Zlib library")
     ENDIF ()
 
-    MESSAGE(STATUS "Build Zlib: ${ZLIB_LIBRARIES}")
+    MESSAGE(STATUS "Build Zlib: ")
+    MESSAGE(STATUS " -- Optimized: ${ZLIB_LIBRARIES}")
+    MESSAGE(STATUS " -- Debug:     ${ZLIB_LIBRARIES_DEBUG}")
     SET(ZLIB_INCLUDE_DIR ${TPDIST}/include CACHE PATH "Zlib include" FORCE)
     SET(ZLIB_CONFIG_INCLUDE_DIR ${TPINC})
 ELSE (THIRDPARTY_BUILD_ZLIB)
     ADD_CUSTOM_TARGET(zlib-1.2.7 ALL)
     MESSAGE(STATUS "Found Zlib: ${ZLIB_LIBRARIES} (version ${ZLIB_VERSION_STRING})")
+
+    # We use the found library also for debug builds.
+    SET(ZLIB_LIBRARIES_DEBUG ${ZLIB_LIBRARIES})
+
     SET(ZLIB_CONFIG_INCLUDE_DIR ${ZLIB_INCLUDE_DIRS})
 ENDIF (THIRDPARTY_BUILD_ZLIB)
 

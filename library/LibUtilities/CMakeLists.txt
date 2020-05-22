@@ -7,6 +7,7 @@ SET(BasicConstHeaders
 
 SET(BasicUtilsHeaders
     ./BasicUtils/ArrayPolicies.hpp
+    ./BasicUtils/CheckedCast.hpp
     ./BasicUtils/ConsistentObjectAccess.hpp
     ./BasicUtils/CompressData.h
     ./BasicUtils/CsvIO.h
@@ -19,13 +20,13 @@ SET(BasicUtilsHeaders
     ./BasicUtils/HashUtils.hpp
     ./BasicUtils/NekManager.hpp
     ./BasicUtils/NekFactory.hpp
-    ./BasicUtils/OperatorGenerators.hpp
     ./BasicUtils/ParseUtils.h
     ./BasicUtils/Progressbar.hpp
     ./BasicUtils/PtsField.h
     ./BasicUtils/PtsIO.h
     ./BasicUtils/Timer.h
     ./BasicUtils/RawType.hpp
+    ./BasicUtils/RealComparison.hpp
     ./BasicUtils/SessionReader.h
     ./BasicUtils/ShapeType.hpp
     ./BasicUtils/SharedArray.hpp
@@ -38,10 +39,10 @@ SET(BasicUtilsHeaders
 )
 
 SET(BasicUtilsSources
-    ./BasicUtils/ArrayEqualityComparison.cpp
     ./BasicUtils/CompressData.cpp
     ./BasicUtils/CsvIO.cpp
     ./BasicUtils/Equation.cpp
+    ./BasicUtils/ErrorUtil.cpp
     ./BasicUtils/FieldIO.cpp
     ./BasicUtils/FieldIOXml.cpp
     ./BasicUtils/FileSystem.cpp
@@ -176,11 +177,11 @@ SET(FoundationSources
 )
 
 SET(InterpreterHeaders
-      ./Interpreter/AnalyticExpressionEvaluator.hpp
+    ./Interpreter/Interpreter.h
 )
 
 SET(InterpreterSources
-        ./Interpreter/AnalyticExpressionEvaluator.cpp
+    ./Interpreter/Interpreter.cpp
 )
 
 SET(KernelHeaders
@@ -258,14 +259,29 @@ SET(PolylibSources
 )
 
 SET(TimeIntegrationHeaders
+        ./TimeIntegration/AdamsBashforthTimeIntegrationSchemes.h
+        ./TimeIntegration/AdamsMoultonTimeIntegrationSchemes.h
+        ./TimeIntegration/BDFImplicitTimeIntegrationSchemes.h
+        ./TimeIntegration/EulerTimeIntegrationSchemes.h
+        ./TimeIntegration/CNABTimeIntegrationScheme.h
+        ./TimeIntegration/DIRKTimeIntegrationSchemes.h
+        ./TimeIntegration/IMEXGearTimeIntegrationScheme.h
+        ./TimeIntegration/IMEXTimeIntegrationSchemes.h
+        ./TimeIntegration/IMEXdirkTimeIntegrationSchemes.h
+        ./TimeIntegration/MCNABTimeIntegrationScheme.h
+        ./TimeIntegration/RungeKuttaTimeIntegrationSchemes.h
         ./TimeIntegration/TimeIntegrationScheme.h
-        ./TimeIntegration/TimeIntegrationWrapper.h
+        ./TimeIntegration/TimeIntegrationSchemeData.h
+        ./TimeIntegration/TimeIntegrationSolution.h
 )
 
 SET(TimeIntegrationSources
+        ./TimeIntegration/SchemeInitializer.cpp
         ./TimeIntegration/TimeIntegrationScheme.cpp
-        ./TimeIntegration/TimeIntegrationWrapper.cpp
+        ./TimeIntegration/TimeIntegrationSchemeData.cpp
+        ./TimeIntegration/TimeIntegrationSolution.cpp
 )
+
 
 SET(BaseHeaders
     LibUtilitiesDeclspec.h
@@ -378,7 +394,7 @@ TARGET_LINK_LIBRARIES(LibUtilities LINK_PUBLIC
     ${Boost_PROGRAM_OPTIONS_LIBRARY}
     ${Boost_FILESYSTEM_LIBRARY}
     ${Boost_SYSTEM_LIBRARY}
-    ${ZLIB_LIBRARIES}
+    optimized ${ZLIB_LIBRARIES} debug ${ZLIB_LIBRARIES_DEBUG}
 )
 
 # TinyXML
@@ -417,8 +433,12 @@ ENDIF()
 IF( NEKTAR_USE_PETSC )
     TARGET_LINK_LIBRARIES(LibUtilities LINK_PRIVATE ${PETSC_LIBRARIES})
     TARGET_LINK_LIBRARIES(LibUtilities LINK_PUBLIC ${CMAKE_DL_LIBS})
-    ADD_DEPENDENCIES(LibUtilities petsc-3.7.7)
+    ADD_DEPENDENCIES(LibUtilities petsc-3.11.4)
 ENDIF( NEKTAR_USE_PETSC )
+
+IF (NEKTAR_BUILD_PYTHON)
+    SUBDIRS(Python)
+ENDIF()
 
 # HDF5
 IF( NEKTAR_USE_HDF5 )

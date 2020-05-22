@@ -10,7 +10,6 @@
 //  Department of Aeronautics, Imperial College London (UK), and Scientific
 //  Computing and Imaging Institute, University of Utah (USA).
 //
-//  License for the specific language governing rights and limitations under
 //  Permission is hereby granted, free of charge, to any person obtaining a
 //  copy of this software and associated documentation files (the "Software"),
 //  to deal in the Software without restriction, including without limitation
@@ -60,6 +59,10 @@
 #include <boost/iostreams/filter/zlib.hpp>
 #include <boost/iostreams/filtering_stream.hpp>
 
+#include <boost/geometry/geometry.hpp>
+#include <boost/geometry/index/rtree.hpp>
+namespace bg = boost::geometry;
+
 using namespace std;
 
 namespace Nektar
@@ -74,6 +77,30 @@ MeshGraphFactory &GetMeshGraphFactory()
 {
     static MeshGraphFactory instance;
     return instance;
+}
+
+struct MeshGraph::GeomRTree
+{
+    typedef bg::model::point<NekDouble, 3, bg::cs::cartesian> BgPoint;
+    typedef bg::model::box<BgPoint> BgBox;
+    typedef std::pair<BgBox, int> BgRtreeValue;
+
+    bg::index::rtree< BgRtreeValue, bg::index::rstar<16, 4> > m_bgTree;
+
+    void InsertGeom(GeometrySharedPtr const &geom)
+    {
+        std::array<NekDouble, 6> minMax = geom->GetBoundingBox();
+        BgPoint ptMin(minMax[0], minMax[1], minMax[2]);
+        BgPoint ptMax(minMax[3], minMax[4], minMax[5]);
+        m_bgTree.insert(
+            std::make_pair(BgBox(ptMin, ptMax), geom->GetGlobalID()));
+    }
+};
+
+MeshGraph::MeshGraph()
+{
+    m_boundingBoxTree = std::unique_ptr<MeshGraph::GeomRTree>(
+        new MeshGraph::GeomRTree());
 }
 
 /**
@@ -183,6 +210,82 @@ void MeshGraph::FillGraph()
         }
         break;
     }
+}
+
+void MeshGraph::FillBoundingBoxTree()
+{
+
+    m_boundingBoxTree->m_bgTree.clear();
+    switch (m_meshDimension)
+    {
+        case 1:
+            for (auto &x : m_segGeoms)
+            {
+                m_boundingBoxTree->InsertGeom(x.second);
+            }
+            break;
+        case 2:
+            for (auto &x : m_triGeoms)
+            {
+                m_boundingBoxTree->InsertGeom(x.second);
+            }
+            for (auto &x : m_quadGeoms)
+            {
+                m_boundingBoxTree->InsertGeom(x.second);
+            }
+            break;
+        case 3:
+            for (auto &x : m_tetGeoms)
+            {
+                m_boundingBoxTree->InsertGeom(x.second);
+            }
+            for (auto &x : m_prismGeoms)
+            {
+                m_boundingBoxTree->InsertGeom(x.second);
+            }
+            for (auto &x : m_pyrGeoms)
+            {
+                m_boundingBoxTree->InsertGeom(x.second);
+            }
+            for (auto &x : m_hexGeoms)
+            {
+                m_boundingBoxTree->InsertGeom(x.second);
+            }
+            break;
+        default:
+            ASSERTL0(false, "Unknown dim");
+    }
+}
+
+std::vector<int> MeshGraph::GetElementsContainingPoint(
+    PointGeomSharedPtr p)
+{
+    if (m_boundingBoxTree->m_bgTree.empty())
+    {
+        FillBoundingBoxTree();
+    }
+
+    NekDouble x = 0.0;
+    NekDouble y = 0.0;
+    NekDouble z = 0.0;
+    std::vector<GeomRTree::BgRtreeValue> matches;
+
+    p->GetCoords(x, y, z);
+
+    GeomRTree::BgBox b(GeomRTree::BgPoint(x, y, z),
+                       GeomRTree::BgPoint(x, y, z));
+
+    m_boundingBoxTree->m_bgTree.query(bg::index::intersects(b),
+                                      std::back_inserter(matches));
+
+    std::vector<int> vals(matches.size());
+
+    for (int i = 0; i < matches.size(); ++i)
+    {
+        vals[i] = matches[i].second;
+    }
+
+    return vals;
 }
 
 void MeshGraph::SetDomainRange(NekDouble xmin, NekDouble xmax, NekDouble ymin,
@@ -2497,6 +2600,46 @@ ExpansionMapShPtr MeshGraph::SetUpExpansionMap(void)
     return returnval;
 }
 
+/**
+ * @brief Returns a string representation of a composite.
+ */
+std::string MeshGraph::GetCompositeString(CompositeSharedPtr comp)
+{
+    if (comp->m_geomVec.size() == 0)
+    {
+        return "";
+    }
+
+    // Create a map that gets around the issue of mapping faces -> F and edges
+    // -> E inside the tag.
+    map<LibUtilities::ShapeType, pair<string, string>> compMap;
+    compMap[LibUtilities::ePoint]         = make_pair("V", "V");
+    compMap[LibUtilities::eSegment]       = make_pair("S", "E");
+    compMap[LibUtilities::eQuadrilateral] = make_pair("Q", "F");
+    compMap[LibUtilities::eTriangle]      = make_pair("T", "F");
+    compMap[LibUtilities::eTetrahedron]   = make_pair("A", "A");
+    compMap[LibUtilities::ePyramid]       = make_pair("P", "P");
+    compMap[LibUtilities::ePrism]         = make_pair("R", "R");
+    compMap[LibUtilities::eHexahedron]    = make_pair("H", "H");
+
+    stringstream s;
+
+    GeometrySharedPtr firstGeom = comp->m_geomVec[0];
+    int shapeDim                = firstGeom->GetShapeDim();
+    string tag                  = (shapeDim < m_meshDimension)
+        ? compMap[firstGeom->GetShapeType()].second
+        : compMap[firstGeom->GetShapeType()].first;
+
+    std::vector<unsigned int> idxList;
+    std::transform(
+        comp->m_geomVec.begin(), comp->m_geomVec.end(),
+        std::back_inserter(idxList),
+        [] (GeometrySharedPtr geom) { return geom->GetGlobalID(); });
+
+    s << " " << tag << "[" << ParseUtils::GenerateSeqString(idxList) << "] ";
+    return s.str();
+}
+
 void MeshGraph::ReadExpansions()
 {
     // Find the Expansions tag
@@ -2648,7 +2791,7 @@ void MeshGraph::ReadExpansions()
                     // nummodes ");
                     if (m_session)
                     {
-                        LibUtilities::Equation nummodesEqn(m_session->GetExpressionEvaluator(), nummodesStr);
+                        LibUtilities::Equation nummodesEqn(m_session->GetInterpreter(), nummodesStr);
                         num_modes = (int)nummodesEqn.Evaluate();
                     }
                     else
@@ -2924,7 +3067,7 @@ void MeshGraph::ReadExpansions()
 
                     if (m_session)
                     {
-                        LibUtilities::Equation nummodesEqn(m_session->GetExpressionEvaluator(), nummodesStr);
+                        LibUtilities::Equation nummodesEqn(m_session->GetInterpreter(), nummodesStr);
                         num_modes_x = (int)nummodesEqn.Evaluate();
                     }
                     else
@@ -2956,7 +3099,7 @@ void MeshGraph::ReadExpansions()
                     // nummodes ");
                     if (m_session)
                     {
-                        LibUtilities::Equation nummodesEqn(m_session->GetExpressionEvaluator(), nummodesStr);
+                        LibUtilities::Equation nummodesEqn(m_session->GetInterpreter(), nummodesStr);
                         num_modes_y = (int)nummodesEqn.Evaluate();
                     }
                     else
@@ -2988,7 +3131,7 @@ void MeshGraph::ReadExpansions()
                     // nummodes ");
                     if (m_session)
                     {
-                        LibUtilities::Equation nummodesEqn(m_session->GetExpressionEvaluator(), nummodesStr);
+                        LibUtilities::Equation nummodesEqn(m_session->GetInterpreter(), nummodesStr);
                         num_modes_z = (int)nummodesEqn.Evaluate();
                     }
                     else
@@ -3379,6 +3522,136 @@ void MeshGraph::PopulateFaceToElMap(Geometry3DSharedPtr element, int kNfaces)
         }
     }
 }
+
+/**
+ * @brief Create mesh entities for this graph.
+ *
+ * This function will create a map of all mesh entities of the current graph,
+ * which can then be used within the mesh partitioner to construct an
+ * appropriate partitioning.
+ */
+std::map<int, MeshEntity> MeshGraph::CreateMeshEntities()
+{
+    std::map<int, MeshEntity> elements;
+    switch (m_meshDimension)
+    {
+        case 1:
+        {
+            for (auto &i : m_segGeoms)
+            {
+                MeshEntity e;
+                e.id = e.origId = i.first;
+                e.list.push_back(i.second->GetVertex(0)->GetGlobalID());
+                e.list.push_back(i.second->GetVertex(1)->GetGlobalID());
+                e.ghost = false;
+                elements[e.id] = e;
+            }
+        }
+        break;
+        case 2:
+        {
+            for (auto &i : m_triGeoms)
+            {
+                MeshEntity e;
+                e.id = e.origId = i.first;
+                e.list.push_back(i.second->GetEdge(0)->GetGlobalID());
+                e.list.push_back(i.second->GetEdge(1)->GetGlobalID());
+                e.list.push_back(i.second->GetEdge(2)->GetGlobalID());
+                e.ghost = false;
+                elements[e.id] = e;
+            }
+            for (auto &i : m_quadGeoms)
+            {
+                MeshEntity e;
+                e.id = e.origId = i.first;
+                e.list.push_back(i.second->GetEdge(0)->GetGlobalID());
+                e.list.push_back(i.second->GetEdge(1)->GetGlobalID());
+                e.list.push_back(i.second->GetEdge(2)->GetGlobalID());
+                e.list.push_back(i.second->GetEdge(3)->GetGlobalID());
+                e.ghost = false;
+                elements[e.id] = e;
+            }
+        }
+        break;
+        case 3:
+        {
+            for (auto &i : m_tetGeoms)
+            {
+                MeshEntity e;
+                e.id = e.origId = i.first;
+                e.list.push_back(i.second->GetFace(0)->GetGlobalID());
+                e.list.push_back(i.second->GetFace(1)->GetGlobalID());
+                e.list.push_back(i.second->GetFace(2)->GetGlobalID());
+                e.list.push_back(i.second->GetFace(3)->GetGlobalID());
+                e.ghost = false;
+                elements[e.id] = e;
+            }
+            for (auto &i : m_pyrGeoms)
+            {
+                MeshEntity e;
+                e.id = e.origId = i.first;
+                e.list.push_back(i.second->GetFace(0)->GetGlobalID());
+                e.list.push_back(i.second->GetFace(1)->GetGlobalID());
+                e.list.push_back(i.second->GetFace(2)->GetGlobalID());
+                e.list.push_back(i.second->GetFace(3)->GetGlobalID());
+                e.list.push_back(i.second->GetFace(4)->GetGlobalID());
+                e.ghost = false;
+                elements[e.id] = e;
+            }
+            for (auto &i : m_prismGeoms)
+            {
+                MeshEntity e;
+                e.id = e.origId = i.first;
+                e.list.push_back(i.second->GetFace(0)->GetGlobalID());
+                e.list.push_back(i.second->GetFace(1)->GetGlobalID());
+                e.list.push_back(i.second->GetFace(2)->GetGlobalID());
+                e.list.push_back(i.second->GetFace(3)->GetGlobalID());
+                e.list.push_back(i.second->GetFace(4)->GetGlobalID());
+                e.ghost = false;
+                elements[e.id] = e;
+            }
+            for (auto &i : m_hexGeoms)
+            {
+                MeshEntity e;
+                e.id = e.origId = i.first;
+                e.list.push_back(i.second->GetFace(0)->GetGlobalID());
+                e.list.push_back(i.second->GetFace(1)->GetGlobalID());
+                e.list.push_back(i.second->GetFace(2)->GetGlobalID());
+                e.list.push_back(i.second->GetFace(3)->GetGlobalID());
+                e.list.push_back(i.second->GetFace(4)->GetGlobalID());
+                e.list.push_back(i.second->GetFace(5)->GetGlobalID());
+                e.ghost = false;
+                elements[e.id] = e;
+            }
+        }
+        break;
+    }
+
+    return elements;
+}
+
+CompositeDescriptor MeshGraph::CreateCompositeDescriptor()
+{
+    CompositeDescriptor ret;
+
+    for (auto &comp : m_meshComposites)
+    {
+        std::pair<LibUtilities::ShapeType, vector<int>> tmp;
+        tmp.first = comp.second->m_geomVec[0]->GetShapeType();
+
+        tmp.second.resize(comp.second->m_geomVec.size());
+        for (size_t i = 0; i < tmp.second.size(); ++i)
+        {
+            tmp.second[i] = comp.second->m_geomVec[i]->GetGlobalID();
+        }
+
+        ret[comp.first] = tmp;
+    }
+
+    return ret;
+}
+
+
 
 } // end of namespace
 } // end of namespace

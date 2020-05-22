@@ -10,7 +10,6 @@
 // Department of Aeronautics, Imperial College London (UK), and Scientific
 // Computing and Imaging Institute, University of Utah (USA).
 //
-// License for the specific language governing rights and limitations under
 // Permission is hereby granted, free of charge, to any person obtaining a
 // copy of this software and associated documentation files (the "Software"),
 // to deal in the Software without restriction, including without limitation
@@ -35,6 +34,8 @@
 
 #ifndef EXPANSION2D_H
 #define EXPANSION2D_H
+
+#include <boost/core/ignore_unused.hpp>
 
 #include <LocalRegions/Expansion1D.h>
 #include <StdRegions/StdExpansion2D.h>
@@ -99,7 +100,7 @@ namespace Nektar
                 Array<OneD, NekDouble>          &edgePhys,
                 const StdRegions::VarCoeffMap   &dirForcing,
                 Array<OneD, NekDouble>          &outarray);
-            
+
             inline void AddHDGHelmholtzTraceTerms(
                 const NekDouble                     tau,
                 const Array<OneD, const NekDouble> &inarray,
@@ -120,7 +121,7 @@ namespace Nektar
                 Expansion3DSharedPtr            &f);
 
             inline SpatialDomains::Geometry2DSharedPtr GetGeom2D() const;
-            
+
             LOCAL_REGIONS_EXPORT void ReOrientEdgePhysMap(
                 const int                        nvert,
                 const StdRegions::Orientation    orient,
@@ -128,14 +129,26 @@ namespace Nektar
                 Array<OneD, int>                &idmap);
 
         protected:
-            std::vector<Expansion1DWeakPtr>           m_edgeExp;
+            std::vector<Expansion1DWeakPtr>         m_edgeExp;
             std::vector<bool>                       m_requireNeg;
             std::map<int, StdRegions::NormalVector> m_edgeNormals;
-            std::map<int, bool>                     m_negatedNormals;
             Expansion3DWeakPtr                      m_elementLeft;
             Expansion3DWeakPtr                      m_elementRight;
             int                                     m_elementFaceLeft;
             int                                     m_elementFaceRight;
+
+            LOCAL_REGIONS_EXPORT virtual Array<OneD, NekDouble> v_GetMF(
+                const int dir,
+                const int shapedim,
+                const StdRegions::VarCoeffMap   &varcoeffs);
+
+            LOCAL_REGIONS_EXPORT virtual Array<OneD, NekDouble> v_GetMFDiv(
+                const int dir,
+                const StdRegions::VarCoeffMap   &varcoeffs);
+
+            LOCAL_REGIONS_EXPORT virtual Array<OneD, NekDouble> v_GetMFMag(
+                const int dir,
+                const StdRegions::VarCoeffMap   &varcoeffs);
 
             virtual DNekMatSharedPtr v_GenMatrix(
                 const StdRegions::StdMatrixKey &mkey);
@@ -169,6 +182,7 @@ namespace Nektar
             virtual void v_AddRobinEdgeContribution(
                 const int edgeid,
                 const Array<OneD, const NekDouble> &primCoeffs,
+                const Array<OneD, NekDouble> &incoeffs,
                 Array<OneD, NekDouble> &coeffs);
 
             virtual DNekMatSharedPtr v_BuildVertexMatrix(
@@ -179,7 +193,14 @@ namespace Nektar
                 ExpansionSharedPtr &EdgeExp,
                 const Array<OneD, const NekDouble>  &varcoeff,
                 Array<OneD,NekDouble> &outarray);
-            
+
+            Array<OneD, NekDouble> v_GetnEdgecdotMF(
+                const int dir,
+                const int edge,
+                ExpansionSharedPtr &EdgeExp_e, 
+                const Array<OneD, const Array<OneD, NekDouble> > &normals,
+                const StdRegions::VarCoeffMap   &varcoeffs);
+
             LOCAL_REGIONS_EXPORT void ReOrientQuadEdgePhysMap(
                 const StdRegions::Orientation    orient,
                 const int                        nq0,
@@ -187,8 +208,6 @@ namespace Nektar
 
             Array<OneD, unsigned int> v_GetEdgeInverseBoundaryMap(int eid);
 
-            virtual void v_NegateEdgeNormal (const int edge);
-            virtual bool v_EdgeNormalNegated(const int edge);
             virtual void v_SetUpPhysNormals (const int edge);
             const StdRegions::NormalVector &v_GetEdgeNormal(
                 const int edge) const;
@@ -202,6 +221,7 @@ namespace Nektar
             int edge,
             bool SetUpNormal)
         {
+            boost::ignore_unused(SetUpNormal);
             ASSERTL1(edge < GetNedges(), "Edge out of range.");
             return m_edgeExp[edge].lock();
         }
