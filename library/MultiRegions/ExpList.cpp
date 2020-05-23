@@ -302,6 +302,21 @@ namespace Nektar
                 m_coeffs = Array<OneD, NekDouble>(m_ncoeffs, 0.0);
                 m_phys   = Array<OneD, NekDouble>(m_npoints, 0.0);
             }
+
+            m_coeffsToElmt = Array<OneD, pair<int, int> > {size_t(m_ncoeffs)};
+
+            for (int i = 0; i < m_exp->size(); ++i)
+            {
+                int coeffs_offset   =   m_coeff_offset[i];
+
+                int loccoeffs = (*m_exp)[i]->GetNcoeffs();
+                
+                for(int j = 0; j < loccoeffs; ++j)
+                {
+                    m_coeffsToElmt[coeffs_offset+j].first  = i;
+                    m_coeffsToElmt[coeffs_offset+j].second = j;
+                }
+            }
         }
 
         void ExpList::InitialiseExpVector( const
@@ -550,6 +565,39 @@ namespace Nektar
             out = (*blockmat)*in;
         }
 
+        /**
+         * multiply the metric jacobi and quadrature weights
+         */
+        void ExpList::MultiplyByQuadratureMetric(
+                const Array<OneD, const NekDouble>  &inarray,
+                Array<OneD, NekDouble>              &outarray)
+        {
+            Array<OneD,NekDouble> e_outarray;
+
+            for (int i = 0; i < (*m_exp).size(); ++i)
+            {
+                (*m_exp)[i]->MultiplyByQuadratureMetric(
+                                inarray+m_phys_offset[i],
+                                e_outarray = outarray + m_phys_offset[i]);
+            }
+        }
+
+        /**
+         * Divided by the metric jacobi and quadrature weights
+         */
+        void ExpList::DivideByQuadratureMetric(
+                const Array<OneD, const NekDouble>  &inarray,
+                Array<OneD, NekDouble>              &outarray)
+        {
+            Array<OneD,NekDouble> e_outarray;
+
+            for (int i = 0; i < (*m_exp).size(); ++i)
+            {
+                (*m_exp)[i]->DivideByQuadratureMetric(
+                                inarray+m_phys_offset[i],
+                                e_outarray = outarray + m_phys_offset[i]);
+            }
+        }
 
         /**
          * The operation is evaluated locally for every element by the function
@@ -2750,6 +2798,22 @@ namespace Nektar
             }
         }
 
+        /**
+         * Get the weight value on boundaries
+         */
+        void ExpList::GetBwdWeight(
+            Array<OneD, NekDouble>  &weightAver,
+            Array<OneD, NekDouble>  &weightJump)
+        {
+            size_t nTracePts = weightAver.size();
+            // average for interior traces
+            for(int i = 0; i < nTracePts; ++i)
+            {
+                weightAver[i] = 0.5;
+                weightJump[i] = 1.0;
+            }
+            FillBwdWithBwdWeight(weightAver, weightJump);
+        }
 
         void ExpList::v_GetMovingFrames(
             const SpatialDomains::GeomMMF MMFdir,
@@ -3293,6 +3357,154 @@ namespace Nektar
             }
         }
         
+        void ExpList::GetElmtNormalLength(
+            Array<OneD, NekDouble>  &lengthsFwd,
+            Array<OneD, NekDouble>  &lengthsBwd)
+        {
+            int e_npoints;
+
+            Array<OneD, NekDouble> locLeng;
+            Array<OneD, NekDouble> lengintp;
+            Array<OneD, NekDouble> lengAdd;
+            Array<OneD, int      > LRbndnumbs(2);
+            Array<OneD, Array<OneD,NekDouble> > lengLR(2);
+            lengLR[0]   =   lengthsFwd;
+            lengLR[1]   =   lengthsBwd;
+            Array<OneD, LocalRegions::ExpansionSharedPtr> LRelmts(2);
+            LocalRegions::ExpansionSharedPtr loc_elmt;
+            LocalRegions::ExpansionSharedPtr loc_exp;
+            int e_npoints0  =   -1; 
+            if(m_expType == e1D)
+            {
+                for (int i = 0; i < m_exp->size(); ++i)
+                {
+                    loc_exp = (*m_exp)[i];
+                    int offset = m_phys_offset[i];
+                    
+                    int e_nmodes   = loc_exp->GetBasis(0)->GetNumModes();
+                    e_npoints  = (*m_exp)[i]->GetNumPoints(0);
+                    if ( e_npoints0 < e_npoints)
+                    {
+                        lengintp = Array<OneD, NekDouble>{size_t(e_npoints),0.0};
+                        e_npoints0 = e_npoints;
+                    }
+                    
+                    LRelmts[0] = loc_exp->GetLeftAdjacentElementExp();
+                    LRelmts[1] = loc_exp->GetRightAdjacentElementExp();
+                    
+                    LRbndnumbs[0] = loc_exp->GetLeftAdjacentElementTrace();
+                    LRbndnumbs[1] = loc_exp->GetRightAdjacentElementTrace();
+                    for (int nlr = 0; nlr < 2; ++nlr)
+                    {
+                        Vmath::Zero(e_npoints0, lengintp, 1);
+                        lengAdd     =   lengintp;
+                        int bndNumber = LRbndnumbs[nlr];
+                        loc_elmt = LRelmts[nlr];
+                        if (bndNumber >= 0)
+                        {
+                            locLeng  = loc_elmt->GetElmtBndNormDirElmtLen(
+                                                               bndNumber);
+                            lengAdd  =   locLeng;
+                            
+                            int loc_nmodes  = loc_elmt->GetBasis(0)->
+                                GetNumModes();
+                            if (e_nmodes != loc_nmodes)
+                            {
+                                // Parallel case: need to interpolate.
+                                LibUtilities::PointsKey to_key =
+                                    loc_exp->GetBasis(0)->GetPointsKey();
+                                LibUtilities::PointsKey from_key =
+                                    loc_elmt->GetBasis(0)->GetPointsKey();
+                                LibUtilities::Interp1D(from_key, locLeng,
+                                                       to_key, lengintp);
+                                lengAdd     =   lengintp;
+                            }
+                        }
+                        for (int j = 0; j < e_npoints; ++j)
+                        {
+                            lengLR[nlr][offset + j] = lengAdd[j];
+                        }
+                    }
+                }
+            }
+            else if (m_expType == e2D)
+            {
+                for (int i = 0; i < m_exp->size(); ++i)
+                {
+                    loc_exp = (*m_exp)[i];
+                    int offset = m_phys_offset[i];
+                    
+                    LibUtilities::BasisKey traceBasis0
+                        = loc_exp->GetBasis(0)->GetBasisKey();
+                    LibUtilities::BasisKey traceBasis1
+                        = loc_exp->GetBasis(1)->GetBasisKey();
+                    const int TraceNq0 = traceBasis0.GetNumPoints();
+                    const int TraceNq1 = traceBasis1.GetNumPoints();
+                    e_npoints  =   TraceNq0*TraceNq1;
+                    if (e_npoints0 < e_npoints)
+                    {
+                        lengintp = Array<OneD,NekDouble>{size_t(e_npoints),
+                                                         0.0};
+                        e_npoints0 = e_npoints;
+                    }
+                    
+                    LRelmts[0] = loc_exp->GetLeftAdjacentElementExp();
+                    LRelmts[1] = loc_exp->GetRightAdjacentElementExp();
+                    
+                    LRbndnumbs[0] = loc_exp->GetLeftAdjacentElementTrace();
+                    LRbndnumbs[1] = loc_exp->GetRightAdjacentElementTrace();
+                    for (int nlr = 0; nlr < 2; ++nlr)
+                    {
+                        Vmath::Zero(e_npoints0, lengintp, 1);
+                        int bndNumber = LRbndnumbs[nlr];
+                        loc_elmt = LRelmts[nlr];
+                        if (bndNumber >= 0)
+                        {
+                            locLeng = loc_elmt->GetElmtBndNormDirElmtLen(
+                                                             bndNumber);
+                            // Project normals from 3D element onto the
+                            // same orientation as the trace expansion.
+                            StdRegions::Orientation orient = loc_elmt->
+                                GetTraceOrient(bndNumber);
+                            
+                            int fromid0,fromid1;
+                            if (orient < StdRegions::eDir1FwdDir2_Dir2FwdDir1)
+                            {
+                                fromid0 = 0;
+                                fromid1 = 1;
+                            }
+                            else
+                            {
+                                fromid0 = 1;
+                                fromid1 = 0;
+                            }
+                            
+                            LibUtilities::BasisKey faceBasis0 
+                                = loc_elmt->GetTraceBasisKey(bndNumber, fromid0);
+                            LibUtilities::BasisKey faceBasis1 
+                                = loc_elmt->GetTraceBasisKey(bndNumber, fromid1);
+                            const int faceNq0 = faceBasis0.GetNumPoints();
+                            const int faceNq1 = faceBasis1.GetNumPoints();
+                            Array<OneD, NekDouble> alignedLeng(faceNq0*faceNq1);
+                            
+                            AlignFace(orient, faceNq0, faceNq1,
+                                      locLeng, alignedLeng);
+                            LibUtilities::Interp2D(faceBasis0.GetPointsKey(),
+                                                   faceBasis1.GetPointsKey(),
+                                                   alignedLeng,
+                                                   traceBasis0.GetPointsKey(),
+                                                   traceBasis1.GetPointsKey(),
+                                                   lengintp);
+                            }
+                        for (int j = 0; j < e_npoints; ++j)
+                        {
+                            lengLR[nlr][offset + j] = lengintp[j];
+                        }
+                    }
+                }
+            }
+        }
+        
         void ExpList::v_AddTraceIntegral(
                                 const Array<OneD, const NekDouble> &Fx,
                                 const Array<OneD, const NekDouble> &Fy,
@@ -3335,13 +3547,44 @@ namespace Nektar
                                 const Array<OneD,const NekDouble>  &field,
                                 Array<OneD,NekDouble> &Fwd,
                                 Array<OneD,NekDouble> &Bwd,
-                                bool PutFwdInBwdOnBCs)
+                                bool FillBnd,
+                                bool PutFwdInBwdOnBCs, 
+                                bool DoExchange) 
         {
-            boost::ignore_unused(field, Fwd, Bwd, PutFwdInBwdOnBCs);
+            boost::ignore_unused(field, Fwd, Bwd, FillBnd,
+                                 PutFwdInBwdOnBCs, DoExchange);
             NEKERROR(ErrorUtil::efatal,
                      "This method is not defined or valid for this class type");
         }
 
+        void ExpList::v_AddTraceQuadPhysToField(
+            const Array<OneD, const NekDouble>  &Fwd,
+            const Array<OneD, const NekDouble>  &Bwd,
+            Array<OneD,       NekDouble>        &field)
+        {
+            boost::ignore_unused(field, Fwd, Bwd);
+            ASSERTL0(false, 
+                "v_AddTraceQuadPhysToField is not defined for this class type");
+        }
+
+        const Array<OneD,const NekDouble>
+                &ExpList::v_GetBndCondBwdWeight()
+        {
+            ASSERTL0(false, 
+                "v_GetBndCondBwdWeight is not defined for this class type");
+            static Array<OneD, NekDouble> tmp;
+            return tmp;
+        }
+
+        void ExpList::v_SetBndCondBwdWeight(
+            const int index, 
+            const NekDouble value)
+        {
+            boost::ignore_unused(index, value);
+            ASSERTL0(false,
+                    "v_setBndCondBwdWeight is not defined for this class type");
+        }
+        
         const vector<bool> &ExpList::v_GetLeftAdjacentFaces(void) const
         {
             NEKERROR(ErrorUtil::efatal,
@@ -3471,7 +3714,7 @@ namespace Nektar
             NEKERROR(ErrorUtil::efatal,
                      "This method is not defined or valid for this class type");
         }
-
+        
         void ExpList::v_NormVectorIProductWRTBase(
                                 Array<OneD, Array<OneD, NekDouble> > &V,
                                 Array<OneD, NekDouble> &outarray)
@@ -3871,6 +4114,22 @@ namespace Nektar
                      "This method is not defined or valid for this class type");
         }
 
+        void ExpList::v_FillBwdWithBwdWeight(
+            Array<OneD,       NekDouble> &weightave,
+            Array<OneD,       NekDouble> &weightjmp)
+        {
+            boost::ignore_unused(weightave, weightjmp);
+            ASSERTL0(false, "v_FillBwdWithBwdWeight not defined");
+        }
+
+        void ExpList::v_PeriodicBwdCopy(
+                const Array<OneD, const NekDouble> &Fwd,
+                      Array<OneD,       NekDouble> &Bwd)
+        {
+            boost::ignore_unused(Fwd, Bwd);
+            ASSERTL0(false, "v_PeriodicBwdCopy not defined");
+        }
+
         /**
          */
         const Array<OneD,const SpatialDomains::BoundaryConditionShPtr>
@@ -4104,187 +4363,6 @@ namespace Nektar
             v_ClearGlobalLinSysManager();
         }
 
-        /**
-         * To perform post-processing on the entire domain use \a elmtId = 0.
-         * @param   kernel      The post-processing kernel.
-         * @param   inarray     The set of evaluation points.
-         * @param   outarray    Contains the resulting post-processed
-         *                      solution for element \a elmId.
-         * @param   h           The mesh spacing.
-         * @param   elmId       Optionally specifies which element to perform
-         *                      the post-processing on (0=whole domain).
-         */
-        void ExpList::PostProcess(LibUtilities::KernelSharedPtr kernel,
-                                    Array<OneD,NekDouble> &inarray,
-                                    Array<OneD,NekDouble> &outarray,
-                                    NekDouble h,
-                                    int elmId)
-
-        {
-
-            ASSERTL0(m_expType == e1D,"Only setup for 1D explist");
-
-            int i,j,r;
-
-            // get the local element expansion of the elmId element
-            LocalRegions::ExpansionSharedPtr elmExp = GetExp( elmId );
-
-            // Get the quadrature points and weights required for integration
-            int quad_npoints = elmExp->GetTotPoints();
-            LibUtilities::PointsKey quadPointsKey(quad_npoints,
-                                                    elmExp->GetPointsType(0));
-            Array<OneD,NekDouble> quad_points
-                        = LibUtilities::PointsManager()[quadPointsKey]->GetZ();
-            Array<OneD,NekDouble> quad_weights
-                        = LibUtilities::PointsManager()[quadPointsKey]->GetW();
-
-            // Declare variable for the local kernel breaks
-            int kernel_width = kernel->GetKernelWidth();
-            Array<OneD,NekDouble> local_kernel_breaks(kernel_width+1);
-
-            // Declare variable for the transformed quadrature points
-            Array<OneD,NekDouble> mapped_quad_points(quad_npoints);
-
-            // For each evaluation point
-            for(i = 0; i < inarray.size(); i++)
-            {
-                // Move the center of the kernel to the current point
-                kernel->MoveKernelCenter(inarray[i],local_kernel_breaks);
-
-                // Find the mesh breaks under the kernel support
-                Array<OneD,NekDouble> mesh_breaks;
-                kernel->FindMeshUnderKernel(local_kernel_breaks,h,mesh_breaks);
-
-                // Sort the total breaks for integration purposes
-                int total_nbreaks = local_kernel_breaks.size() +
-                                    mesh_breaks.size();
-                                    // number of the total breaks
-                Array<OneD,NekDouble> total_breaks(total_nbreaks);
-                kernel->Sort(local_kernel_breaks,mesh_breaks,total_breaks);
-
-                // Integrate the product of kernel and function over the total
-                // breaks
-                NekDouble integral_value = 0.0;
-                for(j = 0; j < total_breaks.size()-1; j++)
-                {
-                    NekDouble a = total_breaks[j];
-                    NekDouble b = total_breaks[j+1];
-
-                    // Map the quadrature points to the appropriate interval
-                    for(r = 0; r < quad_points.size(); r++)
-                    {
-                        mapped_quad_points[r]
-                                = (quad_points[r] + 1.0) * 0.5 * (b - a) + a;
-                    }
-
-                    // Evaluate the function at the transformed quadrature
-                    // points
-                    Array<OneD,NekDouble> u_value(quad_npoints);
-                    Array<OneD,NekDouble> coeffs = GetCoeffs();
-
-                    PeriodicEval(coeffs,mapped_quad_points,h,
-                                 elmExp->GetBasisNumModes(0),u_value);
-
-                    // Evaluate the kernel at the transformed quadrature points
-                    Array<OneD,NekDouble> k_value(quad_npoints);
-                    kernel->EvaluateKernel(mapped_quad_points,h,k_value);
-
-                    // Integrate
-                    for(r = 0; r < quad_npoints; r++)
-                    {
-                        integral_value += (b - a) * 0.5 * k_value[r]
-                                                * u_value[r] * quad_weights[r];
-                    }
-                }
-                outarray[i] = integral_value/h;
-            }
-        }
-        
-
-        /**
-         * Given the elemental coefficients \f$\hat{u}_n^e\f$ of an expansion,
-         * periodically evaluate the spectral/hp expansion
-         * \f$u^{\delta}(\boldsymbol{x})\f$ at arbitrary points.
-         * @param   inarray1    An array of size \f$N_{\mathrm{eof}}\f$
-         *                      containing the local coefficients
-         *                      \f$\hat{u}_n^e\f$.
-         * @param   inarray2    Contains the set of evaluation points.
-         * @param   h           The mesh spacing.
-         * @param   nmodes      The number of polynomial modes for each element
-         *                      (we consider that each element has the same
-         *                      number of polynomial modes).
-         * @param   outarray    Contains the resulting values at the
-         *                      evaluation points
-         */
-        void ExpList::PeriodicEval(Array<OneD,NekDouble> &inarray1,
-                                     Array<OneD,NekDouble> &inarray2,
-                                     NekDouble h, int nmodes,
-                                     Array<OneD,NekDouble> &outarray)
-        {
-
-            ASSERTL0(m_expType == e1D,"Only setup for 1D explist");
-
-            int i,j,r;
-
-            // Get the number of elements in the domain
-            int num_elm = GetExpSize();
-
-            // initializing the outarray
-            for(i = 0; i < outarray.size(); i++)
-            {
-                outarray[i] = 0.0;
-            }
-
-            // Make a copy for further modification
-            int x_size = inarray2.size();
-            Array<OneD,NekDouble> x_values_cp(x_size);
-
-            // Determining the element to which the x belongs
-            Array<OneD,int> x_elm(x_size);
-            for(i = 0; i < x_size; i++ )
-            {
-                x_elm[i] = (int)floor(inarray2[i]/h);
-            }
-
-            // Clamp indices periodically
-            for(i = 0; i < x_size; i++)
-            {
-                while(x_elm[i] < 0)
-                {
-                    x_elm[i] += num_elm;
-                }
-                while(x_elm[i] >= num_elm)
-                {
-                    x_elm[i] -= num_elm ;
-                }
-            }
-
-            // Map the values of x to [-1 1] on its interval
-            for(i = 0; i < x_size; i++)
-            {
-                x_values_cp[i] = (inarray2[i]/h - floor(inarray2[i]/h))*2 - 1.0;
-            }
-
-            // Evaluate the jocobi polynomials
-            // (Evaluating the base at some points other than the quadrature
-            // points). Should it be added to the base class????
-            Array<TwoD,NekDouble> jacobi_poly(nmodes,x_size);
-            for(i = 0; i < nmodes; i++)
-            {
-                Polylib::jacobfd(x_size,x_values_cp.get(),
-                                    jacobi_poly.get()+i*x_size,NULL,i,0.0,0.0);
-            }
-
-            // Evaluate the function values
-            for(r = 0; r < nmodes; r++)
-            {
-                for(j = 0; j < x_size; j++)
-                {
-                    int index = ((x_elm[j])*nmodes)+r;
-                    outarray[j] += inarray1[index]*jacobi_poly[r][j];
-                }
-            }
-        }
 
         void ExpList::v_PhysInterp1DScaled(
             const NekDouble scale, 
@@ -4441,6 +4519,12 @@ namespace Nektar
             }
         }
         
+        const LocTraceToTraceMapSharedPtr 
+                &ExpList::v_GetLocTraceToTraceMap() const
+        {
+            ASSERTL0(false, "v_GetLocTraceToTraceMap not coded");
+            return NullLocTraceToTraceMapSharedPtr;
+        }
     } //end of namespace
 } //end of namespace
 

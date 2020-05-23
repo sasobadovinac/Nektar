@@ -1072,7 +1072,6 @@ namespace Nektar
                         const Array<OneD, const NekDouble>& sol = NullNekDouble1DArray);
 
             // I/O routines
-
             const LibUtilities::PointsKeyVector GetPointsKeys() const
             {
                 LibUtilities::PointsKeyVector p;
@@ -1300,6 +1299,10 @@ namespace Nektar
                                        const Array<OneD, const NekDouble> &Lcoord,
                                        const Array<OneD, const NekDouble> &physvals);
 
+            STD_REGIONS_EXPORT virtual void v_MultiplyByStdQuadratureMetric(
+                    const Array<OneD, const NekDouble> &inarray,
+                    Array<OneD, NekDouble> &outarray);
+
         private:
             // Virtual functions
             STD_REGIONS_EXPORT virtual int v_GetNverts() const = 0;
@@ -1519,17 +1522,15 @@ namespace Nektar
                     const Array<OneD, const NekDouble> &inarray,
                     Array<OneD, NekDouble> &outarray);
 
-            STD_REGIONS_EXPORT virtual void v_MultiplyByStdQuadratureMetric(
-                    const Array<OneD, const NekDouble> &inarray,
-                    Array<OneD, NekDouble> &outarray);
-
             STD_REGIONS_EXPORT virtual void v_BwdTrans_SumFac
                     (const Array<OneD, const NekDouble>& inarray,
                      Array<OneD, NekDouble> &outarray);
 
+
             STD_REGIONS_EXPORT virtual void v_IProductWRTBase_SumFac
                     (const Array<OneD, const NekDouble>& inarray,
-                     Array<OneD, NekDouble> &outarray, bool multiplybyweights = true);
+                     Array<OneD, NekDouble> &outarray,
+                     bool multiplybyweights = true);
 
             STD_REGIONS_EXPORT virtual void v_IProductWRTDerivBase_SumFac(
                 const int dir,

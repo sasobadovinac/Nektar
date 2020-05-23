@@ -168,6 +168,14 @@ namespace Nektar
                 v_SetCoeffsToOrientation(dir,inarray,outarray);
             }
 
+            /// Divided by the metric jacobi and quadrature weights
+            void DivideByQuadratureMetric(
+                    const Array<OneD, const NekDouble> &inarray,
+                          Array<OneD, NekDouble> &outarray)
+            {
+                v_DivideByQuadratureMetric(inarray, outarray);
+            }
+
             /**
              * @brief Extract the metric factors to compute the contravariant
              * fluxes along edge \a edge and stores them into \a outarray
@@ -216,16 +224,6 @@ namespace Nektar
                 v_ComputeTraceNormal(id);
             }
             
-            void NegateTraceNormal(const int id)
-            {
-                v_NegateTraceNormal(id);
-            }
-            
-            bool TraceNormalNegated(const int id)
-            {
-                return v_TraceNormalNegated(id);
-            }
-            
             const Array<OneD, const NekDouble>& GetPhysNormals(void)
             {
                 return v_GetPhysNormals();
@@ -257,9 +255,12 @@ namespace Nektar
                 v_AddRobinTraceContribution(traceid, primCoeffs, incoeffs, coeffs);
             }
 
+            LOCAL_REGIONS_EXPORT const Array<OneD, const NekDouble > 
+                        &GetElmtBndNormDirElmtLen(const int nbnd) const;
+            
         protected:
 	    LibUtilities::NekManager<IndexMapKey,
-                                     IndexMapValues, IndexMapKey::opLess> m_IndexMapManager;
+                      IndexMapValues, IndexMapKey::opLess> m_IndexMapManager;
 
             std::vector<ExpansionWeakPtr>        m_traceExp;
             SpatialDomains::GeometrySharedPtr    m_geom;
@@ -269,6 +270,12 @@ namespace Nektar
             ExpansionWeakPtr m_elementRight;
             int              m_elementTraceLeft;
             int              m_elementTraceRight;
+
+            /// the element length in each element boundary(Vertex, edge
+            /// or face) normal direction calculated based on the local
+            /// m_metricinfo times the standard element length (which is
+            /// 2.0)
+            std::map<int, Array<OneD, NekDouble>> m_elmtBndNormDirElmtLen;
             
             void ComputeLaplacianMetric();
             void ComputeQuadratureMetric();
@@ -279,6 +286,11 @@ namespace Nektar
             virtual void v_MultiplyByQuadratureMetric
                     (const Array<OneD, const NekDouble> &inarray,
                      Array<OneD,       NekDouble> &outarray);
+
+            virtual void v_DivideByQuadratureMetric(
+                     const Array<OneD, 
+                     const NekDouble>& inarray,
+                     Array<OneD, NekDouble> &outarray);
 
             virtual void v_ComputeLaplacianMetric() {};
             
@@ -373,10 +385,6 @@ namespace Nektar
 
             virtual void v_ComputeTraceNormal(const int id);
 
-            virtual void v_NegateTraceNormal (const int id);
-
-            virtual bool v_TraceNormalNegated(const int id);
-                
             virtual const Array<OneD, const NekDouble>& v_GetPhysNormals(void);
 
             virtual void v_SetPhysNormals(Array<OneD, const NekDouble> &normal);

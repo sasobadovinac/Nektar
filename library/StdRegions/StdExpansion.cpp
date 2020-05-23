@@ -1340,7 +1340,6 @@ namespace Nektar
                     const Array<OneD, const NekDouble> &inarray,
                     Array<OneD, NekDouble> &outarray)
         {
-            boost::ignore_unused(inarray, outarray);
             v_MultiplyByStdQuadratureMetric(inarray,outarray);
         }
         
@@ -1349,10 +1348,10 @@ namespace Nektar
                     Array<OneD, NekDouble> &outarray)
         {
             boost::ignore_unused(inarray, outarray);
-            NEKERROR(ErrorUtil::efatal, "Method does not exist for this "
-                     "shape or library");
+            NEKERROR(ErrorUtil::efatal,
+                     "Method does not exist for this shape or library");
         }
-
+        
         void StdExpansion::v_BwdTrans_SumFac
             (const Array<OneD, const NekDouble>& inarray,
              Array<OneD, NekDouble> &outarray)
@@ -1533,7 +1532,6 @@ namespace Nektar
             HelmholtzMatrixOp_MatFree_GenericImpl(inarray,outarray,mkey);
         }
 
-
         DNekMatSharedPtr
         StdExpansion::v_BuildInverseTransformationMatrix(
             const DNekScalMatSharedPtr & m_transformationmatrix)
@@ -1609,6 +1607,6 @@ namespace Nektar
             NekVector<NekDouble> out(m_ncoeffs, outarray,eWrapper);
             out = (*intmat) * in;
         }
-
+        
     }//end namespace
 }//end namespace

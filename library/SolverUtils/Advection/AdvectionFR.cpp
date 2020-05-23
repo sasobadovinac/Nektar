@@ -1216,14 +1216,11 @@ namespace Nektar
                         Vmath::Reverse(nEdgePts, &fluxJumps[0], 1, 
                                        &fluxJumps[0], 1);
                     }
-                    
-                    NekDouble fac = fields[0]->GetExp(n)->TraceNormalNegated(e) ?
-                        -1.0 : 1.0;
 
                     for (i = 0; i < nEdgePts; ++i)
                     {
-                        if (m_traceNormals[0][trace_offset+i] != fac*normals[0][i] 
-                        || m_traceNormals[1][trace_offset+i] != fac*normals[1][i])
+                        if (m_traceNormals[0][trace_offset+i] != normals[0][i] 
+                        || m_traceNormals[1][trace_offset+i] != normals[1][i])
                         {
                             fluxJumps[i] = -fluxJumps[i];
                         }
@@ -1335,8 +1332,6 @@ namespace Nektar
             int nquad0;
             int nquad1;
             
-            NekDouble fac;
-            
             Array<OneD, NekDouble> auxArray1, auxArray2;
             Array<OneD, LibUtilities::BasisSharedPtr> base;
             
@@ -1418,15 +1413,12 @@ namespace Nektar
                                 fluxN_R[i] = (m_Q2D_e0[n][i]) * fluxN[i];
                             }
                             
-                            fac = fields[0]->GetExp(n)->TraceNormalNegated(e) ?
-                            -1.0 : 1.0;
-                            
                             for (i = 0; i < nEdgePts; ++i)
                             {
                                 if (m_traceNormals[0][trace_offset+i]
-                                    != fac*normals[0][i] ||
+                                    != normals[0][i] ||
                                     m_traceNormals[1][trace_offset+i]
-                                    != fac*normals[1][i])
+                                    != normals[1][i])
                                 {
                                     fluxN_R[i] = -fluxN_R[i];
                                 }
@@ -1484,15 +1476,12 @@ namespace Nektar
                                 fluxN_R[i] = (m_Q2D_e1[n][i]) * fluxN[i];
                             }
                             
-                            fac = fields[0]->GetExp(n)->TraceNormalNegated(e) ?
-                            -1.0 : 1.0;
-                            
                             for (i = 0; i < nEdgePts; ++i)
                             {
                                 if (m_traceNormals[0][trace_offset+i]
-                                    != fac*normals[0][i] ||
+                                    != normals[0][i] ||
                                     m_traceNormals[1][trace_offset+i]
-                                    != fac*normals[1][i])
+                                    != normals[1][i])
                                 {
                                     fluxN_R[i] = -fluxN_R[i];
                                 }
@@ -1552,15 +1541,12 @@ namespace Nektar
                                 fluxN_R[i] = (m_Q2D_e2[n][i]) * fluxN[i];
                             }
                             
-                            fac = fields[0]->GetExp(n)->TraceNormalNegated(e) ?
-                            -1.0 : 1.0;
-                            
                             for (i = 0; i < nEdgePts; ++i)
                             {
                                 if (m_traceNormals[0][trace_offset+i]
-                                    != fac*normals[0][i] ||
+                                    != normals[0][i] ||
                                     m_traceNormals[1][trace_offset+i]
-                                    != fac*normals[1][i])
+                                    != normals[1][i])
                                 {
                                     fluxN_R[i] = -fluxN_R[i];
                                 }
@@ -1621,15 +1607,12 @@ namespace Nektar
                                 fluxN_R[i] = (m_Q2D_e3[n][i]) * fluxN[i];
                             }
                             
-                            fac = fields[0]->GetExp(n)->TraceNormalNegated(e) ?
-                            -1.0 : 1.0;
-                            
                             for (i = 0; i < nEdgePts; ++i)
                             {
                                 if (m_traceNormals[0][trace_offset+i]
-                                    != fac*normals[0][i] ||
+                                    != normals[0][i] ||
                                     m_traceNormals[1][trace_offset+i]
-                                    != fac*normals[1][i])
+                                    != normals[1][i])
                                 {
                                     fluxN_R[i] = -fluxN_R[i];
                                 }

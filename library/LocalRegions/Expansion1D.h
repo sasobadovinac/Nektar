@@ -56,34 +56,33 @@ namespace Nektar
         class Expansion1D: virtual public Expansion,
             virtual public StdRegions::StdExpansion1D
         {
-        public:
-            LOCAL_REGIONS_EXPORT Expansion1D(SpatialDomains::
-                                             Geometry1DSharedPtr pGeom)
-                : Expansion(pGeom),
-                  StdExpansion1D()
-            {
-            }
-            
-            LOCAL_REGIONS_EXPORT virtual ~Expansion1D() {}
-            
-            LOCAL_REGIONS_EXPORT void AddNormTraceInt
-            (const int dir,
-             Array<OneD, const NekDouble> &inarray,
-             Array<OneD,NekDouble> &outarray);
-            
-                        
-            void AddHDGHelmholtzTraceTerms
-            (const NekDouble                      tau,
-             const Array<OneD, const NekDouble>  &inarray,
-             Array<OneD, NekDouble>        &outarray);
-            
-            inline SpatialDomains::Geometry1DSharedPtr GetGeom1D() const;
+            public:
+                LOCAL_REGIONS_EXPORT Expansion1D(SpatialDomains::
+                                                 Geometry1DSharedPtr pGeom)
+                                                 : Expansion(pGeom),
+                                                   StdExpansion1D()
+                {
+                }
 
-        protected: 
-            std::map<int, NormalVector>             m_vertexNormals;
-            std::map<int, bool>                     m_negatedNormals;
-            
-            virtual DNekMatSharedPtr v_GenMatrix(
+                LOCAL_REGIONS_EXPORT virtual ~Expansion1D() {}
+
+                LOCAL_REGIONS_EXPORT void AddNormTraceInt(
+                        const int dir,
+                        Array<OneD, const NekDouble> &inarray,
+                        Array<OneD,NekDouble> &outarray);
+
+
+                void AddHDGHelmholtzTraceTerms(
+                    const NekDouble                      tau,
+                    const Array<OneD, const NekDouble>  &inarray,
+                          Array<OneD, NekDouble>        &outarray);
+
+                inline SpatialDomains::Geometry1DSharedPtr GetGeom1D() const;
+
+            protected:
+                std::map<int, NormalVector>             m_vertexNormals;
+
+                virtual DNekMatSharedPtr v_GenMatrix(
                     const StdRegions::StdMatrixKey      &mkey);
 
             virtual void v_AddRobinMassMatrix(
@@ -103,13 +102,8 @@ namespace Nektar
             virtual void v_NormalTraceDerivFactors
             (Array<OneD, Array<OneD, NekDouble> > &factors);
 
-            virtual void v_NegateTraceNormal (const int vertex);
-
-            virtual bool v_TraceNormalNegated(const int vertex);
-
             virtual const NormalVector &v_GetTraceNormal(const int edge) const;
 
-            
             virtual void v_ReOrientTracePhysMap
                     (const StdRegions::Orientation orient,
                      Array<OneD, int> &idmap,
