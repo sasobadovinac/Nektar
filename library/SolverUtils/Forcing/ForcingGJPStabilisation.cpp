@@ -283,7 +283,7 @@ namespace SolverUtils
                 // Evaluate the  normal derivative jump on the trace
                 for(int n = 0; n < m_coordDim; ++n)
                 {
-                    m_dgfield->GetFwdBwdTracePhys(deriv[n],Fwd,Bwd,true);
+                    m_dgfield->GetFwdBwdTracePhys(deriv[n],Fwd,Bwd,true,true);
                     
                     // Multiply by normal and add to trace evaluation
                     Vmath::Vsub(nTracePts,Fwd,1,Bwd,1,Fwd,1);

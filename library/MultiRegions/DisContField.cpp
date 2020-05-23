@@ -2824,58 +2824,6 @@ namespace Nektar
             return (vSame == 1);
         }
 
-
-<<<<<<< HEAD
-        /**
-         * Generate the forward or backward state for each trace point.
-         * @param   Fwd     Forward state.
-         * @param   Bwd     Backward state.
-         */
-        void DisContField::v_GetFwdBwdTracePhys(Array<OneD, NekDouble> &Fwd,
-                                                Array<OneD, NekDouble> &Bwd,
-                                                bool PutFwdInBwdOnBCs)
-        {
-            v_GetFwdBwdTracePhys(m_phys,Fwd,Bwd,PutFwdInBwdOnBCs);
-        }
-=======
-        vector<bool> &DisContField::GetNegatedFluxNormal(void)
-        {
-            if(m_negatedFluxNormal.size() == 0)
-            {
-                Array<OneD, Array<OneD, LocalRegions::ExpansionSharedPtr> >
-                    &elmtToTrace = m_traceMap->GetElmtToTrace();
-
-                m_negatedFluxNormal.resize(2*GetExpSize());
-                
-                for(int i = 0; i < GetExpSize(); ++i)
-                {
-
-                    for(int v = 0; v < 2; ++v)
-                    {
-                        LocalRegions::Expansion0DSharedPtr vertExp =
-                            elmtToTrace[i][v]->as<LocalRegions::Expansion0D>();
-
-                        if(vertExp->GetLeftAdjacentElementExp()->GetGeom()
-                           ->GetGlobalID() !=
-                           (*m_exp)[i]->GetGeom()->GetGlobalID())
-                        {
-                            m_negatedFluxNormal[2*i+v] = true;
-                        }
-                        else
-                        {
-                            m_negatedFluxNormal[2*i+v] = false;
-                        }
-                    }
-                }
-
-            }
-
-            return m_negatedFluxNormal;
-        }
-
->>>>>>> feature/CollapseExplist
-        
-        
         /**
          * \brief This method extracts the "forward" and "backward" trace
          * data from the array \a field and puts the data into output
@@ -2903,17 +2851,11 @@ namespace Nektar
          */
         void DisContField::v_GetFwdBwdTracePhys
            (const Array<OneD, const NekDouble> &field,
-<<<<<<< HEAD
-            Array<OneD,       NekDouble> &Fwd,
-            Array<OneD,       NekDouble> &Bwd,
-            bool PutFwdInBwdOnBCs)
-=======
             Array<OneD, NekDouble> &Fwd,
             Array<OneD, NekDouble> &Bwd,
             bool FillBnd,
             bool PutFwdInBwdOnBCs, 
             bool DoExchange)
->>>>>>> feature/CollapseExplist
         {
             int cnt, n, e, npts, phys_offset;
 

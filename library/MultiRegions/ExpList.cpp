@@ -3047,14 +3047,6 @@ namespace Nektar
             return GetTraceMap()->GetBndCondIDToGlobalTraceID();
         }
 
-        LocTraceToTraceMapSharedPtr &ExpList::v_GetLocTraceToTraceMap(void)
-        {
-            NEKERROR(ErrorUtil::efatal,
-                     "This method is not defined or valid for this class type");
-            static LocTraceToTraceMapSharedPtr result;
-            return result;
-        }
-
         std::vector<bool> &ExpList::v_GetLeftAdjacentTraces()
         {
             NEKERROR(ErrorUtil::efatal,
@@ -3535,10 +3527,9 @@ namespace Nektar
         }
 
         void ExpList::v_GetFwdBwdTracePhys(Array<OneD,NekDouble> &Fwd,
-                                           Array<OneD,NekDouble> &Bwd,
-                                           bool PutFwdInBwdOnBCs)
+                                           Array<OneD,NekDouble> &Bwd)
         {
-            boost::ignore_unused(Fwd, Bwd,PutFwdInBwdOnBCs);
+            boost::ignore_unused(Fwd, Bwd);
             NEKERROR(ErrorUtil::efatal,
                      "This method is not defined or valid for this class type");
         }

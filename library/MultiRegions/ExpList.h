@@ -864,8 +864,7 @@ namespace Nektar
 
             inline void GetFwdBwdTracePhys(
                 Array<OneD,NekDouble> &Fwd,
-                Array<OneD,NekDouble> &Bwd,
-                bool PutFwdInBwdOnBCs = false);
+                Array<OneD,NekDouble> &Bwd);
 
             inline void GetFwdBwdTracePhys(
                 const Array<OneD,const NekDouble> &field,
@@ -1286,10 +1285,10 @@ namespace Nektar
 
             virtual const Array<OneD, const int> &v_GetTraceBndMap();
 
-            virtual std::vector<bool> &v_GetLeftAdjacentTraces(void);
-
             virtual const std::shared_ptr<LocTraceToTraceMap>
-                 &v_GetLocTraceToTraceMap(void) const;
+            &v_GetLocTraceToTraceMap(void) const;
+
+            virtual std::vector<bool> &v_GetLeftAdjacentTraces(void);
 
             /// Populate \a normals with the normals of all expansions.
             virtual void v_GetNormals(
@@ -1311,8 +1310,7 @@ namespace Nektar
 
             virtual void v_GetFwdBwdTracePhys(
                 Array<OneD,NekDouble> &Fwd,
-                Array<OneD,NekDouble> &Bwd,
-                bool PutFwdInBwdOnBCs = false);
+                Array<OneD,NekDouble> &Bwd);
 
             virtual void v_GetFwdBwdTracePhys(
                 const Array<OneD,const NekDouble>  &field,
@@ -2409,14 +2407,6 @@ namespace Nektar
             return v_GetTraceBndMap();
         }
 
-
-        inline std::shared_ptr<LocTraceToTraceMap>
-            &ExpList::GetLocTraceToTraceMap()
-        {
-            return v_GetLocTraceToTraceMap();
-        }
-
-
         inline void ExpList::GetNormals(
             Array<OneD, Array<OneD, NekDouble> > &normals)
         {
@@ -2448,21 +2438,15 @@ namespace Nektar
 
         inline void ExpList::GetFwdBwdTracePhys(
             Array<OneD,NekDouble> &Fwd,
-            Array<OneD,NekDouble> &Bwd,
-            bool PutFwdInBwdOnBCs)
+            Array<OneD,NekDouble> &Bwd)
         {
-            v_GetFwdBwdTracePhys(Fwd,Bwd,PutFwdInBwdOnBCs);
+            v_GetFwdBwdTracePhys(Fwd,Bwd);
         }
 
         inline void ExpList::GetFwdBwdTracePhys(
             const Array<OneD,const NekDouble>  &field,
             Array<OneD,NekDouble> &Fwd,
             Array<OneD,NekDouble> &Bwd,
-<<<<<<< HEAD
-            bool PutFwdInBwdOnBCs)
-        {
-            v_GetFwdBwdTracePhys(field,Fwd,Bwd,PutFwdInBwdOnBCs);
-=======
             bool FillBnd,
             bool PutFwdInBwdOnBCs, 
             bool DoExchange)
@@ -2492,7 +2476,6 @@ namespace Nektar
                       Array<OneD,       NekDouble> &Bwd)
         {
             v_PeriodicBwdCopy(Fwd, Bwd);
->>>>>>> feature/CollapseExplist
         }
 
         inline const std::vector<bool> &ExpList::GetLeftAdjacentFaces(void) const

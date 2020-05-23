@@ -233,19 +233,12 @@ namespace Nektar
             virtual void v_AddTraceIntegral(
                 const Array<OneD, const NekDouble> &Fn,
                       Array<OneD,       NekDouble> &outarray);
+
             virtual void v_AddFwdBwdTraceIntegral(
                 const Array<OneD, const NekDouble> &Fwd, 
                 const Array<OneD, const NekDouble> &Bwd, 
                       Array<OneD,       NekDouble> &outarray);
-            virtual void v_GetFwdBwdTracePhys(
-                      Array<OneD,       NekDouble> &Fwd,
-                      Array<OneD,       NekDouble> &Bwd,
-                      bool PutFwdInBwdOnBCs = false);
-            virtual void v_GetFwdBwdTracePhys(
-                      const Array<OneD, const NekDouble> &field,
-                      Array<OneD,       NekDouble> &Fwd,
-                      Array<OneD,       NekDouble> &Bwd,
-                      bool PutFwdInBwdOnBCs = false);
+
             virtual void v_AddTraceQuadPhysToField(
                 const Array<OneD, const NekDouble> &Fwd,
                 const Array<OneD, const NekDouble> &Bwd,
