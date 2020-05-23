@@ -2823,7 +2823,10 @@ namespace Nektar
                 }
             
                 // cout << "GetpreconditionerNSBlkDiag_coeff"<<endl;
-                m_CalcuPrecMatFlag = false;
+                if (m_PrcdMatFreezNumb>0)
+                {
+                    m_CalcuPrecMatFlag = false;
+                }
                 m_TimeIntegLambdaPrcMat = m_TimeIntegLambda;
                 // cout << "m_TotNonLinItePrecMat  =   "<<m_TotNonLinItePrecMat<<endl;
                 // m_TotNonLinItePrecMat = 0;
