@@ -2716,8 +2716,8 @@ namespace Nektar
                 {
                     for(unsigned int j = 0; j < ncoeff1; ++j)
                     {
-                        dbasis[1][k*ncoeff0+i][j] = DerivBasis1[(j+1)*nquad1-1];
-                        dbasis[3][k*ncoeff0+i][j] = DerivBasis1[j*nquad1];
+                        dbasis[1][k*ncoeff0+i][j] = DerivBasis1[j*nquad1];
+                        dbasis[3][k*ncoeff0+i][j] = DerivBasis1[(j+1)*nquad1-1];
                         
                         TraceToCoeffMap[1][k*ncoeff0+i][j] =  i + j*ncoeff1
                             + k*ncoeff0*ncoeff1;                            

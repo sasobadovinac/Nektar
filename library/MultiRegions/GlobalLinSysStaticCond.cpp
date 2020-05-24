@@ -559,10 +559,13 @@ namespace Nektar
                         // (*substructuredMat[0][i]) =(*substructuredMat[0][i])-
                         // (*substructuredMat[1][i])*(*substructuredMat[2][i]);
                         // Note: faster to use blas directly
-                        Blas::Dgemm('N','N', subMat1rows, subMat2cols,
-                                    subMat2rows, -1.0, &subMat1[0], subMat1rows,
-                                    &subMat2[0], subMat2rows, 1.0, &subMat0[0],
-                                    subMat0rows);
+                        if(subMat1rows&&subMat2cols)
+                        {
+                            Blas::Dgemm('N','N', subMat1rows, subMat2cols,
+                                        subMat2rows, -1.0, &subMat1[0],
+                                        subMat1rows, &subMat2[0], subMat2rows,
+                                        1.0, &subMat0[0], subMat0rows);
+                        }
                     }
                 }
 
