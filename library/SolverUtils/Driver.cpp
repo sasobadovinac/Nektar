@@ -194,6 +194,28 @@ void Driver::v_InitObject(ostream &out)
                 vector<string>  MultiOrderFilename;
                 
                 //Because file name will change to FileName_xml/P0000000.xml, so return back to original name
+                // for(int i=0;i<m_session->GetFilenames().size();i++)
+                // {
+                //     TmpInputFile=m_session->GetFilenames()[i];
+                //     int index,length;
+                //     index=TmpInputFile.find("/");
+                //     if((-1)!=index)
+                //     {
+                //         length=TmpInputFile.length()-index+5;
+                //         // TmpInputFile.replace( index-4,length, "_MultiOrder.xml");
+                //         TmpInputFile.replace( index-4,length, ".xml");
+                //         MultiOrderFilename.push_back(TmpInputFile);
+                //     }
+                //     else
+                //     {
+                //         index=TmpInputFile.find(".");
+                //         TmpInputFile.replace( index,4, ".xml");
+                //         MultiOrderFilename.push_back(TmpInputFile);
+
+                //     }
+                // }
+
+                //Change to 2_32_MultiOrder/P00000.xml
                 for(int i=0;i<m_session->GetFilenames().size();i++)
                 {
                     TmpInputFile=m_session->GetFilenames()[i];
@@ -201,10 +223,10 @@ void Driver::v_InitObject(ostream &out)
                     index=TmpInputFile.find("/");
                     if((-1)!=index)
                     {
-                        length=TmpInputFile.length()-index+5;
-                        // TmpInputFile.replace( index-4,length, "_MultiOrder.xml");
-                        TmpInputFile.replace( index-4,length, ".xml");
+                        TmpInputFile.replace( index-4,4, "_MultiOrder_xml");
                         MultiOrderFilename.push_back(TmpInputFile);
+                        cout<<TmpInputFile<<endl;
+                        // ASSERTL0(false, "Change Name Successfully");
                     }
                     else
                     {
@@ -218,7 +240,7 @@ void Driver::v_InitObject(ostream &out)
                 int Order=1;
                 MultiOrderSession= LibUtilities::SessionReader::CreateInstance(
                                 0, NULL, MultiOrderFilename, m_session->GetComm(),Order);
-                SpatialDomains::MeshGraphSharedPtr MultiOrderGraph =SpatialDomains::MeshGraph::ReadMultiOrder(MultiOrderSession);
+                SpatialDomains::MeshGraphSharedPtr MultiOrderGraph =SpatialDomains::MeshGraph::Read(MultiOrderSession);
 
                 //Run MultiOrder Solver
                 MultiOrderSession->SetTag("AdvectiveType","Convective");
