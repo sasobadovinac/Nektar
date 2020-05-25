@@ -2984,7 +2984,10 @@ namespace Nektar
 
                    
                 converged = true;
-                cout <<right<<scientific<<setw(nwidthcolm)<<setprecision(nwidthcolm-6)<<" Time= "<<m_time<<" ResidualNorm="<<sqrt(resnorm)<<",  AbsoluteTolerance="<<sqrt(tol2)<<endl;
+                if(l_root && l_verbose)
+                {
+                    cout <<right<<scientific<<setw(nwidthcolm)<<setprecision(nwidthcolm-6)<<" Time= "<<m_time<<" ResidualNorm="<<sqrt(resnorm)<<",  AbsoluteTolerance="<<sqrt(tol2)<<endl;
+                }
 
                 if(resratio>tol2Ratio&&l_root)
                 {

@@ -179,8 +179,9 @@ namespace Nektar
 
             if(m_SpatialErrorFreezNumber>0)
             {
+                m_SpatialErrorNorm=0.0;
                 int nvariables=GetNvariables();
-                m_SpatialErrorNormArray=Array<OneD, NekDouble> (nvariables,0.0);
+                  m_SpatialErrorNormArray=Array<OneD, NekDouble> (nvariables,0.0);
                 m_SpatialError=Array<OneD,Array<OneD,NekDouble>>(nvariables);
                 m_OperatedSpatialError=Array<OneD,Array<OneD,NekDouble>>(nvariables);
                 for(int i=0;i<nvariables;i++)
@@ -194,7 +195,9 @@ namespace Nektar
 
             if(m_TemporalErrorFreezNumber>0)
             {
+                m_TemporalErrorNorm=0.0;
                 int nvariables=GetNvariables();
+                m_TemporalErrorNormArray=Array<OneD, NekDouble> (nvariables,0.0);
                 m_TemporalError=Array<OneD,Array<OneD,NekDouble>>(nvariables);
                 m_OperatedTemporalError=Array<OneD,Array<OneD,NekDouble>>(nvariables);
                 for(int i=0;i<nvariables;i++)
@@ -539,7 +542,6 @@ namespace Nektar
                         }
                         m_OperatedAdaptiveTimeStep=Vmath::Vmin(nvariables,timestepArray,1);
                         m_comm->AllReduce(m_OperatedAdaptiveTimeStep,LibUtilities::ReduceMin);
-
                     }
 
                     // if(m_ErrorBasedAdaptedTimeStepFlag && m_comm->GetRank() == 0)
@@ -706,8 +708,6 @@ namespace Nektar
                 //Direct error is between the comparison between DIRK3 and DIRK4
                 if(m_TemporalErrorFreezNumber>0)
                 {
-                        m_TemporalErrorNormArray=Array<OneD, NekDouble> (nvariables,0.0);
-
                         for(int i = 0; i < nvariables; i++)
                         {
                             int npoints=m_fields[i]->GetNpoints();
@@ -733,23 +733,32 @@ namespace Nektar
                 
                 if(m_ErrorBasedAdaptedTimeStepFlag && m_comm->GetRank() == 0)
                 {
-                    Array<OneD, NekDouble>  m_SpatialQuadErrorNormArray(nvariables,0.0);
-                    Array<OneD, NekDouble>  m_TemporalQuadErrorNormArray(nvariables,0.0);
+                    // Array<OneD, NekDouble>  m_SpatialQuadErrorNormArray(nvariables,0.0);
+                    // Array<OneD, NekDouble>  m_TemporalQuadErrorNormArray(nvariables,0.0);
 
-                    for(int i = 0; i < nvariables; i++)
-                    {
-                        int npoints=m_fields[i]->GetNpoints();
-                        m_TemporalQuadErrorNormArray[i] = Vmath::Dot(npoints,m_TemporalError[i],m_TemporalError[i]);
-                         m_TemporalQuadErrorNormArray[i] =sqrt( m_TemporalQuadErrorNormArray[i]);
-                    }
-                    for(int i = 0; i < nvariables; i++)
-                    {
-                        int npoints=m_fields[i]->GetNpoints();
-                        m_SpatialQuadErrorNormArray[i] = Vmath::Dot(npoints,m_SpatialError[i],m_SpatialError[i]);
-                        m_SpatialQuadErrorNormArray[i] =sqrt(m_SpatialQuadErrorNormArray[i] );
-                    }
+                    // for(int i = 0; i < nvariables; i++)
+                    // {
+                    //     int npoints=m_fields[i]->GetNpoints();
+                    //     m_TemporalQuadErrorNormArray[i] = Vmath::Dot(npoints,m_TemporalError[i],m_TemporalError[i]);
+                    // }
+                    // m_comm->AllReduce(m_TemporalQuadErrorNormArray, Nektar::LibUtilities::ReduceSum);
+                    // for(int i = 0; i < nvariables; i++)
+                    // {
+                    //     m_TemporalQuadErrorNormArray[i]=sqrt(m_TemporalQuadErrorNormArray[i]);
+                    // }
+
+                    // for(int i = 0; i < nvariables; i++)
+                    // {
+                    //     int npoints=m_fields[i]->GetNpoints();
+                    //     m_SpatialQuadErrorNormArray[i] = Vmath::Dot(npoints,m_SpatialError[i],m_SpatialError[i]);
+                    // }
+                    // m_comm->AllReduce(m_SpatialQuadErrorNormArray, Nektar::LibUtilities::ReduceSum);
+                    // for(int i = 0; i < nvariables; i++)
+                    // {
+                    //     m_SpatialQuadErrorNormArray[i] =sqrt(m_SpatialQuadErrorNormArray[i] );
+                    // }
                     ofstream outfile0;
-                    outfile0.open("QuadErrorNorm.txt",ios::app);
+                    outfile0.open("CoeffErrorNorm.txt",ios::app);
                     outfile0<<"$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$"<<endl;
                     int nwidthcolm=12;
                     int npoints=m_fields[0]->GetNpoints();
@@ -758,14 +767,14 @@ namespace Nektar
                     outfile0<<"Spatial Error (NonOperatedNorm)"<<endl;
                     for(int i=0;i<nvariables;i++)
                     {
-                        outfile0<<right<<scientific<<setw(nwidthcolm)<<setprecision(nwidthcolm-6)<<m_SpatialQuadErrorNormArray[i]/sqrt(npoints);//Because L2 norm is sqrt((x1^2+x2^2)/2)
+                        outfile0<<right<<scientific<<setw(nwidthcolm)<<setprecision(nwidthcolm-6)<<m_SpatialErrorNormArray[i];//Because L2 norm is sqrt((x1^2+x2^2)/2)
                         outfile0<<"     ";
                     }
                     outfile0<<endl;
                     outfile0<<"Temporal Error (NonOperatedNorm)"<<endl;
                     for(int i=0;i<nvariables;i++)
                     {
-                        outfile0<<right<<scientific<<setw(nwidthcolm)<<setprecision(nwidthcolm-6)<<m_TemporalQuadErrorNormArray[i]/sqrt(npoints);
+                        outfile0<<right<<scientific<<setw(nwidthcolm)<<setprecision(nwidthcolm-6)<<m_TemporalErrorNormArray[i];
                         outfile0<<"     ";
                     }
                     outfile0<<endl;
