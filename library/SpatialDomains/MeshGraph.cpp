@@ -138,6 +138,8 @@ MeshGraphSharedPtr MeshGraph::Read(
 
 MeshGraphSharedPtr MeshGraph::ReadMultiOrder(
     const LibUtilities::SessionReaderSharedPtr session,
+    CompositeOrdering                          &compOrder,
+    BndRegionOrdering                          &bndRegOrder,
     DomainRangeShPtr                           rng,
     bool                                       fillGraph)
 {
@@ -182,6 +184,12 @@ MeshGraphSharedPtr MeshGraph::ReadMultiOrder(
     // XML and HDF5.
     MeshGraphSharedPtr mesh = GetMeshGraphFactory().CreateInstance(geomType);
     mesh->PartitionMesh(session);
+    if(comm->GetSize() > 1)
+    {
+        mesh->SetCompositeOrdering(compOrder);
+        mesh->SetBndRegionOrdering(bndRegOrder);
+
+    }
 
     // Finally, read the geometry information.
     mesh->ReadMultiOrderGeometry(rng, fillGraph);

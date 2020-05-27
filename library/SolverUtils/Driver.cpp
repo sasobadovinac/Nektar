@@ -192,7 +192,6 @@ void Driver::v_InitObject(ostream &out)
                 m_equ[0] = GetEquationSystemFactory().CreateInstance(vEquation, m_session, m_graph);
                 string         TmpInputFile;
                 vector<string>  MultiOrderFilename;
-                
                 //Because file name will change to FileName_xml/P0000000.xml, so return back to original name
                 for(int i=0;i<m_session->GetFilenames().size();i++)
                 {
@@ -201,9 +200,12 @@ void Driver::v_InitObject(ostream &out)
                     index=TmpInputFile.find("/");
                     if((-1)!=index)
                     {
-                        length=TmpInputFile.length()-index+5;
+                        ////////////////ReName
+                        // length=TmpInputFile.length()-index+5;
                         // TmpInputFile.replace( index-4,length, "_MultiOrder.xml");
-                        //TmpInputFile.replace( index-4,length, ".xml");
+                        ////////////////Return Original Name
+                        // length=TmpInputFile.length()-index+5;
+                        // TmpInputFile.replace( index-4,length, ".xml");
                         MultiOrderFilename.push_back(TmpInputFile);
                     }
                     else
@@ -243,8 +245,11 @@ void Driver::v_InitObject(ostream &out)
                                 0, NULL, MultiOrderFilename, m_session->GetComm(),Order);
                 
                 TmpInputFile=MultiOrderSession->GetSessionName();
-                SpatialDomains::MeshGraphSharedPtr MultiOrderGraph =SpatialDomains::MeshGraph::ReadMultiOrder(MultiOrderSession);
-                
+                 SpatialDomains::MeshGraphSharedPtr MultiOrderGraph =
+                 SpatialDomains::MeshGraph::ReadMultiOrder(MultiOrderSession,
+                 m_graph->GetCompositeOrdering(),
+                 m_graph->GetBndRegionOrdering());
+                //SpatialDomains::MeshGraphSharedPtr MultiOrderGraph =SpatialDomains::MeshGraph::Read(MultiOrderSession);
                 // cout<<"2: "<<m_session->GetSessionName()<<endl;
                 // cout<<"3: "<<MultiOrderSession->GetSessionName()<<endl;
                 //Run MultiOrder Solver

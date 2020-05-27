@@ -175,6 +175,8 @@ public:
 
     SPATIAL_DOMAINS_EXPORT static MeshGraphSharedPtr ReadMultiOrder(
         const LibUtilities::SessionReaderSharedPtr pSession,
+        CompositeOrdering                          &compOrder,
+        BndRegionOrdering                          &bndRegOrder,
         DomainRangeShPtr                           rng       = NullDomainRangeShPtr,
         bool                                       fillGraph = true);
 
@@ -421,6 +423,16 @@ public:
     BndRegionOrdering &GetBndRegionOrdering()
     {
         return m_bndRegOrder;
+    }
+
+    void SetCompositeOrdering(CompositeOrdering &compOrder)
+    {
+        m_compOrder=compOrder;
+    }
+
+    void SetBndRegionOrdering(BndRegionOrdering &bndRegOrder)
+    {
+        m_bndRegOrder=bndRegOrder;
     }
 
     /*an inital read which loads a very light weight data structure*/
