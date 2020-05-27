@@ -712,14 +712,14 @@ automatically built during the \nekpp build process. Below are the choices of X:
 
 There are also a number of additional options to fine-tune the build:
 \begin{itemize}
-    \item \inlsh{NEKTAR\_ENABLE\_BACKUPS}
+    \item \inlsh{NEKTAR\_DISABLE\_BACKUPS}
 
-    By default, Nektar++ solvers and the FieldConvert utility will overwrite
-    any generated field files or output files if they find an existing file with
-    the same name, thus overwriting all pre-existing output silently. If you do
-    not want this behaviour, then enabling this option will cause the existing
-    file to be either moved to a backup file or you will be prompted to
-    overwrite them.
+    By default, Nektar++ solvers and the FieldConvert utility will not overwrite
+    any generated field files or output files they find an existing file with
+    the same name. Instead, the existing file will be either moved to a backup
+    file or you will be prompted to overwrite them. If you do not want this
+    behaviour, then enabling this option will cause all pre-existing output to
+    be overwritten silently.
 
     \item \inlsh{NEKTAR\_TEST\_ALL}
     

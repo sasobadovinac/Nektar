@@ -127,8 +127,7 @@ int main(int argc, char* argv[])
         return 1;
     }
 
-#ifndef NEKTAR_ENABLE_BACKUPS
-    std::cout << "here" << std::endl;
+#ifdef NEKTAR_DISABLE_BACKUPS
     vm.insert(std::make_pair("forceoutput", po::variable_value()));
 #endif
 
