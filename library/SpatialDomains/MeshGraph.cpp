@@ -248,7 +248,8 @@ void MeshGraph::FillGraph()
 
 void MeshGraph::FillMultiOrderGraph()
 {
-    ReadMultiOrderExpansions();
+    ReplaceExpansion(1,0);
+    ReadExpansions();
 
     switch (m_meshDimension)
     {
@@ -3737,180 +3738,98 @@ void MeshGraph::ReadMultiOrderExpansions()
 }
 
 
-void  MeshGraph::ReplaceExpansion(int Offset)
+void  MeshGraph::ReplaceExpansion(int ModeOffset, int QuadOffset)
 {
     // Find the Expansions tag
     TiXmlElement *expansionTypes = m_session->GetElement("NEKTAR/EXPANSIONS");
     ASSERTL0(expansionTypes, "Unable to find EXPANSIONS tag in file.");
 
+
+
     if (expansionTypes)
     {
-        // Find the Expansion type
         TiXmlElement *expansion = expansionTypes->FirstChildElement();
         std::string expType     = expansion->Value();
-            std::vector<LibUtilities::FieldDefinitionsSharedPtr> fielddefs;
-
-        // This has to use the XML reader since we are treating the already
-        // parsed XML as a standard FLD file.
-        std::shared_ptr<LibUtilities::FieldIOXml> f =
-            make_shared<LibUtilities::FieldIOXml>(m_session->GetComm(), false);
-        f->ImportFieldDefs(LibUtilities::XmlDataSource::create(m_session->GetDocument()),
-                            fielddefs, true);
         if (expType == "E")
         {
-            //Clear Expansion and reset
-            expansionTypes->Clear();
-            // Write new expansion information
-            for (int f = 0; f < fielddefs.size(); ++f)
+            const char *nModesStr = expansion->Attribute("NUMMODES");
+            if(nModesStr)
             {
-                int nExp = fielddefs[f]->m_elementIDs.size();
+                std::string numModesStr = nModesStr;
+                std::vector<unsigned int> numModes;
+                bool valid = ParseUtils::GenerateVector(
+                    numModesStr.c_str(), numModes);
+                int nDim=numModes.size();
+                //Yu Pan's Test : Add higher order
+                for(int i=0;i<nDim;i++)
+                {
+                    numModes[i]=numModes[i]+ModeOffset;
+                }
+                expansion->RemoveAttribute("NUMMODES");
 
-                // Write ELEMENTS
-                TiXmlElement *elemTag = new TiXmlElement("ELEMENTS");
-                expansionTypes->LinkEndChild(elemTag);
-
-                // Write NUMMODESPERDIR
                 std::string numModesString;
                 {
                     std::stringstream numModesStringStream;
-
-                    if (fielddefs[f]->m_uniOrder)
-                    {
-                        numModesStringStream << "UNIORDER:";
-                        // Just dump single definition
-                        bool first = true;
-                        for (std::vector<int>::size_type i = 0;
-                            i < fielddefs[f]->m_basis.size();
-                            i++)
-                        {
-                            if (!first)
-                            {
-                                numModesStringStream << ",";
-                            }
-                            numModesStringStream << fielddefs[f]->m_numModes[i];
-                            first = false;
-                        }
-                    }
-                    else
-                    {
-                        numModesStringStream << "MIXORDER:";
-                        bool first = true;
-                        for (std::vector<int>::size_type i = 0;
-                            i < fielddefs[f]->m_numModes.size();
-                            i++)
-                        {
-                            if (!first)
-                            {
-                                numModesStringStream << ",";
-                            }
-                            numModesStringStream << fielddefs[f]->m_numModes[i];
-                            first = false;
-                        }
-                    }
-
-                    numModesString = numModesStringStream.str();
-                }
-                elemTag->SetAttribute("NUMMODESPERDIR", numModesString);
-                
- 
-                // Write BASIS
-                // std::string basisTypeString;
-                // {
-                //     std::stringstream basisTypeStringStream;
-                //     bool first = true;
-                //     for (std::vector<LibUtilities::BasisType>::size_type i = 0;
-                //         i < fielddefs[f]->m_basis.size(); i++)
-                //     {
-                //         if (!first)
-                //         {
-                //             basisTypeStringStream << ",";
-                //         }
-                //         basisTypeStringStream
-                //             << LibUtilities::BasisTypeMap[fielddefs[f]->m_basis[i]];
-                //         first = false;
-                //     }
-                //     basisTypeString = basisTypeStringStream.str();
-                // }
-                // elemTag->SetAttribute("BASISTYPE", basisTypeString);     
-                
-                // Write BASIS
-                std::string basisString;
-                {
-                    std::stringstream basisStringStream;
                     bool first = true;
-                    for (std::vector<LibUtilities::BasisType>::size_type i = 0;
-                        i < fielddefs[f]->m_basis.size();
-                        i++)
+                    for (int i = 0; i < nDim; i++)
                     {
                         if (!first)
                         {
-                            basisStringStream << ",";
+                            numModesStringStream << ",";
                         }
-                        basisStringStream << LibUtilities::BasisTypeMap[fielddefs[f]->m_basis[i]];
+                        numModesStringStream << numModes[i];
                         first = false;
                     }
-                    basisString = basisStringStream.str();
+                    numModesString = numModesStringStream.str();
+                } 
+                expansion->SetAttribute("NUMMODES", numModesString);
+            }
+            else
+            {
+                ASSERTL0(nModesStr, "Currently only support NUMMODES and NUMPOINTS input expansion");
+            }
+
+            const char *nPointsStr = expansion->Attribute("NUMPOINTS");
+            if(nPointsStr)
+            {
+                std::string numPointsStr = nPointsStr;
+                std::vector<unsigned int> numPoints;
+                bool valid = ParseUtils::GenerateVector(
+                    numPointsStr.c_str(), numPoints);
+                int nDim=numPoints.size();
+                //Yu Pan's Test : Add higher order
+                for(int i=0;i<nDim;i++)
+                {
+                    numPoints[i]=numPoints[i]+QuadOffset;
                 }
-                elemTag->SetAttribute("BASIS", basisString);    
+                expansion->RemoveAttribute("NUMPOINTS");
 
-
-                // Write NUMPOINTSPERDIR
                 std::string numPointsString;
                 {
                     std::stringstream numPointsStringStream;
                     bool first = true;
-                    if (fielddefs[f]->m_pointsDef)
-                    {
-                        numPointsStringStream << "NUMPOINTS:";
-                        // Just dump single definition
-                        bool first = true;
-                        for (std::vector<LibUtilities::PointsType>::size_type i = 0;
-                            i < fielddefs[f]->m_points.size();
-                            i++)
-                        {
-                            if (!first)
-                            {
-                                numPointsStringStream << ",";
-                            }
-                            numPointsStringStream << fielddefs[f]->m_numPoints[i];
-                            first = false;
-                        }
-                    }
-
-                    numPointsString = numPointsStringStream.str();
-                }
-                elemTag->SetAttribute("NUMPOINTSPERDIR",numPointsString);  
-
-                // Write FIELDS rho, rhou, rhov ...rhoE
-                std::string fieldsString;
-                {
-                    std::stringstream fieldsStringStream;
-                    bool first = true;
-                    for (std::vector<int>::size_type i = 0;
-                        i < fielddefs[f]->m_fields.size(); i++)
+                    for (int i = 0; i < nDim; i++)
                     {
                         if (!first)
                         {
-                            fieldsStringStream << ",";
+                            numPointsStringStream << ",";
                         }
-                        fieldsStringStream << fielddefs[f]->m_fields[i];
+                        numPointsStringStream << numPoints[i];
                         first = false;
                     }
-                    fieldsString = fieldsStringStream.str();
-                }
-                elemTag->SetAttribute("FIELDS", fieldsString); 
-                
-                // Write IDs. Should ideally look at ways of compressing this stream if
-                // just sequential.
-                // elemTag->SetAttribute(
-                //     "ID", ParseUtils::GenerateSeqString(fielddefs[f]->m_elementIDs));
+                    numPointsString = numPointsStringStream.str();
+                } 
+                expansion->SetAttribute("NUMPOINTS", numPointsString);
+            }
+            else
+            {
+                ASSERTL0(nModesStr, "Currently only support NUMMODES and NUMPOINTS input expansion");
             }
         }
         else
         {
-            ASSERTL0(false,"Have not defined Adaptive Solver for Other expansion");
-        }
-    
+            ASSERTL0(false,"Need to add more formats in ReplaceExpansion");
+        }     
     }
 }
 

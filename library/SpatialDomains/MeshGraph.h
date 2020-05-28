@@ -213,7 +213,7 @@ public:
     SPATIAL_DOMAINS_EXPORT void ReadMultiOrderExpansions();
 
 
-    SPATIAL_DOMAINS_EXPORT void  ReplaceExpansion(int Offset);
+    SPATIAL_DOMAINS_EXPORT void  ReplaceExpansion(int ModeOffset, int QuadOffset);
 
     /* ---- Helper functions ---- */
     /// Dimension of the mesh (can be a 1D curve in 3D space).
