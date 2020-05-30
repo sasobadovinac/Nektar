@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File: ForcingGJPStabilisaton.h
+// File: ForcingGJPStabilisation.h
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -49,11 +49,11 @@ namespace Nektar
 {
 namespace SolverUtils
 {
-class ForcingGJPStabilisaton : public Forcing
+class ForcingGJPStabilisation : public Forcing
 {
 public:
     
-    friend class MemoryManager<ForcingGJPStabilisaton>;
+    friend class MemoryManager<ForcingGJPStabilisation>;
     
     /// Creates an instance of this class
     SOLVER_UTILS_EXPORT static ForcingSharedPtr create
@@ -63,7 +63,7 @@ public:
          const unsigned int& pNumForcingFields,
          const TiXmlElement* pForce)
     {
-        ForcingSharedPtr p = MemoryManager<ForcingGJPStabilisaton>::
+        ForcingSharedPtr p = MemoryManager<ForcingGJPStabilisation>::
             AllocateSharedPtr(pSession, pEquation);
         p->InitObject(pFields, pNumForcingFields, pForce);
         return p;
@@ -84,7 +84,6 @@ protected:
          const Array<OneD, Array<OneD, NekDouble> > &inarray,
          Array<OneD, Array<OneD, NekDouble> > &outarray,
          const NekDouble &time);
-    
 private:
     MultiRegions::ExpansionType  m_expType; 
     int m_numForcingFields; 
@@ -113,11 +112,14 @@ private:
     // Link to the trace normals 
     Array<OneD, Array<OneD, NekDouble> > m_traceNormals; 
 
-    ForcingGJPStabilisaton
+    ForcingGJPStabilisation
         (const LibUtilities::SessionReaderSharedPtr &pSession,
          const std::weak_ptr<EquationSystem>      &pEquation);
     
-    virtual ~ForcingGJPStabilisaton(void){};
+    virtual ~ForcingGJPStabilisation(void){};
+
+    void eval_h(LocalRegions::ExpansionSharedPtr geom, int traceid,
+               NekDouble &h, NekDouble &p);
 };
 
 }

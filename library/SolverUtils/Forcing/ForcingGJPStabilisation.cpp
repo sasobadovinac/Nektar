@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File: ForcingGJPStabilisaton.cpp
+// File: ForcingGJPStabilisation.cpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -43,23 +43,23 @@ namespace Nektar
 {
 namespace SolverUtils
 {
-    std::string ForcingGJPStabilisaton::classNameBody = GetForcingFactory().
+    std::string ForcingGJPStabilisation::classNameBody = GetForcingFactory().
         RegisterCreatorFunction("GJPStabilisation",
-                                ForcingGJPStabilisaton::create,
+                                ForcingGJPStabilisation::create,
                                 "Graient Jump Penalty Stablisation");
-    std::string ForcingGJPStabilisaton::classNameField = GetForcingFactory().
+    std::string ForcingGJPStabilisation::classNameField = GetForcingFactory().
         RegisterCreatorFunction("GJPStabilization",
-                                ForcingGJPStabilisaton::create,
+                                ForcingGJPStabilisation::create,
                                 "Graient Jump Penalty Stablization");
 
-    ForcingGJPStabilisaton::ForcingGJPStabilisaton(
+    ForcingGJPStabilisation::ForcingGJPStabilisation(
             const LibUtilities::SessionReaderSharedPtr &pSession,
             const std::weak_ptr<EquationSystem>      &pEquation)
         : Forcing(pSession, pEquation)
     {
     }
 
-    void ForcingGJPStabilisaton::v_InitObject
+    void ForcingGJPStabilisation::v_InitObject
          (const Array<OneD, MultiRegions::ExpListSharedPtr>& pFields,
           const unsigned int& pNumForcingFields,
           const TiXmlElement* pForce)
@@ -97,7 +97,7 @@ namespace SolverUtils
             m_traceNormals = Array<OneD, Array<OneD, NekDouble> >(m_coordDim);
             for(int i=0; i < m_coordDim; ++i)
             {
-                m_traceNormals[i] = Array<OneD, NekDouble>(trace->GetNpoints()); 
+                m_traceNormals[i] = Array<OneD,NekDouble>(trace->GetNpoints()); 
             }
             
             m_dgfield->GetTrace()->GetNormals(m_traceNormals);
@@ -138,10 +138,9 @@ namespace SolverUtils
         Array<OneD, Array<OneD, Array<OneD, NekDouble> > >dbasis;
         Array<OneD, Array<OneD, Array<OneD, unsigned int> > >traceToCoeffMap;
         
-        int expdim = m_dgfield->GetShapeDimension();
-
         Array<OneD, unsigned int> map;
         Array<OneD, int> sign;
+        NekDouble h,p;
             
         for(int e = 0; e < m_dgfield->GetExpSize(); ++e)
         {
@@ -152,29 +151,7 @@ namespace SolverUtils
 
             for(int n = 0; n < elmt->GetNtraces(); ++n, ++cnt)
             {
-                // Estimate h as average of adjacent elmeents
-                ASSERTL1((*exp)[e]->GetTraceExp(n)->GetLeftAdjacentElementTrace()
-                         != -1, "Left adjacent expansion not setup");
-                
-                LocalRegions::ExpansionSharedPtr texp  =
-                    elmt->GetTraceExp(n)->GetLeftAdjacentElementExp();
-                int np = texp->GetTotPoints();
-                NekDouble p  = texp->GetBasisNumModes(0);
-                Array<OneD, NekDouble> one(np,1.0);
-                NekDouble h = texp->Integral(one);
-                h = pow(h,1.0/(NekDouble)expdim);
-                
-                if(elmt->GetTraceExp(n)->GetRightAdjacentElementTrace()!=-1)
-                {
-                    texp  = elmt->GetTraceExp(n)->GetRightAdjacentElementExp();
-                    np = texp->GetTotPoints();
-                    one = Array<OneD, NekDouble>(np,1.0);
-                    NekDouble  h2 = texp->Integral(one);
-                    h2 = pow(h2,1.0/(NekDouble)expdim);
-                    h = (h + h2)*0.5;
-                    NekDouble p2  = texp->GetBasisNumModes(0);
-                    p = (p + p2)*0.5;
-                }            
+                eval_h(elmt,n,h,p);
                 NekDouble jumpScal = 0.7*pow(p,-4.0)*h*h; 
                 
                 LocalRegions::ExpansionSharedPtr telmt = elmtToTrace[e][n];
@@ -197,7 +174,8 @@ namespace SolverUtils
                 if(leftAdjacentTrace[cnt])
                 {
                     Vmath::Smul(nptrace,jumpScal, factors[n], 1,
-                                e_tmp = FwdLocTrace + fwd_offset_phys,1);
+                    e_tmp = FwdLocTrace + fwd_offset_phys,1);
+                    
                     fwd_offset_phys += nptrace;
                     
                     // note the min is for variable p expansions
@@ -245,7 +223,7 @@ namespace SolverUtils
         locTraceToTraceMap->InterpLocTracesToTrace(1,BwdLocTrace, m_scalBwd);
     }
     
-    void ForcingGJPStabilisaton::v_Apply
+    void ForcingGJPStabilisation::v_Apply
          (const Array<OneD, MultiRegions::ExpListSharedPtr> &pFields,
           const Array<OneD, Array<OneD, NekDouble> > &inarray,
           Array<OneD, Array<OneD, NekDouble> > &outarray,
@@ -337,11 +315,77 @@ namespace SolverUtils
                 }
                 
                 m_dgfield->MultiplyByElmtInvMass(FilterCoeffs,deriv[0]);
+
                 m_dgfield->BwdTrans(deriv[0],FilterCoeffs);
-                
                 Vmath::Vadd(nphys,outarray[f]+p*nphys,1,FilterCoeffs,1,
                             tmp = outarray[f]+p*nphys,1);
             }
+        }
+    }
+
+    void ForcingGJPStabilisation::eval_h(LocalRegions::ExpansionSharedPtr elmt,
+                                      int traceid, NekDouble &h, NekDouble &p)
+    {
+        SpatialDomains::GeometrySharedPtr geom = elmt->GetGeom();
+
+        h = 0.0;
+        
+        switch(geom->GetCoordim())
+        {
+        case 1:
+            {
+                h = geom->GetVertex(1)->dist(*geom->GetVertex(0));
+                p = elmt->GetNcoeffs(); 
+            }
+            break;
+        case 2:
+            {
+                int nverts = geom->GetNumVerts();
+                int pe;
+                //vertices on edges
+                SpatialDomains::PointGeom ev0 = *geom->GetVertex(traceid);
+                SpatialDomains::PointGeom ev1 = *geom->GetVertex((traceid+1)%
+                                                                 nverts);
+
+                //vertex on adjacent edge to ev0 
+                SpatialDomains::PointGeom vadj = *geom->GetVertex
+                    ((traceid+(nverts-1))%nverts);
+                
+                // calculate perpendicular distance of normal length
+                // from first vertex
+                NekDouble h1 = ev0.dist(vadj);
+                SpatialDomains::PointGeom Dx, Dx1; 
+
+                Dx.Sub(ev1,ev0);
+                NekDouble lenDx = ev1.dist(ev0);
+                Dx1.Sub(vadj,ev0);
+                
+                NekDouble d1  = Dx.dot(Dx1); 
+                h = sqrt(h1*h1-d1*d1/lenDx);
+                pe = elmt->GetTraceNcoeffs((traceid+nverts-1)%nverts);
+                p = pe; 
+                    
+                    
+                // perpendicular distanace from second vertex 
+                vadj = *geom->GetVertex((traceid+2)%nverts);
+
+                h1  = ev1.dist(vadj);
+                Dx1.Sub(vadj,ev1);
+                d1 = Dx.dot(Dx1); 
+
+                h = (h+sqrt(h1*h1-d1*d1/lenDx))*0.5;
+
+                pe = elmt->GetTraceNcoeffs((traceid+1)%nverts);
+                p = (p+pe)*0.5;
+            }
+        break;
+        case 3:
+        {
+            ASSERTL0(false,"Need to sort out h estimate");
+        }
+        break;
+        default:
+        break;
         }
     }
 }
