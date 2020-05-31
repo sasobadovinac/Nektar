@@ -398,7 +398,6 @@ namespace SolverUtils
                                   normal.z()*mag);
 
             SpatialDomains::PointGeom Dx;
-            p = 0.0; 
             for(int i = 0; i < nverts; ++i)
             {
                 //vertices on edges
@@ -410,14 +409,23 @@ namespace SolverUtils
 
                 // calculate perpendicular distance of normal length
                 // from first vertex
-                h  += normal.dot(Dx);
-                
-                // add value of p along normal edges
-                p += (NekDouble) (elmt->GetTraceNcoeffs(edgid)-1); 
+                h  += fabs(normal.dot(Dx));
             }
             
             h /= (NekDouble)(nverts);
-            p /= (NekDouble)(nverts);
+
+            // find normal basis direction
+            int dir0 = geom->GetDir(traceid,0);
+            int dir1 = geom->GetDir(traceid,1);
+            int dirn;
+            for(dirn = 0; dirn < 3; ++dirn)
+            {
+                if((dirn != dir0)&&(dirn != dir1))
+                {
+                    break;
+                }
+            }
+            p = (NekDouble) (elmt->GetBasisNumModes(dirn)-1);
         }
         break;
         default:

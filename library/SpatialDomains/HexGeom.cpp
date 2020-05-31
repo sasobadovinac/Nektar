@@ -304,7 +304,7 @@ int HexGeom::v_GetEdgeFaceMap(const int i, const int j) const
 
 int HexGeom::v_GetEdgeNormalToFaceVert(const int i, const int j) const
 {
-    return EdgeFaceConnectivity[i][j];
+    return EdgeNormalToFaceVert[i][j];
 }
 
 int HexGeom::v_GetDir(const int faceidx, const int facedir) const
