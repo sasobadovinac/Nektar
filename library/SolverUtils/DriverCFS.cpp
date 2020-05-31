@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File Driver.cpp
+// File DriverCFS.cpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -33,7 +33,7 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#include <SolverUtils/Driver.h>
+#include <SolverUtils/DriverCFS.h>
 
 using namespace std;
 
@@ -42,7 +42,7 @@ namespace Nektar
 namespace SolverUtils
 {
 
-std::string Driver::evolutionOperatorLookupIds[7] = {
+std::string DriverCFS::evolutionOperatorLookupIds[7] = {
     LibUtilities::SessionReader::RegisterEnumValue(
             "EvolutionOperator","Nonlinear"      ,eNonlinear),
     LibUtilities::SessionReader::RegisterEnumValue(
@@ -58,31 +58,33 @@ std::string Driver::evolutionOperatorLookupIds[7] = {
     LibUtilities::SessionReader::RegisterEnumValue(
             "EvolutionOperator","AdaptiveCFS"    ,eAdaptiveCFS)
 };
-std::string Driver::evolutionOperatorDef =
+std::string DriverCFS::evolutionOperatorDef =
     LibUtilities::SessionReader::RegisterDefaultSolverInfo(
             "EvolutionOperator","Nonlinear");
-std::string Driver::driverDefault =
+std::string DriverCFS::driverDefault =
     LibUtilities::SessionReader::RegisterDefaultSolverInfo(
-            "Driver",           "Standard");
+            "DriverCFS",           "DriverCFSAdaptive");
 
-DriverFactory& GetDriverFactory()
+DriverCFSFactory& GetDriverCFSFactory()
 {
-    static DriverFactory instance;
+    static DriverCFSFactory instance;
     return instance;
 }
 
 /**
  *
  */
-Driver::Driver(const LibUtilities::SessionReaderSharedPtr pSession,
-               const SpatialDomains::MeshGraphSharedPtr pGraph)
+DriverCFS::DriverCFS(const LibUtilities::SessionReaderSharedPtr pSession,
+               const SpatialDomains::MeshGraphSharedPtr pGraph,
+               const SpatialDomains::MeshGraphSharedPtr pMultiOrderGraph)
     : m_comm(pSession->GetComm()),
       m_session(pSession),
-      m_graph(pGraph)
+      m_graph(pGraph),
+      m_MultiOrdergraph(pMultiOrderGraph)
 {
 }
 
-Driver::~Driver()
+DriverCFS::~DriverCFS()
 
 {
 }
@@ -90,7 +92,7 @@ Driver::~Driver()
 /**
  *
  */
-void Driver::v_InitObject(ostream &out)
+void DriverCFS::v_InitObject(ostream &out)
 {
     try
     {
@@ -115,11 +117,13 @@ void Driver::v_InitObject(ostream &out)
                     "EvolutionOperator");
 
         m_nequ = ((m_EvolutionOperator == eTransientGrowth ||
-                   m_EvolutionOperator == eAdaptiveSFD || m_EvolutionOperator == eAdaptiveCFS) ? 2 : 1);
+                   m_EvolutionOperator == eAdaptiveSFD ||m_EvolutionOperator == eAdaptiveCFS) ? 2 : 1);
 
         m_equ = Array<OneD, EquationSystemSharedPtr>(m_nequ);
 
         // Set the AdvectiveType tag and create EquationSystem objects.
+
+        ASSERTL0(m_EvolutionOperator==eAdaptiveCFS,"This test solver only works for eAdaptiveSFD");
         switch (m_EvolutionOperator)
         {
             case eNonlinear:
@@ -170,7 +174,7 @@ void Driver::v_InitObject(ostream &out)
                                 0, NULL, LinNSFilename, m_session->GetComm());
 
                 SpatialDomains::MeshGraphSharedPtr graph_linns =
-                    SpatialDomains::MeshGraph::Read(session_LinNS);
+                SpatialDomains::MeshGraph::Read(session_LinNS);
 
                 //For running stability analysis
                 session_LinNS->SetTag("AdvectiveType","Linearised");
@@ -182,80 +186,33 @@ void Driver::v_InitObject(ostream &out)
                 m_equ[1] = GetEquationSystemFactory().CreateInstance(
                     vEquation, m_session, m_graph);
             }
-                break;
+            break;
             case eAdaptiveCFS:
             {
-                // Coupling SFD method and Arnoldi algorithm
-                // For having 2 equation systems defined into 2 different
-                // session files (with the mesh into a file named 'session'.gz)
-                m_session->SetTag("AdvectiveType","Convective");
-                m_equ[0] = GetEquationSystemFactory().CreateInstance(vEquation, m_session, m_graph);
-                string         TmpInputFile;
-                vector<string>  MultiOrderFilename;
-                //Because file name will change to FileName_xml/P0000000.xml, so return back to original name
-                for(int i=0;i<m_session->GetFilenames().size();i++)
-                {
-                    TmpInputFile=m_session->GetFilenames()[i];
-                    int index,length;
-                    index=TmpInputFile.find("/");
-                    if((-1)!=index)
-                    {
-                        ////////////////ReName
-                        // length=TmpInputFile.length()-index+5;
-                        // TmpInputFile.replace( index-4,length, "_MultiOrder.xml");
-                        ////////////////Return Original Name
-                        // length=TmpInputFile.length()-index+5;
-                        // TmpInputFile.replace( index-4,length, ".xml");
-                        MultiOrderFilename.push_back(TmpInputFile);
-                    }
-                    else
-                    {
-                        index=TmpInputFile.find(".");
-                        TmpInputFile.replace( index,4, ".xml");
-                        MultiOrderFilename.push_back(TmpInputFile);
+                m_session->SetTag("AdvectiveType", "Convective");
+                m_equ[0] = GetEquationSystemFactory().CreateInstance(
+                    vEquation, m_session, m_graph);
 
-                    }
-                }
+                LibUtilities::SessionReaderSharedPtr MultiOrdersession;
+                SpatialDomains::MeshGraphSharedPtr MultiOrdergraph;
+                string          meshfile;
+                string          LinNSCondFile;
+                vector<string>  LinNSFilename;
 
-                //Change to 2_32_MultiOrder/P00000.xml
-                // for(int i=0;i<m_session->GetFilenames().size();i++)
-                // {
-                //     TmpInputFile=m_session->GetFilenames()[i];
-                //     // cout<<"Before: "<<TmpInputFile<<endl;
-                //     int index,length;
-                //     index=TmpInputFile.find("/");
-                //     if((-1)!=index)
-                //     {
-                //         TmpInputFile.replace( index-4,4, "_MultiOrder_xml");
-                //         MultiOrderFilename.push_back(TmpInputFile);
-                //         // cout<<"After: "<<TmpInputFile<<endl;
-                //         // ASSERTL0(false, "Change Name Successfully");
-                //     }
-                //     else
-                //     {
-                //         index=TmpInputFile.find(".");
-                //         TmpInputFile.replace( index,4, "_MultiOrder.xml");
-                //         MultiOrderFilename.push_back(TmpInputFile);
-
-                //     }
-                // }
-
-                int Order=0;
-                MultiOrderSession= LibUtilities::SessionReader::CreateInstance(
-                                0, NULL, MultiOrderFilename, m_session->GetComm(),Order);
-                
-                TmpInputFile=MultiOrderSession->GetSessionName();
-                 SpatialDomains::MeshGraphSharedPtr MultiOrderGraph =
-                 SpatialDomains::MeshGraph::ReadMultiOrder(MultiOrderSession,
-                 m_graph->GetCompositeOrdering(),
-                 m_graph->GetBndRegionOrdering());
-                //SpatialDomains::MeshGraphSharedPtr MultiOrderGraph =SpatialDomains::MeshGraph::Read(MultiOrderSession);
-                // cout<<"2: "<<m_session->GetSessionName()<<endl;
-                // cout<<"3: "<<MultiOrderSession->GetSessionName()<<endl;
-                //Run MultiOrder Solver
-                MultiOrderSession->SetTag("AdvectiveType","Convective");
+                meshfile = "2_32_LinNS.xml";
+                LinNSCondFile = m_session->GetSessionName();
+                LinNSCondFile += "_LinNS.xml";
+                cout << " LinNSCondFile= " << LinNSCondFile << endl;
+                cout << " meshfile= " << meshfile << endl;
+                LinNSFilename.push_back(meshfile);
+                LinNSFilename.push_back(LinNSCondFile);
+                MultiOrdersession = LibUtilities::SessionReader::CreateInstance(0, NULL,
+                                LinNSFilename,
+                                m_session->GetComm());
+                                
+                // MultiOrdergraph = SpatialDomains::MeshGraph::ReadMultiOrder(MultiOrdersession);
                 m_equ[1] = GetEquationSystemFactory().CreateInstance(
-                    vEquation, MultiOrderSession, MultiOrderGraph);
+                    vEquation, MultiOrdersession, MultiOrdergraph);
             }
                 break;
             default:
@@ -270,17 +227,18 @@ void Driver::v_InitObject(ostream &out)
     }
 }
 
-Array<OneD, NekDouble> Driver::v_GetRealEvl(void)
+Array<OneD, NekDouble> DriverCFS::v_GetRealEvl(void)
 {
     ASSERTL0(false,"This routine is not valid in this class");
     return NullNekDouble1DArray;
 }
 
-Array<OneD, NekDouble> Driver::v_GetImagEvl(void)
+Array<OneD, NekDouble> DriverCFS::v_GetImagEvl(void)
 {
     ASSERTL0(false,"This routine is not valid in this class");
     return NullNekDouble1DArray;
 }
+
 
 }
 }

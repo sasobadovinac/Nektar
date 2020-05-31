@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File Driver.h
+// File DriverCFS.h
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -33,15 +33,15 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#ifndef SOLVERUTILS_DRIVER_H
-#define SOLVERUTILS_DRIVER_H
+#ifndef SOLVERUTILS_DRIVERCFS_H
+#define SOLVERUTILS_DRIVERCFS_H
 
 #include <LibUtilities/Communication/Comm.h>
 #include <LibUtilities/BasicUtils/SessionReader.h>
 #include <LibUtilities/BasicUtils/NekFactory.hpp>
 #include <LibUtilities/BasicUtils/SharedArray.hpp>
 
-#include <SolverUtils/SolverUtils.hpp>
+#include <SolverUtils/CFSSolverUtils.hpp>
 #include <SolverUtils/EquationSystem.h>
 #include<SolverUtils/DriverCFSOperators.hpp>
 
@@ -50,26 +50,27 @@ namespace Nektar
 namespace SolverUtils
 {
 
-class Driver;
+class DriverCFS;
 
-/// A shared pointer to a Driver object
-typedef std::shared_ptr<Driver> DriverSharedPtr;
+/// A shared pointer to a DriverCFS object
+typedef std::shared_ptr<DriverCFS> DriverCFSSharedPtr;
 
 /// Datatype of the NekFactory used to instantiate classes derived from
-/// the Driver class.
+/// the DriverCFS class.
 typedef LibUtilities::NekFactory<
-    std::string, Driver,
+    std::string, DriverCFS,
     const LibUtilities::SessionReaderSharedPtr &,
-    const SpatialDomains::MeshGraphSharedPtr &> DriverFactory;
+    const SpatialDomains::MeshGraphSharedPtr &,
+    const SpatialDomains::MeshGraphSharedPtr &> DriverCFSFactory;
 
-SOLVER_UTILS_EXPORT DriverFactory& GetDriverFactory();
+SOLVER_UTILS_EXPORT DriverCFSFactory& GetDriverCFSFactory();
 
 /// Base class for the development of solvers.
-class Driver
+class DriverCFS
 {
 public:
     /// Destructor
-    virtual ~Driver();
+    virtual ~DriverCFS();
 
     SOLVER_UTILS_EXPORT inline void DoMultiOrderProjection(const Array<OneD,const Array<OneD, NekDouble>> &inarray,
                                                                    Array<OneD, Array<OneD,NekDouble>> &outarray,
@@ -108,25 +109,25 @@ protected:
     /// I the Coupling between SFD and arnoldi
     LibUtilities::SessionReaderSharedPtr        session_LinNS;
 
-    LibUtilities::SessionReaderSharedPtr        MultiOrderSession;
-
     /// MeshGraph object
     SpatialDomains::MeshGraphSharedPtr          m_graph;
+    SpatialDomains::MeshGraphSharedPtr          m_MultiOrdergraph;
 
     /// Equation system to solve
     Array<OneD, EquationSystemSharedPtr>        m_equ;
 
     ///number of equations
     int m_nequ;
-
+    
     SolverUtils::DriverOperators                    m_driverOperator;
 
     ///Evolution Operator
     enum EvolutionOperatorType m_EvolutionOperator;
 
     /// Initialises EquationSystem class members.
-    Driver(const LibUtilities::SessionReaderSharedPtr pSession,
-           const SpatialDomains::MeshGraphSharedPtr   pGraph);
+    DriverCFS(const LibUtilities::SessionReaderSharedPtr pSession,
+           const SpatialDomains::MeshGraphSharedPtr   pGraph,
+           const SpatialDomains::MeshGraphSharedPtr   pMultiOrderGraph);
     
     SOLVER_UTILS_EXPORT virtual void v_DoMultiOrderProjection(const Array<OneD,const Array<OneD, NekDouble>> &inarray,
                                                                    Array<OneD, Array<OneD,NekDouble>> &outarray,
@@ -141,7 +142,6 @@ protected:
     {
          ASSERTL0(false,"This routine is not valid in this class");
     }
-
 
     SOLVER_UTILS_EXPORT virtual void v_InitObject(std::ostream &out = std::cout);
 
@@ -159,27 +159,27 @@ protected:
 
 };
 
-inline void Driver::InitObject(std::ostream &out)
+inline void DriverCFS::InitObject(std::ostream &out)
 {
     v_InitObject(out);
 }
 
-inline void Driver::Execute(std::ostream &out)
+inline void DriverCFS::Execute(std::ostream &out)
 {
     v_Execute(out);
 }
 
-inline Array<OneD, EquationSystemSharedPtr> Driver::GetEqu()
+inline Array<OneD, EquationSystemSharedPtr> DriverCFS::GetEqu()
 {
     return m_equ;
 }
 
-inline Array<OneD, NekDouble> Driver::GetRealEvl()
+inline Array<OneD, NekDouble> DriverCFS::GetRealEvl()
 {
     return v_GetRealEvl();
 }
 
-inline Array<OneD, NekDouble> Driver::GetImagEvl()
+inline Array<OneD, NekDouble> DriverCFS::GetImagEvl()
 {
     return v_GetImagEvl();
 }

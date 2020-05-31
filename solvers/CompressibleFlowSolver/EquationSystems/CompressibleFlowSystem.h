@@ -49,6 +49,7 @@
 #include <LocalRegions/Expansion3D.h>
 #include <LocalRegions/Expansion2D.h>
 
+
 #define CFS_DEBUGMODE
 namespace Nektar
 {
@@ -62,7 +63,7 @@ namespace Nektar
         friend class MemoryManager<CompressibleFlowSystem>;
 
         virtual ~CompressibleFlowSystem();
-
+ 
         /// Function to calculate the stability limit for DG/CG.
         NekDouble GetStabilityLimit(int n);
 
@@ -74,6 +75,7 @@ namespace Nektar
         /// Function to get estimate of min h/p factor per element
         Array<OneD, NekDouble>  GetElmtMinHP(void);
     protected:
+
         SolverUtils::DiffusionSharedPtr     m_diffusion;
         ArtificialDiffusionSharedPtr        m_artificialDiffusion;
         Array<OneD, Array<OneD, NekDouble> >m_vecLocs;
@@ -151,6 +153,16 @@ namespace Nektar
         CompressibleFlowSystem(
             const LibUtilities::SessionReaderSharedPtr& pSession,
             const SpatialDomains::MeshGraphSharedPtr& pGraph);
+        
+        void v_DoOdeProjection1(
+        const Array<OneD, const Array<OneD, NekDouble> > &inarray,
+              Array<OneD,       Array<OneD, NekDouble> > &outarray,
+              const NekDouble                              time);
+        
+        void v_DoOdeRhs1(
+        const Array<OneD, const Array<OneD, NekDouble> > &inarray,
+              Array<OneD,       Array<OneD, NekDouble> > &outarray,
+              const NekDouble                              time);
 
         virtual void v_InitObject();
 

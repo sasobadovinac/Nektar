@@ -219,7 +219,8 @@ namespace Nektar
             int                             argc,
             char                           *argv[],
             const std::vector<std::string> &pFilenames,
-            const CommSharedPtr            &pComm)
+            const CommSharedPtr            &pComm,
+            int                            Order)
         {
             ASSERTL0(pFilenames.size() > 0, "No filenames specified.");
 
@@ -228,6 +229,11 @@ namespace Nektar
             m_filenames   = pFilenames;
 
             m_sessionName = ParseSessionName(m_filenames);
+            if(Order)
+            {
+                string OrderStr= to_string(Order);
+                m_sessionName+="_OrderStr";
+            }
 
             // Create communicator
             if (!pComm.get())

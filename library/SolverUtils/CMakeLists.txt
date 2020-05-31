@@ -14,11 +14,13 @@ SET(SOLVER_UTILS_SOURCES
   Diffusion/DiffusionLFRNS.cpp
   Diffusion/DiffusionIP.cpp
   Driver.cpp
+  DriverCFS.cpp
   DriverAdaptive.cpp
   DriverArnoldi.cpp
   DriverModifiedArnoldi.cpp
   DriverStandard.cpp
   DriverSteadyState.cpp	
+  DriverCFSAdaptive.cpp
   EquationSystem.cpp
   Filters/Filter.cpp
   Filters/FilterAeroForces.cpp
@@ -60,11 +62,13 @@ SET(SOLVER_UTILS_HEADERS
   Diffusion/DiffusionLFRNS.h
   Diffusion/DiffusionIP.h
   Driver.h
+  DriverCFS.h
   DriverAdaptive.h
   DriverArnoldi.h
   DriverModifiedArnoldi.h
   DriverStandard.h
   DriverSteadyState.h
+  DriverCFSAdaptive.h
   EquationSystem.h
   Filters/Filter.h
   Filters/FilterAeroForces.h
@@ -83,6 +87,7 @@ SET(SOLVER_UTILS_HEADERS
   RiemannSolvers/UpwindSolver.h
   RiemannSolvers/UpwindLDGSolver.h
   SolverUtils.hpp
+  DriverCFSOperators.hpp
   SolverUtilsDeclspec.h
   UnsteadySystem.h
   Forcing/Forcing.h

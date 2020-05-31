@@ -135,6 +135,7 @@ namespace Nektar
             }
             cnt += m_fields[0]->GetBndCondExpansions()[n]->GetExpSize();
         }
+        
 
         if (m_explicitAdvection)
         {
@@ -588,6 +589,31 @@ namespace Nektar
                 }
             }
         }
+
+        /////////////////////////////////////////////////////////////
+        //Yu Pan's Test: bind EquationSystem1's OdeRhs
+        //Why use it here? use it in UnsteadySystem::v_DoSolve()
+        //Need to be careful, Use in RealTimeStep Simulation
+        // bool RealTimeStepFlag=m_intScheme->GetIntegrationSchemeVector()[0]->GetRealTimeStepState();
+        // if(RealTimeStepFlag)
+        // {
+        //     if( m_CalculateSpatialErrorFlag)
+        //     {
+        //         Array<OneD,Array<OneD,NekDouble>> MultiOrderRhs(nvariables);
+        //         for(int i=0;i<nvariables;i++)
+        //         {
+        //             //Multi order Quad points need to be the same
+        //             MultiOrderRhs[i]=Array<OneD,NekDouble>(npoints,0.0);
+        //         }
+        //         //To Do: be careful if high order m_equ calculate the repeated error.
+        //         m_EqdriverOperator.DoMultiOrderOdeRhs(inarray,MultiOrderRhs,time);
+        //         for(int i=0;i<nvariables;i++)
+        //         {
+        //             Vmath::Vsub(npoints,outarray[i],1,MultiOrderRhs[i],1,m_SpatialError[i],1);   
+        //         }
+        //     }
+        // }
+        /////////////////////////////////////////////////////////////
     }
 
     /**
@@ -2867,11 +2893,12 @@ namespace Nektar
 
         bool converged       = false;
         bool steady_state    = false;
-        int nwidthcolm = 8;
+        int nwidthcolm = 10;
         int NtotDoOdeRHS = 0;
         int NtotGMRESIts = 0;
         NekDouble resnorm0 = 0.0;
         NekDouble resnorm  = 0.0;
+        NekDouble solnorm=0.0;
         NekDouble resmaxm  = 0.0;
         NekDouble resratio = 1.0;
         NekDouble ratioSteps = 1.0;
@@ -2885,6 +2912,11 @@ namespace Nektar
             resnorm = Vmath::Dot(ntotal,NonlinSysRes_1D,NonlinSysRes_1D);
 
             v_Comm->AllReduce(resnorm, Nektar::LibUtilities::ReduceSum);
+
+            solnorm = Vmath::Dot(ntotal,dsol_1D,dsol_1D);
+
+            v_Comm->AllReduce(solnorm, Nektar::LibUtilities::ReduceSum);
+
 
             if(0==k)
             {
@@ -2915,11 +2947,36 @@ namespace Nektar
             // }
 
             // cout << "   resratio=   "<<resratio<< "   resnorm0=   "<<resnorm0<< "   resnorm=   "<<resnorm<<endl;
+            
+            //NekDouble tau;
+            //m_session->LoadParameter("tau", tau,1.0E-4);
+            bool RealTimeStepFlag=m_intScheme->GetIntegrationSchemeVector()[0]->GetRealTimeStepState();
+            bool FirstStepErrorControlFlag=m_FirstStepErrorControlFlag;//First step, there is no error control
+            //Error Norm need to transfer to Coeff Space
+            if(m_TemporalErrorFreezNumber>0 && RealTimeStepFlag && FirstStepErrorControlFlag)//TemporalErrorControlTolerance
+            {
 
-            //TODO: To further optimise the criteria. mainly use L1 norm!!
-            // think about the case in which change is limited to small zone.
-            // think about the steady state quadrature convergence requirement
-            if (resratio<tol2Ratio||resnorm<tol2)
+                NekDouble ErrorNorm=m_TemporalErrorNorm;
+                NekDouble Scale=0.1;//Newton iteration error << TemporalError
+                //To Do: can remove repeated sqrt
+                NekDouble ResidualNorm=sqrt(resnorm);
+                NekDouble SolutionNorm=sqrt(solnorm);
+                NekDouble JumpOutValue=ResidualNorm;
+                NekDouble ErrorAdaptiveTolerance=Scale*ErrorNorm;
+                bool state=(JumpOutValue<ErrorAdaptiveTolerance);
+
+                if(state)
+                {
+                    converged = true;
+                    if(l_root && l_verbose)
+                    {
+                            cout <<right<<scientific<<setw(nwidthcolm)<<setprecision(nwidthcolm-6)<<"Time="<<m_time<<",    SolutionNorm="<<SolutionNorm<<",    ResidualNorm="<<ResidualNorm<<",    ErrorNorm="<<ErrorNorm<<",    SafeFactor="<<Scale<<",    AdaptiveNewtonTolerance="<<ErrorAdaptiveTolerance<<endl;
+                    }
+                    break;
+                }
+            }
+            else if (resratio<tol2Ratio||resnorm<tol2)
+            //else if (resratio<tol2Ratio || resnorm<(tau*tau))
             {
                 resmaxm = 0.0;
                 for(int i=0;i<ntotal;i++)
@@ -2927,36 +2984,22 @@ namespace Nektar
                     resmaxm = max(resmaxm,abs(NonlinSysRes_1D[i]));
                 }
                 v_Comm->AllReduce(resmaxm, Nektar::LibUtilities::ReduceMax);
-                if((resmaxm<tol2Max)&&k>0)
+
+                   
+                converged = true;
+                if(l_root && l_verbose)
                 {
-                    // if(l_verbose)
-                    // {
-                    //     cout    << " resratio= "<<resratio<< " tol2Ratio= "<<tol2Ratio
-                    //             << " resnorm= "<<resnorm<< " tol2= "<<tol2
-                    //             << " resmaxm= "<<resmaxm<< " tol2Max= "<<tol2Max<< endl;
-                    // }
-
-                // at least one Newton Iteration
-                // or else the flow field will not update
-                // if(k>0)
-                // {
-                    /// TODO: m_root
-                    // if(m_cflLocTimestep>0.0)
-                    // {
-                    //     m_cflLocTimestep *= pow(ratioSteps,0.35);
-                    // }
-                    // m_cflSafetyFactor *= pow(ratioSteps,0.35);
-
-                    converged = true;
-                    if(resratio>tol2Ratio&&l_root)
-                    {
-                        WARNINGL0(true,"     # resratio>tol2Ratio in CompressibleFlowSystem::DoImplicitSolve ");
-                        cout <<right<<scientific<<setw(nwidthcolm)<<setprecision(nwidthcolm-6)
-                             <<" resratio= "<<resratio<<" tol2Ratio= "<<tol2Ratio<<endl;
-                    }
-                    break;
-                // }
+                    cout <<right<<scientific<<setw(nwidthcolm)<<setprecision(nwidthcolm-6)<<" Time= "<<m_time<<" ResidualNorm="<<sqrt(resnorm)<<",  AbsoluteTolerance="<<sqrt(tol2)<<endl;
                 }
+
+                if(resratio>tol2Ratio&&l_root)
+                {
+                    WARNINGL0(true,"     # resratio>tol2Ratio in CompressibleFlowSystem::DoImplicitSolve ");
+                    cout <<right<<scientific<<setw(nwidthcolm)<<setprecision(nwidthcolm-6)<<" Time= "<<m_time
+                            <<" resratio= "<<resratio<<" tol2Ratio= "<<tol2Ratio<<endl;
+                }
+                break;
+
             }
 
             //TODO: currently  NonlinSysRes is 2D array and SolveLinearSystem needs 1D array
@@ -5134,6 +5177,138 @@ namespace Nektar
                 variables.push_back  ("ArtificialVisc");
                 fieldcoeffs.push_back(sensorFwd);
             }
+            
+            
+            // if(m_ErrorBasedAdaptedTimeStepFlag)
+            // {
+            //     int nvariables=m_fields.num_elements();
+            //     if(m_SpatialErrorFreezNumber>0)
+            //     {
+            //         Array<OneD,Array<OneD, NekDouble>> SpatialErrorFwd(nvariables);
+            //         for(int i=0;i<nvariables;i++)
+            //         {
+            //             SpatialErrorFwd[i]=Array<OneD,NekDouble>(nCoeffs);
+            //             m_fields[0]->FwdTrans_IterPerExp(m_SpatialError[i],SpatialErrorFwd[i]);
+            //         }
+            //         variables.push_back  ("SpatialError_rho");
+            //         fieldcoeffs.push_back(SpatialErrorFwd[0]);
+            //         variables.push_back  ("SpatialError_rhoU");
+            //         fieldcoeffs.push_back(SpatialErrorFwd[1]);
+            //         if(m_spacedim>1)
+            //         {
+            //             variables.push_back  ("SpatialError_rhoV");
+            //             fieldcoeffs.push_back(SpatialErrorFwd[2]);   
+            //         }
+            //         if(m_spacedim>2)
+            //         {
+            //             variables.push_back  ("SpatialError_rhoW");
+            //             fieldcoeffs.push_back(SpatialErrorFwd[3]);   
+            //         }
+            //         variables.push_back("SpatialError_rhoE");
+            //         fieldcoeffs.push_back(SpatialErrorFwd[m_spacedim+1]);
+            //     }
+
+            //     if(m_SpatialErrorFreezNumber>0)
+            //     {
+            //         Array<OneD,Array<OneD, NekDouble>> OperatedSpatialErrorFwd(nvariables);
+            //         for(int i=0;i<nvariables;i++)
+            //         {
+            //             OperatedSpatialErrorFwd[i]=Array<OneD,NekDouble>(nCoeffs);
+            //             m_fields[0]->FwdTrans_IterPerExp(m_OperatedSpatialError[i],OperatedSpatialErrorFwd[i]);
+            //         }
+            //         variables.push_back  ("OperatedSpatialError_rho");
+            //         fieldcoeffs.push_back(OperatedSpatialErrorFwd[0]);
+            //         variables.push_back  ("OperatedSpatialError_rhoU");
+            //         fieldcoeffs.push_back(OperatedSpatialErrorFwd[1]);
+            //         if(m_spacedim>1)
+            //         {
+            //             variables.push_back  ("OperatedSpatialError_rhoV");
+            //             fieldcoeffs.push_back(OperatedSpatialErrorFwd[2]);   
+            //         }
+            //         if(m_spacedim>2)
+            //         {
+            //             variables.push_back  ("OperatedSpatialError_rhoW");
+            //             fieldcoeffs.push_back(OperatedSpatialErrorFwd[3]);   
+            //         }
+            //         variables.push_back("OperatedSpatialError_rhoE");
+            //         fieldcoeffs.push_back(OperatedSpatialErrorFwd[m_spacedim+1]);
+            //     }
+
+            //     if(m_TemporalErrorFreezNumber>0)
+            //     {
+            //         Array<OneD,Array<OneD, NekDouble>> TemporalErrorFwd(nvariables);
+            //         for(int i=0;i<nvariables;i++)
+            //         {
+            //             TemporalErrorFwd[i]=Array<OneD,NekDouble>(nCoeffs);
+            //             m_fields[0]->FwdTrans_IterPerExp(m_TemporalError[i],TemporalErrorFwd[i]);
+            //         }
+            //         variables.push_back  ("TemporalError_rho");
+            //         fieldcoeffs.push_back(TemporalErrorFwd[0]);
+            //         variables.push_back  ("TemporalError_rhoU");
+            //         fieldcoeffs.push_back(TemporalErrorFwd[1]);
+            //         if(m_spacedim>1)
+            //         {
+            //             variables.push_back  ("TemporalError_rhoV");
+            //             fieldcoeffs.push_back(TemporalErrorFwd[2]);   
+            //         }
+            //         if(m_spacedim>2)
+            //         {
+            //             variables.push_back  ("TemporalError_rhoW");
+            //             fieldcoeffs.push_back(TemporalErrorFwd[3]);   
+            //         }
+            //         variables.push_back("TemporalError_rhoE");
+            //         fieldcoeffs.push_back(TemporalErrorFwd[m_spacedim+1]);
+            //     }
+
+            //     if(m_TemporalErrorFreezNumber>0)
+            //     {
+            //         Array<OneD,Array<OneD, NekDouble>> OperatedTemporalErrorFwd(nvariables);
+            //         for(int i=0;i<nvariables;i++)
+            //         {
+            //             OperatedTemporalErrorFwd[i]=Array<OneD,NekDouble>(nCoeffs);
+            //             m_fields[0]->FwdTrans_IterPerExp(m_OperatedTemporalError[i],OperatedTemporalErrorFwd[i]);
+            //         }
+            //         variables.push_back  ("OperatedTemporalError_rho");
+            //         fieldcoeffs.push_back(OperatedTemporalErrorFwd[0]);
+            //         variables.push_back  ("OperatedTemporalError_rhoU");
+            //         fieldcoeffs.push_back(OperatedTemporalErrorFwd[1]);
+            //         if(m_spacedim>1)
+            //         {
+            //             variables.push_back  ("OperatedTemporalError_rhoV");
+            //             fieldcoeffs.push_back(OperatedTemporalErrorFwd[2]);   
+            //         }
+            //         if(m_spacedim>2)
+            //         {
+            //             variables.push_back  ("OperatedTemporalError_rhoW");
+            //             fieldcoeffs.push_back(OperatedTemporalErrorFwd[3]);   
+            //         }
+            //         variables.push_back("OperatedTemporalError_rhoE");
+            //         fieldcoeffs.push_back(OperatedTemporalErrorFwd[m_spacedim+1]);
+            //     }
+
+            //     Array<OneD,Array<OneD, NekDouble>> OperatedAdaptiveTimeStepFwd(nvariables);
+            //     for(int i=0;i<nvariables;i++)
+            //     {
+            //         OperatedAdaptiveTimeStepFwd[i]=Array<OneD,NekDouble>(nCoeffs);
+            //         m_fields[0]->FwdTrans_IterPerExp(m_OperatedAdaptiveTimeStepForOutput[i],OperatedAdaptiveTimeStepFwd[i]);
+            //     }
+            //     variables.push_back  ("AdaptiveTimeStep_rho");
+            //     fieldcoeffs.push_back(OperatedAdaptiveTimeStepFwd[0]);
+            //     variables.push_back  ("AdaptiveTimeStep_rhoU");
+            //     fieldcoeffs.push_back(OperatedAdaptiveTimeStepFwd[1]);
+            //     if(m_spacedim>1)
+            //     {
+            //         variables.push_back  ("AdaptiveTimeStep_rhoV");
+            //         fieldcoeffs.push_back(OperatedAdaptiveTimeStepFwd[2]);   
+            //     }
+            //     if(m_spacedim>2)
+            //     {
+            //         variables.push_back  ("AdaptiveTimeStep_rhoW");
+            //         fieldcoeffs.push_back(OperatedAdaptiveTimeStepFwd[3]);   
+            //     }
+            //     variables.push_back("AdaptiveTimeStep_rhoE");
+            //     fieldcoeffs.push_back(OperatedAdaptiveTimeStepFwd[m_spacedim+1]);
+            // }
         }
     }
 
@@ -5329,6 +5504,22 @@ Array<OneD, NekDouble>  CompressibleFlowSystem::GetElmtMinHP(void)
     }
     return hOverP;
 }
+    
+    void CompressibleFlowSystem::v_DoOdeProjection1(
+        const Array<OneD, const Array<OneD, NekDouble> > &inarray,
+              Array<OneD,       Array<OneD, NekDouble> > &outarray,
+              const NekDouble                             time)
+    {
+        DoOdeProjection(inarray,outarray,time);
+    } 
+
+    void CompressibleFlowSystem::v_DoOdeRhs1(
+        const Array<OneD, const Array<OneD, NekDouble> > &inarray,
+              Array<OneD,       Array<OneD, NekDouble> > &outarray,
+              const NekDouble                             time)
+    {
+        DoOdeRhs(inarray,outarray,time);
+    } 
 
 
 }

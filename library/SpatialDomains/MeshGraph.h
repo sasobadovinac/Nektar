@@ -173,6 +173,13 @@ public:
         DomainRangeShPtr                           rng       = NullDomainRangeShPtr,
         bool                                       fillGraph = true);
 
+    SPATIAL_DOMAINS_EXPORT static MeshGraphSharedPtr ReadMultiOrder(
+        const LibUtilities::SessionReaderSharedPtr pSession,
+        CompositeOrdering                          &compOrder,
+        BndRegionOrdering                          &bndRegOrder,
+        DomainRangeShPtr                           rng       = NullDomainRangeShPtr,
+        bool                                       fillGraph = true);
+
     SPATIAL_DOMAINS_EXPORT virtual void WriteGeometry(
         std::string &outfilename,
         bool defaultExp = false,
@@ -193,12 +200,20 @@ public:
     /*transfers the minial data structure to full meshgraph*/
     SPATIAL_DOMAINS_EXPORT void FillGraph();
 
+    /*transfers the minial data structure to full meshgraph*/
+    SPATIAL_DOMAINS_EXPORT void FillMultiOrderGraph();
+
     ////////////////////
     ////////////////////
 
     SPATIAL_DOMAINS_EXPORT virtual ~MeshGraph();
 
     SPATIAL_DOMAINS_EXPORT void ReadExpansions();
+
+    SPATIAL_DOMAINS_EXPORT void ReadMultiOrderExpansions();
+
+
+    SPATIAL_DOMAINS_EXPORT void  ReplaceExpansion(int ModeOffset, int QuadOffset);
 
     /* ---- Helper functions ---- */
     /// Dimension of the mesh (can be a 1D curve in 3D space).
@@ -413,10 +428,25 @@ public:
         return m_bndRegOrder;
     }
 
+    void SetCompositeOrdering(CompositeOrdering &compOrder)
+    {
+        m_compOrder=compOrder;
+    }
+
+    void SetBndRegionOrdering(BndRegionOrdering &bndRegOrder)
+    {
+        m_bndRegOrder=bndRegOrder;
+    }
+
     /*an inital read which loads a very light weight data structure*/
     SPATIAL_DOMAINS_EXPORT virtual void ReadGeometry(
         DomainRangeShPtr rng,
         bool             fillGraph) = 0;
+    
+    SPATIAL_DOMAINS_EXPORT virtual void ReadMultiOrderGeometry(
+        DomainRangeShPtr rng,
+        bool             fillGraph) = 0;
+        
     SPATIAL_DOMAINS_EXPORT virtual void PartitionMesh(
         LibUtilities::SessionReaderSharedPtr session) = 0;
 

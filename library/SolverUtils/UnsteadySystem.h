@@ -38,7 +38,7 @@
 
 #include <LibUtilities/TimeIntegration/TimeIntegrationWrapper.h>
 #include <SolverUtils/EquationSystem.h>
-#include <SolverUtils/Filters/Filter.h>
+#include <SolverUtils/Filters/Filter.h> 
 
 namespace Nektar
 {
@@ -72,6 +72,8 @@ namespace Nektar
 
 
         protected:
+            int  m_ExtractRhsCalculator=0;
+            
             /// Number of time steps between outputting status information.
             int                                             m_infosteps;
 
@@ -80,6 +82,8 @@ namespace Nektar
             LibUtilities::TimeIntegrationWrapperSharedPtr   m_intScheme;
             /// The time integration scheme operators to use.
             LibUtilities::TimeIntegrationSchemeOperators    m_ode;
+
+            // SolverUtils::DriverOperators                    m_driver;
             ///
             LibUtilities::TimeIntegrationSolutionSharedPtr  m_intSoln;
             ///
@@ -171,6 +175,22 @@ namespace Nektar
             NekDouble   m_inArrayNorm=-1.0;
 
             bool m_CalcuPrecMatFlag     = true;
+            ////////////////////////////////////////////////////////////////////////////
+            //Paremeters to control the Direct Error
+            int m_CalculateTemporalErrorCounter=0;
+            NekDouble m_TemporalErrorNorm;
+            Array<OneD,NekDouble> m_TemporalErrorNormArray;
+            Array<OneD,Array<OneD,NekDouble>> m_TemporalError;
+            int m_CalculateSpatialErrorCounter=0;
+            bool m_CalculateSpatialErrorFlag=false;
+            bool m_CalculateTemporalErrorFlag=false;
+            NekDouble m_SpatialErrorNorm;
+            Array<OneD,NekDouble> m_SpatialErrorNormArray;
+            Array<OneD,Array<OneD,NekDouble>> m_SpatialError;
+            Array<OneD,Array<OneD,NekDouble>> m_OperatedSpatialError;
+            Array<OneD,Array<OneD,NekDouble>> m_OperatedTemporalError;
+            //Array<OneD,Array<OneD,NekDouble>> m_OperatedAdaptiveTimeStepForOutput;
+            ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
             int m_CalcuPrecMatCounter  = std::numeric_limits<int>::max();
 
@@ -243,6 +263,9 @@ namespace Nektar
 
             bool CheckSteadyState(int step);
             bool CheckSteadyState(int step, NekDouble totCPUTime);
+            NekDouble CalculateToleranceSafetyFactor();
+
+            NekDouble CalculateToleranceErrorNorm();
         };
 
     }

@@ -405,23 +405,57 @@ void FilterAeroForces::v_Update(
         // Write result in each plane
         if( m_outputAllPlanes)
         {
+        //     for( int plane = 0; plane < m_nPlanes; plane++)
+        //     {
+        //         // Write time
+        //         m_outputStream.width(12);
+        //         m_outputStream << setprecision(10) << time;
+        //         // Write forces
+        //         for( int i = 0; i < expdim; i++ )
+        //         {
+        //             m_outputStream.width(24);
+        //             m_outputStream << setprecision(16) 
+        //                            << m_Fpplane[i][plane];
+        //             m_outputStream.width(24);
+        //             m_outputStream << setprecision(16)
+        //                            << m_Fvplane[i][plane];
+        //             m_outputStream.width(24);
+        //             m_outputStream << setprecision(16)  
+        //                            << m_Ftplane[i][plane];
+        //         }
+        //         m_outputStream.width(10);
+        //         m_outputStream << plane;
+        //         m_outputStream << endl;
+        //     }                       
+        // }
+        // // Output average (or total) force
+        // m_outputStream.width(12);
+        // m_outputStream << setprecision(10) << time;
+        // for( int i = 0; i < expdim; i++)
+        // {
+        //     m_outputStream.width(24);
+        //     m_outputStream << setprecision(16) << Fp[i];
+        //     m_outputStream.width(24);
+        //     m_outputStream << setprecision(16) << Fv[i];
+        //     m_outputStream.width(24);
+        //     m_outputStream << setprecision(16) << Ft[i];
+        // }
+            int nwidthcolm=16;
             for( int plane = 0; plane < m_nPlanes; plane++)
             {
                 // Write time
-                m_outputStream.width(8);
-                m_outputStream << setprecision(6) << time;
+                m_outputStream.width(12);
+                m_outputStream << setprecision(10) << time;
+                cout<<"    ";
                 // Write forces
                 for( int i = 0; i < expdim; i++ )
                 {
-                    m_outputStream.width(15);
-                    m_outputStream << setprecision(8) 
-                                   << m_Fpplane[i][plane];
-                    m_outputStream.width(15);
-                    m_outputStream << setprecision(8)
-                                   << m_Fvplane[i][plane];
-                    m_outputStream.width(15);
-                    m_outputStream << setprecision(8)  
-                                   << m_Ftplane[i][plane];
+                    m_outputStream<<right<<scientific<<setw(nwidthcolm)<<setprecision(nwidthcolm-6)<< m_Fpplane[i][plane];
+                    m_outputStream<<"    ";
+                    m_outputStream <<right<<scientific<<setw(nwidthcolm)<<setprecision(nwidthcolm-6)<< m_Fvplane[i][plane];
+                    m_outputStream<<"    ";
+                    m_outputStream<<right<<scientific<<setw(nwidthcolm)<<setprecision(nwidthcolm-6)<<m_Ftplane[i][plane];
+                    m_outputStream<<"    ";
                 }
                 m_outputStream.width(10);
                 m_outputStream << plane;
@@ -429,16 +463,18 @@ void FilterAeroForces::v_Update(
             }                       
         }
         // Output average (or total) force
-        m_outputStream.width(8);
-        m_outputStream << setprecision(6) << time;
+        int nwidthcolm=16;
+        m_outputStream.width(12);
+        m_outputStream << setprecision(10) << time;
+        m_outputStream<<"    ";
         for( int i = 0; i < expdim; i++)
         {
-            m_outputStream.width(15);
-            m_outputStream << setprecision(8) << Fp[i];
-            m_outputStream.width(15);
-            m_outputStream << setprecision(8) << Fv[i];
-            m_outputStream.width(15);
-            m_outputStream << setprecision(8) << Ft[i];
+            m_outputStream<<right<<scientific<<setw(nwidthcolm)<<setprecision(nwidthcolm-6)<< Fp[i];
+            m_outputStream<<"    ";
+            m_outputStream<<right<<scientific<<setw(nwidthcolm)<<setprecision(nwidthcolm-6)<<Fv[i];
+            m_outputStream<<"    ";
+            m_outputStream<<right<<scientific<<setw(nwidthcolm)<<setprecision(nwidthcolm-6)<<  Ft[i];
+            m_outputStream<<"    ";
         }
         if( m_outputAllPlanes)
         {
