@@ -362,9 +362,8 @@ namespace SolverUtils
                 
                 NekDouble d1  = Dx.dot(Dx1); 
                 h = sqrt(h1*h1-d1*d1/lenDx);
-                pe = elmt->GetTraceNcoeffs((traceid+nverts-1)%nverts);
+                pe = elmt->GetTraceNcoeffs((traceid+nverts-1)%nverts)-1;
                 p = pe; 
-                    
                     
                 // perpendicular distanace from second vertex 
                 vadj = *geom->GetVertex((traceid+2)%nverts);
@@ -375,13 +374,50 @@ namespace SolverUtils
 
                 h = (h+sqrt(h1*h1-d1*d1/lenDx))*0.5;
 
-                pe = elmt->GetTraceNcoeffs((traceid+1)%nverts);
+                pe = elmt->GetTraceNcoeffs((traceid+1)%nverts)-1;
                 p = (p+pe)*0.5;
             }
         break;
         case 3:
         {
-            ASSERTL0(false,"Need to sort out h estimate");
+            int nverts = geom->GetFace(traceid)->GetNumVerts();
+
+            SpatialDomains::PointGeom tn1,tn2, normal;
+            tn1.Sub(*(geom->GetFace(traceid)->GetVertex(1)),
+                    *(geom->GetFace(traceid)->GetVertex(0)));
+            tn2.Sub(*(geom->GetFace(traceid)->GetVertex(nverts-1)),
+                    *(geom->GetFace(traceid)->GetVertex(0)));
+
+            normal.Mult(tn1,tn2);
+
+            //normalise normal
+            NekDouble mag = normal.dot(normal);
+            mag = 1.0/sqrt(mag); 
+            normal.UpdatePosition(normal.x()*mag,
+                                  normal.y()*mag,
+                                  normal.z()*mag);
+
+            SpatialDomains::PointGeom Dx;
+            p = 0.0; 
+            for(int i = 0; i < nverts; ++i)
+            {
+                //vertices on edges
+                int edgid = geom->GetEdgeNormalToFaceVert(traceid,i); 
+                    
+                //vector along noramal edge to each vertex 
+                Dx.Sub(*(geom->GetEdge(edgid)->GetVertex(0)),
+                       *(geom->GetEdge(edgid)->GetVertex(1)));
+
+                // calculate perpendicular distance of normal length
+                // from first vertex
+                h  += normal.dot(Dx);
+                
+                // add value of p along normal edges
+                p += (NekDouble) (elmt->GetTraceNcoeffs(edgid)-1); 
+            }
+            
+            h /= (NekDouble)(nverts);
+            p /= (NekDouble)(nverts);
         }
         break;
         default:

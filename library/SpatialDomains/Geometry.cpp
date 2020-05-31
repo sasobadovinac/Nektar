@@ -293,6 +293,17 @@ int Geometry::v_GetEdgeFaceMap(const int i, const int j) const
 }
 
 /**
+ * @copydoc Geometry::GetEdgeNormalToFaceVert()
+ */
+int Geometry::v_GetEdgeNormalToFaceVert(const int i, const int j) const
+{
+    boost::ignore_unused(i, j);
+    NEKERROR(ErrorUtil::efatal,
+             "This function has not been defined for this geometry");
+    return 0;
+}
+    
+/**
  * @copydoc Geometry::GetDir()
  */
 int Geometry::v_GetDir(const int i, const int j) const

@@ -55,7 +55,10 @@ const unsigned int HexGeom::VertexFaceConnectivity[8][3] = {
 const unsigned int HexGeom::EdgeFaceConnectivity[12][2] = {
     {0, 1}, {0, 2}, {0, 3}, {0, 4}, {1, 4}, {1, 2},
     {2, 3}, {3, 4}, {1, 5}, {2, 5}, {3, 5}, {4, 5}};
-
+const unsigned int HexGeom::EdgeNormalToFaceVert[6][4] = {
+    {4, 5, 6, 7},  {1, 3, 9, 11}, {0, 2, 8, 10},
+    {1, 3, 9, 11}, {0, 2, 8, 10}, {4, 5, 6, 7}};
+    
 HexGeom::HexGeom()
 {
     m_shapeType = LibUtilities::eHexahedron;
@@ -295,6 +298,11 @@ int HexGeom::v_GetVertexFaceMap(const int i, const int j) const
 }
 
 int HexGeom::v_GetEdgeFaceMap(const int i, const int j) const
+{
+    return EdgeFaceConnectivity[i][j];
+}
+
+int HexGeom::v_GetEdgeNormalToFaceVert(const int i, const int j) const
 {
     return EdgeFaceConnectivity[i][j];
 }
