@@ -127,8 +127,10 @@ namespace Nektar
             "RungeKutta2",
             "DIRKOrder2",
             "DIRKOrder3",
+            "DIRKOrder3Stage4Embedded5",
             "DIRKOrder3Stage5",
             "DIRKOrder4Stage6",
+            "DIRKOrder4Stage6Embedded7",
             "CNAB",
             "IMEXGear",
             "MCNAB",
@@ -590,19 +592,25 @@ namespace Nektar
 
 
         protected:
-            bool                      m_IfExtractRhsFlag=false;
             Array<OneD,Array<OneD,NekDouble>>     m_Rhs;
 
-            bool                      m_EmbeddedTemporalError=false;  
-            bool                      m_DirectTemporalError=false;  
+            bool                        m_IfExtractRhsFlag=false;
+            bool                        m_EmbeddedTemporalError=false;  
+            bool                        m_DirectTemporalError=false;  
            
-           unsigned int              m_Order; //< Order of timeintegration scheme
-            bool m_TemporalErrorInitialized=true;//Control the first step first assuming true, if finished initializing, change it to true
-            bool m_TemporalErrorState=false;//Control the remaining steps except the first step
+            //< Order of timeintegration scheme
+            unsigned int                m_Order; 
+            //Control the first step first assuming true, if finished initializing, change it to true
+            bool                        m_TemporalErrorInitialized=true;
+            //Control the remaining steps except the first step
+            bool                        m_TemporalErrorState=false;
 
-            bool m_EmbeddedScheme=false;//Control if embedd scheme
-            bool m_EmbeddedInitialized=true;//Control the first step 
-            bool m_EmbeddedState=false;//Control the remaining steps  except the first step
+            //Control if embedd scheme
+            bool                        m_EmbeddedScheme=false;
+            //Control the first step 
+            bool                        m_EmbeddedInitialized=true;
+            //Control the remaining steps  except the first step
+            bool                        m_EmbeddedState=false;
             TimeIntegrationSchemeKey  m_schemeKey; 
             TimeIntegrationSchemeType m_schemeType;
             unsigned int              m_numsteps;   //< Number of steps in multi-step component. 
@@ -638,15 +646,15 @@ namespace Nektar
             TripleArray                         m_solVectortmp;
             SingleArray                         m_ttmp;
             Array<OneD, Array<TwoD,NekDouble> > m_B_embedded;
-            DoubleArray m_TemporalError;
-            DoubleArray m_EmbeddedError;
-            DoubleArray m_LocalError;
+            DoubleArray                         m_TemporalError;
+            DoubleArray                         m_EmbeddedError;
+            DoubleArray                         m_LocalError;
             
-            int  m_nvar_Paired;       
-            int  m_npoints_Paired; 
-            int  m_numsteps_Paired;
-            int  m_numstages_Paired;    
-            bool m_RealTimeStepFlag;
+            int                                 m_nvar_Paired;       
+            int                                 m_npoints_Paired; 
+            int                                 m_numsteps_Paired;
+            int                                 m_numstages_Paired;    
+            bool                                m_RealTimeStepFlag;
 
         private: 
             bool m_initialised;   /// bool to identify if array has been initialised 
@@ -678,12 +686,6 @@ namespace Nektar
                 NEKERROR(ErrorUtil::efatal,"Copy Constructor for the TimeIntegrationScheme class should not be called");
             }
 
-            void PairedExplicitTimeIntegrate(const NekDouble    timestep,
-                                    ConstTripleArray   &y_old  ,
-                                    ConstSingleArray   &t_old  ,
-                                    DoubleArray        &y_new  ,
-                                    const TimeIntegrationSchemeOperators &op);
-            
             void PairedImplicitTimeIntegrate(const NekDouble    timestep,
                         ConstTripleArray   &y_old  ,
                         ConstSingleArray   &t_old  ,

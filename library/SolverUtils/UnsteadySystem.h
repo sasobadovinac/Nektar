@@ -82,8 +82,6 @@ namespace Nektar
             LibUtilities::TimeIntegrationWrapperSharedPtr   m_intScheme;
             /// The time integration scheme operators to use.
             LibUtilities::TimeIntegrationSchemeOperators    m_ode;
-
-            // SolverUtils::DriverOperators                    m_driver;
             ///
             LibUtilities::TimeIntegrationSolutionSharedPtr  m_intSoln;
             ///
@@ -177,18 +175,18 @@ namespace Nektar
             bool m_CalcuPrecMatFlag     = true;
             ////////////////////////////////////////////////////////////////////////////
             //Paremeters to control the Direct Error
-            int m_CalculateTemporalErrorCounter=0;
-            NekDouble m_TemporalErrorNorm;
-            Array<OneD,NekDouble> m_TemporalErrorNormArray;
-            Array<OneD,Array<OneD,NekDouble>> m_TemporalError;
-            int m_CalculateSpatialErrorCounter=0;
-            bool m_CalculateSpatialErrorFlag=false;
-            bool m_CalculateTemporalErrorFlag=false;
-            NekDouble m_SpatialErrorNorm;
-            Array<OneD,NekDouble> m_SpatialErrorNormArray;
-            Array<OneD,Array<OneD,NekDouble>> m_SpatialError;
-            Array<OneD,Array<OneD,NekDouble>> m_OperatedSpatialError;
-            Array<OneD,Array<OneD,NekDouble>> m_OperatedTemporalError;
+            int                         m_CalculateTemporalErrorCounter=0;
+            NekDouble                   m_TemporalErrorNorm;
+            Array<OneD,NekDouble>       m_TemporalErrorNormArray;
+            int                         m_CalculateSpatialErrorCounter=0;
+            bool                        m_CalculateSpatialErrorFlag=false;
+            bool                        m_CalculateTemporalErrorFlag=false;
+            NekDouble                   m_SpatialErrorNorm;
+            Array<OneD,NekDouble>       m_SpatialErrorNormArray;
+            Array<OneD,Array<OneD,NekDouble>>       m_TemporalError;
+            Array<OneD,Array<OneD,NekDouble>>       m_SpatialError;
+            Array<OneD,Array<OneD,NekDouble>>       m_OperatedSpatialError;
+            Array<OneD,Array<OneD,NekDouble>>       m_OperatedTemporalError;
             //Array<OneD,Array<OneD,NekDouble>> m_OperatedAdaptiveTimeStepForOutput;
             ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 

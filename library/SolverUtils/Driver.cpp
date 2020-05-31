@@ -115,7 +115,8 @@ void Driver::v_InitObject(ostream &out)
                     "EvolutionOperator");
 
         m_nequ = ((m_EvolutionOperator == eTransientGrowth ||
-                   m_EvolutionOperator == eAdaptiveSFD || m_EvolutionOperator == eAdaptiveCFS) ? 2 : 1);
+                   m_EvolutionOperator == eAdaptiveSFD || 
+                   m_EvolutionOperator == eAdaptiveCFS) ? 2 : 1);
 
         m_equ = Array<OneD, EquationSystemSharedPtr>(m_nequ);
 
@@ -202,12 +203,6 @@ void Driver::v_InitObject(ostream &out)
                     index=TmpInputFile.find("/");
                     if((-1)!=index)
                     {
-                        ////////////////ReName
-                        // length=TmpInputFile.length()-index+5;
-                        // TmpInputFile.replace( index-4,length, "_MultiOrder.xml");
-                        ////////////////Return Original Name
-                        // length=TmpInputFile.length()-index+5;
-                        // TmpInputFile.replace( index-4,length, ".xml");
                         MultiOrderFilename.push_back(TmpInputFile);
                     }
                     else
@@ -219,42 +214,20 @@ void Driver::v_InitObject(ostream &out)
                     }
                 }
 
-                //Change to 2_32_MultiOrder/P00000.xml
-                // for(int i=0;i<m_session->GetFilenames().size();i++)
-                // {
-                //     TmpInputFile=m_session->GetFilenames()[i];
-                //     // cout<<"Before: "<<TmpInputFile<<endl;
-                //     int index,length;
-                //     index=TmpInputFile.find("/");
-                //     if((-1)!=index)
-                //     {
-                //         TmpInputFile.replace( index-4,4, "_MultiOrder_xml");
-                //         MultiOrderFilename.push_back(TmpInputFile);
-                //         // cout<<"After: "<<TmpInputFile<<endl;
-                //         // ASSERTL0(false, "Change Name Successfully");
-                //     }
-                //     else
-                //     {
-                //         index=TmpInputFile.find(".");
-                //         TmpInputFile.replace( index,4, "_MultiOrder.xml");
-                //         MultiOrderFilename.push_back(TmpInputFile);
-
-                //     }
-                // }
-
-                int Order=0;
                 MultiOrderSession= LibUtilities::SessionReader::CreateInstance(
-                                0, NULL, MultiOrderFilename, m_session->GetComm(),Order);
-                
+                                0, NULL, MultiOrderFilename, 
+                                m_session->GetComm());
+                int ncoeffOffset = 1;
+                int nphyscOffset = 0;
                 TmpInputFile=MultiOrderSession->GetSessionName();
                  SpatialDomains::MeshGraphSharedPtr MultiOrderGraph =
-                 SpatialDomains::MeshGraph::ReadMultiOrder(MultiOrderSession,
-                 m_graph->GetCompositeOrdering(),
-                 m_graph->GetBndRegionOrdering());
-                //SpatialDomains::MeshGraphSharedPtr MultiOrderGraph =SpatialDomains::MeshGraph::Read(MultiOrderSession);
-                // cout<<"2: "<<m_session->GetSessionName()<<endl;
-                // cout<<"3: "<<MultiOrderSession->GetSessionName()<<endl;
-                //Run MultiOrder Solver
+                 SpatialDomains::MeshGraph::Read(MultiOrderSession,
+                        SpatialDomains::NullDomainRangeShPtr,
+                        true,
+                        m_graph->GetCompositeOrdering(),
+                        m_graph->GetBndRegionOrdering(), 
+                        ncoeffOffset, nphyscOffset);
+
                 MultiOrderSession->SetTag("AdvectiveType","Convective");
                 m_equ[1] = GetEquationSystemFactory().CreateInstance(
                     vEquation, MultiOrderSession, MultiOrderGraph);

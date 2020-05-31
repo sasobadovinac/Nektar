@@ -315,7 +315,9 @@ void MeshGraphXml::PartitionMesh(
 
 void MeshGraphXml::ReadGeometry(
     DomainRangeShPtr rng,
-    bool             fillGraph)
+    bool             fillGraph,
+    const int        &ncoeffsOffset,
+    const int        &nphysicOffset)
 {
     // Reset member variables.
     m_vertSet.clear();
@@ -398,96 +400,7 @@ void MeshGraphXml::ReadGeometry(
 
     if (fillGraph)
     {
-        MeshGraph::FillGraph();
-    }
-}
-
-void MeshGraphXml::ReadMultiOrderGeometry(
-    DomainRangeShPtr rng,
-    bool             fillGraph)
-{
-    // Reset member variables.
-    m_vertSet.clear();
-    m_curvedEdges.clear();
-    m_curvedFaces.clear();
-    m_segGeoms.clear();
-    m_triGeoms.clear();
-    m_quadGeoms.clear();
-    m_tetGeoms.clear();
-    m_pyrGeoms.clear();
-    m_prismGeoms.clear();
-    m_hexGeoms.clear();
-    m_meshComposites.clear();
-    m_compositesLabels.clear();
-    m_domain.clear();
-    m_expansionMapShPtrMap.clear();
-    m_geomInfo.clear();
-    m_faceToElMap.clear();
-
-    m_domainRange = rng;
-    m_xmlGeom     = m_session->GetElement("NEKTAR/GEOMETRY");
-
-    int err; /// Error value returned by TinyXML.
-
-    TiXmlAttribute *attr = m_xmlGeom->FirstAttribute();
-
-    // Initialize the mesh and space dimensions to 3 dimensions.
-    // We want to do this each time we read a file, so it should
-    // be done here and not just during class initialization.
-    m_meshPartitioned = false;
-    m_meshDimension   = 3;
-    m_spaceDimension  = 3;
-
-    while (attr)
-    {
-        std::string attrName(attr->Name());
-        if (attrName == "DIM")
-        {
-            err = attr->QueryIntValue(&m_meshDimension);
-            ASSERTL1(err == TIXML_SUCCESS, "Unable to read mesh dimension.");
-        }
-        else if (attrName == "SPACE")
-        {
-            err = attr->QueryIntValue(&m_spaceDimension);
-            ASSERTL1(err == TIXML_SUCCESS, "Unable to read space dimension.");
-        }
-        else if (attrName == "PARTITION")
-        {
-            err = attr->QueryIntValue(&m_partition);
-            ASSERTL1(err == TIXML_SUCCESS, "Unable to read partition.");
-            m_meshPartitioned = true;
-        }
-        else
-        {
-            std::string errstr("Unknown attribute: ");
-            errstr += attrName;
-            ASSERTL1(false, errstr.c_str());
-        }
-
-        // Get the next attribute.
-        attr = attr->Next();
-    }
-
-    ASSERTL1(m_meshDimension <= m_spaceDimension,
-             "Mesh dimension greater than space dimension");
-
-    ReadVertices();
-    ReadCurves();
-    if (m_meshDimension >= 2)
-    {
-        ReadEdges();
-        if (m_meshDimension == 3)
-        {
-            ReadFaces();
-        }
-    }
-    ReadElements();
-    ReadComposites();
-    ReadDomain();
-
-    if (fillGraph)
-    {
-        MeshGraph::FillMultiOrderGraph();
+        MeshGraph::FillGraph(ncoeffsOffset, nphysicOffset);
     }
 }
 

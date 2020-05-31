@@ -450,11 +450,14 @@ void FilterAeroForces::v_Update(
                 // Write forces
                 for( int i = 0; i < expdim; i++ )
                 {
-                    m_outputStream<<right<<scientific<<setw(nwidthcolm)<<setprecision(nwidthcolm-6)<< m_Fpplane[i][plane];
+                    m_outputStream<<right<<scientific<<setw(nwidthcolm)
+                    <<setprecision(nwidthcolm-6)<< m_Fpplane[i][plane];
                     m_outputStream<<"    ";
-                    m_outputStream <<right<<scientific<<setw(nwidthcolm)<<setprecision(nwidthcolm-6)<< m_Fvplane[i][plane];
+                    m_outputStream <<right<<scientific<<setw(nwidthcolm)
+                    <<setprecision(nwidthcolm-6)<< m_Fvplane[i][plane];
                     m_outputStream<<"    ";
-                    m_outputStream<<right<<scientific<<setw(nwidthcolm)<<setprecision(nwidthcolm-6)<<m_Ftplane[i][plane];
+                    m_outputStream<<right<<scientific<<setw(nwidthcolm)
+                    <<setprecision(nwidthcolm-6)<<m_Ftplane[i][plane];
                     m_outputStream<<"    ";
                 }
                 m_outputStream.width(10);
@@ -469,11 +472,14 @@ void FilterAeroForces::v_Update(
         m_outputStream<<"    ";
         for( int i = 0; i < expdim; i++)
         {
-            m_outputStream<<right<<scientific<<setw(nwidthcolm)<<setprecision(nwidthcolm-6)<< Fp[i];
+            m_outputStream<<right<<scientific<<setw(nwidthcolm)
+            <<setprecision(nwidthcolm-6)<< Fp[i];
             m_outputStream<<"    ";
-            m_outputStream<<right<<scientific<<setw(nwidthcolm)<<setprecision(nwidthcolm-6)<<Fv[i];
+            m_outputStream<<right<<scientific<<setw(nwidthcolm)
+            <<setprecision(nwidthcolm-6)<<Fv[i];
             m_outputStream<<"    ";
-            m_outputStream<<right<<scientific<<setw(nwidthcolm)<<setprecision(nwidthcolm-6)<<  Ft[i];
+            m_outputStream<<right<<scientific<<setw(nwidthcolm)
+            <<setprecision(nwidthcolm-6)<<  Ft[i];
             m_outputStream<<"    ";
         }
         if( m_outputAllPlanes)

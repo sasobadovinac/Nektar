@@ -339,7 +339,7 @@ namespace Nektar
 
             }
 
-            // if(m_ErrorBasedAdaptedTimeStepFlag)
+            // if (m_ErrorBasedAdaptedTimeStepFlag)
             // {
             //     int nvariables=m_fields.num_elements();
             //     if(m_SpatialErrorFreezNumber>0)

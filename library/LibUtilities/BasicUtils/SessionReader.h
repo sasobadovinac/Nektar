@@ -155,8 +155,7 @@ namespace Nektar
                 int                       argc,
                 char                     *argv[],
                 std::vector<std::string> &pFilenames,
-                const CommSharedPtr      &pComm = CommSharedPtr(),
-                int                            Order= 0)
+                const CommSharedPtr      &pComm = CommSharedPtr())
             {
                 SessionReaderSharedPtr p = MemoryManager<
                     LibUtilities::SessionReader>
@@ -168,8 +167,7 @@ namespace Nektar
                 int                             argc,
                 char                           *argv[],
                 const std::vector<std::string> &pFilenames,
-                const CommSharedPtr            &pComm,
-                int                            Order= 0);
+                const CommSharedPtr            &pComm);
 
             /// Destructor
             LIB_UTILITIES_EXPORT ~SessionReader();

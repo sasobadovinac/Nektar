@@ -360,17 +360,17 @@ class Interpolator;
         protected:
             ////////////////////////////////////////////////////////////////////
             //Yu Pan's Test codes
-            bool                                        m_ErrorBasedAdaptedTimeStepFlag=false;
+            bool                        m_ErrorBasedAdaptedTimeStepFlag=false;
 
-            bool                                        m_FirstStepErrorControlFlag;
+            bool                        m_FirstStepErrorControlFlag;
 
-            int                                         m_TemporalErrorFreezNumber;
+            int                         m_TemporalErrorFreezNumber;
 
-            int                                         m_SpatialErrorFreezNumber;
+            int                         m_SpatialErrorFreezNumber;
 
-            int                                         m_ExtractRhsPerNTimeSteps;
+            int                         m_ExtractRhsPerNTimeSteps;
 
-            int                                         m_ExtractRhsPerNStages;
+            int                         m_ExtractRhsPerNStages;
             //////////////////////////////////////////////////////////////////////
             /// Temparary factor to determine whether strong/weak
             bool                                        m_useUnifiedWeakIntegration  =   false;

@@ -78,7 +78,9 @@ public:
 protected:
     SPATIAL_DOMAINS_EXPORT virtual void ReadGeometry(
         DomainRangeShPtr rng,
-        bool             fillGraph);
+        bool             fillGraph,
+        const int        &ncoeffsOffset = 0,
+        const int        &nphysicOffset = 0);
     SPATIAL_DOMAINS_EXPORT virtual void PartitionMesh(
         LibUtilities::SessionReaderSharedPtr session);
 

@@ -793,7 +793,6 @@ namespace Nektar
                     outfile0.close();
                 }
 
-
                 timer.Stop();
 
                 m_time  += m_timestep;

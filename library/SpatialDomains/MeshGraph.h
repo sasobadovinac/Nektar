@@ -113,6 +113,9 @@ typedef std::map<int, CompositeSharedPtr> CompositeMap;
 typedef std::map<int, std::vector<unsigned int>> CompositeOrdering;
 typedef std::map<int, std::vector<unsigned int>> BndRegionOrdering;
 
+static CompositeOrdering NullCompositeOrdering;
+static BndRegionOrdering NullBndRegionOrdering;
+
 // set restriction on domain range for post-processing.
 struct DomainRange
 {
@@ -170,15 +173,12 @@ public:
 
     SPATIAL_DOMAINS_EXPORT static MeshGraphSharedPtr Read(
         const LibUtilities::SessionReaderSharedPtr pSession,
-        DomainRangeShPtr                           rng       = NullDomainRangeShPtr,
-        bool                                       fillGraph = true);
-
-    SPATIAL_DOMAINS_EXPORT static MeshGraphSharedPtr ReadMultiOrder(
-        const LibUtilities::SessionReaderSharedPtr pSession,
-        CompositeOrdering                          &compOrder,
-        BndRegionOrdering                          &bndRegOrder,
-        DomainRangeShPtr                           rng       = NullDomainRangeShPtr,
-        bool                                       fillGraph = true);
+        DomainRangeShPtr        rng            = NullDomainRangeShPtr,
+        bool                    fillGraph      = true,
+        CompositeOrdering       &compOrder     = NullCompositeOrdering,
+        BndRegionOrdering       &bndRegOrder   = NullBndRegionOrdering,
+        const int               &ncoeffsOffset = 0,
+        const int               &nphysicOffset = 0);
 
     SPATIAL_DOMAINS_EXPORT virtual void WriteGeometry(
         std::string &outfilename,
@@ -198,11 +198,10 @@ public:
     }
 
     /*transfers the minial data structure to full meshgraph*/
-    SPATIAL_DOMAINS_EXPORT void FillGraph();
-
-    /*transfers the minial data structure to full meshgraph*/
-    SPATIAL_DOMAINS_EXPORT void FillMultiOrderGraph();
-
+    SPATIAL_DOMAINS_EXPORT void FillGraph(
+        const int               &ncoeffsOffset,
+        const int               &nphysicOffset);
+    
     ////////////////////
     ////////////////////
 
@@ -210,10 +209,9 @@ public:
 
     SPATIAL_DOMAINS_EXPORT void ReadExpansions();
 
-    SPATIAL_DOMAINS_EXPORT void ReadMultiOrderExpansions();
-
-
-    SPATIAL_DOMAINS_EXPORT void  ReplaceExpansion(int ModeOffset, int QuadOffset);
+    SPATIAL_DOMAINS_EXPORT void  ReplaceExpansion(
+        const int &ModeOffset, 
+        const int &QuadOffset);
 
     /* ---- Helper functions ---- */
     /// Dimension of the mesh (can be a 1D curve in 3D space).
@@ -441,12 +439,10 @@ public:
     /*an inital read which loads a very light weight data structure*/
     SPATIAL_DOMAINS_EXPORT virtual void ReadGeometry(
         DomainRangeShPtr rng,
-        bool             fillGraph) = 0;
-    
-    SPATIAL_DOMAINS_EXPORT virtual void ReadMultiOrderGeometry(
-        DomainRangeShPtr rng,
-        bool             fillGraph) = 0;
-        
+        bool             fillGraph,
+        const int        &ncoeffsOffset = 0,
+        const int        &nphysicOffset = 0) = 0;
+          
     SPATIAL_DOMAINS_EXPORT virtual void PartitionMesh(
         LibUtilities::SessionReaderSharedPtr session) = 0;
 
