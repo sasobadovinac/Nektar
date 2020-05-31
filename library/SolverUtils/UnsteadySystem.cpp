@@ -520,6 +520,8 @@ namespace Nektar
                         NekDouble oTemporalOrder_PlusOne=1.0/TemporalOrder_PlusOne; 
                         
                         Array<OneD,NekDouble> timestepArray(nvariables);
+                        NekDouble wghtedTimeStep = 0.0;
+                        NekDouble wghts = 0.0;
                         for(int i=0;i<nvariables;i++)
                         {
                             Array<OneD,NekDouble> tmp1(nElements,0.0);
@@ -531,7 +533,14 @@ namespace Nektar
                             Vmath::Vpow(nElements,tmp1,1,oTemporalOrder_PlusOne,tmp1,1);
                             Vmath::Smul(nElements,m_timestep,tmp1,1,tmp1,1);
                             //To Do: if need min for each variable, need to AllReduce min here
-                            timestepArray[i]=Vmath::Vmin(nElements,tmp1,1);
+                            // timestepArray[i]=Vmath::Vmin(nElements,tmp1,1);
+                            Vmath::Vsqrt(nElements,OperatedTemporalErrortmp[i],1,tmp2,1);
+                            wghts +=Vmath::Vsum(nElements,tmp2,1);
+                            Vmath::Vmul(nElements,tmp2,1,
+                                            tmp1,1,
+                                            tmp2,1);
+
+                            wghtedTimeStep +=Vmath::Vsum(nElements,tmp2,1);
                             //To Do: for contour output, can remove after testing
                             // for(int j=0;j<nElements;j++)
                             // {
@@ -540,8 +549,11 @@ namespace Nektar
                             //     Vmath::Fill(nElementPoints,tmp1[j],&m_OperatedAdaptiveTimeStepForOutput[i][nElementOffset],1);
                             // }
                         }
-                        m_OperatedAdaptiveTimeStep=Vmath::Vmin(nvariables,timestepArray,1);
-                        m_comm->AllReduce(m_OperatedAdaptiveTimeStep,LibUtilities::ReduceMin);
+                        m_comm->AllReduce(wghtedTimeStep,LibUtilities::ReduceSum);
+                        m_comm->AllReduce(wghts,LibUtilities::ReduceSum);
+
+                        m_OperatedAdaptiveTimeStep = wghtedTimeStep/wghts;
+
                     }
 
                     // if(m_ErrorBasedAdaptedTimeStepFlag && m_comm->GetRank() == 0)

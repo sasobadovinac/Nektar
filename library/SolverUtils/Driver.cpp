@@ -196,6 +196,8 @@ void Driver::v_InitObject(ostream &out)
                 for(int i=0;i<m_session->GetFilenames().size();i++)
                 {
                     TmpInputFile=m_session->GetFilenames()[i];
+
+                    cout << TmpInputFile << endl;
                     int index,length;
                     index=TmpInputFile.find("/");
                     if((-1)!=index)
