@@ -136,18 +136,19 @@ namespace Nektar
             SetExpType(e2D);
 
             // Split up our mesh graph along interfaces if necessary.
-            SpatialDomains::Interfaces interfaceCollection(m_session, m_graph);
-            m_interfaces = interfaceCollection.GetInterfaces();
-            for (auto &inter : m_interfaces)
+            m_interfaces = MemoryManager<SpatialDomains::Interfaces>::AllocateSharedPtr(m_session, m_graph);
+            for (auto &inter : m_interfaces->GetInterfaces())
             {
-                if (inter.second.second->GetEdge().empty())
+                auto interfacePair = inter.second;
+                if (interfacePair->GetRightInterface()->GetEdge().empty())
                 {
-                    interfaceCollection.SeparateGraph(m_graph, inter.first);
+                    interfacePair->SeparateGraph(m_graph);
                 }
             }
 
-            std::string filename = "out.xml";
-            m_graph->WriteGeometry(filename, true);                   // Write split geometry to use when creating VTU
+            // Write split geometry to use when creating VTU
+            std::string filename = m_session->GetSessionName() + "_split.xml";
+            m_graph->WriteGeometry(filename, true);
 
             // Re-read expansion maps to break our expansions appropriately!
             m_graph->ReadExpansions();

@@ -454,11 +454,11 @@ namespace Nektar
                 traceIdToElmt[traceGeomId] = i;
             }
 
-            for (auto &interface : m_interfaces)
+            for (auto &interface : m_interfaces->GetInterfaces())
             {
                 const int indx = interface.first;
 
-                for (auto &iter : interface.second.second->GetEdge())
+                for (auto &iter : interface.second->GetRightInterface()->GetEdge())
                 {
                     int id       = iter.first;
                     auto traceEl = std::dynamic_pointer_cast<LocalRegions::Expansion1D>(
@@ -467,7 +467,7 @@ namespace Nektar
                     m_interfaceEdge.second.insert(id);
                 }
 
-                for (auto &iter : interface.second.first->GetEdge())
+                for (auto &iter : interface.second->GetLeftInterface()->GetEdge())
                 {
                     int id       = iter.first;
                     auto traceEl = std::dynamic_pointer_cast<LocalRegions::Expansion1D>(

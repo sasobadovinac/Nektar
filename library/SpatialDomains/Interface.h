@@ -55,8 +55,6 @@ enum InterfaceType
     eSliding,
 };
 
-const char *const InterfaceTypeMap[] = {"Fixed", "Rotating", "Sliding"};
-
 struct Composite;
 typedef std::map<int, std::shared_ptr<Composite>> CompositeMap;
 
@@ -108,8 +106,8 @@ protected:
 
 struct RotatingInterface : public InterfaceBase
 {
-    RotatingInterface(const CompositeMap domain, const PointGeom origin,
-                      const std::vector<NekDouble> axis,
+    RotatingInterface(const CompositeMap &domain, const PointGeom &origin,
+                      const std::vector<NekDouble> &axis,
                       const NekDouble angularVel)
         : InterfaceBase(eRotating, domain), m_origin(origin),
           m_axis(axis), m_angularVel(angularVel)
@@ -139,17 +137,46 @@ protected:
 
 struct FixedInterface : public InterfaceBase
 {
-    FixedInterface(const CompositeMap domain)
+    FixedInterface(const CompositeMap &domain)
             : InterfaceBase(eFixed, domain)
     {
     }
 };
 
-typedef std::shared_ptr<InterfaceBase> InterfaceShPtr;
+typedef std::shared_ptr<InterfaceBase> InterfaceBaseShPtr;
 typedef std::shared_ptr<RotatingInterface> RotatingInterfaceShPtr;
 typedef std::shared_ptr<FixedInterface> FixedInterfaceShPtr;
 
-typedef std::map<int, std::pair<InterfaceShPtr, InterfaceShPtr>> InterfaceCollection;
+struct InterfacePair
+{
+    InterfacePair(InterfaceBaseShPtr leftInterface,
+                  InterfaceBaseShPtr rightInterface)
+                 : m_leftInterface(leftInterface),
+                   m_rightInterface(rightInterface)
+    {
+    }
+
+    InterfaceBaseShPtr m_leftInterface;
+    InterfaceBaseShPtr m_rightInterface;
+
+public:
+    const InterfaceBaseShPtr &GetLeftInterface() const
+    {
+        return m_leftInterface;
+    }
+
+    const InterfaceBaseShPtr &GetRightInterface() const
+    {
+        return m_rightInterface;
+    }
+
+    void SeparateGraph(MeshGraphSharedPtr &graph);
+};
+
+
+typedef std::shared_ptr<InterfacePair> InterfacePairShPtr;
+typedef std::map<int, InterfacePairShPtr> InterfaceCollection;
+typedef std::shared_ptr<InterfaceCollection> InterfaceCollectionShPtr;
 
 class Interfaces
 {
@@ -160,12 +187,12 @@ public:
 
     SPATIAL_DOMAINS_EXPORT Interfaces() = default;
 
-    const InterfaceCollection &GetInterfaces(void) const
+    const InterfaceCollection &GetInterfaces() const
     {
         return m_interfaces;
     }
 
-    void SeparateGraph(MeshGraphSharedPtr &graph, int indx);
+    SPATIAL_DOMAINS_EXPORT void CalculateOpposite();
 
 protected:
     /// The mesh graph to use for referencing geometry info.
@@ -178,6 +205,8 @@ private:
     void Read(TiXmlElement *interfaceTag);
     void ReadInterfaces(TiXmlElement *interfaceTag);
 };
+
+typedef std::shared_ptr<Interfaces> InterfacesSharedPtr;
 
 } // namespace SpatialDomains
 } // namespace Nektar

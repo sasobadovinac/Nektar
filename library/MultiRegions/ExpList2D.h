@@ -133,7 +133,7 @@ namespace Nektar
             MULTI_REGIONS_EXPORT virtual ~ExpList2D();
 
         protected:
-            SpatialDomains::InterfaceCollection m_interfaces;
+            SpatialDomains::InterfacesSharedPtr m_interfaces;
 
             /// Upwind the \a Fwd and \a Bwd states based on the one-
             /// dimensional normal velocity field given by \a Vn.

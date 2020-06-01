@@ -103,7 +103,7 @@ void Interfaces::ReadInterfaces(TiXmlElement *interfaces)
 
     TiXmlElement *interfaceElement = interfaces->FirstChildElement();
 
-    std::map<int, std::vector<InterfaceShPtr>> tmpInterfaceMap;
+    std::map<int, std::vector<InterfaceBaseShPtr>> tmpInterfaceMap;
 
     while (interfaceElement)
     {
@@ -156,7 +156,7 @@ void Interfaces::ReadInterfaces(TiXmlElement *interfaces)
 
         }
 
-        InterfaceShPtr interface;
+        InterfaceBaseShPtr interface;
 
         if (interfaceType == "R")
         {
@@ -204,19 +204,19 @@ void Interfaces::ReadInterfaces(TiXmlElement *interfaces)
 
     for (auto interfacePair : tmpInterfaceMap)
     {
-        ASSERTL0(interfacePair.second.size() == 2, "Every interface ID must have two domains associated with it")
+        ASSERTL0(interfacePair.second.size() == 2,
+                 "Every interface ID must have two domains associated with it")
 
-           m_interfaces[interfacePair.first] = std::make_pair(
-                   interfacePair.second[0], interfacePair.second[1]);
+        m_interfaces[interfacePair.first] =
+            MemoryManager<SpatialDomains::InterfacePair>::AllocateSharedPtr(
+                interfacePair.second[0], interfacePair.second[1]);
     }
 }
 
-void Interfaces::SeparateGraph(MeshGraphSharedPtr &graph, int indx)
+void InterfacePair::SeparateGraph(MeshGraphSharedPtr &graph)
 {
-    auto &keepInterface = m_interfaces[indx].first;
-    auto &changeInterface = m_interfaces[indx].second;
-    auto rightDomain   = changeInterface->GetDomain();
-    auto interfaceEdge = changeInterface->GetInterfaceEdge();
+    auto rightDomain   = m_rightInterface->GetDomain();
+    auto interfaceEdge = m_rightInterface->GetInterfaceEdge();
 
     int maxVertId = -1;
     for (auto &vert : graph->GetAllPointGeoms())
@@ -301,8 +301,8 @@ void Interfaces::SeparateGraph(MeshGraphSharedPtr &graph, int indx)
             graph->GetAllSegGeoms()[maxEdgeId] = newEdge;
             edgeDone[geom->GetGlobalID()]      = newEdge;
 
-            keepInterface->SetEdge(oldEdge);
-            changeInterface->SetEdge(newEdge);
+            m_leftInterface->SetEdge(oldEdge);
+            m_rightInterface->SetEdge(newEdge);
             maxEdgeId++;
 
             auto toProcess = GetElementsFromVertex(rightDomain, vid[0], vid[1]);
@@ -452,7 +452,7 @@ void Interfaces::SeparateGraph(MeshGraphSharedPtr &graph, int indx)
 #endif
 
     }
-};
+}
 
 void InterfaceBase::SetEdge(const CompositeMap &edge)
 {
@@ -467,6 +467,12 @@ void InterfaceBase::SetEdge(const CompositeMap &edge)
         }
     }
 }
+
+void Interfaces::CalculateOpposite()
+{
+
+}
+
 
 }
 }
