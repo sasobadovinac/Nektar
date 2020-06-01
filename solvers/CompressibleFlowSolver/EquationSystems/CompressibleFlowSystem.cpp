@@ -2732,7 +2732,10 @@ namespace Nektar
             
             converged = NewtonStopCriteria(NonlinSysRes_1D, k, ntotalDOF, 
                         resnorm, resnorm0, resmaxm, resratio);
-
+            if (converged)
+            {
+                break;
+            }
             LinSysTol = m_GMRESRelativeIteTol*sqrt(resnorm);
             int ntmpGMRESIts =  m_linsol->SolveLinearSystem(ntotal,NonlinSysRes_1D,dsol_1D,0,LinSysTol);
             NtotDoOdeRHS  +=  ntmpGMRESIts;
