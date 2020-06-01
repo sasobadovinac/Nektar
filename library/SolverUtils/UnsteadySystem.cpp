@@ -166,16 +166,16 @@ namespace Nektar
             }
             
             //Current stage only define other two parameters together can calculate adaptive time step
-            // if(m_ErrorBasedAdaptedTimeStepFlag)
-            // {
-            //     int nvariables=GetNvariables();
-            //     m_OperatedAdaptiveTimeStepForOutput=Array<OneD,Array<OneD,NekDouble>>(nvariables);
-            //     for(int i=0;i<nvariables;i++)
-            //     {
-            //         int npoints=m_fields[i]->GetNpoints();
-            //         m_OperatedAdaptiveTimeStepForOutput[i]=Array<OneD,NekDouble>(npoints,0.0);
-            //     }
-            // }
+            if(m_ErrorBasedAdaptedTimeStepFlag)
+            {
+                int nvariables=GetNvariables();
+                m_OperatedAdaptiveTimeStepForOutput=Array<OneD,Array<OneD,NekDouble>>(nvariables);
+                for(int i=0;i<nvariables;i++)
+                {
+                    int npoints=m_fields[i]->GetNpoints();
+                    m_OperatedAdaptiveTimeStepForOutput[i]=Array<OneD,NekDouble>(npoints,0.0);
+                }
+            }
 
             if(m_SpatialErrorFreezNumber>0)
             {
