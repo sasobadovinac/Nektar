@@ -152,6 +152,7 @@ namespace SolverUtils
             for(int n = 0; n < elmt->GetNtraces(); ++n, ++cnt)
             {
                 eval_h(elmt,n,h,p);
+                ASSERTL0(boost::math::isnan(h) == false,"h has a nan value when e = "  +boost::lexical_cast<std::string>(e) + " n =" + boost::lexical_cast<std::string>(n));
                 NekDouble jumpScal = 0.7*pow(p,-4.0)*h*h; 
                 
                 LocalRegions::ExpansionSharedPtr telmt = elmtToTrace[e][n];
@@ -169,6 +170,7 @@ namespace SolverUtils
                 elmt->GetElmtTraceToTraceMap(n,map,sign,
                                              elmt->GetTraceOrient(n),
                                              P,Q);                 
+                
                 // Note curretly doing the same thing so can likely
                 // remove this if
                 if(leftAdjacentTrace[cnt])
@@ -357,10 +359,10 @@ namespace SolverUtils
                 SpatialDomains::PointGeom Dx, Dx1; 
 
                 Dx.Sub(ev1,ev0);
-                NekDouble lenDx = ev1.dist(ev0);
                 Dx1.Sub(vadj,ev0);
                 
                 NekDouble d1  = Dx.dot(Dx1); 
+                NekDouble lenDx = ev1.dot(ev1);
                 h = sqrt(h1*h1-d1*d1/lenDx);
                 pe = elmt->GetTraceNcoeffs((traceid+nverts-1)%nverts)-1;
                 p = pe; 
