@@ -99,17 +99,11 @@ struct InterfaceBase
 
     void SetEdge(const CompositeMap &edge);
 
-    void FillInterfaceBoundingBoxTree();
-
-    std::vector<BgRtreeValue> GetEdgesContainingPoint(NekDouble x, NekDouble y,
-                                                          NekDouble z);
-
 protected:
     InterfaceType m_type;
     CompositeMap m_domain;
     std::map<int, SegGeomSharedPtr> m_edge;
     CompositeMap m_interfaceEdge;
-    BgRtree m_boundingInterface;
 };
 
 struct RotatingInterface : public InterfaceBase

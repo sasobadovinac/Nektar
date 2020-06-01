@@ -468,34 +468,5 @@ void InterfaceBase::SetEdge(const CompositeMap &edge)
     }
 }
 
-void InterfaceBase::FillInterfaceBoundingBoxTree()
-{
-    if (m_boundingInterface.empty())
-    {
-        for (auto &x : m_edge)
-        {
-            BgBox b = x.second->GetBoundingBox();
-            m_boundingInterface.insert(std::make_pair(b, x.first));
-        }
-    }
-}
-
-std::vector<BgRtreeValue> InterfaceBase::GetEdgesContainingPoint(NekDouble x,
-        NekDouble y, NekDouble z)
-{
-    if (m_boundingInterface.empty())
-    {
-        FillInterfaceBoundingBoxTree();
-    }
-
-    std::vector<BgRtreeValue> vals;
-
-    BgBox b(BgPoint(x, y, z), BgPoint(x, y, z));
-
-    m_boundingInterface.query(bg::index::intersects(b),
-                                  std::back_inserter(vals));
-
-    return vals;
-}
 }
 }

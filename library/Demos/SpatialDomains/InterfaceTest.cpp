@@ -12,22 +12,6 @@
 using namespace Nektar;
 using namespace Nektar::SpatialDomains;
 
-int main(int argc, char *argv[])
+int main()
 {
-    LibUtilities::SessionReaderSharedPtr session = LibUtilities::SessionReader::CreateInstance(argc, argv);
-    MeshGraphSharedPtr graph = MeshGraph::Read(session);
-
-    auto bbox = graph->GetGeometry2D(0)->GetBoundingBox();
-
-    Array<OneD, NekDouble> min(2), max(2);
-
-    min[0] = boost::geometry::get<boost::geometry::min_corner, 0>(bbox);
-    min[1] = boost::geometry::get<boost::geometry::min_corner, 1>(bbox);
-
-    max[0] = boost::geometry::get<boost::geometry::max_corner, 0>(bbox);
-    max[1] = boost::geometry::get<boost::geometry::max_corner, 1>(bbox);
-
-    cout << "MINIMUM CORNER IS: (" << min[0] << ", " << min[1] << ")" << endl;
-    cout << "MAXIMUM CORNER IS: (" << max[0] << ", " << max[1] << ")" << endl;
-
 }

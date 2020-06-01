@@ -1,18 +1,25 @@
 .*
 !.gitignore
+!.gitlab-ci.yml
 !.gitattributes
 !.clang-format
+!.dockerignore
+!.gitlab-ci
 # Ignore builds and ThirdParty directories
 build
+buildDebug
 builds
 ThirdParty
+cmake-build*
 # Ignore .DS_Store sometimes created by OS X.
 .DS_Store
 # for the userguide
 *.pdf
 # Kdevelop project files
 *.kdev4
-cmake-build-debug
-cmake-build-release
-cmake-build-minsizerel
-cmake-build-relwithdebinfo
+# Sublime project files
+*.sublime-project
+*.sublime-workspace
+# Sublime project files
+*.sublime-project
+*.sublime-workspace
