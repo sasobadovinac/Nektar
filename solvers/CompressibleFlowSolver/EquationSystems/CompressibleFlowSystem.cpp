@@ -2631,17 +2631,16 @@ namespace Nektar
     }
 
     void CompressibleFlowSystem::DoImplicitSolve_coeff(
-                                                 const Array<OneD, const Array<OneD, NekDouble> >&inpnts,
-                                                 const Array<OneD, const Array<OneD, NekDouble> >&inarray,
-                                                       Array<OneD,       Array<OneD, NekDouble> >&out,
-                                                 const NekDouble time,
-                                                 const NekDouble lambda)
+        const Array<OneD, const Array<OneD, NekDouble> >    &inpnts,
+        const Array<OneD, const Array<OneD, NekDouble> >    &inarray,
+        Array<OneD,       Array<OneD, NekDouble> >          &out,
+        const NekDouble                                     time,
+        const NekDouble                                     lambda)
     {
         m_TimeIntegtSol_n   = inarray;
         m_TimeIntegtSol_k   = out;
         m_BndEvaluateTime   = time;
         m_TimeIntegLambda   = lambda;
-        bool l_verbose      = m_session->DefinesCmdLineArgument("verbose");
         const unsigned int MaxNonlinIte =   m_MaxNonlinIte;
         unsigned int nvariables     = inarray.num_elements();
         unsigned int npoints        = inarray[0].num_elements();
@@ -2650,74 +2649,21 @@ namespace Nektar
 
         LibUtilities::CommSharedPtr v_Comm  = m_fields[0]->GetComm()->GetRowComm();
 
+        bool l_verbose      = m_session->DefinesCmdLineArgument("verbose");
         bool l_root=false;
         if(0==v_Comm->GetRank())
         {
             l_root =true;
         }
-
         unsigned int ntotalGlobal     = ntotal;
         v_Comm->AllReduce(ntotalGlobal, Nektar::LibUtilities::ReduceSum);
         unsigned int ntotalDOF        = ntotalGlobal/nvariables;
         NekDouble ototalGlobal  = 1.0/ntotalGlobal;
         NekDouble ototalDOF     = 1.0/ntotalDOF;
 
-        // if(m_inArrayNorm<0.0)
-        // {
-            m_inArrayNorm = 0.0;
+        UpdateSoltnRefNorms(inarray, ototalDOF);
 
-            // estimate the magnitude of each flow variables
-            m_magnitdEstimat = Array<OneD, NekDouble>  (nvariables,0.0);
-
-            for(int i = 0; i < nvariables; i++)
-            {
-                m_magnitdEstimat[i] = Vmath::Dot(npoints,inarray[i],inarray[i]);
-            }
-            v_Comm->AllReduce(m_magnitdEstimat, Nektar::LibUtilities::ReduceSum);
-
-
-            // NekDouble ototpnts = 1.0/(ntotalGlobal/nvariables);
-
-            for(int i = 0; i < nvariables; i++)
-            {
-                m_inArrayNorm += m_magnitdEstimat[i];
-            }
-
-            for(int i = 2; i < nvariables-1; i++)
-            {
-                m_magnitdEstimat[1]   +=   m_magnitdEstimat[i] ;
-            }
-            for(int i = 2; i < nvariables-1; i++)
-            {
-                m_magnitdEstimat[i]   =   m_magnitdEstimat[1] ;
-            }
-
-            for(int i = 0; i < nvariables; i++)
-            {
-                m_magnitdEstimat[i] = sqrt(m_magnitdEstimat[i]*ototalDOF);
-            }
-        //     if(0==m_session->GetComm()->GetRank()&&l_verbose)
-        //     {
-        //         for(int i = 0; i < nvariables; i++)
-        //         {
-        //             cout << "m_magnitdEstimat["<<i<<"]    = "<<m_magnitdEstimat[i]<<endl;
-        //         }
-        //         cout << "m_inArrayNorm    = "<<m_inArrayNorm<<endl;
-        //     }
-        // }
-
-        NekDouble LinSysTol = 0.0;
-        NekDouble tolrnc    = m_NewtonAbsoluteIteTol;
-        NekDouble tol2      = m_inArrayNorm*tolrnc*tolrnc;
-
-        //TODO: if steady state the dt should change according to resnorm/m_inArrayNorm
-        // so that quadrature convergence rate may be achieved
-        // at this situation && may be better in convergence critiria
-
-        NekDouble ratioTol = m_NewtonRelativeIteTol;
-        // NekDouble ratioTol = tolrnc;
-        NekDouble tol2Ratio = ratioTol*ratioTol;
-        NekDouble tol2Max   = sqrt(m_inArrayNorm*ototalDOF)*ratioTol;
+        
 
         Array<OneD, NekDouble> NonlinSysRes_1D(ntotal,0.0),sol_k_1D(ntotal,0.0),dsol_1D(ntotal,0.0);
         Array<OneD,       Array<OneD, NekDouble> > NonlinSysRes(nvariables),dsol(nvariables);
@@ -2746,14 +2692,6 @@ namespace Nektar
             m_locTimeStep = tstep;
         }
 
-        // //TODO: NekLinSysIterative as a member to avoid repeted initialization
-        // NekLinSysIterative linsol(m_session,v_Comm);
-        // m_LinSysOprtors.DefineMatrixMultiply(&CompressibleFlowSystem::MatrixMultiply_MatrixFree_coeff, this);
-        // m_LinSysOprtors.DefinePrecond(&CompressibleFlowSystem::preconditioner_BlkSOR_coeff, this);
-        // // m_LinSysOprtors.DefinePrecond(&CompressibleFlowSystem::preconditioner_BlkDiag, this);
-        // // m_LinSysOprtors.DefinePrecond(&CompressibleFlowSystem::preconditioner, this);
-        // linsol.setLinSysOperators(m_LinSysOprtors);
-
 //Debug
 //         NonlinSysEvaluator_coeff(m_TimeIntegtSol_k,m_SysEquatResid_k);
 // Fill2DArrayOfBlkDiagonalMat(m_PrecMatVars,0.0);
@@ -2766,102 +2704,9 @@ namespace Nektar
         // TODO: auto precondition recompute. use random vector&L1 norm relative error.
         if(m_CalcuPrecMatFlag||(m_TimeIntegLambdaPrcMat!=m_TimeIntegLambda))
         {
-            if(0!=m_JFNKPrecondStep)
+            if(0 < m_JFNKPrecondStep)
             {
-#ifdef CFS_DEBUGMODE
-                if(m_DebugNumJacBSOR)
-                {
-                    NonlinSysEvaluator_coeff(m_TimeIntegtSol_k,m_SysEquatResid_k);
-                    Fill2DArrayOfBlkDiagonalMat(m_PrecMatVars,0.0);
-                    DebugNumCalJac_coeff(m_PrecMatVars,m_PrecMatVarsOffDiag);
-
-                    NekDouble zero=0.0;
-                    ElmtVarInvMtrx(m_PrecMatVars,zero);
-                }
-                else
-                {
-#endif
-                int nphspnt = inpnts[0].num_elements();
-                Array<OneD, Array<OneD, NekDouble> > intmp(nvariables);
-                for(int i = 0; i < nvariables; i++)
-                {
-                    intmp[i]    =   Array<OneD, NekDouble>(nphspnt,0.0);
-                }
-
-                DoOdeProjection(inpnts,intmp,m_BndEvaluateTime);
-                if(m_flagPrecMatVarsSingle)
-                {
-                    if(m_flagPrecondCacheOptmis)
-                    {
-                        GetpreconditionerNSBlkDiag_coeff(intmp,m_PrecMatVarsSingle,m_PrecMatSingle,
-                                                    m_TraceJacSingle,m_TraceJacDerivSingle,m_TraceJacDerivSignSingle,
-                                                    m_TraceJacArraySingle,m_TraceJacDerivArraySingle,m_TraceIPSymJacArraySingle,
-                                                    m_StdSMatDataDBB,m_StdSMatDataDBDB);
-                    }
-                    else
-                    {
-                        GetpreconditionerNSBlkDiag_coeff(intmp,m_PrecMatVarsSingle,
-                                                    m_TraceJacSingle,m_TraceJacDerivSingle,m_TraceJacDerivSignSingle,
-                                                    m_TraceIPSymJacArraySingle,
-                                                    m_StdSMatDataDBB,m_StdSMatDataDBDB);
-                    }
-                }
-                else
-                {
-                    if(m_flagPrecondCacheOptmis)
-                    {
-                        GetpreconditionerNSBlkDiag_coeff(intmp,m_PrecMatVars,m_PrecMat,m_TraceJac,m_TraceJacDeriv,m_TraceJacDerivSign,
-                                                        m_TraceJacArray,m_TraceJacDerivArray,m_TraceIPSymJacArray,
-                                                        m_StdDMatDataDBB,m_StdDMatDataDBDB);
-                    }
-                    else
-                    {
-                        GetpreconditionerNSBlkDiag_coeff(intmp,m_PrecMatVars,m_TraceJac,m_TraceJacDeriv,m_TraceJacDerivSign,
-                                                        m_TraceIPSymJacArray,
-                                                        m_StdDMatDataDBB,m_StdDMatDataDBDB);
-                    }
-                }
-            
-                // cout << "GetpreconditionerNSBlkDiag_coeff"<<endl;
-                if (m_PrcdMatFreezNumb>0)
-                {
-                    m_CalcuPrecMatFlag = false;
-                }
-                m_TimeIntegLambdaPrcMat = m_TimeIntegLambda;
-                // cout << "m_TotNonLinItePrecMat  =   "<<m_TotNonLinItePrecMat<<endl;
-                // m_TotNonLinItePrecMat = 0;
-
-                // to free the storage
-                for(int i = 0; i < nvariables; i++)
-                {
-                    intmp[i]    =   NullNekDouble1DArray;
-                }
-
-#ifdef CFS_DEBUGMODE
-                if(m_DebugNumJacMatSwitch)
-                {
-                    cout <<" m_DebugNumJacMatSwitch "<<endl;
-                    NonlinSysEvaluator_coeff(m_TimeIntegtSol_k,m_SysEquatResid_k);
-                    Fill2DArrayOfBlkDiagonalMat(m_PrecMatVars,0.0);
-                    DebugNumCalJac_coeff(m_PrecMatVars);
-
-                    NekDouble zero=0.0;
-                    ElmtVarInvMtrx(m_PrecMatVars,zero);
-
-                    for(int m = 0; m < nvariables; m++)
-                    {
-                        for(int n = 0; n < nvariables; n++)
-                        {
-                            m_fields[0]->RightMultiplyByElmtInvMassOnDiag(m_PrecMatVars[m][n], m_PrecMatVars[m][n]);
-                        }
-                    }
-                }
-                if(m_DebugOutputJacMatSwitch)
-                {
-                    Cout2DArrayBlkMat(m_PrecMatVars);
-                }
-                }
-#endif
+                CalPrecMat(inpnts, m_BndEvaluateTime, m_TimeIntegLambda);
             }
         }
 
@@ -2874,106 +2719,40 @@ namespace Nektar
         NekDouble resnorm  = 0.0;
         NekDouble resmaxm  = 0.0;
         NekDouble resratio = 1.0;
-        NekDouble ratioSteps = 1.0;
+        NekDouble LinSysTol = 0.0;
         int NttlNonlinIte    = 0;
         for (int k = 0; k < MaxNonlinIte; k++)
         {
             NonlinSysEvaluator_coeff(m_TimeIntegtSol_k,m_SysEquatResid_k);
-            // NonlinSysEvaluator_coeff_out(m_TimeIntegtSol_k,m_SysEquatResid_k);
             NtotDoOdeRHS++;
+            
             // NonlinSysRes_1D and m_SysEquatResid_k share the same storage
             resnorm = Vmath::Dot(ntotal,NonlinSysRes_1D,NonlinSysRes_1D);
-
             v_Comm->AllReduce(resnorm, Nektar::LibUtilities::ReduceSum);
+            
+            converged = NewtonStopCriteria(NonlinSysRes_1D, k, ntotalDOF, 
+                        resnorm, resnorm0, resmaxm, resratio);
 
-            if(0==k)
-            {
-                resnorm0 = resnorm;
-                resratio = 1.0;
-
-                if(m_Res0PreviousStep<0.0)
-                {
-                    m_Res0PreviousStep = resnorm0;
-                    ratioSteps         = 1.0;
-                }
-                else
-                {
-                    ratioSteps         = m_Res0PreviousStep/resnorm0;
-                    m_Res0PreviousStep = resnorm0;
-                }
-
-            }
-            else
-            {
-                resratio = resnorm/resnorm0;
-            }
-            // if(resnorm0<tol2)
-            // {
-            //     converged = true;
-            //     steady_state = true;
-            //     break;
-            // }
-
-            // cout << "   resratio=   "<<resratio<< "   resnorm0=   "<<resnorm0<< "   resnorm=   "<<resnorm<<endl;
-
-            //TODO: To further optimise the criteria. mainly use L1 norm!!
-            // think about the case in which change is limited to small zone.
-            // think about the steady state quadrature convergence requirement
-            if (resratio<tol2Ratio||resnorm<tol2)
-            {
-                resmaxm = 0.0;
-                for(int i=0;i<ntotal;i++)
-                {
-                    resmaxm = max(resmaxm,abs(NonlinSysRes_1D[i]));
-                }
-                v_Comm->AllReduce(resmaxm, Nektar::LibUtilities::ReduceMax);
-                if((resmaxm<tol2Max)&&k>0)
-                {
-                    // if(l_verbose)
-                    // {
-                    //     cout    << " resratio= "<<resratio<< " tol2Ratio= "<<tol2Ratio
-                    //             << " resnorm= "<<resnorm<< " tol2= "<<tol2
-                    //             << " resmaxm= "<<resmaxm<< " tol2Max= "<<tol2Max<< endl;
-                    // }
-
-                // at least one Newton Iteration
-                // or else the flow field will not update
-                // if(k>0)
-                // {
-                    /// TODO: m_root
-                    // if(m_cflLocTimestep>0.0)
-                    // {
-                    //     m_cflLocTimestep *= pow(ratioSteps,0.35);
-                    // }
-                    // m_cflSafetyFactor *= pow(ratioSteps,0.35);
-
-                    converged = true;
-                    if(resratio>tol2Ratio&&l_root)
-                    {
-                        WARNINGL0(true,"     # resratio>tol2Ratio in CompressibleFlowSystem::DoImplicitSolve ");
-                        cout <<right<<scientific<<setw(nwidthcolm)<<setprecision(nwidthcolm-6)
-                             <<" resratio= "<<resratio<<" tol2Ratio= "<<tol2Ratio<<endl;
-                    }
-                    break;
-                // }
-                }
-            }
-
-            //TODO: currently  NonlinSysRes is 2D array and SolveLinearSystem needs 1D array
-            // LinSysTol = sqrt(0.01*sqrt(ratioTol)*resnorm);
             LinSysTol = m_GMRESRelativeIteTol*sqrt(resnorm);
-            // LinSysTol = 0.005*sqrt(resnorm)*(k+1);
             int ntmpGMRESIts =  m_linsol->SolveLinearSystem(ntotal,NonlinSysRes_1D,dsol_1D,0,LinSysTol);
             NtotDoOdeRHS  +=  ntmpGMRESIts;
             NtotGMRESIts  +=  ntmpGMRESIts;
-            // cout << "NtotDoOdeRHS    = "<<NtotDoOdeRHS<<endl;
 
-            // LinSysEPS  =   m_linsol->SolveLinearSystem(ntotal,NonlinSysRes_1D,dsol_1D,0);
             for(int i = 0; i < nvariables; i++)
             {
                 Vmath::Vsub(npoints,m_TimeIntegtSol_k[i],1,dsol[i],1,m_TimeIntegtSol_k[i],1);
             }
-            NttlNonlinIte ++;
+            NttlNonlinIte++;
+        }
+
+        if((l_verbose||(!converged))&&l_root)
+        {
+            WARNINGL0(converged,"     # Nonlinear system solver not converge in CompressibleFlowSystem::DoImplicitSolve ");
+            cout <<right<<scientific<<setw(nwidthcolm)<<setprecision(nwidthcolm-6)
+                <<"     * Newton-Its converged (RES="
+                << sqrt(resnorm)<<" Res/Q="<< sqrt(resnorm/m_inArrayNorm)
+                <<" ResMax/QPerDOF="<< resmaxm*sqrt(ntotalDOF/m_inArrayNorm)<<" Res/(DtRHS): "<<sqrt(resratio)
+                <<" with "<<setw(3)<<NttlNonlinIte<<" Non-Its"<<" and "<<setw(4)<<NtotDoOdeRHS<<" Lin-Its)"<<endl;
         }
 
         m_TotNewtonIts  +=  NttlNonlinIte;
@@ -2987,24 +2766,226 @@ namespace Nektar
         {
             m_TotLinItePerStep +=   m_maxLinItePerNewton*100;
         }
+    }
 
-        /// TODO: disconnect these from other arrays to avoid memory cannot release.
-        // m_TimeIntegtSol_k   =   nullptr;
-        // m_TimeIntegtSol_n   =   nullptr;
-        // m_SysEquatResid_k   =   nullptr;
-        // ASSERTL0(converged,"Nonlinear system solver not converge in CompressibleFlowSystem::DoImplicitSolve ");
-        if((l_verbose||(!converged))&&l_root)
+    void CompressibleFlowSystem::UpdateSoltnRefNorms(
+        const Array<OneD, Array<OneD, NekDouble>>    &inarray,
+        const NekDouble                 &ototalDOF)
+    {
+        int nvariables = inarray.num_elements();
+        int npoints = inarray[nvariables-1].num_elements();
+        m_inArrayNorm = 0.0;
+
+        LibUtilities::CommSharedPtr v_Comm  = m_fields[0]->GetComm()->GetRowComm();
+        // estimate the magnitude of each flow variables
+        m_magnitdEstimat = Array<OneD, NekDouble>  (nvariables,0.0);
+
+        for(int i = 0; i < nvariables; i++)
         {
-            WARNINGL0(converged,"     # Nonlinear system solver not converge in CompressibleFlowSystem::DoImplicitSolve ");
-            cout <<right<<scientific<<setw(nwidthcolm)<<setprecision(nwidthcolm-6)
-                <<"     * Newton-Its converged (RES="
-                << sqrt(resnorm)<<" Res/Q="<< sqrt(resnorm/m_inArrayNorm)
-                <<" ResMax/QPerDOF="<< resmaxm*sqrt(ntotalDOF/m_inArrayNorm)<<" Res/(DtRHS): "<<sqrt(resratio)
-                <<" with "<<setw(3)<<NttlNonlinIte<<" Non-Its"<<" and "<<setw(4)<<NtotDoOdeRHS<<" Lin-Its)"<<endl;
-
-            // cout <<right<<scientific<<setw(nwidthcolm)<<setprecision(nwidthcolm-6)
-            //         << "       m_cflSafetyFactor=   "<<m_cflSafetyFactor<<endl;
+            m_magnitdEstimat[i] = Vmath::Dot(npoints,inarray[i],inarray[i]);
         }
+        v_Comm->AllReduce(m_magnitdEstimat, Nektar::LibUtilities::ReduceSum);
+
+        for(int i = 0; i < nvariables; i++)
+        {
+            m_inArrayNorm += m_magnitdEstimat[i];
+        }
+
+        for(int i = 2; i < nvariables-1; i++)
+        {
+            m_magnitdEstimat[1]   +=   m_magnitdEstimat[i] ;
+        }
+        for(int i = 2; i < nvariables-1; i++)
+        {
+            m_magnitdEstimat[i]   =   m_magnitdEstimat[1] ;
+        }
+
+        for(int i = 0; i < nvariables; i++)
+        {
+            m_magnitdEstimat[i] = sqrt(m_magnitdEstimat[i]*ototalDOF);
+        }
+        
+    }
+
+    void CompressibleFlowSystem::CalPrecMat(
+        const Array<OneD, const Array<OneD, NekDouble> >    &inpnts,
+        const NekDouble                                     time,
+        const NekDouble                                     lambda)
+    {
+        int nvariables = inpnts.num_elements();
+#ifdef CFS_DEBUGMODE
+        if(m_DebugNumJacBSOR)
+        {
+            NonlinSysEvaluator_coeff(m_TimeIntegtSol_k,m_SysEquatResid_k);
+            Fill2DArrayOfBlkDiagonalMat(m_PrecMatVars,0.0);
+            DebugNumCalJac_coeff(m_PrecMatVars,m_PrecMatVarsOffDiag);
+
+            NekDouble zero=0.0;
+            ElmtVarInvMtrx(m_PrecMatVars,zero);
+        }
+        else
+        {
+#endif
+            int nphspnt = inpnts[0].num_elements();
+            Array<OneD, Array<OneD, NekDouble> > intmp(nvariables);
+            for(int i = 0; i < nvariables; i++)
+            {
+                intmp[i]    =   Array<OneD, NekDouble>(nphspnt,0.0);
+            }
+
+            DoOdeProjection(inpnts,intmp,time);
+            if(m_flagPrecMatVarsSingle)
+            {
+                if(m_flagPrecondCacheOptmis)
+                {
+                    GetpreconditionerNSBlkDiag_coeff(intmp,m_PrecMatVarsSingle,m_PrecMatSingle,
+                                                m_TraceJacSingle,m_TraceJacDerivSingle,m_TraceJacDerivSignSingle,
+                                                m_TraceJacArraySingle,m_TraceJacDerivArraySingle,m_TraceIPSymJacArraySingle,
+                                                m_StdSMatDataDBB,m_StdSMatDataDBDB);
+                }
+                else
+                {
+                    GetpreconditionerNSBlkDiag_coeff(intmp,m_PrecMatVarsSingle,
+                                                m_TraceJacSingle,m_TraceJacDerivSingle,m_TraceJacDerivSignSingle,
+                                                m_TraceIPSymJacArraySingle,
+                                                m_StdSMatDataDBB,m_StdSMatDataDBDB);
+                }
+            }
+            else
+            {
+                if(m_flagPrecondCacheOptmis)
+                {
+                    GetpreconditionerNSBlkDiag_coeff(intmp,m_PrecMatVars,m_PrecMat,m_TraceJac,m_TraceJacDeriv,m_TraceJacDerivSign,
+                                                    m_TraceJacArray,m_TraceJacDerivArray,m_TraceIPSymJacArray,
+                                                    m_StdDMatDataDBB,m_StdDMatDataDBDB);
+                }
+                else
+                {
+                    GetpreconditionerNSBlkDiag_coeff(intmp,m_PrecMatVars,m_TraceJac,m_TraceJacDeriv,m_TraceJacDerivSign,
+                                                    m_TraceIPSymJacArray,
+                                                    m_StdDMatDataDBB,m_StdDMatDataDBDB);
+                }
+            }
+        
+            if (m_PrcdMatFreezNumb>0)
+            {
+                m_CalcuPrecMatFlag = false;
+            }
+            m_TimeIntegLambdaPrcMat = lambda;
+
+            // to free the storage
+            for(int i = 0; i < nvariables; i++)
+            {
+                intmp[i]    =   NullNekDouble1DArray;
+            }
+
+#ifdef CFS_DEBUGMODE
+            if(m_DebugNumJacMatSwitch)
+            {
+                cout <<" m_DebugNumJacMatSwitch "<<endl;
+                NonlinSysEvaluator_coeff(m_TimeIntegtSol_k,m_SysEquatResid_k);
+                Fill2DArrayOfBlkDiagonalMat(m_PrecMatVars,0.0);
+                DebugNumCalJac_coeff(m_PrecMatVars);
+
+                NekDouble zero=0.0;
+                ElmtVarInvMtrx(m_PrecMatVars,zero);
+
+                for(int m = 0; m < nvariables; m++)
+                {
+                    for(int n = 0; n < nvariables; n++)
+                    {
+                        m_fields[0]->RightMultiplyByElmtInvMassOnDiag(m_PrecMatVars[m][n], m_PrecMatVars[m][n]);
+                    }
+                }
+            }
+            if(m_DebugOutputJacMatSwitch)
+            {
+                Cout2DArrayBlkMat(m_PrecMatVars);
+            }
+        }
+#endif
+    }
+
+    bool CompressibleFlowSystem::NewtonStopCriteria(
+        const Array<OneD, NekDouble>    &NonlinSysRes_1D,
+        const int                       &k,
+        const int                       &totalDOF,
+        const NekDouble                 &resnorm,
+        NekDouble                       &resnorm0,
+        NekDouble                       &resmaxm,
+        NekDouble                       &resratio)
+    {
+        bool converged = false;
+        LibUtilities::CommSharedPtr v_Comm  = m_fields[0]->GetComm()->GetRowComm();
+        bool l_verbose      = m_session->DefinesCmdLineArgument("verbose");
+        bool l_root=false;
+        if(0==v_Comm->GetRank())
+        {
+            l_root =true;
+        }
+
+        NekDouble tolrnc    = m_NewtonAbsoluteIteTol;
+        NekDouble tol2      = m_inArrayNorm*tolrnc*tolrnc;
+
+        NekDouble ototalDOF = 1.0/totalDOF;
+
+        NekDouble ratioTol = m_NewtonRelativeIteTol;
+        NekDouble tol2Ratio = ratioTol*ratioTol;
+        NekDouble tol2Max   = sqrt(m_inArrayNorm*ototalDOF)*ratioTol;
+
+        int nwidthcolm = 8;
+        NekDouble ratioSteps = 1.0;
+        if(0==k)
+        {
+            resnorm0 = resnorm;
+            resratio = 1.0;
+
+            if(m_Res0PreviousStep<0.0)
+            {
+                m_Res0PreviousStep = resnorm0;
+                ratioSteps         = 1.0;
+            }
+            else
+            {
+                ratioSteps         = m_Res0PreviousStep/resnorm0;
+                m_Res0PreviousStep = resnorm0;
+            }
+
+        }
+        else
+        {
+            resratio = resnorm/resnorm0;
+        }
+        if (resratio<tol2Ratio||resnorm<tol2)
+        {
+            resmaxm = 0.0;
+            for(int i=0;i<NonlinSysRes_1D.num_elements();i++)
+            {
+                resmaxm = max(resmaxm,abs(NonlinSysRes_1D[i]));
+            }
+            v_Comm->AllReduce(resmaxm, Nektar::LibUtilities::ReduceMax);
+            if((resmaxm<tol2Max)&&k>0)
+            {
+            // if(k>0)
+            // {
+                /// TODO: m_root
+                // if(m_cflLocTimestep>0.0)
+                // {
+                //     m_cflLocTimestep *= pow(ratioSteps,0.35);
+                // }
+                // m_cflSafetyFactor *= pow(ratioSteps,0.35);
+
+                converged = true;
+                if(resratio>tol2Ratio&&l_root)
+                {
+                    WARNINGL0(true,"     # resratio>tol2Ratio in CompressibleFlowSystem::DoImplicitSolve ");
+                    cout <<right<<scientific<<setw(nwidthcolm)<<setprecision(nwidthcolm-6)
+                            <<" resratio= "<<resratio<<" tol2Ratio= "<<tol2Ratio<<endl;
+                }
+            }
+        }
+            
+        return converged;
     }
 
     template<typename TypeNekBlkMatSharedPtr>

@@ -397,6 +397,23 @@ namespace Nektar
                 Array<OneD,       Array<OneD, NekDouble> >&out,
             const NekDouble time,
             const NekDouble lambda);
+        void UpdateSoltnRefNorms(
+            const Array<OneD, Array<OneD, NekDouble>>    &inarray,
+            const NekDouble                 &ototalDOF);
+
+        bool NewtonStopCriteria(
+            const Array<OneD, NekDouble>    &NonlinSysRes_1D,
+            const int                       &k,
+            const int                       &totalDOF,
+            const NekDouble                 &resnorm,
+            NekDouble                       &resnorm0,
+            NekDouble                       &resmaxm,
+            NekDouble                       &resratio);
+
+        void CalPrecMat(
+            const Array<OneD, const Array<OneD, NekDouble> >    &inpnts,
+            const NekDouble                                     time,
+            const NekDouble                                     lambda);
 
         template<typename TypeNekBlkMatSharedPtr>
         void AllocatePrecondBlkDiag_coeff(
