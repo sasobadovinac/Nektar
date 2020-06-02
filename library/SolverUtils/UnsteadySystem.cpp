@@ -542,12 +542,12 @@ namespace Nektar
 
                             wghtedTimeStep +=Vmath::Vsum(nElements,tmp2,1);
                             //To Do: for contour output, can remove after testing
-                            // for(int j=0;j<nElements;j++)
-                            // {
-                            //     int nElementPoints=(*m_exp)[j]->GetTotPoints();
-                            //     int nElementOffset=m_fields[0]->GetPhys_Offset(j);
-                            //     Vmath::Fill(nElementPoints,tmp1[j],&m_OperatedAdaptiveTimeStepForOutput[i][nElementOffset],1);
-                            // }
+                            for(int j=0;j<nElements;j++)
+                            {
+                                int nElementPoints=(*m_exp)[j]->GetTotPoints();
+                                int nElementOffset=m_fields[0]->GetPhys_Offset(j);
+                                Vmath::Fill(nElementPoints,tmp1[j],&m_OperatedAdaptiveTimeStepForOutput[i][nElementOffset],1);
+                            }
                         }
                         m_comm->AllReduce(wghtedTimeStep,LibUtilities::ReduceSum);
                         m_comm->AllReduce(wghts,LibUtilities::ReduceSum);
