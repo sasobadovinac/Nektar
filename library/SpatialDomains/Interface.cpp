@@ -461,18 +461,19 @@ void InterfaceBase::SetEdge(const CompositeMap &edge)
         for (auto &elmtIt : compIt.second->m_geomVec)
         {
             SegGeomSharedPtr elmt = std::dynamic_pointer_cast<SegGeom>(elmtIt);
+
             ASSERTL0(elmt,
-                     "Composite for left edge should only contain segments");
-            m_edge[elmt->GetGlobalID()] = elmt;
+                     "Composite for edge on the interface should only contain "
+                     "segments");
+
+            size_t id = elmt->GetGlobalID();
+            m_edge[id] = elmt;
+            m_edgeIds.emplace_back(id);
         }
     }
+
+    std::sort(m_edgeIds.begin(), m_edgeIds.end());
 }
-
-void Interfaces::CalculateOpposite()
-{
-
-}
-
 
 }
 }

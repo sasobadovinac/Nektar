@@ -162,18 +162,10 @@ namespace Nektar
              */
             Array<OneD,SpatialDomains::BoundaryConditionShPtr> m_bndConditions;
 
-            typedef std::map<int, LocalRegions::Expansion1DSharedPtr> TraceEdge;
-            std::map<int, std::pair<TraceEdge,TraceEdge>> m_traceEdge;
 
-            std::pair<std::unordered_set<int>,std::unordered_set<int>> m_interfaceEdge;
-
-            // first key is interface ID; contains a pair of vectors with each
-            // quadrature point giving seg ID and local coordinate found
-            typedef std::vector<std::pair<int, double>> EdgeCacheMap;
-            std::map<int, std::pair<EdgeCacheMap, EdgeCacheMap>> m_edgeCacheMap;
-
-            //Flag true if interface cache has been created
-            std::map<int, std::pair<bool,bool>> m_interfaceCacheFlag;
+            // Map taking a global geometry ID to the matching trace expansion ID
+            std::map<int, int> m_geomIdToTraceId;
+            std::map<int, std::vector<std::pair<NekDouble, int>>> m_locCoordSegIdPair;
 
             GlobalLinSysMapShPtr   m_globalBndMat;
             ExpListSharedPtr       m_trace;
@@ -386,6 +378,8 @@ namespace Nektar
 
             inline virtual const LocTraceToTraceMapSharedPtr 
                     &v_GetLocTraceToTraceMap() const;
+
+            void CalcMatchLocalCoords();
         };
 
         void DisContField2D::v_GetFwdBwdTracePhys(
@@ -473,6 +467,7 @@ namespace Nektar
         }
 
         typedef std::shared_ptr<DisContField2D>   DisContField2DSharedPtr;
+
     } //end of namespace
 } //end of namespace
 

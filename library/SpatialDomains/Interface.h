@@ -90,6 +90,11 @@ struct InterfaceBase
         return m_edge;
     }
 
+    std::vector<int> const &GetEdgeIds() const
+    {
+        return m_edgeIds;
+    }
+
     void SetEdge(const SegGeomSharedPtr &edge)
     {
         m_edge[edge->GetGlobalID()] = edge;
@@ -101,6 +106,7 @@ protected:
     InterfaceType m_type;
     CompositeMap m_domain;
     std::map<int, SegGeomSharedPtr> m_edge;
+    std::vector<int> m_edgeIds;
     CompositeMap m_interfaceEdge;
 };
 
@@ -158,6 +164,7 @@ struct InterfacePair
 
     InterfaceBaseShPtr m_leftInterface;
     InterfaceBaseShPtr m_rightInterface;
+    bool m_calcFlag = true;
 
 public:
     const InterfaceBaseShPtr &GetLeftInterface() const
@@ -168,6 +175,16 @@ public:
     const InterfaceBaseShPtr &GetRightInterface() const
     {
         return m_rightInterface;
+    }
+
+    bool GetCalcFlag()
+    {
+        return m_calcFlag;
+    }
+
+    void SetCalcFlag(bool flag)
+    {
+        m_calcFlag = flag;
     }
 
     void SeparateGraph(MeshGraphSharedPtr &graph);
@@ -191,8 +208,6 @@ public:
     {
         return m_interfaces;
     }
-
-    SPATIAL_DOMAINS_EXPORT void CalculateOpposite();
 
 protected:
     /// The mesh graph to use for referencing geometry info.

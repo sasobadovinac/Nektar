@@ -442,41 +442,11 @@ namespace Nektar
             // Set up physical normals
             SetUpPhysNormals();
 
-            // Loop over all interface edges and keep track of both interior
-            // and exterior interface components. Setup cache flag.
-
-            std::unordered_map<int, int> traceIdToElmt;
+            // Loop over all trace edges and create a map from geom ID to
+            // position in the trace expansion
             for (int i = 0; i < m_trace->GetExpSize(); ++i)
             {
-                LocalRegions::Expansion1DSharedPtr traceEl =
-                    m_trace->GetExp(i)->as<LocalRegions::Expansion1D>();
-                int traceGeomId = traceEl->GetGeom1D()->GetGlobalID();
-                traceIdToElmt[traceGeomId] = i;
-            }
-
-            for (auto &interface : m_interfaces->GetInterfaces())
-            {
-                const int indx = interface.first;
-
-                for (auto &iter : interface.second->GetRightInterface()->GetEdge())
-                {
-                    int id       = iter.first;
-                    auto traceEl = std::dynamic_pointer_cast<LocalRegions::Expansion1D>(
-                        m_trace->GetExp(traceIdToElmt[id]));
-                    m_traceEdge[indx].second[id] = traceEl;
-                    m_interfaceEdge.second.insert(id);
-                }
-
-                for (auto &iter : interface.second->GetLeftInterface()->GetEdge())
-                {
-                    int id       = iter.first;
-                    auto traceEl = std::dynamic_pointer_cast<LocalRegions::Expansion1D>(
-                        m_trace->GetExp(traceIdToElmt[id]));
-                    m_traceEdge[indx].first[id] = traceEl;
-                    m_interfaceEdge.first.insert(id);
-                }
-
-                m_interfaceCacheFlag[indx] = make_pair(false, false);
+                m_geomIdToTraceId[m_trace->GetExp(i)->GetGeom()->GetGlobalID()] = i;
             }
 
             int cnt, n, e;
@@ -1400,63 +1370,50 @@ namespace Nektar
             DisContField2D::v_PeriodicBwdCopy(Fwd, Bwd);
 
             // Interpolate from each side of the interface to the other.
-            for (size_t n = 0; n < 2; ++n)
+            CalcMatchLocalCoords();
+
+            for (auto &interface : m_interfaces->GetInterfaces())
             {
-                for (auto &interface : m_traceEdge)
+                size_t indx = interface.first;
+                auto pair   = interface.second;
+
+                auto leftEdge  = pair->GetLeftInterface()->GetEdgeIds();
+                auto rightEdge = pair->GetRightInterface()->GetEdgeIds();
+
+                size_t cnt = 0;
+                for (auto leftId : leftEdge)
                 {
-                    auto &traceEdge = (n == 0 ? interface.second.first
-                                              : interface.second.second);
-                    auto &traceEdgeCache = (n == 0 ? interface.second.second
-                                                   : interface.second.first);
-
-                    int cnt = 0;
-                    for (auto edges : traceEdge)
+                    size_t nq = m_trace->GetExp(m_geomIdToTraceId[leftId])
+                                    ->GetTotPoints();
+                    for (size_t i = 0; i < nq; ++i)
                     {
-                        auto elmt = edges.second;
-                        int nq = elmt->GetTotPoints();
+                        Array<OneD, NekDouble> edgePhys =
+                            Fwd + m_trace->GetPhys_Offset(
+                            m_locCoordSegIdPair[indx][cnt].second);
+                        Array<OneD, NekDouble> foundPointArray(
+                            1, m_locCoordSegIdPair[indx][cnt].first);
+                        Bwd[m_trace->GetPhys_Offset(
+                            m_geomIdToTraceId[leftId]) + i] = m_trace
+                             ->GetExp(m_locCoordSegIdPair[indx][cnt++].second)
+                            ->StdPhysEvaluate(foundPointArray, edgePhys);
+                    }
+                }
 
-                        for (int i = 0; i < nq; ++i, ++cnt)
-                        {
-                            bool found = false;
-                            NekDouble foundPoint;
-                            LocalRegions::Expansion1DSharedPtr geom;
-                            Array<OneD, NekDouble> xc(nq), yc(nq);
-                            elmt->GetCoords(xc, yc);
-                            NekDouble zero = 0.0;
-
-                            SpatialDomains::PointGeomSharedPtr pt =
-                                std::make_shared<SpatialDomains::PointGeom>(3, -1, xc[i], yc[i], zero);
-
-                            for (auto elem : traceEdgeCache)
-                            {
-                                geom = elem.second;
-                                SpatialDomains::SegGeomSharedPtr geomSeg =
-                                    std::static_pointer_cast<
-                                        SpatialDomains::SegGeom>(
-                                        geom->GetGeom1D());
-
-                                Array<OneD, NekDouble> xs(3);
-                                xs[0] = xc[i];
-                                xs[1] = yc[i];
-                                xs[2] = 0;
-
-                                NekDouble dist =
-                                    geomSeg->FindDistance(xs, foundPoint);
-                                if (dist > 1e-8)
-                                {
-                                    continue;
-                                }
-
-                                found = true;
-                                break;
-                            }
-
-                            ASSERTL0(found, "Couldn't interpolate across interface.");
-
-                            Array<OneD, NekDouble> edgePhys = Fwd + m_trace->GetPhys_Offset(geom->GetElmtId());
-                            Array<OneD, NekDouble> foundPointArray(1, foundPoint);
-                            Bwd[m_trace->GetPhys_Offset(elmt->GetElmtId()) +i] = geom->StdPhysEvaluate(foundPointArray, edgePhys);
-                        }
+                for (auto rightId : rightEdge)
+                {
+                    size_t nq = m_trace->GetExp(m_geomIdToTraceId[rightId])
+                                    ->GetTotPoints();
+                    for (size_t i = 0; i < nq; ++i)
+                    {
+                        Array<OneD, NekDouble> edgePhys =
+                            Fwd + m_trace->GetPhys_Offset(
+                            m_locCoordSegIdPair[indx][cnt].second);
+                        Array<OneD, NekDouble> foundPointArray(
+                            1, m_locCoordSegIdPair[indx][cnt].first);
+                        Bwd[m_trace->GetPhys_Offset(
+                            m_geomIdToTraceId[rightId]) + i] = m_trace
+                            ->GetExp(m_locCoordSegIdPair[indx][cnt++].second)
+                            ->StdPhysEvaluate(foundPointArray, edgePhys);
                     }
                 }
             }
@@ -2594,5 +2551,92 @@ namespace Nektar
                 }
             }
         }
+
+
+        std::pair<NekDouble, size_t> CalcGlobPntToLocCoord(
+            const NekDouble &xc,
+            const NekDouble &yc,
+            const std::vector<int> &searchIds,
+            const SpatialDomains::MeshGraphSharedPtr &graph,
+            const std::map<int, int> &geomToTrace)
+        {
+            Array<OneD, NekDouble> xs(3);
+            xs[0] = xc;
+            xs[1] = yc;
+            xs[2] = 0;
+
+            int foundTraceId = -1;
+            NekDouble foundLocCoord;
+            bool found = false;
+
+            for (auto id : searchIds)
+            {
+                SpatialDomains::SegGeomSharedPtr searchSeg =
+                    std::static_pointer_cast<SpatialDomains::SegGeom>(graph->GetSegGeom(id));
+                NekDouble dist = searchSeg->FindDistance(xs, foundLocCoord);
+
+                if (dist < 1e-8)
+                {
+                    foundTraceId = geomToTrace.at(id);
+                    //std::cout << "Found : "<< xc << " " << yc << " in trace " << foundTraceId << " loc coord " << foundLocCoord << " @ dist: " << dist << std::endl;
+                    found = true;
+                    break;
+                }
+            }
+
+            ASSERTL0(found, "Couldn't interpolate across interface.");
+
+            return std::make_pair(foundLocCoord, foundTraceId);
+        }
+
+        std::vector<std::pair<NekDouble, int>> CalcCoordsOneWay(
+            const std::vector<int> &childEdge,
+            const std::vector<int> &parentEdge,
+            const ExpListSharedPtr &trace,
+            const SpatialDomains::MeshGraphSharedPtr &graph,
+            const std::map<int, int> &geomToTrace)
+        {
+
+            std::vector<std::pair<NekDouble, int>> tmp;
+            for (auto childId : childEdge)
+            {
+                LocalRegions::ExpansionSharedPtr childElmt = trace->GetExp(geomToTrace.at(childId));
+                size_t nq = childElmt->GetTotPoints();
+                Array<OneD, NekDouble> xc(nq), yc(nq);
+                childElmt->GetCoords(xc, yc);
+
+                for (int i = 0; i < nq; ++i)
+                {
+                    std::pair<NekDouble, int> found =
+                        CalcGlobPntToLocCoord(xc[i], yc[i], parentEdge, graph, geomToTrace);
+
+                    tmp.emplace_back(found);
+                }
+            }
+
+            return tmp;
+        }
+
+        void DisContField2D::CalcMatchLocalCoords()
+        {
+            for (auto &interface : m_interfaces->GetInterfaces())
+            {
+                size_t indx = interface.first;
+                auto pair = interface.second;
+                if (pair->GetCalcFlag())
+                {
+                    auto leftEdge  = pair->GetLeftInterface()->GetEdgeIds();
+                    auto rightEdge = pair->GetRightInterface()->GetEdgeIds();
+
+                    auto tmp = CalcCoordsOneWay(leftEdge, rightEdge, m_trace, m_graph, m_geomIdToTraceId);
+                    auto tmp2 = CalcCoordsOneWay(rightEdge, leftEdge, m_trace, m_graph, m_geomIdToTraceId);
+                    tmp.insert(tmp.end(), tmp2.begin(), tmp2.end());
+
+                    m_locCoordSegIdPair[indx] = tmp;
+                    pair->SetCalcFlag(false);
+                }
+            }
+        }
+
     } // end of namespace
 } //end of namespace
