@@ -1109,7 +1109,11 @@ FieldConvert to obtain the \inltt{.vtu} or \inltt{.dat} files if needed for visu
     FieldConvert -m phifile:file=geom.stl:scale=value session.xml geom.fld
     FieldConvert session.xml geom.fld geom.vtu
 \end{lstlisting}
-
+This module can also be used to produce a \inltt{.fld} and \inltt{.vtu} / \inltt{.dat} file of shapes defined directly in the session file through an analytical expression. In this case, the commands simplify to:
+\begin{lstlisting}[style=BashInputStyle]
+    FieldConvert -m phifile session.xml geom.fld
+    FieldConvert session.xml geom.fld geom.vtu
+\end{lstlisting}
 The algorithm computes an octree for the triangles in the STL file and then,
 loops over all the nodes of the mesh looking for the shortest distance to the
 3D object. Since this module is currently in experimental phase, it only runs in serial and therefore its performance in computing the shape function from the \inltt{.stl} file is limited, especially in 3D cases.
