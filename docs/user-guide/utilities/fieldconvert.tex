@@ -1112,7 +1112,7 @@ FieldConvert to obtain the \inltt{.vtu} or \inltt{.dat} files if needed for visu
 
 The algorithm computes an octree for the triangles in the STL file and then,
 loops over all the nodes of the mesh looking for the shortest distance to the
-3D object. Since the module is still under development and the process does
+3D object. Since this module is currently in experimental phase, it only runs in serial and therefore its performance in computing the shape function from the \inltt{.stl} file is limited, especially in 3D cases.
 not run in parallel yet, the computation of the shape function takes a
 considerable amount of time. In addition to this, it is recommended to make
 sure that the angles between triangles are not strictly equal to $90^\circ$,
