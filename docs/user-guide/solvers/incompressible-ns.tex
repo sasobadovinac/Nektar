@@ -406,7 +406,8 @@ incompressible Navier-Stokes equations in such a way that the mesh does not
 necessariliy follow the boundaries. The solution in the regions falling outside
 the boundaries is simply that of the boundaries, forcing the flow to behave as
 if there were a real object even if the mesh does not represent it. As shown
-in \cite{LuoSPM}, the boundaries defined in this way are no-slip walls and, in
+the mesh does not represent it.
+The method presented here is an adaptation of the Smoothed Profile Method \cite{NakayamaSPM} extended to a high-order semi-implicit splitting scheme \cite{LuoSPM, WangSPM}. This method ensures that the no-slip, no-penetration and incompressibility constraint are mathematically enforced.
 any case, the flow is still incompressible. Starting from the incompressible Navier-Stokes equations,
 the term $\mathbf{f_s}$ is added to the right hand side:
 
