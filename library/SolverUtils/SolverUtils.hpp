@@ -10,7 +10,8 @@ namespace Nektar
             eTransientGrowth,
             eSkewSymmetric,
             eAdaptiveSFD,
-            eAdaptiveCFS
+            eAdaptiveCFS,
+            eMultiLevelCFS
         };
     }
 }

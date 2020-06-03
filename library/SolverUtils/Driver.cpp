@@ -42,7 +42,7 @@ namespace Nektar
 namespace SolverUtils
 {
 
-std::string Driver::evolutionOperatorLookupIds[7] = {
+std::string Driver::evolutionOperatorLookupIds[8] = {
     LibUtilities::SessionReader::RegisterEnumValue(
             "EvolutionOperator","Nonlinear"      ,eNonlinear),
     LibUtilities::SessionReader::RegisterEnumValue(
@@ -56,7 +56,9 @@ std::string Driver::evolutionOperatorLookupIds[7] = {
     LibUtilities::SessionReader::RegisterEnumValue(
             "EvolutionOperator","AdaptiveSFD"    ,eAdaptiveSFD),
     LibUtilities::SessionReader::RegisterEnumValue(
-            "EvolutionOperator","AdaptiveCFS"    ,eAdaptiveCFS)
+            "EvolutionOperator","AdaptiveCFS"    ,eAdaptiveCFS),
+    LibUtilities::SessionReader::RegisterEnumValue(
+            "EvolutionOperator","MultiLevelCFS" ,eMultiLevelCFS)
 };
 std::string Driver::evolutionOperatorDef =
     LibUtilities::SessionReader::RegisterDefaultSolverInfo(
@@ -119,6 +121,13 @@ void Driver::v_InitObject(ostream &out)
                    m_EvolutionOperator == eAdaptiveCFS) ? 2 : 1);
 
         m_equ = Array<OneD, EquationSystemSharedPtr>(m_nequ);
+
+        
+        int TestLevel=2;
+        if(eMultiLevelCFS==m_EvolutionOperator)
+        {
+            m_equ = Array<OneD, EquationSystemSharedPtr>(TestLevel);
+        }
 
         // Set the AdvectiveType tag and create EquationSystem objects.
         switch (m_EvolutionOperator)
@@ -197,21 +206,42 @@ void Driver::v_InitObject(ostream &out)
                 for(int i=0;i<m_session->GetFilenames().size();i++)
                 {
                     TmpInputFile=m_session->GetFilenames()[i];
+                    MultiOrderFilename.push_back(TmpInputFile);
+                }
 
-                    cout << TmpInputFile << endl;
-                    int index,length;
-                    index=TmpInputFile.find("/");
-                    if((-1)!=index)
-                    {
-                        MultiOrderFilename.push_back(TmpInputFile);
-                    }
-                    else
-                    {
-                        index=TmpInputFile.find(".");
-                        TmpInputFile.replace( index,4, ".xml");
-                        MultiOrderFilename.push_back(TmpInputFile);
+                MultiOrderSession= LibUtilities::SessionReader::CreateInstance(
+                                0, NULL, MultiOrderFilename, 
+                                m_session->GetComm());
+                int ncoeffOffset = 1;
+                int nphyscOffset = 0;
+                TmpInputFile=MultiOrderSession->GetSessionName();
+                 SpatialDomains::MeshGraphSharedPtr MultiOrderGraph =
+                 SpatialDomains::MeshGraph::Read(MultiOrderSession,
+                        SpatialDomains::NullDomainRangeShPtr,
+                        true,
+                        m_graph->GetCompositeOrdering(),
+                        m_graph->GetBndRegionOrdering(), 
+                        ncoeffOffset, nphyscOffset);
 
-                    }
+                MultiOrderSession->SetTag("AdvectiveType","Convective");
+                m_equ[1] = GetEquationSystemFactory().CreateInstance(
+                    vEquation, MultiOrderSession, MultiOrderGraph);
+            }
+                break;
+            case eMultiLevelCFS:
+            {
+                // Coupling SFD method and Arnoldi algorithm
+                // For having 2 equation systems defined into 2 different
+                // session files (with the mesh into a file named 'session'.gz)
+                m_session->SetTag("AdvectiveType","Convective");
+                m_equ[0] = GetEquationSystemFactory().CreateInstance(vEquation, m_session, m_graph);
+                string         TmpInputFile;
+                vector<string>  MultiOrderFilename;
+                //Because file name will change to FileName_xml/P0000000.xml, so return back to original name
+                for(int i=0;i<m_session->GetFilenames().size();i++)
+                {
+                    TmpInputFile=m_session->GetFilenames()[i];
+                    MultiOrderFilename.push_back(TmpInputFile);
                 }
 
                 MultiOrderSession= LibUtilities::SessionReader::CreateInstance(
