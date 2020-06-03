@@ -394,9 +394,10 @@ $\alpha=1,\beta=0$ weights (see \cite{KaSh05} for details on why).
 The usual way to solve any PDE requires the definition of a well defined domain
 where the solution is to be determined. Thus, for complex geometries, the
 meshing process may get cumbersome and, in any case, the solver will have to
-the meshing process may get cumbersome, and likely struggle to avoid the presence of highly deformed and skewed elements. In addition, when
-solving cases with moving boundaries, the mesh has to be updated every time
-step to follow the shape of the boundaries, leading to a very resource and
+the meshing process may get cumbersome, and likely struggle to avoid the
+presence of highly deformed and skewed elements. In addition, when solving
+cases with moving boundaries, the mesh has to be updated every time step to
+follow the shape of the boundaries, leading to a very resource and
 time-consuming simulation that limits the capabilities of the solver.
 
 Immersed Boundary Methods may be very useful in these situations, where the
@@ -405,11 +406,13 @@ convergence. The main idea behind them is the use of a forcing term in the
 incompressible Navier-Stokes equations in such a way that the mesh does not
 necessariliy follow the boundaries. The solution in the regions falling outside
 the boundaries is simply that of the boundaries, forcing the flow to behave as
-if there were a real object even if the mesh does not represent it. As shown
-the mesh does not represent it.
-The method presented here is an adaptation of the Smoothed Profile Method \cite{NakayamaSPM} extended to a high-order semi-implicit splitting scheme \cite{LuoSPM, WangSPM}. This method ensures that the no-slip, no-penetration and incompressibility constraint are mathematically enforced.
-any case, the flow is still incompressible. Starting from the incompressible Navier-Stokes equations,
-the term $\mathbf{f_s}$ is added to the right hand side:
+if there were a real object even if the mesh does not represent it. The method
+presented here is an adaptation of the Smoothed Profile Method
+\cite{NakayamaSPM} extended to a high-order semi-implicit splitting scheme
+\cite{LuoSPM, WangSPM}. This method ensures that the no-slip, no-penetration
+and incompressibility constraints are mathematically enforced. Starting from
+the incompressible Navier-Stokes equations, the term $\mathbf{f_s}$ is added to
+the right hand side:
 
 \begin{subequations}
 \begin{equation} \label{spm:eq:SPMeqmov}
@@ -589,22 +592,22 @@ them. The attribute \inltt{USERDEFINEDTYPE} is compulsory only if the functions
 depend on time, when it must be set to \inltt{"TimeDependent"}.
 
 For immersed boundaries with geometries that cannot be represented by means of
-analytical functions, an \inltt{.STL} binary file can be supplied as well. However, the
-geometry file must be first converted to \inltt{.fld} format with the \texttt{phifile}
-module of \texttt{FieldConvert}. The simplest way to proceed is by issuing the
-command:
+analytical functions, an \inltt{.stl} binary file can be supplied as well.
+However, the geometry file must be first converted to \inltt{.fld} format with
+the \texttt{phifile} module of \texttt{FieldConvert}. The simplest way to
+proceed is by issuing the command:
 
 \begin{lstlisting}[style=BashInputStyle]
     FieldConvert -m phifile:file=geom.stl:scale=value session.xml geom.fld
 \end{lstlisting}
 
 where the value of \texttt{scale} corresponds to the coefficient $\xi$ in
-equation \eqref{spm:eq:mask}. The output file can be changed to a \inltt{.vtu} or \inltt{.dat}
-file in order to get a graphical representation of the Phi field. It is also
-possible to call the \texttt{phifile} module without options to output the
-shape function if it has been defined in the session file as an analytical
-function. In any case, it is important to remark that this functionality is
-still under development and needs to be improved.
+equation \eqref{spm:eq:mask}. The output file can be changed to a \inltt{.vtu}
+or \inltt{.dat} file in order to get a graphical representation of the $\Phi$
+field. It is also possible to call the \texttt{phifile} module without options
+to output the shape function if it has been defined in the session file as an
+analytical function. In any case, it is important to remark that this
+functionality is still under development and needs to be improved.
 
 In the \inltt{ShapeFunction} block of the session file, the line
 \inltt{<E VAR="Phi" ... />} indicates that the immersed bodies are defined by
@@ -614,8 +617,8 @@ the function introduced in \inltt{VALUE}, while a line like the following:
     <F VAR="Phi" FILE="geometry.fld" />
 \end{lstlisting}
 
-must be used when the Phi field is defined in an STL file previously converted
-to FLD format.
+must be used when the $\Phi$ field is defined in an \inltt{.stl} file
+previously converted to FLD format.
 
 \subsection{Direct solver (coupled approach)}
 \label{DirectSolv}
