@@ -32,7 +32,7 @@
             <I PROPERTY="Projection"              VALUE="Continuous"            />
             <I PROPERTY="Driver"                  VALUE="Standard"              />
             <I PROPERTY="Homogeneous"             VALUE="1D"                    />
-            <I PROPERTY="ForceBoundary"           VALUE="1"                     />
+            <I PROPERTY="ForceBoundary"           VALUE="True"                  />
         </SOLVERINFO>
         <PARAMETERS>
             <P> TimeStep      = 0.001  </P>

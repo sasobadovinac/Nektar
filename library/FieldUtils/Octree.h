@@ -1,3 +1,37 @@
+///////////////////////////////////////////////////////////////////////////////
+//
+// File Octree.h
+//
+// For more information, please see: http://www.nektar.info
+//
+// The MIT License
+//
+// Copyright (c) 2006 Division of Applied Mathematics, Brown University (USA),
+// Department of Aeronautics, Imperial College London (UK), and Scientific
+// Computing and Imaging Institute, University of Utah (USA).
+//
+// Permission is hereby granted, free of charge, to any person obtaining a
+// copy of this software and associated documentation files (the "Software"),
+// to deal in the Software without restriction, including without limitation
+// the rights to use, copy, modify, merge, publish, distribute, sublicense,
+// and/or sell copies of the Software, and to permit persons to whom the
+// Software is furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included
+// in all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+// OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+// THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+// FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+// DEALINGS IN THE SOFTWARE.
+//
+// Description: Octree header.
+//
+///////////////////////////////////////////////////////////////////////////////
+
 #include <LibUtilities/BasicUtils/SharedArray.hpp>
 #include <vector>
 #include <memory>
@@ -8,20 +42,20 @@ namespace Nektar
 namespace FieldUtils
 {
 
-class octree
+class Octree
 {
-    class octant;
-    using octantSharedPtr = std::shared_ptr<octant>;
-    using octantWeakPtr   = std::weak_ptr<octant>;
+    class Octant;
+    using OctantSharedPtr = std::shared_ptr<Octant>;
+    using OctantWeakPtr   = std::weak_ptr<Octant>;
 
 public:
     // Empty constructor
-    octree();
+    Octree();
     // Constructor with bounds
-    octree(const Array<OneD, Array<OneD, NekDouble> > &pts, int maxPts,
+    Octree(const Array<OneD, Array<OneD, NekDouble> > &pts, int maxPts,
            const Array<OneD, NekDouble> &bounds);
     // Constructor without bounds
-    octree(const Array<OneD, Array<OneD, NekDouble> > &pts, int maxPts);
+    Octree(const Array<OneD, Array<OneD, NekDouble> > &pts, int maxPts);
 
     // Returns the ID of the leaf node that contains 'coords'
     int QueryNode(const Array<OneD, NekDouble> &coords,
@@ -46,15 +80,16 @@ public:
                   int &nLeaves, int &depth);
 
 private:
-    class octant : public std::enable_shared_from_this<octant>
+    class Octant : public std::enable_shared_from_this<Octant>
     {
     public:
         // Empty constructor
-        octant();
+        Octant();
         // Constructor
-        octant(int loc, int depth, int id, const Array<OneD, NekDouble> &bounds);
+        Octant(int loc, int depth, int id, const Array<OneD,
+               NekDouble> &bounds);
         // Copy constructor
-        octant(int loc, octant &parent);
+        Octant(int loc, Octant &parent);
 
         int GetNpoints() const { return m_nPts; }
         int GetLoc() const { return m_loc; }
@@ -65,18 +100,19 @@ private:
         Array<OneD, NekDouble>& GetCentre() { return m_centre; }
         Array<OneD, NekDouble>& GetBounds() { return m_bounds; }
         std::vector<int>& GetIndices() { return m_pointInd; }
-        Array<OneD, octantSharedPtr>& GetChildren() { return m_children; }
-        std::vector<octantWeakPtr>& GetNeighbours() { return m_neighbours; }
+        Array<OneD, OctantSharedPtr>& GetChildren() { return m_children; }
+        std::vector<OctantWeakPtr>& GetNeighbours() { return m_neighbours; }
 
         void SetID(int id) { m_id = id; }
 
-        void GetLeaves(std::vector<octantSharedPtr>& leaves);
+        void GetLeaves(std::vector<OctantSharedPtr>& leaves);
         void SetIndices(const std::vector<int> &indices);
-        void AddNeighbours(const std::vector<octantSharedPtr> &neighbours);
+        void AddNeighbours(const std::vector<OctantSharedPtr> &neighbours);
         void AddPoints(const Array<OneD, Array<OneD, NekDouble> > &pts,
                        const std::vector<int> &indices);
-        void Subdivide(int maxPts, const Array<OneD, Array<OneD, NekDouble> > &pts,
-                       std::vector<octantSharedPtr> &nodes);
+        void Subdivide(int maxPts,
+                       const Array<OneD, Array<OneD, NekDouble> > &pts,
+                       std::vector<OctantSharedPtr> &nodes);
         int GetLocInNode(const Array<OneD, NekDouble> &coords);
 
     private:
@@ -100,9 +136,9 @@ private:
         bool m_isLeaf;
 
         /// Vector of pointers to the children octants
-        Array<OneD, octantSharedPtr> m_children;
+        Array<OneD, OctantSharedPtr> m_children;
         /// Vector of pointers to the neighbouring octants
-        std::vector<octantWeakPtr> m_neighbours;
+        std::vector<OctantWeakPtr> m_neighbours;
     };
 
     /// Max points allowed in each octant
@@ -117,9 +153,9 @@ private:
     int m_maxDepth;
 
     /// First node of the tree, linked to the rest
-    octantSharedPtr m_root;
+    OctantSharedPtr m_root;
     /// Vector of pointers to every octant in the tree
-    std::vector<octantSharedPtr> m_nodes;
+    std::vector<OctantSharedPtr> m_nodes;
 
     void AdvanceToStats(int nodeID);
     void SetNeighbours(int nodeID);

@@ -433,9 +433,9 @@ valued 0 in the fluid domain and 1 outside. It is usually defined as:
         {\xi}\right)-1 \right],
 \end{equation}
 
-\begin{figure}[htb]
+\begin{figure}[!htbp]
     \centering
-    \includegraphics[width=10cm]{img/concentration.pdf}
+    \includegraphics[width=0.7\textwidth]{img/concentration.pdf}
     \caption{Definition of the shape function $\Phi$ close to the boundary of
         an immersed body.}
     \label{spm:fig:shapefunc}
@@ -551,7 +551,7 @@ Navies-Stokes solver. However, there are some additional parameters that must
 be supplied when using this approach. First, the property \inltt{SolverType}
 must be set to \inltt{SmoothedProfileMethod}, while the immersed boundaries are
 defined in a function called \inltt{ShapeFunction}. Besides, the property
-\inltt{ForceBoundary} can be set to 1 if equation
+\inltt{ForceBoundary} can be set to \inltt{True} if equation
 \eqref{eq:SPM:compressiblePressure} is preferred over
 \eqref{eq:SPM:incompressiblePressure}. Thus, the \inltt{SOLVERINFO} section
 could be similar to:
@@ -561,7 +561,7 @@ could be similar to:
     <I PROPERTY="SolverType"            VALUE="SmoothedProfileMethod" />
     <I PROPERTY="TimeIntegrationMethod" VALUE="IMEXOrder3"            />
     ...
-    <I PROPERTY="ForceBoundary"         VALUE="0"                     />
+    <I PROPERTY="ForceBoundary"         VALUE="True"                  />
 </SOLVERINFO>
 \end{lstlisting}
 
@@ -602,12 +602,10 @@ proceed is by issuing the command:
 \end{lstlisting}
 
 where the value of \texttt{scale} corresponds to the coefficient $\xi$ in
-equation \eqref{spm:eq:mask}. The output file can be changed to a \inltt{.vtu}
-or \inltt{.dat} file in order to get a graphical representation of the $\Phi$
-field. It is also possible to call the \texttt{phifile} module without options
-to output the shape function if it has been defined in the session file as an
-analytical function. In any case, it is important to remark that this
-functionality is still under development and needs to be improved.
+equation \eqref{spm:eq:mask}. More details can be found in the documentation of
+the \texttt{phifile} module~\ref{s:utilities:fieldconvert:sub:phifile}. In any
+case, it is important to remark that this functionality is still under
+development.
 
 In the \inltt{ShapeFunction} block of the session file, the line
 \inltt{<E VAR="Phi" ... />} indicates that the immersed bodies are defined by

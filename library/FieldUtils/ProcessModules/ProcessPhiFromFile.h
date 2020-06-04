@@ -1,37 +1,36 @@
-////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
 //
-//  File: ProcessPhiFromFile.h
+// File: ProcessPhiFromFile.h
 //
-//  For more information, please see: http://www.nektar.info/
+// For more information, please see: http://www.nektar.info/
 //
-//  The MIT License
+// The MIT License
 //
-//  Copyright (c) 2006 Division of Applied Mathematics, Brown University (USA),
-//  Department of Aeronautics, Imperial College London (UK), and Scientific
-//  Computing and Imaging Institute, University of Utah (USA).
+// Copyright (c) 2006 Division of Applied Mathematics, Brown University (USA),
+// Department of Aeronautics, Imperial College London (UK), and Scientific
+// Computing and Imaging Institute, University of Utah (USA).
 //
-//  License for the specific language governing rights and limitations under
-//  Permission is hereby granted, free of charge, to any person obtaining a
-//  copy of this software and associated documentation files (the "Software"),
-//  to deal in the Software without restriction, including without limitation
-//  the rights to use, copy, modify, merge, publish, distribute, sublicense,
-//  and/or sell copies of the Software, and to permit persons to whom the
-//  Software is furnished to do so, subject to the following conditions:
+// Permission is hereby granted, free of charge, to any person obtaining a
+// copy of this software and associated documentation files (the "Software"),
+// to deal in the Software without restriction, including without limitation
+// the rights to use, copy, modify, merge, publish, distribute, sublicense,
+// and/or sell copies of the Software, and to permit persons to whom the
+// Software is furnished to do so, subject to the following conditions:
 //
-//  The above copyright notice and this permission notice shall be included
-//  in all copies or substantial portions of the Software.
+// The above copyright notice and this permission notice shall be included
+// in all copies or substantial portions of the Software.
 //
-//  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-//  OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-//  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-//  THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-//  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-//  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-//  DEALINGS IN THE SOFTWARE.
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+// OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+// THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+// FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+// DEALINGS IN THE SOFTWARE.
 //
-//  Description: geometry file converter.
+// Description: geometry file converter.
 //
-////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
 
 #ifndef FIELDUTILS_PROCESSPHIFROMFILE
 #define FIELDUTILS_PROCESSPHIFROMFILE
@@ -99,7 +98,7 @@ protected:
         Array<OneD, triangle> triangles;
     };
     /// Octree object
-    octree m_tree;
+    Octree m_tree;
 
     // Reads one vector from a binary STL file
     Array<OneD, NekDouble> ReadVector(std::ifstream &in);
@@ -122,18 +121,11 @@ protected:
                           double &dist);
     // Utility to find if two doubles are equal
     bool IsEqual(double x, double y, double relTol);
-    // Utility to find if a double is positive with a certain tolerance
-    bool IsPositive(double x, double tol);
     // Utility to find if a double is negative with a certain tolerance
     bool IsNegative(double x, double tol);
     // Utility to calculate the cross-product of two 3D vectors
     Array<OneD, NekDouble> Cross(const Array<OneD, NekDouble> &v0,
                                  const Array<OneD, NekDouble> &v1);
-    // Utilit to calculate the determinant of a 3x3 matrix
-    NekDouble Det3(const Array<OneD, Array<OneD, NekDouble> > &mat);
-    // Utility to calculate the distance between two points
-    NekDouble Distance2point(const Array<OneD, NekDouble> &v0,
-                          const Array<OneD, NekDouble> &v1);
     // Utility to measure shortest distance to a segment
     Array<OneD, NekDouble> Vector2edge(const Array<OneD, NekDouble> &x,
                                        const Array<OneD, NekDouble> &e1,

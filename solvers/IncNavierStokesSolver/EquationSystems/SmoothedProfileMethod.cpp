@@ -374,7 +374,8 @@ namespace Nektar
             // Adding -(1-m_phi)*grad(p_p) instead of -grad(p_p) reduces the
             // flux through the walls, but the flow is not incompressible
             if (m_session->DefinesSolverInfo("ForceBoundary") &&
-                boost::iequals(m_session->GetSolverInfo("ForceBoundary"), "1"))
+                boost::iequals(m_session->GetSolverInfo("ForceBoundary"),
+                               "True"))
             {
                 Vmath::Vvtvm(physTot, m_phi->GetPhys(), 1, Forcing[i], 1,
                              Forcing[i], 1, Forcing[i], 1);

@@ -1,37 +1,36 @@
-////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
 //
-//  File: ProcessPhiFromFile.cpp
+// File: ProcessPhiFromFile.cpp
 //
-//  For more information, please see: http://www.nektar.info/
+// For more information, please see: http://www.nektar.info/
 //
-//  The MIT License
+// The MIT License
 //
-//  Copyright (c) 2006 Division of Applied Mathematics, Brown University (USA),
-//  Department of Aeronautics, Imperial College London (UK), and Scientific
-//  Computing and Imaging Institute, University of Utah (USA).
+// Copyright (c) 2006 Division of Applied Mathematics, Brown University (USA),
+// Department of Aeronautics, Imperial College London (UK), and Scientific
+// Computing and Imaging Institute, University of Utah (USA).
 //
-//  License for the specific language governing rights and limitations under
-//  Permission is hereby granted, free of charge, to any person obtaining a
-//  copy of this software and associated documentation files (the "Software"),
-//  to deal in the Software without restriction, including without limitation
-//  the rights to use, copy, modify, merge, publish, distribute, sublicense,
-//  and/or sell copies of the Software, and to permit persons to whom the
-//  Software is furnished to do so, subject to the following conditions:
+// Permission is hereby granted, free of charge, to any person obtaining a
+// copy of this software and associated documentation files (the "Software"),
+// to deal in the Software without restriction, including without limitation
+// the rights to use, copy, modify, merge, publish, distribute, sublicense,
+// and/or sell copies of the Software, and to permit persons to whom the
+// Software is furnished to do so, subject to the following conditions:
 //
-//  The above copyright notice and this permission notice shall be included
-//  in all copies or substantial portions of the Software.
+// The above copyright notice and this permission notice shall be included
+// in all copies or substantial portions of the Software.
 //
-//  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-//  OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-//  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-//  THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-//  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-//  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-//  DEALINGS IN THE SOFTWARE.
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+// OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+// THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+// FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+// DEALINGS IN THE SOFTWARE.
 //
-//  Description: Reads an STL file.
+// Description: Reads an STL file.
 //
-////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
 
 #include "ProcessPhiFromFile.h"
 #include <boost/core/ignore_unused.hpp>
@@ -109,7 +108,7 @@ void ProcessPhiFromFile::Process(po::variables_map &vm)
 /**
  * @brief Read one 3D vector from a STL file, starting from the next line
  * of the input 'ifstream'. Numbers in ifstream are defined as 'float'
- * 
+ *
  * @param in
  * @return Array<OneD, NekDouble>
  */
@@ -132,7 +131,7 @@ Array<OneD, NekDouble> ProcessPhiFromFile::ReadVector(ifstream &in)
 /**
  * @brief Read an STL binary file and returns a struct of type 'STLobject'
  * containing the parsed data
- * 
+ *
  * @param filename
  * @return ProcessPhiFromFile::STLobject
  */
@@ -189,7 +188,7 @@ ProcessPhiFromFile::STLobject ProcessPhiFromFile::ReadSTL(string filename)
 /**
  * @brief Smoothing function for the SPM method given a distance value
  * and a scaling coefficient
- * 
+ *
  * @param dist
  * @param coeff
  * @return NekDouble
@@ -201,7 +200,7 @@ NekDouble ProcessPhiFromFile::PhiFunction(double dist, double coeff)
 
 /**
  * @brief Assigns to 'phi' the values indicated by 'ShapeFunction'
- * 
+ *
  */
 void ProcessPhiFromFile::GetPhifromSession()
 {
@@ -248,10 +247,11 @@ void ProcessPhiFromFile::GetPhifromSession()
 
 /**
  * @brief Assigns to 'phi' the corresponding values of Phi
- * 
+ *
  * @param file
  */
-void ProcessPhiFromFile::GetPhifromSTL(const ProcessPhiFromFile::STLobject &file)
+void ProcessPhiFromFile::GetPhifromSTL(
+        const ProcessPhiFromFile::STLobject &file)
 {
     // Get info about the domain
     int nPts  = m_f->m_exp[0]->GetNpoints();
@@ -290,13 +290,11 @@ void ProcessPhiFromFile::GetPhifromSTL(const ProcessPhiFromFile::STLobject &file
         bounds[5] = (bounds[5] > coords[2][i]) ? bounds[5] : coords[2][i];
     }
     // and add a margin to avoid rounding errors
-    bounds[0] -= fabs(bounds[0])*0.01;
-    bounds[1] += fabs(bounds[1])*0.01;
-    bounds[2] -= fabs(bounds[2])*0.01;
-    bounds[3] += fabs(bounds[3])*0.01;
-    bounds[4] -= fabs(bounds[4])*0.01;
-    bounds[5] += fabs(bounds[5])*0.01;
-    
+    for (int i = 0; i < 6; ++i)
+    {
+        bounds[i] -= pow(-1,i) * 1e-10;
+    }
+
     // Array of centroids of triangles in the STL object
     Array<OneD, Array<OneD, NekDouble> > centroids(file.numTri);
     for (int i = 0; i < file.numTri; ++i)
@@ -305,7 +303,7 @@ void ProcessPhiFromFile::GetPhifromSTL(const ProcessPhiFromFile::STLobject &file
     }
 
     // Initialise octree
-    m_tree = octree(centroids, 10, bounds);
+    m_tree = Octree(centroids, 10, bounds);
 
     // For each strip...
     for (int s = 0; s < nStrips; ++s)
@@ -328,7 +326,8 @@ void ProcessPhiFromFile::GetPhifromSTL(const ProcessPhiFromFile::STLobject &file
             FindShortestDist(file, tmpCoords, dist);
 
             // Get corresponding value of Phi
-            phi->UpdatePhys()[i] = PhiFunction(dist, m_config["scale"].as<double>());
+            phi->UpdatePhys()[i] = PhiFunction(dist, 
+                                               m_config["scale"].as<double>());
         }
 
         // Update vector of expansions
@@ -344,10 +343,10 @@ void ProcessPhiFromFile::GetPhifromSTL(const ProcessPhiFromFile::STLobject &file
  * defined by 'tri' in any case. A negative distance means that the hit
  * happened in the direction oposite that of the ray. Approach to calculate
  * the intersection point found in:
- * 
+ *
  * Fast, minimum storage ray/triangle intersection,
  * Tomas Moeller, Ben Trumbore
- * 
+ *
  * @param tri
  * @param Origin
  * @param Dvec
@@ -404,7 +403,7 @@ bool ProcessPhiFromFile::CheckHit(const ProcessPhiFromFile::triangle &tri,
 /**
  * @brief Calculates the shortest distance from a point \f[x\f] to the closed
  * body contained in the STL file
- * 
+ *
  * @param file
  * @param x
  * @param dist
@@ -516,7 +515,7 @@ void ProcessPhiFromFile::FindShortestDist(
 /**
  * @brief Returns true if \f[x=y\f] within the relative tolerance 'relTol'
  * (relative to 'y')
- * 
+ *
  * @param x
  * @return true
  * @return false
@@ -527,21 +526,8 @@ bool ProcessPhiFromFile::IsEqual(double x, double y, double relTol)
 }
 
 /**
- * @brief Returns true if \f[x>tol\f]
- * 
- * @param x
- * @param relTol
- * @return true
- * @return false
- */
-bool ProcessPhiFromFile::IsPositive(double x, double tol)
-{
-    return (x > tol);
-}
-
-/**
  * @brief Returns true if \f[x<tol\f]
- * 
+ *
  * @param x
  * @param relTol
  * @return true
@@ -554,7 +540,7 @@ bool ProcessPhiFromFile::IsNegative(double x, double tol)
 
 /**
  * @brief Returns the cross product of vectors 'v0' y 'v1'
- * 
+ *
  * @param v0
  * @param v1
  * @return Array<OneD, NekDouble>
@@ -573,45 +559,11 @@ Array<OneD, NekDouble> ProcessPhiFromFile::Cross(
 }
 
 /**
- * @brief Calculates the determinant of a 3x3 matrix
- * 
- * @param mat
- * @return NekDouble
- */
-NekDouble ProcessPhiFromFile::Det3(const Array<OneD, Array<OneD, NekDouble> > &mat)
-{
-    return mat[0][0] * (mat[1][1] * mat[2][2] - mat[2][1] * mat[1][2]) -
-           mat[0][1] * (mat[1][0] * mat[2][2] - mat[1][2] * mat[2][0]) +
-           mat[0][2] * (mat[1][0] * mat[2][1] - mat[1][1] * mat[2][0]);
-}
-
-/**
- * @brief Calculates the distance between two n-dimensional points
- * 
- * @param v0
- * @param v1
- * @return NekDouble
- */
-NekDouble ProcessPhiFromFile::Distance2point(const Array<OneD, NekDouble> &v0,
-                                          const Array<OneD, NekDouble> &v1)
-{
-    size_t n   = v0.size();
-    double out = 0.0;
-
-    for (size_t i = 0; i < n; ++i)
-    {
-        out += (v1[i]-v0[i]) * (v1[i]-v0[i]);
-    }
-
-    return sqrt(out);
-}
-
-/**
  * @brief Determines the shortest distance from a point 'x' to the segment
  * defined by the points 'e1' and 'e2'. Note that this distance may be
  * equal to that to one of the end points. The vector returned points towards
  * the point 'x'
- * 
+ *
  * @param x
  * @param e1
  * @param e2

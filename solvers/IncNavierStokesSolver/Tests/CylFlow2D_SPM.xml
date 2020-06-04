@@ -31,7 +31,7 @@
             <I PROPERTY="EvolutionOperator"       VALUE="Nonlinear"             />
             <I PROPERTY="Projection"              VALUE="Continuous"            />
             <I PROPERTY="Driver"                  VALUE="Standard"              />
-            <I PROPERTY="ForceBoundary"           VALUE="0"                     />
+            <I PROPERTY="ForceBoundary"           VALUE="False"                 />
         </SOLVERINFO>
         <PARAMETERS>
             <P> TimeStep      = 0.001    </P>

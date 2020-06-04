@@ -1,3 +1,37 @@
+///////////////////////////////////////////////////////////////////////////////
+//
+// File Octree.cpp
+//
+// For more information, please see: http://www.nektar.info
+//
+// The MIT License
+//
+// Copyright (c) 2006 Division of Applied Mathematics, Brown University (USA),
+// Department of Aeronautics, Imperial College London (UK), and Scientific
+// Computing and Imaging Institute, University of Utah (USA).
+//
+// Permission is hereby granted, free of charge, to any person obtaining a
+// copy of this software and associated documentation files (the "Software"),
+// to deal in the Software without restriction, including without limitation
+// the rights to use, copy, modify, merge, publish, distribute, sublicense,
+// and/or sell copies of the Software, and to permit persons to whom the
+// Software is furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included
+// in all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+// OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+// THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+// FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+// DEALINGS IN THE SOFTWARE.
+//
+// Description: Implementation of an octree sorting algorithm.
+//
+///////////////////////////////////////////////////////////////////////////////
+
 #include "Octree.h"
 #include <stdexcept>
 #include <math.h>
@@ -11,7 +45,7 @@ namespace FieldUtils
  * @brief Construct a new octree object
  *
  */
-octree::octree() : m_maxPts(0), m_nMshPts(0), m_nNodes(0), m_nLeaves(0),
+Octree::Octree() : m_maxPts(0), m_nMshPts(0), m_nNodes(0), m_nLeaves(0),
                    m_maxDepth(0), m_root(nullptr)
 {
 }
@@ -23,7 +57,7 @@ octree::octree() : m_maxPts(0), m_nMshPts(0), m_nNodes(0), m_nLeaves(0),
  * @param maxPts
  * @param bounds
  */
-octree::octree(const Array<OneD, Array<OneD, NekDouble> > &pts, int maxPts,
+Octree::Octree(const Array<OneD, Array<OneD, NekDouble> > &pts, int maxPts,
                const Array<OneD, NekDouble> &bounds)
 {
     // Set some values
@@ -36,7 +70,7 @@ octree::octree(const Array<OneD, Array<OneD, NekDouble> > &pts, int maxPts,
     {
         indices[i] = i;
     }
-    m_root = std::make_shared<octant>(0, 1, 0, bounds);
+    m_root = std::make_shared<Octant>(0, 1, 0, bounds);
     m_root->SetIndices(indices);
     m_nodes.push_back(m_root);
 
@@ -58,8 +92,11 @@ octree::octree(const Array<OneD, Array<OneD, NekDouble> > &pts, int maxPts,
  * @param pts
  * @param maxPts
  */
-octree::octree(const Array<OneD, Array<OneD, NekDouble> > &pts, int maxPts)
+Octree::Octree(const Array<OneD, Array<OneD, NekDouble> > &pts, int maxPts)
 {
+    // Small margin to avoid rounding errors
+    NekDouble margin = 1e-10;
+
     // Find coordinates of the bounding box
     Array<OneD, NekDouble> bounds(6);
     bounds[0] = pts[0][0];
@@ -78,13 +115,11 @@ octree::octree(const Array<OneD, Array<OneD, NekDouble> > &pts, int maxPts)
         bounds[5] = (bounds[5] > pts[i][2]) ? bounds[5] : pts[i][2];
     }
 
-    // Add a small margin
-    bounds[0] -= fabs(bounds[0])*0.01;
-    bounds[1] += fabs(bounds[1])*0.01;
-    bounds[2] -= fabs(bounds[2])*0.01;
-    bounds[3] += fabs(bounds[3])*0.01;
-    bounds[4] -= fabs(bounds[4])*0.01;
-    bounds[5] += fabs(bounds[5])*0.01;
+    // Add the margin
+    for (int i = 0; i < 6; ++i)
+    {
+        bounds[i] -= pow(-1,i) * margin;
+    }
 
     // Call the octree constructor
     octree(pts, maxPts, bounds);
@@ -100,7 +135,7 @@ octree::octree(const Array<OneD, Array<OneD, NekDouble> > &pts, int maxPts)
  * @param depth
  * @return int
  */
-int octree::QueryNode(const Array<OneD, NekDouble> &coords, int depth)
+int Octree::QueryNode(const Array<OneD, NekDouble> &coords, int depth)
 {
     int nodeID = -1;
 
@@ -113,7 +148,7 @@ int octree::QueryNode(const Array<OneD, NekDouble> &coords, int depth)
             (coords[2] >= bounds[4]) && (coords[2] <= bounds[5]))
         {
             // Initialise 'node'
-            octantSharedPtr node = m_root;
+            OctantSharedPtr node = m_root;
 
             // Keep advancing towards the end of the branch
             while (!node->IsLeaf() && node->GetDepth() < depth)
@@ -139,12 +174,12 @@ int octree::QueryNode(const Array<OneD, NekDouble> &coords, int depth)
  * @param pointInd
  * @return int
  */
-int octree::QueryClosest(const Array<OneD, Array<OneD, NekDouble> > &pts,
+int Octree::QueryClosest(const Array<OneD, Array<OneD, NekDouble> > &pts,
                          const Array<OneD, NekDouble> &coords,
-                         double &distance, int pointInd)
+                         NekDouble &distance, int pointInd)
 {
     int index = -1;
-    distance  = std::numeric_limits<double>::max();
+    distance  = std::numeric_limits<NekDouble>::max();
 
     if (coords.size())
     {
@@ -161,7 +196,7 @@ int octree::QueryClosest(const Array<OneD, Array<OneD, NekDouble> > &pts,
 
         // List the indices of all the candidate points
         std::vector<int> indices(m_nodes[nodeInd]->GetIndices());
-        for (octantWeakPtr neigh : m_nodes[nodeInd]->GetNeighbours())
+        for (OctantWeakPtr neigh : m_nodes[nodeInd]->GetNeighbours())
         {
             for (int i : neigh.lock()->GetIndices())
             {
@@ -172,8 +207,8 @@ int octree::QueryClosest(const Array<OneD, Array<OneD, NekDouble> > &pts,
         // Check the distances with all the nodes
         for (int i : indices)
         {
-            double sub = pts[i][0]-coords[0];
-            double tmpDistance = sub * sub;
+            NekDouble sub = pts[i][0]-coords[0];
+            NekDouble tmpDistance = sub * sub;
             for (int j = 1; j < 3; ++j)
             {
                 sub = pts[i][j]-coords[j];
@@ -198,7 +233,7 @@ int octree::QueryClosest(const Array<OneD, Array<OneD, NekDouble> > &pts,
  * @param nodeID
  * @return std::vector<int>
  */
-std::vector<int> octree::QueryPoints(int nodeID)
+std::vector<int> Octree::QueryPoints(int nodeID)
 {
     return m_nodes[nodeID]->GetIndices();
 }
@@ -213,10 +248,10 @@ std::vector<int> octree::QueryPoints(int nodeID)
  * @param nodeID
  * @return std::vector<int>
  */
-std::vector<int> octree::QueryNeighbours(int nodeID)
+std::vector<int> Octree::QueryNeighbours(int nodeID)
 {
     std::vector<int> indices;
-    for (const octantWeakPtr node : m_nodes[nodeID]->GetNeighbours())
+    for (const OctantWeakPtr node : m_nodes[nodeID]->GetNeighbours())
     {
         indices.push_back(node.lock()->GetID());
     }
@@ -232,7 +267,7 @@ std::vector<int> octree::QueryNeighbours(int nodeID)
  * @param nLeaves
  * @param depth
  */
-void octree::GetStats(int &maxPts, int &nPts, int &nNodes,
+void Octree::GetStats(int &maxPts, int &nPts, int &nNodes,
                       int &nLeaves, int &depth)
 {
     maxPts  = m_maxPts;
@@ -248,7 +283,7 @@ void octree::GetStats(int &maxPts, int &nPts, int &nNodes,
  *
  * @param nodeID
  */
-void octree::AdvanceToStats(int nodeID)
+void Octree::AdvanceToStats(int nodeID)
 {
     // Update stats if we reached the end of the branch
     if (m_nodes[nodeID]->IsLeaf())
@@ -260,8 +295,8 @@ void octree::AdvanceToStats(int nodeID)
     // In any other case, dig into the tree
     else
     {
-        Array<OneD, octantSharedPtr> children = m_nodes[nodeID]->GetChildren();
-        for (octantSharedPtr child : children)
+        Array<OneD, OctantSharedPtr> children = m_nodes[nodeID]->GetChildren();
+        for (OctantSharedPtr child : children)
         {
             AdvanceToStats(child->GetID());
         }
@@ -274,7 +309,7 @@ void octree::AdvanceToStats(int nodeID)
  *
  * @param nodeID
  */
-void octree::SetNeighbours(int nodeID)
+void Octree::SetNeighbours(int nodeID)
 {
     // Array with the different steps
     static int steps[26][3] = {{-1,-1,-1}, {1,0,0}, {1,0,0}, {0,1,0}, {0,1,0},
@@ -287,7 +322,7 @@ void octree::SetNeighbours(int nodeID)
     // Advance to the leaves of the octree
     if (!m_nodes[nodeID]->IsLeaf())
     {
-        for (octantSharedPtr child : m_nodes[nodeID]->GetChildren())
+        for (OctantSharedPtr child : m_nodes[nodeID]->GetChildren())
         {
             SetNeighbours(child->GetID());
         }
@@ -307,7 +342,7 @@ void octree::SetNeighbours(int nodeID)
             int neighInd = QueryNode(probeCoords, m_nodes[nodeID]->GetDepth());
             if (neighInd > -1)
             {
-                std::vector<octantSharedPtr> leaves;
+                std::vector<OctantSharedPtr> leaves;
                 m_nodes[neighInd]->GetLeaves(leaves);
                 m_nodes[nodeID]->AddNeighbours(leaves);
             }
@@ -319,8 +354,8 @@ void octree::SetNeighbours(int nodeID)
  * @brief Construct a new octree::octant object
  *
  */
-octree::octant::octant() : m_nPts(-1), m_loc(-1), m_depth(-1), m_id(-1),
-                           m_delta(-1), m_centre(3), m_bounds(6), m_isLeaf(true)
+Octree::Octant::Octant() : m_nPts(-1), m_loc(-1), m_depth(-1), m_id(-1),
+                        m_delta(-1), m_centre(3), m_bounds(6), m_isLeaf(true)
 {
 }
 
@@ -332,7 +367,7 @@ octree::octant::octant() : m_nPts(-1), m_loc(-1), m_depth(-1), m_id(-1),
  * @param id
  * @param bounds
  */
-octree::octant::octant(int loc, int depth, int id,
+Octree::Octant::Octant(int loc, int depth, int id,
                        const Array<OneD, NekDouble> &bounds) :
                             m_nPts(0), m_loc(loc), m_depth(depth),
                             m_id(id), m_isLeaf(true)
@@ -344,9 +379,9 @@ octree::octant::octant(int loc, int depth, int id,
     }
 
     // If all deltas are not equal, use the largest ones
-    double deltaX = bounds[1] - bounds[0];
-    double deltaY = bounds[3] - bounds[2];
-    double deltaZ = bounds[5] - bounds[4];
+    NekDouble deltaX = bounds[1] - bounds[0];
+    NekDouble deltaY = bounds[3] - bounds[2];
+    NekDouble deltaZ = bounds[5] - bounds[4];
     if (deltaX != deltaY || deltaY != deltaZ)
     {
         m_delta = (deltaX > deltaY) ? deltaX : deltaY;
@@ -374,7 +409,7 @@ octree::octant::octant(int loc, int depth, int id,
  * @param loc
  * @param parent
  */
-octree::octant::octant(int loc, octant &parent) : m_nPts(0), m_loc(loc),
+Octree::Octant::Octant(int loc, Octant &parent) : m_nPts(0), m_loc(loc),
                                                   m_id(-1), m_isLeaf(true)
 {
     // Set depth
@@ -384,9 +419,9 @@ octree::octant::octant(int loc, octant &parent) : m_nPts(0), m_loc(loc),
     m_delta = parent.GetDelta()/2.0;
 
     // Set centre
-    double centreDX;
-    double centreDY;
-    double centreDZ;
+    NekDouble centreDX;
+    NekDouble centreDY;
+    NekDouble centreDZ;
     switch (loc)
     {
         case 1:  // x-, y-, z-
@@ -453,7 +488,7 @@ octree::octant::octant(int loc, octant &parent) : m_nPts(0), m_loc(loc),
  *
  * @param leaves
  */
-void octree::octant::GetLeaves(std::vector<octantSharedPtr>& leaves)
+void Octree::Octant::GetLeaves(std::vector<OctantSharedPtr>& leaves)
 {
     if (m_isLeaf)
     {
@@ -461,7 +496,7 @@ void octree::octant::GetLeaves(std::vector<octantSharedPtr>& leaves)
     }
     else
     {
-        for (octantSharedPtr child : m_children)
+        for (OctantSharedPtr child : m_children)
         {
             child->GetLeaves(leaves);
         }
@@ -473,7 +508,7 @@ void octree::octant::GetLeaves(std::vector<octantSharedPtr>& leaves)
  *
  * @param indices
  */
-void octree::octant::SetIndices(const std::vector<int> &indices)
+void Octree::Octant::SetIndices(const std::vector<int> &indices)
 {
     for (int i : indices)
     {
@@ -487,12 +522,13 @@ void octree::octant::SetIndices(const std::vector<int> &indices)
  *
  * @param neighbours
  */
-void octree::octant::AddNeighbours(const std::vector<octantSharedPtr> &neighbours)
+void Octree::Octant::AddNeighbours(
+        const std::vector<OctantSharedPtr> &neighbours)
 {
-    for (const octantSharedPtr neighbour : neighbours)
+    for (const OctantSharedPtr neighbour : neighbours)
     {
         bool equal = false;
-        for (const octantWeakPtr neigh: m_neighbours)
+        for (const OctantWeakPtr neigh: m_neighbours)
         {
             if (neigh.lock()->GetID() == neighbour->GetID())
             {
@@ -514,7 +550,7 @@ void octree::octant::AddNeighbours(const std::vector<octantSharedPtr> &neighbour
  * @param pts
  * @param indices
  */
-void octree::octant::AddPoints(const Array<OneD, Array<OneD, NekDouble> > &pts,
+void Octree::Octant::AddPoints(const Array<OneD, Array<OneD, NekDouble> > &pts,
                                const std::vector<int> &indices)
 {
     for (int i : indices)
@@ -551,19 +587,19 @@ void octree::octant::AddPoints(const Array<OneD, Array<OneD, NekDouble> > &pts,
  * @param pts
  * @param nodes
  */
-void octree::octant::Subdivide(int maxPts,
+void Octree::Octant::Subdivide(int maxPts,
                                const Array<OneD, Array<OneD, NekDouble> > &pts,
-                               std::vector<octantSharedPtr> &nodes)
+                               std::vector<OctantSharedPtr> &nodes)
 {
     // For a non-leaf node
     if (m_nPts > maxPts)
     {
         // Create and fill children RECURSIVELY
-        m_children = Array<OneD, octantSharedPtr>(8);
+        m_children = Array<OneD, OctantSharedPtr>(8);
         for (int i = 0; i < 8; ++i)
         {
-            octantSharedPtr newChild =
-                std::make_shared<octant>(i+1, *shared_from_this());
+            OctantSharedPtr newChild =
+                std::make_shared<Octant>(i+1, *shared_from_this());
             newChild->AddPoints(pts, m_pointInd);
             newChild->SetID(nodes.size());  // ID's start from 0
 
@@ -584,17 +620,17 @@ void octree::octant::Subdivide(int maxPts,
 
 /**
  * @brief Returns the position inside an octant in the range (1-8). The name
- * convention is as follows: let \f[\Delta\f] be half the length of the
- * father octant side, and \f[x_c,y_c,z_c\f] be the coordinates of the centre
- * of the father node. Then, position 1 corresponds to \f[x=x_c-\Delta\f],
- * \f[y=y_c-\Delta\f] and \f[y=y_c-\Delta\f]. The next positions are obtained
- * by rotating counter-clockwise around the Z axis and then, making the same
- * rotation for \f[z=z_c+\Delta\f]
+ * convention is as follows: let \f$\Delta\f$ be a value between 0 and the
+ * length of the side of the father octant, and \f$x_c,y_c,z_c\f$ be the
+ * coordinates of the centre of the father node. Then, position 1 corresponds
+ * to \f$x=x_c-\Delta\f$, \f$y=y_c-\Delta\f$ and \f$y=y_c-\Delta\f$. The next
+ * positions are obtained by rotating counter-clockwise around the Z axis and
+ * then, making the same rotation for \f$z=z_c+\Delta\f$
  *
  * @param coords
  * @return int
  */
-int octree::octant::GetLocInNode(const Array<OneD, NekDouble> &coords)
+int Octree::Octant::GetLocInNode(const Array<OneD, NekDouble> &coords)
 {
     // Different positions as bits in 'posByte'
     // MSB <==> LSB
