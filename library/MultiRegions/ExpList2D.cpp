@@ -140,7 +140,7 @@ namespace Nektar
             for (auto &inter : m_interfaces->GetInterfaces())
             {
                 auto interfacePair = inter.second;
-                if (interfacePair->GetRightInterface()->GetEdge().empty())
+                if (interfacePair->GetRightInterface()->GetEdge().empty() && false) // Disable interface separation as broken with MPI
                 {
                     interfacePair->SeparateGraph(m_graph);
                 }

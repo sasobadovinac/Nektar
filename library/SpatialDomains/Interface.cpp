@@ -213,6 +213,87 @@ void Interfaces::ReadInterfaces(TiXmlElement *interfaces)
     }
 }
 
+void Interfaces::CommSetup(LibUtilities::CommSharedPtr &comm)
+{
+    // myIndxLR contains the info about what interface edges are present on
+    // current rank with each interface no,  i,  consisting of:
+    // [i] = indx
+    // [i + 1] = 0 (non), = 1 (left only), = 2 (right only), = 3 (both)
+
+    Array<OneD, int> myIndxLR(m_interfaces.size() * 2, 0);
+    std::map<int, int> myIndxLRMap;
+    size_t cnt = 0;
+    for (const auto &interface : m_interfaces)
+    {
+        myIndxLR[2 * cnt] = interface.first;
+
+        if(!interface.second->GetLeftInterface()->IsEmpty())
+        {
+            myIndxLR[2 * cnt + 1] += 1;
+        }
+        if (!interface.second->GetRightInterface()->IsEmpty())
+        {
+            myIndxLR[2 * cnt + 1] += 2;
+        }
+
+        myIndxLRMap[interface.first] = myIndxLR[2 * cnt + 1];
+        cnt++;
+    }
+
+
+    //Send num of interfaces size so all partitions can prepare buffers
+    int nRanks = comm->GetSize();
+    Array<OneD, int> rankNumInterfaces(nRanks);
+    Array<OneD, int> localInterfaceSize(1, myIndxLR.size());
+    comm->AllGather(localInterfaceSize, rankNumInterfaces);
+
+    Array<OneD, int> rankLocalInterfaceDisp(nRanks, 0);
+    for (size_t i = 1; i < nRanks; ++i)
+    {
+        rankLocalInterfaceDisp[i] = rankLocalInterfaceDisp[i - 1] + rankNumInterfaces[i - 1];
+    }
+
+    Array<OneD, int> rankLocalInterfaceIds(
+        std::accumulate(rankNumInterfaces.begin(), rankNumInterfaces.end(), 0), 0);
+
+    // Send all interface IDs to all partitions
+    comm->AllGatherv(myIndxLR, rankLocalInterfaceIds, rankNumInterfaces,
+                     rankLocalInterfaceDisp);
+
+    // Find what interface Ids match with other ranks, then check if opposite edge
+    size_t myRank = comm->GetRank();
+    for (size_t i = 0; i < nRanks; ++i)
+    {
+        if (i == myRank)
+        {
+            continue;
+        }
+
+        for (size_t j = 0; j < rankNumInterfaces[i] / 2; ++j)
+        {
+            int otherId =
+                rankLocalInterfaceIds[rankLocalInterfaceDisp[i] + 2 * j];
+            int otherCode =
+                rankLocalInterfaceIds[rankLocalInterfaceDisp[i] + 2 * j + 1];
+            if (myIndxLRMap.find(otherId) != myIndxLRMap.end())
+            {
+                // Set interface opposite ranks
+                int myCode = myIndxLRMap[otherId];
+                if ((myCode == 1 && otherCode == 2) ||
+                    (myCode == 1 && otherCode == 3))
+                {
+                    m_interfaces[otherId]->GetLeftInterface()->AddOppRank(i);
+                }
+                else if ((myCode == 2 && otherCode == 1) ||
+                         (myCode == 2 && otherCode == 3))
+                {
+                    m_interfaces[otherId]->GetRightInterface()->AddOppRank(i);
+                }
+            }
+        }
+    }
+}
+
 void InterfacePair::SeparateGraph(MeshGraphSharedPtr &graph)
 {
     auto rightDomain   = m_rightInterface->GetDomain();

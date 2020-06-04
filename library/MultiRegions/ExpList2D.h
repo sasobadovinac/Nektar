@@ -39,7 +39,6 @@
 #include <vector>
 #include <MultiRegions/ExpList.h>
 #include <SpatialDomains/Conditions.h>
-#include <SpatialDomains/Interface.h>
 
 namespace Nektar
 {
@@ -133,8 +132,6 @@ namespace Nektar
             MULTI_REGIONS_EXPORT virtual ~ExpList2D();
 
         protected:
-            SpatialDomains::InterfacesSharedPtr m_interfaces;
-
             /// Upwind the \a Fwd and \a Bwd states based on the one-
             /// dimensional normal velocity field given by \a Vn.
             MULTI_REGIONS_EXPORT void v_Upwind(

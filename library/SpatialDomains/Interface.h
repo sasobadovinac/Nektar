@@ -65,49 +65,76 @@ struct InterfaceBase
     {
     }
 
-    InterfaceType GetInterfaceType() const
+    inline InterfaceType GetInterfaceType() const
     {
         return m_type;
     }
 
-    CompositeMap GetDomain() const
+    inline CompositeMap GetDomain() const
     {
         return m_domain;
     }
 
-    CompositeMap GetInterfaceEdge() const
+    inline CompositeMap GetInterfaceEdge() const
     {
         return m_interfaceEdge;
     }
 
-    void SetInterfaceEdge(const CompositeMap &interfaceEdge)
+    inline void SetInterfaceEdge(const CompositeMap &interfaceEdge)
     {
         m_interfaceEdge = interfaceEdge;
     }
 
-    std::map<int, SegGeomSharedPtr> const &GetEdge() const
+    inline std::map<int, SegGeomSharedPtr> const &GetEdge() const
     {
         return m_edge;
     }
 
-    std::vector<int> const &GetEdgeIds() const
+    inline std::vector<int> const &GetEdgeIds() const
     {
         return m_edgeIds;
     }
 
-    void SetEdge(const SegGeomSharedPtr &edge)
+    inline bool IsEmpty() const
+    {
+        return m_edge.empty();
+    }
+
+    inline void SetEdge(const SegGeomSharedPtr &edge)
     {
         m_edge[edge->GetGlobalID()] = edge;
     }
 
     void SetEdge(const CompositeMap &edge);
 
+    inline std::vector<int> GetOppRank()
+    {
+        return m_sharedWithRank;
+    }
+
+    inline void AddOppRank(int i)
+    {
+        m_sharedWithRank.emplace_back(i);
+    }
+
+    inline int GetTotPoints() const
+    {
+        return m_totQuadPts;
+    }
+
+    inline void SetTotPoints(int i)
+    {
+         m_totQuadPts = i;
+    }
+
 protected:
     InterfaceType m_type;
     CompositeMap m_domain;
     std::map<int, SegGeomSharedPtr> m_edge;
     std::vector<int> m_edgeIds;
+    int m_totQuadPts;
     CompositeMap m_interfaceEdge;
+    std::vector<int> m_sharedWithRank;
 };
 
 struct RotatingInterface : public InterfaceBase
@@ -120,17 +147,17 @@ struct RotatingInterface : public InterfaceBase
     {
     }
 
-    PointGeom GetOrigin() const
+    inline PointGeom GetOrigin() const
     {
         return m_origin;
     }
 
-    std::vector<NekDouble> GetAxis() const
+    inline std::vector<NekDouble> GetAxis() const
     {
         return m_axis;
     }
 
-    NekDouble GetAngularVel() const
+    inline NekDouble GetAngularVel() const
     {
         return m_angularVel;
     }
@@ -167,22 +194,22 @@ struct InterfacePair
     bool m_calcFlag = true;
 
 public:
-    const InterfaceBaseShPtr &GetLeftInterface() const
+    inline const InterfaceBaseShPtr &GetLeftInterface() const
     {
         return m_leftInterface;
     }
 
-    const InterfaceBaseShPtr &GetRightInterface() const
+    inline const InterfaceBaseShPtr &GetRightInterface() const
     {
         return m_rightInterface;
     }
 
-    bool GetCalcFlag()
+    inline bool GetCalcFlag()
     {
         return m_calcFlag;
     }
 
-    void SetCalcFlag(bool flag)
+    inline void SetCalcFlag(bool flag)
     {
         m_calcFlag = flag;
     }
@@ -204,16 +231,21 @@ public:
 
     SPATIAL_DOMAINS_EXPORT Interfaces() = default;
 
-    const InterfaceCollection &GetInterfaces() const
+    inline const InterfaceCollection &GetInterfaces() const
     {
         return m_interfaces;
     }
+
+    void CommSetup(LibUtilities::CommSharedPtr &comm);
 
 protected:
     /// The mesh graph to use for referencing geometry info.
     MeshGraphSharedPtr m_meshGraph;
     LibUtilities::SessionReaderSharedPtr m_session;
     InterfaceCollection m_interfaces;
+    /// Map of interface ID to ranks sharing that interface (on the other side)
+    std::map<int, std::vector<int>> m_interfacesSharedRank;
+
 
 private:
     /// Read segments (and general MeshGraph) given TiXmlDocument.

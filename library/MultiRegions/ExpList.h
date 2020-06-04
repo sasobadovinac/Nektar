@@ -52,6 +52,7 @@
 #include <MultiRegions/GlobalOptimizationParameters.h>
 #include <MultiRegions/AssemblyMap/AssemblyMap.h>
 #include <tinyxml.h>
+#include <SpatialDomains/Interface.h>
 
 namespace Nektar
 {
@@ -1083,6 +1084,8 @@ namespace Nektar
             MULTI_REGIONS_EXPORT inline const LocTraceToTraceMapSharedPtr 
                 &GetLocTraceToTraceMap() const;
         protected:
+            SpatialDomains::InterfacesSharedPtr m_interfaces;
+
             /// Definition of the total number of degrees of freedom and
             /// quadrature points and offsets to access data
             void SetCoeffPhysOffsets();

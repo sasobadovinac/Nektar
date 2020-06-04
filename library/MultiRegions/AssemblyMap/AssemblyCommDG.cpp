@@ -695,7 +695,6 @@ void AssemblyCommDG::InitialiseStructure(
 
     // Find what edge Ids match with other ranks
     size_t myRank = comm->GetRank();
-    Array<OneD, int> perTraceSend(m_nRanks, 0);
     for (size_t i = 0; i < m_nRanks; ++i)
     {
         if (i == myRank)
