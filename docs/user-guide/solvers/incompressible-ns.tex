@@ -602,10 +602,9 @@ proceed is by issuing the command:
 \end{lstlisting}
 
 where the value of \texttt{scale} corresponds to the coefficient $\xi$ in
-equation \eqref{spm:eq:mask}. More details can be found in the documentation of
-the \texttt{phifile} module~\ref{s:utilities:fieldconvert:sub:phifile}. In any
-case, it is important to remark that this functionality is still under
-development.
+equation \eqref{spm:eq:mask}. More details can be found in section
+\ref{s:utilities:fieldconvert:sub:phifile}. In any case, it is important to
+remark that this functionality is still under development.
 
 In the \inltt{ShapeFunction} block of the session file, the line
 \inltt{<E VAR="Phi" ... />} indicates that the immersed bodies are defined by
@@ -616,7 +615,9 @@ the function introduced in \inltt{VALUE}, while a line like the following:
 \end{lstlisting}
 
 must be used when the $\Phi$ field is defined in an \inltt{.stl} file
-previously converted to FLD format.
+previously converted to \inltt{.fld} format. In this case, the solver only
+supports non-moving geometries and the attribute
+\inltt{USERDEFINEDTYPE="TimeDependent"}, if specified, will not be used.
 
 \subsection{Direct solver (coupled approach)}
 \label{DirectSolv}

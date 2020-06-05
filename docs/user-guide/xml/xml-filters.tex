@@ -133,7 +133,7 @@ During the execution a file named \inltt{DragLift.fce} will be created and the
 value of the aerodynamic forces on boundaries 1 and 2, defined in the
 \inltt{GEOMETRY} section, will be output every 10 time steps.
 
-\subsubsection{Extension for the SPM formulation}
+\subsubsection{Extension for the SPM formulation}\label{filters:sub:ForcesSPM}
 
 \begin{notebox}
     This filter is only supported for the incompressible Navier-Stokes solver
@@ -179,7 +179,7 @@ For instance, a block like the following
 \end{lstlisting}
 
 will generate a file called \inltt{Forces.fce} with the values of the forces
-in the different coordinate axes, that must be scaled with the density of the
+in the ($X,Y,Z$) directions, that must be scaled with the density of the
 fluid to get the real values. It is important to remark that the computed
 values are the sum of all the boundaries defined by $\Phi$.
 

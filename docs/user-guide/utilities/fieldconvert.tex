@@ -1089,6 +1089,13 @@ To process the output file(s) you will need an xml file of the same region.
 \subsection{Calculating the shape function $\Phi$ for an SPM case:
 \textit{phifile} module}
 \label{s:utilities:fieldconvert:sub:phifile}
+
+\begin{notebox}
+    This module is in experimental phase and only runs in serial. When reading
+    3D geometries from \inltt{.stl} files, errors may occur if triangles are
+    placed exactly at $90^{\circ}$.
+\end{notebox}
+
 This FieldConvert module converts a binary \inltt{.stl} CAD file into
 \inltt{.fld} or \inltt{.vtu}/\inltt{.dat} files that can be used as inputs for
 the Smoothed Profile Method solver. Running the command:
