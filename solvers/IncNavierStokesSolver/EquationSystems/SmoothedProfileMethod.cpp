@@ -119,12 +119,15 @@ namespace Nektar
                     {
                         SetUpExpansions<ContField3D>(nvel);
                     }
-                    else if (m_HomogeneousType == EquationSystem::eHomogeneous1D)
+                    else if (m_HomogeneousType ==
+                             EquationSystem::eHomogeneous1D)
                     {
                         SetUpExpansions<ContField3DHomogeneous1D>(nvel);
                     }
-                    else if (m_HomogeneousType == EquationSystem::eHomogeneous2D
-                          || m_HomogeneousType == EquationSystem::eHomogeneous3D)
+                    else if (m_HomogeneousType ==
+                             EquationSystem::eHomogeneous2D ||
+                             m_HomogeneousType ==
+                             EquationSystem::eHomogeneous3D)
                     {
                         SetUpExpansions<ContField3DHomogeneous2D>(nvel);
                     }
@@ -135,12 +138,15 @@ namespace Nektar
                     {
                         SetUpExpansions<DisContField3D>(nvel);
                     }
-                    else if (m_HomogeneousType == EquationSystem::eHomogeneous1D)
+                    else if (m_HomogeneousType ==
+                             EquationSystem::eHomogeneous1D)
                     {
                         SetUpExpansions<DisContField3DHomogeneous1D>(nvel);
                     }
-                    else if (m_HomogeneousType == EquationSystem::eHomogeneous2D
-                          || m_HomogeneousType == EquationSystem::eHomogeneous3D)
+                    else if (m_HomogeneousType ==
+                             EquationSystem::eHomogeneous2D ||
+                             m_HomogeneousType ==
+                             EquationSystem::eHomogeneous3D)
                     {
                         SetUpExpansions<DisContField3DHomogeneous2D>(nvel);
                     }
@@ -226,7 +232,7 @@ namespace Nektar
      * @brief Linear terms due to pressure and visosity are calculated here.
      * After solving the velocity filed without taking into account the
      * immersed boundaries, a new correction is applied through the force
-     * \f[f_s\f]:
+     * \f$f_s\f$:
      *
      * \f[ \mathbf{f_s} = \frac{\Phi^{n+1}(\mathbf{u_p}-\mathbf{u^*})}
      * {\Delta t} \f]
@@ -281,7 +287,7 @@ namespace Nektar
 
     /**
      * @brief Sets the forcing term of the equation for the correction pressure
-     * \f[p_p\f]:
+     * \f$p_p\f$:
      *
      * \f[ \nabla\cdot\mathbf{f_s} \f]
      *
@@ -313,7 +319,7 @@ namespace Nektar
 
     /**
      * @brief Solves the Poisson equation for the correction pressure
-     * \f[p_p\f]:
+     * \f$p_p\f$:
      *
      * \f[ \nabla^2 p_p = \nabla\cdot\mathbf{f_s} \f]
      *
@@ -470,8 +476,8 @@ namespace Nektar
     }
 
     /**
-     * @brief For a body with a velocity \f[\mathbf{u_p}\f], the force
-     * \f[\mathbf{f_s}\f] applied to the fluid ensures that the IBC are met:
+     * @brief For a body with a velocity \f$\mathbf{u_p}\f$, the force
+     * \f$\mathbf{f_s}\f$ applied to the fluid ensures that the IBC are met:
      *
      * \f[ \mathbf{f_s} = \frac{\Phi^{n+1}\left(\mathbf{u_p}^{n+1} -
      * \mathbf{u^*}\right)}{\Delta t} \f]
@@ -640,9 +646,11 @@ namespace Nektar
             switch (m_velocity.size())
             {
                 case 3:
-                    m_timeDependentUp |= GetVarTimeDependence("ShapeFunction", "Wp");
+                    m_timeDependentUp |=
+                        GetVarTimeDependence("ShapeFunction", "Wp");
                 case 2:
-                    m_timeDependentUp |= GetVarTimeDependence("ShapeFunction", "Vp");
+                    m_timeDependentUp |=
+                        GetVarTimeDependence("ShapeFunction", "Vp");
             }
         }
     }

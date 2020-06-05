@@ -219,7 +219,7 @@ bool FilterAeroForcesSPM::v_IsTimeDependent()
 }
 
 /**
- * @brief Determine the total force on the body defined by \f[\Phi\f]
+ * @brief Determine the total force on the body defined by \f$\Phi\f$
  * (note that if the shape function represents more than one
  * body, this function calculates the value of the final force after adding
  * up the values for each body). This value must be scaled with the

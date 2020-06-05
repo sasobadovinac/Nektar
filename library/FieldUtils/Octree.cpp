@@ -122,7 +122,7 @@ Octree::Octree(const Array<OneD, Array<OneD, NekDouble> > &pts, int maxPts)
     }
 
     // Call the octree constructor
-    octree(pts, maxPts, bounds);
+    Octree(pts, maxPts, bounds);
 }
 
 /**
@@ -305,7 +305,7 @@ void Octree::AdvanceToStats(int nodeID)
 
 /**
  * @brief Once the nodes of the octree are created, sets their neighbours as
- * explained in 'octree::QueryNeighbours'
+ * explained in 'Octree::QueryNeighbours'
  *
  * @param nodeID
  */
@@ -351,7 +351,7 @@ void Octree::SetNeighbours(int nodeID)
 }
 
 /**
- * @brief Construct a new octree::octant object
+ * @brief Construct a new Octree::Octant object
  *
  */
 Octree::Octant::Octant() : m_nPts(-1), m_loc(-1), m_depth(-1), m_id(-1),
@@ -360,7 +360,7 @@ Octree::Octant::Octant() : m_nPts(-1), m_loc(-1), m_depth(-1), m_id(-1),
 }
 
 /**
- * @brief Construct a new octree::octant object
+ * @brief Construct a new Octree::Octant object
  *
  * @param loc
  * @param depth
@@ -404,7 +404,7 @@ Octree::Octant::Octant(int loc, int depth, int id,
 }
 
 /**
- * @brief Construct a new octree::octant object
+ * @brief Construct a new Octree::Octant object
  *
  * @param loc
  * @param parent

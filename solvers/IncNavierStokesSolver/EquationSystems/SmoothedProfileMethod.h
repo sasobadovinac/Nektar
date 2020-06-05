@@ -90,9 +90,9 @@ namespace Nektar
         Array<OneD, Array<OneD, NekDouble> > m_upPrev;
         /// Vector storing the names of the components of \u_p
         std::vector<std::string> m_velName;
-        /// Flag signaling if \f[\u_p\f] depends on time
+        /// Flag signaling if \f$\u_p\f$ depends on time
         bool m_timeDependentUp;
-        /// Stiffly-stable scheme \f[\gamma_0\f] coefficient
+        /// Stiffly-stable scheme \f$\gamma_0\f$ coefficient
         NekDouble m_gamma0;
         /// Forcing function 'f_s'
         Array<OneD, MultiRegions::ExpListSharedPtr> m_fs;
@@ -131,7 +131,8 @@ namespace Nektar
         // (only for non-moving boundaries)
         void UpdatePhiUp(NekDouble time);
         // Calculates the virtual force 'fs'
-        void UpdateForcing(const Array<OneD, const Array<OneD, NekDouble> > &fields,
+        void UpdateForcing(
+                    const Array<OneD, const Array<OneD, NekDouble> > &fields,
                     NekDouble dt);
         // Gets time-dependence information from the first elment of 'name'
         bool GetVarTimeDependence(std::string funcName,

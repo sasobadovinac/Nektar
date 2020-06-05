@@ -92,6 +92,9 @@ void ProcessPhiFromFile::Process(po::variables_map &vm)
     // Read Phi function from the session file...
     if (m_config["file"].as<string>().compare("NotSet") == 0)
     {
+        WARNINGL0(m_config["scale"].as<string>().compare("NotSet") == 0,
+                  "Reading Phi function from session file, the provided scale "
+                  "value will not be used");
         GetPhifromSession();
     }
     // ...or Read STL file and append Phi values to the existing expansions
@@ -401,7 +404,7 @@ bool ProcessPhiFromFile::CheckHit(const ProcessPhiFromFile::triangle &tri,
 }
 
 /**
- * @brief Calculates the shortest distance from a point \f[x\f] to the closed
+ * @brief Calculates the shortest distance from a point \f$x\f$ to the closed
  * body contained in the STL file
  *
  * @param file
@@ -513,7 +516,7 @@ void ProcessPhiFromFile::FindShortestDist(
 }
 
 /**
- * @brief Returns true if \f[x=y\f] within the relative tolerance 'relTol'
+ * @brief Returns true if \f$x=y\f$ within the relative tolerance 'relTol'
  * (relative to 'y')
  *
  * @param x
@@ -526,7 +529,7 @@ bool ProcessPhiFromFile::IsEqual(double x, double y, double relTol)
 }
 
 /**
- * @brief Returns true if \f[x<tol\f]
+ * @brief Returns true if \f$x<tol\f$
  *
  * @param x
  * @param relTol
