@@ -229,8 +229,9 @@ void Driver::v_InitObject(ostream &out)
                 m_session->SetTag("AdvectiveType","Convective");
                 m_equ[0] = GetEquationSystemFactory().CreateInstance(vEquation, m_session, m_graph);
                 int m_nCycles=m_nLevels-1;
-                // Array<OneD,int> ncoeffOffset(m_nCycles,-1);
-                // Array<OneD,int> nphyscOffset(m_nCycles,-1);
+                //To Do: tmpoffset, set in LoadParameter
+                Array<OneD,int> ncoeffOffset(m_nCycles,-1);
+                Array<OneD,int> nphyscOffset(m_nCycles,-1);
                 // Array<OneD, Array<OneD, int>> m_nHighLevelPoints(m_nCycles);
                 // Array<OneD, Array<OneD, int>>  m_nLowLevelPoints(m_nCycles);
                 // Array<OneD, Array<OneD, int>> m_nHighLevelCoeffs(m_nCycles);
