@@ -5,7 +5,7 @@ v5.1.0
 ------
 **Library**
 - Restructure library to use local coefficient storage down to the GlobalLinSys
-  level. Removed GlobalCeoffs functionality (!963)
+  level. Removed GlobalCoeffs functionality (!963)
 - Add interior penalty method to DG framework (!1101)
 - Add an error filter for the time-evolution of the L2 and Linf errors (!1147)
 
@@ -17,9 +17,15 @@ v5.1.0
 - Use base MPI functions instead of the GS library in the trace exchange
   for parallel DG simulations (!1112)
   num_elements with size() (!1127, !1137, !1141)
+- Add phifile module to compute shape functions for the SPM solver
 
 **CardiacEPSolver**
 - Added additional parameter sets to Fenton-Karma model (!1119)
+
+**IncNavierStokesSolver**
+- Add Smoothed Profile Method (SPM) for the formulation of immersed boundaries
+- Add new filter AeroForcesSPM to compute aerodynamic forces in immersed
+  boundaries
 
 **NekMesh**
 - Improved boundary layer splitting and output to CADfix (!938)

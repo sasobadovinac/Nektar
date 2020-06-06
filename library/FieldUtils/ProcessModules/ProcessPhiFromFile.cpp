@@ -79,9 +79,14 @@ void ProcessPhiFromFile::Process(po::variables_map &vm)
     // Ignore warnings due to 'vm'
     boost::ignore_unused(vm);
 
+    // Do not run in parallel
+    ASSERTL0(m_f->m_session->GetComm()->IsSerial(), "Parallel execution is "
+                                                    "not supported yet in "
+                                                    "this module.")
+
     // Check if required params are defined
     ASSERTL0(m_f->m_graph, "A session file file must be provided before the "
-                           "STL file.");
+                           "STL file.")
 
     // Skip in case of empty partition
     if (m_f->m_exp[0]->GetNumElmts() == 0)
