@@ -122,13 +122,6 @@ void Driver::v_InitObject(ostream &out)
 
         m_equ = Array<OneD, EquationSystemSharedPtr>(m_nequ);
 
-        
-        int TestLevel=2;
-        if(eMultiLevelCFS==m_EvolutionOperator)
-        {
-            m_equ = Array<OneD, EquationSystemSharedPtr>(TestLevel);
-        }
-
         // Set the AdvectiveType tag and create EquationSystem objects.
         switch (m_EvolutionOperator)
         {
@@ -195,26 +188,23 @@ void Driver::v_InitObject(ostream &out)
                 break;
             case eAdaptiveCFS:
             {
-                // Coupling SFD method and Arnoldi algorithm
-                // For having 2 equation systems defined into 2 different
-                // session files (with the mesh into a file named 'session'.gz)
                 m_session->SetTag("AdvectiveType","Convective");
                 m_equ[0] = GetEquationSystemFactory().CreateInstance(vEquation, m_session, m_graph);
                 string         TmpInputFile;
                 vector<string>  MultiOrderFilename;
-                //Because file name will change to FileName_xml/P0000000.xml, so return back to original name
+                //Notice, after partition, FileName_xml/P0000000.xml, 
                 for(int i=0;i<m_session->GetFilenames().size();i++)
                 {
                     TmpInputFile=m_session->GetFilenames()[i];
                     MultiOrderFilename.push_back(TmpInputFile);
                 }
 
-                MultiOrderSession= LibUtilities::SessionReader::CreateInstance(
+                LibUtilities::SessionReaderSharedPtr   MultiOrderSession= 
+                LibUtilities::SessionReader::CreateInstance(
                                 0, NULL, MultiOrderFilename, 
                                 m_session->GetComm());
                 int ncoeffOffset = 1;
                 int nphyscOffset = 0;
-                TmpInputFile=MultiOrderSession->GetSessionName();
                  SpatialDomains::MeshGraphSharedPtr MultiOrderGraph =
                  SpatialDomains::MeshGraph::Read(MultiOrderSession,
                         SpatialDomains::NullDomainRangeShPtr,
@@ -230,37 +220,81 @@ void Driver::v_InitObject(ostream &out)
                 break;
             case eMultiLevelCFS:
             {
-                // Coupling SFD method and Arnoldi algorithm
-                // For having 2 equation systems defined into 2 different
-                // session files (with the mesh into a file named 'session'.gz)
+                //To Do: design to read from m_session
+                int m_nLevels=2;
+                if(eMultiLevelCFS==m_EvolutionOperator)
+                {
+                    m_equ = Array<OneD, EquationSystemSharedPtr>(m_nLevels);
+                }
                 m_session->SetTag("AdvectiveType","Convective");
                 m_equ[0] = GetEquationSystemFactory().CreateInstance(vEquation, m_session, m_graph);
+                int m_nCycles=m_nLevels-1;
+                // Array<OneD,int> ncoeffOffset(m_nCycles,-1);
+                // Array<OneD,int> nphyscOffset(m_nCycles,-1);
+                // Array<OneD, Array<OneD, int>> m_nHighLevelPoints(m_nCycles);
+                // Array<OneD, Array<OneD, int>>  m_nLowLevelPoints(m_nCycles);
+                // Array<OneD, Array<OneD, int>> m_nHighLevelCoeffs(m_nCycles);
+                // Array<OneD, Array<OneD, int>>  m_nLowLevelCoeffs(m_nCycles);
+                Array<OneD,Array<OneD,DNekMatSharedPtr>> m_RestrictionMatrix(m_nCycles);
+                Array<OneD,Array<OneD,DNekMatSharedPtr>>m_ProlongationMatrix(m_nCycles);
+                // nHighLevelCoeffs  = Array<OneD, Array<OneD, int>>(nElmts);
+                // nLowLevelCoeffs   = Array<OneD, Array<OneD, int>>(nElmts);
+                // nHighLevelPoints  = Array<OneD, Array<OneD, int>>(nElmts);
+                // nLowLevelPoints   = Array<OneD, Array<OneD, int>>(nElmts);
+                // for(int k=0;k<nElmts;k++)
+                // {
+                //     nHighLevelCoeffs[k]     = Array<OneD, int>(nVcycles,0);
+                //     nLowLevelCoeffs[k]      = Array<OneD, int>(nVcycles,0);
+                //     nHighLevelPoints[k]     = Array<OneD, int>(nVcycles,0);
+                //     nLowLevelPoints[k]      = Array<OneD, int>(nVcycles,0);
+                // }
+                // m_RestrictionMatrix=Array<OneD,DNekMatSharedPtr>(nTotalMat);
+                // m_ProlongationMatrix=Array<OneD,DNekMatSharedPtr>(nTotalMat);
+
                 string         TmpInputFile;
                 vector<string>  MultiOrderFilename;
-                //Because file name will change to FileName_xml/P0000000.xml, so return back to original name
-                for(int i=0;i<m_session->GetFilenames().size();i++)
+                LibUtilities::SessionReaderSharedPtr  MultiOrderSession;
+                SpatialDomains::MeshGraphSharedPtr    MultiOrderGraph;
+                for(int k=0;k<m_nCycles;k++)
                 {
-                    TmpInputFile=m_session->GetFilenames()[i];
-                    MultiOrderFilename.push_back(TmpInputFile);
+                    //Notice, after partition, FileName_xml/P0000000.xml, 
+                    for(int i=0;i<m_session->GetFilenames().size();i++)
+                    {
+                        TmpInputFile=m_session->GetFilenames()[i];
+                        MultiOrderFilename.push_back(TmpInputFile);
+                    }
+
+                    MultiOrderSession= 
+                    LibUtilities::SessionReader::CreateInstance(
+                                    0, NULL, MultiOrderFilename, 
+                                    m_session->GetComm());
+
+                    MultiOrderGraph=
+                    SpatialDomains::MeshGraph::Read(MultiOrderSession,
+                            SpatialDomains::NullDomainRangeShPtr,
+                            true,
+                            m_graph->GetCompositeOrdering(),
+                            m_graph->GetBndRegionOrdering(), 
+                            ncoeffOffset[k], nphyscOffset[k]);
+
+                    MultiOrderSession->SetTag("AdvectiveType","Convective");
+                    m_equ[k+1] = GetEquationSystemFactory().CreateInstance(
+                        vEquation, MultiOrderSession, MultiOrderGraph);
+                    //To Do: operate in StdElement, to save memory, need to only store nType Element
+                    int nElmts=m_equ[k]->GetExpSize();
+                    m_RestrictionMatrix[k]=Array<OneD,DNekMatSharedPtr>(nElmts);
+                    m_ProlongationMatrix[k]=Array<OneD,DNekMatSharedPtr>(nElmts);
+                    for (int i=0;i<nElmts;i++)
+                    {
+                       int nHighOrderCoeffs=m_equ[k]->GetNcoeffs(i);
+                       int nLowOrderCoeffs=m_equ[k+1]->GetNcoeffs(i);
+                       m_RestrictionMatrix[k][i]=MemoryManager<DNekMat>::AllocateSharedPtr(nLowOrderCoeffs,nHighOrderCoeffs, eFULL, 0.0);
+                       m_ProlongationMatrix[k][i]=MemoryManager<DNekMat>::AllocateSharedPtr(nHighOrderCoeffs,nLowOrderCoeffs, eFULL, 0.0);
+                    }
+                
+
+
                 }
-
-                MultiOrderSession= LibUtilities::SessionReader::CreateInstance(
-                                0, NULL, MultiOrderFilename, 
-                                m_session->GetComm());
-                int ncoeffOffset = 1;
-                int nphyscOffset = 0;
-                TmpInputFile=MultiOrderSession->GetSessionName();
-                 SpatialDomains::MeshGraphSharedPtr MultiOrderGraph =
-                 SpatialDomains::MeshGraph::Read(MultiOrderSession,
-                        SpatialDomains::NullDomainRangeShPtr,
-                        true,
-                        m_graph->GetCompositeOrdering(),
-                        m_graph->GetBndRegionOrdering(), 
-                        ncoeffOffset, nphyscOffset);
-
-                MultiOrderSession->SetTag("AdvectiveType","Convective");
-                m_equ[1] = GetEquationSystemFactory().CreateInstance(
-                    vEquation, MultiOrderSession, MultiOrderGraph);
             }
                 break;
             default:

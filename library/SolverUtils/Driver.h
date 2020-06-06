@@ -110,8 +110,6 @@ protected:
     /// I the Coupling between SFD and arnoldi
     LibUtilities::SessionReaderSharedPtr        session_LinNS;
 
-    LibUtilities::SessionReaderSharedPtr        MultiOrderSession;
-
     /// MeshGraph object
     SpatialDomains::MeshGraphSharedPtr          m_graph;
 

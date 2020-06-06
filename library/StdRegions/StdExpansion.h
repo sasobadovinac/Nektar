@@ -1004,6 +1004,10 @@ namespace Nektar
 
             STD_REGIONS_EXPORT DNekMatSharedPtr CreateGeneralMatrix(const StdMatrixKey &mkey);
 
+            STD_REGIONS_EXPORT  void  CreateInterpolationMatrix(const LibUtilities::PointsKeyVector ExpansionKey,
+                                                                const DNekMatSharedPtr &InputMatrix,
+                                                                      DNekMatSharedPtr &OutputMatrix);
+
             STD_REGIONS_EXPORT void GeneralMatrixOp(const Array<OneD, const NekDouble> &inarray,
                                  Array<OneD,NekDouble> &outarray,
                                  const StdMatrixKey &mkey);
