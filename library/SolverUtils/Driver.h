@@ -99,10 +99,6 @@ public:
     SOLVER_UTILS_EXPORT Array<OneD, NekDouble> GetRealEvl(void);
     SOLVER_UTILS_EXPORT Array<OneD, NekDouble> GetImagEvl(void);
 
-    void PrintMatrix(DNekMatSharedPtr &Matrix);
-    
-    void OutputMatrix(DNekMatSharedPtr &Matrix);
-
 protected:
     /// Communication object
     LibUtilities::CommSharedPtr                 m_comm;
@@ -118,6 +114,9 @@ protected:
 
     /// Equation system to solve
     Array<OneD, EquationSystemSharedPtr>        m_equ;
+    
+    //For use of MultiLevel
+    int                                         m_nLevels;
 
     ///number of equations
     int m_nequ;

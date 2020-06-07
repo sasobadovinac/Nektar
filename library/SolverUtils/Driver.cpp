@@ -221,7 +221,6 @@ void Driver::v_InitObject(ostream &out)
             case eMultiLevelCFS:
             {
                 //Design to read from m_session
-                int m_nLevels;
                 m_session->LoadParameter("NumLevels", m_nLevels, 1);
                 if(eMultiLevelCFS==m_EvolutionOperator)
                 {
@@ -229,14 +228,15 @@ void Driver::v_InitObject(ostream &out)
                 }
                 m_session->SetTag("AdvectiveType","Convective");
                 m_equ[0] = GetEquationSystemFactory().CreateInstance(vEquation, m_session, m_graph);
-                int m_nCycles=m_nLevels-1;
+                int nCycles=m_nLevels-1;
                 //CoeOffset and QuadOffset defined in m_session LoadParameter, set in LoadParameter
-                Array<OneD,int> ncoeffOffset(m_nCycles);
-                Array<OneD,int> nphyscOffset(m_nCycles);
+                Array<OneD,int> ncoeffOffset(nCycles);
+                Array<OneD,int> nphyscOffset(nCycles);
                 stringstream stream;
                 std::string str,MultiLevelCoeffOffsetstr,MultiLevelQuadOffsetstr;
+                //To Do: cannot only consider the first element
                 int nMaxCoeffs=m_equ[0]->GetNcoeffs(0);
-                for(int k=0;k<m_nCycles;k++)
+                for(int k=0;k<nCycles;k++)
                 {
                    stream.clear();
                    stream<<k;
@@ -251,16 +251,12 @@ void Driver::v_InitObject(ostream &out)
                        ASSERTL0(false,"Currently, Cannot MultiLevel to Mode<2");
                    }
                 }  
- 
-
-                Array<OneD,Array<OneD,DNekMatSharedPtr>> m_RestrictionMatrix(m_nCycles);
-                Array<OneD,Array<OneD,DNekMatSharedPtr>>m_ProlongationMatrix(m_nCycles);
 
                 string         TmpInputFile;
                 vector<string>  MultiOrderFilename;
                 LibUtilities::SessionReaderSharedPtr  MultiOrderSession;
                 SpatialDomains::MeshGraphSharedPtr    MultiOrderGraph;
-                for(int k=0;k<m_nCycles;k++)
+                for(int k=0;k<nCycles;k++)
                 {
                     //Notice, after partition, FileName_xml/P0000000.xml, 
                     for(int i=0;i<m_session->GetFilenames().size();i++)
@@ -285,37 +281,6 @@ void Driver::v_InitObject(ostream &out)
                     MultiOrderSession->SetTag("AdvectiveType","Convective");
                     m_equ[k+1] = GetEquationSystemFactory().CreateInstance(
                         vEquation, MultiOrderSession, MultiOrderGraph);
-                    //To Do: operate in StdElement, to save memory, need to only store nType Element
-                    int nElmts=m_equ[k]->GetExpSize();
-                    m_RestrictionMatrix[k]=Array<OneD,DNekMatSharedPtr>(nElmts);
-                    m_ProlongationMatrix[k]=Array<OneD,DNekMatSharedPtr>(nElmts);
-                    for (int i=0;i<nElmts;i++)
-                    {
-                        LocalRegions::ExpansionSharedPtr LowerOrderExpansion=m_equ[k+1]->GetExp(i);
-                        LocalRegions::ExpansionSharedPtr HigherOrderExpansion=m_equ[k]->GetExp(i);
-                        int nHighOrderCoeffs=m_equ[k]->GetNcoeffs(i);
-                        int nLowOrderCoeffs=m_equ[k+1]->GetNcoeffs(i);
-                        m_RestrictionMatrix[k][i]=MemoryManager<DNekMat>::AllocateSharedPtr(nLowOrderCoeffs,nHighOrderCoeffs, eFULL, 0.0);
-                        m_ProlongationMatrix[k][i]=MemoryManager<DNekMat>::AllocateSharedPtr(nHighOrderCoeffs,nLowOrderCoeffs, eFULL, 0.0);
-                        LibUtilities::PointsKeyVector HigherOrderExpansionKeys,LowerOrderExpansionKeys;
-                        LowerOrderExpansionKeys=LowerOrderExpansion->GetPointsKeys();
-                        HigherOrderExpansionKeys=HigherOrderExpansion->GetPointsKeys();
-                        StdRegions::StdMatrixKey LowerOrderMatKey(StdRegions::eBwdTrans,
-                                                LowerOrderExpansion->DetShapeType(),
-                                                *(LowerOrderExpansion));
-                        DNekMatSharedPtr LowerOrderBwdMat = LowerOrderExpansion->GetStdMatrix(LowerOrderMatKey);
-                        StdRegions::StdMatrixKey HigherOrderMatKey(StdRegions::eBwdTrans,
-                                                HigherOrderExpansion->DetShapeType(),
-                                                *(HigherOrderExpansion));
-                        DNekMatSharedPtr HigherOrderBwdMat = HigherOrderExpansion->GetStdMatrix(HigherOrderMatKey);
-                        LowerOrderExpansion->CreateInterpolationMatrix(HigherOrderExpansionKeys,HigherOrderBwdMat,m_RestrictionMatrix[k][i]);
-                        HigherOrderExpansion->CreateInterpolationMatrix(LowerOrderExpansionKeys,LowerOrderBwdMat,m_ProlongationMatrix[k][i]);
-                        //  cout<<"RestrictionMatrix["<<k<<"]["<<i<<"]"<<endl;
-                        // PrintMatrix(m_RestrictionMatrix[k][i]);
-                        // cout<<"ProlongationMatrix["<<k<<"]["<<i<<"]"<<endl;
-                        // PrintMatrix(m_ProlongationMatrix[k][i]);
-                    
-                    }
                 }
             }
                 break;
@@ -341,40 +306,6 @@ Array<OneD, NekDouble> Driver::v_GetImagEvl(void)
 {
     ASSERTL0(false,"This routine is not valid in this class");
     return NullNekDouble1DArray;
-}
-
-void Driver::PrintMatrix(DNekMatSharedPtr &Matrix)
-{
-    int nrows                = Matrix->GetRows();
-    int ncols                = Matrix->GetColumns();
-    MatrixStorage matStorage = Matrix->GetStorageType();
-    for (int i = 0; i < nrows; i++)
-    {
-
-        for (int j = 0; j < ncols; j++)
-        {
-            cout << setprecision(1)  << i  << "    " << j 
-                    << "     " << setprecision(16) << (*Matrix)(i, j) << endl;
-        }
-    
-    }
-}
-
-void Driver::OutputMatrix(DNekMatSharedPtr &Matrix)
-{
-    int rows = Matrix->GetRows();
-    int cols = Matrix->GetColumns();
-    ofstream outfile1;
-    outfile1.open("./Matrix.txt");
-    for (int i = 0; i < rows; i++)
-    {
-        for (int j = 0; j < cols; j++)
-        {
-            outfile1 << i+1<< "     " << j+1  << "    "
-                    << std::setprecision(16) << (*Matrix)(i, j) << endl;
-        }
-    }
-    outfile1.close();
 }
 
 }

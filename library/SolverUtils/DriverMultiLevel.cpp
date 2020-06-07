@@ -87,6 +87,48 @@ namespace Nektar
         void DriverMultiLevel::v_InitObject(ostream &out)
         {
             Driver::v_InitObject(out);
+            int nCycles=m_nLevels-1;
+
+            Array<OneD,Array<OneD,DNekMatSharedPtr>> m_RestrictionMatrix(nCycles);
+            Array<OneD,Array<OneD,DNekMatSharedPtr>>m_ProlongationMatrix(nCycles);
+
+            for(int k=0;k<nCycles;k++)
+            {
+
+                //To Do: operate in StdElement, to save memory, need to only store nType Element
+                int nElmts=m_equ[k]->GetExpSize();
+                m_RestrictionMatrix[k]=Array<OneD,DNekMatSharedPtr>(nElmts);
+                m_ProlongationMatrix[k]=Array<OneD,DNekMatSharedPtr>(nElmts);
+                for (int i=0;i<nElmts;i++)
+                {
+                    LocalRegions::ExpansionSharedPtr LowerOrderExpansion=m_equ[k+1]->GetExp(i);
+                    LocalRegions::ExpansionSharedPtr HigherOrderExpansion=m_equ[k]->GetExp(i);
+                    int nHighOrderCoeffs=m_equ[k]->GetNcoeffs(i);
+                    int nLowOrderCoeffs=m_equ[k+1]->GetNcoeffs(i);
+                    m_RestrictionMatrix[k][i]=MemoryManager<DNekMat>::AllocateSharedPtr(nLowOrderCoeffs,nHighOrderCoeffs, eFULL, 0.0);
+                    m_ProlongationMatrix[k][i]=MemoryManager<DNekMat>::AllocateSharedPtr(nHighOrderCoeffs,nLowOrderCoeffs, eFULL, 0.0);
+                    LibUtilities::PointsKeyVector HigherOrderExpansionKeys,LowerOrderExpansionKeys;
+                    LowerOrderExpansionKeys=LowerOrderExpansion->GetPointsKeys();
+                    HigherOrderExpansionKeys=HigherOrderExpansion->GetPointsKeys();
+                    StdRegions::StdMatrixKey LowerOrderMatKey(StdRegions::eBwdTrans,
+                                            LowerOrderExpansion->DetShapeType(),
+                                            *(LowerOrderExpansion));
+                    DNekMatSharedPtr LowerOrderBwdMat = LowerOrderExpansion->GetStdMatrix(LowerOrderMatKey);
+                    StdRegions::StdMatrixKey HigherOrderMatKey(StdRegions::eBwdTrans,
+                                            HigherOrderExpansion->DetShapeType(),
+                                            *(HigherOrderExpansion));
+                    DNekMatSharedPtr HigherOrderBwdMat = HigherOrderExpansion->GetStdMatrix(HigherOrderMatKey);
+                    LowerOrderExpansion->CreateInterpolationMatrix(HigherOrderExpansionKeys,HigherOrderBwdMat,m_RestrictionMatrix[k][i]);
+                    HigherOrderExpansion->CreateInterpolationMatrix(LowerOrderExpansionKeys,LowerOrderBwdMat,m_ProlongationMatrix[k][i]);
+                    // cout<<"RestrictionMatrix["<<k<<"]["<<i<<"]"<<endl;
+                    // OutputMatrix(m_RestrictionMatrix[k][i]);
+                    // cout<<"ProlongationMatrix["<<k<<"]["<<i<<"]"<<endl;
+                    // OutputMatrix(m_ProlongationMatrix[k][i]);
+                
+                }
+            }
+
+
             m_driverOperator.DefineMultiOrderProjection(&Driver::DoMultiOrderProjection, this);
             m_driverOperator.DefineMultiOrderOdeRhs(&Driver::DoMultiOrderOdeRhs, this);
             m_equ[0]->SetdriverOperator(m_driverOperator);
@@ -149,6 +191,40 @@ namespace Nektar
                         << vLinfError << endl;
                 }
             }
+        }
+        
+        void DriverMultiLevel::PrintMatrix(DNekMatSharedPtr &Matrix)
+        {
+            int nrows                = Matrix->GetRows();
+            int ncols                = Matrix->GetColumns();
+            MatrixStorage matStorage = Matrix->GetStorageType();
+            for (int i = 0; i < nrows; i++)
+            {
+
+                for (int j = 0; j < ncols; j++)
+                {
+                    cout << setprecision(1)  << i  << "    " << j 
+                            << "     " << setprecision(16) << (*Matrix)(i, j) << endl;
+                }
+            
+            }
+        }
+
+        void DriverMultiLevel::OutputMatrix(DNekMatSharedPtr &Matrix)
+        {
+            int rows = Matrix->GetRows();
+            int cols = Matrix->GetColumns();
+            ofstream outfile1;
+            outfile1.open("./Matrix.txt");
+            for (int i = 0; i < rows; i++)
+            {
+                for (int j = 0; j < cols; j++)
+                {
+                    outfile1 << i+1<< "     " << j+1  << "    "
+                            << std::setprecision(16) << (*Matrix)(i, j) << endl;
+                }
+            }
+            outfile1.close();
         }
     }
 }

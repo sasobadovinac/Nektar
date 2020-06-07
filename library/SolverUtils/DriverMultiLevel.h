@@ -57,6 +57,10 @@ namespace Nektar
                 p->InitObject();
                 return p;
             }
+
+            void PrintMatrix(DNekMatSharedPtr &Matrix);
+    
+            void OutputMatrix(DNekMatSharedPtr &Matrix);
 	
             ///Name of the class
             static std::string className;
