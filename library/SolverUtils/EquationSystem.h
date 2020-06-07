@@ -279,6 +279,8 @@ class Interpolator;
             SOLVER_UTILS_EXPORT inline int GetTraceNpoints();
             
             SOLVER_UTILS_EXPORT inline int GetExpSize();
+
+            SOLVER_UTILS_EXPORT inline LocalRegions::ExpansionSharedPtr & GetExp(int ElmtId);
             
             SOLVER_UTILS_EXPORT inline int GetPhys_Offset(int n);
             
@@ -725,6 +727,11 @@ class Interpolator;
         inline Array<OneD, MultiRegions::ExpListSharedPtr> &EquationSystem::UpdateFields(void)
         {
             return m_fields;
+        }
+
+        inline LocalRegions::ExpansionSharedPtr &EquationSystem::GetExp(int ElmtId)
+        {
+            return m_fields[0]->GetExp(ElmtId); 
         }
         
         /// Return final time

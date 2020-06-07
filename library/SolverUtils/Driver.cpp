@@ -287,14 +287,26 @@ void Driver::v_InitObject(ostream &out)
                     m_ProlongationMatrix[k]=Array<OneD,DNekMatSharedPtr>(nElmts);
                     for (int i=0;i<nElmts;i++)
                     {
-                       int nHighOrderCoeffs=m_equ[k]->GetNcoeffs(i);
-                       int nLowOrderCoeffs=m_equ[k+1]->GetNcoeffs(i);
-                       m_RestrictionMatrix[k][i]=MemoryManager<DNekMat>::AllocateSharedPtr(nLowOrderCoeffs,nHighOrderCoeffs, eFULL, 0.0);
-                       m_ProlongationMatrix[k][i]=MemoryManager<DNekMat>::AllocateSharedPtr(nHighOrderCoeffs,nLowOrderCoeffs, eFULL, 0.0);
+                        LocalRegions::ExpansionSharedPtr LowerOrderExpansion=m_equ[k+1]->GetExp(i);
+                        LocalRegions::ExpansionSharedPtr HigherOrderExpansion=m_equ[k]->GetExp(i);
+                        int nHighOrderCoeffs=m_equ[k]->GetNcoeffs(i);
+                        int nLowOrderCoeffs=m_equ[k+1]->GetNcoeffs(i);
+                        m_RestrictionMatrix[k][i]=MemoryManager<DNekMat>::AllocateSharedPtr(nLowOrderCoeffs,nHighOrderCoeffs, eFULL, 0.0);
+                        m_ProlongationMatrix[k][i]=MemoryManager<DNekMat>::AllocateSharedPtr(nHighOrderCoeffs,nLowOrderCoeffs, eFULL, 0.0);
+                        LibUtilities::PointsKeyVector HigherOrderExpansionKeys,LowerOrderExpansionKeys;
+                        LowerOrderExpansionKeys=LowerOrderExpansion->GetPointsKeys();
+                        HigherOrderExpansionKeys=HigherOrderExpansion->GetPointsKeys();
+                        StdRegions::StdMatrixKey LowerOrderMatKey(StdRegions::eBwdTrans,
+                                                LowerOrderExpansion->DetShapeType(),
+                                                *(LowerOrderExpansion));
+                        DNekMatSharedPtr LowerOrderBwdMat = LowerOrderExpansion->GetStdMatrix(LowerOrderMatKey);
+                        StdRegions::StdMatrixKey HigherOrderMatKey(StdRegions::eBwdTrans,
+                                                HigherOrderExpansion->DetShapeType(),
+                                                *(HigherOrderExpansion));
+                        DNekMatSharedPtr HigherOrderBwdMat = HigherOrderExpansion->GetStdMatrix(HigherOrderMatKey);
+                        LowerOrderExpansion->CreateInterpolationMatrix(HigherOrderExpansionKeys,HigherOrderBwdMat,m_RestrictionMatrix[k][i]);
+                        HigherOrderExpansion->CreateInterpolationMatrix(LowerOrderExpansionKeys,LowerOrderBwdMat,m_ProlongationMatrix[k][i]);
                     }
-                
-
-
                 }
             }
                 break;
