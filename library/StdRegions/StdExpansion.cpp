@@ -623,7 +623,7 @@ namespace Nektar
                     ASSERTL0(false,"Undefined dimension");
                 }
 
-                for(int m=0;m<InputMatrix->GetRows();m++)
+                for(int m=0;m<GetTotPoints();m++)
                 {
                     (*tmpMatrix)(m,n)=tmp2[m];
                 }

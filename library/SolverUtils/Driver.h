@@ -99,6 +99,9 @@ public:
     SOLVER_UTILS_EXPORT Array<OneD, NekDouble> GetRealEvl(void);
     SOLVER_UTILS_EXPORT Array<OneD, NekDouble> GetImagEvl(void);
 
+    void PrintMatrix(DNekMatSharedPtr &Matrix);
+    
+    void OutputMatrix(DNekMatSharedPtr &Matrix);
 
 protected:
     /// Communication object

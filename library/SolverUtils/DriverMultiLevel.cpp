@@ -102,7 +102,6 @@ namespace Nektar
             m_equ[0]->PrintSummary(out);
 
             time(&starttime);
-            ASSERTL0(m_equ[0]->GetNpoints()==m_equ[1]->GetNpoints(),"Quad Points Not the Same");
             m_equ[0]->DoInitialise();   
             // m_driver.DefineMultiOrderOdeRhs(&m_equ[1]->GetDoOdeObj().DoOdeRhs,this);
             m_equ[0]->DoSolve();

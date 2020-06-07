@@ -220,8 +220,9 @@ void Driver::v_InitObject(ostream &out)
                 break;
             case eMultiLevelCFS:
             {
-                //To Do: design to read from m_session
-                int m_nLevels=2;
+                //Design to read from m_session
+                int m_nLevels;
+                m_session->LoadParameter("NumLevels", m_nLevels, 1);
                 if(eMultiLevelCFS==m_EvolutionOperator)
                 {
                     m_equ = Array<OneD, EquationSystemSharedPtr>(m_nLevels);
@@ -229,28 +230,31 @@ void Driver::v_InitObject(ostream &out)
                 m_session->SetTag("AdvectiveType","Convective");
                 m_equ[0] = GetEquationSystemFactory().CreateInstance(vEquation, m_session, m_graph);
                 int m_nCycles=m_nLevels-1;
-                //To Do: tmpoffset, set in LoadParameter
-                Array<OneD,int> ncoeffOffset(m_nCycles,-1);
-                Array<OneD,int> nphyscOffset(m_nCycles,-1);
-                // Array<OneD, Array<OneD, int>> m_nHighLevelPoints(m_nCycles);
-                // Array<OneD, Array<OneD, int>>  m_nLowLevelPoints(m_nCycles);
-                // Array<OneD, Array<OneD, int>> m_nHighLevelCoeffs(m_nCycles);
-                // Array<OneD, Array<OneD, int>>  m_nLowLevelCoeffs(m_nCycles);
+                //CoeOffset and QuadOffset defined in m_session LoadParameter, set in LoadParameter
+                Array<OneD,int> ncoeffOffset(m_nCycles);
+                Array<OneD,int> nphyscOffset(m_nCycles);
+                stringstream stream;
+                std::string str,MultiLevelCoeffOffsetstr,MultiLevelQuadOffsetstr;
+                int nMaxCoeffs=m_equ[0]->GetNcoeffs(0);
+                for(int k=0;k<m_nCycles;k++)
+                {
+                   stream.clear();
+                   stream<<k;
+                   stream>>str;
+                   MultiLevelCoeffOffsetstr="MultiLevelCoeffOffset"+str;
+                   MultiLevelQuadOffsetstr="MultiLevelQuadOffset"+str;
+                   m_session->LoadParameter(MultiLevelCoeffOffsetstr, ncoeffOffset[k], 0); 
+                   //Default the same reduce as Modes
+                   m_session->LoadParameter(MultiLevelQuadOffsetstr, nphyscOffset[k], ncoeffOffset[k]);   
+                   if(nMaxCoeffs+ncoeffOffset[k]<2)
+                   {
+                       ASSERTL0(false,"Currently, Cannot MultiLevel to Mode<2");
+                   }
+                }  
+ 
+
                 Array<OneD,Array<OneD,DNekMatSharedPtr>> m_RestrictionMatrix(m_nCycles);
                 Array<OneD,Array<OneD,DNekMatSharedPtr>>m_ProlongationMatrix(m_nCycles);
-                // nHighLevelCoeffs  = Array<OneD, Array<OneD, int>>(nElmts);
-                // nLowLevelCoeffs   = Array<OneD, Array<OneD, int>>(nElmts);
-                // nHighLevelPoints  = Array<OneD, Array<OneD, int>>(nElmts);
-                // nLowLevelPoints   = Array<OneD, Array<OneD, int>>(nElmts);
-                // for(int k=0;k<nElmts;k++)
-                // {
-                //     nHighLevelCoeffs[k]     = Array<OneD, int>(nVcycles,0);
-                //     nLowLevelCoeffs[k]      = Array<OneD, int>(nVcycles,0);
-                //     nHighLevelPoints[k]     = Array<OneD, int>(nVcycles,0);
-                //     nLowLevelPoints[k]      = Array<OneD, int>(nVcycles,0);
-                // }
-                // m_RestrictionMatrix=Array<OneD,DNekMatSharedPtr>(nTotalMat);
-                // m_ProlongationMatrix=Array<OneD,DNekMatSharedPtr>(nTotalMat);
 
                 string         TmpInputFile;
                 vector<string>  MultiOrderFilename;
@@ -306,6 +310,11 @@ void Driver::v_InitObject(ostream &out)
                         DNekMatSharedPtr HigherOrderBwdMat = HigherOrderExpansion->GetStdMatrix(HigherOrderMatKey);
                         LowerOrderExpansion->CreateInterpolationMatrix(HigherOrderExpansionKeys,HigherOrderBwdMat,m_RestrictionMatrix[k][i]);
                         HigherOrderExpansion->CreateInterpolationMatrix(LowerOrderExpansionKeys,LowerOrderBwdMat,m_ProlongationMatrix[k][i]);
+                        //  cout<<"RestrictionMatrix["<<k<<"]["<<i<<"]"<<endl;
+                        // PrintMatrix(m_RestrictionMatrix[k][i]);
+                        // cout<<"ProlongationMatrix["<<k<<"]["<<i<<"]"<<endl;
+                        // PrintMatrix(m_ProlongationMatrix[k][i]);
+                    
                     }
                 }
             }
@@ -332,6 +341,40 @@ Array<OneD, NekDouble> Driver::v_GetImagEvl(void)
 {
     ASSERTL0(false,"This routine is not valid in this class");
     return NullNekDouble1DArray;
+}
+
+void Driver::PrintMatrix(DNekMatSharedPtr &Matrix)
+{
+    int nrows                = Matrix->GetRows();
+    int ncols                = Matrix->GetColumns();
+    MatrixStorage matStorage = Matrix->GetStorageType();
+    for (int i = 0; i < nrows; i++)
+    {
+
+        for (int j = 0; j < ncols; j++)
+        {
+            cout << setprecision(1)  << i  << "    " << j 
+                    << "     " << setprecision(16) << (*Matrix)(i, j) << endl;
+        }
+    
+    }
+}
+
+void Driver::OutputMatrix(DNekMatSharedPtr &Matrix)
+{
+    int rows = Matrix->GetRows();
+    int cols = Matrix->GetColumns();
+    ofstream outfile1;
+    outfile1.open("./Matrix.txt");
+    for (int i = 0; i < rows; i++)
+    {
+        for (int j = 0; j < cols; j++)
+        {
+            outfile1 << i+1<< "     " << j+1  << "    "
+                    << std::setprecision(16) << (*Matrix)(i, j) << endl;
+        }
+    }
+    outfile1.close();
 }
 
 }
