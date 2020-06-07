@@ -333,10 +333,13 @@ void Advection::Advect_coeff(
     Array<OneD, Array<OneD, NekDouble> >              &pOutarray,
     const NekDouble                                   &pTime,
     const Array<OneD, Array<OneD, NekDouble> >        &pFwd,
-    const Array<OneD, Array<OneD, NekDouble> >        &pBwd)
+    const Array<OneD, Array<OneD, NekDouble> >        &pBwd,
+    const bool                                       flagFreezeJac)
 {
+    m_flagFreezeJac  = flagFreezeJac;
     v_Advect_coeff(nConvectiveFields, pFields, pAdvVel, pInarray,
             pOutarray, pTime, pFwd, pBwd);
+    m_flagFreezeJac  = false;
 }
 
 /**
@@ -389,8 +392,8 @@ void Advection::v_Advect_coeff(
         const Array<OneD, Array<OneD, NekDouble> >        &inarray,
               Array<OneD, Array<OneD, NekDouble> >        &outarray,
         const NekDouble                                   &time,
-        const Array<OneD, Array<OneD, NekDouble> > &pFwd,
-        const Array<OneD, Array<OneD, NekDouble> > &pBwd)
+        const Array<OneD, Array<OneD, NekDouble> >          &pFwd,
+        const Array<OneD, Array<OneD, NekDouble> >          &pBwd)
         {
             ASSERTL0(false, "v_Advect_coeff no defined");
         }

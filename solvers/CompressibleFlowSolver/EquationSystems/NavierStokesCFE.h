@@ -155,11 +155,12 @@ namespace Nektar
             const Array<OneD, Array<OneD, NekDouble> >   &pFwd,
             const Array<OneD, Array<OneD, NekDouble> >   &pBwd);
     virtual void v_DoDiffusion_coeff(
-        const Array<OneD, const Array<OneD, NekDouble> > &inarray,
-               Array<OneD,       Array<OneD, NekDouble> > &outarray,
-            const Array<OneD, Array<OneD, NekDouble> >   &pFwd,
-            const Array<OneD, Array<OneD, NekDouble> >   &pBwd);
-
+        const Array<OneD, const Array<OneD, NekDouble> >    &inarray,
+        Array<OneD,       Array<OneD, NekDouble> >          &outarray,
+        const Array<OneD, Array<OneD, NekDouble> >          &pFwd,
+        const Array<OneD, Array<OneD, NekDouble> >          &pBwd,
+        const bool                                          flagFreezeJac);
+    
     virtual void v_DoDiffusionFlux(
             const Array<OneD, const Array<OneD, NekDouble> > &inarray,
             Array<OneD, Array<OneD, Array<OneD, NekDouble>>> &VolumeFlux,
@@ -194,7 +195,7 @@ namespace Nektar
     void C0Smooth(Array<OneD, NekDouble> &field);
 
 #ifdef DEMO_IMPLICITSOLVER_JFNK_COEFF
-  virtual void v_MinusDiffusionFluxJacDirctn(
+    virtual void v_MinusDiffusionFluxJacDirctn(
         const int                                                       nDirctn,
         const Array<OneD, const Array<OneD, NekDouble> >                &inarray,
         const Array<OneD, const Array<OneD, Array<OneD, NekDouble>> >   &qfields,
@@ -209,6 +210,12 @@ namespace Nektar
             const Array<OneD, NekDouble>                                    &normals,
             DNekMatSharedPtr                                                &wspMat,
             Array<OneD, Array<OneD, NekDouble> >                            &PntJacArray);
+    
+    virtual void v_MinusDiffusionFluxJacDirctnMat(
+            const int                                                       nDirctn,
+            const Array<OneD, const Array<OneD, NekDouble> >                &inarray,
+            const Array<OneD, const Array<OneD, Array<OneD, NekDouble>> >   &qfields,
+            Array<OneD, Array<OneD, DNekBlkMatSharedPtr > >                 &ElmtFluxJacArray);
 
     virtual void v_GetFluxDerivJacDirctn(
         const MultiRegions::ExpListSharedPtr                            &explist,
@@ -234,7 +241,6 @@ namespace Nektar
         const int                                                       nDervDir,
         const Array<OneD, const Array<OneD, NekDouble> >                &inarray,
               Array<OneD, Array<OneD, DNekMatSharedPtr> >               &ElmtJac);
-
 
     virtual void v_GetDiffusionFluxJacPoint(
             const Array<OneD, NekDouble>                        &conservVar, 

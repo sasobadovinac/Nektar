@@ -67,6 +67,13 @@ namespace Nektar
                 const Array<OneD, const Array<OneD, NekDouble> > &Fwd,
                 const Array<OneD, const Array<OneD, NekDouble> > &Bwd,
                       Array<OneD,       Array<OneD, NekDouble> > &flux);
+            SOLVER_UTILS_EXPORT void Solve(
+                const int                                         nDim,
+                const Array<OneD, const Array<OneD, NekDouble> > &FwdJ,
+                const Array<OneD, const Array<OneD, NekDouble> > &BwdJ,
+                const Array<OneD, const Array<OneD, NekDouble> > &Fwd ,
+                const Array<OneD, const Array<OneD, NekDouble> > &Bwd ,
+                    Array<OneD,       Array<OneD, NekDouble> > &flux) ;
 
             template<typename FuncPointerT, typename ObjectPointerT>
             void SetScalar(std::string    name,
@@ -176,6 +183,14 @@ namespace Nektar
                 const Array<OneD, const Array<OneD, NekDouble> > &Fwd,
                 const Array<OneD, const Array<OneD, NekDouble> > &Bwd,
                       Array<OneD,       Array<OneD, NekDouble> > &flux) = 0;
+            
+            virtual void v_Solve(
+                const int                                         nDim,
+                const Array<OneD, const Array<OneD, NekDouble> > &FwdJ,
+                const Array<OneD, const Array<OneD, NekDouble> > &BwdJ,
+                const Array<OneD, const Array<OneD, NekDouble> > &Fwd ,
+                const Array<OneD, const Array<OneD, NekDouble> > &Bwd ,
+                    Array<OneD,       Array<OneD, NekDouble> > &flux) ;
 
             void GenerateRotationMatrices(
                 const Array<OneD, const Array<OneD, NekDouble> > &normals);

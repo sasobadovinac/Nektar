@@ -58,6 +58,12 @@ typedef std::function<void (
     Array<OneD, Array<OneD, Array<OneD, NekDouble> > >&)>
     AdvectionFluxVecCB;
 
+typedef std::function<void (
+    const Array<OneD, Array<OneD, NekDouble> >&,
+    const Array<OneD, Array<OneD, NekDouble> >&,
+    Array<OneD, Array<OneD, NekDouble> >&)>
+    AdvectionFluxVecCBTraceNormal;
+
 /**
  * @brief An abstract base class encapsulating the concept of advection
  * of a vector field.
@@ -121,7 +127,9 @@ public:
         Array<OneD, Array<OneD, NekDouble> >              &outarray,
         const NekDouble                                   &time,
         const Array<OneD, Array<OneD, NekDouble> > &pFwd = NullNekDoubleArrayofArray,
-        const Array<OneD, Array<OneD, NekDouble> > &pBwd = NullNekDoubleArrayofArray);
+        const Array<OneD, Array<OneD, NekDouble> > &pBwd = NullNekDoubleArrayofArray,
+        const bool                                       flagFreezeJac=false);
+
 
     /**
      * @brief Set the flux vector callback function.
@@ -135,6 +143,20 @@ public:
     {
         m_fluxVector = std::bind(
             func, obj, std::placeholders::_1, std::placeholders::_2);
+    }
+
+    template<typename FuncPointerT, typename ObjectPointerT>
+    void SetFluxVectorMF(FuncPointerT func, ObjectPointerT obj)
+    {
+        m_fluxVectorMF = std::bind(
+            func, obj, std::placeholders::_1, std::placeholders::_2);
+    }
+
+    template<typename FuncPointerT, typename ObjectPointerT>
+    void SetFluxVectorTraceMF(FuncPointerT func, ObjectPointerT obj)
+    {
+        m_fluxVectortraceMF = std::bind(
+            func, obj, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
     }
 
     /**
@@ -233,6 +255,11 @@ public:
         v_NumCalRiemFluxJac(nConvectiveFields,fields,AdvVel,inarray,pFwd,pBwd,FJac,BJac);
     }
 
+    SOLVER_UTILS_EXPORT RiemannSolverSharedPtr GetRiemann()
+    {
+        return m_riemann;
+    }
+
     void CoutBlkMat(
         DNekBlkMatSharedPtr &gmtx, 
         const unsigned int nwidthcolm=12);
@@ -263,10 +290,13 @@ protected:
     /// Callback function to the flux vector (set when advection is in
     /// conservative form).
     AdvectionFluxVecCB     m_fluxVector;
+    AdvectionFluxVecCB     m_fluxVectorMF;
+    AdvectionFluxVecCBTraceNormal m_fluxVectortraceMF;
     /// Riemann solver for DG-type schemes.
     RiemannSolverSharedPtr m_riemann;
     /// Storage for space dimension. Used for homogeneous extension.
     int                    m_spaceDim;
+    bool                   m_flagFreezeJac = false;
 
     /// Initialises the advection object.
     SOLVER_UTILS_EXPORT virtual void v_InitObject(
@@ -314,7 +344,7 @@ protected:
         const Array<OneD, Array<OneD, NekDouble> > &pFwd = NullNekDoubleArrayofArray,
         const Array<OneD, Array<OneD, NekDouble> > &pBwd = NullNekDoubleArrayofArray);
 
-    
+        
 
     /// Overrides the base flow used during linearised advection
     SOLVER_UTILS_EXPORT virtual void v_SetBaseFlow(
