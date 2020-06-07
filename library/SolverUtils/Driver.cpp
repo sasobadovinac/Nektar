@@ -253,34 +253,34 @@ void Driver::v_InitObject(ostream &out)
                 }  
 
                 string         TmpInputFile;
-                vector<string>  MultiOrderFilename;
-                LibUtilities::SessionReaderSharedPtr  MultiOrderSession;
-                SpatialDomains::MeshGraphSharedPtr    MultiOrderGraph;
+                vector<string>  MultiLevelFilename;
+                LibUtilities::SessionReaderSharedPtr  MultiLevelSession;
+                SpatialDomains::MeshGraphSharedPtr    MultiLevelGraph;
                 for(int k=0;k<nCycles;k++)
                 {
                     //Notice, after partition, FileName_xml/P0000000.xml, 
                     for(int i=0;i<m_session->GetFilenames().size();i++)
                     {
                         TmpInputFile=m_session->GetFilenames()[i];
-                        MultiOrderFilename.push_back(TmpInputFile);
+                        MultiLevelFilename.push_back(TmpInputFile);
                     }
 
-                    MultiOrderSession= 
+                    MultiLevelSession= 
                     LibUtilities::SessionReader::CreateInstance(
-                                    0, NULL, MultiOrderFilename, 
+                                    0, NULL, MultiLevelFilename, 
                                     m_session->GetComm());
 
-                    MultiOrderGraph=
-                    SpatialDomains::MeshGraph::Read(MultiOrderSession,
+                    MultiLevelGraph=
+                    SpatialDomains::MeshGraph::Read(MultiLevelSession,
                             SpatialDomains::NullDomainRangeShPtr,
                             true,
                             m_graph->GetCompositeOrdering(),
                             m_graph->GetBndRegionOrdering(), 
                             ncoeffOffset[k], nphyscOffset[k]);
 
-                    MultiOrderSession->SetTag("AdvectiveType","Convective");
+                    MultiLevelSession->SetTag("AdvectiveType","Convective");
                     m_equ[k+1] = GetEquationSystemFactory().CreateInstance(
-                        vEquation, MultiOrderSession, MultiOrderGraph);
+                        vEquation, MultiLevelSession, MultiLevelGraph);
                 }
             }
                 break;

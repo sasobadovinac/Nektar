@@ -66,6 +66,10 @@ namespace Nektar
             static std::string className;
 
         protected:
+            Array<OneD,Array<OneD,DNekMatSharedPtr>>    m_RestrictionMatrix;
+
+            Array<OneD,Array<OneD,DNekMatSharedPtr>>    m_ProlongationMatrix;
+
             /// Constructor
             SOLVER_UTILS_EXPORT DriverMultiLevel(
                 const LibUtilities::SessionReaderSharedPtr pSession,

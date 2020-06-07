@@ -87,10 +87,12 @@ namespace Nektar
         void DriverMultiLevel::v_InitObject(ostream &out)
         {
             Driver::v_InitObject(out);
+            
+            //Define Restriction and Prolongation Matrix
             int nCycles=m_nLevels-1;
 
-            Array<OneD,Array<OneD,DNekMatSharedPtr>> m_RestrictionMatrix(nCycles);
-            Array<OneD,Array<OneD,DNekMatSharedPtr>>m_ProlongationMatrix(nCycles);
+            m_RestrictionMatrix=Array<OneD,Array<OneD,DNekMatSharedPtr>> (nCycles);
+            m_ProlongationMatrix=Array<OneD,Array<OneD,DNekMatSharedPtr>>(nCycles);
 
             for(int k=0;k<nCycles;k++)
             {
@@ -101,25 +103,25 @@ namespace Nektar
                 m_ProlongationMatrix[k]=Array<OneD,DNekMatSharedPtr>(nElmts);
                 for (int i=0;i<nElmts;i++)
                 {
-                    LocalRegions::ExpansionSharedPtr LowerOrderExpansion=m_equ[k+1]->GetExp(i);
-                    LocalRegions::ExpansionSharedPtr HigherOrderExpansion=m_equ[k]->GetExp(i);
-                    int nHighOrderCoeffs=m_equ[k]->GetNcoeffs(i);
-                    int nLowOrderCoeffs=m_equ[k+1]->GetNcoeffs(i);
-                    m_RestrictionMatrix[k][i]=MemoryManager<DNekMat>::AllocateSharedPtr(nLowOrderCoeffs,nHighOrderCoeffs, eFULL, 0.0);
-                    m_ProlongationMatrix[k][i]=MemoryManager<DNekMat>::AllocateSharedPtr(nHighOrderCoeffs,nLowOrderCoeffs, eFULL, 0.0);
-                    LibUtilities::PointsKeyVector HigherOrderExpansionKeys,LowerOrderExpansionKeys;
-                    LowerOrderExpansionKeys=LowerOrderExpansion->GetPointsKeys();
-                    HigherOrderExpansionKeys=HigherOrderExpansion->GetPointsKeys();
-                    StdRegions::StdMatrixKey LowerOrderMatKey(StdRegions::eBwdTrans,
-                                            LowerOrderExpansion->DetShapeType(),
-                                            *(LowerOrderExpansion));
-                    DNekMatSharedPtr LowerOrderBwdMat = LowerOrderExpansion->GetStdMatrix(LowerOrderMatKey);
-                    StdRegions::StdMatrixKey HigherOrderMatKey(StdRegions::eBwdTrans,
-                                            HigherOrderExpansion->DetShapeType(),
-                                            *(HigherOrderExpansion));
-                    DNekMatSharedPtr HigherOrderBwdMat = HigherOrderExpansion->GetStdMatrix(HigherOrderMatKey);
-                    LowerOrderExpansion->CreateInterpolationMatrix(HigherOrderExpansionKeys,HigherOrderBwdMat,m_RestrictionMatrix[k][i]);
-                    HigherOrderExpansion->CreateInterpolationMatrix(LowerOrderExpansionKeys,LowerOrderBwdMat,m_ProlongationMatrix[k][i]);
+                    LocalRegions::ExpansionSharedPtr LowerLevelExpansion=m_equ[k+1]->GetExp(i);
+                    LocalRegions::ExpansionSharedPtr HigherLevelExpansion=m_equ[k]->GetExp(i);
+                    int nHighLevelCoeffs=m_equ[k]->GetNcoeffs(i);
+                    int nLowLevelCoeffs=m_equ[k+1]->GetNcoeffs(i);
+                    m_RestrictionMatrix[k][i]=MemoryManager<DNekMat>::AllocateSharedPtr(nLowLevelCoeffs,nHighLevelCoeffs, eFULL, 0.0);
+                    m_ProlongationMatrix[k][i]=MemoryManager<DNekMat>::AllocateSharedPtr(nHighLevelCoeffs,nLowLevelCoeffs, eFULL, 0.0);
+                    LibUtilities::PointsKeyVector HigherLevelExpansionKeys,LowerLevelExpansionKeys;
+                    LowerLevelExpansionKeys=LowerLevelExpansion->GetPointsKeys();
+                    HigherLevelExpansionKeys=HigherLevelExpansion->GetPointsKeys();
+                    StdRegions::StdMatrixKey LowerLevelMatKey(StdRegions::eBwdTrans,
+                                            LowerLevelExpansion->DetShapeType(),
+                                            *(LowerLevelExpansion));
+                    DNekMatSharedPtr LowerLevelBwdMat = LowerLevelExpansion->GetStdMatrix(LowerLevelMatKey);
+                    StdRegions::StdMatrixKey HigherLevelMatKey(StdRegions::eBwdTrans,
+                                            HigherLevelExpansion->DetShapeType(),
+                                            *(HigherLevelExpansion));
+                    DNekMatSharedPtr HigherLevelBwdMat = HigherLevelExpansion->GetStdMatrix(HigherLevelMatKey);
+                    LowerLevelExpansion->CreateInterpolationMatrix(HigherLevelExpansionKeys,HigherLevelBwdMat,m_RestrictionMatrix[k][i]);
+                    HigherLevelExpansion->CreateInterpolationMatrix(LowerLevelExpansionKeys,LowerLevelBwdMat,m_ProlongationMatrix[k][i]);
                     // cout<<"RestrictionMatrix["<<k<<"]["<<i<<"]"<<endl;
                     // OutputMatrix(m_RestrictionMatrix[k][i]);
                     // cout<<"ProlongationMatrix["<<k<<"]["<<i<<"]"<<endl;
