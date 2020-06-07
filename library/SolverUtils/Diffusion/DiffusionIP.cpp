@@ -95,13 +95,6 @@ namespace Nektar
             TraceMap->UniversalTraceAssemble(lengthFwd);
             TraceMap->UniversalTraceAssemble(lengthBwd);
 
-            // for(int i=0;i<nTracePts;i++)
-            // {
-            //     if(lengthBwd[i]<0.0)
-            //     {
-            //         lengthBwd[i] = lengthFwd[i];
-            //     }
-            // }
             Array<OneD, NekDouble>  lengthsum(nTracePts,0.0);
             Array<OneD, NekDouble>  lengthmul(nTracePts,0.0);
             Vmath::Vadd(nTracePts,lengthBwd,1,lengthFwd,1,lengthsum,1);

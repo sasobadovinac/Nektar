@@ -423,7 +423,6 @@ namespace Nektar
             m_DEBUG_VISCOUS_TRACE_DERIV_JAC_MAT = true;
         }
 
-        
 #ifdef CFS_DEBUGMODE
         m_session->LoadParameter("DebugAdvDiffSwitch",                 m_DebugAdvDiffSwitch      ,    0);
         m_session->LoadParameter("DebugVolTraceSwitch",                m_DebugVolTraceSwitch     ,    0);
@@ -596,6 +595,7 @@ namespace Nektar
                             &TraceFlux1[i][0], 1);
                 m_fields[i]->AddTraceIntegral(TraceFlux1[i], tmp);
                 m_fields[i]->MultiplyByElmtInvMass(tmp, tmp);
+        
                 m_fields[i]->BwdTrans(tmp, outarray[i]);
             }
 
@@ -704,7 +704,6 @@ namespace Nektar
         return;
     }
 
-    
     template<typename DataType, typename TypeNekBlkMatSharedPtr>
     void CompressibleFlowSystem::preconditioner_BlkDiag(
         const Array<OneD, NekDouble>                                &inarray,

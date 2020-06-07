@@ -474,7 +474,7 @@ namespace Nektar
                     E_CEIL,   E_COS,   E_COSH,  E_EXP,   E_FABS,  E_FLOOR,
                     E_LOG,    E_LOG10, E_POW,   E_RAD,   E_SIN,   E_SINH,
                     E_SQRT,   E_TAN,   E_TANH,  E_SIGN,  E_AWGN,  E_BESSEL,
-		    E_BLAU,   E_BLAV,  E_BLAT,  E_HUMP
+                    E_BLAU,   E_BLAV,  E_BLAT,  E_HUMP
             };
 
 

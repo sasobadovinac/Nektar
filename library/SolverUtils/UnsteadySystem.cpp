@@ -336,7 +336,7 @@ namespace Nektar
                 m_calcuPhysicalAV = true;
 
                 // Frozen preconditioner checks
-                if(    (m_CalcuPrecMatCounter>=m_PrcdMatFreezNumb)
+                if ((m_CalcuPrecMatCounter>=m_PrcdMatFreezNumb)
                     ||(m_time + m_timestep > m_fintime && m_fintime > 0.0)
                     ||(m_checktime && m_time + m_timestep - lastCheckTime >= m_checktime))
                 {
