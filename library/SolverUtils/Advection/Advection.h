@@ -260,6 +260,36 @@ public:
         return m_riemann;
     }
 
+    SOLVER_UTILS_EXPORT bool GetCalcTracePartFlag() const
+    {
+        return m_CalcTracePartFlag;
+    }
+
+    SOLVER_UTILS_EXPORT void SetCalcTracePartFlag(bool in)
+    {
+        m_CalcTracePartFlag = in;
+    }
+
+    SOLVER_UTILS_EXPORT bool GetCalcVolumPartFlag() const
+    {
+        return m_CalcVolumPartFlag;
+    }
+
+    SOLVER_UTILS_EXPORT void SetCalcVolumPartFlag(bool in)
+    {
+        m_CalcVolumPartFlag = in;
+    }
+
+    SOLVER_UTILS_EXPORT bool GetMultipInvmassFlag() const
+    {
+        return m_MultipInvmassFlag;
+    }
+
+    SOLVER_UTILS_EXPORT void SetMultipInvmassFlag(bool in)
+    {
+        m_MultipInvmassFlag = in;
+    }
+
     void CoutBlkMat(
         DNekBlkMatSharedPtr &gmtx, 
         const unsigned int nwidthcolm=12);
@@ -297,6 +327,10 @@ protected:
     /// Storage for space dimension. Used for homogeneous extension.
     int                    m_spaceDim;
     bool                   m_flagFreezeJac = false;
+
+    bool                   m_CalcTracePartFlag = true;
+    bool                   m_CalcVolumPartFlag = true;
+    bool                   m_MultipInvmassFlag = true;
 
     /// Initialises the advection object.
     SOLVER_UTILS_EXPORT virtual void v_InitObject(

@@ -1131,6 +1131,13 @@ namespace Nektar
                 const   Array<OneD, const  Array<OneD, NekDouble> >&inarray,
                 Array<OneD, DNekMatSharedPtr> &mtxPerVar);
 
+            inline void AddTraceIntegralToDiag(
+                const Array<OneD, const NekDouble> &FwdFlux, 
+                const Array<OneD, const NekDouble> &BwdFlux, 
+                      Array<OneD,       NekDouble> &outarray)
+            {
+                v_AddTraceIntegralToDiag(FwdFlux,BwdFlux,outarray);
+            }
             inline void AddTraceIntegralToOffDiag(
                 const Array<OneD, const NekDouble> &FwdFlux, 
                 const Array<OneD, const NekDouble> &BwdFlux, 
@@ -1756,6 +1763,10 @@ namespace Nektar
 
             virtual std::shared_ptr<ExpList> &v_GetPlane(int n);
 #ifdef DEMO_IMPLICITSOLVER_JFNK_COEFF
+            virtual void v_AddTraceIntegralToDiag(
+                const Array<OneD, const NekDouble> &FwdFlux, 
+                const Array<OneD, const NekDouble> &BwdFlux, 
+                      Array<OneD,       NekDouble> &outarray);
             virtual void v_AddTraceIntegralToOffDiag(
                 const Array<OneD, const NekDouble> &FwdFlux, 
                 const Array<OneD, const NekDouble> &BwdFlux, 

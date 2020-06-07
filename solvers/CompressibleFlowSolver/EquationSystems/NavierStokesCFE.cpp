@@ -247,6 +247,9 @@ namespace Nektar
 
             break;
         }
+
+        m_diffusion->SetCalcTracePartFlag( m_CalcTracePartFlag);
+        m_diffusion->SetCalcVolumPartFlag( m_CalcVolumPartFlag);
     }
 
     void NavierStokesCFE::v_ExtraFldOutput(

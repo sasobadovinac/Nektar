@@ -3738,6 +3738,13 @@ namespace Nektar
             }
         }
 
+        void ExpList::v_AddTraceIntegralToDiag(
+                const Array<OneD, const NekDouble> &FwdFlux, 
+                const Array<OneD, const NekDouble> &BwdFlux, 
+                      Array<OneD,       NekDouble> &outarray)
+        {
+            ASSERTL0(false,"AddTraceIntegralToDiag not defined");
+        }
         void ExpList::v_AddTraceIntegralToOffDiag(
                 const Array<OneD, const NekDouble> &FwdFlux, 
                 const Array<OneD, const NekDouble> &BwdFlux, 

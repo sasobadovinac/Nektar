@@ -193,15 +193,7 @@ namespace Nektar
                 }
             }
 
-            Array<OneD, Array<OneD, Array<OneD, NekDouble> > > qfield(nDim);
-            for (j = 0; j < nDim; ++j)
-            {
-                qfield[j]       = Array<OneD, Array<OneD, NekDouble> >(nConvectiveFields);
-                for (i = 0; i < nConvectiveFields; ++i)
-                {
-                    qfield[j][i] = Array<OneD, NekDouble>(nPts, 0.0);
-                }
-            }
+            Array<OneD, Array<OneD, Array<OneD, NekDouble> > > qfield;
             DiffuseCalculateDerivative(nConvectiveFields,fields,inarray,qfield,vFwd,vBwd);
 
             Array<OneD, int > nonZeroIndex;
@@ -232,6 +224,11 @@ namespace Nektar
             int nTracePts = fields[0]->GetTrace()->GetTotPoints();
 
             Array<OneD, Array<OneD, Array<OneD, NekDouble> > > elmtFlux(nDim);
+            
+#ifdef CFS_DEBUGMODE
+            if(2!=m_DebugVolTraceSwitch)
+            {
+#endif
             for (j = 0; j < nDim; ++j)
             {
                 elmtFlux[j]     = Array<OneD, Array<OneD, NekDouble> >(nConvectiveFields);
@@ -240,14 +237,8 @@ namespace Nektar
                     elmtFlux[j][i]   = Array<OneD, NekDouble>(nPts, 0.0);
                 }
             }
-#ifdef CFS_DEBUGMODE
-            if(2!=m_DebugVolTraceSwitch)
-            {
-#endif
+
             DiffuseVolumeFlux(nConvectiveFields,fields,inarray,qfield,elmtFlux,nonZeroIndex);
-#ifdef CFS_DEBUGMODE
-            }
-#endif
 
             //TODO: TO GET TRACE QFIELD FIRST AND RELEASE qfield. AddDiffusionSymmFluxToCoeff DON'T NEED qfield
             Array<OneD, Array<OneD, NekDouble> > tmpFluxIprdct(nDim);
@@ -262,25 +253,21 @@ namespace Nektar
                 fields[j]->IProductWRTDerivBase(tmpFluxIprdct,outarray[j]);
                 Vmath::Neg                      (nCoeffs, outarray[j], 1);
             }
-
+#ifdef CFS_DEBUGMODE
+            }
+#endif
+            
+#ifdef CFS_DEBUGMODE
+            if(1!=m_DebugVolTraceSwitch)
+            {
+#endif
             Array<OneD, Array<OneD, NekDouble > > Traceflux(nConvectiveFields);
             for (int j = 0; j < nConvectiveFields; ++j)
             {
                 Traceflux[j]   = Array<OneD, NekDouble>(nTracePts, 0.0);
             }
-#ifdef CFS_DEBUGMODE
-            if(1!=m_DebugVolTraceSwitch)
-            {
-#endif
+
             DiffuseTraceFlux(nConvectiveFields,fields,inarray,qfield,elmtFlux,Traceflux,vFwd,vBwd,nonZeroIndex);
-#ifdef CFS_DEBUGMODE
-            }
-#endif
-            // release qfield, elmtFlux and muvar;
-            for (j = 0; j < nDim; ++j)
-            {
-                elmtFlux[j]     = NullNekDoubleArrayofArray;
-            }
 
             for(i = 0; i < nonZeroIndex.num_elements(); ++i)
             {
@@ -289,10 +276,6 @@ namespace Nektar
                 fields[j]->AddTraceIntegral     (Traceflux[j], outarray[j]);
                 fields[j]->SetPhysState         (false);
             }
-#ifdef CFS_DEBUGMODE
-            if(1!=m_DebugVolTraceSwitch)
-            {
-#endif
             AddDiffusionSymmFluxToCoeff(nConvectiveFields, fields, inarray,qfield,elmtFlux, outarray, vFwd, vBwd);
 #ifdef CFS_DEBUGMODE
             }
@@ -308,6 +291,20 @@ namespace Nektar
             const Array<OneD, Array<OneD, NekDouble> >                  &pBwd)
         {
             int nDim      = fields[0]->GetCoordim(0);
+            int nPts      = fields[0]->GetTotPoints();
+            
+            if (0 == qfield.num_elements())
+            {
+                qfield = Array<OneD, Array<OneD, Array<OneD, NekDouble> > >(nDim);
+                for (int j = 0; j < nDim; ++j)
+                {
+                    qfield[j]       = Array<OneD, Array<OneD, NekDouble> >(nConvectiveFields);
+                    for (int i = 0; i < nConvectiveFields; ++i)
+                    {
+                        qfield[j][i] = Array<OneD, NekDouble>(nPts, 0.0);
+                    }
+                }   
+            }
 
             Array<OneD, Array<OneD, NekDouble> > qtmp(3);
             for(int nd=0; nd<3; nd++)

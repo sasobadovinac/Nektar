@@ -113,6 +113,9 @@ namespace Nektar
         bool                                m_DEBUG_ADVECTION_JAC_MAT;
         bool                                m_centralDiffTracJac;
 
+        bool                                m_CalcTracePartFlag;
+        bool                                m_CalcVolumPartFlag;
+
 #ifdef CFS_DEBUGMODE
        // 1: Adv; 2: Dif; Default: all
         int                                 m_DebugAdvDiffSwitch; 

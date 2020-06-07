@@ -2747,6 +2747,19 @@ using namespace std;
 //             DisContField3D::v_PeriodicBwdCopy(Fwd,Bwd);
 
 
+        void DisContField3D::v_AddTraceIntegralToDiag(
+            const Array<OneD, const NekDouble> &FwdFlux, 
+            const Array<OneD, const NekDouble> &BwdFlux, 
+                  Array<OneD,       NekDouble> &outarray)
+        {
+            Array<OneD, NekDouble> FCoeffs(m_trace->GetNcoeffs());
+
+            m_trace->IProductWRTBase(FwdFlux,FCoeffs);
+            m_locTraceToTraceMap->AddTraceCoeffsToFieldCoeffs(0,FCoeffs,outarray);
+            m_trace->IProductWRTBase(BwdFlux,FCoeffs);
+            m_locTraceToTraceMap->AddTraceCoeffsToFieldCoeffs(1,FCoeffs,outarray);
+        }
+        
         void DisContField3D::v_AddTraceIntegralToOffDiag(
             const Array<OneD, const NekDouble> &FwdFlux, 
             const Array<OneD, const NekDouble> &BwdFlux, 

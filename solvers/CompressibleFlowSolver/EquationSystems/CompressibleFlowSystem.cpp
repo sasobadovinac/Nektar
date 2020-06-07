@@ -448,6 +448,25 @@ namespace Nektar
         {
             m_centralDiffTracJac = true;
         }
+
+        m_CalcTracePartFlag = true;
+        m_CalcVolumPartFlag = true;
+        switch (m_DebugVolTraceSwitch)
+        {
+        case 1:
+            {
+                m_CalcTracePartFlag = false;
+            }
+            break;
+        case 2:
+            {
+                m_CalcVolumPartFlag = false;
+            }
+            break;
+        }
+
+        m_advObject->SetCalcTracePartFlag( m_CalcTracePartFlag);
+        m_advObject->SetCalcVolumPartFlag( m_CalcVolumPartFlag);
 #endif
     }
 
@@ -1237,7 +1256,7 @@ namespace Nektar
             m_fields[i]->AddTraceIntegralToOffDiag       (FwdFlux[i],BwdFlux[i], outarray[i]);
             // m_fields[i]->MultiplyByElmtInvMass          (outarray[i], outarray[i]);
         }
-              for(int i = 0; i < nvariables; ++i)
+        for(int i = 0; i < nvariables; ++i)
         {
             Vmath::Svtvp(nCoeffs,-m_TimeIntegLambda,outarray[i],1,inarray[i],1,outarray[i],1);
         }
