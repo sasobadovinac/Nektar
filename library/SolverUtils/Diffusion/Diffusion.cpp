@@ -69,7 +69,7 @@ namespace Nektar
             v_Diffuse(nConvectiveFields, fields, inarray, outarray, pFwd, pBwd);
         }
 
-        void Diffusion::Diffuse_coeff(
+        void Diffusion::DiffuseCoeff(
             const int nConvectiveFields,
             const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
             const Array<OneD, Array<OneD, NekDouble> >        &inarray,
@@ -77,7 +77,8 @@ namespace Nektar
             const Array<OneD, Array<OneD, NekDouble> >        &pFwd,
             const Array<OneD, Array<OneD, NekDouble> >        &pBwd)
         {
-            v_Diffuse_coeff(nConvectiveFields, fields, inarray, outarray, pFwd, pBwd);
+            v_DiffuseCoeff(nConvectiveFields, fields, inarray, outarray, 
+                            pFwd, pBwd);
         }
 
         void Diffusion::Diffuse(
@@ -93,7 +94,7 @@ namespace Nektar
             v_Diffuse(nConvectiveFields, fields, inarray, outarray, pFwd, pBwd);
         }
 
-        void Diffusion::Diffuse_coeff(
+        void Diffusion::DiffuseCoeff(
             const int nConvectiveFields,
             const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
             const Array<OneD, Array<OneD, NekDouble> >        &inarray,
@@ -105,7 +106,46 @@ namespace Nektar
         {
             m_time  =    time;
             m_flagFreezeJac = flagFreezeJac;
-            v_Diffuse_coeff(nConvectiveFields, fields, inarray, outarray, pFwd, pBwd);
+            v_DiffuseCoeff(nConvectiveFields, fields, inarray, outarray, 
+                            pFwd, pBwd);
+            m_flagFreezeJac = false;
+        }
+
+        SOLVER_UTILS_EXPORT void Diffusion::DiffuseCoeffVol(
+            const int                                          nConvectiveFields,
+            const Array<OneD, MultiRegions::ExpListSharedPtr>  &fields,
+            const Array<OneD, Array<OneD, NekDouble> >         &inarray,
+            Array<OneD, Array<OneD, Array<OneD, NekDouble> > > &qfield,
+            Array<OneD, Array<OneD, NekDouble> >               &outarray,
+            NekDouble                                         time,
+            Array<OneD, Array<OneD, Array<OneD, NekDouble> > > &elmtFlux,
+            Array< OneD, int >                                 &nonZeroIndex,
+            const bool                                         flagFreezeJac)
+        {
+            m_time  =    time;
+            m_flagFreezeJac = flagFreezeJac;
+            v_DiffuseCoeffVol(nConvectiveFields, fields, inarray, qfield, 
+                            outarray, elmtFlux, nonZeroIndex);
+            m_flagFreezeJac = false;
+        }
+
+        SOLVER_UTILS_EXPORT void Diffusion::DiffuseCoeffTrac(
+            const int                                          nConvectiveFields,
+            const Array<OneD, MultiRegions::ExpListSharedPtr>  &fields,
+            const Array<OneD, Array<OneD, NekDouble> >         &inarray,
+            Array<OneD, Array<OneD, NekDouble> >               &outarray,
+            NekDouble                                         time,
+            const Array<OneD, Array<OneD, NekDouble> >         &vFwd,
+            const Array<OneD, Array<OneD, NekDouble> >         &vBwd,
+            Array<OneD, Array<OneD, Array<OneD, NekDouble> > > &qfield,
+            Array<OneD, Array<OneD, Array<OneD, NekDouble> > > &elmtFlux,
+            Array< OneD, int >                                 &nonZeroIndex,
+            const bool                                         flagFreezeJac)
+        {
+            m_time  =    time;
+            m_flagFreezeJac = flagFreezeJac;
+            v_DiffuseCoeffTrac(nConvectiveFields, fields, inarray, outarray, 
+                            vFwd, vBwd, qfield, elmtFlux, nonZeroIndex);
             m_flagFreezeJac = false;
         }
         void Diffusion::GetAVmu(
@@ -168,18 +208,18 @@ namespace Nektar
             }
         }
         
-        void Diffusion::v_Diffuse_coeff(
+        void Diffusion::v_DiffuseCoeff(
             const int nConvectiveFields,
             const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
             const Array<OneD, Array<OneD, NekDouble> >        &inarray,
                   Array<OneD, Array<OneD, NekDouble> >        &outarray,
-            const Array<OneD, Array<OneD, NekDouble> > &pFwd,
-            const Array<OneD, Array<OneD, NekDouble> > &pBwd)
+            const Array<OneD, Array<OneD, NekDouble> >        &pFwd,
+            const Array<OneD, Array<OneD, NekDouble> >        &pBwd)
         {
-            ASSERTL0(false,"v_Diffuse_coeff not defined");
+            ASSERTL0(false,"v_DiffuseCoeff not defined");
         }
 
-        void Diffusion::v_Diffuse_coeff(
+        void Diffusion::v_DiffuseCoeff(
             const int                                                   nConvectiveFields,
             const Array<OneD, MultiRegions::ExpListSharedPtr>           &fields,
             const Array<OneD, Array<OneD, NekDouble> >                  &inarray,
@@ -189,7 +229,33 @@ namespace Nektar
             Array<OneD, Array<OneD, Array<OneD, NekDouble> > >          &qfield,
             Array< OneD, int >                                          &nonZeroIndex)
         {
-            ASSERTL0(false,"v_Diffuse_coeff not defined");
+            ASSERTL0(false,"v_DiffuseCoeff not defined");
+        }
+
+        void Diffusion::v_DiffuseCoeffVol(
+            const int                                          nConvectiveFields,
+            const Array<OneD, MultiRegions::ExpListSharedPtr>  &fields,
+            const Array<OneD, Array<OneD, NekDouble> >         &inarray,
+            Array<OneD, Array<OneD, Array<OneD, NekDouble> > > &qfield,
+            Array<OneD, Array<OneD, NekDouble> >               &outarray,
+            Array<OneD, Array<OneD, Array<OneD, NekDouble> > > &elmtFlux,
+            Array< OneD, int >                                 &nonZeroIndex)
+        {
+            ASSERTL0(false,"v_DiffuseCoeffVol not defined");
+        }
+
+        void Diffusion::v_DiffuseCoeffTrac(
+            const int                                          nConvectiveFields,
+            const Array<OneD, MultiRegions::ExpListSharedPtr>  &fields,
+            const Array<OneD, Array<OneD, NekDouble> >         &inarray,
+            Array<OneD, Array<OneD, NekDouble> >               &outarray,
+            const Array<OneD, Array<OneD, NekDouble> >         &vFwd,
+            const Array<OneD, Array<OneD, NekDouble> >         &vBwd,
+            Array<OneD, Array<OneD, Array<OneD, NekDouble> > > &qfield,
+            Array<OneD, Array<OneD, Array<OneD, NekDouble> > > &elmtFlux,
+            Array< OneD, int >                                 &nonZeroIndex)
+        {
+            ASSERTL0(false,"v_DiffuseCoeffTrac not defined");
         }
         // Diffusion Calculate the physical derivatives
         void Diffusion::DiffuseCalculateDerivative(

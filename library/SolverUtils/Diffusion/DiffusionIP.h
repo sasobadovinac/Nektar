@@ -144,7 +144,7 @@ namespace Nektar
                 const Array<OneD, Array<OneD, NekDouble> > &pFwd = NullNekDoubleArrayofArray,
                 const Array<OneD, Array<OneD, NekDouble> > &pBwd = NullNekDoubleArrayofArray);
             
-            virtual void v_Diffuse_coeff(
+            virtual void v_DiffuseCoeff(
                 const int                                          nConvective,
                 const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
                 const Array<OneD, Array<OneD, NekDouble> >        &inarray,
@@ -152,7 +152,7 @@ namespace Nektar
                 const Array<OneD, Array<OneD, NekDouble> > &pFwd = NullNekDoubleArrayofArray,
                 const Array<OneD, Array<OneD, NekDouble> > &pBwd = NullNekDoubleArrayofArray);
 
-            virtual void v_Diffuse_coeff(
+            virtual void v_DiffuseCoeff(
                 const int                                                   nConvectiveFields,
                 const Array<OneD, MultiRegions::ExpListSharedPtr>           &fields,
                 const Array<OneD, Array<OneD, NekDouble> >                  &inarray,
@@ -161,6 +161,26 @@ namespace Nektar
                 const Array<OneD, Array<OneD, NekDouble> >                  &vBwd,
                 Array<OneD, Array<OneD, Array<OneD, NekDouble> > >          &qfield,
                 Array< OneD, int >                                          &nonZeroIndex);
+
+            virtual void v_DiffuseCoeffVol(
+                const int                                          nConvectiveFields,
+                const Array<OneD, MultiRegions::ExpListSharedPtr>  &fields,
+                const Array<OneD, Array<OneD, NekDouble> >         &inarray,
+                Array<OneD, Array<OneD, Array<OneD, NekDouble> > > &qfield,
+                Array<OneD, Array<OneD, NekDouble> >               &outarray,
+                Array<OneD, Array<OneD, Array<OneD, NekDouble> > > &elmtFlux,
+                Array< OneD, int >                                 &nonZeroIndex);
+
+            virtual void v_DiffuseCoeffTrac(
+                const int                                          nConvectiveFields,
+                const Array<OneD, MultiRegions::ExpListSharedPtr>  &fields,
+                const Array<OneD, Array<OneD, NekDouble> >         &inarray,
+                Array<OneD, Array<OneD, NekDouble> >               &outarray,
+                const Array<OneD, Array<OneD, NekDouble> >         &vFwd,
+                const Array<OneD, Array<OneD, NekDouble> >         &vBwd,
+                Array<OneD, Array<OneD, Array<OneD, NekDouble> > > &qfield,
+                Array<OneD, Array<OneD, Array<OneD, NekDouble> > > &elmtFlux,
+                Array< OneD, int >                                 &nonZeroIndex);
 
             virtual void v_DiffuseVolumeFlux(
                 const int                                           nConvectiveFields,

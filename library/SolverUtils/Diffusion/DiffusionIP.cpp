@@ -149,14 +149,14 @@ namespace Nektar
             {
                 tmp[i] = Array<OneD, NekDouble>(nCoeffs, 0.0);
             }
-            DiffusionIP::v_Diffuse_coeff(nConvectiveFields,fields,inarray,tmp,pFwd,pBwd);
+            DiffusionIP::v_DiffuseCoeff(nConvectiveFields,fields,inarray,tmp,pFwd,pBwd);
             for (int i = 0; i < nConvectiveFields; ++i)
             {
                 fields[i]->BwdTrans             (tmp[i], outarray[i]);
             }
         }
 
-        void DiffusionIP::v_Diffuse_coeff(
+        void DiffusionIP::v_DiffuseCoeff(
             const int                                         nConvectiveFields,
             const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
             const Array<OneD, Array<OneD, NekDouble> >        &inarray,
@@ -193,11 +193,19 @@ namespace Nektar
                 }
             }
 
-            Array<OneD, Array<OneD, Array<OneD, NekDouble> > > qfield;
+            Array<OneD, Array<OneD, Array<OneD, NekDouble> > > qfield(nDim);
+            for (j = 0; j < nDim; ++j)
+            {
+                qfield[j]       = Array<OneD, Array<OneD, NekDouble> >(nConvectiveFields);
+                for (i = 0; i < nConvectiveFields; ++i)
+                {
+                    qfield[j][i] = Array<OneD, NekDouble>(nPts, 0.0);
+                }
+            }
             DiffuseCalculateDerivative(nConvectiveFields,fields,inarray,qfield,vFwd,vBwd);
 
             Array<OneD, int > nonZeroIndex;
-            Diffuse_coeff(nConvectiveFields, fields, inarray, outarray, vFwd, vBwd,qfield,nonZeroIndex,m_flagFreezeJac);
+            DiffuseCoeff(nConvectiveFields, fields, inarray, outarray, vFwd, vBwd,qfield,nonZeroIndex,m_flagFreezeJac);
 
             for(i = 0; i < nonZeroIndex.num_elements(); ++i)
             {
@@ -207,15 +215,15 @@ namespace Nektar
             }
         }
 
-        void DiffusionIP::v_Diffuse_coeff(
-            const int                                                   nConvectiveFields,
-            const Array<OneD, MultiRegions::ExpListSharedPtr>           &fields,
-            const Array<OneD, Array<OneD, NekDouble> >                  &inarray,
-            Array<OneD, Array<OneD, NekDouble> >                        &outarray,
-            const Array<OneD, Array<OneD, NekDouble> >                  &vFwd,
-            const Array<OneD, Array<OneD, NekDouble> >                  &vBwd,
-            Array<OneD, Array<OneD, Array<OneD, NekDouble> > >          &qfield,
-            Array< OneD, int >                                          &nonZeroIndex)
+        void DiffusionIP::v_DiffuseCoeff(
+            const int                                          nConvectiveFields,
+            const Array<OneD, MultiRegions::ExpListSharedPtr>  &fields,
+            const Array<OneD, Array<OneD, NekDouble> >         &inarray,
+            Array<OneD, Array<OneD, NekDouble> >               &outarray,
+            const Array<OneD, Array<OneD, NekDouble> >         &vFwd,
+            const Array<OneD, Array<OneD, NekDouble> >         &vBwd,
+            Array<OneD, Array<OneD, Array<OneD, NekDouble> > > &qfield,
+            Array< OneD, int >                                 &nonZeroIndex)
         {
             int i, j;
             int nDim      = fields[0]->GetCoordim(0);
@@ -223,16 +231,45 @@ namespace Nektar
             int nCoeffs   = fields[0]->GetNcoeffs();
             int nTracePts = fields[0]->GetTrace()->GetTotPoints();
 
-            Array<OneD, Array<OneD, Array<OneD, NekDouble> > > elmtFlux(nDim);
+            Array<OneD, Array<OneD, Array<OneD, NekDouble> > > elmtFlux;
             
 #ifdef CFS_DEBUGMODE
             if(2!=m_DebugVolTraceSwitch)
             {
 #endif
-            for (j = 0; j < nDim; ++j)
+            v_DiffuseCoeffVol(nConvectiveFields,fields,inarray,qfield,
+                            outarray,elmtFlux,nonZeroIndex);
+#ifdef CFS_DEBUGMODE
+            }
+            if(1!=m_DebugVolTraceSwitch)
             {
-                elmtFlux[j]     = Array<OneD, Array<OneD, NekDouble> >(nConvectiveFields);
-                for (i = 0; i < nConvectiveFields; ++i)
+#endif
+            v_DiffuseCoeffTrac(nConvectiveFields,fields,inarray,outarray,
+                            vFwd,vBwd,qfield,elmtFlux,nonZeroIndex);
+#ifdef CFS_DEBUGMODE
+            }
+#endif
+        }
+
+        void DiffusionIP::v_DiffuseCoeffVol(
+            const int                                          nConvectiveFields,
+            const Array<OneD, MultiRegions::ExpListSharedPtr>  &fields,
+            const Array<OneD, Array<OneD, NekDouble> >         &inarray,
+            Array<OneD, Array<OneD, Array<OneD, NekDouble> > > &qfield,
+            Array<OneD, Array<OneD, NekDouble> >               &outarray,
+            Array<OneD, Array<OneD, Array<OneD, NekDouble> > > &elmtFlux,
+            Array< OneD, int >                                 &nonZeroIndex)
+        {
+            int nDim      = fields[0]->GetCoordim(0);
+            int nPts      = fields[0]->GetTotPoints();
+            int nCoeffs   = fields[0]->GetNcoeffs();
+
+            elmtFlux = Array<OneD, Array<OneD, Array<OneD, NekDouble>>>{nDim};
+            
+            for (int j = 0; j < nDim; ++j)
+            {
+                elmtFlux[j] = Array<OneD, Array<OneD, NekDouble> >(nConvectiveFields);
+                for (int i = 0; i < nConvectiveFields; ++i)
                 {
                     elmtFlux[j][i]   = Array<OneD, NekDouble>(nPts, 0.0);
                 }
@@ -243,7 +280,7 @@ namespace Nektar
             //TODO: TO GET TRACE QFIELD FIRST AND RELEASE qfield. AddDiffusionSymmFluxToCoeff DON'T NEED qfield
             Array<OneD, Array<OneD, NekDouble> > tmpFluxIprdct(nDim);
             // volume intergration: the nonZeroIndex indicates which flux is nonzero
-            for(i = 0; i < nonZeroIndex.num_elements(); ++i)
+            for (int i = 0; i < nonZeroIndex.num_elements(); ++i)
             {
                 int j = nonZeroIndex[i];
                 for (int k = 0; k < nDim; ++k)
@@ -253,33 +290,39 @@ namespace Nektar
                 fields[j]->IProductWRTDerivBase(tmpFluxIprdct,outarray[j]);
                 Vmath::Neg                      (nCoeffs, outarray[j], 1);
             }
-#ifdef CFS_DEBUGMODE
-            }
-#endif
-            
-#ifdef CFS_DEBUGMODE
-            if(1!=m_DebugVolTraceSwitch)
-            {
-#endif
+        }
+
+        void DiffusionIP::v_DiffuseCoeffTrac(
+            const int                                          nConvectiveFields,
+            const Array<OneD, MultiRegions::ExpListSharedPtr>  &fields,
+            const Array<OneD, Array<OneD, NekDouble> >         &inarray,
+            Array<OneD, Array<OneD, NekDouble> >               &outarray,
+            const Array<OneD, Array<OneD, NekDouble> >         &vFwd,
+            const Array<OneD, Array<OneD, NekDouble> >         &vBwd,
+            Array<OneD, Array<OneD, Array<OneD, NekDouble> > > &qfield,
+            Array<OneD, Array<OneD, Array<OneD, NekDouble> > > &elmtFlux,
+            Array< OneD, int >                                 &nonZeroIndex)
+        {
+            int nTracePts = fields[0]->GetTrace()->GetTotPoints();
+
             Array<OneD, Array<OneD, NekDouble > > Traceflux(nConvectiveFields);
             for (int j = 0; j < nConvectiveFields; ++j)
             {
                 Traceflux[j]   = Array<OneD, NekDouble>(nTracePts, 0.0);
             }
 
-            DiffuseTraceFlux(nConvectiveFields,fields,inarray,qfield,elmtFlux,Traceflux,vFwd,vBwd,nonZeroIndex);
+            DiffuseTraceFlux(nConvectiveFields,fields,inarray,qfield,elmtFlux,
+                            Traceflux,vFwd,vBwd,nonZeroIndex);
 
-            for(i = 0; i < nonZeroIndex.num_elements(); ++i)
+            for (int i = 0; i < nonZeroIndex.num_elements(); ++i)
             {
                 int j = nonZeroIndex[i];
 
                 fields[j]->AddTraceIntegral     (Traceflux[j], outarray[j]);
                 fields[j]->SetPhysState         (false);
             }
-            AddDiffusionSymmFluxToCoeff(nConvectiveFields, fields, inarray,qfield,elmtFlux, outarray, vFwd, vBwd);
-#ifdef CFS_DEBUGMODE
-            }
-#endif
+            AddDiffusionSymmFluxToCoeff(nConvectiveFields, fields, inarray,
+                                    qfield,elmtFlux, outarray, vFwd, vBwd);
         }
 
         void DiffusionIP::v_DiffuseCalculateDerivative(
@@ -291,20 +334,6 @@ namespace Nektar
             const Array<OneD, Array<OneD, NekDouble> >                  &pBwd)
         {
             int nDim      = fields[0]->GetCoordim(0);
-            int nPts      = fields[0]->GetTotPoints();
-            
-            if (0 == qfield.num_elements())
-            {
-                qfield = Array<OneD, Array<OneD, Array<OneD, NekDouble> > >(nDim);
-                for (int j = 0; j < nDim; ++j)
-                {
-                    qfield[j]       = Array<OneD, Array<OneD, NekDouble> >(nConvectiveFields);
-                    for (int i = 0; i < nConvectiveFields; ++i)
-                    {
-                        qfield[j][i] = Array<OneD, NekDouble>(nPts, 0.0);
-                    }
-                }   
-            }
 
             Array<OneD, Array<OneD, NekDouble> > qtmp(3);
             for(int nd=0; nd<3; nd++)

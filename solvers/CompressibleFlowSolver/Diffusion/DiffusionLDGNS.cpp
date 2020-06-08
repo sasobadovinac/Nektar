@@ -112,15 +112,14 @@ namespace Nektar
         {
             tmp2[i] = Array<OneD, NekDouble>(nCoeffs, 0.0);
         }
-        v_Diffuse_coeff(nConvectiveFields,fields,inarray,tmp2,pFwd,pBwd);
+        v_DiffuseCoeff(nConvectiveFields,fields,inarray,tmp2,pFwd,pBwd);
         for (int i = 0; i < nConvectiveFields; ++i)
         {
             fields[i]->BwdTrans             (tmp2[i], outarray[i]);
         }
     }
 
-    // TODO:: REPLACED
-    void DiffusionLDGNS::v_Diffuse_coeff(
+    void DiffusionLDGNS::v_DiffuseCoeff(
         const int                                         nConvectiveFields,
         const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
         const Array<OneD, Array<OneD, NekDouble> >        &inarray,
@@ -135,12 +134,10 @@ namespace Nektar
         int nCoeffs   = fields[0]->GetNcoeffs();
         int nTracePts = fields[0]->GetTrace()->GetTotPoints();
 
-        Array<OneD, NekDouble>               tmp1(nCoeffs);
-        Array<OneD, Array<OneD, NekDouble> > tmp2(nConvectiveFields);
+        // Array<OneD, Array<OneD, NekDouble> > tmp2(nConvectiveFields);
 
         Array<OneD, Array<OneD, Array<OneD, NekDouble> > >
                                                 derivativesO1(m_spaceDim);
-
         for (j = 0; j < m_spaceDim; ++j)
         {
             derivativesO1[j]   = Array<OneD, Array<OneD, NekDouble> >(
@@ -151,14 +148,11 @@ namespace Nektar
                 derivativesO1[j][i]   = Array<OneD, NekDouble>(nPts, 0.0);
             }
         }
-
         DiffuseCalculateDerivative(nConvectiveFields,fields,inarray,derivativesO1,pFwd,pBwd);
 
         // Initialisation viscous tensor
         m_viscTensor = Array<OneD, Array<OneD, Array<OneD, NekDouble> > >
                                                                (m_spaceDim);
-        Array<OneD, Array<OneD, NekDouble> > viscousFlux(nConvectiveFields);
-
         for (j = 0; j < m_spaceDim; ++j)
         {
             m_viscTensor[j] = Array<OneD, Array<OneD, NekDouble> >(
@@ -169,33 +163,42 @@ namespace Nektar
             }
         }
 
-        for (i = 0; i < nConvectiveFields; ++i)
-        {
-            viscousFlux[i] = Array<OneD, NekDouble>(nTracePts, 0.0);
-        }
-
         DiffuseVolumeFlux(nConvectiveFields,fields,inarray,derivativesO1,m_viscTensor);
 
-        // Compute u from q_{\eta} and q_{\xi}
-        // Obtain numerical fluxes
-        DiffuseTraceFlux(nConvectiveFields,fields,inarray,derivativesO1,m_viscTensor,viscousFlux,pFwd,pBwd);
-        // v_NumericalFluxO2(fields, inarray, m_viscTensor, viscousFlux);
-
         for (i = 0; i < nConvectiveFields; ++i)
         {
-            tmp2[i] = Array<OneD, NekDouble>(nCoeffs, 0.0);
+            Vmath::Zero(nCoeffs, outarray[i], 1);
+            Array<OneD, NekDouble>               tmp1(nCoeffs);
 
             for (j = 0; j < nDim; ++j)
             {
                 fields[i]->IProductWRTDerivBase(j, m_viscTensor[j][i], tmp1);
-                Vmath::Vadd(nCoeffs, tmp1, 1, tmp2[i], 1, tmp2[i], 1);
+                Vmath::Vadd(nCoeffs, tmp1, 1, outarray[i], 1, outarray[i], 1);
             }
-
             // Evaulate  <\phi, \hat{F}\cdot n> - outarray[i]
-            Vmath::Neg                      (nCoeffs, tmp2[i], 1);
-            fields[i]->AddTraceIntegral     (viscousFlux[i], tmp2[i]);
+            Vmath::Neg                      (nCoeffs, outarray[i], 1);
+        }
+
+
+
+        Array<OneD, Array<OneD, NekDouble> > viscousFlux(nConvectiveFields);
+        for (i = 0; i < nConvectiveFields; ++i)
+        {
+            viscousFlux[i] = Array<OneD, NekDouble>(nTracePts, 0.0);
+        }
+        // Compute u from q_{\eta} and q_{\xi}
+        // Obtain numerical fluxes
+        DiffuseTraceFlux(nConvectiveFields,fields,inarray,derivativesO1,m_viscTensor,viscousFlux,pFwd,pBwd);
+        // v_NumericalFluxO2(fields, inarray, m_viscTensor, viscousFlux);
+        for (i = 0; i < nConvectiveFields; ++i)
+        {
+            fields[i]->AddTraceIntegral     (viscousFlux[i], outarray[i]);
             fields[i]->SetPhysState         (false);
-            fields[i]->MultiplyByElmtInvMass(tmp2[i], outarray[i]);
+        }
+
+        for (i = 0; i < nConvectiveFields; ++i)
+        {
+            fields[i]->MultiplyByElmtInvMass(outarray[i], outarray[i]);
         }
     }
 

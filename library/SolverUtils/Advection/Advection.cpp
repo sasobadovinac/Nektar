@@ -325,7 +325,7 @@ void Advection::v_AdvectTraceFlux(
  * @param   pOutarray           Advected scalar data.
  * @param   pTime               Simulation time.
  */
-void Advection::Advect_coeff(
+void Advection::AdvectCoeff(
     const int                                          nConvectiveFields,
     const Array<OneD, MultiRegions::ExpListSharedPtr> &pFields,
     const Array<OneD, Array<OneD, NekDouble> >        &pAdvVel,
@@ -337,7 +337,55 @@ void Advection::Advect_coeff(
     const bool                                       flagFreezeJac)
 {
     m_flagFreezeJac  = flagFreezeJac;
-    v_Advect_coeff(nConvectiveFields, pFields, pAdvVel, pInarray,
+    v_AdvectCoeff(nConvectiveFields, pFields, pAdvVel, pInarray,
+            pOutarray, pTime, pFwd, pBwd);
+    m_flagFreezeJac  = false;
+}
+
+/**
+ * @param   nConvectiveFields   Number of velocity components.
+ * @param   pFields             Expansion lists for scalar fields.
+ * @param   pAdvVel             Advection velocity.
+ * @param   pInarray            Scalar data to advect.
+ * @param   pOutarray           Advected scalar data.
+ * @param   pTime               Simulation time.
+ */
+void Advection::AdvectCoeffVol(
+    const int                                          nConvectiveFields,
+    const Array<OneD, MultiRegions::ExpListSharedPtr> &pFields,
+    const Array<OneD, Array<OneD, NekDouble> >        &pAdvVel,
+    const Array<OneD, Array<OneD, NekDouble> >        &pInarray,
+    Array<OneD, Array<OneD, NekDouble> >              &pOutarray,
+    const NekDouble                                   &pTime,
+    const bool                                       flagFreezeJac)
+{
+    m_flagFreezeJac  = flagFreezeJac;
+    v_AdvectCoeffVol(nConvectiveFields, pFields, pAdvVel, pInarray,
+            pOutarray, pTime);
+    m_flagFreezeJac  = false;
+}
+
+/**
+ * @param   nConvectiveFields   Number of velocity components.
+ * @param   pFields             Expansion lists for scalar fields.
+ * @param   pAdvVel             Advection velocity.
+ * @param   pInarray            Scalar data to advect.
+ * @param   pOutarray           Advected scalar data.
+ * @param   pTime               Simulation time.
+ */
+void Advection::AdvectCoeffTrac(
+    const int                                          nConvectiveFields,
+    const Array<OneD, MultiRegions::ExpListSharedPtr> &pFields,
+    const Array<OneD, Array<OneD, NekDouble> >        &pAdvVel,
+    const Array<OneD, Array<OneD, NekDouble> >        &pInarray,
+    Array<OneD, Array<OneD, NekDouble> >              &pOutarray,
+    const NekDouble                                   &pTime,
+    const Array<OneD, Array<OneD, NekDouble> >        &pFwd,
+    const Array<OneD, Array<OneD, NekDouble> >        &pBwd,
+    const bool                                       flagFreezeJac)
+{
+    m_flagFreezeJac  = flagFreezeJac;
+    v_AdvectCoeffTrac(nConvectiveFields, pFields, pAdvVel, pInarray,
             pOutarray, pTime, pFwd, pBwd);
     m_flagFreezeJac  = false;
 }
@@ -385,7 +433,7 @@ void Advection::v_SetBaseFlow(
             "A baseflow is not appropriate for this advection type.");
 }
 
-void Advection::v_Advect_coeff(
+void Advection::v_AdvectCoeff(
         const int nConvectiveFields,
         const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
         const Array<OneD, Array<OneD, NekDouble> >        &advVel,
@@ -395,8 +443,30 @@ void Advection::v_Advect_coeff(
         const Array<OneD, Array<OneD, NekDouble> >          &pFwd,
         const Array<OneD, Array<OneD, NekDouble> >          &pBwd)
         {
-            ASSERTL0(false, "v_Advect_coeff no defined");
+            ASSERTL0(false, "v_AdvectCoeff no defined");
         }
+void Advection::v_AdvectCoeffVol(
+    const int nConvectiveFields,
+    const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
+    const Array<OneD, Array<OneD, NekDouble> >        &advVel,
+    const Array<OneD, Array<OneD, NekDouble> >        &inarray,
+    Array<OneD, Array<OneD, NekDouble> >              &outarray,
+    const NekDouble                                   &time)
+{
+    ASSERTL0(false, "v_AdvectCoeffVol no defined");
+}
+void Advection::v_AdvectCoeffTrac(
+    const int nConvectiveFields,
+    const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
+    const Array<OneD, Array<OneD, NekDouble> >        &advVel,
+    const Array<OneD, Array<OneD, NekDouble> >        &inarray,
+            Array<OneD, Array<OneD, NekDouble> >        &outarray,
+    const NekDouble                                   &time,
+    const Array<OneD, Array<OneD, NekDouble> >          &pFwd,
+    const Array<OneD, Array<OneD, NekDouble> >          &pBwd)
+{
+    ASSERTL0(false, "v_AdvectCoeffTrac no defined");
+}
 
 #ifdef DEMO_IMPLICITSOLVER_JFNK_COEFF
     void Advection::v_NumCalRiemFluxJac( 

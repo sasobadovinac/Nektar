@@ -4008,7 +4008,7 @@ namespace Nektar
         int nvariables = inarray.num_elements();
         Array<OneD, Array<OneD, NekDouble> > advVel(m_spacedim);
 
-        m_advObject->Advect_coeff(nvariables, m_fields, advVel, inarray,
+        m_advObject->AdvectCoeff(nvariables, m_fields, advVel, inarray,
                             outarray, time, pFwd, pBwd,flagFreezeJac);
     }
 

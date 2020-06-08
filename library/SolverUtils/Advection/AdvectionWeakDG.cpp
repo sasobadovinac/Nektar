@@ -91,7 +91,7 @@ namespace Nektar
                 tmp[i] = Array<OneD, NekDouble>(nCoeffs, 0.0);
             }
 
-            AdvectionWeakDG::v_Advect_coeff(nConvectiveFields,fields,advVel,inarray,tmp,time,pFwd,pBwd);
+            AdvectionWeakDG::v_AdvectCoeff(nConvectiveFields,fields,advVel,inarray,tmp,time,pFwd,pBwd);
             
             for(int i = 0; i < nConvectiveFields; ++i)
             {
@@ -99,7 +99,7 @@ namespace Nektar
             }
         }
 
-        void AdvectionWeakDG::v_Advect_coeff(
+        void AdvectionWeakDG::v_AdvectCoeff(
             const int                                         nConvectiveFields,
             const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
             const Array<OneD, Array<OneD, NekDouble> >        &advVel,
@@ -109,11 +109,6 @@ namespace Nektar
             const Array<OneD, Array<OneD, NekDouble> >        &pFwd,
             const Array<OneD, Array<OneD, NekDouble> >        &pBwd)
         {
-            int nPointsTot      = fields[0]->GetTotPoints();
-            int nCoeffs         = fields[0]->GetNcoeffs();
-            int nTracePointsTot = fields[0]->GetTrace()->GetTotPoints();
-            int i, j;
-
             // Get the advection part (without numerical flux)
             for(int i = 0; i < nConvectiveFields; ++i)
             {
@@ -124,13 +119,49 @@ namespace Nektar
         if(m_CalcVolumPartFlag)
         {
 #endif
+            v_AdvectCoeffVol(   nConvectiveFields, fields, advVel, inarray, 
+                                outarray, time);
+#ifdef CFS_DEBUGMODE
+        }
+
+        if(m_CalcTracePartFlag)
+        {
+#endif
+            v_AdvectCoeffTrac(   nConvectiveFields, fields, advVel, inarray, 
+                                outarray, time, pFwd, pBwd);
+#ifdef CFS_DEBUGMODE
+        }
+
+        if(m_MultipInvmassFlag)
+        {
+#endif
+            // Evaulate <\phi, \hat{F}\cdot n> - OutField[i]
+            for(int i = 0; i < nConvectiveFields; ++i)
+            {
+                fields[i]->MultiplyByElmtInvMass(outarray[i], outarray[i]);
+            }
+#ifdef CFS_DEBUGMODE
+        }
+#endif
+        }
+
+        void AdvectionWeakDG::v_AdvectCoeffVol(
+            const int nConvectiveFields,
+            const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
+            const Array<OneD, Array<OneD, NekDouble> >        &advVel,
+            const Array<OneD, Array<OneD, NekDouble> >        &inarray,
+            Array<OneD, Array<OneD, NekDouble> >              &outarray,
+            const NekDouble                                   &time)
+        {
+            int nPointsTot      = fields[0]->GetTotPoints();
+            int nCoeffs         = fields[0]->GetNcoeffs();
             Array<OneD, Array<OneD, Array<OneD, NekDouble> > > fluxvector(nConvectiveFields);
             // Allocate storage for flux vector F(u).
-            for (i = 0; i < nConvectiveFields; ++i)
+            for (int i = 0; i < nConvectiveFields; ++i)
             {
                 fluxvector[i] =
                     Array<OneD, Array<OneD, NekDouble> >(m_spaceDim);
-                for (j = 0; j < m_spaceDim; ++j)
+                for (int j = 0; j < m_spaceDim; ++j)
                 {
                     fluxvector[i][j] = Array<OneD, NekDouble>(nPointsTot,0.0);
                 }
@@ -145,15 +176,23 @@ namespace Nektar
                 fields[i]->IProductWRTDerivBase(fluxvector[i],outarray[i]);
                 Vmath::Neg                      (nCoeffs, outarray[i], 1);
             }
-#ifdef CFS_DEBUGMODE
+
         }
 
-        if(m_CalcTracePartFlag)
+        void AdvectionWeakDG::v_AdvectCoeffTrac(
+            const int nConvectiveFields,
+            const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
+            const Array<OneD, Array<OneD, NekDouble> >        &advVel,
+            const Array<OneD, Array<OneD, NekDouble> >        &inarray,
+            Array<OneD, Array<OneD, NekDouble> >              &outarray,
+            const NekDouble                                   &time,
+            const Array<OneD, Array<OneD, NekDouble> >        &pFwd,
+            const Array<OneD, Array<OneD, NekDouble> >        &pBwd)
         {
-#endif
             // Store forwards/backwards space along trace space
+            int nTracePointsTot = fields[0]->GetTrace()->GetTotPoints();
             Array<OneD, Array<OneD, NekDouble> > numflux(nConvectiveFields);
-            for(i = 0; i < nConvectiveFields; ++i)
+            for(int i = 0; i < nConvectiveFields; ++i)
             {
                 numflux[i] = Array<OneD, NekDouble>(nTracePointsTot, 0.0);
             }
@@ -161,24 +200,10 @@ namespace Nektar
             v_AdvectTraceFlux(nConvectiveFields, fields, advVel, inarray, 
                                 numflux,time,pFwd,pBwd);
 
-            for(i = 0; i < nConvectiveFields; ++i)
+            for(int i = 0; i < nConvectiveFields; ++i)
             {
                 fields[i]->AddTraceIntegral     (numflux[i], outarray[i]);
             }
-#ifdef CFS_DEBUGMODE
-        }
-
-        if(m_MultipInvmassFlag)
-        {
-#endif
-            // Evaulate <\phi, \hat{F}\cdot n> - OutField[i]
-            for(i = 0; i < nConvectiveFields; ++i)
-            {
-                fields[i]->MultiplyByElmtInvMass(outarray[i], outarray[i]);
-            }
-#ifdef CFS_DEBUGMODE
-        }
-#endif
         }
 
            /**

@@ -525,7 +525,7 @@ namespace Nektar
                 v_CalphysDeriv(inpnts,qfield);
 
                 Array<OneD, int > nonZeroIndex;
-                m_diffusion->Diffuse_coeff(nvariables,m_fields, inarray, outarray, pFwd, pBwd,qfield,nonZeroIndex,flagFreezeJac);
+                m_diffusion->DiffuseCoeff(nvariables,m_fields, inarray, outarray, pFwd, pBwd,qfield,nonZeroIndex,flagFreezeJac);
 
                 for(i = 0; i < nonZeroIndex.num_elements(); ++i)
                 {
@@ -557,7 +557,7 @@ namespace Nektar
         
 
                 Array<OneD, int > nonZeroIndex;
-                m_diffusion->Diffuse_coeff(nvariables, m_fields, inpnts, outarray, Fwd, Bwd,qfield,nonZeroIndex,flagFreezeJac);
+                m_diffusion->DiffuseCoeff(nvariables, m_fields, inpnts, outarray, Fwd, Bwd,qfield,nonZeroIndex,flagFreezeJac);
 
                 for(i = 0; i < nonZeroIndex.num_elements(); ++i)
                 {
@@ -569,13 +569,13 @@ namespace Nektar
             {
                 Array<OneD, int > nonZeroIndex;
                 Array<OneD, Array<OneD, Array<OneD, NekDouble> > > qfield;
-                m_diffusion->Diffuse_coeff(nvariables, m_fields, inarray, outarrayDiff,m_BndEvaluateTime,
+                m_diffusion->DiffuseCoeff(nvariables, m_fields, inarray, outarrayDiff,m_BndEvaluateTime,
                                 pFwd, pBwd,flagFreezeJac);
             }
 #else
             Array<OneD, int > nonZeroIndex;
             Array<OneD, Array<OneD, Array<OneD, NekDouble> > > qfield;
-            m_diffusion->Diffuse_coeff(nvariables, m_fields, inarray, outarrayDiff,m_BndEvaluateTime,
+            m_diffusion->DiffuseCoeff(nvariables, m_fields, inarray, outarrayDiff,m_BndEvaluateTime,
                                 pFwd, pBwd,flagFreezeJac);
 #endif
                 
@@ -630,7 +630,7 @@ namespace Nektar
             }
 
             // Diffusion term in physical rhs form
-            m_diffusion->Diffuse_coeff(nvariables, m_fields, inarrayDiff, outarrayDiff,
+            m_diffusion->DiffuseCoeff(nvariables, m_fields, inarrayDiff, outarrayDiff,
                                 inFwd, inBwd);
 
             for (i = 0; i < nvariables; ++i)
@@ -641,7 +641,7 @@ namespace Nektar
                             outarray[i], 1);
             }
 
-            // m_diffusion->v_Diffuse_coeff(inarray, outarray, pFwd, pBwd);
+            // m_diffusion->v_DiffuseCoeff(inarray, outarray, pFwd, pBwd);
             if (m_artificialDiffusion)
             {
                 m_artificialDiffusion->DoArtificialDiffusion_coeff(inarray, outarray);
