@@ -1355,157 +1355,26 @@ namespace Nektar
         int nDim       = m_spacedim;
         int nConvectiveFields = nvariables;
 
-        Array<OneD, Array<OneD, NekDouble> > outpnts(nvariables);
-        for(int i = 0; i < nvariables; i++)
-        {
-            outpnts[i]  =  Array<OneD, NekDouble> (npoints,0.0);
-            m_fields[i]->BwdTrans(outarray[i],outpnts[i]);
-        }
-
-        // Store forwards/backwards space along trace space
-        Array<OneD, Array<OneD, NekDouble> > Fwd    ;
-        Array<OneD, Array<OneD, NekDouble> > Bwd    ;
-        Array<OneD, Array<OneD, NekDouble> > FwdFlux;
-        Array<OneD, Array<OneD, NekDouble> > BwdFlux;
-        Array<OneD, Array<OneD, Array<OneD, NekDouble> > >    numDerivBwd(nDim);
-        Array<OneD, Array<OneD, Array<OneD, NekDouble> > >    numDerivFwd(nDim);
         int indexwspTrace = 0;
-        Fwd     =   wspTrace[indexwspTrace], indexwspTrace++;
-        Bwd     =   wspTrace[indexwspTrace], indexwspTrace++;
         FwdFlux =   wspTrace[indexwspTrace], indexwspTrace++;
         BwdFlux =   wspTrace[indexwspTrace], indexwspTrace++;
-       
-        for(int i = 0; i < nvariables; ++i)
+        int wspttl = wspTrace.num_elements();
+        Array<OneD, Array<OneD, Array<OneD, NekDouble> >> 
+            tmpTrace{wspttl - indexwspTrace};
+        for (int i = indexwspTrace; i < wspttl; ++i)
         {
-            m_fields[i]->GetFwdBwdTracePhys(outpnts[i], Fwd[i], Bwd[i]);
+            tmpTrace[i - indexwspTrace] = wspTrace[i];
         }
 
-#ifdef CFS_DEBUGMODE
-        if(1!=m_DebugVolTraceSwitch)
-        {
-#endif
-        int indexwspTraceDataType = 0;
-        Array<OneD, Array<OneD, DataType> > Fwdarray (nvariables);
-        for(int m = 0; m < nvariables; ++m)
-        {
-            Fwdarray[m] = wspTraceDataType[indexwspTraceDataType], indexwspTraceDataType++;
-        }
-        Array<OneD, DataType> Fwdreslt;
-        Fwdreslt = wspTraceDataType[indexwspTraceDataType], indexwspTraceDataType++;
-
-        for(int m = 0; m < nvariables; ++m)
-        {
-            for(int i = 0; i < nTracePts; ++i)
-            {
-                Fwdarray[m][i] =  DataType( Fwd[m][i] );
-            }
-        }
-        for(int m = 0; m < nvariables; ++m)
-        {
-            Vmath::Zero(nTracePts, &Fwdreslt[0],1);
-            for(int n = 0; n < nvariables; ++n)
-            {
-                Vmath::Vvtvp(nTracePts,&TraceJacArray[0][m][n][0],1,&Fwdarray[n][0],1,&Fwdreslt[0],1,&Fwdreslt[0],1);
-            }
-
-            for(int i = 0; i < nTracePts; ++i)
-            {
-                FwdFlux[m][i] =  NekDouble( Fwdreslt[i] );
-            }
-        }
-
-        for(int m = 0; m < nvariables; ++m)
-        {
-            for(int i = 0; i < nTracePts; ++i)
-            {
-                Fwdarray[m][i] =  DataType( Bwd[m][i] );
-            }
-        }
-        for(int m = 0; m < nvariables; ++m)
-        {
-            Vmath::Zero(nTracePts, &Fwdreslt[0],1);
-            for(int n = 0; n < nvariables; ++n)
-            {
-                Vmath::Vvtvp(nTracePts,&TraceJacArray[1][m][n][0],1,&Fwdarray[n][0],1,&Fwdreslt[0],1,&Fwdreslt[0],1);
-            }
-            for(int i = 0; i < nTracePts; ++i)
-            {
-                BwdFlux[m][i] =  NekDouble( Fwdreslt[i] );
-            }
-        }
+        CalTraceFwdBwdFlux(nvariables, nCoeffs, inarray, 
+            FwdFlux, BwdFlux, flagUpdateDervFlux, FwdFluxDeriv, 
+            BwdFluxDeriv, qfield, tmpTrace, 
+            wspTraceDataType, TraceJacArray, 
+            TraceJacDerivArray, 
+            TraceJacDerivSign);
 
         if(m_DEBUG_VISCOUS_JAC_MAT&&m_DEBUG_VISCOUS_TRACE_DERIV_JAC_MAT)
         {
-            if(flagUpdateDervFlux)
-            {
-        // for(int i = 0; i< m_spacedim; i++)
-        // {
-        //     for(int j = 0; j< nConvectiveFields; j++)
-        //     {
-        //         Vmath::Zero(npoints,qfield[i][j],1);
-        //     }
-        // }
-                CalphysDeriv(outpnts,qfield);
-
-                for (int nd = 0; nd < nDim; ++nd)
-                {
-                    numDerivBwd[nd] =   wspTrace[indexwspTrace], indexwspTrace++;
-                    numDerivFwd[nd] =   wspTrace[indexwspTrace], indexwspTrace++;
-                }
-
-                const MultiRegions::AssemblyMapDGSharedPtr      TraceMap=m_fields[0]->GetTraceMap();
-                for (int nd = 0; nd < nDim; ++nd)
-                {
-                    for (int i = 0; i < nConvectiveFields; ++i)
-                    {
-                        Vmath::Zero(nTracePts, Bwd[i],1);
-                        Vmath::Zero(nTracePts, Fwd[i],1);
-                        m_fields[i]->GetFwdBwdTracePhysNoBndFill(qfield[nd][i], numDerivFwd[nd][i], numDerivBwd[nd][i]);
-                        TraceMap->UniversalTraceAssemble(numDerivBwd[nd][i]);
-                        TraceMap->UniversalTraceAssemble(numDerivFwd[nd][i]);
-                    }
-                }
-
-                for(int m = 0; m < nvariables; ++m)
-                {
-                    Vmath::Zero(nTracePts, &Fwdreslt[0],1);
-                    for (int nd = 0; nd < nDim; ++nd)
-                    {
-                        for(int n = 0; n < nvariables; ++n)
-                        {
-                            for(int i = 0; i < nTracePts; ++i)
-                            {
-                                Fwdarray[n][i] =  DataType( numDerivFwd[nd][n][i] );
-                            }
-                            Vmath::Vvtvp(nTracePts,&TraceJacDerivArray[0][m][n*nDim+nd][0],1,&Fwdarray[n][0],1,&Fwdreslt[0],1,&Fwdreslt[0],1);
-                        }
-                    }
-                    for(int i = 0; i < nTracePts; ++i)
-                    {
-                        FwdFlux[m][i] +=  NekDouble( TraceJacDerivSign[0][i]*Fwdreslt[i] );
-                    }
-                }
-
-                for(int m = 0; m < nvariables; ++m)
-                {
-                    Vmath::Zero(nTracePts, &Fwdreslt[0],1);
-                    for (int nd = 0; nd < nDim; ++nd)
-                    {
-                        for(int n = 0; n < nvariables; ++n)
-                        {
-                            for(int i = 0; i < nTracePts; ++i)
-                            {
-                                Fwdarray[n][i] =  DataType( numDerivBwd[nd][n][i] );
-                            }
-                            Vmath::Vvtvp(nTracePts,&TraceJacDerivArray[1][m][n*nDim+nd][0],1,&Fwdarray[n][0],1,&Fwdreslt[0],1,&Fwdreslt[0],1);
-                        }
-                    }
-                    for(int i = 0; i < nTracePts; ++i)
-                    {
-                        BwdFlux[m][i] +=  NekDouble( TraceJacDerivSign[1][i]*Fwdreslt[i] );
-                    }
-                }
-
 #ifdef CFS_DEBUGMODE
                 if(m_DebugIPSymmFluxJacSwitch)
                 {
@@ -1601,8 +1470,7 @@ namespace Nektar
         Array<OneD, Array<OneD, DataType > >             &wspTraceDataType,
         const Array<OneD,Array<OneD,Array<OneD,Array<OneD,DataType >>>>                 &TraceJacArray,
         const Array<OneD,Array<OneD,Array<OneD,Array<OneD,DataType >>>>                 &TraceJacDerivArray,
-        const Array<OneD,Array<OneD, DataType> >                                       &TraceJacDerivSign,
-        const Array<OneD,Array<OneD,Array<OneD,Array<OneD,Array<OneD,DataType >>>>>     &TraceIPSymJacArray)
+        const Array<OneD,Array<OneD, DataType> >                                       &TraceJacDerivSign)
     {
         int nTracePts  = GetTraceTotPoints();
         int npoints    = GetNpoints();
