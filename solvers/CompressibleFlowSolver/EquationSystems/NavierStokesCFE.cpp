@@ -649,6 +649,72 @@ namespace Nektar
         }
     }
 
+    void NavierStokesCFE::v_DoDiffusion_coeffVol(
+        const Array<OneD, const Array<OneD, NekDouble> > &inarray,
+              Array<OneD,       Array<OneD, NekDouble> > &outarray,
+            const bool                                   flagFreezeJac)
+    {
+        int nDim = m_fields[0]->GetCoordim(0);
+        int nvariables = inarray.num_elements();
+        int npoints    = GetNpoints();
+        int ncoeffs    = GetNcoeffs();
+        int nTracePts  = GetTraceTotPoints();
+
+        Array<OneD, Array<OneD, NekDouble> > outarrayDiff(nvariables);
+        for (int i = 0; i < nvariables; ++i)
+        {
+            outarrayDiff[i] = Array<OneD, NekDouble>(ncoeffs,0.0);
+        }
+
+        // get artificial viscosity
+        if (m_shockCaptureType == "Physical" && m_calcuPhysicalAV)
+        {
+            GetPhysicalAV(inarray);
+        }
+
+        string diffName;
+        m_session->LoadSolverInfo("DiffusionType", diffName, "LDGNS");
+        if("InteriorPenalty"==diffName)
+        {
+            if(m_BndEvaluateTime<0.0)
+            {
+                ASSERTL0(false, "m_BndEvaluateTime not setup");
+            }
+
+            Array<OneD, int > nonZeroIndex;
+            Array<OneD, Array<OneD, NekDouble>> pFwd;
+            Array<OneD, Array<OneD, NekDouble>> pBwd;
+            Array<OneD, Array<OneD, Array<OneD, NekDouble> > > elmtFlux;
+
+            Array<OneD, Array<OneD, Array<OneD, NekDouble> > > qfield(nDim);
+            for (int j = 0; j < nDim; ++j)
+            {
+                qfield[j] = Array<OneD, Array<OneD, NekDouble> >(nvariables);
+                for (int i = 0; i < nvariables; ++i)
+                {
+                    qfield[j][i] = Array<OneD, NekDouble>(npoints, 0.0);
+                }
+            }
+            m_diffusion->DiffuseCalculateDerivative(nvariables, m_fields, 
+                            inarray, qfield, pFwd, pBwd);
+            m_diffusion->DiffuseCoeffVol(nvariables, m_fields, inarray, qfield,
+                                outarrayDiff, m_BndEvaluateTime, elmtFlux, 
+                                nonZeroIndex, flagFreezeJac);
+            
+            for (int i = 0; i < nvariables; ++i)
+            {
+                Vmath::Vadd(ncoeffs,
+                            outarrayDiff[i], 1,
+                            outarray[i], 1,
+                            outarray[i], 1);
+            }
+        }
+        else
+        {
+            ASSERTL0(false, "not implemented yet");
+        }
+    }
+
     void NavierStokesCFE::v_DoDiffusionFlux(
         const Array<OneD, const Array<OneD, NekDouble>> &inarray,
         Array<OneD, Array<OneD, Array<OneD, NekDouble>>>&VolumeFlux,

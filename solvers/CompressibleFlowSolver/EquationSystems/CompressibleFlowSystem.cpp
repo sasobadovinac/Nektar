@@ -3994,6 +3994,78 @@ namespace Nektar
         }
     }
 
+    void CompressibleFlowSystem::DoOdeRhs_coeffVol(
+        const Array<OneD, const Array<OneD, NekDouble>> &inarray,
+        Array<OneD, Array<OneD, NekDouble> >            &outarray,
+        const NekDouble                                 time,
+        const bool                                      flagFreezeJac)
+    {
+        int nvariables = inarray.num_elements();
+        int nTracePts  = GetTraceTotPoints();
+        int ncoeffs    = GetNcoeffs();
+        
+         // Calculate advection
+        DoAdvection_coeffVol(inarray, outarray, time, flagFreezeJac);
+        // Negate results
+        
+        for (int i = 0; i < nvariables; ++i)
+        {
+            Vmath::Neg(ncoeffs, outarray[i], 1);
+        }
+#ifdef CFS_DEBUGMODE
+        if(2==m_DebugAdvDiffSwitch)
+        {
+            for (int i = 0; i < nvariables; ++i)
+            {
+                Vmath::Zero(ncoeffs, outarray[i], 1);
+            }
+        }
+#endif
+
+#ifdef CFS_DEBUGMODE
+        if(1!=m_DebugAdvDiffSwitch)
+        {
+#endif
+        DoDiffusion_coeffVol(inarray, outarray, flagFreezeJac);
+#ifdef CFS_DEBUGMODE
+        }
+#endif
+        // Add forcing terms
+        for (auto &x : m_forcing)
+        {
+            if(true==flagFreezeJac)
+            {
+                ASSERTL0(false,"forcing not coded for DoOdeRhs_coeffMF");
+            }
+            // x->Apply(m_fields, inarray, outarray, time);
+            x->Apply_coeff(m_fields, inarray, outarray, time);
+        }
+
+        if (m_useLocalTimeStep)
+        {
+            int nElements = m_fields[0]->GetExpSize();
+            int nq, offset;
+            NekDouble fac;
+            Array<OneD, NekDouble> tmp;
+
+            Array<OneD, NekDouble> tstep (nElements, 0.0);
+            GetElmtTimeStep(inarray, tstep);
+
+            // Loop over elements
+            for(int n = 0; n < nElements; ++n)
+            {
+                nq     = m_fields[0]->GetExp(n)->GetTotPoints();
+                offset = m_fields[0]->GetPhys_Offset(n);
+                fac    = tstep[n] / m_timestep;
+                for(int i = 0; i < nvariables; ++i)
+                {
+                    Vmath::Smul(nq, fac, outarray[i] + offset, 1,
+                                         tmp = outarray[i] + offset, 1);
+                }
+            }
+        }
+    }
+
     /**
      * @brief Compute the advection terms for the right-hand side
      */
@@ -4010,6 +4082,19 @@ namespace Nektar
 
         m_advObject->AdvectCoeff(nvariables, m_fields, advVel, inarray,
                             outarray, time, pFwd, pBwd,flagFreezeJac);
+    }
+
+    void CompressibleFlowSystem::DoAdvection_coeffVol(
+        const Array<OneD, const Array<OneD, NekDouble> > &inarray,
+              Array<OneD,       Array<OneD, NekDouble> > &outarray,
+        const NekDouble                                   time,
+        const bool                                       flagFreezeJac)
+    {
+        int nvariables = inarray.num_elements();
+        Array<OneD, Array<OneD, NekDouble> > advVel(m_spacedim);
+
+        m_advObject->AdvectCoeffVol(nvariables, m_fields, advVel, inarray,
+                            outarray, time, flagFreezeJac);
     }
 
 #ifdef CFS_DEBUGMODE

@@ -533,6 +533,12 @@ namespace Nektar
             Array<OneD,       Array<OneD, NekDouble> >          &outarray,
             const NekDouble                                     time,
             const bool                                          flagFreezeJac = false);
+        
+        void DoOdeRhs_coeffVol(
+            const Array<OneD, const Array<OneD, NekDouble>> &inarray,
+            Array<OneD, Array<OneD, NekDouble> >            &outarray,
+            const NekDouble                                 time,
+            const bool                                      flagFreezeJac=false);
 
         void DoAdvection_coeff(
             const Array<OneD, const Array<OneD, NekDouble> > &inarray,
@@ -541,7 +547,12 @@ namespace Nektar
             const Array<OneD, Array<OneD, NekDouble> >       &pFwd,
             const Array<OneD, Array<OneD, NekDouble> >       &pBwd,
             const bool                                       flagFreezeJac=false);
-
+        void DoAdvection_coeffVol(
+            const Array<OneD, const Array<OneD, NekDouble> > &inarray,
+            Array<OneD,       Array<OneD, NekDouble> >       &outarray,
+            const NekDouble                                  time,
+            const bool                                       flagFreezeJac);
+        
         template<typename DataType, typename TypeNekBlkMatSharedPtr>
         void MultiplyElmtInvMass_PlusSource(
             Array<OneD, Array<OneD, TypeNekBlkMatSharedPtr> > &gmtxarray,
@@ -748,6 +759,13 @@ namespace Nektar
             const Array<OneD, Array<OneD, NekDouble> >       &pFwd,
             const Array<OneD, Array<OneD, NekDouble> >       &pBwd,
             const bool                                       flagFreezeJac = false);
+        void DoDiffusion_coeffVol(
+            const Array<OneD, const Array<OneD, NekDouble> > &inarray,
+                  Array<OneD,       Array<OneD, NekDouble> > &outarray,
+            const bool                                       flagFreezeJac = false)
+        {
+            v_DoDiffusion_coeffVol(inarray, outarray, flagFreezeJac);
+        }
 
         void GetFluxVector(
             const Array<OneD, Array<OneD, NekDouble> >               &physfield,
@@ -833,6 +851,14 @@ namespace Nektar
                   Array<OneD,       Array<OneD, NekDouble> > &outarray,
             const Array<OneD, Array<OneD, NekDouble> >       &pFwd,
             const Array<OneD, Array<OneD, NekDouble> >       &pBwd,
+            const bool                                       flagFreezeJac)
+        {
+            // Do nothing by default
+        }
+
+        virtual void v_DoDiffusion_coeffVol(
+            const Array<OneD, const Array<OneD, NekDouble> > &inarray,
+                  Array<OneD,       Array<OneD, NekDouble> > &outarray,
             const bool                                       flagFreezeJac)
         {
             // Do nothing by default

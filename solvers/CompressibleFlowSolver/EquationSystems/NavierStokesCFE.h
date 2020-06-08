@@ -160,6 +160,10 @@ namespace Nektar
         const Array<OneD, Array<OneD, NekDouble> >          &pFwd,
         const Array<OneD, Array<OneD, NekDouble> >          &pBwd,
         const bool                                          flagFreezeJac);
+    virtual void v_DoDiffusion_coeffVol(
+        const Array<OneD, const Array<OneD, NekDouble> >    &inarray,
+        Array<OneD,       Array<OneD, NekDouble> >          &outarray,
+        const bool                                          flagFreezeJac);
     
     virtual void v_DoDiffusionFlux(
             const Array<OneD, const Array<OneD, NekDouble> > &inarray,
@@ -179,13 +183,13 @@ namespace Nektar
 
 
     virtual void v_GetViscousSymmtrFluxConservVar(
-            const int                                                       nConvectiveFields,
-            const int                                                       nSpaceDim,
-            const Array<OneD, Array<OneD, NekDouble> >                      &inaverg,
-            const Array<OneD, Array<OneD, NekDouble > >                     &inarray,
-            Array<OneD, Array<OneD, Array<OneD, NekDouble> > >              &outarray,
-            Array< OneD, int >                                              &nonZeroIndex,
-            const Array<OneD, Array<OneD, NekDouble> >                      &normals);
+        const int                                          nConvectiveFields,
+        const int                                          nSpaceDim,
+        const Array<OneD, Array<OneD, NekDouble> >         &inaverg,
+        const Array<OneD, Array<OneD, NekDouble > >        &inarray,
+        Array<OneD, Array<OneD, Array<OneD, NekDouble> > > &outarray,
+        Array< OneD, int >                                 &nonZeroIndex,
+        const Array<OneD, Array<OneD, NekDouble> >         &normals);
 
     void GetPhysicalAV(
         const Array<OneD, const Array<OneD, NekDouble>> &physfield);
