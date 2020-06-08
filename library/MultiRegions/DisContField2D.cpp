@@ -443,12 +443,16 @@ namespace Nektar
             SetUpPhysNormals();
 
             // ------ Setting up interfaces ------
-            // Loop over all trace edges and create a map from geom ID to
-            // position in the trace expansion
+            // Map taking a global geometry ID to the matching trace expansion ID
+            std::map<int, int> geomIdToTraceId;
             for (int i = 0; i < m_trace->GetExpSize(); ++i)
             {
-                m_geomIdToTraceId[m_trace->GetExp(i)->GetGeom()->GetGlobalID()] = i;
+                geomIdToTraceId[m_trace->GetExp(i)->GetGeom()->GetGlobalID()] = i;
             }
+
+
+            m_interfaceMap = MemoryManager<InterfaceMapDG>::
+            AllocateSharedPtr(m_interfaces, m_trace, geomIdToTraceId);
 
             // Calculate total quadrature points on each interface edge
             for (const auto &interface : m_interfaces->GetInterfaces())
@@ -2571,122 +2575,6 @@ namespace Nektar
                     {
                         ASSERTL0(false, "This type of BC not implemented yet");
                     }
-                }
-            }
-        }
-
-        std::vector<std::tuple<NekDouble, int, int>> CalcCoordsOneWay(
-            const SpatialDomains::InterfaceBaseShPtr &child,
-            const SpatialDomains::InterfaceBaseShPtr &parent,
-            const ExpListSharedPtr &trace,
-            const SpatialDomains::MeshGraphSharedPtr &graph,
-            const std::map<int, int> &geomToTrace,
-            LibUtilities::CommSharedPtr &comm)
-        {
-
-            int cnt = 0;
-            //Vector of quad point matching coords {local coord, edge ID, rank}
-            std::vector<std::tuple<NekDouble, int, int>> tmp(child->GetTotPoints());
-            std::map<int, Array<OneD, NekDouble>> missingCoords;
-
-            auto childEdge = child->GetEdgeIds();
-            auto parentEdge = parent->GetEdgeIds();
-
-            for (auto childId : childEdge)
-            {
-                int myRank = comm->GetRank();
-                std::cout << "My rank: " << myRank << " child ID" << childId << std::endl;
-                LocalRegions::ExpansionSharedPtr childElmt = trace->GetExp(geomToTrace.at(childId));
-                size_t nq = childElmt->GetTotPoints();
-                Array<OneD, NekDouble> xc(nq), yc(nq);
-                childElmt->GetCoords(xc, yc);
-
-                // Check local interface
-                for (int i = 0; i < nq; ++i)
-                {
-                    Array<OneD, NekDouble> xs(3);
-                    xs[0] = xc[i];
-                    xs[1] = yc[i];
-                    xs[2] = 0;
-
-                    bool found = false;
-                    int foundTraceId = -1;
-                    NekDouble foundLocCoord = -1;
-
-                    for (auto id : parentEdge)
-                    {
-                        SpatialDomains::SegGeomSharedPtr searchSeg =
-                            std::static_pointer_cast<SpatialDomains::SegGeom>(graph->GetSegGeom(id));
-                        NekDouble dist = searchSeg->FindDistance(xs, foundLocCoord);
-
-                        if (dist < 1e-8)
-                        {
-                            foundTraceId = geomToTrace.at(id);
-                            //std::cout << "Found : "<< xc << " " << yc << " in trace " << foundTraceId << " loc coord " << foundLocCoord << " @ dist: " << dist << std::endl;
-                            found = true;
-                            break;
-                        }
-                    }
-
-                    if(!found)
-                    {
-                        missingCoords[cnt] = xs;
-                    }
-
-                    tmp[cnt] = std::make_tuple(foundLocCoord, foundTraceId, myRank);
-
-                    cnt++;
-                }
-            }
-
-            std::cout << "Couldn't find locally: ";
-            for (auto i : missingCoords)
-            {
-                std::cout << i.first << " @ " << i.second[0] << ", " << i.second[1] << " | ";
-            }
-            std::cout << std::endl;
-
-            // Share how many unknown points to expect on each rank
-            std::vector<int> oppRanks = child->GetOppRank();
-
-            Array<OneD, NekDouble> sendBuff(1, missingCoords.size());
-            Array<OneD, NekDouble> recvBuff(oppRanks.size(), -1);
-
-            LibUtilities::CommRequestSharedPtr recvRequest;
-            LibUtilities::CommRequestSharedPtr sendRequest;
-            for (int i = 0; i < oppRanks.size(); ++i)
-            {
-                comm->Irecv(oppRanks[i], recvBuff[i], 1, recvRequest, i);
-            }
-
-            for (int i = 0; i < oppRanks.size(); ++i)
-            {
-                comm->Isend(oppRanks[i], sendBuff, 1, sendRequest, i);
-            }
-
-            comm->WaitAll(sendRequest);
-            comm->WaitAll(recvRequest);
-
-            return tmp;
-        }
-
-        void DisContField2D::CalcLocalInterfaceCoords()
-        {
-            for (auto &interface : m_interfaces->GetInterfaces())
-            {
-                size_t indx = interface.first;
-                auto pair = interface.second;
-                if (pair->GetCalcFlag())
-                {
-                    auto left = pair->GetLeftInterface();
-                    auto right = pair->GetRightInterface();
-
-                    auto tmp = CalcCoordsOneWay(left, right, m_trace, m_graph, m_geomIdToTraceId, m_comm);
-                    auto tmp2 = CalcCoordsOneWay(right, left, m_trace, m_graph, m_geomIdToTraceId, m_comm);
-                    tmp.insert(tmp.end(), tmp2.begin(), tmp2.end());
-
-                    //m_locCoordSegIdPair[indx] = tmp;
-                    pair->SetCalcFlag(false);
                 }
             }
         }

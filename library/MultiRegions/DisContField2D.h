@@ -43,6 +43,7 @@
 #include <MultiRegions/ExpList2D.h>
 #include <MultiRegions/GlobalLinSys.h>
 #include <MultiRegions/AssemblyMap/AssemblyMapDG.h>
+#include <MultiRegions/AssemblyMap/InterfaceMapDG.h>
 #include <MultiRegions/AssemblyMap/LocTraceToTraceMap.h>
 #include <SpatialDomains/Conditions.h>
 #include <SpatialDomains/Interface.h>
@@ -162,9 +163,7 @@ namespace Nektar
              */
             Array<OneD,SpatialDomains::BoundaryConditionShPtr> m_bndConditions;
 
-
-            // Map taking a global geometry ID to the matching trace expansion ID
-            std::map<int, int> m_geomIdToTraceId;
+            InterfaceMapDGSharedPtr m_interfaceMap;
             std::map<int, std::vector<std::pair<NekDouble, int>>> m_locCoordSegIdPair;
 
             GlobalLinSysMapShPtr   m_globalBndMat;

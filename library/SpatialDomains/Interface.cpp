@@ -277,16 +277,24 @@ void Interfaces::CommSetup(LibUtilities::CommSharedPtr &comm)
                 rankLocalInterfaceIds[rankLocalInterfaceDisp[i] + 2 * j + 1];
             if (myIndxLRMap.find(otherId) != myIndxLRMap.end())
             {
-                // Set interface opposite ranks
+                // Set interface opposite ranks (could probably simplify logic
+                // here but this is easy to understand
                 int myCode = myIndxLRMap[otherId];
                 if ((myCode == 1 && otherCode == 2) ||
-                    (myCode == 1 && otherCode == 3))
+                    (myCode == 1 && otherCode == 3) ||
+                    (myCode == 3 && otherCode == 2))
                 {
                     m_interfaces[otherId]->GetLeftInterface()->AddOppRank(i);
                 }
                 else if ((myCode == 2 && otherCode == 1) ||
-                         (myCode == 2 && otherCode == 3))
+                         (myCode == 2 && otherCode == 3) ||
+                         (myCode == 3 && otherCode == 1))
                 {
+                    m_interfaces[otherId]->GetRightInterface()->AddOppRank(i);
+                }
+                else if (myCode == 3 && otherCode == 3)
+                {
+                    m_interfaces[otherId]->GetLeftInterface()->AddOppRank(i);
                     m_interfaces[otherId]->GetRightInterface()->AddOppRank(i);
                 }
             }
@@ -294,7 +302,7 @@ void Interfaces::CommSetup(LibUtilities::CommSharedPtr &comm)
     }
 }
 
-void InterfacePair::SeparateGraph(MeshGraphSharedPtr &graph)
+void InterfacePair::SeparateGraph(MeshGraphSharedPtr &graph) const
 {
     auto rightDomain   = m_rightInterface->GetDomain();
     auto interfaceEdge = m_rightInterface->GetInterfaceEdge();

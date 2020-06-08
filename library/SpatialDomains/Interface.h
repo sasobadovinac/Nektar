@@ -48,11 +48,19 @@ struct OneD;
 
 namespace SpatialDomains
 {
+
 enum InterfaceType
 {
     eFixed,
     eRotating,
     eSliding,
+};
+
+enum InterfaceSide
+{
+    eNone,
+    eLeft,
+    eRight
 };
 
 struct Composite;
@@ -107,34 +115,23 @@ struct InterfaceBase
 
     void SetEdge(const CompositeMap &edge);
 
-    inline std::vector<int> GetOppRank()
+    inline InterfaceSide GetSide() const
     {
-        return m_sharedWithRank;
+        return m_side;
     }
 
-    inline void AddOppRank(int i)
+    inline void SetSide(const InterfaceSide &side)
     {
-        m_sharedWithRank.emplace_back(i);
-    }
-
-    inline int GetTotPoints() const
-    {
-        return m_totQuadPts;
-    }
-
-    inline void SetTotPoints(int i)
-    {
-         m_totQuadPts = i;
+        m_side = side;
     }
 
 protected:
     InterfaceType m_type;
+    InterfaceSide m_side = eNone;
     CompositeMap m_domain;
     std::map<int, SegGeomSharedPtr> m_edge;
     std::vector<int> m_edgeIds;
-    int m_totQuadPts;
     CompositeMap m_interfaceEdge;
-    std::vector<int> m_sharedWithRank;
 };
 
 struct RotatingInterface : public InterfaceBase
@@ -187,6 +184,8 @@ struct InterfacePair
                  : m_leftInterface(leftInterface),
                    m_rightInterface(rightInterface)
     {
+        leftInterface->SetSide(eLeft);
+        rightInterface->SetSide(eRight);
     }
 
     InterfaceBaseShPtr m_leftInterface;
@@ -214,7 +213,7 @@ public:
         m_calcFlag = flag;
     }
 
-    void SeparateGraph(MeshGraphSharedPtr &graph);
+    void SeparateGraph(MeshGraphSharedPtr &graph) const;
 };
 
 

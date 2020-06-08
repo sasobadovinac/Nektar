@@ -3,6 +3,7 @@ SET(MULTI_REGIONS_SOURCES
 ./AssemblyMap/AssemblyMap.cpp
 ./AssemblyMap/AssemblyMapCG.cpp
 ./AssemblyMap/AssemblyMapDG.cpp
+./AssemblyMap/InterfaceMapDG.cpp
 ./AssemblyMap/LocTraceToTraceMap.cpp
 ContField1D.cpp
 ContField2D.cpp
@@ -90,6 +91,7 @@ SET(ASSEMBLY_MAP_HEADERS
 ./AssemblyMap/AssemblyMap.h
 ./AssemblyMap/AssemblyMapCG.h
 ./AssemblyMap/AssemblyMapDG.h
+./AssemblyMap/InterfaceMapDG.h
 ./AssemblyMap/LocTraceToTraceMap.h
 )
 
