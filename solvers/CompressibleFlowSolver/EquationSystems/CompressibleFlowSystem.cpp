@@ -5328,7 +5328,98 @@ Array<OneD, NekDouble>  CompressibleFlowSystem::GetElmtMinHP(void)
               const NekDouble                             time)
     {
         DoOdeRhs(inarray,outarray,time);
-    } 
+    }
 
+    void CompressibleFlowSystem::MultiLevel(
+        const Array<OneD, NekDouble>               &inarray,
+              Array<OneD, NekDouble>               &outarray, 
+        //These four coeffs should be filled in Driver
+        const int                                  CurrentLevelCoeff,    
+        const int                                  LowLevelCoeff,   
+        const bool                                 MultiLevelFlag,
+        const bool                                 UpDateOperatorflag)
+    {
+        
+        int nVariables=m_fields.num_elements();
+        int nCoeffs=GetNcoeffs();
+        ASSERTL0(CurrentLevelCoeff==nVariables*nCoeffs,"Should Step into Wrong Level");
+        if(MultiLevelFlag)
+        {
+            //false is outarray from zero
+            preconditioner_BlkSOR_coeff(inarray,outarray,false);
+            Array<OneD, NekDouble> outarraytmp(CurrentLevelCoeff,0.0);
+            MatrixMultiply_MatrixFree_coeff(outarray,outarraytmp);
+            Vmath::Vsub(CurrentLevelCoeff,inarray,1,outarraytmp,1,outarraytmp,1);
+            Array<OneD,NekDouble> LowLevelRhs(LowLevelCoeff,0.0);
+            Array<OneD,NekDouble> LowLeveloutarray(LowLevelCoeff,0.0);
+            RestrictResidual(m_RestrictionMatrix,outarraytmp,LowLevelRhs);
+            //To Do: bind in driver
+            //NextLevelMultiLevel(LowLevelRhs,LowLeveloutarray);
+            ProlongateSolution(m_ProlongationMatrix,LowLeveloutarray,outarraytmp);
+            //To DO: True is continue outarray
+            preconditioner_BlkSOR_coeff(inarray,outarraytmp,true);
+            Vmath::Vadd(CurrentLevelCoeff,outarray,1,outarraytmp,1,outarray,1);
+        }
+        else
+        {
+            //Other More accurate iterators
+        }  
+    }
+   
+    void CompressibleFlowSystem::RestrictResidual(
+        const Array<OneD,DNekMatSharedPtr>         &RestrictionMatrix,
+        const Array<OneD, NekDouble>               &inarray,
+              Array<OneD, NekDouble>               &outarray)
+    {
+        std::shared_ptr<LocalRegions::ExpansionVector> pexp = m_fields[0]->GetExp();
+        int nVariables=m_fields.num_elements();
+        int nElmts=m_fields[0]->GetExpSize();
+        
+        int RestrictedArrayOffset=0;
+        for(int i=0;i<nVariables;i++)
+        {
+            int VariableOffset=i*GetNcoeffs();
+            for(int j=0;j<nElmts;j++)
+            {
+                int nElmtCoeffs=(*pexp)[j]->GetNcoeffs();
+                int nElmtOffset=m_fields[0]->GetCoeff_Offset(j);
+                int nRestrictedElmtCoeffs=RestrictionMatrix[j]->GetRows();
+                Array<OneD, NekDouble> Residualtmp(nElmtCoeffs,&inarray[VariableOffset+nElmtOffset]);  
+                DNekVec Vin(nElmtCoeffs,Residualtmp,eCopy);
+                Array<OneD,NekDouble> RestrictedResidualtmp(nRestrictedElmtCoeffs,&outarray[RestrictedArrayOffset]);
+                DNekVec Vout(RestrictedResidualtmp,eWrapper);
+                Vout=(*RestrictionMatrix[j])*Vin;
+                RestrictedArrayOffset=RestrictedArrayOffset+nRestrictedElmtCoeffs;
+            }
+        }
+    }
+
+    void CompressibleFlowSystem::ProlongateSolution(
+        const Array<OneD, DNekMatSharedPtr>        &ProlongationMatrix,
+        const Array<OneD, NekDouble>               &inarray,
+              Array<OneD, NekDouble>               &outarray)
+    {
+        std::shared_ptr<LocalRegions::ExpansionVector> pexp = m_fields[0]->GetExp();
+        int nVariables=m_fields.num_elements();
+        int nElmts=m_fields[0]->GetExpSize();
+
+        int ProlongatedArrayOffset=0;
+        for(int i=0;i<nVariables;i++)
+        {
+            int VariableOffset=i*GetNcoeffs();
+            for(int j=0;j<nElmts;j++)
+            {
+                int nElmtCoeffs=(*pexp)[j]->GetNcoeffs();
+                int nElmtOffset=m_fields[0]->GetCoeff_Offset(j);
+                int nProlongatedElmtCoeffs=ProlongationMatrix[j]->GetColumns();
+                Array<OneD, NekDouble> Solutiontmp(nProlongatedElmtCoeffs,&inarray[ProlongatedArrayOffset]);  
+                DNekVec Vin(nProlongatedElmtCoeffs,Solutiontmp,eCopy);
+                Array<OneD,NekDouble> ProlongatedSolutiontmp(nElmtCoeffs,&outarray[VariableOffset+nElmtOffset]);
+                DNekVec Vout(nElmtCoeffs,ProlongatedSolutiontmp,eWrapper);
+                Vout=(*ProlongationMatrix[j])*Vin;
+                ProlongatedArrayOffset=ProlongatedArrayOffset+nProlongatedElmtCoeffs;
+            }
+        }
+    }
 
 }

@@ -872,6 +872,24 @@ namespace Nektar
             const Array<OneD, const Array<OneD, NekDouble> >                &inarray,
                   Array<OneD, Array<OneD, DNekMatSharedPtr> >               &ElmtJac);
 
+        void MultiLevel(           
+            const Array<OneD, NekDouble>                                    &inarray,
+            Array<OneD, NekDouble>                                          &outarray, 
+            const int                                                       CurrentLevelCoeff,    
+            const int                                                       TargetLevelCoeff,     
+            const bool                                                      MultiLevelFlag, 
+            const bool                                                      UpDateOperatorflag);
+
+        void RestrictResidual(
+        const Array<OneD,DNekMatSharedPtr>                                  &RestrictionMatrix,
+        const Array<OneD, NekDouble>                                        &inarray,
+              Array<OneD, NekDouble>                                        &outarray);
+        
+        void ProlongateSolution(
+        const Array<OneD, DNekMatSharedPtr>                                 &ProlongationMatrix,
+        const Array<OneD, NekDouble>                                        &inarray,
+              Array<OneD, NekDouble>                                        &outarray);
+
         // virtual void v_GetFluxDerivJacDirctn(
         //     const MultiRegions::ExpListSharedPtr                            &explist,
         //     const int                                                       nFluxDir,

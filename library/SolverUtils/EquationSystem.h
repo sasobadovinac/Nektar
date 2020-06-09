@@ -100,6 +100,20 @@ class Interpolator;
             {
                 v_DoOdeRhs1(inarray,outarray,time);
             }
+
+            //Set RestrictionMatrix
+            SOLVER_UTILS_EXPORT void SetRestrictionMatrix(
+            const Array<OneD, DNekMatSharedPtr> &RestrictionMatrix)
+            {
+                m_RestrictionMatrix= RestrictionMatrix;
+            }
+            
+            //Set ProlongationMatrix
+            SOLVER_UTILS_EXPORT void SetProlongationMatrix(
+            const Array<OneD, DNekMatSharedPtr> &ProlongationMatrix)
+            {
+                m_ProlongationMatrix= ProlongationMatrix;
+            }
             ///////////////////////////////////////////////////////
             
             // Set up trace normals if required
@@ -373,6 +387,10 @@ class Interpolator;
             int                         m_ExtractRhsPerNTimeSteps;
 
             int                         m_ExtractRhsPerNStages;
+
+            Array<OneD, DNekMatSharedPtr>      m_RestrictionMatrix;
+
+            Array<OneD, DNekMatSharedPtr>      m_ProlongationMatrix;
             //////////////////////////////////////////////////////////////////////
             /// Temparary factor to determine whether strong/weak
             bool                                        m_useUnifiedWeakIntegration  =   false;

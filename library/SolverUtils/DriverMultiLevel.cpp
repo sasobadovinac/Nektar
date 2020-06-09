@@ -122,6 +122,8 @@ namespace Nektar
                     DNekMatSharedPtr HigherLevelBwdMat = HigherLevelExpansion->GetStdMatrix(HigherLevelMatKey);
                     LowerLevelExpansion->CreateInterpolationMatrix(HigherLevelExpansionKeys,HigherLevelBwdMat,m_RestrictionMatrix[k][i]);
                     HigherLevelExpansion->CreateInterpolationMatrix(LowerLevelExpansionKeys,LowerLevelBwdMat,m_ProlongationMatrix[k][i]);
+                    m_equ[k]->SetRestrictionMatrix(m_RestrictionMatrix[k]);
+                    m_equ[k]->SetProlongationMatrix(m_ProlongationMatrix[k]);
                     // cout<<"RestrictionMatrix["<<k<<"]["<<i<<"]"<<endl;
                     // OutputMatrix(m_RestrictionMatrix[k][i]);
                     // cout<<"ProlongationMatrix["<<k<<"]["<<i<<"]"<<endl;
