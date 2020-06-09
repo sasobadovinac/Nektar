@@ -871,12 +871,17 @@ namespace Nektar
             const int                                                       nDervDir,
             const Array<OneD, const Array<OneD, NekDouble> >                &inarray,
                   Array<OneD, Array<OneD, DNekMatSharedPtr> >               &ElmtJac);
+        
+        void preconditioner_MultiLevel_coeff(
+            const Array<OneD, NekDouble>                                    &inarray,
+                  Array<OneD, NekDouble>                                    &outarray);
 
-        void MultiLevel(           
+        void v_MultiLevel(           
             const Array<OneD, NekDouble>                                    &inarray,
             Array<OneD, NekDouble>                                          &outarray, 
+            const int                                                       Level,
             const int                                                       CurrentLevelCoeff,    
-            const int                                                       TargetLevelCoeff,     
+            const int                                                       LowLevelCoeff,     
             const bool                                                      MultiLevelFlag, 
             const bool                                                      UpDateOperatorflag);
 

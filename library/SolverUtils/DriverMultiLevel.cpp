@@ -64,22 +64,17 @@ namespace Nektar
         {
         }
 
-        void DriverMultiLevel::v_DoMultiOrderProjection(const Array<OneD,const Array<OneD, NekDouble>> &inarray,
-                                                           Array<OneD, Array<OneD,NekDouble>> &outarray,
-                                                                        const NekDouble time)
+        void DriverMultiLevel::v_MultiLevel(const Array<OneD, NekDouble> &inarray,
+                                                Array<OneD,NekDouble> &outarray,
+                                                const bool UpDateOperatorflag,
+                                                const int Level)
         {
-            ASSERTL1(m_equ[1],"Need to define EquationSystem[1]");
-            m_equ[1]->DoOdeProjection1(inarray,outarray,time);
-        }
-
-        void DriverMultiLevel::v_DoMultiOrderOdeRhs(const Array<OneD,const Array<OneD, NekDouble>> &inarray,
-                                                           Array<OneD, Array<OneD,NekDouble>> &outarray,
-                                                                        const NekDouble time)
-        {
-            ASSERTL1(m_equ[1],"Need to define EquationSystem[1]");
-            m_equ[1]->DoOdeRhs1(inarray,outarray,time);
-        }
-    
+            ASSERTL1(m_equ[Level],"Need to define EquationSystem[1]");
+            bool MultiLevelFlag=(Level!=m_nLevels);
+            //m_equ[==m_nLevels] should not use function MultiLevel
+            m_equ[Level]->MultiLevel(inarray, outarray, Level, m_MultiLevelCoeffs[Level],
+                       m_MultiLevelCoeffs[Level+1], MultiLevelFlag, UpDateOperatorflag);
+        }    
     
         /**
          *
@@ -87,12 +82,19 @@ namespace Nektar
         void DriverMultiLevel::v_InitObject(ostream &out)
         {
             Driver::v_InitObject(out);
+    
+            int nVariables=m_equ[0]->GetNvariables();
+            m_MultiLevelCoeffs=Array<OneD, int>(m_nLevels,0.0);
+            for(int k=0;k<m_nLevels;k++)
+            {
+                m_MultiLevelCoeffs[k]=nVariables*m_equ[k]->GetNcoeffs();
+            }
             
             //Define Restriction and Prolongation Matrix
-            int nCycles=m_nLevels-1;
-
+            int nCycles=m_nLevels-1;  
             m_RestrictionMatrix=Array<OneD,Array<OneD,DNekMatSharedPtr>> (nCycles);
             m_ProlongationMatrix=Array<OneD,Array<OneD,DNekMatSharedPtr>>(nCycles);
+
 
             for(int k=0;k<nCycles;k++)
             {
@@ -132,9 +134,7 @@ namespace Nektar
                 }
             }
 
-
-            m_driverOperator.DefineMultiOrderProjection(&Driver::DoMultiOrderProjection, this);
-            m_driverOperator.DefineMultiOrderOdeRhs(&Driver::DoMultiOrderOdeRhs, this);
+            m_driverOperator.DefineMultiLevel(&Driver::MultiLevel, this);
             m_equ[0]->SetdriverOperator(m_driverOperator);
         }
     

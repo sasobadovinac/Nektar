@@ -51,7 +51,7 @@
 #include <SolverUtils/SolverUtilsDeclspec.h>
 #include <SolverUtils/Core/Misc.h>
 #include <SolverUtils/Filters/Filter.h>
-#include<SolverUtils/DriverCFSOperators.hpp>  
+#include<SolverUtils/DriverOperators.hpp>  
 
 namespace Nektar
 {
@@ -99,6 +99,19 @@ class Interpolator;
                                                   const NekDouble time)
             {
                 v_DoOdeRhs1(inarray,outarray,time);
+            }
+
+            SOLVER_UTILS_EXPORT void MultiLevel(
+            const Array<OneD, NekDouble>                                    &inarray,
+            Array<OneD, NekDouble>                                          &outarray, 
+            const int                                                       Level,
+            const int                                                       CurrentLevelCoeff,    
+            const int                                                       LowLevelCoeff,     
+            const bool                                                      MultiLevelFlag, 
+            const bool                                                      UpDateOperatorflag)
+            {
+                v_MultiLevel(inarray,outarray, Level, CurrentLevelCoeff, LowLevelCoeff,
+                                                      MultiLevelFlag,UpDateOperatorflag);
             }
 
             //Set RestrictionMatrix
@@ -543,6 +556,19 @@ class Interpolator;
             const Array<OneD, const  Array<OneD, NekDouble> >&inarray,
                   Array<OneD,        Array<OneD, NekDouble> >&outarray,
                                                   const NekDouble time)
+            {
+                 ASSERTL0(false, "Not defined.");
+            }
+
+            /// Do MultiLevel
+            SOLVER_UTILS_EXPORT virtual void v_MultiLevel(
+            const Array<OneD, NekDouble>                                    &inarray,
+            Array<OneD, NekDouble>                                          &outarray, 
+            const int                                                       Level,
+            const int                                                       CurrentLevelCoeff,    
+            const int                                                       LowLevelCoeff,     
+            const bool                                                      MultiLevelFlag, 
+            const bool                                                      UpDateOperatorflag)
             {
                  ASSERTL0(false, "Not defined.");
             }

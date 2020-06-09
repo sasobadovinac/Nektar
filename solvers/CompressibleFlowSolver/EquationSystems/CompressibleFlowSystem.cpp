@@ -2747,6 +2747,10 @@ namespace Nektar
             }
             NttlNonlinIte++;
         }
+        if (m_PrcdMatFreezNumb>0)
+        {
+            m_CalcuPrecMatFlag = false;
+        }
 
         if((l_verbose||(!converged))&&l_root)
         {
@@ -2870,10 +2874,6 @@ namespace Nektar
                 }
             }
         
-            if (m_PrcdMatFreezNumb>0)
-            {
-                m_CalcuPrecMatFlag = false;
-            }
             m_TimeIntegLambdaPrcMat = lambda;
 
             // to free the storage
@@ -5330,10 +5330,19 @@ Array<OneD, NekDouble>  CompressibleFlowSystem::GetElmtMinHP(void)
         DoOdeRhs(inarray,outarray,time);
     }
 
-    void CompressibleFlowSystem::MultiLevel(
+    void CompressibleFlowSystem::preconditioner_MultiLevel_coeff(
+            const Array<OneD, NekDouble> &inarray,
+                  Array<OneD, NekDouble >&outarray)
+    { 
+        int Level=0;
+        m_EqdriverOperator.MultiLevel(inarray, outarray, m_CalcuPrecMatFlag, Level);
+    }
+
+    void CompressibleFlowSystem::v_MultiLevel(
         const Array<OneD, NekDouble>               &inarray,
               Array<OneD, NekDouble>               &outarray, 
         //These four coeffs should be filled in Driver
+        const int                                  Level,
         const int                                  CurrentLevelCoeff,    
         const int                                  LowLevelCoeff,   
         const bool                                 MultiLevelFlag,
@@ -5354,7 +5363,8 @@ Array<OneD, NekDouble>  CompressibleFlowSystem::GetElmtMinHP(void)
             Array<OneD,NekDouble> LowLeveloutarray(LowLevelCoeff,0.0);
             RestrictResidual(m_RestrictionMatrix,outarraytmp,LowLevelRhs);
             //To Do: bind in driver
-            //NextLevelMultiLevel(LowLevelRhs,LowLeveloutarray);
+            int NextLevel=Level+1;
+            m_EqdriverOperator.MultiLevel(LowLevelRhs,LowLeveloutarray,UpDateOperatorflag,NextLevel);
             ProlongateSolution(m_ProlongationMatrix,LowLeveloutarray,outarraytmp);
             //To DO: True is continue outarray
             preconditioner_BlkSOR_coeff(inarray,outarraytmp,true);

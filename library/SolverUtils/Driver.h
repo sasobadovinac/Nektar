@@ -43,7 +43,7 @@
 
 #include <SolverUtils/SolverUtils.hpp>
 #include <SolverUtils/EquationSystem.h>
-#include<SolverUtils/DriverCFSOperators.hpp>
+#include<SolverUtils/DriverOperators.hpp>
 
 namespace Nektar
 {
@@ -85,6 +85,15 @@ public:
         const NekDouble time)
     {
         v_DoMultiOrderOdeRhs(inarray,outarray,time);
+    }
+
+    SOLVER_UTILS_EXPORT inline void MultiLevel(
+        const Array<OneD, NekDouble>                    &inarray,
+        Array<OneD,NekDouble>                           &outarray,
+        const bool                                      UpDateOperatorflag,
+        const int                                       Level)
+    {
+        v_MultiLevel(inarray,outarray, UpDateOperatorflag, Level);
     }
         
 
@@ -142,6 +151,15 @@ protected:
         const Array<OneD,const Array<OneD, NekDouble>>  &inarray,
         Array<OneD, Array<OneD,NekDouble>>              &outarray,
         const NekDouble                                 time)
+    {
+         ASSERTL0(false,"This routine is not valid in this class");
+    }
+
+    SOLVER_UTILS_EXPORT virtual void v_MultiLevel(
+        const Array<OneD, NekDouble>                    &inarray,
+        Array<OneD,NekDouble>                           &outarray,
+        const bool                                      UpDateOperatorflag,
+        const int                                       Level)
     {
          ASSERTL0(false,"This routine is not valid in this class");
     }

@@ -70,6 +70,8 @@ namespace Nektar
 
             Array<OneD,Array<OneD,DNekMatSharedPtr>>    m_ProlongationMatrix;
 
+            Array<OneD,int>                             m_MultiLevelCoeffs;
+
             /// Constructor
             SOLVER_UTILS_EXPORT DriverMultiLevel(
                 const LibUtilities::SessionReaderSharedPtr pSession,
@@ -78,13 +80,10 @@ namespace Nektar
             /// Destructor
             SOLVER_UTILS_EXPORT virtual ~DriverMultiLevel();
 
-            SOLVER_UTILS_EXPORT virtual void v_DoMultiOrderProjection(const Array<OneD,const Array<OneD, NekDouble>> &inarray,
-                                                            Array<OneD, Array<OneD,NekDouble>> &outarray,
-                                                            const NekDouble time);
-
-            SOLVER_UTILS_EXPORT virtual void v_DoMultiOrderOdeRhs(const Array<OneD,const Array<OneD, NekDouble>> &inarray,
-                                                                        Array<OneD, Array<OneD,NekDouble>> &outarray,
-                                                                        const NekDouble time);
+            SOLVER_UTILS_EXPORT virtual void v_MultiLevel(const Array<OneD, NekDouble> &inarray,
+                                                      Array<OneD,NekDouble>  &outarray,
+                                                      const bool UpDateOperatorflag,
+                                                      const int Level);
         
             /// Second-stage initialisation
             SOLVER_UTILS_EXPORT virtual void v_InitObject(std::ostream &out = std::cout);

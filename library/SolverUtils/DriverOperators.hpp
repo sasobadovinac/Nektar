@@ -33,13 +33,11 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#ifndef NEKTAR_SOLVERUTILS_DRIVERCFSOPERATORS_HPP
-#define NEKTAR_SOLVERUTILS_DRIVERCFSOPERATORS_HPP
+#ifndef NEKTAR_SOLVERUTILS_DRIVEROPERATORS_HPP
+#define NEKTAR_SOLVERUTILS_DRIVEROPERATORS_HPP
 
 #include <LibUtilities/Communication/Comm.h>
 #include <LibUtilities/BasicUtils/SharedArray.hpp>
-
-#include <SolverUtils/DriverCFSOperators.hpp>
 
 namespace Nektar
 {
@@ -49,56 +47,84 @@ namespace Nektar
         {
         public:
 
-            typedef const Array<OneD, const Array<OneD, NekDouble>> InArrayType;
-            typedef       Array<OneD, Array<OneD,NekDouble>>       OutArrayType;
-            typedef std::function< void (InArrayType&, OutArrayType&, const NekDouble)>  FunctorType;
+            typedef const Array<OneD, NekDouble> InArrayType1;
+            typedef       Array<OneD,NekDouble>  OutArrayType1;
+            typedef std::function< void (InArrayType1&, OutArrayType1&, const bool, const int)>  FunctorType1;
+
+            typedef const Array<OneD, const Array<OneD, NekDouble>> InArrayType2;
+            typedef       Array<OneD, Array<OneD,NekDouble>>       OutArrayType2;
+            typedef std::function< void (InArrayType2&, OutArrayType2&, const NekDouble)>  FunctorType2;
             
             DriverOperators(void):
-            m_functors(2)
+            functors1(1),
+            functors2(2)
             {
             }
 
             DriverOperators(DriverOperators &in):
-            m_functors(2)
+            functors1(1),
+            functors2(2)
             {
+                for (int i = 0; i < 1; i++)
+                {
+                    functors1[i] = in.functors1[i];
+                }
+
                 for (int i = 0; i < 2; i++)
                 {
-                    m_functors[i] = in.m_functors[i];
+                    functors2[i] = in.functors2[i];
                 }
+            }
+
+            //Set a functor that m_equ[k] can access m_equ[k+1]'s MultiLevel 
+            template<typename FuncPointerT, typename ObjectPointerT> 
+            void DefineMultiLevel(FuncPointerT func, ObjectPointerT obj)
+            {
+                 functors1[0]=  std::bind(func, obj, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4);
+            }
+
+            inline void MultiLevel(InArrayType1     &inarray, 
+                                   OutArrayType1    &outarray,
+                                   const bool UpDateOperatorflag,
+                                   const int  Level) const
+            {
+                ASSERTL1(functors1[0],"MultiLevel should be defined in InitObject");
+                functors1[0](inarray, outarray, UpDateOperatorflag, Level);
             }
 
             //Set a functor that m_equ[0] can do Projection
             template<typename FuncPointerT, typename ObjectPointerT> 
             void DefineMultiOrderProjection(FuncPointerT func, ObjectPointerT obj)
             {
-                 m_functors[0]=  std::bind(func, obj, std::placeholders::_1, std::placeholders::_2,std::placeholders::_3);
+                 functors2[0]=  std::bind(func, obj, std::placeholders::_1, std::placeholders::_2,std::placeholders::_3);
             }
 
-            inline void DoMultiOrderProjection(InArrayType     &inarray, 
-                                           OutArrayType    &outarray,
+            inline void DoMultiOrderProjection(InArrayType2     &inarray, 
+                                               OutArrayType2    &outarray,
                                                const NekDouble time) const
             {
-                ASSERTL1(m_functors[0],"DoMultiOrderOdeRhs should be defined for this time integration scheme");
-                m_functors[0](inarray,outarray,time);
+                ASSERTL1(functors2[0],"DoMultiOrderProjection should be defined for this time integration scheme");
+                functors2[0](inarray,outarray,time);
             }
 
             //Set a functor that m_equ[0] can extract Rhs from m_equ[1]
             template<typename FuncPointerT, typename ObjectPointerT> 
             void DefineMultiOrderOdeRhs(FuncPointerT func, ObjectPointerT obj)
             {
-                 m_functors[1]=  std::bind(func, obj, std::placeholders::_1, std::placeholders::_2,std::placeholders::_3);
+                 functors2[1]=  std::bind(func, obj, std::placeholders::_1, std::placeholders::_2,std::placeholders::_3);
             }
 
-            inline void DoMultiOrderOdeRhs(InArrayType     &inarray, 
-                                           OutArrayType    &outarray,
+            inline void DoMultiOrderOdeRhs(InArrayType2     &inarray, 
+                                           OutArrayType2    &outarray,
                                                const NekDouble time) const
             {
-                ASSERTL1(m_functors[1],"DoMultiOrderOdeRhs should be defined for this time integration scheme");
-                m_functors[1](inarray,outarray,time);
+                ASSERTL1(functors2[1],"DoMultiOrderOdeRhs should be defined for this time integration scheme");
+                functors2[1](inarray,outarray,time);
             }
 
         protected:
-            Array<OneD,FunctorType> m_functors;
+            Array<OneD,FunctorType1> functors1;
+            Array<OneD,FunctorType2> functors2;
         private:
 
         };
