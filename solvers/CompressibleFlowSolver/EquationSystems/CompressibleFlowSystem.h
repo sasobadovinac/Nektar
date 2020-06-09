@@ -116,6 +116,8 @@ namespace Nektar
         bool                                m_CalcTracePartFlag;
         bool                                m_CalcVolumPartFlag;
 
+        bool                                m_flagPrecMatFree = false;
+
 #ifdef CFS_DEBUGMODE
        // 1: Adv; 2: Dif; Default: all
         int                                 m_DebugAdvDiffSwitch; 
@@ -154,14 +156,22 @@ namespace Nektar
         // Forcing term
         std::vector<SolverUtils::ForcingSharedPtr> m_forcing;
 
+        NekLinSysIterativeSharedPtr                 m_linsolBRJ;
+
         enum PreconditionerType
         {
             eNull,    ///< No Solution type specified
             eDiagonal,
             eSparse,
         };
-
         PreconditionerType                  m_PrecMatStorage;
+
+        enum PrecDiagOffDiagTag
+        {
+            ePrecDiagOffDiagTagAll,    
+            ePrecDiagOffDiagTagDiag,
+            ePrecDiagOffDiagTagOffdiag
+        };
 
         CompressibleFlowSystem(
             const LibUtilities::SessionReaderSharedPtr& pSession,
@@ -199,6 +209,22 @@ namespace Nektar
             Array<OneD, NekDouble >       &outarray,
             const TypeNekBlkMatSharedPtr  &PrecMatVars,
             const DataType                &tmpDataType);
+
+        template<typename DataType>
+        void preconditioner_BlkDiagMatFree(
+            const TensorOfArray1D<NekDouble>     &inarray,
+            TensorOfArray1D<NekDouble>           &outarray,
+            const DataType                       &tmpDataType);
+
+        void PrecBJRDiagMult(
+            const  Array<OneD, NekDouble>   &inarray,
+            Array<OneD, NekDouble >         &out,
+            const  bool                     &controlFlag);
+
+        void PrecBJRDiagPrec(
+            const Array<OneD, NekDouble>    &inarray,
+            Array<OneD, NekDouble >         &outarray,
+            const bool                      &flag);
 
         void preconditioner_NumJac(
             const Array<OneD, NekDouble>                  &inarray,
@@ -244,21 +270,51 @@ namespace Nektar
             const Array<OneD, Array<OneD, DataType> >   &TraceJacDerivSign);
 
         template<typename DataType>
-        void MinusOffDiag2Rhs(
-            const int                                   nvariables,
-            const int                                   nCoeffs,
-            const TensorOfArray2D<NekDouble>            &inarray,
-            Array<OneD, Array<OneD, NekDouble> >        &outarray,
-            bool                                        flagUpdateDervFlux,
-            Array<OneD, Array<OneD, NekDouble> >        &FwdFluxDeriv,
-            Array<OneD, Array<OneD, NekDouble> >        &BwdFluxDeriv,
-            TensorOfArray3D<NekDouble>                  &qfield,
-            TensorOfArray3D<NekDouble>                  &wspTrace,
-            Array<OneD, Array<OneD, DataType > >        &wspTraceDataType,
-            const TensorOfArray4D<DataType>             &TraceJacArray,
-            const TensorOfArray4D<DataType>             &TraceJacDerivArray,
-            const Array<OneD, Array<OneD, DataType> >   &TraceJacDerivSign,
-            const TensorOfArray5D<DataType>             &TraceIPSymJacArray);
+        void AddOrMinusPrecTraceFlux(
+            const int                            &nswitchDiagOffdiag,
+            const NekDouble                      AddOrMinusSign,
+            const TensorOfArray2D<NekDouble>     &inarray,
+            TensorOfArray2D<NekDouble>           &outarray,
+            bool                                 flagUpdateDervFlux,
+            TensorOfArray2D<NekDouble>           &FwdFluxDeriv,
+            TensorOfArray2D<NekDouble>           &BwdFluxDeriv,
+            TensorOfArray3D<NekDouble>           &qfield,
+            TensorOfArray3D<NekDouble>           &wspTrace,
+            TensorOfArray2D<DataType>            &wspTraceDataType,
+            const TensorOfArray4D<DataType>      &TraceJacArray,
+            const TensorOfArray4D<DataType>      &TraceJacDerivArray,
+            const TensorOfArray2D<DataType>      &TraceJacDerivSign,
+            const TensorOfArray5D<DataType>      &TraceIPSymJacArray);
+        
+        template<typename DataType>
+        void CalTraceFwdBwdFlux(
+            const TensorOfArray2D<NekDouble>         &Fwd,
+            const TensorOfArray2D<NekDouble>         &Bwd,
+            TensorOfArray2D<NekDouble>               &FwdFlux,
+            TensorOfArray2D<NekDouble>               &BwdFlux,
+            TensorOfArray2D<DataType>                &wspTraceDataType,
+            const TensorOfArray4D<DataType>          &TraceJacArray);
+
+        template<typename DataType>
+        void AddTraceFwdBwdDerivFlux(
+            TensorOfArray2D<NekDouble>               &FwdFlux,
+            TensorOfArray2D<NekDouble>               &BwdFlux,
+            TensorOfArray3D<NekDouble>               &numDerivFwd,
+            TensorOfArray3D<NekDouble>               &numDerivBwd,
+            TensorOfArray3D<NekDouble>               &qfield,
+            TensorOfArray2D<DataType>                &wspTraceDataType,
+            const TensorOfArray4D<DataType>          &TraceJacDerivArray,
+            const TensorOfArray2D<DataType>          &TraceJacDerivSign);
+        
+        template<typename DataType>
+        void CalTraceFwdBwdSymFlux(
+            const TensorOfArray2D<NekDouble>         &Fwd,
+            const TensorOfArray2D<NekDouble>         &Bwd,
+            TensorOfArray3D<NekDouble>               &numDerivFwd,
+            TensorOfArray3D<NekDouble>               &numDerivBwd,
+            TensorOfArray2D<DataType>                &wspTraceDataType,
+            const TensorOfArray2D<DataType>          &TraceJacDerivSign,
+            const TensorOfArray5D<DataType>          &TraceIPSymJacArray);
 
         template<typename DataType, typename TypeNekBlkMatSharedPtr>
         void AddMatNSBlkDiag_volume(
@@ -539,7 +595,7 @@ namespace Nektar
         
         void DoOdeRhs_coeffVol(
             const TensorOfArray2D<NekDouble>        &inarray,
-            Array<OneD, Array<OneD, NekDouble> >    &outarray,
+            TensorOfArray2D<NekDouble>              &outarray,
             const NekDouble                         time,
             const bool                              flagFreezeJac=false);
 
@@ -770,7 +826,7 @@ namespace Nektar
             const bool                                  flagFreezeJac = false);
         void DoDiffusion_coeffVol(
             const TensorOfArray2D<NekDouble>        &inarray,
-            Array<OneD, Array<OneD, NekDouble> >    &outarray,
+            TensorOfArray2D<NekDouble>              &outarray,
             const bool                              flagFreezeJac = false)
         {
             v_DoDiffusion_coeffVol(inarray, outarray, flagFreezeJac);

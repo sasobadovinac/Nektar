@@ -90,15 +90,15 @@ namespace Nektar
                 const Array<OneD, MultiRegions::ExpListSharedPtr>   &fields,
                 Array<OneD, NekDouble >                             &factor); 
 
-            void AddSymmFluxIntegralToCoeff(
-                const int                                                           nConvectiveFields,
-                const int                                                           nDim,
-                const int                                                           nPts,
-                const int                                                           nTracePts,
-                const Array<OneD, MultiRegions::ExpListSharedPtr>                   &fields,
-                const Array<OneD, const int >                                       &nonZeroIndex,
-                      Array<OneD, Array<OneD, Array<OneD, NekDouble> > >            &tracflux,
-                      Array<OneD, Array<OneD, NekDouble> >                          &outarray);
+            virtual void v_AddSymmFluxIntegralToCoeff(
+                const int                                         nvariables,
+                const int                                         nDim,
+                const int                                         nPts,
+                const int                                         nTracePts,
+                const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
+                const Array<OneD, const int >                     &nonZeroIndex,
+                TensorOfArray3D<NekDouble>                        &tracflux,
+                TensorOfArray2D<NekDouble>                        &outarray);
 
             void AddSymmFluxIntegralToPhys(
                 const int                                                           nConvectiveFields,

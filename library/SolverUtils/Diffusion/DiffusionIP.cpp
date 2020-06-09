@@ -524,7 +524,7 @@ namespace Nektar
                 DiffuseTraceSymmFlux(nConvectiveFields,fields,inarray,qfield,VolumeFlux,
                                         traceSymflux,pFwd,pBwd,nonZeroIndex,m_traceAver,m_traceJump);
               
-                AddSymmFluxIntegralToCoeff(nConvectiveFields,nDim,nPts,nTracePts,fields,nonZeroIndex,traceSymflux,outarray);
+                v_AddSymmFluxIntegralToCoeff(nConvectiveFields,nDim,nPts,nTracePts,fields,nonZeroIndex,traceSymflux,outarray);
             }
         }
 
@@ -620,17 +620,17 @@ namespace Nektar
             m_FunctorSymmetricfluxCons(nConvectiveFields,nDim,solution_Aver,solution_jump,traceSymflux,nonZeroIndexsymm,m_traceNormals);
         }
 
-        void DiffusionIP::AddSymmFluxIntegralToCoeff(
-            const int                                                           nConvectiveFields,
-            const int                                                           nDim,
-            const int                                                           nPts,
-            const int                                                           nTracePts,
-            const Array<OneD, MultiRegions::ExpListSharedPtr>                   &fields,
-            const Array<OneD, const int >                                       &nonZeroIndex,
-                  Array<OneD, Array<OneD, Array<OneD, NekDouble> > >            &tracflux,
-                  Array<OneD, Array<OneD, NekDouble> >                          &outarray)
+        void DiffusionIP::v_AddSymmFluxIntegralToCoeff(
+            const int                                         nvariables,
+            const int                                         nDim,
+            const int                                         nPts,
+            const int                                         nTracePts,
+            const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
+            const Array<OneD, const int >                     &nonZeroIndex,
+            TensorOfArray3D<NekDouble>                        &tracflux,
+            TensorOfArray2D<NekDouble>                        &outarray)
         {
-            int nCoeffs =   outarray[nConvectiveFields-1].num_elements();
+            int nCoeffs =   outarray[nvariables-1].num_elements();
             Array<OneD, NekDouble > tmpCoeff(nCoeffs,0.0);
             Array<OneD, Array<OneD, NekDouble> > tmpfield(nDim);
             for(int i = 0;i<nDim;i++)

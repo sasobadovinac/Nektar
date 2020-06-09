@@ -356,6 +356,17 @@ namespace Nektar
                 Array<OneD, Array<OneD, Array<OneD, NekDouble> > >                  &Fwdflux,
                 Array<OneD, Array<OneD, Array<OneD, NekDouble> > >                  &Bwdflux,
                 Array<OneD, Array<OneD, NekDouble> >                                &outarray);
+                
+            SOLVER_UTILS_EXPORT virtual void v_AddSymmFluxIntegralToCoeff(
+                const int                                         nvariables,
+                const int                                         nDim,
+                const int                                         nPts,
+                const int                                         nTracePts,
+                const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
+                const Array<OneD, const int >                     &nonZeroIndex,
+                TensorOfArray3D<NekDouble>                        &tracflux,
+                TensorOfArray2D<NekDouble>                        &outarray);
+                
             SOLVER_UTILS_EXPORT void SetRefFields(
                 Array<OneD, Array<OneD, NekDouble > >  &in)
             {

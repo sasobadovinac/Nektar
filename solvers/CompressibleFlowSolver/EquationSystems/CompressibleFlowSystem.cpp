@@ -873,9 +873,11 @@ namespace Nektar
         }
     }
 
+    template<typename DataType>
     void CompressibleFlowSystem::preconditioner_BlkDiagMatFree(
-        const Array<OneD, NekDouble>                        &inarray,
-        Array<OneD, NekDouble >                             &outarray)
+        const TensorOfArray1D<NekDouble>     &inarray,
+        TensorOfArray1D<NekDouble>           &outarray,
+        const DataType                       &tmpDataType)
     {
         unsigned int ntotal = inarray.num_elements();
         LibUtilities::CommSharedPtr v_Comm = m_fields[0]->
@@ -890,19 +892,35 @@ namespace Nektar
             inarray,outarray,0,LinSysTol);
     }
 
-    voivoid CompressibleFlowSystem::PrecBJRDiagMult(
-        const  Array<OneD, NekDouble>   &inarray,
-        Array<OneD, NekDouble >         &out,
-        const  bool                     &controlFlag)
+    void CompressibleFlowSystem::PrecBJRDiagMult(
+        const  TensorOfArray1D<NekDouble>   &inarray,
+        TensorOfArray1D<NekDouble>          &outarray,
+        const  bool                         &controlFlag)
     {
-        DoDiffusion_coeffVol(inarray, out, true);
-        AddTraceIntglToRhs(inarray, out);
+        size_t nvariables = m_fields.num_elements();
+        size_t npoints    = GetNpoints();
+        size_t ncoeffs    = GetNcoeffs();
+        
+        TensorOfArray2D<NekDouble> inpnts(nvariables);
+        TensorOfArray2D<NekDouble> out_2d(nvariables);
+        for (int m = 0; m < nvariables; ++m)
+        {
+            int moffset = m*ncoeffs;
+            out_2d[m]   = outarray  + moffset;
+            inpnts[m]   = TensorOfArray1D<NekDouble> {npoints};
+
+            TensorOfArray1D<NekDouble> tmp = inarray + moffset;
+            m_fields[m]->BwdTrans(tmp, inpnts[m]);
+        }
+
+        DoOdeRhs_coeffVol(inpnts, out_2d, true);
+        // AddTraceIntglToRhs(inarray, outarray);
     }
 
     void CompressibleFlowSystem::PrecBJRDiagPrec(
-        const Array<OneD, NekDouble>    &inarray,
-        Array<OneD, NekDouble >         &outarray,
-        const bool                      &flag)
+        const TensorOfArray1D<NekDouble>    &inarray,
+        TensorOfArray1D<NekDouble>          &outarray,
+        const bool                          &flag)
     {
         Vmath::Vcopy(inarray.num_elements(), inarray, 1, outarray, 1);
     }
@@ -1084,10 +1102,12 @@ namespace Nektar
                                 Vmath::Smul(ntotpnt,OmSORParam,
                                     outarray,1,outN,1);
                                 
-                                MinusOffDiag2Rhs(nvariables, npoints, rhs2d, 
-                                    out_2d, flagUpdateDervFlux, FwdFluxDeriv, 
-                                    BwdFluxDeriv, qfield, tmpTrace, 
-                                    wspTraceDataType, m_TraceJacArraySingle, 
+                                AddOrMinusPrecTraceFlux(
+                                    ePrecDiagOffDiagTagOffdiag, -1, 
+                                    rhs2d, out_2d, flagUpdateDervFlux, 
+                                    FwdFluxDeriv, BwdFluxDeriv, qfield, 
+                                    tmpTrace, wspTraceDataType, 
+                                    m_TraceJacArraySingle, 
                                     m_TraceJacDerivArraySingle, 
                                     m_TraceJacDerivSignSingle,
                                     m_TraceIPSymJacArraySingle);
@@ -1112,10 +1132,12 @@ namespace Nektar
                             {
                                 Vmath::Smul(ntotpnt,OmSORParam,outarray,1,outN,1);
                                 
-                                MinusOffDiag2Rhs(nvariables,npoints,rhs2d,
-                                    out_2d,flagUpdateDervFlux,FwdFluxDeriv,
-                                    BwdFluxDeriv,qfield,tmpTrace,
-                                    wspTraceDataType,m_TraceJacArraySingle, 
+                                AddOrMinusPrecTraceFlux(
+                                    ePrecDiagOffDiagTagOffdiag, -1, 
+                                    rhs2d, out_2d, flagUpdateDervFlux, 
+                                    FwdFluxDeriv, BwdFluxDeriv, qfield, 
+                                    tmpTrace, wspTraceDataType, 
+                                    m_TraceJacArraySingle, 
                                     m_TraceJacDerivArraySingle, 
                                     m_TraceJacDerivSignSingle,
                                     m_TraceIPSymJacArraySingle);
@@ -1179,9 +1201,11 @@ namespace Nektar
                         {
                             Vmath::Smul(ntotpnt,OmSORParam,outarray,1,outN,1);
                             
-                            MinusOffDiag2Rhs(nvariables,npoints,rhs2d,out_2d,
-                                flagUpdateDervFlux,FwdFluxDeriv,BwdFluxDeriv,
-                                qfield,tmpTrace,wspTraceDataType, 
+                            AddOrMinusPrecTraceFlux(
+                                ePrecDiagOffDiagTagOffdiag, -1, 
+                                rhs2d, out_2d, flagUpdateDervFlux, 
+                                FwdFluxDeriv, BwdFluxDeriv, qfield, 
+                                tmpTrace, wspTraceDataType, 
                                 m_TraceJacArray, m_TraceJacDerivArray, 
                                 m_TraceJacDerivSign,m_TraceIPSymJacArray);
 
@@ -1428,210 +1452,238 @@ namespace Nektar
     }
 
     template<typename DataType>
-    void CompressibleFlowSystem::MinusOffDiag2Rhs(
-        const int                                   nvariables,
-        const int                                   nCoeffs,
-        const TensorOfArray2D<NekDouble>            &inarray,
-        Array<OneD, Array<OneD, NekDouble> >        &outarray,
-        bool                                        flagUpdateDervFlux,
-        Array<OneD, Array<OneD, NekDouble> >        &FwdFluxDeriv,
-        Array<OneD, Array<OneD, NekDouble> >        &BwdFluxDeriv,
-        TensorOfArray3D<NekDouble>                  &qfield,
-        TensorOfArray3D<NekDouble>                  &wspTrace,
-        Array<OneD, Array<OneD, DataType > >        &wspTraceDataType,
-        const TensorOfArray4D<DataType>             &TraceJacArray,
-        const TensorOfArray4D<DataType>             &TraceJacDerivArray,
-        const Array<OneD, Array<OneD, DataType> >   &TraceJacDerivSign,
-        const TensorOfArray5D<DataType>             &TraceIPSymJacArray)
+    void CompressibleFlowSystem::AddOrMinusPrecTraceFlux(
+        const int                            &nswitchDiagOffdiag,
+        const NekDouble                      AddOrMinusSign,
+        const TensorOfArray2D<NekDouble>     &inarray,
+        TensorOfArray2D<NekDouble>           &outarray,
+        bool                                 flagUpdateDervFlux,
+        TensorOfArray2D<NekDouble>           &FwdFluxDeriv,
+        TensorOfArray2D<NekDouble>           &BwdFluxDeriv,
+        TensorOfArray3D<NekDouble>           &qfield,
+        TensorOfArray3D<NekDouble>           &wspTrace,
+        TensorOfArray2D<DataType>            &wspTraceDataType,
+        const TensorOfArray4D<DataType>      &TraceJacArray,
+        const TensorOfArray4D<DataType>      &TraceJacDerivArray,
+        const TensorOfArray2D<DataType>      &TraceJacDerivSign,
+        const TensorOfArray5D<DataType>      &TraceIPSymJacArray)
     {
-        int nTracePts  = GetTraceTotPoints();
-        int npoints    = GetNpoints();
-        int nDim       = m_spacedim;
-        int nConvectiveFields = nvariables;
-
-        int indexwspTrace = 0;
-        TensorOfArray2D<NekDouble> FwdFlux;
-        TensorOfArray2D<NekDouble> BwdFlux;
-        FwdFlux =   wspTrace[indexwspTrace], indexwspTrace++;
-        BwdFlux =   wspTrace[indexwspTrace], indexwspTrace++;
-        int wspttl = wspTrace.num_elements();
-        TensorOfArray3D<NekDouble> tmpTrace{wspttl - indexwspTrace};
-        for (int i = indexwspTrace; i < wspttl; ++i)
-        {
-            tmpTrace[i - indexwspTrace] = wspTrace[i];
-        }
-
-        CalTraceFwdBwdFlux(nvariables, nCoeffs, inarray, 
-            FwdFlux, BwdFlux, flagUpdateDervFlux, FwdFluxDeriv, 
-            BwdFluxDeriv, qfield, tmpTrace, 
-            wspTraceDataType, TraceJacArray, 
-            TraceJacDerivArray, 
-            TraceJacDerivSign);
-
-        if(m_DEBUG_VISCOUS_JAC_MAT&&m_DEBUG_VISCOUS_TRACE_DERIV_JAC_MAT)
-        {
-#ifdef CFS_DEBUGMODE
-                if(m_DebugIPSymmFluxJacSwitch)
-                {
-                    for(int m = 0; m < nvariables; ++m)
-                    {
-                        for(int i = 0; i < nTracePts; ++i)
-                        {
-                            Fwdarray[m][i] =  DataType( Fwd[m][i] );
-                        }
-                    }
-                    for(int nd = 0; nd < m_spacedim; ++nd)
-                    {
-                        for(int m = 0; m < nvariables; ++m)
-                        {
-                            Vmath::Zero(nTracePts, &Fwdreslt[0],1);
-                            for(int n = 0; n < nvariables; ++n)
-                            {
-                                Vmath::Vvtvp(nTracePts,
-                                    &TraceIPSymJacArray[0][nd][m][n][0],1,
-                                    &Fwdarray[n][0],1,
-                                    &Fwdreslt[0],1,
-                                    &Fwdreslt[0],1);
-                            }
-
-                             for(int i = 0; i < nTracePts; ++i)
-                             {
-                                 numDerivFwd[nd][m][i] =  NekDouble( 
-                                     TraceJacDerivSign[0][i]*Fwdreslt[i] );
-                             }
-                         }
-                     }
-
-                    for(int m = 0; m < nvariables; ++m)
-                    {
-                        for(int i = 0; i < nTracePts; ++i)
-                        {
-                            Fwdarray[m][i] =  DataType( Bwd[m][i] );
-                        }
-                    }
-                    for(int nd = 0; nd < m_spacedim; ++nd)
-                    {
-                        for(int m = 0; m < nvariables; ++m)
-                        {
-                            Vmath::Zero(nTracePts, &Fwdreslt[0],1);
-                            for(int n = 0; n < nvariables; ++n)
-                            {
-                                Vmath::Vvtvp(nTracePts,
-                                    &TraceIPSymJacArray[1][nd][m][n][0],1,
-                                    &Fwdarray[n][0],1,
-                                    &Fwdreslt[0],1,
-                                    &Fwdreslt[0],1);
-                            }
-
-                             for(int i = 0; i < nTracePts; ++i)
-                             {
-                                 numDerivBwd[nd][m][i] = NekDouble(
-                                     TraceJacDerivSign[1][i]*Fwdreslt[i] );
-                             }
-                         }
-                     }
-                 }
-#endif
-             }
-         }
-
-#ifdef CFS_DEBUGMODE
-        }
-#endif
-        for(int i = 0; i < nvariables; ++i)
-        {
-            Vmath::Fill(nCoeffs,0.0,outarray[i],1);
-            m_fields[i]->AddTraceIntegralToOffDiag(FwdFlux[i],BwdFlux[i], 
-                outarray[i]);
-        }
-
-#ifdef CFS_DEBUGMODE
-        Array<OneD, int > nonZeroIndex;
-        if(m_DEBUG_VISCOUS_JAC_MAT&&m_DEBUG_VISCOUS_TRACE_DERIV_JAC_MAT&&
-            m_DebugIPSymmFluxJacSwitch)
-        {
-            for(int i = 0; i < nvariables; ++i)
-            {
-                m_diffusion->AddSymmFluxIntegralToOffDiag(nConvectiveFields,
-                    nDim,npoints,nTracePts,m_fields,nonZeroIndex,numDerivFwd,
-                    numDerivBwd,outarray);
-            }
-        }
-#endif
-        for(int i = 0; i < nvariables; ++i)
-        {
-            Vmath::Svtvp(nCoeffs,-m_TimeIntegLambda,outarray[i],1,inarray[i],1,
-                outarray[i],1);
-        }
-    }
-
-    template<typename DataType>
-    void CompressibleFlowSystem::CalTraceFwdBwdFlux(
-        const int                                nvariables,
-        const int                                nCoeffs,
-        const TensorOfArray2D<NekDouble>         &inarray,
-        Array<OneD, Array<OneD, NekDouble> >     &FwdFlux,
-        Array<OneD, Array<OneD, NekDouble> >     &BwdFlux,
-        bool                                     flagUpdateDervFlux,
-        Array<OneD, Array<OneD, NekDouble> >     &FwdFluxDeriv,
-        Array<OneD, Array<OneD, NekDouble> >     &BwdFluxDeriv,
-        TensorOfArray3D<NekDouble>               &qfield,
-        TensorOfArray3D<NekDouble>               &wspTrace,
-        Array<OneD, Array<OneD, DataType > >     &wspTraceDataType,
-        const TensorOfArray4D<DataType>          &TraceJacArray,
-        const TensorOfArray4D<DataType>          &TraceJacDerivArray,
-        const Array<OneD,Array<OneD, DataType> > &TraceJacDerivSign)
-    {
-        int nTracePts  = GetTraceTotPoints();
-        int npoints    = GetNpoints();
-        int nDim       = m_spacedim;
-        int nConvectiveFields = nvariables;
-
-        Array<OneD, Array<OneD, NekDouble> > outpnts(nvariables);
-        for(int i = 0; i < nvariables; i++)
-        {
-            outpnts[i]  =  Array<OneD, NekDouble> (npoints,0.0);
-            m_fields[i]->BwdTrans(outarray[i],outpnts[i]);
-        }
-
-        // Store forwards/backwards space along trace space
-        Array<OneD, Array<OneD, NekDouble> > Fwd    ;
-        Array<OneD, Array<OneD, NekDouble> > Bwd    ;
-        Array<OneD, Array<OneD, NekDouble> > FwdFlux;
-        Array<OneD, Array<OneD, NekDouble> > BwdFlux;
-        TensorOfArray3D<NekDouble> numDerivBwd(nDim);
-        TensorOfArray3D<NekDouble> numDerivFwd(nDim);
-        int indexwspTrace = 0;
-        Fwd     =   wspTrace[indexwspTrace], indexwspTrace++;
-        Bwd     =   wspTrace[indexwspTrace], indexwspTrace++;
-        // FwdFlux =   wspTrace[indexwspTrace], indexwspTrace++;
-        // BwdFlux =   wspTrace[indexwspTrace], indexwspTrace++;
-       
-        for(int i = 0; i < nvariables; ++i)
-        {
-            m_fields[i]->GetFwdBwdTracePhys(outpnts[i], Fwd[i], Bwd[i]);
-        }
-
 #ifdef CFS_DEBUGMODE
         if(1!=m_DebugVolTraceSwitch)
         {
 #endif
+        size_t nvariables = m_fields.num_elements();
+        size_t nCoeffs    = GetNcoeffs();
+        size_t npoints    = GetNpoints();
+        size_t nDim       = m_spacedim;
+        size_t nTracePts  = GetTraceTotPoints();
+
+        TensorOfArray2D<NekDouble> FwdFlux;
+        TensorOfArray2D<NekDouble> BwdFlux;
+        TensorOfArray2D<NekDouble> Fwd;
+        TensorOfArray2D<NekDouble> Bwd;
+
+        int indexwspTrace = 0;
+        FwdFlux = wspTrace[indexwspTrace];
+        indexwspTrace++;
+        BwdFlux = wspTrace[indexwspTrace];
+        indexwspTrace++;
+        Fwd = wspTrace[indexwspTrace];
+        indexwspTrace++;
+        Bwd = wspTrace[indexwspTrace];
+        indexwspTrace++;
+
+        TensorOfArray3D<NekDouble> numDerivBwd(nDim);
+        TensorOfArray3D<NekDouble> numDerivFwd(nDim);
+       
+        TensorOfArray2D<NekDouble> outpnts(nvariables);
+        for(int i = 0; i < nvariables; i++)
+        {
+            outpnts[i] = TensorOfArray1D<NekDouble> (npoints,0.0);
+            m_fields[i]->BwdTrans(outarray[i],outpnts[i]);
+            m_fields[i]->GetFwdBwdTracePhys(outpnts[i], Fwd[i], Bwd[i]);
+        }
+
+        if(m_DEBUG_VISCOUS_JAC_MAT&&m_DEBUG_VISCOUS_TRACE_DERIV_JAC_MAT)
+        {
+            if(flagUpdateDervFlux)
+            {
+                CalphysDeriv(outpnts,qfield);
+            }
+        }
+
+        for(int i = 0; i < nvariables; i++)
+        {
+            outpnts[i] = NullNekDouble1DArray;
+        }
+
+        CalTraceFwdBwdFlux(Fwd, Bwd, FwdFlux, BwdFlux, wspTraceDataType,
+            TraceJacArray);
+
+        if (m_DEBUG_VISCOUS_JAC_MAT && 
+            m_DEBUG_VISCOUS_TRACE_DERIV_JAC_MAT)
+        {
+            if (flagUpdateDervFlux || m_DebugIPSymmFluxJacSwitch)
+            {
+                
+                for (int nd = 0; nd < nDim; ++nd)
+                {
+                    numDerivBwd[nd] =  wspTrace[indexwspTrace];
+                    indexwspTrace++;
+                    numDerivFwd[nd] =  wspTrace[indexwspTrace];
+                    indexwspTrace++;
+                }
+            }
+
+            if (flagUpdateDervFlux )
+            {
+                AddTraceFwdBwdDerivFlux(FwdFlux, BwdFlux, numDerivFwd, 
+                    numDerivBwd, qfield, wspTraceDataType, TraceJacDerivArray, 
+                    TraceJacDerivSign);
+            }
+        }   
+
+        switch (nswitchDiagOffdiag)
+        {
+        case ePrecDiagOffDiagTagAll:
+            for(int i = 0; i < nvariables; ++i)
+            {
+                Vmath::Fill(nCoeffs,0.0,outarray[i],1);
+                Vmath::Vadd(nTracePts, 
+                        FwdFlux[i], 1, 
+                        BwdFlux[i], 1, 
+                        FwdFlux[i], 1);
+                m_fields[i]->AddTraceIntegral(FwdFlux[i], outarray[i]);
+            }
+            break;
+        case ePrecDiagOffDiagTagDiag:
+            for(int i = 0; i < nvariables; ++i)
+            {
+                Vmath::Fill(nCoeffs,0.0,outarray[i],1);
+                m_fields[i]->AddTraceIntegralToDiag(FwdFlux[i],BwdFlux[i], 
+                    outarray[i]);
+            }
+            break;
+        case ePrecDiagOffDiagTagOffdiag:
+            for(int i = 0; i < nvariables; ++i)
+            {
+                Vmath::Fill(nCoeffs,0.0,outarray[i],1);
+                m_fields[i]->AddTraceIntegralToOffDiag(FwdFlux[i],BwdFlux[i], 
+                    outarray[i]);
+            }
+            break;
+        default:
+            for(int i = 0; i < nvariables; ++i)
+            {
+                Vmath::Fill(nCoeffs,0.0,outarray[i],1);
+                Vmath::Vadd(nTracePts, 
+                        FwdFlux[i], 1, 
+                        BwdFlux[i], 1, 
+                        FwdFlux[i], 1);
+                m_fields[i]->AddTraceIntegral(FwdFlux[i], outarray[i]);
+            }
+            break;
+        }
+        
+#ifdef CFS_DEBUGMODE
+        if (m_DEBUG_VISCOUS_JAC_MAT &&
+            m_DEBUG_VISCOUS_TRACE_DERIV_JAC_MAT &&
+            m_DebugIPSymmFluxJacSwitch)
+        {
+            CalTraceFwdBwdSymFlux(Fwd, Bwd, numDerivFwd, numDerivBwd,
+                wspTraceDataType, TraceJacDerivSign, TraceIPSymJacArray);
+
+            Array<OneD, int > nonZeroIndex;
+            size_t nTracePts  = GetTraceTotPoints();
+            switch (nswitchDiagOffdiag)
+            {
+            case ePrecDiagOffDiagTagAll:
+                for (int nd = 0; nd < nDim; ++nd)
+                {
+                    for(int i = 0; i < nvariables; ++i)
+                    {
+                        Vmath::Vadd(nTracePts, 
+                            numDerivFwd[nd][i], 1, 
+                            numDerivBwd[nd][i], 1, 
+                            numDerivFwd[nd][i], 1);
+                    }
+                }
+                m_diffusion->v_AddSymmFluxIntegralToCoeff(nvariables,
+                    nDim,npoints,nTracePts,m_fields,nonZeroIndex,numDerivFwd,
+                    outarray);
+                break;
+            case ePrecDiagOffDiagTagDiag:
+                // for(int i = 0; i < nvariables; ++i)
+                // {
+                //     m_diffusion->AddSymmFluxIntegralToDiag(nvariables,
+                //         nDim,npoints,nTracePts,m_fields,nonZeroIndex,numDerivFwd,
+                //         numDerivBwd,outarray);
+                // }
+                ASSERTL0(false, "AddSymmFluxIntegralToDiag not coded");
+                break;
+            case ePrecDiagOffDiagTagOffdiag:
+                m_diffusion->AddSymmFluxIntegralToOffDiag(nvariables,
+                    nDim,npoints,nTracePts,m_fields,nonZeroIndex,numDerivFwd,
+                    numDerivBwd,outarray);
+                break;
+            default:
+                for (int nd = 0; nd < nDim; ++nd)
+                {
+                    for(int i = 0; i < nvariables; ++i)
+                    {
+                        Vmath::Vadd(nTracePts, 
+                            numDerivFwd[nd][i], 1, 
+                            numDerivBwd[nd][i], 1, 
+                            numDerivFwd[nd][i], 1);
+                    }
+                }
+                m_diffusion->v_AddSymmFluxIntegralToCoeff(nvariables,
+                    nDim,npoints,nTracePts,m_fields,nonZeroIndex,numDerivFwd,
+                    outarray);
+                break;
+            }
+        }
+#endif
+                for(int i = 0; i < nvariables; ++i)
+        {
+            Vmath::Svtvp(nCoeffs,AddOrMinusSign*m_TimeIntegLambda,
+                        outarray[i],1,
+                        inarray[i],1,
+                        outarray[i],1);
+        }
+#ifdef CFS_DEBUGMODE
+        }
+#endif
+    }
+
+    template<typename DataType>
+    void CompressibleFlowSystem::CalTraceFwdBwdFlux(
+        const TensorOfArray2D<NekDouble>         &Fwd,
+        const TensorOfArray2D<NekDouble>         &Bwd,
+        TensorOfArray2D<NekDouble>               &FwdFlux,
+        TensorOfArray2D<NekDouble>               &BwdFlux,
+        TensorOfArray2D<DataType>                &wspTraceDataType,
+        const TensorOfArray4D<DataType>          &TraceJacArray)
+    {
+        size_t nvariables = m_fields.num_elements();
+        size_t nTracePts  = GetTraceTotPoints();
+
         int indexwspTraceDataType = 0;
-        Array<OneD, Array<OneD, DataType> > Fwdarray (nvariables);
+        TensorOfArray2D<DataType> Fwdarray (nvariables);
         for(int m = 0; m < nvariables; ++m)
         {
-            Fwdarray[m] = wspTraceDataType[indexwspTraceDataType], 
-                indexwspTraceDataType++;
+            Fwdarray[m] = wspTraceDataType[indexwspTraceDataType];
+            indexwspTraceDataType++;
         }
-        Array<OneD, DataType> Fwdreslt;
-        Fwdreslt = 
-            wspTraceDataType[indexwspTraceDataType], indexwspTraceDataType++;
+        TensorOfArray1D<DataType> Fwdreslt;
+        Fwdreslt = wspTraceDataType[indexwspTraceDataType];
+        indexwspTraceDataType++;
 
         for(int m = 0; m < nvariables; ++m)
         {
             for(int i = 0; i < nTracePts; ++i)
             {
-                Fwdarray[m][i] =  DataType( Fwd[m][i] );
+                Fwdarray[m][i] = DataType(Fwd[m][i]);
             }
         }
         for(int m = 0; m < nvariables; ++m)
@@ -1669,91 +1721,181 @@ namespace Nektar
                 BwdFlux[m][i] =  NekDouble( Fwdreslt[i] );
             }
         }
+    }
 
-        if(m_DEBUG_VISCOUS_JAC_MAT&&m_DEBUG_VISCOUS_TRACE_DERIV_JAC_MAT)
+    template<typename DataType>
+    void CompressibleFlowSystem::AddTraceFwdBwdDerivFlux(
+        TensorOfArray2D<NekDouble>               &FwdFlux,
+        TensorOfArray2D<NekDouble>               &BwdFlux,
+        TensorOfArray3D<NekDouble>               &numDerivFwd,
+        TensorOfArray3D<NekDouble>               &numDerivBwd,
+        TensorOfArray3D<NekDouble>               &qfield,
+        TensorOfArray2D<DataType>                &wspTraceDataType,
+        const TensorOfArray4D<DataType>          &TraceJacDerivArray,
+        const TensorOfArray2D<DataType>          &TraceJacDerivSign)
+    {
+        size_t nTracePts  = GetTraceTotPoints();
+        size_t nDim       = m_spacedim;
+        size_t nvariables = m_fields.num_elements();
+
+        int indexwspTraceDataType = 0;
+        TensorOfArray2D<DataType> Fwdarray (nvariables);
+        for(int m = 0; m < nvariables; ++m)
         {
-            if(flagUpdateDervFlux)
+            Fwdarray[m] = wspTraceDataType[indexwspTraceDataType];
+            indexwspTraceDataType++;
+        }
+        TensorOfArray1D<DataType> Fwdreslt;
+        Fwdreslt = wspTraceDataType[indexwspTraceDataType];
+        indexwspTraceDataType++;
+
+        const MultiRegions::AssemblyMapDGSharedPtr TraceMap = 
+            m_fields[0]->GetTraceMap();
+        for (int nd = 0; nd < nDim; ++nd)
+        {
+            for (int i = 0; i < nvariables; ++i)
             {
-                CalphysDeriv(outpnts,qfield);
+                m_fields[i]->GetFwdBwdTracePhysNoBndFill(qfield[nd][i], 
+                    numDerivFwd[nd][i], numDerivBwd[nd][i]);
+                TraceMap->UniversalTraceAssemble(numDerivBwd[nd][i]);
+                TraceMap->UniversalTraceAssemble(numDerivFwd[nd][i]);
+            }
+        }
 
-                for (int nd = 0; nd < nDim; ++nd)
+        for(int m = 0; m < nvariables; ++m)
+        {
+            Vmath::Zero(nTracePts, &Fwdreslt[0],1);
+            for (int nd = 0; nd < nDim; ++nd)
+            {
+                for(int n = 0; n < nvariables; ++n)
                 {
-                    numDerivBwd[nd] =  wspTrace[indexwspTrace], indexwspTrace++;
-                    numDerivFwd[nd] =  wspTrace[indexwspTrace], indexwspTrace++;
-                }
-
-                const MultiRegions::AssemblyMapDGSharedPtr TraceMap = 
-                    m_fields[0]->GetTraceMap();
-                for (int nd = 0; nd < nDim; ++nd)
-                {
-                    for (int i = 0; i < nConvectiveFields; ++i)
-                    {
-                        Vmath::Zero(nTracePts, Bwd[i],1);
-                        Vmath::Zero(nTracePts, Fwd[i],1);
-                        m_fields[i]->GetFwdBwdTracePhysNoBndFill(qfield[nd][i], 
-                            numDerivFwd[nd][i], numDerivBwd[nd][i]);
-                        TraceMap->UniversalTraceAssemble(numDerivBwd[nd][i]);
-                        TraceMap->UniversalTraceAssemble(numDerivFwd[nd][i]);
-                    }
-                }
-
-                for(int m = 0; m < nvariables; ++m)
-                {
-                    Vmath::Zero(nTracePts, &Fwdreslt[0],1);
-                    for (int nd = 0; nd < nDim; ++nd)
-                    {
-                        for(int n = 0; n < nvariables; ++n)
-                        {
-                            for(int i = 0; i < nTracePts; ++i)
-                            {
-                                Fwdarray[n][i] =  
-                                    DataType( numDerivFwd[nd][n][i] );
-                            }
-                            Vmath::Vvtvp(nTracePts,
-                                &TraceJacDerivArray[0][m][n*nDim+nd][0],1,
-                                &Fwdarray[n][0],1,
-                                &Fwdreslt[0],1,
-                                &Fwdreslt[0],1);
-                        }
-                    }
                     for(int i = 0; i < nTracePts; ++i)
                     {
-                        FwdFlux[m][i] += 
-                            NekDouble(TraceJacDerivSign[0][i]*Fwdreslt[i] );
+                        Fwdarray[n][i] =  
+                            DataType( numDerivFwd[nd][n][i] );
                     }
+                    Vmath::Vvtvp(nTracePts,
+                        &TraceJacDerivArray[0][m][n*nDim+nd][0],1,
+                        &Fwdarray[n][0],1,
+                        &Fwdreslt[0],1,
+                        &Fwdreslt[0],1);
                 }
+            }
+            for(int i = 0; i < nTracePts; ++i)
+            {
+                FwdFlux[m][i] += 
+                    NekDouble(TraceJacDerivSign[0][i]*Fwdreslt[i] );
+            }
+        }
 
-                for(int m = 0; m < nvariables; ++m)
+        for(int m = 0; m < nvariables; ++m)
+        {
+            Vmath::Zero(nTracePts, &Fwdreslt[0],1);
+            for (int nd = 0; nd < nDim; ++nd)
+            {
+                for(int n = 0; n < nvariables; ++n)
                 {
-                    Vmath::Zero(nTracePts, &Fwdreslt[0],1);
-                    for (int nd = 0; nd < nDim; ++nd)
-                    {
-                        for(int n = 0; n < nvariables; ++n)
-                        {
-                            for(int i = 0; i < nTracePts; ++i)
-                            {
-                                Fwdarray[n][i] = 
-                                    DataType(numDerivBwd[nd][n][i]);
-                            }
-                            Vmath::Vvtvp(nTracePts,
-                                &TraceJacDerivArray[1][m][n*nDim+nd][0],1,
-                                &Fwdarray[n][0],1,
-                                &Fwdreslt[0],1,
-                                &Fwdreslt[0],1);
-                        }
-                    }
                     for(int i = 0; i < nTracePts; ++i)
                     {
-                        BwdFlux[m][i] +=  
-                            NekDouble( TraceJacDerivSign[1][i]*Fwdreslt[i] );
+                        Fwdarray[n][i] = 
+                            DataType(numDerivBwd[nd][n][i]);
                     }
+                    Vmath::Vvtvp(nTracePts,
+                        &TraceJacDerivArray[1][m][n*nDim+nd][0],1,
+                        &Fwdarray[n][0],1,
+                        &Fwdreslt[0],1,
+                        &Fwdreslt[0],1);
+                }
+            }
+            for(int i = 0; i < nTracePts; ++i)
+            {
+                BwdFlux[m][i] +=  
+                    NekDouble( TraceJacDerivSign[1][i]*Fwdreslt[i] );
+            }
+        }
+    }
+
+    template<typename DataType>
+    void CompressibleFlowSystem::CalTraceFwdBwdSymFlux(
+        const TensorOfArray2D<NekDouble>         &Fwd,
+        const TensorOfArray2D<NekDouble>         &Bwd,
+        TensorOfArray3D<NekDouble>               &numDerivFwd,
+        TensorOfArray3D<NekDouble>               &numDerivBwd,
+        TensorOfArray2D<DataType>                &wspTraceDataType,
+        const TensorOfArray2D<DataType>          &TraceJacDerivSign,
+        const TensorOfArray5D<DataType>          &TraceIPSymJacArray)
+    {
+        size_t nTracePts  = GetTraceTotPoints();
+        size_t nvariables = m_fields.num_elements();
+
+        int indexwspTraceDataType = 0;
+        TensorOfArray2D<DataType> Fwdarray (nvariables);
+        for(int m = 0; m < nvariables; ++m)
+        {
+            Fwdarray[m] = wspTraceDataType[indexwspTraceDataType];
+            indexwspTraceDataType++;
+        }
+        TensorOfArray1D<DataType> Fwdreslt;
+        Fwdreslt = wspTraceDataType[indexwspTraceDataType];
+        indexwspTraceDataType++;
+
+        for(int m = 0; m < nvariables; ++m)
+        {
+            for(int i = 0; i < nTracePts; ++i)
+            {
+                Fwdarray[m][i] =  DataType( Fwd[m][i] );
+            }
+        }
+        for(int nd = 0; nd < m_spacedim; ++nd)
+        {
+            for(int m = 0; m < nvariables; ++m)
+            {
+                Vmath::Zero(nTracePts, &Fwdreslt[0],1);
+                for(int n = 0; n < nvariables; ++n)
+                {
+                    Vmath::Vvtvp(nTracePts,
+                        &TraceIPSymJacArray[0][nd][m][n][0],1,
+                        &Fwdarray[n][0],1,
+                        &Fwdreslt[0],1,
+                        &Fwdreslt[0],1);
+                }
+
+                for(int i = 0; i < nTracePts; ++i)
+                {
+                    numDerivFwd[nd][m][i] =  NekDouble( 
+                        TraceJacDerivSign[0][i]*Fwdreslt[i] );
                 }
             }
         }
 
-#ifdef CFS_DEBUGMODE
+        for(int m = 0; m < nvariables; ++m)
+        {
+            for(int i = 0; i < nTracePts; ++i)
+            {
+                Fwdarray[m][i] =  DataType( Bwd[m][i] );
+            }
         }
-#endif
+        for(int nd = 0; nd < m_spacedim; ++nd)
+        {
+            for(int m = 0; m < nvariables; ++m)
+            {
+                Vmath::Zero(nTracePts, &Fwdreslt[0],1);
+                for(int n = 0; n < nvariables; ++n)
+                {
+                    Vmath::Vvtvp(nTracePts,
+                        &TraceIPSymJacArray[1][nd][m][n][0],1,
+                        &Fwdarray[n][0],1,
+                        &Fwdreslt[0],1,
+                        &Fwdreslt[0],1);
+                }
+
+                for(int i = 0; i < nTracePts; ++i)
+                {
+                    numDerivBwd[nd][m][i] = NekDouble(
+                        TraceJacDerivSign[1][i]*Fwdreslt[i] );
+                }
+            }
+        }
     }
 
     template<typename DataType, typename TypeNekBlkMatSharedPtr>
@@ -4391,7 +4533,7 @@ namespace Nektar
 
     void CompressibleFlowSystem::DoOdeRhs_coeffVol(
         const TensorOfArray2D<NekDouble>        &inarray,
-        Array<OneD, Array<OneD, NekDouble> >    &outarray,
+        TensorOfArray2D<NekDouble>              &outarray,
         const NekDouble                         time,
         const bool                              flagFreezeJac)
     {
