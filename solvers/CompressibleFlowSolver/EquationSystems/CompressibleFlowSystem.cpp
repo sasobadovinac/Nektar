@@ -5378,13 +5378,13 @@ Array<OneD, NekDouble>  CompressibleFlowSystem::GetElmtMinHP(void)
         const int                                  Level,
         const int                                  CurrentLevelCoeff,    
         const int                                  LowLevelCoeff,   
-        const bool                                 MultiLevelFlag,
         const bool                                 UpDateOperatorflag)
     {
         
         int nVariables=m_fields.num_elements();
         int nCoeffs=GetNcoeffs();
         ASSERTL0(CurrentLevelCoeff==nVariables*nCoeffs,"Should Step into Wrong Level");
+        bool MultiLevelFlag=LowLevelCoeff>0;
         if(MultiLevelFlag)
         {
             //false is outarray from zero
@@ -5410,7 +5410,10 @@ Array<OneD, NekDouble>  CompressibleFlowSystem::GetElmtMinHP(void)
         }
         else
         {
-            //Other More accurate iterators
+            //Double SOR Number
+            //Or use more advanced Smoothers
+            preconditioner_BlkSOR_coeff(inarray,outarray,false);
+            preconditioner_BlkSOR_coeff(inarray,outarray,true);
         }  
     }
    

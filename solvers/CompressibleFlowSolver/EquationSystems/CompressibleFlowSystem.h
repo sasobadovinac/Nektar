@@ -883,7 +883,6 @@ namespace Nektar
             const int                                                       Level,
             const int                                                       CurrentLevelCoeff,    
             const int                                                       LowLevelCoeff,     
-            const bool                                                      MultiLevelFlag, 
             const bool                                                      UpDateOperatorflag);
 
         void RestrictResidual(

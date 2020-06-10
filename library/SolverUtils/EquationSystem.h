@@ -107,11 +107,9 @@ class Interpolator;
             const int                                                       Level,
             const int                                                       CurrentLevelCoeff,    
             const int                                                       LowLevelCoeff,     
-            const bool                                                      MultiLevelFlag, 
             const bool                                                      UpDateOperatorflag)
             {
-                v_MultiLevel(inarray,outarray, Level, CurrentLevelCoeff, LowLevelCoeff,
-                                                      MultiLevelFlag,UpDateOperatorflag);
+                v_MultiLevel(inarray,outarray, Level, CurrentLevelCoeff, LowLevelCoeff, UpDateOperatorflag);
             }
 
             //Set RestrictionMatrix
@@ -566,8 +564,7 @@ class Interpolator;
             Array<OneD, NekDouble>                                          &outarray, 
             const int                                                       Level,
             const int                                                       CurrentLevelCoeff,    
-            const int                                                       LowLevelCoeff,     
-            const bool                                                      MultiLevelFlag, 
+            const int                                                       LowLevelCoeff,
             const bool                                                      UpDateOperatorflag)
             {
                  ASSERTL0(false, "Not defined.");

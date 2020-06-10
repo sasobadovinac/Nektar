@@ -70,10 +70,9 @@ namespace Nektar
                                                 const int Level)
         {
             ASSERTL1(m_equ[Level],"Need to define EquationSystem[level]");
-            bool MultiLevelFlag=(Level<(m_nLevels-1));
-            //m_equ[==m_nLevels] should not use function MultiLevel
+            
             m_equ[Level]->MultiLevel(inarray, outarray, Level, m_MultiLevelCoeffs[Level],
-                       m_MultiLevelCoeffs[Level+1], MultiLevelFlag, UpDateOperatorflag);
+                       m_MultiLevelCoeffs[Level+1], UpDateOperatorflag);
         }    
     
         /**
@@ -84,11 +83,14 @@ namespace Nektar
             Driver::v_InitObject(out);
     
             int nVariables=m_equ[0]->GetNvariables();
-            m_MultiLevelCoeffs=Array<OneD, int>(m_nLevels,0.0);
+            m_MultiLevelCoeffs=Array<OneD, int>(m_nLevels+1,0.0);
             for(int k=0;k<m_nLevels;k++)
             {
                 m_MultiLevelCoeffs[k]=nVariables*m_equ[k]->GetNcoeffs();
             }
+            //m_MultiLevelCoeffs[m_nLevels]=-1 used in MultiLevel‘s LowLevelCoeffs 
+            //so that avoid repeated setting flag of lowest level
+            m_MultiLevelCoeffs[m_nLevels]=-1;
             
             //Define Restriction and Prolongation Matrix
             int nCycles=m_nLevels-1;  
