@@ -17,15 +17,16 @@ v5.1.0
 - Use base MPI functions instead of the GS library in the trace exchange
   for parallel DG simulations (!1112)
   num_elements with size() (!1127, !1137, !1141)
-- Add phifile module to compute shape functions for the SPM solver
+- Add phifile module to compute shape functions for the SPM solver (!1065)
 
 **CardiacEPSolver**
 - Added additional parameter sets to Fenton-Karma model (!1119)
 
 **IncNavierStokesSolver**
-- Add Smoothed Profile Method (SPM) for the formulation of immersed boundaries
+- Add Smoothed Profile Method (SPM) for the formulation of immersed boundaries 
+  (!1065)
 - Add new filter AeroForcesSPM to compute aerodynamic forces in immersed
-  boundaries
+  boundaries (!1065)
 
 **NekMesh**
 - Improved boundary layer splitting and output to CADfix (!938)
