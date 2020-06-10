@@ -23,7 +23,7 @@ v5.1.0
 - Added additional parameter sets to Fenton-Karma model (!1119)
 
 **IncNavierStokesSolver**
-- Add Smoothed Profile Method (SPM) for the formulation of immersed boundaries 
+- Add Smoothed Profile Method (SPM) for the formulation of immersed boundaries
   (!1065)
 - Add new filter AeroForcesSPM to compute aerodynamic forces in immersed
   boundaries (!1065)
