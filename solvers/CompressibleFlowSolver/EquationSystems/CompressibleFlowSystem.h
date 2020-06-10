@@ -210,7 +210,12 @@ namespace Nektar
         void preconditioner_BlkSOR_coeff(
             const Array<OneD, NekDouble> &inarray,
                   Array<OneD, NekDouble >&outarray,
-            const bool                   &flag);
+            const bool                   &Continueflag);
+
+        void preconditioner_MultiLevel_coeff(
+            const Array<OneD, NekDouble> &inarray,
+                  Array<OneD, NekDouble >&outarray,
+                  const bool             &UnusedFlag);
 
         // void MinusOffDiag2Rhs(
         //     const int nvariables,
@@ -871,10 +876,6 @@ namespace Nektar
             const int                                                       nDervDir,
             const Array<OneD, const Array<OneD, NekDouble> >                &inarray,
                   Array<OneD, Array<OneD, DNekMatSharedPtr> >               &ElmtJac);
-        
-        void preconditioner_MultiLevel_coeff(
-            const Array<OneD, NekDouble>                                    &inarray,
-                  Array<OneD, NekDouble>                                    &outarray);
 
         void v_MultiLevel(           
             const Array<OneD, NekDouble>                                    &inarray,
@@ -894,6 +895,18 @@ namespace Nektar
         const Array<OneD, DNekMatSharedPtr>                                 &ProlongationMatrix,
         const Array<OneD, NekDouble>                                        &inarray,
               Array<OneD, NekDouble>                                        &outarray);
+
+        void PrintArray(Array<OneD, NekDouble> &Array);
+
+        void OutputArray(Array<OneD, NekDouble> &Array);
+
+        void OutputConstArray(const Array<OneD, NekDouble> &Array);
+
+        void PrintMatrix(DNekMatSharedPtr &Matrix);
+
+        void OutputMatrix(DNekMatSharedPtr &Matrix);
+
+        void OutputConstMatrix(const DNekMatSharedPtr &Matrix);
 
         // virtual void v_GetFluxDerivJacDirctn(
         //     const MultiRegions::ExpListSharedPtr                            &explist,

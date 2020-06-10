@@ -69,8 +69,8 @@ namespace Nektar
                                                 const bool UpDateOperatorflag,
                                                 const int Level)
         {
-            ASSERTL1(m_equ[Level],"Need to define EquationSystem[1]");
-            bool MultiLevelFlag=(Level!=m_nLevels);
+            ASSERTL1(m_equ[Level],"Need to define EquationSystem[level]");
+            bool MultiLevelFlag=(Level<(m_nLevels-1));
             //m_equ[==m_nLevels] should not use function MultiLevel
             m_equ[Level]->MultiLevel(inarray, outarray, Level, m_MultiLevelCoeffs[Level],
                        m_MultiLevelCoeffs[Level+1], MultiLevelFlag, UpDateOperatorflag);
