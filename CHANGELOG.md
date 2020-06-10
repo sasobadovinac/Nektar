@@ -27,6 +27,8 @@ v5.1.0
   (!1065)
 - Add new filter AeroForcesSPM to compute aerodynamic forces in immersed
   boundaries (!1065)
+**Documentation**:
+- Updated Windows source build instructions in user guide (!1152)
 
 **NekMesh**
 - Improved boundary layer splitting and output to CADfix (!938)
@@ -35,6 +37,8 @@ v5.1.0
 
 **BuildSystem**
 - Toggle build type (!1135)
+- Updated minimum required CMake version to 3.5.1 (!1152)
+- Updated third party Boost version 1.71 (!1152)
 
 v5.0.1
 ------
