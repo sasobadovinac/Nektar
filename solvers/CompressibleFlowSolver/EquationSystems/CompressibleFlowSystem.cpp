@@ -700,8 +700,8 @@ namespace Nektar
         const TypeNekBlkMatSharedPtr                        &PrecMatVars,
         const DataType                                      &tmpDataType)
     {
-        unsigned int nvariables = m_TimeIntegtSol_n.num_elements();
-        unsigned int npoints    = m_TimeIntegtSol_n[0].num_elements();
+        unsigned int nvariables = m_fields.num_elements();
+        unsigned int npoints    = GetNcoeffs();
         unsigned int npointsVar = nvariables*npoints;
         Array<OneD, DataType >Sinarray(npointsVar);
         Array<OneD, DataType > Soutarray(npointsVar);
@@ -831,8 +831,8 @@ namespace Nektar
                 const NekDouble SORParam        =   m_SORRelaxParam;
                 const NekDouble OmSORParam      =   1.0-SORParam;
 
-                unsigned int nvariables = m_TimeIntegtSol_n.num_elements();
-                unsigned int npoints    = m_TimeIntegtSol_n[0].num_elements();
+                unsigned int nvariables = m_fields.num_elements();
+                unsigned int npoints    = GetNcoeffs();
                 unsigned int ntotpnt    = inarray.num_elements();
                 
                 ASSERTL0(nvariables*npoints==ntotpnt,"nvariables*npoints==ntotpnt not satisfied in preconditioner_BlkSOR");
@@ -5383,29 +5383,42 @@ Array<OneD, NekDouble>  CompressibleFlowSystem::GetElmtMinHP(void)
         
         int nVariables=m_fields.num_elements();
         int nCoeffs=GetNcoeffs();
-        ASSERTL0(CurrentLevelCoeff==nVariables*nCoeffs,"Should Step into Wrong Level");
+        ASSERTL0(CurrentLevelCoeff==nCoeffs,"Should Step into Wrong Level");
         bool MultiLevelFlag=LowLevelCoeff>0;
+        int TotalCurrentLevelCoeff=nVariables*CurrentLevelCoeff;
+        int TotalLowLevelCoeff=nVariables*LowLevelCoeff;
         if(MultiLevelFlag)
         {
             //false is outarray from zero
             preconditioner_BlkSOR_coeff(inarray,outarray,false);
-            Array<OneD, NekDouble> outarraytmp(CurrentLevelCoeff,0.0);
+            Array<OneD, NekDouble> outarraytmp(TotalCurrentLevelCoeff,0.0);
             //Ax
             MatrixMultiply_MatrixFree_coeff(outarray,outarraytmp);
             //b-Ax:Ok
-            Vmath::Vsub(CurrentLevelCoeff,inarray,1,outarraytmp,1,outarraytmp,1);
-            Array<OneD,NekDouble> LowLevelRhs(LowLevelCoeff,0.0);
-            Array<OneD,NekDouble> LowLeveloutarray(LowLevelCoeff,0.0);
+            Vmath::Vsub(TotalCurrentLevelCoeff,inarray,1,outarraytmp,1,outarraytmp,1);
+            Array<OneD,NekDouble> LowLevelRhs(TotalLowLevelCoeff,0.0);
+            Array<OneD,NekDouble> LowLeveloutarray(TotalLowLevelCoeff,0.0);
             //R=R*Rhs:OK
             RestrictResidual(m_RestrictionMatrix,outarraytmp,LowLevelRhs);
             int NextLevel=Level+1;
+            //u=R*u (seem different R for Rhs and U, need to check)
+            Array<OneD, Array<OneD,NekDouble>> LowLevelSolution(nVariables);
+            for(int i=0; i<nVariables; i++)
+            {
+                LowLevelSolution[i]=Array<OneD, NekDouble> (LowLevelCoeff,0.0);
+            }
+            if(UpDateOperatorflag)
+            {
+                RestrictSolution(m_RestrictionMatrix,m_TimeIntegtSol_k,LowLevelSolution);
+                m_EqdriverOperator.CalculateNextLevelPreconditioner(LowLevelSolution,m_BndEvaluateTime, m_TimeIntegLambda, NextLevel);
+            }
             m_EqdriverOperator.MultiLevel(LowLevelRhs,LowLeveloutarray,UpDateOperatorflag,NextLevel);
             //outarray2=Pe
             //Need to Zero before prolongation
-            Vmath::Zero(CurrentLevelCoeff,outarraytmp,1);
+            Vmath::Zero(TotalCurrentLevelCoeff,outarraytmp,1);
             ProlongateSolution(m_ProlongationMatrix,LowLeveloutarray,outarraytmp);
             //outarray=outarray+Pe
-            Vmath::Vadd(CurrentLevelCoeff,outarray,1,outarraytmp,1,outarray,1);
+            Vmath::Vadd(TotalCurrentLevelCoeff,outarray,1,outarraytmp,1,outarray,1);
             preconditioner_BlkSOR_coeff(inarray,outarray,true);
         }
         else
@@ -5416,7 +5429,47 @@ Array<OneD, NekDouble>  CompressibleFlowSystem::GetElmtMinHP(void)
             preconditioner_BlkSOR_coeff(inarray,outarray,true);
         }  
     }
+
+    void  CompressibleFlowSystem::v_CalculateNextLevelPreconditioner(
+        const Array<OneD, const Array<OneD, NekDouble>>                 &inarrayCoeff,
+        const NekDouble                                                 time,
+        const NekDouble                                                 lambda)
+    {
+        int nVariables=m_fields.num_elements();
+        m_BndEvaluateTime=time;
+        m_TimeIntegLambda=lambda;
+        Array<OneD,Array<OneD,NekDouble>> inarray(nVariables);
+        Array<OneD,Array<OneD,NekDouble>> m_TimeIntegtSol_k(nVariables);
+        int npoints=GetNpoints();
+        for(int i=0;i<nVariables;i++)
+        {
+            m_TimeIntegtSol_k[i]=inarrayCoeff[i];
+            inarray[i]=Array<OneD,NekDouble> (npoints,0.0);
+            m_fields[i]->BwdTrans(inarrayCoeff[i],inarray[i]);
+        }
+        
+        //This part of codes coping from DoImplicit_Coeff so that get m_magnitude
+        int ntotal         = nVariables*GetNcoeffs();
+        int nElements      = m_fields[0]->GetExpSize();
+
+        LibUtilities::CommSharedPtr v_Comm  = m_fields[0]->GetComm()->GetRowComm();
+
+        bool l_verbose      = m_session->DefinesCmdLineArgument("verbose");
+        bool l_root=false;
+        if(0==v_Comm->GetRank())
+        {
+            l_root =true;
+        }
+        unsigned int ntotalGlobal     = ntotal;
+        v_Comm->AllReduce(ntotalGlobal, Nektar::LibUtilities::ReduceSum);
+        unsigned int ntotalDOF        = ntotalGlobal/nVariables;
+        NekDouble ototalGlobal  = 1.0/ntotalGlobal;
+        NekDouble ototalDOF     = 1.0/ntotalDOF;
+        UpdateSoltnRefNorms(inarrayCoeff, ototalDOF);
+        CalPrecMat(inarray,m_BndEvaluateTime,m_TimeIntegLambda);
+    }
    
+   //To Do: check the Restict Residual and Restrict Solution. they seem different
     void CompressibleFlowSystem::RestrictResidual(
         const Array<OneD,DNekMatSharedPtr>         &RestrictionMatrix,
         const Array<OneD, NekDouble>               &inarray,
@@ -5441,6 +5494,36 @@ Array<OneD, NekDouble>  CompressibleFlowSystem::GetElmtMinHP(void)
                 DNekVec Vout(RestrictedResidualtmp,eWrapper);
                 Vout=(*RestrictionMatrix[j])*Vin;
                 Vmath::Vcopy(nRestrictedElmtCoeffs,&RestrictedResidualtmp[0],1,&outarray[RestrictedArrayOffset],1);
+                RestrictedArrayOffset=RestrictedArrayOffset+nRestrictedElmtCoeffs;
+            }
+        }
+    }
+
+    //To Do: check the Restict Residual and Restrict Solution. they seem different
+    void CompressibleFlowSystem::RestrictSolution(
+        const Array<OneD,DNekMatSharedPtr>         &RestrictionMatrix,
+        const Array<OneD, const Array<OneD, NekDouble>>  &inarray,
+              Array<OneD, Array<OneD, NekDouble>>  &outarray)
+    {
+        std::shared_ptr<LocalRegions::ExpansionVector> pexp = m_fields[0]->GetExp();
+        int nVariables=m_fields.num_elements();
+        int nElmts=m_fields[0]->GetExpSize();
+
+        for(int i=0;i<nVariables;i++)
+        {
+            int RestrictedArrayOffset=0;
+            int VariableOffset=i*GetNcoeffs();
+            for(int j=0;j<nElmts;j++)
+            {
+                int nElmtCoeffs=(*pexp)[j]->GetNcoeffs();
+                int nElmtOffset=m_fields[0]->GetCoeff_Offset(j);
+                int nRestrictedElmtCoeffs=RestrictionMatrix[j]->GetRows();
+                Array<OneD, NekDouble> Solutiontmp(nElmtCoeffs,&inarray[i][nElmtOffset]);  
+                DNekVec Vin(nElmtCoeffs,Solutiontmp,eCopy);
+                Array<OneD,NekDouble> RestrictedSolutiontmp(nRestrictedElmtCoeffs,&outarray[i][RestrictedArrayOffset]);
+                DNekVec Vout(RestrictedSolutiontmp,eWrapper);
+                Vout=(*RestrictionMatrix[j])*Vin;
+                Vmath::Vcopy(nRestrictedElmtCoeffs,&RestrictedSolutiontmp[0],1,&outarray[i][RestrictedArrayOffset],1);
                 RestrictedArrayOffset=RestrictedArrayOffset+nRestrictedElmtCoeffs;
             }
         }

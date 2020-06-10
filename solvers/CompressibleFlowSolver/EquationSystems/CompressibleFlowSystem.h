@@ -884,11 +884,21 @@ namespace Nektar
             const int                                                       CurrentLevelCoeff,    
             const int                                                       LowLevelCoeff,     
             const bool                                                      UpDateOperatorflag);
+        
+        void v_CalculateNextLevelPreconditioner(
+            const Array<OneD, const Array<OneD, NekDouble>>                 &inarrayCoeff,
+            const NekDouble                                                 time,
+            const NekDouble                                                 lambda);
 
         void RestrictResidual(
         const Array<OneD,DNekMatSharedPtr>                                  &RestrictionMatrix,
         const Array<OneD, NekDouble>                                        &inarray,
               Array<OneD, NekDouble>                                        &outarray);
+        
+        void RestrictSolution(
+        const Array<OneD,DNekMatSharedPtr>                                  &RestrictionMatrix,
+        const Array<OneD, const Array<OneD, NekDouble>>                     &inarray,
+              Array<OneD, Array<OneD, NekDouble>>                           &outarray);
         
         void ProlongateSolution(
         const Array<OneD, DNekMatSharedPtr>                                 &ProlongationMatrix,

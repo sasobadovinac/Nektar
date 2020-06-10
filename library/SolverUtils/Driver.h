@@ -95,6 +95,15 @@ public:
     {
         v_MultiLevel(inarray,outarray, UpDateOperatorflag, Level);
     }
+
+    SOLVER_UTILS_EXPORT inline void CalculateNextLevelPreconditioner(
+        const Array<OneD, const Array<OneD, NekDouble>> &inarray,
+        const NekDouble                                 time,
+        const NekDouble                                 lambda,
+        const int                                       Level)
+    {
+        v_CalculateNextLevelPreconditioner(inarray,time,lambda,Level);
+    }
         
 
     /// Initialise Object
@@ -159,6 +168,15 @@ protected:
         const Array<OneD, NekDouble>                    &inarray,
         Array<OneD,NekDouble>                           &outarray,
         const bool                                      UpDateOperatorflag,
+        const int                                       Level)
+    {
+         ASSERTL0(false,"This routine is not valid in this class");
+    }
+
+    SOLVER_UTILS_EXPORT virtual void v_CalculateNextLevelPreconditioner(
+        const Array<OneD, const Array<OneD, NekDouble>> &inarray,
+        const NekDouble                                 time,
+        const NekDouble                                 lambda,
         const int                                       Level)
     {
          ASSERTL0(false,"This routine is not valid in this class");

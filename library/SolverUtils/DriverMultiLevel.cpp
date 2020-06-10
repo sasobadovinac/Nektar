@@ -74,6 +74,17 @@ namespace Nektar
             m_equ[Level]->MultiLevel(inarray, outarray, Level, m_MultiLevelCoeffs[Level],
                        m_MultiLevelCoeffs[Level+1], UpDateOperatorflag);
         }    
+
+        void DriverMultiLevel::v_CalculateNextLevelPreconditioner(
+                    const Array<OneD, const Array<OneD, NekDouble>> &inarray,
+                    const NekDouble                                 time,
+                    const NekDouble                                 lambda,
+                    const int                                       Level)
+        {
+            ASSERTL1(m_equ[Level],"Need to define EquationSystem[level]");
+            
+            m_equ[Level]->CalculateNextLevelPreconditioner(inarray, time, lambda);
+        }    
     
         /**
          *
@@ -86,7 +97,7 @@ namespace Nektar
             m_MultiLevelCoeffs=Array<OneD, int>(m_nLevels+1,0.0);
             for(int k=0;k<m_nLevels;k++)
             {
-                m_MultiLevelCoeffs[k]=nVariables*m_equ[k]->GetNcoeffs();
+                m_MultiLevelCoeffs[k]=m_equ[k]->GetNcoeffs();
             }
             //m_MultiLevelCoeffs[m_nLevels]=-1 used in MultiLevel‘s LowLevelCoeffs 
             //so that avoid repeated setting flag of lowest level
@@ -135,7 +146,9 @@ namespace Nektar
                 
                 }
             }
-
+            
+            m_driverOperator.DefineCalculateNextLevelPreconditioner
+                       (&Driver::CalculateNextLevelPreconditioner, this);
             m_driverOperator.DefineMultiLevel(&Driver::MultiLevel, this);
             m_equ[0]->SetdriverOperator(m_driverOperator);
         }

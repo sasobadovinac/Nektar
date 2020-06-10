@@ -54,16 +54,20 @@ namespace Nektar
             typedef const Array<OneD, const Array<OneD, NekDouble>> InArrayType2;
             typedef       Array<OneD, Array<OneD,NekDouble>>       OutArrayType2;
             typedef std::function< void (InArrayType2&, OutArrayType2&, const NekDouble)>  FunctorType2;
+
+            typedef std::function< void (InArrayType2&, const NekDouble, const NekDouble, const int)>  FunctorType3;
             
             DriverOperators(void):
             functors1(1),
-            functors2(2)
+            functors2(2),
+            functors3(1)
             {
             }
 
             DriverOperators(DriverOperators &in):
             functors1(1),
-            functors2(2)
+            functors2(2),
+            functors3(1)
             {
                 for (int i = 0; i < 1; i++)
                 {
@@ -73,6 +77,12 @@ namespace Nektar
                 for (int i = 0; i < 2; i++)
                 {
                     functors2[i] = in.functors2[i];
+                }
+
+
+                for (int i = 0; i < 1; i++)
+                {
+                    functors3[i] = in.functors3[i];
                 }
             }
 
@@ -122,9 +132,26 @@ namespace Nektar
                 functors2[1](inarray,outarray,time);
             }
 
+            //Set a functor that calculate Next level's Stored matrices
+            template<typename FuncPointerT, typename ObjectPointerT> 
+            void DefineCalculateNextLevelPreconditioner(FuncPointerT func, ObjectPointerT obj)
+            {
+                 functors3[0]=  std::bind(func, obj, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4);
+            }
+
+            inline void  CalculateNextLevelPreconditioner(InArrayType2     &inarray, 
+                                                          const NekDouble time,
+                                                          const NekDouble lambda,
+                                                          const int       NextLevel) const
+            {
+                ASSERTL1(functors3[0],"CalculateNextLevelPreconditioner has not been defined");
+                functors3[0](inarray,time,lambda,NextLevel);
+            }
+
         protected:
             Array<OneD,FunctorType1> functors1;
             Array<OneD,FunctorType2> functors2;
+            Array<OneD,FunctorType3> functors3;
         private:
 
         };

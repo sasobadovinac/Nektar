@@ -112,6 +112,14 @@ class Interpolator;
                 v_MultiLevel(inarray,outarray, Level, CurrentLevelCoeff, LowLevelCoeff, UpDateOperatorflag);
             }
 
+            SOLVER_UTILS_EXPORT void CalculateNextLevelPreconditioner(
+            const Array<OneD, const Array<OneD, NekDouble>>                 &inarrayCoeff,
+            const NekDouble                                                 time,
+            const NekDouble                                                 lambda)
+            {
+                v_CalculateNextLevelPreconditioner(inarrayCoeff,time,lambda);
+            }
+
             //Set RestrictionMatrix
             SOLVER_UTILS_EXPORT void SetRestrictionMatrix(
             const Array<OneD, DNekMatSharedPtr> &RestrictionMatrix)
@@ -568,6 +576,14 @@ class Interpolator;
             const bool                                                      UpDateOperatorflag)
             {
                  ASSERTL0(false, "Not defined.");
+            }
+
+            SOLVER_UTILS_EXPORT virtual void v_CalculateNextLevelPreconditioner(
+            const Array<OneD, const Array<OneD, NekDouble>>                 &inarrayCoeff,
+            const NekDouble                                                 time,
+            const NekDouble                                                 lambda)
+            {
+                ASSERTL0(false, "Not defined.");
             }
             
             SOLVER_UTILS_EXPORT virtual void v_InitObject();
