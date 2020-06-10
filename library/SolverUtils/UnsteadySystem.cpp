@@ -737,7 +737,7 @@ namespace Nektar
          * the problem remains stable.
          */
         NekDouble UnsteadySystem::GetTimeStep(
-            const Array<OneD, const Array<OneD, NekDouble> > &inarray)
+            const TensorOfArray2D<NekDouble> &inarray)
         {
             return v_GetTimeStep(inarray);
         }
@@ -749,7 +749,7 @@ namespace Nektar
          * @see UnsteadySystem::GetTimeStep
          */
         NekDouble UnsteadySystem::v_GetTimeStep(
-            const Array<OneD, const Array<OneD, NekDouble> > &inarray)
+            const TensorOfArray2D<NekDouble> &inarray)
         {
             ASSERTL0(false, "Not defined for this class");
             return 0.0;

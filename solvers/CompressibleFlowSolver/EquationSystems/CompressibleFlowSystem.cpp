@@ -84,6 +84,27 @@ namespace Nektar
         // Setting up advection and diffusion operators
         InitAdvection();
 
+        m_session->LoadParameter("DebugVolTraceSwitch",    
+            m_DebugVolTraceSwitch     ,    0);
+        m_CalcTracePartFlag = true;
+        m_CalcVolumPartFlag = true;
+        switch (m_DebugVolTraceSwitch)
+        {
+        case 1:
+            {
+                m_CalcTracePartFlag = false;
+            }
+            break;
+        case 2:
+            {
+                m_CalcVolumPartFlag = false;
+            }
+            break;
+        }
+
+        m_advObject->SetCalcTracePartFlag( m_CalcTracePartFlag);
+        m_advObject->SetCalcVolumPartFlag( m_CalcVolumPartFlag);
+
         // Create artificial diffusion
         if (m_shockCaptureType != "Off")
         {
@@ -466,8 +487,6 @@ namespace Nektar
 #ifdef CFS_DEBUGMODE
         m_session->LoadParameter("DebugAdvDiffSwitch",     
             m_DebugAdvDiffSwitch      ,    0);
-        m_session->LoadParameter("DebugVolTraceSwitch",    
-            m_DebugVolTraceSwitch     ,    0);
         m_session->LoadParameter("DebugConsDerivSwitch",   
             m_DebugConsDerivSwitch    ,    0);
         m_session->LoadParameter("DebugNumJacMatSwitch",   
@@ -497,25 +516,6 @@ namespace Nektar
         {
             m_centralDiffTracJac = true;
         }
-
-        m_CalcTracePartFlag = true;
-        m_CalcVolumPartFlag = true;
-        switch (m_DebugVolTraceSwitch)
-        {
-        case 1:
-            {
-                m_CalcTracePartFlag = false;
-            }
-            break;
-        case 2:
-            {
-                m_CalcVolumPartFlag = false;
-            }
-            break;
-        }
-
-        m_advObject->SetCalcTracePartFlag( m_CalcTracePartFlag);
-        m_advObject->SetCalcVolumPartFlag( m_CalcVolumPartFlag);
 #endif
     }
 
@@ -5639,7 +5639,7 @@ namespace Nektar
         NekDouble sml_ssf= 1.0E-12;
 
         NekDouble fExactorSplt = 2.0-abs(fsw); // if fsw=+-1 calculate 
-
+        
         NekDouble   rhoL  = Fwd[0];
         NekDouble   rhouL = Fwd[1];
         NekDouble   rhovL = Fwd[2];
