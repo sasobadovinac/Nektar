@@ -247,6 +247,9 @@ void FilterAeroForcesSPM::CalculateForces(
     int nq = pIntVel[0].size();
     Array<OneD, NekDouble> tmp(nq);
 
+    // Aerodynamic forces are computed according eq. 18a in Luo et al. (2009).
+    // Smoothed profile method for particulate flows: Error analysis and
+    // simulations. Journal of Computational Physics, 228(5)
     for (int i = 0; i < m_spaceDim; ++i)
     {
         // "Scalar" field to be integrated
