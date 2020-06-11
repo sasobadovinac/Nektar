@@ -53,12 +53,12 @@ template
     <
         std::is_floating_point
         <
-            typename std::remove_cv_t<typename std::remove_reference_t<T1>>
+            std::remove_cv_t <std::remove_reference_t<T1>>
         >::value &&
         std::is_same
         <
-            typename std::remove_cv_t<typename std::remove_reference_t<T1>>,
-            typename std::remove_cv_t<typename std::remove_reference_t<T2>>
+            std::remove_cv_t <std::remove_reference_t<T1>>,
+            std::remove_cv_t <std::remove_reference_t<T2>>
         >::value
     >
 >
@@ -68,7 +68,7 @@ inline bool IsRealEqual(T1&& lhs, T2&& rhs,
     // Check precondition in debug mode
     ASSERTL1(factor >= 1, "real comparison factor needs to be >= 1");
     // Get base type
-    typedef typename std::remove_reference_t<T1> Tbase;
+    using Tbase = std::remove_reference_t<T1>;
     // Tolerance
     Tbase tol = factor * std::numeric_limits<Tbase>::epsilon();
     // Distance
