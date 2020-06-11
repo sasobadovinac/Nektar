@@ -49,7 +49,7 @@ namespace LibUtilities
 template
 <
     class T1, class T2,
-    class = typename std::enable_if_t
+    class = std::enable_if_t
     <
         std::is_floating_point
         <
