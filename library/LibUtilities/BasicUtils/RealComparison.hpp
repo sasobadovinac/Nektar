@@ -49,21 +49,18 @@ namespace LibUtilities
 template
 <
     class T1, class T2,
-    class = typename std::enable_if
+    class = typename std::enable_if_t
     <
         std::is_floating_point
         <
-            typename std::remove_cv<
-                typename std::remove_reference<T1>::type>::type
+            typename std::remove_cv_t<typename std::remove_reference_t<T1>>
         >::value &&
         std::is_same
         <
-            typename std::remove_cv<
-                typename std::remove_reference<T1>::type>::type,
-            typename std::remove_cv<
-                typename std::remove_reference<T2>::type>::type
+            typename std::remove_cv_t<typename std::remove_reference_t<T1>>,
+            typename std::remove_cv_t<typename std::remove_reference_t<T2>>
         >::value
-    >::type
+    >
 >
 inline bool IsRealEqual(T1&& lhs, T2&& rhs,
     const unsigned int factor = NekConstants::kNekFloatCompFact)
@@ -71,7 +68,7 @@ inline bool IsRealEqual(T1&& lhs, T2&& rhs,
     // Check precondition in debug mode
     ASSERTL1(factor >= 1, "real comparison factor needs to be >= 1");
     // Get base type
-    typedef typename std::remove_reference<T1>::type Tbase;
+    typedef typename std::remove_reference_t<T1> Tbase;
     // Tolerance
     Tbase tol = factor * std::numeric_limits<Tbase>::epsilon();
     // Distance
