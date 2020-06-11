@@ -5379,8 +5379,7 @@ Array<OneD, NekDouble>  CompressibleFlowSystem::GetElmtMinHP(void)
         const int                                  CurrentLevelCoeff,    
         const int                                  LowLevelCoeff,   
         const bool                                 UpDateOperatorflag)
-    {
-        
+    {   
         int nVariables=m_fields.num_elements();
         int nCoeffs=GetNcoeffs();
         ASSERTL0(CurrentLevelCoeff==nCoeffs,"Should Step into Wrong Level");
@@ -5425,7 +5424,7 @@ Array<OneD, NekDouble>  CompressibleFlowSystem::GetElmtMinHP(void)
         {
             //Double SOR Number
             //Or use more advanced Smoothers
-            preconditioner_BlkSOR_coeff(inarray,outarray,false);
+            preconditioner_BlkSOR_coeff(inarray,outarray,false);;
             preconditioner_BlkSOR_coeff(inarray,outarray,true);
         }  
     }
@@ -5589,7 +5588,7 @@ Array<OneD, NekDouble>  CompressibleFlowSystem::GetElmtMinHP(void)
 
         ofstream outfile1;
         outfile1.open("./ConstArray.txt");
-        for (int i = 0; i < nrows; i++)
+        for (int i = 0; i < 10; i++)
         {
 
             outfile1 << setprecision(1)  << i+1 << "     " << setprecision(16) << Array[i] << endl;
