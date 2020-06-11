@@ -108,7 +108,6 @@ namespace Nektar
             m_RestrictionMatrix=Array<OneD,Array<OneD,DNekMatSharedPtr>> (nCycles);
             m_ProlongationMatrix=Array<OneD,Array<OneD,DNekMatSharedPtr>>(nCycles);
 
-
             for(int k=0;k<nCycles;k++)
             {
 
@@ -140,17 +139,21 @@ namespace Nektar
                     m_equ[k]->SetRestrictionMatrix(m_RestrictionMatrix[k]);
                     m_equ[k]->SetProlongationMatrix(m_ProlongationMatrix[k]);
                     // cout<<"RestrictionMatrix["<<k<<"]["<<i<<"]"<<endl;
-                    // OutputMatrix(m_RestrictionMatrix[k][i]);
+                    // PrintMatrix(m_RestrictionMatrix[k][i]);
                     // cout<<"ProlongationMatrix["<<k<<"]["<<i<<"]"<<endl;
-                    // OutputMatrix(m_ProlongationMatrix[k][i]);
+                    // PrintMatrix(m_ProlongationMatrix[k][i]);
                 
                 }
             }
             
             m_driverOperator.DefineCalculateNextLevelPreconditioner
-                       (&Driver::CalculateNextLevelPreconditioner, this);
+            (&Driver::CalculateNextLevelPreconditioner, this);
             m_driverOperator.DefineMultiLevel(&Driver::MultiLevel, this);
-            m_equ[0]->SetdriverOperator(m_driverOperator);
+            //Every m_equation sets a functor to use next level's equation
+            for(int k=0;k<nCycles;k++)
+            {
+                m_equ[k]->SetdriverOperator(m_driverOperator);
+            }
         }
     
     

@@ -514,6 +514,10 @@ namespace Nektar
         void NonlinSysEvaluator_coeff(
                 Array<OneD, Array<OneD, NekDouble> > &inarray,
                 Array<OneD, Array<OneD, NekDouble> > &out);
+        
+        void NonlinSysEvaluator_coeff_noSource(
+                Array<OneD, Array<OneD, NekDouble> > &inarray,
+                Array<OneD, Array<OneD, NekDouble> > &out);
 
         void DoOdeRhs_coeff(
             const Array<OneD, const Array<OneD, NekDouble> > &inarray,

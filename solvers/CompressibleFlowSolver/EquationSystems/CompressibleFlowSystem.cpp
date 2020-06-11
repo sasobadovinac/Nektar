@@ -3308,8 +3308,8 @@ namespace Nektar
         // eps *= magnitdEstimatMax;
         eps *= sqrt( (sqrt(m_inArrayNorm) + 1.0)/magninarray);
         NekDouble oeps = 1.0/eps;
-        unsigned int nvariables = m_TimeIntegtSol_n.num_elements();
-        unsigned int npoints    = m_TimeIntegtSol_n[0].num_elements();
+        unsigned int nvariables = m_fields.num_elements();
+        unsigned int npoints    = GetNcoeffs();
         Array<OneD, NekDouble > tmp;
         Array<OneD,       Array<OneD, NekDouble> > solplus(nvariables);
         Array<OneD,       Array<OneD, NekDouble> > resplus(nvariables);
@@ -3349,8 +3349,8 @@ namespace Nektar
         // eps *= magnitdEstimatMax;
         eps *= sqrt( (sqrt(m_inArrayNorm) + 1.0)/magninarray);
         NekDouble oeps = 1.0/eps;
-        unsigned int nvariables = m_TimeIntegtSol_n.num_elements();
-        unsigned int npoints    = m_TimeIntegtSol_n[0].num_elements();
+        unsigned int nvariables = m_fields.num_elements();
+        unsigned int npoints    = GetNcoeffs();
         Array<OneD, NekDouble > tmp;
         Array<OneD,       Array<OneD, NekDouble> > solplus(nvariables);
         Array<OneD,       Array<OneD, NekDouble> > resplus(nvariables);
@@ -3367,14 +3367,14 @@ namespace Nektar
             tmp = inarray + i*npoints;
             Vmath::Svtvp(npoints,eps,tmp,1,m_TimeIntegtSol_k[i],1,solplus[i],1);
         }
-        NonlinSysEvaluator_coeff(solplus,resplus);
+        NonlinSysEvaluator_coeff_noSource(solplus,resplus);
 
         for (int i = 0; i < nvariables; i++)
         {
             tmp = inarray + i*npoints;
             Vmath::Svtvp(npoints,-eps,tmp,1,m_TimeIntegtSol_k[i],1,solplus[i],1);
         }
-        NonlinSysEvaluator_coeff(solplus,resminus);
+        NonlinSysEvaluator_coeff_noSource(solplus,resminus);
 
         for (int i = 0; i < nvariables; i++)
         {
@@ -3512,8 +3512,25 @@ namespace Nektar
         Array<OneD, Array<OneD, NekDouble> > sol_n;
         sol_n                  = m_TimeIntegtSol_n;
         //inforc = m_TimeIntegForce;
-        unsigned int nvariable  = inarray.num_elements();
-        unsigned int ncoeffs    = inarray[nvariable-1].num_elements();
+        unsigned int nvariable  = m_fields.num_elements();
+        unsigned int ncoeffs    = GetNcoeffs();
+
+        NonlinSysEvaluator_coeff_noSource(inarray,out);
+
+        for (int i = 0; i < nvariable; i++)
+        {
+            Vmath::Vsub(ncoeffs,out[i],1,sol_n[i],1,out[i],1);
+        }
+        return;
+    }
+
+     void CompressibleFlowSystem::NonlinSysEvaluator_coeff_noSource(
+                                                       Array<OneD, Array<OneD, NekDouble> > &inarray,
+                                                       Array<OneD, Array<OneD, NekDouble> > &out)
+    {
+        //inforc = m_TimeIntegForce;
+        unsigned int nvariable  = m_fields.num_elements();
+        unsigned int ncoeffs    = GetNcoeffs();
         unsigned int npoints    = m_fields[0]->GetNpoints();
 
         Array<OneD, Array<OneD, NekDouble> > inpnts(nvariable);
@@ -3529,11 +3546,12 @@ namespace Nektar
 
         for (int i = 0; i < nvariable; i++)
         {
-            Vmath::Svtvp(ncoeffs,m_TimeIntegLambda,out[i],1,sol_n[i],1,out[i],1);
+            Vmath::Smul(ncoeffs,m_TimeIntegLambda,out[i],1,out[i],1);
             Vmath::Vsub(ncoeffs,inarray[i],1,out[i],1,out[i],1);
         }
         return;
     }
+
 
     /**
      * @brief Compute the right-hand side.
@@ -5391,8 +5409,9 @@ Array<OneD, NekDouble>  CompressibleFlowSystem::GetElmtMinHP(void)
             //false is outarray from zero
             preconditioner_BlkSOR_coeff(inarray,outarray,false);
             Array<OneD, NekDouble> outarraytmp(TotalCurrentLevelCoeff,0.0);
-            //Ax
-            MatrixMultiply_MatrixFree_coeff(outarray,outarraytmp);
+            //Ax: cannot use MatrixMultiply_MatrixFree_coeff in low level.
+            //Because it reuse TimeIntegration_Res_n, which does not calculate
+            MatrixMultiply_MatrixFree_coeff_central(outarray,outarraytmp);
             //b-Ax:Ok
             Vmath::Vsub(TotalCurrentLevelCoeff,inarray,1,outarraytmp,1,outarraytmp,1);
             Array<OneD,NekDouble> LowLevelRhs(TotalLowLevelCoeff,0.0);
@@ -5424,7 +5443,7 @@ Array<OneD, NekDouble>  CompressibleFlowSystem::GetElmtMinHP(void)
         {
             //Double SOR Number
             //Or use more advanced Smoothers
-            preconditioner_BlkSOR_coeff(inarray,outarray,false);;
+            preconditioner_BlkSOR_coeff(inarray,outarray,false);
             preconditioner_BlkSOR_coeff(inarray,outarray,true);
         }  
     }
@@ -5438,12 +5457,13 @@ Array<OneD, NekDouble>  CompressibleFlowSystem::GetElmtMinHP(void)
         m_BndEvaluateTime=time;
         m_TimeIntegLambda=lambda;
         Array<OneD,Array<OneD,NekDouble>> inarray(nVariables);
-        Array<OneD,Array<OneD,NekDouble>> m_TimeIntegtSol_k(nVariables);
+        m_TimeIntegtSol_k=Array<OneD,Array<OneD,NekDouble>> (nVariables);
         int npoints=GetNpoints();
+        int ncoeffs=GetNcoeffs();
         for(int i=0;i<nVariables;i++)
         {
-            m_TimeIntegtSol_k[i]=inarrayCoeff[i];
             inarray[i]=Array<OneD,NekDouble> (npoints,0.0);
+            m_TimeIntegtSol_k[i]=inarrayCoeff[i];
             m_fields[i]->BwdTrans(inarrayCoeff[i],inarray[i]);
         }
         
