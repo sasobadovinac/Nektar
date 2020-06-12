@@ -133,6 +133,8 @@ namespace Nektar
             /// also the b of linearsys(Ax=b) stored to compute Jacobian_
             Array<OneD,       Array<OneD, NekDouble> >      m_SysEquatResid_k;
 
+            Array<OneD,       Array<OneD, NekDouble> >      m_LowLevelSysEquatResid;
+
             Array<OneD, Array<OneD, DNekBlkMatSharedPtr> >  m_PrecMatVars;
 
             Array<OneD, Array<OneD, NekDouble> >            m_PrecMatVarsOffDiag;

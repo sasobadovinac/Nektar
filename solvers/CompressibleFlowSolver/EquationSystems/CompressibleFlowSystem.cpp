@@ -3337,6 +3337,47 @@ namespace Nektar
         return;
     }
 
+    void CompressibleFlowSystem::MatrixMultiply_MatrixFree_coeff_noSource(
+                                                 const  Array<OneD, NekDouble> &inarray,
+                                                        Array<OneD, NekDouble >&out)
+    {
+        NekDouble eps = m_JFEps;
+        unsigned int ntotalGlobal     = inarray.num_elements();
+        NekDouble magninarray = Vmath::Dot(ntotalGlobal,inarray,inarray);
+        LibUtilities::CommSharedPtr v_Comm  = m_fields[0]->GetComm()->GetRowComm();
+        v_Comm->AllReduce(magninarray, Nektar::LibUtilities::ReduceSum);
+        // eps *= magnitdEstimatMax;
+        eps *= sqrt( (sqrt(m_inArrayNorm) + 1.0)/magninarray);
+        NekDouble oeps = 1.0/eps;
+        unsigned int nvariables = m_fields.num_elements();
+        unsigned int npoints    = GetNcoeffs();
+        Array<OneD, NekDouble > tmp;
+        Array<OneD,       Array<OneD, NekDouble> > solplus(nvariables);
+        Array<OneD,       Array<OneD, NekDouble> > resplus(nvariables);
+        for(int i = 0; i < nvariables; i++)
+        {
+            solplus[i] =  Array<OneD, NekDouble>(npoints,0.0);
+            resplus[i] =  Array<OneD, NekDouble>(npoints,0.0);
+        }
+
+        for (int i = 0; i < nvariables; i++)
+        {
+            tmp = inarray + i*npoints;
+            Vmath::Svtvp(npoints,eps,tmp,1,m_TimeIntegtSol_k[i],1,solplus[i],1);
+        }
+        
+        NonlinSysEvaluator_coeff_noSource(solplus,resplus);
+
+        for (int i = 0; i < nvariables; i++)
+        {
+            tmp = out + i*npoints;
+            Vmath::Vsub(npoints,&resplus[i][0],1,&m_LowLevelSysEquatResid[i][0],1,&tmp[0],1);
+            Vmath::Smul(npoints, oeps ,&tmp[0],1,&tmp[0],1);
+        }
+       
+        return;
+    }
+
     void CompressibleFlowSystem::MatrixMultiply_MatrixFree_coeff_central(
                                                  const  Array<OneD, NekDouble> &inarray,
                                                         Array<OneD, NekDouble >&out)
@@ -5411,7 +5452,16 @@ Array<OneD, NekDouble>  CompressibleFlowSystem::GetElmtMinHP(void)
             Array<OneD, NekDouble> outarraytmp(TotalCurrentLevelCoeff,0.0);
             //Ax: cannot use MatrixMultiply_MatrixFree_coeff in low level.
             //Because it reuse TimeIntegration_Res_n, which does not calculate
-            MatrixMultiply_MatrixFree_coeff_central(outarray,outarraytmp);
+            if(Level>0)
+            {
+                MatrixMultiply_MatrixFree_coeff_noSource(outarray,outarraytmp);
+            }
+            else
+            {
+                //Avoid repeating calculating Residual_k in highest level
+                MatrixMultiply_MatrixFree_coeff(outarray,outarraytmp);
+            }
+
             //b-Ax:Ok
             Vmath::Vsub(TotalCurrentLevelCoeff,inarray,1,outarraytmp,1,outarraytmp,1);
             Array<OneD,NekDouble> LowLevelRhs(TotalLowLevelCoeff,0.0);
@@ -5461,14 +5511,17 @@ Array<OneD, NekDouble>  CompressibleFlowSystem::GetElmtMinHP(void)
         m_TimeIntegLambda=lambda;
         Array<OneD,Array<OneD,NekDouble>> inarray(nVariables);
         m_TimeIntegtSol_k=Array<OneD,Array<OneD,NekDouble>> (nVariables);
+        m_LowLevelSysEquatResid=Array<OneD,Array<OneD,NekDouble>> (nVariables);
         int npoints=GetNpoints();
         int ncoeffs=GetNcoeffs();
         for(int i=0;i<nVariables;i++)
         {
             inarray[i]=Array<OneD,NekDouble> (npoints,0.0);
+            m_LowLevelSysEquatResid[i]=Array<OneD,NekDouble> (ncoeffs,0.0);
             m_TimeIntegtSol_k[i]=inarrayCoeff[i];
             m_fields[i]->BwdTrans(inarrayCoeff[i],inarray[i]);
         }
+        NonlinSysEvaluator_coeff_noSource(m_TimeIntegtSol_k,m_LowLevelSysEquatResid);
         
         //This part of codes coping from DoImplicit_Coeff so that get m_magnitude
         int ntotal         = nVariables*GetNcoeffs();

@@ -499,6 +499,9 @@ namespace Nektar
         void MatrixMultiply_MatrixFree_coeff(
             const  Array<OneD, NekDouble> &inarray,
                    Array<OneD, NekDouble >&out);
+        void MatrixMultiply_MatrixFree_coeff_noSource(
+            const  Array<OneD, NekDouble> &inarray,
+                   Array<OneD, NekDouble >&out);
         void MatrixMultiply_MatrixFree_coeff_central(
             const  Array<OneD, NekDouble> &inarray,
                 Array<OneD, NekDouble >&out);
