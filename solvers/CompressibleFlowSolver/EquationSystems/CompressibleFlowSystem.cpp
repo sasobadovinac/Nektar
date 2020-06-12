@@ -2811,8 +2811,8 @@ namespace Nektar
         const Array<OneD, Array<OneD, NekDouble>>    &inarray,
         const NekDouble                 &ototalDOF)
     {
-        int nvariables = inarray.num_elements();
-        int npoints = inarray[nvariables-1].num_elements();
+        int nvariables = m_fields.num_elements();
+        int npoints = GetNcoeffs();
         m_inArrayNorm = 0.0;
 
         LibUtilities::CommSharedPtr v_Comm  = m_fields[0]->GetComm()->GetRowComm();
