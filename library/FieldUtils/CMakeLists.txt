@@ -47,6 +47,7 @@ SET(FieldUtilsHeaders
     ProcessModules/ProcessPrintFldNorms.h
     ProcessModules/ProcessRemoveField.h
     ProcessModules/ProcessScaleInFld.h
+    ProcessModules/ProcessSensor.h
     ProcessModules/ProcessStreamFunction.h
     ProcessModules/ProcessSurfDistance.h
     ProcessModules/ProcessVorticity.h
@@ -106,6 +107,7 @@ SET(FieldUtilsSources
     ProcessModules/ProcessPrintFldNorms.cpp
     ProcessModules/ProcessRemoveField.cpp    
     ProcessModules/ProcessScaleInFld.cpp
+    ProcessModules/ProcessSensor.cpp
     ProcessModules/ProcessVorticity.cpp
     ProcessModules/ProcessScalGrad.cpp
     ProcessModules/ProcessStreamFunction.cpp
