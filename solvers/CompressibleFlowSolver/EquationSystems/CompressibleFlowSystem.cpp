@@ -5444,7 +5444,7 @@ Array<OneD, NekDouble>  CompressibleFlowSystem::GetElmtMinHP(void)
             //Double SOR Number
             //Or use more advanced Smoothers
             preconditioner_BlkSOR_coeff(inarray,outarray,false);
-            preconditioner_BlkSOR_coeff(inarray,outarray,true);
+            //preconditioner_BlkSOR_coeff(inarray,outarray,true);
         }  
     }
 
