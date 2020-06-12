@@ -173,6 +173,8 @@ namespace Nektar
             NekDouble   m_inArrayNorm=-1.0;
 
             bool m_CalcuPrecMatFlag     = true;
+
+            bool m_UpDateOperatorflag;
             ////////////////////////////////////////////////////////////////////////////
             //Paremeters to control the Direct Error
             int                         m_CalculateTemporalErrorCounter=0;

@@ -400,6 +400,8 @@ namespace Nektar
                 {
 
                     m_CalcuPrecMatFlag      =   true;
+                    //This flag control MultiLevel if need update Jacobian matrix
+                    m_UpDateOperatorflag=m_CalcuPrecMatFlag; 
                     m_CalcuPrecMatCounter   =   0;
                     m_cflSafetyFactor       =   tmp_cflSafetyFactor;
 

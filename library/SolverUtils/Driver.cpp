@@ -221,7 +221,8 @@ void Driver::v_InitObject(ostream &out)
             case eMultiLevelCFS:
             {
                 //Design to read from m_session
-                m_session->LoadParameter("NumLevels", m_nLevels, 1);
+                m_session->LoadParameter("NumLevels", m_nLevels, 2);
+                ASSERTL0(m_nLevels>1,"No need use MultiLevel");
                 if(eMultiLevelCFS==m_EvolutionOperator)
                 {
                     m_equ = Array<OneD, EquationSystemSharedPtr>(m_nLevels);

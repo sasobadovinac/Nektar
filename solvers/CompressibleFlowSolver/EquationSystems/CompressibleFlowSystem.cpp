@@ -5386,7 +5386,7 @@ Array<OneD, NekDouble>  CompressibleFlowSystem::GetElmtMinHP(void)
                   const bool             &UnusedFlag)
     { 
         int Level=0;
-        m_EqdriverOperator.MultiLevel(inarray, outarray, m_CalcuPrecMatFlag, Level);
+        m_EqdriverOperator.MultiLevel(inarray, outarray, m_UpDateOperatorflag, Level);
     }
 
     void CompressibleFlowSystem::v_MultiLevel(
@@ -5425,10 +5425,13 @@ Array<OneD, NekDouble>  CompressibleFlowSystem::GetElmtMinHP(void)
             {
                 LowLevelSolution[i]=Array<OneD, NekDouble> (LowLevelCoeff,0.0);
             }
-            if(UpDateOperatorflag)
+            //Avoid repeating calculating low level matrices
+             m_UpDateOperatorflag= UpDateOperatorflag;
+            if(m_UpDateOperatorflag)
             {
                 RestrictSolution(m_RestrictionMatrix,m_TimeIntegtSol_k,LowLevelSolution);
                 m_EqdriverOperator.CalculateNextLevelPreconditioner(LowLevelSolution,m_BndEvaluateTime, m_TimeIntegLambda, NextLevel);
+                m_UpDateOperatorflag=false;
             }
             m_EqdriverOperator.MultiLevel(LowLevelRhs,LowLeveloutarray,UpDateOperatorflag,NextLevel);
             //outarray2=Pe
