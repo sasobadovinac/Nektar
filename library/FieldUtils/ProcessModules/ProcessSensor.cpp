@@ -63,6 +63,7 @@ ModuleKey ProcessSensor::className = GetModuleFactory().RegisterCreatorFunction(
 
 ProcessSensor::ProcessSensor(FieldSharedPtr f) : ProcessModule(f)
 {
+    m_config["var"] = ConfigOption(false, "0", "Variable to process");
 }
 
 ProcessSensor::~ProcessSensor()
@@ -76,21 +77,24 @@ void ProcessSensor::Process(po::variables_map &vm)
     int expdim    = m_f->m_graph->GetMeshDimension();
     // int spacedim  = m_f->m_numHomogeneousDir + expdim;
     int nfields   = m_f->m_variables.size();
-    
-    m_f->m_variables.push_back("Sensor");
-    m_f->m_exp.resize(nfields + 1);
-    m_f->m_exp[nfields] = m_f->AppendExpList(0);
+
+    int var = m_config["var"].as<int>();
 
     int nExp = m_f->m_exp[0]->GetExpSize();
 
+    vector<vector<NekDouble>> sensors;
+    int maxSize = 0;
+
     for (int i = 0; i < nExp; ++i)
     {
-        int offset = m_f->m_exp[0]->GetPhys_Offset(i);
-        LocalRegions::ExpansionSharedPtr Exp = m_f->m_exp[0]->GetExp(i);
+        int offset = m_f->m_exp[var]->GetPhys_Offset(i);
+        LocalRegions::ExpansionSharedPtr Exp = m_f->m_exp[var]->GetExp(i);
 
         Array<OneD, int> P(expdim);
         Array<OneD, int> numPoints(expdim);
         Array<OneD, LibUtilities::PointsKey> ptsKey(expdim);
+
+        int minP = numeric_limits<int>::max();
 
         for (int j = 0; j < expdim; ++j)
         {
@@ -98,123 +102,163 @@ void ProcessSensor::Process(po::variables_map &vm)
             numPoints[j] = Exp->GetBasis(j)->GetNumPoints();
             ptsKey[j]    = LibUtilities::PointsKey (numPoints[j],
                             Exp->GetBasis(j)->GetPointsType());
+            
+            minP = min(minP, P[j]);
         }
 
-        // Declare orthogonal basis.
-        StdRegions::StdExpansionSharedPtr OrthoExp;
-        switch (Exp->GetGeom()->GetShapeType())
+        vector<NekDouble> sensor;
+
+        NekDouble den = 0;
+        Array<OneD, NekDouble> phys = m_f->m_exp[var]->GetPhys() + offset;
+
+        for (int k = 1; k < minP; ++k)
         {
-            case LibUtilities::eQuadrilateral:
+            // Declare orthogonal basis.
+            StdRegions::StdExpansionSharedPtr OrthoExp;
+            switch (Exp->GetGeom()->GetShapeType())
             {
-                LibUtilities::BasisKey Ba(LibUtilities::eOrtho_A, P[0] - 1,
-                                            ptsKey[0]);
-                LibUtilities::BasisKey Bb(LibUtilities::eOrtho_A, P[1] - 1,
-                                            ptsKey[1]);
-                OrthoExp = MemoryManager<
-                    StdRegions::StdQuadExp>::AllocateSharedPtr(Ba, Bb);
-                break;
+                case LibUtilities::eQuadrilateral:
+                {
+                    LibUtilities::BasisKey Ba(LibUtilities::eOrtho_A, P[0] - k,
+                                                ptsKey[0]);
+                    LibUtilities::BasisKey Bb(LibUtilities::eOrtho_A, P[1] - k,
+                                                ptsKey[1]);
+                    OrthoExp = MemoryManager<
+                        StdRegions::StdQuadExp>::AllocateSharedPtr(Ba, Bb);
+                    break;
+                }
+                case LibUtilities::eTriangle:
+                {
+                    LibUtilities::BasisKey Ba(LibUtilities::eOrtho_A, P[0] - k,
+                                                ptsKey[0]);
+                    LibUtilities::BasisKey Bb(LibUtilities::eOrtho_B, P[1] - k,
+                                                ptsKey[1]);
+                    OrthoExp =
+                        MemoryManager<StdRegions::StdTriExp>::AllocateSharedPtr(
+                            Ba, Bb);
+                    break;
+                }
+                case LibUtilities::eTetrahedron:
+                {
+                    LibUtilities::BasisKey Ba(LibUtilities::eOrtho_A, P[0] - k,
+                                                ptsKey[0]);
+                    LibUtilities::BasisKey Bb(LibUtilities::eOrtho_B, P[1] - k,
+                                                ptsKey[1]);
+                    LibUtilities::BasisKey Bc(LibUtilities::eOrtho_C, P[2] - k,
+                                                ptsKey[2]);
+                    OrthoExp =
+                        MemoryManager<StdRegions::StdTetExp>::AllocateSharedPtr(
+                            Ba, Bb, Bc);
+                    break;
+                }
+                case LibUtilities::ePyramid:
+                {
+                    LibUtilities::BasisKey Ba(LibUtilities::eOrtho_A, P[0] - k,
+                                                ptsKey[0]);
+                    LibUtilities::BasisKey Bb(LibUtilities::eOrtho_A, P[1] - k,
+                                                ptsKey[1]);
+                    LibUtilities::BasisKey Bc(LibUtilities::eOrtho_C, P[2] - k,
+                                                ptsKey[2]);
+                    OrthoExp =
+                        MemoryManager<StdRegions::StdPyrExp>::AllocateSharedPtr(
+                            Ba, Bb, Bc);
+                    break;
+                }
+                case LibUtilities::ePrism:
+                {
+                    LibUtilities::BasisKey Ba(LibUtilities::eOrtho_A, P[0] - k,
+                                                ptsKey[0]);
+                    LibUtilities::BasisKey Bb(LibUtilities::eOrtho_A, P[1] - k,
+                                                ptsKey[1]);
+                    LibUtilities::BasisKey Bc(LibUtilities::eOrtho_B, P[2] - k,
+                                                ptsKey[2]);
+                    OrthoExp =
+                        MemoryManager<StdRegions::StdPrismExp>::AllocateSharedPtr(
+                            Ba, Bb, Bc);
+                    break;
+                }
+                case LibUtilities::eHexahedron:
+                {
+                    LibUtilities::BasisKey Ba(LibUtilities::eOrtho_A, P[0] - k,
+                                                ptsKey[0]);
+                    LibUtilities::BasisKey Bb(LibUtilities::eOrtho_A, P[1] - k,
+                                                ptsKey[1]);
+                    LibUtilities::BasisKey Bc(LibUtilities::eOrtho_A, P[2] - k,
+                                                ptsKey[2]);
+                    OrthoExp =
+                        MemoryManager<StdRegions::StdHexExp>::AllocateSharedPtr(
+                            Ba, Bb, Bc);
+                    break;
+                }
+                default:
+                    ASSERTL0(false, "Shape not supported.");
+                    break;
             }
-            case LibUtilities::eTriangle:
+
+            int nq = OrthoExp->GetTotPoints();
+
+            Array<OneD, NekDouble> coeffs      = Array<OneD, NekDouble>(OrthoExp->GetNcoeffs());
+            Array<OneD, NekDouble> physReduced = Array<OneD, NekDouble>(OrthoExp->GetTotPoints());
+            Array<OneD, NekDouble> tmpArray    = Array<OneD, NekDouble>(OrthoExp->GetTotPoints(), 0.0);
+
+            // Project solution to lower order
+            OrthoExp->FwdTrans(phys, coeffs);
+            OrthoExp->BwdTrans(coeffs, physReduced);
+
+            // ||phys-physReduced||^2
+            Vmath::Vsub(nq, phys,     1, physReduced, 1, tmpArray, 1);
+            Vmath::Vmul(nq, tmpArray, 1, tmpArray,    1, tmpArray, 1);
+            NekDouble num = Exp->Integral(tmpArray);
+
+            if (k == 1)
             {
-                LibUtilities::BasisKey Ba(LibUtilities::eOrtho_A, P[0] - 1,
-                                            ptsKey[0]);
-                LibUtilities::BasisKey Bb(LibUtilities::eOrtho_B, P[1] - 1,
-                                            ptsKey[1]);
-                OrthoExp =
-                    MemoryManager<StdRegions::StdTriExp>::AllocateSharedPtr(
-                        Ba, Bb);
-                break;
+                // ||phys||^2
+                Vmath::Vmul(nq, phys, 1, phys, 1, tmpArray, 1);
+                den = Exp->Integral(tmpArray);
             }
-            case LibUtilities::eTetrahedron:
+
+            // Calculate error =||phys-physReduced||^2 / ||phys||^2
+            sensor.push_back(fabs(num / den));
+
+            if (k + 1 == minP)
             {
-                LibUtilities::BasisKey Ba(LibUtilities::eOrtho_A, P[0] - 1,
-                                            ptsKey[0]);
-                LibUtilities::BasisKey Bb(LibUtilities::eOrtho_B, P[1] - 1,
-                                            ptsKey[1]);
-                LibUtilities::BasisKey Bc(LibUtilities::eOrtho_C, P[2] - 1,
-                                            ptsKey[2]);
-                OrthoExp =
-                    MemoryManager<StdRegions::StdTetExp>::AllocateSharedPtr(
-                        Ba, Bb, Bc);
-                break;
+                // ||physReduced||^2
+                Vmath::Vmul(nq, physReduced, 1, physReduced, 1, tmpArray, 1);
+                num = Exp->Integral(tmpArray);
+
+                // ||physReduced||^2 / ||phys||^2
+                sensor.push_back(fabs(num / den));
             }
-            case LibUtilities::ePyramid:
+            else
             {
-                LibUtilities::BasisKey Ba(LibUtilities::eOrtho_A, P[0] - 1,
-                                            ptsKey[0]);
-                LibUtilities::BasisKey Bb(LibUtilities::eOrtho_A, P[1] - 1,
-                                            ptsKey[1]);
-                LibUtilities::BasisKey Bc(LibUtilities::eOrtho_C, P[2] - 1,
-                                            ptsKey[2]);
-                OrthoExp =
-                    MemoryManager<StdRegions::StdPyrExp>::AllocateSharedPtr(
-                        Ba, Bb, Bc);
-                break;
+                phys = physReduced;
             }
-            case LibUtilities::ePrism:
-            {
-                LibUtilities::BasisKey Ba(LibUtilities::eOrtho_A, P[0] - 1,
-                                            ptsKey[0]);
-                LibUtilities::BasisKey Bb(LibUtilities::eOrtho_A, P[1] - 1,
-                                            ptsKey[1]);
-                LibUtilities::BasisKey Bc(LibUtilities::eOrtho_B, P[2] - 1,
-                                            ptsKey[2]);
-                OrthoExp =
-                    MemoryManager<StdRegions::StdPrismExp>::AllocateSharedPtr(
-                        Ba, Bb, Bc);
-                break;
-            }
-            case LibUtilities::eHexahedron:
-            {
-                LibUtilities::BasisKey Ba(LibUtilities::eOrtho_A, P[0] - 1,
-                                            ptsKey[0]);
-                LibUtilities::BasisKey Bb(LibUtilities::eOrtho_A, P[1] - 1,
-                                            ptsKey[1]);
-                LibUtilities::BasisKey Bc(LibUtilities::eOrtho_A, P[2] - 1,
-                                            ptsKey[2]);
-                OrthoExp =
-                    MemoryManager<StdRegions::StdHexExp>::AllocateSharedPtr(
-                        Ba, Bb, Bc);
-                break;
-            }
-            default:
-                ASSERTL0(false, "Shape not supported.");
-                break;
         }
 
-        int nq = OrthoExp->GetTotPoints();
-
-        NekDouble sensor = 0;
-        NekDouble fac    = 0;
-
-        Array<OneD, NekDouble> phys        = m_f->m_exp[0]->GetPhys() + offset;
-        Array<OneD, NekDouble> coeffs      = Array<OneD, NekDouble>(OrthoExp->GetNcoeffs());
-        Array<OneD, NekDouble> physReduced = Array<OneD, NekDouble>(OrthoExp->GetTotPoints());
-        Array<OneD, NekDouble> tmpArray    = Array<OneD, NekDouble>(OrthoExp->GetTotPoints(), 0.0);
-
-        // Project solution to lower order
-        OrthoExp->FwdTrans(phys, coeffs);
-        OrthoExp->BwdTrans(coeffs, physReduced);
-
-        // Calculate error =||phys-physReduced||^2 / ||phys||^2
-        Vmath::Vsub(nq, phys,     1, physReduced, 1, tmpArray, 1);
-        Vmath::Vmul(nq, tmpArray, 1, tmpArray,    1, tmpArray, 1);
-        sensor = Exp->Integral(tmpArray);
-
-        Vmath::Vmul(nq, phys, 1, phys, 1, tmpArray, 1);
-        fac = Exp->Integral(tmpArray);
-
-        sensor = abs(sensor / fac);
-
-        // Add sensor to all points in the element
-        int npts = Exp->GetTotPoints();
-        Array<OneD, NekDouble> tmp = m_f->m_exp[1]->UpdatePhys() + offset;
-        Vmath::Fill(npts, sensor, tmp, 1);
+        maxSize = max(maxSize, int(sensor.size()));
+        sensors.push_back(sensor);
     }
 
-    // forward transform
-    m_f->m_exp[1]->FwdTrans_IterPerExp(m_f->m_exp[1]->GetPhys(), m_f->m_exp[1]->UpdateCoeffs());
+    m_f->m_exp.resize(nfields + maxSize);
 
+    for (int i = 0; i < maxSize; ++i)
+    {
+        m_f->m_variables.push_back("Sensor" + to_string(i));
+        m_f->m_exp[nfields + i] = m_f->AppendExpList(0);
+    }
+
+    for (int i = 0; i < sensors.size(); ++i)
+    {
+        int npts = m_f->m_exp[var]->GetExp(i)->GetTotPoints();
+        int offset = m_f->m_exp[var]->GetPhys_Offset(i);
+
+        for (int j = 0; j < sensors[i].size(); j ++)
+        {
+            // Add sensor to all points in the element
+            Array<OneD, NekDouble> tmp = m_f->m_exp[nfields + j]->UpdatePhys() + offset;
+            Vmath::Fill(npts, sensors[i][j], tmp, 1);
+        }
+    }
 }
 }
 }
