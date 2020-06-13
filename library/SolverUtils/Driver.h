@@ -118,6 +118,11 @@ public:
     SOLVER_UTILS_EXPORT Array<OneD, NekDouble> GetImagEvl(void);
 
 protected:
+    Array<OneD,Array<OneD,DNekMatSharedPtr>>    m_RestrictionMatrix;
+
+    Array<OneD,Array<OneD,DNekMatSharedPtr>>    m_ProlongationMatrix;
+
+    Array<OneD,int>                             m_MultiLevelCoeffs;
     /// Communication object
     LibUtilities::CommSharedPtr                 m_comm;
 

@@ -92,65 +92,12 @@ namespace Nektar
         void DriverMultiLevel::v_InitObject(ostream &out)
         {
             Driver::v_InitObject(out);
-    
-            int nVariables=m_equ[0]->GetNvariables();
-            m_MultiLevelCoeffs=Array<OneD, int>(m_nLevels+1,0.0);
-            for(int k=0;k<m_nLevels;k++)
-            {
-                m_MultiLevelCoeffs[k]=m_equ[k]->GetNcoeffs();
-            }
-            //m_MultiLevelCoeffs[m_nLevels]=-1 used in MultiLevel‘s LowLevelCoeffs 
-            //so that avoid repeated setting flag of lowest level
-            m_MultiLevelCoeffs[m_nLevels]=-1;
-            
-            //Define Restriction and Prolongation Matrix
-            int nCycles=m_nLevels-1;  
-            m_RestrictionMatrix=Array<OneD,Array<OneD,DNekMatSharedPtr>> (nCycles);
-            m_ProlongationMatrix=Array<OneD,Array<OneD,DNekMatSharedPtr>>(nCycles);
-
-            for(int k=0;k<nCycles;k++)
-            {
-
-                //To Do: operate in StdElement, to save memory, need to only store nType Element
-                int nElmts=m_equ[k]->GetExpSize();
-                m_RestrictionMatrix[k]=Array<OneD,DNekMatSharedPtr>(nElmts);
-                m_ProlongationMatrix[k]=Array<OneD,DNekMatSharedPtr>(nElmts);
-                for (int i=0;i<nElmts;i++)
-                {
-                    LocalRegions::ExpansionSharedPtr LowerLevelExpansion=m_equ[k+1]->GetExp(i);
-                    LocalRegions::ExpansionSharedPtr HigherLevelExpansion=m_equ[k]->GetExp(i);
-                    int nHighLevelCoeffs=m_equ[k]->GetNcoeffs(i);
-                    int nLowLevelCoeffs=m_equ[k+1]->GetNcoeffs(i);
-                    m_RestrictionMatrix[k][i]=MemoryManager<DNekMat>::AllocateSharedPtr(nLowLevelCoeffs,nHighLevelCoeffs, eFULL, 0.0);
-                    m_ProlongationMatrix[k][i]=MemoryManager<DNekMat>::AllocateSharedPtr(nHighLevelCoeffs,nLowLevelCoeffs, eFULL, 0.0);
-                    LibUtilities::PointsKeyVector HigherLevelExpansionKeys,LowerLevelExpansionKeys;
-                    LowerLevelExpansionKeys=LowerLevelExpansion->GetPointsKeys();
-                    HigherLevelExpansionKeys=HigherLevelExpansion->GetPointsKeys();
-                    StdRegions::StdMatrixKey LowerLevelMatKey(StdRegions::eBwdTrans,
-                                            LowerLevelExpansion->DetShapeType(),
-                                            *(LowerLevelExpansion));
-                    DNekMatSharedPtr LowerLevelBwdMat = LowerLevelExpansion->GetStdMatrix(LowerLevelMatKey);
-                    StdRegions::StdMatrixKey HigherLevelMatKey(StdRegions::eBwdTrans,
-                                            HigherLevelExpansion->DetShapeType(),
-                                            *(HigherLevelExpansion));
-                    DNekMatSharedPtr HigherLevelBwdMat = HigherLevelExpansion->GetStdMatrix(HigherLevelMatKey);
-                    LowerLevelExpansion->CreateInterpolationMatrix(HigherLevelExpansionKeys,HigherLevelBwdMat,m_RestrictionMatrix[k][i]);
-                    HigherLevelExpansion->CreateInterpolationMatrix(LowerLevelExpansionKeys,LowerLevelBwdMat,m_ProlongationMatrix[k][i]);
-                    m_equ[k]->SetRestrictionMatrix(m_RestrictionMatrix[k]);
-                    m_equ[k]->SetProlongationMatrix(m_ProlongationMatrix[k]);
-                    // cout<<"RestrictionMatrix["<<k<<"]["<<i<<"]"<<endl;
-                    // PrintMatrix(m_RestrictionMatrix[k][i]);
-                    // cout<<"ProlongationMatrix["<<k<<"]["<<i<<"]"<<endl;
-                    // PrintMatrix(m_ProlongationMatrix[k][i]);
-                
-                }
-            }
             
             m_driverOperator.DefineCalculateNextLevelPreconditioner
             (&Driver::CalculateNextLevelPreconditioner, this);
             m_driverOperator.DefineMultiLevel(&Driver::MultiLevel, this);
             //Every m_equation sets a functor to use next level's equation
-            for(int k=0;k<nCycles;k++)
+            for(int k=0;k<(m_nLevels-1);k++)
             {
                 m_equ[k]->SetdriverOperator(m_driverOperator);
             }
