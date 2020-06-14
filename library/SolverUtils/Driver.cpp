@@ -257,6 +257,7 @@ void Driver::v_InitObject(ostream &out)
                 vector<string>  MultiLevelFilename;
                 LibUtilities::SessionReaderSharedPtr  MultiLevelSession;
                 SpatialDomains::MeshGraphSharedPtr    MultiLevelGraph;
+                m_RestrictionResidualMatrix=Array<OneD,Array<OneD,DNekMatSharedPtr>> (nCycles);
                 m_RestrictionMatrix=Array<OneD,Array<OneD,DNekMatSharedPtr>> (nCycles);
                 m_ProlongationMatrix=Array<OneD,Array<OneD,DNekMatSharedPtr>>(nCycles);
                 for(int k=0;k<nCycles;k++)
@@ -288,6 +289,7 @@ void Driver::v_InitObject(ostream &out)
                         vEquation, MultiLevelSession, MultiLevelGraph);
                     
                     int nElmts=m_equ[k]->GetExpSize();
+                    m_RestrictionResidualMatrix[k]=Array<OneD,DNekMatSharedPtr>(nElmts);
                     m_RestrictionMatrix[k]=Array<OneD,DNekMatSharedPtr>(nElmts);
                     m_ProlongationMatrix[k]=Array<OneD,DNekMatSharedPtr>(nElmts);
                     for (int i=0;i<nElmts;i++)
@@ -296,6 +298,7 @@ void Driver::v_InitObject(ostream &out)
                         LocalRegions::ExpansionSharedPtr HigherLevelExpansion=m_equ[k]->GetExp(i);
                         int nHighLevelCoeffs=m_equ[k]->GetNcoeffs(i);
                         int nLowLevelCoeffs=m_equ[k+1]->GetNcoeffs(i);
+                        m_RestrictionResidualMatrix[k][i]=MemoryManager<DNekMat>::AllocateSharedPtr(nLowLevelCoeffs,nHighLevelCoeffs, eFULL, 0.0);
                         m_RestrictionMatrix[k][i]=MemoryManager<DNekMat>::AllocateSharedPtr(nLowLevelCoeffs,nHighLevelCoeffs, eFULL, 0.0);
                         m_ProlongationMatrix[k][i]=MemoryManager<DNekMat>::AllocateSharedPtr(nHighLevelCoeffs,nLowLevelCoeffs, eFULL, 0.0);
                         LibUtilities::PointsKeyVector HigherLevelExpansionKeys,LowerLevelExpansionKeys;
@@ -311,6 +314,14 @@ void Driver::v_InitObject(ostream &out)
                         DNekMatSharedPtr HigherLevelBwdMat = HigherLevelExpansion->GetStdMatrix(HigherLevelMatKey);
                         LowerLevelExpansion->CreateInterpolationMatrix(HigherLevelExpansionKeys,HigherLevelBwdMat,m_RestrictionMatrix[k][i]);
                         HigherLevelExpansion->CreateInterpolationMatrix(LowerLevelExpansionKeys,LowerLevelBwdMat,m_ProlongationMatrix[k][i]);
+                        //Since have not found related DNekMatSharedPtr Transpose
+                        for(int row=0;row<nLowLevelCoeffs;row++)
+                        {
+                            for(int col=0;col<nHighLevelCoeffs;col++)
+                            {
+                               (*m_RestrictionResidualMatrix[k][i])(row,col)=(*m_ProlongationMatrix[k][i])(col,row);
+                            }
+                        }
                     }
 
                     //Reset MultiLevel Graph
@@ -325,11 +336,11 @@ void Driver::v_InitObject(ostream &out)
                     MultiLevelSession->SetTag("AdvectiveType","Convective");
                     m_equ[k+1] = GetEquationSystemFactory().CreateInstance(
                         vEquation, MultiLevelSession, MultiLevelGraph);
-                    for(int i=0;i<nElmts;i++)
-                    {
-                        m_equ[k]->SetRestrictionMatrix(m_RestrictionMatrix[k]);
-                        m_equ[k]->SetProlongationMatrix(m_ProlongationMatrix[k]);
-                    }
+
+                    m_equ[k]->SetRestrictionResidualMatrix(m_RestrictionResidualMatrix[k]);
+                    m_equ[k]->SetRestrictionMatrix(m_RestrictionMatrix[k]);
+                    m_equ[k]->SetProlongationMatrix(m_ProlongationMatrix[k]);
+
                 }
 
                 m_MultiLevelCoeffs=Array<OneD, int>(m_nLevels+1,0.0);

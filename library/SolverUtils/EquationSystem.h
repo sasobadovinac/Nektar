@@ -121,6 +121,13 @@ class Interpolator;
             }
 
             //Set RestrictionMatrix
+            SOLVER_UTILS_EXPORT void SetRestrictionResidualMatrix(
+            const Array<OneD, DNekMatSharedPtr> &RestrictionResidualMatrix)
+            {
+                m_RestrictionResidualMatrix= RestrictionResidualMatrix;
+            }
+
+            //Set RestrictionMatrix
             SOLVER_UTILS_EXPORT void SetRestrictionMatrix(
             const Array<OneD, DNekMatSharedPtr> &RestrictionMatrix)
             {
@@ -406,6 +413,8 @@ class Interpolator;
             int                         m_ExtractRhsPerNTimeSteps;
 
             int                         m_ExtractRhsPerNStages;
+
+            Array<OneD, DNekMatSharedPtr>      m_RestrictionResidualMatrix;
 
             Array<OneD, DNekMatSharedPtr>      m_RestrictionMatrix;
 

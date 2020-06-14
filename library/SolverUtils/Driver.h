@@ -118,6 +118,8 @@ public:
     SOLVER_UTILS_EXPORT Array<OneD, NekDouble> GetImagEvl(void);
 
 protected:
+    Array<OneD,Array<OneD,DNekMatSharedPtr>>    m_RestrictionResidualMatrix;
+
     Array<OneD,Array<OneD,DNekMatSharedPtr>>    m_RestrictionMatrix;
 
     Array<OneD,Array<OneD,DNekMatSharedPtr>>    m_ProlongationMatrix;

@@ -657,8 +657,8 @@ namespace Nektar
         const Array<OneD, Array<OneD, TypeNekBlkMatSharedPtr> >     &PrecMatVars,
         const DataType                                              &tmpDataType)
     {
-        unsigned int nvariables = m_TimeIntegtSol_n.num_elements();
-        unsigned int npoints    = m_TimeIntegtSol_n[0].num_elements();
+        unsigned int nvariables = m_fields.num_elements();
+        unsigned int npoints    = GetNcoeffs();
         Array<OneD, Array<OneD, DataType > >Sinarray(nvariables);
         Array<OneD, NekVector<DataType> >tmpVect(nvariables);
         Array<OneD, DataType > Soutarray(npoints);
@@ -5497,7 +5497,6 @@ Array<OneD, NekDouble>  CompressibleFlowSystem::GetElmtMinHP(void)
             //Double SOR Number
             //Or use more advanced Smoothers
             preconditioner_BlkSOR_coeff(inarray,outarray,false);
-            //preconditioner_BlkSOR_coeff(inarray,outarray,true);
         }  
     }
 
