@@ -36,6 +36,7 @@
 
 #include <StdRegions/StdExpansion.h>
 #include <LibUtilities/Foundations/ManagerAccess.h>  // for BasisManager, etc
+#include <LibUtilities/Foundations/Interp.h>
 
 namespace Nektar
 {
@@ -568,6 +569,66 @@ namespace Nektar
             }
 
             return returnval;
+        }
+
+
+        void StdExpansion::CreateInterpolationMatrix(const LibUtilities::PointsKeyVector ExpansionKey,
+                                                     const DNekMatSharedPtr &InputMatrix,
+                                                           DNekMatSharedPtr &OutputMatrix)
+        {
+            int nDim=GetCoordim();
+            //InputMatrix is Another expansion's Bwd. The QuadNumber is different, therefore, need to interpolate
+            DNekMatSharedPtr tmpMatrix=MemoryManager<DNekMat>::AllocateSharedPtr(GetTotPoints(), InputMatrix->GetColumns(), eFULL, 0.0);
+            StdMatrixKey      IProductWRTBaseKey(eIProductWRTBase,DetShapeType(),*this);
+            DNekMatSharedPtr  IProductWRTBaseMatrix = GetStdMatrix(IProductWRTBaseKey);
+            StdMatrixKey      InvMassKey(eInvMass,DetShapeType(),*this);
+            DNekMatSharedPtr  InvMassMatrix = GetStdMatrix(InvMassKey);
+            
+
+            for(int n=0;n<InputMatrix->GetColumns();n++)
+            {
+                Array<OneD,NekDouble> tmp1(InputMatrix->GetRows(),0.0);
+                for(int m=0;m<InputMatrix->GetRows();m++)
+                {
+                    tmp1[m]=(*InputMatrix)(m,n);
+                }
+                Array<OneD,NekDouble> tmp2(GetTotPoints(),0.0);
+
+                switch (nDim)
+                {
+                    case 1:
+                    {
+                        LibUtilities::PointsKey PointsKey0(GetNumPoints(0),GetPointsType(0));
+                        LibUtilities::Interp1D(ExpansionKey[0],&tmp1[0],PointsKey0,&tmp2[0]); 
+                    }
+                    break;
+                    case 2:
+                    {
+                        LibUtilities::PointsKey PointsKey0(GetNumPoints(0),GetPointsType(0));
+                        LibUtilities::PointsKey PointsKey1(GetNumPoints(1),GetPointsType(1));
+                        LibUtilities::Interp2D(ExpansionKey[0],ExpansionKey[1],&tmp1[0],
+                                               PointsKey0,PointsKey1,&tmp2[0]);
+                    }
+                    break;
+                    case 3:
+                    {
+                        LibUtilities::PointsKey PointsKey0(GetNumPoints(0),GetPointsType(0));
+                        LibUtilities::PointsKey PointsKey1(GetNumPoints(1),GetPointsType(1));
+                        LibUtilities::PointsKey PointsKey2(GetNumPoints(2),GetPointsType(2));
+                        LibUtilities::Interp3D(ExpansionKey[0],ExpansionKey[1],ExpansionKey[2],&tmp1[0],
+                                               PointsKey0,PointsKey1,PointsKey2,&tmp2[0]);
+                    }
+                    break;
+                    default:
+                    ASSERTL0(false,"Undefined dimension");
+                }
+
+                for(int m=0;m<GetTotPoints();m++)
+                {
+                    (*tmpMatrix)(m,n)=tmp2[m];
+                }
+            }
+            (*OutputMatrix)=(*InvMassMatrix)*(*IProductWRTBaseMatrix)*(*tmpMatrix);
         }
 
         void StdExpansion::GeneralMatrixOp(const Array<OneD, const NekDouble> &inarray,

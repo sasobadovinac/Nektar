@@ -85,8 +85,12 @@ MeshGraph::~MeshGraph()
 
 MeshGraphSharedPtr MeshGraph::Read(
     const LibUtilities::SessionReaderSharedPtr session,
-    DomainRangeShPtr                           rng,
-    bool                                       fillGraph)
+    DomainRangeShPtr        rng,
+    bool                    fillGraph,
+    CompositeOrdering       &compOrder,
+    BndRegionOrdering       &bndRegOrder,
+    const int               &ncoeffsOffset,
+    const int               &nphysicOffset)
 {
     LibUtilities::CommSharedPtr comm = session->GetComm();
     ASSERTL0(comm.get(), "Communication not initialised.");
@@ -129,15 +133,27 @@ MeshGraphSharedPtr MeshGraph::Read(
     // XML and HDF5.
     MeshGraphSharedPtr mesh = GetMeshGraphFactory().CreateInstance(geomType);
     mesh->PartitionMesh(session);
+    if(compOrder.size() > 0)
+    {
+        mesh->SetCompositeOrdering(compOrder);
+        mesh->SetBndRegionOrdering(bndRegOrder);
+
+    }
 
     // Finally, read the geometry information.
-    mesh->ReadGeometry(rng, fillGraph);
+    mesh->ReadGeometry(rng, fillGraph, ncoeffsOffset, nphysicOffset);
 
     return mesh;
 }
 
-void MeshGraph::FillGraph()
+void MeshGraph::FillGraph(
+    const int               &ncoeffsOffset,
+    const int               &nphysicOffset)
 {
+    if (0!=nphysicOffset||0!=ncoeffsOffset)
+    {
+        ReplaceExpansion(ncoeffsOffset,nphysicOffset);
+    }
     ReadExpansions();
 
     switch (m_meshDimension)
@@ -3054,6 +3070,101 @@ void MeshGraph::ReadExpansions()
         {
             ASSERTL0(false, "Expansion type not defined");
         }
+    }
+}
+
+void  MeshGraph::ReplaceExpansion(
+    const int &ModeOffset, 
+    const int &QuadOffset)
+{
+    // Find the Expansions tag
+    TiXmlElement *expansionTypes = m_session->GetElement("NEKTAR/EXPANSIONS");
+    ASSERTL0(expansionTypes, "Unable to find EXPANSIONS tag in file.");
+
+    if (expansionTypes)
+    {
+        TiXmlElement *expansion = expansionTypes->FirstChildElement();
+        std::string expType     = expansion->Value();
+        if (expType == "E")
+        {
+            const char *nModesStr = expansion->Attribute("NUMMODES");
+            if(nModesStr)
+            {
+                std::string numModesStr = nModesStr;
+                std::vector<unsigned int> numModes;
+                bool valid = ParseUtils::GenerateVector(
+                    numModesStr.c_str(), numModes);
+                int nDim=numModes.size();
+                //Yu Pan's Test : Add higher order
+                for(int i=0;i<nDim;i++)
+                {
+                    numModes[i]=numModes[i]+ModeOffset;
+                }
+                expansion->RemoveAttribute("NUMMODES");
+
+                std::string numModesString;
+                {
+                    std::stringstream numModesStringStream;
+                    bool first = true;
+                    for (int i = 0; i < nDim; i++)
+                    {
+                        if (!first)
+                        {
+                            numModesStringStream << ",";
+                        }
+                        numModesStringStream << numModes[i];
+                        first = false;
+                    }
+                    numModesString = numModesStringStream.str();
+                } 
+                expansion->SetAttribute("NUMMODES", numModesString);
+            }
+            else
+            {
+                ASSERTL0(nModesStr, "Currently only support NUMMODES and NUMPOINTS input expansion");
+            }
+
+            const char *nPointsStr = expansion->Attribute("NUMPOINTS");
+            if(nPointsStr)
+            {
+                std::string numPointsStr = nPointsStr;
+                std::vector<unsigned int> numPoints;
+                bool valid = ParseUtils::GenerateVector(
+                    numPointsStr.c_str(), numPoints);
+                int nDim=numPoints.size();
+                //Yu Pan's Test : Add higher order
+                for(int i=0;i<nDim;i++)
+                {
+                    numPoints[i]=numPoints[i]+QuadOffset;
+                }
+                expansion->RemoveAttribute("NUMPOINTS");
+
+                std::string numPointsString;
+                {
+                    std::stringstream numPointsStringStream;
+                    bool first = true;
+                    for (int i = 0; i < nDim; i++)
+                    {
+                        if (!first)
+                        {
+                            numPointsStringStream << ",";
+                        }
+                        numPointsStringStream << numPoints[i];
+                        first = false;
+                    }
+                    numPointsString = numPointsStringStream.str();
+                } 
+                expansion->SetAttribute("NUMPOINTS", numPointsString);
+            }
+            else
+            {
+                ASSERTL0(nModesStr, "Currently only support NUMMODES and NUMPOINTS input expansion");
+            }
+        }
+        else
+        {
+            ASSERTL0(false,"Need to add more formats in ReplaceExpansion");
+        }     
     }
 }
 

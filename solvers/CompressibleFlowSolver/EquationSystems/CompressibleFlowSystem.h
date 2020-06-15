@@ -62,7 +62,7 @@ namespace Nektar
         friend class MemoryManager<CompressibleFlowSystem>;
 
         virtual ~CompressibleFlowSystem();
-
+ 
         /// Function to calculate the stability limit for DG/CG.
         NekDouble GetStabilityLimit(int n);
 
@@ -151,6 +151,16 @@ namespace Nektar
         CompressibleFlowSystem(
             const LibUtilities::SessionReaderSharedPtr& pSession,
             const SpatialDomains::MeshGraphSharedPtr& pGraph);
+        
+        void v_DoOdeProjection1(
+        const Array<OneD, const Array<OneD, NekDouble> > &inarray,
+              Array<OneD,       Array<OneD, NekDouble> > &outarray,
+              const NekDouble                              time);
+        
+        void v_DoOdeRhs1(
+        const Array<OneD, const Array<OneD, NekDouble> > &inarray,
+              Array<OneD,       Array<OneD, NekDouble> > &outarray,
+              const NekDouble                              time);
 
         virtual void v_InitObject();
 
@@ -200,7 +210,12 @@ namespace Nektar
         void preconditioner_BlkSOR_coeff(
             const Array<OneD, NekDouble> &inarray,
                   Array<OneD, NekDouble >&outarray,
-            const bool                   &flag);
+            const bool                   &Continueflag);
+
+        void preconditioner_MultiLevel_coeff(
+            const Array<OneD, NekDouble> &inarray,
+                  Array<OneD, NekDouble >&outarray,
+                  const bool             &UnusedFlag);
 
         // void MinusOffDiag2Rhs(
         //     const int nvariables,
@@ -484,6 +499,9 @@ namespace Nektar
         void MatrixMultiply_MatrixFree_coeff(
             const  Array<OneD, NekDouble> &inarray,
                    Array<OneD, NekDouble >&out);
+        void MatrixMultiply_MatrixFree_coeff_noSource(
+            const  Array<OneD, NekDouble> &inarray,
+                   Array<OneD, NekDouble >&out);
         void MatrixMultiply_MatrixFree_coeff_central(
             const  Array<OneD, NekDouble> &inarray,
                 Array<OneD, NekDouble >&out);
@@ -497,6 +515,10 @@ namespace Nektar
             const  bool                   &controlFlag);
 
         void NonlinSysEvaluator_coeff(
+                Array<OneD, Array<OneD, NekDouble> > &inarray,
+                Array<OneD, Array<OneD, NekDouble> > &out);
+        
+        void NonlinSysEvaluator_coeff_noSource(
                 Array<OneD, Array<OneD, NekDouble> > &inarray,
                 Array<OneD, Array<OneD, NekDouble> > &out);
 
@@ -861,6 +883,46 @@ namespace Nektar
             const int                                                       nDervDir,
             const Array<OneD, const Array<OneD, NekDouble> >                &inarray,
                   Array<OneD, Array<OneD, DNekMatSharedPtr> >               &ElmtJac);
+
+        void v_MultiLevel(           
+            const Array<OneD, NekDouble>                                    &inarray,
+            Array<OneD, NekDouble>                                          &outarray, 
+            const int                                                       Level,
+            const int                                                       CurrentLevelCoeff,    
+            const int                                                       LowLevelCoeff,     
+            const bool                                                      UpDateOperatorflag);
+        
+        void v_CalculateNextLevelPreconditioner(
+            const Array<OneD, const Array<OneD, NekDouble>>                 &inarrayCoeff,
+            const NekDouble                                                 time,
+            const NekDouble                                                 lambda);
+
+        void RestrictResidual(
+        const Array<OneD,DNekMatSharedPtr>                                  &RestrictionMatrix,
+        const Array<OneD, NekDouble>                                        &inarray,
+              Array<OneD, NekDouble>                                        &outarray);
+        
+        void RestrictSolution(
+        const Array<OneD,DNekMatSharedPtr>                                  &RestrictionMatrix,
+        const Array<OneD, const Array<OneD, NekDouble>>                     &inarray,
+              Array<OneD, Array<OneD, NekDouble>>                           &outarray);
+        
+        void ProlongateSolution(
+        const Array<OneD, DNekMatSharedPtr>                                 &ProlongationMatrix,
+        const Array<OneD, NekDouble>                                        &inarray,
+              Array<OneD, NekDouble>                                        &outarray);
+
+        void PrintArray(Array<OneD, NekDouble> &Array);
+
+        void OutputArray(Array<OneD, NekDouble> &Array);
+
+        void OutputConstArray(const Array<OneD, NekDouble> &Array);
+
+        void PrintMatrix(DNekMatSharedPtr &Matrix);
+
+        void OutputMatrix(DNekMatSharedPtr &Matrix);
+
+        void OutputConstMatrix(const DNekMatSharedPtr &Matrix);
 
         // virtual void v_GetFluxDerivJacDirctn(
         //     const MultiRegions::ExpListSharedPtr                            &explist,

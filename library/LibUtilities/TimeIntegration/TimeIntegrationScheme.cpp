@@ -37,6 +37,8 @@
 #include <LibUtilities/BasicConst/NektarUnivConsts.hpp>
 #include <iostream>
 #include <math.h>
+#include <fstream>
+#include <iomanip>  
 
 namespace Nektar
 {
@@ -607,11 +609,16 @@ namespace Nektar
                     m_timeLevelOffset[0] = 0;
                 }
                 break;
-            case eDIRKOrder3Stage5:
+             case eDIRKOrder3Stage4Embedded5:
                 {
-                    // See Kennedey&Carpenter 2016, Table 16
+                    // See "A FAMILY OF ESDIRK INTEGRATION METHODS" 
+                    // ESDIRK 4/3 with 5 stages
+                    //Or original paper "SINGLY DIAGONALLY IMPLICIT RUNGE–KUTTA METHODS WITH AN EXPLICIT FIRST STAGE"
                     m_numsteps = 1;
-                    m_numstages = 5;
+                    m_numstages = 4;
+                     m_EmbeddedTemporalError=true;
+                    //m_DirectTemporalError=true;
+                    m_Order=3;
 
                     m_A = Array<OneD, Array<TwoD,NekDouble> >(1);
                     m_B = Array<OneD, Array<TwoD,NekDouble> >(1);
@@ -621,8 +628,115 @@ namespace Nektar
                     m_U    = Array<TwoD,NekDouble>(m_numstages,m_numsteps, 1.0);
                     m_V    = Array<TwoD,NekDouble>(m_numsteps, m_numsteps, 1.0);
 
+                    m_A[0][0][0] = 0.0;
+                    m_A[0][1][0] = 0.43586652150846;
+                    m_A[0][2][0] = 0.14073777472471;
+                    m_A[0][3][0] = 0.10239940061991;
+
+                    m_A[0][1][1] = 0.43586652150846;
+                    m_A[0][2][1] = -0.10836555138132;
+                    m_A[0][3][1] = -0.37687845225556;
+
+                    m_A[0][2][2] = 0.43586652150846;
+                    m_A[0][3][2] = 0.83861253012719;
+
+                    m_A[0][3][3] = 0.43586652150846;
+
+                    m_B[0][0][0] = m_A[0][3][0];
+                    m_B[0][0][1] = m_A[0][3][1];
+                    m_B[0][0][2] = m_A[0][3][2];
+                    m_B[0][0][3] = m_A[0][3][3];
+
+                    m_schemeType = eDiagonallyImplicit;
+                    m_numMultiStepValues = 1;
+                    m_numMultiStepDerivs = 0;
+                    m_timeLevelOffset = Array<OneD,unsigned int>(m_numsteps);
+                    m_timeLevelOffset[0] = 0;
+
+                    //Extra stage for estimating third order error
+                    if(m_EmbeddedTemporalError)
+                    {
+                        m_A_Paired = Array<OneD, Array<TwoD,NekDouble> >(1);
+                        m_B_Paired = Array<OneD, Array<TwoD,NekDouble> >(1);
+                        //Extra one stage
+                        m_A_Paired[0] = Array<TwoD,NekDouble>(1,m_numstages+1,0.0);
+                        m_B_Paired[0] = Array<TwoD,NekDouble>(m_numsteps, m_numstages+1,0.0);
+                        m_U_Paired    = Array<TwoD,NekDouble>(1,m_numsteps, 1.0);
+                        //Unused 
+                        m_V_Paired    = Array<TwoD,NekDouble>(m_numsteps, m_numsteps, 1.0);
+            
+                        m_A_Paired[0][0][0] = 0.15702489786032;
+                        m_A_Paired[0][0][1] = 0.11733044137044;
+                        m_A_Paired[0][0][2] = 0.61667803039212;
+                        m_A_Paired[0][0][3] = -0.32689989113134;
+                        m_A_Paired[0][0][4] = 0.43586652150846;
+                        m_B_Paired[0][0][0] = m_A_Paired[0][0][0];
+                        m_B_Paired[0][0][1] = m_A_Paired[0][0][1];
+                        m_B_Paired[0][0][2] = m_A_Paired[0][0][2];
+                        m_B_Paired[0][0][3] = m_A_Paired[0][0][3];
+                        m_B_Paired[0][0][4] = m_A_Paired[0][0][4];
+                    }
+                    
+
+                    //To Do: Here just help debuging, remove
+                    if(m_DirectTemporalError)
+                    {
+                        m_numsteps_Paired = 1;
+                        m_numstages_Paired = 5;
+
+                        m_A_Paired = Array<OneD, Array<TwoD,NekDouble> >(1);
+                        m_B_Paired = Array<OneD, Array<TwoD,NekDouble> >(1);
+
+                        m_A_Paired[0] = Array<TwoD,NekDouble>(m_numstages_Paired,m_numstages_Paired,0.0);
+                        m_B_Paired[0] = Array<TwoD,NekDouble>(m_numsteps_Paired, m_numstages_Paired,0.0);
+                        m_U_Paired    = Array<TwoD,NekDouble>(m_numstages_Paired,m_numsteps_Paired, 1.0);
+                        m_V_Paired    = Array<TwoD,NekDouble>(m_numsteps_Paired, m_numsteps_Paired, 1.0);
+                        
+                        m_A_Paired[0][0][0] = 0.0;
+                        m_A_Paired[0][1][0] = 0.43586652150846;
+                        m_A_Paired[0][2][0] = 0.14073777472471;
+                        m_A_Paired[0][3][0] = 0.10239940061991;
+                        m_A_Paired[0][4][0] = 0.15702489786032;
+
+                        m_A_Paired[0][1][1] = 0.43586652150846;
+                        m_A_Paired[0][2][1] = -0.10836555138132;
+                        m_A_Paired[0][3][1] = -0.37687845225556;
+                        m_A_Paired[0][4][1] = 0.11733044137044;
+
+                        m_A_Paired[0][2][2] = 0.43586652150846;
+                        m_A_Paired[0][3][2] = 0.83861253012719;
+                        m_A_Paired[0][4][2] = 0.61667803039212;
+
+                        m_A_Paired[0][3][3] = 0.43586652150846;
+                        m_A_Paired[0][4][3] = -0.32689989113134;
+
+                        m_A_Paired[0][4][4] = 0.43586652150846;
+
+                        m_B_Paired[0][0][0] = m_A_Paired[0][4][0];
+                        m_B_Paired[0][0][1] = m_A_Paired[0][4][1];
+                        m_B_Paired[0][0][2] = m_A_Paired[0][4][2];
+                        m_B_Paired[0][0][3] = m_A_Paired[0][4][3];
+                        m_B_Paired[0][0][4] = m_A_Paired[0][4][4];
+                    }
+                }
+                break;
+            case eDIRKOrder3Stage5:
+                {
+                    // See Kennedey&Carpenter 2016, Table 16
+                    m_numsteps = 1;
+                    m_numstages = 5;
+                    m_DirectTemporalError=true;
+                    m_Order=3;
+                    m_A = Array<OneD, Array<TwoD,NekDouble> >(1);
+                    m_B = Array<OneD, Array<TwoD,NekDouble> >(1);
+
+                    m_A[0] = Array<TwoD,NekDouble>(m_numstages,m_numstages,0.0);
+                    m_B[0] = Array<TwoD,NekDouble>(m_numsteps, m_numstages,0.0);
+                    m_U    = Array<TwoD,NekDouble>(m_numstages,m_numsteps, 1.0);
+                    m_V    = Array<TwoD,NekDouble>(m_numsteps, m_numsteps, 1.0);
+
                     NekDouble lambda = 9.0/40.0;
-                    const NekDouble ConstSqrt2  = sqrt(2.0);
+                    NekDouble ConstSqrt2  = sqrt(2.0);
 
                     m_A[0][0][0] = 0.0;
                     m_A[0][1][0] = lambda;
@@ -655,6 +769,58 @@ namespace Nektar
                     m_numMultiStepDerivs = 0;
                     m_timeLevelOffset = Array<OneD,unsigned int>(m_numsteps);
                     m_timeLevelOffset[0] = 0;
+
+                    //Paired Scheme move here DirkOrder4Stage6
+                    if(m_DirectTemporalError)
+                    {
+                        m_numsteps_Paired = 1;
+                        m_numstages_Paired = 6;
+
+                        m_A_Paired = Array<OneD, Array<TwoD,NekDouble> >(1);
+                        m_B_Paired = Array<OneD, Array<TwoD,NekDouble> >(1);
+
+                        m_A_Paired[0] = Array<TwoD,NekDouble>(m_numstages_Paired,m_numstages_Paired,0.0);
+                        m_B_Paired[0] = Array<TwoD,NekDouble>(m_numsteps_Paired, m_numstages_Paired,0.0);
+                        m_U_Paired    = Array<TwoD,NekDouble>(m_numstages_Paired,m_numsteps_Paired, 1.0);
+                        m_V_Paired    = Array<TwoD,NekDouble>(m_numsteps_Paired, m_numsteps_Paired, 1.0);
+
+                        lambda = 1.0/4.0;
+                        ConstSqrt2  = sqrt(2.0);
+
+                        m_A_Paired[0][0][0] = 0.0;
+                        m_A_Paired[0][1][0] = lambda;
+                        m_A_Paired[0][2][0] = (1.0-ConstSqrt2)/8.0;
+                        m_A_Paired[0][3][0] = (5.0-7.0*ConstSqrt2)/64.0;
+                        m_A_Paired[0][4][0] = (-13796.0-54539*ConstSqrt2)/125000.0;
+                        m_A_Paired[0][5][0] = (1181.0-987.0*ConstSqrt2)/ 13782.0;
+
+                        m_A_Paired[0][1][1] = m_A_Paired[0][1][0];
+                        m_A_Paired[0][2][1] = m_A_Paired[0][2][0];
+                        m_A_Paired[0][3][1] = m_A_Paired[0][3][0];
+                        m_A_Paired[0][4][1] = m_A_Paired[0][4][0];
+                        m_A_Paired[0][5][1] = m_A_Paired[0][5][0];
+
+                        m_A_Paired[0][2][2] = lambda;
+                        m_A_Paired[0][3][2] = 7.0*(1.0+ConstSqrt2)/32.0;
+                        m_A_Paired[0][4][2] = (506605.0+132109.0*ConstSqrt2)/437500.0;
+                        m_A_Paired[0][5][2] = 47.0*(-267.0+1783.0*ConstSqrt2)/273343.0;
+
+                        m_A_Paired[0][3][3] = lambda;
+                        m_A_Paired[0][4][3] = 166.0*(-97.0+376.0*ConstSqrt2)/109375.0;
+                        m_A_Paired[0][5][3] = -16.0*(-22922.0+3525.0*ConstSqrt2)/571953.0;
+
+                        m_A_Paired[0][4][4] = lambda;
+                        m_A_Paired[0][5][4] = -15625.0*(97.0+376.0*ConstSqrt2)/90749876.0;
+
+                        m_A_Paired[0][5][5] = lambda;
+
+                        m_B_Paired[0][0][0] = m_A_Paired[0][5][0];
+                        m_B_Paired[0][0][1] = m_A_Paired[0][5][1];
+                        m_B_Paired[0][0][2] = m_A_Paired[0][5][2];
+                        m_B_Paired[0][0][3] = m_A_Paired[0][5][3];
+                        m_B_Paired[0][0][4] = m_A_Paired[0][5][4];
+                        m_B_Paired[0][0][5] = m_A_Paired[0][5][5];
+                    }
                 }
                 break;
             case eDIRKOrder4Stage6:
@@ -662,7 +828,7 @@ namespace Nektar
                     // See Kennedey&Carpenter 2016, Table 16
                     m_numsteps = 1;
                     m_numstages = 6;
-
+                    m_Order=4;
                     m_A = Array<OneD, Array<TwoD,NekDouble> >(1);
                     m_B = Array<OneD, Array<TwoD,NekDouble> >(1);
 
@@ -715,6 +881,153 @@ namespace Nektar
                     m_timeLevelOffset[0] = 0;
                 }
                 break;
+            case eDIRKOrder4Stage6Embedded7:
+            {
+                // See "A FAMILY OF ESDIRK INTEGRATION METHODS" 
+                // ESDIRK 5/4 with 7 stages
+                //Or original paper "SINGLY DIAGONALLY IMPLICIT RUNGE–KUTTA METHODS WITH AN EXPLICIT FIRST STAGE"
+                m_numsteps  = 1;
+                m_numstages = 6;
+                m_EmbeddedTemporalError=true;
+                //m_DirectTemporalError=true;
+                m_Order=4;
+
+                m_A = Array<OneD, Array<TwoD,NekDouble> >(1);
+                m_B = Array<OneD, Array<TwoD,NekDouble> >(1);
+
+                m_A[0] = Array<TwoD,NekDouble>(m_numstages,m_numstages,0.0);
+                m_B[0] = Array<TwoD,NekDouble>(m_numsteps, m_numstages,0.0);
+                m_U    = Array<TwoD,NekDouble>(m_numstages,m_numsteps, 1.0);
+                m_V    = Array<TwoD,NekDouble>(m_numsteps, m_numsteps, 1.0);
+
+                m_A[0][0][0] = 0.0;
+                m_A[0][1][0] = 0.27000000000000000;
+                m_A[0][2][0] = 0.13500000000000000;
+                m_A[0][3][0] = 0.24814211234447322;
+                m_A[0][4][0] = 0.25494479822150471;
+                m_A[0][5][0] = 0.17549975523182941;
+
+                m_A[0][1][1] = 0.27000000000000000;
+                m_A[0][2][1] = 0.87265371804359686;
+                m_A[0][3][1] = 0.13282088522859322;
+                m_A[0][4][1] = 0.13106196422347200;
+                m_A[0][5][1] = 0.0;
+
+                m_A[0][2][2] =  0.27000000000000000;
+                m_A[0][3][2] = -0.03886686658917771;
+                m_A[0][4][2] = -0.04522093930235708;
+                m_A[0][5][2] = -0.01641725931492383;
+
+                m_A[0][3][3] = 0.27000000000000000;
+                m_A[0][4][3] = 0.03389121682051642;
+                m_A[0][5][3] = 3.59357175290010625;
+                
+                m_A[0][4][4] = 0.27000000000000000;
+                m_A[0][5][4] = -3.02265424881701182;
+
+                m_A[0][5][5] = 0.27000000000000000;
+
+
+                m_B[0][0][0] = m_A[0][5][0];
+                m_B[0][0][1] = m_A[0][5][1];
+                m_B[0][0][2] = m_A[0][5][2];
+                m_B[0][0][3] = m_A[0][5][3];
+                m_B[0][0][4] = m_A[0][5][4];
+                m_B[0][0][5] = m_A[0][5][5];
+
+                m_schemeType = eDiagonallyImplicit;
+                m_numMultiStepValues = 1;
+                m_numMultiStepDerivs = 0;
+                m_timeLevelOffset = Array<OneD,unsigned int>(m_numsteps);
+                m_timeLevelOffset[0] = 0;
+
+                //Extra stage for estimating third order error
+                if(m_EmbeddedTemporalError)
+                {
+                    m_A_Paired = Array<OneD, Array<TwoD,NekDouble> >(1);
+                    m_B_Paired = Array<OneD, Array<TwoD,NekDouble> >(1);
+                    //Extra one stage
+                    m_A_Paired[0] = Array<TwoD,NekDouble>(1,m_numstages+1,0.0);
+                    m_B_Paired[0] = Array<TwoD,NekDouble>(m_numsteps, m_numstages+1,0.0);
+                    m_U_Paired    = Array<TwoD,NekDouble>(1,m_numsteps, 1.0);
+                    //Unused 
+                    m_V_Paired    = Array<TwoD,NekDouble>(m_numsteps, m_numsteps, 1.0);
+        
+                    m_A_Paired[0][0][0] = 0.15847612643670410;
+                    m_A_Paired[0][0][1] = 0.0;
+                    m_A_Paired[0][0][2] = -0.07384703732094983;
+                    m_A_Paired[0][0][3] =  5.26056776397634893;
+                    m_A_Paired[0][0][4] = -4.83946947758407500;
+                    m_A_Paired[0][0][5] = 0.22427262449197180;
+                    m_A_Paired[0][0][6] = 0.27;
+                    m_B_Paired[0][0][0] = m_A_Paired[0][0][0];
+                    m_B_Paired[0][0][1] = m_A_Paired[0][0][1];
+                    m_B_Paired[0][0][2] = m_A_Paired[0][0][2];
+                    m_B_Paired[0][0][3] = m_A_Paired[0][0][3];
+                    m_B_Paired[0][0][4] = m_A_Paired[0][0][4];
+                    m_B_Paired[0][0][5] = m_A_Paired[0][0][5];
+                    m_B_Paired[0][0][6] = m_A_Paired[0][0][6];
+                }
+
+                //To Do: Here just help debuging, remove
+                if(m_DirectTemporalError)
+                {
+                    m_numsteps_Paired = 1;
+                    m_numstages_Paired = 7;
+
+                    m_A_Paired = Array<OneD, Array<TwoD,NekDouble> >(1);
+                    m_B_Paired = Array<OneD, Array<TwoD,NekDouble> >(1);
+
+                    m_A_Paired[0] = Array<TwoD,NekDouble>(m_numstages_Paired,m_numstages_Paired,0.0);
+                    m_B_Paired[0] = Array<TwoD,NekDouble>(m_numsteps_Paired, m_numstages_Paired,0.0);
+                    m_U_Paired    = Array<TwoD,NekDouble>(m_numstages_Paired,m_numsteps_Paired, 1.0);
+                    m_V_Paired    = Array<TwoD,NekDouble>(m_numsteps_Paired, m_numsteps_Paired, 1.0);
+                    
+                    m_A_Paired[0][0][0] = 0.0;
+                    m_A_Paired[0][1][0] = 0.27000000000000000;
+                    m_A_Paired[0][2][0] = 0.13500000000000000;
+                    m_A_Paired[0][3][0] = 0.24814211234447322;
+                    m_A_Paired[0][4][0] = 0.25494479822150471;
+                    m_A_Paired[0][5][0] = 0.17549975523182941;
+                    m_A_Paired[0][6][0] =  0.15847612643670410;
+
+                    m_A_Paired[0][1][1] = 0.27000000000000000;
+                    m_A_Paired[0][2][1] = 0.87265371804359686;
+                    m_A_Paired[0][3][1] = 0.13282088522859322;
+                    m_A_Paired[0][4][1] = 0.13106196422347200;
+                    m_A_Paired[0][5][1] = 0.0;
+                    m_A_Paired[0][6][1] = 0.0;
+
+                    m_A_Paired[0][2][2] =  0.27000000000000000;
+                    m_A_Paired[0][3][2] = -0.03886686658917771;
+                    m_A_Paired[0][4][2] = -0.04522093930235708;
+                    m_A_Paired[0][5][2] = -0.01641725931492383;
+                    m_A_Paired[0][6][2] = -0.07384703732094983;
+
+                    m_A_Paired[0][3][3] = 0.27000000000000000;
+                    m_A_Paired[0][4][3] = 0.03389121682051642;
+                    m_A_Paired[0][5][3] = 3.59357175290010625;
+                    m_A_Paired[0][6][3] =  5.26056776397634893;
+
+                    m_A_Paired[0][4][4] =  0.27000000000000000;
+                    m_A_Paired[0][5][4] = -3.02265424881701182;
+                    m_A_Paired[0][6][4] = -4.83946947758407500;
+
+                    m_A_Paired[0][5][5] =  0.27000000000000000;
+                    m_A_Paired[0][6][5] = 0.22427262449197180;
+
+                    m_A_Paired[0][6][6] =  0.27000000000000000;
+
+                    m_B_Paired[0][0][0] = m_A_Paired[0][6][0];
+                    m_B_Paired[0][0][1] = m_A_Paired[0][6][1];
+                    m_B_Paired[0][0][2] = m_A_Paired[0][6][2];
+                    m_B_Paired[0][0][3] = m_A_Paired[0][6][3];
+                    m_B_Paired[0][0][4] = m_A_Paired[0][6][4];
+                    m_B_Paired[0][0][5] = m_A_Paired[0][6][5];
+                    m_B_Paired[0][0][6] = m_A_Paired[0][6][6];
+                }
+            }
+            break;
             case eIMEXdirk_2_3_2:
                 {
                     m_numsteps  = 1;
@@ -1469,15 +1782,277 @@ namespace Nektar
                 const TimeIntegrationSchemeKey& key = solvector->GetIntegrationSchemeKey();
                 
                 TimeIntegrationSolutionSharedPtr solvector_new = MemoryManager<TimeIntegrationSolution>::AllocateSharedPtr(key,nvar,npoints); 
-                
+                /////////////////////////////////////////////////////////////////////////////////////
+                //Direct Error calculating need back up initial solution
+                if(m_TemporalErrorState && m_DirectTemporalError)
+                {
+                    //Back up initial solvector
+                    //For temporary store original scheme
+                    //FirstDim is variable number, you can check the codes of its definition
+                    int nvar = GetFirstDim(solvector->GetSolutionVector());
+                    //SecondDim is npoints, you can check the codes of its definition
+                    int npoints= GetSecondDim(solvector->GetSolutionVector());
+                    m_ttmp=Array<OneD,NekDouble> (m_numsteps,0.0);
+                    m_solVectortmp=Array<OneD,Array<OneD, Array<OneD, NekDouble> > >(m_numsteps);
+                    for(int i = 0; i < m_numsteps; i++)
+                    {
+                        //To Do: Because m_var have not defined yet
+                        m_solVectortmp[i] = Array<OneD, Array<OneD, NekDouble> >(nvar);
+                        for(int j = 0; j < nvar; j++)
+                        {
+                            m_solVectortmp[i][j] = Array<OneD,NekDouble>(npoints,0.0);
+                        }
+                    }
+                    Vmath::Vcopy(solvector->GetTimeVector().num_elements(),solvector->GetTimeVector(),1,m_ttmp,1);
+                    for(int i=0;i<m_solVectortmp.num_elements();i++)
+                    {
+                        for(int j=0;j<m_solVectortmp[i].num_elements();j++)
+                        {
+                            Vmath::Vcopy(npoints,solvector->GetSolutionVector()[i][j],1,m_solVectortmp[i][j],1);
+                        }
+                    }
+                }
+                ///////////////////////////////////////////////////////////////////////////////////////
+               
+                m_RealTimeStepFlag=true;
                 TimeIntegrate(timestep,solvector->GetSolutionVector(),
                               solvector->GetTimeVector(),
                               solvector_new->UpdateSolutionVector(),
                               solvector_new->UpdateTimeVector(),op); 
                 
                 solvector = solvector_new;
+
+                if(m_TemporalErrorState && m_DirectTemporalError)
+                {
+                    //Begin Calculating Error
+                    //FirstDim is variable number, you can check the codes of its definition
+                    m_nvar_Paired = GetFirstDim(solvector->GetSolutionVector());
+                    //SecondDim is npoints, you can check the codes of its definition
+                    m_npoints_Paired = GetSecondDim(solvector->GetSolutionVector());             
+                    int nvar=m_nvar_Paired;
+                    int npoints=m_npoints_Paired;
+
+                    m_TemporalError = Array<OneD, Array<OneD, NekDouble> >(nvar);
+                    for(int i = 0; i < nvar; i++)
+                    {
+                        m_TemporalError[i] = Array<OneD,NekDouble>(npoints,0.0);
+                    }
+
+                    m_RealTimeStepFlag=false;//This flag is used for tolerance 
+                    PairedImplicitTimeIntegrate(timestep, 
+                                        m_solVectortmp,
+                                        m_ttmp,
+                                        m_TemporalError,op);
+                    
+                    ASSERTL0(1==solvector->GetSolutionVector().num_elements(),"Only work for one-step DIRK scheme");
+                    for(int i=0;i<m_TemporalError.num_elements();i++)
+                    {
+                        Vmath::Vsub(npoints,m_TemporalError[i],1,solvector->GetSolutionVector()[0][i],1,m_TemporalError[i],1);   
+                        Vmath::Vabs(npoints,m_TemporalError[i],1,m_TemporalError[i],1);                    
+                    }
+                    m_TemporalErrorState=false;
+                }               
+
             }
             return solvector->GetSolution();
+        }
+		
+	    //To Do: Currently use Implicit DIRK schemes as Paired schemes. Cancel many flags from TimeIntegrate
+       //Please check if the codes are general after testing
+       void TimeIntegrationScheme::PairedImplicitTimeIntegrate(const NekDouble    timestep,
+                                                  ConstTripleArray   &y_old  ,
+                                                  ConstSingleArray   &t_old  ,
+                                                  DoubleArray        &y_new  ,
+                                                  const TimeIntegrationSchemeOperators &op)
+        {
+            unsigned int i,j,k;
+            Array<OneD,NekDouble> t_new(t_old.num_elements(),0.0);
+
+            ///////////////////////////////////////////////////////////////
+            //Initialize tempory storage
+            int nvar=m_nvar_Paired;
+            int npoints= m_npoints_Paired;
+            int nsteps=m_numsteps_Paired;
+            int nstages=m_numstages_Paired;
+            DoubleArray Y;      
+            DoubleArray tmp;    
+            TripleArray F;      
+            NekDouble   T;  
+
+            // Check if storage has already been initialised.
+            // If so, we just zero the temporary storage.
+            tmp = DoubleArray(nvar);
+            for(j = 0; j < nvar; j++)
+            {
+                tmp[j]   = Array<OneD, NekDouble>(npoints,0.0);
+            }
+
+            Y = DoubleArray(nvar);
+            for(j = 0; j < nvar; j++)
+            {
+                Y[j] =  Array<OneD, NekDouble>(npoints,0.0);
+            }
+
+            // Different storage for every stage derivative as the data
+            // will be re-used to update the solution -> m_F is a TripleArray
+            F = TripleArray(nstages);
+            for(i = 0; i < nstages; ++i)
+            {
+                F[i]   = DoubleArray(nvar);
+                for(j = 0; j < nvar; j++)
+                {
+                    F[i][j] = Array<OneD, NekDouble>(npoints,0.0);
+                }
+            }
+         
+			
+            // The loop below calculates the stage values and derivatives
+            for(i = 0; i < nstages; i++)
+            {
+                if( i==0 )
+                {
+                    for(k = 0; k < nvar; k++)
+                    {
+                        Vmath::Vcopy(npoints,y_old[0][k],1,Y[k],1);
+                    }
+                    T = t_old[0];
+                }
+                else
+                {
+                    // The stage values m_Y are a linear combination of:
+                    // 1: the stage derivatives
+					
+                    if( i != 0 )
+                    {
+                        for(k = 0; k < nvar; k++)
+                        {
+                            Vmath::Smul(npoints,timestep*A_Paired(i,0),F[0][k],1,
+                                        tmp[k],1);
+                        }
+                    }          
+                    T = A_Paired(i,0)*timestep;
+                        
+                    for( j = 1; j < i; j++ )
+                    {
+                        for(k = 0; k < nvar; k++)
+                        {
+                            Vmath::Svtvp(npoints,timestep*A_Paired(i,j),F[j][k],1,
+                                         tmp[k],1,tmp[k],1);
+                        }          
+                        
+                        T += A_Paired(i,j)*timestep;
+                    }
+                    
+                    // 2: the imported multi-step solution of the
+                    // previous time level
+                    for(k = 0; k < nvar; k++)
+                    {
+                        //U_Paired(i,0) is 1
+                        Vmath::Svtvp(npoints,U_Paired(i,0),y_old[0][k],1,
+                                        tmp[k],1,tmp[k],1);
+                    }
+                }
+      
+                // Calculate the stage derivative based upon the stage value
+                if(i==0)
+                {
+                    // cout << "(i==0) && m_firstStageEqualsOldSolution "<<i<<endl;
+                    op.DoProjection(Y,Y,T);
+                    op.DoOdeRhs(Y, F[i], T);        
+                }
+                else
+                {
+                    if(nstages==1)
+                    {
+                        T= t_old[0]+timestep;
+                    }
+                    else 
+                    {
+                        T= t_old[0];
+                        for(int j=0; j<=i; ++j)
+                        {
+                            T += A_Paired(i,j)*timestep;
+                        }
+                    }
+                    
+                    op.DoImplicitSolve(tmp, Y, T, A_Paired(i,i)*timestep);
+
+                    for(k = 0; k < nvar; k++)
+                    {
+                        Vmath::Vsub(npoints,Y[k],1,tmp[k],1,F[i][k],1);
+                        Vmath::Smul(npoints,1.0/(A_Paired(i,i)*timestep),F[i][k],1,F[i][k],1);
+                    }
+                }
+
+            }
+
+            // Next, the solution vector y at the new time level will
+            // be calculated.
+            //
+            // For multi-step methods, this includes updating the
+            // values of the auxiliary parameters
+            //
+            // The loop below calculates the solution at the new time
+            // level
+            //
+            // If last stage equals the new solution, the new solution
+            // needs not be calculated explicitly but can simply be
+            // copied. This saves a solve. 	   	
+            //Seems no need
+            // for(k = 0; k < nvar; k++)
+            // {
+            //     Vmath::Vcopy(npoints,Y[k],1,y_new[k],1);
+            // }
+    
+
+            // t_new[0] = B_Paired(0,0)*timestep;
+            // for(j = 1; j < nstages; j++)
+            // {
+            //     t_new[0] += B_Paired(0,j)*timestep;
+            // }
+
+            		
+            // The solution at the new time level is a linear
+            // combination of: 
+            // 1: the stage derivatives
+            //Only one time step
+            for(k = 0; k < nvar; k++)
+            {
+                Vmath::Smul(npoints,timestep*B_Paired(0,0),F[0][k],1,
+                            y_new[k],1);
+                
+            }
+
+            if(nstages != 1 )
+            {
+                t_new[0] = B_Paired(0,0)*timestep;
+            }
+            
+    
+            for(j = 1; j < nstages; j++)
+            {
+                for(k = 0; k < nvar; k++)
+                {					
+                    Vmath::Svtvp(npoints,timestep*B_Paired(0,j),F[j][k],1,
+                                    y_new[k],1,y_new[k],1);
+                }
+                if(nstages != 1)
+                {
+                    t_new[0] += B_Paired(0,j)*timestep; 
+                }
+            }			
+            
+            // 2: the imported multi-step solution of the previous
+            // time level
+            for(k = 0; k < nvar; k++)
+            {
+                Vmath::Svtvp(npoints,V_Paired(0,0),y_old[0][k],1,
+                                y_new[k],1,y_new[k],1);
+            }
+            if(nstages != 1)
+            {
+                t_new[0] += V_Paired(0,0)*t_old[0];
+            }
         }
 
         void TimeIntegrationScheme::TimeIntegrate(const NekDouble    timestep,
@@ -1640,7 +2215,16 @@ namespace Nektar
                     {
                         // cout << "(i==0) && m_firstStageEqualsOldSolution "<<i<<endl;
                         op.DoProjection(m_Y,m_Y,m_T);
-                        op.DoOdeRhs(m_Y, m_F[i], m_T);        
+                        op.DoOdeRhs(m_Y, m_F[i], m_T);      
+                        // cout<<"$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$"<<endl;
+                        // cout<<"Real Integrate"<<endl;  
+                        // for(int m=0;m<m_nvar;m++)
+                        // {    cout<<"Var["<<m<<"]"<<endl;
+                        //     for(int n=0;n<m_npoints;n++)
+                        //     {
+                        //         cout<<std::setprecision(16)<<m_F[0][m][n]<<endl;
+                        //     }
+                        // }
                     }
                     else
                     {
@@ -1808,6 +2392,85 @@ namespace Nektar
             if(type == eExplicit)
             {
                 op.DoProjection(y_new[0],y_new[0],t_new[0]);
+            }
+
+            if(m_TemporalErrorState && m_EmbeddedTemporalError)
+            {
+
+                m_TemporalError = Array<OneD, Array<OneD, NekDouble> >(m_nvar);
+                for(int i = 0; i < m_nvar; i++)
+                {
+                    m_TemporalError[i] = Array<OneD,NekDouble>(m_npoints,0.0);
+                }
+
+
+                Array<OneD,Array<OneD,NekDouble>> F_Paired(m_nvar);
+                for(int k = 0; k < m_nvar; k++)
+                {
+                    F_Paired[k]= Array<OneD, NekDouble>(m_npoints,0.0);
+                }
+                
+                //Calculate Extra stage
+                for(int k = 0; k < m_nvar; k++)
+                {
+                    Vmath::Smul(m_npoints,timestep*A_Paired(0,0),m_F[0][k],1,
+                                m_tmp[k],1);
+                }
+                m_T = A_Paired(0,0)*timestep;
+
+                for( int j = 1; j < m_numstages; j++ )
+                {
+                    for(int k = 0; k < m_nvar; k++)
+                    {
+                        Vmath::Svtvp(m_npoints,timestep*A_Paired(0,j),m_F[j][k],1,
+                                        m_tmp[k],1,m_tmp[k],1);
+                    }          
+                    
+                    m_T += A_Paired(0,j)*timestep;
+                }
+
+                // 2: the imported multi-step solution of the
+                // previous time level
+                for(int k = 0; k < m_nvar; k++)
+                {
+                    //U_Paired(i,0) is 1
+                    Vmath::Svtvp(m_npoints,U_Paired(0,0),y_old[0][k],1,
+                                    m_tmp[k],1,m_tmp[k],1);
+                }
+
+                m_T= t_old[0];
+                for(int j=0; j<=m_numstages; ++j)
+                {
+                    m_T += A_Paired(0,j)*timestep;
+                }
+
+                
+                op.DoImplicitSolve(m_tmp, m_Y, m_T, A_Paired(0,m_numstages)*timestep);
+
+                for(int k = 0; k < m_nvar; k++)
+                {
+                    Vmath::Vsub(m_npoints,m_Y[k],1,m_tmp[k],1,F_Paired[k],1);
+                    Vmath::Smul(m_npoints,1.0/(A_Paired(0,m_numstages)*timestep),F_Paired[k],1,F_Paired[k],1);
+                }
+
+                for(int i= 0; i < m_numstages; i++)
+                {
+                    NekDouble diff=(m_B_Paired[0][0][i]-m_B[0][0][i])*timestep;
+                    for(k = 0; k < m_nvar; k++)
+                    {
+                        Vmath::Svtvp(m_npoints,diff,m_F[i][k],1,m_TemporalError[k],1,m_TemporalError[k],1);
+                    }
+                }
+                
+                //Extra stage error
+                for(k = 0; k < m_nvar; k++)
+                {
+                    NekDouble diff=m_B_Paired[0][0][m_numstages]*timestep;
+                    Vmath::Svtvp(m_npoints,diff,F_Paired[k],1,m_TemporalError[k],1,m_TemporalError[k],1);
+                    Vmath::Vabs(m_npoints,m_TemporalError[k],1,m_TemporalError[k],1);
+                }
+                
+                m_TemporalErrorState=false;
             }
         }
         

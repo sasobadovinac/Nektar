@@ -558,8 +558,9 @@ namespace Nektar
         if(m_flag_RightPrecond)
         {
             tmp1 = solution + nDir;
-            tmp2 = solution + nDir;
+            tmp2 = Array<OneD,NekDouble>(nNonDir,0.0);
             m_oprtor.DoPrecond(tmp1, tmp2);
+            Vmath::Vcopy(nNonDir,&tmp2[0],1,&tmp1[0]+nDir,1);
         }
         Vmath::Vadd(nNonDir, &solution[0] + nDir, 1, &pOutput[0] + nDir, 1, &pOutput[0] + nDir, 1);
 

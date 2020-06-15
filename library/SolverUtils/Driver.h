@@ -43,6 +43,7 @@
 
 #include <SolverUtils/SolverUtils.hpp>
 #include <SolverUtils/EquationSystem.h>
+#include<SolverUtils/DriverOperators.hpp>
 
 namespace Nektar
 {
@@ -70,6 +71,41 @@ public:
     /// Destructor
     virtual ~Driver();
 
+    SOLVER_UTILS_EXPORT inline void DoMultiOrderProjection(
+        const Array<OneD,const Array<OneD, NekDouble>>  &inarray,
+        Array<OneD, Array<OneD,NekDouble>>              &outarray,
+        const NekDouble time)
+    {
+        v_DoMultiOrderProjection(inarray,outarray,time);
+    }
+
+    SOLVER_UTILS_EXPORT inline void DoMultiOrderOdeRhs(
+        const Array<OneD,const Array<OneD, NekDouble>>  &inarray,
+        Array<OneD, Array<OneD,NekDouble>>              &outarray,
+        const NekDouble time)
+    {
+        v_DoMultiOrderOdeRhs(inarray,outarray,time);
+    }
+
+    SOLVER_UTILS_EXPORT inline void MultiLevel(
+        const Array<OneD, NekDouble>                    &inarray,
+        Array<OneD,NekDouble>                           &outarray,
+        const bool                                      UpDateOperatorflag,
+        const int                                       Level)
+    {
+        v_MultiLevel(inarray,outarray, UpDateOperatorflag, Level);
+    }
+
+    SOLVER_UTILS_EXPORT inline void CalculateNextLevelPreconditioner(
+        const Array<OneD, const Array<OneD, NekDouble>> &inarray,
+        const NekDouble                                 time,
+        const NekDouble                                 lambda,
+        const int                                       Level)
+    {
+        v_CalculateNextLevelPreconditioner(inarray,time,lambda,Level);
+    }
+        
+
     /// Initialise Object
     SOLVER_UTILS_EXPORT inline void InitObject(std::ostream &out = std::cout);
 
@@ -81,8 +117,14 @@ public:
     SOLVER_UTILS_EXPORT Array<OneD, NekDouble> GetRealEvl(void);
     SOLVER_UTILS_EXPORT Array<OneD, NekDouble> GetImagEvl(void);
 
-
 protected:
+    Array<OneD,Array<OneD,DNekMatSharedPtr>>    m_RestrictionResidualMatrix;
+
+    Array<OneD,Array<OneD,DNekMatSharedPtr>>    m_RestrictionMatrix;
+
+    Array<OneD,Array<OneD,DNekMatSharedPtr>>    m_ProlongationMatrix;
+
+    Array<OneD,int>                             m_MultiLevelCoeffs;
     /// Communication object
     LibUtilities::CommSharedPtr                 m_comm;
 
@@ -97,9 +139,14 @@ protected:
 
     /// Equation system to solve
     Array<OneD, EquationSystemSharedPtr>        m_equ;
+    
+    //For use of MultiLevel
+    int                                         m_nLevels;
 
     ///number of equations
     int m_nequ;
+
+    SolverUtils::DriverOperators                    m_driverOperator;
 
     ///Evolution Operator
     enum EvolutionOperatorType m_EvolutionOperator;
@@ -107,6 +154,41 @@ protected:
     /// Initialises EquationSystem class members.
     Driver(const LibUtilities::SessionReaderSharedPtr pSession,
            const SpatialDomains::MeshGraphSharedPtr   pGraph);
+    
+    SOLVER_UTILS_EXPORT virtual void v_DoMultiOrderProjection(
+        const Array<OneD,const Array<OneD, NekDouble>>  &inarray,
+        Array<OneD, Array<OneD,NekDouble>>              &outarray,
+        const NekDouble                                 time)
+    {
+         ASSERTL0(false,"This routine is not valid in this class");
+    }
+
+    SOLVER_UTILS_EXPORT virtual void v_DoMultiOrderOdeRhs(
+        const Array<OneD,const Array<OneD, NekDouble>>  &inarray,
+        Array<OneD, Array<OneD,NekDouble>>              &outarray,
+        const NekDouble                                 time)
+    {
+         ASSERTL0(false,"This routine is not valid in this class");
+    }
+
+    SOLVER_UTILS_EXPORT virtual void v_MultiLevel(
+        const Array<OneD, NekDouble>                    &inarray,
+        Array<OneD,NekDouble>                           &outarray,
+        const bool                                      UpDateOperatorflag,
+        const int                                       Level)
+    {
+         ASSERTL0(false,"This routine is not valid in this class");
+    }
+
+    SOLVER_UTILS_EXPORT virtual void v_CalculateNextLevelPreconditioner(
+        const Array<OneD, const Array<OneD, NekDouble>> &inarray,
+        const NekDouble                                 time,
+        const NekDouble                                 lambda,
+        const int                                       Level)
+    {
+         ASSERTL0(false,"This routine is not valid in this class");
+    }
+
 
     SOLVER_UTILS_EXPORT virtual void v_InitObject(std::ostream &out = std::cout);
 
