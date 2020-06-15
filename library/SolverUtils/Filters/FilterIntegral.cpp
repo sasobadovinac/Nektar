@@ -96,6 +96,19 @@ FilterIntegral::FilterIntegral(
         m_compVector.emplace_back(tmpVec);
     }
 
+    // OutputPrecision
+    size_t precision;
+    it = pParams.find("OutputPrecision");
+    if (it == pParams.end())
+    {
+        precision = 7;
+    }
+    else
+    {
+        ASSERTL0(it->second.length() > 0, "Empty parameter 'OutputPrecision'.");
+        precision = std::stoi(it->second);
+    }
+
     // Lock equation system pointer
     auto equationSys = m_equ.lock();
     ASSERTL0(equationSys, "Weak pointer expired");
@@ -108,6 +121,7 @@ FilterIntegral::FilterIntegral(
         m_outFile.open(outName);
         ASSERTL0(m_outFile.good(), "Unable to open: '" + outName + "'");
         m_outFile.setf(std::ios::scientific, std::ios::floatfield);
+        m_outFile.precision(precision);
         m_outFile << "#Time";
 
         for (auto &compName : m_splitCompString)
