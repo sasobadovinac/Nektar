@@ -608,33 +608,89 @@ namespace Nektar
             // Get name of STL file
             string fileName;
             int status = child->QueryStringAttribute("FILE", &fileName);
-            ASSERTL0(status == TIXML_SUCCESS, "An FLD file with the values "
+            ASSERTL0(status == TIXML_SUCCESS, "A folder or or an FLD file with the values "
                      "of the phi function has to be supplied.")
-            ASSERTL0(boost::iequals(fileName.substr(fileName.length()-4),
-                     ".fld"), "A valid FLD file must be supplied in the "
-                     "'ShapeFunction' field.")
+          
+            // Check if Phi is timedependent
+            m_timeDependentPhi = GetVarTimeDependence("ShapeFunction", "Phi");
 
-            // Get phi values from XML file (after "FieldConvert" the STL file)
-            // First, load the data
-            std::vector<LibUtilities::FieldDefinitionsSharedPtr> fieldDef;
-            std::vector<std::vector<NekDouble> > fieldData;
-            LibUtilities::FieldMetaDataMap fieldMetaData;
-            LibUtilities::FieldIOSharedPtr phiFile =
-                LibUtilities::FieldIO::CreateForFile(m_session, fileName);
-            phiFile->Import(fileName, fieldDef, fieldData, fieldMetaData);
+            if(m_timeDependentPhi)
+            {   
+                // --> Look into directory
+                // --> Find number of files
+                // --> Import files (and corresponding angle or suppose first it is a uniform distribution)
+                // --> Add each file to the array
 
-            // Only Phi field should be defined in the file
-            ASSERTL0(fieldData.size() == 1, "Only one field (phi) must be "
-                                            "defined in the FLD file.")
+              
+                //Read number of samples
+                int nSamples;
+                child = child -> NextSiblingElement("F");
 
-            // Extract Phi field to output
-            string tmp("phi");
-            m_phi->ExtractDataToCoeffs(fieldDef[0], fieldData[0],
-                                       tmp, m_phi->UpdateCoeffs());
-            m_phi->BwdTrans(m_phi->GetCoeffs(), m_phi->UpdatePhys());
+                TiXmlAttribute *childAttr = child->FirstAttribute();
+                std::string attrName(childAttr->Name());
+                ASSERTL0(attrName == "NSAMPLES", "Unable to read attribute number of samples.");
+
+                status = childAttr->QueryIntValue(&nSamples);
+                ASSERTL0(status == TIXML_SUCCESS, "The number of samples "
+                     "has to be specified.")
+
+                /*int npoints  = m_baseflow[0].num_elements();
+                m_interp     = Array<OneD, Array<OneD, NekDouble> > (nSamples);
+
+                for (int i = 0; i < nSamples; ++i)
+                {
+                    m_interp[i] = Array<OneD,NekDouble>(npoints*nSamples, 0.0);
+                }*/
+
+                // Import the STL samples into auxiliary vector
+
+                // The STL samples should be stored in the form "%d.stl" where %d is
+                // the rotation angle from the initial position
+
+                // A subdirectory can also be included, such as "dir/%d.stl"
+                
+                size_t found = fileName.find("%d");
+                ASSERTL0(found != string::npos && fileName.find("%d", found+1) == string::npos,
+                         "Since N_slices is specified, the filename provided for function "
+                         "'BaseFlow' must include exactly one instance of the format "
+                         "specifier '%d', to index the time-slices.");
+                char* buffer = new char[fileName.length() + 8];
+                for (int i = 0; i < nSamples; ++i)
+                {
+                    //Add file
+                }
+                delete[] buffer;
+                m_timeDependentPhi = true;
+                m_timeDependentUp  = false;
+            }
+            else
+            {
+                ASSERTL0(boost::iequals(fileName.substr(fileName.length()-4),
+                         ".fld"), "A valid FLD file must be supplied in the "
+                         "'ShapeFunction' field.")
+
+                // Get phi values from XML file (after "FieldConvert" the STL file)
+                // First, load the data
+                std::vector<LibUtilities::FieldDefinitionsSharedPtr> fieldDef;
+                std::vector<std::vector<NekDouble> > fieldData;
+                LibUtilities::FieldMetaDataMap fieldMetaData;
+                LibUtilities::FieldIOSharedPtr phiFile =
+                    LibUtilities::FieldIO::CreateForFile(m_session, fileName);
+                phiFile->Import(fileName, fieldDef, fieldData, fieldMetaData);
+
+                // Only Phi field should be defined in the file
+                ASSERTL0(fieldData.size() == 1, "Only one field (phi) must be "
+                                                "defined in the FLD file.")
+
+                // Extract Phi field to output
+                string tmp("phi");
+                m_phi->ExtractDataToCoeffs(fieldDef[0], fieldData[0],
+                                           tmp, m_phi->UpdateCoeffs());
+                m_phi->BwdTrans(m_phi->GetCoeffs(), m_phi->UpdatePhys());
+                m_timeDependentPhi = false;
+                m_timeDependentUp  = false;
+            }
             m_filePhi = true;
-            m_timeDependentPhi = false;
-            m_timeDependentUp  = false;
         }
         else
         {
@@ -654,5 +710,30 @@ namespace Nektar
             }
         }
     }
+
+    /*void LinearisedAdvection::UpdateBase(
+        const NekDouble                     m_slices,
+        const Array<OneD, const NekDouble> &inarray,
+        Array<OneD, NekDouble>             &outarray,
+        const NekDouble                     m_time,
+        const NekDouble                     m_period)
+    {
+        int npoints     = m_baseflow[0].num_elements();
+        NekDouble BetaT = 2*M_PI*fmod (m_time, m_period) / m_period;
+        NekDouble phase;
+        Array<OneD, NekDouble> auxiliary(npoints);
+
+        Vmath::Vcopy(npoints,&inarray[0],1,&outarray[0],1);
+        Vmath::Svtvp(npoints, cos(0.5*m_slices*BetaT),&inarray[npoints],1,&outarray[0],1,&outarray[0],1);
+
+        for (int i = 2; i < m_slices; i += 2)
+        {
+            phase = (i>>1) * BetaT;
+
+            Vmath::Svtvp(npoints, cos(phase),&inarray[i*npoints],1,&outarray[0],1,&outarray[0],1);
+            Vmath::Svtvp(npoints, -sin(phase), &inarray[(i+1)*npoints], 1, &outarray[0], 1,&outarray[0],1);
+        }
+
+    }*/
 
 } // end of namespace
