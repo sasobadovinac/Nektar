@@ -87,8 +87,8 @@ private:
     std::vector<std::string> m_splitCompString;
     std::vector<std::vector<unsigned int>> m_compVector;
     std::map<size_t, size_t> m_geomElmtIdToExpId;
-    std::vector<LocalRegions::ExpansionVector> m_compExpVector;
-
+    std::map<int, std::vector<std::pair<LocalRegions::ExpansionSharedPtr, int>>>
+        m_compExpMap;
 };
 } // namespace SolverUtils
 } // namespace Nektar

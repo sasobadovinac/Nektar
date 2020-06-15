@@ -32,10 +32,13 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#include <boost/core/ignore_unused.hpp>
-#include <SolverUtils/Filters/FilterIntegral.h>
 #include <LibUtilities/BasicUtils/ParseUtils.h>
+#include <LocalRegions/Expansion1D.h>
+#include <LocalRegions/Expansion2D.h>
+#include <LocalRegions/Expansion3D.h>
+#include <SolverUtils/Filters/FilterIntegral.h>
 
+#include <boost/core/ignore_unused.hpp>
 #include <boost/algorithm/string.hpp>
 
 namespace Nektar
@@ -43,11 +46,12 @@ namespace Nektar
 namespace SolverUtils
 {
 std::string FilterIntegral::className =
-    GetFilterFactory().RegisterCreatorFunction("Integral", FilterIntegral::create);
+    GetFilterFactory().RegisterCreatorFunction("Integral",
+                                               FilterIntegral::create);
 
-FilterIntegral::FilterIntegral(const LibUtilities::SessionReaderSharedPtr &pSession,
-                         const std::weak_ptr<EquationSystem> &pEquation,
-                         const ParamMap &pParams)
+FilterIntegral::FilterIntegral(
+    const LibUtilities::SessionReaderSharedPtr &pSession,
+    const std::weak_ptr<EquationSystem> &pEquation, const ParamMap &pParams)
     : Filter(pSession, pEquation)
 {
     std::string outName;
@@ -71,11 +75,14 @@ FilterIntegral::FilterIntegral(const LibUtilities::SessionReaderSharedPtr &pSess
     ASSERTL0(it->second.length() > 0, "Empty parameter 'Composites'.");
 
     std::vector<std::string> splitComposite;
-    boost::split(m_splitCompString, it->second,  boost::is_any_of(","));
+    boost::split(m_splitCompString, it->second, boost::is_any_of(","),
+                 boost::token_compress_on);
+
     for (auto &comp : m_splitCompString)
     {
-        size_t first = comp.find_first_of('[') + 1;
-        size_t last = comp.find_last_of(']') - 1;
+        boost::trim(comp);
+        size_t first   = comp.find_first_of('[') + 1;
+        size_t last    = comp.find_last_of(']') - 1;
         auto tmpString = comp.substr(first, last - first + 1);
 
         std::vector<unsigned int> tmpVec;
@@ -83,7 +90,8 @@ FilterIntegral::FilterIntegral(const LibUtilities::SessionReaderSharedPtr &pSess
 
         ASSERTL0(parseGood && !tmpVec.empty(),
                  "Unable to read composite regions index range for "
-                 "FilterIntegral: " + comp);
+                 "FilterIntegral: " +
+                     comp);
 
         m_compVector.emplace_back(tmpVec);
     }
@@ -100,8 +108,7 @@ FilterIntegral::FilterIntegral(const LibUtilities::SessionReaderSharedPtr &pSess
         m_outFile.open(outName);
         ASSERTL0(m_outFile.good(), "Unable to open: '" + outName + "'");
         m_outFile.setf(std::ios::scientific, std::ios::floatfield);
-
-        m_outFile << "Time";
+        m_outFile << "#Time";
 
         for (auto &compName : m_splitCompString)
         {
@@ -134,24 +141,42 @@ void FilterIntegral::v_Initialise(
 {
 
     // Create map from element ID -> expansion list ID
-    auto expList =  pFields[0]->GetExp();
+    auto expList   = pFields[0]->GetExp();
+    auto meshGraph = pFields[0]->GetGraph();
+
     for (size_t i = 0; i < expList->size(); ++i)
     {
-        auto exp = (*expList)[i];
-        m_geomElmtIdToExpId[exp->GetElmtId()] = i;
+        auto exp                                           = (*expList)[i];
+        m_geomElmtIdToExpId[exp->GetGeom()->GetGlobalID()] = i;
     }
 
-    std::vector<std::pair<size_t, std::vector<size_t>>>
-        pairDimGeomIds(m_compVector.size());
-
-
-    for (int i = 0; i < m_compVector.size(); ++ i)
+    // Create a map from geom ID -> trace expansion list ID
+    std::map<size_t, size_t> geomIdToTraceId;
+    auto trace = pFields[0]->GetTrace()->GetExp();
+    for (size_t i = 0; i < trace->size(); ++i)
     {
-        // Get comp list dimension from first composite & element
-        auto composites = pFields[0]->GetGraph()->GetComposites();
-        size_t dim = composites[m_compVector[0][0]]->m_geomVec[0]->GetShapeDim();
+        auto exp                                       = (*trace)[i];
+        geomIdToTraceId[exp->GetGeom()->GetGlobalID()] = i;
+    }
 
+    // Get comp list dimension from first composite & element
+    auto composites = pFields[0]->GetGraph()->GetComposites();
+    size_t meshDim  = pFields[0]->GetGraph()->GetMeshDimension();
 
+    for (int i = 0; i < m_compVector.size(); ++i)
+    {
+        // Check composite is present in the rank
+        if (composites.find(m_compVector[i][0]) == composites.end())
+        {
+            continue;
+        }
+
+        std::vector<std::shared_ptr<SpatialDomains::Geometry>> geomVec =
+            composites[m_compVector[i][0]]->m_geomVec;
+        size_t dim =
+            composites[m_compVector[i][0]]->m_geomVec[0]->GetShapeDim();
+
+        // Vector of all geometry IDs contained within the composite list
         std::vector<size_t> compGeomIds;
         for (auto compNum : m_compVector[i])
         {
@@ -168,27 +193,70 @@ void FilterIntegral::v_Initialise(
             }
 
             // Only check first element in each comp for dimension
-            ASSERTL0(dim == compGeom[0]->GetShapeDim(),
+            ASSERTL0(
+                dim == compGeom[0]->GetShapeDim(),
                 "Differing geometry dimensions specified in FilterIntegral '" +
                     m_splitCompString[i] + "'.");
         }
 
+        std::vector<std::pair<LocalRegions::ExpansionSharedPtr, int>>
+            tmpCompExp(compGeomIds.size());
+
+        // If dimension of composite == dimension of mesh then we only need the
+        // expansion of the element
         if (dim == pFields[0]->GetShapeDimension())
         {
-            LocalRegions::ExpansionVector tmpCompExp(compGeomIds.size());
-
             for (size_t j = 0; j < compGeomIds.size(); ++j)
             {
-                tmpCompExp[j] = (*expList)[m_geomElmtIdToExpId[compGeomIds[j]]];
+                tmpCompExp[j] = std::make_pair(
+                    (*expList)[m_geomElmtIdToExpId[compGeomIds[j]]], -1);
             }
-
-            m_compExpVector.emplace_back(tmpCompExp);
         }
-        else if (dim < pFields[0]->GetShapeDimension())
+        // however if the dimension is less we need the expansion of the element
+        // containing the global composite geometry and the face/edge local ID
+        // within that. 3D mesh -> 2D, 2D -> 1D.
+        else if (meshDim == 3 && dim == 2)
         {
-            ASSERTL0(false, "Finding the integral on a composite of dimension"
-                            "smaller than the domain is not currently supported.")
+            for (size_t j = 0; j < compGeomIds.size(); ++j)
+            {
+                LocalRegions::ExpansionSharedPtr exp =
+                    (*trace)[geomIdToTraceId[compGeomIds[j]]];
+                LocalRegions::Expansion2DSharedPtr exp2D =
+                    std::dynamic_pointer_cast<LocalRegions::Expansion2D>(exp);
+
+                LocalRegions::ExpansionSharedPtr leftAdjElmtExp =
+                    std::dynamic_pointer_cast<LocalRegions::Expansion>(
+                        exp2D->GetLeftAdjacentElementExp());
+                int leftAdjElmtFace = exp2D->GetLeftAdjacentElementFace();
+
+                tmpCompExp[j] = std::make_pair(leftAdjElmtExp, leftAdjElmtFace);
+            }
         }
+        else if (meshDim == 2 && dim == 1)
+        {
+            for (size_t j = 0; j < compGeomIds.size(); ++j)
+            {
+                LocalRegions::ExpansionSharedPtr exp =
+                    (*trace)[geomIdToTraceId[compGeomIds[j]]];
+                LocalRegions::Expansion1DSharedPtr exp1D =
+                    std::dynamic_pointer_cast<LocalRegions::Expansion1D>(exp);
+
+                LocalRegions::ExpansionSharedPtr leftAdjElmtExp =
+                    std::dynamic_pointer_cast<LocalRegions::Expansion>(
+                        exp1D->GetLeftAdjacentElementExp());
+                int leftAdjElmtEdge = exp1D->GetLeftAdjacentElementEdge();
+
+                tmpCompExp[j] = std::make_pair(leftAdjElmtExp, leftAdjElmtEdge);
+            }
+        }
+        else
+        {
+            ASSERTL0(false,
+                     "FilterIntegral: Only composite dimensions equal to or "
+                     "one lower than the mesh dimension are supported.")
+        }
+
+        m_compExpMap[i] = tmpCompExp;
     }
 
     v_Update(pFields, time);
@@ -198,8 +266,6 @@ void FilterIntegral::v_Update(
     const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
     const NekDouble &time)
 {
-    boost::ignore_unused(pFields);
-
     if (m_index++ % m_outputFrequency > 0)
     {
         return;
@@ -210,32 +276,74 @@ void FilterIntegral::v_Update(
         m_outFile << time;
     }
 
-    // Lock equation system pointer
-    auto equationSys = m_equ.lock();
-    ASSERTL0(equationSys, "Weak pointer expired");
-
-    for (auto &compExp : m_compExpVector)
+    for (size_t j = 0; j < m_compVector.size(); ++j)
     {
         for (size_t i = 0; i < m_numVariables; ++i)
         {
-            // Evaluate integral using improved Kahan–Babuška summation
-            // algorithm to reduce numerical error from adding floating point
-            auto phys = pFields[i]->GetPhys();
+            Array<OneD, const NekDouble> phys;
+            phys = pFields[i]->GetPhys();
 
             NekDouble sum = 0.0;
             NekDouble c   = 0.0;
-            for (auto &exp : compExp)
-            {
-                size_t offset = pFields[0]->GetPhys_Offset(
-                    m_geomElmtIdToExpId[exp->GetElmtId()]);
 
-                NekDouble input = exp->Integral(phys + offset);
-                NekDouble t = sum + input;
-                c += fabs(sum) >= fabs(input) ? (sum - t) + input
-                                              : (input - t) + sum;
-                sum = t;
+            // Check if composite is on the rank
+            if (m_compExpMap.find(j) != m_compExpMap.end())
+            {
+                auto compExp   = m_compExpMap[j];
+                size_t dim     = compExp[0].first->GetGeom()->GetShapeDim();
+                size_t meshDim = pFields[i]->GetGraph()->GetMeshDimension();
+
+                // Evaluate integral using improved Kahan–Babuška summation
+                // algorithm to reduce numerical error from adding floating
+                // points
+                for (auto &expPair : compExp)
+                {
+                    NekDouble input = 0;
+                    auto exp        = expPair.first;
+
+                    if (meshDim == dim)
+                    {
+                        size_t offset = pFields[i]->GetPhys_Offset(
+                            m_geomElmtIdToExpId[exp->GetGeom()->GetGlobalID()]);
+                        input = exp->Integral(phys + offset);
+                    }
+                    else if (meshDim == 3 && dim == 2)
+                    {
+                        Array<OneD, NekDouble> facePhys;
+                        exp->GetFacePhysVals(expPair.second, exp, phys,
+                                             facePhys);
+                        input =
+                            pFields[i]
+                                ->GetTrace()
+                                ->GetExp(exp->GetGeom()->GetTid(expPair.second))
+                                ->Integral(facePhys);
+                    }
+                    else if (meshDim == 2 && dim == 1)
+                    {
+                        Array<OneD, NekDouble> edgePhys;
+                        exp->GetEdgePhysVals(expPair.second, phys, edgePhys);
+                        input =
+                            pFields[i]
+                                ->GetTrace()
+                                ->GetExp(exp->GetGeom()->GetTid(expPair.second))
+                                ->Integral(edgePhys);
+                    }
+                    else
+                    {
+                        ASSERTL0(false,
+                                 "FilterIntegral: Only composite dimensions "
+                                 "equal to or one lower than the mesh "
+                                 "dimension are supported.")
+                    }
+
+                    NekDouble t = sum + input;
+                    c += fabs(sum) >= fabs(input) ? (sum - t) + input
+                                                  : (input - t) + sum;
+                    sum = t;
+                }
             }
 
+            // Sum integral values from all ranks
             Array<OneD, NekDouble> sumArray(1, sum + c);
             m_comm->AllReduce(sumArray, LibUtilities::ReduceSum);
             if (m_comm->GetRank() == 0)
