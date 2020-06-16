@@ -2158,42 +2158,6 @@ namespace Nektar
         }
     }
 
-    void CompressibleFlowSystem::CalcFluxJacVolBnd(
-        const Array<OneD, const Array<OneD, NekDouble> >                &inarray,
-        const Array<OneD, const Array<OneD, Array<OneD, NekDouble> > >  &qfield)
-    {
-        int nSpaceDim = m_graph->GetSpaceDimension();
-
-        for(int nfluxDir = 0; nfluxDir < nSpaceDim; nfluxDir++)
-        {
-            if(m_DEBUG_ADVECTION_JAC_MAT)
-            {
-                GetFluxVectorJacDirctnMat(nfluxDir,inarray, m_ElmtFluxJacArray);
-            }
-
-            if(m_DEBUG_VISCOUS_JAC_MAT)
-            {
-                MinusDiffusionFluxJacDirctnMat(nfluxDir,inarray,qfield, m_ElmtFluxJacArray);
-            }
-        }
-
-        GetTraceJac(inarray,qfield,m_TraceJac,m_TraceJacDeriv,m_TraceJacDerivSign,m_TraceIPSymJacArray);
-        
-        int npoints = GetTotPoints();
-        for(int j = 0; j< m_fields.num_elements(); j++)
-        {
-            Vmath::Vcopy(npoints, inarray[j],1,m_MatrixFreeRefFields[j],1);
-            m_fields[j]->GetFwdBwdTracePhys(m_MatrixFreeRefFields[j], 
-                                            m_MatrixFreeRefFwd[j], 
-                                            m_MatrixFreeRefBwd[j]);
-        }
-
-        if(m_DEBUG_VISCOUS_JAC_MAT)
-        {
-            m_diffusion->SetRefFields(m_MatrixFreeRefFields);
-        }
-    }
-
     template<typename DataType, typename TypeNekBlkMatSharedPtr>
     void CompressibleFlowSystem::AddMatNSBlkDiag_volume(
         const TensorOfArray2D<NekDouble>         &inarray,
