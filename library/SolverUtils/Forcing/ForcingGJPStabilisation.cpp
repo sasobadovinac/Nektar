@@ -107,9 +107,9 @@ namespace SolverUtils
         m_scalBwd = Array<OneD, NekDouble> (trace->GetNpoints(),0.0);
         
         m_fwdTraceToCoeffMap = Array<OneD,
-        std::set< std::pair<unsigned int, NekDouble> > >(trace->GetTotPoints());
+        std::set< std::pair<unsigned int, NekDouble> > >(trace->GetNcoeffs());
         m_bwdTraceToCoeffMap = Array<OneD,
-        std::set< std::pair<unsigned int, NekDouble> > >(trace->GetTotPoints());
+        std::set< std::pair<unsigned int, NekDouble> > >(trace->GetNcoeffs());
     
         Array<OneD, Array<OneD, NekDouble> > factors;
         Array<OneD, Array<OneD, LocalRegions::ExpansionSharedPtr> >
@@ -189,9 +189,11 @@ namespace SolverUtils
                         {
                             int ncoeffid =traceToCoeffMap[n][i][j] +
                                 coeff_offset;
-                            ASSERTL1(ncoeffid < m_dgfield->GetNcoeffs(), "Error in evaluating "
+                            ASSERTL1(ncoeffid < m_dgfield->GetNcoeffs(),
+                                     "Error in evaluating "
                                      "which coefficient is being updated");
-                            std::pair<int, NekDouble> dbaseinfo(ncoeffid,Sign*dbasis[n][i][j]);
+                            std::pair<int, NekDouble> dbaseinfo(ncoeffid,
+                                                              Sign*dbasis[n][i][j]);
                             m_fwdTraceToCoeffMap[loc+toffset_coeff].insert(dbaseinfo);
                         }
                     }
@@ -209,9 +211,11 @@ namespace SolverUtils
                         for(int j = 0; j < dbasis[n][i].size(); ++j)
                         {
                             int ncoeffid =traceToCoeffMap[n][i][j] + coeff_offset;
-                            ASSERTL1(ncoeffid < m_dgfield->GetNcoeffs(), "Error in evaluating "
+                            ASSERTL1(ncoeffid < m_dgfield->GetNcoeffs(),
+                                     "Error in evaluating "
                                      "which coefficient is being updated");
-                            std::pair<int, NekDouble> dbaseinfo(ncoeffid,Sign*dbasis[n][i][j]);
+                            std::pair<int, NekDouble> dbaseinfo(ncoeffid,
+                                                              Sign*dbasis[n][i][j]);
                             m_bwdTraceToCoeffMap[loc+toffset_coeff].insert(dbaseinfo);
                         }
                     }
@@ -295,19 +299,21 @@ namespace SolverUtils
                 
                 if(m_expType == MultiRegions::e1D)
                 {
-                    // Scale jump on fwd trace
+                    // Scale jump on bwd trace
                     Vmath::Vmul(nTracePts,m_scalBwd,1,GradJumpOnTrace,1,Bwd,1);
                 }
                 else
                 {
-                    // Scale jump on fwd trace
+                    // Scale jump on bwd trace
                     Vmath::Vmul(nTracePts,m_scalBwd,1,GradJumpOnTrace,1,Fwd,1);
                     
                     // Take inner product and put result into Fwd array
                     m_dgfield->GetTrace()->IProductWRTBase(Fwd,Bwd);
                 }
                 
-                // Add trace values to coeffs scaled by factor and sign. 
+                // Add trace values to coeffs scaled by factor and
+                // sign.  Note although the nornal is negated in this case
+	 	// the bwd-fwd is also reversed/negated so same sign used
                 for(int i = 0; i < nTraceCoeffs; ++i)
                 {
                     for(auto &it:  m_bwdTraceToCoeffMap[i])
@@ -362,7 +368,7 @@ namespace SolverUtils
                 Dx1.Sub(vadj,ev0);
                 
                 NekDouble d1  = Dx.dot(Dx1); 
-                NekDouble lenDx = ev1.dot(ev1);
+                NekDouble lenDx = Dx.dot(Dx);
                 h = sqrt(h1*h1-d1*d1/lenDx);
                 pe = elmt->GetTraceNcoeffs((traceid+nverts-1)%nverts)-1;
                 p = pe; 
@@ -375,7 +381,6 @@ namespace SolverUtils
                 d1 = Dx.dot(Dx1); 
 
                 h = (h+sqrt(h1*h1-d1*d1/lenDx))*0.5;
-
                 pe = elmt->GetTraceNcoeffs((traceid+1)%nverts)-1;
                 p = (p+pe)*0.5;
             }
