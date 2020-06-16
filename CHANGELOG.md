@@ -8,6 +8,8 @@ v5.1.0
   level. Removed GlobalCeoffs functionality (!963)
 - Add interior penalty method to DG framework (!1101)
 - Add an error filter for the time-evolution of the L2 and Linf errors (!1147)
+- Add an integral filter for the time-evolution of integrals on composites,
+  supports dimension equal to or one lower than the mesh dimension. (!1156)
 
 **FieldConvert**
 - Refactored time integration code using factory pattern (!1034)
@@ -20,6 +22,9 @@ v5.1.0
 
 **CardiacEPSolver**
 - Added additional parameter sets to Fenton-Karma model (!1119)
+
+**CompressibleFlowSolver**
+- Add additional parameters for the Isentropic Vortex equation system. (!1156)
 
 **NekMesh**
 - Improved boundary layer splitting and output to CADfix (!938)
