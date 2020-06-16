@@ -137,7 +137,18 @@ namespace Nektar
 #ifdef CFS_DEBUGMODE
         }
 #endif
-            
+
+            // for(int nd=0;nd<m_spaceDim;nd++)
+            // {
+            //     for(int i=0;i<nPointsTot;i++)
+            //     {
+            //         for(int nv=0;nv<nConvectiveFields;nv++)
+            //         {
+            //             cout << " fluxvector["<<nv<<"]["<<nd<<"]["<<i<<"]= "<<fluxvector[nv][nd][i]<<endl;
+            //         }
+            //         cout <<endl;
+            //     }
+            // }            
             // Get the advection part (without numerical flux)
             for(int i = 0; i < nConvectiveFields; ++i)
             {
@@ -214,11 +225,16 @@ namespace Nektar
                 {
                     Fwd[i] = pFwd[i];
                     Bwd[i] = pBwd[i];
-                    // numflux[i] = Array<OneD, NekDouble>(nTracePointsTot, 0.0);
                 }
             }
-
-            m_riemann->Solve(m_spaceDim, Fwd, Bwd, TraceFlux);
+            if(m_flagFreezeJac)
+            {
+                m_fluxVectortraceMF(Fwd, Bwd, TraceFlux);
+            }
+            else
+            {
+                m_riemann->Solve(m_spaceDim, Fwd, Bwd, TraceFlux);
+            }
         }
 
 #ifdef DEMO_IMPLICITSOLVER_JFNK_COEFF

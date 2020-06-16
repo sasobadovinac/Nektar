@@ -58,6 +58,13 @@ namespace Nektar
             const Array<OneD, const Array<OneD, NekDouble> > &Fwd,
             const Array<OneD, const Array<OneD, NekDouble> > &Bwd,
                   Array<OneD,       Array<OneD, NekDouble> > &flux);
+        virtual void v_Solve(
+            const int                                         nDim,
+            const Array<OneD, const Array<OneD, NekDouble> > &FwdJ,
+            const Array<OneD, const Array<OneD, NekDouble> > &BwdJ,
+            const Array<OneD, const Array<OneD, NekDouble> > &Fwd ,
+            const Array<OneD, const Array<OneD, NekDouble> > &Bwd ,
+                  Array<OneD,       Array<OneD, NekDouble> > &flux);
 
         virtual void v_ArraySolve(
             const Array<OneD, const Array<OneD, NekDouble> > &Fwd,
@@ -71,6 +78,16 @@ namespace Nektar
             NekDouble  rhoL, NekDouble  rhouL, NekDouble  rhovL, NekDouble  rhowL, NekDouble  EL,
             NekDouble  rhoR, NekDouble  rhouR, NekDouble  rhovR, NekDouble  rhowR, NekDouble  ER,
             NekDouble &rhof, NekDouble &rhouf, NekDouble &rhovf, NekDouble &rhowf, NekDouble &Ef)
+        {
+            ASSERTL0(false, "This function should be defined by subclasses.");
+        }
+
+        virtual void v_PointSolve(
+            const Array<OneD, NekDouble> &Fwd, 
+            const Array<OneD, NekDouble> &Bwd, 
+            Array<OneD, NekDouble>       &flux, 
+            const Array<OneD, NekDouble> &FwdJ, 
+            const Array<OneD, NekDouble> &BwdJ)
         {
             ASSERTL0(false, "This function should be defined by subclasses.");
         }
@@ -106,8 +123,23 @@ namespace Nektar
         {
             ASSERTL0(false, "v_PointFluxJacobian This function should be defined by subclasses.");
         }
+
+        void PointFluxJacobian_pn(
+            const Array<OneD, NekDouble>    &Fwd,
+            const Array<OneD, NekDouble>    &normals,
+            DNekMatSharedPtr                &FJac,
+            const NekDouble                 efix,   
+            const NekDouble                 fsw);
+        
+        void EulerFlux(
+            double rhoL, double rhouL, double rhovL, double rhowL, double EL,
+            double &f0, double &f1, double &f2, double &f3, double &f4);
+        void EulerFlux(
+            double rhoJ, double rhouJ, double rhovJ, double rhowJ, double EJ,
+            double rhoL, double rhouL, double rhovL, double rhowL, double EL,
+            double &f0, double &f1, double &f2, double &f3, double &f4);
 #endif 
     };
 }
-
+    
 #endif

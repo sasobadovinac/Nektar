@@ -139,6 +139,68 @@ namespace Nektar
             }
         }
 
+
+        void RiemannSolver::Solve(
+            const int                                         nDim,
+            const Array<OneD, const Array<OneD, NekDouble> > &FwdJ,
+            const Array<OneD, const Array<OneD, NekDouble> > &BwdJ,
+            const Array<OneD, const Array<OneD, NekDouble> > &Fwd ,
+            const Array<OneD, const Array<OneD, NekDouble> > &Bwd ,
+                Array<OneD,       Array<OneD, NekDouble> > &flux)
+        {
+            if (m_requiresRotation)
+            {
+                ASSERTL1(CheckVectors("N"), "N not defined.");
+                ASSERTL1(CheckAuxVec("vecLocs"), "vecLocs not defined.");
+                const Array<OneD, const Array<OneD, NekDouble> > normals =
+                    m_vectors["N"]();
+                const Array<OneD, const Array<OneD, NekDouble> > vecLocs =
+                    m_auxVec["vecLocs"]();
+
+                int nFields = Fwd   .num_elements();
+                int nPts    = Fwd[0].num_elements();
+                
+                if (m_rotStorage[0].num_elements()    != nFields ||
+                    m_rotStorage[0][0].num_elements() != nPts)
+                {
+                    for (int i = 0; i < 3; ++i)
+                    {
+                        m_rotStorage[i] =
+                            Array<OneD, Array<OneD, NekDouble> >(nFields);
+                        for (int j = 0; j < nFields; ++j)
+                        {
+                            m_rotStorage[i][j] = Array<OneD, NekDouble>(nPts);
+                        }
+                    }
+                }
+
+                Array<OneD, Array<OneD, Array<OneD, NekDouble> > > 
+                    tmpRotStorage {2};
+                for (int i = 0; i < 2; ++i)
+                {
+                    tmpRotStorage[i] =
+                        Array<OneD, Array<OneD, NekDouble> >{nFields};
+                    for (int j = 0; j < nFields; ++j)
+                    {
+                        tmpRotStorage[i][j] = Array<OneD, NekDouble>{nPts};
+                    }
+                }
+
+                rotateToNormal  (Fwd, normals, vecLocs, m_rotStorage[0]);
+                rotateToNormal  (Bwd, normals, vecLocs, m_rotStorage[1]);
+                rotateToNormal  (FwdJ, normals, vecLocs, tmpRotStorage[0]);
+                rotateToNormal  (BwdJ, normals, vecLocs, tmpRotStorage[1]);
+                v_Solve         (nDim, tmpRotStorage[0], tmpRotStorage[1], 
+                                       m_rotStorage[0], m_rotStorage[1],
+                                       m_rotStorage[2]);
+                rotateFromNormal(m_rotStorage[2], normals, vecLocs, flux);
+            }
+            else
+            {
+                v_Solve(nDim, FwdJ, BwdJ, Fwd, Bwd, flux);
+            }
+        }
+
         /**
          * @brief Rotate a vector field to trace normal.
          * 
@@ -561,6 +623,17 @@ namespace Nektar
                   DNekBlkMatSharedPtr                        &BJac)
         {
             ASSERTL0(false, "v_CalcFluxJacobian not specified.");
+        }
+
+        void RiemannSolver::v_Solve(
+            const int                                         nDim,
+            const Array<OneD, const Array<OneD, NekDouble> > &FwdJ,
+            const Array<OneD, const Array<OneD, NekDouble> > &BwdJ,
+            const Array<OneD, const Array<OneD, NekDouble> > &Fwd ,
+            const Array<OneD, const Array<OneD, NekDouble> > &Bwd ,
+                Array<OneD,       Array<OneD, NekDouble> > &flux)
+        {
+            ASSERTL0(false, "v_Solve not specified.");
         }
 #endif
 
