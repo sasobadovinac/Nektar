@@ -68,8 +68,8 @@ ArtificialDiffusion::ArtificialDiffusion(
  *
  */
 void ArtificialDiffusion::DoArtificialDiffusion(
-            const Array<OneD, const Array<OneD, NekDouble> > &inarray,
-            Array<OneD,       Array<OneD, NekDouble> > &outarray)
+            const TensorOfArray2D<NekDouble>    &inarray,
+            TensorOfArray2D<NekDouble>          &outarray)
 {
     v_DoArtificialDiffusion(inarray, outarray);
 }
@@ -78,14 +78,14 @@ void ArtificialDiffusion::DoArtificialDiffusion(
  *
  */
 void ArtificialDiffusion::v_DoArtificialDiffusion(
-            const Array<OneD, const Array<OneD, NekDouble> > &inarray,
-            Array<OneD,       Array<OneD, NekDouble> > &outarray)
+            const TensorOfArray2D<NekDouble>    &inarray,
+            TensorOfArray2D<NekDouble>          &outarray)
 {
     int i;
     int nvariables = inarray.num_elements();
     int npoints    = m_fields[0]->GetNpoints();
 
-    Array<OneD, Array<OneD, NekDouble> > outarrayDiff(nvariables);
+    TensorOfArray2D<NekDouble> outarrayDiff(nvariables);
 
     for (i = 0; i < nvariables; ++i)
     {
@@ -109,8 +109,8 @@ void ArtificialDiffusion::v_DoArtificialDiffusion(
  *
  */
 void ArtificialDiffusion::DoArtificialDiffusion_coeff(
-            const Array<OneD, const Array<OneD, NekDouble> > &inarray,
-            Array<OneD,       Array<OneD, NekDouble> > &outarray)
+            const TensorOfArray2D<NekDouble>    &inarray,
+            TensorOfArray2D<NekDouble>          &outarray)
 {
     v_DoArtificialDiffusion_coeff(inarray, outarray);
 }
@@ -120,22 +120,22 @@ void ArtificialDiffusion::DoArtificialDiffusion_coeff(
  *
  */
 void ArtificialDiffusion::v_DoArtificialDiffusion_coeff(
-            const Array<OneD, const Array<OneD, NekDouble> > &inarray,
-            Array<OneD,       Array<OneD, NekDouble> > &outarray)
+            const TensorOfArray2D<NekDouble>    &inarray,
+            TensorOfArray2D<NekDouble>          &outarray)
 {
     int i;
     int nvariables = inarray.num_elements();
     int npoints    = m_fields[0]->GetNpoints();
     int ncoeffs    = m_fields[0]->GetNcoeffs();
 
-    Array<OneD, Array<OneD, NekDouble> > outarrayDiff(nvariables);
+    TensorOfArray2D<NekDouble> outarrayDiff(nvariables);
 
     for (i = 0; i < nvariables; ++i)
     {
         outarrayDiff[i] = Array<OneD, NekDouble>(ncoeffs, 0.0);
     }
 
-    m_diffusion->Diffuse_coeff(nvariables, m_fields, inarray, outarrayDiff);
+    m_diffusion->DiffuseCoeff(nvariables, m_fields, inarray, outarrayDiff);
 
     for (i = 0; i < nvariables; ++i)
     {
@@ -151,27 +151,27 @@ void ArtificialDiffusion::v_DoArtificialDiffusion_coeff(
 //To DO, need to judge whether conservative/primal derivatives!
 //To Do, SmoothCapture has not been modified because it includes  force.
 void ArtificialDiffusion::v_DoArtificialDiffusionFlux(
-    const Array<OneD, const Array<OneD, NekDouble>> &inarray,
-    Array<OneD, Array<OneD, Array<OneD, NekDouble>>>&VolumeFlux,
-    Array<OneD, Array<OneD, NekDouble>>             &TraceFlux)
+    const TensorOfArray2D<NekDouble>    &inarray,
+    TensorOfArray3D<NekDouble>          &VolumeFlux,
+    TensorOfArray2D<NekDouble>          &TraceFlux)
 {
     int nvariables = inarray.num_elements();
     int npoints    = m_fields[0]->GetNpoints();
     int nTracePts  = m_fields[0]->GetTrace()->GetTotPoints();
     int nDim       = m_fields[0]->GetCoordim(0);
 
-    Array<OneD, Array<OneD, Array<OneD, NekDouble>>> VolumeDiff(nDim);
-    Array<OneD, Array<OneD, NekDouble>> TraceDiff(nvariables);
-    Array<OneD,Array<OneD, Array<OneD, NekDouble>>> inarrayDiffderivative(nDim);
+    TensorOfArray3D<NekDouble> VolumeDiff(nDim);
+    TensorOfArray2D<NekDouble> TraceDiff(nvariables);
+    TensorOfArray3D<NekDouble> qfields(nDim);
     
     for (int j = 0; j < nDim; ++j)
     {
-        VolumeDiff[j] = Array<OneD, Array<OneD, NekDouble>>(nvariables);
-        inarrayDiffderivative[j]=Array<OneD, Array<OneD, NekDouble>> (nvariables);
+        VolumeDiff[j] = TensorOfArray2D<NekDouble>(nvariables);
+        qfields[j]=TensorOfArray2D<NekDouble> (nvariables);
         for (int i = 0; i < nvariables; ++i)
         {
             VolumeDiff[j][i] = Array<OneD, NekDouble>(npoints, 0.0);
-            inarrayDiffderivative[j][i]=Array<OneD, NekDouble>(npoints,0.0);
+            qfields[j][i]=Array<OneD, NekDouble>(npoints,0.0);
         }
     }
     for (int i = 0; i < nvariables; ++i)
@@ -181,15 +181,19 @@ void ArtificialDiffusion::v_DoArtificialDiffusionFlux(
 
     // Diffusion term in physical rhs form
     // To notice, needs to firstly calculate volumeflux, traceflux uses it.
-    m_diffusion->DiffuseCalculateDerivative(nvariables,m_fields,inarray,inarrayDiffderivative);
-    m_diffusion->DiffuseVolumeFlux(nvariables, m_fields, inarray,inarrayDiffderivative, VolumeFlux);
-    m_diffusion->DiffuseTraceFlux(nvariables, m_fields, inarray,inarrayDiffderivative,VolumeFlux,TraceFlux);
+    m_diffusion->DiffuseCalculateDerivative(nvariables,m_fields,
+        inarray,qfields);
+    m_diffusion->DiffuseVolumeFlux(nvariables, m_fields, inarray,
+        qfields, VolumeFlux);
+    m_diffusion->DiffuseTraceFlux(nvariables, m_fields, inarray,
+        qfields,VolumeFlux,TraceFlux);
 
     for (int j = 0; j < nDim; ++j)
     {
         for (int i = 0; i < nvariables; ++i)
         {
-            Vmath::Vadd(npoints, &VolumeDiff[j][i][0], 1, &VolumeFlux[j][i][0], 1,
+            Vmath::Vadd(npoints, &VolumeDiff[j][i][0], 1, 
+                        &VolumeFlux[j][i][0], 1,
                         &VolumeFlux[j][i][0], 1);
         }
     }
@@ -204,8 +208,8 @@ void ArtificialDiffusion::v_DoArtificialDiffusionFlux(
  *
  */
 void ArtificialDiffusion::GetArtificialViscosity(
-            const Array<OneD, Array<OneD, NekDouble> > &physfield,
-                  Array<OneD, NekDouble  >             &mu)
+            const TensorOfArray2D<NekDouble>    &physfield,
+            Array<OneD, NekDouble  >            &mu)
 {
     v_GetArtificialViscosity(physfield, mu);
 }

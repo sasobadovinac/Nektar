@@ -74,7 +74,7 @@ namespace Nektar
                 const Array<OneD, Array<OneD, NekDouble> >        &pFwd = NullNekDoubleArrayofArray,
                 const Array<OneD, Array<OneD, NekDouble> >        &pBwd = NullNekDoubleArrayofArray);
             
-            virtual void v_Advect_coeff(
+            virtual void v_AdvectCoeff(
                 const int                                          nConvective,
                 const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
                 const Array<OneD, Array<OneD, NekDouble> >        &advVel,
@@ -83,6 +83,22 @@ namespace Nektar
                 const NekDouble                                   &time,
                 const Array<OneD, Array<OneD, NekDouble> > &pFwd = NullNekDoubleArrayofArray,
                 const Array<OneD, Array<OneD, NekDouble> > &pBwd = NullNekDoubleArrayofArray);
+            virtual void v_AdvectCoeffVol(
+                const int nConvectiveFields,
+                const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
+                const Array<OneD, Array<OneD, NekDouble> >        &advVel,
+                const Array<OneD, Array<OneD, NekDouble> >        &inarray,
+                Array<OneD, Array<OneD, NekDouble> >              &outarray,
+                const NekDouble                                   &time);
+            virtual void v_AdvectCoeffTrac(
+                const int nConvectiveFields,
+                const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
+                const Array<OneD, Array<OneD, NekDouble> >        &advVel,
+                const Array<OneD, Array<OneD, NekDouble> >        &inarray,
+                Array<OneD, Array<OneD, NekDouble> >              &outarray,
+                const NekDouble                                   &time,
+                const Array<OneD, Array<OneD, NekDouble> >        &pFwd,
+                const Array<OneD, Array<OneD, NekDouble> >        &pBwd);
                 
 
             virtual void v_AdvectVolumeFlux(

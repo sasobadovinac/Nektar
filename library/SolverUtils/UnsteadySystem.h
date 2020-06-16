@@ -53,7 +53,7 @@ namespace Nektar
 
             /// Calculate the larger time-step mantaining the problem stable.
             SOLVER_UTILS_EXPORT NekDouble GetTimeStep(
-                const Array<OneD, const Array<OneD, NekDouble> > &inarray);
+                const TensorOfArray2D<NekDouble> &inarray);
 
             SOLVER_UTILS_EXPORT void SteadyStateResidual(
                 int                         step, 
@@ -235,7 +235,7 @@ namespace Nektar
                 Array<OneD, Array<OneD, NekDouble> > &solution1D);
 
             SOLVER_UTILS_EXPORT virtual NekDouble v_GetTimeStep(
-                const Array<OneD, const Array<OneD, NekDouble> > &inarray);
+                const TensorOfArray2D<NekDouble> &inarray);
 
             SOLVER_UTILS_EXPORT virtual bool v_PreIntegrate(int step);
             SOLVER_UTILS_EXPORT virtual bool v_PostIntegrate(int step);

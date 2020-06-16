@@ -172,46 +172,79 @@ namespace Nektar
                 const Array<OneD, Array<OneD, NekDouble> > &pFwd = NullNekDoubleArrayofArray,
                 const Array<OneD, Array<OneD, NekDouble> > &pBwd = NullNekDoubleArrayofArray);
 
-            SOLVER_UTILS_EXPORT void Diffuse_coeff(
+            SOLVER_UTILS_EXPORT void DiffuseCoeff(
                 const int nConvectiveFields,
                 const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
                 const Array<OneD, Array<OneD, NekDouble> >        &inarray,
                 Array<OneD, Array<OneD, NekDouble> >              &outarray,
-                const Array<OneD, Array<OneD, NekDouble> >        &pFwd= NullNekDoubleArrayofArray,
-                const Array<OneD, Array<OneD, NekDouble> >        &pBwd= NullNekDoubleArrayofArray);
+                const Array<OneD, Array<OneD, NekDouble> >        &pFwd= 
+                        NullNekDoubleArrayofArray,
+                const Array<OneD, Array<OneD, NekDouble> >        &pBwd= 
+                        NullNekDoubleArrayofArray);
 
             SOLVER_UTILS_EXPORT void Diffuse(
                 const int nConvectiveFields,
                 const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
                 const Array<OneD, Array<OneD, NekDouble> >        &inarray,
                       Array<OneD, Array<OneD, NekDouble> >        &outarray,
-                NekDouble                                           time,
-                const Array<OneD, Array<OneD, NekDouble> > &pFwd = NullNekDoubleArrayofArray,
-                const Array<OneD, Array<OneD, NekDouble> > &pBwd = NullNekDoubleArrayofArray);
+                NekDouble                                         time,
+                const Array<OneD, Array<OneD, NekDouble> >        &pFwd = 
+                        NullNekDoubleArrayofArray,
+                const Array<OneD, Array<OneD, NekDouble> >        &pBwd = 
+                        NullNekDoubleArrayofArray);
 
-            SOLVER_UTILS_EXPORT void Diffuse_coeff(
+            SOLVER_UTILS_EXPORT void DiffuseCoeff(
                 const int nConvectiveFields,
                 const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
                 const Array<OneD, Array<OneD, NekDouble> >        &inarray,
                 Array<OneD, Array<OneD, NekDouble> >              &outarray,
-                NekDouble                                           time,
-                const Array<OneD, Array<OneD, NekDouble> >        &pFwd= NullNekDoubleArrayofArray,
-                const Array<OneD, Array<OneD, NekDouble> >        &pBwd= NullNekDoubleArrayofArray,
-                const bool                                                  flagFreezeJac = false);
+                NekDouble                                         time,
+                const Array<OneD, Array<OneD, NekDouble> >        &pFwd = 
+                        NullNekDoubleArrayofArray,
+                const Array<OneD, Array<OneD, NekDouble> >        &pBwd = 
+                        NullNekDoubleArrayofArray,
+                const bool                                      flagFreezeJac = 
+                        false);
+
+            SOLVER_UTILS_EXPORT void DiffuseCoeffVol(
+                const int                                          nConvectiveFields,
+                const Array<OneD, MultiRegions::ExpListSharedPtr>  &fields,
+                const Array<OneD, Array<OneD, NekDouble> >         &inarray,
+                Array<OneD, Array<OneD, Array<OneD, NekDouble> > > &qfield,
+                Array<OneD, Array<OneD, NekDouble> >               &outarray,
+                NekDouble                                         time,
+                Array<OneD, Array<OneD, Array<OneD, NekDouble> > > &elmtFlux,
+                Array< OneD, int >                                 &nonZeroIndex,
+                const bool                                      flagFreezeJac = 
+                        false);
+
+            SOLVER_UTILS_EXPORT void DiffuseCoeffTrac(
+                const int                                          nConvectiveFields,
+                const Array<OneD, MultiRegions::ExpListSharedPtr>  &fields,
+                const Array<OneD, Array<OneD, NekDouble> >         &inarray,
+                Array<OneD, Array<OneD, NekDouble> >               &outarray,
+                NekDouble                                         time,
+                const Array<OneD, Array<OneD, NekDouble> >         &vFwd,
+                const Array<OneD, Array<OneD, NekDouble> >         &vBwd,
+                Array<OneD, Array<OneD, Array<OneD, NekDouble> > > &qfield,
+                Array<OneD, Array<OneD, Array<OneD, NekDouble> > > &elmtFlux,
+                Array< OneD, int >                                 &nonZeroIndex,
+                const bool                                      flagFreezeJac = 
+                        false);
             
-            SOLVER_UTILS_EXPORT void Diffuse_coeff(
-                const int                                                   nConvectiveFields,
-                const Array<OneD, MultiRegions::ExpListSharedPtr>           &fields,
-                const Array<OneD, Array<OneD, NekDouble> >                  &inarray,
-                Array<OneD, Array<OneD, NekDouble> >                        &outarray,
-                const Array<OneD, Array<OneD, NekDouble> >                  &vFwd,
-                const Array<OneD, Array<OneD, NekDouble> >                  &vBwd,
-                Array<OneD, Array<OneD, Array<OneD, NekDouble> > >          &qfield,
-                Array< OneD, int >                                          &nonZeroIndex,
-                const bool                                                  flagFreezeJac = false)
+            SOLVER_UTILS_EXPORT void DiffuseCoeff(
+                const int                                          nConvectiveFields,
+                const Array<OneD, MultiRegions::ExpListSharedPtr>  &fields,
+                const Array<OneD, Array<OneD, NekDouble> >         &inarray,
+                Array<OneD, Array<OneD, NekDouble> >               &outarray,
+                const Array<OneD, Array<OneD, NekDouble> >         &vFwd,
+                const Array<OneD, Array<OneD, NekDouble> >         &vBwd,
+                Array<OneD, Array<OneD, Array<OneD, NekDouble> > > &qfield,
+                Array< OneD, int >                                 &nonZeroIndex,
+                const bool                                         flagFreezeJac = false)
             {
                 m_flagFreezeJac = flagFreezeJac;
-                v_Diffuse_coeff(nConvectiveFields, fields, inarray, outarray, vFwd, vBwd,qfield,nonZeroIndex);
+                v_DiffuseCoeff(nConvectiveFields, fields, inarray, outarray, vFwd, vBwd,qfield,nonZeroIndex);
                 m_flagFreezeJac = false;
             }
             
@@ -323,6 +356,17 @@ namespace Nektar
                 Array<OneD, Array<OneD, Array<OneD, NekDouble> > >                  &Fwdflux,
                 Array<OneD, Array<OneD, Array<OneD, NekDouble> > >                  &Bwdflux,
                 Array<OneD, Array<OneD, NekDouble> >                                &outarray);
+                
+            SOLVER_UTILS_EXPORT virtual void v_AddSymmFluxIntegralToCoeff(
+                const int                                         nvariables,
+                const int                                         nDim,
+                const int                                         nPts,
+                const int                                         nTracePts,
+                const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
+                const Array<OneD, const int >                     &nonZeroIndex,
+                TensorOfArray3D<NekDouble>                        &tracflux,
+                TensorOfArray2D<NekDouble>                        &outarray);
+                
             SOLVER_UTILS_EXPORT void SetRefFields(
                 Array<OneD, Array<OneD, NekDouble > >  &in)
             {
@@ -332,6 +376,36 @@ namespace Nektar
             SOLVER_UTILS_EXPORT void FluxVec(
                     Array<OneD, Array<OneD, Array<OneD, NekDouble> > >
                                                                 &fluxvector);
+
+            SOLVER_UTILS_EXPORT bool GetCalcTracePartFlag() const
+            {
+                return m_CalcTracePartFlag;
+            }
+
+            SOLVER_UTILS_EXPORT void SetCalcTracePartFlag(bool in)
+            {
+                m_CalcTracePartFlag = in;
+            }
+
+            SOLVER_UTILS_EXPORT bool GetCalcVolumPartFlag() const
+            {
+                return m_CalcVolumPartFlag;
+            }
+
+            SOLVER_UTILS_EXPORT void SetCalcVolumPartFlag(bool in)
+            {
+                m_CalcVolumPartFlag = in;
+            }
+
+            SOLVER_UTILS_EXPORT bool GetMultipInvmassFlag() const
+            {
+                return m_MultipInvmassFlag;
+            }
+
+            SOLVER_UTILS_EXPORT void SetMultipInvmassFlag(bool in)
+            {
+                m_MultipInvmassFlag = in;
+            }
 
             template<typename FuncPointerT, typename ObjectPointerT>
             void SetFluxVector(FuncPointerT func, ObjectPointerT obj)
@@ -504,6 +578,10 @@ namespace Nektar
 
             bool                            m_flagFreezeJac = false;
 
+            bool                   m_CalcTracePartFlag = true;
+            bool                   m_CalcVolumPartFlag = true;
+            bool                   m_MultipInvmassFlag = true;
+
             virtual void v_InitObject(
                 LibUtilities::SessionReaderSharedPtr              pSession,
                 Array<OneD, MultiRegions::ExpListSharedPtr>       pFields)
@@ -519,23 +597,43 @@ namespace Nektar
                 const Array<OneD, Array<OneD, NekDouble> > &pFwd = NullNekDoubleArrayofArray,
                 const Array<OneD, Array<OneD, NekDouble> > &pBwd = NullNekDoubleArrayofArray)=0;
 
-            virtual void v_Diffuse_coeff(
+            virtual void v_DiffuseCoeff(
                 const int nConvectiveFields,
                 const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
                 const Array<OneD, Array<OneD, NekDouble> >        &inarray,
-                      Array<OneD, Array<OneD, NekDouble> >        &outarray,
-                const Array<OneD, Array<OneD, NekDouble> > &pFwd = NullNekDoubleArrayofArray,
-                const Array<OneD, Array<OneD, NekDouble> > &pBwd = NullNekDoubleArrayofArray);
+                Array<OneD, Array<OneD, NekDouble> >              &outarray,
+                const Array<OneD, Array<OneD, NekDouble> >        &pFwd,
+                const Array<OneD, Array<OneD, NekDouble> >        &pBwd);
 
-            virtual void v_Diffuse_coeff(
-                const int                                                   nConvectiveFields,
-                const Array<OneD, MultiRegions::ExpListSharedPtr>           &fields,
-                const Array<OneD, Array<OneD, NekDouble> >                  &inarray,
-                Array<OneD, Array<OneD, NekDouble> >                        &outarray,
-                const Array<OneD, Array<OneD, NekDouble> >                  &vFwd,
-                const Array<OneD, Array<OneD, NekDouble> >                  &vBwd,
-                Array<OneD, Array<OneD, Array<OneD, NekDouble> > >          &qfield,
-                Array< OneD, int >                                          &nonZeroIndex);
+            virtual void v_DiffuseCoeff(
+                const int                                          nConvectiveFields,
+                const Array<OneD, MultiRegions::ExpListSharedPtr>  &fields,
+                const Array<OneD, Array<OneD, NekDouble> >         &inarray,
+                Array<OneD, Array<OneD, NekDouble> >               &outarray,
+                const Array<OneD, Array<OneD, NekDouble> >         &vFwd,
+                const Array<OneD, Array<OneD, NekDouble> >         &vBwd,
+                Array<OneD, Array<OneD, Array<OneD, NekDouble> > > &qfield,
+                Array< OneD, int >                                 &nonZeroIndex);
+
+            virtual void v_DiffuseCoeffVol(
+                const int                                          nConvectiveFields,
+                const Array<OneD, MultiRegions::ExpListSharedPtr>  &fields,
+                const Array<OneD, Array<OneD, NekDouble> >         &inarray,
+                Array<OneD, Array<OneD, Array<OneD, NekDouble> > > &qfield,
+                Array<OneD, Array<OneD, NekDouble> >               &outarray,
+                Array<OneD, Array<OneD, Array<OneD, NekDouble> > > &elmtFlux,
+                Array< OneD, int >                                 &nonZeroIndex);
+
+            virtual void v_DiffuseCoeffTrac(
+                const int                                          nConvectiveFields,
+                const Array<OneD, MultiRegions::ExpListSharedPtr>  &fields,
+                const Array<OneD, Array<OneD, NekDouble> >         &inarray,
+                Array<OneD, Array<OneD, NekDouble> >               &outarray,
+                const Array<OneD, Array<OneD, NekDouble> >         &vFwd,
+                const Array<OneD, Array<OneD, NekDouble> >         &vBwd,
+                Array<OneD, Array<OneD, Array<OneD, NekDouble> > > &qfield,
+                Array<OneD, Array<OneD, Array<OneD, NekDouble> > > &elmtFlux,
+                Array< OneD, int >                                 &nonZeroIndex);
         
             virtual void v_ConsVarAveJump(
                 const int                                           nConvectiveFields,
