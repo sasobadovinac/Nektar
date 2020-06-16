@@ -299,8 +299,6 @@ namespace Nektar
                         }
                         AllocateNekBlkMatDig(m_PrecMat,nelmtmatdim,nelmtmatdim);
                     }
-        
-
 #ifdef CFS_DEBUGMODE
                     if(m_DebugNumJacBSOR)
                     {
@@ -317,8 +315,6 @@ namespace Nektar
 #endif
                 }
             }
-            m_linsol->setLinSysOperators(m_LinSysOprtors);
-
             m_linsol->setLinSysOperators(m_LinSysOprtors);
 
             int nvariables  =   m_fields.num_elements();
@@ -522,13 +518,6 @@ namespace Nektar
         {
             m_centralDiffTracJac = true;
         }
-        m_session->LoadParameter("centralDiffTracJac",     ntmp      ,    0);
-        m_centralDiffTracJac = false;
-        if(1==ntmp)
-        {
-            m_centralDiffTracJac = true;
-        }
-
 #endif
     }
 
@@ -2701,6 +2690,7 @@ namespace Nektar
             AllocateNekBlkMatDig(BJac,n_blks1, n_blks1);
         }
         
+
                 if (m_HomogeneousType == eHomogeneous1D)
         {
             Fwd = NullNekDoubleArrayofArray;
@@ -3871,11 +3861,10 @@ namespace Nektar
             }
         }
 
-
-        if (l_verbose&&l_root)
-        {
-            cout << " GMRESRelativeIteTol= " << forcing << endl;
-        }
+        // if (l_verbose&&l_root)
+        // {
+        //     cout << " GMRESRelativeIteTol= " << forcing << endl;
+        // }
     }
 
     template<typename TypeNekBlkMatSharedPtr>
@@ -4487,7 +4476,7 @@ namespace Nektar
 
         NonlinSysEvaluator_coeff_noSource(inarray,out);
 
-        for (int i = 0; i < nvariable; i++)
+        for (int i = 0; i < nvariable; ++i)
         {
             Vmath::Vsub(ncoeffs,out[i],1,sol_n[i],1,out[i],1);
         }
@@ -4521,7 +4510,6 @@ namespace Nektar
         }
         return;
     }
-
 
     /**
      * @brief Compute the right-hand side.
