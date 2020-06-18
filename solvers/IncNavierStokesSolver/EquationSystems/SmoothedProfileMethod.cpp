@@ -463,14 +463,18 @@ namespace Nektar
         // Phi functions from files are not timedependent
         else if (m_timeDependentPhi)
         {
-            m_phiEvaluator->Evaluate("Phi", m_phi->UpdatePhys(), t);
+            if (!m_filePhi)
+            {
+              m_phiEvaluator->Evaluate("Phi", m_phi->UpdatePhys(), t);
+            
 
             // And if velocities are timedependent as well
-            if (m_timeDependentUp)
-            {
-                // Store previous value of u_p during simulation
-                m_upPrev = m_up;
-                m_phiEvaluator->Evaluate(m_velName, m_up, t);
+              if (m_timeDependentUp)
+              {
+                  // Store previous value of u_p during simulation
+                  m_upPrev = m_up;
+                  m_phiEvaluator->Evaluate(m_velName, m_up, t);
+              }
             }
         }
     }
@@ -601,6 +605,7 @@ namespace Nektar
         TiXmlElement *function = GetFunctionHdl("ShapeFunction");
         TiXmlElement *child    = function->FirstChildElement();
         m_filePhi = false;
+        m_timeDependentPhi = false;
 
         // If defined by using a file
         if (boost::iequals(child->ValueStr(), "F"))
@@ -616,17 +621,17 @@ namespace Nektar
 
             if(m_timeDependentPhi)
             {   
+                // --> Read number of files
+                // --> Read angular velocity
                 // --> Look into directory
-                // --> Find number of files
                 // --> Import files (and corresponding angle or suppose first it is a uniform distribution)
                 // --> Add each file to the array
-
-              
+          
                 //Read number of samples
                 int nSamples;
-                child = child -> NextSiblingElement("F");
+                //child = child -> NextSiblingElement("F");
 
-                TiXmlAttribute *childAttr = child->FirstAttribute();
+                TiXmlAttribute *childAttr = child->LastAttribute();
                 std::string attrName(childAttr->Name());
                 ASSERTL0(attrName == "NSAMPLES", "Unable to read attribute number of samples.");
 
@@ -634,34 +639,57 @@ namespace Nektar
                 ASSERTL0(status == TIXML_SUCCESS, "The number of samples "
                      "has to be specified.")
 
-                /*int npoints  = m_baseflow[0].num_elements();
-                m_interp     = Array<OneD, Array<OneD, NekDouble> > (nSamples);
-
-                for (int i = 0; i < nSamples; ++i)
-                {
-                    m_interp[i] = Array<OneD,NekDouble>(npoints*nSamples, 0.0);
-                }*/
-
                 // Import the STL samples into auxiliary vector
 
                 // The STL samples should be stored in the form "%d.stl" where %d is
                 // the rotation angle from the initial position
 
-                // A subdirectory can also be included, such as "dir/%d.stl"
+                // A subdirectory can also be included, such as "dir/%d.stl"                
+                int angle = 0;
+                int dAngle = 360/nSamples;
+                ASSERTL0(typeid(dAngle) == typeid(int),"Angular postion of samples must be integers");
                 
-                size_t found = fileName.find("%d");
-                ASSERTL0(found != string::npos && fileName.find("%d", found+1) == string::npos,
-                         "Since N_slices is specified, the filename provided for function "
-                         "'BaseFlow' must include exactly one instance of the format "
-                         "specifier '%d', to index the time-slices.");
-                char* buffer = new char[fileName.length() + 8];
+                string sampleFileName;
+                string angleString;
                 for (int i = 0; i < nSamples; ++i)
                 {
-                    //Add file
+                    // Get phi values from XML file (after "FieldConvert" the STL file)
+                    // First, load the data
+                    std::vector<LibUtilities::FieldDefinitionsSharedPtr> fieldDef;
+                    std::vector<std::vector<NekDouble> > fieldData;
+                    LibUtilities::FieldMetaDataMap fieldMetaData;
+                    angleString = to_string(angle);
+                    
+                    cout << "Imported Phi field for sample angle " + angleString + " degrees" << endl;
+                    
+                    sampleFileName = "./" + fileName + "/" + angleString + ".fld";
+                    LibUtilities::FieldIOSharedPtr phiFile =
+                        LibUtilities::FieldIO::CreateForFile(m_session, sampleFileName);
+                    phiFile->Import(sampleFileName, fieldDef, fieldData, fieldMetaData);
+
+                    // Only Phi field should be defined in the file
+                    ASSERTL0(fieldData.size() == 1, "Only one field (phi) must be "
+                                                    "defined in the FLD file.")
+
+                    // Extract Phi field to output
+                    string tmp("phi");
+                    m_phi->ExtractDataToCoeffs(fieldDef[0], fieldData[0],
+                                               tmp, m_phi->UpdateCoeffs());
+                    m_phi->BwdTrans(m_phi->GetCoeffs(), m_phi->UpdatePhys());
+                    
+                    // Store Phi in table of Phi fields
+                    m_phiTable.push_back(m_phi);
+
+                    //Update angle name
+                    angle = angle + dAngle;
                 }
-                delete[] buffer;
+
+                ASSERTL0(m_phiTable.size() == nSamples, "The number of samples provided does not match"
+                                                        " NSAMPLES.")
+
                 m_timeDependentPhi = true;
                 m_timeDependentUp  = false;
+
             }
             else
             {
@@ -710,30 +738,5 @@ namespace Nektar
             }
         }
     }
-
-    /*void LinearisedAdvection::UpdateBase(
-        const NekDouble                     m_slices,
-        const Array<OneD, const NekDouble> &inarray,
-        Array<OneD, NekDouble>             &outarray,
-        const NekDouble                     m_time,
-        const NekDouble                     m_period)
-    {
-        int npoints     = m_baseflow[0].num_elements();
-        NekDouble BetaT = 2*M_PI*fmod (m_time, m_period) / m_period;
-        NekDouble phase;
-        Array<OneD, NekDouble> auxiliary(npoints);
-
-        Vmath::Vcopy(npoints,&inarray[0],1,&outarray[0],1);
-        Vmath::Svtvp(npoints, cos(0.5*m_slices*BetaT),&inarray[npoints],1,&outarray[0],1,&outarray[0],1);
-
-        for (int i = 2; i < m_slices; i += 2)
-        {
-            phase = (i>>1) * BetaT;
-
-            Vmath::Svtvp(npoints, cos(phase),&inarray[i*npoints],1,&outarray[0],1,&outarray[0],1);
-            Vmath::Svtvp(npoints, -sin(phase), &inarray[(i+1)*npoints], 1, &outarray[0], 1,&outarray[0],1);
-        }
-
-    }*/
 
 } // end of namespace

@@ -98,6 +98,8 @@ namespace Nektar
         Array<OneD, MultiRegions::ExpListSharedPtr> m_fs;
         /// Shape function 'phi' as expansion list
         MultiRegions::ExpListSharedPtr m_phi;
+        /// Vector of shape functions in case of rotating STL
+        std::vector<MultiRegions::ExpListSharedPtr> m_phiTable;
         /// Function that evaluates the values of \Phi
         SolverUtils::SessionFunctionSharedPtr m_phiEvaluator;
         /// Flag that is true when phi depends on time
@@ -181,3 +183,4 @@ namespace Nektar
 } // end of namespace
 
 #endif // SMOOTHEDPROFILEMETHOD_H
+ 
