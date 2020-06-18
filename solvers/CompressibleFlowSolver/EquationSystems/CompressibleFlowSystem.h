@@ -118,6 +118,8 @@ namespace Nektar
 
         bool                                m_flagPrecMatFree = false;
 
+        bool                                m_updateMatFreeJacFlag = false;
+
 #ifdef CFS_DEBUGMODE
        // 1: Adv; 2: Dif; Default: all
         int                                 m_DebugAdvDiffSwitch; 
@@ -641,8 +643,7 @@ namespace Nektar
             const DataType                          tmpDataType);
 
         void CalcFluxJacVolBnd(
-            const TensorOfArray2D<NekDouble>  &inarray,
-            const TensorOfArray3D<NekDouble>  &qfield);
+            const TensorOfArray2D<NekDouble>  &inarray);
 
         void GetFluxVectorMF(
             const Array<OneD, Array<OneD, NekDouble> > &physfield,

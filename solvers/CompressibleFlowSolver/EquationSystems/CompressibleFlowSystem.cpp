@@ -2110,32 +2110,41 @@ namespace Nektar
     }
 
     void CompressibleFlowSystem::CalcFluxJacVolBnd(
-        const TensorOfArray2D<NekDouble>  &inarray,
-        const TensorOfArray3D<NekDouble>  &qfield)
+        const TensorOfArray2D<NekDouble>  &inarray)
     {
-        int nSpaceDim = m_graph->GetSpaceDimension();
+        size_t nSpaceDim = m_graph->GetSpaceDimension();
+        size_t nvariables = m_fields.num_elements();
+        size_t npoints = GetTotPoints();
+
+        Array<OneD, Array<OneD, NekDouble> > pnts(nvariables);
+        for(int i = 0; i < nvariables; i++)
+        {
+            pnts[i]   =   Array<OneD, NekDouble>(npoints,0.0);
+            m_fields[i]->BwdTrans(inarray[i], pnts[i]);
+        }
+
+        CalphysDeriv(pnts,m_qfield);
 
         for(int nfluxDir = 0; nfluxDir < nSpaceDim; nfluxDir++)
         {
             if(m_DEBUG_ADVECTION_JAC_MAT)
             {
-                GetFluxVectorJacDirctnMat(nfluxDir,inarray, m_ElmtFluxJacArray);
+                GetFluxVectorJacDirctnMat(nfluxDir,pnts, m_ElmtFluxJacArray);
             }
 
             if(m_DEBUG_VISCOUS_JAC_MAT)
             {
-                MinusDiffusionFluxJacDirctnMat(nfluxDir,inarray,qfield, 
+                MinusDiffusionFluxJacDirctnMat(nfluxDir,pnts,m_qfield, 
                     m_ElmtFluxJacArray);
             }
         }
 
-        GetTraceJac(inarray,qfield,m_TraceJac,m_TraceJacDeriv,
+        GetTraceJac(pnts,m_qfield,m_TraceJac,m_TraceJacDeriv,
                     m_TraceJacDerivSign, m_TraceIPSymJacArray);
         
-        int npoints = GetTotPoints();
         for(int j = 0; j< m_fields.num_elements(); j++)
         {
-            Vmath::Vcopy(npoints, inarray[j],1,m_MatrixFreeRefFields[j],1);
+            Vmath::Vcopy(npoints, pnts[j],1,m_MatrixFreeRefFields[j],1);
             m_fields[j]->GetFwdBwdTracePhys(m_MatrixFreeRefFields[j], 
                                             m_MatrixFreeRefFwd[j], 
                                             m_MatrixFreeRefBwd[j]);
@@ -3442,16 +3451,7 @@ namespace Nektar
         // }
             if(2==m_LiniearizationMethod||3==m_LiniearizationMethod)
             {
-                Array<OneD, Array<OneD, NekDouble> > pnts(nvariables);
-                int nphspnt = inpnts[0].num_elements();
-                for(int i = 0; i < nvariables; i++)
-                {
-                    pnts[i]   =   Array<OneD, NekDouble>(nphspnt,0.0);
-                    m_fields[i]->BwdTrans(m_TimeIntegtSol_k[i], pnts[i]);
-                }
-
-                CalphysDeriv(pnts,m_qfield);
-                CalcFluxJacVolBnd(pnts,m_qfield);
+                m_updateMatFreeJacFlag = true;
             }
         // int ncoefftmp = m_TimeIntegtSol_k[nvariables-1].num_elements();
         // for(int i = 0; i < nvariables; i++)
@@ -4374,6 +4374,12 @@ namespace Nektar
         const  Array<OneD, NekDouble>   &inarray,
         Array<OneD, NekDouble >         &out)
     {
+        if (m_updateMatFreeJacFlag)
+        {
+            CalcFluxJacVolBnd(m_TimeIntegtSol_k);
+            m_updateMatFreeJacFlag = false;
+        }
+
         DoOdeProjection(m_MatrixFreeRefFields,m_MatrixFreeRefFields,
             m_BndEvaluateTime);
 
