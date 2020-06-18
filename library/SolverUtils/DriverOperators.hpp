@@ -51,23 +51,31 @@ namespace Nektar
             typedef       Array<OneD,NekDouble>  OutArrayType1;
             typedef std::function< void (InArrayType1&, OutArrayType1&, const bool, const int)>  FunctorType1;
 
-            typedef const Array<OneD, const Array<OneD, NekDouble>> InArrayType2;
+            typedef const Array<OneD, Array<OneD, NekDouble>> InArrayType2;
             typedef       Array<OneD, Array<OneD,NekDouble>>       OutArrayType2;
             typedef std::function< void (InArrayType2&, OutArrayType2&, const NekDouble)>  FunctorType2;
 
             typedef std::function< void (InArrayType2&, const NekDouble, const NekDouble, const int)>  FunctorType3;
+
+            typedef std::function< void (InArrayType1&, 
+                                        OutArrayType1&, 
+                                        const NekDouble, 
+                                        InArrayType2&, 
+                                        const bool)>  FunctorType4;
             
             DriverOperators(void):
             functors1(1),
             functors2(2),
-            functors3(1)
+            functors3(1),
+            functors4(1)
             {
             }
 
             DriverOperators(DriverOperators &in):
             functors1(1),
             functors2(2),
-            functors3(1)
+            functors3(1),
+            functors4(1)
             {
                 for (int i = 0; i < 1; i++)
                 {
@@ -83,6 +91,11 @@ namespace Nektar
                 for (int i = 0; i < 1; i++)
                 {
                     functors3[i] = in.functors3[i];
+                }
+
+                for (int i = 0; i < 1; i++)
+                {
+                    functors4[i] = in.functors4[i];
                 }
             }
 
@@ -148,10 +161,34 @@ namespace Nektar
                 functors3[0](inarray,time,lambda,NextLevel);
             }
 
+            //Set a functor that calculate Next level's Stored matrices
+            template<typename FuncPointerT, typename ObjectPointerT> 
+            void DefineMultiLvlJacMultiplyMatFree(FuncPointerT func, ObjectPointerT obj)
+            {
+                 functors4[0]=  std::bind(func, obj, 
+                    std::placeholders::_1, 
+                    std::placeholders::_2, 
+                    std::placeholders::_3, 
+                    std::placeholders::_4,
+                    std::placeholders::_5);
+            }
+
+            inline void  MultiLvlJacMultiplyMatFree(
+                InArrayType1&       inarray, 
+                OutArrayType1&      outarray, 
+                const NekDouble     time, 
+                InArrayType2&       refFields, 
+                const bool          flagUpdateJac) const
+            {
+                ASSERTL1(functors3[0],"CalculateNextLevelPreconditioner has not been defined");
+                functors4[0](inarray, outarray, time, refFields, flagUpdateJac);
+            }
+
         protected:
             Array<OneD,FunctorType1> functors1;
             Array<OneD,FunctorType2> functors2;
             Array<OneD,FunctorType3> functors3;
+            Array<OneD,FunctorType4> functors4;
         private:
 
         };

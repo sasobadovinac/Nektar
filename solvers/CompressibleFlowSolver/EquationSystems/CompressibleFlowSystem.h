@@ -106,19 +106,22 @@ namespace Nektar
         Array<OneD, NekDouble>              m_muavTrace;
 
         // Parameters for local time-stepping
-        bool                                m_useLocalTimeStep;
+        bool                        m_useLocalTimeStep;
 
-        bool                                m_DEBUG_VISCOUS_TRACE_DERIV_JAC_MAT;
-        bool                                m_DEBUG_VISCOUS_JAC_MAT;
-        bool                                m_DEBUG_ADVECTION_JAC_MAT;
-        bool                                m_centralDiffTracJac;
+        bool                        m_DEBUG_VISCOUS_TRACE_DERIV_JAC_MAT;
+        bool                        m_DEBUG_VISCOUS_JAC_MAT;
+        bool                        m_DEBUG_ADVECTION_JAC_MAT;
+        bool                        m_centralDiffTracJac;
 
-        bool                                m_CalcTracePartFlag;
-        bool                                m_CalcVolumPartFlag;
+        bool                        m_CalcTracePartFlag;
+        bool                        m_CalcVolumPartFlag;
 
-        bool                                m_flagPrecMatFree = false;
+        bool                        m_flagPrecMatFree = false;
 
-        bool                                m_updateMatFreeJacFlag = false;
+        bool                        m_updateMatFreeJacFlag = false;
+
+        bool                        m_flagMultiLvlJacMultiplyMatFree = false;
+        
 
 #ifdef CFS_DEBUGMODE
        // 1: Adv; 2: Dif; Default: all
@@ -585,16 +588,23 @@ namespace Nektar
         void MatrixMultiply_JacobianFree_coeff(
             const  Array<OneD, NekDouble> &inarray,
                    Array<OneD, NekDouble >&out);
-        void MatrixMultiply_MatrixFree_coeff_noSource(
+        void MatrixMultiply_JacobianFree_coeff_noSource(
             const  Array<OneD, NekDouble> &inarray,
                    Array<OneD, NekDouble >&out);
         void MatrixMultiply_JacobianFree_coeff_central(
             const  Array<OneD, NekDouble> &inarray,
                 Array<OneD, NekDouble >&out);
         void MatrixMultiply_MatrixFree_coeff(
-            const  Array<OneD, NekDouble> &inarray,
-                Array<OneD, NekDouble >&out);
-        void MatrixMultiply_MatrixFree_coeff_FourthCentral(
+            const TensorOfArray1D<NekDouble>  &inarray, 
+            TensorOfArray1D<NekDouble>        &outarray);
+
+        void MatrixMultiply_MatrixFree_coeff(
+            const TensorOfArray1D<NekDouble>  &inarray, 
+            TensorOfArray1D<NekDouble>        &out, 
+            const NekDouble                   time, 
+            const TensorOfArray2D<NekDouble>  &refFields, 
+            const bool                        flagUpdateJac);
+        void MatrixMultiply_JacobianFree_coeff_FourthCentral(
             const  Array<OneD, NekDouble> &inarray,
                 Array<OneD, NekDouble >&out);
 

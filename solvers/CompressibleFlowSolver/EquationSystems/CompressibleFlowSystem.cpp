@@ -4199,9 +4199,9 @@ namespace Nektar
         return;
     }
 
-    void CompressibleFlowSystem::MatrixMultiply_MatrixFree_coeff_noSource(
-                                                 const  Array<OneD, NekDouble> &inarray,
-                                                        Array<OneD, NekDouble >&out)
+    void CompressibleFlowSystem::MatrixMultiply_JacobianFree_coeff_noSource(
+        const  Array<OneD, NekDouble>   &inarray,
+        Array<OneD, NekDouble >         &out)
     {
         NekDouble eps = m_JFEps;
         unsigned int ntotalGlobal     = inarray.num_elements();
@@ -4291,7 +4291,7 @@ namespace Nektar
         return;
     }
 
-    void CompressibleFlowSystem::MatrixMultiply_MatrixFree_coeff_FourthCentral(
+    void CompressibleFlowSystem::MatrixMultiply_JacobianFree_coeff_FourthCentral(
         const  Array<OneD, NekDouble>   &inarray,
         Array<OneD, NekDouble >         &out)
     {
@@ -4371,17 +4371,45 @@ namespace Nektar
     }
 
     void CompressibleFlowSystem::MatrixMultiply_MatrixFree_coeff(
-        const  Array<OneD, NekDouble>   &inarray,
-        Array<OneD, NekDouble >         &out)
+        const TensorOfArray1D<NekDouble>  &inarray, 
+        TensorOfArray1D<NekDouble>        &outarray)
     {
-        if (m_updateMatFreeJacFlag)
+        if (m_flagMultiLvlJacMultiplyMatFree)
         {
-            CalcFluxJacVolBnd(m_TimeIntegtSol_k);
-            m_updateMatFreeJacFlag = false;
+            m_EqdriverOperator.MultiLvlJacMultiplyMatFree(
+                inarray,
+                outarray,
+                m_BndEvaluateTime,
+                m_TimeIntegtSol_k,
+                m_updateMatFreeJacFlag);
+        }
+        else
+        {
+            MatrixMultiply_MatrixFree_coeff(
+                inarray,
+                outarray,
+                m_BndEvaluateTime,
+                m_TimeIntegtSol_k,
+                m_updateMatFreeJacFlag);
+        }
+        m_updateMatFreeJacFlag = false;
+    }
+
+
+    void CompressibleFlowSystem::MatrixMultiply_MatrixFree_coeff(
+        const TensorOfArray1D<NekDouble>  &inarray, 
+        TensorOfArray1D<NekDouble>        &out, 
+        const NekDouble                   time, 
+        const TensorOfArray2D<NekDouble>  &refFields, 
+        const bool                        flagUpdateJac)
+    {
+        if (flagUpdateJac)
+        {
+            CalcFluxJacVolBnd(refFields);
         }
 
         DoOdeProjection(m_MatrixFreeRefFields,m_MatrixFreeRefFields,
-            m_BndEvaluateTime);
+            time);
 
         unsigned int nvariable  = m_fields.num_elements();
         unsigned int ncoeffs    = m_fields[0]->GetNcoeffs();
@@ -4400,7 +4428,7 @@ namespace Nektar
         }
 
         bool flag = true;
-        DoOdeRhs_coeff(inpnts,out2D,m_BndEvaluateTime,flag);
+        DoOdeRhs_coeff(inpnts,out2D,time,flag);
 
         Vmath::Smul(nvariable*ncoeffs,m_TimeIntegLambda,out,1,out,1);
         Vmath::Vsub(nvariable*ncoeffs,inarray,1,out,1,out,1);
@@ -4818,7 +4846,7 @@ namespace Nektar
             {
                 tmpinn[i][nElmtOffset+npnt] = 1.0;
                 // MatrixMultiply_MatrixFree_coeff_central(tmpinn_1d,tmpout_1d);
-                MatrixMultiply_MatrixFree_coeff_FourthCentral(tmpinn_1d,
+                MatrixMultiply_JacobianFree_coeff_FourthCentral(tmpinn_1d,
                                                               tmpout_1d);
 
                 Vmath::Vcopy(ntotpnt,&tmpout_1d[0],1,
@@ -6881,12 +6909,12 @@ Array<OneD, NekDouble>  CompressibleFlowSystem::GetElmtMinHP(void)
             //Because it reuse TimeIntegration_Res_n, which does not calculate
             if(Level>0)
             {
-                MatrixMultiply_MatrixFree_coeff_noSource(outarray,outarraytmp);
+                MatrixMultiply_JacobianFree_coeff_noSource(outarray,outarraytmp);
             }
             else
             {
                 //Avoid repeating calculating Residual_k in highest level
-                MatrixMultiply_MatrixFree_coeff(outarray,outarraytmp);
+                MatrixMultiply_JacobianFree_coeff(outarray,outarraytmp);
             }
 
             //b-Ax:Ok
