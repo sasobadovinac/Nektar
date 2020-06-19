@@ -57,11 +57,14 @@ namespace Nektar
 
             typedef std::function< void (InArrayType2&, const NekDouble, const NekDouble, const int)>  FunctorType3;
 
-            typedef std::function< void (InArrayType1&, 
-                                        OutArrayType1&, 
-                                        const NekDouble, 
-                                        InArrayType2&, 
-                                        const bool)>  FunctorType4;
+            typedef std::function< void (
+                const int,
+                InArrayType1&, 
+                OutArrayType1&, 
+                const NekDouble, 
+                const NekDouble, 
+                InArrayType2&, 
+                const bool)>  FunctorType4;
             
             DriverOperators(void):
             functors1(1),
@@ -170,18 +173,24 @@ namespace Nektar
                     std::placeholders::_2, 
                     std::placeholders::_3, 
                     std::placeholders::_4,
-                    std::placeholders::_5);
+                    std::placeholders::_5,
+                    std::placeholders::_6,
+                    std::placeholders::_7);
             }
 
             inline void  MultiLvlJacMultiplyMatFree(
+                const int           Level,
                 InArrayType1&       inarray, 
                 OutArrayType1&      outarray, 
                 const NekDouble     time, 
+                const NekDouble     dtlamda, 
                 InArrayType2&       refFields, 
                 const bool          flagUpdateJac) const
             {
-                ASSERTL1(functors3[0],"CalculateNextLevelPreconditioner has not been defined");
-                functors4[0](inarray, outarray, time, refFields, flagUpdateJac);
+                ASSERTL1(functors3[0],
+                    "CalculateNextLevelPreconditioner has not been defined");
+                functors4[0](Level, inarray, outarray, time, dtlamda, refFields, 
+                    flagUpdateJac);
             }
 
         protected:

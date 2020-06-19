@@ -96,6 +96,19 @@ public:
         v_MultiLevel(inarray,outarray, UpDateOperatorflag, Level);
     }
 
+    SOLVER_UTILS_EXPORT inline void MultiLvlJacMultiplyMatFree(
+        const int                         Level,
+        const TensorOfArray1D<NekDouble>  &inarray, 
+        TensorOfArray1D<NekDouble>        &out, 
+        const NekDouble                   time, 
+        const NekDouble                   dtlamda, 
+        const TensorOfArray2D<NekDouble>  &refFields, 
+        const bool                        flagUpdateJac)
+    {
+        v_MultiLvlJacMultiplyMatFree(
+            Level, inarray, out, time, dtlamda, refFields, flagUpdateJac);
+    }
+
     SOLVER_UTILS_EXPORT inline void CalculateNextLevelPreconditioner(
         const Array<OneD, const Array<OneD, NekDouble>> &inarray,
         const NekDouble                                 time,
@@ -178,6 +191,18 @@ protected:
         const int                                       Level)
     {
          ASSERTL0(false,"This routine is not valid in this class");
+    }
+
+    SOLVER_UTILS_EXPORT virtual void v_MultiLvlJacMultiplyMatFree(
+        const int                         Level,
+        const TensorOfArray1D<NekDouble>  &inarray, 
+        TensorOfArray1D<NekDouble>        &out, 
+        const NekDouble                   time, 
+        const NekDouble                   dtlamda, 
+        const TensorOfArray2D<NekDouble>  &refFields, 
+        const bool                        flagUpdateJac)
+    {
+         ASSERTL0(false,"MultiLvlJacMultiplyMatFree is not valid");
     }
 
     SOLVER_UTILS_EXPORT virtual void v_CalculateNextLevelPreconditioner(

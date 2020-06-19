@@ -518,6 +518,12 @@ namespace Nektar
         {
             m_centralDiffTracJac = true;
         }
+        m_session->LoadParameter("flagMultiLvlJacMultiplyMatFree", ntmp , 0);
+        m_flagMultiLvlJacMultiplyMatFree = false;
+        if(1==ntmp)
+        {
+            m_flagMultiLvlJacMultiplyMatFree = true;
+        }
 #endif
     }
 
@@ -2110,7 +2116,8 @@ namespace Nektar
     }
 
     void CompressibleFlowSystem::CalcFluxJacVolBnd(
-        const TensorOfArray2D<NekDouble>  &inarray)
+        const TensorOfArray2D<NekDouble>  &inarray,
+        const NekDouble                   time)
     {
         size_t nSpaceDim = m_graph->GetSpaceDimension();
         size_t nvariables = m_fields.num_elements();
@@ -2122,6 +2129,22 @@ namespace Nektar
             pnts[i]   =   Array<OneD, NekDouble>(npoints,0.0);
             m_fields[i]->BwdTrans(inarray[i], pnts[i]);
         }
+
+        for(int j = 0; j< m_fields.num_elements(); j++)
+        {
+            Vmath::Vcopy(npoints, pnts[j],1,m_MatrixFreeRefFields[j],1);
+            m_fields[j]->GetFwdBwdTracePhys(m_MatrixFreeRefFields[j], 
+                                            m_MatrixFreeRefFwd[j], 
+                                            m_MatrixFreeRefBwd[j]);
+        }
+
+        if(m_DEBUG_VISCOUS_JAC_MAT)
+        {
+            m_diffusion->SetRefFields(m_MatrixFreeRefFields);
+        }
+
+        DoOdeProjection(m_MatrixFreeRefFields,m_MatrixFreeRefFields,
+            time);
 
         CalphysDeriv(pnts,m_qfield);
 
@@ -2141,19 +2164,6 @@ namespace Nektar
 
         GetTraceJac(pnts,m_qfield,m_TraceJac,m_TraceJacDeriv,
                     m_TraceJacDerivSign, m_TraceIPSymJacArray);
-        
-        for(int j = 0; j< m_fields.num_elements(); j++)
-        {
-            Vmath::Vcopy(npoints, pnts[j],1,m_MatrixFreeRefFields[j],1);
-            m_fields[j]->GetFwdBwdTracePhys(m_MatrixFreeRefFields[j], 
-                                            m_MatrixFreeRefFwd[j], 
-                                            m_MatrixFreeRefBwd[j]);
-        }
-
-        if(m_DEBUG_VISCOUS_JAC_MAT)
-        {
-            m_diffusion->SetRefFields(m_MatrixFreeRefFields);
-        }
     }
 
     template<typename DataType, typename TypeNekBlkMatSharedPtr>
@@ -3336,7 +3346,6 @@ namespace Nektar
         {
             m_fields[i]->BwdTrans(out[i],outpnt[i]);
         }
-
     }
 
     void CompressibleFlowSystem::DoImplicitSolve_coeff(
@@ -3372,8 +3381,6 @@ namespace Nektar
         NekDouble ototalDOF     = 1.0/ntotalDOF;
 
         UpdateSoltnRefNorms(inarray, ototalDOF);
-
-        
 
         Array<OneD, NekDouble> NonlinSysRes_1D(ntotal,0.0),
             sol_k_1D(ntotal,0.0),dsol_1D(ntotal,0.0);
@@ -4375,20 +4382,24 @@ namespace Nektar
         TensorOfArray1D<NekDouble>        &outarray)
     {
         if (m_flagMultiLvlJacMultiplyMatFree)
-        {
+        {   
+            int nlvl = 1;
             m_EqdriverOperator.MultiLvlJacMultiplyMatFree(
+                nlvl,
                 inarray,
                 outarray,
                 m_BndEvaluateTime,
+                m_TimeIntegLambda,
                 m_TimeIntegtSol_k,
                 m_updateMatFreeJacFlag);
         }
         else
         {
-            MatrixMultiply_MatrixFree_coeff(
+            v_MatrixMultiply_MatrixFree_coeff(
                 inarray,
                 outarray,
                 m_BndEvaluateTime,
+                m_TimeIntegLambda,
                 m_TimeIntegtSol_k,
                 m_updateMatFreeJacFlag);
         }
@@ -4396,24 +4407,31 @@ namespace Nektar
     }
 
 
-    void CompressibleFlowSystem::MatrixMultiply_MatrixFree_coeff(
+    void CompressibleFlowSystem::v_MatrixMultiply_MatrixFree_coeff(
         const TensorOfArray1D<NekDouble>  &inarray, 
         TensorOfArray1D<NekDouble>        &out, 
         const NekDouble                   time, 
+        const NekDouble                   dtlamda, 
         const TensorOfArray2D<NekDouble>  &refFields, 
         const bool                        flagUpdateJac)
     {
-        if (flagUpdateJac)
-        {
-            CalcFluxJacVolBnd(refFields);
-        }
-
-        DoOdeProjection(m_MatrixFreeRefFields,m_MatrixFreeRefFields,
-            time);
-
         unsigned int nvariable  = m_fields.num_elements();
         unsigned int ncoeffs    = m_fields[0]->GetNcoeffs();
         unsigned int npoints    = m_fields[0]->GetNpoints();
+
+        if (flagUpdateJac)
+        {
+            unsigned int ntotalGlobal     = nvariable * ncoeffs;
+            m_comm->AllReduce(ntotalGlobal, Nektar::LibUtilities::ReduceSum);
+            unsigned int ntotalDOF        = ntotalGlobal/nvariable;
+            NekDouble ototalDOF     = 1.0/ntotalDOF;
+
+            UpdateSoltnRefNorms(refFields, ototalDOF);
+
+            CalcFluxJacVolBnd(refFields, time);
+        }
+
+        
 
         Array<OneD, Array<OneD, NekDouble> > inpnts(nvariable);
         Array<OneD, Array<OneD, NekDouble> > in2D(nvariable);
@@ -4430,7 +4448,7 @@ namespace Nektar
         bool flag = true;
         DoOdeRhs_coeff(inpnts,out2D,time,flag);
 
-        Vmath::Smul(nvariable*ncoeffs,m_TimeIntegLambda,out,1,out,1);
+        Vmath::Smul(nvariable*ncoeffs,dtlamda,out,1,out,1);
         Vmath::Vsub(nvariable*ncoeffs,inarray,1,out,1,out,1);
         return;
     }

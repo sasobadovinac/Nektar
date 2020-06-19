@@ -64,6 +64,25 @@ namespace Nektar
         {
         }
 
+        /**
+         *
+         */
+        void DriverMultiLevel::v_InitObject(ostream &out)
+        {
+            Driver::v_InitObject(out);
+            
+            m_driverOperator.DefineCalculateNextLevelPreconditioner
+            (&Driver::CalculateNextLevelPreconditioner, this);
+            m_driverOperator.DefineMultiLevel(&Driver::MultiLevel, this);
+            m_driverOperator.DefineMultiLvlJacMultiplyMatFree(
+                &Driver::MultiLvlJacMultiplyMatFree, this);
+            //Every m_equation sets a functor to use next level's equation
+            for(int k=0;k<(m_nLevels-1);k++)
+            {
+                m_equ[k]->SetdriverOperator(m_driverOperator);
+            }
+        }
+
         void DriverMultiLevel::v_MultiLevel(const Array<OneD, NekDouble> &inarray,
                                                 Array<OneD,NekDouble> &outarray,
                                                 const bool UpDateOperatorflag,
@@ -73,6 +92,25 @@ namespace Nektar
             
             m_equ[Level]->MultiLevel(inarray, outarray, Level, m_MultiLevelCoeffs[Level],
                        m_MultiLevelCoeffs[Level+1], UpDateOperatorflag);
+        } 
+
+        void DriverMultiLevel::v_MultiLvlJacMultiplyMatFree(
+            const int                         Level,
+            const TensorOfArray1D<NekDouble>  &inarray, 
+            TensorOfArray1D<NekDouble>        &out, 
+            const NekDouble                   time, 
+            const NekDouble                   dtlamda, 
+            const TensorOfArray2D<NekDouble>  &refFields, 
+            const bool                        flagUpdateJac)
+        {
+            ASSERTL1(m_equ[Level],"Need to define EquationSystem[level]");
+            m_equ[Level]->MatrixMultiply_MatrixFree_coeff(
+                inarray,
+                out,
+                time,
+                dtlamda,
+                refFields,
+                flagUpdateJac);
         }    
 
         void DriverMultiLevel::v_CalculateNextLevelPreconditioner(
@@ -85,24 +123,6 @@ namespace Nektar
             
             m_equ[Level]->CalculateNextLevelPreconditioner(inarray, time, lambda);
         }    
-    
-        /**
-         *
-         */
-        void DriverMultiLevel::v_InitObject(ostream &out)
-        {
-            Driver::v_InitObject(out);
-            
-            m_driverOperator.DefineCalculateNextLevelPreconditioner
-            (&Driver::CalculateNextLevelPreconditioner, this);
-            m_driverOperator.DefineMultiLevel(&Driver::MultiLevel, this);
-            //Every m_equation sets a functor to use next level's equation
-            for(int k=0;k<(m_nLevels-1);k++)
-            {
-                m_equ[k]->SetdriverOperator(m_driverOperator);
-            }
-        }
-    
     
         void DriverMultiLevel::v_Execute(ostream &out)
         

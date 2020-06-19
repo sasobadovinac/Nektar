@@ -79,7 +79,16 @@ namespace Nektar
                     Array<OneD,NekDouble>  &outarray,
                     const bool UpDateOperatorflag,
                     const int Level);
-            
+
+            SOLVER_UTILS_EXPORT virtual void  v_MultiLvlJacMultiplyMatFree(
+                const int                         Level,
+                const TensorOfArray1D<NekDouble>  &inarray, 
+                TensorOfArray1D<NekDouble>        &out, 
+                const NekDouble                   time, 
+                const NekDouble                   dtlamda, 
+                const TensorOfArray2D<NekDouble>  &refFields, 
+                const bool                        flagUpdateJac);
+
             SOLVER_UTILS_EXPORT virtual void  v_CalculateNextLevelPreconditioner(
                     const Array<OneD, const Array<OneD, NekDouble>> &inarray,
                     const NekDouble                                 time,

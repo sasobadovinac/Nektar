@@ -598,12 +598,14 @@ namespace Nektar
             const TensorOfArray1D<NekDouble>  &inarray, 
             TensorOfArray1D<NekDouble>        &outarray);
 
-        void MatrixMultiply_MatrixFree_coeff(
+        virtual void v_MatrixMultiply_MatrixFree_coeff(
             const TensorOfArray1D<NekDouble>  &inarray, 
             TensorOfArray1D<NekDouble>        &out, 
             const NekDouble                   time, 
+            const NekDouble                   dtlamda, 
             const TensorOfArray2D<NekDouble>  &refFields, 
             const bool                        flagUpdateJac);
+
         void MatrixMultiply_JacobianFree_coeff_FourthCentral(
             const  Array<OneD, NekDouble> &inarray,
                 Array<OneD, NekDouble >&out);
@@ -653,7 +655,8 @@ namespace Nektar
             const DataType                          tmpDataType);
 
         void CalcFluxJacVolBnd(
-            const TensorOfArray2D<NekDouble>  &inarray);
+            const TensorOfArray2D<NekDouble>  &inarray,
+            const NekDouble                   time);
 
         void GetFluxVectorMF(
             const Array<OneD, Array<OneD, NekDouble> > &physfield,

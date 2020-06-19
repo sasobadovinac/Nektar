@@ -112,6 +112,18 @@ class Interpolator;
                 v_MultiLevel(inarray,outarray, Level, CurrentLevelCoeff, LowLevelCoeff, UpDateOperatorflag);
             }
 
+            SOLVER_UTILS_EXPORT void MatrixMultiply_MatrixFree_coeff(
+                const TensorOfArray1D<NekDouble>  &inarray, 
+                TensorOfArray1D<NekDouble>        &out, 
+                const NekDouble                   time, 
+                const NekDouble                   dtlamda, 
+                const TensorOfArray2D<NekDouble>  &refFields, 
+                const bool                        flagUpdateJac)
+            {
+                v_MatrixMultiply_MatrixFree_coeff(inarray, out, time, dtlamda,
+                    refFields, flagUpdateJac);
+            }
+
             SOLVER_UTILS_EXPORT void CalculateNextLevelPreconditioner(
             const Array<OneD, const Array<OneD, NekDouble>>                 &inarrayCoeff,
             const NekDouble                                                 time,
@@ -587,6 +599,18 @@ class Interpolator;
             const bool                                                      UpDateOperatorflag)
             {
                  ASSERTL0(false, "Not defined.");
+            }
+
+            SOLVER_UTILS_EXPORT virtual void v_MatrixMultiply_MatrixFree_coeff(
+                const TensorOfArray1D<NekDouble>  &inarray, 
+                TensorOfArray1D<NekDouble>        &out, 
+                const NekDouble                   time, 
+                const NekDouble                   dtlamda, 
+                const TensorOfArray2D<NekDouble>  &refFields, 
+                const bool                        flagUpdateJac)
+            {
+                 ASSERTL0(false, 
+                    "v_MatrixMultiply_MatrixFree_coeff not defined.");
             }
 
             SOLVER_UTILS_EXPORT virtual void v_CalculateNextLevelPreconditioner(
