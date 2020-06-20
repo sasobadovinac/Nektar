@@ -608,7 +608,8 @@ NekDouble HandleNekMesh1D::v_GetDynamicScaling(Array<OneD, NekDouble> glCoord,
     // if eid <0 find a elid.
     if (eid < 0)
     {
-        eid = GetExpansionIndexUsingRTree(glCoord);
+		eid = m_expansions[0]->GetExpIndex(glCoord,TOLERENCE);
+     //   eid = GetExpansionIndexUsingRTree(glCoord);
     }
     ASSERTL0(eid >= 0, "Point out of mesh");
     NekDouble result = -1.0;
