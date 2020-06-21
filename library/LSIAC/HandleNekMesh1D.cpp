@@ -513,9 +513,15 @@ bool HandleNekMesh1D::v_CanTRangebeApplied(
             if ((xMeshMin > ptsX + direction[0] * tmin) &&
                 (xMeshMax < ptsX + direction[0] * tmax))
             {
-                NEKERROR(ErrorUtil::efatal, "Kernel bigger than mesh");
+                //NEKERROR(ErrorUtil::efatal, "Kernel bigger than mesh");
+            	return false;
             }
-            return false;
+			if (abs(meshTShift)> abs(TOLERENCE))
+			{
+            	return false;
+			}else{
+				return true;
+			}
         }
     }
     else
@@ -529,9 +535,22 @@ bool HandleNekMesh1D::v_EvaluateAt(const NekDouble xPos, const NekDouble yPos,
                                    const NekDouble zPos, int gID, int eID,
                                    NekDouble &value, int varNum)
 {
-    boost::ignore_unused(xPos, yPos, zPos, gID, eID, value, varNum);
-    NEKERROR(ErrorUtil::efatal, "Need to be implemented");
-    return false;
+    //boost::ignore_unused(xPos, yPos, zPos, gID, eID, value, varNum);
+    //NEKERROR(ErrorUtil::efatal, "Need to be implemented");
+	Array<OneD,NekDouble> Xpos(1,xPos),Ypos(1,yPos),Zpos(1,zPos),values(1,0.0);
+   	Array<OneD,NekDouble> glCoord(3,0.0);
+	glCoord[0] = xPos; 
+	glCoord[1] = yPos; 
+	glCoord[2] = zPos; 
+    if (eID < 0)
+    {
+		eID = m_expansions[0]->GetExpIndex(glCoord,TOLERENCE);
+     //   eID = GetExpansionIndexUsingRTree(glCoord);
+    }
+    ASSERTL0(eID >= 0, "Point out of mesh");
+	bool ret = this->v_EvaluateAt(Xpos,Ypos,Zpos, gID, eID, values, varNum);
+	value = values[0];
+    return ret;
 }
 
 bool HandleNekMesh1D::v_EvaluateAt(const Array<OneD, NekDouble> &xPos,

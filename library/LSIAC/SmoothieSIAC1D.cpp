@@ -154,10 +154,26 @@ bool SmoothieSIAC1D::v_EvaluateAt(const NekDouble PtsX, const NekDouble PtsY,
                                                       meshTShift);
             m_siacFilterPtrs[m_OneID]->GetBreakPts(meshSpacing, SvalT,
                                                    meshTShift);
+			
+            bool fitOneSidedFilter = m_meshHandlePtr->CanTRangebeApplied(PtsX, PtsY, PtsZ, direction,
+                                                tmin, tmax, meshTShift);
+			if( !fitOneSidedFilter)
+			{
+				cout << "kernel does not fit at ("<< 
+				PtsX <<"," <<PtsY<<","<<PtsZ<<"). "<< endl;
+				cout << "Hence, not postprocessed." << endl;
+				m_meshHandlePtr->EvaluateAt(PtsX, PtsY, PtsZ, -1,-1, valX,varNum);
+				return false;
+			}
+			
         }
         else
         { // OneSided Filter is not defined.
-            valX = -1;
+            //valX = -1;
+			cout << "kernel does not fit at ("<< 
+			PtsX <<"," <<PtsY<<","<<PtsZ<<"). "<< endl;
+			cout << "Hence, not postprocessed." << endl;
+			m_meshHandlePtr->EvaluateAt(PtsX, PtsY, PtsZ, -1,-1, valX,varNum);
             return false;
         }
     }
@@ -233,6 +249,11 @@ bool SmoothieSIAC1D::v_EvaluateAt(const NekDouble PtsX, const NekDouble PtsY,
                                   const NekDouble PtsZ, NekDouble &valX,
                                   NekDouble &valY, NekDouble &valZ)
 {
+    Array<OneD, NekDouble> direction(3, 0.0);
+    direction[0]         = 1.0;
+    return this->v_EvaluateAt(PtsX,PtsY,PtsZ,valX,valY,valZ, direction, m_meshSpacing,0);
+
+/*
     boost::ignore_unused(valY, valZ); // reserved for derivative filter.
     Array<OneD, NekDouble> direction(3, 0.0);
     direction[0]         = 1.0;
@@ -342,6 +363,7 @@ bool SmoothieSIAC1D::v_EvaluateAt(const NekDouble PtsX, const NekDouble PtsY,
     }
     valX = sum;
     return true;
+*/
 }
 
 bool SmoothieSIAC1D::v_EvaluateNonSymAt(const NekDouble PtsX,
