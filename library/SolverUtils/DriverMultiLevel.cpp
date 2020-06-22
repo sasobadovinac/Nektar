@@ -64,25 +64,6 @@ namespace Nektar
         {
         }
 
-        /**
-         *
-         */
-        void DriverMultiLevel::v_InitObject(ostream &out)
-        {
-            Driver::v_InitObject(out);
-            
-            m_driverOperator.DefineCalculateNextLevelPreconditioner
-            (&Driver::CalculateNextLevelPreconditioner, this);
-            m_driverOperator.DefineMultiLevel(&Driver::MultiLevel, this);
-            m_driverOperator.DefineMultiLvlJacMultiplyMatFree(
-                &Driver::MultiLvlJacMultiplyMatFree, this);
-            //Every m_equation sets a functor to use next level's equation
-            for(int k=0;k<(m_nLevels-1);k++)
-            {
-                m_equ[k]->SetdriverOperator(m_driverOperator);
-            }
-        }
-
         void DriverMultiLevel::v_MultiLevel(const Array<OneD, NekDouble> &inarray,
                                                 Array<OneD,NekDouble> &outarray,
                                                 const bool UpDateOperatorflag,
@@ -123,6 +104,176 @@ namespace Nektar
             
             m_equ[Level]->CalculateNextLevelPreconditioner(inarray, time, lambda);
         }    
+    
+        /**
+         *
+         */
+        void DriverMultiLevel::v_InitObject(ostream &out)
+        {
+            Driver::v_InitObject(out);
+
+            ASSERTL0(m_nLevels > 1,"No need use MultiLevel");
+
+            CalcMultiLevelMatrix();
+
+            std::string vEquation = m_session->GetSolverInfo("EqType");
+            if (m_session->DefinesSolverInfo("SolverType"))
+            {
+                vEquation = m_session->GetSolverInfo("SolverType");
+            }
+
+            int nCycles = m_nLevels - 1;
+            
+            for (int k = 0; k < nCycles; ++k)
+            {
+                vector<string>  MultiLevelFilename;
+                for(int i=0;i<m_session->GetFilenames().size(); ++i)
+                {
+                    std::string TmpInputFile=m_session->GetFilenames()[i];
+                    MultiLevelFilename.push_back(TmpInputFile);
+                }
+
+                LibUtilities::SessionReaderSharedPtr MultiLevelSession = 
+                    LibUtilities::SessionReader::CreateInstance(
+                                    0, NULL, MultiLevelFilename, 
+                                    m_session->GetComm());
+                SpatialDomains::MeshGraphSharedPtr MultiLevelGraph =
+                    SpatialDomains::MeshGraph::Read(MultiLevelSession,
+                            SpatialDomains::NullDomainRangeShPtr,
+                            true,
+                            m_graph->GetCompositeOrdering(),
+                            m_graph->GetBndRegionOrdering(), 
+                            m_multilvlncoeffOffset[k], 
+                            m_multilvlnphyscOffset[k]);
+
+                MultiLevelSession->SetTag("AdvectiveType","Convective");
+                m_equ[k+1] = GetEquationSystemFactory().CreateInstance(
+                    vEquation, MultiLevelSession, MultiLevelGraph);
+            }  
+
+            m_MultiLevelCoeffs = Array<OneD, int>(m_nLevels+1, 0);
+            for(int k = 0; k < m_nLevels; ++k)
+            {
+                m_MultiLevelCoeffs[k] = m_equ[k]->GetNcoeffs();
+            }
+            //m_MultiLevelCoeffs[m_nLevels]=-1 used in MultiLevel's LowLevelCoeffs 
+            //so that avoid repeated setting flag of lowest level
+            m_MultiLevelCoeffs[m_nLevels] = -1;
+            
+            m_driverOperator.DefineCalculateNextLevelPreconditioner
+                (&Driver::CalculateNextLevelPreconditioner, this);
+            m_driverOperator.DefineMultiLevel(&Driver::MultiLevel, this);
+            for (int k = 0;k < nCycles; ++k)
+            {
+                m_equ[k]->SetdriverOperator(m_driverOperator);
+            }
+        }  
+        void DriverMultiLevel::CalcMultiLevelMatrix()
+        {
+            std::string vEquation = m_session->GetSolverInfo("EqType");
+            if (m_session->DefinesSolverInfo("SolverType"))
+            {
+                vEquation = m_session->GetSolverInfo("SolverType");
+            }
+
+            int nCycles = m_nLevels - 1;
+            m_RestrictionResidualMatrix  = 
+                Array<OneD,Array<OneD,DNekMatSharedPtr>> (nCycles);
+            m_RestrictionMatrix = 
+                Array<OneD,Array<OneD,DNekMatSharedPtr>> (nCycles);
+            m_ProlongationMatrix = 
+                Array<OneD,Array<OneD,DNekMatSharedPtr>>(nCycles);
+            for (int k = 0; k < nCycles; ++k)
+            {
+                vector<string>  MultiLevelFilename;
+                //Notice, after partition, FileName_xml/P0000000.xml, 
+                for(int i = 0; i < m_session->GetFilenames().size(); ++i)
+                {
+                    string TmpInputFile=m_session->GetFilenames()[i];
+                    MultiLevelFilename.push_back(TmpInputFile);
+                }
+
+                LibUtilities::SessionReaderSharedPtr MultiLevelSession= 
+                LibUtilities::SessionReader::CreateInstance(
+                                0, NULL, MultiLevelFilename, 
+                                m_session->GetComm());
+                
+                //Temporary Graph uses highest Quad number to Calculate Restriction and prolongation
+                //This way can help jump levels
+                SpatialDomains::MeshGraphSharedPtr MultiLevelGraph=
+                SpatialDomains::MeshGraph::Read(MultiLevelSession,
+                        SpatialDomains::NullDomainRangeShPtr,
+                        true,
+                        m_graph->GetCompositeOrdering(),
+                        m_graph->GetBndRegionOrdering(), 
+                        m_multilvlncoeffOffset[k], 0);
+
+                MultiLevelSession->SetTag("AdvectiveType","Convective");
+                m_equ[k+1] = GetEquationSystemFactory().CreateInstance(
+                    vEquation, MultiLevelSession, MultiLevelGraph);
+                
+                int nElmts = m_equ[k]->GetExpSize();
+                m_RestrictionResidualMatrix[k] = 
+                    Array<OneD,DNekMatSharedPtr>(nElmts);
+                m_RestrictionMatrix[k] = 
+                    Array<OneD,DNekMatSharedPtr>(nElmts);
+                m_ProlongationMatrix[k] = 
+                    Array<OneD,DNekMatSharedPtr>(nElmts);
+                for (int i = 0; i < nElmts; ++i)
+                {
+                    LocalRegions::ExpansionSharedPtr LowerLevelExpansion = 
+                        m_equ[k+1]->GetExp(i);
+                    LocalRegions::ExpansionSharedPtr HigherLevelExpansion = 
+                        m_equ[k]->GetExp(i);
+                    int nHighLevelCoeffs = m_equ[k]->GetNcoeffs(i);
+                    int nLowLevelCoeffs = m_equ[k+1]->GetNcoeffs(i);
+                    m_RestrictionResidualMatrix[k][i] = 
+                        MemoryManager<DNekMat>::AllocateSharedPtr(
+                            nLowLevelCoeffs,nHighLevelCoeffs, eFULL, 0.0);
+                    m_RestrictionMatrix[k][i] = 
+                        MemoryManager<DNekMat>::AllocateSharedPtr(
+                            nLowLevelCoeffs,nHighLevelCoeffs, eFULL, 0.0);
+                    m_ProlongationMatrix[k][i] = 
+                        MemoryManager<DNekMat>::AllocateSharedPtr(
+                            nHighLevelCoeffs,nLowLevelCoeffs, eFULL, 0.0);
+                    LibUtilities::PointsKeyVector LowerLevelExpansionKeys = 
+                        LowerLevelExpansion->GetPointsKeys();
+                    LibUtilities::PointsKeyVector HigherLevelExpansionKeys =
+                        HigherLevelExpansion->GetPointsKeys();
+                    StdRegions::StdMatrixKey LowerLevelMatKey(
+                        StdRegions::eBwdTrans,
+                        LowerLevelExpansion->DetShapeType(),
+                        *(LowerLevelExpansion));
+                    DNekMatSharedPtr LowerLevelBwdMat = 
+                        LowerLevelExpansion->GetStdMatrix(LowerLevelMatKey);
+                    StdRegions::StdMatrixKey HigherLevelMatKey(
+                        StdRegions::eBwdTrans,
+                        HigherLevelExpansion->DetShapeType(),
+                        *(HigherLevelExpansion));
+                    DNekMatSharedPtr HigherLevelBwdMat = 
+                        HigherLevelExpansion->GetStdMatrix(HigherLevelMatKey);
+                    LowerLevelExpansion->CreateInterpolationMatrix(
+                        HigherLevelExpansionKeys,HigherLevelBwdMat,
+                        m_RestrictionMatrix[k][i]);
+                    HigherLevelExpansion->CreateInterpolationMatrix(
+                        LowerLevelExpansionKeys,LowerLevelBwdMat,
+                        m_ProlongationMatrix[k][i]);
+                    //Since have not found related DNekMatSharedPtr Transpose
+                    for(int row=0;row<nLowLevelCoeffs;row++)
+                    {
+                        for(int col=0;col<nHighLevelCoeffs;col++)
+                        {
+                            (*m_RestrictionResidualMatrix[k][i])(row,col) = 
+                                (*m_ProlongationMatrix[k][i])(col,row);
+                        }
+                    }
+                }
+                m_equ[k]->SetRestrictionResidualMatrix(
+                    m_RestrictionResidualMatrix[k]);
+                m_equ[k]->SetRestrictionMatrix(m_RestrictionMatrix[k]);
+                m_equ[k]->SetProlongationMatrix(m_ProlongationMatrix[k]);
+            }
+        } 
     
         void DriverMultiLevel::v_Execute(ostream &out)
         
@@ -181,7 +332,7 @@ namespace Nektar
                 }
             }
         }
-        
+
         void DriverMultiLevel::PrintMatrix(DNekMatSharedPtr &Matrix)
         {
             int nrows                = Matrix->GetRows();

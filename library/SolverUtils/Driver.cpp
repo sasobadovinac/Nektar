@@ -119,6 +119,13 @@ void Driver::v_InitObject(ostream &out)
         m_nequ = ((m_EvolutionOperator == eTransientGrowth ||
                    m_EvolutionOperator == eAdaptiveSFD || 
                    m_EvolutionOperator == eAdaptiveCFS) ? 2 : 1);
+        
+        m_session->LoadParameter("NumLevels", m_nLevels, 1);
+        if (m_nLevels > 1)
+        {
+            m_EvolutionOperator = eMultiLevelCFS;
+            m_nequ = m_nLevels;
+        }
 
         m_equ = Array<OneD, EquationSystemSharedPtr>(m_nequ);
 
@@ -220,137 +227,33 @@ void Driver::v_InitObject(ostream &out)
                 break;
             case eMultiLevelCFS:
             {
-                //Design to read from m_session
-                m_session->LoadParameter("NumLevels", m_nLevels, 2);
-                ASSERTL0(m_nLevels>1,"No need use MultiLevel");
-                if(eMultiLevelCFS==m_EvolutionOperator)
-                {
-                    m_equ = Array<OneD, EquationSystemSharedPtr>(m_nLevels);
-                }
                 m_session->SetTag("AdvectiveType","Convective");
-                m_equ[0] = GetEquationSystemFactory().CreateInstance(vEquation, m_session, m_graph);
-                int nCycles=m_nLevels-1;
-                //CoeOffset and QuadOffset defined in m_session LoadParameter, set in LoadParameter
-                Array<OneD,int> ncoeffOffset(nCycles);
-                Array<OneD,int> nphyscOffset(nCycles);
-                stringstream stream;
-                std::string str,MultiLevelCoeffOffsetstr,MultiLevelQuadOffsetstr;
-                //To Do: cannot only consider the first element
-                int nMaxCoeffs=m_equ[0]->GetNcoeffs(0);
-                for(int k=0;k<nCycles;k++)
+                m_equ[0] = GetEquationSystemFactory().CreateInstance(vEquation, 
+                    m_session, m_graph);
+
+                int nCycles = m_nLevels - 1;
+                m_multilvlncoeffOffset = Array<OneD,int> (nCycles);
+                m_multilvlnphyscOffset = Array<OneD,int> (nCycles);
+                int nMaxCoeffs = m_equ[0]->GetNcoeffs(0);
+                
+                for (int k = 0; k < nCycles; ++k)
                 {
-                   stream.clear();
-                   stream<<k;
-                   stream>>str;
-                   MultiLevelCoeffOffsetstr="MultiLevelCoeffOffset"+str;
-                   MultiLevelQuadOffsetstr="MultiLevelQuadOffset"+str;
-                   m_session->LoadParameter(MultiLevelCoeffOffsetstr, ncoeffOffset[k], 0); 
-                   //Default the same reduce as Modes
-                   m_session->LoadParameter(MultiLevelQuadOffsetstr, nphyscOffset[k], ncoeffOffset[k]);   
-                   if(nMaxCoeffs+ncoeffOffset[k]<2)
-                   {
-                       ASSERTL0(false,"Currently, Cannot MultiLevel to Mode<2");
-                   }
+                    stringstream stream;
+                    std::string str;
+                    stream.clear();
+                    stream<<k;
+                    stream>>str;
+                    std::string MultiLevelCoeffOffsetstr = 
+                        "MultiLevelCoeffOffset"+str;
+                    std::string MultiLevelQuadOffsetstr = 
+                        "MultiLevelQuadOffset"+str;
+                    m_session->LoadParameter(MultiLevelCoeffOffsetstr, 
+                        m_multilvlncoeffOffset[k], 0); 
+                    m_session->LoadParameter(MultiLevelQuadOffsetstr, 
+                        m_multilvlnphyscOffset[k], m_multilvlncoeffOffset[k]);   
+                    ASSERTL0(nMaxCoeffs + m_multilvlncoeffOffset[k] >= 2, 
+                        "Currently, Cannot MultiLevel to Mode<2");
                 }  
-
-                string         TmpInputFile;
-                vector<string>  MultiLevelFilename;
-                LibUtilities::SessionReaderSharedPtr  MultiLevelSession;
-                SpatialDomains::MeshGraphSharedPtr    MultiLevelGraph;
-                m_RestrictionResidualMatrix=Array<OneD,Array<OneD,DNekMatSharedPtr>> (nCycles);
-                m_RestrictionMatrix=Array<OneD,Array<OneD,DNekMatSharedPtr>> (nCycles);
-                m_ProlongationMatrix=Array<OneD,Array<OneD,DNekMatSharedPtr>>(nCycles);
-                for(int k=0;k<nCycles;k++)
-                {
-                    //Notice, after partition, FileName_xml/P0000000.xml, 
-                    for(int i=0;i<m_session->GetFilenames().size();i++)
-                    {
-                        TmpInputFile=m_session->GetFilenames()[i];
-                        MultiLevelFilename.push_back(TmpInputFile);
-                    }
-
-                    MultiLevelSession= 
-                    LibUtilities::SessionReader::CreateInstance(
-                                    0, NULL, MultiLevelFilename, 
-                                    m_session->GetComm());
-                    
-                    //Temporary Graph uses highest Quad number to Calculate Restriction and prolongation
-                    //This way can help jump levels
-                    MultiLevelGraph=
-                    SpatialDomains::MeshGraph::Read(MultiLevelSession,
-                            SpatialDomains::NullDomainRangeShPtr,
-                            true,
-                            m_graph->GetCompositeOrdering(),
-                            m_graph->GetBndRegionOrdering(), 
-                            ncoeffOffset[k], 0);
-
-                    MultiLevelSession->SetTag("AdvectiveType","Convective");
-                    m_equ[k+1] = GetEquationSystemFactory().CreateInstance(
-                        vEquation, MultiLevelSession, MultiLevelGraph);
-                    
-                    int nElmts=m_equ[k]->GetExpSize();
-                    m_RestrictionResidualMatrix[k]=Array<OneD,DNekMatSharedPtr>(nElmts);
-                    m_RestrictionMatrix[k]=Array<OneD,DNekMatSharedPtr>(nElmts);
-                    m_ProlongationMatrix[k]=Array<OneD,DNekMatSharedPtr>(nElmts);
-                    for (int i=0;i<nElmts;i++)
-                    {
-                        LocalRegions::ExpansionSharedPtr LowerLevelExpansion=m_equ[k+1]->GetExp(i);
-                        LocalRegions::ExpansionSharedPtr HigherLevelExpansion=m_equ[k]->GetExp(i);
-                        int nHighLevelCoeffs=m_equ[k]->GetNcoeffs(i);
-                        int nLowLevelCoeffs=m_equ[k+1]->GetNcoeffs(i);
-                        m_RestrictionResidualMatrix[k][i]=MemoryManager<DNekMat>::AllocateSharedPtr(nLowLevelCoeffs,nHighLevelCoeffs, eFULL, 0.0);
-                        m_RestrictionMatrix[k][i]=MemoryManager<DNekMat>::AllocateSharedPtr(nLowLevelCoeffs,nHighLevelCoeffs, eFULL, 0.0);
-                        m_ProlongationMatrix[k][i]=MemoryManager<DNekMat>::AllocateSharedPtr(nHighLevelCoeffs,nLowLevelCoeffs, eFULL, 0.0);
-                        LibUtilities::PointsKeyVector HigherLevelExpansionKeys,LowerLevelExpansionKeys;
-                        LowerLevelExpansionKeys=LowerLevelExpansion->GetPointsKeys();
-                        HigherLevelExpansionKeys=HigherLevelExpansion->GetPointsKeys();
-                        StdRegions::StdMatrixKey LowerLevelMatKey(StdRegions::eBwdTrans,
-                                                LowerLevelExpansion->DetShapeType(),
-                                                *(LowerLevelExpansion));
-                        DNekMatSharedPtr LowerLevelBwdMat = LowerLevelExpansion->GetStdMatrix(LowerLevelMatKey);
-                        StdRegions::StdMatrixKey HigherLevelMatKey(StdRegions::eBwdTrans,
-                                                HigherLevelExpansion->DetShapeType(),
-                                                *(HigherLevelExpansion));
-                        DNekMatSharedPtr HigherLevelBwdMat = HigherLevelExpansion->GetStdMatrix(HigherLevelMatKey);
-                        LowerLevelExpansion->CreateInterpolationMatrix(HigherLevelExpansionKeys,HigherLevelBwdMat,m_RestrictionMatrix[k][i]);
-                        HigherLevelExpansion->CreateInterpolationMatrix(LowerLevelExpansionKeys,LowerLevelBwdMat,m_ProlongationMatrix[k][i]);
-                        //Since have not found related DNekMatSharedPtr Transpose
-                        for(int row=0;row<nLowLevelCoeffs;row++)
-                        {
-                            for(int col=0;col<nHighLevelCoeffs;col++)
-                            {
-                               (*m_RestrictionResidualMatrix[k][i])(row,col)=(*m_ProlongationMatrix[k][i])(col,row);
-                            }
-                        }
-                    }
-
-                    //Reset MultiLevel Graph
-                    MultiLevelGraph=
-                    SpatialDomains::MeshGraph::Read(MultiLevelSession,
-                            SpatialDomains::NullDomainRangeShPtr,
-                            true,
-                            m_graph->GetCompositeOrdering(),
-                            m_graph->GetBndRegionOrdering(), 
-                            ncoeffOffset[k], nphyscOffset[k]);
-
-                    MultiLevelSession->SetTag("AdvectiveType","Convective");
-                    m_equ[k+1] = GetEquationSystemFactory().CreateInstance(
-                        vEquation, MultiLevelSession, MultiLevelGraph);
-
-                    m_equ[k]->SetRestrictionResidualMatrix(m_RestrictionResidualMatrix[k]);
-                    m_equ[k]->SetRestrictionMatrix(m_RestrictionMatrix[k]);
-                    m_equ[k]->SetProlongationMatrix(m_ProlongationMatrix[k]);
-
-                }
-
-                m_MultiLevelCoeffs=Array<OneD, int>(m_nLevels+1,0.0);
-                for(int k=0;k<m_nLevels;k++)
-                {
-                    m_MultiLevelCoeffs[k]=m_equ[k]->GetNcoeffs();
-                }
-                //m_MultiLevelCoeffs[m_nLevels]=-1 used in MultiLevel‘s LowLevelCoeffs 
-                //so that avoid repeated setting flag of lowest level
-                m_MultiLevelCoeffs[m_nLevels]=-1;
                 
             }
                 break;

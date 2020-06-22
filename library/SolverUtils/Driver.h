@@ -159,7 +159,11 @@ protected:
     ///number of equations
     int m_nequ;
 
-    SolverUtils::DriverOperators                    m_driverOperator;
+    SolverUtils::DriverOperators                m_driverOperator;
+
+    Array<OneD,int>                             m_multilvlncoeffOffset;
+    Array<OneD,int>                             m_multilvlnphyscOffset;
+
 
     ///Evolution Operator
     enum EvolutionOperatorType m_EvolutionOperator;

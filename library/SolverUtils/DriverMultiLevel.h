@@ -58,6 +58,8 @@ namespace Nektar
                 return p;
             }
 
+            void CalcMultiLevelMatrix();
+
             void PrintMatrix(DNekMatSharedPtr &Matrix);
     
             void OutputMatrix(DNekMatSharedPtr &Matrix);
