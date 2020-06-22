@@ -56,7 +56,6 @@ namespace Nektar
         {
         }
     
-    
         /**
          *
          */
@@ -64,15 +63,56 @@ namespace Nektar
         {
         }
 
-        void DriverMultiLevel::v_MultiLevel(const Array<OneD, NekDouble> &inarray,
-                                                Array<OneD,NekDouble> &outarray,
-                                                const bool UpDateOperatorflag,
-                                                const int Level)
+        void DriverMultiLevel::v_MultiLevel(
+            const TensorOfArray1D<NekDouble>    &inarray,
+            TensorOfArray1D<NekDouble>          &outarray,
+            const bool                          updateOperatorflag,
+            const int                           level,
+            const TensorOfArray2D<NekDouble>    &refSolution,
+            const NekDouble                     time,
+            const NekDouble                     dtlamda)
         {
-            ASSERTL1(m_equ[Level],"Need to define EquationSystem[level]");
+            ASSERTL1(m_equ[level],"Need to define m_equ[level]");
             
-            m_equ[Level]->MultiLevel(inarray, outarray, Level, m_MultiLevelCoeffs[Level],
-                       m_MultiLevelCoeffs[Level+1], UpDateOperatorflag);
+            size_t nVariables = m_equ[0]->UpdateFields().num_elements();
+            size_t nCoeffs = m_equ[level]->GetNcoeffs();
+            size_t lowLevelCoeff = m_MultiLevelCoeffs[level+1];
+            size_t ttlCurrentLvlCoeff = nVariables * m_MultiLevelCoeffs[level];
+            size_t ttlLowLvlCoeff = nVariables * lowLevelCoeff;
+
+            int nextLevel = level + 1;
+
+            if (lowLevelCoeff > 0)
+            {
+                m_equ[level]->MutilLvlPresmooth(inarray,outarray);
+                
+                TensorOfArray1D<NekDouble> outarraytmp{ttlCurrentLvlCoeff, 0.0};
+                m_equ[level]->MutilLvlResidual(inarray,outarray,outarraytmp);
+                
+                TensorOfArray1D<NekDouble> lowLevelRhs{ttlLowLvlCoeff,0.0};
+                m_equ[level]->MutilLvlRestriction(outarraytmp,lowLevelRhs);
+                
+                TensorOfArray2D<NekDouble> lowLevelSolution;
+                m_equ[level+1]->MutilLvlUpdateMultilvlMatrix(updateOperatorflag, 
+                    refSolution, lowLevelSolution, time, dtlamda)
+                
+                TensorOfArray1D<NekDouble> lowLeveloutarray(ttlLowLvlCoeff,0.0);
+                v_MultiLevel(lowLevelRhs, lowLeveloutarray, updateOperatorflag,
+                    nextLevel, lowLevelSolution, time, dtlamda)
+                
+                Vmath::Zero(ttlCurrentLvlCoeff,outarraytmp,1);
+                m_equ[level]->MutilLvlProlong(lowLeveloutarray,outarraytmp);
+                
+                //outarray=outarray+Pe
+                Vmath::Vadd(ttlCurrentLvlCoeff,outarray,1,
+                    outarraytmp,1,outarray,1);
+                
+                m_equ[level]->MutilLvlPostsmooth(inarray,outarray);
+            }
+            else
+            {
+                m_equ[level]->MutilLvlLowestLvlSolver(inarray,outarray);
+            }
         } 
 
         void DriverMultiLevel::v_MultiLvlJacMultiplyMatFree(

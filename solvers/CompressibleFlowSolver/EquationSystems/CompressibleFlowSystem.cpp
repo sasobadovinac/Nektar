@@ -6921,26 +6921,11 @@ Array<OneD, NekDouble>  CompressibleFlowSystem::GetElmtMinHP(void)
         if(MultiLevelFlag)
         {
             //false is outarray from zero
-            preconditioner_BlkSOR_coeff(inarray,outarray,false);
-            Array<OneD, NekDouble> outarraytmp(TotalCurrentLevelCoeff,0.0);
-            //Ax: cannot use MatrixMultiply_MatrixFree_coeff in low level.
-            //Because it reuse TimeIntegration_Res_n, which does not calculate
-            if(Level>0)
-            {
-                MatrixMultiply_JacobianFree_coeff_noSource(outarray,outarraytmp);
-            }
-            else
-            {
-                //Avoid repeating calculating Residual_k in highest level
-                MatrixMultiply_JacobianFree_coeff(outarray,outarraytmp);
-            }
+            
 
-            //b-Ax:Ok
-            Vmath::Vsub(TotalCurrentLevelCoeff,inarray,1,outarraytmp,1,outarraytmp,1);
             Array<OneD,NekDouble> LowLevelRhs(TotalLowLevelCoeff,0.0);
             Array<OneD,NekDouble> LowLeveloutarray(TotalLowLevelCoeff,0.0);
             //R=R*Rhs:OK
-            RestrictResidual(m_RestrictionMatrix,outarraytmp,LowLevelRhs);
             int NextLevel=Level+1;
             //u=R*u (seem different R for Rhs and U, need to check)
             Array<OneD, Array<OneD,NekDouble>> LowLevelSolution(nVariables);
@@ -6960,7 +6945,6 @@ Array<OneD, NekDouble>  CompressibleFlowSystem::GetElmtMinHP(void)
             //outarray2=Pe
             //Need to Zero before prolongation
             Vmath::Zero(TotalCurrentLevelCoeff,outarraytmp,1);
-            ProlongateSolution(m_ProlongationMatrix,LowLeveloutarray,outarraytmp);
             //outarray=outarray+Pe
             Vmath::Vadd(TotalCurrentLevelCoeff,outarray,1,outarraytmp,1,outarray,1);
             preconditioner_BlkSOR_coeff(inarray,outarray,true);
@@ -6973,10 +6957,95 @@ Array<OneD, NekDouble>  CompressibleFlowSystem::GetElmtMinHP(void)
         }  
     }
 
+    void CompressibleFlowSystem::v_MutilLvlResidual(
+        const TensorOfArray1D<NekDouble>    &inarray,
+        TensorOfArray1D<NekDouble>          &outarray,
+        TensorOfArray1D<NekDouble>          &outRes,
+        const int                           level)
+    {
+        //Ax: cannot use MatrixMultiply_MatrixFree_coeff in low level.
+        //Because it reuse TimeIntegration_Res_n, which does not calculate
+        if(level>0)
+        {
+            MatrixMultiply_JacobianFree_coeff_noSource(outarray,outRes);
+        }
+        else
+        {
+            //Avoid repeating calculating Residual_k in highest level
+            MatrixMultiply_JacobianFree_coeff(outarray,outRes);
+        }
+
+        //b-Ax:Ok
+        Vmath::Vsub(inarray.num_elements(),inarray,1,outRes,1,outRes,1);
+    }
+
+    void CompressibleFlowSystem::v_MutilLvlPresmooth(
+        const TensorOfArray1D<NekDouble>    &inarray,
+        TensorOfArray1D<NekDouble>          &outarray)
+    {
+        preconditioner_BlkSOR_coeff(inarray,outarray,false);
+    }
+
+    void CompressibleFlowSystem::v_MutilLvlPostsmooth(
+        const TensorOfArray1D<NekDouble>    &inarray,
+        TensorOfArray1D<NekDouble>          &outarray)
+    {
+        preconditioner_BlkSOR_coeff(inarray,outarray,true);
+    }
+
+    void CompressibleFlowSystem::v_MutilLvlLowestLvlSolver(
+        const TensorOfArray1D<NekDouble>    &inarray,
+        TensorOfArray1D<NekDouble>          &outarray)
+    {
+        preconditioner_BlkSOR_coeff(inarray,outarray,false);
+    }
+
+    void CompressibleFlowSystem::v_MutilLvlRestriction(
+        const TensorOfArray1D<NekDouble>    &inarray,
+        TensorOfArray1D<NekDouble>          &outarray)
+    {
+        RestrictResidual(m_RestrictionMatrix,inarray,outarray);
+    }
+
+    void CompressibleFlowSystem::v_MutilLvlProlong(
+        const TensorOfArray1D<NekDouble>    &inarray,
+        TensorOfArray1D<NekDouble>          &outarray)
+    {
+        ProlongateSolution(m_ProlongationMatrix,inarray,outarray);
+    }
+
+    void CompressibleFlowSystem::v_MutilLvlUpdateMultilvlMatrix(
+        const bool                          updateOperatorflag,
+        const TensorOfArray2D<NekDouble>    &refSolution,
+        TensorOfArray2D<NekDouble>          &lowLevelSolution,
+        const NekDouble                     time,
+        const NekDouble                     dtlamda)
+    {
+        if(updateOperatorflag)
+        {
+            if (lowLevelSolution.num_elemets()<=0)
+            {
+                int nVariables = m_fields.num_elements();
+                int lowLevelCoeff = GetNCoeffs();
+
+                lowLevelSolution = TensorOfArray2D<NekDouble> {nVariables};
+                for (int i = 0; i < nVariables; ++i)
+                {
+                    lowLevelSolution[i]=
+                        TensorOfArray1D<NekDouble> {lowLevelCoeff, 0.0};
+                }
+            } 
+            
+            v_MutilLvlRestriction(refSolution,lowLevelSolution);
+            CalculateNextLevelPreconditioner(
+                lowLevelSolution, time, dtlamda);
+        }
+    }
+
     void  CompressibleFlowSystem::v_CalculateNextLevelPreconditioner(
-        const Array<OneD, const Array<OneD, NekDouble>>                 &inarrayCoeff,
-        const NekDouble                                                 time,
-        const NekDouble                                                 lambda)
+        const TensorOfArray2D<NekDouble>    &inarrayCoeff,
+        const NekDouble                     time,
+        const NekDouble                     lambda)
     {
         int nVariables=m_fields.num_elements();
         m_BndEvaluateTime=time;
