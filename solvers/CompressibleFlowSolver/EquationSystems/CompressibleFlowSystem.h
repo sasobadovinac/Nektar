@@ -1066,18 +1066,53 @@ namespace Nektar
             Array<OneD, Array<OneD, DNekMatSharedPtr> >     &ElmtJac);
         
 
-        void v_MultiLevel(           
-            const Array<OneD, NekDouble>                                    &inarray,
-            Array<OneD, NekDouble>                                          &outarray, 
-            const int                                                       Level,
-            const int                                                       CurrentLevelCoeff,    
-            const int                                                       LowLevelCoeff,     
-            const bool                                                      UpDateOperatorflag);
+        // void v_MultiLevel(           
+        //     const Array<OneD, NekDouble>                                    &inarray,
+        //     Array<OneD, NekDouble>                                          &outarray, 
+        //     const int                                                       Level,
+        //     const int                                                       CurrentLevelCoeff,    
+        //     const int                                                       LowLevelCoeff,     
+        //     const bool                                                      UpDateOperatorflag);
+
+        virtual void v_MutilLvlResidual(
+            const TensorOfArray1D<NekDouble>    &inarray,
+            TensorOfArray1D<NekDouble>          &outarray,
+            TensorOfArray1D<NekDouble>          &outRes,
+            const int                           level);
+
+        virtual void v_MutilLvlPresmooth(
+            const TensorOfArray1D<NekDouble>    &inarray,
+            TensorOfArray1D<NekDouble>          &outarray);
+
+        virtual void v_MutilLvlPostsmooth(
+            const TensorOfArray1D<NekDouble>    &inarray,
+            TensorOfArray1D<NekDouble>          &outarray);
+
+        virtual void v_MutilLvlLowestLvlSolver(
+            const TensorOfArray1D<NekDouble>    &inarray,
+            TensorOfArray1D<NekDouble>          &outarray);
+
+        virtual void v_MutilLvlRestriction1D(
+            const TensorOfArray1D<NekDouble>    &inarray,
+            TensorOfArray1D<NekDouble>          &outarray);
+
+        virtual void v_MutilLvlRestriction2D(
+            const TensorOfArray2D<NekDouble>    &inarray,
+            TensorOfArray2D<NekDouble>          &outarray);
+
+        virtual void v_MutilLvlProlong(
+            const TensorOfArray1D<NekDouble>    &inarray,
+            TensorOfArray1D<NekDouble>          &outarray);
+
+        virtual void v_MutilLvlUpdateMultilvlMatrix(
+            const TensorOfArray2D<NekDouble>    &lowLevelSolution,
+            const NekDouble                     time,
+            const NekDouble                     dtlamda);
         
-        void v_CalculateNextLevelPreconditioner(
-            const Array<OneD, const Array<OneD, NekDouble>>                 &inarrayCoeff,
-            const NekDouble                                                 time,
-            const NekDouble                                                 lambda);
+        virtual void v_CalculateNextLevelPreconditioner(
+            const TensorOfArray2D<NekDouble>    &inarrayCoeff,
+            const NekDouble                     time,
+            const NekDouble                     lambda);
 
         void RestrictResidual(
         const Array<OneD,DNekMatSharedPtr>                                  &RestrictionMatrix,

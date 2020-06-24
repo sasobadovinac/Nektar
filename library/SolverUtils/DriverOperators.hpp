@@ -49,7 +49,14 @@ namespace Nektar
 
             typedef const Array<OneD, NekDouble> InArrayType1;
             typedef       Array<OneD,NekDouble>  OutArrayType1;
-            typedef std::function< void (InArrayType1&, OutArrayType1&, const bool, const int)>  FunctorType1;
+            typedef std::function< void (
+                const TensorOfArray1D<NekDouble>    &,
+                TensorOfArray1D<NekDouble>          &,
+                const bool                          ,
+                const int                           ,
+                const TensorOfArray2D<NekDouble>    &,
+                const NekDouble                     ,
+                const NekDouble                     )>  FunctorType1;
 
             typedef const Array<OneD, Array<OneD, NekDouble>> InArrayType2;
             typedef       Array<OneD, Array<OneD,NekDouble>>       OutArrayType2;
@@ -106,16 +113,28 @@ namespace Nektar
             template<typename FuncPointerT, typename ObjectPointerT> 
             void DefineMultiLevel(FuncPointerT func, ObjectPointerT obj)
             {
-                 functors1[0]=  std::bind(func, obj, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4);
+                 functors1[0]=  std::bind(func, obj, 
+                    std::placeholders::_1, 
+                    std::placeholders::_2, 
+                    std::placeholders::_3, 
+                    std::placeholders::_4,
+                    std::placeholders::_5,
+                    std::placeholders::_6,
+                    std::placeholders::_7);
             }
 
-            inline void MultiLevel(InArrayType1     &inarray, 
-                                   OutArrayType1    &outarray,
-                                   const bool UpDateOperatorflag,
-                                   const int  Level) const
+            inline void MultiLevel(
+                const TensorOfArray1D<NekDouble>    &inarray,
+                TensorOfArray1D<NekDouble>          &outarray,
+                const bool                          updateOperatorflag,
+                const int                           level,
+                const TensorOfArray2D<NekDouble>    &refSolution,
+                const NekDouble                     time,
+                const NekDouble                     dtlamda) const
             {
                 ASSERTL1(functors1[0],"MultiLevel should be defined in InitObject");
-                functors1[0](inarray, outarray, UpDateOperatorflag, Level);
+                functors1[0](inarray, outarray, updateOperatorflag, level,
+                    refSolution, time, dtlamda);
             }
 
             //Set a functor that m_equ[0] can do Projection
@@ -148,21 +167,21 @@ namespace Nektar
                 functors2[1](inarray,outarray,time);
             }
 
-            //Set a functor that calculate Next level's Stored matrices
-            template<typename FuncPointerT, typename ObjectPointerT> 
-            void DefineCalculateNextLevelPreconditioner(FuncPointerT func, ObjectPointerT obj)
-            {
-                 functors3[0]=  std::bind(func, obj, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4);
-            }
+            // //Set a functor that calculate Next level's Stored matrices
+            // template<typename FuncPointerT, typename ObjectPointerT> 
+            // void DefineCalculateNextLevelPreconditioner(FuncPointerT func, ObjectPointerT obj)
+            // {
+            //      functors3[0]=  std::bind(func, obj, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4);
+            // }
 
-            inline void  CalculateNextLevelPreconditioner(InArrayType2     &inarray, 
-                                                          const NekDouble time,
-                                                          const NekDouble lambda,
-                                                          const int       NextLevel) const
-            {
-                ASSERTL1(functors3[0],"CalculateNextLevelPreconditioner has not been defined");
-                functors3[0](inarray,time,lambda,NextLevel);
-            }
+            // inline void  CalculateNextLevelPreconditioner(InArrayType2     &inarray, 
+            //                                               const NekDouble time,
+            //                                               const NekDouble lambda,
+            //                                               const int       NextLevel) const
+            // {
+            //     ASSERTL1(functors3[0],"CalculateNextLevelPreconditioner has not been defined");
+            //     functors3[0](inarray,time,lambda,NextLevel);
+            // }
 
             //Set a functor that calculate Next level's Stored matrices
             template<typename FuncPointerT, typename ObjectPointerT> 
@@ -187,8 +206,8 @@ namespace Nektar
                 InArrayType2&       refFields, 
                 const bool          flagUpdateJac) const
             {
-                ASSERTL1(functors3[0],
-                    "CalculateNextLevelPreconditioner has not been defined");
+                ASSERTL1(functors4[0],
+                    "MultiLvlJacMultiplyMatFree has not been defined");
                 functors4[0](Level, inarray, outarray, time, dtlamda, refFields, 
                     flagUpdateJac);
             }

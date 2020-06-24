@@ -101,15 +101,75 @@ class Interpolator;
                 v_DoOdeRhs1(inarray,outarray,time);
             }
 
-            SOLVER_UTILS_EXPORT void MultiLevel(
-            const Array<OneD, NekDouble>                                    &inarray,
-            Array<OneD, NekDouble>                                          &outarray, 
-            const int                                                       Level,
-            const int                                                       CurrentLevelCoeff,    
-            const int                                                       LowLevelCoeff,     
-            const bool                                                      UpDateOperatorflag)
+            // SOLVER_UTILS_EXPORT void MultiLevel(
+            // const Array<OneD, NekDouble>                                    &inarray,
+            // Array<OneD, NekDouble>                                          &outarray, 
+            // const int                                                       Level,
+            // const int                                                       CurrentLevelCoeff,    
+            // const int                                                       LowLevelCoeff,     
+            // const bool                                                      UpDateOperatorflag)
+            // {
+            //     v_MultiLevel(inarray,outarray, Level, CurrentLevelCoeff, 
+            //         LowLevelCoeff, UpDateOperatorflag);
+            // }
+
+            SOLVER_UTILS_EXPORT virtual void v_MutilLvlResidual(
+                const TensorOfArray1D<NekDouble>    &inarray,
+                TensorOfArray1D<NekDouble>          &outarray,
+                TensorOfArray1D<NekDouble>          &outRes,
+                const int                           level)
             {
-                v_MultiLevel(inarray,outarray, Level, CurrentLevelCoeff, LowLevelCoeff, UpDateOperatorflag);
+                ASSERTL0(false, "v_MutilLvlResidual not defined");
+            }
+
+            SOLVER_UTILS_EXPORT virtual void v_MutilLvlPresmooth(
+                const TensorOfArray1D<NekDouble>    &inarray,
+                TensorOfArray1D<NekDouble>          &outarray)
+            {
+                ASSERTL0(false, "v_MutilLvlPresmooth not defined");
+            }
+
+            SOLVER_UTILS_EXPORT virtual void v_MutilLvlPostsmooth(
+                const TensorOfArray1D<NekDouble>    &inarray,
+                TensorOfArray1D<NekDouble>          &outarray)
+            {
+                ASSERTL0(false, "v_MutilLvlPostsmooth not defined");
+            }
+
+            SOLVER_UTILS_EXPORT virtual void v_MutilLvlLowestLvlSolver(
+                const TensorOfArray1D<NekDouble>    &inarray,
+                TensorOfArray1D<NekDouble>          &outarray)
+            {
+                ASSERTL0(false, "v_MutilLvlLowestLvlSolver not defined");
+            }
+
+            SOLVER_UTILS_EXPORT virtual void v_MutilLvlRestriction1D(
+                const TensorOfArray1D<NekDouble>    &inarray,
+                TensorOfArray1D<NekDouble>          &outarray)
+            {
+                ASSERTL0(false, "v_MutilLvlRestriction1D not defined");
+            }
+
+            SOLVER_UTILS_EXPORT virtual void v_MutilLvlRestriction2D(
+                const TensorOfArray2D<NekDouble>    &inarray,
+                TensorOfArray2D<NekDouble>          &outarray)
+            {
+                ASSERTL0(false, "v_MutilLvlRestriction2D not defined");
+            }
+
+            SOLVER_UTILS_EXPORT virtual void v_MutilLvlProlong(
+                const TensorOfArray1D<NekDouble>    &inarray,
+                TensorOfArray1D<NekDouble>          &outarray)
+            {
+                ASSERTL0(false, "v_MutilLvlProlong not defined");
+            }
+
+            SOLVER_UTILS_EXPORT virtual void v_MutilLvlUpdateMultilvlMatrix(
+                const TensorOfArray2D<NekDouble>    &lowLevelSolution,
+                const NekDouble                     time,
+                const NekDouble                     dtlamda)
+            {
+                ASSERTL0(false, "v_MutilLvlUpdateMultilvlMatrix not defined");
             }
 
             SOLVER_UTILS_EXPORT void MatrixMultiply_MatrixFree_coeff(
@@ -589,17 +649,17 @@ class Interpolator;
                  ASSERTL0(false, "Not defined.");
             }
 
-            /// Do MultiLevel
-            SOLVER_UTILS_EXPORT virtual void v_MultiLevel(
-            const Array<OneD, NekDouble>                                    &inarray,
-            Array<OneD, NekDouble>                                          &outarray, 
-            const int                                                       Level,
-            const int                                                       CurrentLevelCoeff,    
-            const int                                                       LowLevelCoeff,
-            const bool                                                      UpDateOperatorflag)
-            {
-                 ASSERTL0(false, "Not defined.");
-            }
+            // /// Do MultiLevel
+            // SOLVER_UTILS_EXPORT virtual void v_MultiLevel(
+            // const Array<OneD, NekDouble>                                    &inarray,
+            // Array<OneD, NekDouble>                                          &outarray, 
+            // const int                                                       Level,
+            // const int                                                       CurrentLevelCoeff,    
+            // const int                                                       LowLevelCoeff,
+            // const bool                                                      UpDateOperatorflag)
+            // {
+            //      ASSERTL0(false, "Not defined.");
+            // }
 
             SOLVER_UTILS_EXPORT virtual void v_MatrixMultiply_MatrixFree_coeff(
                 const TensorOfArray1D<NekDouble>  &inarray, 

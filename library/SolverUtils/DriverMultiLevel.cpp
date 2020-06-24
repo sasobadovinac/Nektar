@@ -74,44 +74,57 @@ namespace Nektar
         {
             ASSERTL1(m_equ[level],"Need to define m_equ[level]");
             
-            size_t nVariables = m_equ[0]->UpdateFields().num_elements();
-            size_t nCoeffs = m_equ[level]->GetNcoeffs();
-            size_t lowLevelCoeff = m_MultiLevelCoeffs[level+1];
-            size_t ttlCurrentLvlCoeff = nVariables * m_MultiLevelCoeffs[level];
-            size_t ttlLowLvlCoeff = nVariables * lowLevelCoeff;
+            int nVariables = m_equ[0]->UpdateFields().num_elements();
+            int nCoeffs = m_equ[level]->GetNcoeffs();
+            int lowLevelCoeff = m_MultiLevelCoeffs[level+1];
+            int ttlCurrentLvlCoeff = nVariables * m_MultiLevelCoeffs[level];
+            int ttlLowLvlCoeff = nVariables * lowLevelCoeff;
 
             int nextLevel = level + 1;
 
             if (lowLevelCoeff > 0)
             {
-                m_equ[level]->MutilLvlPresmooth(inarray,outarray);
+                m_equ[level]->v_MutilLvlPresmooth(inarray,outarray);
                 
                 TensorOfArray1D<NekDouble> outarraytmp{ttlCurrentLvlCoeff, 0.0};
-                m_equ[level]->MutilLvlResidual(inarray,outarray,outarraytmp);
+                m_equ[level]->v_MutilLvlResidual(inarray,outarray,
+                    outarraytmp, level);
                 
                 TensorOfArray1D<NekDouble> lowLevelRhs{ttlLowLvlCoeff,0.0};
-                m_equ[level]->MutilLvlRestriction(outarraytmp,lowLevelRhs);
+                m_equ[level]->v_MutilLvlRestriction1D(outarraytmp,lowLevelRhs);
                 
-                TensorOfArray2D<NekDouble> lowLevelSolution;
-                m_equ[level+1]->MutilLvlUpdateMultilvlMatrix(updateOperatorflag, 
-                    refSolution, lowLevelSolution, time, dtlamda)
+                TensorOfArray2D<NekDouble> lowLevelSolution{nVariables};
+                if(updateOperatorflag)
+                {
+                    for (int i = 0; i < nVariables; ++i)
+                    {
+                        lowLevelSolution[i]=
+                            TensorOfArray1D<NekDouble> {lowLevelCoeff, 0.0};
+                    }
+                    m_equ[level]->v_MutilLvlRestriction2D(
+                        refSolution, 
+                        lowLevelSolution);
+
+                    m_equ[level+1]->v_MutilLvlUpdateMultilvlMatrix(
+                        lowLevelSolution, time, dtlamda);
+                }
                 
                 TensorOfArray1D<NekDouble> lowLeveloutarray(ttlLowLvlCoeff,0.0);
                 v_MultiLevel(lowLevelRhs, lowLeveloutarray, updateOperatorflag,
-                    nextLevel, lowLevelSolution, time, dtlamda)
+                    nextLevel, lowLevelSolution, time, dtlamda);
                 
                 Vmath::Zero(ttlCurrentLvlCoeff,outarraytmp,1);
-                m_equ[level]->MutilLvlProlong(lowLeveloutarray,outarraytmp);
+                m_equ[level]->v_MutilLvlProlong(lowLeveloutarray,outarraytmp);
                 
                 //outarray=outarray+Pe
                 Vmath::Vadd(ttlCurrentLvlCoeff,outarray,1,
                     outarraytmp,1,outarray,1);
                 
-                m_equ[level]->MutilLvlPostsmooth(inarray,outarray);
+                m_equ[level]->v_MutilLvlPostsmooth(inarray,outarray);
             }
             else
             {
-                m_equ[level]->MutilLvlLowestLvlSolver(inarray,outarray);
+                m_equ[level]->v_MutilLvlLowestLvlSolver(inarray,outarray);
             }
         } 
 
@@ -134,16 +147,16 @@ namespace Nektar
                 flagUpdateJac);
         }    
 
-        void DriverMultiLevel::v_CalculateNextLevelPreconditioner(
-                    const Array<OneD, const Array<OneD, NekDouble>> &inarray,
-                    const NekDouble                                 time,
-                    const NekDouble                                 lambda,
-                    const int                                       Level)
-        {
-            ASSERTL1(m_equ[Level],"Need to define EquationSystem[level]");
+        // void DriverMultiLevel::v_CalculateNextLevelPreconditioner(
+        //             const Array<OneD, const Array<OneD, NekDouble>> &inarray,
+        //             const NekDouble                                 time,
+        //             const NekDouble                                 lambda,
+        //             const int                                       Level)
+        // {
+        //     ASSERTL1(m_equ[Level],"Need to define EquationSystem[level]");
             
-            m_equ[Level]->CalculateNextLevelPreconditioner(inarray, time, lambda);
-        }    
+        //     m_equ[Level]->CalculateNextLevelPreconditioner(inarray, time, lambda);
+        // }    
     
         /**
          *
@@ -189,6 +202,10 @@ namespace Nektar
                 MultiLevelSession->SetTag("AdvectiveType","Convective");
                 m_equ[k+1] = GetEquationSystemFactory().CreateInstance(
                     vEquation, MultiLevelSession, MultiLevelGraph);
+                m_equ[k]->SetRestrictionResidualMatrix(
+                    m_RestrictionResidualMatrix[k]);
+                m_equ[k]->SetRestrictionMatrix(m_RestrictionMatrix[k]);
+                m_equ[k]->SetProlongationMatrix(m_ProlongationMatrix[k]);
             }  
 
             m_MultiLevelCoeffs = Array<OneD, int>(m_nLevels+1, 0);
@@ -200,9 +217,12 @@ namespace Nektar
             //so that avoid repeated setting flag of lowest level
             m_MultiLevelCoeffs[m_nLevels] = -1;
             
-            m_driverOperator.DefineCalculateNextLevelPreconditioner
-                (&Driver::CalculateNextLevelPreconditioner, this);
+            // m_driverOperator.DefineCalculateNextLevelPreconditioner
+            //     (&Driver::CalculateNextLevelPreconditioner, this);
             m_driverOperator.DefineMultiLevel(&Driver::MultiLevel, this);
+            m_driverOperator.DefineMultiLvlJacMultiplyMatFree(
+                &Driver::MultiLvlJacMultiplyMatFree, this);
+            
             for (int k = 0;k < nCycles; ++k)
             {
                 m_equ[k]->SetdriverOperator(m_driverOperator);
@@ -308,10 +328,7 @@ namespace Nektar
                         }
                     }
                 }
-                m_equ[k]->SetRestrictionResidualMatrix(
-                    m_RestrictionResidualMatrix[k]);
-                m_equ[k]->SetRestrictionMatrix(m_RestrictionMatrix[k]);
-                m_equ[k]->SetProlongationMatrix(m_ProlongationMatrix[k]);
+                
             }
         } 
     

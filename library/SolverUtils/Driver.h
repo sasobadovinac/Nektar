@@ -88,12 +88,16 @@ public:
     }
 
     SOLVER_UTILS_EXPORT inline void MultiLevel(
-        const Array<OneD, NekDouble>                    &inarray,
-        Array<OneD,NekDouble>                           &outarray,
-        const bool                                      UpDateOperatorflag,
-        const int                                       Level)
+        const TensorOfArray1D<NekDouble>    &inarray,
+        TensorOfArray1D<NekDouble>          &outarray,
+        const bool                          updateOperatorflag,
+        const int                           level,
+        const TensorOfArray2D<NekDouble>    &refSolution,
+        const NekDouble                     time,
+        const NekDouble                     dtlamda)
     {
-        v_MultiLevel(inarray,outarray, UpDateOperatorflag, Level);
+        v_MultiLevel(inarray,outarray, updateOperatorflag, level, refSolution, 
+            time, dtlamda);
     }
 
     SOLVER_UTILS_EXPORT inline void MultiLvlJacMultiplyMatFree(
@@ -109,14 +113,14 @@ public:
             Level, inarray, out, time, dtlamda, refFields, flagUpdateJac);
     }
 
-    SOLVER_UTILS_EXPORT inline void CalculateNextLevelPreconditioner(
-        const Array<OneD, const Array<OneD, NekDouble>> &inarray,
-        const NekDouble                                 time,
-        const NekDouble                                 lambda,
-        const int                                       Level)
-    {
-        v_CalculateNextLevelPreconditioner(inarray,time,lambda,Level);
-    }
+    // SOLVER_UTILS_EXPORT inline void CalculateNextLevelPreconditioner(
+    //     const Array<OneD, const Array<OneD, NekDouble>> &inarray,
+    //     const NekDouble                                 time,
+    //     const NekDouble                                 lambda,
+    //     const int                                       Level)
+    // {
+    //     v_CalculateNextLevelPreconditioner(inarray,time,lambda,Level);
+    // }
         
 
     /// Initialise Object
@@ -189,10 +193,13 @@ protected:
     }
 
     SOLVER_UTILS_EXPORT virtual void v_MultiLevel(
-        const Array<OneD, NekDouble>                    &inarray,
-        Array<OneD,NekDouble>                           &outarray,
-        const bool                                      UpDateOperatorflag,
-        const int                                       Level)
+        const TensorOfArray1D<NekDouble>    &inarray,
+        TensorOfArray1D<NekDouble>          &outarray,
+        const bool                          updateOperatorflag,
+        const int                           level,
+        const TensorOfArray2D<NekDouble>    &refSolution,
+        const NekDouble                     time,
+        const NekDouble                     dtlamda)
     {
          ASSERTL0(false,"This routine is not valid in this class");
     }
@@ -209,14 +216,14 @@ protected:
          ASSERTL0(false,"MultiLvlJacMultiplyMatFree is not valid");
     }
 
-    SOLVER_UTILS_EXPORT virtual void v_CalculateNextLevelPreconditioner(
-        const Array<OneD, const Array<OneD, NekDouble>> &inarray,
-        const NekDouble                                 time,
-        const NekDouble                                 lambda,
-        const int                                       Level)
-    {
-         ASSERTL0(false,"This routine is not valid in this class");
-    }
+    // SOLVER_UTILS_EXPORT virtual void v_CalculateNextLevelPreconditioner(
+    //     const Array<OneD, const Array<OneD, NekDouble>> &inarray,
+    //     const NekDouble                                 time,
+    //     const NekDouble                                 lambda,
+    //     const int                                       Level)
+    // {
+    //      ASSERTL0(false,"This routine is not valid in this class");
+    // }
 
 
     SOLVER_UTILS_EXPORT virtual void v_InitObject(std::ostream &out = std::cout);
