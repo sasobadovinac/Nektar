@@ -101,18 +101,6 @@ class Interpolator;
                 v_DoOdeRhs1(inarray,outarray,time);
             }
 
-            // SOLVER_UTILS_EXPORT void MultiLevel(
-            // const Array<OneD, NekDouble>                                    &inarray,
-            // Array<OneD, NekDouble>                                          &outarray, 
-            // const int                                                       Level,
-            // const int                                                       CurrentLevelCoeff,    
-            // const int                                                       LowLevelCoeff,     
-            // const bool                                                      UpDateOperatorflag)
-            // {
-            //     v_MultiLevel(inarray,outarray, Level, CurrentLevelCoeff, 
-            //         LowLevelCoeff, UpDateOperatorflag);
-            // }
-
             SOLVER_UTILS_EXPORT virtual void v_MutilLvlResidual(
                 const TensorOfArray1D<NekDouble>    &inarray,
                 TensorOfArray1D<NekDouble>          &outarray,
@@ -648,18 +636,6 @@ class Interpolator;
             {
                  ASSERTL0(false, "Not defined.");
             }
-
-            // /// Do MultiLevel
-            // SOLVER_UTILS_EXPORT virtual void v_MultiLevel(
-            // const Array<OneD, NekDouble>                                    &inarray,
-            // Array<OneD, NekDouble>                                          &outarray, 
-            // const int                                                       Level,
-            // const int                                                       CurrentLevelCoeff,    
-            // const int                                                       LowLevelCoeff,
-            // const bool                                                      UpDateOperatorflag)
-            // {
-            //      ASSERTL0(false, "Not defined.");
-            // }
 
             SOLVER_UTILS_EXPORT virtual void v_MatrixMultiply_MatrixFree_coeff(
                 const TensorOfArray1D<NekDouble>  &inarray, 

@@ -94,12 +94,6 @@ namespace Nektar
                 const TensorOfArray2D<NekDouble>  &refFields, 
                 const bool                        flagUpdateJac);
 
-            // SOLVER_UTILS_EXPORT virtual void  v_CalculateNextLevelPreconditioner(
-            //         const Array<OneD, const Array<OneD, NekDouble>> &inarray,
-            //         const NekDouble                                 time,
-            //         const NekDouble                                 lambda,
-            //         const int                                       Level);
-        
             /// Second-stage initialisation
             SOLVER_UTILS_EXPORT virtual void v_InitObject(std::ostream &out = std::cout);
 

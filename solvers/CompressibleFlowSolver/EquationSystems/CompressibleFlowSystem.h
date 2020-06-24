@@ -1065,15 +1065,6 @@ namespace Nektar
             const TensorOfArray2D<NekDouble>                &inarray,
             Array<OneD, Array<OneD, DNekMatSharedPtr> >     &ElmtJac);
         
-
-        // void v_MultiLevel(           
-        //     const Array<OneD, NekDouble>                                    &inarray,
-        //     Array<OneD, NekDouble>                                          &outarray, 
-        //     const int                                                       Level,
-        //     const int                                                       CurrentLevelCoeff,    
-        //     const int                                                       LowLevelCoeff,     
-        //     const bool                                                      UpDateOperatorflag);
-
         virtual void v_MutilLvlResidual(
             const TensorOfArray1D<NekDouble>    &inarray,
             TensorOfArray1D<NekDouble>          &outarray,

@@ -167,22 +167,6 @@ namespace Nektar
                 functors2[1](inarray,outarray,time);
             }
 
-            // //Set a functor that calculate Next level's Stored matrices
-            // template<typename FuncPointerT, typename ObjectPointerT> 
-            // void DefineCalculateNextLevelPreconditioner(FuncPointerT func, ObjectPointerT obj)
-            // {
-            //      functors3[0]=  std::bind(func, obj, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4);
-            // }
-
-            // inline void  CalculateNextLevelPreconditioner(InArrayType2     &inarray, 
-            //                                               const NekDouble time,
-            //                                               const NekDouble lambda,
-            //                                               const int       NextLevel) const
-            // {
-            //     ASSERTL1(functors3[0],"CalculateNextLevelPreconditioner has not been defined");
-            //     functors3[0](inarray,time,lambda,NextLevel);
-            // }
-
             //Set a functor that calculate Next level's Stored matrices
             template<typename FuncPointerT, typename ObjectPointerT> 
             void DefineMultiLvlJacMultiplyMatFree(FuncPointerT func, ObjectPointerT obj)

@@ -147,17 +147,6 @@ namespace Nektar
                 flagUpdateJac);
         }    
 
-        // void DriverMultiLevel::v_CalculateNextLevelPreconditioner(
-        //             const Array<OneD, const Array<OneD, NekDouble>> &inarray,
-        //             const NekDouble                                 time,
-        //             const NekDouble                                 lambda,
-        //             const int                                       Level)
-        // {
-        //     ASSERTL1(m_equ[Level],"Need to define EquationSystem[level]");
-            
-        //     m_equ[Level]->CalculateNextLevelPreconditioner(inarray, time, lambda);
-        // }    
-    
         /**
          *
          */
@@ -217,8 +206,6 @@ namespace Nektar
             //so that avoid repeated setting flag of lowest level
             m_MultiLevelCoeffs[m_nLevels] = -1;
             
-            // m_driverOperator.DefineCalculateNextLevelPreconditioner
-            //     (&Driver::CalculateNextLevelPreconditioner, this);
             m_driverOperator.DefineMultiLevel(&Driver::MultiLevel, this);
             m_driverOperator.DefineMultiLvlJacMultiplyMatFree(
                 &Driver::MultiLvlJacMultiplyMatFree, this);
