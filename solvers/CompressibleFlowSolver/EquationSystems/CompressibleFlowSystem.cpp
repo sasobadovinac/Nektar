@@ -188,7 +188,7 @@ namespace Nektar
             m_LinSysOprtors.DefinePrecond(&CompressibleFlowSystem::
                 preconditioner_BlkSOR_coeff, this);
 
-            if (boost::iequals(m_session->GetSolverInfo("PRECONDITIONER"),
+            if (boost::iequals(m_session->GetSolverInfo("PRECONDITIONERCFS"),
                                "IncompleteLU"))
             {
                 // m_LinSysOprtors.DefinePrecond(&CompressibleFlowSystem::preconditioner_BlkILU_coeff, this);
@@ -208,12 +208,16 @@ namespace Nektar
                 // matBytes = m_smvbsrmatrix->GetMemoryFootprint();
 
             }
-            else
+            else 
             {
                 int nvariables  =   m_fields.num_elements();
-                m_LinSysOprtors.DefinePrecond(
-                    &CompressibleFlowSystem::preconditioner_MultiLevel_coeff, 
-                    this);
+                if (boost::iequals(m_session->GetSolverInfo("PRECONDITIONERCFS"),
+                               "MultilvlJacobiIte"))
+                {
+                    m_LinSysOprtors.DefinePrecond(&CompressibleFlowSystem::
+                        preconditioner_MultiLevel_coeff, this);
+                    
+                }
 
                 m_PrecMatStorage    =   eDiagonal;
                 m_session->LoadParameter("nPadding", m_nPadding, 4);
