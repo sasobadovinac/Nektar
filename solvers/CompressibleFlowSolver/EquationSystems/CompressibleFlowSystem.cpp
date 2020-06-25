@@ -6903,9 +6903,10 @@ Array<OneD, NekDouble>  CompressibleFlowSystem::GetElmtMinHP(void)
                   Array<OneD, NekDouble >&outarray,
                   const bool             &UnusedFlag)
     { 
-        int Level=0;
+        int Level=1;
         m_EqdriverOperator.MultiLevel(inarray, outarray, m_UpDateOperatorflag, 
             Level, m_TimeIntegtSol_k, m_BndEvaluateTime, m_TimeIntegLambda);
+        m_UpDateOperatorflag = false;
     }
 
     void CompressibleFlowSystem::v_MutilLvlResidual(

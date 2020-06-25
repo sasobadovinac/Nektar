@@ -124,6 +124,11 @@ namespace Nektar
             }
             else
             {
+                if(updateOperatorflag)
+                {
+                    m_equ[level]->v_MutilLvlUpdateMultilvlMatrix(
+                            refSolution, time, dtlamda);
+                }
                 m_equ[level]->v_MutilLvlLowestLvlSolver(inarray,outarray);
             }
         } 
