@@ -250,8 +250,7 @@ void ProcessLSIAC::ApplyLSIAC(LSIACParams set1)
     vector<int> outVarVal(set1.inVar.size(), -1);
     if (!getIntVFromVals(set1.inVar, outVarVal))
     {
-        cout << "One of the input variables are not defined" << endl;
-        return false;
+        cout << "One or more of the input variables are not defined" << endl;
     }
     // for (int i_f=0;i_f<nfields; i_f++)
     for (int i_f = 0; i_f < set1.outVar.size(); i_f++)
