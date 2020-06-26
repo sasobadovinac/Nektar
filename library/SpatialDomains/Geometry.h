@@ -297,7 +297,9 @@ inline GeomFactorsSharedPtr Geometry::GetGeomFactors()
  */
 inline GeomFactorsSharedPtr Geometry::GetMetricInfo()
 {
-    return m_geomFactors;
+    //return m_geomFactors;
+    GenGeomFactors();
+    return ValidateRegGeomFactor(m_geomFactors);
 }
 
 /**

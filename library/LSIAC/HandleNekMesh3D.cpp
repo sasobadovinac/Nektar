@@ -281,7 +281,7 @@ bool HandleNekMesh3D::v_CanTRangebeApplied(
         }
         if ((0 > pl_index) && (0 > pr_index))
         {
-            NEKERROR(ErrorUtil::efatal, "Not enough mesh size to apply.");
+            //NEKERROR(ErrorUtil::efatal, "Not enough mesh size to apply.");
         }
         return false;
     }
@@ -292,9 +292,28 @@ bool HandleNekMesh3D::v_EvaluateAt(const NekDouble xPos, const NekDouble yPos,
                                    const NekDouble zPos, int gID, int eID,
                                    NekDouble &value, int varNum)
 {
-    boost::ignore_unused(xPos, yPos, zPos, gID, eID, value, varNum);
-    NEKERROR(ErrorUtil::efatal, "Not yet coded");
-    return false;
+    //boost::ignore_unused(xPos, yPos, zPos, gID, eID, value, varNum);
+    //NEKERROR(ErrorUtil::efatal, "Not yet coded");
+    //return false;
+	Array<OneD,NekDouble> Xpos(1,xPos),Ypos(1,yPos),Zpos(1,zPos),values(1,0.0);
+   	Array<OneD,NekDouble> glCoord(3,0.0);
+	glCoord[0] = xPos; 
+	glCoord[1] = yPos; 
+	glCoord[2] = zPos; 
+    if (eID < 0)
+    {
+        if (m_useRTree)
+        {
+        	eID = GetExpansionIndexUsingRTree(glCoord);
+		}else
+		{
+            eID = m_expansions[0]->GetExpIndex(glCoord, TOLERENCE);
+		}
+    }
+    ASSERTL0(eID >= 0, "Point out of mesh");
+	bool ret = this->v_EvaluateAt(Xpos,Ypos,Zpos, gID, eID, values, varNum);
+	value = values[0];
+    return ret;
 }
 
 bool HandleNekMesh3D::v_EvaluateAt(const Array<OneD, NekDouble> &xPos,
@@ -305,7 +324,7 @@ bool HandleNekMesh3D::v_EvaluateAt(const Array<OneD, NekDouble> &xPos,
 {
     // The reason for asking gID will be useful if we are using MPI.
     boost::ignore_unused(gID); // reserved for global id if implemented.
-    ASSERTL0(gID >= 0 && eID >= 0, "Input paramerters are out of scope;");
+    ASSERTL0( eID >= 0, "Input paramerters are out of scope;");
     LocalRegions::ExpansionSharedPtr lexp = m_expansions[0]->GetExp(eID);
     const int phys_offset = m_expansions[0]->GetPhys_Offset(eID);
 
@@ -578,11 +597,16 @@ void HandleNekMesh3D::IntersectWithFaces(const Array<OneD, NekDouble> &dir,
             m_triMap.find(t)->second; //->second;
         IntersectLineSegWithFace(triPtr, dir, point, t1, t2, tvalT);
     }
+	SpatialDomains::QuadGeomMap::iterator it;
+	for(it = m_quadMap.begin(); it!= m_quadMap.end();it++)
+	{
+        IntersectLineSegWithFace(it->second, dir, point, t1, t2, tvalT);
+	}/*
     for (int q = 0; q < m_quadMap.size(); q++)
     {
         SpatialDomains::QuadGeomSharedPtr quadPtr = m_quadMap.find(q)->second;
         IntersectLineSegWithFace(quadPtr, dir, point, t1, t2, tvalT);
-    }
+    }*/
 
     // sort and keep them unique
     std::sort(tvalT.begin(), tvalT.end());
@@ -886,9 +910,14 @@ NekDouble HandleNekMesh3D::v_GetDynamicScaling(Array<OneD, NekDouble> glCoord,
     // This will be different depending on the element type.
     if (eid < 0)
     {
-        eid = GetExpansionIndexUsingRTree(glCoord);
+        if (m_useRTree)
+        {
+        	eid = GetExpansionIndexUsingRTree(glCoord);
+		}else
+		{
+            eid = m_expansions[0]->GetExpIndex(glCoord, TOLERENCE);
+		}
     }
-
     ASSERTL0(eid >= 0, "Point out of mesh");
     NekDouble result = 0;
 

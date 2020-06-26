@@ -225,7 +225,10 @@ void ProcessLSIAC::ApplyLSIAC(LSIACParams set1)
     // Initializing
     vector<Array<OneD, NekDouble>> LSIAC_Fields;
     HNM->CalculateDynamicScaling();
-    // HNM->LoadExpListIntoRTree();
+	if (expdim==3)
+	{
+    	HNM->LoadExpListIntoRTree();
+	}
 
     for (int i_f = 0; i_f < nfields; i_f++)
     {
