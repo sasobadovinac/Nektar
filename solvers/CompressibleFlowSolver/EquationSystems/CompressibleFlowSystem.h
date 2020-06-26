@@ -140,6 +140,9 @@ namespace Nektar
 
         int                                 m_DebugIPSymmFluxJacSwitch; 
         int                                 m_DebugNumJacBSOR;
+
+        int                                 m_CFSPrecondSwitch;
+        
 #endif
 
 #ifdef DEMO_IMPLICITSOLVER_JFNK_COEFF

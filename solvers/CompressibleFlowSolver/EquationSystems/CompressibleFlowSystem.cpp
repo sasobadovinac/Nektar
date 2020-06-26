@@ -188,36 +188,19 @@ namespace Nektar
             m_LinSysOprtors.DefinePrecond(&CompressibleFlowSystem::
                 preconditioner_BlkSOR_coeff, this);
 
-            if (boost::iequals(m_session->GetSolverInfo("PRECONDITIONER"),
-                               "IncompleteLU"))
+             m_session->LoadParameter("CFSPrecondSwitch",     
+            m_CFSPrecondSwitch, 0);
+            
+            switch (m_CFSPrecondSwitch)
             {
-                // m_LinSysOprtors.DefinePrecond(&CompressibleFlowSystem::preconditioner_BlkILU_coeff, this);
-                m_PrecMatStorage    =   eSparse;
-
-                ASSERTL0(false,"IncompleteLU preconditioner not finished yet");
-
-                // DNekSmvBsrMat::SparseStorageSharedPtr sparseStorage =
-                //             MemoryManager<DNekSmvBsrMat::StorageType>::
-                //                     AllocateSharedPtr(
-                //                         brows, bcols, block_size, bcoMat, matStorage );
-
-                // // Create sparse matrix
-                // m_smvbsrmatrix = MemoryManager<DNekSmvBsrMat>::
-                //                         AllocateSharedPtr( sparseStorage );
-
-                // matBytes = m_smvbsrmatrix->GetMemoryFootprint();
-
+            case 2:
+            {
+                m_LinSysOprtors.DefinePrecond(&CompressibleFlowSystem::
+                    preconditioner_MultiLevel_coeff, this);
             }
-            else 
+            case 1:
             {
                 int nvariables  =   m_fields.num_elements();
-                // if (boost::iequals(m_session->GetSolverInfo("PRECONDITIONERCFS"),
-                //                "MultilvlJacobiIte"))
-                // {
-                    m_LinSysOprtors.DefinePrecond(&CompressibleFlowSystem::
-                        preconditioner_MultiLevel_coeff, this);
-                    
-                // }
 
                 m_PrecMatStorage    =   eDiagonal;
                 m_session->LoadParameter("nPadding", m_nPadding, 4);
@@ -240,8 +223,6 @@ namespace Nektar
                 {
                     m_flagPrecondCacheOptmis = false;
                 }
-
-                // cout << " flagPrecondCacheOptmis= "<<m_flagPrecondCacheOptmis<<endl;
 
                 if (m_flagPrecMatFree)
                 {
@@ -318,7 +299,20 @@ namespace Nektar
                     }
 #endif
                 }
+                break;
             }
+            case 3:
+            {
+                m_PrecMatStorage    =   eSparse;
+
+                ASSERTL0(false,"IncompleteLU preconditioner not finished yet");
+                break;
+            }
+            default:
+                ASSERTL0(false," preconditioner not finished yet");
+                break;
+            }
+
             m_linsol->setLinSysOperators(m_LinSysOprtors);
 
             int nvariables  =   m_fields.num_elements();
