@@ -3272,19 +3272,19 @@ namespace Nektar
         
         if(m_DEBUG_VISCOUS_JAC_MAT)
         {
-            Array<OneD, Array<OneD, NekDouble > > visflux(nConvectiveFields);
-            for(int i = 0; i < nConvectiveFields; i++)
-            {
-                visflux[i]  =    Array<OneD, NekDouble>(nTracePts,0.0);
-            }
+            // Array<OneD, Array<OneD, NekDouble > > visflux(nConvectiveFields);
+            // for(int i = 0; i < nConvectiveFields; i++)
+            // {
+            //     visflux[i]  =    Array<OneD, NekDouble>(nTracePts,0.0);
+            // }
 
-            m_diffusion->DiffuseTraceFlux(nConvectiveFields, fields, inarray,
-                qfield,visflux,vFwd, vBwd,qFwd,qBwd,MuVarTrace,nonZeroIndex);
-            for(int i = 0; i < nConvectiveFields; i++)
-            {
-                Vmath::Vsub(nTracePts,traceflux[i],1,visflux[i],1,
-                            traceflux[i],1);
-            }
+            // m_diffusion->DiffuseTraceFlux(nConvectiveFields, fields, inarray,
+            //     qfield,visflux,vFwd, vBwd,qFwd,qBwd,MuVarTrace,nonZeroIndex);
+            // for(int i = 0; i < nConvectiveFields; i++)
+            // {
+            //     Vmath::Vsub(nTracePts,traceflux[i],1,visflux[i],1,
+            //                 traceflux[i],1);
+            // }
         }
     }
 
@@ -4385,7 +4385,9 @@ namespace Nektar
             m_EqdriverOperator.MultiLvlJacMultiplyMatFree(
                 nlvl,
                 inarray,
-                outarray,
+                outarray,03	5.1%	1,052,389	+11,781	42%	1,325,50227,121	52.9%
+Brazil	1,233,147	+40,673	55,054	+1,180	4.5%	679,524	+19,055	55.1%	498,56920,438	40.4%
+Mexico	202,951	+6,104	25,060	
                 m_BndEvaluateTime,
                 m_TimeIntegLambda,
                 m_TimeIntegtSol_k,
@@ -4403,7 +4405,6 @@ namespace Nektar
         }
         m_updateMatFreeJacFlag = false;
     }
-
 
     void CompressibleFlowSystem::v_MatrixMultiply_MatrixFree_coeff(
         const TensorOfArray1D<NekDouble>  &inarray, 
