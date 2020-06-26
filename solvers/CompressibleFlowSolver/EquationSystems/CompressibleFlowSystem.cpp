@@ -4385,9 +4385,7 @@ namespace Nektar
             m_EqdriverOperator.MultiLvlJacMultiplyMatFree(
                 nlvl,
                 inarray,
-                outarray,03	5.1%	1,052,389	+11,781	42%	1,325,50227,121	52.9%
-Brazil	1,233,147	+40,673	55,054	+1,180	4.5%	679,524	+19,055	55.1%	498,56920,438	40.4%
-Mexico	202,951	+6,104	25,060	
+                outarray,
                 m_BndEvaluateTime,
                 m_TimeIntegLambda,
                 m_TimeIntegtSol_k,
