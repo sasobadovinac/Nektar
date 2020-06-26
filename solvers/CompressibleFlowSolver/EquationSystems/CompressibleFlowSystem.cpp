@@ -188,8 +188,8 @@ namespace Nektar
             m_LinSysOprtors.DefinePrecond(&CompressibleFlowSystem::
                 preconditioner_BlkSOR_coeff, this);
 
-             m_session->LoadParameter("CFSPrecondSwitch",     
-            m_CFSPrecondSwitch, 0);
+            m_session->LoadParameter("CFSPrecondSwitch",     
+                m_CFSPrecondSwitch, 1);
             
             switch (m_CFSPrecondSwitch)
             {
