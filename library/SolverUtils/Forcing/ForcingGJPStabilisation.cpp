@@ -64,7 +64,34 @@ namespace SolverUtils
           const unsigned int& pNumForcingFields,
           const TiXmlElement* pForce)
     {
-        boost::ignore_unused(pForce);
+        const TiXmlElement* funcNameElmt = pForce->FirstChildElement("HSCALING");
+
+        if (funcNameElmt)
+        {
+            m_hScalingStr = funcNameElmt->GetText();
+        }
+        else
+        {
+            m_hScalingStr = std::string("DEFAULT");
+        }
+
+        funcNameElmt = pForce->FirstChildElement("VELSCALING");
+
+        if (funcNameElmt)
+        {
+            m_velScalingStr = funcNameElmt->GetText();
+        }
+        else
+        {
+            m_velScalingStr = std::string("DEFAULT");
+        }
+
+        if(m_session->GetComm()->GetRank() == 0)
+        {
+            cout << "GJP Stabilisation:" << endl;
+            cout << "\t H-Scaling:        " << m_hScalingStr << endl;
+            cout << "\t Velocity-Scaling: " << m_velScalingStr << endl;
+        }
         
         m_numForcingFields = pNumForcingFields;
 
@@ -141,7 +168,7 @@ namespace SolverUtils
         Array<OneD, unsigned int> map;
         Array<OneD, int> sign;
         NekDouble h,p;
-            
+
         for(int e = 0; e < m_dgfield->GetExpSize(); ++e)
         {
             LocalRegions::ExpansionSharedPtr elmt = (*exp)[e];
@@ -151,9 +178,34 @@ namespace SolverUtils
 
             for(int n = 0; n < elmt->GetNtraces(); ++n, ++cnt)
             {
+                NekDouble jumpScal; 
                 eval_h(elmt,n,h,p);
-                ASSERTL0(boost::math::isnan(h) == false,"h has a nan value when e = "  +boost::lexical_cast<std::string>(e) + " n =" + boost::lexical_cast<std::string>(n));
-                NekDouble jumpScal = 0.7*pow(p,-4.0)*h*h; 
+                ASSERTL0(boost::math::isnan(h) == false,"h has a nan value when e = "
+                         +boost::lexical_cast<std::string>(e) + " n =" +
+                         boost::lexical_cast<std::string>(n));
+                if(boost::iequals(m_hScalingStr,"H-cubed"))
+                {
+                    if(p==1)
+                    {
+                        jumpScal = 0.02*h*h*h;
+                    }
+                    else
+                    {
+                        jumpScal = 0.8*pow(p+1,-4.0)*h*h*h;
+                    }
+                }
+                else
+                {
+                    if(p==1)
+                    {
+                        jumpScal = 0.02*h*h;
+                    }
+                    else
+                    {
+                        jumpScal = 0.8*pow(p+1,-4.0)*h*h;
+                    }
+                }
+
                 
                 LocalRegions::ExpansionSharedPtr telmt = elmtToTrace[e][n];
                 unsigned long  nctrace = telmt->GetNcoeffs(); 
@@ -252,8 +304,24 @@ namespace SolverUtils
         Array<OneD, NekDouble> Fwd(nTracePts), Bwd(nTracePts), tmp; 
         Array<OneD, NekDouble> FilterCoeffs(nmax);
         Array<OneD, NekDouble> GradJumpOnTrace(nTracePts); 
+        Array<OneD, NekDouble> unorm(nTracePts,1.0);
 
-        
+        if(boost::iequals(m_velScalingStr,"NormalVelocity"))
+        {
+            m_dgfield->GetFwdBwdTracePhys(inarray[0],Fwd,Bwd,true,true);
+            Vmath::Vmul(nTracePts,Fwd,1,m_traceNormals[0],1,unorm,1);
+
+            // Evaluate u.n on trace
+            for(int f = 1; f < m_coordDim; ++f)
+            {
+                m_dgfield->GetFwdBwdTracePhys(inarray[f],Fwd,Bwd,true,true);
+                Vmath::Vvtvp(nTracePts,Fwd,1,m_traceNormals[f],1,
+                             unorm,1,unorm,1);
+            }
+            
+            Vmath::Vabs(nTracePts,unorm,1,unorm,1);
+        }
+            
         for(int f = 0; f < m_numForcingFields; ++f)
         {
             for(int p = 0; p < m_nplanes; ++p)
@@ -284,6 +352,8 @@ namespace SolverUtils
                 {
                     // Scale jump on fwd trace
                     Vmath::Vmul(nTracePts,m_scalFwd,1,GradJumpOnTrace,1,Fwd,1);
+                    Vmath::Vmul(nTracePts,unorm,1,Fwd,1,Fwd,1);
+
                     // Take inner product and put result into Fwd array
                     m_dgfield->GetTrace()->IProductWRTBase(Fwd,Bwd);
                 }
@@ -306,7 +376,8 @@ namespace SolverUtils
                 {
                     // Scale jump on bwd trace
                     Vmath::Vmul(nTracePts,m_scalBwd,1,GradJumpOnTrace,1,Fwd,1);
-                    
+                    Vmath::Vmul(nTracePts,unorm,1,Fwd,1,Fwd,1);
+
                     // Take inner product and put result into Fwd array
                     m_dgfield->GetTrace()->IProductWRTBase(Fwd,Bwd);
                 }

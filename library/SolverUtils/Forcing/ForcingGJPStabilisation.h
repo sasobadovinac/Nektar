@@ -112,6 +112,13 @@ private:
     // Link to the trace normals 
     Array<OneD, Array<OneD, NekDouble> > m_traceNormals; 
 
+    // String to define type of forcing, i.e. default, h-cubed
+    std::string m_hScalingStr; 
+
+    // String to define scaling velocity
+    std::string m_velScalingStr; 
+    
+    
     ForcingGJPStabilisation
         (const LibUtilities::SessionReaderSharedPtr &pSession,
          const std::weak_ptr<EquationSystem>      &pEquation);
