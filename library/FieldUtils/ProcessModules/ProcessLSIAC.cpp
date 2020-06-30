@@ -251,7 +251,8 @@ void ProcessLSIAC::ApplyLSIAC(LSIACParams set1)
     if (!getIntVFromVals(set1.inVar, outVarVal))
     {
         cout << "One or more of the input variables are not defined" << endl;
-    }
+		return ;    
+	}
     // for (int i_f=0;i_f<nfields; i_f++)
     for (int i_f = 0; i_f < set1.outVar.size(); i_f++)
     {
@@ -364,14 +365,14 @@ void ProcessLSIAC::printHelpMessage()
     cout << "Example of an config.xml file is follows" << endl;
     cout << "<?xml version=\"1.0\" ?>" << endl;
     cout << "<LSIAC>" << endl;
-    cout << "<Set>" << endl;
-    cout << "<Invariables> u,v,w <\\Invariables>" << endl;
-    cout << "<Outvariables> L_u,L_v,L_w <\\Outvariables>" << endl;
-    cout << "<Order> 2<\\Order>" << endl;
-    cout << "<Derivative> 2<\\Derivative>" << endl;
-    cout << "<Direction>0.0,1.0,0.0<\\Direction>" << endl;
-    cout << "<MaxChLength>0.5<\\MaxChLength>" << endl;
-    cout << "<\\Set>" << endl;
+    cout << "<SET>" << endl;
+    cout << "<INVARIABLES> u,v,w <\\INVARIABLES>" << endl;
+    cout << "<OUTVARIABLES> L_u,L_v,L_w <\\OUTVARIABLES>" << endl;
+    cout << "<ORDER> 2<\\ORDER>" << endl;
+    cout << "<DERIVATIVE> 2<\\DERIVATIVE>" << endl;
+    cout << "<DIRECTION>1.0,0.0,0.0<\\DIRECTION>" << endl;
+    cout << "<MAXCHLENGTH>0.5<\\MAXCHLENGTH>" << endl;
+    cout << "<\\SET>" << endl;
     cout << "<\\LSIAC>" << endl;
 }
 
