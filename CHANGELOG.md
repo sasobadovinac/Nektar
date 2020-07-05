@@ -8,6 +8,7 @@ v5.1.0
   level. Removed GlobalCoeffs functionality (!963)
 - Add interior penalty method to DG framework (!1101)
 - Add an error filter for the time-evolution of the L2 and Linf errors (!1147)
+- Fix bug in PreconditionerLowEnergy (!1161)
 
 **FieldConvert**
 - Refactored time integration code using factory pattern (!1034)
