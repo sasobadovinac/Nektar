@@ -66,6 +66,7 @@ protected:
     NekDouble m_IPSymmFluxCoeff;
     NekDouble m_IP2ndDervCoeff;
     NekDouble m_IPPenaltyCoeff;
+    int       m_IPPenaltyType;
 
     Array<OneD, NekDouble> m_MuVarTrace;
     Array<OneD, Array<OneD, NekDouble>> m_traceNormals;

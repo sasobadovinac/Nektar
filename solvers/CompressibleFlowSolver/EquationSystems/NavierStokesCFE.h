@@ -65,11 +65,13 @@ namespace Nektar
 
   protected:
     std::string                         m_ViscosityType;
+    std::string                         m_diffName;
+
     NekDouble                           m_Cp;
     NekDouble                           m_Cv;
     NekDouble                           m_Prandtl;
 
-    NekDouble                            m_Twall;
+    NekDouble                           m_Twall;
     NekDouble                           m_muRef;
     NekDouble                           m_thermalConductivityRef;
     Array<OneD, NekDouble>              m_mu;
@@ -136,9 +138,9 @@ namespace Nektar
         TensorOfArray3D<NekDouble>                         &viscousTensor);
 
     virtual void v_GetFluxPenalty(
-        const Array<OneD, Array<OneD, NekDouble> > &uFwd,
-        const Array<OneD, Array<OneD, NekDouble> > &uBwd,
-              Array<OneD, Array<OneD, NekDouble> > &penaltyCoeff);
+        const TensorOfArray2D<NekDouble>    &solution_aver,
+        const TensorOfArray2D<NekDouble>    &solution_jump,
+              TensorOfArray2D<NekDouble>    &penaltyCoeff);
 
     void GetViscosityAndThermalCondFromTemp(
         const Array<OneD, NekDouble> &temperature,

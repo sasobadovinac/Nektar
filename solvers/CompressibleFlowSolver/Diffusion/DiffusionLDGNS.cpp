@@ -666,37 +666,52 @@ void DiffusionLDGNS::ApplyBCsO1(
  *
  */
 void DiffusionLDGNS::NumericalFluxO2(
-    const Array<OneD, MultiRegions::ExpListSharedPtr>        &fields,
-    TensorOfArray3D<NekDouble>                               &qfield,
-    Array<OneD, Array<OneD, NekDouble> >                     &qflux,
-    const Array<OneD, Array<OneD, NekDouble> >               &uFwd,
-    const Array<OneD, Array<OneD, NekDouble> >               &uBwd)
+    const Array<OneD, MultiRegions::ExpListSharedPtr>   &fields,
+    TensorOfArray3D<NekDouble>                          &qfield,
+    TensorOfArray2D<NekDouble>                          &qflux,
+    const TensorOfArray2D<NekDouble>                    &uFwd,
+    const TensorOfArray2D<NekDouble>                    &uBwd)
 {
     std::size_t nTracePts  = fields[0]->GetTrace()->GetTotPoints();
     std::size_t nVariables = fields.size();
 
     // Initialize penalty flux
-    Array<OneD, Array<OneD, NekDouble> >  fluxPen{nVariables-1};
+    TensorOfArray2D<NekDouble> fluxPen{nVariables-1};
     for (std::size_t i = 0; i < nVariables-1; ++i)
     {
-        fluxPen[i] = Array<OneD, NekDouble>{nTracePts, 0.0};
+        fluxPen[i] = TensorOfArray1D<NekDouble>{nTracePts, 0.0};
+    }
+
+    TensorOfArray2D<NekDouble> solution_aver{nVariables-1};
+    TensorOfArray2D<NekDouble> solution_jump{nVariables-1};
+    for (std::size_t i = 0; i < nVariables-1; ++i)
+    {
+        solution_aver[i] = TensorOfArray1D<NekDouble>{nTracePts, 0.0};
+        solution_jump[i] = TensorOfArray1D<NekDouble>{nTracePts, 0.0};
+
+        Vmath::Svtsvtp(nTracePts, 0.5, uFwd[i], 1,
+            0.5, uBwd[i], 1, solution_aver[i], 1);
+        Vmath::Vsub(nTracePts, uFwd[i], 1, uBwd[i], 1, solution_jump[i], 1);
     }
 
     // Get penalty flux
-    m_fluxPenaltyNS(uFwd, uBwd, fluxPen);
+    m_fluxPenaltyNS(solution_aver, solution_jump, fluxPen);
+
+    solution_aver = NullNekDoubleArrayofArray;
+    solution_jump = NullNekDoubleArrayofArray;
 
     // Evaluate Riemann flux
     // qflux = \hat{q} \cdot u = q \cdot n
     // Notice: i = 1 (first row of the viscous tensor is zero)
 
-    Array<OneD, NekDouble > qFwd{nTracePts};
-    Array<OneD, NekDouble > qBwd{nTracePts};
-    Array<OneD, NekDouble > qtemp{nTracePts};
-    Array<OneD, NekDouble > qfluxtemp{nTracePts, 0.0};
+    TensorOfArray1D<NekDouble> qFwd{nTracePts};
+    TensorOfArray1D<NekDouble> qBwd{nTracePts};
+    TensorOfArray1D<NekDouble> qtemp{nTracePts};
+    TensorOfArray1D<NekDouble> qfluxtemp{nTracePts, 0.0};
     std::size_t nDim = fields[0]->GetCoordim(0);
     for (std::size_t i = 1; i < nVariables; ++i)
     {
-        qflux[i] = Array<OneD, NekDouble> {nTracePts, 0.0};
+        qflux[i] = TensorOfArray1D<NekDouble> {nTracePts, 0.0};
         for (std::size_t j = 0; j < nDim; ++j)
         {
             // Compute qFwd and qBwd value of qfield in position 'ji'

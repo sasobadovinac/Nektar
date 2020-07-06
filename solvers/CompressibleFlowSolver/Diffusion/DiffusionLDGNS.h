@@ -138,11 +138,11 @@ namespace Nektar
                   Array<OneD, Array<OneD, NekDouble> >        &flux01);
 
         void NumericalFluxO2(
-            const Array<OneD, MultiRegions::ExpListSharedPtr>       &fields,
-            TensorOfArray3D<NekDouble>                              &qfield,
-            Array<OneD, Array<OneD, NekDouble> >                    &qflux,
-            const Array<OneD, Array<OneD, NekDouble> >              &pFwd,
-            const Array<OneD, Array<OneD, NekDouble> >              &pBwd);
+            const Array<OneD, MultiRegions::ExpListSharedPtr>   &fields,
+            TensorOfArray3D<NekDouble>                          &qfield,
+            TensorOfArray2D<NekDouble>                          &qflux,
+            const TensorOfArray2D<NekDouble>                    &uFwd,
+            const TensorOfArray2D<NekDouble>                    &uBwd);
 
         void ApplyBCsO2(
             const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,

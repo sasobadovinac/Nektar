@@ -145,13 +145,10 @@ namespace Nektar
             }
         }
 
-        // Set up penalty term for LDGNS
-        if ("LDGNS" == diffName||
-            "LDGNS3DHomogeneous1D" == diffName)
-        {
-            m_diffusion->SetFluxPenaltyNS(&NavierStokesCFE::
-                v_GetFluxPenalty, this);
-        }
+        m_diffusion->SetFluxPenaltyNS(&NavierStokesCFE::
+            v_GetFluxPenalty, this);
+
+        m_diffName = diffName;
 
         // Concluding initialisation of diffusion operator
         m_diffusion->InitObject         (m_session, m_fields);
@@ -969,40 +966,45 @@ namespace Nektar
      * @brief Return the penalty vector for the LDGNS diffusion problem.
      */
     void NavierStokesCFE::v_GetFluxPenalty(
-        const Array<OneD, Array<OneD, NekDouble> >  &uFwd,
-        const Array<OneD, Array<OneD, NekDouble> >  &uBwd,
-              Array<OneD, Array<OneD, NekDouble> >  &penaltyCoeff)
+        const TensorOfArray2D<NekDouble>    &solution_aver,
+        const TensorOfArray2D<NekDouble>    &solution_jump,
+              TensorOfArray2D<NekDouble>    &penaltyCoeff)
     {
-        unsigned int nTracePts  = uFwd[0].size();
+        std::size_t nVariables = solution_aver.size();
+        std::size_t nTracePts  = solution_aver[nVariables-1].size();
 
         // Compute average temperature
-        unsigned int nVariables = uFwd.size();
-        Array<OneD, NekDouble> tAve{nTracePts, 0.0};
-        Vmath::Svtsvtp(nTracePts, 0.5, uFwd[nVariables-1], 1,
-            0.5, uBwd[nVariables-1], 1, tAve, 1);
-
+        TensorOfArray1D<NekDouble> tAve{nTracePts, 0.0};
         // Get average viscosity and thermal conductivity
-        Array<OneD, NekDouble> muAve{nTracePts, 0.0};
-        Array<OneD, NekDouble> tcAve{nTracePts, 0.0};
+        TensorOfArray1D<NekDouble> muAve{nTracePts, 0.0};
+        TensorOfArray1D<NekDouble> tcAve{nTracePts, 0.0};
+        
+        TensorOfArray2D<NekDouble> coeffVars{nVariables};
+        for (std::size_t i = 0; i < nVariables; ++i)
+        {
+            coeffVars[i] = muAve;
+        }
+        
+        if ("InteriorPenalty" == m_diffName)
+        { 
+            m_varConv->GetTemperature(solution_aver, tAve);
+        }
+        else
+        {
+            Vmath::Vcopy(nTracePts, solution_aver[nVariables-1], 1, tAve, 1);
+            coeffVars[nVariables-1] = tcAve;
+        }
 
         GetViscosityAndThermalCondFromTemp(tAve, muAve, tcAve);
 
         // Compute penalty term
-        for (int i = 0; i < nVariables; ++i)
+        for (std::size_t i = 0; i < nVariables; ++i)
         {
             // Get jump of u variables
-            Vmath::Vsub(nTracePts, uFwd[i], 1, uBwd[i], 1, penaltyCoeff[i], 1);
+            Vmath::Vcopy(nTracePts, solution_jump[i], 1, penaltyCoeff[i], 1);
             // Multiply by variable coefficient = {coeff} ( u^+ - u^- )
-            if ( i < nVariables-1 )
-            {
-                Vmath::Vmul(nTracePts, muAve, 1, penaltyCoeff[i], 1,
-                    penaltyCoeff[i], 1);
-            }
-            else
-            {
-                Vmath::Vmul(nTracePts, tcAve, 1, penaltyCoeff[i], 1,
-                    penaltyCoeff[i], 1);
-            }
+            Vmath::Vmul(nTracePts, coeffVars[i], 1, penaltyCoeff[i], 1,
+                penaltyCoeff[i], 1);
         }
     }
 
