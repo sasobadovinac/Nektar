@@ -589,7 +589,7 @@ protected:
     virtual void v_LoadExpListIntoRTree()
     {
         NEKERROR(ErrorUtil::efatal, "v_LoadExpListIntoRTree");
-        return false;
+        return ;
     }
 
     virtual NekDouble v_GetJacobian(const int eID)
