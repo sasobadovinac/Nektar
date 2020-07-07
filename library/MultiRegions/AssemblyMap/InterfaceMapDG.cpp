@@ -41,10 +41,12 @@ namespace MultiRegions
 
 InterfaceMapDG::InterfaceMapDG(
     const SpatialDomains::InterfacesSharedPtr &interfaces,
-    const ExpList &locExp, const ExpListSharedPtr &trace,
+    const ExpListSharedPtr &trace,
     const std::map<int, int> geomIdToTraceId)
+    : m_trace(trace),
+      m_geomIdToTraceId(geomIdToTraceId)
 {
-    auto comm = trace->GetComm();
+    auto comm = m_trace->GetComm();
     auto interfaceCollection = interfaces->GetInterfaces();
 
     // myIndxLR contains the info about what interface edges are present on
@@ -92,14 +94,13 @@ InterfaceMapDG::InterfaceMapDG(
                      rankLocalInterfaceDisp);
 
     // Find what interface Ids match with other ranks, then check if opposite edge
+    std::map<int, std::vector<int>> leftEdgeOppRanks; // Map of interface Id to vector of ranks with the opposite edge
+    std::map<int, std::vector<int>> rightEdgeOppRanks;
+    std::map<int, bool> checkLocal;
+
     size_t myRank = comm->GetRank();
     for (size_t i = 0; i < nRanks; ++i)
     {
-        if (i == myRank)
-        {
-            continue;
-        }
-
         for (size_t j = 0; j < rankNumInterfaces[i] / 2; ++j)
         {
             int otherId =
@@ -110,42 +111,119 @@ InterfaceMapDG::InterfaceMapDG(
             InterfaceExchangeSharedPtr exchange;
             if (myIndxLRMap.find(otherId) != myIndxLRMap.end())
             {
-                // `Set` interface opposite ranks (could probably simplify logic
+                if (i == myRank)
+                {
+                    //If contains opposite edge locally then set true
+                    if (otherCode == 3)
+                    {
+                        checkLocal[otherId] = true;
+                    }
+
+                    continue;
+                }
+
+                // Interface opposite ranks (could probably simplify logic
                 // here but this is easy to understand
                 int myCode = myIndxLRMap[otherId];
                 if ((myCode == 1 && otherCode == 2) ||
                     (myCode == 1 && otherCode == 3) ||
                     (myCode == 3 && otherCode == 2))
                 {
-                    m_exchange.emplace_back(
-                        MemoryManager<InterfaceExchange>::AllocateSharedPtr(
-                            interfaceCollection[otherId]->GetLeftInterface(), i));
+                    leftEdgeOppRanks[otherId].emplace_back(i);
                 }
                 else if ((myCode == 2 && otherCode == 1) ||
                          (myCode == 2 && otherCode == 3) ||
                          (myCode == 3 && otherCode == 1))
                 {
-                    m_exchange.emplace_back(
-                        MemoryManager<InterfaceExchange>::AllocateSharedPtr(
-                            interfaceCollection[otherId]->GetRightInterface(),
-                            i));
+                    rightEdgeOppRanks[otherId].emplace_back(i);
                 }
                 else if (myCode == 3 && otherCode == 3)
                 {
-                    m_exchange.emplace_back(
-                        MemoryManager<InterfaceExchange>::AllocateSharedPtr(
-                            interfaceCollection[otherId]->GetLeftInterface(), i));
-                    m_exchange.emplace_back(
-                        MemoryManager<InterfaceExchange>::AllocateSharedPtr(
-                            interfaceCollection[otherId]->GetRightInterface(),
-                            i));
+                    leftEdgeOppRanks[otherId].emplace_back(i);
+                    rightEdgeOppRanks[otherId].emplace_back(i);
+
                 }
+            }
+        }
+    }
+
+    // Create individual interface exchange objects
+    for (auto interface : interfaceCollection)
+    {
+        int interfaceId = interface.first;
+
+        m_exchange.emplace_back(
+            MemoryManager<InterfaceExchange>::AllocateSharedPtr(
+                interfaceCollection[interfaceId]->GetLeftInterface(),
+                leftEdgeOppRanks[interfaceId],
+                checkLocal[interfaceId]));
+
+        m_exchange.emplace_back(
+            MemoryManager<InterfaceExchange>::AllocateSharedPtr(
+                interfaceCollection[interfaceId]->GetRightInterface(),
+                rightEdgeOppRanks[interfaceId],
+                checkLocal[interfaceId]));
+    }
+}
+
+void InterfaceExchange::CalcLocalCoordsReturnTrace(ExpListSharedPtr &trace, std::map<int, int> geomIdToTraceId)
+{
+    auto graph = trace->GetGraph();
+    Array<OneD, std::pair<int, NekDouble>> geomEdgeIdLocalCoordPair(m_interface->GetTotPoints());
+    Array<OneD, Array<OneD, NekDouble>> missingCoords(m_interface->GetTotPoints());
+    if(m_checkLocal)
+    {
+        int cnt = 0;
+        auto childEdgeIds = m_interface->GetEdgeIds();
+        auto parentEdgeIds = m_interface->GetOppInterface()->GetEdgeIds();
+        for (auto childId : childEdgeIds)
+        {
+            auto childElmt = trace->GetExp(geomIdToTraceId.at(childId));
+            size_t nq = childElmt->GetTotPoints();
+            Array<OneD, NekDouble> xc(nq), yc(nq);
+            childElmt->GetCoords(xc, yc);
+
+            // Check local interface
+            for (int i = 0; i < nq; ++i)
+            {
+                Array<OneD, NekDouble> xs(3);
+                xs[0] = xc[i];
+                xs[1] = yc[i];
+                xs[2] = 0;
+
+                bool found = false;
+                int foundEdgeId = -1;
+                NekDouble foundLocCoord = -1;
+
+                for (auto parentId : parentEdgeIds)
+                {
+                    SpatialDomains::SegGeomSharedPtr searchSeg =
+                        std::static_pointer_cast<SpatialDomains::SegGeom>(graph->GetSegGeom(parentId));
+                    NekDouble dist = searchSeg->FindDistance(xs, foundLocCoord);
+
+                    if (dist < 1e-8)
+                    {
+                        foundEdgeId = parentId;
+                        //std::cout << "Found : "<< xc << " " << yc << " in trace " << foundTraceId << " loc coord " << foundLocCoord << " @ dist: " << dist << std::endl;
+                        found = true;
+                        break;
+                    }
+                }
+
+                if(!found)
+                {
+                    missingCoords[cnt] = xs;
+                }
+
+                geomEdgeIdLocalCoordPair[cnt] = std::make_pair(foundEdgeId, foundLocCoord);
+
+                cnt++;
             }
         }
     }
 }
 
-std::vector<std::tuple<NekDouble, int, int>> CalcCoordsOneWay(
+/*std::vector<std::tuple<NekDouble, int, int>> CalcCoordsOneWay(
     const SpatialDomains::InterfaceBaseShPtr &child,
     const SpatialDomains::InterfaceBaseShPtr &parent,
     const ExpListSharedPtr &trace,
@@ -259,7 +337,7 @@ void InterfaceExchange::CalcLocalInterfaceCoords()
             pair->SetCalcFlag(false);
         }
     }
-}
+}*/
 
 } // namespace MultiRegions
 } // namespace Nektar

@@ -450,7 +450,7 @@ namespace Nektar
                 geomIdToTraceId[m_trace->GetExp(i)->GetGeom()->GetGlobalID()] = i;
             }
 
-
+            // Create interface exchange object
             m_interfaceMap = MemoryManager<InterfaceMapDG>::
             AllocateSharedPtr(m_interfaces, m_trace, geomIdToTraceId);
 
@@ -461,7 +461,7 @@ namespace Nektar
                 auto leftInterface = interface.second->GetLeftInterface();
                 for (auto id : leftInterface->GetEdgeIds())
                 {
-                    tmp += m_trace->GetExp(m_geomIdToTraceId[id])->GetTotPoints();
+                    tmp += m_trace->GetExp(geomIdToTraceId[id])->GetTotPoints();
                 }
                 leftInterface->SetTotPoints(tmp);
 
@@ -469,15 +469,14 @@ namespace Nektar
                 auto rightInterface = interface.second->GetRightInterface();
                 for (auto id : leftInterface->GetEdgeIds())
                 {
-                    tmp += m_trace->GetExp(m_geomIdToTraceId[id])->GetTotPoints();
+                    tmp += m_trace->GetExp(geomIdToTraceId[id])->GetTotPoints();
                 }
                 rightInterface->SetTotPoints(tmp);
             }
 
-            m_interfaces->CommSetup(m_comm);
+
 
             int cnt, n, e;
-
             // Identify boundary edges
             for (cnt = 0, n = 0; n < m_bndCondExpansions.size(); ++n)
             {
@@ -1396,8 +1395,12 @@ namespace Nektar
             }
             DisContField2D::v_PeriodicBwdCopy(Fwd, Bwd);
 
-            // Interpolate from each side of the interface to the other.
+
+            m_interfaceMap->CalcLocalInterfaceCoords();
+
+            /* // Interpolate from each side of the interface to the other.
             CalcLocalInterfaceCoords();
+
 
             for (auto &interface : m_interfaces->GetInterfaces())
             {
@@ -1443,7 +1446,7 @@ namespace Nektar
                             ->StdPhysEvaluate(foundPointArray, edgePhys);
                     }
                 }
-            }
+            }*/
         }
 
         void DisContField2D::v_AddTraceQuadPhysToField(

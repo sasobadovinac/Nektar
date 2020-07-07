@@ -66,6 +66,9 @@ enum InterfaceSide
 struct Composite;
 typedef std::map<int, std::shared_ptr<Composite>> CompositeMap;
 
+struct InterfaceBase;
+typedef std::shared_ptr<InterfaceBase> InterfaceBaseShPtr;
+
 struct InterfaceBase
 {
     InterfaceBase(InterfaceType type, CompositeMap domain)
@@ -125,13 +128,46 @@ struct InterfaceBase
         m_side = side;
     }
 
+    inline void SetTotPoints(const int &points)
+    {
+        m_totPoints = points;
+    }
+
+    inline int &GetTotPoints()
+    {
+        return m_totPoints;
+    }
+
+    inline void AddOppRank(const int &rank)
+    {
+        m_oppRanks.emplace_back(rank);
+    }
+
+    inline std::vector<int> &GetOppRanks()
+    {
+        return m_oppRanks;
+    }
+
+    inline void SetOppInterface(InterfaceBaseShPtr oppInterface)
+    {
+        m_oppInterface = oppInterface;
+    }
+
+    inline InterfaceBaseShPtr GetOppInterface()
+    {
+        return m_oppInterface;
+    }
+
 protected:
+    InterfaceBaseShPtr m_oppInterface;
     InterfaceType m_type;
     InterfaceSide m_side = eNone;
     CompositeMap m_domain;
     std::map<int, SegGeomSharedPtr> m_edge;
     std::vector<int> m_edgeIds;
     CompositeMap m_interfaceEdge;
+    int m_totPoints;
+    std::vector<int> m_oppRanks;
 };
 
 struct RotatingInterface : public InterfaceBase
@@ -173,7 +209,6 @@ struct FixedInterface : public InterfaceBase
     }
 };
 
-typedef std::shared_ptr<InterfaceBase> InterfaceBaseShPtr;
 typedef std::shared_ptr<RotatingInterface> RotatingInterfaceShPtr;
 typedef std::shared_ptr<FixedInterface> FixedInterfaceShPtr;
 

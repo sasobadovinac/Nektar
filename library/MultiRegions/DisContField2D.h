@@ -377,8 +377,6 @@ namespace Nektar
 
             inline virtual const LocTraceToTraceMapSharedPtr 
                     &v_GetLocTraceToTraceMap() const;
-
-            void CalcLocalInterfaceCoords();
         };
 
         void DisContField2D::v_GetFwdBwdTracePhys(

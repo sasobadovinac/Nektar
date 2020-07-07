@@ -53,14 +53,24 @@ public:
     /// Default constructor
     MULTI_REGIONS_EXPORT InterfaceExchange(
         const SpatialDomains::InterfaceBaseShPtr &interface,
-        const int &rank)
+        const std::vector<int> &ranks,
+        const bool &checkLocal)
         : m_interface(interface),
-        m_rank(rank)
+          m_ranks(ranks),
+          m_checkLocal(checkLocal)
     {
     }
+
+    void CalcLocalCoordsReturnTrace(ExpListSharedPtr &trace, std::map<int, int> geomIdToTraceId);
+    void ReturnTrace();
+
+    MULTI_REGIONS_EXPORT void PerformExchange();
 private:
     SpatialDomains::InterfaceBaseShPtr m_interface;
-    int m_rank;
+    std::vector<int> m_ranks;
+    bool m_checkLocal;
+    Array<OneD, NekDouble> m_localQuadCoords;
+
 };
 
 typedef std::shared_ptr<InterfaceExchange>  InterfaceExchangeSharedPtr;
@@ -74,11 +84,14 @@ public:
     // Constructor for interface communication
     MULTI_REGIONS_EXPORT InterfaceMapDG(
         const SpatialDomains::InterfacesSharedPtr &interfaces,
-        const ExpList &locExp, const ExpListSharedPtr &trace,
+        const ExpListSharedPtr &trace,
         const std::map<int, int> geomIdToTraceId);
 
+
 private:
+    const ExpListSharedPtr m_trace;
     std::vector<InterfaceExchangeSharedPtr> m_exchange;
+    std::map<int, int> m_geomIdToTraceId;
 };
 
 typedef std::shared_ptr<InterfaceMapDG>  InterfaceMapDGSharedPtr;
