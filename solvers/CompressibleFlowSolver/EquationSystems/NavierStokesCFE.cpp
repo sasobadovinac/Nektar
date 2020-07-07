@@ -183,6 +183,10 @@ namespace Nektar
 
         m_diffusion->SetCalcViscosity(
                 &NavierStokesCFE::CalcViscosity, this);
+        m_diffusion->SetFluxPenaltyNS(&NavierStokesCFE::
+            v_GetFluxPenalty, this);
+
+        m_diffName = diffName;
 
         // Concluding initialisation of diffusion operator
         m_diffusion->InitObject         (m_session, m_fields);
@@ -3033,6 +3037,78 @@ namespace Nektar
                 Vmath::Zero(npoints, DmuDT, 1);
             }
         }
+    }
+
+    /**
+     * @brief Return the penalty vector for the LDGNS diffusion problem.
+     */
+    void NavierStokesCFE::v_GetFluxPenalty(
+        const TensorOfArray2D<NekDouble>    &solution_aver,
+        const TensorOfArray2D<NekDouble>    &solution_jump,
+              TensorOfArray2D<NekDouble>    &penaltyCoeff)
+    {
+        std::size_t nVariables = solution_aver.num_elements();
+        std::size_t nTracePts  = solution_aver[nVariables-1].num_elements();
+
+        // Compute average temperature
+        TensorOfArray1D<NekDouble> tAve{nTracePts, 0.0};
+        // Get average viscosity and thermal conductivity
+        TensorOfArray1D<NekDouble> muAve{nTracePts, 0.0};
+        TensorOfArray1D<NekDouble> tcAve{nTracePts, 0.0};
+        
+        TensorOfArray2D<NekDouble> coeffVars{nVariables};
+        for (std::size_t i = 0; i < nVariables; ++i)
+        {
+            coeffVars[i] = muAve;
+        }
+        
+        if ("InteriorPenalty" == m_diffName)
+        { 
+            m_varConv->GetTemperature(solution_aver, tAve);
+        }
+        else
+        {
+            Vmath::Vcopy(nTracePts, solution_aver[nVariables-1], 1, tAve, 1);
+            coeffVars[nVariables-1] = tcAve;
+        }
+
+        GetViscosityAndThermalCondFromTemp(tAve, muAve, tcAve);
+
+        // Compute penalty term
+        for (std::size_t i = 0; i < nVariables; ++i)
+        {
+            // Get jump of u variables
+            Vmath::Vcopy(nTracePts, solution_jump[i], 1, penaltyCoeff[i], 1);
+            // Multiply by variable coefficient = {coeff} ( u^+ - u^- )
+            Vmath::Vmul(nTracePts, coeffVars[i], 1, penaltyCoeff[i], 1,
+                penaltyCoeff[i], 1);
+        }
+    }
+
+
+    /**
+     * @brief Update viscosity
+     * todo: add artificial viscosity here
+     */
+    void NavierStokesCFE::GetViscosityAndThermalCondFromTemp(
+        const Array<OneD, NekDouble> &temperature,
+        Array<OneD, NekDouble> &mu,
+        Array<OneD, NekDouble> &thermalCond)
+    {
+        int nPts       = temperature.num_elements();
+
+        // Variable viscosity through the Sutherland's law
+        if (m_ViscosityType == "Variable")
+        {
+            m_varConv->GetDynamicViscosity(temperature, mu);
+        }
+        else
+        {
+            Vmath::Fill(nPts, m_mu, mu, 1);
+        }
+        NekDouble tRa = m_Cp / m_Prandtl;
+        Vmath::Smul(nPts, tRa, mu, 1, thermalCond, 1);
+
     }
 
 }

@@ -77,6 +77,8 @@ namespace Nektar
 
   protected:
     std::string                         m_ViscosityType;
+    std::string                         m_diffName;
+    
     NekDouble                           m_mu;
     NekDouble                           m_thermalConductivity;
     NekDouble                           m_Cp;
@@ -175,6 +177,16 @@ namespace Nektar
         const Array<OneD, Array<OneD, NekDouble> >         &physfield,
         Array<OneD, Array<OneD, Array<OneD, NekDouble> > > &derivatives,
         Array<OneD, Array<OneD, Array<OneD, NekDouble> > > &viscousTensor);
+    
+    virtual void v_GetFluxPenalty(
+        const TensorOfArray2D<NekDouble>    &solution_aver,
+        const TensorOfArray2D<NekDouble>    &solution_jump,
+              TensorOfArray2D<NekDouble>    &penaltyCoeff);
+
+    void GetViscosityAndThermalCondFromTemp(
+        const Array<OneD, NekDouble> &temperature,
+              Array<OneD, NekDouble> &mu,
+              Array<OneD, NekDouble> &thermalCond);
 
 
     virtual void v_GetViscousSymmtrFluxConservVar(

@@ -66,6 +66,9 @@ namespace Nektar
             m_session->LoadParameter("IPPenaltyCoeff",
                                   m_IPPenaltyCoeff,   4.0); 
 
+            m_session->LoadParameter("IPPenaltyType", m_IPPenaltyType,
+                             0); //0: matrix form; 1: scalar form
+
             // Setting up the normals
             int i;
             int nDim = pFields[0]->GetCoordim(0);
@@ -926,22 +929,55 @@ namespace Nektar
             Array<OneD, NekDouble> jumpTmp(nTracePts,0.0);
             Array<OneD, NekDouble> PenaltyFactor(nTracePts,0.0);
 
-            // GetPenaltyFactor_const(fields,PenaltyFactor);
-            GetPenaltyFactor(fields,PenaltyFactor);
+            GetPenaltyFactor_const(fields,PenaltyFactor);
+            // GetPenaltyFactor(fields,PenaltyFactor);
 
             Vmath::Vmul(nTracePts,PenaltyFactor,1, m_oIPPenaltyLength,1,PenaltyFactor,1);
-            for (int i = 0; i < nConvectiveFields; ++i)
+
+            if (0 == m_IPPenaltyType)
             {
-                Vmath::Vmul(nTracePts,solution_jump[i],1, PenaltyFactor,1,jumpTmp,1);
-                for (int nd = 0; nd < nDim; ++nd)
+                for (size_t i = 0; i < nConvectiveFields; ++i)
                 {
-                    Vmath::Vvtvp(nTracePts, m_traceNormals[nd],1,jumpTmp,1, numDerivFwd[nd][i],1, numDerivFwd[nd][i],1);
+                    Vmath::Vmul(nTracePts, solution_jump[i], 1, PenaltyFactor, 1, jumpTmp,
+                                1);
+                    for (size_t nd = 0; nd < nDim; ++nd)
+                    {
+                        Vmath::Vvtvp(nTracePts, m_traceNormals[nd], 1, jumpTmp, 1,
+                                    numDerivFwd[nd][i], 1, numDerivFwd[nd][i], 1);
+                    }
+                }
+                jumpTmp       = NullNekDouble1DArray;
+                PenaltyFactor = NullNekDouble1DArray;
+            }
+
+            // // Calculate normal viscous flux
+            // m_FunctorDiffusionfluxCons(nDim, solution_Aver, numDerivFwd, traceflux,
+            //                         nonZeroIndexflux, m_traceNormals, MuVarTrace);
+            // Calculate normal viscous flux
+            m_FunctorDiffusionfluxCons(nConvectiveFields,nDim,solution_Aver,
+                numDerivFwd,traceflux,nonZeroIndexflux,m_traceNormals,MuVarTrace);
+            if (1 == m_IPPenaltyType)
+            {
+                TensorOfArray2D<NekDouble> tracePen = numDerivFwd[0];
+                m_fluxPenaltyNS(solution_Aver, solution_jump, tracePen);
+
+                // for (size_t nNon = 0; nNon < nonZeroIndexflux.num_elements(); ++nNon)
+                // {
+                //     size_t i = nonZeroIndexflux[nNon];
+                //     Vmath::Vvtvp(nTracePts, PenaltyFactor, 1, 
+                //                 tracePen[i], 1, 
+                //                 traceflux[0][i], 1,
+                //                 traceflux[0][i], 1);
+                // }
+
+                for (size_t i = 0; i < nConvectiveFields; ++i)
+                {
+                    Vmath::Vvtvp(nTracePts, PenaltyFactor, 1, 
+                                tracePen[i], 1, 
+                                traceflux[0][i], 1,
+                                traceflux[0][i], 1);
                 }
             }
-            jumpTmp         =   NullNekDouble1DArray;
-            PenaltyFactor   =   NullNekDouble1DArray;
-            // Calculate normal viscous flux
-            m_FunctorDiffusionfluxCons(nConvectiveFields,nDim,solution_Aver,numDerivFwd,traceflux,nonZeroIndexflux,m_traceNormals,MuVarTrace);
         }
         
         void DiffusionIP::AddSecondDerivTOTrace_ReduceComm(

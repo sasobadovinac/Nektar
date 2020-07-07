@@ -65,6 +65,12 @@ namespace Nektar
 
         typedef std::function<void (
             const Array<OneD, Array<OneD, NekDouble> >&,
+            const Array<OneD, Array<OneD, NekDouble> >&,
+                  Array<OneD, Array<OneD, NekDouble> >&)>
+                                            DiffusionFluxPenaltyNS;
+
+        typedef std::function<void (
+            const Array<OneD, Array<OneD, NekDouble> >&,
                   Array<OneD,             NekDouble  >&)>
                                             DiffusionArtificialDiffusion;
 
@@ -340,6 +346,11 @@ namespace Nektar
                     std::placeholders::_3);
             }
 
+            void SetFluxVectorNS(DiffusionFluxVecCBNS fluxVector)
+            {
+                m_fluxVectorNS = fluxVector;
+            }
+
             template<typename FuncPointerT, typename ObjectPointerT>
             void SetArtificialDiffusionVector(FuncPointerT func, ObjectPointerT obj)
             {
@@ -347,9 +358,17 @@ namespace Nektar
                     func, obj, std::placeholders::_1, std::placeholders::_2);
             }
 
-            void SetFluxVectorNS(DiffusionFluxVecCBNS fluxVector)
+            template<typename FuncPointerT, typename ObjectPointerT>
+            void SetFluxPenaltyNS(FuncPointerT func, ObjectPointerT obj)
             {
-                m_fluxVectorNS = fluxVector;
+                m_fluxPenaltyNS = std::bind(
+                    func, obj, std::placeholders::_1, std::placeholders::_2,
+                    std::placeholders::_3);
+            }
+
+            void SetFluxPenaltyNS(DiffusionFluxPenaltyNS flux)
+            {
+                m_fluxPenaltyNS = flux;
             }
 
             template<typename FuncPointerT, typename ObjectPointerT>
@@ -462,6 +481,7 @@ namespace Nektar
         protected:
             DiffusionFluxVecCB              m_fluxVector;
             DiffusionFluxVecCBNS            m_fluxVectorNS;
+            DiffusionFluxPenaltyNS          m_fluxPenaltyNS;
             DiffusionArtificialDiffusion    m_ArtificialDiffusionVector;
             DiffusionFluxCons               m_FunctorDiffusionfluxCons;
             FunctorDerivBndCond             m_FunctorDerivBndCond;
