@@ -1191,6 +1191,16 @@ namespace Nektar
             return 0;
         }
 
+        NekDouble StdExpansion::v_PhysEvaluateDeriv
+        (const Array<OneD,
+                                  const NekDouble>& coords,
+                                  const Array<OneD, const NekDouble>& physvals)
+        {
+            boost::ignore_unused(coords, physvals);
+            NEKERROR(ErrorUtil::efatal, "Method does not exist for this shape");
+            return 0;
+        }
+
 
         NekDouble StdExpansion::v_PhysEvaluate
                                   (const Array<OneD, DNekMatSharedPtr > & I,

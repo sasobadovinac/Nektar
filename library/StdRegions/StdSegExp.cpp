@@ -531,6 +531,7 @@ namespace Nektar
             return StdExpansion::BaryEvaluateBasis<0>(coords[0], mode);
         }
 
+
         void StdSegExp::v_LaplacianMatrixOp(
             const Array<OneD, const NekDouble> &inarray,
                   Array<OneD,       NekDouble> &outarray,

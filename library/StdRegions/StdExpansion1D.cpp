@@ -66,6 +66,7 @@ namespace Nektar
     void StdExpansion1D::PhysTensorDeriv(const Array<OneD, const NekDouble>& inarray,
                          Array<OneD, NekDouble>& outarray)
     {
+
         int nquad = GetTotPoints();
         DNekMatSharedPtr D = m_base[0]->GetD();
 
@@ -80,7 +81,16 @@ namespace Nektar
         {
             Blas::Dgemv('N',nquad,nquad,1.0,&(D->GetPtr())[0],nquad,
                         &inarray[0],1,0.0,&outarray[0],1);
-        }
+                        }
+    }
+
+        NekDouble StdExpansion1D::v_PhysEvaluateDeriv(
+                    const Array<OneD, const NekDouble>& coords,
+                    const Array<OneD, const NekDouble>& physvals)
+    {
+
+        return StdExpansion::BaryEvaluate<0>(coords[0], &physvals[0]);
+       
     }
 
     NekDouble StdExpansion1D::v_PhysEvaluate(
@@ -92,6 +102,7 @@ namespace Nektar
 
         return StdExpansion::BaryEvaluate<0>(Lcoord[0], &physvals[0]);
     }
+
 
     }//end namespace
 }//end namespace

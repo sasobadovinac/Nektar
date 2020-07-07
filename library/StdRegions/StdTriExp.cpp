@@ -136,8 +136,93 @@ namespace Nektar
                   Array<OneD,       NekDouble>& out_d2)
         {
             boost::ignore_unused(out_d2);
+            Array<OneD, NekDouble> coll(2);
+            LocCoordToLocCollapsed(inarray,coll);
+            //coll = inarray;
+            //const Array<OneD, const NekDouble>& z0 = m_base[0]->GetZ();
+            //const Array<OneD, const NekDouble>& z1 = m_base[1]->GetZ();
 
-            int    i;
+            const int nq0 = m_base[0]->GetNumPoints();
+            const int nq1 = m_base[1]->GetNumPoints();
+            //Array<OneD, NekDouble> wsp(std::max(nq0, nq1));  
+            Array<OneD, NekDouble> wsp2(std::max(nq0, nq1));  
+            //Array<OneD, NekDouble> wsp3(std::max(nq0, nq1));  
+
+            // set up geometric factor: 2/(1-z1)
+            //Vmath::Sadd(nq1, -1.0, z1, 1, wsp, 1);
+            //Vmath::Sdiv(nq1, -2.0, wsp, 1, wsp, 1);
+
+            if (out_d0.size() > 0)
+            {
+
+                for (int i = 0; i < nq1; ++i)
+                {
+                    wsp2[i] = StdExpansion::BaryEvaluateDeriv<0>(
+                                                                coll[0], &inarray[0] + i * nq0);
+                }
+                out_d0 = wsp2;
+                // for (int i = 0; i < nq1; ++i)
+                // {
+                //     Blas::Dscal(nq0,wsp[i],&out_d0[0]+i*nq1,1);
+                // }
+                // if no d1 required do not need to calculate both deriv
+                if (out_d1.size() > 0)
+                {
+                    // set up geometric factor: (1_z0)/(1-z1)
+                    //                    Vmath::Sadd(nq0, 1.0, z0, 1, wsp, 1);
+                    //           Vmath::Smul(nq0, 0.5, wsp, 1, wsp, 1);
+
+                    // for (int i = 0; i < nq1; ++i)
+                    // {
+
+                    //     Vmath::Vvtvp(nq0,&wsp[0],1,&out_d0[0]+i*nq0,
+                    //                  1,&out_d1[0]+i*nq0,
+                    //                  1,&out_d1[0]+i*nq0,1);
+                    // }
+
+                for (int i = 0; i < nq0; ++i)
+                {
+                    wsp2[i] = StdExpansion::BaryEvaluateDeriv<1>(
+                                                                coll[0], &inarray[0] + i * nq1);
+                }
+                out_d1 = wsp2;
+
+                }
+
+            }
+            else if (out_d1.size() > 0)
+            {
+
+                // for (int i = 0; i < nq1; ++i)
+                // {
+                //     wsp3[i] = StdExpansion::BaryEvaluateDeriv<0>(
+                //                                                 coll[0], &inarray[0] + i * nq0);
+                // }
+
+                for (int i = 0; i < nq0; ++i)
+                {
+                    wsp2[i] = StdExpansion::BaryEvaluateDeriv<1>(
+                                                                coll[0], &inarray[0] + i * nq1);
+                }
+                out_d1 = wsp2;
+
+                // for (int i = 0; i < nq1; ++i)
+                // {
+                //     Blas::Dscal(nq0,wsp[i],&wsp3[0]+i*nq0,1);
+                // }
+
+                // Vmath::Sadd(nq0, 1.0, z0, 1, wsp, 1);
+                // Vmath::Smul(nq0, 0.5, wsp, 1, wsp, 1);
+
+                // for (int i = 0; i < nq1; ++i)
+                // {
+                //     Vmath::Vvtvp(nq0,&wsp[0],1,&wsp3[0]+i*nq0,
+                //                  1,&out_d1[0]+i*nq0,
+                //                  1,&out_d1[0]+i*nq0,1);
+                // }
+            }
+
+            /*            int    i;
             int    nquad0 = m_base[0]->GetNumPoints();
             int    nquad1 = m_base[1]->GetNumPoints();
             Array<OneD, NekDouble> wsp(std::max(nquad0, nquad1));
@@ -192,7 +277,7 @@ namespace Nektar
                                  1,&out_d1[0]+i*nquad0,
                                  1,&out_d1[0]+i*nquad0,1);
                 }
-            }
+                }*/
         }
 
         void StdTriExp::v_PhysDeriv(

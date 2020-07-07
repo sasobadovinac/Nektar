@@ -112,6 +112,14 @@ namespace Nektar
             }
         }
 
+        NekDouble StdExpansion2D::v_PhysEvaluateDeriv(
+            const Array<OneD, const NekDouble> &coords,
+            const Array<OneD, const NekDouble> &physvals)
+        {
+            boost::ignore_unused(coords, physvals);
+            return 0.0;
+        }
+
         NekDouble StdExpansion2D::v_PhysEvaluate(
             const Array<OneD, const NekDouble> &coords,
             const Array<OneD, const NekDouble> &physvals)
@@ -140,6 +148,8 @@ namespace Nektar
 
             return StdExpansion::BaryEvaluate<1>(coll[1], &wsp[0]);
         }
+
+
 
         NekDouble StdExpansion2D::v_PhysEvaluate(
             const Array<OneD, DNekMatSharedPtr > &I,

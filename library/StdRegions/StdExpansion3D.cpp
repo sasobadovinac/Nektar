@@ -139,6 +139,14 @@ namespace Nektar
             v_IProductWRTBase_SumFacKernel(base0, base1, base2, inarray, outarray, wsp, doCheckCollDir0, doCheckCollDir1, doCheckCollDir2);
         }
 
+
+        NekDouble StdExpansion3D::v_PhysEvaluateDeriv(
+            const Array<OneD, const NekDouble> &coords,
+            const Array<OneD, const NekDouble> &physvals)
+        {
+            boost::ignore_unused(coords, physvals);
+            return 0.0;
+        }
         NekDouble StdExpansion3D::v_PhysEvaluate(
             const Array<OneD, const NekDouble> &coords,
             const Array<OneD, const NekDouble> &physvals)

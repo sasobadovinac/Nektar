@@ -180,6 +180,9 @@ namespace Nektar
                     const Array<OneD, const NekDouble>& coords,
                     const Array<OneD, const NekDouble>& physvals);
 
+            STD_REGIONS_EXPORT virtual NekDouble v_PhysEvaluateDeriv(
+                    const Array<OneD, const NekDouble>& coords,
+                    const Array<OneD, const NekDouble>& physvals);
 
             STD_REGIONS_EXPORT virtual NekDouble v_PhysEvaluate(
                     const Array<OneD, DNekMatSharedPtr >& I,
