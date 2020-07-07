@@ -38,6 +38,7 @@
 
 #include <IncNavierStokesSolver/EquationSystems/VelocityCorrectionScheme.h>
 #include <fstream>
+#include <LibUtilities/FFT/NektarFFT.h>
 
 namespace Nektar
 {
@@ -98,8 +99,14 @@ namespace Nektar
         Array<OneD, MultiRegions::ExpListSharedPtr> m_fs;
         /// Shape function 'phi' as expansion list
         MultiRegions::ExpListSharedPtr m_phi;
+        /// Number of samples
+        int nSamples;
+        /// Number of elements in the expansion
+        int npoints;
         /// Vector of shape functions in case of rotating STL
-        std::vector<MultiRegions::ExpListSharedPtr> m_phiTable;
+        Array<OneD, MultiRegions::ExpListSharedPtr> m_phiExp;
+        /// Interpolation vector
+        Array<OneD, NekDouble> m_phiInterp;
         /// Function that evaluates the values of \Phi
         SolverUtils::SessionFunctionSharedPtr m_phiEvaluator;
         /// Flag that is true when phi depends on time
@@ -108,6 +115,8 @@ namespace Nektar
         bool m_filePhi;
         /// Position of "AeroForcesSPM" filter in 'm_session->GetFilters()'
         int m_forcesFilter;
+        /// Auxiliary variables
+        LibUtilities::NektarFFTSharedPtr m_FFT;
 
         // Interface for 'v_SolveUnsteadyStokesSystem'
         virtual void v_SolveUnsteadyStokesSystem(

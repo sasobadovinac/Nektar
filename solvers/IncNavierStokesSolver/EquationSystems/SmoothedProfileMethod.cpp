@@ -42,7 +42,7 @@
 #include <MultiRegions/ContField3DHomogeneous2D.h>
 
 using namespace std;
-
+# define my_sizeof(type) ((char *)(&type+1)-(char*)(&type))
 namespace Nektar
 {
     using namespace MultiRegions;
@@ -283,6 +283,7 @@ namespace Nektar
 
         // Add presure to outflow bc if using convective like BCs
         m_extrapolation->AddPressureToOutflowBCs(m_kinvis);
+
     }
 
     /**
@@ -465,8 +466,7 @@ namespace Nektar
         {
             if (!m_filePhi)
             {
-              m_phiEvaluator->Evaluate("Phi", m_phi->UpdatePhys(), t);
-            
+              m_phiEvaluator->Evaluate("Phi", m_phi->UpdatePhys(), t);            
 
             // And if velocities are timedependent as well
               if (m_timeDependentUp)
@@ -476,6 +476,34 @@ namespace Nektar
                   m_phiEvaluator->Evaluate(m_velName, m_up, t);
               }
             }
+            
+            else
+            {
+              //Fourier Interpolation
+              Array< OneD, NekDouble > temp(npoints);
+              NekDouble m_period = M_PI;
+              NekDouble BetaT = 2*M_PI*fmod (t, m_period) / m_period;
+              NekDouble phase;
+
+              Vmath::Vcopy(npoints,&m_phiInterp[0],1,&temp[0],1);
+              Vmath::Svtvp(npoints,cos(0.5*nSamples*BetaT),&m_phiInterp[npoints],1,&temp[0],1,&temp[0],1);
+
+
+              for (int i = 2; i < nSamples; i += 2)
+              {
+                  phase = (i>>1) * BetaT;
+
+                  Vmath::Svtvp(npoints, cos(phase),&m_phiInterp[i*npoints],1,&temp[0],1,&temp[0],1);
+                  Vmath::Svtvp(npoints, -sin(phase), &m_phiInterp[(i+1)*npoints], 1, &temp[0], 1,&temp[0],1);
+              }
+              //Copy the coefficients to m_phi
+              for (int i = 1; i < npoints; i+=1)
+              {
+                m_phi -> SetPhys(i,temp[i]);
+              }
+
+            }            
+        
         }
     }
 
@@ -620,17 +648,8 @@ namespace Nektar
             m_timeDependentPhi = GetVarTimeDependence("ShapeFunction", "Phi");
 
             if(m_timeDependentPhi)
-            {   
-                // --> Read number of files
-                // --> Read angular velocity
-                // --> Look into directory
-                // --> Import files (and corresponding angle or suppose first it is a uniform distribution)
-                // --> Add each file to the array
-          
+            {             
                 //Read number of samples
-                int nSamples;
-                //child = child -> NextSiblingElement("F");
-
                 TiXmlAttribute *childAttr = child->LastAttribute();
                 std::string attrName(childAttr->Name());
                 ASSERTL0(attrName == "NSAMPLES", "Unable to read attribute number of samples.");
@@ -651,6 +670,7 @@ namespace Nektar
                 
                 string sampleFileName;
                 string angleString;
+                Array<OneD, MultiRegions::ExpListSharedPtr> m_phiExp(nSamples);
                 for (int i = 0; i < nSamples; ++i)
                 {
                     // Get phi values from XML file (after "FieldConvert" the STL file)
@@ -678,17 +698,71 @@ namespace Nektar
                     m_phi->BwdTrans(m_phi->GetCoeffs(), m_phi->UpdatePhys());
                     
                     // Store Phi in table of Phi fields
-                    m_phiTable.push_back(m_phi);
+                    m_phiExp[i] = m_phi;
 
                     //Update angle name
                     angle = angle + dAngle;
                 }
 
-                ASSERTL0(m_phiTable.size() == nSamples, "The number of samples provided does not match"
+                
+                ASSERTL0(m_phiExp.size() == nSamples, "The number of samples provided does not match"
                                                         " NSAMPLES.")
+
+                int npoints = m_phiExp[0] -> GetNumElmts();
+                m_phiInterp = Array<OneD, NekDouble> (npoints*nSamples, 0.0);
+                Array< OneD, NekDouble > temp(npoints);
+              
+
+                for(int i = 0; i < nSamples; ++i)
+                {   
+                    temp = m_phiExp[i] -> GetPhys();
+                    Vmath::Vcopy(npoints,&temp[0],1,&m_phiInterp[i*npoints],1);
+                }
+
+                //Discrete Fourier Transform using FFTW
+                Array<OneD, NekDouble> fft_in(npoints*nSamples);
+                Array<OneD, NekDouble> fft_out(npoints*nSamples);
+
+                Array<OneD, NekDouble> m_tmpIN(nSamples);
+                Array<OneD, NekDouble> m_tmpOUT(nSamples);
+
+                //Shuffle the data
+                for(int j= 0; j < nSamples; ++j)
+                {
+                    Vmath::Vcopy(npoints,&m_phiInterp[j*npoints],1,&(fft_in[j]),nSamples);
+                }
+
+                m_FFT = LibUtilities::GetNektarFFTFactory().CreateInstance("NekFFTW", nSamples);
+
+                //FFT Transform
+                for(int i=0; i<npoints; i++)
+                {
+                    m_FFT->FFTFwdTrans(m_tmpIN =fft_in + i*nSamples, m_tmpOUT =fft_out + i*nSamples);
+
+                }
+
+                //Reshuffle data
+                for(int s = 0; s < nSamples; ++s)
+                {
+                    Vmath::Vcopy(npoints,&fft_out[s],nSamples,&m_phiInterp[s*npoints],1);
+
+                }
+
+                Vmath::Zero(fft_in.size(),&fft_in[0],1);
+                Vmath::Zero(fft_out.size(),&fft_out[0],1);
+
+                //scaling of the Fourier coefficients
+                /*NekDouble j=-1;
+                for (int i = 2; i < nSamples; i += 2)
+                {
+                    Vmath::Smul(2*npoints,j,&m_phiInterp[i*npoints],1,&m_phiInterp[i*npoints],1);
+                    j=-j;
+
+                }*/
 
                 m_timeDependentPhi = true;
                 m_timeDependentUp  = false;
+
 
             }
             else
@@ -717,6 +791,18 @@ namespace Nektar
                 m_phi->BwdTrans(m_phi->GetCoeffs(), m_phi->UpdatePhys());
                 m_timeDependentPhi = false;
                 m_timeDependentUp  = false;
+
+                //Output Phi field
+                MultiRegions::ExpListSharedPtr m_phiCopy = m_phi;
+                m_phiCopy->FwdTrans_IterPerExp(m_phiCopy->GetPhys(), m_phiCopy->UpdateCoeffs());
+                Array< OneD, NekDouble > temp(npoints);
+                temp = m_phiCopy -> GetPhys(); 
+                std::vector<Array<OneD, NekDouble> > phiOutputVectorOfArray;
+                phiOutputVectorOfArray.push_back(temp); 
+                std::vector<std::string> variableName;
+                variableName.push_back("phi");
+                EquationSystem::WriteFld("phi.fld",m_phiCopy,phiOutputVectorOfArray, variableName); 
+                
             }
             m_filePhi = true;
         }
