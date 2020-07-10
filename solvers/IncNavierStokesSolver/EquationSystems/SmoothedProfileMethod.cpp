@@ -502,6 +502,17 @@ namespace Nektar
                 m_phi -> SetPhys(i,temp[i]);
               }
 
+              //Output Phi field
+              m_phi->FwdTrans_IterPerExp(m_phi->GetPhys(), m_phi->UpdateCoeffs());
+              std::vector<Array<OneD, NekDouble> > phiOutputVectorOfArray;
+              phiOutputVectorOfArray.push_back(m_phi -> UpdateCoeffs()); 
+              std::vector<std::string> variableName;
+              variableName.push_back("phi");
+              string tString;
+              tString = to_string(t);
+              EquationSystem::WriteFld("phi_" + tString+ ".fld",m_phi,phiOutputVectorOfArray, variableName); 
+
+              m_phi->BwdTrans(m_phi->GetCoeffs(), m_phi->UpdatePhys());
             }            
         
         }
@@ -702,6 +713,17 @@ namespace Nektar
 
                     //Update angle name
                     angle = angle + dAngle;
+
+                    //Output Phi field
+                    m_phi->FwdTrans_IterPerExp(m_phi->GetPhys(), m_phi->UpdateCoeffs());
+                    std::vector<Array<OneD, NekDouble> > phiOutputVectorOfArray;
+                    phiOutputVectorOfArray.push_back(m_phi -> UpdateCoeffs()); 
+                    std::vector<std::string> variableName;
+                    variableName.push_back("phi");
+                    string stringI = to_string(i);
+                    EquationSystem::WriteFld("phi_"+ stringI +".fld",m_phi,phiOutputVectorOfArray, variableName); 
+
+                    m_phi->BwdTrans(m_phi->GetCoeffs(), m_phi->UpdatePhys());
                 }
 
                 
@@ -752,13 +774,13 @@ namespace Nektar
                 Vmath::Zero(fft_out.size(),&fft_out[0],1);
 
                 //scaling of the Fourier coefficients
-                /*NekDouble j=-1;
+                NekDouble j=-1;
                 for (int i = 2; i < nSamples; i += 2)
                 {
                     Vmath::Smul(2*npoints,j,&m_phiInterp[i*npoints],1,&m_phiInterp[i*npoints],1);
                     j=-j;
 
-                }*/
+                }
 
                 m_timeDependentPhi = true;
                 m_timeDependentUp  = false;
@@ -793,15 +815,14 @@ namespace Nektar
                 m_timeDependentUp  = false;
 
                 //Output Phi field
-                MultiRegions::ExpListSharedPtr m_phiCopy = m_phi;
-                m_phiCopy->FwdTrans_IterPerExp(m_phiCopy->GetPhys(), m_phiCopy->UpdateCoeffs());
-                Array< OneD, NekDouble > temp(npoints);
-                temp = m_phiCopy -> GetPhys(); 
+                m_phi->FwdTrans_IterPerExp(m_phi->GetPhys(), m_phi->UpdateCoeffs());
                 std::vector<Array<OneD, NekDouble> > phiOutputVectorOfArray;
-                phiOutputVectorOfArray.push_back(temp); 
+                phiOutputVectorOfArray.push_back(m_phi -> UpdateCoeffs()); 
                 std::vector<std::string> variableName;
                 variableName.push_back("phi");
-                EquationSystem::WriteFld("phi.fld",m_phiCopy,phiOutputVectorOfArray, variableName); 
+                EquationSystem::WriteFld("phi.fld",m_phi,phiOutputVectorOfArray, variableName); 
+
+                m_phi->BwdTrans(m_phi->GetCoeffs(), m_phi->UpdatePhys());
                 
             }
             m_filePhi = true;
