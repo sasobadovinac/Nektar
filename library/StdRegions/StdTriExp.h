@@ -156,9 +156,26 @@ namespace Nektar
             STD_REGIONS_EXPORT virtual void v_FillMode(
                 const int               mode,
                 Array<OneD, NekDouble> &outarray);
+
             STD_REGIONS_EXPORT NekDouble v_PhysEvaluateBasis(
                 const Array<OneD, const NekDouble>& coords,
                 int mode) final;
+
+            STD_REGIONS_EXPORT NekDouble v_PhysEvaluatedyBasis(
+                const Array<OneD, const NekDouble>& coords,
+                int mode) final;
+
+            STD_REGIONS_EXPORT NekDouble v_PhysEvaluatedxBasis(
+                const Array<OneD, const NekDouble>& coords,
+                int mode) final;
+
+            STD_REGIONS_EXPORT NekDouble v_PhysEvaluatedx(
+                const Array<OneD, const NekDouble> &coords,
+                const Array<OneD, const NekDouble> &physvals) final;
+            
+            STD_REGIONS_EXPORT NekDouble v_PhysEvaluatedy(
+                const Array<OneD, const NekDouble> &coords,
+                const Array<OneD, const NekDouble> &physvals) final;
 
 
             //---------------------------

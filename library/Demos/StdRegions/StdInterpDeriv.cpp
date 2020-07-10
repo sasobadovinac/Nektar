@@ -42,17 +42,47 @@
 Array<OneD, NekDouble> EvalPolyDerivx(Array<OneD, Array<OneD, NekDouble>> &pts)
 {
     Array<OneD, NekDouble> ret(pts[0].size());
-    unsigned dim = pts.size();
+    //    unsigned dim = pts.size();
 
     // check if pts[0] and pts[1] have same size
-    // polynomial = x^2 + y^2 - 3x - 4
-    // derivative in x = 2x - 3
+    // polynomial = x^2 + y^2 - z^2 + 3x - 9z
+    // derivative in x = 2x + 3
 
     for (int i = 0; i < pts[0].size(); i++)
     {
-        ret[i] =  2*pts[0][i] - 3.0
-            + (dim >= 2 ? pow(pts[1][i], 2) : 0.0)
-            + (dim >= 3 ? pow(pts[2][i], 2) : 0.0);
+        ret[i] =  2*pts[0][i] + 3.0;
+    }
+    return ret;
+}
+
+Array<OneD, NekDouble> EvalPolyDerivy(Array<OneD, Array<OneD, NekDouble>> &pts)
+{
+    Array<OneD, NekDouble> ret(pts[0].size());
+    //unsigned dim = pts.size();
+
+    // check if pts[0] and pts[1] have same size
+    // polynomial = x^2 + y^2 - z^2 + 3x - 9z
+    // derivative in y = 2y
+
+    for (int i = 0; i < pts[0].size(); i++)
+    {
+        ret[i] =  2*pts[1][i];
+    }
+    return ret;
+}
+
+Array<OneD, NekDouble> EvalPolyDerivz(Array<OneD, Array<OneD, NekDouble>> &pts)
+{
+    Array<OneD, NekDouble> ret(pts[0].size());
+    //unsigned dim = pts.size();
+
+    // check if pts[0] and pts[1] have same size
+    // polynomial = x^2 + y^2 - z^2 + 3x - 9z
+    // derivative in z = -2z - 9
+
+    for (int i = 0; i < pts[0].size(); i++)
+    {
+        ret[i] =  -2*pts[2][i] - 9.0;
     }
     return ret;
 }
@@ -78,27 +108,55 @@ int main(int argc, char *argv[])
 
     Array<OneD, Array<OneD, NekDouble>> coordsE = demo.GetCoords(E);
     Array<OneD, Array<OneD, NekDouble>> coordsF = demo.GetCoords(F);
-    Array<OneD, NekDouble> physIn(totPoints), physOut(totPoints);
-    Array<OneD, NekDouble> tmpIn(dimension), sol(totPoints);
+    Array<OneD, NekDouble> physIn(totPoints), physOut0(totPoints), physOut1(totPoints), physOut2(totPoints);
+    Array<OneD, NekDouble> tmpIn(dimension), sol0(totPoints), sol1(totPoints), sol2(totPoints);
 
     // Evaluate polynomial at the set of elemental solution points.
-    physIn = EvalPolyDerivx(coordsE);
-
+    //cout<<"\n physout:\n";
     for (int i = 0; i < totPoints; ++i)
     {
         for (int d = 0; d < dimension; ++d)
         {
             tmpIn[d] = coordsF[d][i];
         }
-        physOut[i] = E->PhysEvaluateDeriv(tmpIn, physIn);
+        if(dimension>2)
+        {
+            physIn = EvalPolyDerivz(coordsE);
+   
+            physOut2[i] = E->PhysEvaluatedz(tmpIn, physIn);
+        }
+        if(dimension>1)
+        {
+            physIn = EvalPolyDerivy(coordsE);
+   
+            physOut1[i] = E->PhysEvaluatedy(tmpIn, physIn);
+        }
 
+        if(dimension>0)
+        {
+            physIn = EvalPolyDerivx(coordsE);
+   
+            physOut0[i] = E->PhysEvaluatedx(tmpIn, physIn);
+        }
+        
+            //  cout<<" "<<physOut[i];
     }
 
-    
-    sol = EvalPolyDerivx(coordsF);
+    //    cout<<"\n sol:\n";
+    if(dimension>2)
+        sol2 = EvalPolyDerivz(coordsF);
+    if(dimension>1)
+        sol1 = EvalPolyDerivy(coordsF);
+    if(dimension>0)
+        sol0 = EvalPolyDerivx(coordsF);
+    // for(int i = 0; i<sol.size(); i++)
+    // {
+    //     cout<<" "<< sol[i]<<" ";
+    // }
 
-    cout << "L infinity error : " << scientific << E->Linf(physOut, sol) << endl;
-    cout << "L 2 error        : " << scientific << E->L2  (physOut, sol) << endl;
+ cout << "L infinity error : " << scientific << E->Linf(physOut0, sol0) + E->Linf(physOut1, sol1)+ E->Linf(physOut2, sol2) << endl;
+ cout << "L 2 error        : " << scientific << E->L2  (physOut0, sol0) +  E->L2  (physOut1, sol1) +  E->L2  (physOut2, sol2) << endl;
+    
 
     return 0;
 }

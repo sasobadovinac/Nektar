@@ -934,7 +934,6 @@ namespace Nektar
             NEKERROR(ErrorUtil::efatal, "This function is not defined for this shape");
         }
 
-
         NekDouble StdExpansion::v_StdPhysEvaluate(const Array<OneD, const NekDouble> &Lcoord,
                                                   const Array<OneD, const NekDouble> &physvals)
 
@@ -943,6 +942,7 @@ namespace Nektar
             NEKERROR(ErrorUtil::efatal, "This function is not defined for this shape");
             return 0;
         }
+
 
         void StdExpansion::v_LocCoordToLocCollapsed(const Array<OneD, const NekDouble>& xi,Array<OneD, NekDouble>& eta)
         {
@@ -1191,12 +1191,42 @@ namespace Nektar
             return 0;
         }
 
-        NekDouble StdExpansion::v_PhysEvaluateDeriv
-        (const Array<OneD,
+        NekDouble StdExpansion::v_PhysEvaluatedx
+                                 (const Array<OneD,
                                   const NekDouble>& coords,
                                   const Array<OneD, const NekDouble>& physvals)
         {
             boost::ignore_unused(coords, physvals);
+            NEKERROR(ErrorUtil::efatal, "Method does not exist for this shape");
+            return 0;
+        }
+
+        NekDouble StdExpansion::v_PhysEvaluatedy
+                                 (const Array<OneD,
+                                  const NekDouble>& coords,
+                                  const Array<OneD, const NekDouble>& physvals)
+        {
+            boost::ignore_unused(coords, physvals);
+            NEKERROR(ErrorUtil::efatal, "Method does not exist for this shape");
+            return 0;
+        }
+
+        NekDouble StdExpansion::v_PhysEvaluatedz
+                                 (const Array<OneD,
+                                  const NekDouble>& coords,
+                                  const Array<OneD, const NekDouble>& physvals)
+        {
+            boost::ignore_unused(coords, physvals);
+            NEKERROR(ErrorUtil::efatal, "Method does not exist for this shape");
+            return 0;
+        }
+
+        NekDouble StdExpansion::v_PhysEvaluateDeriv
+        (int dir, const Array<OneD,
+                                  const NekDouble>& coords,
+                                  const Array<OneD, const NekDouble>& physvals)
+        {
+            boost::ignore_unused(coords, physvals, dir);
             NEKERROR(ErrorUtil::efatal, "Method does not exist for this shape");
             return 0;
         }
@@ -1218,7 +1248,55 @@ namespace Nektar
             return 0;
         }
 
+
+        NekDouble StdExpansion::v_PhysEvaluatedxBasis(const Array<OneD, const NekDouble>& coords, int mode)
+        {
+            boost::ignore_unused(coords, mode);
+            NEKERROR(ErrorUtil::efatal, "Method does not exist for this shape");
+            return 0;
+        }
+
+        NekDouble StdExpansion::v_PhysEvaluatedyBasis(const Array<OneD, const NekDouble>& coords, int mode)
+        {
+            boost::ignore_unused(coords, mode);
+            NEKERROR(ErrorUtil::efatal, "Method does not exist for this shape");
+            return 0;
+        }
+
+        NekDouble StdExpansion::v_PhysEvaluatedzBasis(const Array<OneD, const NekDouble>& coords, int mode)
+        {
+            boost::ignore_unused(coords, mode);
+            NEKERROR(ErrorUtil::efatal, "Method does not exist for this shape");
+            return 0;
+        }
+
+
+
         void StdExpansion::v_FillMode(const int mode, Array<OneD, NekDouble> &outarray)
+        {
+            boost::ignore_unused(mode, outarray);
+            NEKERROR(ErrorUtil::efatal, "This function has not "
+                     "been defined for this shape");
+        }
+
+
+        void StdExpansion::v_FillModedy(const int mode, Array<OneD, NekDouble> &outarray)
+        {
+            boost::ignore_unused(mode, outarray);
+            NEKERROR(ErrorUtil::efatal, "This function has not "
+                     "been defined for this shape");
+        }
+
+
+        void StdExpansion::v_FillModedx(const int mode, Array<OneD, NekDouble> &outarray)
+        {
+            boost::ignore_unused(mode, outarray);
+            NEKERROR(ErrorUtil::efatal, "This function has not "
+                     "been defined for this shape");
+        }
+
+
+        void StdExpansion::v_FillModedz(const int mode, Array<OneD, NekDouble> &outarray)
         {
             boost::ignore_unused(mode, outarray);
             NEKERROR(ErrorUtil::efatal, "This function has not "
@@ -1233,6 +1311,7 @@ namespace Nektar
             DNekMatSharedPtr returnval;
             return returnval;
         }
+
 
         DNekMatSharedPtr StdExpansion::v_CreateStdMatrix(const StdMatrixKey &mkey)
         {

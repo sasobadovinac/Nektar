@@ -85,10 +85,11 @@ namespace Nektar
     }
 
         NekDouble StdExpansion1D::v_PhysEvaluateDeriv(
+                                                      int dir,
                     const Array<OneD, const NekDouble>& coords,
                     const Array<OneD, const NekDouble>& physvals)
     {
-
+        boost::ignore_unused(dir);
         return StdExpansion::BaryEvaluate<0>(coords[0], &physvals[0]);
        
     }
@@ -101,6 +102,16 @@ namespace Nektar
         ASSERTL2(Lcoord[0] <=  1 + NekConstants::kNekZeroTol,"Lcoord[0] >  1");
 
         return StdExpansion::BaryEvaluate<0>(Lcoord[0], &physvals[0]);
+    }
+
+        NekDouble StdExpansion1D::v_PhysEvaluatedx(
+        const Array<OneD, const NekDouble>& Lcoord,
+        const Array<OneD, const NekDouble>& physvals)
+    {
+        ASSERTL2(Lcoord[0] >= -1 - NekConstants::kNekZeroTol,"Lcoord[0] < -1");
+        ASSERTL2(Lcoord[0] <=  1 + NekConstants::kNekZeroTol,"Lcoord[0] >  1");
+
+        return StdExpansion::BaryEvaluateDeriv<0>(Lcoord[0], &physvals[0]);
     }
 
 

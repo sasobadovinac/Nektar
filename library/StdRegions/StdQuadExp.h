@@ -157,6 +157,12 @@ namespace Nektar
             STD_REGIONS_EXPORT virtual void v_FillMode(
                     const int mode,
                     Array<OneD, NekDouble> &array);
+            STD_REGIONS_EXPORT virtual void v_FillModedx(
+                    const int mode,
+                    Array<OneD, NekDouble> &array);
+            STD_REGIONS_EXPORT virtual void v_FillModedy(
+                    const int mode,
+                    Array<OneD, NekDouble> &array);
 
             //---------------------------
             // Helper functions
@@ -182,6 +188,23 @@ namespace Nektar
             STD_REGIONS_EXPORT virtual NekDouble v_PhysEvaluateBasis(
                 const Array<OneD, const NekDouble>& coords,
                 int mode);
+            STD_REGIONS_EXPORT virtual NekDouble v_PhysEvaluatedyBasis(
+                const Array<OneD, const NekDouble>& coords,
+                int mode);
+            STD_REGIONS_EXPORT virtual NekDouble v_PhysEvaluatedxBasis(
+                const Array<OneD, const NekDouble>& coords,
+                int mode);
+
+
+            STD_REGIONS_EXPORT virtual NekDouble v_PhysEvaluatedx(
+                    const Array<OneD, const NekDouble>& coords,
+                    const Array<OneD, const NekDouble>& physvals);
+
+            STD_REGIONS_EXPORT virtual NekDouble v_PhysEvaluatedy(
+                    const Array<OneD, const NekDouble>& coords,
+                    const Array<OneD, const NekDouble>& physvals);
+                    
+            
 
             //--------------------------
             // Mappings

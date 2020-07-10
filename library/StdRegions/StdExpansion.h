@@ -502,6 +502,21 @@ namespace Nektar
                 v_FillMode(mode, outarray);
             }
 
+            void FillModedx(const int mode, Array<OneD, NekDouble> &outarray)
+            {
+                v_FillModedx(mode, outarray);
+            }
+
+            void FillModedy(const int mode, Array<OneD, NekDouble> &outarray)
+            {
+                v_FillModedy(mode, outarray);
+            }
+
+            void FillModedz(const int mode, Array<OneD, NekDouble> &outarray)
+            {
+                v_FillModedz(mode, outarray);
+            }
+
             /** \brief this function calculates the inner product of a given
              *  function \a f with the different modes of the expansion
              *
@@ -929,10 +944,16 @@ namespace Nektar
                 return v_PhysEvaluate(coords,physvals);
             }
 
-            NekDouble PhysEvaluateDeriv(const Array<OneD, const NekDouble>& coords,
+            NekDouble PhysEvaluatedz(const Array<OneD, const NekDouble>& coords,
+                                     const Array<OneD, const NekDouble>& physvals)
+            {
+                return v_PhysEvaluatedz(coords,physvals);
+            }
+
+            NekDouble PhysEvaluateDeriv(int dir, const Array<OneD, const NekDouble>& coords,
                                    const Array<OneD, const NekDouble>& physvals)
             {
-                return v_PhysEvaluateDeriv(coords,physvals);
+                return v_PhysEvaluateDeriv(dir, coords,physvals);
             }
 
             /** \brief This function evaluates the expansion at a single
@@ -981,6 +1002,21 @@ namespace Nektar
             }
 
 
+            NekDouble PhysEvaluatedx(
+                                const Array<OneD, const NekDouble> &coords,
+                const Array<OneD, const NekDouble> &physvals)
+            {
+                return v_PhysEvaluatedx(coords, physvals);
+            }
+
+
+            NekDouble PhysEvaluatedy(
+                                const Array<OneD, const NekDouble> &coords,
+                const Array<OneD, const NekDouble> &physvals)
+            {
+                return v_PhysEvaluatedy(coords, physvals);
+            }
+
             /**
              * @brief This function evaluates the derivative of basis function mode 
              * @p mode at a point @p coords of the domain.
@@ -993,13 +1029,27 @@ namespace Nektar
              *
              * @return The value of the derivative of the basis function @p mode at @p coords.
              */
-            NekDouble PhysEvaluateDerivBasis(
+            NekDouble PhysEvaluatedxBasis(
                 const Array<OneD, const NekDouble>& coords,
                 int mode)
             {
-                return v_PhysEvaluateBasis(coords, mode);
+                return v_PhysEvaluatedxBasis(coords, mode);
             }
 
+
+            NekDouble PhysEvaluatedyBasis(
+                const Array<OneD, const NekDouble>& coords,
+                int mode)
+            {
+                return v_PhysEvaluatedyBasis(coords, mode);
+            }
+            
+            NekDouble PhysEvaluatedzBasis(
+                const Array<OneD, const NekDouble>& coords,
+                int mode)
+            {
+                return v_PhysEvaluatedzBasis(coords, mode);
+            }
 
             /**
              * \brief Convert local cartesian coordinate \a xi into local
@@ -1480,7 +1530,7 @@ namespace Nektar
             {
                 const int nquad = m_base[DIR]->GetNumPoints();
                 return BaryEvaluateDeriv<DIR>(
-                    coord, &(m_base[DIR]->GetBdata())[0] + nquad * mode);
+                    coord, &(m_base[DIR]->GetDbdata())[0] + nquad * mode);
             }
         private:
             // Virtual functions
@@ -1609,24 +1659,47 @@ namespace Nektar
              const Array<OneD, const NekDouble>& inarray,
              Array<OneD, NekDouble> &outarray);
             
-           
             STD_REGIONS_EXPORT virtual NekDouble v_PhysEvaluate
             (const Array<OneD, DNekMatSharedPtr >& I,
              const Array<OneD, const NekDouble> & physvals);
-            
+
             STD_REGIONS_EXPORT virtual NekDouble v_PhysEvaluateBasis
             (const Array<OneD, const NekDouble>& coords, int mode);
 
+            STD_REGIONS_EXPORT virtual NekDouble v_PhysEvaluatedxBasis            
+            (const Array<OneD, const NekDouble>& coords, int mode);
+
+            STD_REGIONS_EXPORT virtual NekDouble v_PhysEvaluatedyBasis
+            (const Array<OneD, const NekDouble>& coords, int mode);
+
+            STD_REGIONS_EXPORT virtual NekDouble v_PhysEvaluatedzBasis
+            (const Array<OneD, const NekDouble>& coords, int mode);
+
             STD_REGIONS_EXPORT virtual NekDouble v_PhysEvaluateDeriv
-                (const Array<OneD,
+                (int dir, const Array<OneD,
                  const NekDouble>& coords,
                  const Array<OneD, const NekDouble>& physvals);
+
 
             STD_REGIONS_EXPORT virtual NekDouble v_PhysEvaluate
                 (const Array<OneD,
                  const NekDouble>& coords,
                  const Array<OneD, const NekDouble>& physvals);
 
+            STD_REGIONS_EXPORT virtual NekDouble v_PhysEvaluatedx
+                (const Array<OneD,
+                 const NekDouble>& coords,
+                 const Array<OneD, const NekDouble>& physvals);
+
+            STD_REGIONS_EXPORT virtual NekDouble v_PhysEvaluatedy
+                (const Array<OneD,
+                 const NekDouble>& coords,
+                 const Array<OneD, const NekDouble>& physvals);
+
+            STD_REGIONS_EXPORT virtual NekDouble v_PhysEvaluatedz
+                (const Array<OneD,
+                 const NekDouble>& coords,
+                 const Array<OneD, const NekDouble>& physvals);
 
             STD_REGIONS_EXPORT virtual void v_LocCoordToLocCollapsed(
                                         const Array<OneD, const NekDouble>& xi,
@@ -1634,6 +1707,12 @@ namespace Nektar
 
 
             STD_REGIONS_EXPORT virtual void v_FillMode(const int mode,
+                                                  Array<OneD, NekDouble> &outarray);
+            STD_REGIONS_EXPORT virtual void v_FillModedx(const int mode,
+                                                  Array<OneD, NekDouble> &outarray);
+            STD_REGIONS_EXPORT virtual void v_FillModedy(const int mode,
+                                                  Array<OneD, NekDouble> &outarray);
+            STD_REGIONS_EXPORT virtual void v_FillModedz(const int mode,
                                                   Array<OneD, NekDouble> &outarray);
 
             STD_REGIONS_EXPORT virtual DNekMatSharedPtr v_GenMatrix(
