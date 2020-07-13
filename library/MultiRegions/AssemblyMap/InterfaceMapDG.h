@@ -61,7 +61,7 @@ public:
     {
     }
 
-    void CalcLocalCoordsReturnTrace(ExpListSharedPtr &trace, std::map<int, int> geomIdToTraceId);
+    void CalcLocalCoords(const ExpListSharedPtr &trace, std::map<int, int> geomIdToTraceId);
     void ReturnTrace();
 
     MULTI_REGIONS_EXPORT void PerformExchange();
@@ -70,7 +70,7 @@ private:
     std::vector<int> m_ranks;
     bool m_checkLocal;
     Array<OneD, NekDouble> m_localQuadCoords;
-
+    std::map<int, std::tuple<NekDouble, NekDouble, NekDouble>> m_missingCoords;
 };
 
 typedef std::shared_ptr<InterfaceExchange>  InterfaceExchangeSharedPtr;

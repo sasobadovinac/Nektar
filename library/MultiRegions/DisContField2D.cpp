@@ -1396,7 +1396,7 @@ namespace Nektar
             DisContField2D::v_PeriodicBwdCopy(Fwd, Bwd);
 
 
-            m_interfaceMap->CalcLocalInterfaceCoords();
+            //m_interfaceMap->CalcLocalInterfaceCoords();
 
             /* // Interpolate from each side of the interface to the other.
             CalcLocalInterfaceCoords();

@@ -71,8 +71,8 @@ typedef std::shared_ptr<InterfaceBase> InterfaceBaseShPtr;
 
 struct InterfaceBase
 {
-    InterfaceBase(InterfaceType type, CompositeMap domain)
-        : m_type(type), m_domain(domain)
+    InterfaceBase(InterfaceType type, int indx, CompositeMap domain)
+        : m_type(type), m_id(indx), m_domain(domain)
     {
     }
 
@@ -158,9 +158,15 @@ struct InterfaceBase
         return m_oppInterface;
     }
 
+    inline int &GetId()
+    {
+        return m_id;
+    }
+
 protected:
     InterfaceBaseShPtr m_oppInterface;
     InterfaceType m_type;
+    int m_id;
     InterfaceSide m_side = eNone;
     CompositeMap m_domain;
     std::map<int, SegGeomSharedPtr> m_edge;
@@ -172,10 +178,10 @@ protected:
 
 struct RotatingInterface : public InterfaceBase
 {
-    RotatingInterface(const CompositeMap &domain, const PointGeom &origin,
+    RotatingInterface(int id, const CompositeMap &domain, const PointGeom &origin,
                       const std::vector<NekDouble> &axis,
                       const NekDouble angularVel)
-        : InterfaceBase(eRotating, domain), m_origin(origin),
+        : InterfaceBase(eRotating, id, domain), m_origin(origin),
           m_axis(axis), m_angularVel(angularVel)
     {
     }
@@ -203,8 +209,8 @@ protected:
 
 struct FixedInterface : public InterfaceBase
 {
-    FixedInterface(const CompositeMap &domain)
-            : InterfaceBase(eFixed, domain)
+    FixedInterface(int id, const CompositeMap &domain)
+            : InterfaceBase(eFixed, id, domain)
     {
     }
 };

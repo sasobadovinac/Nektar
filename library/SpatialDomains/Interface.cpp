@@ -181,11 +181,11 @@ void Interfaces::ReadInterfaces(TiXmlElement *interfaces)
 
             NekDouble angularVel = stod(angularVelStr);
 
-            interface = RotatingInterfaceShPtr(MemoryManager<RotatingInterface>::AllocateSharedPtr(domain,  origin, axis, angularVel));
+            interface = RotatingInterfaceShPtr(MemoryManager<RotatingInterface>::AllocateSharedPtr(indx, domain,  origin, axis, angularVel));
         }
         else if (interfaceType == "F")
         {
-            interface = FixedInterfaceShPtr(MemoryManager<FixedInterface>::AllocateSharedPtr(domain));
+            interface = FixedInterfaceShPtr(MemoryManager<FixedInterface>::AllocateSharedPtr(indx, domain));
         }
 
         if (interfaceErr == TIXML_SUCCESS)
