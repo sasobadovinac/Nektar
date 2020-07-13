@@ -52,24 +52,27 @@ public:
 
     /// Default constructor
     MULTI_REGIONS_EXPORT InterfaceExchange(
-        const SpatialDomains::InterfaceBaseShPtr &interface,
-        const std::vector<int> &ranks,
-        const bool &checkLocal)
-        : m_interface(interface),
-          m_ranks(ranks),
+        std::pair<int, std::vector<SpatialDomains::InterfaceBaseShPtr>> rankPair,
+        std::map<int, bool> checkLocal)
+        : m_rank(rankPair.first),
+          m_interfaces(rankPair.second),
           m_checkLocal(checkLocal)
     {
     }
 
     void CalcLocalCoords(const ExpListSharedPtr &trace, std::map<int, int> geomIdToTraceId);
-    void ReturnTrace();
+
+    inline std::map<int, std::tuple<NekDouble, NekDouble, NekDouble>> GetMissing()
+    {
+        return m_missingCoords;
+    }
 
     MULTI_REGIONS_EXPORT void PerformExchange();
 private:
-    SpatialDomains::InterfaceBaseShPtr m_interface;
-    std::vector<int> m_ranks;
-    bool m_checkLocal;
-    Array<OneD, NekDouble> m_localQuadCoords;
+    int m_rank;
+    const std::vector<SpatialDomains::InterfaceBaseShPtr> m_interfaces;
+    std::map<int, bool> m_checkLocal;
+    std::map<int, std::pair<int, NekDouble>> m_foundEdgeLocalCoordPair;
     std::map<int, std::tuple<NekDouble, NekDouble, NekDouble>> m_missingCoords;
 };
 
