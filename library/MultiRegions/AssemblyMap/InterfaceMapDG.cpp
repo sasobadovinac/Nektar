@@ -43,11 +43,15 @@ InterfaceMapDG::InterfaceMapDG(
     const SpatialDomains::InterfacesSharedPtr &interfaces,
     const ExpListSharedPtr &trace,
     const std::map<int, int> geomIdToTraceId)
-    : m_trace(trace),
+    : m_interfaces(interfaces),
+      m_trace(trace),
       m_geomIdToTraceId(geomIdToTraceId)
 {
+
     auto comm = m_trace->GetComm();
-    auto interfaceCollection = interfaces->GetInterfaces();
+    auto interfaceCollection = m_interfaces->GetInterfaces();
+
+    std::cout << "RANK: " << comm->GetRank() << " BEFORE InterfaceMapDG" << std::endl;
 
     // myIndxLR contains the info about what interface edges are present on
     // current rank with each interface no,  i,  consisting of:
@@ -63,10 +67,12 @@ InterfaceMapDG::InterfaceMapDG(
         if(!interface.second->GetLeftInterface()->IsEmpty())
         {
             myIndxLR[2 * cnt + 1] += 1;
+            m_localInterfaces.emplace_back(interface.second->GetLeftInterface());
         }
         if (!interface.second->GetRightInterface()->IsEmpty())
         {
             myIndxLR[2 * cnt + 1] += 2;
+            m_localInterfaces.emplace_back(interface.second->GetRightInterface());
         }
 
         myIndxLRMap[interface.first] = myIndxLR[2 * cnt + 1];
@@ -90,12 +96,13 @@ InterfaceMapDG::InterfaceMapDG(
         std::accumulate(rankNumInterfaces.begin(), rankNumInterfaces.end(), 0), 0);
 
     // Send all interface IDs to all partitions
+    std::cout << "RANK: " << comm->GetRank() << " BEFORE Allgatherv for interface IDs" << std::endl;
     comm->AllGatherv(myIndxLR, rankLocalInterfaceIds, rankNumInterfaces,
                      rankLocalInterfaceDisp);
+    std::cout << "RANK: " << comm->GetRank() << " AFTER Allgatherv for interface IDs" << std::endl;
 
     // Find what interface Ids match with other ranks, then check if opposite edge
     std::map<int, std::vector<SpatialDomains::InterfaceBaseShPtr>> oppRankSharedInterface; // Map of rank to map of interfaces to opposite edge
-    std::map<int, bool> checkLocal;
 
     size_t myRank = comm->GetRank();
     for (size_t i = 0; i < nRanks; ++i)
@@ -115,7 +122,8 @@ InterfaceMapDG::InterfaceMapDG(
                     //If contains opposite edge locally then set true
                     if (otherCode == 3)
                     {
-                        checkLocal[otherId] = true;
+                        interfaceCollection[otherId]->GetLeftInterface()->SetCheckLocal(true);
+                        interfaceCollection[otherId]->GetRightInterface()->SetCheckLocal(true);
                     }
 
                     continue;
@@ -167,30 +175,97 @@ InterfaceMapDG::InterfaceMapDG(
     // Create individual interface exchange objects
     for (auto rank : oppRankSharedInterface)
     {
-        m_exchange.emplace_back(MemoryManager<InterfaceExchange>::AllocateSharedPtr(rank, checkLocal));
+        m_exchange.emplace_back(MemoryManager<InterfaceExchange>::AllocateSharedPtr(comm, rank));
     }
 
+    // Find local seg-coord pairs and missing coords to communicate to other ranks
+    std::cout << "RANK: " << comm->GetRank() << " BEFORE CalcLocalCoords" << std::endl;
+    CalcLocalCoords(trace, geomIdToTraceId);
+    std::cout << "RANK: " << comm->GetRank() << " AFTER CalcLocalCoords" << std::endl;
 
-    comm->Block();
-
-    for (auto i : m_exchange)
+    // Combine multiple interfaces on each rank for communication
+    auto request = comm->CreateRequest(2 * m_exchange.size());
+    std::cout << "RANK: " << comm->GetRank() << " BEFORE RankFillSizes()" << std::endl;
+    for (int i = 0; i < m_exchange.size(); ++i)
     {
-        i->CalcLocalCoords(trace, geomIdToTraceId);
+        m_exchange[i]->RankFillSizes(request, i);
     }
+    std::cout << "RANK: " << comm->GetRank() << " AT WAITALL AFTER RankFillSizes()" << std::endl;
+
+    comm->WaitAll(request);
+
+    std::cout << "RANK: " << comm->GetRank() << " BEFORE RankCoordCalc()" << std::endl;
+    for (int i = 0; i < m_exchange.size(); ++i)
+    {
+        m_exchange[i]->RankCoordCalc(request, i);
+    }
+    std::cout << "RANK: " << comm->GetRank() << " AT WAITALL AFTER RankCoordCalc()" << std::endl;
+    comm->WaitAll(request);
 
     comm->Block();
     exit(0);
 }
 
-void InterfaceExchange::CalcLocalCoords(const ExpListSharedPtr &trace, std::map<int, int> geomIdToTraceId)
+void InterfaceExchange::RankFillSizes(LibUtilities::CommRequestSharedPtr request, int requestNum)
 {
-    for (auto interface : m_interfaces)
+    // Get size of all interfaces missing to communicate
+    m_sendSize = Array<OneD, int>(m_interfaces.size());
+    m_recvSize = Array<OneD, int>(m_interfaces.size());
+    for (int i = 0; i < m_interfaces.size(); ++i)
     {
-        if (m_checkLocal[interface->GetId()])
+        m_sendSize[i] = m_interfaces[i]->GetMissing().size();
+    }
+
+    m_comm->Isend(m_rank, m_sendSize, m_interfaces.size(), request, 2 * requestNum);
+    m_comm->Irecv(m_rank, m_recvSize, m_interfaces.size(), request, 2 * requestNum + 1);
+}
+
+void InterfaceExchange::RankCoordCalc(LibUtilities::CommRequestSharedPtr request, int requestNum)
+{
+    m_totSendSize = std::accumulate(m_sendSize.begin(), m_sendSize.end(), 0);
+    m_totRecvSize = std::accumulate(m_recvSize.begin(), m_recvSize.end(), 0);
+    m_send = Array<OneD, NekDouble>(m_totSendSize);
+    m_recv = Array<OneD, NekDouble>(m_totRecvSize);
+
+    int cnt = 0;
+    for (int i = 0; i < m_interfaces.size(); ++i)
+    {
+        auto missing = m_interfaces[i]->GetMissing();
+        for (auto coord : missing)
+        {
+            m_send[3 * cnt] = std::get<0>(coord.second);
+            m_send[3 * cnt + 1] = std::get<1>(coord.second);
+            m_send[3 * cnt + 2] = std::get<2>(coord.second);
+        }
+    }
+
+    // Debug output
+    boost::ignore_unused(request, requestNum);
+    std::ostringstream output;
+    output << "MYRANK: " << m_comm->GetRank() << " TO RANK: " << m_rank << "\n";
+    for (int i = 0; i < m_interfaces.size(); ++i)
+    {
+        output << "\tINTERFACE: " << m_interfaces[i]->GetId() << " SEND SIZE: " << m_sendSize[i] << " RECV SIZE: " << m_recvSize[i] << "\n";
+    }
+    output << "\tTOTAL: " << " SEND SIZE: " << m_totSendSize << " RECV SIZE: " << m_totRecvSize << "\n";
+    std::cout << output.str() << std::endl;
+
+    m_comm->Isend(m_rank, m_send, m_totSendSize, request, 2 * requestNum);
+    m_comm->Irecv(m_rank, m_recv, m_totRecvSize, request, 2 * requestNum + 1);
+}
+
+// @TODO: Something funky in here. Sometimes crashes e.g. when n = 3, or v. slow at n = 4 ,for the everything case.
+void InterfaceMapDG::CalcLocalCoords(const ExpListSharedPtr &trace, std::map<int, int> geomIdToTraceId)
+{
+    for (auto interface : m_localInterfaces)
+    {
+        std::map<int, std::tuple<NekDouble, NekDouble, NekDouble>> missingCoords;
+        std::map<int, std::pair<int, NekDouble>> foundEdgeLocalCoordPair;
+
+        if (interface->GetCheckLocal())
         {
             auto graph = trace->GetGraph();
-            Array<OneD, std::pair<int, NekDouble>> geomEdgeIdLocalCoordPair(
-                interface->GetTotPoints());
+            Array<OneD, std::pair<int, NekDouble>> geomEdgeIdLocalCoordPair(interface->GetTotPoints());
 
             int cnt            = 0;
             auto childEdgeIds  = interface->GetEdgeIds();
@@ -233,12 +308,10 @@ void InterfaceExchange::CalcLocalCoords(const ExpListSharedPtr &trace, std::map<
 
                     if (!found)
                     {
-                        m_missingCoords[cnt] =
-                            std::make_tuple(xs[0], xs[1], xs[2]);
+                        missingCoords[cnt] = std::make_tuple(xs[0], xs[1], xs[2]);
                     }
 
-                    m_foundEdgeLocalCoordPair[cnt] =
-                        std::make_pair(foundEdgeId, foundLocCoord);
+                    foundEdgeLocalCoordPair[cnt] = std::make_pair(foundEdgeId, foundLocCoord);
                     cnt++;
                 }
             }
@@ -254,29 +327,27 @@ void InterfaceExchange::CalcLocalCoords(const ExpListSharedPtr &trace, std::map<
                 Array<OneD, NekDouble> xc(nq), yc(nq);
                 childElmt->GetCoords(xc, yc);
 
-                // Check local interface
                 for (int i = 0; i < nq; ++i)
                 {
-                    Array<OneD, NekDouble> xs(3);
-                    xs[0] = xc[i];
-                    xs[1] = yc[i];
-                    xs[2] = 0;
-
-                    m_missingCoords[cnt] = std::make_tuple(xs[0], xs[1], xs[2]);
+                    missingCoords[cnt] = std::make_tuple(xc[i], yc[i], 0);
                     cnt++;
                 }
             }
         }
 
+        interface->SetMissing(missingCoords);
+
         // Cout missing coords (debug)
-        std::cout << "MY RANK: " << trace->GetComm()->GetRank() << " TO RANK " << m_rank << " INTERFACE: " << interface->GetId() << " MISSING: \n";
-        for (auto i : m_missingCoords)
+        /*std::ostringstream output;
+        output << "MY RANK: " << trace->GetComm()->GetRank() << " INTERFACE: " << interface->GetId() << " " << SpatialDomains::InterfaceSideStr[interface->GetSide()] << " MISSING: \n";
+        for (auto i : missingCoords)
         {
-            std::cout << i.first << "\t" << std::get<0>(i.second) << " "
-                      << std::get<1>(i.second) << " " << std::get<2>(i.second)
-                      << "\n";
+            output << "\t" << i.first << "\t" << std::get<0>(i.second) << " "
+                   << std::get<1>(i.second) << " " << std::get<2>(i.second)
+                   << "\n";
         }
-        std::cout << std::endl;
+        output << std::endl;
+        std::cout << output.str();*/
     }
 }
 

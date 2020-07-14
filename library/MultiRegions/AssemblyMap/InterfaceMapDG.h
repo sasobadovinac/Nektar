@@ -52,28 +52,27 @@ public:
 
     /// Default constructor
     MULTI_REGIONS_EXPORT InterfaceExchange(
-        std::pair<int, std::vector<SpatialDomains::InterfaceBaseShPtr>> rankPair,
-        std::map<int, bool> checkLocal)
-        : m_rank(rankPair.first),
-          m_interfaces(rankPair.second),
-          m_checkLocal(checkLocal)
+        const LibUtilities::CommSharedPtr &comm,
+        std::pair<int, std::vector<SpatialDomains::InterfaceBaseShPtr>> rankPair)
+        : m_comm(comm),
+          m_rank(rankPair.first),
+          m_interfaces(rankPair.second)
     {
     }
 
-    void CalcLocalCoords(const ExpListSharedPtr &trace, std::map<int, int> geomIdToTraceId);
-
-    inline std::map<int, std::tuple<NekDouble, NekDouble, NekDouble>> GetMissing()
-    {
-        return m_missingCoords;
-    }
-
-    MULTI_REGIONS_EXPORT void PerformExchange();
+    MULTI_REGIONS_EXPORT void RankFillSizes(LibUtilities::CommRequestSharedPtr request, int requestNum);
+    MULTI_REGIONS_EXPORT void RankCoordCalc(LibUtilities::CommRequestSharedPtr request, int requestNum);
 private:
+    const LibUtilities::CommSharedPtr m_comm;
     int m_rank;
     const std::vector<SpatialDomains::InterfaceBaseShPtr> m_interfaces;
+    Array<OneD, int> m_sendSize;
+    Array<OneD, int> m_recvSize;
+    int m_totSendSize = 0;
+    int m_totRecvSize = 0;
+    Array<OneD, NekDouble> m_send;
+    Array<OneD, NekDouble> m_recv;
     std::map<int, bool> m_checkLocal;
-    std::map<int, std::pair<int, NekDouble>> m_foundEdgeLocalCoordPair;
-    std::map<int, std::tuple<NekDouble, NekDouble, NekDouble>> m_missingCoords;
 };
 
 typedef std::shared_ptr<InterfaceExchange>  InterfaceExchangeSharedPtr;
@@ -90,8 +89,11 @@ public:
         const ExpListSharedPtr &trace,
         const std::map<int, int> geomIdToTraceId);
 
+    void CalcLocalCoords(const ExpListSharedPtr &trace, std::map<int, int> geomIdToTraceId);
 
 private:
+    SpatialDomains::InterfacesSharedPtr m_interfaces;
+    std::vector<SpatialDomains::InterfaceBaseShPtr> m_localInterfaces;
     const ExpListSharedPtr m_trace;
     std::vector<InterfaceExchangeSharedPtr> m_exchange;
     std::map<int, int> m_geomIdToTraceId;

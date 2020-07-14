@@ -63,6 +63,13 @@ enum InterfaceSide
     eRight
 };
 
+const std::string InterfaceSideStr[] =
+{
+    "NONE",
+    "LEFT",
+    "RIGHT"
+};
+
 struct Composite;
 typedef std::map<int, std::shared_ptr<Composite>> CompositeMap;
 
@@ -163,6 +170,26 @@ struct InterfaceBase
         return m_id;
     }
 
+    inline bool GetCheckLocal()
+    {
+        return m_checkLocal;
+    }
+
+    inline void SetCheckLocal(bool flag)
+    {
+        m_checkLocal = flag;
+    }
+
+    inline std::map<int, std::tuple<NekDouble, NekDouble, NekDouble>> GetMissing()
+    {
+        return m_missingCoords;
+    }
+
+    inline void SetMissing(std::map<int, std::tuple<NekDouble, NekDouble, NekDouble>> missingCoords)
+    {
+        m_missingCoords = missingCoords;
+    }
+
 protected:
     InterfaceBaseShPtr m_oppInterface;
     InterfaceType m_type;
@@ -174,6 +201,8 @@ protected:
     CompositeMap m_interfaceEdge;
     int m_totPoints;
     std::vector<int> m_oppRanks;
+    bool m_checkLocal = false;
+    std::map<int, std::tuple<NekDouble, NekDouble, NekDouble>> m_missingCoords;
 };
 
 struct RotatingInterface : public InterfaceBase
@@ -232,6 +261,7 @@ struct InterfacePair
     InterfaceBaseShPtr m_leftInterface;
     InterfaceBaseShPtr m_rightInterface;
     bool m_calcFlag = true;
+    bool m_checkLocal = false;
 
 public:
     inline const InterfaceBaseShPtr &GetLeftInterface() const
