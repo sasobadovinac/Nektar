@@ -763,7 +763,11 @@ void DiffusionIP::CalTraceNumFlux(
     {
         TensorOfArray2D<NekDouble> tracePen = numDerivFwd[0];
         m_fluxPenaltyNS(solution_Aver, solution_jump, tracePen);
-
+        nonZeroIndexflux = TensorOfArray1D<int> {nConvectiveFields};
+        for (size_t i = 0; i < nConvectiveFields; ++i)
+        {
+            nonZeroIndexflux[i] = i; 
+        }
         for (size_t nNon = 0; nNon < nonZeroIndexflux.size(); ++nNon)
         {
             size_t i = nonZeroIndexflux[nNon];
