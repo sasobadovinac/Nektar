@@ -68,6 +68,7 @@ int main(int argc, char *argv[])
     // perform a PhysEvaluate at a different set of nodal points
     // (i.e. non-collocated interpolation).
     vector<string> &ptypes = demo.GetPointsType();
+
     for (int i = 0; i < dimension; ++i)
     {
         ptypes[i] = "PolyEvenlySpaced";
@@ -91,7 +92,6 @@ int main(int argc, char *argv[])
 
         physOut[i] = E->PhysEvaluate(tmpIn, physIn);
     }
-
     sol = EvalPoly(coordsF);
 
     cout << "L infinity error : " << scientific << E->Linf(physOut, sol) << endl;

@@ -149,10 +149,10 @@ int main(int argc, char *argv[])
         sol1 = EvalPolyDerivy(coordsF);
     if(dimension>0)
         sol0 = EvalPolyDerivx(coordsF);
-    // for(int i = 0; i<sol.size(); i++)
-    // {
-    //     cout<<" "<< sol[i]<<" ";
-    // }
+    /*for(int i = 0; i<sol0.size(); i++)
+    {
+        cout<<" "<< sol0[i]<<" ";
+    }*/
 
  cout << "L infinity error : " << scientific << E->Linf(physOut0, sol0) + E->Linf(physOut1, sol1)+ E->Linf(physOut2, sol2) << endl;
  cout << "L 2 error        : " << scientific << E->L2  (physOut0, sol0) +  E->L2  (physOut1, sol1) +  E->L2  (physOut2, sol2) << endl;
