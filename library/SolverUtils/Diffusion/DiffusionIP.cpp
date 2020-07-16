@@ -57,8 +57,8 @@ namespace Nektar
             m_session->LoadSolverInfo("ShockCaptureType",
                                   m_shockCaptureType,    "Off");	
 
-            m_session->LoadParameter("IPSymmFtluxCoeff",
-                                  m_IPSymmFtluxCoeff,   1.0);	//1.0：SIPG; -1.0: NIPG; 0.0:IIPG
+            m_session->LoadParameter("IPSymmFluxCoeff",
+                                  m_IPSymmFluxCoeff,   1.0);	//1.0：SIPG; -1.0: NIPG; 0.0:IIPG
 
             m_session->LoadParameter("IP2ndDervCoeff",
                                   m_IP2ndDervCoeff,   0.0); // 1.0/12.0	
@@ -464,7 +464,7 @@ namespace Nektar
             const Array<OneD, Array<OneD, NekDouble> >          &pFwd,
             const Array<OneD, Array<OneD, NekDouble> >          &pBwd)
         {
-            if(abs(m_IPSymmFtluxCoeff)>1.0E-12)
+            if(abs(m_IPSymmFluxCoeff)>1.0E-12)
             {
                 int nDim      = fields[0]->GetCoordim(0);
                 int nPts      = fields[0]->GetTotPoints();
@@ -497,7 +497,7 @@ namespace Nektar
         //     const Array<OneD, Array<OneD, NekDouble> >          &pBwd)
         // {
             
-        //     if(abs(m_IPSymmFtluxCoeff)>1.0E-12)
+        //     if(abs(m_IPSymmFluxCoeff)>1.0E-12)
         //     {
         //         int nDim      = fields[0]->GetCoordim(0);
         //         int nPts      = fields[0]->GetTotPoints();
@@ -559,7 +559,7 @@ namespace Nektar
                 for (int j = 0; j < nonZeroIndex.num_elements(); ++j)
                 {
                     int i = nonZeroIndex[j];
-                    Vmath::Smul(nTracePts,-0.5*m_IPSymmFtluxCoeff,SymmFlux[nd][i],1,SymmFlux[nd][i],1);
+                    Vmath::Smul(nTracePts,-0.5*m_IPSymmFluxCoeff,SymmFlux[nd][i],1,SymmFlux[nd][i],1);
                 }
             }
         }
@@ -961,14 +961,11 @@ namespace Nektar
                 TensorOfArray2D<NekDouble> tracePen = numDerivFwd[0];
                 m_fluxPenaltyNS(solution_Aver, solution_jump, tracePen);
 
-                // for (size_t nNon = 0; nNon < nonZeroIndexflux.num_elements(); ++nNon)
-                // {
-                //     size_t i = nonZeroIndexflux[nNon];
-                //     Vmath::Vvtvp(nTracePts, PenaltyFactor, 1, 
-                //                 tracePen[i], 1, 
-                //                 traceflux[0][i], 1,
-                //                 traceflux[0][i], 1);
-                // }
+                nonZeroIndexflux = TensorOfArray1D<int> {nConvectiveFields};
+                for (size_t i = 0; i < nConvectiveFields; ++i)
+                {
+                    nonZeroIndexflux[i] = i; 
+                }
 
                 for (size_t i = 0; i < nConvectiveFields; ++i)
                 {
@@ -1313,7 +1310,7 @@ namespace Nektar
         //     const Array<OneD, Array<OneD, NekDouble> >          &pFwd,
         //     const Array<OneD, Array<OneD, NekDouble> >          &pBwd)
         // {
-        //     if(abs(m_IPSymmFtluxCoeff)>1.0E-12)
+        //     if(abs(m_IPSymmFluxCoeff)>1.0E-12)
         //     {
         //         AddSymmFluxIntegralToCoeff(nConvectiveFields,nDim,nPts,nTracePts,fields,nonZeroIndex,traceSymfluxFwd,outarray);
         //     }

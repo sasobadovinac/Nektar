@@ -64,7 +64,7 @@ namespace Nektar
             DiffusionIP();
    		
             std::string                             m_shockCaptureType;
-            NekDouble                               m_IPSymmFtluxCoeff;
+            NekDouble                               m_IPSymmFluxCoeff;
             NekDouble                               m_IP2ndDervCoeff;
             NekDouble                               m_IPPenaltyCoeff;
             int                                     m_IPPenaltyType;
