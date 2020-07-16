@@ -173,9 +173,29 @@ InterfaceMapDG::InterfaceMapDG(
     std::cout << std::endl;*/
 
     // Create individual interface exchange objects
-    for (auto rank : oppRankSharedInterface)
+    for (auto &rank : oppRankSharedInterface)
     {
         m_exchange.emplace_back(MemoryManager<InterfaceExchange>::AllocateSharedPtr(comm, rank));
+    }
+
+    // Calculate total quadrature points on each interface edge
+    for (const auto &interface : m_interfaces->GetInterfaces())
+    {
+        int tmp = 0;
+        auto leftInterface = interface.second->GetLeftInterface();
+        for (auto id : leftInterface->GetEdgeIds())
+        {
+            tmp += m_trace->GetExp(geomIdToTraceId.at(id))->GetTotPoints();
+        }
+        leftInterface->SetTotPoints(tmp);
+
+        tmp = 0;
+        auto rightInterface = interface.second->GetRightInterface();
+        for (auto id : leftInterface->GetEdgeIds())
+        {
+            tmp += m_trace->GetExp(geomIdToTraceId.at(id))->GetTotPoints();
+        }
+        rightInterface->SetTotPoints(tmp);
     }
 
     // Find local seg-coord pairs and missing coords to communicate to other ranks
@@ -254,10 +274,9 @@ void InterfaceExchange::RankCoordCalc(LibUtilities::CommRequestSharedPtr request
     m_comm->Irecv(m_rank, m_recv, m_totRecvSize, request, 2 * requestNum + 1);
 }
 
-// @TODO: Something funky in here. Sometimes crashes e.g. when n = 3, or v. slow at n = 4 ,for the everything case.
 void InterfaceMapDG::CalcLocalCoords(const ExpListSharedPtr &trace, std::map<int, int> geomIdToTraceId)
 {
-    for (auto interface : m_localInterfaces)
+    for (auto &interface : m_localInterfaces)
     {
         std::map<int, std::tuple<NekDouble, NekDouble, NekDouble>> missingCoords;
         std::map<int, std::pair<int, NekDouble>> foundEdgeLocalCoordPair;

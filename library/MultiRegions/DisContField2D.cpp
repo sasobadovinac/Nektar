@@ -454,28 +454,6 @@ namespace Nektar
             m_interfaceMap = MemoryManager<InterfaceMapDG>::
             AllocateSharedPtr(m_interfaces, m_trace, geomIdToTraceId);
 
-            // Calculate total quadrature points on each interface edge
-            for (const auto &interface : m_interfaces->GetInterfaces())
-            {
-                int tmp = 0;
-                auto leftInterface = interface.second->GetLeftInterface();
-                for (auto id : leftInterface->GetEdgeIds())
-                {
-                    tmp += m_trace->GetExp(geomIdToTraceId[id])->GetTotPoints();
-                }
-                leftInterface->SetTotPoints(tmp);
-
-                tmp = 0;
-                auto rightInterface = interface.second->GetRightInterface();
-                for (auto id : leftInterface->GetEdgeIds())
-                {
-                    tmp += m_trace->GetExp(geomIdToTraceId[id])->GetTotPoints();
-                }
-                rightInterface->SetTotPoints(tmp);
-            }
-
-
-
             int cnt, n, e;
             // Identify boundary edges
             for (cnt = 0, n = 0; n < m_bndCondExpansions.size(); ++n)
