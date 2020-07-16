@@ -1199,33 +1199,33 @@ namespace Nektar
             }
         }
 
-        if(ArtifDiffFactor.num_elements())
-        {
-            n_nonZero   =   nConvectiveFields;
+        // if(ArtifDiffFactor.num_elements())
+        // {
+        //     n_nonZero   =   nConvectiveFields;
 
-            if(normal.num_elements())
-            {
-                Array<OneD, NekDouble> tmparray(nPts,0.0);
-                for(int i=0; i< nDim; i++)
-                {
-                    Vmath::Vmul(nPts,ArtifDiffFactor,1,normal[i],1,tmparray,1);
-                    for(int j=0; j< nConvectiveFields; j++)
-                    {
-                        Vmath::Vvtvp(nPts,tmparray,1,qfields[i][j],1,outarray[0][j],1,outarray[0][j],1);
-                    }
-                }
-            }
-            else
-            {
-                for(int i=0; i< nDim; i++)
-                {
-                    for(int j=0; j< nConvectiveFields; j++)
-                    {
-                        Vmath::Vvtvp(nPts,ArtifDiffFactor,1,qfields[i][j],1,outarray[i][j],1,outarray[i][j],1);
-                    }
-                }
-            }
-        }
+        //     if(normal.num_elements())
+        //     {
+        //         Array<OneD, NekDouble> tmparray(nPts,0.0);
+        //         for(int i=0; i< nDim; i++)
+        //         {
+        //             Vmath::Vmul(nPts,ArtifDiffFactor,1,normal[i],1,tmparray,1);
+        //             for(int j=0; j< nConvectiveFields; j++)
+        //             {
+        //                 Vmath::Vvtvp(nPts,tmparray,1,qfields[i][j],1,outarray[0][j],1,outarray[0][j],1);
+        //             }
+        //         }
+        //     }
+        //     else
+        //     {
+        //         for(int i=0; i< nDim; i++)
+        //         {
+        //             for(int j=0; j< nConvectiveFields; j++)
+        //             {
+        //                 Vmath::Vvtvp(nPts,ArtifDiffFactor,1,qfields[i][j],1,outarray[i][j],1,outarray[i][j],1);
+        //             }
+        //         }
+        //     }
+        // }
 
         nonZeroIndex = Array< OneD, int > (n_nonZero,0);
         for(int i=1;i<n_nonZero+1; i++)
