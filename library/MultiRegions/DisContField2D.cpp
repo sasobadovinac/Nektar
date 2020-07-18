@@ -1373,58 +1373,7 @@ namespace Nektar
             }
             DisContField2D::v_PeriodicBwdCopy(Fwd, Bwd);
 
-
-            //m_interfaceMap->CalcLocalInterfaceCoords();
-
-            /* // Interpolate from each side of the interface to the other.
-            CalcLocalInterfaceCoords();
-
-
-            for (auto &interface : m_interfaces->GetInterfaces())
-            {
-                size_t indx = interface.first;
-                auto pair   = interface.second;
-
-                auto leftEdge  = pair->GetLeftInterface()->GetEdgeIds();
-                auto rightEdge = pair->GetRightInterface()->GetEdgeIds();
-
-                size_t cnt = 0;
-                for (auto leftId : leftEdge)
-                {
-                    size_t nq = m_trace->GetExp(m_geomIdToTraceId[leftId])
-                                    ->GetTotPoints();
-                    for (size_t i = 0; i < nq; ++i)
-                    {
-                        Array<OneD, NekDouble> edgePhys =
-                            Fwd + m_trace->GetPhys_Offset(
-                            m_locCoordSegIdPair[indx][cnt].second);
-                        Array<OneD, NekDouble> foundPointArray(
-                            1, m_locCoordSegIdPair[indx][cnt].first);
-                        Bwd[m_trace->GetPhys_Offset(
-                            m_geomIdToTraceId[leftId]) + i] = m_trace
-                             ->GetExp(m_locCoordSegIdPair[indx][cnt++].second)
-                            ->StdPhysEvaluate(foundPointArray, edgePhys);
-                    }
-                }
-
-                for (auto rightId : rightEdge)
-                {
-                    size_t nq = m_trace->GetExp(m_geomIdToTraceId[rightId])
-                                    ->GetTotPoints();
-                    for (size_t i = 0; i < nq; ++i)
-                    {
-                        Array<OneD, NekDouble> edgePhys =
-                            Fwd + m_trace->GetPhys_Offset(
-                            m_locCoordSegIdPair[indx][cnt].second);
-                        Array<OneD, NekDouble> foundPointArray(
-                            1, m_locCoordSegIdPair[indx][cnt].first);
-                        Bwd[m_trace->GetPhys_Offset(
-                            m_geomIdToTraceId[rightId]) + i] = m_trace
-                            ->GetExp(m_locCoordSegIdPair[indx][cnt++].second)
-                            ->StdPhysEvaluate(foundPointArray, edgePhys);
-                    }
-                }
-            }*/
+            m_interfaceMap->ExchangeTrace(Fwd, Bwd);
         }
 
         void DisContField2D::v_AddTraceQuadPhysToField(

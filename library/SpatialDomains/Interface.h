@@ -170,16 +170,6 @@ struct InterfaceBase
         return m_id;
     }
 
-    inline bool GetCheckLocal()
-    {
-        return m_checkLocal;
-    }
-
-    inline void SetCheckLocal(bool flag)
-    {
-        m_checkLocal = flag;
-    }
-
     inline std::map<int, std::tuple<NekDouble, NekDouble, NekDouble>> GetMissing()
     {
         return m_missingCoords;
