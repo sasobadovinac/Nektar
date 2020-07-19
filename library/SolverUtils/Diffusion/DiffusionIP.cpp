@@ -929,8 +929,8 @@ namespace Nektar
             Array<OneD, NekDouble> jumpTmp(nTracePts,0.0);
             Array<OneD, NekDouble> PenaltyFactor(nTracePts,0.0);
 
-            GetPenaltyFactor_const(fields,PenaltyFactor);
-            // GetPenaltyFactor(fields,PenaltyFactor);
+            // GetPenaltyFactor_const(fields,PenaltyFactor);
+            GetPenaltyFactor(fields,PenaltyFactor);
 
             Vmath::Vmul(nTracePts,PenaltyFactor,1, m_oIPPenaltyLength,1,PenaltyFactor,1);
 
