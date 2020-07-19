@@ -464,7 +464,7 @@ namespace Nektar
             const Array<OneD, Array<OneD, NekDouble> >          &pFwd,
             const Array<OneD, Array<OneD, NekDouble> >          &pBwd)
         {
-            if(abs(m_IPSymmFluxCoeff)>1.0E-12)
+            if (abs(m_IPSymmFluxCoeff)>1.0E-12)
             {
                 int nDim      = fields[0]->GetCoordim(0);
                 int nPts      = fields[0]->GetTotPoints();
@@ -497,7 +497,7 @@ namespace Nektar
         //     const Array<OneD, Array<OneD, NekDouble> >          &pBwd)
         // {
             
-        //     if(abs(m_IPSymmFluxCoeff)>1.0E-12)
+        //     if (abs(m_IPSymmFluxCoeff)>1.0E-12)
         //     {
         //         int nDim      = fields[0]->GetCoordim(0);
         //         int nPts      = fields[0]->GetTotPoints();
@@ -950,9 +950,6 @@ namespace Nektar
                 PenaltyFactor = NullNekDouble1DArray;
             }
 
-            // // Calculate normal viscous flux
-            // m_FunctorDiffusionfluxCons(nDim, solution_Aver, numDerivFwd, traceflux,
-            //                         nonZeroIndexflux, m_traceNormals, MuVarTrace);
             // Calculate normal viscous flux
             m_FunctorDiffusionfluxCons(nConvectiveFields,nDim,solution_Aver,
                 numDerivFwd,traceflux,nonZeroIndexflux,m_traceNormals,MuVarTrace);
