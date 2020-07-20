@@ -143,9 +143,6 @@ namespace Nektar
         }
 
 
-
-
-
         NekDouble StdExpansion2D::v_PhysEvaluate(
             const Array<OneD, DNekMatSharedPtr > &I,
             const Array<OneD, const NekDouble> &physvals)

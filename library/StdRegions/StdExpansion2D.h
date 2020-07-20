@@ -144,7 +144,6 @@ namespace StdRegions
             STD_REGIONS_EXPORT virtual NekDouble v_PhysEvaluate(
                     const Array<OneD, const NekDouble>& coords,
                     const Array<OneD, const NekDouble>& physvals);
-            
                 
             STD_REGIONS_EXPORT virtual NekDouble v_PhysEvaluate(
                     const Array<OneD, DNekMatSharedPtr>& I,
@@ -178,6 +177,8 @@ namespace StdRegions
                     const StdRegions::StdMatrixKey &mkey);
 
         private:
+
+
 
             // Virtual Functions ----------------------------------------
             virtual int v_GetShapeDimension() const

@@ -48,6 +48,7 @@ namespace Nektar
 
         StdTriExp::StdTriExp()
         {
+            m_physevalall   = v_GetPhysEvalALL();
         }
 
 
@@ -66,12 +67,16 @@ namespace Nektar
             ASSERTL0(Ba.GetNumModes() <= Bb.GetNumModes(),
                      "order in 'a' direction is higher than order "
                      "in 'b' direction");
+            m_physevalall   = v_GetPhysEvalALL();
+
         }
 
         StdTriExp::StdTriExp(const StdTriExp &T):
             StdExpansion(T),
             StdExpansion2D(T)
         {
+            m_physevalall   = v_GetPhysEvalALL();
+
         }
 
         StdTriExp::~StdTriExp()
@@ -739,145 +744,156 @@ namespace Nektar
             }
         }
 
-
-        void StdTriExp::v_FillModedy(
-            const int mode, Array<OneD, NekDouble> &outarray)
+        Array< OneD, Array<OneD, NekDouble> > StdTriExp::v_GetPhysEvalALL()
         {
-            int   i,m;
-            int   nquad0 = m_base[0]->GetNumPoints();
-            int   nquad1 = m_base[1]->GetNumPoints();
-            int   order0 = m_base[0]->GetNumModes();
-            int   order1 = m_base[1]->GetNumModes()-1;
-            int   mode0  = 0;
-            Array<OneD, const NekDouble> base0 = m_base[0]->GetBdata();
-            Array<OneD, const NekDouble> base1 = m_base[1]->GetDbdata();
-
-            ASSERTL2(mode <= m_ncoeffs,
-                     "calling argument mode is larger than "
-                     "total expansion order");
-
-            m = order1;
-            for (i = 0; i < order0; ++i, m+=order1-i)
+            Array<OneD, Array<OneD, NekDouble> > tmp_ret(4);
+            NekDouble totPts = GetTotPoints();
+            Array<OneD, NekDouble> tmp(totPts*m_ncoeffs);
+            Array<OneD, NekDouble> tmpdx(totPts*m_ncoeffs);
+            Array<OneD, NekDouble> tmpdy(totPts*m_ncoeffs);
+            for(int i = 0; i < m_ncoeffs; i++)
             {
-                if (m > mode)
-                {
-                    mode0 = i;
-                    break;
-                }
+                Array<OneD, NekDouble> k(totPts);
+                v_FillMode(i,k);
+                Vmath::Vcopy(totPts, &k[0], 1, &tmp[(i*totPts)], 1);
+                v_FillModedx(i,k);
+                Vmath::Vcopy(totPts, &k[0], 1, &tmpdx[(i*totPts)], 1);
+                v_FillModedy(i,k);
+                Vmath::Vcopy(totPts, &k[0], 1, &tmpdy[(i*totPts)], 1);
+                
+            }
+            
+            tmp_ret[0] = tmp;
+            tmp_ret[1] = tmpdx;
+            tmp_ret[2] = tmpdy;
+            return tmp_ret;
+
+        }        
+
+        void StdTriExp::v_FillModedx(const int mode,
+                            Array<OneD, NekDouble> &outarray)
+        {
+
+            v_FillMode( mode,
+                        outarray);
+            int tot = GetTotPoints();
+            //check
+            Array<OneD, NekDouble> temp(tot), coordsx(tot), coordsy(tot);
+
+            v_GetCoords(coordsx, coordsy, NullNekDouble1DArray);
+            
+            Array<OneD, NekDouble> coords(2);
+            for( int i = 0; i < tot; i++)
+            {
+                coords[0] = coordsx[i];
+                coords[1] = coordsy[i];
+                temp[i] = PhysEvaluatedx(coords, outarray);
+            }
+            outarray = temp;
+
+        }
+
+        void StdTriExp::v_FillModedy(const int mode,
+                            Array<OneD, NekDouble> &outarray)
+        {
+
+            v_FillMode( mode,
+                        outarray);
+            int tot = GetTotPoints();
+            //check
+            Array<OneD, NekDouble> temp(tot), coordsx(tot), coordsy(tot);
+
+            v_GetCoords(coordsx, coordsy, NullNekDouble1DArray);
+            
+            Array<OneD, NekDouble> coords(2);
+            for( int i = 0; i < tot; i++)
+            {
+                coords[0] = coordsx[i];
+                coords[1] = coordsy[i];
+                temp[i] = PhysEvaluatedy(coords, outarray);
             }
 
-            // deal with top vertex mode in modified basis
-            if (mode == 1 &&
-                m_base[0]->GetBasisType() == LibUtilities::eModified_A)
-            {
-                Vmath::Fill(nquad0*nquad1 , 1.0, outarray, 1);
-            }
-            else
-            {
-                for (i = 0; i < nquad1; ++i)
-                {
-                    Vmath::Vcopy(nquad0,(NekDouble *)(base0.get()+mode0*nquad0),
-                                 1,&outarray[0]+i*nquad0,1);
-                }
-            }
-
-            for(i = 0; i < nquad0; ++i)
-            {
-                Vmath::Vmul(nquad1,(NekDouble *)(base1.get() + mode*nquad1),
-                            1,&outarray[0]+i,nquad0,&outarray[0]+i,nquad0);
-            }
+            outarray = temp;
         }
 
 
-        void StdTriExp::v_FillModedx(
-            const int mode, Array<OneD, NekDouble> &outarray)
-        {
-            int   i,m;
-            int   nquad0 = m_base[0]->GetNumPoints();
-            int   nquad1 = m_base[1]->GetNumPoints();
-            int   order0 = m_base[0]->GetNumModes();
-            int   order1 = m_base[1]->GetNumModes();
-            int   mode0  = 0;
-            Array<OneD, const NekDouble> base0 = m_base[0]->GetDbdata();
-            Array<OneD, const NekDouble> base1 = m_base[1]->GetBdata();
-
-            ASSERTL2(mode <= m_ncoeffs,
-                     "calling argument mode is larger than "
-                     "total expansion order");
-
-            m = order1;
-            for (i = 0; i < order0; ++i, m+=order1-i)
-            {
-                if (m > mode)
-                {
-                    mode0 = i;
-                    break;
-                }
-            }
-
-            // deal with top vertex mode in modified basis
-            if (mode == 1 &&
-                m_base[0]->GetBasisType() == LibUtilities::eModified_A)
-            {
-                Vmath::Fill(nquad0*nquad1 , 1.0, outarray, 1);
-            }
-            else
-            {
-                for (i = 0; i < nquad1; ++i)
-                {
-                    Vmath::Vcopy(nquad0,(NekDouble *)(base0.get()+mode0*nquad0),
-                                 1,&outarray[0]+i*nquad0,1);
-                }
-            }
-
-            for(i = 0; i < nquad0; ++i)
-            {
-                Vmath::Vmul(nquad1,(NekDouble *)(base1.get() + mode*nquad1),
-                            1,&outarray[0]+i,nquad0,&outarray[0]+i,nquad0);
-            }
-        }
-        
         NekDouble StdTriExp::v_PhysEvaluatedxBasis(
             const Array<OneD, const NekDouble>& coords,
             int mode)
         {
             Array<OneD, NekDouble> coll(2);
             LocCoordToLocCollapsed(coords, coll);
-            
+ 
+            int tot = GetTotPoints(); 
             // From mode we need to determine mode0 and mode1 in the (p,q)
             // direction. mode1 can be directly inferred from mode.
             const int    nm1    = m_base[1]->GetNumModes();
             const double c      = 1 + 2*nm1;
             const int    mode0  = floor(0.5*(c - sqrt(c*c - 8*mode)));
+            Array<OneD, NekDouble> physvals(tot);
+            
             if (mode == 1 &&
                 m_base[0]->GetBasisType() == LibUtilities::eModified_A)
             {
                 // Account for collapsed vertex.
-                return StdExpansion::BaryEvaluateDerivBasis<0>(coll[0], 1);
+                Vmath::Vcopy(tot, &m_physevalall[1][tot], 1, &physvals[0],1);
+                return v_PhysEvaluate(coll, physvals);   
+            
             }
-            else
-            {
-                return
-                    StdExpansion::BaryEvaluateBasis<1>(coll[0], mode0) *
-                    StdExpansion::BaryEvaluateDerivBasis<0>(coll[1], mode);
+            else{
+                Vmath::Vcopy(tot, &m_physevalall[1][mode0*tot], 1, &physvals[0],1);      
+                
+                return v_PhysEvaluate(coll, physvals);
             }
-
         }
 
 
-        NekDouble StdTriExp::v_PhysEvaluatedyBasis(
+        NekDouble StdTriExp::v_PhysEvaluatedyBasisBary(
             const Array<OneD, const NekDouble>& coords,
             int mode)
         {
             Array<OneD, NekDouble> coll(2);
             LocCoordToLocCollapsed(coords, coll);
+
             
+            // From mode we need to determine mode0 and mode1 in the (p,q)
+            // direction. mode1 can be directly inferred from mode.
+            const int    nm1    = m_base[1]->GetNumModes();
+                       const double c      = 1 + 2*nm1;
+            const int    mode0  = floor(0.5*(c - sqrt(c*c - 8*mode)));
+
+            if (mode == 1 &&
+                m_base[0]->GetBasisType() == LibUtilities::eModified_A)
+            {
+                // Account for collapsed vertex.
+                return StdExpansion::BaryEvaluateDerivBasis<1>(coll[1], 1);
+            }
+            else
+            {
+
+                int tot = GetTotPoints(); 
+                Array<OneD, NekDouble> physvals(tot);
+                v_FillMode(mode0,physvals);
+   
+                return v_PhysEvaluatedy(coords, physvals);
+            }
+        }
+
+
+        NekDouble StdTriExp::v_PhysEvaluatedxBasisBary(
+            const Array<OneD, const NekDouble>& coords,
+            int mode)
+        {
+
             // From mode we need to determine mode0 and mode1 in the (p,q)
             // direction. mode1 can be directly inferred from mode.
             const int    nm1    = m_base[1]->GetNumModes();
             const double c      = 1 + 2*nm1;
             const int    mode0  = floor(0.5*(c - sqrt(c*c - 8*mode)));
 
+            Array<OneD, NekDouble> coll(2);
+            LocCoordToLocCollapsed(coords, coll);
+            
             if (mode == 1 &&
                 m_base[0]->GetBasisType() == LibUtilities::eModified_A)
             {
@@ -886,11 +902,41 @@ namespace Nektar
             }
             else
             {
-                return
-                    StdExpansion::BaryEvaluateDerivBasis<1>(coll[1], mode0) *
-                    StdExpansion::BaryEvaluateBasis<0>(coll[0], mode);
+                int tot = GetTotPoints(); 
+                Array<OneD, NekDouble> physvals(tot);
+                v_FillMode(mode0,physvals);
+   
+                return v_PhysEvaluatedx(coll, physvals);
             }
+        }
+       
 
+        NekDouble StdTriExp::v_PhysEvaluatedyBasis(
+            const Array<OneD, const NekDouble>& coords,
+            int mode)
+        {
+            Array<OneD, NekDouble> coll(2);
+            LocCoordToLocCollapsed(coords, coll);
+            
+            int tot = GetTotPoints(); 
+            
+            Array<OneD, NekDouble> physvals(tot);
+                
+            if (mode == 1 &&
+                m_base[0]->GetBasisType() == LibUtilities::eModified_A)
+            {
+                // Account for collapsed vertex.
+                Vmath::Vcopy(tot, &m_physevalall[2][tot], 1, &physvals[0],1);
+                return v_PhysEvaluate(coll, physvals);   
+            
+            }
+            else{
+                const int    nm1    = m_base[1]->GetNumModes();
+                const double c      = 1 + 2*nm1;
+                const int    mode0  = floor(0.5*(c - sqrt(c*c - 8*mode)));
+                Vmath::Vcopy(tot, &m_physevalall[2][mode0*tot], 1, &physvals[0],1);
+                return v_PhysEvaluate(coll, physvals);   
+            }
         }
 
 
@@ -900,14 +946,13 @@ namespace Nektar
         {
             Array<OneD, NekDouble> coll(2);
             LocCoordToLocCollapsed(coords,coll);
-            
             const int nq0 = m_base[0]->GetNumPoints();
             const int nq1 = m_base[1]->GetNumPoints();
 
             const Array<OneD, const NekDouble>& z1 = m_base[1]->GetZ();
             Array<OneD, NekDouble> wsp(nq1);
-
             Array<OneD, NekDouble> wsp1(nq1);
+
             for (int i = 0; i < nq1; ++i)
             {
                 wsp1[i] = StdExpansion::BaryEvaluate<0>(
@@ -932,13 +977,11 @@ namespace Nektar
             
             const int nq0 = m_base[0]->GetNumPoints();
             const int nq1 = m_base[1]->GetNumPoints();
-            const Array<OneD, const NekDouble>& z1 = m_base[1]->GetZ();
 
             const Array<OneD, const NekDouble>& z0 = m_base[0]->GetZ();
 
-
             Array<OneD, NekDouble> coll(2);
-            LocCoordToLocCollapsed(coords,coll);
+            coll = coords;
             Array<OneD, NekDouble> wsp(nq0);
             Array<OneD, NekDouble> wsp1(nq1);
             Array<OneD, NekDouble> wsp3(nq1);
@@ -949,12 +992,6 @@ namespace Nektar
                 wsp1[i] = StdExpansion::BaryEvaluate<0>(
                     coll[0], &physvals[0] + i * nq1);
             }
-            
-
-            // set up geometric factor: 2/(1-z1)
-            Vmath::Sadd(nq1, -1.0, z1, 1, wsp, 1);
-            Vmath::Sdiv(nq1, -2.0, wsp, 1, wsp, 1);
-            
 
             // set up geometric factor: (1_z0)/(1-z1)
             Vmath::Sadd(nq0, 1.0, z0, 1, wsp, 1);

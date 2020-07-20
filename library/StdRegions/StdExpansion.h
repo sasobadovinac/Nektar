@@ -63,6 +63,12 @@ namespace Nektar
         {
         public:
 
+            Array<OneD, Array<OneD, NekDouble> > m_physevalall = Array< OneD, Array< OneD, NekDouble> >(4);
+            // 0 = basis eval
+            // 1 = dx
+            // 2 = dy
+            // 3 = dz
+
             /** \brief Default Constructor */
             STD_REGIONS_EXPORT StdExpansion();
 
@@ -502,15 +508,18 @@ namespace Nektar
                 v_FillMode(mode, outarray);
             }
 
+
             void FillModedx(const int mode, Array<OneD, NekDouble> &outarray)
             {
                 v_FillModedx(mode, outarray);
             }
 
+
             void FillModedy(const int mode, Array<OneD, NekDouble> &outarray)
             {
                 v_FillModedy(mode, outarray);
             }
+
 
             void FillModedz(const int mode, Array<OneD, NekDouble> &outarray)
             {
@@ -1000,7 +1009,11 @@ namespace Nektar
             {
                 return v_PhysEvaluateBasis(coords, mode);
             }
-
+            
+            Array< OneD, Array<OneD, NekDouble> > GetPhysEvalALL()
+            {
+                return v_GetPhysEvalALL();
+            }
 
             NekDouble PhysEvaluatedx(
                                 const Array<OneD, const NekDouble> &coords,
@@ -1043,12 +1056,38 @@ namespace Nektar
             {
                 return v_PhysEvaluatedyBasis(coords, mode);
             }
-            
+
+
+
             NekDouble PhysEvaluatedzBasis(
                 const Array<OneD, const NekDouble>& coords,
                 int mode)
             {
                 return v_PhysEvaluatedzBasis(coords, mode);
+            }
+
+
+            NekDouble PhysEvaluatedxBasisBary(
+                const Array<OneD, const NekDouble>& coords,
+                int mode)
+            {
+                return v_PhysEvaluatedxBasisBary(coords, mode);
+            }
+
+
+            NekDouble PhysEvaluatedyBasisBary(
+                const Array<OneD, const NekDouble>& coords,
+                int mode)
+            {
+                return v_PhysEvaluatedyBasisBary(coords, mode);
+            }
+
+            
+            NekDouble PhysEvaluatedzBasisBary(
+                const Array<OneD, const NekDouble>& coords,
+                int mode)
+            {
+                return v_PhysEvaluatedzBasisBary(coords, mode);
             }
 
             /**
@@ -1530,9 +1569,18 @@ namespace Nektar
             {
                 const int nquad = m_base[DIR]->GetNumPoints();
                 return BaryEvaluateDeriv<DIR>(
-                    coord, &(m_base[DIR]->GetDbdata())[0] + nquad * mode);
+                    coord, &(m_base[DIR]->GetBdata())[0] + nquad * mode);
             }
         private:
+
+            STD_REGIONS_EXPORT virtual Array< OneD, Array< OneD, NekDouble> >v_GetPhysEvalALL();/*
+            STD_REGIONS_EXPORT virtual Array< OneD, NekDouble> v_GetPhysEvalALLdx();
+            STD_REGIONS_EXPORT virtual Array< OneD, NekDouble> v_GetPhysEvalALLdy();
+            STD_REGIONS_EXPORT virtual Array< OneD, NekDouble> v_GetPhysEvalALLdz();*/
+            //Array<OneD, NekDouble> PhysEvalALLDx;
+            //            Array<OneD, NekDouble> PhysEvalALLDy;
+            //Array<OneD, NekDouble> PhysEvalALLDz;
+
             // Virtual functions
             STD_REGIONS_EXPORT virtual int v_GetNverts() const = 0;
             STD_REGIONS_EXPORT virtual int v_GetNtraces() const;
@@ -1666,6 +1714,8 @@ namespace Nektar
             STD_REGIONS_EXPORT virtual NekDouble v_PhysEvaluateBasis
             (const Array<OneD, const NekDouble>& coords, int mode);
 
+            STD_REGIONS_EXPORT Array< OneD, Array<OneD, NekDouble> >v_PhysEvalALL();
+
             STD_REGIONS_EXPORT virtual NekDouble v_PhysEvaluatedxBasis            
             (const Array<OneD, const NekDouble>& coords, int mode);
 
@@ -1673,6 +1723,21 @@ namespace Nektar
             (const Array<OneD, const NekDouble>& coords, int mode);
 
             STD_REGIONS_EXPORT virtual NekDouble v_PhysEvaluatedzBasis
+            (const Array<OneD, const NekDouble>& coords, int mode);
+
+
+            // These methods calculate the interpolation of the 
+            // derivatives in respective directions using the 
+            // modified barycentric interpolation formula
+            // [ Hope is that this will be faster and replace
+            // current impl of v_PhysEvaluatedxBasis() ]
+            STD_REGIONS_EXPORT virtual NekDouble v_PhysEvaluatedxBasisBary            
+            (const Array<OneD, const NekDouble>& coords, int mode);
+
+            STD_REGIONS_EXPORT virtual NekDouble v_PhysEvaluatedyBasisBary
+            (const Array<OneD, const NekDouble>& coords, int mode);
+
+            STD_REGIONS_EXPORT virtual NekDouble v_PhysEvaluatedzBasisBary
             (const Array<OneD, const NekDouble>& coords, int mode);
 
             STD_REGIONS_EXPORT virtual NekDouble v_PhysEvaluateDeriv
@@ -1713,7 +1778,7 @@ namespace Nektar
             STD_REGIONS_EXPORT virtual void v_FillModedy(const int mode,
                                                   Array<OneD, NekDouble> &outarray);
             STD_REGIONS_EXPORT virtual void v_FillModedz(const int mode,
-                                                  Array<OneD, NekDouble> &outarray);
+            Array<OneD, NekDouble> &outarray);
 
             STD_REGIONS_EXPORT virtual DNekMatSharedPtr v_GenMatrix(
                                                   const StdMatrixKey &mkey);
