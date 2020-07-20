@@ -73,6 +73,7 @@ public:
     }
 
     void FillLocalBwdTrace(Array<OneD, NekDouble> &Fwd, Array<OneD, NekDouble> &Bwd);
+    void FillRankBwdTrace(Array<OneD, NekDouble> &trace, Array<OneD, NekDouble> &Bwd);
 
 
 private:
@@ -97,11 +98,13 @@ public:
     MULTI_REGIONS_EXPORT InterfaceExchange(
         const ExpListSharedPtr &trace,
         const LibUtilities::CommSharedPtr &comm,
-        std::pair<int, std::vector<InterfaceTraceSharedPtr>> rankPair)
+        std::pair<int, std::vector<InterfaceTraceSharedPtr>> rankPair,
+        const std::map<int, int> &geomIdToTraceId)
         : m_trace(trace),
           m_comm(comm),
           m_rank(rankPair.first),
-          m_interfaces(rankPair.second)
+          m_interfaces(rankPair.second),
+          m_geomIdToTraceId(geomIdToTraceId)
     {
     }
 
@@ -109,7 +112,7 @@ public:
     MULTI_REGIONS_EXPORT void SendMissing(LibUtilities::CommRequestSharedPtr request, int requestNum);
     MULTI_REGIONS_EXPORT void CalcRankDistances();
     MULTI_REGIONS_EXPORT void SendFwdTrace(LibUtilities::CommRequestSharedPtr request, int requestNum, Array<OneD, NekDouble> &Fwd);
-    MULTI_REGIONS_EXPORT void FillRankBwdTrace(LibUtilities::CommRequestSharedPtr request, int requestNum, Array<OneD, NekDouble> &Bwd);
+    MULTI_REGIONS_EXPORT void FillRankBwdTraceExchange(Array<OneD, NekDouble> &Bwd);
 
 private:
     const ExpListSharedPtr m_trace;
@@ -124,7 +127,7 @@ private:
     Array<OneD, NekDouble> m_recv;
     std::map<int, std::pair<int, NekDouble>> m_foundRankCoords;
     Array<OneD, NekDouble> m_recvTrace;
-
+    std::map<int, int> m_geomIdToTraceId;
 };
 
 typedef std::shared_ptr<InterfaceExchange>  InterfaceExchangeSharedPtr;
