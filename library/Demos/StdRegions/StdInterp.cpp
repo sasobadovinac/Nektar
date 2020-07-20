@@ -79,7 +79,7 @@ int main(int argc, char *argv[])
     Array<OneD, Array<OneD, NekDouble>> coordsF = demo.GetCoords(F);
     Array<OneD, NekDouble> physIn(totPoints), physOut(totPoints);
     Array<OneD, NekDouble> tmpIn(dimension), sol(totPoints);
-
+    //cout<<"\n\n dies\n\n";
     // Evaluate polynomial at the set of elemental solution points.
     physIn = EvalPoly(coordsE);
 

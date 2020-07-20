@@ -52,7 +52,40 @@ int main(int argc, char *argv[])
     int nTot = nCoeffs * nPts, dimension = E->GetShapeDimension();
 
     Array<OneD, Array<OneD, NekDouble>> coords = demo.GetCoords(E);
-    Array<OneD, NekDouble> sol(nTot), phys(nTot), tmpIn(dimension);
+    Array<OneD, NekDouble> sol(nTot), phys(nTot), physOut(nTot), tmpIn(dimension);
+
+ 
+    /*cout<<"\n we want:\n";
+    for (int k = 0; k < nCoeffs; ++k)
+    {
+        
+        cout<<"\n mode = "<<k<<":";
+        Array<OneD, NekDouble> vals(nPts);
+        E->FillMode(k,vals);
+        // Evaluate each mode at the quadrature points.
+        for (int i = 0; i < nPts; ++i)
+        {
+            cout<<" " << vals[i];
+        }
+        cout<<"\n";
+    }
+
+
+    cout<<"\n we get:\n";
+    
+    for(int i = 0, ct = 0; i< temparr.size(); i++)
+    {
+        cout<<" "<<temparr[i];
+        ct++;
+        if(ct == nPts)
+        {
+            cout<<"\n";
+            ct = 0;
+        }
+    }*/
+
+    Array<OneD, Array<OneD, NekDouble> > temparr = E->m_physevalall;
+
 
     // For each mode, we follow two approaches:
     //
@@ -79,8 +112,27 @@ int main(int argc, char *argv[])
         E->FillMode(k, tmp);
     }
 
-    cout << "L infinity error : " << scientific << E->Linf(phys, sol) << endl;
-    cout << "L 2 error        : " << scientific << E->L2(phys, sol) << endl;
+    
+
+
+    // Another approach: Use Nektar++'s approach treating 
+    // the whole FillMode on all quad points as a function 
+    // evaluation on domain. Do not leverage the multiplicative 
+    // separability of basis definitions in each individual direction:
+
+    for (int i = 0; i < nPts; ++i)
+    {
+        for (int d = 0; d < dimension; ++d)
+        {
+            tmpIn[d] = coords[d][i];
+        }
+
+        physOut[i] = E->PhysEvaluate(tmpIn, temparr[0]);
+    }
+    
+
+    cout << "L infinity error : " << scientific << E->Linf(physOut, sol) << endl;
+    cout << "L 2 error        : " << scientific << E->L2(physOut, sol) << endl;
 
     return 0;
 }
