@@ -60,7 +60,7 @@ public:
         m_checkLocal = flag;
     }
 
-    inline std::map<int, Array<OneD, NekDouble>> GetMissingCoords()
+    inline std::vector<Array<OneD, NekDouble>> GetMissingCoords()
     {
         return m_missingCoords;
     }
@@ -82,8 +82,10 @@ private:
     std::map<int, int> m_geomIdToTraceId;
     int m_totQuadPnts = 0;
     bool m_checkLocal = false;
-    std::map<int, Array<OneD, NekDouble>> m_missingCoords;
-    std::map<int, std::pair<int, NekDouble>> m_foundLocalCoords;
+    std::vector<Array<OneD, NekDouble>> m_missingCoords;
+    std::vector<std::pair<int, NekDouble>> m_foundLocalCoords;
+    std::vector<int> m_mapMissingCoordToTrace;
+    std::vector<int> m_mapFoundCoordToTrace;
 };
 
 typedef std::shared_ptr<InterfaceTrace> InterfaceTraceSharedPtr;
