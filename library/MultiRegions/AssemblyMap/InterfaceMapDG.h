@@ -65,16 +65,16 @@ public:
         return m_missingCoords;
     }
 
-    void CalcLocalMissing();
-
-    SpatialDomains::InterfaceBaseShPtr GetInterface() // Debug REMOVE THIS.
+    SpatialDomains::InterfaceBaseShPtr GetInterface()
     {
         return m_interfaceBase;
     }
 
-    void FillLocalBwdTrace(Array<OneD, NekDouble> &Fwd, Array<OneD, NekDouble> &Bwd);
-    void FillRankBwdTrace(Array<OneD, NekDouble> &trace, Array<OneD, NekDouble> &Bwd);
-
+    void CalcLocalMissing();
+    void FillLocalBwdTrace(Array<OneD, NekDouble> &Fwd,
+                           Array<OneD, NekDouble> &Bwd);
+    void FillRankBwdTrace(Array<OneD, NekDouble> &trace,
+                          Array<OneD, NekDouble> &Bwd);
 
 private:
     ExpListSharedPtr m_trace;
@@ -98,23 +98,24 @@ public:
 
     /// Default constructor
     MULTI_REGIONS_EXPORT InterfaceExchange(
-        const ExpListSharedPtr &trace,
-        const LibUtilities::CommSharedPtr &comm,
+        const ExpListSharedPtr &trace, const LibUtilities::CommSharedPtr &comm,
         std::pair<int, std::vector<InterfaceTraceSharedPtr>> rankPair,
         const std::map<int, int> &geomIdToTraceId)
-        : m_trace(trace),
-          m_comm(comm),
-          m_rank(rankPair.first),
-          m_interfaces(rankPair.second),
-          m_geomIdToTraceId(geomIdToTraceId)
+        : m_trace(trace), m_comm(comm), m_rank(rankPair.first),
+          m_interfaces(rankPair.second), m_geomIdToTraceId(geomIdToTraceId)
     {
     }
 
-    MULTI_REGIONS_EXPORT void RankFillSizes(LibUtilities::CommRequestSharedPtr request, int requestNum);
-    MULTI_REGIONS_EXPORT void SendMissing(LibUtilities::CommRequestSharedPtr request, int requestNum);
+    MULTI_REGIONS_EXPORT void RankFillSizes(
+        LibUtilities::CommRequestSharedPtr request, int requestNum);
+    MULTI_REGIONS_EXPORT void SendMissing(
+        LibUtilities::CommRequestSharedPtr request, int requestNum);
     MULTI_REGIONS_EXPORT void CalcRankDistances();
-    MULTI_REGIONS_EXPORT void SendFwdTrace(LibUtilities::CommRequestSharedPtr request, int requestNum, Array<OneD, NekDouble> &Fwd);
-    MULTI_REGIONS_EXPORT void FillRankBwdTraceExchange(Array<OneD, NekDouble> &Bwd);
+    MULTI_REGIONS_EXPORT void SendFwdTrace(
+        LibUtilities::CommRequestSharedPtr request, int requestNum,
+        Array<OneD, NekDouble> &Fwd);
+    MULTI_REGIONS_EXPORT void FillRankBwdTraceExchange(
+        Array<OneD, NekDouble> &Bwd);
 
 private:
     const ExpListSharedPtr m_trace;
@@ -132,7 +133,7 @@ private:
     std::map<int, int> m_geomIdToTraceId;
 };
 
-typedef std::shared_ptr<InterfaceExchange>  InterfaceExchangeSharedPtr;
+typedef std::shared_ptr<InterfaceExchange> InterfaceExchangeSharedPtr;
 
 class InterfaceMapDG
 {
@@ -146,9 +147,9 @@ public:
         const ExpListSharedPtr &trace,
         const std::map<int, int> geomIdToTraceId);
 
-    void CalcLocalCoords(const ExpListSharedPtr &trace, std::map<int, int> geomIdToTraceId);
-    void ExchangeTrace(Array<OneD, NekDouble> &Fwd, Array<OneD, NekDouble> &Bwd);
-
+    MULTI_REGIONS_EXPORT void ExchangeTrace(Array<OneD, NekDouble> &Fwd,
+                                            Array<OneD, NekDouble> &Bwd);
+    MULTI_REGIONS_EXPORT void ExchangeCoords();
 
 private:
     SpatialDomains::InterfacesSharedPtr m_interfaces;
@@ -158,8 +159,7 @@ private:
     std::map<int, int> m_geomIdToTraceId;
 };
 
-typedef std::shared_ptr<InterfaceMapDG>  InterfaceMapDGSharedPtr;
-
+typedef std::shared_ptr<InterfaceMapDG> InterfaceMapDGSharedPtr;
 
 } // namespace MultiRegions
 } // namespace Nektar
