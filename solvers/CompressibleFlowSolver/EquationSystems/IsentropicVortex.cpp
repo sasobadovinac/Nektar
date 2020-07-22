@@ -51,6 +51,11 @@ namespace Nektar
         : UnsteadySystem(pSession, pGraph),
           EulerCFE(pSession, pGraph)
     {
+        m_session->LoadParameter("IsentropicBeta", m_beta, 5.0);
+        m_session->LoadParameter("IsentropicU0", m_u0, 1.0);
+        m_session->LoadParameter("IsentropicV0", m_v0, 0.5);
+        m_session->LoadParameter("IsentropicX0", m_x0, 5.0);
+        m_session->LoadParameter("IsentropicY0", m_y0, 0.0);
     }
 
     /**
@@ -106,7 +111,8 @@ namespace Nektar
         if (dumpInitialConditions && m_checksteps)
         {
             // Dump initial conditions to file
-            Checkpoint_Output(0);
+            Checkpoint_Output(m_nchk);
+            m_nchk++;
         }
     }
 
@@ -150,14 +156,8 @@ namespace Nektar
         int nq = x.size();
 
         // Flow parameters
-        const NekDouble x0    = 5.0;
-        const NekDouble y0    = 0.0;
-        const NekDouble beta  = 5.0;
-        const NekDouble u0    = 1.0;
-        const NekDouble v0    = 0.5;
-        const NekDouble gamma = m_gamma;
         NekDouble r, xbar, ybar, tmp;
-        NekDouble fac = 1.0/(16.0*gamma*M_PI*M_PI);
+        NekDouble fac = 1.0/(16.0*m_gamma*M_PI*M_PI);
 
         // In 3D zero rhow field.
         if (m_spacedim == 3)
@@ -168,14 +168,14 @@ namespace Nektar
         // Fill storage
         for (int i = 0; i < nq; ++i)
         {
-            xbar      = x[i] - u0*time - x0;
-            ybar      = y[i] - v0*time - y0;
+            xbar      = x[i] - m_u0*time - m_x0;
+            ybar      = y[i] - m_v0*time - m_y0;
             r         = sqrt(xbar*xbar + ybar*ybar);
-            tmp       = beta*exp(1-r*r);
-            u[0][i+o] = pow(1.0 - (gamma-1.0)*tmp*tmp*fac, 1.0/(gamma-1.0));
-            u[1][i+o] = u[0][i+o]*(u0 - tmp*ybar/(2*M_PI));
-            u[2][i+o] = u[0][i+o]*(v0 + tmp*xbar/(2*M_PI));
-            u[m_spacedim+1][i+o] = pow(u[0][i+o], gamma)/(gamma-1.0) +
+            tmp       = m_beta*exp(1-r*r);
+            u[0][i+o] = pow(1.0 - (m_gamma-1.0)*tmp*tmp*fac, 1.0/(m_gamma-1.0));
+            u[1][i+o] = u[0][i+o]*(m_u0 - tmp*ybar/(2*M_PI));
+            u[2][i+o] = u[0][i+o]*(m_v0 + tmp*xbar/(2*M_PI));
+            u[m_spacedim+1][i+o] = pow(u[0][i+o], m_gamma)/(m_gamma-1.0) +
             0.5*(u[1][i+o]*u[1][i+o] + u[2][i+o]*u[2][i+o]) / u[0][i+o];
         }
     }
