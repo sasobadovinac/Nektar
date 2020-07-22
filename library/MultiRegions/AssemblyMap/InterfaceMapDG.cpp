@@ -243,7 +243,7 @@ void InterfaceTrace::CalcLocalMissing()
         {
             auto childElmt = m_trace->GetExp(m_geomIdToTraceId.at(childId));
             size_t nq      = childElmt->GetTotPoints();
-            Array<OneD, NekDouble> xc(nq), yc(nq), zc(nq);
+            Array<OneD, NekDouble> xc(nq, 0.0), yc(nq, 0.0), zc(nq, 0.0);
             childElmt->GetCoords(xc, yc, zc);
             int offset = m_trace->GetPhys_Offset(m_geomIdToTraceId.at(childId));
 
@@ -270,7 +270,7 @@ void InterfaceTrace::CalcLocalMissing()
         {
             auto childElmt = m_trace->GetExp(m_geomIdToTraceId.at(childId));
             size_t nq      = childElmt->GetTotPoints();
-            Array<OneD, NekDouble> xc(nq), yc(nq), zc(nq);
+            Array<OneD, NekDouble> xc(nq,0.0), yc(nq,0.0), zc(nq,0.0);
             childElmt->GetCoords(xc, yc, zc);
             int offset = m_trace->GetPhys_Offset(m_geomIdToTraceId.at(childId));
 
