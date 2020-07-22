@@ -48,29 +48,10 @@ namespace Nektar
     StdExpansion1D::StdExpansion1D(int numcoeffs, const LibUtilities::BasisKey &Ba):
         StdExpansion(numcoeffs,1,Ba)
     {
-        int nq = m_base[0]->GetNumPoints();
-        Array<OneD, NekDouble> z = m_base[0]->GetZ();
-        m_bcweights = Array<OneD, NekDouble>(nq, 1.0);
-
-        for (int i = 0; i < nq; ++i)
-        {
-            for (int j = 0; j < nq; ++j)
-            {
-                if (i == j)
-                {
-                    continue;
-                }
-
-                m_bcweights[i] *= (z[i] - z[j]);
-            }
-
-            m_bcweights[i] = 1.0 / m_bcweights[i];
-        }
     }
 
     StdExpansion1D::StdExpansion1D(const StdExpansion1D &T):StdExpansion(T)
     {
-        m_bcweights = T.m_bcweights;
     }
 
     StdExpansion1D::~StdExpansion1D()
@@ -111,12 +92,9 @@ namespace Nektar
 
         return StdExpansion::BaryEvaluate<0>(Lcoord[0], &physvals[0]);
     }
-	
-	void StdExpansion1D::v_SetUpPhysNormals(const int vertex)
 
     void StdExpansion1D::v_SetUpPhysNormals(const int vertex)
     {
-		ComputeVertexNormal(vertex);
         ComputeVertexNormal(vertex);
     }
 
