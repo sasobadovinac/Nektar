@@ -1458,6 +1458,7 @@ namespace Nektar
                      */
                     if (xdiff == 0.0)
                     {
+                        //                        std::cout<<"\n here in evl!";
                         return pval;
                     }
 
@@ -1465,6 +1466,8 @@ namespace Nektar
                     numer += tmp * pval;
                     denom += tmp;
                 }
+
+                //                std::cout<<"\n numer="<<numer<<" denom = "<<denom;
 
                 return numer / denom;
             }
@@ -1517,7 +1520,9 @@ namespace Nektar
                      */
                     if (xdiff == 0.0)
                     {
-                        return pval;
+                        //   std::cout<<"\nz[i] = "<<z[i]<<" coord="<<coord<<" pval = "<<pval;;
+                        //                        std::cout<<"\n here in dereval!";
+                        return -1.0*pval;
                     }
 
                     NekDouble tmp = bw[i] / xdiff;
@@ -1529,7 +1534,8 @@ namespace Nektar
                     denom += tmp;
                 }
 
-                return (numer1*numer2 + numer3*numer4) / pow(denom,2);
+
+                return (numer1*numer2 - numer3*numer4) / pow(denom,2);
             }
 
 

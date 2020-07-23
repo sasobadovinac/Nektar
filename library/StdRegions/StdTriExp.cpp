@@ -787,7 +787,7 @@ namespace Nektar
             {
                 coords[0] = coordsx[i];
                 coords[1] = coordsy[i];
-                temp[i] = PhysEvaluatedx(coords, outarray);
+                temp[i] = 0.0;//PhysEvaluatedx(coords, outarray);
             }
             outarray = temp;
 
@@ -810,7 +810,7 @@ namespace Nektar
             {
                 coords[0] = coordsx[i];
                 coords[1] = coordsy[i];
-                temp[i] = PhysEvaluatedy(coords, outarray);
+                temp[i] = 0.0;//PhysEvaluatedy(coords, outarray);
             }
 
             outarray = temp;
@@ -944,30 +944,187 @@ namespace Nektar
                                               const Array<OneD, const NekDouble> &coords,
                                               const Array<OneD, const NekDouble> &physvals)
         {
-            Array<OneD, NekDouble> coll(2);
-            LocCoordToLocCollapsed(coords,coll);
+            /*            Array<OneD, NekDouble> coll(2);
+            //LocCoordToLocCollapsed(coords,coll);
+             const Array<OneD, const NekDouble>& z1 = m_base[1]->GetZ();
+                        //const Array<OneD, const NekDouble>& z0 = m_base[0]->GetZ();
+            coll = coords;
+
+            const int nq0 = m_base[0]->GetNumPoints();
+            const int nq1 = m_base[0]->GetNumPoints();
+            Array<OneD, NekDouble> wsp(nq0), wsp1(nq0);
+            for (int i = 0; i < nq0; i++)
+            {
+                wsp[i] = StdExpansion::BaryEvaluateDeriv<0>(
+                    coll[0], &physvals[0]+i*nq0);
+            }
+            cout<<"\n wsp :   ";
+            for(int i = 0; i<wsp.size(); i++)
+                cout<<" "<<wsp[i];
+
+            // set up geometric factor: 2/(1-z1)
+                        Vmath::Sadd(nq1, -1.0, z1, 1, wsp1, 1);
+            Vmath::Sdiv(nq1, -2.0, wsp1, 1, wsp1, 1);
+            Vmath::Vmul(nq1, wsp,1,wsp1,1,wsp, 1);
+            NekDouble ans = StdExpansion::BaryEvaluate<1>(
+                                                 coll[1], &wsp[0]);
+            
+            cout<<"\n ans ="<< ans;
+            return ans;
+
+            Array<OneD, NekDouble> xcoord(GetTotPoints()), ycoord(GetTotPoints());
+            GetCoords(xcoord,ycoord);
+
+            Array<OneD, Array<OneD, NekDouble>> collcoord(2);
+            collcoord[0] = Array<OneD, NekDouble>(GetTotPoints());
+            collcoord[1] = Array<OneD, NekDouble>(GetTotPoints());
+            
+            for(int i = 0; i<GetTotPoints(); i++)
+            {
+                Array<OneD, NekDouble> tmp(2), tmp2(2);;
+                    tmp[0] = xcoord[i];
+                    tmp[1] = ycoord[i];
+                    LocCoordToLocCollapsed(tmp, tmp2);
+                    collcoord[0][i] = tmp2[0];
+                    collcoord[1][i] = tmp2[1];
+            }
+
+                        const int nq0 = m_base[0]->GetNumPoints();
+            return StdExpansion::BaryEvaluateDeriv<0>(
+                    coll[0], &physvals[0]);
+            
+                     const int nq1 = m_base[1]->GetNumPoints();
+
+            cout<<"\n phsvals:   ";
+            for(int i = 0; i<physvals.size(); i++)
+                cout<<" "<<physvals[i];
+
+            //const Array<OneD, const NekDouble>& z1 = m_base[1]->GetZ();
+            Array<OneD, NekDouble> wsp(nq1);
+            Array<OneD, NekDouble> wsp1(nq0*nq1);
+
+            for (int i = 0; i < nq0*nq1; ++i)
+            {
+                wsp1[i] = StdExpansion::BaryEvaluateDeriv<1>(
+                    collcoord[1][i], &physvals[0]);
+            }
+            
+            Vmath::Vcopy(nq0, wsp1, nq0, wsp, 1);
+                        
+                        cout<<"\n wsp1:   ";
+            for(int i = 0; i<wsp1.size(); i++)
+                cout<<" "<<wsp1[i];
+ */
+            // set up geometric factor: 2/(1-z1)
+            //Vmath::Sadd(nq1, -1.0, z1, 1, wsp, 1);
+            //Vmath::Sdiv(nq1, -2.0, wsp, 1, wsp, 1);
+            //Vmath::Vmul(nq1, wsp,1,wsp1,1,wsp1, 1);
+
+            //cout<<"\n wsp:   ";
+            // for(int i = 0; i<wsp.size(); i++)
+            //     cout<<" "<<wsp[i];
+ 
+            //return  StdExpansion::BaryEvaluate<0>(coll[1], &wsp[0]);
+
+            //            return StdExpansion::BaryEvaluate<1>(coll[1], &wsp1[0]);
+            
             const int nq0 = m_base[0]->GetNumPoints();
             const int nq1 = m_base[1]->GetNumPoints();
+           Array<OneD, NekDouble> xcoord(GetTotPoints()), ycoord(GetTotPoints());
 
-            const Array<OneD, const NekDouble>& z1 = m_base[1]->GetZ();
-            Array<OneD, NekDouble> wsp(nq1);
-            Array<OneD, NekDouble> wsp1(nq1);
-
-            for (int i = 0; i < nq1; ++i)
-            {
-                wsp1[i] = StdExpansion::BaryEvaluate<0>(
-                    coll[0], &physvals[0] + i * nq1);
-            }
-            // set up geometric factor: 2/(1-z1)
-            Vmath::Sadd(nq1, -1.0, z1, 1, wsp, 1);
-            Vmath::Sdiv(nq1, -2.0, wsp, 1, wsp, 1);
+          Array<OneD, NekDouble> d0(GetTotPoints()),dd0(nq0);
             
-            for (int i = 0; i < nq0; ++i)
+            v_PhysDeriv(physvals, d0,NullNekDouble1DArray,NullNekDouble1DArray);
+
+            Array<OneD, NekDouble> coll(2);
+                cout<<"\n******\n";
+            LocCoordToLocCollapsed(coords,coll);
+
+            Vmath::Vcopy(nq0, d0, 1, dd0, 1);
+            /*             cout<<"\n d0=";
+             for(int i = 0; i< GetTotPoints(); i++)
             {
-                Blas::Dscal(nq1,wsp[i],&wsp1[0]+i*nq1,1);
+                cout<<"    "<<d0[i];
+                }*/
+            cout<<"\n dd0=";
+                for(int i = 0; i< nq0; i++)
+            {
+                cout<<"    "<<dd0[i];
+                }
+                cout<<"der 0 = "<<StdExpansion::BaryEvaluate<0>(coords[0], &dd0[0]);
+            GetCoords(xcoord,ycoord);
+            const Array<OneD, const NekDouble>& z1 = m_base[1]->GetZ();
+            const Array<OneD, const NekDouble>& z0 = m_base[0]->GetZ();
+            cout<<"z0.s="<<z0.size()<<z1.size();
+            //            const Array<OneD, const NekDouble>& z0 = m_base[0]->GetZ();
+
+
+            Array<OneD, Array<OneD, NekDouble>> collcoord(2);
+            collcoord[0] = Array<OneD, NekDouble>(GetTotPoints());
+            collcoord[1] = Array<OneD, NekDouble>(GetTotPoints());
+            
+            for(int i = 0; i<GetTotPoints(); i++)
+            {
+                Array<OneD, NekDouble> tmp(2), tmp2(2);;
+                    tmp[0] = xcoord[i];
+                    tmp[1] = ycoord[i];
+                    LocCoordToLocCollapsed(tmp, tmp2);
+                    collcoord[0][i] = tmp2[0];
+                    collcoord[1][i] = tmp2[1];
             }
-            return StdExpansion::BaryEvaluateDeriv<1>(coll[1], &wsp1[0]);
-        
+            Array<OneD, NekDouble> wsp(nq0*nq1),wsp1(nq0),wsp2(nq1*nq0),wsp3(nq0);
+
+            for (int i = 0; i < nq0*nq1; ++i)
+            {
+                   
+                wsp[i] = StdExpansion::BaryEvaluateDeriv<0>(
+                                       collcoord[1][i], &physvals[0]);
+            }
+
+            /*        cout<<"\n wsp=  ";
+            for(int i = 0; i< nq0*nq1; i++)
+            {
+                cout<<" "<<wsp[i];
+                }*/
+
+
+            Vmath::Vcopy(nq0, wsp, nq0, wsp1, 1);
+            // set up geometric factor: 2/(1-z1)
+
+            /*Vmath::Sadd(nq1, -1.0, z1, 1, wsp3, 1);
+            Vmath::Sdiv(nq1, -2.0, wsp3, 1, wsp3, 1);
+            Vmath::Vmul(nq1, wsp3,1,wsp1,1,wsp1, 1);
+            */
+            cout<<"\nwsp1=";
+            
+            for(int i = 0; i<wsp1.size(); i++)
+                cout<<" "<<wsp1[i];
+            NekDouble ret = 
+            StdExpansion::BaryEvaluate<1>(
+                                                     coords[0], &wsp1[0]);
+
+            cout<<"    der0="<<ret;
+            return ret;
+            //}
+                /*  cout<<"\n wsp2 = "<<wsp2[0];
+            cout<<"\n wsp2=  ";
+            for(int i = 0; i< nq1; i++)
+            {
+                cout<<" "<<wsp1[i];
+                }*/
+
+
+            /*
+            cout<<"\n physvals=  ";
+            for(int i = 0; i< nq1*nq0; i++)
+            {
+                cout<<" "<<physvals[i];
+            }
+            */
+            //            Vmath::Vcopy(nq0, wsp1, 1, wsp2, 1);
+             
+            //return  StdExpansion::BaryEvaluate<1>(coll[1], &wsp2[0]);
+
         }
 
         NekDouble StdTriExp::v_PhysEvaluatedy(            
@@ -977,43 +1134,103 @@ namespace Nektar
             
             const int nq0 = m_base[0]->GetNumPoints();
             const int nq1 = m_base[1]->GetNumPoints();
-
+            const Array<OneD, const NekDouble>& z1 = m_base[1]->GetZ();
             const Array<OneD, const NekDouble>& z0 = m_base[0]->GetZ();
-
             Array<OneD, NekDouble> coll(2);
-            coll = coords;
-            Array<OneD, NekDouble> wsp(nq0);
-            Array<OneD, NekDouble> wsp1(nq1);
-            Array<OneD, NekDouble> wsp3(nq1);
+            //            coll = coords;            
+            LocCoordToLocCollapsed(coords, coll);
+
+            /*          Array<OneD, NekDouble> d0(GetTotPoints()), d1(GetTotPoints()),dd0(nq0), dd1(nq1);;
             
+            v_PhysDeriv(physvals, d0,d1,NullNekDouble1DArray);
+            Vmath::Vcopy(nq0, d0, 1, dd0, 1);
+             cout<<"\n d0=";
+             for(int i = 0; i< GetTotPoints(); i++)
+            {
+                cout<<"    "<<d0[i];
+                }
+            cout<<"\n dd0=";
+                for(int i = 0; i< nq0; i++)
+            {
+                cout<<"    "<<dd0[i];
+            }
+
+            cout<<"der 0 = "<<StdExpansion::BaryEvaluate<0>(coll[0], &dd0[0]);
+            cout<<"\n d1=";
+            for(int i = 0; i<GetTotPoints(); i++)
+            {
+                cout<<"    "<<d1[i];
+            }
+            Vmath::Vcopy(nq0, d1, nq0, dd1, 1);
+            cout<<"\n dd1=";
+            for(int i = 0; i< nq0; i++)
+            {
+                cout<<"    "<<dd1[i];
+            }
+
+            
+            cout<<"der 1 ="<<StdExpansion::BaryEvaluate<1>(coll[1], &dd1[0]);
+*/
+
+            Array<OneD, NekDouble> wsp(nq1*nq0);
+            Array<OneD, NekDouble> wsp1(nq0*nq1);
+            Array<OneD, NekDouble> wsp2(nq1);
+            Array<OneD, NekDouble> wsp3(nq1);
+            Array<OneD, NekDouble> wsp4(nq1);
+            Array<OneD, NekDouble> xcoord(GetTotPoints()), ycoord(GetTotPoints());
+            GetCoords(xcoord,ycoord);
+
+            Array<OneD, Array<OneD, NekDouble>> collcoord(2);
+            collcoord[0] = Array<OneD, NekDouble>(GetTotPoints());
+            collcoord[1] = Array<OneD, NekDouble>(GetTotPoints());
+            
+            for(int i = 0; i<GetTotPoints(); i++)
+            {
+                Array<OneD, NekDouble> tmp(2), tmp2(2);;
+                    tmp[0] = xcoord[i];
+                    tmp[1] = ycoord[i];
+                    LocCoordToLocCollapsed(tmp, tmp2);
+                    collcoord[0][i] = tmp2[0];
+                    collcoord[1][i] = tmp2[1];
+            }
 
             for (int i = 0; i < nq1; ++i)
             {
-                wsp1[i] = StdExpansion::BaryEvaluate<0>(
+                wsp3[i] = StdExpansion::BaryEvaluateDeriv<0>(
                     coll[0], &physvals[0] + i * nq1);
             }
+            // set up geometric factor: 2/(1-z1)
+            Vmath::Sadd(nq1, -1.0, z1, 1, wsp2, 1);
+            Vmath::Sdiv(nq1, -2.0, wsp2, 1, wsp2, 1);
 
-            // set up geometric factor: (1_z0)/(1-z1)
-            Vmath::Sadd(nq0, 1.0, z0, 1, wsp, 1);
-            Vmath::Smul(nq0, 0.5, wsp, 1, wsp, 1);
-
-            for (int i = 0; i < nq0; ++i)
+            Vmath::Vmul(nq1, wsp3,1,wsp2,1,wsp3, 1);
+         
+            // set up geometric factor: (1+z0)/(1-z1)
+            Vmath::Sadd(nq0, 1.0, z0, 1, wsp2, 1);
+            
+            Vmath::Smul(nq0, 0.5, wsp2, 1, wsp2, 1);
+     
+            Vmath::Vmul(nq0, wsp2, 1, wsp3, 1, wsp3, 1);
+            
+            //            NekDouble ret = StdExpansion::BaryEvaluate<1>(coll[1], &wsp3[0]);
+                
+      
+            for (int i = 0; i < nq0*nq1; ++i)
             {
-                Blas::Dscal(nq1,wsp[i],&wsp1[0]+i*nq1,1);
-            }
-
-
-            for (int i = 0; i < nq0; ++i)
-            {
-                wsp3[i] = StdExpansion::BaryEvaluate<1>(
-                    coll[1], &physvals[0] + i * nq1);
+                //                Vmath::Vcopy(nq0,&physvals[nq0*i],1,&wsp4[0],1);
+                   
+                wsp1[i] = StdExpansion::BaryEvaluateDeriv<0>(
+                                                        ycoord[i], &physvals[0] );
             }
             
-            // add wsp1 and wsp 3
-            Vmath::Vadd(nq1, wsp1, 1, wsp3, 1, wsp3, 1);
+            Vmath::Vcopy(nq0, wsp1, nq0, wsp2, 1);
             
-            // interpolate derivative in y direction
-            return StdExpansion::BaryEvaluateDeriv<1>(coll[1], &wsp3[0]);
+            //            Vmath::Vcopy(nq0,physvals,1,wsp3,1);
+            //            NekDouble ret2 = StdExpansion::BaryEvaluateDeriv<0>( 
+            //              coll[1],&wsp3[0]); 
+             
+            return  StdExpansion::BaryEvaluate<1>(coords[1], &wsp2[0]);
+
             
         }
 
