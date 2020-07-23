@@ -441,7 +441,7 @@ void InterfaceTrace::FillRankBwdTrace(Array<OneD, NekDouble> &trace,
 {
     for (int i = 0; i < m_mapMissingCoordToTrace.size(); ++i)
     {
-        if (trace[i] != std::numeric_limits<NekDouble>::min())
+        if (!std::isnan(trace[i]))
         {
             Bwd[m_mapMissingCoordToTrace[i]] = trace[i];
         }
@@ -457,7 +457,7 @@ void InterfaceExchange::SendFwdTrace(LibUtilities::CommRequestSharedPtr request,
 {
     m_recvTrace = Array<OneD, NekDouble>(m_totSendSize / 3);
     Array<OneD, NekDouble> sendTrace(m_totRecvSize / 3,
-                                     std::numeric_limits<NekDouble>::min());
+                                     std::nan(""));
     for (auto i : m_foundRankCoords)
     {
         Array<OneD, NekDouble> locCoord(1, i.second.second);
