@@ -229,6 +229,8 @@ void FilterIntegral::v_Initialise(
         // however if the dimension is less we need the expansion of the element
         // containing the global composite geometry and the face/edge local ID
         // within that. 3D mesh -> 2D, 2D -> 1D.
+        // @TODO: Restructure with the new dimension independent functions
+        //        and check all is correct with this filter.
         else if (meshDim == 3 && dim == 2)
         {
             for (size_t j = 0; j < compGeomIds.size(); ++j)
@@ -241,7 +243,7 @@ void FilterIntegral::v_Initialise(
                 LocalRegions::ExpansionSharedPtr leftAdjElmtExp =
                     std::dynamic_pointer_cast<LocalRegions::Expansion>(
                         exp2D->GetLeftAdjacentElementExp());
-                int leftAdjElmtFace = exp2D->GetLeftAdjacentElementFace();
+                int leftAdjElmtFace = exp2D->GetLeftAdjacentElementTrace();
 
                 tmpCompExp[j] = std::make_pair(leftAdjElmtExp, leftAdjElmtFace);
             }
@@ -258,7 +260,7 @@ void FilterIntegral::v_Initialise(
                 LocalRegions::ExpansionSharedPtr leftAdjElmtExp =
                     std::dynamic_pointer_cast<LocalRegions::Expansion>(
                         exp1D->GetLeftAdjacentElementExp());
-                int leftAdjElmtEdge = exp1D->GetLeftAdjacentElementEdge();
+                int leftAdjElmtEdge = exp1D->GetLeftAdjacentElementTrace();
 
                 tmpCompExp[j] = std::make_pair(leftAdjElmtExp, leftAdjElmtEdge);
             }
@@ -324,7 +326,7 @@ void FilterIntegral::v_Update(
                     else if (meshDim == 3 && dim == 2)
                     {
                         Array<OneD, NekDouble> facePhys;
-                        exp->GetFacePhysVals(expPair.second, exp, phys,
+                        exp->GetTracePhysVals(expPair.second, exp, phys,
                                              facePhys);
                         input =
                             pFields[i]
@@ -335,7 +337,7 @@ void FilterIntegral::v_Update(
                     else if (meshDim == 2 && dim == 1)
                     {
                         Array<OneD, NekDouble> edgePhys;
-                        exp->GetEdgePhysVals(expPair.second, phys, edgePhys);
+                        exp->GetTracePhysVals(expPair.second, exp, phys, edgePhys);
                         input =
                             pFields[i]
                                 ->GetTrace()

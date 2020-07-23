@@ -209,11 +209,17 @@ namespace Nektar
             m_blockMat(MemoryManager<BlockMatrixMap>::AllocateSharedPtr()),
             m_WaveSpace(false)
         {
+
+            // Initialise interfaces
+            m_interfaces =
+                MemoryManager<SpatialDomains::Interfaces>::AllocateSharedPtr(
+                    m_session, m_graph);
+
             // Retrieve the list of expansions
             const SpatialDomains::ExpansionInfoMap &expansions
                 = graph->GetExpansionInfo(var);
             
-            // Initialise Expansionn Vector
+            // Initialise Expansion Vector
             InitialiseExpVector(expansions);
             
             // Setup phys coeff space
