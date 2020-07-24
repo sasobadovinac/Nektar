@@ -273,8 +273,6 @@ public:
     {
         m_calcFlag = flag;
     }
-
-    void SeparateGraph(MeshGraphSharedPtr &graph) const;
 };
 
 
