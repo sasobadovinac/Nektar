@@ -4,6 +4,12 @@ ADD_NEKTAR_EXECUTABLE(StdInterp
     COMPONENT demos DEPENDS StdRegions SOURCES StdInterp.cpp)
 ADD_NEKTAR_EXECUTABLE(StdInterpDeriv
     COMPONENT demos DEPENDS StdRegions SOURCES StdInterpDeriv.cpp)
+ADD_NEKTAR_EXECUTABLE(StdInterpDerivtri
+    COMPONENT demos DEPENDS StdRegions SOURCES StdInterpDerivtri.cpp)
+ADD_NEKTAR_EXECUTABLE(StdInterpDerivquad
+    COMPONENT demos DEPENDS StdRegions SOURCES StdInterpDerivquad.cpp)
+ADD_NEKTAR_EXECUTABLE(StdInterpDerivSeg
+    COMPONENT demos DEPENDS StdRegions SOURCES StdInterpDerivSeg.cpp)
 ADD_NEKTAR_EXECUTABLE(StdInterpBasis
     COMPONENT demos DEPENDS StdRegions SOURCES StdInterpBasis.cpp)
 ADD_NEKTAR_EXECUTABLE(StdInterpDerivBasis
