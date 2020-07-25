@@ -612,6 +612,7 @@ void BoundaryConditions::ReadBoundaryConditions(TiXmlElement *conditions)
                     {
                         std::string equation1, equation2, userDefined;
                         std::string filename;
+                        std::string primcoeff_filename;
 
                         bool primcoeffset = false;
 
@@ -664,6 +665,26 @@ void BoundaryConditions::ReadBoundaryConditions(TiXmlElement *conditions)
 
                                 primcoeffset = true;
                             }
+
+                            else if (attrName == "PRIMCOEFF_FILE")
+                            {
+
+                                attrData = attr->Value();
+                                ASSERTL0(!attrData.empty(),
+                                         "PRIMCOEFF_FILE attributes must have "
+                                         "associated values.");
+
+                                m_session->SubstituteExpressions(attrData);
+
+                                
+                                primcoeff_filename = attrData;
+
+                                // need to set equation2 somehow.
+                                equation2 = attrData;
+
+                                primcoeffset = true;
+                            }
+
                             else if (attrName == "FILE")
                             {
                                 attrData = attr->Value();
@@ -687,7 +708,7 @@ void BoundaryConditions::ReadBoundaryConditions(TiXmlElement *conditions)
 
                         if (primcoeffset == false)
                         {
-                            ASSERTL0(false, "PRIMCOEFF must be specified in a "
+                            ASSERTL0(false, "PRIMCOEFF or PRIMCOEFF_FILE must be specified in a "
                                             "Robin boundary condition");
                         }
                         BoundaryConditionShPtr robinCondition(

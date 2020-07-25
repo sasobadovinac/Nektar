@@ -161,12 +161,14 @@ namespace Nektar
                 const std::string &a,
                 const std::string &b,
                 const std::string &userDefined = std::string("NoUserDefined"),
-                const std::string& filename=std::string(""),
-                const LibUtilities::CommSharedPtr comm=LibUtilities::CommSharedPtr()):
+                const std::string &filename = std::string(""),
+                const std::string &primcoeff_filename = std::string(""),
+                const LibUtilities::CommSharedPtr comm = LibUtilities::CommSharedPtr()):
                     BoundaryConditionBase(eRobin, userDefined, comm),
                     m_robinFunction(pSession->GetInterpreter(), a),
                     m_robinPrimitiveCoeff(pSession->GetInterpreter(), b),
-                    m_filename(filename)
+                    m_filename(filename),
+                    m_primcoeff_filename(primcoeff_filename)
             {
             }
             // \frac{\partial {u}}{\partial{n}} +
@@ -174,6 +176,7 @@ namespace Nektar
             LibUtilities::Equation m_robinFunction;
             LibUtilities::Equation m_robinPrimitiveCoeff;
             std::string m_filename;
+            std::string m_primcoeff_filename;
         };
 
 
