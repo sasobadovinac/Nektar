@@ -83,7 +83,7 @@ private:
     int m_totQuadPnts = 0;
     bool m_checkLocal = false;
     std::vector<Array<OneD, NekDouble>> m_missingCoords;
-    std::vector<std::pair<int, NekDouble>> m_foundLocalCoords;
+    std::vector<std::pair<int, Array<OneD, NekDouble>>> m_foundLocalCoords;
     std::vector<int> m_mapMissingCoordToTrace;
     std::vector<int> m_mapFoundCoordToTrace;
 };
@@ -128,7 +128,7 @@ private:
     int m_totRecvSize = 0;
     Array<OneD, NekDouble> m_send;
     Array<OneD, NekDouble> m_recv;
-    std::map<int, std::pair<int, NekDouble>> m_foundRankCoords;
+    std::map<int, std::pair<int, Array<OneD, NekDouble>>> m_foundRankCoords;
     Array<OneD, NekDouble> m_recvTrace;
     std::map<int, int> m_geomIdToTraceId;
 };

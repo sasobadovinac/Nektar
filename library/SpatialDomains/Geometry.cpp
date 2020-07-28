@@ -261,7 +261,7 @@ bool Geometry::v_ContainsPoint(const Array<OneD, const NekDouble> &gloCoord,
 }
 
 NekDouble Geometry::v_FindDistance(const Array<OneD, const NekDouble> &xs,
-                                   NekDouble &xi)
+                                   Array<OneD, NekDouble> &xi)
 {
     boost::ignore_unused(xs, xi);
     NEKERROR(ErrorUtil::efatal,

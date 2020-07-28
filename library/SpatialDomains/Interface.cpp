@@ -222,14 +222,15 @@ void InterfaceBase::SetEdge(const CompositeMap &edge)
     {
         for (auto &elmtIt : compIt.second->m_geomVec)
         {
-            SegGeomSharedPtr elmt = std::dynamic_pointer_cast<SegGeom>(elmtIt);
+            auto shapeType = elmtIt->GetShapeType();
 
-            ASSERTL0(elmt,
-                     "Composite for edge on the interface should only contain "
-                     "segments");
+            ASSERTL0((shapeType == LibUtilities::eSegment) ||
+                     (shapeType == LibUtilities::eQuadrilateral) ||
+                     (shapeType == LibUtilities::eTriangle),
+                "Interface edge must be a segment for 2D or quad/tri for 3D.")
 
-            size_t id = elmt->GetGlobalID();
-            m_edge[id] = elmt;
+            size_t id = elmtIt->GetGlobalID();
+            m_edge[id] = elmtIt;
             m_edgeIds.emplace_back(id);
         }
     }

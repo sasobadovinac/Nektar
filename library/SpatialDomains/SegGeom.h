@@ -103,7 +103,7 @@ protected:
         NekDouble &resid);
 
     virtual NekDouble v_FindDistance(const Array<OneD, const NekDouble> &xs,
-                                     NekDouble &xi);
+                                     Array<OneD, NekDouble> &xi);
 
 
 private:

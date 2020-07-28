@@ -421,51 +421,26 @@ int SegGeom::v_GetNumEdges() const
 }
 
 NekDouble SegGeom::v_FindDistance(const Array<OneD, const NekDouble> &xs,
-                                  NekDouble &xiOut)
+                                  Array<OneD, NekDouble> &xiOut)
 {
-    ASSERTL0(m_coordim == 2, "Need to rewrite for m_coordim != 2");
-
     if (m_geomFactors->GetGtype() == eRegular)
     {
-        std::vector<NekDouble> edgeVertexOne(3, 0), edgeVertexTwo(3, 0);
-        m_verts[0]->GetCoords(
-            edgeVertexOne[0], edgeVertexOne[1], edgeVertexOne[2]);
-        m_verts[1]->GetCoords(
-            edgeVertexTwo[0], edgeVertexTwo[1], edgeVertexTwo[2]);
+        xiOut = Array<OneD, NekDouble>(1,0.0);
 
-        NekDouble px = edgeVertexTwo[0] - edgeVertexOne[0];
-        NekDouble py = edgeVertexTwo[1] - edgeVertexOne[1];
-        NekDouble pz = edgeVertexTwo[2] - edgeVertexOne[2];
+        GetLocCoords(xs, xiOut);
+        ClampLocCoords(xiOut);
 
-        NekDouble norm = px * px + py * py + pz * pz;
+        Array<OneD, NekDouble> gloCoord(3);
+        gloCoord[0] = GetCoord(0, xiOut);
+        gloCoord[1] = GetCoord(1, xiOut);
+        gloCoord[2] = GetCoord(2, xiOut);
 
-        NekDouble u =
-            ((xs[0] - edgeVertexOne[0]) * px +
-             (xs[1] - edgeVertexOne[1]) * py +
-             (xs[2] - edgeVertexOne[2]) * pz) / norm;
+        return sqrt((xs[0] - gloCoord[0])*(xs[0] - gloCoord[0]) +
+                    (xs[1] - gloCoord[1])*(xs[1] - gloCoord[1]) +
+                    (xs[2] - gloCoord[2])*(xs[2] - gloCoord[2]));
 
-        if (u > 1)
-        {
-            u = 1;
-        }
-        else if (u < 0)
-        {
-            u = 0;
-        }
-
-        xiOut = 2 * u - 1; // Local coordinate between -1 and 1
-
-        NekDouble x = edgeVertexOne[0] + u * px;
-        NekDouble y = edgeVertexOne[1] + u * py;
-        NekDouble z = edgeVertexOne[2] + u * pz;
-
-        NekDouble dx = x - xs[0];
-        NekDouble dy = y - xs[1];
-        NekDouble dz = z - xs[2];
-
-        return sqrt(dx * dx + dy * dy + dz * dz);
     }
-    else if (m_geomFactors->GetGtype() == eDeformed)
+    else if (m_geomFactors->GetGtype() == eDeformed) // @TODO: Rework to follow more general newton implementation as shown for quad and tri
     {
         Array<OneD, NekDouble> xi(1, 0.0);
         const NekDouble c1 = 1e-4, c2 = 0.9;
@@ -500,10 +475,8 @@ NekDouble SegGeom::v_FindDistance(const Array<OneD, const NekDouble> &xs,
             NekDouble xc_der2 = m_xmap->PhysEvaluate(xi, xder2);
             NekDouble yc_der2 = m_xmap->PhysEvaluate(xi, yder2);
 
-            NekDouble fx =
-                (xc - xs[0]) * (xc - xs[0]) + (yc - xs[1]) * (yc - xs[1]);
-            NekDouble fxp =
-                2.0 * (xc_der * (xc - xs[0]) + yc_der * (yc - xs[1]));
+            NekDouble fx = (xc - xs[0]) * (xc - xs[0]) + (yc - xs[1]) * (yc - xs[1]);
+            NekDouble fxp = 2.0 * (xc_der * (xc - xs[0]) + yc_der * (yc - xs[1]));
             NekDouble fxp2 = 2.0 * (xc_der2 * (xc - xs[0]) + xc_der * xc_der +
                                     yc_der2 * (yc - xs[1]) + yc_der * yc_der);
 
@@ -572,12 +545,12 @@ NekDouble SegGeom::v_FindDistance(const Array<OneD, const NekDouble> &xs,
 
         if (opt_succeed)
         {
-            xiOut = xi[0];
+            xiOut = xi;
             return fx_prev;
         }
         else
         {
-            xiOut = std::numeric_limits<NekDouble>::max();
+            xiOut = Array<OneD, NekDouble>(2, std::numeric_limits<NekDouble>::max());
             return std::numeric_limits<NekDouble>::max();
         }
     }

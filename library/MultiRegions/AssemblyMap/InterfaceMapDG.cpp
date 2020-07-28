@@ -263,7 +263,7 @@ void InterfaceTrace::CalcLocalMissing()
     // interface on this rank contains
     else
     {
-        auto parentEdgeIds = m_interfaceBase->GetOppInterface()->GetEdgeIds();
+        auto parentEdge = m_interfaceBase->GetOppInterface()->GetEdge();
 
         int cnt = 0;
         for (auto childId : childEdgeIds)
@@ -277,24 +277,23 @@ void InterfaceTrace::CalcLocalMissing()
             for (int i = 0; i < nq; ++i, ++cnt)
             {
                 bool found = false;
-                NekDouble foundLocCoord;
+                Array<OneD, NekDouble> foundLocCoord;
                 Array<OneD, NekDouble> xs(3);
                 xs[0] = xc[i];
                 xs[1] = yc[i];
                 xs[2] = zc[i];
 
-                for (auto id : parentEdgeIds)
+                std::cout << LibUtilities::ShapeTypeMap[childElmt->GetGeom()->GetShapeType()] << " ID: " << childId << " point " << i << " = (" << xs[0] <<", " << xs[1] << ", " << xs[2] << ")" << std::endl;
+
+                for (auto edge : parentEdge)
                 {
-                    SpatialDomains::SegGeomSharedPtr searchSeg =
-                        std::static_pointer_cast<SpatialDomains::SegGeom>(
-                            m_trace->GetGraph()->GetSegGeom(id));
-                    NekDouble dist = searchSeg->FindDistance(xs, foundLocCoord);
+                    NekDouble dist = edge.second->FindDistance(xs, foundLocCoord);
 
                     if (dist < 1e-8)
                     {
                         found = true;
-                        m_foundLocalCoords.emplace_back(std::make_pair(
-                            searchSeg->GetGlobalID(), foundLocCoord));
+                        std::cout << "\t found in: " << LibUtilities::ShapeTypeMap[edge.second->GetShapeType()] << " at local coord = (" << foundLocCoord[0] << ", " << foundLocCoord[1] << ")" << std::endl;
+                        m_foundLocalCoords.emplace_back(edge.second->GetGlobalID(), foundLocCoord);
                         m_mapFoundCoordToTrace.emplace_back(offset + i);
                         break;
                     }
@@ -402,13 +401,12 @@ void InterfaceTrace::FillLocalBwdTrace(Array<OneD, NekDouble> &Fwd,
         for (int i = 0; i < m_foundLocalCoords.size(); ++i)
         {
             int traceId        = m_geomIdToTraceId[m_foundLocalCoords[i].first];
-            NekDouble locCoord = m_foundLocalCoords[i].second;
+            Array<OneD, NekDouble> locCoord = m_foundLocalCoords[i].second;
 
             Array<OneD, NekDouble> edgePhys =
                 Fwd + m_trace->GetPhys_Offset(traceId);
-            Array<OneD, NekDouble> foundPointArray(1, locCoord);
             Bwd[m_mapFoundCoordToTrace[i]] =
-                m_trace->GetExp(traceId)->StdPhysEvaluate(foundPointArray,
+                m_trace->GetExp(traceId)->StdPhysEvaluate(locCoord,
                                                           edgePhys);
         }
     }
@@ -460,7 +458,7 @@ void InterfaceExchange::SendFwdTrace(LibUtilities::CommRequestSharedPtr request,
                                      std::nan(""));
     for (auto i : m_foundRankCoords)
     {
-        Array<OneD, NekDouble> locCoord(1, i.second.second);
+        Array<OneD, NekDouble> locCoord = i.second.second;
         int edgeId = i.second.first;
 
         Array<OneD, NekDouble> edgePhys =
@@ -487,27 +485,23 @@ void InterfaceExchange::CalcRankDistances()
 
     for (int i = 0; i < m_interfaces.size(); ++i)
     {
-        auto parentEdgeIds = m_interfaces[i]->GetInterface()->GetEdgeIds();
+        auto parentEdge = m_interfaces[i]->GetInterface()->GetEdge();
 
         for (int j = disp[i]; j < disp[i + 1]; j += 3)
         {
-            NekDouble foundLocCoord;
+            Array<OneD, NekDouble> foundLocCoord;
             Array<OneD, NekDouble> xs(3);
             xs[0] = m_recv[j];
             xs[1] = m_recv[j + 1];
             xs[2] = m_recv[j + 2];
 
-            for (auto id : parentEdgeIds)
+            for (auto edge : parentEdge)
             {
-                SpatialDomains::SegGeomSharedPtr searchSeg =
-                    std::static_pointer_cast<SpatialDomains::SegGeom>(
-                        m_trace->GetGraph()->GetSegGeom(id));
-                NekDouble dist = searchSeg->FindDistance(xs, foundLocCoord);
+                NekDouble dist = edge.second->FindDistance(xs, foundLocCoord);
 
                 if (dist < 1e-8)
                 {
-                    m_foundRankCoords[j / 3] =
-                        std::make_pair(searchSeg->GetGlobalID(), foundLocCoord);
+                    m_foundRankCoords[j / 3] = std::make_pair(edge.second->GetGlobalID(), foundLocCoord);
                     break;
                 }
             }

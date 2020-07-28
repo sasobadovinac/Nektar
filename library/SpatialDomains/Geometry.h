@@ -161,10 +161,10 @@ public:
         const Array<OneD, const NekDouble> &gloCoord);
     SPATIAL_DOMAINS_EXPORT void ClampLocCoords(
         Array<OneD, NekDouble> &locCoord,
-        NekDouble tol);
+        NekDouble tol = std::numeric_limits<NekDouble>::epsilon());
    SPATIAL_DOMAINS_EXPORT inline NekDouble FindDistance(
         const Array<OneD, const NekDouble> &xs,
-        NekDouble &xi);
+        Array<OneD, NekDouble> &xi);
 
     //---------------------------------------
     // Misc. helper functions
@@ -236,7 +236,7 @@ protected:
     virtual NekDouble v_GetLocCoords(const Array<OneD, const NekDouble> &coords,
                                      Array<OneD, NekDouble> &Lcoords);
     virtual NekDouble v_FindDistance(const Array<OneD, const NekDouble> &xs,
-                                     NekDouble &xi);
+                                     Array<OneD, NekDouble> &xi);
 
     virtual int v_GetVertexEdgeMap(int i, int j) const;
     virtual int v_GetVertexFaceMap(int i, int j) const;
@@ -559,7 +559,7 @@ inline NekDouble Geometry::GetCoord(const int i,
 }
 
 inline NekDouble Geometry::FindDistance(const Array<OneD, const NekDouble> &xs,
-                                        NekDouble &xi)
+                                        Array<OneD, NekDouble> &xi)
 {
     return v_FindDistance(xs, xi);
 }

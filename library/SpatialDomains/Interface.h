@@ -103,7 +103,7 @@ struct InterfaceBase
         m_interfaceEdge = interfaceEdge;
     }
 
-    inline std::map<int, SegGeomSharedPtr> const &GetEdge() const
+    inline std::map<int, GeometrySharedPtr> const &GetEdge() const
     {
         return m_edge;
     }
@@ -118,7 +118,7 @@ struct InterfaceBase
         return m_edge.empty();
     }
 
-    inline void SetEdge(const SegGeomSharedPtr &edge)
+    inline void SetEdge(const GeometrySharedPtr &edge)
     {
         m_edge[edge->GetGlobalID()] = edge;
     }
@@ -186,7 +186,7 @@ protected:
     int m_id;
     InterfaceSide m_side = eNone;
     CompositeMap m_domain;
-    std::map<int, SegGeomSharedPtr> m_edge;
+    std::map<int, GeometrySharedPtr> m_edge;
     std::vector<int> m_edgeIds;
     CompositeMap m_interfaceEdge;
     int m_totPoints;
@@ -306,7 +306,7 @@ protected:
 
 
 private:
-    /// Read segments (and general MeshGraph) given TiXmlDocument.
+    /// Read interfaces (and general MeshGraph) given TiXmlDocument.
     void Read(TiXmlElement *interfaceTag);
     void ReadInterfaces(TiXmlElement *interfaceTag);
 };
