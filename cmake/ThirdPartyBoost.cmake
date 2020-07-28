@@ -77,36 +77,61 @@ IF (THIRDPARTY_BUILD_BOOST)
         ENDIF ()
     ENDIF()
 
-    # Build Boost
+    # Build Boost: first need to select toolset. Some will have specific
+    # versions.
+    SET(TOOLSET_VERSION "")
     IF (APPLE)
+        # macOS should have the darwin toolset regardless of gcc/clang.
         SET(TOOLSET darwin)
-    ELSEIF (WIN32)
-        IF (MSVC10)
-            SET(TOOLSET msvc-10.0)
-        ELSEIF (MSVC11)
-            SET(TOOLSET msvc-11.0)
-        ELSEIF (MSVC12)
-            SET(TOOLSET msvc-12.0)
-        ELSEIF (MSVC14)
-            SET(TOOLSET msvc-14.0)
+    ELSEIF (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+        SET(TOOLSET msvc)
+        IF (MSVC_VERSION EQUAL 1600)
+            SET(TOOLSET_VERSION 10.0) # Visual Studio 2010
+        ELSEIF (MSVC_VERSION EQUAL 1700)
+            SET(TOOLSET_VERSION 11.0) # Visual Studio 2012
+        ELSEIF (MSVC_VERSION EQUAL 1800)
+            SET(TOOLSET_VERSION 12.0) # Visual Studio 2013
+        ELSEIF (MSVC_VERSION EQUAL 1900)
+            SET(TOOLSET_VERSION 14.0) # Visual Studio 2015
+        ELSEIF (MSVC_VERSION GREATER 1909 AND MSVC_VERSION LESS 1920)
+            SET(TOOLSET_VERSION 14.1) # Visual Studio 2017
+        ELSEIF (MSVC_VERSION GREATER 1919 AND MSVC_VERSION LESS 1930)
+            SET(TOOLSET_VERSION 14.2) # Visual Studio 2019
         ENDIF()
-    ELSE()
+    ELSEIF(CMAKE_CXX_COMPILER_ID STREQUAL "Cray")
+        SET(TOOLSET cray)
+    ELSEIF(CMAKE_CXX_COMPILER_ID STREQUAL "Intel")
+        SET(TOOLSET intel)
+    ELSEIF(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
         SET(TOOLSET gcc)
+        SET(TOOLSET_VERSION ${CMAKE_CXX_COMPILER_VERSION})
+    ELSEIF(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+        SET(TOOLSET clang)
+        SET(TOOLSET_VERSION ${CMAKE_CXX_COMPILER_VERSION})
+    ELSE()
+        MESSAGE(STATUS "Unknown compiler for boost, assuming gcc toolset")
+        SET(TOOLSET gcc)
+    ENDIF()
+
+    IF (TOOLSET_VERSION STREQUAL "")
+        SET(TOOLSET_CMDLINE ${TOOLSET})
+    ELSE()
+        SET(TOOLSET_CMDLINE ${TOOLSET}-${TOOLSET_VERSION})
     ENDIF()
 
     IF (NOT WIN32)
         EXTERNALPROJECT_ADD(
             boost
             PREFIX ${TPSRC}
-            URL ${TPURL}/boost_1_57_0.tar.bz2
-            URL_MD5 "1be49befbdd9a5ce9def2983ba3e7b76"
+            URL ${TPURL}/boost_1_71_0.tar.bz2
+            URL_MD5 "4cdf9b5c2dc01fb2b7b733d5af30e558"
             STAMP_DIR ${TPBUILD}/stamp
             DOWNLOAD_DIR ${TPSRC}
             SOURCE_DIR ${TPBUILD}/boost
             BINARY_DIR ${TPBUILD}/boost
             TMP_DIR ${TPBUILD}/boost-tmp
             INSTALL_DIR ${TPDIST}
-            CONFIGURE_COMMAND CC=${CMAKE_C_COMPILER} CXX=${CMAKE_CXX_COMPILER} ./bootstrap.sh --prefix=${TPDIST}
+            CONFIGURE_COMMAND ./bootstrap.sh
             BUILD_COMMAND NO_BZIP2=1 ./b2
                 variant=release
                 link=shared
@@ -114,20 +139,23 @@ IF (THIRDPARTY_BUILD_BOOST)
                 cxxflags="-w"
                 linkflags="-L${TPDIST}/lib"
                 ${BOOST_FLAGS} ${BOOST_LIB_LIST}
-                --layout=system toolset=${TOOLSET} install
+		--prefix=${TPDIST}
+                --layout=system toolset=${TOOLSET_CMDLINE} install
             INSTALL_COMMAND ""
             )
     ELSE ()
-        IF (CMAKE_CL_64)
+	    MESSAGE(STATUS "Windows MSVC build - toolset is: ${TOOLSET_CMDLINE}")
+        IF (CMAKE_SIZEOF_VOID_P EQUAL 8)
             SET(ADDRESS_MODEL 64)
         ELSE()
             SET(ADDRESS_MODEL 32)
         ENDIF()
+		MESSAGE(STATUS "Windows MSVC build - address model is: ${ADDRESS_MODEL}")
         EXTERNALPROJECT_ADD(
             boost
             PREFIX ${TPSRC}
-            URL ${TPURL}/boost_1_57_0.tar.bz2
-            URL_MD5 "1be49befbdd9a5ce9def2983ba3e7b76"
+            URL ${TPURL}/boost_1_71_0.tar.bz2
+            URL_MD5 "4cdf9b5c2dc01fb2b7b733d5af30e558"
             STAMP_DIR ${TPBUILD}/stamp
             DOWNLOAD_DIR ${TPSRC}
             SOURCE_DIR ${TPBUILD}/boost
@@ -136,7 +164,7 @@ IF (THIRDPARTY_BUILD_BOOST)
             INSTALL_DIR ${TPDIST}
             CONFIGURE_COMMAND call bootstrap.bat
             BUILD_COMMAND b2 variant=release
-                toolset=${TOOLSET}
+                toolset=${TOOLSET_CMDLINE}
                 address-model=${ADDRESS_MODEL}
                 link=shared
                 runtime-link=shared
@@ -153,10 +181,23 @@ IF (THIRDPARTY_BUILD_BOOST)
 
     IF (APPLE)
         EXTERNALPROJECT_ADD_STEP(boost patch-install-path
-            COMMAND sed -i ".bak" "s|-install_name \"|&${TPDIST}/lib/|" ${TPBUILD}/boost/tools/build/src/tools/darwin.jam
+            COMMAND sed -i ".bak" "s|-install_name \"|&${TPDIST}/lib/|"
+                ${TPBUILD}/boost/tools/build/src/tools/darwin.jam
             DEPENDERS build
             DEPENDEES download)
     ENDIF (APPLE)
+
+    # Write to jamfile to use appropriate toolset.
+    SET(cmd_string "using ${TOOLSET} : ${TOOLSET_VERSION}")
+    SET(cmd_string "${cmd_string} : ${CMAKE_CXX_COMPILER} $<SEMICOLON>")
+
+    IF (UNIX)
+	EXTERNALPROJECT_ADD_STEP(boost conf-project-conf
+            COMMAND cmake -E echo "${cmd_string}" >
+                ${TPBUILD}/boost/tools/build/src/user-config.jam
+            DEPENDERS build
+            DEPENDEES configure)
+    ENDIF()
 
     # If building ThirdParty zlib, force zlib build before boost
     IF (THIRDPARTY_BUILD_ZLIB)

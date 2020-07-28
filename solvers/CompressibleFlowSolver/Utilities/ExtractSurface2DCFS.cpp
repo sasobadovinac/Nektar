@@ -40,14 +40,12 @@
 #include <iomanip>
 
 #include <MultiRegions/ExpList.h>
-#include <MultiRegions/ExpList1D.h>
-#include <MultiRegions/ExpList2D.h>
 #include <MultiRegions/ExpList2DHomogeneous1D.h>
 #include <MultiRegions/ExpList3DHomogeneous1D.h>
 #include <MultiRegions/ExpList3DHomogeneous2D.h>
 #include <MultiRegions/AssemblyMap/AssemblyMapDG.h>
 
-#include <MultiRegions/DisContField2D.h>
+#include <MultiRegions/DisContField.h>
 #include <LocalRegions/MatrixKey.h>
 #include <LocalRegions/Expansion2D.h>
 #include <LocalRegions/Expansion.h>
@@ -59,7 +57,7 @@
 #include <LibUtilities/Communication/Comm.h>
 
 #include <LibUtilities/Memory/NekMemoryManager.hpp>
-#include <MultiRegions/ContField2D.h>
+#include <MultiRegions/ContField.h>
 #include <SpatialDomains/MeshGraph.h>
 
 #include <SolverUtils/SolverUtilsDeclspec.h>
@@ -189,7 +187,7 @@ int main(int argc, char *argv[])
         }
         pointsType.push_back(ptype);
     }
-    graphShPt->SetExpansions(fieldDef, pointsType);
+    graphShPt->SetExpansionInfo(fieldDef, pointsType);
 
     //--------------------------------------------------------------------------
 
@@ -200,22 +198,22 @@ int main(int argc, char *argv[])
     Array<OneD, MultiRegions::ExpListSharedPtr> Exp(nfields);
     Array<OneD, MultiRegions::ExpListSharedPtr> pFields(nfields);
 
-    for(i = 0; i < pFields.num_elements(); i++)
+    for(i = 0; i < pFields.size(); i++)
     {
         pFields[i] = MemoryManager<
-            MultiRegions::DisContField2D>::AllocateSharedPtr(
+            MultiRegions::DisContField>::AllocateSharedPtr(
                 vSession, graphShPt, vSession->GetVariable(i));
     }
 
-    MultiRegions::ExpList2DSharedPtr Exp2D;
-    Exp2D = MemoryManager<MultiRegions::ExpList2D>
+    MultiRegions::ExpListSharedPtr Exp2D;
+    Exp2D = MemoryManager<MultiRegions::ExpList>
         ::AllocateSharedPtr(vSession, graphShPt);
 
     Exp[0] = Exp2D;
 
     for (i = 1; i < nfields; ++i)
     {
-        Exp[i] = MemoryManager<MultiRegions::ExpList2D>
+        Exp[i] = MemoryManager<MultiRegions::ExpList>
             ::AllocateSharedPtr(*Exp2D);
     }
 
@@ -699,11 +697,11 @@ int main(int argc, char *argv[])
     /**************************************************************************/
     // Extract coordinates
 
-    if (pFields[0]->GetBndCondExpansions().num_elements())
+    if (pFields[0]->GetBndCondExpansions().size())
     {
         id1 = 0;
         cnt = 0;
-        nBndRegions = pFields[0]->GetBndCondExpansions().num_elements();
+        nBndRegions = pFields[0]->GetBndCondExpansions().size();
         for (b = 0; b < nBndRegions; ++b)
         {
             nBndEdges = pFields[0]->GetBndCondExpansions()[b]->GetExpSize();
@@ -714,7 +712,7 @@ int main(int argc, char *argv[])
 
                 id2 = pFields[0]->GetTrace()->
                     GetPhys_Offset(pFields[0]->GetTraceMap()->
-                                   GetBndCondTraceToGlobalTraceMap(cnt++));
+                                   GetBndCondIDToGlobalTraceID(cnt++));
 
                 if (pFields[0]->GetBndConditions()[b]->
                         GetUserDefined() == "WallViscous" ||
@@ -739,13 +737,13 @@ int main(int argc, char *argv[])
     }
 
     // Extract fields
-    if (pFields[0]->GetBndCondExpansions().num_elements())
+    if (pFields[0]->GetBndCondExpansions().size())
     {
         for (j = 0; j < nfields; ++j)
         {
             id1 = 0;
             cnt = 0;
-            nBndRegions = pFields[j]->GetBndCondExpansions().num_elements();
+            nBndRegions = pFields[j]->GetBndCondExpansions().size();
             for (b = 0; b < nBndRegions; ++b)
             {
                 nBndEdges = pFields[j]->GetBndCondExpansions()[b]->GetExpSize();
@@ -756,7 +754,7 @@ int main(int argc, char *argv[])
 
                     id2 = pFields[j]->GetTrace()->
                         GetPhys_Offset(pFields[j]->GetTraceMap()->
-                                       GetBndCondTraceToGlobalTraceMap(cnt++));
+                                       GetBndCondIDToGlobalTraceID(cnt++));
 
                     if (pFields[j]->GetBndConditions()[b]->
                             GetUserDefined() == "WallViscous" ||
@@ -776,13 +774,13 @@ int main(int argc, char *argv[])
     }
 
     // Extract fields added
-    if (pFields[0]->GetBndCondExpansions().num_elements())
+    if (pFields[0]->GetBndCondExpansions().size())
     {
         for (j = 0; j < nfieldsAdded; ++j)
         {
             id1 = 0;
             cnt = 0;
-            nBndRegions = pFields[0]->GetBndCondExpansions().num_elements();
+            nBndRegions = pFields[0]->GetBndCondExpansions().size();
             for (b = 0; b < nBndRegions; ++b)
             {
                 nBndEdges = pFields[0]->GetBndCondExpansions()[b]->GetExpSize();
@@ -793,7 +791,7 @@ int main(int argc, char *argv[])
 
                     id2 = pFields[0]->GetTrace()->
                         GetPhys_Offset(pFields[0]->GetTraceMap()->
-                                       GetBndCondTraceToGlobalTraceMap(cnt++));
+                                       GetBndCondIDToGlobalTraceID(cnt++));
 
                     if (pFields[0]->GetBndConditions()[b]->
                             GetUserDefined() == "WallViscous" ||

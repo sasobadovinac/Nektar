@@ -137,13 +137,15 @@ namespace Nektar
         /// Area of the boundary through which we are measuring the flowrate
         NekDouble m_flowrateArea;
         // Bool to identify 3D1HD with forcing explicitly defined
-        bool m_Hom1DExplicit;
+        bool m_homd1DFlowinPlane;
         /// Flux of the Stokes function solution
         NekDouble m_greenFlux;
         /// Current flowrate correction
         NekDouble m_alpha;
         /// Boundary ID of the flowrate reference surface
         int m_flowrateBndID;
+        /// Plane ID for cases with homogeneous expansion
+        int m_planeID;
         /// Flowrate reference surface
         MultiRegions::ExpListSharedPtr m_flowrateBnd;
         /// Stokes solution used to impose flowrate
@@ -198,7 +200,7 @@ namespace Nektar
 
         virtual bool v_RequireFwdTrans()
         {
-            return false || m_flowrate > 0.0;
+            return false;
         }
 
         virtual std::string v_GetExtrapolateStr(void)

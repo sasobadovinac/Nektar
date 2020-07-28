@@ -38,40 +38,42 @@ using namespace std;
 
 namespace Nektar
 {
+
+    std::string NavierStokesAdvection::navierStokesAdvectionTypeLookupIds[2] = {
+        LibUtilities::SessionReader::RegisterEnumValue("SPECTRALHPDEALIASING",
+            "True", 0),
+        LibUtilities::SessionReader::RegisterEnumValue("SPECTRALHPDEALIASING",
+            "False", 1)};
+
     string NavierStokesAdvection::className  = SolverUtils::GetAdvectionFactory().RegisterCreatorFunction("Convective", NavierStokesAdvection::create);
     string NavierStokesAdvection::className2 = SolverUtils::GetAdvectionFactory().RegisterCreatorFunction("NonConservative", NavierStokesAdvection::create);
-    
+
     /**
      * Constructor. Creates ...
      *
-     * \param 
+     * \param
      * \param
      */
 
     NavierStokesAdvection::NavierStokesAdvection():
         Advection()
-	
+
     {
-        
+
     }
-    
+
     NavierStokesAdvection::~NavierStokesAdvection()
     {
     }
-    
+
 
     void NavierStokesAdvection::v_InitObject(
                     LibUtilities::SessionReaderSharedPtr        pSession,
                     Array<OneD, MultiRegions::ExpListSharedPtr> pFields)
     {
-        m_CoeffState = MultiRegions::eLocal;
         m_homogen_dealiasing = pSession->DefinesSolverInfo("dealiasing");
 
         pSession->MatchSolverInfo("SPECTRALHPDEALIASING","True",m_specHP_dealiasing,false);
-        if(m_specHP_dealiasing == false)
-        {
-            pSession->MatchSolverInfo("SPECTRALHPDEALIASING","On",m_specHP_dealiasing,false);
-        }
         pSession->MatchSolverInfo("ModeType","SingleMode",m_SingleMode,false);
         pSession->MatchSolverInfo("ModeType","HalfMode",m_HalfMode,false);
 
@@ -90,11 +92,11 @@ namespace Nektar
         const Array<OneD, Array<OneD, NekDouble> >        &pBwd)
     {
         int nqtot            = fields[0]->GetTotPoints();
-        ASSERTL1(nConvectiveFields == inarray.num_elements(),"Number of convective fields and Inarray are not compatible");
+        ASSERTL1(nConvectiveFields == inarray.size(),"Number of convective fields and Inarray are not compatible");
 
         // use dimension of Velocity vector to dictate dimension of operation
-        int ndim       = advVel.num_elements();
-        Array<OneD, Array<OneD, NekDouble> > AdvVel   (advVel.num_elements());
+        int ndim       = advVel.size();
+        Array<OneD, Array<OneD, NekDouble> > AdvVel   (advVel.size());
 
         Array<OneD, Array<OneD, NekDouble> > velocity(ndim);
         for(int i = 0; i < ndim; ++i)
@@ -217,7 +219,7 @@ namespace Nektar
                     }
                 }
 
-                fields[0]->DealiasedDotProd(AdvVel,gradScaled,Outarray,m_CoeffState);
+                fields[0]->DealiasedDotProd(AdvVel,gradScaled,Outarray);
 
                 for (int n = 0; n < nConvectiveFields; n++)
                 {
@@ -245,7 +247,7 @@ namespace Nektar
                                                     grad[n*ndim+2]);
                 }
 
-                fields[0]->DealiasedDotProd(AdvVel,grad,outarray,m_CoeffState);
+                fields[0]->DealiasedDotProd(AdvVel,grad,outarray);
             }
             else
             {

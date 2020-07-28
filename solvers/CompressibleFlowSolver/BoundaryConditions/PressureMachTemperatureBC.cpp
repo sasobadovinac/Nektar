@@ -55,7 +55,7 @@ PressureMachTemperatureBC::PressureMachTemperatureBC(
            const int cnt)
     : CFSBndCond(pSession, pFields, pTraceNormals, pSpaceDim, bcRegion, cnt)
 {
-    int nvariables = m_fields.num_elements();
+    int nvariables = m_fields.size();
     int numBCPts = m_fields[0]->
         GetBndCondExpansions()[m_bcRegion]->GetNpoints();
 
@@ -133,7 +133,7 @@ void PressureMachTemperatureBC::v_Apply(
 {
     boost::ignore_unused(Fwd, physarray, time);
 
-    int nvariables = m_fields.num_elements();
+    int nvariables = m_fields.size();
     int numBCPts = m_fields[0]->
         GetBndCondExpansions()[m_bcRegion]->GetNpoints();
     // Copy conserved variables to boundary condition

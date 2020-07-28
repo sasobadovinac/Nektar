@@ -7,6 +7,7 @@ SET(BasicConstHeaders
 
 SET(BasicUtilsHeaders
     ./BasicUtils/ArrayPolicies.hpp
+    ./BasicUtils/CheckedCast.hpp
     ./BasicUtils/ConsistentObjectAccess.hpp
     ./BasicUtils/CompressData.h
     ./BasicUtils/CsvIO.h
@@ -25,6 +26,7 @@ SET(BasicUtilsHeaders
     ./BasicUtils/PtsIO.h
     ./BasicUtils/Timer.h
     ./BasicUtils/RawType.hpp
+    ./BasicUtils/RealComparison.hpp
     ./BasicUtils/SessionReader.h
     ./BasicUtils/ShapeType.hpp
     ./BasicUtils/SharedArray.hpp
@@ -37,7 +39,6 @@ SET(BasicUtilsHeaders
 )
 
 SET(BasicUtilsSources
-    ./BasicUtils/ArrayEqualityComparison.cpp
     ./BasicUtils/CompressData.cpp
     ./BasicUtils/CsvIO.cpp
     ./BasicUtils/Equation.cpp
@@ -258,14 +259,29 @@ SET(PolylibSources
 )
 
 SET(TimeIntegrationHeaders
+        ./TimeIntegration/AdamsBashforthTimeIntegrationSchemes.h
+        ./TimeIntegration/AdamsMoultonTimeIntegrationSchemes.h
+        ./TimeIntegration/BDFImplicitTimeIntegrationSchemes.h
+        ./TimeIntegration/EulerTimeIntegrationSchemes.h
+        ./TimeIntegration/CNABTimeIntegrationScheme.h
+        ./TimeIntegration/DIRKTimeIntegrationSchemes.h
+        ./TimeIntegration/IMEXGearTimeIntegrationScheme.h
+        ./TimeIntegration/IMEXTimeIntegrationSchemes.h
+        ./TimeIntegration/IMEXdirkTimeIntegrationSchemes.h
+        ./TimeIntegration/MCNABTimeIntegrationScheme.h
+        ./TimeIntegration/RungeKuttaTimeIntegrationSchemes.h
         ./TimeIntegration/TimeIntegrationScheme.h
-        ./TimeIntegration/TimeIntegrationWrapper.h
+        ./TimeIntegration/TimeIntegrationSchemeData.h
+        ./TimeIntegration/TimeIntegrationSolution.h
 )
 
 SET(TimeIntegrationSources
+        ./TimeIntegration/SchemeInitializer.cpp
         ./TimeIntegration/TimeIntegrationScheme.cpp
-        ./TimeIntegration/TimeIntegrationWrapper.cpp
+        ./TimeIntegration/TimeIntegrationSchemeData.cpp
+        ./TimeIntegration/TimeIntegrationSolution.cpp
 )
+
 
 SET(BaseHeaders
     LibUtilitiesDeclspec.h

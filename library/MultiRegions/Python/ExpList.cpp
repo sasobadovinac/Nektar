@@ -95,7 +95,7 @@ Array<OneD, NekDouble> ExpList_MultiplyByInvMassMatrix(
     const Array<OneD, const NekDouble> &in)
 {
     Array<OneD, NekDouble> out(exp->GetNcoeffs(), 0.0);
-    exp->MultiplyByInvMassMatrix(in, out, eLocal);
+    exp->MultiplyByInvMassMatrix(in, out);
     return out;
 }
 
@@ -119,9 +119,7 @@ Array<OneD, NekDouble> ExpList_HelmSolve(
         coeffMap = py::extract<StdRegions::VarCoeffMap>(varCoeffMap);
     }
 
-    FlagList notUsed;
-
-    exp->HelmSolve(in, out, notUsed, facMap, coeffMap);
+    exp->HelmSolve(in, out, facMap, coeffMap);
     return out;
 }
 
@@ -234,13 +232,13 @@ void export_ExpList()
     py::class_<ExpList,
                std::shared_ptr<ExpList>,
                boost::noncopyable>(
-                   "ExpList", py::no_init)
-
-        // Expansions
-        .def("GetExp", ExpList_GetExp)
-        .def("GetExpSize", &ExpList::GetExpSize)
+                   "ExpList", py::init<
+		    const LibUtilities::SessionReaderSharedPtr &,
+		    const SpatialDomains::MeshGraphSharedPtr &>())
 
         // Query points and offset information
+        .def("GetExp",     &ExpList_GetExp)
+        .def("GetExpSize", &ExpList::GetExpSize)
         .def("GetNpoints", &ExpList::GetNpoints)
         .def("GetNcoeffs", GetNcoeffs)
         .def("GetCoords", &ExpList_GetCoords)

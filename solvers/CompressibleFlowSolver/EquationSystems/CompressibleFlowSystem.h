@@ -116,6 +116,8 @@ namespace Nektar
         // Forcing term
         std::vector<SolverUtils::ForcingSharedPtr> m_forcing;
 
+        NekDouble                           m_BndEvaluateTime;
+
         CompressibleFlowSystem(
             const LibUtilities::SessionReaderSharedPtr& pSession,
             const SpatialDomains::MeshGraphSharedPtr& pGraph);
@@ -147,17 +149,24 @@ namespace Nektar
                   Array<OneD,       Array<OneD, NekDouble> > &outarray,
             const Array<OneD, Array<OneD, NekDouble> >       &pFwd,
             const Array<OneD, Array<OneD, NekDouble> >       &pBwd);
+        void DoDiffusion_coeff(
+            const Array<OneD, const Array<OneD, NekDouble> > &inarray,
+            Array<OneD, Array<OneD, NekDouble> >             &outarray,
+            const Array<OneD, Array<OneD, NekDouble> >       &pFwd,
+            const Array<OneD, Array<OneD, NekDouble> >       &pBwd);
 
         void GetFluxVector(
-            const Array<OneD, Array<OneD, NekDouble> >               &physfield,
-                  Array<OneD, Array<OneD, Array<OneD, NekDouble> > > &flux);
+            const Array<OneD, Array<OneD, NekDouble> >       &physfield,
+            TensorOfArray3D<NekDouble>                       &flux);
         void GetFluxVectorDeAlias(
-            const Array<OneD, Array<OneD, NekDouble> >         &physfield,
-            Array<OneD, Array<OneD, Array<OneD, NekDouble> > > &flux);
+            const Array<OneD, Array<OneD, NekDouble> >       &physfield,
+            TensorOfArray3D<NekDouble>                       &flux);
 
         void SetBoundaryConditions(
             Array<OneD, Array<OneD, NekDouble> >             &physarray,
             NekDouble                                         time);
+        
+        void SetBoundaryConditionsBwdWeight();
 
         void GetElmtTimeStep(
             const Array<OneD, const Array<OneD, NekDouble> > &inarray,
@@ -193,11 +202,13 @@ namespace Nektar
             const Array<OneD, const Array<OneD, NekDouble> > &inarray,
                   Array<OneD,       Array<OneD, NekDouble> > &outarray,
             const Array<OneD, Array<OneD, NekDouble> >       &pFwd,
-            const Array<OneD, Array<OneD, NekDouble> >       &pBwd)
-        {
-            boost::ignore_unused(inarray, outarray, pFwd, pBwd);
-            // Do nothing by default
-        }
+            const Array<OneD, Array<OneD, NekDouble> >       &pBwd);
+
+        virtual void v_DoDiffusion_coeff(
+            const Array<OneD, const Array<OneD, NekDouble> > &inarray,
+                  Array<OneD,       Array<OneD, NekDouble> > &outarray,
+            const Array<OneD, Array<OneD, NekDouble> >       &pFwd,
+            const Array<OneD, Array<OneD, NekDouble> >       &pBwd);
 
         virtual Array<OneD, NekDouble> v_GetMaxStdVelocity();
     };

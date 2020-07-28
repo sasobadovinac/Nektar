@@ -93,7 +93,7 @@ where \inltt{FieldConvert} is the executable associated to the utility
 FieldConvert, \inltt{test.xml} is the session file and
 \inltt{test.vtu}, \inltt{test.dat},  \inltt{test.plt} are the desired
 format outputs, either Paraview, VisIt or Tecplot formats. \\
-When converting to \inltt{.dat} or \inltt{plt} format, it is possible to
+When converting to \inltt{.dat} or \inltt{.plt} format, it is possible to
 enable output with double precision, which is more accurate but requires larger
 disk space. For example, double precision output in plt. format can be produced
 with the command:
@@ -197,6 +197,8 @@ possibly also Reynolds stresses) into single file;
 \item \inltt{surfdistance}: Computes height of a prismatic boundary layer mesh and projects onto the surface (for e.g. $y^+$ calculation).
 \item \inltt{vorticity}: Computes the vorticity field.
 \item \inltt{wss}: Computes wall shear stress field.
+\item \inltt{phifile}: Computes the $\Phi$ function representing a body defined
+  in an \inltt{.stl} file. Useful for the Smoothed Profile Method solver.
 \end{enumerate}
 The module list above can be seen by running the command
 %
@@ -651,7 +653,8 @@ The format of the file \inltt{file2.pts} is of the same form as for the
 </NEKTAR>
 \end{lstlisting}
 Similar to the \textit{interppointdatatofld} module, the \inltt{.pts} file can
-be interchanged with a \inltt{.csv} file:
+be interchanged with a \inltt{.csv} file (the output can also be written to 
+\inltt{.csv}):
 \begin{lstlisting}[style=BashInputStyle]
 # x, y
 0.0,0.0
@@ -665,38 +668,44 @@ interpolation between these two values and the third defines the default
 value to be used if the point is outside the domain. Their default values
 are -10,000,000, 10,000,000 and 0.
 
-In addition, instead of specifying the file \inltt{file2.pts}, a module list of the form
+In addition, instead of specifying the file \inltt{file2.pts}, a module list of
+the form 
 \begin{lstlisting}[style=BashInputStyle]
 FieldConvert -m interppoints:fromxml=file1.xml:fromfld= \
-	file1.fld:line=npts,x0,y0,x1,y1
+	file1.fld:line=npts,x0,y0,x1,y1 file2.dat
 \end{lstlisting}
 can be specified where \inltt{npts} is the number of equispaced points between
-$(x0,y0)$ to $(x1,y1)$ which can also be used in 3D by specifying $(x0,y0,z0)$
-to $(x1,y1,z1)$.
+$(x_0,y_0)$ to $(x_1,y_1)$. This also works in 3D, by specifying
+$(x_0,y_0,z_0)$ to $(x_1,y_1,z_1)$.
 
 An extraction of a plane of points can also be specified by
 \begin{lstlisting}[style=BashInputStyle]
   FieldConvert -m interppoints:fromxml=file1.xml:fromfld=file1.fld:\
-        plane=npts1,npts2,x0,y0,z0,x1,y1,z1,x2,y2,z2,x3,y3,z3
+        plane=npts1,npts2,x0,y0,z0,x1,y1,z1,x2,y2,z2,x3,y3,z3 file2.dat
 \end{lstlisting}
 where \inltt{npts1,npts2} is the number of equispaced points in each
-direction and $(x0,y0,z0)$, $(x1,y1,z1)$, $(x2,y2,z2)$ and $(x3,y3,z3)$
-define the plane of points specified in a clockwise or anticlockwise direction.
+direction and $(x_0,y_0,z_0)$, $(x_1,y_1,z_1)$, $(x_2,y_2,z_2)$ and
+$(x_3,y_3,z_3)$ define the plane of points specified in a clockwise or
+anticlockwise direction.
 
-In addition an extraction of a box of points can also be specified by
+In addition, an extraction of a box of points can also be specified by
 \begin{lstlisting}[style=BashInputStyle]
   FieldConvert -m interppoints:fromxml=file1.xml:fromfld=file1.fld:\
-       box=npts1,npts2,npts3,xmin,xmax,ymin,ymax,zmin,zmax
+       box=npts1,npts2,npts3,xmin,xmax,ymin,ymax,zmin,zmax file2.dat
 \end{lstlisting}
 where \inltt{npts1,npts2,npts3} is the number of equispaced points in each
-direction and $(xmin,ymin,zmin)$ and $(xmax,ymax,zmax3)$
+direction and $(x_{min},y_{min},z_{min})$ and $(x_{max},y_{max},z_{max})$
 define the limits of the box of points.
 
 There is also an additional optional argument \inltt{cp=p0,q} which adds to the
 interpolated fields the value of $c_p=(p-p0)/q$ and $c_{p0}=(p-p0+0.5 u^2)/q$
 where $p0$ is a reference pressure and $q$ is the free stream dynamics pressure.
 If the input does not contain a field ``p'' or a velocity field ``u,v,w'' then $cp$
-and $cp0$ are not evaluated accordingly
+and $cp0$ are not evaluated accordingly.
+
+Interpolation of 3DH1D fields is performed only in the x-y
+spectral/\emph{hp} planes. At every x-y location, if the point lies outside a
+Fourier plane its z-coordinate is reset to the closest plane.
 %
 \begin{notebox}
 This module  runs in parallel for the line, plane and box extraction of points.
@@ -970,7 +979,7 @@ The option \inltt{bnd} specifies which boundary region to extract. Note this is 
 \subsection{Scale a given .fld: \textit{scaleinputfld} module}
 To scale a .fld file by a given scalar quantity, the user can run:
 \begin{lstlisting}[style=BashInputStyle]
-FieldConvert -m scaleinputfld:scale=value test.fld test-scal.fld
+FieldConvert -m scaleinputfld:scale=value test.xml test.fld test-scal.fld
 \end{lstlisting}
 The argument \inltt{scale=value} rescales of a factor \inltt{value}
 \inltt{test.fld} by the factor value.
@@ -1073,6 +1082,58 @@ are extracted to different fields. The \inltt{addnormals} is an optional command
 argument which, when turned on, outputs the normal vector of the extracted boundary
 region as well as the shear stress vector and magnitude. This option is off by default.
 To process the output file(s) you will need an xml file of the same region.
+%
+%
+%
+
+\subsection{Calculating the shape function $\Phi$ for an SPM case:
+\textit{phifile} module}
+\label{s:utilities:fieldconvert:sub:phifile}
+
+\begin{notebox}
+    This module is in experimental phase and only runs in serial. When reading
+    3D geometries from \inltt{.stl} files, errors may occur if triangles are
+    placed exactly at $90^{\circ}$.
+\end{notebox}
+
+This FieldConvert module converts a binary \inltt{.stl} CAD file into
+\inltt{.fld} or \inltt{.vtu}/\inltt{.dat} files that can be used as inputs for
+the Smoothed Profile Method solver. Running the command:
+
+\begin{lstlisting}[style=BashInputStyle]
+    FieldConvert -m phifile:file=geom.stl:scale=value session.xml geom.fld
+\end{lstlisting}
+
+will generate an output file \inltt{geom.fld} with all the information required
+to define a shape function $\Phi$ representing the geometry specified in
+\inltt{geom.stl}. The option \inltt{scale} sets the value of $\xi$ as it is
+described in the Synopsis chapter of the Incompressible N-S solver. If the
+output file gets the extension \inltt{.vtu} or \inltt{.dat}, the module will
+produce a graphical representation of the shape function; however, the
+recommended way to proceed is to generate an \inltt{.fld} file and then, use
+FieldConvert to obtain the \inltt{.vtu} or \inltt{.dat} files if needed for
+visualisation purposes:
+\begin{lstlisting}[style=BashInputStyle]
+    FieldConvert -m phifile:file=geom.stl:scale=value session.xml geom.fld
+    FieldConvert session.xml geom.fld geom.vtu
+\end{lstlisting}
+This module can also be used to produce a \inltt{.fld} and \inltt{.vtu} /
+\inltt{.dat} file of shapes defined directly in the session file through an
+analytical expression. In this case, the commands simplify to:
+\begin{lstlisting}[style=BashInputStyle]
+    FieldConvert -m phifile session.xml geom.fld
+    FieldConvert session.xml geom.fld geom.vtu
+\end{lstlisting}
+
+The algorithm computes an octree for the triangles that define the 3D object
+in the \inltt{.stl} file, and then loops over all the nodes of the
+computational mesh looking for the shortest distance to the 3D object. Since
+this module is currently in experimental phase, it only runs in serial and
+therefore its performance in computing the shape function from the \inltt{.stl}
+file is limited, especially in 3D cases. In addition to this, it is recommended
+to make sure that the angles between triangles are not strictly equal to
+$90^\circ$, since the algorithm will probably fail to find the real $\Phi$
+function.
 %
 %
 %

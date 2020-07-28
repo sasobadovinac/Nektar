@@ -80,15 +80,27 @@ namespace Nektar
             DNekBlkMatSharedPtr m_InvRBlk;
 
             
-            Array<OneD, NekDouble>  m_locToGloSignMult;
-            Array<OneD, NekDouble>  m_multiplicity;
-            Array<OneD, int>        m_map;
+            Array<OneD, NekDouble>  m_variablePmask;
 
             bool m_signChange;
             
             // store how many consecutive similar blocks there
             // are in R and Rinv
             std::vector<std::pair<int,int> >  m_sameBlock;  
+            
+            virtual void v_DoTransformBasisToLowEnergy(
+                Array<OneD, NekDouble>& pInOut);
+
+            virtual void v_DoTransformCoeffsFromLowEnergy(
+                Array<OneD, NekDouble>& pInOut);
+
+            virtual void v_DoTransformBasisFromLowEnergy(
+                const Array<OneD, NekDouble>& pInput,
+                Array<OneD, NekDouble>& pOutput);
+
+            virtual void v_DoTransformCoeffsToLowEnergy(
+                const Array<OneD, NekDouble>& pInput,
+                Array<OneD, NekDouble>& pOutput);
             
 	private:
 
@@ -97,7 +109,7 @@ namespace Nektar
             typedef std::map<LibUtilities::ShapeType, DNekScalMatSharedPtr>
                 ShapeToDNekMap;
             typedef std::map<LibUtilities::ShapeType,
-                LocalRegions::ExpansionSharedPtr > ShapeToExpMap;
+                LocalRegions::Expansion3DSharedPtr > ShapeToExpMap;
             typedef std::map<LibUtilities::ShapeType,
                 Array<OneD, unsigned int> > ShapeToIntArrayMap;
             typedef std::map<LibUtilities::ShapeType,
@@ -133,13 +145,13 @@ namespace Nektar
                                    bool UseTetOnly);
             
             DNekMatSharedPtr ExtractLocMat(
-                          StdRegions::StdExpansionSharedPtr &locExp,
+                          LocalRegions::Expansion3DSharedPtr &locExp,
                           DNekScalMatSharedPtr              &maxRmat,
-                          LocalRegions::ExpansionSharedPtr  &expMax,
+                          LocalRegions::Expansion3DSharedPtr  &expMax,
                           Array<OneD, unsigned int>         &vertMapMaxR,
                           Array<OneD, Array<OneD, unsigned int> > &edgeMapMaxR);
             
-            void CreateMultiplicityMap(void);
+            void CreateVariablePMask(void);
             
             SpatialDomains::TetGeomSharedPtr   CreateRefTetGeom(void);
             SpatialDomains::PyrGeomSharedPtr   CreateRefPyrGeom(void);
@@ -152,25 +164,6 @@ namespace Nektar
                 const Array<OneD, NekDouble>& pInput,
                 Array<OneD, NekDouble>& pOutput);
 
-            virtual void v_DoTransformToLowEnergy(
-                Array<OneD, NekDouble>& pInOut,
-                int offset);
-
-            virtual void v_DoTransformToLowEnergy(
-                const Array<OneD, NekDouble>& pInput,
-                Array<OneD, NekDouble>& pOutput);
-            
-            virtual void v_DoTransformFromLowEnergy(
-                Array<OneD, NekDouble>& pInOut);
-
-            virtual void v_DoMultiplybyInverseTransformationMatrix(
-                const Array<OneD, NekDouble>& pInput,
-                Array<OneD, NekDouble>& pOutput);
-
-            virtual void v_DoMultiplybyInverseTransposedTransformationMatrix(
-                const Array<OneD, NekDouble>& pInput,
-                Array<OneD, NekDouble>& pOutput);
-            
             virtual void v_BuildPreconditioner();
             
             virtual DNekScalMatSharedPtr

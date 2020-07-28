@@ -65,7 +65,7 @@ void ExtrapOrder0BC::v_Apply(
     int i, j;
     int e, pnt;
     int id1, id2, nBCEdgePts;
-    int nVariables = physarray.num_elements();
+    int nVariables = physarray.size();
 
     const Array<OneD, const int> &traceBndMap
         = m_fields[0]->GetTraceBndMap();
