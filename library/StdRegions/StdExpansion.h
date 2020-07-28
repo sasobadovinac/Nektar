@@ -1441,6 +1441,7 @@ namespace Nektar
                 const Array<OneD, const NekDouble> &z = m_base[DIR]->GetZ();
                 const Array<OneD, const NekDouble> &bw =
                     m_base[DIR]->GetBaryWeights();
+                // Create D ptr, comment only activated/assigned in if stmt
 
                 const auto nquad = z.size();
 
@@ -1458,7 +1459,7 @@ namespace Nektar
                      */
                     if (xdiff == 0.0)
                     {
-                        //                        std::cout<<"\n here in evl!";
+                        std::cout<<"\n same:";
                         return pval;
                     }
 
@@ -1497,6 +1498,9 @@ namespace Nektar
                 NekDouble numer1 = 0.0, denom = 0.0;
                 NekDouble numer2 = 0.0,  numer3 = 0.0,
                           numer4 = 0.0;  
+                // Pointer to derivative matrix
+                // Only assigned if needed
+                DNekMatSharedPtr D0;
                 ASSERTL2(DIR < m_base.size(),
                          "Direction should be less than shape dimension.");
 
@@ -1520,9 +1524,13 @@ namespace Nektar
                      */
                     if (xdiff == 0.0)
                     {
-                        //   std::cout<<"\nz[i] = "<<z[i]<<" coord="<<coord<<" pval = "<<pval;;
-                        //                        std::cout<<"\n here in dereval!";
-                        return -1.0*pval;
+                        D0 = m_base[DIR]->GetD();
+                        // take ith row of z and multiply with physvals
+          
+                        pval = Vmath::Dot(nquad, &(D0->GetPtr())[i], nquad, &physvals[0], 1);
+                        std::cout<<"\n here in evlderiv! pval ="<<pval<<" z[i]="<<z[i]<<" coord="<<coord;
+          
+                        return pval;
                     }
 
                     NekDouble tmp = bw[i] / xdiff;

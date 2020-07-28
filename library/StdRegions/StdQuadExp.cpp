@@ -605,7 +605,7 @@ namespace Nektar
             {
                 coords[0] = coordsx[i];
                 coords[1] = coordsy[i];
-                temp[i] = PhysEvaluatedy(coords, outarray);
+                temp[i] = 0.0;//PhysEvaluatedy(coords, outarray);
             }
         }
 
@@ -671,7 +671,7 @@ namespace Nektar
             {
                 coords[0] = coordsx[i];
                 coords[1] = coordsy[i];
-                temp[i] = PhysEvaluatedx(coords, outarray);
+                temp[i] = 0.0;//PhysEvaluatedx(coords, outarray);
             }
         }
 
@@ -890,20 +890,17 @@ namespace Nektar
                      "coord[1] >  1");
             ASSERTL2(dir < 1 && dir > 0, "direction can be 0 or 1");
            
-            Array<OneD, NekDouble> coll(2);
-            LocCoordToLocCollapsed(coords,coll);
-
             const int nq0 = m_base[0]->GetNumPoints();
-            const int nq1 = m_base[1]->GetNumPoints();
             Array<OneD, NekDouble> wsp(nq0);
             for (int i = 0; i < nq0; ++i)
             {
+                   
                 wsp[i] = StdExpansion::BaryEvaluate<0>(
-                                                            coll[0], &physvals[0] + i*nq1   );
+                    coords[0], &physvals[0]+i*nq0 );
             }
             
-            return StdExpansion::BaryEvaluateDeriv<1>(coll[1], &wsp[0]);
-        }
+            
+            return  StdExpansion::BaryEvaluateDeriv<1>(coords[1], &wsp[0]);        }
 
         NekDouble StdQuadExp::v_PhysEvaluatedx(
             const Array<OneD, const NekDouble> &coords,
@@ -917,9 +914,10 @@ namespace Nektar
                      "coord[1] < -1");
             ASSERTL2(coords[1] <  1 + NekConstants::kNekZeroTol,
                      "coord[1] >  1");
-
             Array<OneD, NekDouble> coll(2);
-            LocCoordToLocCollapsed(coords,coll);
+            
+            //LocCoordToLocCollapsed(coords,coll);
+            coll = coords;
             const int nq0 = m_base[0]->GetNumPoints();
             const int nq1 = m_base[1]->GetNumPoints();
             Array<OneD, NekDouble> wsp(nq1);

@@ -124,15 +124,7 @@ int main(int argc, char *argv[])
     Array<OneD, NekDouble> physIn(totevalpts), physOut0(totevalpts);
     Array<OneD, NekDouble> tmpIn(dimension), sol0(totevalpts);
     Array<OneD, NekDouble> collcoor(2);
-    cout<<"\n coordsF size = "<<coordsF[0].size();
-    cout<<"\n coordsE size = "<<coordsE[0].size();
-    
-cout<<"\n coordsF size = "<<coordsF[1].size();
-    cout<<"\n coordsE size = "<<coordsE[1].size();
-    
-    //cout<<"\n coordsF:"<<coordsF[0][0]<<coordsF[1][0]<<coordsF[0][1]<<coordsF[1][1];
-
-    //Make sure that there are no  overlapping elements in coordsF and coordsE 
+     //Make sure that there are no  overlapping elements in coordsF and coordsE 
     for(int i = 0; i<coordsF[0].size(); i++)
     {
         for(int j = 0; j<coordsE[0].size(); j++)

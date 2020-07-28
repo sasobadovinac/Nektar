@@ -38,6 +38,26 @@
 #include "StdDemoSupport.hpp"
 
 // Evaluate polynomial for testing and save in ret (size same as pts[0]) if
+Array<OneD, NekDouble> EvalPoly(Array<OneD, Array<OneD, NekDouble>> &pts)
+{
+    Array<OneD, NekDouble> ret(pts[0].size());
+    unsigned dim = pts.size();
+
+    // check if pts[0] and pts[1] have same size
+    // polynomial = x^4 + y^2 - z^2 
+   
+    for (int i = 0; i < pts[0].size(); i++)
+    {
+        ret[i] = pow(pts[0][i],2) 
+            + (dim >= 2 ? pow(pts[1][i], 2) : 0.0)
+            + (dim >= 3 ? pow(pts[2][i], 2) : 0.0);
+    }
+    return ret;
+}
+
+
+
+// Evaluate polynomial for testing and save in ret (size same as pts[0]) if
 // tensorp = 0, we need tensorprod else just eval at pts
 Array<OneD, NekDouble> EvalPolyDerivx(Array<OneD, Array<OneD, NekDouble>> &pts)
 {
@@ -45,12 +65,12 @@ Array<OneD, NekDouble> EvalPolyDerivx(Array<OneD, Array<OneD, NekDouble>> &pts)
     //    unsigned dim = pts.size();
 
     // check if pts[0] and pts[1] have same size
-    // polynomial = x^2 + y^2 - z^2 + 3x - 9z
-    // derivative in x = 2x + 3
+    // polynomial = x^2 + y^2 - z^2 
+    // derivative in x = 2x 
 
     for (int i = 0; i < pts[0].size(); i++)
     {
-        ret[i] =  2*pts[0][i] + 3.0;
+        ret[i] =  2*pts[0][i];
     }
     return ret;
 }
@@ -82,7 +102,7 @@ Array<OneD, NekDouble> EvalPolyDerivz(Array<OneD, Array<OneD, NekDouble>> &pts)
 
     for (int i = 0; i < pts[0].size(); i++)
     {
-        ret[i] =  -2*pts[2][i] - 9.0;
+        ret[i] =  -2*pts[2][i] ;
     }
     return ret;
 }
@@ -111,6 +131,26 @@ int main(int argc, char *argv[])
     Array<OneD, NekDouble> physIn(totPoints), physOut0(totPoints), physOut1(totPoints), physOut2(totPoints);
     Array<OneD, NekDouble> tmpIn(dimension), sol0(totPoints), sol1(totPoints), sol2(totPoints);
 
+    cout<<"\n coordsF:";
+    for (int i = 0; i < coordsF[0].size(); ++i)
+    {
+        for (int d = 0; d < coordsF.size(); ++d)
+        {
+            cout<<" "<<coordsF[d][i];
+        }
+    }
+
+    cout<<"\n coordsE:";
+    for (int i = 0; i < coordsE[0].size(); ++i)
+    {
+        for (int d = 0; d < coordsE.size(); ++d)
+        {
+            cout<<" "<<coordsE[d][i];
+        }
+    }
+    physIn = EvalPoly(coordsE);
+
+
     // Evaluate polynomial at the set of elemental solution points.
     //cout<<"\n physout:\n";
     for (int i = 0; i < totPoints; ++i)
@@ -121,21 +161,19 @@ int main(int argc, char *argv[])
         }
         if(dimension>2)
         {
-            physIn = EvalPolyDerivz(coordsE);
+           
    
             physOut2[i] = E->PhysEvaluatedz(tmpIn, physIn);
         }
         if(dimension>1)
         {
-            physIn = EvalPolyDerivy(coordsE);
-   
+           
             physOut1[i] = E->PhysEvaluatedy(tmpIn, physIn);
         }
 
         if(dimension>0)
         {
-            physIn = EvalPolyDerivx(coordsE);
-   
+           
             physOut0[i] = E->PhysEvaluatedx(tmpIn, physIn);
         }
         
@@ -147,6 +185,23 @@ int main(int argc, char *argv[])
         sol1 = EvalPolyDerivy(coordsF);
     if(dimension>0)
         sol0 = EvalPolyDerivx(coordsF);
+
+    cout<<"\n sol:  ";
+    for(int i = 0; i<sol0.size(); i++)
+        cout<<sol0[i]<<" ";
+    cout<<"\nphysout = ";
+    for(int i = 0; i<physOut0.size(); i++)
+        cout<<physOut0[i]<<" ";
+    cout<<"\n";
+
+
+    cout<<"\n sol:  ";
+    for(int i = 0; i<sol1.size(); i++)
+        cout<<sol1[i]<<" ";
+    cout<<"\nphysout = ";
+    for(int i = 0; i<physOut1.size(); i++)
+        cout<<physOut1[i]<<" ";
+
     
 
  cout << "L infinity error : " << scientific << E->Linf(physOut0, sol0) + E->Linf(physOut1, sol1)+ E->Linf(physOut2, sol2) << endl;

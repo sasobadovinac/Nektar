@@ -142,6 +142,7 @@ public:
                 {
                     if (boost::iequals(kPointsTypeStr[i], p))
                     {
+                        
                         tmp = static_cast<PointsType>(i);
                         break;
                     }
@@ -153,6 +154,7 @@ public:
             }
         }
 
+       
         // Convert string input argument to nodal type
         PointsType nodaltype = eNoPointsType;
         ShapeType stype = eNoShapeType;
@@ -227,7 +229,6 @@ public:
                          "The shape type '" + m_shape + "' does not exist");
             }
         }
-
         // Check arguments supplied equals dimension
         const int dimension = (stype == ePoint) ? 1 : ShapeTypeDimMap[stype];
         ASSERTL0(m_order.size() == dimension,
@@ -315,7 +316,6 @@ public:
                           " for shape '" + ShapeTypeMap[stype] + "'."))
                     }
         }
-
         //Declaration of other variables needed
         StdExpansion *E = nullptr;
 
@@ -358,6 +358,7 @@ public:
             }
         }
 
+       
         vector<PointsKey> pkey;
         vector<BasisKey> bkey;
         for (int i = 0; i < dimension; ++i)
@@ -442,6 +443,7 @@ public:
     {
         return m_pointstype;
     }
+
 
     Array<OneD, Array<OneD, NekDouble>> GetCoords(StdExpansion *E)
     {

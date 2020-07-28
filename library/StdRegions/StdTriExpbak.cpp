@@ -944,36 +944,41 @@ namespace Nektar
                                               const Array<OneD, const NekDouble> &coords,
                                               const Array<OneD, const NekDouble> &physvals)
         {
-
             const int nq0 = m_base[0]->GetNumPoints();
             const int nq1 = m_base[1]->GetNumPoints();
+           Array<OneD, NekDouble> xcoord(GetTotPoints()), ycoord(GetTotPoints());
+
             
             Array<OneD, NekDouble> coll(2);
-         
-            coll = coords;
-            //            LocCoordToLocCollapsed(coords, coll); 
-        
-            Array<OneD, NekDouble> wsp(nq1),wsp1(nq0),wsp2(nq1*nq0),wsp3(nq0);
+            LocCoordToLocCollapsed(coords,coll);
+
+            GetCoords(xcoord,ycoord);
+
+
+            Array<OneD, Array<OneD, NekDouble>> collcoord(2);
+            collcoord[0] = Array<OneD, NekDouble>(GetTotPoints());
+            collcoord[1] = Array<OneD, NekDouble>(GetTotPoints());
             
-            const Array<OneD, const NekDouble>& z1 = m_base[1]->GetZ();
-            for (int i = 0; i < nq0; ++i)
+            for(int i = 0; i<GetTotPoints(); i++)
+            {
+                Array<OneD, NekDouble> tmp(2), tmp2(2);;
+                    tmp[0] = xcoord[i];
+                    tmp[1] = ycoord[i];
+                    LocCoordToLocCollapsed(tmp, tmp2);
+                    collcoord[0][i] = tmp2[0];
+                    collcoord[1][i] = tmp2[1];
+            }
+            Array<OneD, NekDouble> wsp(nq0*nq1),wsp1(nq0),wsp2(nq1*nq0),wsp3(nq0);
+
+            for (int i = 0; i < nq0*nq1; ++i)
             {
                    
                 wsp[i] = StdExpansion::BaryEvaluateDeriv<0>(
-                                       coll[0], &physvals[0]+i*nq0);
+                                       collcoord[1][i], &physvals[0]);
             }
 
-            // set up geometric factor: 2/(1-z1)
-                      Vmath::Sadd(nq1, -1.0, z1, 1, wsp3, 1);
-            Vmath::Sdiv(nq1, -2.0, wsp3, 1, wsp3, 1);
-
-            Vmath::Vmul(nq1, wsp, 1, wsp3, 1, wsp3, 1);
-
-
-            NekDouble ret = 
-                StdExpansion::BaryEvaluate<1>(coll[1], &wsp[0]);
-
-            return ret;
+            Vmath::Vcopy(nq0, wsp, nq0, wsp1, 1);
+            return StdExpansion::BaryEvaluate<1>(coords[0], &wsp1[0]);
 
         }
 
@@ -985,36 +990,43 @@ namespace Nektar
             const int nq0 = m_base[0]->GetNumPoints();
             const int nq1 = m_base[1]->GetNumPoints();
             //const Array<OneD, const NekDouble>& z1 = m_base[1]->GetZ();
-            //const Array<OneD, const NekDouble>& z0 = m_base[0]->GetZ();
+            //            const Array<OneD, const NekDouble>& z0 = m_base[0]->GetZ();
             Array<OneD, NekDouble> coll(2);
-            coll = coords;            
+            //            coll = coords;            
+            LocCoordToLocCollapsed(coords, coll);
 
             Array<OneD, NekDouble> wsp(nq1*nq0);
             Array<OneD, NekDouble> wsp1(nq0*nq1);
             Array<OneD, NekDouble> wsp2(nq1);
             Array<OneD, NekDouble> wsp3(nq1);
             Array<OneD, NekDouble> wsp4(nq1);
-            
-            for (int i = 0; i < nq0; ++i)
-            {
-                // make tensor deriv method in StdExpansion and get rid of the loop here
-                wsp3[i] = StdExpansion::BaryEvaluate<0>(
-                    coll[0], &physvals[0] + i * nq1);
-            }
-            // set up geometric factor: 2/(1-z1)
-            //            Vmath::Sadd(nq1, -1.0, z1, 1, wsp2, 1);
-            //Vmath::Sdiv(nq1, -2.0, wsp2, 1, wsp2, 1);
+            Array<OneD, NekDouble> xcoord(GetTotPoints()), ycoord(GetTotPoints());
+            GetCoords(xcoord,ycoord);
 
-            //            Vmath::Vmul(nq1, wsp3,1,wsp2,1,wsp3, 1);
-         
-            // set up geometric factor: (1+z0)/(1-z1)
-            //Vmath::Sadd(nq0, 1.0, z0, 1, wsp2, 1);
+            Array<OneD, Array<OneD, NekDouble>> collcoord(2);
+            collcoord[0] = Array<OneD, NekDouble>(GetTotPoints());
+            collcoord[1] = Array<OneD, NekDouble>(GetTotPoints());
             
-            //Vmath::Smul(nq0, 0.5, wsp2, 1, wsp2, 1);
-     
-            //          Vmath::Vmul(nq0, wsp2, 1, wsp3, 1, wsp3, 1);
-             
-            return  StdExpansion::BaryEvaluateDeriv<1>(coll[1], &wsp3[0]);
+            for(int i = 0; i<GetTotPoints(); i++)
+            {
+                Array<OneD, NekDouble> tmp(2), tmp2(2);;
+                    tmp[0] = xcoord[i];
+                    tmp[1] = ycoord[i];
+                    LocCoordToLocCollapsed(tmp, tmp2);
+                    collcoord[0][i] = tmp2[0];
+                    collcoord[1][i] = tmp2[1];
+            }
+      
+            for (int i = 0; i < nq0*nq1; ++i)
+            {
+                   
+                wsp1[i] = StdExpansion::BaryEvaluateDeriv<0>(
+                    ycoord[i], &physvals[0] );
+            }
+            
+            Vmath::Vcopy(nq0, wsp1, nq0, wsp2, 1);
+            
+            return  StdExpansion::BaryEvaluate<1>(coords[1], &wsp2[0]);
 
             
         }
