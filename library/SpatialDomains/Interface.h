@@ -93,16 +93,6 @@ struct InterfaceBase
         return m_domain;
     }
 
-    inline CompositeMap GetInterfaceEdge() const
-    {
-        return m_interfaceEdge;
-    }
-
-    inline void SetInterfaceEdge(const CompositeMap &interfaceEdge)
-    {
-        m_interfaceEdge = interfaceEdge;
-    }
-
     inline std::map<int, GeometrySharedPtr> const &GetEdge() const
     {
         return m_edge;
@@ -125,36 +115,6 @@ struct InterfaceBase
 
     void SetEdge(const CompositeMap &edge);
 
-    inline InterfaceSide GetSide() const
-    {
-        return m_side;
-    }
-
-    inline void SetSide(const InterfaceSide &side)
-    {
-        m_side = side;
-    }
-
-    inline void SetTotPoints(const int &points)
-    {
-        m_totPoints = points;
-    }
-
-    inline int &GetTotPoints()
-    {
-        return m_totPoints;
-    }
-
-    inline void AddOppRank(const int &rank)
-    {
-        m_oppRanks.emplace_back(rank);
-    }
-
-    inline std::vector<int> &GetOppRanks()
-    {
-        return m_oppRanks;
-    }
-
     inline void SetOppInterface(InterfaceBaseShPtr oppInterface)
     {
         m_oppInterface = oppInterface;
@@ -170,14 +130,14 @@ struct InterfaceBase
         return m_id;
     }
 
-    inline std::map<int, std::tuple<NekDouble, NekDouble, NekDouble>> GetMissing()
+    inline InterfaceSide GetSide() const
     {
-        return m_missingCoords;
+        return m_side;
     }
 
-    inline void SetMissing(std::map<int, std::tuple<NekDouble, NekDouble, NekDouble>> missingCoords)
+    inline void SetSide(const InterfaceSide &side)
     {
-        m_missingCoords = missingCoords;
+        m_side = side;
     }
 
 protected:
@@ -188,11 +148,6 @@ protected:
     CompositeMap m_domain;
     std::map<int, GeometrySharedPtr> m_edge;
     std::vector<int> m_edgeIds;
-    CompositeMap m_interfaceEdge;
-    int m_totPoints;
-    std::vector<int> m_oppRanks;
-    bool m_checkLocal = false;
-    std::map<int, std::tuple<NekDouble, NekDouble, NekDouble>> m_missingCoords;
 };
 
 struct RotatingInterface : public InterfaceBase

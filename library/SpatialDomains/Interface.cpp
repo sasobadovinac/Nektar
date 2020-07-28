@@ -123,17 +123,6 @@ void Interfaces::ReadInterfaces(TiXmlElement *interfaces)
         auto domain =
             m_meshGraph->GetDomain(stoi(ReadTag(interfaceDomainStr)));
 
-
-        std::string interfaceEdgeStr;
-        int interfaceErr = interfaceElement->QueryStringAttribute(
-            "INTERFACEEDGE", &interfaceEdgeStr);
-        map<int, CompositeSharedPtr> interfaceEdge;
-        if (interfaceErr == TIXML_SUCCESS)
-        {
-            std::string indxStr = ReadTag(interfaceEdgeStr);
-            m_meshGraph->GetCompositeList(indxStr, interfaceEdge);
-        }
-
         std::string domainEdgeStr;
         int domainEdgeErr =
             interfaceElement->QueryStringAttribute("EDGE", &domainEdgeStr);
@@ -142,18 +131,6 @@ void Interfaces::ReadInterfaces(TiXmlElement *interfaces)
         {
             std::string indxStr = ReadTag(domainEdgeStr);
             m_meshGraph->GetCompositeList(indxStr, domainEdge);
-        }
-
-        if (interfaceErr == TIXML_SUCCESS)
-        {
-            ASSERTL0(domainEdgeErr != TIXML_SUCCESS,
-                     "Choose to define either INTERFACEEDGE or EDGE")
-        }
-        else if (domainEdgeErr == TIXML_SUCCESS)
-        {
-            ASSERTL0(interfaceErr != TIXML_SUCCESS,
-                     "Choose to define either INTERFACEEDGE or EDGE")
-
         }
 
         InterfaceBaseShPtr interface;
@@ -188,14 +165,8 @@ void Interfaces::ReadInterfaces(TiXmlElement *interfaces)
             interface = FixedInterfaceShPtr(MemoryManager<FixedInterface>::AllocateSharedPtr(indx, domain));
         }
 
-        if (interfaceErr == TIXML_SUCCESS)
-        {
-            interface->SetInterfaceEdge(interfaceEdge);
-        }
-        else
-        {
-            interface->SetEdge(domainEdge);
-        }
+        interface->SetEdge(domainEdge);
+
 
         tmpInterfaceMap[indx].emplace_back(interface);
 
