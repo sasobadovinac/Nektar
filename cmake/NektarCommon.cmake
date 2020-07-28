@@ -79,7 +79,7 @@ MACRO(SET_COMMON_PROPERTIES name)
     SET_TARGET_PROPERTIES(${name} PROPERTIES DEBUG_POSTFIX -g)
     SET_TARGET_PROPERTIES(${name} PROPERTIES MINSIZEREL_POSTFIX -ms)
     SET_TARGET_PROPERTIES(${name} PROPERTIES RELWITHDEBINFO_POSTFIX -rg)
-    
+
     IF (MSVC)
         # Enable production-level warnings
         TARGET_COMPILE_OPTIONS(${name} PRIVATE /W4)
@@ -105,7 +105,7 @@ MACRO(SET_COMMON_PROPERTIES name)
         IF (NOT CMAKE_CXX_COMPILER_ID MATCHES "Clang")
             TARGET_COMPILE_OPTIONS(${name} PRIVATE -fpermissive)
         ENDIF()
-        
+
         # Disable dignostic about partially overloaded virtual functions
         IF (CMAKE_CXX_COMPILER_ID STREQUAL "Intel")
             TARGET_COMPILE_OPTIONS(${name} PRIVATE -diag-disable 654)
@@ -130,19 +130,19 @@ MACRO(SET_COMMON_PROPERTIES name)
         SET(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -DNEKTAR_DEBUG")
 
         IF ( NEKTAR_FULL_DEBUG )
-            SET(CMAKE_CXX_FLAGS_DEBUG 
+            SET(CMAKE_CXX_FLAGS_DEBUG
                     "${CMAKE_CXX_FLAGS_DEBUG} -DNEKTAR_FULLDEBUG")
         ENDIF( NEKTAR_FULL_DEBUG)
-   
+
         # Define version
         SET_PROPERTY(TARGET ${name}
             APPEND PROPERTY COMPILE_DEFINITIONS
             NEKTAR_VERSION=\"${NEKTAR_VERSION}\")
 
-        SET(CMAKE_CXX_FLAGS_RELEASE 
+        SET(CMAKE_CXX_FLAGS_RELEASE
                 "${CMAKE_CXX_FLAGS_RELEASE} -DNEKTAR_RELEASE")
     ENDIF(NOT ${CMAKE_CXX_FLAGS_DEBUG} MATCHES ".*DNEKTAR_DEBUG.*")
-        
+
     IF( CMAKE_SYSTEM_PROCESSOR STREQUAL "x86_64" )
         # The static libraries must be compiled with position independent
         # code on 64 bit Linux.
@@ -309,3 +309,20 @@ MACRO(ADD_NEKPY_EXECUTABLE name source)
     FILE(COPY ${source} DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
     ADD_CUSTOM_TARGET(${name} SOURCES ${source})
 ENDMACRO()
+
+#
+# ADD_NEKPY_TEST(name)
+#
+# Adds a NekPy test with a given name. The Test Definition File should be in a
+# subdirectory called Tests relative to the CMakeLists.txt file calling this
+# macros. The test file should be called NAME.tst, where NAME is given as a
+# parameter to this macro.
+#
+# Arguments:
+#   - `name`: name of the test file
+#
+MACRO(ADD_NEKPY_TEST name)
+    GET_FILENAME_COMPONENT(dir ${CMAKE_CURRENT_SOURCE_DIR} NAME)
+    ADD_TEST(NAME NekPy_${dir}_${name}
+             COMMAND Tester ${CMAKE_CURRENT_SOURCE_DIR}/Tests/${name}.tst)
+ENDMACRO(ADD_NEKPY_TEST)

@@ -17,3 +17,5 @@ IF (NEKTAR_BUILD_TESTS)
         ADD_NEKTAR_TEST(Helmholtz2D)
     ENDIF()
 ENDIF()
+
+SUBDIRS(SolverUtils)

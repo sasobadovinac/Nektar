@@ -20,7 +20,7 @@ SET(SOLVER_UTILS_SOURCES
   DriverArnoldi.cpp
   DriverModifiedArnoldi.cpp
   DriverStandard.cpp
-  DriverSteadyState.cpp	
+  DriverSteadyState.cpp
   EquationSystem.cpp
   Filters/Filter.cpp
   Filters/FilterAeroForces.cpp
@@ -122,3 +122,7 @@ ADD_NEKTAR_LIBRARY(SolverUtils
     SUMMARY "Nektar++ SolverUtils library"
     DESCRIPTION "This library provides support classes and routines for constructing complete spectral/hp element solvers.")
 
+
+IF (NEKTAR_BUILD_PYTHON)
+    SUBDIRS(Python)
+ENDIF()
