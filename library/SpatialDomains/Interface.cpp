@@ -180,11 +180,11 @@ void Interfaces::ReadInterfaces(TiXmlElement *interfaces)
             ParseUtils::GenerateVector(axisStr, axis);
 
             std::string angularVelStr;
-            err = interfaceElement->QueryStringAttribute("ANGVEL",
-                                                         &angularVelStr);
+            err = interfaceElement->QueryStringAttribute("ANGVEL", &angularVelStr);
             ASSERTL0(err == TIXML_SUCCESS, "Unable to read angular velocity.");
-
-            NekDouble angularVel = stod(angularVelStr);
+            LibUtilities::Equation angularVelEqn(
+                m_session->GetInterpreter(), angularVelStr);
+            NekDouble angularVel = angularVelEqn.Evaluate();
 
             interface = RotatingInterfaceShPtr(MemoryManager<RotatingInterface>::AllocateSharedPtr(indx, domain,  origin, axis, angularVel));
         }
