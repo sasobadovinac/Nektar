@@ -1095,6 +1095,11 @@ namespace Nektar
             MULTI_REGIONS_EXPORT inline const LocTraceToTraceMapSharedPtr
                 &GetLocTraceToTraceMap() const;
 
+            inline SpatialDomains::InterfacesSharedPtr GetInterfaces()
+            {
+                return m_interfaces;
+            }
+
         protected:
             /// Expansion type
             ExpansionType m_expType;

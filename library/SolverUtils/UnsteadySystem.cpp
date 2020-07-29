@@ -332,7 +332,16 @@ namespace Nektar
                     }
                     m_fields[m_intVariables[i]]->SetPhysState(false);
                 }
-                
+
+                // Perform interface movement, probably shouldn't be here (would be better in a generic place rather just calling fields[0])
+                m_fields[0]->GetInterfaces()->PerformMovement(m_timestep);
+                if (abs(std::fmod(m_time, m_checksteps*m_timestep)) < 1e-8)
+                {
+                    std::string name = m_sessionName + "_" + std::to_string(m_nchk) +".xml";
+                    m_graph->WriteGeometry(name, true);
+                }
+                //m_fields[0]->Reset();
+
                 // Perform any solver-specific post-integration steps
                 if (v_PostIntegrate(step))
                 {

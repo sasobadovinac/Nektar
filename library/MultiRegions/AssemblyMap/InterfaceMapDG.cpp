@@ -283,7 +283,7 @@ void InterfaceTrace::CalcLocalMissing()
                 xs[1] = yc[i];
                 xs[2] = zc[i];
 
-                std::cout << LibUtilities::ShapeTypeMap[childElmt->GetGeom()->GetShapeType()] << " ID: " << childId << " point " << i << " = (" << xs[0] <<", " << xs[1] << ", " << xs[2] << ")" << std::endl;
+                //std::cout << LibUtilities::ShapeTypeMap[childElmt->GetGeom()->GetShapeType()] << " ID: " << childId << " point " << i << " = (" << xs[0] <<", " << xs[1] << ", " << xs[2] << ")" << std::endl;
 
                 for (auto edge : parentEdge)
                 {
@@ -292,7 +292,7 @@ void InterfaceTrace::CalcLocalMissing()
                     if (dist < 1e-8)
                     {
                         found = true;
-                        std::cout << "\t found in: " << LibUtilities::ShapeTypeMap[edge.second->GetShapeType()] << " at local coord = (" << foundLocCoord[0] << ", " << foundLocCoord[1] << ")" << std::endl;
+                        //std::cout << "\t found in: " << LibUtilities::ShapeTypeMap[edge.second->GetShapeType()] << " at local coord = (" << foundLocCoord[0] << ", " << foundLocCoord[1] << ")" << std::endl;
                         m_foundLocalCoords.emplace_back(edge.second->GetGlobalID(), foundLocCoord);
                         m_mapFoundCoordToTrace.emplace_back(offset + i);
                         break;
@@ -368,6 +368,8 @@ void InterfaceExchange::SendMissing(LibUtilities::CommRequestSharedPtr request,
 void InterfaceMapDG::ExchangeTrace(Array<OneD, NekDouble> &Fwd,
                                    Array<OneD, NekDouble> &Bwd)
 {
+    //ExchangeCoords();
+
     auto comm    = m_trace->GetComm();
     auto request = comm->CreateRequest(2 * m_exchange.size());
     for (int i = 0; i < m_exchange.size(); ++i)

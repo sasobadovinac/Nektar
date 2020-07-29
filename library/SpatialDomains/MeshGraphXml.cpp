@@ -2759,7 +2759,7 @@ void MeshGraphXml::WriteDefaultExpansion(TiXmlElement *root)
             exp->SetAttribute("COMPOSITE",
                               "C[" + boost::lexical_cast<string>(it->first) +
                                   "]");
-            exp->SetAttribute("NUMMODES", 4);
+            exp->SetAttribute("NUMMODES", 9);
             exp->SetAttribute("TYPE", "MODIFIED");
             exp->SetAttribute("FIELDS", "u");
 

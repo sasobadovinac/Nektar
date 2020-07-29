@@ -2651,7 +2651,7 @@ std::string MeshGraph::GetCompositeString(CompositeSharedPtr comp)
 void MeshGraph::ReadExpansionInfo()
 {
     // Hack?
-    m_expansionMapShPtrMap.clear();
+    //m_expansionMapShPtrMap.clear();
 
     // Find the Expansions tag
     TiXmlElement *expansionTypes = m_session->GetElement("NEKTAR/EXPANSIONS");

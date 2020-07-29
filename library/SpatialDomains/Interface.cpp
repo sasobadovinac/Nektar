@@ -60,6 +60,55 @@ Interfaces::Interfaces(const LibUtilities::SessionReaderSharedPtr &pSession,
     }
 }
 
+RotatingInterface::RotatingInterface(int id, const CompositeMap &domain,
+                                     const PointGeom &origin,
+                                     const std::vector<NekDouble> &axis,
+                                     const NekDouble angularVel)
+    : InterfaceBase(eRotating, id, domain), m_origin(origin), m_axis(axis),
+      m_angularVel(angularVel)
+{
+    std::set<int> seenVerts, seenEdges;
+    for (auto &comp : m_domain)
+    {
+        for (auto &geom : comp.second->m_geomVec)
+        {
+            for (int i = 0; i < geom->GetNumVerts(); ++i)
+            {
+                PointGeomSharedPtr vert = geom->GetVertex(i);
+
+                if (seenVerts.find(vert->GetGlobalID()) != seenVerts.end())
+                {
+                    continue;
+                }
+
+                seenVerts.insert(vert->GetGlobalID());
+                m_rotateVerts.emplace_back(vert);
+            }
+
+            for (int i = 0; i < geom->GetNumEdges(); ++i)
+            {
+                SegGeomSharedPtr edge =
+                    std::static_pointer_cast<SegGeom>(geom->GetEdge(i));
+
+                if (seenEdges.find(edge->GetGlobalID()) != seenEdges.end())
+                {
+                    continue;
+                }
+
+                seenEdges.insert(edge->GetGlobalID());
+
+                CurveSharedPtr curve = edge->GetCurve();
+                if (!curve)
+                {
+                    continue;
+                }
+
+                m_rotateCurves.emplace_back(curve);
+            }
+        }
+    }
+}
+
 std::string ReadTag(std::string &tagStr)
 {
     std::string::size_type indxBeg = tagStr.find_first_of('[') + 1;
@@ -73,27 +122,6 @@ std::string ReadTag(std::string &tagStr)
     std::string indxStr = tagStr.substr(indxBeg, indxEnd - indxBeg + 1);
 
     return indxStr;
-}
-
-std::vector<GeometrySharedPtr> GetElementsFromVertex(CompositeMap &domain,
-                                                     int vertId1, int vertId2)
-{
-    std::vector<GeometrySharedPtr> ret;
-    for (auto &comp : domain)
-    {
-        for (auto &geom : comp.second->m_geomVec)
-        {
-            for (int i = 0; i < geom->GetNumVerts(); ++i)
-            {
-                if (geom->GetVid(i) == vertId1 || geom->GetVid(i) == vertId2)
-                {
-                    ret.push_back(geom);
-                    break;
-                }
-            }
-        }
-    }
-    return ret;
 }
 
 void Interfaces::ReadInterfaces(TiXmlElement *interfaces)
@@ -167,8 +195,9 @@ void Interfaces::ReadInterfaces(TiXmlElement *interfaces)
 
         interface->SetEdge(domainEdge);
 
-
         tmpInterfaceMap[indx].emplace_back(interface);
+
+        m_interfaceVector.emplace_back(interface);
 
         interfaceElement = interfaceElement->NextSiblingElement();
     }
@@ -194,10 +223,11 @@ void InterfaceBase::SetEdge(const CompositeMap &edge)
         for (auto &elmtIt : compIt.second->m_geomVec)
         {
             auto shapeType = elmtIt->GetShapeType();
+            auto dim = elmtIt->GetCoordim();
 
-            ASSERTL0((shapeType == LibUtilities::eSegment) ||
-                     (shapeType == LibUtilities::eQuadrilateral) ||
-                     (shapeType == LibUtilities::eTriangle),
+            ASSERTL0((shapeType == LibUtilities::eSegment && dim == 2) ||
+                     (shapeType == LibUtilities::eQuadrilateral && dim == 3) ||
+                     (shapeType == LibUtilities::eTriangle && dim == 3),
                 "Interface edge must be a segment for 2D or quad/tri for 3D.")
 
             size_t id = elmtIt->GetGlobalID();
@@ -207,6 +237,52 @@ void InterfaceBase::SetEdge(const CompositeMap &edge)
     }
 
     std::sort(m_edgeIds.begin(), m_edgeIds.end());
+}
+
+void Interfaces::PerformMovement(NekDouble timeStep)
+{
+    for (auto interface : m_interfaceVector)
+    {
+        interface->Move(timeStep);
+    }
+}
+
+void RotatingInterface::v_Move(NekDouble timeStep)
+{
+    NekDouble angle = m_angularVel * timeStep;
+
+    NekDouble ox, oy, oz;
+    m_origin.GetCoords(ox, oy, oz);
+
+    for (auto &vert : m_rotateVerts)
+    {
+        NekDouble x, y, z;
+        vert->GetCoords(x, y, z);
+
+        vert->UpdatePosition(
+            std::cos(angle) * (x - ox) - std::sin(angle) * (y - oy) + ox,
+            std::sin(angle) * (x - ox) + std::cos(angle) * (y - oy) + oy,
+            0);
+    }
+
+    for (auto &curve : m_rotateCurves)
+    {
+        for (auto &vert : curve->m_points)
+        {
+            NekDouble x, y, z;
+            vert->GetCoords(x, y, z);
+
+            vert->UpdatePosition(
+                std::cos(angle) * (x - ox) - std::sin(angle) * (y - oy) + ox,
+                std::sin(angle) * (x - ox) + std::cos(angle) * (y - oy) + oy,
+                0);
+        }
+    }
+}
+
+void FixedInterface::v_Move(NekDouble time)
+{
+    boost::ignore_unused(time);
 }
 
 }

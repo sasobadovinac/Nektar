@@ -140,6 +140,16 @@ struct InterfaceBase
         m_side = side;
     }
 
+    inline virtual void v_Move(NekDouble time)
+    {
+        boost::ignore_unused(time);
+    }
+
+    inline void Move(NekDouble time)
+    {
+        v_Move(time);
+    }
+
 protected:
     InterfaceBaseShPtr m_oppInterface;
     InterfaceType m_type;
@@ -150,15 +160,11 @@ protected:
     std::vector<int> m_edgeIds;
 };
 
-struct RotatingInterface : public InterfaceBase
+struct RotatingInterface final: public InterfaceBase
 {
     RotatingInterface(int id, const CompositeMap &domain, const PointGeom &origin,
                       const std::vector<NekDouble> &axis,
-                      const NekDouble angularVel)
-        : InterfaceBase(eRotating, id, domain), m_origin(origin),
-          m_axis(axis), m_angularVel(angularVel)
-    {
-    }
+                      const NekDouble angularVel);
 
     inline PointGeom GetOrigin() const
     {
@@ -175,18 +181,24 @@ struct RotatingInterface : public InterfaceBase
         return m_angularVel;
     }
 
+    virtual void v_Move(NekDouble timeStep) final;
+
 protected:
     PointGeom m_origin;
     std::vector<NekDouble> m_axis;
     NekDouble m_angularVel;
+    std::vector<PointGeomSharedPtr> m_rotateVerts;
+    std::vector<CurveSharedPtr> m_rotateCurves;
 };
 
-struct FixedInterface : public InterfaceBase
+struct FixedInterface final: public InterfaceBase
 {
     FixedInterface(int id, const CompositeMap &domain)
             : InterfaceBase(eFixed, id, domain)
     {
     }
+
+    virtual void v_Move(NekDouble timeStep) final;
 };
 
 typedef std::shared_ptr<RotatingInterface> RotatingInterfaceShPtr;
@@ -205,8 +217,6 @@ struct InterfacePair
 
     InterfaceBaseShPtr m_leftInterface;
     InterfaceBaseShPtr m_rightInterface;
-    bool m_calcFlag = true;
-    bool m_checkLocal = false;
 
 public:
     inline const InterfaceBaseShPtr &GetLeftInterface() const
@@ -217,16 +227,6 @@ public:
     inline const InterfaceBaseShPtr &GetRightInterface() const
     {
         return m_rightInterface;
-    }
-
-    inline bool GetCalcFlag()
-    {
-        return m_calcFlag;
-    }
-
-    inline void SetCalcFlag(bool flag)
-    {
-        m_calcFlag = flag;
     }
 };
 
@@ -249,15 +249,19 @@ public:
         return m_interfaces;
     }
 
-    void CommSetup(LibUtilities::CommSharedPtr &comm);
+    inline const std::vector<InterfaceBaseShPtr> &GetInterfaceVector() const
+    {
+        return m_interfaceVector;
+    }
+
+    void PerformMovement(NekDouble timeStep);
 
 protected:
     /// The mesh graph to use for referencing geometry info.
     MeshGraphSharedPtr m_meshGraph;
     LibUtilities::SessionReaderSharedPtr m_session;
     InterfaceCollection m_interfaces;
-    /// Map of interface ID to ranks sharing that interface (on the other side)
-    std::map<int, std::vector<int>> m_interfacesSharedRank;
+    std::vector<InterfaceBaseShPtr> m_interfaceVector;
 
 
 private:
