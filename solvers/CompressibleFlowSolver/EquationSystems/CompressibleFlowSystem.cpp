@@ -4428,8 +4428,6 @@ namespace Nektar
             CalcFluxJacVolBnd(refFields, time);
         }
 
-        
-
         Array<OneD, Array<OneD, NekDouble> > inpnts(nvariable);
         Array<OneD, Array<OneD, NekDouble> > in2D(nvariable);
         Array<OneD, Array<OneD, NekDouble> > out2D(nvariable);
@@ -6145,6 +6143,17 @@ namespace Nektar
         default:
             GetFluxVectorTraceMFNum(Fwd, Bwd, flux);
             break;
+        }
+
+        size_t nvar = flux.num_elements();
+        for (size_t i = 0; i < flux[nvar - 1].num_elements(); ++i)
+        {
+            for (size_t n = 0; n < nvar; ++n)
+            {
+                cout << " flux["<<n<<"]["<<i<<"]= "<< flux[n][i] 
+                    <<" "<< Fwd[n][i]
+                    <<" "<< Bwd[n][i]<< endl;
+            }
         }
     }
 
