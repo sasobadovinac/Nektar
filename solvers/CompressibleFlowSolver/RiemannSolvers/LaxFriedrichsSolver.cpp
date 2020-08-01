@@ -128,7 +128,7 @@ namespace Nektar
               Array<OneD,       Array<OneD, NekDouble> > &flux,
         const int nDim)
     {
-        for (int i = 0; i < Fwd[0].num_elements(); i++)
+        for (int i = 0; i < Fwd[0].size(); i++)
         {
             NekDouble  rhoL = 0; 
             NekDouble  rhouL = 0; 
@@ -224,7 +224,7 @@ namespace Nektar
 		    NekDouble URoe = fabs(uRoe) + cRoe;
 
 		    // Lax-Friedrichs flux formula
-            for(int k=0; k<Fwd.num_elements(); k++)
+            for(int k=0; k<Fwd.size(); k++)
             {
                 flux[k][i] = 0.5*(Fwd[k][i]*uL + Bwd[k][i]*uR - URoe*(Bwd[k][i] - Fwd[k][i]));
             }

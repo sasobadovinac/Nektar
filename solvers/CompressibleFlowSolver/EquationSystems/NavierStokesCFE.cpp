@@ -220,7 +220,7 @@ namespace Nektar
             m_varConv->GetVelocityVector(inarray, inarrayDiff);
 
             // Extract scalars
-            for(i=m_spacedim+2; i<nvariables; i++)
+            for(int i=m_spacedim+2; i<nvariables; i++)
             {
                 Vmath::Vdiv(npoints, inarray[i], 1, inarray[0], 1,
                             inarrayDiff[i-1], 1);
@@ -273,7 +273,6 @@ namespace Nektar
 
         Array<OneD, Array<OneD, NekDouble> > outarrayDiff{nvariables};
         for (int i = 0; i < nvariables; ++i)
->>>>>>> master
         {
             outarrayDiff[i] = Array<OneD, NekDouble>{ncoeffs, 0.0};
         }
@@ -380,7 +379,8 @@ namespace Nektar
         GetViscosityAndThermalCondFromTemp(physfield[nScalar-1], m_mu,
             m_thermalConductivity);
 
-        Vmath::Smul(nPts, 1.0/m_Schmidt, mu, 1, diffusivity, 1);
+        Array<OneD, NekDouble> diffusivity(nPts);
+        Vmath::Smul(nPts, 1.0/m_Schmidt, m_mu, 1, diffusivity, 1);
 
         // Velocity divergence
         for (int j = 0; j < m_spacedim; ++j)
@@ -447,14 +447,13 @@ namespace Nektar
                                viscousTensor[i][m_spacedim+1], 1);
         }
 
-
         // Terms for the scalars
-        for (i = 0; i < m_spacedim; ++i)
+        for (int i = 0; i < m_spacedim; ++i)
         {
-            for(j=m_spacedim+2; j<nVariables; ++j)
+            for(int j=m_spacedim+2; j<nScalar; ++j)
             {
                 Vmath::Zero(nPts, viscousTensor[i][j], 1);
-
+                
                 // Add D*Yj_i
                 Vmath::Vvtvp(nPts, diffusivity, 1,
                                    derivativesO1[i][j-1], 1,
@@ -491,7 +490,9 @@ namespace Nektar
         GetViscosityAndThermalCondFromTemp(physfield[nScalar-1], m_mu,
             m_thermalConductivity);
 
-        Vmath::Smul(nPts, 1.0/m_Schmidt, mu, 1, diffusivity, 1);
+        
+        Array<OneD, NekDouble> diffusivity(nPts);
+        Vmath::Smul(nPts, 1.0/m_Schmidt, m_mu, 1, diffusivity, 1);
 
         // Interpolate inputs and initialise interpolated output
         Array<OneD, Array<OneD, NekDouble> > vel_interp(m_spacedim);
@@ -587,9 +588,9 @@ namespace Nektar
         }
 
         // Terms for the scalars
-        for (i = 0; i < m_spacedim; ++i)
+        for (int i = 0; i < m_spacedim; ++i)
         {
-            for(j=m_spacedim+2; j<nVariables; ++j)
+            for(int j=m_spacedim+2; j<nScalar; ++j)
             {
                 Vmath::Zero(nPts, out_interp[i][j], 1);
 

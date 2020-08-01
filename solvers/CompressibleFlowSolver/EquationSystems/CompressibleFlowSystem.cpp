@@ -55,7 +55,7 @@ namespace Nektar
     {
         AdvectionSystem::v_InitObject();
 
-        for (int i = 0; i < m_fields.num_elements(); i++)
+        for (int i = 0; i < m_fields.size(); i++)
         {
             // Use BwdTrans to make sure initial condition is in solution space
             m_fields[i]->BwdTrans(m_fields[i]->GetCoeffs(),
@@ -1016,41 +1016,59 @@ Array<OneD, NekDouble>  CompressibleFlowSystem::GetElmtMinHP(void)
 {
     int nElements               = m_fields[0]->GetExpSize();
     Array<OneD, NekDouble> hOverP(nElements, 1.0);
+
+    // Determine h/p scaling
+    Array<OneD, int> pOrderElmt = m_fields[0]->EvalBasisNumModesMaxPerExp();
+    for (int e = 0; e < nElements; e++)
+    {
+        NekDouble h = 1.0e+10;
+        switch(m_expdim)
+        {
+            case 3:
+            {
                 LocalRegions::Expansion3DSharedPtr exp3D;
                 exp3D = m_fields[0]->GetExp(e)->as<LocalRegions::Expansion3D>();
                 for(int i = 0; i < exp3D->GetNtraces(); ++i)
                 {
-                    LocalRegions::Expansion2DSharedPtr exp2D;
-                    exp2D = m_fields[0]->GetExp(e)->as<LocalRegions::Expansion2D>();
-                    for(int i = 0; i < exp2D->GetNedges(); ++i)
-                    {
-                        h = min(h, exp2D->GetGeom2D()->GetEdge(i)->GetVertex(0)->
-                            dist(*(exp2D->GetGeom2D()->GetEdge(i)->GetVertex(1))));
-                    }
-                break;
+                    h = min(h, exp3D->GetGeom3D()->GetEdge(i)->GetVertex(0)->
+                        dist(*(exp3D->GetGeom3D()->GetEdge(i)->GetVertex(1))));
                 }
-                case 1:
-                {
-                    LocalRegions::Expansion1DSharedPtr exp1D;
-                    exp1D = m_fields[0]->GetExp(e)->as<LocalRegions::Expansion1D>();
+            break;
+            }
 
             case 2:
             {
                 LocalRegions::Expansion2DSharedPtr exp2D;
                 exp2D = m_fields[0]->GetExp(e)->as<LocalRegions::Expansion2D>();
                 for(int i = 0; i < exp2D->GetNtraces(); ++i)
-
                 {
-                    ASSERTL0(false,"Dimension out of bound.")
+                    h = min(h, exp2D->GetGeom2D()->GetEdge(i)->GetVertex(0)->
+                        dist(*(exp2D->GetGeom2D()->GetEdge(i)->GetVertex(1))));
                 }
+            break;
             }
+            case 1:
+            {
+                LocalRegions::Expansion1DSharedPtr exp1D;
+                exp1D = m_fields[0]->GetExp(e)->as<LocalRegions::Expansion1D>();
 
-            // Determine h/p scaling
-            hOverP[e] = h/max(pOrderElmt[e]-1,1);
+                h = min(h, exp1D->GetGeom1D()->GetVertex(0)->
+                    dist(*(exp1D->GetGeom1D()->GetVertex(1))));
 
+            break;
+            }
+            default:
+            {
+                ASSERTL0(false,"Dimension out of bound.")
+            }
         }
-        return hOverP;
+
+        // Determine h/p scaling
+        hOverP[e] = h/max(pOrderElmt[e]-1,1);
+
     }
+    return hOverP;
+}
 
 
 }

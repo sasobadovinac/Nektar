@@ -144,7 +144,7 @@ namespace Nektar
               Array<OneD,       Array<OneD, NekDouble> > &flux,
         const int nDim)
     {
-        for (int i = 0; i < Fwd[0].num_elements(); i++)
+        for (int i = 0; i < Fwd[0].size(); i++)
         {
             NekDouble  rhoL = 0; 
             NekDouble  rhouL = 0; 
@@ -252,7 +252,7 @@ namespace Nektar
                 flux[0][i] = mdot;
                 flux[1][i] = mdot * Fwd[1][i]/Fwd[0][i] + pbar;
 
-                for(int k=2; k<Fwd.num_elements(); k++)
+                for(int k=2; k<Fwd.size(); k++)
                 {
                     flux[k][i] = mdot * Fwd[k][i]/Fwd[0][i];
                 }
@@ -265,7 +265,7 @@ namespace Nektar
                 flux[0][i] = mdot;
                 flux[1][i] = mdot * Bwd[1][i]/Bwd[0][i] + pbar;
 
-                for(int k=2; k<Bwd.num_elements(); k++)
+                for(int k=2; k<Bwd.size(); k++)
                 {
                     flux[k][i] = mdot * Bwd[k][i]/Bwd[0][i];
                 }

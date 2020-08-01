@@ -83,6 +83,18 @@ namespace Nektar
                      "This function should be defined by subclasses.");
         }
 
+        virtual void v_PointSolveVisc(
+            NekDouble  rhoL, NekDouble  rhouL, NekDouble  rhovL, NekDouble  rhowL, NekDouble  EL, NekDouble EpsL,
+            NekDouble  rhoR, NekDouble  rhouR, NekDouble  rhovR, NekDouble  rhowR, NekDouble  ER, NekDouble EpsR,
+            NekDouble &rhof, NekDouble &rhouf, NekDouble &rhovf, NekDouble &rhowf, NekDouble &Ef, NekDouble &Epsf)
+        {
+            boost::ignore_unused(rhoL, rhouL, rhovL, rhowL, EL, EpsL,
+                                 rhoR, rhouR, rhovR, rhowR, ER, EpsR,
+                                 rhof, rhouf, rhovf, rhowf, Ef, Epsf);
+            NEKERROR(ErrorUtil::efatal,
+                     "This function should be defined by subclasses.");
+        }
+
         NekDouble GetRoeSoundSpeed(
             NekDouble rhoL, NekDouble pL, NekDouble eL, NekDouble HL, NekDouble srL,
             NekDouble rhoR, NekDouble pR, NekDouble eR, NekDouble HR, NekDouble srR,

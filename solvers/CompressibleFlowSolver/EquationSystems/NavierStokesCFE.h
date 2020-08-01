@@ -70,7 +70,7 @@ namespace Nektar
     NekDouble                           m_Prandtl;
     NekDouble                           m_Schmidt;
 
-    NekDouble                            m_Twall;
+    NekDouble                           m_Twall;
     NekDouble                           m_muRef;
     NekDouble                           m_thermalConductivityRef;
     Array<OneD, NekDouble>              m_mu;

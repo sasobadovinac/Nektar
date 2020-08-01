@@ -60,10 +60,7 @@ namespace Nektar
         const Array<OneD, const Array<OneD, NekDouble> > &Bwd,
               Array<OneD,       Array<OneD, NekDouble> > &flux)
     {
-        int expDim      = nDim;
-        int nvariables  = Fwd.num_elements();
-
-        if(nvariables > expDim+2)
+        if(m_pointSolve)
         {
             int expDim      = nDim;
             int nvariables  = Fwd.size();

@@ -79,7 +79,7 @@ void RiemannInvariantBC::v_Apply(
     int i, j;
     int nTracePts = m_fields[0]->GetTrace()->GetNpoints();
     int nDimensions = m_spacedim;
-    int nVariables = physarray.num_elements();
+    int nVariables = physarray.size();
 
     const Array<OneD, const int> &traceBndMap
         = m_fields[0]->GetTraceBndMap();

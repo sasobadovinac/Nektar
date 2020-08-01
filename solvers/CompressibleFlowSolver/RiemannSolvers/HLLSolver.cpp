@@ -157,7 +157,7 @@ namespace Nektar
               Array<OneD,       Array<OneD, NekDouble> > &flux,
         const int nDim)
     {
-        for (int i = 0; i < Fwd[0].num_elements(); i++)
+        for (int i = 0; i < Fwd[0].size(); i++)
         {
             NekDouble  rhoL = 0; 
             NekDouble  rhouL = 0; 
@@ -259,7 +259,7 @@ namespace Nektar
             // HLLC Riemann fluxes (positive case)
             if (SL >= 0)
             {
-                for(int k=0; k<Fwd.num_elements(); k++)
+                for(int k=0; k<Fwd.size(); k++)
                 {
                     flux[k][i] = Fwd[k][i]*uL;
                 }
@@ -270,7 +270,7 @@ namespace Nektar
             // HLLC Riemann fluxes (negative case)
             else if (SR <= 0)
             {
-                for(int k=0; k<Bwd.num_elements(); k++)
+                for(int k=0; k<Bwd.size(); k++)
                 {
                     flux[k][i] = Bwd[k][i]*uR;
                 }
@@ -293,7 +293,7 @@ namespace Nektar
                 NekDouble Ef    = (SR * uL * (EL + pL) - SL * uR * (ER + pR) + 
                                    tmp2 * (ER - EL)) * tmp1;
 
-                for(int k=nDim+2; k<Fwd.num_elements(); k++)
+                for(int k=nDim+2; k<Fwd.size(); k++)
                 {
                     flux[k][i] = (SR*Fwd[k][i]*uL - SL*Bwd[k][i]*uR + tmp2 * (Bwd[k][i] - Fwd[k][i])) * tmp1;
                 }

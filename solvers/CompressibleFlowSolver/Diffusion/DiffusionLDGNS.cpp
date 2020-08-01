@@ -100,8 +100,8 @@ void DiffusionLDGNS::v_InitObject(
         NekDouble h{1.0e+10};
         switch(expDim)
         {
-            case 3:
-
+        case 3:
+            {
                 LocalRegions::Expansion3DSharedPtr exp3D;
                 exp3D = pFields[0]->GetExp(e)->as<LocalRegions::Expansion3D>();
                 for(std::size_t i = 0; i < exp3D->GetNtraces(); ++i)
@@ -111,7 +111,7 @@ void DiffusionLDGNS::v_InitObject(
                 }
             break;
             }
-            case 2:
+        case 2:
             {
                 LocalRegions::Expansion2DSharedPtr exp2D;
                 exp2D = pFields[0]->GetExp(e)->as<LocalRegions::Expansion2D>();
@@ -122,21 +122,21 @@ void DiffusionLDGNS::v_InitObject(
                 }
             break;
             }
-            case 1:
+        case 1:
             {
                 LocalRegions::Expansion1DSharedPtr exp1D;
                 exp1D = pFields[0]->GetExp(e)->as<LocalRegions::Expansion1D>();
                 h = std::min(h, exp1D->GetGeom1D()->GetVertex(0)->
                     dist(*(exp1D->GetGeom1D()->GetVertex(1))));
 
-            break;
+                break;
             }
-            default:
+        default:
             {
-                ASSERTL0(false,"Dimension out of bound.")
+                ASSERTL0(false,"Dimension out of bound.");
             }
         }
-
+        
         // Store scaling
         hEle[e] = h;
     }
@@ -575,13 +575,15 @@ void DiffusionLDGNS::ApplyBCsO1(
             }
         }
 
+        std::size_t nVariables = fields.size();
+    
         //Compute boundary conditions for scalars
         for(i=m_spaceDim+1; i<nVariables-1; i++)
         {
             cnt = 0;
             nBndRegions = fields[i+1]->
-            GetBndCondExpansions().num_elements();
-            for (j = 0; j < nBndRegions; ++j)
+            GetBndCondExpansions().size();
+            for (int j = 0; j < nBndRegions; ++j)
             {
                 if (fields[i+1]->GetBndConditions()[j]->
                     GetBoundaryConditionType() ==
@@ -590,19 +592,18 @@ void DiffusionLDGNS::ApplyBCsO1(
                     continue;
                 }
 
-                nBndEdges = fields[i+1]->
-                GetBndCondExpansions()[j]->GetExpSize();
-                for (e = 0; e < nBndEdges; ++e)
+                int nBndEdges = fields[i+1]->
+                    GetBndCondExpansions()[j]->GetExpSize();
+
+                for (int e = 0; e < nBndEdges; ++e)
                 {
-                    nBndEdgePts = fields[i+1]->
-                    GetBndCondExpansions()[j]->GetExp(e)->GetTotPoints();
-
-                    id1 = fields[i+1]->
-                    GetBndCondExpansions()[j]->GetPhys_Offset(e);
-
-                    id2 = fields[0]->GetTrace()->
-                    GetPhys_Offset(fields[0]->GetTraceMap()->
-                                   GetBndCondTraceToGlobalTraceMap(cnt++));
+                    int nBndEdgePts = fields[i+1]->
+                        GetBndCondExpansions()[j]->GetExp(e)->GetTotPoints();
+                    int id1 = fields[i+1]->
+                        GetBndCondExpansions()[j]->GetPhys_Offset(e);
+                    int id2 = fields[0]->GetTrace()->
+                        GetPhys_Offset(fields[0]->GetTraceMap()->
+                                       GetBndCondIDToGlobalTraceID(cnt++));
 
                     if (fields[i]->GetBndConditions()[j]->
                              GetBoundaryConditionType() == 
@@ -624,7 +625,7 @@ void DiffusionLDGNS::ApplyBCsO1(
                     {
                         Vmath::Vcopy(nBndEdgePts, 
                                      &scalarVariables[i][id2], 1, 
-                                     &penaltyfluxO1[i][id2], 1);
+                                     &fluxO1[i][id2], 1);
 
                     }
 
@@ -642,8 +643,8 @@ void DiffusionLDGNS::ApplyBCsO1(
                                             GetUserDefined(),"Symmetry"))
                     {
                         Vmath::Vcopy(nBndEdgePts, 
-                                     &uplus[i][id2], 1, 
-                                     &penaltyfluxO1[i][id2], 1);
+                                     &pFwd[i][id2], 1, 
+                                     &fluxO1[i][id2], 1);
 
                     }
                 }
