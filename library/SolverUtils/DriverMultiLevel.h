@@ -92,7 +92,10 @@ namespace Nektar
                 const NekDouble                   time, 
                 const NekDouble                   dtlamda, 
                 const TensorOfArray2D<NekDouble>  &refFields, 
-                const bool                        flagUpdateJac);
+                const bool                        flagUpdateJac,
+                const bool                        flagDoAdv,
+                const bool                        flagDoVis,
+                const bool                        flagSourc);
 
             /// Second-stage initialisation
             SOLVER_UTILS_EXPORT virtual void v_InitObject(std::ostream &out = std::cout);

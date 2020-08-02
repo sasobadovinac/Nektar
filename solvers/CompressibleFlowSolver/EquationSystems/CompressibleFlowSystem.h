@@ -120,7 +120,7 @@ namespace Nektar
 
         bool                        m_updateMatFreeJacFlag = false;
 
-        bool                        m_flagMultiLvlJacMultiplyMatFree = false;
+        int                         m_flagMultiLvlJacMultiplyMatFree;
         
 
 #ifdef CFS_DEBUGMODE
@@ -607,8 +607,11 @@ namespace Nektar
             const NekDouble                   time, 
             const NekDouble                   dtlamda, 
             const TensorOfArray2D<NekDouble>  &refFields, 
-            const bool                        flagUpdateJac);
-
+            const bool                        flagUpdateJac,
+            const bool                        flagDoAdv = true,
+            const bool                        flagDoVis = true,
+            const bool                        flagSourc = true);
+ 
         void MatrixMultiply_JacobianFree_coeff_FourthCentral(
             const  Array<OneD, NekDouble> &inarray,
                 Array<OneD, NekDouble >&out);
@@ -630,7 +633,10 @@ namespace Nektar
             const TensorOfArray2D<NekDouble>     &inarray,
             Array<OneD, Array<OneD, NekDouble> > &outarray,
             const NekDouble                      time,
-            const bool                           flagFreezeJac = false);
+            const bool                           flagFreezeJac = false,
+            const bool                           flagDoAdv = true,
+            const bool                           flagDoVis = true,
+            const bool                           flagSourc = true);
         
         void DoOdeRhs_coeffVol(
             const TensorOfArray2D<NekDouble>        &inarray,

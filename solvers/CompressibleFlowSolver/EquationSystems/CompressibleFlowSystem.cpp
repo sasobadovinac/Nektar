@@ -516,12 +516,8 @@ namespace Nektar
         {
             m_centralDiffTracJac = true;
         }
-        m_session->LoadParameter("flagMultiLvlJacMultiplyMatFree", ntmp , 0);
-        m_flagMultiLvlJacMultiplyMatFree = false;
-        if(1==ntmp)
-        {
-            m_flagMultiLvlJacMultiplyMatFree = true;
-        }
+        m_session->LoadParameter("flagMultiLvlJacMultiplyMatFree", 
+            m_flagMultiLvlJacMultiplyMatFree , 0);
 #endif
     }
 
@@ -2122,15 +2118,21 @@ namespace Nektar
         size_t npoints = GetTotPoints();
 
         Array<OneD, Array<OneD, NekDouble> > pnts(nvariables);
-        for(int i = 0; i < nvariables; i++)
+        for (int i = 0; i < nvariables; ++i)
         {
             pnts[i]   =   Array<OneD, NekDouble>(npoints,0.0);
             m_fields[i]->BwdTrans(inarray[i], pnts[i]);
         }
 
-        for(int j = 0; j< m_fields.num_elements(); j++)
+        DoOdeProjection(pnts, pnts, time);
+
+        for (int j = 0; j< nvariables; ++j)
         {
             Vmath::Vcopy(npoints, pnts[j],1,m_MatrixFreeRefFields[j],1);
+        }
+
+        for (int j = 0; j< nvariables; ++j)
+        {
             m_fields[j]->GetFwdBwdTracePhys(m_MatrixFreeRefFields[j], 
                                             m_MatrixFreeRefFwd[j], 
                                             m_MatrixFreeRefBwd[j]);
@@ -2139,12 +2141,9 @@ namespace Nektar
         if(m_DEBUG_VISCOUS_JAC_MAT)
         {
             m_diffusion->SetRefFields(m_MatrixFreeRefFields);
+            CalphysDeriv(pnts,m_qfield);
         }
 
-        DoOdeProjection(m_MatrixFreeRefFields,m_MatrixFreeRefFields,
-            time);
-
-        CalphysDeriv(pnts,m_qfield);
 
         for(int nfluxDir = 0; nfluxDir < nSpaceDim; nfluxDir++)
         {
@@ -4379,27 +4378,58 @@ namespace Nektar
         const TensorOfArray1D<NekDouble>  &inarray, 
         TensorOfArray1D<NekDouble>        &outarray)
     {
-        if (m_flagMultiLvlJacMultiplyMatFree)
-        {   
-            int nlvl = 1;
-            m_EqdriverOperator.MultiLvlJacMultiplyMatFree(
-                nlvl,
-                inarray,
-                outarray,
-                m_BndEvaluateTime,
-                m_TimeIntegLambda,
-                m_TimeIntegtSol_k,
-                m_updateMatFreeJacFlag);
-        }
-        else
+        int nlvl = 1;
+        bool flagTrue = true;
+        bool flagFalse = false;
+
+        switch (m_flagMultiLvlJacMultiplyMatFree)
         {
-            v_MatrixMultiply_MatrixFree_coeff(
-                inarray,
-                outarray,
-                m_BndEvaluateTime,
-                m_TimeIntegLambda,
-                m_TimeIntegtSol_k,
-                m_updateMatFreeJacFlag);
+            case 1:
+                m_EqdriverOperator.MultiLvlJacMultiplyMatFree(
+                    nlvl,
+                    inarray,
+                    outarray,
+                    m_BndEvaluateTime,
+                    m_TimeIntegLambda,
+                    m_TimeIntegtSol_k,
+                    m_updateMatFreeJacFlag,
+                    flagTrue,
+                    flagTrue,
+                    flagTrue);
+                break;
+            case 2:
+                v_MatrixMultiply_MatrixFree_coeff(
+                    inarray,
+                    outarray,
+                    m_BndEvaluateTime,
+                    m_TimeIntegLambda,
+                    m_TimeIntegtSol_k,
+                    m_updateMatFreeJacFlag,
+                    flagTrue,
+                    flagFalse,
+                    flagFalse);
+
+                m_EqdriverOperator.MultiLvlJacMultiplyMatFree(
+                    nlvl,
+                    inarray,
+                    outarray,
+                    m_BndEvaluateTime,
+                    m_TimeIntegLambda,
+                    m_TimeIntegtSol_k,
+                    m_updateMatFreeJacFlag,
+                    flagFalse,
+                    flagTrue,
+                    flagTrue);
+                break;
+            default:
+                v_MatrixMultiply_MatrixFree_coeff(
+                    inarray,
+                    outarray,
+                    m_BndEvaluateTime,
+                    m_TimeIntegLambda,
+                    m_TimeIntegtSol_k,
+                    m_updateMatFreeJacFlag);
+                break;
         }
         m_updateMatFreeJacFlag = false;
     }
@@ -4410,41 +4440,50 @@ namespace Nektar
         const NekDouble                   time, 
         const NekDouble                   dtlamda, 
         const TensorOfArray2D<NekDouble>  &refFields, 
-        const bool                        flagUpdateJac)
+        const bool                        flagUpdateJac,
+        const bool                        flagDoAdv,
+        const bool                        flagDoVis,
+        const bool                        flagSourc)
     {
         unsigned int nvariable  = m_fields.num_elements();
         unsigned int ncoeffs    = m_fields[0]->GetNcoeffs();
         unsigned int npoints    = m_fields[0]->GetNpoints();
 
-        if (flagUpdateJac)
+        if (flagDoAdv || flagDoVis || flagSourc)
         {
-            unsigned int ntotalGlobal     = nvariable * ncoeffs;
-            m_comm->AllReduce(ntotalGlobal, Nektar::LibUtilities::ReduceSum);
-            unsigned int ntotalDOF        = ntotalGlobal/nvariable;
-            NekDouble ototalDOF     = 1.0/ntotalDOF;
+            if (flagUpdateJac)
+            {
+                unsigned int ntotalGlobal     = nvariable * ncoeffs;
+                m_comm->AllReduce(ntotalGlobal, Nektar::LibUtilities::ReduceSum);
+                unsigned int ntotalDOF        = ntotalGlobal/nvariable;
+                NekDouble ototalDOF     = 1.0/ntotalDOF;
 
-            UpdateSoltnRefNorms(refFields, ototalDOF);
+                UpdateSoltnRefNorms(refFields, ototalDOF);
 
-            CalcFluxJacVolBnd(refFields, time);
+                CalcFluxJacVolBnd(refFields, time);
+            }
+
+            Array<OneD, Array<OneD, NekDouble> > inpnts(nvariable);
+            Array<OneD, Array<OneD, NekDouble> > in2D(nvariable);
+            Array<OneD, Array<OneD, NekDouble> > out2D(nvariable);
+            
+            for(int i = 0; i < nvariable; i++)
+            {
+                in2D[i]     = inarray + i*ncoeffs;
+                out2D[i]    = out + i*ncoeffs;
+                inpnts[i]   =   Array<OneD, NekDouble>(npoints,0.0);
+                m_fields[i]->BwdTrans(in2D[i], inpnts[i]);
+            }
+
+            bool flag = true;
+            DoOdeRhs_coeff(inpnts,out2D,time,flag, flagDoAdv, flagDoVis, flagSourc);
         }
-
-        Array<OneD, Array<OneD, NekDouble> > inpnts(nvariable);
-        Array<OneD, Array<OneD, NekDouble> > in2D(nvariable);
-        Array<OneD, Array<OneD, NekDouble> > out2D(nvariable);
         
-        for(int i = 0; i < nvariable; i++)
+        if (flagSourc)
         {
-            in2D[i]     = inarray + i*ncoeffs;
-            out2D[i]    = out + i*ncoeffs;
-            inpnts[i]   =   Array<OneD, NekDouble>(npoints,0.0);
-            m_fields[i]->BwdTrans(in2D[i], inpnts[i]);
+            Vmath::Smul(nvariable*ncoeffs,dtlamda,out,1,out,1);
+            Vmath::Vsub(nvariable*ncoeffs,inarray,1,out,1,out,1);
         }
-
-        bool flag = true;
-        DoOdeRhs_coeff(inpnts,out2D,time,flag);
-
-        Vmath::Smul(nvariable*ncoeffs,dtlamda,out,1,out,1);
-        Vmath::Vsub(nvariable*ncoeffs,inarray,1,out,1,out,1);
         return;
     }
 
@@ -4565,100 +4604,117 @@ namespace Nektar
         const TensorOfArray2D<NekDouble>        &inarray,
         Array<OneD, Array<OneD, NekDouble> >    &outarray,
         const NekDouble                         time,
-        const bool                              flagFreezeJac)
+        const bool                              flagFreezeJac,
+        const bool                              flagDoAdv,
+        const bool                              flagDoVis,
+        const bool                              flagSourc)
     {
         int nvariables = inarray.num_elements();
         int nTracePts  = GetTraceTotPoints();
         int ncoeffs    = GetNcoeffs();
+
         // Store forwards/backwards space along trace space
         Array<OneD, Array<OneD, NekDouble> > Fwd    (nvariables);
         Array<OneD, Array<OneD, NekDouble> > Bwd    (nvariables);
 
-        if (m_HomogeneousType == eHomogeneous1D)
+        if (flagDoAdv || flagDoVis)
         {
-            Fwd = NullNekDoubleArrayofArray;
-            Bwd = NullNekDoubleArrayofArray;
-        }
-        else
-        {
-            if(flagFreezeJac)
+            if (m_HomogeneousType == eHomogeneous1D)
             {
-                for(int i = 0; i < nvariables; ++i)
-                {
-                    Fwd[i]     = Array<OneD, NekDouble>(nTracePts, 0.0);
-                    Bwd[i]     = Array<OneD, NekDouble>(nTracePts, 0.0);
-                    m_fields[i]->GetFwdBwdTracePhysNoBndFill(inarray[i], 
-                        Fwd[i], Bwd[i]);
-                }
+                Fwd = NullNekDoubleArrayofArray;
+                Bwd = NullNekDoubleArrayofArray;
             }
             else
             {
-                for(int i = 0; i < nvariables; ++i)
+                if(flagFreezeJac)
                 {
-                    Fwd[i]     = Array<OneD, NekDouble>(nTracePts, 0.0);
-                    Bwd[i]     = Array<OneD, NekDouble>(nTracePts, 0.0);
-                    m_fields[i]->GetFwdBwdTracePhys(inarray[i], Fwd[i], Bwd[i]);
+                    for(int i = 0; i < nvariables; ++i)
+                    {
+                        Fwd[i]     = Array<OneD, NekDouble>(nTracePts, 0.0);
+                        Bwd[i]     = Array<OneD, NekDouble>(nTracePts, 0.0);
+                        m_fields[i]->GetFwdBwdTracePhysNoBndFill(inarray[i], 
+                            Fwd[i], Bwd[i]);
+                    }
+                }
+                else
+                {
+                    for(int i = 0; i < nvariables; ++i)
+                    {
+                        Fwd[i]     = Array<OneD, NekDouble>(nTracePts, 0.0);
+                        Bwd[i]     = Array<OneD, NekDouble>(nTracePts, 0.0);
+                        m_fields[i]->GetFwdBwdTracePhys(inarray[i], Fwd[i], Bwd[i]);
+                    }
                 }
             }
         }
- 
-         // Calculate advection
-        DoAdvection_coeff(inarray, outarray, time, Fwd, Bwd,flagFreezeJac);
-        // Negate results
         
-        for (int i = 0; i < nvariables; ++i)
+        if (flagDoAdv)
         {
-            Vmath::Neg(ncoeffs, outarray[i], 1);
-        }
-#ifdef CFS_DEBUGMODE
-        if(2==m_DebugAdvDiffSwitch)
-        {
+            // Calculate advection
+            DoAdvection_coeff(inarray, outarray, time, Fwd, Bwd,flagFreezeJac);
+
+            // Negate results
             for (int i = 0; i < nvariables; ++i)
             {
-                Vmath::Zero(ncoeffs, outarray[i], 1);
+                Vmath::Neg(ncoeffs, outarray[i], 1);
             }
         }
-#endif
-
+         
+        if (flagDoVis)
+        {
 #ifdef CFS_DEBUGMODE
-        if(1!=m_DebugAdvDiffSwitch)
-        {
-#endif
-        DoDiffusion_coeff(inarray, outarray, Fwd, Bwd,flagFreezeJac);
-#ifdef CFS_DEBUGMODE
-        }
-#endif
-        // Add forcing terms
-        for (auto &x : m_forcing)
-        {
-            if(true==flagFreezeJac)
+            if(2==m_DebugAdvDiffSwitch)
             {
-                ASSERTL0(false,"forcing not coded for DoOdeRhs_coeffMF");
-            }
-            // x->Apply(m_fields, inarray, outarray, time);
-            x->Apply_coeff(m_fields, inarray, outarray, time);
-        }
-
-        if (m_useLocalTimeStep)
-        {
-            int nElements = m_fields[0]->GetExpSize();
-            int nq, offset;
-            NekDouble fac;
-            Array<OneD, NekDouble> tmp;
-
-            Array<OneD, NekDouble> tstep (nElements, 0.0);
-            GetElmtTimeStep(inarray, tstep);
-
-            // Loop over elements
-            for(int n = 0; n < nElements; ++n)
-            {
-                nq     = m_fields[0]->GetExp(n)->GetTotPoints();
-                offset = m_fields[0]->GetPhys_Offset(n);
-                fac    = tstep[n] / m_timestep;
-                for(int i = 0; i < nvariables; ++i)
+                for (int i = 0; i < nvariables; ++i)
                 {
-                    Vmath::Smul(nq, fac, outarray[i] + offset, 1,
-                                         tmp = outarray[i] + offset, 1);
+                    Vmath::Zero(ncoeffs, outarray[i], 1);
+                }
+            }
+#endif
+
+#ifdef CFS_DEBUGMODE
+            if(1!=m_DebugAdvDiffSwitch)
+            {
+#endif
+                DoDiffusion_coeff(inarray, outarray, Fwd, Bwd,flagFreezeJac);
+#ifdef CFS_DEBUGMODE
+            }
+#endif
+        }
+        if (flagSourc)
+        {
+            // Add forcing terms
+            for (auto &x : m_forcing)
+            {
+                if(true==flagFreezeJac)
+                {
+                    ASSERTL0(false,"forcing not coded for DoOdeRhs_coeffMF");
+                }
+                // x->Apply(m_fields, inarray, outarray, time);
+                x->Apply_coeff(m_fields, inarray, outarray, time);
+            }
+
+            if (m_useLocalTimeStep)
+            {
+                int nElements = m_fields[0]->GetExpSize();
+                int nq, offset;
+                NekDouble fac;
+                Array<OneD, NekDouble> tmp;
+
+                Array<OneD, NekDouble> tstep (nElements, 0.0);
+                GetElmtTimeStep(inarray, tstep);
+
+                // Loop over elements
+                for(int n = 0; n < nElements; ++n)
+                {
+                    nq     = m_fields[0]->GetExp(n)->GetTotPoints();
+                    offset = m_fields[0]->GetPhys_Offset(n);
+                    fac    = tstep[n] / m_timestep;
+                    for(int i = 0; i < nvariables; ++i)
+                    {
+                        Vmath::Smul(nq, fac, outarray[i] + offset, 1,
+                                            tmp = outarray[i] + offset, 1);
+                    }
                 }
             }
         }
@@ -6145,16 +6201,65 @@ namespace Nektar
             break;
         }
 
-        size_t nvar = flux.num_elements();
-        for (size_t i = 0; i < flux[nvar - 1].num_elements(); ++i)
-        {
-            for (size_t n = 0; n < nvar; ++n)
-            {
-                cout << " flux["<<n<<"]["<<i<<"]= "<< flux[n][i] 
-                    <<" "<< Fwd[n][i]
-                    <<" "<< Bwd[n][i]<< endl;
-            }
-        }
+        // int nvars = flux.num_elements();
+        // int npnts = flux[nvars-1].num_elements();
+        // Array<OneD, Array<OneD, NekDouble> > flux0(nvars);
+        // Array<OneD, Array<OneD, NekDouble> > flux1(nvars);
+        // for(int i = 0; i < nvars; ++i)
+        // {
+        //     flux0[i] = Array<OneD, NekDouble> {npnts, 0.0};
+        //     flux1[i] = Array<OneD, NekDouble> {npnts, 0.0};
+        // }
+        // GetFluxVectorTraceMFNum(Fwd, Bwd, flux0);
+
+        // GetFluxVectorTraceMFAna(Fwd, Bwd, flux1);
+
+        // for(int i = 0; i < nvars; ++i)
+        // {
+        //     Vmath::Vsub(npnts, flux0[i], 1, flux1[i], 1, flux1[i], 1);
+        // }
+
+        // for(int i = 0; i < nvars; ++i)
+        // {
+        //     for (int n = 0; n < npnts; ++n)
+        //     {
+        //         // flux1[i][n] = abs( flux1[i][n]/( abs(flux0[i][n]) + 1.0E-5) );
+        //         flux1[i][n] = abs( flux1[i][n] );
+        //     }
+        // }
+
+        // NekDouble tmpMax = -1.0;
+        // int MaxVar;
+        // int MaxPnt;
+
+        // for (int i = 0; i < nvars; ++i)
+        // {
+        //     for (int n = 0; n < npnts; ++n)
+        //     {
+        //         if (flux1[i][n] > tmpMax)
+        //         {
+        //             tmpMax = flux1[i][n];
+        //             MaxVar = i;
+        //             MaxPnt = n;
+        //         }
+        //     }
+        // }
+
+        // cout << "       MaxRelFluxError[" 
+        //      << MaxVar << "][" 
+        //      << MaxPnt << "]= " << tmpMax 
+        //      << endl;
+
+        // for (size_t i = 0; i < npnts; ++i)
+        // {
+        //     for (size_t n = 0; n < nvars; ++n)
+        //     {
+        //         cout << " flux022["<<n<<"]["<<i<<"]= "
+        //              << abs(flux1[n][i]/flux0[n][i]) 
+        //              << endl;
+        //     }
+        // }
+        // ASSERTL0(false, "DebugStop!");
     }
 
     void CompressibleFlowSystem::GetFluxVectorTraceMFNum(

@@ -66,6 +66,13 @@ namespace Nektar
             double  nx  , double  ny   , double  nz   ,
             double &rhof, double &rhouf, double &rhovf, double &rhowf, double &Ef,
             NekDouble efix, NekDouble fsw);
+        
+        void v_PointSolve(
+            const Array<OneD, NekDouble> &Fwd, 
+            const Array<OneD, NekDouble> &Bwd, 
+            Array<OneD, NekDouble>       &flux, 
+            const Array<OneD, NekDouble> &FwdJ, 
+            const Array<OneD, NekDouble> &BwdJ);
 
         virtual void v_PointFluxJacobian(
             const Array<OneD, NekDouble> &Fwd,

@@ -52,7 +52,7 @@ namespace Nektar
         : CompressibleSolver(pSession)
     {
     }
-    
+
     /**
      * @brief StegerWarming Riemann solver
      *
@@ -77,93 +77,123 @@ namespace Nektar
         double  rhoR, double  rhouR, double  rhovR, double  rhowR, double  ER,
         double &rhof, double &rhouf, double &rhovf, double &rhowf, double &Ef)
     {
-        NekDouble nx,ny,nz;
-        NekDouble f1,f2,f3,f4,f5;
-        nx = 1.0;
-        ny = 0.0;
-        nz = 0.0;
+        // NekDouble nx,ny,nz;
+        // NekDouble f1,f2,f3,f4,f5;
+        // nx = 1.0;
+        // ny = 0.0;
+        // nz = 0.0;
 
-        NekDouble fsw,efix_StegerWarming;
-        efix_StegerWarming = 0.0;
-        fsw =  1.0;
-        flux_sw_pn(
-            rhoL,   rhouL,  rhovL,  rhowL,  EL,
-            nx  ,   ny   ,  nz,
-            f1  ,   f2   ,  f3   ,  f4   ,  f5,
-            efix_StegerWarming,   fsw);
+        // NekDouble fsw,efix_StegerWarming;
+        // efix_StegerWarming = 0.0;
+        // fsw =  1.0;
+        // flux_sw_pn(
+        //     rhoL,   rhouL,  rhovL,  rhowL,  EL,
+        //     nx  ,   ny   ,  nz,
+        //     f1  ,   f2   ,  f3   ,  f4   ,  f5,
+        //     efix_StegerWarming,   fsw);
 
-        rhof    = f1;
-        rhouf   = f2;
-        rhovf   = f3;
-        rhowf   = f4;
-        Ef      = f5;
+        // rhof    = f1;
+        // rhouf   = f2;
+        // rhovf   = f3;
+        // rhowf   = f4;
+        // Ef      = f5;
 
-        fsw =-1.0;
-        flux_sw_pn(
-            rhoR,   rhouR,  rhovR,  rhowR,  ER,
-            nx  ,   ny   ,  nz,
-            f1  ,   f2   ,  f3   ,  f4   ,  f5,
-            efix_StegerWarming,   fsw);
+        // fsw =-1.0;
+        // flux_sw_pn(
+        //     rhoR,   rhouR,  rhovR,  rhowR,  ER,
+        //     nx  ,   ny   ,  nz,
+        //     f1  ,   f2   ,  f3   ,  f4   ,  f5,
+        //     efix_StegerWarming,   fsw);
 
-        rhof    += f1;
-        rhouf   += f2;
-        rhovf   += f3;
-        rhowf   += f4;
-        Ef      += f5;
+        // rhof    += f1;
+        // rhouf   += f2;
+        // rhovf   += f3;
+        // rhowf   += f4;
+        // Ef      += f5;
 
-        if(false)
-        {
-            // int nvariables=5;
-            // Array<OneD, NekDouble> PointFwd(nvariables,0.0),PointBwd(nvariables,0.0);
-            // Array<OneD, NekDouble> PointFlux(nvariables,0.0);
-            // Array<OneD, NekDouble> PointNormal(3,0.0);
+        // if(false)
+        // {
+        //     // int nvariables=5;
+        //     // Array<OneD, NekDouble> PointFwd(nvariables,0.0),PointBwd(nvariables,0.0);
+        //     // Array<OneD, NekDouble> PointFlux(nvariables,0.0);
+        //     // Array<OneD, NekDouble> PointNormal(3,0.0);
 
-            // DNekMatSharedPtr PointFJac = MemoryManager<DNekMat>
-            //     ::AllocateSharedPtr(nvariables, nvariables);
-            // DNekMatSharedPtr PointBJac = MemoryManager<DNekMat>
-            //     ::AllocateSharedPtr(nvariables, nvariables);
+        //     // DNekMatSharedPtr PointFJac = MemoryManager<DNekMat>
+        //     //     ::AllocateSharedPtr(nvariables, nvariables);
+        //     // DNekMatSharedPtr PointBJac = MemoryManager<DNekMat>
+        //     //     ::AllocateSharedPtr(nvariables, nvariables);
 
-            // PointNormal[0] = nx;
-            // PointNormal[1] = ny;
-            // PointNormal[2] = nz;
-            
-            
-            // PointFwd[0] = rhoL;
-            // PointFwd[1] = rhouL;
-            // PointFwd[2] = rhovL;
-            // PointFwd[3] = rhowL;
-            // PointFwd[4] = EL;
-
-            // PointBwd[0] = rhoR;
-            // PointBwd[1] = rhouR;
-            // PointBwd[2] = rhovR;
-            // PointBwd[3] = rhowR;
-            // PointBwd[4] = ER;
-            // v_PointFluxJacobian(nvariables,PointFwd,PointBwd,PointNormal,PointFJac,PointBJac);
+        //     // PointNormal[0] = nx;
+        //     // PointNormal[1] = ny;
+        //     // PointNormal[2] = nz;
 
 
-            // DNekMat &M = (*PointBJac);
-            // NekVector<NekDouble> VectPrim(nvariables,PointBwd,eWrapper);
-            // NekVector<NekDouble> VectFlux(nvariables,PointFlux,eWrapper);
-            // VectFlux = M * VectPrim;
-            // // for(int i =0;i<nvariables;i++)
-            // // {
-            // //     PointFlux[i] = 0.0;
-            // //     for(int j =0;j<nvariables;j++)
-            // //     {
-            // //         PointFlux[i] += M(j,i)*VectPrim[j];
-            // //     }
-            // // }
+        //     // PointFwd[0] = rhoL;
+        //     // PointFwd[1] = rhouL;
+        //     // PointFwd[2] = rhovL;
+        //     // PointFwd[3] = rhowL;
+        //     // PointFwd[4] = EL;
+
+        //     // PointBwd[0] = rhoR;
+        //     // PointBwd[1] = rhouR;
+        //     // PointBwd[2] = rhovR;
+        //     // PointBwd[3] = rhowR;
+        //     // PointBwd[4] = ER;
+        //     // v_PointFluxJacobian(nvariables,PointFwd,PointBwd,PointNormal,PointFJac,PointBJac);
 
 
-            // std::cout   <<std::scientific<<std::setw(12)<<std::setprecision(5)
-            //             <<"abs(PointFlux[0]-f1)   =   "<<abs(PointFlux[0]-f1)<<"    "<<PointFlux[0]<<"    "<<f1<<std::endl
-            //             <<"abs(PointFlux[1]-f2)   =   "<<abs(PointFlux[1]-f2)<<"    "<<PointFlux[1]<<"    "<<f2<<std::endl
-            //             <<"abs(PointFlux[2]-f3)   =   "<<abs(PointFlux[2]-f3)<<"    "<<PointFlux[2]<<"    "<<f3<<std::endl
-            //             <<"abs(PointFlux[3]-f4)   =   "<<abs(PointFlux[3]-f4)<<"    "<<PointFlux[3]<<"    "<<f4<<std::endl
-            //             <<"abs(PointFlux[4]-f5)   =   "<<abs(PointFlux[4]-f5)<<"    "<<PointFlux[4]<<"    "<<f5<<std::endl;
+        //     // DNekMat &M = (*PointBJac);
+        //     // NekVector<NekDouble> VectPrim(nvariables,PointBwd,eWrapper);
+        //     // NekVector<NekDouble> VectFlux(nvariables,PointFlux,eWrapper);
+        //     // VectFlux = M * VectPrim;
+        //     // // for(int i =0;i<nvariables;i++)
+        //     // // {
+        //     // //     PointFlux[i] = 0.0;
+        //     // //     for(int j =0;j<nvariables;j++)
+        //     // //     {
+        //     // //         PointFlux[i] += M(j,i)*VectPrim[j];
+        //     // //     }
+        //     // // }
 
-        }
+
+        //     // std::cout   <<std::scientific<<std::setw(12)<<std::setprecision(5)
+        //     //             <<"abs(PointFlux[0]-f1)   =   "<<abs(PointFlux[0]-f1)<<"    "<<PointFlux[0]<<"    "<<f1<<std::endl
+        //     //             <<"abs(PointFlux[1]-f2)   =   "<<abs(PointFlux[1]-f2)<<"    "<<PointFlux[1]<<"    "<<f2<<std::endl
+        //     //             <<"abs(PointFlux[2]-f3)   =   "<<abs(PointFlux[2]-f3)<<"    "<<PointFlux[2]<<"    "<<f3<<std::endl
+        //     //             <<"abs(PointFlux[3]-f4)   =   "<<abs(PointFlux[3]-f4)<<"    "<<PointFlux[3]<<"    "<<f4<<std::endl
+        //     //             <<"abs(PointFlux[4]-f5)   =   "<<abs(PointFlux[4]-f5)<<"    "<<PointFlux[4]<<"    "<<f5<<std::endl;
+
+        // }
+
+        int nvars = 5;
+        Array<OneD, NekDouble> Fwd{nvars};
+        Array<OneD, NekDouble> Bwd{nvars};
+        Array<OneD, NekDouble> flux{nvars, 0.0};
+
+        Fwd[0] = rhoL  ;
+        Fwd[1] = rhouL ;
+        Fwd[2] = rhovL ;
+        Fwd[3] = rhowL ;
+        Fwd[4] = EL    ;
+
+        Bwd[0] = rhoR  ;
+        Bwd[1] = rhouR ;
+        Bwd[2] = rhovR ;
+        Bwd[3] = rhowR ;
+        Bwd[4] = ER    ;
+
+        v_PointSolve(
+        Fwd,
+        Bwd,
+        flux,
+        Fwd,
+        Bwd);
+
+        rhof    = flux[0];
+        rhouf   = flux[1];
+        rhovf   = flux[2];
+        rhowf   = flux[3];
+        Ef      = flux[4];
     }
 
 
@@ -191,7 +221,7 @@ namespace Nektar
         NekDouble   v2 = vx*vx + vy*vy + vz*vz;
         NekDouble   h0 = h + 0.5*v2;
         NekDouble   e0 = eL + 0.5*v2;
-        
+
         NekDouble sml_ssf= 1.0E-12;
 
 
@@ -217,7 +247,7 @@ namespace Nektar
         l4 = 0.5*(l4 + fsw*al4);
         l5 = 0.5*(l5 + fsw*al5);
 
-        
+
         NekDouble   c2r = c2 / m_eos->GetGamma();
         NekDouble   x1 = c2r * ( 2.0*l1 - l4 - l5 )/( 2.0 * c2 );
         NekDouble   x2 = c2r * ( l4 - l5 )/( 2.0 * c );
@@ -228,7 +258,41 @@ namespace Nektar
         rhowf   = (l1*vz - x1*vz + nza*x2 ) * ro;
         Ef      = (l1*e0 - x1*h0 + vna*x2 ) * ro;
     }
-    
+
+    void StegerWarmingSolver::v_PointSolve(
+        const Array<OneD, NekDouble> &Fwd,
+        const Array<OneD, NekDouble> &Bwd,
+        Array<OneD, NekDouble>       &flux,
+        const Array<OneD, NekDouble> &FwdJ,
+        const Array<OneD, NekDouble> &BwdJ)
+    {
+        int nvars = 5;
+        int nspce = 3;
+
+        Array<OneD, NekDouble> normals{nspce,0.0};
+        normals[0] = 1.0;
+
+        DNekMatSharedPtr FJac = MemoryManager<DNekMat>::AllocateSharedPtr
+                        (nvars,nvars,0.0);
+        DNekMatSharedPtr BJac = MemoryManager<DNekMat>::AllocateSharedPtr
+                        (nvars,nvars,0.0);
+
+        v_PointFluxJacobian(FwdJ, BwdJ,normals,FJac,BJac);
+
+        Array<OneD, NekDouble> BwdFlux{nvars,0.0};
+
+        NekVector<NekDouble> FwdVect (nvars, Fwd, eWrapper);
+        NekVector<NekDouble> BwdVect (nvars, Bwd, eWrapper);
+        NekVector<NekDouble> FwdFluxVect (nvars, flux, eWrapper);
+        NekVector<NekDouble> BwdFluxVect (nvars, BwdFlux, eWrapper);
+
+        FwdFluxVect = (*FJac)*FwdVect;
+        BwdFluxVect = (*BJac)*BwdVect;
+
+        Vmath::Vadd(nvars, BwdFlux, 1, flux, 1, flux, 1);
+
+        return;
+    }
 
     void StegerWarmingSolver::v_PointFluxJacobian(
             const Array<OneD, NekDouble>    &Fwd,
@@ -242,7 +306,7 @@ namespace Nektar
 
         fsw = 1.0;
         PointFluxJacobian_pn(Fwd,normals,FJac,efix_StegerWarming,fsw);
-  
+
         fsw = -1.0;
         PointFluxJacobian_pn(Bwd,normals,BJac,efix_StegerWarming,fsw);
         return;

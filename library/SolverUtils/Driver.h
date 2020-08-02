@@ -107,10 +107,14 @@ public:
         const NekDouble                   time, 
         const NekDouble                   dtlamda, 
         const TensorOfArray2D<NekDouble>  &refFields, 
-        const bool                        flagUpdateJac)
+        const bool                        flagUpdateJac,
+        const bool                        flagDoAdv = true,
+        const bool                        flagDoVis = true,
+        const bool                        flagSourc = true)
     {
         v_MultiLvlJacMultiplyMatFree(
-            Level, inarray, out, time, dtlamda, refFields, flagUpdateJac);
+            Level, inarray, out, time, dtlamda, refFields, flagUpdateJac,
+            flagDoAdv, flagDoVis, flagSourc);
     }
 
     /// Initialise Object
@@ -201,7 +205,10 @@ protected:
         const NekDouble                   time, 
         const NekDouble                   dtlamda, 
         const TensorOfArray2D<NekDouble>  &refFields, 
-        const bool                        flagUpdateJac)
+        const bool                        flagUpdateJac,
+        const bool                        flagDoAdv,
+        const bool                        flagDoVis,
+        const bool                        flagSourc)
     {
          ASSERTL0(false,"MultiLvlJacMultiplyMatFree is not valid");
     }

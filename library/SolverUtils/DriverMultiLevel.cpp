@@ -142,7 +142,10 @@ namespace Nektar
             const NekDouble                   time, 
             const NekDouble                   dtlamda, 
             const TensorOfArray2D<NekDouble>  &refFields, 
-            const bool                        flagUpdateJac)
+            const bool                        flagUpdateJac,
+            const bool                        flagDoAdv,
+            const bool                        flagDoVis,
+            const bool                        flagSourc)
         {
             ASSERTL1(m_equ[Level],"Need to define EquationSystem[level]");
             m_equ[Level]->MatrixMultiply_MatrixFree_coeff(
@@ -151,7 +154,10 @@ namespace Nektar
                 time,
                 dtlamda,
                 refFields,
-                flagUpdateJac);
+                flagUpdateJac,
+                flagDoAdv,
+                flagDoVis,
+                flagSourc);
         }    
 
         /**

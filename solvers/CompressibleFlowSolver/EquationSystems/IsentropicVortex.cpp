@@ -155,7 +155,7 @@ namespace Nektar
 
       ///////////////////////////////////////
       //NonDim
-      NekDouble  rhoDim               = 1.225;                                  
+      NekDouble  rhoDim                = 1.225;                                  
       NekDouble  pDim                  = 101325;                                 
       NekDouble  ReRef                 = 3900.0;                                 
       NekDouble  Pr                    = 0.72 ;                                   
@@ -167,8 +167,9 @@ namespace Nektar
       NekDouble  LengthRef             = 1.0;                                     
       NekDouble  LengthGrid            = 1.0;                                     
       NekDouble  velMagnDim            = Ma*soundSpdDim;                          
-      NekDouble  uDim                  = Ma*soundSpdDim;                          
-      NekDouble  vDim                  = 0.5*uDim;      
+      NekDouble  uDim                  = 2.5*Ma*soundSpdDim
+                                         *3.0/2.98808418213669569;                          
+      NekDouble  vDim                  = uDim;      
       NekDouble  uInf                  = uDim/velMagnDim;
       NekDouble  vInf                  = vDim/velMagnDim;                      
       ////////////////////////////////////////
@@ -176,7 +177,7 @@ namespace Nektar
         // Flow parameters
         const NekDouble x0    = 5.0;
         const NekDouble y0    = 0.0;
-        const NekDouble beta  = 0.5;
+        const NekDouble beta  = 1.0;
         const NekDouble u0    = uInf;
         const NekDouble v0    = vInf;
         const NekDouble gamma = m_gamma;

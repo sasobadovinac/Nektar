@@ -71,6 +71,9 @@ namespace Nektar
                 const NekDouble, 
                 const NekDouble, 
                 InArrayType2&, 
+                const bool,
+                const bool,
+                const bool,
                 const bool)>  FunctorType4;
             
             DriverOperators(void):
@@ -178,7 +181,10 @@ namespace Nektar
                     std::placeholders::_4,
                     std::placeholders::_5,
                     std::placeholders::_6,
-                    std::placeholders::_7);
+                    std::placeholders::_7,
+                    std::placeholders::_8,
+                    std::placeholders::_9,
+                    std::placeholders::_10);
             }
 
             inline void  MultiLvlJacMultiplyMatFree(
@@ -188,12 +194,15 @@ namespace Nektar
                 const NekDouble     time, 
                 const NekDouble     dtlamda, 
                 InArrayType2&       refFields, 
-                const bool          flagUpdateJac) const
+                const bool          flagUpdateJac,
+                const bool          flagDoAdv,
+                const bool          flagDoVis, 
+                const bool          flagSourc) const
             {
                 ASSERTL1(functors4[0],
                     "MultiLvlJacMultiplyMatFree has not been defined");
                 functors4[0](Level, inarray, outarray, time, dtlamda, refFields, 
-                    flagUpdateJac);
+                    flagUpdateJac, flagDoAdv, flagDoVis, flagSourc);
             }
 
         protected:

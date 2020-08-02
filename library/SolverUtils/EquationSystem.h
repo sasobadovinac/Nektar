@@ -166,10 +166,13 @@ class Interpolator;
                 const NekDouble                   time, 
                 const NekDouble                   dtlamda, 
                 const TensorOfArray2D<NekDouble>  &refFields, 
-                const bool                        flagUpdateJac)
+                const bool                        flagUpdateJac,
+                const bool                        flagDoAdv = true,
+                const bool                        flagDoVis = true,
+                const bool                        flagSourc = true)
             {
                 v_MatrixMultiply_MatrixFree_coeff(inarray, out, time, dtlamda,
-                    refFields, flagUpdateJac);
+                    refFields, flagUpdateJac, flagDoAdv, flagDoVis, flagSourc);
             }
 
             SOLVER_UTILS_EXPORT void CalculateNextLevelPreconditioner(
@@ -643,7 +646,10 @@ class Interpolator;
                 const NekDouble                   time, 
                 const NekDouble                   dtlamda, 
                 const TensorOfArray2D<NekDouble>  &refFields, 
-                const bool                        flagUpdateJac)
+                const bool                        flagUpdateJac,
+                const bool                        flagDoAdv,
+                const bool                        flagDoVis,
+                const bool                        flagSourc)
             {
                  ASSERTL0(false, 
                     "v_MatrixMultiply_MatrixFree_coeff not defined.");
