@@ -109,6 +109,7 @@ SET(NEKTAR_INCLUDE_DIR include/nektar++)
 SET(NEKTAR_SHARE_DIR share/nektar++)
 SET(NEKTAR_DOC_DIR share/doc/nektar++)
 SET(NEKTAR_CMAKE_DIR ${LIB_DIR}/nektar++/cmake)
+SET(NEKTAR_SOLVER_PLUGIN_DIR ${LIB_DIR}/nektar++/solver-plugins)
 
 # Set ThirdParty locations.
 SET(TPSRC   ${CMAKE_SOURCE_DIR}/ThirdParty)

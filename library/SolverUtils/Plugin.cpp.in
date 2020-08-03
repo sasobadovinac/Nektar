@@ -1,0 +1,32 @@
+#include <boost/dll/import.hpp>
+
+#include <LibUtilities/BasicUtils/FileSystem.h>
+#include <SolverUtils/Plugin.h>
+
+namespace dll = boost::dll;
+
+namespace Nektar
+{
+namespace SolverUtils
+{
+
+fs::path install_dir = "@CMAKE_INSTALL_PREFIX@";
+fs::path plugin_base_dir = "@NEKTAR_SOLVER_PLUGIN_DIR@";
+
+boost::shared_ptr<SolverPluginAPI> LoadSolverPlugin(std::string name)
+{
+    std::string libname = "lib" + name + ".so";
+
+    boost::shared_ptr<SolverPluginAPI> plugin = dll::import<SolverPluginAPI>(
+        install_dir / plugin_base_dir / libname,
+        "plugin",
+        dll::load_mode::append_decorations);
+
+    plugin->Initialise();
+    return plugin;
+    // return std::shared_ptr<SolverPluginAPI>(
+    //     plugin.get(), [plugin](SolverPluginAPI*) mutable {plugin.reset();});
+}
+
+}
+}

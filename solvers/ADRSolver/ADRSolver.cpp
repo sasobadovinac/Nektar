@@ -35,6 +35,8 @@
 #include <SolverUtils/Driver.h>
 #include <LibUtilities/BasicUtils/SessionReader.h>
 
+#include "Plugins.h"
+
 using namespace std;
 using namespace Nektar;
 using namespace Nektar::SolverUtils;
@@ -48,6 +50,15 @@ int main(int argc, char *argv[])
 
     try
     {
+        // Load solver plugins.
+        auto plugin = SolverUtils::LoadSolverPlugin("ADRSolver");
+
+        // Artificially increase shared_ptr count... seems that the deallocation
+        // of the boost shared library somehow causes a segfault, for some
+        // reason. Probably something is being deallocated incorrectly.
+        auto asdf = new boost::shared_ptr<SolverUtils::SolverPluginAPI>(plugin);
+        (void)asdf;
+
         // Create session reader.
         session = LibUtilities::SessionReader::CreateInstance(argc, argv);
 
