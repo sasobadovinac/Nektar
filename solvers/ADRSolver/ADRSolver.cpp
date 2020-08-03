@@ -43,31 +43,24 @@ using namespace Nektar::SolverUtils;
 
 int main(int argc, char *argv[])
 {
-    LibUtilities::SessionReaderSharedPtr session;
-    SpatialDomains::MeshGraphSharedPtr graph;
-    string vDriverModule;
-    DriverSharedPtr drv;
-
     try
     {
         // Load solver plugins.
         auto plugin = SolverUtils::LoadSolverPlugin("ADRSolver");
 
-        // Artificially increase shared_ptr count... seems that the deallocation
-        // of the boost shared library somehow causes a segfault, for some
-        // reason. Probably something is being deallocated incorrectly.
-        auto asdf = new boost::shared_ptr<SolverUtils::SolverPluginAPI>(plugin);
-        (void)asdf;
-
         // Create session reader.
-        session = LibUtilities::SessionReader::CreateInstance(argc, argv);
+        LibUtilities::SessionReaderSharedPtr session
+            = LibUtilities::SessionReader::CreateInstance(argc, argv);
 
         // Create MeshGraph
-        graph = SpatialDomains::MeshGraph::Read(session);
+        SpatialDomains::MeshGraphSharedPtr graph =
+            SpatialDomains::MeshGraph::Read(session);
 
         // Create driver
+        string vDriverModule;
         session->LoadSolverInfo("Driver", vDriverModule, "Standard");
-        drv = GetDriverFactory().CreateInstance(vDriverModule, session, graph);
+        DriverSharedPtr drv = GetDriverFactory().CreateInstance(
+            vDriverModule, session, graph);
 
         // Execute driver
         drv->Execute();
