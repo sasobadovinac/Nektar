@@ -84,7 +84,7 @@ namespace Nektar
                         }
     }
 
-        NekDouble StdExpansion1D::v_PhysEvaluateDeriv(
+        /*        NekDouble StdExpansion1D::v_PhysEvaluateDeriv(
                                                       int dir,
                     const Array<OneD, const NekDouble>& coords,
                     const Array<OneD, const NekDouble>& physvals)
@@ -92,7 +92,7 @@ namespace Nektar
         boost::ignore_unused(dir);
         return StdExpansion::BaryEvaluate<0>(coords[0], &physvals[0]);
        
-    }
+        }*/
 
     NekDouble StdExpansion1D::v_PhysEvaluate(
         const Array<OneD, const NekDouble>& Lcoord,
@@ -112,7 +112,35 @@ namespace Nektar
         ASSERTL2(Lcoord[0] <=  1 + NekConstants::kNekZeroTol,"Lcoord[0] >  1");
 
         return StdExpansion::BaryEvaluateDeriv<0>(Lcoord[0], &physvals[0]);
-    }
+        }
+
+
+        void StdExpansion1D::v_PhysEvalGrad(
+                                            const Array<OneD, const Array<OneD, NekDouble> >coords,
+                                            const Array<OneD, const NekDouble>& inarray,        
+                                            Array<OneD, NekDouble> &out_d0,
+                                            Array<OneD, NekDouble> &out_d1,
+                                            Array<OneD, NekDouble> &out_d2)
+        {
+            boost::ignore_unused(out_d1, out_d2);
+
+            if(out_d0.size()>0)
+            {
+                const int nq0 = m_base[0]->GetNumPoints();
+
+                Array<OneD, NekDouble> wsp(nq0);
+
+                for(int j = 0; j<coords[0].size(); j++)
+                {
+                    out_d0[j] = StdExpansion::BaryEvaluateDeriv<0>
+                        (coords[0][j], &inarray[0]);
+                    
+                }
+                
+            }
+            
+        }
+    
 
 
     }//end namespace

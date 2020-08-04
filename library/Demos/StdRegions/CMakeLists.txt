@@ -8,12 +8,6 @@ ADD_NEKTAR_EXECUTABLE(StdInterpDeriv
     COMPONENT demos DEPENDS StdRegions SOURCES StdInterpDeriv.cpp)
 ADD_NEKTAR_EXECUTABLE(StdInterpDerivtri
     COMPONENT demos DEPENDS StdRegions SOURCES StdInterpDerivtri.cpp)
-ADD_NEKTAR_EXECUTABLE(StdInterpDerivquad
-    COMPONENT demos DEPENDS StdRegions SOURCES StdInterpDerivquad.cpp)
-ADD_NEKTAR_EXECUTABLE(StdInterpDerivhex
-    COMPONENT demos DEPENDS StdRegions SOURCES StdInterpDerivhex.cpp)
-ADD_NEKTAR_EXECUTABLE(StdInterpDerivSeg
-    COMPONENT demos DEPENDS StdRegions SOURCES StdInterpDerivSeg.cpp)
 ADD_NEKTAR_EXECUTABLE(StdInterpBasis
     COMPONENT demos DEPENDS StdRegions SOURCES StdInterpBasis.cpp)
 ADD_NEKTAR_EXECUTABLE(StdInterpDerivBasis
@@ -28,7 +22,6 @@ ADD_NEKTAR_TEST(StdInterp_Prism_Mod_P6_Q7)
 ADD_NEKTAR_TEST(StdInterp_Pyr_Mod_P6_Q7)
 ADD_NEKTAR_TEST(StdInterp_Tet_Mod_P6_Q7)
 ADD_NEKTAR_TEST(StdInterp_Tri_Mod_P6_Q7)
-ADD_NEKTAR_TEST(StdInterp_Tri_Orth_P7_Q8)
 
 # Basis interpolation tests.
 ADD_NEKTAR_TEST(StdInterpBasis_Prism_Orth_P6_Q7)
@@ -40,10 +33,16 @@ ADD_NEKTAR_TEST(StdInterpBasis_Pyr_Mod_P7_Q8)
 ADD_NEKTAR_TEST(StdInterpBasis_Tri_Orth_P7_Q8)
 
 # interpolation tests for derivatives.
+ADD_NEKTAR_TEST(StdInterpDeriv_Seg_Mod_P7_Q8)
 ADD_NEKTAR_TEST(StdInterpDeriv_Quad_Lagrange_P6_Q7)
 ADD_NEKTAR_TEST(StdInterpDeriv_Tri_Mod_P7_Q8)
 ADD_NEKTAR_TEST(StdInterpDeriv_Tri_Orth_P7_Q8)
-
+ADD_NEKTAR_TEST(StdInterpDeriv_Pyr_Mod_P7_Q8)
+ADD_NEKTAR_TEST(StdInterpDeriv_Pyr_Orth_P7_Q8)
+ADD_NEKTAR_TEST(StdInterpDeriv_Prism_Mod_P7_Q8)
+ADD_NEKTAR_TEST(StdInterpDeriv_Prism_Orth_P7_Q8)
+ADD_NEKTAR_TEST(StdInterpDeriv_Hex_Orth_P7_Q8)
+ADD_NEKTAR_TEST(StdInterpDeriv_Hex_Mod_P7_Q8)
 
 # interpolation tests for derivatives of basis.
 ADD_NEKTAR_TEST(StdInterpDerivBasis_Quad_Lagrange_P6_Q7)

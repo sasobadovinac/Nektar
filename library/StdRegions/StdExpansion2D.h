@@ -145,9 +145,38 @@ namespace StdRegions
                     const Array<OneD, const NekDouble>& coords,
                     const Array<OneD, const NekDouble>& physvals);
                 
+
+            //            STD_REGIONS_EXPORT virtual  Array<OneD, DNekMatSharedPtr> v_GetPhysEvalALL();
+                
+
             STD_REGIONS_EXPORT virtual NekDouble v_PhysEvaluate(
                     const Array<OneD, DNekMatSharedPtr>& I,
                     const Array<OneD, const NekDouble> & physvals);
+            
+                        STD_REGIONS_EXPORT virtual NekDouble v_PhysEvaluatedx(
+                    const Array<OneD, const NekDouble>& coords,
+                    const Array<OneD, const NekDouble>& physvals);
+
+            STD_REGIONS_EXPORT virtual NekDouble v_PhysEvaluatedy(
+                    const Array<OneD, const NekDouble>& coords,
+                    const Array<OneD, const NekDouble>& physvals);
+            
+            
+            //evaluates der of multiple points given in coords(2D array) with x-coords in coords[0] and ycoords in coords[1]
+        
+      
+            STD_REGIONS_EXPORT virtual void v_PhysEvalGrad(
+                                const Array<OneD, const Array<OneD, NekDouble> >coords,
+                                const Array<OneD, const NekDouble>& inarray,        
+                                Array<OneD, NekDouble> &out_d0,
+                                Array<OneD, NekDouble> &out_d1,
+                                                 Array<OneD, NekDouble> &out_d2 = NullNekDouble1DArray);
+            
+            STD_REGIONS_EXPORT virtual void v_PhysEvaluateBasisGrad(
+                                        const Array<OneD, Array<OneD, const NekDouble> >&coords,
+                                        int mode,
+                                        Array<OneD, NekDouble> &out_d0, 
+                                        Array<OneD, NekDouble> &out_d1);
             
             STD_REGIONS_EXPORT virtual void v_BwdTrans_SumFacKernel(
                     const Array<OneD, const NekDouble>& base0,

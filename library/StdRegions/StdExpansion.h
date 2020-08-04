@@ -63,7 +63,8 @@ namespace Nektar
         {
         public:
 
-            Array<OneD, Array<OneD, NekDouble> > m_physevalall = Array< OneD, Array< OneD, NekDouble> >(4);
+            //            Array<OneD, Array<OneD, NekDouble> > m_physevalall = Array< OneD, Array< OneD, NekDouble> >(4);
+            Array<OneD, Array<TwoD, NekDouble> > m_physevalall;
             // 0 = basis eval
             // 1 = dx
             // 2 = dy
@@ -952,18 +953,28 @@ namespace Nektar
             {
                 return v_PhysEvaluate(coords,physvals);
             }
-
+            
+            void PhysEvalGrad(
+                              const Array<OneD, const Array<OneD, NekDouble> >coords,
+                              const Array<OneD, const NekDouble>& inarray,        
+                              Array<OneD, NekDouble> &out_d0,
+                              Array<OneD, NekDouble> &out_d1,
+                              Array<OneD, NekDouble> &out_d2)
+                
+            {
+                v_PhysEvalGrad(coords, inarray, out_d0, out_d1, out_d2);
+            }
             NekDouble PhysEvaluatedz(const Array<OneD, const NekDouble>& coords,
                                      const Array<OneD, const NekDouble>& physvals)
             {
                 return v_PhysEvaluatedz(coords,physvals);
-            }
-
+                }
+                /*
             NekDouble PhysEvaluateDeriv(int dir, const Array<OneD, const NekDouble>& coords,
                                    const Array<OneD, const NekDouble>& physvals)
             {
                 return v_PhysEvaluateDeriv(dir, coords,physvals);
-            }
+                }*/
 
             /** \brief This function evaluates the expansion at a single
              *  (arbitrary) point of the domain
@@ -1010,7 +1021,7 @@ namespace Nektar
                 return v_PhysEvaluateBasis(coords, mode);
             }
             
-            Array< OneD, Array<OneD, NekDouble> > GetPhysEvalALL()
+            Array<OneD, Array<TwoD, NekDouble> >  GetPhysEvalALL()
             {
                 return v_GetPhysEvalALL();
             }
@@ -1020,7 +1031,29 @@ namespace Nektar
                 const Array<OneD, const NekDouble> &physvals)
             {
                 return v_PhysEvaluatedx(coords, physvals);
+                }
+            
+            /*          void PhysEvalGrad(                                       
+                              const Array<OneD, Array<OneD, NekDouble> >coords,
+                              const Array<OneD, const NekDouble>& inarray,        
+                              Array<OneD, NekDouble> &out_d0,
+                              Array<OneD, NekDouble> &out_d1,
+                              Array<OneD, NekDouble> &out_d2)
+            {
+                return v_PhysEvalGrad(coords, inarray,out_d0, out_d1, out_d2 );
             }
+*/
+
+            void PhysEvalBasisGrad(
+                                   const Array<OneD, Array<OneD, NekDouble> >coords,
+                                   int mode,
+                                   Array<OneD, NekDouble> &out_d0,
+                                   Array<OneD, NekDouble> &out_d1 = NullNekDouble1DArray,
+                                   Array<OneD, NekDouble> &out_d2 = NullNekDouble1DArray)
+            {
+                return v_PhysEvalBasisGrad(coords, mode,out_d0, out_d1, out_d2 );  
+            }
+            
 
 
             NekDouble PhysEvaluatedy(
@@ -1457,9 +1490,14 @@ namespace Nektar
                      * the paper here:
                      *https://people.maths.ox.ac.uk/trefethen/barycentric.pdf
                      */
-                    if (xdiff == 0.0)
+                    if (xdiff == 0.0 )
                     {
-                        std::cout<<"\n same:";
+                        if(z[i] == 1 && coord == 1)
+                        {
+                            //  std::cout<<"\n z[i] and coord = 1, pval = "<<pval;                 
+                        }
+                        //                        std::cout<<"\n same: pval = "<<pval;
+                        
                         return pval;
                     }
 
@@ -1500,7 +1538,7 @@ namespace Nektar
                           numer4 = 0.0;  
                 // Pointer to derivative matrix
                 // Only assigned if needed
-                DNekMatSharedPtr D0;
+                DNekMatSharedPtr D0 = NULL;
                 ASSERTL2(DIR < m_base.size(),
                          "Direction should be less than shape dimension.");
 
@@ -1514,7 +1552,6 @@ namespace Nektar
                 {
                     NekDouble xdiff = z[i] - coord;
                     NekDouble pval = physvals[i];
-
                     /*
                      * (in this specific case) you actually 
                      * want to do the comparison exactly 
@@ -1522,14 +1559,27 @@ namespace Nektar
                      * the paper here:
                      *https://people.maths.ox.ac.uk/trefethen/barycentric.pdf
                      */
-                    if (xdiff == 0.0)
+                    //std::cout<<"\ncoord="<<coord<<" z["<<i<<"]="<<z[i]<<" xdiff="<<xdiff<<" physvals = "<<physvals[0]<<" "<<physvals[1]<<" "<<physvals[2];
+                    if (xdiff == 0.0 || fabs(xdiff)<1e-15)
                     {
-                        D0 = m_base[DIR]->GetD();
+                        if(D0 == NULL)
+                        {   
+                            D0 = m_base[DIR]->GetD();
+                        }   
+                        
                         // take ith row of z and multiply with physvals
-          
-                        pval = Vmath::Dot(nquad, &(D0->GetPtr())[i], nquad, &physvals[0], 1);
-                        std::cout<<"\n here in evlderiv! pval ="<<pval<<" z[i]="<<z[i]<<" coord="<<coord;
-          
+                        
+                        pval = Vmath::Dot(z.size(), &(D0->GetPtr())[i],z.size(), &physvals[0], 1);
+                        //if(z[i] == 1 && coord == 1)
+                        //{
+                            //std::cout<<"\n*********z["<<i<<"] = 1 and coord = 1\n";
+                            //std::cout<<" pval="<<pval;
+                      
+                        //}else{
+                        
+                            //                          std::cout<<"\n*********z["<<i<<"] = "<<z[i]<<"  and coord = "<<coord<<"\n";
+                            //std::cout<<" pval="<<pval;
+                            //}
                         return pval;
                     }
 
@@ -1542,8 +1592,9 @@ namespace Nektar
                     denom += tmp;
                 }
 
-
-                return (numer1*numer2 - numer3*numer4) / pow(denom,2);
+                NekDouble ret =  (numer1*numer2 - numer3*numer4) / pow(denom,2);
+                std::cout<<"\n  coord="<<coord<<" returning = "<<ret;
+                return ret;
             }
 
 
@@ -1587,7 +1638,7 @@ namespace Nektar
             }
         private:
 
-            STD_REGIONS_EXPORT virtual Array< OneD, Array< OneD, NekDouble> >v_GetPhysEvalALL();/*
+            STD_REGIONS_EXPORT virtual Array<OneD, Array< TwoD, NekDouble> >        v_GetPhysEvalALL();/*
             STD_REGIONS_EXPORT virtual Array< OneD, NekDouble> v_GetPhysEvalALLdx();
             STD_REGIONS_EXPORT virtual Array< OneD, NekDouble> v_GetPhysEvalALLdy();
             STD_REGIONS_EXPORT virtual Array< OneD, NekDouble> v_GetPhysEvalALLdz();*/
@@ -1730,6 +1781,15 @@ namespace Nektar
 
             STD_REGIONS_EXPORT Array< OneD, Array<OneD, NekDouble> >v_PhysEvalALL();
 
+
+            /*STD_REGIONS_EXPORT virtual void v_PhysEvalGrad            
+                (                                            const Array<OneD, Array<OneD, NekDouble> >coords,
+                                                             const Array<OneD, const NekDouble>& inarray,        
+                                                             Array<OneD, NekDouble> &out_d0,
+                                                             Array<OneD, NekDouble> &out_d1,
+                                                             Array<OneD, NekDouble> &out_d2);
+            
+            */
             STD_REGIONS_EXPORT virtual NekDouble v_PhysEvaluatedxBasis            
             (const Array<OneD, const NekDouble>& coords, int mode);
 
@@ -1754,18 +1814,34 @@ namespace Nektar
             STD_REGIONS_EXPORT virtual NekDouble v_PhysEvaluatedzBasisBary
             (const Array<OneD, const NekDouble>& coords, int mode);
 
-            STD_REGIONS_EXPORT virtual NekDouble v_PhysEvaluateDeriv
+            /*            STD_REGIONS_EXPORT virtual NekDouble v_PhysEvaluateDeriv
                 (int dir, const Array<OneD,
                  const NekDouble>& coords,
                  const Array<OneD, const NekDouble>& physvals);
-
+            */
 
             STD_REGIONS_EXPORT virtual NekDouble v_PhysEvaluate
                 (const Array<OneD,
                  const NekDouble>& coords,
                  const Array<OneD, const NekDouble>& physvals);
 
-            STD_REGIONS_EXPORT virtual NekDouble v_PhysEvaluatedx
+
+ STD_REGIONS_EXPORT virtual void v_PhysEvalGrad(
+                                                const Array<OneD, const Array<OneD, NekDouble> > coords, 
+                                                const Array<OneD, const NekDouble>& inarray,
+                                                Array<OneD, NekDouble> &out_d0, 
+                                                Array<OneD, NekDouble>& out_d1, 
+                                                Array<OneD, NekDouble>& out_d2);
+
+            STD_REGIONS_EXPORT virtual void v_PhysEvalBasisGrad(
+                                                               const Array<OneD, const Array<OneD, NekDouble> > coords, 
+                                                               int mode, 
+                                                               Array<OneD, NekDouble>& out_d0,                                        
+                                                               Array<OneD, NekDouble>& out_d1, 
+                                                               Array<OneD, NekDouble>& out_d2);
+            
+
+                        STD_REGIONS_EXPORT virtual NekDouble v_PhysEvaluatedx
                 (const Array<OneD,
                  const NekDouble>& coords,
                  const Array<OneD, const NekDouble>& physvals);
@@ -1779,7 +1855,7 @@ namespace Nektar
                 (const Array<OneD,
                  const NekDouble>& coords,
                  const Array<OneD, const NekDouble>& physvals);
-
+            
             STD_REGIONS_EXPORT virtual void v_LocCoordToLocCollapsed(
                                         const Array<OneD, const NekDouble>& xi,
                                         Array<OneD, NekDouble>& eta);

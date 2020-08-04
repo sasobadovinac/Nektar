@@ -152,6 +152,26 @@ namespace Nektar
 
         }
 
+        /*   void StdQuadExp::v_PhysEvalGrad(
+                                        const Array<OneD, NekDouble> coords,
+                                        const Array<OneD, const NekDouble>& inarray,                           Array<OneD, NekDouble> &out_d0,
+                                        Array<OneD, NekDouble> &out_d1,
+                                        Array<OneD, NekDouble> &out_d2)
+        {
+            boost::ignore_unused(out_d2);
+            int nummodes0 = m_base[0]->GetNumModes();
+            int nummodes1 = m_base[1]->GetNumModes();
+            if(out_d0.size()>0)
+            {
+                StdExpansion2D::PhysEvaluatedx(coords, out_d0);
+            }
+            if(out_d1.size()>0)
+            {
+                StdExpansion2D::PhysEvaluatedy(coords, out_d1);
+            }
+        }
+        }*/
+
 
         ////////////////
         // Transforms //
@@ -588,7 +608,7 @@ namespace Nektar
          *  fastest
          */
 
-        void StdQuadExp::v_FillModedy(const int mode,
+        /*        void StdQuadExp::v_FillModedy(const int mode,
                             Array<OneD, NekDouble> &outarray)
         {
             
@@ -605,9 +625,10 @@ namespace Nektar
             {
                 coords[0] = coordsx[i];
                 coords[1] = coordsy[i];
-                temp[i] = 0.0;//PhysEvaluatedy(coords, outarray);
+                temp[i] = StdExpansion2D::PhysEvaluatedy(coords, outarray);
             }
-        }
+            outarray = temp;
+            }*/
 
         /** \brief Fill outarray with mode \a mode of expansion
          *
@@ -654,7 +675,7 @@ namespace Nektar
          *  fastest
          */
 
-        void StdQuadExp::v_FillModedx(const int mode,
+        /*        void StdQuadExp::v_FillModedx(const int mode,
                             Array<OneD, NekDouble> &outarray)
         {
             
@@ -671,10 +692,11 @@ namespace Nektar
             {
                 coords[0] = coordsx[i];
                 coords[1] = coordsy[i];
-                temp[i] = 0.0;//PhysEvaluatedx(coords, outarray);
+                temp[i] = StdExpansion2D::PhysEvaluatedx(coords, outarray);
             }
+            outarray = temp;
         }
-
+        */
 
         //////////////////////
         // Helper functions //
@@ -814,7 +836,7 @@ namespace Nektar
             }
         }
 
-        NekDouble StdQuadExp::v_PhysEvaluatedyBasis(
+        /*NekDouble StdQuadExp::v_PhysEvaluatedyBasis(
             const Array<OneD, const NekDouble> &coords,
             int mode)
         {
@@ -833,29 +855,8 @@ namespace Nektar
             Vmath::Vcopy(tot, &m_physevalall[2][mode*tot], 1, &physvals[0], 1);
             return v_PhysEvaluate(coords, physvals);
 
-        }
+            }*/
         
-        NekDouble StdQuadExp::v_PhysEvaluatedxBasis(
-            const Array<OneD, const NekDouble> &coords,
-            int mode)
-        {
-            ASSERTL2(coords[0] > -1 - NekConstants::kNekZeroTol,
-                     "coord[0] < -1");
-            ASSERTL2(coords[0] <  1 + NekConstants::kNekZeroTol,
-                     "coord[0] >  1");
-            ASSERTL2(coords[1] > -1 - NekConstants::kNekZeroTol,
-                     "coord[1] < -1");
-            ASSERTL2(coords[1] <  1 + NekConstants::kNekZeroTol,
-                     "coord[1] >  1");
-    
-            int tot = GetTotPoints();
-            Array<OneD, NekDouble> physvals(tot);
-           
-            
-            Vmath::Vcopy(tot, &m_physevalall[1][mode*tot], 1, &physvals[0], 1);
-            return v_PhysEvaluate(coords, physvals);
-
-        }
 
         NekDouble StdQuadExp::v_PhysEvaluatedxBasisBary(
             const Array<OneD, const NekDouble> &coords,
@@ -876,7 +877,7 @@ namespace Nektar
                 StdExpansion::BaryEvaluateBasis<1>(coords[1], mode / nm0);
         }
 
-        NekDouble StdQuadExp::v_PhysEvaluatedy(
+        /*        NekDouble StdQuadExp::v_PhysEvaluatedy(
             const Array<OneD, const NekDouble> &coords,
             const Array<OneD, const NekDouble> &physvals)
         {
@@ -929,31 +930,48 @@ namespace Nektar
 
             return StdExpansion::BaryEvaluate<1>(coll[1], &wsp[0]);
         }
+*/
 
-
-        Array<OneD, Array<OneD, NekDouble> >StdQuadExp::v_GetPhysEvalALL()
+        //        Array<OneD, DNekMatSharedPtr> 
+        Array<OneD, Array<TwoD, NekDouble> >StdQuadExp::v_GetPhysEvalALL()
         {
-            Array<OneD, Array<OneD, NekDouble> > tmp_ret(4);
-            NekDouble totPts = GetTotPoints();
-            Array<OneD, NekDouble> tmp(totPts*m_ncoeffs);
-            Array<OneD, NekDouble> tmpdx(totPts*m_ncoeffs);
-            Array<OneD, NekDouble> tmpdy(totPts*m_ncoeffs);
+            
+            Array<OneD, Array<TwoD, NekDouble> > ret(3);//            Array<OneD, DNekMatSharedPtr> rArr(3);
+            //            Array<TwoD, NekDouble> rArr(3);
+            NekDouble nq = GetTotPoints();
+           
+            //MemoryManager<DNekMat>::AllocateSharedPtr(m_ncoeffs,nq);
+            //MemoryManager<DNekMat>::AllocateSharedPtr(m_ncoeffs,nq);   
+            // MemoryManager<DNekMat>::AllocateSharedPtr(m_ncoeffs,nq);
+            //Array<OneD, Array<OneD, NekDouble> > temp_ret(4);
+            //          Array<OneD, NekDouble> tmp(totPts*m_ncoeffs);
+            //Array<OneD, NekDouble> tmpdx(totPts*m_ncoeffs);
+            //Array<OneD, NekDouble> tmpdy(totPts*m_ncoeffs);
+            
+            // Array<OneD, NekDouble> row(m_ncoeffs*totPts);
+            //temp_ret[0] = row;
+            
+            ret[0] = Array<TwoD, NekDouble>(m_ncoeffs, nq);
+            ret[1] = Array<TwoD, NekDouble>(m_ncoeffs, nq);
+            ret[2] = Array<TwoD, NekDouble>(m_ncoeffs, nq);
+            
             for(int i = 0; i < m_ncoeffs; i++)
             {
-                Array<OneD, NekDouble> k(totPts);
-                v_FillMode(i,k);
-                Vmath::Vcopy(totPts, &k[0], 1, &tmp[(i*totPts)], 1);
-                v_FillModedx(i,k);
-                Vmath::Vcopy(totPts, &k[0], 1, &tmpdx[(i*totPts)], 1);
-                v_FillModedy(i,k);
-                Vmath::Vcopy(totPts, &k[0], 1, &tmpdy[(i*totPts)], 1);
-                
+                Array<OneD, NekDouble> tmp(nq);
+                           
+                Array<OneD, NekDouble> tmp2(nq);
+                             
+                v_FillMode(i, tmp);
+                Vmath::Vcopy(nq, tmp.data(), 1, &ret[0][i][0], 1);  
+
+                v_PhysDeriv(0, tmp, tmp2);
+                Vmath::Vcopy(nq, tmp2.data(), 1, &ret[1][i][0], 1);  
+
+                v_PhysDeriv(1, tmp, tmp2);
+                Vmath::Vcopy(nq, tmp2.data(), 1, &ret[2][i][0], 1);  
+
             }
-            
-            tmp_ret[0] = tmp;
-            tmp_ret[1] = tmpdx;
-            tmp_ret[2] = tmpdy;
-            return tmp_ret;
+            return ret;
         }        
 
 

@@ -112,9 +112,159 @@ namespace Nektar
             }
         }
        
+        
+       NekDouble StdExpansion2D::v_PhysEvaluatedy(
+            const Array<OneD, const NekDouble> &coords,
+            const Array<OneD, const NekDouble> &physvals)
+        {
+            ASSERTL2(coords[0] > -1 - NekConstants::kNekZeroTol,
+                     "coord[0] < -1");
+            ASSERTL2(coords[0] <  1 + NekConstants::kNekZeroTol,
+                     "coord[0] >  1");
+            ASSERTL2(coords[1] > -1 - NekConstants::kNekZeroTol,
+                     "coord[1] < -1");
+            ASSERTL2(coords[1] <  1 + NekConstants::kNekZeroTol,
+                     "coord[1] >  1");
+            ASSERTL2(dir < 1 && dir > 0, "direction can be 0 or 1");
+           
+            const int nq0 = m_base[0]->GetNumPoints();
+            Array<OneD, NekDouble> wsp(nq0);
+            for (int i = 0; i < nq0; ++i)
+            {
+                   
+                wsp[i] = StdExpansion::BaryEvaluate<0>(
+                    coords[0], &physvals[0]+i*nq0 );
+            }
+            
+            
+            return  StdExpansion::BaryEvaluateDeriv<1>(coords[1], &wsp[0]);        }
+
+        //evaluates der of multiple points given in coords(2D array) with x-coords in coords[0] and ycoords in coords[1]
+        
+        void StdExpansion2D::v_PhysEvalGrad(
+                                            const Array<OneD, const Array<OneD, NekDouble> >coords,
+                                            const Array<OneD, const NekDouble>& inarray,        
+                                            Array<OneD, NekDouble> &out_d0,
+                                            Array<OneD, NekDouble> &out_d1,
+                                            Array<OneD, NekDouble> &out_d2)
+        {
+            boost::ignore_unused(out_d2);
+
+            if(out_d0.size()>0)
+            {
+                Array<OneD, NekDouble> coll(2);
+                const int nq1 = m_base[1]->GetNumPoints();
+                
+                Array<OneD, NekDouble> wsp(nq1);
+
+                const int nq0 = m_base[0]->GetNumPoints();
+            
+                for(int j = 0; j<coords[0].size(); j++)
+                {
+                    for (int i = 0; i < nq0; ++i)
+                    {
+                        wsp[i] = StdExpansion::BaryEvaluateDeriv<0>
+                            (coords[0][j], &inarray[0]);
+                    }
+                    out_d0[j] =  StdExpansion::BaryEvaluate<1>(coords[1][j], &wsp[0]);
+                }
+
+            }
+            
+            if(out_d1.size()>0)
+            {
+                const int nq0 = m_base[0]->GetNumPoints();
+                Array<OneD, NekDouble> wsp(nq0);
+
+                for(int j = 0; j<coords[1].size(); j++)
+                {
+                    for (int i = 0; i < nq0; ++i)
+                    {
+                        wsp[i] = StdExpansion::BaryEvaluate<0>
+                            (coords[0][j], &inarray[0]+ i * nq0);
+                    }
+                    out_d1[j] =  StdExpansion::BaryEvaluateDeriv<1>(coords[1][j], &wsp[0]);
+                }
+            }
+            
+        }
+    
 
 
-        NekDouble StdExpansion2D::v_PhysEvaluate(
+    void StdExpansion2D::v_PhysEvaluateBasisGrad(
+                                                 const Array<OneD, Array<OneD, const NekDouble> >&coords,
+                                                      int mode,
+                                                      Array<OneD, NekDouble> &out_d0, 
+                                                 Array<OneD, NekDouble> &out_d1)
+    {
+        ASSERTL2(coords[0] > -1 - NekConstants::kNekZeroTol,
+                     "coord[0] < -1");
+            ASSERTL2(coords[0] <  1 + NekConstants::kNekZeroTol,
+                     "coord[0] >  1");
+            ASSERTL2(coords[1] > -1 - NekConstants::kNekZeroTol,
+                     "coord[1] < -1");
+            ASSERTL2(coords[1] <  1 + NekConstants::kNekZeroTol,
+                     "coord[1] >  1");
+    
+            //            int tot = GetTotPoints();
+            //Array<OneD, NekDouble> physvals(tot);
+            if(out_d0.size() > 0)
+            {
+                const int nq0 = m_base[0]->GetNumPoints();  
+                Array<OneD, NekDouble> wsp(nq0);   
+                for(int j = 0; j < coords[0].size(); j++)
+                {
+                    out_d0[j] =  StdExpansion::BaryEvaluate<0>(coords[0][j], &(m_physevalall[1][mode][0]));
+                       
+                }
+            }
+            if(out_d1.size() > 0)
+            {
+                const int nq1 = m_base[1]->GetNumPoints();  
+                Array<OneD, NekDouble> wsp(nq1);   
+                for(int j = 0; j < coords[1].size(); j++)
+                {
+                    out_d1[j] =  StdExpansion::BaryEvaluate<1>(coords[1][j], &(m_physevalall[2][mode][0]));
+                       
+                }
+            }
+            
+        }    
+
+       NekDouble StdExpansion2D::v_PhysEvaluatedx(
+            const Array<OneD, const NekDouble> &coords,
+            const Array<OneD, const NekDouble> &physvals)
+        {
+            ASSERTL2(coords[0] > -1 - NekConstants::kNekZeroTol,
+                     "coord[0] < -1");
+            ASSERTL2(coords[0] <  1 + NekConstants::kNekZeroTol,
+                     "coord[0] >  1");
+            ASSERTL2(coords[1] > -1 - NekConstants::kNekZeroTol,
+                     "coord[1] < -1");
+            ASSERTL2(coords[1] <  1 + NekConstants::kNekZeroTol,
+                     "coord[1] >  1");
+            
+            const int nq0 = m_base[0]->GetNumPoints();
+            const int nq1 = m_base[1]->GetNumPoints();
+            Array<OneD, NekDouble> wsp(nq1);
+            // std::            cout<<"\ncoords[0]="<<coords[0];
+                        //std::cout<<"  wsp:";
+            for (int i = 0; i < nq1; ++i)
+            {
+                wsp[i] = StdExpansion::BaryEvaluateDeriv<0>(
+                    coords[0], &physvals[0]+ i * nq0);
+                  std::cout<<" "<<wsp[i];
+            }
+            //        std::cout<<"\ncoords[1]="<<coords[1];
+            
+            NekDouble ret = StdExpansion::BaryEvaluate<1>(coords[1], &wsp[0]);
+            //std::cout<<" finalval = "<<ret<<"\n";
+
+            return ret;
+        }
+
+    
+    NekDouble StdExpansion2D::v_PhysEvaluate(
             const Array<OneD, const NekDouble> &coords,
             const Array<OneD, const NekDouble> &physvals)
         {
@@ -142,7 +292,7 @@ namespace Nektar
             return StdExpansion::BaryEvaluate<1>(coll[1], &wsp[0]);
         }
 
-
+    
         NekDouble StdExpansion2D::v_PhysEvaluate(
             const Array<OneD, DNekMatSharedPtr > &I,
             const Array<OneD, const NekDouble> &physvals)

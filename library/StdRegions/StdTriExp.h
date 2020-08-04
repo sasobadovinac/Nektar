@@ -157,7 +157,7 @@ namespace Nektar
                 const int               mode,
                 Array<OneD, NekDouble> &outarray);
             
-            STD_REGIONS_EXPORT virtual void v_FillModedx(
+            /*            STD_REGIONS_EXPORT virtual void v_FillModedx(
                     const int mode,
                     Array<OneD, NekDouble> &array);
             
@@ -165,7 +165,7 @@ namespace Nektar
                     const int mode,
                     Array<OneD, NekDouble> &array);
             
-
+            */
 
             STD_REGIONS_EXPORT NekDouble v_PhysEvaluateBasis(
                 const Array<OneD, const NekDouble>& coords,
@@ -179,14 +179,16 @@ namespace Nektar
                 const Array<OneD, const NekDouble>& coords,
                 int mode) final;
 
-            STD_REGIONS_EXPORT NekDouble v_PhysEvaluatedx(
+
+            /*          STD_REGIONS_EXPORT NekDouble v_PhysEvaluatedx(
                 const Array<OneD, const NekDouble> &coords,
                 const Array<OneD, const NekDouble> &physvals) final;
+            
             
             STD_REGIONS_EXPORT NekDouble v_PhysEvaluatedy(
                 const Array<OneD, const NekDouble> &coords,
                 const Array<OneD, const NekDouble> &physvals) final;
-
+            */
             // These methods calculate the interpolation of the 
             // derivatives in respective directions using the 
             // modified barycentric interpolation formula
@@ -200,7 +202,7 @@ namespace Nektar
                 const Array<OneD, const NekDouble>& coords,
                 int mode);
             
-            STD_REGIONS_EXPORT virtual Array< OneD, Array<OneD, NekDouble> >v_GetPhysEvalALL();
+            //            STD_REGIONS_EXPORT virtual Array<OneD, DNekMatSharedPtr> v_GetPhysEvalALL();
            
             //---------------------------
             // Helper functions
