@@ -22,7 +22,8 @@ IF( NEKTAR_SOLVER_ADR )
         ./EquationSystems/UnsteadyInviscidBurger.cpp
         ./EquationSystems/UnsteadyReactionDiffusion.cpp
         ./EquationSystems/UnsteadyViscousBurgers.cpp
-        ./EquationSystems/EigenValuesAdvection.cpp)
+        ./EquationSystems/EigenValuesAdvection.cpp
+        ./EquationSystems/ALEDemo.cpp)
 
     #MMF advection
     ADD_NEKTAR_TEST        (TestMMFAdvPlane)
