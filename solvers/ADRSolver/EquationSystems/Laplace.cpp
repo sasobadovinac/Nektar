@@ -33,13 +33,24 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <ADRSolver/EquationSystems/Laplace.h>
+#include <ADRSolver/Plugin.h>
 
 using namespace std;
 
 namespace Nektar
 {
-    string Laplace::className = GetEquationSystemFactory().
-        RegisterCreatorFunction("Laplace", Laplace::create);
+    // Definition of ADRSolver plugin object.
+    namespace SolverUtils
+    {
+        extern "C" ADRSolverPlugin plugin = ADRSolverPlugin();
+    }
+
+    std::string Laplace::className;
+    bool laplace_reg = Nektar::SolverUtils::plugin.RegisterCallback(
+        [](){
+            Laplace::className = GetEquationSystemFactory().
+                RegisterCreatorFunction("Laplace", Laplace::create);
+        });
 
     Laplace::Laplace(
         const LibUtilities::SessionReaderSharedPtr& pSession,

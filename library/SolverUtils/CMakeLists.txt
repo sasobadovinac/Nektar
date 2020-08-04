@@ -1,3 +1,7 @@
+CONFIGURE_FILE(${CMAKE_SOURCE_DIR}/library/SolverUtils/Plugin.cpp.in
+               ${CMAKE_BINARY_DIR}/library/SolverUtils/Plugin.cpp
+	       @ONLY)
+
 SET(SOLVER_UTILS_SOURCES
   Core/Coupling.cpp
   Core/CouplingFile.cpp
@@ -46,6 +50,7 @@ SET(SOLVER_UTILS_SOURCES
   Forcing/ForcingMovingReferenceFrame.cpp
   Forcing/ForcingNoise.cpp
   Forcing/ForcingProgrammatic.cpp
+  ${CMAKE_BINARY_DIR}/library/SolverUtils/Plugin.cpp
 )
 
 SET(SOLVER_UTILS_HEADERS
@@ -88,6 +93,7 @@ SET(SOLVER_UTILS_HEADERS
   RiemannSolvers/RiemannSolver.h
   RiemannSolvers/UpwindSolver.h
   RiemannSolvers/UpwindLDGSolver.h
+  Plugin.h
   SolverUtils.hpp
   SolverUtilsDeclspec.h
   UnsteadySystem.h

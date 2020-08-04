@@ -35,28 +35,32 @@
 #include <SolverUtils/Driver.h>
 #include <LibUtilities/BasicUtils/SessionReader.h>
 
+#include <ADRSolver/Plugin.h>
+
 using namespace std;
 using namespace Nektar;
 using namespace Nektar::SolverUtils;
 
 int main(int argc, char *argv[])
 {
-    LibUtilities::SessionReaderSharedPtr session;
-    SpatialDomains::MeshGraphSharedPtr graph;
-    string vDriverModule;
-    DriverSharedPtr drv;
-
     try
     {
+        // Load solver plugins.
+        auto plugin = SolverUtils::LoadSolverPlugin("ADRSolver");
+
         // Create session reader.
-        session = LibUtilities::SessionReader::CreateInstance(argc, argv);
+        LibUtilities::SessionReaderSharedPtr session
+            = LibUtilities::SessionReader::CreateInstance(argc, argv);
 
         // Create MeshGraph
-        graph = SpatialDomains::MeshGraph::Read(session);
+        SpatialDomains::MeshGraphSharedPtr graph =
+            SpatialDomains::MeshGraph::Read(session);
 
         // Create driver
+        string vDriverModule;
         session->LoadSolverInfo("Driver", vDriverModule, "Standard");
-        drv = GetDriverFactory().CreateInstance(vDriverModule, session, graph);
+        DriverSharedPtr drv = GetDriverFactory().CreateInstance(
+            vDriverModule, session, graph);
 
         // Execute driver
         drv->Execute();

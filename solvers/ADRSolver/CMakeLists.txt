@@ -6,11 +6,27 @@ IF (NOT NEKTAR_BUILD_SOLVERS)
     SET(NEKTAR_SOLVER_ADR OFF CACHE INTERNAL "")
 ENDIF()
 
-SUBDIRS(EquationSystems)
-
 IF( NEKTAR_SOLVER_ADR )
-    ADD_SOLVER_EXECUTABLE(ADRSolver SOURCES ./ADRSolver.cpp)
-    TARGET_LINK_LIBRARIES(ADRSolver PUBLIC ADRSolverEquationSystems)
+    ADD_SOLVER_EXECUTABLE(ADRSolver SOURCES
+        ./ADRSolver.cpp
+        ./EquationSystems/Projection.cpp
+        ./EquationSystems/SteadyAdvectionDiffusion.cpp
+        ./EquationSystems/SteadyAdvectionDiffusionReaction.cpp
+        ./EquationSystems/UnsteadyAdvection.cpp
+        ./EquationSystems/MMFAdvection.cpp
+        ./EquationSystems/UnsteadyDiffusion.cpp
+        ./EquationSystems/UnsteadyAdvectionDiffusion.cpp
+        ./EquationSystems/UnsteadyInviscidBurger.cpp
+        ./EquationSystems/UnsteadyReactionDiffusion.cpp
+        ./EquationSystems/UnsteadyViscousBurgers.cpp
+        ./EquationSystems/EigenValuesAdvection.cpp
+        )
+
+    ADD_SOLVER_PLUGIN(ADRSolver SOURCES
+        ./EquationSystems/Laplace.cpp
+        ./EquationSystems/Helmholtz.cpp
+        ./EquationSystems/Poisson.cpp
+        )
 
     #MMF advection
     ADD_NEKTAR_TEST        (TestMMFAdvPlane)

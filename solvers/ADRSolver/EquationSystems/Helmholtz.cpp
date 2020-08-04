@@ -33,14 +33,22 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <ADRSolver/EquationSystems/Helmholtz.h>
+#include <ADRSolver/Plugin.h>
 
 using namespace std;
 
 namespace Nektar
 {
-    string Helmholtz::className1 = GetEquationSystemFactory().RegisterCreatorFunction("Helmholtz", Helmholtz::create);
-    string Helmholtz::className2 = GetEquationSystemFactory().RegisterCreatorFunction("SteadyDiffusionReaction", Helmholtz::create);
-    
+    std::string Helmholtz::className1, Helmholtz::className2;
+    bool helm_reg = Nektar::SolverUtils::plugin.RegisterCallback(
+    []() {
+        Helmholtz::className1 = GetEquationSystemFactory().
+            RegisterCreatorFunction("Helmholtz", Helmholtz::create);
+        Helmholtz::className1 = GetEquationSystemFactory().
+            RegisterCreatorFunction("SteadyDiffusionReaction",
+                                    Helmholtz::create);
+    });
+
     Helmholtz::Helmholtz(
         const LibUtilities::SessionReaderSharedPtr& pSession,
         const SpatialDomains::MeshGraphSharedPtr& pGraph)

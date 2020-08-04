@@ -33,13 +33,20 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <ADRSolver/EquationSystems/Poisson.h>
+#include <ADRSolver/Plugin.h>
 
 using namespace std;
 
 namespace Nektar
 {
-    string Poisson::className1 = GetEquationSystemFactory().RegisterCreatorFunction("Poisson", Poisson::create);
-    string Poisson::className2 = GetEquationSystemFactory().RegisterCreatorFunction("SteadyDiffusion", Poisson::create);
+    std::string Poisson::className1, Poisson::className2;
+    bool reg_poisson = Nektar::SolverUtils::plugin.RegisterCallback(
+        []() {
+            Poisson::className1 = GetEquationSystemFactory().
+                RegisterCreatorFunction("Poisson", Poisson::create);
+            Poisson::className2 = GetEquationSystemFactory().
+                RegisterCreatorFunction("SteadyDiffusion", Poisson::create);
+        });
 
     Poisson::Poisson(
         const LibUtilities::SessionReaderSharedPtr& pSession,
