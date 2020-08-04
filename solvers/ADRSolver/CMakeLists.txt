@@ -23,9 +23,8 @@ IF( NEKTAR_SOLVER_ADR )
         )
 
     ADD_SOLVER_PLUGIN(ADRSolver SOURCES
-        ./Plugins.cpp
-        ./EquationSystems/Helmholtz.cpp
         ./EquationSystems/Laplace.cpp
+        ./EquationSystems/Helmholtz.cpp
         ./EquationSystems/Poisson.cpp
         )
 

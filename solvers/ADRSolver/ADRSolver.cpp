@@ -35,7 +35,7 @@
 #include <SolverUtils/Driver.h>
 #include <LibUtilities/BasicUtils/SessionReader.h>
 
-#include "Plugins.h"
+#include <ADRSolver/Plugin.h>
 
 using namespace std;
 using namespace Nektar;

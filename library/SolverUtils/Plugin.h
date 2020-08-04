@@ -1,8 +1,6 @@
 #ifndef nektar_plugin_h
 #define nektar_plugin_h
 
-#include <boost/shared_ptr.hpp>
-
 #include <functional>
 #include <memory>
 #include <iostream>
@@ -14,18 +12,16 @@ namespace Nektar
 namespace SolverUtils
 {
 
-class SolverPluginAPI
+class SolverPlugin
 {
 public:
-    SolverPluginAPI() = default;
-    virtual ~SolverPluginAPI() = default;
+    SolverPlugin() = default;
+    virtual ~SolverPlugin() = default;
 
     virtual std::string Name() = 0;
 
     virtual void Initialise()
     {
-        std::cout << "called initialise" << std::endl;
-
         // Call initialisation functions
         for (auto &func : m_funcs)
         {
@@ -35,7 +31,6 @@ public:
 
     bool RegisterCallback(RegisterFunction fn)
     {
-        std::cout << "called register" << std::endl;
         m_funcs.push_back(fn);
         return true;
     }
@@ -44,7 +39,7 @@ protected:
     std::vector<RegisterFunction> m_funcs;
 };
 
-boost::shared_ptr<SolverPluginAPI> LoadSolverPlugin(std::string name);
+std::shared_ptr<SolverPlugin> LoadSolverPlugin(std::string name);
 
 }
 }

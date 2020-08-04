@@ -11,13 +11,10 @@ namespace Nektar
 namespace SolverUtils
 {
 
-class ADRSolverPlugin : public SolverPluginAPI
+class ADRSolverPlugin : public SolverPlugin
 {
 public:
-    ADRSolverPlugin()
-    {
-        std::cout << "loading ADRSolver" << std::endl;
-    }
+    ADRSolverPlugin() = default;
 
     std::string Name() override final
     {
