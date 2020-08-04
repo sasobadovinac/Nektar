@@ -72,7 +72,6 @@ namespace Nektar
             const NekDouble                     time,
             const NekDouble                     dtlamda)
         {
-            WARNINGL1(false, "Start Driver::v_MultiLevel");
             ASSERTL1(m_equ[level],"Need to define m_equ[level]");
             
             int nVariables = m_equ[0]->UpdateFields().num_elements();
@@ -132,7 +131,6 @@ namespace Nektar
                 }
                 m_equ[level]->v_MutilLvlLowestLvlSolver(inarray,outarray);
             }
-            WARNINGL1(false, "After Driver::v_MultiLevel");
         } 
 
         void DriverMultiLevel::v_MultiLvlJacMultiplyMatFree(
@@ -169,10 +167,7 @@ namespace Nektar
 
             ASSERTL0(m_nLevels > 1,"No need use MultiLevel");
             
-            WARNINGL1(false, "After Driver::v_InitObject");
-
             CalcMultiLevelMatrix();
-            WARNINGL1(false, "After Driver::CalcMultiLevelMatrix");
 
             std::string vEquation = m_session->GetSolverInfo("EqType");
             if (m_session->DefinesSolverInfo("SolverType"))
@@ -230,7 +225,6 @@ namespace Nektar
             {
                 m_equ[k]->SetdriverOperator(m_driverOperator);
             }
-            WARNINGL1(false, "After Driver::v_InitObject");
         }  
         void DriverMultiLevel::CalcMultiLevelMatrix()
         {
