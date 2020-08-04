@@ -73,26 +73,26 @@ class ArtificialDiffusion
 
         /// Apply the artificial diffusion
         void DoArtificialDiffusion(
-            const Array<OneD, const Array<OneD, NekDouble> > &inarray,
-            Array<OneD,       Array<OneD, NekDouble> > &outarray);
+            const TensorOfArray2D<NekDouble> &inarray,
+            TensorOfArray2D<NekDouble>       &outarray);
         
         void DoArtificialDiffusionFlux(
-            const Array<OneD, const Array<OneD, NekDouble> > &inarray,
-            Array<OneD, Array<OneD, Array<OneD, NekDouble>>> &VolumeFlux,
-                  Array<OneD, Array<OneD, NekDouble>>        &TraceFlux)
+            const TensorOfArray2D<NekDouble> &inarray,
+            TensorOfArray3D<NekDouble>       &VolumeFlux,
+            TensorOfArray2D<NekDouble>       &TraceFlux)
         {
             v_DoArtificialDiffusionFlux(inarray, VolumeFlux,TraceFlux);
         }
 
         /// Apply the artificial diffusion
         void DoArtificialDiffusion_coeff(
-            const Array<OneD, const Array<OneD, NekDouble> > &inarray,
-            Array<OneD,       Array<OneD, NekDouble> > &outarray);
+            const TensorOfArray2D<NekDouble> &inarray,
+            TensorOfArray2D<NekDouble>       &outarray);
 
         /// Calculate the artificial viscosity
         void GetArtificialViscosity(
-            const Array<OneD, Array<OneD, NekDouble> > &physfield,
-                  Array<OneD, NekDouble  >             &mu);
+            const TensorOfArray2D<NekDouble> &physfield,
+            Array<OneD, NekDouble  >         &mu);
 
     protected:
         /// Session reader
@@ -111,21 +111,21 @@ class ArtificialDiffusion
                 const int spacedim);
 
         virtual void v_DoArtificialDiffusion(
-            const Array<OneD, const Array<OneD, NekDouble> > &inarray,
-            Array<OneD,       Array<OneD, NekDouble> > &outarray);
+            const TensorOfArray2D<NekDouble> &inarray,
+            TensorOfArray2D<NekDouble>       &outarray);
         
         virtual void v_DoArtificialDiffusion_coeff(
-            const Array<OneD, const Array<OneD, NekDouble> > &inarray,
-            Array<OneD,       Array<OneD, NekDouble> > &outarray);
+            const TensorOfArray2D<NekDouble> &inarray,
+            TensorOfArray2D<NekDouble>       &outarray);
             
         virtual void v_DoArtificialDiffusionFlux(
-            const Array<OneD, const Array<OneD, NekDouble>> &inarray,
-            Array<OneD, Array<OneD, Array<OneD, NekDouble>>>&VolumeFlux,
-            Array<OneD, Array<OneD, NekDouble>>             &TraceFlux);
+            const TensorOfArray2D<NekDouble> &inarray,
+            TensorOfArray3D<NekDouble>       &VolumeFlux,
+            TensorOfArray2D<NekDouble>       &TraceFlux);
 
         virtual void v_GetArtificialViscosity(
-            const Array<OneD, Array<OneD, NekDouble> > &physfield,
-                  Array<OneD, NekDouble  >             &mu)=0;
+            const TensorOfArray2D<NekDouble> &physfield,
+            Array<OneD, NekDouble  >         &mu)=0;
 
 };
 }

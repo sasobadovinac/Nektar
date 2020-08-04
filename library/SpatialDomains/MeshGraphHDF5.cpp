@@ -56,7 +56,9 @@ std::string MeshGraphHDF5::className =
 
 void MeshGraphHDF5::ReadGeometry(
     DomainRangeShPtr rng,
-    bool fillGraph)
+    bool fillGraph,
+    const int        &ncoeffsOffset,
+    const int        &nphysicOffset)
 {
     int err;
     //we use the xml geom to find information about the HDF5 file

@@ -51,6 +51,7 @@
 #include <SolverUtils/SolverUtilsDeclspec.h>
 #include <SolverUtils/Core/Misc.h>
 #include <SolverUtils/Filters/Filter.h>
+#include<SolverUtils/DriverOperators.hpp>  
 
 namespace Nektar
 {
@@ -79,6 +80,130 @@ class Interpolator;
         public:
             /// Destructor
             SOLVER_UTILS_EXPORT virtual ~EquationSystem();
+
+            ///////////////////////////////////////////////////////
+            //Yu Pan's Test codes
+            /// OdeProjection
+            SOLVER_UTILS_EXPORT void DoOdeProjection1(
+            const Array<OneD, const  Array<OneD, NekDouble> >&inarray,
+                  Array<OneD,        Array<OneD, NekDouble> >&outarray,
+                                                  const NekDouble time)
+            {
+                v_DoOdeProjection1(inarray,outarray,time);
+            }
+
+            /// Compute the RHS
+            SOLVER_UTILS_EXPORT void DoOdeRhs1(
+            const Array<OneD, const  Array<OneD, NekDouble> >&inarray,
+                  Array<OneD,        Array<OneD, NekDouble> >&outarray,
+                                                  const NekDouble time)
+            {
+                v_DoOdeRhs1(inarray,outarray,time);
+            }
+
+            SOLVER_UTILS_EXPORT virtual void v_MutilLvlResidual(
+                const TensorOfArray1D<NekDouble>    &inarray,
+                TensorOfArray1D<NekDouble>          &outarray,
+                TensorOfArray1D<NekDouble>          &outRes,
+                const int                           level)
+            {
+                ASSERTL0(false, "v_MutilLvlResidual not defined");
+            }
+
+            SOLVER_UTILS_EXPORT virtual void v_MutilLvlPresmooth(
+                const TensorOfArray1D<NekDouble>    &inarray,
+                TensorOfArray1D<NekDouble>          &outarray)
+            {
+                ASSERTL0(false, "v_MutilLvlPresmooth not defined");
+            }
+
+            SOLVER_UTILS_EXPORT virtual void v_MutilLvlPostsmooth(
+                const TensorOfArray1D<NekDouble>    &inarray,
+                TensorOfArray1D<NekDouble>          &outarray)
+            {
+                ASSERTL0(false, "v_MutilLvlPostsmooth not defined");
+            }
+
+            SOLVER_UTILS_EXPORT virtual void v_MutilLvlLowestLvlSolver(
+                const TensorOfArray1D<NekDouble>    &inarray,
+                TensorOfArray1D<NekDouble>          &outarray)
+            {
+                ASSERTL0(false, "v_MutilLvlLowestLvlSolver not defined");
+            }
+
+            SOLVER_UTILS_EXPORT virtual void v_MutilLvlRestriction1D(
+                const TensorOfArray1D<NekDouble>    &inarray,
+                TensorOfArray1D<NekDouble>          &outarray)
+            {
+                ASSERTL0(false, "v_MutilLvlRestriction1D not defined");
+            }
+
+            SOLVER_UTILS_EXPORT virtual void v_MutilLvlRestriction2D(
+                const TensorOfArray2D<NekDouble>    &inarray,
+                TensorOfArray2D<NekDouble>          &outarray)
+            {
+                ASSERTL0(false, "v_MutilLvlRestriction2D not defined");
+            }
+
+            SOLVER_UTILS_EXPORT virtual void v_MutilLvlProlong(
+                const TensorOfArray1D<NekDouble>    &inarray,
+                TensorOfArray1D<NekDouble>          &outarray)
+            {
+                ASSERTL0(false, "v_MutilLvlProlong not defined");
+            }
+
+            SOLVER_UTILS_EXPORT virtual void v_MutilLvlUpdateMultilvlMatrix(
+                const TensorOfArray2D<NekDouble>    &lowLevelSolution,
+                const NekDouble                     time,
+                const NekDouble                     dtlamda)
+            {
+                ASSERTL0(false, "v_MutilLvlUpdateMultilvlMatrix not defined");
+            }
+
+            SOLVER_UTILS_EXPORT void MatrixMultiply_MatrixFree_coeff(
+                const TensorOfArray1D<NekDouble>  &inarray, 
+                TensorOfArray1D<NekDouble>        &out, 
+                const NekDouble                   time, 
+                const NekDouble                   dtlamda, 
+                const TensorOfArray2D<NekDouble>  &refFields, 
+                const bool                        flagUpdateJac,
+                const bool                        flagDoAdv = true,
+                const bool                        flagDoVis = true,
+                const bool                        flagSourc = true)
+            {
+                v_MatrixMultiply_MatrixFree_coeff(inarray, out, time, dtlamda,
+                    refFields, flagUpdateJac, flagDoAdv, flagDoVis, flagSourc);
+            }
+
+            SOLVER_UTILS_EXPORT void CalculateNextLevelPreconditioner(
+            const Array<OneD, const Array<OneD, NekDouble>>                 &inarrayCoeff,
+            const NekDouble                                                 time,
+            const NekDouble                                                 lambda)
+            {
+                v_CalculateNextLevelPreconditioner(inarrayCoeff,time,lambda);
+            }
+
+            //Set RestrictionMatrix
+            SOLVER_UTILS_EXPORT void SetRestrictionResidualMatrix(
+            const Array<OneD, DNekMatSharedPtr> &RestrictionResidualMatrix)
+            {
+                m_RestrictionResidualMatrix= RestrictionResidualMatrix;
+            }
+
+            //Set RestrictionMatrix
+            SOLVER_UTILS_EXPORT void SetRestrictionMatrix(
+            const Array<OneD, DNekMatSharedPtr> &RestrictionMatrix)
+            {
+                m_RestrictionMatrix= RestrictionMatrix;
+            }
+            
+            //Set ProlongationMatrix
+            SOLVER_UTILS_EXPORT void SetProlongationMatrix(
+            const Array<OneD, DNekMatSharedPtr> &ProlongationMatrix)
+            {
+                m_ProlongationMatrix= ProlongationMatrix;
+            }
+            ///////////////////////////////////////////////////////
             
             // Set up trace normals if required
             SOLVER_UTILS_EXPORT void SetUpTraceNormals(void);
@@ -257,6 +382,8 @@ class Interpolator;
             SOLVER_UTILS_EXPORT inline int GetTraceNpoints();
             
             SOLVER_UTILS_EXPORT inline int GetExpSize();
+
+            SOLVER_UTILS_EXPORT inline LocalRegions::ExpansionSharedPtr & GetExp(int ElmtId);
             
             SOLVER_UTILS_EXPORT inline int GetPhys_Offset(int n);
             
@@ -330,7 +457,32 @@ class Interpolator;
                 std::vector<std::string>                &variables,
                 const  bool                             &flag = false);
 
+            SOLVER_UTILS_EXPORT inline void SetdriverOperator(DriverOperators &in)
+            {
+                m_EqdriverOperator = DriverOperators(in);
+            }
+
         protected:
+            ////////////////////////////////////////////////////////////////////
+            //Yu Pan's Test codes
+            bool                        m_ErrorBasedAdaptedTimeStepFlag=false;
+
+            bool                        m_FirstStepErrorControlFlag;
+
+            int                         m_TemporalErrorFreezNumber;
+
+            int                         m_SpatialErrorFreezNumber;
+
+            int                         m_ExtractRhsPerNTimeSteps;
+
+            int                         m_ExtractRhsPerNStages;
+
+            Array<OneD, DNekMatSharedPtr>      m_RestrictionResidualMatrix;
+
+            Array<OneD, DNekMatSharedPtr>      m_RestrictionMatrix;
+
+            Array<OneD, DNekMatSharedPtr>      m_ProlongationMatrix;
+            //////////////////////////////////////////////////////////////////////
             /// Temparary factor to determine whether strong/weak
             bool                                        m_useUnifiedWeakIntegration  =   false;
             /// Communicator
@@ -357,6 +509,10 @@ class Interpolator;
             NekDouble                                   m_fintime;
             /// Time step size
             NekDouble                                   m_timestep;
+
+            NekDouble                                   m_AdaptiveTimeStep;
+
+            NekDouble                                   m_OperatedAdaptiveTimeStep;
             /// Time step size
             NekDouble                                   m_timestepMax=-1.0;
             
@@ -387,6 +543,8 @@ class Interpolator;
             int                                         m_JFNKPrecondStep;
 
             int                                         m_MaxNonlinIte;
+
+            int                                         m_adapGMRESTol;
             
 #endif
             /// Number of checkpoints written so far
@@ -432,6 +590,8 @@ class Interpolator;
             NekLinSysIterativeSharedPtr                 m_linsol;
 
             FilterOperators                             m_FilterOperators;
+            
+            SolverUtils::DriverOperators                m_EqdriverOperator;
 
             /// Number of Quadrature points used to work out the error
             int  m_NumQuadPointsError;
@@ -461,6 +621,47 @@ class Interpolator;
             SOLVER_UTILS_EXPORT EquationSystem(
                 const LibUtilities::SessionReaderSharedPtr& pSession,
                 const SpatialDomains::MeshGraphSharedPtr& pGraph);
+            
+            /// Do Ode Projection
+            SOLVER_UTILS_EXPORT virtual void v_DoOdeProjection1(
+            const Array<OneD, const  Array<OneD, NekDouble> >&inarray,
+                  Array<OneD,        Array<OneD, NekDouble> >&outarray,
+                                                  const NekDouble time)
+            {
+                 ASSERTL0(false, "Not defined.");
+            }
+            
+            /// Compute the RHS
+            SOLVER_UTILS_EXPORT virtual void v_DoOdeRhs1(
+            const Array<OneD, const  Array<OneD, NekDouble> >&inarray,
+                  Array<OneD,        Array<OneD, NekDouble> >&outarray,
+                                                  const NekDouble time)
+            {
+                 ASSERTL0(false, "Not defined.");
+            }
+
+            SOLVER_UTILS_EXPORT virtual void v_MatrixMultiply_MatrixFree_coeff(
+                const TensorOfArray1D<NekDouble>  &inarray, 
+                TensorOfArray1D<NekDouble>        &out, 
+                const NekDouble                   time, 
+                const NekDouble                   dtlamda, 
+                const TensorOfArray2D<NekDouble>  &refFields, 
+                const bool                        flagUpdateJac,
+                const bool                        flagDoAdv,
+                const bool                        flagDoVis,
+                const bool                        flagSourc)
+            {
+                 ASSERTL0(false, 
+                    "v_MatrixMultiply_MatrixFree_coeff not defined.");
+            }
+
+            SOLVER_UTILS_EXPORT virtual void v_CalculateNextLevelPreconditioner(
+            const Array<OneD, const Array<OneD, NekDouble>>                 &inarrayCoeff,
+            const NekDouble                                                 time,
+            const NekDouble                                                 lambda)
+            {
+                ASSERTL0(false, "Not defined.");
+            }
             
             SOLVER_UTILS_EXPORT virtual void v_InitObject();
             
@@ -660,6 +861,11 @@ class Interpolator;
         inline Array<OneD, MultiRegions::ExpListSharedPtr> &EquationSystem::UpdateFields(void)
         {
             return m_fields;
+        }
+
+        inline LocalRegions::ExpansionSharedPtr &EquationSystem::GetExp(int ElmtId)
+        {
+            return m_fields[0]->GetExp(ElmtId); 
         }
         
         /// Return final time

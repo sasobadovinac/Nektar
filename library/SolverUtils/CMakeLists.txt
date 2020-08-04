@@ -19,6 +19,8 @@ SET(SOLVER_UTILS_SOURCES
   DriverModifiedArnoldi.cpp
   DriverStandard.cpp
   DriverSteadyState.cpp	
+  DriverCFSAdaptive.cpp
+  DriverMultiLevel.cpp
   EquationSystem.cpp
   Filters/Filter.cpp
   Filters/FilterAeroForces.cpp
@@ -65,6 +67,8 @@ SET(SOLVER_UTILS_HEADERS
   DriverModifiedArnoldi.h
   DriverStandard.h
   DriverSteadyState.h
+  DriverCFSAdaptive.h
+  DriverMultiLevel.h
   EquationSystem.h
   Filters/Filter.h
   Filters/FilterAeroForces.h
@@ -83,6 +87,7 @@ SET(SOLVER_UTILS_HEADERS
   RiemannSolvers/UpwindSolver.h
   RiemannSolvers/UpwindLDGSolver.h
   SolverUtils.hpp
+  DriverOperators.hpp
   SolverUtilsDeclspec.h
   UnsteadySystem.h
   Forcing/Forcing.h

@@ -315,7 +315,9 @@ void MeshGraphXml::PartitionMesh(
 
 void MeshGraphXml::ReadGeometry(
     DomainRangeShPtr rng,
-    bool             fillGraph)
+    bool             fillGraph,
+    const int        &ncoeffsOffset,
+    const int        &nphysicOffset)
 {
     // Reset member variables.
     m_vertSet.clear();
@@ -398,7 +400,7 @@ void MeshGraphXml::ReadGeometry(
 
     if (fillGraph)
     {
-        MeshGraph::FillGraph();
+        MeshGraph::FillGraph(ncoeffsOffset, nphysicOffset);
     }
 }
 

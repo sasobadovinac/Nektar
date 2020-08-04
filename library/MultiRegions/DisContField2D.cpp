@@ -765,7 +765,7 @@ namespace Nektar
                     cId1 = bndRegOrder.find(region1ID)->second[0];
                     cId2 = bndRegOrder.find(region2ID)->second[0];
                 }
-                
+
                 ASSERTL0(it.second->size() == 1,
                          "Boundary region "+boost::lexical_cast<string>(
                              region1ID)+" should only contain 1 composite.");
@@ -971,7 +971,7 @@ namespace Nektar
             // vertices are copied into m_periodicVerts at the end of the
             // function.
             PeriodicMap periodicVerts;
-                
+
             for (auto &cIt : perComps)
             {
                 SpatialDomains::CompositeSharedPtr c[2];
@@ -2562,6 +2562,28 @@ namespace Nektar
         }
 
 #ifdef DEMO_IMPLICITSOLVER_JFNK_COEFF
+        void DisContField2D::v_AddTraceIntegralToDiag(
+            const Array<OneD, const NekDouble> &FwdFlux, 
+            const Array<OneD, const NekDouble> &BwdFlux, 
+                  Array<OneD,       NekDouble> &outarray)
+        {
+            // Basis definition on each element
+            LibUtilities::BasisSharedPtr basis = (*m_exp)[0]->GetBasis(0);
+            if (basis->GetBasisType() != LibUtilities::eGauss_Lagrange)
+            {
+                Array<OneD, NekDouble> FCoeffs(m_trace->GetNcoeffs());
+
+                m_trace->IProductWRTBase(FwdFlux,FCoeffs);
+                m_locTraceToTraceMap->AddTraceCoeffsToFieldCoeffs(0,FCoeffs,outarray);
+                m_trace->IProductWRTBase(BwdFlux,FCoeffs);
+                m_locTraceToTraceMap->AddTraceCoeffsToFieldCoeffs(1,FCoeffs,outarray);
+            }
+            else
+            {
+                ASSERTL0(false,"v_AddTraceIntegralToOffDiag not coded for eGauss_Lagrange");
+            }
+        }
+        
         void DisContField2D::v_AddTraceIntegralToOffDiag(
             const Array<OneD, const NekDouble> &FwdFlux, 
             const Array<OneD, const NekDouble> &BwdFlux, 

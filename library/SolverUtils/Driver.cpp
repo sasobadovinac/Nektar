@@ -42,7 +42,7 @@ namespace Nektar
 namespace SolverUtils
 {
 
-std::string Driver::evolutionOperatorLookupIds[6] = {
+std::string Driver::evolutionOperatorLookupIds[8] = {
     LibUtilities::SessionReader::RegisterEnumValue(
             "EvolutionOperator","Nonlinear"      ,eNonlinear),
     LibUtilities::SessionReader::RegisterEnumValue(
@@ -54,7 +54,11 @@ std::string Driver::evolutionOperatorLookupIds[6] = {
     LibUtilities::SessionReader::RegisterEnumValue(
             "EvolutionOperator","SkewSymmetric"  ,eSkewSymmetric),
     LibUtilities::SessionReader::RegisterEnumValue(
-            "EvolutionOperator","AdaptiveSFD"    ,eAdaptiveSFD)
+            "EvolutionOperator","AdaptiveSFD"    ,eAdaptiveSFD),
+    LibUtilities::SessionReader::RegisterEnumValue(
+            "EvolutionOperator","AdaptiveCFS"    ,eAdaptiveCFS),
+    LibUtilities::SessionReader::RegisterEnumValue(
+            "EvolutionOperator","MultiLevelCFS" ,eMultiLevelCFS)
 };
 std::string Driver::evolutionOperatorDef =
     LibUtilities::SessionReader::RegisterDefaultSolverInfo(
@@ -113,7 +117,15 @@ void Driver::v_InitObject(ostream &out)
                     "EvolutionOperator");
 
         m_nequ = ((m_EvolutionOperator == eTransientGrowth ||
-                   m_EvolutionOperator == eAdaptiveSFD) ? 2 : 1);
+                   m_EvolutionOperator == eAdaptiveSFD || 
+                   m_EvolutionOperator == eAdaptiveCFS) ? 2 : 1);
+        
+        m_session->LoadParameter("NumLevels", m_nLevels, 1);
+        if (m_nLevels > 1)
+        {
+            m_EvolutionOperator = eMultiLevelCFS;
+            m_nequ = m_nLevels;
+        }
 
         m_equ = Array<OneD, EquationSystemSharedPtr>(m_nequ);
 
@@ -179,6 +191,70 @@ void Driver::v_InitObject(ostream &out)
                 m_session->SetTag("AdvectiveType","Convective");
                 m_equ[1] = GetEquationSystemFactory().CreateInstance(
                     vEquation, m_session, m_graph);
+            }
+                break;
+            case eAdaptiveCFS:
+            {
+                m_session->SetTag("AdvectiveType","Convective");
+                m_equ[0] = GetEquationSystemFactory().CreateInstance(vEquation, m_session, m_graph);
+                string         TmpInputFile;
+                vector<string>  MultiOrderFilename;
+                //Notice, after partition, FileName_xml/P0000000.xml, 
+                for(int i=0;i<m_session->GetFilenames().size();i++)
+                {
+                    TmpInputFile=m_session->GetFilenames()[i];
+                    MultiOrderFilename.push_back(TmpInputFile);
+                }
+
+                LibUtilities::SessionReaderSharedPtr   MultiOrderSession= 
+                LibUtilities::SessionReader::CreateInstance(
+                                0, NULL, MultiOrderFilename, 
+                                m_session->GetComm());
+                int ncoeffOffset = 1;
+                int nphyscOffset = 0;
+                 SpatialDomains::MeshGraphSharedPtr MultiOrderGraph =
+                 SpatialDomains::MeshGraph::Read(MultiOrderSession,
+                        SpatialDomains::NullDomainRangeShPtr,
+                        true,
+                        m_graph->GetCompositeOrdering(),
+                        m_graph->GetBndRegionOrdering(), 
+                        ncoeffOffset, nphyscOffset);
+
+                MultiOrderSession->SetTag("AdvectiveType","Convective");
+                m_equ[1] = GetEquationSystemFactory().CreateInstance(
+                    vEquation, MultiOrderSession, MultiOrderGraph);
+            }
+                break;
+            case eMultiLevelCFS:
+            {
+                m_session->SetTag("AdvectiveType","Convective");
+                m_equ[0] = GetEquationSystemFactory().CreateInstance(vEquation, 
+                    m_session, m_graph);
+
+                int nCycles = m_nLevels - 1;
+                m_multilvlncoeffOffset = Array<OneD,int> (nCycles);
+                m_multilvlnphyscOffset = Array<OneD,int> (nCycles);
+                int nMaxCoeffs = m_equ[0]->GetNcoeffs(0);
+                
+                for (int k = 0; k < nCycles; ++k)
+                {
+                    stringstream stream;
+                    std::string str;
+                    stream.clear();
+                    stream<<k;
+                    stream>>str;
+                    std::string MultiLevelCoeffOffsetstr = 
+                        "MultiLevelCoeffOffset"+str;
+                    std::string MultiLevelQuadOffsetstr = 
+                        "MultiLevelQuadOffset"+str;
+                    m_session->LoadParameter(MultiLevelCoeffOffsetstr, 
+                        m_multilvlncoeffOffset[k], 0); 
+                    m_session->LoadParameter(MultiLevelQuadOffsetstr, 
+                        m_multilvlnphyscOffset[k], m_multilvlncoeffOffset[k]);   
+                    ASSERTL0(nMaxCoeffs + m_multilvlncoeffOffset[k] >= 2, 
+                        "Currently, Cannot MultiLevel to Mode<2");
+                }  
+                
             }
                 break;
             default:

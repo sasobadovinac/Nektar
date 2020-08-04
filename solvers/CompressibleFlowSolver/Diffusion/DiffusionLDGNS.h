@@ -109,7 +109,7 @@ namespace Nektar
             const Array<OneD, Array<OneD, NekDouble>>           &pBwd,
             Array< OneD, int >                                  &nonZeroIndex);
 
-        virtual void v_Diffuse_coeff(
+        virtual void v_DiffuseCoeff(
             const int                                         nConvectiveFields,
             const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
             const Array<OneD, Array<OneD, NekDouble> >        &inarray,

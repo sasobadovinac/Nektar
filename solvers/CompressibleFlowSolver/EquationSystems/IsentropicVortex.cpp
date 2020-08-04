@@ -48,7 +48,7 @@ namespace Nektar
         const LibUtilities::SessionReaderSharedPtr& pSession,
         const SpatialDomains::MeshGraphSharedPtr& pGraph)
         : UnsteadySystem(pSession, pGraph),
-          EulerCFE(pSession, pGraph)
+           EulerCFE(pSession, pGraph)
     {
     }
 
@@ -76,34 +76,42 @@ namespace Nektar
         bool        dumpInitialConditions,
         const int   domain)
     {
-        int nTotQuadPoints  = GetTotPoints();
-        Array<OneD, NekDouble> x(nTotQuadPoints);
-        Array<OneD, NekDouble> y(nTotQuadPoints);
-        Array<OneD, NekDouble> z(nTotQuadPoints);
-        Array<OneD, Array<OneD, NekDouble> > u(m_spacedim+2);
         
-        m_fields[0]->GetCoords(x, y, z);
-        
-        for (int i = 0; i < m_spacedim + 2; ++i)
+        if(m_time>0)
         {
-            u[i] = Array<OneD, NekDouble>(nTotQuadPoints);
+             EquationSystem::v_SetInitialConditions(initialtime, false);
         }
-
-        EvaluateIsentropicVortex(x, y, z, u, initialtime);
-
-        // Forward transform to fill the coefficient space
-        for(int i = 0; i < m_fields.num_elements(); ++i)
+        else
         {
-            Vmath::Vcopy(nTotQuadPoints, u[i], 1, m_fields[i]->UpdatePhys(), 1);
-            m_fields[i]->SetPhysState(true);
-            m_fields[i]->FwdTrans(m_fields[i]->GetPhys(), 
-                                  m_fields[i]->UpdateCoeffs());
-        }
+            int nTotQuadPoints  = GetTotPoints();
+            Array<OneD, NekDouble> x(nTotQuadPoints);
+            Array<OneD, NekDouble> y(nTotQuadPoints);
+            Array<OneD, NekDouble> z(nTotQuadPoints);
+            Array<OneD, Array<OneD, NekDouble> > u(m_spacedim+2);
+            
+            m_fields[0]->GetCoords(x, y, z);
+            
+            for (int i = 0; i < m_spacedim + 2; ++i)
+            {
+                u[i] = Array<OneD, NekDouble>(nTotQuadPoints);
+            }
 
-        if (dumpInitialConditions && m_checksteps)
-        {
-            // Dump initial conditions to file
-            Checkpoint_Output(0);
+            EvaluateIsentropicVortex(x, y, z, u, initialtime);
+
+            // Forward transform to fill the coefficient space
+            for(int i = 0; i < m_fields.num_elements(); ++i)
+            {
+                Vmath::Vcopy(nTotQuadPoints, u[i], 1, m_fields[i]->UpdatePhys(), 1);
+                m_fields[i]->SetPhysState(true);
+                m_fields[i]->FwdTrans(m_fields[i]->GetPhys(), 
+                                    m_fields[i]->UpdateCoeffs());
+            }
+
+            if (dumpInitialConditions && m_checksteps)
+            {
+                // Dump initial conditions to file
+                Checkpoint_Output(0);
+            }
         }
     }
 
@@ -143,13 +151,35 @@ namespace Nektar
         const int                                   o)
     {
         int nq = x.num_elements();
+
+
+      ///////////////////////////////////////
+      //NonDim
+      NekDouble  rhoDim                = 1.225;                                  
+      NekDouble  pDim                  = 101325;                                 
+      NekDouble  ReRef                 = 3900.0;                                 
+      NekDouble  Pr                    = 0.72 ;                                   
+      NekDouble  GasConstantDim        = 287.058 ;                                
+      NekDouble  TDim                  = pDim/(GasConstantDim*rhoDim);     
+      NekDouble  TwallDim              = TDim;                                    
+      NekDouble  soundSpdDim           = sqrt(m_gamma*pDim/rhoDim);                 
+      NekDouble  Ma                    = 1/soundSpdDim;                           
+      NekDouble  LengthRef             = 1.0;                                     
+      NekDouble  LengthGrid            = 1.0;                                     
+      NekDouble  velMagnDim            = Ma*soundSpdDim;                          
+      NekDouble  uDim                  = 2.5*Ma*soundSpdDim
+                                         *3.0/2.98808418213669569;                          
+      NekDouble  vDim                  = uDim;      
+      NekDouble  uInf                  = uDim/velMagnDim;
+      NekDouble  vInf                  = vDim/velMagnDim;                      
+      ////////////////////////////////////////
         
         // Flow parameters
         const NekDouble x0    = 5.0;
         const NekDouble y0    = 0.0;
-        const NekDouble beta  = 5.0;
-        const NekDouble u0    = 1.0;
-        const NekDouble v0    = 0.5;
+        const NekDouble beta  = 1.0;
+        const NekDouble u0    = uInf;
+        const NekDouble v0    = vInf;
         const NekDouble gamma = m_gamma;
         NekDouble r, xbar, ybar, tmp;
         NekDouble fac = 1.0/(16.0*gamma*M_PI*M_PI);

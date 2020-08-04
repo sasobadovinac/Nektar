@@ -796,6 +796,19 @@ namespace Nektar
     template<class T>
     using TensorOfArray3D = Array<OneD, Array<OneD, Array<OneD, T>>>;
 
+    template<class T>
+    using TensorOfArray1D = Array<OneD, T>;
+    template<class T>
+    using TensorOfArray2D = Array<OneD, Array<OneD, T>>;
+    template<class T>
+    using TensorOfArray3D = Array<OneD, Array<OneD, Array<OneD, T>>>;
+    template<class T>
+    using TensorOfArray4D = 
+                Array<OneD, Array<OneD, Array<OneD, Array<OneD, T>>>>;
+    template<class T>
+    using TensorOfArray5D = 
+            Array<OneD, Array<OneD, Array<OneD, Array<OneD, Array<OneD, T>>>>>;
+
     LIB_UTILITIES_EXPORT bool IsEqual(const Array<TwoD, const NekDouble>& lhs,
                  const Array<TwoD, const NekDouble>& rhs,
                  NekDouble tol = NekConstants::kNekZeroTol);

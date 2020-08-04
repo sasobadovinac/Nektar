@@ -86,7 +86,7 @@ namespace Nektar
                 tmp[i] = Array<OneD, NekDouble>(nCoeffs,0.0);
             }
 
-            DiffusionLDG::v_Diffuse_coeff(nConvectiveFields,fields,inarray,tmp,pFwd,pBwd);
+            DiffusionLDG::v_DiffuseCoeff(nConvectiveFields,fields,inarray,tmp,pFwd,pBwd);
             
             for (int i = 0; i < nConvectiveFields; ++i)
             {
@@ -94,7 +94,7 @@ namespace Nektar
             }
         }
 
-        void DiffusionLDG::v_Diffuse_coeff(
+        void DiffusionLDG::v_DiffuseCoeff(
             const int                                         nConvectiveFields,
             const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
             const Array<OneD, Array<OneD, NekDouble> >        &inarray,

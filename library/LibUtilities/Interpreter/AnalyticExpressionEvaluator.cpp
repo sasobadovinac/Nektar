@@ -131,8 +131,8 @@ namespace Nektar
                     // and few more custom functions
                     ("sign",	sign)
                     ("awgn",	awgn)
-		    ("blau",    blau)
-		    ("blav",    blav)
+                    ("blau",    blau)
+                    ("blav",    blav)
                     ("blat",    blat)
                     ("hump",    hump)
                     ;

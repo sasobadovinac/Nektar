@@ -152,6 +152,62 @@ namespace Nektar
                     GetFilterFactory().CreateInstance(
                         x.first, m_session, x.second));
             }
+            
+            /////////////////////////////////////////////////////////////
+            //Yu Pan's Test
+            int tmp;
+            m_session->LoadParameter("ErrorBasedAdaptedTimeStepFlag",    tmp   ,  0);
+            m_ErrorBasedAdaptedTimeStepFlag=false;
+            if(1==tmp)
+            {
+                m_ErrorBasedAdaptedTimeStepFlag=true;
+                ASSERTL0(m_SpatialErrorFreezNumber>0 && m_SpatialErrorFreezNumber>0,"Need to define the parameters to calculate SpatialError and TemporalError");
+                ASSERTL0(m_SpatialErrorFreezNumber== m_SpatialErrorFreezNumber,"Spatial Error and Temporal Error freezeNum Better to be the same");
+            }
+            
+            //Current stage only define other two parameters together can calculate adaptive time step
+            if(m_ErrorBasedAdaptedTimeStepFlag)
+            {
+                int nvariables=GetNvariables();
+                m_OperatedAdaptiveTimeStepForOutput=Array<OneD,Array<OneD,NekDouble>>(nvariables);
+                for(int i=0;i<nvariables;i++)
+                {
+                    int npoints=m_fields[i]->GetNpoints();
+                    m_OperatedAdaptiveTimeStepForOutput[i]=Array<OneD,NekDouble>(npoints,0.0);
+                }
+            }
+
+            if(m_SpatialErrorFreezNumber>0)
+            {
+                m_SpatialErrorNorm=0.0;
+                int nvariables=GetNvariables();
+                  m_SpatialErrorNormArray=Array<OneD, NekDouble> (nvariables,0.0);
+                m_SpatialError=Array<OneD,Array<OneD,NekDouble>>(nvariables);
+                m_OperatedSpatialError=Array<OneD,Array<OneD,NekDouble>>(nvariables);
+                for(int i=0;i<nvariables;i++)
+                {
+                    int npoints=m_fields[i]->GetNpoints();
+                    m_SpatialError[i]=Array<OneD,NekDouble>(npoints,0.0);
+                    m_OperatedSpatialError[i]=Array<OneD,NekDouble>(npoints,0.0);
+                }
+
+            }
+
+            if(m_TemporalErrorFreezNumber>0)
+            {
+                m_TemporalErrorNorm=0.0;
+                int nvariables=GetNvariables();
+                m_TemporalErrorNormArray=Array<OneD, NekDouble> (nvariables,0.0);
+                m_TemporalError=Array<OneD,Array<OneD,NekDouble>>(nvariables);
+                m_OperatedTemporalError=Array<OneD,Array<OneD,NekDouble>>(nvariables);
+                for(int i=0;i<nvariables;i++)
+                {
+                    int npoints=m_fields[i]->GetNpoints();
+                    m_TemporalError[i]=Array<OneD,NekDouble>(npoints,0.0);
+                    m_OperatedTemporalError[i]=Array<OneD,NekDouble>(npoints,0.0);
+                }
+            }
+            //////////////////////////////////////////////////////////////////////////////
         }
 
         /**
@@ -194,8 +250,10 @@ namespace Nektar
                 case LibUtilities::eBackwardEuler:
                 case LibUtilities::eDIRKOrder2:
                 case LibUtilities::eDIRKOrder3:
+                case LibUtilities::eDIRKOrder3Stage4Embedded5:
                 case LibUtilities::eDIRKOrder3Stage5:
                 case LibUtilities::eDIRKOrder4Stage6:
+                case LibUtilities::eDIRKOrder4Stage6Embedded7:
                 {
                     TimeStability = 2.0;
                     break;
@@ -336,12 +394,14 @@ namespace Nektar
                 m_calcuPhysicalAV = true;
 
                 // Frozen preconditioner checks
-                if(    (m_CalcuPrecMatCounter>=m_PrcdMatFreezNumb)
+                if ((m_CalcuPrecMatCounter>=m_PrcdMatFreezNumb)
                     ||(m_time + m_timestep > m_fintime && m_fintime > 0.0)
                     ||(m_checktime && m_time + m_timestep - lastCheckTime >= m_checktime))
                 {
 
                     m_CalcuPrecMatFlag      =   true;
+                    //This flag control MultiLevel if need update Jacobian matrix
+                    m_UpDateOperatorflag=m_CalcuPrecMatFlag; 
                     m_CalcuPrecMatCounter   =   0;
                     m_cflSafetyFactor       =   tmp_cflSafetyFactor;
 
@@ -386,6 +446,170 @@ namespace Nektar
                 // m_CalcuPrecMatCounter++;
 
 #endif
+               
+
+               ////////////////////////////////////////////////////////////////
+               //Yu Pan's test
+               //Time Step Adaptivity
+               //First step have not calcualted error
+               if(m_initialStep==step)
+               {
+                   m_FirstStepErrorControlFlag=false;
+               }
+               else
+               {
+                   m_FirstStepErrorControlFlag=true;
+               }
+               
+               //To do: First step sometimes cannot get OoA, maybe consider restart first step
+                if ( m_FirstStepErrorControlFlag && m_ErrorBasedAdaptedTimeStepFlag)
+                {
+                    if(m_CalculateTemporalErrorFlag && m_CalculateSpatialErrorFlag)
+                    {
+                        //Avoid reoperating of AdaptiveTimeStep.
+                        m_CalculateTemporalErrorFlag=false;
+                        m_CalculateSpatialErrorFlag=false;
+                        //////////////////////////////////////////////////////////////////////
+                        //First Step: Manually modify Spatial Error: L2 norm of each Element
+                        //Because find some spatial errors are really small like when initially start with constant field
+                        // which will lead to too small adptive time step
+
+                        int nElements  = m_fields[0]->GetNumElmts();
+                        Array<OneD,Array<OneD,NekDouble>> OperatedSpatialErrortmp(nvariables);
+                        std::shared_ptr<LocalRegions::ExpansionVector> m_exp=m_fields[0]->GetExp();
+                        for(int i=0;i<nvariables;i++)
+                        {
+                            OperatedSpatialErrortmp[i]=Array<OneD,NekDouble>(nElements);
+                            for(int k=0;k<nElements;k++)
+                            {
+                                NekDouble sum=0.0;
+                                int nElementPoints= (*m_exp)[k]->GetTotPoints();
+                                int nElementOffset = m_fields[0]->GetPhys_Offset(k);
+                                sum=Vmath::Dot(nElementPoints,&m_SpatialError[i][nElementOffset],1,&m_SpatialError[i][nElementOffset],1);
+                                //elemental dot, no need to AllReduce
+                                sum=sum/nElementPoints;
+                                sum=sqrt(sum);
+                                OperatedSpatialErrortmp[i][k]=sum;
+                                Vmath::Fill(nElementPoints,sum,&m_OperatedSpatialError[i][nElementOffset],1);
+                            }
+                        }
+
+                        //Second Step: Manually operate Temporal Error
+                        // L2 norm smooth
+                        Array<OneD,Array<OneD,NekDouble>> OperatedTemporalErrortmp(nvariables);
+                        for(int i=0;i<nvariables;i++)
+                        {
+                            OperatedTemporalErrortmp[i]=Array<OneD,NekDouble>(nElements);
+                            for(int k=0;k<nElements;k++)
+                            {
+                                NekDouble sum=0.0;
+                                int nElementPoints= (*m_exp)[k]->GetTotPoints();
+                                int nElementOffset = m_fields[0]->GetPhys_Offset(k);
+                                sum=Vmath::Dot(nElementPoints,&m_TemporalError[i][nElementOffset],1,&m_TemporalError[i][nElementOffset],1);
+                            //elemental dot, no need to AllReduce
+                                sum=sum/nElementPoints;
+                                sum=sqrt(sum);
+                                OperatedTemporalErrortmp[i][k]=sum;
+                                Vmath::Fill(nElementPoints,sum,&m_OperatedTemporalError[i][nElementOffset],1);
+                            }
+                        }
+                        
+                        //Step 2: from the theoretical proof, use spatial error to control temporal error
+                        int TemporalOrder=m_intScheme->GetIntegrationSchemeVector()[0]->GetTimeIntegrationSchemeOrder();
+                        //Compare spatial error and time integration error to adapt time step
+                        NekDouble Scale=0.1;// TimeIntegration error is assuemed to be much less than Spatial Error
+                        int TemporalOrder_PlusOne=TemporalOrder+1;  
+                        NekDouble oTemporalOrder_PlusOne=1.0/TemporalOrder_PlusOne; 
+                        
+                        Array<OneD,NekDouble> timestepArray(nvariables);
+                        NekDouble wghtedTimeStep = 0.0;
+                        NekDouble wghts = 0.0;
+                        for(int i=0;i<nvariables;i++)
+                        {
+                            Array<OneD,NekDouble> tmp1(nElements,0.0);
+                            Array<OneD,NekDouble> tmp2(nElements,0.0);
+                            Vmath::Smul(nElements,Scale,OperatedSpatialErrortmp[i],1,tmp1,1);
+                            //Assume TemporalError much smaller than SpatialError
+                            Vmath::Vcopy(nElements,OperatedTemporalErrortmp[i],1,tmp2,1);
+                            Vmath::Vdiv(nElements,tmp1,1,tmp2,1,tmp1,1);
+                            Vmath::Vpow(nElements,tmp1,1,oTemporalOrder_PlusOne,tmp1,1);
+                            Vmath::Smul(nElements,m_timestep,tmp1,1,tmp1,1);
+                            //To Do: if need min for each variable, need to AllReduce min here
+                            // timestepArray[i]=Vmath::Vmin(nElements,tmp1,1);
+                            Vmath::Vsqrt(nElements,OperatedTemporalErrortmp[i],1,tmp2,1);
+                            wghts +=Vmath::Vsum(nElements,tmp2,1);
+                            Vmath::Vmul(nElements,tmp2,1,
+                                            tmp1,1,
+                                            tmp2,1);
+
+                            wghtedTimeStep +=Vmath::Vsum(nElements,tmp2,1);
+                            //To Do: for contour output, can remove after testing
+                            for(int j=0;j<nElements;j++)
+                            {
+                                int nElementPoints=(*m_exp)[j]->GetTotPoints();
+                                int nElementOffset=m_fields[0]->GetPhys_Offset(j);
+                                Vmath::Fill(nElementPoints,tmp1[j],&m_OperatedAdaptiveTimeStepForOutput[i][nElementOffset],1);
+                            }
+                        }
+                        m_comm->AllReduce(wghtedTimeStep,LibUtilities::ReduceSum);
+                        m_comm->AllReduce(wghts,LibUtilities::ReduceSum);
+
+                        m_OperatedAdaptiveTimeStep = wghtedTimeStep/wghts;
+
+                    }
+
+                    // if(m_ErrorBasedAdaptedTimeStepFlag && m_comm->GetRank() == 0)
+                    // {
+                    //     Array<OneD, NekDouble>  m_SpatialQuadErrorNormArray(nvariables,0.0);
+                    //     Array<OneD, NekDouble>  m_TemporalQuadErrorNormArray(nvariables,0.0);
+
+                    //     for(int i = 0; i < nvariables; i++)
+                    //     {
+                    //         int npoints=m_fields[i]->GetNpoints();
+                    //         m_TemporalQuadErrorNormArray[i] = Vmath::Dot(npoints,m_OperatedTemporalError[i],m_OperatedTemporalError[i]);
+                    //         m_TemporalQuadErrorNormArray[i] =sqrt( m_TemporalQuadErrorNormArray[i]);
+                    //     }
+                    //     for(int i = 0; i < nvariables; i++)
+                    //     {
+                    //         int npoints=m_fields[i]->GetNpoints();
+                    //         m_SpatialQuadErrorNormArray[i] = Vmath::Dot(npoints,m_OperatedSpatialError[i],m_OperatedSpatialError[i]);
+                    //         m_SpatialQuadErrorNormArray[i] =sqrt(m_SpatialQuadErrorNormArray[i] );
+                    //     }
+                    //     ofstream outfile1;
+                    //     outfile1.open("OperatedQuadErrorNorm.txt",ios::app);
+                    //     outfile1<<"$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$"<<endl;
+                    //     int nwidthcolm=12;
+                    //     int npoints=m_fields[0]->GetNpoints();
+                    //     outfile1<<"Time="<<m_time<<", TimeStep="<<m_timestep<<", AdaptiveTimeStep="<<m_OperatedAdaptiveTimeStep;
+                    //     outfile1<<endl;
+                    //     outfile1<<"Spatial Error (OperatedNorm)"<<endl;
+                    //     for(int i=0;i<nvariables;i++)
+                    //     {
+                    //         outfile1<<right<<scientific<<setw(nwidthcolm)<<setprecision(nwidthcolm-6)<<m_SpatialQuadErrorNormArray[i]/sqrt(npoints);//Because L2 norm is sqrt((x1^2+x2^2)/2)
+                    //         outfile1<<"     ";
+                    //     }
+                    //     outfile1<<endl;
+                    //     outfile1<<"Temporal Error (OperatedNorm)"<<endl;
+                    //     for(int i=0;i<nvariables;i++)
+                    //     {
+                    //         outfile1<<right<<scientific<<setw(nwidthcolm)<<setprecision(nwidthcolm-6)<<m_TemporalQuadErrorNormArray[i]/sqrt(npoints);
+                    //         outfile1<<"     ";
+                    //     }
+                    //     outfile1<<endl;
+                    //     outfile1.close();
+                    // }
+                    
+                    //To Do:currently test const timestep
+                    //Error based TimeStep Adaptivity
+                    m_timestep=m_OperatedAdaptiveTimeStep;
+
+                    if (m_time + m_timestep > m_fintime && m_fintime > 0.0)
+                    {
+                        m_timestep = m_fintime - m_time;
+                    }
+                }
+
+               ////////////////////////////////////////////////////////////////
 
                 // Perform any solver-specific pre-integration steps
                 timer.Start();
@@ -396,9 +620,181 @@ namespace Nektar
 
                 m_StagesPerStep = 0;
                 m_TotLinItePerStep = 0;
+                
 
-                fields = m_intScheme->TimeIntegrate(
-                    stepCounter, m_timestep, m_intSoln, m_ode);
+                //////////////////////////////////////////////////////////////////////////
+                //For freeze: need to before TimeIntegrate because you send a bool flag to TimeIntegrationScheme
+                if(m_TemporalErrorFreezNumber>0)
+                {
+                    if(0==step || m_CalculateTemporalErrorCounter>=(m_TemporalErrorFreezNumber-1))
+                    {
+                        m_intScheme->GetIntegrationSchemeVector()[0]->UpdateTemporalErrorState(true);
+                        //Avoid reoperating TemporalError     
+                        m_CalculateTemporalErrorFlag=true;
+                        m_CalculateTemporalErrorCounter=0;
+                    }
+                    else
+                    {
+                        //To do: In time integration,it will be set false after calculating, no need update false,
+                        //but need check if repeated calculation
+                        m_CalculateTemporalErrorCounter++;
+                    }
+                }
+                
+
+                fields = m_intScheme->TimeIntegrate(stepCounter, m_timestep, m_intSoln, m_ode);
+
+                //Need to be careful, separate the Realtime and PairedIntegration
+                //Do the calculation after TimeIntegrate, because in TimeIntegrate is also Dirk4-Dirk3 before RealTime Integrate
+                if(m_SpatialErrorFreezNumber>0)
+                {
+                    if(0==step || m_CalculateSpatialErrorCounter>=(m_SpatialErrorFreezNumber-1))
+                    {
+                        //Because only research on One Step Runge-Kutta scheme!!!, so [0]
+                        Array<OneD,Array<OneD,NekDouble>> IntegrationSolutiontmp1(nvariables);
+                        Array<OneD,Array<OneD,NekDouble>> IntegrationSolutiontmp2(nvariables);
+                        Array<OneD,Array<OneD,NekDouble>> CurrentOrderRhs(nvariables);
+                        Array<OneD,Array<OneD,NekDouble>> MultiOrderRhs(nvariables);
+                        for(int i=0;i<nvariables;i++)
+                        {
+                            int npoints=m_fields[i]->GetNpoints();
+                            //Multi order Quad points need to be the same
+                            IntegrationSolutiontmp1[i]=Array<OneD,NekDouble>(npoints,0.0);
+                            Vmath::Vcopy(npoints,m_intSoln->GetSolutionVector()[0][i],1,IntegrationSolutiontmp1[i],1);
+                            IntegrationSolutiontmp2[i]=Array<OneD,NekDouble>(npoints,0.0);
+                            Vmath::Vcopy(npoints,m_intSoln->GetSolutionVector()[0][i],1,IntegrationSolutiontmp2[i],1);
+                            CurrentOrderRhs[i]=Array<OneD,NekDouble>(npoints,0.0);
+                            MultiOrderRhs[i]=Array<OneD,NekDouble>(npoints,0.0);
+                        }
+                        //To Do: be careful if high order m_equ calculate the repeated error.
+                        DoOdeProjection1(IntegrationSolutiontmp1,IntegrationSolutiontmp1,m_time);
+                        DoOdeRhs1(IntegrationSolutiontmp1,CurrentOrderRhs,m_time);
+                        m_EqdriverOperator.DoMultiOrderProjection(IntegrationSolutiontmp2,IntegrationSolutiontmp2,m_time);
+                        m_EqdriverOperator.DoMultiOrderOdeRhs(IntegrationSolutiontmp2,MultiOrderRhs,m_time);
+                        for(int i=0;i<nvariables;i++)
+                        {
+                            int npoints=m_fields[i]->GetNpoints();
+                            Vmath::Vsub(npoints,CurrentOrderRhs[i],1,MultiOrderRhs[i],1,m_SpatialError[i],1);   
+                            //Because from our derivatation, it need to muliply dt
+                            Vmath::Smul(npoints,m_timestep,m_SpatialError[i],1,m_SpatialError[i],1);
+                            //Better to Abs, because TemporalError also positive
+                            Vmath::Vabs(npoints,m_SpatialError[i],1,m_SpatialError[i],1);
+                        }        
+                        
+                        //To Do: Spatial norm is maybe can used as Tolerance like Temporal Error
+                        //Can be removed after testing
+                        for(int i = 0; i < nvariables; i++)
+                        {
+                            int npoints=m_fields[i]->GetNpoints();
+                            int ncoeffs=m_fields[i]->GetNcoeffs();
+                            Array<OneD,NekDouble> tmp(ncoeffs,0.0);
+                            //For time step, no need FwdTrans, but for Tolerance adaptivity, need transfer to coeffs space
+                            m_fields[i]->FwdTrans(m_SpatialError[i],tmp);
+                            m_SpatialErrorNormArray[i] = Vmath::Dot(ncoeffs,tmp,tmp);
+                        }
+                        m_comm->AllReduce(m_SpatialErrorNormArray, Nektar::LibUtilities::ReduceSum);
+                        m_SpatialErrorNorm =0.0;
+                        for(int i = 0; i < nvariables; i++)
+                        {
+                            m_SpatialErrorNorm += m_SpatialErrorNormArray[i];
+                        }
+                        m_SpatialErrorNorm=sqrt(m_SpatialErrorNorm);//To Do: No need sqrt if in NewtonTolerance use, q2<Norm2, can save computation
+                        for(int i=0;i<nvariables;i++)
+                        {
+                            m_SpatialErrorNormArray[i]=sqrt(m_SpatialErrorNormArray[i]);
+                        }
+
+
+                        //Avoid reoperating SpatialError     
+                        m_CalculateSpatialErrorFlag=true;
+                        m_CalculateSpatialErrorCounter=0;
+
+                    }
+                    else
+                    {
+                        m_CalculateSpatialErrorCounter++;
+                    }
+                }
+                
+                ///////////////////////////////////////////////////////////////////////////////
+                //Calculate Temporal TimeIntegration Error
+                //To Do: Assume currently only DIRK3 can be used because see the codes in TimeIntegrationScheme, the reference uses DIRK4 as accurate solution
+                //Direct error is between the comparison between DIRK3 and DIRK4
+                if(m_TemporalErrorFreezNumber>0)
+                {
+                        for(int i = 0; i < nvariables; i++)
+                        {
+                            int npoints=m_fields[i]->GetNpoints();
+                            int ncoeffs=m_fields[i]->GetNcoeffs();
+                            Array<OneD,NekDouble> tmp(ncoeffs,0.0);
+                            //For time step, no need FwdTrans, but for Tolerance adaptivity, need transfer to coeffs space
+                            Vmath::Vcopy(npoints,m_intScheme->GetIntegrationSchemeVector()[0]->GetTemporalErrorVector()[i],1,m_TemporalError[i],1);
+                            m_fields[i]->FwdTrans(m_TemporalError[i],tmp);
+                            m_TemporalErrorNormArray[i] = Vmath::Dot(ncoeffs,tmp,tmp);
+                        }
+                        m_comm->AllReduce(m_TemporalErrorNormArray, Nektar::LibUtilities::ReduceSum);
+                        m_TemporalErrorNorm =0.0;
+                        for(int i = 0; i < nvariables; i++)
+                        {
+                            m_TemporalErrorNorm += m_TemporalErrorNormArray[i];
+                        }
+                        m_TemporalErrorNorm=sqrt(m_TemporalErrorNorm);//To Do: No need sqrt if in NewtonTolerance use, q2<Norm2, can save computation
+                        for(int i=0;i<nvariables;i++)
+                        {
+                            m_TemporalErrorNormArray[i]=sqrt(m_TemporalErrorNormArray[i]);
+                        }
+                }
+                
+                if(m_ErrorBasedAdaptedTimeStepFlag && m_comm->GetRank() == 0)
+                {
+                    // Array<OneD, NekDouble>  m_SpatialQuadErrorNormArray(nvariables,0.0);
+                    // Array<OneD, NekDouble>  m_TemporalQuadErrorNormArray(nvariables,0.0);
+
+                    // for(int i = 0; i < nvariables; i++)
+                    // {
+                    //     int npoints=m_fields[i]->GetNpoints();
+                    //     m_TemporalQuadErrorNormArray[i] = Vmath::Dot(npoints,m_TemporalError[i],m_TemporalError[i]);
+                    // }
+                    // m_comm->AllReduce(m_TemporalQuadErrorNormArray, Nektar::LibUtilities::ReduceSum);
+                    // for(int i = 0; i < nvariables; i++)
+                    // {
+                    //     m_TemporalQuadErrorNormArray[i]=sqrt(m_TemporalQuadErrorNormArray[i]);
+                    // }
+
+                    // for(int i = 0; i < nvariables; i++)
+                    // {
+                    //     int npoints=m_fields[i]->GetNpoints();
+                    //     m_SpatialQuadErrorNormArray[i] = Vmath::Dot(npoints,m_SpatialError[i],m_SpatialError[i]);
+                    // }
+                    // m_comm->AllReduce(m_SpatialQuadErrorNormArray, Nektar::LibUtilities::ReduceSum);
+                    // for(int i = 0; i < nvariables; i++)
+                    // {
+                    //     m_SpatialQuadErrorNormArray[i] =sqrt(m_SpatialQuadErrorNormArray[i] );
+                    // }
+                    ofstream outfile0;
+                    outfile0.open("CoeffErrorNorm.txt",ios::app);
+                    outfile0<<"$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$"<<endl;
+                    int nwidthcolm=12;
+                    int npoints=m_fields[0]->GetNpoints();
+                    outfile0<<"Time="<<m_time<<", TimeStep="<<m_timestep<<", AdaptiveTimeStep="<<m_OperatedAdaptiveTimeStep;
+                    outfile0<<endl;
+                    outfile0<<"Spatial Error (NonOperatedNorm)"<<endl;
+                    for(int i=0;i<nvariables;i++)
+                    {
+                        outfile0<<right<<scientific<<setw(nwidthcolm)<<setprecision(nwidthcolm-6)<<m_SpatialErrorNormArray[i];//Because L2 norm is sqrt((x1^2+x2^2)/2)
+                        outfile0<<"     ";
+                    }
+                    outfile0<<endl;
+                    outfile0<<"Temporal Error (NonOperatedNorm)"<<endl;
+                    for(int i=0;i<nvariables;i++)
+                    {
+                        outfile0<<right<<scientific<<setw(nwidthcolm)<<setprecision(nwidthcolm-6)<<m_TemporalErrorNormArray[i];
+                        outfile0<<"     ";
+                    }
+                    outfile0<<endl;
+                    outfile0.close();
+                }
+
                 timer.Stop();
 
                 m_time  += m_timestep;
@@ -737,7 +1133,7 @@ namespace Nektar
          * the problem remains stable.
          */
         NekDouble UnsteadySystem::GetTimeStep(
-            const Array<OneD, const Array<OneD, NekDouble> > &inarray)
+            const TensorOfArray2D<NekDouble> &inarray)
         {
             return v_GetTimeStep(inarray);
         }
@@ -749,7 +1145,7 @@ namespace Nektar
          * @see UnsteadySystem::GetTimeStep
          */
         NekDouble UnsteadySystem::v_GetTimeStep(
-            const Array<OneD, const Array<OneD, NekDouble> > &inarray)
+            const TensorOfArray2D<NekDouble> &inarray)
         {
             ASSERTL0(false, "Not defined for this class");
             return 0.0;
