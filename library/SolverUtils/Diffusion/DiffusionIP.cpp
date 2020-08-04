@@ -971,13 +971,14 @@ namespace Nektar
 
             ConsVarAveJump(nConvectiveFields,nTracePts,vFwd,vBwd,solution_Aver,solution_jump);
 
+            Array<OneD, NekDouble> PenaltyFactor(nTracePts,0.0);
+            // GetPenaltyFactor_const(fields,PenaltyFactor);
+            GetPenaltyFactor(fields,PenaltyFactor);
+
             if(!m_flagFreezeJac)
             {
                 Array<OneD, NekDouble> jumpTmp(nTracePts,0.0);
-                Array<OneD, NekDouble> PenaltyFactor(nTracePts,0.0);
-
-                // GetPenaltyFactor_const(fields,PenaltyFactor);
-                GetPenaltyFactor(fields,PenaltyFactor);
+                
 
                 Vmath::Vmul(nTracePts,PenaltyFactor,1, 
                     m_oIPPenaltyLength,1,
