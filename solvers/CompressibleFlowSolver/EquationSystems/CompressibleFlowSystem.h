@@ -50,6 +50,7 @@
 #include <LocalRegions/Expansion2D.h>
 
 #define CFS_DEBUGMODE
+#define DEMO_IMPLICITSOLVER_JFNK_COEFF
 namespace Nektar
 {
     /**
