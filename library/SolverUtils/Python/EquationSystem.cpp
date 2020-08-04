@@ -63,7 +63,15 @@ struct EquationSystemWrap : public EquationSystem, public py::wrapper<EquationSy
      */
     void DoSolve()
     {
-        this->get_override("DoSolve")();
+        this->get_override("v_DoSolve")();
+    }
+
+    /**
+     * @brief Concrete implementation of the EquationSystem::v_DoSolve function.
+     */
+    void v_DoSolve()
+    {
+        this->get_override("v_DoSolve")();
     }
 
 };
@@ -129,13 +137,6 @@ EquationSystemSharedPtr CreateEquationSystem(py::tuple args, py::dict kwargs)
 // };
 
 
-
-
-void hello_bello()
-{
-    std::cout << "hello bello" << std::endl;
-}
-
 void export_EquationSystem()
 {
     py::implicitly_convertible<std::shared_ptr<EquationSystemWrap>,
@@ -149,7 +150,6 @@ void export_EquationSystem()
         .def("DoSolve", py::pure_virtual(&EquationSystem::DoSolve))
         .def("Create", py::raw_function(CreateEquationSystem))
         .staticmethod("Create")
-        .def("hello_bello", &hello_bello)
         ;
     EquationSystemWrapConverter();
 }

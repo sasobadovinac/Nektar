@@ -10,7 +10,6 @@ class TestEquationSystem(unittest.TestCase):
         return self.__class__.__name__
 
     def setUp(self):
-        print("hello_bello")
         self.session_name = ["test_solverutils_equationsystem.py",\
                              "newsquare_2x2.xml"]
         self.session      = SessionReader.CreateInstance(self.session_name)
@@ -19,7 +18,8 @@ class TestEquationSystem(unittest.TestCase):
     def testEquationSystemConstructor(self):
         msg = self.getCN() + "::testEquationSystemConstructor: "
         try:
-            eq = EquationSystem(self.session, self.graph)
+            eq1 = EquationSystem(self.session, self.graph)
+            eq2 = EquationSystem.Create(self.session, self.graph)
             msg += "PASS"
             print(msg)
         except :

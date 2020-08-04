@@ -353,7 +353,7 @@ class Interpolator;
             NekDouble                                   m_timestep;
             /// Time step size
             NekDouble                                   m_timestepMax = -1.0;
-            
+
             /// Lambda constant in real system if one required.
             NekDouble                                   m_lambda;
             /// Time between checkpoints.
@@ -430,7 +430,7 @@ class Interpolator;
             SOLVER_UTILS_EXPORT virtual void v_DoInitialise();
 
             /// Virtual function for solve implementation.
-            SOLVER_UTILS_EXPORT virtual void v_DoSolve();
+            SOLVER_UTILS_EXPORT virtual void v_DoSolve() = 0;
 
 
             /// Virtual function for the L_inf error computation between fields and a given exact solution.
