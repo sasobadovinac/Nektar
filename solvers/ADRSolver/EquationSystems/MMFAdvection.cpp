@@ -40,13 +40,20 @@
 
 #include <ADRSolver/EquationSystems/MMFAdvection.h>
 #include <LibUtilities/BasicUtils/Timer.h>
+#include <ADRSolver/Plugin.h>
 
 namespace Nektar
 {
-std::string MMFAdvection::className =
-    SolverUtils::GetEquationSystemFactory().RegisterCreatorFunction(
-        "MMFAdvection", MMFAdvection::create, "MMFAdvection equation.");
-
+    std::string MMFAdvection::className;
+    bool mmfadvection_reg = Nektar::SolverUtils::plugin.RegisterCallback(
+        [](){
+            MMFAdvection::className = SolverUtils::GetEquationSystemFactory().
+                                            RegisterCreatorFunction(
+                                                "MMFAdvection",
+                                                MMFAdvection::create,
+                                                "MMFAdvection equation.");
+        }
+    );
 MMFAdvection::MMFAdvection(const LibUtilities::SessionReaderSharedPtr &pSession,
             const SpatialDomains::MeshGraphSharedPtr& pGraph)
     : UnsteadySystem(pSession, pGraph), MMFSystem(pSession, pGraph),
@@ -208,6 +215,7 @@ MMFAdvection::~MMFAdvection()
 
 void MMFAdvection::v_DoSolve()
 {
+    std::cout << "MMFAdvection::v_DoSolve() was called!!!" << std::endl;
     ASSERTL0(m_intScheme != 0, "No time integration scheme.");
 
     int i, nchk = 1;

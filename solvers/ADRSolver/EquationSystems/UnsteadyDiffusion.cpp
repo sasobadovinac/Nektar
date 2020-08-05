@@ -33,6 +33,8 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <ADRSolver/EquationSystems/UnsteadyDiffusion.h>
+#include <ADRSolver/Plugin.h>
+
 #include <iostream>
 #include <iomanip>
 
@@ -42,7 +44,14 @@ using namespace std;
 
 namespace Nektar
 {
-    string UnsteadyDiffusion::className = GetEquationSystemFactory().RegisterCreatorFunction("UnsteadyDiffusion", UnsteadyDiffusion::create);
+    string UnsteadyDiffusion::className;
+    bool unsteadydiffusion_reg = Nektar::SolverUtils::plugin.RegisterCallback(
+        []() {
+            UnsteadyDiffusion::className = GetEquationSystemFactory().
+                            RegisterCreatorFunction("UnsteadyDiffusion",
+                                                    UnsteadyDiffusion::create);
+        }
+    );
 
     UnsteadyDiffusion::UnsteadyDiffusion(
         const LibUtilities::SessionReaderSharedPtr& pSession,

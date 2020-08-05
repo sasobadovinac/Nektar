@@ -33,13 +33,22 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <ADRSolver/EquationSystems/SteadyAdvectionDiffusionReaction.h>
+#include <ADRSolver/Plugin.h>
 
 using namespace std;
 
 namespace Nektar
 {
-    string SteadyAdvectionDiffusionReaction::className = GetEquationSystemFactory().RegisterCreatorFunction("SteadyAdvectionDiffusionReaction", SteadyAdvectionDiffusionReaction::create);
-
+    string SteadyAdvectionDiffusionReaction::className;
+    bool steadyard_reg = Nektar::SolverUtils::plugin.RegisterCallback(
+        []() {
+            SteadyAdvectionDiffusionReaction::className =
+                GetEquationSystemFactory().
+                    RegisterCreatorFunction(
+                        "SteadyAdvectionDiffusionReaction",
+                        SteadyAdvectionDiffusionReaction::create);
+        }
+    );
 
     SteadyAdvectionDiffusionReaction::SteadyAdvectionDiffusionReaction(
         const LibUtilities::SessionReaderSharedPtr& pSession,

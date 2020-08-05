@@ -13,15 +13,14 @@ namespace SolverUtils
 fs::path install_dir = "@CMAKE_INSTALL_PREFIX@";
 fs::path plugin_base_dir = "@NEKTAR_SOLVER_PLUGIN_DIR@";
 
-std::shared_ptr<SolverPlugin> LoadSolverPlugin(std::string name)
+std::shared_ptr<SolverPlugin> LoadSolverPlugin(std::string libname)
 {
-    std::string libname = "lib" + name + ".so";
-
+    std::cout << "loading " << libname << std::endl;
     boost::shared_ptr<SolverPlugin> plugin = dll::import<SolverPlugin>(
         install_dir / plugin_base_dir / libname,
         "plugin",
         dll::load_mode::append_decorations);
-
+    std::cout << "initializing " << libname << std::endl;
     plugin->Initialise();
 
     // convert to std::shared_ptr to avoid using boost::shared_ptr

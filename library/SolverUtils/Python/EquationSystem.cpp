@@ -112,31 +112,6 @@ EquationSystemSharedPtr CreateEquationSystem(py::tuple args, py::dict kwargs)
     return eqsystem;
 }
 
-// /**
-//  * @brief Wrapper for subclasses of the EquationSystem class, which
-//  * can then be inhereted from Python classes.
-//  */
-// struct PythonEquationSystemClass
-// {
-//     PythonEquationSystemClass()
-//     {
-//         py::class_<EquationSystemWrap,
-//                    std::shared_ptr<EquationSystemWrap>,
-//                    py::bases<EquationSystem>,
-//                    boost::noncopyable>(
-//                        "EquationSystemWrap",
-//                        py::init<SessionReaderSharedPtr, MeshGraphSharedPtr>()
-//             )
-//             .def("DoSolve", py::pure_virtual(&EquationSystem::DoSolve))
-//             .def("Create", py::raw_function(CreateEquationSystem))
-//             .staticmethod("Create")
-//             ;
-//
-//         EquationSystemWrapConverter();
-//     }
-// };
-
-
 void export_EquationSystem()
 {
     py::implicitly_convertible<std::shared_ptr<EquationSystemWrap>,
@@ -146,7 +121,7 @@ void export_EquationSystem()
                std::shared_ptr<EquationSystemWrap>,
                boost::noncopyable>(
             "EquationSystem",
-            py::init<SessionReaderSharedPtr, MeshGraphSharedPtr>())
+            py::no_init)
         .def("DoSolve", py::pure_virtual(&EquationSystem::DoSolve))
         .def("Create", py::raw_function(CreateEquationSystem))
         .staticmethod("Create")

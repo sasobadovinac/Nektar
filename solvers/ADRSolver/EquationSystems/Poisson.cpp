@@ -40,7 +40,7 @@ using namespace std;
 namespace Nektar
 {
     std::string Poisson::className1, Poisson::className2;
-    bool reg_poisson = Nektar::SolverUtils::plugin.RegisterCallback(
+    bool poisson_reg = Nektar::SolverUtils::plugin.RegisterCallback(
         []() {
             Poisson::className1 = GetEquationSystemFactory().
                 RegisterCreatorFunction("Poisson", Poisson::create);

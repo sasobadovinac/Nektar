@@ -128,6 +128,7 @@ ADD_NEKTAR_LIBRARY(SolverUtils
     SUMMARY "Nektar++ SolverUtils library"
     DESCRIPTION "This library provides support classes and routines for constructing complete spectral/hp element solvers.")
 
+TARGET_LINK_LIBRARIES(SolverUtils PUBLIC ${CMAKE_DL_LIBS})
 
 IF (NEKTAR_BUILD_PYTHON)
     SUBDIRS(Python)

@@ -35,10 +35,12 @@
 #include <LibUtilities/Python/NekPyConfig.hpp>
 
 void export_EquationSystem();
+void export_Plugin();
 
 BOOST_PYTHON_MODULE(_SolverUtils)
 {
     np::initialize();
 
     export_EquationSystem();
+    export_Plugin();
 }

@@ -9,12 +9,9 @@ MACRO(ADD_SOLVER_PLUGIN name)
     CMAKE_PARSE_ARGUMENTS(SOLVERPLUGIN "" "" "SOURCES" ${ARGN})
 
     ADD_LIBRARY(${name}-plugin SHARED ${SOLVERPLUGIN_SOURCES})
-    TARGET_LINK_LIBRARIES(${name}-plugin LINK_PUBLIC SolverUtils)
-
-    # Set output name to always be, e.g. libADRSolver.so
-    SET_TARGET_PROPERTIES(${name}-plugin PROPERTIES OUTPUT_NAME ${name})
-    SET_TARGET_PROPERTIES(${name}-plugin PROPERTIES PREFIX "lib")
-    SET_TARGET_PROPERTIES(${name}-plugin PROPERTIES SUFFIX ".so")
+    TARGET_LINK_LIBRARIES(${name}-plugin PUBLIC SolverUtils)
+    # do we need this??????
+    # TARGET_LINK_LIBRARIES(${name} PUBLIC ${name}-plugin)
 
     INSTALL(TARGETS ${name}-plugin DESTINATION ${NEKTAR_SOLVER_PLUGIN_DIR})
 ENDMACRO()
@@ -57,7 +54,7 @@ ENDMACRO()
 # Generate list of available subdirectories
 FILE(GLOB dir_list "*")
 FOREACH(dir ${dir_list})
-    IF(IS_DIRECTORY ${dir} AND EXISTS ${dir}/CMakeLists.txt)    
+    IF(IS_DIRECTORY ${dir} AND EXISTS ${dir}/CMakeLists.txt)
         ADD_SUBDIRECTORY(${dir})
     ENDIF(IS_DIRECTORY ${dir} AND EXISTS ${dir}/CMakeLists.txt)
 ENDFOREACH(dir ${dir_list})

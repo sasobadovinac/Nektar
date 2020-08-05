@@ -32,12 +32,20 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 #include <ADRSolver/EquationSystems/SteadyAdvectionDiffusion.h>
+#include <ADRSolver/Plugin.h>
 
 using namespace std;
 
 namespace Nektar
 {
-    string SteadyAdvectionDiffusion::className = GetEquationSystemFactory().RegisterCreatorFunction("SteadyAdvectionDiffusion", SteadyAdvectionDiffusion::create);
+    string SteadyAdvectionDiffusion::className;
+    bool steadyad_reg =  Nektar::SolverUtils::plugin.RegisterCallback(
+       []() {
+           SteadyAdvectionDiffusion::className= GetEquationSystemFactory().
+                RegisterCreatorFunction("SteadyAdvectionDiffusion", 
+                                        SteadyAdvectionDiffusion::create);
+        }
+    );
 
     /**
      * @class SteadyAdvectionDiffusion
@@ -90,6 +98,7 @@ namespace Nektar
 
     void SteadyAdvectionDiffusion::v_DoSolve()
     {
+        std::cout << "SteadyAdvectionDiffusion::v_DoSolve() was called!" <<std::endl;
         for(int i = 0; i < m_fields.size(); ++i)
         {
 	    // Zero initial guess

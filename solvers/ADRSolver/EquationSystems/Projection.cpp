@@ -33,14 +33,20 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <ADRSolver/EquationSystems/Projection.h>
+#include <ADRSolver/Plugin.h>
 
 using namespace std;
 
 namespace Nektar
 {
-string Projection::className =
-    GetEquationSystemFactory().RegisterCreatorFunction("Projection",
-                                                       Projection::create);
+    string Projection::className;
+    bool projection_reg =  Nektar::SolverUtils::plugin.RegisterCallback(
+        []() {
+            Projection::className =  GetEquationSystemFactory().
+                RegisterCreatorFunction("Projection", Projection::create);
+        }
+    );
+
 
 Projection::Projection(const LibUtilities::SessionReaderSharedPtr &pSession,
                        const SpatialDomains::MeshGraphSharedPtr& pGraph)
@@ -61,6 +67,7 @@ Projection::~Projection()
 
 void Projection::v_DoSolve()
 {
+    std::cout << "Projection::v_DoSolve() was called!" << std::endl;
     for (int i = 0; i < m_fields.size(); ++i)
     {
         // Zero field so initial conditions are zero

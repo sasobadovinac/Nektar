@@ -34,15 +34,22 @@
 
 #include <iostream>
 #include <ADRSolver/EquationSystems/UnsteadyAdvection.h>
+#include <ADRSolver/Plugin.h>
+
 
 using namespace std;
 
 namespace Nektar
 {
-    string UnsteadyAdvection::className = SolverUtils::GetEquationSystemFactory().
-        RegisterCreatorFunction("UnsteadyAdvection",
-                                UnsteadyAdvection::create,
-                                "Unsteady Advection equation.");
+    string UnsteadyAdvection::className;
+    bool unsteadya_reg = Nektar::SolverUtils::plugin.RegisterCallback(
+        []() {
+            UnsteadyAdvection::className = SolverUtils::GetEquationSystemFactory().
+                RegisterCreatorFunction("UnsteadyAdvection",
+                                        UnsteadyAdvection::create,
+                                        "Unsteady Advection equation.");
+        }
+    );
 
     UnsteadyAdvection::UnsteadyAdvection(
         const LibUtilities::SessionReaderSharedPtr& pSession,
