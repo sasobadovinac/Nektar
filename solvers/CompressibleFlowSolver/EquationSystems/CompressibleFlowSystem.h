@@ -100,6 +100,10 @@ namespace Nektar
         NekDouble                           m_gamma;
         std::string                         m_shockCaptureType;
 
+        /// Storage for physical artificial viscosity
+        Array<OneD, NekDouble>              m_muav;
+        Array<OneD, NekDouble>              m_muavTrace;
+
         // Parameters for exponential filtering
         NekDouble                           m_filterAlpha;
         NekDouble                           m_filterExponent;
@@ -167,7 +171,7 @@ namespace Nektar
         void SetBoundaryConditions(
             Array<OneD, Array<OneD, NekDouble> >             &physarray,
             NekDouble                                         time);
-        
+
         void SetBoundaryConditionsBwdWeight();
 
         void GetElmtTimeStep(

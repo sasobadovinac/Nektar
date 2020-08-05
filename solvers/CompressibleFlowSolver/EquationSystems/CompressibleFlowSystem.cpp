@@ -81,11 +81,22 @@ namespace Nektar
         // Create artificial diffusion
         if (m_shockCaptureType != "Off")
         {
-            m_artificialDiffusion = GetArtificialDiffusionFactory()
-                                    .CreateInstance(m_shockCaptureType,
-                                                    m_session,
-                                                    m_fields,
-                                                    m_spacedim);
+            if (m_shockCaptureType == "Physical")
+            {
+                auto nPts = m_fields[0]->GetTotPoints();
+                m_muav = Array<OneD, NekDouble>(nPts, 0.0);
+
+                auto nTracePts = m_fields[0]->GetTrace()->GetTotPoints();
+                m_muavTrace = Array<OneD, NekDouble> (nTracePts,0.0);
+            }
+            else
+            {
+                m_artificialDiffusion = GetArtificialDiffusionFactory()
+                                        .CreateInstance(m_shockCaptureType,
+                                                        m_session,
+                                                        m_fields,
+                                                        m_spacedim);
+            }
         }
 
         // Forcing terms for the sponge region
@@ -125,12 +136,12 @@ namespace Nektar
             m_ode.DefineProjection(&CompressibleFlowSystem::DoOdeProjection, this);
         }
         else
-        {   
+        {
             ASSERTL0(false, "Implicit CFS not set up.");
         }
 
         SetBoundaryConditionsBwdWeight();
-        
+
         string advName;
         m_session->LoadSolverInfo("AdvectionType", advName, "WeakDG");
     }
@@ -253,8 +264,7 @@ namespace Nektar
                 m_fields[i]->GetFwdBwdTracePhys(inarray[i], Fwd[i], Bwd[i]);
             }
         }
-        
-        //Oringinal CompressibleFlowSolver
+
         // Calculate advection
         DoAdvection(inarray, outarray, time, Fwd, Bwd);
 
@@ -357,7 +367,7 @@ namespace Nektar
         m_advObject->Advect(nvariables, m_fields, advVel, inarray,
                             outarray, time, pFwd, pBwd);
     }
-    
+
     /**
      * @brief Add the diffusions terms to the right-hand side
      */
@@ -368,7 +378,7 @@ namespace Nektar
             const Array<OneD, Array<OneD, NekDouble> >   &pBwd)
     {
         v_DoDiffusion(inarray, outarray, pFwd, pBwd);
-        
+
     }
 
     /**
@@ -408,7 +418,7 @@ namespace Nektar
         }
     }
     /**
-     * @brief Set up a weight on physical boundaries for boundary condition 
+     * @brief Set up a weight on physical boundaries for boundary condition
      * applications
      */
     void CompressibleFlowSystem::SetBoundaryConditionsBwdWeight()
