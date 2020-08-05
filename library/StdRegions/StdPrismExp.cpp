@@ -46,6 +46,7 @@ namespace Nektar
 
         StdPrismExp::StdPrismExp() // Deafult construct of standard expansion directly called.
         {
+            //            m_physevalall   = v_GetPhysEvalALL();
         }
 
         StdPrismExp::StdPrismExp(const LibUtilities::BasisKey &Ba,
@@ -64,12 +65,14 @@ namespace Nektar
         {
             ASSERTL0(Ba.GetNumModes() <= Bc.GetNumModes(),
                      "order in 'a' direction is higher than order in 'c' direction");
+            // m_physevalall   = v_GetPhysEvalALL();
         }
 
         StdPrismExp::StdPrismExp(const StdPrismExp &T)
             : StdExpansion(T),
               StdExpansion3D(T)
         {
+            //            m_physevalall   = v_GetPhysEvalALL();
         }
 
 
@@ -725,6 +728,73 @@ namespace Nektar
             }
         }
 
+
+        /*        void StdPrismExp::v_FillModedx(const int mode,
+                            Array<OneD, NekDouble> &outarray)
+        {
+            
+            v_FillMode( mode,
+                        outarray);
+            int tot = GetTotPoints();
+            //check
+            Array<OneD, NekDouble> temp(tot), coordsx(tot), coordsy(tot);
+
+            v_GetCoords(coordsx, coordsy, NullNekDouble1DArray);
+            
+            Array<OneD, NekDouble> coords(2);
+            for( int i = 0; i < tot; i++)
+            {
+                coords[0] = coordsx[i];
+                coords[1] = coordsy[i];
+                temp[i] = StdExpansion3D::PhysEvaluatedx(coords, outarray);
+            }
+        }
+
+        void StdPrismExp::v_FillModedy(const int mode,
+                            Array<OneD, NekDouble> &outarray)
+        {
+            
+            v_FillMode( mode,
+                        outarray);
+            int tot = GetTotPoints();
+            //check
+            Array<OneD, NekDouble> temp(tot), coordsx(tot), coordsy(tot);
+
+            v_GetCoords(coordsx, coordsy, NullNekDouble1DArray);
+            
+            Array<OneD, NekDouble> coords(2);
+            for( int i = 0; i < tot; i++)
+            {
+                coords[0] = coordsx[i];
+                coords[1] = coordsy[i];
+                temp[i] = StdExpansion3D::PhysEvaluatedy(coords, outarray);
+            }
+        }
+
+
+        void StdPrismExp::v_FillModedz(const int mode,
+                            Array<OneD, NekDouble> &outarray)
+        {
+            
+            v_FillMode( mode,
+                        outarray);
+            int tot = GetTotPoints();
+            //check
+            Array<OneD, NekDouble> temp(tot), coordsx(tot), coordsy(tot), coordsz(tot);
+
+            v_GetCoords(coordsx, coordsy, coordsz);
+            
+            Array<OneD, NekDouble> coords(3);
+            for( int i = 0; i < tot; i++)
+            {
+                coords[0] = coordsx[i];
+                coords[1] = coordsy[i];
+                coords[2] = coordsz[i];
+                temp[i] = StdExpansion3D::PhysEvaluatedz(coords, outarray);
+            }
+        }
+
+        */
         void StdPrismExp::v_FillMode(const int mode, Array<OneD, NekDouble> &outarray)
         {
             Array<OneD, NekDouble> tmp(m_ncoeffs,0.0);
@@ -732,7 +802,7 @@ namespace Nektar
             StdPrismExp::v_BwdTrans(tmp, outarray);
         }
 
-        NekDouble StdPrismExp::v_PhysEvaluatedx(                                            const Array<OneD, const NekDouble> &coords,                     const Array<OneD, const NekDouble> &physvals)
+        /*        NekDouble StdPrismExp::v_PhysEvaluatedx(                                            const Array<OneD, const NekDouble> &coords,                     const Array<OneD, const NekDouble> &physvals)
         {
 
 
@@ -860,12 +930,40 @@ namespace Nektar
 
             return StdExpansion::BaryEvaluateDeriv<2>(eta[2], &wsp2[0]);
         }
+        */
 
-
-
+        /*  Array<OneD, Array<OneD, NekDouble> >StdPrismExp::v_GetPhysEvalALL()
+        {
+            Array<OneD, Array<OneD, NekDouble> > tmp_ret(4);
+            NekDouble totPts = GetTotPoints();
+            Array<OneD, NekDouble> tmp(totPts*m_ncoeffs);
+            Array<OneD, NekDouble> tmpdx(totPts*m_ncoeffs);
+            Array<OneD, NekDouble> tmpdy(totPts*m_ncoeffs);
+            Array<OneD, NekDouble> tmpdz(totPts*m_ncoeffs);
+            for(int i = 0; i < m_ncoeffs; i++)
+            {
+                Array<OneD, NekDouble> k(totPts);
+                v_FillMode(i,k);
+                Vmath::Vcopy(totPts, &k[0], 1, &tmp[(i*totPts)], 1);
+                v_FillModedx(i,k);
+                Vmath::Vcopy(totPts, &k[0], 1, &tmpdx[(i*totPts)], 1);
+                v_FillModedy(i,k);
+                Vmath::Vcopy(totPts, &k[0], 1, &tmpdy[(i*totPts)], 1);
+                v_FillModedz(i,k);
+                Vmath::Vcopy(totPts, &k[0], 1, &tmpdz[(i*totPts)], 1);
+                
+            }
+            
+            tmp_ret[0] = tmp;
+            tmp_ret[1] = tmpdx;
+            tmp_ret[2] = tmpdy;
+            tmp_ret[3] = tmpdz;
+            return tmp_ret;
+        }        
+        */
         NekDouble StdPrismExp::v_PhysEvaluateBasis(
-            const Array<OneD, const NekDouble>& coords,
-            int mode)
+                                                   const Array<OneD, const NekDouble>& coords,
+                                                   int mode)
         {
             Array<OneD, NekDouble> coll(3);
             LocCoordToLocCollapsed(coords, coll);
@@ -894,6 +992,180 @@ namespace Nektar
                     StdExpansion::BaryEvaluateBasis<0>(coll[0], mode0) *
                     StdExpansion::BaryEvaluateBasis<1>(coll[1], mode1) *
                     StdExpansion::BaryEvaluateBasis<2>(coll[2], mode2);
+            }
+        }
+
+
+
+        /*        
+        NekDouble StdPrismExp::v_PhysEvaluatedxBasis(
+            const Array<OneD, const NekDouble> &coords,
+            int mode)
+        {
+            ASSERTL2(coords[0] > -1 - NekConstants::kNekZeroTol,
+                     "coord[0] < -1");
+            ASSERTL2(coords[0] <  1 + NekConstants::kNekZeroTol,
+                     "coord[0] >  1");
+            ASSERTL2(coords[1] > -1 - NekConstants::kNekZeroTol,
+                     "coord[1] < -1");
+            ASSERTL2(coords[1] <  1 + NekConstants::kNekZeroTol,
+                     "coord[1] >  1");
+    
+            int tot = GetTotPoints();
+            Array<OneD, NekDouble> physvals(tot);
+           
+            
+            Vmath::Vcopy(tot, &(m_physevalall[1][mode][0]), 1, &physvals[0], 1);
+            return v_PhysEvaluate(coords, physvals);
+
+        }
+
+
+
+
+        NekDouble StdPrismExp::v_PhysEvaluatedyBasis(
+            const Array<OneD, const NekDouble> &coords,
+            int mode)
+        {
+            ASSERTL2(coords[0] > -1 - NekConstants::kNekZeroTol,
+                     "coord[0] < -1");
+            ASSERTL2(coords[0] <  1 + NekConstants::kNekZeroTol,
+                     "coord[0] >  1");
+            ASSERTL2(coords[1] > -1 - NekConstants::kNekZeroTol,
+                     "coord[1] < -1");
+            ASSERTL2(coords[1] <  1 + NekConstants::kNekZeroTol,
+                     "coord[1] >  1");
+    
+            int tot = GetTotPoints();
+        
+            Array<OneD, NekDouble> physvals(tot);
+            Vmath::Vcopy(tot, &(m_physevalall[2][mode][0]), 1, &physvals[0], 1);
+            return v_PhysEvaluate(coords, physvals);
+
+        }
+
+
+        NekDouble StdPrismExp::v_PhysEvaluatedzBasis(
+            const Array<OneD, const NekDouble> &coords,
+            int mode)
+        {
+            ASSERTL2(coords[0] > -1 - NekConstants::kNekZeroTol,
+                     "coord[0] < -1");
+            ASSERTL2(coords[0] <  1 + NekConstants::kNekZeroTol,
+                     "coord[0] >  1");
+            ASSERTL2(coords[1] > -1 - NekConstants::kNekZeroTol,
+                     "coord[1] < -1");
+            ASSERTL2(coords[1] <  1 + NekConstants::kNekZeroTol,
+                     "coord[1] >  1");
+    
+            int tot = GetTotPoints();
+        
+            Array<OneD, NekDouble> physvals(tot);
+            Vmath::Vcopy(tot, &(m_physevalall[3][mode][tot]), 1, &physvals[0], 1);
+            return v_PhysEvaluate(coords, physvals);
+
+        }
+*/
+        NekDouble StdPrismExp::v_PhysEvaluatedxBasisBary(
+            const Array<OneD, const NekDouble> &coords,
+            int mode)
+        {
+            Array<OneD, NekDouble> coll(3);
+            LocCoordToLocCollapsed(coords, coll);
+
+            const int nm1 = m_base[1]->GetNumModes();
+            const int nm2 = m_base[2]->GetNumModes();
+            const int b = 2 * nm2 + 1;
+
+            const int mode0 = floor(0.5 * (b - sqrt(b * b - 8.0 * mode / nm1)));
+            const int tmp   =
+                mode - nm1*(mode0 * (nm2-1) + 1 - (mode0 - 2)*(mode0 - 1) / 2);
+            const int mode1 = tmp / (nm2 - mode0);
+            const int mode2 = tmp % (nm2 - mode0);
+
+            if (mode0 == 0 && mode2 == 1 &&
+                m_base[0]->GetBasisType() == LibUtilities::eModified_A)
+            {
+                // handle collapsed top edge to remove mode0 terms
+                return
+                    StdExpansion::BaryEvaluateBasis<1>(coll[1], mode1) *
+                    StdExpansion::BaryEvaluateBasis<2>(coll[2], mode2);
+            }
+            else
+            {
+                return
+                    StdExpansion::BaryEvaluateDerivBasis<0>(coll[0], mode0) *
+                    StdExpansion::BaryEvaluateBasis<1>(coll[1], mode1) *
+                    StdExpansion::BaryEvaluateBasis<2>(coll[2], mode2);
+            }
+        }
+
+        NekDouble StdPrismExp::v_PhysEvaluatedyBasisBary(
+            const Array<OneD, const NekDouble> &coords,
+            int mode)
+        {
+            Array<OneD, NekDouble> coll(3);
+            LocCoordToLocCollapsed(coords, coll);
+
+            const int nm1 = m_base[1]->GetNumModes();
+            const int nm2 = m_base[2]->GetNumModes();
+            const int b = 2 * nm2 + 1;
+
+            const int mode0 = floor(0.5 * (b - sqrt(b * b - 8.0 * mode / nm1)));
+            const int tmp   =
+                mode - nm1*(mode0 * (nm2-1) + 1 - (mode0 - 2)*(mode0 - 1) / 2);
+            const int mode1 = tmp / (nm2 - mode0);
+            const int mode2 = tmp % (nm2 - mode0);
+
+            if (mode0 == 0 && mode2 == 1 &&
+                m_base[0]->GetBasisType() == LibUtilities::eModified_A)
+            {
+                // handle collapsed top edge to remove mode0 terms
+                return
+                    StdExpansion::BaryEvaluateDerivBasis<1>(coll[1], mode1) *
+                    StdExpansion::BaryEvaluateBasis<2>(coll[2], mode2);
+            }
+            else
+            {
+                return
+                    StdExpansion::BaryEvaluateBasis<0>(coll[0], mode0) *
+                    StdExpansion::BaryEvaluateDerivBasis<1>(coll[1], mode1) *
+                    StdExpansion::BaryEvaluateBasis<2>(coll[2], mode2);
+            }
+        }
+
+
+        NekDouble StdPrismExp::v_PhysEvaluatedzBasisBary(
+            const Array<OneD, const NekDouble>& coords,
+            int mode)
+        {
+            Array<OneD, NekDouble> coll(3);
+            LocCoordToLocCollapsed(coords, coll);
+
+            const int nm1 = m_base[1]->GetNumModes();
+            const int nm2 = m_base[2]->GetNumModes();
+            const int b = 2 * nm2 + 1;
+
+            const int mode0 = floor(0.5 * (b - sqrt(b * b - 8.0 * mode / nm1)));
+            const int tmp   =
+                mode - nm1*(mode0 * (nm2-1) + 1 - (mode0 - 2)*(mode0 - 1) / 2);
+            const int mode1 = tmp / (nm2 - mode0);
+            const int mode2 = tmp % (nm2 - mode0);
+
+            if (mode0 == 0 && mode2 == 1 &&
+                m_base[0]->GetBasisType() == LibUtilities::eModified_A)
+            {
+                // handle collapsed top edge to remove mode0 terms
+                return
+                    StdExpansion::BaryEvaluateBasis<1>(coll[1], mode1) *
+                    StdExpansion::BaryEvaluateDerivBasis<2>(coll[2], mode2);
+            }
+            else
+            {
+                return
+                    StdExpansion::BaryEvaluateBasis<0>(coll[0], mode0) *
+                    StdExpansion::BaryEvaluateBasis<1>(coll[1], mode1) *
+                    StdExpansion::BaryEvaluateDerivBasis<2>(coll[2], mode2);
             }
         }
 

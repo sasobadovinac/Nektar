@@ -153,6 +153,14 @@ namespace Nektar
                 const Array<OneD, const NekDouble>& coords,
                 int mode) final;
 
+            STD_REGIONS_EXPORT virtual void v_PhysEvalBasisGrad(
+                                                                const Array<OneD, const Array<OneD, NekDouble> > coords, 
+                                                                
+                                                                Array<OneD, NekDouble>& out_d0,                                        
+                                                                Array<OneD, NekDouble>& out_d1 = NullNekDouble1DArray, 
+                                                                Array<OneD, NekDouble>& out_d2 = NullNekDouble1DArray);
+
+            
             STD_REGIONS_EXPORT virtual void v_LaplacianMatrixOp(
                     const Array<OneD, const NekDouble> &inarray,
                     Array<OneD,NekDouble> &outarray,
@@ -186,6 +194,8 @@ namespace Nektar
                     Array<OneD, NekDouble> &coords_1,
                     Array<OneD, NekDouble> &coords_2);
 
+   STD_REGIONS_EXPORT virtual         Array<OneD, Array<OneD, NekDouble> > v_GetPhysEvalALL() ;
+         
 
             //----------------------------
             // Public Mappings

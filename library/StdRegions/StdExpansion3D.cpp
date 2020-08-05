@@ -140,13 +140,231 @@ namespace Nektar
         }
 
 
-        NekDouble StdExpansion3D::v_PhysEvaluateDeriv(
+        //evaluates der of multiple points given in coords(2D array) with x-coords in coords[0] and ycoords in coords[1]
+        
+        void StdExpansion3D::v_PhysEvalGrad(
+                                            const Array<OneD, const Array<OneD, NekDouble> >coords,
+                                            const Array<OneD, const NekDouble>& inarray,        
+                                            Array<OneD, NekDouble> &out_d0,
+                                            Array<OneD, NekDouble> &out_d1,
+                                            Array<OneD, NekDouble> &out_d2)
+        {
+            Array<OneD, NekDouble> eta(3);
+            const int nq0 = m_base[0]->GetNumPoints();
+            const int nq1 = m_base[1]->GetNumPoints();
+            const int nq2 = m_base[2]->GetNumPoints();
+                
+            Array<OneD, NekDouble> wsp1(nq1 * nq2), wsp2(nq2);
+            
+            for(int k = 0; k<coords[0].size(); k++)
+            {
+                eta[0] = coords[0][k];
+                eta[1] = coords[1][k];
+                eta[2] = coords[2][k];
+            
+                if(out_d0.size()>0)
+                {
+                
+                    // Construct the 2D square...
+                    const NekDouble *ptr = &inarray[0];
+                    for (int i = 0; i < nq1 * nq2; ++i, ptr += nq0)
+                    {
+                        wsp1[i] = StdExpansion::BaryEvaluateDeriv<0>(eta[0], ptr);
+                    }
+                    for (int i = 0; i < nq2; ++i)
+                    {
+                        wsp2[i] = StdExpansion::BaryEvaluate<1>(eta[1], &wsp1[i * nq1]);
+                    }
+                    
+                    out_d0[k] = StdExpansion::BaryEvaluate<2>(eta[2], &wsp2[0]);
+                    
+                }
+
+            
+                if(out_d1.size()>0)
+                {
+                    Array<OneD, NekDouble> wsp1(nq1 * nq2), wsp2(nq2);
+                
+                    // Construct the 2D square...
+                    const NekDouble *ptr = &inarray[0];
+                    for (int i = 0; i < nq1 * nq2; ++i, ptr += nq0)
+                    {
+                        wsp1[i] = StdExpansion::BaryEvaluate<0>(eta[0], ptr);
+                    }
+                    
+                    for (int i = 0; i < nq2; ++i)
+                    {
+                        wsp2[i] = StdExpansion::BaryEvaluateDeriv<1>(eta[1], &wsp1[i * nq1]);
+                    }
+                    
+                    out_d1[k] = StdExpansion::BaryEvaluate<2>(eta[2], &wsp2[0]);
+                    
+                }
+
+                if(out_d2.size()>0)
+                {
+                    Array<OneD, NekDouble> wsp1(nq1 * nq2), wsp2(nq2);
+                
+                    // Construct the 2D square...
+                    const NekDouble *ptr = &inarray[0];
+                    for (int i = 0; i < nq1 * nq2; ++i, ptr += nq0)
+                    {
+                        wsp1[i] = StdExpansion::BaryEvaluate<0>(eta[0], ptr);
+                    }
+                    
+                    for (int i = 0; i < nq2; ++i)
+                    {
+                        wsp2[i] = StdExpansion::BaryEvaluate<1>(eta[1], &wsp1[i * nq1]);
+                    }
+                    
+                    out_d2[k] = StdExpansion::BaryEvaluateDeriv<2>(eta[2], &wsp2[0]);
+                    
+                }
+
+            }
+        }            
+    
+
+
+
+
+        /*        NekDouble StdExpansion3D::v_PhysEvaluatedx(
             const Array<OneD, const NekDouble> &coords,
             const Array<OneD, const NekDouble> &physvals)
         {
-            boost::ignore_unused(coords, physvals);
-            return 0.0;
+            Array<OneD, NekDouble> eta(3);
+
+            WARNINGL2(coords[0] >= -1 - NekConstants::kNekZeroTol,
+                      "coord[0] < -1");
+            WARNINGL2(coords[0] <=  1 + NekConstants::kNekZeroTol,
+                      "coord[0] >  1");
+            WARNINGL2(coords[1] >= -1 - NekConstants::kNekZeroTol,
+                      "coord[1] < -1");
+            WARNINGL2(coords[1] <=  1 + NekConstants::kNekZeroTol,
+                      "coord[1] >  1");
+            WARNINGL2(coords[2] >= -1 - NekConstants::kNekZeroTol,
+                      "coord[2] < -1");
+            WARNINGL2(coords[2] <=  1 + NekConstants::kNekZeroTol,
+                      "coord[2] >  1");
+
+            // Obtain local collapsed corodinate from Cartesian coordinate.
+            //            LocCoordToLocCollapsed(coords, eta);
+            eta = coords;
+            const int nq0 = m_base[0]->GetNumPoints();
+            const int nq1 = m_base[1]->GetNumPoints();
+            const int nq2 = m_base[2]->GetNumPoints();
+
+            Array<OneD, NekDouble> wsp1(nq1 * nq2), wsp2(nq2);
+
+            // Construct the 2D square...
+            const NekDouble *ptr = &physvals[0];
+            for (int i = 0; i < nq1 * nq2; ++i, ptr += nq0)
+            {
+                wsp1[i] = StdExpansion::BaryEvaluateDeriv<0>(eta[0], ptr);
+            }
+
+            for (int i = 0; i < nq2; ++i)
+            {
+                wsp2[i] = StdExpansion::BaryEvaluate<1>(eta[1], &wsp1[i * nq1]);
+            }
+
+            return StdExpansion::BaryEvaluate<2>(eta[2], &wsp2[0]);
+
         }
+
+
+
+        NekDouble StdExpansion3D::v_PhysEvaluatedy(
+            const Array<OneD, const NekDouble> &coords,
+            const Array<OneD, const NekDouble> &physvals)
+        {
+            Array<OneD, NekDouble> eta(3);
+                        
+            WARNINGL2(coords[0] >= -1 - NekConstants::kNekZeroTol,
+                      "coord[0] < -1");
+            WARNINGL2(coords[0] <=  1 + NekConstants::kNekZeroTol,
+                      "coord[0] >  1");
+            WARNINGL2(coords[1] >= -1 - NekConstants::kNekZeroTol,
+                      "coord[1] < -1");
+            WARNINGL2(coords[1] <=  1 + NekConstants::kNekZeroTol,
+                      "coord[1] >  1");
+            WARNINGL2(coords[2] >= -1 - NekConstants::kNekZeroTol,
+                      "coord[2] < -1");
+            WARNINGL2(coords[2] <=  1 + NekConstants::kNekZeroTol,
+                      "coord[2] >  1");
+
+            // Obtain local collapsed corodinate from Cartesian coordinate.
+            //            LocCoordToLocCollapsed(coords, eta);
+            eta = coords;
+            const int nq0 = m_base[0]->GetNumPoints();
+            const int nq1 = m_base[1]->GetNumPoints();
+            const int nq2 = m_base[2]->GetNumPoints();
+
+            Array<OneD, NekDouble> wsp1(nq1 * nq2), wsp2(nq2);
+
+            // Construct the 2D square...
+            const NekDouble *ptr = &physvals[0];
+            for (int i = 0; i < nq1 * nq2; ++i, ptr += nq0)
+            {
+                wsp1[i] = StdExpansion::BaryEvaluate<0>(eta[0], ptr);
+            }
+
+            for (int i = 0; i < nq2; ++i)
+            {
+                wsp2[i] = StdExpansion::BaryEvaluateDeriv<1>(eta[1], &wsp1[i * nq1]);
+            }
+
+            return StdExpansion::BaryEvaluate<2>(eta[2], &wsp2[0]);
+
+        }
+
+
+        NekDouble StdExpansion3D::v_PhysEvaluatedz(
+            const Array<OneD, const NekDouble> &coords,
+            const Array<OneD, const NekDouble> &physvals)
+        {
+            Array<OneD, NekDouble> eta(3);
+
+            WARNINGL2(coords[0] >= -1 - NekConstants::kNekZeroTol,
+                      "coord[0] < -1");
+            WARNINGL2(coords[0] <=  1 + NekConstants::kNekZeroTol,
+                      "coord[0] >  1");
+            WARNINGL2(coords[1] >= -1 - NekConstants::kNekZeroTol,
+                      "coord[1] < -1");
+            WARNINGL2(coords[1] <=  1 + NekConstants::kNekZeroTol,
+                      "coord[1] >  1");
+            WARNINGL2(coords[2] >= -1 - NekConstants::kNekZeroTol,
+                      "coord[2] < -1");
+            WARNINGL2(coords[2] <=  1 + NekConstants::kNekZeroTol,
+                      "coord[2] >  1");
+
+            // Obtain local collapsed corodinate from Cartesian coordinate.
+            //            LocCoordToLocCollapsed(coords, eta);
+            eta = coords;
+            const int nq0 = m_base[0]->GetNumPoints();
+            const int nq1 = m_base[1]->GetNumPoints();
+            const int nq2 = m_base[2]->GetNumPoints();
+
+            Array<OneD, NekDouble> wsp1(nq1 * nq2), wsp2(nq2);
+
+            // Construct the 2D square...
+            const NekDouble *ptr = &physvals[0];
+            for (int i = 0; i < nq1 * nq2; ++i, ptr += nq0)
+            {
+                wsp1[i] = StdExpansion::BaryEvaluate<0>(eta[0], ptr);
+            }
+
+            for (int i = 0; i < nq2; ++i)
+            {
+                wsp2[i] = StdExpansion::BaryEvaluate<1>(eta[1], &wsp1[i * nq1]);
+            }
+
+            return StdExpansion::BaryEvaluateDeriv<2>(eta[2], &wsp2[0]);
+
+        }
+        */
+
+
         NekDouble StdExpansion3D::v_PhysEvaluate(
             const Array<OneD, const NekDouble> &coords,
             const Array<OneD, const NekDouble> &physvals)

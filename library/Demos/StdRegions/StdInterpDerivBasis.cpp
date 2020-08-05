@@ -50,10 +50,15 @@ int main(int argc, char *argv[])
 
     int nCoeffs = E->GetNcoeffs(), nPts = E->GetTotPoints();
     int dimension = E->GetShapeDimension();
+    vector<string> &ptypes = demo.GetPointsType();
+    for (int i = 0; i < dimension; ++i)
+    {
+        ptypes[i] = "GaussGaussChebyshev";
+    }
 
     Array<OneD, Array<OneD, NekDouble>> coords = demo.GetCoords(E);
-    Array<OneD, NekDouble> sol(nPts), phys(nPts), tmpIn(dimension);
-    Array<OneD, NekDouble> sol1(nPts), phys1(nPts), tmpIn1(dimension);
+    Array<OneD, NekDouble> sol(nPts*nCoeffs), soll(nPts), phys(nPts*nCoeffs), tmpIn(dimension);
+    Array<OneD, NekDouble> sol1(nPts*nCoeffs), phys1(nCoeffs*nPts), tmpIn1(dimension);
     Array<OneD, NekDouble> sol2(nPts), phys2(nPts), tmpIn2(dimension);
     NekDouble errL2 = 0, errLinf = 0;
     
@@ -65,62 +70,95 @@ int main(int argc, char *argv[])
     //
     // These are then compared to ensure they give the same result.
     
-    for (int k = 0; k < nCoeffs; ++k)
-    {
+    //for (int k = 0; k < nCoeffs; ++k)
+    //{
         // Evaluate each mode at the quadrature points.
-        for (int i = 0; i < nPts; ++i)
-        {
-            for (int d = 0; d < dimension; ++d)
+        //for (int i = 0; i < nPts; ++i)
+            //{
+    /*          for (int d = 0; d < dimension; ++d)
             {
                 tmpIn[d] = coords[d][i];
             }
-            
+*/            
             if(dimension>2)
             {
-                phys2[i] = E->PhysEvaluatedzBasis(tmpIn, k);
-                sol2[i] = E->PhysEvaluatedzBasisBary(tmpIn, k);
+                //phys2[i] = E->PhysEvaluatedzBasis(tmpIn, k);
+                //sol2[i] = E->PhysEvaluatedzBasisBary(tmpIn, k);
             }
-            if(dimension>1)
-            {
-                phys1[i] = E->PhysEvaluatedyBasis(tmpIn, k);
-                sol1[i] = E->PhysEvaluatedyBasisBary(tmpIn, k);
-                
-            }
-            if(dimension>0)
-            {
-                phys[i] = E->PhysEvaluatedxBasis(tmpIn, k);       
-                sol[i] = E->PhysEvaluatedxBasisBary(tmpIn, k);       
+            else if(dimension>1)
 
-         
+            {
+                E->PhysEvalBasisGrad(coords, phys, phys1,  NullNekDouble1DArray);
+
+                for (int k = 0; k < nCoeffs; ++k)
+                {
+                    // Fill the 'solution' field with each of the modes using FillMode.
+                    Array<OneD, NekDouble> hold1(nPts);
+                    Array<OneD, NekDouble> hold2(nPts);
+                    E->FillMode(k, soll);
+
+                    E->PhysDeriv(soll,  hold1, hold2, NullNekDouble1DArray);       
+                    Vmath::Vcopy(nPts, &hold1[0], 1, &sol[k*nPts], 1);
+                    Vmath::Vcopy(nPts, &hold2[0], 1, &sol1[k*nPts], 1);
+                    /*                    cout<<"\nsol for k = "<<k<<" ";
+                    for(int i = 0; i<sol.size(); i++)
+                    {
+                        cout<<" "<<sol[i]<<" ";
+                        
+                    }
+                    cout<<"\nsol1 for k = "<<k<<" ";
+                    for(int i = 0; i<sol1.size(); i++)
+                    {
+                        cout<<" "<<sol1[i]<<" ";
+                        
+                        }*/
+                }
+                    
             }
-        }
-        /*
-        cout<<"\n phys = \n";
-        for(int i =  0; i<phys.size(); i++)
-            cout<<phys[i]<<" ";
-        cout<<" \n\n";
+            else if(dimension>0)
+            {
+                E->PhysEvalBasisGrad(coords, phys, NullNekDouble1DArray,  NullNekDouble1DArray);
+
+                for (int k = 0; k < nCoeffs; ++k)
+                {
+                    // Fill the 'solution' field with each of the modes using FillMode.
+
+                    Array<OneD, NekDouble> hold1(nPts);
+                    E->FillMode(k, soll);
+                    E->PhysDeriv(soll,  hold1, NullNekDouble1DArray, NullNekDouble1DArray);       
+                    
+                    Vmath::Vcopy(nPts, &hold1[0], 1, &sol[k*nPts], 1);  
+                }
+            }
+        
+        
+         cout<<"\n phys = \n";
+         for(int i =  0; i<phys.size(); i++)
+             cout<<phys[i]<<" ";
+         cout<<" \n\n";
+
+
+         cout<<"\n sol = \n";
+         for(int i =  0; i<sol.size(); i++)
+             cout<<sol[i]<<" ";
+         cout<<" \n\n";
 
         cout<<"\n phys1 = \n";
         for(int i =  0; i<phys1.size(); i++)
             cout<<phys1[i]<<" ";
         cout<<" \n\n";
 
-        cout<<"\n sol = \n";
-        for(int i =  0; i<sol.size(); i++)
-            cout<<sol[i]<<" ";
-        cout<<" \n\n";
+
 
         cout<<"\n sol1 = \n";
         for(int i =  0; i<sol1.size(); i++)
             cout<<sol1[i]<<" ";
         cout<<" \n\n";
 
-        exit(0);*/
-            
 
         errL2 += E->L2(phys, sol)+ E->L2(phys1, sol1)+ E->L2(phys2, sol2);
         errLinf += E->Linf(phys, sol)+ E->Linf(phys1, sol1)+  E->Linf(phys2, sol2);
-    }
+
         
     cout << "L infinity error : " << scientific << errL2 << endl;
     cout << "L 2 error        : " << scientific << errLinf << endl;

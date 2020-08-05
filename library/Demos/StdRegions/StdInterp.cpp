@@ -46,10 +46,10 @@ Array<OneD, NekDouble> EvalPoly(Array<OneD, Array<OneD, NekDouble>> &pts)
     unsigned dim = pts.size();
 
     // check if pts[0] and pts[1] have same size
-    // polynomial = x^2 + y^2 - 3x - 4
+    // polynomial = x^2 + y^2 + z^2
     for (int i = 0; i < pts[0].size(); i++)
     {
-        ret[i] = pow(pts[0][i],2) - 3*pts[0][i] - 4.0
+        ret[i] = pow(pts[0][i],2)
             + (dim >= 2 ? pow(pts[1][i], 2) : 0.0)
             + (dim >= 3 ? pow(pts[2][i], 2) : 0.0);
     }
@@ -60,47 +60,25 @@ int main(int argc, char *argv[])
 {
     DemoSupport demo;
     demo.ParseArguments(argc, argv);
-    cout<<"\n before create\n";
     StdExpansion *E = demo.CreateStdExpansion();
 
     const auto totPoints = (unsigned) E->GetTotPoints();
     const auto dimension = (unsigned) E->GetShapeDimension();
-
     // Create a new element but with the evenly-spaced points type, so that we
     // perform a PhysEvaluate at a different set of nodal points
     // (i.e. non-collocated interpolation).
     vector<string> &ptypes = demo.GetPointsType();
     for (int i = 0; i < dimension; ++i)
     {
-        cout<<"\n ptypes["<<i<<"]="<<ptypes[i];
         ptypes[i] = "PolyEvenlySpaced";
     }
-
-    cout<<"\n coordsE:\n";
+    //cout<<"\n coordsE:\n";
     Array<OneD, Array<OneD, NekDouble>> coordsE = demo.GetCoords(E);
-
-    for(int i = 0; i < dimension; ++i)
-    {
-        for(int j = 0; j<coordsE[0].size();j++)
-        {
-            cout<<coordsE[i][j]<<" ";
-        }
-        cout<<"\n";
-    }
-    cout<<"\n coordsF:\n";
 
     StdExpansion *F = demo.CreateStdExpansion();
 
     Array<OneD, Array<OneD, NekDouble>> coordsF = demo.GetCoords(F);
 
-    for(int i = 0; i < dimension; ++i)
-    {
-        for(int j = 0; j<coordsF[0].size();j++)
-        {
-            cout<<coordsF[i][j]<<" ";
-        }
-        cout<<"\n";
-    }
     cout<<"\n size of coordsE = "<<coordsE[0].size();
     cout<<" size of coordsF = "<<coordsF[0].size();
     Array<OneD, NekDouble> res(coordsE.size());
@@ -131,8 +109,6 @@ int main(int argc, char *argv[])
 
     return 0;
 }
-
-
 
 
 // #include <iostream>

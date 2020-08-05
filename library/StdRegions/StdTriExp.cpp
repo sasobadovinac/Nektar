@@ -517,6 +517,34 @@ namespace Nektar
             }
         }
 
+        void StdTriExp::v_PhysEvalBasisGrad(
+                                            const Array<OneD, const Array<OneD, NekDouble> >coords,
+                                            Array<OneD, NekDouble> &out_d0,
+                                            Array<OneD, NekDouble> &out_d1,
+                                       Array<OneD, NekDouble> &out_d2)
+        {
+            boost::ignore_unused(coords, out_d0, out_d2, out_d1);
+
+            /*int tot = GetTotPoints();
+                
+            Array<OneD, NekDouble> physvals(tot);
+            if(out_d0.size() > 0)
+            {    
+                for(int k = 0; k < m_base[0]->GetNumModes(); k++)
+                {
+                    Vmath::Vcopy(tot, &m_physevalall[1][k][0], 1, &physvals[0], 1);
+                    for(int i = 0; i < coords[0]. size(); i++)
+                    {
+                        out_d0[i] =   StdExpansion::BaryEvaluate<0>(coords[0][i], &physvals[0]);
+                        out_d1[i] =   StdExpansion::BaryEvaluate<1>(coords[0][i], &physvals[0]);
+                        
+                    } 
+                }
+                
+            }*/
+        }
+
+
         void StdTriExp::v_IProductWRTBase_SumFacKernel(
             const Array<OneD, const NekDouble>& base0,
             const Array<OneD, const NekDouble>& base1,
@@ -824,7 +852,7 @@ for(int i = 0; i < m_ncoeffs; i++)
             }
 
             outarray = temp;
-        }*/
+        }
 
 
         NekDouble StdTriExp::v_PhysEvaluatedxBasis(
@@ -858,7 +886,7 @@ for(int i = 0; i < m_ncoeffs; i++)
                 return v_PhysEvaluate(coll, tmp);
             }
         }
-
+        */
         NekDouble StdTriExp::v_PhysEvaluatedyBasisBary(
             const Array<OneD, const NekDouble>& coords,
             int mode)
@@ -947,7 +975,7 @@ for(int i = 0; i < m_ncoeffs; i++)
         }
        
 
-        NekDouble StdTriExp::v_PhysEvaluatedyBasis(
+        /*        NekDouble StdTriExp::v_PhysEvaluatedyBasis(
             const Array<OneD, const NekDouble>& coords,
             int mode)
         {
@@ -977,7 +1005,7 @@ for(int i = 0; i < m_ncoeffs; i++)
             }
         }
 
-        /*
+        
         NekDouble StdTriExp::v_PhysEvaluatedx(            
                                               const Array<OneD, const NekDouble> &coords,
                                               const Array<OneD, const NekDouble> &physvals)

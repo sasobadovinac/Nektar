@@ -1,9 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <test>
-    <description>StdInterp Triangle Modified basis P=6 Q=7</description>
-    <executable>StdInterp</executable>
-    <parameters>-s triangle -b Modified_A Modified_B -o 6 6 -p 7 7 -P
-GaussGaussLegendre GaussGaussLegendre </parameters>
+    <description>StdInterpBasis Triangle Ortho basis P=7 Q=8</description>
+    <executable>StdInterpBasis</executable>
+    <parameters>-s triangle -b Ortho_A Ortho_B -o 7 7 -p 8 8</parameters>
     <metrics>
         <metric type="Linf" id="1">
             <value tolerance="1e-12">0</value>
@@ -13,5 +12,3 @@ GaussGaussLegendre GaussGaussLegendre </parameters>
         </metric>
     </metrics>
 </test>
-
-

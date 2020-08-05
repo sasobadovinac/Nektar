@@ -113,7 +113,7 @@ namespace Nektar
         }
        
         
-       NekDouble StdExpansion2D::v_PhysEvaluatedy(
+        /*       NekDouble StdExpansion2D::v_PhysEvaluatedy(
             const Array<OneD, const NekDouble> &coords,
             const Array<OneD, const NekDouble> &physvals)
         {
@@ -138,6 +138,7 @@ namespace Nektar
             
             
             return  StdExpansion::BaryEvaluateDeriv<1>(coords[1], &wsp[0]);        }
+        */
 
         //evaluates der of multiple points given in coords(2D array) with x-coords in coords[0] and ycoords in coords[1]
         
@@ -165,6 +166,7 @@ namespace Nektar
                     {
                         wsp[i] = StdExpansion::BaryEvaluateDeriv<0>
                             (coords[0][j], &inarray[0]);
+                        
                     }
                     out_d0[j] =  StdExpansion::BaryEvaluate<1>(coords[1][j], &wsp[0]);
                 }
@@ -191,10 +193,10 @@ namespace Nektar
     
 
 
-    void StdExpansion2D::v_PhysEvaluateBasisGrad(
+        /*    void StdExpansion2D::v_PhysEvaluateBasisGrad(
                                                  const Array<OneD, Array<OneD, const NekDouble> >&coords,
-                                                      int mode,
-                                                      Array<OneD, NekDouble> &out_d0, 
+                                                 int mode,
+                                                 Array<OneD, NekDouble> &out_d0, 
                                                  Array<OneD, NekDouble> &out_d1)
     {
         ASSERTL2(coords[0] > -1 - NekConstants::kNekZeroTol,
@@ -206,8 +208,6 @@ namespace Nektar
             ASSERTL2(coords[1] <  1 + NekConstants::kNekZeroTol,
                      "coord[1] >  1");
     
-            //            int tot = GetTotPoints();
-            //Array<OneD, NekDouble> physvals(tot);
             if(out_d0.size() > 0)
             {
                 const int nq0 = m_base[0]->GetNumPoints();  
@@ -231,7 +231,7 @@ namespace Nektar
             
         }    
 
-       NekDouble StdExpansion2D::v_PhysEvaluatedx(
+               NekDouble StdExpansion2D::v_PhysEvaluatedx(
             const Array<OneD, const NekDouble> &coords,
             const Array<OneD, const NekDouble> &physvals)
         {
@@ -253,7 +253,7 @@ namespace Nektar
             {
                 wsp[i] = StdExpansion::BaryEvaluateDeriv<0>(
                     coords[0], &physvals[0]+ i * nq0);
-                  std::cout<<" "<<wsp[i];
+                //std::cout<<" "<<wsp[i];
             }
             //        std::cout<<"\ncoords[1]="<<coords[1];
             
@@ -261,7 +261,7 @@ namespace Nektar
             //std::cout<<" finalval = "<<ret<<"\n";
 
             return ret;
-        }
+        }*/
 
     
     NekDouble StdExpansion2D::v_PhysEvaluate(

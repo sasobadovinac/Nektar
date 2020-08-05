@@ -47,7 +47,7 @@ namespace Nektar
 
         StdHexExp::StdHexExp()
         {
-            m_physevalall   = v_GetPhysEvalALL();
+            //            m_physevalall   = v_GetPhysEvalALL();
 
         }
 
@@ -59,7 +59,7 @@ namespace Nektar
             StdExpansion3D(Ba.GetNumModes()*Bb.GetNumModes()*Bc.GetNumModes(),
                            Ba, Bb, Bc)
         {
-            m_physevalall   = v_GetPhysEvalALL();
+            //            m_physevalall   = v_GetPhysEvalALL();
 
         }
 
@@ -67,7 +67,7 @@ namespace Nektar
             StdExpansion(T),
             StdExpansion3D(T)
         {
-            m_physevalall   = v_GetPhysEvalALL();
+            //            m_physevalall   = v_GetPhysEvalALL();
 
         }
 
@@ -664,7 +664,7 @@ namespace Nektar
             }
         }
 
-        Array<OneD, Array<OneD, NekDouble> >StdHexExp::v_GetPhysEvalALL()
+        /*     Array<OneD, Array<OneD, NekDouble> >StdHexExp::v_GetPhysEvalALL()
         {
             Array<OneD, Array<OneD, NekDouble> > tmp_ret(4);
             NekDouble totPts = GetTotPoints();
@@ -691,25 +691,27 @@ namespace Nektar
             tmp_ret[2] = tmpdy;
             tmp_ret[3] = tmpdz;
             return tmp_ret;
-            }        
+            }       
+        */        
 
         NekDouble StdHexExp::v_PhysEvaluatedxBasis(
             const Array<OneD, const NekDouble>& coords,
             int mode)
         {
+            boost::ignore_unused(mode);
             Array<OneD, NekDouble> coll(2);
             LocCoordToLocCollapsed(coords, coll);
  
             int tot = GetTotPoints(); 
-
-            Array<OneD, NekDouble> physvals(tot);
-            Vmath::Vcopy(tot, &m_physevalall[1][0+mode], 1, &physvals[0],1);      
             
-            return v_PhysEvaluatedx(coll, physvals);
+            Array<OneD, NekDouble> physvals(tot);
+            //            Vmath::Vcopy(tot, &(m_physevalall[1][mode][0]), 1, &physvals[0],1);      
+            
+            return 0.0;//v_PhysEvaluatedx(coll, physvals);
 
         }
 
-        NekDouble StdHexExp::v_PhysEvaluatedx(                                            const Array<OneD, const NekDouble> &coords,                     const Array<OneD, const NekDouble> &physvals)
+        /*        NekDouble StdHexExp::v_PhysEvaluatedx(                                            const Array<OneD, const NekDouble> &coords,                     const Array<OneD, const NekDouble> &physvals)
         {
 
 
@@ -728,9 +730,7 @@ namespace Nektar
             WARNINGL2(coords[2] <=  1 + NekConstants::kNekZeroTol,
                       "coord[2] >  1");
 
-            // Obtain local collapsed corodinate from Cartesian coordinate.
-            LocCoordToLocCollapsed(coords, eta);
-
+            eta = coords;
             const int nq0 = m_base[0]->GetNumPoints();
             const int nq1 = m_base[1]->GetNumPoints();
             const int nq2 = m_base[2]->GetNumPoints();
@@ -837,7 +837,7 @@ namespace Nektar
 
             return StdExpansion::BaryEvaluateDeriv<2>(eta[2], &wsp2[0]);
         }
-
+        */
 
         NekDouble StdHexExp::v_PhysEvaluateBasis(
             const Array<OneD, const NekDouble>& coords,
@@ -869,7 +869,7 @@ namespace Nektar
         }
 
 
-        void StdHexExp::v_FillModedx(const int mode,
+        /*        void StdHexExp::v_FillModedx(const int mode,
                             Array<OneD, NekDouble> &outarray)
         {
             int    i;
@@ -962,7 +962,7 @@ namespace Nektar
             }
         }
 
-
+        */
         int StdHexExp::v_GetNverts() const
         {
             return 8;

@@ -171,7 +171,7 @@ namespace Nektar
                 const Array<OneD, const NekDouble>& coords,
                 int mode) final;
 
-            STD_REGIONS_EXPORT NekDouble v_PhysEvaluatedyBasis(
+            /*STD_REGIONS_EXPORT NekDouble v_PhysEvaluatedyBasis(
                 const Array<OneD, const NekDouble>& coords,
                 int mode) final;
 
@@ -180,7 +180,7 @@ namespace Nektar
                 int mode) final;
 
 
-            /*          STD_REGIONS_EXPORT NekDouble v_PhysEvaluatedx(
+                      STD_REGIONS_EXPORT NekDouble v_PhysEvaluatedx(
                 const Array<OneD, const NekDouble> &coords,
                 const Array<OneD, const NekDouble> &physvals) final;
             
@@ -195,6 +195,14 @@ namespace Nektar
             // [ Hope is that this will be faster and replace
             // current impl of v_PhysEvaluatedxBasis() ]
 
+            STD_REGIONS_EXPORT virtual void v_PhysEvalBasisGrad(
+                                                                const Array<OneD, const Array<OneD, NekDouble> > coords, 
+                                                                
+                                                                Array<OneD, NekDouble>& out_d0,                                        
+                                                                Array<OneD, NekDouble>& out_d1, 
+                                                                Array<OneD, NekDouble>& out_d2 = NullNekDouble1DArray);
+
+            
             STD_REGIONS_EXPORT virtual NekDouble v_PhysEvaluatedyBasisBary(
                 const Array<OneD, const NekDouble>& coords,
                 int mode);

@@ -84,7 +84,7 @@ int main(int argc, char *argv[])
         }
     }*/
 
-    Array<OneD, Array<OneD, NekDouble> > temparr = E->m_physevalall;
+    Array<OneD, Array<OneD, NekDouble> > temparr ;//= E->m_physevalall;
 
 
     // For each mode, we follow two approaches:
@@ -111,8 +111,6 @@ int main(int argc, char *argv[])
         Array<OneD, NekDouble> tmp = sol + k * nPts;
         E->FillMode(k, tmp);
     }
-
-    
 
 
     // Another approach: Use Nektar++'s approach treating 

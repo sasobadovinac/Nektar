@@ -180,7 +180,7 @@ int main(int argc, char *argv[])
 
 
     physIn = EvalPoly(coordsE);
-    cout<<"\n physIn.size = "<<physIn.size()<<" ";
+    //cout<<"\n physIn.size = "<<physIn.size()<<" ";
     //for(int i = 0; i<physIn.size(); i++)
     //    cout<<" "<<physIn[i]<<" ";
     //cout<<"\n";
@@ -196,13 +196,11 @@ int main(int argc, char *argv[])
         if(dimension>2)
         {
             E->PhysEvalGrad(coordsF, physIn, physOut0, physOut1, physOut2);
-            //physOut2[i] = E->PhysEvaluatedz(tmpIn, physIn);
         }
         
         else if(dimension>1)
         {
-            E->PhysEvalGrad(coordsF, physIn, NullNekDouble1DArray, physOut1, NullNekDouble1DArray);
-            //physOut1[i] = E->PhysEvaluatedy(tmpIn, physIn);
+            E->PhysEvalGrad(coordsF, physIn, physOut0, physOut1, NullNekDouble1DArray);
         }
 
         else if(dimension>0)
@@ -235,7 +233,7 @@ int main(int argc, char *argv[])
         cout<<physOut2[i]<<" ";
     cout<<"\n";
 
-    */
+    
     cout<<"\n sol:  ";
     for(int i = 0; i<sol1.size(); i++)
         cout<<sol1[i]<<" ";
@@ -259,12 +257,9 @@ int main(int argc, char *argv[])
     for(int i = 0; i<coordsF[0].size(); i++)
         cout<<coordsF[0][i]<<" "<<coordsF[1][i]<<"\t";
 
-    
-    cout << "\n\nL infinity error x: " << scientific << E->Linf(physOut0, sol0)  << endl;
-  cout << "L 2 error x        : " << scientific << E->L2  (physOut0, sol0)<< endl;
-    
- cout << "\nL infinity error y: " << scientific << E->Linf(physOut1, sol1)  << endl;
-  cout << "L 2 error y        : " << scientific << E->L2  (physOut1, sol1)<< endl;
+    */ 
+    cout << "\n\nL infinity error: " << scientific << E->Linf(physOut0, sol0)  +E->Linf(physOut1, sol1) +E->Linf(physOut2, sol2) << endl;
+  cout << "L 2 error         : " << scientific << E->L2  (physOut0, sol0)+E->L2  (physOut1, sol1)+E->L2  (physOut2, sol2)<< endl;
     
 
     return 0;

@@ -116,7 +116,6 @@ int main(int argc, char *argv[])
     StdExpansion *E = demo.CreateStdExpansion();
     
     const auto totPoints = (unsigned) E->GetTotPoints();
-                //    NekDouble totPoints = 1;
     const auto dimension = (unsigned) E->GetShapeDimension();
 
     // Create a new element but with the evenly-spaced points type, so that we
@@ -125,9 +124,9 @@ int main(int argc, char *argv[])
     vector<string> &ptypes = demo.GetPointsType();
     for (int i = 0; i < dimension; ++i)
     {
-        ptypes[i] = "NodalTriFekete" ;
+        ptypes[i] = "PolyEvenlySpaced" ;
     }
-    LibUtilities::BasisType btype;
+    /*    LibUtilities::BasisType btype;
     btype = LibUtilities::eOrtho_A;
     LibUtilities::BasisType btype2;
     btype2 = LibUtilities::eOrtho_B;
@@ -147,14 +146,14 @@ int main(int argc, char *argv[])
     StdRegions::StdTriExp tmp = StdTriExp(bkey0,bkey2);
       
 
-    StdRegions::StdTriExp *F = &tmp;
-    //StdExpansion *F = demo.CreateStdExpansion();
+    StdRegions::StdTriExp *F = &tmp;*/
+    StdExpansion *F = demo.CreateStdExpansion();
     Array<OneD, Array<OneD, NekDouble>> coordsE = demo.GetCoords(E);
-    Array<OneD, Array<OneD, NekDouble>> coordsF(2);
-    coordsF[0] = Array<OneD,NekDouble>(F->GetTotPoints());
-    coordsF[1] = Array<OneD,NekDouble>(F->GetTotPoints());
+    Array<OneD, Array<OneD, NekDouble>> coordsF = demo.GetCoords(F);
+    //coordsF[0] = Array<OneD,NekDouble>(F->GetTotPoints());
+    //coordsF[1] = Array<OneD,NekDouble>(F->GetTotPoints());
 
-    F->GetCoords(coordsF[0],coordsF[1]);
+    //    F->GetCoords(coordsF[0],coordsF[1]);
 
     int totevalpts = F->GetTotPoints();
 
@@ -162,31 +161,9 @@ int main(int argc, char *argv[])
     Array<OneD, NekDouble> tmpIn(dimension), sol0(totevalpts), sol1(totevalpts), sol2(totPoints);
 
     Array<OneD, NekDouble> collcoor(2);
-  
-    //collapse coordsE and coordsF:
-      for(int i = 0; i<coordsF[0].size(); i++)
-    {
-        Array<OneD, NekDouble> tmp(2);
-        collcoor[0] = coordsF[0][i];
-        collcoor[1] = coordsF[1][i];
-        F->LocCoordToLocCollapsed(collcoor,tmp); 
-        coordsF[0][i] = tmp[0];
-        coordsF[1][i] = tmp[1];
-
-    }
-      for(int i = 0; i<coordsE[0].size(); i++)
-    {
-        Array<OneD, NekDouble> tmp(2);
-        collcoor[0] = coordsE[0][i];
-        collcoor[1] = coordsE[1][i];
-        E->LocCoordToLocCollapsed(collcoor,tmp); 
-        coordsE[0][i] = tmp[0];
-        coordsE[1][i] = tmp[1];
-
-        }
 
     //Make sure that there are no  overlapping elements in coordsF and coordsE 
-    for(int i = 0; i<coordsF[0].size(); i++)
+    /*      for(int i = 0; i<coordsF[0].size(); i++)
     {
         for(int j = 0; j<coordsE[0].size(); j++)
         {
@@ -208,18 +185,49 @@ int main(int argc, char *argv[])
 
         }
 
+        }*/
+      
+  
+    //collapse coordsE and coordsF:
+      for(int i = 0; i<coordsF[0].size(); i++)
+    {
+        Array<OneD, NekDouble> tmp(2);
+        collcoor[0] = coordsF[0][i];
+        collcoor[1] = coordsF[1][i];
+        F->LocCoordToLocCollapsed(collcoor,tmp); 
+        coordsF[0][i] = tmp[0];
+        coordsF[1][i] = tmp[1];
+
     }
+      for(int i = 0; i<coordsE[0].size(); i++)
+    {
+        Array<OneD, NekDouble> tmp(2);
+        collcoor[0] = coordsE[0][i];
+        collcoor[1] = coordsE[1][i];
+        E->LocCoordToLocCollapsed(collcoor,tmp); 
+        coordsE[0][i] = tmp[0];
+        coordsE[1][i] = tmp[1];
+
+    }
+
+    if(dimension>2)
+        sol2 = EvalPolyDerivz(coordsF);
+    if(dimension>1)
+        sol1 = EvalPolyDerivy(coordsF);
+    if(dimension>0)
+        sol0 = EvalPolyDerivx(coordsF);
 
 
     physIn = EvalPoly(coordsE);
 
-    Array<OneD, NekDouble> tmp2(2);
+    //    Array<OneD, NekDouble> tmp2(2);
     // Evaluate polynomial at the set of elemental solution points.
     //cout<<"\n physout:\n";
     for (int i = 0; i < sol0.size(); ++i)
     {
         for (int d = 0; d < dimension; ++d)
         {
+
             tmpIn[d] = coordsF[d][i];
             
         }
@@ -237,17 +245,11 @@ int main(int argc, char *argv[])
 
         if(dimension>0)
         {
-      
+            //            cout<<"\n x = "<<collcoor[0]<<" y ="<<collcoor[1];
             physOut0[i] = E->PhysEvaluatedx(collcoor, physIn);
         }
         
     }    
-    if(dimension>2)
-        sol2 = EvalPolyDerivz(coordsF);
-    if(dimension>1)
-        sol1 = EvalPolyDerivy(coordsF);
-    if(dimension>0)
-        sol0 = EvalPolyDerivx(coordsF);
 
 
     cout<<"\n sol:  ";
@@ -259,15 +261,19 @@ int main(int argc, char *argv[])
     cout<<"\n";
 
 
-    cout<<"\n sol:  ";
+    cout<<"\n sol y:  ";
     for(int i = 0; i<sol1.size(); i++)
         cout<<sol1[i]<<" ";
-    cout<<"\nphysout = ";
+    cout<<"\nphysout y = ";
     for(int i = 0; i<physOut1.size(); i++)
         cout<<physOut1[i]<<" ";
     
-    cout << "\n\nL infinity error : " << scientific << F->Linf  (physOut1, sol1)+F->Linf  (physOut0, sol0)  << endl;
-              cout << "L 2 error        : " << scientific << F->L2  (physOut1, sol1)+F->L2  (physOut0, sol0)    << endl;
+    cout << "\n\nL infinity error : x" << scientific << F->Linf  (physOut0, sol0)  << endl;
+              cout << "L 2 error     x   : " << scientific << F->L2  (physOut0, sol0)    << endl;
+    
+
+    cout << "\n\nL infinity error : " << scientific << F->Linf  (physOut1, sol1)  << endl;
+              cout << "L 2 error        : " << scientific << F->L2  (physOut1, sol1)    << endl;
     
 
     return 0;

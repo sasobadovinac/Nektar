@@ -180,10 +180,20 @@ namespace Nektar
                     const Array<OneD, const NekDouble>& coords,
                     const Array<OneD, const NekDouble>& physvals);
 
-            STD_REGIONS_EXPORT virtual NekDouble v_PhysEvaluateDeriv(
+            //            STD_REGIONS_EXPORT virtual  Array<OneD, DNekMatSharedPtr> v_GetPhysEvalALL();
+
+            /*            STD_REGIONS_EXPORT virtual NekDouble v_PhysEvaluatedx(
                     const Array<OneD, const NekDouble>& coords,
                     const Array<OneD, const NekDouble>& physvals);
 
+            STD_REGIONS_EXPORT virtual NekDouble v_PhysEvaluatedy(
+                    const Array<OneD, const NekDouble>& coords,
+                    const Array<OneD, const NekDouble>& physvals);
+
+            STD_REGIONS_EXPORT virtual NekDouble v_PhysEvaluatedz(
+                    const Array<OneD, const NekDouble>& coords,
+                    const Array<OneD, const NekDouble>& physvals);
+            */
             STD_REGIONS_EXPORT virtual NekDouble v_PhysEvaluate(
                     const Array<OneD, DNekMatSharedPtr >& I,
                     const Array<OneD, const NekDouble >& physvals);
@@ -226,6 +236,15 @@ namespace Nektar
             STD_REGIONS_EXPORT virtual int v_GetNedges(void) const;
             STD_REGIONS_EXPORT virtual int v_GetEdgeNcoeffs(const int i) const;
 
+
+            STD_REGIONS_EXPORT virtual void v_PhysEvalGrad(
+                                const Array<OneD, const Array<OneD, NekDouble> >coords,
+                                const Array<OneD, const NekDouble>& inarray,        
+                                Array<OneD, NekDouble> &out_d0,
+                                Array<OneD, NekDouble> &out_d1,
+                                                 Array<OneD, NekDouble> &out_d2 );
+            
+      
             STD_REGIONS_EXPORT virtual void v_GetEdgeInteriorToElementMap(
                const int                  tid,
                Array<OneD, unsigned int> &maparray,

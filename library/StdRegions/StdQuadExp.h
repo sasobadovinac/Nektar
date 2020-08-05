@@ -191,9 +191,17 @@ namespace Nektar
                 const Array<OneD, const NekDouble>& coords,
                 int mode);
 
-            STD_REGIONS_EXPORT virtual         Array<OneD, Array<TwoD, NekDouble> > v_GetPhysEvalALL() ;
+            STD_REGIONS_EXPORT virtual         Array<OneD, Array<OneD, NekDouble> > v_GetPhysEvalALL() ;
          
-            
+        
+            STD_REGIONS_EXPORT virtual void v_PhysEvalBasisGrad(
+                                                                const Array<OneD, const Array<OneD, NekDouble> > coords, 
+                                                                
+                                                                Array<OneD, NekDouble>& out_d0,                                        
+                                                                Array<OneD, NekDouble>& out_d1, 
+                                                                Array<OneD, NekDouble>& out_d2 = NullNekDouble1DArray);
+
+    
             /*            STD_REGIONS_EXPORT NekDouble v_PhysEvaluatedyBasis(
                 const Array<OneD, const NekDouble>& coords,
                 int mode) final;

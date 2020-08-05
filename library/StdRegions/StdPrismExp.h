@@ -161,6 +161,21 @@ namespace Nektar
                 Array<OneD, NekDouble> & xi_x,
                 Array<OneD, NekDouble> & xi_y,
                 Array<OneD, NekDouble> & xi_z);
+
+
+            /*            STD_REGIONS_EXPORT virtual void v_FillModedx(
+                    const int mode,
+                    Array<OneD, NekDouble> &array);
+            
+            STD_REGIONS_EXPORT virtual void v_FillModedy(
+                    const int mode,
+                    Array<OneD, NekDouble> &array);
+            
+            STD_REGIONS_EXPORT virtual void v_FillModedz(
+                    const int mode,
+                    Array<OneD, NekDouble> &array);
+            */
+
             STD_REGIONS_EXPORT virtual void v_FillMode(
                 const int mode,
                 Array<OneD, NekDouble> &outarray);
@@ -168,7 +183,35 @@ namespace Nektar
                 const Array<OneD, const NekDouble>& coords,
                 int mode) final;
 
-            STD_REGIONS_EXPORT NekDouble v_PhysEvaluatedx(
+            //            STD_REGIONS_EXPORT virtual Array<OneD, Array<OneD, NekDouble> > v_GetPhysEvalALL();
+         
+            
+            /*            STD_REGIONS_EXPORT NekDouble v_PhysEvaluatedxBasis(
+                const Array<OneD, const NekDouble>& coords,
+                int mode) final;
+
+            STD_REGIONS_EXPORT NekDouble v_PhysEvaluatedyBasis(
+                const Array<OneD, const NekDouble>& coords,
+                int mode) final;
+
+            STD_REGIONS_EXPORT NekDouble v_PhysEvaluatedzBasis(
+                const Array<OneD, const NekDouble>& coords,
+                int mode) final;
+            */
+
+            STD_REGIONS_EXPORT virtual NekDouble v_PhysEvaluatedxBasisBary(
+                const Array<OneD, const NekDouble>& coords,
+                int mode);
+            STD_REGIONS_EXPORT virtual NekDouble v_PhysEvaluatedyBasisBary(
+                const Array<OneD, const NekDouble>& coords,
+                int mode);
+
+            STD_REGIONS_EXPORT virtual NekDouble v_PhysEvaluatedzBasisBary(
+                const Array<OneD, const NekDouble>& coords,
+                int mode);
+       
+
+            /*          STD_REGIONS_EXPORT NekDouble v_PhysEvaluatedx(
                 const Array<OneD, const NekDouble> &coords,
                 const Array<OneD, const NekDouble> &physvals) final;
             
@@ -179,7 +222,7 @@ namespace Nektar
             STD_REGIONS_EXPORT NekDouble v_PhysEvaluatedz(
                 const Array<OneD, const NekDouble> &coords,
                 const Array<OneD, const NekDouble> &physvals) final;
-
+*/
             STD_REGIONS_EXPORT virtual void v_GetTraceNumModes(
                     const int    fid,
                     int &numModes0,
