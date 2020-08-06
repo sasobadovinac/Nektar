@@ -33,6 +33,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <CompressibleFlowSolver/EquationSystems/NavierStokesCFE.h>
+#include <LibUtilities/BasicUtils/Smath.hpp>
 
 using namespace std;
 
@@ -194,7 +195,10 @@ namespace Nektar
             {
                 ApplyC0Smooth(m_muav);
             }
-            // Set trace
+            // Set trace AV
+
+
+
         }
 
         string diffName;
@@ -1009,7 +1013,7 @@ namespace Nektar
         Array<OneD, NekDouble> muAve{nTracePts, 0.0};
         Array<OneD, NekDouble> tcAve{nTracePts, 0.0};
 
-        GetViscosityAndThermalCondFromTemp<true>(tAve, muAve, tcAve);
+        GetViscosityAndThermalCondFromTemp(tAve, muAve, tcAve);
 
         // Compute penalty term
         for (int i = 0; i < nVariables; ++i)
@@ -1076,8 +1080,8 @@ namespace Nektar
     * @param physfield  Input field.
     */
     void NavierStokesCFE::GetPhysicalAV(
-        const Array<OneD, const Array<OneD, NekDouble>>& physfield
-              Array<OneD,       Array<OneD, NekDouble>>& muAv)
+        const Array<OneD, const Array<OneD, NekDouble>>& physfield,
+              Array<OneD, NekDouble>& muAv)
     {
         auto nPts = physfield[0].size();
         auto nElements = m_fields[0]->GetExpSize();
@@ -1099,7 +1103,7 @@ namespace Nektar
         m_varConv->GetSensor(m_fields[0], physfield, Sensor, muAv, 1);
 
         Array<OneD, NekDouble> tmp;
-        for (size_t e = 0; e < nElements; e++)
+        for (size_t e = 0; e < nElements; ++e)
         {
             auto physOffset  = m_fields[0]->GetPhys_Offset(e);
             auto nElmtPoints = m_fields[0]->GetExp(e)->GetTotPoints();
@@ -1125,54 +1129,152 @@ namespace Nektar
     /**
     * @brief Get divergence and curl squared
     *
-    * @param
+    * @param input
+    *   fields -> expansion list pointer
+    *   cnsVar -> conservative variables
+    *   cnsVarFwd -> forward trace of conservative variables
+    *   cnsVarBwd -> backward trace of conservative variables
+    * @paran output
+    *   divSquare -> divergence squared
+    *   curlSquare -> curl squared
+    *
     */
     void NavierStokesCFE::GetDivCurlSquared(
         const Array<OneD, MultiRegions::ExpListSharedPtr>& fields,
-        const Array<OneD, Array<OneD, NekDouble>>& inarray,
+        const Array<OneD, Array<OneD, NekDouble>>& cnsVar,
         Array<OneD, NekDouble>& divSquare,
-        Array<OneD, NekDouble>& curlSquare)
+        Array<OneD, NekDouble>& curlSquare,
+        const Array<OneD, Array<OneD, NekDouble>>& cnsVarFwd,
+        const Array<OneD, Array<OneD, NekDouble>>& cnsVarBwd)
     {
         auto nDim = fields[0]->GetCoordim(0);
-        auto nPts = fields[0]->GetTotPoints();
-        auto nVar = inarray.size();
+        auto nVar = cnsVar.size();
+        auto nPts = cnsVar[0].size();
+        auto nPtsTrc = cnsVarFwd[0].size();
 
-        // this could be allocated once
-        Array<OneD, Array<OneD, NekDouble>>  primVar(nvar-2);
-        for (unsigned short d = 0; d < nvar-2; ++d)
+        // These should be allocated once
+        Array<OneD, Array<OneD, NekDouble>>  primVar(nVar-2),
+            primVarFwd(nVar-2), primVarBwd(nVar-2);
+        for (unsigned short d = 0; d < nVar-2; ++d)
         {
-            primVar = Array<OneD, NekDouble>(nPts, 0.0);
+            primVar[d] = Array<OneD, NekDouble>(nPts, 0.0);
+            primVarFwd[d] = Array<OneD, NekDouble>(nPtsTrc, 0.0);
+            primVarBwd[d] = Array<OneD, NekDouble>(nPtsTrc, 0.0);
         }
 
         // Get primary variables
-        for (unsigned short d = 0; d < nvar-2; ++d)
+        for (unsigned short d = 0; d < nVar-2; ++d)
         {
+            // Volume
             for (size_t p = 0; p < nPts; ++p)
             {
-                primVar[d][p] = inarray[d+1][p] / inarray[0][p];
+                primVar[d][p] = cnsVar[d+1][p] / cnsVar[0][p];
             }
+            // Trace
+            for (size_t p = 0; p < nPtsTrc; ++p)
+            {
+                primVarFwd[d][p] = cnsVarFwd[d+1][p] / cnsVarFwd[0][p];
+                primVarBwd[d][p] = cnsVarBwd[d+1][p] / cnsVarBwd[0][p];
+            }
+
         }
 
         // this should be allocated once
         Array<OneD,Array<OneD, Array<OneD, NekDouble>>> primVarDer(nDim);
         for (unsigned short j = 0; j < nDim; ++j)
         {
-            primVarDer[j] = Array<OneD, Array<OneD, NekDouble>> (nvar-2);
-            for (unsigned short i = 0; i < nvar-2; ++i)
+            primVarDer[j] = Array<OneD, Array<OneD, NekDouble>> (nVar-2);
+            for (unsigned short i = 0; i < nVar-2; ++i)
             {
                 primVarDer[j][i] = Array<OneD, NekDouble>(nPts, 0.0);
             }
         }
 
-        // Get trace prim vars -- bcs??
-
         // Get derivative tensor
+        // check flux in ip and ldg
         m_diffusion->DiffuseCalculateDerivative(fields, primVar, primVarDer,
-            pFwd, pBwd);
+            primVarFwd, primVarBwd);
 
         // Get div curl squared
-        GetDivCurl(fields, primVarDer);
+        GetDivCurlImpl(primVarDer, divSquare, curlSquare);
 
+    }
+
+
+    /**
+     * @brief get div and curl from vel derivative tensor
+     *
+     */
+    void NavierStokesCFE::GetDivCurlImpl(
+        const TensorOfArray3D<NekDouble>& pVarDer,
+              Array<OneD, NekDouble>&     divSquare,
+              Array<OneD, NekDouble>&     curlSquare)
+    {
+        auto nDim = pVarDer.size();
+        auto nPts = pVarDer[0].size();
+
+        // (div velocity) ** 2
+        for (size_t p = 0; p < nPts; ++p)
+        {
+            NekDouble div = 0;
+            for (unsigned short j = 0; j < nDim; ++j)
+            {
+                div += pVarDer[j][j][p];
+            }
+            divSquare[p] = div * div;
+        }
+
+        // |curl velocity| ** 2
+        if (nDim > 2)
+        {
+            for (size_t p = 0; p < nPts; ++p)
+            {
+                // curl[0] 3/2 - 2/3
+                NekDouble curl032 = pVarDer[2][1][p]; // load 1x
+                NekDouble curl023 = pVarDer[1][2][p]; // load 1x
+                NekDouble curl0 = curl032 - curl023;
+                // square curl[0]
+                NekDouble curl0sqr = curl0 * curl0;
+
+                // curl[1] 3/1 - 1/3
+                NekDouble curl131 = pVarDer[2][0][p]; // load 1x
+                NekDouble curl113 = pVarDer[0][2][p]; // load 1x
+                NekDouble curl1 = curl131 - curl113;
+                // square curl[1]
+                NekDouble curl1sqr = curl1 * curl1;
+
+                // curl[2] 1/2 - 2/1
+                NekDouble curl212 = pVarDer[0][1][p]; // load 1x
+                NekDouble curl221 = pVarDer[1][0][p]; // load 1x
+                NekDouble curl2 = curl212 - curl221;
+                // square curl[2]
+                NekDouble curl2sqr = curl2 * curl2;
+
+                // reduce
+                curl0sqr += curl1sqr + curl2sqr;
+                // store
+                curlSquare[p] = curl0sqr; // store 1x
+
+            }
+        }
+        else if (nDim > 1)
+        {
+            for (size_t p = 0; p < nPts; ++p)
+            {
+                // curl[2] 1/2
+                NekDouble c212 = pVarDer[0][1][p]; // load 1x
+                // curl[2] 2/1
+                NekDouble c221 = pVarDer[1][0][p]; // load 1x
+                // curl[2] 1/2 - 2/1
+                NekDouble curl = c212 - c221;
+                // square curl[2]
+                curlSquare[p] = curl * curl; // store 1x
+            }
+        }
+        else
+        {
+            Vmath::Fill(nPts, 0.0, curlSquare, 1);
+        }
     }
 
     /**
@@ -1220,7 +1322,6 @@ namespace Nektar
      */
     void NavierStokesCFE::ApplyC0Smooth(Array<OneD, NekDouble>& field)
     {
-        auto nDim = m_fields[0]->GetCoordim(0);
         auto nCoeffs = m_C0ProjectExp->GetNcoeffs();
         Array<OneD, NekDouble> muFwd(nCoeffs);
         Array<OneD, NekDouble> weights(nCoeffs, 1.0);

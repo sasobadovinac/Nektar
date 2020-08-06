@@ -96,6 +96,7 @@ namespace Nektar
             &normal             =   NullNekDoubleArrayofArray,
         const Array<OneD, NekDouble>
             &ArtifDiffFactor    =   NullNekDouble1DArray);
+
     void GetViscousSymmtrFluxConservVar(
             const int                                           nSpaceDim,
             const Array<OneD, Array<OneD, NekDouble> >          &inaverg,
@@ -126,6 +127,7 @@ namespace Nektar
               Array<OneD,       Array<OneD, NekDouble> > &outarray,
             const Array<OneD, Array<OneD, NekDouble> >   &pFwd,
             const Array<OneD, Array<OneD, NekDouble> >   &pBwd);
+
     virtual void v_DoDiffusion_coeff(
         const Array<OneD, const Array<OneD, NekDouble> >    &inarray,
         Array<OneD, Array<OneD, NekDouble> >                &outarray,
@@ -136,6 +138,7 @@ namespace Nektar
         const Array<OneD, Array<OneD, NekDouble> >         &physfield,
         TensorOfArray3D<NekDouble>                         &derivatives,
         TensorOfArray3D<NekDouble>                         &viscousTensor);
+
     virtual void v_GetViscousFluxVectorDeAlias(
         const Array<OneD, Array<OneD, NekDouble> >         &physfield,
         TensorOfArray3D<NekDouble>                         &derivatives,
@@ -152,12 +155,31 @@ namespace Nektar
               Array<OneD, NekDouble> &thermalCond);
 
     void GetPhysicalAV(
-        const Array<OneD, const Array<OneD, NekDouble>>& physfield);
+        const Array<OneD, const Array<OneD, NekDouble>>& physfield,
+              Array<OneD, NekDouble>& muAv);
 
-    void ApplyDucros(Array<OneD, NekDouble>& field);
+    void GetDivCurlSquared(
+        const Array<OneD, MultiRegions::ExpListSharedPtr>& fields,
+        const Array<OneD, Array<OneD, NekDouble>>&         cnsVar,
+              Array<OneD, NekDouble>&                      divSquare,
+              Array<OneD, NekDouble>&                      curlSquare,
+        const Array<OneD, Array<OneD, NekDouble>>&         cnsVarFwd,
+        const Array<OneD, Array<OneD, NekDouble>>&         cnsVarBwd);
+
+    void GetDivCurlImpl(
+        const TensorOfArray3D<NekDouble>& pVarDer,
+              Array<OneD, NekDouble>&     divSquare,
+              Array<OneD, NekDouble>&     curlSquare);
+
+    void ApplyDucros(
+        const Array<OneD, MultiRegions::ExpListSharedPtr>& fields,
+        const Array<OneD, NekDouble>&                      divSquare,
+        const Array<OneD, NekDouble>&                      curlSquare,
+              Array<OneD, NekDouble>&                      muAv);
 
     void ApplyC0Smooth(Array<OneD, NekDouble>& field);
-
   };
+
+  // helper functions
 }
 #endif
