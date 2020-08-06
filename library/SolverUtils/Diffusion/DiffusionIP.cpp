@@ -54,8 +54,6 @@ void DiffusionIP::v_InitObject(
 {
     m_session = pSession;
 
-    m_session->LoadSolverInfo("ShockCaptureType", m_shockCaptureType, "Off");
-
     m_session->LoadParameter("IPSymmFluxCoeff", m_IPSymmFluxCoeff, 0.0); // 0.5
 
     m_session->LoadParameter("IP2ndDervCoeff", m_IP2ndDervCoeff,
@@ -116,12 +114,6 @@ void DiffusionIP::v_InitObject(
         }
         ASSERTL0(norm < 1.0E-11,
                  "different BWD for different variable not coded yet");
-    }
-
-    m_MuVarTrace = NullNekDouble1DArray;
-    if (m_ArtificialDiffusionVector)
-    {
-        m_MuVarTrace = Array<OneD, NekDouble>{nTracePts, 0.0};
     }
 }
 
@@ -288,19 +280,11 @@ void DiffusionIP::v_DiffuseVolumeFlux(
     Array<OneD, int> &nonZeroIndex)
 {
     size_t nDim = fields[0]->GetCoordim(0);
-    size_t nPts = fields[0]->GetTotPoints();
-
-    Array<OneD, NekDouble> muvar = NullNekDouble1DArray;
-    if (m_ArtificialDiffusionVector)
-    {
-        muvar = Array<OneD, NekDouble>{nPts, 0.0};
-        GetAVmu(fields, inarray, muvar, m_MuVarTrace);
-    }
 
     Array<OneD, Array<OneD, NekDouble>> tmparray2D = NullNekDoubleArrayofArray;
 
     m_FunctorDiffusionfluxCons(nDim, inarray, qfield, VolumeFlux, nonZeroIndex,
-                               tmparray2D, muvar);
+                               tmparray2D);
 }
 
 void DiffusionIP::v_DiffuseTraceFlux(
@@ -322,7 +306,7 @@ void DiffusionIP::v_DiffuseTraceFlux(
 
     size_t nConvectiveFields = fields.size();
     CalTraceNumFlux(nConvectiveFields, nDim, nPts, nTracePts, m_IP2ndDervCoeff,
-                    fields, inarray, qfield, pFwd, pBwd, m_MuVarTrace,
+                    fields, inarray, qfield, pFwd, pBwd,
                     nonZeroIndex, traceflux3D, m_traceAver, m_traceJump);
 }
 
@@ -666,7 +650,6 @@ void DiffusionIP::CalTraceNumFlux(
     const TensorOfArray3D<NekDouble> &qfield,
     const Array<OneD, Array<OneD, NekDouble>> &vFwd,
     const Array<OneD, Array<OneD, NekDouble>> &vBwd,
-    const Array<OneD, NekDouble> &MuVarTrace,
     Array<OneD, int> &nonZeroIndexflux, TensorOfArray3D<NekDouble> &traceflux,
     Array<OneD, Array<OneD, NekDouble>> &solution_Aver,
     Array<OneD, Array<OneD, NekDouble>> &solution_jump)
@@ -751,7 +734,7 @@ void DiffusionIP::CalTraceNumFlux(
 
     // Calculate normal viscous flux
     m_FunctorDiffusionfluxCons(nDim, solution_Aver, numDerivFwd, traceflux,
-                               nonZeroIndexflux, m_traceNormals, MuVarTrace);
+                               nonZeroIndexflux, m_traceNormals);
 }
 
 void DiffusionIP::AddSecondDerivToTrace(

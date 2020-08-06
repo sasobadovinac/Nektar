@@ -124,6 +124,10 @@ namespace Nektar
 
         if ("InteriorPenalty" == diffName)
         {
+            // Check problem dimensions
+            auto nDim = m_fields[0]->GetCoordim(0);
+            ASSERTL0(nDim > 1,
+                "Interior Penalty method not implemented in 1D, use LDGNS");
             SetBoundaryConditionsBwdWeight();
         }
         // Set up penalty term for LDGNS
@@ -134,13 +138,6 @@ namespace Nektar
                 v_GetFluxPenalty, this);
         }
 
-        if (m_shockCaptureType != "Off")
-        {
-            m_diffusion->SetArtificialDiffusionVector(
-                &NavierStokesCFE::GetArtificialViscosity, this);
-        }
-
-
         // Concluding initialisation of diffusion operator
         m_diffusion->InitObject         (m_session, m_fields);
 
@@ -149,7 +146,7 @@ namespace Nektar
         m_physicalSensorType,    "Off");
 
         // Artificial viscosity scaling constant
-        m_session->LoadParameter("mu0", m_mu0, 1.0);
+        m_session->LoadParameter("mu0", m_mu0, 0.5);
 
         // load smoothing tipe
         m_session->LoadSolverInfo("Smoothing", m_smoothing, "Off");
@@ -609,8 +606,7 @@ namespace Nektar
         const TensorOfArray3D<NekDouble>                       &qfields,
         TensorOfArray3D<NekDouble>                             &outarray,
         Array< OneD, int >                                     &nonZeroIndex,
-        const Array<OneD, Array<OneD, NekDouble> >             &normal,
-        const Array<OneD, NekDouble>                           &ArtifDiffFactor)
+        const Array<OneD, Array<OneD, NekDouble> >             &normal)
     {
         size_t nConvectiveFields   = inarray.size();
         size_t nPts=inarray[0].size();
@@ -671,38 +667,8 @@ namespace Nektar
             }
         }
 
-        if (ArtifDiffFactor.size())
-        {
-            n_nonZero   =   nConvectiveFields;
-
-            if (normal.size())
-            {
-                Array<OneD, NekDouble> tmparray{nPts, 0.0};
-                for (int i = 0; i < nDim; ++i)
-                {
-                    Vmath::Vmul(nPts, ArtifDiffFactor, 1, normal[i], 1,
-                                tmparray, 1);
-                    for (int j = 0; j < nConvectiveFields; ++j)
-                    {
-                        Vmath::Vvtvp(nPts, tmparray, 1, qfields[i][j], 1,
-                                    outarray[0][j], 1, outarray[0][j], 1);
-                    }
-                }
-            }
-            else
-            {
-                for (int i = 0; i < nDim; ++i)
-                {
-                    for (int j = 0; j < nConvectiveFields; ++j)
-                    {
-                        Vmath::Vvtvp(nPts, ArtifDiffFactor, 1, qfields[i][j], 1,
-                                    outarray[i][j], 1, outarray[i][j], 1);
-                    }
-                }
-            }
-        }
-
         nonZeroIndex = Array< OneD, int > {size_t(n_nonZero), 0};
+
         for (int i = 1; i < n_nonZero + 1; ++i)
         {
             nonZeroIndex[n_nonZero - i] =   nConvectiveFields - i;
@@ -802,16 +768,6 @@ namespace Nektar
                 }
             }
         }
-    }
-
-    /**
-     * @brief Calculate and return the ArtificialViscosity for shock-capturing.
-     */
-    void NavierStokesCFE::GetArtificialViscosity(
-        const Array<OneD, Array<OneD, NekDouble> >  &inarray,
-              Array<OneD,             NekDouble  >  &muav)
-    {
-        m_artificialDiffusion->GetArtificialViscosity(inarray, muav);
     }
 
     /**

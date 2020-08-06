@@ -69,11 +69,6 @@ namespace Nektar
                   Array<OneD, Array<OneD, NekDouble> >&)>
                                             DiffusionFluxPenaltyNS;
 
-        typedef std::function<void (
-            const Array<OneD, Array<OneD, NekDouble> >&,
-                  Array<OneD,             NekDouble  >&)>
-                                            DiffusionArtificialDiffusion;
-
         /**
          * Parameter list meaning:
          *  1nd: nspaceDimension
@@ -81,7 +76,6 @@ namespace Nektar
          *  3th: Devrivatives of field conservative varialbes
          *  4th: nonzero flux index array,          optional
          *  5th: normal vectors                     optional
-         *  6th: aritificial diffusion facotres     optional
          *
          *  a null pointer need to be passed for optional parameters
          */
@@ -91,8 +85,7 @@ namespace Nektar
             const TensorOfArray3D<NekDouble>                                &,
                   TensorOfArray3D<NekDouble>                                &,
                   Array< OneD, int >                                        &,
-            const Array<OneD, Array<OneD, NekDouble> >                      &,
-            const Array<OneD, NekDouble>                                    &)>
+            const Array<OneD, Array<OneD, NekDouble> >                      &)>
                 DiffusionFluxCons;
 
         /**
@@ -298,21 +291,12 @@ namespace Nektar
                 m_FunctorDiffusionfluxCons = std::bind(
                     func, obj, std::placeholders::_1, std::placeholders::_2,
                                std::placeholders::_3, std::placeholders::_4,
-                               std::placeholders::_5, std::placeholders::_6,
-                               std::placeholders::_7);
+                               std::placeholders::_5, std::placeholders::_6);
             }
 
             void SetDiffusionFluxCons(DiffusionFluxCons flux)
             {
                 m_FunctorDiffusionfluxCons =   flux;
-            }
-
-            template<typename FuncPointerT, typename ObjectPointerT>
-            void SetArtificialDiffusionVector(
-                FuncPointerT func, ObjectPointerT obj)
-            {
-                m_ArtificialDiffusionVector = std::bind(
-                    func, obj, std::placeholders::_1, std::placeholders::_2);
             }
 
             template<typename FuncPointerT, typename ObjectPointerT>
@@ -340,12 +324,6 @@ namespace Nektar
             {
                 return v_GetFluxTensor();
             }
-            /// Get the mu of artifical viscosity(AV)
-            SOLVER_UTILS_EXPORT void GetAVmu(
-                const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
-                const Array<OneD, Array<OneD, NekDouble> >        &inarray,
-                Array<OneD, NekDouble >                           &muvar,
-                Array<OneD, NekDouble >                           &MuVarTrace);
 
             /// Get the average and jump value of conservative variables on trace
             SOLVER_UTILS_EXPORT void ConsVarAveJump(
@@ -371,7 +349,6 @@ namespace Nektar
             DiffusionFluxVecCB              m_fluxVector;
             DiffusionFluxVecCBNS            m_fluxVectorNS;
             DiffusionFluxPenaltyNS          m_fluxPenaltyNS;
-            DiffusionArtificialDiffusion    m_ArtificialDiffusionVector;
             DiffusionFluxCons               m_FunctorDiffusionfluxCons;
             SpecialBndTreat                 m_SpecialBndTreat;
             DiffusionSymmFluxCons           m_FunctorSymmetricfluxCons;

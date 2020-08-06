@@ -62,7 +62,6 @@ public:
 protected:
     DiffusionIP();
 
-    std::string m_shockCaptureType;
     NekDouble m_IPSymmFluxCoeff;
     NekDouble m_IP2ndDervCoeff;
     NekDouble m_IPPenaltyCoeff;
@@ -209,7 +208,6 @@ protected:
         const TensorOfArray3D<NekDouble> &qfield,
         const Array<OneD, Array<OneD, NekDouble>> &vFwd,
         const Array<OneD, Array<OneD, NekDouble>> &vBwd,
-        const Array<OneD, NekDouble> &MuVarTrace,
         Array<OneD, int> &nonZeroIndexflux,
         TensorOfArray3D<NekDouble> &traceflux,
         Array<OneD, Array<OneD, NekDouble>> &solution_Aver,

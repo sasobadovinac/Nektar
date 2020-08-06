@@ -93,9 +93,7 @@ namespace Nektar
         Array< OneD, int >
             &nonZeroIndex       =   NullInt1DArray,
         const Array<OneD, Array<OneD, NekDouble> >
-            &normal             =   NullNekDoubleArrayofArray,
-        const Array<OneD, NekDouble>
-            &ArtifDiffFactor    =   NullNekDouble1DArray);
+            &normal             =   NullNekDoubleArrayofArray);
 
     void GetViscousSymmtrFluxConservVar(
             const int                                           nSpaceDim,

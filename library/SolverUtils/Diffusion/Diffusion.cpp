@@ -106,27 +106,6 @@ namespace Nektar
             v_DiffuseCoeffs(nConvectiveFields, fields, inarray, outarray,
                             pFwd, pBwd);
         }
-        void Diffusion::GetAVmu(
-            const Array<OneD, MultiRegions::ExpListSharedPtr>   &fields,
-            const Array<OneD, Array<OneD, NekDouble> >          &inarray,
-                  Array<OneD, NekDouble >                       &muvar,
-                  Array<OneD, NekDouble >                       &MuVarTrace)
-        {
-            size_t nTracePts = fields[0]->GetTrace()->GetTotPoints();
-
-            Array<OneD, NekDouble> Fwd{nTracePts, 0.0};
-            Array<OneD, NekDouble> Bwd{nTracePts, 0.0};
-
-            m_ArtificialDiffusionVector(inarray, muvar);
-
-            // BwdMuvar is left to be 0.0 according to DiffusionLDG.cpp
-            fields[0]->GetFwdBwdTracePhys(muvar, Fwd, Bwd, false);
-
-            for (int k = 0; k < nTracePts; ++k)
-            {
-                MuVarTrace[k] = 0.5 * (Fwd[k] + Bwd[k]) ;
-            }
-        }
 
         void Diffusion::v_Diffuse(
             const std::size_t                             nConvectiveFields,
