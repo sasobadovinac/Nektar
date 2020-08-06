@@ -84,10 +84,10 @@ namespace Nektar
             if (m_shockCaptureType == "Physical")
             {
                 auto nPts = m_fields[0]->GetTotPoints();
-                m_muav = Array<OneD, NekDouble>(nPts, 0.0);
+                m_muAv = Array<OneD, NekDouble>(nPts, 0.0);
 
                 auto nTracePts = m_fields[0]->GetTrace()->GetTotPoints();
-                m_muavTrace = Array<OneD, NekDouble> (nTracePts,0.0);
+                m_muAvTrace = Array<OneD, NekDouble> (nTracePts,0.0);
             }
             else
             {
@@ -939,6 +939,14 @@ namespace Nektar
 
                 variables.push_back  ("ArtificialVisc");
                 fieldcoeffs.push_back(sensorFwd);
+            }
+
+            if (m_shockCaptureType == "Physical")
+            {
+                Array<OneD, NekDouble> muavFwd(nCoeffs);
+                m_fields[0]->FwdTrans_IterPerExp(m_muAv,   muavFwd);
+                variables.push_back  ("ArtificialVisc");
+                fieldcoeffs.push_back(muavFwd);
             }
         }
     }

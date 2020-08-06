@@ -177,28 +177,32 @@ namespace Nektar
             outarrayDiff[i] = Array<OneD, NekDouble>(npoints, 0.0);
         }
 
-        // Get artificial viscosity
+        // Set artificial viscosity
         if (m_shockCaptureType == "Physical")
         {
             // Get volume artificial viscosity
-            GetPhysicalAV(inarray, m_muav);
+            GetPhysicalAV(inarray, m_muAv);
             // Apply Ducros sensor
             if (m_physicalSensorType == "Ducros")
             {
                 Array<OneD, NekDouble> divSquare(npoints), curlSquare(npoints);
                 GetDivCurlSquared(m_fields, inarray, divSquare, curlSquare,
                     pFwd, pBwd);
-                ApplyDucros(m_fields, divSquare, curlSquare, m_muav);
+                ApplyDucros(m_fields, divSquare, curlSquare, m_muAv);
             }
             // Apply approximate c0 smoothing
             if (m_smoothing == "C0")
             {
-                ApplyC0Smooth(m_muav);
+                ApplyC0Smooth(m_muAv);
             }
             // Set trace AV
-
-
-
+            Array<OneD, NekDouble> muFwd(nTracePts), muBwd(nTracePts);
+            m_fields[0]->GetFwdBwdTracePhys(m_muAv, muFwd, muBwd, false,
+                false, false);
+            for (size_t p = 0; p < nTracePts; ++p)
+            {
+                m_muAvTrace[p] = 0.5 * (muFwd[p] + muBwd[p]);
+            }
         }
 
         string diffName;
@@ -1059,13 +1063,13 @@ namespace Nektar
         // Add artificial viscosity if wanted
         if (m_shockCaptureType == "Physical")
         {
-            if (mu.size() == m_muav.size())
+            if (mu.size() == m_muAv.size())
             {
-                Vmath::Vadd(nPts, mu, 1, m_muav, 1, mu, 1);
+                Vmath::Vadd(nPts, mu, 1, m_muAv, 1, mu, 1);
             }
             else
             {
-                Vmath::Vadd(nPts, mu, 1, m_muavTrace, 1, mu, 1);
+                Vmath::Vadd(nPts, mu, 1, m_muAvTrace, 1, mu, 1);
             }
         }
 

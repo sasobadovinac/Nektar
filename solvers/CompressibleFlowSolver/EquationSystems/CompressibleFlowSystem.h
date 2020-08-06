@@ -101,8 +101,8 @@ namespace Nektar
         std::string                         m_shockCaptureType;
 
         /// Storage for physical artificial viscosity
-        Array<OneD, NekDouble>              m_muav;
-        Array<OneD, NekDouble>              m_muavTrace;
+        Array<OneD, NekDouble>              m_muAv;
+        Array<OneD, NekDouble>              m_muAvTrace;
 
         // Parameters for exponential filtering
         NekDouble                           m_filterAlpha;
