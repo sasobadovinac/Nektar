@@ -214,6 +214,15 @@ namespace Nektar
             boost::ignore_unused(out_d1, out_d2);
             PhysTensorDeriv(inarray,out_d0);
         }
+        
+        void StdSegExp::v_PhysDerivFast(const Array<OneD, const NekDouble>& inarray,
+                Array<OneD, NekDouble> &out_d0,
+                Array<OneD, NekDouble> &out_d1,
+                Array<OneD, NekDouble> &out_d2)
+        {
+            boost::ignore_unused(out_d1, out_d2);
+            PhysTensorDerivFast(inarray, out_d0);
+        }
 
 
         void StdSegExp::v_PhysDeriv(const int dir,
@@ -371,27 +380,82 @@ namespace Nektar
 
         void StdSegExp::v_PhysEvalBasisGrad(
                                             const Array<OneD, const Array<OneD, NekDouble> >coords,
+                                            Array<OneD, NekDouble> &out_eval,
                                             Array<OneD, NekDouble> &out_d0,
                                             Array<OneD, NekDouble> &out_d1,
-                                       Array<OneD, NekDouble> &out_d2)
+                                            Array<OneD, NekDouble> &out_d2)
         {
             boost::ignore_unused(out_d1, out_d2);
 
             int tot = GetTotPoints();
             int sz = coords[0].size();
+            Array<OneD, NekDouble> physvalsder(tot);
             Array<OneD, NekDouble> physvals(tot);
-            if(out_d0.size() > 0)
+            if(out_eval.size() > 0)
             {    
                 for(int k = 0; k < m_base[0]->GetNumModes(); k++)
                 {
-                    Vmath::Vcopy(tot, &m_physevalall[1][k*tot], 1, &physvals[0], 1);
+                    Vmath::Vcopy(tot, &m_physevalall[0][k*tot], 1, &physvals[0], 1);
                     for(int i = 0; i < sz; i++)
                     {
-                        out_d0[i+k*sz] =   StdExpansion::BaryEvaluate<0>(coords[0][i], &physvals[0]);
+                        out_eval[i+k*sz] = StdExpansion::BaryEvaluate<0>(coords[0][i], &physvals[0]);
                     } 
                 }
                 
             }
+
+            if(out_d0.size() > 0)
+            {    
+                for(int k = 0; k < m_base[0]->GetNumModes(); k++)
+                {
+                    Vmath::Vcopy(tot, &m_physevalall[1][k*tot], 1, &physvalsder[0], 1);
+                    for(int i = 0; i < sz; i++)
+                    {
+                        out_d0[i+k*sz] =   StdExpansion::BaryEvaluate<0>(coords[0][i], &physvalsder[0]);
+                    } 
+                }
+                
+            }
+        }
+
+
+
+        void StdSegExp::v_PhysEvalBasisGradFast(
+                                            const Array<OneD, const Array<OneD, NekDouble> >coords,
+                                            Array<OneD, NekDouble> &out_eval,
+                                            Array<OneD, NekDouble> &out_d0,
+                                            Array<OneD, NekDouble> &out_d1,
+                                            Array<OneD, NekDouble> &out_d2)
+        {
+            boost::ignore_unused(out_d1, out_d2);
+
+            int sz = coords[0].size();
+            if(out_eval.size() > 0)
+            {    
+                for(int k = 0; k < m_base[0]->GetNumModes(); k++)
+                {
+                    for(int i = 0; i < sz; i++)
+                    {
+                 
+                        out_eval[i+k*sz] = PhysEvaluateBasis(Array<OneD, NekDouble>(1,coords[0][i]), k);
+                    }
+                }
+                
+            }
+
+            if(out_d0.size() > 0)
+            {    
+                for(int k = 0; k < m_base[0]->GetNumModes(); k++)
+                {
+                       for(int i = 0; i < sz; i++)
+                    {
+                 
+                        out_d0[i+k*sz] = StdExpansion::BaryEvaluateDerivBasis<0>(coords[0][i], k);
+                    }
+                }
+                
+            }
+
         }
 
         void StdSegExp::v_FwdTrans_BndConstrained(

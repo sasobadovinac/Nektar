@@ -62,6 +62,18 @@ namespace Nektar
     //----------------------------
     // Differentiation Methods
     //-----------------------------
+        // find derivative of u (inarray) at all quad points
+    void StdExpansion1D::PhysTensorDerivFast(const Array<OneD, const NekDouble>& inarray,
+                         Array<OneD, NekDouble>& outarray)
+    {
+        int nquad = GetTotPoints();
+        Array<OneD, NekDouble> x(nquad);
+        GetCoords(x);
+        for(int i = 0; i < nquad; i++)   
+        {
+            outarray[i] =  StdExpansion::BaryEvaluateDeriv<0>(x[i], &inarray[0]); 
+        }
+    }
 
     void StdExpansion1D::PhysTensorDeriv(const Array<OneD, const NekDouble>& inarray,
                          Array<OneD, NekDouble>& outarray)
@@ -81,7 +93,7 @@ namespace Nektar
         {
             Blas::Dgemv('N',nquad,nquad,1.0,&(D->GetPtr())[0],nquad,
                         &inarray[0],1,0.0,&outarray[0],1);
-                        }
+        }
     }
 
         /*        NekDouble StdExpansion1D::v_PhysEvaluateDeriv(
