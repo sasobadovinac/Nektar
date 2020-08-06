@@ -11,6 +11,9 @@
         <file description="Session File">../../../../../solvers/ADRSolver/Tests/UnsteadyAdvection_FRDG_3DHomo1D_MVM.xml</file>
         <file description="Session File">../../../../../solvers/ADRSolver/Tests/MMFAdvSphere.xml</file>
         <file description="Session File">../../../../../solvers/ADRSolver/Tests/UnsteadyDiffusion_LDG_3DHomo1D_MVM.xml</file>
+        <file description="Session File">../../../../../solvers/ADRSolver/Tests/UnsteadyAdvectionDiffusion_3DHomo1D_MVM.xml</file>
+        <file description="Session File">../../../../../solvers/ADRSolver/Tests/InviscidBurger1D_WeakDG_GAUSS_LAGRANGE.xml</file>
+        <file description="Session File">../../../../../solvers/ADRSolver/Tests/ReactionDiffusion2D.xml</file>
     </files>
      <metrics>
      <metric type="regex" id="1">
@@ -81,10 +84,49 @@
         <regex>^.*testEquationSystemCreateUnsteadyDiffusionSolver: (.*)</regex>
               <matches>
                   <match>
-                      <field id="0">PAXX</field>
+                      <field id="0">PASS</field>
                   </match>
               </matches>
       </metric>
-
+      <metric type="regex" id="10">
+        <regex>^.*testEquationSystemCreateUnsteadyAdvectionDiffusionSolver: (.*)</regex>
+              <matches>
+                  <match>
+                      <field id="0">PASS</field>
+                  </match>
+              </matches>
+      </metric>
+      <metric type="regex" id="11">
+        <regex>^.*testEquationSystemCreateUnsteadyInviscidBurgerSolver: (.*)</regex>
+              <matches>
+                  <match>
+                      <field id="0">PASS</field>
+                  </match>
+              </matches>
+      </metric>
+      <metric type="regex" id="12">
+        <regex>^.*testEquationSystemCreateUnsteadyReactionDiffusionSolver: (.*)</regex>
+              <matches>
+                  <match>
+                      <field id="0">PASS</field>
+                  </match>
+              </matches>
+      </metric>
+      <metric type="regex" id="13">
+        <regex>^.*testEquationSystemCreateUnsteadyViscousBurgersSolver: (.*)</regex>
+              <matches>
+                  <match>
+                      <field id="0">PASS</field>
+                  </match>
+              </matches>
+      </metric>
+      <metric type="regex" id="14">
+        <regex>^.*testEquationSystemCreateEigenValuesAdvectionSolver: (.*)</regex>
+              <matches>
+                  <match>
+                      <field id="0">PASS</field>
+                  </match>
+              </matches>
+      </metric>
     </metrics>
 </test>

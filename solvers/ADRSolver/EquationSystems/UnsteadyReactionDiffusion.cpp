@@ -38,14 +38,21 @@
 #include <boost/core/ignore_unused.hpp>
 
 #include <ADRSolver/EquationSystems/UnsteadyReactionDiffusion.h>
+#include <ADRSolver/Plugin.h>
 
 using namespace std;
 
 namespace Nektar
 {
-string UnsteadyReactionDiffusion::className = GetEquationSystemFactory().
-    RegisterCreatorFunction("UnsteadyReactionDiffusion",
-                            UnsteadyReactionDiffusion::create);
+string UnsteadyReactionDiffusion::className;
+
+bool unsteady_rd_reg = Nektar::SolverUtils::plugin.RegisterCallback(
+    []() {
+        UnsteadyReactionDiffusion::className = GetEquationSystemFactory().
+            RegisterCreatorFunction("UnsteadyReactionDiffusion",
+                                     UnsteadyReactionDiffusion::create);
+    }
+);
 
 UnsteadyReactionDiffusion::UnsteadyReactionDiffusion(
     const LibUtilities::SessionReaderSharedPtr& pSession,

@@ -170,6 +170,92 @@ class TestEquationSystem(unittest.TestCase):
             print(msg)
             raise
 
+    def testEquationSystemCreateUnsteadyAdvectionDiffusionSolver(self):
+        self.session_name = ["test_solverutils_equationsystem.py",\
+                             "UnsteadyAdvectionDiffusion_3DHomo1D_MVM.xml"]
+        self.session      = SessionReader.CreateInstance(self.session_name)
+        self.graph        = MeshGraph.Read(self.session)
+        msg = self.getCN() + "::testEquationSystemCreateUnsteadyAdvectionDiffusionSolver: "
+        try:
+            eq = EquationSystem.Create("UnsteadyAdvectionDiffusion",
+                                        self.session, self.graph)
+            eq.DoSolve()
+            msg += "PASS"
+            print(msg)
+        except :
+            msg += "FAIL"
+            print(msg)
+            raise
+
+    def testEquationSystemCreateUnsteadyInviscidBurgerSolver(self):
+        self.session_name = ["test_solverutils_equationsystem.py",\
+                             "InviscidBurger1D_WeakDG_GAUSS_LAGRANGE.xml"]
+        self.session      = SessionReader.CreateInstance(self.session_name)
+        self.graph        = MeshGraph.Read(self.session)
+        msg = self.getCN() + "::testEquationSystemCreateUnsteadyInviscidBurgerSolver: "
+        try:
+            eq = EquationSystem.Create("UnsteadyInviscidBurger",
+                                        self.session, self.graph)
+            eq.DoSolve()
+            msg += "PASS"
+            print(msg)
+        except :
+            msg += "FAIL"
+            print(msg)
+            raise
+
+    def testEquationSystemCreateUnsteadyReactionDiffusionSolver(self):
+        self.session_name = ["test_solverutils_equationsystem.py",\
+                             "ReactionDiffusion2D.xml"]
+        self.session      = SessionReader.CreateInstance(self.session_name)
+        self.graph        = MeshGraph.Read(self.session)
+        msg = self.getCN() + "::testEquationSystemCreateUnsteadyReactionDiffusionSolver: "
+        try:
+            eq = EquationSystem.Create("UnsteadyReactionDiffusion",
+                                        self.session, self.graph)
+            eq.DoSolve()
+            msg += "PASS"
+            print(msg)
+        except :
+            msg += "FAIL"
+            print(msg)
+            raise
+
+    def testEquationSystemCreateUnsteadyViscousBurgersSolver(self):
+        self.session_name = ["test_solverutils_equationsystem.py",\
+                             "UnsteadyAdvectionDiffusion_3DHomo1D_MVM.xml"]
+        self.session      = SessionReader.CreateInstance(self.session_name)
+        self.graph        = MeshGraph.Read(self.session)
+        msg = self.getCN() + "::testEquationSystemCreateUnsteadyViscousBurgersSolver: "
+        try:
+            eq = EquationSystem.Create("UnsteadyViscousBurgers",
+                                        self.session, self.graph)
+            eq.DoSolve()
+            msg += "PASS"
+            print(msg)
+        except :
+            msg += "FAIL"
+            print(msg)
+            raise
+
+    def testEquationSystemCreateEigenValuesAdvectionSolver(self):
+        self.session_name = ["test_solverutils_equationsystem.py",\
+                             "UnsteadyAdvectionDiffusion_3DHomo1D_MVM.xml"]
+        self.session      = SessionReader.CreateInstance(self.session_name)
+        self.graph        = MeshGraph.Read(self.session)
+        msg = self.getCN() + "::testEquationSystemCreateEigenValuesAdvectionSolver: "
+        try:
+            eq = EquationSystem.Create("EigenValuesAdvection",
+                                        self.session, self.graph)
+            eq.DoSolve()
+            msg += "PASS"
+            print(msg)
+        except :
+            msg += "FAIL"
+            print(msg)
+            raise
+
+
 
 
 if __name__ == '__main__':

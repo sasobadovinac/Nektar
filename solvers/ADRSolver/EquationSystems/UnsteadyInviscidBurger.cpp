@@ -33,16 +33,23 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <ADRSolver/EquationSystems/UnsteadyInviscidBurger.h>
+#include <ADRSolver/Plugin.h>
 
 using namespace std;
 
 namespace Nektar
 {
-    string UnsteadyInviscidBurger::className
-        = SolverUtils::GetEquationSystemFactory().RegisterCreatorFunction(
-                "UnsteadyInviscidBurger",
-                UnsteadyInviscidBurger::create,
-                "Inviscid Burger equation");
+    string UnsteadyInviscidBurger::className;
+    bool unsteady_ivb_reg = Nektar::SolverUtils::plugin.RegisterCallback(
+        []() {
+            UnsteadyInviscidBurger::className =
+                SolverUtils::GetEquationSystemFactory().
+                    RegisterCreatorFunction(
+                        "UnsteadyInviscidBurger",
+                        UnsteadyInviscidBurger::create,
+                        "Inviscid Burger equation");
+        }
+    );
 
     UnsteadyInviscidBurger::UnsteadyInviscidBurger(
         const LibUtilities::SessionReaderSharedPtr& pSession,
@@ -291,4 +298,3 @@ namespace Nektar
         }
     }
 }
-

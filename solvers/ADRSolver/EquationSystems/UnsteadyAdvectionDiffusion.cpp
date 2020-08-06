@@ -39,15 +39,22 @@
 #include <ADRSolver/EquationSystems/UnsteadyAdvectionDiffusion.h>
 
 #include <LibUtilities/TimeIntegration/TimeIntegrationSolution.h>
+#include <ADRSolver/Plugin.h>
 
 using namespace std;
 
 namespace Nektar
 {
-    string UnsteadyAdvectionDiffusion::className
-        = SolverUtils::GetEquationSystemFactory().RegisterCreatorFunction(
-                "UnsteadyAdvectionDiffusion",
-                UnsteadyAdvectionDiffusion::create);
+    string UnsteadyAdvectionDiffusion::className;
+    bool unsteady_ad_reg = Nektar::SolverUtils::plugin.RegisterCallback(
+        []() {
+            UnsteadyAdvectionDiffusion::className =
+                SolverUtils::GetEquationSystemFactory().
+                            RegisterCreatorFunction(
+                                    "UnsteadyAdvectionDiffusion",
+                                    UnsteadyAdvectionDiffusion::create);
+        }
+    );
 
     UnsteadyAdvectionDiffusion::UnsteadyAdvectionDiffusion(
         const LibUtilities::SessionReaderSharedPtr& pSession,

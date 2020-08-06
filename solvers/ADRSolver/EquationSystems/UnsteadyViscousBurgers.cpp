@@ -38,15 +38,23 @@
 
 #include <ADRSolver/EquationSystems/UnsteadyViscousBurgers.h>
 #include <StdRegions/StdQuadExp.h>
+#include <ADRSolver/Plugin.h>
 
 using namespace std;
 
 namespace Nektar
 {
-    string UnsteadyViscousBurgers::className
-    = SolverUtils::GetEquationSystemFactory().RegisterCreatorFunction(
-                "UnsteadyViscousBurgers",
-                UnsteadyViscousBurgers::create);
+    string UnsteadyViscousBurgers::className;
+
+    bool unsteady_vb_reg = Nektar::SolverUtils::plugin.RegisterCallback(
+        []() {
+            UnsteadyViscousBurgers::className =
+                SolverUtils::GetEquationSystemFactory().
+                                RegisterCreatorFunction(
+                                    "UnsteadyViscousBurgers",
+                                     UnsteadyViscousBurgers::create);
+        }
+    );
 
     UnsteadyViscousBurgers::UnsteadyViscousBurgers(
         const LibUtilities::SessionReaderSharedPtr& pSession,

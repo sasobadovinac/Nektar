@@ -35,12 +35,22 @@
 #include <iostream>
 
 #include <ADRSolver/EquationSystems/EigenValuesAdvection.h>
+#include <ADRSolver/Plugin.h>
 
 using namespace std;
 
 namespace Nektar
 {
-    string EigenValuesAdvection::className = GetEquationSystemFactory().RegisterCreatorFunction("EigenValuesAdvection", EigenValuesAdvection::create, "Eigenvalues of the weak advection operator.");
+    string EigenValuesAdvection::className;
+    bool eigenvd_reg = Nektar::SolverUtils::plugin.RegisterCallback(
+        []() {
+            EigenValuesAdvection::className =
+                GetEquationSystemFactory().
+                    RegisterCreatorFunction("EigenValuesAdvection",
+                                             EigenValuesAdvection::create,
+                                "Eigenvalues of the weak advection operator.");
+        }
+    );
 
     EigenValuesAdvection::EigenValuesAdvection(
         const LibUtilities::SessionReaderSharedPtr& pSession,
@@ -156,6 +166,7 @@ namespace Nektar
 
     void EigenValuesAdvection::v_DoSolve()
     {
+        std::cout << "EigenValuesAdvection::v_DoSolve() was called!!" << std::endl;
         int nvariables = 1;
         int dofs = GetNcoeffs();
 		//bool UseContCoeffs = false;
