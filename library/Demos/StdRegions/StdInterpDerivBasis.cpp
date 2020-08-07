@@ -51,13 +51,13 @@ int main(int argc, char *argv[])
     int nCoeffs = E->GetNcoeffs(), nPts = E->GetTotPoints();
     int dimension = E->GetShapeDimension();
     vector<string> &ptypes = demo.GetPointsType();
-    for (int i = 0; i < dimension; ++i)
-    {
-        ptypes[i] = "GaussGaussChebyshev";
-    }
+    //for (int i = 0; i < dimension; ++i)
+        //{
+        ptypes[0] = "Modified_A";
+        ptypes[1] = "Modified_B";
+    //}
 
     cout<<"\nPts = "<<nPts;
-    cout<<"\n nCoeffs="<<nCoeffs;
     Array<OneD, Array<OneD, NekDouble>> coords = demo.GetCoords(E);
 
     Array<OneD, NekDouble> sol(nPts*nCoeffs), soll(nPts), out_eval(nPts*nCoeffs), phys(nPts*nCoeffs);
@@ -92,7 +92,7 @@ int main(int argc, char *argv[])
     else if(dimension>1)
 
     {
-        E->PhysEvalBasisGradFast(coords,  out_eval, phys, phys1,  NullNekDouble1DArray);
+        E->PhysEvalBasisGrad(coords,  out_eval, phys, phys1,  NullNekDouble1DArray);
                 
         for (int k = 0; k < nCoeffs; ++k)
         {

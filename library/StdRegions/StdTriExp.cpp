@@ -48,7 +48,7 @@ namespace Nektar
 
         StdTriExp::StdTriExp()
         {
-            //  m_physevalall   = v_GetPhysEvalALL();
+            m_physevalall   = v_GetPhysEvalALL();
         }
 
 
@@ -67,7 +67,7 @@ namespace Nektar
             ASSERTL0(Ba.GetNumModes() <= Bb.GetNumModes(),
                      "order in 'a' direction is higher than order "
                      "in 'b' direction");
-            //m_physevalall   = v_GetPhysEvalALL();
+            m_physevalall   = v_GetPhysEvalALL();
 
         }
 
@@ -75,7 +75,7 @@ namespace Nektar
             StdExpansion(T),
             StdExpansion2D(T)
         {
-            //m_physevalall   = v_GetPhysEvalALL();
+            m_physevalall   = v_GetPhysEvalALL();
 
         }
 
@@ -517,32 +517,123 @@ namespace Nektar
             }
         }
 
+
+        void StdTriExp::v_PhysEvalGrad(
+                                            const Array<OneD, const Array<OneD, NekDouble> >coords,
+                                            const Array<OneD, const NekDouble>& inarray,
+                                            Array<OneD, NekDouble> &out_d0,
+                                            Array<OneD, NekDouble> &out_d1,                                      Array<OneD, NekDouble> &out_d2)
+        {
+            boost::ignore_unused(out_d2);
+
+            int    nq0 = m_base[0]->GetNumPoints();
+            int    nq1 = m_base[1]->GetNumPoints();
+
+            const Array<OneD, const NekDouble>& z1 = m_base[1]->GetZ();
+            const Array<OneD, const NekDouble>& z0 = m_base[1]->GetZ();
+
+            if(out_d0.size()>0)
+            {
+
+                Array<OneD, NekDouble> wsp2(std::max(nq0, nq1));
+
+                // set up geometric factor: 2/(1-z1)
+                Vmath::Sadd(wsp2.size(), -1.0, z1, 1, wsp2, 1);
+                Vmath::Sdiv(wsp2.size(), -2.0, wsp2, 1, wsp2, 1);
+                   
+
+                Array<OneD, NekDouble> wsp(nq1);
+            
+                for(int j = 0; j<coords[0].size(); j++)
+                {
+                    for (int i = 0; i < nq0; ++i)
+                    {
+                        wsp[i] = StdExpansion::BaryEvaluateDeriv<0>
+                            (coords[0][j], &inarray[0]);
+                        
+                    }
+                    Vmath::Vmul(nq0, &wsp[0], 1, &wsp2[0], 1, &wsp[0], 1);
+                    out_d0[j] =  StdExpansion::BaryEvaluate<1>(coords[1][j], &wsp[0]);
+                }
+
+            }
+            
+            if(out_d1.size()>0)
+            {
+
+                Array<OneD, NekDouble> wsp2(std::max(nq0, nq1));
+                Array<OneD, NekDouble> wsp3(std::max(nq0, nq1));
+
+                // set up geometric factor: 2/(1-z1)
+                Vmath::Sadd(wsp2.size(), -1.0, z1, 1, wsp2, 1);
+                Vmath::Sdiv(wsp2.size(), -2.0, wsp2, 1, wsp2, 1);
+
+                // set up geometric factor: (1+z0)/(1-z1)
+                Vmath::Sadd(wsp3.size(), 1.0, z0, 1, wsp3, 1);
+            
+                Vmath::Smul(wsp2.size(), 0.5, wsp2, 1, wsp2, 1);
+                Vmath::Vmul(wsp2.size(), wsp2, 1, wsp3, 1, wsp2, 1);
+                
+                
+                Array<OneD, NekDouble> wsp(nq0);
+
+                for(int j = 0; j<coords[1].size(); j++)
+                {
+                    for (int i = 0; i < nq0; ++i)
+                    {
+                        wsp[i] = StdExpansion::BaryEvaluate<0>
+                            (coords[0][j], &inarray[0]+ i * nq0);
+                    }
+
+                    Vmath::Vmul(nq0, &wsp[0], 1, &wsp2[0], 1, &wsp[0], 1);
+                    out_d1[j] =  StdExpansion::BaryEvaluateDeriv<1>(coords[1][j], &wsp[0]);
+                }
+            }
+
+
+        }
+        /*
         void StdTriExp::v_PhysEvalBasisGrad(
                                             const Array<OneD, const Array<OneD, NekDouble> >coords,
+                                            Array<OneD, NekDouble> &out_eval,                    
                                             Array<OneD, NekDouble> &out_d0,
                                             Array<OneD, NekDouble> &out_d1,
                                        Array<OneD, NekDouble> &out_d2)
         {
-            boost::ignore_unused(coords, out_d0, out_d2, out_d1);
-
-            /*int tot = GetTotPoints();
+            boost::ignore_unused(out_d2);
+            
+            int tot = GetTotPoints();
                 
             Array<OneD, NekDouble> physvals(tot);
-            if(out_d0.size() > 0)
+            Array<OneD, NekDouble> physvalsder(tot);
+
+            const int nq0 = m_base[0]->GetNumPoints();
+            const int nq1 = m_base[1]->GetNumPoints();
+
+            int neq = LibUtilities::StdTriData::
+                getNumberOfCoefficients(nq0, nq1);
+             
+
+            if(out_eval.size() > 0)
             {    
-                for(int k = 0; k < m_base[0]->GetNumModes(); k++)
+                
+                Array<OneD, NekDouble> wsp(nq1);
+                for(int k = 0; k < neq; k++)
                 {
-                    Vmath::Vcopy(tot, &m_physevalall[1][k][0], 1, &physvals[0], 1);
-                    for(int i = 0; i < coords[0]. size(); i++)
+                    Vmath::Vcopy(tot, &m_physevalall[0][k*tot], 1, &physvals[0], 1);       
+                    for(int i = 0; i < tot; i++)
                     {
-                        out_d0[i] =   StdExpansion::BaryEvaluate<0>(coords[0][i], &physvals[0]);
-                        out_d1[i] =   StdExpansion::BaryEvaluate<1>(coords[0][i], &physvals[0]);
-                        
-                    } 
+                        for (int j = 0; j < nq1; ++j)
+                        {
+                            wsp[j] = StdExpansion::BaryEvaluate<0>(
+                                                                   coords[0][i], &physvals[0] + j * nq0);
+                        }
+                        out_eval[i+k*tot] =  StdExpansion::BaryEvaluate<1>(coords[1][i], &wsp[0]); 
+                    }
                 }
                 
-            }*/
-        }
+            } 
+        }*/
 
 
         void StdTriExp::v_IProductWRTBase_SumFacKernel(
@@ -771,43 +862,50 @@ namespace Nektar
                             1,&outarray[0]+i,nquad0,&outarray[0]+i,nquad0);
             }
         }
-        /*
-        Array<OneD, DNekMatSharedPtr> StdTriExp::v_GetPhysEvalALL()
+        //move to 2D exp
+        Array<OneD, Array<OneD, NekDouble> >StdTriExp::v_GetPhysEvalALL()
         {
-            Array<OneD, DNekMatSharedPtr> rArr(3);
+            
+            Array<OneD, Array<OneD, NekDouble> > ret(3);
             NekDouble nq = GetTotPoints();
            
-            rArr[0] = MemoryManager<DNekMat>::AllocateSharedPtr(m_ncoeffs,nq);
-            rArr[1] = MemoryManager<DNekMat>::AllocateSharedPtr(m_ncoeffs,nq);   
-            rArr[2] = MemoryManager<DNekMat>::AllocateSharedPtr(m_ncoeffs,nq);
+            //MemoryManager<DNekMat>::AllocateSharedPtr(m_ncoeffs,nq);
+            //MemoryManager<DNekMat>::AllocateSharedPtr(m_ncoeffs,nq);   
+            // MemoryManager<DNekMat>::AllocateSharedPtr(m_ncoeffs,nq);
             //Array<OneD, Array<OneD, NekDouble> > temp_ret(4);
             //          Array<OneD, NekDouble> tmp(totPts*m_ncoeffs);
             //Array<OneD, NekDouble> tmpdx(totPts*m_ncoeffs);
             //Array<OneD, NekDouble> tmpdy(totPts*m_ncoeffs);
             
-            // Array<OneD, NekDouble> row(m_ncoeffs*totPts);
-            //temp_ret[0] = row;
-for(int i = 0; i < m_ncoeffs; i++)
+            
+            ret[0] = Array<OneD, NekDouble>(m_ncoeffs*nq);
+            ret[1] = Array<OneD, NekDouble>(m_ncoeffs*nq);
+            ret[2] = Array<OneD, NekDouble>(m_ncoeffs*nq);
+            cout<<"m_ncoeffs = "<<m_ncoeffs;
+            cout<<"\n nq = "<<nq<<"\n";
+            for(int i = 0; i < m_ncoeffs; i++)
             {
-                
-                v_FillMode(i,&(rArr[0]->GetPtr())[i]);
-                //Vmath::Vcopy(totPts, &k[0], 1, &tmp[(i*totPts)], 1);
-                
-                //v_FillModedx(i,k);
-                //Vmath::Vcopy(totPts, &k[0], 1, &tmpdx[(i*totPts)], 1);
-                //v_FillModedy(i,k);
-                //Vmath::Vcopy(totPts, &k[0], 1, &tmpdy[(i*totPts)], 1);
-                v_PhysDeriv(0,&(rArr[0]->GetPtr())[i],&(rArr[1]->GetPtr())[i]);
-                v_PhysDeriv(1,&(rArr[0]->GetPtr())[i],&(rArr[2]->GetPtr())[i]);
-               
-            }            
-            // tmp_ret[0] = tmp;
-            // tmp_ret[1] = tmpdx;
-            // tmp_ret[2] = tmpdy;
-            return rArr;
+                Array<OneD, NekDouble> tmp(nq);
+                           
+                Array<OneD, NekDouble> tmp2(nq);
+
+                Array<OneD, NekDouble> tmp3(nq);
+                             
+                v_FillMode(i, tmp);
+                Vmath::Vcopy(nq, &tmp[0], 1, &ret[0][i*nq], 1);  
+
+                v_PhysDeriv(0, tmp, tmp2);
+                Vmath::Vcopy(nq, &tmp2[0], 1, &ret[1][i*nq], 1);  
+
+                v_PhysDeriv(1, tmp, tmp3);
+                Vmath::Vcopy(nq, &tmp3[0], 1, &ret[2][i*nq], 1);  
+
+            }
+            return ret;
+        
         }        
 
-        
+        /*        
         void StdTriExp::v_FillModedx(const int mode,
                             Array<OneD, NekDouble> &outarray)
         {
@@ -1952,6 +2050,78 @@ for(int i = 0; i < m_ncoeffs; i++)
                     break;
             }
         }
+        
+        void StdTriExp::v_PhysEvalBasisGradFast(
+                                                 const Array<OneD, const Array<OneD, NekDouble> >coords,
+                                                 Array<OneD, NekDouble> &out_eval,                    
+                                                 Array<OneD, NekDouble> &out_d0,
+                                                 Array<OneD, NekDouble> &out_d1,
+                                                 Array<OneD, NekDouble> &out_d2
+                                                 )
+        {
+            boost::ignore_unused(out_d2);
+
+            int sz = GetTotPoints();
+            const int nq0 = m_base[0]->GetNumPoints();
+            const int nq1 = m_base[1]->GetNumPoints();
+            int neq = LibUtilities::StdTriData::
+                getNumberOfCoefficients(nq0, nq1);
+            
+
+            if(out_eval.size() > 0)
+            {    
+
+                for(int k = 0; k < neq; k++)
+                {
+                    for(int i = 0; i < sz; i++)
+                    {
+                        Array<OneD, NekDouble> tmp(2);
+                        tmp[0] = coords[0][i];
+                        tmp[1] = coords[1][i];
+
+                        out_eval[i+k*sz] = PhysEvaluateBasis(tmp, k);
+                    }
+                }
+            }
+
+            if(out_d0.size() > 0)
+            {
+                const int nm1 = m_base[1]->GetNumModes();
+                const double c      = 1 + 2*nm1;
+
+                for(int k = 0; k < neq; k++)
+                {
+                    const int    mode0  = floor(0.5*(c - sqrt(c*c - 8*k)));
+                    for(int i = 0; i < sz; i++)
+                    {
+                        
+                        out_d0[i + k*sz] =  StdExpansion::BaryEvaluateDerivBasis<0>(coords[0][i], mode0) *
+                    StdExpansion::BaryEvaluateBasis<1>(coords[1][i], k);
+                  }
+                }
+            }
+                
+            
+            if(out_d1.size() > 0)
+            {
+
+                const int nm1 = m_base[1]->GetNumModes();
+                const double c      = 1 + 2*nm1;
+
+                for(int k = 0; k < neq; k++)
+                {
+                    const int    mode0  = floor(0.5*(c - sqrt(c*c - 8*k)));
+                    for(int i = 0; i < sz; i++)
+                    {
+                        
+                        out_d0[i + k*sz] =  StdExpansion::BaryEvaluateBasis<0>(coords[0][i], mode0) *
+                    StdExpansion::BaryEvaluateDerivBasis<1>(coords[1][i], k);
+                  }
+                }            }
+
+        }
+
+
 
         void StdTriExp::v_GetSimplexEquiSpacedConnectivity(
             Array<OneD, int> &conn,

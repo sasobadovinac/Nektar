@@ -885,6 +885,8 @@ namespace Nektar
                 v_PhysDeriv (inarray, out_d0, out_d1, out_d2);
             }
 
+
+
             void PhysDeriv(const int dir,
                            const Array<OneD, const NekDouble>& inarray,
                            Array<OneD, NekDouble> &outarray)

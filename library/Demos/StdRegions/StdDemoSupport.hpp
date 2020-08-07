@@ -451,7 +451,7 @@ public:
         const auto totPoints = (unsigned) E->GetTotPoints();
 
         Array<OneD, NekDouble> x(totPoints), y(totPoints), z(totPoints);
-        Array<OneD, Array<OneD, NekDouble>> coords(dimension);
+        Array<OneD, Array<OneD, NekDouble> > coords(dimension);
 
         switch (dimension)
         {

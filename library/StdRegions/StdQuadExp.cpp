@@ -151,7 +151,8 @@ namespace Nektar
             PhysTensorDeriv(inarray, out_d0, out_d1);
         }
 
-        void StdQuadExp::v_PhysDeriv(const int dir,
+
+       void StdQuadExp::v_PhysDeriv(const int dir,
                              const Array<OneD, const NekDouble>& inarray,
                              Array<OneD, NekDouble> &outarray)
         {
@@ -195,94 +196,70 @@ namespace Nektar
         }
 
 
-        void StdQuadExp::v_PhysEvalBasisGrad(
+        void StdQuadExp::v_PhysEvalGrad(
                                             const Array<OneD, const Array<OneD, NekDouble> >coords,
-                                            Array<OneD, NekDouble> &out_eval,                    
+                                            const Array<OneD, const NekDouble>& inarray,        
+                                             
                                             Array<OneD, NekDouble> &out_d0,
                                             Array<OneD, NekDouble> &out_d1,
                                             Array<OneD, NekDouble> &out_d2)
         {
             boost::ignore_unused(out_d2);
-
-            int tot = GetTotPoints();
-                
-            Array<OneD, NekDouble> physvals(tot);
-            Array<OneD, NekDouble> physvalsder(tot);
-
-            const int nq0 = m_base[0]->GetNumPoints();
-            const int nq1 = m_base[1]->GetNumPoints();
-
-            int neq = LibUtilities::StdQuadData::
-                getNumberOfCoefficients(nq0, nq1);
-             
-
-            if(out_eval.size() > 0)
-            {    
+       
+            if(out_d0.size()>0)
+            {
+                Array<OneD, NekDouble> coll(2);
+                const int nq1 = m_base[1]->GetNumPoints();
                 
                 Array<OneD, NekDouble> wsp(nq1);
-                for(int k = 0; k < neq; k++)
-                {
-                    Vmath::Vcopy(tot, &m_physevalall[0][k*tot], 1, &physvals[0], 1);       
-                    for(int i = 0; i < tot; i++)
-                    {
-                        for (int j = 0; j < nq1; ++j)
-                        {
-                            wsp[j] = StdExpansion::BaryEvaluate<0>(
-                                                                   coords[0][i], &physvals[0] + j * nq0);
-                        }
-                        out_eval[i+k*tot] =  StdExpansion::BaryEvaluate<1>(coords[1][i], &wsp[0]); 
-                    }
-                }
-                
-            }
 
-            if(out_d0.size() > 0)
-            {    
-                
-                Array<OneD, NekDouble> wsp(nq1);
-                for(int k = 0; k < neq; k++)
+                const int nq0 = m_base[0]->GetNumPoints();
+            
+                for(int j = 0; j<coords[0].size(); j++)
                 {
-                    Vmath::Vcopy(tot, &m_physevalall[1][k*tot], 1, &physvals[0], 1);       
-                    for(int i = 0; i < tot; i++)
+                    for (int i = 0; i < nq0; ++i)
                     {
-                        for (int j = 0; j < nq1; ++j)
-                        {
-                            wsp[j] = StdExpansion::BaryEvaluate<0>(
-                                                                   coords[0][i], &physvals[0] + j * nq0);
-                        }
-                        out_d0[i+k*tot] =  StdExpansion::BaryEvaluate<1>(coords[1][i], &wsp[0]); 
+                        wsp[i] = StdExpansion::BaryEvaluateDeriv<0>
+                            (coords[0][j], &inarray[0]);
+                        
                     }
+                    out_d0[j] =  StdExpansion::BaryEvaluate<1>(coords[1][j], &wsp[0]);
                 }
-                
+
             }
-            if(out_d1.size() > 0)
-            {    
-                
-                Array<OneD, NekDouble> wsp(nq1);
-                for(int k = 0; k < neq; k++)
+            
+            if(out_d1.size()>0)
+            {
+                const int nq0 = m_base[0]->GetNumPoints();
+                Array<OneD, NekDouble> wsp(nq0);
+
+                for(int j = 0; j<coords[1].size(); j++)
                 {
-                    Vmath::Vcopy(tot, &m_physevalall[2][k*tot], 1, &physvals[0], 1);       
-                    for(int i = 0; i < tot; i++)
+                    for (int i = 0; i < nq0; ++i)
                     {
-                        for (int j = 0; j < nq1; ++j)
-                        {
-                            wsp[j] = StdExpansion::BaryEvaluate<0>(
-                                                                   coords[0][i], &physvals[0] + j * nq0);
-                        }
-                        out_d1[i+k*tot] =  StdExpansion::BaryEvaluate<1>(coords[1][i], &wsp[0]); 
+                        wsp[i] = StdExpansion::BaryEvaluate<0>
+                            (coords[0][j], &inarray[0]+ i * nq0);
                     }
+                    out_d1[j] =  StdExpansion::BaryEvaluateDeriv<1>(coords[1][j], &wsp[0]);
                 }
-                
             }
+            
         }
+    
 
 
+        //    StdQuadExp::v_PhysEvalDeriv(coords, inarray, out_d0, out_d1);
+    
+
+        // Can be named physderivfast if we remove out_eval
+        // this is a gradient method specialized for optimizer
         void StdQuadExp::v_PhysEvalBasisGradFast(
                                             const Array<OneD, const Array<OneD, NekDouble> >coords,
                                             Array<OneD, NekDouble> &out_eval,                    
                                             Array<OneD, NekDouble> &out_d0,
                                             Array<OneD, NekDouble> &out_d1,
-                                            Array<OneD, NekDouble> &out_d2)
+                                            Array<OneD, NekDouble> &out_d2
+                                                 )
         {
             boost::ignore_unused(out_d2);
 
@@ -341,6 +318,7 @@ namespace Nektar
                     }
                 }            
             }
+
         }
 
 
@@ -1047,7 +1025,7 @@ namespace Nektar
             Vmath::Vcopy(tot, &m_physevalall[2][mode*tot], 1, &physvals[0], 1);
             return v_PhysEvaluate(coords, physvals);
 
-            }*/
+            }
         
 
         NekDouble StdQuadExp::v_PhysEvaluatedxBasisBary(
@@ -1069,7 +1047,7 @@ namespace Nektar
                 StdExpansion::BaryEvaluateBasis<1>(coords[1], mode / nm0);
         }
 
-        /*        NekDouble StdQuadExp::v_PhysEvaluatedy(
+              NekDouble StdQuadExp::v_PhysEvaluatedy(
             const Array<OneD, const NekDouble> &coords,
             const Array<OneD, const NekDouble> &physvals)
         {
@@ -1157,7 +1135,7 @@ namespace Nektar
                 StdExpansion::BaryEvaluateBasis<1>(coords[1], mode / nm0);
         }
 
-        NekDouble StdQuadExp::v_PhysEvaluatedyBasisBary(
+        /*        NekDouble StdQuadExp::v_PhysEvaluatedyBasisBary(
             const Array<OneD, const NekDouble>& coords,
             int mode)
         {
@@ -1176,7 +1154,7 @@ namespace Nektar
             return StdExpansion::BaryEvaluateBasis<0>(coords[0], mode % nm1) *
                 StdExpansion::BaryEvaluateDerivBasis<1>(coords[1], mode / nm0);
         }
-
+        */
         //////////////
         // Mappings //
         //////////////
