@@ -176,6 +176,11 @@ namespace Nektar
               Array<OneD, NekDouble>&                      muAv);
 
     void ApplyC0Smooth(Array<OneD, NekDouble>& field);
+
+
+    virtual void v_ExtraFldOutput(
+            std::vector<Array<OneD, NekDouble> > &fieldcoeffs,
+            std::vector<std::string>             &variables) override;
   };
 
   // helper functions
