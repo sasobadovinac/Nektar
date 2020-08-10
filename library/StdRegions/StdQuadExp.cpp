@@ -204,45 +204,8 @@ namespace Nektar
                                             Array<OneD, NekDouble> &out_d1,
                                             Array<OneD, NekDouble> &out_d2)
         {
-            boost::ignore_unused(out_d2);
-       
-            if(out_d0.size()>0)
-            {
-                Array<OneD, NekDouble> coll(2);
-                const int nq1 = m_base[1]->GetNumPoints();
-                
-                Array<OneD, NekDouble> wsp(nq1);
-
-                const int nq0 = m_base[0]->GetNumPoints();
-            
-                for(int j = 0; j<coords[0].size(); j++)
-                {
-                    for (int i = 0; i < nq0; ++i)
-                    {
-                        wsp[i] = StdExpansion::BaryEvaluateDeriv<0>
-                            (coords[0][j], &inarray[0]);
-                        
-                    }
-                    out_d0[j] =  StdExpansion::BaryEvaluate<1>(coords[1][j], &wsp[0]);
-                }
-
-            }
-            
-            if(out_d1.size()>0)
-            {
-                const int nq0 = m_base[0]->GetNumPoints();
-                Array<OneD, NekDouble> wsp(nq0);
-
-                for(int j = 0; j<coords[1].size(); j++)
-                {
-                    for (int i = 0; i < nq0; ++i)
-                    {
-                        wsp[i] = StdExpansion::BaryEvaluate<0>
-                            (coords[0][j], &inarray[0]+ i * nq0);
-                    }
-                    out_d1[j] =  StdExpansion::BaryEvaluateDeriv<1>(coords[1][j], &wsp[0]);
-                }
-            }
+            boost::ignore_unused( out_d2);
+            PhysTensorDerivFast(inarray, coords, out_d0, out_d1);
             
         }
     

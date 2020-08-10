@@ -103,7 +103,14 @@ int main(int argc, char *argv[])
     }
 
     sol = EvalPoly(coordsF);
+    /*xsy  cout<<"\n sol:";
+    for(int i = 0; i<sol.size(); i++)
+        cout<<sol[i] <<" ";
 
+    cout<<"\n phys:out";
+    for(int i = 0; i<sol.size(); i++)
+        cout<<physOut[i] <<" ";
+*/
     cout << "L infinity error : " << scientific << E->Linf(physOut, sol) << endl;
     cout << "L 2 error        : " << scientific << E->L2  (physOut, sol) << endl;
 

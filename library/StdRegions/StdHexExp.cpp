@@ -692,7 +692,7 @@ namespace Nektar
             tmp_ret[3] = tmpdz;
             return tmp_ret;
             }       
-        */        
+                
 
         NekDouble StdHexExp::v_PhysEvaluatedxBasis(
             const Array<OneD, const NekDouble>& coords,
@@ -711,7 +711,7 @@ namespace Nektar
 
         }
 
-        /*        NekDouble StdHexExp::v_PhysEvaluatedx(                                            const Array<OneD, const NekDouble> &coords,                     const Array<OneD, const NekDouble> &physvals)
+                NekDouble StdHexExp::v_PhysEvaluatedx(                                            const Array<OneD, const NekDouble> &coords,                     const Array<OneD, const NekDouble> &physvals)
         {
 
 
@@ -1510,7 +1510,123 @@ namespace Nektar
             sort(outarray.get(), outarray.get() + nBndCoeffs);
         }
 
-        NekDouble StdHexExp::v_PhysEvaluatedxBasisBary(
+
+        void StdHexExp::v_PhysEvalGrad(
+                                            const Array<OneD, const Array<OneD, NekDouble> >coords,
+                                            const Array<OneD, const NekDouble>& inarray,        
+                                             
+                                            Array<OneD, NekDouble> &out_d0,
+                                            Array<OneD, NekDouble> &out_d1,
+                                            Array<OneD, NekDouble> &out_d2)
+        {
+
+            PhysTensorDerivFast(inarray, coords, out_d0, out_d1, out_d2);            
+        }
+    
+
+
+        void StdHexExp::v_PhysEvalBasisGradFast(
+                                            const Array<OneD, const Array<OneD, NekDouble> >coords,
+                                            Array<OneD, NekDouble> &out_eval,                    
+                                            Array<OneD, NekDouble> &out_d0,
+                                            Array<OneD, NekDouble> &out_d1,
+                                            Array<OneD, NekDouble> &out_d2
+                                                 )
+        {
+                    cout<<"\n ********i="<<"\n\n";                
+            
+            int sz = GetTotPoints();
+            const int nq0 = m_base[0]->GetNumPoints();
+            const int nq1 = m_base[1]->GetNumPoints();
+            const int nq2 = m_base[2]->GetNumPoints();
+            int neq = LibUtilities::StdHexData::
+                getNumberOfCoefficients(nq0, nq1, nq2);
+            
+            const int nm0 = m_base[0]->GetNumModes();
+            const int nm1 = m_base[1]->GetNumModes();
+            
+            if(out_eval.size() > 0)
+            {    
+                for(int k = 0; k < neq; k++)
+                {
+                    for(int i = 0; i < sz; i++)
+                    {
+                        Array<OneD, NekDouble> tmp(3);
+                        tmp[0] = coords[0][i];
+                        tmp[1] = coords[1][i];
+                        tmp[2] = coords[2][i];
+
+                        out_eval[i+k*sz] = PhysEvaluateBasis(tmp, k);
+
+                    }
+        
+                }
+        
+            }
+
+            if(out_d0.size() > 0)
+            {    
+                for(int k = 0; k < neq; k++)
+                {
+                    const int mode2 = k / (nm0 * nm1);
+                    const int mode1 = (k - mode2 * nm0 * nm1) / nm0;
+                    const int mode0 = (k - mode2 * nm0 * nm1) % nm0;
+
+                    for(int i = 0; i < sz; i++)
+                    {
+
+                        out_d0[i + k*sz] =  StdExpansion::BaryEvaluateDerivBasis<0>(coords[0][i], mode0) *
+                            StdExpansion::BaryEvaluateBasis<1>(coords[1][i], mode1) *
+                            StdExpansion::BaryEvaluateBasis<2>(coords[2][i], mode2);
+
+                    }
+                }
+            }
+                
+            
+            if(out_d1.size() > 0)
+            {
+                for(int k = 0; k < neq; k++)
+                {
+                    const int mode2 = k / (nm0 * nm1);
+                    const int mode1 = (k - mode2 * nm0 * nm1) / nm0;
+                    const int mode0 = (k - mode2 * nm0 * nm1) % nm0;
+                    
+                    for(int i = 0; i < sz; i++)
+                    {
+
+
+                        out_d1[i + k*sz] =  StdExpansion::BaryEvaluateBasis<0>(coords[0][i], mode0) *
+                            StdExpansion::BaryEvaluateDerivBasis<1>(coords[1][i], mode1) *
+                            StdExpansion::BaryEvaluateBasis<2>(coords[2][i], mode2);
+                    }
+                }            
+            }
+
+
+            if(out_d2.size() > 0)
+            {
+                for(int k = 0; k < neq; k++)
+                {
+                    const int mode2 = k / (nm0 * nm1);
+                    const int mode1 = (k - mode2 * nm0 * nm1) / nm0;
+                    const int mode0 = (k - mode2 * nm0 * nm1) % nm0;
+
+                    for(int i = 0; i < sz; i++)
+                    {
+
+
+                        out_d2[i + k*sz] =  StdExpansion::BaryEvaluateBasis<0>(coords[0][i], mode0) *
+                            StdExpansion::BaryEvaluateBasis<1>(coords[1][i], mode1) *
+                            StdExpansion::BaryEvaluateDerivBasis<2>(coords[2][i], mode2);
+                    }
+                }            
+            }
+            
+        }
+
+
+        /*        NekDouble StdHexExp::v_PhysEvaluatedxBasisBary(
             const Array<OneD, const NekDouble> &coords,
             int mode)
         {
@@ -1569,7 +1685,7 @@ namespace Nektar
             return StdExpansion::BaryEvaluateBasis<0>(coords[0], mode % nm1) *
                 StdExpansion::BaryEvaluateDerivBasis<1>(coords[1], mode / nm0);
         }
-
+        */
 
 
         /**

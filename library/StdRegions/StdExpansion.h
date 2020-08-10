@@ -960,8 +960,8 @@ namespace Nektar
                               const Array<OneD, const Array<OneD, NekDouble> >coords,
                               const Array<OneD, const NekDouble>& inarray,        
                               Array<OneD, NekDouble> &out_d0,
-                              Array<OneD, NekDouble> &out_d1,
-                              Array<OneD, NekDouble> &out_d2)
+                              Array<OneD, NekDouble> &out_d1 = NullNekDouble1DArray,
+                              Array<OneD, NekDouble> &out_d2 = NullNekDouble1DArray)
                 
             {
                 v_PhysEvalGrad(coords, inarray, out_d0, out_d1, out_d2);
@@ -1489,10 +1489,10 @@ namespace Nektar
                     {
                         if(z[i] == 1 && coord == 1)
                         {
-                            //  std::cout<<"\n z[i] and coord = 1, pval = "<<pval;                 
+                            //std::cout<<"\n z[i] and coord = 1, pval = "<<pval;                 
                         }
                         //                        std::cout<<"\n same: pval = "<<pval;
-                        // std::cout<<"z["<<i<<"]="<<z[i]<<" pval = "<<pval<<"\t";
+                        std::cout<<"z["<<i<<"]="<<z[i]<<" pval = "<<pval<<"\t\n";
                         return pval;
                     }
 
@@ -1773,6 +1773,12 @@ namespace Nektar
 
             STD_REGIONS_EXPORT Array< OneD, Array<OneD, NekDouble> >v_PhysEvalALL();
 
+            STD_REGIONS_EXPORT void v_PhysEvaluateGrad(
+                                                       const Array<OneD, Array<OneD, const NekDouble> >&coords,
+                                                       const Array<OneD, NekDouble> &inarray,
+                                                              Array<OneD, NekDouble> &out_d0, 
+                                                              Array<OneD, NekDouble> &out_d1,
+                                                              Array<OneD, NekDouble> &out_d2)    ;
 
             /*STD_REGIONS_EXPORT virtual void v_PhysEvalGrad            
                 (                                            const Array<OneD, Array<OneD, NekDouble> >coords,
@@ -1837,8 +1843,8 @@ namespace Nektar
                                                            const Array<OneD, const Array<OneD, NekDouble> > coords, 
                                                            const Array<OneD, const NekDouble>& inarray,
                                                            Array<OneD, NekDouble> &out_d0, 
-                                                           Array<OneD, NekDouble>& out_d1, 
-                                                           Array<OneD, NekDouble>& out_d2);
+                                                           Array<OneD, NekDouble>& out_d1 = NullNekDouble1DArray, 
+                                                           Array<OneD, NekDouble>& out_d2 = NullNekDouble1DArray);
             
             
 

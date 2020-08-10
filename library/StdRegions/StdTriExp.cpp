@@ -518,7 +518,7 @@ namespace Nektar
         }
 
 
-        void StdTriExp::v_PhysEvalGrad(
+        /*void StdTriExp::v_PhysEvalGrad(
                                             const Array<OneD, const Array<OneD, NekDouble> >coords,
                                             const Array<OneD, const NekDouble>& inarray,
                                             Array<OneD, NekDouble> &out_d0,
@@ -530,7 +530,7 @@ namespace Nektar
             int    nq1 = m_base[1]->GetNumPoints();
 
             const Array<OneD, const NekDouble>& z1 = m_base[1]->GetZ();
-            const Array<OneD, const NekDouble>& z0 = m_base[1]->GetZ();
+            const Array<OneD, const NekDouble>& z0 = m_base[0]->GetZ();
 
             if(out_d0.size()>0)
             {
@@ -591,7 +591,84 @@ namespace Nektar
             }
 
 
+            }*/
+        void StdTriExp::v_PhysEvalGrad(
+                                            const Array<OneD, const Array<OneD, NekDouble> >coords,
+                                            const Array<OneD, const NekDouble>& inarray,        
+                                            Array<OneD, NekDouble> &out_d0,
+                                            Array<OneD, NekDouble> &out_d1,
+                                            Array<OneD, NekDouble> &out_d2)
+        {
+            boost::ignore_unused(out_d2);
+            int    nq0 = m_base[0]->GetNumPoints();
+            int    nq1 = m_base[1]->GetNumPoints();
+            int    nc0 = nq0;//coords[0].size();
+            int    nc1 = nq1;//coords[1].size();
+            //metric terms here:
+
+            const Array<OneD, const NekDouble>& z1 = coords[1];
+                const Array<OneD, const NekDouble>& z0 = coords[0];
+                
+            
+            Array<OneD, NekDouble> wsp2(std::max(nc0, nc1));
+
+            // set up geometric factor: 2.0/(1.0-z1)
+            Vmath::Sadd(wsp2.size(), -1.0, z1, nq0, wsp2, 1);
+            Vmath::Sdiv(wsp2.size(), -2.0, wsp2, 1, wsp2, 1);
+
+
+            if(out_d0.size()>0)
+            {                    
+
+                PhysTensorDerivFast( inarray, coords, out_d0, out_d1 );
+
+                for (int i = 0; i < nc1; ++i)
+                {
+                    Blas::Dscal(nc0,wsp2[i],&out_d0[0]+i*nc0,1);
+                }
+
+                if(out_d1.size() > 0)
+                {
+                    // set up geometric factor: (1_z0)/(1-z1)
+                    Vmath::Sadd(nq0, 1.0, z0, 1, wsp2, 1);
+                    Vmath::Smul(nq0, 0.5, wsp2, 1, wsp2, 1);
+
+                    for (int i = 0; i < nc1; ++i)
+                    {
+                        Vmath::Vvtvp(nc0,&wsp2[0],1,&out_d0[0]+i*nc0,
+                                     1,&out_d1[0]+i*nc0,
+                                     1,&out_d1[0]+i*nc0,1);
+                    }
+                    
+                }
+                return;
+            }
+            if(out_d1.size() > 0)
+            {
+                Array<OneD, NekDouble>tmp(out_d1.size());
+                
+                PhysTensorDerivFast( inarray, coords, tmp, out_d1 );
+
+                for (int i = 0; i < nc1; ++i)
+                {
+                    Blas::Dscal(nc0,wsp2[i],&tmp[0]+i*nc0,1);
+                }
+                
+                Vmath::Sadd(nq0, 1.0, z0, 1, wsp2, 1);
+                Vmath::Smul(nq0, 0.5, wsp2, 1, wsp2, 1);
+
+                for (int i = 0; i < nc1; ++i)
+                {
+                    Vmath::Vvtvp(nc0,&wsp2[0],1,&tmp[0]+i*nc0,
+                    1,&out_d1[0]+i*nc0,
+                    1,&out_d1[0]+i*nc0,1);
+                }
+                
+             
+            }
         }
+    
+
         /*
         void StdTriExp::v_PhysEvalBasisGrad(
                                             const Array<OneD, const Array<OneD, NekDouble> >coords,
@@ -905,55 +982,7 @@ namespace Nektar
         
         }        
 
-        /*        
-        void StdTriExp::v_FillModedx(const int mode,
-                            Array<OneD, NekDouble> &outarray)
-        {
-
-            v_FillMode( mode,
-                        outarray);
-            int tot = GetTotPoints();
-            //check
-            Array<OneD, NekDouble> temp(tot), coordsx(tot), coordsy(tot);
-
-            v_GetCoords(coordsx, coordsy, NullNekDouble1DArray);
-            
-            Array<OneD, NekDouble> coords(2);
-            for( int i = 0; i < tot; i++)
-            {
-                coords[0] = coordsx[i];
-                coords[1] = coordsy[i];
-                temp[i] = 0.0;//PhysEvaluatedx(coords, outarray);//Use PhysDeriv existing method here
-            }
-            outarray = temp;
-
-        }
-
-        void StdTriExp::v_FillModedy(const int mode,
-                            Array<OneD, NekDouble> &outarray)
-        {
-
-            v_FillMode( mode,
-                        outarray);
-            int tot = GetTotPoints();
-            //check
-            Array<OneD, NekDouble> temp(tot), coordsx(tot), coordsy(tot);
-
-            v_GetCoords(coordsx, coordsy, NullNekDouble1DArray);
-            
-            Array<OneD, NekDouble> coords(2);
-            for( int i = 0; i < tot; i++)
-            {
-                coords[0] = coordsx[i];
-                coords[1] = coordsy[i];
-                temp[i] = StdExpansion2D::PhysEvaluatedy(coords, outarray);
-            }
-
-            outarray = temp;
-        }
-
-
-        NekDouble StdTriExp::v_PhysEvaluatedxBasis(
+        /*        NekDouble StdTriExp::v_PhysEvaluatedxBasis(
             const Array<OneD, const NekDouble>& coords,
             int mode)
         {
@@ -2084,6 +2113,7 @@ namespace Nektar
                 }
             }
 
+            cout<<"\n\n****\n";
             if(out_d0.size() > 0)
             {
                 const int nm1 = m_base[1]->GetNumModes();
@@ -2094,9 +2124,14 @@ namespace Nektar
                     const int    mode0  = floor(0.5*(c - sqrt(c*c - 8*k)));
                     for(int i = 0; i < sz; i++)
                     {
+                        Array<OneD, NekDouble> coll1(2);
+                        Array<OneD, NekDouble> coll2(2);
+                        coll1[0] = coords[0][i];
+                        coll1[1] = coords[1][i];
+                        LocCoordToLocCollapsed(coll1, coll2);
                         
-                        out_d0[i + k*sz] =  StdExpansion::BaryEvaluateDerivBasis<0>(coords[0][i], mode0) *
-                    StdExpansion::BaryEvaluateBasis<1>(coords[1][i], k);
+                        out_d0[i + k*sz] =  StdExpansion::BaryEvaluateDerivBasis<0>(coll2[0], mode0) *
+                    StdExpansion::BaryEvaluateBasis<1>(coll2[1], k);
                   }
                 }
             }
@@ -2113,9 +2148,14 @@ namespace Nektar
                     const int    mode0  = floor(0.5*(c - sqrt(c*c - 8*k)));
                     for(int i = 0; i < sz; i++)
                     {
+                        Array<OneD, NekDouble> coll1(2);
+                        Array<OneD, NekDouble> coll2(2);
+                        coll1[0] = coords[0][i];
+                        coll1[1] = coords[1][i];
+                        LocCoordToLocCollapsed(coll1, coll2);
                         
-                        out_d0[i + k*sz] =  StdExpansion::BaryEvaluateBasis<0>(coords[0][i], mode0) *
-                    StdExpansion::BaryEvaluateDerivBasis<1>(coords[1][i], k);
+                        out_d0[i + k*sz] =  StdExpansion::BaryEvaluateBasis<0>(coll2[0], mode0) *
+                    StdExpansion::BaryEvaluateDerivBasis<1>(coll2[1], k);
                   }
                 }            }
 

@@ -54,7 +54,8 @@ int main(int argc, char *argv[])
     //for (int i = 0; i < dimension; ++i)
         //{
         ptypes[0] = "Modified_A";
-        ptypes[1] = "Modified_B";
+        ptypes[1] = "Modified_A";
+        ptypes[2] = "Modified_B";
     //}
 
     cout<<"\nPts = "<<nPts;
@@ -86,8 +87,25 @@ int main(int argc, char *argv[])
     */            
     if(dimension>2)
     {
-        //phys2[i] = E->PhysEvaluatedzBasis(tmpIn, k);
-        //sol2[i] = E->PhysEvaluatedzBasisBary(tmpIn, k);
+        cout<<"\n ********\n\n";                
+
+        E->PhysEvalBasisGradFast(coords,  out_eval, phys, phys1, phys2);
+        E->PhysEvalBasisGrad(coords, out_eval, sol, sol1, sol2);
+        /*for (int k = 0; k < nCoeffs; ++k)
+        {
+            // Fill the 'solution' field with each of the modes using FillMode.
+            Array<OneD, NekDouble> hold1(nPts);
+            Array<OneD, NekDouble> hold2(nPts);
+            Array<OneD, NekDouble> hold3(nPts);
+            E->FillMode(k, soll);
+                    
+            E->PhysDeriv(soll, hold1, hold2,hold3);       
+            Vmath::Vcopy(nPts, &hold1[0], 1, &sol[k*nPts], 1);
+            Vmath::Vcopy(nPts, &hold2[0], 1, &sol1[k*nPts], 1);
+            Vmath::Vcopy(nPts, &hold3[0], 1, &sol2[k*nPts], 1);
+        }*/
+
+
     }
     else if(dimension>1)
 
@@ -149,8 +167,8 @@ int main(int argc, char *argv[])
     cout<<" \n\n";
             
         
-    errL2 += E->L2(phys1, sol1);
-    errLinf += E->Linf(phys, sol)+ E->Linf(phys1, sol1);
+    errL2 += E->L2(phys1, sol1)+ E->L2(phys2, sol2)+E->L2(phys, sol);
+    errLinf += E->Linf(phys, sol)+ E->Linf(phys1, sol1)+E->Linf(phys2,sol2);
         
         
     cout << "L infinity error : " << scientific << errL2 << endl;

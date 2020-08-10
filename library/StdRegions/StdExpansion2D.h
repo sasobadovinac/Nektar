@@ -93,6 +93,12 @@ namespace StdRegions
                           Array<OneD, NekDouble> &outarray_d0,
                           Array<OneD, NekDouble> &outarray_d1);
 
+            STD_REGIONS_EXPORT void PhysTensorDerivFast(
+                    const Array<OneD, const NekDouble>& inarray,
+                    const Array<OneD, const Array<OneD, NekDouble> >& coords,
+                          Array<OneD, NekDouble> &outarray_d0,
+                          Array<OneD, NekDouble> &outarray_d1);
+
             STD_REGIONS_EXPORT NekDouble Integral(
                     const Array<OneD, const NekDouble>& inarray,
                     const Array<OneD, const NekDouble>& w0,
@@ -170,6 +176,16 @@ namespace StdRegions
                                         Array<OneD, NekDouble> &out_d0, 
                                         Array<OneD, NekDouble> &out_d1);*/
 
+
+            // inarray = f(coords) out_d0 = df(coords)/dx...
+            /* STD_REGIONS_EXPORT void v_PhysEvalGrad(
+                                               const Array<OneD, const Array<OneD, NekDouble> >&coords,
+                                               const Array<OneD,  const NekDouble> &inarray,
+                                                 Array<OneD, NekDouble> &out_d0, 
+                                                 Array<OneD, NekDouble> &out_d1,
+                                        Array<OneD, NekDouble> &out_d2 = NullNekDouble1DArray)    ;
+            */
+
             STD_REGIONS_EXPORT virtual void v_PhysEvalBasisGrad(
                                                                 const Array<OneD, const Array<OneD, NekDouble> > coords, 
                                                                 
@@ -177,8 +193,6 @@ namespace StdRegions
                                                                 Array<OneD, NekDouble>& out_d0,                                        
                                                                 Array<OneD, NekDouble>& out_d1, 
                                                                 Array<OneD, NekDouble>& out_d2 = NullNekDouble1DArray);
-
-
 
             
             STD_REGIONS_EXPORT virtual void v_BwdTrans_SumFacKernel(
