@@ -178,14 +178,16 @@ namespace Nektar
         if (m_shockCaptureType == "Physical")
         {
             // Get volume artificial viscosity
-            GetPhysicalAV(inarray, m_muAv);
+            // GetPhysicalAV(inarray, m_muAv);
             // Apply Ducros sensor
             if (m_physicalSensorType == "Ducros")
             {
-                Array<OneD, NekDouble> divSquare(npoints), curlSquare(npoints);
-                GetDivCurlSquared(m_fields, inarray, divSquare, curlSquare,
+                Array<OneD, NekDouble> div(npoints), curlSquare(npoints);
+                GetDivCurlSquared(m_fields, inarray, div, curlSquare,
                     pFwd, pBwd);
-                ApplyDucros(m_fields, divSquare, curlSquare, m_muAv);
+                GetPhysicalAV(inarray, div, m_muAv);
+
+                ApplyDucros(m_fields, div, curlSquare, m_muAv);
             }
             // Apply approximate c0 smoothing
             if (m_smoothing == "C0")
@@ -1036,7 +1038,7 @@ namespace Nektar
     }
 
     /**
-    * @brief Calculate the physical artificial viscosity.
+    * @brief Calculate the physical artificial viscosity based on modal sensor.
     *
     * @param physfield  Input field.
     */
@@ -1088,6 +1090,51 @@ namespace Nektar
     }
 
     /**
+    * @brief Calculate the physical artificial viscosity based on dilatation.
+    *
+    * @param
+    */
+    void NavierStokesCFE::GetPhysicalAV(
+        const Array<OneD, const Array<OneD, NekDouble>>& physfield,
+        const Array<OneD, NekDouble>& div,
+              Array<OneD, NekDouble>& muAv)
+    {
+        auto nPts = physfield[0].size();
+        auto nElements = m_fields[0]->GetExpSize();
+
+        Array <OneD, NekDouble> hOverP(nElements, 0.0);
+        hOverP = GetElmtMinHP();
+
+        // Get sound speed (theretically it should be the critical sound speed)
+        Array <OneD, NekDouble > soundspeed(nPts, 0.0);
+        m_varConv->GetSoundSpeed(physfield, soundspeed);
+
+        // Compute sensor based on rho
+        Array<OneD, NekDouble> Sensor(nPts, 0.0);
+        m_varConv->GetSensor(m_fields[0], physfield, Sensor, muAv, 1);
+
+        // loop over elements
+        auto nElmt = m_fields[0]->GetExpSize();
+        for (size_t e = 0; e < nElmt; ++e)
+        {
+            auto nElmtPoints = m_fields[0]->GetExp(e)->GetTotPoints();
+            auto physOffset  = m_fields[0]->GetPhys_Offset(e);
+            auto physEnd = physOffset + nElmtPoints;
+
+            NekDouble mu0hOp = m_mu0 * hOverP[e];
+
+            for (size_t p = physOffset; p < physEnd; ++p)
+            {
+                NekDouble muTmp = - mu0hOp * div[p] / soundspeed[p];
+                // smooth bound to positive value
+                muTmp = Smath::Smax(muTmp, 1.0e-4, 1.0e+4);
+                muAv[p] = muTmp;
+            }
+        }
+
+    }
+
+    /**
     * @brief Get divergence and curl squared
     *
     * @param input
@@ -1096,14 +1143,14 @@ namespace Nektar
     *   cnsVarFwd -> forward trace of conservative variables
     *   cnsVarBwd -> backward trace of conservative variables
     * @paran output
-    *   divSquare -> divergence squared
+    *   divSquare -> divergence
     *   curlSquare -> curl squared
     *
     */
     void NavierStokesCFE::GetDivCurlSquared(
         const Array<OneD, MultiRegions::ExpListSharedPtr>& fields,
         const Array<OneD, Array<OneD, NekDouble>>& cnsVar,
-        Array<OneD, NekDouble>& divSquare,
+        Array<OneD, NekDouble>& div,
         Array<OneD, NekDouble>& curlSquare,
         const Array<OneD, Array<OneD, NekDouble>>& cnsVarFwd,
         const Array<OneD, Array<OneD, NekDouble>>& cnsVarBwd)
@@ -1128,7 +1175,7 @@ namespace Nektar
         primVarFwd[ergLoc] = Array<OneD, NekDouble>(nPtsTrc, 0.0);
         primVarBwd[ergLoc] = Array<OneD, NekDouble>(nPtsTrc, 0.0);
 
-        // Get primitive variables [u,v,w,T]
+        // Get primitive variables [u,v,w,T=0]
         // Possibly should be changed to [rho,u,v,w,T] to make IP and LDGNS more
         // consistent with each other
         for (unsigned short d = 0; d < nVar-2; ++d)
@@ -1162,7 +1209,7 @@ namespace Nektar
             primVarFwd, primVarBwd);
 
         // Get div curl squared
-        GetDivCurlImpl(primVarDer, divSquare, curlSquare);
+        GetDivCurlImpl(primVarDer, div, curlSquare);
     }
 
 
@@ -1172,21 +1219,21 @@ namespace Nektar
      */
     void NavierStokesCFE::GetDivCurlImpl(
         const TensorOfArray3D<NekDouble>& pVarDer,
-              Array<OneD, NekDouble>&     divSquare,
+              Array<OneD, NekDouble>&     div,
               Array<OneD, NekDouble>&     curlSquare)
     {
         auto nDim = pVarDer.size();
-        auto nPts = divSquare.size();
+        auto nPts = div.size();
 
-        // (div velocity) ** 2
+        // div velocity
         for (size_t p = 0; p < nPts; ++p)
         {
-            NekDouble div = 0;
+            NekDouble divTmp = 0;
             for (unsigned short j = 0; j < nDim; ++j)
             {
-                div += pVarDer[j][j][p];
+                divTmp += pVarDer[j][j][p];
             }
-            divSquare[p] = div * div;
+            div[p] = divTmp;
         }
 
         // |curl velocity| ** 2
@@ -1249,7 +1296,7 @@ namespace Nektar
     */
     void NavierStokesCFE::ApplyDucros(
         const Array<OneD, MultiRegions::ExpListSharedPtr>& fields,
-        const Array<OneD, NekDouble>& divSquare,
+        const Array<OneD, NekDouble>& div,
         const Array<OneD, NekDouble>& curlSquare,
         Array<OneD, NekDouble>& muAv)
     {
@@ -1269,7 +1316,8 @@ namespace Nektar
             NekDouble elmtAvgDuc = 0.0;
             for (size_t p = physOffset; p < physEnd; ++p)
             {
-                NekDouble tmpDiv2 = divSquare[p];
+                NekDouble tmpDiv2 = div[p];
+                tmpDiv2 *= tmpDiv2;
                 NekDouble denDuc = tmpDiv2 + curlSquare[p] + eps;
                 elmtAvgDuc += tmpDiv2 / denDuc;
             }
@@ -1424,22 +1472,19 @@ namespace Nektar
                     m_fields[i]->GetFwdBwdTracePhys(cnsVar[i], cnsVarFwd[i], cnsVarBwd[i]);
                 }
 
-
-                Array<OneD, NekDouble> divSquare(nPhys), curlSquare(nPhys);
-                GetDivCurlSquared(m_fields, cnsVar, divSquare, curlSquare,
+                Array<OneD, NekDouble> div(nPhys), curlSquare(nPhys);
+                GetDivCurlSquared(m_fields, cnsVar, div, curlSquare,
                     cnsVarFwd, cnsVarBwd);
 
                 Array<OneD, NekDouble> divFwd(nCoeffs, 0.0);
-                m_fields[0]->FwdTrans_IterPerExp(divSquare, divFwd);
-                variables.push_back("div^2");
+                m_fields[0]->FwdTrans_IterPerExp(div, divFwd);
+                variables.push_back("div");
                 fieldcoeffs.push_back(divFwd);
 
                 Array<OneD, NekDouble> curlFwd(nCoeffs, 0.0);
                 m_fields[0]->FwdTrans_IterPerExp(curlSquare, curlFwd);
                 variables.push_back("curl^2");
                 fieldcoeffs.push_back(curlFwd);
-
-
 
             }
         }

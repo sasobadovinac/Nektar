@@ -156,22 +156,27 @@ namespace Nektar
         const Array<OneD, const Array<OneD, NekDouble>>& physfield,
               Array<OneD, NekDouble>& muAv);
 
+    void GetPhysicalAV(
+        const Array<OneD, const Array<OneD, NekDouble>>& physfield,
+        const Array<OneD, NekDouble>& div,
+              Array<OneD, NekDouble>& muAv);
+
     void GetDivCurlSquared(
         const Array<OneD, MultiRegions::ExpListSharedPtr>& fields,
         const Array<OneD, Array<OneD, NekDouble>>&         cnsVar,
-              Array<OneD, NekDouble>&                      divSquare,
+              Array<OneD, NekDouble>&                      div,
               Array<OneD, NekDouble>&                      curlSquare,
         const Array<OneD, Array<OneD, NekDouble>>&         cnsVarFwd,
         const Array<OneD, Array<OneD, NekDouble>>&         cnsVarBwd);
 
     void GetDivCurlImpl(
         const TensorOfArray3D<NekDouble>& pVarDer,
-              Array<OneD, NekDouble>&     divSquare,
+              Array<OneD, NekDouble>&     div,
               Array<OneD, NekDouble>&     curlSquare);
 
     void ApplyDucros(
         const Array<OneD, MultiRegions::ExpListSharedPtr>& fields,
-        const Array<OneD, NekDouble>&                      divSquare,
+        const Array<OneD, NekDouble>&                      div,
         const Array<OneD, NekDouble>&                      curlSquare,
               Array<OneD, NekDouble>&                      muAv);
 
