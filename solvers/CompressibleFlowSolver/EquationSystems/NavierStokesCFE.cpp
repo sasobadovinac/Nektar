@@ -193,7 +193,7 @@ namespace Nektar
                 ApplyC0Smooth(m_muAv);
             }
             // Set trace AV
-            Array<OneD, NekDouble> muFwd(nTracePts), muBwd(nTracePts);
+            Array<OneD, NekDouble> muFwd(nTracePts, 0.0), muBwd(nTracePts, 0.0);
             m_fields[0]->GetFwdBwdTracePhys(m_muAv, muFwd, muBwd, false,
                 false, false);
             for (size_t p = 0; p < nTracePts; ++p)
@@ -1129,6 +1129,8 @@ namespace Nektar
         primVarBwd[ergLoc] = Array<OneD, NekDouble>(nPtsTrc, 0.0);
 
         // Get primitive variables [u,v,w,T]
+        // Possibly should be changed to [rho,u,v,w,T] to make IP and LDGNS more
+        // consistent with each other
         for (unsigned short d = 0; d < nVar-2; ++d)
         {
             // Volume
@@ -1142,7 +1144,6 @@ namespace Nektar
                 primVarFwd[d][p] = cnsVarFwd[d+1][p] / cnsVarFwd[0][p];
                 primVarBwd[d][p] = cnsVarBwd[d+1][p] / cnsVarBwd[0][p];
             }
-
         }
 
         // this should be allocated once
@@ -1157,13 +1158,11 @@ namespace Nektar
         }
 
         // Get derivative tensor
-        // check flux in ip and ldg
         m_diffusion->DiffuseCalculateDerivative(fields, primVar, primVarDer,
             primVarFwd, primVarBwd);
 
         // Get div curl squared
         GetDivCurlImpl(primVarDer, divSquare, curlSquare);
-
     }
 
 
@@ -1254,6 +1253,10 @@ namespace Nektar
         const Array<OneD, NekDouble>& curlSquare,
         Array<OneD, NekDouble>& muAv)
     {
+        // machine eps**2
+        NekDouble eps = std::numeric_limits<NekDouble>::epsilon();
+        eps *= eps;
+
         // loop over elements
         auto nElmt = fields[0]->GetExpSize();
         for (size_t e = 0; e < nElmt; ++e)
@@ -1267,8 +1270,7 @@ namespace Nektar
             for (size_t p = physOffset; p < physEnd; ++p)
             {
                 NekDouble tmpDiv2 = divSquare[p];
-                NekDouble denDuc = tmpDiv2 + NekConstants::kNekZeroTol +
-                    curlSquare[p];
+                NekDouble denDuc = tmpDiv2 + curlSquare[p] + eps;
                 elmtAvgDuc += tmpDiv2 / denDuc;
             }
             elmtAvgDuc /= nElmtPoints;

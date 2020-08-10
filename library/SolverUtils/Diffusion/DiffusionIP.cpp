@@ -253,16 +253,16 @@ void DiffusionIP::v_DiffuseCalculateDerivative(
     const Array<OneD, Array<OneD, NekDouble>> &pFwd,
     const Array<OneD, Array<OneD, NekDouble>> &pBwd)
 {
-    size_t nConvectiveFields = fields.size();
     boost::ignore_unused(pFwd, pBwd);
 
-    size_t nDim = fields[0]->GetCoordim(0);
-
     Array<OneD, Array<OneD, NekDouble>> qtmp{3};
+    size_t nDim = fields[0]->GetCoordim(0);
     for (int nd = 0; nd < 3; ++nd)
     {
         qtmp[nd] = NullNekDouble1DArray;
     }
+
+    size_t nConvectiveFields = inarray.size();
     for (int i = 0; i < nConvectiveFields; ++i)
     {
         for (int nd = 0; nd < nDim; ++nd)
