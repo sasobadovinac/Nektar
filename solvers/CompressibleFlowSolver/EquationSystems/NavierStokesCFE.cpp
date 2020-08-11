@@ -178,14 +178,16 @@ namespace Nektar
         if (m_shockCaptureType == "Physical")
         {
             // Get volume artificial viscosity
-            // GetPhysicalAV(inarray, m_muAv);
+            GetPhysicalAV(inarray, m_muAv);
             // Apply Ducros sensor
             if (m_physicalSensorType == "Ducros")
             {
                 Array<OneD, NekDouble> div(npoints), curlSquare(npoints);
                 GetDivCurlSquared(m_fields, inarray, div, curlSquare,
                     pFwd, pBwd);
-                GetPhysicalAV(inarray, div, m_muAv);
+
+                // Dilatation sensor
+                // GetPhysicalAV(inarray, div, m_muAv);
 
                 ApplyDucros(m_fields, div, curlSquare, m_muAv);
             }
@@ -1125,7 +1127,8 @@ namespace Nektar
 
             for (size_t p = physOffset; p < physEnd; ++p)
             {
-                NekDouble muTmp = - mu0hOp * div[p] / soundspeed[p];
+                NekDouble rho = physfield[0][p];
+                NekDouble muTmp = - mu0hOp * rho * div[p] / soundspeed[p];
                 // smooth bound to positive value
                 muTmp = Smath::Smax(muTmp, 1.0e-4, 1.0e+4);
                 muAv[p] = muTmp;
