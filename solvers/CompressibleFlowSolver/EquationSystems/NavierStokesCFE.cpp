@@ -178,7 +178,7 @@ namespace Nektar
         if (m_shockCaptureType == "Physical")
         {
             // Get volume artificial viscosity
-            GetPhysicalAV(inarray, m_muAv);
+            // GetPhysicalAV(inarray, m_muAv);
             // Apply Ducros sensor
             if (m_physicalSensorType == "Ducros")
             {
@@ -187,7 +187,7 @@ namespace Nektar
                     pFwd, pBwd);
 
                 // Dilatation sensor
-                // GetPhysicalAV(inarray, div, m_muAv);
+                GetPhysicalAV(inarray, div, m_muAv);
 
                 ApplyDucros(m_fields, div, curlSquare, m_muAv);
             }
@@ -1107,13 +1107,10 @@ namespace Nektar
         Array <OneD, NekDouble> hOverP(nElements, 0.0);
         hOverP = GetElmtMinHP();
 
-        // Get sound speed (theretically it should be the critical sound speed)
+        // Get sound speed (theoretically it should be the critical sound speed)
+        // this matters greatly for large Mach numbers (above 3.0)
         Array <OneD, NekDouble > soundspeed(nPts, 0.0);
         m_varConv->GetSoundSpeed(physfield, soundspeed);
-
-        // Compute sensor based on rho
-        Array<OneD, NekDouble> Sensor(nPts, 0.0);
-        m_varConv->GetSensor(m_fields[0], physfield, Sensor, muAv, 1);
 
         // loop over elements
         auto nElmt = m_fields[0]->GetExpSize();
@@ -1128,13 +1125,13 @@ namespace Nektar
             for (size_t p = physOffset; p < physEnd; ++p)
             {
                 NekDouble rho = physfield[0][p];
-                NekDouble muTmp = - mu0hOp * rho * div[p] / soundspeed[p];
-                // smooth bound to positive value
-                muTmp = Smath::Smax(muTmp, 1.0e-4, 1.0e+4);
+                // only compression waves
+                NekDouble divTmp = - div[p];
+                divTmp = Smath::Smax(divTmp, 1.0e-8, 1.0e+8) - 1.0e-8;
+                NekDouble muTmp = mu0hOp * rho * divTmp / soundspeed[p];
                 muAv[p] = muTmp;
             }
         }
-
     }
 
     /**
