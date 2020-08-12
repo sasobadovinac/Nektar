@@ -67,51 +67,19 @@ int main(int argc, char *argv[])
     Array<OneD, NekDouble> sol2(nPts*nCoeffs), phys2(nPts*nCoeffs);
     NekDouble errL2 = 0, errLinf = 0;
     
-    // For each mode, we follow two approaches:
-    //
-    // 1) Evaluate the der of basis function at each quadrature point using the
-    //    StdExpansion::PhysEvaluateBasisdx function.
-    // 2) Evaluate the der of basis function at all quadrature points using bary interp of FillModedx and FillModedy.
-    //
-    // These are then compared to ensure they give the same result.
-    
-    //for (int k = 0; k < nCoeffs; ++k)
-    //{
-    // Evaluate each mode at the quadrature points.
-    //for (int i = 0; i < nPts; ++i)
-    //{
-    /*          for (int d = 0; d < dimension; ++d)
-                {
-                tmpIn[d] = coords[d][i];
-                }
-    */            
     if(dimension>2)
     {
-        cout<<"\n ********\n\n";                
-
-        E->PhysEvalBasisGradFast(coords,  out_eval, phys, phys1, phys2);
+     
+        E->PhysEvalBasisGradFast(coords, out_eval, phys, phys1, phys2);
         E->PhysEvalBasisGrad(coords, out_eval, sol, sol1, sol2);
-        /*for (int k = 0; k < nCoeffs; ++k)
-        {
-            // Fill the 'solution' field with each of the modes using FillMode.
-            Array<OneD, NekDouble> hold1(nPts);
-            Array<OneD, NekDouble> hold2(nPts);
-            Array<OneD, NekDouble> hold3(nPts);
-            E->FillMode(k, soll);
-                    
-            E->PhysDeriv(soll, hold1, hold2,hold3);       
-            Vmath::Vcopy(nPts, &hold1[0], 1, &sol[k*nPts], 1);
-            Vmath::Vcopy(nPts, &hold2[0], 1, &sol1[k*nPts], 1);
-            Vmath::Vcopy(nPts, &hold3[0], 1, &sol2[k*nPts], 1);
-        }*/
-
 
     }
     else if(dimension>1)
 
     {
-        E->PhysEvalBasisGrad(coords,  out_eval, phys, phys1,  NullNekDouble1DArray);
-                
+       E->PhysEvalBasisGradFast(coords,  out_eval, phys, phys1, NullNekDouble1DArray); 
+       E->PhysEvalBasisGrad(coords,  out_eval, sol,sol1,  NullNekDouble1DArray);
+       /*
         for (int k = 0; k < nCoeffs; ++k)
         {
             // Fill the 'solution' field with each of the modes using FillMode.
@@ -122,7 +90,7 @@ int main(int argc, char *argv[])
             E->PhysDeriv(soll, hold1, hold2, NullNekDouble1DArray);       
             Vmath::Vcopy(nPts, &hold1[0], 1, &sol[k*nPts], 1);
             Vmath::Vcopy(nPts, &hold2[0], 1, &sol1[k*nPts], 1);
-        }
+            }*/
                     
     }
     else if(dimension>0)
@@ -153,7 +121,7 @@ int main(int argc, char *argv[])
     for(int i =  0; i<sol.size(); i++)
         cout<<sol[i]<<" ";
     cout<<" \n\n";
-
+    /*
     cout<<"\n phys1 = \n";
     for(int i =  0; i<phys1.size(); i++)
         cout<<phys1[i]<<" ";
@@ -165,7 +133,7 @@ int main(int argc, char *argv[])
     for(int i =  0; i<sol1.size(); i++)
         cout<<sol1[i]<<" ";
     cout<<" \n\n";
-            
+    */      
         
     errL2 += E->L2(phys1, sol1)+ E->L2(phys2, sol2)+E->L2(phys, sol);
     errLinf += E->Linf(phys, sol)+ E->Linf(phys1, sol1)+E->Linf(phys2,sol2);

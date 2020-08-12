@@ -59,7 +59,7 @@ Array<OneD, NekDouble> EvalPoly(Array<OneD, Array<OneD, NekDouble>> &pts)
 
 // Evaluate polynomial for testing and save in ret (size same as pts[0]) if
 // tensorp = 0, we need tensorprod else just eval at pts
-Array<OneD, NekDouble> EvalPolyDerivx(Array<OneD, Array<OneD, NekDouble>> &pts)
+Array<OneD, NekDouble> EvalPolyDerivx(const Array<OneD, const Array<OneD, NekDouble> > &pts)
 {
     Array<OneD, NekDouble> ret(pts[0].size());
     //    unsigned dim = pts.size();
@@ -74,7 +74,7 @@ Array<OneD, NekDouble> EvalPolyDerivx(Array<OneD, Array<OneD, NekDouble>> &pts)
     return ret;
 }
 
-Array<OneD, NekDouble> EvalPolyDerivy(Array<OneD, Array<OneD, NekDouble>> &pts)
+Array<OneD, NekDouble> EvalPolyDerivy(const Array<OneD, const Array<OneD, NekDouble> > &pts)
 {
     Array<OneD, NekDouble> ret(pts[0].size());
 
@@ -89,14 +89,13 @@ Array<OneD, NekDouble> EvalPolyDerivy(Array<OneD, Array<OneD, NekDouble>> &pts)
     return ret;
 }
 
-Array<OneD, NekDouble> EvalPolyDerivz(Array<OneD, Array<OneD, NekDouble>> &pts)
+Array<OneD, NekDouble> EvalPolyDerivz(const Array<OneD, const Array<OneD, NekDouble> > &pts)
 {
     Array<OneD, NekDouble> ret(pts[0].size());
 
     // check if pts[0] and pts[1] have same size
     // polynomial = x^2 + y^2 - z^2 
     // derivative in z = -2z 
-
     for (int i = 0; i < pts[0].size(); i++)
     {
         ret[i] =  -2*pts[2][i] ;
@@ -117,26 +116,37 @@ int main(int argc, char *argv[])
     // (i.e. non-collocated interpolation).
     vector<string> &ptypes = demo.GetPointsType();
    
-    ptypes[0] = "GaussRadauMLegendre";
+    // Doubt: should it work for polyevenlyspaced?
+    // Only with these ptypes, this demo works for triangles
+    ptypes[0] = "GaussRadauPLegendre"; // if ptypes[0] is MLegendre, hell breaks lose!
     
-    ptypes[1] = "GaussRadauMLegendre";
+    ptypes[1] = "GaussRadauMLegendre"; // if ptypes[1] is PLegendre, another hell breaks lose!
+    
+    ptypes[2] = "GaussRadauMLegendre";
+    
     
     StdExpansion *F = demo.CreateStdExpansion();
 
     const auto totPoints = (unsigned) E->GetTotPoints();
 
 
-    Array<OneD, Array<OneD, NekDouble>> coordsE = demo.GetCoords(E);
-    Array<OneD, Array<OneD, NekDouble>> coordsF = demo.GetCoords(F);                              
-    int totpts = coordsF[0].size();
+    Array<OneD, Array<OneD, NekDouble> > coordsE = demo.GetCoords(E);
+ 
+    int totpts = coordsE[0].size();
     Array<OneD, NekDouble> physIn(totPoints), physOut0(totpts), physOut1(totpts), physOut2(totpts);
     Array<OneD, NekDouble>  sol0(totpts), sol1(totpts), sol2(totpts);
-
+    
     physIn = EvalPoly(coordsE);
-
+   
+    const Array<OneD, const Array<OneD, NekDouble> > coordsF = demo.GetCoords(F);   cout<<"\n coordsE.size()="<<coordsE.size()<<" " <<coordsE[0].size()<<" " <<coordsE[1].size()<<" " <<coordsE[2].size()<<"\n\n";
+    
     if(dimension>2)
     {
-        E->PhysEvalGrad(coordsF, physIn, physOut0, physOut1, physOut2);
+
+    cout<<"\n coordsF size = "<<coordsF.size()<<" "<<coordsF[0].size()<<" "<<coordsF[1].size()<<" "<<coordsF[2].size()<<"\n\n";
+    E->PhysEvalGrad(coordsF, physIn, physOut0, physOut1, physOut2);
+
+    cout<<"\n coordsF size = "<<coordsF.size()<<" "<<coordsF[0].size()<<" "<<coordsF[1].size()<<" "<<coordsF[2].size()<<"\n\n";
     }
     
     else if(dimension>1)
@@ -150,23 +160,22 @@ int main(int argc, char *argv[])
     {
         E->PhysEvalGrad(coordsF, physIn, physOut0, NullNekDouble1DArray, NullNekDouble1DArray);    
     }
-
-    //Array<OneD, Array<OneD, NekDouble>> coordsG = demo.GetCoords(F);       
+ 
     if(dimension>2)
         sol2 = EvalPolyDerivz(coordsF);
+
     if(dimension>1)
         sol1 = EvalPolyDerivy(coordsF);
     if(dimension>0)
         sol0 = EvalPolyDerivx(coordsF);
 
-    /*        cout<<"\n sol y :  ";
+    cout<<"\n sol y :  ";
     for(int i = 0; i<sol1.size(); i++)
         cout<<sol1[i]<<" ";
     cout<<"\nphysout y = ";
     for(int i = 0; i<physOut1.size(); i++)
         cout<<physOut1[i]<<" ";
-    */
-    //    cout<<"\n\nsol x="<<sol0[0];    
+        
     cout<<"\n\n sol x:  ";
     for(int i = 0; i<sol0.size(); i++)
         cout<<sol0[i]<<" ";
@@ -174,8 +183,15 @@ int main(int argc, char *argv[])
     for(int i = 0; i<physOut0.size(); i++)
         cout<<physOut0[i]<<" ";
 
+    cout<<"\n\n sol z:  ";
+    for(int i = 0; i<sol2.size(); i++)
+        cout<<sol2[i]<<" ";
+    cout<<"\nphysout z = ";
+    for(int i = 0; i<physOut2.size(); i++)
+        cout<<physOut2[i]<<" ";
 
-    /*cout<<"\n\n coordsE = ";
+
+    /*        cout<<"\n\n coordsE = ";
     for(int i = 0; i<coordsE[0].size(); i++)
         cout<<coordsE[0][i]<<" "<<coordsE[1][i]<<"\t";
     cout<<"\n coordsF = ";
@@ -183,8 +199,8 @@ int main(int argc, char *argv[])
         cout<<coordsF[0][i]<<" "<<coordsF[1][i]<<"\t";
     */
     
-    cout << "\n\nL infinity error x: " << scientific << E->Linf(physOut0, sol0)  << endl;
-    cout << "L 2 error x        : " << scientific << E->L2  (physOut0, sol0)<< endl;
+    cout << "\n\nL infinity error x: " << scientific << E->Linf(physOut0, sol0)  <<  "\n\n\n";
+    cout << "L 2 error x        : " << scientific << E->L2  (physOut0, sol0)<< "\n\n\n";
     
     cout << "\nL infinity error y: " << scientific << E->Linf(physOut1, sol1)  << endl;
     cout << "L 2 error y        : " << scientific << E->L2  (physOut1, sol1)<< endl;
