@@ -10,7 +10,7 @@ Requires:       libnektar++ = %{version}
 BuildRequires:  arpack-devel
 BuildRequires:  blas-devel
 BuildRequires:  boost169-devel
-BuildRequires:  cmake
+BuildRequires:  cmake3
 BuildRequires:  fftw-devel
 BuildRequires:  gcc-c++
 BuildRequires:  gcc-gfortran
@@ -92,7 +92,7 @@ Requires:       libnektar++ = %{version}
 Requires:       arpack-devel
 Requires:       blas-devel
 Requires:       boost169-devel
-Requires:       cmake
+Requires:       cmake3
 Requires:       fftw-devel
 Requires:       gcc-c++
 Requires:       gcc-gfortran
@@ -119,7 +119,7 @@ Requires:       ptscotch-openmpi-devel
 Requires:       arpack-devel
 Requires:       blas-devel
 Requires:       boost169-devel
-Requires:       cmake
+Requires:       cmake3
 Requires:       fftw-devel
 Requires:       gcc-c++
 Requires:       gcc-gfortran
@@ -143,7 +143,7 @@ Requires:       ptscotch-mpich-devel
 Requires:       arpack-devel
 Requires:       blas-devel
 Requires:       boost169-devel
-Requires:       cmake
+Requires:       cmake3
 Requires:       fftw-devel
 Requires:       gcc-c++
 Requires:       gcc-gfortran
@@ -380,7 +380,7 @@ Shallow water flow solver for Nektar++ (MPICH)
 %define dobuild()                                \
 mkdir $MPI_COMPILER;                             \
 cd $MPI_COMPILER;                                \
-%{cmake}                                       \\\
+%{cmake3}                                      \\\
     -DCMAKE_INSTALL_PREFIX=$INSTALL_PREFIX     \\\
     -DCMAKE_CXX_FLAGS=-Wno-error               \\\
     -DBOOST_INCLUDEDIR=/usr/include/boost169   \\\
@@ -430,7 +430,7 @@ export PATH=$PATH:/usr/local/texlive/2019/bin/x86_64-linux
 MPI_COMPILER=serial MPI_SUFFIX= MPI_ON=OFF NEKTAR_LIBDIR=lib64 NEKTAR_INCLUDE_ROOT=%{_prefix}/include INSTALL_PREFIX=%{_prefix} %dobuild
 
 # Build documentation.
-cd serial && cmake -DNEKTAR_BUILD_DOC=ON .
+cd serial && cmake3 -DNEKTAR_BUILD_DOC=ON .
 make user-guide-pdf developer-guide-pdf doc
 cd ..
 
@@ -635,4 +635,3 @@ rm %{buildroot}/usr/lib64/openmpi/bin/NekMesh
 %{_libdir}/openmpi/bin/ShallowWaterSolver
 %files mpich-shallowwater-solver
 %{_libdir}/mpich/bin/ShallowWaterSolver
-

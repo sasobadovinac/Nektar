@@ -4,7 +4,7 @@ set -e
 
 # Create a build directory and compile against Nektar++
 rm -rf build && mkdir build && cd build
-cmake -DNektar++_DIR=$1 ..
+$3 -DNektar++_DIR=$1 ..
 make install
 
 # Run test case in parallel.

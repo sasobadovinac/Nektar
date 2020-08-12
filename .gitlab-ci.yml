@@ -621,7 +621,7 @@ dockerhub-deploy-nektar-workbook:
     - if [ "$test_output" -eq 0 ]; then echo "Tolerance test failed on ADRSolver run"; exit 1; fi
     - yum install -y RPMS/x86_64/nektar++-openmpi-devel-*.rpm
     - cd $CI_PROJECT_DIR/templates/executable
-    - ./test.sh /usr/lib64/openmpi/lib/nektar++/cmake 3
+    - ./test.sh /usr/lib64/openmpi/lib/nektar++/cmake 3 ${cmake_exe}
 
 .package-rpm-deploy: &package-rpm-deploy
   <<: *package-conditions
@@ -668,6 +668,7 @@ package-centos7-test:
   variables:
     image_name: centos:7
     needs_epel: 1
+    cmake_exe: cmake3
 
 package-centos7-deploy:
   <<: *package-rpm-deploy
@@ -702,6 +703,7 @@ package-fedora30-test:
     - package-fedora30-build
   variables:
     image_name: fedora:30
+    cmake_exe: cmake
 
 package-fedora30-deploy:
   <<: *package-rpm-deploy
@@ -736,6 +738,7 @@ package-fedora31-test:
     - package-fedora31-build
   variables:
     image_name: fedora:31
+    cmake_exe: cmake
 
 package-fedora31-deploy:
   <<: *package-rpm-deploy
