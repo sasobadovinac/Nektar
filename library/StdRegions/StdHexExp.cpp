@@ -47,7 +47,7 @@ namespace Nektar
 
         StdHexExp::StdHexExp()
         {
-            //            m_physevalall   = v_GetPhysEvalALL();
+            m_physevalall   = v_GetPhysEvalALL();
 
         }
 
@@ -59,7 +59,7 @@ namespace Nektar
             StdExpansion3D(Ba.GetNumModes()*Bb.GetNumModes()*Bc.GetNumModes(),
                            Ba, Bb, Bc)
         {
-            //            m_physevalall   = v_GetPhysEvalALL();
+            m_physevalall   = v_GetPhysEvalALL();
 
         }
 
@@ -67,7 +67,7 @@ namespace Nektar
             StdExpansion(T),
             StdExpansion3D(T)
         {
-            //            m_physevalall   = v_GetPhysEvalALL();
+            m_physevalall   = v_GetPhysEvalALL();
 
         }
 
@@ -664,36 +664,8 @@ namespace Nektar
             }
         }
 
-        /*     Array<OneD, Array<OneD, NekDouble> >StdHexExp::v_GetPhysEvalALL()
-        {
-            Array<OneD, Array<OneD, NekDouble> > tmp_ret(4);
-            NekDouble totPts = GetTotPoints();
-            Array<OneD, NekDouble> tmp(totPts*m_ncoeffs);
-            Array<OneD, NekDouble> tmpdx(totPts*m_ncoeffs);
-            Array<OneD, NekDouble> tmpdy(totPts*m_ncoeffs);
-            Array<OneD, NekDouble> tmpdz(totPts*m_ncoeffs);
-            for(int i = 0; i < m_ncoeffs; i++)
-            {
-                Array<OneD, NekDouble> k(totPts);
-                v_FillMode(i,k);
-                Vmath::Vcopy(totPts, &k[0], 1, &tmp[(i*totPts)], 1);
-                v_FillModedx(i,k);
-                Vmath::Vcopy(totPts, &k[0], 1, &tmpdx[(i*totPts)], 1);
-                v_FillModedy(i,k);
-                Vmath::Vcopy(totPts, &k[0], 1, &tmpdy[(i*totPts)], 1);
-                v_FillModedz(i,k);
-                Vmath::Vcopy(totPts, &k[0], 1, &tmpdz[(i*totPts)], 1);
-                
-            }
-            
-            tmp_ret[0] = tmp;
-            tmp_ret[1] = tmpdx;
-            tmp_ret[2] = tmpdy;
-            tmp_ret[3] = tmpdz;
-            return tmp_ret;
-            }       
-                
-
+        
+        /*
         NekDouble StdHexExp::v_PhysEvaluatedxBasis(
             const Array<OneD, const NekDouble>& coords,
             int mode)
@@ -1520,7 +1492,7 @@ namespace Nektar
                                             Array<OneD, NekDouble> &out_d2)
         {
 
-            PhysTensorDerivFast(inarray, coords, out_d0, out_d1, out_d2);            
+            PhysTensorDerivFast( coords, inarray, out_d0, out_d1, out_d2);            
         }
     
 
@@ -1533,7 +1505,7 @@ namespace Nektar
                                             Array<OneD, NekDouble> &out_d2
                                                  )
         {
-                    cout<<"\n ********i="<<"\n\n";                
+            cout<<"\n ********i="<<"\n\n";                
             
             int sz = GetTotPoints();
             const int nq0 = m_base[0]->GetNumPoints();
@@ -1622,7 +1594,7 @@ namespace Nektar
                     }
                 }            
             }
-            
+            cout<<"\n\n%$@%@@^^%^%^^#^#%^#\n\n\n";
         }
 
 

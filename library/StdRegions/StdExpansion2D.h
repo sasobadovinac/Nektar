@@ -94,10 +94,11 @@ namespace StdRegions
                           Array<OneD, NekDouble> &outarray_d1);
 
             STD_REGIONS_EXPORT void PhysTensorDerivFast(
-                    const Array<OneD, const NekDouble>& inarray,
-                    const Array<OneD, const Array<OneD, NekDouble> >& coords,
-                          Array<OneD, NekDouble> &outarray_d0,
-                          Array<OneD, NekDouble> &outarray_d1);
+                                                        const Array<OneD, const Array<OneD, NekDouble> >& coords,
+                                                        const Array<OneD, const NekDouble>& inarray,
+                                                        
+                                                        Array<OneD, NekDouble> &outarray_d0,
+                                                        Array<OneD, NekDouble> &outarray_d1);
 
             STD_REGIONS_EXPORT NekDouble Integral(
                     const Array<OneD, const NekDouble>& inarray,
@@ -186,11 +187,14 @@ namespace StdRegions
                                         Array<OneD, NekDouble> &out_d2 = NullNekDouble1DArray)    ;
             */
 
+
+            STD_REGIONS_EXPORT virtual Array<OneD, Array<OneD, NekDouble> > v_GetPhysEvalALL();
+            
             STD_REGIONS_EXPORT virtual void v_PhysEvalBasisGrad(
-                                                                const Array<OneD, const Array<OneD, NekDouble> > coords, 
-                                                                
-                                                                Array<OneD, NekDouble>& out_eval,
-                                                                Array<OneD, NekDouble>& out_d0,                                        
+                                                                    const Array<OneD, const Array<OneD, NekDouble> > coords, 
+                                                                    
+                                                                    Array<OneD, NekDouble>& out_eval,
+                                                                    Array<OneD, NekDouble>& out_d0,                                        
                                                                 Array<OneD, NekDouble>& out_d1, 
                                                                 Array<OneD, NekDouble>& out_d2 = NullNekDouble1DArray);
 

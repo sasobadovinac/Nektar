@@ -96,15 +96,32 @@ namespace Nektar
         }
     }
 
-        /*        NekDouble StdExpansion1D::v_PhysEvaluateDeriv(
-                                                      int dir,
-                    const Array<OneD, const NekDouble>& coords,
-                    const Array<OneD, const NekDouble>& physvals)
-    {
-        boost::ignore_unused(dir);
-        return StdExpansion::BaryEvaluate<0>(coords[0], &physvals[0]);
-       
-        }*/
+
+        Array<OneD, Array<OneD, NekDouble> >StdExpansion1D::v_GetPhysEvalALL()
+        {
+            Array<OneD, Array<OneD, NekDouble> > ret(4);
+            NekDouble nq = GetTotPoints();
+   
+            ret[0] = Array<OneD, NekDouble>(m_ncoeffs*nq);
+            ret[1] = Array<OneD, NekDouble>(m_ncoeffs*nq);
+            for(int i = 0; i < m_ncoeffs; i++)
+            {
+                Array<OneD, NekDouble> tmp(nq);
+                           
+                Array<OneD, NekDouble> tmp2(nq);
+
+                FillMode(i, tmp);
+                Vmath::Vcopy(nq, &tmp[0], 1, &ret[0][i*nq], 1);  
+
+                PhysDeriv(0, tmp, tmp2);
+                Vmath::Vcopy(nq, &tmp2[0], 1, &ret[1][i*nq], 1);  
+
+            }
+            return ret;
+
+        }       
+
+
 
     NekDouble StdExpansion1D::v_PhysEvaluate(
         const Array<OneD, const NekDouble>& Lcoord,

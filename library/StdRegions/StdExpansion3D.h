@@ -236,6 +236,8 @@ namespace Nektar
             STD_REGIONS_EXPORT virtual int v_GetNedges(void) const;
             STD_REGIONS_EXPORT virtual int v_GetEdgeNcoeffs(const int i) const;
 
+            STD_REGIONS_EXPORT virtual Array<OneD, Array<OneD, NekDouble> >v_GetPhysEvalALL();
+
             STD_REGIONS_EXPORT void v_PhysEvalBasisGrad(
                                             const Array<OneD, const Array<OneD, NekDouble> >coords,
                                             Array<OneD, NekDouble> &out_eval,                    
@@ -243,8 +245,9 @@ namespace Nektar
                                             Array<OneD, NekDouble> &out_d1,
                                             Array<OneD, NekDouble> &out_d2);
             STD_REGIONS_EXPORT void PhysTensorDerivFast(
-                                                 const Array<OneD, const NekDouble>& inarray,
+                                                 
                                                  const Array<OneD, const Array<OneD, NekDouble> >& coords,
+                                                 const Array<OneD, const NekDouble>& inarray,
                                                  Array<OneD, NekDouble> &out_d0,
                                                  Array<OneD, NekDouble> &out_d1,
                                                  Array<OneD, NekDouble> &out_d2);

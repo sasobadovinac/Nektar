@@ -607,9 +607,21 @@ namespace Nektar
             //metric terms here:
 
             const Array<OneD, const NekDouble>& z1 = coords[1];
-                const Array<OneD, const NekDouble>& z0 = coords[0];
+            const Array<OneD, const NekDouble>& z0 = coords[0];
                 
-            
+            /* Array<OneD, NekDouble> z1(coords[1].size());
+            Array<OneD, NekDouble> z0(coords[0].size());
+            Array<OneD, NekDouble> tmp(2), tmp2(2);
+            //collapse z11 and z00
+            for(int i = 0; i<z0.size(); i++)
+            {
+                tmp[1] = z11[i];
+                tmp[0] = z00[i];
+                LocCoordToLocCollapsed(tmp, tmp2);
+                z1[i] = tmp2[1];
+                z0[i] = tmp2[0];
+            }*/
+
             Array<OneD, NekDouble> wsp2(std::max(nc0, nc1));
 
             // set up geometric factor: 2.0/(1.0-z1)
@@ -620,7 +632,7 @@ namespace Nektar
             if(out_d0.size()>0)
             {                    
 
-                PhysTensorDerivFast( inarray, coords, out_d0, out_d1 );
+                PhysTensorDerivFast( coords, inarray, out_d0, out_d1 );
 
                 for (int i = 0; i < nc1; ++i)
                 {
@@ -647,7 +659,7 @@ namespace Nektar
             {
                 Array<OneD, NekDouble>tmp(out_d1.size());
                 
-                PhysTensorDerivFast( inarray, coords, tmp, out_d1 );
+                PhysTensorDerivFast( coords,inarray, tmp, out_d1 );
 
                 for (int i = 0; i < nc1; ++i)
                 {
@@ -939,49 +951,7 @@ namespace Nektar
                             1,&outarray[0]+i,nquad0,&outarray[0]+i,nquad0);
             }
         }
-        //move to 2D exp
-        Array<OneD, Array<OneD, NekDouble> >StdTriExp::v_GetPhysEvalALL()
-        {
-            
-            Array<OneD, Array<OneD, NekDouble> > ret(3);
-            NekDouble nq = GetTotPoints();
-           
-            //MemoryManager<DNekMat>::AllocateSharedPtr(m_ncoeffs,nq);
-            //MemoryManager<DNekMat>::AllocateSharedPtr(m_ncoeffs,nq);   
-            // MemoryManager<DNekMat>::AllocateSharedPtr(m_ncoeffs,nq);
-            //Array<OneD, Array<OneD, NekDouble> > temp_ret(4);
-            //          Array<OneD, NekDouble> tmp(totPts*m_ncoeffs);
-            //Array<OneD, NekDouble> tmpdx(totPts*m_ncoeffs);
-            //Array<OneD, NekDouble> tmpdy(totPts*m_ncoeffs);
-            
-            
-            ret[0] = Array<OneD, NekDouble>(m_ncoeffs*nq);
-            ret[1] = Array<OneD, NekDouble>(m_ncoeffs*nq);
-            ret[2] = Array<OneD, NekDouble>(m_ncoeffs*nq);
-            cout<<"m_ncoeffs = "<<m_ncoeffs;
-            cout<<"\n nq = "<<nq<<"\n";
-            for(int i = 0; i < m_ncoeffs; i++)
-            {
-                Array<OneD, NekDouble> tmp(nq);
-                           
-                Array<OneD, NekDouble> tmp2(nq);
-
-                Array<OneD, NekDouble> tmp3(nq);
-                             
-                v_FillMode(i, tmp);
-                Vmath::Vcopy(nq, &tmp[0], 1, &ret[0][i*nq], 1);  
-
-                v_PhysDeriv(0, tmp, tmp2);
-                Vmath::Vcopy(nq, &tmp2[0], 1, &ret[1][i*nq], 1);  
-
-                v_PhysDeriv(1, tmp, tmp3);
-                Vmath::Vcopy(nq, &tmp3[0], 1, &ret[2][i*nq], 1);  
-
-            }
-            return ret;
-        
-        }        
-
+ 
         /*        NekDouble StdTriExp::v_PhysEvaluatedxBasis(
             const Array<OneD, const NekDouble>& coords,
             int mode)
@@ -1020,7 +990,6 @@ namespace Nektar
         {
             Array<OneD, NekDouble> coll(2);
             LocCoordToLocCollapsed(coords, coll);
-
             
             // From mode we need to determine mode0 and mode1 in the (p,q)
             // direction. mode1 can be directly inferred from mode.
@@ -2089,7 +2058,7 @@ namespace Nektar
                                                  )
         {
             boost::ignore_unused(out_d2);
-
+            cout<<"\n\n hiiiiiiiiiiiiiiiiiiiii\n\n";
             int sz = GetTotPoints();
             const int nq0 = m_base[0]->GetNumPoints();
             const int nq1 = m_base[1]->GetNumPoints();

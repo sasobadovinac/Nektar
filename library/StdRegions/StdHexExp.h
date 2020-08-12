@@ -236,9 +236,9 @@ namespace Nektar
             STD_REGIONS_EXPORT virtual NekDouble v_PhysEvaluatedzBasisBary(
                 const Array<OneD, const NekDouble>& coords,
                 int mode);
+            
+            STD_REGIONS_EXPORT virtual Array< OneD, Array<OneD, NekDouble> >v_GetPhysEvalALL();
             */
-            //            STD_REGIONS_EXPORT virtual Array< OneD, Array<OneD, NekDouble> >v_GetPhysEvalALL();
-
 
             //---------------------------
             // Helper functions

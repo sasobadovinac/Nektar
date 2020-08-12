@@ -190,6 +190,14 @@ namespace Nektar
                 const Array<OneD, const NekDouble>& coords,
                 int mode) final;
 
+            STD_REGIONS_EXPORT virtual void v_PhysEvalGrad(
+                                            const Array<OneD, const Array<OneD, NekDouble> >coords,
+                                            const Array<OneD, const NekDouble>& inarray,        
+                                            Array<OneD, NekDouble> &out_d0,
+                                            Array<OneD, NekDouble> &out_d1,
+                                            Array<OneD, NekDouble> &out_d2);
+
+
             STD_REGIONS_EXPORT virtual void v_GetTraceNumModes(
                     const int                  fid,
                     int &numModes0,

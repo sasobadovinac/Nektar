@@ -149,6 +149,7 @@ namespace Nektar
                                             Array<OneD, NekDouble> &out_d1,
                                             Array<OneD, NekDouble> &out_d2)
         {
+            std::            cout<<"\n\n*********\n\n";
             int tot = GetTotPoints();
                 
             Array<OneD, NekDouble> physall(tot);
@@ -241,6 +242,43 @@ namespace Nektar
             }
 
         }
+
+        Array<OneD, Array<OneD, NekDouble> >StdExpansion3D::v_GetPhysEvalALL()
+        {
+            Array<OneD, Array<OneD, NekDouble> > ret(4);
+            NekDouble nq = GetTotPoints();
+   
+            ret[0] = Array<OneD, NekDouble>(m_ncoeffs*nq);
+            ret[1] = Array<OneD, NekDouble>(m_ncoeffs*nq);
+            ret[2] = Array<OneD, NekDouble>(m_ncoeffs*nq);
+            ret[3] = Array<OneD, NekDouble>(m_ncoeffs*nq);
+            for(int i = 0; i < m_ncoeffs; i++)
+            {
+                Array<OneD, NekDouble> tmp(nq);
+                           
+                Array<OneD, NekDouble> tmp2(nq);
+
+                Array<OneD, NekDouble> tmp3(nq);
+
+                Array<OneD, NekDouble> tmp4(nq);
+                             
+                FillMode(i, tmp);
+                Vmath::Vcopy(nq, &tmp[0], 1, &ret[0][i*nq], 1);  
+
+                PhysDeriv(0, tmp, tmp2);
+                Vmath::Vcopy(nq, &tmp2[0], 1, &ret[1][i*nq], 1);  
+
+                PhysDeriv(1, tmp, tmp3);
+                Vmath::Vcopy(nq, &tmp3[0], 1, &ret[2][i*nq], 1);  
+
+                PhysDeriv(2, tmp, tmp4);
+                Vmath::Vcopy(nq, &tmp4[0], 1, &ret[3][i*nq], 1);  
+
+            }
+            return ret;
+
+        }       
+
         
         
         //evaluates der of multiple points given in coords(2D array) with x-coords in coords[0] and ycoords in coords[1]
@@ -468,8 +506,8 @@ namespace Nektar
         */
 
         void StdExpansion3D::PhysTensorDerivFast(
-                                                 const Array<OneD, const NekDouble>& inarray,
                                                  const Array<OneD, const Array<OneD, NekDouble> >& coords,
+                                                 const Array<OneD, const NekDouble>& inarray,
                                                  Array<OneD, NekDouble> &out_d0,
                                                  Array<OneD, NekDouble> &out_d1,
                                                  Array<OneD, NekDouble> &out_d2)
@@ -480,10 +518,9 @@ namespace Nektar
             const int nq2 = m_base[2]->GetNumPoints();
   
             // collapse coords;
-            Array<OneD, NekDouble>  collcoords(3);
-            Array<OneD, NekDouble> tmp(3);
+            Array<OneD, NekDouble> eta(3);
             
-            Array<OneD, NekDouble> wsp1(nq1 * nq2), wsp2(nq2);
+            Array<OneD, NekDouble> wsp1(nq1 * nq2 ), wsp2(nq2);
            
 
             if(out_d0.size() > 0)
@@ -491,25 +528,27 @@ namespace Nektar
            
                 for(int i = 0; i < coords[0].size(); i++)
                 {
+                    Array<OneD, NekDouble> tmp(3);
+            
                     tmp[0] = coords[0][i];
                     tmp[1] = coords[1][i];
                     tmp[2] = coords[2][i];
-                    LocCoordToLocCollapsed(tmp, collcoords);
+                    LocCoordToLocCollapsed(tmp, eta);
                     const NekDouble *ptr = &inarray[0];
                     
                     // Construct the 2D square...
 
                     for (int j = 0; j < nq1 * nq2; ++j, ptr += nq0)
                     {
-                        wsp1[j] = StdExpansion::BaryEvaluateDeriv<0>(collcoords[0], ptr);
+                        wsp1[j] = StdExpansion::BaryEvaluateDeriv<0>(eta[0], ptr);
                     }
 
                     for (int j = 0; j < nq2; ++j)
                     {
-                        wsp2[j] = StdExpansion::BaryEvaluate<1>(collcoords[1], &wsp1[j * nq1]);
+                        wsp2[j] = StdExpansion::BaryEvaluate<1>(eta[1], &wsp1[j * nq1]);
                     }
                     
-                    out_d0[i] =  StdExpansion::BaryEvaluate<2>(collcoords[2], &wsp2[0]);
+                    out_d0[i] =  StdExpansion::BaryEvaluate<2>(eta[2], &wsp2[0]);
                     
                 }
 
@@ -520,25 +559,26 @@ namespace Nektar
                 
                 for(int i = 0; i < coords[0].size(); i++)
                 {
+                    Array<OneD, NekDouble> tmp(3);
 
                     tmp[0] = coords[0][i];
                     tmp[1] = coords[1][i];
                     tmp[2] = coords[2][i];
-                    LocCoordToLocCollapsed(tmp, collcoords);
+                    LocCoordToLocCollapsed(tmp, eta);
                     const NekDouble *ptr = &inarray[0];
                     
                     // Construct the 2D square...
                     
                     for (int j = 0; j < nq1 * nq2; ++j, ptr += nq0)
                     {
-                        wsp1[j] = StdExpansion::BaryEvaluate<0>(collcoords[0], ptr);
+                        wsp1[j] = StdExpansion::BaryEvaluate<0>(eta[0], ptr);
                     }
                     for (int j = 0; j < nq2; ++j)
                     {
-                        wsp2[j] = StdExpansion::BaryEvaluateDeriv<1>(collcoords[1], &wsp1[j * nq1]);
+                        wsp2[j] = StdExpansion::BaryEvaluateDeriv<1>(eta[1], &wsp1[j * nq1]);
                     }
                     
-                    out_d1[i] =  StdExpansion::BaryEvaluate<2>(collcoords[2], &wsp2[0]);
+                    out_d1[i] =  StdExpansion::BaryEvaluate<2>(eta[2], &wsp2[0]);
                     
                     
                     
@@ -549,25 +589,26 @@ namespace Nektar
                 
                 for(int i = 0; i < coords[0].size(); i++)
                 {
+                    Array<OneD, NekDouble> tmp(3);
 
                     tmp[0] = coords[0][i];
                     tmp[1] = coords[1][i];
                     tmp[2] = coords[2][i];
-                    LocCoordToLocCollapsed(tmp, collcoords);
+                    LocCoordToLocCollapsed(tmp, eta);
                     const NekDouble *ptr = &inarray[0];
                     
                     // Construct the 2D square...
 
                     for (int j = 0; j < nq1 * nq2; ++j, ptr += nq0)
                     {
-                        wsp1[j] = StdExpansion::BaryEvaluate<0>(collcoords[0], ptr);
+                        wsp1[j] = StdExpansion::BaryEvaluate<0>(eta[0], ptr);
                     }
                     for (int j = 0; j < nq2; ++j)
                     {
-                        wsp2[j] = StdExpansion::BaryEvaluate<1>(collcoords[1], &wsp1[j * nq1]);
+                        wsp2[j] = StdExpansion::BaryEvaluate<1>(eta[1], &wsp1[j * nq1]);
                     }
                     
-                    out_d2[i] =  StdExpansion::BaryEvaluateDeriv<2>(collcoords[2], &wsp2[0]);
+                    out_d2[i] =  StdExpansion::BaryEvaluateDeriv<2>(eta[2], &wsp2[0]);
                     
                 }
                 

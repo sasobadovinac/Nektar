@@ -91,6 +91,9 @@ namespace Nektar
                                                            Array<OneD, NekDouble> &out_d1 = NullNekDouble1DArray,
                                                            Array<OneD, NekDouble> &out_d2 = NullNekDouble1DArray);
             
+            STD_REGIONS_EXPORT virtual Array<OneD, Array<OneD, NekDouble> >v_GetPhysEvalALL();
+
+
             /*
             STD_REGIONS_EXPORT virtual void v_PhysEvalBasisGrad(
                                                                 const Array<OneD, const Array<OneD, NekDouble> >coords,

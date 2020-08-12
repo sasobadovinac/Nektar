@@ -90,7 +90,7 @@ namespace Nektar
             return StdExpansion2D::Integral(inarray,w0,w1);
         }
 
-    Array<OneD, Array<OneD, NekDouble> >StdQuadExp::v_GetPhysEvalALL()
+        /*   Array<OneD, Array<OneD, NekDouble> >StdQuadExp::v_GetPhysEvalALL()
         {
             
             Array<OneD, Array<OneD, NekDouble> > ret(3);
@@ -131,7 +131,7 @@ namespace Nektar
             return ret;
         }        
 
-
+        */
         /////////////////////////////
         // Differentiation Methods //
         /////////////////////////////
@@ -205,7 +205,7 @@ namespace Nektar
                                             Array<OneD, NekDouble> &out_d2)
         {
             boost::ignore_unused( out_d2);
-            PhysTensorDerivFast(inarray, coords, out_d0, out_d1);
+            PhysTensorDerivFast( coords, inarray, out_d0, out_d1);
             
         }
     

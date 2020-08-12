@@ -1487,12 +1487,6 @@ namespace Nektar
                      */
                     if (xdiff == 0.0 )
                     {
-                        if(z[i] == 1 && coord == 1)
-                        {
-                            //std::cout<<"\n z[i] and coord = 1, pval = "<<pval;                 
-                        }
-                        //                        std::cout<<"\n same: pval = "<<pval;
-                        std::cout<<"z["<<i<<"]="<<z[i]<<" pval = "<<pval<<"\t\n";
                         return pval;
                     }
 
@@ -1501,7 +1495,6 @@ namespace Nektar
                     denom += tmp;
                 }
 
-                //                std::cout<<"\n numer="<<numer<<" denom = "<<denom;
 
                 return numer / denom;
             }
@@ -1543,7 +1536,7 @@ namespace Nektar
 
                 const auto nquad = z.size();
 
-                for (int i = 0; i < nquad; ++i)
+                for (int i = 0; i < nquad; i++)
                 {
                     NekDouble xdiff = z[i] - coord;
                     NekDouble pval = physvals[i];
@@ -1560,21 +1553,12 @@ namespace Nektar
                         if(D0 == NULL)
                         {   
                             D0 = m_base[DIR]->GetD();
+                            //                            std::cout<<"\n\n d0 size===="<<(D0->GetRows())<<" "<<D0->GetColumns();
                         }   
-                        
+                        //std::                        cout<<"\n here!";
                         // take ith row of z and multiply with physvals
                         
                         pval = Vmath::Dot(z.size(), &(D0->GetPtr())[i],z.size(), &physvals[0], 1);
-                        //if(z[i] == 1 && coord == 1)
-                        //{
-                            //std::cout<<"\n*********z["<<i<<"] = 1 and coord = 1\n";
-                            //std::cout<<" pval="<<pval;
-                      
-                        //}else{
-                        
-                            //                          std::cout<<"\n*********z["<<i<<"] = "<<z[i]<<"  and coord = "<<coord<<"\n";
-                            //std::cout<<" pval="<<pval;
-                            //}
                         return pval;
                     }
 

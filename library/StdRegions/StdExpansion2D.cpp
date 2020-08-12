@@ -114,10 +114,10 @@ namespace Nektar
        
         
         void StdExpansion2D::PhysTensorDerivFast(
-                                            const Array<OneD, const NekDouble>& inarray,
-                    const Array<OneD, const Array<OneD, NekDouble> >& coords,
-                          Array<OneD, NekDouble> &out_d0,
-                          Array<OneD, NekDouble> &out_d1)
+                                                 const Array<OneD, const Array<OneD, NekDouble> >& coords,
+                                                 const Array<OneD, const NekDouble>& inarray,
+                                                 Array<OneD, NekDouble> &out_d0,
+                                                 Array<OneD, NekDouble> &out_d1)
 
         {        
             //int sz = GetTotPoints();
@@ -126,8 +126,6 @@ namespace Nektar
   
             // collapse coords;
             Array<OneD, NekDouble>  collcoords(2);
-            //collcoords[0] = Array<OneD, NekDouble>(coords[0].size());
-            //collcoords[1] = Array<OneD, NekDouble>(coords[1].size());
 
             if(out_d0.size() > 0)
             {    
@@ -279,6 +277,38 @@ namespace Nektar
             }
         }
 
+        // create and populate storage for slow versions of physderiv
+        // and physbasisderiv
+        Array<OneD, Array<OneD, NekDouble> >StdExpansion2D::v_GetPhysEvalALL()
+        {
+            
+            Array<OneD, Array<OneD, NekDouble> > ret(3);
+            NekDouble nq = GetTotPoints();
+           
+            ret[0] = Array<OneD, NekDouble>(m_ncoeffs*nq);
+            ret[1] = Array<OneD, NekDouble>(m_ncoeffs*nq);
+            ret[2] = Array<OneD, NekDouble>(m_ncoeffs*nq);
+            for(int i = 0; i < m_ncoeffs; i++)
+            {
+                Array<OneD, NekDouble> tmp(nq);
+                           
+                Array<OneD, NekDouble> tmp2(nq);
+
+                Array<OneD, NekDouble> tmp3(nq);
+                             
+                FillMode(i, tmp);
+                Vmath::Vcopy(nq, &tmp[0], 1, &ret[0][i*nq], 1);  
+
+                PhysDeriv(0, tmp, tmp2);
+                Vmath::Vcopy(nq, &tmp2[0], 1, &ret[1][i*nq], 1);  
+
+                PhysDeriv(1, tmp, tmp3);
+                Vmath::Vcopy(nq, &tmp3[0], 1, &ret[2][i*nq], 1);  
+
+            }
+            return ret;
+        
+        }        
 
         /*       NekDouble StdExpansion2D::v_PhysEvaluatedy(
             const Array<OneD, const NekDouble> &coords,
