@@ -157,7 +157,7 @@ namespace Nektar
               Array<OneD, NekDouble>& muAv);
 
     void GetPhysicalAV(
-        const Array<OneD, const Array<OneD, NekDouble>>& physfield,
+        const Array<OneD, const Array<OneD, NekDouble>>& consVar,
         const Array<OneD, NekDouble>& div,
               Array<OneD, NekDouble>& muAv);
 

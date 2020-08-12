@@ -191,7 +191,7 @@ namespace Nektar
 
                 ApplyDucros(m_fields, div, curlSquare, m_muAv);
             }
-            // Apply approximate c0 smoothing
+            // Apply approximate C0 smoothing
             if (m_smoothing == "C0")
             {
                 ApplyC0Smooth(m_muAv);
@@ -1092,27 +1092,33 @@ namespace Nektar
     }
 
     /**
-    * @brief Calculate the physical artificial viscosity based on dilatation.
+    * @brief Calculate the physical artificial viscosity based on dilatation of
+    * velocity vector.
     *
     * @param
     */
     void NavierStokesCFE::GetPhysicalAV(
-        const Array<OneD, const Array<OneD, NekDouble>>& physfield,
+        const Array<OneD, const Array<OneD, NekDouble>>& consVar,
         const Array<OneD, NekDouble>& div,
               Array<OneD, NekDouble>& muAv)
     {
-        auto nPts = physfield[0].size();
+        auto nPts = consVar[0].size();
         auto nElements = m_fields[0]->GetExpSize();
 
         Array <OneD, NekDouble> hOverP(nElements, 0.0);
         hOverP = GetElmtMinHP();
 
-        // Get sound speed (theoretically it should be the critical sound speed)
-        // this matters greatly for large Mach numbers (above 3.0)
+        // Get sound speed
+        // theoretically it should be used  the critical sound speed, this
+        // matters greatly for large Mach numbers (above 3.0)
         Array <OneD, NekDouble > soundspeed(nPts, 0.0);
-        m_varConv->GetSoundSpeed(physfield, soundspeed);
+        m_varConv->GetSoundSpeed(consVar, soundspeed);
 
-        // loop over elements
+        // Get maximum wavespeed
+        Array <OneD, NekDouble > absVelocity(nPts, 0.0);
+        m_varConv->GetAbsoluteVelocity(consVar, absVelocity);
+
+        // Loop over elements
         auto nElmt = m_fields[0]->GetExpSize();
         for (size_t e = 0; e < nElmt; ++e)
         {
@@ -1120,16 +1126,21 @@ namespace Nektar
             auto physOffset  = m_fields[0]->GetPhys_Offset(e);
             auto physEnd = physOffset + nElmtPoints;
 
-            NekDouble mu0hOp = m_mu0 * hOverP[e];
+            NekDouble hOpTmp = hOverP[e];
 
+            // Loop over the points
             for (size_t p = physOffset; p < physEnd; ++p)
             {
-                NekDouble rho = physfield[0][p];
-                // only compression waves
+                // Get non-dimensional sensor based on dilatation
+                NekDouble sspeedTmp = soundspeed[p];
+                // (only compression waves)
                 NekDouble divTmp = - div[p];
-                divTmp = Smath::Smax(divTmp, 1.0e-8, 1.0e+8) - 1.0e-8;
-                NekDouble muTmp = mu0hOp * rho * divTmp / soundspeed[p];
-                muAv[p] = muTmp;
+                divTmp = std::max(divTmp, 0.0);
+                NekDouble sensor = m_mu0 * hOpTmp * divTmp / sspeedTmp;
+                // Scale to viscosity scale
+                NekDouble rho = consVar[0][p];
+                NekDouble lambda = sspeedTmp + absVelocity[p];
+                muAv[p] = sensor * rho * lambda * hOpTmp;
             }
         }
     }
