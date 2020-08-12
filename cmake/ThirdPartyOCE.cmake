@@ -59,8 +59,8 @@ IF(NEKTAR_USE_MESHGEN)
         EXTERNALPROJECT_ADD(
             oce-0.17
             PREFIX ${TPSRC}
-            URL ${TPURL}/OCE-0.17.2.tar.gz
-            URL_MD5 bf2226be4cd192606af677cf178088e5
+            URL https://github.com/tpaviot/oce/archive/OCE-0.18.3.tar.gz
+            URL_MD5 1686393c8493bbbb2f3f242330b33cba
             STAMP_DIR ${TPBUILD}/stamp
             BINARY_DIR ${TPBUILD}/oce-0.17
             DOWNLOAD_DIR ${TPSRC}
