@@ -2058,7 +2058,6 @@ namespace Nektar
                                                  )
         {
             boost::ignore_unused(out_d2);
-            cout<<"\n\n hiiiiiiiiiiiiiiiiiiiii\n\n";
             int sz = GetTotPoints();
             const int nq0 = m_base[0]->GetNumPoints();
             const int nq1 = m_base[1]->GetNumPoints();
@@ -2082,7 +2081,6 @@ namespace Nektar
                 }
             }
 
-            cout<<"\n\n****\n";
             if(out_d0.size() > 0)
             {
                 const int nm1 = m_base[1]->GetNumModes();
@@ -2126,7 +2124,8 @@ namespace Nektar
                         out_d0[i + k*sz] =  StdExpansion::BaryEvaluateBasis<0>(coll2[0], mode0) *
                     StdExpansion::BaryEvaluateDerivBasis<1>(coll2[1], k);
                   }
-                }            }
+                }            
+            }
 
         }
 

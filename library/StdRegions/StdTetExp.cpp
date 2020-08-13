@@ -1107,11 +1107,149 @@ cout<<"\nout_d0:";
                     
                 }
                 
-                cout<<"\n coords.size()="<<coords.size()<<" " <<coords[0].size()<<" " <<coords[1].size()<<" " <<coords[2].size()<<"\n\n";
 
             }
     
         }
+        
+        void StdTetExp::v_PhysEvalBasisGradFast(
+                                            const Array<OneD, const Array<OneD, NekDouble> >coords,
+                                            Array<OneD, NekDouble> &out_eval,                    
+                                            Array<OneD, NekDouble> &out_d0,
+                                            Array<OneD, NekDouble> &out_d1,
+                                            Array<OneD, NekDouble> &out_d2
+                                                 )
+        {
+            int sz = GetTotPoints();
+            const int nq0 = m_base[0]->GetNumPoints();
+            const int nq1 = m_base[1]->GetNumPoints();
+            const int nq2 = m_base[2]->GetNumPoints();
+            int neq = LibUtilities::StdTetData::
+                getNumberOfCoefficients(nq0, nq1, nq2);
+            
+            if(out_eval.size() > 0)
+            {    
+                for(int k = 0; k < neq; k++)
+                {
+                    for(int i = 0; i < sz; i++)
+                    {
+                        Array<OneD, NekDouble> tmp(3);
+                        tmp[0] = coords[0][i];
+                        tmp[1] = coords[1][i];
+                        tmp[2] = coords[2][i];
+
+                        out_eval[i+k*sz] = PhysEvaluateBasis(tmp, k);
+
+                    }
+        
+                }
+        
+            }
+
+            if(out_d0.size() > 0)
+            {
+                
+                const int nm1 = m_base[1]->GetNumModes();
+                const int nm2 = m_base[2]->GetNumModes();
+                
+                const int b = 2 * nm2 + 1;
+
+                for(int k = 0; k < neq; k++)
+                {
+                 
+                    const int mode0 = floor(0.5 * (b - sqrt(b * b - 8.0 * k / nm1)));
+                    const int tmp   =
+                        k - nm1*(mode0 * (nm2-1) + 1 - (mode0 - 2)*(mode0 - 1) / 2);
+                    const int mode1 = tmp / (nm2 - mode0);
+                    const int mode2 = tmp % (nm2 - mode0);
+                    
+                    for(int i = 0; i < sz; i++)
+                    {
+                        Array<OneD, NekDouble> coll1(3);
+                        Array<OneD, NekDouble> coll2(3);
+                        coll1[0] = coords[0][i];
+                        coll1[1] = coords[1][i];
+                        coll1[2] = coords[2][i];
+                        LocCoordToLocCollapsed(coll1, coll2);
+                        
+                        out_d0[i + k*sz] = StdExpansion::BaryEvaluateDerivBasis<0>(coll1[0], mode0) *
+                            StdExpansion::BaryEvaluateBasis<1>(coll1[1], mode1) *
+                            StdExpansion::BaryEvaluateBasis<2>(coll1[2], mode2);
+
+                    }
+                }
+            }
+            
+
+            if(out_d1.size() > 0)
+            {
+                
+                const int nm1 = m_base[1]->GetNumModes();
+                const int nm2 = m_base[2]->GetNumModes();
+                
+                const int b = 2 * nm2 + 1;
+                for(int k = 0; k < neq; k++)
+                {
+                 
+                    const int mode0 = floor(0.5 * (b - sqrt(b * b - 8.0 * k / nm1)));
+                    const int tmp   =
+                        k - nm1*(mode0 * (nm2-1) + 1 - (mode0 - 2)*(mode0 - 1) / 2);
+                    const int mode1 = tmp / (nm2 - mode0);
+                    const int mode2 = tmp % (nm2 - mode0);
+                    
+                    for(int i = 0; i < sz; i++)
+                    {
+                        Array<OneD, NekDouble> coll1(3);
+                        Array<OneD, NekDouble> coll2(3);
+                        coll1[0] = coords[0][i];
+                        coll1[1] = coords[1][i];
+                        coll1[2] = coords[2][i];
+                        LocCoordToLocCollapsed(coll1, coll2);
+                        
+                        out_d0[i + k*sz] = StdExpansion::BaryEvaluateBasis<0>(coll1[0], mode0) *
+                            StdExpansion::BaryEvaluateDerivBasis<1>(coll1[1], mode1) *
+                            StdExpansion::BaryEvaluateBasis<2>(coll1[2], mode2);
+
+                    }
+                }
+            }
+            if(out_d2.size() > 0)
+            {
+                
+                const int nm1 = m_base[1]->GetNumModes();
+                const int nm2 = m_base[2]->GetNumModes();
+                
+                const int b = 2 * nm2 + 1;
+                for(int k = 0; k < neq; k++)
+                {
+                 
+                    const int mode0 = floor(0.5 * (b - sqrt(b * b - 8.0 * k / nm1)));
+                    const int tmp   =
+                        k - nm1*(mode0 * (nm2-1) + 1 - (mode0 - 2)*(mode0 - 1) / 2);
+                    const int mode1 = tmp / (nm2 - mode0);
+                    const int mode2 = tmp % (nm2 - mode0);
+                    
+                    for(int i = 0; i < sz; i++)
+                    {
+                        Array<OneD, NekDouble> coll1(3);
+                        Array<OneD, NekDouble> coll2(3);
+                        coll1[0] = coords[0][i];
+                        coll1[1] = coords[1][i];
+                        coll1[2] = coords[2][i];
+                        LocCoordToLocCollapsed(coll1, coll2);
+                        
+                        out_d0[i + k*sz] = StdExpansion::BaryEvaluateBasis<0>(coll1[0], mode0) *
+                            StdExpansion::BaryEvaluateBasis<1>(coll1[1], mode1) *
+                            StdExpansion::BaryEvaluateDerivBasis<2>(coll1[2], mode2);
+
+                    }
+                }
+            }
+            
+            
+        }
+    
+
 
         /*
      NekDouble StdTetExp::v_PhysEvaluatedx(                                            const Array<OneD, const NekDouble> &coords,                     const Array<OneD, const NekDouble> &physvals)

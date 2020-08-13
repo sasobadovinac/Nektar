@@ -46,6 +46,8 @@ namespace Nektar
     {
         StdPyrExp::StdPyrExp() // Deafult construct of standard expansion directly called.
         {
+            m_physevalall   = v_GetPhysEvalALL();
+
         }
 
         StdPyrExp::StdPyrExp(const LibUtilities::BasisKey &Ba,
@@ -62,7 +64,7 @@ namespace Nektar
                                  Bc.GetNumModes()),
                              Ba, Bb, Bc)
         {
-
+            
             ASSERTL0(Ba.GetNumModes() <= Bc.GetNumModes(), "order in 'a' direction is higher "
                      "than order in 'c' direction");
             ASSERTL0(Bb.GetNumModes() <= Bc.GetNumModes(), "order in 'b' direction is higher "
@@ -71,12 +73,16 @@ namespace Nektar
                      Bc.GetBasisType() == LibUtilities::eOrthoPyr_C,
                      "Expected basis type in 'c' direction to be ModifiedPyr_C or OrthoPyr_C");
 
+            m_physevalall   = v_GetPhysEvalALL();
+
         }
 
         StdPyrExp::StdPyrExp(const StdPyrExp &T)
             : StdExpansion  (T),
               StdExpansion3D(T)
         {
+            m_physevalall   = v_GetPhysEvalALL();
+
         }
 
 
@@ -765,6 +771,213 @@ namespace Nektar
                     }
                 }
             }
+        }
+
+
+        void StdPyrExp::v_PhysEvalBasisGradFast(
+                                            const Array<OneD, const Array<OneD, NekDouble> >coords,
+                                            Array<OneD, NekDouble> &out_eval,                    
+                                            Array<OneD, NekDouble> &out_d0,
+                                            Array<OneD, NekDouble> &out_d1,
+                                            Array<OneD, NekDouble> &out_d2
+                                                 )
+        {
+            int sz = GetTotPoints();
+            const int nq0 = m_base[0]->GetNumPoints();
+            const int nq1 = m_base[1]->GetNumPoints();
+            const int nq2 = m_base[2]->GetNumPoints();
+
+            const int nm0 = m_base[0]->GetNumModes();
+            const int nm1 = m_base[1]->GetNumModes();
+            const int nm2 = m_base[2]->GetNumModes();
+
+
+            int neq = LibUtilities::StdPyrData::
+                getNumberOfCoefficients(nq0, nq1, nq2);
+            
+            if(out_eval.size() > 0)
+            {    
+                for(int k = 0; k < neq; k++)
+                {
+                    for(int i = 0; i < sz; i++)
+                    {
+                        Array<OneD, NekDouble> tmp(3);
+                        tmp[0] = coords[0][i];
+                        tmp[1] = coords[1][i];
+                        tmp[2] = coords[2][i];
+
+                        out_eval[i+k*sz] = PhysEvaluateBasis(tmp, k);
+
+                    }
+        
+                }
+        
+            }
+
+            if(out_d0.size() > 0)
+            {
+                for(int k = 0; k < neq; k++)
+                {
+                    
+                    int mode = k;
+                    int mode0 = 0, mode1 = 0, mode2 = 0, cnt = 0;
+                    
+                    bool found = false;
+                    for (mode0 = 0; mode0 < nm0; ++mode0)
+                    {
+                        for (mode1 = 0; mode1 < nm1; ++mode1)
+                        {
+                            int maxpq = max(mode0, mode1);
+                            for (mode2 = 0; mode2 < nm2 - maxpq; ++mode2, ++cnt)
+                            {
+                                if (cnt == mode)
+                                {
+                                    found = true;
+                                    break;
+                                }
+                            }
+                            
+                            if (found)
+                            {
+                                break;
+                            }
+                        }
+                        
+                        if (found)
+                        {
+                            break;
+                        }
+                        
+                        for (int j = nm1; j < nm2; ++j)
+                        {
+                            int ijmax = max(mode0, j);
+                            mode2 += nm2 - ijmax;
+                        }
+                    }
+                    
+                    for(int i = 0; i < sz; i++)
+                    {
+                        
+                        out_d0[i + k*sz] =  StdExpansion::BaryEvaluateDerivBasis<0>(coords[0][i], mode0) *
+                            StdExpansion::BaryEvaluateBasis<1>(coords[1][i], mode1) *
+                            StdExpansion::BaryEvaluateBasis<2>(coords[2][i], mode2);
+                        
+                    }
+                }
+                
+                
+            }
+        
+            if(out_d1.size() > 0)
+            {
+                for(int k = 0; k < neq; k++)
+                {
+                    
+                    int mode = k;
+                    int mode0 = 0, mode1 = 0, mode2 = 0, cnt = 0;
+                    
+                    bool found = false;
+                    for (mode0 = 0; mode0 < nm0; ++mode0)
+                    {
+                        for (mode1 = 0; mode1 < nm1; ++mode1)
+                        {
+                            int maxpq = max(mode0, mode1);
+                            for (mode2 = 0; mode2 < nm2 - maxpq; ++mode2, ++cnt)
+                            {
+                                if (cnt == mode)
+                                {
+                                    found = true;
+                                    break;
+                                }
+                            }
+                            
+                            if (found)
+                            {
+                                break;
+                            }
+                        }
+                        
+                        if (found)
+                        {
+                            break;
+                        }
+                        
+                        for (int j = nm1; j < nm2; ++j)
+                        {
+                            int ijmax = max(mode0, j);
+                            mode2 += nm2 - ijmax;
+                        }
+                    }
+                    
+                    for(int i = 0; i < sz; i++)
+                    {
+                        
+                        out_d0[i + k*sz] =  StdExpansion::BaryEvaluateBasis<0>(coords[0][i], mode0) *
+                            StdExpansion::BaryEvaluateDerivBasis<1>(coords[1][i], mode1) *
+                            StdExpansion::BaryEvaluateBasis<2>(coords[2][i], mode2);
+                        
+                    }
+                }
+                
+
+
+            }
+        
+            if(out_d2.size() > 0)
+            {
+                                for(int k = 0; k < neq; k++)
+                {
+                    
+                    int mode = k;
+                    int mode0 = 0, mode1 = 0, mode2 = 0, cnt = 0;
+                    
+                    bool found = false;
+                    for (mode0 = 0; mode0 < nm0; ++mode0)
+                    {
+                        for (mode1 = 0; mode1 < nm1; ++mode1)
+                        {
+                            int maxpq = max(mode0, mode1);
+                            for (mode2 = 0; mode2 < nm2 - maxpq; ++mode2, ++cnt)
+                            {
+                                if (cnt == mode)
+                                {
+                                    found = true;
+                                    break;
+                                }
+                            }
+                            
+                            if (found)
+                            {
+                                break;
+                            }
+                        }
+                        
+                        if (found)
+                        {
+                            break;
+                        }
+                        
+                        for (int j = nm1; j < nm2; ++j)
+                        {
+                            int ijmax = max(mode0, j);
+                            mode2 += nm2 - ijmax;
+                        }
+                    }
+                    
+                    for(int i = 0; i < sz; i++)
+                    {
+                        
+                        out_d0[i + k*sz] =  StdExpansion::BaryEvaluateBasis<0>(coords[0][i], mode0) *
+                            StdExpansion::BaryEvaluateBasis<1>(coords[1][i], mode1) *
+                            StdExpansion::BaryEvaluateDerivBasis<2>(coords[2][i], mode2);
+                        
+                    }
+                }
+                
+
+
+            }
+        
         }
 
         void StdPyrExp::v_PhysEvalGrad(

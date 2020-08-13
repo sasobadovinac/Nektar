@@ -206,6 +206,14 @@ namespace Nektar
                                             Array<OneD, NekDouble> &out_d1,
                                             Array<OneD, NekDouble> &out_d2);
 
+        STD_REGIONS_EXPORT void v_PhysEvalBasisGradFast(
+                                            const Array<OneD, const Array<OneD, NekDouble> >coords,
+                                            Array<OneD, NekDouble> &out_eval,                    
+                                            Array<OneD, NekDouble> &out_d0,
+                                            Array<OneD, NekDouble> &out_d1,
+                                            Array<OneD, NekDouble> &out_d2);
+        
+
 
         /*     STD_REGIONS_EXPORT virtual NekDouble v_PhysEvaluatedxBasisBary(
                 const Array<OneD, const NekDouble>& coords,
