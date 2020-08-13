@@ -36,13 +36,18 @@
 #include <iostream>
 
 #include <CompressibleFlowSolver/Misc/VariableConverter.h>
+#include <LocalRegions/Expansion3D.h>
+#include <LocalRegions/Expansion2D.h>
+#include <LibUtilities/BasicUtils/Smath.hpp>
 
 using namespace std;
 
 namespace Nektar
 {
 VariableConverter::VariableConverter(
-    const LibUtilities::SessionReaderSharedPtr &pSession, const int spaceDim)
+    const LibUtilities::SessionReaderSharedPtr& pSession,
+    const int spaceDim,
+    const SpatialDomains::MeshGraphSharedPtr& pGraph)
     : m_session(pSession), m_spacedim(spaceDim)
 {
     // Create equation of state object
@@ -59,6 +64,35 @@ VariableConverter::VariableConverter(
     // Parameters for sensor
     m_session->LoadParameter("Skappa", m_Skappa, -1.0);
     m_session->LoadParameter("Kappa", m_Kappa, 0.25);
+
+    m_hOverP = NullNekDouble1DArray;
+
+    // Shock sensor
+    m_session->LoadSolverInfo("ShockCaptureType", m_shockCaptureType, "Off");
+    if (m_shockCaptureType == "Physical")
+    {
+        // Artificial viscosity scaling constant
+        m_session->LoadParameter("mu0", m_mu0, 0.5);
+
+        m_muAv = NullNekDouble1DArray;
+        m_muAvTrace = NullNekDouble1DArray;
+
+        // Check for Modal/Dilation sensor
+        m_session->LoadSolverInfo("ShockSensorType",
+            m_shockSensorType, "Dilation");
+
+        // Check for Ducros sensor
+        m_session->LoadSolverInfo("DucrosSensor",
+            m_ducrosSensor, "On");
+
+        // Load smoothing tipe
+        m_session->LoadSolverInfo("Smoothing", m_smoothing, "Off");
+        if (m_smoothing == "C0")
+        {
+            m_C0ProjectExp = MemoryManager<MultiRegions::ContField>::
+                AllocateSharedPtr(m_session, pGraph, m_session->GetVariable(0));
+        }
+    }
 
 }
 
@@ -232,99 +266,6 @@ void VariableConverter::GetAbsoluteVelocity(
     Vmath::Vsqrt(nPts, Vtot, 1, Vtot, 1);
 }
 
-void VariableConverter::GetSensor(
-    const MultiRegions::ExpListSharedPtr &field,
-    const Array<OneD, const Array<OneD, NekDouble>> &physarray,
-    Array<OneD, NekDouble> &Sensor, Array<OneD, NekDouble> &SensorKappa,
-    int offset)
-{
-    NekDouble Skappa;
-    NekDouble order;
-    Array<OneD, NekDouble> tmp;
-    Array<OneD, int> expOrderElement = field->EvalBasisNumModesMaxPerExp();
-
-    for (int e = 0; e < field->GetExpSize(); e++)
-    {
-        int numModesElement = expOrderElement[e];
-        int nElmtPoints     = field->GetExp(e)->GetTotPoints();
-        int physOffset      = field->GetPhys_Offset(e);
-        int nElmtCoeffs     = field->GetExp(e)->GetNcoeffs();
-        int numCutOff       = numModesElement - offset;
-
-        if (numModesElement <= offset)
-        {
-            Vmath::Fill(nElmtPoints, 0.0,
-                    tmp = Sensor + physOffset, 1);
-            Vmath::Fill(nElmtPoints, 0.0,
-                    tmp = SensorKappa + physOffset, 1);
-            continue;
-        }
-
-        // create vector to save the solution points per element at P = p;
-        Array<OneD, NekDouble> elmtPhys(nElmtPoints,
-            tmp = physarray[0] + physOffset);
-        // Compute coefficients
-        Array<OneD, NekDouble> elmtCoeffs(nElmtCoeffs, 0.0);
-        field->GetExp(e)->FwdTrans(elmtPhys, elmtCoeffs);
-
-        // ReduceOrderCoeffs reduces the polynomial order of the solution
-        // that is represented by the coeffs given as an inarray. This is
-        // done by projecting the higher order solution onto the orthogonal
-        // basis and padding the higher order coefficients with zeros.
-        Array<OneD, NekDouble> reducedElmtCoeffs(nElmtCoeffs, 0.0);
-        field->GetExp(e)->ReduceOrderCoeffs(numCutOff, elmtCoeffs,
-                                            reducedElmtCoeffs);
-
-        Array<OneD, NekDouble> reducedElmtPhys(nElmtPoints, 0.0);
-        field->GetExp(e)->BwdTrans(reducedElmtCoeffs, reducedElmtPhys);
-
-        NekDouble numerator   = 0.0;
-        NekDouble denominator = 0.0;
-
-        // Determining the norm of the numerator of the Sensor
-        Array<OneD, NekDouble> difference(nElmtPoints, 0.0);
-        Vmath::Vsub(nElmtPoints, elmtPhys, 1, reducedElmtPhys, 1, difference,
-                    1);
-
-        numerator = Vmath::Dot(nElmtPoints, difference, difference);
-        denominator = Vmath::Dot(nElmtPoints, elmtPhys, elmtPhys);
-
-        NekDouble elmtSensor = sqrt(numerator / denominator);
-        elmtSensor = log10(max(elmtSensor, NekConstants::kNekSqrtTol));
-
-        Vmath::Fill(nElmtPoints, elmtSensor, tmp = Sensor + physOffset, 1);
-
-        // Compute reference value for sensor
-        order = max(numModesElement-1, 1);
-        if (order > 0 )
-        {
-            Skappa = m_Skappa - 4.25 * log10(static_cast<NekDouble>(order));
-        }
-        else
-        {
-            Skappa = 0.0;
-        }
-
-        // Compute artificial viscosity
-        NekDouble elmtSensorKappa;
-        if (elmtSensor < (Skappa-m_Kappa))
-        {
-            elmtSensorKappa = 0;
-        }
-        else if (elmtSensor > (Skappa + m_Kappa))
-        {
-            elmtSensorKappa = 1.0;
-        }
-        else
-        {
-            elmtSensorKappa = 0.5 *
-                (1 + sin(M_PI * (elmtSensor - Skappa) / (2 * m_Kappa)));
-        }
-        Vmath::Fill(nElmtPoints, elmtSensorKappa,
-                tmp = SensorKappa + physOffset, 1);
-    }
-}
-
 /**
  * @brief Calculate the pressure using the equation of state.
  *
@@ -446,4 +387,412 @@ void VariableConverter::GetRhoFromPT(const Array<OneD, NekDouble> &pressure,
         rho[i] = m_eos->GetRhoFromPT(pressure[i], temperature[i]);
     }
 }
+
+void VariableConverter::SetAv(
+    const Array<OneD, MultiRegions::ExpListSharedPtr>& fields,
+    const Array<OneD, const Array<OneD, NekDouble>>& consVar,
+    const Array<OneD, NekDouble>& div,
+    const Array<OneD, NekDouble>& curlSquared)
+{
+    auto nTracePts = fields[0]->GetTrace()->GetTotPoints();
+    if (m_muAv == NullNekDouble1DArray)
+    {
+        auto nPts = fields[0]->GetTotPoints();
+        m_muAv = Array<OneD, NekDouble>(nPts, 0.0);
+        m_muAvTrace = Array<OneD, NekDouble> (nTracePts,0.0);
+        SetElmtMinHP(fields);
+    }
+
+
+    if (m_shockSensorType == "Modal")
+    {
+        // Get viscosity based on modal sensor
+        GetMuAv(fields, consVar, m_muAv);
+    }
+    else
+    {
+        // Get viscosity based on dilatation sensor
+        GetMuAv(fields, consVar, div, m_muAv);
+    }
+
+    // Apply Ducros sensor
+    if (m_ducrosSensor != "Off")
+    {
+        ApplyDucros(fields, div, curlSquared, m_muAv);
+    }
+        // Apply approximate C0 smoothing
+    if (m_smoothing == "C0")
+    {
+        ApplyC0Smooth(m_muAv);
+    }
+
+    // Set trace AV
+    Array<OneD, NekDouble> muFwd(nTracePts, 0.0), muBwd(nTracePts, 0.0);
+    fields[0]->GetFwdBwdTracePhys(m_muAv, muFwd, muBwd, false,
+        false, false);
+    for (size_t p = 0; p < nTracePts; ++p)
+    {
+        m_muAvTrace[p] = 0.5 * (muFwd[p] + muBwd[p]);
+    }
 }
+
+Array<OneD, NekDouble>& VariableConverter::GetAv()
+{
+    return m_muAv;
+}
+
+Array<OneD, NekDouble>& VariableConverter::GetAvTrace()
+{
+    return m_muAvTrace;
+}
+
+/**
+ * @brief Compute an estimate of minimum h/p
+ * for each element of the expansion.
+ */
+void VariableConverter::SetElmtMinHP(const Array<OneD, MultiRegions::ExpListSharedPtr>& fields)
+{
+    auto nElements = fields[0]->GetExpSize();
+    if (m_hOverP == NullNekDouble1DArray)
+    {
+        m_hOverP = Array<OneD, NekDouble>(nElements, 1.0);
+    }
+
+    // Determine h/p scaling
+    Array<OneD, int> pOrderElmt = fields[0]->EvalBasisNumModesMaxPerExp();
+    auto expdim = fields[0]->GetGraph()->GetMeshDimension();
+    for (size_t e = 0; e < nElements; e++)
+    {
+        NekDouble h = 1.0e+10;
+        switch (expdim)
+        {
+            case 3:
+            {
+                LocalRegions::Expansion3DSharedPtr exp3D;
+                exp3D = fields[0]->GetExp(e)->as<LocalRegions::Expansion3D>();
+                for(size_t i = 0; i < exp3D->GetNtraces(); ++i)
+                {
+                    h = min(h, exp3D->GetGeom3D()->GetEdge(i)->GetVertex(0)->
+                        dist(*(exp3D->GetGeom3D()->GetEdge(i)->GetVertex(1))));
+                }
+            break;
+            }
+
+            case 2:
+            {
+                LocalRegions::Expansion2DSharedPtr exp2D;
+                exp2D = fields[0]->GetExp(e)->as<LocalRegions::Expansion2D>();
+                for(size_t i = 0; i < exp2D->GetNtraces(); ++i)
+                {
+                    h = min(h, exp2D->GetGeom2D()->GetEdge(i)->GetVertex(0)->
+                        dist(*(exp2D->GetGeom2D()->GetEdge(i)->GetVertex(1))));
+                }
+            break;
+            }
+            case 1:
+            {
+                LocalRegions::Expansion1DSharedPtr exp1D;
+                exp1D = fields[0]->GetExp(e)->as<LocalRegions::Expansion1D>();
+
+                h = min(h, exp1D->GetGeom1D()->GetVertex(0)->
+                    dist(*(exp1D->GetGeom1D()->GetVertex(1))));
+
+            break;
+            }
+            default:
+            {
+                ASSERTL0(false,"Dimension out of bound.")
+            }
+        }
+
+        // Store h/p scaling
+        m_hOverP[e] = h / max(pOrderElmt[e]-1, 1);
+    }
+}
+
+Array<OneD, NekDouble>& VariableConverter::GetElmtMinHP()
+{
+    ASSERTL1(m_hOverP /= NullNekDouble1DArray, "m_hOverP not set");
+    return m_hOverP;
+}
+
+void VariableConverter::GetSensor(
+    const MultiRegions::ExpListSharedPtr &field,
+    const Array<OneD, const Array<OneD, NekDouble>> &physarray,
+    Array<OneD, NekDouble> &Sensor, Array<OneD, NekDouble> &SensorKappa,
+    int offset)
+{
+    NekDouble Skappa;
+    NekDouble order;
+    Array<OneD, NekDouble> tmp;
+    Array<OneD, int> expOrderElement = field->EvalBasisNumModesMaxPerExp();
+
+    for (int e = 0; e < field->GetExpSize(); e++)
+    {
+        int numModesElement = expOrderElement[e];
+        int nElmtPoints     = field->GetExp(e)->GetTotPoints();
+        int physOffset      = field->GetPhys_Offset(e);
+        int nElmtCoeffs     = field->GetExp(e)->GetNcoeffs();
+        int numCutOff       = numModesElement - offset;
+
+        if (numModesElement <= offset)
+        {
+            Vmath::Fill(nElmtPoints, 0.0,
+                    tmp = Sensor + physOffset, 1);
+            Vmath::Fill(nElmtPoints, 0.0,
+                    tmp = SensorKappa + physOffset, 1);
+            continue;
+        }
+
+        // create vector to save the solution points per element at P = p;
+        Array<OneD, NekDouble> elmtPhys(nElmtPoints,
+            tmp = physarray[0] + physOffset);
+        // Compute coefficients
+        Array<OneD, NekDouble> elmtCoeffs(nElmtCoeffs, 0.0);
+        field->GetExp(e)->FwdTrans(elmtPhys, elmtCoeffs);
+
+        // ReduceOrderCoeffs reduces the polynomial order of the solution
+        // that is represented by the coeffs given as an inarray. This is
+        // done by projecting the higher order solution onto the orthogonal
+        // basis and padding the higher order coefficients with zeros.
+        Array<OneD, NekDouble> reducedElmtCoeffs(nElmtCoeffs, 0.0);
+        field->GetExp(e)->ReduceOrderCoeffs(numCutOff, elmtCoeffs,
+                                            reducedElmtCoeffs);
+
+        Array<OneD, NekDouble> reducedElmtPhys(nElmtPoints, 0.0);
+        field->GetExp(e)->BwdTrans(reducedElmtCoeffs, reducedElmtPhys);
+
+        NekDouble numerator   = 0.0;
+        NekDouble denominator = 0.0;
+
+        // Determining the norm of the numerator of the Sensor
+        Array<OneD, NekDouble> difference(nElmtPoints, 0.0);
+        Vmath::Vsub(nElmtPoints, elmtPhys, 1, reducedElmtPhys, 1, difference,
+                    1);
+
+        numerator = Vmath::Dot(nElmtPoints, difference, difference);
+        denominator = Vmath::Dot(nElmtPoints, elmtPhys, elmtPhys);
+
+        NekDouble elmtSensor = sqrt(numerator / denominator);
+        elmtSensor = log10(max(elmtSensor, NekConstants::kNekSqrtTol));
+
+        Vmath::Fill(nElmtPoints, elmtSensor, tmp = Sensor + physOffset, 1);
+
+        // Compute reference value for sensor
+        order = max(numModesElement-1, 1);
+        if (order > 0 )
+        {
+            Skappa = m_Skappa - 4.25 * log10(static_cast<NekDouble>(order));
+        }
+        else
+        {
+            Skappa = 0.0;
+        }
+
+        // Compute artificial viscosity
+        NekDouble elmtSensorKappa;
+        if (elmtSensor < (Skappa-m_Kappa))
+        {
+            elmtSensorKappa = 0;
+        }
+        else if (elmtSensor > (Skappa + m_Kappa))
+        {
+            elmtSensorKappa = 1.0;
+        }
+        else
+        {
+            elmtSensorKappa = 0.5 *
+                (1 + sin(M_PI * (elmtSensor - Skappa) / (2 * m_Kappa)));
+        }
+        Vmath::Fill(nElmtPoints, elmtSensorKappa,
+                tmp = SensorKappa + physOffset, 1);
+    }
+}
+
+/**
+* @brief Calculate the physical artificial viscosity based on modal sensor.
+*
+* @param consVar  Input field.
+*/
+void VariableConverter::GetMuAv(
+    const Array<OneD, MultiRegions::ExpListSharedPtr>& fields,
+    const Array<OneD, const Array<OneD, NekDouble>>& consVar,
+          Array<OneD, NekDouble>& muAv)
+{
+    auto nPts = consVar[0].size();
+    // Determine the maximum wavespeed
+    Array <OneD, NekDouble > Lambdas(nPts, 0.0);
+    Array <OneD, NekDouble > soundspeed(nPts, 0.0);
+    Array <OneD, NekDouble > absVelocity(nPts, 0.0);
+    GetSoundSpeed(consVar, soundspeed);
+    GetAbsoluteVelocity(consVar, absVelocity);
+    Vmath::Vadd(nPts, absVelocity, 1, soundspeed, 1, Lambdas, 1);
+
+    // Compute sensor based on rho
+    Array<OneD, NekDouble> Sensor(nPts, 0.0);
+    GetSensor(fields[0], consVar, Sensor, muAv, 1);
+
+    Array<OneD, NekDouble> tmp;
+    auto nElmt = fields[0]->GetExpSize();
+    for (size_t e = 0; e < nElmt; ++e)
+    {
+        auto physOffset  = fields[0]->GetPhys_Offset(e);
+        auto nElmtPoints = fields[0]->GetExp(e)->GetTotPoints();
+
+        // Compute the maximum wave speed
+        NekDouble LambdaElmt = 0.0;
+        LambdaElmt = Vmath::Vmax(nElmtPoints, tmp = Lambdas + physOffset, 1);
+
+        // Compute average bounded density
+        NekDouble rhoAve = Vmath::Vsum(nElmtPoints, tmp = consVar[0]
+            + physOffset, 1);
+        rhoAve = rhoAve / nElmtPoints;
+        rhoAve = Smath::Smax(rhoAve, 1.0e-4, 1.0e+4);
+
+        // Scale sensor by coeff, h/p, and density
+        LambdaElmt *= m_mu0 *  m_hOverP[e] * rhoAve;
+        Vmath::Smul(nElmtPoints, LambdaElmt, tmp = muAv + physOffset, 1,
+            tmp = muAv + physOffset, 1);
+    }
+
+}
+
+/**
+* @brief Calculate the physical artificial viscosity based on dilatation of
+* velocity vector.
+*
+* @param
+*/
+void VariableConverter::GetMuAv(
+    const Array<OneD, MultiRegions::ExpListSharedPtr>& fields,
+    const Array<OneD, const Array<OneD, NekDouble>>& consVar,
+    const Array<OneD, NekDouble>& div,
+          Array<OneD, NekDouble>& muAv)
+{
+    auto nPts = consVar[0].size();
+
+    // Get sound speed
+    // theoretically it should be used  the critical sound speed, this
+    // matters greatly for large Mach numbers (above 3.0)
+    Array <OneD, NekDouble > soundspeed(nPts, 0.0);
+    GetSoundSpeed(consVar, soundspeed);
+
+    // Get maximum wavespeed
+    Array <OneD, NekDouble > absVelocity(nPts, 0.0);
+    GetAbsoluteVelocity(consVar, absVelocity);
+
+    // Loop over elements
+    auto nElmt = fields[0]->GetExpSize();
+    for (size_t e = 0; e < nElmt; ++e)
+    {
+        auto nElmtPoints = fields[0]->GetExp(e)->GetTotPoints();
+        auto physOffset  = fields[0]->GetPhys_Offset(e);
+        auto physEnd = physOffset + nElmtPoints;
+
+        NekDouble hOpTmp = m_hOverP[e];
+
+        // Loop over the points
+        for (size_t p = physOffset; p < physEnd; ++p)
+        {
+            // Get non-dimensional sensor based on dilatation
+            NekDouble sspeedTmp = soundspeed[p];
+            // (only compression waves)
+            NekDouble divTmp = - div[p];
+            divTmp = std::max(divTmp, 0.0);
+            NekDouble sensor = m_mu0 * hOpTmp * divTmp / sspeedTmp;
+            // Scale to viscosity scale
+            NekDouble rho = consVar[0][p];
+            NekDouble lambda = sspeedTmp + absVelocity[p];
+            muAv[p] = sensor * rho * lambda * hOpTmp;
+        }
+    }
+}
+
+/**
+* @brief Applied Ducros (anti-vorticity) sensor averaged over the element.
+*
+* @param field Input Field
+*/
+void VariableConverter::ApplyDucros(
+    const Array<OneD, MultiRegions::ExpListSharedPtr>& fields,
+    const Array<OneD, NekDouble>& div,
+    const Array<OneD, NekDouble>& curlSquare,
+    Array<OneD, NekDouble>& muAv)
+{
+    // machine eps**2
+    NekDouble eps = std::numeric_limits<NekDouble>::epsilon();
+    eps *= eps;
+
+    // loop over elements
+    auto nElmt = fields[0]->GetExpSize();
+    for (size_t e = 0; e < nElmt; ++e)
+    {
+        auto nElmtPoints = fields[0]->GetExp(e)->GetTotPoints();
+        auto physOffset  = fields[0]->GetPhys_Offset(e);
+        auto physEnd = physOffset + nElmtPoints;
+#if 0
+        // loop over points in element to get average
+        NekDouble elmtAvgDuc = 0.0;
+        for (size_t p = physOffset; p < physEnd; ++p)
+        {
+            NekDouble tmpDiv2 = div[p];
+            tmpDiv2 *= tmpDiv2;
+            NekDouble denDuc = tmpDiv2 + curlSquare[p] + eps;
+            elmtAvgDuc += tmpDiv2 / denDuc;
+        }
+        elmtAvgDuc /= nElmtPoints;
+
+        // loop over points in element to apply ducros
+        for (size_t p = physOffset; p < physEnd; ++p)
+        {
+            muAv[p] *= elmtAvgDuc;
+        }
+#else
+        // loop over points in element
+        for (size_t p = physOffset; p < physEnd; ++p)
+        {
+            NekDouble tmpDiv2 = div[p];
+            tmpDiv2 *= tmpDiv2;
+            NekDouble denDuc = tmpDiv2 + curlSquare[p] + eps;
+            NekDouble Duc = tmpDiv2 / denDuc;
+            // apply
+            muAv[p] *= Duc;
+        }
+#endif
+    }
+}
+
+/**
+ * @brief Make field C0.
+ *
+ * @param field Input Field
+ */
+void VariableConverter::ApplyC0Smooth(Array<OneD, NekDouble>& field)
+{
+    auto nCoeffs = m_C0ProjectExp->GetNcoeffs();
+    Array<OneD, NekDouble> muFwd(nCoeffs);
+    Array<OneD, NekDouble> weights(nCoeffs, 1.0);
+    // Assemble global expansion coefficients for viscosity
+    m_C0ProjectExp->FwdTrans_IterPerExp(field,
+        m_C0ProjectExp->UpdateCoeffs());
+    m_C0ProjectExp->Assemble();
+    Vmath::Vcopy(nCoeffs, m_C0ProjectExp->GetCoeffs(), 1, muFwd, 1);
+    // Global coefficients
+    Vmath::Vcopy(nCoeffs, weights, 1,
+        m_C0ProjectExp->UpdateCoeffs(), 1);
+    // This is the sign vector
+    m_C0ProjectExp->GlobalToLocal();
+    // Get weights
+    m_C0ProjectExp->Assemble();
+    // Divide
+    Vmath::Vdiv(nCoeffs, muFwd, 1, m_C0ProjectExp->GetCoeffs(), 1,
+        m_C0ProjectExp->UpdateCoeffs(), 1);
+    // Get local coefficients
+    m_C0ProjectExp->GlobalToLocal();
+    // Get C0 field
+    m_C0ProjectExp->BwdTrans_IterPerExp(
+    m_C0ProjectExp->GetCoeffs(), field);
+}
+
+
+} //namespace

@@ -56,7 +56,7 @@ namespace Nektar
         AdvectionSystem::v_InitObject();
 
         m_varConv = MemoryManager<VariableConverter>::AllocateSharedPtr(
-                    m_session, m_spacedim);
+                    m_session, m_spacedim, m_graph);
 
         ASSERTL0(m_session->DefinesSolverInfo("UPWINDTYPE"),
                  "No UPWINDTYPE defined in session.");
@@ -78,25 +78,14 @@ namespace Nektar
         // Setting up advection and diffusion operators
         InitAdvection();
 
-        // Create artificial diffusion
-        if (m_shockCaptureType != "Off")
+        // Create artificial diffusion with laplacian operator
+        if (m_shockCaptureType == "NonSmooth")
         {
-            if (m_shockCaptureType == "Physical")
-            {
-                auto nPts = m_fields[0]->GetTotPoints();
-                m_muAv = Array<OneD, NekDouble>(nPts, 0.0);
-
-                auto nTracePts = m_fields[0]->GetTrace()->GetTotPoints();
-                m_muAvTrace = Array<OneD, NekDouble> (nTracePts,0.0);
-            }
-            else
-            {
-                m_artificialDiffusion = GetArtificialDiffusionFactory()
-                                        .CreateInstance(m_shockCaptureType,
-                                                        m_session,
-                                                        m_fields,
-                                                        m_spacedim);
-            }
+            m_artificialDiffusion = GetArtificialDiffusionFactory()
+                                    .CreateInstance(m_shockCaptureType,
+                                                    m_session,
+                                                    m_fields,
+                                                    m_spacedim);
         }
 
         // Forcing terms for the sponge region
@@ -930,8 +919,6 @@ namespace Nektar
 
             if (m_artificialDiffusion)
             {
-                // Get min h/p
-                m_artificialDiffusion->SetElmtHP(GetElmtMinHP());
                 // reuse pressure
                 Array<OneD, NekDouble> sensorFwd(nCoeffs);
                 m_artificialDiffusion->GetArtificialViscosity(tmp, pressure);
@@ -939,14 +926,6 @@ namespace Nektar
 
                 variables.push_back  ("ArtificialVisc");
                 fieldcoeffs.push_back(sensorFwd);
-            }
-
-            if (m_shockCaptureType == "Physical")
-            {
-                Array<OneD, NekDouble> muavFwd(nCoeffs);
-                m_fields[0]->FwdTrans_IterPerExp(m_muAv,   muavFwd);
-                variables.push_back  ("ArtificialVisc");
-                fieldcoeffs.push_back(muavFwd);
             }
         }
     }
@@ -988,7 +967,7 @@ namespace Nektar
         const Array<OneD, Array<OneD, NekDouble> >       &pBwd)
     {
         boost::ignore_unused(inarray, outarray, pFwd, pBwd);
-        if (m_shockCaptureType != "Off")
+        if (m_shockCaptureType == "NonSmooth")
         {
             m_artificialDiffusion->DoArtificialDiffusion(inarray, outarray);
         }
@@ -1003,66 +982,4 @@ namespace Nektar
         boost::ignore_unused(inarray, outarray, pFwd, pBwd);
         // Do nothing by default
     }
-
-/**
- * @brief Compute an estimate of minimum h/p
- * for each element of the expansion.
- */
-Array<OneD, NekDouble>  CompressibleFlowSystem::GetElmtMinHP(void)
-{
-    int nElements               = m_fields[0]->GetExpSize();
-    Array<OneD, NekDouble> hOverP(nElements, 1.0);
-
-    // Determine h/p scaling
-    Array<OneD, int> pOrderElmt = m_fields[0]->EvalBasisNumModesMaxPerExp();
-    for (int e = 0; e < nElements; e++)
-    {
-        NekDouble h = 1.0e+10;
-        switch(m_expdim)
-        {
-            case 3:
-            {
-                LocalRegions::Expansion3DSharedPtr exp3D;
-                exp3D = m_fields[0]->GetExp(e)->as<LocalRegions::Expansion3D>();
-                for(int i = 0; i < exp3D->GetNtraces(); ++i)
-                {
-                    h = min(h, exp3D->GetGeom3D()->GetEdge(i)->GetVertex(0)->
-                        dist(*(exp3D->GetGeom3D()->GetEdge(i)->GetVertex(1))));
-                }
-            break;
-            }
-
-            case 2:
-            {
-                LocalRegions::Expansion2DSharedPtr exp2D;
-                exp2D = m_fields[0]->GetExp(e)->as<LocalRegions::Expansion2D>();
-                for(int i = 0; i < exp2D->GetNtraces(); ++i)
-                {
-                    h = min(h, exp2D->GetGeom2D()->GetEdge(i)->GetVertex(0)->
-                        dist(*(exp2D->GetGeom2D()->GetEdge(i)->GetVertex(1))));
-                }
-            break;
-            }
-            case 1:
-            {
-                LocalRegions::Expansion1DSharedPtr exp1D;
-                exp1D = m_fields[0]->GetExp(e)->as<LocalRegions::Expansion1D>();
-
-                h = min(h, exp1D->GetGeom1D()->GetVertex(0)->
-                    dist(*(exp1D->GetGeom1D()->GetVertex(1))));
-
-            break;
-            }
-            default:
-            {
-                ASSERTL0(false,"Dimension out of bound.")
-            }
-        }
-
-        // Determine h/p scaling
-        hOverP[e] = h/max(pOrderElmt[e]-1,1);
-
-    }
-    return hOverP;
-}
 }

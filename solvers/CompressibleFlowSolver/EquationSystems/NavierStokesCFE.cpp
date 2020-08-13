@@ -33,7 +33,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <CompressibleFlowSolver/EquationSystems/NavierStokesCFE.h>
-#include <LibUtilities/BasicUtils/Smath.hpp>
 
 using namespace std;
 
@@ -140,22 +139,6 @@ namespace Nektar
 
         // Concluding initialisation of diffusion operator
         m_diffusion->InitObject         (m_session, m_fields);
-
-        // Shock sensor
-        m_session->LoadSolverInfo("PhysicalSensorType",
-            m_physicalSensorType,    "Off");
-
-        // Artificial viscosity scaling constant
-        m_session->LoadParameter("mu0", m_mu0, 0.5);
-
-        // load smoothing tipe
-        m_session->LoadSolverInfo("Smoothing", m_smoothing, "Off");
-        if (m_smoothing == "C0")
-        {
-            m_C0ProjectExp = MemoryManager<MultiRegions::ContField>::
-            AllocateSharedPtr(m_session, m_graph, m_session->GetVariable(0));
-        }
-
     }
 
     void NavierStokesCFE::v_DoDiffusion(
@@ -174,36 +157,15 @@ namespace Nektar
             outarrayDiff[i] = Array<OneD, NekDouble>(npoints, 0.0);
         }
 
-        // Set artificial viscosity
+        // Set artificial viscosity based on NS viscous tensor
         if (m_shockCaptureType == "Physical")
         {
-            // Get volume artificial viscosity
-            // GetPhysicalAV(inarray, m_muAv);
-            // Apply Ducros sensor
-            if (m_physicalSensorType == "Ducros")
-            {
-                Array<OneD, NekDouble> div(npoints), curlSquare(npoints);
-                GetDivCurlSquared(m_fields, inarray, div, curlSquare,
-                    pFwd, pBwd);
+            Array<OneD, NekDouble> div(npoints), curlSquare(npoints);
+            GetDivCurlSquared(m_fields, inarray, div, curlSquare,
+                pFwd, pBwd);
 
-                // Dilatation sensor
-                GetPhysicalAV(inarray, div, m_muAv);
-
-                ApplyDucros(m_fields, div, curlSquare, m_muAv);
-            }
-            // Apply approximate C0 smoothing
-            if (m_smoothing == "C0")
-            {
-                ApplyC0Smooth(m_muAv);
-            }
-            // Set trace AV
-            Array<OneD, NekDouble> muFwd(nTracePts, 0.0), muBwd(nTracePts, 0.0);
-            m_fields[0]->GetFwdBwdTracePhys(m_muAv, muFwd, muBwd, false,
-                false, false);
-            for (size_t p = 0; p < nTracePts; ++p)
-            {
-                m_muAvTrace[p] = 0.5 * (muFwd[p] + muBwd[p]);
-            }
+            // Set volume and trace artificial viscosity
+            m_varConv->SetAv(m_fields, inarray, div, curlSquare);
         }
 
         string diffName;
@@ -374,7 +336,8 @@ namespace Nektar
                             outarray[i], 1);
             }
 
-            if (m_shockCaptureType != "Off")
+            // Laplacian operator based artificial viscosity
+            if (m_shockCaptureType == "NonSmooth")
             {
                 m_artificialDiffusion->DoArtificialDiffusion_coeff(
                     inarray, outarray);
@@ -1024,125 +987,20 @@ namespace Nektar
         // Add artificial viscosity if wanted
         if (m_shockCaptureType == "Physical")
         {
-            if (mu.size() == m_muAv.size())
+            auto nTracePts = m_fields[0]->GetTrace()->GetTotPoints();
+            if (nPts != nTracePts)
             {
-                Vmath::Vadd(nPts, mu, 1, m_muAv, 1, mu, 1);
+                Vmath::Vadd(nPts, mu, 1, m_varConv->GetAv(), 1, mu, 1);
             }
             else
             {
-                Vmath::Vadd(nPts, mu, 1, m_muAvTrace, 1, mu, 1);
+                Vmath::Vadd(nPts, mu, 1, m_varConv->GetAvTrace(), 1, mu, 1);
             }
         }
 
         // Thermal conductivity
         NekDouble tRa = m_Cp / m_Prandtl;
         Vmath::Smul(nPts, tRa, mu, 1, thermalCond, 1);
-    }
-
-    /**
-    * @brief Calculate the physical artificial viscosity based on modal sensor.
-    *
-    * @param physfield  Input field.
-    */
-    void NavierStokesCFE::GetPhysicalAV(
-        const Array<OneD, const Array<OneD, NekDouble>>& physfield,
-              Array<OneD, NekDouble>& muAv)
-    {
-        auto nPts = physfield[0].size();
-        auto nElements = m_fields[0]->GetExpSize();
-
-        Array <OneD, NekDouble> hOverP(nElements, 0.0);
-        hOverP = GetElmtMinHP();
-
-        // Determine the maximum wavespeed
-        Array <OneD, NekDouble > Lambdas(nPts, 0.0);
-        Array <OneD, NekDouble > soundspeed(nPts, 0.0);
-        Array <OneD, NekDouble > absVelocity(nPts, 0.0);
-        m_varConv->GetSoundSpeed(physfield, soundspeed);
-        m_varConv->GetAbsoluteVelocity(physfield, absVelocity);
-
-        Vmath::Vadd(nPts, absVelocity, 1, soundspeed, 1, Lambdas, 1);
-
-        // Compute sensor based on rho
-        Array<OneD, NekDouble> Sensor(nPts, 0.0);
-        m_varConv->GetSensor(m_fields[0], physfield, Sensor, muAv, 1);
-
-        Array<OneD, NekDouble> tmp;
-        for (size_t e = 0; e < nElements; ++e)
-        {
-            auto physOffset  = m_fields[0]->GetPhys_Offset(e);
-            auto nElmtPoints = m_fields[0]->GetExp(e)->GetTotPoints();
-
-            // Compute the maximum wave speed
-            NekDouble LambdaElmt = 0.0;
-            LambdaElmt = Vmath::Vmax(nElmtPoints, tmp = Lambdas + physOffset, 1);
-
-            // Compute average bounded density
-            NekDouble rhoAve = Vmath::Vsum(nElmtPoints, tmp = physfield[0]
-                + physOffset, 1);
-            rhoAve = rhoAve / nElmtPoints;
-            rhoAve = Smath::Smax(rhoAve, 1.0e-4, 1.0e+4);
-
-            // Scale sensor by coeff, h/p, and density
-            LambdaElmt *= m_mu0 * hOverP[e] * rhoAve;
-            Vmath::Smul(nElmtPoints, LambdaElmt, tmp = muAv + physOffset, 1,
-                tmp = muAv + physOffset, 1);
-        }
-
-    }
-
-    /**
-    * @brief Calculate the physical artificial viscosity based on dilatation of
-    * velocity vector.
-    *
-    * @param
-    */
-    void NavierStokesCFE::GetPhysicalAV(
-        const Array<OneD, const Array<OneD, NekDouble>>& consVar,
-        const Array<OneD, NekDouble>& div,
-              Array<OneD, NekDouble>& muAv)
-    {
-        auto nPts = consVar[0].size();
-        auto nElements = m_fields[0]->GetExpSize();
-
-        Array <OneD, NekDouble> hOverP(nElements, 0.0);
-        hOverP = GetElmtMinHP();
-
-        // Get sound speed
-        // theoretically it should be used  the critical sound speed, this
-        // matters greatly for large Mach numbers (above 3.0)
-        Array <OneD, NekDouble > soundspeed(nPts, 0.0);
-        m_varConv->GetSoundSpeed(consVar, soundspeed);
-
-        // Get maximum wavespeed
-        Array <OneD, NekDouble > absVelocity(nPts, 0.0);
-        m_varConv->GetAbsoluteVelocity(consVar, absVelocity);
-
-        // Loop over elements
-        auto nElmt = m_fields[0]->GetExpSize();
-        for (size_t e = 0; e < nElmt; ++e)
-        {
-            auto nElmtPoints = m_fields[0]->GetExp(e)->GetTotPoints();
-            auto physOffset  = m_fields[0]->GetPhys_Offset(e);
-            auto physEnd = physOffset + nElmtPoints;
-
-            NekDouble hOpTmp = hOverP[e];
-
-            // Loop over the points
-            for (size_t p = physOffset; p < physEnd; ++p)
-            {
-                // Get non-dimensional sensor based on dilatation
-                NekDouble sspeedTmp = soundspeed[p];
-                // (only compression waves)
-                NekDouble divTmp = - div[p];
-                divTmp = std::max(divTmp, 0.0);
-                NekDouble sensor = m_mu0 * hOpTmp * divTmp / sspeedTmp;
-                // Scale to viscosity scale
-                NekDouble rho = consVar[0][p];
-                NekDouble lambda = sspeedTmp + absVelocity[p];
-                muAv[p] = sensor * rho * lambda * hOpTmp;
-            }
-        }
     }
 
     /**
@@ -1300,83 +1158,6 @@ namespace Nektar
         }
     }
 
-    /**
-    * @brief Applied Ducros (anti-vorticity) sensor averaged over the element.
-    *
-    * @param field Input Field
-    */
-    void NavierStokesCFE::ApplyDucros(
-        const Array<OneD, MultiRegions::ExpListSharedPtr>& fields,
-        const Array<OneD, NekDouble>& div,
-        const Array<OneD, NekDouble>& curlSquare,
-        Array<OneD, NekDouble>& muAv)
-    {
-        // machine eps**2
-        NekDouble eps = std::numeric_limits<NekDouble>::epsilon();
-        eps *= eps;
-
-        // loop over elements
-        auto nElmt = fields[0]->GetExpSize();
-        for (size_t e = 0; e < nElmt; ++e)
-        {
-            auto nElmtPoints = fields[0]->GetExp(e)->GetTotPoints();
-            auto physOffset  = fields[0]->GetPhys_Offset(e);
-            auto physEnd = physOffset + nElmtPoints;
-
-            // loop over points in element to get average
-            NekDouble elmtAvgDuc = 0.0;
-            for (size_t p = physOffset; p < physEnd; ++p)
-            {
-                NekDouble tmpDiv2 = div[p];
-                tmpDiv2 *= tmpDiv2;
-                NekDouble denDuc = tmpDiv2 + curlSquare[p] + eps;
-                elmtAvgDuc += tmpDiv2 / denDuc;
-            }
-            elmtAvgDuc /= nElmtPoints;
-
-            // loop over points in element to apply ducros
-            for (size_t p = physOffset; p < physEnd; ++p)
-            {
-                muAv[p] *= elmtAvgDuc;
-            }
-        }
-    }
-
-    /**
-     * @brief Make field C0.
-     *
-     * @param field Input Field
-     */
-    void NavierStokesCFE::ApplyC0Smooth(Array<OneD, NekDouble>& field)
-    {
-        auto nCoeffs = m_C0ProjectExp->GetNcoeffs();
-        Array<OneD, NekDouble> muFwd(nCoeffs);
-        Array<OneD, NekDouble> weights(nCoeffs, 1.0);
-        // Assemble global expansion coefficients for viscosity
-        m_C0ProjectExp->FwdTrans_IterPerExp(field,
-            m_C0ProjectExp->UpdateCoeffs());
-        m_C0ProjectExp->Assemble();
-        Vmath::Vcopy(nCoeffs, m_C0ProjectExp->GetCoeffs(), 1, muFwd, 1);
-        // Global coefficients
-        Vmath::Vcopy(nCoeffs, weights, 1,
-            m_C0ProjectExp->UpdateCoeffs(), 1);
-        // This is the sign vector
-        m_C0ProjectExp->GlobalToLocal();
-        // Get weights
-        m_C0ProjectExp->Assemble();
-        // Divide
-        Vmath::Vdiv(nCoeffs, muFwd, 1, m_C0ProjectExp->GetCoeffs(), 1,
-            m_C0ProjectExp->UpdateCoeffs(), 1);
-        // Get local coefficients
-        m_C0ProjectExp->GlobalToLocal();
-        // Get C0 field
-        m_C0ProjectExp->BwdTrans_IterPerExp(
-        m_C0ProjectExp->GetCoeffs(), field);
-
-
-    }
-
-
     void NavierStokesCFE::v_ExtraFldOutput(
         std::vector<Array<OneD, NekDouble> > &fieldcoeffs,
         std::vector<std::string>             &variables)
@@ -1453,10 +1234,8 @@ namespace Nektar
             fieldcoeffs.push_back(mFwd);
             fieldcoeffs.push_back(sensFwd);
 
-            if (m_artificialDiffusion)
+            if (m_artificialDiffusion == "NonSmooth")
             {
-                // Get min h/p
-                m_artificialDiffusion->SetElmtHP(GetElmtMinHP());
                 // reuse pressure
                 Array<OneD, NekDouble> sensorFwd(nCoeffs);
                 m_artificialDiffusion->GetArtificialViscosity(cnsVar, pressure);
@@ -1468,10 +1247,6 @@ namespace Nektar
 
             if (m_shockCaptureType == "Physical")
             {
-                Array<OneD, NekDouble> muavFwd(nCoeffs);
-                m_fields[0]->FwdTrans_IterPerExp(m_muAv, muavFwd);
-                variables.push_back  ("ArtificialVisc");
-                fieldcoeffs.push_back(muavFwd);
 
                 Array<OneD, Array<OneD, NekDouble>> cnsVarFwd(m_fields.size()),
                     cnsVarBwd(m_fields.size());
@@ -1497,6 +1272,12 @@ namespace Nektar
                 variables.push_back("curl^2");
                 fieldcoeffs.push_back(curlFwd);
 
+                m_varConv->SetAv(m_fields, cnsVar, div, curlSquare);
+
+                Array<OneD, NekDouble> muavFwd(nCoeffs);
+                m_fields[0]->FwdTrans_IterPerExp(m_varConv->GetAv(), muavFwd);
+                variables.push_back  ("ArtificialVisc");
+                fieldcoeffs.push_back(muavFwd);
             }
         }
     }

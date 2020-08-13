@@ -36,7 +36,6 @@
 #define NEKTAR_SOLVERS_COMPRESSIBLEFLOWSOLVER_EQUATIONSYSTEMS_NAVIERSTOKESCFE_H
 
 #include <CompressibleFlowSolver/EquationSystems/CompressibleFlowSystem.h>
-#include <MultiRegions/ContField.h>
 
 namespace Nektar
 {
@@ -75,12 +74,6 @@ namespace Nektar
     NekDouble                           m_thermalConductivityRef;
     Array<OneD, NekDouble>              m_mu;
     Array<OneD, NekDouble>              m_thermalConductivity;
-
-    // Shock sensor
-    NekDouble                           m_mu0;
-    std::string                         m_physicalSensorType;
-    std::string                         m_smoothing;
-    MultiRegions::ContFieldSharedPtr    m_C0ProjectExp;
 
     NavierStokesCFE(const LibUtilities::SessionReaderSharedPtr& pSession,
                     const SpatialDomains::MeshGraphSharedPtr& pGraph);
@@ -152,15 +145,6 @@ namespace Nektar
               Array<OneD, NekDouble> &mu,
               Array<OneD, NekDouble> &thermalCond);
 
-    void GetPhysicalAV(
-        const Array<OneD, const Array<OneD, NekDouble>>& physfield,
-              Array<OneD, NekDouble>& muAv);
-
-    void GetPhysicalAV(
-        const Array<OneD, const Array<OneD, NekDouble>>& consVar,
-        const Array<OneD, NekDouble>& div,
-              Array<OneD, NekDouble>& muAv);
-
     void GetDivCurlSquared(
         const Array<OneD, MultiRegions::ExpListSharedPtr>& fields,
         const Array<OneD, Array<OneD, NekDouble>>&         cnsVar,
@@ -173,15 +157,6 @@ namespace Nektar
         const TensorOfArray3D<NekDouble>& pVarDer,
               Array<OneD, NekDouble>&     div,
               Array<OneD, NekDouble>&     curlSquare);
-
-    void ApplyDucros(
-        const Array<OneD, MultiRegions::ExpListSharedPtr>& fields,
-        const Array<OneD, NekDouble>&                      div,
-        const Array<OneD, NekDouble>&                      curlSquare,
-              Array<OneD, NekDouble>&                      muAv);
-
-    void ApplyC0Smooth(Array<OneD, NekDouble>& field);
-
 
     virtual void v_ExtraFldOutput(
             std::vector<Array<OneD, NekDouble> > &fieldcoeffs,

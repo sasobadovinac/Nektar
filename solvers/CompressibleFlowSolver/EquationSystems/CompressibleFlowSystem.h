@@ -47,8 +47,6 @@
 #include <SolverUtils/Diffusion/Diffusion.h>
 #include <SolverUtils/Forcing/Forcing.h>
 #include <SolverUtils/Filters/FilterInterfaces.hpp>
-#include <LocalRegions/Expansion3D.h>
-#include <LocalRegions/Expansion2D.h>
 
 
 namespace Nektar
@@ -73,9 +71,6 @@ namespace Nektar
         Array<OneD, NekDouble> GetStabilityLimitVector(
             const Array<OneD,int> &ExpOrder);
 
-        /// Function to get estimate of min h/p factor per element
-        Array<OneD, NekDouble>  GetElmtMinHP(void);
-
         virtual void GetPressure(
             const Array<OneD, const Array<OneD, NekDouble> > &physfield,
                   Array<OneD, NekDouble>                     &pressure);
@@ -99,10 +94,6 @@ namespace Nektar
         Array<OneD, Array<OneD, NekDouble> >m_vecLocs;
         NekDouble                           m_gamma;
         std::string                         m_shockCaptureType;
-
-        /// Storage for physical artificial viscosity
-        Array<OneD, NekDouble>              m_muAv;
-        Array<OneD, NekDouble>              m_muAvTrace;
 
         // Parameters for exponential filtering
         NekDouble                           m_filterAlpha;

@@ -38,6 +38,7 @@
 
 #include "EquationOfState.h"
 #include <SolverUtils/UnsteadySystem.h>
+#include <MultiRegions/ContField.h>
 
 namespace Nektar
 {
@@ -50,8 +51,9 @@ typedef std::shared_ptr<VariableConverter> VariableConverterSharedPtr;
 class VariableConverter
 {
 public:
-    VariableConverter(const LibUtilities::SessionReaderSharedPtr &pSession,
-                      const int spaceDim);
+    VariableConverter(const LibUtilities::SessionReaderSharedPtr& pSession,
+                      const int spaceDim,
+                      const SpatialDomains::MeshGraphSharedPtr& pGraph = 0);
 
     ~VariableConverter();
 
@@ -74,10 +76,6 @@ public:
     void GetAbsoluteVelocity(
         const Array<OneD, const Array<OneD, NekDouble>> &physfield,
         Array<OneD, NekDouble> &Vtot);
-    void GetSensor(const MultiRegions::ExpListSharedPtr &field,
-                   const Array<OneD, const Array<OneD, NekDouble>> &physarray,
-                   Array<OneD, NekDouble> &Sensor,
-                   Array<OneD, NekDouble> &SensorKappa, int offset = 1);
 
     // Transformations depending on the equation of state
     void GetTemperature(
@@ -97,6 +95,46 @@ public:
                       const Array<OneD, NekDouble> &temperature,
                       Array<OneD, NekDouble> &rho);
 
+    // Shock sensor methods
+    void SetAv(const Array<OneD, MultiRegions::ExpListSharedPtr>& fields,
+               const Array<OneD, const Array<OneD, NekDouble>>& consVar,
+               const Array<OneD, NekDouble>& div,
+               const Array<OneD, NekDouble>& curlSquared);
+
+
+    Array<OneD, NekDouble>& GetAv();
+
+    Array<OneD, NekDouble>& GetAvTrace();
+
+
+    void SetElmtMinHP(const Array<OneD, MultiRegions::ExpListSharedPtr>& fields);
+
+    Array<OneD, NekDouble>&  GetElmtMinHP();
+
+    void GetSensor(const MultiRegions::ExpListSharedPtr &field,
+                   const Array<OneD, const Array<OneD, NekDouble>> &physarray,
+                   Array<OneD, NekDouble> &Sensor,
+                   Array<OneD, NekDouble> &SensorKappa, int offset = 1);
+
+    void GetMuAv(
+        const Array<OneD, MultiRegions::ExpListSharedPtr>& fields,
+        const Array<OneD, const Array<OneD, NekDouble>>& physfield,
+              Array<OneD, NekDouble>& muAv);
+
+    void GetMuAv(
+        const Array<OneD, MultiRegions::ExpListSharedPtr>& fields,
+        const Array<OneD, const Array<OneD, NekDouble>>& consVar,
+        const Array<OneD, NekDouble>& div,
+              Array<OneD, NekDouble>& muAv);
+
+    void ApplyDucros(
+        const Array<OneD, MultiRegions::ExpListSharedPtr>& fields,
+        const Array<OneD, NekDouble>&                      div,
+        const Array<OneD, NekDouble>&                      curlSquare,
+              Array<OneD, NekDouble>&                      muAv);
+
+    void ApplyC0Smooth(Array<OneD, NekDouble>& field);
+
 protected:
     LibUtilities::SessionReaderSharedPtr m_session;
     EquationOfStateSharedPtr m_eos;
@@ -107,6 +145,21 @@ protected:
     NekDouble m_mu;
     NekDouble m_Skappa;
     NekDouble m_Kappa;
+
+    /// Shock sensor
+    NekDouble                           m_mu0;
+    std::string                         m_shockCaptureType;
+    std::string                         m_shockSensorType;
+    std::string                         m_ducrosSensor;
+    std::string                         m_smoothing;
+    MultiRegions::ContFieldSharedPtr    m_C0ProjectExp;
+
+    /// h/p scaling
+    Array<OneD, NekDouble>              m_hOverP;
+    /// storage
+    Array<OneD, NekDouble>              m_muAv;
+    Array<OneD, NekDouble>              m_muAvTrace;
+
 };
 }
 #endif
