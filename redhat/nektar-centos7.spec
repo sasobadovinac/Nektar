@@ -460,7 +460,6 @@ cd ..
 %{_mpich_load}
 cd $MPI_COMPILER
 make install DESTDIR=%{buildroot}
-chmod +x %{buildroot}%{_libdir}/mpich/lib/nektar++/thirdparty/*.so.*
 %{__python3} setup.py install --root=%{buildroot} --install-purelib=%{python3_sitearch}/mpich
 mv %{buildroot}/usr/lib64/mpich/include %{buildroot}/usr/include/$MPI_COMPILER
 cd ..
