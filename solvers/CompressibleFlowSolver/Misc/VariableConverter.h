@@ -128,7 +128,6 @@ public:
               Array<OneD, NekDouble>& muAv);
 
     void ApplyDucros(
-        const Array<OneD, MultiRegions::ExpListSharedPtr>& fields,
         const Array<OneD, NekDouble>&                      div,
         const Array<OneD, NekDouble>&                      curlSquare,
               Array<OneD, NekDouble>&                      muAv);

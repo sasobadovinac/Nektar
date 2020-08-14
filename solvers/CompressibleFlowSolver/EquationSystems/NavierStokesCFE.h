@@ -153,7 +153,7 @@ namespace Nektar
         const Array<OneD, Array<OneD, NekDouble>>&         cnsVarFwd,
         const Array<OneD, Array<OneD, NekDouble>>&         cnsVarBwd);
 
-    void GetDivCurlImpl(
+    void GetDivCurlFromDvelT(
         const TensorOfArray3D<NekDouble>& pVarDer,
               Array<OneD, NekDouble>&     div,
               Array<OneD, NekDouble>&     curlSquare);

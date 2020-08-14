@@ -403,7 +403,6 @@ void VariableConverter::SetAv(
         SetElmtMinHP(fields);
     }
 
-
     if (m_shockSensorType == "Modal")
     {
         // Get viscosity based on modal sensor
@@ -418,9 +417,10 @@ void VariableConverter::SetAv(
     // Apply Ducros sensor
     if (m_ducrosSensor != "Off")
     {
-        ApplyDucros(fields, div, curlSquared, m_muAv);
+        ApplyDucros(div, curlSquared, m_muAv);
     }
-        // Apply approximate C0 smoothing
+
+    // Apply approximate C0 smoothing
     if (m_smoothing == "C0")
     {
         ApplyC0Smooth(m_muAv);
@@ -450,7 +450,8 @@ Array<OneD, NekDouble>& VariableConverter::GetAvTrace()
  * @brief Compute an estimate of minimum h/p
  * for each element of the expansion.
  */
-void VariableConverter::SetElmtMinHP(const Array<OneD, MultiRegions::ExpListSharedPtr>& fields)
+void VariableConverter::SetElmtMinHP(
+    const Array<OneD, MultiRegions::ExpListSharedPtr>& fields)
 {
     auto nElements = fields[0]->GetExpSize();
     if (m_hOverP == NullNekDouble1DArray)
@@ -605,7 +606,7 @@ void VariableConverter::GetSensor(
                 (1 + sin(M_PI * (elmtSensor - Skappa) / (2 * m_Kappa)));
         }
         Vmath::Fill(nElmtPoints, elmtSensorKappa,
-                tmp = SensorKappa + physOffset, 1);
+            tmp = SensorKappa + physOffset, 1);
     }
 }
 
@@ -673,11 +674,11 @@ void VariableConverter::GetMuAv(
 
     // Get sound speed
     // theoretically it should be used  the critical sound speed, this
-    // matters greatly for large Mach numbers (above 3.0)
-    Array <OneD, NekDouble > soundspeed(nPts, 0.0);
-    GetSoundSpeed(consVar, soundspeed);
+    // matters for large Mach numbers (above 3.0)
+    Array <OneD, NekDouble > soundSpeed(nPts, 0.0);
+    GetSoundSpeed(consVar, soundSpeed);
 
-    // Get maximum wavespeed
+    // Get abosolute velovity to compute lambda
     Array <OneD, NekDouble > absVelocity(nPts, 0.0);
     GetAbsoluteVelocity(consVar, absVelocity);
 
@@ -695,26 +696,25 @@ void VariableConverter::GetMuAv(
         for (size_t p = physOffset; p < physEnd; ++p)
         {
             // Get non-dimensional sensor based on dilatation
-            NekDouble sspeedTmp = soundspeed[p];
+            NekDouble sSpeedTmp = soundSpeed[p];
             // (only compression waves)
             NekDouble divTmp = - div[p];
             divTmp = std::max(divTmp, 0.0);
-            NekDouble sensor = m_mu0 * hOpTmp * divTmp / sspeedTmp;
+            NekDouble sensor = m_mu0 * hOpTmp * divTmp / sSpeedTmp;
             // Scale to viscosity scale
             NekDouble rho = consVar[0][p];
-            NekDouble lambda = sspeedTmp + absVelocity[p];
+            NekDouble lambda = sSpeedTmp + absVelocity[p];
             muAv[p] = sensor * rho * lambda * hOpTmp;
         }
     }
 }
 
 /**
-* @brief Applied Ducros (anti-vorticity) sensor averaged over the element.
+* @brief Apply Ducros (anti-vorticity) sensor averaged over the element.
 *
 * @param field Input Field
 */
 void VariableConverter::ApplyDucros(
-    const Array<OneD, MultiRegions::ExpListSharedPtr>& fields,
     const Array<OneD, NekDouble>& div,
     const Array<OneD, NekDouble>& curlSquare,
     Array<OneD, NekDouble>& muAv)
@@ -723,42 +723,16 @@ void VariableConverter::ApplyDucros(
     NekDouble eps = std::numeric_limits<NekDouble>::epsilon();
     eps *= eps;
 
-    // loop over elements
-    auto nElmt = fields[0]->GetExpSize();
-    for (size_t e = 0; e < nElmt; ++e)
+    // loop over points
+    auto nPts = div.size();
+    for (size_t p = 0; p < nPts; ++p)
     {
-        auto nElmtPoints = fields[0]->GetExp(e)->GetTotPoints();
-        auto physOffset  = fields[0]->GetPhys_Offset(e);
-        auto physEnd = physOffset + nElmtPoints;
-#if 0
-        // loop over points in element to get average
-        NekDouble elmtAvgDuc = 0.0;
-        for (size_t p = physOffset; p < physEnd; ++p)
-        {
-            NekDouble tmpDiv2 = div[p];
-            tmpDiv2 *= tmpDiv2;
-            NekDouble denDuc = tmpDiv2 + curlSquare[p] + eps;
-            elmtAvgDuc += tmpDiv2 / denDuc;
-        }
-        elmtAvgDuc /= nElmtPoints;
-
-        // loop over points in element to apply ducros
-        for (size_t p = physOffset; p < physEnd; ++p)
-        {
-            muAv[p] *= elmtAvgDuc;
-        }
-#else
-        // loop over points in element
-        for (size_t p = physOffset; p < physEnd; ++p)
-        {
-            NekDouble tmpDiv2 = div[p];
-            tmpDiv2 *= tmpDiv2;
-            NekDouble denDuc = tmpDiv2 + curlSquare[p] + eps;
-            NekDouble Duc = tmpDiv2 / denDuc;
-            // apply
-            muAv[p] *= Duc;
-        }
-#endif
+        NekDouble tmpDiv2 = div[p];
+        tmpDiv2 *= tmpDiv2;
+        NekDouble denDuc = tmpDiv2 + curlSquare[p] + eps;
+        NekDouble Duc = tmpDiv2 / denDuc;
+        // apply
+        muAv[p] *= Duc;
     }
 }
 

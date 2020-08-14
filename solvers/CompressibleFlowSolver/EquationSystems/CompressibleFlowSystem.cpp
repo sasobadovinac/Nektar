@@ -967,7 +967,7 @@ namespace Nektar
         const Array<OneD, Array<OneD, NekDouble> >       &pBwd)
     {
         boost::ignore_unused(inarray, outarray, pFwd, pBwd);
-        if (m_shockCaptureType == "NonSmooth")
+        if (m_artificialDiffusion)
         {
             m_artificialDiffusion->DoArtificialDiffusion(inarray, outarray);
         }

@@ -337,7 +337,7 @@ namespace Nektar
             }
 
             // Laplacian operator based artificial viscosity
-            if (m_shockCaptureType == "NonSmooth")
+            if (m_artificialDiffusion)
             {
                 m_artificialDiffusion->DoArtificialDiffusion_coeff(
                     inarray, outarray);
@@ -1078,15 +1078,15 @@ namespace Nektar
             primVarFwd, primVarBwd);
 
         // Get div curl squared
-        GetDivCurlImpl(primVarDer, div, curlSquare);
+        GetDivCurlFromDvelT(primVarDer, div, curlSquare);
     }
 
 
     /**
-     * @brief get div and curl from vel derivative tensor
+     * @brief Get divergence and curl from velocity derivative tensor
      *
      */
-    void NavierStokesCFE::GetDivCurlImpl(
+    void NavierStokesCFE::GetDivCurlFromDvelT(
         const TensorOfArray3D<NekDouble>& pVarDer,
               Array<OneD, NekDouble>&     div,
               Array<OneD, NekDouble>&     curlSquare)
@@ -1234,7 +1234,7 @@ namespace Nektar
             fieldcoeffs.push_back(mFwd);
             fieldcoeffs.push_back(sensFwd);
 
-            if (m_artificialDiffusion == "NonSmooth")
+            if (m_artificialDiffusion)
             {
                 // reuse pressure
                 Array<OneD, NekDouble> sensorFwd(nCoeffs);
