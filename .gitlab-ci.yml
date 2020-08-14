@@ -609,9 +609,8 @@ dockerhub-deploy-nektar-workbook:
     - tmptag
   script:
     - NEKVER=$(<VERSION)
-    - STATUSCODE=$(curl --silent -o /dev/null --write-out "%{http_code}" https://xyloid.org/nektar-repo/versions/${version_file})
-    - if [ $STATUSCODE -ne 200 ]; then echo "Failed to grab versions file"; exit 1; fi
-    - curl -o ${version_file} https://xyloid.org/nektar-repo/versions/${version_file}
+    - STATUSCODE=$(curl --silent -o ${version_file} --write-out "%{http_code}" https://xyloid.org/nektar-repo/versions/${version_file})
+    - if [ $STATUSCODE -eq 404 ]; then echo '{}' > ${version_file}; elif [ $STATUSCODE -ne 200 ]; then echo "Failed to grab versions file"; exit 1; fi
     - RPMRELEASE=$(python3 redhat/version-tracker.py ${version_file} nektar ${NEKVER})
     - mkdir -p ~/rpmbuild/{BUILD,RPMS,SOURCES,SPECS,SRPMS}
     - cp ${spec_file} ~/rpmbuild/SPECS/nektar.spec
@@ -640,13 +639,16 @@ dockerhub-deploy-nektar-workbook:
   script:
     - if [ "$needs_epel" -eq 1 ]; then yum install -y epel-release; fi
     - if [ "$needs_powertools" -eq 1 ]; then yum install -y dnf-plugins-core; yum config-manager --set-enabled PowerTools; fi
-    - yum install -y environment-modules RPMS/x86_64/nektar++-openmpi-adr-solver-[1-9]*.rpm RPMS/x86_64/libnektar++-openmpi-[1-9]*.rpm
+    - yum install -y environment-modules RPMS/x86_64/nektar++-openmpi-adr-solver-[1-9]*.rpm RPMS/x86_64/libnektar++-openmpi-[1-9]*.rpm RPMS/x86_64/nektar++-adr-solver-[1-9]*.rpm RPMS/x86_64/libnektar++-[1-9]*.rpm
+    - cp $CI_PROJECT_DIR/solvers/ADRSolver/Tests/ImDiffusion_m12.xml .
+    - ADRSolver ImDiffusion_m12.xml
+    - test_output=`ADRSolver ImDiffusion_m12.xml | grep "L 2 error" | awk '{print ($7 < 2e-7)}'`
+    - if [ "$test_output" -eq 0 ]; then echo "Tolerance test failed on serial ADRSolver run"; exit 1; fi
     - source /etc/profile.d/modules.sh
     - module load mpi
-    - cp $CI_PROJECT_DIR/solvers/ADRSolver/Tests/ImDiffusion_m12.xml .
     - mpirun --allow-run-as-root -n 3 ADRSolver ImDiffusion_m12.xml
     - test_output=`mpirun --allow-run-as-root -n 3 ADRSolver ImDiffusion_m12.xml | grep "L 2 error" | awk '{print ($7 < 2e-7)}'`
-    - if [ "$test_output" -eq 0 ]; then echo "Tolerance test failed on ADRSolver run"; exit 1; fi
+    - if [ "$test_output" -eq 0 ]; then echo "Tolerance test failed on parallel ADRSolver run"; exit 1; fi
     - yum install -y RPMS/x86_64/nektar++-openmpi-devel-*.rpm
     - cd $CI_PROJECT_DIR/templates/executable
     - ./test.sh /usr/lib64/openmpi/lib/nektar++/cmake 3 ${cmake_exe}

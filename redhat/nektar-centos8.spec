@@ -54,6 +54,7 @@ BuildRequires:  openmpi
 BuildRequires:  hdf5-openmpi-devel
 BuildRequires:  petsc-openmpi-devel
 BuildRequires:  ptscotch-openmpi-devel
+Requires:       libnektar++ = %{version}
 Requires:       boost
 Requires:       tinyxml
 Requires:       fftw
@@ -76,6 +77,7 @@ BuildRequires:  mpich
 BuildRequires:  hdf5-mpich-devel
 BuildRequires:  petsc-mpich-devel
 BuildRequires:  ptscotch-mpich-devel
+Requires:       libnektar++ = %{version}
 Requires:       boost
 Requires:       tinyxml
 Requires:       fftw
