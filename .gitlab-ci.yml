@@ -639,6 +639,7 @@ dockerhub-deploy-nektar-workbook:
   stage: package-test
   script:
     - if [ "$needs_epel" -eq 1 ]; then yum install -y epel-release; fi
+    - if [ "$needs_powertools" -eq 1 ]; then yum install -y dnf-plugins-core; yum config-manager --set-enabled PowerTools; fi
     - yum install -y environment-modules RPMS/x86_64/nektar++-openmpi-adr-solver-[1-9]*.rpm RPMS/x86_64/libnektar++-openmpi-[1-9]*.rpm
     - source /etc/profile.d/modules.sh
     - module load mpi
@@ -697,13 +698,50 @@ package-centos7-test:
     needs_epel: 1
     cmake_exe: cmake3
 
-package-centos7-deploy:
+.package-centos7-deploy:
   <<: *package-rpm-deploy
   needs: ["package-centos7-build", "package-centos7-test"]
   dependencies:
     - package-centos7-build
   variables:
     RPM_LOCATION: centos/7
+
+##
+## CentOS 8
+##
+package-centos8-env:
+  <<: *package-env-build
+  variables:
+    image_name: pkg/centos8
+    dockerfile: docker/packaging/Dockerfile-centos8
+
+package-centos8-build:
+  <<: *package-rpm-build
+  needs: ["package-centos8-env"]
+  variables:
+    GIT_SUBMODULE_STRATEGY: normal
+    spec_file: redhat/nektar-centos8.spec
+    image_name: pkg/centos8
+    version_file: centos-8.json
+
+package-centos8-test:
+  <<: *package-rpm-test
+  needs: ["package-centos8-build"]
+  dependencies:
+    - package-centos8-build
+  variables:
+    image_name: centos:8
+    needs_epel: 1
+    needs_powertools: 1
+    cmake_exe: cmake
+
+.package-centos8-deploy:
+  <<: *package-rpm-deploy
+  needs: ["package-centos8-build", "package-centos8-test"]
+  dependencies:
+    - package-centos8-build
+  variables:
+    RPM_LOCATION: centos/8
 
 ##
 ## Fedora 30
@@ -732,7 +770,7 @@ package-fedora30-test:
     image_name: fedora:30
     cmake_exe: cmake
 
-package-fedora30-deploy:
+.package-fedora30-deploy:
   <<: *package-rpm-deploy
   needs: ["package-fedora30-build", "package-fedora30-test"]
   dependencies:
@@ -767,10 +805,45 @@ package-fedora31-test:
     image_name: fedora:31
     cmake_exe: cmake
 
-package-fedora31-deploy:
+.package-fedora31-deploy:
   <<: *package-rpm-deploy
   needs: ["package-fedora31-build", "package-fedora31-test"]
   dependencies:
     - package-fedora31-build
   variables:
     RPM_LOCATION: fedora/31
+
+##
+## Fedora 32
+##
+package-fedora32-env:
+  <<: *package-env-build
+  variables:
+    image_name: pkg/fedora32
+    dockerfile: docker/packaging/Dockerfile-fedora32
+
+package-fedora32-build:
+  <<: *package-rpm-build
+  needs: ["package-fedora32-env"]
+  variables:
+    GIT_SUBMODULE_STRATEGY: normal
+    spec_file: redhat/nektar-fedora.spec
+    image_name: pkg/fedora32
+    version_file: fedora-32.json
+
+package-fedora32-test:
+  <<: *package-rpm-test
+  needs: ["package-fedora32-build"]
+  dependencies:
+    - package-fedora32-build
+  variables:
+    image_name: fedora:32
+    cmake_exe: cmake
+
+.package-fedora32-deploy:
+  <<: *package-rpm-deploy
+  needs: ["package-fedora32-build", "package-fedora32-test"]
+  dependencies:
+    - package-fedora32-build
+  variables:
+    RPM_LOCATION: fedora/32

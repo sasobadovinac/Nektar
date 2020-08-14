@@ -13,15 +13,15 @@ BuildRequires:  boost-devel
 BuildRequires:  boost-python3-devel
 BuildRequires:  cmake
 BuildRequires:  fftw-devel
+BuildRequires:  freetype-devel
 BuildRequires:  gcc-c++
 BuildRequires:  gcc-gfortran
 BuildRequires:  lapack-devel
 BuildRequires:  make
-BuildRequires:  OCE-devel
+BuildRequires:  mesa-libGL-devel
 BuildRequires:  petsc-devel
 BuildRequires:  python3-devel
 BuildRequires:  scotch-devel
-BuildRequires:  tetgen-devel
 BuildRequires:  tinyxml-devel
 BuildRequires:  zlib-devel
 
@@ -38,8 +38,11 @@ Summary:        Nektar++ spectral/hp element framework libraries
 Group:          System/Libraries
 Requires:       boost
 Requires:       boost-python3
+Requires:       boost-numpy3
 Requires:       tinyxml
 Requires:       fftw
+Requires:       freetype
+Requires:       mesa-libGL
 Requires:       arpack
 Requires:       blas
 Requires:       lapack
@@ -52,9 +55,10 @@ BuildRequires:  hdf5-openmpi-devel
 BuildRequires:  petsc-openmpi-devel
 BuildRequires:  ptscotch-openmpi-devel
 Requires:       boost
-Requires:       boost-python3
 Requires:       tinyxml
 Requires:       fftw
+Requires:       freetype
+Requires:       mesa-libGL
 Requires:       arpack
 Requires:       blas
 Requires:       lapack
@@ -73,9 +77,10 @@ BuildRequires:  hdf5-mpich-devel
 BuildRequires:  petsc-mpich-devel
 BuildRequires:  ptscotch-mpich-devel
 Requires:       boost
-Requires:       boost-python3
 Requires:       tinyxml
 Requires:       fftw
+Requires:       freetype
+Requires:       mesa-libGL
 Requires:       arpack
 Requires:       blas
 Requires:       lapack
@@ -96,18 +101,15 @@ Requires:       libnektar++ = %{version}
 Requires:       arpack-devel
 Requires:       blas-devel
 Requires:       boost-devel
-Requires:       boost-python3-devel
 Requires:       cmake
 Requires:       fftw-devel
 Requires:       gcc-c++
 Requires:       gcc-gfortran
 Requires:       lapack-devel
 Requires:       make
-Requires:       OCE-devel
 Requires:       petsc-devel
 Requires:       python3-devel
 Requires:       scotch-devel
-Requires:       tetgen-devel
 Requires:       tinyxml-devel
 Requires:       zlib-devel
 %description devel
@@ -117,22 +119,19 @@ Development and header files for Nektar++
 Summary:        Development and header files for Nektar++ (OpenMPI variant)
 Group:          Development/Libraries/C and C++
 Requires:       libnektar++-openmpi = %{version}
+Requires:       hdf5-openmpi-devel
+Requires:       petsc-openmpi-devel
+Requires:       ptscotch-openmpi-devel
 Requires:       arpack-devel
 Requires:       blas-devel
 Requires:       boost-devel
-Requires:       boost-python3-devel
 Requires:       cmake
 Requires:       fftw-devel
 Requires:       gcc-c++
 Requires:       gcc-gfortran
 Requires:       lapack-devel
 Requires:       make
-Requires:       OCE-devel
-Requires:       petsc-openmpi-devel
-Requires:       hdf5-openmpi-devel
 Requires:       python3-devel
-Requires:       ptscotch-openmpi-devel
-Requires:       tetgen-devel
 Requires:       tinyxml-devel
 Requires:       zlib-devel
 %description openmpi-devel
@@ -142,22 +141,19 @@ Development and header files for Nektar++ (OpenMPI variant)
 Summary:        Development and header files for Nektar++ (MPICH variant)
 Group:          Development/Libraries/C and C++
 Requires:       libnektar++-mpich = %{version}
+Requires:       hdf5-mpich-devel
+Requires:       petsc-mpich-devel
+Requires:       ptscotch-mpich-devel
 Requires:       arpack-devel
 Requires:       blas-devel
 Requires:       boost-devel
-Requires:       boost-python3-devel
 Requires:       cmake
 Requires:       fftw-devel
 Requires:       gcc-c++
 Requires:       gcc-gfortran
 Requires:       lapack-devel
 Requires:       make
-Requires:       OCE-devel
-Requires:       petsc-mpich-devel
-Requires:       hdf5-mpich-devel
 Requires:       python3-devel
-Requires:       ptscotch-mpich-devel
-Requires:       tetgen-devel
 Requires:       tinyxml-devel
 Requires:       zlib-devel
 %description mpich-devel
@@ -166,21 +162,22 @@ Development and header files for Nektar++ (MPICH variant)
 #### Python bindings
 %package python3
 Summary:        Nektar++ Python 3 interface library
+Requires:       python3
 Requires:       libnektar++ = %{version}
 %description python3
 Nektar++ Python 3 interface library
 
 %package python3-openmpi
 Summary:        Nektar++ Python 3 interface library (OpenMPI variant)
-Requires:       libnektar++-openmpi = %{version}
 Requires:       python3-openmpi
+Requires:       libnektar++-openmpi = %{version}
 %description python3-openmpi
 Nektar++ Python 3 interface library (OpenMPI variant)
 
 %package python3-mpich
 Summary:        Nektar++ Python 3 interface library (MPICH variant)
-Requires:       libnektar++ = %{version}
 Requires:       python3-mpich
+Requires:       libnektar++ = %{version}
 %description python3-mpich
 Nektar++ Python 3 interface library (MPICH variant)
 
@@ -191,8 +188,6 @@ Group:          Documentation
 BuildRequires:  doxygen
 BuildRequires:  ImageMagick
 BuildRequires:  graphviz
-BuildRequires:  texlive texlive-import texlive-lstaddons texlive-bclogo
-BuildRequires:  texlive-mdframed texlive-standalone
 %description doc
 Documentation for Nektar++
 
@@ -392,8 +387,7 @@ mkdir $MPI_COMPILER;                                        \
 cd $MPI_COMPILER;                                           \
 %{cmake}                                                  \\\
     -DCMAKE_INSTALL_PREFIX=$INSTALL_PREFIX                \\\
-    -DCMAKE_CXX_IMPLICIT_INCLUDE_DIRECTORIES=/usr/include \\\
-    -DNEKTAR_ERROR_ON_WARNINGS=OFF                        \\\
+    -DCMAKE_CXX_FLAGS=-Wno-error                          \\\
     -DNEKTAR_LIB_DIR=$NEKTAR_LIBDIR                       \\\
     -DNEKTAR_INCLUDE_ROOT=$NEKTAR_INCLUDE_ROOT            \\\
     -DNEKTAR_BUILD_DEMOS=OFF                              \\\
@@ -424,6 +418,9 @@ cd ..
 
 %undefine _hardened_build
 
+# Export path for texlive.
+export PATH=$PATH:/usr/local/texlive/2019/bin/x86_64-linux
+
 # Build serial version, dummy arguments
 MPI_COMPILER=serial MPI_SUFFIX= MPI_ON=OFF NEKTAR_LIBDIR=%{_lib} NEKTAR_INCLUDE_ROOT=%{_prefix}/include INSTALL_PREFIX=%{_prefix} %dobuild
 
@@ -431,9 +428,6 @@ MPI_COMPILER=serial MPI_SUFFIX= MPI_ON=OFF NEKTAR_LIBDIR=%{_lib} NEKTAR_INCLUDE_
 cd serial && cmake -DNEKTAR_BUILD_DOC=ON .
 make user-guide-pdf developer-guide-pdf doc
 cd ..
-
-# Make sure module paths are loaded
-. /etc/profile.d/00-modulepath.sh;
 
 # Build OpenMPI version
 %{_openmpi_load}
@@ -448,19 +442,18 @@ MPI_ON=ON NEKTAR_LIBDIR=lib NEKTAR_INCLUDE_ROOT=%{_prefix}/include/$MPI_COMPILER
 %install
 # Install serial version
 make -C serial install DESTDIR=%{buildroot} INSTALL="install -p" CPPROG="cp -p"
+chmod +x %{buildroot}%{_libdir}/nektar++/thirdparty/*.so.*
 
 # Install serial NekPy library
 cd serial
 %{__python3} setup.py install --root=%{buildroot} --install-purelib=%{python3_sitearch}
 cd ..
 
-# Make sure module paths are loaded, again.
-. /etc/profile.d/00-modulepath.sh;
-
 # Install OpenMPI version
 %{_openmpi_load}
 cd $MPI_COMPILER
 make install DESTDIR=%{buildroot}
+chmod +x %{buildroot}%{_libdir}/openmpi/lib/nektar++/thirdparty/*.so.*
 %{__python3} setup.py install --root=%{buildroot} --install-purelib=%{python3_sitearch}/openmpi
 mv %{buildroot}/usr/lib64/openmpi/include %{buildroot}/usr/include/$MPI_COMPILER
 cd ..
@@ -475,43 +468,55 @@ mv %{buildroot}/usr/lib64/mpich/include %{buildroot}/usr/include/$MPI_COMPILER
 cd ..
 %{_mpich_unload}
 
-# Clean up temporary Python files
-rm -rf %{buildroot}/root
-
 # Remove MPI NekMesh executables
 rm %{buildroot}/usr/lib64/mpich/bin/NekMesh
 rm %{buildroot}/usr/lib64/openmpi/bin/NekMesh
+
+# Clean up temporary third-party library files
+rm -rf %{buildroot}/root/ %{buildroot}/usr/lib/debug/root
 
 #### Files for RPM packages
 
 %files -n libnektar++
 %defattr(-,root,root,-)
 %{_libdir}/*.so.*
+%dir %{_libdir}/nektar++
+%defattr(-,root,root,-)
+%{_libdir}/nektar++/thirdparty/*.so.*
 
 %files -n libnektar++-openmpi
 %defattr(-,root,root,-)
 %{_libdir}/openmpi/lib/*.so.*
+%dir %{_libdir}/openmpi/lib/nektar++
+%defattr(-,root,root,-)
+%{_libdir}/openmpi/lib/nektar++/thirdparty/*.so.*
 
 %files -n libnektar++-mpich
 %defattr(-,root,root,-)
 %{_libdir}/mpich/lib/*.so.*
+%dir %{_libdir}/mpich/lib/nektar++
+%defattr(-,root,root,-)
+%{_libdir}/mpich/lib/nektar++/thirdparty/*.so.*
 
 %files devel
 %defattr(-,root,root,-)
 %{_libdir}/*.so
-%{_libdir}/nektar++
+%{_libdir}/nektar++/cmake
+%{_libdir}/nektar++/thirdparty/*.so
 %{_includedir}/*
 
 %files openmpi-devel
 %defattr(-,root,root,-)
 %{_libdir}/openmpi/lib/*.so
-%{_libdir}/openmpi/lib/nektar++
+%{_libdir}/openmpi/lib/nektar++/cmake
+%{_libdir}/openmpi/lib/nektar++/thirdparty/*.so
 %{_includedir}/openmpi-x86_64/*
 
 %files mpich-devel
 %defattr(-,root,root,-)
 %{_libdir}/mpich/lib/*.so
-%{_libdir}/mpich/lib/nektar++
+%{_libdir}/mpich/lib/nektar++/cmake
+%{_libdir}/mpich/lib/nektar++/thirdparty/*.so
 %{_includedir}/mpich-x86_64/*
 
 %files python3
@@ -631,4 +636,3 @@ rm %{buildroot}/usr/lib64/openmpi/bin/NekMesh
 %{_libdir}/openmpi/bin/ShallowWaterSolver
 %files mpich-shallowwater-solver
 %{_libdir}/mpich/bin/ShallowWaterSolver
-

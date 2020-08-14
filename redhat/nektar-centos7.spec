@@ -35,7 +35,7 @@ discretisation and associated support classes.
 %package -n libnektar++
 Summary:        Nektar++ spectral/hp element framework libraries
 Group:          System/Libraries
-Requires:       boost169 
+Requires:       boost169
 Requires:       tinyxml
 Requires:       fftw
 Requires:       arpack
@@ -49,7 +49,7 @@ BuildRequires:  openmpi
 BuildRequires:  hdf5-openmpi-devel
 BuildRequires:  petsc-openmpi-devel
 BuildRequires:  ptscotch-openmpi-devel
-Requires:       boost169 
+Requires:       boost169
 Requires:       tinyxml
 Requires:       fftw
 Requires:       arpack
@@ -69,7 +69,7 @@ BuildRequires:  mpich
 BuildRequires:  hdf5-mpich-devel
 BuildRequires:  petsc-mpich-devel
 BuildRequires:  ptscotch-mpich-devel
-Requires:       boost169 
+Requires:       boost169
 Requires:       tinyxml
 Requires:       fftw
 Requires:       arpack
@@ -207,14 +207,14 @@ FieldConvert post-processing utility for Nektar++
 %package openmpi-fieldconvert
 Summary:        FieldConvert post-processing utility for Nektar++
 Group:          Scientific
-Requires:      	libnektar++-openmpi = %{version}
+Requires:       libnektar++-openmpi = %{version}
 %description openmpi-fieldconvert
 FieldConvert post-processing utility for Nektar++
 
 %package mpich-fieldconvert
 Summary:        FieldConvert post-processing utility for Nektar++
 Group:          Scientific
-Requires:      	libnektar++ = %{version}
+Requires:       libnektar++ = %{version}
 %description mpich-fieldconvert
 FieldConvert post-processing utility for Nektar++
 
@@ -224,21 +224,21 @@ FieldConvert post-processing utility for Nektar++
 %package acoustic-solver
 Summary:        Acoustic solver for Nektar++
 Group:          Scientific
-Requires:      	libnektar++ = %{version}
+Requires:       libnektar++ = %{version}
 %description acoustic-solver
 Acoustic solver for Nektar++
 
 %package openmpi-acoustic-solver
 Summary:        Acoustic solver for Nektar++ (OpenMPI)
 Group:          Scientific
-Requires:      	libnektar++-openmpi = %{version}
+Requires:       libnektar++-openmpi = %{version}
 %description openmpi-acoustic-solver
 Acoustic solver for Nektar++ (OpenMPI)
 
 %package mpich-acoustic-solver
 Summary:        Acoustic solver for Nektar++ (MPICH)
 Group:          Scientific
-Requires:      	libnektar++-mpich = %{version}
+Requires:       libnektar++-mpich = %{version}
 %description mpich-acoustic-solver
 Acoustic solver for Nektar++ (MPICH)
 
@@ -246,21 +246,21 @@ Acoustic solver for Nektar++ (MPICH)
 %package adr-solver
 Summary:        Advection-diffusion-reaction solver for Nektar++
 Group:          Scientific
-Requires:      	libnektar++ = %{version}
+Requires:       libnektar++ = %{version}
 %description adr-solver
 Advection-diffusion-reaction solver for Nektar++
 
 %package openmpi-adr-solver
 Summary:        Advection-diffusion-reactionsolver for Nektar++ (OpenMPI)
 Group:          Scientific
-Requires:      	libnektar++-openmpi = %{version}
+Requires:       libnektar++-openmpi = %{version}
 %description openmpi-adr-solver
 Advection-diffusion-reactionsolver for Nektar++ (OpenMPI)
 
 %package mpich-adr-solver
 Summary:        Advection-diffusion-reactionsolver for Nektar++ (MPICH)
 Group:          Scientific
-Requires:      	libnektar++-mpich = %{version}
+Requires:       libnektar++-mpich = %{version}
 %description mpich-adr-solver
 Advection-diffusion-reactionsolver for Nektar++ (MPICH)
 
@@ -268,21 +268,21 @@ Advection-diffusion-reactionsolver for Nektar++ (MPICH)
 %package cardiacep-solver
 Summary:        Cardiac electrophysiology solver for Nektar++
 Group:          Scientific
-Requires:      	libnektar++ = %{version}
+Requires:       libnektar++ = %{version}
 %description cardiacep-solver
 Cardiac electrophysiology solver for Nektar++
 
 %package openmpi-cardiacep-solver
 Summary:        Cardiac electrophysiology solver for Nektar++ (OpenMPI)
 Group:          Scientific
-Requires:      	libnektar++-openmpi = %{version}
+Requires:       libnektar++-openmpi = %{version}
 %description openmpi-cardiacep-solver
 Cardiac electrophysiology solver for Nektar++ (OpenMPI)
 
 %package mpich-cardiacep-solver
 Summary:        Cardiac electrophysiology solver for Nektar++ (MPICH)
 Group:          Scientific
-Requires:      	libnektar++-mpich = %{version}
+Requires:       libnektar++-mpich = %{version}
 %description mpich-cardiacep-solver
 Cardiac electrophysiology solver for Nektar++ (MPICH)
 
@@ -290,21 +290,21 @@ Cardiac electrophysiology solver for Nektar++ (MPICH)
 %package compressibleflow-solver
 Summary:        Compressible flow solver for Nektar++
 Group:          Scientific
-Requires:      	libnektar++ = %{version}
+Requires:       libnektar++ = %{version}
 %description compressibleflow-solver
 Compressible flow solver for Nektar++
 
 %package openmpi-compressibleflow-solver
 Summary:        Compressible flow solver for Nektar++ (OpenMPI)
 Group:          Scientific
-Requires:      	libnektar++-openmpi = %{version}
+Requires:       libnektar++-openmpi = %{version}
 %description openmpi-compressibleflow-solver
 Compressible flow solver for Nektar++ (OpenMPI)
 
 %package mpich-compressibleflow-solver
 Summary:        Compressible flow solver for Nektar++ (MPICH)
 Group:          Scientific
-Requires:      	libnektar++-mpich = %{version}
+Requires:       libnektar++-mpich = %{version}
 %description mpich-compressibleflow-solver
 Compressible flow solver for Nektar++ (MPICH)
 
@@ -312,21 +312,21 @@ Compressible flow solver for Nektar++ (MPICH)
 %package incnavierstokes-solver
 Summary:        Incompressible flow solver for Nektar++
 Group:          Scientific
-Requires:      	libnektar++ = %{version}
+Requires:       libnektar++ = %{version}
 %description incnavierstokes-solver
 Incompressible flow solver for Nektar++
 
 %package openmpi-incnavierstokes-solver
 Summary:        Incompressible flow solver for Nektar++ (OpenMPI)
 Group:          Scientific
-Requires:      	libnektar++-openmpi = %{version}
+Requires:       libnektar++-openmpi = %{version}
 %description openmpi-incnavierstokes-solver
 Incompressible flow solver for Nektar++ (OpenMPI)
 
 %package mpich-incnavierstokes-solver
 Summary:        Incompressible flow solver for Nektar++ (MPICH)
 Group:          Scientific
-Requires:      	libnektar++-mpich = %{version}
+Requires:       libnektar++-mpich = %{version}
 %description mpich-incnavierstokes-solver
 Incompressible flow solver for Nektar++ (MPICH)
 
@@ -334,21 +334,21 @@ Incompressible flow solver for Nektar++ (MPICH)
 %package pulsewave-solver
 Summary:        Pulse wave solver for Nektar++
 Group:          Scientific
-Requires:      	libnektar++ = %{version}
+Requires:       libnektar++ = %{version}
 %description pulsewave-solver
 Pulse wave flow solver for Nektar++
 
 %package openmpi-pulsewave-solver
 Summary:        Pulse wave flow solver for Nektar++ (OpenMPI)
 Group:          Scientific
-Requires:      	libnektar++-openmpi = %{version}
+Requires:       libnektar++-openmpi = %{version}
 %description openmpi-pulsewave-solver
 Pulse wave flow solver for Nektar++ (OpenMPI)
 
 %package mpich-pulsewave-solver
 Summary:        Pulse wave flow solver for Nektar++ (MPICH)
 Group:          Scientific
-Requires:      	libnektar++-mpich = %{version}
+Requires:       libnektar++-mpich = %{version}
 %description mpich-pulsewave-solver
 Pulse wave flow solver for Nektar++ (MPICH)
 
@@ -356,21 +356,21 @@ Pulse wave flow solver for Nektar++ (MPICH)
 %package shallowwater-solver
 Summary:        Shallow water solver for Nektar++
 Group:          Scientific
-Requires:      	libnektar++ = %{version}
+Requires:       libnektar++ = %{version}
 %description shallowwater-solver
 Shallow water flow solver for Nektar++
 
 %package openmpi-shallowwater-solver
 Summary:        Shallow water flow solver for Nektar++ (OpenMPI)
 Group:          Scientific
-Requires:      	libnektar++-openmpi = %{version}
+Requires:       libnektar++-openmpi = %{version}
 %description openmpi-shallowwater-solver
 Shallow water flow solver for Nektar++ (OpenMPI)
 
 %package mpich-shallowwater-solver
 Summary:        Shallow water flow solver for Nektar++ (MPICH)
 Group:          Scientific
-Requires:      	libnektar++-mpich = %{version}
+Requires:       libnektar++-mpich = %{version}
 %description mpich-shallowwater-solver
 Shallow water flow solver for Nektar++ (MPICH)
 
@@ -384,7 +384,7 @@ cd $MPI_COMPILER;                                \
     -DCMAKE_INSTALL_PREFIX=$INSTALL_PREFIX     \\\
     -DCMAKE_CXX_FLAGS=-Wno-error               \\\
     -DBOOST_INCLUDEDIR=/usr/include/boost169   \\\
-    -DBOOST_LIBRARYDIR=/usr/lib64/boost169     \\\
+    -DBOOST_LIBRARYDIR=/usr/%{_lib}/boost169   \\\
     -DBoost_ADDITIONAL_VERSIONS=1.69           \\\
     -DBoost_NO_SYSTEM_PATHS=ON                 \\\
     -DNEKTAR_LIB_DIR=$NEKTAR_LIBDIR            \\\
@@ -413,12 +413,6 @@ cd $MPI_COMPILER;                                \
 make %{?_smp_mflags} ; \
 cd ..
 
-%define pythoncleanup() \
-# Manually install Python libs because this conflicts with DESTDIR \
-for lib in LibUtilities StdRegions SpatialDomains LocalRegions MultiRegions; do \
-  cp library/${lib}/Python/_*.so %{buildroot}%{python3_sitearch}/${PYTHONMPILOC}NekPy/${lib} \
-done \
-
 %build
 
 %undefine _hardened_build
@@ -427,7 +421,7 @@ done \
 export PATH=$PATH:/usr/local/texlive/2019/bin/x86_64-linux
 
 # Build serial version, dummy arguments
-MPI_COMPILER=serial MPI_SUFFIX= MPI_ON=OFF NEKTAR_LIBDIR=lib64 NEKTAR_INCLUDE_ROOT=%{_prefix}/include INSTALL_PREFIX=%{_prefix} %dobuild
+MPI_COMPILER=serial MPI_SUFFIX= MPI_ON=OFF NEKTAR_LIBDIR=%{_lib} NEKTAR_INCLUDE_ROOT=%{_prefix}/include INSTALL_PREFIX=%{_prefix} %dobuild
 
 # Build documentation.
 cd serial && cmake3 -DNEKTAR_BUILD_DOC=ON .
@@ -448,14 +442,16 @@ MPI_ON=ON NEKTAR_LIBDIR=lib NEKTAR_INCLUDE_ROOT=%{_prefix}/include/$MPI_COMPILER
 # Install serial version
 make -C serial install DESTDIR=%{buildroot} INSTALL="install -p" CPPROG="cp -p"
 
+# Install serial NekPy library
+cd serial
+%{__python3} setup.py install --root=%{buildroot} --install-purelib=%{python3_sitearch}
+cd ..
+
 # Install OpenMPI version
 %{_openmpi_load}
 cd $MPI_COMPILER
 make install DESTDIR=%{buildroot}
-python3 setup.py install --root=%{buildroot} 
-mkdir -p %{buildroot}%{python3_sitearch}/openmpi
-mv %{buildroot}%{python3_sitelib}/NekPy/ %{buildroot}%{python3_sitelib}/NekPy*.egg-info %{buildroot}%{python3_sitearch}/openmpi
-PYTHONMPILOC=openmpi/ %pythoncleanup
+%{__python3} setup.py install --root=%{buildroot} --install-purelib=%{python3_sitearch}/openmpi
 mv %{buildroot}/usr/lib64/openmpi/include %{buildroot}/usr/include/$MPI_COMPILER
 cd ..
 %{_openmpi_unload}
@@ -464,22 +460,13 @@ cd ..
 %{_mpich_load}
 cd $MPI_COMPILER
 make install DESTDIR=%{buildroot}
-python3 setup.py install --root=%{buildroot}
-mkdir -p %{buildroot}%{python3_sitearch}/mpich
-mv %{buildroot}%{python3_sitelib}/NekPy/ %{buildroot}%{python3_sitelib}/NekPy*.egg-info %{buildroot}%{python3_sitearch}/mpich
-PYTHONMPILOC=mpich/ %pythoncleanup
+chmod +x %{buildroot}%{_libdir}/mpich/lib/nektar++/thirdparty/*.so.*
+%{__python3} setup.py install --root=%{buildroot} --install-purelib=%{python3_sitearch}/mpich
 mv %{buildroot}/usr/lib64/mpich/include %{buildroot}/usr/include/$MPI_COMPILER
 cd ..
 %{_mpich_unload}
 
-# Install serial NekPy library to avoid MPI ones clobbering this one
-cd serial
-python3 setup.py install --root=%{buildroot}
-mv %{buildroot}%{python3_sitelib}/NekPy/ %{buildroot}%{python3_sitelib}/NekPy*.egg-info %{buildroot}%{python3_sitearch}
-PYTHONMPILOC= %pythoncleanup
-cd ..
-
-# Clean up temporary Python files
+# Clean up temporary third-party library files
 rm -rf %{buildroot}/root
 
 # Remove MPI NekMesh executables
