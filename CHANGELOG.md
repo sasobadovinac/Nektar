@@ -1,6 +1,10 @@
 Changelog
 =========
 
+v6.0.0
+**CompressibleFlowSolver**
+- Added physical AV, dilatation sensor, Ducros's and smoothing (!1180)
+
 v5.1.0
 ------
 **Library**

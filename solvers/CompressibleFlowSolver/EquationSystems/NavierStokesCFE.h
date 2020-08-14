@@ -163,6 +163,5 @@ namespace Nektar
             std::vector<std::string>             &variables) override;
   };
 
-  // helper functions
 }
 #endif
