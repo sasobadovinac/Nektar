@@ -72,7 +72,7 @@ VariableConverter::VariableConverter(
     if (m_shockCaptureType == "Physical")
     {
         // Artificial viscosity scaling constant
-        m_session->LoadParameter("mu0", m_mu0, 0.5);
+        m_session->LoadParameter("mu0", m_mu0, 1.0);
 
         m_muAv = NullNekDouble1DArray;
         m_muAvTrace = NullNekDouble1DArray;
@@ -83,15 +83,15 @@ VariableConverter::VariableConverter(
 
         // Check for Ducros sensor
         m_session->LoadSolverInfo("DucrosSensor",
-            m_ducrosSensor, "On");
+            m_ducrosSensor, "Off");
 
-        // Load smoothing tipe
-        m_session->LoadSolverInfo("Smoothing", m_smoothing, "Off");
-        if (m_smoothing == "C0")
-        {
-            m_C0ProjectExp = MemoryManager<MultiRegions::ContField>::
-                AllocateSharedPtr(m_session, pGraph, m_session->GetVariable(0));
-        }
+    }
+    // Load smoothing tipe
+    m_session->LoadSolverInfo("Smoothing", m_smoothing, "Off");
+    if (m_smoothing == "C0")
+    {
+        m_C0ProjectExp = MemoryManager<MultiRegions::ContField>::
+            AllocateSharedPtr(m_session, pGraph, m_session->GetVariable(0));
     }
 
 }
@@ -438,11 +438,13 @@ void VariableConverter::SetAv(
 
 Array<OneD, NekDouble>& VariableConverter::GetAv()
 {
+    ASSERTL1(m_muAv /= NullNekDouble1DArray, "m_muAv not set");
     return m_muAv;
 }
 
 Array<OneD, NekDouble>& VariableConverter::GetAvTrace()
 {
+    ASSERTL1(m_muAvTrace /= NullNekDouble1DArray, "m_muAvTrace not set");
     return m_muAvTrace;
 }
 
