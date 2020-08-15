@@ -675,13 +675,13 @@ dockerhub-deploy-nektar-workbook:
 ##
 ## CentOS 7
 ##
-package-centos7-env:
+.package-centos7-env:
   <<: *package-env-build
   variables:
     image_name: pkg/centos7
     dockerfile: docker/packaging/Dockerfile-centos7
 
-package-centos7-build:
+.package-centos7-build:
   <<: *package-rpm-build
   needs: ["package-centos7-env"]
   variables:
@@ -690,7 +690,7 @@ package-centos7-build:
     image_name: pkg/centos7
     version_file: centos-7.json
 
-package-centos7-test:
+.package-centos7-test:
   <<: *package-rpm-test
   needs: ["package-centos7-build"]
   dependencies:
@@ -737,7 +737,7 @@ package-centos8-test:
     needs_powertools: 1
     cmake_exe: cmake
 
-.package-centos8-deploy:
+package-centos8-deploy:
   <<: *package-rpm-deploy
   needs: ["package-centos8-build", "package-centos8-test"]
   dependencies:
@@ -748,13 +748,13 @@ package-centos8-test:
 ##
 ## Fedora 30
 ##
-package-fedora30-env:
+.package-fedora30-env:
   <<: *package-env-build
   variables:
     image_name: pkg/fedora30
     dockerfile: docker/packaging/Dockerfile-fedora30
 
-package-fedora30-build:
+.package-fedora30-build:
   <<: *package-rpm-build
   needs: ["package-fedora30-env"]
   variables:
@@ -763,7 +763,7 @@ package-fedora30-build:
     image_name: pkg/fedora30
     version_file: fedora-30.json
 
-package-fedora30-test:
+.package-fedora30-test:
   <<: *package-rpm-test
   needs: ["package-fedora30-build"]
   dependencies:
@@ -783,13 +783,13 @@ package-fedora30-test:
 ##
 ## Fedora 31
 ##
-package-fedora31-env:
+.package-fedora31-env:
   <<: *package-env-build
   variables:
     image_name: pkg/fedora31
     dockerfile: docker/packaging/Dockerfile-fedora31
 
-package-fedora31-build:
+.package-fedora31-build:
   <<: *package-rpm-build
   needs: ["package-fedora31-env"]
   variables:
@@ -798,7 +798,7 @@ package-fedora31-build:
     image_name: pkg/fedora31
     version_file: fedora-31.json
 
-package-fedora31-test:
+.package-fedora31-test:
   <<: *package-rpm-test
   needs: ["package-fedora31-build"]
   dependencies:
@@ -818,13 +818,13 @@ package-fedora31-test:
 ##
 ## Fedora 32
 ##
-package-fedora32-env:
+.package-fedora32-env:
   <<: *package-env-build
   variables:
     image_name: pkg/fedora32
     dockerfile: docker/packaging/Dockerfile-fedora32
 
-package-fedora32-build:
+.package-fedora32-build:
   <<: *package-rpm-build
   needs: ["package-fedora32-env"]
   variables:
@@ -833,7 +833,7 @@ package-fedora32-build:
     image_name: pkg/fedora32
     version_file: fedora-32.json
 
-package-fedora32-test:
+.package-fedora32-test:
   <<: *package-rpm-test
   needs: ["package-fedora32-build"]
   dependencies:
