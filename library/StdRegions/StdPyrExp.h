@@ -211,19 +211,6 @@ namespace Nektar
                                        Array<OneD, NekDouble> &out_d2);
 
 
-            /*STD_REGIONS_EXPORT NekDouble v_PhysEvaluatedx(
-                const Array<OneD, const NekDouble> &coords,
-                const Array<OneD, const NekDouble> &physvals) final;
-            
-            STD_REGIONS_EXPORT NekDouble v_PhysEvaluatedy(
-                const Array<OneD, const NekDouble> &coords,
-                const Array<OneD, const NekDouble> &physvals) final;
-
-            STD_REGIONS_EXPORT NekDouble v_PhysEvaluatedz(
-                const Array<OneD, const NekDouble> &coords,
-                const Array<OneD, const NekDouble> &physvals) final;
-            */
-
             STD_REGIONS_EXPORT NekDouble v_PhysEvaluateBasis(
                const Array<OneD, const NekDouble>& coords,
                int mode) final;

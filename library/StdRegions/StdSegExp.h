@@ -83,11 +83,6 @@ namespace Nektar
                     Array<OneD, NekDouble> &out_d1 = NullNekDouble1DArray,
                     Array<OneD, NekDouble> &out_d2 = NullNekDouble1DArray);
 
-            STD_REGIONS_EXPORT virtual void v_PhysDerivFast(
-                    const Array<OneD, const NekDouble>& inarray,
-                    Array<OneD, NekDouble> &out_d0,
-                    Array<OneD, NekDouble> &out_d1 = NullNekDouble1DArray,
-                    Array<OneD, NekDouble> &out_d2 = NullNekDouble1DArray);
 
             STD_REGIONS_EXPORT virtual void v_PhysDeriv(
                     const int dir,
@@ -159,13 +154,12 @@ namespace Nektar
                 const Array<OneD, const NekDouble>& coords,
                 int mode) final;
 
-            STD_REGIONS_EXPORT virtual void v_PhysEvalBasisGrad(
-                                                                const Array<OneD, const Array<OneD, NekDouble> > coords, 
-                                                                
-                                                                Array<OneD, NekDouble>& out_eval,                                      
-                                                                Array<OneD, NekDouble>& out_d0,                                        
-                                                                Array<OneD, NekDouble>& out_d1 = NullNekDouble1DArray, 
-                                                                Array<OneD, NekDouble>& out_d2 = NullNekDouble1DArray);
+            STD_REGIONS_EXPORT virtual void v_PhysEvalGrad(
+                                                           const Array<OneD, const Array<OneD, NekDouble> >coords,
+                                                           const Array<OneD, const NekDouble>& inarray,
+                                                           Array<OneD, NekDouble> &out_d0,
+                                                           Array<OneD, NekDouble> &out_d1 = NullNekDouble1DArray,
+                                                           Array<OneD, NekDouble> &out_d2 = NullNekDouble1DArray);
 
 
             STD_REGIONS_EXPORT virtual void v_PhysEvalBasisGradFast(

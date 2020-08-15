@@ -63,15 +63,14 @@ namespace Nektar
     // Differentiation Methods
     //-----------------------------
         // find derivative of u (inarray) at all quad points
-    void StdExpansion1D::PhysTensorDerivFast(const Array<OneD, const NekDouble>& inarray,
-                         Array<OneD, NekDouble>& outarray)
+    void StdExpansion1D::PhysTensorDerivFast(
+                                             const Array<OneD, const Array<OneD, NekDouble> >& coords,
+                                             const Array<OneD, const NekDouble>& inarray,
+                                             Array<OneD, NekDouble> &out_d0)
     {
-        int nquad = GetTotPoints();
-        Array<OneD, NekDouble> x(nquad);
-        GetCoords(x);
-        for(int i = 0; i < nquad; i++)   
+        for(int i = 0; i < coords[0].size(); i++)   
         {
-            outarray[i] =  StdExpansion::BaryEvaluateDeriv<0>(x[i], &inarray[0]); 
+            out_d0[i] =  StdExpansion::BaryEvaluateDeriv<0>(coords[0][i], &inarray[0]); 
         }
     }
 
@@ -133,42 +132,64 @@ namespace Nektar
         return StdExpansion::BaryEvaluate<0>(Lcoord[0], &physvals[0]);
     }
 
-        /*        NekDouble StdExpansion1D::v_PhysEvaluatedx(
-        const Array<OneD, const NekDouble>& Lcoord,
-        const Array<OneD, const NekDouble>& physvals)
-    {
-        ASSERTL2(Lcoord[0] >= -1 - NekConstants::kNekZeroTol,"Lcoord[0] < -1");
-        ASSERTL2(Lcoord[0] <=  1 + NekConstants::kNekZeroTol,"Lcoord[0] >  1");
-
-        return StdExpansion::BaryEvaluateDeriv<0>(Lcoord[0], &physvals[0]);
-        }*/
-
-
-        void StdExpansion1D::v_PhysEvalGrad(
+        //slow version
+        // fast one impl as v_PhysEvalBasisGradFast() -> does not use storage space
+        void StdExpansion1D::v_PhysEvalBasisGrad(
                                             const Array<OneD, const Array<OneD, NekDouble> >coords,
-                                            const Array<OneD, const NekDouble>& inarray,        
+                                            Array<OneD, NekDouble> &out_eval,                    
                                             Array<OneD, NekDouble> &out_d0,
                                             Array<OneD, NekDouble> &out_d1,
-                                            Array<OneD, NekDouble> &out_d2)
+                                         Array<OneD, NekDouble> &out_d2)
         {
             boost::ignore_unused(out_d1, out_d2);
+            int tot = GetTotPoints();
+                
+            Array<OneD, NekDouble> physall(tot);
 
-            if(out_d0.size()>0)
-            {
-                const int nq0 = m_base[0]->GetNumPoints();
+            const int nq1 = m_base[1]->GetNumPoints();
+            const int nq2 = m_base[2]->GetNumPoints();
 
-                Array<OneD, NekDouble> wsp(nq0);
+            int neq = m_ncoeffs;
+            Array<OneD, NekDouble> wsp1(nq1 * nq2), wsp2(nq2);
 
-                for(int j = 0; j<coords[0].size(); j++)
+
+            if(out_eval.size() > 0)
+            {    
+                for(int k = 0; k < neq; k++)
                 {
-                    out_d0[j] = StdExpansion::BaryEvaluateDeriv<0>
-                        (coords[0][j], &inarray[0]);
-                    
+                    Vmath::Vcopy(tot, &m_physevalall[0][k*tot], 1, &physall[0], 1);
+                    for(int i = 0; i < tot; i++)
+                    {
+                        Array<OneD, NekDouble> ctemp(1);
+                        ctemp[0] = coords[0][i];
+                          
+                        out_eval[i+k*tot] = v_PhysEvaluate(ctemp, physall);              }
                 }
                 
-            }
-            
+            } 
+
+
+            if(out_d0.size() > 0)
+            {    
+                
+                 
+                for(int k = 0; k < neq; k++)
+                {
+                    Vmath::Vcopy(tot, &m_physevalall[1][k*tot], 1, &physall[0], 1);
+                    for(int i = 0; i < tot; i++)
+                    {
+                        Array<OneD, NekDouble> ctemp(1);
+                        ctemp[0] = coords[0][i];
+                        
+                        out_d0[i+k*tot] = v_PhysEvaluate(ctemp, physall);              
+                    }
+                }
+              
+                
+            }            
+
         }
+
     
         /*        void StdExpansion1D::v_PhysEvalBasisGrad(
                                             const Array<OneD, const Array<OneD, NekDouble> >coords,

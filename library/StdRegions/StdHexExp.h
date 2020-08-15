@@ -197,48 +197,6 @@ namespace Nektar
                                                                     Array<OneD, NekDouble>& out_d1, 
                                                                     Array<OneD, NekDouble>& out_d2);
          
-            /*
-            STD_REGIONS_EXPORT NekDouble v_PhysEvaluatedxBasis(
-                const Array<OneD, const NekDouble>& coords,
-                int mode) final;
-                
-            STD_REGIONS_EXPORT NekDouble v_PhysEvaluatedzBasis(
-                const Array<OneD, const NekDouble>& coords,
-                int mode) final;*/
-
-            /*            STD_REGIONS_EXPORT NekDouble v_PhysEvaluatedx(
-                const Array<OneD, const NekDouble> &coords,
-                const Array<OneD, const NekDouble> &physvals) final;
-            
-            STD_REGIONS_EXPORT NekDouble v_PhysEvaluatedy(
-                const Array<OneD, const NekDouble> &coords,
-                const Array<OneD, const NekDouble> &physvals) final;
-
-            STD_REGIONS_EXPORT NekDouble v_PhysEvaluatedz(
-                const Array<OneD, const NekDouble> &coords,
-                const Array<OneD, const NekDouble> &physvals) final;
-            */
-            // These methods calculate the interpolation of the 
-            // derivatives in respective directions using the 
-            // modified barycentric interpolation formula
-            // [ Hope is that this will be faster and replace
-            // current impl of v_PhysEvaluatedxBasis() ]
-
-            /*           STD_REGIONS_EXPORT virtual NekDouble v_PhysEvaluatedyBasisBary(
-                const Array<OneD, const NekDouble>& coords,
-                int mode);
-            
-            STD_REGIONS_EXPORT virtual NekDouble v_PhysEvaluatedxBasisBary(
-                const Array<OneD, const NekDouble>& coords,
-                int mode);
-            
-
-            STD_REGIONS_EXPORT virtual NekDouble v_PhysEvaluatedzBasisBary(
-                const Array<OneD, const NekDouble>& coords,
-                int mode);
-            
-            STD_REGIONS_EXPORT virtual Array< OneD, Array<OneD, NekDouble> >v_GetPhysEvalALL();
-            */
 
             //---------------------------
             // Helper functions

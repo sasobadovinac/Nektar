@@ -158,15 +158,7 @@ namespace Nektar
                     const int mode,
                     Array<OneD, NekDouble> &array);
             
-            /*            STD_REGIONS_EXPORT virtual void v_FillModedx(
-                    const int mode,
-                    Array<OneD, NekDouble> &array);
-            
-            STD_REGIONS_EXPORT virtual void v_FillModedy(
-                    const int mode,
-                    Array<OneD, NekDouble> &array);
-            */
-            //---------------------------
+             //---------------------------
             // Helper functions
             //---------------------------
             STD_REGIONS_EXPORT virtual int v_GetNverts() const;
@@ -191,8 +183,6 @@ namespace Nektar
                 const Array<OneD, const NekDouble>& coords,
                 int mode);
 
-            //            STD_REGIONS_EXPORT virtual         Array<OneD, Array<OneD, NekDouble> > v_GetPhysEvalALL() ;
-            
             STD_REGIONS_EXPORT virtual void v_PhysEvalBasisGradFast(
                                                                 const Array<OneD, const Array<OneD, NekDouble> > coords, 
                                                                 
@@ -201,33 +191,6 @@ namespace Nektar
                                                                 Array<OneD, NekDouble>& out_d1, 
                                                                 Array<OneD, NekDouble>& out_d2 = NullNekDouble1DArray);
             
-            /*            STD_REGIONS_EXPORT NekDouble v_PhysEvaluatedyBasis(
-                const Array<OneD, const NekDouble>& coords,
-                int mode) final;
-
-            STD_REGIONS_EXPORT NekDouble v_PhysEvaluatedxBasis(
-                const Array<OneD, const NekDouble>& coords,
-                int mode) final;
-            
-
-            STD_REGIONS_EXPORT virtual NekDouble v_PhysEvaluateBasisGrad(              const Array<OneD, const NekDouble>& coords,
-                int mode);
-
-            STD_REGIONS_EXPORT virtual NekDouble v_PhysEvaluateBasisGrad(              const Array<OneD, const NekDouble>& coords,
-            int mode);*/
-            // These methods calculate the interpolation of the 
-            // derivatives in respective directions using the 
-            // modified barycentric interpolation formula
-            // [ Hope is that this will be faster and replace
-            // current impl of v_PhysEvaluatedxBasis() ]
-
-            /*STD_REGIONS_EXPORT virtual             void v_PhysEvalGrad(                                       
-                              const Array<OneD, Array<OneD, NekDouble> >coords,
-                              const Array<OneD, const NekDouble>& inarray,        
-                              Array<OneD, NekDouble> &out_d0,
-                              Array<OneD, NekDouble> &out_d1,
-                              Array<OneD, NekDouble> &out_d2 = NullNekDouble1DArray);*/
-
 
             STD_REGIONS_EXPORT virtual void v_PhysEvalGrad(
                                                            const Array<OneD, const Array<OneD, NekDouble> >coords,
@@ -236,24 +199,6 @@ namespace Nektar
                                                            Array<OneD, NekDouble> &out_d0,
                                                            Array<OneD, NekDouble> &out_d1,
                                                            Array<OneD, NekDouble> &out_d2 = NullNekDouble1DArray);
-
-            /*
-            STD_REGIONS_EXPORT virtual NekDouble v_PhysEvaluatedyBasisBary(
-                const Array<OneD, const NekDouble>& coords,
-                int mode);
-            STD_REGIONS_EXPORT virtual NekDouble v_PhysEvaluatedxBasisBary(
-                const Array<OneD, const NekDouble>& coords,
-                int mode);
-            
-                      STD_REGIONS_EXPORT virtual NekDouble v_PhysEvaluatedx(
-                    const Array<OneD, const NekDouble>& coords,
-                    const Array<OneD, const NekDouble>& physvals);
-
-            STD_REGIONS_EXPORT virtual NekDouble v_PhysEvaluatedy(
-                    const Array<OneD, const NekDouble>& coords,
-                    const Array<OneD, const NekDouble>& physvals);
-                    
-*/            
 
             //--------------------------
             // Mappings

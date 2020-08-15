@@ -46,6 +46,12 @@ ADD_NEKTAR_TEST(StdInterpDeriv_Hex_Mod_P7_Q8)
 ADD_NEKTAR_TEST(StdInterpDerivBasis_Quad_Lagrange_P6_Q7)
 ADD_NEKTAR_TEST(StdInterpDerivBasis_Tri_Mod_P7_Q8)
 ADD_NEKTAR_TEST(StdInterpDerivBasis_Tri_Orth_P7_Q8)
+ADD_NEKTAR_TEST(StdInterpDerivBasis_Pyr_Mod_P7_Q8)
+ADD_NEKTAR_TEST(StdInterpDerivBasis_Pyr_Orth_P7_Q8)
+ADD_NEKTAR_TEST(StdInterpDerivBasis_Prism_Mod_P7_Q8)
+ADD_NEKTAR_TEST(StdInterpDerivBasis_Prism_Orth_P7_Q8)
+ADD_NEKTAR_TEST(StdInterpDerivBasis_Hex_Orth_P7_Q8)
+ADD_NEKTAR_TEST(StdInterpDerivBasis_Hex_Mod_P7_Q8)
 
 
 # Projection tests.

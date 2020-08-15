@@ -215,14 +215,6 @@ namespace Nektar
             PhysTensorDeriv(inarray,out_d0);
         }
         
-        void StdSegExp::v_PhysDerivFast(const Array<OneD, const NekDouble>& inarray,
-                Array<OneD, NekDouble> &out_d0,
-                Array<OneD, NekDouble> &out_d1,
-                Array<OneD, NekDouble> &out_d2)
-        {
-            boost::ignore_unused(out_d1, out_d2);
-            PhysTensorDerivFast(inarray, out_d0);
-        }
 
 
         void StdSegExp::v_PhysDeriv(const int dir,
@@ -378,45 +370,20 @@ namespace Nektar
             }
         }
 
-        void StdSegExp::v_PhysEvalBasisGrad(
+        
+        void StdSegExp::v_PhysEvalGrad(
                                             const Array<OneD, const Array<OneD, NekDouble> >coords,
-                                            Array<OneD, NekDouble> &out_eval,
+                                            const Array<OneD, const NekDouble>& inarray,        
+                                             
                                             Array<OneD, NekDouble> &out_d0,
                                             Array<OneD, NekDouble> &out_d1,
                                             Array<OneD, NekDouble> &out_d2)
         {
-            boost::ignore_unused(out_d1, out_d2);
-
-            int tot = GetTotPoints();
-            int sz = coords[0].size();
-            Array<OneD, NekDouble> physvalsder(tot);
-            Array<OneD, NekDouble> physvals(tot);
-            if(out_eval.size() > 0)
-            {    
-                for(int k = 0; k < m_base[0]->GetNumModes(); k++)
-                {
-                    Vmath::Vcopy(tot, &m_physevalall[0][k*tot], 1, &physvals[0], 1);
-                    for(int i = 0; i < sz; i++)
-                    {
-                        out_eval[i+k*sz] = StdExpansion::BaryEvaluate<0>(coords[0][i], &physvals[0]);
-                    } 
-                }
-                
-            }
-
-            if(out_d0.size() > 0)
-            {    
-                for(int k = 0; k < m_base[0]->GetNumModes(); k++)
-                {
-                    Vmath::Vcopy(tot, &m_physevalall[1][k*tot], 1, &physvalsder[0], 1);
-                    for(int i = 0; i < sz; i++)
-                    {
-                        out_d0[i+k*sz] =   StdExpansion::BaryEvaluate<0>(coords[0][i], &physvalsder[0]);
-                    } 
-                }
-                
-            }
+            boost::ignore_unused( out_d1, out_d2);
+            PhysTensorDerivFast( coords, inarray, out_d0);
+            
         }
+
 
 
 

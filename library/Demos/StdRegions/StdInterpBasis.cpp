@@ -54,37 +54,18 @@ int main(int argc, char *argv[])
     Array<OneD, Array<OneD, NekDouble>> coords = demo.GetCoords(E);
     Array<OneD, NekDouble> sol(nTot), phys(nTot), physOut(nTot), tmpIn(dimension);
 
- 
-    /*cout<<"\n we want:\n";
-    for (int k = 0; k < nCoeffs; ++k)
-    {
-        
-        cout<<"\n mode = "<<k<<":";
-        Array<OneD, NekDouble> vals(nPts);
-        E->FillMode(k,vals);
-        // Evaluate each mode at the quadrature points.
-        for (int i = 0; i < nPts; ++i)
-        {
-            cout<<" " << vals[i];
-        }
-        cout<<"\n";
-    }
-
-
-    cout<<"\n we get:\n";
+    // can't use this line after we remnove the temp storage:
+    Array<OneD, Array<OneD, NekDouble> > temparr = E->m_physevalall;
     
-    for(int i = 0, ct = 0; i< temparr.size(); i++)
+    /*Array<OneD, NekDouble> physvalall (nCoeffs*nPts);
+ 
+    for(int i = 0; i < nCoeffs; i++)
     {
-        cout<<" "<<temparr[i];
-        ct++;
-        if(ct == nPts)
-        {
-            cout<<"\n";
-            ct = 0;
-        }
-    }*/
+        Array<OneD, NekDouble> tmp(nTot);
+        E->FillMode(i, tmp);
+        Vmath::Vcopy(nTot, &tmp[0], 1, &physvalall[i*nTot], 1);  
 
-    Array<OneD, Array<OneD, NekDouble> > temparr ;//= E->m_physevalall;
+        } */    
 
 
     // For each mode, we follow two approaches:

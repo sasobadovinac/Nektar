@@ -89,49 +89,6 @@ namespace Nektar
 
             return StdExpansion2D::Integral(inarray,w0,w1);
         }
-
-        /*   Array<OneD, Array<OneD, NekDouble> >StdQuadExp::v_GetPhysEvalALL()
-        {
-            
-            Array<OneD, Array<OneD, NekDouble> > ret(3);
-            NekDouble nq = GetTotPoints();
-           
-            //MemoryManager<DNekMat>::AllocateSharedPtr(m_ncoeffs,nq);
-            //MemoryManager<DNekMat>::AllocateSharedPtr(m_ncoeffs,nq);   
-            // MemoryManager<DNekMat>::AllocateSharedPtr(m_ncoeffs,nq);
-            //Array<OneD, Array<OneD, NekDouble> > temp_ret(4);
-            //          Array<OneD, NekDouble> tmp(totPts*m_ncoeffs);
-            //Array<OneD, NekDouble> tmpdx(totPts*m_ncoeffs);
-            //Array<OneD, NekDouble> tmpdy(totPts*m_ncoeffs);
-            
-            
-            ret[0] = Array<OneD, NekDouble>(m_ncoeffs*nq);
-            ret[1] = Array<OneD, NekDouble>(m_ncoeffs*nq);
-            ret[2] = Array<OneD, NekDouble>(m_ncoeffs*nq);
-            cout<<"m_ncoeffs = "<<m_ncoeffs;
-            cout<<"\n nq = "<<nq<<"\n";
-            for(int i = 0; i < m_ncoeffs; i++)
-            {
-                Array<OneD, NekDouble> tmp(nq);
-                           
-                Array<OneD, NekDouble> tmp2(nq);
-
-                Array<OneD, NekDouble> tmp3(nq);
-                             
-                v_FillMode(i, tmp);
-                Vmath::Vcopy(nq, &tmp[0], 1, &ret[0][i*nq], 1);  
-
-                v_PhysDeriv(0, tmp, tmp2);
-                Vmath::Vcopy(nq, &tmp2[0], 1, &ret[1][i*nq], 1);  
-
-                v_PhysDeriv(1, tmp, tmp3);
-                Vmath::Vcopy(nq, &tmp3[0], 1, &ret[2][i*nq], 1);  
-
-            }
-            return ret;
-        }        
-
-        */
         /////////////////////////////
         // Differentiation Methods //
         /////////////////////////////
@@ -283,27 +240,6 @@ namespace Nektar
             }
 
         }
-
-
-        /*   void StdQuadExp::v_PhysEvalGrad(
-                                        const Array<OneD, NekDouble> coords,
-                                        const Array<OneD, const NekDouble>& inarray,                           Array<OneD, NekDouble> &out_d0,
-                                        Array<OneD, NekDouble> &out_d1,
-                                        Array<OneD, NekDouble> &out_d2)
-        {
-            boost::ignore_unused(out_d2);
-            int nummodes0 = m_base[0]->GetNumModes();
-            int nummodes1 = m_base[1]->GetNumModes();
-            if(out_d0.size()>0)
-            {
-                StdExpansion2D::PhysEvaluatedx(coords, out_d0);
-            }
-            if(out_d1.size()>0)
-            {
-                StdExpansion2D::PhysEvaluatedy(coords, out_d1);
-            }
-        }
-        }*/
 
 
         ////////////////
@@ -734,35 +670,6 @@ namespace Nektar
             eta[1] = xi[1];
         }
 
-        /** \brief Fill outarray with mode \a mode of partial 
-         *  derivative in y of expansion
-         *  
-         *  Note for quadrilateral expansions _base[0] (i.e. p)  modes run
-         *  fastest
-         */
-
-        /*        void StdQuadExp::v_FillModedy(const int mode,
-                            Array<OneD, NekDouble> &outarray)
-        {
-            
-            v_FillMode( mode,
-                        outarray);
-            int tot = GetTotPoints();
-            //check
-            Array<OneD, NekDouble> temp(tot), coordsx(tot), coordsy(tot);
-
-            v_GetCoords(coordsx, coordsy, NullNekDouble1DArray);
-            
-            Array<OneD, NekDouble> coords(2);
-            for( int i = 0; i < tot; i++)
-            {
-                coords[0] = coordsx[i];
-                coords[1] = coordsy[i];
-                temp[i] = StdExpansion2D::PhysEvaluatedy(coords, outarray);
-            }
-            outarray = temp;
-            }*/
-
         /** \brief Fill outarray with mode \a mode of expansion
          *
          *  Note for quadrilateral expansions _base[0] (i.e. p)  modes run
@@ -800,36 +707,6 @@ namespace Nektar
                             &outarray[0]+i,nquad0,&outarray[0]+i,nquad0);
             }
         }
-
-        /** \brief Fill outarray with mode \a mode of partial
-         *  derivative wrt y of expansion
-         *
-         *  Note for quadrilateral expansions _base[0] (i.e. p)  modes run
-         *  fastest
-         */
-
-        /*        void StdQuadExp::v_FillModedx(const int mode,
-                            Array<OneD, NekDouble> &outarray)
-        {
-            
-            v_FillMode( mode,
-                        outarray);
-            int tot = GetTotPoints();
-            //check
-            Array<OneD, NekDouble> temp(tot), coordsx(tot), coordsy(tot);
-
-            v_GetCoords(coordsx, coordsy, NullNekDouble1DArray);
-            
-            Array<OneD, NekDouble> coords(2);
-            for( int i = 0; i < tot; i++)
-            {
-                coords[0] = coordsx[i];
-                coords[1] = coordsy[i];
-                temp[i] = StdExpansion2D::PhysEvaluatedx(coords, outarray);
-            }
-            outarray = temp;
-        }
-        */
 
         //////////////////////
         // Helper functions //
@@ -969,103 +846,6 @@ namespace Nektar
             }
         }
 
-        /*NekDouble StdQuadExp::v_PhysEvaluatedyBasis(
-            const Array<OneD, const NekDouble> &coords,
-            int mode)
-        {
-            ASSERTL2(coords[0] > -1 - NekConstants::kNekZeroTol,
-                     "coord[0] < -1");
-            ASSERTL2(coords[0] <  1 + NekConstants::kNekZeroTol,
-                     "coord[0] >  1");
-            ASSERTL2(coords[1] > -1 - NekConstants::kNekZeroTol,
-                     "coord[1] < -1");
-            ASSERTL2(coords[1] <  1 + NekConstants::kNekZeroTol,
-                     "coord[1] >  1");
-    
-            int tot = GetTotPoints();
-        
-            Array<OneD, NekDouble> physvals(tot);
-            Vmath::Vcopy(tot, &m_physevalall[2][mode*tot], 1, &physvals[0], 1);
-            return v_PhysEvaluate(coords, physvals);
-
-            }
-        
-
-        NekDouble StdQuadExp::v_PhysEvaluatedxBasisBary(
-            const Array<OneD, const NekDouble> &coords,
-            int mode)
-        {
-            ASSERTL2(coords[0] > -1 - NekConstants::kNekZeroTol,
-                     "coord[0] < -1");
-            ASSERTL2(coords[0] <  1 + NekConstants::kNekZeroTol,
-                     "coord[0] >  1");
-            ASSERTL2(coords[1] > -1 - NekConstants::kNekZeroTol,
-                     "coord[1] < -1");
-            ASSERTL2(coords[1] <  1 + NekConstants::kNekZeroTol,
-                     "coord[1] >  1");
-            const int nm0 = m_base[0]->GetNumModes();
-            const int nm1 = m_base[1]->GetNumModes();
-                       
-            return StdExpansion::BaryEvaluateDerivBasis<0>(coords[0], mode % nm1) *
-                StdExpansion::BaryEvaluateBasis<1>(coords[1], mode / nm0);
-        }
-
-              NekDouble StdQuadExp::v_PhysEvaluatedy(
-            const Array<OneD, const NekDouble> &coords,
-            const Array<OneD, const NekDouble> &physvals)
-        {
-            ASSERTL2(coords[0] > -1 - NekConstants::kNekZeroTol,
-                     "coord[0] < -1");
-            ASSERTL2(coords[0] <  1 + NekConstants::kNekZeroTol,
-                     "coord[0] >  1");
-            ASSERTL2(coords[1] > -1 - NekConstants::kNekZeroTol,
-                     "coord[1] < -1");
-            ASSERTL2(coords[1] <  1 + NekConstants::kNekZeroTol,
-                     "coord[1] >  1");
-            ASSERTL2(dir < 1 && dir > 0, "direction can be 0 or 1");
-           
-            const int nq0 = m_base[0]->GetNumPoints();
-            Array<OneD, NekDouble> wsp(nq0);
-            for (int i = 0; i < nq0; ++i)
-            {
-                   
-                wsp[i] = StdExpansion::BaryEvaluate<0>(
-                    coords[0], &physvals[0]+i*nq0 );
-            }
-            
-            
-            return  StdExpansion::BaryEvaluateDeriv<1>(coords[1], &wsp[0]);        }
-
-        NekDouble StdQuadExp::v_PhysEvaluatedx(
-            const Array<OneD, const NekDouble> &coords,
-            const Array<OneD, const NekDouble> &physvals)
-        {
-            ASSERTL2(coords[0] > -1 - NekConstants::kNekZeroTol,
-                     "coord[0] < -1");
-            ASSERTL2(coords[0] <  1 + NekConstants::kNekZeroTol,
-                     "coord[0] >  1");
-            ASSERTL2(coords[1] > -1 - NekConstants::kNekZeroTol,
-                     "coord[1] < -1");
-            ASSERTL2(coords[1] <  1 + NekConstants::kNekZeroTol,
-                     "coord[1] >  1");
-            Array<OneD, NekDouble> coll(2);
-            
-            //LocCoordToLocCollapsed(coords,coll);
-            coll = coords;
-            const int nq0 = m_base[0]->GetNumPoints();
-            const int nq1 = m_base[1]->GetNumPoints();
-            Array<OneD, NekDouble> wsp(nq1);
-            for (int i = 0; i < nq1; ++i)
-            {
-                wsp[i] = StdExpansion::BaryEvaluateDeriv<0>(
-                    coll[0], &physvals[0]+ i * nq0);
-            }
-
-            return StdExpansion::BaryEvaluate<1>(coll[1], &wsp[0]);
-        }
-
-
-        */    
         /**
          * @brief This function evaluates the basis function mode @p mode at a
          * point @p coords of the domain.
@@ -1098,26 +878,6 @@ namespace Nektar
                 StdExpansion::BaryEvaluateBasis<1>(coords[1], mode / nm0);
         }
 
-        /*        NekDouble StdQuadExp::v_PhysEvaluatedyBasisBary(
-            const Array<OneD, const NekDouble>& coords,
-            int mode)
-        {
-            ASSERTL2(coords[0] > -1 - NekConstants::kNekZeroTol,
-                     "coord[0] < -1");
-            ASSERTL2(coords[0] <  1 + NekConstants::kNekZeroTol,
-                     "coord[0] >  1");
-            ASSERTL2(coords[1] > -1 - NekConstants::kNekZeroTol,
-                     "coord[1] < -1");
-            ASSERTL2(coords[1] <  1 + NekConstants::kNekZeroTol,
-                     "coord[1] >  1");
-
-            const int nm0 = m_base[0]->GetNumModes();
-            const int nm1 = m_base[1]->GetNumModes();
-
-            return StdExpansion::BaryEvaluateBasis<0>(coords[0], mode % nm1) *
-                StdExpansion::BaryEvaluateDerivBasis<1>(coords[1], mode / nm0);
-        }
-        */
         //////////////
         // Mappings //
         //////////////

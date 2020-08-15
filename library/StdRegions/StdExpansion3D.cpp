@@ -149,7 +149,6 @@ namespace Nektar
                                             Array<OneD, NekDouble> &out_d1,
                                             Array<OneD, NekDouble> &out_d2)
         {
-            std::            cout<<"\n\n*********\n\n";
             int tot = GetTotPoints();
                 
             Array<OneD, NekDouble> physall(tot);
@@ -192,7 +191,8 @@ namespace Nektar
                         ctemp[1] = coords[1][i];
                         ctemp[2] = coords[2][i];
                         
-                        out_d0[i+k*tot] = v_PhysEvaluate(ctemp, physall);              }
+                        out_d0[i+k*tot] = v_PhysEvaluate(ctemp, physall);              
+                    }
                 }
               
                 

@@ -138,15 +138,13 @@ int main(int argc, char *argv[])
     
     physIn = EvalPoly(coordsE);
    
-    const Array<OneD, const Array<OneD, NekDouble> > coordsF = demo.GetCoords(F);   cout<<"\n coordsE.size()="<<coordsE.size()<<" " <<coordsE[0].size()<<" " <<coordsE[1].size()<<" " <<coordsE[2].size()<<"\n\n";
+    const Array<OneD, const Array<OneD, NekDouble> > coordsF = demo.GetCoords(F);
     
     if(dimension>2)
     {
 
-    cout<<"\n coordsF size = "<<coordsF.size()<<" "<<coordsF[0].size()<<" "<<coordsF[1].size()<<" "<<coordsF[2].size()<<"\n\n";
-    E->PhysEvalGrad(coordsF, physIn, physOut0, physOut1, physOut2);
+        E->PhysEvalGrad(coordsF, physIn, physOut0, physOut1, physOut2);
 
-    cout<<"\n coordsF size = "<<coordsF.size()<<" "<<coordsF[0].size()<<" "<<coordsF[1].size()<<" "<<coordsF[2].size()<<"\n\n";
     }
     
     else if(dimension>1)
@@ -163,12 +161,11 @@ int main(int argc, char *argv[])
  
     if(dimension>2)
         sol2 = EvalPolyDerivz(coordsF);
-
     if(dimension>1)
         sol1 = EvalPolyDerivy(coordsF);
     if(dimension>0)
         sol0 = EvalPolyDerivx(coordsF);
-
+    /*
     cout<<"\n sol y :  ";
     for(int i = 0; i<sol1.size(); i++)
         cout<<sol1[i]<<" ";
@@ -189,25 +186,12 @@ int main(int argc, char *argv[])
     cout<<"\nphysout z = ";
     for(int i = 0; i<physOut2.size(); i++)
         cout<<physOut2[i]<<" ";
-
-
-    /*        cout<<"\n\n coordsE = ";
-    for(int i = 0; i<coordsE[0].size(); i++)
-        cout<<coordsE[0][i]<<" "<<coordsE[1][i]<<"\t";
-    cout<<"\n coordsF = ";
-    for(int i = 0; i<coordsF[0].size(); i++)
-        cout<<coordsF[0][i]<<" "<<coordsF[1][i]<<"\t";
-    */
+*/
     
-    cout << "\n\nL infinity error x: " << scientific << E->Linf(physOut0, sol0)  <<  "\n\n\n";
-    cout << "L 2 error x        : " << scientific << E->L2  (physOut0, sol0)<< "\n\n\n";
-    
-    cout << "\nL infinity error y: " << scientific << E->Linf(physOut1, sol1)  << endl;
-    cout << "L 2 error y        : " << scientific << E->L2  (physOut1, sol1)<< endl;
 
     
-    cout << "\nL infinity error z: " << scientific << E->Linf(physOut2, sol2)  << endl;
-    cout << "L 2 error z        : " << scientific << E->L2  (physOut2, sol2)<< endl;
+    cout << "\nL infinity error: " << scientific << E->Linf(physOut2, sol2) +E->Linf(physOut1, sol1) + E->Linf(physOut0, sol0)  << endl;
+    cout << "L 2 error         : " << scientific << E->L2  (physOut2, sol2) + E->L2  (physOut1, sol1) + E->L2  (physOut0, sol0)<< endl;
     
 
     return 0;

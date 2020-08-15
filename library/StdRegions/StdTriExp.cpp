@@ -149,7 +149,6 @@ namespace Nektar
  
             const Array<OneD, const NekDouble>& z0 = m_base[0]->GetZ();
             const Array<OneD, const NekDouble>& z1 = m_base[1]->GetZ();
- 
             // set up geometric factor: 2/(1-z1)
             Vmath::Sadd(nquad1, -1.0, z1, 1, wsp, 1);
             Vmath::Sdiv(nquad1, -2.0, wsp, 1, wsp, 1);
@@ -518,80 +517,6 @@ namespace Nektar
         }
 
 
-        /*void StdTriExp::v_PhysEvalGrad(
-                                            const Array<OneD, const Array<OneD, NekDouble> >coords,
-                                            const Array<OneD, const NekDouble>& inarray,
-                                            Array<OneD, NekDouble> &out_d0,
-                                            Array<OneD, NekDouble> &out_d1,                                      Array<OneD, NekDouble> &out_d2)
-        {
-            boost::ignore_unused(out_d2);
-
-            int    nq0 = m_base[0]->GetNumPoints();
-            int    nq1 = m_base[1]->GetNumPoints();
-
-            const Array<OneD, const NekDouble>& z1 = m_base[1]->GetZ();
-            const Array<OneD, const NekDouble>& z0 = m_base[0]->GetZ();
-
-            if(out_d0.size()>0)
-            {
-
-                Array<OneD, NekDouble> wsp2(std::max(nq0, nq1));
-
-                // set up geometric factor: 2/(1-z1)
-                Vmath::Sadd(wsp2.size(), -1.0, z1, 1, wsp2, 1);
-                Vmath::Sdiv(wsp2.size(), -2.0, wsp2, 1, wsp2, 1);
-                   
-
-                Array<OneD, NekDouble> wsp(nq1);
-            
-                for(int j = 0; j<coords[0].size(); j++)
-                {
-                    for (int i = 0; i < nq0; ++i)
-                    {
-                        wsp[i] = StdExpansion::BaryEvaluateDeriv<0>
-                            (coords[0][j], &inarray[0]);
-                        
-                    }
-                    Vmath::Vmul(nq0, &wsp[0], 1, &wsp2[0], 1, &wsp[0], 1);
-                    out_d0[j] =  StdExpansion::BaryEvaluate<1>(coords[1][j], &wsp[0]);
-                }
-
-            }
-            
-            if(out_d1.size()>0)
-            {
-
-                Array<OneD, NekDouble> wsp2(std::max(nq0, nq1));
-                Array<OneD, NekDouble> wsp3(std::max(nq0, nq1));
-
-                // set up geometric factor: 2/(1-z1)
-                Vmath::Sadd(wsp2.size(), -1.0, z1, 1, wsp2, 1);
-                Vmath::Sdiv(wsp2.size(), -2.0, wsp2, 1, wsp2, 1);
-
-                // set up geometric factor: (1+z0)/(1-z1)
-                Vmath::Sadd(wsp3.size(), 1.0, z0, 1, wsp3, 1);
-            
-                Vmath::Smul(wsp2.size(), 0.5, wsp2, 1, wsp2, 1);
-                Vmath::Vmul(wsp2.size(), wsp2, 1, wsp3, 1, wsp2, 1);
-                
-                
-                Array<OneD, NekDouble> wsp(nq0);
-
-                for(int j = 0; j<coords[1].size(); j++)
-                {
-                    for (int i = 0; i < nq0; ++i)
-                    {
-                        wsp[i] = StdExpansion::BaryEvaluate<0>
-                            (coords[0][j], &inarray[0]+ i * nq0);
-                    }
-
-                    Vmath::Vmul(nq0, &wsp[0], 1, &wsp2[0], 1, &wsp[0], 1);
-                    out_d1[j] =  StdExpansion::BaryEvaluateDeriv<1>(coords[1][j], &wsp[0]);
-                }
-            }
-
-
-            }*/
         void StdTriExp::v_PhysEvalGrad(
                                             const Array<OneD, const Array<OneD, NekDouble> >coords,
                                             const Array<OneD, const NekDouble>& inarray,        
@@ -608,20 +533,7 @@ namespace Nektar
 
             const Array<OneD, const NekDouble>& z1 = coords[1];
             const Array<OneD, const NekDouble>& z0 = coords[0];
-                
-            /* Array<OneD, NekDouble> z1(coords[1].size());
-            Array<OneD, NekDouble> z0(coords[0].size());
-            Array<OneD, NekDouble> tmp(2), tmp2(2);
-            //collapse z11 and z00
-            for(int i = 0; i<z0.size(); i++)
-            {
-                tmp[1] = z11[i];
-                tmp[0] = z00[i];
-                LocCoordToLocCollapsed(tmp, tmp2);
-                z1[i] = tmp2[1];
-                z0[i] = tmp2[0];
-            }*/
-
+               
             Array<OneD, NekDouble> wsp2(std::max(nc0, nc1));
 
             // set up geometric factor: 2.0/(1.0-z1)
@@ -680,50 +592,6 @@ namespace Nektar
             }
         }
     
-
-        /*
-        void StdTriExp::v_PhysEvalBasisGrad(
-                                            const Array<OneD, const Array<OneD, NekDouble> >coords,
-                                            Array<OneD, NekDouble> &out_eval,                    
-                                            Array<OneD, NekDouble> &out_d0,
-                                            Array<OneD, NekDouble> &out_d1,
-                                       Array<OneD, NekDouble> &out_d2)
-        {
-            boost::ignore_unused(out_d2);
-            
-            int tot = GetTotPoints();
-                
-            Array<OneD, NekDouble> physvals(tot);
-            Array<OneD, NekDouble> physvalsder(tot);
-
-            const int nq0 = m_base[0]->GetNumPoints();
-            const int nq1 = m_base[1]->GetNumPoints();
-
-            int neq = LibUtilities::StdTriData::
-                getNumberOfCoefficients(nq0, nq1);
-             
-
-            if(out_eval.size() > 0)
-            {    
-                
-                Array<OneD, NekDouble> wsp(nq1);
-                for(int k = 0; k < neq; k++)
-                {
-                    Vmath::Vcopy(tot, &m_physevalall[0][k*tot], 1, &physvals[0], 1);       
-                    for(int i = 0; i < tot; i++)
-                    {
-                        for (int j = 0; j < nq1; ++j)
-                        {
-                            wsp[j] = StdExpansion::BaryEvaluate<0>(
-                                                                   coords[0][i], &physvals[0] + j * nq0);
-                        }
-                        out_eval[i+k*tot] =  StdExpansion::BaryEvaluate<1>(coords[1][i], &wsp[0]); 
-                    }
-                }
-                
-            } 
-        }*/
-
 
         void StdTriExp::v_IProductWRTBase_SumFacKernel(
             const Array<OneD, const NekDouble>& base0,
@@ -1070,127 +938,6 @@ namespace Nektar
             }
         }
        
-
-        /*        NekDouble StdTriExp::v_PhysEvaluatedyBasis(
-            const Array<OneD, const NekDouble>& coords,
-            int mode)
-        {
-            Array<OneD, NekDouble> coll(2);
-            LocCoordToLocCollapsed(coords, coll);
-            
-            int tot = GetTotPoints(); 
-            
-            Array<OneD, NekDouble> physvals(tot);
-                
-            if (mode == 1 &&
-                m_base[0]->GetBasisType() == LibUtilities::eModified_A)
-            {
-                // Account for collapsed vertex.
-                Array<OneD, NekDouble> tmp(tot, &m_physevalall[2][1][0]);
-                //              Vmath::Vcopy(tot, &m_physevalall[2][tot][0], 1, &physvals[0],1);
-                return v_PhysEvaluate(coll, tmp);   
-            
-            }
-            else{
-                const int    nm1    = m_base[1]->GetNumModes();
-                const double c      = 1 + 2*nm1;
-                const int    mode0  = floor(0.5*(c - sqrt(c*c - 8*mode)));
-                Array<OneD, NekDouble> tmp(tot, &m_physevalall[2][mode0][0]);
-                //                Vmath::Vcopy(tot, &m_physevalall[2][mode0*tot], 1, &physvals[0],1);
-                return v_PhysEvaluate(coll, tmp);   
-            }
-        }
-
-        
-        NekDouble StdTriExp::v_PhysEvaluatedx(            
-                                              const Array<OneD, const NekDouble> &coords,
-                                              const Array<OneD, const NekDouble> &physvals)
-        {
-
-            const int nq0 = m_base[0]->GetNumPoints();
-            const int nq1 = m_base[1]->GetNumPoints();
-            
-            Array<OneD, NekDouble> coll(2);
-         
-            coll = coords;
-        
-            Array<OneD, NekDouble> wsp(nq1),wsp1(nq0),wsp2(nq1),wsp3(nq0);
-            
-            for (int i = 0; i < nq0; ++i)
-            {
-                   
-                wsp[i] = StdExpansion::BaryEvaluateDeriv<0>(
-                                       coll[0], &physvals[0]+i*nq0);
-            }
-
-            NekDouble ret = 
-                StdExpansion::BaryEvaluate<1>(coll[1], &wsp[0]);
-
-            return ret;
-
-        }
-                
-        NekDouble StdTriExp::v_PhysEvaluatedy(            
-                                              const Array<OneD, const NekDouble> &coords,
-                                              const Array<OneD, const NekDouble> &physvals)
-        {
-            
-            const int nq0 = m_base[0]->GetNumPoints();
-            const int nq1 = m_base[1]->GetNumPoints();
-            const Array<OneD, const NekDouble>& z1 = m_base[1]->GetZ();
-            const Array<OneD, const NekDouble>& z0 = m_base[0]->GetZ();
-            Array<OneD, NekDouble> tz1(z1);
-            Array<OneD, NekDouble> tz0(z0);
-            
-            Array<OneD, NekDouble> coll(2);
-            //       LocCoordToLocCollapsed(coords,coll); 
-            coll = coords;
-            Array<OneD, NekDouble> collz(2);
-            
-            Array<OneD, NekDouble> wsp(nq1*nq0);
-            Array<OneD, NekDouble> wsp1(nq0*nq1);
-            Array<OneD, NekDouble> wsp2(nq1);
-            Array<OneD, NekDouble> wsp3(nq1);
-            Array<OneD, NekDouble> wsp4(nq1);
-            
-            for (int i = 0; i < nq0; ++i)
-            {
-                // make tensor deriv method in StdExpansion and get rid of the loop here
-                wsp3[i] = StdExpansion::BaryEvaluate<0>(
-                    coll[0], &physvals[0] + i * nq1);
-            }
-          
-            // // set up geometric factor: 2/(1-z1)
-            // Vmath::Sadd(nq1, -1.0, z1, 1, wsp2, 1);
-            // Vmath::Sdiv(nq1, -2.0, wsp2, 1, wsp2, 1);
-
-            // Vmath::Vmul(nq1, wsp3,1,wsp2,1,wsp4, 1);
-         
-            // // set up geometric factor: (1+z0)/(1-z1)
-            // Vmath::Sadd(nq0, 1.0, z0, 1, wsp2, 1);
-            
-            // Vmath::Smul(nq0, 0.5, wsp2, 1, wsp2, 1);
-            // Vmath::Vmul(nq0, wsp2, 1, wsp4, 1, wsp4, 1);
-     
-            // //if coll[1] is part of any z1, multiply wsp3 with wsp2,
-            // //else don't
-            // NekDouble tmp1 = 1.0;
-            // for(int ii = 0; ii<z1.size(); ii++)
-            // {
-            //     if(abs(coll[1] - z1[ii])<1e-15)
-            //     {
-            //         cout<<"\n $%@%$@%$@%%@$% flg = 5@@%#@%@#%@"<<wsp1[ii];
-            //         wsp4[ii] = 1;// = wsp3[ii]*wsp4[ii];
-            //         break;
-            //     }
-            // }
-            // Vmath::Vmul(nq0, wsp4, 1, wsp3, 1, wsp3, 1);
-     
-            return  StdExpansion::BaryEvaluateDeriv<1>(coll[1], &wsp3[0]);
-            
-        }
-        */
-        
         NekDouble StdTriExp::v_PhysEvaluateBasis(
             const Array<OneD, const NekDouble>& coords,
             int mode)
