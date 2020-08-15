@@ -11,6 +11,7 @@ BuildRequires:  arpack-devel
 BuildRequires:  blas-devel
 BuildRequires:  boost-devel
 BuildRequires:  boost-python3-devel
+BuildRequires:  chrpath
 BuildRequires:  cmake
 BuildRequires:  fftw-devel
 BuildRequires:  freetype-devel
@@ -54,7 +55,6 @@ BuildRequires:  openmpi
 BuildRequires:  hdf5-openmpi-devel
 BuildRequires:  petsc-openmpi-devel
 BuildRequires:  ptscotch-openmpi-devel
-Requires:       libnektar++ = %{version}
 Requires:       boost
 Requires:       tinyxml
 Requires:       fftw
@@ -77,7 +77,6 @@ BuildRequires:  mpich
 BuildRequires:  hdf5-mpich-devel
 BuildRequires:  petsc-mpich-devel
 BuildRequires:  ptscotch-mpich-devel
-Requires:       libnektar++ = %{version}
 Requires:       boost
 Requires:       tinyxml
 Requires:       fftw
@@ -465,6 +464,7 @@ cd ..
 %{_mpich_load}
 cd $MPI_COMPILER
 make install DESTDIR=%{buildroot}
+chmod +x %{buildroot}%{_libdir}/mpich/lib/nektar++/thirdparty/*.so.*
 %{__python3} setup.py install --root=%{buildroot} --install-purelib=%{python3_sitearch}/mpich
 mv %{buildroot}/usr/lib64/mpich/include %{buildroot}/usr/include/$MPI_COMPILER
 cd ..
@@ -476,6 +476,11 @@ rm %{buildroot}/usr/lib64/openmpi/bin/NekMesh
 
 # Clean up temporary third-party library files
 rm -rf %{buildroot}/root/ %{buildroot}/usr/lib/debug/root
+
+# Change rpath for third-party libraries
+chrpath -r /usr/%{_lib}/nektar++/thirdparty %{buildroot}/usr/%{_lib}/nektar++/thirdparty/*.so.*
+chrpath -r /usr/%{_lib}/openmpi/lib/nektar++/thirdparty %{buildroot}/usr/%{_lib}/openmpi/lib/nektar++/thirdparty/*.so.*
+chrpath -r /usr/%{_lib}/mpich/lib/nektar++/thirdparty %{buildroot}/usr/%{_lib}/mpich/lib/nektar++/thirdparty/*.so.*
 
 #### Files for RPM packages
 
