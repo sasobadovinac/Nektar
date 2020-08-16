@@ -23,7 +23,7 @@
   image: $CI_REGISTRY_IMAGE/${image_name}
   stage: package-build
   script:
-    - cp -av ${pkg-dir} debian
+    - ln -s ${pkg_dir} debian
     - gbp buildpackage --git-upstream-tag=v$(<VERSION)
                        --git-ignore-branch
                        --git-ignore-new
