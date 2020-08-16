@@ -35,4 +35,4 @@ RUN groupadd nektar && useradd -m -g nektar nektar
 
 USER nektar:nektar
 WORKDIR /home/nektar
-COPY quiltrc .quiltrc
+COPY docker/packaging/quiltrc .quiltrc
