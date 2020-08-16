@@ -1,0 +1,3 @@
+fix-patch-gcc9-warnings.patch
+fix-lib-install-path.patch
+fix-mpi-allow-root.patch
