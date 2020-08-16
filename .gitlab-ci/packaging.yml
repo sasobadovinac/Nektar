@@ -26,6 +26,7 @@
     - ln -s ${pkg-dir} debian
     - gbp buildpackage --git-upstream-tag=v$(<VERSION)
                        --git-ignore-branch
+                       --git-ignore-new
                        --git-export-dir=../build-area
                        --git-builder="dpkg-buildpackage --no-sign -idocker -ipkg"
     - lintian -v
