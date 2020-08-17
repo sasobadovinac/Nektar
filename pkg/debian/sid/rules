@@ -32,7 +32,8 @@ override_dh_auto_configure:
 	-DNEKTAR_USE_HDF5=ON \
 	-DNEKTAR_USE_MESHGEN=ON \
 	-DNEKTAR_USE_MPI=ON \
-	-DNEKTAR_TEST_USE_HOSTFILE=ON
+	-DNEKTAR_TEST_USE_HOSTFILE=ON \
+	-DNEKTAR_ERROR_ON_WARNINGS=OFF
 	
 override_dh_auto_build:
 	dh_auto_build -- all doc user-guide-pdf developer-guide-pdf
