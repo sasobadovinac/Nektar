@@ -133,7 +133,7 @@ package-debian-sid-env:
 
 package-debian-sid-build:
   <<: *package-deb-build
-  needs: ["package-tarball", "package-debian-sid-env"]
+  needs: ["package-debian-sid-env"]
   variables:
     GIT_SUBMODULE_STRATEGY: normal
     image_name: pkg/debian-sid
