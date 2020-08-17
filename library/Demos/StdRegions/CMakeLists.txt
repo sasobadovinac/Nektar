@@ -14,12 +14,15 @@ ADD_NEKTAR_EXECUTABLE(StdEquiToCoeff2D
     COMPONENT demos DEPENDS StdRegions SOURCES StdEquiToCoeff2D.cpp)
 
 # Interpolation tests.
+ADD_NEKTAR_TEST(StdInterp_Seg_Mod_P6_Q7)
 ADD_NEKTAR_TEST(StdInterp_Hex_Mod_P6_Q7)
 ADD_NEKTAR_TEST(StdInterp_Quad_Lagrange_P6_Q7)
 ADD_NEKTAR_TEST(StdInterp_Prism_Mod_P6_Q7)
 ADD_NEKTAR_TEST(StdInterp_Pyr_Mod_P6_Q7)
 ADD_NEKTAR_TEST(StdInterp_Tet_Mod_P6_Q7)
 ADD_NEKTAR_TEST(StdInterp_Tri_Mod_P6_Q7)
+ADD_NEKTAR_TEST(StdInterp_Tri_Orth_P7_Q8)
+
 
 # Basis interpolation tests.
 ADD_NEKTAR_TEST(StdInterpBasis_Prism_Orth_P6_Q7)
@@ -52,6 +55,7 @@ ADD_NEKTAR_TEST(StdInterpDerivBasis_Prism_Mod_P7_Q8)
 ADD_NEKTAR_TEST(StdInterpDerivBasis_Prism_Orth_P7_Q8)
 ADD_NEKTAR_TEST(StdInterpDerivBasis_Hex_Orth_P7_Q8)
 ADD_NEKTAR_TEST(StdInterpDerivBasis_Hex_Mod_P7_Q8)
+
 
 
 # Projection tests.
