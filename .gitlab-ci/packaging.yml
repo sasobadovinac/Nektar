@@ -23,8 +23,6 @@
   image: $CI_REGISTRY_IMAGE/${image_name}
   stage: package-build
   script:
-    - pwd
-    - ls . ..
     - tar -czvf nektar++-$(<VERSION).tar.gz 
                 --transform="s/^/nektar++-$(<VERSION)\//"
                 --exclude-from=.gitlab-ci/packaging-exclude *
@@ -35,6 +33,7 @@
     - sed -e s/DISTRIBUTION_ID/${distribution}/g < pkg/debian/changelog
             > tmp/nektar++-$(<VERSION)/debian/changelog
     - cd tmp/nektar++-$(<VERSION)
+    - cat debian/changelog
     - dpkg-source -b .
     - dpkg-buildpackage -us -uc
     - lintian
