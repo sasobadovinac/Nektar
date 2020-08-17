@@ -36,6 +36,8 @@
     - pwd
     - ls ..
     - cat debian/changelog
+    - cat tests/Tester.cpp.in
+    - cat debian/patches/fix-mpi-allow-root.patch
     - dpkg-source -b .
     - dpkg-buildpackage -us -uc
     - lintian
