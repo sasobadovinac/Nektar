@@ -317,10 +317,10 @@ protected:
                 Array<OneD, NekDouble> xc(nq, 0.0), yc(nq, 0.0), zc(nq, 0.0);
                 expansion->GetCoords(xc, yc, zc);
 
-                for (int i = offset; i < offset + nq; ++i)
+                for (int i = 0; i < nq; ++i)
                 {
-                   m_gridVelocity[0][i] = -yc[i];
-                   m_gridVelocity[1][i] =  xc[i];
+                   m_gridVelocity[0][offset + i] = -yc[i];
+                   m_gridVelocity[1][offset + i] =  xc[i];
                 }
             }
         }
