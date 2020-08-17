@@ -33,7 +33,7 @@
     - tar -C tmp -xvf tmp/nektar++_$(<VERSION).orig.tar.gz
     - cp -a ${pkg_dir} tmp/nektar++-$(<VERSION)/debian
     - sed -e 's/DISTRIBUTION_ID/${distribution}/g' < pkg/debian/changelog
-        > ${pkg_dir}/changelog
+            > tmp/nektar++-$(<VERSION)/debian/changelog
     - cd tmp/nektar++-$(<VERSION)
     - dpkg-source -b .
     - dpkg-buildpackage -us -uc
