@@ -50,14 +50,14 @@ namespace Nektar
         }
 
         StdExpansion2D::StdExpansion2D(int numcoeffs,
-                       const LibUtilities::BasisKey &Ba,
+                                       const LibUtilities::BasisKey &Ba,
                                        const LibUtilities::BasisKey &Bb):
-        StdExpansion(numcoeffs,2, Ba, Bb)
+            StdExpansion(numcoeffs,2, Ba, Bb)
         {
         }
 
         StdExpansion2D::StdExpansion2D(const StdExpansion2D &T):
-                StdExpansion(T)
+            StdExpansion(T)
         {
         }
 
@@ -68,9 +68,11 @@ namespace Nektar
         //----------------------------
         // Differentiation Methods
         //----------------------------
+        
+        // find derivative of u (inarray) at all quad points
         void StdExpansion2D::PhysTensorDeriv(const Array<OneD, const NekDouble>& inarray,
-                         Array<OneD, NekDouble> &outarray_d0,
-                         Array<OneD, NekDouble> &outarray_d1)
+                                             Array<OneD, NekDouble> &outarray_d0,
+                                             Array<OneD, NekDouble> &outarray_d1)
         {
             int nquad0 = m_base[0]->GetNumPoints();
             int nquad1 = m_base[1]->GetNumPoints();
@@ -113,6 +115,8 @@ namespace Nektar
         }
        
         
+        
+        // find derivative of u (inarray) at all coords points
         void StdExpansion2D::PhysTensorDerivFast(
                                                  const Array<OneD, const Array<OneD, NekDouble> >& coords,
                                                  const Array<OneD, const NekDouble>& inarray,
@@ -166,7 +170,7 @@ namespace Nektar
                         for (int j = 0; j < nq1; ++j)
                         {
                             wsp[j] = StdExpansion::BaryEvaluate<0>(
-                                                                        collcoords[0], &inarray[0] + j * nq0);
+                                                                   collcoords[0], &inarray[0] + j * nq0);
                             
                         }
                         
@@ -180,11 +184,11 @@ namespace Nektar
         //slow version
         // fast one impl as v_PhysEvalBasisGradFast() -> does not use storage space
         void StdExpansion2D::v_PhysEvalBasisGrad(
-                                            const Array<OneD, const Array<OneD, NekDouble> >coords,
-                                            Array<OneD, NekDouble> &out_eval,                    
-                                            Array<OneD, NekDouble> &out_d0,
-                                            Array<OneD, NekDouble> &out_d1,
-                                         Array<OneD, NekDouble> &out_d2)
+                                                 const Array<OneD, const Array<OneD, NekDouble> >coords,
+                                                 Array<OneD, NekDouble> &out_eval,                    
+                                                 Array<OneD, NekDouble> &out_d0,
+                                                 Array<OneD, NekDouble> &out_d1,
+                                                 Array<OneD, NekDouble> &out_d2)
         {
             boost::ignore_unused(out_d2);
 
@@ -312,9 +316,9 @@ namespace Nektar
 
         //evaluates der of multiple points given in coords(2D array) with x-coords in coords[0] and ycoords in coords[1]
         
-    NekDouble StdExpansion2D::v_PhysEvaluate(
-            const Array<OneD, const NekDouble> &coords,
-            const Array<OneD, const NekDouble> &physvals)
+        NekDouble StdExpansion2D::v_PhysEvaluate(
+                                                 const Array<OneD, const NekDouble> &coords,
+                                                 const Array<OneD, const NekDouble> &physvals)
         {
             ASSERTL2(coords[0] > -1 - NekConstants::kNekZeroTol,
                      "coord[0] < -1");
@@ -335,7 +339,7 @@ namespace Nektar
             for (int i = 0; i < nq1; ++i)
             {
                 wsp[i] = StdExpansion::BaryEvaluate<0>(
-                    coll[0], &physvals[0] + i * nq0);
+                                                       coll[0], &physvals[0] + i * nq0);
             }
 
             return StdExpansion::BaryEvaluate<1>(coll[1], &wsp[0]);
@@ -343,8 +347,8 @@ namespace Nektar
 
     
         NekDouble StdExpansion2D::v_PhysEvaluate(
-            const Array<OneD, DNekMatSharedPtr > &I,
-            const Array<OneD, const NekDouble> &physvals)
+                                                 const Array<OneD, DNekMatSharedPtr > &I,
+                                                 const Array<OneD, const NekDouble> &physvals)
         {
             NekDouble val;
             int i;
@@ -370,8 +374,8 @@ namespace Nektar
         //////////////////////////////
 
         NekDouble StdExpansion2D::Integral(const Array<OneD, const NekDouble>& inarray,
-                       const Array<OneD, const NekDouble>& w0,
-                       const Array<OneD, const NekDouble>& w1)
+                                           const Array<OneD, const NekDouble>& w0,
+                                           const Array<OneD, const NekDouble>& w1)
         {
             int i;
             NekDouble Int = 0.0;
@@ -397,33 +401,33 @@ namespace Nektar
         }
 
         void StdExpansion2D::BwdTrans_SumFacKernel(
-                const Array<OneD, const NekDouble>& base0,
-                const Array<OneD, const NekDouble>& base1,
-                const Array<OneD, const NekDouble>& inarray,
-                Array<OneD, NekDouble> &outarray,
-                Array<OneD, NekDouble> &wsp,
-                bool doCheckCollDir0,
-                bool doCheckCollDir1)
+                                                   const Array<OneD, const NekDouble>& base0,
+                                                   const Array<OneD, const NekDouble>& base1,
+                                                   const Array<OneD, const NekDouble>& inarray,
+                                                   Array<OneD, NekDouble> &outarray,
+                                                   Array<OneD, NekDouble> &wsp,
+                                                   bool doCheckCollDir0,
+                                                   bool doCheckCollDir1)
         {
             v_BwdTrans_SumFacKernel(base0, base1, inarray, outarray, wsp, doCheckCollDir0, doCheckCollDir1);
         }
 
         void StdExpansion2D::IProductWRTBase_SumFacKernel(
-                const Array<OneD, const NekDouble>& base0,
-                const Array<OneD, const NekDouble>& base1,
-                const Array<OneD, const NekDouble>& inarray,
-                Array<OneD, NekDouble> &outarray,
-                Array<OneD, NekDouble> &wsp,
-                bool doCheckCollDir0,
-                bool doCheckCollDir1)
+                                                          const Array<OneD, const NekDouble>& base0,
+                                                          const Array<OneD, const NekDouble>& base1,
+                                                          const Array<OneD, const NekDouble>& inarray,
+                                                          Array<OneD, NekDouble> &outarray,
+                                                          Array<OneD, NekDouble> &wsp,
+                                                          bool doCheckCollDir0,
+                                                          bool doCheckCollDir1)
         {
             v_IProductWRTBase_SumFacKernel(base0, base1, inarray, outarray, wsp, doCheckCollDir0, doCheckCollDir1);
         }
 
         void StdExpansion2D::v_LaplacianMatrixOp_MatFree(
-            const Array<OneD, const NekDouble> &inarray,
-                  Array<OneD,NekDouble> &outarray,
-            const StdRegions::StdMatrixKey &mkey)
+                                                         const Array<OneD, const NekDouble> &inarray,
+                                                         Array<OneD,NekDouble> &outarray,
+                                                         const StdRegions::StdMatrixKey &mkey)
         {
             if (mkey.GetNVarCoeff() == 0
                 &&!mkey.ConstFactorExists(StdRegions::eFactorSVVCutoffRatio))
@@ -463,16 +467,16 @@ namespace Nektar
             else
             {
                 StdExpansion::LaplacianMatrixOp_MatFree_GenericImpl(
-                    inarray,outarray,mkey);
+                                                                    inarray,outarray,mkey);
             }
         }
 
 
 
         void StdExpansion2D::v_HelmholtzMatrixOp_MatFree(
-            const Array<OneD, const NekDouble> &inarray,
-                  Array<OneD,NekDouble> &outarray,
-            const StdRegions::StdMatrixKey &mkey)
+                                                         const Array<OneD, const NekDouble> &inarray,
+                                                         Array<OneD,NekDouble> &outarray,
+                                                         const StdRegions::StdMatrixKey &mkey)
         {
             if (mkey.GetNVarCoeff() == 0
                 &&!mkey.ConstFactorExists(StdRegions::eFactorSVVCutoffRatio))
@@ -520,12 +524,12 @@ namespace Nektar
                 // outarray = lambda * outarray + wsp1
                 //          = (lambda * M + L ) * u_hat
                 Vmath::Svtvp(m_ncoeffs, lambda, &outarray[0], 1,
-                              &wsp1[0], 1, &outarray[0], 1);
+                             &wsp1[0], 1, &outarray[0], 1);
             }
             else
             {
                 StdExpansion::HelmholtzMatrixOp_MatFree_GenericImpl(
-                    inarray,outarray,mkey);
+                                                                    inarray,outarray,mkey);
             }
         }
 

@@ -99,30 +99,6 @@ int main(int argc, char *argv[])
     }
         
         
-    /*    cout<<"\n phys = \n";
-    for(int i =  0; i<phys.size(); i++)
-        cout<<phys[i]<<" ";
-    cout<<" \n\n";
-
-
-    cout<<"\n sol = \n";
-    for(int i =  0; i<sol.size(); i++)
-        cout<<sol[i]<<" ";
-    cout<<" \n\n";
-    
-    cout<<"\n phys1 = \n";
-    for(int i =  0; i<phys1.size(); i++)
-        cout<<phys1[i]<<" ";
-    cout<<" \n\n";
-            
-
-
-    cout<<"\n sol1 = \n";
-    for(int i =  0; i<sol1.size(); i++)
-        cout<<sol1[i]<<" ";
-    cout<<" \n\n";
-    */      
-        
     errL2 += E->L2(phys1, sol1)+ E->L2(phys2, sol2)+E->L2(phys, sol);
     errLinf += E->Linf(phys, sol)+ E->Linf(phys1, sol1)+E->Linf(phys2,sol2);
         

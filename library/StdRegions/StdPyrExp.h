@@ -194,6 +194,10 @@ namespace Nektar
                     int &numModes1,
                     Orientation  faceOrient  = eDir1FwdDir1_Dir2FwdDir2);
 
+            
+            // Should be called v_PhysEvalBasisGrad
+            // and replace the existing method v_PhysEvalBasisGrad
+            
             STD_REGIONS_EXPORT void v_PhysEvalBasisGradFast(
                                             const Array<OneD, const Array<OneD, NekDouble> >coords,
                                             Array<OneD, NekDouble> &out_eval,                    

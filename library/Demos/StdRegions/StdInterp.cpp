@@ -78,14 +78,7 @@ int main(int argc, char *argv[])
     StdExpansion *F = demo.CreateStdExpansion();
 
     Array<OneD, Array<OneD, NekDouble>> coordsF = demo.GetCoords(F);
-
-    cout<<"\n size of coordsE = "<<coordsE[0].size();
-    cout<<" size of coordsF = "<<coordsF[0].size();
-    Array<OneD, NekDouble> res(coordsE.size());
-    Vmath::Vsub(coordsE.size(), coordsE[0],1,coordsF[0],1,res,1);
-    NekDouble maxx = Vmath::Vmax(coordsE.size(),res, 1);
-    cout<<"\n max = "<<maxx<<"\n";
-        
+    
     Array<OneD, NekDouble> physIn(totPoints), physOut(totPoints);
     Array<OneD, NekDouble> tmpIn(dimension), sol(totPoints);
 
@@ -103,109 +96,10 @@ int main(int argc, char *argv[])
     }
 
     sol = EvalPoly(coordsF);
-    /*xsy  cout<<"\n sol:";
-    for(int i = 0; i<sol.size(); i++)
-        cout<<sol[i] <<" ";
-
-    cout<<"\n phys:out";
-    for(int i = 0; i<sol.size(); i++)
-        cout<<physOut[i] <<" ";
-*/
+  
     cout << "L infinity error : " << scientific << E->Linf(physOut, sol) << endl;
     cout << "L 2 error        : " << scientific << E->L2  (physOut, sol) << endl;
 
     return 0;
 }
-
-
-// #include <iostream>
-// #include <LibUtilities/BasicUtils/Timer.h>
-
-// #include "StdDemoSupport.hpp"
-
-// // Evaluate polynomial for testing and save in ret (size same as pts[0]) if
-// // tensorp = 0, we need tensorprod else just eval at pts
-// Array<OneD, NekDouble> EvalPoly(Array<OneD, Array<OneD, NekDouble>> &pts)
-// {
-//     Array<OneD, NekDouble> ret(pts[0].size());
-//     unsigned dim = pts.size();
-
-//     // check if pts[0] and pts[1] have same size
-//     // polynomial = x^2 + y^2 - 3x - 4
-//     for (int i = 0; i < pts[0].size(); i++)
-//     {
-//         ret[i] = pow(pts[0][i],2) - 3*pts[0][i] - 4.0
-//             + (dim >= 2 ? pow(pts[1][i], 2) : 0.0)
-//             + (dim >= 3 ? pow(pts[2][i], 2) : 0.0);
-//     }
-//     return ret;
-// }
-
-// int main(int argc, char *argv[])
-// {
-//     DemoSupport demo;
-//     demo.ParseArguments(argc, argv);
-//     StdExpansion *E = demo.CreateStdExpansion();
-
-//     const auto totPoints = (unsigned) E->GetTotPoints();
-//     const auto dimension = (unsigned) E->GetShapeDimension();
-
-//     // Create a new element but with the evenly-spaced points type, so that we
-//     // perform a PhysEvaluate at a different set of nodal points
-//     // (i.e. non-collocated interpolation).
-//     vector<string> &ptypes = demo.GetPointsType();
-
-//     for (int i = 0; i < dimension; ++i)
-//     {
-//         ptypes[i] = "PolyEvenlySpaced";
-//     }
-//     //    StdExpansion *F = demo.CreateStdExpansion();
-
-//     Array<OneD, Array<OneD, NekDouble>> coordsE = demo.GetCoords(E);
-//     //Array<OneD, Array<OneD, NekDouble>> coordsF = demo.GetCoords(F);
-//     Array<OneD, NekDouble> physIn(totPoints), physOut(totPoints);
-//     Array<OneD, NekDouble> tmpIn(dimension), sol(totPoints);
-//     //cout<<"\n\n dies\n\n";
-//     // Evaluate polynomial at the set of elemental solution points.
-//     Array<OneD, Array<OneD, NekDouble> > coordsF(dimension); 
-//     for (int d = 0; d < dimension; ++d)
-//     {
-//         coordsF[d] = Array<OneD, NekDouble>(totPoints);
-//     }
-//     for(int i = 0; i <totPoints; i++)
-//     {
-//         for (int d = 0; d < dimension; ++d)
-//         {
-//             coordsF[d][i] = ((double) rand() / (RAND_MAX));
-//             cout<<" "<<coordsF[d][i]<<" ";
-//         }
-//     }
-    
-//     physIn = EvalPoly(coordsE);
-
-//     for (int i = 0; i < totPoints; ++i)
-//     {
-//         for (int d = 0; d < dimension; ++d)
-//         {
-//             tmpIn[d] = coordsF[d][i];
-//         }
-
-//         physOut[i] = E->PhysEvaluate(tmpIn, physIn);
-//     }
-//     sol = EvalPoly(coordsF);
-
-//     cout<<"\n sol:  ";
-//     for(int i = 0; i<sol.size(); i++)
-//         cout<<sol[i]<<" ";
-//     cout<<"\nphysout = ";
-//     for(int i = 0; i<physOut.size(); i++)
-//         cout<<physOut[i]<<" ";
-//     cout<<"\n";
-
-
-//     cout << "L infinity error : " << scientific << E->Linf(physOut, sol) << endl;
-//     cout << "L 2 error        : " << scientific << E->L2  (physOut, sol) << endl;
-
-//     return 0;
-// }
 

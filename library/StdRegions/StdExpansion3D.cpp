@@ -66,11 +66,14 @@ namespace Nektar
         StdExpansion3D::~StdExpansion3D()
         {
         }
+
+
+        // find derivative of u (inarray) at all quad points
         void StdExpansion3D::PhysTensorDeriv(
-            const Array<OneD, const NekDouble> &inarray,
-                  Array<OneD,       NekDouble> &out_dx,
-                  Array<OneD,       NekDouble> &out_dy,
-                  Array<OneD,       NekDouble> &out_dz)
+                                             const Array<OneD, const NekDouble> &inarray,
+                                             Array<OneD,       NekDouble> &out_dx,
+                                             Array<OneD,       NekDouble> &out_dy,
+                                             Array<OneD,       NekDouble> &out_dz)
         {
             const int nquad0 = m_base[0]->GetNumPoints();
             const int nquad1 = m_base[1]->GetNumPoints();
@@ -112,42 +115,42 @@ namespace Nektar
         }
 
         void StdExpansion3D::BwdTrans_SumFacKernel(
-            const Array<OneD, const NekDouble>& base0,
-            const Array<OneD, const NekDouble>& base1,
-            const Array<OneD, const NekDouble>& base2,
-            const Array<OneD, const NekDouble>& inarray,
-                  Array<OneD,       NekDouble>& outarray,
-                  Array<OneD,       NekDouble>& wsp,
-            bool                                doCheckCollDir0,
-            bool                                doCheckCollDir1,
-            bool                                doCheckCollDir2)
+                                                   const Array<OneD, const NekDouble>& base0,
+                                                   const Array<OneD, const NekDouble>& base1,
+                                                   const Array<OneD, const NekDouble>& base2,
+                                                   const Array<OneD, const NekDouble>& inarray,
+                                                   Array<OneD,       NekDouble>& outarray,
+                                                   Array<OneD,       NekDouble>& wsp,
+                                                   bool                                doCheckCollDir0,
+                                                   bool                                doCheckCollDir1,
+                                                   bool                                doCheckCollDir2)
         {
             v_BwdTrans_SumFacKernel(base0, base1, base2, inarray, outarray, wsp, doCheckCollDir0, doCheckCollDir1, doCheckCollDir2);
         }
 
         void StdExpansion3D::IProductWRTBase_SumFacKernel(
-                const Array<OneD, const NekDouble>& base0,
-                const Array<OneD, const NekDouble>& base1,
-                const Array<OneD, const NekDouble>& base2,
-                const Array<OneD, const NekDouble>& inarray,
-                      Array<OneD, NekDouble> &outarray,
-                      Array<OneD, NekDouble> &wsp,
-                bool doCheckCollDir0,
-                bool doCheckCollDir1,
-                bool doCheckCollDir2)
+                                                          const Array<OneD, const NekDouble>& base0,
+                                                          const Array<OneD, const NekDouble>& base1,
+                                                          const Array<OneD, const NekDouble>& base2,
+                                                          const Array<OneD, const NekDouble>& inarray,
+                                                          Array<OneD, NekDouble> &outarray,
+                                                          Array<OneD, NekDouble> &wsp,
+                                                          bool doCheckCollDir0,
+                                                          bool doCheckCollDir1,
+                                                          bool doCheckCollDir2)
         {
             v_IProductWRTBase_SumFacKernel(base0, base1, base2, inarray, outarray, wsp, doCheckCollDir0, doCheckCollDir1, doCheckCollDir2);
         }
 
 
-    //slow version
+        //slow version
         // fast one impl as v_PhysEvalBasisGradFast() -> does not use storage space
         void StdExpansion3D::v_PhysEvalBasisGrad(
-                                            const Array<OneD, const Array<OneD, NekDouble> >coords,
-                                            Array<OneD, NekDouble> &out_eval,                    
-                                            Array<OneD, NekDouble> &out_d0,
-                                            Array<OneD, NekDouble> &out_d1,
-                                            Array<OneD, NekDouble> &out_d2)
+                                                 const Array<OneD, const Array<OneD, NekDouble> >coords,
+                                                 Array<OneD, NekDouble> &out_eval,                    
+                                                 Array<OneD, NekDouble> &out_d0,
+                                                 Array<OneD, NekDouble> &out_d1,
+                                                 Array<OneD, NekDouble> &out_d2)
         {
             int tot = GetTotPoints();
                 
@@ -278,233 +281,8 @@ namespace Nektar
             return ret;
 
         }       
-
         
-        
-        //evaluates der of multiple points given in coords(2D array) with x-coords in coords[0] and ycoords in coords[1]
-        
-        /*        void StdExpansion3D::v_PhysEvalGradFast(
-                                            const Array<OneD, const Array<OneD, NekDouble> >coords,
-                                            const Array<OneD, const NekDouble>& inarray,        
-                                            Array<OneD, NekDouble> &out_d0,
-                                            Array<OneD, NekDouble> &out_d1,
-                                            Array<OneD, NekDouble> &out_d2)
-        {
-            Array<OneD, NekDouble> eta(3);
-            const int nq0 = m_base[0]->GetNumPoints();
-            const int nq1 = m_base[1]->GetNumPoints();
-            const int nq2 = m_base[2]->GetNumPoints();
-                
-            Array<OneD, NekDouble> wsp1(nq1 * nq2), wsp2(nq2);
-            
-            for(int k = 0; k<coords[0].size(); k++)
-            {
-                eta[0] = coords[0][k];
-                eta[1] = coords[1][k];
-                eta[2] = coords[2][k];
-            
-                if(out_d0.size()>0)
-                {
-                
-                    // Construct the 2D square...
-                    const NekDouble *ptr = &inarray[0];
-                    for (int i = 0; i < nq1 * nq2; ++i, ptr += nq0)
-                    {
-                        wsp1[i] = StdExpansion::BaryEvaluateDeriv<0>(eta[0], ptr);
-                    }
-                    for (int i = 0; i < nq2; ++i)
-                    {
-                        wsp2[i] = StdExpansion::BaryEvaluate<1>(eta[1], &wsp1[i * nq1]);
-                    }
-                    
-                    out_d0[k] = StdExpansion::BaryEvaluate<2>(eta[2], &wsp2[0]);
-                    
-                }
-
-            
-                if(out_d1.size()>0)
-                {
-                    Array<OneD, NekDouble> wsp1(nq1 * nq2), wsp2(nq2);
-                
-                    // Construct the 2D square...
-                    const NekDouble *ptr = &inarray[0];
-                    for (int i = 0; i < nq1 * nq2; ++i, ptr += nq0)
-                    {
-                        wsp1[i] = StdExpansion::BaryEvaluate<0>(eta[0], ptr);
-                    }
-                    
-                    for (int i = 0; i < nq2; ++i)
-                    {
-                        wsp2[i] = StdExpansion::BaryEvaluateDeriv<1>(eta[1], &wsp1[i * nq1]);
-                    }
-                    
-                    out_d1[k] = StdExpansion::BaryEvaluate<2>(eta[2], &wsp2[0]);
-                    
-                }
-
-                if(out_d2.size()>0)
-                {
-                    Array<OneD, NekDouble> wsp1(nq1 * nq2), wsp2(nq2);
-                
-                    // Construct the 2D square...
-                    const NekDouble *ptr = &inarray[0];
-                    for (int i = 0; i < nq1 * nq2; ++i, ptr += nq0)
-                    {
-                        wsp1[i] = StdExpansion::BaryEvaluate<0>(eta[0], ptr);
-                    }
-                    
-                    for (int i = 0; i < nq2; ++i)
-                    {
-                        wsp2[i] = StdExpansion::BaryEvaluate<1>(eta[1], &wsp1[i * nq1]);
-                    }
-                    
-                    out_d2[k] = StdExpansion::BaryEvaluateDeriv<2>(eta[2], &wsp2[0]);
-                    
-                }
-
-            }
-        }            
-    
-
-
-
-
-                NekDouble StdExpansion3D::v_PhysEvaluatedx(
-            const Array<OneD, const NekDouble> &coords,
-            const Array<OneD, const NekDouble> &physvals)
-        {
-            Array<OneD, NekDouble> eta(3);
-
-            WARNINGL2(coords[0] >= -1 - NekConstants::kNekZeroTol,
-                      "coord[0] < -1");
-            WARNINGL2(coords[0] <=  1 + NekConstants::kNekZeroTol,
-                      "coord[0] >  1");
-            WARNINGL2(coords[1] >= -1 - NekConstants::kNekZeroTol,
-                      "coord[1] < -1");
-            WARNINGL2(coords[1] <=  1 + NekConstants::kNekZeroTol,
-                      "coord[1] >  1");
-            WARNINGL2(coords[2] >= -1 - NekConstants::kNekZeroTol,
-                      "coord[2] < -1");
-            WARNINGL2(coords[2] <=  1 + NekConstants::kNekZeroTol,
-                      "coord[2] >  1");
-
-            // Obtain local collapsed corodinate from Cartesian coordinate.
-            //            LocCoordToLocCollapsed(coords, eta);
-            eta = coords;
-            const int nq0 = m_base[0]->GetNumPoints();
-            const int nq1 = m_base[1]->GetNumPoints();
-            const int nq2 = m_base[2]->GetNumPoints();
-
-            Array<OneD, NekDouble> wsp1(nq1 * nq2), wsp2(nq2);
-
-            // Construct the 2D square...
-            const NekDouble *ptr = &physvals[0];
-            for (int i = 0; i < nq1 * nq2; ++i, ptr += nq0)
-            {
-                wsp1[i] = StdExpansion::BaryEvaluateDeriv<0>(eta[0], ptr);
-            }
-
-            for (int i = 0; i < nq2; ++i)
-            {
-                wsp2[i] = StdExpansion::BaryEvaluate<1>(eta[1], &wsp1[i * nq1]);
-            }
-
-            return StdExpansion::BaryEvaluate<2>(eta[2], &wsp2[0]);
-
-        }
-
-
-
-        NekDouble StdExpansion3D::v_PhysEvaluatedy(
-            const Array<OneD, const NekDouble> &coords,
-            const Array<OneD, const NekDouble> &physvals)
-        {
-            Array<OneD, NekDouble> eta(3);
-                        
-            WARNINGL2(coords[0] >= -1 - NekConstants::kNekZeroTol,
-                      "coord[0] < -1");
-            WARNINGL2(coords[0] <=  1 + NekConstants::kNekZeroTol,
-                      "coord[0] >  1");
-            WARNINGL2(coords[1] >= -1 - NekConstants::kNekZeroTol,
-                      "coord[1] < -1");
-            WARNINGL2(coords[1] <=  1 + NekConstants::kNekZeroTol,
-                      "coord[1] >  1");
-            WARNINGL2(coords[2] >= -1 - NekConstants::kNekZeroTol,
-                      "coord[2] < -1");
-            WARNINGL2(coords[2] <=  1 + NekConstants::kNekZeroTol,
-                      "coord[2] >  1");
-
-            // Obtain local collapsed corodinate from Cartesian coordinate.
-            //            LocCoordToLocCollapsed(coords, eta);
-            eta = coords;
-            const int nq0 = m_base[0]->GetNumPoints();
-            const int nq1 = m_base[1]->GetNumPoints();
-            const int nq2 = m_base[2]->GetNumPoints();
-
-            Array<OneD, NekDouble> wsp1(nq1 * nq2), wsp2(nq2);
-
-            // Construct the 2D square...
-            const NekDouble *ptr = &physvals[0];
-            for (int i = 0; i < nq1 * nq2; ++i, ptr += nq0)
-            {
-                wsp1[i] = StdExpansion::BaryEvaluate<0>(eta[0], ptr);
-            }
-
-            for (int i = 0; i < nq2; ++i)
-            {
-                wsp2[i] = StdExpansion::BaryEvaluateDeriv<1>(eta[1], &wsp1[i * nq1]);
-            }
-
-            return StdExpansion::BaryEvaluate<2>(eta[2], &wsp2[0]);
-
-        }
-
-
-        NekDouble StdExpansion3D::v_PhysEvaluatedz(
-            const Array<OneD, const NekDouble> &coords,
-            const Array<OneD, const NekDouble> &physvals)
-        {
-            Array<OneD, NekDouble> eta(3);
-
-            WARNINGL2(coords[0] >= -1 - NekConstants::kNekZeroTol,
-                      "coord[0] < -1");
-            WARNINGL2(coords[0] <=  1 + NekConstants::kNekZeroTol,
-                      "coord[0] >  1");
-            WARNINGL2(coords[1] >= -1 - NekConstants::kNekZeroTol,
-                      "coord[1] < -1");
-            WARNINGL2(coords[1] <=  1 + NekConstants::kNekZeroTol,
-                      "coord[1] >  1");
-            WARNINGL2(coords[2] >= -1 - NekConstants::kNekZeroTol,
-                      "coord[2] < -1");
-            WARNINGL2(coords[2] <=  1 + NekConstants::kNekZeroTol,
-                      "coord[2] >  1");
-
-            // Obtain local collapsed corodinate from Cartesian coordinate.
-            //            LocCoordToLocCollapsed(coords, eta);
-            eta = coords;
-            const int nq0 = m_base[0]->GetNumPoints();
-            const int nq1 = m_base[1]->GetNumPoints();
-            const int nq2 = m_base[2]->GetNumPoints();
-
-            Array<OneD, NekDouble> wsp1(nq1 * nq2), wsp2(nq2);
-
-            // Construct the 2D square...
-            const NekDouble *ptr = &physvals[0];
-            for (int i = 0; i < nq1 * nq2; ++i, ptr += nq0)
-            {
-                wsp1[i] = StdExpansion::BaryEvaluate<0>(eta[0], ptr);
-            }
-
-            for (int i = 0; i < nq2; ++i)
-            {
-                wsp2[i] = StdExpansion::BaryEvaluate<1>(eta[1], &wsp1[i * nq1]);
-            }
-
-            return StdExpansion::BaryEvaluateDeriv<2>(eta[2], &wsp2[0]);
-
-        }
-        */
-
+        // find derivative of u (inarray) at all coords points
         void StdExpansion3D::PhysTensorDerivFast(
                                                  const Array<OneD, const Array<OneD, NekDouble> >& coords,
                                                  const Array<OneD, const NekDouble>& inarray,
@@ -620,8 +398,8 @@ namespace Nektar
 
 
         NekDouble StdExpansion3D::v_PhysEvaluate(
-            const Array<OneD, const NekDouble> &coords,
-            const Array<OneD, const NekDouble> &physvals)
+                                                 const Array<OneD, const NekDouble> &coords,
+                                                 const Array<OneD, const NekDouble> &physvals)
         {
             Array<OneD, NekDouble> eta(3);
 
@@ -663,8 +441,8 @@ namespace Nektar
         }
 
         NekDouble StdExpansion3D::v_PhysEvaluate(
-            const Array<OneD, DNekMatSharedPtr > &I,
-            const Array<OneD, const NekDouble> &physvals)
+                                                 const Array<OneD, DNekMatSharedPtr > &I,
+                                                 const Array<OneD, const NekDouble> &physvals)
         {
             NekDouble  value;
 
@@ -702,12 +480,12 @@ namespace Nektar
          * @param   mkey        Matrix key
          */
         void StdExpansion3D::v_LaplacianMatrixOp_MatFree(
-                const Array<OneD, const NekDouble> &inarray,
-                      Array<OneD,NekDouble> &outarray,
-                const StdRegions::StdMatrixKey &mkey)
+                                                         const Array<OneD, const NekDouble> &inarray,
+                                                         Array<OneD,NekDouble> &outarray,
+                                                         const StdRegions::StdMatrixKey &mkey)
         {
             if ( mkey.GetNVarCoeff() == 0 &&
-                !mkey.ConstFactorExists(eFactorSVVCutoffRatio))
+                 !mkey.ConstFactorExists(eFactorSVVCutoffRatio))
             {
                 // This implementation is only valid when there are no
                 // coefficients associated to the Laplacian operator
@@ -744,9 +522,9 @@ namespace Nektar
 
 
         void StdExpansion3D::v_HelmholtzMatrixOp_MatFree(
-                const Array<OneD, const NekDouble> &inarray,
-                      Array<OneD,NekDouble> &outarray,
-                const StdRegions::StdMatrixKey &mkey)
+                                                         const Array<OneD, const NekDouble> &inarray,
+                                                         Array<OneD,NekDouble> &outarray,
+                                                         const StdRegions::StdMatrixKey &mkey)
         {
             if(mkey.GetNVarCoeff() == 0)
             {
@@ -806,7 +584,7 @@ namespace Nektar
         }
 
         NekDouble StdExpansion3D::v_Integral(
-            const Array<OneD, const NekDouble>& inarray)
+                                             const Array<OneD, const NekDouble>& inarray)
         {
             const int nqtot = GetTotPoints();
             Array<OneD, NekDouble> tmp(GetTotPoints());
@@ -828,63 +606,63 @@ namespace Nektar
         }
 
         void StdExpansion3D::v_GetEdgeInteriorToElementMap(
-               const int                  tid,
-               Array<OneD, unsigned int> &maparray,
-               Array<OneD,          int> &signarray,
-               Orientation                traceOrient)
+                                                           const int                  tid,
+                                                           Array<OneD, unsigned int> &maparray,
+                                                           Array<OneD,          int> &signarray,
+                                                           Orientation                traceOrient)
         {
             boost::ignore_unused(tid,maparray,signarray,traceOrient);
             NEKERROR(ErrorUtil::efatal,"Method does not exist for this shape" );
         }
 
         LibUtilities::BasisKey EvaluateQuadFaceBasisKey(
-            const int                     facedir,
-            const LibUtilities::BasisType faceDirBasisType,
-            const int                     numpoints,
-            const int                     nummodes)
+                                                        const int                     facedir,
+                                                        const LibUtilities::BasisType faceDirBasisType,
+                                                        const int                     numpoints,
+                                                        const int                     nummodes)
         {
             boost::ignore_unused(facedir);
 
             switch(faceDirBasisType)
             {
-                case LibUtilities::eModified_A:
+            case LibUtilities::eModified_A:
                 {
                     const LibUtilities::PointsKey pkey(
-                        numpoints, LibUtilities::eGaussLobattoLegendre);
+                                                       numpoints, LibUtilities::eGaussLobattoLegendre);
                     return LibUtilities::BasisKey(
-                        LibUtilities::eModified_A, nummodes, pkey);
+                                                  LibUtilities::eModified_A, nummodes, pkey);
                 }
-                case LibUtilities::eModified_B:
-                case LibUtilities::eModified_C:
+            case LibUtilities::eModified_B:
+            case LibUtilities::eModified_C:
                 {
                     const LibUtilities::PointsKey pkey(
-                        numpoints+1, LibUtilities::eGaussLobattoLegendre);
+                                                       numpoints+1, LibUtilities::eGaussLobattoLegendre);
                     return LibUtilities::BasisKey(
-                        LibUtilities::eModified_A, nummodes, pkey);
+                                                  LibUtilities::eModified_A, nummodes, pkey);
                 }
-                case LibUtilities::eGLL_Lagrange:
+            case LibUtilities::eGLL_Lagrange:
                 {
                     const LibUtilities::PointsKey pkey(
-                        numpoints, LibUtilities::eGaussLobattoLegendre);
+                                                       numpoints, LibUtilities::eGaussLobattoLegendre);
                     return LibUtilities::BasisKey(
-                        LibUtilities::eGLL_Lagrange, nummodes, pkey);
+                                                  LibUtilities::eGLL_Lagrange, nummodes, pkey);
                 }
-                case LibUtilities::eOrtho_A:
+            case LibUtilities::eOrtho_A:
                 {
                     const LibUtilities::PointsKey pkey(
-                        numpoints, LibUtilities::eGaussLobattoLegendre);
+                                                       numpoints, LibUtilities::eGaussLobattoLegendre);
                     return LibUtilities::BasisKey(
-                        LibUtilities::eOrtho_A, nummodes, pkey);
+                                                  LibUtilities::eOrtho_A, nummodes, pkey);
                 }
-                case LibUtilities::eOrtho_B:
-                case LibUtilities::eOrtho_C:
+            case LibUtilities::eOrtho_B:
+            case LibUtilities::eOrtho_C:
                 {
                     const LibUtilities::PointsKey pkey(
-                        numpoints+1, LibUtilities::eGaussLobattoLegendre);
+                                                       numpoints+1, LibUtilities::eGaussLobattoLegendre);
                     return LibUtilities::BasisKey(
-                        LibUtilities::eOrtho_A, nummodes, pkey);
+                                                  LibUtilities::eOrtho_A, nummodes, pkey);
                 }
-                default:
+            default:
                 {
                     ASSERTL0(false, "expansion type unknown");
                     break;
@@ -896,46 +674,46 @@ namespace Nektar
         }
 
         LibUtilities::BasisKey EvaluateTriFaceBasisKey(
-            const int                     facedir,
-            const LibUtilities::BasisType faceDirBasisType,
-            const int                     numpoints,
-            const int                     nummodes)
+                                                       const int                     facedir,
+                                                       const LibUtilities::BasisType faceDirBasisType,
+                                                       const int                     numpoints,
+                                                       const int                     nummodes)
         {
             switch(faceDirBasisType)
             {
-                case LibUtilities::eModified_A:
+            case LibUtilities::eModified_A:
                 {
                     const LibUtilities::PointsKey pkey(
-                        numpoints, LibUtilities::eGaussLobattoLegendre);
+                                                       numpoints, LibUtilities::eGaussLobattoLegendre);
                     return LibUtilities::BasisKey(
-                        LibUtilities::eModified_A, nummodes, pkey);
+                                                  LibUtilities::eModified_A, nummodes, pkey);
                 }
-                case LibUtilities::eModified_B:
-                case LibUtilities::eModified_C:
-                case LibUtilities::eModifiedPyr_C:
+            case LibUtilities::eModified_B:
+            case LibUtilities::eModified_C:
+            case LibUtilities::eModifiedPyr_C:
                 {
                     switch (facedir)
                     {
-                        case 0:
+                    case 0:
                         {
                             const LibUtilities::PointsKey pkey(
-                                numpoints+1,
-                                LibUtilities::eGaussLobattoLegendre);
+                                                               numpoints+1,
+                                                               LibUtilities::eGaussLobattoLegendre);
                             return LibUtilities::BasisKey(
-                                LibUtilities::eModified_A, nummodes, pkey);
+                                                          LibUtilities::eModified_A, nummodes, pkey);
                         }
-                        case 1:
+                    case 1:
                         {
-//                            const LibUtilities::PointsKey pkey(
-//                                numpoints+1,
-//                                LibUtilities::eGaussLobattoLegendre);
+                            //                            const LibUtilities::PointsKey pkey(
+                            //                                numpoints+1,
+                            //                                LibUtilities::eGaussLobattoLegendre);
                             const LibUtilities::PointsKey pkey(
-	 			numpoints,
-				LibUtilities::eGaussRadauMAlpha1Beta0);
+                                                               numpoints,
+                                                               LibUtilities::eGaussRadauMAlpha1Beta0);
                             return LibUtilities::BasisKey(
-                                LibUtilities::eModified_B, nummodes, pkey);
+                                                          LibUtilities::eModified_B, nummodes, pkey);
                         }
-                        default:
+                    default:
                         {
 
                             ASSERTL0(false,"invalid value to flag");
@@ -945,27 +723,27 @@ namespace Nektar
                     break;
                 }
 
-                case LibUtilities::eGLL_Lagrange:
+            case LibUtilities::eGLL_Lagrange:
                 {
                     switch (facedir)
                     {
-                        case 0:
+                    case 0:
                         {
                             const LibUtilities::PointsKey pkey(
-                                numpoints,
-                                LibUtilities::eGaussLobattoLegendre);
+                                                               numpoints,
+                                                               LibUtilities::eGaussLobattoLegendre);
                             return LibUtilities::BasisKey(
-                                LibUtilities::eOrtho_A, nummodes, pkey);
+                                                          LibUtilities::eOrtho_A, nummodes, pkey);
                         }
-                        case 1:
+                    case 1:
                         {
                             const LibUtilities::PointsKey pkey(
-                                numpoints,
-                                LibUtilities::eGaussRadauMAlpha1Beta0);
+                                                               numpoints,
+                                                               LibUtilities::eGaussRadauMAlpha1Beta0);
                             return LibUtilities::BasisKey(
-                                LibUtilities::eOrtho_B, nummodes, pkey);
+                                                          LibUtilities::eOrtho_B, nummodes, pkey);
                         }
-                        default:
+                    default:
                         {
                             ASSERTL0(false,"invalid value to flag");
                             break;
@@ -974,30 +752,30 @@ namespace Nektar
                     break;
                 }
 
-                case LibUtilities::eOrtho_A:
-                case LibUtilities::eOrtho_B:
-                case LibUtilities::eOrtho_C:
-                case LibUtilities::eOrthoPyr_C:
+            case LibUtilities::eOrtho_A:
+            case LibUtilities::eOrtho_B:
+            case LibUtilities::eOrtho_C:
+            case LibUtilities::eOrthoPyr_C:
                 {
                     switch (facedir)
                     {
-                        case 0:
+                    case 0:
                         {
                             const LibUtilities::PointsKey pkey(
-                                numpoints,
-                                LibUtilities::eGaussLobattoLegendre);
+                                                               numpoints,
+                                                               LibUtilities::eGaussLobattoLegendre);
                             return LibUtilities::BasisKey(
-                                LibUtilities::eOrtho_A, nummodes, pkey);
+                                                          LibUtilities::eOrtho_A, nummodes, pkey);
                         }
-                        case 1:
+                    case 1:
                         {
                             const LibUtilities::PointsKey pkey(
-                                numpoints,
-                                LibUtilities::eGaussRadauMAlpha1Beta0);
+                                                               numpoints,
+                                                               LibUtilities::eGaussRadauMAlpha1Beta0);
                             return LibUtilities::BasisKey(
-                                LibUtilities::eOrtho_B, nummodes, pkey);
+                                                          LibUtilities::eOrtho_B, nummodes, pkey);
                         }
-                        default:
+                    default:
                         {
                             ASSERTL0(false,"invalid value to flag");
                             break;
@@ -1005,7 +783,7 @@ namespace Nektar
                     }
                     break;
                 }
-                default:
+            default:
                 {
                     ASSERTL0(false,"expansion type unknown");
                     break;

@@ -165,28 +165,6 @@ int main(int argc, char *argv[])
         sol1 = EvalPolyDerivy(coordsF);
     if(dimension>0)
         sol0 = EvalPolyDerivx(coordsF);
-    /*
-    cout<<"\n sol y :  ";
-    for(int i = 0; i<sol1.size(); i++)
-        cout<<sol1[i]<<" ";
-    cout<<"\nphysout y = ";
-    for(int i = 0; i<physOut1.size(); i++)
-        cout<<physOut1[i]<<" ";
-        
-    cout<<"\n\n sol x:  ";
-    for(int i = 0; i<sol0.size(); i++)
-        cout<<sol0[i]<<" ";
-    cout<<"\nphysout x = ";
-    for(int i = 0; i<physOut0.size(); i++)
-        cout<<physOut0[i]<<" ";
-
-    cout<<"\n\n sol z:  ";
-    for(int i = 0; i<sol2.size(); i++)
-        cout<<sol2[i]<<" ";
-    cout<<"\nphysout z = ";
-    for(int i = 0; i<physOut2.size(); i++)
-        cout<<physOut2[i]<<" ";
-*/
     
 
     

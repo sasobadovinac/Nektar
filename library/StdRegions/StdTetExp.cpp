@@ -980,24 +980,6 @@ namespace Nektar
             Vmath::Vcopy(nq1, eta11, nq0, eta1, 1);
             Vmath::Vcopy(nq2, eta22, nq0*nq1, eta2, 1);
 
-            
-            // calculate 2.0/((1-eta1)(1-eta2)) out_d0
-            
-            /*            Array<OneD, NekDouble> wsp2( nq0),
-                wsp1( nq1),
-                wsp0(nc0);
-
-
-
-            // set up geometric factor: 2.0/(1.0-eta1) in wsp1
-            Vmath::Sadd(nq0, -1.0, eta1, nq2*nq0, wsp1, 1);
-            Vmath::Sdiv(nq0, 2.0, wsp1, 1, wsp1, 1);
-            Vmath::Sadd(nq0, -1.0, eta2, nq1*nq0 , wsp2, 1);
-            
-            Vmath::Vdiv(nq0, wsp1, 1, wsp2, 1, wsp2, 1); // this is 2.0/((1-eta1)(1-eta2))
-            
-            Vmath::Smul(nc0, 2.0, wsp2, 1, wsp1, 1);*/
-
             NekDouble fac;
             Array<OneD, NekDouble> tmpoutd0(out_d0.size());
             Array<OneD, NekDouble> tmpoutd1(out_d1.size());
@@ -1033,28 +1015,6 @@ cout<<"\nout_d0:";
                 // out_dxi0 = 4.0/((1-eta_1)(1-eta_2)) Out_dEta0
                 Vmath::Smul(nc0,2.0,tmpoutd0,1, out_d0, 1);
             }
-            cout<<"\n again outd0:::   ";
-            for(int ii = 0; ii<out_d0.size(); ii++)
-                cout<<out_d0[ii]<<" ";
-            cout<<"\n****\n";
-
-            
-            cout<<"\neta0:";
-            for(int ii = 0; ii<eta0.size(); ii++)
-                cout<<eta0[ii]<<" ";
-            cout<<"\n****\n";
-            cout<<"\nout_d0:";
-           
-            
-            cout<<"\neta1:";
-            for(int ii = 0; ii<eta1.size(); ii++)
-                cout<<eta1[ii]<<" ";
-            cout<<"\n****\n";
-            cout<<"\neta2:";
-            for(int ii = 0; ii<eta2.size(); ii++)
-                cout<<eta2[ii]<<" ";
-            cout<<"\n****\n";
-
                         
 
             if (Do_1||Do_2)
@@ -1112,6 +1072,10 @@ cout<<"\nout_d0:";
     
         }
         
+        
+        // Should be called v_PhysEvalBasisGrad
+        // and replace the existing method v_PhysEvalBasisGrad
+
         void StdTetExp::v_PhysEvalBasisGradFast(
                                             const Array<OneD, const Array<OneD, NekDouble> >coords,
                                             Array<OneD, NekDouble> &out_eval,                    

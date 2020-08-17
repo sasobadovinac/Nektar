@@ -57,18 +57,18 @@ namespace Nektar
             STD_REGIONS_EXPORT virtual ~StdExpansion1D();
 
             /** \brief Evaluate the derivative \f$ d/d{\xi_1} \f$ at the
-            *  physical quadrature points given by \a inarray and return in
-            *  \a outarray.
-            *
-            *  \param inarray array of a function evaluated at the quadrature
-            *  points
-            *  \param outarray the resulting array of the derivative \f$
-            *  du/d_{\xi_1}|_{\xi_{1i}} \f$ will be stored in the array
-            *  \a outarray as output of the function
-            */
+             *  physical quadrature points given by \a inarray and return in
+             *  \a outarray.
+             *
+             *  \param inarray array of a function evaluated at the quadrature
+             *  points
+             *  \param outarray the resulting array of the derivative \f$
+             *  du/d_{\xi_1}|_{\xi_{1i}} \f$ will be stored in the array
+             *  \a outarray as output of the function
+             */
             STD_REGIONS_EXPORT void PhysTensorDeriv(
-                    const Array<OneD, const NekDouble>& inarray,
-                          Array<OneD,       NekDouble>& outarray);
+                                                    const Array<OneD, const NekDouble>& inarray,
+                                                    Array<OneD,       NekDouble>& outarray);
 
 
             STD_REGIONS_EXPORT void PhysTensorDerivFast(
@@ -78,39 +78,17 @@ namespace Nektar
 
         protected:
             STD_REGIONS_EXPORT virtual NekDouble v_PhysEvaluate(
-                    const Array<OneD, const NekDouble>& coords,
-                    const Array<OneD, const NekDouble>& physvals) override;
-
-            /*      STD_REGIONS_EXPORT virtual NekDouble v_PhysEvaluatedx(
-                    const Array<OneD, const NekDouble>& coords,
-                    const Array<OneD, const NekDouble>& physvals) override;
+                                                                const Array<OneD, const NekDouble>& coords,
+                                                                const Array<OneD, const NekDouble>& physvals) override;
         
-            STD_REGIONS_EXPORT virtual void v_PhysEvalGrad(
-                                                           const Array<OneD, const Array<OneD, NekDouble> >coords,
-                                                           const Array<OneD, const NekDouble>& inarray,        
-                                                           Array<OneD, NekDouble> &out_d0,
-                                                           Array<OneD, NekDouble> &out_d1 = NullNekDouble1DArray,
-                                                           Array<OneD, NekDouble> &out_d2 = NullNekDouble1DArray);
-            */        
             STD_REGIONS_EXPORT virtual Array<OneD, Array<OneD, NekDouble> >v_GetPhysEvalALL();
 
-
-            
             STD_REGIONS_EXPORT virtual void v_PhysEvalBasisGrad(
                                                                 const Array<OneD, const Array<OneD, NekDouble> >coords,
                                                                 Array<OneD, NekDouble> &out_d0,
                                                                 Array<OneD, NekDouble> &out_eval,
                                                                 Array<OneD, NekDouble> &out_d1 = NullNekDouble1DArray,
-                                                                Array<OneD, NekDouble> &out_d2 = NullNekDouble1DArray);
-            /*
-
-            STD_REGIONS_EXPORT virtual void v_PhysEvalBasisGradFast(
-                                                                const Array<OneD, const Array<OneD, NekDouble> >coords,
-                                                                Array<OneD, NekDouble> &out_d0,
-                                                                Array<OneD, NekDouble> &out_eval,
-                                                                Array<OneD, NekDouble> &out_d1 = NullNekDouble1DArray,
-                                                                Array<OneD, NekDouble> &out_d2 = NullNekDouble1DArray);
-            */
+                                                                Array<OneD, NekDouble> &out_d2 = NullNekDouble1DArray) override;
 
         private:
 

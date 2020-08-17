@@ -1255,7 +1255,8 @@ namespace Nektar
         }
     
 
-
+        // Should be called v_PhysEvalBasisGrad
+        // and replace the existing method v_PhysEvalBasisGrad
         void StdHexExp::v_PhysEvalBasisGradFast(
                                             const Array<OneD, const Array<OneD, NekDouble> >coords,
                                             Array<OneD, NekDouble> &out_eval,                    

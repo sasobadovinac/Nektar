@@ -731,72 +731,9 @@ namespace Nektar
         }
 
 
-        /*        void StdPrismExp::v_FillModedx(const int mode,
-                            Array<OneD, NekDouble> &outarray)
-        {
-            
-            v_FillMode( mode,
-                        outarray);
-            int tot = GetTotPoints();
-            //check
-            Array<OneD, NekDouble> temp(tot), coordsx(tot), coordsy(tot);
-
-            v_GetCoords(coordsx, coordsy, NullNekDouble1DArray);
-            
-            Array<OneD, NekDouble> coords(2);
-            for( int i = 0; i < tot; i++)
-            {
-                coords[0] = coordsx[i];
-                coords[1] = coordsy[i];
-                temp[i] = StdExpansion3D::PhysEvaluatedx(coords, outarray);
-            }
-        }
-
-        void StdPrismExp::v_FillModedy(const int mode,
-                            Array<OneD, NekDouble> &outarray)
-        {
-            
-            v_FillMode( mode,
-                        outarray);
-            int tot = GetTotPoints();
-            //check
-            Array<OneD, NekDouble> temp(tot), coordsx(tot), coordsy(tot);
-
-            v_GetCoords(coordsx, coordsy, NullNekDouble1DArray);
-            
-            Array<OneD, NekDouble> coords(2);
-            for( int i = 0; i < tot; i++)
-            {
-                coords[0] = coordsx[i];
-                coords[1] = coordsy[i];
-                temp[i] = StdExpansion3D::PhysEvaluatedy(coords, outarray);
-            }
-        }
-
-
-        void StdPrismExp::v_FillModedz(const int mode,
-                            Array<OneD, NekDouble> &outarray)
-        {
-            
-            v_FillMode( mode,
-                        outarray);
-            int tot = GetTotPoints();
-            //check
-            Array<OneD, NekDouble> temp(tot), coordsx(tot), coordsy(tot), coordsz(tot);
-
-            v_GetCoords(coordsx, coordsy, coordsz);
-            
-            Array<OneD, NekDouble> coords(3);
-            for( int i = 0; i < tot; i++)
-            {
-                coords[0] = coordsx[i];
-                coords[1] = coordsy[i];
-                coords[2] = coordsz[i];
-                temp[i] = StdExpansion3D::PhysEvaluatedz(coords, outarray);
-            }
-        }
-
-        */
+        
+        // Should be called v_PhysEvalBasisGrad
+        // and replace the existing method v_PhysEvalBasisGrad
 
         void StdPrismExp::v_PhysEvalBasisGradFast(
                                             const Array<OneD, const Array<OneD, NekDouble> >coords,

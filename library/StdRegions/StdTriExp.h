@@ -161,11 +161,16 @@ namespace Nektar
             STD_REGIONS_EXPORT NekDouble v_PhysEvaluateBasis(
                 const Array<OneD, const NekDouble>& coords,
                 int mode) final;
+            
             // These methods calculate the interpolation of the 
             // derivatives in respective directions using the 
             // modified barycentric interpolation formula
             // [ Hope is that this will be faster and replace
             // current impl of v_PhysEvaluatedxBasis() ]
+
+            
+            // Should be called v_PhysEvalBasisGrad
+            // and replace the existing method v_PhysEvalBasisGrad
 
             STD_REGIONS_EXPORT virtual void v_PhysEvalBasisGradFast(
                                             const Array<OneD, const Array<OneD, NekDouble> >coords,

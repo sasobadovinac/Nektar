@@ -162,20 +162,6 @@ namespace Nektar
                 Array<OneD, NekDouble> & xi_y,
                 Array<OneD, NekDouble> & xi_z);
 
-
-            /*            STD_REGIONS_EXPORT virtual void v_FillModedx(
-                    const int mode,
-                    Array<OneD, NekDouble> &array);
-            
-            STD_REGIONS_EXPORT virtual void v_FillModedy(
-                    const int mode,
-                    Array<OneD, NekDouble> &array);
-            
-            STD_REGIONS_EXPORT virtual void v_FillModedz(
-                    const int mode,
-                    Array<OneD, NekDouble> &array);
-            */
-
             STD_REGIONS_EXPORT virtual void v_FillMode(
                 const int mode,
                 Array<OneD, NekDouble> &outarray);
@@ -190,6 +176,10 @@ namespace Nektar
                                             Array<OneD, NekDouble> &out_d0,
                                             Array<OneD, NekDouble> &out_d1,
                                             Array<OneD, NekDouble> &out_d2);
+
+            
+            // Should be called v_PhysEvalBasisGrad
+            // and replace the existing method v_PhysEvalBasisGrad
 
             STD_REGIONS_EXPORT void v_PhysEvalBasisGradFast(
                                             const Array<OneD, const Array<OneD, NekDouble> >coords,

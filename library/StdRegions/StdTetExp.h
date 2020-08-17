@@ -178,6 +178,9 @@ namespace Nektar
                 int mode) final;
 
 
+            
+            // Should be called v_PhysEvalBasisGrad
+            // and replace the existing method v_PhysEvalBasisGrad
             STD_REGIONS_EXPORT virtual void v_PhysEvalBasisGradFast(
                                                                     const Array<OneD, const Array<OneD, NekDouble> > coords,
                                                                     Array<OneD, NekDouble>& out_eval,                                      
