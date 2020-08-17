@@ -23,24 +23,27 @@
   image: $CI_REGISTRY_IMAGE/${image_name}
   stage: package-build
   script:
-    - ln -s ${pkg_dir} debian
-    - gbp buildpackage --git-upstream-tag=v$(<VERSION)
-                       --git-ignore-branch
-                       --git-ignore-new
-                       --git-export-dir=../build-area
-                       --git-builder="dpkg-buildpackage --no-sign -idocker -ipkg"
-    - lintian -v
-    - rm -f ./*.{deb,changes,debian.tar.xz,dsc,buildinfo,orig.tar.gz}
-    - mv ../build-area/*.{deb,changes,debian.tar.xz,dsc,buildinfo,orig.tar.gz}
+    - pwd
+    - ls . ..
+    - mkdir tmp
+    - mv nektar++-$(<VERSION).tar.gz tmp/nektar++_$(<VERSION).orig.tar.gz
+    - tar -C tmp -xvf tmp/nektar++_$(<VERSION).orig.tar.gz
+    - cp -a ${pkg_dir} tmp/nektar++-$(<VERSION)/debian
+    - sed -e 's/DISTRIBUTION_ID/${distribution}/g' < pkg/debian/changelog
+        > ${pkg_dir}/changelog
+    - cd tmp/nektar++-$(<VERSION)
+    - dpkg-source -b .
+    - dpkg-buildpackage -us -uc
+    - lintian
   artifacts:
     when: always
     paths:
-     - ./*.deb
-     - ./*.changes
-     - ./*.debian.tar.xz
-     - ./*.dsc
-     - ./*.buildinfo
-     - ./*.orig.tar.gz
+     - tmp/*.deb
+     - tmp/*.changes
+     - tmp/*.debian.tar.xz
+     - tmp/*.dsc
+     - tmp/*.buildinfo
+     - tmp/*.orig.tar.gz
     expire_in: 1 week
 
 
@@ -115,6 +118,16 @@
     - createrepo --update $RPM_LOC
     - gpg --batch --yes --detach-sign -u nektar-users@imperial.ac.uk --armor $RPM_LOC/repodata/repomd.xml
 
+package-tarball:
+  stage: package-build
+  script:
+      - tar -czvf nektar++-$(<VERSION) 
+                --transform="s/nektar/nektar++-$(<VERSION)/"
+                --exclude-from=.gitlab-ci/packaging-exclude *
+  artifacts:
+    paths:
+      - nektar++*.tar.gz
+
 ##
 ## Debian sid
 ##
@@ -126,7 +139,7 @@ package-debian-sid-env:
 
 package-debian-sid-build:
   <<: *package-deb-build
-  needs: ["package-debian-sid-env"]
+  needs: ["package-tarball", "package-debian-sid-env"]
   variables:
     GIT_SUBMODULE_STRATEGY: normal
     image_name: pkg/debian-sid
