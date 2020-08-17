@@ -25,7 +25,7 @@
   script:
     - pwd
     - ls . ..
-    - tar -czvf nektar++-$(<VERSION) 
+    - tar -czvf nektar++-$(<VERSION).tar.gz 
                 --transform="s/nektar/nektar++-$(<VERSION)/"
                 --exclude-from=.gitlab-ci/packaging-exclude *
     - mkdir tmp
