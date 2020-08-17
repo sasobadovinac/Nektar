@@ -25,6 +25,9 @@
   script:
     - pwd
     - ls . ..
+    - tar -czvf nektar++-$(<VERSION) 
+                --transform="s/nektar/nektar++-$(<VERSION)/"
+                --exclude-from=.gitlab-ci/packaging-exclude *
     - mkdir tmp
     - mv nektar++-$(<VERSION).tar.gz tmp/nektar++_$(<VERSION).orig.tar.gz
     - tar -C tmp -xvf tmp/nektar++_$(<VERSION).orig.tar.gz
@@ -118,15 +121,6 @@
     - createrepo --update $RPM_LOC
     - gpg --batch --yes --detach-sign -u nektar-users@imperial.ac.uk --armor $RPM_LOC/repodata/repomd.xml
 
-package-tarball:
-  stage: package-build
-  script:
-      - tar -czvf nektar++-$(<VERSION) 
-                --transform="s/nektar/nektar++-$(<VERSION)/"
-                --exclude-from=.gitlab-ci/packaging-exclude *
-  artifacts:
-    paths:
-      - nektar++*.tar.gz
 
 ##
 ## Debian sid
@@ -144,6 +138,7 @@ package-debian-sid-build:
     GIT_SUBMODULE_STRATEGY: normal
     image_name: pkg/debian-sid
     pkg_dir: pkg/debian-sid
+    distributon: unstable
 
 ##
 ## CentOS 7
