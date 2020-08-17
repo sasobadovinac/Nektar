@@ -26,7 +26,7 @@
     - pwd
     - ls . ..
     - tar -czvf nektar++-$(<VERSION).tar.gz 
-                --transform="s/nektar/nektar++-$(<VERSION)/"
+                --transform="s/^/nektar++-$(<VERSION)\//"
                 --exclude-from=.gitlab-ci/packaging-exclude *
     - mkdir tmp
     - mv nektar++-$(<VERSION).tar.gz tmp/nektar++_$(<VERSION).orig.tar.gz
