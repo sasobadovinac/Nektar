@@ -24,7 +24,7 @@
   stage: package-build
   script:
     - tar -czvf nektar++-$(<VERSION).tar.gz 
-                --transform="s/^(.\w.*)/nektar++-$(<VERSION)\/$1/"
+                --transform="s/^/nektar++-$(<VERSION)\//S"
                 --exclude-from=.gitlab-ci/packaging-exclude *
     - mkdir tmp
     - mv nektar++-$(<VERSION).tar.gz tmp/nektar++_$(<VERSION).orig.tar.gz
