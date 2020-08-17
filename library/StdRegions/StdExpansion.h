@@ -939,6 +939,18 @@ namespace Nektar
                 return v_PhysEvaluate(coords,physvals);
             }
             
+            
+            /** \brief This function evaluates the derivative of the expansion 
+             * at a single (arbitrary) point of the domain
+             *
+             *  This function is a wrapper around the virtual function
+             *  \a v_PhysEvalGrad()
+             
+             *  Based on the value of the expansion at the quadrature
+             *  points provided in \a physvals, this function
+             *  calculates the value of the expansion at a set of points
+             * given in \a coords
+             */
             void PhysEvalGrad(
                               const Array<OneD, const Array<OneD, NekDouble> >coords,
                               const Array<OneD, const NekDouble>& inarray,        
@@ -995,11 +1007,37 @@ namespace Nektar
                 return v_PhysEvaluateBasis(coords, mode);
             }
             
+
+            /**
+             * @brief This function populates the m_physevalall storage
+             * which is an array of arrays that holds the evaluation of 
+             * the basis functions at all the quad points, and the derivatives 
+             * of the same. This storage is required for slow implementation
+             * of basisderiv interpolation. In fast implementation, this
+             * will no longer be needed and should be deprecated.
+             * @return array of arrays m_physevalall 
+             */
+
             Array<OneD, Array<OneD, NekDouble> >  GetPhysEvalALL()
             {
                 return v_GetPhysEvalALL();
             }
 
+
+            /**
+             * @brief This function evaluates all the modes of the basis function, 
+             * and their derivatives at a given set of points @p coords of the domain.
+             *
+             * This is a slow version which uses the pre-stored array of arrays  
+             * called m_physevalall. m_physevalall contains the evaluation
+             * of the basis function for all the modes at all the 
+             * quad points, and the derivatives of the same.
+             *
+             *
+             * @param coord   The coordinates inside the standard region..
+             *
+             * @return The value of the basis function for all the modes  at @p coords, derivatives of the basis function for all the modes at @p coords.
+             */
 
             void PhysEvalBasisGrad(
                                    const Array<OneD, Array<OneD, NekDouble> >coords,
@@ -1010,6 +1048,22 @@ namespace Nektar
             {
                 return v_PhysEvalBasisGrad(coords, out_eval, out_d0, out_d1, out_d2 );  
             }
+
+                        
+            /**
+             * @brief This function evaluates all the modes of the basis function, 
+             * and their derivatives at a given set of points @p coords of the domain.
+             *
+             * This is a fast version which uses the derivative interpolation barycentric 
+             * along with the formula tensor  product separation of the 
+             * basis function to improve performance.
+             * 
+             *
+             * @param coord   The coordinates inside the standard region..
+             *
+             * @return The value of the basis function for all the modes  at @p coords, derivatives of the basis function for all the modes at @p coords.
+             */
+
 
             void PhysEvalBasisGradFast(
                                    const Array<OneD, Array<OneD, NekDouble> >coords,
@@ -1466,15 +1520,12 @@ namespace Nektar
                      * the paper here:
                      *https://people.maths.ox.ac.uk/trefethen/barycentric.pdf
                      */
-                    //std::cout<<"\ncoord="<<coord<<" z["<<i<<"]="<<z[i]<<" xdiff="<<xdiff<<" physvals = "<<physvals[0]<<" "<<physvals[1]<<" "<<physvals[2];
                     if (xdiff == 0.0 || fabs(xdiff)<1e-15)
                     {
                         if(D0 == NULL)
                         {   
                             D0 = m_base[DIR]->GetD();
-                            //                            std::cout<<"\n\n d0 size===="<<(D0->GetRows())<<" "<<D0->GetColumns();
-                        }   
-                        //std::                        cout<<"\n here!";
+                        }
                         // take ith row of z and multiply with physvals
                         
                         pval = Vmath::Dot(z.size(), &(D0->GetPtr())[i],z.size(), &physvals[0], 1);
