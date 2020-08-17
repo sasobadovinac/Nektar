@@ -137,7 +137,7 @@ package-debian-sid-build:
     GIT_SUBMODULE_STRATEGY: normal
     image_name: pkg/debian-sid
     pkg_dir: pkg/debian/sid
-    distributon: unstable
+    distribution: unstable
 
 ##
 ## CentOS 7
