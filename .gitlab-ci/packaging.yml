@@ -33,6 +33,8 @@
     - sed -e s/DISTRIBUTION_ID/${distribution}/g < pkg/debian/changelog
             > tmp/nektar++-$(<VERSION)/debian/changelog
     - cd tmp/nektar++-$(<VERSION)
+    - pwd
+    - ls ..
     - cat debian/changelog
     - dpkg-source -b .
     - dpkg-buildpackage -us -uc
