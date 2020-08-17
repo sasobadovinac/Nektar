@@ -36,8 +36,7 @@ protected:
 
         for (int j = 0; j < traceVel.size(); ++j)
         {
-            const Array<OneD, const Array<OneD, NekDouble> > &tmp =
-                traceVel[j] >= 0 ? Fwd : Bwd;
+            const Array<OneD, const Array<OneD, NekDouble> > &tmp = traceVel[j] >= 0 ? Fwd : Bwd;
             for (int i = 0; i < Fwd.size(); ++i)
             {
                 flux[i][j] = traceVel[j]*tmp[i][j];
@@ -79,6 +78,7 @@ public:
 protected:
     SolverUtils::RiemannSolverSharedPtr  m_riemannSolver;
     Array<OneD, Array<OneD, NekDouble> > m_velocity;
+    Array<OneD, Array<OneD, NekDouble>>  m_gridVelocity;
     Array<OneD, NekDouble>               m_traceVn;
     SolverUtils::AdvectionSharedPtr      m_advObject;
 
@@ -175,8 +175,12 @@ protected:
                 m_fields[i]->GeneralMatrixOp_IterPerExp(mkey, tmp[i], un[i]);
             }
 
-            // Update geometry
-            // Call m_fields[i]->Reset
+            // Perform movement and reset the matrices
+            for (int i = 0; i < m_fields.size(); ++i)
+            {
+                m_fields[i]->GetInterfaces()->PerformMovement(m_timestep);
+                m_fields[i]->Reset();
+            }
 
             for (int i = 0; i < nFields; ++i)
             {
@@ -236,6 +240,17 @@ protected:
         // v = grid velocity
         // u = physfield
         //
+
+        CalcGridVelocity();
+        for (i = 0; i < flux.size(); ++i)
+        {
+            for (j = 0; j < flux[0].size(); ++j)
+            {
+                Array<OneD, NekDouble> tmp(nq, 0.0);
+                Vmath::Vmul(nq, physfield[i], 1, m_gridVelocity[j], 1, tmp, 1);
+                Vmath::Vsub(nq, flux[i][j], 1, tmp, 1, flux[i][j], 1);
+            }
+        }
     }
 
     /**
@@ -265,6 +280,50 @@ protected:
         }
 
         return m_traceVn;
+    }
+
+    void CalcGridVelocity()
+    {
+        // Initialise grid velocity as 0s
+        m_gridVelocity = Array<OneD, Array<OneD, NekDouble> >(m_spacedim, Array<OneD, NekDouble>(m_fields[0]->GetTotPoints(), 0.0));
+
+        // Do I need to do this for each field? I think it is consistent?
+        auto exp = m_fields[0]->GetExp();
+
+        // Create map from element ID to expansion ID
+        std::map<int, int> elmtToExpId;
+        for(int i = (*exp).size()-1; i >= 0; --i)
+        {
+            elmtToExpId[(*exp)[i]->GetGeom()->GetGlobalID()] = i;
+        }
+
+        auto intVec = m_fields[0]->GetInterfaces()->GetInterfaceVector();
+        for (auto &interface : intVec)
+        {
+            // If the interface domain is fixed then grid velocity is left at 0
+            if (interface->GetInterfaceType() == SpatialDomains::eFixed)
+            {
+                continue;
+            }
+
+            auto ids = interface->GetElementIds();
+            for (auto id : ids)
+            {
+                int indx = elmtToExpId[id];
+                int offset = m_fields[0]->GetPhys_Offset(indx);
+                auto expansion = (*exp)[indx];
+
+                int nq = expansion->GetTotPoints();
+                Array<OneD, NekDouble> xc(nq, 0.0), yc(nq, 0.0), zc(nq, 0.0);
+                expansion->GetCoords(xc, yc, zc);
+
+                for (int i = offset; i < offset + nq; ++i)
+                {
+                   m_gridVelocity[0][i] = -yc[i];
+                   m_gridVelocity[1][i] =  xc[i];
+                }
+            }
+        }
     }
 };
 

@@ -60,6 +60,19 @@ Interfaces::Interfaces(const LibUtilities::SessionReaderSharedPtr &pSession,
     }
 }
 
+InterfaceBase::InterfaceBase(InterfaceType type, int indx, CompositeMap domain)
+: m_type(type), m_id(indx), m_domain(domain)
+{
+    // Fill element Ids
+    for (auto &comp : domain)
+    {
+        for (auto &geom : comp.second->m_geomVec)
+        {
+            m_elementIds.emplace_back(geom->GetGlobalID());
+        }
+    }
+}
+
 RotatingInterface::RotatingInterface(int id, const CompositeMap &domain,
                                      const PointGeom &origin,
                                      const std::vector<NekDouble> &axis,

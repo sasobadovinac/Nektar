@@ -56,6 +56,13 @@ enum InterfaceType
     eSliding,
 };
 
+const std::string InterfaceTypeStr[] =
+{
+    "Fixed",
+    "Rotating",
+    "Sliding"
+};
+
 enum InterfaceSide
 {
     eNone,
@@ -78,10 +85,7 @@ typedef std::shared_ptr<InterfaceBase> InterfaceBaseShPtr;
 
 struct InterfaceBase
 {
-    InterfaceBase(InterfaceType type, int indx, CompositeMap domain)
-        : m_type(type), m_id(indx), m_domain(domain)
-    {
-    }
+    InterfaceBase(InterfaceType type, int indx, CompositeMap domain);
 
     inline InterfaceType GetInterfaceType() const
     {
@@ -150,6 +154,11 @@ struct InterfaceBase
         v_Move(time);
     }
 
+    inline std::vector<int> const &GetElementIds() const
+    {
+        return m_elementIds;
+    }
+
 protected:
     InterfaceBaseShPtr m_oppInterface;
     InterfaceType m_type;
@@ -158,6 +167,7 @@ protected:
     CompositeMap m_domain;
     std::map<int, GeometrySharedPtr> m_edge;
     std::vector<int> m_edgeIds;
+    std::vector<int> m_elementIds;
 };
 
 struct RotatingInterface final: public InterfaceBase
