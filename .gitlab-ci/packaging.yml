@@ -144,6 +144,25 @@ package-debian-sid-build:
     distribution: unstable
 
 ##
+## Debian Buster
+##
+package-debian-buster-env:
+  <<: *package-env-build
+  variables:
+    image_name: pkg/debian-buster
+    dockerfile: docker/packaging/Dockerfile-debian-buster
+
+package-debian-buster-build:
+  <<: *package-deb-build
+  needs: ["package-debian-buster-env"]
+  variables:
+    GIT_SUBMODULE_STRATEGY: normal
+    image_name: pkg/debian-buster
+    pkg_dir: pkg/debian/buster
+    distribution: buster
+
+
+##
 ## CentOS 7
 ##
 .package-centos7-env:
@@ -182,13 +201,13 @@ package-debian-sid-build:
 ##
 ## CentOS 8
 ##
-package-centos8-env:
+.package-centos8-env:
   <<: *package-env-build
   variables:
     image_name: pkg/centos8
     dockerfile: docker/packaging/Dockerfile-centos8
 
-package-centos8-build:
+.package-centos8-build:
   <<: *package-rpm-build
   needs: ["package-centos8-env"]
   variables:
@@ -197,7 +216,7 @@ package-centos8-build:
     image_name: pkg/centos8
     version_file: centos-8.json
 
-package-centos8-test:
+.package-centos8-test:
   <<: *package-rpm-test
   needs: ["package-centos8-build"]
   dependencies:
@@ -208,7 +227,7 @@ package-centos8-test:
     needs_powertools: 1
     cmake_exe: cmake
 
-package-centos8-deploy:
+.package-centos8-deploy:
   <<: *package-rpm-deploy
   needs: ["package-centos8-build", "package-centos8-test"]
   dependencies:
