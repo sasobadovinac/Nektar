@@ -69,6 +69,7 @@ InterfaceBase::InterfaceBase(InterfaceType type, int indx, CompositeMap domain)
         for (auto &geom : comp.second->m_geomVec)
         {
             m_elementIds.emplace_back(geom->GetGlobalID());
+            m_elements.emplace_back(geom);
         }
     }
 }
@@ -121,6 +122,53 @@ RotatingInterface::RotatingInterface(int id, const CompositeMap &domain,
         }
     }
 }
+
+SlidingInterface::SlidingInterface(int id, const CompositeMap &domain,
+                                   const std::vector<NekDouble> &velocity)
+    : InterfaceBase(eSliding, id, domain), m_velocity(velocity)
+{
+    std::set<int> seenVerts, seenEdges;
+    for (auto &comp : m_domain)
+    {
+        for (auto &geom : comp.second->m_geomVec)
+        {
+            for (int i = 0; i < geom->GetNumVerts(); ++i)
+            {
+                PointGeomSharedPtr vert = geom->GetVertex(i);
+
+                if (seenVerts.find(vert->GetGlobalID()) != seenVerts.end())
+                {
+                    continue;
+                }
+
+                seenVerts.insert(vert->GetGlobalID());
+                m_slideVerts.emplace_back(vert);
+            }
+
+            for (int i = 0; i < geom->GetNumEdges(); ++i)
+            {
+                SegGeomSharedPtr edge =
+                    std::static_pointer_cast<SegGeom>(geom->GetEdge(i));
+
+                if (seenEdges.find(edge->GetGlobalID()) != seenEdges.end())
+                {
+                    continue;
+                }
+
+                seenEdges.insert(edge->GetGlobalID());
+
+                CurveSharedPtr curve = edge->GetCurve();
+                if (!curve)
+                {
+                    continue;
+                }
+
+                m_slideCurves.emplace_back(curve);
+            }
+        }
+    }
+}
+
 
 std::string ReadTag(std::string &tagStr)
 {
@@ -200,6 +248,17 @@ void Interfaces::ReadInterfaces(TiXmlElement *interfaces)
             NekDouble angularVel = angularVelEqn.Evaluate();
 
             interface = RotatingInterfaceShPtr(MemoryManager<RotatingInterface>::AllocateSharedPtr(indx, domain,  origin, axis, angularVel));
+        }
+        else if (interfaceType == "S")
+        {
+            std::string velocityStr;
+            err = interfaceElement->QueryStringAttribute("VELOCITY", &velocityStr);
+            ASSERTL0(err == TIXML_SUCCESS, "Unable to read direction.");
+            std::vector<NekDouble> velocity;
+            ParseUtils::GenerateVector(velocityStr, velocity);
+
+            interface = SlidingInterfaceShPtr(MemoryManager<SlidingInterface>::AllocateSharedPtr(indx, domain, velocity));
+
         }
         else if (interfaceType == "F")
         {
@@ -291,6 +350,55 @@ void RotatingInterface::v_Move(NekDouble timeStep)
                 0);
         }
     }
+}
+
+void SlidingInterface::v_Move(NekDouble timeStep)
+{
+    int dim = m_slideVerts[0]->GetCoordim();
+
+    Array<OneD, NekDouble> dist(3, 0.0);
+    for (int i = 0; i < dim; ++i)
+    {
+        dist[i] = m_velocity[i] * timeStep;
+    }
+
+    for (auto &vert : m_slideVerts)
+    {
+        Array<OneD, NekDouble> coords(dim, 0.0);
+        vert->GetCoords(coords);
+
+        Array<OneD, NekDouble> newLoc(3, 0.0);
+        for (int i = 0; i < dim; ++i)
+        {
+            newLoc[i] = coords[i] + dist[i];
+        }
+
+        vert->UpdatePosition(
+            newLoc[0],
+            newLoc[1],
+            newLoc[2]);
+    }
+
+    for (auto &curve : m_slideCurves)
+    {
+        for (auto &vert : curve->m_points)
+        {
+            Array<OneD, NekDouble> coords(dim, 0.0);
+            vert->GetCoords(coords);
+
+            Array<OneD, NekDouble> newLoc(3, 0.0);
+            for (int i = 0; i < dim; ++i)
+            {
+                newLoc[i] = coords[i] + dist[i];
+            }
+
+            vert->UpdatePosition(
+                newLoc[0],
+                newLoc[1],
+                newLoc[2]);
+        }
+    }
+
 }
 
 void FixedInterface::v_Move(NekDouble time)

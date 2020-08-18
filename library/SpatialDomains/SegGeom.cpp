@@ -423,24 +423,29 @@ int SegGeom::v_GetNumEdges() const
 NekDouble SegGeom::v_FindDistance(const Array<OneD, const NekDouble> &xs,
                                   Array<OneD, NekDouble> &xiOut)
 {
-    if (m_geomFactors->GetGtype() == eRegular)
+    //std::cout << "SEARCHING EDGE: " << m_globalID << std::endl;
+    //std::cout << "ARE GEOM FACTORS FILLED? : " << m_geomFactorsState << std::endl;
+    //std::cout << m_geomFactors->GetGtype() << std::endl;
+    //auto type = m_geomFactors->GetGtype();
+
+    if (false)
     {
         xiOut = Array<OneD, NekDouble>(1,0.0);
 
         GetLocCoords(xs, xiOut);
         ClampLocCoords(xiOut);
 
-        Array<OneD, NekDouble> gloCoord(3);
-        gloCoord[0] = GetCoord(0, xiOut);
-        gloCoord[1] = GetCoord(1, xiOut);
-        gloCoord[2] = GetCoord(2, xiOut);
+        Array<OneD, NekDouble> gloCoord(m_coordim);
+        NekDouble tmp = 0;
+        for (int i = 0; i < m_coordim; ++i)
+        {
+            gloCoord[i] = GetCoord(i, xiOut);
+            tmp += (xs[i] - gloCoord[i]) * (xs[i] - gloCoord[i]);
+        }
 
-        return sqrt((xs[0] - gloCoord[0])*(xs[0] - gloCoord[0]) +
-                    (xs[1] - gloCoord[1])*(xs[1] - gloCoord[1]) +
-                    (xs[2] - gloCoord[2])*(xs[2] - gloCoord[2]));
-
+        return sqrt(tmp);
     }
-    else if (m_geomFactors->GetGtype() == eDeformed) // @TODO: Rework to follow more general newton implementation as shown for quad and tri
+    else if (true) // @TODO: Rework to follow more general newton implementation as shown for quad and tri
     {
         Array<OneD, NekDouble> xi(1, 0.0);
         const NekDouble c1 = 1e-4, c2 = 0.9;

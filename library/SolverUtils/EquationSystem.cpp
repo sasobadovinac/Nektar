@@ -1114,6 +1114,9 @@ namespace Nektar
             std::string outname =  m_sessionName +  "_" +
                 boost::lexical_cast<std::string>(n);
             WriteFld(outname + ".chk");
+            // @TODO: Properly implement an xml output
+            std::string graphname = outname + ".xml";
+            m_graph->WriteGeometry(graphname, true);
         }
 
         /**

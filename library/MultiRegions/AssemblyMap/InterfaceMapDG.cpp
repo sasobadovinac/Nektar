@@ -193,6 +193,7 @@ InterfaceMapDG::InterfaceMapDG(
     }
 
     // Perform initial exchange of missing coords
+    // @TODO: Not sure we need this initial exchange
     ExchangeCoords();
 }
 
@@ -205,22 +206,27 @@ void InterfaceMapDG::ExchangeCoords()
         interfaceTrace->CalcLocalMissing();
     }
 
-    auto request = comm->CreateRequest(2 * m_exchange.size());
-    for (int i = 0; i < m_exchange.size(); ++i)
+    // If parallel communication is needed
+    if (!m_exchange.empty())
     {
-        m_exchange[i]->RankFillSizes(request, i);
-    }
-    comm->WaitAll(request);
+        auto request = comm->CreateRequest(2 * m_exchange.size());
 
-    for (int i = 0; i < m_exchange.size(); ++i)
-    {
-        m_exchange[i]->SendMissing(request, i);
-    }
-    comm->WaitAll(request);
+        for (int i = 0; i < m_exchange.size(); ++i)
+        {
+            m_exchange[i]->RankFillSizes(request, i);
+        }
+        comm->WaitAll(request);
 
-    for (int i = 0; i < m_exchange.size(); ++i)
-    {
-        m_exchange[i]->CalcRankDistances();
+        for (int i = 0; i < m_exchange.size(); ++i)
+        {
+            m_exchange[i]->SendMissing(request, i);
+        }
+        comm->WaitAll(request);
+
+        for (int i = 0; i < m_exchange.size(); ++i)
+        {
+            m_exchange[i]->CalcRankDistances();
+        }
     }
 }
 
@@ -233,6 +239,12 @@ void InterfaceMapDG::ExchangeCoords()
  */
 void InterfaceTrace::CalcLocalMissing()
 {
+    // Nuke old missing/found
+    m_missingCoords.clear();
+    m_mapMissingCoordToTrace.clear();
+    m_foundLocalCoords.clear();
+    m_mapFoundCoordToTrace.clear();
+
     auto childEdgeIds = m_interfaceBase->GetEdgeIds();
 
     // If not flagged 'check local' then all points are missing
@@ -368,27 +380,42 @@ void InterfaceExchange::SendMissing(LibUtilities::CommRequestSharedPtr request,
 void InterfaceMapDG::ExchangeTrace(Array<OneD, NekDouble> &Fwd,
                                    Array<OneD, NekDouble> &Bwd)
 {
-    //ExchangeCoords();
+    ExchangeCoords();
 
-    auto comm    = m_trace->GetComm();
-    auto request = comm->CreateRequest(2 * m_exchange.size());
-    for (int i = 0; i < m_exchange.size(); ++i)
+    auto comm = m_trace->GetComm();
+
+    // If no parallel exchange needed we only fill the local traces
+    if(m_exchange.empty())
     {
-        m_exchange[i]->SendFwdTrace(request, i, Fwd);
+        // Fill local interface traces
+        for (int i = 0; i < m_localInterfaces.size(); ++i)
+        {
+            m_localInterfaces[i]->FillLocalBwdTrace(Fwd, Bwd);
+        }
+    }
+    else
+    {
+        auto request = comm->CreateRequest(2 * m_exchange.size());
+        for (int i = 0; i < m_exchange.size(); ++i)
+        {
+            m_exchange[i]->SendFwdTrace(request, i, Fwd);
+        }
+
+        // Fill local interface traces
+        for (int i = 0; i < m_localInterfaces.size(); ++i)
+        {
+            m_localInterfaces[i]->FillLocalBwdTrace(Fwd, Bwd);
+        }
+
+        comm->WaitAll(request);
+
+        for (int i = 0; i < m_exchange.size(); ++i)
+        {
+            m_exchange[i]->FillRankBwdTraceExchange(Bwd);
+        }
     }
 
-    // Fill local interface traces
-    for (int i = 0; i < m_localInterfaces.size(); ++i)
-    {
-        m_localInterfaces[i]->FillLocalBwdTrace(Fwd, Bwd);
-    }
 
-    comm->WaitAll(request);
-
-    for (int i = 0; i < m_exchange.size(); ++i)
-    {
-        m_exchange[i]->FillRankBwdTraceExchange(Bwd);
-    }
 }
 
 /**

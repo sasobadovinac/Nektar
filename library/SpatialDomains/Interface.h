@@ -168,6 +168,7 @@ protected:
     std::map<int, GeometrySharedPtr> m_edge;
     std::vector<int> m_edgeIds;
     std::vector<int> m_elementIds;
+    std::vector<GeometrySharedPtr> m_elements;
 };
 
 struct RotatingInterface final: public InterfaceBase
@@ -201,6 +202,25 @@ protected:
     std::vector<CurveSharedPtr> m_rotateCurves;
 };
 
+struct SlidingInterface final: public InterfaceBase
+{
+    SlidingInterface(int id, const CompositeMap &domain,
+                     const std::vector<NekDouble> &velocity);
+
+
+    inline std::vector<NekDouble> GetVel() const
+    {
+        return m_velocity;
+    }
+
+    virtual void v_Move(NekDouble timeStep) final;
+
+protected:
+    std::vector<NekDouble> m_velocity;
+    std::vector<PointGeomSharedPtr> m_slideVerts;
+    std::vector<CurveSharedPtr> m_slideCurves;
+};
+
 struct FixedInterface final: public InterfaceBase
 {
     FixedInterface(int id, const CompositeMap &domain)
@@ -212,6 +232,7 @@ struct FixedInterface final: public InterfaceBase
 };
 
 typedef std::shared_ptr<RotatingInterface> RotatingInterfaceShPtr;
+typedef std::shared_ptr<SlidingInterface> SlidingInterfaceShPtr;
 typedef std::shared_ptr<FixedInterface> FixedInterfaceShPtr;
 
 struct InterfacePair
