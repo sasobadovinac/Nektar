@@ -44,6 +44,24 @@ protected:
         }
 
         // Add in the term to deal with grid velocity * normal
+        const Array<OneD, const Array<OneD, NekDouble>> &gridVel = m_vectors["Tvg"]();
+        const Array<OneD, const Array<OneD, NekDouble>> &normals = m_vectors["N"]();
+        Array<OneD, NekDouble> tmp(gridVel[0].size(), 0.0);
+        for (int i = 0; i < gridVel.size(); ++i)
+        {
+            for (int j = 0; j < gridVel[0].size(); ++j)
+            {
+                tmp[j] += gridVel[i][j] * normals[i][j];
+            }
+        }
+
+        for (int j = 0; j < traceVel.size(); ++j)
+        {
+            for (int i = 0; i < Fwd.size(); ++i)
+            {
+                flux[i][j] += tmp[j];
+            }
+        }
     }
 };
 
@@ -79,6 +97,7 @@ protected:
     SolverUtils::RiemannSolverSharedPtr  m_riemannSolver;
     Array<OneD, Array<OneD, NekDouble> > m_velocity;
     Array<OneD, Array<OneD, NekDouble>>  m_gridVelocity;
+    Array<OneD, Array<OneD, NekDouble>>  m_traceGridVelocity;
     Array<OneD, NekDouble>               m_traceVn;
     SolverUtils::AdvectionSharedPtr      m_advObject;
 
@@ -116,8 +135,9 @@ protected:
 
         m_riemannSolver = SolverUtils::GetRiemannSolverFactory().CreateInstance(
             "ALEUpwind", m_session);
-        m_riemannSolver->SetScalar(
-            "Vn", &ALEDemo::GetNormalVelocity, this);
+        m_riemannSolver->SetScalar("Vn", &ALEDemo::GetNormalVelocity, this);
+        m_riemannSolver->SetVector("Tvg", &ALEDemo::GetTraceGridVelocity, this);
+        m_riemannSolver->SetVector("N", &ALEDemo::GetNormals, this);
         m_advObject->SetRiemannSolver(m_riemannSolver);
         m_advObject->InitObject(m_session, m_fields);
     }
@@ -224,33 +244,25 @@ protected:
         int i , j;
         int nq = physfield[0].size();
 
+        GetGridVelocity();
+
         for (i = 0; i < flux.size(); ++i)
         {
             for (j = 0; j < flux[0].size(); ++j)
             {
-                Vmath::Vmul(nq, physfield[i], 1, m_velocity[j], 1,
-                            flux[i][j], 1);
+                // This is u * vel - u * gridvel
+                Vmath::Vvtvvtm(nq, physfield[i], 1,
+                                   m_velocity[j], 1,
+                                   physfield[i], 1,
+                                   m_gridVelocity[j], 1,
+                                   flux[i][j], 1);
             }
         }
+    }
 
-        //
-        // Here you're going to need something to add onto the flux the
-        // contribution -vu
-        //
-        // v = grid velocity
-        // u = physfield
-        //
-
-        CalcGridVelocity();
-        for (i = 0; i < flux.size(); ++i)
-        {
-            for (j = 0; j < flux[0].size(); ++j)
-            {
-                Array<OneD, NekDouble> tmp(nq, 0.0);
-                Vmath::Vmul(nq, physfield[i], 1, m_gridVelocity[j], 1, tmp, 1);
-                Vmath::Vsub(nq, flux[i][j], 1, tmp, 1, flux[i][j], 1);
-            }
-        }
+    const Array<OneD, const Array<OneD, NekDouble>> &GetNormals()
+    {
+        return m_traceNormals;
     }
 
     /**
@@ -282,7 +294,7 @@ protected:
         return m_traceVn;
     }
 
-    void CalcGridVelocity()
+    const Array<OneD, const Array<OneD, NekDouble>> &GetGridVelocity()
     {
         // Initialise grid velocity as 0s
         m_gridVelocity = Array<OneD, Array<OneD, NekDouble> >(m_spacedim, Array<OneD, NekDouble>(m_fields[0]->GetTotPoints(), 0.0));
@@ -319,11 +331,67 @@ protected:
 
                 for (int i = 0; i < nq; ++i)
                 {
-                   m_gridVelocity[0][offset + i] = -yc[i];
-                   m_gridVelocity[1][offset + i] =  xc[i];
+                    m_gridVelocity[0][offset + i] = -yc[i];
+                    m_gridVelocity[1][offset + i] =  xc[i];
                 }
             }
         }
+
+        return m_gridVelocity;
+    }
+
+    const Array<OneD, const Array<OneD, NekDouble>> &GetTraceGridVelocity()
+    {
+        // Initialise grid velocity as 0s
+        m_traceGridVelocity = Array<OneD, Array<OneD, NekDouble> >(m_spacedim, Array<OneD, NekDouble>(m_fields[0]->GetTrace()->GetTotPoints(), 0.0));
+
+        // Do I need to do this for each field? I think it is consistent?
+        auto exp = m_fields[0]->GetTrace()->GetExp();
+
+        // Create map from element ID to expansion ID
+        std::map<int, int> elmtToTraceId;
+        for(int i = (*exp).size()-1; i >= 0; --i)
+        {
+            elmtToTraceId[(*exp)[i]->GetGeom()->GetGlobalID()] = i;
+        }
+
+        auto intVec = m_fields[0]->GetInterfaces()->GetInterfaceVector();
+        for (auto &interface : intVec)
+        {
+            // If the interface domain is fixed then grid velocity is left at 0
+            if (interface->GetInterfaceType() == SpatialDomains::eFixed)
+            {
+                continue;
+            }
+
+            auto ids = interface->GetElementIds();
+
+            for (auto id : ids)
+            {
+                int ne = m_graph->GetGeometry2D(id)->GetNumEdges();
+
+                for (int i = 0; i < ne; ++i)
+                {
+                    auto edge  = m_graph->GetGeometry2D(id)->GetEdge(i);
+                    int indx   = elmtToTraceId[edge->GetGlobalID()];
+                    int offset = m_fields[0]->GetTrace()->GetPhys_Offset(indx);
+                    auto expansion = (*exp)[indx];
+
+                    int nq = expansion->GetTotPoints();
+                    Array<OneD, NekDouble> xc(nq, 0.0), yc(nq, 0.0),
+                        zc(nq, 0.0);
+                    expansion->GetCoords(xc, yc, zc);
+
+                    for (int j = 0; j < nq; ++j)
+                    {
+                        m_traceGridVelocity[0][offset + j] = -yc[j];
+                        m_traceGridVelocity[1][offset + j] = xc[j];
+                    }
+                }
+            }
+        }
+
+        return m_traceGridVelocity;
     }
 };
 
