@@ -23,21 +23,16 @@
   image: $CI_REGISTRY_IMAGE/${image_name}
   stage: package-build
   script:
-    - tar -czvf nektar++-$(<VERSION).tar.gz 
+    - tar -czf nektar++-$(<VERSION).tar.gz 
                 --transform="s/^/nektar++-$(<VERSION)\//S"
                 --exclude-from=.gitlab-ci/packaging-exclude *
     - mkdir tmp
     - mv nektar++-$(<VERSION).tar.gz tmp/nektar++_$(<VERSION).orig.tar.gz
-    - tar -C tmp -xvf tmp/nektar++_$(<VERSION).orig.tar.gz
+    - tar -C tmp -xf tmp/nektar++_$(<VERSION).orig.tar.gz
     - cp -a ${pkg_dir} tmp/nektar++-$(<VERSION)/debian
     - sed -e s/unstable/${distribution}/g < pkg/debian/changelog
             > tmp/nektar++-$(<VERSION)/debian/changelog
     - cd tmp/nektar++-$(<VERSION)
-    - pwd
-    - ls ..
-    - cat debian/changelog
-    - cat tests/Tester.cpp.in
-    - cat debian/patches/fix-mpi-allow-root.patch
     - dpkg-source -b .
     - dpkg-buildpackage -us -uc
     - lintian
