@@ -4,7 +4,7 @@ include /usr/share/dpkg/architecture.mk
 BUILDDIR = $(CURDIR)/debian/build
 
 %:
-	dh $@ --parallel
+	dh $@ --parallel --max-parallel=8
 
 override_dh_clean:
 	dh_clean
