@@ -197,6 +197,24 @@ package-debian-stretch-build:
     pkg_dir: pkg/debian/stretch
     distribution: stretch
 
+##
+## Ubuntu bionic
+##
+package-ubuntu-bionic-env:
+  <<: *package-env-build
+  variables:
+    image_name: pkg/ubuntu-bionic
+    dockerfile: docker/packaging/Dockerfile-ubuntu-bionic
+
+package-ubuntu-bionic-build:
+  <<: *package-deb-build
+  needs: ["package-ubuntu-bionic-env"]
+  variables:
+    GIT_SUBMODULE_STRATEGY: normal
+    image_name: pkg/ubuntu-bionic
+    pkg_dir: pkg/ubuntu/bionic
+    distribution: bionic
+
 
 
 ##
