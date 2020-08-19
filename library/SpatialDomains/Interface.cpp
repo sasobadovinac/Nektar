@@ -313,9 +313,21 @@ void InterfaceBase::SetEdge(const CompositeMap &edge)
 
 void Interfaces::PerformMovement(NekDouble timeStep)
 {
-    for (auto interface : m_interfaceVector)
+    for (auto &interface : m_interfaceVector)
     {
         interface->Move(timeStep);
+    }
+}
+
+void Interfaces::GenGeomFactors()
+{
+    for (auto &interface : m_interfaceVector)
+    {
+        auto edges = interface->GetEdge();
+        for (auto &el : edges)
+        {
+            el.second->GenGeomFactors();
+        }
     }
 }
 
@@ -398,7 +410,6 @@ void SlidingInterface::v_Move(NekDouble timeStep)
                 newLoc[2]);
         }
     }
-
 }
 
 void FixedInterface::v_Move(NekDouble time)

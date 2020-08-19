@@ -200,6 +200,7 @@ std::string ALEUpwindSolver::solverName =
                 {
                     m_fields[i]->GetInterfaces()->PerformMovement(m_timestep);
                     m_fields[i]->Reset();
+                    m_fields[i]->GetInterfaces()->GenGeomFactors();
                 }
 
                 for (int i = 0; i < nFields; ++i)

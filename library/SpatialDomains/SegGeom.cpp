@@ -428,7 +428,7 @@ NekDouble SegGeom::v_FindDistance(const Array<OneD, const NekDouble> &xs,
     //std::cout << m_geomFactors->GetGtype() << std::endl;
     //auto type = m_geomFactors->GetGtype();
 
-    if (false)
+    if (m_geomFactors->GetGtype() == eRegular)
     {
         xiOut = Array<OneD, NekDouble>(1,0.0);
 
@@ -445,7 +445,7 @@ NekDouble SegGeom::v_FindDistance(const Array<OneD, const NekDouble> &xs,
 
         return sqrt(tmp);
     }
-    else if (true) // @TODO: Rework to follow more general newton implementation as shown for quad and tri
+    else if (m_geomFactors->GetGtype() == eDeformed) // @TODO: Rework to follow more general newton implementation as shown for quad and tri
     {
         Array<OneD, NekDouble> xi(1, 0.0);
         const NekDouble c1 = 1e-4, c2 = 0.9;

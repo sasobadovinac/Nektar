@@ -287,6 +287,8 @@ public:
 
     void PerformMovement(NekDouble timeStep);
 
+    void GenGeomFactors();
+
 protected:
     /// The mesh graph to use for referencing geometry info.
     MeshGraphSharedPtr m_meshGraph;

@@ -179,6 +179,8 @@ public:
                                              CurveMap &curvedFaces);
     SPATIAL_DOMAINS_EXPORT inline void Setup();
 
+    /// Handles generation of geometry factors.
+    void                              GenGeomFactors();
 protected:
     SPATIAL_DOMAINS_EXPORT static GeomFactorsSharedPtr ValidateRegGeomFactor(
         GeomFactorsSharedPtr geomFactor);
@@ -204,9 +206,6 @@ protected:
     int                               m_globalID;
     /// Array containing expansion coefficients of @p m_xmap
     Array<OneD, Array<OneD, NekDouble> > m_coeffs;
-
-    /// Handles generation of geometry factors.
-    void                              GenGeomFactors();
 
     std::pair<NekDouble, NekDouble>   FindMinMaxCoord(int);
 
