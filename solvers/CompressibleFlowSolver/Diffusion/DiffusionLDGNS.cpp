@@ -256,12 +256,11 @@ void DiffusionLDGNS::v_DiffuseCoeffs(
         }
     }
 
-        DiffuseCalculateDerivative(fields, inarray, derivativesO1, pFwd, pBwd);
+    DiffuseCalculateDerivative(fields, inarray, derivativesO1, pFwd, pBwd);
 
     // Initialisation viscous tensor
+    // Initialisation viscous tensor
     m_viscTensor = TensorOfArray3D<NekDouble> {m_spaceDim};
-    Array<OneD, Array<OneD, NekDouble> > viscousFlux{nConvectiveFields};
-
     for (std::size_t j = 0; j < m_spaceDim; ++j)
     {
         m_viscTensor[j] = Array<OneD, Array<OneD, NekDouble> >{nScalars+1};
@@ -271,6 +270,7 @@ void DiffusionLDGNS::v_DiffuseCoeffs(
         }
     }
 
+    Array<OneD, Array<OneD, NekDouble> > viscousFlux{nConvectiveFields};
     for (std::size_t i = 0; i < nConvectiveFields; ++i)
     {
         viscousFlux[i] = Array<OneD, NekDouble>{nTracePts, 0.0};
@@ -446,7 +446,7 @@ void DiffusionLDGNS::ApplyBCsO1(
     }
 
     // Compute boundary conditions for velocities
-    for (std::size_t i = 0; i < nScalars-1; ++i)
+    for (std::size_t i = 0; i < m_spaceDim+1; ++i)
     {
         // Note that cnt has to loop on nBndRegions and nBndEdges
         // and has to be reset to zero per each equation
@@ -575,14 +575,12 @@ void DiffusionLDGNS::ApplyBCsO1(
             }
         }
 
-        std::size_t nVariables = fields.size();
-    
         //Compute boundary conditions for scalars
-        for(i=m_spaceDim+1; i<nVariables-1; i++)
+        for(i=m_spaceDim+1; i<nScalars-1; i++)
         {
             cnt = 0;
             nBndRegions = fields[i+1]->
-            GetBndCondExpansions().size();
+                 GetBndCondExpansions().size();
             for (int j = 0; j < nBndRegions; ++j)
             {
                 if (fields[i+1]->GetBndConditions()[j]->
