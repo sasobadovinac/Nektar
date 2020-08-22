@@ -41,6 +41,9 @@
 #include <MultiRegions/ContField3DHomogeneous1D.h>
 #include <MultiRegions/ContField3DHomogeneous2D.h>
 
+#include <iostream>
+#include <fstream>
+
 using namespace std;
 # define my_sizeof(type) ((char *)(&type+1)-(char*)(&type))
 namespace Nektar
@@ -247,7 +250,7 @@ namespace Nektar
                     Array<OneD, Array<OneD, NekDouble> > &outarray,
                     const NekDouble time,
                     const NekDouble a_iixDt)
-    {
+    {   
         VelocityCorrectionScheme::SolveUnsteadyStokesSystem(inarray,
                                                             outarray,
                                                             time,
@@ -480,39 +483,72 @@ namespace Nektar
             else
             {
               //Fourier Interpolation
-              Array< OneD, NekDouble > temp(npoints);
+              npoints = m_phi -> GetTotPoints(); 
+              //nCoeffs = m_phi -> GetNcoeffs();
+
+              Array< OneD, NekDouble > temp;
+              temp = Array<OneD, NekDouble>(npoints, 0.0);
+              //Array< OneD, NekDouble > tempCoeffs;
+              //tempCoeffs= Array<OneD, NekDouble>(nCoeffs, 0.0);
+
               NekDouble m_period = M_PI;
               NekDouble BetaT = 2*M_PI*fmod (t, m_period) / m_period;
               NekDouble phase;
 
+              
               Vmath::Vcopy(npoints,&m_phiInterp[0],1,&temp[0],1);
               Vmath::Svtvp(npoints,cos(0.5*nSamples*BetaT),&m_phiInterp[npoints],1,&temp[0],1,&temp[0],1);
-
-
+              Vmath::Svtvp(npoints,-sin(BetaT),&m_phiInterp[npoints],1,&temp[0],1,&temp[0],1);
+              //Vmath::Vcopy(nCoeffs,&m_phiInterpCoeffs[0],1,&tempCoeffs[0],1);             
+              //Vmath::Svtvp(nCoeffs,cos(0.5*nSamples*BetaT),&m_phiInterpCoeffs[nCoeffs],1,&tempCoeffs[0],1,&tempCoeffs[0],1);
+              cout << nSamples << endl;
               for (int i = 2; i < nSamples; i += 2)
               {
                   phase = (i>>1) * BetaT;
-
                   Vmath::Svtvp(npoints, cos(phase),&m_phiInterp[i*npoints],1,&temp[0],1,&temp[0],1);
-                  Vmath::Svtvp(npoints, -sin(phase), &m_phiInterp[(i+1)*npoints], 1, &temp[0], 1,&temp[0],1);
+                  Vmath::Svtvp(npoints, -sin(phase),&m_phiInterp[(i+1)*npoints], 1, &temp[0], 1,&temp[0],1);
+                  //Vmath::Svtvp(nCoeffs, cos(phase),&m_phiInterpCoeffs[i*nCoeffs],1,&tempCoeffs[0],1,&tempCoeffs[0],1);
+                  //Vmath::Svtvp(nCoeffs, -sin(phase),&m_phiInterpCoeffs[(i+1)*nCoeffs], 1, &tempCoeffs[0], 1,&tempCoeffs[0],1);
               }
+
+              /*for (int i = 1; i < nSamples; i += 1)
+              {
+                  phase = i * BetaT;
+                  //Vmath::Svtvp(npoints, cos(phase),&m_phiInterp[i*npoints],1,&temp[0],1,&temp[0],1);
+                  //Vmath::Svtvp(npoints, -sin(phase),&m_phiInterp[(i+1)*npoints], 1, &temp[0], 1,&temp[0],1);
+                  Vmath::Svtvp(nCoeffs, cos(phase),&m_phiInterpCoeffs[i*nCoeffs],1,&tempCoeffs[0],1,&tempCoeffs[0],1);
+                  //Vmath::Svtvp(nCoeffs, sin(phase),&m_phiInterpCoeffs[(i+1)*nCoeffs], 1, &tempCoeffs[0], 1,&tempCoeffs[0],1);
+              }*/
+              
               //Copy the coefficients to m_phi
-              for (int i = 1; i < npoints; i+=1)
+              for (int i = 0; i < npoints; i+=1)
               {
                 m_phi -> SetPhys(i,temp[i]);
               }
 
+              /*for (int i = 0; i < nCoeffs; i+=1)
+              {
+                m_phi -> SetCoeffs(i,tempCoeffs[i]);
+              }*/
+
               //Output Phi field
               m_phi->FwdTrans_IterPerExp(m_phi->GetPhys(), m_phi->UpdateCoeffs());
+              m_phi->BwdTrans_IterPerExp(m_phi->GetCoeffs(), m_phi->UpdatePhys());
+              //m_phi->BwdTrans_IterPerExp(m_phi->GetCoeffs(), m_phi->UpdatePhys());
+              //m_phi->FwdTrans_IterPerExp(m_phi->GetPhys(), m_phi->UpdateCoeffs());
               std::vector<Array<OneD, NekDouble> > phiOutputVectorOfArray;
               phiOutputVectorOfArray.push_back(m_phi -> UpdateCoeffs()); 
               std::vector<std::string> variableName;
               variableName.push_back("phi");
-              string tString;
-              tString = to_string(t);
-              EquationSystem::WriteFld("phi_" + tString+ ".fld",m_phi,phiOutputVectorOfArray, variableName); 
+              string tstring = to_string(t);
+              EquationSystem::WriteFld("phi_"+ tstring +".fld",m_phi,phiOutputVectorOfArray, variableName); 
+              //cout <<"After output tranformation"<< endl;
 
-              m_phi->BwdTrans(m_phi->GetCoeffs(), m_phi->UpdatePhys());
+              //cout << "(m_phi -> UpdateCoeffs())[10] = " << (m_phi -> UpdateCoeffs())[10] << endl;
+              //cout << "tempCoeffs[10] = " << tempCoeffs[10] << endl;
+
+              //cout << "(m_phi -> UpdatePhys())[10] = " <<(m_phi -> UpdatePhys())[10] << endl;
+              //cout << "temp[10] = " << temp[10] << endl;
             }            
         
         }
@@ -637,7 +673,8 @@ namespace Nektar
     }
 
     void SmoothedProfileMethod::ReadPhi()
-    {
+    {   
+        SPMTest();
         // Function evaluator for Phi and Up
         m_phiEvaluator = GetFunction("ShapeFunction");
 
@@ -681,7 +718,31 @@ namespace Nektar
                 
                 string sampleFileName;
                 string angleString;
-                Array<OneD, MultiRegions::ExpListSharedPtr> m_phiExp(nSamples);
+
+                //Extract the value of npoints
+                int npoints;
+                //int nCoeffs;
+                std::vector<LibUtilities::FieldDefinitionsSharedPtr> fieldDef;
+                std::vector<std::vector<NekDouble> > fieldData;
+                LibUtilities::FieldMetaDataMap fieldMetaData;
+                sampleFileName = "./" + fileName + "/" + "0.fld";
+                LibUtilities::FieldIOSharedPtr phiFile =
+                    LibUtilities::FieldIO::CreateForFile(m_session, sampleFileName);
+                phiFile->Import(sampleFileName, fieldDef, fieldData, fieldMetaData);
+
+                // Extract Phi field to output
+                string tmp("phi");
+                m_phi->ExtractDataToCoeffs(fieldDef[0], fieldData[0],
+                                            tmp, m_phi->UpdateCoeffs());
+                m_phi->BwdTrans(m_phi->GetCoeffs(), m_phi->UpdatePhys());
+                    
+                npoints = m_phi -> GetTotPoints();
+                //nCoeffs = m_phi -> GetNcoeffs();
+
+                // Table containing phi fields of all samples 
+                m_phiInterp = Array<OneD, NekDouble> (npoints*nSamples, 0.0);
+                //m_phiInterpCoeffs = Array<OneD, NekDouble> (nCoeffs*nSamples, 0.0);
+
                 for (int i = 0; i < nSamples; ++i)
                 {
                     // Get phi values from XML file (after "FieldConvert" the STL file)
@@ -709,52 +770,62 @@ namespace Nektar
                     m_phi->BwdTrans(m_phi->GetCoeffs(), m_phi->UpdatePhys());
                     
                     // Store Phi in table of Phi fields
-                    m_phiExp[i] = m_phi;
+                    Vmath::Vcopy(npoints,&((m_phi -> UpdatePhys())[0]),1,&m_phiInterp[i*npoints],1);
+                    //Vmath::Vcopy(nCoeffs,&((m_phi -> UpdateCoeffs())[0]),1,&m_phiInterpCoeffs[i*nCoeffs],1);
 
                     //Update angle name
+                    /*if(angle == 0)
+                    {
+                        angle = angle+dAngle;
+                    }
+                    else if(angle < 0)
+                    {
+                        angle = -angle + 10;
+                    }
+                    else
+                    {
+                        angle = -angle;
+                    }*/
+
                     angle = angle + dAngle;
-
-                    //Output Phi field
-                    m_phi->FwdTrans_IterPerExp(m_phi->GetPhys(), m_phi->UpdateCoeffs());
-                    std::vector<Array<OneD, NekDouble> > phiOutputVectorOfArray;
-                    phiOutputVectorOfArray.push_back(m_phi -> UpdateCoeffs()); 
-                    std::vector<std::string> variableName;
-                    variableName.push_back("phi");
-                    string stringI = to_string(i);
-                    EquationSystem::WriteFld("phi_"+ stringI +".fld",m_phi,phiOutputVectorOfArray, variableName); 
-
-                    m_phi->BwdTrans(m_phi->GetCoeffs(), m_phi->UpdatePhys());
                 }
 
+                sampleFileName = "./" + fileName + "/0.fld";
+                phiFile = LibUtilities::FieldIO::CreateForFile(m_session, sampleFileName);
+                phiFile->Import(sampleFileName, fieldDef, fieldData, fieldMetaData);
+
+                // Extract Phi field to output
+                m_phi->ExtractDataToCoeffs(fieldDef[0], fieldData[0],
+                                               tmp, m_phi->UpdateCoeffs());
+                m_phi->BwdTrans(m_phi->GetCoeffs(), m_phi->UpdatePhys());
                 
-                ASSERTL0(m_phiExp.size() == nSamples, "The number of samples provided does not match"
-                                                        " NSAMPLES.")
+                //ASSERTL0(m_phiExp.size() == nSamples, "The number of samples provided does not match"
+                //                                        " NSAMPLES.")
 
-                int npoints = m_phiExp[0] -> GetNumElmts();
-                m_phiInterp = Array<OneD, NekDouble> (npoints*nSamples, 0.0);
-                Array< OneD, NekDouble > temp(npoints);
-              
-
-                for(int i = 0; i < nSamples; ++i)
-                {   
-                    temp = m_phiExp[i] -> GetPhys();
-                    Vmath::Vcopy(npoints,&temp[0],1,&m_phiInterp[i*npoints],1);
-                }
+//#ifdef NEKTAR_USING_FFTW              
 
                 //Discrete Fourier Transform using FFTW
                 Array<OneD, NekDouble> fft_in(npoints*nSamples);
                 Array<OneD, NekDouble> fft_out(npoints*nSamples);
 
+                //Array<OneD, NekDouble> fft_inCoeffs(nCoeffs*nSamples);
+                //Array<OneD, NekDouble> fft_outCoeffs(nCoeffs*nSamples);
+
                 Array<OneD, NekDouble> m_tmpIN(nSamples);
                 Array<OneD, NekDouble> m_tmpOUT(nSamples);
+
+                //Array<OneD, NekDouble> m_tmpINCoeffs(nCoeffs);
+                //Array<OneD, NekDouble> m_tmpOUTCoeffs(nCoeffs);
 
                 //Shuffle the data
                 for(int j= 0; j < nSamples; ++j)
                 {
                     Vmath::Vcopy(npoints,&m_phiInterp[j*npoints],1,&(fft_in[j]),nSamples);
+                    //Vmath::Vcopy(nCoeffs,&m_phiInterpCoeffs[j*nCoeffs],1,&(fft_inCoeffs[j*nCoeffs]),1);
                 }
 
                 m_FFT = LibUtilities::GetNektarFFTFactory().CreateInstance("NekFFTW", nSamples);
+                //m_FFTCoeffs = LibUtilities::GetNektarFFTFactory().CreateInstance("NekFFTW", nSamples);
 
                 //FFT Transform
                 for(int i=0; i<npoints; i++)
@@ -763,28 +834,49 @@ namespace Nektar
 
                 }
 
+                //for(int i=0; i<nCoeffs; i++)
+                //{
+                //    m_FFTCoeffs->FFTFwdTrans(m_tmpINCoeffs =fft_inCoeffs + i*nSamples, m_tmpOUTCoeffs =fft_outCoeffs + i*nSamples);
+                //}
+
                 //Reshuffle data
                 for(int s = 0; s < nSamples; ++s)
                 {
                     Vmath::Vcopy(npoints,&fft_out[s],nSamples,&m_phiInterp[s*npoints],1);
-
+                    //Vmath::Vcopy(nCoeffs,&fft_outCoeffs[s*nCoeffs],1,&m_phiInterpCoeffs[s*nCoeffs],1);
                 }
 
                 Vmath::Zero(fft_in.size(),&fft_in[0],1);
                 Vmath::Zero(fft_out.size(),&fft_out[0],1);
+
+                //Vmath::Zero(fft_inCoeffs.size(),&fft_inCoeffs[0],1);
+                //Vmath::Zero(fft_outCoeffs.size(),&fft_outCoeffs[0],1);
 
                 //scaling of the Fourier coefficients
                 NekDouble j=-1;
                 for (int i = 2; i < nSamples; i += 2)
                 {
                     Vmath::Smul(2*npoints,j,&m_phiInterp[i*npoints],1,&m_phiInterp[i*npoints],1);
+                    //Vmath::Smul(2*nCoeffs,j,&m_phiInterpCoeffs[i*nCoeffs],1,&m_phiInterpCoeffs[i*nCoeffs],1);
                     j=-j;
 
                 }
-
+                
                 m_timeDependentPhi = true;
                 m_timeDependentUp  = false;
 
+              //Output Phi field
+              m_phi->FwdTrans_IterPerExp(m_phi->GetPhys(), m_phi->UpdateCoeffs());
+              m_phi->BwdTrans_IterPerExp(m_phi->GetCoeffs(), m_phi->UpdatePhys());
+              
+              //m_phi->BwdTrans_IterPerExp(m_phi->GetCoeffs(), m_phi->UpdatePhys());
+              //m_phi->FwdTrans_IterPerExp(m_phi->GetPhys(), m_phi->UpdateCoeffs());
+              
+              std::vector<Array<OneD, NekDouble> > phiOutputVectorOfArray;
+              phiOutputVectorOfArray.push_back(m_phi -> UpdateCoeffs()); 
+              std::vector<std::string> variableName;
+              variableName.push_back("phi");
+              EquationSystem::WriteFld("phi_0.fld",m_phi,phiOutputVectorOfArray, variableName); 
 
             }
             else
@@ -821,8 +913,7 @@ namespace Nektar
                 std::vector<std::string> variableName;
                 variableName.push_back("phi");
                 EquationSystem::WriteFld("phi.fld",m_phi,phiOutputVectorOfArray, variableName); 
-
-                m_phi->BwdTrans(m_phi->GetCoeffs(), m_phi->UpdatePhys());
+                m_phi->BwdTrans_IterPerExp(m_phi->GetCoeffs(), m_phi->UpdatePhys());
                 
             }
             m_filePhi = true;
@@ -845,5 +936,158 @@ namespace Nektar
             }
         }
     }
+
+    void SmoothedProfileMethod::SPMTest()
+    {
+        int nX = 10;
+        int nSamplesD = 10;
+
+        Array<OneD, NekDouble> Xspace;
+        Xspace = Array<OneD, NekDouble>(nX);
+        /*Array<OneD, NekDouble> func;
+        func = Array<OneD, NekDouble>(nX, 0.0);*/
+        const Array<OneD, NekDouble> func;
+        //func = Array<OneD, NekDouble>(nX, 0.0);
+        Array<OneD, NekDouble> funcInterp;
+        funcInterp = Array<OneD, NekDouble>(nX*nSamplesD);
+
+        for(int i=0; i<nX; ++i)
+        {
+            Xspace[i] = double(i)/double(nX);
+        }
+
+        ofstream myfile;
+        myfile.open ("output_base.csv");
+
+        NekDouble mu;
+        NekDouble sigma = 0.1; 
+        for(int i=0; i<nSamplesD; ++i)
+        {   
+            mu = double(i)/double(nSamplesD);
+            for(int j=0; j<nX; ++j)
+            {
+                funcInterp[i*nX+j] = (sigma*2.51)*exp(-(Xspace[j]-mu)*(Xspace[j]-mu)/(2*sigma*sigma));
+                if(i==0)
+                {
+                    myfile << Xspace[j] <<","<< funcInterp[i*nX+j] << "\n"; 
+                }
+                
+            }        
+        }
+
+        myfile.close();
+
+        Array<OneD, NekDouble> fft_inD(nX*nSamplesD);
+        Array<OneD, NekDouble> fft_outD(nX*nSamplesD);
+
+        Array<OneD, NekDouble> m_tmpIND(nSamplesD);
+        Array<OneD, NekDouble> m_tmpOUTD(nSamplesD);
+
+        /*for(int j= 0; j < nSamplesD; ++j)
+        {
+            Vmath::Vcopy(nX,&funcInterp[j*nX],1,&(fft_inD[j*nX]),1);
+        }
+
+        m_FFTD = LibUtilities::GetNektarFFTFactory().CreateInstance("NekFFTW", nSamplesD);
+
+        //FFT Transform
+        for(int i=0; i<nX; i++)
+        {
+            m_FFTD->FFTFwdTrans(m_tmpIND =fft_inD + i*nSamplesD, m_tmpOUTD =fft_outD + i*nSamplesD);
+        }
+
+        //scaling of the Fourier coefficients
+        NekDouble j=-1;
+        for (int i = 2; i < nSamplesD; i += 2)
+        {
+            Vmath::Smul(2*nX,j,&funcInterp[i*nX],1,&funcInterp[i*nX],1);
+            j=-j;
+        }
+
+
+        //Reshuffle data
+        for(int s = 0; s < nSamplesD; ++s)
+        {
+            Vmath::Vcopy(nSamplesD,&fft_outD[s*nX],1,&funcInterp[s*nX],1);
+        }
+
+        Vmath::Zero(fft_inD.size(),&fft_inD[0],1);
+        Vmath::Zero(fft_outD.size(),&fft_outD[0],1);*/
+
+        //Shuffle the data
+        for(int j= 0; j < nSamplesD; ++j)
+        {
+            Vmath::Vcopy(nX,&funcInterp[j*nX],1,&(fft_inD[j]),nSamplesD);
+        }
+
+        m_FFTD = LibUtilities::GetNektarFFTFactory().CreateInstance("NekFFTW", nSamplesD);
+
+        //FFT Transform
+        for(int i=0; i<nX; i++)
+        {
+            m_FFTD->FFTFwdTrans(m_tmpIND =fft_inD + i*nSamplesD, m_tmpOUTD =fft_outD + i*nSamplesD);
+
+        }
+
+        //Reshuffle data
+        for(int s = 0; s < nSamplesD; ++s)
+        {
+            Vmath::Vcopy(nX,&fft_outD[s],nSamplesD,&funcInterp[s*nX],1);
+
+        }
+
+        Vmath::Zero(fft_inD.size(),&fft_inD[0],1);
+        Vmath::Zero(fft_outD.size(),&fft_outD[0],1);
+
+        //scaling of the Fourier coefficients
+        /*NekDouble j=-1;
+        for (int i = 2; i < nSamplesD; i += 2)
+        {
+            Vmath::Smul(2*nX,j,&funcInterp[i*nX],1,&funcInterp[i*nX],1);
+            j=-j;
+        }*/
+
+        Array< OneD, NekDouble > tempD;
+        tempD = Array<OneD, NekDouble>(nX, 0.0);
+
+        NekDouble m_period = 1.0;
+        NekDouble phase;
+        NekDouble BetaT;
+        NekDouble t;
+
+        for(int i=0; i<nX*nSamplesD; ++i)
+        {
+            cout << "funcInterp[" << i << "] = " << funcInterp[i] << endl;
+        }
+        
+        for (int j=0; j<21; ++j)
+        {   
+            t = 0.1*j;
+            BetaT = 2*M_PI*fmod (t, m_period) / m_period;
+            
+            Vmath::Vcopy(nX,&funcInterp[0],1,&tempD[0],1);
+            Vmath::Svtvp(nX,cos(0.5*nSamplesD*BetaT),&funcInterp[nX],1,&tempD[0],1,&tempD[0],1);
+            //Vmath::Svtvp(nX,-sin(BetaT),&funcInterp[nX],1,&tempD[0],1,&tempD[0],1);
+            for (int i = 2; i < nSamplesD; i += 2)
+            {
+                phase = (i>>1) * BetaT;
+                Vmath::Svtvp(nX, cos(phase),&funcInterp[i*nX],1,&tempD[0],1,&tempD[0],1);
+                Vmath::Svtvp(nX, -sin(phase),&funcInterp[(i+1)*nX], 1, &tempD[0], 1,&tempD[0],1);
+            }
+            
+            string tstring = to_string(t);
+            myfile.open ("output_t" + tstring + ".csv");
+            for(int i=0; i<nX; ++i)
+            {
+                myfile << Xspace[i] <<","<< tempD[i] << "\n";
+            }
+            
+            myfile.close();
+        }
+            
+
+        cout << "1D DONE" << endl;
+    }
+
 
 } // end of namespace

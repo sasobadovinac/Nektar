@@ -103,10 +103,12 @@ namespace Nektar
         int nSamples;
         /// Number of elements in the expansion
         int npoints;
+        int nCoeffs;
         /// Vector of shape functions in case of rotating STL
         Array<OneD, MultiRegions::ExpListSharedPtr> m_phiExp;
         /// Interpolation vector
         Array<OneD, NekDouble> m_phiInterp;
+        Array<OneD, NekDouble> m_phiInterpCoeffs;
         /// Function that evaluates the values of \Phi
         SolverUtils::SessionFunctionSharedPtr m_phiEvaluator;
         /// Flag that is true when phi depends on time
@@ -117,6 +119,9 @@ namespace Nektar
         int m_forcesFilter;
         /// Auxiliary variables
         LibUtilities::NektarFFTSharedPtr m_FFT;
+        LibUtilities::NektarFFTSharedPtr m_FFTCoeffs;
+
+        LibUtilities::NektarFFTSharedPtr m_FFTD;
 
         // Interface for 'v_SolveUnsteadyStokesSystem'
         virtual void v_SolveUnsteadyStokesSystem(
@@ -152,6 +157,8 @@ namespace Nektar
         TiXmlElement* GetFunctionHdl(std::string functionName);
         // Reads and set the values of Phi from an analyitic func. or a file
         void ReadPhi();
+
+        void SPMTest();
 
         /// Initialises the expansions for the intermediate pressure, the 'Phi'
         /// function and the IB forcing
