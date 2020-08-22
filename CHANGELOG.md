@@ -16,6 +16,7 @@ v5.1.0
   num_elements with size() (!1127, !1137, !1141)
 - Use base MPI functions instead of the GS library in the trace exchange
   for parallel DG simulations (!1112)
+- Fix virtual function specifiers for CWIPI and MPI (!1186)
 
 **FieldConvert**:
 - Add phifile module to compute shape functions for the SPM solver (!1065)

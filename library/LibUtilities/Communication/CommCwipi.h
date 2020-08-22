@@ -67,10 +67,10 @@ public:
 
     CommCwipi(int narg, char *arg[]);
 
-    virtual ~CommCwipi();
+    virtual ~CommCwipi() override;
 
 protected:
-    virtual void v_Finalise();
+    virtual void v_Finalise() final;
 };
 }
 }
