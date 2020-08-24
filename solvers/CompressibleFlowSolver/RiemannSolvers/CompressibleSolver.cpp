@@ -91,17 +91,6 @@ namespace Nektar
                     }
                 }
 
-                if (nvariables > expDim+2)
-                {
-                    for (int i = 0; i < Fwd[0].size(); ++i)
-                    {
-                        v_PointSolveVisc(
-                            Fwd [0][i], Fwd [1][i], Fwd [2][i], 0.0, Fwd [3][i], Fwd [4][i],
-                            Bwd [0][i], Bwd [1][i], Bwd [2][i], 0.0, Bwd [3][i], Bwd [4][i],
-                            flux[0][i], flux[1][i], flux[2][i], rhovf, flux[3][i], flux[4][i]);
-                    }
-                }
-
             }
             else if (expDim == 3)
             {
@@ -111,16 +100,6 @@ namespace Nektar
                         Fwd [0][i], Fwd [1][i], Fwd [2][i], Fwd [3][i], Fwd [4][i],
                         Bwd [0][i], Bwd [1][i], Bwd [2][i], Bwd [3][i], Bwd [4][i],
                         flux[0][i], flux[1][i], flux[2][i], flux[3][i], flux[4][i]);
-                }
-                if (nvariables > expDim+2)
-                {
-                    for (int i = 0; i < Fwd[0].size(); ++i)
-                    {
-                        v_PointSolveVisc(
-                            Fwd [0][i], Fwd [1][i], Fwd [2][i], Fwd [3][i], Fwd [4][i], Fwd [5][i],
-                            Bwd [0][i], Bwd [1][i], Bwd [2][i], Bwd [3][i], Bwd [4][i], Bwd [5][i],
-                            flux[0][i], flux[1][i], flux[2][i], flux[3][i], flux[4][i], flux[5][i]);
-                    }
                 }
             }
         }
