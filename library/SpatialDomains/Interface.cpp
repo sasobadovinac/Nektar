@@ -329,6 +329,22 @@ void Interfaces::GenGeomFactors()
             el.second->GenGeomFactors();
         }
     }
+
+    // @TODO: Don't know if below is needed?
+    /*for (auto &interface : m_interfaceVector)
+    {
+        auto elements = interface->GetElements();
+        for (auto &el : elements)
+        {
+            int ne = el->GetNumEdges();
+            for (int i = 0; i < ne; ++i)
+            {
+                el->GetEdge(i)->GenGeomFactors();
+            }
+
+            el->GenGeomFactors();
+        }
+    }*/
 }
 
 void RotatingInterface::v_Move(NekDouble timeStep)

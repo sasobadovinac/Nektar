@@ -159,6 +159,11 @@ struct InterfaceBase
         return m_elementIds;
     }
 
+    inline std::vector<GeometrySharedPtr> const &GetElements() const
+    {
+        return m_elements;
+    }
+
 protected:
     InterfaceBaseShPtr m_oppInterface;
     InterfaceType m_type;
