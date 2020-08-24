@@ -63,11 +63,11 @@ public:
     }
 
     /// Name of class
-    static std::string className;
+    LIB_UTILITIES_EXPORT static std::string className;
 
-    CommCwipi(int narg, char *arg[]);
+    LIB_UTILITIES_EXPORT CommCwipi(int narg, char *arg[]);
 
-    virtual ~CommCwipi() override;
+    LIB_UTILITIES_EXPORT virtual ~CommCwipi() override;
 
 protected:
     virtual void v_Finalise() final;
