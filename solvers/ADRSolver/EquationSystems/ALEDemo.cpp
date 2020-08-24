@@ -41,26 +41,6 @@ protected:
                 flux[i][j] = traceVel[j] * tmp[i][j];
             }
         }
-
-        // Add in the term to deal with grid velocity * normal
-        const Array<OneD, const Array<OneD, NekDouble>> &gridVel = m_vectors["Tvg"]();
-        const Array<OneD, const Array<OneD, NekDouble>> &normals = m_vectors["N"]();
-        Array<OneD, NekDouble> tmp(gridVel[0].size(), 0.0);
-        for (int i = 0; i < gridVel.size(); ++i)
-        {
-            for (int j = 0; j < gridVel[0].size(); ++j)
-            {
-                tmp[j] += gridVel[i][j] * normals[i][j];
-            }
-        }
-
-        for (int j = 0; j < traceVel.size(); ++j)
-        {
-            for (int i = 0; i < Fwd.size(); ++i)
-            {
-                flux[i][j] += tmp[j];
-            }
-        }
     }
 };
 
@@ -134,9 +114,6 @@ std::string ALEUpwindSolver::solverName =
                 SolverUtils::GetRiemannSolverFactory().CreateInstance(
                     "ALEUpwind", m_session);
             m_riemannSolver->SetScalar("Vn", &ALEDemo::GetNormalVelocity, this);
-            m_riemannSolver->SetVector("Tvg", &ALEDemo::GetTraceGridVelocity,
-                                       this);
-            m_riemannSolver->SetVector("N", &ALEDemo::GetNormals, this);
             m_advObject->SetRiemannSolver(m_riemannSolver);
             m_advObject->InitObject(m_session, m_fields);
         }
@@ -265,11 +242,6 @@ std::string ALEUpwindSolver::solverName =
             // u = physfield
         }
 
-        const Array<OneD, const Array<OneD, NekDouble>> &GetNormals()
-        {
-            return m_traceNormals;
-        }
-
         /**
      * @brief Get the normal velocity for the linear advection equation.
          */
@@ -285,13 +257,20 @@ std::string ALEUpwindSolver::solverName =
             // Reset the normal velocity
             Vmath::Zero(nTracePts, m_traceVn, 1);
 
+            GetTraceGridVelocity();
+
             for (i = 0; i < m_velocity.size(); ++i)
             {
                 m_fields[0]->ExtractTracePhys(m_velocity[i], tmp);
 
+                // Subtract grid velocity here from trace velocity
+                // tmp - grid velocity
+                Vmath::Vsub(nTracePts, tmp, 1, m_traceGridVelocity[i], 1, tmp, 1);
+
                 Vmath::Vvtvp(nTracePts, m_traceNormals[i], 1, tmp, 1, m_traceVn,
                              1, m_traceVn, 1);
             }
+
 
             return m_traceVn;
         }
@@ -299,9 +278,11 @@ std::string ALEUpwindSolver::solverName =
         const Array<OneD, const Array<OneD, NekDouble>> &GetGridVelocity()
         {
             // Initialise grid velocity as 0s
-            m_gridVelocity = Array<OneD, Array<OneD, NekDouble>>(
-                m_spacedim,
-                Array<OneD, NekDouble>(m_fields[0]->GetTotPoints(), 0.0));
+            m_gridVelocity = Array<OneD, Array<OneD, NekDouble>>(m_spacedim);
+            for (int i = 0; i < m_spacedim; ++i)
+            {
+                m_gridVelocity[i] = Array<OneD, NekDouble>(m_fields[0]->GetTotPoints(), 0.0);
+            }
 
             // Do I need to do this for each field? I think it is consistent?
             auto exp = m_fields[0]->GetExp();
@@ -321,9 +302,12 @@ std::string ALEUpwindSolver::solverName =
                 {
                     continue;
                 }
-                else if (interface->GetInterfaceType() ==
-                         SpatialDomains::eRotating)
+                else if (interface->GetInterfaceType() == SpatialDomains::eRotating)
                 {
+                    SpatialDomains::RotatingInterfaceShPtr interfaceRotate =
+                        std::static_pointer_cast<
+                            SpatialDomains::RotatingInterface>(interface);
+                    NekDouble angVel = interfaceRotate->GetAngularVel();
 
                     auto ids = interface->GetElementIds();
                     for (auto id : ids)
@@ -340,9 +324,8 @@ std::string ALEUpwindSolver::solverName =
                         for (int i = 0; i < nq; ++i)
                         {
                             //std::cout << "Coordinate: (" << xc[i] << ", " << yc[i] << ") has velocity = " << -yc[i] << ", " << xc[i] << std::endl;
-                            boost::ignore_unused(offset);
-                            //m_gridVelocity[0][offset + i] = -yc[i];
-                            //m_gridVelocity[1][offset + i] = xc[i];
+                            m_gridVelocity[0][offset + i] = -angVel * yc[i];
+                            m_gridVelocity[1][offset + i] = angVel * xc[i];
                         }
                     }
                 }
@@ -363,8 +346,8 @@ std::string ALEUpwindSolver::solverName =
                         int nq = expansion->GetTotPoints();
                         for (int i = 0; i < nq; ++i)
                         {
-                            m_gridVelocity[0][offset + i] = 0; //velocity[0];
-                            m_gridVelocity[1][offset + i] = 0; //velocity[1];
+                            m_gridVelocity[0][offset + i] = velocity[0];
+                            m_gridVelocity[1][offset + i] = velocity[1];
                         }
                     }
                 }
@@ -376,9 +359,11 @@ std::string ALEUpwindSolver::solverName =
         const Array<OneD, const Array<OneD, NekDouble>> &GetTraceGridVelocity()
         {
             // Initialise grid velocity as 0s
-            m_traceGridVelocity = Array<OneD, Array<OneD, NekDouble>>(
-                m_spacedim, Array<OneD, NekDouble>(
-                                m_fields[0]->GetTrace()->GetTotPoints(), 0.0));
+            m_traceGridVelocity = Array<OneD, Array<OneD, NekDouble>>(m_spacedim);
+            for (int i =0; i < m_spacedim; ++i)
+            {
+                m_traceGridVelocity[i] = Array<OneD, NekDouble>(m_fields[0]->GetTrace()->GetTotPoints(), 0.0);
+            }
 
             // Do I need to do this for each field? I think it is consistent?
             auto exp = m_fields[0]->GetTrace()->GetExp();
@@ -398,12 +383,15 @@ std::string ALEUpwindSolver::solverName =
                 {
                     continue;
                 }
-                else if (interface->GetInterfaceType() ==
-                         SpatialDomains::eRotating)
+                else if (interface->GetInterfaceType() == SpatialDomains::eRotating)
                 {
 
-                    auto ids = interface->GetElementIds();
+                    SpatialDomains::RotatingInterfaceShPtr interfaceRotate =
+                        std::static_pointer_cast<
+                            SpatialDomains::RotatingInterface>(interface);
+                    NekDouble angVel = interfaceRotate->GetAngularVel();
 
+                    auto ids = interface->GetElementIds();
                     for (auto id : ids)
                     {
                         int ne = m_graph->GetGeometry2D(id)->GetNumEdges();
@@ -416,20 +404,18 @@ std::string ALEUpwindSolver::solverName =
                             auto expansion = (*exp)[indx];
 
                             int nq = expansion->GetTotPoints();
-                            Array<OneD, NekDouble> xc(nq, 0.0), yc(nq, 0.0),
-                                zc(nq, 0.0);
+                            Array<OneD, NekDouble> xc(nq, 0.0), yc(nq, 0.0), zc(nq, 0.0);
                             expansion->GetCoords(xc, yc, zc);
 
                             for (int j = 0; j < nq; ++j)
                             {
-                                m_traceGridVelocity[0][offset + j] = -yc[j];
-                                m_traceGridVelocity[1][offset + j] = xc[j];
+                                m_traceGridVelocity[0][offset + j] = -angVel * yc[j];
+                                m_traceGridVelocity[1][offset + j] = angVel * xc[j];
                             }
                         }
                     }
                 }
-                else if (interface->GetInterfaceType() ==
-                         SpatialDomains::eSliding)
+                else if (interface->GetInterfaceType() == SpatialDomains::eSliding)
                 {
                     SpatialDomains::SlidingInterfaceShPtr interfaceSlide =
                         std::static_pointer_cast<
@@ -450,8 +436,8 @@ std::string ALEUpwindSolver::solverName =
                             int nq = expansion->GetTotPoints();
                             for (int j = 0; j < nq; ++j)
                             {
-                                m_gridVelocity[0][offset + j] = 0; //velocity[0];
-                                m_gridVelocity[1][offset + j] = 0; //velocity[1];
+                                m_traceGridVelocity[0][offset + j] = velocity[0];
+                                m_traceGridVelocity[1][offset + j] = velocity[1];
                             }
                         }
                     }
