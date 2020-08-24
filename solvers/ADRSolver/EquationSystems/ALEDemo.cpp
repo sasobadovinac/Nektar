@@ -176,9 +176,14 @@ std::string ALEUpwindSolver::solverName =
                 for (int i = 0; i < m_fields.size(); ++i)
                 {
                     m_fields[i]->GetInterfaces()->PerformMovement(m_timestep);
+                    m_fields[i]->GetTrace()->Reset();
                     m_fields[i]->Reset();
                     m_fields[i]->GetInterfaces()->GenGeomFactors();
                 }
+
+                // Why does this break everything for rotating?!?
+                m_fields[0]->SetUpPhysNormals();
+                m_fields[0]->GetTrace()->GetNormals(m_traceNormals);
 
                 for (int i = 0; i < nFields; ++i)
                 {
@@ -234,12 +239,6 @@ std::string ALEUpwindSolver::solverName =
                                    flux[i][j], 1);
                 }
             }
-
-            // Here you're going to need something to add onto the flux the
-            // contribution -vu
-            //
-            // v = grid velocity
-            // u = physfield
         }
 
         /**
@@ -324,7 +323,7 @@ std::string ALEUpwindSolver::solverName =
                         for (int i = 0; i < nq; ++i)
                         {
                             //std::cout << "Coordinate: (" << xc[i] << ", " << yc[i] << ") has velocity = " << -yc[i] << ", " << xc[i] << std::endl;
-                            m_gridVelocity[0][offset + i] = -angVel * yc[i];
+                            m_gridVelocity[0][offset + i] = angVel * -yc[i];
                             m_gridVelocity[1][offset + i] = angVel * xc[i];
                         }
                     }
@@ -409,7 +408,7 @@ std::string ALEUpwindSolver::solverName =
 
                             for (int j = 0; j < nq; ++j)
                             {
-                                m_traceGridVelocity[0][offset + j] = -angVel * yc[j];
+                                m_traceGridVelocity[0][offset + j] = angVel * -yc[j];
                                 m_traceGridVelocity[1][offset + j] = angVel * xc[j];
                             }
                         }
