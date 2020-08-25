@@ -1069,8 +1069,8 @@ namespace Nektar
                                    const Array<OneD, Array<OneD, NekDouble> >coords,
                                    Array<OneD, NekDouble> &out_eval,
                                    Array<OneD, NekDouble> &out_d0,
-                                   Array<OneD, NekDouble> &out_d1 ,
-                                   Array<OneD, NekDouble> &out_d2 )
+                                   Array<OneD, NekDouble> &out_d1 = NullNekDouble1DArray,
+                                   Array<OneD, NekDouble> &out_d2 = NullNekDouble1DArray)
             {
                 return v_PhysEvalBasisGrad(coords, out_eval, out_d0, out_d1, out_d2 );  
             }
@@ -1752,8 +1752,8 @@ namespace Nektar
                                             const Array<OneD, const Array<OneD, NekDouble> >coords,
                                             Array<OneD, NekDouble> &out_eval,
                                             Array<OneD, NekDouble> &out_d0,
-                                            Array<OneD, NekDouble> &out_d1,
-                                            Array<OneD, NekDouble> &out_d2);
+                                            Array<OneD, NekDouble> &out_d1 = NullNekDouble1DArray,
+                                            Array<OneD, NekDouble> &out_d2 = NullNekDouble1DArray);
         STD_REGIONS_EXPORT virtual void v_LocCoordToLocCollapsed(
                                                                  const Array<OneD, const NekDouble>& xi,
                                                                  Array<OneD, NekDouble>& eta);
