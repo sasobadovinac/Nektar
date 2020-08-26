@@ -1072,7 +1072,7 @@ namespace Nektar
                                    Array<OneD, NekDouble> &out_d1 = NullNekDouble1DArray,
                                    Array<OneD, NekDouble> &out_d2 = NullNekDouble1DArray)
             {
-                return v_PhysEvalBasisGrad(coords, out_eval, out_d0, out_d1, out_d2 );  
+                return v_PhysEvalBasisGradFast(coords, out_eval, out_d0, out_d1, out_d2 );  
             }
             
 
