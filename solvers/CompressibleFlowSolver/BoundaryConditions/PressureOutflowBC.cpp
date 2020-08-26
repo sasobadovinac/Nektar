@@ -54,6 +54,14 @@ PressureOutflowBC::PressureOutflowBC(
            const int cnt)
     : CFSBndCond(pSession, pFields, pTraceNormals, pSpaceDim, bcRegion, cnt)
 {
+    int numBCPts = m_fields[0]->
+        GetBndCondExpansions()[m_bcRegion]->GetNpoints();
+    m_pressureStorage = Array<OneD, NekDouble>(numBCPts, 0.0);
+
+    // Get Pressure
+    Vmath::Vcopy(numBCPts,
+        m_fields[m_spacedim+1]->GetBndCondExpansions()[m_bcRegion]->GetPhys(), 1,
+        m_pressureStorage, 1);
 }
 
 void PressureOutflowBC::v_Apply(
@@ -110,7 +118,7 @@ void PressureOutflowBC::v_Apply(
         id2 = m_fields[0]->GetTrace()->GetPhys_Offset(traceBndMap[m_offset+e]);
 
         // Get internal energy
-        Array<OneD, NekDouble> pressure (npts, m_pInf);
+        Array<OneD, NekDouble> pressure (npts, m_pressureStorage);
         Array<OneD, NekDouble> rho      (npts, Fwd[0]+id2);
         Array<OneD, NekDouble> e(npts);
         m_varConv->GetEFromRhoP(rho, pressure, e);

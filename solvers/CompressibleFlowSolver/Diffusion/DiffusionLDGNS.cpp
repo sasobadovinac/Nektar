@@ -118,7 +118,7 @@ void DiffusionLDGNS::v_InitObject(
                 for(std::size_t i = 0; i < exp2D->GetNtraces(); ++i)
                 {
                     h = std::min(h, exp2D->GetGeom2D()->GetEdge(i)->GetVertex(0)->
-                        dist(*(exp2D->GetGeom2D()->GetEdge(i)->GetVertex(1))));
+                                 dist(*(exp2D->GetGeom2D()->GetEdge(i)->GetVertex(1))));
                 }
             break;
             }
@@ -258,7 +258,7 @@ void DiffusionLDGNS::v_DiffuseCoeffs(
 
     DiffuseCalculateDerivative(fields, inarray, derivativesO1, pFwd, pBwd);
 
-    // Initialisation viscous tensor
+
     // Initialisation viscous tensor
     m_viscTensor = TensorOfArray3D<NekDouble> {m_spaceDim};
     for (std::size_t j = 0; j < m_spaceDim; ++j)
@@ -446,7 +446,7 @@ void DiffusionLDGNS::ApplyBCsO1(
     }
 
     // Compute boundary conditions for velocities
-    for (std::size_t i = 0; i < m_spaceDim+1; ++i)
+    for (std::size_t i = 0; i < m_spaceDim; ++i)
     {
         // Note that cnt has to loop on nBndRegions and nBndEdges
         // and has to be reset to zero per each equation
@@ -574,103 +574,29 @@ void DiffusionLDGNS::ApplyBCsO1(
                             &tmp2[id2], 1);
             }
         }
-
-        //Compute boundary conditions for scalars
-        for(i=m_spaceDim+1; i<nScalars-1; i++)
-        {
-            cnt = 0;
-            nBndRegions = fields[i+1]->
-                 GetBndCondExpansions().size();
-            for (int j = 0; j < nBndRegions; ++j)
-            {
-                if (fields[i+1]->GetBndConditions()[j]->
-                    GetBoundaryConditionType() ==
-                    SpatialDomains::ePeriodic)
-                {
-                    continue;
-                }
-
-                int nBndEdges = fields[i+1]->
-                    GetBndCondExpansions()[j]->GetExpSize();
-
-                for (int e = 0; e < nBndEdges; ++e)
-                {
-                    int nBndEdgePts = fields[i+1]->
-                        GetBndCondExpansions()[j]->GetExp(e)->GetTotPoints();
-                    int id1 = fields[i+1]->
-                        GetBndCondExpansions()[j]->GetPhys_Offset(e);
-                    int id2 = fields[0]->GetTrace()->
-                        GetPhys_Offset(fields[0]->GetTraceMap()->
-                                       GetBndCondIDToGlobalTraceID(cnt++));
-
-                    if (fields[i]->GetBndConditions()[j]->
-                             GetBoundaryConditionType() == 
-                             SpatialDomains::eDirichlet)
-                    {
-                        // Evaluate primitive scalars
-                        Vmath::Vdiv(nBndEdgePts,
-                                &(fields[i+1]->GetBndCondExpansions()[j]->
-                                  UpdatePhys())[id1], 1,
-                                &(fields[0]->GetBndCondExpansions()[j]->
-                                  UpdatePhys())[id1], 1,
-                                &scalarVariables[i][id2], 1);
-                    }
-
-                    // For Dirichlet boundary condition: uflux = u_bcs
-                    if (fields[i+1]->GetBndConditions()[j]->
-                        GetBoundaryConditionType() ==
-                        SpatialDomains::eDirichlet)
-                    {
-                        Vmath::Vcopy(nBndEdgePts, 
-                                     &scalarVariables[i][id2], 1, 
-                                     &fluxO1[i][id2], 1);
-
-                    }
-
-                    // For Neumann boundary condition: uflux = u_+
-                    else if (((fields[i+1]->GetBndConditions()[j])->
-                              GetBoundaryConditionType() ==
-                              SpatialDomains::eNeumann) ||
-                              boost::iequals(fields[i+1]->GetBndConditions()[j]->
-                                            GetUserDefined(), "WallAdiabatic") ||
-                              boost::iequals(fields[i+1]->GetBndConditions()[j]->
-                                            GetUserDefined(), "WallViscous") || 
-                              boost::iequals(fields[i+1]->GetBndConditions()[j]->
-                                            GetUserDefined(),"Wall") ||
-                              boost::iequals(fields[i+1]->GetBndConditions()[j]->
-                                            GetUserDefined(),"Symmetry"))
-                    {
-                        Vmath::Vcopy(nBndEdgePts, 
-                                     &pFwd[i][id2], 1, 
-                                     &fluxO1[i][id2], 1);
-
-                    }
-                }
-            }
-        }
     }
 
     // Compute boundary conditions  for temperature
     std::size_t cnt = 0;
-    std::size_t nBndRegions = fields[nScalars]->
+    std::size_t nBndRegions = fields[m_spaceDim+1]->
     GetBndCondExpansions().size();
     for (std::size_t j = 0; j < nBndRegions; ++j)
     {
-        if (fields[nScalars]->GetBndConditions()[j]->
+        if (fields[m_spaceDim+1]->GetBndConditions()[j]->
             GetBoundaryConditionType() ==
             SpatialDomains::ePeriodic)
         {
             continue;
         }
 
-        std::size_t nBndEdges = fields[nScalars]->
+        std::size_t nBndEdges = fields[m_spaceDim+1]->
         GetBndCondExpansions()[j]->GetExpSize();
         for (std::size_t e = 0; e < nBndEdges; ++e)
         {
-            std::size_t nBndEdgePts = fields[nScalars]->
+            std::size_t nBndEdgePts = fields[m_spaceDim+1]->
             GetBndCondExpansions()[j]->GetExp(e)->GetTotPoints();
 
-            std::size_t id1 = fields[nScalars]->
+            std::size_t id1 = fields[m_spaceDim+1]->
             GetBndCondExpansions()[j]->GetPhys_Offset(e);
 
             std::size_t id2 = fields[0]->GetTrace()->
@@ -678,16 +604,16 @@ void DiffusionLDGNS::ApplyBCsO1(
                            GetBndCondIDToGlobalTraceID(cnt++));
 
             // Imposing Temperature Twall at the wall
-            if (boost::iequals(fields[nScalars]->GetBndConditions()[j]->
+            if (boost::iequals(fields[m_spaceDim+1]->GetBndConditions()[j]->
                 GetUserDefined(),"WallViscous"))
             {
                 Vmath::Vcopy(nBndEdgePts,
                              &Tw[0], 1,
-                             &scalarVariables[nScalars-1][id2], 1);
+                             &scalarVariables[m_spaceDim][id2], 1);
             }
             // Imposing Temperature through condition on the Energy
             // for no wall boundaries (e.g. farfield)
-            else if (fields[nScalars]->GetBndConditions()[j]->
+            else if (fields[m_spaceDim+1]->GetBndConditions()[j]->
                      GetBoundaryConditionType() ==
                      SpatialDomains::eDirichlet)
             {
@@ -698,36 +624,110 @@ void DiffusionLDGNS::ApplyBCsO1(
                     rho = fields[0]->
                               GetBndCondExpansions()[j]->
                               GetPhys()[id1+n];
-                    ene = fields[nScalars]->
+                    ene = fields[m_spaceDim+1]->
                               GetBndCondExpansions()[j]->
                               GetPhys()[id1 +n] / rho - tmp2[id2+n];
-                    scalarVariables[nScalars-1][id2+n] =
+                    scalarVariables[m_spaceDim][id2+n] =
                             m_eos->GetTemperature(rho, ene);
                 }
             }
 
             // For Dirichlet boundary condition: uflux = u_bcs
-            if (fields[nScalars]->GetBndConditions()[j]->
+            if (fields[m_spaceDim+1]->GetBndConditions()[j]->
                 GetBoundaryConditionType() == SpatialDomains::eDirichlet &&
-                !boost::iequals(fields[nScalars]->GetBndConditions()[j]
+                !boost::iequals(fields[m_spaceDim+1]->GetBndConditions()[j]
                 ->GetUserDefined(), "WallAdiabatic"))
             {
                 Vmath::Vcopy(nBndEdgePts,
-                             &scalarVariables[nScalars-1][id2], 1,
-                             &fluxO1[nScalars-1][id2], 1);
+                             &scalarVariables[m_spaceDim][id2], 1,
+                             &fluxO1[m_spaceDim][id2], 1);
 
             }
 
             // For Neumann boundary condition: uflux = u_+
-            else if (((fields[nScalars]->GetBndConditions()[j])->
+            else if (((fields[m_spaceDim+1]->GetBndConditions()[j])->
                       GetBoundaryConditionType() == SpatialDomains::eNeumann) ||
-                      boost::iequals(fields[nScalars]->GetBndConditions()[j]->
+                      boost::iequals(fields[m_spaceDim+1]->GetBndConditions()[j]->
                                     GetUserDefined(), "WallAdiabatic"))
             {
                 Vmath::Vcopy(nBndEdgePts,
-                             &pFwd[nScalars-1][id2], 1,
-                             &fluxO1[nScalars-1][id2], 1);
+                             &pFwd[m_spaceDim][id2], 1,
+                             &fluxO1[m_spaceDim][id2], 1);
 
+            }
+        }
+    }   
+
+    //Compute boundary conditions for scalars
+    for(std::size_t i=m_spaceDim+1; i<nScalars-1; i++)
+    {
+        cnt = 0;
+        nBndRegions = fields[i+1]->
+            GetBndCondExpansions().size();
+        for (int j = 0; j < nBndRegions; ++j)
+        {
+            if (fields[i+1]->GetBndConditions()[j]->
+                GetBoundaryConditionType() ==
+                SpatialDomains::ePeriodic)
+            {
+                continue;
+            }
+            
+            int nBndEdges = fields[i+1]->
+                GetBndCondExpansions()[j]->GetExpSize();
+            
+            for (int e = 0; e < nBndEdges; ++e)
+            {
+                int nBndEdgePts = fields[i+1]->
+                    GetBndCondExpansions()[j]->GetExp(e)->GetTotPoints();
+                int id1 = fields[i+1]->
+                    GetBndCondExpansions()[j]->GetPhys_Offset(e);
+                int id2 = fields[0]->GetTrace()->
+                    GetPhys_Offset(fields[0]->GetTraceMap()->
+                                   GetBndCondIDToGlobalTraceID(cnt++));
+                
+                if (fields[i]->GetBndConditions()[j]->
+                    GetBoundaryConditionType() == 
+                    SpatialDomains::eDirichlet)
+                {
+                    // Evaluate primitive scalars
+                    Vmath::Vdiv(nBndEdgePts,
+                                &(fields[i+1]->GetBndCondExpansions()[j]->
+                                  UpdatePhys())[id1], 1,
+                                &(fields[0]->GetBndCondExpansions()[j]->
+                                  UpdatePhys())[id1], 1,
+                                &scalarVariables[i][id2], 1);
+                }
+                
+                // For Dirichlet boundary condition: uflux = u_bcs
+                if (fields[i+1]->GetBndConditions()[j]->
+                    GetBoundaryConditionType() ==
+                    SpatialDomains::eDirichlet)
+                {
+                    Vmath::Vcopy(nBndEdgePts, 
+                                 &scalarVariables[i][id2], 1, 
+                                 &fluxO1[i][id2], 1);
+                    
+                }
+                
+                // For Neumann boundary condition: uflux = u_+
+                else if (((fields[i+1]->GetBndConditions()[j])->
+                          GetBoundaryConditionType() ==
+                          SpatialDomains::eNeumann) ||
+                         boost::iequals(fields[i+1]->GetBndConditions()[j]->
+                                        GetUserDefined(), "WallAdiabatic") ||
+                         boost::iequals(fields[i+1]->GetBndConditions()[j]->
+                                        GetUserDefined(), "WallViscous") || 
+                         boost::iequals(fields[i+1]->GetBndConditions()[j]->
+                                        GetUserDefined(),"Wall") ||
+                         boost::iequals(fields[i+1]->GetBndConditions()[j]->
+                                        GetUserDefined(),"Symmetry"))
+                {
+                    Vmath::Vcopy(nBndEdgePts, 
+                                 &pFwd[i][id2], 1, 
+                                 &fluxO1[i][id2], 1);
+                    
+                }
             }
         }
     }
@@ -757,7 +757,7 @@ void DiffusionLDGNS::NumericalFluxO2(
     // Get penalty flux
     m_fluxPenaltyNS(uFwd, uBwd, fluxPen);
 
-    // Evaluate Riemann flux
+    // Evaluate flux
     // qflux = \hat{q} \cdot u = q \cdot n
     // Notice: i = 1 (first row of the viscous tensor is zero)
 
@@ -774,10 +774,10 @@ void DiffusionLDGNS::NumericalFluxO2(
             // Compute qFwd and qBwd value of qfield in position 'ji'
             fields[i]->GetFwdBwdTracePhys(qfield[j][i], qFwd, qBwd);
 
-            // Downwind
+            // Bwd state
             Vmath::Vcopy(nTracePts, qBwd, 1, qfluxtemp, 1);
 
-            // Multiply the Riemann flux by the trace normals
+            // Multiply the flux by the trace normals
             Vmath::Vmul(nTracePts, m_traceNormals[j], 1, qfluxtemp, 1,
                         qfluxtemp, 1);
 

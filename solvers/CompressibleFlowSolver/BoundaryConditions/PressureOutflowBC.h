@@ -83,6 +83,9 @@ class PressureOutflowBC : public CFSBndCond
                const int cnt);
         
         virtual ~PressureOutflowBC(void){};
+
+    // Field storage for PressureOutflow
+        Array<OneD, NekDouble> m_pressureStorage;
 };
 
 }
