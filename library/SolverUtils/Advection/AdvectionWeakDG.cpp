@@ -155,6 +155,7 @@ namespace Nektar
             {
                 Vmath::Neg                      (nCoeffs, outarray[i], 1);
                 fields[i]->AddTraceIntegral     (numflux[i], outarray[i]);
+                // Comment out below for the GLM implementation
                 fields[i]->MultiplyByElmtInvMass(outarray[i], outarray[i]);
             }
         }

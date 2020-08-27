@@ -41,6 +41,43 @@ protected:
                 flux[i][j] = traceVel[j] * tmp[i][j];
             }
         }
+
+        // Add in the term to deal with grid velocity * normal
+        /*const Array<OneD, const Array<OneD, NekDouble>> &gridVel =
+        m_vectors["Tvg"](); const Array<OneD, const Array<OneD, NekDouble>>
+        &normals = m_vectors["N"](); int nTracePts = gridVel[0].size();
+        Array<OneD, NekDouble> tmp(nTracePts, 0.0);
+
+        for (int i = 0; i < m_spacedim; ++i)
+        {
+            Vmath::Vvtvp(nTracePts, normals[i], 1, gridVel[i], 1, tmp, 1, tmp,
+        1);
+        }
+
+        std::cout << tmp.size() << " " << flux[0].size() << std::endl;
+
+        //Vmath::Vadd(nTracePts, flux[0], 1, tmp, 1, flux[0], 1); */
+
+        // Add in the term to deal with grid velocity * normal
+        const Array<OneD, const Array<OneD, NekDouble>> &gridVel =
+            m_vectors["Tvg"]();
+        const Array<OneD, const Array<OneD, NekDouble>> &normals =
+            m_vectors["N"]();
+        Array<OneD, NekDouble> tmp(gridVel[0].size(), 0.0);
+        for (int i = 0; i < gridVel.size(); ++i)
+        {
+            for (int j = 0; j < gridVel[0].size(); ++j)
+            {
+                tmp[j] += gridVel[i][j] * normals[i][j];
+            }
+        }
+        for (int j = 0; j < traceVel.size(); ++j)
+        {
+            for (int i = 0; i < Fwd.size(); ++i)
+            {
+                flux[i][j] += tmp[j];
+            }
+        }
     }
 };
 
@@ -114,6 +151,9 @@ std::string ALEUpwindSolver::solverName =
                 SolverUtils::GetRiemannSolverFactory().CreateInstance(
                     "ALEUpwind", m_session);
             m_riemannSolver->SetScalar("Vn", &ALEDemo::GetNormalVelocity, this);
+            m_riemannSolver->SetVector("Tvg", &ALEDemo::GetTraceGridVelocity,
+                                       this);
+            m_riemannSolver->SetVector("N", &ALEDemo::GetNormals, this);
             m_advObject->SetRiemannSolver(m_riemannSolver);
             m_advObject->InitObject(m_session, m_fields);
         }
@@ -239,6 +279,11 @@ std::string ALEUpwindSolver::solverName =
                                    flux[i][j], 1);
                 }
             }
+        }
+
+        const Array<OneD, const Array<OneD, NekDouble>> &GetNormals()
+        {
+            return m_traceNormals;
         }
 
         /**
