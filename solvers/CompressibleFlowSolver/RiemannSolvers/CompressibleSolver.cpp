@@ -60,11 +60,16 @@ namespace Nektar
         const Array<OneD, const Array<OneD, NekDouble> > &Bwd,
               Array<OneD,       Array<OneD, NekDouble> > &flux)
     {
+        int expDim      = nDim;
+        int nvariables  = Fwd.size();
+        
+        if(nvariables > expDim+2)
+        {
+            m_pointSolve = false;
+        }
+
         if(m_pointSolve)
         {
-            int expDim      = nDim;
-            int nvariables  = Fwd.size();
-
             NekDouble rhouf, rhovf;
 
             // Check if PDE-based SC is used

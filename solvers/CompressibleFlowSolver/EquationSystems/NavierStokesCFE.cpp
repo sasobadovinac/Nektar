@@ -1026,8 +1026,8 @@ namespace Nektar
         // Compute average temperature
         unsigned int nVariables = uFwd.size();
         Array<OneD, NekDouble> tAve{nTracePts, 0.0};
-        Vmath::Svtsvtp(nTracePts, 0.5, uFwd[nVariables-1], 1,
-            0.5, uBwd[nVariables-1], 1, tAve, 1);
+        Vmath::Svtsvtp(nTracePts, 0.5, uFwd[m_spacedim], 1,
+            0.5, uBwd[m_spacedim], 1, tAve, 1);
 
         // Get average viscosity and thermal conductivity
         Array<OneD, NekDouble> muAve{nTracePts, 0.0};
@@ -1041,16 +1041,22 @@ namespace Nektar
             // Get jump of u variables
             Vmath::Vsub(nTracePts, uFwd[i], 1, uBwd[i], 1, penaltyCoeff[i], 1);
             // Multiply by variable coefficient = {coeff} ( u^+ - u^- )
-            if ( i < nVariables-1 )
-            {
-                Vmath::Vmul(nTracePts, muAve, 1, penaltyCoeff[i], 1,
-                    penaltyCoeff[i], 1);
-            }
-            else
+            if ( i== m_spacedim )
             {
                 Vmath::Vmul(nTracePts, tcAve, 1, penaltyCoeff[i], 1,
                     penaltyCoeff[i], 1);
             }
+            else
+            {
+                Vmath::Vmul(nTracePts, muAve, 1, penaltyCoeff[i], 1,
+                    penaltyCoeff[i], 1);
+            }
+        }
+
+        // Currently zero passive scalar contribution until appropriate strategy devised.
+        for(int i = m_spacedim; i < nVariables; ++i)
+        {
+            Vmath::Zero(nTracePts,penaltyCoeff[i],1);
         }
     }
 

@@ -1,4 +1,4 @@
-///////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////
 //
 // File: DiffusionLDGNS.cpp
 //
@@ -475,19 +475,20 @@ void DiffusionLDGNS::ApplyBCsO1(
                     GetPhys_Offset(fields[0]->GetTraceMap()->
                                    GetBndCondIDToGlobalTraceID(cnt++));
 
-                if (boost::iequals(fields[i]->GetBndConditions()[j]->
+                if (boost::iequals(fields[i+1]->GetBndConditions()[j]->
                     GetUserDefined(),"WallViscous") ||
-                    boost::iequals(fields[i]->GetBndConditions()[j]->
+                    boost::iequals(fields[i+1]->GetBndConditions()[j]->
                     GetUserDefined(),"WallAdiabatic"))
                 {
                     // Reinforcing bcs for velocity in case of Wall bcs
-                    Vmath::Zero(nBndEdgePts, &scalarVariables[i][id2], 1);
+                    Vmath::Zero(nBndEdgePts,
+                                &scalarVariables[i][id2], 1);
 
                 }
                 else if (
-                    boost::iequals(fields[i]->GetBndConditions()[j]->
+                    boost::iequals(fields[i+1]->GetBndConditions()[j]->
                     GetUserDefined(),"Wall") ||
-                    boost::iequals(fields[i]->GetBndConditions()[j]->
+                    boost::iequals(fields[i+1]->GetBndConditions()[j]->
                     GetUserDefined(),"Symmetry"))
                 {
                     // Symmetry bc: normal velocity is zero
@@ -515,7 +516,7 @@ void DiffusionLDGNS::ApplyBCsO1(
                                     &tmp1[0], 1);
 
                         //    u_i - (u.n)n_i
-                        for (std::size_t k = 0; k < nScalars-1; ++k)
+                        for (std::size_t k = 0; k < m_spaceDim; ++k)
                         {
                             Vmath::Vvtvp(nBndEdgePts,
                                     &tmp1[0], 1,
@@ -686,7 +687,7 @@ void DiffusionLDGNS::ApplyBCsO1(
                     GetPhys_Offset(fields[0]->GetTraceMap()->
                                    GetBndCondIDToGlobalTraceID(cnt++));
                 
-                if (fields[i]->GetBndConditions()[j]->
+                if (fields[i+1]->GetBndConditions()[j]->
                     GetBoundaryConditionType() == 
                     SpatialDomains::eDirichlet)
                 {
@@ -845,10 +846,19 @@ void DiffusionLDGNS::ApplyBCsO2(
                && !boost::iequals(fields[var]->GetBndConditions()[i]->
                                   GetUserDefined(), "WallAdiabatic"))
             {
-                Vmath::Vmul(nBndEdgePts,
-                            &m_traceNormals[dir][id2], 1,
-                            &qFwd[id2], 1,
-                            &penaltyflux[id2], 1);
+                if( (var >= m_spaceDim + 2) &&
+                    boost::iequals(fields[var]->GetBndConditions()[i]->
+                                   GetUserDefined(), "WallViscous") )
+                {
+                    Vmath::Zero(nBndEdgePts, &penaltyflux[id2], 1);
+                }
+                else
+                {
+                    Vmath::Vmul(nBndEdgePts,
+                                &m_traceNormals[dir][id2], 1,
+                                &qFwd[id2], 1,
+                                &penaltyflux[id2], 1);
+                }
             }
             // 3.4) In case of Neumann bcs:
             // uflux = u+
