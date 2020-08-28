@@ -4060,23 +4060,24 @@
         <DOMAIN> C[0] </DOMAIN>
     </GEOMETRY>
     <EXPANSIONS>
-     <E COMPOSITE="C[0]" NUMMODES="3" FIELDS="rho,rhou,rhov,E" TYPE="MODIFIED" />
+     <E COMPOSITE="C[0]" NUMMODES="3" FIELDS="rho,rhou,rhov,E,rhoC,rhoD" TYPE="MODIFIED" />
     </EXPANSIONS>
 
   <CONDITIONS>
     <!-- M = 0.2, Re = 200, Pr = 0.72 -->
     <PARAMETERS>
       <P> TimeStep              = 0.00001       </P>
-      <P> NumSteps              = 10          </P>
+      <P> NumSteps              = 10       </P>
       <P> FinTime               = 0             </P>
-      <P> IO_CheckSteps         = 500000        </P>
-      <P> IO_InfoSteps          = 500000        </P>
+      <P> IO_CheckSteps         = 500        </P>
+      <P> IO_InfoSteps          = 5       </P>
       <P> GasConstant           = 287.058       </P>
       <P> Gamma                 = 1.4           </P>
       <P> pInf                  = 101325        </P>
       <P> rhoInf                = 1.225         </P>
       <P> uInf                  = 68.0588       </P>
       <P> vInf                  = 0.0           </P>
+      <P> CInf                  = 1.0           </P>
       <P> Twall                 = 300.15        </P>
       <P> mu                    = 0.4169        </P>
       <P> thermalConductivity   = 581.6936      </P>
@@ -4088,7 +4089,7 @@
         <I PROPERTY="AdvectionType"         VALUE="WeakDG"              />
         <I PROPERTY="DiffusionType"         VALUE="LDGNS"               />
         <I PROPERTY="TimeIntegrationMethod" VALUE="ClassicalRungeKutta4"/>
-        <I PROPERTY="UpwindType"            VALUE="HLLC"                />
+        <I PROPERTY="UpwindType"            VALUE="AUSM2"                />
         <I PROPERTY="ProblemType"           VALUE="General"             />
         <I PROPERTY="ViscosityType"         VALUE="Constant"            />
     </SOLVERINFO>
@@ -4098,6 +4099,8 @@
       <V ID="1"> rhou </V>
       <V ID="2"> rhov </V>
       <V ID="3"> E    </V>
+      <V ID="4"> rhoC </V>
+      <V ID="5"> rhoD </V>
     </VARIABLES>
 
     <BOUNDARYREGIONS>
@@ -4114,6 +4117,8 @@
         <D VAR="rhou" USERDEFINEDTYPE="WallViscous" VALUE="0" />
         <D VAR="rhov" USERDEFINEDTYPE="WallViscous" VALUE="0" />
         <D VAR="E"    USERDEFINEDTYPE="WallViscous" VALUE="0" />
+        <D VAR="rhoC" USERDEFINEDTYPE="WallViscous" VALUE="0" />
+        <D VAR="rhoD" USERDEFINEDTYPE="WallViscous" VALUE="0" />
       </REGION>
       <!-- Farfield -->
       <!--REGION REF="1">
@@ -4121,12 +4126,15 @@
         <D VAR="rhou" USERDEFINEDTYPE="ExtrapOrder0" VALUE="0" />
         <D VAR="rhov" USERDEFINEDTYPE="ExtrapOrder0" VALUE="0" />
         <D VAR="E"    USERDEFINEDTYPE="ExtrapOrder0" VALUE="0" />
+        <D VAR="rhoC" USERDEFINEDTYPE="ExtrapOrder0" VALUE="0" />
       </REGION--> 
       <REGION REF="1">
         <D VAR="rho"  VALUE="rhoInf" />
         <D VAR="rhou" VALUE="rhoInf * uInf" />
         <D VAR="rhov" VALUE="rhoInf * vInf" />
         <D VAR="E"    VALUE="pInf / (Gamma - 1) + 0.5 * rhoInf * (uInf * uInf + vInf * vInf)" />
+        <D VAR="rhoC" VALUE="rhoInf * CInf * (0.5+0.5*tanh(2*y))" />
+        <D VAR="rhoD" VALUE="rhoInf * CInf * (0.5-0.5*tanh(2*y))" />
       </REGION>
       <!-- Inflow -->
       <REGION REF="2">
@@ -4134,13 +4142,17 @@
         <D VAR="rhou" VALUE="rhoInf * uInf" />
         <D VAR="rhov" VALUE="rhoInf * vInf" />
         <D VAR="E"    VALUE="pInf / (Gamma - 1) + 0.5 * rhoInf * (uInf * uInf + vInf * vInf)" />
+        <D VAR="rhoC" VALUE="rhoInf * CInf * (0.5+0.5*tanh(2*y))" />
+        <D VAR="rhoD" VALUE="rhoInf * CInf * (0.5-0.5*tanh(2*y))" />
       </REGION>
       <!-- Outflow -->
       <REGION REF="3">
-        <D VAR="rho"  VALUE="rhoInf" />
-        <D VAR="rhou" VALUE="rhoInf * uInf" />
-        <D VAR="rhov" VALUE="rhoInf * vInf" />
-        <D VAR="E"    VALUE="pInf / (Gamma - 1) + 0.5 * rhoInf * (uInf * uInf + vInf * vInf)" />
+        <D VAR="rho"  USERDEFINEDTYPE="PressureOutflow" VALUE="0" />
+        <D VAR="rhou" USERDEFINEDTYPE="PressureOutflow" VALUE="0" />
+        <D VAR="rhov" USERDEFINEDTYPE="PressureOutflow" VALUE="0" />
+        <D VAR="E"    USERDEFINEDTYPE="PressureOutflow" VALUE="pInf" />
+        <D VAR="rhoC" USERDEFINEDTYPE="PressureOutflow" VALUE="0" />
+        <D VAR="rhoD" USERDEFINEDTYPE="PressureOutflow" VALUE="0" />
       </REGION>
     </BOUNDARYCONDITIONS>
 
@@ -4148,7 +4160,9 @@
         <E VAR="rho"    VALUE="rhoInf"/>
         <E VAR="rhou"   VALUE="rhoInf * uInf"   />
         <E VAR="rhov"   VALUE="rhoInf * vInf"   />
-        <E VAR="E"      VALUE="pInf / (Gamma - 1) + 0.5 * rhoInf * (uInf * uInf + vInf * vInf)"/>       
+        <E VAR="E"      VALUE="pInf / (Gamma - 1) + 0.5 * rhoInf * (uInf * uInf + vInf * vInf)"/>
+        <E VAR="rhoC"   VALUE="rhoInf * CInf * (0.5+0.5*tanh(2*y))"   />
+        <E VAR="rhoD"   VALUE="rhoInf * CInf * (0.5-0.5*tanh(2*y))"   />
     </FUNCTION>
         
     <FUNCTION NAME="ExactSolution">
@@ -4156,6 +4170,8 @@
         <E VAR="rhou" VALUE="1" />
         <E VAR="rhov" VALUE="1" />
         <E VAR="E"    VALUE="1" />
+        <E VAR="rhoC" VALUE="1" />
+        <E VAR="rhoD" VALUE="1" />
     </FUNCTION>
     
   </CONDITIONS>

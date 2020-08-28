@@ -243,6 +243,12 @@ namespace Nektar
 
                 m_varConv->GetVelocityVector(pFwd, inFwd);
                 m_varConv->GetVelocityVector(pBwd, inBwd);
+
+                for(int i = m_spacedim+2; i < nvariables; ++i)
+                {
+                    Vmath::Vdiv(nTracePts, pFwd[i], 1, pFwd[0], 1, inFwd[i-1], 1);
+                    Vmath::Vdiv(nTracePts, pBwd[i], 1, pBwd[0], 1, inBwd[i-1], 1);
+                }
             }
 
             // Diffusion term in physical rhs form
@@ -368,7 +374,7 @@ namespace Nektar
         TensorOfArray3D<NekDouble>                              &viscousTensor)
     {
         // Auxiliary variables
-        size_t nScalar    = physfield.size();
+        size_t nVariables = m_fields.size();
         size_t nPts       = physfield[0].size();
         Array<OneD, NekDouble > divVel             (nPts, 0.0);
 
@@ -376,8 +382,8 @@ namespace Nektar
         const NekDouble lambda = -2.0/3.0;
 
         // Update viscosity and thermal conductivity
-        GetViscosityAndThermalCondFromTemp(physfield[nScalar-1], m_mu,
-            m_thermalConductivity);
+        GetViscosityAndThermalCondFromTemp(physfield[m_spacedim], m_mu,
+                                           m_thermalConductivity);
 
         Array<OneD, NekDouble> diffusivity(nPts);
         Vmath::Smul(nPts, 1.0/m_Schmidt, m_mu, 1, diffusivity, 1);
@@ -450,7 +456,7 @@ namespace Nektar
         // Terms for the scalars
         for (int i = 0; i < m_spacedim; ++i)
         {
-            for(int j=m_spacedim+2; j<nScalar; ++j)
+            for(int j=m_spacedim+2; j<nVariables; ++j)
             {
                 Vmath::Zero(nPts, viscousTensor[i][j], 1);
                 
@@ -476,9 +482,9 @@ namespace Nektar
         // Factor to rescale 1d points in dealiasing.
         NekDouble OneDptscale = 2;
         // Get number of points to dealias a cubic non-linearity
-        size_t nScalar   = physfield.size();
-        int nPts      = m_fields[0]->Get1DScaledTotPoints(OneDptscale);
-        size_t nPts_orig = physfield[0].size();
+        size_t nVariables = m_fields.size();
+        int nPts           = m_fields[0]->Get1DScaledTotPoints(OneDptscale);
+        size_t nPts_orig   = physfield[0].size();
 
         // Auxiliary variables
         Array<OneD, NekDouble > divVel             (nPts, 0.0);
@@ -487,7 +493,7 @@ namespace Nektar
         const NekDouble lambda = -2.0/3.0;
 
         // Update viscosity and thermal conductivity
-        GetViscosityAndThermalCondFromTemp(physfield[nScalar-1], m_mu,
+        GetViscosityAndThermalCondFromTemp(physfield[m_spacedim], m_mu,
             m_thermalConductivity);
 
         
@@ -590,7 +596,7 @@ namespace Nektar
         // Terms for the scalars
         for (int i = 0; i < m_spacedim; ++i)
         {
-            for(int j=m_spacedim+2; j<nScalar; ++j)
+            for(int j=m_spacedim+2; j<nVariables; ++j)
             {
                 Vmath::Zero(nPts, out_interp[i][j], 1);
 
@@ -1035,28 +1041,34 @@ namespace Nektar
 
         GetViscosityAndThermalCondFromTemp(tAve, muAve, tcAve);
 
+        Array<OneD, NekDouble> diff;
+        if(nVariables > m_spacedim+1)
+        {
+            diff = Array<OneD, NekDouble>(nTracePts);
+            Vmath::Smul(nTracePts, 1.0/m_Schmidt, muAve, 1, diff, 1);
+        }
+
         // Compute penalty term
         for (int i = 0; i < nVariables; ++i)
         {
             // Get jump of u variables
             Vmath::Vsub(nTracePts, uFwd[i], 1, uBwd[i], 1, penaltyCoeff[i], 1);
             // Multiply by variable coefficient = {coeff} ( u^+ - u^- )
-            if ( i== m_spacedim )
-            {
-                Vmath::Vmul(nTracePts, tcAve, 1, penaltyCoeff[i], 1,
-                    penaltyCoeff[i], 1);
-            }
-            else
+            if ( i <  m_spacedim ) // velocity fields
             {
                 Vmath::Vmul(nTracePts, muAve, 1, penaltyCoeff[i], 1,
                     penaltyCoeff[i], 1);
             }
-        }
-
-        // Currently zero passive scalar contribution until appropriate strategy devised.
-        for(int i = m_spacedim; i < nVariables; ++i)
-        {
-            Vmath::Zero(nTracePts,penaltyCoeff[i],1);
+            else if( i == m_spacedim) // temperature field 
+            {
+                Vmath::Vmul(nTracePts, tcAve, 1, penaltyCoeff[i], 1,
+                    penaltyCoeff[i], 1);
+            }
+            else // scalar fields
+            {
+                Vmath::Vmul(nTracePts, diff, 1, penaltyCoeff[i], 1,
+                    penaltyCoeff[i], 1);
+            }
         }
     }
 

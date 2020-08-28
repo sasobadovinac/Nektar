@@ -497,7 +497,7 @@ void DiffusionLDGNS::ApplyBCsO1(
                     {
                         //    tmp1 = -(u.n)
                         Vmath::Zero(nBndEdgePts, tmp1, 1);
-                        for (std::size_t k = 0; k < nScalars-1; ++k)
+                        for (std::size_t k = 0; k < m_spaceDim; ++k)
                         {
                             Vmath::Vdiv(nBndEdgePts,
                               &(fields[k+1]->GetBndCondExpansions()[j]->
@@ -516,7 +516,7 @@ void DiffusionLDGNS::ApplyBCsO1(
                                     &tmp1[0], 1);
 
                         //    u_i - (u.n)n_i
-                        for (std::size_t k = 0; k < m_spaceDim; ++k)
+                        for (std::size_t k = 0; k < m_spaceDim+1; ++k)
                         {
                             Vmath::Vvtvp(nBndEdgePts,
                                     &tmp1[0], 1,
@@ -660,7 +660,7 @@ void DiffusionLDGNS::ApplyBCsO1(
     }   
 
     //Compute boundary conditions for scalars
-    for(std::size_t i=m_spaceDim+1; i<nScalars-1; i++)
+    for(std::size_t i=m_spaceDim+1; i<nScalars; i++)
     {
         cnt = 0;
         nBndRegions = fields[i+1]->
