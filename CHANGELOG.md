@@ -22,6 +22,9 @@ v5.1.0
 **CardiacEPSolver**
 - Added additional parameter sets to Fenton-Karma model (!1119)
 
+**CompressibleFlowSolver**
+- Added ability to run passive scalars explicitly (!1188)
+
 **IncNavierStokesSolver**
 - Add Smoothed Profile Method (SPM) for the formulation of immersed boundaries
   (!1065)
