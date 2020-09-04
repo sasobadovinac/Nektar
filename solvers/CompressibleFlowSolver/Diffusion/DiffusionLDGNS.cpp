@@ -516,7 +516,7 @@ void DiffusionLDGNS::ApplyBCsO1(
                                     &tmp1[0], 1);
 
                         //    u_i - (u.n)n_i
-                        for (std::size_t k = 0; k < m_spaceDim+1; ++k)
+                        for (std::size_t k = 0; k < m_spaceDim; ++k)
                         {
                             Vmath::Vvtvp(nBndEdgePts,
                                     &tmp1[0], 1,
