@@ -1267,7 +1267,7 @@ namespace Nektar
         {
             cout<<"\n ********i="<<"\n\n";                
             
-            int sz = GetTotPoints();
+            int sz = coords.size();
             const int nq0 = m_base[0]->GetNumPoints();
             const int nq1 = m_base[1]->GetNumPoints();
             const int nq2 = m_base[2]->GetNumPoints();
