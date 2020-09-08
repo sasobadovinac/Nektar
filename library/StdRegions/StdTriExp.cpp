@@ -1807,7 +1807,7 @@ namespace Nektar
                                                 )
         {
             boost::ignore_unused(out_d2);
-            int sz = GetTotPoints();
+            int sz = coords.size();
             const int nq0 = m_base[0]->GetNumPoints();
             const int nq1 = m_base[1]->GetNumPoints();
             int neq = LibUtilities::StdTriData::
