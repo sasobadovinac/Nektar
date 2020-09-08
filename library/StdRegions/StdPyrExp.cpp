@@ -786,7 +786,7 @@ namespace Nektar
                                             Array<OneD, NekDouble> &out_d2
                                                  )
         {
-            int sz = coords.size();
+            int sz = coords[0].size();
             const int nq0 = m_base[0]->GetNumPoints();
             const int nq1 = m_base[1]->GetNumPoints();
             const int nq2 = m_base[2]->GetNumPoints();
