@@ -787,17 +787,12 @@ namespace Nektar
                                                  )
         {
             int sz = coords[0].size();
-            const int nq0 = m_base[0]->GetNumPoints();
-            const int nq1 = m_base[1]->GetNumPoints();
-            const int nq2 = m_base[2]->GetNumPoints();
-
             const int nm0 = m_base[0]->GetNumModes();
             const int nm1 = m_base[1]->GetNumModes();
             const int nm2 = m_base[2]->GetNumModes();
 
 
-            int neq = LibUtilities::StdPyrData::
-                getNumberOfCoefficients(nq0, nq1, nq2);
+            int neq = GetNcoeffs();
             
             if(out_eval.size() > 0)
             {    

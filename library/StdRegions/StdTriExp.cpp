@@ -1808,11 +1808,8 @@ namespace Nektar
         {
             boost::ignore_unused(out_d2);
             int sz = coords[0].size();
-            const int nq0 = m_base[0]->GetNumPoints();
-            const int nq1 = m_base[1]->GetNumPoints();
-            int neq = LibUtilities::StdTriData::
-                getNumberOfCoefficients(nq0, nq1);
-            
+
+            int neq = GetNcoeffs();            
 
             if(out_eval.size() > 0)
             {    
