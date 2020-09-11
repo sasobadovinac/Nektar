@@ -23,8 +23,9 @@
   image: $CI_REGISTRY_IMAGE/${image_name}
   stage: package-build
   script:
+    - OMPI_MCA_btl_vader_single_copy_mechanism=none
     - tar -czf nektar++-$(<VERSION).tar.gz 
-                --transform="s/^/nektar++-$(<VERSION)\//S"
+                --transform="s,^,nektar++-$(<VERSION)/,S"
                 --exclude-from=.gitlab-ci/packaging-exclude *
     - mkdir tmp
     - mv nektar++-$(<VERSION).tar.gz tmp/nektar++_$(<VERSION).orig.tar.gz
