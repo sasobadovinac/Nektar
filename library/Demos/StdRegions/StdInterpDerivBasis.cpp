@@ -32,8 +32,8 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#include <iostream>
 #include <LibUtilities/BasicUtils/Timer.h>
+#include <iostream>
 
 #include "StdDemoSupport.hpp"
 
@@ -48,115 +48,79 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-    int nCoeffs = E->GetNcoeffs();
+    int nCoeffs   = E->GetNcoeffs();
     int dimension = E->GetShapeDimension();
 
     Array<OneD, Array<OneD, NekDouble>> coords = demo.GetCoords(E);
 
-    int  nPts = coords[0].size();
-    Array<OneD, NekDouble> sol(nPts*nCoeffs), 
+    int nPts = coords[0].size();
+    Array<OneD, NekDouble>
+        sol(nPts * nCoeffs),
         hold1(nPts),
-        temp(nPts), 
-        temp1(nPts), 
-        temp2(nPts), 
-        out_eval(nPts*nCoeffs),
-        out_eval2(nPts*nCoeffs),
-        out_eval1(nPts*nCoeffs), 
-        phys(nPts*nCoeffs),
-        sol1(nPts*nCoeffs), 
-        phys1(nCoeffs*nPts),
-        sol2(nPts*nCoeffs), 
-        phys2(nPts*nCoeffs);
-    NekDouble errL2 = 0, errLinf = 0;
-    
-    if(dimension>2)
+        temp(nPts),
+        temp1(nPts),
+        temp2(nPts),
+        out_eval(nPts * nCoeffs),
+        out_eval2(nPts * nCoeffs),
+        out_eval1(nPts * nCoeffs),
+        phys(nPts * nCoeffs),
+        phys1(nCoeffs * nPts),
+        phys2(nPts * nCoeffs),
+        sol1(nPts * nCoeffs),
+        sol2(nPts * nCoeffs);
+
+    E->PhysEvalBasisGrad(coords, out_eval2, sol, sol1, sol2);
+
+    for (int k = 0; k < nCoeffs; ++k)
     {
-     
-        E->PhysEvalBasisGrad(coords, out_eval2, sol, sol1, sol2);
-        for (int k = 0; k < nCoeffs; ++k)
+        // Fill the 'solution' field with each of the modes using FillMode.
+        E->FillMode(k, hold1);
+        E->PhysDeriv(hold1, temp, temp1, temp2);
+
+        switch(dimension)
         {
-           // Fill the 'solution' field with each of the modes using FillMode.    
-           E->FillMode(k, hold1);
-           E->PhysDeriv(hold1,  temp,  temp1, temp2);       
-           
-           Vmath::Vcopy(nPts, &temp[0], 1, &phys[k*nPts], 1);  
-           Vmath::Vcopy(nPts, &temp1[0], 1, &phys1[k*nPts], 1);  
-           Vmath::Vcopy(nPts, &temp2[0], 1, &phys2[k*nPts], 1);  
-           Vmath::Vcopy(nPts, &hold1[0], 1, &out_eval1[k*nPts], 1);  
-       }
+            case 3:
+                Vmath::Vcopy(nPts, &temp2[0], 1, &phys2[k * nPts], 1);
+            case 2:
+                Vmath::Vcopy(nPts, &temp1[0], 1, &phys1[k * nPts], 1);
+            case 1:
+                Vmath::Vcopy(nPts, &temp[0], 1, &phys[k * nPts], 1);
+                Vmath::Vcopy(nPts, &hold1[0], 1, &out_eval1[k * nPts], 1);
+            default:
+                break;
+        }
     }
-    else if(dimension>1)
 
-    {
-
-       E->PhysEvalBasisGrad(coords,  out_eval2, sol,sol1,  NullNekDouble1DArray); 
-       for (int k = 0; k < nCoeffs; ++k)
-       {
-           // Fill the 'solution' field with each of the modes using FillMode.    
-           Array<OneD, NekDouble> hold1(nPts);
-           E->FillMode(k, hold1);
-           E->PhysDeriv(hold1,  temp, temp1, NullNekDouble1DArray);       
-           
-           Vmath::Vcopy(nPts, &temp[0], 1, &phys[k*nPts], 1);  
-           Vmath::Vcopy(nPts, &temp1[0], 1, &phys1[k*nPts], 1);  
-           Vmath::Vcopy(nPts, &hold1[0], 1, &out_eval1[k*nPts], 1);  
-       }
-
-
-     }
-    else if(dimension>0)
-    {
-
-        E->PhysEvalBasisGrad(coords,  out_eval2, sol,  NullNekDouble1DArray,  NullNekDouble1DArray);
-       for (int k = 0; k < nCoeffs; ++k)
-       {
-           // Fill the 'solution' field with each of the modes using FillMode.    
-           Array<OneD, NekDouble> hold1(nPts);
-           E->FillMode(k, hold1);
-           E->PhysDeriv(hold1,  temp, NullNekDouble1DArray,  NullNekDouble1DArray);       
-           
-           Vmath::Vcopy(nPts, &temp[0], 1, &phys[k*nPts], 1);  
-           Vmath::Vcopy(nPts, &hold1[0], 1, &out_eval1[k*nPts], 1);  
-       }
-
-            
-    }
-    
-    Array<OneD, NekDouble> tmp (nPts);
-    Array<OneD, NekDouble> tmp2 (nPts);
     // Separate modes 0 to nCoeffs
-    for( int ii = 0 ; ii < nCoeffs; ii++)
+    Array<OneD, NekDouble> tmp(nPts);
+    Array<OneD, NekDouble> tmp2(nPts);
+    NekDouble errL2 = 0, errLinf = 0;
+    for (int i = 0; i < nCoeffs; i++)
     {
-        Vmath::Vcopy(nPts, &out_eval1[0]+ii*nPts, 1, &tmp[0], 1 );
-        
-        Vmath::Vcopy(nPts, &out_eval2[0]+ii*nPts,1,  &tmp2[0], 1 );
-                
-        errL2 += E->L2(tmp, tmp2);
-        errLinf += E->Linf(tmp, tmp2);
-        
-        Vmath::Vcopy(nPts, &phys[0]+ii, nCoeffs, &tmp[0], 1 );
-        Vmath::Vcopy(nPts, &sol[0]+ii, nCoeffs , &tmp2[0], 1 );
+        Vmath::Vcopy(nPts, &out_eval1[0] + i * nPts, 1, &tmp[0], 1);
+        Vmath::Vcopy(nPts, &out_eval2[0] + i * nPts, 1, &tmp2[0], 1);
 
         errL2 += E->L2(tmp, tmp2);
         errLinf += E->Linf(tmp, tmp2);
-        
-        Vmath::Vcopy(nPts, &phys1[0]+ii, nCoeffs, &tmp[0], 1 );
-        Vmath::Vcopy(nPts, &sol1[0]+ii, nCoeffs, &tmp2[0], 1 );
-        errL2 += E->L2(tmp, tmp2);
-        errLinf += E->Linf(tmp, tmp2);
-        
 
-        Vmath::Vcopy(nPts, &phys2[0]+ii, nCoeffs, &tmp[0], 1 );
-        Vmath::Vcopy(nPts, &sol2[0]+ii, nCoeffs, &tmp2[0], 1 );
+        Vmath::Vcopy(nPts, &phys[0] + i, nCoeffs, &tmp[0], 1);
+        Vmath::Vcopy(nPts, &sol[0] + i, nCoeffs, &tmp2[0], 1);
         errL2 += E->L2(tmp, tmp2);
         errLinf += E->Linf(tmp, tmp2);
-        
-        
+
+        Vmath::Vcopy(nPts, &phys1[0] + i, nCoeffs, &tmp[0], 1);
+        Vmath::Vcopy(nPts, &sol1[0] + i, nCoeffs, &tmp2[0], 1);
+        errL2 += E->L2(tmp, tmp2);
+        errLinf += E->Linf(tmp, tmp2);
+
+        Vmath::Vcopy(nPts, &phys2[0] + i, nCoeffs, &tmp[0], 1);
+        Vmath::Vcopy(nPts, &sol2[0] + i, nCoeffs, &tmp2[0], 1);
+        errL2 += E->L2(tmp, tmp2);
+        errLinf += E->Linf(tmp, tmp2);
     }
-    
+
     cout << "L infinity error : " << scientific << errLinf << endl;
     cout << "L 2 error        : " << scientific << errL2 << endl;
-    
 
     return 0;
 }

@@ -50,11 +50,9 @@ int main(int argc, char *argv[])
 
     int nCoeffs = E->GetNcoeffs(), nPts = E->GetTotPoints();
     int nTot = nCoeffs * nPts, dimension = E->GetShapeDimension();
-    Array<OneD, NekDouble> tmp;
 
     Array<OneD, Array<OneD, NekDouble>> coords = demo.GetCoords(E);
     Array<OneD, NekDouble> sol(nTot), phys(nTot), physOut(nTot), tmpIn(dimension);
-
 
     // For each mode, we follow two approaches:
     //
@@ -65,20 +63,17 @@ int main(int argc, char *argv[])
     // These are then compared to ensure they give the same result.
     
     // Evaluate each mode at the quadrature points.
+    Array<OneD, NekDouble> tmp;
     for (int i = 0; i < nCoeffs; ++i)
     {
-
         tmp = E->PhysEvaluateBasis(coords, i);
         Vmath::Vcopy(nPts, &tmp[0], 1, &phys[nPts*i], 1);
-
     }
-        
 
     // Another approach: Use Nektar++'s approach treating 
     // the whole FillMode on all quad points as a function 
     // evaluation on domain. Do not leverage the multiplicative 
     // separability of basis definitions in each individual direction:
-
     Array<OneD, Array<OneD, NekDouble> > temparr = E->m_physevalall;
     Array<OneD, NekDouble> ar1(nPts);
     for (int i = 0; i < nCoeffs; ++i)
@@ -91,9 +86,8 @@ int main(int argc, char *argv[])
             {
                 tmpIn[d] = coords[d][k];
             }
-            
+
             sol[i*nPts + k] = E->PhysEvaluate(tmpIn, ar1);
-        
         }
     }
     
@@ -101,15 +95,13 @@ int main(int argc, char *argv[])
     Array<OneD, NekDouble> solpts (nPts);
     NekDouble errL2 = 0, errLinf = 0;
     // Separate modes 0 to nCoeffs
-    for( int ii = 0 ; ii < nCoeffs; ii++)
+    for( int i = 0 ; i < nCoeffs; i++)
     {
-        Vmath::Vcopy(nPts, &sol[nPts*ii], 1, &solpts[0], 1 );
-        
-        Vmath::Vcopy(nPts, &phys[nPts*ii], 1, &physpts[0], 1 );
+        Vmath::Vcopy(nPts, &sol[nPts*i], 1, &solpts[0], 1 );
+        Vmath::Vcopy(nPts, &phys[nPts*i], 1, &physpts[0], 1 );
 
         errL2 += E->L2(solpts, physpts);
         errLinf += E->Linf(solpts, physpts);
-        
     }
 
     cout << "L infinity error : " << scientific << errLinf << endl;

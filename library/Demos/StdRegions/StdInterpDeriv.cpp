@@ -37,69 +37,54 @@
 
 #include "StdDemoSupport.hpp"
 
-// Evaluate polynomial for testing and save in ret (size same as pts[0]) if
+// polynomial = x^2 + y^2 - z^2
 Array<OneD, NekDouble> EvalPoly(Array<OneD, Array<OneD, NekDouble>> &pts)
 {
     Array<OneD, NekDouble> ret(pts[0].size());
     unsigned dim = pts.size();
-
-    // check if pts[0] and pts[1] have same size
-    // polynomial = x^2 + y^2 - z^2 
-   
     for (int i = 0; i < pts[0].size(); i++)
     {
         ret[i] = pow(pts[0][i],2) 
             + (dim >= 2 ? pow(pts[1][i], 2) : 0.0)
             - (dim >= 3 ? pow(pts[2][i], 2) : 0.0);
     }
+
     return ret;
 }
 
-
-
-// Evaluate polynomial for testing and save in ret (size same as pts[0]) if
-// tensorp = 0, we need tensorprod else just eval at pts
+// derivative in x = 2x
 Array<OneD, NekDouble> EvalPolyDerivx(const Array<OneD, const Array<OneD, NekDouble> > &pts)
 {
     Array<OneD, NekDouble> ret(pts[0].size());
-    //    unsigned dim = pts.size();
-
-    // check if pts[0] and pts[1] have same size
-    // polynomial = x^2 + y^2 - z^2 
-    // derivative in x = 2x 
     for (int i = 0; i < pts[0].size(); i++)
     {
         ret[i] =  2*pts[0][i];
     }
+
     return ret;
 }
 
+// derivative in y = 2y
 Array<OneD, NekDouble> EvalPolyDerivy(const Array<OneD, const Array<OneD, NekDouble> > &pts)
 {
     Array<OneD, NekDouble> ret(pts[0].size());
-
-    // check if pts[0] and pts[1] have same size
-    // polynomial = x^2 + y^2 - z^2
-    // derivative in y = 2y
-
     for (int i = 0; i < pts[0].size(); i++)
     {
         ret[i] =  2*pts[1][i];
     }
+
     return ret;
 }
 
+// derivative in z = -2z
 Array<OneD, NekDouble> EvalPolyDerivz(const Array<OneD, const Array<OneD, NekDouble> > &pts)
 {
     Array<OneD, NekDouble> ret(pts[0].size());
-
-    // check if pts[0] and pts[1] have same size
-    // polynomial = x^2 + y^2 - z^2 
-    // derivative in z = -2z 
     for (int i = 0; i < pts[0].size(); i++)
     {
         ret[i] =  -2*pts[2][i] ;
     }
+
     return ret;
 }
 
@@ -115,17 +100,12 @@ int main(int argc, char *argv[])
     // perform a PhysEvaluateDeriv at a different set of nodal points
     // (i.e. non-collocated interpolation).
     vector<string> &ptypes = demo.GetPointsType();
-   
-    ptypes[0] = "GaussRadauPLegendre"; 
-    
-    ptypes[1] = "GaussRadauMLegendre"; 
-    
+    ptypes[0] = "GaussRadauPLegendre";
+    ptypes[1] = "GaussRadauMLegendre";
     ptypes[2] = "GaussRadauMLegendre";
-
     StdExpansion *F = demo.CreateStdExpansion();
 
     const auto totPoints = (unsigned) E->GetTotPoints();
-
 
     Array<OneD, Array<OneD, NekDouble> > coordsE = demo.GetCoords(E);
  
@@ -136,49 +116,29 @@ int main(int argc, char *argv[])
     physIn = EvalPoly(coordsE);
    
     const Array<OneD, const Array<OneD, NekDouble> > coordsF = demo.GetCoords(F);
-    
-    if(dimension>2)
-    {
 
-        E->PhysEvalGrad(coordsF, physIn, physOut0, physOut1, physOut2);
-    }
-    
-    else if(dimension>1)
-    {
-        
-        E->PhysEvalGrad(coordsF, physIn, physOut0, physOut1, NullNekDouble1DArray);
+    E->PhysEvalGrad(coordsF, physIn, physOut0, physOut1, physOut2);
 
-    }
-    
-    else if(dimension>0)
+    switch(dimension)
     {
-        E->PhysEvalGrad(coordsF, physIn, physOut0, NullNekDouble1DArray, NullNekDouble1DArray);    
+        case 3:
+            sol2 = EvalPolyDerivz(coordsF);
+        case 2:
+            sol1 = EvalPolyDerivy(coordsF);
+        case 1:
+            sol0 = EvalPolyDerivx(coordsF);
+        default:
+            break;
     }
 
-    
-
-    if(dimension>2)
-        sol2 = EvalPolyDerivz(coordsF);
-    if(dimension>1)
-        sol1 = EvalPolyDerivy(coordsF);
-    if(dimension>0)
-        sol0 = EvalPolyDerivx(coordsF);
-    cout<<"\n sol0:\n";
-
-        for(int k = 0; k < sol0.size(); k++)
-    {
-        cout<<sol0[k]<<" ";
-    }
-    cout<<"\n physout0:\n";
-
-    for(int k = 0; k < sol0.size(); k++)
-    {
-        cout<<physOut0[k]<<" ";
-        }
-    
-    cout << "\nL infinity error: " << scientific << E->Linf(physOut0, sol0)+ E->Linf(physOut1, sol1)+E->Linf(physOut2, sol2)  << endl;
-cout << "L 2 error         : " << scientific << E->L2  (physOut0, sol0)+ E->L2  (physOut1, sol1)+E->L2  (physOut2, sol2)<< endl;
-    
+    cout << "\nL infinity error: " << scientific << E->Linf(physOut0, sol0) +
+                                                    E->Linf(physOut1, sol1) +
+                                                    E->Linf(physOut2, sol2)
+                                                 << endl;
+    cout << "L 2 error         : " << scientific << E->L2(physOut0, sol0) +
+                                                    E->L2(physOut1, sol1) +
+                                                    E->L2(physOut2, sol2)
+                                                 << endl;
 
     return 0;
 }

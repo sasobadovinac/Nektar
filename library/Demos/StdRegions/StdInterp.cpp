@@ -32,7 +32,6 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-
 #include <iostream>
 #include <LibUtilities/BasicUtils/Timer.h>
 
@@ -62,10 +61,10 @@ int main(int argc, char *argv[])
     demo.ParseArguments(argc, argv);
     StdExpansion *E = demo.CreateStdExpansion();
 
-    const auto totPoints = (unsigned) E->GetTotPoints();
-    const auto dimension = (unsigned) E->GetShapeDimension();
-    // Create a new element but with the evenly-spaced points type, so that we
+    const auto totPoints = (unsigned)E->GetTotPoints();
+    const auto dimension = (unsigned)E->GetShapeDimension();
 
+    // Create a new element but with the evenly-spaced points type, so that we
     // perform a PhysEvaluate at a different set of nodal points
     // (i.e. non-collocated interpolation).
     vector<string> &ptypes = demo.GetPointsType();
@@ -73,13 +72,12 @@ int main(int argc, char *argv[])
     {
         ptypes[i] = "PolyEvenlySpaced";
     }
-    //cout<<"\n coordsE:\n";
+
     Array<OneD, Array<OneD, NekDouble>> coordsE = demo.GetCoords(E);
 
     StdExpansion *F = demo.CreateStdExpansion();
-
     Array<OneD, Array<OneD, NekDouble>> coordsF = demo.GetCoords(F);
-    
+
     Array<OneD, NekDouble> physIn(totPoints), physOut(totPoints);
     Array<OneD, NekDouble> tmpIn(dimension), sol(totPoints);
 
@@ -97,7 +95,7 @@ int main(int argc, char *argv[])
     }
 
     sol = EvalPoly(coordsF);
-  
+
     cout << "L infinity error : " << scientific << E->Linf(physOut, sol) << endl;
     cout << "L 2 error        : " << scientific << E->L2  (physOut, sol) << endl;
 
