@@ -76,6 +76,10 @@ namespace Nektar
                                                                 Array<OneD, NekDouble> &out_d2 = NullNekDouble1DArray);
 
 
+            STD_REGIONS_EXPORT virtual Array< OneD, NekDouble > v_PhysEvaluateBasis(
+                                                                                                 const Array<OneD, const Array<OneD, NekDouble> >coords, int mode) override;
+
+
             STD_REGIONS_EXPORT virtual NekDouble v_PhysEvaluate(
                                                                 const Array<OneD, const NekDouble>& coords,
                                                                 const Array<OneD, const NekDouble>& physvals);

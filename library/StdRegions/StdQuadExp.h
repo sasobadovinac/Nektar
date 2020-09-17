@@ -154,6 +154,12 @@ namespace Nektar
                                                                      const Array<OneD, const NekDouble>& xi,
                                                                      Array<OneD, NekDouble>& eta);
 
+            STD_REGIONS_EXPORT virtual         Array< OneD, NekDouble > v_PhysEvaluateBasis(     
+                                                                                                         const Array<OneD, const Array<OneD, NekDouble> >coords, 
+                                                                                                         int mode);
+            
+            
+
             STD_REGIONS_EXPORT virtual void v_FillMode(
                                                        const int mode,
                                                        Array<OneD, NekDouble> &array);
@@ -180,21 +186,17 @@ namespace Nektar
                                                         Array<OneD, NekDouble> &coords_1,
                                                         Array<OneD, NekDouble> &coords_2);
 
-            STD_REGIONS_EXPORT virtual NekDouble v_PhysEvaluateBasis(
-                                                                     const Array<OneD, const NekDouble>& coords,
-                                                                     int mode);
 
             
-            // Should be called v_PhysEvalBasisGrad
-            // and replace the existing method v_PhysEvalBasisGrad
+            // Deprecated
 
-            STD_REGIONS_EXPORT virtual void v_PhysEvalBasisGradFast(
-                                                                    const Array<OneD, const Array<OneD, NekDouble> > coords, 
+            /* STD_REGIONS_EXPORT virtual void v_PhysEvalBasisGradFast( */
+            /*                                                         const Array<OneD, const Array<OneD, NekDouble> > coords,  */
                                                                 
-                                                                    Array<OneD, NekDouble>& out_eval,                                      
-                                                                    Array<OneD, NekDouble>& out_d0,                                        
-                                                                    Array<OneD, NekDouble>& out_d1, 
-                                                                    Array<OneD, NekDouble>& out_d2 = NullNekDouble1DArray);
+            /*                                                         Array<OneD, NekDouble>& out_eval,                                       */
+            /*                                                         Array<OneD, NekDouble>& out_d0,                                         */
+            /*                                                         Array<OneD, NekDouble>& out_d1,  */
+            /*                                                         Array<OneD, NekDouble>& out_d2 = NullNekDouble1DArray); */
             
 
             STD_REGIONS_EXPORT virtual void v_PhysEvalGrad(

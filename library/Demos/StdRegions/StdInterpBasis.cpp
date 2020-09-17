@@ -50,22 +50,10 @@ int main(int argc, char *argv[])
 
     int nCoeffs = E->GetNcoeffs(), nPts = E->GetTotPoints();
     int nTot = nCoeffs * nPts, dimension = E->GetShapeDimension();
+    Array<OneD, NekDouble> tmp;
 
     Array<OneD, Array<OneD, NekDouble>> coords = demo.GetCoords(E);
     Array<OneD, NekDouble> sol(nTot), phys(nTot), physOut(nTot), tmpIn(dimension);
-
-    // can't use this line after we remnove the temp storage:
-    Array<OneD, Array<OneD, NekDouble> > temparr = E->m_physevalall;
-    
-    /*Array<OneD, NekDouble> physvalall (nCoeffs*nPts);
- 
-    for(int i = 0; i < nCoeffs; i++)
-    {
-        Array<OneD, NekDouble> tmp(nTot);
-        E->FillMode(i, tmp);
-        Vmath::Vcopy(nTot, &tmp[0], 1, &physvalall[i*nTot], 1);  
-
-        } */    
 
 
     // For each mode, we follow two approaches:
@@ -75,43 +63,62 @@ int main(int argc, char *argv[])
     // 2) Evaluate the basis function at all quadrature points using FillMode.
     //
     // These are then compared to ensure they give the same result.
-    for (int k = 0; k < nCoeffs; ++k)
+    
+    // Evaluate each mode at the quadrature points.
+    for (int i = 0; i < nCoeffs; ++i)
     {
-        // Evaluate each mode at the quadrature points.
-        for (int i = 0; i < nPts; ++i)
-        {
-            for (int d = 0; d < dimension; ++d)
-            {
-                tmpIn[d] = coords[d][i];
-            }
 
-            phys[k * nPts + i] = E->PhysEvaluateBasis(tmpIn, k);
-        }
+        tmp = E->PhysEvaluateBasis(coords, i);
+        Vmath::Vcopy(nPts, &tmp[0], 1, &phys[nPts*i], 1);
 
-        // Fill the 'solution' field with each of the modes using FillMode.
-        Array<OneD, NekDouble> tmp = sol + k * nPts;
-        E->FillMode(k, tmp);
     }
-
+        
 
     // Another approach: Use Nektar++'s approach treating 
     // the whole FillMode on all quad points as a function 
     // evaluation on domain. Do not leverage the multiplicative 
     // separability of basis definitions in each individual direction:
 
-    for (int i = 0; i < nPts; ++i)
+    Array<OneD, Array<OneD, NekDouble> > temparr = E->m_physevalall;
+    Array<OneD, NekDouble> ar1(nPts);
+    for (int i = 0; i < nCoeffs; ++i)
     {
-        for (int d = 0; d < dimension; ++d)
+        Vmath::Vcopy(nPts, &temparr[0][i*nPts],1, &ar1[0], 1);
+            
+        for (int k = 0; k < nPts; ++k)
         {
-            tmpIn[d] = coords[d][i];
+            for (int d = 0; d < dimension; ++d)
+            {
+                tmpIn[d] = coords[d][k];
+            }
+            
+            sol[i*nPts + k] = E->PhysEvaluate(tmpIn, ar1);
+        
         }
-
-        physOut[i] = E->PhysEvaluate(tmpIn, temparr[0]);
     }
     
+    Array<OneD, NekDouble> physpts (nPts);
+    Array<OneD, NekDouble> solpts (nPts);
+    NekDouble errL2, errLinf;
+    // Separate modes 0 to nCoeffs
+    //int ctr = 0;
+    for( int ii = 0 ; ii < nCoeffs; ii++)
+    {
+        Vmath::Vcopy(nPts, &sol[nPts*ii], 1, &solpts[0], 1 );
+        
+        Vmath::Vcopy(nPts, &phys[nPts*ii], 1, &physpts[0], 1 );
+        /*              for (int kk = 0; kk < solpts.size(); kk++)
+        {        cout<<"\n sol["<<kk<<"]="<<solpts[kk]<<"\t phys["<<ctr<<"]="<<physpts[kk]<<"\t physout["<<ctr<<"]="<<phys[ctr];
+               ctr++;
+            }
+        */
+        errL2 += E->L2(solpts, physpts);
+        errLinf += E->Linf(solpts, physpts);
+        
+    }
 
-    cout << "L infinity error : " << scientific << E->Linf(physOut, sol) << endl;
-    cout << "L 2 error        : " << scientific << E->L2(physOut, sol) << endl;
+    cout << "L infinity error : " << scientific << errLinf << endl;
+    cout << "L 2 error        : " << scientific << errL2 << endl;
 
     return 0;
 }

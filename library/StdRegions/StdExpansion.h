@@ -988,7 +988,7 @@ namespace Nektar
                 return v_PhysEvaluate(I,physvals);
             }
 
-            /**
+            /** Deprecated
              * @brief This function evaluates the basis function mode @p mode at a
              * point @p coords of the domain.
              *
@@ -1000,9 +1000,9 @@ namespace Nektar
              *
              * @return The value of the basis function @p mode at @p coords.
              */
-            NekDouble PhysEvaluateBasis(
-                const Array<OneD, const NekDouble>& coords,
-                int mode)
+            Array<OneD, NekDouble> PhysEvaluateBasis(
+                                                                             const Array<OneD, const Array<OneD, NekDouble> >coords, int mode)
+
             {
                 return v_PhysEvaluateBasis(coords, mode);
             }
@@ -1064,16 +1064,16 @@ namespace Nektar
              * @return The value of the basis function for all the modes  at @p coords, derivatives of the basis function for all the modes at @p coords.
              */
 
-
-            void PhysEvalBasisGradFast(
-                                   const Array<OneD, Array<OneD, NekDouble> >coords,
-                                   Array<OneD, NekDouble> &out_eval,
-                                   Array<OneD, NekDouble> &out_d0,
-                                   Array<OneD, NekDouble> &out_d1 = NullNekDouble1DArray,
-                                   Array<OneD, NekDouble> &out_d2 = NullNekDouble1DArray)
-            {
-                return v_PhysEvalBasisGradFast(coords, out_eval, out_d0, out_d1, out_d2 );  
-            }
+            // Deprecated
+            /* void PhysEvalBasisGradFast( */
+            /*                        const Array<OneD, Array<OneD, NekDouble> >coords, */
+            /*                        Array<OneD, NekDouble> &out_eval, */
+            /*                        Array<OneD, NekDouble> &out_d0, */
+            /*                        Array<OneD, NekDouble> &out_d1 = NullNekDouble1DArray, */
+            /*                        Array<OneD, NekDouble> &out_d2 = NullNekDouble1DArray) */
+            /* { */
+            /*     return v_PhysEvalBasisGradFast(coords, out_eval, out_d0, out_d1, out_d2 );   */
+            /* } */
             
 
 
@@ -1445,7 +1445,7 @@ namespace Nektar
                 // Create D ptr, comment only activated/assigned in if stmt
 
                 const auto nquad = z.size();
-
+                //std::cout<<"\n nquad<<"<<nquad<<"\n";
                 for (int i = 0; i < nquad; ++i)
                 {
                     NekDouble xdiff = z[i] - coord;
@@ -1460,7 +1460,12 @@ namespace Nektar
                      */
                     if (xdiff == 0.0 )
                     {
+                        // std::cout<<"\n in baryeval:";
+            
+                        //            std::cout<<" coord="<<coord<<"  retpval = "<<pval<<" z["<<i<<"]="<<z[i];
+
                         return pval;
+
                     }
 
                     NekDouble tmp = bw[i] / xdiff;
@@ -1468,7 +1473,10 @@ namespace Nektar
                     denom += tmp;
                 }
 
-
+                //            std::cout<<"\n in baryeval:\n\n";
+            
+            //            std::cout<<" coord="<<coord<<"  ret = "<<numer / denom;
+                
                 return numer / denom;
             }
 
@@ -1542,12 +1550,11 @@ namespace Nektar
                 }
 
                 NekDouble ret =  (numer1*numer2 - numer3*numer4) / pow(denom,2);
-                //                std::cout<<"\n  coord="<<coord<<" returning = "<<ret;
                 return ret;
             }
 
 
-            /**
+            /** Deprecated:
              * @brief This function evaluates the basis function mode @p mode at
              * a point @p coords of the domain in direction @dir.
              *
@@ -1558,15 +1565,35 @@ namespace Nektar
              * @return The value of the basis function @p mode at @p coords in
              *         direction @p dir.
              */
-            template<int DIR>
-            inline NekDouble BaryEvaluateBasis(const NekDouble &coord,
-                                               const int &mode)
-            {
-                const int nquad = m_base[DIR]->GetNumPoints();
-                return BaryEvaluate<DIR>(
-                    coord, &(m_base[DIR]->GetBdata())[0] + nquad * mode);
-            }
-            /**
+          /*   template<int DIR> */
+          /*   inline NekDouble BaryEvaluateBasis(const NekDouble &coord, */
+          /*                                      const int &mode) */
+          /*   { */
+          /*       const int nquad = m_base[DIR]->GetNumPoints(); */
+          /*       //const int nmodes = m_base[DIR]->GetNumModes(); */
+          /*       //           NekDouble val =  (m_base[DIR]->GetBdata())[mode]; */
+          /*       //                std::                cout<<"\n back to baryevaluatebasis mode="<<mode<<" nquad"<<nquad<<"nmodes="<<nmodes<<"\n\n"; */
+          /*       //Array<OneD, NekDouble> tmp(nquad); */
+          /*       //  Array<OneD, NekDouble> tmp2(2*nmodes*nquad); */
+          /*       //                Vmath::Vcopy(nquad, (m_base[DIR]->GetBdata())[mode], nquad, &tmp[0], 1); */
+          /*       //for(int k = 0; k < ; k++) */
+          /*       //    Vmath::Vcopy(nquad*nmodes*2, &(m_base[DIR]->GetBdata())[0],1, &tmp2[0], 1); */
+          /*       //  Vmath::Vcopy(nquad, &tmp2[2*mode*nquad], 1, &tmp[0], 1); */
+      
+          /*       //std::cout<<"\n in baryevalbasis:nmodes="<<nmodes<<" nquad="<<nquad<<" mode"<<mode<<"\n"; */
+          /*       //          std::          cout<<"\n getbdata:"; */
+          /*       //  Array<OneD,NekDouble> bdt = (m_base[DIR]->GetBdata()); */
+          /*       //        std::          cout<<"\n sz bdt = "<<bdt.size()<<"\n"; */
+
+          /* //          for(int i = 0; i<nmodes*nquad*2; i++) */
+          /* //  std::cout<<tmp2[i]<<" "; */
+          /* //std::cout<<"\n current physvals to pass to baryeval::"; */
+          /* //    for(int i = 0; i < nquad; i++) */
+          /* //        std::cout<<tmp[i]<<" "; */
+          /*       return BaryEvaluate<DIR>( */
+          /*                                coord, &(m_base[DIR]->GetBdata())[0]+nquad*mode); */
+          /*   } */
+            /** Deprecated:
              * @brief This function evaluates the derivative of the basis function 
              * mode @p mode at a point @p coords of the domain in direction @dir.
              *
@@ -1577,14 +1604,14 @@ namespace Nektar
              * @return The value of the basis function @p mode at @p coords in
              *         direction @p dir.
              */
-            template<int DIR>
-            inline NekDouble BaryEvaluateDerivBasis(const NekDouble &coord,
-                                               const int &mode)
-            {
-                const int nquad = m_base[DIR]->GetNumPoints();
-                return BaryEvaluateDeriv<DIR>(
-                    coord, &(m_base[DIR]->GetBdata())[0] + nquad * mode);
-            }
+            /* template<int DIR> */
+            /* inline NekDouble BaryEvaluateDerivBasis(const NekDouble &coord, */
+            /*                                    const int &mode) */
+            /* { */
+            /*     const int nquad = m_base[DIR]->GetNumPoints(); */
+            /*     return BaryEvaluateDeriv<DIR>( */
+            /*         coord, &(m_base[DIR]->GetBdata())[0] + nquad * mode); */
+            /* } */
         private:
 
             STD_REGIONS_EXPORT virtual Array<OneD, Array< OneD, NekDouble> >        v_GetPhysEvalALL();/*
@@ -1722,86 +1749,88 @@ namespace Nektar
             (const Array<OneD, DNekMatSharedPtr >& I,
              const Array<OneD, const NekDouble> & physvals);
 
-            STD_REGIONS_EXPORT virtual NekDouble v_PhysEvaluateBasis
-            (const Array<OneD, const NekDouble>& coords, int mode);
+            STD_REGIONS_EXPORT virtual          Array< OneD, NekDouble> v_PhysEvaluateBasis(
+                                                                                                                         const Array<OneD, const Array<OneD, NekDouble> >coords, int mode);
+
 
             STD_REGIONS_EXPORT Array< OneD, Array<OneD, NekDouble> >v_PhysEvalALL();
 
-            STD_REGIONS_EXPORT void v_PhysEvaluateGrad(
-                                                       const Array<OneD, Array<OneD, const NekDouble> >&coords,
-                                                       const Array<OneD, NekDouble> &inarray,
-                                                              Array<OneD, NekDouble> &out_d0, 
-                                                              Array<OneD, NekDouble> &out_d1,
-                                                              Array<OneD, NekDouble> &out_d2)    ;
-
-            STD_REGIONS_EXPORT virtual NekDouble v_PhysEvaluate
-                (const Array<OneD,
-                 const NekDouble>& coords,
-                 const Array<OneD, const NekDouble>& physvals);
-
-
-        STD_REGIONS_EXPORT virtual void v_PhysEvalBasisGrad(
-                                            const Array<OneD, const Array<OneD, NekDouble> >coords,
-                                            Array<OneD, NekDouble> &out_eval,
-                                            Array<OneD, NekDouble> &out_d0,
-                                            Array<OneD, NekDouble> &out_d1,
-                                            Array<OneD, NekDouble> &out_d2);
-
-
-        STD_REGIONS_EXPORT virtual void v_PhysEvalBasisGradFast(
-                                            const Array<OneD, const Array<OneD, NekDouble> >coords,
-                                            Array<OneD, NekDouble> &out_eval,
-                                            Array<OneD, NekDouble> &out_d0,
-                                            Array<OneD, NekDouble> &out_d1 = NullNekDouble1DArray,
-                                            Array<OneD, NekDouble> &out_d2 = NullNekDouble1DArray);
-        STD_REGIONS_EXPORT virtual void v_LocCoordToLocCollapsed(
-                                                                 const Array<OneD, const NekDouble>& xi,
-                                                                 Array<OneD, NekDouble>& eta);
-        
-        
-        STD_REGIONS_EXPORT virtual void v_FillMode(const int mode,
-                                                   Array<OneD, NekDouble> &outarray);
-
-        STD_REGIONS_EXPORT virtual DNekMatSharedPtr v_GenMatrix(
-                                                                const StdMatrixKey &mkey);
-
-        STD_REGIONS_EXPORT virtual DNekMatSharedPtr v_CreateStdMatrix(
-                                                                      const StdMatrixKey &mkey);
-
-        STD_REGIONS_EXPORT virtual void v_GetCoords(
-                                                    Array<OneD, NekDouble> &coords_0,
-                                                    Array<OneD, NekDouble> &coords_1,
-                                                    Array<OneD, NekDouble> &coords_2);
-
-        STD_REGIONS_EXPORT virtual void v_GetCoord(
-                                                   const Array<OneD, const NekDouble>& Lcoord,
-                                                   Array<OneD, NekDouble> &coord);
+            STD_REGIONS_EXPORT void v_PhysEvaluateGrad
+            (const Array<OneD, Array<OneD, const NekDouble> >&coords,
+             const Array<OneD, NekDouble> &inarray,
+             Array<OneD, NekDouble> &out_d0, 
+             Array<OneD, NekDouble> &out_d1,
+             Array<OneD, NekDouble> &out_d2)    ;
             
-        STD_REGIONS_EXPORT virtual int v_GetCoordim(void);
+            STD_REGIONS_EXPORT virtual NekDouble v_PhysEvaluate
+            (const Array<OneD,
+             const NekDouble>& coords,
+             const Array<OneD, const NekDouble>& physvals);
 
-        STD_REGIONS_EXPORT virtual void v_GetBoundaryMap(
-                                                         Array<OneD, unsigned int>& outarray);
 
-        STD_REGIONS_EXPORT virtual void v_GetInteriorMap(
-                                                         Array<OneD, unsigned int>& outarray);
+            STD_REGIONS_EXPORT virtual void v_PhysEvalBasisGrad
+            (const Array<OneD, const Array<OneD, NekDouble> >coords,
+             Array<OneD, NekDouble> &out_eval,
+             Array<OneD, NekDouble> &out_d0,
+             Array<OneD, NekDouble> &out_d1,
+             Array<OneD, NekDouble> &out_d2);
+            
+            
+            STD_REGIONS_EXPORT virtual void v_PhysEvalBasisGradFast
+            (const Array<OneD, const Array<OneD, NekDouble> >coords,
+             Array<OneD, NekDouble> &out_eval,
+             Array<OneD, NekDouble> &out_d0,
+             Array<OneD, NekDouble> &out_d1 = NullNekDouble1DArray,
+             Array<OneD, NekDouble> &out_d2 = NullNekDouble1DArray);
+            
+            STD_REGIONS_EXPORT virtual void v_LocCoordToLocCollapsed
+            (const Array<OneD, const NekDouble>& xi,
+             Array<OneD, NekDouble>& eta);
+            
+            
+            STD_REGIONS_EXPORT virtual void v_FillMode
+            (const int mode,
+             Array<OneD, NekDouble> &outarray);
+            
+            STD_REGIONS_EXPORT virtual DNekMatSharedPtr v_GenMatrix
+            (const StdMatrixKey &mkey);
+            
+            STD_REGIONS_EXPORT virtual DNekMatSharedPtr v_CreateStdMatrix(const StdMatrixKey &mkey);
 
-        STD_REGIONS_EXPORT virtual int v_GetVertexMap(int localVertexId,
-                                                      bool useCoeffPacking = false);
+            STD_REGIONS_EXPORT virtual void v_GetCoords
+            (Array<OneD, NekDouble> &coords_0,
+             Array<OneD, NekDouble> &coords_1,
+             Array<OneD, NekDouble> &coords_2);
 
-        STD_REGIONS_EXPORT virtual void v_GetTraceToElementMap(
-                                                               const int                  tid,
-                                                               Array<OneD, unsigned int> &maparray,
-                                                               Array<OneD,          int> &signarray,
-                                                               Orientation                traceOrient = eForwards,
-                                                               int                        P = -1,
-                                                               int                        Q = -1);
-
-        STD_REGIONS_EXPORT  virtual void v_GetTraceInteriorToElementMap(
-                                                                        const int                  eid,
-                                                                        Array<OneD, unsigned int>& maparray,
-                                                                        Array<OneD,          int>& signarray,
-                                                                        const Orientation          traceOrient = eForwards);
-
+            STD_REGIONS_EXPORT virtual void v_GetCoord(
+                                                       const Array<OneD, const NekDouble>& Lcoord,
+                                                       Array<OneD, NekDouble> &coord);
+            
+            STD_REGIONS_EXPORT virtual int v_GetCoordim(void);
+            
+            STD_REGIONS_EXPORT virtual void v_GetBoundaryMap(
+                                                             Array<OneD, unsigned int>& outarray);
+            
+            STD_REGIONS_EXPORT virtual void v_GetInteriorMap(
+                                                             Array<OneD, unsigned int>& outarray);
+            
+            STD_REGIONS_EXPORT virtual int v_GetVertexMap(int localVertexId,
+                                                          bool useCoeffPacking = false);
+            
+            STD_REGIONS_EXPORT virtual void v_GetTraceToElementMap(
+                                                                   const int                  tid,
+                                                                   Array<OneD, unsigned int> &maparray,
+                                                                   Array<OneD,          int> &signarray,
+                                                                   Orientation                traceOrient = eForwards,
+                                                                   int                        P = -1,
+                                                                   int                        Q = -1);
+            
+            STD_REGIONS_EXPORT  virtual void v_GetTraceInteriorToElementMap(
+                                                                            const int                  eid,
+                                                                            Array<OneD, unsigned int>& maparray,
+                                                                            Array<OneD,          int>& signarray,
+                                                                            const Orientation          traceOrient = eForwards);
+            
 
         STD_REGIONS_EXPORT virtual void v_GetTraceNumModes(
                                                            const int fid,

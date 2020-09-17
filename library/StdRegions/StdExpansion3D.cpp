@@ -112,6 +112,10 @@ namespace Nektar
                             &wsp[0],nquad0*nquad1,D2,nquad2,0.0,&out_dz[0],
                             nquad0*nquad1);
             }
+            /*for(int k = 0; k < out_dz.size(); k++)
+                std::                cout<<out_dz[k]<<" ";
+            std::cout<<"\n*****\n";
+            */
         }
 
         void StdExpansion3D::BwdTrans_SumFacKernel(
@@ -142,9 +146,29 @@ namespace Nektar
             v_IProductWRTBase_SumFacKernel(base0, base1, base2, inarray, outarray, wsp, doCheckCollDir0, doCheckCollDir1, doCheckCollDir2);
         }
 
+        //slow version: uses stored arrays: m_physevalall
+        Array< OneD, NekDouble > StdExpansion3D::PhysEvaluateBasis(
+                                                 const Array<OneD, const Array<OneD, NekDouble> >coords, int mode)
+        {
+            int tot = GetTotPoints();
+   
+            Array<OneD, NekDouble> physall(tot), ret(coords[0].size());
+            
+            Vmath::Vcopy(tot, &m_physevalall[0][mode*tot], 1, &physall[0], 1);
+            for(int i = 0; i < coords[0].size(); i++)
+            {
+                Array<OneD, NekDouble> ctemp(3);
+                ctemp[0] = coords[0][i];
+                ctemp[1] = coords[1][i];
+                ctemp[2] = coords[2][i];
+                
+                ret[i] = v_PhysEvaluate(ctemp, physall);
+            }
+            return ret;
+        }
 
-        //slow version
-        // fast one impl as v_PhysEvalBasisGradFast() -> does not use storage space
+        
+        //version :  uses storage space via m_physevalall
         void StdExpansion3D::v_PhysEvalBasisGrad(
                                                  const Array<OneD, const Array<OneD, NekDouble> >coords,
                                                  Array<OneD, NekDouble> &out_eval,                    
@@ -161,24 +185,26 @@ namespace Nektar
 
             int neq = m_ncoeffs;
             Array<OneD, NekDouble> wsp1(nq1 * nq2), wsp2(nq2);
-
-
             if(out_eval.size() > 0)
-            {    
-                for(int k = 0; k < neq; k++)
+            {     for(int k = 0; k < neq; k++)
                 {
                     Vmath::Vcopy(tot, &m_physevalall[0][k*tot], 1, &physall[0], 1);
-                    for(int i = 0; i < tot; i++)
+                    for(int i = 0; i < coords[0].size(); i++)
                     {
                         Array<OneD, NekDouble> ctemp(3);
                         ctemp[0] = coords[0][i];
                         ctemp[1] = coords[1][i];
                         ctemp[2] = coords[2][i];
                         
-                        out_eval[i+k*tot] = v_PhysEvaluate(ctemp, physall);              }
+                        out_eval[k+i*neq] = v_PhysEvaluate(ctemp, physall);              }
                 }
                 
             } 
+            /*            std::cout<<"\n\n out_eval\n";
+            for ( int i = 0; i < out_eval.size(); i++)
+                std::cout<<out_eval[i]<<" ";
+            std::cout<<"\n ***\n\n";
+            */
 
             if(out_d0.size() > 0)
             {    
@@ -194,7 +220,7 @@ namespace Nektar
                         ctemp[1] = coords[1][i];
                         ctemp[2] = coords[2][i];
                         
-                        out_d0[i+k*tot] = v_PhysEvaluate(ctemp, physall);              
+                        out_d0[k+i*neq] = v_PhysEvaluate(ctemp, physall);              
                     }
                 }
               
@@ -215,7 +241,7 @@ namespace Nektar
                         ctemp[1] = coords[1][i];
                         ctemp[2] = coords[2][i];
                         
-                        out_d1[i+k*tot] = v_PhysEvaluate(ctemp, physall);      
+                        out_d1[k+i*neq] = v_PhysEvaluate(ctemp, physall);      
                     }
                 }
               
@@ -238,9 +264,16 @@ namespace Nektar
                         ctemp[1] = coords[1][i];
                         ctemp[2] = coords[2][i];
                         
-                        out_d2[i+k*tot] = v_PhysEvaluate(ctemp, physall);      
+                        out_d2[k+i*neq] = v_PhysEvaluate(ctemp, physall);      
                     }
                 }
+
+
+                /*            std::cout<<"\n in grad: out_d2=\n";
+            for(int kk = 0; kk < out_d2.size(); kk++)
+                std::                cout<<out_d2[kk]<<" ";
+            std::            cout<<"\n ***\n";
+                */
 
             }
 
@@ -267,7 +300,12 @@ namespace Nektar
                              
                 FillMode(i, tmp);
                 Vmath::Vcopy(nq, &tmp[0], 1, &ret[0][i*nq], 1);  
-
+                /*              std::cout<<"mode="<<i<<"\n";
+                {for(int ii = 0; ii < nq; ii++)
+                    std::cout<<ret[0][i*nq+ii]<<" ";
+                std::                cout<<"\n\n";
+                }
+*/
                 PhysDeriv(0, tmp, tmp2);
                 Vmath::Vcopy(nq, &tmp2[0], 1, &ret[1][i*nq], 1);  
 
@@ -276,6 +314,15 @@ namespace Nektar
 
                 PhysDeriv(2, tmp, tmp4);
                 Vmath::Vcopy(nq, &tmp4[0], 1, &ret[3][i*nq], 1);  
+                /*                if(i == 3)
+      \          {for(int ii = 0; ii < tmp4.size(); ii++)
+                    std::cout<<tmp4[ii]<<" ";
+                std::                cout<<"\n\n";exit(0);
+                }*/
+                //                 std::cout<<"\n\n all()";
+                //                 for ( int i = 0; i < ret[0].size(); i++)
+                     //  std::cout<<ret[0][i]<<" ";
+                 // std::cout<<"\n ***\n\n";
 
             }
             return ret;
@@ -311,7 +358,8 @@ namespace Nektar
                     tmp[0] = coords[0][i];
                     tmp[1] = coords[1][i];
                     tmp[2] = coords[2][i];
-                    LocCoordToLocCollapsed(tmp, eta);
+                    //                    LocCoordToLocCollapsed(tmp, eta);
+                    eta = tmp;
                     const NekDouble *ptr = &inarray[0];
                     
                     // Construct the 2D square...
@@ -342,7 +390,8 @@ namespace Nektar
                     tmp[0] = coords[0][i];
                     tmp[1] = coords[1][i];
                     tmp[2] = coords[2][i];
-                    LocCoordToLocCollapsed(tmp, eta);
+                    //LocCoordToLocCollapsed(tmp, eta);
+                    eta = tmp;
                     const NekDouble *ptr = &inarray[0];
                     
                     // Construct the 2D square...
@@ -372,7 +421,8 @@ namespace Nektar
                     tmp[0] = coords[0][i];
                     tmp[1] = coords[1][i];
                     tmp[2] = coords[2][i];
-                    LocCoordToLocCollapsed(tmp, eta);
+                    //                    LocCoordToLocCollapsed(tmp, eta);
+                    eta = tmp;
                     const NekDouble *ptr = &inarray[0];
                     
                     // Construct the 2D square...
@@ -387,8 +437,10 @@ namespace Nektar
                     }
                     
                     out_d2[i] =  StdExpansion::BaryEvaluateDeriv<2>(eta[2], &wsp2[0]);
+                    //                      std::                    cout<<out_d2[i]<<" ";
                     
                 }
+                // std::cout<<"\n***\n";
                 
             }
         }

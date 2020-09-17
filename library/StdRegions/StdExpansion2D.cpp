@@ -113,7 +113,26 @@ namespace Nektar
                 }
             }
         }
-       
+        
+        // version: uses stored arrays: m_physevalall
+        Array<OneD , NekDouble> StdExpansion2D::PhysEvaluateBasis(
+                                                 const Array<OneD, const Array<OneD, NekDouble> >coords, int mode)
+        {
+            int tot = GetTotPoints();   
+            Array<OneD, NekDouble> physall(tot), ret(coords[0].size());
+            Vmath::Vcopy(tot, &m_physevalall[0][mode*tot], 1, &physall[0], 1);
+            for(int i = 0; i < coords[0].size(); i++)
+            {
+                Array<OneD, NekDouble> ctemp(2);
+                ctemp[0] = coords[0][i];
+                ctemp[1] = coords[1][i];
+                
+                ret[i] = v_PhysEvaluate(ctemp, physall);
+            }
+            return ret;
+ 
+           
+       }
         
         
         // find derivative of u (inarray) at all coords points
@@ -138,7 +157,8 @@ namespace Nektar
                     Array<OneD, NekDouble> tmp(2);
                     tmp[0] = coords[0][i];
                     tmp[1] = coords[1][i];
-                    LocCoordToLocCollapsed(tmp, collcoords);                    
+                    //                    LocCoordToLocCollapsed(tmp, collcoords);           
+                    collcoords = tmp;
                     Array<OneD, NekDouble> wsp(nq1);
                     for(int k = 0; k < nq0; k++)
                     {
@@ -162,7 +182,8 @@ namespace Nektar
                     Array<OneD, NekDouble> tmp(2);
                     tmp[0] = coords[0][i];
                     tmp[1] = coords[1][i];
-                    LocCoordToLocCollapsed(tmp, collcoords);           
+                    //                    LocCoordToLocCollapsed(tmp, collcoords);           
+                    collcoords = tmp;
                 
                     Array<OneD, NekDouble> wsp(nq1);
                     for(int k = 0; k < nq0; k++)
@@ -180,9 +201,8 @@ namespace Nektar
                 
             }
         }
-              
-        //slow version
-        // fast one impl as v_PhysEvalBasisGradFast() -> does not use storage space
+
+        //version :  uses storage space via m_physevalall
         void StdExpansion2D::v_PhysEvalBasisGrad(
                                                  const Array<OneD, const Array<OneD, NekDouble> >coords,
                                                  Array<OneD, NekDouble> &out_eval,                    
@@ -193,88 +213,63 @@ namespace Nektar
             boost::ignore_unused(out_d2);
 
             int tot = GetTotPoints();
-                
-            Array<OneD, NekDouble> physvals(tot);
-            Array<OneD, NekDouble> physvalsder(tot);
-
-            const int nq0 = m_base[0]->GetNumPoints();
-            const int nq1 = m_base[1]->GetNumPoints();
-
+            
             int neq = m_ncoeffs;
-             
+             std::            cout<<"\n neq="<<neq<<"\n";
+
+            Array<OneD, NekDouble> physvals(tot);
+            Array<OneD, NekDouble> coll(2);
 
             if(out_eval.size() > 0)
             {    
-                
-                Array<OneD, NekDouble> wsp(nq1);
-                for(int k = 0; k < neq; k++)
+                for(int k = 0; k < neq; k++) 
                 {
                     Vmath::Vcopy(tot, &m_physevalall[0][k*tot], 1, &physvals[0], 1);       
-                    for(int i = 0; i < tot; i++)
+                    
+                    for(int i = 0; i < coords[0].size(); i++)
                     {
-                        Array<OneD, NekDouble> coll1(2);
-                        Array<OneD, NekDouble> coll2(2);
-                        coll1[0] = coords[0][i];
-                        coll1[1] = coords[1][i];
-                        LocCoordToLocCollapsed(coll1, coll2);
-                     
-                        for (int j = 0; j < nq1; ++j)
-                        {
-                            wsp[j] = StdExpansion::BaryEvaluate<0>(
-                                                                   coll2[0], &physvals[0] + j * nq0);
-                        }
-                        out_eval[i+k*tot] =  StdExpansion::BaryEvaluate<1>(coll2[1], &wsp[0]); 
-                    }
-                }
-                
+                        coll[0] = coords[0][i];
+                        coll[1] = coords[1][i];
+                          
+                        out_eval[k+i*neq] = v_PhysEvaluate(  coll, physvals);
+                        
+                      }
+                  }
+                  
             } 
-
+            
             if(out_d0.size() > 0)
             {    
                 
-                Array<OneD, NekDouble> wsp(nq1);
-                for(int k = 0; k < neq; k++)
+                      
+                for(int k = 0; k < neq; k++) 
                 {
                     Vmath::Vcopy(tot, &m_physevalall[1][k*tot], 1, &physvals[0], 1);       
-                    for(int i = 0; i < tot; i++)
+                    
+                    for(int i = 0; i < coords[0].size(); i++)
                     {
-                        Array<OneD, NekDouble> coll1(2);
-                        Array<OneD, NekDouble> coll2(2);
-                        coll1[0] = coords[0][i];
-                        coll1[1] = coords[1][i];
-                        LocCoordToLocCollapsed(coll1, coll2);
-                     
-                        for (int j = 0; j < nq1; ++j)
-                        {
-                            wsp[j] = StdExpansion::BaryEvaluate<0>(
-                                                                   coll2[0], &physvals[0] + j * nq0);
-                        }
-                        out_d0[i+k*tot] =  StdExpansion::BaryEvaluate<1>(coll2[1], &wsp[0]); 
+                        coll[0] = coords[0][i];
+                        coll[1] = coords[1][i];
+                        out_d0[k+i*neq] = v_PhysEvaluate(  coll, physvals);
+                        
                     }
                 }
                 
             }
             if(out_d1.size() > 0)
             {    
-                
-                Array<OneD, NekDouble> wsp(nq1);
-                for(int k = 0; k < neq; k++)
+
+                      
+                for(int k = 0; k < neq; k++) 
                 {
                     Vmath::Vcopy(tot, &m_physevalall[2][k*tot], 1, &physvals[0], 1);       
-                    for(int i = 0; i < tot; i++)
+                    
+                    for(int i = 0; i < coords[0].size(); i++)
                     {
-                        Array<OneD, NekDouble> coll1(2);
-                        Array<OneD, NekDouble> coll2(2);
-                        coll1[0] = coords[0][i];
-                        coll1[1] = coords[1][i];
-                        LocCoordToLocCollapsed(coll1, coll2);
+                        coll[0] = coords[0][i];
+                        coll[1] = coords[1][i];
+                        out_d1[k+i*neq] = v_PhysEvaluate(  coll, physvals);
                         
-                        for (int j = 0; j < nq1; ++j)
-                        {
-                            wsp[j] = StdExpansion::BaryEvaluate<0>(
-                                                                   coll2[0], &physvals[0] + j * nq0);
-                        }
-                        out_d1[i+k*tot] =  StdExpansion::BaryEvaluate<1>(coll2[1], &wsp[0]); 
                     }
                 }
                 

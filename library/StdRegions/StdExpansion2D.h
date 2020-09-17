@@ -123,6 +123,10 @@ namespace Nektar
                                                                  bool doCheckCollDir0 = true,
                                                                  bool doCheckCollDir1 = true);
 
+            STD_REGIONS_EXPORT virtual Array< OneD, NekDouble > PhysEvaluateBasis(
+                                                                                  const Array<OneD, const Array<OneD, NekDouble> >coords, int mode);
+       
+
         protected:
 
             /** \brief This function evaluates the expansion at a single
@@ -159,6 +163,8 @@ namespace Nektar
 
             STD_REGIONS_EXPORT virtual Array<OneD, Array<OneD, NekDouble> > v_GetPhysEvalALL();
             
+
+
             STD_REGIONS_EXPORT virtual void v_PhysEvalBasisGrad(
                                                                 const Array<OneD, const Array<OneD, NekDouble> > coords, 
                                                                     

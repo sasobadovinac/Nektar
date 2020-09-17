@@ -1234,11 +1234,11 @@ namespace Nektar
         }
 
 
-        NekDouble StdExpansion::v_PhysEvaluateBasis(const Array<OneD, const NekDouble>& coords, int mode)
+        Array< OneD, NekDouble > StdExpansion::v_PhysEvaluateBasis(     const Array<OneD, const Array<OneD, NekDouble> >coords, int mode)
         {
             boost::ignore_unused(coords, mode);
             NEKERROR(ErrorUtil::efatal, "Method does not exist for this shape");
-            return 0;
+            return NullNekDouble1DArray;
         }
 
 

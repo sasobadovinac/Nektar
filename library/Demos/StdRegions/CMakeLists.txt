@@ -42,6 +42,7 @@ ADD_NEKTAR_TEST(StdInterpDeriv_Prism_Mod_P7_Q8)
 ADD_NEKTAR_TEST(StdInterpDeriv_Prism_Orth_P7_Q8)
 ADD_NEKTAR_TEST(StdInterpDeriv_Hex_Orth_P7_Q8)
 ADD_NEKTAR_TEST(StdInterpDeriv_Hex_Mod_P7_Q8)
+ADD_NEKTAR_TEST(StdInterpDeriv_Tet_Orth_P7_Q8)
 
 # interpolation tests for derivatives of basis.
 ADD_NEKTAR_TEST(StdInterpDerivBasis_Quad_Lagrange_P6_Q7)

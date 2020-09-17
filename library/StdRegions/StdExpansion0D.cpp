@@ -109,6 +109,27 @@ namespace Nektar
             return StdExpansion::BaryEvaluate<0>(Lcoord[0], &physvals[0]);
         }
 
+
+        //slow version: uses stored arrays: m_physevalall
+        Array< OneD, NekDouble> StdExpansion0D::v_PhysEvaluateBasis(
+                                                 const Array<OneD, const Array<OneD, NekDouble> >coords, int mode)
+        {
+
+            int tot = GetTotPoints();
+   
+            Array<OneD, NekDouble> physall(tot), ret(coords[0].size());
+            
+            Vmath::Vcopy(tot, &m_physevalall[0][mode*tot], 1, &physall[0], 1);
+            for(int i = 0; i < coords[0].size(); i++)
+            {
+                Array<OneD, NekDouble> ctemp(1);
+                ctemp[0] = coords[0][i];
+                
+                ret[i] = v_PhysEvaluate(ctemp, physall);
+            }
+            return ret;
+        }
+
         void StdExpansion0D::v_PhysEvalBasisGrad(
                                                  const Array<OneD, const Array<OneD, NekDouble> >coords,
                                                  Array<OneD, NekDouble> &out_eval,                    
@@ -116,16 +137,11 @@ namespace Nektar
                                                  Array<OneD, NekDouble> &out_d1,
                                                  Array<OneD, NekDouble> &out_d2)
         {
-            boost::ignore_unused(out_d1, out_d2);
+            boost::ignore_unused(out_d0, out_d1, out_d2);
             int tot = GetTotPoints();
-                
+   
             Array<OneD, NekDouble> physall(tot);
-
-            const int nq1 = m_base[1]->GetNumPoints();
-            const int nq2 = m_base[2]->GetNumPoints();
-
             int neq = m_ncoeffs;
-            Array<OneD, NekDouble> wsp1(nq1 * nq2), wsp2(nq2);
 
 
             if(out_eval.size() > 0)
@@ -133,36 +149,16 @@ namespace Nektar
                 for(int k = 0; k < neq; k++)
                 {
                     Vmath::Vcopy(tot, &m_physevalall[0][k*tot], 1, &physall[0], 1);
-                    for(int i = 0; i < tot; i++)
+                    for(int i = 0; i < coords[0].size(); i++)
                     {
                         Array<OneD, NekDouble> ctemp(1);
                         ctemp[0] = coords[0][i];
                           
-                        out_eval[i+k*tot] = v_PhysEvaluate(ctemp, physall);              }
+                        out_eval[i+k*(coords[0].size())] = v_PhysEvaluate(ctemp, physall);
+                    }
                 }
                 
             } 
-
-
-            if(out_d0.size() > 0)
-            {    
-                
-                 
-                for(int k = 0; k < neq; k++)
-                {
-                    Vmath::Vcopy(tot, &m_physevalall[1][k*tot], 1, &physall[0], 1);
-                    for(int i = 0; i < tot; i++)
-                    {
-                        Array<OneD, NekDouble> ctemp(1);
-                        ctemp[0] = coords[0][i];
-                        
-                        out_d0[i+k*tot] = v_PhysEvaluate(ctemp, physall);              
-                    }
-                }
-              
-                
-            }            
-
         }
 	
     }//end namespace

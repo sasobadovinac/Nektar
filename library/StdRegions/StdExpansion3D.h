@@ -154,6 +154,10 @@ namespace Nektar
                 v_GetEdgeInteriorToElementMap(tid,maparray,signarray,traceOrient);
             }
 
+            STD_REGIONS_EXPORT virtual Array< OneD, NekDouble> PhysEvaluateBasis(
+                                                                const Array<OneD, const Array<OneD, NekDouble> >coords, int mode);
+
+
         protected:
 
             /** \brief This function evaluates the expansion at a single
@@ -223,6 +227,8 @@ namespace Nektar
             STD_REGIONS_EXPORT virtual int v_GetEdgeNcoeffs(const int i) const;
 
             STD_REGIONS_EXPORT virtual Array<OneD, Array<OneD, NekDouble> >v_GetPhysEvalALL();
+
+
 
             STD_REGIONS_EXPORT void v_PhysEvalBasisGrad(
       const Array<OneD, const Array<OneD, NekDouble> >coords,
