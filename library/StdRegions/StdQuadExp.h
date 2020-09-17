@@ -153,11 +153,6 @@ namespace Nektar
             STD_REGIONS_EXPORT virtual void v_LocCoordToLocCollapsed(
                                                                      const Array<OneD, const NekDouble>& xi,
                                                                      Array<OneD, NekDouble>& eta);
-
-            STD_REGIONS_EXPORT virtual         Array< OneD, NekDouble > v_PhysEvaluateBasis(     
-                                                                                                         const Array<OneD, const Array<OneD, NekDouble> >coords, 
-                                                                                                         int mode);
-            
             
 
             STD_REGIONS_EXPORT virtual void v_FillMode(

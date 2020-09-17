@@ -910,25 +910,6 @@ namespace Nektar
             }
         }
 
-/**
-         * @brief This function evaluates the basis function mode @p mode at an array of
-         * points @p coords of the domain.
-         *
-         * This function uses barycentric interpolation with the tensor
-         * product separation of the basis function to improve performance.
-         *
-         * @param coord   The coordinate inside the standard region.
-         * @param mode    The mode number to be evaluated.
-         *
-         * @return The values of the basis function mode @p mode at @p coords.
-         */
-        Array< OneD, NekDouble> StdPyrExp::v_PhysEvaluateBasis(     
-                                        const Array<OneD, const Array<OneD, NekDouble> >coords, 
-                                        int mode)
-        {
-            return PhysEvaluateBasis(coords, mode);
-        }
-
         // Deprecated
         // NekDouble StdPyrExp::v_PhysEvaluateBasis(
         //     const Array<OneD, const NekDouble>& coords,

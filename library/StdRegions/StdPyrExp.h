@@ -212,12 +212,6 @@ namespace Nektar
                                        Array<OneD, NekDouble> &out_d1,
                                        Array<OneD, NekDouble> &out_d2);
 
-
-            STD_REGIONS_EXPORT virtual          Array< OneD, NekDouble > v_PhysEvaluateBasis(     
-                                                                                                         const Array<OneD, const Array<OneD, NekDouble> >coords, 
-                                                                                                         int mode);
-
-            
             //---------------------------------------
             // Helper functions
             //---------------------------------------

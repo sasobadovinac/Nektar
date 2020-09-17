@@ -123,8 +123,8 @@ namespace Nektar
                                                                  bool doCheckCollDir0 = true,
                                                                  bool doCheckCollDir1 = true);
 
-            STD_REGIONS_EXPORT virtual Array< OneD, NekDouble > PhysEvaluateBasis(
-                                                                                  const Array<OneD, const Array<OneD, NekDouble> >coords, int mode);
+            STD_REGIONS_EXPORT virtual Array< OneD, NekDouble > v_PhysEvaluateBasis(
+                                                                                  const Array<OneD, const Array<OneD, NekDouble> >coords, int mode) final;
        
 
         protected:
@@ -154,14 +154,14 @@ namespace Nektar
 
             STD_REGIONS_EXPORT virtual NekDouble v_PhysEvaluate(
                                                                 const Array<OneD, const NekDouble>& coords,
-                                                                const Array<OneD, const NekDouble>& physvals);
+                                                                const Array<OneD, const NekDouble>& physvals) override;
 
             STD_REGIONS_EXPORT virtual NekDouble v_PhysEvaluate(
                                                                 const Array<OneD, DNekMatSharedPtr>& I,
-                                                                const Array<OneD, const NekDouble> & physvals);
+                                                                const Array<OneD, const NekDouble> & physvals) override;
             
 
-            STD_REGIONS_EXPORT virtual Array<OneD, Array<OneD, NekDouble> > v_GetPhysEvalALL();
+            STD_REGIONS_EXPORT virtual Array<OneD, Array<OneD, NekDouble> > v_GetPhysEvalALL() final;
             
 
 
@@ -171,7 +171,7 @@ namespace Nektar
                                                                 Array<OneD, NekDouble>& out_eval,
                                                                 Array<OneD, NekDouble>& out_d0,                                        
                                                                 Array<OneD, NekDouble>& out_d1, 
-                                                                Array<OneD, NekDouble>& out_d2 = NullNekDouble1DArray) override;
+                                                                Array<OneD, NekDouble>& out_d2 = NullNekDouble1DArray) final;
 
             
             STD_REGIONS_EXPORT virtual void v_BwdTrans_SumFacKernel(
@@ -195,23 +195,23 @@ namespace Nektar
             STD_REGIONS_EXPORT virtual void v_LaplacianMatrixOp_MatFree(
                                                                         const Array<OneD, const NekDouble> &inarray,
                                                                         Array<OneD,       NekDouble> &outarray,
-                                                                        const StdRegions::StdMatrixKey &mkey);
+                                                                        const StdRegions::StdMatrixKey &mkey) final;
             STD_REGIONS_EXPORT virtual void v_HelmholtzMatrixOp_MatFree(
                                                                         const Array<OneD, const NekDouble> &inarray,
                                                                         Array<OneD,       NekDouble> &outarray,
-                                                                        const StdRegions::StdMatrixKey &mkey);
+                                                                        const StdRegions::StdMatrixKey &mkey) final;
 
         private:
 
 
 
             // Virtual Functions ----------------------------------------
-            virtual int v_GetShapeDimension() const
+            virtual int v_GetShapeDimension() const override
             {
                 return 2;
             }
 
-            virtual int v_GetCoordim(void)
+            virtual int v_GetCoordim(void) override
             {
                 return 2;
             }

@@ -147,7 +147,7 @@ namespace Nektar
         }
 
         //slow version: uses stored arrays: m_physevalall
-        Array< OneD, NekDouble > StdExpansion3D::PhysEvaluateBasis(
+        Array< OneD, NekDouble > StdExpansion3D::v_PhysEvaluateBasis(
                                                  const Array<OneD, const Array<OneD, NekDouble> >coords, int mode)
         {
             int tot = GetTotPoints();

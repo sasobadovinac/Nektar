@@ -150,11 +150,6 @@ namespace Nektar
             // Evaluations Methods
             //---------------------------
 
-
-            STD_REGIONS_EXPORT virtual   Array< OneD, NekDouble > v_PhysEvaluateBasis(
-                                                                                      const Array<OneD, const Array<OneD, NekDouble> >coords,              
-                                                                                      int mode);
-
             STD_REGIONS_EXPORT virtual void v_PhysEvalGrad(
                                                            const Array<OneD, const Array<OneD, NekDouble> >coords,
                                                            const Array<OneD, const NekDouble>& inarray,

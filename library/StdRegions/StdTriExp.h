@@ -158,12 +158,6 @@ namespace Nektar
                 const int               mode,
                 Array<OneD, NekDouble> &outarray);
             
-
-            STD_REGIONS_EXPORT virtual Array< OneD, NekDouble> v_PhysEvaluateBasis(     
-                                                                                                         const Array<OneD, const Array<OneD, NekDouble> >coords, 
-                                                                                                         int mode);
-            
-            
             // Deprecated: mode splitting ver
             /* STD_REGIONS_EXPORT virtual void v_PhysEvalBasisGradFast( */
             /*                                 const Array<OneD, const Array<OneD, NekDouble> >coords, */

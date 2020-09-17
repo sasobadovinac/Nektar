@@ -988,9 +988,9 @@ namespace Nektar
                 return v_PhysEvaluate(I,physvals);
             }
 
-            /** Deprecated
-             * @brief This function evaluates the basis function mode @p mode at a
-             * point @p coords of the domain.
+            /**
+             * @brief This function evaluates the basis function mode @p mode at an array of
+             * points @p coords of the domain.
              *
              * This function uses barycentric interpolation with the tensor
              * product separation of the basis function to improve performance.
@@ -998,10 +998,9 @@ namespace Nektar
              * @param coord   The coordinate inside the standard region.
              * @param mode    The mode number to be evaluated.
              *
-             * @return The value of the basis function @p mode at @p coords.
+             * @return The values of the basis function mode @p mode at @p coords.
              */
-            Array<OneD, NekDouble> PhysEvaluateBasis(
-                                                                             const Array<OneD, const Array<OneD, NekDouble> >coords, int mode)
+            Array<OneD, NekDouble> PhysEvaluateBasis(const Array<OneD, const Array<OneD, NekDouble> >coords, int mode)
 
             {
                 return v_PhysEvaluateBasis(coords, mode);

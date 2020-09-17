@@ -73,32 +73,32 @@ namespace Nektar
                                                                 Array<OneD, NekDouble> &out_d0,
                                                                 Array<OneD, NekDouble> &out_eval,
                                                                 Array<OneD, NekDouble> &out_d1 = NullNekDouble1DArray,
-                                                                Array<OneD, NekDouble> &out_d2 = NullNekDouble1DArray);
+                                                                Array<OneD, NekDouble> &out_d2 = NullNekDouble1DArray) final;
 
 
             STD_REGIONS_EXPORT virtual Array< OneD, NekDouble > v_PhysEvaluateBasis(
-                                                                                                 const Array<OneD, const Array<OneD, NekDouble> >coords, int mode) override;
+                                                                                                 const Array<OneD, const Array<OneD, NekDouble> >coords, int mode) final;
 
 
             STD_REGIONS_EXPORT virtual NekDouble v_PhysEvaluate(
                                                                 const Array<OneD, const NekDouble>& coords,
-                                                                const Array<OneD, const NekDouble>& physvals);
+                                                                const Array<OneD, const NekDouble>& physvals) final;
 
         private:
 
             // Virtual Functions ----------------------------------------
 
-            virtual int v_GetCoordim(void)
+            virtual int v_GetCoordim(void) override
             {
                 return 1;
             }
 
-            virtual int v_GetShapeDimension() const
+            virtual int v_GetShapeDimension() const override
             {
                 return 1;
             }
 
-            virtual int v_GetNtraces() const
+            virtual int v_GetNtraces() const override
             {
                 return 0;
             }
