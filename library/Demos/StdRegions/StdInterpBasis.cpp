@@ -99,7 +99,7 @@ int main(int argc, char *argv[])
     
     Array<OneD, NekDouble> physpts (nPts);
     Array<OneD, NekDouble> solpts (nPts);
-    NekDouble errL2, errLinf;
+    NekDouble errL2 = 0, errLinf = 0;
     // Separate modes 0 to nCoeffs
     for( int ii = 0 ; ii < nCoeffs; ii++)
     {
