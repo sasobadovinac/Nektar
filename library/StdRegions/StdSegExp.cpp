@@ -140,55 +140,6 @@ namespace Nektar
         }
 
 
-    Array<OneD, Array<OneD, NekDouble> >StdSegExp::v_GetPhysEvalALL()
-        {
-            
-            Array<OneD, Array<OneD, NekDouble> > ret(2);//            Array<OneD, DNekMatSharedPtr> rArr(3);
-            //            Array<TwoD, NekDouble> rArr(3);
-            NekDouble nq = GetTotPoints();
-           
-            //MemoryManager<DNekMat>::AllocateSharedPtr(m_ncoeffs,nq);
-            //MemoryManager<DNekMat>::AllocateSharedPtr(m_ncoeffs,nq);   
-            // MemoryManager<DNekMat>::AllocateSharedPtr(m_ncoeffs,nq);
-            //Array<OneD, Array<OneD, NekDouble> > temp_ret(4);
-            //          Array<OneD, NekDouble> tmp(totPts*m_ncoeffs);
-            //Array<OneD, NekDouble> tmpdx(totPts*m_ncoeffs);
-            //Array<OneD, NekDouble> tmpdy(totPts*m_ncoeffs);
-            
-            
-            ret[0] = Array<OneD, NekDouble> (nq*m_ncoeffs);
-            ret[1] = Array<OneD, NekDouble>(nq*m_ncoeffs);
-            //cout<<"\n npts = "<<nq<<"\n";
-            //cout<<"\nm_ncoeffs="<<m_ncoeffs;
-
-            //            cout<<"\nsize of ret="<<ret.size()<<" "<<ret[0].size();
-            for(int i = 0; i < m_ncoeffs; i++)
-            {
-                Array<OneD, NekDouble> tmp(nq);
-                           
-                Array<OneD, NekDouble> tmp2(nq);
-                             
-                v_FillMode(i, tmp);
-                Vmath::Vcopy(nq, tmp.data(), 1, &ret[0][i*nq], 1);  
-
-                PhysDeriv(tmp,  tmp2, NullNekDouble1DArray, NullNekDouble1DArray);       
-
-                Vmath::Vcopy(nq, tmp2.data(), 1, &ret[1][i*nq], 1);  
-
-            }
-            /*            cout<<"\n in physevalall:";
-            for(int i = 0; i<ret.size(); i++)    
-            {
-                cout<<" ret["<<i<<"]=   ";
-                for(int j = 0; j < ret[0].size(); j++)
-                {
-                    cout<<" "<<ret[i][j];
-
-                }
-                cout<<"\n";
-                }*/
-            return ret;
-        }        
 
 
 

@@ -1519,7 +1519,7 @@ namespace Nektar
 
                 for (int i = 0; i < nquad; i++)
                 {
-                    NekDouble xdiff = z[i] - coord;
+                    NekDouble xdiff = coord - z[i];
                     NekDouble pval = physvals[i];
                     /*
                      * (in this specific case) you actually 
@@ -1549,7 +1549,7 @@ namespace Nektar
                     denom += tmp;
                 }
 
-                NekDouble ret =  (numer1*numer2 - numer3*numer4) / pow(denom,2);
+                NekDouble ret =  (-numer1*numer2 + numer3*numer4) / pow(denom,2);
                 return ret;
             }
 
@@ -1568,31 +1568,6 @@ namespace Nektar
           /*   template<int DIR> */
           /*   inline NekDouble BaryEvaluateBasis(const NekDouble &coord, */
           /*                                      const int &mode) */
-          /*   { */
-          /*       const int nquad = m_base[DIR]->GetNumPoints(); */
-          /*       //const int nmodes = m_base[DIR]->GetNumModes(); */
-          /*       //           NekDouble val =  (m_base[DIR]->GetBdata())[mode]; */
-          /*       //                std::                cout<<"\n back to baryevaluatebasis mode="<<mode<<" nquad"<<nquad<<"nmodes="<<nmodes<<"\n\n"; */
-          /*       //Array<OneD, NekDouble> tmp(nquad); */
-          /*       //  Array<OneD, NekDouble> tmp2(2*nmodes*nquad); */
-          /*       //                Vmath::Vcopy(nquad, (m_base[DIR]->GetBdata())[mode], nquad, &tmp[0], 1); */
-          /*       //for(int k = 0; k < ; k++) */
-          /*       //    Vmath::Vcopy(nquad*nmodes*2, &(m_base[DIR]->GetBdata())[0],1, &tmp2[0], 1); */
-          /*       //  Vmath::Vcopy(nquad, &tmp2[2*mode*nquad], 1, &tmp[0], 1); */
-      
-          /*       //std::cout<<"\n in baryevalbasis:nmodes="<<nmodes<<" nquad="<<nquad<<" mode"<<mode<<"\n"; */
-          /*       //          std::          cout<<"\n getbdata:"; */
-          /*       //  Array<OneD,NekDouble> bdt = (m_base[DIR]->GetBdata()); */
-          /*       //        std::          cout<<"\n sz bdt = "<<bdt.size()<<"\n"; */
-
-          /* //          for(int i = 0; i<nmodes*nquad*2; i++) */
-          /* //  std::cout<<tmp2[i]<<" "; */
-          /* //std::cout<<"\n current physvals to pass to baryeval::"; */
-          /* //    for(int i = 0; i < nquad; i++) */
-          /* //        std::cout<<tmp[i]<<" "; */
-          /*       return BaryEvaluate<DIR>( */
-          /*                                coord, &(m_base[DIR]->GetBdata())[0]+nquad*mode); */
-          /*   } */
             /** Deprecated:
              * @brief This function evaluates the derivative of the basis function 
              * mode @p mode at a point @p coords of the domain in direction @dir.
@@ -1607,17 +1582,10 @@ namespace Nektar
             /* template<int DIR> */
             /* inline NekDouble BaryEvaluateDerivBasis(const NekDouble &coord, */
             /*                                    const int &mode) */
-            /* { */
-            /*     const int nquad = m_base[DIR]->GetNumPoints(); */
-            /*     return BaryEvaluateDeriv<DIR>( */
-            /*         coord, &(m_base[DIR]->GetBdata())[0] + nquad * mode); */
-            /* } */
+
         private:
 
-            STD_REGIONS_EXPORT virtual Array<OneD, Array< OneD, NekDouble> >        v_GetPhysEvalALL();/*
-            STD_REGIONS_EXPORT virtual Array< OneD, NekDouble> v_GetPhysEvalALLdx();
-            STD_REGIONS_EXPORT virtual Array< OneD, NekDouble> v_GetPhysEvalALLdy();
-            STD_REGIONS_EXPORT virtual Array< OneD, NekDouble> v_GetPhysEvalALLdz();*/
+            STD_REGIONS_EXPORT virtual Array<OneD, Array< OneD, NekDouble> >        v_GetPhysEvalALL();
 
             // Virtual functions
             STD_REGIONS_EXPORT virtual int v_GetNverts() const = 0;

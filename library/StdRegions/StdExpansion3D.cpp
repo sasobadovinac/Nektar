@@ -200,12 +200,6 @@ namespace Nektar
                 }
                 
             } 
-            /*            std::cout<<"\n\n out_eval\n";
-            for ( int i = 0; i < out_eval.size(); i++)
-                std::cout<<out_eval[i]<<" ";
-            std::cout<<"\n ***\n\n";
-            */
-
             if(out_d0.size() > 0)
             {    
                 
@@ -268,13 +262,6 @@ namespace Nektar
                     }
                 }
 
-
-                /*            std::cout<<"\n in grad: out_d2=\n";
-            for(int kk = 0; kk < out_d2.size(); kk++)
-                std::                cout<<out_d2[kk]<<" ";
-            std::            cout<<"\n ***\n";
-                */
-
             }
 
         }
@@ -300,12 +287,7 @@ namespace Nektar
                              
                 FillMode(i, tmp);
                 Vmath::Vcopy(nq, &tmp[0], 1, &ret[0][i*nq], 1);  
-                /*              std::cout<<"mode="<<i<<"\n";
-                {for(int ii = 0; ii < nq; ii++)
-                    std::cout<<ret[0][i*nq+ii]<<" ";
-                std::                cout<<"\n\n";
-                }
-*/
+
                 PhysDeriv(0, tmp, tmp2);
                 Vmath::Vcopy(nq, &tmp2[0], 1, &ret[1][i*nq], 1);  
 
@@ -314,16 +296,7 @@ namespace Nektar
 
                 PhysDeriv(2, tmp, tmp4);
                 Vmath::Vcopy(nq, &tmp4[0], 1, &ret[3][i*nq], 1);  
-                /*                if(i == 3)
-      \          {for(int ii = 0; ii < tmp4.size(); ii++)
-                    std::cout<<tmp4[ii]<<" ";
-                std::                cout<<"\n\n";exit(0);
-                }*/
-                //                 std::cout<<"\n\n all()";
-                //                 for ( int i = 0; i < ret[0].size(); i++)
-                     //  std::cout<<ret[0][i]<<" ";
-                 // std::cout<<"\n ***\n\n";
-
+                
             }
             return ret;
 
@@ -337,7 +310,6 @@ namespace Nektar
                                                  Array<OneD, NekDouble> &out_d1,
                                                  Array<OneD, NekDouble> &out_d2)
         {        
-            //int sz = GetTotPoints();
             const int nq0 = m_base[0]->GetNumPoints();
             const int nq1 = m_base[1]->GetNumPoints();
             const int nq2 = m_base[2]->GetNumPoints();
@@ -358,7 +330,6 @@ namespace Nektar
                     tmp[0] = coords[0][i];
                     tmp[1] = coords[1][i];
                     tmp[2] = coords[2][i];
-                    //                    LocCoordToLocCollapsed(tmp, eta);
                     eta = tmp;
                     const NekDouble *ptr = &inarray[0];
                     
@@ -390,7 +361,6 @@ namespace Nektar
                     tmp[0] = coords[0][i];
                     tmp[1] = coords[1][i];
                     tmp[2] = coords[2][i];
-                    //LocCoordToLocCollapsed(tmp, eta);
                     eta = tmp;
                     const NekDouble *ptr = &inarray[0];
                     
@@ -421,7 +391,6 @@ namespace Nektar
                     tmp[0] = coords[0][i];
                     tmp[1] = coords[1][i];
                     tmp[2] = coords[2][i];
-                    //                    LocCoordToLocCollapsed(tmp, eta);
                     eta = tmp;
                     const NekDouble *ptr = &inarray[0];
                     
@@ -437,10 +406,7 @@ namespace Nektar
                     }
                     
                     out_d2[i] =  StdExpansion::BaryEvaluateDeriv<2>(eta[2], &wsp2[0]);
-                    //                      std::                    cout<<out_d2[i]<<" ";
-                    
                 }
-                // std::cout<<"\n***\n";
                 
             }
         }

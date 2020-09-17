@@ -185,8 +185,6 @@ namespace Nektar
                                                         Array<OneD, NekDouble> &coords_0,
                                                         Array<OneD, NekDouble> &coords_1,
                                                         Array<OneD, NekDouble> &coords_2);
-
-
             
             // Deprecated
 

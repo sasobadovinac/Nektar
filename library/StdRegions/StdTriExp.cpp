@@ -587,10 +587,6 @@ namespace Nektar
                 Vmath::Vadd(nc, temp, 1, out_d1, 1, out_d1, 1);
              
             }
-            /*            cout<<"\n out_d0 from grad():\n";
-            for(int i = 0; i < out_d0.size(); i++)
-                cout<<out_d0[i]<<" ";
-            cout<<"\n";*/
         }
     
 
@@ -821,38 +817,6 @@ namespace Nektar
             }
         }
  
-        /*        NekDouble StdTriExp::v_PhysEvaluatedxBasis(
-                  const Array<OneD, const NekDouble>& coords,
-                  int mode)
-                  {
-                  Array<OneD, NekDouble> coll(2);
-                  LocCoordToLocCollapsed(coords, coll);
- 
-                  int tot = GetTotPoints(); 
-                  // From mode we need to determine mode0 and mode1 in the (p,q)
-                  // direction. mode1 can be directly inferred from mode.
-                  const int    nm1    = m_base[1]->GetNumModes();
-                  const double c      = 1 + 2*nm1;
-                  const int    mode0  = floor(0.5*(c - sqrt(c*c - 8*mode)));
-                  //            Array<OneD, NekDouble> physvals(tot);
-            
-                  if (mode == 1 &&
-                  m_base[0]->GetBasisType() == LibUtilities::eModified_A)
-                  {
-                  // Account for collapsed vertex.
-                  //                Vmath::Vcopy(tot, &m_physevalall[1][tot], 1, &physvals[0],1);
-                  Array<OneD, NekDouble> tmp(tot, &m_physevalall[1][mode][0]);
-                  return v_PhysEvaluate(coll, tmp);   
-            
-                  }
-                  else{
-                  //remove vcopy
-                  //Vmath::Vcopy(tot, &m_physevalall[1][mode0*tot], 1, &physvals[0],1);      
-                  Array<OneD, NekDouble> tmp(tot, &m_physevalall[1][mode0][0]);           
-                  return v_PhysEvaluate(coll, tmp);
-                  }
-                  }
-        */
        
         /**
          * @brief This function evaluates the basis function mode @p mode at an array of
@@ -873,34 +837,10 @@ namespace Nektar
             return PhysEvaluateBasis(coords, mode);
         }
 
-        // Deprecated
+        // Deprecated : mode splitting version
         // NekDouble StdTriExp::v_PhysEvaluateBasis(
         //                                          const Array<OneD, const NekDouble>& coords,
         //                                          int mode)
-        // {
-        //     Array<OneD, NekDouble> coll(2);
-        //     LocCoordToLocCollapsed(coords, coll);
-        //     //coll=coords;
-        //     // From mode we need to determine mode0 and mode1 in the (p,q)
-        //     // direction. mode1 can be directly inferred from mode.
-        //     const int    nm1    = m_base[1]->GetNumModes();
-        //     cout<<"\n nm1="<<nm1<<"\n";
-        //     const double c      = 1 + 2*nm1;
-        //     const int    mode0  = floor(0.5*(c - sqrt(c*c - 8*mode)));
-        //     cout<<"\n mode0 = "<<mode0<<"\n";
-        //     if (mode == 1 &&
-        //         m_base[0]->GetBasisType() == LibUtilities::eModified_A)
-        //     {
-        //         // Account for collapsed vertex.
-        //         return StdExpansion::BaryEvaluateBasis<1>(coll[1], 1);
-        //     }
-        //     else
-        //     {
-        //         return
-        //             StdExpansion::BaryEvaluateBasis<0>(coll[0], mode0) *
-        //             StdExpansion::BaryEvaluateBasis<1>(coll[1], mode);
-        //     }
-        // }
 
         int StdTriExp::v_GetNverts() const
         {

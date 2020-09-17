@@ -101,17 +101,12 @@ int main(int argc, char *argv[])
     Array<OneD, NekDouble> solpts (nPts);
     NekDouble errL2, errLinf;
     // Separate modes 0 to nCoeffs
-    //int ctr = 0;
     for( int ii = 0 ; ii < nCoeffs; ii++)
     {
         Vmath::Vcopy(nPts, &sol[nPts*ii], 1, &solpts[0], 1 );
         
         Vmath::Vcopy(nPts, &phys[nPts*ii], 1, &physpts[0], 1 );
-        /*              for (int kk = 0; kk < solpts.size(); kk++)
-        {        cout<<"\n sol["<<kk<<"]="<<solpts[kk]<<"\t phys["<<ctr<<"]="<<physpts[kk]<<"\t physout["<<ctr<<"]="<<phys[ctr];
-               ctr++;
-            }
-        */
+
         errL2 += E->L2(solpts, physpts);
         errLinf += E->Linf(solpts, physpts);
         

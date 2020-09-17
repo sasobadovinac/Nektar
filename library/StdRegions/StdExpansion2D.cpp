@@ -182,7 +182,6 @@ namespace Nektar
                     Array<OneD, NekDouble> tmp(2);
                     tmp[0] = coords[0][i];
                     tmp[1] = coords[1][i];
-                    //                    LocCoordToLocCollapsed(tmp, collcoords);           
                     collcoords = tmp;
                 
                     Array<OneD, NekDouble> wsp(nq1);

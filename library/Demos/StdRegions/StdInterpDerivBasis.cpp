@@ -53,15 +53,20 @@ int main(int argc, char *argv[])
 
     Array<OneD, Array<OneD, NekDouble>> coords = demo.GetCoords(E);
 
-    int  nPts = coords[0].size();//E->GetTotPoints();
+    int  nPts = coords[0].size();
     Array<OneD, NekDouble> sol(nPts*nCoeffs), 
         hold1(nPts),
         temp(nPts), 
         temp1(nPts), 
         temp2(nPts), 
-        out_eval(nPts*nCoeffs),out_eval2(nPts*nCoeffs),out_eval1(nPts*nCoeffs), phys(nPts*nCoeffs);
-    Array<OneD, NekDouble> sol1(nPts*nCoeffs), phys1(nCoeffs*nPts);
-    Array<OneD, NekDouble> sol2(nPts*nCoeffs), phys2(nPts*nCoeffs);
+        out_eval(nPts*nCoeffs),
+        out_eval2(nPts*nCoeffs),
+        out_eval1(nPts*nCoeffs), 
+        phys(nPts*nCoeffs),
+        sol1(nPts*nCoeffs), 
+        phys1(nCoeffs*nPts),
+        sol2(nPts*nCoeffs), 
+        phys2(nPts*nCoeffs);
     NekDouble errL2 = 0, errLinf = 0;
     
     if(dimension>2)
@@ -145,23 +150,10 @@ int main(int argc, char *argv[])
         Vmath::Vcopy(nPts, &sol2[0]+ii, nCoeffs, &tmp2[0], 1 );
         errL2 += E->L2(tmp, tmp2);
         errLinf += E->Linf(tmp, tmp2);
-        //        cout<<"\n at coeff="<<ii<<" L2="<<errL2<<"errLinf="<<errLinf<<"\n";
         
         
     }
-    /*    
-cout<<"\n phys2:\n";
-        for(int i = 0; i < out_eval1.size(); i++)
-            cout<<out_eval1[i]<<" ";
-        cout<<"\n sol2:\n";
-        for(int i = 0; i < out_eval2.size(); i++)
-            cout<<out_eval2[i]<<" ";
-        
-               cout<<"\n*****\n";
-        for(int ll = 0;  ll <phys.size(); ll++)
-            cout<<"fast="<<phys2[ll]<<" slow="<<sol2[ll]<<" diff = "<<scientific<<phys2[ll]-sol2[ll]<<"\n";
-    */
-
+    
     cout << "L infinity error : " << scientific << errLinf << endl;
     cout << "L 2 error        : " << scientific << errL2 << endl;
     

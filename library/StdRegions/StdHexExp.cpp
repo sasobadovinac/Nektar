@@ -684,35 +684,10 @@ namespace Nektar
         }
 
 
-        // Deprecated
+        // Deprecated: mode-splitting ver
         // NekDouble StdHexExp::v_PhysEvaluateBasis(
         //     const Array<OneD, const NekDouble>& coords,
         //     int mode)
-        // {
-        //     ASSERTL2(coords[0] > -1 - NekConstants::kNekZeroTol,
-        //              "coord[0] < -1");
-        //     ASSERTL2(coords[0] <  1 + NekConstants::kNekZeroTol,
-        //              "coord[0] >  1");
-        //     ASSERTL2(coords[1] > -1 - NekConstants::kNekZeroTol,
-        //              "coord[1] < -1");
-        //     ASSERTL2(coords[1] <  1 + NekConstants::kNekZeroTol,
-        //              "coord[1] >  1");
-        //     ASSERTL2(coords[2] > -1 - NekConstants::kNekZeroTol,
-        //              "coord[2] < -1");
-        //     ASSERTL2(coords[2] <  1 + NekConstants::kNekZeroTol,
-        //              "coord[2] >  1");
-
-        //     const int nm0 = m_base[0]->GetNumModes();
-        //     const int nm1 = m_base[1]->GetNumModes();
-        //     const int mode2 = mode / (nm0 * nm1);
-        //     const int mode1 = (mode - mode2 * nm0 * nm1) / nm0;
-        //     const int mode0 = (mode - mode2 * nm0 * nm1) % nm0;
-
-        //     return
-        //         StdExpansion::BaryEvaluateBasis<0>(coords[0], mode0) *
-        //         StdExpansion::BaryEvaluateBasis<1>(coords[1], mode1) *
-        //         StdExpansion::BaryEvaluateBasis<2>(coords[2], mode2);
-        // }
 
         int StdHexExp::v_GetNverts() const
         {
@@ -1272,10 +1247,6 @@ namespace Nektar
         {
             
             PhysTensorDerivFast( coords, inarray, out_d0, out_d1, out_d2);            
-            //            cout<<"\n physderivfast returns:\n";
-            //            for(int i = 0; i < out_d2.size() ; i++)
-            //    cout<<out_d2[i]<<" ";
-            //cout<<"\n\n";
         }
     
 
@@ -1287,66 +1258,6 @@ namespace Nektar
         //                                     Array<OneD, NekDouble> &out_d1,
         //                                     Array<OneD, NekDouble> &out_d2
         //                                          )
-        // {
-            
-        //     int sz = coords[0].size();
-        //     int neq = GetNcoeffs();
-        //     int npt = GetTotPoints();
-   
-        //     if(out_eval.size() > 0)
-        //     {    
-        //         for(int k = 0; k < neq; k++)
-        //         {
-        //             for(int i = 0; i < sz; i++)
-        //             {
-        //                 Array<OneD, NekDouble> tmp(3);
-        //                 tmp[0] = coords[0][i];
-        //                 tmp[1] = coords[1][i];
-        //                 tmp[2] = coords[2][i];
-
-        //                 out_eval[k+i*neq] = PhysEvaluateBasis(tmp, k);
-
-        //             }
-        
-        //         }
-        
-        //     }
-        //     for(int i = 0; i < neq; i++)
-        //     {
-        //         // fill mode i for all quad points
-        //         Array<OneD, NekDouble> tmp3(npt), tmp2, tmp4, tmp5;
-        //         FillMode(i, tmp3);
-        //         if(out_d0.size()>0)
-        //         {
-        //             tmp2 = Array<OneD, NekDouble>(sz);
-        //         }
-        //         if(out_d1.size()>0)
-        //         {
-        //             tmp4 = Array<OneD, NekDouble>(sz);
-        //         }
-        //         if(out_d2.size()>0)
-        //         {
-        //             tmp5 = Array<OneD, NekDouble>(sz);
-        //         }
-        //         v_PhysEvalGrad(coords, tmp3, tmp2, tmp4, tmp5);
-
-        //         if(out_d0.size()>0)
-        //         {
-        //             Vmath::Vcopy(sz, &tmp2[0], 1, &out_d0[i], neq);
-        //         }
-        //         if(out_d1.size()>0)
-        //         {
-        //             Vmath::Vcopy(sz, &tmp4[0], 1, &out_d1[i], neq);
-        //         }
-        //         if(out_d2.size()>0)
-        //         {
-        //             Vmath::Vcopy(sz, &tmp5[0], 1, &out_d2[i], neq);
-                   
-        //         }
-
-                
-        //     }
-        // }
 
         /**
          * Only for basis type Modified_A or GLL_LAGRANGE in all directions.

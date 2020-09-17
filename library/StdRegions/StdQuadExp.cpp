@@ -165,60 +165,13 @@ namespace Nektar
         }
     
 
-        // Deprecated
+        // Deprecated: mode splitting ver
         // void StdQuadExp::v_PhysEvalBasisGradFast(
         //                                          const Array<OneD, const Array<OneD, NekDouble> >coords,
         //                                          Array<OneD, NekDouble> &out_eval,                    
         //                                          Array<OneD, NekDouble> &out_d0,
         //                                          Array<OneD, NekDouble> &out_d1,
-        //                                          Array<OneD, NekDouble> &out_d2
-        //                                          )
-        // {
-        //     boost::ignore_unused(out_d2);
-
-        //     int sz = coords[0].size();
-        //     int neq = GetNcoeffs();
-        //     int npt = GetTotPoints();
-
-        //     if(out_eval.size() > 0)
-        //     {    
-
-        //         Array<OneD, NekDouble> tmp(2);
-                
-        //         for(int k = 0; k < neq; k++)
-        //         {
-        //             for(int i = 0; i < sz; i++)
-        //             {
-                        
-        //                 tmp[0] = coords[0][i];
-        //                 tmp[1] = coords[1][i];
-                        
-                        
-        //                 out_eval[k +i*neq] = PhysEvaluateBasis(tmp, k);
-        //             }
-        //         }
-        //     }
-        //     for(int i = 0; i < neq; i++)
-        //     {
-        //         // fill mode i for all quad points
-        //         Array<OneD, NekDouble> tmp3(npt), tmp2, tmp4;
-        //         FillMode(i, tmp3);
-
-        //         if(out_d0.size()>0)
-        //         {
-        //             tmp2 = Array<OneD, NekDouble>(sz);
-        //         }
-        //         if(out_d1.size()>0)
-        //         {
-        //             tmp4 = Array<OneD, NekDouble>(sz);
-        //         }
-        //         v_PhysEvalGrad(coords,tmp3,tmp2,tmp4);
-        //         Vmath::Vcopy(sz, &tmp2[0], 1, &out_d0[i], neq);
-        //         Vmath::Vcopy(sz, &tmp4[0], 1, &out_d1[i], neq);
-
-        //     }
-        // }
-
+        //                                          Array<OneD, NekDouble> &out_d2)
 
         ////////////////
         // Transforms //

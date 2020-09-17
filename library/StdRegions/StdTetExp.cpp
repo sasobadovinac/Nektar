@@ -975,7 +975,7 @@ namespace Nektar
             
             Array<OneD, NekDouble> temp(Qtot);
 
-            // eta_i = coords[i]
+            // eta_i = ci
 
             // calculate 2.0/((1-eta_1)(1-eta_2)) Out_dEta0
             
@@ -991,11 +991,6 @@ namespace Nektar
                 // out_dxi0 = 4.0/((1-eta_1)(1-eta_2)) Out_dEta0
                 Vmath::Smul(Qtot,2.0,out_dEta0,1,out_d0,1);
             }
-            /*            cout<<"\n d0:\n";
-            for(int k = 0; k < Qtot; k++)
-            {
-                cout<<out_d0[k]<<" ";
-                }*/
             if (Do_1||Do_2)
             {
                 Array<OneD, NekDouble> Fac0(Qtot);
@@ -1011,7 +1006,6 @@ namespace Nektar
                 {
                     Fac0[k] = 2.0/(1.0-c2[k]);
                 }
-            cout<<"\n Qtot = "<<Qtot<<"\n\n";
 
                 Vmath::Vmul(Qtot, Fac0, 1, out_dEta1, 1, out_dEta1, 1); 
 
@@ -1045,7 +1039,7 @@ namespace Nektar
         }
         
         
-        // Deprecated
+        // Deprecated: mode splitting ver
         // void StdTetExp::v_PhysEvalBasisGradFast(
         //                                     const Array<OneD, const Array<OneD, NekDouble> >coords,
         //                                     Array<OneD, NekDouble> &out_eval,                    
@@ -1053,246 +1047,11 @@ namespace Nektar
         //                                     Array<OneD, NekDouble> &out_d1,
         //                                     Array<OneD, NekDouble> &out_d2
         //                                          )
-        // {
-        //     int sz = coords[0].size();
-        //     const int nq0 = m_base[0]->GetNumPoints();
-        //     const int nq1 = m_base[1]->GetNumPoints();
-        //     const int nq2 = m_base[2]->GetNumPoints();
-        //     int neq = LibUtilities::StdTetData::
-        //         getNumberOfCoefficients(nq0, nq1, nq2);
-            
-        //     if(out_eval.size() > 0)
-        //     {    
-        //         for(int k = 0; k < neq; k++)
-        //         {
-        //             for(int i = 0; i < sz; i++)
-        //             {
-        //                 Array<OneD, NekDouble> tmp(3);
-        //                 tmp[0] = coords[0][i];
-        //                 tmp[1] = coords[1][i];
-        //                 tmp[2] = coords[2][i];
 
-        //                 out_eval[i+k*sz] = PhysEvaluateBasis(tmp, k);
-
-        //             }
-        
-        //         }
-        
-        //     }
-
-        //     if(out_d0.size() > 0)
-        //     {
-                
-        //         const int nm1 = m_base[1]->GetNumModes();
-        //         const int nm2 = m_base[2]->GetNumModes();
-                
-        //         const int b = 2 * nm2 + 1;
-
-        //         for(int k = 0; k < neq; k++)
-        //         {
-                 
-        //             const int mode0 = floor(0.5 * (b - sqrt(b * b - 8.0 * k / nm1)));
-        //             const int tmp   =
-        //                 k - nm1*(mode0 * (nm2-1) + 1 - (mode0 - 2)*(mode0 - 1) / 2);
-        //             const int mode1 = tmp / (nm2 - mode0);
-        //             const int mode2 = tmp % (nm2 - mode0);
-                    
-        //             for(int i = 0; i < sz; i++)
-        //             {
-        //                 Array<OneD, NekDouble> coll1(3);
-        //                 Array<OneD, NekDouble> coll2(3);
-        //                 coll1[0] = coords[0][i];
-        //                 coll1[1] = coords[1][i];
-        //                 coll1[2] = coords[2][i];
-        //                 LocCoordToLocCollapsed(coll1, coll2);
-                        
-        //                 out_d0[i + k*sz] = StdExpansion::BaryEvaluateDerivBasis<0>(coll1[0], mode0) *
-        //                     StdExpansion::BaryEvaluateBasis<1>(coll1[1], mode1) *
-        //                     StdExpansion::BaryEvaluateBasis<2>(coll1[2], mode2);
-
-        //             }
-        //         }
-        //     }
-            
-
-        //     if(out_d1.size() > 0)
-        //     {
-                
-        //         const int nm1 = m_base[1]->GetNumModes();
-        //         const int nm2 = m_base[2]->GetNumModes();
-                
-        //         const int b = 2 * nm2 + 1;
-        //         for(int k = 0; k < neq; k++)
-        //         {
-                 
-        //             const int mode0 = floor(0.5 * (b - sqrt(b * b - 8.0 * k / nm1)));
-        //             const int tmp   =
-        //                 k - nm1*(mode0 * (nm2-1) + 1 - (mode0 - 2)*(mode0 - 1) / 2);
-        //             const int mode1 = tmp / (nm2 - mode0);
-        //             const int mode2 = tmp % (nm2 - mode0);
-                    
-        //             for(int i = 0; i < sz; i++)
-        //             {
-        //                 Array<OneD, NekDouble> coll1(3);
-        //                 Array<OneD, NekDouble> coll2(3);
-        //                 coll1[0] = coords[0][i];
-        //                 coll1[1] = coords[1][i];
-        //                 coll1[2] = coords[2][i];
-        //                 LocCoordToLocCollapsed(coll1, coll2);
-                        
-        //                 out_d0[i + k*sz] = StdExpansion::BaryEvaluateBasis<0>(coll1[0], mode0) *
-        //                     StdExpansion::BaryEvaluateDerivBasis<1>(coll1[1], mode1) *
-        //                     StdExpansion::BaryEvaluateBasis<2>(coll1[2], mode2);
-
-        //             }
-        //         }
-        //     }
-        //     if(out_d2.size() > 0)
-        //     {
-                
-        //         const int nm1 = m_base[1]->GetNumModes();
-        //         const int nm2 = m_base[2]->GetNumModes();
-                
-        //         const int b = 2 * nm2 + 1;
-        //         for(int k = 0; k < neq; k++)
-        //         {
-                 
-        //             const int mode0 = floor(0.5 * (b - sqrt(b * b - 8.0 * k / nm1)));
-        //             const int tmp   =
-        //                 k - nm1*(mode0 * (nm2-1) + 1 - (mode0 - 2)*(mode0 - 1) / 2);
-        //             const int mode1 = tmp / (nm2 - mode0);
-        //             const int mode2 = tmp % (nm2 - mode0);
-                    
-        //             for(int i = 0; i < sz; i++)
-        //             {
-        //                 Array<OneD, NekDouble> coll1(3);
-        //                 Array<OneD, NekDouble> coll2(3);
-        //                 coll1[0] = coords[0][i];
-        //                 coll1[1] = coords[1][i];
-        //                 coll1[2] = coords[2][i];
-        //                 LocCoordToLocCollapsed(coll1, coll2);
-                        
-        //                 out_d0[i + k*sz] = StdExpansion::BaryEvaluateBasis<0>(coll1[0], mode0) *
-        //                     StdExpansion::BaryEvaluateBasis<1>(coll1[1], mode1) *
-        //                     StdExpansion::BaryEvaluateDerivBasis<2>(coll1[2], mode2);
-
-        //             }
-        //         }
-        //     }
-            
-            
-        // }
-    
-
-        // Deprecated
+        // Deprecated: mode splitting ver
         // NekDouble StdTetExp::v_PhysEvaluateBasis(
         //     const Array<OneD, const NekDouble>& coords,
         //     int mode)
-        // {
-        //     Array<OneD, NekDouble> coll(3);
-        //     LocCoordToLocCollapsed(coords, coll);
-
-        //     const int nm0 = m_base[0]->GetNumModes();
-        //     const int nm1 = m_base[1]->GetNumModes();
-        //     const int nm2 = m_base[2]->GetNumModes();
-
-        //     /*const int b = 2 * nm2 + 1;
-        //     const int mode0 = floor(0.5 * (b - sqrt(b * b - 8.0 * mode / nm1)));
-        //     const int tmp   =
-        //         mode - nm1*(mode0 * (nm2-1) + 1 - (mode0 - 2)*(mode0 - 1) / 2);
-        //     const int mode1 = tmp / (nm2 - mode0);
-        //     const int mode2 = tmp % (nm2 - mode0);
-            
-        //     if (m_base[0]->GetBasisType() == LibUtilities::eModified_A)
-        //     {
-        //         // Handle the collapsed vertices and edges in the modified
-        //         // basis.
-        //         if (mode == 1)
-        //         {
-        //             // Collapsed top vertex
-        //             return StdExpansion::BaryEvaluateBasis<2>(coll[2], 1);
-        //         }
-        //         else if (mode0 == 0 && mode2 == 1)
-        //         {
-        //             return
-        //                 StdExpansion::BaryEvaluateBasis<1>(coll[1], 0) *
-        //                 StdExpansion::BaryEvaluateBasis<2>(coll[2], 1);
-        //         }
-        //         else if (mode0 == 1 && mode1 == 1 && mode2 == 0)
-        //         {
-        //             return
-        //                 StdExpansion::BaryEvaluateBasis<0>(coll[0], 0) *
-        //                 StdExpansion::BaryEvaluateBasis<1>(coll[1], 1);
-        //         }
-        //     }
-
-        //     return
-        //         StdExpansion::BaryEvaluateBasis<0>(coll[0], mode0) *
-        //         StdExpansion::BaryEvaluateBasis<1>(coll[1], mode1) *
-        //         StdExpansion::BaryEvaluateBasis<2>(coll[2], mode2);
-        //     */
-        
-        //     int mode0 = 0, mode1 = 0, mode2 = 0;
-
-        //     // Very suboptimal lookup for rather more complex tet indices.
-        //     for (mode0 = 0; mode0 < nm0; ++mode0)
-        //     {
-        //         for (mode1 = 0; mode1 < nm1 - mode0; ++mode1)
-        //         {
-        //             for (mode2 = 0; mode2 < nm2 - mode0 - mode1; ++mode2)
-        //             {
-        //                 if (mode == GetMode(mode0, mode1, mode2))
-        //                 {
-        //                     break;
-        //                 }
-        //             }
-        //         }
-        //     }
-
-        //     // Lookup for mode2 index in basis
-        //     int i, j, k, cnt = 0;
-        //     for (i = 0; i < nm2; ++i)
-        //     {
-        //         for (j = 0; j < nm2 - i; ++j)
-        //         {
-        //             for (k = 0; k < nm2 - i - j; ++k, ++cnt)
-        //             {
-        //                 if (i == mode0 && j == mode1 && k == mode2)
-        //                 {
-        //                     break;
-        //                 }
-        //             }
-        //         }
-        //     }
-        //     if(mode == 1)
-        //     {
-        //         // Collapsed top vertex
-        //         double ret =  
-        //             (StdExpansion::BaryEvaluateBasis<2>(coll[2], 1));
-        //         return ret;
-        //     }
-        //     else if (mode0 == 0 &&  mode2 == 1)
-        //     {
-        //         return
-        //             StdExpansion::BaryEvaluateBasis<1>(coll[1], 0) *
-        //             StdExpansion::BaryEvaluateBasis<2>(coll[2], 1);
-        //     }
-        //     else if (mode0 == 1 && mode1 == 1 && mode2 == 0)
-        //     {
-        //        return
-        //            StdExpansion::BaryEvaluateBasis<0>(coll[0], 0) *
-        //            StdExpansion::BaryEvaluateBasis<1>(coll[1], 1);
-        //     }
-        //     else
-        //     {
-        //         return
-        //             StdExpansion::BaryEvaluateBasis<0>(coll[0], mode0) *
-        //             StdExpansion::BaryEvaluateBasis<1>(coll[1], mode1) *
-        //             StdExpansion::BaryEvaluateBasis<2>(coll[2], mode2);
-        //     }
-
-
-        // }
 
         /**
          * @brief This function evaluates the basis function mode @p mode at an array of

@@ -775,7 +775,7 @@ namespace Nektar
 
 
         
-        // deprecate
+        // deprecated
         // void StdPyrExp::v_PhysEvalBasisGradFast(
         //                                     const Array<OneD, const Array<OneD, NekDouble> >coords,
         //                                     Array<OneD, NekDouble> &out_eval,                    
@@ -783,199 +783,6 @@ namespace Nektar
         //                                     Array<OneD, NekDouble> &out_d1,
         //                                     Array<OneD, NekDouble> &out_d2
         //                                          )
-        // {
-        //     int sz = coords[0].size();
-        //     const int nm0 = m_base[0]->GetNumModes();
-        //     const int nm1 = m_base[1]->GetNumModes();
-        //     const int nm2 = m_base[2]->GetNumModes();
-
-
-        //     int neq = GetNcoeffs();
-            
-        //     if(out_eval.size() > 0)
-        //     {    
-        //         for(int k = 0; k < neq; k++)
-        //         {
-        //             for(int i = 0; i < sz; i++)
-        //             {
-        //                 Array<OneD, NekDouble> tmp(3);
-        //                 tmp[0] = coords[0][i];
-        //                 tmp[1] = coords[1][i];
-        //                 tmp[2] = coords[2][i];
-
-        //                 out_eval[i+k*sz] = PhysEvaluateBasis(tmp, k);
-
-        //             }
-        
-        //         }
-        
-        //     }
-
-        //     if(out_d0.size() > 0)
-        //     {
-        //         for(int k = 0; k < neq; k++)
-        //         {
-                    
-        //             int mode = k;
-        //             int mode0 = 0, mode1 = 0, mode2 = 0, cnt = 0;
-                    
-        //             bool found = false;
-        //             for (mode0 = 0; mode0 < nm0; ++mode0)
-        //             {
-        //                 for (mode1 = 0; mode1 < nm1; ++mode1)
-        //                 {
-        //                     int maxpq = max(mode0, mode1);
-        //                     for (mode2 = 0; mode2 < nm2 - maxpq; ++mode2, ++cnt)
-        //                     {
-        //                         if (cnt == mode)
-        //                         {
-        //                             found = true;
-        //                             break;
-        //                         }
-        //                     }
-                            
-        //                     if (found)
-        //                     {
-        //                         break;
-        //                     }
-        //                 }
-                        
-        //                 if (found)
-        //                 {
-        //                     break;
-        //                 }
-                        
-        //                 for (int j = nm1; j < nm2; ++j)
-        //                 {
-        //                     int ijmax = max(mode0, j);
-        //                     mode2 += nm2 - ijmax;
-        //                 }
-        //             }
-                    
-        //             for(int i = 0; i < sz; i++)
-        //             {
-                        
-        //                 out_d0[i + k*sz] =  StdExpansion::BaryEvaluateDerivBasis<0>(coords[0][i], mode0) *
-        //                     StdExpansion::BaryEvaluateBasis<1>(coords[1][i], mode1) *
-        //                     StdExpansion::BaryEvaluateBasis<2>(coords[2][i], mode2);
-                        
-        //             }
-        //         }
-                
-                
-        //     }
-        
-        //     if(out_d1.size() > 0)
-        //     {
-        //         for(int k = 0; k < neq; k++)
-        //         {
-                    
-        //             int mode = k;
-        //             int mode0 = 0, mode1 = 0, mode2 = 0, cnt = 0;
-                    
-        //             bool found = false;
-        //             for (mode0 = 0; mode0 < nm0; ++mode0)
-        //             {
-        //                 for (mode1 = 0; mode1 < nm1; ++mode1)
-        //                 {
-        //                     int maxpq = max(mode0, mode1);
-        //                     for (mode2 = 0; mode2 < nm2 - maxpq; ++mode2, ++cnt)
-        //                     {
-        //                         if (cnt == mode)
-        //                         {
-        //                             found = true;
-        //                             break;
-        //                         }
-        //                     }
-                            
-        //                     if (found)
-        //                     {
-        //                         break;
-        //                     }
-        //                 }
-                        
-        //                 if (found)
-        //                 {
-        //                     break;
-        //                 }
-                        
-        //                 for (int j = nm1; j < nm2; ++j)
-        //                 {
-        //                     int ijmax = max(mode0, j);
-        //                     mode2 += nm2 - ijmax;
-        //                 }
-        //             }
-                    
-        //             for(int i = 0; i < sz; i++)
-        //             {
-                        
-        //                 out_d0[i + k*sz] =  StdExpansion::BaryEvaluateBasis<0>(coords[0][i], mode0) *
-        //                     StdExpansion::BaryEvaluateDerivBasis<1>(coords[1][i], mode1) *
-        //                     StdExpansion::BaryEvaluateBasis<2>(coords[2][i], mode2);
-                        
-        //             }
-        //         }
-                
-
-
-        //     }
-        
-        //     if(out_d2.size() > 0)
-        //     {
-        //                         for(int k = 0; k < neq; k++)
-        //         {
-                    
-        //             int mode = k;
-        //             int mode0 = 0, mode1 = 0, mode2 = 0, cnt = 0;
-                    
-        //             bool found = false;
-        //             for (mode0 = 0; mode0 < nm0; ++mode0)
-        //             {
-        //                 for (mode1 = 0; mode1 < nm1; ++mode1)
-        //                 {
-        //                     int maxpq = max(mode0, mode1);
-        //                     for (mode2 = 0; mode2 < nm2 - maxpq; ++mode2, ++cnt)
-        //                     {
-        //                         if (cnt == mode)
-        //                         {
-        //                             found = true;
-        //                             break;
-        //                         }
-        //                     }
-                            
-        //                     if (found)
-        //                     {
-        //                         break;
-        //                     }
-        //                 }
-                        
-        //                 if (found)
-        //                 {
-        //                     break;
-        //                 }
-                        
-        //                 for (int j = nm1; j < nm2; ++j)
-        //                 {
-        //                     int ijmax = max(mode0, j);
-        //                     mode2 += nm2 - ijmax;
-        //                 }
-        //             }
-                    
-        //             for(int i = 0; i < sz; i++)
-        //             {
-                        
-        //                 out_d0[i + k*sz] =  StdExpansion::BaryEvaluateBasis<0>(coords[0][i], mode0) *
-        //                     StdExpansion::BaryEvaluateBasis<1>(coords[1][i], mode1) *
-        //                     StdExpansion::BaryEvaluateDerivBasis<2>(coords[2][i], mode2);
-                        
-        //             }
-        //         }
-                
-
-
-        //     }
-        
-        // }
 
         void StdPyrExp::v_PhysEvalGrad(
                                             const Array<OneD, const Array<OneD, NekDouble> >coords,
@@ -1018,16 +825,6 @@ namespace Nektar
             PhysTensorDerivFast(alleta, inarray, dEta_bar1, dXi2, dEta3);
 
 
-            //            Array<OneD, NekDouble> eta0(Nc);
-            //Array<OneD,  NekDouble> eta1(Nc); //alleta[1];//(nc1);       
-            //Array<OneD,  NekDouble> eta2(Nc); 
-
-            //            Vmath::Vcopy(Nc, eta00, 1, eta0, 1);
-            //Vmath::Vcopy(Nc, eta11, Nc, eta1, 1);
-            //Vmath::Vcopy(Nc, eta22, Qx*Qy, eta2, 1);
-
-
-            
             int k;
             if (out_d0.size() > 0)
             {
@@ -1136,62 +933,6 @@ namespace Nektar
         // NekDouble StdPyrExp::v_PhysEvaluateBasis(
         //     const Array<OneD, const NekDouble>& coords,
         //     int mode)
-        // {
-        //     Array<OneD, NekDouble> coll(3);
-        //     LocCoordToLocCollapsed(coords, coll);
-
-        //     const int nm0 = m_base[0]->GetNumModes();
-        //     const int nm1 = m_base[1]->GetNumModes();
-        //     const int nm2 = m_base[2]->GetNumModes();
-
-        //     int mode0 = 0, mode1 = 0, mode2 = 0, cnt = 0;
-
-        //     bool found = false;
-        //     for (mode0 = 0; mode0 < nm0; ++mode0)
-        //     {
-        //         for (mode1 = 0; mode1 < nm1; ++mode1)
-        //         {
-        //             int maxpq = max(mode0, mode1);
-        //             for (mode2 = 0; mode2 < nm2 - maxpq; ++mode2, ++cnt)
-        //             {
-        //                 if (cnt == mode)
-        //                 {
-        //                     found = true;
-        //                     break;
-        //                 }
-        //             }
-
-        //             if (found)
-        //             {
-        //                 break;
-        //             }
-        //         }
-
-        //         if (found)
-        //         {
-        //             break;
-        //         }
-
-        //         for (int j = nm1; j < nm2; ++j)
-        //         {
-        //             int ijmax = max(mode0, j);
-        //             mode2 += nm2 - ijmax;
-        //         }
-        //     }
-
-        //     if (mode == 1 &&
-        //         m_base[0]->GetBasisType() == LibUtilities::eModified_A)
-        //     {
-        //         return StdExpansion::BaryEvaluateBasis<2>(coll[2], 1);
-        //     }
-        //     else
-        //     {
-        //         return
-        //             StdExpansion::BaryEvaluateBasis<0>(coll[0], mode0) *
-        //             StdExpansion::BaryEvaluateBasis<1>(coll[1], mode1) *
-        //             StdExpansion::BaryEvaluateBasis<2>(coll[2], mode2);
-        //     }
-        // }
 
         //---------------------------------------
         // Helper functions

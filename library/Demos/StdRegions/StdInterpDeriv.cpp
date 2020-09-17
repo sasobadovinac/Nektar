@@ -116,9 +116,9 @@ int main(int argc, char *argv[])
     // (i.e. non-collocated interpolation).
     vector<string> &ptypes = demo.GetPointsType();
    
-    ptypes[0] = "GaussRadauPLegendre"; // if ptypes[0] is MLegendre, hell breaks lose!
+    ptypes[0] = "GaussRadauPLegendre"; 
     
-    ptypes[1] = "GaussRadauMLegendre"; // if ptypes[1] is PLegendre, another hell breaks lose!
+    ptypes[1] = "GaussRadauMLegendre"; 
     
     ptypes[2] = "GaussRadauMLegendre";
 

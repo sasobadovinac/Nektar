@@ -207,9 +207,6 @@ namespace Nektar
                     Array<OneD, NekDouble> &coords_1,
                     Array<OneD, NekDouble> &coords_2);
 
-   STD_REGIONS_EXPORT virtual         Array<OneD, Array<OneD, NekDouble> > v_GetPhysEvalALL() ;
-         
-
             //----------------------------
             // Public Mappings
             //---------------------------
