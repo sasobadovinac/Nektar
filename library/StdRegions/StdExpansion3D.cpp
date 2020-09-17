@@ -196,7 +196,7 @@ namespace Nektar
                         ctemp[1] = coords[1][i];
                         ctemp[2] = coords[2][i];
                         
-                        out_eval[k+i*neq] = v_PhysEvaluate(ctemp, physall);              }
+                        out_eval[k*tot+i] = v_PhysEvaluate(ctemp, physall);              }
                 }
                 
             } 
@@ -220,7 +220,7 @@ namespace Nektar
                         ctemp[1] = coords[1][i];
                         ctemp[2] = coords[2][i];
                         
-                        out_d0[k+i*neq] = v_PhysEvaluate(ctemp, physall);              
+                        out_d0[k*tot+i] = v_PhysEvaluate(ctemp, physall);              
                     }
                 }
               
@@ -241,7 +241,7 @@ namespace Nektar
                         ctemp[1] = coords[1][i];
                         ctemp[2] = coords[2][i];
                         
-                        out_d1[k+i*neq] = v_PhysEvaluate(ctemp, physall);      
+                        out_d1[k*tot+i] = v_PhysEvaluate(ctemp, physall);      
                     }
                 }
               
@@ -264,7 +264,7 @@ namespace Nektar
                         ctemp[1] = coords[1][i];
                         ctemp[2] = coords[2][i];
                         
-                        out_d2[k+i*neq] = v_PhysEvaluate(ctemp, physall);      
+                        out_d2[k*tot+i] = v_PhysEvaluate(ctemp, physall);      
                     }
                 }
 

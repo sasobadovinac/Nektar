@@ -116,15 +116,12 @@ int main(int argc, char *argv[])
     // (i.e. non-collocated interpolation).
     vector<string> &ptypes = demo.GetPointsType();
    
-    // Doubt: should it work for polyevenlyspaced?
-    // Only with these ptypes, this demo works for triangles
     ptypes[0] = "GaussRadauPLegendre"; // if ptypes[0] is MLegendre, hell breaks lose!
     
     ptypes[1] = "GaussRadauMLegendre"; // if ptypes[1] is PLegendre, another hell breaks lose!
     
     ptypes[2] = "GaussRadauMLegendre";
-    
-    
+
     StdExpansion *F = demo.CreateStdExpansion();
 
     const auto totPoints = (unsigned) E->GetTotPoints();
@@ -144,7 +141,6 @@ int main(int argc, char *argv[])
     {
 
         E->PhysEvalGrad(coordsF, physIn, physOut0, physOut1, physOut2);
-
     }
     
     else if(dimension>1)
@@ -158,18 +154,30 @@ int main(int argc, char *argv[])
     {
         E->PhysEvalGrad(coordsF, physIn, physOut0, NullNekDouble1DArray, NullNekDouble1DArray);    
     }
- 
+
+    
+
     if(dimension>2)
         sol2 = EvalPolyDerivz(coordsF);
     if(dimension>1)
         sol1 = EvalPolyDerivy(coordsF);
     if(dimension>0)
         sol0 = EvalPolyDerivx(coordsF);
-    
+    cout<<"\n sol0:\n";
 
+        for(int k = 0; k < sol0.size(); k++)
+    {
+        cout<<sol0[k]<<" ";
+    }
+    cout<<"\n physout0:\n";
+
+    for(int k = 0; k < sol0.size(); k++)
+    {
+        cout<<physOut0[k]<<" ";
+        }
     
-    cout << "\nL infinity error: " << scientific << E->Linf(physOut2, sol2) +E->Linf(physOut1, sol1) + E->Linf(physOut0, sol0)  << endl;
-    cout << "L 2 error         : " << scientific << E->L2  (physOut2, sol2) + E->L2  (physOut1, sol1) + E->L2  (physOut0, sol0)<< endl;
+    cout << "\nL infinity error: " << scientific << E->Linf(physOut0, sol0)+ E->Linf(physOut1, sol1)+E->Linf(physOut2, sol2)  << endl;
+cout << "L 2 error         : " << scientific << E->L2  (physOut0, sol0)+ E->L2  (physOut1, sol1)+E->L2  (physOut2, sol2)<< endl;
     
 
     return 0;

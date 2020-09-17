@@ -231,7 +231,7 @@ namespace Nektar
                         coll[0] = coords[0][i];
                         coll[1] = coords[1][i];
                           
-                        out_eval[k+i*neq] = v_PhysEvaluate(  coll, physvals);
+                        out_eval[k*tot+i] = v_PhysEvaluate(  coll, physvals);
                         
                       }
                   }
@@ -250,7 +250,7 @@ namespace Nektar
                     {
                         coll[0] = coords[0][i];
                         coll[1] = coords[1][i];
-                        out_d0[k+i*neq] = v_PhysEvaluate(  coll, physvals);
+                        out_d0[i+k*tot] = v_PhysEvaluate(  coll, physvals);
                         
                     }
                 }
@@ -268,7 +268,7 @@ namespace Nektar
                     {
                         coll[0] = coords[0][i];
                         coll[1] = coords[1][i];
-                        out_d1[k+i*neq] = v_PhysEvaluate(  coll, physvals);
+                        out_d1[k*tot+i] = v_PhysEvaluate(  coll, physvals);
                         
                     }
                 }

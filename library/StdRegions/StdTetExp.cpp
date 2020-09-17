@@ -924,37 +924,20 @@ namespace Nektar
                                             Array<OneD, NekDouble> &out_d1,
                                             Array<OneD, NekDouble> &out_d2)
         {   
-            int    nq0 = m_base[0]->GetNumPoints();
-            int    nq1 = m_base[1]->GetNumPoints();
-                        int    nq2 = m_base[2]->GetNumPoints();
-            int    nc0 = coords[0].size();
-            //int    nc1 = coords[1].size();
-            //            int    nc2 = coords[2].size();
-            bool Do_2 = (out_d1.size() > 0)? true:false;
-            bool Do_1 = (out_d2.size() > 0)? true:false;
 
+            int    Qtot = coords[0].size();
             
-            if(Do_2) // Need all local derivatives
-            {
-                PhysTensorDerivFast(coords,  inarray, out_d0, out_d1, out_d2);
-            }
-            else if (Do_1) // Need 0 and 1 derivatives
-            {
-                PhysTensorDerivFast(coords, inarray,out_d0, out_d1, NullNekDouble1DArray);
-            }
-            else // Only need Eta0 derivaitve
-            {
-                PhysTensorDerivFast( coords, inarray, out_d0, NullNekDouble1DArray, NullNekDouble1DArray);
+            Array<OneD, NekDouble> out_dEta0(Qtot,0.0);
+            Array<OneD, NekDouble> out_dEta1(Qtot,0.0);
+            Array<OneD, NekDouble> out_dEta2(Qtot,0.0);
 
-            }            
             Array<OneD, Array<OneD,  NekDouble> >alleta(3); 
-            //        alleta[0] = coords[0];
-            //alleta[1] = coords[1];
-            //alleta[2] = coords[2];
-            alleta[0] = Array<OneD, NekDouble>(coords[0].size());
-            alleta[1] = Array<OneD, NekDouble>(coords[1].size());
-            alleta[2] = Array<OneD, NekDouble>(coords[2].size());
-            Vmath::Vcopy(coords[0].size(), coords[0], 1, alleta[0], 1);          Vmath::Vcopy(coords[1].size(), coords[1], 1, alleta[1], 1);          Vmath::Vcopy(coords[2].size(), coords[2], 1, alleta[2], 1);
+            alleta[0] = Array<OneD, NekDouble>(Qtot);
+            alleta[1] = Array<OneD, NekDouble>(Qtot);
+            alleta[2] = Array<OneD, NekDouble>(Qtot);
+            Vmath::Vcopy(Qtot, coords[0], 1, alleta[0], 1);
+            Vmath::Vcopy(Qtot, coords[1], 1, alleta[1], 1);
+            Vmath::Vcopy(Qtot, coords[2], 1, alleta[2], 1);
             Array<OneD, NekDouble> allxi(3), allcoll(3);
             //convert to eta
             for(int i = 0; i < coords[0].size(); i++)
@@ -968,107 +951,96 @@ namespace Nektar
                 alleta[1][i] = allcoll[1];
                 alleta[2][i] = allcoll[2];
             }
-            const Array<OneD, const NekDouble> eta00 = alleta[0];;            
-            const Array<OneD, const NekDouble> eta11 = alleta[1];//(nc1);            
-            const Array<OneD, const NekDouble> eta22 = alleta[2]; 
+            const Array<OneD, const NekDouble> c0 = alleta[0];
+            const Array<OneD, const NekDouble> c1 = alleta[1];
+            const Array<OneD, const NekDouble> c2 = alleta[2]; 
 
-            Array<OneD, NekDouble> eta0(nq0);
-            Array<OneD,  NekDouble> eta1(nq1); //alleta[1];//(nc1);       
-            Array<OneD,  NekDouble> eta2(nq2); 
-
-            Vmath::Vcopy(nq0, eta00, 1, eta0, 1);
-            Vmath::Vcopy(nq1, eta11, nq0, eta1, 1);
-            Vmath::Vcopy(nq2, eta22, nq0*nq1, eta2, 1);
-
-            NekDouble fac;
-            Array<OneD, NekDouble> tmpoutd0(out_d0.size());
-            Array<OneD, NekDouble> tmpoutd1(out_d1.size());
-            Array<OneD, NekDouble> tmpoutd2(out_d2.size());
-            Vmath::Vcopy(out_d0.size(), out_d0, 1, tmpoutd0, 1);
-            Vmath::Vcopy(out_d1.size(), out_d1, 1, tmpoutd1, 1);
-            Vmath::Vcopy(out_d2.size(), out_d2, 1, tmpoutd2, 1);
-
-            NekDouble *dEta0 = &tmpoutd0[0];
             
-            for(int k=0; k< nq2; ++k)
+            bool Do_2 = (out_d2.size() > 0)? true:false;
+            bool Do_1 = (out_d1.size() > 0)? true:false;
+            if(Do_2) // Need all local derivatives
             {
-                for(int j=0; j<nq1; ++j,dEta0+=nq0)
-                {
-                    Vmath::Smul(nq0,2.0/(1.0-eta1[j]),dEta0,1,dEta0,1);
-                }
-                fac = 1.0/(1.0-eta2[k]);
-                Vmath::Smul(nq0*nq1,fac,&tmpoutd0[0]+k*nq0*nq1,1,&tmpoutd0[0]+k*nq0*nq1,1);
-            }
-cout<<"\nout_d0:";
-            for(int ii = 0; ii<out_d0.size(); ii++)
-                cout<<out_d0[ii]<<" ";
-            cout<<"\n****\n";
-            
-            
-            cout<<"\ntmpoutd0:";
-            for(int ii = 0; ii<tmpoutd0.size(); ii++)
-                cout<<tmpoutd0[ii]<<" ";
-            cout<<"\n****\n";
 
+                PhysTensorDerivFast(alleta, inarray, out_dEta0, out_dEta1, out_dEta2);
+
+            }
+            else if (Do_1) // Need 0 and 1 derivatives
+            {
+                PhysTensorDerivFast(alleta, inarray, out_dEta0, out_dEta1, NullNekDouble1DArray);
+            }
+            else // Only need Eta0 derivaitve
+            {
+                PhysTensorDerivFast(alleta, inarray, out_dEta0, NullNekDouble1DArray, NullNekDouble1DArray);
+            }
+            
+            Array<OneD, NekDouble> temp(Qtot);
+
+            // eta_i = coords[i]
+
+            // calculate 2.0/((1-eta_1)(1-eta_2)) Out_dEta0
+            
+            for(int k = 0; k < Qtot; k++)
+            {
+                temp[k] = 2.0/((1-c1[k])*(1-c2[k]));
+            }
+                    
+            Vmath::Vmul(Qtot, temp, 1, out_dEta0, 1, out_dEta0, 1);
+    
             if (out_d0.size() > 0)
             {
                 // out_dxi0 = 4.0/((1-eta_1)(1-eta_2)) Out_dEta0
-                Vmath::Smul(nc0,2.0,tmpoutd0,1, out_d0, 1);
+                Vmath::Smul(Qtot,2.0,out_dEta0,1,out_d0,1);
             }
-                        
-
+            /*            cout<<"\n d0:\n";
+            for(int k = 0; k < Qtot; k++)
+            {
+                cout<<out_d0[k]<<" ";
+                }*/
             if (Do_1||Do_2)
             {
+                Array<OneD, NekDouble> Fac0(Qtot);
+                Vmath::Sadd(Qtot,1.0,c0,1,Fac0,1);
 
-                Array<OneD, NekDouble> Fac0(nq0);
-                Vmath::Sadd(nq0,1.0,eta0,1,Fac0,1);
 
-
-                // calculate 2.0*(1+eta0)/((1-eta1)(1-eta2)) out_d0
-                for(int k = 0; k < nq2*nq1; ++k)
+                // calculate 2.0*(1+eta_0)/((1-eta_1)(1-eta_2)) Out_dEta0
+                Vmath::Vmul(Qtot, Fac0, 1, out_dEta0, 1, out_dEta0, 1);
+                
+                // calculate 2/(1.0-eta_2) out_dEta1
+                
+                for(int k = 0; k < Qtot; ++k)
                 {
-                    Vmath::Vmul(nq0,&Fac0[0],1,&tmpoutd0[0]+k*nq0,1,&tmpoutd0[0]+k*nq0,1);
+                    Fac0[k] = 2.0/(1.0-c2[k]);
                 }
-        
-                // calculate 2/(1.0-eta2) out_d1
-                for(int k = 0; k < nq2; ++k)
-                {
-                    Vmath::Smul(nq0*nq1,2.0/(1.0-eta2[k]),&tmpoutd1[0]+k*nq0*nq1, 1, &tmpoutd1[0]+k*nq0*nq1,1);
-                }
-            
+            cout<<"\n Qtot = "<<Qtot<<"\n\n";
+
+                Vmath::Vmul(Qtot, Fac0, 1, out_dEta1, 1, out_dEta1, 1); 
+
                 if(Do_1)
                 {
-                    // calculate out_d1 = 2.0(1+eta0)/((1-eta1)(1-eta2)) out_d0
-                    // + 2/(1.0-eta2) out_d1
-                    Vmath::Vadd(nc0,tmpoutd0,1,tmpoutd1,1,out_d1,1);
+
+                    // calculate out_dxi1 = 2.0(1+eta_0)/((1-eta_1)(1-eta_2)) Out_dEta0
+                    // + 2/(1.0-eta_2) out_dEta1
+                    Vmath::Vadd(Qtot,out_dEta0,1,out_dEta1,1,out_d1,1);
                 }
-
-
                 if(Do_2)
                 {
-                    // calculate (1 + eta1)/(1 -eta2)*out_d1
-                    NekDouble *dEta1 = &tmpoutd1[0];
-                    for(int k=0; k< nq2; ++k)
+
+                    // calculate (1 + eta_1)/(1 -eta_2)*out_dEta1
+                    for(int k=0; k< Qtot; ++k)
                     {
-                        for(int j=0; j<nq1; ++j,dEta1+=nq0)
-                        {
-                            Vmath::Smul(nq0,(1.0+eta1[j])/2.0,dEta1,1,dEta1,1);
-                        }
+                        Fac0[k] = (1.0+c1[k])/2.0;
                     }
-
-
+                    Vmath::Vmul(Qtot, Fac0, 1, out_dEta1, 1, out_dEta1, 1);
                     // calculate out_dxi2 =
-                    // 2.0(1+eta0)/((1-eta1)(1-eta2)) out_d0 +
-                    // (1 + eta1)/(1 -eta2)*out_d1 + out_d2
-                    Vmath::Vadd(nc0,tmpoutd0,1,tmpoutd1,1,out_d2,1);
-                    
-                    Vmath::Vadd(nc0,tmpoutd2,1,out_d2 ,1,out_d2,1);
+                    // 2.0(1+eta_0)/((1-eta_1)(1-eta_2)) Out_dEta0 +
+                    // (1 + eta_1)/(1 -eta_2)*out_dEta1 + out_dEta2
+                    Vmath::Vadd(Qtot,out_dEta0,1,out_dEta1,1,out_d2,1);
+                    Vmath::Vadd(Qtot,out_dEta2,1,out_d2 ,1,out_d2,1);
 
-                    
                 }
-                
 
             }
+        
     
         }
         
@@ -1338,7 +1310,7 @@ cout<<"\nout_d0:";
                                         const Array<OneD, const Array<OneD, NekDouble> >coords, 
                                         int mode)
         {
-            return PhysEvaluateBasis(coords, mode);
+            return StdExpansion3D::PhysEvaluateBasis(coords, mode);
         }
 
 

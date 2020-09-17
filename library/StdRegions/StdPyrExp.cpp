@@ -985,15 +985,7 @@ namespace Nektar
                                             Array<OneD, NekDouble> &out_d2)
         {
 
-            //            int    Qx  = m_base[0]->GetNumPoints();
-            //int    Qy  = m_base[1]->GetNumPoints();
-            //int    Qz  = m_base[2]->GetNumPoints();
             int    Nc  = coords[0].size();
-           
-            Array<OneD, NekDouble> dEta_bar1(Nc,0.0);
-            Array<OneD, NekDouble> dXi2     (Nc,0.0);
-            Array<OneD, NekDouble> dEta3    (Nc,0.0);
-            PhysTensorDerivFast(coords, inarray, dEta_bar1, dXi2, dEta3);
             
             Array<OneD, Array<OneD,  NekDouble> >alleta(3); 
             alleta[0] = Array<OneD, NekDouble>(Nc);
@@ -1019,6 +1011,13 @@ namespace Nektar
             const Array<OneD, const NekDouble> eta1 = alleta[1];
             const Array<OneD, const NekDouble> eta2 = alleta[2]; 
 
+           
+            Array<OneD, NekDouble> dEta_bar1(Nc,0.0);
+            Array<OneD, NekDouble> dXi2     (Nc,0.0);
+            Array<OneD, NekDouble> dEta3    (Nc,0.0);
+            PhysTensorDerivFast(alleta, inarray, dEta_bar1, dXi2, dEta3);
+
+
             //            Array<OneD, NekDouble> eta0(Nc);
             //Array<OneD,  NekDouble> eta1(Nc); //alleta[1];//(nc1);       
             //Array<OneD,  NekDouble> eta2(Nc); 
@@ -1029,34 +1028,30 @@ namespace Nektar
 
 
             
-            int i, j, k, n;
+            int k;
             if (out_d0.size() > 0)
             {
+                NekDouble fac;
                 for (k = 0; k < Nc; ++k)
                 {
-                    NekDouble fac = 2.0/(1.0 - eta2[k]);
-                    for (j = 0; j < Nc; ++j)
-                    {
-                        for (i = 0; i < Nc; ++i)
-                        {
-                            out_d0[k] = fac * dEta_bar1[k];
-                        }
-                    }
+                    fac = 2.0/(1.0 - eta2[k]);
+                    
+                    out_d0[k] = fac * dEta_bar1[k];
+                    
                 }
+            
             }
 
             if (out_d1.size() > 0)
             {
+                
+                NekDouble fac;
                 for (k = 0; k < Nc; ++k)
                 {
-                    NekDouble fac = 2.0/(1.0 - eta2[k]);
-                    for (j = 0; j < Nc; ++j)
-                    {
-                        for (i = 0; i < Nc; ++i)
-                        {
-                            out_d1[k] = fac * dXi2[k];
-                        }
-                    }
+                    fac = 2.0/(1.0 - eta2[k]);
+                    
+                    out_d1[k] = fac * dXi2[k];
+                    
                 }
             }
 
@@ -1064,16 +1059,7 @@ namespace Nektar
             {
                 for (k = 0; k < Nc; ++k)
                 {
-                    NekDouble fac = 1.0/(1.0 - eta2[k]);
-                    for (j = 0; j < Nc; ++j)
-                    {
-                        NekDouble fac1 = (1.0+eta1[j]);
-                        for (i = 0; i < Nc; ++i, ++n)
-                        {
-                            out_d2[k] = (1.0+eta0[k])*fac*dEta_bar1[k] +
-                                fac1*fac*dXi2[k] + dEta3[k];
-                        }
-                    }
+                    out_d2[k] = ((1.0+eta0[k])/(1.0 - eta2[k]))*dEta_bar1[k] + ((1.0+eta1[k])/(1.0 - eta2[k]))*dXi2[k] +dEta3[k];
                 }
             }
 

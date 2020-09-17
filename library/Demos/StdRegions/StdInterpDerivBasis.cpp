@@ -48,20 +48,18 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-    int nCoeffs = E->GetNcoeffs(), nPts = E->GetTotPoints();
+    int nCoeffs = E->GetNcoeffs();
     int dimension = E->GetShapeDimension();
-    vector<string> &ptypes = demo.GetPointsType();
-    //for (int i = 0; i < dimension; ++i)
-        //{
-        ptypes[0] = "Modified_A";
-        ptypes[1] = "Modified_A";
-        ptypes[2] = "Modified_B";
-    //}
 
     Array<OneD, Array<OneD, NekDouble>> coords = demo.GetCoords(E);
 
-    Array<OneD, NekDouble> sol(nPts*nCoeffs), soll(nPts), out_eval(nPts*nCoeffs), phys(nPts*nCoeffs);
-
+    int  nPts = coords[0].size();//E->GetTotPoints();
+    Array<OneD, NekDouble> sol(nPts*nCoeffs), 
+        hold1(nPts),
+        temp(nPts), 
+        temp1(nPts), 
+        temp2(nPts), 
+        out_eval(nPts*nCoeffs),out_eval2(nPts*nCoeffs),out_eval1(nPts*nCoeffs), phys(nPts*nCoeffs);
     Array<OneD, NekDouble> sol1(nPts*nCoeffs), phys1(nCoeffs*nPts);
     Array<OneD, NekDouble> sol2(nPts*nCoeffs), phys2(nPts*nCoeffs);
     NekDouble errL2 = 0, errLinf = 0;
@@ -69,42 +67,103 @@ int main(int argc, char *argv[])
     if(dimension>2)
     {
      
-        E->PhysEvalBasisGradFast(coords, out_eval, phys, phys1, phys2);
-        E->PhysEvalBasisGrad(coords, out_eval, sol, sol1, sol2);
-
+        E->PhysEvalBasisGrad(coords, out_eval2, sol, sol1, sol2);
+        for (int k = 0; k < nCoeffs; ++k)
+        {
+           // Fill the 'solution' field with each of the modes using FillMode.    
+           E->FillMode(k, hold1);
+           E->PhysDeriv(hold1,  temp,  temp1, temp2);       
+           
+           Vmath::Vcopy(nPts, &temp[0], 1, &phys[k*nPts], 1);  
+           Vmath::Vcopy(nPts, &temp1[0], 1, &phys1[k*nPts], 1);  
+           Vmath::Vcopy(nPts, &temp2[0], 1, &phys2[k*nPts], 1);  
+           Vmath::Vcopy(nPts, &hold1[0], 1, &out_eval1[k*nPts], 1);  
+       }
     }
     else if(dimension>1)
 
     {
-       E->PhysEvalBasisGradFast(coords,  out_eval, phys, phys1, NullNekDouble1DArray); 
-       E->PhysEvalBasisGrad(coords,  out_eval, sol,sol1,  NullNekDouble1DArray);
-                    
-    }
+
+       E->PhysEvalBasisGrad(coords,  out_eval2, sol,sol1,  NullNekDouble1DArray); 
+       for (int k = 0; k < nCoeffs; ++k)
+       {
+           // Fill the 'solution' field with each of the modes using FillMode.    
+           Array<OneD, NekDouble> hold1(nPts);
+           E->FillMode(k, hold1);
+           E->PhysDeriv(hold1,  temp, temp1, NullNekDouble1DArray);       
+           
+           Vmath::Vcopy(nPts, &temp[0], 1, &phys[k*nPts], 1);  
+           Vmath::Vcopy(nPts, &temp1[0], 1, &phys1[k*nPts], 1);  
+           Vmath::Vcopy(nPts, &hold1[0], 1, &out_eval1[k*nPts], 1);  
+       }
+
+
+     }
     else if(dimension>0)
     {
-        E->PhysEvalBasisGradFast(coords, out_eval, phys, NullNekDouble1DArray,  NullNekDouble1DArray);
-        E->PhysEvalBasisGrad(coords,  out_eval, sol,  NullNekDouble1DArray,  NullNekDouble1DArray);
 
-        // for (int k = 0; k < nCoeffs; ++k)
-        // {
-        //     // Fill the 'solution' field with each of the modes using FillMode.
+        E->PhysEvalBasisGrad(coords,  out_eval2, sol,  NullNekDouble1DArray,  NullNekDouble1DArray);
+       for (int k = 0; k < nCoeffs; ++k)
+       {
+           // Fill the 'solution' field with each of the modes using FillMode.    
+           Array<OneD, NekDouble> hold1(nPts);
+           E->FillMode(k, hold1);
+           E->PhysDeriv(hold1,  temp, NullNekDouble1DArray,  NullNekDouble1DArray);       
+           
+           Vmath::Vcopy(nPts, &temp[0], 1, &phys[k*nPts], 1);  
+           Vmath::Vcopy(nPts, &hold1[0], 1, &out_eval1[k*nPts], 1);  
+       }
 
-        //     Array<OneD, NekDouble> hold1(nPts);
-        //     E->FillMode(k, soll);
-        //     E->PhysDeriv(soll,  hold1, NullNekDouble1DArray, NullNekDouble1DArray);       
-        //     // check if soll = out_eval
-                    
-        //     Vmath::Vcopy(nPts, &hold1[0], 1, &sol[k*nPts], 1);  
-        // }
+            
     }
+    
+    Array<OneD, NekDouble> tmp (nPts);
+    Array<OneD, NekDouble> tmp2 (nPts);
+    // Separate modes 0 to nCoeffs
+    for( int ii = 0 ; ii < nCoeffs; ii++)
+    {
+        Vmath::Vcopy(nPts, &out_eval1[0]+ii*nPts, 1, &tmp[0], 1 );
+        
+        Vmath::Vcopy(nPts, &out_eval2[0]+ii*nPts,1,  &tmp2[0], 1 );
+                
+        errL2 += E->L2(tmp, tmp2);
+        errLinf += E->Linf(tmp, tmp2);
+        
+        Vmath::Vcopy(nPts, &phys[0]+ii, nCoeffs, &tmp[0], 1 );
+        Vmath::Vcopy(nPts, &sol[0]+ii, nCoeffs , &tmp2[0], 1 );
+
+        errL2 += E->L2(tmp, tmp2);
+        errLinf += E->Linf(tmp, tmp2);
+        
+        Vmath::Vcopy(nPts, &phys1[0]+ii, nCoeffs, &tmp[0], 1 );
+        Vmath::Vcopy(nPts, &sol1[0]+ii, nCoeffs, &tmp2[0], 1 );
+        errL2 += E->L2(tmp, tmp2);
+        errLinf += E->Linf(tmp, tmp2);
+        
+
+        Vmath::Vcopy(nPts, &phys2[0]+ii, nCoeffs, &tmp[0], 1 );
+        Vmath::Vcopy(nPts, &sol2[0]+ii, nCoeffs, &tmp2[0], 1 );
+        errL2 += E->L2(tmp, tmp2);
+        errLinf += E->Linf(tmp, tmp2);
+        //        cout<<"\n at coeff="<<ii<<" L2="<<errL2<<"errLinf="<<errLinf<<"\n";
         
         
-    errL2 += E->L2(phys1, sol1)+ E->L2(phys2, sol2)+E->L2(phys, sol);
-    errLinf += E->Linf(phys, sol)+ E->Linf(phys1, sol1)+E->Linf(phys2,sol2);
+    }
+    /*    
+cout<<"\n phys2:\n";
+        for(int i = 0; i < out_eval1.size(); i++)
+            cout<<out_eval1[i]<<" ";
+        cout<<"\n sol2:\n";
+        for(int i = 0; i < out_eval2.size(); i++)
+            cout<<out_eval2[i]<<" ";
         
-        
-    cout << "L infinity error : " << scientific << errL2 << endl;
-    cout << "L 2 error        : " << scientific << errLinf << endl;
+               cout<<"\n*****\n";
+        for(int ll = 0;  ll <phys.size(); ll++)
+            cout<<"fast="<<phys2[ll]<<" slow="<<sol2[ll]<<" diff = "<<scientific<<phys2[ll]-sol2[ll]<<"\n";
+    */
+
+    cout << "L infinity error : " << scientific << errLinf << endl;
+    cout << "L 2 error        : " << scientific << errL2 << endl;
     
 
     return 0;
