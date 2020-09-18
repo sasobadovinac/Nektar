@@ -48,6 +48,28 @@
      - tmp/*.orig.tar.gz
     expire_in: 1 week
 
+##
+## Test the generated DEB packages: first, run the ADRSolver on a
+## randomly-selected test. Then, install the development package and test
+## compilation of the standalone executable.
+##
+.package-deb-test: &package-deb-test
+  <<: *package-conditions
+  image: ${image_name}
+  stage: package-test
+  script:
+    - cd DEB && dpkg -i nektar++-adrsolver_[1-9]*.deb libnektar++_[1-9]*.deb
+    - cp $CI_PROJECT_DIR/solvers/ADRSolver/Tests/ImDiffusion_m12.xml .
+    - ADRSolver ImDiffusion_m12.xml
+    - test_output=`ADRSolver ImDiffusion_m12.xml | grep "L 2 error" | awk '{print ($7 < 2e-7)}'`
+    - if [ "$test_output" -eq 0 ]; then echo "Tolerance test failed on serial ADRSolver run"; exit 1; fi
+    - mpirun --allow-run-as-root -n 3 ADRSolver ImDiffusion_m12.xml
+    - test_output=`mpirun --allow-run-as-root -n 3 ADRSolver ImDiffusion_m12.xml | grep "L 2 error" | awk '{print ($7 < 2e-7)}'`
+    - if [ "$test_output" -eq 0 ]; then echo "Tolerance test failed on parallel ADRSolver run"; exit 1; fi
+    - cd DEB && dpkg -i libnektar++-dev_[1-9]*.deb
+    - cd $CI_PROJECT_DIR/templates/executable
+    - ./test.sh /usr/lib/nektar++/cmake 3 /usr/bin/cmake
+
 
 .package-rpm-build: &package-rpm-build
   <<: *package-conditions
@@ -156,6 +178,14 @@ package-debian-bullseye-build:
     image_name: pkg/debian-bullseye
     pkg_dir: pkg/debian/bullseye
     distribution: bullseye
+
+.package-debian-bullseye-test:
+  <<: *package-deb-test
+  needs: ["package-debian-bullseye-build"]
+  dependencies:
+    - package-debian-bullseye-build
+  variables:
+    image_name: debian:bullseye
 
 ##
 ## Debian buster
