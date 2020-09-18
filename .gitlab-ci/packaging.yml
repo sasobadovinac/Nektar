@@ -27,25 +27,25 @@
     - tar -czf nektar++-$(<VERSION).tar.gz 
                 --transform="s,^,nektar++-$(<VERSION)/,S"
                 --exclude-from=.gitlab-ci/packaging-exclude *
-    - mkdir tmp
-    - mv nektar++-$(<VERSION).tar.gz tmp/nektar++_$(<VERSION).orig.tar.gz
-    - tar -C tmp -xf tmp/nektar++_$(<VERSION).orig.tar.gz
-    - cp -a ${pkg_dir} tmp/nektar++-$(<VERSION)/debian
+    - mkdir deb
+    - mv nektar++-$(<VERSION).tar.gz deb/nektar++_$(<VERSION).orig.tar.gz
+    - tar -C DEB -xf deb/nektar++_$(<VERSION).orig.tar.gz
+    - cp -a ${pkg_dir} deb/nektar++-$(<VERSION)/debian
     - sed -e s/unstable/${distribution}/g < pkg/debian/changelog
-            > tmp/nektar++-$(<VERSION)/debian/changelog
-    - cd tmp/nektar++-$(<VERSION)
+            > deb/nektar++-$(<VERSION)/debian/changelog
+    - cd deb/nektar++-$(<VERSION)
     - dpkg-source -b .
     - dpkg-buildpackage -us -uc
     - lintian
   artifacts:
     when: always
     paths:
-     - tmp/*.deb
-     - tmp/*.changes
-     - tmp/*.debian.tar.xz
-     - tmp/*.dsc
-     - tmp/*.buildinfo
-     - tmp/*.orig.tar.gz
+     - deb/*.deb
+     - deb/*.changes
+     - deb/*.debian.tar.xz
+     - deb/*.dsc
+     - deb/*.buildinfo
+     - deb/*.orig.tar.gz
     expire_in: 1 week
 
 ##
@@ -58,7 +58,7 @@
   image: ${image_name}
   stage: package-test
   script:
-    - cd DEB && dpkg -i nektar++-adrsolver_[1-9]*.deb libnektar++_[1-9]*.deb
+    - cd deb && dpkg -i nektar++-adrsolver_[1-9]*.deb libnektar++_[1-9]*.deb
     - cp $CI_PROJECT_DIR/solvers/ADRSolver/Tests/ImDiffusion_m12.xml .
     - ADRSolver ImDiffusion_m12.xml
     - test_output=`ADRSolver ImDiffusion_m12.xml | grep "L 2 error" | awk '{print ($7 < 2e-7)}'`
@@ -66,7 +66,7 @@
     - mpirun --allow-run-as-root -n 3 ADRSolver ImDiffusion_m12.xml
     - test_output=`mpirun --allow-run-as-root -n 3 ADRSolver ImDiffusion_m12.xml | grep "L 2 error" | awk '{print ($7 < 2e-7)}'`
     - if [ "$test_output" -eq 0 ]; then echo "Tolerance test failed on parallel ADRSolver run"; exit 1; fi
-    - cd DEB && dpkg -i libnektar++-dev_[1-9]*.deb
+    - cd deb && dpkg -i libnektar++-dev_[1-9]*.deb
     - cd $CI_PROJECT_DIR/templates/executable
     - ./test.sh /usr/lib/nektar++/cmake 3 /usr/bin/cmake
 
