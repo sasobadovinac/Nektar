@@ -179,7 +179,7 @@ package-debian-bullseye-build:
     pkg_dir: pkg/debian/bullseye
     distribution: bullseye
 
-.package-debian-bullseye-test:
+package-debian-bullseye-test:
   <<: *package-deb-test
   needs: ["package-debian-bullseye-build"]
   dependencies:
