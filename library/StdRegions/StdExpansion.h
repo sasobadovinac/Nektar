@@ -988,9 +988,9 @@ namespace Nektar
                 return v_PhysEvaluate(I,physvals);
             }
 
-            /**
-             * @brief This function evaluates the basis function mode @p mode at an array of
-             * points @p coords of the domain.
+            /** Deprecated
+             * @brief This function evaluates the basis function mode @p mode at a
+             * point @p coords of the domain.
              *
              * This function uses barycentric interpolation with the tensor
              * product separation of the basis function to improve performance.
@@ -998,9 +998,10 @@ namespace Nektar
              * @param coord   The coordinate inside the standard region.
              * @param mode    The mode number to be evaluated.
              *
-             * @return The values of the basis function mode @p mode at @p coords.
+             * @return The value of the basis function @p mode at @p coords.
              */
-            Array<OneD, NekDouble> PhysEvaluateBasis(const Array<OneD, const Array<OneD, NekDouble> >coords, int mode)
+            Array<OneD, NekDouble> PhysEvaluateBasis(
+                                                                             const Array<OneD, const Array<OneD, NekDouble> >coords, int mode)
 
             {
                 return v_PhysEvaluateBasis(coords, mode);
@@ -1074,14 +1075,6 @@ namespace Nektar
             /*     return v_PhysEvalBasisGradFast(coords, out_eval, out_d0, out_d1, out_d2 );   */
             /* } */
             
-
-
-            /*            NekDouble PhysEvaluatedy(
-                                const Array<OneD, const NekDouble> &coords,
-                const Array<OneD, const NekDouble> &physvals)
-            {
-                return v_PhysEvaluatedy(coords, physvals);
-                }*/
 
             /**
              * \brief Convert local cartesian coordinate \a xi into local
@@ -1441,8 +1434,10 @@ namespace Nektar
                 const Array<OneD, const NekDouble> &z = m_base[DIR]->GetZ();
                 const Array<OneD, const NekDouble> &bw =
                     m_base[DIR]->GetBaryWeights();
+                // Create D ptr, comment only activated/assigned in if stmt
 
                 const auto nquad = z.size();
+                //std::cout<<"\n nquad<<"<<nquad<<"\n";
                 for (int i = 0; i < nquad; ++i)
                 {
                     NekDouble xdiff = z[i] - coord;
@@ -1457,7 +1452,12 @@ namespace Nektar
                      */
                     if (xdiff == 0.0 )
                     {
+                        // std::cout<<"\n in baryeval:";
+            
+                        //            std::cout<<" coord="<<coord<<"  retpval = "<<pval<<" z["<<i<<"]="<<z[i];
+
                         return pval;
+
                     }
 
                     NekDouble tmp = bw[i] / xdiff;
@@ -1468,11 +1468,10 @@ namespace Nektar
                 return numer / denom;
             }
 
-            /**
+/**
              * @brief This function performs the barycentric interpolation of
-             * the derivative of the polynomial stored in @p coord at a point
-             * @p physvals using barycentric interpolation weights in direction
-             * @tparam DIR.
+             * the derivative of the polynomial stored in @p physvals at a point 
+             * @p coord using barycentric interpolation weights in direction @tparam DIR.
              *
              * This method is intended to be used a helper function for
              * StdExpansion::PhysDeriv and its elemental instances, so that
@@ -1486,12 +1485,17 @@ namespace Nektar
              *
              * @return The value of @p physvals at @p coord in direction @p dir.
              */
-            template <int DIR>
-            inline NekDouble BaryEvaluateDeriv(const NekDouble &coord,
-                                               const NekDouble *physvals)
+            template<int DIR>
+            inline NekDouble BaryEvaluateDeriv(
+                const NekDouble &coord,
+                const NekDouble *physvals)
             {
-                NekDouble numer1 = 0.0, numer2 = 0.0, numer3 = 0.0, denom = 0.0;
-
+                NekDouble numer1 = 0.0, denom = 0.0;
+                NekDouble numer2 = 0.0,  numer3 = 0.0,
+                          numer4 = 0.0;  
+                // Pointer to derivative matrix
+                // Only assigned if needed
+                DNekMatSharedPtr D0 = NULL;
                 ASSERTL2(DIR < m_base.size(),
                          "Direction should be less than shape dimension.");
 
@@ -1500,37 +1504,133 @@ namespace Nektar
                     m_base[DIR]->GetBaryWeights();
 
                 const auto nquad = z.size();
+
                 for (int i = 0; i < nquad; i++)
                 {
                     NekDouble xdiff = coord - z[i];
-                    NekDouble pval  = physvals[i];
-
+                    NekDouble pval = physvals[i];
                     /*
-                     * (in this specific case) you actually
-                     * want to do the comparison exactly
-                     * (believe it or not!) See chapter 7 of
+                     * (in this specific case) you actually 
+                     * want to do the comparison exactly 
+                     * (believe it or not!) See chapter 7 of 
                      * the paper here:
                      *https://people.maths.ox.ac.uk/trefethen/barycentric.pdf
                      */
-                    if (xdiff == 0.0 || fabs(xdiff) < 1e-15)
+                    if (xdiff == 0.0 || fabs(xdiff)<1e-15)
                     {
-                        DNekMatSharedPtr D0 = m_base[DIR]->GetD();
-
+                        if(D0 == NULL)
+                        {   
+                            D0 = m_base[DIR]->GetD();
+                        }
                         // take ith row of z and multiply with physvals
-                        return Vmath::Dot(z.size(), &(D0->GetPtr())[i],
-                                          z.size(), &physvals[0], 1);
+                        
+                        pval = Vmath::Dot(z.size(), &(D0->GetPtr())[i],z.size(), &physvals[0], 1);
+                        return pval;
                     }
 
-                    NekDouble tmp  = bw[i] / xdiff;
-                    NekDouble tmp2 = bw[i] / (xdiff * xdiff);
+                    NekDouble tmp = bw[i] / xdiff;
+                    NekDouble tmp2 = bw[i] / pow(xdiff,2);
                     numer1 += (tmp2 * pval);
-                    numer2 += (tmp * pval);
-                    numer3 += (tmp2);
+                    numer2 += (tmp);
+                    numer3 += (tmp * pval);
+                    numer4 += (tmp2);
                     denom += tmp;
                 }
 
-                return (-numer1 * denom + numer2 * numer3) / (denom * denom);
+                NekDouble ret =  (-numer1*numer2 + numer3*numer4) / pow(denom,2);
+                return ret;
             }
+
+
+
+/**
+             * @brief This function performs the barycentric interpolation of
+             * the second derivative of the polynomial stored in @p physvals at a point 
+             * @p coord using barycentric interpolation weights in direction @tparam DIR.
+             *
+             * This method is intended to be used a helper function for
+             * StdExpansion::PhysDeriv and its elemental instances, so that
+             * the calling method should provide @p coord for x, y and z
+             * sequentially and the appropriate @p physvals and @p weights for
+             * that particular direction.
+             *
+             * @param  coord    The coordinate of the single point.
+             * @param  physvals The polynomial stored at each quadrature point.
+             * @tparam DIR      The direction of evaluation.
+             *
+             * @return The value of @p physvals at @p coord in direction @p dir.
+             */
+            template<int DIR>
+            inline NekDouble BaryEvaluateSecondDeriv(
+                const NekDouble &coord,
+                const NekDouble *physvals)
+            {
+                NekDouble A = 0.0, B = 0.0, C = 0.0, 
+                    D = 0.0, E = 0.0, F = 0.0;
+               
+                
+                // Pointer to derivative matrix
+                // Only assigned if needed
+                DNekMatSharedPtr D0 = NULL;
+                ASSERTL2(DIR < m_base.size(),
+                         "Direction should be less than shape dimension.");
+
+                const Array<OneD, const NekDouble> &z = m_base[DIR]->GetZ();
+                const Array<OneD, const NekDouble> &bw =
+                    m_base[DIR]->GetBaryWeights();
+                const auto nquad = z.size();
+
+                Array<OneD, NekDouble> temp(nquad),temp2(nquad); //physvals.size());
+ 
+                for (int i = 0; i < nquad; i++)
+                {
+                    NekDouble xdiff = coord - z[i];
+                    NekDouble pval = physvals[i];
+                    /*
+                     * (in this specific case) you actually 
+                     * want to do the comparison exactly 
+                     * (believe it or not!) See chapter 7 of 
+                     * the paper here:
+                     *https://people.maths.ox.ac.uk/trefethen/barycentric.pdf
+                     */
+                    if (xdiff == 0.0 || fabs(xdiff)<1e-15)
+                    {
+                        std::cout<<"\n z = coord.. calli ng der matrix\n\n";
+                        if(D0 == NULL)
+                        {   
+                            D0 = m_base[DIR]->GetD();
+                     
+                        }
+                        // take ith row of z and multiply with physvals
+                        for(int kk = 0; kk < nquad; kk++)
+                        {  
+                            temp2[kk] = Vmath::Dot(nquad,  &(D0->GetPtr())[kk], nquad, &physvals[0], 1);   
+                        }
+                        pval = Vmath::Dot(nquad,  &(D0->GetPtr())[i], nquad, &temp2[0], 1);
+                        
+                        return pval;
+                    }
+                    NekDouble tmp = bw[i] / xdiff;
+                    NekDouble tmp2 = bw[i] / pow(xdiff,2);
+                    NekDouble tmp3 = bw[i] / pow(xdiff,3);
+                    A += (tmp);
+                    B += (tmp2);
+                    C += (tmp3);
+                    D += (tmp * pval);
+                    E += (tmp2 * pval);
+                    F += (tmp3 * pval);
+                 
+                }
+
+                //                std::cout<<"A = "<<A<<" B="<<B<<" C ="<<C<<" D="<<D<<" E="<<E<<" F="<<F;
+                NekDouble ret = (2.0*F/A) 
+                    - (2.0*C*D/pow(A,2)) 
+                    -(2.0)*E*B/pow(A,2) 
+                    +(2.0*pow(B,2)*D/pow(A,3)); 
+                
+                return ret;
+            }
+
 
             /** Deprecated:
              * @brief This function evaluates the basis function mode @p mode at
