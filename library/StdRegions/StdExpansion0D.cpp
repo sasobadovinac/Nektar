@@ -86,21 +86,20 @@ namespace Nektar
                             &inarray[0],1,0.0,&outarray[0],1);
             }
         }
-        
-        
+
         // find derivative of u (inarray) at all coords points
         void StdExpansion0D::PhysTensorDerivFast(
-                                                 const Array<OneD, const Array<OneD, NekDouble> >& coords,
-                                                 const Array<OneD, const NekDouble>& inarray,
-                                                 Array<OneD, NekDouble> &out_d0)
+            const Array<OneD, const Array<OneD, NekDouble>> &coords,
+            const Array<OneD, const NekDouble> &inarray,
+            Array<OneD, NekDouble> &out_d0)
         {
-            for(int i = 0; i < coords[0].size(); i++)   
+            for (int i = 0; i < coords[0].size(); i++)
             {
-                out_d0[i] =  StdExpansion::BaryEvaluateDeriv<0>(coords[0][i], &inarray[0]); 
+                out_d0[i] = StdExpansion::BaryEvaluateDeriv<0>(coords[0][i],
+                                                               &inarray[0]);
             }
         }
 
-	
         NekDouble StdExpansion0D::v_PhysEvaluate(const Array<OneD, const NekDouble>& Lcoord, const Array<OneD, const NekDouble>& physvals)
         {
             ASSERTL2(Lcoord[0] >= -1 - NekConstants::kNekZeroTol,"Lcoord[0] < -1");

@@ -133,71 +133,52 @@ namespace Nektar
  
            
        }
-        
-        
+
         // find derivative of u (inarray) at all coords points
         void StdExpansion2D::PhysTensorDerivFast(
-                                                 const Array<OneD, const Array<OneD, NekDouble> >& coords,
-                                                 const Array<OneD, const NekDouble>& inarray,
-                                                 Array<OneD, NekDouble> &out_d0,
-                                                 Array<OneD, NekDouble> &out_d1)
-
-        {        
-            //int sz = GetTotPoints();
+           const Array<OneD, const Array<OneD, NekDouble>> &coords,
+           const Array<OneD, const NekDouble> &inarray,
+           Array<OneD, NekDouble> &out_d0,
+           Array<OneD, NekDouble> &out_d1)
+        {
+            // int sz = GetTotPoints();
             const int nq0 = m_base[0]->GetNumPoints();
             const int nq1 = m_base[1]->GetNumPoints();
-  
-            // collapse coords;
-            Array<OneD, NekDouble>  collcoords(2);
 
-            if(out_d0.size() > 0)
-            {    
-                for(int i = 0; i < coords[0].size(); i++)
+            Array<OneD, NekDouble> wsp(nq1);
+
+            if (out_d0.size() > 0)
+            {
+                for (int i = 0; i < coords[0].size(); i++)
                 {
-                    Array<OneD, NekDouble> tmp(2);
-                    tmp[0] = coords[0][i];
-                    tmp[1] = coords[1][i];
-                    //                    LocCoordToLocCollapsed(tmp, collcoords);           
-                    collcoords = tmp;
-                    Array<OneD, NekDouble> wsp(nq1);
-                    for(int k = 0; k < nq0; k++)
+                    const NekDouble *ptr = &inarray[0];
+
+                    for (int j = 0; j < nq1; ++j, ptr += nq0)
                     {
-                        for (int j = 0; j < nq1; ++j)
-                        {
-                            wsp[j] = StdExpansion::BaryEvaluateDeriv<0>(
-                                                                        collcoords[0], &inarray[0] + j * nq0);
-                            
-                        }
-                        
-                        out_d0[i] =  StdExpansion::BaryEvaluate<1>( collcoords[1], &wsp[0]);
-                    } 
+                        wsp[j] = StdExpansion::BaryEvaluateDeriv<0>(
+                            coords[0][i], ptr);
+                    }
+
+                    out_d0[i] = StdExpansion::BaryEvaluate<1>(
+                        coords[1][i], &wsp[0]);
                 }
             }
-            if(out_d1.size()>0)
-            {
-                
-                for(int i = 0; i < coords[0].size(); i++)
-                {
 
-                    Array<OneD, NekDouble> tmp(2);
-                    tmp[0] = coords[0][i];
-                    tmp[1] = coords[1][i];
-                    collcoords = tmp;
-                
-                    Array<OneD, NekDouble> wsp(nq1);
-                    for(int k = 0; k < nq0; k++)
+            if (out_d1.size() > 0)
+            {
+                for (int i = 0; i < coords[0].size(); i++)
+                {
+                    const NekDouble *ptr = &inarray[0];
+
+                    for (int j = 0; j < nq1; ++j, ptr += nq0)
                     {
-                        for (int j = 0; j < nq1; ++j)
-                        {
-                            wsp[j] = StdExpansion::BaryEvaluate<0>(
-                                                                   collcoords[0], &inarray[0] + j * nq0);
-                            
-                        }
-                        
-                        out_d1[i] =  StdExpansion::BaryEvaluateDeriv<1>(collcoords[1], &wsp[0]);
-                    } 
-                }            
-                
+                        wsp[j] = StdExpansion::BaryEvaluate<0>(
+                            coords[0][i], ptr);
+                    }
+
+                    out_d1[i] = StdExpansion::BaryEvaluateDeriv<1>(
+                        coords[1][i], &wsp[0]);
+                }
             }
         }
 
