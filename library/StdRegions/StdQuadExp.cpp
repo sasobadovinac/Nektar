@@ -152,18 +152,15 @@ namespace Nektar
         }
 
         void StdQuadExp::v_PhysEvalGrad(
-                                        const Array<OneD, const Array<OneD, NekDouble> >coords,
-                                        const Array<OneD, const NekDouble>& inarray,        
-                                             
-                                        Array<OneD, NekDouble> &out_d0,
-                                        Array<OneD, NekDouble> &out_d1,
-                                        Array<OneD, NekDouble> &out_d2)
+            const Array<OneD, const Array<OneD, NekDouble>> coords,
+            const Array<OneD, const NekDouble> &inarray,
+            Array<OneD, NekDouble> &out_d0,
+            Array<OneD, NekDouble> &out_d1,
+            Array<OneD, NekDouble> &out_d2)
         {
-            boost::ignore_unused( out_d2);
-            PhysTensorDerivFast( coords, inarray, out_d0, out_d1);
-            
+            boost::ignore_unused(out_d2);
+            PhysTensorDerivFast(coords, inarray, out_d0, out_d1);
         }
-    
 
         // Deprecated: mode splitting ver
         // void StdQuadExp::v_PhysEvalBasisGradFast(

@@ -785,82 +785,78 @@ namespace Nektar
         //                                          )
 
         void StdPyrExp::v_PhysEvalGrad(
-                                            const Array<OneD, const Array<OneD, NekDouble> >coords,
-                                            const Array<OneD, const NekDouble>& inarray,        
-                                            Array<OneD, NekDouble> &out_d0,
-                                            Array<OneD, NekDouble> &out_d1,
-                                            Array<OneD, NekDouble> &out_d2)
+            const Array<OneD, const Array<OneD, NekDouble>> coords,
+            const Array<OneD, const NekDouble> &inarray,
+            Array<OneD, NekDouble> &out_d0,
+            Array<OneD, NekDouble> &out_d1,
+            Array<OneD, NekDouble> &out_d2)
         {
 
-            int    Nc  = coords[0].size();
-            
-            Array<OneD, Array<OneD,  NekDouble> >alleta(3); 
-            alleta[0] = Array<OneD, NekDouble>(Nc);
-            alleta[1] = Array<OneD, NekDouble>(Nc);
-            alleta[2] = Array<OneD, NekDouble>(Nc);
-            Vmath::Vcopy(Nc, coords[0], 1, alleta[0], 1);
-            Vmath::Vcopy(Nc, coords[1], 1, alleta[1], 1);
-            Vmath::Vcopy(Nc, coords[2], 1, alleta[2], 1);
+            int Qtot = coords[0].size();
+
+            Array<OneD, Array<OneD, NekDouble>> alleta(3);
+            alleta[0] = Array<OneD, NekDouble>(Qtot);
+            alleta[1] = Array<OneD, NekDouble>(Qtot);
+            alleta[2] = Array<OneD, NekDouble>(Qtot);
+
+            Vmath::Vcopy(Qtot, coords[0], 1, alleta[0], 1);
+            Vmath::Vcopy(Qtot, coords[1], 1, alleta[1], 1);
+            Vmath::Vcopy(Qtot, coords[2], 1, alleta[2], 1);
+
+            // convert to eta
             Array<OneD, NekDouble> allxi(3), allcoll(3);
-            //convert to eta
-            for(int i = 0; i < coords[0].size(); i++)
+            for (int i = 0; i < coords[0].size(); i++)
             {
                 allxi[0] = alleta[0][i];
                 allxi[1] = alleta[1][i];
                 allxi[2] = alleta[2][i];
-                
+
                 LocCoordToLocCollapsed(allxi, allcoll);
                 alleta[0][i] = allcoll[0];
                 alleta[1][i] = allcoll[1];
                 alleta[2][i] = allcoll[2];
             }
+
             const Array<OneD, const NekDouble> eta0 = alleta[0];
             const Array<OneD, const NekDouble> eta1 = alleta[1];
-            const Array<OneD, const NekDouble> eta2 = alleta[2]; 
+            const Array<OneD, const NekDouble> eta2 = alleta[2];
 
-           
-            Array<OneD, NekDouble> dEta_bar1(Nc,0.0);
-            Array<OneD, NekDouble> dXi2     (Nc,0.0);
-            Array<OneD, NekDouble> dEta3    (Nc,0.0);
+            Array<OneD, NekDouble> dEta_bar1(Qtot, 0.0);
+            Array<OneD, NekDouble> dXi2(Qtot, 0.0);
+            Array<OneD, NekDouble> dEta3(Qtot, 0.0);
             PhysTensorDerivFast(alleta, inarray, dEta_bar1, dXi2, dEta3);
-
 
             int k;
             if (out_d0.size() > 0)
             {
                 NekDouble fac;
-                for (k = 0; k < Nc; ++k)
+                for (k = 0; k < Qtot; ++k)
                 {
-                    fac = 2.0/(1.0 - eta2[k]);
-                    
+                    fac       = 2.0 / (1.0 - eta2[k]);
                     out_d0[k] = fac * dEta_bar1[k];
-                    
                 }
-            
             }
 
             if (out_d1.size() > 0)
             {
-                
                 NekDouble fac;
-                for (k = 0; k < Nc; ++k)
+                for (k = 0; k < Qtot; ++k)
                 {
-                    fac = 2.0/(1.0 - eta2[k]);
-                    
+                    fac       = 2.0 / (1.0 - eta2[k]);
                     out_d1[k] = fac * dXi2[k];
-                    
                 }
             }
 
             if (out_d2.size() > 0)
             {
-                for (k = 0; k < Nc; ++k)
+                for (k = 0; k < Qtot; ++k)
                 {
-                    out_d2[k] = ((1.0+eta0[k])/(1.0 - eta2[k]))*dEta_bar1[k] + ((1.0+eta1[k])/(1.0 - eta2[k]))*dXi2[k] +dEta3[k];
+                    out_d2[k] =
+                        ((1.0 + eta0[k]) / (1.0 - eta2[k])) * dEta_bar1[k] +
+                        ((1.0 + eta1[k]) / (1.0 - eta2[k])) * dXi2[k] +
+                        dEta3[k];
                 }
             }
-
-
         }
 
         void StdPyrExp::v_FillMode(const int mode, Array<OneD, NekDouble> &outarray)

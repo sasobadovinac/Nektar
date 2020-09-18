@@ -321,22 +321,16 @@ namespace Nektar
             }
         }
 
-        
         void StdSegExp::v_PhysEvalGrad(
-                                            const Array<OneD, const Array<OneD, NekDouble> >coords,
-                                            const Array<OneD, const NekDouble>& inarray,        
-                                             
-                                            Array<OneD, NekDouble> &out_d0,
-                                            Array<OneD, NekDouble> &out_d1,
-                                            Array<OneD, NekDouble> &out_d2)
+            const Array<OneD, const Array<OneD, NekDouble>> coords,
+            const Array<OneD, const NekDouble> &inarray,
+            Array<OneD, NekDouble> &out_d0,
+            Array<OneD, NekDouble> &out_d1,
+            Array<OneD, NekDouble> &out_d2)
         {
-            boost::ignore_unused( out_d1, out_d2);
-            PhysTensorDerivFast( coords, inarray, out_d0);
-            
+            boost::ignore_unused(out_d1, out_d2);
+            PhysTensorDerivFast(coords, inarray, out_d0);
         }
-
-
-
 
         // Deprecated
         // void StdSegExp::v_PhysEvalBasisGradFast(
