@@ -29,7 +29,7 @@
                 --exclude-from=.gitlab-ci/packaging-exclude *
     - mkdir deb
     - mv nektar++-$(<VERSION).tar.gz deb/nektar++_$(<VERSION).orig.tar.gz
-    - tar -C DEB -xf deb/nektar++_$(<VERSION).orig.tar.gz
+    - tar -C deb -xf deb/nektar++_$(<VERSION).orig.tar.gz
     - cp -a ${pkg_dir} deb/nektar++-$(<VERSION)/debian
     - sed -e s/unstable/${distribution}/g < pkg/debian/changelog
             > deb/nektar++-$(<VERSION)/debian/changelog
