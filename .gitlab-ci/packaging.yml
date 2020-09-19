@@ -163,6 +163,14 @@
     pkg_dir: pkg/debian/sid
     distribution: unstable
 
+.package-debian-sid-test:
+  <<: *package-deb-test
+  needs: ["package-debian-sid-build"]
+  dependencies:
+    - package-debian-sid-build
+  variables:
+    image_name: debian:sid
+
 ##
 ## Debian bullseye
 ##
@@ -207,6 +215,14 @@ package-debian-buster-build:
     pkg_dir: pkg/debian/buster
     distribution: buster
 
+package-debian-buster-test:
+  <<: *package-deb-test
+  needs: ["package-debian-buster-build"]
+  dependencies:
+    - package-debian-buster-build
+  variables:
+    image_name: debian:buster
+
 ##
 ## Debian stretch
 ##
@@ -224,6 +240,14 @@ package-debian-stretch-build:
     image_name: pkg/debian-stretch
     pkg_dir: pkg/debian/stretch
     distribution: stretch
+
+package-debian-stretch-test:
+  <<: *package-deb-test
+  needs: ["package-debian-stretch-build"]
+  dependencies:
+    - package-debian-stretch-build
+  variables:
+    image_name: debian:stretch
 
 ##
 ## Ubuntu focal
@@ -243,6 +267,14 @@ package-ubuntu-focal-build:
     pkg_dir: pkg/ubuntu/focal
     distribution: focal
 
+package-ubuntu-focal-test:
+  <<: *package-deb-test
+  needs: ["package-ubuntu-focal-build"]
+  dependencies:
+    - package-ubuntu-focal-build
+  variables:
+    image_name: ubuntu:focal
+
 ##
 ## Ubuntu bionic
 ##
@@ -261,6 +293,14 @@ package-ubuntu-bionic-build:
     pkg_dir: pkg/ubuntu/bionic
     distribution: bionic
 
+package-ubuntu-bionic-test:
+  <<: *package-deb-test
+  needs: ["package-ubuntu-bionic-build"]
+  dependencies:
+    - package-ubuntu-bionic-build
+  variables:
+    image_name: ubuntu:bionic
+
 ##
 ## Ubuntu xenial
 ##
@@ -278,6 +318,14 @@ package-ubuntu-xenial-build:
     image_name: pkg/ubuntu-xenial
     pkg_dir: pkg/ubuntu/xenial
     distribution: xenial
+
+package-ubuntu-xenial-test:
+  <<: *package-deb-test
+  needs: ["package-ubuntu-xenial-build"]
+  dependencies:
+    - package-ubuntu-xenial-build
+  variables:
+    image_name: ubuntu:xenial
 
 
 
