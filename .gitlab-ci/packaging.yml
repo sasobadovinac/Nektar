@@ -58,6 +58,7 @@
   image: ${image_name}
   stage: package-test
   script:
+    - apt update
     - cd deb && apt install ./nektar++-adr-solver_[1-9]*.deb ./libnektar++_[1-9]*.deb
     - cp $CI_PROJECT_DIR/solvers/ADRSolver/Tests/ImDiffusion_m12.xml .
     - ADRSolver ImDiffusion_m12.xml
