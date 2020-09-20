@@ -154,6 +154,7 @@ Depends: ${misc:Depends},
          libnektar++ (= ${binary:Version}),
          liboce-foundation-dev,
          liboce-modeling-dev,
+         libtinyxml-dev
          mpi-default-dev,
          zlib1g-dev
 Recommends: cmake
