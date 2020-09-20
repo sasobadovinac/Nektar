@@ -4,7 +4,7 @@ Priority: optional
 Maintainer: Chris Cantwell <c.cantwell@imperial.ac.uk>
 Homepage: https://www.nektar.info
 Standards-Version: 4.4.0
-Build-Depends: cmake (>= 2.8.8),
+Build-Depends: cmake (>= 2.8.11),
     debhelper (>= 9),
     quilt,
     libarpack2-dev,
@@ -20,6 +20,7 @@ Build-Depends: cmake (>= 2.8.8),
     liblapack-dev,
     libhdf5-mpi-dev,
     libtinyxml-dev,
+    libptscotch-dev,
     mpi-default-dev,
     zlib1g-dev
 
@@ -154,7 +155,8 @@ Depends: ${misc:Depends},
          libnektar++ (= ${binary:Version}),
          liboce-foundation-dev,
          liboce-modeling-dev,
-         libtinyxml-dev
+         libptscotch-dev,
+         libtinyxml-dev,
          mpi-default-dev,
          zlib1g-dev
 Recommends: cmake
