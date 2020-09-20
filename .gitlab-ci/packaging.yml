@@ -11,6 +11,8 @@
   <<: *package-conditions
   image: docker:stable
   stage: package-env
+  tags:
+    - pkg
   script:
     - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
     - IMAGE=$CI_REGISTRY_IMAGE/${image_name}
@@ -22,6 +24,8 @@
   <<: *package-conditions
   image: $CI_REGISTRY_IMAGE/${image_name}
   stage: package-build
+  tags:
+    - pkg
   script:
     - OMPI_MCA_btl_vader_single_copy_mechanism=none
     - tar -czf nektar++-$(<VERSION).tar.gz 
@@ -57,6 +61,8 @@
   <<: *package-conditions
   image: ${image_name}
   stage: package-test
+  tags:
+    - pkg
   script:
     - DEBIAN_FRONTEND=noninteractive
     - sed -i 's/main$/main contrib non-free/g' /etc/apt/sources.list
@@ -80,12 +86,12 @@
   image: $CI_REGISTRY_IMAGE/${image_name}
   stage: package-build
   tags:
-    - tmptag
+    - pkg
   script:
     - NEKVER=$(<VERSION)
     - STATUSCODE=$(curl --silent -o ${version_file} --write-out "%{http_code}" https://xyloid.org/nektar-repo/versions/${version_file})
     - if [ $STATUSCODE -eq 404 ]; then echo '{}' > ${version_file}; elif [ $STATUSCODE -ne 200 ]; then echo "Failed to grab versions file"; exit 1; fi
-    - RPMRELEASE=$(python3 redhat/version-tracker.py ${version_file} nektar ${NEKVER})
+    - RPMRELEASE=$(python3 pkg/redhat/version-tracker.py ${version_file} nektar ${NEKVER})
     - mkdir -p ~/rpmbuild/{BUILD,RPMS,SOURCES,SPECS,SRPMS}
     - cp ${spec_file} ~/rpmbuild/SPECS/nektar.spec
     - git archive --format=tgz --prefix=nektar-v${NEKVER}/ -o ~/rpmbuild/SOURCES/nektar-v${NEKVER}.tar.gz HEAD
@@ -110,6 +116,8 @@
   <<: *package-conditions
   image: ${image_name}
   stage: package-test
+  tags:
+    - pkg
   script:
     - if [ "$needs_epel" -eq 1 ]; then yum install -y epel-release; fi
     - if [ "$needs_powertools" -eq 1 ]; then yum install -y dnf-plugins-core; yum config-manager --set-enabled PowerTools; fi
@@ -132,8 +140,8 @@
   image: fedora:30
   stage: package-deploy
   tags:
-    - package
-    - rpm
+    - pkg
+    - pkg-rpm
   script:
     - RPM_LOC=/web/${RPM_LOCATION}
     - dnf install -y createrepo rpm-sign
@@ -335,22 +343,22 @@ package-ubuntu-xenial-test:
 ##
 ## CentOS 7
 ##
-.package-centos7-env:
+package-centos7-env:
   <<: *package-env-build
   variables:
     image_name: pkg/centos7
     dockerfile: docker/packaging/Dockerfile-centos7
 
-.package-centos7-build:
+package-centos7-build:
   <<: *package-rpm-build
   needs: ["package-centos7-env"]
   variables:
     GIT_SUBMODULE_STRATEGY: normal
-    spec_file: redhat/nektar-centos7.spec
+    spec_file: pkg/redhat/nektar-centos7.spec
     image_name: pkg/centos7
     version_file: centos-7.json
 
-.package-centos7-test:
+package-centos7-test:
   <<: *package-rpm-test
   needs: ["package-centos7-build"]
   dependencies:
@@ -360,7 +368,7 @@ package-ubuntu-xenial-test:
     needs_epel: 1
     cmake_exe: cmake3
 
-.package-centos7-deploy:
+package-centos7-deploy:
   <<: *package-rpm-deploy
   needs: ["package-centos7-build", "package-centos7-test"]
   dependencies:
@@ -371,22 +379,22 @@ package-ubuntu-xenial-test:
 ##
 ## CentOS 8
 ##
-.package-centos8-env:
+package-centos8-env:
   <<: *package-env-build
   variables:
     image_name: pkg/centos8
     dockerfile: docker/packaging/Dockerfile-centos8
 
-.package-centos8-build:
+package-centos8-build:
   <<: *package-rpm-build
   needs: ["package-centos8-env"]
   variables:
     GIT_SUBMODULE_STRATEGY: normal
-    spec_file: redhat/nektar-centos8.spec
+    spec_file: pkg/redhat/nektar-centos8.spec
     image_name: pkg/centos8
     version_file: centos-8.json
 
-.package-centos8-test:
+package-centos8-test:
   <<: *package-rpm-test
   needs: ["package-centos8-build"]
   dependencies:
@@ -397,7 +405,7 @@ package-ubuntu-xenial-test:
     needs_powertools: 1
     cmake_exe: cmake
 
-.package-centos8-deploy:
+package-centos8-deploy:
   <<: *package-rpm-deploy
   needs: ["package-centos8-build", "package-centos8-test"]
   dependencies:
@@ -408,22 +416,22 @@ package-ubuntu-xenial-test:
 ##
 ## Fedora 30
 ##
-.package-fedora30-env:
+package-fedora30-env:
   <<: *package-env-build
   variables:
     image_name: pkg/fedora30
     dockerfile: docker/packaging/Dockerfile-fedora30
 
-.package-fedora30-build:
+package-fedora30-build:
   <<: *package-rpm-build
   needs: ["package-fedora30-env"]
   variables:
     GIT_SUBMODULE_STRATEGY: normal
-    spec_file: redhat/nektar-fedora.spec
+    spec_file: pkg/redhat/nektar-fedora.spec
     image_name: pkg/fedora30
     version_file: fedora-30.json
 
-.package-fedora30-test:
+package-fedora30-test:
   <<: *package-rpm-test
   needs: ["package-fedora30-build"]
   dependencies:
@@ -432,7 +440,7 @@ package-ubuntu-xenial-test:
     image_name: fedora:30
     cmake_exe: cmake
 
-.package-fedora30-deploy:
+package-fedora30-deploy:
   <<: *package-rpm-deploy
   needs: ["package-fedora30-build", "package-fedora30-test"]
   dependencies:
@@ -443,22 +451,22 @@ package-ubuntu-xenial-test:
 ##
 ## Fedora 31
 ##
-.package-fedora31-env:
+package-fedora31-env:
   <<: *package-env-build
   variables:
     image_name: pkg/fedora31
     dockerfile: docker/packaging/Dockerfile-fedora31
 
-.package-fedora31-build:
+package-fedora31-build:
   <<: *package-rpm-build
   needs: ["package-fedora31-env"]
   variables:
     GIT_SUBMODULE_STRATEGY: normal
-    spec_file: redhat/nektar-fedora.spec
+    spec_file: pkg/redhat/nektar-fedora.spec
     image_name: pkg/fedora31
     version_file: fedora-31.json
 
-.package-fedora31-test:
+package-fedora31-test:
   <<: *package-rpm-test
   needs: ["package-fedora31-build"]
   dependencies:
@@ -467,7 +475,7 @@ package-ubuntu-xenial-test:
     image_name: fedora:31
     cmake_exe: cmake
 
-.package-fedora31-deploy:
+package-fedora31-deploy:
   <<: *package-rpm-deploy
   needs: ["package-fedora31-build", "package-fedora31-test"]
   dependencies:
@@ -478,22 +486,22 @@ package-ubuntu-xenial-test:
 ##
 ## Fedora 32
 ##
-.package-fedora32-env:
+package-fedora32-env:
   <<: *package-env-build
   variables:
     image_name: pkg/fedora32
     dockerfile: docker/packaging/Dockerfile-fedora32
 
-.package-fedora32-build:
+package-fedora32-build:
   <<: *package-rpm-build
   needs: ["package-fedora32-env"]
   variables:
     GIT_SUBMODULE_STRATEGY: normal
-    spec_file: redhat/nektar-fedora.spec
+    spec_file: pkg/redhat/nektar-fedora.spec
     image_name: pkg/fedora32
     version_file: fedora-32.json
 
-.package-fedora32-test:
+package-fedora32-test:
   <<: *package-rpm-test
   needs: ["package-fedora32-build"]
   dependencies:
@@ -502,7 +510,7 @@ package-ubuntu-xenial-test:
     image_name: fedora:32
     cmake_exe: cmake
 
-.package-fedora32-deploy:
+package-fedora32-deploy:
   <<: *package-rpm-deploy
   needs: ["package-fedora32-build", "package-fedora32-test"]
   dependencies:
