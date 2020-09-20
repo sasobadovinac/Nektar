@@ -58,9 +58,11 @@
   image: ${image_name}
   stage: package-test
   script:
+    - DEBIAN_FRONTEND=noninteractive
     - sed -i 's/main$/main contrib non-free/g' /etc/apt/sources.list
-    - apt update
-    - apt -y install ./deb/nektar++-adr-solver_[1-9]*.deb ./deb/libnektar++_[1-9]*.deb
+    - apt -yq update
+    - apt -yq install ssh
+    - apt -yq install ./deb/nektar++-adr-solver_[1-9]*.deb ./deb/libnektar++_[1-9]*.deb
     - cp $CI_PROJECT_DIR/solvers/ADRSolver/Tests/ImDiffusion_m12.xml .
     - ADRSolver ImDiffusion_m12.xml
     - test_output=`ADRSolver ImDiffusion_m12.xml | grep "L 2 error" | awk '{print ($7 < 2e-7)}'`
@@ -68,7 +70,7 @@
     - mpirun --allow-run-as-root -n 3 ADRSolver ImDiffusion_m12.xml
     - test_output=`mpirun --allow-run-as-root -n 3 ADRSolver ImDiffusion_m12.xml | grep "L 2 error" | awk '{print ($7 < 2e-7)}'`
     - if [ "$test_output" -eq 0 ]; then echo "Tolerance test failed on parallel ADRSolver run"; exit 1; fi
-    - apt -y install ./deb/libnektar++-dev_[1-9]*.deb
+    - apt -yq install build-essential ./deb/libnektar++-dev_[1-9]*.deb
     - cd $CI_PROJECT_DIR/templates/executable
     - ./test.sh /usr/lib/*/nektar++/cmake 3 /usr/bin/cmake
 
