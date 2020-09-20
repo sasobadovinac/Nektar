@@ -4,7 +4,7 @@ FROM fedora:30
 RUN dnf install -y rpm-build dnf-plugins-core git
 
 WORKDIR /root
-COPY redhat/nektar-fedora.spec .
+COPY pkg/redhat/nektar-fedora.spec .
 
 # Install build requirements from spec file.
 RUN dnf builddep -y nektar-fedora.spec && rm -f nektar-fedora.spec

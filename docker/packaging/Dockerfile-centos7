@@ -4,7 +4,7 @@ FROM centos:7
 RUN yum install -y epel-release
 
 # Grab docker
-COPY docker/packaging/texlive.profile redhat/nektar-centos7.spec /root/
+COPY docker/packaging/texlive.profile pkg/redhat/nektar-centos7.spec /root/
 WORKDIR /root
 
 # Install build dependencies from specfile.

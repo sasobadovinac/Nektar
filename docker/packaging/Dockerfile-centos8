@@ -5,7 +5,7 @@ RUN yum install -y epel-release dnf-plugins-core && \
     yum config-manager --set-enabled PowerTools
 
 # Grab docker
-COPY docker/packaging/texlive.profile redhat/nektar-centos8.spec /root/
+COPY docker/packaging/texlive.profile pkg/redhat/nektar-centos8.spec /root/
 WORKDIR /root
 
 # Install build dependencies from specfile.
