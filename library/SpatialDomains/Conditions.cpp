@@ -715,7 +715,7 @@ void BoundaryConditions::ReadBoundaryConditions(TiXmlElement *conditions)
                             MemoryManager<RobinBoundaryCondition>::
                             AllocateSharedPtr(
                                 m_session, equation1, equation2,
-                                userDefined, filename, boundaryRegionComm));
+                                userDefined, filename, primcoeff_filename, boundaryRegionComm));
                         (*boundaryConditions)[*iter] = robinCondition;
                     }
                     else

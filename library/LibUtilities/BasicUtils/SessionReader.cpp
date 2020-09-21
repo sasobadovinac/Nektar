@@ -970,6 +970,7 @@ namespace Nektar
         {
             TiXmlElement *xmlGeom = m_xmlDoc->FirstChildElement("NEKTAR")
                 ->FirstChildElement("GEOMETRY");
+	    ASSERTL0(xmlGeom , "Did not fine GEOMETRY tag in session file");
             TiXmlAttribute *attr  = xmlGeom->FirstAttribute();
             while (attr)
             {
