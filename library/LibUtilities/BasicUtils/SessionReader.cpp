@@ -970,6 +970,7 @@ namespace Nektar
         {
             TiXmlElement *xmlGeom = m_xmlDoc->FirstChildElement("NEKTAR")
                 ->FirstChildElement("GEOMETRY");
+	    ASSERTL0(xmlGoem,"A GEOMETRY section must be specified in the session file."); 
             TiXmlAttribute *attr  = xmlGeom->FirstAttribute();
             while (attr)
             {
