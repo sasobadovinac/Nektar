@@ -73,7 +73,8 @@ int main(int argc, char *argv[])
         ptypes[i] = "PolyEvenlySpaced";
     }
 
-    Array<OneD, Array<OneD, NekDouble>> coordsE = demo.GetCoords(E);
+
+    cout<<"\n here!\n\n";    Array<OneD, Array<OneD, NekDouble>> coordsE = demo.GetCoords(E);
 
     StdExpansion *F = demo.CreateStdExpansion();
     Array<OneD, Array<OneD, NekDouble>> coordsF = demo.GetCoords(F);

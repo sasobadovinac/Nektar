@@ -962,6 +962,7 @@ namespace Nektar
                 v_PhysEvalGrad(coords, inarray, out_d0, out_d1, out_d2);
             }
 
+
             /** \brief This function evaluates the expansion at a single
              *  (arbitrary) point of the domain
              *
@@ -1001,7 +1002,7 @@ namespace Nektar
              * @return The value of the basis function @p mode at @p coords.
              */
             Array<OneD, NekDouble> PhysEvaluateBasis(
-                                                                             const Array<OneD, const Array<OneD, NekDouble> >coords, int mode)
+                                                     const Array<OneD, const Array<OneD, NekDouble> >coords, int mode)
 
             {
                 return v_PhysEvaluateBasis(coords, mode);
@@ -1049,6 +1050,31 @@ namespace Nektar
                 return v_PhysEvalBasisGrad(coords, out_eval, out_d0, out_d1, out_d2 );  
             }
 
+
+
+            /**
+             * @brief This function evaluates second derivatives of a
+             * given function evaluated on quadrature points provided
+             * in @p inarray
+             * at a given set of points @p coords of the domain.
+             *
+             * @param coord   The coordinates inside the standard region..
+             * @param inarray function value evaluated at quadrature points
+             *
+             * @return Second derivative of the function whose evaluation is provided in inarray.
+             */
+
+
+            void PhysEvalSecondDeriv(
+                                   const Array<OneD, const Array<OneD, NekDouble> >coords,
+                                   const Array<OneD, const NekDouble> &inarray,
+                                   Array<OneD, NekDouble> &out_d0,
+                                   Array<OneD, NekDouble> &out_d1 ,
+                                   Array<OneD, NekDouble> &out_d2 )
+            {
+                v_PhysEvalSecondDeriv(coords, inarray, out_d0, out_d1, out_d2 );  
+            }
+
                         
             /**
              * @brief This function evaluates all the modes of the basis function, 
@@ -1063,18 +1089,6 @@ namespace Nektar
              *
              * @return The value of the basis function for all the modes  at @p coords, derivatives of the basis function for all the modes at @p coords.
              */
-
-            // Deprecated
-            /* void PhysEvalBasisGradFast( */
-            /*                        const Array<OneD, Array<OneD, NekDouble> >coords, */
-            /*                        Array<OneD, NekDouble> &out_eval, */
-            /*                        Array<OneD, NekDouble> &out_d0, */
-            /*                        Array<OneD, NekDouble> &out_d1 = NullNekDouble1DArray, */
-            /*                        Array<OneD, NekDouble> &out_d2 = NullNekDouble1DArray) */
-            /* { */
-            /*     return v_PhysEvalBasisGradFast(coords, out_eval, out_d0, out_d1, out_d2 );   */
-            /* } */
-            
 
             /**
              * \brief Convert local cartesian coordinate \a xi into local
@@ -1391,6 +1405,7 @@ namespace Nektar
                                                Array<OneD, NekDouble> &out_d1 = NullNekDouble1DArray,
                                                             Array<OneD, NekDouble> &out_d2 = NullNekDouble1DArray);
    
+   
 
             STD_REGIONS_EXPORT virtual void v_SetCoeffsToOrientation
                                        (Array<OneD, NekDouble> &coeffs,
@@ -1452,10 +1467,6 @@ namespace Nektar
                      */
                     if (xdiff == 0.0 )
                     {
-                        // std::cout<<"\n in baryeval:";
-            
-                        //            std::cout<<" coord="<<coord<<"  retpval = "<<pval<<" z["<<i<<"]="<<z[i];
-
                         return pval;
 
                     }
@@ -1595,7 +1606,7 @@ namespace Nektar
                      */
                     if (xdiff == 0.0 || fabs(xdiff)<1e-15)
                     {
-                        std::cout<<"\n z = coord.. calli ng der matrix\n\n";
+                        
                         if(D0 == NULL)
                         {   
                             D0 = m_base[DIR]->GetD();
@@ -1828,7 +1839,15 @@ namespace Nektar
              Array<OneD, NekDouble> &out_d0,
              Array<OneD, NekDouble> &out_d1 = NullNekDouble1DArray,
              Array<OneD, NekDouble> &out_d2 = NullNekDouble1DArray);
+
             
+            STD_REGIONS_EXPORT virtual void v_PhysEvalSecondDeriv
+            (const Array<OneD, const Array<OneD, NekDouble> >coords,
+             const Array<OneD, const NekDouble> &inarray,
+             Array<OneD, NekDouble> &out_d0,
+             Array<OneD, NekDouble> &out_d1,
+             Array<OneD, NekDouble> &out_d2 );
+
             STD_REGIONS_EXPORT virtual void v_LocCoordToLocCollapsed
             (const Array<OneD, const NekDouble>& xi,
              Array<OneD, NekDouble>& eta);

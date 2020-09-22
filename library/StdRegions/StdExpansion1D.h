@@ -83,14 +83,21 @@ namespace Nektar
             STD_REGIONS_EXPORT virtual NekDouble v_PhysEvaluate(
                                                                 const Array<OneD, const NekDouble>& coords,
                                                                 const Array<OneD, const NekDouble>& physvals) override;
-        
+ 
+           STD_REGIONS_EXPORT virtual void v_PhysEvalSecondDeriv(
+                                                                 const Array<OneD, const Array<OneD, NekDouble> >coords,
+                                                                 const Array<OneD, const NekDouble>& inarray,        
+                                                                 Array<OneD, NekDouble> &out_d0,
+                                                                Array<OneD, NekDouble> &out_d1 = NullNekDouble1DArray,
+                                                                Array<OneD, NekDouble> &out_d2 = NullNekDouble1DArray) final;
+
             STD_REGIONS_EXPORT virtual Array<OneD, Array<OneD, NekDouble> >v_GetPhysEvalALL() final;
 
             
             STD_REGIONS_EXPORT virtual void v_PhysEvalBasisGrad(
-                                                                const Array<OneD, const Array<OneD, NekDouble> >coords,
+                                                                const Array<OneD, const Array<OneD, NekDouble> > coords,
+                                                                Array<OneD, NekDouble> &inarray,
                                                                 Array<OneD, NekDouble> &out_d0,
-                                                                Array<OneD, NekDouble> &out_eval,
                                                                 Array<OneD, NekDouble> &out_d1 = NullNekDouble1DArray,
                                                                 Array<OneD, NekDouble> &out_d2 = NullNekDouble1DArray) final;
 

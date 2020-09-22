@@ -332,6 +332,7 @@ namespace Nektar
             PhysTensorDerivFast(coords, inarray, out_d0);
         }
 
+
         // Deprecated
         // void StdSegExp::v_PhysEvalBasisGradFast(
         //                                     const Array<OneD, const Array<OneD, NekDouble> >coords,

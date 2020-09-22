@@ -158,7 +158,6 @@ namespace Nektar
                                                            Array<OneD, NekDouble> &out_d2 = NullNekDouble1DArray);
 
 
-
             // Deprecated
             /* STD_REGIONS_EXPORT virtual void v_PhysEvalBasisGradFast( */
             /*                                                     const Array<OneD, const Array<OneD, NekDouble> > coords,  */

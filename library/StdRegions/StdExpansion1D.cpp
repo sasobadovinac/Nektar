@@ -75,6 +75,23 @@ namespace Nektar
             }
         }
 
+        // find second derivative of u (inarray) at all coords points
+        void StdExpansion1D::v_PhysEvalSecondDeriv(
+            const Array<OneD, const Array<OneD, NekDouble>> coords,
+            const Array<OneD, const NekDouble> &inarray,
+            Array<OneD, NekDouble> &out_d0,
+            Array<OneD, NekDouble> &out_d1,
+            Array<OneD, NekDouble> &out_d2)
+        {
+            boost::ignore_unused(out_d1, out_d2);
+          
+            for (int i = 0; i < coords[0].size(); i++)
+            {
+                out_d0[i] = StdExpansion::BaryEvaluateSecondDeriv<0>(coords[0][i],
+                                                               &inarray[0]);
+            }
+        }
+
         // find derivative of u (inarray) at all quad points
         void StdExpansion1D::PhysTensorDeriv(const Array<OneD, const NekDouble>& inarray,
                                              Array<OneD, NekDouble>& outarray)

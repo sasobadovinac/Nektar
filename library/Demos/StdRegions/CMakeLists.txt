@@ -8,6 +8,8 @@ ADD_NEKTAR_EXECUTABLE(StdInterpBasis
     COMPONENT demos DEPENDS StdRegions SOURCES StdInterpBasis.cpp)
 ADD_NEKTAR_EXECUTABLE(StdInterpDerivBasis
     COMPONENT demos DEPENDS StdRegions SOURCES StdInterpDerivBasis.cpp)
+ADD_NEKTAR_EXECUTABLE(StdInterpSecondDeriv
+    COMPONENT demos DEPENDS StdRegions SOURCES StdInterpSecondDeriv.cpp)
 ADD_NEKTAR_EXECUTABLE(StdEquiToCoeff2D
     COMPONENT demos DEPENDS StdRegions SOURCES StdEquiToCoeff2D.cpp)
 
@@ -43,6 +45,10 @@ ADD_NEKTAR_TEST(StdInterpDeriv_Prism_Orth_P7_Q8)
 ADD_NEKTAR_TEST(StdInterpDeriv_Hex_Orth_P7_Q8)
 ADD_NEKTAR_TEST(StdInterpDeriv_Hex_Mod_P7_Q8)
 ADD_NEKTAR_TEST(StdInterpDeriv_Tet_Orth_P7_Q8)
+
+# interpolation tests for second derivatives.
+ADD_NEKTAR_TEST(StdInterpSecondDeriv_Seg_Orth_P6_Q7)
+
 
 # interpolation tests for derivatives of basis.
 ADD_NEKTAR_TEST(StdInterpDerivBasis_Quad_Lagrange_P6_Q7)
