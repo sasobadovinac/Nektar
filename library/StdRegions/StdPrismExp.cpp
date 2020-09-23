@@ -730,16 +730,6 @@ namespace Nektar
             }
         }
 
-
-        
-        // Deprecated
-        // void StdPrismExp::v_PhysEvalBasisGradFast(
-        //                                     const Array<OneD, const Array<OneD, NekDouble> >coords,
-        //                                     Array<OneD, NekDouble> &out_eval,                    
-        //                                     Array<OneD, NekDouble> &out_d0,
-        //                                     Array<OneD, NekDouble> &out_d1,
-        //                                     Array<OneD, NekDouble> &out_d2)
-
         void StdPrismExp::v_PhysEvalGrad(
             const Array<OneD, const Array<OneD, NekDouble>> coords,
             const Array<OneD, const NekDouble> &inarray,
@@ -831,11 +821,6 @@ namespace Nektar
             tmp[mode] = 1.0;
             StdPrismExp::v_BwdTrans(tmp, outarray);
         }
-
-        // Deprecated
-//         NekDouble StdPrismExp::v_PhysEvaluateBasis(
-//                                                    const Array<OneD, const NekDouble>& coords,
-//                                                    int mode)
 
         void StdPrismExp::v_GetTraceNumModes(
                     const int      fid,

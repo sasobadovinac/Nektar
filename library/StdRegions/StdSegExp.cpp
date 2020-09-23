@@ -332,45 +332,6 @@ namespace Nektar
             PhysTensorDerivFast(coords, inarray, out_d0);
         }
 
-        // Deprecated
-        // void StdSegExp::v_PhysEvalBasisGradFast(
-        //                                     const Array<OneD, const Array<OneD, NekDouble> >coords,
-        //                                     Array<OneD, NekDouble> &out_eval,
-        //                                     Array<OneD, NekDouble> &out_d0,
-        //                                     Array<OneD, NekDouble> &out_d1,
-        //                                     Array<OneD, NekDouble> &out_d2)
-        // {
-        //     boost::ignore_unused(out_d1, out_d2);
-
-        //     int sz = coords[0].size();
-        //     if(out_eval.size() > 0)
-        //     {    
-        //         for(int k = 0; k < m_base[0]->GetNumModes(); k++)
-        //         {
-        //             for(int i = 0; i < sz; i++)
-        //             {
-                 
-        //                 out_eval[i+k*sz] = PhysEvaluateBasis(Array<OneD, NekDouble>(1,coords[0][i]), k);
-        //             }
-        //         }
-                
-        //     }
-
-        //     if(out_d0.size() > 0)
-        //     {    
-        //         for(int k = 0; k < m_base[0]->GetNumModes(); k++)
-        //         {
-        //                for(int i = 0; i < sz; i++)
-        //             {
-                 
-        //                 out_d0[i+k*sz] = StdExpansion::BaryEvaluateDerivBasis<0>(coords[0][i], k);
-        //             }
-        //         }
-                
-        //     }
-
-        // }
-
         void StdSegExp::v_FwdTrans_BndConstrained(
                 const Array<OneD, const NekDouble>& inarray,
                 Array<OneD, NekDouble> &outarray)

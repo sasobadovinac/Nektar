@@ -1005,7 +1005,6 @@ namespace Nektar
             {
                 return v_PhysEvaluateBasis(coords, mode);
             }
-            
 
             /**
              * @brief This function populates the m_physevalall storage
@@ -1016,12 +1015,10 @@ namespace Nektar
              * will no longer be needed and should be deprecated.
              * @return array of arrays m_physevalall 
              */
-
             Array<OneD, Array<OneD, NekDouble> >  GetPhysEvalALL()
             {
                 return v_GetPhysEvalALL();
             }
-
 
             /**
              * @brief This function evaluates all the modes of the basis function, 
@@ -1047,41 +1044,6 @@ namespace Nektar
             {
                 return v_PhysEvalBasisGrad(coords, out_eval, out_d0, out_d1, out_d2 );  
             }
-
-                        
-            /**
-             * @brief This function evaluates all the modes of the basis function, 
-             * and their derivatives at a given set of points @p coords of the domain.
-             *
-             * This is a fast version which uses the derivative interpolation barycentric 
-             * along with the formula tensor  product separation of the 
-             * basis function to improve performance.
-             * 
-             *
-             * @param coord   The coordinates inside the standard region..
-             *
-             * @return The value of the basis function for all the modes  at @p coords, derivatives of the basis function for all the modes at @p coords.
-             */
-
-            // Deprecated
-            /* void PhysEvalBasisGradFast( */
-            /*                        const Array<OneD, Array<OneD, NekDouble> >coords, */
-            /*                        Array<OneD, NekDouble> &out_eval, */
-            /*                        Array<OneD, NekDouble> &out_d0, */
-            /*                        Array<OneD, NekDouble> &out_d1 = NullNekDouble1DArray, */
-            /*                        Array<OneD, NekDouble> &out_d2 = NullNekDouble1DArray) */
-            /* { */
-            /*     return v_PhysEvalBasisGradFast(coords, out_eval, out_d0, out_d1, out_d2 );   */
-            /* } */
-            
-
-
-            /*            NekDouble PhysEvaluatedy(
-                                const Array<OneD, const NekDouble> &coords,
-                const Array<OneD, const NekDouble> &physvals)
-            {
-                return v_PhysEvaluatedy(coords, physvals);
-                }*/
 
             /**
              * \brief Convert local cartesian coordinate \a xi into local
@@ -1532,35 +1494,6 @@ namespace Nektar
                 return (-numer1 * denom + numer2 * numer3) / (denom * denom);
             }
 
-            /** Deprecated:
-             * @brief This function evaluates the basis function mode @p mode at
-             * a point @p coords of the domain in direction @dir.
-             *
-             * @param coord   The coordinate inside the standard region.
-             * @param mode    The mode number to be evaluated of #m_base[dir]
-             * @param dir     The direction of interpolation.
-             *
-             * @return The value of the basis function @p mode at @p coords in
-             *         direction @p dir.
-             */
-          /*   template<int DIR> */
-          /*   inline NekDouble BaryEvaluateBasis(const NekDouble &coord, */
-          /*                                      const int &mode) */
-            /** Deprecated:
-             * @brief This function evaluates the derivative of the basis function 
-             * mode @p mode at a point @p coords of the domain in direction @dir.
-             *
-             * @param coord   The coordinate inside the standard region.
-             * @param mode    The mode number to be evaluated of #m_base[dir]
-             * @param dir     The direction of interpolation.
-             *
-             * @return The value of the basis function @p mode at @p coords in
-             *         direction @p dir.
-             */
-            /* template<int DIR> */
-            /* inline NekDouble BaryEvaluateDerivBasis(const NekDouble &coord, */
-            /*                                    const int &mode) */
-
         private:
 
             STD_REGIONS_EXPORT virtual Array<OneD, Array< OneD, NekDouble> >        v_GetPhysEvalALL();
@@ -1720,14 +1653,6 @@ namespace Nektar
              Array<OneD, NekDouble> &out_d0,
              Array<OneD, NekDouble> &out_d1,
              Array<OneD, NekDouble> &out_d2);
-            
-            
-            STD_REGIONS_EXPORT virtual void v_PhysEvalBasisGradFast
-            (const Array<OneD, const Array<OneD, NekDouble> >coords,
-             Array<OneD, NekDouble> &out_eval,
-             Array<OneD, NekDouble> &out_d0,
-             Array<OneD, NekDouble> &out_d1 = NullNekDouble1DArray,
-             Array<OneD, NekDouble> &out_d2 = NullNekDouble1DArray);
             
             STD_REGIONS_EXPORT virtual void v_LocCoordToLocCollapsed
             (const Array<OneD, const NekDouble>& xi,

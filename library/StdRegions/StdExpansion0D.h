@@ -64,8 +64,6 @@ namespace Nektar
                                                         const Array<OneD, const NekDouble>& inarray,
                                                         Array<OneD, NekDouble> &out_d0);
 
-			
-            
         protected:
 
             STD_REGIONS_EXPORT virtual void v_PhysEvalBasisGrad(

@@ -194,17 +194,6 @@ namespace Nektar
                     int &numModes1,
                     Orientation  faceOrient  = eDir1FwdDir1_Dir2FwdDir2);
 
-            
-            // Deprecated
-            /* STD_REGIONS_EXPORT void v_PhysEvalBasisGradFast( */
-            /*                                 const Array<OneD, const Array<OneD, NekDouble> >coords, */
-            /*                                 Array<OneD, NekDouble> &out_eval,                     */
-            /*                                 Array<OneD, NekDouble> &out_d0, */
-            /*                                 Array<OneD, NekDouble> &out_d1, */
-            /*                                 Array<OneD, NekDouble> &out_d2 */
-            /*                                     ); */
-
-
             STD_REGIONS_EXPORT void v_PhysEvalGrad(
                                        const Array<OneD, const Array<OneD, NekDouble> >coords,
                                        const Array<OneD, const NekDouble>& inarray,        

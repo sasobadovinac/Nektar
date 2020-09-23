@@ -180,17 +180,6 @@ namespace Nektar
                                                         Array<OneD, NekDouble> &coords_0,
                                                         Array<OneD, NekDouble> &coords_1,
                                                         Array<OneD, NekDouble> &coords_2);
-            
-            // Deprecated
-
-            /* STD_REGIONS_EXPORT virtual void v_PhysEvalBasisGradFast( */
-            /*                                                         const Array<OneD, const Array<OneD, NekDouble> > coords,  */
-                                                                
-            /*                                                         Array<OneD, NekDouble>& out_eval,                                       */
-            /*                                                         Array<OneD, NekDouble>& out_d0,                                         */
-            /*                                                         Array<OneD, NekDouble>& out_d1,  */
-            /*                                                         Array<OneD, NekDouble>& out_d2 = NullNekDouble1DArray); */
-            
 
             STD_REGIONS_EXPORT virtual void v_PhysEvalGrad(
                                                            const Array<OneD, const Array<OneD, NekDouble> >coords,

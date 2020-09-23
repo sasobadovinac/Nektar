@@ -773,17 +773,6 @@ namespace Nektar
             }
         }
 
-
-        
-        // deprecated
-        // void StdPyrExp::v_PhysEvalBasisGradFast(
-        //                                     const Array<OneD, const Array<OneD, NekDouble> >coords,
-        //                                     Array<OneD, NekDouble> &out_eval,                    
-        //                                     Array<OneD, NekDouble> &out_d0,
-        //                                     Array<OneD, NekDouble> &out_d1,
-        //                                     Array<OneD, NekDouble> &out_d2
-        //                                          )
-
         void StdPyrExp::v_PhysEvalGrad(
             const Array<OneD, const Array<OneD, NekDouble>> coords,
             const Array<OneD, const NekDouble> &inarray,
@@ -905,11 +894,6 @@ namespace Nektar
                 std::swap(numModes0, numModes1);
             }
         }
-
-        // Deprecated
-        // NekDouble StdPyrExp::v_PhysEvaluateBasis(
-        //     const Array<OneD, const NekDouble>& coords,
-        //     int mode)
 
         //---------------------------------------
         // Helper functions

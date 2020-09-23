@@ -46,9 +46,7 @@ namespace Nektar
         StdTetExp::StdTetExp()
         {
             m_physevalall   = v_GetPhysEvalALL();
-
         }
-
 
         StdTetExp::StdTetExp(const LibUtilities::BasisKey &Ba,
                              const LibUtilities::BasisKey &Bb,
@@ -1031,20 +1029,6 @@ namespace Nektar
                 }
             }
         }
-
-        // Deprecated: mode splitting ver
-        // void StdTetExp::v_PhysEvalBasisGradFast(
-        //                                     const Array<OneD, const Array<OneD, NekDouble> >coords,
-        //                                     Array<OneD, NekDouble> &out_eval,                    
-        //                                     Array<OneD, NekDouble> &out_d0,
-        //                                     Array<OneD, NekDouble> &out_d1,
-        //                                     Array<OneD, NekDouble> &out_d2
-        //                                          )
-
-        // Deprecated: mode splitting ver
-        // NekDouble StdTetExp::v_PhysEvaluateBasis(
-        //     const Array<OneD, const NekDouble>& coords,
-        //     int mode)
 
         void StdTetExp::v_GetTraceNumModes(
                     const int          fid,

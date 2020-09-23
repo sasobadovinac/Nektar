@@ -664,11 +664,6 @@ namespace Nektar
             }
         }
 
-        // Deprecated: mode-splitting ver
-        // NekDouble StdHexExp::v_PhysEvaluateBasis(
-        //     const Array<OneD, const NekDouble>& coords,
-        //     int mode)
-
         int StdHexExp::v_GetNverts() const
         {
             return 8;
@@ -1225,15 +1220,6 @@ namespace Nektar
         {
             PhysTensorDerivFast(coords, inarray, out_d0, out_d1, out_d2);
         }
-
-        // Deprecated
-        // void StdHexExp::v_PhysEvalBasisGradFast(
-        //                                     const Array<OneD, const Array<OneD, NekDouble> >coords,
-        //                                     Array<OneD, NekDouble> &out_eval,                    
-        //                                     Array<OneD, NekDouble> &out_d0,
-        //                                     Array<OneD, NekDouble> &out_d1,
-        //                                     Array<OneD, NekDouble> &out_d2
-        //                                          )
 
         /**
          * Only for basis type Modified_A or GLL_LAGRANGE in all directions.
