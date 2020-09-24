@@ -231,22 +231,19 @@ namespace Nektar
 
 
             STD_REGIONS_EXPORT void v_PhysEvalBasisGrad(
-      const Array<OneD, const Array<OneD, NekDouble> >coords,
-      Array<OneD, NekDouble> &out_eval,                    
-      Array<OneD, NekDouble> &out_d0,
-      Array<OneD, NekDouble> &out_d1,
-      Array<OneD, NekDouble> &out_d2) final;
+              const Array<OneD, const Array<OneD, NekDouble> >coords,
+              Array<OneD, NekDouble> &out_eval,
+              Array<OneD, NekDouble> &out_d0,
+              Array<OneD, NekDouble> &out_d1,
+              Array<OneD, NekDouble> &out_d2) final;
             
             STD_REGIONS_EXPORT void PhysTensorDerivFast(
-      const Array<OneD, const Array<OneD, NekDouble> >& coords,
-      
-      const Array<OneD, const NekDouble>& inarray,
-      
-      Array<OneD, NekDouble> &out_d0,
-      Array<OneD, NekDouble> &out_d1,
-      Array<OneD, NekDouble> &out_d2);
-  
-      
+                const Array<OneD, NekDouble> &coords,
+                const Array<OneD, const NekDouble>& inarray,
+                Array<OneD, NekDouble> &out_d0,
+                Array<OneD, NekDouble> &out_d1,
+                Array<OneD, NekDouble> &out_d2);
+
             STD_REGIONS_EXPORT virtual void v_GetEdgeInteriorToElementMap(
                                                                           const int                  tid,
                                                                           Array<OneD, unsigned int> &maparray,

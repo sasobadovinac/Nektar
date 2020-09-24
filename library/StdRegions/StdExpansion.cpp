@@ -1194,13 +1194,13 @@ namespace Nektar
 
         
         void StdExpansion::v_PhysEvalGrad(
-                                          const Array<OneD, const Array<OneD, NekDouble> >coords,
+                                          const Array<OneD, NekDouble> coord,
                                           const Array<OneD, const NekDouble>& inarray,        
                                           Array<OneD, NekDouble> &out_d0,
                                           Array<OneD, NekDouble> &out_d1,
                                           Array<OneD, NekDouble> &out_d2)
         {
-            boost::ignore_unused(coords, inarray, out_d0, out_d1, out_d2);
+            boost::ignore_unused(coord, inarray, out_d0, out_d1, out_d2);
             NEKERROR(ErrorUtil::efatal, "Method does not exist for this shape");
         }
         void StdExpansion::v_PhysEvalBasisGrad(

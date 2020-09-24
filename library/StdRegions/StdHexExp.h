@@ -160,9 +160,8 @@ namespace Nektar
                           Array<OneD, NekDouble> &outarray);
 
             STD_REGIONS_EXPORT void v_PhysEvalGrad(
-                                            const Array<OneD, const Array<OneD, NekDouble> >coords,
-                                            const Array<OneD, const NekDouble>& inarray,        
-                                             
+                                            const Array<OneD, NekDouble> coord,
+                                            const Array<OneD, const NekDouble>& inarray,
                                             Array<OneD, NekDouble> &out_d0,
                                             Array<OneD, NekDouble> &out_d1,
                                             Array<OneD, NekDouble> &out_d2);

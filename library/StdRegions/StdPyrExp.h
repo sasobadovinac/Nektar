@@ -195,7 +195,7 @@ namespace Nektar
                     Orientation  faceOrient  = eDir1FwdDir1_Dir2FwdDir2);
 
             STD_REGIONS_EXPORT void v_PhysEvalGrad(
-                                       const Array<OneD, const Array<OneD, NekDouble> >coords,
+                                       const Array<OneD, NekDouble> coord,
                                        const Array<OneD, const NekDouble>& inarray,        
                                        Array<OneD, NekDouble> &out_d0,
                                        Array<OneD, NekDouble> &out_d1,

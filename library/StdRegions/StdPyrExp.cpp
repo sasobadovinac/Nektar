@@ -47,7 +47,6 @@ namespace Nektar
         StdPyrExp::StdPyrExp() // Deafult construct of standard expansion directly called.
         {
             m_physevalall   = v_GetPhysEvalALL();
-
         }
 
         StdPyrExp::StdPyrExp(const LibUtilities::BasisKey &Ba,
@@ -64,7 +63,7 @@ namespace Nektar
                                  Bc.GetNumModes()),
                              Ba, Bb, Bc)
         {
-            
+
             ASSERTL0(Ba.GetNumModes() <= Bc.GetNumModes(), "order in 'a' direction is higher "
                      "than order in 'c' direction");
             ASSERTL0(Bb.GetNumModes() <= Bc.GetNumModes(), "order in 'b' direction is higher "
@@ -774,77 +773,40 @@ namespace Nektar
         }
 
         void StdPyrExp::v_PhysEvalGrad(
-            const Array<OneD, const Array<OneD, NekDouble>> coords,
+            const Array<OneD, NekDouble> coord,
             const Array<OneD, const NekDouble> &inarray,
             Array<OneD, NekDouble> &out_d0,
             Array<OneD, NekDouble> &out_d1,
             Array<OneD, NekDouble> &out_d2)
         {
+            // Collapse coordinates
+            Array<OneD, NekDouble> coll(3, 0.0);
+            LocCoordToLocCollapsed(coord, coll);
 
-            int Qtot = coords[0].size();
+            Array<OneD, NekDouble> dEta_bar1(1, 0.0);
+            Array<OneD, NekDouble> dXi2(1, 0.0);
+            Array<OneD, NekDouble> dEta3(1, 0.0);
+            PhysTensorDerivFast(coll, inarray, dEta_bar1, dXi2, dEta3);
 
-            Array<OneD, Array<OneD, NekDouble>> alleta(3);
-            alleta[0] = Array<OneD, NekDouble>(Qtot);
-            alleta[1] = Array<OneD, NekDouble>(Qtot);
-            alleta[2] = Array<OneD, NekDouble>(Qtot);
-
-            Vmath::Vcopy(Qtot, coords[0], 1, alleta[0], 1);
-            Vmath::Vcopy(Qtot, coords[1], 1, alleta[1], 1);
-            Vmath::Vcopy(Qtot, coords[2], 1, alleta[2], 1);
-
-            // convert to eta
-            Array<OneD, NekDouble> allxi(3), allcoll(3);
-            for (int i = 0; i < coords[0].size(); i++)
-            {
-                allxi[0] = alleta[0][i];
-                allxi[1] = alleta[1][i];
-                allxi[2] = alleta[2][i];
-
-                LocCoordToLocCollapsed(allxi, allcoll);
-                alleta[0][i] = allcoll[0];
-                alleta[1][i] = allcoll[1];
-                alleta[2][i] = allcoll[2];
-            }
-
-            const Array<OneD, const NekDouble> eta0 = alleta[0];
-            const Array<OneD, const NekDouble> eta1 = alleta[1];
-            const Array<OneD, const NekDouble> eta2 = alleta[2];
-
-            Array<OneD, NekDouble> dEta_bar1(Qtot, 0.0);
-            Array<OneD, NekDouble> dXi2(Qtot, 0.0);
-            Array<OneD, NekDouble> dEta3(Qtot, 0.0);
-            PhysTensorDerivFast(alleta, inarray, dEta_bar1, dXi2, dEta3);
-
-            int k;
+            //@TODO: Refactor to prevent repeat calculations e.g. fac
             if (out_d0.size() > 0)
             {
-                NekDouble fac;
-                for (k = 0; k < Qtot; ++k)
-                {
-                    fac       = 2.0 / (1.0 - eta2[k]);
-                    out_d0[k] = fac * dEta_bar1[k];
-                }
+                NekDouble fac = 2.0 / (1.0 - coll[2]);
+                out_d0[0] = fac * dEta_bar1[0];
             }
 
             if (out_d1.size() > 0)
             {
-                NekDouble fac;
-                for (k = 0; k < Qtot; ++k)
-                {
-                    fac       = 2.0 / (1.0 - eta2[k]);
-                    out_d1[k] = fac * dXi2[k];
-                }
+                NekDouble fac = 2.0 / (1.0 - coll[2]);
+                out_d1[0] = fac * dXi2[0];
             }
 
             if (out_d2.size() > 0)
             {
-                for (k = 0; k < Qtot; ++k)
-                {
-                    out_d2[k] =
-                        ((1.0 + eta0[k]) / (1.0 - eta2[k])) * dEta_bar1[k] +
-                        ((1.0 + eta1[k]) / (1.0 - eta2[k])) * dXi2[k] +
-                        dEta3[k];
-                }
+                    out_d2[0] =
+                        ((1.0 + coll[0]) / (1.0 - coll[2])) * dEta_bar1[0] +
+                        ((1.0 + coll[1]) / (1.0 - coll[2])) * dXi2[0] +
+                        dEta3[0];
             }
         }
 
@@ -908,7 +870,7 @@ namespace Nektar
         {
             return 8;
         }
-        
+
         int StdPyrExp::v_GetNtraces() const
         {
             return 5;
@@ -1041,7 +1003,7 @@ namespace Nektar
                 return GetBasisNumModes(2);
             }
         }
-        
+
         const LibUtilities::BasisKey StdPyrExp::v_GetTraceBasisKey(
             const int i, const int k) const
         {
@@ -1367,7 +1329,7 @@ namespace Nektar
                     }
                 }
                 break;
-                
+
             case 1: // Front triangle
                 for (p = 0; p < P; ++p)
                 {
@@ -1381,7 +1343,7 @@ namespace Nektar
                     }
                 }
                 break;
-                
+
             case 2: // Right triangle
                 maparray[idx++] = GetMode(1,0,0);
                 maparray[idx++] = GetMode(0,0,1);
@@ -1423,7 +1385,7 @@ namespace Nektar
                     }
                 }
                 break;
-                
+
             case 4: // Left triangle
                 for (q = 0; q < P; ++q)
                 {
@@ -1624,7 +1586,7 @@ namespace Nektar
                     maparray[i-2] = GetMode(i,0,0);
                 }
                 break;
-                
+
             case 1:
                 for (i = 2; i <= Q; ++i)
                 {
@@ -1637,7 +1599,7 @@ namespace Nektar
                     maparray[i-2] = GetMode(i,1,0);
                 }
                 break;
-                
+
             case 3:
                 for (i = 2; i <= Q; ++i)
                 {
@@ -1650,20 +1612,20 @@ namespace Nektar
                     maparray[i-2] = GetMode(0,0,i);
                 }
                 break;
-                
+
             case 5:
                 for (i = 1; i <= R-1; ++i)
                 {
                     maparray[i-1] = GetMode(1,0,i);
                 }
-                break;                
+                break;
             case 6:
                 for (i = 1; i <= R-1; ++i)
                 {
                     maparray[i-1] = GetMode(1,1,i);
                 }
                 break;
-                
+
             case 7:
                 for (i = 1; i <= R-1; ++i)
                 {
@@ -1674,7 +1636,7 @@ namespace Nektar
                 ASSERTL0(false, "Edge not defined.");
                 break;
             }
-            
+
             if (signChange)
             {
                 for (i = 1; i < nEdgeIntCoeffs; i += 2)
@@ -1774,7 +1736,7 @@ namespace Nektar
                     }
                 }
                     break;
-                    
+
             case 3: // Rear triangle
                 for (p = 2; p <= P; ++p)
                 {
@@ -1788,7 +1750,7 @@ namespace Nektar
                     }
                 }
                 break;
-                
+
             case 4: // Left triangle
                 for (q = 2; q <= Q; ++q)
                 {
@@ -1805,7 +1767,7 @@ namespace Nektar
             default:
                 ASSERTL0(false, "Face interior map not available.");
             }
-            
+
             // Triangular faces are processed in the above switch loop; for
             // remaining quad faces, set up orientation if necessary.
             if (fid > 0)

@@ -1212,13 +1212,13 @@ namespace Nektar
         }
 
         void StdHexExp::v_PhysEvalGrad(
-            const Array<OneD, const Array<OneD, NekDouble>> coords,
+            const Array<OneD, NekDouble> coord,
             const Array<OneD, const NekDouble> &inarray,
             Array<OneD, NekDouble> &out_d0,
             Array<OneD, NekDouble> &out_d1,
             Array<OneD, NekDouble> &out_d2)
         {
-            PhysTensorDerivFast(coords, inarray, out_d0, out_d1, out_d2);
+            PhysTensorDerivFast(coord, inarray, out_d0, out_d1, out_d2);
         }
 
         /**

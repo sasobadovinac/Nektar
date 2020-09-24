@@ -916,116 +916,79 @@ namespace Nektar
         }
 
         void StdTetExp::v_PhysEvalGrad(
-            const Array<OneD, const Array<OneD, NekDouble>> coords,
+            const Array<OneD, NekDouble> coord,
             const Array<OneD, const NekDouble> &inarray,
             Array<OneD, NekDouble> &out_d0,
             Array<OneD, NekDouble> &out_d1,
             Array<OneD, NekDouble> &out_d2)
         {
-            int Qtot = coords[0].size();
-
-            Array<OneD, NekDouble> out_dEta0(Qtot, 0.0);
-            Array<OneD, NekDouble> out_dEta1(Qtot, 0.0);
-            Array<OneD, NekDouble> out_dEta2(Qtot, 0.0);
-
-            Array<OneD, Array<OneD, NekDouble>> alleta(3);
-            alleta[0] = Array<OneD, NekDouble>(Qtot);
-            alleta[1] = Array<OneD, NekDouble>(Qtot);
-            alleta[2] = Array<OneD, NekDouble>(Qtot);
-
-            Vmath::Vcopy(Qtot, coords[0], 1, alleta[0], 1);
-            Vmath::Vcopy(Qtot, coords[1], 1, alleta[1], 1);
-            Vmath::Vcopy(Qtot, coords[2], 1, alleta[2], 1);
-
-            // convert to eta
-            Array<OneD, NekDouble> allxi(3), allcoll(3);
-            for (int i = 0; i < coords[0].size(); i++)
-            {
-                allxi[0] = alleta[0][i];
-                allxi[1] = alleta[1][i];
-                allxi[2] = alleta[2][i];
-
-                LocCoordToLocCollapsed(allxi, allcoll);
-                alleta[0][i] = allcoll[0];
-                alleta[1][i] = allcoll[1];
-                alleta[2][i] = allcoll[2];
-            }
-
-            const Array<OneD, const NekDouble> c0 = alleta[0];
-            const Array<OneD, const NekDouble> c1 = alleta[1];
-            const Array<OneD, const NekDouble> c2 = alleta[2];
+            // Collapse coordinates
+            Array<OneD, NekDouble> coll(3, 0.0);
+            LocCoordToLocCollapsed(coord, coll);
 
             bool Do_2 = out_d2.size() > 0;
             bool Do_1 = out_d1.size() > 0;
 
+            Array<OneD, NekDouble> out_dEta0(1, 0.0);
+            Array<OneD, NekDouble> out_dEta1(1, 0.0);
+            Array<OneD, NekDouble> out_dEta2(1, 0.0);
+
             if (Do_2) // Need all local derivatives
             {
-                PhysTensorDerivFast(alleta, inarray, out_dEta0, out_dEta1,
+                PhysTensorDerivFast(coll, inarray, out_dEta0, out_dEta1,
                                     out_dEta2);
             }
             else if (Do_1) // Need 0 and 1 derivatives
             {
-                PhysTensorDerivFast(alleta, inarray, out_dEta0, out_dEta1,
+                PhysTensorDerivFast(coll, inarray, out_dEta0, out_dEta1,
                                     NullNekDouble1DArray);
             }
-            else // Only need Eta0 derivaitve
+            else // Only need Eta0 derivative
             {
-                PhysTensorDerivFast(alleta, inarray, out_dEta0,
+                PhysTensorDerivFast(coll, inarray, out_dEta0,
                                     NullNekDouble1DArray, NullNekDouble1DArray);
             }
 
-            // eta_i = ci
-            // calculate 2.0/((1-eta_1)(1-eta_2)) Out_dEta0
-            Array<OneD, NekDouble> temp(Qtot);
-            for (int k = 0; k < Qtot; k++)
-            {
-                temp[k] = 2.0 / ((1 - c1[k]) * (1 - c2[k]));
-            }
-
-            Vmath::Vmul(Qtot, temp, 1, out_dEta0, 1, out_dEta0, 1);
+            // calculate 2.0/((1-eta_1)(1-eta_2)) * Out_dEta0
+            NekDouble temp = 2.0 / ((1 - coll[1]) * (1 - coll[2]));
+            out_dEta0[0] *= temp;
 
             if (out_d0.size() > 0)
             {
-                // out_dxi0 = 4.0/((1-eta_1)(1-eta_2)) Out_dEta0
-                Vmath::Smul(Qtot, 2.0, out_dEta0, 1, out_d0, 1);
+                // out_dxi0 = 4.0/((1-eta_1)(1-eta_2)) * Out_dEta0
+                out_d0[0] = 2 * out_dEta0[0];
             }
+
             if (Do_1 || Do_2)
             {
-                Array<OneD, NekDouble> Fac0(Qtot);
-                Vmath::Sadd(Qtot, 1.0, c0, 1, Fac0, 1);
+                // fac0 = 1 + eta_0
+                NekDouble fac0;
+                fac0 = 1 + coll[0];
 
-                // calculate 2.0*(1+eta_0)/((1-eta_1)(1-eta_2)) Out_dEta0
-                Vmath::Vmul(Qtot, Fac0, 1, out_dEta0, 1, out_dEta0, 1);
+                // calculate 2.0*(1+eta_0)/((1-eta_1)(1-eta_2)) * Out_dEta0
+                out_dEta0[0] *= fac0;
 
-                // calculate 2/(1.0-eta_2) out_dEta1
-                for (int k = 0; k < Qtot; ++k)
-                {
-                    Fac0[k] = 2.0 / (1.0 - c2[k]);
-                }
-
-                Vmath::Vmul(Qtot, Fac0, 1, out_dEta1, 1, out_dEta1, 1);
+                // calculate 2/(1.0-eta_2) * out_dEta1
+                fac0 = 2 / (1 - coll[2]);
+                out_dEta1[0] *= fac0;
 
                 if (Do_1)
                 {
                     // calculate out_dxi1 = 2.0(1+eta_0)/((1-eta_1)(1-eta_2))
-                    // Out_dEta0
-                    // + 2/(1.0-eta_2) out_dEta1
-                    Vmath::Vadd(Qtot, out_dEta0, 1, out_dEta1, 1, out_d1, 1);
+                    //  * Out_dEta0 + 2/(1.0-eta_2) out_dEta1
+                    out_d1[0] = out_dEta0[0] + out_dEta1[0];
                 }
+
                 if (Do_2)
                 {
                     // calculate (1 + eta_1)/(1 -eta_2)*out_dEta1
-                    for (int k = 0; k < Qtot; ++k)
-                    {
-                        Fac0[k] = (1.0 + c1[k]) / 2.0;
-                    }
-                    Vmath::Vmul(Qtot, Fac0, 1, out_dEta1, 1, out_dEta1, 1);
+                    fac0 = (1 + coll[1]) / 2;
+                    out_dEta1[0] *= fac0;
 
                     // calculate out_dxi2 =
                     // 2.0(1+eta_0)/((1-eta_1)(1-eta_2)) Out_dEta0 +
                     // (1 + eta_1)/(1 -eta_2)*out_dEta1 + out_dEta2
-                    Vmath::Vadd(Qtot, out_dEta0, 1, out_dEta1, 1, out_d2, 1);
-                    Vmath::Vadd(Qtot, out_dEta2, 1, out_d2, 1, out_d2, 1);
+                    out_d2[0] = out_dEta0[0] + out_dEta1[0] + out_dEta2[0];
                 }
             }
         }

@@ -952,14 +952,14 @@ namespace Nektar
              * given in \a coords
              */
             void PhysEvalGrad(
-                              const Array<OneD, const Array<OneD, NekDouble> >coords,
+                              const Array<OneD, NekDouble> coord,
                               const Array<OneD, const NekDouble>& inarray,        
                               Array<OneD, NekDouble> &out_d0,
                               Array<OneD, NekDouble> &out_d1 = NullNekDouble1DArray,
                               Array<OneD, NekDouble> &out_d2 = NullNekDouble1DArray)
                 
             {
-                v_PhysEvalGrad(coords, inarray, out_d0, out_d1, out_d2);
+                v_PhysEvalGrad(coord, inarray, out_d0, out_d1, out_d2);
             }
 
             /** \brief This function evaluates the expansion at a single
@@ -1354,7 +1354,7 @@ namespace Nektar
                                        Array<OneD, const NekDouble> &inarray,
                                        Array<OneD, NekDouble> &outarray);
 
-            STD_REGIONS_EXPORT virtual void v_PhysEvalGrad( const Array<OneD, const Array<OneD, NekDouble> >coords,
+            STD_REGIONS_EXPORT virtual void v_PhysEvalGrad(const Array<OneD, NekDouble> coord,
                                                const Array<OneD, const NekDouble>& inarray,        
                                                Array<OneD, NekDouble> &out_d0,
                                                Array<OneD, NekDouble> &out_d1 = NullNekDouble1DArray,

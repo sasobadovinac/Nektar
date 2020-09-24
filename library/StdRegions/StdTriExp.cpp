@@ -517,7 +517,7 @@ namespace Nektar
         }
 
         void StdTriExp::v_PhysEvalGrad(
-            const Array<OneD, const Array<OneD, NekDouble>> coords,
+            const Array<OneD, NekDouble> coord,
             const Array<OneD, const NekDouble> &inarray,
             Array<OneD, NekDouble> &out_d0,
             Array<OneD, NekDouble> &out_d1,
@@ -525,61 +525,42 @@ namespace Nektar
         {
             boost::ignore_unused(out_d2);
 
-            int Qtot = coords[0].size();
-
-            // metric terms here:
-            Array<OneD, Array<OneD, NekDouble>> collcoords(2);
-            collcoords[0] = Array<OneD, NekDouble>(Qtot);
-            collcoords[1] = Array<OneD, NekDouble>(Qtot);
-            Array<OneD, NekDouble> tmp(2), tmpcoll(2);
-
-            // collapse coords:
-            for (int i = 0; i < Qtot; i++)
-            {
-                tmp[0] = coords[0][i];
-                tmp[1] = coords[1][i];
-                LocCoordToLocCollapsed(tmp, tmpcoll);
-                collcoords[0][i] = tmpcoll[0];
-                collcoords[1][i] = tmpcoll[1];
-            }
-
-            const Array<OneD, const NekDouble> &z1 = collcoords[1];
-            const Array<OneD, const NekDouble> &z0 = collcoords[0];
-            Array<OneD, NekDouble> wsp2(Qtot), wsp(Qtot), temp(Qtot);
+            // Collapse coordinates
+            Array<OneD, NekDouble> coll(2, 0.0);
+            LocCoordToLocCollapsed(coord, coll);
 
             // set up geometric factor: 2.0/(1.0-z1)
-            Vmath::Sadd(wsp2.size(), -1.0, &z1[0], 1, &wsp2[0], 1);
-            Vmath::Sdiv(wsp2.size(), -2.0, &wsp2[0], 1, &wsp2[0], 1);
+            NekDouble fac0 = 2 / (1 - coll[1]);
 
+            Array<OneD, NekDouble> temp(1, 0.0);
             if (out_d0.size() > 0)
             {
-                PhysTensorDerivFast(collcoords, inarray, out_d0, out_d1);
-                Vmath::Vcopy(Qtot, out_d0, 1, temp, 1);
-                Vmath::Vmul(Qtot, wsp2, 1, out_d0, 1, out_d0, 1);
+                PhysTensorDerivFast(coll, inarray, out_d0, out_d1);
+
+                // Copy d0 into temp for d1
+                std::copy(out_d0.begin(), out_d1.end(), temp.begin());
+
+                //Multiply by geometric factor
+                out_d0[0] = out_d0[0] * fac0;
 
                 if (out_d1.size() > 0)
                 {
-                    // set up geometric factor: (1_z0)/(1-z1)
-                    Vmath::Smul(Qtot, 0.5, wsp2, 1, wsp2, 1);
-                    Vmath::Sadd(Qtot, 1.0, z0, 1, wsp, 1);
-                    Vmath::Vmul(Qtot, wsp, 1, wsp2, 1, wsp2, 1);
-                    Vmath::Vmul(Qtot, wsp2, 1, temp, 1, temp, 1);
-                    Vmath::Vadd(Qtot, temp, 1, out_d1, 1, out_d1, 1);
+                    // set up geometric factor: (1+z0)/(1-z1)
+                    NekDouble fac1 = fac0 * (coll[0] + 1) / 2;
+
+                    //Multiply out_d0 by geometric factor and add to out_d1
+                    out_d1[0] += fac1 * temp[0];
                 }
-
-                return;
             }
-
-            if (out_d1.size() > 0)
+            else if (out_d1.size() > 0)
             {
+                PhysTensorDerivFast(coll, inarray, temp, out_d1);
 
-                PhysTensorDerivFast(collcoords, inarray, temp, out_d1);
+                // set up geometric factor: (1+z0)/(1-z1)
+                NekDouble fac1 = fac0 * (coll[0] + 1) / 2;
 
-                Vmath::Smul(Qtot, 0.5, wsp2, 1, wsp2, 1);
-                Vmath::Sadd(Qtot, 1.0, z0, 1, wsp, 1);
-                Vmath::Vmul(Qtot, wsp, 1, wsp2, 1, wsp2, 1);
-                Vmath::Vmul(Qtot, wsp2, 1, temp, 1, temp, 1);
-                Vmath::Vadd(Qtot, temp, 1, out_d1, 1, out_d1, 1);
+                //Multiply out_d0 by geometric factor and add to out_d1
+                out_d1[0] += fac1 * temp[0];
             }
         }
 

@@ -117,7 +117,22 @@ int main(int argc, char *argv[])
    
     const Array<OneD, const Array<OneD, NekDouble> > coordsF = demo.GetCoords(F);
 
-    E->PhysEvalGrad(coordsF, physIn, physOut0, physOut1, physOut2);
+    for (int i = 0; i < totPoints; ++i)
+    {
+        // Fill coords array
+        Array<OneD, NekDouble> coordIn(dimension, 0.0);
+        for (int j =0; j < dimension; ++j)
+        {
+            coordIn[j] = coordsF[j][i];
+        }
+
+        Array<OneD, NekDouble> tmp0(1, 0.0), tmp1(1, 0.0), tmp2(1, 0.0);
+        E->PhysEvalGrad(coordIn, physIn, tmp0, tmp1, tmp2);
+
+        physOut0[i] = tmp0[0];
+        physOut1[i] = tmp1[0];
+        physOut2[i] = tmp2[0];
+    }
 
     switch(dimension)
     {
@@ -142,4 +157,3 @@ int main(int argc, char *argv[])
 
     return 0;
 }
-

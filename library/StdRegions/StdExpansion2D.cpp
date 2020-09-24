@@ -136,7 +136,7 @@ namespace Nektar
 
         // find derivative of u (inarray) at all coords points
         void StdExpansion2D::PhysTensorDerivFast(
-           const Array<OneD, const Array<OneD, NekDouble>> &coords,
+           const Array<OneD, NekDouble> &coord,
            const Array<OneD, const NekDouble> &inarray,
            Array<OneD, NekDouble> &out_d0,
            Array<OneD, NekDouble> &out_d1)
@@ -149,36 +149,30 @@ namespace Nektar
 
             if (out_d0.size() > 0)
             {
-                for (int i = 0; i < coords[0].size(); i++)
+                const NekDouble *ptr = &inarray[0];
+
+                for (int j = 0; j < nq1; ++j, ptr += nq0)
                 {
-                    const NekDouble *ptr = &inarray[0];
-
-                    for (int j = 0; j < nq1; ++j, ptr += nq0)
-                    {
-                        wsp[j] = StdExpansion::BaryEvaluateDeriv<0>(
-                            coords[0][i], ptr);
-                    }
-
-                    out_d0[i] = StdExpansion::BaryEvaluate<1>(
-                        coords[1][i], &wsp[0]);
+                    wsp[j] = StdExpansion::BaryEvaluateDeriv<0>(
+                        coord[0], ptr);
                 }
+
+                out_d0[0] = StdExpansion::BaryEvaluate<1>(
+                    coord[1], &wsp[0]);
             }
 
             if (out_d1.size() > 0)
             {
-                for (int i = 0; i < coords[0].size(); i++)
+                const NekDouble *ptr = &inarray[0];
+
+                for (int j = 0; j < nq1; ++j, ptr += nq0)
                 {
-                    const NekDouble *ptr = &inarray[0];
-
-                    for (int j = 0; j < nq1; ++j, ptr += nq0)
-                    {
-                        wsp[j] = StdExpansion::BaryEvaluate<0>(
-                            coords[0][i], ptr);
-                    }
-
-                    out_d1[i] = StdExpansion::BaryEvaluateDeriv<1>(
-                        coords[1][i], &wsp[0]);
+                    wsp[j] = StdExpansion::BaryEvaluate<0>(
+                        coord[0], ptr);
                 }
+
+                out_d1[0] = StdExpansion::BaryEvaluateDeriv<1>(
+                    coord[1], &wsp[0]);
             }
         }
 
@@ -285,8 +279,8 @@ namespace Nektar
                 Vmath::Vcopy(nq, &tmp3[0], 1, &ret[2][i*nq], 1);  
 
             }
+
             return ret;
-        
         }        
 
         //evaluates der of multiple points given in coords(2D array) with x-coords in coords[0] and ycoords in coords[1]
