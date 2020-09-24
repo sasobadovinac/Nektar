@@ -93,11 +93,11 @@ namespace Nektar
                                                     Array<OneD, NekDouble> &outarray_d0,
                                                     Array<OneD, NekDouble> &outarray_d1);
 
-            STD_REGIONS_EXPORT void PhysTensorDerivFast(
+            STD_REGIONS_EXPORT NekDouble PhysTensorDerivFast(
                 const Array<OneD, NekDouble> &coord,
                 const Array<OneD, const NekDouble>& inarray,
-                Array<OneD, NekDouble> &outarray_d0,
-                Array<OneD, NekDouble> &outarray_d1);
+                Array<OneD, NekDouble> &out_d0,
+                Array<OneD, NekDouble> &out_d1);
 
             STD_REGIONS_EXPORT NekDouble Integral(
                                                   const Array<OneD, const NekDouble>& inarray,
@@ -158,6 +158,13 @@ namespace Nektar
             STD_REGIONS_EXPORT virtual NekDouble v_PhysEvaluate(
                                                                 const Array<OneD, DNekMatSharedPtr>& I,
                                                                 const Array<OneD, const NekDouble> & physvals) override;
+
+            STD_REGIONS_EXPORT virtual NekDouble v_PhysEvaluate(
+                const Array<OneD, NekDouble> coord,
+                const Array<OneD, const NekDouble>& inarray,
+                Array<OneD, NekDouble> &out_d0,
+                Array<OneD, NekDouble> &out_d1,
+                Array<OneD, NekDouble> &out_d2 = NullNekDouble1DArray) override;
             
 
             STD_REGIONS_EXPORT virtual Array<OneD, Array<OneD, NekDouble> > v_GetPhysEvalALL() final;

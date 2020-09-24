@@ -516,7 +516,7 @@ namespace Nektar
             }
         }
 
-        void StdTriExp::v_PhysEvalGrad(
+        NekDouble StdTriExp::v_PhysEvaluate(
             const Array<OneD, NekDouble> coord,
             const Array<OneD, const NekDouble> &inarray,
             Array<OneD, NekDouble> &out_d0,
@@ -533,9 +533,10 @@ namespace Nektar
             NekDouble fac0 = 2 / (1 - coll[1]);
 
             Array<OneD, NekDouble> temp(1, 0.0);
+            NekDouble val = 0;
             if (out_d0.size() > 0)
             {
-                PhysTensorDerivFast(coll, inarray, out_d0, out_d1);
+                val = PhysTensorDerivFast(coll, inarray, out_d0, out_d1);
 
                 // Copy d0 into temp for d1
                 std::copy(out_d0.begin(), out_d1.end(), temp.begin());
@@ -554,14 +555,16 @@ namespace Nektar
             }
             else if (out_d1.size() > 0)
             {
-                PhysTensorDerivFast(coll, inarray, temp, out_d1);
+                val = PhysTensorDerivFast(coll, inarray, temp, out_d1);
 
                 // set up geometric factor: (1+z0)/(1-z1)
                 NekDouble fac1 = fac0 * (coll[0] + 1) / 2;
 
-                //Multiply out_d0 by geometric factor and add to out_d1
+                // Multiply out_d0 by geometric factor and add to out_d1
                 out_d1[0] += fac1 * temp[0];
             }
+
+            return val;
         }
 
         void StdTriExp::v_IProductWRTBase_SumFacKernel(

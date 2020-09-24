@@ -301,7 +301,7 @@ namespace Nektar
         }
 
         // find derivative of u (inarray) at all coords points
-        void StdExpansion3D::PhysTensorDerivFast(
+        NekDouble StdExpansion3D::PhysTensorDerivFast(
             const Array<OneD, NekDouble> &coord,
             const Array<OneD, const NekDouble> &inarray,
             Array<OneD, NekDouble> &out_d0,
@@ -373,6 +373,20 @@ namespace Nektar
                 out_d2[0] = StdExpansion::BaryEvaluateDeriv<2>(
                     coord[2], &wsp2[0]);
             }
+
+            // Construct the 2D square...
+            const NekDouble *ptr = &inarray[0];
+            for (int i = 0; i < nq1 * nq2; ++i, ptr += nq0)
+            {
+                wsp1[i] = StdExpansion::BaryEvaluate<0>(coord[0], ptr);
+            }
+
+            for (int i = 0; i < nq2; ++i)
+            {
+                wsp2[i] = StdExpansion::BaryEvaluate<1>(coord[1], &wsp1[i * nq1]);
+            }
+
+            return StdExpansion::BaryEvaluate<2>(coord[2], &wsp2[0]);
         }
 
         NekDouble StdExpansion3D::v_PhysEvaluate(
@@ -449,6 +463,17 @@ namespace Nektar
             value = Blas::Ddot(Qz, interpolatingNodes, 1, &sumFactorization_r[0], 1);
 
             return value;
+        }
+
+        NekDouble StdExpansion3D::v_PhysEvaluate(
+            const Array<OneD, NekDouble> coord,
+            const Array<OneD, const NekDouble> &inarray,
+            Array<OneD, NekDouble> &out_d0,
+            Array<OneD, NekDouble> &out_d1,
+            Array<OneD, NekDouble> &out_d2)
+        {
+            boost::ignore_unused(coord, inarray, out_d0, out_d1, out_d2);
+            return 0;
         }
 
         

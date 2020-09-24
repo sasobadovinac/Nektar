@@ -135,7 +135,7 @@ namespace Nektar
        }
 
         // find derivative of u (inarray) at all coords points
-        void StdExpansion2D::PhysTensorDerivFast(
+       NekDouble StdExpansion2D::PhysTensorDerivFast(
            const Array<OneD, NekDouble> &coord,
            const Array<OneD, const NekDouble> &inarray,
            Array<OneD, NekDouble> &out_d0,
@@ -174,6 +174,16 @@ namespace Nektar
                 out_d1[0] = StdExpansion::BaryEvaluateDeriv<1>(
                     coord[1], &wsp[0]);
             }
+
+            const NekDouble *ptr = &inarray[0];
+
+            for (int i = 0; i < nq1; ++i, ptr += nq0)
+            {
+                wsp[i] = StdExpansion::BaryEvaluate<0>(
+                    coord[0], ptr);
+            }
+
+            return StdExpansion::BaryEvaluate<1>(coord[1], &wsp[0]);
         }
 
         //version :  uses storage space via m_physevalall
@@ -337,6 +347,18 @@ namespace Nektar
 
             return val;
         }
+
+         NekDouble StdExpansion2D::v_PhysEvaluate(
+                const Array<OneD, NekDouble> coord,
+                const Array<OneD, const NekDouble> &inarray,
+                Array<OneD, NekDouble> &out_d0,
+                Array<OneD, NekDouble> &out_d1,
+                Array<OneD, NekDouble> &out_d2)
+         {
+             boost::ignore_unused(coord, inarray, out_d0, out_d1, out_d2);
+
+             return 0;
+         }
 
         //////////////////////////////
         // Integration Methods

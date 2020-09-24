@@ -1183,8 +1183,7 @@ namespace Nektar
 
 
         NekDouble StdExpansion::v_PhysEvaluate
-        (const Array<OneD,
-         const NekDouble>& coords,
+        (const Array<OneD, const NekDouble>& coords,
          const Array<OneD, const NekDouble>& physvals)
         {
             boost::ignore_unused(coords, physvals);
@@ -1192,8 +1191,7 @@ namespace Nektar
             return 0;
         }
 
-        
-        void StdExpansion::v_PhysEvalGrad(
+        NekDouble StdExpansion::v_PhysEvaluate(
                                           const Array<OneD, NekDouble> coord,
                                           const Array<OneD, const NekDouble>& inarray,        
                                           Array<OneD, NekDouble> &out_d0,
@@ -1202,6 +1200,7 @@ namespace Nektar
         {
             boost::ignore_unused(coord, inarray, out_d0, out_d1, out_d2);
             NEKERROR(ErrorUtil::efatal, "Method does not exist for this shape");
+            return 0;
         }
         void StdExpansion::v_PhysEvalBasisGrad(
                                                const Array<OneD, const Array<OneD, NekDouble> >coords,

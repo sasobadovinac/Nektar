@@ -426,7 +426,7 @@ namespace Nektar
             ASSERTL0(m_geom,"m_geom not defined");
             m_geom->GetLocCoords(coord,Lcoord);
 
-            return StdNodalTriExp::v_PhysEvaluate(Lcoord, physvals);
+            return StdExpansion2D::v_PhysEvaluate(Lcoord, physvals);
         }
 
         DNekScalMatSharedPtr NodalTriExp::CreateMatrix(const MatrixKey &mkey)

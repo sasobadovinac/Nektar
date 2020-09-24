@@ -915,7 +915,7 @@ namespace Nektar
             StdTetExp::v_BwdTrans(tmp, outarray);
         }
 
-        void StdTetExp::v_PhysEvalGrad(
+        NekDouble StdTetExp::v_PhysEvaluate(
             const Array<OneD, NekDouble> coord,
             const Array<OneD, const NekDouble> &inarray,
             Array<OneD, NekDouble> &out_d0,
@@ -933,19 +933,20 @@ namespace Nektar
             Array<OneD, NekDouble> out_dEta1(1, 0.0);
             Array<OneD, NekDouble> out_dEta2(1, 0.0);
 
+            NekDouble val = 0;
             if (Do_2) // Need all local derivatives
             {
-                PhysTensorDerivFast(coll, inarray, out_dEta0, out_dEta1,
+                val = PhysTensorDerivFast(coll, inarray, out_dEta0, out_dEta1,
                                     out_dEta2);
             }
             else if (Do_1) // Need 0 and 1 derivatives
             {
-                PhysTensorDerivFast(coll, inarray, out_dEta0, out_dEta1,
+                val = PhysTensorDerivFast(coll, inarray, out_dEta0, out_dEta1,
                                     NullNekDouble1DArray);
             }
             else // Only need Eta0 derivative
             {
-                PhysTensorDerivFast(coll, inarray, out_dEta0,
+                val = PhysTensorDerivFast(coll, inarray, out_dEta0,
                                     NullNekDouble1DArray, NullNekDouble1DArray);
             }
 
@@ -991,6 +992,8 @@ namespace Nektar
                     out_d2[0] = out_dEta0[0] + out_dEta1[0] + out_dEta2[0];
                 }
             }
+
+            return val;
         }
 
         void StdTetExp::v_GetTraceNumModes(

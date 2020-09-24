@@ -672,7 +672,7 @@ namespace Nektar
             const Array<OneD, const NekDouble> &physvals)
         {
             // Evaluate point in local (eta) coordinates.
-            return StdQuadExp::v_PhysEvaluate(Lcoord,physvals);
+            return StdExpansion2D::v_PhysEvaluate(Lcoord,physvals);
         }
 
         NekDouble QuadExp::v_PhysEvaluate(
@@ -684,9 +684,23 @@ namespace Nektar
             ASSERTL0(m_geom,"m_geom not defined");
             m_geom->GetLocCoords(coord,Lcoord);
 
-            return StdQuadExp::v_PhysEvaluate(Lcoord, physvals);
+            return StdExpansion2D::v_PhysEvaluate(Lcoord, physvals);
         }
 
+        NekDouble QuadExp::v_PhysEvaluate(
+            const Array<OneD, NekDouble> coord,
+            const Array<OneD, const NekDouble>& inarray,
+            Array<OneD, NekDouble> &out_d0,
+            Array<OneD, NekDouble> &out_d1,
+            Array<OneD, NekDouble> &out_d2)
+        {
+            Array<OneD, NekDouble> Lcoord(2);
+
+            ASSERTL0(m_geom,"m_geom not defined");
+            m_geom->GetLocCoords(coord, Lcoord);
+
+            return StdQuadExp::v_PhysEvaluate(Lcoord, inarray, out_d0, out_d1, out_d2);
+        }
 
         // Get edge values from the 2D Phys space along an edge
         // following a counter clockwise edge convention for definition

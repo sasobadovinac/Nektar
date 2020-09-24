@@ -772,7 +772,7 @@ namespace Nektar
             }
         }
 
-        void StdPyrExp::v_PhysEvalGrad(
+        NekDouble StdPyrExp::v_PhysEvaluate(
             const Array<OneD, NekDouble> coord,
             const Array<OneD, const NekDouble> &inarray,
             Array<OneD, NekDouble> &out_d0,
@@ -786,7 +786,7 @@ namespace Nektar
             Array<OneD, NekDouble> dEta_bar1(1, 0.0);
             Array<OneD, NekDouble> dXi2(1, 0.0);
             Array<OneD, NekDouble> dEta3(1, 0.0);
-            PhysTensorDerivFast(coll, inarray, dEta_bar1, dXi2, dEta3);
+            NekDouble val = StdExpansion3D::PhysTensorDerivFast(coll, inarray, dEta_bar1, dXi2, dEta3);
 
             //@TODO: Refactor to prevent repeat calculations e.g. fac
             if (out_d0.size() > 0)
@@ -808,6 +808,8 @@ namespace Nektar
                         ((1.0 + coll[1]) / (1.0 - coll[2])) * dXi2[0] +
                         dEta3[0];
             }
+
+            return val;
         }
 
         void StdPyrExp::v_FillMode(const int mode, Array<OneD, NekDouble> &outarray)

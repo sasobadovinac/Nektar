@@ -321,7 +321,7 @@ namespace Nektar
             }
         }
 
-        void StdSegExp::v_PhysEvalGrad(
+        NekDouble StdSegExp::v_PhysEvaluate(
             const Array<OneD, NekDouble> coord,
             const Array<OneD, const NekDouble> &inarray,
             Array<OneD, NekDouble> &out_d0,
@@ -329,7 +329,7 @@ namespace Nektar
             Array<OneD, NekDouble> &out_d2)
         {
             boost::ignore_unused(out_d1, out_d2);
-            PhysTensorDerivFast(coord, inarray, out_d0);
+            return PhysTensorDerivFast(coord, inarray, out_d0);
         }
 
         void StdSegExp::v_FwdTrans_BndConstrained(

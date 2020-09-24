@@ -38,7 +38,7 @@
 #include "StdDemoSupport.hpp"
 
 // polynomial = x^2 + y^2 - z^2
-Array<OneD, NekDouble> EvalPoly(Array<OneD, Array<OneD, NekDouble>> &pts)
+Array<OneD, NekDouble> EvalPoly(const Array<OneD, const Array<OneD, NekDouble>> &pts)
 {
     Array<OneD, NekDouble> ret(pts[0].size());
     unsigned dim = pts.size();
@@ -110,8 +110,8 @@ int main(int argc, char *argv[])
     Array<OneD, Array<OneD, NekDouble> > coordsE = demo.GetCoords(E);
  
     int totpts = coordsE[0].size();
-    Array<OneD, NekDouble> physIn(totPoints), physOut0(totpts), physOut1(totpts), physOut2(totpts);
-    Array<OneD, NekDouble>  sol0(totpts), sol1(totpts), sol2(totpts);
+    Array<OneD, NekDouble> physIn(totPoints), physOut(totpts), physOut0(totpts), physOut1(totpts), physOut2(totpts);
+    Array<OneD, NekDouble>  sol(totpts), sol0(totpts), sol1(totpts), sol2(totpts);
     
     physIn = EvalPoly(coordsE);
    
@@ -127,7 +127,7 @@ int main(int argc, char *argv[])
         }
 
         Array<OneD, NekDouble> tmp0(1, 0.0), tmp1(1, 0.0), tmp2(1, 0.0);
-        E->PhysEvalGrad(coordIn, physIn, tmp0, tmp1, tmp2);
+        physOut[i] = E->PhysEvaluate(coordIn, physIn, tmp0, tmp1, tmp2);
 
         physOut0[i] = tmp0[0];
         physOut1[i] = tmp1[0];
@@ -143,14 +143,17 @@ int main(int argc, char *argv[])
         case 1:
             sol0 = EvalPolyDerivx(coordsF);
         default:
+            sol = EvalPoly(coordsF);
             break;
     }
 
-    cout << "\nL infinity error: " << scientific << E->Linf(physOut0, sol0) +
+    cout << "\nL infinity error: " << scientific << E->Linf(physOut, sol) +
+                                                    E->Linf(physOut0, sol0) +
                                                     E->Linf(physOut1, sol1) +
                                                     E->Linf(physOut2, sol2)
                                                  << endl;
-    cout << "L 2 error         : " << scientific << E->L2(physOut0, sol0) +
+    cout << "L 2 error         : " << scientific << E->Linf(physOut, sol) +
+                                                    E->L2(physOut0, sol0) +
                                                     E->L2(physOut1, sol1) +
                                                     E->L2(physOut2, sol2)
                                                  << endl;

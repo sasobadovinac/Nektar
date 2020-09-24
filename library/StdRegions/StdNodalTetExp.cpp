@@ -170,7 +170,7 @@ namespace Nektar
                     c[0] = r[j];
                     c[1] = s[j];
                     c[2] = t[j];
-                    (*Mat)(j,i) = StdTetExp::v_PhysEvaluate(c,tmp_phys);
+                    (*Mat)(j,i) = StdExpansion3D::v_PhysEvaluate(c,tmp_phys);
                 }
             }
 

@@ -730,7 +730,7 @@ namespace Nektar
             }
         }
 
-        void StdPrismExp::v_PhysEvalGrad(
+        NekDouble StdPrismExp::v_PhysEvaluate(
             const Array<OneD, NekDouble> coord,
             const Array<OneD, const NekDouble> &inarray,
             Array<OneD, NekDouble> &out_d0, Array<OneD, NekDouble> &out_d1,
@@ -745,19 +745,19 @@ namespace Nektar
 
             Array<OneD, NekDouble> dEta_bar1(1, 0.0);
 
+            NekDouble val = 0;
             if (Do_2) // Need all local derivatives
             {
-
-                PhysTensorDerivFast(coll, inarray, dEta_bar1, out_d1, out_d2);
+                val = PhysTensorDerivFast(coll, inarray, dEta_bar1, out_d1, out_d2);
             }
             else if (Do_0) // Need 0 and 1 derivatives
             {
-                PhysTensorDerivFast(coll, inarray, dEta_bar1, out_d1,
+                val = PhysTensorDerivFast(coll, inarray, dEta_bar1, out_d1,
                                     NullNekDouble1DArray);
             }
             else // Only need Eta0 derivative
             {
-                PhysTensorDerivFast(coll, inarray, NullNekDouble1DArray,
+                val = PhysTensorDerivFast(coll, inarray, NullNekDouble1DArray,
                                     out_d1, NullNekDouble1DArray);
             }
 
@@ -777,6 +777,8 @@ namespace Nektar
                 fac = 1.0 + coll[0];
                 out_d2[0]    += fac * dEta_bar1[0];
             }
+
+            return val;
         }
 
         void StdPrismExp::v_FillMode(const int mode, Array<OneD, NekDouble> &outarray)

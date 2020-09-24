@@ -944,22 +944,21 @@ namespace Nektar
              * at a single (arbitrary) point of the domain
              *
              *  This function is a wrapper around the virtual function
-             *  \a v_PhysEvalGrad()
+             *  \a v_PhysEvaluate()
              
              *  Based on the value of the expansion at the quadrature
              *  points provided in \a physvals, this function
              *  calculates the value of the expansion at a set of points
              * given in \a coords
              */
-            void PhysEvalGrad(
-                              const Array<OneD, NekDouble> coord,
+            NekDouble PhysEvaluate(const Array<OneD, NekDouble> coord,
                               const Array<OneD, const NekDouble>& inarray,        
                               Array<OneD, NekDouble> &out_d0,
                               Array<OneD, NekDouble> &out_d1 = NullNekDouble1DArray,
                               Array<OneD, NekDouble> &out_d2 = NullNekDouble1DArray)
                 
             {
-                v_PhysEvalGrad(coord, inarray, out_d0, out_d1, out_d2);
+                return v_PhysEvaluate(coord, inarray, out_d0, out_d1, out_d2);
             }
 
             /** \brief This function evaluates the expansion at a single
@@ -1354,13 +1353,6 @@ namespace Nektar
                                        Array<OneD, const NekDouble> &inarray,
                                        Array<OneD, NekDouble> &outarray);
 
-            STD_REGIONS_EXPORT virtual void v_PhysEvalGrad(const Array<OneD, NekDouble> coord,
-                                               const Array<OneD, const NekDouble>& inarray,        
-                                               Array<OneD, NekDouble> &out_d0,
-                                               Array<OneD, NekDouble> &out_d1 = NullNekDouble1DArray,
-                                                            Array<OneD, NekDouble> &out_d2 = NullNekDouble1DArray);
-   
-
             STD_REGIONS_EXPORT virtual void v_SetCoeffsToOrientation
                                        (Array<OneD, NekDouble> &coeffs,
                                         StdRegions::Orientation dir);
@@ -1642,10 +1634,14 @@ namespace Nektar
              Array<OneD, NekDouble> &out_d2)    ;
             
             STD_REGIONS_EXPORT virtual NekDouble v_PhysEvaluate
-            (const Array<OneD,
-             const NekDouble>& coords,
+            (const Array<OneD, const NekDouble>& coords,
              const Array<OneD, const NekDouble>& physvals);
 
+            STD_REGIONS_EXPORT virtual NekDouble v_PhysEvaluate(const Array<OneD, NekDouble> coord,
+                                                                const Array<OneD, const NekDouble>& inarray,
+                                                                Array<OneD, NekDouble> &out_d0,
+                                                                Array<OneD, NekDouble> &out_d1 = NullNekDouble1DArray,
+                                                                Array<OneD, NekDouble> &out_d2 = NullNekDouble1DArray);
 
             STD_REGIONS_EXPORT virtual void v_PhysEvalBasisGrad
             (const Array<OneD, const Array<OneD, NekDouble> >coords,

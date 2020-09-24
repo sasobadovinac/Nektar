@@ -158,7 +158,7 @@ namespace Nektar
                 const int               mode,
                 Array<OneD, NekDouble> &outarray);
 
-            STD_REGIONS_EXPORT virtual void v_PhysEvalGrad(
+            STD_REGIONS_EXPORT virtual NekDouble v_PhysEvaluate(
                                                            const Array<OneD, NekDouble> coord,
                                                            const Array<OneD, const NekDouble>& inarray,
                                                            Array<OneD, NekDouble> &out_d0,

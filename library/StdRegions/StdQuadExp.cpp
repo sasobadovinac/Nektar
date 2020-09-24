@@ -151,7 +151,7 @@ namespace Nektar
 
         }
 
-        void StdQuadExp::v_PhysEvalGrad(
+        NekDouble StdQuadExp::v_PhysEvaluate(
             const Array<OneD, NekDouble> coord,
             const Array<OneD, const NekDouble> &inarray,
             Array<OneD, NekDouble> &out_d0,
@@ -159,7 +159,7 @@ namespace Nektar
             Array<OneD, NekDouble> &out_d2)
         {
             boost::ignore_unused(out_d2);
-            PhysTensorDerivFast(coord, inarray, out_d0, out_d1);
+            return PhysTensorDerivFast(coord, inarray, out_d0, out_d1);
         }
 
         ////////////////

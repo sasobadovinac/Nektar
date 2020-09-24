@@ -63,13 +63,15 @@ namespace Nektar
         // Differentiation Methods
         //-----------------------------
         // find derivative of u (inarray) at all coords points
-        void StdExpansion1D::PhysTensorDerivFast(
+        NekDouble StdExpansion1D::PhysTensorDerivFast(
             const Array<OneD, NekDouble> &coord,
             const Array<OneD, const NekDouble> &inarray,
             Array<OneD, NekDouble> &out_d0)
         {
             out_d0[0] = StdExpansion::BaryEvaluateDeriv<0>(coord[0],
                                                            &inarray[0]);
+
+            return StdExpansion::BaryEvaluate<0>(coord[0], &inarray[0]);
         }
 
         // find derivative of u (inarray) at all quad points
@@ -129,6 +131,18 @@ namespace Nektar
 
             return StdExpansion::BaryEvaluate<0>(Lcoord[0], &physvals[0]);
         }
+
+    NekDouble StdExpansion1D::v_PhysEvaluate(
+        const Array<OneD, NekDouble> coord,
+        const Array<OneD, const NekDouble> &inarray,
+        Array<OneD, NekDouble> &out_d0,
+        Array<OneD, NekDouble> &out_d1,
+        Array<OneD, NekDouble> &out_d2)
+    {
+        boost::ignore_unused(coord, inarray, out_d0, out_d1, out_d2);
+
+        return 0;
+    }
 
 
         //slow version: uses stored arrays: m_physevalall
