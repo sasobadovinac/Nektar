@@ -330,6 +330,78 @@ Filter \inltt{Electrogram} computes virtual unipolar electrograms at a
     are desired. \emph{They must not lie within the domain.}
     \end{itemize}
 
+\subsection{Offset Phase}\label{filters:OffsetPhase}
+
+\begin{notebox}
+  This filter is only supported for the Cardiac Electrophysiology Solver.
+\end{notebox}
+
+Filter \inltt{OffsetPhase} computes the instantaneous phase of the action potential using a time delay-embedding technique \cite{iyer2001}:\\
+\begin{equation*}
+	\theta(t) = \textnormal{atan2}[v(t-\tau)-\bar v, v(t) - \bar v].
+\end{equation*}
+
+\begin{center}
+  \begin{tabularx}{0.99\textwidth}{lllX}
+    \toprule
+    \textbf{Option name} & \textbf{Required} & \textbf{Default} & 
+    \textbf{Description} \\
+    \midrule
+    \inltt{OutputFile}      & \xmark   & \inltt{session} &
+    Prefix of the output filename to which the phase are written.\\
+    \inltt{OutputFrequency} & \cmark   & - &
+    Number of timesteps after which output is written.\\
+    \inltt{MeanV}           & \xmark   & -57.2986 &
+    Specifies the time-averaged AP value ($\bar v$) in mV.\\
+    \bottomrule
+  \end{tabularx}
+\end{center}
+
+
+\subsection{Hilbert Transform Phase based on FFTW}\label{filters:HilbertPhase}
+
+\begin{notebox}
+  This filter is only supported for the Cardiac Electrophysiology Solver. 
+  To use this filter, user must build Nektar++ with FFTW library. 
+\end{notebox}
+
+Filter \inltt{HilbertFFTPhase} computes the instantaneous phase of the action 
+potential by generating an analytic signal, $v(t) + i \mathcal{H}\{v\}(t)$.\\
+\begin{equation*}
+	\mathcal{H}\{v\}(t) = \frac{1}{\pi} \, \textnormal{p.v.} \int^\infty_{-\infty} \frac{v(\tau)}{t-\tau} \, d\tau,
+\end{equation*}
+and
+\begin{equation*}
+	\theta(t) = \textnormal{atan2}[\mathcal{H}\{v-\bar v\}(t), v(t) - \bar v].
+\end{equation*}
+
+\begin{center}
+  \begin{tabularx}{0.99\textwidth}{lllX}
+    \toprule
+    \textbf{Option name} & \textbf{Required} & \textbf{Default} & 
+    \textbf{Description} \\
+    \midrule
+    \inltt{OutputFile}      & \xmark   & \inltt{session} &
+    Prefix of the output filename to which the phase are written.\\
+    \inltt{OutputFrequency} & \cmark   & - &
+    Number of timesteps after which an output is written. 
+	It is equal to the sampling frequency for Fourier Transform.\\
+	\inltt{WindowSize}      & \cmark   & - &
+    Number of output steps taken in each FFT. 
+	\textit{Note: output steps $\neq$ timesteps.}\\
+	\inltt{OverlapSize}     & \cmark   & - &
+    Number of output steps overlapped between each segment.\\
+    \inltt{MeanV}           & \xmark   & Time-average &
+    Specifies the time-averaged AP value in mV.\\
+	\inltt{LinearTransitionOverlap} & \xmark & \inltt{true} &
+    \inltt{true}: Use linear transition in overlapping region(s). 
+	\inltt{false}: Use simple average in overlapping region(s). 
+	Input must be either \inltt{true} or \inltt{false}.\\
+    \bottomrule
+  \end{tabularx}
+\end{center}
+
+
 \subsection{Error}\label{filters:Error}
 
 This filter produces a file containing the time-evolution of the $L_2$ and
