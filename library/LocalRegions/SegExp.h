@@ -143,7 +143,7 @@ namespace Nektar
                 const Array<OneD, const NekDouble>& inarray,
                 Array<OneD, NekDouble> &out_d0,
                 Array<OneD, NekDouble> &out_d1,
-                Array<OneD, NekDouble> &out_d2);
+                Array<OneD, NekDouble> &out_d2) override;
 
             LOCAL_REGIONS_EXPORT virtual void v_GetCoord(
                     const Array<OneD, const NekDouble>& Lcoords,
