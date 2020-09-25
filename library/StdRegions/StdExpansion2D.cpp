@@ -145,45 +145,18 @@ namespace Nektar
             const int nq0 = m_base[0]->GetNumPoints();
             const int nq1 = m_base[1]->GetNumPoints();
 
-            Array<OneD, NekDouble> wsp(nq1);
-
-            if (out_d0.size() > 0)
-            {
-                const NekDouble *ptr = &inarray[0];
-
-                for (int j = 0; j < nq1; ++j, ptr += nq0)
-                {
-                    wsp[j] = StdExpansion::BaryEvaluateDeriv<0>(
-                        coord[0], ptr);
-                }
-
-                out_d0[0] = StdExpansion::BaryEvaluate<1>(
-                    coord[1], &wsp[0]);
-            }
-
-            if (out_d1.size() > 0)
-            {
-                const NekDouble *ptr = &inarray[0];
-
-                for (int j = 0; j < nq1; ++j, ptr += nq0)
-                {
-                    wsp[j] = StdExpansion::BaryEvaluate<0>(
-                        coord[0], ptr);
-                }
-
-                out_d1[0] = StdExpansion::BaryEvaluateDeriv<1>(
-                    coord[1], &wsp[0]);
-            }
-
             const NekDouble *ptr = &inarray[0];
+            Array<OneD, NekDouble> deriv0(nq1);
+            Array<OneD, NekDouble> phys0(nq1);
 
-            for (int i = 0; i < nq1; ++i, ptr += nq0)
+            for (int j = 0; j < nq1; ++j, ptr += nq0)
             {
-                wsp[i] = StdExpansion::BaryEvaluate<0>(
-                    coord[0], ptr);
+                phys0[j] = StdExpansion::BaryEvaluate<0, true>(coord[0], ptr, deriv0[j]);
             }
 
-            return StdExpansion::BaryEvaluate<1>(coord[1], &wsp[0]);
+            out_d0[0] = StdExpansion::BaryEvaluate<1, false>(coord[1], &deriv0[0]);
+
+            return StdExpansion::BaryEvaluate<1, true>(coord[1], &phys0[0], out_d1[0]);
         }
 
         //version :  uses storage space via m_physevalall

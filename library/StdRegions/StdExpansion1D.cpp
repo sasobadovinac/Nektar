@@ -68,17 +68,13 @@ namespace Nektar
             const Array<OneD, const NekDouble> &inarray,
             Array<OneD, NekDouble> &out_d0)
         {
-            out_d0[0] = StdExpansion::BaryEvaluateDeriv<0>(coord[0],
-                                                           &inarray[0]);
-
-            return StdExpansion::BaryEvaluate<0>(coord[0], &inarray[0]);
+            return StdExpansion::BaryEvaluate<0, true>(coord[0], &inarray[0], out_d0[0]);
         }
 
         // find derivative of u (inarray) at all quad points
         void StdExpansion1D::PhysTensorDeriv(const Array<OneD, const NekDouble>& inarray,
                                              Array<OneD, NekDouble>& outarray)
         {
-
             int nquad = GetTotPoints();
             DNekMatSharedPtr D = m_base[0]->GetD();
 

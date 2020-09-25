@@ -48,6 +48,8 @@
 #include <LibUtilities/LinearAlgebra/NekTypeDefs.hpp>
 namespace Nektar { namespace LocalRegions { class MatrixKey; class Expansion; } }
 
+static Nektar::NekDouble tmpRef = 0.0;
+
 namespace Nektar
 {
     namespace StdRegions
@@ -1369,6 +1371,9 @@ namespace Nektar
              * @brief This function performs the barycentric interpolation of
              * the polynomial stored in @p coord at a point @p physvals using
              * barycentric interpolation weights in direction @tparam DIR.
+             * It can also perform the barycentric interpolation of the
+             * derivative of the polynomial if @tparam DERIV is set to true,
+             * which outputs in to @param deriv.
              *
              * This method is intended to be used a helper function for
              * StdExpansion::PhysEvaluate and its elemental instances, so that
@@ -1378,16 +1383,19 @@ namespace Nektar
              *
              * @param  coord    The coordinate of the single point.
              * @param  physvals The polynomial stored at each quadrature point.
+             * @param  deriv    The value of the derivative.
              * @tparam DIR      The direction of evaluation.
+             * @tparam DERIV    Bool to find derivative.
              *
              * @return The value of @p physvals at @p coord in direction @p dir.
              */
-            template<int DIR>
+            template<int DIR, bool DERIV = false>
             inline NekDouble BaryEvaluate(
                 const NekDouble &coord,
-                const NekDouble *physvals)
+                const NekDouble *physvals,
+                NekDouble &deriv = tmpRef)
             {
-                NekDouble numer = 0.0, denom = 0.0;
+                NekDouble numer1 = 0.0, numer2 = 0.0, numer3 = 0.0, denom = 0.0;
 
                 ASSERTL2(DIR < m_base.size(),
                          "Direction should be less than shape dimension.");
@@ -1403,63 +1411,6 @@ namespace Nektar
                     NekDouble pval = physvals[i];
 
                     /*
-                     * (in this specific case) you actually 
-                     * want to do the comparison exactly 
-                     * (believe it or not!) See chapter 7 of 
-                     * the paper here:
-                     *https://people.maths.ox.ac.uk/trefethen/barycentric.pdf
-                     */
-                    if (xdiff == 0.0 )
-                    {
-                        return pval;
-                    }
-
-                    NekDouble tmp = bw[i] / xdiff;
-                    numer += tmp * pval;
-                    denom += tmp;
-                }
-
-                return numer / denom;
-            }
-
-            /**
-             * @brief This function performs the barycentric interpolation of
-             * the derivative of the polynomial stored in @p coord at a point
-             * @p physvals using barycentric interpolation weights in direction
-             * @tparam DIR.
-             *
-             * This method is intended to be used a helper function for
-             * StdExpansion::PhysDeriv and its elemental instances, so that
-             * the calling method should provide @p coord for x, y and z
-             * sequentially and the appropriate @p physvals and @p weights for
-             * that particular direction.
-             *
-             * @param  coord    The coordinate of the single point.
-             * @param  physvals The polynomial stored at each quadrature point.
-             * @tparam DIR      The direction of evaluation.
-             *
-             * @return The value of @p physvals at @p coord in direction @p dir.
-             */
-            template <int DIR>
-            inline NekDouble BaryEvaluateDeriv(const NekDouble &coord,
-                                               const NekDouble *physvals)
-            {
-                NekDouble numer1 = 0.0, numer2 = 0.0, numer3 = 0.0, denom = 0.0;
-
-                ASSERTL2(DIR < m_base.size(),
-                         "Direction should be less than shape dimension.");
-
-                const Array<OneD, const NekDouble> &z = m_base[DIR]->GetZ();
-                const Array<OneD, const NekDouble> &bw =
-                    m_base[DIR]->GetBaryWeights();
-
-                const auto nquad = z.size();
-                for (int i = 0; i < nquad; i++)
-                {
-                    NekDouble xdiff = coord - z[i];
-                    NekDouble pval  = physvals[i];
-
-                    /*
                      * (in this specific case) you actually
                      * want to do the comparison exactly
                      * (believe it or not!) See chapter 7 of
@@ -1468,22 +1419,36 @@ namespace Nektar
                      */
                     if (xdiff == 0.0 || fabs(xdiff) < 1e-15)
                     {
-                        DNekMatSharedPtr D0 = m_base[DIR]->GetD();
+                        if (DERIV)
+                        {
+                            DNekMatSharedPtr D0 = m_base[DIR]->GetD();
 
-                        // take ith row of z and multiply with physvals
-                        return Vmath::Dot(z.size(), &(D0->GetPtr())[i],
-                                          z.size(), &physvals[0], 1);
+                            // take ith row of z and multiply with physvals
+                            deriv = Vmath::Dot(z.size(), &(D0->GetPtr())[i],
+                                               z.size(), &physvals[0], 1);
+                        }
+
+                        return pval;
                     }
 
-                    NekDouble tmp  = bw[i] / xdiff;
-                    NekDouble tmp2 = bw[i] / (xdiff * xdiff);
-                    numer1 += (tmp2 * pval);
-                    numer2 += (tmp * pval);
-                    numer3 += (tmp2);
+                    NekDouble tmp = bw[i] / xdiff;
+                    numer1 += tmp * physvals[i];
                     denom += tmp;
+
+                    if (DERIV)
+                    {
+                        NekDouble tmp2 = tmp / xdiff;
+                        numer2 += tmp2 * physvals[i];
+                        numer3 += tmp2;
+                    }
                 }
 
-                return (-numer1 * denom + numer2 * numer3) / (denom * denom);
+                if (DERIV)
+                {
+                    deriv = (numer2 * denom - numer1 * numer3) / (denom * denom);
+                }
+
+                return numer1 / denom;
             }
 
         private:

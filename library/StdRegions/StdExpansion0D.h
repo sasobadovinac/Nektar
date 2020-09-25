@@ -59,7 +59,7 @@ namespace Nektar
             STD_REGIONS_EXPORT void PhysTensorDeriv(const Array<OneD, const NekDouble>& inarray,
                                                     Array<OneD,       NekDouble>& outarray);
 
-            STD_REGIONS_EXPORT void PhysTensorDerivFast(
+            STD_REGIONS_EXPORT NekDouble PhysTensorDerivFast(
                 const Array<OneD, NekDouble> &coord,
                 const Array<OneD, const NekDouble>& inarray,
                 Array<OneD, NekDouble> &out_d0);
