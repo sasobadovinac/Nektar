@@ -69,7 +69,9 @@ int main(int argc, char *argv[])
         sol1(nPts * nCoeffs),
         sol2(nPts * nCoeffs);
 
-    E->PhysEvalBasisGrad(coords, out_eval2, sol, sol1, sol2);
+    auto storage = E->GetPhysEvalALL();
+
+    E->PhysEvalBasisGrad(coords, storage, out_eval2, sol, sol1, sol2);
 
     for (int k = 0; k < nCoeffs; ++k)
     {

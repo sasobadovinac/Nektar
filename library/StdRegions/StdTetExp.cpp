@@ -45,7 +45,6 @@ namespace Nektar
     {
         StdTetExp::StdTetExp()
         {
-            m_physevalall   = v_GetPhysEvalALL();
         }
 
         StdTetExp::StdTetExp(const LibUtilities::BasisKey &Ba,
@@ -71,16 +70,12 @@ namespace Nektar
             ASSERTL0(Bb.GetNumModes() <= Bc.GetNumModes(),
                      "order in 'b' direction is higher than order "
                      "in 'c' direction");
-            m_physevalall   = v_GetPhysEvalALL();
-
         }
 
         StdTetExp::StdTetExp(const StdTetExp &T):
             StdExpansion(T),
             StdExpansion3D(T)
         {
-            m_physevalall   = v_GetPhysEvalALL();
-
         }
 
 

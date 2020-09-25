@@ -146,15 +146,16 @@ namespace Nektar
             v_IProductWRTBase_SumFacKernel(base0, base1, base2, inarray, outarray, wsp, doCheckCollDir0, doCheckCollDir1, doCheckCollDir2);
         }
 
-        //slow version: uses stored arrays: m_physevalall
         Array< OneD, NekDouble > StdExpansion3D::v_PhysEvaluateBasis(
-                                                 const Array<OneD, const Array<OneD, NekDouble> >coords, int mode)
+                                                 const Array<OneD, const Array<OneD, NekDouble> >coords,
+                                                 const Array<OneD, Array<OneD, NekDouble> > storage,
+                                                 int mode)
         {
             int tot = GetTotPoints();
    
             Array<OneD, NekDouble> physall(tot), ret(coords[0].size());
             
-            Vmath::Vcopy(tot, &m_physevalall[0][mode*tot], 1, &physall[0], 1);
+            Vmath::Vcopy(tot, &storage[0][mode*tot], 1, &physall[0], 1);
             for(int i = 0; i < coords[0].size(); i++)
             {
                 Array<OneD, NekDouble> ctemp(3);
@@ -168,9 +169,10 @@ namespace Nektar
         }
 
         
-        //version :  uses storage space via m_physevalall
+
         void StdExpansion3D::v_PhysEvalBasisGrad(
                                                  const Array<OneD, const Array<OneD, NekDouble> >coords,
+                                                 Array<OneD, Array<OneD, NekDouble> > storage,
                                                  Array<OneD, NekDouble> &out_eval,                    
                                                  Array<OneD, NekDouble> &out_d0,
                                                  Array<OneD, NekDouble> &out_d1,
@@ -188,7 +190,7 @@ namespace Nektar
             if(out_eval.size() > 0)
             {     for(int k = 0; k < neq; k++)
                 {
-                    Vmath::Vcopy(tot, &m_physevalall[0][k*tot], 1, &physall[0], 1);
+                    Vmath::Vcopy(tot, &storage[0][k*tot], 1, &physall[0], 1);
                     for(int i = 0; i < coords[0].size(); i++)
                     {
                         Array<OneD, NekDouble> ctemp(3);
@@ -206,7 +208,7 @@ namespace Nektar
 
                 for(int k = 0; k < neq; k++)
                 {
-                    Vmath::Vcopy(tot, &m_physevalall[1][k*tot], 1, &physall[0], 1);
+                    Vmath::Vcopy(tot, &storage[1][k*tot], 1, &physall[0], 1);
                     for(int i = 0; i < tot; i++)
                     {
                         Array<OneD, NekDouble> ctemp(3);
@@ -225,7 +227,7 @@ namespace Nektar
                  
                 for(int k = 0; k < neq; k++)
                 {
-                    Vmath::Vcopy(tot, &m_physevalall[2][k*tot], 1, &physall[0], 1);
+                    Vmath::Vcopy(tot, &storage[2][k*tot], 1, &physall[0], 1);
                     for(int i = 0; i < tot; i++)
                     {
                         Array<OneD, NekDouble> ctemp(3);
@@ -248,7 +250,7 @@ namespace Nektar
                  
                 for(int k = 0; k < neq; k++)
                 {
-                    Vmath::Vcopy(tot, &m_physevalall[3][k*tot], 1, &physall[0], 1);
+                    Vmath::Vcopy(tot, &storage[3][k*tot], 1, &physall[0], 1);
                     for(int i = 0; i < tot; i++)
                     {
                         Array<OneD, NekDouble> ctemp(3);

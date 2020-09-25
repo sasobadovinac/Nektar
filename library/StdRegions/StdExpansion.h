@@ -64,14 +64,6 @@ namespace Nektar
         class StdExpansion : public std::enable_shared_from_this<StdExpansion>
         {
         public:
-
-            //            Array<OneD, Array<OneD, NekDouble> > m_physevalall = Array< OneD, Array< OneD, NekDouble> >(4);
-            Array<OneD, Array<OneD, NekDouble> > m_physevalall;
-            // 0 = basis eval
-            // 1 = dx
-            // 2 = dy
-            // 3 = dz
-
             /** \brief Default Constructor */
             STD_REGIONS_EXPORT StdExpansion();
 
@@ -1001,10 +993,12 @@ namespace Nektar
              *
              * @return The values of the basis function mode @p mode at @p coords.
              */
-            Array<OneD, NekDouble> PhysEvaluateBasis(const Array<OneD, const Array<OneD, NekDouble> >coords, int mode)
+            Array<OneD, NekDouble> PhysEvaluateBasis(const Array<OneD, const Array<OneD, NekDouble> >coords,
+                                                     const Array<OneD, Array<OneD, NekDouble> > storage,
+                                                     int mode)
 
             {
-                return v_PhysEvaluateBasis(coords, mode);
+                return v_PhysEvaluateBasis(coords, storage, mode);
             }
 
             /**
@@ -1038,12 +1032,13 @@ namespace Nektar
 
             void PhysEvalBasisGrad(
                                    const Array<OneD, Array<OneD, NekDouble> >coords,
+                                   const Array<OneD, Array<OneD, NekDouble> > storage,
                                    Array<OneD, NekDouble> &out_eval,
                                    Array<OneD, NekDouble> &out_d0,
                                    Array<OneD, NekDouble> &out_d1 ,
                                    Array<OneD, NekDouble> &out_d2 )
             {
-                return v_PhysEvalBasisGrad(coords, out_eval, out_d0, out_d1, out_d2 );  
+                return v_PhysEvalBasisGrad(coords, storage, out_eval, out_d0, out_d1, out_d2 );
             }
 
             /**
@@ -1585,9 +1580,10 @@ namespace Nektar
             (const Array<OneD, DNekMatSharedPtr >& I,
              const Array<OneD, const NekDouble> & physvals);
 
-            STD_REGIONS_EXPORT virtual          Array< OneD, NekDouble> v_PhysEvaluateBasis(
-                                                                                                                         const Array<OneD, const Array<OneD, NekDouble> >coords, int mode);
-
+            STD_REGIONS_EXPORT virtual Array<OneD, NekDouble> v_PhysEvaluateBasis(
+                const Array<OneD, const Array<OneD, NekDouble>> coords,
+                const Array<OneD, Array<OneD, NekDouble> > storage,
+                int mode);
 
             STD_REGIONS_EXPORT Array< OneD, Array<OneD, NekDouble> >v_PhysEvalALL();
 
@@ -1610,6 +1606,7 @@ namespace Nektar
 
             STD_REGIONS_EXPORT virtual void v_PhysEvalBasisGrad
             (const Array<OneD, const Array<OneD, NekDouble> >coords,
+             const Array<OneD, Array<OneD, NekDouble> > storage,
              Array<OneD, NekDouble> &out_eval,
              Array<OneD, NekDouble> &out_d0,
              Array<OneD, NekDouble> &out_d1,

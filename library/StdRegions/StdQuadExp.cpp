@@ -49,7 +49,6 @@ namespace Nektar
 
         StdQuadExp::StdQuadExp()
         {
-            m_physevalall   = v_GetPhysEvalALL();
         }
 
         /** \brief Constructor using BasisKey class for quadrature
@@ -60,7 +59,6 @@ namespace Nektar
             StdExpansion  (Ba.GetNumModes()*Bb.GetNumModes(),2,Ba,Bb),
             StdExpansion2D(Ba.GetNumModes()*Bb.GetNumModes(),Ba,Bb)
         {
-            m_physevalall = v_GetPhysEvalALL();
         }
 
         /** \brief Copy Constructor */
@@ -68,8 +66,6 @@ namespace Nektar
             StdExpansion(T),
             StdExpansion2D(T)
         {
-            
-            m_physevalall = v_GetPhysEvalALL();
         }
 
         /** \brief Destructor */

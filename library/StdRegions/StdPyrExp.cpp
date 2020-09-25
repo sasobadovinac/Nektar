@@ -46,7 +46,6 @@ namespace Nektar
     {
         StdPyrExp::StdPyrExp() // Deafult construct of standard expansion directly called.
         {
-            m_physevalall   = v_GetPhysEvalALL();
         }
 
         StdPyrExp::StdPyrExp(const LibUtilities::BasisKey &Ba,
@@ -72,16 +71,12 @@ namespace Nektar
                      Bc.GetBasisType() == LibUtilities::eOrthoPyr_C,
                      "Expected basis type in 'c' direction to be ModifiedPyr_C or OrthoPyr_C");
 
-            m_physevalall   = v_GetPhysEvalALL();
-
         }
 
         StdPyrExp::StdPyrExp(const StdPyrExp &T)
             : StdExpansion  (T),
               StdExpansion3D(T)
         {
-            m_physevalall   = v_GetPhysEvalALL();
-
         }
 
 

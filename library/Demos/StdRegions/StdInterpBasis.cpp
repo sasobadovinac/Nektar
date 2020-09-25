@@ -63,10 +63,13 @@ int main(int argc, char *argv[])
     // These are then compared to ensure they give the same result.
     
     // Evaluate each mode at the quadrature points.
+
+    auto storage = E->GetPhysEvalALL();
+
     Array<OneD, NekDouble> tmp;
     for (int i = 0; i < nCoeffs; ++i)
     {
-        tmp = E->PhysEvaluateBasis(coords, i);
+        tmp = E->PhysEvaluateBasis(coords, storage, i);
         Vmath::Vcopy(nPts, &tmp[0], 1, &phys[nPts*i], 1);
     }
 
@@ -74,11 +77,10 @@ int main(int argc, char *argv[])
     // the whole FillMode on all quad points as a function 
     // evaluation on domain. Do not leverage the multiplicative 
     // separability of basis definitions in each individual direction:
-    Array<OneD, Array<OneD, NekDouble> > temparr = E->m_physevalall;
     Array<OneD, NekDouble> ar1(nPts);
     for (int i = 0; i < nCoeffs; ++i)
     {
-        Vmath::Vcopy(nPts, &temparr[0][i*nPts],1, &ar1[0], 1);
+        Vmath::Vcopy(nPts, &storage[0][i*nPts],1, &ar1[0], 1);
             
         for (int k = 0; k < nPts; ++k)
         {

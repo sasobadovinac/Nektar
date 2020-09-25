@@ -47,8 +47,6 @@ namespace Nektar
 
         StdHexExp::StdHexExp()
         {
-            m_physevalall   = v_GetPhysEvalALL();
-
         }
 
         StdHexExp::StdHexExp(const LibUtilities::BasisKey &Ba,
@@ -59,16 +57,12 @@ namespace Nektar
             StdExpansion3D(Ba.GetNumModes()*Bb.GetNumModes()*Bc.GetNumModes(),
                            Ba, Bb, Bc)
         {
-            m_physevalall   = v_GetPhysEvalALL();
-
         }
 
         StdHexExp::StdHexExp(const StdHexExp &T):
             StdExpansion(T),
             StdExpansion3D(T)
         {
-            m_physevalall   = v_GetPhysEvalALL();
-
         }
 
         StdHexExp::~StdHexExp()

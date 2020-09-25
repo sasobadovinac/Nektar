@@ -140,16 +140,16 @@ namespace Nektar
         return 0;
     }
 
-
-        //slow version: uses stored arrays: m_physevalall
         Array< OneD, NekDouble> StdExpansion1D::v_PhysEvaluateBasis(
-                                                 const Array<OneD, const Array<OneD, NekDouble> >coords, int mode)
+                                                 const Array<OneD, const Array<OneD, NekDouble> >coords,
+                                                 const Array<OneD, Array<OneD, NekDouble> > storage,
+                                                 int mode)
         {
             int tot = GetTotPoints();
    
             Array<OneD, NekDouble> physall(tot), ret(coords[0].size());
             
-            Vmath::Vcopy(tot, &m_physevalall[0][mode*tot], 1, &physall[0], 1);
+            Vmath::Vcopy(tot, &storage[0][mode*tot], 1, &physall[0], 1);
             for(int i = 0; i < coords[0].size(); i++)
             {
                 Array<OneD, NekDouble> ctemp(1);
@@ -160,10 +160,9 @@ namespace Nektar
             return ret;
         }
   
-
-        //slow version: uses stored arrays: m_physevalall
         void StdExpansion1D::v_PhysEvalBasisGrad(
                                                  const Array<OneD, const Array<OneD, NekDouble> >coords,
+                                                 Array<OneD, Array<OneD, NekDouble> > storage,
                                                  Array<OneD, NekDouble> &out_eval,                    
                                                  Array<OneD, NekDouble> &out_d0,
                                                  Array<OneD, NekDouble> &out_d1,
@@ -180,7 +179,7 @@ namespace Nektar
             {    
                 for(int k = 0; k < neq; k++)
                 {
-                    Vmath::Vcopy(tot, &m_physevalall[0][k*tot], 1, &physall[0], 1);
+                    Vmath::Vcopy(tot, &storage[0][k*tot], 1, &physall[0], 1);
                     for(int i = 0; i < coords[0].size(); i++)
                     {
                         Array<OneD, NekDouble> ctemp(1);
@@ -198,7 +197,7 @@ namespace Nektar
                 std::cout<<"\n here\n\n";
                 for(int k = 0; k < neq; k++)
                 {
-                    Vmath::Vcopy(tot, &m_physevalall[1][k*tot], 1, &physall[0], 1);
+                    Vmath::Vcopy(tot, &storage[1][k*tot], 1, &physall[0], 1);
                     for(int i = 0; i < tot; i++)
                     {
                         Array<OneD, NekDouble> ctemp(1);

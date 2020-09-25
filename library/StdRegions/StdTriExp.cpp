@@ -48,9 +48,7 @@ namespace Nektar
 
         StdTriExp::StdTriExp()
         {
-            m_physevalall   = v_GetPhysEvalALL();
         }
-
 
         StdTriExp::StdTriExp(
                              const LibUtilities::BasisKey &Ba,
@@ -67,16 +65,12 @@ namespace Nektar
             ASSERTL0(Ba.GetNumModes() <= Bb.GetNumModes(),
                      "order in 'a' direction is higher than order "
                      "in 'b' direction");
-            m_physevalall   = v_GetPhysEvalALL();
-
         }
 
         StdTriExp::StdTriExp(const StdTriExp &T):
             StdExpansion(T),
             StdExpansion2D(T)
         {
-            m_physevalall   = v_GetPhysEvalALL();
-
         }
 
         StdTriExp::~StdTriExp()

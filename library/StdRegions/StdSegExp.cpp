@@ -49,7 +49,6 @@ namespace Nektar
 
         StdSegExp::StdSegExp()
         {
-            m_physevalall   = v_GetPhysEvalALL(); 
         }
 
 
@@ -64,7 +63,6 @@ namespace Nektar
         StdExpansion(Ba.GetNumModes(), 1, Ba),
         StdExpansion1D(Ba.GetNumModes(),Ba)
         {
-            m_physevalall   = v_GetPhysEvalALL(); 
         }
 
 
@@ -74,7 +72,6 @@ namespace Nektar
                 StdExpansion(T),
                 StdExpansion1D(T)
         {
-            m_physevalall   = v_GetPhysEvalALL(); 
         }
 
 

@@ -46,7 +46,6 @@ namespace Nektar
 
         StdPrismExp::StdPrismExp() // Deafult construct of standard expansion directly called.
         {
-            m_physevalall   = v_GetPhysEvalALL();
         }
 
         StdPrismExp::StdPrismExp(const LibUtilities::BasisKey &Ba,
@@ -65,22 +64,18 @@ namespace Nektar
         {
             ASSERTL0(Ba.GetNumModes() <= Bc.GetNumModes(),
                      "order in 'a' direction is higher than order in 'c' direction");
-            m_physevalall   = v_GetPhysEvalALL();
         }
 
         StdPrismExp::StdPrismExp(const StdPrismExp &T)
             : StdExpansion(T),
               StdExpansion3D(T)
         {
-            m_physevalall   = v_GetPhysEvalALL();
         }
 
 
         // Destructor
         StdPrismExp::~StdPrismExp()
         {
-            m_physevalall   = v_GetPhysEvalALL();
-
         }
 
         //---------------------------------------

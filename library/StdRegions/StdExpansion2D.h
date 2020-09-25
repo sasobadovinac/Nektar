@@ -122,9 +122,10 @@ namespace Nektar
                                                                  bool doCheckCollDir0 = true,
                                                                  bool doCheckCollDir1 = true);
 
-            STD_REGIONS_EXPORT virtual Array< OneD, NekDouble > v_PhysEvaluateBasis(
-                                                                                  const Array<OneD, const Array<OneD, NekDouble> >coords, int mode) final;
-       
+            STD_REGIONS_EXPORT virtual Array<OneD, NekDouble> v_PhysEvaluateBasis(
+                const Array<OneD, const Array<OneD, NekDouble>> coords,
+                const Array<OneD, Array<OneD, NekDouble> > storage,
+                int mode) final;
 
         protected:
 
@@ -172,8 +173,8 @@ namespace Nektar
 
 
             STD_REGIONS_EXPORT virtual void v_PhysEvalBasisGrad(
-                                                                const Array<OneD, const Array<OneD, NekDouble> > coords, 
-                                                                    
+                                                                const Array<OneD, const Array<OneD, NekDouble> > coords,
+                                                                Array<OneD, Array<OneD, NekDouble> > storage,
                                                                 Array<OneD, NekDouble>& out_eval,
                                                                 Array<OneD, NekDouble>& out_d0,                                        
                                                                 Array<OneD, NekDouble>& out_d1, 

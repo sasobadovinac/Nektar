@@ -1204,12 +1204,13 @@ namespace Nektar
         }
         void StdExpansion::v_PhysEvalBasisGrad(
                                                const Array<OneD, const Array<OneD, NekDouble> >coords,
+                                               const Array<OneD, Array<OneD, NekDouble> > storage,
                                                Array<OneD, NekDouble> &out_eval,
                                                Array<OneD, NekDouble> &out_d0,
                                                Array<OneD, NekDouble> &out_d1,
                                                Array<OneD, NekDouble> &out_d2)
         {
-            boost::ignore_unused(coords, out_eval, out_d0, out_d1, out_d2);
+            boost::ignore_unused(coords, storage, out_eval, out_d0, out_d1, out_d2);
             NEKERROR(ErrorUtil::efatal, "Method does not exist for this shape");
         }
 
@@ -1223,9 +1224,11 @@ namespace Nektar
         }
 
 
-        Array< OneD, NekDouble > StdExpansion::v_PhysEvaluateBasis(     const Array<OneD, const Array<OneD, NekDouble> >coords, int mode)
+        Array< OneD, NekDouble > StdExpansion::v_PhysEvaluateBasis(const Array<OneD, const Array<OneD, NekDouble> >coords,
+                                                                   Array<OneD, Array<OneD, NekDouble> >storage,
+                                                                   int mode)
         {
-            boost::ignore_unused(coords, mode);
+            boost::ignore_unused(coords, storage, mode);
             NEKERROR(ErrorUtil::efatal, "Method does not exist for this shape");
             return NullNekDouble1DArray;
         }
@@ -1234,7 +1237,7 @@ namespace Nektar
         Array<OneD, Array<OneD, NekDouble> > StdExpansion::v_GetPhysEvalALL()
         {
             NEKERROR(ErrorUtil::efatal, "Method does not exist for this shape");
-            return m_physevalall;
+            return NullNekDoubleArrayofArray;
         }
         void StdExpansion::v_FillMode(const int mode, Array<OneD, NekDouble> &outarray)
         {
