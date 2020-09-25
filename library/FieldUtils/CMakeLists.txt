@@ -2,6 +2,7 @@ SET(FieldUtilsHeaders
     Module.h
     Field.hpp
     Interpolator.h
+    Octree.h
     InputModules/InputDat.h
     InputModules/InputFld.h
     InputModules/InputXml.h
@@ -44,6 +45,7 @@ SET(FieldUtilsHeaders
     ProcessModules/ProcessNumModes.h
     ProcessModules/ProcessMean.h
     ProcessModules/ProcessMeanMode.h
+    ProcessModules/ProcessPhiFromFile.h
     ProcessModules/ProcessPointDataToFld.h
     ProcessModules/ProcessPrintFldNorms.h
     ProcessModules/ProcessRemoveField.h
@@ -62,6 +64,7 @@ SET(FieldUtilsHeaders
 SET(FieldUtilsSources
     Module.cpp
     Interpolator.cpp
+    Octree.cpp
     InputModules/InputDat.cpp
     InputModules/InputFld.cpp
     InputModules/InputXml.cpp
@@ -104,6 +107,7 @@ SET(FieldUtilsSources
     ProcessModules/ProcessNumModes.cpp
     ProcessModules/ProcessMean.cpp
     ProcessModules/ProcessMeanMode.cpp
+    ProcessModules/ProcessPhiFromFile.cpp
     ProcessModules/ProcessPointDataToFld.cpp
     ProcessModules/ProcessPrintFldNorms.cpp
     ProcessModules/ProcessRemoveField.cpp    
