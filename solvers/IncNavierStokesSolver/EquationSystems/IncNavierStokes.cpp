@@ -826,8 +826,9 @@ namespace Nektar
 
                 // Calculate total force
                 m_bsbcParams->m_force[i][0] = aeroForces[i] -
-                        m_bsbcParams->m_K[i] * m_bsbcParams->m_dof[i] 
-                        - m_bsbcParams->m_C[i] * m_bsbcParams->m_dofVel[i][0];
+                        (m_bsbcParams->m_K[i] - m_bsbcParams->m_Kadd) *
+                         m_bsbcParams->m_dof[i] - m_bsbcParams->m_C[i] *
+                          m_bsbcParams->m_dofVel[i][0];
 
                 // Rotate velocity storage, keeping value of velocity[0]
                 for(int n = m_bsbcParams->m_intSteps-1; n > 0; --n)
@@ -865,6 +866,7 @@ namespace Nektar
             // Calculate total moment
             if( expdim == 2)
             {
+
                 // Only have moment in z-direction
                 m_bsbcParams->m_moment[0] = moments[0];
             }
@@ -879,8 +881,8 @@ namespace Nektar
             }
 
             // Account for torsional spring and damping contributions
-            m_bsbcParams->m_moment[0] -= m_bsbcParams->m_K[2] * m_bsbcParams->m_dof[2]
-             + m_bsbcParams->m_C[2] * m_bsbcParams->m_dofVel[2][0];
+            m_bsbcParams->m_moment[0] -= (m_bsbcParams->m_K[2] - m_bsbcParams->m_Kadd)
+             * m_bsbcParams->m_dof[2]+ m_bsbcParams->m_C[2] * m_bsbcParams->m_dofVel[2][0];
 
             // Shift velocity storage
             for(int n = m_bsbcParams->m_intSteps-1; n > 0; --n)
@@ -1086,8 +1088,8 @@ namespace Nektar
 	                    m_bsbcParams->m_momentA[j];
 	        }
         }
-// something inside the previous if statement change the values of m_dofVel[i] m_dofAdj[i]
-// for other than i=2 ...
+        // something inside the previous if statement change the values of m_dofVel[i] m_dofAdj[i]
+        // for other than i=2 ...
         for(int i=0 ; i<3 ; ++i)
         {
             if(m_bsbcParams->m_DOF[i] != 1)
@@ -1415,6 +1417,15 @@ namespace Nektar
         m_bsbcParams->m_DOF[1] = dof[1];
         m_bsbcParams->m_DOF[2] = dof[2];
 
+        if(m_bsbcParams->m_DOF[1] == 1)
+        {
+            m_bsbcParams->m_isSway = true;
+        }
+        if(m_bsbcParams->m_DOF[2] == 1)
+        {
+            m_bsbcParams->m_isPitch = true;
+        }
+
         // Inertia
         m_bsbcParams->m_I = 0.0;
         ASSERTL0(BSparams.count("I") == 1,
@@ -1527,6 +1538,13 @@ namespace Nektar
         AllocateSharedPtr(m_session, shared_from_this(), vParams);
         m_bsbcParams->m_filterForcesB->Initialise(m_fields, 0.0);
         m_bsbcParams->m_isMomentB = false;
+        
+        // Create FilterAeroForces object -----> Added Stiffness
+        m_bsbcParams->m_isModified = true;
+        m_bsbcParams->m_filterForcesAS = MemoryManager<SolverUtils::FilterAeroForces>::
+        AllocateSharedPtr(m_session, shared_from_this(), vParams);
+        m_bsbcParams->m_filterForcesAS->Initialise(m_fields, 0.0);
+        m_bsbcParams->m_isModified = false;
 
         // Determine time integration order
         std::string intMethod = m_session->GetSolverInfo("TIMEINTEGRATIONMETHOD");
@@ -1654,6 +1672,7 @@ namespace Nektar
         int nfields = m_fields.num_elements();
         int nvel = nfields - 1;
         int nbnds    = m_fields[0]->GetBndConditions().num_elements();
+        int expdim = m_fields[0]->GetGraph()->GetMeshDimension();
 
         // Declare variables
         Array<OneD, const SpatialDomains::BoundaryConditionShPtr> BndConds;
@@ -1695,11 +1714,28 @@ namespace Nektar
         m_fields[0]->GetCoords(coords[0],coords[1],coords[2]);
 
         for(int j = 0; j < 3; ++j)
-            {
-                // Subtract m_momPoint
-                Vmath::Sadd (physTot, -1.0*m_bsbcParams->m_hingePoint[j],
-                             coords[j], 1, coords[j], 1);
-            }
+        {
+            // Subtract m_momPoint
+            Vmath::Sadd (physTot, -1.0*m_bsbcParams->m_hingePoint[j],
+                coords[j], 1, coords[j], 1);
+        }
+
+        // Get added stiffness:
+        m_bsbcParams->m_Kadd = 0.0;
+        if(m_bsbcParams->m_isPitch == true)
+        {
+            Array<OneD, NekDouble> moments(expdim, 0.0);
+            m_bsbcParams->m_filterForcesAS->GetTotalMoments(m_fields, moments, 0.0);
+            m_bsbcParams->m_Kadd = moments[0];
+            cout<<"added stiffness = "<<m_bsbcParams->m_Kadd<<endl;
+        }
+        else if(m_bsbcParams->m_isSway == true)
+        {
+            Array<OneD, NekDouble> aeroforces(expdim, 0.0);
+            m_bsbcParams->m_filterForcesAS->GetTotalForces(m_fields, aeroforces, 0.0);
+            m_bsbcParams->m_Kadd = aeroforces[1];
+            cout<<"added stiffness = "<<m_bsbcParams->m_Kadd<<endl;
+        }
 
         // Loop boundary conditions looking for BS-BC's
         for(int n = 0 ; n < nbnds ; ++n)
@@ -1870,7 +1906,7 @@ namespace Nektar
     	int nfields = m_fields.num_elements();
         int nvel = nfields - 1;
 
-    	for(int i = 0; i < nvel*nvel; ++i)
+    	for(int i = 0; i < nvel*nfields; ++i)
     	{
     		Vmath::Vcopy(m_fields[0]->GetTotPoints(), m_advObject->GetGradBase()[i], 1, 
     			gradBase[i], 1);
@@ -1925,6 +1961,16 @@ namespace Nektar
     {
         isMomentA = m_bsbcParams->m_isMomentA;
         isMomentB = m_bsbcParams->m_isMomentB;
+    }
+
+    /**
+     *  
+     */
+    bool IncNavierStokes::v_SetAddedStiff(bool &isModified, bool &isPitch, bool &isSway)
+    {
+        isModified = m_bsbcParams->m_isModified;
+        isPitch    = m_bsbcParams->m_isPitch;
+        isSway     = m_bsbcParams->m_isSway;
     }
 
     /**
