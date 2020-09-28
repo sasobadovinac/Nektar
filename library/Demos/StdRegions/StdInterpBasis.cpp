@@ -64,7 +64,7 @@ int main(int argc, char *argv[])
     
     // Evaluate each mode at the quadrature points.
 
-    auto storage = E->GetPhysEvalALL();
+    auto storage = E->GetPhysEvaluateStorage();
 
     Array<OneD, NekDouble> tmp;
     for (int i = 0; i < nCoeffs; ++i)

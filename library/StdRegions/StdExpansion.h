@@ -978,17 +978,17 @@ public:
     }
 
     /**
-     * @brief This function populates the m_physevalall storage
+     * @brief This function populates the PhysEvaluateBasis storage
      * which is an array of arrays that holds the evaluation of
      * the basis functions at all the quad points, and the derivatives
      * of the same. This storage is required for slow implementation
      * of basisderiv interpolation. In fast implementation, this
      * will no longer be needed and should be deprecated.
-     * @return array of arrays m_physevalall
+     * @return array of arrays containing basis function evaluations.
      */
-    Array<OneD, Array<OneD, NekDouble>> GetPhysEvalALL()
+    Array<OneD, Array<OneD, NekDouble>> GetPhysEvaluateStorage()
     {
-        return v_GetPhysEvalALL();
+        return v_GetPhysEvaluateStorage();
     }
 
     /**
@@ -1395,7 +1395,7 @@ protected:
 
 private:
     STD_REGIONS_EXPORT virtual Array<OneD, Array<OneD, NekDouble>>
-    v_GetPhysEvalALL();
+    v_GetPhysEvaluateStorage();
 
     // Virtual functions
     STD_REGIONS_EXPORT virtual int v_GetNverts() const = 0;
@@ -1517,13 +1517,6 @@ private:
     STD_REGIONS_EXPORT virtual Array<OneD, NekDouble> v_PhysEvaluateBasis(
         const Array<OneD, const Array<OneD, NekDouble>> coords,
         const Array<OneD, Array<OneD, NekDouble>> storage, int mode);
-
-    STD_REGIONS_EXPORT Array<OneD, Array<OneD, NekDouble>> v_PhysEvalALL();
-
-    STD_REGIONS_EXPORT void v_PhysEvaluateGrad(
-        const Array<OneD, Array<OneD, const NekDouble>> &coords,
-        const Array<OneD, NekDouble> &inarray, Array<OneD, NekDouble> &out_d0,
-        Array<OneD, NekDouble> &out_d1, Array<OneD, NekDouble> &out_d2);
 
     STD_REGIONS_EXPORT virtual NekDouble v_PhysEvaluate(
         const Array<OneD, const NekDouble> &coords,

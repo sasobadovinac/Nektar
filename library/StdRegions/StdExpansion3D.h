@@ -222,7 +222,7 @@ protected:
     STD_REGIONS_EXPORT virtual int v_GetEdgeNcoeffs(const int i) const;
 
     STD_REGIONS_EXPORT virtual Array<OneD, Array<OneD, NekDouble>>
-    v_GetPhysEvalALL() final;
+    v_GetPhysEvaluateStorage() final;
 
     STD_REGIONS_EXPORT virtual Array<OneD, NekDouble> v_PhysEvaluateBasis(
         const Array<OneD, const Array<OneD, NekDouble>> coords,

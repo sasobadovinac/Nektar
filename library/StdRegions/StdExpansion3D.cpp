@@ -244,7 +244,7 @@ Array<OneD, NekDouble> StdExpansion3D::v_PhysEvaluateBasis(
     return out_eval;
 }
 
-Array<OneD, Array<OneD, NekDouble>> StdExpansion3D::v_GetPhysEvalALL()
+Array<OneD, Array<OneD, NekDouble>> StdExpansion3D::v_GetPhysEvaluateStorage()
 {
     Array<OneD, Array<OneD, NekDouble>> ret(4);
     NekDouble nq = GetTotPoints();

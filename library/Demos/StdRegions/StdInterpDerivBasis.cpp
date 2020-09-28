@@ -68,7 +68,7 @@ int main(int argc, char *argv[])
         sol1(nPts * nCoeffs),
         sol2(nPts * nCoeffs);
 
-    auto storage = E->GetPhysEvalALL();
+    auto storage = E->GetPhysEvaluateStorage();
 
     Array<OneD, NekDouble> out_eval2 = E->PhysEvaluateBasis(coords, storage, sol, sol1, sol2);
 

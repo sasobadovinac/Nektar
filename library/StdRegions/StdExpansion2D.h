@@ -161,7 +161,7 @@ protected:
         Array<OneD, NekDouble> &out_d2 = NullNekDouble1DArray) override;
 
     STD_REGIONS_EXPORT virtual Array<OneD, Array<OneD, NekDouble>>
-    v_GetPhysEvalALL() final;
+    v_GetPhysEvaluateStorage() final;
 
     STD_REGIONS_EXPORT virtual Array<OneD, NekDouble> v_PhysEvaluateBasis(
         const Array<OneD, const Array<OneD, NekDouble>> coords,

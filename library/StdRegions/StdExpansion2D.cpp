@@ -222,7 +222,7 @@ Array<OneD, NekDouble> StdExpansion2D::v_PhysEvaluateBasis(
 
 // create and populate storage for slow versions of physderiv
 // and physbasisderiv
-Array<OneD, Array<OneD, NekDouble>> StdExpansion2D::v_GetPhysEvalALL()
+Array<OneD, Array<OneD, NekDouble>> StdExpansion2D::v_GetPhysEvaluateStorage()
 {
 
     Array<OneD, Array<OneD, NekDouble>> ret(3);

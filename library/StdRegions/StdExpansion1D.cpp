@@ -92,7 +92,7 @@ void StdExpansion1D::PhysTensorDeriv(
     }
 }
 
-Array<OneD, Array<OneD, NekDouble>> StdExpansion1D::v_GetPhysEvalALL()
+Array<OneD, Array<OneD, NekDouble>> StdExpansion1D::v_GetPhysEvaluateStorage()
 {
     Array<OneD, Array<OneD, NekDouble>> ret(2);
     NekDouble nq = GetTotPoints();

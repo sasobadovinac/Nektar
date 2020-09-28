@@ -1231,7 +1231,7 @@ Array<OneD, NekDouble> StdExpansion::v_PhysEvaluateBasis(
     return NullNekDouble1DArray;
 }
 
-Array<OneD, Array<OneD, NekDouble>> StdExpansion::v_GetPhysEvalALL()
+Array<OneD, Array<OneD, NekDouble>> StdExpansion::v_GetPhysEvaluateStorage()
 {
     NEKERROR(ErrorUtil::efatal, "Method does not exist for this shape");
     return NullNekDoubleArrayofArray;
