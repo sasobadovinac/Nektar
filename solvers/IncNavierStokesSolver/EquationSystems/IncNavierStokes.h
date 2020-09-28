@@ -146,6 +146,8 @@ namespace Nektar
         NekDouble                                        m_I;
         // Spring coefficient
         Array<OneD, NekDouble>                           m_K;
+        // Added Spring coefficient
+        NekDouble                                        m_Kadd;
         // Damping coefficient
         Array<OneD, NekDouble>                           m_C;
         // Hinge point 
@@ -158,6 +160,8 @@ namespace Nektar
         SolverUtils::FilterAeroForcesSharedPtr           m_filterForcesA;
         // AeroForces filter
         SolverUtils::FilterAeroForcesSharedPtr           m_filterForcesB;
+        // AeroForces filter
+        SolverUtils::FilterAeroForcesSharedPtr           m_filterForcesAS;
         /// Soft pointer to original equation system 
         const std::weak_ptr<SolverUtils::EquationSystem> m_equ;
 
@@ -205,6 +209,10 @@ namespace Nektar
         Array<OneD, bool>                       m_isBlowingSuction;
         bool                                    m_isMomentA;
         bool                                    m_isMomentB;
+
+        bool                                    m_isModified;
+        bool                                    m_isPitch;
+        bool                                    m_isSway;
 
         NekDouble                               m_alpha;
 
@@ -292,6 +300,9 @@ namespace Nektar
         /// Set moments flags
         virtual bool v_SetMoment(bool &isMomentA, bool &isMomentB);
 
+        /// Set added stiffness flags
+        virtual bool v_SetAddedStiff(bool &isModified, bool &isPitch, bool &isSway);
+
         // bool to check if BSBC needed
         bool m_BlowingSuction = false;
 
@@ -348,6 +359,9 @@ namespace Nektar
         /// Number of time integration steps AND Order of extrapolation for
         /// pressure boundary conditions.
         int m_intSteps;
+
+        /// Modified fields to use in FSI stability
+        Array<OneD, MultiRegions::ExpListSharedPtr> m_modifiedBase;
 
         /// Constructor.
         IncNavierStokes(const LibUtilities::SessionReaderSharedPtr& pSession,

@@ -104,6 +104,9 @@ protected:
     bool m_BlowingSuction;
     bool m_isMomentA;
     bool m_isMomentB;
+    bool m_isModified;
+    bool m_isPitch;
+    bool m_isSway;
 
 private:
     /// Determines if a given Boundary Region is in
@@ -162,6 +165,10 @@ private:
         const NekDouble &time);
 
     void CalculateForcesBSBC(
+        const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
+        const NekDouble &time);
+
+    void CalculateForcesStiffness(
         const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
         const NekDouble &time);
 

@@ -1119,7 +1119,18 @@ namespace Nektar
         {
             bool condition = false;
             ASSERTL0(condition,
-                "Blowing/Suction BS's only implemented to Direct solver yet.");
+                "error v_SetMoment flag.");
+        }
+
+        /**
+         * Virtual function defined in IncNavierStokes for 
+         * Blowing/Suction boundary conditions type
+         */
+        bool EquationSystem::v_SetAddedStiff(bool &isModified, bool &isPitch, bool &isSway)
+        {
+            bool condition = false;
+            ASSERTL0(condition,
+                "error isModified flag");
         }
 
         /**

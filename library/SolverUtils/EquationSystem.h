@@ -361,6 +361,9 @@ class Interpolator;
 
             /// Virtual function to get BS-BC flag
             SOLVER_UTILS_EXPORT virtual bool v_SetMoment(bool &isMomentA, bool &isMomentB);
+
+            /// Virtual function to get flag added stiffness
+            SOLVER_UTILS_EXPORT virtual bool v_SetAddedStiff(bool &isModified, bool &isPitch, bool &isSway);
             
         protected:
             /// Communicator
