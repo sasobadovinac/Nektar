@@ -66,11 +66,10 @@ namespace Nektar
 
         protected:
 
-            STD_REGIONS_EXPORT virtual void v_PhysEvalBasisGrad(
+            STD_REGIONS_EXPORT virtual Array<OneD, NekDouble> v_PhysEvaluateBasis(
                                                                 const Array<OneD, const Array<OneD, NekDouble> >coords,
                                                                 Array<OneD, Array<OneD, NekDouble> > storage,
                                                                 Array<OneD, NekDouble> &out_d0,
-                                                                Array<OneD, NekDouble> &out_eval,
                                                                 Array<OneD, NekDouble> &out_d1 = NullNekDouble1DArray,
                                                                 Array<OneD, NekDouble> &out_d2 = NullNekDouble1DArray) final;
 

@@ -160,78 +160,68 @@ namespace Nektar
             return StdExpansion::BaryEvaluate<1, true>(coord[1], &phys0[0], out_d1[0]);
         }
 
-        void StdExpansion2D::v_PhysEvalBasisGrad(
-                                                 const Array<OneD, const Array<OneD, NekDouble> >coords,
-                                                 Array<OneD, Array<OneD, NekDouble> > storage,
-                                                 Array<OneD, NekDouble> &out_eval,                    
-                                                 Array<OneD, NekDouble> &out_d0,
-                                                 Array<OneD, NekDouble> &out_d1,
-                                                 Array<OneD, NekDouble> &out_d2)
+        Array<OneD, NekDouble> StdExpansion2D::v_PhysEvaluateBasis(
+            const Array<OneD, const Array<OneD, NekDouble>> coords,
+            Array<OneD, Array<OneD, NekDouble>> storage,
+            Array<OneD, NekDouble> &out_d0, Array<OneD, NekDouble> &out_d1,
+            Array<OneD, NekDouble> &out_d2)
         {
             boost::ignore_unused(out_d2);
 
             int tot = GetTotPoints();
-            
+
             int neq = m_ncoeffs;
-             std::            cout<<"\n neq="<<neq<<"\n";
+            std::cout << "\n neq=" << neq << "\n";
 
             Array<OneD, NekDouble> physvals(tot);
             Array<OneD, NekDouble> coll(2);
 
-            if(out_eval.size() > 0)
-            {    
-                for(int k = 0; k < neq; k++) 
-                {
-                    Vmath::Vcopy(tot, &storage[0][k*tot], 1, &physvals[0], 1);
-                    
-                    for(int i = 0; i < coords[0].size(); i++)
-                    {
-                        coll[0] = coords[0][i];
-                        coll[1] = coords[1][i];
-                          
-                        out_eval[k*tot+i] = v_PhysEvaluate(  coll, physvals);
-                        
-                      }
-                  }
-                  
-            } 
-            
-            if(out_d0.size() > 0)
-            {    
-                
-                      
-                for(int k = 0; k < neq; k++) 
-                {
-                    Vmath::Vcopy(tot, &storage[1][k*tot], 1, &physvals[0], 1);
-                    
-                    for(int i = 0; i < coords[0].size(); i++)
-                    {
-                        coll[0] = coords[0][i];
-                        coll[1] = coords[1][i];
-                        out_d0[i+k*tot] = v_PhysEvaluate(  coll, physvals);
-                        
-                    }
-                }
-                
-            }
-            if(out_d1.size() > 0)
-            {    
+            Array<OneD, NekDouble> out_eval(tot * neq);
+            for (int k = 0; k < neq; k++)
+            {
+                Vmath::Vcopy(tot, &storage[0][k * tot], 1, &physvals[0], 1);
 
-                      
-                for(int k = 0; k < neq; k++) 
+                for (int i = 0; i < coords[0].size(); i++)
                 {
-                    Vmath::Vcopy(tot, &storage[2][k*tot], 1, &physvals[0], 1);
-                    
-                    for(int i = 0; i < coords[0].size(); i++)
+                    coll[0] = coords[0][i];
+                    coll[1] = coords[1][i];
+
+                    out_eval[k * tot + i] = v_PhysEvaluate(coll, physvals);
+                }
+            }
+
+            if (out_d0.size() > 0)
+            {
+
+                for (int k = 0; k < neq; k++)
+                {
+                    Vmath::Vcopy(tot, &storage[1][k * tot], 1, &physvals[0], 1);
+
+                    for (int i = 0; i < coords[0].size(); i++)
                     {
-                        coll[0] = coords[0][i];
-                        coll[1] = coords[1][i];
-                        out_d1[k*tot+i] = v_PhysEvaluate(  coll, physvals);
-                        
+                        coll[0]             = coords[0][i];
+                        coll[1]             = coords[1][i];
+                        out_d0[i + k * tot] = v_PhysEvaluate(coll, physvals);
                     }
                 }
-                
             }
+            if (out_d1.size() > 0)
+            {
+
+                for (int k = 0; k < neq; k++)
+                {
+                    Vmath::Vcopy(tot, &storage[2][k * tot], 1, &physvals[0], 1);
+
+                    for (int i = 0; i < coords[0].size(); i++)
+                    {
+                        coll[0]             = coords[0][i];
+                        coll[1]             = coords[1][i];
+                        out_d1[k * tot + i] = v_PhysEvaluate(coll, physvals);
+                    }
+                }
+            }
+
+            return out_eval;
         }
 
         // create and populate storage for slow versions of physderiv

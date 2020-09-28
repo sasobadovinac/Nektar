@@ -61,7 +61,6 @@ int main(int argc, char *argv[])
         temp1(nPts),
         temp2(nPts),
         out_eval(nPts * nCoeffs),
-        out_eval2(nPts * nCoeffs),
         out_eval1(nPts * nCoeffs),
         phys(nPts * nCoeffs),
         phys1(nCoeffs * nPts),
@@ -71,7 +70,7 @@ int main(int argc, char *argv[])
 
     auto storage = E->GetPhysEvalALL();
 
-    E->PhysEvalBasisGrad(coords, storage, out_eval2, sol, sol1, sol2);
+    Array<OneD, NekDouble> out_eval2 = E->PhysEvaluateBasis(coords, storage, sol, sol1, sol2);
 
     for (int k = 0; k < nCoeffs; ++k)
     {

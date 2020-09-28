@@ -159,58 +159,52 @@ namespace Nektar
             }
             return ret;
         }
-  
-        void StdExpansion1D::v_PhysEvalBasisGrad(
-                                                 const Array<OneD, const Array<OneD, NekDouble> >coords,
-                                                 Array<OneD, Array<OneD, NekDouble> > storage,
-                                                 Array<OneD, NekDouble> &out_eval,                    
-                                                 Array<OneD, NekDouble> &out_d0,
-                                                 Array<OneD, NekDouble> &out_d1,
-                                                 Array<OneD, NekDouble> &out_d2)
+
+        Array<OneD, NekDouble> StdExpansion1D::v_PhysEvaluateBasis(
+            const Array<OneD, const Array<OneD, NekDouble>> coords,
+            Array<OneD, Array<OneD, NekDouble>> storage,
+            Array<OneD, NekDouble> &out_d0, Array<OneD, NekDouble> &out_d1,
+            Array<OneD, NekDouble> &out_d2)
         {
             boost::ignore_unused(out_d1, out_d2);
             int tot = GetTotPoints();
-   
+
             Array<OneD, NekDouble> physall(tot);
             int neq = m_ncoeffs;
 
-
-            if(out_eval.size() > 0)
-            {    
-                for(int k = 0; k < neq; k++)
+            Array<OneD, NekDouble> out_eval(tot * neq);
+            for (int k = 0; k < neq; k++)
+            {
+                Vmath::Vcopy(tot, &storage[0][k * tot], 1, &physall[0], 1);
+                for (int i = 0; i < coords[0].size(); i++)
                 {
-                    Vmath::Vcopy(tot, &storage[0][k*tot], 1, &physall[0], 1);
-                    for(int i = 0; i < coords[0].size(); i++)
-                    {
-                        Array<OneD, NekDouble> ctemp(1);
-                        ctemp[0] = coords[0][i];
-                          
-                        out_eval[i+k*(coords[0].size())] = v_PhysEvaluate(ctemp, physall);              }
+                    Array<OneD, NekDouble> ctemp(1);
+                    ctemp[0] = coords[0][i];
+
+                    out_eval[i + k * (coords[0].size())] =
+                        v_PhysEvaluate(ctemp, physall);
                 }
-                
-            } 
+            }
 
+            if (out_d0.size() > 0)
+            {
 
-            if(out_d0.size() > 0)
-            {    
-                
-                std::cout<<"\n here\n\n";
-                for(int k = 0; k < neq; k++)
+                std::cout << "\n here\n\n";
+                for (int k = 0; k < neq; k++)
                 {
-                    Vmath::Vcopy(tot, &storage[1][k*tot], 1, &physall[0], 1);
-                    for(int i = 0; i < tot; i++)
+                    Vmath::Vcopy(tot, &storage[1][k * tot], 1, &physall[0], 1);
+                    for (int i = 0; i < tot; i++)
                     {
                         Array<OneD, NekDouble> ctemp(1);
                         ctemp[0] = coords[0][i];
-                        
-                        out_d0[i+k*tot] = v_PhysEvaluate(ctemp, physall);              
+
+                        out_d0[i + k * tot] = v_PhysEvaluate(ctemp, physall);
                     }
                 }
-              
-                
-            }            
+            }
 
+            return out_eval;
         }
 
-    }//end namespace
+        }//end namespace
 }//end namespace
