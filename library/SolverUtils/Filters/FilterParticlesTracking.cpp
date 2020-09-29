@@ -958,8 +958,7 @@ void FilterParticlesTracking::InterpSolution(
       {
           for (int k=0; k<particle.m_dim; k++)
           {
-             pFields[0] -> GetExp(particle.m_eId)
-                -> e(k,physvals[j], grad);
+             pFields[0]->GetExp(particle.m_eId)->PhysDeriv(k,physvals[j], grad);
         
              particle.m_grad[j][k] = pFields[0] -> GetExp(particle.m_eId)
                              ->StdPhysEvaluate(particle.m_locCoord, grad);
