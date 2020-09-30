@@ -2176,16 +2176,9 @@ void FilterAeroForces::CalculateForcesStiffnessGeo(
             }
             else if (m_isSway == true)
             {
-                // creates \hat u, \hat v, and \hat p:
-                // \hat u = du/dy 
-                // \hat v = dv/dy 
-                // \hat p = dp/dy 
-                Vmath::Vcopy (fields[0]->GetTotPoints(), gradBase[1], 1,
-                    velocity[0], 1);
-                Vmath::Vcopy (fields[0]->GetTotPoints(), gradBase[3], 1,
-                    velocity[1], 1);
-                Vmath::Vcopy (fields[0]->GetTotPoints(), gradBase[5], 1,
-                    pressure, 1);
+                bool condition = false;
+                ASSERTL0(condition, 
+                    "not sway yet, to compute geo added stiffness");
             }
             else
             {
@@ -2216,23 +2209,23 @@ void FilterAeroForces::CalculateForcesStiffnessGeo(
                             pElmt = pressure + offset;
 
                             // Compute the velocity gradients
-                            div = Array<OneD, NekDouble>(nq,0.0);
-                            for (j=0; j<expdim; j++)
-                            {
-                                for (k=0; k<expdim; k++)
-                                {
-                                    grad[j*expdim+k] = 
-                                        Array<OneD, NekDouble>(nq,0.0);
-                                    elmt->PhysDeriv(k,velElmt[j],
-                                                    grad[j*expdim+k]);
+                            // div = Array<OneD, NekDouble>(nq,0.0);
+                            // for (j=0; j<expdim; j++)
+                            // {
+                            //     for (k=0; k<expdim; k++)
+                            //     {
+                            //         grad[j*expdim+k] = 
+                            //             Array<OneD, NekDouble>(nq,0.0);
+                            //         elmt->PhysDeriv(k,velElmt[j],
+                            //                         grad[j*expdim+k]);
 
-                                    if( j == k)
-                                    {
-                                        Vmath::Vadd(nq, grad[j*expdim+k], 1,
-                                                    div, 1, div, 1);
-                                    }
-                                }
-                            }
+                            //         if( j == k)
+                            //         {
+                            //             Vmath::Vadd(nq, grad[j*expdim+k], 1,
+                            //                         div, 1, div, 1);
+                            //         }
+                            //     }
+                            // }
                             // Scale div by lambda (for compressible flows)
                             Vmath::Smul(nq, lambda, div, 1, div, 1);
 
@@ -2279,17 +2272,20 @@ void FilterAeroForces::CalculateForcesStiffnessGeo(
 
                             // Calculate forces per unit length
 
-                            // Pressure component: fp[j] = rho*p*n[j]
+                            // Pressure component: fp[j] = rho*p*n[j] = 0 here
                             for ( int j = 0; j < expdim; ++j)
                             {
                                 fp[j] = Array<OneD, NekDouble> (nbc,0.0);
-                                Vmath::Vmul (nbc, Pb, 1, normals[j], 1,
-                                             fp[j], 1);
-                                Vmath::Smul(nbc, m_rho, fp[j], 1, fp[j], 1);
+                                // Vmath::Vmul (nbc, Pb, 1, normals[j], 1,
+                                //              fp[j], 1);
+                                // Vmath::Smul(nbc, m_rho, fp[j], 1, fp[j], 1);
                             }
 
                             // Viscous component:
-                            //     fv[j] = -mu*{(grad[k,j]+grad[j,k]) *n[k]}
+                            //     fv[j] = -mu*{(grad[k,j]+grad[j,k]) *n[k]} (standard)
+                            //     here we want:
+                            //     fv[0] = [n[0]*(dv/dx+du/dy) + n[1]*(dv/dy+du/dx)]*mu
+                            //     fv[1] = [n[0]*(dv/dy-du/dx) - n[1]*(dv/dx+du/dy)]*mu
                             for ( int j = 0; j < expdim; ++j )
                             {
                                 fv[j] = Array<OneD, NekDouble> (nbc,0.0);
