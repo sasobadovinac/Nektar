@@ -254,6 +254,27 @@ NekDouble StdExpansion2D::v_PhysEvaluate(
     return StdExpansion::BaryEvaluate<1>(coll[1], &wsp[0]);
 }
 
+NekDouble StdExpansion2D::v_PhysEvaluateOld(
+    const Array<OneD, const NekDouble>& coords,
+    const Array<OneD, const NekDouble> & physvals)
+{
+    Array<OneD, NekDouble> coll(2);
+    Array<OneD, DNekMatSharedPtr>  I(2);
+
+    ASSERTL2(coords[0] > -1 - NekConstants::kNekZeroTol, "coord[0] < -1");
+    ASSERTL2(coords[0] <  1 + NekConstants::kNekZeroTol, "coord[0] >  1");
+    ASSERTL2(coords[1] > -1 - NekConstants::kNekZeroTol, "coord[1] < -1");
+    ASSERTL2(coords[1] <  1 + NekConstants::kNekZeroTol, "coord[1] >  1");
+
+    LocCoordToLocCollapsed(coords,coll);
+
+    I[0] = m_base[0]->GetI(coll);
+    I[1] = m_base[1]->GetI(coll+1);
+
+    return v_PhysEvaluate(I,physvals);
+}
+
+
 NekDouble StdExpansion2D::v_PhysEvaluate(
     const Array<OneD, DNekMatSharedPtr> &I,
     const Array<OneD, const NekDouble> &physvals)

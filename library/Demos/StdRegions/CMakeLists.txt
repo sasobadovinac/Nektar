@@ -11,6 +11,9 @@ ADD_NEKTAR_EXECUTABLE(StdInterpDerivBasis
 ADD_NEKTAR_EXECUTABLE(StdEquiToCoeff2D
     COMPONENT demos DEPENDS StdRegions SOURCES StdEquiToCoeff2D.cpp)
 
+ADD_NEKTAR_EXECUTABLE(BarycentricSpeedTest
+        COMPONENT demos DEPENDS StdRegions SOURCES BarycentricSpeedTest.cpp)
+
 # Interpolation tests.
 ADD_NEKTAR_TEST(StdInterp_Seg_Mod_P6_Q7)
 ADD_NEKTAR_TEST(StdInterp_Hex_Mod_P6_Q7)

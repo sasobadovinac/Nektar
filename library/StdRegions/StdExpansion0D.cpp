@@ -97,6 +97,23 @@ NekDouble StdExpansion0D::v_PhysEvaluate(
     return StdExpansion::BaryEvaluate<0>(Lcoord[0], &physvals[0]);
 }
 
+NekDouble StdExpansion0D::v_PhysEvaluateOld(
+    const Array<OneD, const NekDouble>& Lcoord,
+    const Array<OneD, const NekDouble>& physvals)
+{
+    int    nquad = GetTotPoints();
+    NekDouble  val;
+    DNekMatSharedPtr I = m_base[0]->GetI(Lcoord);
+
+    ASSERTL2(Lcoord[0] >= -1,"Lcoord[0] < -1");
+    ASSERTL2(Lcoord[0] <=  1,"Lcoord[0] >  1");
+
+    val = Blas::Ddot(nquad, I->GetPtr(), 1, physvals, 1);
+
+    return val;
+}
+
+
 Array<OneD, NekDouble> StdExpansion0D::v_PhysEvaluateBasis(
     const Array<OneD, const Array<OneD, NekDouble>> coords,
     const Array<OneD, Array<OneD, NekDouble>> storage, int mode)

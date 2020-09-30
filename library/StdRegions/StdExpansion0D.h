@@ -84,6 +84,10 @@ protected:
         const Array<OneD, const NekDouble> &coords,
         const Array<OneD, const NekDouble> &physvals) final;
 
+    STD_REGIONS_EXPORT virtual NekDouble v_PhysEvaluateOld(
+        const Array<OneD, const NekDouble> &coords,
+        const Array<OneD, const NekDouble> &physvals) final;
+
 private:
     // Virtual Functions ----------------------------------------
 

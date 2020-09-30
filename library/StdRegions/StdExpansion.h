@@ -907,6 +907,12 @@ public:
         return v_PhysEvaluate(coords, physvals);
     }
 
+    inline NekDouble PhysEvaluateOld(const Array<OneD, const NekDouble> &coords,
+                                  const Array<OneD, const NekDouble> &physvals)
+    {
+        return v_PhysEvaluateOld(coords, physvals);
+    }
+
     /** \brief This function evaluates the derivative of the expansion
      * at a single (arbitrary) point of the domain
      *
@@ -1554,6 +1560,10 @@ private:
         const Array<OneD, Array<OneD, NekDouble>> storage, int mode);
 
     STD_REGIONS_EXPORT virtual NekDouble v_PhysEvaluate(
+        const Array<OneD, const NekDouble> &coords,
+        const Array<OneD, const NekDouble> &physvals);
+
+    STD_REGIONS_EXPORT virtual NekDouble v_PhysEvaluateOld(
         const Array<OneD, const NekDouble> &coords,
         const Array<OneD, const NekDouble> &physvals);
 
