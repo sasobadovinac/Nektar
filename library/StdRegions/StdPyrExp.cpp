@@ -719,38 +719,26 @@ void StdPyrExp::v_GetCoords(Array<OneD, NekDouble> &xi_x,
 
 NekDouble StdPyrExp::v_PhysEvaluate(const Array<OneD, NekDouble> coord,
                                     const Array<OneD, const NekDouble> &inarray,
-                                    Array<OneD, NekDouble> &out_d0,
-                                    Array<OneD, NekDouble> &out_d1,
-                                    Array<OneD, NekDouble> &out_d2)
+                                    NekDouble &out_d0,
+                                    NekDouble &out_d1,
+                                    NekDouble &out_d2)
 {
     // Collapse coordinates
     Array<OneD, NekDouble> coll(3, 0.0);
     LocCoordToLocCollapsed(coord, coll);
 
-    Array<OneD, NekDouble> dEta_bar1(1, 0.0);
-    Array<OneD, NekDouble> dXi2(1, 0.0);
-    Array<OneD, NekDouble> dEta3(1, 0.0);
-    NekDouble val = StdExpansion3D::PhysTensorDerivFast(coll, inarray,
-                                                        dEta_bar1, dXi2, dEta3);
+    NekDouble dEta_bar1;
+    NekDouble dXi2;
+    NekDouble dEta3;
+    NekDouble val =
+        StdExpansion3D::BaryTensorDeriv(coll, inarray, dEta_bar1, dXi2, dEta3);
 
-    //@TODO: Refactor to prevent repeat calculations e.g. fac
-    if (out_d0.size() > 0)
-    {
-        NekDouble fac = 2.0 / (1.0 - coll[2]);
-        out_d0[0]     = fac * dEta_bar1[0];
-    }
+    NekDouble fac = 2.0 / (1.0 - coll[2]);
 
-    if (out_d1.size() > 0)
-    {
-        NekDouble fac = 2.0 / (1.0 - coll[2]);
-        out_d1[0]     = fac * dXi2[0];
-    }
-
-    if (out_d2.size() > 0)
-    {
-        out_d2[0] = ((1.0 + coll[0]) / (1.0 - coll[2])) * dEta_bar1[0] +
-                    ((1.0 + coll[1]) / (1.0 - coll[2])) * dXi2[0] + dEta3[0];
-    }
+    out_d0     = fac * dEta_bar1;
+    out_d1     = fac * dXi2;
+    out_d2 = ((1.0 + coll[0]) / (1.0 - coll[2])) * dEta_bar1 +
+                ((1.0 + coll[1]) / (1.0 - coll[2])) * dXi2 + dEta3;
 
     return val;
 }

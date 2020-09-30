@@ -646,9 +646,8 @@ NekDouble SegExp::v_PhysEvaluate(const Array<OneD, const NekDouble> &coord,
 
 NekDouble SegExp::v_PhysEvaluate(const Array<OneD, NekDouble> coord,
                                  const Array<OneD, const NekDouble> &inarray,
-                                 Array<OneD, NekDouble> &out_d0,
-                                 Array<OneD, NekDouble> &out_d1,
-                                 Array<OneD, NekDouble> &out_d2)
+                                 NekDouble &out_d0, NekDouble &out_d1,
+                                 NekDouble &out_d2)
 {
     Array<OneD, NekDouble> Lcoord(1);
 

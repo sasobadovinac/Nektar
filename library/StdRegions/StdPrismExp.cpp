@@ -690,50 +690,28 @@ void StdPrismExp::v_GetCoords(Array<OneD, NekDouble> &xi_x,
 
 NekDouble StdPrismExp::v_PhysEvaluate(
     const Array<OneD, NekDouble> coord,
-    const Array<OneD, const NekDouble> &inarray, Array<OneD, NekDouble> &out_d0,
-    Array<OneD, NekDouble> &out_d1, Array<OneD, NekDouble> &out_d2)
+    const Array<OneD, const NekDouble> &inarray,
+    NekDouble &out_d0,
+    NekDouble &out_d1,
+    NekDouble &out_d2)
 {
     // Collapse coordinates
     Array<OneD, NekDouble> coll(3, 0.0);
     LocCoordToLocCollapsed(coord, coll);
 
-    bool Do_2 = out_d2.size() > 0;
-    bool Do_0 = out_d0.size() > 0;
+    NekDouble dEta_bar1;
+    NekDouble val = BaryTensorDeriv(coll, inarray, dEta_bar1, out_d1, out_d2);
 
-    Array<OneD, NekDouble> dEta_bar1(1, 0.0);
+    NekDouble fac = 2.0 / (1.0 - coll[2]);
+    out_d0     = fac * dEta_bar1;
 
-    NekDouble val = 0;
-    if (Do_2) // Need all local derivatives
-    {
-        val = PhysTensorDerivFast(coll, inarray, dEta_bar1, out_d1, out_d2);
-    }
-    else if (Do_0) // Need 0 and 1 derivatives
-    {
-        val = PhysTensorDerivFast(coll, inarray, dEta_bar1, out_d1,
-                                  NullNekDouble1DArray);
-    }
-    else // Only need Eta0 derivative
-    {
-        val = PhysTensorDerivFast(coll, inarray, NullNekDouble1DArray, out_d1,
-                                  NullNekDouble1DArray);
-    }
+    // divide dEta_Bar1 by (1-eta_z)
+    fac = 1.0 / (1.0 - coll[2]);
+    dEta_bar1  = fac * dEta_bar1;
 
-    if (Do_0)
-    {
-        NekDouble fac = 2.0 / (1.0 - coll[2]);
-        out_d0[0]     = fac * dEta_bar1[0];
-    }
-
-    if (Do_2)
-    {
-        // divide dEta_Bar1 by (1-eta_z)
-        NekDouble fac = 1.0 / (1.0 - coll[2]);
-        dEta_bar1[0]  = fac * dEta_bar1[0];
-
-        // Multiply dEta_Bar1 by (1+eta_x) and add ot out_dxi3
-        fac = 1.0 + coll[0];
-        out_d2[0] += fac * dEta_bar1[0];
-    }
+    // Multiply dEta_Bar1 by (1+eta_x) and add ot out_dxi3
+    fac = 1.0 + coll[0];
+    out_d2 += fac * dEta_bar1;
 
     return val;
 }

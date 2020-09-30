@@ -1195,13 +1195,14 @@ NekDouble StdExpansion::v_PhysEvaluate(
 
 NekDouble StdExpansion::v_PhysEvaluate(
     const Array<OneD, NekDouble> coord,
-    const Array<OneD, const NekDouble> &inarray, Array<OneD, NekDouble> &out_d0,
-    Array<OneD, NekDouble> &out_d1, Array<OneD, NekDouble> &out_d2)
+    const Array<OneD, const NekDouble> &inarray, NekDouble &out_d0,
+    NekDouble &out_d1, NekDouble &out_d2)
 {
     boost::ignore_unused(coord, inarray, out_d0, out_d1, out_d2);
     NEKERROR(ErrorUtil::efatal, "Method does not exist for this shape");
     return 0;
 }
+
 Array<OneD, NekDouble> StdExpansion::v_PhysEvaluateBasis(
     const Array<OneD, const Array<OneD, NekDouble>> coords,
     const Array<OneD, Array<OneD, NekDouble>> storage,

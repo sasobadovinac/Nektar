@@ -61,14 +61,6 @@ StdExpansion1D::~StdExpansion1D()
 //----------------------------
 // Differentiation Methods
 //-----------------------------
-// find derivative of u (inarray) at all coords points
-NekDouble StdExpansion1D::PhysTensorDerivFast(
-    const Array<OneD, NekDouble> &coord,
-    const Array<OneD, const NekDouble> &inarray, Array<OneD, NekDouble> &out_d0)
-{
-    return StdExpansion::BaryEvaluate<0, true>(coord[0], &inarray[0],
-                                               out_d0[0]);
-}
 
 // find derivative of u (inarray) at all quad points
 void StdExpansion1D::PhysTensorDeriv(
@@ -125,8 +117,8 @@ NekDouble StdExpansion1D::v_PhysEvaluate(
 
 NekDouble StdExpansion1D::v_PhysEvaluate(
     const Array<OneD, NekDouble> coord,
-    const Array<OneD, const NekDouble> &inarray, Array<OneD, NekDouble> &out_d0,
-    Array<OneD, NekDouble> &out_d1, Array<OneD, NekDouble> &out_d2)
+    const Array<OneD, const NekDouble> &inarray, NekDouble &out_d0,
+    NekDouble &out_d1, NekDouble &out_d2)
 {
     boost::ignore_unused(coord, inarray, out_d0, out_d1, out_d2);
 

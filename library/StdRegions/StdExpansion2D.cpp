@@ -132,31 +132,6 @@ Array<OneD, NekDouble> StdExpansion2D::v_PhysEvaluateBasis(
     return ret;
 }
 
-// find derivative of u (inarray) at all coords points
-NekDouble StdExpansion2D::PhysTensorDerivFast(
-    const Array<OneD, NekDouble> &coord,
-    const Array<OneD, const NekDouble> &inarray, Array<OneD, NekDouble> &out_d0,
-    Array<OneD, NekDouble> &out_d1)
-{
-    // int sz = GetTotPoints();
-    const int nq0 = m_base[0]->GetNumPoints();
-    const int nq1 = m_base[1]->GetNumPoints();
-
-    const NekDouble *ptr = &inarray[0];
-    Array<OneD, NekDouble> deriv0(nq1);
-    Array<OneD, NekDouble> phys0(nq1);
-
-    for (int j = 0; j < nq1; ++j, ptr += nq0)
-    {
-        phys0[j] =
-            StdExpansion::BaryEvaluate<0, true>(coord[0], ptr, deriv0[j]);
-    }
-
-    out_d0[0] = StdExpansion::BaryEvaluate<1, false>(coord[1], &deriv0[0]);
-
-    return StdExpansion::BaryEvaluate<1, true>(coord[1], &phys0[0], out_d1[0]);
-}
-
 Array<OneD, NekDouble> StdExpansion2D::v_PhysEvaluateBasis(
     const Array<OneD, const Array<OneD, NekDouble>> coords,
     Array<OneD, Array<OneD, NekDouble>> storage, Array<OneD, NekDouble> &out_d0,
@@ -304,8 +279,8 @@ NekDouble StdExpansion2D::v_PhysEvaluate(
 
 NekDouble StdExpansion2D::v_PhysEvaluate(
     const Array<OneD, NekDouble> coord,
-    const Array<OneD, const NekDouble> &inarray, Array<OneD, NekDouble> &out_d0,
-    Array<OneD, NekDouble> &out_d1, Array<OneD, NekDouble> &out_d2)
+    const Array<OneD, const NekDouble> &inarray, NekDouble &out_d0,
+    NekDouble &out_d1, NekDouble &out_d2)
 {
     boost::ignore_unused(coord, inarray, out_d0, out_d1, out_d2);
 

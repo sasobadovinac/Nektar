@@ -69,10 +69,14 @@ public:
         const Array<OneD, const NekDouble> &inarray,
         Array<OneD, NekDouble> &outarray);
 
-    STD_REGIONS_EXPORT NekDouble
-    PhysTensorDerivFast(const Array<OneD, NekDouble> &coord,
-                        const Array<OneD, const NekDouble> &inarray,
-                        Array<OneD, NekDouble> &out_d0);
+     // find derivative of u (inarray) at all coords points
+     STD_REGIONS_EXPORT inline NekDouble BaryTensorDeriv(
+        const Array<OneD, NekDouble> &coord,
+        const Array<OneD, const NekDouble> &inarray, NekDouble &out_d0)
+    {
+        return StdExpansion::BaryEvaluate<0, true>(coord[0], &inarray[0],
+                                                   out_d0);
+    }
 
     STD_REGIONS_EXPORT virtual Array<OneD, NekDouble> v_PhysEvaluateBasis(
         const Array<OneD, const Array<OneD, NekDouble>> coords,
@@ -85,9 +89,8 @@ protected:
 
     STD_REGIONS_EXPORT virtual NekDouble v_PhysEvaluate(
         const Array<OneD, NekDouble> coord,
-        const Array<OneD, const NekDouble> &inarray,
-        Array<OneD, NekDouble> &out_d0, Array<OneD, NekDouble> &out_d1,
-        Array<OneD, NekDouble> &out_d2 = NullNekDouble1DArray) override;
+        const Array<OneD, const NekDouble> &inarray, NekDouble &out_d0,
+        NekDouble &out_d1, NekDouble &out_d2) override;
 
     STD_REGIONS_EXPORT virtual Array<OneD, Array<OneD, NekDouble>>
     v_GetPhysEvaluateStorage() final;

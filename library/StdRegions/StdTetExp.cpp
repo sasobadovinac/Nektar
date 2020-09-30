@@ -863,80 +863,50 @@ void StdTetExp::v_FillMode(const int mode, Array<OneD, NekDouble> &outarray)
 
 NekDouble StdTetExp::v_PhysEvaluate(const Array<OneD, NekDouble> coord,
                                     const Array<OneD, const NekDouble> &inarray,
-                                    Array<OneD, NekDouble> &out_d0,
-                                    Array<OneD, NekDouble> &out_d1,
-                                    Array<OneD, NekDouble> &out_d2)
+                                    NekDouble &out_d0,
+                                    NekDouble &out_d1,
+                                    NekDouble &out_d2)
 {
     // Collapse coordinates
     Array<OneD, NekDouble> coll(3, 0.0);
     LocCoordToLocCollapsed(coord, coll);
 
-    bool Do_2 = out_d2.size() > 0;
-    bool Do_1 = out_d1.size() > 0;
+    NekDouble out_dEta0;
+    NekDouble out_dEta1;
+    NekDouble out_dEta2;
 
-    Array<OneD, NekDouble> out_dEta0(1, 0.0);
-    Array<OneD, NekDouble> out_dEta1(1, 0.0);
-    Array<OneD, NekDouble> out_dEta2(1, 0.0);
-
-    NekDouble val = 0;
-    if (Do_2) // Need all local derivatives
-    {
-        val =
-            PhysTensorDerivFast(coll, inarray, out_dEta0, out_dEta1, out_dEta2);
-    }
-    else if (Do_1) // Need 0 and 1 derivatives
-    {
-        val = PhysTensorDerivFast(coll, inarray, out_dEta0, out_dEta1,
-                                  NullNekDouble1DArray);
-    }
-    else // Only need Eta0 derivative
-    {
-        val = PhysTensorDerivFast(coll, inarray, out_dEta0,
-                                  NullNekDouble1DArray, NullNekDouble1DArray);
-    }
+    NekDouble val = BaryTensorDeriv(coll, inarray, out_dEta0, out_dEta1, out_dEta2);
 
     // calculate 2.0/((1-eta_1)(1-eta_2)) * Out_dEta0
     NekDouble temp = 2.0 / ((1 - coll[1]) * (1 - coll[2]));
-    out_dEta0[0] *= temp;
+    out_dEta0 *= temp;
 
-    if (out_d0.size() > 0)
-    {
-        // out_dxi0 = 4.0/((1-eta_1)(1-eta_2)) * Out_dEta0
-        out_d0[0] = 2 * out_dEta0[0];
-    }
+    // out_dxi0 = 4.0/((1-eta_1)(1-eta_2)) * Out_dEta0
+    out_d0 = 2 * out_dEta0;
 
-    if (Do_1 || Do_2)
-    {
-        // fac0 = 1 + eta_0
-        NekDouble fac0;
-        fac0 = 1 + coll[0];
+    // fac0 = 1 + eta_0
+    NekDouble fac0;
+    fac0 = 1 + coll[0];
 
-        // calculate 2.0*(1+eta_0)/((1-eta_1)(1-eta_2)) * Out_dEta0
-        out_dEta0[0] *= fac0;
+    // calculate 2.0*(1+eta_0)/((1-eta_1)(1-eta_2)) * Out_dEta0
+    out_dEta0 *= fac0;
 
-        // calculate 2/(1.0-eta_2) * out_dEta1
-        fac0 = 2 / (1 - coll[2]);
-        out_dEta1[0] *= fac0;
+    // calculate 2/(1.0-eta_2) * out_dEta1
+    fac0 = 2 / (1 - coll[2]);
+    out_dEta1 *= fac0;
 
-        if (Do_1)
-        {
-            // calculate out_dxi1 = 2.0(1+eta_0)/((1-eta_1)(1-eta_2))
-            //  * Out_dEta0 + 2/(1.0-eta_2) out_dEta1
-            out_d1[0] = out_dEta0[0] + out_dEta1[0];
-        }
+    // calculate out_dxi1 = 2.0(1+eta_0)/((1-eta_1)(1-eta_2))
+    //  * Out_dEta0 + 2/(1.0-eta_2) out_dEta1
+    out_d1 = out_dEta0 + out_dEta1;
 
-        if (Do_2)
-        {
-            // calculate (1 + eta_1)/(1 -eta_2)*out_dEta1
-            fac0 = (1 + coll[1]) / 2;
-            out_dEta1[0] *= fac0;
+    // calculate (1 + eta_1)/(1 -eta_2)*out_dEta1
+    fac0 = (1 + coll[1]) / 2;
+    out_dEta1 *= fac0;
 
-            // calculate out_dxi2 =
-            // 2.0(1+eta_0)/((1-eta_1)(1-eta_2)) Out_dEta0 +
-            // (1 + eta_1)/(1 -eta_2)*out_dEta1 + out_dEta2
-            out_d2[0] = out_dEta0[0] + out_dEta1[0] + out_dEta2[0];
-        }
-    }
+    // calculate out_dxi2 =
+    // 2.0(1+eta_0)/((1-eta_1)(1-eta_2)) Out_dEta0 +
+    // (1 + eta_1)/(1 -eta_2)*out_dEta1 + out_dEta2
+    out_d2 = out_dEta0 + out_dEta1 + out_dEta2;
 
     return val;
 }

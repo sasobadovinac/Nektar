@@ -126,12 +126,7 @@ int main(int argc, char *argv[])
             coordIn[j] = coordsF[j][i];
         }
 
-        Array<OneD, NekDouble> tmp0(1, 0.0), tmp1(1, 0.0), tmp2(1, 0.0);
-        physOut[i] = E->PhysEvaluate(coordIn, physIn, tmp0, tmp1, tmp2);
-
-        physOut0[i] = tmp0[0];
-        physOut1[i] = tmp1[0];
-        physOut2[i] = tmp2[0];
+        physOut[i] = E->PhysEvaluate(coordIn, physIn, physOut0[i], physOut1[i], physOut2[i]);
     }
 
     switch(dimension)

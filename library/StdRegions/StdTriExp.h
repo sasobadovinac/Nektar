@@ -141,8 +141,9 @@ protected:
     STD_REGIONS_EXPORT virtual NekDouble v_PhysEvaluate(
         const Array<OneD, NekDouble> coord,
         const Array<OneD, const NekDouble> &inarray,
-        Array<OneD, NekDouble> &out_d0, Array<OneD, NekDouble> &out_d1,
-        Array<OneD, NekDouble> &out_d2 = NullNekDouble1DArray);
+        NekDouble &out_d0,
+        NekDouble &out_d1,
+        NekDouble &out_d2);
 
     //---------------------------
     // Helper functions

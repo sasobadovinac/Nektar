@@ -55,8 +55,6 @@ class Expansion;
 } // namespace LocalRegions
 } // namespace Nektar
 
-static Nektar::NekDouble tmpRef = 0.0;
-
 namespace Nektar
 {
 namespace StdRegions
@@ -903,7 +901,7 @@ public:
      *  \return returns the value of the expansion at the
      *  single point
      */
-    NekDouble PhysEvaluate(const Array<OneD, const NekDouble> &coords,
+    inline NekDouble PhysEvaluate(const Array<OneD, const NekDouble> &coords,
                            const Array<OneD, const NekDouble> &physvals)
     {
         return v_PhysEvaluate(coords, physvals);
@@ -920,15 +918,31 @@ public:
      *  calculates the value of the expansion at a set of points
      * given in \a coords
      */
-    NekDouble PhysEvaluate(
-        const Array<OneD, NekDouble> coord,
-        const Array<OneD, const NekDouble> &inarray,
-        Array<OneD, NekDouble> &out_d0,
-        Array<OneD, NekDouble> &out_d1 = NullNekDouble1DArray,
-        Array<OneD, NekDouble> &out_d2 = NullNekDouble1DArray)
+    inline NekDouble PhysEvaluate(const Array<OneD, NekDouble> &coord,
+                                  const Array<OneD, const NekDouble> &inarray,
+                                  NekDouble &out_d0, NekDouble &out_d1,
+                                  NekDouble &out_d2)
 
     {
         return v_PhysEvaluate(coord, inarray, out_d0, out_d1, out_d2);
+    }
+
+    inline NekDouble PhysEvaluate(const Array<OneD, NekDouble> &coord,
+                                  const Array<OneD, const NekDouble> &inarray,
+                                  NekDouble &out_d0, NekDouble &out_d1)
+
+    {
+        NekDouble unusedValue;
+        return v_PhysEvaluate(coord, inarray, out_d0, out_d1, unusedValue);
+    }
+
+    inline NekDouble PhysEvaluate(const Array<OneD, NekDouble> &coord,
+                                  const Array<OneD, const NekDouble> &inarray,
+                                  NekDouble &out_d0)
+
+    {
+        NekDouble unusedValue;
+        return v_PhysEvaluate(coord, inarray, out_d0, unusedValue, unusedValue);
     }
 
     /** \brief This function evaluates the expansion at a single
@@ -1010,7 +1024,8 @@ public:
     Array<OneD, NekDouble> PhysEvaluateBasis(
         const Array<OneD, Array<OneD, NekDouble>> coords,
         const Array<OneD, Array<OneD, NekDouble>> storage,
-        Array<OneD, NekDouble> &out_d0, Array<OneD, NekDouble> &out_d1,
+        Array<OneD, NekDouble> &out_d0,
+        Array<OneD, NekDouble> &out_d1,
         Array<OneD, NekDouble> &out_d2)
     {
         return v_PhysEvaluateBasis(coords, storage, out_d0, out_d1, out_d2);
@@ -1336,7 +1351,7 @@ protected:
     template <int DIR, bool DERIV = false>
     inline NekDouble BaryEvaluate(const NekDouble &coord,
                                   const NekDouble *physvals,
-                                  NekDouble &deriv = tmpRef)
+                                  NekDouble &deriv)
     {
         NekDouble numer1 = 0.0, numer2 = 0.0, numer3 = 0.0, denom = 0.0;
 
@@ -1359,7 +1374,7 @@ protected:
              * the paper here:
              *https://people.maths.ox.ac.uk/trefethen/barycentric.pdf
              */
-            if (xdiff == 0.0 || fabs(xdiff) < 1e-15)
+            if ((!DERIV && xdiff == 0.0) || (DERIV && abs(xdiff) < 1e-15))
             {
                 if (DERIV)
                 {
@@ -1391,6 +1406,26 @@ protected:
         }
 
         return numer1 / denom;
+    }
+
+
+    /**
+     * @brief Helper function to pass an unused value by reference into
+     * BaryEvaluate.
+     *
+     * @param  coord    The coordinate of the single point.
+     * @param  physvals The polynomial stored at each quadrature point.
+     * @tparam DIR      The direction of evaluation.
+     * @tparam DERIV    Bool to find derivative.
+     *
+     * @return The value of @p physvals at @p coord in direction @p dir.
+     */
+    template <int DIR, bool DERIV = false>
+    inline NekDouble BaryEvaluate(const NekDouble &coord,
+                                  const NekDouble *physvals)
+    {
+        NekDouble unusedValue;
+        return BaryEvaluate<DIR, DERIV>(coord, physvals, unusedValue);
     }
 
 private:
@@ -1525,9 +1560,9 @@ private:
     STD_REGIONS_EXPORT virtual NekDouble v_PhysEvaluate(
         const Array<OneD, NekDouble> coord,
         const Array<OneD, const NekDouble> &inarray,
-        Array<OneD, NekDouble> &out_d0,
-        Array<OneD, NekDouble> &out_d1 = NullNekDouble1DArray,
-        Array<OneD, NekDouble> &out_d2 = NullNekDouble1DArray);
+        NekDouble &out_d0,
+        NekDouble &out_d1,
+        NekDouble &out_d2);
 
     STD_REGIONS_EXPORT virtual Array<OneD, NekDouble> v_PhysEvaluateBasis(
         const Array<OneD, const Array<OneD, NekDouble>> coords,

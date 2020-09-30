@@ -94,10 +94,31 @@ public:
         Array<OneD, NekDouble> &outarray_d0,
         Array<OneD, NekDouble> &outarray_d1);
 
-    STD_REGIONS_EXPORT NekDouble PhysTensorDerivFast(
+    // find derivative of u (inarray) at all coords points
+    STD_REGIONS_EXPORT inline NekDouble BaryTensorDeriv(
         const Array<OneD, NekDouble> &coord,
         const Array<OneD, const NekDouble> &inarray,
-        Array<OneD, NekDouble> &out_d0, Array<OneD, NekDouble> &out_d1);
+        NekDouble &out_d0,
+        NekDouble &out_d1)
+    {
+        // int sz = GetTotPoints();
+        const int nq0 = m_base[0]->GetNumPoints();
+        const int nq1 = m_base[1]->GetNumPoints();
+
+        const NekDouble *ptr = &inarray[0];
+        Array<OneD, NekDouble> deriv0(nq1);
+        Array<OneD, NekDouble> phys0(nq1);
+
+        for (int j = 0; j < nq1; ++j, ptr += nq0)
+        {
+            phys0[j] =
+                StdExpansion::BaryEvaluate<0, true>(coord[0], ptr, deriv0[j]);
+        }
+
+        out_d0 = StdExpansion::BaryEvaluate<1, false>(coord[1], &deriv0[0]);
+
+        return StdExpansion::BaryEvaluate<1, true>(coord[1], &phys0[0], out_d1);
+    }
 
     STD_REGIONS_EXPORT NekDouble
     Integral(const Array<OneD, const NekDouble> &inarray,
@@ -157,8 +178,9 @@ protected:
     STD_REGIONS_EXPORT virtual NekDouble v_PhysEvaluate(
         const Array<OneD, NekDouble> coord,
         const Array<OneD, const NekDouble> &inarray,
-        Array<OneD, NekDouble> &out_d0, Array<OneD, NekDouble> &out_d1,
-        Array<OneD, NekDouble> &out_d2 = NullNekDouble1DArray) override;
+        NekDouble &out_d0,
+        NekDouble &out_d1,
+        NekDouble &out_d2) override;
 
     STD_REGIONS_EXPORT virtual Array<OneD, Array<OneD, NekDouble>>
     v_GetPhysEvaluateStorage() final;
