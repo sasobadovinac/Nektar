@@ -160,8 +160,10 @@ namespace Nektar
         SolverUtils::FilterAeroForcesSharedPtr           m_filterForcesA;
         // AeroForces filter
         SolverUtils::FilterAeroForcesSharedPtr           m_filterForcesB;
-        // AeroForces filter
-        SolverUtils::FilterAeroForcesSharedPtr           m_filterForcesAS;
+        // AeroForces filter (base flow gradient)
+        SolverUtils::FilterAeroForcesSharedPtr           m_filterForcesAS_B;
+        // AeroForces filter (geometric)
+        SolverUtils::FilterAeroForcesSharedPtr           m_filterForcesAS_G;
         /// Soft pointer to original equation system 
         const std::weak_ptr<SolverUtils::EquationSystem> m_equ;
 
@@ -211,6 +213,8 @@ namespace Nektar
         bool                                    m_isMomentB;
 
         bool                                    m_isModified;
+        bool                                    m_isBase;
+        bool                                    m_isGeo;
         bool                                    m_isPitch;
         bool                                    m_isSway;
 
@@ -301,7 +305,8 @@ namespace Nektar
         virtual bool v_SetMoment(bool &isMomentA, bool &isMomentB);
 
         /// Set added stiffness flags
-        virtual bool v_SetAddedStiff(bool &isModified, bool &isPitch, bool &isSway);
+        virtual bool v_SetAddedStiff(bool &isModified, bool &isPitch, bool &isSway, 
+            bool &isBase, bool &isGeo);
 
         // bool to check if BSBC needed
         bool m_BlowingSuction = false;

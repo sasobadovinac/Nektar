@@ -1126,7 +1126,8 @@ namespace Nektar
          * Virtual function defined in IncNavierStokes for 
          * Blowing/Suction boundary conditions type
          */
-        bool EquationSystem::v_SetAddedStiff(bool &isModified, bool &isPitch, bool &isSway)
+        bool EquationSystem::v_SetAddedStiff(bool &isModified, bool &isPitch, bool &isSway, 
+            bool &isBase, bool &isGeo)
         {
             bool condition = false;
             ASSERTL0(condition,

@@ -363,7 +363,8 @@ class Interpolator;
             SOLVER_UTILS_EXPORT virtual bool v_SetMoment(bool &isMomentA, bool &isMomentB);
 
             /// Virtual function to get flag added stiffness
-            SOLVER_UTILS_EXPORT virtual bool v_SetAddedStiff(bool &isModified, bool &isPitch, bool &isSway);
+            SOLVER_UTILS_EXPORT virtual bool v_SetAddedStiff(bool &isModified, bool &isPitch, bool &isSway,
+            bool &isBase, bool &isGeo);
             
         protected:
             /// Communicator

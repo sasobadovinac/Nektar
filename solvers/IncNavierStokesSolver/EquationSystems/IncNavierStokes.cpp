@@ -1539,12 +1539,21 @@ namespace Nektar
         m_bsbcParams->m_filterForcesB->Initialise(m_fields, 0.0);
         m_bsbcParams->m_isMomentB = false;
         
-        // Create FilterAeroForces object -----> Added Stiffness
+        // Create FilterAeroForces object -----> Added Stiffness Gradient base flow
         m_bsbcParams->m_isModified = true;
-        m_bsbcParams->m_filterForcesAS = MemoryManager<SolverUtils::FilterAeroForces>::
+        m_bsbcParams->m_isBase = true;
+        m_bsbcParams->m_filterForcesAS_B = MemoryManager<SolverUtils::FilterAeroForces>::
         AllocateSharedPtr(m_session, shared_from_this(), vParams);
-        m_bsbcParams->m_filterForcesAS->Initialise(m_fields, 0.0);
+        m_bsbcParams->m_filterForcesAS_B->Initialise(m_fields, 0.0);
+        m_bsbcParams->m_isBase = false;
+
+        // Create FilterAeroForces object -----> Added Stiffness geometric
+        m_bsbcParams->m_isGeo = true;
+        m_bsbcParams->m_filterForcesAS_G = MemoryManager<SolverUtils::FilterAeroForces>::
+        AllocateSharedPtr(m_session, shared_from_this(), vParams);
+        m_bsbcParams->m_filterForcesAS_G->Initialise(m_fields, 0.0);
         m_bsbcParams->m_isModified = false;
+        m_bsbcParams->m_isGeo = false;
 
         // Determine time integration order
         std::string intMethod = m_session->GetSolverInfo("TIMEINTEGRATIONMETHOD");
@@ -1725,16 +1734,26 @@ namespace Nektar
         if(m_bsbcParams->m_isPitch == true)
         {
             Array<OneD, NekDouble> moments(expdim, 0.0);
-            m_bsbcParams->m_filterForcesAS->GetTotalMoments(m_fields, moments, 0.0);
+            m_bsbcParams->m_filterForcesAS_B->GetTotalMoments(m_fields, moments, 0.0);
             m_bsbcParams->m_Kadd = moments[0];
-            cout<<"added stiffness = "<<m_bsbcParams->m_Kadd<<endl;
+            cout<<"added stiffness (base flow contribution) = "<<m_bsbcParams->m_Kadd<<endl;
+            moments[0] = 0.0;
+            m_bsbcParams->m_filterForcesAS_G->GetTotalMoments(m_fields, moments, 0.0);
+            m_bsbcParams->m_Kadd += moments[0];
+            cout<<"added stiffness (geometric contribution) = "<< moments[0] <<endl;
+            cout<<"added stiffness = "<< m_bsbcParams->m_Kadd <<endl;
         }
         else if(m_bsbcParams->m_isSway == true)
         {
             Array<OneD, NekDouble> aeroforces(expdim, 0.0);
-            m_bsbcParams->m_filterForcesAS->GetTotalForces(m_fields, aeroforces, 0.0);
+            m_bsbcParams->m_filterForcesAS_B->GetTotalForces(m_fields, aeroforces, 0.0);
             m_bsbcParams->m_Kadd = aeroforces[1];
-            cout<<"added stiffness = "<<m_bsbcParams->m_Kadd<<endl;
+            cout<<"added stiffness (base flow contribution) = "<<m_bsbcParams->m_Kadd<<endl;
+            aeroforces[1] = 0.0;
+            m_bsbcParams->m_filterForcesAS_G->GetTotalForces(m_fields, aeroforces, 0.0);
+            m_bsbcParams->m_Kadd += aeroforces[1];
+            cout<<"added stiffness (geometric contribution) = "<< aeroforces[1] <<endl;
+            cout<<"added stiffness = "<< m_bsbcParams->m_Kadd <<endl;
         }
 
         // Loop boundary conditions looking for BS-BC's
@@ -1966,11 +1985,14 @@ namespace Nektar
     /**
      *  
      */
-    bool IncNavierStokes::v_SetAddedStiff(bool &isModified, bool &isPitch, bool &isSway)
+    bool IncNavierStokes::v_SetAddedStiff(bool &isModified, bool &isPitch, bool &isSway,
+     bool &isBase, bool &isGeo)
     {
         isModified = m_bsbcParams->m_isModified;
         isPitch    = m_bsbcParams->m_isPitch;
         isSway     = m_bsbcParams->m_isSway;
+        isBase     = m_bsbcParams->m_isBase;
+        isGeo      = m_bsbcParams->m_isGeo;
     }
 
     /**

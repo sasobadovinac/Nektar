@@ -107,6 +107,8 @@ protected:
     bool m_isModified;
     bool m_isPitch;
     bool m_isSway;
+    bool m_isBase;
+    bool m_isGeo;
 
 private:
     /// Determines if a given Boundary Region is in
@@ -168,7 +170,11 @@ private:
         const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
         const NekDouble &time);
 
-    void CalculateForcesStiffness(
+    void CalculateForcesStiffnessBase(
+        const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
+        const NekDouble &time);
+
+    void CalculateForcesStiffnessGeo(
         const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
         const NekDouble &time);
 
