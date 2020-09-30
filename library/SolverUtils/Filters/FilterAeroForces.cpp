@@ -2008,7 +2008,6 @@ void FilterAeroForces::CalculateForcesStiffnessGeo(
                                                const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
                                                const NekDouble &time)
 {
-
     // Lock equation system weak pointer
     auto equ = m_equ.lock();
     ASSERTL0(equ, "Weak pointer expired");
@@ -2167,12 +2166,13 @@ void FilterAeroForces::CalculateForcesStiffnessGeo(
                 // \hat u = x * du/dy - y * du/dx 
                 // \hat v = x * dv/dy - y * dv/dx 
                 // \hat p = x * dp/dy - y * dp/dx 
-                Vmath::Vvtvvtm (fields[0]->GetTotPoints(), coords[0], 1, gradBase[1], 1,
-                    coords[1], 1, gradBase[0], 1, velocity[0], 1);
-                Vmath::Vvtvvtm (fields[0]->GetTotPoints(), coords[0], 1, gradBase[3], 1,
-                    coords[1], 1, gradBase[2], 1, velocity[1], 1);
-                Vmath::Vvtvvtm (fields[0]->GetTotPoints(), coords[0], 1, gradBase[5], 1,
-                    coords[1], 1, gradBase[4], 1, pressure, 1);
+
+                // Vmath::Vvtvvtm (fields[0]->GetTotPoints(), coords[0], 1, gradBase[1], 1,
+                //     coords[1], 1, gradBase[0], 1, velocity[0], 1);
+                // Vmath::Vvtvvtm (fields[0]->GetTotPoints(), coords[0], 1, gradBase[3], 1,
+                //     coords[1], 1, gradBase[2], 1, velocity[1], 1);
+                // Vmath::Vvtvvtm (fields[0]->GetTotPoints(), coords[0], 1, gradBase[5], 1,
+                //     coords[1], 1, gradBase[4], 1, pressure, 1);
             }
             else if (m_isSway == true)
             {
@@ -2202,14 +2202,14 @@ void FilterAeroForces::CalculateForcesStiffnessGeo(
                             offset = fields[0]->GetPhys_Offset(elmtid);
 
                             // Extract  fields on this element
-                            for( j=0; j<expdim; j++)
+                            for( j=0; j<expdim*expdim; j++)
                             {
-                                velElmt[j] = velocity[j] + offset;
+                                gradBaseElmt[j] = gradBase[j] + offset;
                             }
                             pElmt = pressure + offset;
 
                             // Compute the velocity gradients
-                            // div = Array<OneD, NekDouble>(nq,0.0);
+                            div = Array<OneD, NekDouble>(nq,0.0);
                             // for (j=0; j<expdim; j++)
                             // {
                             //     for (k=0; k<expdim; k++)
@@ -2258,7 +2258,7 @@ void FilterAeroForces::CalculateForcesStiffnessGeo(
                             {
                                 gradb[j] = Array<OneD, NekDouble> (nbc,0.0);
                                 elmt->GetTracePhysVals(boundary,
-                                                       bc, grad[j], gradb[j]);
+                                                       bc, gradBaseElmt[j], gradb[j]);
                             }
                             for(int j = 0; j < 3; ++j)
                             {
