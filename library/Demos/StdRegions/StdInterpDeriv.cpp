@@ -110,8 +110,8 @@ int main(int argc, char *argv[])
     Array<OneD, Array<OneD, NekDouble> > coordsE = demo.GetCoords(E);
  
     int totpts = coordsE[0].size();
-    Array<OneD, NekDouble> physIn(totPoints), physOut(totpts), physOut0(totpts), physOut1(totpts), physOut2(totpts);
-    Array<OneD, NekDouble>  sol(totpts), sol0(totpts), sol1(totpts), sol2(totpts);
+    Array<OneD, NekDouble> physIn(totPoints, 0.0), physOut(totpts, 0.0), physOut0(totpts, 0.0), physOut1(totpts, 0.0), physOut2(totpts, 0.0);
+    Array<OneD, NekDouble>  sol(totpts, 0.0), sol0(totpts, 0.0), sol1(totpts, 0.0), sol2(totpts, 0.0);
     
     physIn = EvalPoly(coordsE);
    
