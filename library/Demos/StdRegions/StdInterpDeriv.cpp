@@ -121,7 +121,7 @@ int main(int argc, char *argv[])
     {
         // Fill coords array
         Array<OneD, NekDouble> coordIn(dimension, 0.0);
-        for (int j =0; j < dimension; ++j)
+        for (int j = 0; j < dimension; ++j)
         {
             coordIn[j] = coordsF[j][i];
         }
@@ -147,7 +147,7 @@ int main(int argc, char *argv[])
                                                     E->Linf(physOut1, sol1) +
                                                     E->Linf(physOut2, sol2)
                                                  << endl;
-    cout << "L 2 error         : " << scientific << E->Linf(physOut, sol) +
+    cout << "L 2 error         : " << scientific << E->L2(physOut, sol) +
                                                     E->L2(physOut0, sol0) +
                                                     E->L2(physOut1, sol1) +
                                                     E->L2(physOut2, sol2)
