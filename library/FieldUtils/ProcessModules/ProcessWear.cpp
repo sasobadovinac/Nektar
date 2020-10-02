@@ -36,8 +36,6 @@
 #include <iostream>
 #include <string>
 
-using namespace std;
-
 #include <boost/geometry.hpp>
 #include "ProcessWear.h"
 
@@ -47,6 +45,8 @@ using namespace std;
 #include <LibUtilities/BasicUtils/PtsIO.h>
 #include <LibUtilities/BasicUtils/CsvIO.h>
 #include <boost/math/special_functions/fpclassify.hpp>
+
+using namespace std;
 
 namespace bg  = boost::geometry;
 namespace bgi = boost::geometry::index;
@@ -63,7 +63,7 @@ ModuleKey ProcessWear::className =
        "Computes Erosion Wear field.");
 
 ProcessWear::ProcessWear(FieldSharedPtr f)
-    : ProcessModule(f)
+    : ProcessBoundaryExtract(f)
 {
         m_config["frompts"] = ConfigOption(
         false, "NotSet", "Pts file from which to interpolate field");
@@ -78,6 +78,8 @@ ProcessWear::~ProcessWear()
 
 void ProcessWear::Process(po::variables_map &vm)
 {
+    ProcessBoundaryExtract::Process(vm);
+
     LibUtilities::PtsFieldSharedPtr fieldPts;
     // Load pts file
     ASSERTL0( m_config["frompts"].as<string>().compare("NotSet") != 0,
@@ -112,62 +114,136 @@ void ProcessWear::Process(po::variables_map &vm)
         "ProcessWear does not support homogeneous expansion");
 
     m_f->m_exp.resize(1);
-    //m_f->m_exp[1] = m_f->AppendExpList(m_f->m_numHomogeneousDir);
-  
-
-    //Create variables for the data generation
-    int totpoints = m_f->m_exp[0]->GetTotPoints();
-    Array<OneD, Array<OneD, NekDouble> > intFields(4);
-    for (int i = 0; i < 4 ; ++i)
-    {
-        intFields[i] = Array<OneD, NekDouble>(totpoints,0.0);
-    }
-    //Load the quadrature point information
-    m_f->m_exp[0]->GetCoords(intFields[0], intFields[1], intFields[2]);
-    
-    Array<OneD, Array<OneD, NekDouble> > pts; fieldPts->GetPts(pts);
-    int dim = fieldPts->GetDim();
-
-   NekDouble ONE_OVER_SQRT_2PI = 0.39894228040143267793994605993438;
-   NekDouble dist2 = 0.0, Sigma = 0.01/3, Wear = 0.0;
-   for (int  k = 0; k < pts[0].num_elements() ; ++k)
-   {
-        //Wear  = Model1wear(pts[dim][k],fabs(pts[dim+1][k]));
-        Wear  = ECRCwear(pts[dim][k],(pts[dim+1][k]));
-        cout<<"Wear: "<< Wear <<endl;
-    
-        // Sum Gauss function
-        for ( int i = 0; i < totpoints; ++i)
-           {
-                dist2 = 0.0;
-                for (int j = 0; j < dim; ++j)
-                {
-                    dist2 += pow(intFields[j][i] - pts[j][k],2);
-                }
-                
-                //~ if (dist2,0.1)
-                //~ {
-                 intFields[3][i] +=  ONE_OVER_SQRT_2PI / Sigma
-                                   * exp(-0.5*dist2/pow(Sigma,2))
-                                   * Wear;
-                //~ }
-            }
-    }    
-
-//Interpolate data
-   for (int i = 0; i < totpoints; ++i)
-    {
-            m_f->m_exp[0]->SetPhys(i, intFields[3][i]);
-    }
-
-    // forward transform fields
-        m_f->m_exp[0]->FwdTrans_IterPerExp(m_f->m_exp[0]->GetPhys(),
-                                           m_f->m_exp[0]->UpdateCoeffs());
-
-
-    // save field names
     m_f->m_variables.push_back("Wear");
+    //m_f->m_exp[1] = m_f->AppendExpList(m_f->m_numHomogeneousDir);
+ 
+    // Create map of boundary ids for partitioned domains
+    SpatialDomains::BoundaryConditions bcs(m_f->m_session,
+                                           m_f->m_exp[0]->GetGraph());
+    const SpatialDomains::BoundaryRegionCollection bregions =
+                                                 bcs.GetBoundaryRegions();
+    map<int, int> BndRegionMap;
+    int cnt = 0;
+    for (auto &breg_it : bregions)
+    {
+       BndRegionMap[breg_it.first] = cnt++;
+    }
 
+    int dim = fieldPts->GetDim();
+    Array<OneD, Array<OneD, NekDouble> > pts; fieldPts->GetPts(pts);
+    Array<OneD, MultiRegions::ExpListSharedPtr> BndExp(1);
+    NekDouble ONE_OVER_SQRT_2PI = 0.39894228040143267793994605993438;
+    NekDouble dist2 = 0.0, Sigma = 0.01, Wear = 0.0;
+
+#if 1  // Gauss counting
+    for (int b = 0; b < m_f->m_bndRegionsToWrite.size(); ++b)
+    {
+        if (BndRegionMap.count(m_f->m_bndRegionsToWrite[b]) == 1)
+        {
+           int bnd = BndRegionMap[m_f->m_bndRegionsToWrite[b]];
+           // Get expansion list for boundary and for elements containing this bnd
+           BndExp[0] = m_f->m_exp[0]->UpdateBndCondExpansion(bnd);
+
+           //Create variables for the data generation
+           int totpoints = BndExp[0]->GetTotPoints();
+           Array<OneD, Array<OneD, NekDouble> > intFields(4);
+           for (int i = 0; i < 4 ; ++i)
+           {
+              intFields[i] = Array<OneD, NekDouble>(totpoints,0.0);
+           }
+           //Load the quadrature point information
+           BndExp[0]->GetCoords(intFields[0], intFields[1], intFields[2]);
+
+           for (int  k = 0; k < pts[0].num_elements() ; ++k)
+           {
+              /* Wear  = Model1wear(pts[dim][k],fabs(pts[dim+1][k])); */
+              /* Wear  = ECRCwear(pts[dim][k],(pts[dim+1][k])); */
+              Wear  = TulsaAnsys(pts[dim][k],(pts[dim+1][k]));
+
+              // Sum Gauss function
+              for ( int i = 0; i < totpoints; ++i)
+              {
+                 dist2 = 0.0;
+                 for (int j = 0; j < dim; ++j)
+                 {
+                    dist2 += pow(intFields[j][i] - pts[j][k],2);
+                 }
+
+                 intFields[3][i] += Wear * ONE_OVER_SQRT_2PI / Sigma
+                    * exp(- 0.5 * dist2 / pow(Sigma,2));
+              }
+           }    
+
+           //Interpolate data
+           for (int i = 0; i < totpoints; ++i)
+           {
+           			BndExp[0]->SetPhys(i, intFields[3][i]);
+           }
+
+           // forward transform fields
+           BndExp[0]->FwdTrans_IterPerExp(BndExp[0]->GetPhys(),
+           										   BndExp[0]->UpdateCoeffs());
+
+        }
+    }
+#endif
+
+#if 0 // elemental counting
+    for (int b = 0; b < m_f->m_bndRegionsToWrite.size(); ++b)
+    {
+        if (BndRegionMap.count(m_f->m_bndRegionsToWrite[b]) == 1)
+        {
+           int bnd = BndRegionMap[m_f->m_bndRegionsToWrite[b]];
+           // Get expansion list for boundary and for elements containing this bnd
+           BndExp[0] = m_f->m_exp[0]->UpdateBndCondExpansion(bnd);
+           
+           // Count the collisions in each elements of each boundary
+           Array<OneD, int> elmtWear(BndExp[0]->GetExpSize(),0.0);
+           for (int k = 0; k < pts[0].num_elements(); ++k)
+           {
+              Array<OneD, NekDouble> newCoord(3,0.0), locCoord(3,0.0);
+              for (int i = 0; i < dim; ++i)
+              {
+                 newCoord[i] = pts[i][k];
+
+              }
+              int eId = BndExp[0]->GetExpIndex(newCoord,locCoord,
+                                       NekConstants::kNekZeroTol);
+              if (eId > -1)
+              {
+                 elmtWear[eId] +=  ECRCwear(pts[dim][k],(pts[dim+1][k]));
+                 /* elmtWear[eId] += Model1wear(pts[dim][k],fabs(pts[dim+1][k])); */
+              }
+           }
+
+           const int nBndPts = BndExp[0]->GetNpoints();
+           Array<OneD, NekDouble> wearBnd(nBndPts, 0.0);
+
+           //Set erosion to each element 
+           for (int i = 0; i < BndExp[0]->GetExpSize(); ++i)
+           {
+              LocalRegions::ExpansionSharedPtr elmt = BndExp[0]->GetExp(i);
+
+              int nElmtPts = elmt->GetTotPoints();
+              Array<OneD, NekDouble> wear(nElmtPts, 0.0);
+
+              // Calculate elemental area or length 
+              Array<OneD, NekDouble> ones(nElmtPts, 1.0);
+              NekDouble scale = elmt->Integral(ones);
+
+              for (int j = 0; j < nElmtPts; ++j)
+              {
+                 wear[j] = elmtWear[i]/scale;
+              }
+
+              Vmath::Vcopy(nElmtPts, &wear[0], 1, &wearBnd[BndExp[0]->GetPhys_Offset(i)], 1);
+           }
+
+           BndExp[0]->FwdTrans_IterPerExp(wearBnd, BndExp[0]->UpdateCoeffs());
+        }
+    }
+#endif
+    
 }
 
 NekDouble ProcessWear::ECRCwear(NekDouble Vel, NekDouble angle)
@@ -203,9 +279,28 @@ NekDouble ProcessWear::Model1wear(NekDouble Vel, NekDouble angle)
     
 }
 
+NekDouble ProcessWear::TulsaAnsys(NekDouble Vel, NekDouble angle)
+{
+    // Angle function variables
+    NekDouble mp = 1; // mass flow
+    NekDouble Fs = 1; 
+    NekDouble B = 200; // Brinel hardness 
+    NekDouble Fa = 0.0; 
+    if (angle<=0.267)
+    {
+      Fa = 22.7*angle-38.4*pow(angle,2); 
+    }
+    else
+    {
+      Fa = 2+6.8*angle-7.5*pow(angle,2)+2.25*pow(angle,3); 
+    }
+    return 1.559E-6*pow(B,-0.59)*Fs*pow(Vel,1.73)*Fa; 
+    
+}
 
 
 }
 }
+
 
 

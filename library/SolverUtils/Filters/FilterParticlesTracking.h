@@ -51,26 +51,36 @@ struct Particle
         int                     dim,
         int                     numFields,
         int                     intOrder,
-        Array<OneD, NekDouble>  gloCoord)
+        Array<OneD, NekDouble>  newCoord)
         : m_dim(dim), m_eId(-1), m_used(true)
     {
         // Initialise arrays
-        m_gloCoord          = Array<OneD, NekDouble> (3, 0.0);
+        m_newCoord          = Array<OneD, NekDouble> (3, 0.0);
         m_oldCoord          = Array<OneD, NekDouble> (3, 0.0);
         m_locCoord          = Array<OneD, NekDouble> (3, 0.0);
         m_fluidVelocity     = Array<OneD, NekDouble> (m_dim, 0.0);
         m_fields            = Array<OneD, NekDouble> (numFields, 0.0);
-        // Force and velocity with intOrder entries
+        // Force, Velocity, Torque and Angular velocity with intOrder entries
         m_force            = Array<OneD, Array<OneD,NekDouble>> (intOrder);
         m_particleVelocity = Array<OneD, Array<OneD,NekDouble>> (intOrder);
+        m_torque           = Array<OneD, Array<OneD,NekDouble>> (intOrder);
+        m_angularVelocity  = Array<OneD, Array<OneD,NekDouble>> (intOrder);
         for (int i = 0; i < intOrder; ++i)
         {
-            m_force[i]         = Array<OneD, NekDouble> (m_dim, 0.0);
+            m_force[i]            = Array<OneD, NekDouble> (m_dim, 0.0);
             m_particleVelocity[i] = Array<OneD, NekDouble> (m_dim, 0.0);
+            m_torque[i]           = Array<OneD, NekDouble> (3, 0.0);
+            m_angularVelocity[i]  = Array<OneD, NekDouble> (3, 0.0);
+        }
+        // gradient array  
+        m_grad = Array<OneD,Array<OneD,NekDouble> >(m_dim*m_dim);
+        for (int i = 0; i < m_dim*m_dim; ++i)
+        {
+            m_grad[i] = Array<OneD, NekDouble> (m_dim, 0.0);
         }
 
         // Store coordinates
-        SetCoord(gloCoord);
+        SetCoord(newCoord);
 
         // Obtain a unique id
         SetNewId();
@@ -85,11 +95,11 @@ struct Particle
     }
 
     /// Function to assign a new id to the particle
-    void SetCoord(Array<OneD, NekDouble>  gloCoord)
+    void SetCoord(Array<OneD, NekDouble>  newCoord)
     {
-        m_gloCoord[0] = gloCoord[0];
-        m_gloCoord[1] = gloCoord[1];
-        m_gloCoord[2] = gloCoord[2];
+        m_newCoord[0] = newCoord[0];
+        m_newCoord[1] = newCoord[1];
+        m_newCoord[2] = newCoord[2];
     }
 
     /// Static counter for numbering particles
@@ -99,13 +109,15 @@ struct Particle
     /// Spatial dimension
     int                             m_dim;
     /// Global coordinate
-    Array<OneD, NekDouble>          m_gloCoord;
+    Array<OneD, NekDouble>          m_newCoord;
     /// Previous coordinates
     Array<OneD, NekDouble>          m_oldCoord;
     /// Coordinate in the standard element
     Array<OneD, NekDouble>          m_locCoord;
     /// Velocity of the particle
     Array<OneD, Array<OneD, NekDouble>> m_particleVelocity;
+    /// Angular Velocity of the particle
+    Array<OneD, Array<OneD, NekDouble>> m_angularVelocity;
     /// Fluid velocity
     Array<OneD, NekDouble>          m_fluidVelocity;
     /// Id of the element currently holding the particle
@@ -116,8 +128,12 @@ struct Particle
     Array<OneD, NekDouble>          m_fields;
     /// Force acting on the particle
     Array<OneD, Array<OneD, NekDouble>> m_force;
+    /// Torque acting on the particle
+    Array<OneD, Array<OneD, NekDouble>> m_torque;
+    /// Gradiend acting on the particle
+    Array<OneD, Array<OneD, NekDouble>> m_grad;
     /// Counter of times particles were advanced
-    unsigned int                            m_advanceCalls;
+    unsigned int                    m_advanceCalls;
 };
 
 
@@ -164,6 +180,8 @@ private:
     unsigned int                            m_index;
     /// Location(s) where new points are created
     SpatialDomains::PointGeomVector         m_seedPoints;
+    /// Location(s) of crossing points are created
+    SpatialDomains::PointGeomVector         m_crossPoints;
     /// Stringstream for temporarily holding seed points coordinates
     std::stringstream                       m_seedPointStream;
     /// Frequency for adding new points
@@ -191,6 +209,8 @@ private:
     NekDouble                               m_SG;
     /// Particles Gravity (for solid particles)
     NekDouble                               m_gravity;
+    /// Particles Seeding Velocity  (for solid particles)
+    NekDouble                               m_SV;
     /// Particles diameter (for solid particles)
     NekDouble                               m_diameter;
     /// Kinematic viscosity
@@ -228,6 +248,9 @@ private:
     /// Add seed points to m_particles
     void AddSeedPoints(
         const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields);
+	/// Add cross points to m_particles
+    void AddCrossParticles(
+        const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields);
     /// Update location of particle (eId and locCoords)
     void UpdateLocCoord(
         const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
@@ -240,6 +263,8 @@ private:
     void UpdatePosition(Particle &particle);
     /// Set the particle velocity to match the fluid velocity
     void SetToFluidVelocity(Particle &particle);
+    /// Set the particle velocity and force for crossing particles
+    void SetToVelForce(const Array<OneD, NekDouble>  VelForce, Particle &particle);
     /// Update particle velocity
     void UpdateVelocity(Particle &particle);
     /// Calculate force (for solid particles)
@@ -251,7 +276,8 @@ private:
     /// Check if particle left the domain of interest
     void CheckBoundingBox(Particle &particle);
     /// Write output information
-    void OutputParticles(const NekDouble &time);
+    void OutputParticles(const NekDouble &time,
+		 const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields);
     /// Rotate array for high order time integration
     void RollOver(Array<OneD, Array<OneD, NekDouble> > &input);
 };
