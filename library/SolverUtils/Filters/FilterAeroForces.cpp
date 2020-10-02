@@ -2283,21 +2283,55 @@ void FilterAeroForces::CalculateForcesStiffnessGeo(
 
                             // Viscous component:
                             //     fv[j] = -mu*{(grad[k,j]+grad[j,k]) *n[k]} (standard)
-                            //     here we want:
+                            //     here we want (here u and v come from base flow):
                             //     fv[0] = [n[0]*(dv/dx+du/dy) + n[1]*(dv/dy+du/dx)]*mu
                             //     fv[1] = [n[0]*(dv/dy-du/dx) - n[1]*(dv/dx+du/dy)]*mu
                             for ( int j = 0; j < expdim; ++j )
                             {
                                 fv[j] = Array<OneD, NekDouble> (nbc,0.0);
-                                for ( int k = 0; k < expdim; ++k )
-                                {
-                                    Vmath::Vvtvp (nbc, gradb[k*expdim+j], 1,
-                                                  normals[k], 1, fv[j], 1, fv[j], 1);
-                                    Vmath::Vvtvp (nbc, gradb[j*expdim+k], 1,
-                                                  normals[k], 1, fv[j], 1, fv[j], 1);
-                                }
+                                // for ( int k = 0; k < expdim; ++k )
+                                // {
+                                //     Vmath::Vvtvp (nbc, gradb[k*expdim+j], 1,
+                                //                   normals[k], 1, fv[j], 1, fv[j], 1);
+                                //     Vmath::Vvtvp (nbc, gradb[j*expdim+k], 1,
+                                //                   normals[k], 1, fv[j], 1, fv[j], 1);
+                                // }
+                                // Vmath::Smul(nbc, -m_mu, fv[j], 1, fv[j], 1);
+                            }
+                            // fv_x:
+                            Vmath::Vvtvvtp(nbc, normals[0], 1, gradb[2], 1,
+                                           normals[0], 1, gradb[1], 1,
+                                           fv[0], 1);
+                            // use fp as fv cp...
+                            Vmath::Vvtvvtp(nbc, normals[1], 1, gradb[3], 1,
+                                           normals[1], 1, gradb[0], 1,
+                                           fp[0], 1);
+                            // add first and second components
+                            Vmath::Vadd(nbc, fv[0], 1, fp[0], 1, fv[0], 1);
+                            // fp = 0.0
+                            Vmath::Smul(nbc, 0.0, fp[0], 1, fp[0], 1);
+
+                            // fv_y:
+                            Vmath::Vvtvvtm(nbc, normals[0], 1, gradb[3], 1,
+                                           normals[0], 1, gradb[0], 1,
+                                           fv[0], 1);
+                            // use fp as fv cp...
+                            Vmath::Vvtvvtp(nbc, normals[1], 1, gradb[2], 1,
+                                           normals[1], 1, gradb[1], 1,
+                                           fp[0], 1);
+                            // fp = -fp
+                            Vmath::Smul(nbc, -1.0, fp[0], 1, fp[0], 1);
+                            // add first and second components
+                            Vmath::Vadd(nbc, fv[0], 1, fp[0], 1, fv[0], 1);
+                            // fp = 0.0
+                            Vmath::Smul(nbc, 0.0, fp[0], 1, fp[0], 1);
+
+
+                            for ( int j = 0; j < expdim; ++j )
+                            {
                                 Vmath::Smul(nbc, -m_mu, fv[j], 1, fv[j], 1);
                             }
+
 
                             // Calculate moments per unit length
                             if( momdim == 1)
