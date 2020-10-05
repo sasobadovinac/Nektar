@@ -540,7 +540,7 @@ namespace Nektar
          * \brief Inner product of \a inarray over region with respect to the
          * object's default expansion basis; output in \a outarray.
          */
-        void StdPrismExp::v_IProductWRTDerivBase(
+        void StdPrismExp::v_IProductWRTStdDerivBase(
             const int                           dir,
             const Array<OneD, const NekDouble>& inarray,
                   Array<OneD,       NekDouble>& outarray)

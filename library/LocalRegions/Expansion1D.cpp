@@ -436,8 +436,11 @@ namespace Nektar
             geometric factors along the element trace.
         */
         void Expansion1D::v_NormalTraceDerivFactors
-        (Array<OneD, Array<OneD, NekDouble> > &factors) 
+        (Array<OneD, Array<OneD, NekDouble> > &factors,
+         Array<OneD, Array<OneD, NekDouble> > &d0factors,
+         Array<OneD, Array<OneD, NekDouble> > &d1factors) 
         {
+            boost::ignore_unused(d0factors,d1factors); // for 2D&3D shapes
             int nquad  = GetNumPoints(0);
             Array<TwoD, const NekDouble> gmat =
                                 m_metricinfo->GetDerivFactors(GetPointsKeys());

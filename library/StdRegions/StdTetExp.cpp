@@ -671,7 +671,7 @@ namespace Nektar
         }
 
 
-        void StdTetExp::v_IProductWRTDerivBase(
+        void StdTetExp::v_IProductWRTStdDerivBase(
             const int                           dir,
             const Array<OneD, const NekDouble>& inarray,
                   Array<OneD,       NekDouble>& outarray)

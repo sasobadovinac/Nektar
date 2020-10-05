@@ -135,8 +135,18 @@ namespace Nektar
             LOCAL_REGIONS_EXPORT NekDouble VectorFlux(
                     const Array<OneD, Array<OneD, NekDouble > > &vec);
 
+            LOCAL_REGIONS_EXPORT void  IProductWRTDerivBase(
+                    const int dir,
+                    const Array<OneD, const NekDouble>& inarray,
+                          Array<OneD, NekDouble> &outarray)
+            {
+                v_IProductWRTDerivBase(dir,inarray, outarray);
+            }
+
             LOCAL_REGIONS_EXPORT  void NormalTraceDerivFactors
-                    (Array<OneD, Array<OneD, NekDouble> > &factors);
+                 (Array<OneD, Array<OneD, NekDouble> > &factors,
+                  Array<OneD, Array<OneD, NekDouble> > &d0factors,
+                  Array<OneD, Array<OneD, NekDouble> > &d1factors);
 
             inline IndexMapValuesSharedPtr GetIndexMap(const IndexMapKey &ikey)
             {
@@ -213,7 +223,7 @@ namespace Nektar
                 v_ReOrientTracePhysMap(orient,idmap,nq0,nq1);
             }
 
-        // Elemental Normals routines
+            // Elemental Normals routines
             const NormalVector & GetTraceNormal(const int id) const
             {
                 return v_GetTraceNormal(id);
@@ -353,8 +363,10 @@ namespace Nektar
             virtual NekDouble v_VectorFlux(
                     const Array<OneD, Array<OneD, NekDouble > > &vec);
 
-                 virtual void v_NormalTraceDerivFactors
-                     (Array<OneD, Array<OneD, NekDouble> > &factors);
+            virtual void v_NormalTraceDerivFactors
+                 (Array<OneD, Array<OneD, NekDouble> > &factors,
+                  Array<OneD, Array<OneD, NekDouble> > &d0factors,
+                  Array<OneD, Array<OneD, NekDouble> > &d1factors); 
 
             virtual StdRegions::Orientation v_GetTraceOrient(int trace);
 
@@ -374,6 +386,10 @@ namespace Nektar
             
             virtual void v_GetTracePhysMap( const int       edge,
                                             Array<OneD,int> &outarray);
+
+            virtual void  v_IProductWRTDerivBase(const int dir,
+                                 const Array<OneD, const NekDouble>& inarray,
+                                 Array<OneD, NekDouble> &outarray);
 
             virtual void v_ReOrientTracePhysMap
                                 (const StdRegions::Orientation orient,

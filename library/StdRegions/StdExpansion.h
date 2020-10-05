@@ -551,12 +551,12 @@ namespace Nektar
             }
 
 
-            void   IProductWRTDerivBase(
+            void   IProductWRTStdDerivBase(
                     const int dir,
                     const Array<OneD, const NekDouble>& inarray,
                           Array<OneD, NekDouble> &outarray)
             {
-                v_IProductWRTDerivBase(dir,inarray, outarray);
+                v_IProductWRTStdDerivBase(dir,inarray, outarray);
             }
 
             void   IProductWRTDirectionalDerivBase(
@@ -1379,7 +1379,7 @@ namespace Nektar
 
 
 
-            STD_REGIONS_EXPORT virtual void  v_IProductWRTDerivBase
+            STD_REGIONS_EXPORT virtual void  v_IProductWRTStdDerivBase
             (const int dir,
              const Array<OneD, const NekDouble>& inarray,
              Array<OneD, NekDouble> &outarray);

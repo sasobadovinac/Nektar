@@ -100,7 +100,9 @@ namespace Nektar
                     const Array<OneD, Array<OneD, NekDouble> > &vec);
 
             virtual void v_NormalTraceDerivFactors
-            (Array<OneD, Array<OneD, NekDouble> > &factors);
+            (Array<OneD, Array<OneD, NekDouble> > &factors,
+             Array<OneD, Array<OneD, NekDouble> > &d0factors,
+             Array<OneD, Array<OneD, NekDouble> > &d1factors);
 
             virtual const NormalVector &v_GetTraceNormal(const int edge) const;
 

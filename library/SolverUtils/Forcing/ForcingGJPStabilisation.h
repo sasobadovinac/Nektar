@@ -88,16 +88,17 @@ private:
     MultiRegions::ExpansionType  m_expType; 
     int m_numForcingFields; 
     int m_coordDim; 
+    int m_traceDim; 
     /// Number of planes in expansion to be stabilised for Homgoeneous expansion
     int m_nplanes;
     /// DG expansion for projection evalaution along trace
     MultiRegions::DisContFieldSharedPtr m_dgfield;
     /// Scale factor for phys values along trace involving the lcoal
     /// normals and tangenet geometric factors on Fwd Trace
-    Array<OneD, NekDouble> m_scalFwd;
+    Array<OneD, Array<OneD, NekDouble>> m_scalFwd;
     /// Scale factor for phys values along trace involving the lcoal
     /// normals and tangenet geometric factors on Bwd Trace
-    Array<OneD, NekDouble> m_scalBwd;
+    Array<OneD, Array<OneD, NekDouble>> m_scalBwd;
     /// Array for every coefficient on trace of a mapping form trace
     /// coefficients to elemental coefficients with a scaling factor
     /// of the derivative of the normal basis along that trace
@@ -109,6 +110,16 @@ private:
     Array<OneD,  std::set< std::pair<unsigned int, NekDouble > > >
                                                     m_bwdTraceToCoeffMap;
 
+    /// Array for every coefficient on trace of a mapping form trace
+    /// coefficients to elemental coefficients 
+    Array<OneD, std::set< std::pair<unsigned int, int> > >
+                                                  m_fwdTraceToETraceCoeffMap; 
+
+    /// Array for every coefficient on trace of a mapping form trace
+    /// coefficients to elemental coefficients 
+    Array<OneD, std::set< std::pair<unsigned int, int> > >
+                                                  m_bwdTraceToETraceCoeffMap; 
+    
     // Link to the trace normals 
     Array<OneD, Array<OneD, NekDouble> > m_traceNormals; 
 

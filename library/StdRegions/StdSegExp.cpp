@@ -471,14 +471,21 @@ namespace Nektar
             v_IProductWRTBase(m_base[0]->GetBdata(),inarray,outarray,1);
         }
 
-        void StdSegExp::v_IProductWRTDerivBase(
+        void StdSegExp::v_IProductWRTStdDerivBase(const int dir,
+                            const Array<OneD, const NekDouble>& inarray,
+                            Array<OneD, NekDouble> & outarray)
+        {
+            StdSegExp::IProductWRTDerivBase_SumFac(dir,inarray,outarray);
+        }
+
+        void StdSegExp::v_IProductWRTDerivBase_SumFac(
                 const int dir,
                 const Array<OneD, const NekDouble>& inarray,
                 Array<OneD, NekDouble> & outarray)
         {
             boost::ignore_unused(dir);
-            ASSERTL1(dir >= 0 && dir < 1,"input dir is out of range");
-            v_IProductWRTBase(m_base[0]->GetDbdata(),inarray,outarray,1);
+            ASSERTL1(dir == 0,"input dir is out of range");
+            StdSegExp::v_IProductWRTBase(m_base[0]->GetDbdata(),inarray,outarray,1);
         }
 
         void StdSegExp::v_IProductWRTBase_SumFac(

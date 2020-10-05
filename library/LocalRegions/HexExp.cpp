@@ -2031,8 +2031,14 @@ namespace Nektar
             geometric factors along the element trace.
         */
         void HexExp::v_NormalTraceDerivFactors
-             (Array<OneD, Array<OneD, NekDouble> > &factors) 
+        (Array<OneD, Array<OneD, NekDouble> > &factors,
+         Array<OneD, Array<OneD, NekDouble> > &d0factors,
+         Array<OneD, Array<OneD, NekDouble> > &d1factors) 
         {
+            boost::ignore_unused(d0factors,d1factors);
+
+            ASSERTL0(false,"Need to set up d0factors and d1factors");
+
             int nquad0 = GetNumPoints(0);
             int nquad1 = GetNumPoints(1);
             int nquad2 = GetNumPoints(2);

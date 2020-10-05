@@ -294,6 +294,11 @@ namespace Nektar
                 const Array<OneD, const NekDouble> &inarray,
                       Array<OneD,       NekDouble> &outarray);
 
+            MULTI_REGIONS_EXPORT void IProductWRTStdDerivBase(
+                const int dir,
+                const Array<OneD, const NekDouble> &inarray,
+                Array<OneD, NekDouble> &outarray);
+
             MULTI_REGIONS_EXPORT void   IProductWRTDirectionalDerivBase(
                 const Array<OneD, const NekDouble> &direction,
                 const Array<OneD, const NekDouble> &inarray,

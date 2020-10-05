@@ -134,7 +134,7 @@ namespace Nektar
                     bool doCheckCollDir1,
                     bool doCheckCollDir2);
 
-            STD_REGIONS_EXPORT virtual void v_IProductWRTDerivBase(
+            STD_REGIONS_EXPORT virtual void v_IProductWRTStdDerivBase(
                     const int dir,
                     const Array<OneD, const NekDouble>& inarray,
                           Array<OneD, NekDouble> & outarray);

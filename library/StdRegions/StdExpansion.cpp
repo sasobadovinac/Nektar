@@ -647,7 +647,7 @@ namespace Nektar
                     {
                         Vmath::Vmul(nq, mkey.GetVarCoeff(varcoefftypes[k1][k1]), 1, dtmp, 1, dtmp, 1);
                     }
-                    v_IProductWRTDerivBase(k1, dtmp, outarray);
+                    v_IProductWRTDerivBase_SumFac(k1, dtmp, outarray);
                 }
                 else
                 {
@@ -655,7 +655,7 @@ namespace Nektar
                     if(mkey.HasVarCoeff(varcoefftypes[k1][k2]))
                     {
                         Vmath::Vmul(nq, mkey.GetVarCoeff(varcoefftypes[k1][k2]), 1, dtmp, 1, dtmp, 1);
-                        v_IProductWRTDerivBase(k1, dtmp, outarray);
+                        v_IProductWRTDerivBase_SumFac(k1, dtmp, outarray);
                     }
                     else
                     {
@@ -672,7 +672,7 @@ namespace Nektar
                     SVVLaplacianFilter(dtmp,mkey);
                     Vmath::Vadd(nq, tmp, 1, dtmp, 1, dtmp, 1);
                 }
-                v_IProductWRTDerivBase(k1, dtmp, outarray);
+                v_IProductWRTDerivBase_SumFac(k1, dtmp, outarray);
             }
         }
 
@@ -1058,7 +1058,7 @@ namespace Nektar
             return false;
         }
 
-        void  StdExpansion::v_IProductWRTDerivBase
+        void  StdExpansion::v_IProductWRTStdDerivBase
         (const int dir,
          const Array<OneD, const NekDouble>& inarray,
          Array<OneD, NekDouble> &outarray)

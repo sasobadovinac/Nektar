@@ -161,7 +161,7 @@ namespace Nektar
                 // if no d1 required do not need to calculate both deriv
                 if (out_d1.size() > 0)
                 {
-                    // set up geometric factor: (1_z0)/(1-z1)
+                    // set up geometric factor: (1+z0)/2
                     Vmath::Sadd(nquad0, 1.0, z0, 1, wsp, 1);
                     Vmath::Smul(nquad0, 0.5, wsp, 1, wsp, 1);
 
@@ -552,7 +552,7 @@ namespace Nektar
             }
         }
 
-        void StdTriExp::v_IProductWRTDerivBase(
+        void StdTriExp::v_IProductWRTStdDerivBase(
             const int                           dir,
             const Array<OneD, const NekDouble>& inarray,
                   Array<OneD,       NekDouble>& outarray)
@@ -1552,6 +1552,127 @@ namespace Nektar
             }
         }
 
+#if 0 
+        /** @brief: This method provides the value of the derivative of
+            the normal component of the basis along the trace. (Note by
+            definition this is a constant value along the trace). In
+            addition it also provides an index of the elemental local
+            coefficient location of that trace coefficients (n) and hte
+            derivative of the basis (m).
+        */
+        void StdTriExp::v_DerivNormalBasisOnTrace
+          (Array<OneD, Array<OneD, Array<OneD, NekDouble> > > &dbasis,
+           Array<OneD, Array<OneD, Array<OneD, unsigned int> > >
+                                                     &TraceToCoeffMap)
+        {
+            int nquad0  = m_base[0]->GetNumPoints();
+            int nquad1  = m_base[1]->GetNumPoints();
+
+            int ncoeff0 = m_base[0]->GetNumModes();
+            int ncoeff1 = m_base[1]->GetNumModes();
+            
+            if(dbasis.size() != 3)
+            {
+                dbasis = Array<OneD, Array<OneD, Array<OneD, NekDouble> > >(3);
+                TraceToCoeffMap = Array<OneD,
+                                 Array<OneD, Array<OneD, unsigned int> > > (3);
+            }
+            
+            if(dbasis[0].size() != ncoeff0)
+            {
+                // in 1D number of coefficients along trace is always 1
+                dbasis[0] = Array<OneD, Array<OneD, NekDouble> > (ncoeff0);
+
+                TraceToCoeffMap[0] = Array<OneD,
+                                           Array<OneD, unsigned int> >(ncoeff0);
+            }
+
+            if(dbasis[1].size() != ncoeff1)
+            {
+                dbasis[1] = Array<OneD, Array<OneD, NekDouble> > (ncoeff1);
+                dbasis[2] = Array<OneD, Array<OneD, NekDouble> > (ncoeff1);
+
+                TraceToCoeffMap[1] = Array<OneD,
+                                           Array<OneD, unsigned int> >(ncoeff1);
+                TraceToCoeffMap[2] = Array<OneD,
+                                           Array<OneD, unsigned int> >(ncoeff1);
+            }
+            
+            if(dbasis[0][0].size() != ncoeff1)
+            {
+                for(unsigned int i = 0; i < ncoeff0; ++i)
+                {
+                    dbasis[0][i] = Array<OneD, NekDouble>(ncoeff1-i);
+                    
+                    TraceToCoeffMap[0][i] = Array<OneD, unsigned int>(ncoeff1-i);
+                }
+            }
+            
+            if(dbasis[1][0].size() != ncoeff0)
+            {
+                for(unsigned int i = 0; i < ncoeff1; ++i)
+                {
+                    int ncoeff0mi = ncoeff0-i; 
+                    dbasis[1][i] = Array<OneD, NekDouble>(ncoeff0mi);
+                    dbasis[2][i] = Array<OneD, NekDouble>(ncoeff0mi);
+                    
+                    TraceToCoeffMap[1][i] = Array<OneD,unsigned int>(ncoeff0mi);
+                    TraceToCoeffMap[2][i] = Array<OneD,unsigned int>(ncoeff0mi);
+                }
+            }
+            
+            const Array<OneD, const NekDouble> DerivBasis0 =
+                m_base[0]->GetDbdata();
+            const Array<OneD, const NekDouble> DerivBasis1 =
+                m_base[1]->GetDbdata();
+            
+            int cnt = 0; 
+            for(unsigned int i = 0; i < ncoeff0; ++i)
+            {
+                for(unsigned int j = 0; j < ncoeff1-i; ++j, ++cnt)
+                {
+                    // edge 0 
+                    dbasis[0][i][j] = DerivBasis1[cnt*nquad1];
+                    TraceToCoeffMap[0][i][j] = cnt; 
+                }
+            }
+            
+            cnt = 0; 
+            for(unsigned int i = 0; i < ncoeff0; ++i)
+            {
+                for(unsigned int j = 0; j < ncoeff1-i; ++j,++cnt)
+                {
+                    // edges 1 and 2
+                    dbasis[1][j][i] = DerivBasis0[(i+1)*nquad0-1];
+                    dbasis[2][j][i] = DerivBasis0[i*nquad0];
+
+                    TraceToCoeffMap[1][j][i] = cnt;
+                    TraceToCoeffMap[2][j][i] = cnt; 
+                }
+
+            }
+
+
+            cnt = 0; 
+            for(unsigned int j = 0; j < ncoeff1; ++j)
+            {
+                for(unsigned int i = 0; i < ncoeff0-j; ++i,++cnt)
+                {
+                    // edges 1 and 2
+                    dbasis[1][j][i] = DerivBasis0[(i+1)*nquad0-1];
+                    dbasis[2][j][i] = DerivBasis0[i*nquad0];
+
+                    TraceToCoeffMap[1][j][i] = cnt;
+                    TraceToCoeffMap[2][j][i] = cnt; 
+                }
+
+            }
+
+            // Top vertex is constant in x direction so needs to be zeroed
+            dbasis[1][1][0] = 0.0;
+            dbasis[2][1][0] = 0.0;
+        }
+#endif        
 
     }//end namespace
 }//end namespace

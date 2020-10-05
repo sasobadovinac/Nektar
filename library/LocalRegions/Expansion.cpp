@@ -162,9 +162,11 @@ namespace Nektar
         }
 
         void Expansion::NormalTraceDerivFactors
-        (Array<OneD, Array<OneD, NekDouble> > &factors)
+        (Array<OneD, Array<OneD, NekDouble> > &factors,
+         Array<OneD, Array<OneD, NekDouble> > &d0factors,
+         Array<OneD, Array<OneD, NekDouble> > &d1factors) 
         {
-            return v_NormalTraceDerivFactors(factors);
+            return v_NormalTraceDerivFactors(factors,d0factors,d1factors);
         }
 
         DNekScalMatSharedPtr Expansion::GetLocMatrix
@@ -649,9 +651,11 @@ namespace Nektar
         }
 
         void Expansion::v_NormalTraceDerivFactors
-             (Array<OneD, Array<OneD, NekDouble> > &factors)
+              (Array<OneD, Array<OneD, NekDouble> > &factors,
+               Array<OneD, Array<OneD, NekDouble> > &d0factors,
+               Array<OneD, Array<OneD, NekDouble> > &d1factors)
         {
-            boost::ignore_unused(factors);
+            boost::ignore_unused(factors,d0factors,d1factors);
             NEKERROR(ErrorUtil::efatal, "This function is only valid for "
                      "shape expansion in LocalRegions, not parant class");
         }
@@ -758,6 +762,15 @@ namespace Nektar
         {
             boost::ignore_unused(traceid,primCoeffs,incoeffs, coeffs);
             NEKERROR(ErrorUtil::efatal, "This function is not valid for this class");
+        }
+
+        void  Expansion::v_IProductWRTDerivBase
+                 (const int dir,
+                  const Array<OneD, const NekDouble>& inarray,
+                  Array<OneD, NekDouble> &outarray)
+        {
+            boost::ignore_unused(dir, inarray, outarray);
+            NEKERROR(ErrorUtil::efatal, "This method has not been defined");
         }
 
         const Array<OneD, const NekDouble > &Expansion::

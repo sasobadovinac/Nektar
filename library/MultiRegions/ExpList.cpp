@@ -626,7 +626,7 @@ namespace Nektar
 
         /**
          * The operation is evaluated locally for every element by the function
-         * StdRegions#StdExpansion#IProductWRTDerivBase.
+         * StdRegions#Expansion#IProductWRTDerivBase.
          *
          * @param   dir             {0,1} is the direction in which the
          *                          derivative of the basis should be taken
@@ -652,6 +652,34 @@ namespace Nektar
             }
         }
 
+        /**
+         * The operation is evaluated locally for every element by the function
+         * StdRegions#StdExpansion#IProductWRTStdDerivBase.
+         *
+         * @param   dir             {0,1} is the direction in which the
+         *                          derivative of the basis should be taken
+         * @param   inarray         An array of size \f$Q_{\mathrm{tot}}\f$
+         *                          containing the values of the function
+         *                          \f$f(\boldsymbol{x})\f$ at the quadrature
+         *                          points \f$\boldsymbol{x}_i\f$.
+         * @param   outarray        An array of size \f$N_{\mathrm{eof}}\f$
+         *                          used to store the result.
+         */
+        void ExpList::IProductWRTStdDerivBase(const int dir,
+                                  const Array<OneD, const NekDouble> &inarray,
+                                  Array<OneD, NekDouble> &outarray)
+        {
+            int    i;
+            Array<OneD,NekDouble> e_outarray;
+
+            for(i = 0; i < (*m_exp).size(); ++i)
+            {
+                (*m_exp)[i]->IProductWRTStdDerivBase(dir,
+                                                     inarray+m_phys_offset[i],
+                                                     e_outarray =
+                                                     outarray+m_coeff_offset[i]);
+            }
+        }
 
         /**
          * @brief Directional derivative along a given direction
@@ -744,7 +772,7 @@ namespace Nektar
                 }
                 break;
             default:
-                ASSERTL0(false,"Dimension of inarray not correct");
+                ASSERTL0(false,"size  of inarray not correct");
                 break;
             }
         }
