@@ -1255,10 +1255,10 @@ void FilterParticlesTracking::CalculateForce(Particle &particle)
     
 
     // Add gravity and buoyancy effects on y direction
-    /* particle.m_force[0][1] += m_gravity * (1.0 - 1.0 / m_SG); */
+    //particle.m_force[0][1] += m_gravity * (1.0 - 1.0 / m_SG); 
     
-    // Add gravity and buoyancy effects on x direction
-    particle.m_force[0][0] += m_gravity * (1.0 - 1.0 / m_SG);
+    // Add gravity and buoyancy effects on z direction
+    particle.m_force[0][2] += m_gravity * (1.0 - 1.0 / m_SG);
     
     // Add  virtual mass effects, if the velocity field is constant
     for (int i = 0; i < particle.m_dim; ++i)

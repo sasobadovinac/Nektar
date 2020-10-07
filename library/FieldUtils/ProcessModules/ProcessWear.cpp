@@ -154,7 +154,7 @@ void ProcessWear::Process(po::variables_map &vm)
            //Load the quadrature point information
            BndExp[0]->GetCoords(intFields[0], intFields[1], intFields[2]);
 
-           for (int  k = 0; k < pts[0].num_elements() ; ++k)
+           for (int  k = 0; k < pts[0].size() ; ++k)
            {
               /* Wear  = Model1wear(pts[dim][k],fabs(pts[dim+1][k])); */
               /* Wear  = ECRCwear(pts[dim][k],(pts[dim+1][k])); */
@@ -255,8 +255,8 @@ NekDouble ProcessWear::ECRCwear(NekDouble Vel, NekDouble angle)
     NekDouble Hv = 1.83;
     NekDouble f  = 1.53;
     NekDouble K  = 2.16E-8;
-    NekDouble C  = 4.62E-7;
-    NekDouble BH = 178.9;
+//    NekDouble C  = 4.62E-7;
+    //NekDouble BH = 178.9;
     NekDouble fs = 1.0;
     
     return    K * fs * pow(Vel,2.41)
@@ -266,7 +266,7 @@ NekDouble ProcessWear::ECRCwear(NekDouble Vel, NekDouble angle)
 
 NekDouble ProcessWear::Model1wear(NekDouble Vel, NekDouble angle)
 {
-    // Angle function variables
+    //Angle function variables
     NekDouble A = -0.396;
     NekDouble B = 8.380;
     NekDouble C = -16.92;
@@ -282,7 +282,7 @@ NekDouble ProcessWear::Model1wear(NekDouble Vel, NekDouble angle)
 NekDouble ProcessWear::TulsaAnsys(NekDouble Vel, NekDouble angle)
 {
     // Angle function variables
-    NekDouble mp = 1; // mass flow
+   // NekDouble mp = 1; // mass flow
     NekDouble Fs = 1; 
     NekDouble B = 200; // Brinel hardness 
     NekDouble Fa = 0.0; 
@@ -297,7 +297,6 @@ NekDouble ProcessWear::TulsaAnsys(NekDouble Vel, NekDouble angle)
     return 1.559E-6*pow(B,-0.59)*Fs*pow(Vel,1.73)*Fa; 
     
 }
-
 
 }
 }
