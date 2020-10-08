@@ -1374,7 +1374,7 @@ protected:
              * the paper here:
              *https://people.maths.ox.ac.uk/trefethen/barycentric.pdf
              */
-            if ((!DERIV && xdiff == 0.0) || (DERIV && abs(xdiff) < 1e-15))
+            if ((!DERIV && xdiff == 0.0) || (DERIV && std::abs(xdiff) < 1e-15))
             {
                 if (DERIV)
                 {

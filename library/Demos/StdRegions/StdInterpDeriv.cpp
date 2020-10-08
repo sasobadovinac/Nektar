@@ -44,7 +44,7 @@ Array<OneD, NekDouble> EvalPoly(const Array<OneD, const Array<OneD, NekDouble>> 
     unsigned dim = pts.size();
     for (int i = 0; i < pts[0].size(); i++)
     {
-        ret[i] = pow(pts[0][i],2) 
+        ret[i] = pow(pts[0][i], 2)
             + (dim >= 2 ? pow(pts[1][i], 2) : 0.0)
             - (dim >= 3 ? pow(pts[2][i], 2) : 0.0);
     }
@@ -106,13 +106,10 @@ int main(int argc, char *argv[])
     StdExpansion *F = demo.CreateStdExpansion();
 
     const auto totPoints = (unsigned) E->GetTotPoints();
+    Array<OneD, NekDouble> physIn(totPoints, 0.0), physOut(totPoints, 0.0), physOut0(totPoints, 0.0), physOut1(totPoints, 0.0), physOut2(totPoints, 0.0);
+    Array<OneD, NekDouble>  sol(totPoints, 0.0), sol0(totPoints, 0.0), sol1(totPoints, 0.0), sol2(totPoints, 0.0);
 
     Array<OneD, Array<OneD, NekDouble> > coordsE = demo.GetCoords(E);
- 
-    int totpts = coordsE[0].size();
-    Array<OneD, NekDouble> physIn(totPoints, 0.0), physOut(totpts, 0.0), physOut0(totpts, 0.0), physOut1(totpts, 0.0), physOut2(totpts, 0.0);
-    Array<OneD, NekDouble>  sol(totpts, 0.0), sol0(totpts, 0.0), sol1(totpts, 0.0), sol2(totpts, 0.0);
-    
     physIn = EvalPoly(coordsE);
    
     const Array<OneD, const Array<OneD, NekDouble> > coordsF = demo.GetCoords(F);
@@ -142,15 +139,15 @@ int main(int argc, char *argv[])
             break;
     }
 
-    cout << "\nL infinity error: " << scientific << E->Linf(physOut, sol) +
-                                                    E->Linf(physOut0, sol0) +
-                                                    E->Linf(physOut1, sol1) +
-                                                    E->Linf(physOut2, sol2)
+    cout << "\nL infinity error: " << scientific << F->Linf(physOut, sol) +
+                                                    F->Linf(physOut0, sol0) +
+                                                    F->Linf(physOut1, sol1) +
+                                                    F->Linf(physOut2, sol2)
                                                  << endl;
-    cout << "L 2 error         : " << scientific << E->L2(physOut, sol) +
-                                                    E->L2(physOut0, sol0) +
-                                                    E->L2(physOut1, sol1) +
-                                                    E->L2(physOut2, sol2)
+    cout << "L 2 error         : " << scientific << F->L2(physOut, sol) +
+                                                    F->L2(physOut0, sol0) +
+                                                    F->L2(physOut1, sol1) +
+                                                    F->L2(physOut2, sol2)
                                                  << endl;
 
     return 0;
