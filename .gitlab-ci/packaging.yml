@@ -158,13 +158,13 @@
 ##
 ## Debian sid
 ##
-.package-debian-sid-env:
+package-debian-sid-env:
   <<: *package-env-build
   variables:
     image_name: pkg/debian-sid
     dockerfile: docker/packaging/Dockerfile-debian-sid
 
-.package-debian-sid-build:
+package-debian-sid-build:
   <<: *package-deb-build
   needs: ["package-debian-sid-env"]
   variables:
@@ -173,7 +173,7 @@
     pkg_dir: pkg/debian/sid
     distribution: unstable
 
-.package-debian-sid-test:
+package-debian-sid-test:
   <<: *package-deb-test
   needs: ["package-debian-sid-build"]
   dependencies:
