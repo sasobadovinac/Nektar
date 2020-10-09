@@ -38,6 +38,10 @@
 #include <MultiRegions/ExpList3DHomogeneous1D.h>
 #include <SolverUtils/Filters/FilterParticlesTracking.h>
 #include <boost/format.hpp>
+
+#include <boost/random/mersenne_twister.hpp>
+#include <boost/random/normal_distribution.hpp>
+#include <boost/random/variate_generator.hpp>
 #include <iomanip>
 
 using namespace std;
@@ -1398,14 +1402,18 @@ if (particle.m_eId == -1 && particle.m_used == true && m_fluidParticles == false
                   // Evaluation of the restitution coeficients
                   int order              = min(particle.m_advanceCalls, m_intOrder);
                   NekDouble dotProdCoord = 0.0, dotProdVel = 0.0, dotProdForce = 0.0;
-                  NekDouble angle = 0.0, Vel = 0.0;
-       
+                  NekDouble angle = 0.0, Vel = 0.0, DeltaY = 5.0 ;
+
                   for (int i = 0; i < particle.m_dim; ++i)
                   {
                       angle +=  abs(VecDir[i] * minNormal[i]);
                       Vel += pow(particle.m_particleVelocity[0][i],2);
                   }
-                  angle = asinf(angle); Vel = sqrt(Vel); 
+                  angle = asinf(angle); Vel = sqrt(Vel);
+
+                  boost::mt19937 rng;
+                  boost::normal_distribution<> dist(1, 1);
+                  angle = angle + DeltaY*dist(rng);
                   
                   // Evaluate dot products to make the reflection
                   for (int i = 0; i < particle.m_dim; ++i)
