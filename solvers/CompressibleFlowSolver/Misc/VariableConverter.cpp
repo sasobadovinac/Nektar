@@ -197,11 +197,12 @@ void VariableConverter::GetDynamicViscosity(
     const NekDouble C = 110./m_Tref;
     NekDouble muref = m_mu;
     NekDouble T_star  = m_pInf / (m_rhoInf * m_gasConstant);
+    NekDouble oT_star = 1.0 / T_star;
     NekDouble ratio;
 
     for (int i = 0; i < nPts; ++i)
     {
-        ratio = temperature[i] / T_star;
+        ratio = temperature[i] * oT_star;
         mu[i] = muref * ratio * sqrt(ratio) * (1 + C) / (ratio + C);
     }
 }
@@ -221,11 +222,16 @@ void VariableConverter::GetDmuDT(
 {
     const int nPts      = temperature.num_elements();
     NekDouble tmp       = 0.0;
+    const NekDouble C = 110./m_Tref;
+    NekDouble T_star  = m_pInf / (m_rhoInf * m_gasConstant);
+    NekDouble oT_star = 1.0 / T_star;
+    NekDouble ratio;
 
     for (int i = 0; i < nPts; ++i)
     {
-        tmp         = 0.5* (temperature[i]+3.0*110.0)/(temperature[i]*(temperature[i]+110.0));
-        DmuDT[i]    = mu[i]*tmp;
+        ratio = temperature[i]  * oT_star;
+        tmp         = 0.5 * (ratio + 3.0 * C) / (ratio * (ratio + C));
+        DmuDT[i]    = mu[i] * tmp * oT_star;
     }
 }
 
