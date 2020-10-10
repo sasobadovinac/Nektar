@@ -61,6 +61,16 @@ VariableConverter::VariableConverter(
     m_session->LoadParameter("Skappa", m_Skappa, -1.0);
     m_session->LoadParameter("Kappa", m_Kappa, 0.25);
 
+    std::string viscosityType;
+    m_session->LoadSolverInfo("ViscosityType", viscosityType, "Constant");
+    if ("Variable" == viscosityType)
+    {
+        WARNINGL0(m_session->DefinesParameter("Tref"), 
+            "The Tref should be given in Kelvin for using the Sutherland's law "
+            "of dynamic viscosity. The default is 288.15. Note the mu or "
+            "Reynolds number should coorespond to this temperature.");
+        m_session->LoadParameter ("Tref", m_Tref, 288.15);
+    }
 }
 
 /**
@@ -167,9 +177,15 @@ void VariableConverter::GetMach(Array<OneD, Array<OneD, NekDouble>> &physfield,
 
 /**
  * @brief Compute the dynamic viscosity using the Sutherland's law
- * \f$ \mu = \mu_star * (T / T_star)^3/2 * (T_star + 110) / (T + 110) \f$,
- * where:   \mu_star = 1.7894 * 10^-5 Kg / (m * s)
- *          T_star   = 288.15 K
+ * \f$ \mu = \mu_star * (T / T_star)^3/2 * (1 + C) / (T/T_star + C) \f$,
+ *  Tref   : the reference temperature, should always given in Kelvin, 
+ *           if non-dimensional should be the reference for non-dimensionalizing 
+ *  muref  : the dynamic viscosity or the 1/Re corresponding to Tref
+ *  T_star : m_pInf / (m_rhoInf * m_gasConstant),non-dimensional or dimensional 
+ *  C      : 110. /Tref
+ *
+ * WARNING, if this routine is modified the same must be done in the
+ * FieldConvert utility ProcessWSS.cpp (this class should be restructured).
  *
  * @param physfield    Input physical field.
  * @param mu           The resulting dynamic viscosity.
@@ -178,15 +194,15 @@ void VariableConverter::GetDynamicViscosity(
     const Array<OneD, const NekDouble> &temperature, Array<OneD, NekDouble> &mu)
 {
     const int nPts    = temperature.num_elements();
-    NekDouble mu_star = m_mu;
+    const NekDouble C = 110./m_Tref;
+    NekDouble muref = m_mu;
     NekDouble T_star  = m_pInf / (m_rhoInf * m_gasConstant);
     NekDouble ratio;
 
     for (int i = 0; i < nPts; ++i)
     {
         ratio = temperature[i] / T_star;
-        mu[i] = mu_star * ratio * sqrt(ratio) * (T_star + 110.0) /
-                (temperature[i] + 110.0);
+        mu[i] = muref * ratio * sqrt(ratio) * (1 + C) / (ratio + C);
     }
 }
 
@@ -195,7 +211,6 @@ void VariableConverter::GetDynamicViscosity(
  * \f$ \mu = \mu_star * (T / T_star)^3/2 * (T_star + 110) / (T + 110) \f$,
  * where:   \mu_star = 1.7894 * 10^-5 Kg / (m * s)
  *          T_star   = 288.15 K
- *
  * @param physfield    Input physical field.
  * @param mu           The resulting dynamic viscosity.
  */
@@ -220,10 +235,10 @@ void VariableConverter::GetAbsoluteVelocity(
 {
     const int nPts = physfield[0].num_elements();
 
+    Vmath::Zero(Vtot.num_elements(), Vtot, 1);
+
     // Getting the velocity vector on the 2D normal space
     Array<OneD, Array<OneD, NekDouble>> velocity(m_spacedim);
-
-    Vmath::Zero(Vtot.num_elements(), Vtot, 1);
 
     for (int i = 0; i < m_spacedim; ++i)
     {
