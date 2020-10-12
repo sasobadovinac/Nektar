@@ -938,7 +938,7 @@ public:
                                   NekDouble &out_d0, NekDouble &out_d1)
 
     {
-        NekDouble unusedValue;
+        NekDouble unusedValue = 0.0;
         return v_PhysEvaluate(coord, inarray, out_d0, out_d1, unusedValue);
     }
 
@@ -947,7 +947,7 @@ public:
                                   NekDouble &out_d0)
 
     {
-        NekDouble unusedValue;
+        NekDouble unusedValue = 0.0;
         return v_PhysEvaluate(coord, inarray, out_d0, unusedValue, unusedValue);
     }
 
@@ -1380,7 +1380,7 @@ protected:
              * the paper here:
              *https://people.maths.ox.ac.uk/trefethen/barycentric.pdf
              */
-            if ((!DERIV && xdiff == 0.0) || (DERIV && abs(xdiff) < 1e-15))
+            if ((!DERIV && xdiff == 0.0) || (DERIV && std::abs(xdiff) < 1e-15))
             {
                 if (DERIV)
                 {
@@ -1430,7 +1430,7 @@ protected:
     inline NekDouble BaryEvaluate(const NekDouble &coord,
                                   const NekDouble *physvals)
     {
-        NekDouble unusedValue;
+        NekDouble unusedValue = 0.0;
         return BaryEvaluate<DIR, DERIV>(coord, physvals, unusedValue);
     }
 

@@ -249,11 +249,11 @@ protected:
         const int nq2 = m_base[2]->GetNumPoints();
 
         const NekDouble *ptr = &inarray[0];
-        Array<OneD, NekDouble> deriv0(nq1 * nq2);
-        Array<OneD, NekDouble> phys0(nq1 * nq2);
-        Array<OneD, NekDouble> deriv0phys1(nq1);
-        Array<OneD, NekDouble> phys0deriv1(nq1);
-        Array<OneD, NekDouble> phys0phys1(nq1);
+        Array<OneD, NekDouble> deriv0(nq1 * nq2, 0.0);
+        Array<OneD, NekDouble> phys0(nq1 * nq2, 0.0);
+        Array<OneD, NekDouble> deriv0phys1(nq1, 0.0);
+        Array<OneD, NekDouble> phys0deriv1(nq1, 0.0);
+        Array<OneD, NekDouble> phys0phys1(nq1, 0.0);
 
         for (int j = 0; j < nq1 * nq2; ++j, ptr += nq0)
         {

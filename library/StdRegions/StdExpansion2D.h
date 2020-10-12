@@ -106,8 +106,8 @@ public:
         const int nq1 = m_base[1]->GetNumPoints();
 
         const NekDouble *ptr = &inarray[0];
-        Array<OneD, NekDouble> deriv0(nq1);
-        Array<OneD, NekDouble> phys0(nq1);
+        Array<OneD, NekDouble> deriv0(nq1, 0.0);
+        Array<OneD, NekDouble> phys0(nq1, 0.0);
 
         for (int j = 0; j < nq1; ++j, ptr += nq0)
         {
