@@ -108,13 +108,28 @@ int main(int argc, char *argv[])
     t.Start();
     for (int cyc = 0; cyc < totCyc; ++cyc)
     {
+        Array<OneD, Array<OneD, DNekMatSharedPtr>>  I(totPoints);
+        for (int i = 0; i < totPoints; ++i)
+        {
+            // Obtain local collapsed coordinate from
+            // cartesian coordinate.
+            Array<OneD, NekDouble> eta = Array<OneD, NekDouble>(3);
+            E->LocCoordToLocCollapsed(coordIn[i],eta);
+
+            // Get Lagrange interpolants.
+            I[i] = Array<OneD, DNekMatSharedPtr>(3);
+            I[i][0] = E->GetBase()[0]->GetI(eta);
+            I[i][1] = E->GetBase()[1]->GetI(eta+1);
+            I[i][2] = E->GetBase()[2]->GetI(eta+2);
+        }
+
         E->PhysDeriv(physIn, EphysDeriv0, EphysDeriv1, EphysDeriv2);
         for (int i = 0; i < totPoints; ++i)
         {
-            Ephys[i]   = E->PhysEvaluateOld(coordIn[i], physIn);
-            Ederiv0[i] = E->PhysEvaluateOld(coordIn[i], EphysDeriv0);
-            Ederiv1[i] = E->PhysEvaluateOld(coordIn[i], EphysDeriv1);
-            Ederiv2[i] = E->PhysEvaluateOld(coordIn[i], EphysDeriv2);
+            Ephys[i]   = E->PhysEvaluate(I[i], physIn);
+            Ederiv0[i] = E->PhysEvaluate(I[i], EphysDeriv0);
+            Ederiv1[i] = E->PhysEvaluate(I[i], EphysDeriv1);
+            Ederiv2[i] = E->PhysEvaluate(I[i], EphysDeriv2);
         }
     }
     t.Stop();
@@ -122,11 +137,11 @@ int main(int argc, char *argv[])
 
     Array<OneD, NekDouble> SphysDeriv0(totPoints), SphysDeriv1(totPoints), SphysDeriv2(totPoints);
     std::cout << "Testing old method, precalc interp matrix" << std::endl;
-    t.Start();
+
     Array<OneD, Array<OneD, DNekMatSharedPtr>>  I(totPoints);
     for (int i = 0; i < totPoints; ++i)
     {
-        // Obtain local collapsed corodinate from
+        // Obtain local collapsed coordinate from
         // cartesian coordinate.
         Array<OneD, NekDouble> eta = Array<OneD, NekDouble>(3);
         E->LocCoordToLocCollapsed(coordIn[i],eta);
@@ -138,6 +153,7 @@ int main(int argc, char *argv[])
         I[i][2] = E->GetBase()[2]->GetI(eta+2);
     }
 
+    t.Start();
     for (int cyc = 0; cyc < totCyc; ++cyc)
     {
         E->PhysDeriv(physIn, SphysDeriv0, SphysDeriv1, SphysDeriv2);
@@ -150,6 +166,7 @@ int main(int argc, char *argv[])
         }
     }
     t.Stop();
+
     std::cout << "Old method: " << t.TimePerTest(totCyc) << " per cycle (" << totCyc << " cycles)." << std::endl;
 
     Array<OneD, NekDouble> BphysDeriv0(totPoints), BphysDeriv1(totPoints), BphysDeriv2(totPoints);
