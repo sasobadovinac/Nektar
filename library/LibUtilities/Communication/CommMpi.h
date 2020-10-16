@@ -102,6 +102,7 @@ public:
 
     LIB_UTILITIES_EXPORT CommMpi(int narg, char *arg[]);
     LIB_UTILITIES_EXPORT virtual ~CommMpi() override;
+    LIB_UTILITIES_EXPORT CommMpi() = default;
 
     LIB_UTILITIES_EXPORT MPI_Comm GetComm();
 
