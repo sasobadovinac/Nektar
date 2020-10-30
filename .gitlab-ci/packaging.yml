@@ -6,6 +6,8 @@
   only:
     refs:
       - feature/pkg@ccantwel/nektar
+      - tags@nektar/nektar
+      - web
 
 .package-env-build: &package-env-build
   <<: *package-conditions
