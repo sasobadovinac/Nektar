@@ -10,8 +10,8 @@ WORKDIR /root
 
 # Install build dependencies from specfile.
 RUN yum install -y ghostscript rpm-build wget perl-Digest-MD5 git && \
-    dnf builddep -y nektar-centos8.spec && \
-    rm -f nektar-centos8.spec
+    dnf builddep -y nektar-centos-8.spec && \
+    rm -f nektar-centos-8.spec
 
 # Install a reduced version of TeXLive for user/developer guide.
 RUN wget http://mirror.ctan.org/systems/texlive/tlnet/install-tl.zip && \
