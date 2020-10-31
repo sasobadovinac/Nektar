@@ -16,10 +16,13 @@
   tags:
     - pkg
   script:
+    - OS_DIST=$(echo $CI_JOB_NAME | cut -d- -f 2)
+    - OS_VERSION=$(echo $CI_JOB_NAME | cut -d- -f 3)
     - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
-    - IMAGE=$CI_REGISTRY_IMAGE/${image_name}
+    - IMAGE=$CI_REGISTRY_IMAGE/pkg/${OS_DIST}-${OS_VERSION}
+    - DOCKERFILE=docker/packaging/Dockerfile-${OS_DIST}-${OS_VERSION}
     - docker pull $IMAGE || true
-    - docker build --pull -t $IMAGE -f ${dockerfile} .
+    - docker build --pull -t $IMAGE -f ${DOCKERFILE} .
     - docker push $IMAGE
 
 .package-deb-build: &package-deb-build
@@ -28,7 +31,12 @@
   stage: package-build
   tags:
     - pkg
+  variables:
+    GIT_SUBMODULE_STRATEGY: normal
   script:
+    - OS_DIST=$(echo $CI_JOB_NAME | cut -d- -f 2)
+    - OS_VERSION=$(echo $CI_JOB_NAME | cut -d- -f 3)
+    - PKG_DIR=pkg/${OS_DIST}/${OS_VERSION}
     - OMPI_MCA_btl_vader_single_copy_mechanism=none
     - tar -czf nektar++-$(<VERSION).tar.gz 
                 --transform="s,^,nektar++-$(<VERSION)/,S"
@@ -36,8 +44,8 @@
     - mkdir deb
     - mv nektar++-$(<VERSION).tar.gz deb/nektar++_$(<VERSION).orig.tar.gz
     - tar -C deb -xf deb/nektar++_$(<VERSION).orig.tar.gz
-    - cp -a ${pkg_dir} deb/nektar++-$(<VERSION)/debian
-    - sed -e s/unstable/${distribution}/g < pkg/debian/changelog
+    - cp -a ${PKG_DIR} deb/nektar++-$(<VERSION)/debian
+    - sed -e s/unstable/${OS_VERSION}/g < pkg/debian/changelog
             > deb/nektar++-$(<VERSION)/debian/changelog
     - cd deb/nektar++-$(<VERSION)
     - dpkg-source -b .
@@ -89,13 +97,17 @@
   stage: package-build
   tags:
     - pkg
+  variables:
+    GIT_SUBMODULE_STRATEGY: normal
   script:
+    - OS_DIST=$(echo $CI_JOB_NAME | cut -d- -f 2)
+    - OS_VERSION=$(echo $CI_JOB_NAME | cut -d- -f 3)
     - NEKVER=$(<VERSION)
     - STATUSCODE=$(curl --silent -o ${version_file} --write-out "%{http_code}" https://xyloid.org/nektar-repo/versions/${version_file})
     - if [ $STATUSCODE -eq 404 ]; then echo '{}' > ${version_file}; elif [ $STATUSCODE -ne 200 ]; then echo "Failed to grab versions file"; exit 1; fi
     - RPMRELEASE=$(python3 pkg/redhat/version-tracker.py ${version_file} nektar ${NEKVER})
     - mkdir -p ~/rpmbuild/{BUILD,RPMS,SOURCES,SPECS,SRPMS}
-    - cp ${spec_file} ~/rpmbuild/SPECS/nektar.spec
+    - cp pkg/redhat/nektar-${OS_DIST}-${OS_VERSION}.spec ~/rpmbuild/SPECS/nektar.spec
     - git archive --format=tgz --prefix=nektar-v${NEKVER}/ -o ~/rpmbuild/SOURCES/nektar-v${NEKVER}.tar.gz HEAD
     - pushd ~/rpmbuild/SPECS/
     - rpmbuild -ba --define "_nektar_version ${NEKVER}" --define "_nektar_build_release ${RPMRELEASE}" nektar.spec
@@ -145,7 +157,9 @@
     - pkg
     - pkg-rpm
   script:
-    - RPM_LOC=/web/${RPM_LOCATION}
+    - OS_DIST=$(echo $CI_JOB_NAME | cut -d- -f 2)
+    - OS_VERSION=$(echo $CI_JOB_NAME | cut -d- -f 3)
+    - RPM_LOC=/web/${OS_DIST}/${OS_VERSION}
     - dnf install -y createrepo rpm-sign
     - echo "$RPM_DEPLOY_KEY" | base64 --decode | gpg --import
     - for f in RPMS/*/*.rpm SRPMS/*.rpm; do rpm -D '_gpg_name nektar-users@imperial.ac.uk' --addsign $f; done
@@ -160,24 +174,18 @@
 ##
 ## Debian sid
 ##
-package-debian-sid-env:
+package-debian-unstable-env:
   <<: *package-env-build
-  variables:
-    image_name: pkg/debian-sid
-    dockerfile: docker/packaging/Dockerfile-debian-sid
 
-package-debian-sid-build:
+package-debian-unstable-build:
   <<: *package-deb-build
-  needs: ["package-debian-sid-env"]
+  needs: ["package-debian-unstable-env"]
   variables:
-    GIT_SUBMODULE_STRATEGY: normal
     image_name: pkg/debian-sid
-    pkg_dir: pkg/debian/sid
-    distribution: unstable
 
-package-debian-sid-test:
+package-debian-unstable-test:
   <<: *package-deb-test
-  needs: ["package-debian-sid-build"]
+  needs: ["package-debian-unstable-build"]
   dependencies:
     - package-debian-sid-build
   variables:
@@ -188,18 +196,12 @@ package-debian-sid-test:
 ##
 package-debian-bullseye-env:
   <<: *package-env-build
-  variables:
-    image_name: pkg/debian-bullseye
-    dockerfile: docker/packaging/Dockerfile-debian-bullseye
 
 package-debian-bullseye-build:
   <<: *package-deb-build
   needs: ["package-debian-bullseye-env"]
   variables:
-    GIT_SUBMODULE_STRATEGY: normal
     image_name: pkg/debian-bullseye
-    pkg_dir: pkg/debian/bullseye
-    distribution: bullseye
 
 package-debian-bullseye-test:
   <<: *package-deb-test
@@ -214,18 +216,12 @@ package-debian-bullseye-test:
 ##
 package-debian-buster-env:
   <<: *package-env-build
-  variables:
-    image_name: pkg/debian-buster
-    dockerfile: docker/packaging/Dockerfile-debian-buster
 
 package-debian-buster-build:
   <<: *package-deb-build
   needs: ["package-debian-buster-env"]
   variables:
-    GIT_SUBMODULE_STRATEGY: normal
     image_name: pkg/debian-buster
-    pkg_dir: pkg/debian/buster
-    distribution: buster
 
 package-debian-buster-test:
   <<: *package-deb-test
@@ -240,18 +236,12 @@ package-debian-buster-test:
 ##
 package-debian-stretch-env:
   <<: *package-env-build
-  variables:
-    image_name: pkg/debian-stretch
-    dockerfile: docker/packaging/Dockerfile-debian-stretch
 
 package-debian-stretch-build:
   <<: *package-deb-build
   needs: ["package-debian-stretch-env"]
   variables:
-    GIT_SUBMODULE_STRATEGY: normal
     image_name: pkg/debian-stretch
-    pkg_dir: pkg/debian/stretch
-    distribution: stretch
 
 package-debian-stretch-test:
   <<: *package-deb-test
@@ -266,18 +256,12 @@ package-debian-stretch-test:
 ##
 package-ubuntu-focal-env:
   <<: *package-env-build
-  variables:
-    image_name: pkg/ubuntu-focal
-    dockerfile: docker/packaging/Dockerfile-ubuntu-focal
 
 package-ubuntu-focal-build:
   <<: *package-deb-build
   needs: ["package-ubuntu-focal-env"]
   variables:
-    GIT_SUBMODULE_STRATEGY: normal
     image_name: pkg/ubuntu-focal
-    pkg_dir: pkg/ubuntu/focal
-    distribution: focal
 
 package-ubuntu-focal-test:
   <<: *package-deb-test
@@ -292,18 +276,12 @@ package-ubuntu-focal-test:
 ##
 package-ubuntu-bionic-env:
   <<: *package-env-build
-  variables:
-    image_name: pkg/ubuntu-bionic
-    dockerfile: docker/packaging/Dockerfile-ubuntu-bionic
 
 package-ubuntu-bionic-build:
   <<: *package-deb-build
   needs: ["package-ubuntu-bionic-env"]
   variables:
-    GIT_SUBMODULE_STRATEGY: normal
     image_name: pkg/ubuntu-bionic
-    pkg_dir: pkg/ubuntu/bionic
-    distribution: bionic
 
 package-ubuntu-bionic-test:
   <<: *package-deb-test
@@ -318,18 +296,12 @@ package-ubuntu-bionic-test:
 ##
 package-ubuntu-xenial-env:
   <<: *package-env-build
-  variables:
-    image_name: pkg/ubuntu-xenial
-    dockerfile: docker/packaging/Dockerfile-ubuntu-xenial
 
 package-ubuntu-xenial-build:
   <<: *package-deb-build
   needs: ["package-ubuntu-xenial-env"]
   variables:
-    GIT_SUBMODULE_STRATEGY: normal
     image_name: pkg/ubuntu-xenial
-    pkg_dir: pkg/ubuntu/xenial
-    distribution: xenial
 
 package-ubuntu-xenial-test:
   <<: *package-deb-test
@@ -345,178 +317,143 @@ package-ubuntu-xenial-test:
 ##
 ## CentOS 7
 ##
-package-centos7-env:
+package-centos-7-env:
   <<: *package-env-build
-  variables:
-    image_name: pkg/centos7
-    dockerfile: docker/packaging/Dockerfile-centos7
 
-package-centos7-build:
+package-centos-7-build:
   <<: *package-rpm-build
-  needs: ["package-centos7-env"]
+  needs: ["package-centos-7-env"]
   variables:
-    GIT_SUBMODULE_STRATEGY: normal
-    spec_file: pkg/redhat/nektar-centos7.spec
-    image_name: pkg/centos7
+    image_name: pkg/centos-7
     version_file: centos-7.json
 
-package-centos7-test:
+package-centos-7-test:
   <<: *package-rpm-test
-  needs: ["package-centos7-build"]
+  needs: ["package-centos-7-build"]
   dependencies:
-    - package-centos7-build
+    - package-centos-7-build
   variables:
     image_name: centos:7
     needs_epel: 1
     cmake_exe: cmake3
 
-package-centos7-deploy:
+package-centos-7-deploy:
   <<: *package-rpm-deploy
-  needs: ["package-centos7-build", "package-centos7-test"]
+  needs: ["package-centos-7-build", "package-centos-7-test"]
   dependencies:
-    - package-centos7-build
-  variables:
-    RPM_LOCATION: centos/7
+    - package-centos-7-build
 
 ##
 ## CentOS 8
 ##
-package-centos8-env:
+package-centos-8-env:
   <<: *package-env-build
-  variables:
-    image_name: pkg/centos8
-    dockerfile: docker/packaging/Dockerfile-centos8
 
-package-centos8-build:
+package-centos-8-build:
   <<: *package-rpm-build
-  needs: ["package-centos8-env"]
+  needs: ["package-centos-8-env"]
   variables:
-    GIT_SUBMODULE_STRATEGY: normal
-    spec_file: pkg/redhat/nektar-centos8.spec
-    image_name: pkg/centos8
+    image_name: pkg/centos-8
     version_file: centos-8.json
 
-package-centos8-test:
+package-centos-8-test:
   <<: *package-rpm-test
-  needs: ["package-centos8-build"]
+  needs: ["package-centos-8-build"]
   dependencies:
-    - package-centos8-build
+    - package-centos-8-build
   variables:
     image_name: centos:8
     needs_epel: 1
     needs_powertools: 1
     cmake_exe: cmake
 
-package-centos8-deploy:
+package-centos-8-deploy:
   <<: *package-rpm-deploy
-  needs: ["package-centos8-build", "package-centos8-test"]
+  needs: ["package-centos-8-build", "package-centos-8-test"]
   dependencies:
-    - package-centos8-build
-  variables:
-    RPM_LOCATION: centos/8
+    - package-centos-8-build
 
 ##
 ## Fedora 30
 ##
-package-fedora30-env:
+package-fedora-30-env:
   <<: *package-env-build
-  variables:
-    image_name: pkg/fedora30
-    dockerfile: docker/packaging/Dockerfile-fedora30
 
-package-fedora30-build:
+package-fedora-30-build:
   <<: *package-rpm-build
-  needs: ["package-fedora30-env"]
+  needs: ["package-fedora-30-env"]
   variables:
-    GIT_SUBMODULE_STRATEGY: normal
-    spec_file: pkg/redhat/nektar-fedora.spec
-    image_name: pkg/fedora30
+    image_name: pkg/fedora-30
     version_file: fedora-30.json
 
-package-fedora30-test:
+package-fedora-30-test:
   <<: *package-rpm-test
-  needs: ["package-fedora30-build"]
+  needs: ["package-fedora-30-build"]
   dependencies:
-    - package-fedora30-build
+    - package-fedora-30-build
   variables:
     image_name: fedora:30
     cmake_exe: cmake
 
-package-fedora30-deploy:
+package-fedora-30-deploy:
   <<: *package-rpm-deploy
-  needs: ["package-fedora30-build", "package-fedora30-test"]
+  needs: ["package-fedora-30-build", "package-fedora-30-test"]
   dependencies:
-    - package-fedora30-build
-  variables:
-    RPM_LOCATION: fedora/30
+    - package-fedora-30-build
 
 ##
 ## Fedora 31
 ##
-package-fedora31-env:
+package-fedora-31-env:
   <<: *package-env-build
-  variables:
-    image_name: pkg/fedora31
-    dockerfile: docker/packaging/Dockerfile-fedora31
 
-package-fedora31-build:
+package-fedora-31-build:
   <<: *package-rpm-build
-  needs: ["package-fedora31-env"]
+  needs: ["package-fedora-31-env"]
   variables:
-    GIT_SUBMODULE_STRATEGY: normal
-    spec_file: pkg/redhat/nektar-fedora.spec
-    image_name: pkg/fedora31
+    image_name: pkg/fedora-31
     version_file: fedora-31.json
 
-package-fedora31-test:
+package-fedora-31-test:
   <<: *package-rpm-test
-  needs: ["package-fedora31-build"]
+  needs: ["package-fedora-31-build"]
   dependencies:
-    - package-fedora31-build
+    - package-fedora-31-build
   variables:
     image_name: fedora:31
     cmake_exe: cmake
 
-package-fedora31-deploy:
+package-fedora-31-deploy:
   <<: *package-rpm-deploy
-  needs: ["package-fedora31-build", "package-fedora31-test"]
+  needs: ["package-fedora-31-build", "package-fedora-31-test"]
   dependencies:
-    - package-fedora31-build
-  variables:
-    RPM_LOCATION: fedora/31
+    - package-fedora-31-build
 
 ##
 ## Fedora 32
 ##
-package-fedora32-env:
+package-fedora-32-env:
   <<: *package-env-build
-  variables:
-    image_name: pkg/fedora32
-    dockerfile: docker/packaging/Dockerfile-fedora32
 
-package-fedora32-build:
+package-fedora-32-build:
   <<: *package-rpm-build
-  needs: ["package-fedora32-env"]
+  needs: ["package-fedora-32-env"]
   variables:
-    GIT_SUBMODULE_STRATEGY: normal
-    spec_file: pkg/redhat/nektar-fedora.spec
-    image_name: pkg/fedora32
+    image_name: pkg/fedora-32
     version_file: fedora-32.json
 
-package-fedora32-test:
+package-fedora-32-test:
   <<: *package-rpm-test
-  needs: ["package-fedora32-build"]
+  needs: ["package-fedora-32-build"]
   dependencies:
-    - package-fedora32-build
+    - package-fedora-32-build
   variables:
     image_name: fedora:32
     cmake_exe: cmake
 
-package-fedora32-deploy:
+package-fedora-32-deploy:
   <<: *package-rpm-deploy
-  needs: ["package-fedora32-build", "package-fedora32-test"]
+  needs: ["package-fedora-32-build", "package-fedora-32-test"]
   dependencies:
-    - package-fedora32-build
-  variables:
-    RPM_LOCATION: fedora/32
+    - package-fedora-32-build
 
