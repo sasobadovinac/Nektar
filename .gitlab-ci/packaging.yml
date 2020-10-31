@@ -172,7 +172,7 @@
 
 
 ##
-## Debian sid
+## Debian unstable
 ##
 package-debian-unstable-env:
   <<: *package-env-build
@@ -181,15 +181,15 @@ package-debian-unstable-build:
   <<: *package-deb-build
   needs: ["package-debian-unstable-env"]
   variables:
-    image_name: pkg/debian-sid
+    image_name: pkg/debian-unstable
 
 package-debian-unstable-test:
   <<: *package-deb-test
   needs: ["package-debian-unstable-build"]
   dependencies:
-    - package-debian-sid-build
+    - package-debian-unstable-build
   variables:
-    image_name: debian:sid
+    image_name: debian:unstable
 
 ##
 ## Debian bullseye
