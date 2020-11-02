@@ -161,6 +161,7 @@
     - OS_VERSION=$(echo $CI_JOB_NAME | cut -d- -f 3)
     - RPM_LOC=/web/${OS_DIST}/${OS_VERSION}
     - dnf install -y createrepo rpm-sign
+    - export
     - echo "$RPM_DEPLOY_KEY" | base64 --decode | gpg --import
     - for f in RPMS/*/*.rpm SRPMS/*.rpm; do rpm -D '_gpg_name nektar-users@imperial.ac.uk' --addsign $f; done
     - mkdir -p $RPM_LOC/RPMS/x86_64 $RPM_LOC/SRPMS
