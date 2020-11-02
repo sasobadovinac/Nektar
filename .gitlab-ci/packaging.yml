@@ -234,6 +234,7 @@ package-debian-bullseye-test:
     image_name: debian:bullseye
 
 package-debian-bullseye-deploy:
+  <<: *package-deb-deploy
   needs: ["package-debian-bullseye-test"]
   dependencies:
     - package-debian-bullseye-build
