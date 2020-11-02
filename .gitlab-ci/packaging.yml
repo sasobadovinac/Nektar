@@ -90,6 +90,28 @@
     - cd $CI_PROJECT_DIR/templates/executable
     - ./test.sh /usr/lib/*/nektar++/cmake 3 /usr/bin/cmake
 
+.package-deb-deploy: &package-deb-deploy
+  <<: *package-conditions
+  image: debian:stable-slim
+  stage: package-deploy
+  tags:
+    - pkg
+    - pkg-deb
+  script:
+    - OS_DIST=$(echo $CI_JOB_NAME | cut -d- -f 2)
+    - OS_VERSION=$(echo $CI_JOB_NAME | cut -d- -f 3)
+    - DEB_LOC=/web/deb/${OS_DIST}-${OS_VERSION}
+    - apt install dpkg-dev dpkg-sig gpg gzip apt-utils
+    - echo "$DEB_DEPLOY_KEY" | base64 --decode | gpg --import
+    - mkdir -p $DEB_LOC/amd64
+    - cp deb/* $DEB_LOC/amd64
+    - cd $DEB_LOC
+    - apt-ftparchive --arch amd64 packages amd64 > Packages
+    - gzip -k -f Packages
+    - apt-ftparchive release . > Release
+    - rm -rf Release.gpg InRelease
+    - gpg --default-key nektar -abs -o Release.gpg Release
+    - gpg --default-key nektar --clearsign -o InRelease Release
 
 .package-rpm-build: &package-rpm-build
   <<: *package-conditions
@@ -159,15 +181,14 @@
   script:
     - OS_DIST=$(echo $CI_JOB_NAME | cut -d- -f 2)
     - OS_VERSION=$(echo $CI_JOB_NAME | cut -d- -f 3)
-    - RPM_LOC=/web/${OS_DIST}/${OS_VERSION}
+    - RPM_LOC=/web/yum/${OS_DIST}/${OS_VERSION}
     - dnf install -y createrepo rpm-sign
-    - export
     - echo "$RPM_DEPLOY_KEY" | base64 --decode | gpg --import
     - for f in RPMS/*/*.rpm SRPMS/*.rpm; do rpm -D '_gpg_name nektar-users@imperial.ac.uk' --addsign $f; done
     - mkdir -p $RPM_LOC/RPMS/x86_64 $RPM_LOC/SRPMS
     - cp RPMS/x86_64/*.rpm $RPM_LOC/RPMS/x86_64
     - cp SRPMS/*.rpm $RPM_LOC/SRPMS
-    - mv *.json /web/versions
+    - mkdir -p $RPM_LOC/versions && mv *.json $RPM_LOC/versions
     - createrepo --update $RPM_LOC
     - gpg --batch --yes --detach-sign -u nektar-users@imperial.ac.uk --armor $RPM_LOC/repodata/repomd.xml
 
@@ -211,6 +232,11 @@ package-debian-bullseye-test:
     - package-debian-bullseye-build
   variables:
     image_name: debian:bullseye
+
+package-debian-bullseye-deploy:
+  needs: ["package-debian-bullseye-test"]
+  dependencies:
+    - package-debian-bullseye-build
 
 ##
 ## Debian buster
