@@ -191,7 +191,7 @@
     - RPM_LOC=/web/yum/${OS_DIST}/${OS_VERSION}
     - TMP_LOC=/tmp/repo
     - if [ ! -d /web/yum ]; then echo "Remote filesystem not accessible"; exit 1; fi
-    - dnf install -y createrepo rpm-sign
+    - dnf install -y createrepo rpm-sign rsync
     - echo "$RPM_DEPLOY_KEY" | base64 --decode | gpg --import
     - for f in RPMS/*/*.rpm SRPMS/*.rpm; do rpm -D '_gpg_name nektar-users@imperial.ac.uk' --addsign $f; done
     - mkdir -p $TMP_LOC
