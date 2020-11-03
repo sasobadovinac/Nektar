@@ -101,6 +101,7 @@
     - OS_DIST=$(echo $CI_JOB_NAME | cut -d- -f 2)
     - OS_VERSION=$(echo $CI_JOB_NAME | cut -d- -f 3)
     - DEB_LOC=/web/deb/${OS_DIST}-${OS_VERSION}
+    - [ ! -d /web/deb ] && echo "Remote filesystem not accessible" && exit 1
     - apt -yq update
     - apt -yq install dpkg-dev gpg apt-utils
     - echo "$DEB_DEPLOY_KEY" | base64 --decode | gpg --import
@@ -172,6 +173,11 @@
     - cd $CI_PROJECT_DIR/templates/executable
     - ./test.sh /usr/lib64/openmpi/lib/nektar++/cmake 3 ${cmake_exe}
 
+#
+# Deploy the generated RPM packages to web server.
+# Repository update is done on local filesystem as sqlite locking not reliable
+# over NFS.
+#
 .package-rpm-deploy: &package-rpm-deploy
   <<: *package-conditions
   image: fedora:30
@@ -183,15 +189,20 @@
     - OS_DIST=$(echo $CI_JOB_NAME | cut -d- -f 2)
     - OS_VERSION=$(echo $CI_JOB_NAME | cut -d- -f 3)
     - RPM_LOC=/web/yum/${OS_DIST}/${OS_VERSION}
+    - TMP_LOC=/tmp/repo
+    - [ ! -d /web/yum ] && echo "Remote filesystem not accessible" && exit 1
     - dnf install -y createrepo rpm-sign
     - echo "$RPM_DEPLOY_KEY" | base64 --decode | gpg --import
     - for f in RPMS/*/*.rpm SRPMS/*.rpm; do rpm -D '_gpg_name nektar-users@imperial.ac.uk' --addsign $f; done
-    - mkdir -p $RPM_LOC/RPMS/x86_64 $RPM_LOC/SRPMS
-    - cp RPMS/x86_64/*.rpm $RPM_LOC/RPMS/x86_64
-    - cp SRPMS/*.rpm $RPM_LOC/SRPMS
-    - mkdir -p $RPM_LOC/versions && mv *.json $RPM_LOC/versions
-    - createrepo --local-sqlite --update $RPM_LOC
-    - gpg --batch --yes --detach-sign -u nektar-users@imperial.ac.uk --armor $RPM_LOC/repodata/repomd.xml
+    - mkdir -p $TMP_LOC
+    - [ -d $RPM_LOC ] && rsync -a $RPM_LOC/ $TMP_LOC/
+    - mkdir -p $TMP_LOC/RPMS/x86_64 $TMP_LOC/SRPMS
+    - cp RPMS/x86_64/*.rpm $TMP_LOC/RPMS/x86_64
+    - cp SRPMS/*.rpm $TMP_LOC/SRPMS
+    - mkdir -p $TMP_LOC/versions && mv *.json $TMP_LOC/versions
+    - createrepo --update $TMP_LOC
+    - gpg --batch --yes --detach-sign -u nektar-users@imperial.ac.uk --armor $TMP_LOC/repodata/repomd.xml
+    - rsync -a --delete $TMP_LOC/ $RPM_LOC/
 
 
 ##
