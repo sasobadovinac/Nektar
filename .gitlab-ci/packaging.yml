@@ -190,7 +190,7 @@
     - cp RPMS/x86_64/*.rpm $RPM_LOC/RPMS/x86_64
     - cp SRPMS/*.rpm $RPM_LOC/SRPMS
     - mkdir -p $RPM_LOC/versions && mv *.json $RPM_LOC/versions
-    - createrepo --update $RPM_LOC
+    - createrepo --local-sqlite --update $RPM_LOC
     - gpg --batch --yes --detach-sign -u nektar-users@imperial.ac.uk --armor $RPM_LOC/repodata/repomd.xml
 
 
