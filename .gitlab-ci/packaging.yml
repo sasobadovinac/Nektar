@@ -106,9 +106,10 @@
     - apt -yq update
     - apt -yq install dpkg-dev gpg apt-utils
     - echo "$DEB_DEPLOY_KEY" | base64 --decode | gpg --import
-    - mkdir -p $DEB_LOC/{pool/contrib,${CONTRIB}/binary-amd64}
+    - mkdir -p $DEB_LOC/pool/contrib
     - cp deb/* $DEB_LOC/pool/contrib/
     - cd $DEB_LOC
+    - mkdir -p $CONTRIB/binary-amd64
     - apt-ftparchive --arch amd64 packages pool/contrib > ${CONTRIB}/binary-amd64/Packages
     - gzip -k -f ${CONTRIB}/binary-amd64/Packages
     - apt-ftparchive --arch amd64 contents pool/contrib > ${CONTRIB}/binary-amd64/Contents-amd64
