@@ -31,6 +31,10 @@ RUN export DEBIAN_FRONTEND=noninteractive && \
 
 RUN groupadd nektar && useradd -m -g nektar nektar
 
+# Force update to always run when building image
+ARG INVALIDATE_CACHE
+RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get dist-upgrade -y
+
 USER nektar:nektar
 WORKDIR /home/nektar
 COPY docker/packaging/quiltrc .quiltrc
