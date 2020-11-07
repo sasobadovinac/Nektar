@@ -117,8 +117,8 @@
     - apt-ftparchive release ${CONTRIB}/binary-amd64 > ${CONTRIB}/binary-amd64/Release
     - apt-ftparchive release -o APT::FTPArchive::Release::Codename="${OS_VERSION}" -c /web/deb/release.conf dists/${OS_VERSION} > dists/${OS_VERSION}/Release
     - rm -rf Release.gpg InRelease
-    - gpg --default-key nektar -abs -o dists/${OS_VERSION}/Release.gpg dists/${OS_VERSION}/Release
-    - gpg --default-key nektar -abs --clearsign -o dists/${OS_VERSION}/InRelease dists/${OS_VERSION}/Release
+    - gpg --batch --default-key nektar -abs -o dists/${OS_VERSION}/Release.gpg dists/${OS_VERSION}/Release
+    - gpg --batch --default-key nektar -abs --clearsign -o dists/${OS_VERSION}/InRelease dists/${OS_VERSION}/Release
 
 .package-rpm-build: &package-rpm-build
   <<: *package-conditions
