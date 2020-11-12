@@ -207,14 +207,28 @@ private:
     bool                                    m_wear;
     /// Particles specific gravity (for solid particles)
     NekDouble                               m_SG;
+    /// Particles Surface roughness angle
+    NekDouble                               m_SRA;
     /// Particles Gravity (for solid particles)
-    NekDouble                               m_gravity;
+    NekDouble                               m_gravityX;
+    /// Particles Gravity (for solid particles)
+    NekDouble                               m_gravityY;
+    /// Particles Gravity (for solid particles)
+    NekDouble                               m_gravityZ;
     /// Particles Seeding Velocity  (for solid particles)
     NekDouble                               m_SV;
     /// Particles diameter (for solid particles)
     NekDouble                               m_diameter;
     /// Kinematic viscosity
     NekDouble                               m_kinvis;
+    /// Flag marking for dragforce
+    bool                                    m_dragforce;
+    /// Flag marking for shear lift force
+    bool                                    m_shearliftforce;
+    /// Flag marking for rotational lift force
+    bool                                    m_rotliftforce;
+    /// Flag marking for virtual mass
+    bool                                    m_virtualmass;
 
     /// Variables for output file
     std::string                             m_outputFile;

@@ -191,7 +191,7 @@ void ProcessWear::Process(po::variables_map &vm)
 #if 0 // elemental counting
     for (int b = 0; b < m_f->m_bndRegionsToWrite.size(); ++b)
     {
-        if (BndRegionMap.count(m_f->m_bndRegionsToWrite[b]) == 1)
+        if (BndRegionMap.count(m_f->m_bndRegionsToWrite[b]) == 2)
         {
            int bnd = BndRegionMap[m_f->m_bndRegionsToWrite[b]];
            // Get expansion list for boundary and for elements containing this bnd

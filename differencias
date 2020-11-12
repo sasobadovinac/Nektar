@@ -1,0 +1,172 @@
+428,442c428,442
+<          m_outputStream << "Time, Rank, Id, x, y, z, particleU, particleV";
+<         if (dim == 3)
+<          {
+<             m_outputStream << ", particleW";
+<          }
+<          
+<          for (int n = 0; n < pFields.num_elements(); ++n)
+<          {
+<             m_outputStream << ", " << m_session->GetVariables()[n];
+<          }
+<          m_outputStream << ", Fx, Fy";
+<          if (dim == 3)
+<          {
+<             m_outputStream << ", Fz";
+<          }
+---
+>         // m_outputStream << "Time, Rank, Id, x, y, z, particleU, particleV";
+>         //if (dim == 3)
+>         // {
+>         //    m_outputStream << ", particleW";
+>         // }
+>         // 
+>         // for (int n = 0; n < pFields.num_elements(); ++n)
+>         // {
+>         //    m_outputStream << ", " << m_session->GetVariables()[n];
+>         // }
+>         // m_outputStream << ", Fx, Fy";
+>         // if (dim == 3)
+>         // {
+>         //    m_outputStream << ", Fz";
+>         // }
+587c587
+<             // HandleCollision(pFields, particle);
+---
+>             HandleCollision(pFields, particle);
+1068c1068,1069
+<                     particle.m_particleVeloci           }
+---
+>                     particle.m_particleVelocity[1][i];
+>             }
+1120,1130c1121,1131
+<     /* if (Re < 0.1) */
+<     /* { */
+<     /*     Re = 0.1; */
+<     /*     Cd = 240.0; */
+<     /* } */
+<     /* else if (Re < 0.5) */
+<     /* { */
+<     /*     Cd = 24.0 / Re; */
+<     /* } */
+<     /* else if (Re < 1000.0) */
+<     if (Re < 1000.0)
+---
+>      if (Re < 0.1) 
+>      { 
+>          Re = 0.1; 
+>          Cd = 240.0; 
+>      } 
+>      else if (Re < 0.5) 
+>      { 
+>          Cd = 24.0 / Re; 
+>      } 
+>      else if (Re < 1000.0) 
+>     //if (Re < 1000.0)
+1144c1145
+<         particle.m_force[0][i] = Fd * VelRel[i];
+---
+>         particle.m_force[0][i] = 0*Fd * VelRel[i];
+1152c1153
+<        
+---
+>       
+1189c1190
+<         particle.m_force[0][i] += Fl[i];
+---
+>         //particle.m_force[0][i] += Fl[i]*0;
+1238c1239
+<          particle.m_force[0][i] += Flr[i]; 
+---
+>          //particle.m_force[0][i] += Flr[i]; 
+1264c1265
+<     particle.m_force[0][2] += m_gravity * (1.0 - 1.0 / m_SG);
+---
+>     particle.m_force[0][1] += m_gravity * (1.0 - 1.0 / m_SG);
+1269c1270
+<         particle.m_force[0][i] /= (1 + 0.5 / m_SG);
+---
+>         //particle.m_force[0][i] /= (1 + 0.5 / m_SG);
+1380a1382
+>                   Array<OneD, NekDouble> RotPnt(3, 0.0);
+1404c1406
+<                   NekDouble angle = 0.0, Vel = 0.0, DeltaY = 5.0 ;
+---
+>                   NekDouble angle = 0.0, Vel = 0.0, DeltaY = M_PI*30.0/180 ;
+1412,1415c1414,1420
+< 
+<                   boost::mt19937 rng;
+<                   boost::normal_distribution<> dist(1, 1);
+<                   angle = angle + DeltaY*dist(rng);
+---
+> 			//boost::random::random_device rng;	
+>                   //boost::normal_distribution<> dist(0,1);
+> 			//cout<<dist(rng)<<endl;
+>                   //boost::mt19937 rng;
+>                   //boost::normal_distribution<> dist(0,1);
+> 		//	DeltaY=DeltaY*dist(rng);
+>                   //angle = angle + DeltaY;
+1423c1428,1430
+<                   
+---
+>                  //cout<<minNormal[0]<<" "<<minNormal[1]<<" "<<minNormal[2]<<endl;
+>                  //cout<<dist(rng)<<" "<<DeltaY<<endl;
+>  
+1428,1431c1435,1436
+< 
+<                       particle.m_newCoord[i] = collPnt[i] +
+<                                                (particle.m_newCoord[i] - collPnt[i]) -
+<                                                dotProdCoord * 2 * minNormal[i];
+---
+> 			
+>                           particle.m_newCoord[i] -= dotProdCoord * 2 * minNormal[i];
+1433c1438
+<                   UpdateLocCoord(pFields, particle);
+---
+>                   
+1434a1440,1445
+> //Rotacion en un plano
+> RotPnt[0] = particle.m_newCoord[0] - collPnt[0];
+> RotPnt[1] = particle.m_newCoord[1] - collPnt[1];
+> particle.m_newCoord[0] = (RotPnt[0] * cos(DeltaY) - RotPnt[1] * sin(DeltaY)) + collPnt[0]; 
+> particle.m_newCoord[1] = (RotPnt[0] * sin(DeltaY) + RotPnt[1] * cos(DeltaY)) + collPnt[1];
+>  
+1453a1465,1474
+> 
+> RotPnt[0] = particle.m_particleVelocity[j][0];
+> RotPnt[1] = particle.m_particleVelocity[j][1];
+> particle.m_particleVelocity[j][0] = (RotPnt[0] * cos(DeltaY) - RotPnt[1] * sin(DeltaY)); 
+> particle.m_particleVelocity[j][1] = (RotPnt[0] * sin(DeltaY) + RotPnt[1] * cos(DeltaY)); 
+> 
+> RotPnt[0] = particle.m_force[j][0];
+> RotPnt[1] = particle.m_force[j][1];
+> particle.m_force[j][0] = (RotPnt[0] * cos(DeltaY) - RotPnt[1] * sin(DeltaY)); 
+> particle.m_force[j][1] = (RotPnt[0] * sin(DeltaY) + RotPnt[1] * cos(DeltaY)); 
+1455a1477,1487
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> UpdateLocCoord(pFields, particle);
+> 
+> 
+1477,1478c1509,1510
+<                   if (distN < m_diameter / 1000.0)
+<                   {
+---
+>                   //if (distN < m_diameter * m_timestep / 1000.0)
+>                   //{
+1480,1483c1512,1515
+<                      cout<<"Particle stalled after collision ID: "<<particle.m_id<<" distance: "<<distN <<endl;
+<                      particle.m_used         = false;
+<                      particle.m_advanceCalls = 0;
+<                   }
+---
+>                      //cout<<"Particle stalled after collision ID: "<<particle.m_id<<" distance: "<<distN <<endl;
+>                      //particle.m_used         = false;
+>                      //particle.m_advanceCalls = 0;
+>                   //}

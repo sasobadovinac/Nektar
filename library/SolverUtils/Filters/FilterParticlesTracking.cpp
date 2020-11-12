@@ -38,11 +38,16 @@
 #include <MultiRegions/ExpList3DHomogeneous1D.h>
 #include <SolverUtils/Filters/FilterParticlesTracking.h>
 #include <boost/format.hpp>
-
+#include <boost/nondet_random.hpp>
 #include <boost/random/mersenne_twister.hpp>
 #include <boost/random/normal_distribution.hpp>
 #include <boost/random/variate_generator.hpp>
 #include <iomanip>
+#include <boost/random.hpp>
+#include <boost/nondet_random.hpp>
+#include <boost/random/normal_distribution.hpp>
+#include <random>
+#include <iostream>
 
 using namespace std;
 
@@ -210,18 +215,57 @@ FilterParticlesTracking::FilterParticlesTracking(
             m_SG = equ7.Evaluate();
         }
 
-        // Determine if gravity has effect
-        it = pParams.find("Gravity");
+         // Determine if SpecificGravity has effect
+        it = pParams.find("SurfaceRoughnessAngle");
         if (it == pParams.end())
         {
-            m_gravity = 0.0; // By default the value of gravity is zero
+            m_SRA = 0.0; // By default
+        }
+        else
+        {
+            LibUtilities::Equation equ27(
+                m_session->GetInterpreter(), it->second);
+            m_SRA = equ27.Evaluate();
+        }
+
+        // Determine if gravity X has effect
+        it = pParams.find("GravityX");
+        if (it == pParams.end())
+        {
+            m_gravityX = 0.0; // By default the value of gravity is zero
             //cout << "- Working without Gravity" << endl;
         }
         else
         {
             LibUtilities::Equation equ8(
                 m_session->GetInterpreter(), it->second);
-            m_gravity = equ8.Evaluate();
+            m_gravityX = equ8.Evaluate();
+        }
+        // Determine if gravity Y has effect
+        it = pParams.find("GravityY");
+        if (it == pParams.end())
+        {
+            m_gravityY = 0.0; // By default the value of gravity is zero
+            //cout << "- Working without Gravity" << endl;
+        }
+        else
+        {
+            LibUtilities::Equation equ28(
+                m_session->GetInterpreter(), it->second);
+            m_gravityY = equ28.Evaluate();
+        }
+        // Determine if gravity  Z has effect
+        it = pParams.find("GravityZ");
+        if (it == pParams.end())
+        {
+            m_gravityZ = 0.0; // By default the value of gravity is zero
+            //cout << "- Working without Gravity" << endl;
+        }
+        else
+        {
+            LibUtilities::Equation equ38(
+                m_session->GetInterpreter(), it->second);
+            m_gravityZ = equ38.Evaluate();
         }
         
          // Boundary (to evaluate colision)
@@ -256,6 +300,61 @@ FilterParticlesTracking::FilterParticlesTracking(
     {
         std::string sOption = it->second.c_str();
         m_wear          = (boost::iequals(sOption, "true")) ||
+                          (boost::iequals(sOption, "yes" ));
+    }
+    
+   // Set Drag evaluation
+    it = pParams.find("DragForce");
+    if (it == pParams.end())
+    {
+        // By default track fluid particles
+        m_dragforce = false;
+    }
+    else
+    {
+        std::string sOption = it->second.c_str();
+        m_dragforce          = (boost::iequals(sOption, "true")) ||
+                          (boost::iequals(sOption, "yes" ));
+    }
+   
+   // Set Lift Shear evaluation
+    it = pParams.find("ShearLiftForce");
+    if (it == pParams.end())
+    {
+        // By default track fluid particles
+        m_shearliftforce = false;
+    }
+    else
+    {
+        std::string sOption = it->second.c_str();
+        m_shearliftforce= (boost::iequals(sOption, "true")) ||
+                          (boost::iequals(sOption, "yes" ));
+    }
+   
+   // Set Rotational lift evaluation
+    it = pParams.find("RotLiftForce");
+    if (it == pParams.end())
+    {
+        // By default track fluid particles
+        m_rotliftforce = false;
+    }
+    else
+    {
+        std::string sOption = it->second.c_str();
+        m_rotliftforce= (boost::iequals(sOption, "true")) ||
+                          (boost::iequals(sOption, "yes" ));
+    }
+   // Set Virtual Mass evaluation
+    it = pParams.find("VirtualMass");
+    if (it == pParams.end())
+    {
+        // By default track fluid particles
+        m_virtualmass = false;
+    }
+    else
+    {
+        std::string sOption = it->second.c_str();
+        m_virtualmass = (boost::iequals(sOption, "true")) ||
                           (boost::iequals(sOption, "yes" ));
     }
 
@@ -417,12 +516,12 @@ void FilterParticlesTracking::v_Initialise(
 		m_WearStream.open(m_WearFile.c_str()); 
 	}
 	
-    if (vRank == 0)
+   if (vRank == 0)
     {
          cout << "Tracking Particles..." <<endl;
          
          //Write headers in the csv file
-         m_outputStream << "Time, Rank, Id, x, y, z";
+         m_outputStream << "time, Rank, Id, x, y, z";
          m_outputStream << ", Fx, Fy, OmegaX, OmegaY, OmegaZ ";
 
         // m_outputStream << "Time, Rank, Id, x, y, z, particleU, particleV";
@@ -584,7 +683,7 @@ void FilterParticlesTracking::AdvanceParticles(
             //~ // Check if particle left the domain of interest
             //~ CheckBoundingBox(particle);
             //~ // Handle collisions if particle left the domain
-            HandleCollision(pFields, particle);
+            // HandleCollision(pFields, particle);
             if (particle.m_eId == -1 && particle.m_used == true)
 	         {
       		    particleCounts[vRank]++;
@@ -1065,8 +1164,8 @@ void FilterParticlesTracking::UpdateVelocity(Particle &particle)
             if (order != 1)
             {
                 particle.m_particleVelocity[0][i] =
-                    particle.m_particleVelocity[1][i];
-            }
+                       particle.m_particleVelocity[1][i];
+             }
 
             for (int j = 0; j < order; ++j)
             {
@@ -1076,7 +1175,7 @@ void FilterParticlesTracking::UpdateVelocity(Particle &particle)
             }
         }
         
-        for (int i = 0; i < 3; ++i)
+        for (int i = 1; i < 3; ++i)
         {
             if (order != 1)
             {
@@ -1101,7 +1200,7 @@ void FilterParticlesTracking::CalculateForce(Particle &particle)
 {
     // Update particle.m_force[0][i] with force per unit mass
     // Update particle.m_torque[0][i] with torque per unit mass
-
+   
     // Particular Re evaluation
     NekDouble Re = 0.0, Cd = 0.0, Fd = 0.0,Rr = 0.0, phi= 0.0, Cl = 0.0, Clr = 0.0, Cr = 0.0, Omega = 0.0, Vel = 0.0;
     Array<OneD, NekDouble> VelRel(particle.m_dim);
@@ -1117,18 +1216,19 @@ void FilterParticlesTracking::CalculateForce(Particle &particle)
     Vel = sqrt(Vel);
     Re = Vel * m_diameter / m_kinvis;
 
+ if (m_dragforce)
+   {  
     // Calcule Drag coeficient: Crowe et al. (1998), Lain et al. (2009)
-    /* if (Re < 0.1) */
-    /* { */
-    /*     Re = 0.1; */
-    /*     Cd = 240.0; */
-    /* } */
-    /* else if (Re < 0.5) */
-    /* { */
-    /*     Cd = 24.0 / Re; */
-    /* } */
-    /* else if (Re < 1000.0) */
-    if (Re < 1000.0)
+     if (Re < 0.1) 
+     { 
+         Re = 0.1; 
+         Cd = 240.0;
+     } 
+     else if (Re < 0.5) 
+     { 
+         Cd = 24.0 / Re; 
+     } 
+     else if (Re < 1000.0) 
     {
         Cd = (24.0 / Re) * (1.0 + 0.15 * pow(Re, 0.687));
     }
@@ -1140,12 +1240,21 @@ void FilterParticlesTracking::CalculateForce(Particle &particle)
     // Evaluate the drag force
     Fd = (3.0 * m_kinvis * Cd * Re) / (4.0 * m_SG * pow(m_diameter, 2.0));
     
-    for (int i = 0; i < particle.m_dim; ++i)
-    {
+   if (isnan(Fd))
+   {  
+     cout<<"Nan values on Drag force, on particle "<<particle.m_id<<endl;
+   }
+   else
+   {   
+      for (int i = 0; i < particle.m_dim; ++i)
+      {
         particle.m_force[0][i] = Fd * VelRel[i];
-    }
-    
-    // Evaluate lift force
+      }
+   }
+ }   
+ if (m_shearliftforce)
+   {  
+/////// Evaluate lift force
     if ( particle.m_dim == 2 )
     {
         //Rotational Reynolds
@@ -1185,32 +1294,69 @@ void FilterParticlesTracking::CalculateForce(Particle &particle)
       //  cout<<"Fl: "<< Fl[0]<<", "<<Fl[1]<<endl;
     }
     
+    if ( particle.m_dim == 3 )
+    {
+        //Rotational Reynolds
+        Rr = sqrt( pow(particle.m_grad[2][1]-particle.m_grad[1][2],2.0)
+                 +  pow(particle.m_grad[0][2]-particle.m_grad[2][0],2.0)
+                 +  pow(particle.m_grad[1][0]-particle.m_grad[0][1],2.0) ) * pow(m_diameter,2.0) / m_kinvis;
+       
+       /* phi = Re*Rr; */ 
+       /* if (phi <= 6000) */
+       /* { */
+       /*     Cl = 0.0767; */
+       /* } */
+       /* else if (phi < 5E7) */
+       /* { */
+       /*     Cl = -(0.12 - 0.2 * exp(-phi * 1E-5/3.6)) * exp(phi*1E-7/3); */
+       /* } */
+       /* else */
+       /* { */   
+       /*     Cl = -0.6353; */
+       /* } */
+       /*   Fl[0] =  Cl * VelRel[1]*(particle.m_grad[1][0]-particle.m_grad[0][1]); */
+       /*   Fl[1] = -Cl * VelRel[0]*(particle.m_grad[1][0]-particle.m_grad[0][1]); */
+       
+       phi = 0.5 * Rr / Re; 
+
+       if (Re <= 40)
+       {
+           Cl = ( 1.0 - 0.3314 * sqrt(phi) ) * exp( -Re / 10.0 ) + ( 0.3314 * sqrt(phi) ) ;
+       }
+       else
+       {   
+           Cl = 0.0524 * sqrt( phi*Re );
+       }
+
+       Cl *= 4.1126 / sqrt(Rr);    
+
+       Fl[0] = ( 0.75 / m_SG ) * Cl * ( VelRel[1]*(particle.m_grad[1][0]-particle.m_grad[0][1]) 
+                                      - VelRel[2]*(particle.m_grad[0][2]-particle.m_grad[2][0]) );
+
+       Fl[1] = ( 0.75 / m_SG ) * Cl * ( VelRel[2]*(particle.m_grad[2][1]-particle.m_grad[1][2]) 
+                                      - VelRel[0]*(particle.m_grad[1][0]-particle.m_grad[0][1]) );
+
+       Fl[2] = ( 0.75 / m_SG ) * Cl * ( VelRel[0]*(particle.m_grad[0][2]-particle.m_grad[2][0]) 
+                                      - VelRel[1]*(particle.m_grad[2][1]-particle.m_grad[1][2]) );
+    }
+
+   if (isnan(Cl/m_SG))
+   {  
+     cout<<"Nan values on Shear lift force, on particle "<<particle.m_id<<endl;
+   }
+   else
+   {   
     for (int i = 0; i < particle.m_dim; ++i)
     {
         particle.m_force[0][i] += Fl[i];
     }
+   }
 
+}
 
-    /* // */
-    /* if (particle.m_dim=3) */
-    /* { */
-    /*  Fl[0] = VelRel[1]*(particle.m_grad[1][0]-particle.m_grad[0][1]) */
-    /*        - VelRel[2]*(particle.m_grad[0][2]-particle.m_grad[2][0]); */
-     
-    /*  Fl[1] = VelRel[2]*(particle.m_grad[2][1]-particle.m_grad[1][2]); */
-    /*        - VelRel[0]*(particle.m_grad[1][0]-particle.m_grad[0][1]); */
-
-    /*  Fl[2] = VelRel[0]*(particle.m_grad[0][2]-particle.m_grad[2][0]); */
-    /*        - VelRel[1]*(particle.m_grad[2][1]-particle.m_grad[1][2]); */
-    /* } */
-    /* if (particle.m_dim=2) */
-    /* { */
-    /*  Fl[0] =  VelRel[1]*(particle.m_grad[1][0]-particle.m_grad[0][1]); */
-     
-    /*  Fl[1] = -VelRel[0]*(particle.m_grad[1][0]-particle.m_grad[0][1]); */
-    /* } */
-
-    // Evaluate Magnus force
+ if (m_rotliftforce)
+   {  
+/////// Evaluate Magnus force
     if ( particle.m_dim == 2 )
     {
        OmegaVec[2] = 0.5 * ( particle.m_grad[1][0]-particle.m_grad[0][1] ) - particle.m_angularVelocity[0][2];
@@ -1233,13 +1379,50 @@ void FilterParticlesTracking::CalculateForce(Particle &particle)
        Flr[0] = ( 0.75 / ( m_SG * m_diameter) * Clr * Vel * (- VelRel[1] * OmegaVec[2]) / Omega);
        Flr[1] = ( 0.75 / ( m_SG * m_diameter) * Clr * Vel * (  VelRel[0] * OmegaVec[2]) / Omega);
     }
-    
+
+    if ( particle.m_dim == 3 )
+    {
+       OmegaVec[0] = 0.5 * ( particle.m_grad[2][1]-particle.m_grad[1][2] ) - particle.m_angularVelocity[0][0];
+       OmegaVec[1] = 0.5 * ( particle.m_grad[0][2]-particle.m_grad[2][0] ) - particle.m_angularVelocity[0][1];
+       OmegaVec[2] = 0.5 * ( particle.m_grad[1][0]-particle.m_grad[0][1] ) - particle.m_angularVelocity[0][2];
+       Omega = sqrt(pow(OmegaVec[0],2.0)+ pow(OmegaVec[1],2.0)+pow(OmegaVec[2],2.0));
+
+       Rr = Omega * pow(m_diameter,2.0) / m_kinvis; 
+       //phi = 0.5 *  Rr / Re; 
+       
+       if (Re <= 140)
+       {
+          //Clr = ( 0.45 +( Rr/Re - 0.45 ) * exp(-0.075 * pow(Rr,0.4) * pow(Re,0.3) ) );
+          Clr = ( 0.45 +( Rr/Re - 0.45 ) * exp(-0.05684 * pow(Rr,0.4) * pow(Re,0.3) ) );
+       }
+       else
+       {   
+          Clr = Rr / Re;   
+       }
+       /* cout<<"Re:"<<Re <<", Rr:"<<Cl<<", Omega:"<<Omega  <<endl; */ 
+       
+       Flr[0] = ( 0.75 / ( m_SG * m_diameter) * Clr * Vel * ( VelRel[2] * OmegaVec[1]
+                                                            - VelRel[1] * OmegaVec[2]) / Omega);
+
+       Flr[1] = ( 0.75 / ( m_SG * m_diameter) * Clr * Vel * ( VelRel[0] * OmegaVec[2]
+                                                            - VelRel[2] * OmegaVec[0]) / Omega);
+
+       Flr[2] = ( 0.75 / ( m_SG * m_diameter) * Clr * Vel * ( VelRel[1] * OmegaVec[0]
+                                                            - VelRel[0] * OmegaVec[1]) / Omega);
+    }
+   if (isnan(Clr/Omega))
+   {  
+     cout<<"Nan values on Rotational lift force, on particle "<<particle.m_id<<endl;
+   }
+   else
+   {   
     for (int i = 0; i < particle.m_dim; ++i)
     {
          particle.m_force[0][i] += Flr[i]; 
     }
+   }
 
-    //Update torque 
+/////Update torque 
        if (Rr < 32)
        {
            Cr = 64 * M_PI / Rr; 
@@ -1249,26 +1432,35 @@ void FilterParticlesTracking::CalculateForce(Particle &particle)
            Cr = 12.9 / sqrt(Rr) + 128.4 / Rr;
        }
 
-    /* for (int i = 0; i < particle.m_dim; ++i) */
-    /* { */
-          particle.m_torque[0][2] = 15 / (16 * m_SG * M_PI) * Cr * Omega * OmegaVec[2];
-          /* cout<<"Omega: "<<particle.m_angularVelocity[0][2]<<endl; */ 
-          /*  cout<<"Torque: "<<particle.m_torque[0][2]<<endl; */ 
-    /* } */
-
+   if (isnan(Cr))
+   {  
+     cout<<"Nan values on Torque evaluation, on particle "<<particle.m_id<<endl;
+   }
+   else
+   {   
+       particle.m_torque[0][0] = (15 / (16 * m_SG * M_PI)) * Cr * Omega * OmegaVec[0];
+       particle.m_torque[0][1] = (15 / (16 * m_SG * M_PI)) * Cr * Omega * OmegaVec[1];
+       particle.m_torque[0][2] = (15 / (16 * m_SG * M_PI)) * Cr * Omega * OmegaVec[2];
+   }
     
-
+}
     // Add gravity and buoyancy effects on y direction
     //particle.m_force[0][1] += m_gravity * (1.0 - 1.0 / m_SG); 
     
     // Add gravity and buoyancy effects on z direction
-    particle.m_force[0][2] += m_gravity * (1.0 - 1.0 / m_SG);
+    particle.m_force[0][0] += m_gravityX * (1.0 - 1.0 / m_SG);
+    particle.m_force[0][1] += m_gravityY * (1.0 - 1.0 / m_SG);
+    particle.m_force[0][2] += m_gravityZ * (1.0 - 1.0 / m_SG);
     
-    // Add  virtual mass effects, if the velocity field is constant
-    for (int i = 0; i < particle.m_dim; ++i)
+   // Add  virtual mass effects, if the velocity field is constant
+   
+ if (m_virtualmass)
+   {  
+   for (int i = 0; i < particle.m_dim; ++i)
     {
         particle.m_force[0][i] /= (1 + 0.5 / m_SG);
     }
+   }
 }
 
 /**
@@ -1402,7 +1594,8 @@ if (particle.m_eId == -1 && particle.m_used == true && m_fluidParticles == false
                   // Evaluation of the restitution coeficients
                   int order              = min(particle.m_advanceCalls, m_intOrder);
                   NekDouble dotProdCoord = 0.0, dotProdVel = 0.0, dotProdForce = 0.0;
-                  NekDouble angle = 0.0, Vel = 0.0, DeltaY = 5.0 ;
+                  NekDouble angle = 0.0, Vel = 0.0;
+
 
                   for (int i = 0; i < particle.m_dim; ++i)
                   {
@@ -1411,10 +1604,6 @@ if (particle.m_eId == -1 && particle.m_used == true && m_fluidParticles == false
                   }
                   angle = asinf(angle); Vel = sqrt(Vel);
 
-                  boost::mt19937 rng;
-                  boost::normal_distribution<> dist(1, 1);
-                  angle = angle + DeltaY*dist(rng);
-                  
                   // Evaluate dot products to make the reflection
                   for (int i = 0; i < particle.m_dim; ++i)
                   {
@@ -1426,13 +1615,9 @@ if (particle.m_eId == -1 && particle.m_used == true && m_fluidParticles == false
                   for (int i = 0; i < particle.m_dim; ++i)
                   {
                      // particle.m_oldCoord[i] = collPnt[i];
-
-                      particle.m_newCoord[i] = collPnt[i] +
-                                               (particle.m_newCoord[i] - collPnt[i]) -
-                                               dotProdCoord * 2 * minNormal[i];
+                    particle.m_newCoord[i] -= dotProdCoord * 2 * minNormal[i];
                   }
-                  UpdateLocCoord(pFields, particle);
-             
+                  
                   for (int j = 0; j < order; ++j)
                   {
                       // Evaluate dot products to make the reflection
@@ -1452,8 +1637,138 @@ if (particle.m_eId == -1 && particle.m_used == true && m_fluidParticles == false
 
                           particle.m_force[j][i] -= dotProdForce * 2 * minNormal[i];
                       }
-                  }
 
+                   }   
+                  
+               if (m_SRA !=0.0)
+               {
+                  NekDouble  phi = m_SRA*M_PI/180.0 ;
+                  NekDouble  theta = m_SRA*M_PI/180.0 ;
+                  NekDouble  gamma = m_SRA*M_PI/180.0 ;
+                  Array<OneD, NekDouble> RotPnt(3, 0.0);          
+                  Array<OneD, NekDouble> RotPlane(3, 0.0);          
+                  
+                  std::random_device devicex;  
+                  boost::mt19937 rngx(devicex());;
+                  boost::normal_distribution<> distx(0.0, 1.0);
+                  phi *= distx(rngx);
+
+                  std::random_device devicey;  
+                  boost::mt19937 rngy(devicey());;
+                  boost::normal_distribution<> disty(0.0, 1.0);
+                  theta *= disty(rngy);
+
+                  std::random_device devicez;  
+                  boost::mt19937 rngz(devicez());;
+                  boost::normal_distribution<> distz(0.0, 1.0);
+                  gamma *= distz(rngz);
+                  
+                  //Rotacion en un plano
+                  RotPnt[0] = particle.m_newCoord[0] - collPnt[0];
+                  RotPnt[1] = particle.m_newCoord[1] - collPnt[1];
+                  RotPnt[2] = particle.m_newCoord[2] - collPnt[2];
+                  particle.m_newCoord[0] = ( RotPnt[0] * ( cos(theta) * cos(gamma)) +
+                                    RotPnt[1] * (-cos(phi)  * sin(gamma) + sin(phi) * sin(theta) * cos(gamma)) + 
+                                    RotPnt[2] * ( sin(phi) * sin(gamma) + cos(phi) * sin(theta) * cos(gamma))
+                                     ) + collPnt[0]; 
+
+                   particle.m_newCoord[1] = ( RotPnt[0] * ( cos(theta) * sin(gamma)) +
+                                    RotPnt[1] * (cos(phi)  * cos(gamma) + sin(phi) * sin(theta) * sin(gamma)) + 
+                                    RotPnt[2] * (-sin(theta) * cos(gamma) + cos(phi) * sin(theta) * sin(gamma))
+                               ) + collPnt[1]; 
+
+                  if(particle.m_dim == 2) 
+                     {  
+                           particle.m_newCoord[2] = ( RotPnt[0] * sin(theta) +
+                                           RotPnt[1] * sin(phi) * cos(theta) +
+                                           RotPnt[2] * cos(phi) * cos(theta)
+                                                                            ) + collPnt[2];
+
+                     }
+ 
+                  for (int j = 0; j < order; ++j)
+                  {
+                     //Velocity Rotations
+                     RotPnt[0] = particle.m_particleVelocity[j][0] ;
+                     RotPnt[1] = particle.m_particleVelocity[j][1] ;
+                     RotPnt[2] = particle.m_particleVelocity[j][2] ;
+                     particle.m_particleVelocity[j][0] = ( RotPnt[0] * ( cos(theta) * cos(gamma)) +
+                           RotPnt[1] * (-cos(phi)  * sin(gamma) + sin(phi) * sin(theta) * cos(gamma)) + 
+                           RotPnt[2] * ( sin(phi) * sin(gamma) + cos(phi) * sin(theta) * cos(gamma))   ); 
+
+                     particle.m_particleVelocity[j][1] = ( RotPnt[0] * ( cos(theta) * sin(gamma)) +
+                           RotPnt[1] * (cos(phi)  * cos(gamma) + sin(phi) * sin(theta) * sin(gamma)) + 
+                           RotPnt[2] * (-sin(theta) * cos(gamma) + cos(phi) * sin(theta) * sin(gamma)) ); 
+
+                     if(particle.m_dim == 2) 
+                     {
+                        particle.m_particleVelocity[j][2] = ( RotPnt[0] * sin(theta) +
+                                                   RotPnt[1] * sin(phi) * cos(theta) +
+                                                   RotPnt[2] * cos(phi) * cos(theta)   ) ;
+
+                     }   
+                  
+                     //Angular Velocity Rotations
+                     RotPnt[0] = particle.m_angularVelocity[j][0] ;
+                     RotPnt[1] = particle.m_angularVelocity[j][1] ;
+                     RotPnt[2] = particle.m_angularVelocity[j][2] ;
+                     particle.m_angularVelocity[j][0] = ( RotPnt[0] * ( cos(theta) * cos(gamma)) +
+                           RotPnt[1] * (-cos(phi)  * sin(gamma) + sin(phi) * sin(theta) * cos(gamma)) + 
+                           RotPnt[2] * ( sin(phi) * sin(gamma) + cos(phi) * sin(theta) * cos(gamma))   ); 
+
+                     particle.m_angularVelocity[j][1] = ( RotPnt[0] * ( cos(theta) * sin(gamma)) +
+                           RotPnt[1] * (cos(phi)  * cos(gamma) + sin(phi) * sin(theta) * sin(gamma)) + 
+                           RotPnt[2] * (-sin(theta) * cos(gamma) + cos(phi) * sin(theta) * sin(gamma)) ); 
+
+                     if(particle.m_dim == 2) 
+                     {
+                        particle.m_angularVelocity[j][2] = ( RotPnt[0] * sin(theta) +
+                                                   RotPnt[1] * sin(phi) * cos(theta) +
+                                                   RotPnt[2] * cos(phi) * cos(theta)   ) ;
+
+                     }   
+                     //Force Rotations
+                     RotPnt[0] = particle.m_force[j][0] ;
+                     RotPnt[1] = particle.m_force[j][1] ;
+                     RotPnt[2] = particle.m_force[j][2] ;
+                     particle.m_force[j][0] = ( RotPnt[0] * ( cos(theta) * cos(gamma)) +
+                           RotPnt[1] * (-cos(phi)  * sin(gamma) + sin(phi) * sin(theta) * cos(gamma)) + 
+                           RotPnt[2] * ( sin(phi) * sin(gamma) + cos(phi) * sin(theta) * cos(gamma))   ); 
+
+                     particle.m_force[j][1] = ( RotPnt[0] * ( cos(theta) * sin(gamma)) +
+                           RotPnt[1] * (cos(phi)  * cos(gamma) + sin(phi) * sin(theta) * sin(gamma)) + 
+                           RotPnt[2] * (-sin(theta) * cos(gamma) + cos(phi) * sin(theta) * sin(gamma)) ); 
+
+                     if(particle.m_dim == 2) 
+                     {
+                        particle.m_force[j][2] = ( RotPnt[0] * sin(theta) +
+                                                   RotPnt[1] * sin(phi) * cos(theta) +
+                                                   RotPnt[2] * cos(phi) * cos(theta)   ) ;
+
+                     }
+                     //Torque Rotations
+                     RotPnt[0] = particle.m_torque[j][0] ;
+                     RotPnt[1] = particle.m_torque[j][1] ;
+                     RotPnt[2] = particle.m_torque[j][2] ;
+                     particle.m_torque[j][0] = ( RotPnt[0] * ( cos(theta) * cos(gamma)) +
+                           RotPnt[1] * (-cos(phi)  * sin(gamma) + sin(phi) * sin(theta) * cos(gamma)) + 
+                           RotPnt[2] * ( sin(phi) * sin(gamma) + cos(phi) * sin(theta) * cos(gamma))   ); 
+
+                     particle.m_torque[j][1] = ( RotPnt[0] * ( cos(theta) * sin(gamma)) +
+                           RotPnt[1] * (cos(phi)  * cos(gamma) + sin(phi) * sin(theta) * sin(gamma)) + 
+                           RotPnt[2] * (-sin(theta) * cos(gamma) + cos(phi) * sin(theta) * sin(gamma)) ); 
+
+                     if(particle.m_dim == 2) 
+                     {
+                        particle.m_torque[j][2] = ( RotPnt[0] * sin(theta) +
+                                                   RotPnt[1] * sin(phi) * cos(theta) +
+                                                   RotPnt[2] * cos(phi) * cos(theta)   ) ;
+
+                     }
+                  }
+               }
+
+                  UpdateLocCoord(pFields, particle);
                   // Evaluate the erosion
                   if (m_wear)
                   {
@@ -1475,12 +1790,12 @@ if (particle.m_eId == -1 && particle.m_used == true && m_fluidParticles == false
                       distN += pow(collPnt[i] - particle.m_newCoord[i], 2);
                   }
 
-                  if (distN < m_diameter / 1000.0)
+                  if (distN < m_diameter /100.0)
                   {
                      //Particle  is stalled
-                     cout<<"Particle stalled after collision ID: "<<particle.m_id<<" distance: "<<distN <<endl;
-                     particle.m_used         = false;
-                     particle.m_advanceCalls = 0;
+                     //cout<<"Particle stalled after collision ID: "<<particle.m_id<<" distance: "<<distN <<endl;
+                     //particle.m_used         = false;
+                     //particle.m_advanceCalls = 0;
                   }
               }
         }
@@ -1501,7 +1816,7 @@ if (particle.m_eId == -1 && particle.m_used == true && m_fluidParticles == false
                       //cout<<" ID: "<<particle.m_id<<" distance: "<<distN <<endl;
                   }
 
-                  if (distN < m_diameter / 1000.0)
+                  if (distN < m_diameter /100.0 )
                   {
                       // Particle  is stalled
                      cout<<" Particle stalled without collision ID: "<<particle.m_id<<" distance: "<<distN <<endl;
@@ -1605,5 +1920,6 @@ void FilterParticlesTracking::RollOver(
 
     input[0] = tmp;
 }
+
 }
 }
