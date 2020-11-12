@@ -229,6 +229,12 @@ private:
     bool                                    m_rotliftforce;
     /// Flag marking for virtual mass
     bool                                    m_virtualmass;
+    /// Flag marking for outputvelocity 
+    bool                                    m_outputvelocity;
+    /// Flag marking for outputforce
+    bool                                    m_outputforce;
+    /// Flag marking for outputrank
+    bool                                    m_outputrank;
 
     /// Variables for output file
     std::string                             m_outputFile;

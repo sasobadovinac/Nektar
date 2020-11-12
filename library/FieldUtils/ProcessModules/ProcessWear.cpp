@@ -133,7 +133,7 @@ void ProcessWear::Process(po::variables_map &vm)
     Array<OneD, Array<OneD, NekDouble> > pts; fieldPts->GetPts(pts);
     Array<OneD, MultiRegions::ExpListSharedPtr> BndExp(1);
     NekDouble ONE_OVER_SQRT_2PI = 0.39894228040143267793994605993438;
-    NekDouble dist2 = 0.0, Sigma = 0.01, Wear = 0.0;
+    NekDouble dist2 = 0.0, Sigma = 0.39894228040143267793994605993438, Wear = 0.0;
 
 #if 1  // Gauss counting
     for (int b = 0; b < m_f->m_bndRegionsToWrite.size(); ++b)
@@ -171,6 +171,7 @@ void ProcessWear::Process(po::variables_map &vm)
 
                  intFields[3][i] += Wear * ONE_OVER_SQRT_2PI / Sigma
                     * exp(- 0.5 * dist2 / pow(Sigma,2));
+              
               }
            }    
 
@@ -191,7 +192,7 @@ void ProcessWear::Process(po::variables_map &vm)
 #if 0 // elemental counting
     for (int b = 0; b < m_f->m_bndRegionsToWrite.size(); ++b)
     {
-        if (BndRegionMap.count(m_f->m_bndRegionsToWrite[b]) == 2)
+        if (BndRegionMap.count(m_f->m_bndRegionsToWrite[b]) == 1)
         {
            int bnd = BndRegionMap[m_f->m_bndRegionsToWrite[b]];
            // Get expansion list for boundary and for elements containing this bnd
@@ -295,11 +296,7 @@ NekDouble ProcessWear::TulsaAnsys(NekDouble Vel, NekDouble angle)
       Fa = 2+6.8*angle-7.5*pow(angle,2)+2.25*pow(angle,3); 
     }
     return 1.559E-6*pow(B,-0.59)*Fs*pow(Vel,1.73)*Fa; 
-    
 }
 
 }
 }
-
-
-

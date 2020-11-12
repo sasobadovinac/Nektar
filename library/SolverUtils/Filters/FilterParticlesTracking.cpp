@@ -233,7 +233,6 @@ FilterParticlesTracking::FilterParticlesTracking(
         if (it == pParams.end())
         {
             m_gravityX = 0.0; // By default the value of gravity is zero
-            //cout << "- Working without Gravity" << endl;
         }
         else
         {
@@ -246,7 +245,6 @@ FilterParticlesTracking::FilterParticlesTracking(
         if (it == pParams.end())
         {
             m_gravityY = 0.0; // By default the value of gravity is zero
-            //cout << "- Working without Gravity" << endl;
         }
         else
         {
@@ -259,7 +257,6 @@ FilterParticlesTracking::FilterParticlesTracking(
         if (it == pParams.end())
         {
             m_gravityZ = 0.0; // By default the value of gravity is zero
-            //cout << "- Working without Gravity" << endl;
         }
         else
         {
@@ -279,8 +276,7 @@ FilterParticlesTracking::FilterParticlesTracking(
      it = pParams.find("SeedingVelocity");
      if (it == pParams.end())
      {
-         m_SV = 1.0; // By default the value of gravity is zero
-         //cout << "- Working without Gravity" << endl;
+         m_SV = 1.0; // By default the value of particle intial velocity  is 1.0
      }
      else
      {
@@ -458,9 +454,6 @@ void FilterParticlesTracking::v_Initialise(
     SpatialDomains::BoundaryConditions bcs(m_session, pFields[0]->GetGraph());
     const SpatialDomains::BoundaryRegionCollection &bregions =
         bcs.GetBoundaryRegions();
-
-
-
    
     cnt = 0;
     for (auto &it : bregions)
@@ -505,7 +498,7 @@ void FilterParticlesTracking::v_Initialise(
         m_outputFile = m_outputFile +"."+to_string(vRank*0.000001).substr(2)+".csv";
     }
     if (!(m_WearFile.length() >= 4 &&
-          m_WearFile.substr(m_WearFile.length() - 4) == ".csv"))
+          m_WearFile.substr(m_WearFile.length() - 4) == ".pts"))
     {
         m_WearFile = m_WearFile+"."+to_string(vRank*0.000001).substr(2)+".csv";
     }
@@ -519,39 +512,35 @@ void FilterParticlesTracking::v_Initialise(
    if (vRank == 0)
     {
          cout << "Tracking Particles..." <<endl;
-         
-         //Write headers in the csv file
-         m_outputStream << "time, Rank, Id, x, y, z";
-         m_outputStream << ", Fx, Fy, OmegaX, OmegaY, OmegaZ ";
+         //Default file output .csv
 
-        // m_outputStream << "Time, Rank, Id, x, y, z, particleU, particleV";
-        //if (dim == 3)
-        // {
-        //    m_outputStream << ", particleW";
-        // }
-        // 
-        // for (int n = 0; n < pFields.num_elements(); ++n)
-        // {
-        //    m_outputStream << ", " << m_session->GetVariables()[n];
-        // }
-        // m_outputStream << ", Fx, Fy";
-        // if (dim == 3)
-        // {
-        //    m_outputStream << ", Fz";
-        // }
-        m_outputStream << endl;
-         
-         
+ 
+         //Write headers in the csv file
+         m_outputStream << "time, Id, x, y, z";
+        
+         //Add Velocity
+         if (m_outputvelocity)
+         {
+         m_outputStream << ", Vx, Vy, Vz, Omegax, Omegay, Omegaz";
+         }
+
+         //Add Forces
+         if (m_outputforce)
+         {
+               m_outputStream << ", Fx, Fy, Fz, Tx, Ty, Tz";
+         }
+
+         //Add Rank
+         if (m_outputrank)
+         {
+               m_outputStream << ", Rank";
+         }
+         //Header wear file
          if (m_wear)
          {
-            if (dim == 2)
-            {
-               m_WearStream<<"x, y, Velocity, angle"<<endl;
-            }
-            if (dim == 3)
-            {
-               m_WearStream<<"x, y, z, Velocity, angle"<<endl;
-            }
+               m_WearStream<<"<?xml version=\"1.0\" encoding=\"utf-8\"?>"<<endl;
+               m_WearStream<<"<NEKTAR>"<<endl;
+               m_WearStream<<"<POINTS DIM=\""<<dim<<"\" FIELDS=\"Velocity, angle, diameter\">"<<endl;  
          }
 	 }
 
@@ -626,11 +615,12 @@ void FilterParticlesTracking::v_Finalise(
     }
 
     if (pFields[0]->GetComm()->GetRank() == 0)
-    {
+   {
         m_outputStream.close();
         if(m_wear)
-        {
-            m_WearStream.close();
+        {    
+	         m_WearStream << " </POINTS>" <<endl<< "</NEKTAR>  ";
+           	m_WearStream.close();
         }
     }
 }
@@ -953,67 +943,6 @@ void FilterParticlesTracking::AddSeedPoints(
      }
 }
 
-
-/**
- *
- */
-//void FilterParticlesTracking::AddCrossParticles(
-//    const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields)
-//{
-    //bool inserted = false;
-    //Array<OneD, NekDouble> newCoord(3, 0.0);
-    //Array<OneD, NekDouble> locCoord(3, 0.0);
-    
-    //// Parallel Comm
-     //LibUtilities::CommSharedPtr vComm = pFields[0]->GetComm();
-     //int vRank     = vComm->GetRowComm()->GetRank();
-     //int vRankSize = vComm->GetSize();
-     //Array<OneD, int> listId(vRankSize, -2);	
-
-     //~ // Found a space inside the particle list 
-     //~ //to  include points in unused positions of m_particles
-    //~ for (auto &particle : m_particles)
-    //~ {
-        //~ if (particle.m_used == false)
-        //~ {
-	    //~ // Change coordinates of particle
-	    //~ particle.SetCoord(newCoord);
-	    //~ // Obtain new id for particle
-	    //~ particle.SetNewId();
-	    //~ // Change m_used flag
-	    //~ particle.m_used = true;
-	    //~ // Find location of new particle
-	    //~ UpdateLocCoord(pFields, particle);
-	    //~ // Initialise particle velocity to match fluid velocity
-	    //~ InterpSolution(pFields, particle);
-	    //~ particle.m_particleVelocity[j][i]
-	    
-	    
-	    //~ UpdateVelocity(particle);
-	    // Integrate velocity to obtain position
-	    //~ UpdatePosition(particle);
-	    //~ // Update element containing particle and coordinate in std element
-	    //~ UpdateLocCoord(pFields, particle);
-	    //~ inserted = true; 
-	    //~ break;
-	//~ }	
-    //~ }
-	
-    //~ // Add particle to the end of m_particles
-    //~ if (inserted)
-    //~ {
-	//~ m_particles.reserve(1);
-	//~ UpdateLocCoord(pFields, m_particles.back());
-	//~ // Initialise particle velocity to match fluid velocity
-	//~ InterpSolution(pFields, m_particles.back());
-	//~ UpdateVelocity(particle);
-	//~ // Integrate velocity to obtain position
-	//~ UpdatePosition(particle);
-	//~ // Update element containing particle and coordinate in std element
-	//~ UpdateLocCoord(pFields, particle);
-    //~ }
-//}
-
 /**
  *
  */
@@ -1134,7 +1063,6 @@ void FilterParticlesTracking::SetToVelForce(Array<OneD, NekDouble> VelForce, Par
             particle.m_force[k][i] = VelForce[(dim*order)+i+k*dim];
         }
     }
-   //particle.m_advanceCalls = order;
 }
 
 
@@ -1870,31 +1798,46 @@ const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields)
                     << ", "
                     << boost::format("%25.19e") % particle.m_newCoord[n];
             }
+         
 
-            /* for (int n = 0; n < particle.m_dim; ++n) */
-         /* { */
-         /*     m_outputStream << ", " */
-            /*                    << boost::format("%25.19e") % */
-            /*                           particle.m_particleVelocity[0][n]; */
-            /* } */
+            if (m_outputvelocity)
+            {
+                     for (int n = 0; n < particle.m_dim; ++n) 
+                     { 
+                       m_outputStream << ", " 
+                                         << boost::format("%25.19e") % 
+                                                particle.m_particleVelocity[0][n]; 
+                      }	 
+                     for (int n = 0; n < 3; ++n)
+                     {
+                         m_outputStream
+                             << ", "
+                             << boost::format("%25.19e") % particle.m_angularVelocity[0][n];
+                     }
+            }
 
-            /* for (int n = 0; n < particle.m_fields.num_elements(); ++n) */
-            /* { */
-            /*     m_outputStream */
-            /*         << ", " << boost::format("%25.19e") % particle.m_fields[n]; */
-            /* } */
-            for (int n = 0; n < particle.m_dim; ++n)
+
+            if (m_outputforce)
             {
-                m_outputStream
-                    << ", "
-                    << boost::format("%25.19e") % particle.m_force[0][n];
-            }
-            for (int n = 0; n < 3; ++n)
+                  for (int n = 0; n < particle.m_dim; ++n)
+                     {
+                         m_outputStream
+                             << ", "
+                             << boost::format("%25.19e") % particle.m_force[0][n];
+                     }
+                  for (int n = 0; n < particle.m_dim; ++n)
+                     {
+                         m_outputStream
+                             << ", "
+                             << boost::format("%25.19e") % particle.m_torque[0][n];
+                     }
+             }
+       
+            if (m_outputrank)
             {
-                m_outputStream
-                    << ", "
-                    << boost::format("%25.19e") % particle.m_angularVelocity[0][n];
+                     m_outputStream << ", "<< pFields[0]->GetComm() ->GetRowComm()->GetRank();
             }
+
             m_outputStream << endl;
         }
     }
