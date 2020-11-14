@@ -354,6 +354,50 @@ FilterParticlesTracking::FilterParticlesTracking(
                           (boost::iequals(sOption, "yes" ));
     }
 
+    // Set Velocity OutPut data on .cvs
+    it = pParams.find("OutputVelocity");
+    if (it == pParams.end())
+    {
+        // By default track fluid particles
+        m_outputvelocity = false;
+    }
+    else
+    {
+        std::string sOption = it->second.c_str();
+        m_outputvelocity= (boost::iequals(sOption, "true")) ||
+                          (boost::iequals(sOption, "yes" ));
+    }
+
+   // Set Force OutPut data on .cvs
+    it = pParams.find("OutputForce");
+    if (it == pParams.end())
+    {
+        // By default track fluid particles
+        m_outputforce = false;
+    }
+    else
+    {
+        std::string sOption = it->second.c_str();
+        m_outputforce= (boost::iequals(sOption, "true")) ||
+                          (boost::iequals(sOption, "yes" ));
+    }
+
+
+
+   // Set Rank OutPut data on .cvs
+    it = pParams.find("OutputRank");
+    if (it == pParams.end())
+    {
+        // By default track fluid particles
+        m_outputrank = false;
+    }
+    else
+    {
+        std::string sOption = it->second.c_str();
+        m_outputrank= (boost::iequals(sOption, "true")) ||
+                          (boost::iequals(sOption, "yes" ));
+    }
+
     // Read variables for output
     it = pParams.find("OutputFile");
     if (it == pParams.end())
@@ -615,7 +659,7 @@ void FilterParticlesTracking::v_Finalise(
         }
     }
 
-    if (pFields[0]->GetComm()->GetRank() == 0)
+    if (pFields[0]->GetComm()->GetRank() == pFields[0]->GetComm()->GetSize()-1)
    {
         m_outputStream.close();
         if(m_wear)
@@ -1597,7 +1641,7 @@ if (particle.m_eId == -1 && particle.m_used == true && m_fluidParticles == false
                   boost::normal_distribution<> distz(0.0, 1.0);
                   gamma *= distz(rngz);
                   
-                  //Rotacion en un plano
+                  //positions rotations
                   RotPnt[0] = particle.m_newCoord[0] - collPnt[0];
                   RotPnt[1] = particle.m_newCoord[1] - collPnt[1];
                   RotPnt[2] = particle.m_newCoord[2] - collPnt[2];
@@ -1727,9 +1771,9 @@ if (particle.m_eId == -1 && particle.m_used == true && m_fluidParticles == false
                   if (distN < m_diameter /100.0)
                   {
                      //Particle  is stalled
-                     //cout<<"Particle stalled after collision ID: "<<particle.m_id<<" distance: "<<distN <<endl;
-                     //particle.m_used         = false;
-                     //particle.m_advanceCalls = 0;
+                     cout<<"Particle stalled after collision ID: "<<particle.m_id<<" distance: "<<distN <<endl;
+                     particle.m_used         = false;
+                     particle.m_advanceCalls = 0;
                   }
               }
         }

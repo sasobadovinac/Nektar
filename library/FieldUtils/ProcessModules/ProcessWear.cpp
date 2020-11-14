@@ -107,7 +107,7 @@ void ProcessWear::Process(po::variables_map &vm)
 
     int nFields = fieldPts->GetNFields();
     ASSERTL0( nFields == 3, 
-        "Velocity and collision angle are required input fields");
+        "Velocity, collision angle and diameter are required  input fields");
        
     // Define new expansions.
     ASSERTL0(m_f->m_numHomogeneousDir == 0,
