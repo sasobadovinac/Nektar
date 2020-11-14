@@ -211,6 +211,102 @@
 
 
 ##
+## Source packages
+##
+package-source-archive-env:
+  <<: *package-env-build
+
+package-source-archive-build:
+  <<: *package-conditions
+  stage: package-build
+  needs: ["package-source-archive-env"]
+  tags:
+    - pkg
+  variables:
+    GIT_SUBMODULE_STRATEGY: normal
+  script:
+    - VERSION=$(cat VERSION)
+    - mkdir -p src
+    - git archive --format=tar --output=src/nektar++-${VERSION}.tar HEAD
+    - cd src
+    - gzip  --stdout nektar++-${VERSION}.tar > nektar++-${VERSION}.tar.gz
+    - bzip2 --stdout nektar++-${VERSION}.tar > nektar++-${VERSION.tar.bz2
+    - xz    --stdout nektar++-${VERSION}.tar > nektar++-${VERSION.tar.xz
+  artifacts:
+    paths:
+      - src/nektar++*.tar*
+    expire_in: 1 week
+
+package-source-archive-deploy:
+  <<: *package-conditions
+  stage: package-deploy
+  needs: ["package-source-archive-build"]
+  tags:
+    - pkg
+    - pkg-src
+  dependencies:
+    - package-source-archive-build
+  script:
+    - cp src/nektar++*.tar* /web/src
+
+##
+## Documentation
+##
+package-source-doc-env:
+  <<: *package-env-build
+
+package-source-doc-build:
+  <<: *package-conditions
+  stage: package-build
+  needs: ["package-source-doc-env"]
+  tags:
+    - pkg
+  variables:
+    GIT_SUBMODULE_STRATEGY: normal
+  script:
+    - VERSION=$(cat VERSION)
+    - mkdir build && cd build
+    - cmake -DNEKTAR_BUILD_DEMOS:BOOL=OFF -DNEKTAR_BUILD_DOC:BOOL=ON -DNEKTAR_BUILD_LIBRARY:BOOL=OFF -DNEKTAR_BUILD_SOLVERS:BOOL=OFF -DNEKTAR_BUILD_UTILITIES:BOOL=OFF ..
+    - make doc
+    - make user-guide-pdf user-guide-html
+    - make developer-guide-pdf developer-guide-html
+    - make tutorials
+  artifacts:
+    paths:
+      - build/docs/doxygen/html
+      - build/docs/user-guide/user-guide.pdf
+      - build/docs/user-guide/html
+      - build/docs/developer-guide/developer-guide.pdf
+      - build/docs/developer-guide/html
+      - build/docs/tutorial/*/*/*.pdf
+      - build/docs/tutorial/*/*/*.tar.gz
+      - build/docs/tutorial/*/*/html
+
+package-source-doc-deploy:
+  <<: *package-conditions
+  stage: package-deploy
+  needs: ["package-source-doc-build"]
+  tags:
+    - pkg
+    - pkg-src
+  dependencies:
+    - package-source-doc-build
+  script:
+    - VERSION=$(cat VERSION)
+    - cd build/docs
+    - mkdir -p /web/doc/userguide/${VERSION}
+    - rsync user-guide/html/ /web/doc/userguide/${VERSION}/
+    - rsync user-guide/user-guide.pdf /web/src/user-guide-${VERSION}.pdf
+    - mkdir -p /web/doc/developerguide/${VERSION}
+    - rsync developer-guide/html/ /web/doc/developerguide/${VERSION}/
+    - rsync developer-guide/developer-guide.pdf /web/src/developer-guide-${VERSION}.pdf
+    - mkdir -p /web/doc/tutorials/${VERSION}
+    - rsync tutorial/ /web/doc/tutorials/${VERSION}/
+    - mkdir -p /web/doc/doxygen/${VERSION}
+    - rsync doxygen/html /web/doc/doxygen/${VERSION}
+
+    
+##
 ## Debian unstable
 ##
 package-debian-unstable-env:

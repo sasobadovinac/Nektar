@@ -1,8 +1,10 @@
 # Files to ignore for export
 .gitlab-ci.yml export-ignore
+.gitlab-ci/ export-ignore
 .gitignore export-ignore
 .gitattributes export-ignore
 .gitmodules export-ignore
+.dockerignore export-ignore
 /docs/tutorial export-ignore
 /library/Demos/MultiRegions/ExtraDemos/ export-ignore
 /solvers/ImageWarpingSolver/ export-ignore
