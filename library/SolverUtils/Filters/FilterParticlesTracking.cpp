@@ -500,7 +500,7 @@ void FilterParticlesTracking::v_Initialise(
     if (!(m_WearFile.length() >= 4 &&
           m_WearFile.substr(m_WearFile.length() - 4) == ".pts"))
     {
-        m_WearFile = m_WearFile+"."+to_string(vRank*0.000001).substr(2)+".csv";
+        m_WearFile = m_WearFile+"."+to_string(vRank*0.000001).substr(2)+".pts";
     }
 
 	m_outputStream.open(m_outputFile.c_str());
