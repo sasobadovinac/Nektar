@@ -241,7 +241,7 @@ package-source-archive-build:
 package-source-archive-deploy:
   <<: *package-conditions
   stage: package-deploy
-  image: $CI_REGISTRY_IMAGE/pkg/source-archive
+  image: debian:stable-slim
   needs: ["package-source-archive-build"]
   tags:
     - pkg
@@ -288,7 +288,7 @@ package-source-doc-build:
 package-source-doc-deploy:
   <<: *package-conditions
   stage: package-deploy
-  image: $CI_REGISTRY_IMAGE/pkg/source-doc
+  image: debian:stable-slim
   needs: ["package-source-doc-build"]
   tags:
     - pkg
@@ -297,6 +297,8 @@ package-source-doc-deploy:
     - package-source-doc-build
   script:
     - VERSION=$(cat VERSION)
+    - apt -yq update
+    - apt -yq install rsync
     - cd build/docs
     - mkdir -p /web/doc/userguide/${VERSION}
     - rsync user-guide/html/ /web/doc/userguide/${VERSION}/

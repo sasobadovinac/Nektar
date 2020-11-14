@@ -8,7 +8,8 @@ WORKDIR /root
 
 RUN apt-get update && \
     apt-get install -y \
-        build-essential cmake rsync \
+        build-essential cmake rsync flex \
+        liblapack-dev \
         texlive-base texlive-latex-extra texlive-science \
             texlive-fonts-recommended texlive-pstricks \
         doxygen graphviz imagemagick dvipng
