@@ -20,5 +20,8 @@ RUN groupadd nektar && useradd -m -g nektar nektar
 ARG INVALIDATE_CACHE
 RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get dist-upgrade -y
 
+# Patch security policy to allow PDF conversion by ImageMagick
+RUN sed -i 's/rights="none" pattern="PDF"/rights="read|write" pattern="PDF"/g' /etc/ImageMagick-6/policy.xml
+
 USER nektar:nektar
 WORKDIR /home/nektar
