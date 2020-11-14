@@ -310,7 +310,11 @@ package-source-doc-deploy:
     - mkdir -p /web/doc/tutorials/${VERSION}
     - ${RSYNC} tutorial/ /web/doc/tutorials/${VERSION}/
     - mkdir -p /web/doc/doxygen/${VERSION}
-    - ${RSYNC} doxygen/html /web/doc/doxygen/${VERSION}
+    - ${RSYNC} doxygen/html/ /web/doc/doxygen/${VERSION}/
+    - cd /web/doc/userguide && if [ $(ls -1 | grep -v latest | tail -n 1) == "${VERSION}" ]; then rm -f latest; ln -s ${VERSION} latest; fi
+    - cd /web/doc/developerguide && if [ $(ls -1 | grep -v latest | tail -n 1) == "${VERSION}" ]; then rm -f latest; ln -s ${VERSION} latest; fi
+    - cd /web/doc/tutorial && if [ $(ls -1 | grep -v latest | tail -n 1) == "${VERSION}" ]; then rm -f latest; ln -s ${VERSION} latest; fi
+    - cd /web/doc/doxygen && if [ $(ls -1 | grep -v latest | tail -n 1) == "${VERSION}" ]; then rm -f latest; ln -s ${VERSION} latest; fi
 
     
 ##
