@@ -231,8 +231,8 @@ package-source-archive-build:
     - git archive --format=tar --output=src/nektar++-${VERSION}.tar HEAD
     - cd src
     - gzip  --stdout nektar++-${VERSION}.tar > nektar++-${VERSION}.tar.gz
-    - bzip2 --stdout nektar++-${VERSION}.tar > nektar++-${VERSION.tar.bz2
-    - xz    --stdout nektar++-${VERSION}.tar > nektar++-${VERSION.tar.xz
+    - bzip2 --stdout nektar++-${VERSION}.tar > nektar++-${VERSION}.tar.bz2
+    - xz    --stdout nektar++-${VERSION}.tar > nektar++-${VERSION}.tar.xz
   artifacts:
     paths:
       - src/nektar++*.tar*
