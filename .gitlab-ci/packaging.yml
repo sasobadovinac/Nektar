@@ -279,7 +279,7 @@ package-source-doc-build:
       - build/docs/doxygen/html
       - build/docs/user-guide/user-guide.pdf
       - build/docs/user-guide/html
-      - build/docs/developer-guide/developers-guide.pdf
+      - build/docs/developer-guide/developer-guide.pdf
       - build/docs/developer-guide/html
       - build/docs/tutorial/*/*/*.pdf
       - build/docs/tutorial/*/*/*.tar.gz
@@ -297,19 +297,20 @@ package-source-doc-deploy:
     - package-source-doc-build
   script:
     - VERSION=$(cat VERSION)
+    - RSYNC=rsync -a --delete
     - apt -yq update
     - apt -yq install rsync
     - cd build/docs
     - mkdir -p /web/doc/userguide/${VERSION}
-    - rsync user-guide/html/ /web/doc/userguide/${VERSION}/
-    - rsync user-guide/user-guide.pdf /web/src/user-guide-${VERSION}.pdf
+    - ${RSYNC} user-guide/html/ /web/doc/userguide/${VERSION}/
+    - ${RSYNC} user-guide/user-guide.pdf /web/src/user-guide-${VERSION}.pdf
     - mkdir -p /web/doc/developerguide/${VERSION}
-    - rsync developer-guide/html/ /web/doc/developerguide/${VERSION}/
-    - rsync developer-guide/developers-guide.pdf /web/src/developer-guide-${VERSION}.pdf
+    - ${RSYNC} developer-guide/html/ /web/doc/developerguide/${VERSION}/
+    - ${RSYNC} developer-guide/developer-guide.pdf /web/src/developer-guide-${VERSION}.pdf
     - mkdir -p /web/doc/tutorials/${VERSION}
-    - rsync tutorial/ /web/doc/tutorials/${VERSION}/
+    - ${RSYNC} tutorial/ /web/doc/tutorials/${VERSION}/
     - mkdir -p /web/doc/doxygen/${VERSION}
-    - rsync doxygen/html /web/doc/doxygen/${VERSION}
+    - ${RSYNC} doxygen/html /web/doc/doxygen/${VERSION}
 
     
 ##
