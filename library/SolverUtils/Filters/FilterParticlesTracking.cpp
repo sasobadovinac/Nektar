@@ -535,6 +535,7 @@ void FilterParticlesTracking::v_Initialise(
          {
                m_outputStream << ", Rank";
          }
+               m_outputStream <<endl;
          //Header wear file
          if (m_wear)
          {
@@ -1136,6 +1137,11 @@ void FilterParticlesTracking::CalculateForce(Particle &particle)
     Array<OneD, NekDouble> Flr(particle.m_dim);
     Array<OneD, NekDouble> OmegaVec(3);
     
+    for (int i = 0; i < particle.m_dim; ++i)
+    {
+        particle.m_force[0][i] =  0.0 ;
+    }
+
     for (int i = 0; i < particle.m_dim; ++i)
     {
        VelRel[i] = particle.m_fluidVelocity[i] - particle.m_particleVelocity[0][i];
@@ -1788,8 +1794,6 @@ const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields)
         if (particle.m_used)
         {
             m_outputStream << boost::format("%25.19e") % time;
-            m_outputStream << ", "<< pFields[0]->GetComm()
-									->GetRowComm()->GetRank();
             m_outputStream << ", " << particle.m_id;
 
             for (int n = 0; n < 3; ++n)
