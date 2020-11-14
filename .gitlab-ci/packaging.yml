@@ -297,7 +297,7 @@ package-source-doc-deploy:
     - package-source-doc-build
   script:
     - VERSION=$(cat VERSION)
-    - RSYNC=rsync -a --delete
+    - RSYNC="rsync -a --delete"
     - apt -yq update
     - apt -yq install rsync
     - cd build/docs
