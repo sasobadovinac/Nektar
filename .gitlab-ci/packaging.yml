@@ -201,8 +201,8 @@
     - for f in RPMS/*/*.rpm SRPMS/*.rpm; do rpm -D '_gpg_name nektar-users@imperial.ac.uk' --addsign $f; done
     - mkdir -p $TMP_LOC
     - if [ -d $RPM_LOC ]; then rsync -a $RPM_LOC/ $TMP_LOC/; fi
-    - mkdir -p $TMP_LOC/RPMS/x86_64 $TMP_LOC/SRPMS
-    - cp RPMS/x86_64/*.rpm $TMP_LOC/RPMS/x86_64
+    - mkdir -p $TMP_LOC/x86_64 $TMP_LOC/SRPMS
+    - cp RPMS/x86_64/*.rpm $TMP_LOC/x86_64/
     - cp SRPMS/*.rpm $TMP_LOC/SRPMS
     - mkdir -p $TMP_LOC/versions && mv *.json $TMP_LOC/versions
     - createrepo --update $TMP_LOC
