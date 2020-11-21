@@ -192,7 +192,7 @@ BuildRequires:  doxygen
 BuildRequires:  ImageMagick
 BuildRequires:  graphviz
 BuildRequires:  texlive texlive-import texlive-lstaddons texlive-bclogo
-BuildRequires:  texlive-mdframed texlive-standalone
+BuildRequires:  texlive-mdframed texlive-standalone texlive-environ
 %description doc
 Documentation for Nektar++
 

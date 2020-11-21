@@ -132,7 +132,7 @@
     - OS_DIST=$(echo $CI_JOB_NAME | cut -d- -f 2)
     - OS_VERSION=$(echo $CI_JOB_NAME | cut -d- -f 3)
     - NEKVER=$(<VERSION)
-    - STATUSCODE=$(curl --silent -o ${version_file} --write-out "%{http_code}" https://xyloid.org/nektar-repo/versions/${version_file})
+    - STATUSCODE=$(curl --silent -o ${version_file} --write-out "%{http_code}" https://www.nektar.info/${OS_DIST}/${OS_VERSION}versions/${version_file})
     - if [ $STATUSCODE -eq 404 ]; then echo '{}' > ${version_file}; elif [ $STATUSCODE -ne 200 ]; then echo "Failed to grab versions file"; exit 1; fi
     - RPMRELEASE=$(python3 pkg/redhat/version-tracker.py ${version_file} nektar ${NEKVER})
     - mkdir -p ~/rpmbuild/{BUILD,RPMS,SOURCES,SPECS,SRPMS}
@@ -205,7 +205,7 @@
     - cp RPMS/x86_64/*.rpm $TMP_LOC/x86_64/
     - cp SRPMS/*.rpm $TMP_LOC/SRPMS
     - mkdir -p $TMP_LOC/versions && mv *.json $TMP_LOC/versions
-    - createrepo --update $TMP_LOC
+    - createrepo --update $TMP_LOC/x86_64/
     - gpg --batch --yes --detach-sign -u nektar-users@imperial.ac.uk --armor $TMP_LOC/repodata/repomd.xml
     - rsync -a --delete $TMP_LOC/ $RPM_LOC/
 
