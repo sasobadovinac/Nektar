@@ -206,7 +206,7 @@
     - cp SRPMS/*.rpm $TMP_LOC/SRPMS
     - mkdir -p $TMP_LOC/versions && mv *.json $TMP_LOC/versions
     - createrepo --update $TMP_LOC/x86_64/
-    - gpg --batch --yes --detach-sign -u nektar-users@imperial.ac.uk --armor $TMP_LOC/repodata/repomd.xml
+    - gpg --batch --yes --detach-sign -u nektar-users@imperial.ac.uk --armor $TMP_LOC/x86_64/repodata/repomd.xml
     - rsync -a --delete $TMP_LOC/ $RPM_LOC/
 
 
