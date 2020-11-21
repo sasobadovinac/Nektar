@@ -565,13 +565,28 @@ void FilterParticlesTracking::v_Initialise(
          //Add Velocity
          if (m_outputvelocity)
          {
-         m_outputStream << ", Vx, Vy, Vz, Omegax, Omegay, Omegaz";
+            if (dim  == 1)
+            {
+               m_outputStream << ", Vx, Vy, OmegaZ";
+            }
+            else if (dim  == 2)
+            {
+               m_outputStream << ", Vx, Vy, Vz, OmegaX, OmegaY, OmegaZ";
+            }
          }
 
          //Add Forces
          if (m_outputforce)
          {
-               m_outputStream << ", Fx, Fy, Fz, Tx, Ty, Tz";
+            if  (dim  == 1)
+               {
+                  m_outputStream << ", Fx, Fy, Tz";
+               }
+               else if  (dim  == 2)
+               {
+                  m_outputStream << ", Fx, Fy, Fz, Tx, Ty, Tz";
+               }
+
          }
 
          //Add Rank
@@ -1757,7 +1772,8 @@ if (particle.m_eId == -1 && particle.m_used == true && m_fluidParticles == false
                            << boost::format("%25.19e") % collPnt[n];
                       }
                         m_WearStream <<"   "<< boost::format("%25.19e") % Vel
-                            <<"   "<< boost::format("%25.19e") % angle  <<endl;
+                            <<"   "<< boost::format("%25.19e") % angle  
+                            <<"   "<< boost::format("%25.19e") % m_diameter <<endl;
                   }
                   
                   // Evaluate the change in the collision position
@@ -1768,12 +1784,12 @@ if (particle.m_eId == -1 && particle.m_used == true && m_fluidParticles == false
                       distN += pow(collPnt[i] - particle.m_newCoord[i], 2);
                   }
 
-                  if (distN < m_diameter /100.0)
+                  if (distN < m_diameter * m_timestep)
                   {
                      //Particle  is stalled
                      cout<<"Particle stalled after collision ID: "<<particle.m_id<<" distance: "<<distN <<endl;
-                     particle.m_used         = false;
-                     particle.m_advanceCalls = 0;
+                    // particle.m_used         = false;
+                    // particle.m_advanceCalls = 0;
                   }
               }
         }
@@ -1794,13 +1810,13 @@ if (particle.m_eId == -1 && particle.m_used == true && m_fluidParticles == false
                       //cout<<" ID: "<<particle.m_id<<" distance: "<<distN <<endl;
                   }
 
-                  if (distN < m_diameter /100.0 )
+                  if (distN < m_diameter * m_timestep)
                   {
                       // Particle  is stalled
                      cout<<" Particle stalled without collision ID: "<<particle.m_id<<" distance: "<<distN <<endl;
                      cout<<" iter "<<particle.m_advanceCalls<<endl;
-                     particle.m_used         = false;
-                     particle.m_advanceCalls = 0;
+                     //particle.m_used         = false;
+                     //particle.m_advanceCalls = 0;
                   }
             }
         } 
@@ -1856,12 +1872,21 @@ const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields)
                                          << boost::format("%25.19e") % 
                                                 particle.m_particleVelocity[0][n]; 
                       }	 
-                     for (int n = 0; n < 3; ++n)
+                  if (particle.m_dim == 1)
+                     {
+                         m_outputStream
+                             << ", "
+                             << boost::format("%25.19e") % particle.m_angularVelocity[0][2];
+                     } 
+                  else
+                  { 
+                     for (int n = 0; n < particle.m_dim; ++n)
                      {
                          m_outputStream
                              << ", "
                              << boost::format("%25.19e") % particle.m_angularVelocity[0][n];
                      }
+               }
             }
 
 
@@ -1873,12 +1898,21 @@ const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields)
                              << ", "
                              << boost::format("%25.19e") % particle.m_force[0][n];
                      }
+                  if (particle.m_dim == 1)
+                     {
+                         m_outputStream
+                             << ", "
+                             << boost::format("%25.19e") % particle.m_torque[0][2];
+                     } 
+                  else
+                  { 
                   for (int n = 0; n < particle.m_dim; ++n)
                      {
                          m_outputStream
                              << ", "
                              << boost::format("%25.19e") % particle.m_torque[0][n];
                      }
+                  }
              }
        
             if (m_outputrank)
