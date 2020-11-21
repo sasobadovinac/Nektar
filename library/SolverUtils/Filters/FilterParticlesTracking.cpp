@@ -565,11 +565,11 @@ void FilterParticlesTracking::v_Initialise(
          //Add Velocity
          if (m_outputvelocity)
          {
-            if (dim  == 1)
+            if (dim  == 2)
             {
                m_outputStream << ", Vx, Vy, OmegaZ";
             }
-            else if (dim  == 2)
+            else if (dim  == 3)
             {
                m_outputStream << ", Vx, Vy, Vz, OmegaX, OmegaY, OmegaZ";
             }
@@ -578,11 +578,11 @@ void FilterParticlesTracking::v_Initialise(
          //Add Forces
          if (m_outputforce)
          {
-            if  (dim  == 1)
+            if  (dim  == 2)
                {
                   m_outputStream << ", Fx, Fy, Tz";
                }
-               else if  (dim  == 2)
+               else if  (dim  == 3)
                {
                   m_outputStream << ", Fx, Fy, Fz, Tx, Ty, Tz";
                }
@@ -1670,7 +1670,7 @@ if (particle.m_eId == -1 && particle.m_used == true && m_fluidParticles == false
                                     RotPnt[2] * (-sin(theta) * cos(gamma) + cos(phi) * sin(theta) * sin(gamma))
                                ) + collPnt[1]; 
 
-                  if(particle.m_dim == 2) 
+                  if(particle.m_dim == 3) 
                      {  
                            particle.m_newCoord[2] = ( RotPnt[0] * sin(theta) +
                                            RotPnt[1] * sin(phi) * cos(theta) +
@@ -1693,7 +1693,7 @@ if (particle.m_eId == -1 && particle.m_used == true && m_fluidParticles == false
                            RotPnt[1] * (cos(phi)  * cos(gamma) + sin(phi) * sin(theta) * sin(gamma)) + 
                            RotPnt[2] * (-sin(theta) * cos(gamma) + cos(phi) * sin(theta) * sin(gamma)) ); 
 
-                     if(particle.m_dim == 2) 
+                     if(particle.m_dim == 3) 
                      {
                         particle.m_particleVelocity[j][2] = ( RotPnt[0] * sin(theta) +
                                                    RotPnt[1] * sin(phi) * cos(theta) +
@@ -1713,7 +1713,7 @@ if (particle.m_eId == -1 && particle.m_used == true && m_fluidParticles == false
                            RotPnt[1] * (cos(phi)  * cos(gamma) + sin(phi) * sin(theta) * sin(gamma)) + 
                            RotPnt[2] * (-sin(theta) * cos(gamma) + cos(phi) * sin(theta) * sin(gamma)) ); 
 
-                     if(particle.m_dim == 2) 
+                     if(particle.m_dim == 3) 
                      {
                         particle.m_angularVelocity[j][2] = ( RotPnt[0] * sin(theta) +
                                                    RotPnt[1] * sin(phi) * cos(theta) +
@@ -1732,7 +1732,7 @@ if (particle.m_eId == -1 && particle.m_used == true && m_fluidParticles == false
                            RotPnt[1] * (cos(phi)  * cos(gamma) + sin(phi) * sin(theta) * sin(gamma)) + 
                            RotPnt[2] * (-sin(theta) * cos(gamma) + cos(phi) * sin(theta) * sin(gamma)) ); 
 
-                     if(particle.m_dim == 2) 
+                     if(particle.m_dim == 3) 
                      {
                         particle.m_force[j][2] = ( RotPnt[0] * sin(theta) +
                                                    RotPnt[1] * sin(phi) * cos(theta) +
@@ -1751,7 +1751,7 @@ if (particle.m_eId == -1 && particle.m_used == true && m_fluidParticles == false
                            RotPnt[1] * (cos(phi)  * cos(gamma) + sin(phi) * sin(theta) * sin(gamma)) + 
                            RotPnt[2] * (-sin(theta) * cos(gamma) + cos(phi) * sin(theta) * sin(gamma)) ); 
 
-                     if(particle.m_dim == 2) 
+                     if(particle.m_dim == 3) 
                      {
                         particle.m_torque[j][2] = ( RotPnt[0] * sin(theta) +
                                                    RotPnt[1] * sin(phi) * cos(theta) +
@@ -1872,7 +1872,7 @@ const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields)
                                          << boost::format("%25.19e") % 
                                                 particle.m_particleVelocity[0][n]; 
                       }	 
-                  if (particle.m_dim == 1)
+                  if (particle.m_dim == 2)
                      {
                          m_outputStream
                              << ", "
@@ -1898,7 +1898,7 @@ const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields)
                              << ", "
                              << boost::format("%25.19e") % particle.m_force[0][n];
                      }
-                  if (particle.m_dim == 1)
+                  if (particle.m_dim == 2)
                      {
                          m_outputStream
                              << ", "
