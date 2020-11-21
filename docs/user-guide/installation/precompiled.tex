@@ -80,7 +80,7 @@ substituting \inlsh{<baseurl>} for the appropriate line from the table below.
 \toprule
 Distribution & \inlsh{<baseurl>} \\
 \midrule
-Centos & 
+CentOS & 
 \texttt{http://www.nektar.info/centos/\$releasever/\$basearch}\\
 Fedora & 
 \texttt{http://www.nektar.info/fedora/\$releasever/\$basearch}\\
@@ -93,9 +93,15 @@ Fedora &
 The \inltt{\$releasever} and \inltt{\$basearch} variables are automatically replaced by Yum with the OS version and architecture of your system.
 \end{notebox}
 
-\item Now install the Nektar++ packages as required, or install the complete suite with:
+\item Download and install the GPG key used to sign the packages:
 \begin{lstlisting}[style=BashInputStyle]
-yum install nektar++
+wget https://www.nektar.info/nektar-yum.gpg
+sudo rpm --import nektar-yum.gpg
+\end{lstlisting}
+
+\item Now install the Nektar++ packages as required. For example,
+\begin{lstlisting}[style=BashInputStyle]
+yum install nektar++-openmpi-incnavierstokes-solver
 \end{lstlisting}
 Any additional dependencies required by Nektar++ will be automatically installed.
 
