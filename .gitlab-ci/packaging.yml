@@ -644,3 +644,31 @@ package-fedora-32-deploy:
   dependencies:
     - package-fedora-32-build
 
+##
+## Fedora 33
+##
+package-fedora-33-env:
+  <<: *package-env-build
+
+package-fedora-33-build:
+  <<: *package-rpm-build
+  needs: ["package-fedora-33-env"]
+  variables:
+    image_name: pkg/fedora-33
+    version_file: fedora-33.json
+
+package-fedora-33-test:
+  <<: *package-rpm-test
+  needs: ["package-fedora-33-build"]
+  dependencies:
+    - package-fedora-33-build
+  variables:
+    image_name: fedora:33
+    cmake_exe: cmake
+
+package-fedora-33-deploy:
+  <<: *package-rpm-deploy
+  needs: ["package-fedora-33-build", "package-fedora-33-test"]
+  dependencies:
+    - package-fedora-33-build
+
