@@ -126,7 +126,7 @@
   <<: *package-deb-deploy-dev
   stage: package-deploy
   only:
-    ref:
+    refs:
       - tags@nektar/nektar
   variables:
       DPATH: /web/deb
@@ -226,7 +226,7 @@
   <<: *package-rpm-deploy-dev
   stage: package-deploy
   only:
-    ref:
+    refs:
       - tags@nektar/nektar
   variables:
       DPATH: /web/rpm
@@ -263,7 +263,7 @@ package-source-archive-build:
 package-source-archive-deploy:
   stage: package-deploy
   only:
-    ref:
+    refs:
       - tags@nektar/nektar
   image: debian:stable-slim
   needs: ["package-source-archive-build"]
@@ -312,7 +312,7 @@ package-source-doc-build:
 package-source-doc-deploy:
   stage: package-deploy
   only:
-    ref:
+    refs:
       - tags@nektar/nektar
   image: debian:stable-slim
   needs: ["package-source-doc-build"]
