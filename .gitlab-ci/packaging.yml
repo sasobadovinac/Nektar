@@ -5,7 +5,7 @@
 .package-conditions: &package-conditions
   only:
     refs:
-      - feature/pkg@ccantwel/nektar
+      - /^pkg\/.*$/
       - tags@nektar/nektar
       - web
 
@@ -90,19 +90,21 @@
     - cd $CI_PROJECT_DIR/templates/executable
     - ./test.sh /usr/lib/*/nektar++/cmake 3 /usr/bin/cmake
 
-.package-deb-deploy: &package-deb-deploy
+.package-deb-deploy-dev: &package-deb-deploy-dev
   <<: *package-conditions
   image: debian:stable-slim
-  stage: package-deploy
+  stage: package-deploy-dev
+  variables:
+    DPATH: /web/deb-test
   tags:
     - pkg
     - pkg-deb
   script:
     - OS_DIST=$(echo $CI_JOB_NAME | cut -d- -f 2)
     - OS_VERSION=$(echo $CI_JOB_NAME | cut -d- -f 3)
-    - DEB_LOC=/web/deb/${OS_DIST}-${OS_VERSION}
+    - DEB_LOC=$DPATH/${OS_DIST}-${OS_VERSION}
     - CONTRIB=${DEB_LOC}/dists/${OS_VERSION}/contrib
-    - if [ ! -d /web/deb ]; then echo "Remote filesystem not accessible"; exit 1; fi
+    - if [ ! -d $DPATH ]; then echo "Remote filesystem not accessible"; exit 1; fi
     - apt -yq update
     - apt -yq install dpkg-dev gpg apt-utils
     - echo "$DEB_DEPLOY_KEY" | base64 --decode | gpg --import
@@ -115,10 +117,19 @@
     - apt-ftparchive --arch amd64 contents pool/contrib > ${CONTRIB}/binary-amd64/Contents-amd64
     - gzip -k -f ${CONTRIB}/binary-amd64/Contents-amd64
     - apt-ftparchive release ${CONTRIB}/binary-amd64 > ${CONTRIB}/binary-amd64/Release
-    - apt-ftparchive release -o APT::FTPArchive::Release::Codename="${OS_VERSION}" -c /web/deb/release.conf dists/${OS_VERSION} > dists/${OS_VERSION}/Release
+    - apt-ftparchive release -o APT::FTPArchive::Release::Codename="${OS_VERSION}" -c $DPATH/release.conf dists/${OS_VERSION} > dists/${OS_VERSION}/Release
     - rm -rf dists/${OS_VERSION}/Release.gpg dists/${OS_VERSION}/InRelease
     - gpg --batch --default-key nektar -abs -o dists/${OS_VERSION}/Release.gpg dists/${OS_VERSION}/Release
     - gpg --batch --default-key nektar -abs --clearsign -o dists/${OS_VERSION}/InRelease dists/${OS_VERSION}/Release
+
+.package-deb-deploy: &package-deb-deploy
+  <<: *package-deb-deploy-dev
+  stage: package-deploy
+  only:
+    ref:
+      - tags@nektar/nektar
+  variables:
+      DPATH: /web/deb
 
 .package-rpm-build: &package-rpm-build
   <<: *package-conditions
@@ -183,19 +194,21 @@
 # Repository update is done on local filesystem as sqlite locking not reliable
 # over NFS.
 #
-.package-rpm-deploy: &package-rpm-deploy
+.package-rpm-deploy-dev: &package-rpm-deploy-dev
   <<: *package-conditions
   image: fedora:30
-  stage: package-deploy
+  stage: package-deploy-dev
+  variables:
+    DPATH: /web/rpm-test
   tags:
     - pkg
     - pkg-rpm
   script:
     - OS_DIST=$(echo $CI_JOB_NAME | cut -d- -f 2)
     - OS_VERSION=$(echo $CI_JOB_NAME | cut -d- -f 3)
-    - RPM_LOC=/web/yum/${OS_DIST}/${OS_VERSION}
+    - RPM_LOC=$DPATH/${OS_DIST}/${OS_VERSION}
     - TMP_LOC=/tmp/repo
-    - if [ ! -d /web/yum ]; then echo "Remote filesystem not accessible"; exit 1; fi
+    - if [ ! -d $DPATH ]; then echo "Remote filesystem not accessible"; exit 1; fi
     - dnf install -y createrepo rpm-sign rsync
     - echo "$RPM_DEPLOY_KEY" | base64 --decode | gpg --import
     - for f in RPMS/*/*.rpm SRPMS/*.rpm; do rpm -D '_gpg_name nektar-users@imperial.ac.uk' --addsign $f; done
@@ -208,6 +221,15 @@
     - createrepo --update $TMP_LOC/x86_64/
     - gpg --batch --yes --detach-sign -u nektar-users@imperial.ac.uk --armor $TMP_LOC/x86_64/repodata/repomd.xml
     - rsync -a --delete $TMP_LOC/ $RPM_LOC/
+
+.package-rpm-deploy: &package-rpm-deploy
+  <<: *package-rpm-deploy-dev
+  stage: package-deploy
+  only:
+    ref:
+      - tags@nektar/nektar
+  variables:
+      DPATH: /web/rpm
 
 
 ##
@@ -239,8 +261,10 @@ package-source-archive-build:
     expire_in: 1 week
 
 package-source-archive-deploy:
-  <<: *package-conditions
   stage: package-deploy
+  only:
+    ref:
+      - tags@nektar/nektar
   image: debian:stable-slim
   needs: ["package-source-archive-build"]
   tags:
@@ -286,10 +310,15 @@ package-source-doc-build:
       - build/docs/tutorial/*/*/html
 
 package-source-doc-deploy:
-  <<: *package-conditions
   stage: package-deploy
+  only:
+    ref:
+      - tags@nektar/nektar
   image: debian:stable-slim
   needs: ["package-source-doc-build"]
+  variables:
+      DPATH_DOC: /web/doc
+      DPATH_SRC: /web/src
   tags:
     - pkg
     - pkg-src
@@ -301,22 +330,22 @@ package-source-doc-deploy:
     - apt -yq update
     - apt -yq install rsync
     - cd build/docs
-    - mkdir -p /web/doc/userguide/${VERSION}
-    - ${RSYNC} user-guide/html/ /web/doc/userguide/${VERSION}/
-    - ${RSYNC} user-guide/user-guide.pdf /web/src/user-guide-${VERSION}.pdf
-    - mkdir -p /web/doc/developerguide/${VERSION}
-    - ${RSYNC} developer-guide/html/ /web/doc/developerguide/${VERSION}/
-    - ${RSYNC} developer-guide/developer-guide.pdf /web/src/developer-guide-${VERSION}.pdf
-    - mkdir -p /web/doc/tutorials/${VERSION}
-    - ${RSYNC} tutorial/ /web/doc/tutorials/${VERSION}/
-    - mkdir -p /web/doc/doxygen/${VERSION}
-    - ${RSYNC} doxygen/html/ /web/doc/doxygen/${VERSION}/
-    - cd /web/doc/userguide && if [ $(ls -1 | grep -v latest | tail -n 1) == "${VERSION}" ]; then rm -f latest; ln -s ${VERSION} latest; fi
-    - cd /web/doc/developerguide && if [ $(ls -1 | grep -v latest | tail -n 1) == "${VERSION}" ]; then rm -f latest; ln -s ${VERSION} latest; fi
-    - cd /web/doc/tutorials && if [ $(ls -1 | grep -v latest | tail -n 1) == "${VERSION}" ]; then rm -f latest; ln -s ${VERSION} latest; fi
-    - cd /web/doc/doxygen && if [ $(ls -1 | grep -v latest | tail -n 1) == "${VERSION}" ]; then rm -f latest; ln -s ${VERSION} latest; fi
+    - mkdir -p $DPATH_DOC/userguide/${VERSION}
+    - ${RSYNC} user-guide/html/ $DPATH_DOC/userguide/${VERSION}/
+    - ${RSYNC} user-guide/user-guide.pdf $DPATH_SRC/user-guide-${VERSION}.pdf
+    - mkdir -p $DPATH_DOC/developerguide/${VERSION}
+    - ${RSYNC} developer-guide/html/ $DPATH_DOC/developerguide/${VERSION}/
+    - ${RSYNC} developer-guide/developer-guide.pdf $DPATH_SRC/developer-guide-${VERSION}.pdf
+    - mkdir -p $DPATH_DOC/tutorials/${VERSION}
+    - ${RSYNC} tutorial/ $DPATH_DOC/tutorials/${VERSION}/
+    - mkdir -p $DPATH_DOC/doxygen/${VERSION}
+    - ${RSYNC} doxygen/html/ $DPATH_DOC/doxygen/${VERSION}/
+    - cd $DPATH_DOC/userguide && if [ $(ls -1 | grep -v latest | tail -n 1) == "${VERSION}" ]; then rm -f latest; ln -s ${VERSION} latest; fi
+    - cd $DPATH_DOC/developerguide && if [ $(ls -1 | grep -v latest | tail -n 1) == "${VERSION}" ]; then rm -f latest; ln -s ${VERSION} latest; fi
+    - cd $DPATH_DOC/tutorials && if [ $(ls -1 | grep -v latest | tail -n 1) == "${VERSION}" ]; then rm -f latest; ln -s ${VERSION} latest; fi
+    - cd $DPATH_DOC/doxygen && if [ $(ls -1 | grep -v latest | tail -n 1) == "${VERSION}" ]; then rm -f latest; ln -s ${VERSION} latest; fi
 
-    
+
 ##
 ## Debian unstable
 ##
@@ -337,9 +366,15 @@ package-debian-unstable-test:
   variables:
     image_name: debian:unstable
 
+package-debian-unstable-deploy-dev:
+  <<: *package-deb-deploy-dev
+  needs: ["package-debian-unstable-build", "package-debian-unstable-test"]
+  dependencies:
+    - package-debian-unstable-build
+
 package-debian-unstable-deploy:
   <<: *package-deb-deploy
-  needs: ["package-debian-unstable-build", "package-debian-unstable-test"]
+  needs: ["package-debian-unstable-build", "package-debian-unstable-deploy-dev"]
   dependencies:
     - package-debian-unstable-build
 
@@ -363,9 +398,15 @@ package-debian-bullseye-test:
   variables:
     image_name: debian:bullseye
 
+package-debian-bullseye-deploy-dev:
+  <<: *package-deb-deploy-dev
+  needs: ["package-debian-bullseye-build", "package-debian-bullseye-test"]
+  dependencies:
+    - package-debian-bullseye-build
+
 package-debian-bullseye-deploy:
   <<: *package-deb-deploy
-  needs: ["package-debian-bullseye-build", "package-debian-bullseye-test"]
+  needs: ["package-debian-bullseye-build", "package-debian-bullseye-deploy-dev"]
   dependencies:
     - package-debian-bullseye-build
 
@@ -389,9 +430,15 @@ package-debian-buster-test:
   variables:
     image_name: debian:buster
 
+package-debian-buster-deploy-dev:
+  <<: *package-deb-deploy-dev
+  needs: ["package-debian-buster-build", "package-debian-buster-test"]
+  dependencies:
+    - package-debian-buster-build
+
 package-debian-buster-deploy:
   <<: *package-deb-deploy
-  needs: ["package-debian-buster-build", "package-debian-buster-test"]
+  needs: ["package-debian-buster-build", "package-debian-buster-deploy-dev"]
   dependencies:
     - package-debian-buster-build
 
@@ -415,9 +462,15 @@ package-debian-stretch-test:
   variables:
     image_name: debian:stretch
 
+package-debian-stretch-deploy-dev:
+  <<: *package-deb-deploy-dev
+  needs: ["package-debian-stretch-build", "package-debian-stretch-test"]
+  dependencies:
+    - package-debian-stretch-build
+
 package-debian-stretch-deploy:
   <<: *package-deb-deploy
-  needs: ["package-debian-stretch-build", "package-debian-stretch-test"]
+  needs: ["package-debian-stretch-build", "package-debian-stretch-deploy-dev"]
   dependencies:
     - package-debian-stretch-build
 
@@ -441,9 +494,15 @@ package-ubuntu-focal-test:
   variables:
     image_name: ubuntu:focal
 
+package-ubuntu-focal-deploy-dev:
+  <<: *package-deb-deploy-dev
+  needs: ["package-ubuntu-focal-build", "package-ubuntu-focal-test"]
+  dependencies:
+    - package-ubuntu-focal-build
+
 package-ubuntu-focal-deploy:
   <<: *package-deb-deploy
-  needs: ["package-ubuntu-focal-build", "package-ubuntu-focal-test"]
+  needs: ["package-ubuntu-focal-build", "package-ubuntu-focal-deploy-dev"]
   dependencies:
     - package-ubuntu-focal-build
 
@@ -467,9 +526,15 @@ package-ubuntu-bionic-test:
   variables:
     image_name: ubuntu:bionic
 
+package-ubuntu-bionic-deploy-dev:
+  <<: *package-deb-deploy-dev
+  needs: ["package-ubuntu-bionic-build", "package-ubuntu-bionic-test"]
+  dependencies:
+    - package-ubuntu-bionic-build
+
 package-ubuntu-bionic-deploy:
   <<: *package-deb-deploy
-  needs: ["package-ubuntu-bionic-build", "package-ubuntu-bionic-test"]
+  needs: ["package-ubuntu-bionic-build", "package-ubuntu-bionic-deploy-dev"]
   dependencies:
     - package-ubuntu-bionic-build
 
@@ -493,9 +558,15 @@ package-ubuntu-xenial-test:
   variables:
     image_name: ubuntu:xenial
 
+package-ubuntu-xenial-deploy-dev:
+  <<: *package-deb-deploy-dev
+  needs: ["package-ubuntu-xenial-build", "package-ubuntu-xenial-test"]
+  dependencies:
+    - package-ubuntu-xenial-build
+
 package-ubuntu-xenial-deploy:
   <<: *package-deb-deploy
-  needs: ["package-ubuntu-xenial-build", "package-ubuntu-xenial-test"]
+  needs: ["package-ubuntu-xenial-build", "package-ubuntu-xenial-deploy-dev"]
   dependencies:
     - package-ubuntu-xenial-build
 
@@ -524,9 +595,15 @@ package-centos-7-test:
     needs_epel: 1
     cmake_exe: cmake3
 
+package-centos-7-deploy-dev:
+  <<: *package-rpm-deploy-dev
+  needs: ["package-centos-7-build", "package-centos-7-test"]
+  dependencies:
+    - package-centos-7-build
+
 package-centos-7-deploy:
   <<: *package-rpm-deploy
-  needs: ["package-centos-7-build", "package-centos-7-test"]
+  needs: ["package-centos-7-build", "package-centos-7-deploy-dev"]
   dependencies:
     - package-centos-7-build
 
@@ -554,9 +631,15 @@ package-centos-8-test:
     needs_powertools: 1
     cmake_exe: cmake
 
+package-centos-8-deploy-dev:
+  <<: *package-rpm-deploy-dev
+  needs: ["package-centos-8-build", "package-centos-8-test"]
+  dependencies:
+    - package-centos-8-build
+
 package-centos-8-deploy:
   <<: *package-rpm-deploy
-  needs: ["package-centos-8-build", "package-centos-8-test"]
+  needs: ["package-centos-8-build", "package-centos-8-deploy-dev"]
   dependencies:
     - package-centos-8-build
 
@@ -582,9 +665,15 @@ package-fedora-30-test:
     image_name: fedora:30
     cmake_exe: cmake
 
+package-fedora-30-deploy-dev:
+  <<: *package-rpm-deploy-dev
+  needs: ["package-fedora-30-build", "package-fedora-30-test"]
+  dependencies:
+    - package-fedora-30-build
+
 package-fedora-30-deploy:
   <<: *package-rpm-deploy
-  needs: ["package-fedora-30-build", "package-fedora-30-test"]
+  needs: ["package-fedora-30-build", "package-fedora-30-deploy-dev"]
   dependencies:
     - package-fedora-30-build
 
@@ -610,9 +699,15 @@ package-fedora-31-test:
     image_name: fedora:31
     cmake_exe: cmake
 
+package-fedora-31-deploy-dev:
+  <<: *package-rpm-deploy-dev
+  needs: ["package-fedora-31-build", "package-fedora-31-test"]
+  dependencies:
+    - package-fedora-31-build
+
 package-fedora-31-deploy:
   <<: *package-rpm-deploy
-  needs: ["package-fedora-31-build", "package-fedora-31-test"]
+  needs: ["package-fedora-31-build", "package-fedora-31-deploy-dev"]
   dependencies:
     - package-fedora-31-build
 
@@ -638,9 +733,15 @@ package-fedora-32-test:
     image_name: fedora:32
     cmake_exe: cmake
 
+package-fedora-32-deploy-dev:
+  <<: *package-rpm-deploy-dev
+  needs: ["package-fedora-32-build", "package-fedora-32-test"]
+  dependencies:
+    - package-fedora-32-build
+
 package-fedora-32-deploy:
   <<: *package-rpm-deploy
-  needs: ["package-fedora-32-build", "package-fedora-32-test"]
+  needs: ["package-fedora-32-build", "package-fedora-32-deploy-dev"]
   dependencies:
     - package-fedora-32-build
 
@@ -666,9 +767,15 @@ package-fedora-33-test:
     image_name: fedora:33
     cmake_exe: cmake
 
+package-fedora-33-deploy-dev:
+  <<: *package-rpm-deploy-dev
+  needs: ["package-fedora-33-build", "package-fedora-33-test"]
+  dependencies:
+    - package-fedora-33-build
+
 package-fedora-33-deploy:
   <<: *package-rpm-deploy
-  needs: ["package-fedora-33-build", "package-fedora-33-test"]
+  needs: ["package-fedora-33-build", "package-fedora-33-deploy-dev"]
   dependencies:
     - package-fedora-33-build
 
