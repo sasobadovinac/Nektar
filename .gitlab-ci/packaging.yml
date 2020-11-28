@@ -13,6 +13,7 @@
   <<: *package-conditions
   image: docker:stable
   stage: package-env
+  needs: []
   tags:
     - pkg
   script:
