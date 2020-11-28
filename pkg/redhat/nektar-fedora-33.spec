@@ -386,6 +386,7 @@ Shallow water flow solver for Nektar++ (MPICH)
 
 %prep
 %setup -qn nektar-v%{version}
+%global __cmake_in_source_build 1
 
 %define dobuild()                                           \
 mkdir $MPI_COMPILER;                                        \
@@ -417,7 +418,7 @@ cd $MPI_COMPILER;                                           \
     -DNEKTAR_USE_CCM=OFF                                  \\\
     -DNEKTAR_USE_PYTHON3=ON                               \\\
     .. ;                                                    \
-make %{?_smp_mflags} ; \
+make -j4 ; \
 cd ..
 
 %build
