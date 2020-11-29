@@ -16,6 +16,7 @@ BuildRequires:  fftw-devel
 BuildRequires:  gcc-c++
 BuildRequires:  gcc-gfortran
 BuildRequires:  lapack-devel
+BuildRequires:  libXmu-devel
 BuildRequires:  make
 BuildRequires:  opencascade-devel
 BuildRequires:  petsc-devel
