@@ -165,24 +165,24 @@ Requires:       zlib-devel
 Development and header files for Nektar++ (MPICH variant)
 
 #### Python bindings
-%package python3
+%package -n python3-nektar++
 Summary:        Nektar++ Python 3 interface library
 Requires:       libnektar++ = %{version}
-%description python3
+%description -n python3-nektar++
 Nektar++ Python 3 interface library
 
-%package python3-openmpi
+%package -n python3-nektar++-openmpi
 Summary:        Nektar++ Python 3 interface library (OpenMPI variant)
 Requires:       libnektar++-openmpi = %{version}
 Requires:       python3-openmpi
-%description python3-openmpi
+%description -n python3-nektar++-openmpi
 Nektar++ Python 3 interface library (OpenMPI variant)
 
-%package python3-mpich
+%package -n python3-nektar++-mpich
 Summary:        Nektar++ Python 3 interface library (MPICH variant)
 Requires:       libnektar++ = %{version}
 Requires:       python3-mpich
-%description python3-mpich
+%description -n python3-nektar++-mpich
 Nektar++ Python 3 interface library (MPICH variant)
 
 #### Documentation
@@ -516,15 +516,15 @@ rm %{buildroot}/usr/lib64/openmpi/bin/NekMesh
 %{_libdir}/mpich/lib/nektar++
 %{_includedir}/mpich-x86_64/*
 
-%files python3
+%files -n python3-nektar++
 %{python3_sitearch}/NekPy
 %{python3_sitearch}/NekPy*.egg-info
 
-%files python3-openmpi
+%files -n python3-nektar++-openmpi
 %{python3_sitearch}/openmpi/NekPy
 %{python3_sitearch}/openmpi/NekPy*.egg-info
 
-%files python3-mpich
+%files -n python3-nektar++-mpich
 %{python3_sitearch}/mpich/NekPy
 %{python3_sitearch}/mpich/NekPy*.egg-info
 
