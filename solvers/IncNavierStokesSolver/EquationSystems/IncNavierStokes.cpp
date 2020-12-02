@@ -877,10 +877,12 @@ namespace Nektar
                     m_bsbcParams->m_moment[0] += moments[j] * m_bsbcParams->m_axis[j];
                 }
             }
-
+            
             // Account for torsional spring and damping contributions
             m_bsbcParams->m_moment[0] -= m_bsbcParams->m_K[2] * m_bsbcParams->m_dof[2]
              + m_bsbcParams->m_C[2] * m_bsbcParams->m_dofVel[2][0];
+             // with fictious inertia m_FI:
+             m_bsbcParams->m_moment[0] += m_bsbcParams->m_FictI * m_bsbcParams->m_dofAcc[2][0];
 
             // Shift velocity storage
             for(int n = m_bsbcParams->m_intSteps-1; n > 0; --n)
@@ -888,13 +890,24 @@ namespace Nektar
                 m_bsbcParams->m_dofVel[2][n] = m_bsbcParams->m_dofVel[2][n-1];
             }
 
+            // Shift acceleration storage
+            for(int n = m_bsbcParams->m_intSteps-1; n > 0; --n)
+            {
+                m_bsbcParams->m_dofAcc[2][n] = m_bsbcParams->m_dofAcc[2][n-1];
+            }
+
             // Update velocity
             for(int j = 0; j < order; ++j)
             {
                 m_bsbcParams->m_dofVel[2][0] += m_timestep *
                     m_bsbcParams->AdamsBashforth_coeffs[order-1][j] 
-                    * m_bsbcParams->m_moment[j] / m_bsbcParams->m_I;
+                    * m_bsbcParams->m_moment[j] / (m_bsbcParams->m_I+m_bsbcParams->m_FictI);
             }
+
+            // Classic Backward (from t and t-1) for acceleration:
+             m_bsbcParams->m_dofAcc[2][0] = (m_bsbcParams->m_dofVel[2][0] - 
+                m_bsbcParams->m_dofVel[2][1])/m_timestep;
+
 
             // Update position
             m_bsbcParams->m_previousAngle = m_bsbcParams->m_dof[2];
@@ -903,6 +916,7 @@ namespace Nektar
                 m_bsbcParams->m_dof[2] += m_timestep *
                     m_bsbcParams->AdamsMoulton_coeffs[order-1][j] * m_bsbcParams->m_dofVel[2][j];
             }
+
         }
 
         // something inside the previous if statement change the values of m_dofVel[i] m_dofAdj[i]
@@ -1065,7 +1079,9 @@ namespace Nektar
 	        m_bsbcParams->m_momentB[0] = (- m_bsbcParams->m_momentB[0] - 
 	            m_bsbcParams->m_C[2] * m_bsbcParams->m_dofVel[2][0] + 
 	            m_bsbcParams->m_K[2] * m_bsbcParams->m_dofAdj[2][0]) / m_bsbcParams->m_I;
-	         ;
+	         //;
+            // with fictious mass
+            m_bsbcParams->m_momentB[0] += m_bsbcParams->m_FictM * m_bsbcParams->m_dofAcc[2][0];
 
 	        // Shift velocity and position storage
 	        for(int n = m_bsbcParams->m_intSteps-1; n > 0; --n)
@@ -1073,6 +1089,11 @@ namespace Nektar
 	            m_bsbcParams->m_dofVel[2][n] = m_bsbcParams->m_dofVel[2][n-1];
 	            m_bsbcParams->m_dofAdj[2][n] = m_bsbcParams->m_dofAdj[2][n-1];
 	        }
+            // Shift acceleration storage
+            for(int n = m_bsbcParams->m_intSteps-1; n > 0; --n)
+            {
+                m_bsbcParams->m_dofAcc[2][n] = m_bsbcParams->m_dofAcc[2][n-1];
+            }
 
 	        // Update velocity and position
 	        for(int j = 0; j < order; ++j)
@@ -1085,6 +1106,10 @@ namespace Nektar
 	            m_bsbcParams->AdamsBashforth_coeffs[order-1][j] *
 	                    m_bsbcParams->m_momentA[j];
 	        }
+
+            // Classic Backward (from t and t-1) for acceleration:
+             m_bsbcParams->m_dofAcc[2][0] = (m_bsbcParams->m_dofVel[2][0] - 
+                m_bsbcParams->m_dofVel[2][1])/m_timestep;
         }
 // something inside the previous if statement change the values of m_dofVel[i] m_dofAdj[i]
 // for other than i=2 ...
@@ -1423,6 +1448,15 @@ namespace Nektar
         ParseUtils::GenerateVector(BSparams["I"],inertia);
         m_bsbcParams->m_I = inertia[0];
 
+        // Fictious Inertia:
+        m_bsbcParams->m_FictI = 0.0;
+        ASSERTL0(BSparams.count("FICTI") == 1,
+            "Failed to find Fictitious Inertia parameter in Blowing Suction boundary conditions");
+        std::vector<NekDouble> fictitious_inertia;
+        ParseUtils::GenerateVector(BSparams["FICTI"],fictitious_inertia);
+        m_bsbcParams->m_FictI = fictitious_inertia[0];
+        // m_bsbcParams->m_FI = 1000;
+
         // Mass
         m_bsbcParams->m_M = 0.0;
         ASSERTL0(BSparams.count("M") == 1,
@@ -1431,8 +1465,17 @@ namespace Nektar
         ParseUtils::GenerateVector(BSparams["M"],mass);
         m_bsbcParams->m_M = mass[0];
 
+        // Fictious Mass
+        m_bsbcParams->m_FictM = 0.0;
+        ASSERTL0(BSparams.count("FICTM") == 1,
+            "Failed to find fictitious mass parameter in Blowing Suction boundary conditions");
+        std::vector<NekDouble> fictitious_mass;
+        ParseUtils::GenerateVector(BSparams["FICTM"],fictitious_mass);
+        m_bsbcParams->m_FictM = fictitious_mass[0];
+
         // Damping
         m_bsbcParams->m_C = Array<OneD, NekDouble> (3, 0.0);
+        m_bsbcParams->m_FC = Array<OneD, NekDouble> (3, 0.0);
         ASSERTL0(BSparams.count("C") == 1,
           "Failed to find Damping parameter in Blowing Suction boundary conditions");
         std::vector<NekDouble> damp;
@@ -1440,6 +1483,8 @@ namespace Nektar
         m_bsbcParams->m_C[0] = damp[0];
         m_bsbcParams->m_C[1] = damp[1];
         m_bsbcParams->m_C[2] = damp[2];
+        // Fictious:
+        m_bsbcParams->m_FC[2] = 0;
 
         // Stiffness
         m_bsbcParams->m_K = Array<OneD, NekDouble> (3, 0.0);
@@ -1561,6 +1606,7 @@ namespace Nektar
         // Position :
         m_bsbcParams->m_dof           = Array<OneD,NekDouble> (3, 0.0);
         m_bsbcParams->m_dofVel        = Array<OneD, Array<OneD, NekDouble>> (3);
+        m_bsbcParams->m_dofAcc        = Array<OneD, Array<OneD, NekDouble>> (3);
         m_bsbcParams->m_dofAdj        = Array<OneD, Array<OneD, NekDouble>> (3);
         m_bsbcParams->m_force         = Array<OneD, Array<OneD, NekDouble>> (3);
         m_bsbcParams->m_forceA        = Array<OneD, Array<OneD, NekDouble>> (3);

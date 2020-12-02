@@ -142,12 +142,18 @@ namespace Nektar
         Array<OneD, int>                                 m_DOF;
         //Mass
         NekDouble                                        m_M;
+        //Fictious Mass
+        NekDouble                                        m_FictM;
         //Inertia
         NekDouble                                        m_I;
+        //Fictious Inertia
+        NekDouble                                        m_FictI;
         // Spring coefficient
         Array<OneD, NekDouble>                           m_K;
         // Damping coefficient
         Array<OneD, NekDouble>                           m_C;
+        //Fictious Damping
+        Array<OneD, NekDouble>                           m_FC;
         // Hinge point 
         Array<OneD, NekDouble>                           m_hingePoint;
         // Rotation axis 
@@ -186,6 +192,7 @@ namespace Nektar
 
         Array<OneD, NekDouble>                  m_dof;
         Array<OneD, Array<OneD, NekDouble> >    m_dofVel;
+        Array<OneD, Array<OneD, NekDouble> >    m_dofAcc;
         Array<OneD, Array<OneD, NekDouble> >    m_dofAdj;
         Array<OneD, NekDouble>                  m_moment;
         Array<OneD, Array<OneD, NekDouble> >    m_force;
