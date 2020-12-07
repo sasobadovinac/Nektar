@@ -1078,29 +1078,25 @@ namespace Nektar
 	        
 	        m_bsbcParams->m_momentB[0] = (- m_bsbcParams->m_momentB[0] - 
 	            m_bsbcParams->m_C[2] * m_bsbcParams->m_dofVel[2][0] + 
-	            m_bsbcParams->m_K[2] * m_bsbcParams->m_dofAdj[2][0]) / m_bsbcParams->m_I;
+	            m_bsbcParams->m_K[2] * m_bsbcParams->m_dofAdj[2][0]);
 	         //;
             // with fictious mass
-            m_bsbcParams->m_momentB[0] += m_bsbcParams->m_FictM * m_bsbcParams->m_dofAcc[2][0];
+            m_bsbcParams->m_momentB[0] += m_bsbcParams->m_FictI * m_bsbcParams->m_dofAcc[2][0];
 
-	        // Shift velocity and position storage
+	        // Shift velocity and position storage and acceleration
 	        for(int n = m_bsbcParams->m_intSteps-1; n > 0; --n)
 	        {
 	            m_bsbcParams->m_dofVel[2][n] = m_bsbcParams->m_dofVel[2][n-1];
 	            m_bsbcParams->m_dofAdj[2][n] = m_bsbcParams->m_dofAdj[2][n-1];
-	        }
-            // Shift acceleration storage
-            for(int n = m_bsbcParams->m_intSteps-1; n > 0; --n)
-            {
                 m_bsbcParams->m_dofAcc[2][n] = m_bsbcParams->m_dofAcc[2][n-1];
-            }
+	        }
 
 	        // Update velocity and position
 	        for(int j = 0; j < order; ++j)
 	        {
 	            m_bsbcParams->m_dofVel[2][0] += m_timestep *
 	            m_bsbcParams->AdamsBashforth_coeffs[order-1][j] 
-	                * m_bsbcParams->m_momentB[j];
+	                * m_bsbcParams->m_momentB[j] / (m_bsbcParams->m_I+m_bsbcParams->m_FictI);
 
 	            m_bsbcParams->m_dofAdj[2][0] += m_timestep * 
 	            m_bsbcParams->AdamsBashforth_coeffs[order-1][j] *
@@ -1111,8 +1107,8 @@ namespace Nektar
              m_bsbcParams->m_dofAcc[2][0] = (m_bsbcParams->m_dofVel[2][0] - 
                 m_bsbcParams->m_dofVel[2][1])/m_timestep;
         }
-// something inside the previous if statement change the values of m_dofVel[i] m_dofAdj[i]
-// for other than i=2 ...
+        // something inside the previous if statement change the values of m_dofVel[i] m_dofAdj[i]
+        // for other than i=2 ...
         for(int i=0 ; i<3 ; ++i)
         {
             if(m_bsbcParams->m_DOF[i] != 1)
