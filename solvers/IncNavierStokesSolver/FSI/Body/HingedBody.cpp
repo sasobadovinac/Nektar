@@ -356,8 +356,15 @@ void HingedBody::v_Apply(
             }
         }
 
+        // Classic Backward (from t and t-1) for acceleration:
+        double acceleration = 0.0;
+        acceleration = (m_velocity[0] - 
+                m_velocity[1])/m_timestep;
+
         // Account for torsional spring and damping contributions
         m_moment[0] -= m_K * m_angle + m_C * m_velocity[0];
+        // with fictious inertia m_FI:
+        m_moment[0] += 1000 * acceleration;
 
         // Shift velocity storage
         for(int n = m_intSteps-1; n > 0; --n)
@@ -369,7 +376,7 @@ void HingedBody::v_Apply(
         for(int j = 0; j < order; ++j)
         {
             m_velocity[0] += m_subSteps * m_timestep *
-                AdamsBashforth_coeffs[order-1][j] * m_moment[j] / m_I;
+                AdamsBashforth_coeffs[order-1][j] * m_moment[j] /(m_I + 1000);
         }
         // Update position
         m_previousAngle = m_angle;
