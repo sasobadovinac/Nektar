@@ -722,7 +722,9 @@ int main(int argc, char *argv[])
                     pFields[0]->GetBndConditions()[b]->
                         GetUserDefined() == "WallAdiabatic" ||
                     pFields[0]->GetBndConditions()[b]->
-                        GetUserDefined() == "Wall")
+                        GetUserDefined() == "Wall" ||
+                    pFields[0]->GetBndConditions()[b]->
+                        GetUserDefined() == "WallAdiabatic_ptub")
                 {
                     Vmath::Vcopy(nBndEdgePts, &traceX[id2], 1,
                                  &surfaceX[id1], 1);
@@ -764,7 +766,9 @@ int main(int argc, char *argv[])
                         pFields[j]->GetBndConditions()[b]->
                             GetUserDefined() == "WallAdiabatic" ||
                         pFields[j]->GetBndConditions()[b]->
-                            GetUserDefined() == "Wall")
+                            GetUserDefined() == "Wall" ||
+                        pFields[j]->GetBndConditions()[b]->
+                            GetUserDefined() == "WallAdiabatic_ptub")
                     {
                         Vmath::Vcopy(nBndEdgePts, &traceFields[j][id2], 1,
                                      &surfaceFields[j][id1], 1);
@@ -801,7 +805,9 @@ int main(int argc, char *argv[])
                         pFields[0]->GetBndConditions()[b]->
                             GetUserDefined() == "WallAdiabatic" ||
                         pFields[0]->GetBndConditions()[b]->
-                            GetUserDefined() == "Wall")
+                            GetUserDefined() == "Wall" ||
+                        pFields[0]->GetBndConditions()[b]->
+                            GetUserDefined() == "WallAdiabatic_ptub")
                     {
                         Vmath::Vcopy(nBndEdgePts, &traceFieldsAdded[j][id2], 1,
                                      &surfaceFieldsAdded[j][id1], 1);

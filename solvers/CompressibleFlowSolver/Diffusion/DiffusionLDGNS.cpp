@@ -477,7 +477,9 @@ namespace Nektar
                     if (boost::iequals(fields[i]->GetBndConditions()[j]->
                         GetUserDefined(),"WallViscous") ||
                         boost::iequals(fields[i]->GetBndConditions()[j]->
-                        GetUserDefined(),"WallAdiabatic"))
+                        GetUserDefined(),"WallAdiabatic") ||
+                        boost::iequals(fields[i]->GetBndConditions()[j]->
+                        GetUserDefined(),"WallAdiabatic_ptub"))
                     {
                         // Reinforcing bcs for velocity in case of Wall bcs
                         Vmath::Zero(nBndEdgePts,
@@ -640,7 +642,10 @@ namespace Nektar
                     SpatialDomains::eDirichlet &&
                     !boost::iequals(
                         fields[nScalars]->GetBndConditions()[j]
-                        ->GetUserDefined(), "WallAdiabatic"))
+                        ->GetUserDefined(), "WallAdiabatic") &&
+                    !boost::iequals(
+                        fields[nScalars]->GetBndConditions()[j]
+                        ->GetUserDefined(), "WallAdiabatic_ptub"))
                 {
                     Vmath::Vcopy(nBndEdgePts,
                                  &scalarVariables[nScalars-1][id2], 1,
@@ -652,8 +657,10 @@ namespace Nektar
                 else if (((fields[nScalars]->GetBndConditions()[j])->
                           GetBoundaryConditionType() ==
                           SpatialDomains::eNeumann) ||
-                         boost::iequals(fields[nScalars]->GetBndConditions()[j]->
-                                        GetUserDefined(), "WallAdiabatic"))
+                          boost::iequals(fields[nScalars]->GetBndConditions()[j]->
+                                        GetUserDefined(), "WallAdiabatic") ||
+                          boost::iequals(fields[nScalars]->GetBndConditions()[j]->
+                                        GetUserDefined(), "WallAdiabatic_ptub"))
                 {
                     Vmath::Vcopy(nBndEdgePts,
                                  &uplus[nScalars-1][id2], 1,
@@ -776,7 +783,9 @@ namespace Nektar
                 if(fields[var]->GetBndConditions()[i]->
                    GetBoundaryConditionType() == SpatialDomains::eDirichlet
                    && !boost::iequals(fields[var]->GetBndConditions()[i]->
-                                      GetUserDefined(), "WallAdiabatic"))
+                                      GetUserDefined(), "WallAdiabatic")
+                   && !boost::iequals(fields[var]->GetBndConditions()[i]->
+                                      GetUserDefined(), "WallAdiabatic_ptub"))
                 {
                     Vmath::Vmul(nBndEdgePts,
                                 &m_traceNormals[dir][id2], 1,
@@ -801,7 +810,9 @@ namespace Nektar
                      */
                 }
                 else if(boost::iequals(fields[var]->GetBndConditions()[i]->
-                                       GetUserDefined(), "WallAdiabatic"))
+                                       GetUserDefined(), "WallAdiabatic") ||
+                        boost::iequals(fields[var]->GetBndConditions()[i]->
+                                       GetUserDefined(), "WallAdiabatic_ptub"))
                 {
                     if ((var == m_spaceDim + 1))
                     {

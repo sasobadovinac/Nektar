@@ -890,7 +890,9 @@ namespace Nektar
 
                     // Imposing Temperature Twall at the wall 
                     if (boost::iequals(fields[nengy]->GetBndConditions()[j]->
-                        GetUserDefined(),"WallAdiabatic"))
+                        GetUserDefined(),"WallAdiabatic") ||
+                        boost::iequals(fields[nengy]->GetBndConditions()[j]->
+                        GetUserDefined(),"WallAdiabatic_ptub"))
                     {
                         Vmath::Zero(nBndEdgePts, &flux[nengy][id2], 1);
                     }                    

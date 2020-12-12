@@ -1561,7 +1561,7 @@ namespace Nektar
 
     /**
      * @brief aplly Neuman boundary conditions on flux
-     *        Currently only consider WallAdiabatic
+     *        Currently only consider WallAdiabatic and WallAdiabatic_ptub
      *
      */
     void NavierStokesCFE::ApplyFluxBndConds(
@@ -1607,7 +1607,9 @@ namespace Nektar
 
                 // Imposing Temperature Twall at the wall
                 if (boost::iequals(m_fields[nengy]->GetBndConditions()[j]->
-                    GetUserDefined(),"WallAdiabatic"))
+                    GetUserDefined(),"WallAdiabatic") ||
+                    boost::iequals(m_fields[nengy]->GetBndConditions()[j]->
+                    GetUserDefined(),"WallAdiabatic_ptub"))
                 {
                     Vmath::Zero(nBndEdgePts, &flux[nengy][id2], 1);
                 }
