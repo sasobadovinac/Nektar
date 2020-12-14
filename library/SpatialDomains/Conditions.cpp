@@ -528,7 +528,7 @@ namespace Nektar
 
                                         equation = attrData;
 
-                                        //isTimeDependent = isTimeDependent && !boost::iequals(attrData,"0");
+                                        isTimeDependent = isTimeDependent && !boost::iequals(attrData,"0");
                                     }
                                     else if (attrName == "FILE")
                                     {
@@ -546,7 +546,7 @@ namespace Nektar
 
                                         filename = attrData;
 
-                                        //isTimeDependent = isTimeDependent && !boost::iequals(attrData,"0");
+                                        isTimeDependent = isTimeDependent && !boost::iequals(attrData,"0");
                                     }
                                     else
                                     {

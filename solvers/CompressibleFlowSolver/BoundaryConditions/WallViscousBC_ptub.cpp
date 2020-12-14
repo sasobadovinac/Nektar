@@ -75,15 +75,42 @@ void WallViscousBC_ptub::v_Apply(
     int i;
     int nVariables = physarray.num_elements();
 
+    /*
+    for (i=0;i<nVariables;++i) //4
+    {
+        cout << "field i = " << i << ", nbc = " << m_bcRegion << ", isTimeDep = " 
+             << m_fields[i]->GetBndConditions()[m_bcRegion]->IsTimeDependent() << endl; // [m_bcRegion]
+    }
+    */
+
     //----------------------------------------------------
-    // Update variables on the BC for its time dependence
+    // Find the fields whose wall-BC is time-dependent
+    // Update variables on these fields
+    // Get the updated variables on the wall-boundary 
+    //
+    // Maybe the EvaluateBoundaryConditions() should be put upstream to 
+    // CompressibleFlowSystem::NumCalRiemFluxJac(), So that the BCs will not
+    // be repeatedly updated when there are more than one time-dependent BC.
+
     std::string varName;
+    for (i = 0; i < nVariables; ++i)
+    {
+        if (m_fields[i]->GetBndConditions()[m_bcRegion]->IsTimeDependent())
+        {
+            varName = m_session->GetVariable(i);    
+            m_fields[i]->EvaluateBoundaryConditions(time, varName);
+
+            m_bndPhys[i] = m_fields[i]->GetBndCondExpansions()[m_bcRegion]
+                           ->UpdatePhys();
+        }
+    }
+    /*
     for (i = 0; i < nVariables; ++i)
     {
         varName = m_session->GetVariable(i);
         m_fields[i]->EvaluateBoundaryConditions(time, varName);
     }
-
+    
     // Get the variables on the boundary 
     // Merge the two for-loop
     for(i = 0; i < nVariables; ++i) // number of fields
@@ -91,6 +118,7 @@ void WallViscousBC_ptub::v_Apply(
         m_bndPhys[i] = m_fields[i]->GetBndCondExpansions()[m_bcRegion]
             ->UpdatePhys();
     }
+    */
     //----------------------------------------------------
 
 
@@ -122,9 +150,18 @@ void WallViscousBC_ptub::v_Apply(
         // Fwd is created in CompressibleFlowSystem.cpp -> CompressibleFlowSystem::SetBoundaryConditions(...)
         // So it can be modified as we need
         // Fwd is the the array for pyhysical variables, so we can directly manipulate it.    
-        for (int i = 0; i < m_spacedim; i++)
+        /*for (int i = 0; i < m_spacedim; i++)
         {
+            if (i==1 || i==0)
             Vmath::Vadd(nBCEdgePts, &m_bndPhys[i+1][id2],1,&Fwd[i+1][id2],1,&Fwd[i+1][id2],1); //id1 or id2 ?
+        }
+        */
+        for (i = 0; i < nVariables; ++i)
+        {
+            if (m_fields[i]->GetBndConditions()[m_bcRegion]->IsTimeDependent())
+            {
+                Vmath::Vadd(nBCEdgePts, &m_bndPhys[i][id2],1,&Fwd[i][id2],1,&Fwd[i][id2],1); //id1 or id2 ?
+            }
         }
         //------------------------------
 
@@ -136,5 +173,6 @@ void WallViscousBC_ptub::v_Apply(
                            UpdatePhys())[id1], 1);
         }
     }
+
 }
 }
