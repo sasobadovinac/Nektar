@@ -59,6 +59,12 @@ WallViscousBC_ptub::WallViscousBC_ptub(const LibUtilities::SessionReaderSharedPt
     : CFSBndCond(pSession, pFields, pTraceNormals, pSpaceDim, bcRegion, cnt)
 {
     m_diffusionAveWeight = 0.5;
+
+    const MultiRegions::ExpListSharedPtr bndexp =
+        m_fields[0]->GetBndCondExpansions()[m_bcRegion];
+
+    m_npts    = bndexp->GetTotPoints();
+    m_bndPhys = Array<OneD, Array<OneD, NekDouble> > (m_fields.num_elements());
 }
 
 void WallViscousBC_ptub::v_Apply(
@@ -68,6 +74,25 @@ void WallViscousBC_ptub::v_Apply(
 {
     int i;
     int nVariables = physarray.num_elements();
+
+    //----------------------------------------------------
+    // Update variables on the BC for its time dependence
+    std::string varName;
+    for (i = 0; i < nVariables; ++i)
+    {
+        varName = m_session->GetVariable(i);
+        m_fields[i]->EvaluateBoundaryConditions(time, varName);
+    }
+
+    // Get the variables on the boundary 
+    // Merge the two for-loop
+    for(i = 0; i < nVariables; ++i) // number of fields
+    {
+        m_bndPhys[i] = m_fields[i]->GetBndCondExpansions()[m_bcRegion]
+            ->UpdatePhys();
+    }
+    //----------------------------------------------------
+
 
     const Array<OneD, const int> &traceBndMap
         = m_fields[0]->GetTraceBndMap();
@@ -91,6 +116,17 @@ void WallViscousBC_ptub::v_Apply(
         {
             Vmath::Neg(nBCEdgePts, &Fwd[i+1][id2], 1);
         }
+
+        //------------------------------
+        // Super-impose the perturbation 
+        // Fwd is created in CompressibleFlowSystem.cpp -> CompressibleFlowSystem::SetBoundaryConditions(...)
+        // So it can be modified as we need
+        // Fwd is the the array for pyhysical variables, so we can directly manipulate it.    
+        for (int i = 0; i < m_spacedim; i++)
+        {
+            Vmath::Vadd(nBCEdgePts, &m_bndPhys[i+1][id2],1,&Fwd[i+1][id2],1,&Fwd[i+1][id2],1); //id1 or id2 ?
+        }
+        //------------------------------
 
         // Copy boundary adjusted values into the boundary expansion
         for (i = 0; i < nVariables; ++i)

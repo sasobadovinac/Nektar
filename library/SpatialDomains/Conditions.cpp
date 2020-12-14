@@ -509,7 +509,8 @@ namespace Nektar
                                                 attrData);
 
                                         userDefined = attrData;
-                                        isTimeDependent = boost::iequals(attrData,"TimeDependent");
+                                        isTimeDependent = boost::iequals(attrData,"TimeDependent") ||
+                                                          boost::iequals(attrData,"WallAdiabatic_ptub"); // Ganlin Check;;
                                     }
                                     else if (attrName == "VALUE")
                                     {
@@ -526,6 +527,8 @@ namespace Nektar
                                                 attrData);
 
                                         equation = attrData;
+
+                                        //isTimeDependent = isTimeDependent && !boost::iequals(attrData,"0");
                                     }
                                     else if (attrName == "FILE")
                                     {
@@ -542,6 +545,8 @@ namespace Nektar
                                                 attrData);
 
                                         filename = attrData;
+
+                                        //isTimeDependent = isTimeDependent && !boost::iequals(attrData,"0");
                                     }
                                     else
                                     {
