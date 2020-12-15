@@ -526,6 +526,13 @@ namespace Nektar
                                                 attrData);
 
                                         equation = attrData;
+
+                                        if ( !boost::iequals(attrData,"0") &&
+                                             (boost::iequals(userDefined,"WallAdiabatic") ||
+                                              boost::iequals(userDefined,"WallViscous")) )
+                                        {
+                                            isTimeDependent = true;
+                                        }
                                     }
                                     else if (attrName == "FILE")
                                     {
