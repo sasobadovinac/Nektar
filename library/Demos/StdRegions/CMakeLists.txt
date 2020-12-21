@@ -22,6 +22,8 @@ ADD_NEKTAR_EXECUTABLE(BarycentricSpeedTest2D
 
 ADD_NEKTAR_EXECUTABLE(BarycentricSpeedTest2DEvalOnly
         COMPONENT demos DEPENDS StdRegions SOURCES BarycentricSpeedTest2DEvalOnly.cpp)
+ADD_NEKTAR_EXECUTABLE(StdInterpBasisTimings
+        COMPONENT demos DEPENDS StdRegions SOURCES StdInterpBasisTimings.cpp)
 
 # Interpolation tests.
 ADD_NEKTAR_TEST(StdInterp_Seg_Mod_P6_Q7)
