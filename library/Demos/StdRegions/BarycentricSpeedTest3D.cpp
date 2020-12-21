@@ -95,7 +95,17 @@ int main(int argc, char *argv[])
 
     // Do tests of cycles depending on order
     int nModes = E->GetBasisNumModes(0);
-    int totCyc =  1E+06 * exp(-0.656 * nModes); // Approximate cycles to run all cases for minimum of 10s
+    int totCyc;
+    if (nModes < 6)
+    {
+        totCyc = 4333504.20338048 / pow (nModes, 2.98768871615519);
+    }
+    else
+    {
+        totCyc = 123492872.476171 / pow(nModes, 4.95727898146688);
+    }
+
+    if (totCyc < 200) {totCyc = 200;} // Set minimum cycles to 200
     std::cout << "Num of modes is " << nModes << " therefore running for " << totCyc << " cycles." << std::endl;
 
     // Calc interpolation matrix every call
@@ -107,7 +117,6 @@ int main(int argc, char *argv[])
 
 
     Array<OneD, NekDouble> EphysDeriv0(totPoints), EphysDeriv1(totPoints), EphysDeriv2(totPoints);
-    std::cout << "Testing old method, calc interp matrix every cycle" << std::endl;
     t.Start();
     for (int cyc = 0; cyc < totCyc; ++cyc)
     {
@@ -136,11 +145,9 @@ int main(int argc, char *argv[])
         }
     }
     t.Stop();
-    std::cout << "Old method: " << t.TimePerTest(totCyc) << " per cycle (" << totCyc << " cycles)." << std::endl;
+    std::cout << "Old method: " << t.Elapsed().count() << "s - > " << t.TimePerTest(totCyc) << " per cycle (" << totCyc << " cycles)." << std::endl;
 
     Array<OneD, NekDouble> SphysDeriv0(totPoints), SphysDeriv1(totPoints), SphysDeriv2(totPoints);
-    std::cout << "Testing old method, precalc interp matrix" << std::endl;
-
     Array<OneD, Array<OneD, DNekMatSharedPtr>>  I(totPoints);
     for (int i = 0; i < totPoints; ++i)
     {
@@ -170,10 +177,9 @@ int main(int argc, char *argv[])
     }
     t.Stop();
 
-    std::cout << "Old method: " << t.TimePerTest(totCyc) << " per cycle (" << totCyc << " cycles)." << std::endl;
+    std::cout << "Precalc method: " << t.Elapsed().count() << "s - > " << t.TimePerTest(totCyc) << " per cycle (" << totCyc << " cycles)." << std::endl;
 
     Array<OneD, NekDouble> BphysDeriv0(totPoints), BphysDeriv1(totPoints), BphysDeriv2(totPoints);
-    std::cout << "Testing barycentric method" << std::endl;
     t.Start();
     for (int cyc = 0; cyc < totCyc; ++cyc)
     {
@@ -183,7 +189,7 @@ int main(int argc, char *argv[])
         }
     }
     t.Stop();
-    std::cout << "New method: " << t.TimePerTest(totCyc) << " per cycle (" << totCyc << " cycles)." << std::endl;
+    std::cout << "New method: " << t.Elapsed().count() << "s - > " << t.TimePerTest(totCyc) << " per cycle (" << totCyc << " cycles)." << std::endl;
 
 
     Array<OneD, NekDouble> sol(totPoints), sol0(totPoints), sol1(totPoints), sol2(totPoints);
