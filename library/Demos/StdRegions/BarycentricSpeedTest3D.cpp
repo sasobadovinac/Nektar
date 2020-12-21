@@ -145,7 +145,8 @@ int main(int argc, char *argv[])
         }
     }
     t.Stop();
-    std::cout << "Old method: " << t.Elapsed().count() << "s - > " << t.TimePerTest(totCyc) << " per cycle (" << totCyc << " cycles)." << std::endl;
+    NekDouble timeOld = t.TimePerTest(totCyc);
+    std::cout << "Old method: " << t.Elapsed().count() << "s - > " << timeOld << " per cycle (" << totCyc << " cycles)." << std::endl;
 
     Array<OneD, NekDouble> SphysDeriv0(totPoints), SphysDeriv1(totPoints), SphysDeriv2(totPoints);
     Array<OneD, Array<OneD, DNekMatSharedPtr>>  I(totPoints);
@@ -177,7 +178,8 @@ int main(int argc, char *argv[])
     }
     t.Stop();
 
-    std::cout << "Precalc method: " << t.Elapsed().count() << "s - > " << t.TimePerTest(totCyc) << " per cycle (" << totCyc << " cycles)." << std::endl;
+    NekDouble timePrecalc = t.TimePerTest(totCyc);
+    std::cout << "Precalc method: " << t.Elapsed().count() << "s - > " << timePrecalc << " per cycle (" << totCyc << " cycles)." << std::endl;
 
     Array<OneD, NekDouble> BphysDeriv0(totPoints), BphysDeriv1(totPoints), BphysDeriv2(totPoints);
     t.Start();
@@ -189,8 +191,8 @@ int main(int argc, char *argv[])
         }
     }
     t.Stop();
-    std::cout << "New method: " << t.Elapsed().count() << "s - > " << t.TimePerTest(totCyc) << " per cycle (" << totCyc << " cycles)." << std::endl;
-
+    NekDouble timeBary = t.TimePerTest(totCyc);
+    std::cout << "New method: " << t.Elapsed().count() << "s - > " << timeBary << " per cycle (" << totCyc << " cycles)." << std::endl;
 
     Array<OneD, NekDouble> sol(totPoints), sol0(totPoints), sol1(totPoints), sol2(totPoints);
     switch(dimension)
@@ -225,9 +227,10 @@ int main(int argc, char *argv[])
     std::cout << "\tDeriv1: " << "\t" << F->L2(Ederiv1, sol1) << "\t" << F->Linf(Ederiv1, sol1)   << std::endl;
     std::cout << "\tDeriv2: " << "\t" << F->L2(Ederiv2, sol2) << "\t" << F->Linf(Ederiv2, sol2)   << std::endl;
 
-    // Iterative calc interpolation matrix
-
-
-    // Barycentric interpolation
-
+    std::ofstream outfile;
+    std::string fileName = LibUtilities::ShapeTypeMap[E->DetShapeType()];
+    outfile.open(fileName + "All.txt", std::ios_base::app); // append instead of overwrite
+    outfile << nModes << " " << timeOld << " " << timePrecalc << " " << timeBary << std::endl;
+    outfile.close();
+    std::cout << "Saved to file: " << fileName + "All.txt" << std::endl;
 }
