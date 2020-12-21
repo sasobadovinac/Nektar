@@ -93,8 +93,27 @@ int main(int argc, char *argv[])
         }
     }
 
-    // Do tests for 1000 cycles
-    int totCyc = 1000;
+    // Do tests of cycles depending on order
+    int nModes = E->GetBasisNumModes(0);
+    int totCyc;
+    if (nModes < 4)
+    {
+        totCyc = 100000;
+    }
+    else if (nModes < 7)
+    {
+        totCyc = 10000;
+    }
+    else if (nModes < 10)
+    {
+        totCyc = 5000;
+    }
+    else
+    {
+        totCyc = 1000;
+    }
+    std::cout << "Num of modes is " << nModes << " therefore running for " << totCyc << " cycles." << std::endl;
+
     // Calc interpolation matrix every call
     LibUtilities::Timer t;
 
