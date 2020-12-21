@@ -123,7 +123,7 @@ int main(int argc, char *argv[])
 	  tmpcoord[0] = tempIn[0][k];
 	  tmpcoord[1] = tempIn[1][k];
 	  tmpcoord[2] = tempIn[2][k];
-	  phys1[k*tempIn[0].size() + i] =  E->PhysEvaluate(tmpcoord, ar1);
+	  phys1[tempIn[0].size()*i + k] =  E->PhysEvaluate(tmpcoord, ar1);
 	}
     }
   t.Start();
@@ -141,7 +141,7 @@ int main(int argc, char *argv[])
 	      tmpcoord[1] = tempmid[1][k];
 	      tmpcoord[2] = tempmid[2][k];
 	      // evaluation on midpt grid using barycentric
-	      phys2[k*tempmid[0].size() + i]  = 	    E->PhysEvaluate(tmpcoord, ar1);
+	      phys2[tempmid[0].size()*i + k]  = 	    E->PhysEvaluate(tmpcoord, ar1);
 	    }
 	}
     }
@@ -207,7 +207,7 @@ int main(int argc, char *argv[])
     {
       //      if(sol[k] - phys[k] > 1e-10)
       //{
-      //      cout<<" sol :"<<sol2[k]<<" phys:"<<phys2[k]<<"\n\n";
+      //    cout<<" sol :"<<sol2[k]<<" phys:"<<phys2[k]<<"\n\n";
       //exit(0);
       //	}
     }
