@@ -200,14 +200,11 @@ int main(int argc, char *argv[])
     Array<OneD, NekDouble> sol(totPoints), sol0(totPoints), sol1(totPoints);
     switch(dimension)
     {
-    case 2:
-      sol1 = EvalPolyDerivy(coordsF);
-
-	    break;
-    case 1:
+        case 2:
+            sol1 = EvalPolyDerivy(coordsF);
+        case 1:
             sol0 = EvalPolyDerivx(coordsF);
-	    break;
-    default:
+        default:
             sol = EvalPoly(coordsF);
             break;
     }

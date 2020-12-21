@@ -4,27 +4,14 @@ ADD_NEKTAR_EXECUTABLE(StdInterp
     COMPONENT demos DEPENDS StdRegions SOURCES StdInterp.cpp)
 ADD_NEKTAR_EXECUTABLE(StdInterpDeriv
     COMPONENT demos DEPENDS StdRegions SOURCES StdInterpDeriv.cpp)
+ADD_NEKTAR_EXECUTABLE(StdInterpSecondDeriv
+    COMPONENT demos DEPENDS StdRegions SOURCES StdInterpSecondDeriv.cpp)
 ADD_NEKTAR_EXECUTABLE(StdInterpBasis
     COMPONENT demos DEPENDS StdRegions SOURCES StdInterpBasis.cpp)
 ADD_NEKTAR_EXECUTABLE(StdInterpDerivBasis
     COMPONENT demos DEPENDS StdRegions SOURCES StdInterpDerivBasis.cpp)
 ADD_NEKTAR_EXECUTABLE(StdEquiToCoeff2D
     COMPONENT demos DEPENDS StdRegions SOURCES StdEquiToCoeff2D.cpp)
-
-ADD_NEKTAR_EXECUTABLE(BarycentricSpeedTest3D
-        COMPONENT demos DEPENDS StdRegions SOURCES BarycentricSpeedTest3D.cpp)
-
-ADD_NEKTAR_EXECUTABLE(BarycentricSpeedTest3DEvalOnly
-        COMPONENT demos DEPENDS StdRegions SOURCES BarycentricSpeedTest3DEvalOnly.cpp)
-
-ADD_NEKTAR_EXECUTABLE(BarycentricSpeedTest2D
-        COMPONENT demos DEPENDS StdRegions SOURCES BarycentricSpeedTest2D.cpp)
-
-ADD_NEKTAR_EXECUTABLE(BarycentricSpeedTest2DEvalOnly
-        COMPONENT demos DEPENDS StdRegions SOURCES BarycentricSpeedTest2DEvalOnly.cpp)
-
-ADD_NEKTAR_EXECUTABLE(StdInterpBasisTimings
-        COMPONENT demos DEPENDS StdRegions SOURCES StdInterpBasisTimings.cpp)
 
 # Interpolation tests.
 ADD_NEKTAR_TEST(StdInterp_Seg_Mod_P6_Q7)

@@ -199,11 +199,14 @@ int main(int argc, char *argv[])
     {
         case 3:
             sol2 = EvalPolyDerivz(coordsF);
-        case 2:
+	    break;
+    case 2:
             sol1 = EvalPolyDerivy(coordsF);
-        case 1:
+	    break;
+    case 1:
             sol0 = EvalPolyDerivx(coordsF);
-        default:
+	    break;
+    default:
             sol = EvalPoly(coordsF);
             break;
     }
