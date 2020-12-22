@@ -435,7 +435,7 @@ make user-guide-pdf developer-guide-pdf doc
 cd ..
 
 # Make sure module paths are loaded
-. /etc/profile.d/00-modulepath.sh;
+. /etc/profile.d/modules.sh;
 
 # Build OpenMPI version
 %{_openmpi_load}
@@ -457,7 +457,7 @@ cd serial
 cd ..
 
 # Make sure module paths are loaded, again.
-. /etc/profile.d/00-modulepath.sh;
+. /etc/profile.d/modules.sh;
 
 # Install OpenMPI version
 %{_openmpi_load}
