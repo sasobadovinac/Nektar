@@ -119,7 +119,6 @@ namespace Nektar
             }
 
             val = Vmath::Vamax(ntot, wsp, 1);
-
             return  val;
         }
 
@@ -139,7 +138,7 @@ namespace Nektar
                 Vmath::Vsub(ntot, sol, 1, phys, 1, wsp, 1);
                 Vmath::Vmul(ntot, wsp, 1, wsp, 1, wsp, 1);
             }
-
+            
             val = v_Integral(wsp);
 
             // if val too small, sqrt returns nan.
@@ -951,6 +950,12 @@ namespace Nektar
             NEKERROR(ErrorUtil::efatal, "This function is not defined for this shape");
         }
 
+        void StdExpansion::v_LocCollapsedToLocCoord(const Array<OneD, const NekDouble>& eta,Array<OneD, NekDouble>& xi)
+        {
+            boost::ignore_unused(eta, xi);
+            NEKERROR(ErrorUtil::efatal, "This function is not defined for this shape");
+        }
+
         int StdExpansion::v_GetNtraces() const
         {
             ASSERTL0(false, "This function is needs defining for this shape");
@@ -1202,12 +1207,11 @@ namespace Nektar
             return 0;
         }
 
-        void StdExpansion::v_DerivNormalBasisOnTrace
-        (Array<OneD, Array<OneD, Array<OneD, NekDouble> > > &dbasis,
-         Array<OneD, Array<OneD, Array<OneD, unsigned int> > > &TraceToCoeffMap)
+        NekDouble StdExpansion::v_PhysEvaluateBasis(const Array<OneD, const NekDouble>& coords, int mode)
         {
-            boost::ignore_unused(dbasis, TraceToCoeffMap);
+            boost::ignore_unused(coords, mode);
             NEKERROR(ErrorUtil::efatal, "Method does not exist for this shape");
+            return 0;
         }
 
         void StdExpansion::v_FillMode(const int mode, Array<OneD, NekDouble> &outarray)

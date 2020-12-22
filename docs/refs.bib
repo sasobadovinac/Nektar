@@ -547,3 +547,61 @@ year = {2016}
     school = {Technische Universität Darmstadt},
     url    = {http://tuprints.ulb.tu-darmstadt.de/id/eprint/7611},
 }
+
+@article{NakayamaSPM,
+  title = {Simulation method to resolve hydrodynamic interactions in colloidal dispersions},
+  author = {Nakayama, Yasuya and Yamamoto, Ryoichi},
+  journal = {Phys. Rev. E},
+  volume = {71},
+  issue = {3},
+  pages = {036707},
+  numpages = {7},
+  year = {2005},
+  month = {Mar},
+  publisher = {American Physical Society},
+  doi = {10.1103/PhysRevE.71.036707},
+  url = {https://link.aps.org/doi/10.1103/PhysRevE.71.036707}
+}
+
+@article{LuoSPM,
+    abstract = {We re-formulate and analyze a new method for particulate flows, the so-called ``smoothed profile'' method (SPM) first proposed in [Y. Nakayama, R. Yamamoto, Simulation method to resolve hydrodynamic interactions in colloidal dispersions, Phys. Rev. E 71 (2005) 036707], which uses a fixed computational mesh without conformation to the geometry of the particles. The method represents the particles by certain smoothed profiles to construct a body force term added into the Navier--Stokes equations. SPM imposes accurately and efficiently the proper conditions at the particle--fluid interface. In particular, while the original method employs a fully-explicit time-integration scheme we develop a high-order semi-implicit splitting scheme, which we implement in the context of spectral/hp element discretization. First, we show that the modeling error of SPM has a non-monotonic dependence on the time step size \ensuremath{\Delta}t; it is a function of \ensuremath{\nu}\ensuremath{\Delta}t/\ensuremath{\xi}, where \ensuremath{\nu} is the kinematic viscosity of fluid and \ensuremath{\xi} is the interface thickness of the smoothed profile. Subsequently, we present several steady and unsteady simulations, including flow past 3D complex-shaped particles, and compare against direct numerical simulations and the force coupling method (FCM).},
+    author = {Luo, Xian and Maxey, Martin R. and Karniadakis, George Em},
+    doi = {10.1016/j.jcp.2008.11.006},
+    issn = {0021-9991},
+    journal = {Journal of Computational Physics},
+    keywords = {SPM, Two-phase flow, Suspensions, Time-splitting scheme},
+    number = {5},
+    pages = {1750--1769},
+    title = {{Smoothed profile method for particulate flows: Error analysis and simulations}},
+    url = {http://www.sciencedirect.com/science/article/pii/S0021999108005925},
+    volume = {228},
+    year = {2009}
+}
+
+@article{WangSPM,
+    abstract = {An accurate, fast and robust spectral-element/Fourier smoothed profile method (SEF-SPM) for turbulent flow past 3D complex-geometry moving bluff-bodies is developed and analyzed in this paper. Based on the concept of momentum thickness \ensuremath{\delta}2, a new formula for determining the interface thickness parameter \ensuremath{\xi} is proposed. In order to overcome the numerical instability at high Reynolds number, the so-called Entropy Viscosity Method (EVM) is introduced in the framework of large-eddy simulation. To overcome resolution constraints pertaining to moving immersed bodies, the Coordinate Transformation Method (Mapping method) is incorporated in the current implementation. Moreover, a hybrid spectral-element method using mixed triangular and quadrilateral elements is employed in conjunction with Fourier discretization along the third direction to efficiently represent a body of revolution or a long-aspect ratio bluff-body like risers and cables. The combination of the above algorithms results in a robust method which we validate by several prototype flows, including flow past a stationary sphere at 200 \ensuremath{\leq} Re \ensuremath{\leq} 1000, as well as turbulent flow past a stationary and moving cylinder at 80 \ensuremath{\leq} Re \ensuremath{\leq} 10, 000. Finally, we apply the new method to simulate a self-excited rigidly moving dual-step cylinder and demonstrate that SEF-SPM is an efficient method for complex VIV problems.},
+    author = {Wang, Zhicheng and Triantafyllou, Michael S and Constantinides, Yiannis and Karniadakis, George Em},
+    doi = {10.1016/j.compfluid.2018.06.022},
+    issn = {0045-7930},
+    journal = {Computers \& Fluids},
+    keywords = {High-order methods, LES, Entropy-viscosity, Hybrid discretization, Industrial flows},
+    pages = {84--96},
+    title = {{A spectral-element/Fourier smoothed profile method for large-eddy simulations of complex VIV problems}},
+    url = {http://www.sciencedirect.com/science/article/pii/S0045793018303529},
+    volume = {172},
+    year = {2018}
+}
+
+@article{FISCHER1998193,
+	title = "Projection techniques for iterative solution of Ax = b with successive right-hand sides",
+	journal = "Computer Methods in Applied Mechanics and Engineering",
+	volume = "163",
+	number = "1",
+	pages = "193 - 204",
+	year = "1998",
+	issn = "0045-7825",
+	doi = "https://doi.org/10.1016/S0045-7825(98)00012-7",
+	url = "http://www.sciencedirect.com/science/article/pii/S0045782598000127",
+	author = "Paul F. Fischer",
+	abstract = "Projection techniques are developed for computing approximate solutions to linear systems of the form Axn = bn, for a sequence n = 1, 2,…, e.g. arising from time discretization of a partial differential equation. The approximate solutions are based upon previous solutions, and can be used as initial guesses for iterative solution of the system, resulting in significantly reduced computational expense. Examples of two- and three-dimensional incompressible Navier-Stokes calculations are presented in which xn represents the pressure at time level tn, and A is a consistent discrete Poisson operator. In flows containing significant dynamic activity, these projection techniques lead to as much as a two-fold reduction in solution time."
+}

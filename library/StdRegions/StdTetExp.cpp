@@ -874,32 +874,42 @@ namespace Nektar
                                         const Array<OneD, const NekDouble>& xi,
                                         Array<OneD, NekDouble>& eta)
         {
-            if( fabs(xi[2]-1.0) < NekConstants::kNekZeroTol)
+            NekDouble d2 = 1.0-xi[2];
+            NekDouble d12 = -xi[1]-xi[2];
+            if(fabs(d2) < NekConstants::kNekZeroTol)
             {
-                // Very top point of the tetrahedron
-                eta[0] = -1.0;
-                eta[1] = -1.0;
-                eta[2] = xi[2];
-            }
-            else
-            {
-                if( fabs(xi[1]-1.0) <  NekConstants::kNekZeroTol )
+                if(d2>=0.)
                 {
-                    // Distant diagonal edge shared by all eta_x
-                    // coordinate planes: the xi_y == -xi_z line
-                    eta[0] = -1.0;
-                }
-                else if (fabs(xi[1] + xi[2]) < NekConstants::kNekZeroTol)
-                {
-                    eta[0] = -1.0;
+                    d2 =  NekConstants::kNekZeroTol;
                 }
                 else
                 {
-                    eta[0] = 2.0*(1.0+xi[0])/(-xi[1]-xi[2]) - 1.0;
+                    d2 = -NekConstants::kNekZeroTol;
                 }
-                eta[1] = 2.0*(1.0+xi[1])/(1.0-xi[2]) - 1.0;
-                eta[2] = xi[2];
             }
+            if(fabs(d12) < NekConstants::kNekZeroTol)
+            {
+                if(d12>=0.)
+                {
+                    d12 =  NekConstants::kNekZeroTol;
+                }
+                else
+                {
+                    d12 = -NekConstants::kNekZeroTol;
+                }
+            }
+            eta[0] = 2.0*(1.0+xi[0])/d12 - 1.0;
+            eta[1] = 2.0*(1.0+xi[1])/d2 - 1.0;
+            eta[2] = xi[2];
+        }
+
+        void StdTetExp::v_LocCollapsedToLocCoord(
+                                        const Array<OneD, const NekDouble>& eta,
+                                        Array<OneD, NekDouble>& xi)
+        {
+            xi[1] = (1.0 + eta[0]) * (   1.0 - eta[2]) * 0.5 - 1.0;
+            xi[0] = (1.0 + eta[0]) * (-xi[1] - eta[2]) * 0.5 - 1.0;
+            xi[2] = eta[2];
         }
 
         void StdTetExp::v_FillMode(
@@ -911,8 +921,55 @@ namespace Nektar
             StdTetExp::v_BwdTrans(tmp, outarray);
         }
 
+        NekDouble StdTetExp::v_PhysEvaluateBasis(
+            const Array<OneD, const NekDouble>& coords,
+            int mode)
+        {
+            Array<OneD, NekDouble> coll(3);
+            LocCoordToLocCollapsed(coords, coll);
+
+            const int nm1 = m_base[1]->GetNumModes();
+            const int nm2 = m_base[2]->GetNumModes();
+
+            const int b = 2 * nm2 + 1;
+            const int mode0 = floor(0.5 * (b - sqrt(b * b - 8.0 * mode / nm1)));
+            const int tmp   =
+                mode - nm1*(mode0 * (nm2-1) + 1 - (mode0 - 2)*(mode0 - 1) / 2);
+            const int mode1 = tmp / (nm2 - mode0);
+            const int mode2 = tmp % (nm2 - mode0);
+
+            if (m_base[0]->GetBasisType() == LibUtilities::eModified_A)
+            {
+                // Handle the collapsed vertices and edges in the modified
+                // basis.
+                if (mode == 1)
+                {
+                    // Collapsed top vertex
+                    return StdExpansion::BaryEvaluateBasis<2>(coll[2], 1);
+                }
+                else if (mode0 == 0 && mode2 == 1)
+                {
+                    return
+                        StdExpansion::BaryEvaluateBasis<1>(coll[1], 0) *
+                        StdExpansion::BaryEvaluateBasis<2>(coll[2], 1);
+                }
+                else if (mode0 == 1 && mode1 == 1 && mode2 == 0)
+                {
+                    return
+                        StdExpansion::BaryEvaluateBasis<0>(coll[0], 0) *
+                        StdExpansion::BaryEvaluateBasis<1>(coll[1], 1);
+                }
+            }
+
+            return
+                StdExpansion::BaryEvaluateBasis<0>(coll[0], mode0) *
+                StdExpansion::BaryEvaluateBasis<1>(coll[1], mode1) *
+                StdExpansion::BaryEvaluateBasis<2>(coll[2], mode2);
+        }
+
         void StdTetExp::v_GetTraceNumModes(
                     const int          fid,
+
                     int &numModes0,
                     int &numModes1,
                     Orientation  faceOrient)

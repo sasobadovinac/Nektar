@@ -123,8 +123,8 @@ IF (THIRDPARTY_BUILD_BOOST)
         EXTERNALPROJECT_ADD(
             boost
             PREFIX ${TPSRC}
-            URL ${TPURL}/boost_1_57_0.tar.bz2
-            URL_MD5 "1be49befbdd9a5ce9def2983ba3e7b76"
+            URL ${TPURL}/boost_1_71_0.tar.bz2
+            URL_MD5 "4cdf9b5c2dc01fb2b7b733d5af30e558"
             STAMP_DIR ${TPBUILD}/stamp
             DOWNLOAD_DIR ${TPSRC}
             SOURCE_DIR ${TPBUILD}/boost
@@ -139,21 +139,23 @@ IF (THIRDPARTY_BUILD_BOOST)
                 cxxflags="-w"
                 linkflags="-L${TPDIST}/lib"
                 ${BOOST_FLAGS} ${BOOST_LIB_LIST}
-		--prefix=${TPDIST}
+                --prefix=${TPDIST}
                 --layout=system toolset=${TOOLSET_CMDLINE} install
             INSTALL_COMMAND ""
             )
     ELSE ()
-        IF (CMAKE_CL_64)
+	    MESSAGE(STATUS "Windows MSVC build - toolset is: ${TOOLSET_CMDLINE}")
+        IF (CMAKE_SIZEOF_VOID_P EQUAL 8)
             SET(ADDRESS_MODEL 64)
         ELSE()
             SET(ADDRESS_MODEL 32)
         ENDIF()
+		MESSAGE(STATUS "Windows MSVC build - address model is: ${ADDRESS_MODEL}")
         EXTERNALPROJECT_ADD(
             boost
             PREFIX ${TPSRC}
-            URL ${TPURL}/boost_1_57_0.tar.bz2
-            URL_MD5 "1be49befbdd9a5ce9def2983ba3e7b76"
+            URL ${TPURL}/boost_1_71_0.tar.bz2
+            URL_MD5 "4cdf9b5c2dc01fb2b7b733d5af30e558"
             STAMP_DIR ${TPBUILD}/stamp
             DOWNLOAD_DIR ${TPSRC}
             SOURCE_DIR ${TPBUILD}/boost

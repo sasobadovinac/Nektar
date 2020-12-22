@@ -576,7 +576,7 @@ namespace SolverUtils
 
     void ForcingGJPStabilisation::SetUpExpansionInfoMapForGJP(SpatialDomains::MeshGraphSharedPtr graph)
     {
-        const SpatialDomains::ExpansionInfoMap  expInfo = graph->GetExpansionInfos(m_session->GetVariable(0));
+        const SpatialDomains::ExpansionInfoMap  expInfo = graph->GetExpansionInfo(m_session->GetVariable(0));
 
         SpatialDomains::ExpansionInfoMapShPtr newInfo = MemoryManager<SpatialDomains::ExpansionInfoMap>::AllocateSharedPtr();
 
@@ -616,7 +616,7 @@ namespace SolverUtils
         }
                 
 
-        graph->SetExpansionInfos("GJP",newInfo);
+        graph->SetExpansionInfo("GJP",newInfo);
     }
 
     void ForcingGJPStabilisation::MultiplyByIProductWRTDerivOnTraceMat(int i, Array<OneD, NekDouble> &in,

@@ -71,29 +71,23 @@ namespace Nektar
                           Array<OneD,       NekDouble>& outarray);
 
         protected:
-
             STD_REGIONS_EXPORT virtual NekDouble v_PhysEvaluate(
                     const Array<OneD, const NekDouble>& coords,
-                    const Array<OneD, const NekDouble>& physvals);
-
-            STD_REGIONS_EXPORT virtual void v_DerivNormalBasisOnTrace
-            (Array<OneD, Array<OneD, Array<OneD, NekDouble> > > &dbasis,
-             Array<OneD, Array<OneD, Array<OneD, unsigned int> > > &TraceToCoeffMap);
+                    const Array<OneD, const NekDouble>& physvals) override;
 
         private:
 
             // Virtual Functions ----------------------------------------
 
-            virtual int v_GetCoordim(void)
+            virtual int v_GetCoordim(void) override
             {
                 return 1;
             }
 
-            virtual int v_GetShapeDimension() const
+            virtual int v_GetShapeDimension() const final
             {
                 return 1;
             }
-
         };
 
         typedef std::shared_ptr<StdExpansion1D> StdExpansion1DSharedPtr;

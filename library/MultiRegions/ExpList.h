@@ -49,7 +49,6 @@
 #include <MultiRegions/GlobalMatrix.h>
 #include <MultiRegions/GlobalMatrixKey.h>
 #include <MultiRegions/GlobalLinSysKey.h>
-#include <MultiRegions/GlobalOptimizationParameters.h>
 #include <MultiRegions/AssemblyMap/AssemblyMap.h>
 #include <MultiRegions/AssemblyMap/LocTraceToTraceMap.h>
 #include <LibUtilities/Kernel/kernel.h>
@@ -148,7 +147,7 @@ namespace Nektar
             /// Wrapper around LocalRegion::PointExp - used in PrePacing.cpp
             MULTI_REGIONS_EXPORT ExpList(const
                                 SpatialDomains::PointGeomSharedPtr  &geom);
-            
+
             /// Generate expansions for the trace space expansions used in
             /// DisContField.
             MULTI_REGIONS_EXPORT ExpList(
@@ -187,7 +186,7 @@ namespace Nektar
                     const Collections::ImplementationType ImpType
                                          = Collections::eNoImpType);
 
-                       
+
             /// The default destructor.
             MULTI_REGIONS_EXPORT virtual ~ExpList();
 
@@ -213,7 +212,7 @@ namespace Nektar
             /// basis order over all elements.
             MULTI_REGIONS_EXPORT const Array<OneD,int>
                 EvalBasisNumModesMaxPerExp(void) const;
-            
+
             /// Returns the total number of quadrature points #m_npoints
             /// \f$=Q_{\mathrm{tot}}\f$.
             inline int GetTotPoints(void) const;
@@ -658,21 +657,21 @@ namespace Nektar
             }
 
             /// This function returns the transposition class
-            /// associaed with the homogeneous expansion.
+            /// associated with the homogeneous expansion.
             LibUtilities::TranspositionSharedPtr GetTransposition(void)
             {
                 return v_GetTransposition();
             }
 
             /// This function returns the Width of homogeneous direction
-            /// associaed with the homogeneous expansion.
+            /// associated with the homogeneous expansion.
             NekDouble GetHomoLen(void)
             {
                 return v_GetHomoLen();
             }
 
             /// This function sets the Width of homogeneous direction
-            /// associaed with the homogeneous expansion.
+            /// associated with the homogeneous expansion.
             void SetHomoLen(const NekDouble lhom)
             {
                 return v_SetHomoLen(lhom);
@@ -736,13 +735,34 @@ namespace Nektar
             MULTI_REGIONS_EXPORT LocalRegions::ExpansionSharedPtr& GetExp(
                 const Array<OneD, const NekDouble> &gloCoord);
 
-            /** This function returns the index of the local elemental
-             * expansion containing the arbitrary point given by \a gloCoord.
-             **/
+            /**
+             * @brief This function returns the index of the local elemental
+             * expansion containing the arbitrary point given by \a gloCoord,
+             * within a distance tolerance of tol.
+             *
+             * If returnNearestElmt is true and no element contains the point,
+             * this function returns the nearest element whose bounding box contains
+             * the point. The bounding box has a 10% margin in each direction.
+             *
+             * @param gloCoord    (input) coordinate in physics space
+             * @param locCoords   (output) local coordinate xi in the returned element
+             * @param tol         distance tolerance to judge if a point lies in an element
+             * @param returnNearestElmt if true and no element contains this point, the
+             *                          nearest element whose bounding box contains this
+             *                          point is returned
+             * @param cachedId    an initial guess of the most possible element index
+             * @param maxDistance if returnNearestElmt is set as true, the nearest
+             *                    element will be returned. But the distance of the
+             *                    nearest element and this point should be <= maxDistance.
+             *
+             * @return element index; if no element is found, -1 is returned.
+             */
             MULTI_REGIONS_EXPORT int GetExpIndex(
                 const Array<OneD, const NekDouble> &gloCoord,
                 NekDouble tol = 0.0,
-                bool returnNearestElmt = false);
+                bool returnNearestElmt = false,
+                int cachedId = -1,
+                NekDouble maxDistance = 1e6);
 
             /** This function returns the index and the Local
              * Cartesian Coordinates \a locCoords of the local
@@ -753,7 +773,9 @@ namespace Nektar
                 const Array<OneD, const NekDouble> &gloCoords,
                 Array<OneD, NekDouble>       &locCoords,
                 NekDouble tol = 0.0,
-                bool returnNearestElmt = false);
+                bool returnNearestElmt = false,
+                int cachedId = -1,
+                NekDouble maxDistance = 1e6);
 
             /** This function return the expansion field value
              * at the coordinates given as input.
@@ -824,9 +846,9 @@ namespace Nektar
 
             /// Set the weight value for boundary conditions
             inline void SetBndCondBwdWeight(
-                const int index, 
+                const int index,
                 const NekDouble value);
-      
+
             inline std::shared_ptr<ExpList> &UpdateBndCondExpansion(int i);
 
             inline void Upwind(
@@ -834,7 +856,7 @@ namespace Nektar
                 const Array<OneD, const NekDouble> &Fwd,
                 const Array<OneD, const NekDouble> &Bwd,
                       Array<OneD,       NekDouble> &Upwind);
-            
+
             inline void Upwind(
                 const Array<OneD, const Array<OneD,       NekDouble> > &Vec,
                 const Array<OneD,                   const NekDouble>   &Fwd,
@@ -854,9 +876,10 @@ namespace Nektar
             inline void GetNormals(Array<OneD, Array<OneD, NekDouble> >&normals);
 
             /// Get the length of elements in boundary normal direction
-            void GetElmtNormalLength(Array<OneD, NekDouble>  &lengthsFwd,
-                                     Array<OneD, NekDouble>  &lengthsBwd);
-            
+            MULTI_REGIONS_EXPORT void GetElmtNormalLength(
+                Array<OneD, NekDouble>  &lengthsFwd,
+                Array<OneD, NekDouble>  &lengthsBwd);
+
             /// Get the weight value for boundary conditions
             /// for boundary average and jump calculations
             MULTI_REGIONS_EXPORT void GetBwdWeight(
@@ -886,10 +909,10 @@ namespace Nektar
                 Array<OneD,NekDouble> &Fwd,
                 Array<OneD,NekDouble> &Bwd,
                 bool FillBnd           = true,
-                bool PutFwdInBwdOnBCs  = false, 
-                bool DoExchange        = true); 
+                bool PutFwdInBwdOnBCs  = false,
+                bool DoExchange        = true);
 
-            /// Add Fwd and Bwd value to field, 
+            /// Add Fwd and Bwd value to field,
             /// a reverse procedure of GetFwdBwdTracePhys
             inline void AddTraceQuadPhysToField(
                 const Array<OneD, const NekDouble>  &Fwd,
@@ -1101,11 +1124,11 @@ namespace Nektar
             MULTI_REGIONS_EXPORT void ClearGlobalLinSysManager(void);
 
             /// Get m_coeffs to elemental value map
-            MULTI_REGIONS_EXPORT inline const 
-                Array<OneD, const std::pair<int, int> > 
+            MULTI_REGIONS_EXPORT inline const
+                Array<OneD, const std::pair<int, int> >
                 &GetCoeffsToElmt() const;
 
-            MULTI_REGIONS_EXPORT inline const LocTraceToTraceMapSharedPtr 
+            MULTI_REGIONS_EXPORT inline const LocTraceToTraceMapSharedPtr
                 &GetLocTraceToTraceMap() const;
 
             // Return the internal vector which identifieds if trace
@@ -1212,8 +1235,6 @@ namespace Nektar
             /// m_coeffs to elemental value map
             Array<OneD, std::pair<int, int> >  m_coeffsToElmt;
 
-            NekOptimize::GlobalOptParamSharedPtr m_globalOptParam;
-
             BlockMatrixMapShPtr  m_blockMat;
 
             //@todo should this be in ExpList or ExpListHomogeneous1D.cpp
@@ -1230,7 +1251,7 @@ namespace Nektar
                 const GlobalMatrixKey &gkey);
 
             const DNekScalBlkMatSharedPtr& GetBlockMatrix(
-                const GlobalMatrixKey &gkey);  
+                const GlobalMatrixKey &gkey);
 
             void MultiplyByBlockMatrix(
                 const GlobalMatrixKey             &gkey,
@@ -1277,7 +1298,7 @@ namespace Nektar
                 &v_GetBndCondBwdWeight();
 
             virtual void v_SetBndCondBwdWeight(
-                const int index, 
+                const int index,
                 const NekDouble value);
 
             virtual std::shared_ptr<ExpList> &v_UpdateBndCondExpansion(int i);
@@ -1332,14 +1353,14 @@ namespace Nektar
                 Array<OneD,NekDouble> &Fwd,
                 Array<OneD,NekDouble> &Bwd,
                 bool FillBnd           = true,
-                bool PutFwdInBwdOnBCs  = false, 
-                bool DoExchange        = true); 
-            
+                bool PutFwdInBwdOnBCs  = false,
+                bool DoExchange        = true);
+
             virtual void v_AddTraceQuadPhysToField(
                 const Array<OneD, const NekDouble>  &Fwd,
                 const Array<OneD, const NekDouble>  &Bwd,
                 Array<OneD,       NekDouble>        &field);
-                      
+
             virtual void v_FillBwdWithBwdWeight(
                 Array<OneD,       NekDouble> &weightave,
                 Array<OneD,       NekDouble> &weightjmp);
@@ -1411,7 +1432,7 @@ namespace Nektar
             virtual void v_BwdTrans(
                 const Array<OneD,const NekDouble> &inarray,
                 Array<OneD,      NekDouble> &outarray);
-            
+
             virtual void v_BwdTrans_IterPerExp(
                 const Array<OneD,const NekDouble> &inarray,
                       Array<OneD,NekDouble> &outarray);
@@ -1433,7 +1454,7 @@ namespace Nektar
             virtual void v_IProductWRTBase(
                 const Array<OneD, const NekDouble> &inarray,
                 Array<OneD,       NekDouble> &outarray);
-            
+
             virtual void v_IProductWRTBase_IterPerExp(
                 const Array<OneD,const NekDouble> &inarray,
                       Array<OneD,      NekDouble> &outarray);
@@ -1442,7 +1463,7 @@ namespace Nektar
                 const GlobalMatrixKey             &gkey,
                 const Array<OneD,const NekDouble> &inarray,
                 Array<OneD,      NekDouble> &outarray);
-            
+
             virtual void v_GetCoords(
                 Array<OneD, NekDouble> &coord_0,
                 Array<OneD, NekDouble> &coord_1,
@@ -1630,10 +1651,10 @@ namespace Nektar
             /// Define a list of elements using the geometry and basis
             /// key information in expmap;
             void InitialiseExpVector( const SpatialDomains::ExpansionInfoMap &expmap);
-                                      
+
             virtual const Array<OneD,
                 const SpatialDomains::BoundaryConditionShPtr> &v_GetBndConditions();
-            
+
             virtual Array<OneD, SpatialDomains::BoundaryConditionShPtr>
                 &v_UpdateBndConditions();
 
@@ -1674,7 +1695,7 @@ namespace Nektar
 
         /// An empty ExpList object.
         static ExpList NullExpList;
-        static ExpListSharedPtr NullExpListSharedPtr;        
+        static ExpListSharedPtr NullExpListSharedPtr;
 
         // Inline routines follow.
 
@@ -2358,14 +2379,14 @@ namespace Nektar
         }
 
         /// Get m_coeffs to elemental value map
-        MULTI_REGIONS_EXPORT inline const 
-            Array<OneD, const std::pair<int, int> > 
+        MULTI_REGIONS_EXPORT inline const
+            Array<OneD, const std::pair<int, int> >
             &ExpList::GetCoeffsToElmt() const
         {
             return m_coeffsToElmt;
         }
 
-        MULTI_REGIONS_EXPORT inline const LocTraceToTraceMapSharedPtr 
+        MULTI_REGIONS_EXPORT inline const LocTraceToTraceMapSharedPtr
             &ExpList::GetLocTraceToTraceMap() const
         {
             return v_GetLocTraceToTraceMap();
@@ -2378,12 +2399,12 @@ namespace Nektar
         }
 
         inline void ExpList::SetBndCondBwdWeight(
-            const int index, 
+            const int index,
             const NekDouble value)
         {
             v_SetBndCondBwdWeight(index, value);
         }
-        
+
         inline std::shared_ptr<ExpList>  &ExpList::UpdateBndCondExpansion(int i)
         {
             return v_UpdateBndCondExpansion(i);
@@ -2463,7 +2484,7 @@ namespace Nektar
             Array<OneD,NekDouble> &Fwd,
             Array<OneD,NekDouble> &Bwd,
             bool FillBnd,
-            bool PutFwdInBwdOnBCs, 
+            bool PutFwdInBwdOnBCs,
             bool DoExchange)
         {
             v_GetFwdBwdTracePhys(field,Fwd,Bwd,FillBnd,

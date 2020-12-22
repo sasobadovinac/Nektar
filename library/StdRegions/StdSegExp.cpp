@@ -519,6 +519,18 @@ namespace Nektar
         //----------------------------
         // Evaluation
         //----------------------------
+        void StdSegExp::v_LocCoordToLocCollapsed(const Array<OneD, const NekDouble>& xi,
+                                                 Array<OneD, NekDouble>& eta)
+        {
+            eta[0] = xi[0];
+        }
+
+        void StdSegExp::v_LocCollapsedToLocCoord
+                          (const Array<OneD, const NekDouble>& eta,
+                           Array<OneD, NekDouble>& xi)
+        {
+            xi[0] = eta[0];
+        }
 
         void StdSegExp::v_FillMode(const int mode, Array<OneD, NekDouble> &outarray)
         {
@@ -531,12 +543,11 @@ namespace Nektar
             Vmath::Vcopy(nquad,(NekDouble *)base+mode*nquad,1, &outarray[0],1);
         }
 
-
-        NekDouble StdSegExp::v_PhysEvaluate(
-                const Array<OneD, const NekDouble>& coords,
-                const Array<OneD, const NekDouble>& physvals)
+        NekDouble StdSegExp::v_PhysEvaluateBasis(
+            const Array<OneD, const NekDouble>& coords,
+            int mode)
         {
-            return  StdExpansion1D::v_PhysEvaluate(coords, physvals);
+            return StdExpansion::BaryEvaluateBasis<0>(coords[0], mode);
         }
 
         void StdSegExp::v_LaplacianMatrixOp(

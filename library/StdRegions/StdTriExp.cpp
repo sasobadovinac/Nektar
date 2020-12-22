@@ -677,18 +677,27 @@ namespace Nektar
         void StdTriExp::v_LocCoordToLocCollapsed(const Array<OneD, const NekDouble>& xi,
                                                  Array<OneD, NekDouble>& eta)
         {
+            NekDouble d1 = 1.-xi[1];
+            if(fabs(d1) < NekConstants::kNekZeroTol)
+            {
+                if(d1>=0.)
+                {
+                    d1 =  NekConstants::kNekZeroTol;
+                }
+                else
+                {
+                    d1 = -NekConstants::kNekZeroTol;
+                }
+            }
+            eta[0] = 2.*(1.+xi[0])/d1-1.0;
+            eta[1] = xi[1];
+        }
 
-            // set up local coordinate system
-            if (fabs(xi[1]-1.0) < NekConstants::kNekZeroTol)
-            {
-                eta[0] = -1.0;
-                eta[1] =  1.0;
-            }
-            else
-            {
-                eta[0] = 2*(1+xi[0])/(1-xi[1])-1.0;
-                eta[1] = xi[1];
-            }
+        void StdTriExp::v_LocCollapsedToLocCoord(const Array<OneD, const NekDouble>& eta,
+                                                 Array<OneD, NekDouble>& xi)
+        {
+            xi[0] = (1.0 + eta[0]) * (1.0 - eta[1]) * 0.5 - 1.0;
+            xi[1] = eta[1];
         }
 
         void StdTriExp::v_FillMode(
@@ -739,6 +748,32 @@ namespace Nektar
             }
         }
 
+        NekDouble StdTriExp::v_PhysEvaluateBasis(
+            const Array<OneD, const NekDouble>& coords,
+            int mode)
+        {
+            Array<OneD, NekDouble> coll(2);
+            LocCoordToLocCollapsed(coords, coll);
+
+            // From mode we need to determine mode0 and mode1 in the (p,q)
+            // direction. mode1 can be directly inferred from mode.
+            const int    nm1    = m_base[1]->GetNumModes();
+            const double c      = 1 + 2*nm1;
+            const int    mode0  = floor(0.5*(c - sqrt(c*c - 8*mode)));
+
+            if (mode == 1 &&
+                m_base[0]->GetBasisType() == LibUtilities::eModified_A)
+            {
+                // Account for collapsed vertex.
+                return StdExpansion::BaryEvaluateBasis<1>(coll[1], 1);
+            }
+            else
+            {
+                return
+                    StdExpansion::BaryEvaluateBasis<0>(coll[0], mode0) *
+                    StdExpansion::BaryEvaluateBasis<1>(coll[1], mode);
+            }
+        }
 
         int StdTriExp::v_GetNverts() const
         {

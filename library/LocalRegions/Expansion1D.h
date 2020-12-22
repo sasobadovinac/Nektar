@@ -99,17 +99,18 @@ namespace Nektar
             virtual NekDouble v_VectorFlux(
                     const Array<OneD, Array<OneD, NekDouble> > &vec);
 
-            virtual void v_NormalTraceDerivFactors
-            (Array<OneD, Array<OneD, NekDouble> > &factors,
-             Array<OneD, Array<OneD, NekDouble> > &d0factors,
-             Array<OneD, Array<OneD, NekDouble> > &d1factors);
+            virtual void v_NormalTraceDerivFactors(
+                            Array<OneD, Array<OneD, NekDouble> > &factors,
+                            Array<OneD, Array<OneD, NekDouble> > &d0factors,
+                            Array<OneD, Array<OneD, NekDouble> > &d1factors);
 
-            virtual const NormalVector &v_GetTraceNormal(const int edge) const;
+            virtual const NormalVector &v_GetTraceNormal(const int edge) const final;
 
-            virtual void v_ReOrientTracePhysMap
-                    (const StdRegions::Orientation orient,
-                     Array<OneD, int> &idmap,
-                     const int nq0,  const int nq1);
+            virtual void v_ReOrientTracePhysMap(
+                         const StdRegions::Orientation orient,
+                         Array<OneD, int> &idmap,
+                         const int nq0,  const int nq1);
+
         private:
             
         };
