@@ -2,7 +2,7 @@ FROM centos:8
 
 # Set up to use EPEL release files and PowerTools
 RUN yum install -y epel-release dnf-plugins-core && \
-    yum config-manager --set-enabled PowerTools
+    yum config-manager --set-enabled powertools
 
 # Grab docker
 COPY docker/packaging/texlive.profile pkg/redhat/nektar-centos-8.spec /root/
