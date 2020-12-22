@@ -293,11 +293,6 @@ namespace Nektar
                     const NekDouble        alpha,
                     const NekDouble        exponent,
                     const NekDouble        cutoff);
-
-            STD_REGIONS_EXPORT virtual void v_DerivNormalBasisOnTrace
-                   (Array<OneD, Array<OneD, Array<OneD, NekDouble> > > &dbasis,
-                    Array<OneD, Array<OneD, Array<OneD, unsigned int> > >
-                    &TraceToCoeffMap);
         };
 
         typedef std::shared_ptr<StdHexExp> StdHexExpSharedPtr;

@@ -268,10 +268,6 @@ namespace Nektar
                       Array<OneD, int>             &conn,
                       bool                          standard = true);
 
-            STD_REGIONS_EXPORT virtual void v_DerivNormalBasisOnTrace
-                    (Array<OneD, Array<OneD, Array<OneD, NekDouble> > > &dbasis,
-                     Array<OneD, Array<OneD, Array<OneD, unsigned int> > >
-                     &TraceToCoeffMap);
         };
         typedef std::shared_ptr<StdTriExp> StdTriExpSharedPtr;
     } //end of namespace

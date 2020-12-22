@@ -44,7 +44,6 @@
 #include <SolverUtils/Forcing/Forcing.h>
 #include <MultiRegions/DisContField.h>
 
-
 namespace Nektar
 {
 namespace SolverUtils
@@ -98,55 +97,14 @@ private:
     /// Local Elemental trace expansions
     MultiRegions::ExpListSharedPtr m_locElmtTrace;
 
-#ifdef OLD
-    /// Scale factor for phys values along trace involving the lcoal
-    /// normals and tangenet geometric factors on Fwd Trace
-    Array<OneD, Array<OneD, NekDouble>> m_scalFwd;
-    /// Scale factor for phys values along trace involving the lcoal
-    /// normals and tangenet geometric factors on Bwd Trace
-    Array<OneD, Array<OneD, NekDouble>> m_scalBwd;
-    /// Array for every coefficient on trace of a mapping form trace
-    /// coefficients to elemental coefficients with a scaling factor
-    /// of the derivative of the normal basis along that trace
-    Array<OneD,  std::set<std::pair<unsigned int, NekDouble> > >
-                                                    m_fwdTraceToCoeffMap; 
-    /// Array for every coefficient on trace of a mapping form trace
-    /// coefficients to elemental coefficients with a scaling factor
-    /// of the derivative of the normal basis along that trace
-    Array<OneD,  std::set< std::pair<unsigned int, NekDouble > > >
-                                                    m_bwdTraceToCoeffMap;
-    /// Array for every coefficient on trace of a mapping form trace
-    /// coefficients to elemental coefficients 
-    Array<OneD, std::set< std::pair<unsigned int, int> > >
-                                                  m_fwdTraceToETraceCoeffMap; 
-
-    /// Array for every coefficient on trace of a mapping form trace
-    /// coefficients to elemental coefficients 
-    Array<OneD, std::set< std::pair<unsigned int, int> > >
-                                                  m_bwdTraceToETraceCoeffMap; 
-    
-#else
     /// Scale factor for phys values along trace involving the lcoal
     /// normals and tangent geometric factors 
     Array<OneD, Array<OneD, NekDouble>> m_scalTrace;
 
-    Array<OneD,  std::set< std::pair<unsigned int, NekDouble > > >
-                                                    m_traceToCoeffMap;
-
-    /// Array for every coefficient on trace of a mapping form trace
-    /// coefficients to elemental coefficients 
-    Array<OneD, std::set< std::pair<unsigned int, int> > >
-                                                  m_traceToETraceCoeffMap; 
-#define MatProd 1
-#ifdef MatProd
     std::vector<std::pair<int,Array<OneD, DNekMatSharedPtr>>> m_IPWRTDBOnTraceMat;
 
     void MultiplyByIProductWRTDerivOnTraceMat(int i, Array<OneD, NekDouble> &in,
                                               Array<OneD, NekDouble> &out);
-    
-#endif
-    
-#endif
     
     // Link to the trace normals 
     Array<OneD, Array<OneD, NekDouble> > m_traceNormals; 

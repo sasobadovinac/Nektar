@@ -974,14 +974,6 @@ namespace Nektar
                 return v_PhysEvaluate(I,physvals);
             }
 
-
-            void DerivNormalBasisOnTrace
-            (Array<OneD, Array<OneD, Array<OneD, NekDouble> > > &dbasis,
-             Array<OneD, Array<OneD, Array<OneD, unsigned int> > > &TraceToCoeffMap)
-            {
-                v_DerivNormalBasisOnTrace(dbasis,TraceToCoeffMap);
-            }
-        
             /**
              * \brief Convert local cartesian coordinate \a xi into local
              * collapsed coordinates \a eta
