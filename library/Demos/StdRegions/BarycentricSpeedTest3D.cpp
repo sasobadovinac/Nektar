@@ -95,7 +95,7 @@ int main(int argc, char *argv[])
 
     // Do tests of cycles depending on order
     int nModes = E->GetBasisNumModes(0);
-    int totCyc = 1000;
+    int totCyc = 100;
     std::cout << "Num of modes is " << nModes << " therefore running for " << totCyc << " cycles." << std::endl;
 
     // Calc interpolation matrix every call
@@ -106,7 +106,7 @@ int main(int argc, char *argv[])
     Array<OneD, NekDouble> Bphys(totPoints), Bderiv0(totPoints), Bderiv1(totPoints), Bderiv2(totPoints);
 
 
-    Array<OneD, NekDouble> EphysDeriv0(totPoints), EphysDeriv1(totPoints), EphysDeriv2(totPoints);
+    Array<OneD, NekDouble> EphysDeriv0(coordsE[0].size()), EphysDeriv1(coordsE[0].size()), EphysDeriv2(coordsE[0].size());
     t.Start();
     for (int cyc = 0; cyc < totCyc; ++cyc)
     {
@@ -138,7 +138,7 @@ int main(int argc, char *argv[])
     NekDouble timeOld = t.TimePerTest(totCyc);
     std::cout << "Old method: " << t.Elapsed().count() << "s - > " << timeOld << " per cycle (" << totCyc << " cycles)." << std::endl;
 
-    Array<OneD, NekDouble> SphysDeriv0(totPoints), SphysDeriv1(totPoints), SphysDeriv2(totPoints);
+    Array<OneD, NekDouble> SphysDeriv0(coordsE[0].size()), SphysDeriv1(coordsE[0].size()), SphysDeriv2(coordsE[0].size());
     Array<OneD, Array<OneD, DNekMatSharedPtr>>  I(totPoints);
     for (int i = 0; i < totPoints; ++i)
     {
@@ -190,7 +190,14 @@ int main(int argc, char *argv[])
     sol0 = EvalPolyDerivx(coordIn);
     sol = EvalPoly(coordIn);
 
-    //Check error
+    std::ofstream outfile;
+    std::string fileName = LibUtilities::ShapeTypeMap[E->DetShapeType()];
+    outfile.open(fileName + "All.txt", std::ios_base::app); // append instead of overwrite
+    outfile << nModes << " " << timeOld << " " << timePrecalc << " " << timeBary << std::endl;
+    outfile.close();
+    std::cout << "Saved to file: " << fileName + "All.txt" << std::endl;
+
+    //Check error (this breaks for when order > nInt)
     std::cout << "\nBarycentric \t\t L2 Error \t Linf Error" << std::endl;
     std::cout << "\tPhys: "   << "\t\t" << E->L2(Bphys, sol) << "\t" << E->Linf(Bphys, sol)   << std::endl;
     std::cout << "\tDeriv0: " << "\t" <<   E->L2(Bderiv0, sol0) << "\t" << E->Linf(Bderiv0, sol0)   << std::endl;
@@ -208,11 +215,4 @@ int main(int argc, char *argv[])
     std::cout << "\tDeriv0: " << "\t" << E->L2(Ederiv0, sol0) << "\t" << E->Linf(Ederiv0, sol0)   << std::endl;
     std::cout << "\tDeriv1: " << "\t" << E->L2(Ederiv1, sol1) << "\t" << E->Linf(Ederiv1, sol1)   << std::endl;
     std::cout << "\tDeriv2: " << "\t" << E->L2(Ederiv2, sol2) << "\t" << E->Linf(Ederiv2, sol2)   << std::endl;
-
-    std::ofstream outfile;
-    std::string fileName = LibUtilities::ShapeTypeMap[E->DetShapeType()];
-    outfile.open(fileName + "All.txt", std::ios_base::app); // append instead of overwrite
-    outfile << nModes << " " << timeOld << " " << timePrecalc << " " << timeBary << std::endl;
-    outfile.close();
-    std::cout << "Saved to file: " << fileName + "All.txt" << std::endl;
 }
