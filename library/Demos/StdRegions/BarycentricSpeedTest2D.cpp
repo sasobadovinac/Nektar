@@ -196,21 +196,10 @@ int main(int argc, char *argv[])
     t.Stop();
     std::cout << "New method: " << t.TimePerTest(totCyc) << " per cycle (" << totCyc << " cycles)." << std::endl;
 
-
     Array<OneD, NekDouble> sol(totPoints), sol0(totPoints), sol1(totPoints);
-    switch(dimension)
-    {
-    case 2:
-      sol1 = EvalPolyDerivy(coordsF);
-
-	    break;
-    case 1:
-            sol0 = EvalPolyDerivx(coordsF);
-	    break;
-    default:
-            sol = EvalPoly(coordsF);
-            break;
-    }
+    sol1 = EvalPolyDerivy(coordsF);
+    sol0 = EvalPolyDerivx(coordsF);
+    sol = EvalPoly(coordsF);
 
     //Check error
     std::cout << "\nBarycentric \t\t L2 Error \t Linf Error" << std::endl;
