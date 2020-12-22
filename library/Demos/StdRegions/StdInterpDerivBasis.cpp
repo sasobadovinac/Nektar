@@ -78,19 +78,16 @@ int main(int argc, char *argv[])
         E->FillMode(k, hold1);
         E->PhysDeriv(hold1, temp, temp1, temp2);
 
-        switch(dimension)
+        switch (dimension) // It is meant to fall down
         {
             case 3:
                 Vmath::Vcopy(nPts, &temp2[0], 1, &phys2[k * nPts], 1);
-		break;
-	case 2:
+            case 2:
                 Vmath::Vcopy(nPts, &temp1[0], 1, &phys1[k * nPts], 1);
-		break;
-	case 1:
+            case 1:
                 Vmath::Vcopy(nPts, &temp[0], 1, &phys[k * nPts], 1);
                 Vmath::Vcopy(nPts, &hold1[0], 1, &out_eval1[k * nPts], 1);
-		break;
-	default:
+            default:
                 break;
         }
     }

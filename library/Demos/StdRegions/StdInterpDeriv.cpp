@@ -126,18 +126,15 @@ int main(int argc, char *argv[])
         physOut[i] = E->PhysEvaluate(coordIn, physIn, physOut0[i], physOut1[i], physOut2[i]);
     }
 
-    switch(dimension)
+    switch (dimension) // It is meant to fall down
     {
         case 3:
             sol2 = EvalPolyDerivz(coordsF);
-	    break;
-    case 2:
+        case 2:
             sol1 = EvalPolyDerivy(coordsF);
-	    break;
-    case 1:
+        case 1:
             sol0 = EvalPolyDerivx(coordsF);
-	    break;
-    default:
+        default:
             sol = EvalPoly(coordsF);
             break;
     }
