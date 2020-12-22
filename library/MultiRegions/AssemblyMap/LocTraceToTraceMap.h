@@ -182,17 +182,37 @@ public:
         const Array<OneD, const NekDouble>  &faces,
         Array<OneD, NekDouble>              &field);
 
+
+    MULTI_REGIONS_EXPORT void ReshuffleLocTracesForInterp(
+        const int dir,
+        const Array<OneD, const NekDouble> &loctraces,
+        Array<OneD, NekDouble> reshuffle);
+
+    MULTI_REGIONS_EXPORT void UnshuffleLocTraces(const int dir,
+                             const Array<OneD, const NekDouble> &loctraces,
+                             Array<OneD, NekDouble> unshuffle);
+    
     MULTI_REGIONS_EXPORT void InterpLocTracesToTrace(
         const int dir,
         const Array<OneD, const NekDouble> &loctraces,
-        Array<OneD, NekDouble> traces);
+        Array<OneD, NekDouble> &traces);
 
+    MULTI_REGIONS_EXPORT void InterpTraceToLocTrace(
+        const int dir,
+        const Array<OneD, NekDouble> &traces,
+        Array<OneD, NekDouble> &loctraces);
+        
     MULTI_REGIONS_EXPORT inline void InterpLocEdgesToTrace(
         const int dir,
         const Array<OneD, const NekDouble> &locfaces,
-        Array<OneD, NekDouble> edges);
+        Array<OneD, NekDouble> &edges);
 
-    /// Right inner product with(IPTW) localedgetoTrace Interpolation Matrix.
+    MULTI_REGIONS_EXPORT inline void InterpTraceToLocEdges(
+        const int dir,
+        const Array<OneD, const NekDouble> &locfaces,
+        Array<OneD, NekDouble> &edges);
+
+   /// Right inner product with(IPTW) localedgetoTrace Interpolation Matrix.
     MULTI_REGIONS_EXPORT void RightIPTWLocEdgesToTraceInterpMat(
         const int                           dir,
         const Array<OneD, const NekDouble>  &edges,
@@ -298,12 +318,15 @@ private:
     int m_nLocTracePts;
     /// The number of global trace points.
     int m_nTracePts;
-    /// A mapping from the local trace points, arranged as all forwards traces
+    /// A mapping from the local elemental trace points, arranged as all forwards traces
     /// followed by backwards traces, to elemental storage.
-    Array<OneD, int> m_fieldToLocTraceMap;
+    Array<OneD, int> m_locTraceToFieldMap;
+    /// A mapping from the local elemental trace points, arranged as all forwards traces
+    /// followed by backwards traces, to elemental storage.
+    Array<OneD, Array<OneD, int> > m_locTraceToElmtTraceMap;
     /// A mapping from local trace points to the global trace. Dimension 0 holds
     /// forward traces, dimension 1 backward.
-    Array<OneD, Array<OneD, int> > m_locTraceToTraceMap;
+    Array<OneD, Array<OneD, int> > m_locInterpTraceToTraceMap;
     /// A mapping holding the type of interpolation needed for each local trace.
     /// Dimension 0 holds forward traces, dimension 1 backward.
     Array<OneD, Array<OneD, InterpLocTraceToTrace> > m_interpTrace;
@@ -313,7 +336,10 @@ private:
     /// Interpolation matrices for the second coordinate of 3D face, not used in
     /// 2D.
     Array<OneD, Array<OneD, DNekMatSharedPtr> > m_interpTraceI1;
-    /// Interpolation points key distributions for each of the local to global
+    /// Interpolation matrices for either 2D edges or first coordinate of 3D
+    /// face.
+    Array<OneD, Array<OneD, DNekMatSharedPtr> > m_interpFromTraceI0;
+    /// Interpolation points key distributions to each of the local to global
     /// mappings.
     Array<OneD, Array<OneD, TraceInterpPoints> > m_interpPoints;
     /// Mapping to hold first coordinate direction endpoint interpolation, which
@@ -352,7 +378,7 @@ private:
     /// The map of every phys from current trace to the left & right adjacent
     /// expasion phys. This map is only used when no interpolation is needed in
     /// getting GetFwdBwdTracePhys. If interpolation is needed, it should be
-    /// determined as the InnerProduct of m_fieldToLocTraceMap matrix and
+    /// determined as the InnerProduct of m_locTraceToFieldMap matrix and
     /// interpolation matrix.
     Array<OneD, Array<OneD, Array<OneD, int> > >
         m_tracePhysToLeftRightExpPhysMap;

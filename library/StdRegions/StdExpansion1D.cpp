@@ -143,6 +143,6 @@ namespace Nektar
             TraceToCoeffMap[1][0][i] = i; 
         }
     }
-
+        
     }//end namespace
 }//end namespace

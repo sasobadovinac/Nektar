@@ -95,10 +95,12 @@ void LocTraceToTraceMap::Setup(
         &elmtToTrace,
     const vector<bool> &LeftAdjacents)
 {
-    m_locTraceToTraceMap = Array<OneD, Array<OneD, int> >(2);
+    m_locInterpTraceToTraceMap = Array<OneD, Array<OneD, int> >(2);
+    m_locTraceToElmtTraceMap   = Array<OneD, Array<OneD, int> >(2);
     m_interpTrace        = Array<OneD, Array<OneD, InterpLocTraceToTrace> >(2);
     m_interpTraceI0      = Array<OneD, Array<OneD, DNekMatSharedPtr> >(2);
     m_interpEndPtI0      = Array<OneD, Array<OneD, Array<OneD, NekDouble> > >(2);
+    m_interpFromTraceI0      = Array<OneD, Array<OneD, DNekMatSharedPtr> >(2);
     m_interpPoints       = Array<OneD, Array<OneD, TraceInterpPoints> >(2);
     m_interpNtraces      = Array<OneD, Array<OneD, int> >(2);
 
@@ -152,10 +154,13 @@ void LocTraceToTraceMap::Setup(
         }
     }
 
-    m_fieldToLocTraceMap = Array<OneD, int>(m_nLocTracePts);
+    m_locTraceToFieldMap = Array<OneD, int>(m_nLocTracePts);
 
-    m_locTraceToTraceMap[0] = Array<OneD, int>(nFwdPts);
-    m_locTraceToTraceMap[1] = Array<OneD, int>(nBwdPts);
+    m_locTraceToElmtTraceMap[0] = Array<OneD, int>(m_nFwdLocTracePts);
+    m_locTraceToElmtTraceMap[1] = Array<OneD, int>(m_nLocTracePts-m_nFwdLocTracePts);
+
+    m_locInterpTraceToTraceMap[0] = Array<OneD, int>(nFwdPts);
+    m_locInterpTraceToTraceMap[1] = Array<OneD, int>(nBwdPts);
 
     m_nTraceCoeffs[0] = nFwdCoeffs;
     m_nTraceCoeffs[1] = nBwdCoeffs;
@@ -172,17 +177,21 @@ void LocTraceToTraceMap::Setup(
 
     vector<vector<int> > TraceOrder;
     TraceOrder.resize(nexp);
+    vector<vector<int> > ElmtPhysTraceOffset;
+    ElmtPhysTraceOffset.resize(nexp);
     int ntrace;
     int fwdcnt = 0;
     int bwdcnt = 0;
-
+    int neoffset = 0; 
     // Generate a map of similar traces with the same
     // interpolation requirements
+
     for (cnt = n = 0; n < nexp; ++n)
     {
         elmt = (*exp)[n];
         ntrace = elmt->GetNtraces();
         TraceOrder[n].resize(ntrace);
+        ElmtPhysTraceOffset[n].resize(ntrace);
 
         int coeffoffset = locExp.GetCoeff_Offset(n);
         for (e = 0; e < ntrace; ++e, ++cnt)
@@ -249,12 +258,15 @@ void LocTraceToTraceMap::Setup(
             }
             
             TraceInterpPoints fpoint(fromPointsKey0, fromPointsKey1,
-                                      toPointsKey0,   toPointsKey1);
+                                     toPointsKey0,   toPointsKey1);
             
             pair<int, int> epf(n, e);
             TraceInterpMap[fpoint].push_back(epf);
             TraceOrder[n][e] = cnt;
 
+            ElmtPhysTraceOffset[n][e] = neoffset;
+            neoffset += elmt->GetTraceNumPoints(e); 
+                
             // Setup for coefficient mapping from trace normal flux
             // to elements
             Array<OneD, unsigned int> map;
@@ -306,6 +318,7 @@ void LocTraceToTraceMap::Setup(
         m_interpTrace[i]   = Array<OneD, InterpLocTraceToTrace>(nInterpType);
         m_interpTraceI0[i] = Array<OneD, DNekMatSharedPtr>(nInterpType);
         m_interpEndPtI0[i] = Array<OneD, Array<OneD, NekDouble> >(nInterpType);
+        m_interpFromTraceI0[i] = Array<OneD, DNekMatSharedPtr>(nInterpType);
         m_interpPoints[i]  = Array<OneD, TraceInterpPoints>(nInterpType);
         m_interpNtraces[i]  = Array<OneD, int>(nInterpType, 0);
     }
@@ -372,13 +385,19 @@ void LocTraceToTraceMap::Setup(
             {
                 for (int i = 0; i < ntracepts; ++i)
                 {
-                    m_fieldToLocTraceMap[cntFwd + i] =
+                    m_locTraceToFieldMap[cntFwd + i] =
                         phys_offset + traceids[i];
                 }
 
+                for (int i = 0; i < ntracepts; ++i)
+                {
+                    m_locTraceToElmtTraceMap[0][cntFwd + i] =
+                        ElmtPhysTraceOffset[n][e] + i;
+                }
+                
                 for (int i = 0; i < ntracepts1; ++i)
                 {
-                    m_locTraceToTraceMap[0][cntFwd1 + i] =
+                    m_locInterpTraceToTraceMap[0][cntFwd1 + i] =
                         offset + locTraceToTraceMap[i];
                 }
 
@@ -390,13 +409,19 @@ void LocTraceToTraceMap::Setup(
             {
                 for (int i = 0; i < ntracepts; ++i)
                 {
-                    m_fieldToLocTraceMap[m_nFwdLocTracePts + cntBwd + i] =
+                    m_locTraceToFieldMap[m_nFwdLocTracePts + cntBwd + i] =
                         phys_offset + traceids[i];
+                }
+                
+                for (int i = 0; i < ntracepts; ++i)
+                {
+                    m_locTraceToElmtTraceMap[1][cntBwd + i] =
+                        ElmtPhysTraceOffset[n][e] + i;
                 }
 
                 for (int i = 0; i < ntracepts1; ++i)
                 {
-                    m_locTraceToTraceMap[1][cntBwd1 + i] =
+                    m_locInterpTraceToTraceMap[1][cntBwd1 + i] =
                         offset + locTraceToTraceMap[i];
                 }
 
@@ -432,7 +457,7 @@ void LocTraceToTraceMap::Setup(
                             m_interpTraceI0[set][cnt1] =
                                 LibUtilities::PointsManager()
                                 [fromPointsKey0]->GetI(toPointsKey0);
-                            
+
                             // Check to see if we can
                             // just interpolate endpoint
                             if ((fromPointsKey0.GetPointsType() ==
@@ -457,6 +482,16 @@ void LocTraceToTraceMap::Setup(
                                          GetPtr().get() +  tnp0 - 1, tnp0,
                                          &m_interpEndPtI0[set][cnt1][0],1);
                                 }
+                            }
+                            else
+                            {
+                                m_interpTrace[set][cnt1] = eInterpDir0;
+                                m_interpTraceI0[set][cnt1] =
+                                    LibUtilities::PointsManager()
+                                    [fromPointsKey0]->GetI(toPointsKey0);
+                                m_interpFromTraceI0[set][cnt1] =
+                                    LibUtilities::PointsManager()
+                                    [toPointsKey0]->GetI(fromPointsKey0);
                             }
                         }
                     }
@@ -654,8 +689,9 @@ void LocTraceToTraceMap::TraceLocToElmtLocCoeffMap(
 }
 
 /**
- * @brief Gather the local traces in physical space from field using
- * #m_fieldToLocTraceMap.
+ * @brief Gather the local elemental traces in physical space from
+ * field using #m_locTraceToFieldMap. Note traces are blocked together
+ * in similar trace point ordering
  *
  * @param field  Solution field in physical space
  * @param faces  Resulting local traces.
@@ -663,16 +699,16 @@ void LocTraceToTraceMap::TraceLocToElmtLocCoeffMap(
 void LocTraceToTraceMap::LocTracesFromField(
     const Array<OneD, const NekDouble> &field, Array<OneD, NekDouble> faces)
 {
-    Vmath::Gathr(m_fieldToLocTraceMap.size(),
+    Vmath::Gathr(m_locTraceToFieldMap.size(),
                  field,
-                 m_fieldToLocTraceMap,
+                 m_locTraceToFieldMap,
                  faces);
 }
 
 /**
  * @brief Reverse process of LocTracesFromField()
  * Add the local traces in physical space to field using
- * #m_fieldToLocTraceMap.
+ * #m_locTraceToFieldMap.
  *
  * @param field  Solution field in physical space
  * @param faces  local traces.
@@ -683,16 +719,16 @@ void LocTraceToTraceMap::AddLocTracesToField(
 {
     size_t nfield  =   field.size();
     Array<OneD, NekDouble> tmp {nfield, 0.0};
-    Vmath::Scatr(m_fieldToLocTraceMap.size(),
+    Vmath::Scatr(m_locTraceToFieldMap.size(),
                  faces,
-                 m_fieldToLocTraceMap,
+                 m_locTraceToFieldMap,
                  tmp);
     Vmath::Vadd(nfield, tmp, 1, field, 1, field, 1);
 }
 
 /**
  * @brief Gather the forwards-oriented local traces in physical space from field
- * using #m_fieldToLocTraceMap.
+ * using #m_locTraceToFieldMap.
  *
  * @param field  Solution field in physical space
  * @param faces  Resulting local forwards-oriented traces.
@@ -700,21 +736,65 @@ void LocTraceToTraceMap::AddLocTracesToField(
 void LocTraceToTraceMap::FwdLocTracesFromField(
     const Array<OneD, const NekDouble> &field, Array<OneD, NekDouble> faces)
 {
-    Vmath::Gathr(m_nFwdLocTracePts, field, m_fieldToLocTraceMap, faces);
+    Vmath::Gathr(m_nFwdLocTracePts, field, m_locTraceToFieldMap, faces);
 }
 
+
+/**
+ * @brief Reshuffle local elemental traces in physical space so that
+ * similar faces points are blocked together so they can then be
+ * interpolated with InterpLocTraceToTrace method.
+ *
+ * @param loctrace  local traces in physical space
+ * @param reshuffle traces ordered in reshuffled format of similar patterns. 
+ */
+void LocTraceToTraceMap::ReshuffleLocTracesForInterp(const int dir,
+                         const Array<OneD, const NekDouble> &loctraces,
+                         Array<OneD, NekDouble> reshuffle)
+{
+    ASSERTL1(dir < 2,
+             "option dir out of range, "
+             " dir=0 is fwd, dir=1 is bwd");
+
+    Vmath::Gathr(m_locTraceToElmtTraceMap[dir].size(),
+                 loctraces,
+                 m_locTraceToElmtTraceMap[dir],
+                 reshuffle);
+}
+
+
+/**
+ * @brief Unshuffle local elemental traces in physical space from
+ * similar faces points are blocked together to the local elemental trace format
+ *
+ * @param loctrace  local traces in physical space
+ * @param reshuffle traces ordered in reshuffled format of similar patterns. 
+ */
+void LocTraceToTraceMap::UnshuffleLocTraces(const int dir,
+                         const Array<OneD, const NekDouble> &loctraces,
+                         Array<OneD, NekDouble> unshuffle)
+{
+    ASSERTL1(dir < 2,
+             "option dir out of range, "
+             " dir=0 is fwd, dir=1 is bwd");
+
+    Vmath::Scatr(m_locTraceToElmtTraceMap[dir].size(),
+                 loctraces,
+                 m_locTraceToElmtTraceMap[dir],
+                 unshuffle);
+}
 
 void LocTraceToTraceMap::InterpLocTracesToTrace(
     const int dir,
     const Array<OneD, const NekDouble> &loctraces,
-    Array<OneD, NekDouble> traces)
+    Array<OneD, NekDouble> &traces)
 {
     switch(m_expdim)
     {
     case 1: // Essentially do copy
-        Vmath::Scatr(m_locTraceToTraceMap[dir].size(),
+        Vmath::Scatr(m_locInterpTraceToTraceMap[dir].size(),
                      loctraces.get(),
-                     m_locTraceToTraceMap[dir].get(),
+                     m_locInterpTraceToTraceMap[dir].get(),
                      traces.get());
         break;
     case 2:
@@ -729,6 +809,22 @@ void LocTraceToTraceMap::InterpLocTracesToTrace(
     }
 }
             
+void LocTraceToTraceMap::InterpTraceToLocTrace(
+    const int dir,
+    const Array<OneD, NekDouble> &traces,
+    Array<OneD, NekDouble> &loctraces)
+{
+    switch(m_expdim)
+    {
+    case 2:
+        InterpTraceToLocEdges(dir,traces,loctraces);
+        break;
+    default:
+        ASSERTL0(false,"Not set up");
+        break;
+    }
+}
+
 /**
  * @brief Interpolate local trace edges to global trace edge point distributions
  * where required.
@@ -740,7 +836,7 @@ void LocTraceToTraceMap::InterpLocTracesToTrace(
 void LocTraceToTraceMap::InterpLocEdgesToTrace(
     const int dir,
     const Array<OneD, const NekDouble> &locedges,
-    Array<OneD, NekDouble> edges)
+    Array<OneD, NekDouble> &edges)
 {
     ASSERTL1(dir < 2,
              "option dir out of range, "
@@ -817,12 +913,100 @@ void LocTraceToTraceMap::InterpLocEdgesToTrace(
         }
     }
 
-    Vmath::Scatr(m_locTraceToTraceMap[dir].size(),
+    Vmath::Scatr(m_locInterpTraceToTraceMap[dir].size(),
                  tmp.get(),
-                 m_locTraceToTraceMap[dir].get(),
+                 m_locInterpTraceToTraceMap[dir].get(),
                  edges.get());
 }
 
+/**
+ * @brief Interpolate global trace edge to local trace edges  point distributions
+ * where required.
+ *
+ * @param dir       Selects forwards (0) or backwards (1) direction.
+ * @param locfaces  Local trace edge storage.
+ * @param faces     Global trace edge storage
+ */
+void LocTraceToTraceMap::InterpTraceToLocEdges(
+    const int dir,
+    const Array<OneD, const NekDouble> &edges,
+    Array<OneD,  NekDouble> &locedges)
+{
+    ASSERTL1(dir < 2,
+             "option dir out of range, "
+             " dir=0 is fwd, dir=1 is bwd");
+
+    int cnt  = 0;
+    int cnt1 = 0;
+
+    Array<OneD, NekDouble> tmp(m_nTracePts);
+
+    //unshuffles trace into lcoally orientated format. 
+    Vmath::Gathr(m_locInterpTraceToTraceMap[dir].size(),
+                 edges.get(),
+                 m_locInterpTraceToTraceMap[dir].get(),
+                 tmp.get());
+    
+    for (int i = 0; i < m_interpTrace[dir].size(); ++i)
+    {
+        // Check if there are edges to interpolate
+        if (m_interpNtraces[dir][i])
+        {
+            // Get to/from points
+            LibUtilities::PointsKey fromPointsKey0 =
+                std::get<2>(m_interpPoints[dir][i]);
+            LibUtilities::PointsKey toPointsKey0 =
+                std::get<0>(m_interpPoints[dir][i]);
+
+            int fnp    = fromPointsKey0.GetNumPoints();
+            int tnp    = toPointsKey0.GetNumPoints();
+            int nedges = m_interpNtraces[dir][i];
+
+            // Do interpolation here if required
+            switch (m_interpTrace[dir][i])
+            {
+                case eNoInterp: // Just copy
+                {
+                    Vmath::Vcopy(nedges * fnp,
+                                 tmp.get() + cnt,
+                                 1,
+                                 locedges.get() + cnt1,
+                                 1);
+                }
+                break;
+                case eInterpDir0:
+                {
+                    DNekMatSharedPtr I0 = m_interpFromTraceI0[dir][i];
+                    Blas::Dgemm('N','N', tnp, nedges,
+                                fnp,1.0, I0->GetPtr().get(),
+                                tnp, tmp.get() + cnt,
+                                fnp, 0.0, locedges.get() + cnt1,
+                                tnp);
+                }
+                break;
+                case eInterpEndPtDir0:
+                {
+                    // Just copy points back 
+                    for (int k = 0; k < nedges; ++k)
+                    {
+                        Vmath::Vcopy(fnp,  &tmp[cnt + k * fnp], 1,
+                                     &locedges[cnt1 + k * tnp], 1);
+                    }
+                }
+                break;
+                default:
+                    ASSERTL0(false,
+                             "Invalid interpolation type for 2D elements");
+                    break;
+            }
+
+            cnt  += nedges * fnp;
+            cnt1 += nedges * tnp;
+        }
+    }
+
+}
+    
 /**
  * @brief Right inner product with localedgetoTrace Interpolation Matrix.
  *
@@ -844,9 +1028,9 @@ void LocTraceToTraceMap::RightIPTWLocEdgesToTraceInterpMat(
 
     // tmp space assuming forward map is of size of trace
     Array<OneD, NekDouble> tmp{size_t(m_nTracePts)};
-    Vmath::Gathr(m_locTraceToTraceMap[dir].size(),
+    Vmath::Gathr(m_locInterpTraceToTraceMap[dir].size(),
                  edges.get(),
-                 m_locTraceToTraceMap[dir].get(),
+                 m_locInterpTraceToTraceMap[dir].get(),
                  tmp.get());
 
     for (int i = 0; i < m_interpTrace[dir].size(); ++i)
@@ -1150,9 +1334,9 @@ void LocTraceToTraceMap::InterpLocFacesToTrace(
         }
     }
 
-    Vmath::Scatr(m_locTraceToTraceMap[dir].size(),
+    Vmath::Scatr(m_locInterpTraceToTraceMap[dir].size(),
                  tmp.get(),
-                 m_locTraceToTraceMap[dir].get(),
+                 m_locInterpTraceToTraceMap[dir].get(),
                  faces.get());
 }
 
@@ -1177,9 +1361,9 @@ void LocTraceToTraceMap::RightIPTWLocFacesToTraceInterpMat(
 
     // tmp space assuming forward map is of size of trace
     Array<OneD, NekDouble> tmp{size_t(m_nTracePts)};
-    Vmath::Gathr(m_locTraceToTraceMap[dir].size(),
+    Vmath::Gathr(m_locInterpTraceToTraceMap[dir].size(),
                  traces.get(),
-                 m_locTraceToTraceMap[dir].get(),
+                 m_locInterpTraceToTraceMap[dir].get(),
                  tmp.get());
 
     for (int i = 0; i < m_interpTrace[dir].size(); ++i)

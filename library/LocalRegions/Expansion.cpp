@@ -325,6 +325,13 @@ namespace Nektar
                                                    m_metrics[eMetricQuadrature]);
         }
 
+        void Expansion::v_IProductWRTDerivBaseOnTraceMat(
+                    Array<OneD, DNekMatSharedPtr> &DerivMat)
+        {
+            boost::ignore_unused(DerivMat);
+            ASSERTL0(false, "Not implemented.");
+        }
+
         void Expansion::v_GetCoords(
             Array<OneD, NekDouble> &coords_0,
             Array<OneD, NekDouble> &coords_1,

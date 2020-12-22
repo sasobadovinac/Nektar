@@ -70,7 +70,8 @@ namespace Nektar
                 const bool SetUpJustDG  = true,
                 const bool DeclareCoeffPhysArrays = true, 
                 const Collections::ImplementationType ImpType
-                = Collections::eNoImpType);
+                = Collections::eNoImpType,
+                const std::string bcvariable = "NotSet");
             
             /// Constructor for a DisContField from a List of subdomains
             /// New Constructor for arterial network 
@@ -117,6 +118,11 @@ namespace Nektar
 
             MULTI_REGIONS_EXPORT void EvaluateHDGPostProcessing(
                 Array<OneD, NekDouble> &outarray);
+
+            MULTI_REGIONS_EXPORT void GetLocTraceToTraceMap(LocTraceToTraceMapSharedPtr &LocTraceToTraceMap) 
+            {
+                LocTraceToTraceMap = m_locTraceToTraceMap;
+            }
 
         protected:
             /// The number of boundary segments on which Dirichlet boundary
@@ -225,6 +231,7 @@ namespace Nektar
                 return m_locTraceToTraceMap;
             }
 
+            
             // Return the internal vector which identifieds if trace
             // is left adjacent definiing which trace the normal
             // points otwards from

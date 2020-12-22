@@ -329,10 +329,9 @@ namespace Nektar
         
         /** \brief Determine the mapping to re-orientate the
             coefficients along the element trace (assumed to align
-            with teh standard element) into the orientation of the
+            with the standard element) into the orientation of the
             local trace given by edgeOrient. 
          */
-        
         void StdExpansion2D::v_GetElmtTraceToTraceMap(
             const unsigned int          eid,
             Array<OneD, unsigned int>& maparray,
@@ -440,5 +439,7 @@ namespace Nektar
                 maparray[i] = map1[map2[i]];
             }
         }
+
+
     } //end namespace
 } //end namespace

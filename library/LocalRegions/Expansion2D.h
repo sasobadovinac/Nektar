@@ -197,7 +197,10 @@ namespace Nektar
             virtual const NormalVector &v_GetTraceNormal(const int edge) const;
             virtual NekDouble v_VectorFlux(
                                            const Array<OneD, Array<OneD, NekDouble > > &vec);
+            virtual  void v_IProductWRTDerivBaseOnTraceMat
+            (Array<OneD, DNekMatSharedPtr> &DerivMat); 
         };
+
 
 
         inline SpatialDomains::Geometry2DSharedPtr

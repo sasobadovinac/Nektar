@@ -2434,9 +2434,15 @@ namespace Nektar
                 // d xi_2/dx n_x 
                 for(int i = 0; i < nquad0; ++i)
                 {
+#ifdef DNORM
                     factors[0][i] = df[1][i]*normal_0[0][i]; 
                     factors[2][i] = df[1][nquad0*(nquad1-1)+i]*
-                    normal_2[0][i];
+                        normal_2[0][i];
+#else
+                    d0factors[0][i] = df[1][i]*normal_0[0][i]; 
+                    d0factors[2][i] = df[1][nquad0*(nquad1-1)+i]*
+                        normal_2[0][i];
+#endif
                 }
 
                 // d xi_1/dx n_x
@@ -2452,9 +2458,15 @@ namespace Nektar
                     // needs checking for 3D coords
                     for(int i = 0; i < nquad0; ++i)
                     {
+#ifdef DNORM
                         factors[0][i] += df[2*n+1][i]*normal_0[n][i]; 
                         factors[2][i] += df[2*n+1][nquad0*(nquad1-1)+i]
                             *normal_2[n][i];
+#else
+                        d0factors[0][i] += df[2*n+1][i]*normal_0[n][i]; 
+                        d0factors[2][i] += df[2*n+1][nquad0*(nquad1-1)+i]
+                            *normal_2[n][i];
+#endif
                     }
                     
                     // d xi_1/dy n_y
@@ -2470,9 +2482,15 @@ namespace Nektar
                 // d xi_1/dx n_x 
                 for(int i = 0; i < nquad0; ++i)
                 {
+#ifdef DNORM
                     d0factors[0][i] = df[0][i]*normal_0[0][i]; 
                     d0factors[2][i] = df[0][nquad0*(nquad1-1)+i]*
-                    normal_2[0][i];
+                        normal_2[0][i];
+#else
+                    factors[0][i] = df[0][i]*normal_0[0][i]; 
+                    factors[2][i] = df[0][nquad0*(nquad1-1)+i]*
+                        normal_2[0][i];
+#endif
                 }
 
                 // d xi_2/dx n_x
@@ -2488,9 +2506,15 @@ namespace Nektar
                     // needs checking for 3D coords
                     for(int i = 0; i < nquad0; ++i)
                     {
+#ifdef DNORM
                         d0factors[0][i] += df[2*n][i]*normal_0[n][i]; 
                         d0factors[2][i] += df[2*n][nquad0*(nquad1-1)+i]
                             *normal_2[n][i];
+#else
+                        factors[0][i] += df[2*n][i]*normal_0[n][i]; 
+                        factors[2][i] += df[2*n][nquad0*(nquad1-1)+i]
+                            *normal_2[n][i];
+#endif
                     }
                     
                     // d xi_2/dy n_y
@@ -2508,8 +2532,13 @@ namespace Nektar
                 // d xi_2/dx n_x 
                 for(int i = 0; i < nquad0; ++i)
                 {
+#ifdef DNORM
                     factors[0][i] = df[1][0]*normal_0[0][i]; 
                     factors[2][i] = df[1][0]*normal_2[0][i];
+#else
+                    d0factors[0][i] = df[1][0]*normal_0[0][i]; 
+                    d0factors[2][i] = df[1][0]*normal_2[0][i];
+#endif
                 }
 
                 // d xi_1/dx n_x
@@ -2525,8 +2554,13 @@ namespace Nektar
                     // needs checking for 3D coords
                     for(int i = 0; i < nquad0; ++i)
                     {
+#ifdef DNROM
                         factors[0][i] += df[2*n+1][0]*normal_0[n][i]; 
                         factors[2][i] += df[2*n+1][0]*normal_2[n][i];
+#else
+                        d0factors[0][i] += df[2*n+1][0]*normal_0[n][i]; 
+                        d0factors[2][i] += df[2*n+1][0]*normal_2[n][i];
+#endif
                     }
                     
                     // d xi_1/dy n_y
@@ -2542,8 +2576,13 @@ namespace Nektar
                 // d xi_1/dx n_x 
                 for(int i = 0; i < nquad0; ++i)
                 {
+#ifdef DNORM
                     d0factors[0][i] = df[0][0]*normal_0[0][i]; 
                     d0factors[2][i] = df[0][0]*normal_2[0][i];
+#else
+                    factors[0][i] = df[0][0]*normal_0[0][i]; 
+                    factors[2][i] = df[0][0]*normal_2[0][i];
+#endif
                 }
 
                 // d xi_2/dx n_x
@@ -2559,8 +2598,13 @@ namespace Nektar
                     // needs checking for 3D coords
                     for(int i = 0; i < nquad0; ++i)
                     {
+#ifdef DNROM
                         d0factors[0][i] += df[2*n][0]*normal_0[n][i]; 
                         d0factors[2][i] += df[2*n][0]*normal_2[n][i];
+#else
+                        factors[0][i] += df[2*n][0]*normal_0[n][i]; 
+                        factors[2][i] += df[2*n][0]*normal_2[n][i];
+#endif
                     }
                     
                     // d xi_2/dy n_y

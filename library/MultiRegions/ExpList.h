@@ -132,7 +132,7 @@ namespace Nektar
                 const std::string &var = "DefaultVar",
                 const Collections::ImplementationType ImpType
                                              = Collections::eNoImpType);
-            
+
             /// Sets up a list of local expansions based on an expansion  Map
             MULTI_REGIONS_EXPORT ExpList(
                 const LibUtilities::SessionReaderSharedPtr &pSession,
@@ -163,6 +163,16 @@ namespace Nektar
                     const Collections::ImplementationType     ImpType
                                              = Collections::eNoImpType);
 
+            /// Generate an trace ExpList from a meshgraph \a graph and session file            
+            MULTI_REGIONS_EXPORT ExpList(
+                  const LibUtilities::SessionReaderSharedPtr &pSession,
+                  const LocalRegions::ExpansionVector        &locexp,
+                  const SpatialDomains::MeshGraphSharedPtr   &graph,
+                  const bool                                  DeclareCoeffPhysArrays,
+                  const std::string                           variable,
+                  const Collections::ImplementationType       ImpType
+                                         = Collections::eNoImpType);
+            
             /// Constructor based on domain information only for 1D &
             /// 2D boundary conditions
             MULTI_REGIONS_EXPORT ExpList(

@@ -1671,5 +1671,53 @@ namespace Nektar
 
             return StdExpansion::Integral(Fn);
         }
+
+
+        void Expansion2D::v_IProductWRTDerivBaseOnTraceMat(
+                                Array<OneD, DNekMatSharedPtr> &DerivMat)
+        {
+            int nquad = GetTotPoints();
+            int ntraces = GetNtraces();
+
+            Array<OneD, NekDouble> coeffs(m_ncoeffs);
+            Array<OneD, NekDouble> phys(nquad), deriv0(nquad), deriv1(nquad);
+
+            Array<OneD, Array<OneD, int> > traceids(ntraces);
+
+            int tottracepts = 0; 
+            for(int i = 0; i < ntraces; ++i)
+            {
+                GetTracePhysMap(i,traceids[i]);
+                tottracepts += GetTraceNumPoints(i);
+            }               
+                                  
+            DerivMat = Array<OneD, DNekMatSharedPtr> (2); 
+            DerivMat[0] = MemoryManager<DNekMat>::AllocateSharedPtr
+                (m_ncoeffs,tottracepts);
+            DerivMat[1] = MemoryManager<DNekMat>::AllocateSharedPtr
+                (m_ncoeffs,tottracepts);
+
+            for(int i = 0; i < m_ncoeffs; ++i)
+            {
+                Vmath::Zero(m_ncoeffs,coeffs,1);
+                coeffs[i] = 1.0;
+                BwdTrans(coeffs,phys);
+                
+                // dphi_i/d\eta_1,  dphi_i/d\eta_2
+                PhysTensorDeriv(phys,deriv0,deriv1);
+
+                int cnt = 0;
+                for(int j = 0; j < ntraces; ++j)
+                {
+                    int nTracePts = GetTraceNumPoints(j);
+                    for(int k = 0; k < nTracePts; ++k)
+                    {
+                        (*DerivMat[0])(i,cnt+k) = deriv0[traceids[j][k]];
+                        (*DerivMat[1])(i,cnt+k) = deriv1[traceids[j][k]];
+                    }
+                    cnt += nTracePts; 
+                }
+            }
+        }
     }
 }

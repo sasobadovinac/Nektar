@@ -72,7 +72,7 @@ public:
     ///Name of the class
     static std::string classNameBody;
     static std::string classNameField;
-    
+
 protected:
     SOLVER_UTILS_EXPORT virtual void v_InitObject
         (const Array<OneD, MultiRegions::ExpListSharedPtr>& pFields,
@@ -92,7 +92,13 @@ private:
     /// Number of planes in expansion to be stabilised for Homgoeneous expansion
     int m_nplanes;
     /// DG expansion for projection evalaution along trace
-    MultiRegions::DisContFieldSharedPtr m_dgfield;
+    MultiRegions::DisContFieldSharedPtr m_dgfield;    
+    /// LocaTraceToTraceMap 
+    MultiRegions::LocTraceToTraceMapSharedPtr  m_locTraceToTraceMap;
+    /// Local Elemental trace expansions
+    MultiRegions::ExpListSharedPtr m_locElmtTrace;
+
+#ifdef OLD
     /// Scale factor for phys values along trace involving the lcoal
     /// normals and tangenet geometric factors on Fwd Trace
     Array<OneD, Array<OneD, NekDouble>> m_scalFwd;
@@ -109,7 +115,6 @@ private:
     /// of the derivative of the normal basis along that trace
     Array<OneD,  std::set< std::pair<unsigned int, NekDouble > > >
                                                     m_bwdTraceToCoeffMap;
-
     /// Array for every coefficient on trace of a mapping form trace
     /// coefficients to elemental coefficients 
     Array<OneD, std::set< std::pair<unsigned int, int> > >
@@ -119,6 +124,29 @@ private:
     /// coefficients to elemental coefficients 
     Array<OneD, std::set< std::pair<unsigned int, int> > >
                                                   m_bwdTraceToETraceCoeffMap; 
+    
+#else
+    /// Scale factor for phys values along trace involving the lcoal
+    /// normals and tangent geometric factors 
+    Array<OneD, Array<OneD, NekDouble>> m_scalTrace;
+
+    Array<OneD,  std::set< std::pair<unsigned int, NekDouble > > >
+                                                    m_traceToCoeffMap;
+
+    /// Array for every coefficient on trace of a mapping form trace
+    /// coefficients to elemental coefficients 
+    Array<OneD, std::set< std::pair<unsigned int, int> > >
+                                                  m_traceToETraceCoeffMap; 
+#define MatProd 1
+#ifdef MatProd
+    std::vector<std::pair<int,Array<OneD, DNekMatSharedPtr>>> m_IPWRTDBOnTraceMat;
+
+    void MultiplyByIProductWRTDerivOnTraceMat(int i, Array<OneD, NekDouble> &in,
+                                              Array<OneD, NekDouble> &out);
+    
+#endif
+    
+#endif
     
     // Link to the trace normals 
     Array<OneD, Array<OneD, NekDouble> > m_traceNormals; 
@@ -138,6 +166,8 @@ private:
 
     void eval_h(LocalRegions::ExpansionSharedPtr geom, int traceid,
                NekDouble &h, NekDouble &p);
+
+    void SetUpExpansionInfoMapForGJP(SpatialDomains::MeshGraphSharedPtr graph);
 };
 
 }

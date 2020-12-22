@@ -89,22 +89,33 @@ namespace Nektar
             const std::string                          &variable,
             const bool                                  SetUpJustDG,
             const bool                                  DeclareCoeffPhysArrays,
-            const Collections::ImplementationType       ImpType)
+            const Collections::ImplementationType       ImpType,
+            const std::string                           bcvariable)
             : ExpList(pSession,graph,DeclareCoeffPhysArrays, variable, ImpType),
               m_trace(NullExpListSharedPtr)
         {
-            if (variable.compare("DefaultVar") != 0)
+            std::string bcvar; 
+            if(bcvariable == "NotSet")
+            {
+                bcvar = variable;
+            }
+            else
+            {
+                bcvar = bcvariable;
+            }
+            
+            if (bcvar.compare("DefaultVar") != 0)
             {
                 SpatialDomains::BoundaryConditions bcs(m_session, graph);
 
-                GenerateBoundaryConditionExpansion(graph,bcs,variable,
+                GenerateBoundaryConditionExpansion(graph,bcs,bcvar,
                                                    DeclareCoeffPhysArrays);
                 if(DeclareCoeffPhysArrays)
                 {
-                    EvaluateBoundaryConditions(0.0, variable);
+                    EvaluateBoundaryConditions(0.0, bcvar);
                 }
                 ApplyGeomInfo();
-                FindPeriodicTraces(bcs,variable);
+                FindPeriodicTraces(bcs,bcvar);
             }
 
             if(SetUpJustDG)

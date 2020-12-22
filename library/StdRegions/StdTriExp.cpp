@@ -873,7 +873,27 @@ namespace Nektar
                         break;
                     }
 
-                    default:
+                    break; 
+                    // Currently this does not increase the points by
+                    // 1 since when using this quadrature we are
+                    // presuming it is already been increased by one
+                    // when comopared to
+                    // GaussRadauMAlpha1Beta0. Currently used in the
+                    // GJP option
+                    case LibUtilities::eGaussRadauMLegendre: 
+                    {
+                        LibUtilities::PointsKey pkey(
+                                m_base[1]->GetBasisKey().GetPointsKey().
+                                GetNumPoints(),
+                                LibUtilities::eGaussLobattoLegendre);
+                        return LibUtilities::BasisKey(
+                                LibUtilities::eModified_A,
+                                m_base[1]->GetNumModes(),pkey);
+                        break;
+                    }
+
+                    break;
+                   default:
                         NEKERROR(ErrorUtil::efatal,
                                  "unexpected points distribution");
                         break;
@@ -1491,27 +1511,22 @@ namespace Nektar
 
             switch(m_base[1]->GetPointsType())
             {
-                // Legendre inner product
-                case LibUtilities::ePolyEvenlySpaced:
-                case LibUtilities::eGaussLobattoLegendre:
-                    for(i = 0; i < nquad1; ++i)
-                    {
-                        Blas::Dscal(nquad0,0.5*(1-z1[i])*w1[i],
-                                    outarray.get()+i*nquad0,1);
-                    }
-                    break;
-
                 // (1,0) Jacobi Inner product
-                case LibUtilities::eGaussRadauMAlpha1Beta0:
-                    for(i = 0; i < nquad1; ++i)
-                    {
-                        Blas::Dscal(nquad0,0.5*w1[i],outarray.get()+i*nquad0,1);
-                    }
-                    break;
-
-                default:
-                    ASSERTL0(false, "Unsupported quadrature points type.");
-                    break;
+            case LibUtilities::eGaussRadauMAlpha1Beta0:
+                for(i = 0; i < nquad1; ++i)
+                {
+                    Blas::Dscal(nquad0,0.5*w1[i],outarray.get()+i*nquad0,1);
+                }
+                break;
+                // Legendre inner product
+            default:
+                for(i = 0; i < nquad1; ++i)
+                {
+                    Blas::Dscal(nquad0,0.5*(1-z1[i])*w1[i],
+                                outarray.get()+i*nquad0,1);
+                }
+                break;
+                
             }
         }
 
@@ -1552,24 +1567,24 @@ namespace Nektar
             }
         }
 
-#if 0 
-        /** @brief: This method provides the value of the derivative of
-            the normal component of the basis along the trace. (Note by
-            definition this is a constant value along the trace). In
-            addition it also provides an index of the elemental local
-            coefficient location of that trace coefficients (n) and hte
-            derivative of the basis (m).
+        /** @brief: This method provides the value of the derivative
+            of the normal (or non-tangent) component of the basis
+            along the trace. (Note by definition this is a constant
+            value along the trace). In addition it also provides an
+            index of the elemental local coefficient location of that
+            trace coefficients for each derivaite basis that has been
+            provided.
         */
         void StdTriExp::v_DerivNormalBasisOnTrace
           (Array<OneD, Array<OneD, Array<OneD, NekDouble> > > &dbasis,
            Array<OneD, Array<OneD, Array<OneD, unsigned int> > >
                                                      &TraceToCoeffMap)
         {
-            int nquad0  = m_base[0]->GetNumPoints();
-            int nquad1  = m_base[1]->GetNumPoints();
+            unsigned int nquad0  = m_base[0]->GetNumPoints();
+            unsigned int nquad1  = m_base[1]->GetNumPoints();
 
-            int ncoeff0 = m_base[0]->GetNumModes();
-            int ncoeff1 = m_base[1]->GetNumModes();
+            unsigned int ncoeff0 = m_base[0]->GetNumModes();
+            unsigned int ncoeff1 = m_base[1]->GetNumModes();
             
             if(dbasis.size() != 3)
             {
@@ -1600,7 +1615,11 @@ namespace Nektar
             
             if(dbasis[0][0].size() != ncoeff1)
             {
-                for(unsigned int i = 0; i < ncoeff0; ++i)
+                dbasis[0][0] = Array<OneD, NekDouble>(ncoeff1);
+                TraceToCoeffMap[0][0] = Array<OneD, unsigned int>(ncoeff1);
+                dbasis[0][1] = Array<OneD, NekDouble>(ncoeff1);
+                TraceToCoeffMap[0][1] = Array<OneD, unsigned int>(ncoeff1);
+                for(unsigned int i = 2; i < ncoeff0; ++i)
                 {
                     dbasis[0][i] = Array<OneD, NekDouble>(ncoeff1-i);
                     
@@ -1612,7 +1631,7 @@ namespace Nektar
             {
                 for(unsigned int i = 0; i < ncoeff1; ++i)
                 {
-                    int ncoeff0mi = ncoeff0-i; 
+                    int ncoeff0mi = std::min(ncoeff1-i,ncoeff0);  // for var p case
                     dbasis[1][i] = Array<OneD, NekDouble>(ncoeff0mi);
                     dbasis[2][i] = Array<OneD, NekDouble>(ncoeff0mi);
                     
@@ -1636,27 +1655,17 @@ namespace Nektar
                     TraceToCoeffMap[0][i][j] = cnt; 
                 }
             }
+
+            // edge 0 - top vertex is decoponsed into (1-eta_1)/2 +
+            // (1+eta_1)/2 so needs an addiitonal entry for second
+            // component 
+            dbasis[0][1][ncoeff1-1] = DerivBasis1[nquad1];
+            TraceToCoeffMap[0][1][ncoeff1-1] = 1; 
             
-            cnt = 0; 
-            for(unsigned int i = 0; i < ncoeff0; ++i)
-            {
-                for(unsigned int j = 0; j < ncoeff1-i; ++j,++cnt)
-                {
-                    // edges 1 and 2
-                    dbasis[1][j][i] = DerivBasis0[(i+1)*nquad0-1];
-                    dbasis[2][j][i] = DerivBasis0[i*nquad0];
-
-                    TraceToCoeffMap[1][j][i] = cnt;
-                    TraceToCoeffMap[2][j][i] = cnt; 
-                }
-
-            }
-
-
-            cnt = 0; 
             for(unsigned int j = 0; j < ncoeff1; ++j)
             {
-                for(unsigned int i = 0; i < ncoeff0-j; ++i,++cnt)
+                cnt = j; 
+                for(unsigned int i = 0; i < min(ncoeff0,ncoeff1-j); ++i)
                 {
                     // edges 1 and 2
                     dbasis[1][j][i] = DerivBasis0[(i+1)*nquad0-1];
@@ -1664,15 +1673,15 @@ namespace Nektar
 
                     TraceToCoeffMap[1][j][i] = cnt;
                     TraceToCoeffMap[2][j][i] = cnt; 
+                    cnt += ncoeff1-i;
                 }
 
             }
-
+            
             // Top vertex is constant in x direction so needs to be zeroed
             dbasis[1][1][0] = 0.0;
             dbasis[2][1][0] = 0.0;
         }
-#endif        
 
     }//end namespace
 }//end namespace

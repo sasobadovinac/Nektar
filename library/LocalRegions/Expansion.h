@@ -268,6 +268,12 @@ namespace Nektar
             LOCAL_REGIONS_EXPORT const Array<OneD, const NekDouble > 
                         &GetElmtBndNormDirElmtLen(const int nbnd) const;
             
+            void IProductWRTDerivBaseOnTraceMat(
+                    Array<OneD, DNekMatSharedPtr> &DerivMat)
+            {
+                v_IProductWRTDerivBaseOnTraceMat(DerivMat);
+            }
+            
         protected:
 	    LibUtilities::NekManager<IndexMapKey,
                       IndexMapValues, IndexMapKey::opLess> m_IndexMapManager;
@@ -417,6 +423,9 @@ namespace Nektar
                 const Array<OneD, const NekDouble> &primCoeffs,
                 const Array<OneD, NekDouble> &incoeffs,
                 Array<OneD, NekDouble> &coeffs);
+
+            virtual  void v_IProductWRTDerivBaseOnTraceMat(
+                    Array<OneD, DNekMatSharedPtr> &DerivMat); 
 
         private:
 

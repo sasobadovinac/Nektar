@@ -193,7 +193,8 @@ namespace StdRegions
                                 Orientation                edgeOrient = eForwards,
                                 int                        P = -1,
                                 int                        Q = -1);
-        private:
+
+    private:
 
             // Virtual Functions ----------------------------------------
             virtual int v_GetShapeDimension() const

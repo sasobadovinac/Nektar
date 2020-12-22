@@ -134,13 +134,13 @@ namespace MultiRegions
         for(i = 0; i < bndCond.size(); ++i)
         {
             if(bndCond[i]->GetBoundaryConditionType() == 
-                                     SpatialDomains::eDirichlet)
+               SpatialDomains::eDirichlet)
             {
                 for(j = 0; j < bndConstraint[i]->GetExpSize(); ++j)
                 {
                     if((exp0D = std::dynamic_pointer_cast<
                         LocalRegions::Expansion0D>(
-                                         bndConstraint[i]->GetExp(j))))
+                                                   bndConstraint[i]->GetExp(j))))
                     {
                         m_expType = e0D;
                         
@@ -151,30 +151,30 @@ namespace MultiRegions
                     }
                     else if((exp1D = std::dynamic_pointer_cast<
                              LocalRegions::Expansion1D>(
-                                          bndConstraint[i]->GetExp(j))))
+                                                        bndConstraint[i]->GetExp(j))))
                     {
                         m_expType = e1D;
-
+                            
                         LibUtilities::BasisKey bkey = exp1D->
                             GetBasis(0)->GetBasisKey();
                         segGeom = exp1D->GetGeom1D();
                         exp = MemoryManager<LocalRegions::SegExp>
                             ::AllocateSharedPtr(bkey, segGeom);
                         tracesDone.insert(segGeom->GetGlobalID());
-                    
+                        
                     }
                     else if ((exp2D = std::dynamic_pointer_cast
                               <LocalRegions::Expansion2D>(bndConstraint[i]->
                                                           GetExp(j))))
                     {
                         m_expType = e2D;
-
+                        
                         LibUtilities::BasisKey bkey0 = exp2D
                             ->GetBasis(0)->GetBasisKey();
                         LibUtilities::BasisKey bkey1 = exp2D
                             ->GetBasis(1)->GetBasisKey();
                         FaceGeom = exp2D->GetGeom2D();
-
+                        
                         //if face is a quad
                         if((QuadGeom = std::dynamic_pointer_cast<
                             SpatialDomains::QuadGeom>(FaceGeom)))
@@ -199,7 +199,7 @@ namespace MultiRegions
                     }
                     // Assign next id
                     exp->SetElmtId(elmtid++);
-                
+                    
                     // Add the expansion
                     (*m_exp).push_back(exp);
                 }
@@ -249,7 +249,7 @@ namespace MultiRegions
                     segGeom = exp2D->GetGeom2D()->GetEdge(j);
                     id      = segGeom->GetGlobalID();
                     // Ignore Dirichlet edges
-                    if (tracesDone.count(id) != 0)
+                    if (tracesDone.count(id) != 0) 
                     {
                         continue;
                     }
@@ -258,8 +258,8 @@ namespace MultiRegions
                     
                     if (it == edgeOrders.end())
                     {
-                        edgeOrders.insert(std::make_pair(id, std::make_pair(
-                                                                            segGeom, locexp[i]->GetTraceBasisKey(j))));
+                        edgeOrders.insert(std::make_pair(id,
+                              std::make_pair(segGeom, locexp[i]->GetTraceBasisKey(j))));
                     }
                     else // variable modes/points
                     {
@@ -576,14 +576,174 @@ namespace MultiRegions
         
         // Set up m_coeffs, m_phys and offset arrays.
         SetupCoeffPhys(DeclareCoeffPhysArrays);
-        
-        
+                
         // Set up collections
         if(m_expType != e0D)
         {
             CreateCollections(ImpType);
         }
     }
+
+
+    /**
+     * Set  expansions for localtrace space expansions used in
+     * DisContField as part of Gradient Jump Penalisation
+     *
+     * @param  pSession      A session within information about expansion
+     * @param  locexp        Complete domain expansion list.
+     * @param  graph         mesh corresponding to the expansion list.
+     * @param  DeclareCoeffPhysArrays Declare the coefficient and
+     *                               phys space arrays
+     * @param  variable      The variable name associated with the expansion
+     * @param  ImpType       Detail about the implementation type to use 
+     *                       in operators
+     */
+    ExpList::ExpList(
+            const LibUtilities::SessionReaderSharedPtr &pSession,
+            const LocalRegions::ExpansionVector        &locexp,
+            const SpatialDomains::MeshGraphSharedPtr   &graph,
+            const bool                                  DeclareCoeffPhysArrays,
+            const std::string                           variable,
+            const Collections::ImplementationType       ImpType):
+        m_comm(pSession->GetComm()),
+        m_session(pSession),
+        m_graph(graph),
+        m_physState(false),
+        m_exp(MemoryManager<LocalRegions::ExpansionVector>
+              ::AllocateSharedPtr()),
+        m_blockMat(MemoryManager<BlockMatrixMap>::AllocateSharedPtr()),
+        m_WaveSpace(false)
+    {
+        boost::ignore_unused(variable,ImpType);
+        int i, j, id, elmtid = 0;
+        
+        SpatialDomains::PointGeomSharedPtr  PointGeom;
+        SpatialDomains::Geometry1DSharedPtr segGeom;
+        SpatialDomains::Geometry2DSharedPtr ElGeom;
+        SpatialDomains::Geometry2DSharedPtr FaceGeom;
+        SpatialDomains::QuadGeomSharedPtr   QuadGeom;
+        SpatialDomains::TriGeomSharedPtr    TriGeom;
+        
+        LocalRegions::ExpansionSharedPtr    exp;
+        LocalRegions::Expansion0DSharedPtr  exp0D;
+        LocalRegions::Expansion1DSharedPtr  exp1D;
+        LocalRegions::Expansion2DSharedPtr  exp2D;
+        LocalRegions::Expansion3DSharedPtr  exp3D;
+        
+        for(i = 0; i < locexp.size(); ++i)
+        {
+            if((exp1D =
+                std::dynamic_pointer_cast<
+                LocalRegions::Expansion1D>(locexp[i])))
+            {
+                m_expType = e0D;
+
+                for(j = 0; j < 2; ++j)
+                {
+                    PointGeom = (exp1D->GetGeom1D())->GetVertex(j);
+                    id = PointGeom->GetVid();
+		
+                    exp = MemoryManager<LocalRegions::PointExp>::
+                        AllocateSharedPtr(PointGeom);
+                    exp->SetElmtId(elmtid++);
+                    (*m_exp).push_back(exp);
+                }
+            }
+            else if((exp2D =
+                std::dynamic_pointer_cast<
+                LocalRegions::Expansion2D>(locexp[i])))
+            {
+                m_expType = e1D;
+                LibUtilities::BasisKey edgeKey0 = locexp[i]->GetBasis(0)->GetBasisKey();
+
+                for(j = 0; j < locexp[i]->GetNtraces(); ++j)
+                {
+                    segGeom = exp2D->GetGeom2D()->GetEdge(j);
+
+                    int dir = exp2D->GetGeom2D()->GetDir(j);
+                        
+                    if(locexp[i]->GetNtraces() == 3)
+                    {
+                        LibUtilities::BasisKey edgeKey = locexp[i]->GetBasis(dir)->GetBasisKey();
+                    
+                        LibUtilities::BasisKey nEdgeKey(edgeKey0.GetBasisType(),
+                                                        edgeKey.GetNumModes(),
+                                                        edgeKey.GetPointsKey());
+
+                        exp = MemoryManager<LocalRegions::SegExp>
+                            ::AllocateSharedPtr(nEdgeKey, segGeom);
+                    }
+                    else
+                    {
+                        exp = MemoryManager<LocalRegions::SegExp>
+                            ::AllocateSharedPtr(locexp[i]->GetBasis(dir)->GetBasisKey(), segGeom);
+                    }
+
+                    exp->SetElmtId(elmtid++);
+                    (*m_exp).push_back(exp);
+                }
+            }
+            else if((exp3D =
+                     dynamic_pointer_cast<
+                     LocalRegions::Expansion3D>(locexp[i])))
+            {
+                m_expType = e2D;
+
+                LibUtilities::BasisKey face0_dir0
+                    = locexp[i]->GetBasis(0)->GetBasisKey();
+                LibUtilities::BasisKey face0_dir1
+                    = locexp[i]->GetBasis(1)->GetBasisKey();
+                
+                for (j = 0; j < exp3D->GetNtraces(); ++j)
+                {
+                    FaceGeom = exp3D->GetGeom3D()->GetFace(j);
+
+                    int dir0 = exp3D->GetGeom3D()->GetDir(j,0);
+                    int dir1 = exp3D->GetGeom3D()->GetDir(j,1);
+                    
+                    LibUtilities::BasisKey face_dir0
+                        = locexp[i]->GetBasis(dir0)->GetBasisKey();
+                    LibUtilities::BasisKey face_dir1
+                        = locexp[i]->GetBasis(dir1)->GetBasisKey();
+                    
+                    if ((QuadGeom = std::dynamic_pointer_cast<
+                         SpatialDomains::QuadGeom>(FaceGeom)))
+                    {
+                        exp = MemoryManager<LocalRegions::QuadExp>
+                            ::AllocateSharedPtr(face_dir0, face_dir1,
+                                                QuadGeom);
+                    }
+                    else if ((TriGeom = std::dynamic_pointer_cast<
+                              SpatialDomains::TriGeom>(FaceGeom)))
+                    {
+                        
+                        LibUtilities::BasisKey nface_dir0(face0_dir0.GetBasisType(),
+                                                          face_dir0.GetNumModes(),
+                                                          face_dir0.GetPointsKey());
+                        LibUtilities::BasisKey nface_dir1(face0_dir1.GetBasisType(),
+                                                          face_dir1.GetNumModes(),
+                                                          face_dir1.GetPointsKey());
+                        exp = MemoryManager<LocalRegions::TriExp>
+                            ::AllocateSharedPtr(nface_dir0, nface_dir1, 
+                                                TriGeom);
+                    }
+                }
+                exp->SetElmtId(elmtid++);
+                (*m_exp).push_back(exp);
+                
+            }
+        }
+        
+        // Set up m_coeffs, m_phys and offset arrays.
+        SetupCoeffPhys(DeclareCoeffPhysArrays);
+                
+        // Set up collections
+        if(m_expType != e0D)
+        {
+            CreateCollections(ImpType);
+        }
+    }
+    
 
     /**
      * Fills the list of local expansions with the trace from the mesh

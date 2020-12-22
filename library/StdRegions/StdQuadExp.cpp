@@ -1795,6 +1795,5 @@ namespace Nektar
                 }
             }
         }
-        
     } //end namespace
 }//end namespace

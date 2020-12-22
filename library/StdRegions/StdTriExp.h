@@ -267,12 +267,11 @@ namespace Nektar
             STD_REGIONS_EXPORT virtual void v_GetSimplexEquiSpacedConnectivity(
                       Array<OneD, int>             &conn,
                       bool                          standard = true);
-#if 0 
+
             STD_REGIONS_EXPORT virtual void v_DerivNormalBasisOnTrace
                     (Array<OneD, Array<OneD, Array<OneD, NekDouble> > > &dbasis,
                      Array<OneD, Array<OneD, Array<OneD, unsigned int> > >
                      &TraceToCoeffMap);
-#endif
         };
         typedef std::shared_ptr<StdTriExp> StdTriExpSharedPtr;
     } //end of namespace

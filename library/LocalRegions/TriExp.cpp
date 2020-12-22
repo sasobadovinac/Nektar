@@ -2051,7 +2051,11 @@ namespace Nektar
                 // d xi_2/dx n_x 
                 for(int i = 0; i < nquad0; ++i)
                 {
+#ifdef DONORM1
                     factors[0][i] = df[1][i]*normal_0[0][i]; 
+#else
+                    d0factors[0][i] = df[1][i]*normal_0[0][i];
+#endif
                 }
 
                 // d xi_1/dx n_x
@@ -2067,7 +2071,11 @@ namespace Nektar
                     // needs checking for 3D coords
                     for(int i = 0; i < nquad0; ++i)
                     {
-                        factors[0][i] += df[2*n+1][i]*normal_0[n][i]; 
+#ifdef DONORM1
+                        factors[0][i] += df[2*n+1][i]*normal_0[n][i];
+#else
+                        d0factors[0][i] += df[2*n+1][i]*normal_0[n][i];
+#endif
                     }
                     
                     // d xi_1/dy n_y
@@ -2083,7 +2091,11 @@ namespace Nektar
                 // d xi_1/dx n_x 
                 for(int i = 0; i < nquad0; ++i)
                 {
-                    d0factors[0][i] = df[0][i]*normal_0[0][i]; 
+#ifdef DONORM1
+                    d0factors[0][i] = df[0][i]*normal_0[0][i];
+#else
+                    factors[0][i] = df[0][i]*normal_0[0][i];
+#endif
                 }
 
                 // d xi_2/dx n_x
@@ -2099,7 +2111,11 @@ namespace Nektar
                     // needs checking for 3D coords
                     for(int i = 0; i < nquad0; ++i)
                     {
+#ifdef DONORM1
                         d0factors[0][i] += df[2*n][i]*normal_0[n][i]; 
+#else
+                        factors[0][i] += df[2*n][i]*normal_0[n][i]; 
+#endif
                     }
                     
                     // d xi_2/dy n_y
@@ -2117,7 +2133,11 @@ namespace Nektar
                 // d xi_2/dx n_x 
                 for(int i = 0; i < nquad0; ++i)
                 {
-                    factors[0][i] = df[1][0]*normal_0[0][i]; 
+#ifdef DONORM1
+                    factors[0][i] = df[1][0]*normal_0[0][i];
+#else
+                    d0factors[0][i] = df[1][0]*normal_0[0][i];
+#endif
                 }
 
                 // d xi_1/dx n_x
@@ -2133,7 +2153,11 @@ namespace Nektar
                     // needs checking for 3D coords
                     for(int i = 0; i < nquad0; ++i)
                     {
+#ifdef DONORM1
                         factors[0][i] += df[2*n+1][0]*normal_0[n][i]; 
+#else
+                        d0factors[0][i] += df[2*n+1][0]*normal_0[n][i]; 
+#endif
                     }
                     
                     // d xi_1/dy n_y
@@ -2149,7 +2173,11 @@ namespace Nektar
                 // d xi_1/dx n_x 
                 for(int i = 0; i < nquad0; ++i)
                 {
-                    d0factors[0][i] = df[0][0]*normal_0[0][i]; 
+#ifdef DONORM1
+                    d0factors[0][i] = df[0][0]*normal_0[0][i];
+#else
+                    factors[0][i] = df[0][0]*normal_0[0][i];
+#endif
                 }
 
                 // d xi_2/dx n_x
@@ -2165,7 +2193,11 @@ namespace Nektar
                     // needs checking for 3D coords
                     for(int i = 0; i < nquad0; ++i)
                     {
-                        d0factors[0][i] += df[2*n][0]*normal_0[n][i]; 
+#ifdef DONORM1
+                        d0factors[0][i] += df[2*n][0]*normal_0[n][i];
+#else
+                        factors[0][i] += df[2*n][0]*normal_0[n][i];
+#endif
                     }
                     
                     // d xi_2/dy n_y
@@ -2181,14 +2213,18 @@ namespace Nektar
             // readjust factors for collapsed coordinates 
             for(int i = 0; i < nquad0; ++i)
             {
-                d0factors[0][i] = d0factors[0][i] + (1+z0[i])*factors[0][i];
+#ifdef DONORM1
+                d0factors[0][i] = d0factors[0][i] + 0.5*(1+z0[i])*factors[0][i];
+#else
+                factors[0][i] = factors[0][i] + 0.5*(1+z0[i])*d0factors[0][i];
+#endif
             }
             
             // readjust factors for collapsed coordinates 
             for(int i = 0; i < nquad1; ++i)
             {
-                factors[1][i] = (2.0*factors[1][i]+4.0*d0factors[1][i])/(1-z1[i]);
-                factors[2][i] = 2.0*factors[2][i]/(1-z1[i]);
+                factors[1][i]   = (2.0*factors[1][i]+2.0*d0factors[1][i])/(1-z1[i]);
+                factors[2][i]   = 2.0*factors[2][i]/(1-z1[i]);
             }
         }
     }
