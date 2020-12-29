@@ -256,8 +256,11 @@ namespace SolverUtils
         {
             m_scalTrace[i] = LocTrace[i];
 
-            //multiply by Jacobian and quadrature points. 
-            m_locElmtTrace->MultiplyByQuadratureMetric(m_scalTrace[i],m_scalTrace[i]);
+            if(m_traceDim > 0)
+            {
+                //multiply by Jacobian and quadrature points. 
+                m_locElmtTrace->MultiplyByQuadratureMetric(m_scalTrace[i],m_scalTrace[i]);
+            }
         }
 
 
@@ -266,7 +269,7 @@ namespace SolverUtils
         
         int nelmt = 1;
         const Array<OneD, const LibUtilities::BasisSharedPtr> base_sav = dgfield->GetExp(0)->GetBase();
-        dgfield->GetExp(0)->IProductWRTDerivBaseOnTraceMat(TraceMat);
+        dgfield->GetExp(0)->IProductWRTTensorDerivBaseOnTraceMat(TraceMat);
 
         for(int n = 1; n < dgfield->GetExpSize(); ++n)
         {
@@ -291,7 +294,7 @@ namespace SolverUtils
                 m_IPWRTDBOnTraceMat.push_back(std::pair<int,Array<OneD, DNekMatSharedPtr>>(nelmt,TraceMat));
 
                 // start new block 
-                dgfield->GetExp(n)->IProductWRTDerivBaseOnTraceMat(TraceMat);
+                dgfield->GetExp(n)->IProductWRTTensorDerivBaseOnTraceMat(TraceMat);
                 nelmt = 1;
             }
         }

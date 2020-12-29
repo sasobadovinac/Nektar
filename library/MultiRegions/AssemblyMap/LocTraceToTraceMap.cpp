@@ -816,6 +816,12 @@ void LocTraceToTraceMap::InterpTraceToLocTrace(
 {
     switch(m_expdim)
     {
+    case 1: // Essentially do copy
+        Vmath::Gathr(m_locInterpTraceToTraceMap[dir].size(),
+                     traces.get(),
+                     m_locInterpTraceToTraceMap[dir].get(),
+                     loctraces.get());
+        break;
     case 2:
         InterpTraceToLocEdges(dir,traces,loctraces);
         break;

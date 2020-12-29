@@ -268,10 +268,10 @@ namespace Nektar
             LOCAL_REGIONS_EXPORT const Array<OneD, const NekDouble > 
                         &GetElmtBndNormDirElmtLen(const int nbnd) const;
             
-            void IProductWRTDerivBaseOnTraceMat(
+            void IProductWRTTensorDerivBaseOnTraceMat(
                     Array<OneD, DNekMatSharedPtr> &DerivMat)
             {
-                v_IProductWRTDerivBaseOnTraceMat(DerivMat);
+                v_IProductWRTTensorDerivBaseOnTraceMat(DerivMat);
             }
             
         protected:
@@ -424,7 +424,7 @@ namespace Nektar
                 const Array<OneD, NekDouble> &incoeffs,
                 Array<OneD, NekDouble> &coeffs);
 
-            virtual  void v_IProductWRTDerivBaseOnTraceMat(
+            virtual  void v_IProductWRTTensorDerivBaseOnTraceMat(
                     Array<OneD, DNekMatSharedPtr> &DerivMat); 
 
         private:

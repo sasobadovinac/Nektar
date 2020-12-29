@@ -1673,7 +1673,7 @@ namespace Nektar
         }
 
 
-        void Expansion2D::v_IProductWRTDerivBaseOnTraceMat(
+        void Expansion2D::v_IProductWRTTensorDerivBaseOnTraceMat(
                                 Array<OneD, DNekMatSharedPtr> &DerivMat)
         {
             int nquad = GetTotPoints();

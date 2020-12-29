@@ -113,6 +113,8 @@ namespace Nektar
 
         private:
             
+            virtual  void v_IProductWRTTensorDerivBaseOnTraceMat
+            (Array<OneD, DNekMatSharedPtr> &DerivMat); 
         };
 
         inline SpatialDomains::Geometry1DSharedPtr Expansion1D

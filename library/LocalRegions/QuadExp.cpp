@@ -2431,6 +2431,13 @@ namespace Nektar
             
             if(m_metricinfo->GetGtype() == SpatialDomains::eDeformed)
             {
+                // d xi_1/dx n_x
+                for(int i = 0; i < nquad1; ++i)
+                {
+                    d0factors[1][i] = df[0][(i+1)*nquad0-1]*normal_1[0][i];
+                    d0factors[3][i] = df[0][i*nquad0]*normal_3[0][i];
+                }
+
                 // d xi_2/dx n_x 
                 for(int i = 0; i < nquad0; ++i)
                 {
@@ -2439,15 +2446,16 @@ namespace Nektar
                         normal_2[0][i];
                 }
 
-                // d xi_1/dx n_x
-                for(int i = 0; i < nquad1; ++i)
-                {
-                    d0factors[1][i] = df[0][(i+1)*nquad0-1]*normal_1[0][i];
-                    d0factors[3][i] = df[0][i*nquad0]*normal_3[0][i];
-                }
-
                 for(int n = 1; n < ncoords; ++n)
                 {
+                    // d xi_1/dy n_y
+                    // needs checking for 3D coords
+                    for(int i = 0; i < nquad1; ++i)
+                    {
+                        d0factors[1][i] += df[2*n][(i+1)*nquad0-1]*normal_1[n][i];
+                        d0factors[3][i] += df[2*n][i*nquad0]*normal_3[n][i];
+                    }
+
                     // d xi_2/dy n_y
                     // needs checking for 3D coords
                     for(int i = 0; i < nquad0; ++i)
@@ -2455,14 +2463,6 @@ namespace Nektar
                         d1factors[0][i] += df[2*n+1][i]*normal_0[n][i]; 
                         d1factors[2][i] += df[2*n+1][nquad0*(nquad1-1)+i]
                             *normal_2[n][i];
-                    }
-                    
-                    // d xi_1/dy n_y
-                    // needs checking for 3D coords
-                    for(int i = 0; i < nquad1; ++i)
-                    {
-                        d0factors[1][i] += df[2*n][(i+1)*nquad0-1]*normal_1[n][i];
-                        d0factors[3][i] += df[2*n][i*nquad0]*normal_3[n][i];
                     }
                 }
 

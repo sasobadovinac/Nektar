@@ -325,7 +325,7 @@ namespace Nektar
                                                    m_metrics[eMetricQuadrature]);
         }
 
-        void Expansion::v_IProductWRTDerivBaseOnTraceMat(
+        void Expansion::v_IProductWRTTensorDerivBaseOnTraceMat(
                     Array<OneD, DNekMatSharedPtr> &DerivMat)
         {
             boost::ignore_unused(DerivMat);

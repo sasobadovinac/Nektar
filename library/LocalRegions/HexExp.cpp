@@ -2087,44 +2087,58 @@ namespace Nektar
             
             if(m_metricinfo->GetGtype() == SpatialDomains::eDeformed)
             {             
-                // d xi_2/dx n_x 
-                for(int i = 0; i < nquad0*nquad1; ++i)
-                {
-                    d0factors[0][i] = df[2][i]*normal_0[0][i]; 
-                    d0factors[5][i] = df[2][nquad0*nquad1*(nquad2-1)+i]*
-                        normal_5[0][i];
-                }
-
                 // d xi_1/dx n_x
-                for(int j = 0; j < nquad2; ++j)
-                {
-                    for(int i = 0; i < nquad0; ++i)
-                    {
-                        d0factors[1][j*nquad0+i]
-                            = df[1][(j+1)*nquad0*nquad1 - nquad0 + i]*
-                            normal_1[0][j*nquad0+i];
-                        d0factors[3][j*nquad0+i]
-                            = df[1][j*nquad0*nquad1 + i]*
-                            normal_3[0][j*nquad0+i];
-                    }
-                }
-
-                // d xi_12/dx n_x
                 for(int j = 0; j < nquad2; ++j)
                 {
                     for(int i = 0; i < nquad1; ++i)
                     {
-                        d0factors[2][j*nquad1+i] =
-                            df[0][(i+1)*nquad0-1 + j*nquad0*nquad1]*
-                            normal_2[0][j*nquad0+i];
-                        d0factors[4][j*nquad0+i] =
-                            df[0][i*nquad0 + j*nquad0*nquad1]*
-                            normal_4[0][j*nquad0+i];
+                        d0factors[2][j*nquad1+i]
+                            = df[0][(j+1)*nquad0*nquad1 + nquad0-1 + i*nquad0]*
+                            normal_1[0][j*nquad1+i];
+                        d0factors[4][j*nquad1+i]
+                            = df[0][j*nquad0*nquad1 + i*nquad0]*
+                            normal_3[0][j*nquad1+i];
                     }
+                }
+
+                // d xi_2/dx n_x 
+                for(int j = 0; j < nquad2; ++j)
+                {
+                    for(int i = 0; i < nquad0; ++i)
+                    {
+                        d1factors[1][j*nquad2 + i] = df[1]
+                            [j*nquad0*nquad1 + i]*normal_0[0][j*nquad0 + i]; 
+                        d1factors[3][j*nquad2 + i] = df[1]
+                            [(j+1)*nquad0*nquad1 - nquad0 + i]*
+                            normal_5[0][j*nquad0+i];
+                    }
+                }
+
+                // d xi_3/dx n_x 
+                for(int i = 0; i < nquad0*nquad1; ++i)
+                {
+                    d2factors[0][i] = df[2][i]*normal_0[0][i]; 
+                    d2factors[5][i] = df[2][nquad0*nquad1*(nquad2-1)+i]*
+                        normal_5[0][i];
                 }
 
                 for(int n = 1; n < ncoords; ++n)
                 {
+                    // d xi_1/dx n_x
+                    for(int j = 0; j < nquad2; ++j)
+                    {
+                        for(int i = 0; i < nquad1; ++i)
+                        {
+                            d0factors[2][j*nquad1+i] +=
+                                df[3*n][(i+1)*nquad0-1 + j*nquad0*nquad1]*
+                                normal_2[n][j*nquad0+i];
+                            d0factors[4][j*nquad0+i] +=
+                                df[3*n][i*nquad0 + j*nquad0*nquad1]*
+                                normal_4[n][j*nquad0+i];
+                        }
+                    }
+                    
+  //--------edited up to here
                     // d xi_2/dy n_y
                     for(int i = 0; i < nquad0*nquad1; ++i)
                     {
