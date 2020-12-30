@@ -20,7 +20,7 @@ BuildRequires:  gcc-gfortran
 BuildRequires:  lapack-devel
 BuildRequires:  make
 BuildRequires:  mesa-libGL-devel
-BuildRequires:  petsc-devel
+#BuildRequires:  petsc-devel
 BuildRequires:  python3-devel
 BuildRequires:  scotch-devel
 BuildRequires:  tinyxml-devel
@@ -53,7 +53,7 @@ Nektar++ spectral/hp element framework libraries.
 %package -n libnektar++-openmpi
 BuildRequires:  openmpi
 BuildRequires:  hdf5-openmpi-devel
-BuildRequires:  petsc-openmpi-devel
+#BuildRequires:  petsc-openmpi-devel
 BuildRequires:  ptscotch-openmpi-devel
 Requires:       boost
 Requires:       tinyxml
@@ -64,7 +64,7 @@ Requires:       arpack
 Requires:       blas
 Requires:       lapack
 Requires:       hdf5-openmpi
-Requires:       petsc-openmpi
+#Requires:       petsc-openmpi
 Requires:       ptscotch-openmpi
 Requires:       openmpi
 Group:          System/Libraries
@@ -75,7 +75,7 @@ OpenMPI variant of the Nektar++ spectral/hp element framework libraries
 %package -n libnektar++-mpich
 BuildRequires:  mpich
 BuildRequires:  hdf5-mpich-devel
-BuildRequires:  petsc-mpich-devel
+#BuildRequires:  petsc-mpich-devel
 BuildRequires:  ptscotch-mpich-devel
 Requires:       boost
 Requires:       tinyxml
@@ -86,7 +86,7 @@ Requires:       arpack
 Requires:       blas
 Requires:       lapack
 Requires:       hdf5-mpich
-Requires:       petsc-mpich
+#Requires:       petsc-mpich
 Requires:       ptscotch-mpich
 Requires:       mpich
 Group:          System/Libraries
@@ -108,7 +108,7 @@ Requires:       gcc-c++
 Requires:       gcc-gfortran
 Requires:       lapack-devel
 Requires:       make
-Requires:       petsc-devel
+#Requires:       petsc-devel
 Requires:       python3-devel
 Requires:       scotch-devel
 Requires:       tinyxml-devel
@@ -121,7 +121,7 @@ Summary:        Development and header files for Nektar++ (OpenMPI variant)
 Group:          Development/Libraries/C and C++
 Requires:       libnektar++-openmpi = %{version}
 Requires:       hdf5-openmpi-devel
-Requires:       petsc-openmpi-devel
+#Requires:       petsc-openmpi-devel
 Requires:       ptscotch-openmpi-devel
 Requires:       arpack-devel
 Requires:       blas-devel
@@ -143,7 +143,7 @@ Summary:        Development and header files for Nektar++ (MPICH variant)
 Group:          Development/Libraries/C and C++
 Requires:       libnektar++-mpich = %{version}
 Requires:       hdf5-mpich-devel
-Requires:       petsc-mpich-devel
+#Requires:       petsc-mpich-devel
 Requires:       ptscotch-mpich-devel
 Requires:       arpack-devel
 Requires:       blas-devel

@@ -19,7 +19,7 @@ BuildRequires:  lapack-devel
 BuildRequires:  libXmu-devel
 BuildRequires:  make
 BuildRequires:  opencascade-devel
-BuildRequires:  petsc-devel
+#BuildRequires:  petsc-devel
 BuildRequires:  python3-devel
 BuildRequires:  scotch-devel
 BuildRequires:  tetgen-devel
@@ -50,7 +50,7 @@ Nektar++ spectral/hp element framework libraries.
 %package -n libnektar++-openmpi
 BuildRequires:  openmpi
 BuildRequires:  hdf5-openmpi-devel
-BuildRequires:  petsc-openmpi-devel
+#BuildRequires:  petsc-openmpi-devel
 BuildRequires:  ptscotch-openmpi-devel
 Requires:       boost
 Requires:       boost-python3
@@ -60,7 +60,7 @@ Requires:       arpack
 Requires:       blas
 Requires:       lapack
 Requires:       hdf5-openmpi
-Requires:       petsc-openmpi
+#Requires:       petsc-openmpi
 Requires:       ptscotch-openmpi
 Requires:       openmpi
 Group:          System/Libraries
@@ -71,7 +71,7 @@ OpenMPI variant of the Nektar++ spectral/hp element framework libraries
 %package -n libnektar++-mpich
 BuildRequires:  mpich
 BuildRequires:  hdf5-mpich-devel
-BuildRequires:  petsc-mpich-devel
+#BuildRequires:  petsc-mpich-devel
 BuildRequires:  ptscotch-mpich-devel
 Requires:       boost
 Requires:       boost-python3
@@ -81,7 +81,7 @@ Requires:       arpack
 Requires:       blas
 Requires:       lapack
 Requires:       hdf5-mpich
-Requires:       petsc-mpich
+#Requires:       petsc-mpich
 Requires:       ptscotch-mpich
 Requires:       mpich
 Group:          System/Libraries
@@ -105,7 +105,7 @@ Requires:       gcc-gfortran
 Requires:       lapack-devel
 Requires:       make
 Requires:       opencascade-devel
-Requires:       petsc-devel
+#Requires:       petsc-devel
 Requires:       python3-devel
 Requires:       scotch-devel
 Requires:       tetgen-devel
@@ -129,7 +129,7 @@ Requires:       gcc-gfortran
 Requires:       lapack-devel
 Requires:       make
 Requires:       opencascade-devel
-Requires:       petsc-openmpi-devel
+#Requires:       petsc-openmpi-devel
 Requires:       hdf5-openmpi-devel
 Requires:       python3-devel
 Requires:       ptscotch-openmpi-devel
@@ -154,7 +154,7 @@ Requires:       gcc-gfortran
 Requires:       lapack-devel
 Requires:       make
 Requires:       opencascade-devel
-Requires:       petsc-mpich-devel
+#Requires:       petsc-mpich-devel
 Requires:       hdf5-mpich-devel
 Requires:       python3-devel
 Requires:       ptscotch-mpich-devel
