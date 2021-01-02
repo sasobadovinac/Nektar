@@ -2216,51 +2216,6 @@ namespace Nektar
                 }
             }
 
-#if 0 
-            // readjust factors for collapsed coordinates 
-            const Array<OneD, const NekDouble>& z0 = m_base[0]->GetZ();
-            const Array<OneD, const NekDouble>& z2 = m_base[2]->GetZ();
-
-            // Face 0
-            for(int j = 0; j < nquad1; ++j)
-            {
-                for(int i = 0; i < nquad0; ++i)
-                {
-                    // (d0+ (1+z0)/2*d2)
-                    d0factors[0][j*nquad0+i] = d0factors[0][j*nquad0+i]
-                        + 0.5*(1+z0[i])*d2factors[0][j*nquad0+i];
-                }
-            }
-
-            // faces 1 and 3
-            for(int j = 0; j < nquad2; ++j)
-            {
-                NekDouble fac = 1.0/(1.0-z2[j]); 
-                for(int i = 0; i < nquad0; ++i)
-                {
-                    // 1/(1-z2) (2*d0+ (1+z0)*d2)
-                    d0factors[1][j*nquad0+i] = fac*(2*d0factors[1][j*nquad0+i] +
-                                             (1+z0[i])*d2factors[1][j*nquad0+i]);
-                    // 1/(1-z2) (2*d0+ (1+z0)*d2)
-                    d0factors[3][j*nquad0+i]  = fac*(2*d0factors[3][j*nquad0+i] +
-                                             (1+z0[i])*d2factors[3][j*nquad0+i]);
-                }
-            }
-
-            // faces 2 and 4
-            for(int j = 0; j < nquad2; ++j)
-            {
-                NekDouble fac = 1.0/(1.0-z2[j]); 
-                for(int i = 0; i < nquad1; ++i)
-                {
-                    // 2/(1-z2) (d0+d2)
-                    d0factors[2][j*nquad1+i] = 2.0*fac*(d0factors[2][j*nquad1+i]+
-                                                       d2factors[2][j*nquad1+i]);
-                    // 2/(1-z2) d0
-                    d0factors[4][j*nquad1+i] = 2.0*fac*d0factors[4][j*nquad1+i];
-                }
-            }
-#endif
         }        
     }//end of namespace
 }//end of namespace

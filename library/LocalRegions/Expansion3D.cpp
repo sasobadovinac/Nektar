@@ -2530,8 +2530,7 @@ namespace Nektar
                 coeffs[i] = 1.0;
                 BwdTrans(coeffs,phys);
                 
-                // dphi_i/d\eta_1,  dphi_i/d\eta_2  dphi_i/d\eta_3
-                //PhysTensorDeriv(phys,deriv0,deriv1,deriv2);
+                // dphi_i/d\xi_1,  dphi_i/d\xi_2  dphi_i/d\xi_3
                 StdPhysDeriv(phys,deriv0,deriv1,deriv2);
 
                 int cnt = 0;
