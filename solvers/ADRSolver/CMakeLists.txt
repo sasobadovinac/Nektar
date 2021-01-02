@@ -91,6 +91,7 @@ IF( NEKTAR_SOLVER_ADR )
     ADD_NEKTAR_TEST(UnsteadyAdvectionDiffusion_2D_WeakDG)
 
     # 3D discontinous advection
+    ADD_NEKTAR_TEST(Advection3D_AllElmt_GJP)
     ADD_NEKTAR_TEST(Advection3D_m10_DG_hex_periodic_nodal LENGTHY)
     ADD_NEKTAR_TEST(Advection3D_m8_DG_hex_nodal)
     ADD_NEKTAR_TEST(Advection3D_m12_DG_hex_periodic)

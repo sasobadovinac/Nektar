@@ -239,7 +239,7 @@ namespace SolverUtils
                     }
                 }
 
-#define GJPDEBUG 1
+                //#define GJPDEBUG 1
 #if GJPDEBUG
                 jumpScal = 1.0;
 #endif
