@@ -1447,7 +1447,218 @@ namespace Nektar
             }
         }
 
-       /**
+        void StdTetExp::v_GetTraceCoeffMap(
+            const unsigned int        fid,
+            Array<OneD, unsigned int> &maparray)
+        {
+            int i,j,k;
+            int P=0,Q=0,idx=0; 
+            int nFaceCoeffs = 0;
+            
+            switch(fid)
+            {
+            case 0:
+                P = m_base[0]->GetNumModes();
+                Q = m_base[1]->GetNumModes();
+                break;
+            case 1:
+                P = m_base[0]->GetNumModes();
+                Q = m_base[2]->GetNumModes();
+                break;
+            case 2:
+            case 3:
+                P = m_base[1]->GetNumModes();
+                Q = m_base[2]->GetNumModes();
+                break;
+            default:
+                ASSERTL0(false,"fid must be between 0 and 3");
+            }
+
+            nFaceCoeffs = P*(2*Q-P+1)/2;
+
+            if(maparray.size() != nFaceCoeffs)
+            {
+                maparray = Array<OneD, unsigned int>(nFaceCoeffs);
+            }
+
+            switch (fid)
+            {
+            case 0:
+                idx = 0;
+                for (i = 0; i < P; ++i)
+                {
+                    for (j = 0; j < Q-i; ++j)
+                    {
+                        maparray[idx++] = GetMode(i,j,0);
+                    }
+                }
+                break;
+            case 1:
+                idx = 0;
+                for (i = 0; i < P; ++i)
+                {
+                    for (k = 0; k < Q-i; ++k)
+                    {
+                        maparray[idx++] = GetMode(i,0,k);
+                    }
+                }
+                break;
+            case 2:
+                idx = 0;
+                for (j = 0; j < P-1; ++j)
+                {
+                    for (k = 0; k < Q-1-j; ++k)
+                    {
+                        maparray[idx++] = GetMode(1,j,k);
+                        // Incorporate modes from zeroth plane where needed.
+                        if (j == 0 && k == 0)
+                        {
+                            maparray[idx++] = GetMode(0,0,1);
+                        }
+                        if (j == 0 && k == Q-2)
+                        {
+                            for (int r = 0; r < Q-1; ++r)
+                            {
+                                maparray[idx++] = GetMode(0,1,r);
+                            }
+                        }
+                    }
+                }
+                break;
+            case 3:
+                idx = 0;
+                for (j = 0; j < P; ++j)
+                {
+                    for (k = 0; k < Q-j; ++k)
+                    {
+                        maparray[idx++] = GetMode(0,j,k);
+                    }
+                }
+                break;
+            default:
+                ASSERTL0(false, "Element map not available.");
+            }
+        }
+
+        void StdTetExp::v_GetElmtTraceToTraceMap(
+            const unsigned int         fid,
+            Array<OneD, unsigned int>  &maparray,
+            Array<OneD,          int> &signarray,
+            Orientation                faceOrient,
+            int                        P,
+            int                        Q)
+        {
+            int nummodesA=0,nummodesB=0, i, j, k, idx;
+
+            ASSERTL1(v_IsBoundaryInteriorExpansion(),
+                     "Method only implemented for Modified_A BasisType (x "
+                     "direction), Modified_B BasisType (y direction), and "
+                     "Modified_C BasisType(z direction)");
+            
+            int nFaceCoeffs = 0;
+            
+            switch(fid)
+            {
+            case 0:
+                nummodesA = m_base[0]->GetNumModes();
+                nummodesB = m_base[1]->GetNumModes();
+                break;
+            case 1:
+                nummodesA = m_base[0]->GetNumModes();
+                nummodesB = m_base[2]->GetNumModes();
+                break;
+            case 2:
+            case 3:
+                nummodesA = m_base[1]->GetNumModes();
+                nummodesB = m_base[2]->GetNumModes();
+                break;
+            default:
+                ASSERTL0(false,"fid must be between 0 and 3");
+            }
+
+            bool CheckForZeroedModes = false;
+            if(P == -1)
+            {
+                P = nummodesA;
+                Q = nummodesB;
+            }
+            else
+            {
+                CheckForZeroedModes = true;
+            }
+
+            nFaceCoeffs = P*(2*Q-P+1)/2;
+
+            // Allocate the map array and sign array; set sign array to ones (+)
+            if(maparray.size() != nFaceCoeffs)
+            {
+                maparray = Array<OneD, unsigned int>(nFaceCoeffs,1);
+            }
+
+            if(signarray.size() != nFaceCoeffs)
+            {
+                signarray = Array<OneD, int>(nFaceCoeffs,1);
+            }
+            else
+            {
+                fill(signarray.get(),signarray.get()+nFaceCoeffs, 1 );
+            }
+
+
+            // zero signmap and set maparray to zero if elemental
+            // modes are not as large as face modesl
+            idx = 0;
+            int cnt = 0; 
+            for (j = 0; j < nummodesA; ++j)
+            {
+                // set maparray
+                for (k = 0; k < nummodesB-j; ++k, ++cnt)
+                {
+                    maparray[idx++] = cnt;
+                }
+                
+                for (k = nummodesB-j; k < Q-j; ++k)
+                {
+                    signarray[idx]  = 0.0;
+                    maparray[idx++] = maparray[0];
+                }
+            }
+            
+            for (j = nummodesA; j < P; ++j)
+            {
+                for (k = 0; k < Q-j; ++k)
+                {
+                    signarray[idx]  = 0.0;
+                    maparray[idx++] = maparray[0];
+                }
+            }
+
+            if (faceOrient ==  eDir1BwdDir1_Dir2FwdDir2)
+            {
+                idx = 0;
+                for (i = 0; i < P; ++i)
+                {
+                    for (j = 0; j < Q-i; ++j)
+                    {
+                        if (i > 1)
+                        {
+                            signarray[idx] = (i%2 ? -1 : 1);
+                        }
+                    }
+                }
+
+                swap(maparray[0], maparray[Q]);
+
+                for (i = 1; i < Q-1; ++i)
+                {
+                    swap(maparray[i+1], maparray[Q+i]);
+                }
+            }
+        }
+        
+
+#if 0 
+        /**
          * Maps Expansion2D modes of a 2D face to the corresponding expansion
          * modes.
          */
@@ -1624,7 +1835,8 @@ namespace Nektar
                 }
             }
         }
-
+#endif
+        
         /**
          * Maps interior modes of an edge to the elemental modes.
          */

@@ -938,10 +938,9 @@ namespace Nektar
                                 ::AllocateSharedPtr(nface_dir0, nface_dir1, 
                                                     TriGeom);
                         }
+                        exp->SetElmtId(elmtid++);
+                        (*m_exp).push_back(exp);
                     }
-                    exp->SetElmtId(elmtid++);
-                    (*m_exp).push_back(exp);
-                    
                 }
             }
             

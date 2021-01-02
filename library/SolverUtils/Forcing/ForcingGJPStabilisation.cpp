@@ -154,6 +154,15 @@ namespace SolverUtils
                 if(trace->GetExp(i)->GetBasis(j) !=
                    dgfield->GetTrace()->GetExp(i)->GetBasis(j))
                 {
+                    cout << "trace base in elmt " << i << " direction " << j <<
+                        " has type " <<trace->GetExp(i)->GetBasis(j)->
+                        GetPointsType() << " versus " << 
+                        dgfield->GetTrace()->GetExp(i)->GetBasis(j)->
+                        GetPointsType() << std::endl;
+                    cout << "num points is " << trace->GetExp(i)->GetBasis(j)->
+                        GetNumPoints() << " versus " << 
+                        dgfield->GetTrace()->GetExp(i)->GetBasis(j)->
+                        GetNumPoints() << std::endl;
                     sametrace = false;
                 }
             }
@@ -230,7 +239,7 @@ namespace SolverUtils
                     }
                 }
 
-                //#define GJPDEBUG 1
+#define GJPDEBUG 1
 #if GJPDEBUG
                 jumpScal = 1.0;
 #endif
@@ -446,7 +455,7 @@ namespace SolverUtils
 
                     for(int i = 0; i < ncoeffs; ++i)
                     {
-                        if(fabs(FilterCoeffs1[i]-FilterCoeffs[i]) > 1e-10)
+                        if(fabs(FilterCoeffs1[i]+FilterCoeffs[i]) > 1e-10)
                         {
                             cout << "i= " << i << " diff is " <<
                                 fabs(FilterCoeffs1[i]+FilterCoeffs[i])
@@ -456,6 +465,8 @@ namespace SolverUtils
                             
                         }
                     }
+                    cout << "Done testing " << ncoeffs << " coefficients" <<
+                        std::endl;
                     exit(1);
                 }
 #endif
@@ -602,7 +613,9 @@ namespace SolverUtils
                     {
                         int npts = bkeyold.GetNumPoints();
                         
-                        const LibUtilities::PointsKey pkey(npts+1, LibUtilities::eGaussRadauMLegendre);
+                        //const LibUtilities::PointsKey pkey(npts+1, LibUtilities::eGaussRadauMLegendre);
+                        // trying npts to be consistent for tri faces 
+                        const LibUtilities::PointsKey pkey(npts, LibUtilities::eGaussRadauMLegendre);
                         LibUtilities::BasisKey bkeynew(bkeyold.GetBasisType(),
                                                        bkeyold.GetNumModes(), pkey);
                         BKeyVector.push_back(bkeynew);

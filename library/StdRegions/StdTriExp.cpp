@@ -915,11 +915,15 @@ namespace Nektar
                     // when comopared to
                     // GaussRadauMAlpha1Beta0. Currently used in the
                     // GJP option
+                    //
+                    // Note have put down it back to numpoints +1 to
+                    // test for use on tri faces and GJP. 
+                    
                     case LibUtilities::eGaussRadauMLegendre: 
                     {
                         LibUtilities::PointsKey pkey(
                                 m_base[1]->GetBasisKey().GetPointsKey().
-                                GetNumPoints(),
+                                GetNumPoints()+1,
                                 LibUtilities::eGaussLobattoLegendre);
                         return LibUtilities::BasisKey(
                                 LibUtilities::eModified_A,

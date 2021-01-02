@@ -223,6 +223,11 @@ public:
         const Array<OneD, const NekDouble> &locfaces,
         Array<OneD, NekDouble> faces);
 
+    MULTI_REGIONS_EXPORT void InterpTraceToLocFaces(
+        const int dir,
+        const Array<OneD, const NekDouble> &faces,
+        Array<OneD,  NekDouble> &locfaces);
+
     /// Right inner product with(IPTW) FacesToTrace Interpolation Matrix.
     MULTI_REGIONS_EXPORT void RightIPTWLocFacesToTraceInterpMat(
         const int                           dir,
@@ -336,9 +341,14 @@ private:
     /// Interpolation matrices for the second coordinate of 3D face, not used in
     /// 2D.
     Array<OneD, Array<OneD, DNekMatSharedPtr> > m_interpTraceI1;
-    /// Interpolation matrices for either 2D edges or first coordinate of 3D
-    /// face.
+    /// Interpolation matrices for either 2D edges or first coordinate
+    /// of 3D face using going "from' to 'to' points (i.e. the reverse
+    /// of other techniques)
     Array<OneD, Array<OneD, DNekMatSharedPtr> > m_interpFromTraceI0;
+    /// Interpolation matrices for either 2D edges or first coordinate
+    /// of 3D face using going "from' to 'to' points (i.e. the reverse
+    /// of other techniques)
+    Array<OneD, Array<OneD, DNekMatSharedPtr> > m_interpFromTraceI1;
     /// Interpolation points key distributions to each of the local to global
     /// mappings.
     Array<OneD, Array<OneD, TraceInterpPoints> > m_interpPoints;

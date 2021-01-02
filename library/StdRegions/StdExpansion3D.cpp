@@ -357,6 +357,28 @@ namespace Nektar
             NEKERROR(ErrorUtil::efatal,"Method does not exist for this shape" );
         }
 
+        void StdExpansion3D::v_GetTraceToElementMap(
+             const int                  tid,
+             Array<OneD, unsigned int>& maparray,
+             Array<OneD, int>&          signarray,
+             Orientation                traceOrient,
+             int P,  int Q)
+        {
+            Array<OneD, unsigned int> map1, map2;
+            GetTraceCoeffMap(tid,map1);
+            GetElmtTraceToTraceMap(tid,map2,signarray,traceOrient,P,Q);
+
+            if(maparray.size() != map2.size())
+            {
+                maparray = Array<OneD, unsigned int>(map2.size());
+            }
+            
+            for(int i = 0; i < map2.size(); ++i)
+            {
+                maparray[i] = map1[map2[i]];
+            }
+        }
+
         LibUtilities::BasisKey EvaluateQuadFaceBasisKey(
             const int                     facedir,
             const LibUtilities::BasisType faceDirBasisType,
@@ -446,12 +468,12 @@ namespace Nektar
                         }
                         case 1:
                         {
-//                            const LibUtilities::PointsKey pkey(
-//                                numpoints+1,
-//                                LibUtilities::eGaussLobattoLegendre);
+                            //   const LibUtilities::PointsKey pkey(
+                            //   numpoints+1,
+                            //   LibUtilities::eGaussLobattoLegendre);
                             const LibUtilities::PointsKey pkey(
-	 			numpoints,
-				LibUtilities::eGaussRadauMAlpha1Beta0);
+                                       numpoints,
+                                        LibUtilities::eGaussRadauMAlpha1Beta0);
                             return LibUtilities::BasisKey(
                                 LibUtilities::eModified_B, nummodes, pkey);
                         }

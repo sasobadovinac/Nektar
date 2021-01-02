@@ -46,8 +46,8 @@ namespace Nektar
     {
         Expansion::Expansion(SpatialDomains::GeometrySharedPtr pGeom) :
             m_indexMapManager
-               (std::bind(&Expansion::CreateIndexMap,this, std::placeholders::_1),
-                std::string("ExpansionIndexMap")),
+             (std::bind(&Expansion::CreateIndexMap,this, std::placeholders::_1),
+              std::string("ExpansionIndexMap")),
             m_geom(pGeom),
             m_metricinfo(m_geom->GetGeomFactors()),
             m_elementTraceLeft(-1),

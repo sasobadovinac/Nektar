@@ -248,10 +248,9 @@ namespace Nektar
                 const std::shared_ptr<AssemblyMap>& pLocToGloMap)
         {
             int nLocalBnd = m_locToGloMap.lock()->GetNumLocalBndCoeffs();
-            int nIntDofs = m_locToGloMap.lock()->
-                GetNumLocalCoeffs() - nLocalBnd; 
-            m_wsp = Array<OneD, NekDouble>
-                    (3*nLocalBnd+nIntDofs, 0.0);
+            int nIntDofs  = m_locToGloMap.lock()->GetNumLocalCoeffs() -
+                                                         nLocalBnd; 
+            m_wsp = Array<OneD, NekDouble>(3*nLocalBnd+nIntDofs, 0.0);
 
             if (pLocToGloMap->AtLastLevel())
             {

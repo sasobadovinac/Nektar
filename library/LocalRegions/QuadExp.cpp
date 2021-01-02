@@ -2397,7 +2397,7 @@ namespace Nektar
 
             if(d0factors.size() !=4)
             {
-                d0factors   = Array<OneD, Array<OneD, NekDouble> > (4); 
+                d0factors = Array<OneD, Array<OneD, NekDouble> > (4); 
                 d1factors = Array<OneD, Array<OneD, NekDouble> > (4); 
             }
 
@@ -2431,55 +2431,18 @@ namespace Nektar
             
             if(m_metricinfo->GetGtype() == SpatialDomains::eDeformed)
             {
-                // d xi_1/dx n_x
-                for(int i = 0; i < nquad1; ++i)
-                {
-                    d0factors[1][i] = df[0][(i+1)*nquad0-1]*normal_1[0][i];
-                    d0factors[3][i] = df[0][i*nquad0]*normal_3[0][i];
-                }
-
-                // d xi_2/dx n_x 
-                for(int i = 0; i < nquad0; ++i)
-                {
-                    d1factors[0][i] = df[1][i]*normal_0[0][i]; 
-                    d1factors[2][i] = df[1][nquad0*(nquad1-1)+i]*
-                        normal_2[0][i];
-                }
-
-                for(int n = 1; n < ncoords; ++n)
-                {
-                    // d xi_1/dy n_y
-                    // needs checking for 3D coords
-                    for(int i = 0; i < nquad1; ++i)
-                    {
-                        d0factors[1][i] += df[2*n][(i+1)*nquad0-1]*normal_1[n][i];
-                        d0factors[3][i] += df[2*n][i*nquad0]*normal_3[n][i];
-                    }
-
-                    // d xi_2/dy n_y
-                    // needs checking for 3D coords
-                    for(int i = 0; i < nquad0; ++i)
-                    {
-                        d1factors[0][i] += df[2*n+1][i]*normal_0[n][i]; 
-                        d1factors[2][i] += df[2*n+1][nquad0*(nquad1-1)+i]
-                            *normal_2[n][i];
-                    }
-                }
-
-                //d1factors
-                // d xi_1/dx n_x 
+                // needs checking for 3D coords
+                
+                // factors 0 and 2 
                 for(int i = 0; i < nquad0; ++i)
                 {
                     d0factors[0][i] = df[0][i]*normal_0[0][i]; 
                     d0factors[2][i] = df[0][nquad0*(nquad1-1)+i]*
                         normal_2[0][i];
-                }
 
-                // d xi_2/dx n_x
-                for(int i = 0; i < nquad1; ++i)
-                {
-                    d1factors[1][i] = df[1][(i+1)*nquad0-1]*normal_1[0][i];
-                    d1factors[3][i] = df[1][i*nquad0]*normal_3[0][i];
+                    d1factors[0][i] = df[1][i]*normal_0[0][i]; 
+                    d1factors[2][i] = df[1][nquad0*(nquad1-1)+i]*
+                        normal_2[0][i];
                 }
 
                 for(int n = 1; n < ncoords; ++n)
@@ -2491,16 +2454,35 @@ namespace Nektar
                         d0factors[0][i] += df[2*n][i]*normal_0[n][i]; 
                         d0factors[2][i] += df[2*n][nquad0*(nquad1-1)+i]
                             *normal_2[n][i];
+
+                        d1factors[0][i] += df[2*n+1][i]*normal_0[n][i]; 
+                        d1factors[2][i] += df[2*n+1][nquad0*(nquad1-1)+i]
+                            *normal_2[n][i];
                     }
-                    
-                    // d xi_2/dy n_y
-                    // needs checking for 3D coords
+                }
+
+                // faces 1 and 3 
+                for(int i = 0; i < nquad1; ++i)
+                {
+                    d0factors[1][i] = df[0][(i+1)*nquad0-1]*normal_1[0][i];
+                    d0factors[3][i] = df[0][i*nquad0]*normal_3[0][i];
+
+                    d1factors[1][i] = df[1][(i+1)*nquad0-1]*normal_1[0][i];
+                    d1factors[3][i] = df[1][i*nquad0]*normal_3[0][i];
+                }
+                
+                for(int n = 1; n < ncoords; ++n)
+                {
                     for(int i = 0; i < nquad1; ++i)
                     {
+                        d0factors[1][i] += df[2*n][(i+1)*nquad0-1]*normal_1[n][i];
+                        d0factors[3][i] += df[2*n][i*nquad0]*normal_3[n][i];
+
                         d1factors[1][i] += df[2*n+1][(i+1)*nquad0-1]*normal_1[n][i];
                         d1factors[3][i] += df[2*n+1][i*nquad0]*normal_3[n][i];
                     }
                 }
+
 
             }
             else

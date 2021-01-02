@@ -190,8 +190,8 @@ namespace Nektar
                 const StdRegions::StdMatrixKey &mkey);
             LOCAL_REGIONS_EXPORT virtual DNekScalMatSharedPtr v_GetLocMatrix(
                 const MatrixKey &mkey);
-            LOCAL_REGIONS_EXPORT virtual DNekScalBlkMatSharedPtr v_GetLocStaticCondMatrix(
-                const MatrixKey &mkey);
+            LOCAL_REGIONS_EXPORT virtual DNekScalBlkMatSharedPtr
+               v_GetLocStaticCondMatrix( const MatrixKey &mkey);
             LOCAL_REGIONS_EXPORT void v_DropLocStaticCondMatrix(
                 const MatrixKey &mkey);
             LOCAL_REGIONS_EXPORT DNekScalMatSharedPtr CreateMatrix(
@@ -203,8 +203,12 @@ namespace Nektar
             virtual void v_GetSimplexEquiSpacedConnectivity(
                 Array<OneD, int> &conn,
                 bool standard = true);
-            
 
+            LOCAL_REGIONS_EXPORT
+            virtual void v_NormalTraceDerivFactors(
+                 Array<OneD, Array<OneD, NekDouble> > &d0factors,
+                 Array<OneD, Array<OneD, NekDouble> > &d1factors,
+                 Array<OneD, Array<OneD, NekDouble> > &d2factors);
         private:
             LibUtilities::NekManager<MatrixKey, DNekScalMat,
                                 MatrixKey::opLess> m_matrixManager;

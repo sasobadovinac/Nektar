@@ -1442,6 +1442,12 @@ namespace Nektar
                 maparray = Array<OneD, unsigned int>(nFaceCoeffs);
             }
 
+            // fill default mapping as increasing index
+            for(i = 0; i < nFaceCoeffs; ++i)
+            {
+                maparray[i] = i;
+            }
+
             if(signarray.size() != nFaceCoeffs)
             {
                 signarray = Array<OneD, int>(nFaceCoeffs,1);
@@ -1451,32 +1457,40 @@ namespace Nektar
                 fill( signarray.get() , signarray.get()+nFaceCoeffs, 1 );
             }
 
-            Array<OneD, int> arrayindx(nFaceCoeffs);
-            
             // setup indexing to manage transpose directions
+            Array<OneD, int> arrayindx(nFaceCoeffs);
             for(i = 0; i < Q; i++)
             {
                 for(j = 0; j < P; j++)
                 {
-                    // zero signmap and set maparray to zero if elemental
-                    // modes are not as large as face modesl
-                    for(int i = 0; i < nummodesB; i++)
+                    if( faceOrient < eDir1FwdDir2_Dir2FwdDir1 )
                     {
-                        for(int j = nummodesA; j < P; j++)
-                        {
-                            signarray[arrayindx[i*P+j]] = 0.0;
-                            maparray[arrayindx[i*P+j]]  = maparray[0];
-                        }
+                        arrayindx[i*P+j] = i*P+j;
                     }
+                    else
+                    {
+                        arrayindx[i*P+j] = j*Q+i;
+                    }
+                }
+            }
 
-                    for(int i = nummodesB; i < Q; i++)
-                    {
-                        for(int j = 0; j < P; j++)
-                        {
-                            signarray[arrayindx[i*P+j]] = 0.0;
-                            maparray[arrayindx[i*P+j]]  = maparray[0];
-                        }
-                    }
+            // zero signmap and set maparray to zero if elemental
+            // modes are not as large as face models
+            for(i = 0; i < nummodesB; i++)
+            {
+                for(j = nummodesA; j < P; j++)
+                {
+                    signarray[arrayindx[i*P+j]] = 0.0;
+                    maparray[arrayindx[i*P+j]]  = maparray[0];
+                }
+            }
+            
+            for(i = nummodesB; i < Q; i++)
+            {
+                for(j = 0; j < P; j++)
+                {
+                    signarray[arrayindx[i*P+j]] = 0.0;
+                    maparray[arrayindx[i*P+j]]  = maparray[0];
                 }
             }
 
@@ -1508,10 +1522,9 @@ namespace Nektar
                     maparray[arrayindx[i*P+j]]  = maparray[0];
                 }
             }
-        
 
-           // Now reorientate indices accordign to orientation 
-           if( (faceOrient==eDir1FwdDir1_Dir2BwdDir2) ||
+            // Now reorientate indices accordign to orientation 
+            if( (faceOrient==eDir1FwdDir1_Dir2BwdDir2) ||
                 (faceOrient==eDir1BwdDir1_Dir2BwdDir2) ||
                 (faceOrient==eDir1BwdDir2_Dir2FwdDir1) ||
                 (faceOrient==eDir1BwdDir2_Dir2BwdDir1) )
@@ -1645,30 +1658,6 @@ namespace Nektar
                         }
                     }
                 }
-            }
-        }
-
-        // Note when all shapes have been split into this form this
-        // method could be moved to StadExpansions
-        void StdHexExp::v_GetTraceToElementMap(
-             const int                  tid,
-             Array<OneD, unsigned int>& maparray,
-             Array<OneD, int>&          signarray,
-             Orientation                traceOrient,
-             int P,  int Q)
-        {
-            Array<OneD, unsigned int> map1, map2;
-            v_GetTraceCoeffMap(tid,map1);
-            v_GetElmtTraceToTraceMap(tid,map2,signarray,traceOrient,P,Q);
-
-            if(maparray.size() != map2.size())
-            {
-                maparray = Array<OneD, unsigned int>(map2.size());
-            }
-            
-            for(int i = 0; i < map2.size(); ++i)
-            {
-                maparray[i] = map1[map2[i]];
             }
         }
         

@@ -220,13 +220,6 @@ namespace Nektar
                     Orientation                faceOrient,
                     int                        P,
                     int                        Q);
-            STD_REGIONS_EXPORT virtual void v_GetTraceToElementMap(
-                    const int                  fid,
-                    Array<OneD, unsigned int> &maparray,
-                    Array<OneD,          int> &signarray,
-                    Orientation               faceOrient,
-                    int                        P,
-                    int                        Q);
             STD_REGIONS_EXPORT virtual void v_GetEdgeInteriorToElementMap(
                const int                  tid,
                Array<OneD, unsigned int> &maparray,
