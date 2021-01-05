@@ -101,6 +101,8 @@ namespace Nektar
         MultiRegions::ExpListSharedPtr m_phi;
         /// Number of samples
         int nSamples;
+        /// Period of the rotative motion
+        NekDouble Period;
         /// Number of elements in the expansion
         int npoints;
         int nCoeffs;

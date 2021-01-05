@@ -488,13 +488,15 @@ namespace Nektar
               Array< OneD, NekDouble > tempCoeffs;
               tempCoeffs= Array<OneD, NekDouble>(nCoeffs, 0.0);
 
-              NekDouble m_period = M_PI;
+              //NekDouble m_period = M_PI;
+              NekDouble m_period = Period*M_PI/180.0;
               NekDouble BetaT = 2*M_PI*fmod (t, m_period) / m_period;
               NekDouble phase;
 
               //Fourier reconstruction
               Vmath::Vcopy(nCoeffs,&m_phiInterpCoeffs[0],1,&tempCoeffs[0],1);             
               Vmath::Svtvp(nCoeffs,cos(0.5*nSamples*BetaT),&m_phiInterpCoeffs[nCoeffs],1,&tempCoeffs[0],1,&tempCoeffs[0],1);
+
               for (int i = 2; i < nSamples; i += 2)
               {
                   phase = (i>>1) * BetaT;
@@ -665,13 +667,20 @@ namespace Nektar
             if(m_timeDependentPhi)
             {             
                 //Read number of samples
-                TiXmlAttribute *childAttr = child->LastAttribute();
-                std::string attrName(childAttr->Name());
-                ASSERTL0(attrName == "NSAMPLES", "Unable to read attribute number of samples.");
+                /*TiXmlAttribute *childAttr = child->LastAttribute();
+                std::string attrName(childAttr->Name());*/
+                status = child->QueryIntAttribute("NSAMPLES", &nSamples);
+                //std::string attrName(childAttr->Name());
+                ASSERTL0(status == TIXML_SUCCESS, "Unable to read attribute number of samples.");
 
-                status = childAttr->QueryIntValue(&nSamples);
+                /*status = childAttr->QueryIntValue(&nSamples);
                 ASSERTL0(status == TIXML_SUCCESS, "The number of samples "
-                     "has to be specified.")
+                     "has to be specified.")*/
+
+                //Read periodicity
+                status = child->QueryDoubleAttribute("PERIOD", &Period);
+                ASSERTL0(status == TIXML_SUCCESS, "The period of the rotative motion must be "
+                        "specified.");
 
                 // Import the STL samples into auxiliary vector
 
@@ -680,7 +689,7 @@ namespace Nektar
 
                 // A subdirectory can also be included, such as "dir/%d.stl"                
                 int angle = 0;
-                int dAngle = 360/nSamples;
+                int dAngle = Period/nSamples;
                 ASSERTL0(typeid(dAngle) == typeid(int),"Angular postion of samples must be integers");
                 
                 string sampleFileName;
@@ -799,7 +808,6 @@ namespace Nektar
                 std::vector<std::string> variableName;
                 variableName.push_back("phi");
                 EquationSystem::WriteFld("phi_0.fld",m_phi,phiOutputVectorOfArray, variableName);
-
             }
             else
             {
