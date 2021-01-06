@@ -103,6 +103,8 @@ namespace Nektar
         int nSamples;
         /// Period of the rotative motion
         NekDouble Period;
+        /// Output parameter for phi
+        int outputEveryPhi;
         /// Number of elements in the expansion
         int npoints;
         int nCoeffs;

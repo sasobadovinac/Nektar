@@ -510,15 +510,25 @@ namespace Nektar
               }
 
               //Output Phi field
-              m_phi->BwdTrans_IterPerExp(m_phi->GetCoeffs(), m_phi->UpdatePhys());
-              m_phi->FwdTrans_IterPerExp(m_phi->GetPhys(), m_phi->UpdateCoeffs());
+              if(cptOutputPhi < OutputEveryPhi)
+              {
+                cptOutputPhi++;
+              }
+              else
+              {
+                  m_phi->BwdTrans_IterPerExp(m_phi->GetCoeffs(), m_phi->UpdatePhys());
+                  m_phi->FwdTrans_IterPerExp(m_phi->GetPhys(), m_phi->UpdateCoeffs());
+                  
+                  std::vector<Array<OneD, NekDouble> > phiOutputVectorOfArray;
+                  phiOutputVectorOfArray.push_back(m_phi -> UpdateCoeffs()); 
+                  std::vector<std::string> variableName;
+                  variableName.push_back("phi");
+                  string tstring = to_string(t);
+                  EquationSystem::WriteFld("phi_"+ tstring +".fld",m_phi,phiOutputVectorOfArray, variableName);
+                  cptOutputPhi = 0;
+              }
               
-              std::vector<Array<OneD, NekDouble> > phiOutputVectorOfArray;
-              phiOutputVectorOfArray.push_back(m_phi -> UpdateCoeffs()); 
-              std::vector<std::string> variableName;
-              variableName.push_back("phi");
-              string tstring = to_string(t);
-              EquationSystem::WriteFld("phi_"+ tstring +".fld",m_phi,phiOutputVectorOfArray, variableName); 
+               
             }            
         
         }
@@ -682,6 +692,11 @@ namespace Nektar
                 ASSERTL0(status == TIXML_SUCCESS, "The period of the rotative motion must be "
                         "specified.");
 
+                //Read OutputEvery
+                status = child->QueryDoubleAttribute("OUTPUTPHIEVERY", &OutputEveryPhi);
+                ASSERTL0(status == TIXML_SUCCESS, "The output period for Phi must be "
+                        "specified.");
+                int cptOutputPhi = 0;
                 // Import the STL samples into auxiliary vector
 
                 // The STL samples should be stored in the form "%d.stl" where %d is
