@@ -49,7 +49,6 @@ using namespace std;
 namespace Nektar
 {
     using namespace MultiRegions;
-
     string SmoothedProfileMethod::className =
         SolverUtils::GetEquationSystemFactory().RegisterCreatorFunction(
             "SmoothedProfileMethod",
@@ -506,13 +505,13 @@ namespace Nektar
 
               for (int i = 0; i < nCoeffs; i+=1)
               {
-                m_phi -> SetCoeffs(i,tempCoeffs[i]);
+                  m_phi -> SetCoeffs(i,tempCoeffs[i]);
               }
 
               //Output Phi field
-              if(cptOutputPhi < OutputEveryPhi)
+              if(cptOutputPhi < outputEveryPhi)
               {
-                cptOutputPhi++;
+                  cptOutputPhi++;
               }
               else
               {
@@ -677,15 +676,8 @@ namespace Nektar
             if(m_timeDependentPhi)
             {             
                 //Read number of samples
-                /*TiXmlAttribute *childAttr = child->LastAttribute();
-                std::string attrName(childAttr->Name());*/
                 status = child->QueryIntAttribute("NSAMPLES", &nSamples);
-                //std::string attrName(childAttr->Name());
                 ASSERTL0(status == TIXML_SUCCESS, "Unable to read attribute number of samples.");
-
-                /*status = childAttr->QueryIntValue(&nSamples);
-                ASSERTL0(status == TIXML_SUCCESS, "The number of samples "
-                     "has to be specified.")*/
 
                 //Read periodicity
                 status = child->QueryDoubleAttribute("PERIOD", &Period);
@@ -693,10 +685,9 @@ namespace Nektar
                         "specified.");
 
                 //Read OutputEvery
-                status = child->QueryDoubleAttribute("OUTPUTPHIEVERY", &OutputEveryPhi);
+                status = child->QueryIntAttribute("OUTPUTPHIEVERY", &outputEveryPhi);
                 ASSERTL0(status == TIXML_SUCCESS, "The output period for Phi must be "
                         "specified.");
-                int cptOutputPhi = 0;
                 // Import the STL samples into auxiliary vector
 
                 // The STL samples should be stored in the form "%d.stl" where %d is

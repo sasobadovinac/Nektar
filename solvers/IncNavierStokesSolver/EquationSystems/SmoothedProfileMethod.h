@@ -105,6 +105,7 @@ namespace Nektar
         NekDouble Period;
         /// Output parameter for phi
         int outputEveryPhi;
+        int cptOutputPhi = 0;
         /// Number of elements in the expansion
         int npoints;
         int nCoeffs;
