@@ -60,6 +60,11 @@ public:
         m_checkLocal = flag;
     }
 
+    inline bool &RecalcCoords()
+    {
+        return m_moved;
+    }
+
     inline std::vector<Array<OneD, NekDouble>> GetMissingCoords()
     {
         return m_missingCoords;
@@ -71,6 +76,7 @@ public:
     }
 
     void CalcLocalMissing();
+
     void FillLocalBwdTrace(Array<OneD, NekDouble> &Fwd,
                            Array<OneD, NekDouble> &Bwd);
     void FillRankBwdTrace(Array<OneD, NekDouble> &trace,
@@ -82,6 +88,7 @@ private:
     std::map<int, int> m_geomIdToTraceId;
     int m_totQuadPnts = 0;
     bool m_checkLocal = false;
+    bool m_moved = true;
     std::vector<Array<OneD, NekDouble>> m_missingCoords;
     std::vector<std::pair<int, Array<OneD, NekDouble>>> m_foundLocalCoords;
     std::vector<int> m_mapMissingCoordToTrace;

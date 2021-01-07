@@ -201,13 +201,18 @@ void InterfaceMapDG::ExchangeCoords()
 {
     auto comm = m_trace->GetComm();
 
+    int skipExchange = 0;
     for (auto &interfaceTrace : m_localInterfaces)
     {
-        interfaceTrace->CalcLocalMissing();
+        if (interfaceTrace->RecalcCoords())
+        {
+            interfaceTrace->CalcLocalMissing();
+            skipExchange += 1;
+        }
     }
 
     // If parallel communication is needed
-    if (!m_exchange.empty())
+    if (!m_exchange.empty() && skipExchange > 0)
     {
         auto request = comm->CreateRequest(2 * m_exchange.size());
 
@@ -227,6 +232,11 @@ void InterfaceMapDG::ExchangeCoords()
         {
             m_exchange[i]->CalcRankDistances();
         }
+    }
+
+    for (auto &interfaceTrace : m_localInterfaces)
+    {
+        interfaceTrace->RecalcCoords() = false;
     }
 }
 
@@ -295,16 +305,16 @@ void InterfaceTrace::CalcLocalMissing()
                 xs[1] = yc[i];
                 xs[2] = zc[i];
 
-                //std::cout << LibUtilities::ShapeTypeMap[childElmt->GetGeom()->GetShapeType()] << " ID: " << childId << " point " << i << " = (" << xs[0] <<", " << xs[1] << ", " << xs[2] << ")" << std::endl;
+                std::cout << LibUtilities::ShapeTypeMap[childElmt->GetGeom()->GetShapeType()] << " ID: " << childId << " point " << i << " = (" << xs[0] <<", " << xs[1] << ", " << xs[2] << ")" << std::endl;
 
-                for (auto edge : parentEdge)
+                for (auto &edge : parentEdge)
                 {
                     NekDouble dist = edge.second->FindDistance(xs, foundLocCoord);
 
                     if (dist < 1e-8)
                     {
                         found = true;
-                        //std::cout << "\t found in: " << LibUtilities::ShapeTypeMap[edge.second->GetShapeType()] << " at local coord = (" << foundLocCoord[0] << ", " << foundLocCoord[1] << ")" << std::endl;
+                        std::cout << "\t found in: " << LibUtilities::ShapeTypeMap[edge.second->GetShapeType()] << " at local coord = (" << foundLocCoord[0] << ", " << foundLocCoord[1] << ")" << std::endl;
                         m_foundLocalCoords.emplace_back(edge.second->GetGlobalID(), foundLocCoord);
                         m_mapFoundCoordToTrace.emplace_back(offset + i);
                         break;
@@ -328,12 +338,23 @@ void InterfaceTrace::CalcLocalMissing()
 void InterfaceExchange::RankFillSizes(
     LibUtilities::CommRequestSharedPtr request, int requestNum)
 {
-    // Get size of all interfaces missing to communicate
-    m_sendSize = Array<OneD, int>(m_interfaces.size());
-    m_recvSize = Array<OneD, int>(m_interfaces.size());
-    for (int i = 0; i < m_interfaces.size(); ++i)
+    // Get size of all interfaces missing and moved to communicate
+    int recalcSize = 0;
+    for (auto &localInterface : m_interfaces)
     {
-        m_sendSize[i] = m_interfaces[i]->GetMissingCoords().size() * 3;
+        recalcSize += localInterface->RecalcCoords();
+    }
+
+    m_sendSize = Array<OneD, int>(recalcSize);
+    m_recvSize = Array<OneD, int>(recalcSize);
+
+    int cnt = 0;
+    for (auto &m_interface : m_interfaces)
+    {
+        if (m_interface->RecalcCoords())
+        {
+            m_sendSize[cnt++] = m_interface->GetMissingCoords().size() * 3;
+        }
     }
 
     m_comm->Isend(m_rank, m_sendSize, m_interfaces.size(), request,
@@ -354,14 +375,17 @@ void InterfaceExchange::SendMissing(LibUtilities::CommRequestSharedPtr request,
     m_recv        = Array<OneD, NekDouble>(m_totRecvSize);
 
     int cnt = 0;
-    for (int i = 0; i < m_interfaces.size(); ++i)
+    for (auto &m_interface : m_interfaces)
     {
-        auto missing = m_interfaces[i]->GetMissingCoords();
-        for (auto coord : missing)
+        if (m_interface->RecalcCoords())
         {
-            for (int k = 0; k < 3; ++k, ++cnt)
+            auto missing = m_interface->GetMissingCoords();
+            for (auto coord : missing)
             {
-                m_send[cnt] = coord[k];
+                for (int k = 0; k < 3; ++k, ++cnt)
+                {
+                    m_send[cnt] = coord[k];
+                }
             }
         }
     }
@@ -514,24 +538,32 @@ void InterfaceExchange::CalcRankDistances()
 
     for (int i = 0; i < m_interfaces.size(); ++i)
     {
-        auto parentEdge = m_interfaces[i]->GetInterface()->GetEdge();
-
-        for (int j = disp[i]; j < disp[i + 1]; j += 3)
+        if (m_interfaces[i]->RecalcCoords())
         {
-            Array<OneD, NekDouble> foundLocCoord;
-            Array<OneD, NekDouble> xs(3);
-            xs[0] = m_recv[j];
-            xs[1] = m_recv[j + 1];
-            xs[2] = m_recv[j + 2];
+            auto parentEdge = m_interfaces[i]->GetInterface()->GetEdge();
 
-            for (auto edge : parentEdge)
+            for (int j = disp[i]; j < disp[i + 1]; j += 3)
             {
-                NekDouble dist = edge.second->FindDistance(xs, foundLocCoord);
+                Array<OneD, NekDouble> foundLocCoord;
+                Array<OneD, NekDouble> xs(3);
+                xs[0] = m_recv[j];
+                xs[1] = m_recv[j + 1];
+                xs[2] = m_recv[j + 2];
 
-                if (dist < 1e-8)
+                std::cout << " point " << j/3 << " = (" << xs[0] <<", " << xs[1] << ", " << xs[2] << ")" << std::endl;
+
+                for (auto &edge : parentEdge)
                 {
-                    m_foundRankCoords[j / 3] = std::make_pair(edge.second->GetGlobalID(), foundLocCoord);
-                    break;
+                    NekDouble dist =
+                        edge.second->FindDistance(xs, foundLocCoord);
+
+                    if (dist < 1e-8)
+                    {
+                        std::cout << "\t found in: " << LibUtilities::ShapeTypeMap[edge.second->GetShapeType()] << " at local coord = (" << foundLocCoord[0] << ", " << foundLocCoord[1] << ")" << std::endl;
+                        m_foundRankCoords[j / 3] = std::make_pair(
+                            edge.second->GetGlobalID(), foundLocCoord);
+                        break;
+                    }
                 }
             }
         }
