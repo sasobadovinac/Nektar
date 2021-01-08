@@ -338,39 +338,6 @@ void SegGeom::v_Setup()
     }
 }
 
-NekDouble SegGeom::v_GetLocCoords(const Array<OneD, const NekDouble> &coords,
-                                  Array<OneD, NekDouble> &Lcoords)
-{
-    int i;
-    NekDouble resid = 0.0;
-    SegGeom::v_FillGeom();
-
-    // calculate local coordinate for coord
-    if (GetMetricInfo()->GetGtype() == eRegular)
-    {
-        NekDouble len = 0.0;
-        NekDouble xi  = 0.0;
-
-        const int npts = m_xmap->GetTotPoints();
-        Array<OneD, NekDouble> pts(npts);
-
-        for (i = 0; i < m_coordim; ++i)
-        {
-            m_xmap->BwdTrans(m_coeffs[i], pts);
-            len += (pts[npts - 1] - pts[0]) * (pts[npts - 1] - pts[0]);
-            xi += (coords[i] - pts[0]) * (pts[npts - 1] - pts[0]);
-        }
-
-        Lcoords[0] = 2 * xi / len - 1.0;
-    }
-    else
-    {
-        NEKERROR(ErrorUtil::efatal,
-                 "inverse mapping must be set up to use this call");
-    }
-    return resid;
-}
-
 bool SegGeom::v_ContainsPoint(const Array<OneD, const NekDouble> &gloCoord,
                               Array<OneD, NekDouble> &stdCoord, NekDouble tol,
                               NekDouble &resid)

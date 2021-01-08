@@ -84,9 +84,6 @@ protected:
 
     virtual PointGeomSharedPtr v_GetVertex(const int i) const;
     virtual LibUtilities::ShapeType v_GetShapeType() const;
-    virtual NekDouble v_GetLocCoords(
-        const Array<OneD, const NekDouble> &coords,
-        Array<OneD, NekDouble> &Lcoords);
     virtual void v_GenGeomFactors();
     virtual void v_FillGeom();
     virtual void v_Reset(CurveMap &curvedEdges, CurveMap &curvedFaces);

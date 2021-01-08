@@ -1,5 +1,8 @@
 #include <SolverUtils/AdvectionSystem.h>
 #include <SolverUtils/Advection/Advection.h>
+#include <SolverUtils/EquationSystem.h>
+#include <LibUtilities/TimeIntegration/TimeIntegrationScheme.h>
+#include <LibUtilities/TimeIntegration/TimeIntegrationSchemeOperators.h>
 #include <iomanip>
 
 using namespace std;

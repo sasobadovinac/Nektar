@@ -24,7 +24,8 @@ IF( NEKTAR_SOLVER_ADR )
         ./EquationSystems/UnsteadyViscousBurgers.cpp
         ./EquationSystems/EigenValuesAdvection.cpp
         ./EquationSystems/ALEDemo.cpp
-        ./EquationSystems/ALEDemo2.cpp)
+        #./EquationSystems/ALEDemo2.cpp
+            )
 
     #MMF advection
     ADD_NEKTAR_TEST        (TestMMFAdvPlane)
@@ -198,6 +199,8 @@ IF( NEKTAR_SOLVER_ADR )
     ADD_NEKTAR_TEST(CubeAllElements)
     ADD_NEKTAR_TEST(ImDiffusion_m12)
     ADD_NEKTAR_TEST(ImDiffusion_m6)
+    ADD_NEKTAR_TEST(ImDiffusion_m6_DIRKOrder3_ES5)
+    ADD_NEKTAR_TEST(ImDiffusion_m6_DIRKOrder4_ES6)
     ADD_NEKTAR_TEST(ImDiffusion_VarCoeff)
     ADD_NEKTAR_TEST(ImDiffusion_VarCoeff_DirectFull)
     ADD_NEKTAR_TEST(ImDiffusion_Quad_Periodic_m7)
@@ -247,5 +250,6 @@ IF( NEKTAR_SOLVER_ADR )
             ADD_NEKTAR_TEST(Advection3D_m10_DG_prism_VarP_hdf)
         ENDIF()
         ADD_NEKTAR_TEST(RotPerBcs3D_Annulus LENGTHY)
+            ADD_NEKTAR_TEST(UnsteadyAdvection_WDG_3DHomo1D_MVM_NPZ)
     ENDIF (NEKTAR_USE_MPI)
 ENDIF( NEKTAR_SOLVER_ADR )
