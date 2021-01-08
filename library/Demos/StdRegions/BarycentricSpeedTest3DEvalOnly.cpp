@@ -10,13 +10,10 @@
 // polynomial = x^2 + y^2 - z^2
 Array<OneD, NekDouble> EvalPoly(const Array<OneD, const Array<OneD, NekDouble>> &pts)
 {
-    Array<OneD, NekDouble> ret(pts[0].size());
-    unsigned dim = pts.size();
-    for (int i = 0; i < pts[0].size(); i++)
+    Array<OneD, NekDouble> ret(pts.size());
+    for (int i = 0; i < pts.size(); i++)
     {
-        ret[i] = pow(pts[0][i],2)
-                 + (dim >= 2 ? pow(pts[1][i], 2) : 0.0)
-                 - (dim >= 3 ? pow(pts[2][i], 2) : 0.0);
+        ret[i] = pow(pts[i][0],2) + pow(pts[i][1], 2) - pow(pts[i][2], 2);
     }
 
     return ret;
@@ -25,10 +22,10 @@ Array<OneD, NekDouble> EvalPoly(const Array<OneD, const Array<OneD, NekDouble>> 
 // derivative in x = 2x
 Array<OneD, NekDouble> EvalPolyDerivx(const Array<OneD, const Array<OneD, NekDouble> > &pts)
 {
-    Array<OneD, NekDouble> ret(pts[0].size());
-    for (int i = 0; i < pts[0].size(); i++)
+    Array<OneD, NekDouble> ret(pts.size());
+    for (int i = 0; i < pts.size(); i++)
     {
-        ret[i] =  2*pts[0][i];
+        ret[i] =  2*pts[i][0];
     }
 
     return ret;
@@ -37,10 +34,10 @@ Array<OneD, NekDouble> EvalPolyDerivx(const Array<OneD, const Array<OneD, NekDou
 // derivative in y = 2y
 Array<OneD, NekDouble> EvalPolyDerivy(const Array<OneD, const Array<OneD, NekDouble> > &pts)
 {
-    Array<OneD, NekDouble> ret(pts[0].size());
-    for (int i = 0; i < pts[0].size(); i++)
+    Array<OneD, NekDouble> ret(pts.size());
+    for (int i = 0; i < pts.size(); i++)
     {
-        ret[i] =  2*pts[1][i];
+        ret[i] =  2*pts[i][1];
     }
 
     return ret;
@@ -49,10 +46,10 @@ Array<OneD, NekDouble> EvalPolyDerivy(const Array<OneD, const Array<OneD, NekDou
 // derivative in z = -2z
 Array<OneD, NekDouble> EvalPolyDerivz(const Array<OneD, const Array<OneD, NekDouble> > &pts)
 {
-    Array<OneD, NekDouble> ret(pts[0].size());
-    for (int i = 0; i < pts[0].size(); i++)
+    Array<OneD, NekDouble> ret(pts.size());
+    for (int i = 0; i < pts.size(); i++)
     {
-        ret[i] =  -2*pts[2][i] ;
+        ret[i] =  -2*pts[i][2];
     }
 
     return ret;
@@ -64,54 +61,41 @@ int main(int argc, char *argv[])
     demo.ParseArguments(argc, argv);
     StdExpansion *E = demo.CreateStdExpansion();
 
-    const auto dimension = (unsigned) E->GetShapeDimension();
-    const auto totPoints = (unsigned) E->GetTotPoints();
-
-    // Create a new element but with the evenly-spaced points type, so that we
-    // perform a PhysEvaluateDeriv at a different set of nodal points
-    // (i.e. non-collocated interpolation).
-    vector<string> &ptypes = demo.GetPointsType();
-    ptypes[0] = "GaussRadauPLegendre";
-    ptypes[1] = "GaussRadauMLegendre";
-    ptypes[2] = "GaussRadauMLegendre";
-    StdExpansion *F = demo.CreateStdExpansion();
-
-    Array<OneD, Array<OneD, NekDouble> > coordsF = demo.GetCoords(F);
     Array<OneD, Array<OneD, NekDouble> > coordsE = demo.GetCoords(E);
 
-    // Get physical values
-    Array<OneD, NekDouble> physIn = EvalPoly(coordsE);
-
-    // Fill coords array
-    Array<OneD, Array<OneD, NekDouble>> coordIn(totPoints);
-    for (int i = 0; i < totPoints; ++i)
+    // Get physical values from coordsE
+    Array<OneD, Array<OneD, NekDouble>> tmpCoords(coordsE[0].size());
+    for (int i = 0; i < coordsE[0].size(); ++i)
     {
-        coordIn[i] = Array<OneD, NekDouble>(dimension, 0.0);
-        for (int j =0; j < dimension; ++j)
+        tmpCoords[i] = Array<OneD, NekDouble>(3);
+        tmpCoords[i][0] = coordsE[0][i];
+        tmpCoords[i][1] = coordsE[1][i];
+        tmpCoords[i][2] = coordsE[2][i];
+    }
+    Array<OneD, NekDouble> physIn = EvalPoly(tmpCoords);
+
+    // Fill coords array for interpolation with nInt x nInt evenly spaced values
+    int nInt = 10;
+    Array<OneD, Array<OneD, NekDouble>> coordIn(nInt * nInt * nInt);
+    for (NekDouble i = 0, cnt = 0; i < nInt; ++i)
+    {
+        for (NekDouble j = 0; j < nInt; ++j)
         {
-            coordIn[i][j] = coordsF[j][i];
+            for (NekDouble k = 0; k < nInt; ++k, ++cnt)
+            {
+                coordIn[cnt] = Array<OneD,NekDouble>(3);
+                coordIn[cnt][0] = i * 2 / nInt - 1;
+                coordIn[cnt][1] = j * 2 / nInt - 1;
+                coordIn[cnt][2] = k * 2 / nInt - 1;
+            }
         }
     }
 
+    const auto totPoints = coordIn.size();
+
     // Do tests of cycles depending on order
     int nModes = E->GetBasisNumModes(0);
-    int totCyc;
-    if (nModes < 4)
-    {
-        totCyc = 100000;
-    }
-    else if (nModes < 7)
-    {
-        totCyc = 10000;
-    }
-    else if (nModes < 10)
-    {
-        totCyc = 5000;
-    }
-    else
-    {
-        totCyc = 1000;
-    }
+    int totCyc = 500;
     std::cout << "Num of modes is " << nModes << " therefore running for " << totCyc << " cycles." << std::endl;
 
     // Calc interpolation matrix every call
@@ -147,7 +131,8 @@ int main(int argc, char *argv[])
         }
     }
     t.Stop();
-    std::cout << "Old method: " << t.TimePerTest(totCyc) << " per cycle (" << totCyc << " cycles)." << std::endl;
+    NekDouble timeOld = t.TimePerTest(totCyc);
+    std::cout << "Old method: " << t.Elapsed().count() << "s - > " << timeOld << " per cycle (" << totCyc << " cycles)." << std::endl;
 
     std::cout << "Testing old method, precalc interp matrix" << std::endl;
 
@@ -175,8 +160,8 @@ int main(int argc, char *argv[])
         }
     }
     t.Stop();
-
-    std::cout << "Old method: " << t.TimePerTest(totCyc) << " per cycle (" << totCyc << " cycles)." << std::endl;
+    NekDouble timePrecalc = t.TimePerTest(totCyc);
+    std::cout << "Precalc method: " << t.Elapsed().count() << "s - > " << timePrecalc << " per cycle (" << totCyc << " cycles)." << std::endl;
 
     std::cout << "Testing barycentric method" << std::endl;
     t.Start();
@@ -188,25 +173,29 @@ int main(int argc, char *argv[])
         }
     }
     t.Stop();
-    std::cout << "New method: " << t.TimePerTest(totCyc) << " per cycle (" << totCyc << " cycles)." << std::endl;
+    NekDouble timeBary = t.TimePerTest(totCyc);
+    std::cout << "New method: " << t.Elapsed().count() << "s - > " << timeBary << " per cycle (" << totCyc << " cycles)." << std::endl;
 
 
-    Array<OneD, NekDouble> sol(totPoints), sol0(totPoints), sol1(totPoints), sol2(totPoints);
-    sol = EvalPoly(coordsF);
+    Array<OneD, NekDouble> sol(totPoints);
+    sol = EvalPoly(coordIn);
 
-    //Check error
+    std::ofstream outfile;
+    std::string fileName = LibUtilities::ShapeTypeMap[E->DetShapeType()];
+    outfile.open(fileName + "All.txt", std::ios_base::app); // append instead of overwrite
+    outfile << nModes << " " << timeOld << " " << timePrecalc << " " << timeBary << std::endl;
+    outfile.close();
+    std::cout << "Saved to file: " << fileName + "All.txt" << std::endl;
+
+    //Check error (this breaks for when order > nInt)
     std::cout << "\nBarycentric \t\t L2 Error \t Linf Error" << std::endl;
-    std::cout << "\tPhys: "   << "\t\t" << F->L2(Bphys, sol) << "\t" << F->Linf(Bphys, sol)   << std::endl;
+    std::cout << "\tPhys: "   << "\t\t" << E->L2(Bphys, sol) << "\t" << E->Linf(Bphys, sol)   << std::endl;
 
     std::cout << "\nStore matrix \t\t L2 Error \t Linf Error" << std::endl;
-    std::cout << "\tPhys: "   << "\t\t" << F->L2(Sphys, sol) << "\t" << F->Linf(Sphys, sol)   << std::endl;
+    std::cout << "\tPhys: "   << "\t\t" << E->L2(Sphys, sol) << "\t" << E->Linf(Sphys, sol)   << std::endl;
 
     std::cout << "\nCalc every cycle \t L2 Error \t Linf Error" << std::endl;
-    std::cout << "\tPhys: "   << "\t\t" << F->L2(Ephys, sol) << "\t" << F->Linf(Ephys, sol)   << std::endl;
+    std::cout << "\tPhys: "   << "\t\t" << E->L2(Ephys, sol) << "\t" << E->Linf(Ephys, sol)   << std::endl;
 
-    // Iterative calc interpolation matrix
-
-
-    // Barycentric interpolation
 
 }

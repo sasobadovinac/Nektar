@@ -95,7 +95,7 @@ int main(int argc, char *argv[])
 
     // Do tests of cycles depending on order
     int nModes = E->GetBasisNumModes(0);
-    int totCyc = 100;
+    int totCyc = 500;
     std::cout << "Num of modes is " << nModes << " therefore running for " << totCyc << " cycles." << std::endl;
 
     // Calc interpolation matrix every call
@@ -167,7 +167,6 @@ int main(int argc, char *argv[])
         }
     }
     t.Stop();
-
     NekDouble timePrecalc = t.TimePerTest(totCyc);
     std::cout << "Precalc method: " << t.Elapsed().count() << "s - > " << timePrecalc << " per cycle (" << totCyc << " cycles)." << std::endl;
 
