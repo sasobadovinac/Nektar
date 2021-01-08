@@ -717,6 +717,10 @@ namespace Nektar
                 m_phi->ExtractDataToCoeffs(fieldDef[0], fieldData[0],
                                             tmp, m_phi->UpdateCoeffs());
                 m_phi->BwdTrans(m_phi->GetCoeffs(), m_phi->UpdatePhys());
+
+                m_phi->ExtractDataToCoeffs(fieldDef[1], fieldData[1],
+                                            tmp, m_phi->UpdateCoeffs());
+                m_phi->BwdTrans(m_phi->GetCoeffs(), m_phi->UpdatePhys());
                     
                 nCoeffs = m_phi -> GetNcoeffs();
 
@@ -743,13 +747,17 @@ namespace Nektar
                     phiFile->Import(sampleFileName, fieldDef, fieldData, fieldMetaData);
 
                     // Only Phi field should be defined in the file
-                    ASSERTL0(fieldData.size() == 1, "Only one field (phi) must be "
-                                                    "defined in the FLD file.")
+                    //ASSERTL0(fieldData.size() == 1, "Only one field (phi) must be "
+                    //                                "defined in the FLD file.")
 
                     // Extract Phi field to output
                     string tmp("phi");
                     m_phi->ExtractDataToCoeffs(fieldDef[0], fieldData[0],
                                                tmp, m_phi->UpdateCoeffs());
+                    m_phi->BwdTrans(m_phi->GetCoeffs(), m_phi->UpdatePhys());
+
+                    m_phi->ExtractDataToCoeffs(fieldDef[1], fieldData[1],
+                                            tmp, m_phi->UpdateCoeffs());
                     m_phi->BwdTrans(m_phi->GetCoeffs(), m_phi->UpdatePhys());
                     
                     // Store Phi in table of Phi fields
@@ -770,6 +778,10 @@ namespace Nektar
                 // Extract Phi field to output
                 m_phi->ExtractDataToCoeffs(fieldDef[0], fieldData[0],
                                                tmp, m_phi->UpdateCoeffs());
+                m_phi->BwdTrans(m_phi->GetCoeffs(), m_phi->UpdatePhys());
+
+                m_phi->ExtractDataToCoeffs(fieldDef[1], fieldData[1],
+                                            tmp, m_phi->UpdateCoeffs());
                 m_phi->BwdTrans(m_phi->GetCoeffs(), m_phi->UpdatePhys());
               
                 //Discrete Fourier Transform using FFTW
