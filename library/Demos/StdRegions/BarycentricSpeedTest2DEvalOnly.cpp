@@ -174,10 +174,10 @@ int main(int argc, char *argv[])
 
     std::ofstream outfile;
     std::string fileName = LibUtilities::ShapeTypeMap[E->DetShapeType()];
-    outfile.open(fileName + "All.txt", std::ios_base::app); // append instead of overwrite
+    outfile.open(fileName + "AllEval.txt", std::ios_base::app); // append instead of overwrite
     outfile << nModes << " " << timeOld << " " << timePrecalc << " " << timeBary << std::endl;
     outfile.close();
-    std::cout << "Saved to file: " << fileName + "All.txt" << std::endl;
+    std::cout << "Saved to file: " << fileName + "AllEval.txt" << std::endl;
 
     //Check error
     std::cout << "\nBarycentric \t\t L2 Error \t Linf Error" << std::endl;
