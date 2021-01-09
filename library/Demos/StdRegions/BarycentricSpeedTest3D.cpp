@@ -170,7 +170,6 @@ int main(int argc, char *argv[])
     NekDouble timePrecalc = t.TimePerTest(totCyc);
     std::cout << "Precalc method: " << t.Elapsed().count() << "s - > " << timePrecalc << " per cycle (" << totCyc << " cycles)." << std::endl;
 
-    Array<OneD, NekDouble> BphysDeriv0(totPoints), BphysDeriv1(totPoints), BphysDeriv2(totPoints);
     t.Start();
     for (int cyc = 0; cyc < totCyc; ++cyc)
     {

@@ -95,7 +95,7 @@ int main(int argc, char *argv[])
 
     // Do tests of cycles depending on order
     int nModes = E->GetBasisNumModes(0);
-    int totCyc = 500;
+    int totCyc = 1000;
     std::cout << "Num of modes is " << nModes << " therefore running for " << totCyc << " cycles." << std::endl;
 
     // Calc interpolation matrix every call
@@ -106,7 +106,6 @@ int main(int argc, char *argv[])
     Array<OneD, NekDouble> Bphys(totPoints), Bderiv0(totPoints), Bderiv1(totPoints), Bderiv2(totPoints);
 
 
-    std::cout << "Testing old method, calc interp matrix every cycle" << std::endl;
     t.Start();
     for (int cyc = 0; cyc < totCyc; ++cyc)
     {
@@ -133,8 +132,6 @@ int main(int argc, char *argv[])
     t.Stop();
     NekDouble timeOld = t.TimePerTest(totCyc);
     std::cout << "Old method: " << t.Elapsed().count() << "s - > " << timeOld << " per cycle (" << totCyc << " cycles)." << std::endl;
-
-    std::cout << "Testing old method, precalc interp matrix" << std::endl;
 
     Array<OneD, Array<OneD, DNekMatSharedPtr>>  I(totPoints);
     for (int i = 0; i < totPoints; ++i)
@@ -163,7 +160,6 @@ int main(int argc, char *argv[])
     NekDouble timePrecalc = t.TimePerTest(totCyc);
     std::cout << "Precalc method: " << t.Elapsed().count() << "s - > " << timePrecalc << " per cycle (" << totCyc << " cycles)." << std::endl;
 
-    std::cout << "Testing barycentric method" << std::endl;
     t.Start();
     for (int cyc = 0; cyc < totCyc; ++cyc)
     {
