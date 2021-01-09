@@ -174,6 +174,13 @@ void DriverModifiedArnoldi::v_Execute(ostream &out)
     alpha[0] = std::sqrt(alpha[0]);
     Vmath::Smul(ntot, 1.0/alpha[0], Kseq[0], 1, Kseq[0], 1);
 
+    m_alpha = alpha[0];
+    if (m_comm->GetRank() == 0)
+    {
+        out << "Scaling factor: " << m_alpha <<  endl;
+    }
+
+
     // // Scale angle if needed
      // if(m_BlowingSuction)
      // {
@@ -197,6 +204,12 @@ void DriverModifiedArnoldi::v_Execute(ostream &out)
         m_comm->AllReduce(alpha[i], Nektar::LibUtilities::ReduceSum);
         alpha[i] = std::sqrt(alpha[i]);
         Vmath::Smul(ntot, 1.0/alpha[i], Kseq[i], 1, Kseq[i], 1);
+
+        m_alpha = alpha[i];
+        if (m_comm->GetRank() == 0)
+        {
+            out << "Scaling factor: " << m_alpha <<  endl;
+        }
 
         // Scale angle if needed
      // if(m_BlowingSuction)
@@ -260,6 +273,12 @@ void DriverModifiedArnoldi::v_Execute(ostream &out)
             alpha[m_kdim] = std::sqrt(alpha[m_kdim]);
             Vmath::Smul(ntot, 1.0/alpha[m_kdim], Kseq[m_kdim], 1,
                                                  Kseq[m_kdim], 1);
+
+            m_alpha = alpha[m_kdim];
+            if (m_comm->GetRank() == 0)
+            {
+                out << "Scaling factor: " << m_alpha <<  endl;
+            }
             // Scale angle if needed
              // if(m_BlowingSuction)
              // {
