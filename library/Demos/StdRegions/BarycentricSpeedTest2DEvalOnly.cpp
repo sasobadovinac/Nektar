@@ -76,18 +76,15 @@ int main(int argc, char *argv[])
 
     // Fill coords array for interpolation with nInt x nInt evenly spaced values
     int nInt = 10;
-    Array<OneD, Array<OneD, NekDouble>> coordIn(nInt * nInt * nInt);
+    Array<OneD, Array<OneD, NekDouble>> coordIn(nInt * nInt);
     for (NekDouble i = 0, cnt = 0; i < nInt; ++i)
     {
-        for (NekDouble j = 0; j < nInt; ++j)
+        for (NekDouble j = 0; j < nInt; ++j, ++cnt)
         {
-            for (NekDouble k = 0; k < nInt; ++k, ++cnt)
-            {
-                coordIn[cnt] = Array<OneD,NekDouble>(3);
-                coordIn[cnt][0] = i * 2 / nInt - 1;
-                coordIn[cnt][1] = j * 2 / nInt - 1;
-                coordIn[cnt][2] = 0;
-            }
+            coordIn[cnt] = Array<OneD,NekDouble>(3);
+            coordIn[cnt][0] = i * 2 / nInt - 1;
+            coordIn[cnt][1] = j * 2 / nInt - 1;
+            coordIn[cnt][2] = 0;
         }
     }
 
