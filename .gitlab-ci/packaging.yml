@@ -161,6 +161,7 @@
       - ./SRPMS/*.rpm
       - ${version_file}
     expire_in: 1 week
+  timeout: 8h
 
 ##
 ## Test the generated RPM packages: first, run the ADRSolver on a
