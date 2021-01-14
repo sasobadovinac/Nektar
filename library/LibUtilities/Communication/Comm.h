@@ -613,7 +613,7 @@ template <class T>
 void Comm::Isend(int pProc, T &pData, int count,
                   const CommRequestSharedPtr &request, int loc)
 {
-    v_Irsend(CommDataTypeTraits<T>::GetPointer(pData), count,
+    v_Isend(CommDataTypeTraits<T>::GetPointer(pData), count,
              CommDataTypeTraits<T>::GetDataType(), pProc, request, loc);
 }
 

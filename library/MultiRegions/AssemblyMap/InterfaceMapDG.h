@@ -114,12 +114,18 @@ public:
     }
 
     MULTI_REGIONS_EXPORT void RankFillSizes(
-        LibUtilities::CommRequestSharedPtr request, int requestNum);
+        LibUtilities::CommRequestSharedPtr &requestSend,
+        LibUtilities::CommRequestSharedPtr &requestRecv,
+        int requestNum);
     MULTI_REGIONS_EXPORT void SendMissing(
-        LibUtilities::CommRequestSharedPtr request, int requestNum);
+        LibUtilities::CommRequestSharedPtr &requestSend,
+        LibUtilities::CommRequestSharedPtr &requestRecv,
+        int requestNum);
     MULTI_REGIONS_EXPORT void CalcRankDistances();
     MULTI_REGIONS_EXPORT void SendFwdTrace(
-        LibUtilities::CommRequestSharedPtr request, int requestNum,
+        LibUtilities::CommRequestSharedPtr &requestSend,
+        LibUtilities::CommRequestSharedPtr &requestRecv,
+        int requestNum,
         Array<OneD, NekDouble> &Fwd);
     MULTI_REGIONS_EXPORT void FillRankBwdTraceExchange(
         Array<OneD, NekDouble> &Bwd);
@@ -137,6 +143,7 @@ private:
     Array<OneD, NekDouble> m_recv;
     std::map<int, std::pair<int, Array<OneD, NekDouble>>> m_foundRankCoords;
     Array<OneD, NekDouble> m_recvTrace;
+    Array<OneD, NekDouble> m_sendTrace;
     std::map<int, int> m_geomIdToTraceId;
 };
 
