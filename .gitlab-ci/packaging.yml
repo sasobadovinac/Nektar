@@ -176,7 +176,7 @@
     - pkg
   script:
     - if [ "$needs_epel" -eq 1 ]; then yum install -y epel-release; fi
-    - if [ "$needs_powertools" -eq 1 ]; then yum install -y dnf-plugins-core; yum config-manager --set-enabled PowerTools; fi
+    - if [ "$needs_powertools" -eq 1 ]; then yum install -y dnf-plugins-core; yum config-manager --set-enabled powertools; fi
     - yum install -y environment-modules RPMS/x86_64/nektar++-openmpi-adr-solver-[1-9]*.rpm RPMS/x86_64/libnektar++-openmpi-[1-9]*.rpm RPMS/x86_64/nektar++-adr-solver-[1-9]*.rpm RPMS/x86_64/libnektar++-[1-9]*.rpm
     - cp $CI_PROJECT_DIR/solvers/ADRSolver/Tests/ImDiffusion_m12.xml .
     - ADRSolver ImDiffusion_m12.xml
