@@ -45,10 +45,10 @@ Array<OneD, NekDouble> EvalPoly(Array<OneD, Array<OneD, NekDouble>> &pts)
     unsigned dim = pts.size();
 
     // check if pts[0] and pts[1] have same size
-    // polynomial = x^2 + y^2 - 3x - 4
+    // polynomial = x^2 + y^2 + z^2
     for (int i = 0; i < pts[0].size(); i++)
     {
-        ret[i] = pow(pts[0][i],2) - 3*pts[0][i] - 4.0
+        ret[i] = pow(pts[0][i],2)
             + (dim >= 2 ? pow(pts[1][i], 2) : 0.0)
             + (dim >= 3 ? pow(pts[2][i], 2) : 0.0);
     }
@@ -61,8 +61,8 @@ int main(int argc, char *argv[])
     demo.ParseArguments(argc, argv);
     StdExpansion *E = demo.CreateStdExpansion();
 
-    const auto totPoints = (unsigned) E->GetTotPoints();
-    const auto dimension = (unsigned) E->GetShapeDimension();
+    const auto totPoints = (unsigned)E->GetTotPoints();
+    const auto dimension = (unsigned)E->GetShapeDimension();
 
     // Create a new element but with the evenly-spaced points type, so that we
     // perform a PhysEvaluate at a different set of nodal points
@@ -72,10 +72,12 @@ int main(int argc, char *argv[])
     {
         ptypes[i] = "PolyEvenlySpaced";
     }
-    StdExpansion *F = demo.CreateStdExpansion();
 
     Array<OneD, Array<OneD, NekDouble>> coordsE = demo.GetCoords(E);
+
+    StdExpansion *F = demo.CreateStdExpansion();
     Array<OneD, Array<OneD, NekDouble>> coordsF = demo.GetCoords(F);
+
     Array<OneD, NekDouble> physIn(totPoints), physOut(totPoints);
     Array<OneD, NekDouble> tmpIn(dimension), sol(totPoints);
 

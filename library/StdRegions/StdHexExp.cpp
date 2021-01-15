@@ -638,7 +638,7 @@ namespace Nektar
             int   mode1 = (mode-mode2*btmp0*btmp1)/btmp0;
             int   mode0 = (mode-mode2*btmp0*btmp1)%btmp0;
 
-            ASSERTL2(mode == mode2 * btmp0 * btmp1 + mode1 * btmp1 + mode0,
+            ASSERTL2(mode == mode2 * btmp0 * btmp1 + mode1 * btmp0 + mode0,
                      "Mode lookup failed.");
             ASSERTL2(mode < m_ncoeffs,
                      "Calling argument mode is larger than total expansion "
@@ -665,35 +665,6 @@ namespace Nektar
                 Blas::Dscal(nquad0*nquad1,base2[mode2*nquad2+i],
                             &outarray[0]+i*nquad0*nquad1,1);
             }
-        }
-
-        NekDouble StdHexExp::v_PhysEvaluateBasis(
-            const Array<OneD, const NekDouble>& coords,
-            int mode)
-        {
-            ASSERTL2(coords[0] > -1 - NekConstants::kNekZeroTol,
-                     "coord[0] < -1");
-            ASSERTL2(coords[0] <  1 + NekConstants::kNekZeroTol,
-                     "coord[0] >  1");
-            ASSERTL2(coords[1] > -1 - NekConstants::kNekZeroTol,
-                     "coord[1] < -1");
-            ASSERTL2(coords[1] <  1 + NekConstants::kNekZeroTol,
-                     "coord[1] >  1");
-            ASSERTL2(coords[2] > -1 - NekConstants::kNekZeroTol,
-                     "coord[2] < -1");
-            ASSERTL2(coords[2] <  1 + NekConstants::kNekZeroTol,
-                     "coord[2] >  1");
-
-            const int nm0 = m_base[0]->GetNumModes();
-            const int nm1 = m_base[1]->GetNumModes();
-            const int mode2 = mode / (nm0 * nm1);
-            const int mode1 = (mode - mode2 * nm0 * nm1) / nm0;
-            const int mode0 = (mode - mode2 * nm0 * nm1) % nm0;
-
-            return
-                StdExpansion::BaryEvaluateBasis<0>(coords[0], mode0) *
-                StdExpansion::BaryEvaluateBasis<1>(coords[1], mode1) *
-                StdExpansion::BaryEvaluateBasis<2>(coords[2], mode2);
         }
 
         int StdHexExp::v_GetNverts() const
@@ -1241,6 +1212,16 @@ namespace Nektar
             }
 
             sort(outarray.get(), outarray.get() + nBndCoeffs);
+        }
+
+        NekDouble StdHexExp::v_PhysEvaluate(
+            const Array<OneD, NekDouble> coord,
+            const Array<OneD, const NekDouble> &inarray,
+            NekDouble &out_d0,
+            NekDouble &out_d1,
+            NekDouble &out_d2)
+        {
+            return BaryTensorDeriv(coord, inarray, out_d0, out_d1, out_d2);
         }
 
         /**

@@ -357,7 +357,7 @@ public:
                 }
             }
         }
-
+        
         vector<PointsKey> pkey;
         vector<BasisKey> bkey;
         for (int i = 0; i < dimension; ++i)
