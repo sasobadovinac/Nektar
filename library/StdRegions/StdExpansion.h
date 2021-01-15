@@ -1041,8 +1041,18 @@ namespace Nektar
                 v_LocCoordToLocCollapsed(xi, eta);
             }
 
-            STD_REGIONS_EXPORT virtual int v_CalcNumberOfCoefficients(
-                const std::vector<unsigned int> &nummodes, int &modes_offset);
+            /**
+             * \brief Convert local collapsed coordinates \a eta into local
+             * cartesian coordinate \a xi
+             **/
+            void LocCollapsedToLocCoord(const Array<OneD, const NekDouble>& eta,
+                                        Array<OneD, NekDouble>& xi)
+            {
+                v_LocCollapsedToLocCoord(eta,xi);
+            }
+
+            STD_REGIONS_EXPORT virtual int v_CalcNumberOfCoefficients
+              (const std::vector<unsigned int>  &nummodes, int &modes_offset);
 
             STD_REGIONS_EXPORT virtual void v_NormVectorIProductWRTBase(
                 const Array<OneD, const NekDouble> &Fx,
@@ -1536,18 +1546,9 @@ namespace Nektar
                 const Array<OneD, const NekDouble> &direction,
                 Array<OneD, NekDouble> &outarray);
 
-            STD_REGIONS_EXPORT virtual void v_StdPhysDeriv(
-                const Array<OneD, const NekDouble> &inarray,
-                Array<OneD, NekDouble> &out_d1, Array<OneD, NekDouble> &out_d2,
-                Array<OneD, NekDouble> &out_d3);
-
-            STD_REGIONS_EXPORT virtual void v_StdPhysDeriv(
-                const int dir, const Array<OneD, const NekDouble> &inarray,
-                Array<OneD, NekDouble> &outarray);
-
-            STD_REGIONS_EXPORT virtual NekDouble v_PhysEvaluate(
-                const Array<OneD, DNekMatSharedPtr> &I,
-                const Array<OneD, const NekDouble> &physvals);
+            STD_REGIONS_EXPORT virtual void v_LocCollapsedToLocCoord(
+                                        const Array<OneD, const NekDouble>& eta,
+                                        Array<OneD, NekDouble>& xi);
 
             STD_REGIONS_EXPORT virtual Array<OneD, NekDouble> v_PhysEvaluateBasis(
                 const Array<OneD, const Array<OneD, NekDouble>> coords,

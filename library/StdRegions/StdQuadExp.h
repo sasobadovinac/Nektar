@@ -138,7 +138,11 @@ namespace Nektar
             // Evaluation functions
             //---------------------------------------
             STD_REGIONS_EXPORT virtual void v_LocCoordToLocCollapsed(
-                const Array<OneD, const NekDouble> &xi, Array<OneD, NekDouble> &eta);
+                               const Array<OneD, const NekDouble>& xi,
+                               Array<OneD, NekDouble>& eta);
+            STD_REGIONS_EXPORT virtual void v_LocCollapsedToLocCoord(
+                               const Array<OneD, const NekDouble>& eta,
+                               Array<OneD, NekDouble>& xi);
 
             STD_REGIONS_EXPORT virtual void v_FillMode(const int mode,
                                                        Array<OneD, NekDouble> &array);
