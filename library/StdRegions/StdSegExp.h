@@ -137,6 +137,13 @@ namespace Nektar
             //----------------------------
             // Evaluations Methods
             //---------------------------
+            STD_REGIONS_EXPORT virtual void v_LocCoordToLocCollapsed(
+                                           const Array<OneD, const NekDouble>& xi,
+                                           Array<OneD, NekDouble>& eta);
+
+            STD_REGIONS_EXPORT virtual void v_LocCollapsedToLocCoord(
+                                           const Array<OneD, const NekDouble>& eta,
+                                           Array<OneD, NekDouble>& xi);
 
             STD_REGIONS_EXPORT virtual NekDouble v_PhysEvaluate(
                 const Array<OneD, NekDouble> coord,
