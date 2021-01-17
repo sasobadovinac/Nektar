@@ -106,6 +106,14 @@ Array<OneD, Array<OneD, NekDouble>> StdExpansion1D::v_GetPhysEvaluateStorage()
 }
 
 NekDouble StdExpansion1D::v_PhysEvaluate(
+    const Array<OneD, DNekMatSharedPtr> &I,
+    const Array<OneD, const NekDouble> &physvals)
+{
+    int    nquad = GetTotPoints();
+    return Blas::Ddot(nquad, I[0]->GetPtr(), 1, physvals, 1);
+}
+
+NekDouble StdExpansion1D::v_PhysEvaluate(
     const Array<OneD, const NekDouble> &Lcoord,
     const Array<OneD, const NekDouble> &physvals)
 {
