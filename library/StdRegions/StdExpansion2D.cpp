@@ -287,6 +287,17 @@ NekDouble StdExpansion2D::v_PhysEvaluate(
     return 0;
 }
 
+NekDouble StdExpansion2D::v_PhysEvaluate(
+    const Array<OneD, const NekDouble> &coords,
+    const Array<OneD, const NekDouble> &physvals,
+    uint16_t derivs,
+    Array<OneD, NekDouble> &derivOut)
+{
+    boost::ignore_unused(coords, physvals, derivs, derivOut);
+    NEKERROR(ErrorUtil::efatal, "Method does not exist for this shape");
+    return 0;
+}
+
 //////////////////////////////
 // Integration Methods
 //////////////////////////////

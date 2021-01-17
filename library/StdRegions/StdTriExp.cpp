@@ -485,37 +485,67 @@ namespace Nektar
             }
         }
 
-        NekDouble StdTriExp::v_PhysEvaluate(const Array<OneD, NekDouble> coord,
-                                            const Array<OneD, const NekDouble> &inarray,
-                                            NekDouble &out_d0,
-                                            NekDouble &out_d1,
-                                            NekDouble &out_d2)
+        NekDouble StdTriExp::v_PhysEvaluate(
+            const Array<OneD, const NekDouble> &coord,
+            const Array<OneD, const NekDouble> &physvals,
+            uint16_t derivs,
+            Array<OneD, NekDouble> &derivOut)
         {
-            boost::ignore_unused(out_d2);
-
             // Collapse coordinates
             Array<OneD, NekDouble> coll(2, 0.0);
             LocCoordToLocCollapsed(coord, coll);
 
-            // set up geometric factor: 2.0/(1.0-z1)
-            NekDouble fac0 = 2 / (1 - coll[1]);
+            NekDouble val;
+            Array<OneD, NekDouble> baryderivs;
+            if (derivs & (DERIV_1 | (DERIV_X & DERIV_Y))) // compute x-derivative
+            {
+                val = BaryTensorDeriv<true, true>(coll, physvals, baryderivs);
 
-            NekDouble val = BaryTensorDeriv(coll, inarray, out_d0, out_d1);
+                // set up geometric factor: 2.0/(1.0-z1)
+                NekDouble fac0 = 2 / (1 - coll[1]);
 
-            // Copy d0 into temp for d1
-            NekDouble temp;
-            temp = out_d0;
+                // Multiply by geometric factor
+                derivOut[0] = baryderivs[0] * fac0;
 
-            // Multiply by geometric factor
-            out_d0 = out_d0 * fac0;
+                // set up geometric factor: (1+z0)/(1-z1)
+                NekDouble fac1 = fac0 * (coll[0] + 1) / 2;
 
-            // set up geometric factor: (1+z0)/(1-z1)
-            NekDouble fac1 = fac0 * (coll[0] + 1) / 2;
+                // Multiply out_d0 by geometric factor and add to out_d1
+                derivOut[1] += fac1 * baryderivs[0];
 
-            // Multiply out_d0 by geometric factor and add to out_d1
-            out_d1 += fac1 * temp;
+                return val;
+            }
+            else if (derivs & (DERIV_X))
+            {
+                val = BaryTensorDeriv<true, false>(coll, physvals, baryderivs);
 
-            return val;
+                // set up geometric factor: 2.0/(1.0-z1)
+                NekDouble fac0 = 2 / (1 - coll[1]);
+
+                // Multiply by geometric factor
+                derivOut[0] = baryderivs[0] * fac0;
+
+                return val;
+            }
+            else if (derivs & (DERIV_Y))
+            {
+                val = BaryTensorDeriv<false, true>(coll, physvals, baryderivs);
+
+                // set up geometric factor: 2.0/(1.0-z1)
+                NekDouble fac0 = 2 / (1 - coll[1]);
+
+                // set up geometric factor: (1+z0)/(1-z1)
+                NekDouble fac1 = fac0 * (coll[0] + 1) / 2;
+
+                // Multiply out_d0 by geometric factor and add to out_d1
+                derivOut[1] += fac1 * baryderivs[0];
+
+                return val;
+            }
+            else
+            {
+               return BaryTensorDeriv<false, false>(coll, physvals, baryderivs);
+            }
         }
 
         void StdTriExp::v_IProductWRTBase_SumFacKernel(

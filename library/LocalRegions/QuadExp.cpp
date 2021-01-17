@@ -617,17 +617,18 @@ NekDouble QuadExp::v_PhysEvaluate(const Array<OneD, const NekDouble> &coord,
     return StdExpansion2D::v_PhysEvaluate(Lcoord, physvals);
 }
 
-NekDouble QuadExp::v_PhysEvaluate(const Array<OneD, NekDouble> coord,
-                                  const Array<OneD, const NekDouble> &inarray,
-                                  NekDouble &out_d0, NekDouble &out_d1,
-                                  NekDouble &out_d2)
+NekDouble QuadExp::v_PhysEvaluate(
+    const Array<OneD, const NekDouble> &coords,
+    const Array<OneD, const NekDouble> &physvals,
+    uint16_t derivs,
+    Array<OneD, NekDouble> &derivOut)
 {
     Array<OneD, NekDouble> Lcoord(2);
 
     ASSERTL0(m_geom, "m_geom not defined");
-    m_geom->GetLocCoords(coord, Lcoord);
+    m_geom->GetLocCoords(coords, Lcoord);
 
-    return StdQuadExp::v_PhysEvaluate(Lcoord, inarray, out_d0, out_d1, out_d2);
+    return StdQuadExp::v_PhysEvaluate(Lcoord, physvals, derivs, derivOut);
 }
 
 // Get edge values from the 2D Phys space along an edge

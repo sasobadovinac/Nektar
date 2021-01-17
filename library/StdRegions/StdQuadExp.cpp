@@ -141,16 +141,33 @@ namespace Nektar
             StdQuadExp::v_PhysDeriv(dir, inarray, outarray);
         }
 
-        NekDouble StdQuadExp::v_PhysEvaluate(
-            const Array<OneD, NekDouble> coord,
-            const Array<OneD, const NekDouble> &inarray,
-            NekDouble &out_d0,
-            NekDouble &out_d1,
-            NekDouble &out_d2)
+    NekDouble StdQuadExp::v_PhysEvaluate(
+        const Array<OneD, const NekDouble> &coord,
+        const Array<OneD, const NekDouble> &physvals,
+        uint16_t derivs,
+        Array<OneD, NekDouble> &derivOut)
+    {
+        // Collapse coordinates
+        Array<OneD, NekDouble> coll(2, 0.0);
+        LocCoordToLocCollapsed(coord, coll);
+
+        if (derivs & (DERIV_1 | (DERIV_X & DERIV_Y))) // compute x-derivative
         {
-            boost::ignore_unused(out_d2);
-            return BaryTensorDeriv(coord, inarray, out_d0, out_d1);
+            return BaryTensorDeriv<true, true>(coll, physvals, derivOut);
         }
+        else if (derivs & (DERIV_X))
+        {
+            return BaryTensorDeriv<true, false>(coll, physvals, derivOut);
+        }
+        else if (derivs & (DERIV_Y))
+        {
+            return BaryTensorDeriv<false, true>(coll, physvals, derivOut);
+        }
+        else
+        {
+            return BaryTensorDeriv<false, false>(coll, physvals, derivOut);
+        }
+    }
 
         ////////////////
         // Transforms //
