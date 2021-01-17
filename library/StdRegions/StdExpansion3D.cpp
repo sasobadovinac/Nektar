@@ -350,6 +350,32 @@ NekDouble StdExpansion3D::v_PhysEvaluate(
     return value;
 }
 
+NekDouble StdExpansion3D::v_PhysEvaluateOld(
+    const Array<OneD, const NekDouble> &coords,
+    const Array<OneD, const NekDouble> &physvals)
+{
+    Array<OneD, NekDouble> eta = Array<OneD, NekDouble>(3);
+    Array<OneD, DNekMatSharedPtr>  I(3);
+
+    WARNINGL2(coords[0] >= -1 - NekConstants::kNekZeroTol,"coord[0] < -1");
+    WARNINGL2(coords[0] <=  1 + NekConstants::kNekZeroTol,"coord[0] >  1");
+    WARNINGL2(coords[1] >= -1 - NekConstants::kNekZeroTol,"coord[1] < -1");
+    WARNINGL2(coords[1] <=  1 + NekConstants::kNekZeroTol,"coord[1] >  1");
+    WARNINGL2(coords[2] >= -1 - NekConstants::kNekZeroTol,"coord[2] < -1");
+    WARNINGL2(coords[2] <=  1 + NekConstants::kNekZeroTol,"coord[2] >  1");
+
+    // Obtain local collapsed corodinate from
+    // cartesian coordinate.
+    LocCoordToLocCollapsed(coords,eta);
+
+    // Get Lagrange interpolants.
+    I[0] = m_base[0]->GetI(eta);
+    I[1] = m_base[1]->GetI(eta+1);
+    I[2] = m_base[2]->GetI(eta+2);
+
+    return v_PhysEvaluate(I,physvals);
+}
+
 NekDouble StdExpansion3D::v_PhysEvaluate(
     const Array<OneD, NekDouble> coord,
     const Array<OneD, const NekDouble> &inarray, NekDouble &out_d0,

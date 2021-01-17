@@ -390,12 +390,9 @@ int SegGeom::v_GetNumEdges() const
 NekDouble SegGeom::v_FindDistance(const Array<OneD, const NekDouble> &xs,
                                   Array<OneD, NekDouble> &xiOut)
 {
-    //std::cout << "SEARCHING EDGE: " << m_globalID << std::endl;
-    //std::cout << "ARE GEOM FACTORS FILLED? : " << m_geomFactorsState << std::endl;
-    //std::cout << m_geomFactors->GetGtype() << std::endl;
-    //auto type = m_geomFactors->GetGtype();
+    bool bary = true;
 
-    if (m_geomFactors->GetGtype() == eRegular)
+    if (m_geomFactors->GetGtype() == eRegular && false)
     {
         xiOut = Array<OneD, NekDouble>(1,0.0);
 
@@ -412,7 +409,7 @@ NekDouble SegGeom::v_FindDistance(const Array<OneD, const NekDouble> &xs,
 
         return sqrt(tmp);
     }
-    else if (m_geomFactors->GetGtype() == eDeformed) // @TODO: Rework to follow more general newton implementation as shown for quad and tri
+    else if (m_geomFactors->GetGtype() == eDeformed && !bary) // @TODO: Rework to follow more general newton implementation as shown for quad and tri
     {
         Array<OneD, NekDouble> xi(1, 0.0);
         const NekDouble c1 = 1e-4, c2 = 0.9;
@@ -435,22 +432,26 @@ NekDouble SegGeom::v_FindDistance(const Array<OneD, const NekDouble> &xs,
 
         NekDouble fx_prev = std::numeric_limits<NekDouble>::max();
 
+        NekDouble xc, yc, xc_der, yc_der, xc_der2, yc_der2, fx, fxp, fxp2, pk,
+            xc_pk, yc_pk, xc_der_pk, yc_der_pk, fx_pk, fxp_pk, xcDiff, ycDiff, xc_pkDiff, yc_pkDiff;
+        Array<OneD, NekDouble> xi_pk(1);
+
         for (int i = 0; i < 100; ++i)
         {
             // Compute f(x_k) and its derivatives
-            NekDouble xc = m_xmap->PhysEvaluate(xi, x);
-            NekDouble yc = m_xmap->PhysEvaluate(xi, y);
+            xc = m_xmap->PhysEvaluateOld(xi, x);
+            yc = m_xmap->PhysEvaluateOld(xi, y);
 
-            NekDouble xc_der = m_xmap->PhysEvaluate(xi, xder);
-            NekDouble yc_der = m_xmap->PhysEvaluate(xi, yder);
+            xc_der = m_xmap->PhysEvaluateOld(xi, xder);
+            yc_der = m_xmap->PhysEvaluateOld(xi, yder);
 
-            NekDouble xc_der2 = m_xmap->PhysEvaluate(xi, xder2);
-            NekDouble yc_der2 = m_xmap->PhysEvaluate(xi, yder2);
+            xc_der2 = m_xmap->PhysEvaluateOld(xi, xder2);
+            yc_der2 = m_xmap->PhysEvaluateOld(xi, yder2);
 
-            NekDouble fx = (xc - xs[0]) * (xc - xs[0]) + (yc - xs[1]) * (yc - xs[1]);
-            NekDouble fxp = 2.0 * (xc_der * (xc - xs[0]) + yc_der * (yc - xs[1]));
-            NekDouble fxp2 = 2.0 * (xc_der2 * (xc - xs[0]) + xc_der * xc_der +
-                                    yc_der2 * (yc - xs[1]) + yc_der * yc_der);
+            fx   = (xcDiff) * (xcDiff) + (ycDiff) * (ycDiff);
+            fxp  = 2.0 * (xc_der * (xcDiff) + yc_der * (ycDiff));
+            fxp2 = 2.0 * (xc_der2 * (xcDiff) + xc_der * xc_der +
+                          yc_der2 * (ycDiff) + yc_der * yc_der);
 
             // Check for convergence
             if (abs(fx - fx_prev) < 1e-16)
@@ -468,12 +469,11 @@ NekDouble SegGeom::v_FindDistance(const Array<OneD, const NekDouble> &xs,
             bool conv       = false;
 
             // Search direction: Newton's method
-            NekDouble pk = -fxp / fxp2;
+            pk = -fxp / fxp2;
 
             // Backtracking line search
             while (gamma > 1e-10)
             {
-                Array<OneD, NekDouble> xi_pk(1);
                 xi_pk[0] = xi[0] + pk * gamma;
 
                 if (xi_pk[0] < -1.0 || xi_pk[0] > 1.0)
@@ -482,16 +482,144 @@ NekDouble SegGeom::v_FindDistance(const Array<OneD, const NekDouble> &xs,
                     continue;
                 }
 
-                NekDouble xc_pk = m_xmap->PhysEvaluate(xi_pk, x);
-                NekDouble yc_pk = m_xmap->PhysEvaluate(xi_pk, y);
+                xc_pk = m_xmap->PhysEvaluateOld(xi_pk, x);
+                yc_pk = m_xmap->PhysEvaluateOld(xi_pk, y);
 
-                NekDouble xc_der_pk = m_xmap->PhysEvaluate(xi_pk, xder);
-                NekDouble yc_der_pk = m_xmap->PhysEvaluate(xi_pk, yder);
+                xc_der_pk = m_xmap->PhysEvaluateOld(xi_pk, xder);
+                yc_der_pk = m_xmap->PhysEvaluateOld(xi_pk, yder);
 
-                NekDouble fx_pk = (xc_pk - xs[0]) * (xc_pk - xs[0]) +
-                                  (yc_pk - xs[1]) * (yc_pk - xs[1]);
-                NekDouble fxp_pk = 2.0 * (xc_der_pk * (xc_pk - xs[0]) +
-                                          yc_der_pk * (yc_pk - xs[1]));
+                xc_pkDiff = xc_pk - xs[0];
+                yc_pkDiff = yc_pk - xs[1];
+
+                fx_pk = xc_pkDiff * xc_pkDiff + yc_pkDiff * yc_pkDiff;
+                fxp_pk = 2.0 * (xc_der_pk * xc_pkDiff +
+                                yc_der_pk * yc_pkDiff);
+
+                // Check Wolfe conditions
+                //cout << "Condition 1: " << fx_pk << " <= " << fx + c1 * gamma * pk * fxp << endl;
+                //cout << "Condition 2: " << -pk * fxp_pk << " <= " << -c2 * pk * fxp << endl;
+                if ((fx_pk  - (fx + c1 * gamma * pk * fxp)) < std::numeric_limits<NekDouble>::epsilon() &&
+                    (-pk * fxp_pk + c2 * pk * fxp) < std::numeric_limits<NekDouble>::epsilon())
+                {
+                    conv = true;
+                    break;
+                }
+
+                gamma /= 2.0;
+            }
+
+            if (!conv)
+            {
+                opt_succeed = false;
+                break;
+            }
+
+            xi[0] += gamma * pk;
+        }
+
+        if (opt_succeed)
+        {
+            xiOut = xi;
+            return fx_prev;
+        }
+        else
+        {
+            xiOut = Array<OneD, NekDouble>(2, std::numeric_limits<NekDouble>::max());
+            return std::numeric_limits<NekDouble>::max();
+        }
+    }
+    else if (m_geomFactors->GetGtype() == eDeformed && bary) // @TODO: Rework to follow more general newton implementation as shown for quad and tri
+    {
+        Array<OneD, NekDouble> xi(1, 0.0);
+        const NekDouble c1 = 1e-4, c2 = 0.9;
+
+        int nq = m_xmap->GetTotPoints();
+
+        Array<OneD, NekDouble> x(nq), y(nq);
+        m_xmap->BwdTrans(m_coeffs[0], x);
+        m_xmap->BwdTrans(m_coeffs[1], y);
+
+        Array<OneD, NekDouble> xder(nq), yder(nq), xder2(nq), yder2(nq);
+
+        bool opt_succeed = false;
+
+        NekDouble fx_prev = std::numeric_limits<NekDouble>::max();
+
+        NekDouble
+            xc,
+            yc,
+            xc_der,
+            yc_der,
+            xc_der2,
+            yc_der2,
+            fx,
+            fxp,
+            fxp2,
+            pk,
+            xc_pk,
+            yc_pk,
+            xc_der_pk,
+            yc_der_pk,
+            fx_pk,
+            fxp_pk,
+            xcDiff,
+            ycDiff,
+            xc_pkDiff,
+            yc_pkDiff;
+
+        Array<OneD, NekDouble> xi_pk(1);
+        for (int i = 0; i < 100; ++i)
+        {
+            // Compute f(x_k) and its derivatives
+            xc = m_xmap->PhysEvaluate2ndDeriv(xi, x, xc_der, xc_der2);
+            yc = m_xmap->PhysEvaluate2ndDeriv(xi, y, yc_der, yc_der2);
+
+            xcDiff = xc - xs[0];
+            ycDiff = yc - xs[1];
+
+            fx   = (xcDiff) * (xcDiff) + (ycDiff) * (ycDiff);
+            fxp  = 2.0 * (xc_der * (xcDiff) + yc_der * (ycDiff));
+            fxp2 = 2.0 * (xc_der2 * (xcDiff) + xc_der * xc_der +
+                          yc_der2 * (ycDiff) + yc_der * yc_der);
+
+            // Check for convergence
+            if (abs(fx - fx_prev) < 1e-16)
+            {
+                opt_succeed = true;
+                fx_prev     = fx;
+                break;
+            }
+            else
+            {
+                fx_prev = fx;
+            }
+
+            NekDouble gamma = 1.0;
+            bool conv       = false;
+
+            // Search direction: Newton's method
+            pk = -fxp / fxp2;
+
+            // Backtracking line search
+            while (gamma > 1e-10)
+            {
+                xi_pk[0] = xi[0] + pk * gamma;
+
+                if (xi_pk[0] < -1.0 || xi_pk[0] > 1.0)
+                {
+                    gamma /= 2.0;
+                    continue;
+                }
+
+                xc_pk = m_xmap->PhysEvaluate(xi_pk, x, xc_der_pk);
+                yc_pk = m_xmap->PhysEvaluate(xi_pk, y, yc_der_pk);
+
+                xc_pkDiff = xc_pk - xs[0];
+                yc_pkDiff = yc_pk - xs[1];
+
+                fx_pk = xc_pkDiff * xc_pkDiff + yc_pkDiff * yc_pkDiff;
+                fxp_pk = 2.0 * (xc_der_pk * xc_pkDiff +
+                                yc_der_pk * yc_pkDiff);
 
                 // Check Wolfe conditions
                 //cout << "Condition 1: " << fx_pk << " <= " << fx + c1 * gamma * pk * fxp << endl;

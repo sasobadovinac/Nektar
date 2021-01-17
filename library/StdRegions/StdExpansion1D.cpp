@@ -116,9 +116,36 @@ NekDouble StdExpansion1D::v_PhysEvaluate(
 }
 
 NekDouble StdExpansion1D::v_PhysEvaluate(
+    const Array<OneD, DNekMatSharedPtr> &I,
+    const Array<OneD, const NekDouble> &physvals)
+{
+    int    nquad = GetTotPoints();
+    return Blas::Ddot(nquad, I[0]->GetPtr(), 1, physvals, 1);
+}
+
+
+NekDouble StdExpansion1D::v_PhysEvaluateOld(
+    const Array<OneD, const NekDouble>& Lcoord,
+    const Array<OneD, const NekDouble>& physvals)
+{
+    int    nquad = GetTotPoints();
+    NekDouble  val;
+    DNekMatSharedPtr I = m_base[0]->GetI(Lcoord);
+
+    ASSERTL2(Lcoord[0] >= -1 - NekConstants::kNekZeroTol,"Lcoord[0] < -1");
+    ASSERTL2(Lcoord[0] <=  1 + NekConstants::kNekZeroTol,"Lcoord[0] >  1");
+
+    val = Blas::Ddot(nquad, I->GetPtr(), 1, physvals, 1);
+
+    return val;
+}
+
+NekDouble StdExpansion1D::v_PhysEvaluate(
     const Array<OneD, NekDouble> coord,
-    const Array<OneD, const NekDouble> &inarray, NekDouble &out_d0,
-    NekDouble &out_d1, NekDouble &out_d2)
+    const Array<OneD, const NekDouble> &inarray,
+    NekDouble &out_d0,
+    NekDouble &out_d1,
+    NekDouble &out_d2)
 {
     boost::ignore_unused(coord, inarray, out_d0, out_d1, out_d2);
 
