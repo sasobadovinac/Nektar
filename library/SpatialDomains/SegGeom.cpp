@@ -448,6 +448,9 @@ NekDouble SegGeom::v_FindDistance(const Array<OneD, const NekDouble> &xs,
             xc_der2 = m_xmap->PhysEvaluateOld(xi, xder2);
             yc_der2 = m_xmap->PhysEvaluateOld(xi, yder2);
 
+            xcDiff = xc - xs[0];
+            ycDiff = yc - xs[1];
+
             fx   = (xcDiff) * (xcDiff) + (ycDiff) * (ycDiff);
             fxp  = 2.0 * (xc_der * (xcDiff) + yc_der * (ycDiff));
             fxp2 = 2.0 * (xc_der2 * (xcDiff) + xc_der * xc_der +
