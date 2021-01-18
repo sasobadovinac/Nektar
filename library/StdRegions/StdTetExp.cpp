@@ -1576,15 +1576,10 @@ namespace Nektar
                 ASSERTL0(false,"fid must be between 0 and 3");
             }
 
-            bool CheckForZeroedModes = false;
             if(P == -1)
             {
                 P = nummodesA;
                 Q = nummodesB;
-            }
-            else
-            {
-                CheckForZeroedModes = true;
             }
 
             nFaceCoeffs = P*(2*Q-P+1)/2;

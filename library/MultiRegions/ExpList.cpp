@@ -826,7 +826,7 @@ namespace Nektar
             m_WaveSpace(false)
         {
             boost::ignore_unused(variable,ImpType);
-            int i, j, id, elmtid = 0;
+            int i, j, elmtid = 0;
             
             SpatialDomains::PointGeomSharedPtr  PointGeom;
             SpatialDomains::Geometry1DSharedPtr segGeom;
@@ -852,7 +852,6 @@ namespace Nektar
                     for(j = 0; j < 2; ++j)
                     {
                         PointGeom = (exp1D->GetGeom1D())->GetVertex(j);
-                        id = PointGeom->GetVid();
                         
                         exp = MemoryManager<LocalRegions::PointExp>::
                             AllocateSharedPtr(PointGeom);

@@ -1546,6 +1546,7 @@ namespace Nektar
                     faceOrient == eDir1BwdDir2_Dir2BwdDir1)
                 {
                     if (faceOrient < eDir1FwdDir2_Dir2FwdDir1)
+	            {
                         for (i = 3; i < Q; i += 2)
                         {
                             for (j = 0; j < P; j++)
@@ -1576,7 +1577,8 @@ namespace Nektar
                             swap (signarray[i], signarray[i+Q]);
                         }
                     }
-                
+		} 
+
                 if (faceOrient ==  eDir1BwdDir1_Dir2FwdDir2 || 
                     faceOrient ==  eDir1BwdDir1_Dir2BwdDir2 ||
                     faceOrient ==  eDir1FwdDir2_Dir2BwdDir1 ||
