@@ -7,7 +7,11 @@ stages:
   - package-build
   - package-build-dev
   - package-test
+  - package-deploy-dev
   - package-deploy
+
+include:
+  - local: .gitlab-ci/packaging.yml
 
 .execution-conditions: &execution-conditions
   only:
@@ -232,7 +236,7 @@ user-guide-build:
     paths:
       - build/docs/user-guide/user-guide.pdf
       - build/docs/user-guide/html
-      - build/docs/developer-guide/developers-guide.pdf
+      - build/docs/developer-guide/developer-guide.pdf
       - build/docs/developer-guide/html
 
 doxygen-build:
@@ -580,3 +584,4 @@ dockerhub-deploy-nektar-workbook:
   <<: *dockerhub_deploy_template
   variables:
     image_name: nektar-workbook
+

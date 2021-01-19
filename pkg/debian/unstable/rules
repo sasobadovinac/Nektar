@@ -1,0 +1,42 @@
+#!/usr/bin/make -f
+include /usr/share/dpkg/architecture.mk
+
+BUILDDIR = $(CURDIR)/debian/build
+
+%:
+	dh $@ --parallel --max-parallel=4
+
+override_dh_clean:
+	dh_clean
+	rm -rf ThirdParty
+
+override_dh_auto_configure:
+	dh_auto_configure -- \
+	-DCMAKE_BUILD_TYPE=Release \
+	-DCMAKE_INSTALL_PREFIX=/usr \
+	-DCMAKE_SKIP_INSTALL_RPATH=ON \
+	-DCMAKE_SKIP_RPATH=OFF \
+	-DNEKTAR_BUILD_DEMOS=OFF \
+	-DNEKTAR_BUILD_DOC=ON \
+	-DNEKTAR_BUILD_SOLVERS=ON \
+	-DNEKTAR_SOLVER_DIFFUSION=OFF \
+	-DNEKTAR_SOLVER_DUMMY=OFF \
+	-DNEKTAR_SOLVER_ELASTICITY=OFF \
+	-DNEKTAR_SOLVER_IMAGE_WARPING=OFF \
+	-DNEKTAR_SOLVER_MMF=OFF \
+	-DNEKTAR_SOLVER_VORTEXWAVE=OFF \
+	-DNEKTAR_BUILD_PYTHON=ON \
+	-DNEKTAR_USE_PYTHON3=ON \
+	-DNEKTAR_USE_ARPACK=ON \
+	-DNEKTAR_USE_FFTW=ON \
+	-DNEKTAR_USE_HDF5=ON \
+	-DNEKTAR_USE_MESHGEN=ON \
+	-DNEKTAR_USE_MPI=ON \
+	-DNEKTAR_TEST_USE_HOSTFILE=ON \
+	-DNEKTAR_ERROR_ON_WARNINGS=OFF
+	
+override_dh_auto_build:
+	dh_auto_build -- all doc user-guide-pdf developer-guide-pdf
+
+override_dh_shlibdeps:
+	dh_shlibdeps --dpkg-shlibdeps-params=--ignore-missing-info

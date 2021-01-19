@@ -1,0 +1,18 @@
+nektar++ (5.0.1-1) unstable; urgency=medium
+
+  * New upstream release. 
+
+ -- Chris Cantwell <c.cantwell@imperial.ac.uk>  Mon, 17 Aug 2020 11:06:51 +0100
+
+nektar++ (5.0.0-2) unstable; urgency=medium
+
+  * Added NekMesh package
+
+ -- Chris Cantwell <c.cantwell@imperial.ac.uk>  Thu, 19 Dec 2019 20:50:48 +0000
+
+nektar++ (5.0.0-1) unstable; urgency=medium
+
+  * Initial Debian packaging
+
+ -- Chris Cantwell <c.cantwell@imperial.ac.uk>  Thu, 19 Dec 2019 20:48:51 +0000
+

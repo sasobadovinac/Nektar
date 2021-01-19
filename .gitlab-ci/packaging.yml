@@ -1,0 +1,783 @@
+# ##################################################
+# #################  PACKAGING  ####################
+# ##################################################
+
+.package-conditions: &package-conditions
+  only:
+    refs:
+      - /^pkg\/.*$/
+      - tags@nektar/nektar
+      - web
+
+.package-env-build: &package-env-build
+  <<: *package-conditions
+  image: docker:stable
+  stage: package-env
+  needs: []
+  tags:
+    - pkg
+  script:
+    - OS_DIST=$(echo $CI_JOB_NAME | cut -d- -f 2)
+    - OS_VERSION=$(echo $CI_JOB_NAME | cut -d- -f 3)
+    - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
+    - IMAGE=$CI_REGISTRY_IMAGE/pkg/${OS_DIST}-${OS_VERSION}
+    - DOCKERFILE=docker/packaging/Dockerfile-${OS_DIST}-${OS_VERSION}
+    - docker pull $IMAGE || true
+    - docker build --pull -t $IMAGE -f ${DOCKERFILE} .
+    - docker push $IMAGE
+
+.package-deb-build: &package-deb-build
+  <<: *package-conditions
+  image: $CI_REGISTRY_IMAGE/${image_name}
+  stage: package-build
+  tags:
+    - pkg
+  variables:
+    GIT_SUBMODULE_STRATEGY: normal
+  script:
+    - OS_DIST=$(echo $CI_JOB_NAME | cut -d- -f 2)
+    - OS_VERSION=$(echo $CI_JOB_NAME | cut -d- -f 3)
+    - PKG_DIR=pkg/${OS_DIST}/${OS_VERSION}
+    - OMPI_MCA_btl_vader_single_copy_mechanism=none
+    - tar -czf nektar++-$(<VERSION).tar.gz 
+                --transform="s,^,nektar++-$(<VERSION)/,S"
+                --exclude-from=.gitlab-ci/packaging-exclude *
+    - mkdir deb
+    - mv nektar++-$(<VERSION).tar.gz deb/nektar++_$(<VERSION).orig.tar.gz
+    - tar -C deb -xf deb/nektar++_$(<VERSION).orig.tar.gz
+    - cp -a ${PKG_DIR} deb/nektar++-$(<VERSION)/debian
+    - sed -e s/unstable/${OS_VERSION}/g < pkg/debian/changelog
+            > deb/nektar++-$(<VERSION)/debian/changelog
+    - cd deb/nektar++-$(<VERSION)
+    - dpkg-source -b .
+    - dpkg-buildpackage -us -uc
+    - lintian
+  artifacts:
+    when: always
+    paths:
+     - deb/*.deb
+     - deb/*.changes
+     - deb/*.debian.tar.xz
+     - deb/*.dsc
+     - deb/*.buildinfo
+     - deb/*.orig.tar.gz
+    expire_in: 1 week
+
+##
+## Test the generated DEB packages: first, run the ADRSolver on a
+## randomly-selected test. Then, install the development package and test
+## compilation of the standalone executable.
+##
+.package-deb-test: &package-deb-test
+  <<: *package-conditions
+  image: ${image_name}
+  stage: package-test
+  tags:
+    - pkg
+  script:
+    - DEBIAN_FRONTEND=noninteractive
+    - sed -i 's/main$/main contrib non-free/g' /etc/apt/sources.list
+    - apt -yq update
+    - apt -yq install ssh
+    - apt -yq install ./deb/nektar++-adr-solver_[1-9]*.deb ./deb/libnektar++_[1-9]*.deb
+    - cp $CI_PROJECT_DIR/solvers/ADRSolver/Tests/ImDiffusion_m12.xml .
+    - ADRSolver ImDiffusion_m12.xml
+    - test_output=`ADRSolver ImDiffusion_m12.xml | grep "L 2 error" | awk '{print ($7 < 2e-7)}'`
+    - if [ "$test_output" -eq 0 ]; then echo "Tolerance test failed on serial ADRSolver run"; exit 1; fi
+    - mpirun --allow-run-as-root -n 3 ADRSolver ImDiffusion_m12.xml
+    - test_output=`mpirun --allow-run-as-root -n 3 ADRSolver ImDiffusion_m12.xml | grep "L 2 error" | awk '{print ($7 < 2e-7)}'`
+    - if [ "$test_output" -eq 0 ]; then echo "Tolerance test failed on parallel ADRSolver run"; exit 1; fi
+    - apt -yq install build-essential ./deb/libnektar++-dev_[1-9]*.deb
+    - cd $CI_PROJECT_DIR/templates/executable
+    - ./test.sh /usr/lib/*/nektar++/cmake 3 /usr/bin/cmake
+
+.package-deb-deploy-dev: &package-deb-deploy-dev
+  <<: *package-conditions
+  image: debian:stable-slim
+  stage: package-deploy-dev
+  variables:
+    DPATH: /web/deb-test
+  tags:
+    - pkg
+    - pkg-deb
+  script:
+    - OS_DIST=$(echo $CI_JOB_NAME | cut -d- -f 2)
+    - OS_VERSION=$(echo $CI_JOB_NAME | cut -d- -f 3)
+    - DEB_LOC=$DPATH/${OS_DIST}-${OS_VERSION}
+    - CONTRIB=${DEB_LOC}/dists/${OS_VERSION}/contrib
+    - if [ ! -d $DPATH ]; then echo "Remote filesystem not accessible"; exit 1; fi
+    - apt -yq update
+    - apt -yq install dpkg-dev gpg apt-utils
+    - echo "$DEB_DEPLOY_KEY" | base64 --decode | gpg --import
+    - mkdir -p $DEB_LOC/pool/contrib
+    - cp deb/* $DEB_LOC/pool/contrib/
+    - cd $DEB_LOC
+    - mkdir -p $CONTRIB/binary-amd64
+    - apt-ftparchive --arch amd64 packages pool/contrib > ${CONTRIB}/binary-amd64/Packages
+    - gzip -k -f ${CONTRIB}/binary-amd64/Packages
+    - apt-ftparchive --arch amd64 contents pool/contrib > ${CONTRIB}/binary-amd64/Contents-amd64
+    - gzip -k -f ${CONTRIB}/binary-amd64/Contents-amd64
+    - apt-ftparchive release ${CONTRIB}/binary-amd64 > ${CONTRIB}/binary-amd64/Release
+    - apt-ftparchive release -o APT::FTPArchive::Release::Codename="${OS_VERSION}" -c $DPATH/release.conf dists/${OS_VERSION} > dists/${OS_VERSION}/Release
+    - rm -rf dists/${OS_VERSION}/Release.gpg dists/${OS_VERSION}/InRelease
+    - gpg --batch --default-key nektar -abs -o dists/${OS_VERSION}/Release.gpg dists/${OS_VERSION}/Release
+    - gpg --batch --default-key nektar -abs --clearsign -o dists/${OS_VERSION}/InRelease dists/${OS_VERSION}/Release
+
+.package-deb-deploy: &package-deb-deploy
+  <<: *package-deb-deploy-dev
+  stage: package-deploy
+  only:
+    refs:
+      - tags@nektar/nektar
+  variables:
+      DPATH: /web/deb
+
+.package-rpm-build: &package-rpm-build
+  <<: *package-conditions
+  image: $CI_REGISTRY_IMAGE/${image_name}
+  stage: package-build
+  tags:
+    - pkg
+  variables:
+    GIT_SUBMODULE_STRATEGY: normal
+  script:
+    - OS_DIST=$(echo $CI_JOB_NAME | cut -d- -f 2)
+    - OS_VERSION=$(echo $CI_JOB_NAME | cut -d- -f 3)
+    - NEKVER=$(<VERSION)
+    - STATUSCODE=$(curl --silent -o ${version_file} --write-out "%{http_code}" https://www.nektar.info/${OS_DIST}/${OS_VERSION}/versions/${version_file})
+    - if [ $STATUSCODE -ne 200 ]; then echo '{}' > ${version_file}; fi
+    - RPMRELEASE=$(python3 pkg/redhat/version-tracker.py ${version_file} nektar ${NEKVER})
+    - mkdir -p ~/rpmbuild/{BUILD,RPMS,SOURCES,SPECS,SRPMS}
+    - cp pkg/redhat/nektar-${OS_DIST}-${OS_VERSION}.spec ~/rpmbuild/SPECS/nektar.spec
+    - git archive --format=tgz --prefix=nektar-v${NEKVER}/ -o ~/rpmbuild/SOURCES/nektar-v${NEKVER}.tar.gz HEAD
+    - pushd ~/rpmbuild/SPECS/
+    - rpmbuild -ba --define "_nektar_version ${NEKVER}" --define "_nektar_build_release ${RPMRELEASE}" nektar.spec
+    - popd
+    - mv /root/rpmbuild/RPMS ./RPMS
+    - mv /root/rpmbuild/SRPMS ./SRPMS
+  artifacts:
+    paths:
+      - ./RPMS/*/*.rpm
+      - ./SRPMS/*.rpm
+      - ${version_file}
+    expire_in: 1 week
+  timeout: 8h
+
+##
+## Test the generated RPM packages: first, run the ADRSolver on a
+## randomly-selected test. Then, install the development package and test
+## compilation of the standalone executable.
+##
+.package-rpm-test: &package-rpm-test
+  <<: *package-conditions
+  image: ${image_name}
+  stage: package-test
+  tags:
+    - pkg
+  script:
+    - if [ "$needs_epel" -eq 1 ]; then yum install -y epel-release; fi
+    - if [ "$needs_powertools" -eq 1 ]; then yum install -y dnf-plugins-core; yum config-manager --set-enabled powertools; fi
+    - yum install -y environment-modules RPMS/x86_64/nektar++-openmpi-adr-solver-[1-9]*.rpm RPMS/x86_64/libnektar++-openmpi-[1-9]*.rpm RPMS/x86_64/nektar++-adr-solver-[1-9]*.rpm RPMS/x86_64/libnektar++-[1-9]*.rpm
+    - cp $CI_PROJECT_DIR/solvers/ADRSolver/Tests/ImDiffusion_m12.xml .
+    - ADRSolver ImDiffusion_m12.xml
+    - test_output=`ADRSolver ImDiffusion_m12.xml | grep "L 2 error" | awk '{print ($7 < 2e-7)}'`
+    - if [ "$test_output" -eq 0 ]; then echo "Tolerance test failed on serial ADRSolver run"; exit 1; fi
+    - source /etc/profile.d/modules.sh
+    - module load mpi
+    - mpirun --allow-run-as-root -n 3 ADRSolver ImDiffusion_m12.xml
+    - test_output=`mpirun --allow-run-as-root -n 3 ADRSolver ImDiffusion_m12.xml | grep "L 2 error" | awk '{print ($7 < 2e-7)}'`
+    - if [ "$test_output" -eq 0 ]; then echo "Tolerance test failed on parallel ADRSolver run"; exit 1; fi
+    - yum install -y RPMS/x86_64/nektar++-openmpi-devel-*.rpm
+    - cd $CI_PROJECT_DIR/templates/executable
+    - ./test.sh /usr/lib64/openmpi/lib/nektar++/cmake 3 ${cmake_exe}
+
+#
+# Deploy the generated RPM packages to web server.
+# Repository update is done on local filesystem as sqlite locking not reliable
+# over NFS.
+#
+.package-rpm-deploy-dev: &package-rpm-deploy-dev
+  <<: *package-conditions
+  image: fedora:30
+  stage: package-deploy-dev
+  variables:
+    DPATH: /web/rpm-test
+  tags:
+    - pkg
+    - pkg-rpm
+  script:
+    - OS_DIST=$(echo $CI_JOB_NAME | cut -d- -f 2)
+    - OS_VERSION=$(echo $CI_JOB_NAME | cut -d- -f 3)
+    - RPM_LOC=$DPATH/${OS_DIST}/${OS_VERSION}
+    - TMP_LOC=/tmp/repo
+    - if [ ! -d $DPATH ]; then echo "Remote filesystem not accessible"; exit 1; fi
+    - dnf install -y createrepo rpm-sign rsync
+    - echo "$RPM_DEPLOY_KEY" | base64 --decode | gpg --import
+    - for f in RPMS/*/*.rpm SRPMS/*.rpm; do rpm -D '_gpg_name nektar-users@imperial.ac.uk' --addsign $f; done
+    - mkdir -p $TMP_LOC
+    - if [ -d $RPM_LOC ]; then rsync -a $RPM_LOC/ $TMP_LOC/; fi
+    - mkdir -p $TMP_LOC/x86_64 $TMP_LOC/SRPMS
+    - cp RPMS/x86_64/*.rpm $TMP_LOC/x86_64/
+    - cp SRPMS/*.rpm $TMP_LOC/SRPMS
+    - mkdir -p $TMP_LOC/versions && mv *.json $TMP_LOC/versions
+    - createrepo --update $TMP_LOC/x86_64/
+    - gpg --batch --yes --detach-sign -u nektar-users@imperial.ac.uk --armor $TMP_LOC/x86_64/repodata/repomd.xml
+    - rsync -a --delete $TMP_LOC/ $RPM_LOC/
+
+.package-rpm-deploy: &package-rpm-deploy
+  <<: *package-rpm-deploy-dev
+  stage: package-deploy
+  only:
+    refs:
+      - tags@nektar/nektar
+  variables:
+      DPATH: /web/rpm
+
+
+##
+## Source packages
+##
+package-source-archive-env:
+  <<: *package-env-build
+
+package-source-archive-build:
+  <<: *package-conditions
+  stage: package-build
+  image: $CI_REGISTRY_IMAGE/pkg/source-archive
+  needs: ["package-source-archive-env"]
+  tags:
+    - pkg
+  variables:
+    GIT_SUBMODULE_STRATEGY: normal
+  script:
+    - VERSION=$(cat VERSION)
+    - mkdir -p src
+    - git archive --format=tar --output=src/nektar++-${VERSION}.tar HEAD
+    - cd src
+    - gzip  --stdout nektar++-${VERSION}.tar > nektar++-${VERSION}.tar.gz
+    - bzip2 --stdout nektar++-${VERSION}.tar > nektar++-${VERSION}.tar.bz2
+    - xz    --stdout nektar++-${VERSION}.tar > nektar++-${VERSION}.tar.xz
+  artifacts:
+    paths:
+      - src/nektar++*.tar*
+    expire_in: 1 week
+
+package-source-archive-deploy:
+  stage: package-deploy
+  only:
+    refs:
+      - tags@nektar/nektar
+  image: debian:stable-slim
+  needs: ["package-source-archive-build"]
+  tags:
+    - pkg
+    - pkg-src
+  dependencies:
+    - package-source-archive-build
+  script:
+    - cp src/nektar++*.tar* /web/src
+
+##
+## Documentation
+##
+package-source-doc-env:
+  <<: *package-env-build
+
+package-source-doc-build:
+  <<: *package-conditions
+  stage: package-build
+  image: $CI_REGISTRY_IMAGE/pkg/source-doc
+  needs: ["package-source-doc-env"]
+  tags:
+    - pkg
+  variables:
+    GIT_SUBMODULE_STRATEGY: normal
+  script:
+    - VERSION=$(cat VERSION)
+    - mkdir build && cd build
+    - cmake -DNEKTAR_BUILD_DEMOS:BOOL=OFF -DNEKTAR_BUILD_DOC:BOOL=ON -DNEKTAR_BUILD_LIBRARY:BOOL=OFF -DNEKTAR_BUILD_SOLVERS:BOOL=OFF -DNEKTAR_BUILD_UTILITIES:BOOL=OFF ..
+    - make doc
+    - make user-guide-pdf user-guide-html
+    - make developer-guide-pdf developer-guide-html
+    - make tutorials
+  artifacts:
+    paths:
+      - build/docs/doxygen/html
+      - build/docs/user-guide/user-guide.pdf
+      - build/docs/user-guide/html
+      - build/docs/developer-guide/developer-guide.pdf
+      - build/docs/developer-guide/html
+      - build/docs/tutorial/*/*/*.pdf
+      - build/docs/tutorial/*/*/*.tar.gz
+      - build/docs/tutorial/*/*/html
+
+package-source-doc-deploy:
+  stage: package-deploy
+  only:
+    refs:
+      - tags@nektar/nektar
+  image: debian:stable-slim
+  needs: ["package-source-doc-build"]
+  variables:
+      DPATH_DOC: /web/doc
+      DPATH_SRC: /web/src
+  tags:
+    - pkg
+    - pkg-src
+  dependencies:
+    - package-source-doc-build
+  script:
+    - VERSION=$(cat VERSION)
+    - RSYNC="rsync -a --delete"
+    - apt -yq update
+    - apt -yq install rsync
+    - cd build/docs
+    - mkdir -p $DPATH_DOC/userguide/${VERSION}
+    - ${RSYNC} user-guide/html/ $DPATH_DOC/userguide/${VERSION}/
+    - ${RSYNC} user-guide/user-guide.pdf $DPATH_SRC/user-guide-${VERSION}.pdf
+    - mkdir -p $DPATH_DOC/developerguide/${VERSION}
+    - ${RSYNC} developer-guide/html/ $DPATH_DOC/developerguide/${VERSION}/
+    - ${RSYNC} developer-guide/developer-guide.pdf $DPATH_SRC/developer-guide-${VERSION}.pdf
+    - mkdir -p $DPATH_DOC/tutorials/${VERSION}
+    - ${RSYNC} tutorial/ $DPATH_DOC/tutorials/${VERSION}/
+    - mkdir -p $DPATH_DOC/doxygen/${VERSION}
+    - ${RSYNC} doxygen/html/ $DPATH_DOC/doxygen/${VERSION}/
+    - cd $DPATH_DOC/userguide && if [ $(ls -1 | grep -v latest | tail -n 1) == "${VERSION}" ]; then rm -f latest; ln -s ${VERSION} latest; fi
+    - cd $DPATH_DOC/developerguide && if [ $(ls -1 | grep -v latest | tail -n 1) == "${VERSION}" ]; then rm -f latest; ln -s ${VERSION} latest; fi
+    - cd $DPATH_DOC/tutorials && if [ $(ls -1 | grep -v latest | tail -n 1) == "${VERSION}" ]; then rm -f latest; ln -s ${VERSION} latest; fi
+    - cd $DPATH_DOC/doxygen && if [ $(ls -1 | grep -v latest | tail -n 1) == "${VERSION}" ]; then rm -f latest; ln -s ${VERSION} latest; fi
+
+
+##
+## Debian unstable
+##
+package-debian-unstable-env:
+  <<: *package-env-build
+
+package-debian-unstable-build:
+  <<: *package-deb-build
+  needs: ["package-debian-unstable-env"]
+  variables:
+    image_name: pkg/debian-unstable
+
+package-debian-unstable-test:
+  <<: *package-deb-test
+  needs: ["package-debian-unstable-build"]
+  dependencies:
+    - package-debian-unstable-build
+  variables:
+    image_name: debian:unstable
+
+package-debian-unstable-deploy-dev:
+  <<: *package-deb-deploy-dev
+  needs: ["package-debian-unstable-build", "package-debian-unstable-test"]
+  dependencies:
+    - package-debian-unstable-build
+
+package-debian-unstable-deploy:
+  <<: *package-deb-deploy
+  needs: ["package-debian-unstable-build", "package-debian-unstable-deploy-dev"]
+  dependencies:
+    - package-debian-unstable-build
+
+##
+## Debian bullseye
+##
+package-debian-bullseye-env:
+  <<: *package-env-build
+
+package-debian-bullseye-build:
+  <<: *package-deb-build
+  needs: ["package-debian-bullseye-env"]
+  variables:
+    image_name: pkg/debian-bullseye
+
+package-debian-bullseye-test:
+  <<: *package-deb-test
+  needs: ["package-debian-bullseye-build"]
+  dependencies:
+    - package-debian-bullseye-build
+  variables:
+    image_name: debian:bullseye
+
+package-debian-bullseye-deploy-dev:
+  <<: *package-deb-deploy-dev
+  needs: ["package-debian-bullseye-build", "package-debian-bullseye-test"]
+  dependencies:
+    - package-debian-bullseye-build
+
+package-debian-bullseye-deploy:
+  <<: *package-deb-deploy
+  needs: ["package-debian-bullseye-build", "package-debian-bullseye-deploy-dev"]
+  dependencies:
+    - package-debian-bullseye-build
+
+##
+## Debian buster
+##
+package-debian-buster-env:
+  <<: *package-env-build
+
+package-debian-buster-build:
+  <<: *package-deb-build
+  needs: ["package-debian-buster-env"]
+  variables:
+    image_name: pkg/debian-buster
+
+package-debian-buster-test:
+  <<: *package-deb-test
+  needs: ["package-debian-buster-build"]
+  dependencies:
+    - package-debian-buster-build
+  variables:
+    image_name: debian:buster
+
+package-debian-buster-deploy-dev:
+  <<: *package-deb-deploy-dev
+  needs: ["package-debian-buster-build", "package-debian-buster-test"]
+  dependencies:
+    - package-debian-buster-build
+
+package-debian-buster-deploy:
+  <<: *package-deb-deploy
+  needs: ["package-debian-buster-build", "package-debian-buster-deploy-dev"]
+  dependencies:
+    - package-debian-buster-build
+
+##
+## Debian stretch
+##
+package-debian-stretch-env:
+  <<: *package-env-build
+
+package-debian-stretch-build:
+  <<: *package-deb-build
+  needs: ["package-debian-stretch-env"]
+  variables:
+    image_name: pkg/debian-stretch
+
+package-debian-stretch-test:
+  <<: *package-deb-test
+  needs: ["package-debian-stretch-build"]
+  dependencies:
+    - package-debian-stretch-build
+  variables:
+    image_name: debian:stretch
+
+package-debian-stretch-deploy-dev:
+  <<: *package-deb-deploy-dev
+  needs: ["package-debian-stretch-build", "package-debian-stretch-test"]
+  dependencies:
+    - package-debian-stretch-build
+
+package-debian-stretch-deploy:
+  <<: *package-deb-deploy
+  needs: ["package-debian-stretch-build", "package-debian-stretch-deploy-dev"]
+  dependencies:
+    - package-debian-stretch-build
+
+##
+## Ubuntu focal
+##
+package-ubuntu-focal-env:
+  <<: *package-env-build
+
+package-ubuntu-focal-build:
+  <<: *package-deb-build
+  needs: ["package-ubuntu-focal-env"]
+  variables:
+    image_name: pkg/ubuntu-focal
+
+package-ubuntu-focal-test:
+  <<: *package-deb-test
+  needs: ["package-ubuntu-focal-build"]
+  dependencies:
+    - package-ubuntu-focal-build
+  variables:
+    image_name: ubuntu:focal
+
+package-ubuntu-focal-deploy-dev:
+  <<: *package-deb-deploy-dev
+  needs: ["package-ubuntu-focal-build", "package-ubuntu-focal-test"]
+  dependencies:
+    - package-ubuntu-focal-build
+
+package-ubuntu-focal-deploy:
+  <<: *package-deb-deploy
+  needs: ["package-ubuntu-focal-build", "package-ubuntu-focal-deploy-dev"]
+  dependencies:
+    - package-ubuntu-focal-build
+
+##
+## Ubuntu bionic
+##
+package-ubuntu-bionic-env:
+  <<: *package-env-build
+
+package-ubuntu-bionic-build:
+  <<: *package-deb-build
+  needs: ["package-ubuntu-bionic-env"]
+  variables:
+    image_name: pkg/ubuntu-bionic
+
+package-ubuntu-bionic-test:
+  <<: *package-deb-test
+  needs: ["package-ubuntu-bionic-build"]
+  dependencies:
+    - package-ubuntu-bionic-build
+  variables:
+    image_name: ubuntu:bionic
+
+package-ubuntu-bionic-deploy-dev:
+  <<: *package-deb-deploy-dev
+  needs: ["package-ubuntu-bionic-build", "package-ubuntu-bionic-test"]
+  dependencies:
+    - package-ubuntu-bionic-build
+
+package-ubuntu-bionic-deploy:
+  <<: *package-deb-deploy
+  needs: ["package-ubuntu-bionic-build", "package-ubuntu-bionic-deploy-dev"]
+  dependencies:
+    - package-ubuntu-bionic-build
+
+##
+## Ubuntu xenial
+##
+package-ubuntu-xenial-env:
+  <<: *package-env-build
+
+package-ubuntu-xenial-build:
+  <<: *package-deb-build
+  needs: ["package-ubuntu-xenial-env"]
+  variables:
+    image_name: pkg/ubuntu-xenial
+
+package-ubuntu-xenial-test:
+  <<: *package-deb-test
+  needs: ["package-ubuntu-xenial-build"]
+  dependencies:
+    - package-ubuntu-xenial-build
+  variables:
+    image_name: ubuntu:xenial
+
+package-ubuntu-xenial-deploy-dev:
+  <<: *package-deb-deploy-dev
+  needs: ["package-ubuntu-xenial-build", "package-ubuntu-xenial-test"]
+  dependencies:
+    - package-ubuntu-xenial-build
+
+package-ubuntu-xenial-deploy:
+  <<: *package-deb-deploy
+  needs: ["package-ubuntu-xenial-build", "package-ubuntu-xenial-deploy-dev"]
+  dependencies:
+    - package-ubuntu-xenial-build
+
+
+
+##
+## CentOS 7
+##
+package-centos-7-env:
+  <<: *package-env-build
+
+package-centos-7-build:
+  <<: *package-rpm-build
+  needs: ["package-centos-7-env"]
+  variables:
+    image_name: pkg/centos-7
+    version_file: centos-7.json
+
+package-centos-7-test:
+  <<: *package-rpm-test
+  needs: ["package-centos-7-build"]
+  dependencies:
+    - package-centos-7-build
+  variables:
+    image_name: centos:7
+    needs_epel: 1
+    cmake_exe: cmake3
+
+package-centos-7-deploy-dev:
+  <<: *package-rpm-deploy-dev
+  needs: ["package-centos-7-build", "package-centos-7-test"]
+  dependencies:
+    - package-centos-7-build
+
+package-centos-7-deploy:
+  <<: *package-rpm-deploy
+  needs: ["package-centos-7-build", "package-centos-7-deploy-dev"]
+  dependencies:
+    - package-centos-7-build
+
+##
+## CentOS 8
+##
+package-centos-8-env:
+  <<: *package-env-build
+
+package-centos-8-build:
+  <<: *package-rpm-build
+  needs: ["package-centos-8-env"]
+  variables:
+    image_name: pkg/centos-8
+    version_file: centos-8.json
+
+package-centos-8-test:
+  <<: *package-rpm-test
+  needs: ["package-centos-8-build"]
+  dependencies:
+    - package-centos-8-build
+  variables:
+    image_name: centos:8
+    needs_epel: 1
+    needs_powertools: 1
+    cmake_exe: cmake
+
+package-centos-8-deploy-dev:
+  <<: *package-rpm-deploy-dev
+  needs: ["package-centos-8-build", "package-centos-8-test"]
+  dependencies:
+    - package-centos-8-build
+
+package-centos-8-deploy:
+  <<: *package-rpm-deploy
+  needs: ["package-centos-8-build", "package-centos-8-deploy-dev"]
+  dependencies:
+    - package-centos-8-build
+
+##
+## Fedora 30
+##
+package-fedora-30-env:
+  <<: *package-env-build
+
+package-fedora-30-build:
+  <<: *package-rpm-build
+  needs: ["package-fedora-30-env"]
+  variables:
+    image_name: pkg/fedora-30
+    version_file: fedora-30.json
+
+package-fedora-30-test:
+  <<: *package-rpm-test
+  needs: ["package-fedora-30-build"]
+  dependencies:
+    - package-fedora-30-build
+  variables:
+    image_name: fedora:30
+    cmake_exe: cmake
+
+package-fedora-30-deploy-dev:
+  <<: *package-rpm-deploy-dev
+  needs: ["package-fedora-30-build", "package-fedora-30-test"]
+  dependencies:
+    - package-fedora-30-build
+
+package-fedora-30-deploy:
+  <<: *package-rpm-deploy
+  needs: ["package-fedora-30-build", "package-fedora-30-deploy-dev"]
+  dependencies:
+    - package-fedora-30-build
+
+##
+## Fedora 31
+##
+package-fedora-31-env:
+  <<: *package-env-build
+
+package-fedora-31-build:
+  <<: *package-rpm-build
+  needs: ["package-fedora-31-env"]
+  variables:
+    image_name: pkg/fedora-31
+    version_file: fedora-31.json
+
+package-fedora-31-test:
+  <<: *package-rpm-test
+  needs: ["package-fedora-31-build"]
+  dependencies:
+    - package-fedora-31-build
+  variables:
+    image_name: fedora:31
+    cmake_exe: cmake
+
+package-fedora-31-deploy-dev:
+  <<: *package-rpm-deploy-dev
+  needs: ["package-fedora-31-build", "package-fedora-31-test"]
+  dependencies:
+    - package-fedora-31-build
+
+package-fedora-31-deploy:
+  <<: *package-rpm-deploy
+  needs: ["package-fedora-31-build", "package-fedora-31-deploy-dev"]
+  dependencies:
+    - package-fedora-31-build
+
+##
+## Fedora 32
+##
+package-fedora-32-env:
+  <<: *package-env-build
+
+package-fedora-32-build:
+  <<: *package-rpm-build
+  needs: ["package-fedora-32-env"]
+  variables:
+    image_name: pkg/fedora-32
+    version_file: fedora-32.json
+
+package-fedora-32-test:
+  <<: *package-rpm-test
+  needs: ["package-fedora-32-build"]
+  dependencies:
+    - package-fedora-32-build
+  variables:
+    image_name: fedora:32
+    cmake_exe: cmake
+
+package-fedora-32-deploy-dev:
+  <<: *package-rpm-deploy-dev
+  needs: ["package-fedora-32-build", "package-fedora-32-test"]
+  dependencies:
+    - package-fedora-32-build
+
+package-fedora-32-deploy:
+  <<: *package-rpm-deploy
+  needs: ["package-fedora-32-build", "package-fedora-32-deploy-dev"]
+  dependencies:
+    - package-fedora-32-build
+
+##
+## Fedora 33
+##
+package-fedora-33-env:
+  <<: *package-env-build
+
+package-fedora-33-build:
+  <<: *package-rpm-build
+  needs: ["package-fedora-33-env"]
+  variables:
+    image_name: pkg/fedora-33
+    version_file: fedora-33.json
+
+package-fedora-33-test:
+  <<: *package-rpm-test
+  needs: ["package-fedora-33-build"]
+  dependencies:
+    - package-fedora-33-build
+  variables:
+    image_name: fedora:33
+    cmake_exe: cmake
+
+package-fedora-33-deploy-dev:
+  <<: *package-rpm-deploy-dev
+  needs: ["package-fedora-33-build", "package-fedora-33-test"]
+  dependencies:
+    - package-fedora-33-build
+
+package-fedora-33-deploy:
+  <<: *package-rpm-deploy
+  needs: ["package-fedora-33-build", "package-fedora-33-deploy-dev"]
+  dependencies:
+    - package-fedora-33-build
+

@@ -230,8 +230,13 @@ int main(int argc, char *argv[])
 
             fs::copy(source, dest);
 
+#if BOOST_VERSION < 107400
             // If source is a directory, then only directory name is
             // created, so call copy again to copy files.
+            // In Boost 1.74, the default behaviour of fs::copy is to
+            // recursively copy files. copy_directory has been deprecated in
+            // light of new create_directory, so we use the BOOST_VERSION macro
+            // here.
             if (fs::is_directory(source))
             {
                 for (const auto& dirEnt :
@@ -241,6 +246,7 @@ int main(int argc, char *argv[])
                     fs::copy(dirEnt.path(), newdest);
                 }
             }
+#endif
         }
 
         // If we're Python, copy script too.

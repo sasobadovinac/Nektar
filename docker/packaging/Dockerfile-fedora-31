@@ -1,0 +1,10 @@
+FROM fedora:31
+
+# Install some basic build requirements.
+RUN dnf install -y rpm-build dnf-plugins-core git
+
+WORKDIR /root
+COPY pkg/redhat/nektar-fedora-31.spec .
+
+# Install build requirements from spec file.
+RUN dnf builddep -y nektar-fedora-31.spec && rm -f nektar-fedora-31.spec

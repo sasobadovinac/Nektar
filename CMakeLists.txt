@@ -319,12 +319,14 @@ IF (NEKTAR_BUILD_TESTS)
 ENDIF (NEKTAR_BUILD_TESTS)
 
 # Compile list of definitions for Nektar++Config.cmake input file. We exclude
-# vtk definitions which should not be required for external builds.
+# vtk definitions which should not be required for external builds. We also need
+# to eliminate generator expressions from OCE which were not evaluated during
+# OCE build (bug).
 SET(NEKTAR_DEFINITIONS "")
 GET_DIRECTORY_PROPERTY(
     NEKTAR_DEFINITIONS_LIST DIRECTORY ${CMAKE_SOURCE_DIR} COMPILE_DEFINITIONS)
 FOREACH(def ${NEKTAR_DEFINITIONS_LIST})
-    IF (NOT def MATCHES "^vtk")
+    IF (NOT def MATCHES "^vtk" AND NOT def MATCHES "CONFIG:RelWithDebInfo")
         SET(NEKTAR_DEFINITIONS "${NEKTAR_DEFINITIONS} -D${def}")
     ENDIF()
 ENDFOREACH()

@@ -57,14 +57,14 @@ IF(NEKTAR_USE_MESHGEN)
         ENDIF()
 
         EXTERNALPROJECT_ADD(
-            oce-0.17
+            oce-0.18.3
             PREFIX ${TPSRC}
-            URL ${TPURL}/OCE-0.17.2.tar.gz
-            URL_MD5 bf2226be4cd192606af677cf178088e5
+            URL ${TPURL}/OCE-0.18.3.tar.gz
+            URL_MD5 1686393c8493bbbb2f3f242330b33cba
             STAMP_DIR ${TPBUILD}/stamp
-            BINARY_DIR ${TPBUILD}/oce-0.17
+            BINARY_DIR ${TPBUILD}/oce-0.18.3
             DOWNLOAD_DIR ${TPSRC}
-            SOURCE_DIR ${TPSRC}/oce-0.17
+            SOURCE_DIR ${TPSRC}/oce-0.18.3
             INSTALL_DIR ${TPBUILD}/oce-0.17/dist
             CONFIGURE_COMMAND ${CMAKE_COMMAND}
                 -G ${CMAKE_GENERATOR}
@@ -73,7 +73,7 @@ IF(NEKTAR_USE_MESHGEN)
                 -DOCE_INSTALL_PREFIX:PATH=${TPDIST}
                 -DOCE_TESTING=OFF
                 -DOCE_VISUALISATION=OFF
-                ${TPSRC}/oce-0.17
+                ${TPSRC}/oce-0.18.3
             )
 
         # Patch OS X libraries to fix install name problems.
