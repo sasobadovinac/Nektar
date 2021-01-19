@@ -168,10 +168,9 @@ namespace Nektar
                 Array<OneD, NekDouble> &coords_2);
 
             STD_REGIONS_EXPORT virtual NekDouble v_PhysEvaluate(
-                const Array<OneD, const NekDouble> &coords,
-                const Array<OneD, const NekDouble> &physvals,
-                uint16_t derivs,
-                Array<OneD, NekDouble> &derivOut);
+                const Array<OneD, NekDouble> coord,
+                const Array<OneD, const NekDouble> &inarray, NekDouble &out_d0,
+                NekDouble &out_d1, NekDouble &out_d2);
 
             //--------------------------
             // Mappings

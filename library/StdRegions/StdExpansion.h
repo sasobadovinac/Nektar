@@ -945,15 +945,6 @@ namespace Nektar
                 return v_PhysEvaluate(coord, inarray, out_d0, unusedValue, unusedValue);
             }
 
-            inline NekDouble PhysEvaluate(
-                const Array<OneD, const NekDouble> &coords,
-                const Array<OneD, const NekDouble> &physvals,
-                uint16_t derivs,
-                Array<OneD, NekDouble> &derivOut)
-            {
-                return v_PhysEvaluate(coords, physvals, derivs, derivOut);
-            }
-
             /** \brief This function evaluates the expansion at a single
              *  (arbitrary) point of the domain
              *
@@ -1208,21 +1199,6 @@ namespace Nektar
             }
 
         protected:
-            enum PhysEvalDerivs : uint16_t
-            {
-                DERIV_X  = (1 << 0), // direction specific x/y/z 1st order derivatives
-                DERIV_Y  = (1 << 1),
-                DERIV_Z  = (1 << 2),
-                DERIV_XX = (1 << 3),
-                DERIV_XY = (1 << 4),
-                DERIV_XZ = (1 << 5),
-                DERIV_YY = (1 << 6),
-                DERIV_YZ = (1 << 7),
-                DERIV_ZZ = (1 << 8),
-                DERIV_1 = (1 << 9), // all first order derivs
-                DERIV_2 = (1 << 10) // all second order derivs
-            };
-
             Array<OneD, LibUtilities::BasisSharedPtr>
                 m_base; /**< Bases needed for the expansion */
             int m_elmt_id;
@@ -1596,12 +1572,6 @@ namespace Nektar
                 NekDouble &out_d0,
                 NekDouble &out_d1,
                 NekDouble &out_d2);
-
-            STD_REGIONS_EXPORT virtual NekDouble v_PhysEvaluate(
-                const Array<OneD, const NekDouble> &coords,
-                const Array<OneD, const NekDouble> &physvals,
-                uint16_t derivs,
-                Array<OneD, NekDouble> &derivOut);
 
             STD_REGIONS_EXPORT virtual Array<OneD, NekDouble> v_PhysEvaluateBasis(
                 const Array<OneD, const Array<OneD, NekDouble>> coords,

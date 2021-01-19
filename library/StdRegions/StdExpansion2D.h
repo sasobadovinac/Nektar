@@ -95,11 +95,11 @@ public:
         Array<OneD, NekDouble> &outarray_d1);
 
     // find derivative of u (inarray) at all coords points
-    template <bool XDERIV, bool YDERIV>
     STD_REGIONS_EXPORT inline NekDouble BaryTensorDeriv(
         const Array<OneD, NekDouble> &coord,
         const Array<OneD, const NekDouble> &inarray,
-        Array<OneD, NekDouble> &derivs)
+        NekDouble &out_d0,
+        NekDouble &out_d1)
     {
         // int sz = GetTotPoints();
         const int nq0 = m_base[0]->GetNumPoints();
@@ -109,46 +109,15 @@ public:
         Array<OneD, NekDouble> deriv0(nq1, 0.0);
         Array<OneD, NekDouble> phys0(nq1, 0.0);
 
-        if(XDERIV && YDERIV)
+        for (int j = 0; j < nq1; ++j, ptr += nq0)
         {
-            for (int j = 0; j < nq1; ++j, ptr += nq0)
-            {
-                phys0[j] = StdExpansion::BaryEvaluate<0, true>(coord[0], ptr, deriv0[j]);
-            }
-
-            derivs[0] = StdExpansion::BaryEvaluate<1, false>(coord[1], &deriv0[0]);
-
-            return StdExpansion::BaryEvaluate<1, true>(coord[1], &phys0[0], derivs[1]);
+            phys0[j] =
+                StdExpansion::BaryEvaluate<0, true>(coord[0], ptr, deriv0[j]);
         }
-        else if (XDERIV) // @TODO: Is this optimal? if we construct square in other direction first we can remove a call e.g. ptr+= nq1?
-        {
-            for (int j = 0; j < nq1; ++j, ptr += nq0)
-            {
-                phys0[j] = StdExpansion::BaryEvaluate<0, true>(coord[0], ptr, deriv0[j]);
-            }
 
-            derivs[0] = StdExpansion::BaryEvaluate<1, false>(coord[1], &deriv0[0]);
+        out_d0 = StdExpansion::BaryEvaluate<1, false>(coord[1], &deriv0[0]);
 
-            return StdExpansion::BaryEvaluate<1, false>(coord[1], &phys0[0]);
-        }
-        else if (YDERIV)
-        {
-            for (int j = 0; j < nq1; ++j, ptr += nq0)
-            {
-                phys0[j] = StdExpansion::BaryEvaluate<0, false>(coord[0], ptr);
-            }
-
-            return StdExpansion::BaryEvaluate<1, true>(coord[1], &phys0[0], derivs[1]);
-        }
-        else
-        {
-            for (int j = 0; j < nq1; ++j, ptr += nq0)
-            {
-                phys0[j] = StdExpansion::BaryEvaluate<0, false>(coord[0], ptr);
-            }
-
-            return StdExpansion::BaryEvaluate<1>(coord[1], &phys0[0]);
-        }
+        return StdExpansion::BaryEvaluate<1, true>(coord[1], &phys0[0], out_d1);
     }
 
     STD_REGIONS_EXPORT NekDouble
@@ -212,12 +181,6 @@ protected:
         NekDouble &out_d0,
         NekDouble &out_d1,
         NekDouble &out_d2) override;
-
-    STD_REGIONS_EXPORT virtual NekDouble v_PhysEvaluate(
-        const Array<OneD, const NekDouble> &coords,
-        const Array<OneD, const NekDouble> &physvals,
-        uint16_t derivs,
-        Array<OneD, NekDouble> &derivOut) override;
 
     STD_REGIONS_EXPORT virtual Array<OneD, Array<OneD, NekDouble>>
     v_GetPhysEvaluateStorage() final;
