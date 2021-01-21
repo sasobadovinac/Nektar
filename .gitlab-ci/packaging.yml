@@ -252,7 +252,8 @@ package-source-archive-build:
   script:
     - VERSION=$(cat VERSION)
     - mkdir -p src
-    - git archive --format=tar --output=src/nektar++-${VERSION}.tar HEAD
+    - git archive --format=tar --prefix=nektar-v${VERSION}/ --output=src/nektar++-${VERSION}.tar HEAD
+    - git archive --format=zip --prefix=nektar-v${VERSION}/ --output=src/nektar++-${VERSION}.zip HEAD
     - cd src
     - gzip  --stdout nektar++-${VERSION}.tar > nektar++-${VERSION}.tar.gz
     - bzip2 --stdout nektar++-${VERSION}.tar > nektar++-${VERSION}.tar.bz2
@@ -295,7 +296,7 @@ package-source-doc-build:
   script:
     - VERSION=$(cat VERSION)
     - mkdir build && cd build
-    - cmake -DNEKTAR_BUILD_DEMOS:BOOL=OFF -DNEKTAR_BUILD_DOC:BOOL=ON -DNEKTAR_BUILD_LIBRARY:BOOL=OFF -DNEKTAR_BUILD_SOLVERS:BOOL=OFF -DNEKTAR_BUILD_UTILITIES:BOOL=OFF ..
+    - cmake -DNEKTAR_BUILD_DEMOS:BOOL=OFF -DNEKTAR_BUILD_DOC:BOOL=ON -DNEKTAR_BUILD_LIBRARY:BOOL=OFF -DNEKTAR_BUILD_SOLVERS:BOOL=OFF -DNEKTAR_BUILD_UTILITIES:BOOL=OFF -DNEKTAR_USE_MESHGEN:BOOL=ON ..
     - make doc
     - make user-guide-pdf user-guide-html
     - make developer-guide-pdf developer-guide-html
