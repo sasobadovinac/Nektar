@@ -103,7 +103,8 @@ InterfaceMapDG::InterfaceMapDG(
     }
 
     // DEBUG COMMENTS
-    if (false) // Set if verbose/debug mode? to output rank interface information
+    // Set if verbose to output rank interface information
+    if (trace->GetSession()->DefinesCmdLineArgument("verbose"))
     {
         if (comm->GetRank() == 0)
         {
@@ -257,7 +258,7 @@ void InterfaceMapDG::ExchangeCoords()
 
     for (auto &interfaceTrace : m_localInterfaces)
     {
-        interfaceTrace->RecalcCoords() = false;
+        interfaceTrace->RecalcCoords() = true; // @TODO: Change this to false if not recalcing coords every timestep
     }
 }
 
@@ -528,7 +529,7 @@ void InterfaceExchange::SendFwdTrace(
     LibUtilities::CommRequestSharedPtr &requestRecv, int requestNum,
     Array<OneD, NekDouble> &Fwd)
 {
-    m_recvTrace = Array<OneD, NekDouble>(m_totSendSize / 3, std::nan(""));
+    m_recvTrace = Array<OneD, NekDouble>(m_totSendSize / 3, std::nan("")); // @TODO: Change to numeric limits?
     m_sendTrace = Array<OneD, NekDouble>(m_totRecvSize / 3, std::nan(""));
 
     for (auto &i : m_foundRankCoords)

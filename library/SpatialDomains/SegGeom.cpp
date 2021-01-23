@@ -392,7 +392,7 @@ NekDouble SegGeom::v_FindDistance(const Array<OneD, const NekDouble> &xs,
 {
     bool bary = true;
 
-    if (m_geomFactors->GetGtype() == eRegular && false)
+    if (m_geomFactors->GetGtype() == eRegular)
     {
         xiOut = Array<OneD, NekDouble>(1,0.0);
 
@@ -411,6 +411,9 @@ NekDouble SegGeom::v_FindDistance(const Array<OneD, const NekDouble> &xs,
     }
     else if (m_geomFactors->GetGtype() == eDeformed && !bary) // @TODO: Rework to follow more general newton implementation as shown for quad and tri
     {
+
+        Array<OneD, DNekMatSharedPtr> I(1);
+
         Array<OneD, NekDouble> xi(1, 0.0);
         const NekDouble c1 = 1e-4, c2 = 0.9;
 
@@ -439,14 +442,15 @@ NekDouble SegGeom::v_FindDistance(const Array<OneD, const NekDouble> &xs,
         for (int i = 0; i < 100; ++i)
         {
             // Compute f(x_k) and its derivatives
-            xc = m_xmap->PhysEvaluateOld(xi, x);
-            yc = m_xmap->PhysEvaluateOld(xi, y);
+            I[0] = m_xmap->GetBase()[0]->GetI(xi);
+            xc = m_xmap->PhysEvaluate(I, x);
+            yc = m_xmap->PhysEvaluate(I, y);
 
-            xc_der = m_xmap->PhysEvaluateOld(xi, xder);
-            yc_der = m_xmap->PhysEvaluateOld(xi, yder);
+            xc_der = m_xmap->PhysEvaluate(I, xder);
+            yc_der = m_xmap->PhysEvaluate(I, yder);
 
-            xc_der2 = m_xmap->PhysEvaluateOld(xi, xder2);
-            yc_der2 = m_xmap->PhysEvaluateOld(xi, yder2);
+            xc_der2 = m_xmap->PhysEvaluate(I, xder2);
+            yc_der2 = m_xmap->PhysEvaluate(I, yder2);
 
             xcDiff = xc - xs[0];
             ycDiff = yc - xs[1];
@@ -485,11 +489,12 @@ NekDouble SegGeom::v_FindDistance(const Array<OneD, const NekDouble> &xs,
                     continue;
                 }
 
-                xc_pk = m_xmap->PhysEvaluateOld(xi_pk, x);
-                yc_pk = m_xmap->PhysEvaluateOld(xi_pk, y);
+                I[0] = m_xmap->GetBase()[0]->GetI(xi_pk);
+                xc_pk = m_xmap->PhysEvaluate(I, x);
+                yc_pk = m_xmap->PhysEvaluate(I, y);
 
-                xc_der_pk = m_xmap->PhysEvaluateOld(xi_pk, xder);
-                yc_der_pk = m_xmap->PhysEvaluateOld(xi_pk, yder);
+                xc_der_pk = m_xmap->PhysEvaluate(I, xder);
+                yc_der_pk = m_xmap->PhysEvaluate(I, yder);
 
                 xc_pkDiff = xc_pk - xs[0];
                 yc_pkDiff = yc_pk - xs[1];
