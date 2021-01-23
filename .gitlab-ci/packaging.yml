@@ -264,8 +264,8 @@ package-source-archive-build:
       - src/nektar++*.zip
     expire_in: 1 week
 
-package-source-archive-deploy:
-  stage: package-deploy
+package-source-archive-deploy-dev:
+  stage: package-deploy-dev
   only:
     refs:
       - tags@nektar/nektar
@@ -274,10 +274,21 @@ package-source-archive-deploy:
   tags:
     - pkg
     - pkg-src
+  variables:
+      DPATH: /web/src-test
   dependencies:
     - package-source-archive-build
   script:
     - cp src/nektar++*.* /web/src
+
+.package-source-archive-deploy: &package-source-archive-deploy
+  <<: *package-source-archive-deploy-dev
+  stage: package-deploy
+  only:
+    refs:
+      - tags@nektar/nektar
+  variables:
+      DPATH: /web/src
 
 ##
 ## Documentation
@@ -313,16 +324,16 @@ package-source-doc-build:
       - build/docs/tutorial/*/*/*.tar.gz
       - build/docs/tutorial/*/*/html
 
-package-source-doc-deploy:
-  stage: package-deploy
+package-source-doc-deploy-dev:
+  stage: package-deploy-dev
   only:
     refs:
       - tags@nektar/nektar
   image: debian:stable-slim
   needs: ["package-source-doc-build"]
   variables:
-      DPATH_DOC: /web/doc
-      DPATH_SRC: /web/src
+      DPATH_DOC: /web/doc-test
+      DPATH_SRC: /web/src-test
   tags:
     - pkg
     - pkg-src
@@ -350,6 +361,15 @@ package-source-doc-deploy:
     - cd $DPATH_DOC/tutorials && if [ $(ls -1 | grep -v latest | tail -n 1) == "${VERSION}" ]; then rm -f latest; ln -s ${VERSION} latest; fi
     - cd $DPATH_DOC/doxygen && if [ $(ls -1 | grep -v latest | tail -n 1) == "${VERSION}" ]; then rm -f latest; ln -s ${VERSION} latest; fi
 
+.package-source-doc-deploy: &package-source-doc-deploy
+  <<: *package-source-doc-deploy-dev
+  stage: package-deploy
+  only:
+    refs:
+      - tags@nektar/nektar
+  variables:
+      DPATH_DOC: /web/doc
+      DPATH_SRC: /web/src
 
 ##
 ## Debian unstable
