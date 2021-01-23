@@ -261,6 +261,7 @@ package-source-archive-build:
   artifacts:
     paths:
       - src/nektar++*.tar*
+      - src/nektar++*.zip
     expire_in: 1 week
 
 package-source-archive-deploy:
@@ -276,7 +277,7 @@ package-source-archive-deploy:
   dependencies:
     - package-source-archive-build
   script:
-    - cp src/nektar++*.tar* /web/src
+    - cp src/nektar++*.* /web/src
 
 ##
 ## Documentation
@@ -296,7 +297,7 @@ package-source-doc-build:
   script:
     - VERSION=$(cat VERSION)
     - mkdir build && cd build
-    - cmake -DNEKTAR_BUILD_DEMOS:BOOL=OFF -DNEKTAR_BUILD_DOC:BOOL=ON -DNEKTAR_BUILD_LIBRARY:BOOL=OFF -DNEKTAR_BUILD_SOLVERS:BOOL=OFF -DNEKTAR_BUILD_UTILITIES:BOOL=OFF -DNEKTAR_USE_MESHGEN:BOOL=ON ..
+    - cmake -DNEKTAR_BUILD_DEMOS:BOOL=OFF -DNEKTAR_BUILD_DOC:BOOL=ON -DNEKTAR_BUILD_LIBRARY:BOOL=OFF -DNEKTAR_BUILD_SOLVERS:BOOL=OFF -DNEKTAR_BUILD_UTILITIES:BOOL=ON -DNEKTAR_USE_MESHGEN:BOOL=ON ..
     - make doc
     - make user-guide-pdf user-guide-html
     - make developer-guide-pdf developer-guide-html
@@ -341,6 +342,7 @@ package-source-doc-deploy:
     - ${RSYNC} developer-guide/developer-guide.pdf $DPATH_SRC/developer-guide-${VERSION}.pdf
     - mkdir -p $DPATH_DOC/tutorials/${VERSION}
     - ${RSYNC} tutorial/ $DPATH_DOC/tutorials/${VERSION}/
+    - for i in tutorial/*/*; do mv $i/html/* $i/; rmdir $i/html; done
     - mkdir -p $DPATH_DOC/doxygen/${VERSION}
     - ${RSYNC} doxygen/html/ $DPATH_DOC/doxygen/${VERSION}/
     - cd $DPATH_DOC/userguide && if [ $(ls -1 | grep -v latest | tail -n 1) == "${VERSION}" ]; then rm -f latest; ln -s ${VERSION} latest; fi
