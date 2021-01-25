@@ -40,6 +40,7 @@
 #include <boost/algorithm/string/predicate.hpp>
 
 #include <LocalRegions/Expansion2D.h>
+#include <MultiRegions/DisContField.h>
 
 namespace Nektar
 {
@@ -399,7 +400,16 @@ void DiffusionLDGNS::NumericalFluxO1(
     Array<OneD, Array<OneD, NekDouble> > numflux{nScalars};
     for (std::size_t i = 0; i < nScalars; ++i)
     {
-        numflux[i] = {pFwd[i]};
+        MultiRegions::DisContFieldSharedPtr fld = std::dynamic_pointer_cast<
+            MultiRegions::DisContField>(fields[i]);
+        numflux[i] = Array<OneD, NekDouble>(nTracePts);
+
+        for (int j = 0; j < nTracePts; ++j)
+        {
+            numflux[i][j] = fld->m_traceFlipLDG[j] ? pBwd[i][j] : pFwd[i][j];
+        }
+
+        //numflux[i] = {pFwd[i]};
     }
 
     // Modify the values in case of boundary interfaces
@@ -703,7 +713,14 @@ void DiffusionLDGNS::NumericalFluxO2(
             fields[i]->GetFwdBwdTracePhys(qfield[j][i], qFwd, qBwd);
 
             // Downwind
-            Vmath::Vcopy(nTracePts, qBwd, 1, qfluxtemp, 1);
+            MultiRegions::DisContFieldSharedPtr fld = std::dynamic_pointer_cast<
+                MultiRegions::DisContField>(fields[i]);
+
+            for (int k = 0; k < nTracePts; ++k)
+            {
+                qfluxtemp[k] = fld->m_traceFlipLDG[k] ? qFwd[k] : qBwd[k];
+            }
+            //Vmath::Vcopy(nTracePts, qBwd, 1, qfluxtemp, 1);
 
             // Multiply the Riemann flux by the trace normals
             Vmath::Vmul(nTracePts, m_traceNormals[j], 1, qfluxtemp, 1,

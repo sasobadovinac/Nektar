@@ -58,6 +58,8 @@ namespace Nektar
             Array<OneD, int> m_BCtoElmMap;
             Array<OneD, int> m_BCtoTraceMap;
 
+            std::vector<bool> m_traceFlipLDG;
+
             /// Default constructor.
             MULTI_REGIONS_EXPORT DisContField();
 

@@ -424,6 +424,31 @@ namespace Nektar
             m_locTraceToTraceMap = MemoryManager<LocTraceToTraceMap>::
                 AllocateSharedPtr(*this, m_trace, elmtToTrace,
                                   m_leftAdjacentTraces);
+
+            // Hackfest: for partition & periodic edges, LDG needs a consistent
+            // flux definition.
+            Array<OneD, long> edgeUnique(m_trace->GetExpSize());
+
+            // Get IDs of all edges
+            for (int i = 0; i < m_trace->GetExpSize(); ++i)
+            {
+                edgeUnique[i] = m_trace->GetExp(i)->GetGeom()->GetGlobalID();
+            }
+
+            // Use Gs to figure out unique edges; this tells us one side to
+            // flip.
+            Gs::Unique(edgeUnique, m_comm);
+
+            // Now populate this
+            m_traceFlipLDG.resize(m_trace->GetNpoints());
+            for (int i = 0; i < m_trace->GetExpSize(); ++i)
+            {
+                int offset = m_trace->GetPhys_Offset(i);
+                for (int j = 0; j < m_trace->GetExp(i)->GetTotPoints(); ++j)
+                {
+                    m_traceFlipLDG[offset + j] = edgeUnique[i] < 0;
+                }
+            }
         }
 
 

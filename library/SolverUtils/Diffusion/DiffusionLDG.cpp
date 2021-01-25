@@ -39,6 +39,8 @@
 
 #include <SolverUtils/Diffusion/DiffusionLDG.h>
 
+#include <MultiRegions/DisContField.h>
+
 namespace Nektar
 {
 namespace SolverUtils
@@ -257,7 +259,14 @@ void DiffusionLDG::NumFluxforScalar(
         }
 
         // Upwind
-        Vmath::Vcopy(nTracePts, Fwd, 1, fluxtemp, 1);
+        MultiRegions::DisContFieldSharedPtr fld = std::dynamic_pointer_cast<
+            MultiRegions::DisContField>(fields[i]);
+
+        for (int j = 0; j < nTracePts; ++j)
+        {
+            fluxtemp[j] = fld->m_traceFlipLDG[j] ? Bwd[j] : Fwd[j];
+        }
+        //Vmath::Vcopy(nTracePts, Fwd, 1, fluxtemp, 1);
 
         // Imposing weak boundary condition with flux
         if (fields[0]->GetBndCondExpansions().size())
@@ -382,7 +391,14 @@ void DiffusionLDG::NumFluxforVector(
             fields[i]->GetFwdBwdTracePhys(qfield[j][i], qFwd, qBwd);
 
             // Downwind
-            Vmath::Vcopy(nTracePts, qBwd, 1, qfluxtemp, 1);
+            MultiRegions::DisContFieldSharedPtr fld = std::dynamic_pointer_cast<
+                MultiRegions::DisContField>(fields[i]);
+
+            for (int k = 0; k < nTracePts; ++k)
+            {
+                qfluxtemp[k] = fld->m_traceFlipLDG[k] ? qFwd[k] : qBwd[k];
+            }
+            //Vmath::Vcopy(nTracePts, qBwd, 1, qfluxtemp, 1);
 
             Vmath::Vmul(nTracePts, m_traceNormals[j], 1, qfluxtemp, 1,
                         qfluxtemp, 1);
