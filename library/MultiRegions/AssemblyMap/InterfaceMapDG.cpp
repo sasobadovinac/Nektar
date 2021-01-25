@@ -462,6 +462,37 @@ void InterfaceMapDG::ExchangeTrace(Array<OneD, NekDouble> &Fwd,
             i->FillRankBwdTraceExchange(Bwd);
         }
     }
+
+    // LDG needs a consistent flux definition so swap Fwd/Bwd for right-hand side
+    // of the interface
+    for (auto &localInterface : m_localInterfaces)
+    {
+        if (localInterface->GetInterface()->GetSide() == SpatialDomains::eRight)
+        {
+            localInterface->SwapFwdBwdTrace(Fwd, Bwd);
+        }
+    }
+}
+
+/**
+ * Swap the Fwd trace with the Bwd trace
+ */
+void InterfaceTrace::SwapFwdBwdTrace(Array<OneD, NekDouble> &Fwd,
+                                     Array<OneD, NekDouble> &Bwd)
+{
+    // Flips interface edges
+    for (auto &id : m_interfaceBase->GetEdgeIds())
+    {
+        int traceId = m_geomIdToTraceId.at(id);
+        int offset = m_trace->GetPhys_Offset(traceId);
+
+        int nq = m_trace->GetExp(traceId)->GetTotPoints();
+        Array<OneD, NekDouble> tmp(nq);
+        for (int i = 0; i < nq; ++i)
+        {
+            std::swap(Fwd[offset + i], Bwd[offset + i]);
+        }
+    }
 }
 
 /**
