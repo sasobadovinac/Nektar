@@ -87,6 +87,8 @@ struct InterfaceBase
 {
     InterfaceBase(InterfaceType type, int indx, CompositeMap domain);
 
+    virtual ~InterfaceBase() = default;
+
     inline InterfaceType GetInterfaceType() const
     {
         return m_type;
@@ -182,6 +184,8 @@ struct RotatingInterface final: public InterfaceBase
                       const std::vector<NekDouble> &axis,
                       const NekDouble angularVel);
 
+    virtual ~RotatingInterface() = default;
+
     inline PointGeom GetOrigin() const
     {
         return m_origin;
@@ -212,6 +216,7 @@ struct SlidingInterface final: public InterfaceBase
     SlidingInterface(int id, const CompositeMap &domain,
                      const std::vector<NekDouble> &velocity);
 
+    virtual ~SlidingInterface() = default;
 
     inline std::vector<NekDouble> GetVel() const
     {
@@ -232,6 +237,8 @@ struct FixedInterface final: public InterfaceBase
             : InterfaceBase(eFixed, id, domain)
     {
     }
+
+    virtual ~FixedInterface() = default;
 
     virtual void v_Move(NekDouble timeStep) final;
 };
