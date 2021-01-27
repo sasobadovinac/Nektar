@@ -182,8 +182,7 @@ namespace Nektar
                 ASSERTL0(false, "m_BndEvaluateTime not setup");
             }
             m_diffusion->Diffuse(nvariables, m_fields, inarray, outarrayDiff,
-                                m_BndEvaluateTime,
-                                pFwd, pBwd);
+                                 m_BndEvaluateTime, pFwd, pBwd);
             for (int i = 0; i < nvariables; ++i)
             {
                 Vmath::Vadd(npoints,
@@ -599,6 +598,9 @@ namespace Nektar
             }
         }
 
+
+        LibUtilities::Timer timer;
+        timer.Start();
         if (normal.size())
         {
             for (int nd = 0; nd < nDim; ++nd)
@@ -636,6 +638,9 @@ namespace Nektar
                 }
             }
         }
+        timer.Stop();
+        timer.AccumulateRegion("VolumeFlux:BlinearForm");
+        
 
         if (ArtifDiffFactor.size())
         {

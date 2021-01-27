@@ -37,6 +37,8 @@
 #include <iomanip>
 #include <iostream>
 
+#include <LibUtilities/BasicUtils/Timer.h>
+
 namespace Nektar
 {
 namespace SolverUtils
@@ -140,8 +142,14 @@ void DiffusionIP::v_Diffuse(
     {
         tmp[i] = Array<OneD, NekDouble>{nCoeffs, 0.0};
     }
+
+    LibUtilities::Timer timer;
+    timer.Start();
     DiffusionIP::v_DiffuseCoeffs(nConvectiveFields, fields, inarray, tmp, pFwd,
                                  pBwd);
+    timer.Stop();
+    timer.AccumulateRegion("Diffuse:DiffuseCoeffs");
+
     for (int i = 0; i < nConvectiveFields; ++i)
     {
         fields[i]->BwdTrans(tmp[i], outarray[i]);
@@ -166,6 +174,10 @@ void DiffusionIP::v_DiffuseCoeffs(
 
     TensorOfArray3D<NekDouble> elmtFlux{nDim};
     TensorOfArray3D<NekDouble> qfield{nDim};
+
+
+    LibUtilities::Timer timer;
+
     for (int j = 0; j < nDim; ++j)
     {
         qfield[j]   = Array<OneD, Array<OneD, NekDouble>>{nConvectiveFields};
@@ -203,11 +215,18 @@ void DiffusionIP::v_DiffuseCoeffs(
         }
     }
 
+    timer.Start();
     DiffuseCalculateDerivative(fields, inarray, qfield, vFwd, vBwd);
+    timer.Stop();
+    timer.AccumulateRegion("Diffusion:CalcDeriv");
 
+    timer.Start();
     Array<OneD, int> nonZeroIndex;
     DiffuseVolumeFlux(fields, inarray, qfield, elmtFlux, nonZeroIndex);
+    timer.Stop();
+    timer.AccumulateRegion("Diffusion:Volumeflux");
 
+    timer.Start();
     Array<OneD, Array<OneD, NekDouble>> tmpFluxIprdct{nDim};
     // volume intergration: the nonZeroIndex indicates which flux is nonzero
     for (int i = 0; i < nonZeroIndex.size(); ++i)
@@ -220,7 +239,12 @@ void DiffusionIP::v_DiffuseCoeffs(
         fields[j]->IProductWRTDerivBase(tmpFluxIprdct, outarray[j]);
         Vmath::Neg(nCoeffs, outarray[j], 1);
     }
+    timer.Stop();
+    timer.AccumulateRegion("Diffusion:IPWRTDB");
+
+
     // release qfield, elmtFlux and muvar;
+    timer.Start();
     for (int j = 0; j < nDim; ++j)
     {
         elmtFlux[j] = NullNekDoubleArrayofArray;
@@ -234,6 +258,8 @@ void DiffusionIP::v_DiffuseCoeffs(
 
     DiffuseTraceFlux(fields, inarray, qfield, elmtFlux, Traceflux, vFwd, vBwd,
                      nonZeroIndex);
+    timer.Stop();
+    timer.AccumulateRegion("Diffusion:TraceFlux");
 
     for (int i = 0; i < nonZeroIndex.size(); ++i)
     {
@@ -245,13 +271,16 @@ void DiffusionIP::v_DiffuseCoeffs(
 
     AddDiffusionSymmFluxToCoeff(nConvectiveFields, fields, inarray, qfield,
                                 elmtFlux, outarray, vFwd, vBwd);
-
+    
+    timer.Start();
     for (int i = 0; i < nonZeroIndex.size(); ++i)
     {
         int j = nonZeroIndex[i];
 
         fields[j]->MultiplyByElmtInvMass(outarray[j], outarray[j]);
     }
+    timer.Stop();
+    timer.AccumulateRegion("Diffusion:MultByInvMass");    
 }
 
 void DiffusionIP::v_DiffuseCalculateDerivative(
