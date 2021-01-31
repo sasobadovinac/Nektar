@@ -1018,13 +1018,16 @@ namespace Nektar
     	        m_bsbcParams->m_forceB[i][0] = (- m_bsbcParams->m_forceB[i][0] - 
     	            m_bsbcParams->m_C[i] * m_bsbcParams->m_dofVel[i][0] + 
     	            m_bsbcParams->m_K[i] * m_bsbcParams->m_dofAdj[i][0]) / m_bsbcParams->m_M;
-    	         ;
+                // with fictious mass
+                m_bsbcParams->m_forceB[i][0] += m_bsbcParams->m_FictM * m_bsbcParams->m_dofAcc[i][0];
+    	         
 
-    	        // Shift velocity and position storage
+    	        // Shift acceleration, velocity and position storage
     	        for(int n = m_bsbcParams->m_intSteps-1; n > 0; --n)
     	        {
     	            m_bsbcParams->m_dofVel[i][n] = m_bsbcParams->m_dofVel[i][n-1];
     	            m_bsbcParams->m_dofAdj[i][n] = m_bsbcParams->m_dofAdj[i][n-1];
+                    m_bsbcParams->m_dofAcc[i][n] = m_bsbcParams->m_dofAcc[i][n-1];
     	        }
 
     	        // Update velocity and position
@@ -1032,12 +1035,15 @@ namespace Nektar
     	        {
     	            m_bsbcParams->m_dofVel[i][0] += m_timestep *
     	            m_bsbcParams->AdamsBashforth_coeffs[order-1][j] 
-    	                * m_bsbcParams->m_forceB[i][j];
+    	                * m_bsbcParams->m_forceB[i][j] / (m_bsbcParams->m_M+m_bsbcParams->m_FictM);
 
     	            m_bsbcParams->m_dofAdj[i][0] += m_timestep * 
     	            m_bsbcParams->AdamsBashforth_coeffs[order-1][j] *
     	                    m_bsbcParams->m_forceA[i][j];
     	        }
+                // Classic Backward (from t and t-1) for acceleration:
+                m_bsbcParams->m_dofAcc[i][0] = (m_bsbcParams->m_dofVel[i][0] - 
+                m_bsbcParams->m_dofVel[i][1])/m_timestep;
             } 
         }
 
