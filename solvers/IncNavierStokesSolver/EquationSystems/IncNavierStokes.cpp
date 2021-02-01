@@ -1017,7 +1017,7 @@ namespace Nektar
     	        
     	        m_bsbcParams->m_forceB[i][0] = (- m_bsbcParams->m_forceB[i][0] - 
     	            m_bsbcParams->m_C[i] * m_bsbcParams->m_dofVel[i][0] + 
-    	            m_bsbcParams->m_K[i] * m_bsbcParams->m_dofAdj[i][0]) / m_bsbcParams->m_M;
+    	            m_bsbcParams->m_K[i] * m_bsbcParams->m_dofAdj[i][0]);
                 // with fictious mass
                 m_bsbcParams->m_forceB[i][0] += m_bsbcParams->m_FictM * m_bsbcParams->m_dofAcc[i][0];
     	         
@@ -1035,7 +1035,8 @@ namespace Nektar
     	        {
     	            m_bsbcParams->m_dofVel[i][0] += m_timestep *
     	            m_bsbcParams->AdamsBashforth_coeffs[order-1][j] 
-    	                * m_bsbcParams->m_forceB[i][j] / (m_bsbcParams->m_M+m_bsbcParams->m_FictM);
+    	                * m_bsbcParams->m_forceB[i][j] / 
+                        (m_bsbcParams->m_M + m_bsbcParams->m_FictM);
 
     	            m_bsbcParams->m_dofAdj[i][0] += m_timestep * 
     	            m_bsbcParams->AdamsBashforth_coeffs[order-1][j] *
