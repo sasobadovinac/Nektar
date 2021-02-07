@@ -163,6 +163,18 @@ namespace Nektar
         }
 
         /**
+         * map of string values for GlobalSolve parameters for config 
+         *
+         * This map is populated by ReadGlobalSolve if the
+         * GLOBALSOLVE section is defined in the input file.
+         */
+        GlobalSolveInfoMap& SessionReader::GetGlobalSolveDefaults()
+        {
+            static GlobalSolveInfoMap gloSolveMap;
+            return gloSolveMap;
+        }
+        
+        /**
          * Lists the possible command-line argument which can be specified for
          * this executable.
          *
@@ -966,6 +978,22 @@ namespace Nektar
             return iter1->second;
         }
 
+
+        /**
+         *
+         */
+        const GlobalSolveMap SessionReader::GetGlobalSolveInfo
+                    (const std::string &pProperty) const
+        {
+            auto iter = m_globalSolveInfo.find(pProperty);
+
+            ASSERTL1(iter != m_globalSolveInfo.end(),
+                     "Unable to find requested property: " + pProperty);
+
+            return iter->second;
+        }
+        
+
         /**
          * @brief Returns true if the TIMEINTEGRATIONSCHEME section is defined
          * in the session file.
@@ -1598,6 +1626,10 @@ namespace Nektar
                 FirstChildElement("FILTERS").Element();
 
             ReadFilters(e);
+            
+            e = docHandle.FirstChildElement("NEKTAR").
+                FirstChildElement("GLOBALSOLVE").Element();
+            ReadGlobalSolve       (e);
         }
 
 
@@ -1839,6 +1871,117 @@ namespace Nektar
 
 
 
+        /**
+         *
+         */
+        void SessionReader::ReadGlobalSolve(TiXmlElement *globalsolve)
+        {
+            m_globalSolveInfo.clear();
+
+            if (!globalsolve)
+            {
+                return;
+            }
+
+            // read through and set up config statements
+            TiXmlElement *config   = globalsolve->FirstChildElement();
+            
+            while (config)
+            {
+                std::string value = config->ValueStr(); 
+                std::string valueOrig = value;  // orginal value for error 
+                std::size_t pos; 
+
+                boost::to_upper(value);
+                
+                pos = value.find("CONFIG");
+                if(pos!=std::string::npos)
+                {
+                    // ensure attributes names are upper case
+                    TiXmlAttribute *Attr =  config->FirstAttribute();
+                    while(Attr)
+                    {
+                        std::string attrName(Attr->Name());
+                        boost::to_upper(attrName);
+                        Attr->SetName(attrName.c_str());
+                        Attr = Attr->Next();
+                    }
+
+                    
+                    TiXmlElement *elmt = config->FirstChildElement();
+                    while(elmt)
+                    {
+                        std::string elmtval = elmt->ValueStr();
+                        boost::to_upper(elmtval);
+                        elmt->SetValue(elmtval.c_str());
+                        elmt = elmt->NextSiblingElement();
+                    }
+
+                    
+                    // check to see if Name Attribute is provided
+                    std::string    name; 
+                    config->QueryStringAttribute("NAME", &name);
+
+                    if(name.empty())
+                    {
+                        NEKERROR(ErrorUtil::efatal,
+                                 "Every config has to be associated "
+                                 "with an atrtribue \"Name\". Please include "
+                                 "an Attribute NAME in the XML definition of "
+                                 "tag:" + valueOrig );
+                    }
+
+                    std::string val = value.substr(0,pos);
+                    
+                    TiXmlElement *type = config->FirstChildElement("TYPE");
+                    if(type)
+                    {
+                        val += type->GetText();
+                        boost::to_upper(val);
+                    }
+
+                    std::map<std::string,std::string> tostore; 
+
+                    // check to see if solver has been registered
+                    std::string valdef = val + "DEFAULT";
+                    if(GetGlobalSolveDefaults().count(valdef) == 0)
+                    {
+                        NEKERROR(ErrorUtil::efatal,
+                                 "Solver type " + val + " has not been "
+                                 "registered. Either this is an incorrect "
+                                 "config tag in xml file or solver has not "
+                                 "been compiled (i.e. MPI only solve Xxt)");
+                    }
+                    else
+                    {
+                        // set up defaults parameters
+                        tostore = GetGlobalSolveDefaults()[valdef];
+                    }
+
+                    TiXmlElement *params = config->FirstChildElement();
+                    while(params)
+                    {
+                        std::string tagname = params->ValueStr(); 
+
+                        if(boost::iequals(tagname, "TYPE"))
+                        {
+                            params = params->NextSiblingElement(); 
+                            continue;
+                        }
+
+                        std::string val = params->GetText();
+                        tostore[tagname] = val;
+                    
+                        params = params->NextSiblingElement(); 
+                    }
+                    
+                    m_globalSolveInfo[name] = tostore;
+                }
+                
+                config = config->NextSiblingElement();
+            }
+        }
+        
         /**
          *
          */

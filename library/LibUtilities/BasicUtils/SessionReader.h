@@ -76,11 +76,14 @@ namespace Nektar
         typedef std::map<std::string, int>           EnumMap;
         typedef std::map<std::string, EnumMap>       EnumMapList;
 
+#define ToDeprecate6
+#ifdef  ToDeprecate6
         typedef std::map<std::string, std::string>   GloSysInfoMap;
         typedef std::map<std::string, GloSysInfoMap> GloSysSolnInfoList;
-
-        typedef std::map<std::string, std::string>   GloSysInfoMap;
-        typedef std::map<std::string, GloSysInfoMap> GloSysSolnInfoList;
+#endif
+        
+        typedef std::map<std::string, std::string>    GlobalSolveMap;
+        typedef std::map<std::string, GlobalSolveMap> GlobalSolveInfoMap;
 
         struct TimeIntScheme
         {
@@ -286,7 +289,7 @@ namespace Nektar
                 const std::string &pValue);
 
             /* ----GlobalSysSolnInfo ----- */
-
+#ifdef  ToDeprecate6
             LIB_UTILITIES_EXPORT bool DefinesGlobalSysSolnInfo(
                 const std::string &variable,
                 const std::string &property) const;
@@ -294,7 +297,17 @@ namespace Nektar
             LIB_UTILITIES_EXPORT const std::string& GetGlobalSysSolnInfo(
                 const std::string &variable,
                 const std::string &property) const;
+#endif
+            
+            /* ----GlobalSolve ----- */
+            
+            LIB_UTILITIES_EXPORT inline static std::string
+                 RegisterGlobalSolveInfo(const std::string &pProperty,
+                                         const GlobalSolveMap &pGSmap);
 
+            LIB_UTILITIES_EXPORT const GlobalSolveMap GetGlobalSolveInfo
+                (const std::string &pProperty) const;
+            
             /* ------ TIME INTEGRATION INFORMATION ----- */
             LIB_UTILITIES_EXPORT bool DefinesTimeIntScheme() const;
             LIB_UTILITIES_EXPORT const TimeIntScheme &GetTimeIntScheme() const;
@@ -446,6 +459,8 @@ namespace Nektar
             ParameterMap                              m_parameters;
             /// Solver information properties.
             SolverInfoMap                             m_solverInfo;
+            /// Global Solve properties.
+            GlobalSolveInfoMap                        m_globalSolveInfo;
             /// Geometric information properties.
             GeometricInfoMap                          m_geometricInfo;
             /// Expressions.
@@ -470,8 +485,13 @@ namespace Nektar
             LIB_UTILITIES_EXPORT static EnumMapList&  GetSolverInfoEnums();
             /// Default solver info options.
             LIB_UTILITIES_EXPORT static SolverInfoMap& GetSolverInfoDefaults();
+#ifdef  ToDeprecate6
             /// GlobalSysSoln Info map.
             LIB_UTILITIES_EXPORT static GloSysSolnInfoList& GetGloSysSolnList();
+#endif
+            /// GlobalSolve  map.
+            LIB_UTILITIES_EXPORT static GlobalSolveInfoMap&
+                                                    GetGlobalSolveDefaults();
             /// CmdLine argument map.
             LIB_UTILITIES_EXPORT static CmdLineArgMap& GetCmdLineArgMap();
 
@@ -509,10 +529,13 @@ namespace Nektar
 
             /// Reads the PARAMETERS section of the XML document.
             LIB_UTILITIES_EXPORT void ReadParameters(TiXmlElement *conditions);
-            /// Reads the SOLVERINFO section of the XML document.
-            LIB_UTILITIES_EXPORT void ReadSolverInfo(TiXmlElement *conditions);
+#ifdef  ToDeprecate6
             /// Reads the GLOBALSYSSOLNINFO section of the XML document.
             LIB_UTILITIES_EXPORT void ReadGlobalSysSolnInfo(
+                    TiXmlElement *conditions);
+#endif
+            /// Reads the GLOBALSOLVE section of the XML document.
+            LIB_UTILITIES_EXPORT void ReadGlobalSolve(
                     TiXmlElement *conditions);
             /// Reads the TIMEINTEGRATIONSCHEME section of the XML document.
             LIB_UTILITIES_EXPORT void ReadTimeIntScheme(
@@ -525,6 +548,8 @@ namespace Nektar
             LIB_UTILITIES_EXPORT void ReadFunctions(TiXmlElement *conditions);
             /// Reads the FILTERS section of the XML document.
             LIB_UTILITIES_EXPORT void ReadFilters(TiXmlElement *filters);
+            /// Reads the SOLVERINFO section of the XML document.
+            LIB_UTILITIES_EXPORT void ReadSolverInfo(TiXmlElement *globalsolve);
             /// Enforce parameters from command line arguments.
             LIB_UTILITIES_EXPORT void CmdLineOverride();
             /// Check values of solver info options are valid.
@@ -700,6 +725,19 @@ namespace Nektar
             GetCmdLineArgMap()[pName] = x;
             return pName;
         }
+
+        /**
+         *
+         */
+        inline std::string SessionReader::RegisterGlobalSolveInfo(
+            const std::string &pName,
+            const GlobalSolveMap &pGSmap)
+        {
+            ASSERTL0(!pName.empty(), "Empty name for GlobalSolve argument.");
+            GetGlobalSolveDefaults()[pName] = pGSmap;
+            return pName;
+        }
+        
     }
 }
 

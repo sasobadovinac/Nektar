@@ -10,6 +10,8 @@ ADD_NEKTAR_EXECUTABLE(LinSysIterDemo
     COMPONENT demos DEPENDS LibUtilities SOURCES LinSysIterDemo.cpp)
 ADD_NEKTAR_EXECUTABLE(NonlinSysIterDemo
     COMPONENT demos DEPENDS LibUtilities SOURCES NonlinSysIterDemo.cpp)
+ADD_NEKTAR_EXECUTABLE(SessionReaderDemo
+    COMPONENT demos DEPENDS LibUtilities SOURCES SessionReaderDemo.cpp)
 
 IF(NEKTAR_USE_MPI)
     ADD_NEKTAR_EXECUTABLE(FieldIOBenchmarker
@@ -72,3 +74,4 @@ ADD_NEKTAR_TEST(ErrorStream)
 ADD_NEKTAR_TEST(LinSysIterDemo_LinearSys_Jacobi)
 ADD_NEKTAR_TEST(LinSysIterDemo_LinearSys_GMRES)
 ADD_NEKTAR_TEST(NonlinSysIterDemo_LinearSys_Newton)
+ADD_NEKTAR_TEST(SessionReaderDemo)
