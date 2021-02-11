@@ -163,8 +163,8 @@ void ProcessBL::Process()
     ProcessElements();
     ProcessComposites();
 
-    m_mesh->MakeOrder(m_config["nq"].as<int>() - 1,
-                      LibUtilities::ePolyEvenlySpaced, m_log);
+    // m_mesh->MakeOrder(m_config["nq"].as<int>() - 1,
+    //                   LibUtilities::ePolyEvenlySpaced, m_log);
 }
 
 void ProcessBL::BoundaryLayer2D()
