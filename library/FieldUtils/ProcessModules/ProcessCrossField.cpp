@@ -64,7 +64,7 @@ ProcessCrossField::~ProcessCrossField()
 
 void ProcessCrossField::Process(po::variables_map &vm)
 {
-    boost::ignore_unused(vm);
+    m_f->SetUpExp(vm);
 
     Initialise();
 
