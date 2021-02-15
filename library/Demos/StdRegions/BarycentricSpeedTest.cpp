@@ -93,9 +93,25 @@ int main(int argc, char *argv[])
     ptypes[2] = "PolyEvenlySpaced";
 
     vector<int> &points = demo.GetPoints();
-    points[0] = 10;
-    points[1] = 10;
-    points[2] = 10;
+    if (dim == 1)
+    {
+        points[0] = 64;
+        std::cout << "num points to sample = 64^1" << std::endl;
+
+    }
+    else if (dim == 2)
+    {
+        points[0] = 8;
+        points[1] = 8;
+        std::cout << "num points to sample = 8^2" << std::endl;
+    }
+    else if (dim == 3)
+    {
+        points[0] = 4;
+        points[1] = 4;
+        points[2] = 4;
+        std::cout << "num points to sample = 4^3" << std::endl;
+    }
 
     StdExpansion *F = demo.CreateStdExpansion();
     auto tmpCoords2 = demo.GetCoords(F);
@@ -113,22 +129,8 @@ int main(int argc, char *argv[])
 
     int nModes = E->GetBasisNumModes(0);
     std::cout << "Num of modes is: " << nModes << std::endl;
-    int totCyc = 1;
-    if (dim == 1)
-    {
-        totCyc = 1000 * 10 * 10 * 10;
-    }
-    else if (dim == 2)
-    {
-        totCyc = 1000 * 10 * 10;
-    }
-    else if (dim == 3)
-    {
-        totCyc = 1000 * 10;
-    }
-
-
-        std::cout << "Running timings for " << totCyc << " cycles." << std::endl;
+    int totCyc = 100000;
+    std::cout << "Running timings for " << totCyc << " cycles." << std::endl;
 
     // Calc interpolation matrix every call
     LibUtilities::Timer t;
