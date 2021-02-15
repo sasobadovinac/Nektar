@@ -11,17 +11,8 @@ ADD_NEKTAR_EXECUTABLE(StdInterpDerivBasis
 ADD_NEKTAR_EXECUTABLE(StdEquiToCoeff2D
     COMPONENT demos DEPENDS StdRegions SOURCES StdEquiToCoeff2D.cpp)
 
-ADD_NEKTAR_EXECUTABLE(BarycentricSpeedTest3D
-        COMPONENT demos DEPENDS StdRegions SOURCES BarycentricSpeedTest3D.cpp)
-
-ADD_NEKTAR_EXECUTABLE(BarycentricSpeedTest3DEvalOnly
-        COMPONENT demos DEPENDS StdRegions SOURCES BarycentricSpeedTest3DEvalOnly.cpp)
-
-ADD_NEKTAR_EXECUTABLE(BarycentricSpeedTest2D
-        COMPONENT demos DEPENDS StdRegions SOURCES BarycentricSpeedTest2D.cpp)
-
-ADD_NEKTAR_EXECUTABLE(BarycentricSpeedTest2DEvalOnly
-        COMPONENT demos DEPENDS StdRegions SOURCES BarycentricSpeedTest2DEvalOnly.cpp)
+ADD_NEKTAR_EXECUTABLE(BarycentricSpeedTest
+        COMPONENT demos DEPENDS StdRegions SOURCES BarycentricSpeedTest.cpp)
 
 ADD_NEKTAR_EXECUTABLE(StdInterpBasisTimings
         COMPONENT demos DEPENDS StdRegions SOURCES StdInterpBasisTimings.cpp)

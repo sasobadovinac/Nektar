@@ -92,6 +92,10 @@ protected:
         const Array<OneD, const NekDouble> &physvals) override;
 
     STD_REGIONS_EXPORT virtual NekDouble v_PhysEvaluate(
+        const Array<OneD, DNekMatSharedPtr> &I,
+        const Array<OneD, const NekDouble> &physvals) override;
+
+    STD_REGIONS_EXPORT virtual NekDouble v_PhysEvaluate(
         const Array<OneD, NekDouble> coord,
         const Array<OneD, const NekDouble> &inarray, NekDouble &out_d0,
         NekDouble &out_d1, NekDouble &out_d2) override;

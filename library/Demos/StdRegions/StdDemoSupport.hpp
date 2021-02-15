@@ -443,6 +443,21 @@ public:
         return m_pointstype;
     }
 
+    std::vector<int> &GetBasis()
+    {
+        return m_order;
+    }
+
+    std::vector<int> &GetPoints()
+    {
+        return m_points;
+    }
+
+    std::vector<int> &GetOrder()
+    {
+        return m_order;
+    }
+
     Array<OneD, Array<OneD, NekDouble>> GetCoords(StdExpansion *E)
     {
         int dimension = E->GetShapeDimension();
