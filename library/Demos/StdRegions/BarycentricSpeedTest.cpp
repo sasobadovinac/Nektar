@@ -130,6 +130,11 @@ int main(int argc, char *argv[])
     int nModes = E->GetBasisNumModes(0);
     std::cout << "Num of modes is: " << nModes << std::endl;
     int totCyc = 100000;
+    if (dim == 1)
+    {
+        totCyc = 1000000;
+    }
+
     std::cout << "Running timings for " << totCyc << " cycles." << std::endl;
 
     // Calc interpolation matrix every call
