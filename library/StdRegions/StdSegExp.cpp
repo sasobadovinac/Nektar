@@ -291,16 +291,6 @@ void StdSegExp::v_FwdTrans(const Array<OneD, const NekDouble> &inarray,
     }
 }
 
-NekDouble StdSegExp::v_PhysEvaluate(const Array<OneD, NekDouble> coord,
-                                    const Array<OneD, const NekDouble> &inarray,
-                                    NekDouble &out_d0,
-                                    NekDouble &out_d1,
-                                    NekDouble &out_d2)
-{
-    boost::ignore_unused(out_d1, out_d2);
-    return BaryTensorDeriv(coord, inarray, out_d0);
-}
-
 void StdSegExp::v_FwdTrans_BndConstrained(
     const Array<OneD, const NekDouble> &inarray,
     Array<OneD, NekDouble> &outarray)

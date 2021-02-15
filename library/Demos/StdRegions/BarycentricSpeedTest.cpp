@@ -135,11 +135,11 @@ int main(int argc, char *argv[])
     // Calc interpolation matrix every call
     LibUtilities::Timer t;
 
-    Array<OneD, NekDouble> Ephys(totPoints), Ederiv0(totPoints), Ederiv1(totPoints), Ederiv2(totPoints);
-    Array<OneD, NekDouble> Sphys(totPoints), Sderiv0(totPoints), Sderiv1(totPoints), Sderiv2(totPoints);
-    Array<OneD, NekDouble> Bphys(totPoints), Bderiv0(totPoints), Bderiv1(totPoints), Bderiv2(totPoints);
+    Array<OneD, NekDouble> Ephys(totPoints), Ederiv0(totPoints), E2deriv0(totPoints), Ederiv1(totPoints), Ederiv2(totPoints);
+    Array<OneD, NekDouble> Sphys(totPoints), Sderiv0(totPoints), S2deriv0(totPoints), Sderiv1(totPoints), Sderiv2(totPoints);
+    Array<OneD, NekDouble> Bphys(totPoints), Bderiv0(totPoints), B2deriv0(totPoints), Bderiv1(totPoints), Bderiv2(totPoints);
 
-    Array<OneD, NekDouble> EphysDeriv0(coordsE[0].size()), EphysDeriv1(coordsE[0].size()), EphysDeriv2(coordsE[0].size());
+    Array<OneD, NekDouble> EphysDeriv0(coordsE[0].size()), Ephys2Deriv0(coordsE[0].size()), EphysDeriv1(coordsE[0].size()), EphysDeriv2(coordsE[0].size());
     std::cout << "Testing old method, calc interp matrix every cycle" << std::endl;
 
     if (dim == 1)
@@ -163,10 +163,14 @@ int main(int argc, char *argv[])
             }
 
             E->PhysDeriv(physIn, EphysDeriv0);
+            E->PhysDeriv(EphysDeriv0, Ephys2Deriv0);
+
             for (int i = 0; i < totPoints; ++i)
             {
                 Ephys[i]   = E->PhysEvaluate(I[i], physIn);
                 Ederiv0[i] = E->PhysEvaluate(I[i], EphysDeriv0);
+                E2deriv0[i] = E->PhysEvaluate(I[i], Ephys2Deriv0);
+
             }
         }
         t.Stop();
@@ -235,7 +239,7 @@ int main(int argc, char *argv[])
     NekDouble timeOld = t.TimePerTest(totCyc);
     std::cout << "Old method: " << t.Elapsed().count() << "s - > " << timeOld << " per cycle (" << totCyc << " cycles)." << std::endl;
 
-    Array<OneD, NekDouble> SphysDeriv0(coordsE[0].size()), SphysDeriv1(coordsE[0].size()), SphysDeriv2(coordsE[0].size());
+    Array<OneD, NekDouble> SphysDeriv0(coordsE[0].size()), Sphys2Deriv0(coordsE[0].size()), SphysDeriv1(coordsE[0].size()), SphysDeriv2(coordsE[0].size());
     Array<OneD, Array<OneD, DNekMatSharedPtr>>  I(totPoints);
 
     if (dim == 1)
@@ -292,10 +296,12 @@ int main(int argc, char *argv[])
         for (int cyc = 0; cyc < totCyc; ++cyc)
         {
             E->PhysDeriv(physIn, SphysDeriv0);
+            E->PhysDeriv(SphysDeriv0, Sphys2Deriv0);
             for (int i = 0; i < totPoints; ++i)
             {
                 Sphys[i]   = E->PhysEvaluate(I[i], physIn);
                 Sderiv0[i] = E->PhysEvaluate(I[i], SphysDeriv0);
+                S2deriv0[i] = E->PhysEvaluate(I[i], Sphys2Deriv0);
             }
         }
         t.Stop();
@@ -342,7 +348,7 @@ int main(int argc, char *argv[])
         {
             for (int i = 0; i < totPoints; ++i)
             {
-                Bphys[i] = E->PhysEvaluate(coordIn[i], physIn, Bderiv0[i]);
+                Bphys[i] = E->PhysEvaluate2ndDeriv(coordIn[i], physIn, Bderiv0[i], B2deriv0[i]);
             }
         }
         t.Stop();
@@ -375,7 +381,7 @@ int main(int argc, char *argv[])
     NekDouble timeBary = t.TimePerTest(totCyc);
     std::cout << "New method: " << t.Elapsed().count() << "s - > " << timeBary << " per cycle (" << totCyc << " cycles)." << std::endl;
 
-    Array<OneD, NekDouble> sol(totPoints), sol0(totPoints), sol1(totPoints), sol2(totPoints);
+    Array<OneD, NekDouble> sol(totPoints), sol0(totPoints), sol1(totPoints), sol2(totPoints), sol2_0(totPoints, 2);
     sol2 = EvalPolyDerivz(coordIn);
     sol1 = EvalPolyDerivy(coordIn);
     sol0 = EvalPolyDerivx(coordIn);
@@ -395,6 +401,7 @@ int main(int argc, char *argv[])
         //std::cout << sol0[i] << " " << Bderiv0[i] << " " << Sderiv0[i] << " " << Ederiv0[i] << " -> Coord = (" << coordIn[i][0] << ", " << coordIn[i][1] << ", " << coordIn[i][2] << ")" << std::endl;
         //std::cout << sol1[i] << " " << Bderiv1[i] << " " << Sderiv1[i] << " " << Ederiv1[i] << " -> Coord = (" << coordIn[i][0] << ", " << coordIn[i][1] << ", " << coordIn[i][2] << ")" << std::endl;
         //std::cout << sol2[i] << " " << Bderiv2[i] << " " << Sderiv2[i] << " " << Ederiv2[i] << " -> Coord = (" << coordIn[i][0] << ", " << coordIn[i][1] << ", " << coordIn[i][2] << ")" << std::endl;
+        //std::cout << sol2_0[i] << " " << B2deriv0[i] << " " << S2deriv0[i] << " " << E2deriv0[i] << " -> Coord = (" << coordIn[i][0] << ", " << coordIn[i][1] << ", " << coordIn[i][2] << ")" << std::endl;
         //std::cout << sol0[i] << " " << Bderiv0[i] << "\t -> Coord = (" << coordIn[i][0] << ", " << coordIn[i][1] << ", " << coordIn[i][2] << ")" << std::endl;
     }
 
@@ -404,6 +411,10 @@ int main(int argc, char *argv[])
     if (dim > 0)
     {
         std::cout << "\tDeriv0: " << "\t" << F->L2(Bderiv0, sol0) << "\t" << F->Linf(Bderiv0, sol0)   << std::endl;
+    }
+    if (dim == 1)
+    {
+        std::cout << "\t2Deriv0: " << "\t" << F->L2(B2deriv0, sol2_0) << "\t" << F->Linf(B2deriv0, sol2_0)   << std::endl;
     }
     if (dim > 1)
     {
@@ -420,6 +431,10 @@ int main(int argc, char *argv[])
     {
         std::cout << "\tDeriv0: " << "\t" << F->L2(Sderiv0, sol0) << "\t" << F->Linf(Sderiv0, sol0) << std::endl;
     }
+    if (dim == 1)
+    {
+        std::cout << "\t2Deriv0: " << "\t" << F->L2(S2deriv0, sol2_0) << "\t" << F->Linf(S2deriv0, sol2_0)   << std::endl;
+    }
     if (dim > 1)
     {
         std::cout << "\tDeriv1: " << "\t" << F->L2(Sderiv1, sol1) << "\t" << F->Linf(Sderiv1, sol1) << std::endl;
@@ -434,6 +449,10 @@ int main(int argc, char *argv[])
     if (dim > 0)
     {
         std::cout << "\tDeriv0: " << "\t" << F->L2(Ederiv0, sol0) << "\t" << F->Linf(Ederiv0, sol0) << std::endl;
+    }
+    if (dim == 1)
+    {
+        std::cout << "\t2Deriv0: " << "\t" << F->L2(E2deriv0, sol2_0) << "\t" << F->Linf(E2deriv0, sol2_0)   << std::endl;
     }
     if (dim > 1)
     {
