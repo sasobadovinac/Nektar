@@ -10,7 +10,7 @@
     </files>
     <metrics>
         <metric type="regex" id="1">
-            <regex>^(\d+) wires</regex>
+            <regex>^\[CADSystem\]\s+Found (\d+) wires</regex>
             <matches>
                 <match>
                     <field id="0">1</field>
@@ -18,7 +18,7 @@
             </matches>
         </metric>
         <metric type="regex" id="2">
-            <regex>^There are (\d+) faces after splitting</regex>
+            <regex>^\[CADSystem\]\s+There are (\d+) faces after splitting</regex>
             <matches>
                 <match>
                     <field id="0">4</field>

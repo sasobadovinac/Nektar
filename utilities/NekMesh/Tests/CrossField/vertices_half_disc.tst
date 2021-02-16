@@ -9,10 +9,26 @@
     </files>
     <metrics>
         <metric type="regex" id="1">
-            <regex>^Found (\d+) vertices to export for cross field processing:</regex>
+            <regex>^\[InputMCF\]\s+Found (\d+) vertices to export for cross field processing:</regex>
             <matches>
                 <match>
                     <field id="0">2</field>
+                </match>
+            </matches>
+        </metric>
+        <metric type="regex" id="2">
+            <regex>^\[InputMCF\]\s+0\s+([-+]?[0-9]*\.?[0-9]+(?:[eE][-+]?[0-9]+)?)</regex>
+            <matches>
+                <match>
+                    <field id="1">-5.84047e-17</field>
+                </match>
+            </matches>
+        </metric>
+        <metric type="regex" id="3">
+            <regex>^\[InputMCF\]\s+1\s+([-+]?[0-9]*\.?[0-9]+(?:[eE][-+]?[0-9]+)?)</regex>
+            <matches>
+                <match>
+                    <field id="1">3.34524e-17</field>
                 </match>
             </matches>
         </metric>

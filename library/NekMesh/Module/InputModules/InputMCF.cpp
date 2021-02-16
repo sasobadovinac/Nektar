@@ -483,19 +483,19 @@ void InputMCF::Process()
 
         int nVerts = m_mesh->m_cad->GetVerts().size();
 
-        cout << endl << "Found ";
-        cout << (nVerts ? to_string(nVerts) : "no");
-        cout << ((nVerts > 1) ? " vertices" : " vertex");
-        cout << " to export for cross field processing";
-        cout << (nVerts ? ":" : ".");
-        cout << endl;
+        m_log(VERBOSE) << endl << "Found ";
+        m_log(VERBOSE) << (nVerts ? to_string(nVerts) : "no");
+        m_log(VERBOSE) << ((nVerts > 1) ? " vertices" : " vertex");
+        m_log(VERBOSE) << " to export for cross field processing";
+        m_log(VERBOSE) << (nVerts ? ":" : ".");
+        m_log(VERBOSE) << endl;
 
         for (auto &vert : m_mesh->m_cad->GetVerts())
         {
-            cout << "\t" << vert.second->GetLoc()[0]
-                 << "\t" << vert.second->GetLoc()[1] << endl;
-            outfile      << vert.second->GetLoc()[0] << ","
-                         << vert.second->GetLoc()[1] << endl;
+            m_log(VERBOSE) << "\t" << vert.second->GetLoc()[0] << "\t"
+                           << vert.second->GetLoc()[1] << endl;
+            outfile << vert.second->GetLoc()[0] << ","
+                    << vert.second->GetLoc()[1] << endl;
         }
 
         outfile.close();

@@ -305,7 +305,7 @@ bool CADSystemOCE::LoadCAD()
         aStat = aWriter.Write(m_cadexport.c_str());
         if (aStat != IFSelect_RetDone)
         {
-            cout << "Could not export the CAD" << endl;
+            m_log(WARNING) << "Could not export the CAD" << endl;
         }
     }
 
@@ -1466,7 +1466,7 @@ void CADSystemOCE::SplitFace(TopoDS_Shape &shape)
     TopTools_ListOfShape listShapes;
     listShapes.Append(shape);
 
-    cout << wires.size() << " wires" << endl;
+    m_log(VERBOSE) << "Found " << wires.size() << " wires" << endl;
 
     // Split for each wire
     for (auto &w : wires)
@@ -1498,8 +1498,8 @@ void CADSystemOCE::SplitFace(TopoDS_Shape &shape)
         }
     }
 
-    cout << "There are " << listShapes.Extent() << " faces after splitting"
-         << endl;
+    m_log(VERBOSE) << "There are " << listShapes.Extent()
+                   << " faces after splitting" << endl;
 
     TopoDS_Builder builder;
     TopoDS_Shell shell;
