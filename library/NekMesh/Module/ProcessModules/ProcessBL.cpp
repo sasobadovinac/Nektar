@@ -131,6 +131,8 @@ ProcessBL::ProcessBL(MeshSharedPtr m) : ProcessModule(m)
         ConfigOption(false, "", "Tag identifying surface connected to prism.");
     m_config["r"] =
         ConfigOption(false, "2.0", "Ratio to use in geometry progression.");
+    m_config["reproject"] =
+        ConfigOption(true, "0", "Reproject onto the boundaries.");
 }
 
 ProcessBL::~ProcessBL()
@@ -163,8 +165,9 @@ void ProcessBL::Process()
     ProcessElements();
     ProcessComposites();
 
-    // m_mesh->MakeOrder(m_config["nq"].as<int>() - 1,
-    //                   LibUtilities::ePolyEvenlySpaced, m_log);
+    if (m_config["reproject"].beenSet)
+        m_mesh->MakeOrder(m_config["nq"].as<int>() - 1,
+                          LibUtilities::ePolyEvenlySpaced, m_log);
 }
 
 void ProcessBL::BoundaryLayer2D()
