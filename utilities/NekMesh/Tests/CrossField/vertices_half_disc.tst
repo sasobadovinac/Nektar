@@ -17,17 +17,14 @@
             </matches>
         </metric>
         <metric type="regex" id="2">
-            <regex>^\[InputMCF\]\s+0\s+([-+]?[0-9]*\.?[0-9]+(?:[eE][-+]?[0-9]+)?)</regex>
+            <regex>^\[InputMCF\]\s+(\d+)\s+([-+]?[0-9]*\.?[0-9]+(?:[eE][-+]?[0-9]+)?)</regex>
             <matches>
                 <match>
+                    <field id="0">0</field>
                     <field id="1">-5.84047e-17</field>
                 </match>
-            </matches>
-        </metric>
-        <metric type="regex" id="3">
-            <regex>^\[InputMCF\]\s+1\s+([-+]?[0-9]*\.?[0-9]+(?:[eE][-+]?[0-9]+)?)</regex>
-            <matches>
                 <match>
+                    <field id="0">1</field>
                     <field id="1">3.34524e-17</field>
                 </match>
             </matches>
