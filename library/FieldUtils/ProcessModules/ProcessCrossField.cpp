@@ -487,7 +487,7 @@ vector<set<int>> ProcessCrossField::FindIsocontourElements()
                 {
                     // Is it possible to do aggregate initialisation?
                     Array<OneD, NekDouble> lcoords(m_dim);
-                    lcoords[0] = 0.0;
+                    lcoords[0] = -1.0;
                     lcoords[1] = 1.0;
 
                     NekDouble colVal = expansion->StdPhysEvaluate(
