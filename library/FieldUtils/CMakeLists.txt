@@ -55,6 +55,7 @@ SET(FieldUtilsHeaders
     ProcessModules/ProcessScalGrad.h
     ProcessModules/ProcessMultiShear.h
     ProcessModules/ProcessWSS.h
+    ProcessModules/ProcessLocalStabilityAnalysis.h
     ProcessModules/ProcessC0Projection.h
     ProcessModules/ProcessQCriterion.h
     ProcessModules/ProcessQualityMetric.h
@@ -116,6 +117,7 @@ SET(FieldUtilsSources
     ProcessModules/ProcessSurfDistance.cpp
     ProcessModules/ProcessMultiShear.cpp
     ProcessModules/ProcessWSS.cpp
+    ProcessModules/ProcessLocalStabilityAnalysis.cpp
     ProcessModules/ProcessC0Projection.cpp
     ProcessModules/ProcessQCriterion.cpp
     ProcessModules/ProcessQualityMetric.cpp
@@ -126,7 +128,7 @@ ADD_NEKTAR_LIBRARY(FieldUtils
     DESCRIPTION "Collection of post-processing modules for the FieldConvert utility and filter"
     SOURCES ${FieldUtilsSources}
     HEADERS ${FieldUtilsHeaders}
-    DEPENDS GlobalMapping)
+    DEPENDS GlobalMapping ${LST_LIBRARY})
 
 ADD_DEFINITIONS(-DFIELD_UTILS_EXPORTS)
 
