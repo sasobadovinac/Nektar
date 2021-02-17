@@ -82,9 +82,16 @@ namespace Nektar
         typedef std::map<std::string, GloSysInfoMap> GloSysSolnInfoList;
 #endif
         
-        typedef std::map<std::string, std::string>    GlobalSolveMap;
-        typedef std::map<std::string, GlobalSolveMap> GlobalSolveInfoMap;
+        typedef std::pair<std::string, std::string>    Solve;
+        typedef std::map<std::string, Solve>           SolveMap;
+        typedef std::map<std::string, SolveMap>        SolveInfoMap;
 
+        typedef std::map<std::string, std::string>     SolveConfigMap;
+        typedef std::map<std::string, SolveConfigMap>  SolveConfigInfoMap;
+
+        typedef std::map<std::string, std::string>     PreconConfigMap;
+        typedef std::map<std::string, PreconConfigMap> PreconConfigInfoMap;
+        
         struct TimeIntScheme
         {
             std::string method = "";
@@ -302,10 +309,24 @@ namespace Nektar
             /* ----GlobalSolve ----- */
             
             LIB_UTILITIES_EXPORT inline static std::string
-                 RegisterGlobalSolveInfo(const std::string &pProperty,
-                                         const GlobalSolveMap &pGSmap);
+                 RegisterSolveInfo(const std::string &pProperty,
+                                         const SolveMap &pGSmap);
 
-            LIB_UTILITIES_EXPORT const GlobalSolveMap GetGlobalSolveInfo
+            LIB_UTILITIES_EXPORT const SolveMap GetSolveInfo
+                (const std::string &pProperty) const;
+            
+            LIB_UTILITIES_EXPORT inline static std::string
+                RegisterSolveConfigInfo(const std::string &pProperty,
+                                         const SolveConfigMap &pGSmap);
+
+            LIB_UTILITIES_EXPORT const SolveConfigMap GetSolveConfigInfo
+                (const std::string &pProperty) const;
+            
+            LIB_UTILITIES_EXPORT inline static std::string
+                RegisterPreconConfigInfo(const std::string &pProperty,
+                                         const PreconConfigMap &pGSmap);
+
+            LIB_UTILITIES_EXPORT const PreconConfigMap GetPreconConfigInfo
                 (const std::string &pProperty) const;
             
             /* ------ TIME INTEGRATION INFORMATION ----- */
@@ -459,8 +480,12 @@ namespace Nektar
             ParameterMap                              m_parameters;
             /// Solver information properties.
             SolverInfoMap                             m_solverInfo;
-            /// Global Solve properties.
-            GlobalSolveInfoMap                        m_globalSolveInfo;
+            /// Solve properties.
+            SolveInfoMap                              m_solveInfo;
+            /// Solve Config properties.
+            SolveConfigInfoMap                        m_solveConfigInfo;
+            /// Preconditioner  properties.
+            PreconConfigInfoMap                       m_preconCnfigInfo;
             /// Geometric information properties.
             GeometricInfoMap                          m_geometricInfo;
             /// Expressions.
@@ -489,9 +514,15 @@ namespace Nektar
             /// GlobalSysSoln Info map.
             LIB_UTILITIES_EXPORT static GloSysSolnInfoList& GetGloSysSolnList();
 #endif
-            /// GlobalSolve  map.
-            LIB_UTILITIES_EXPORT static GlobalSolveInfoMap&
-                                                    GetGlobalSolveDefaults();
+
+            /// Solve Config map.
+            LIB_UTILITIES_EXPORT static SolveConfigInfoMap&
+                                                 GetSolveConfigDefaults();
+
+            /// Precon Config map.
+            LIB_UTILITIES_EXPORT static PreconConfigInfoMap&
+                                                GetPreconConfigDefaults();
+            
             /// CmdLine argument map.
             LIB_UTILITIES_EXPORT static CmdLineArgMap& GetCmdLineArgMap();
 
@@ -534,8 +565,17 @@ namespace Nektar
             LIB_UTILITIES_EXPORT void ReadGlobalSysSolnInfo(
                     TiXmlElement *conditions);
 #endif
-            /// Reads the GLOBALSOLVE section of the XML document.
+            /// Reads the SOLVE section of the XML document.
             LIB_UTILITIES_EXPORT void ReadGlobalSolve(
+                    TiXmlElement *conditions);
+            /// Reads the SOLVE section of the XML document.
+            LIB_UTILITIES_EXPORT void ReadSolve(
+                    TiXmlElement *conditions);
+            /// Reads the SolveConfig section of the XML document.
+            LIB_UTILITIES_EXPORT void ReadSolveConfig(
+                    TiXmlElement *conditions);
+            /// Reads the PreconConfigsection of the XML document.
+            LIB_UTILITIES_EXPORT void ReadPreconConfig(
                     TiXmlElement *conditions);
             /// Reads the TIMEINTEGRATIONSCHEME section of the XML document.
             LIB_UTILITIES_EXPORT void ReadTimeIntScheme(
@@ -729,12 +769,24 @@ namespace Nektar
         /**
          *
          */
-        inline std::string SessionReader::RegisterGlobalSolveInfo(
+        inline std::string SessionReader::RegisterSolveConfigInfo(
             const std::string &pName,
-            const GlobalSolveMap &pGSmap)
+            const SolveConfigMap &pGSmap)
         {
-            ASSERTL0(!pName.empty(), "Empty name for GlobalSolve argument.");
-            GetGlobalSolveDefaults()[pName] = pGSmap;
+            ASSERTL0(!pName.empty(), "Empty name for Solve Config argument.");
+            GetSolveConfigDefaults()[pName] = pGSmap;
+            return pName;
+        }
+
+        /**
+         *
+         */
+        inline std::string SessionReader::RegisterPreconConfigInfo(
+            const std::string &pName,
+            const PreconConfigMap &pGSmap)
+        {
+            ASSERTL0(!pName.empty(), "Empty name for Precon Config argument.");
+            GetPreconConfigDefaults()[pName] = pGSmap;
             return pName;
         }
         

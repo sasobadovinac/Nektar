@@ -43,15 +43,15 @@
 using namespace Nektar;
 
 // Set up default values
-LibUtilities::GlobalSolveMap XxtMLSC = {{"TYPE","XXTMULTILEVELSTATICCOND"}};
+LibUtilities::SolveConfigMap XxtMLSC = {{"TYPE","XXTMULTILEVELSTATICCOND"}};
 static std::string XxtMLSCGSInfo = LibUtilities::SessionReader::
-    RegisterGlobalSolveInfo("XXTMULTILEVELSTATICCONDDEFAULT", XxtMLSC);
+    RegisterSolveConfigInfo("XXTMULTILEVELSTATICCONDDEFAULT", XxtMLSC);
 
-LibUtilities::GlobalSolveMap XxtSC = {{"TYPE","XXTSTATICCOND"}};
+LibUtilities::SolveConfigMap XxtSC = {{"TYPE","XXTSTATICCOND"}};
 static std::string XxtSCGSInfo = LibUtilities::SessionReader::
-    RegisterGlobalSolveInfo("XXTSTATICCONDDEFAULT", XxtSC);
+    RegisterSolveConfigInfo("XXTSTATICCONDDEFAULT", XxtSC);
 
-LibUtilities::GlobalSolveMap IterSC =
+LibUtilities::SolveConfigMap IterSC =
     {{"TYPE","ITERATIVESTATICCOND"},
      {"METHOD","ConjugateGradient"},
      {"PRECON","Diagonal"},
@@ -60,7 +60,7 @@ LibUtilities::GlobalSolveMap IterSC =
      {"MAXITER","5000"}
     };
 static std::string IterSCGSInfo = LibUtilities::SessionReader::
-    RegisterGlobalSolveInfo("ITERATIVESTATICCONDDEFAULT", IterSC);
+    RegisterSolveConfigInfo("ITERATIVESTATICCONDDEFAULT", IterSC);
 
 int main(int argc, char *argv[])
 {
@@ -68,12 +68,26 @@ int main(int argc, char *argv[])
         LibUtilities::SessionReader::CreateInstance(argc,argv);
     session->InitSession();
 
-    LibUtilities::GlobalSolveMap
-        GSmap = session->GetGlobalSolveInfo("PConfig");
+    LibUtilities::SolveConfigMap
+        GSmap = session->GetSolveConfigInfo("PConfig");
     
+    std::cout << "PConfig: " << std::endl;
     for(auto& x: GSmap)
     {
-        std::cout << x.first << " : " << x.second <<  std::endl;
+        std::cout << "\t" << x.first << " : " << x.second <<  std::endl;
     }
+
+
+    LibUtilities::SolveMap
+        Smap = session->GetSolveInfo("VelocitySolve");
+    std::cout << "VelocitySolve: " << std::endl;
+    
+    for(auto& x: Smap)
+    {
+        std::cout << "\t" << x.first << " : " << x.second.first << " " <<
+            x.second.second << std::endl;
+    }
+
+
     return 1;
 }

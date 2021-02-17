@@ -161,18 +161,31 @@ namespace Nektar
             static GloSysSolnInfoList gloSysSolnInfoList;
             return gloSysSolnInfoList;
         }
-
+        
         /**
-         * map of string values for GlobalSolve parameters for config 
+         * map of string values for SolveConfig parameters in GlobalSolve
          *
          * This map is populated by ReadGlobalSolve if the
          * GLOBALSOLVE section is defined in the input file.
          */
-        GlobalSolveInfoMap& SessionReader::GetGlobalSolveDefaults()
+        SolveConfigInfoMap& SessionReader::GetSolveConfigDefaults()
         {
-            static GlobalSolveInfoMap gloSolveMap;
-            return gloSolveMap;
+            static SolveConfigInfoMap SolveConfigMap;
+            return SolveConfigMap;
         }
+        
+        /**
+         * map of string values for PreconConfig parameters in GlobalSolve
+         *
+         * This map is populated by ReadGlobalSolve if the
+         * GLOBALSOLVE section is defined in the input file.
+         */
+        PreconConfigInfoMap& SessionReader::GetPreconConfigDefaults()
+        {
+            static PreconConfigInfoMap PreconConfigMap;
+            return PreconConfigMap;
+        }
+
         
         /**
          * Lists the possible command-line argument which can be specified for
@@ -982,18 +995,36 @@ namespace Nektar
         /**
          *
          */
-        const GlobalSolveMap SessionReader::GetGlobalSolveInfo
+        const SolveMap SessionReader::GetSolveInfo
                     (const std::string &pProperty) const
         {
-            auto iter = m_globalSolveInfo.find(pProperty);
+            std::string Property = pProperty;
+            boost::to_upper(Property);
+            
+            auto iter = m_solveInfo.find(Property);
 
-            ASSERTL1(iter != m_globalSolveInfo.end(),
+            ASSERTL1(iter != m_solveInfo.end(),
                      "Unable to find requested property: " + pProperty);
 
             return iter->second;
         }
         
 
+        /**
+         *
+         */
+        const SolveConfigMap SessionReader::GetSolveConfigInfo
+                    (const std::string &pProperty) const
+        {
+            auto iter = m_solveConfigInfo.find(pProperty);
+
+            ASSERTL1(iter != m_solveConfigInfo.end(),
+                     "Unable to find requested property: " + pProperty);
+
+            return iter->second;
+        }
+        
+        
         /**
          * @brief Returns true if the TIMEINTEGRATIONSCHEME section is defined
          * in the session file.
@@ -1629,7 +1660,7 @@ namespace Nektar
             
             e = docHandle.FirstChildElement("NEKTAR").
                 FirstChildElement("GLOBALSOLVE").Element();
-            ReadGlobalSolve       (e);
+            ReadGlobalSolve  (e);
         }
 
 
@@ -1876,15 +1907,110 @@ namespace Nektar
          */
         void SessionReader::ReadGlobalSolve(TiXmlElement *globalsolve)
         {
-            m_globalSolveInfo.clear();
-
             if (!globalsolve)
             {
                 return;
             }
 
+            // capitalise tag galues 
+            TiXmlElement *config = globalsolve->FirstChildElement();
+            while(config)
+            {
+                std::string elmtval = config->ValueStr();
+                boost::to_upper(elmtval);
+                config->SetValue(elmtval.c_str());
+                config = config->NextSiblingElement();
+            }
+
+            ReadSolveConfig  (globalsolve);
+            ReadPreconConfig (globalsolve);
+            ReadSolve        (globalsolve);
+        }
+
+        void SessionReader::ReadSolve(TiXmlElement *globalsolve)
+        {
+            m_solveInfo.clear();
+
             // read through and set up config statements
-            TiXmlElement *config   = globalsolve->FirstChildElement();
+            TiXmlElement *config   = globalsolve->
+                FirstChildElement("SOLVE")->FirstChildElement();
+            
+            LibUtilities::SolveMap slvmap; 
+            while (config)
+            {
+                TiXmlElement *Slv = config->FirstChildElement(); 
+
+                std::string slvid = config->ValueStr();
+                boost::to_upper(slvid);
+                
+                while(Slv)
+                {
+                    std::string slvtype(Slv->ValueStr());
+                    boost::to_upper(slvtype);
+
+
+                    TiXmlAttribute *attr  = Slv->FirstAttribute();
+
+                    std::string var; 
+                    while(attr)
+                    {
+                        var = attr->Name();
+                        boost::to_upper(var);
+                        attr->SetName(var.c_str());
+
+                        if(boost::iequals(var,"VAR"))
+                        {
+                            break;
+                        }
+                        attr = attr->Next();
+                    }
+                    ASSERTL0(var.empty() == false,
+                             "Expected the ScalarSolve or VectorSolve "
+                             "to have an attribute Var which defines "
+                             "the variables to which the solver is to "
+                             "be applied (e.g Var=\"u,v\")");
+
+                    Slv->QueryStringAttribute("VAR", &var);
+
+                    if(boost::iequals(slvtype,"SCALARSOLVE"))
+                    {
+                        std::vector<std::string> varStrings;
+                        bool valid = ParseUtils::GenerateVector(var,
+                                                                varStrings);
+                        ASSERTL0(valid,"Unable to process list of variable "
+                                 "in Var attribute "+ var);
+
+
+                        for(int i = 0; i < varStrings.size(); ++i)
+                        {
+                            slvmap[varStrings[i]] = std::pair<
+                                        std::string, std::string> ("SCALAR",
+                                                           Slv->GetText());
+                        }
+                    }
+                    else if (boost::iequals(slvtype,"VECTORSOLVE"))
+                    {
+                        slvmap[var] = std::pair<
+                            std::string, std::string> ("VECTOR",
+                                                       Slv->GetText());
+                    }
+
+
+                    Slv = Slv->NextSiblingElement();
+                }
+                m_solveInfo[slvid] = slvmap; 
+                config = config->NextSiblingElement();
+            }
+        }
+        
+        void SessionReader::ReadSolveConfig(TiXmlElement *globalsolve)
+        {
+            m_solveConfigInfo.clear();
+            m_solveConfigInfo = GetSolveConfigDefaults();
+
+            // read through and set up config statements
+            TiXmlElement *config   = globalsolve->
+                FirstChildElement("SOLVECONFIG")->FirstChildElement();
             
             while (config)
             {
@@ -1922,14 +2048,11 @@ namespace Nektar
                     std::string    name; 
                     config->QueryStringAttribute("NAME", &name);
 
-                    if(name.empty())
-                    {
-                        NEKERROR(ErrorUtil::efatal,
-                                 "Every config has to be associated "
-                                 "with an atrtribue \"Name\". Please include "
-                                 "an Attribute NAME in the XML definition of "
-                                 "tag:" + valueOrig );
-                    }
+                    ASSERTL0(name.empty() == false,
+                             "Every config has to be associated "
+                             "with an atrtribue \"Name\". Please include "
+                             "an Attribute NAME in the XML definition of "
+                             "tag:" + valueOrig );
 
                     std::string val = value.substr(0,pos);
                     
@@ -1944,7 +2067,7 @@ namespace Nektar
 
                     // check to see if solver has been registered
                     std::string valdef = val + "DEFAULT";
-                    if(GetGlobalSolveDefaults().count(valdef) == 0)
+                    if(GetSolveConfigDefaults().count(valdef) == 0)
                     {
                         NEKERROR(ErrorUtil::efatal,
                                  "Solver type " + val + " has not been "
@@ -1955,7 +2078,7 @@ namespace Nektar
                     else
                     {
                         // set up defaults parameters
-                        tostore = GetGlobalSolveDefaults()[valdef];
+                        tostore = GetSolveConfigDefaults()[valdef];
                     }
 
                     TiXmlElement *params = config->FirstChildElement();
@@ -1975,13 +2098,18 @@ namespace Nektar
                         params = params->NextSiblingElement(); 
                     }
                     
-                    m_globalSolveInfo[name] = tostore;
+                    m_solveConfigInfo[name] = tostore;
                 }
                 
                 config = config->NextSiblingElement();
             }
         }
         
+        void SessionReader::ReadPreconConfig(TiXmlElement *globalsolve)
+        {
+            boost::ignore_unused(globalsolve);
+        }
+
         /**
          *
          */

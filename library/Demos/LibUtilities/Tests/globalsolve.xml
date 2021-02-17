@@ -1,14 +1,15 @@
 <NEKTAR>
 
-  <GLOBALSOLVE>
+<GLOBALSOLVE>
+  <SOLVECONFIG>
     <XxtConfig Name="UWConfig" >
       <Type> MultiLevelStaticCond </Type>
     </XxtConfig>
-    
+      
     <XxtConfig Name="VConfig" >
       <Type> StaticCond </Type> <!-- can be Full, MultiLevel, StaticCond -->
     </XxtConfig>
-    
+      
     <IterativeConfig Name="PConfig" >
       <Type> StaticCond </Type>
       <Method> ConjugateGradient </Method>
@@ -16,50 +17,48 @@
       <AbsTol>  1e-8 </AbsTol>
       <MaxIter> 5000 </MaxIter> 
     </IterativeConfig>
-    
-    <!-- IncNS direct setup --> 
-    <VeclocitySolve>
+  </SOLVECONFIG>
+  
+  <SOLVE>
+    <VelocitySolve>
       <ScalarSolve Var="u,w"> UWConfig </ScalarSolve>
       <ScalarSolve Var="v">   VConfig  </ScalarSolve>
-    </VeclocitySolve>
-    
+    </VelocitySolve>
+      
     <PressureSolve>
       <ScalarSolve Var="p"> PConfig  </ScalarSolve>
     </PressureSolve>
-    
-  </GLOBALSOLVE>
-
-
-  <!--- Implicit CFS solver !-->
-
-  <!--- JFNK for global solve !-->
-  <GLOBALSOLVE>
-    <CFSImplicitSolve>
-      <VectorSolve Var="rho,rhou,rhov,rhow,rhoE">
-        JFNKConfig
-      </VectorSolve>
-    </CFSImplicitSolve>
+  </SOLVE>
   
-    <!--- Newton solver !-->
-    <NewtonConfig Name="JFNKConfig">
-      <SolverType> Newton </SolverType>
-      <JacEval>    JacFree  </JacEval>
-      <LinSolver>  GMRes    </LinSolver>
-      <AbsTol>     1e-6     </AbsTol>
-    </NewtonConfig>
-    
-    <!--- GMRes for linear solve !-->
-    <GMResConfig Name="GMRes">
-      <Precon>  BlockDiagConfig </Precon>
-      <AbsTol>  1e-6  </AbsTol>
-      <MaxIter> 5000 </MaxIter> 
-    </GMResConfig>
-
-    <!--- Block Diagonal Preconditioner !-->
-    <PreconConfig Name="BlockDiagConfig" > 
-      <Type> BlockJacobi </Type>
+  <!--- JFNK for global solve !-->
+  <PRECONCONFIG>
+    <BlockJacobiConfig Name="BlockDiagConfig" >
       <NumIter> 3  </NumIter>
-    </PreconConfig>
-  </GLOBALSOLVE>>
-    
+    </BlockJacobiConfig>
+  </PRECONCONFIG>
+  
+  <SOLVECONFIG>
+      <!--- JF Newton solver !-->
+      <NewtonConfig Name="JFNKConfig">
+        <JacEval>    JacFree  </JacEval>
+        <LinSolver>  GMRes    </LinSolver>
+        <AbsTol>     1e-6     </AbsTol>
+      </NewtonConfig>
+      
+
+      <IterativeConfig Name="GMRes">
+        <Method> GMRes </Method>
+        <Precon>  BlockDiagConfig </Precon>
+        <AbsTol>  1e-6  </AbsTol>
+        <MaxIter> 5000 </MaxIter>
+      </IterativeConfig>
+  </SOLVECONFIG>
+
+  <SOLVE>
+    <CFSImplicitSolve>
+      <VectorSolve Var="rho,rhou,rhov,rhow,rhoE"> JFNKConfig </VectorSolve>
+    </CFSImplicitSolve>
+  </SOLVE>
+</GLOBALSOLVE>
+
 </NEKTAR>
