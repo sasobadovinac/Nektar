@@ -616,33 +616,39 @@ Array<OneD, NekDouble> ProcessCrossField::FindSingularityInElmt(int id)
         eta[0] -= delta[0];
         eta[1] -= delta[1];
 
+        // Check if point is still inside the element
+        // If not, we dismiss it;
+        // it's most likely been detected by adjacent element
+        // This probably should be outside of the loop because there is no
+        // guarantee that the search path will not cross the boundary even
+        // though there is indeed a singularity inside the element However,
+        // StdExpansion2D has an ASSERTL2 on coordinates in v_PhysEvaluate that
+        // blocks GitLab tests
+        switch (expansion->GetGeom()->GetShapeType())
+        {
+            case LibUtilities::eTriangle:
+                if (!(eta[0] >= -1.0 && eta[1] >= -1.0 &&
+                      eta[0] + eta[1] <= 0.0))
+                {
+                    eta = Array<OneD, NekDouble>(0);
+                    return eta;
+                }
+                break;
+
+            case LibUtilities::eQuadrilateral:
+                if (!(eta[0] >= -1.0 && eta[1] >= -1.0 && eta[0] <= 1.0 &&
+                      eta[1] <= 1.0))
+                {
+                    eta = Array<OneD, NekDouble>(0);
+                    return eta;
+                }
+                break;
+
+            default:
+                ASSERTL0(false, "Unexpected shape type");
+        }
+
     } while (sqrt(pow(delta[0], 2) + pow(delta[1], 2)) > 1.0e-9);
-
-    // Check if point is still inside the element
-    // If not, we dismiss it;
-    // it's most likely been detected by adjacent element
-    switch (expansion->GetGeom()->GetShapeType())
-    {
-        case LibUtilities::eTriangle:
-            if (!(eta[0] >= -1.0 && eta[1] >= -1.0 && eta[0] + eta[1] <= 0.0))
-            {
-                eta = Array<OneD, NekDouble>(0);
-                return eta;
-            }
-            break;
-
-        case LibUtilities::eQuadrilateral:
-            if (!(eta[0] >= -1.0 && eta[1] >= -1.0 && eta[0] <= 1.0 &&
-                  eta[1] <= 1.0))
-            {
-                eta = Array<OneD, NekDouble>(0);
-                return eta;
-            }
-            break;
-
-        default:
-            ASSERTL0(false, "Unexpected shape type");
-    }
 
     return eta;
 }
