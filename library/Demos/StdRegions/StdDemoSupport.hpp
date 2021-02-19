@@ -85,7 +85,10 @@ public:
              "higher dimensions.")
             ("pointstype,P",
              po::value<vector<string>>(&m_pointstype)->multitoken(),
-             "Optional points type, separate by spaces for higher dimensions.");
+             "Optional points type, separate by spaces for higher dimensions.")
+            ("eval,e",
+             po::value<bool>(&m_eval),
+             "Eval only for speed test?");
     }
 
     void ParseArguments(int argc, char *argv[])
@@ -497,6 +500,8 @@ public:
 
         return coords;
     }
+
+    bool m_eval;
 
 protected:
     po::options_description m_desc;

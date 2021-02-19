@@ -63,6 +63,13 @@ int main(int argc, char *argv[])
     Array<OneD, Array<OneD, NekDouble> > coordsE = demo.GetCoords(E);
     int dim = coordsE.size();
 
+    // Evaluate only?
+    bool eval = demo.m_eval;
+    if(eval)
+    {
+        std::cout << "Eval only!" << std::endl;
+    }
+
     std::cout << "ptypes[0] = " << LibUtilities::kPointsTypeStr[E->GetPointsType(0)] << std::endl;
     if (dim > 1)
     {
@@ -82,6 +89,7 @@ int main(int argc, char *argv[])
         tmpCoords[i][1] = (dim > 1) ? coordsE[1][i] : 0;
         tmpCoords[i][2] = (dim > 2) ? coordsE[2][i] : 0;
     }
+
     Array<OneD, NekDouble> physIn = EvalPoly(tmpCoords);
 
     // Create a new element but with the evenly-spaced points type, so that we
@@ -125,6 +133,12 @@ int main(int argc, char *argv[])
         coordIn[i][2] = (dim > 2) ? tmpCoords2[2][i] : 0;
     }
 
+    /*Array<OneD, Array<OneD, NekDouble>> coordIn(1);
+    coordIn[0] = Array<OneD, NekDouble>(3);
+    coordIn[0][0] = tmpCoords2[0][tmpCoords2[0].size() - 1];
+    coordIn[0][1] = tmpCoords2[1][tmpCoords2[0].size() - 1];
+    coordIn[0][2] = tmpCoords2[2][tmpCoords2[0].size() - 1];*/
+
     int totPoints = coordIn.size();
 
     int nModes = E->GetBasisNumModes(0);
@@ -133,6 +147,10 @@ int main(int argc, char *argv[])
     if (dim == 1)
     {
         totCyc = 1000000;
+    }
+    if(eval)
+    {
+
     }
 
     std::cout << "Running timings for " << totCyc << " cycles." << std::endl;
@@ -149,96 +167,184 @@ int main(int argc, char *argv[])
 
     if (dim == 1)
     {
-        t.Start();
-        for (int cyc = 0; cyc < totCyc; ++cyc)
+        if(eval)
         {
-            Array<OneD, Array<OneD, DNekMatSharedPtr>> I(totPoints);
-            for (int i = 0; i < totPoints; ++i)
+            t.Start();
+            for (int cyc = 0; cyc < totCyc; ++cyc)
             {
-                // Obtain local collapsed coordinate from
-                // cartesian coordinate.
-                Array<OneD, NekDouble> eta = Array<OneD, NekDouble>(3);
-                eta[0] = coordIn[i][0];
-                eta[1] = coordIn[i][1];
-                eta[2] = coordIn[i][2];
+                Array<OneD, Array<OneD, DNekMatSharedPtr>> I(totPoints);
+                for (int i = 0; i < totPoints; ++i)
+                {
+                    // Obtain local collapsed coordinate from
+                    // cartesian coordinate.
+                    Array<OneD, NekDouble> eta = Array<OneD, NekDouble>(3);
+                    eta[0]                     = coordIn[i][0];
+                    eta[1]                     = coordIn[i][1];
+                    eta[2]                     = coordIn[i][2];
 
-                // Get Lagrange interpolants.
-                I[i]    = Array<OneD, DNekMatSharedPtr>(1);
-                I[i][0] = E->GetBase()[0]->GetI(eta);
+                    // Get Lagrange interpolants.
+                    I[i]    = Array<OneD, DNekMatSharedPtr>(1);
+                    I[i][0] = E->GetBase()[0]->GetI(eta);
+                }
+
+                for (int i = 0; i < totPoints; ++i)
+                {
+                    Ephys[i]    = E->PhysEvaluate(I[i], physIn);
+                }
             }
-
-            E->PhysDeriv(physIn, EphysDeriv0);
-            E->PhysDeriv(EphysDeriv0, Ephys2Deriv0);
-
-            for (int i = 0; i < totPoints; ++i)
-            {
-                Ephys[i]   = E->PhysEvaluate(I[i], physIn);
-                Ederiv0[i] = E->PhysEvaluate(I[i], EphysDeriv0);
-                E2deriv0[i] = E->PhysEvaluate(I[i], Ephys2Deriv0);
-
-            }
+            t.Stop();
         }
-        t.Stop();
+        else
+        {
+            t.Start();
+            for (int cyc = 0; cyc < totCyc; ++cyc)
+            {
+                Array<OneD, Array<OneD, DNekMatSharedPtr>> I(totPoints);
+                for (int i = 0; i < totPoints; ++i)
+                {
+                    // Obtain local collapsed coordinate from
+                    // cartesian coordinate.
+                    Array<OneD, NekDouble> eta = Array<OneD, NekDouble>(3);
+                    eta[0]                     = coordIn[i][0];
+                    eta[1]                     = coordIn[i][1];
+                    eta[2]                     = coordIn[i][2];
+
+                    // Get Lagrange interpolants.
+                    I[i]    = Array<OneD, DNekMatSharedPtr>(1);
+                    I[i][0] = E->GetBase()[0]->GetI(eta);
+                }
+
+                E->PhysDeriv(physIn, EphysDeriv0);
+                E->PhysDeriv(EphysDeriv0, Ephys2Deriv0);
+
+                for (int i = 0; i < totPoints; ++i)
+                {
+                    Ephys[i]    = E->PhysEvaluate(I[i], physIn);
+                    Ederiv0[i]  = E->PhysEvaluate(I[i], EphysDeriv0);
+                    E2deriv0[i] = E->PhysEvaluate(I[i], Ephys2Deriv0);
+                }
+            }
+            t.Stop();
+        }
     }
     else if (dim == 2)
     {
-        t.Start();
-        for (int cyc = 0; cyc < totCyc; ++cyc)
+        if (eval)
         {
-            Array<OneD, Array<OneD, DNekMatSharedPtr>> I(totPoints);
-            for (int i = 0; i < totPoints; ++i)
+            t.Start();
+            for (int cyc = 0; cyc < totCyc; ++cyc)
             {
-                // Obtain local collapsed coordinate from
-                // cartesian coordinate.
-                Array<OneD, NekDouble> eta = Array<OneD, NekDouble>(3);
-                E->LocCoordToLocCollapsed(coordIn[i], eta);
+                Array<OneD, Array<OneD, DNekMatSharedPtr>> I(totPoints);
+                for (int i = 0; i < totPoints; ++i)
+                {
+                    // Obtain local collapsed coordinate from
+                    // cartesian coordinate.
+                    Array<OneD, NekDouble> eta = Array<OneD, NekDouble>(3);
+                    E->LocCoordToLocCollapsed(coordIn[i], eta);
 
-                // Get Lagrange interpolants.
-                I[i]    = Array<OneD, DNekMatSharedPtr>(2);
-                I[i][0] = E->GetBase()[0]->GetI(eta);
-                I[i][1] = E->GetBase()[1]->GetI(eta + 1);
-            }
+                    // Get Lagrange interpolants.
+                    I[i]    = Array<OneD, DNekMatSharedPtr>(2);
+                    I[i][0] = E->GetBase()[0]->GetI(eta);
+                    I[i][1] = E->GetBase()[1]->GetI(eta + 1);
+                }
 
-            E->PhysDeriv(physIn, EphysDeriv0, EphysDeriv1);
-            for (int i = 0; i < totPoints; ++i)
-            {
-                Ephys[i]   = E->PhysEvaluate(I[i], physIn);
-                Ederiv0[i] = E->PhysEvaluate(I[i], EphysDeriv0);
-                Ederiv1[i] = E->PhysEvaluate(I[i], EphysDeriv1);
+                for (int i = 0; i < totPoints; ++i)
+                {
+                    Ephys[i]   = E->PhysEvaluate(I[i], physIn);
+                }
             }
+            t.Stop();
         }
-        t.Stop();
+        else
+        {
+            t.Start();
+            for (int cyc = 0; cyc < totCyc; ++cyc)
+            {
+                Array<OneD, Array<OneD, DNekMatSharedPtr>> I(totPoints);
+                for (int i = 0; i < totPoints; ++i)
+                {
+                    // Obtain local collapsed coordinate from
+                    // cartesian coordinate.
+                    Array<OneD, NekDouble> eta = Array<OneD, NekDouble>(3);
+                    E->LocCoordToLocCollapsed(coordIn[i], eta);
+
+                    // Get Lagrange interpolants.
+                    I[i]    = Array<OneD, DNekMatSharedPtr>(2);
+                    I[i][0] = E->GetBase()[0]->GetI(eta);
+                    I[i][1] = E->GetBase()[1]->GetI(eta + 1);
+                }
+
+                E->PhysDeriv(physIn, EphysDeriv0, EphysDeriv1);
+                for (int i = 0; i < totPoints; ++i)
+                {
+                    Ephys[i]   = E->PhysEvaluate(I[i], physIn);
+                    Ederiv0[i] = E->PhysEvaluate(I[i], EphysDeriv0);
+                    Ederiv1[i] = E->PhysEvaluate(I[i], EphysDeriv1);
+                }
+            }
+            t.Stop();
+        }
     }
     else if (dim == 3)
     {
-        t.Start();
-        for (int cyc = 0; cyc < totCyc; ++cyc)
+        if (eval)
         {
-            Array<OneD, Array<OneD, DNekMatSharedPtr>> I(totPoints);
-            for (int i = 0; i < totPoints; ++i)
+            t.Start();
+            for (int cyc = 0; cyc < totCyc; ++cyc)
             {
-                // Obtain local collapsed coordinate from
-                // cartesian coordinate.
-                Array<OneD, NekDouble> eta = Array<OneD, NekDouble>(3);
-                E->LocCoordToLocCollapsed(coordIn[i], eta);
+                Array<OneD, Array<OneD, DNekMatSharedPtr>> I(totPoints);
+                for (int i = 0; i < totPoints; ++i)
+                {
+                    // Obtain local collapsed coordinate from
+                    // cartesian coordinate.
+                    Array<OneD, NekDouble> eta = Array<OneD, NekDouble>(3);
+                    E->LocCoordToLocCollapsed(coordIn[i], eta);
 
-                // Get Lagrange interpolants.
-                I[i]    = Array<OneD, DNekMatSharedPtr>(3);
-                I[i][0] = E->GetBase()[0]->GetI(eta);
-                I[i][1] = E->GetBase()[1]->GetI(eta + 1);
-                I[i][2] = E->GetBase()[2]->GetI(eta + 2);
-            }
+                    // Get Lagrange interpolants.
+                    I[i]    = Array<OneD, DNekMatSharedPtr>(3);
+                    I[i][0] = E->GetBase()[0]->GetI(eta);
+                    I[i][1] = E->GetBase()[1]->GetI(eta + 1);
+                    I[i][2] = E->GetBase()[2]->GetI(eta + 2);
+                }
 
-            E->PhysDeriv(physIn, EphysDeriv0, EphysDeriv1, EphysDeriv2);
-            for (int i = 0; i < totPoints; ++i)
-            {
-                Ephys[i]   = E->PhysEvaluate(I[i], physIn);
-                Ederiv0[i] = E->PhysEvaluate(I[i], EphysDeriv0);
-                Ederiv1[i] = E->PhysEvaluate(I[i], EphysDeriv1);
-                Ederiv2[i] = E->PhysEvaluate(I[i], EphysDeriv2);
+                for (int i = 0; i < totPoints; ++i)
+                {
+                    Ephys[i]   = E->PhysEvaluate(I[i], physIn);
+                }
             }
+            t.Stop();
         }
-        t.Stop();
+        else
+        {
+            t.Start();
+            for (int cyc = 0; cyc < totCyc; ++cyc)
+            {
+                Array<OneD, Array<OneD, DNekMatSharedPtr>> I(totPoints);
+                for (int i = 0; i < totPoints; ++i)
+                {
+                    // Obtain local collapsed coordinate from
+                    // cartesian coordinate.
+                    Array<OneD, NekDouble> eta = Array<OneD, NekDouble>(3);
+                    E->LocCoordToLocCollapsed(coordIn[i], eta);
+
+                    // Get Lagrange interpolants.
+                    I[i]    = Array<OneD, DNekMatSharedPtr>(3);
+                    I[i][0] = E->GetBase()[0]->GetI(eta);
+                    I[i][1] = E->GetBase()[1]->GetI(eta + 1);
+                    I[i][2] = E->GetBase()[2]->GetI(eta + 2);
+                }
+
+                E->PhysDeriv(physIn, EphysDeriv0, EphysDeriv1, EphysDeriv2);
+                for (int i = 0; i < totPoints; ++i)
+                {
+                    Ephys[i]   = E->PhysEvaluate(I[i], physIn);
+                    Ederiv0[i] = E->PhysEvaluate(I[i], EphysDeriv0);
+                    Ederiv1[i] = E->PhysEvaluate(I[i], EphysDeriv1);
+                    Ederiv2[i] = E->PhysEvaluate(I[i], EphysDeriv2);
+                }
+            }
+            t.Stop();
+        }
     }
 
     NekDouble timeOld = t.TimePerTest(totCyc);
@@ -297,50 +403,95 @@ int main(int argc, char *argv[])
 
     if(dim == 1)
     {
-        t.Start();
-        for (int cyc = 0; cyc < totCyc; ++cyc)
+        if (eval)
         {
-            E->PhysDeriv(physIn, SphysDeriv0);
-            E->PhysDeriv(SphysDeriv0, Sphys2Deriv0);
-            for (int i = 0; i < totPoints; ++i)
+            t.Start();
+            for (int cyc = 0; cyc < totCyc; ++cyc)
             {
-                Sphys[i]   = E->PhysEvaluate(I[i], physIn);
-                Sderiv0[i] = E->PhysEvaluate(I[i], SphysDeriv0);
-                S2deriv0[i] = E->PhysEvaluate(I[i], Sphys2Deriv0);
+                for (int i = 0; i < totPoints; ++i)
+                {
+                    Sphys[i]    = E->PhysEvaluate(I[i], physIn);
+                }
             }
+            t.Stop();
         }
-        t.Stop();
+        else
+        {
+            t.Start();
+            for (int cyc = 0; cyc < totCyc; ++cyc)
+            {
+                E->PhysDeriv(physIn, SphysDeriv0);
+                E->PhysDeriv(SphysDeriv0, Sphys2Deriv0);
+                for (int i = 0; i < totPoints; ++i)
+                {
+                    Sphys[i]    = E->PhysEvaluate(I[i], physIn);
+                    Sderiv0[i]  = E->PhysEvaluate(I[i], SphysDeriv0);
+                    S2deriv0[i] = E->PhysEvaluate(I[i], Sphys2Deriv0);
+                }
+            }
+            t.Stop();
+        }
     }
     else if(dim == 2)
     {
-        t.Start();
-        for (int cyc = 0; cyc < totCyc; ++cyc)
+        if (eval)
         {
-            E->PhysDeriv(physIn, SphysDeriv0, SphysDeriv1);
-            for (int i = 0; i < totPoints; ++i)
+            t.Start();
+            for (int cyc = 0; cyc < totCyc; ++cyc)
             {
-                Sphys[i]   = E->PhysEvaluate(I[i], physIn);
-                Sderiv0[i] = E->PhysEvaluate(I[i], SphysDeriv0);
-                Sderiv1[i] = E->PhysEvaluate(I[i], SphysDeriv1);
+                for (int i = 0; i < totPoints; ++i)
+                {
+                    Sphys[i]   = E->PhysEvaluate(I[i], physIn);
+                }
             }
+            t.Stop();
         }
-        t.Stop();
+        else
+        {
+            t.Start();
+            for (int cyc = 0; cyc < totCyc; ++cyc)
+            {
+                E->PhysDeriv(physIn, SphysDeriv0, SphysDeriv1);
+                for (int i = 0; i < totPoints; ++i)
+                {
+                    Sphys[i]   = E->PhysEvaluate(I[i], physIn);
+                    Sderiv0[i] = E->PhysEvaluate(I[i], SphysDeriv0);
+                    Sderiv1[i] = E->PhysEvaluate(I[i], SphysDeriv1);
+                }
+            }
+            t.Stop();
+        }
     }
     else if (dim == 3)
     {
-        t.Start();
-        for (int cyc = 0; cyc < totCyc; ++cyc)
+        if (eval)
         {
-            E->PhysDeriv(physIn, SphysDeriv0, SphysDeriv1, SphysDeriv2);
-            for (int i = 0; i < totPoints; ++i)
+            t.Start();
+            for (int cyc = 0; cyc < totCyc; ++cyc)
             {
-                Sphys[i]   = E->PhysEvaluate(I[i], physIn);
-                Sderiv0[i] = E->PhysEvaluate(I[i], SphysDeriv0);
-                Sderiv1[i] = E->PhysEvaluate(I[i], SphysDeriv1);
-                Sderiv2[i] = E->PhysEvaluate(I[i], SphysDeriv2);
+                for (int i = 0; i < totPoints; ++i)
+                {
+                    Sphys[i]   = E->PhysEvaluate(I[i], physIn);
+                }
             }
+            t.Stop();
         }
-        t.Stop();
+        else
+        {
+            t.Start();
+            for (int cyc = 0; cyc < totCyc; ++cyc)
+            {
+                E->PhysDeriv(physIn, SphysDeriv0, SphysDeriv1, SphysDeriv2);
+                for (int i = 0; i < totPoints; ++i)
+                {
+                    Sphys[i]   = E->PhysEvaluate(I[i], physIn);
+                    Sderiv0[i] = E->PhysEvaluate(I[i], SphysDeriv0);
+                    Sderiv1[i] = E->PhysEvaluate(I[i], SphysDeriv1);
+                    Sderiv2[i] = E->PhysEvaluate(I[i], SphysDeriv2);
+                }
+            }
+            t.Stop();
+        }
     }
 
     NekDouble timePrecalc = t.TimePerTest(totCyc);
@@ -348,39 +499,87 @@ int main(int argc, char *argv[])
 
     if (dim == 1)
     {
-        t.Start();
-        for (int cyc = 0; cyc < totCyc; ++cyc)
+        if (eval)
         {
-            for (int i = 0; i < totPoints; ++i)
+            t.Start();
+            for (int cyc = 0; cyc < totCyc; ++cyc)
             {
-                Bphys[i] = E->PhysEvaluate2ndDeriv(coordIn[i], physIn, Bderiv0[i], B2deriv0[i]);
+                for (int i = 0; i < totPoints; ++i)
+                {
+                    Bphys[i] = E->PhysEvaluate(coordIn[i], physIn);
+                }
             }
+            t.Stop();
         }
-        t.Stop();
+        else
+        {
+            t.Start();
+            for (int cyc = 0; cyc < totCyc; ++cyc)
+            {
+                for (int i = 0; i < totPoints; ++i)
+                {
+                    Bphys[i] = E->PhysEvaluate2ndDeriv(coordIn[i], physIn,
+                                                       Bderiv0[i], B2deriv0[i]);
+                }
+            }
+            t.Stop();
+        }
     }
     else if (dim == 2)
     {
-        t.Start();
-        for (int cyc = 0; cyc < totCyc; ++cyc)
+        if (eval)
         {
-            for (int i = 0; i < totPoints; ++i)
+            t.Start();
+            for (int cyc = 0; cyc < totCyc; ++cyc)
             {
-                Bphys[i] = E->PhysEvaluate(coordIn[i], physIn, Bderiv0[i], Bderiv1[i]);
+                for (int i = 0; i < totPoints; ++i)
+                {
+                    Bphys[i] = E->PhysEvaluate(coordIn[i], physIn);
+                }
             }
+            t.Stop();
         }
-        t.Stop();
+        else
+        {
+            t.Start();
+            for (int cyc = 0; cyc < totCyc; ++cyc)
+            {
+                for (int i = 0; i < totPoints; ++i)
+                {
+                    Bphys[i] = E->PhysEvaluate(coordIn[i], physIn, Bderiv0[i],
+                                               Bderiv1[i]);
+                }
+            }
+            t.Stop();
+        }
     }
     else if (dim == 3)
     {
-        t.Start();
-        for (int cyc = 0; cyc < totCyc; ++cyc)
+        if (eval)
         {
-            for (int i = 0; i < totPoints; ++i)
+            t.Start();
+            for (int cyc = 0; cyc < totCyc; ++cyc)
             {
-                Bphys[i] = E->PhysEvaluate(coordIn[i], physIn, Bderiv0[i], Bderiv1[i], Bderiv2[i]);
+                for (int i = 0; i < totPoints; ++i)
+                {
+                    Bphys[i] = E->PhysEvaluate(coordIn[i], physIn);
+                }
             }
+            t.Stop();
         }
-        t.Stop();
+        else
+        {
+            t.Start();
+            for (int cyc = 0; cyc < totCyc; ++cyc)
+            {
+                for (int i = 0; i < totPoints; ++i)
+                {
+                    Bphys[i] = E->PhysEvaluate(coordIn[i], physIn, Bderiv0[i],
+                                               Bderiv1[i], Bderiv2[i]);
+                }
+            }
+            t.Stop();
+        }
     }
 
     NekDouble timeBary = t.TimePerTest(totCyc);
@@ -399,72 +598,93 @@ int main(int argc, char *argv[])
     outfile.close();
     std::cout << "Saved to file: " << fileName + "AllDeriv.txt" << std::endl;
 
-    // Debug output
-    for (int i = 0; i < totPoints; ++i)
-    {
-        //std::cout << sol[i] << " " << Bphys[i] << " " << Sphys[i] << " " << Ephys[i] << " -> Coord = (" << coordIn[i][0] << ", " << coordIn[i][1] << ", " << coordIn[i][2] << ")" << std::endl;
-        //std::cout << sol0[i] << " " << Bderiv0[i] << " " << Sderiv0[i] << " " << Ederiv0[i] << " -> Coord = (" << coordIn[i][0] << ", " << coordIn[i][1] << ", " << coordIn[i][2] << ")" << std::endl;
-        //std::cout << sol1[i] << " " << Bderiv1[i] << " " << Sderiv1[i] << " " << Ederiv1[i] << " -> Coord = (" << coordIn[i][0] << ", " << coordIn[i][1] << ", " << coordIn[i][2] << ")" << std::endl;
-        //std::cout << sol2[i] << " " << Bderiv2[i] << " " << Sderiv2[i] << " " << Ederiv2[i] << " -> Coord = (" << coordIn[i][0] << ", " << coordIn[i][1] << ", " << coordIn[i][2] << ")" << std::endl;
-        //std::cout << sol2_0[i] << " " << B2deriv0[i] << " " << S2deriv0[i] << " " << E2deriv0[i] << " -> Coord = (" << coordIn[i][0] << ", " << coordIn[i][1] << ", " << coordIn[i][2] << ")" << std::endl;
-        //std::cout << sol0[i] << " " << Bderiv0[i] << "\t -> Coord = (" << coordIn[i][0] << ", " << coordIn[i][1] << ", " << coordIn[i][2] << ")" << std::endl;
-    }
-
     //Check error
     std::cout << "\nBarycentric \t\t L2 Error \t Linf Error" << std::endl;
     std::cout << "\tPhys: "   << "\t\t" << F->L2(Bphys, sol) << "\t" << F->Linf(Bphys, sol)   << std::endl;
-    if (dim > 0)
-    {
-        std::cout << "\tDeriv0: " << "\t" << F->L2(Bderiv0, sol0) << "\t" << F->Linf(Bderiv0, sol0)   << std::endl;
-    }
-    if (dim == 1)
-    {
-        std::cout << "\t2Deriv0: " << "\t" << F->L2(B2deriv0, sol2_0) << "\t" << F->Linf(B2deriv0, sol2_0)   << std::endl;
-    }
-    if (dim > 1)
-    {
-        std::cout << "\tDeriv1: " << "\t" << F->L2(Bderiv1, sol1) << "\t" << F->Linf(Bderiv1, sol1)   << std::endl;
-    }
-    if (dim > 2)
-    {
-        std::cout << "\tDeriv2: " << "\t" << F->L2(Bderiv2, sol2) << "\t" << F->Linf(Bderiv2, sol2)   << std::endl;
-    }
 
+    if(!eval)
+    {
+        if (dim > 0)
+        {
+            std::cout << "\tDeriv0: "
+                      << "\t" << F->L2(Bderiv0, sol0) << "\t"
+                      << F->Linf(Bderiv0, sol0) << std::endl;
+        }
+        if (dim == 1)
+        {
+            std::cout << "\t2Deriv0: "
+                      << "\t" << F->L2(B2deriv0, sol2_0) << "\t"
+                      << F->Linf(B2deriv0, sol2_0) << std::endl;
+        }
+        if (dim > 1)
+        {
+            std::cout << "\tDeriv1: "
+                      << "\t" << F->L2(Bderiv1, sol1) << "\t"
+                      << F->Linf(Bderiv1, sol1) << std::endl;
+        }
+        if (dim > 2)
+        {
+            std::cout << "\tDeriv2: "
+                      << "\t" << F->L2(Bderiv2, sol2) << "\t"
+                      << F->Linf(Bderiv2, sol2) << std::endl;
+        }
+    }
     std::cout << "\nStore matrix \t\t L2 Error \t Linf Error" << std::endl;
     std::cout << "\tPhys: "   << "\t\t" <<F->L2(Sphys, sol) << "\t" << F->Linf(Sphys, sol)   << std::endl;
-    if (dim > 0)
+    if (!eval)
     {
-        std::cout << "\tDeriv0: " << "\t" << F->L2(Sderiv0, sol0) << "\t" << F->Linf(Sderiv0, sol0) << std::endl;
+        if (dim > 0)
+        {
+            std::cout << "\tDeriv0: "
+                      << "\t" << F->L2(Sderiv0, sol0) << "\t"
+                      << F->Linf(Sderiv0, sol0) << std::endl;
+        }
+        if (dim == 1)
+        {
+            std::cout << "\t2Deriv0: "
+                      << "\t" << F->L2(S2deriv0, sol2_0) << "\t"
+                      << F->Linf(S2deriv0, sol2_0) << std::endl;
+        }
+        if (dim > 1)
+        {
+            std::cout << "\tDeriv1: "
+                      << "\t" << F->L2(Sderiv1, sol1) << "\t"
+                      << F->Linf(Sderiv1, sol1) << std::endl;
+        }
+        if (dim > 2)
+        {
+            std::cout << "\tDeriv2: "
+                      << "\t" << F->L2(Sderiv2, sol2) << "\t"
+                      << F->Linf(Sderiv2, sol2) << std::endl;
+        }
     }
-    if (dim == 1)
-    {
-        std::cout << "\t2Deriv0: " << "\t" << F->L2(S2deriv0, sol2_0) << "\t" << F->Linf(S2deriv0, sol2_0)   << std::endl;
-    }
-    if (dim > 1)
-    {
-        std::cout << "\tDeriv1: " << "\t" << F->L2(Sderiv1, sol1) << "\t" << F->Linf(Sderiv1, sol1) << std::endl;
-    }
-    if (dim > 2)
-    {
-        std::cout << "\tDeriv2: " << "\t" << F->L2(Sderiv2, sol2) << "\t" << F->Linf(Sderiv2, sol2) << std::endl;
-    }
-
     std::cout << "\nCalc every cycle \t L2 Error \t Linf Error" << std::endl;
     std::cout << "\tPhys: "   << "\t\t" << F->L2(Ephys, sol) << "\t" << F->Linf(Ephys, sol)   << std::endl;
-    if (dim > 0)
+    if (!eval)
     {
-        std::cout << "\tDeriv0: " << "\t" << F->L2(Ederiv0, sol0) << "\t" << F->Linf(Ederiv0, sol0) << std::endl;
-    }
-    if (dim == 1)
-    {
-        std::cout << "\t2Deriv0: " << "\t" << F->L2(E2deriv0, sol2_0) << "\t" << F->Linf(E2deriv0, sol2_0)   << std::endl;
-    }
-    if (dim > 1)
-    {
-        std::cout << "\tDeriv1: " << "\t" << F->L2(Ederiv1, sol1) << "\t" << F->Linf(Ederiv1, sol1) << std::endl;
-    }
-    if (dim > 2)
-    {
-        std::cout << "\tDeriv2: " << "\t" << F->L2(Ederiv2, sol2) << "\t" << F->Linf(Ederiv2, sol2) << std::endl;
+        if (dim > 0)
+        {
+            std::cout << "\tDeriv0: "
+                      << "\t" << F->L2(Ederiv0, sol0) << "\t"
+                      << F->Linf(Ederiv0, sol0) << std::endl;
+        }
+        if (dim == 1)
+        {
+            std::cout << "\t2Deriv0: "
+                      << "\t" << F->L2(E2deriv0, sol2_0) << "\t"
+                      << F->Linf(E2deriv0, sol2_0) << std::endl;
+        }
+        if (dim > 1)
+        {
+            std::cout << "\tDeriv1: "
+                      << "\t" << F->L2(Ederiv1, sol1) << "\t"
+                      << F->Linf(Ederiv1, sol1) << std::endl;
+        }
+        if (dim > 2)
+        {
+            std::cout << "\tDeriv2: "
+                      << "\t" << F->L2(Ederiv2, sol2) << "\t"
+                      << F->Linf(Ederiv2, sol2) << std::endl;
+        }
     }
 }
