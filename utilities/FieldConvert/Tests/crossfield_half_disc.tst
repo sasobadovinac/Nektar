@@ -10,21 +10,21 @@
     </files>
     <metrics>
         <metric type="regex" id="1">
-            <regex>^([^\s]+) #(\d+) has (\d+) quadrants at \(([-+]?[0-9]*\.?[0-9]+(?:[eE][-+]?[0-9]+)?), ([-+]?[0-9]*\.?[0-9]+(?:[eE][-+]?[0-9]+)?)\)</regex>
+            <regex>^([^\s]+) #(\d+) has (\d+) quadrants at \((?:[-+]?[0-9]*\.?[0-9]+)*?([eE]?[-+]?[0-9]*\.?[0-9]+), (?:[-+]?[0-9]*\.?[0-9]+)*?([eE]?[-+]?[0-9]*\.?[0-9]+)\)</regex>
             <matches>
                 <match>
                     <field id="0">Vertex</field>
                     <field id="1">1</field>
                     <field id="2">1</field>
                     <field id="3">0</field>
-                    <field id="4">-5.84047e-17</field>
+                    <field id="4">e-17</field>
                 </match>
                 <match>
                     <field id="0">Vertex</field>
                     <field id="1">2</field>
                     <field id="2">1</field>
                     <field id="3">1</field>
-                    <field id="4">3.34524e-17</field>
+                    <field id="4">e-17</field>
                 </match>
                 <match>
                     <field id="0">Singularity</field>
