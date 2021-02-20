@@ -97,6 +97,15 @@ public:
         F77NAME(copse3d) ();
     }
 
+    // necessasy routines
+    bool BndElmtContainsPoint(
+        SpatialDomains::GeometrySharedPtr bndGeom,
+        const Array< OneD, const NekDouble > & gloCoord,
+        Array< OneD, NekDouble > & locCoord,
+        const bool useY, 
+        const NekDouble tol,
+        NekDouble & resid);
+
 
 protected:
 
