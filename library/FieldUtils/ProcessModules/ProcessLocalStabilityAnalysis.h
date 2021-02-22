@@ -106,6 +106,10 @@ public:
         const NekDouble tol,
         NekDouble & resid);
 
+    void GetNormals(
+        SpatialDomains::GeometrySharedPtr bndGeom,
+        Array< OneD, NekDouble > & locCoord, 
+        Array< OneD, NekDouble > & normals);
 
 protected:
 
