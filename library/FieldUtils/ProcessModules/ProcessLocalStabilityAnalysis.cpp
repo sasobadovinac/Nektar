@@ -41,6 +41,8 @@
 
 #include "ProcessLocalStabilityAnalysis.h"
 
+#define _DEBUG_
+
 using namespace std;
 
 namespace Nektar
@@ -132,9 +134,10 @@ void ProcessLocalStabilityAnalysis::Process(po::variables_map &vm)
     for (int i = 0; i < nfields; ++i) {
         BndExp[i] = m_f->m_exp[i]->UpdateBndCondExpansion(bnd);
     }
-    const int nqb    = BndExp[0]->GetTotPoints(); // points for all HomModesZ planes
-    const int nElmts = BndExp[0]->GetNumElmts();  // number of elements on the boundary
+    
 
+#ifdef _DEBUG_
+    const int nqb    = BndExp[0]->GetTotPoints(); // points for all HomModesZ planes
     // remove this part later
     // Get inward-pointing wall-normal vectors for all quadrature points on bnd
     Array<OneD, Array<OneD, NekDouble> > normalsQ; 
@@ -142,6 +145,7 @@ void ProcessLocalStabilityAnalysis::Process(po::variables_map &vm)
     for (int i = 0; i < m_spacedim; ++i) {
         Vmath::Neg(nqb, normalsQ[i], 1);
     }
+#endif
 
     //-------------------------------------------------------------------------
     // Find the element that includes the origin
@@ -158,7 +162,8 @@ void ProcessLocalStabilityAnalysis::Process(po::variables_map &vm)
     bool isInside = false;
 
     // Search and get precise Lcoord
-    for (elmtid=0; elmtid<nElmts; ++elmtid) //nElmts
+    const int nElmts = BndExp[0]->GetNumElmts();
+    for (elmtid=0; elmtid<nElmts; ++elmtid)
     {    
         bndGeom = BndExp[0]->GetExp(elmtid)->GetGeom(); 
         bndXmap = bndGeom->GetXmap();
@@ -169,20 +174,7 @@ void ProcessLocalStabilityAnalysis::Process(po::variables_map &vm)
         scaledTol = pow(Jac[0], 1.0/(static_cast<NekDouble>(nCoordDim)-1.0))*2.0; //length scale
         scaledTol *= relTol;
 
-        // Get the coords for the element to check if origin is located inside
-        /*Note
-        * Currently (19 Feb 2021) 
-        * SegGeom::v_GetLocCoords(...) can only get the Lcoord for 
-        * straight-sided (eRegular) segment;
-        * https://doc.nektar.info/doxygen/latest/_seg_geom_8cpp_source.html#l00372
-        * QuadGeom::v_GetLocCoords(...) can only find Lcoord in the x-y plane
-        * https://doc.nektar.info/doxygen/latest/_quad_geom_8cpp_source.html#l00481
-        * TriGeom::v_GetLocCoords(...) can only find Lcoord in the x-y plane
-        * https://doc.nektar.info/doxygen/latest/_tri_geom_8cpp_source.html#l00546
-        * The above three possible types of boundary element do not include 
-        * the needed routines to get Lcoord on curved boundary elements
-        */
-
+        // Get the point
         npts = bndXmap->GetTotPoints();
         for (int i=0; i<nCoordDim; ++i) 
         {
@@ -199,10 +191,7 @@ void ProcessLocalStabilityAnalysis::Process(po::variables_map &vm)
         }
 
     }
-    ASSERTL0(isInside, "Failed to find the sampling position."); 
-
-    cout << "new gloCoord !!! " << endl;
-
+    ASSERTL0(isInside, "Failed to find the sampling origin on the boundary."); 
 
     // Update the precise sampling position
     // x is precise, update y, or vice versa
@@ -236,15 +225,19 @@ void ProcessLocalStabilityAnalysis::Process(po::variables_map &vm)
                 {
                     distCur = distTmp;
                     zCur    = zTmp;
+                    if(i==nPlanes)
+                    {
+                        zCur = 0.0;
+                    }
                 }
             }
             orig[2] = zCur;
         }
     }
-    
-    cout << "Ox = " << orig[0] << ", Oy = " << orig[1] << ", Oz = " << orig[2] << endl;
-    //-----------------------------------------------------------------------
 
+
+
+#ifdef _DEBUG_
     // Get the normals on the quadrature points in the element as reference
     // Set point key to get points
     Array<OneD, LibUtilities::PointsKey> from_key(nBndLcoordDim);
@@ -261,6 +254,7 @@ void ProcessLocalStabilityAnalysis::Process(po::variables_map &vm)
              << normalsQ[0][elmtid*from_nPtsPerElmt+i] << ", " 
              << normalsQ[1][elmtid*from_nPtsPerElmt+i] << "]" << endl;
     }
+#endif
 
     // Correct the direction of the normals
     Array< OneD, NekDouble > normals(3, 0.0);
@@ -269,82 +263,9 @@ void ProcessLocalStabilityAnalysis::Process(po::variables_map &vm)
 
     
     cout << "Final normals:" << endl;
-    cout << "[nx, ny] = [" << normals[0] << ", " << normals[1] << "]" << endl;
-    //cout << "Ox = " << orig[0] << ", Oy = " << orig[1] << ", Oz = " << orig[2] << endl;
-    //---------------------------------------------------------------------
-    cout << "========================================================" << endl;
-    cout << "nqb = " << nqb << ", nElmts = " << nElmts << endl;
-    cout << "Base points num on bnd geo= " << bndXmap->GetBasis(0)->GetNumPoints() << endl;
-    cout << "Quadrature points num on bnd for computating = " << from_nPtsPerElmt << endl;
-    cout << "scaledTol = " << scaledTol << endl;
+    cout << "[nx,ny,nz] = [" << normals[0] << ", " << normals[1] << ", " << normals[2] << "]" << endl;
+    cout << "[Ox,Oy,Oz] = [" << orig[0] << ", " << orig[1] << ", " << orig[2] << "]" << endl;
 
-    //-------------------------------------------------------------------------
-    // Important block
-    /*
-    cout << "nqb = " << nqb << ", nElmts = " << nElmts << endl;
-    cout << "bndExp[0] size = " << BndExp[0]->GetExpSize() << endl;    
-    
-    int elmtid = 0;
-    SpatialDomains::GeometrySharedPtr bndGeom = BndExp[0]->GetExp(elmtid)->GetGeom(); 
-    StdRegions::StdExpansionSharedPtr bndXmap = bndGeom->GetXmap();
-    cout << "bnd numBase = " << bndXmap->GetNumBases() << endl;
-  
-
-    Array<OneD, NekDouble> ksi(2, 0.);
-    Array<OneD, NekDouble> eta(2, 0.);
-    ksi[0] = 1.0;
-    ksi[1] = 2.0;
-    bndXmap->LocCoordToLocCollapsed(ksi, eta);
-
-    cout << "ksi: " << ksi[0] <<", " << ksi[1] << endl; 
-    cout << "eta: " << eta[0] <<", " << eta[1] << endl; 
-
-
-  
-    int npts = bndXmap->GetTotPoints();
-    cout << "npts = " << npts << endl;
-
-
-    Array<OneD, const LibUtilities::BasisSharedPtr> base = bndXmap->GetBase();
-    cout << "base type = " << base[0]->GetBasisType() << endl;
-    cout << "base size = " << base.size() << endl;
-    cout << "base npts = " << base[0]->GetNumPoints() << endl; 
-
-
-    Array<OneD, NekDouble> ptsx(npts), ptsy(npts);
-
-    Array<OneD, const NekDouble> bndCoeffsX = bndGeom->GetCoeffs(0);// 0 for x
-    Array<OneD, const NekDouble> bndCoeffsY = bndGeom->GetCoeffs(1);// 1 for y 
-   
-    bndXmap->BwdTrans(bndCoeffsX, ptsx);
-    bndXmap->BwdTrans(bndCoeffsY, ptsy);
- 
-    cout <<"xy = "<<ptsx[0]<< ", " <<ptsx[1]<< ", " <<ptsy[0]<< ", " <<ptsy[1]<< endl;
-    */
-
-    /*Note
-    * According to the link
-    * https://doc.nektar.info/doxygen/latest/class_nektar_1_1_std_regions_1_1_std_expansion1_d.html#ac73d10bd5d0fe32fefbb18bd20640a81
-    * StdExpansion1D::v_PhysEvaluate uses Lcoord and calls Blas routine to compute. 
-    * However, in the current master branch, StdExpansion1D::v_PhysEvaluate calls 
-    * StdExpansion::BaryEvaluate<0>(Lcoord[0], &physvals[0]), which calls 
-    * inline NekDouble BaryEvaluate(const NekDouble &coord, const NekDouble *physvals)
-    * in the library/StdRegions/StdExpansion.h
-    * The variables do not match (Lcoord vs. coord)
-    * But the results seem to be correct? 
-    */
-    
-    // Important
-    /*
-    Array<OneD, NekDouble> eta2(1);
-    eta2[0] = 0; // range [-1,1]
-    //Array<OneD, DNekMatSharedPtr> I(1); // 2
-    //I[0] = bndXmap->GetBasis(0)->GetI(eta2); //GetI needs a pointer as input
-    NekDouble x_tmp;
-    x_tmp = bndXmap->PhysEvaluate(eta2, ptsx);
-    //x_tmp = bndXmap->PhysEvaluate(I, ptsx);
-    cout << x_tmp << endl;
-    */
 
 
     // Set parametric distance of sampling points
@@ -386,18 +307,7 @@ void ProcessLocalStabilityAnalysis::Process(po::variables_map &vm)
     Interpolator interp;
     interp.Interpolate(m_f->m_exp, m_f->m_fieldPts, NekConstants::kNekUnsetDouble);
 
-    // C2 Peojection? [in python]
-    // Rotate the velocity in the tangential/normal direction [in python]
-    // Re-scale the data as the CoPSE3D_LST needed [in python]
-    //cout << ptsH[0][1] << ", " << ptsH[1][1] << ", " << ptsH[2][1] << ", " << ptsH[3][1] << ", "
-    //     << ptsH[4][1] << ", " << ptsH[5][1] << ", " << ptsH[6][1] << ", " << ptsH[7][1] << ", "
-    //     << ptsH[8][1] << ", " << ptsH[9][1] << ", " << ptsH[10][1]<< ", " << ptsH[11][1] << ", "
-    //     << ptsH[12][1] << ", "<< ptsH[13][1]<< endl;
-    //
-    //0.0190167, 0.0208434, 0.755373, 0.771503, 0.392795, 2.14044, 1.02135, 
-    //0.520001, 0.657731, 0.893228, -0.00169613, 1.1041, 1.03805, -3.46444
-
-
+    
 
 
     //------------------------------------------------------------------------- 
@@ -407,6 +317,29 @@ void ProcessLocalStabilityAnalysis::Process(po::variables_map &vm)
     //call_lst();   
 
 }
+
+/*
+*/
+/*
+bool isInProjectedArea2D(
+    SpatialDomains::GeometrySharedPtr bndGeom,
+    const Array< OneD, const NekDouble > & gloCoord)
+{
+    StdRegions::StdExpansionSharedPtr bndXmap = bndGeom->GetXmap();
+    const int nCoordDim = m_f->m_exp[0]->GetCoordim(0);
+    Array<OneD, Array<OneD, NekDouble> >        pts(nCoordDim);
+    Array<OneD, Array<OneD, const NekDouble> >  bndCoeffs(nCoordDim);
+    const int npts = bndXmap->GetTotPoints();
+
+
+
+    if(pts[dir1][0] <= gloCoord[dir1] && pts[dir1][npts-1] >= gloCoord[dir1])
+    {
+
+    }
+}
+*/
+
 
 /*
 * Check if the boundary element contain an input point
@@ -808,24 +741,62 @@ void ProcessLocalStabilityAnalysis::GetNormals(
         bndXmap->PhysDeriv(pts[0], DxD1);
         bndXmap->PhysDeriv(pts[1], DyD1);
 
-        NekDouble dxd1, dyd1, tmp;
+        NekDouble dxd1, dyd1, norm;
         dxd1 = bndXmap->PhysEvaluate(locCoord, DxD1);
         dyd1 = bndXmap->PhysEvaluate(locCoord, DyD1);
-        tmp = sqrt(dxd1*dxd1 + dyd1*dyd1);
+        norm = sqrt(dxd1*dxd1 + dyd1*dyd1);
 
-        normals[0] =  dyd1/tmp;
-        normals[1] = -dxd1/tmp;
+        normals[0] =  dyd1/norm;
+        normals[1] = -dxd1/norm;
         normals[2] =  0.0;
     }
     else
     {
-        // Will be developed soon
-        ASSERTL0(false, "Analysis for full 3D cases is currently unavailable");
+        Array<OneD, NekDouble> DxD1(pts[0].size());
+        Array<OneD, NekDouble> DxD2(pts[0].size());
+        Array<OneD, NekDouble> DyD1(pts[0].size());
+        Array<OneD, NekDouble> DyD2(pts[0].size());
+        Array<OneD, NekDouble> DzD1(pts[0].size());
+        Array<OneD, NekDouble> DzD2(pts[0].size());
+
+        bndXmap->PhysDeriv(pts[0], DxD1, DxD2);
+        bndXmap->PhysDeriv(pts[1], DyD1, DyD2);
+        bndXmap->PhysDeriv(pts[2], DzD1, DzD2);
+
+        NekDouble dxd1, dyd1, dzd1, dxd2, dyd2, dzd2;
+        dxd1 = bndXmap->PhysEvaluate(locCoord, DxD1);
+        dxd2 = bndXmap->PhysEvaluate(locCoord, DxD2);
+        dyd1 = bndXmap->PhysEvaluate(locCoord, DyD1);
+        dyd2 = bndXmap->PhysEvaluate(locCoord, DyD2);
+        dzd1 = bndXmap->PhysEvaluate(locCoord, DzD1);
+        dzd2 = bndXmap->PhysEvaluate(locCoord, DzD2);
+
+        NekDouble n1, n2, n3, norm;
+        n1 = dyd1*dzd2 - dyd2*dzd1;
+        n2 = dzd1*dxd2 - dzd2*dxd1;
+        n3 = dxd1*dyd2 - dxd2*dyd1;
+        norm = sqrt(n1*n1 + n2*n2 + n3*n3);
+
+        normals[0] = n1/norm;
+        normals[1] = n2/norm;
+        normals[2] = n3/norm;
     }
 
 }
 
+
+
+}
+}
+
+
 /*
+TODO:
+C2 Peojection? [in python]
+Rotate the velocity in the tangential/normal direction [in python]
+Re-scale the data as the CoPSE3D_LST needed [in python]
+
+
 Case 1: 2D channel
 /disk_two/Nek_Test/nektar++/build_f90/dist/bin/FieldConvert -f -m localStabilityAnalysis:bnd=2:x=0.10472:y=1 test_1.xml test_1.fld test_1.pts
 
@@ -837,9 +808,7 @@ Case3: 2.5D flat plate
 
 Case4: 3D flat plate
 /disk_two/Nek_Test/nektar++/build_f90/dist/bin/FieldConvert -f -m localStabilityAnalysis:bnd=0:x=0.601:y=0.001:h=0.02:nh=5 test_4_mesh.xml test_4_session.xml test_4.fld test_4.pts
+
+Case5: 3D airfoil (close output as case2)
+/disk_two/Nek_Test/nektar++/build_f90/dist/bin/FieldConvert -f -m localStabilityAnalysis:bnd=0:x=0.02:y=0.0195:useY=1:h=0.02:nh=5 test_5_mesh.xml test_5_session.xml test_5.fld test_5.pts
 */
-
-
-
-}
-}
