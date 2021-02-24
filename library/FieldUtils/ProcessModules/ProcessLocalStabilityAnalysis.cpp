@@ -152,7 +152,7 @@ void ProcessLocalStabilityAnalysis::Process(po::variables_map &vm)
     int npts;
     Array<OneD, Array<OneD, NekDouble> >       pts(nCoordDim);
     Array<OneD, Array<OneD, const NekDouble> > bndCoeffs(nCoordDim);
-    Array<OneD, NekDouble> locCoord(nCoordDim, -999.0);
+    Array<OneD, NekDouble> locCoord(nCoordDim-1, -999.0);
     NekDouble resid;
     int elmtid;
     bool isInside = false;
@@ -165,7 +165,8 @@ void ProcessLocalStabilityAnalysis::Process(po::variables_map &vm)
         
         // Get the scaled tol by 2 times averaged Jacobian ([-1,1] -> [0,1]) 
         Jac = bndGeom->GetMetricInfo()->GetJac(bndXmap->GetPointsKeys());
-        scaledTol = Vmath::Vsum(Jac.size(), Jac, 1)*2./((NekDouble)Jac.size());
+        scaledTol = Vmath::Vsum(Jac.size(), Jac, 1)/((NekDouble)Jac.size());      //average Jac
+        scaledTol = pow(Jac[0], 1.0/(static_cast<NekDouble>(nCoordDim)-1.0))*2.0; //length scale
         scaledTol *= relTol;
 
         // Get the coords for the element to check if origin is located inside
@@ -199,6 +200,9 @@ void ProcessLocalStabilityAnalysis::Process(po::variables_map &vm)
 
     }
     ASSERTL0(isInside, "Failed to find the sampling position."); 
+
+    cout << "new gloCoord !!! " << endl;
+
 
     // Update the precise sampling position
     // x is precise, update y, or vice versa
@@ -237,6 +241,8 @@ void ProcessLocalStabilityAnalysis::Process(po::variables_map &vm)
             orig[2] = zCur;
         }
     }
+    
+    cout << "Ox = " << orig[0] << ", Oy = " << orig[1] << ", Oz = " << orig[2] << endl;
     //-----------------------------------------------------------------------
 
     // Get the normals on the quadrature points in the element as reference
@@ -264,7 +270,7 @@ void ProcessLocalStabilityAnalysis::Process(po::variables_map &vm)
     
     cout << "Final normals:" << endl;
     cout << "[nx, ny] = [" << normals[0] << ", " << normals[1] << "]" << endl;
-    cout << "Ox = " << orig[0] << ", Oy = " << orig[1] << ", Oz = " << orig[2] << endl;
+    //cout << "Ox = " << orig[0] << ", Oy = " << orig[1] << ", Oz = " << orig[2] << endl;
     //---------------------------------------------------------------------
     cout << "========================================================" << endl;
     cout << "nqb = " << nqb << ", nElmts = " << nElmts << endl;
@@ -554,36 +560,41 @@ bool ProcessLocalStabilityAnalysis::BndElmtContainsPoint(
 
         if( abs(angleSum-2.0*M_PI) < angleTol )
         {
+            /*
             cout <<"inside." << endl;
-
             cout << "npts = " << npts << endl;
             for (int i=0; i<npts; ++i)
             {
                 cout << i <<", old [x,y,z]=[" << pts[0][i]<<", " << pts[1][i]<<", "<< pts[2][i]<<"]" << endl;
             }
             cout << "gloCoordXYZ = " << gloCoord[0] << ", " << gloCoord[1] << ", " << gloCoord[2] << endl;
-            
+            */
             
             // Inside the element projection, use Newton iteration to find the Lcoord
-            
-            NekDouble dist=999.0;
-            NewtonIterationForLocCoordOnBndElmt(bndGeom, gloCoord, pts[0], pts[1], pts[2], 1, locCoord, dist);
+            bool isConverge = false;
+            bool isDesired  = false;        
+            NekDouble dist  = 999.0;
+            NewtonIterationForLocCoordOnBndElmt(bndGeom, gloCoord, pts[0], pts[1], pts[2], dir2, locCoord, dist); //1
 
+            if(dist < geomTol)
+            {
+                isConverge = true; // converged to get Lcoord 
+            }
 
+            NekDouble gloCoordTmp = bndXmap->PhysEvaluate(locCoord, pts[dir2]);
+            if (abs(gloCoord[dir2]-gloCoordTmp) < geomTol)
+            {
+                isDesired = true;
+            }
 
-            return true;
-            
+            return isConverge && isDesired;            
         }
         else
         {
             return false; // not in the projected area
         }
-
-
-        // Will be developed soon
-        //ASSERTL0(false, "Analysis for full 3D cases is currently unavailable");  
+ 
     }
-
 
     return false;
 }
@@ -620,13 +631,12 @@ void ProcessLocalStabilityAnalysis::NewtonIterationForLocCoordOnBndElmt(
     // Initial the locCoord
     Lcoords[0] = 0.0;
     Lcoords[1] = 0.0;
-    Lcoords[2] = 0.0;
 
     NekDouble x1map, x2map, F1, F2;
     NekDouble derx1_1, derx1_2, derx2_1, derx2_2, jac;
 
     Array<OneD, const NekDouble> ptsx1, ptsx2;
-    Array<OneD, NekDouble> LcoordsTmp(2), coordsTmp(2);
+    Array<OneD, NekDouble> LcoordsTmp(2);
     int dir[2]={-1, -1};
     if(projDir==0)
     {
@@ -652,12 +662,7 @@ void ProcessLocalStabilityAnalysis::NewtonIterationForLocCoordOnBndElmt(
     else{
         ASSERTL0(false, "The projection direction needs to be 0 or 1 or 2.");  
     }
-    
-    LcoordsTmp[0] = Lcoords[dir[0]];
-    LcoordsTmp[1] = Lcoords[dir[1]];
-    coordsTmp[0]  = coords[dir[0]];
-    coordsTmp[1]  = coords[dir[1]];
- 
+     
     Array<OneD, NekDouble> Dx1D1(ptsx1.size());
     Array<OneD, NekDouble> Dx1D2(ptsx1.size());
     Array<OneD, NekDouble> Dx2D1(ptsx1.size());
@@ -673,11 +678,11 @@ void ProcessLocalStabilityAnalysis::NewtonIterationForLocCoordOnBndElmt(
     NekDouble resid;
     while (cnt++ < MaxIterations)
     {
-        x1map = bndXmap->PhysEvaluate(LcoordsTmp, ptsx1);
-        x2map = bndXmap->PhysEvaluate(LcoordsTmp, ptsx2);
+        x1map = bndXmap->PhysEvaluate(Lcoords, ptsx1);
+        x2map = bndXmap->PhysEvaluate(Lcoords, ptsx2);
 
-        F1 = coordsTmp[0] - x1map;
-        F2 = coordsTmp[1] - x2map;
+        F1 = coords[dir[0]] - x1map;
+        F2 = coords[dir[1]] - x2map;
 
         if (F1 * F1 + F2 * F2 < ScaledTol)
         {
@@ -686,25 +691,25 @@ void ProcessLocalStabilityAnalysis::NewtonIterationForLocCoordOnBndElmt(
         }
 
         // Interpolate derivative metric at Lcoords
-        derx1_1 = bndXmap->PhysEvaluate(LcoordsTmp, Dx1D1);
-        derx1_2 = bndXmap->PhysEvaluate(LcoordsTmp, Dx1D2);
-        derx2_1 = bndXmap->PhysEvaluate(LcoordsTmp, Dx2D1);
-        derx2_2 = bndXmap->PhysEvaluate(LcoordsTmp, Dx2D2);
+        derx1_1 = bndXmap->PhysEvaluate(Lcoords, Dx1D1);
+        derx1_2 = bndXmap->PhysEvaluate(Lcoords, Dx1D2);
+        derx2_1 = bndXmap->PhysEvaluate(Lcoords, Dx2D1);
+        derx2_2 = bndXmap->PhysEvaluate(Lcoords, Dx2D2);
 
         jac = derx2_2 * derx1_1 - derx2_1 * derx1_2;
         
         // use analytical inverse of derivitives which are
         // also similar to those of metric factors.
-        LcoordsTmp[0] =
-            LcoordsTmp[0] +
-            ( derx2_2 * (coordsTmp[0] - x1map) - derx1_2 * (coordsTmp[1] - x2map)) / jac;
+        Lcoords[0] =
+            Lcoords[0] +
+            ( derx2_2 * (coords[dir[0]] - x1map) - derx1_2 * (coords[dir[1]] - x2map)) / jac;
 
-        LcoordsTmp[1] =
-            LcoordsTmp[1] +
-            (-derx2_1 * (coordsTmp[0] - x1map) + derx1_1 * (coordsTmp[1] - x2map)) / jac;
+        Lcoords[1] =
+            Lcoords[1] +
+            (-derx2_1 * (coords[dir[0]] - x1map) + derx1_1 * (coords[dir[1]] - x2map)) / jac;
 
         
-        if( !(std::isfinite(LcoordsTmp[0]) && std::isfinite(LcoordsTmp[1])) )
+        if( !(std::isfinite(Lcoords[0]) && std::isfinite(Lcoords[1])) )
         {
             dist = 1e16;
             std::ostringstream ss;
@@ -713,7 +718,7 @@ void ProcessLocalStabilityAnalysis::NewtonIterationForLocCoordOnBndElmt(
             WARNINGL1(false, ss.str());
             return;
         }
-        if (fabs(LcoordsTmp[0]) > LcoordDiv || fabs(LcoordsTmp[1]) > LcoordDiv)
+        if (fabs(Lcoords[0]) > LcoordDiv || fabs(Lcoords[1]) > LcoordDiv)
         {
             break; // lcoords have diverged so stop iteration
         }
@@ -722,7 +727,7 @@ void ProcessLocalStabilityAnalysis::NewtonIterationForLocCoordOnBndElmt(
     Array<OneD, DNekMatSharedPtr> I(2);
     Array<OneD, NekDouble> eta(2);
 
-    bndXmap->LocCoordToLocCollapsed(LcoordsTmp, eta);
+    bndXmap->LocCoordToLocCollapsed(Lcoords, eta);
     if(bndGeom->ClampLocCoords(eta, 0.0))
     {
         I[0] = bndXmap->GetBasis(0)->GetI(eta);
@@ -730,13 +735,13 @@ void ProcessLocalStabilityAnalysis::NewtonIterationForLocCoordOnBndElmt(
         // calculate the global point corresponding to Lcoords
         x1map = bndXmap->PhysEvaluate(I, ptsx1);
         x2map = bndXmap->PhysEvaluate(I, ptsx2);
-        F1 = coordsTmp[0] - x1map;
-        F2 = coordsTmp[1] - x2map;
+        F1 = coords[dir[0]] - x1map;
+        F2 = coords[dir[1]] - x2map;
         dist = sqrt(F1 * F1 + F2 * F2);
     }
     else
     {
-        dist = 0.;
+        dist = 0.0;
     }
 
     if (cnt >= MaxIterations)
@@ -762,20 +767,14 @@ void ProcessLocalStabilityAnalysis::NewtonIterationForLocCoordOnBndElmt(
             WARNINGL1(cnt < MaxIterations, ss.str());
         }
     }
-
-    // Copy back the results
-    Lcoords[dir[0]] = LcoordsTmp[0];
-    Lcoords[dir[1]] = LcoordsTmp[1];
     
+    /*
     cout << "dir1, dir2 = [" << dir[0] << ", " << dir[1] << "]" << endl;
     cout << "Lcoords = [" << Lcoords[0] << ", " << Lcoords[1] << ", " << Lcoords[2] << "]" << endl;
-    cout << "xyz = " << bndXmap->PhysEvaluate(LcoordsTmp, ptsx1) << ", " 
-                     << bndXmap->PhysEvaluate(LcoordsTmp, ptsx2) << endl;
-
+    cout << "xyz = " << bndXmap->PhysEvaluate(Lcoords, ptsx1) << ", " 
+                     << bndXmap->PhysEvaluate(Lcoords, ptsx2) << endl;
+    */
 }
-
-
-
 
 
 /*
@@ -828,6 +827,7 @@ void ProcessLocalStabilityAnalysis::GetNormals(
 
 /*
 Case 1: 2D channel
+/disk_two/Nek_Test/nektar++/build_f90/dist/bin/FieldConvert -f -m localStabilityAnalysis:bnd=2:x=0.10472:y=1 test_1.xml test_1.fld test_1.pts
 
 Case 2: 2D airfoil
 /disk_two/Nek_Test/nektar++/build_f90/dist/bin/FieldConvert -f -m localStabilityAnalysis:bnd=0:x=0.02:y=0.0195:useY=1:h=0.02:nh=5 test_2_mesh.xml test_2_session.xml test_2.fld test_2.pts
@@ -836,7 +836,7 @@ Case3: 2.5D flat plate
 /disk_two/Nek_Test/nektar++/build_f90/dist/bin/FieldConvert -f -m localStabilityAnalysis:bnd=0:x=0.335:y=0.0001:z=0.007:h=0.002:nh=5 test_3_mesh.xml test_3_session.xml test_3.fld test_3.pts
 
 Case4: 3D flat plate
-
+/disk_two/Nek_Test/nektar++/build_f90/dist/bin/FieldConvert -f -m localStabilityAnalysis:bnd=0:x=0.601:y=0.001:h=0.02:nh=5 test_4_mesh.xml test_4_session.xml test_4.fld test_4.pts
 */
 
 
