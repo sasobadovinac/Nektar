@@ -103,8 +103,18 @@ public:
         const Array< OneD, const NekDouble > & gloCoord,
         Array< OneD, NekDouble > & locCoord,
         const bool useY, 
-        const NekDouble tol,
+        const NekDouble geomTol,
         NekDouble & resid);
+    
+    void NewtonIterationForLocCoordOnBndElmt(
+        SpatialDomains::GeometrySharedPtr bndGeom,
+        const Array<OneD, const NekDouble> &coords,
+        const Array<OneD, const NekDouble> &ptsx,
+        const Array<OneD, const NekDouble> &ptsy,
+        const Array<OneD, const NekDouble> &ptsz,
+        const int projDir,
+        Array<OneD, NekDouble> &Lcoords,
+        NekDouble &dist);
 
     void GetNormals(
         SpatialDomains::GeometrySharedPtr bndGeom,
