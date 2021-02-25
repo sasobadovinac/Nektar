@@ -98,23 +98,39 @@ public:
     }
 
     // necessasy routines
+    bool isInProjectedArea2D(
+        SpatialDomains::GeometrySharedPtr bndGeom,
+        const Array<OneD, const NekDouble > & gloCoord,
+        const int projDir);
+    
+    bool isInProjectedArea3D(
+        SpatialDomains::GeometrySharedPtr bndGeom,
+        const Array<OneD, const NekDouble > & gloCoord,
+        const int projDir);
+
+    bool BisectionForLocCoordOnBndElmt(
+        SpatialDomains::GeometrySharedPtr bndGeom,
+        const Array<OneD, const NekDouble > & gloCoord,
+        const Array<OneD, const Array<OneD, NekDouble> > & pts,
+        const int projDir,
+        Array< OneD, NekDouble > & locCoord,
+        NekDouble & dist);
+
+    bool NewtonIterationForLocCoordOnBndElmt(
+        SpatialDomains::GeometrySharedPtr bndGeom,
+        const Array<OneD, const NekDouble> &coords,
+        const Array<OneD, const Array<OneD, NekDouble> > &pts,
+        const int projDir,
+        Array<OneD, NekDouble> &Lcoords,
+        NekDouble &dist);
+
     bool BndElmtContainsPoint(
         SpatialDomains::GeometrySharedPtr bndGeom,
         const Array< OneD, const NekDouble > & gloCoord,
         Array< OneD, NekDouble > & locCoord,
-        const bool useY, 
+        const bool isUseY, 
         const NekDouble geomTol,
-        NekDouble & resid);
-    
-    void NewtonIterationForLocCoordOnBndElmt(
-        SpatialDomains::GeometrySharedPtr bndGeom,
-        const Array<OneD, const NekDouble> &coords,
-        const Array<OneD, const NekDouble> &ptsx,
-        const Array<OneD, const NekDouble> &ptsy,
-        const Array<OneD, const NekDouble> &ptsz,
-        const int projDir,
-        Array<OneD, NekDouble> &Lcoords,
-        NekDouble &dist);
+        NekDouble & dist);
 
     void GetNormals(
         SpatialDomains::GeometrySharedPtr bndGeom,

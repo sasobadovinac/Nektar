@@ -135,17 +135,7 @@ void ProcessLocalStabilityAnalysis::Process(po::variables_map &vm)
         BndExp[i] = m_f->m_exp[i]->UpdateBndCondExpansion(bnd);
     }
     
-
-#ifdef _DEBUG_
-    const int nqb    = BndExp[0]->GetTotPoints(); // points for all HomModesZ planes
-    // remove this part later
-    // Get inward-pointing wall-normal vectors for all quadrature points on bnd
-    Array<OneD, Array<OneD, NekDouble> > normalsQ; 
-    m_f->m_exp[0]->GetBoundaryNormals(bnd, normalsQ);
-    for (int i = 0; i < m_spacedim; ++i) {
-        Vmath::Neg(nqb, normalsQ[i], 1);
-    }
-#endif
+    
 
     //-------------------------------------------------------------------------
     // Find the element that includes the origin
@@ -163,7 +153,7 @@ void ProcessLocalStabilityAnalysis::Process(po::variables_map &vm)
 
     // Search and get precise Lcoord
     const int nElmts = BndExp[0]->GetNumElmts();
-    for (elmtid=0; elmtid<nElmts; ++elmtid)
+    for (elmtid=0; elmtid<nElmts; ++elmtid) //nElmts
     {    
         bndGeom = BndExp[0]->GetExp(elmtid)->GetGeom(); 
         bndXmap = bndGeom->GetXmap();
@@ -183,7 +173,7 @@ void ProcessLocalStabilityAnalysis::Process(po::variables_map &vm)
             bndXmap->BwdTrans(bndCoeffs[i], pts[i]);
         }
 
-        isInside = BndElmtContainsPoint(bndGeom, orig, locCoord, isUseY, scaledTol, resid);
+        isInside = BndElmtContainsPoint(bndGeom, orig, locCoord, isUseY, scaledTol, resid); 
 
         if (isInside) 
         {
@@ -220,7 +210,7 @@ void ProcessLocalStabilityAnalysis::Process(po::variables_map &vm)
             for(int i=0; i<=nPlanes; ++i)
             {
                 zTmp    = dZ * i;
-                distTmp = abs(orig[2] - zTmp); 
+                distTmp = fabs(orig[2] - zTmp); 
                 if(distTmp < distCur)
                 {
                     distCur = distTmp;
@@ -236,8 +226,11 @@ void ProcessLocalStabilityAnalysis::Process(po::variables_map &vm)
     }
 
 
+    // Get outward-pointing wall-normal vectors for all quadrature points on bnd
+    // Use these wall-normals as diretion reference
+    Array<OneD, Array<OneD, NekDouble> > normalsQ; 
+    m_f->m_exp[0]->GetBoundaryNormals(bnd, normalsQ);
 
-#ifdef _DEBUG_
     // Get the normals on the quadrature points in the element as reference
     // Set point key to get points
     Array<OneD, LibUtilities::PointsKey> from_key(nBndLcoordDim);
@@ -248,25 +241,37 @@ void ProcessLocalStabilityAnalysis::Process(po::variables_map &vm)
         from_nPtsPerElmt *= from_key[i].GetNumPoints();
     }
 
-    cout << "Ref normals:" << endl;
-    for(int i=0;i<from_nPtsPerElmt;++i){
-        cout << i << ", Q [nx,ny] = [" 
-             << normalsQ[0][elmtid*from_nPtsPerElmt+i] << ", " 
-             << normalsQ[1][elmtid*from_nPtsPerElmt+i] << "]" << endl;
+    //Get ref normal
+    Array< OneD, NekDouble > normalsRef(3, 0.0);
+    int refId = elmtid*from_nPtsPerElmt; // the 1st normal in the bnd element
+    for(int i=0;i<m_spacedim; ++i)
+    {
+        normalsRef[i] = normalsQ[i][refId];
     }
-#endif
-
+    
     // Correct the direction of the normals
     Array< OneD, NekDouble > normals(3, 0.0);
     GetNormals(bndGeom, locCoord, normals);
-    Vmath::Neg(3, normals, 1);
 
+    if(Vmath::Dot(3, normals, normalsRef) > 0.0)
+    {
+        Vmath::Neg(3, normals, 1);
+    }
     
+#ifdef _DEBUG_
+    cout << "Ref normals:" << endl;
+    for(int i=0;i<from_nPtsPerElmt;++i){
+        cout << i << ", Q [nx,ny,nz] = [" 
+             << -normalsQ[0][elmtid*from_nPtsPerElmt+i] << ", "
+             << -normalsQ[1][elmtid*from_nPtsPerElmt+i] << "]" << endl;
+    }
     cout << "Final normals:" << endl;
     cout << "[nx,ny,nz] = [" << normals[0] << ", " << normals[1] << ", " << normals[2] << "]" << endl;
-    cout << "[Ox,Oy,Oz] = [" << orig[0] << ", " << orig[1] << ", " << orig[2] << "]" << endl;
+    cout << "Final origin coordinates:" << endl;
+    cout << "[Ox,Oy,Oz] = [" << orig[0] << ", " << orig[1] << ", " << orig[2] << "]" << endl;   
+#endif
 
-
+    
 
     // Set parametric distance of sampling points
     // Expression in Agrawal's paper:
@@ -319,49 +324,24 @@ void ProcessLocalStabilityAnalysis::Process(po::variables_map &vm)
 }
 
 /*
+* Check if the point is in the projected area or not
+* bndGeom   geometry of single element. It is unnecessary if
+            this routine is moved to Geometry class 
+* gloCoord  global coordinates of the point to be checked
+* projDir   projection direction, the coordinate to be computed
 */
-/*
-bool isInProjectedArea2D(
+bool ProcessLocalStabilityAnalysis::isInProjectedArea2D(
     SpatialDomains::GeometrySharedPtr bndGeom,
-    const Array< OneD, const NekDouble > & gloCoord)
+    const Array<OneD, const NekDouble > & gloCoord,
+    const int projDir)
 {
+    // Get the variables 
     StdRegions::StdExpansionSharedPtr bndXmap = bndGeom->GetXmap();
+    const int npts      = bndXmap->GetTotPoints();
     const int nCoordDim = m_f->m_exp[0]->GetCoordim(0);
-    Array<OneD, Array<OneD, NekDouble> >        pts(nCoordDim);
-    Array<OneD, Array<OneD, const NekDouble> >  bndCoeffs(nCoordDim);
-    const int npts = bndXmap->GetTotPoints();
-
-
-
-    if(pts[dir1][0] <= gloCoord[dir1] && pts[dir1][npts-1] >= gloCoord[dir1])
-    {
-
-    }
-}
-*/
-
-
-/*
-* Check if the boundary element contain an input point
-*/
-bool ProcessLocalStabilityAnalysis::BndElmtContainsPoint(
-        SpatialDomains::GeometrySharedPtr bndGeom,
-        const Array< OneD, const NekDouble > & gloCoord,
-        Array< OneD, NekDouble > & locCoord,
-        const bool isUseY, 
-        const NekDouble geomTol,
-        NekDouble & resid)
-{
-
-    const int MaxIterations = 51;     //51
-    const NekDouble iterTol  = 1.e-8;  // absolute tolerence of position
-
-    const int nCoordDim = m_f->m_exp[0]->GetCoordim(0);     // =2 for 2.5D cases
-    StdRegions::StdExpansionSharedPtr bndXmap = bndGeom->GetXmap();
-    Array<OneD, Array<OneD, NekDouble> >        pts(nCoordDim);
-    Array<OneD, Array<OneD, const NekDouble> >  bndCoeffs(nCoordDim);
-    int npts = bndXmap->GetTotPoints();
-
+    Array<OneD, Array<OneD, NekDouble> >       pts(nCoordDim);
+    Array<OneD, Array<OneD, const NekDouble> > bndCoeffs(nCoordDim);
+    
     for (int i=0; i<nCoordDim; ++i) 
     {
         pts[i] = Array<OneD, NekDouble>(npts);
@@ -369,112 +349,149 @@ bool ProcessLocalStabilityAnalysis::BndElmtContainsPoint(
         bndXmap->BwdTrans(bndCoeffs[i], pts[i]);
     }
 
-
-    const int dir1 = isUseY ? 1 : 0; // Use x or y to determine the location
-    const int dir2 = 1 - dir1;       // The other Lcoord to be computed
-
-    if(nCoordDim==2)
+    // Set direction
+    int dir1 = 0; // Main(1) and minor(2) coordinates
+    if(projDir==0)
     {
-        // Check if the point is in the range 
-        if(pts[dir1][0] <= gloCoord[dir1] && pts[dir1][npts-1] >= gloCoord[dir1])
-        {
-            // In this range, start iteration of bisection
-            Array<OneD, NekDouble> etaLR(2); // range [-1,1]
-            etaLR[0] = -1.0; // left
-            etaLR[1] =  1.0; // right
-            NekDouble tmpL, tmpR;
-            bool isConverge = false;
-            bool isDesired  = false;
-            int cnt = 0;
+        dir1 = 1;
+    }
+    else if(projDir==1)
+    {
+        dir1 = 0;
+    }
+    else{
+        ASSERTL0(false, "Incorrect minor (projection) direction."); 
+    }
 
-            while(cnt<MaxIterations)
-            {
-                tmpL = bndXmap->PhysEvaluate(etaLR  , pts[dir1]);
-                tmpR = bndXmap->PhysEvaluate(etaLR+1, pts[dir1]);
-
-                if (abs(gloCoord[dir1]-tmpL) >= abs(gloCoord[dir1]-tmpR))
-                {
-                    etaLR[0] = 0.5 * (etaLR[0]+etaLR[1]);
-                }
-                else
-                {
-                    etaLR[1] = 0.5 * (etaLR[0]+etaLR[1]);
-                }
-
-                if ( (etaLR[1]-etaLR[0]) < iterTol)
-                {
-                    locCoord[0] = 0.5 * (etaLR[0]+etaLR[1]);
-                    resid = abs(0.5*(tmpL+tmpR)-gloCoord[dir1]);
-                    isConverge = true;
-                    break;
-                }
-
-                ++cnt;
-            }
-
-            tmpL = bndXmap->PhysEvaluate(locCoord, pts[dir2]);
-            if (abs(gloCoord[dir2]-tmpL) < geomTol)
-            {
-                isDesired = true;
-            }
-
-            return isConverge && isDesired;
-
-        }
-        else
-        {
-            return false;
-        }
-        
+    // Set range
+    NekDouble valueL, valueR;
+    if(pts[dir1][0] <= pts[dir1][npts-1])
+    {
+        valueL = pts[dir1][0];
+        valueR = pts[dir1][npts-1];
     }
     else
     {
-        NekDouble angleAbs, angleSign, angleSum = 0.0, angleCos;
-        const NekDouble angleTol = 1e-6;
-        Array<OneD, NekDouble> vec1(2, 0.0), vec2(2, 0.0);
-        int id1, id2;
+        valueL = pts[dir1][npts-1];
+        valueR = pts[dir1][0];
+    }
 
-        // Generate a polygen, re-order the points on the edge
-        int nptsEdge = sqrt(npts);  // num of points on edge for geo representation
-        Array<OneD, Array<OneD, NekDouble> > ptsPolygon(3);
-        for (int i=0; i<3; ++i) 
+    // Check
+    if(valueL <= gloCoord[dir1] && gloCoord[dir1] <= valueR)
+    {
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+
+
+bool ProcessLocalStabilityAnalysis::isInProjectedArea3D(
+    SpatialDomains::GeometrySharedPtr bndGeom,
+    const Array<OneD, const NekDouble > & gloCoord,
+    const int projDir)
+{
+    // Get the variables 
+    StdRegions::StdExpansionSharedPtr bndXmap = bndGeom->GetXmap();
+    const int npts      = bndXmap->GetTotPoints();
+    const int nCoordDim = m_f->m_exp[0]->GetCoordim(0);
+    Array<OneD, Array<OneD, NekDouble> >       pts(nCoordDim);
+    Array<OneD, Array<OneD, const NekDouble> > bndCoeffs(nCoordDim);
+    
+    for (int i=0; i<nCoordDim; ++i) 
+    {
+        pts[i] = Array<OneD, NekDouble>(npts);
+        bndCoeffs[i] = bndGeom->GetCoeffs(i); // 0/1/2 for x/y/z
+        bndXmap->BwdTrans(bndCoeffs[i], pts[i]);
+    }
+
+    // Set direction
+    int dir1 = 2, dir2 = 0; // Main(1,2) and minor(3) coordinates
+    if(projDir==0)
+    {
+        dir1 = 1;
+        dir2 = 2;
+    }
+    else if(projDir==1)
+    {
+        dir1 = 2;
+        dir2 = 0;
+    }
+    else if(projDir==2)
+    {
+        dir1 = 0;
+        dir2 = 1;
+    }
+    else{
+        ASSERTL0(false, "Incorrect minor (projection) direction."); 
+    }
+
+
+    //Generate a polygen (quad), re-order the points on the edge
+    const int nptsEdge    = sqrt(npts);  // num of points on edge for geo representation
+    const int nptsPolygon = 4*nptsEdge-4;
+    Array<OneD, Array<OneD, NekDouble> > ptsPolygon(3);
+    for (int i=0; i<nCoordDim; ++i) 
+    {
+        ptsPolygon[i] = Array<OneD, NekDouble>(nptsPolygon);
+
+        for(int j=0; j<nptsEdge; ++j)
         {
-            ptsPolygon[i] = Array<OneD, NekDouble>(4*nptsEdge-4);
-
-            for(int j=0; j<nptsEdge; ++j)
-            {
-                ptsPolygon[i][j] = pts[i][j];
-            }
-            for(int j=0; j<nptsEdge-2; ++j)
-            {
-                ptsPolygon[i][nptsEdge+j] = pts[i][(j+2)*nptsEdge-1];
-            }
-            for(int j=0; j<nptsEdge; ++j)
-            {
-                ptsPolygon[i][2*nptsEdge-2+j] = pts[i][npts-1-j];
-            }
-            for(int j=0; j<nptsEdge-2; ++j)
-            {
-                ptsPolygon[i][3*nptsEdge-2+j] = pts[i][nptsEdge*(nptsEdge-j-2)];
-            }
+            ptsPolygon[i][j] = pts[i][j];
         }
-
-
-        // Determine relation using z-x (isUseY==0) or y-z (isUseY==1) 
-        for(int i=0; i<4*nptsEdge-4; ++i)
+        for(int j=0; j<nptsEdge-2; ++j)
         {
-            id1 = i;
-            id2 = (id1==(4*nptsEdge-5)) ? 0 : id1+1;
-
-            vec1[0] = ptsPolygon[dir1][id1] - gloCoord[dir1];
-            vec1[1] = ptsPolygon[2][id1]    - gloCoord[2];
-            vec2[0] = ptsPolygon[dir1][id2] - gloCoord[dir1];
-            vec2[1] = ptsPolygon[2][id2]    - gloCoord[2];
+            ptsPolygon[i][nptsEdge+j] = pts[i][(j+2)*nptsEdge-1];
+        }
+        for(int j=0; j<nptsEdge; ++j)
+        {
+            ptsPolygon[i][2*nptsEdge-2+j] = pts[i][npts-1-j];
+        }
+        for(int j=0; j<nptsEdge-2; ++j)
+        {
+            ptsPolygon[i][3*nptsEdge-2+j] = pts[i][nptsEdge*(nptsEdge-j-2)];
+        }
+    }
         
+    
+    // Determine relation using angle method (sum=2*pi)
+    const NekDouble paralTol = 1.0e-12;
+    const NekDouble angleTol = 1.0e-6;
+    NekDouble angleCos, angleAbs, angleSign, angleSum = 0.0;
+    NekDouble norm1, norm2;
+    Array<OneD, NekDouble> vec1(2, 0.0), vec2(2, 0.0);
+    int id1, id2;
+
+    for(int i=0; i<nptsPolygon; ++i)
+    {
+        id1 = i;
+        id2 = (id1==(nptsPolygon-1)) ? 0 : id1+1;
+
+        vec1[0] = ptsPolygon[dir1][id1] - gloCoord[dir1];
+        vec1[1] = ptsPolygon[dir2][id1] - gloCoord[dir2];
+        vec2[0] = ptsPolygon[dir1][id2] - gloCoord[dir1];
+        vec2[1] = ptsPolygon[dir2][id2] - gloCoord[dir2];
+
+        norm1 = sqrt(vec1[0]*vec1[0] + vec1[1]*vec1[1]);
+        norm2 = sqrt(vec2[0]*vec2[0] + vec2[1]*vec2[1]);
+        vec1[0] /= norm1;
+        vec1[1] /= norm1;
+        vec2[0] /= norm2;
+        vec2[1] /= norm2;
+
+        if( (fabs(vec1[0]+vec2[0]) + fabs(vec1[1]+vec2[1])) < paralTol )
+        {
+            // On the line segement, true
+            return true;
+        }
+        else
+        {
+            // Off the line segement, compute angle
             angleSign = ((vec1[0]*vec2[1]-vec1[1]*vec2[0]) > 0.0) ? 1.0 : -1.0;
-            angleCos  = (vec1[0]*vec2[0]+vec1[1]*vec2[1])/
-                         sqrt( (vec1[0]*vec1[0]+vec1[1]*vec1[1])
-                               *(vec2[0]*vec2[0]+vec2[1]*vec2[1]));
+            angleCos  = vec1[0]*vec2[0]+vec1[1]*vec2[1];
+
             if(angleCos>1.0)
             {
                 angleCos=1.0;
@@ -486,65 +503,112 @@ bool ProcessLocalStabilityAnalysis::BndElmtContainsPoint(
 
             angleAbs = acos(angleCos);
             angleSum += angleSign * angleAbs;
-        }
-        angleSum = abs(angleSum);        
-        //cout <<"angle = " << angleSum << endl;
-
-
-        if( abs(angleSum-2.0*M_PI) < angleTol )
-        {
-            /*
-            cout <<"inside." << endl;
-            cout << "npts = " << npts << endl;
-            for (int i=0; i<npts; ++i)
-            {
-                cout << i <<", old [x,y,z]=[" << pts[0][i]<<", " << pts[1][i]<<", "<< pts[2][i]<<"]" << endl;
-            }
-            cout << "gloCoordXYZ = " << gloCoord[0] << ", " << gloCoord[1] << ", " << gloCoord[2] << endl;
-            */
-            
-            // Inside the element projection, use Newton iteration to find the Lcoord
-            bool isConverge = false;
-            bool isDesired  = false;        
-            NekDouble dist  = 999.0;
-            NewtonIterationForLocCoordOnBndElmt(bndGeom, gloCoord, pts[0], pts[1], pts[2], dir2, locCoord, dist); //1
-
-            if(dist < geomTol)
-            {
-                isConverge = true; // converged to get Lcoord 
-            }
-
-            NekDouble gloCoordTmp = bndXmap->PhysEvaluate(locCoord, pts[dir2]);
-            if (abs(gloCoord[dir2]-gloCoordTmp) < geomTol)
-            {
-                isDesired = true;
-            }
-
-            return isConverge && isDesired;            
-        }
-        else
-        {
-            return false; // not in the projected area
-        }
- 
+        }   
+    }
+    
+    // Check
+    angleSum = fabs(angleSum);
+    if( fabs(angleSum-2.0*M_PI) < angleTol )
+    {
+        return true;
+    }
+    else
+    {
+        return false;
     }
 
-    return false;
 }
 
 
-// 3D case -> bnd element projected to 2D plane
-void ProcessLocalStabilityAnalysis::NewtonIterationForLocCoordOnBndElmt(
+/*
+* Compute the Lcoord using the coord
+* bndGeom   geometry of single element. It is unnecessary if
+            this routine is moved to Geometry class 
+* gloCoord  global coordinates of the point
+* pts       global coordinates of the geometry feature points
+* locCoord  local coordinates to be computed
+* projDir   projection direction, the coordinate to be computed
+*/
+bool ProcessLocalStabilityAnalysis::BisectionForLocCoordOnBndElmt(
+    SpatialDomains::GeometrySharedPtr bndGeom,
+    const Array<OneD, const NekDouble > & gloCoord,
+    const Array<OneD, const Array<OneD, NekDouble> > & pts,
+    const int projDir,
+    Array< OneD, NekDouble > & locCoord,
+    NekDouble & dist)
+{
+    const int MaxIterations = 51;     
+    const NekDouble iterTol = 1.e-8;
+  
+    // Set direction
+    int dir1 = 0; // Main(1) and minor(2) coordinates
+    if(projDir==0)
+    {
+        dir1 = 1;
+    }
+    else if(projDir==1)
+    {
+        dir1 = 0;
+    }
+    else{
+        ASSERTL0(false, "Incorrect minor (projection) direction."); 
+    }
+
+    // Bisection iteration
+    Array<OneD, NekDouble> etaLR(2); // range [-1,1]
+    etaLR[0] = -1.0; // left
+    etaLR[1] =  1.0; // right
+    NekDouble tmpL, tmpR;
+    int cnt = 0;
+
+    StdRegions::StdExpansionSharedPtr bndXmap = bndGeom->GetXmap();
+    locCoord[0] = -2.0;
+    dist = 999.0;
+    bool isConverge = false;
+    while(cnt<MaxIterations)
+    {
+        tmpL = bndXmap->PhysEvaluate(etaLR  , pts[dir1]);
+        tmpR = bndXmap->PhysEvaluate(etaLR+1, pts[dir1]);
+
+        if (fabs(gloCoord[dir1]-tmpL) >= fabs(gloCoord[dir1]-tmpR))
+        {
+            etaLR[0] = 0.5 * (etaLR[0]+etaLR[1]);
+        }
+        else
+        {
+            etaLR[1] = 0.5 * (etaLR[0]+etaLR[1]);
+        }
+
+        if ( (etaLR[1]-etaLR[0]) < iterTol )
+        {
+            locCoord[0] = 0.5 * (etaLR[0]+etaLR[1]);
+            dist = fabs(0.5*(tmpL+tmpR)-gloCoord[dir1]);
+            isConverge = true;
+            break;
+        }
+
+        ++cnt;
+    }
+
+    // Warning if failed
+    if(cnt >= MaxIterations)
+    {
+        WARNINGL1(false, "Bisection iteration is not converged");
+    }
+
+    return isConverge;
+
+}
+
+
+bool ProcessLocalStabilityAnalysis::NewtonIterationForLocCoordOnBndElmt(
     SpatialDomains::GeometrySharedPtr bndGeom,
     const Array<OneD, const NekDouble> &coords,
-    const Array<OneD, const NekDouble> &ptsx,
-    const Array<OneD, const NekDouble> &ptsy,
-    const Array<OneD, const NekDouble> &ptsz,
+    const Array<OneD, const Array<OneD, NekDouble> > &pts,
     const int projDir,
     Array<OneD, NekDouble> &Lcoords,
     NekDouble &dist)
-{
-    // Iteration settings 
+{ 
     // Maximum iterations for convergence
     const int MaxIterations = 51;
     // |x-xp|^2 < EPSILON  error    tolerance
@@ -560,66 +624,61 @@ void ProcessLocalStabilityAnalysis::NewtonIterationForLocCoordOnBndElmt(
                           ((NekDouble)Jac.size());
     ScaledTol *= Tol;
 
+
+
+    int dir1 = 2, dir2 = 0;
+    if(projDir==0)
+    {
+        dir1 = 1;
+        dir2 = 2;
+    }
+    else if(projDir==1)
+    {
+        dir1 = 2;
+        dir2 = 0;   
+    }
+    else if(projDir==2)
+    {
+        dir1 = 0;
+        dir2 = 1;
+    }
+    else{
+        ASSERTL0(false, "The projection direction needs to be 0 or 1 or 2.");  
+    }
     
+
+    Array<OneD, NekDouble> Dx1D1(pts[dir1].size());
+    Array<OneD, NekDouble> Dx1D2(pts[dir1].size());
+    Array<OneD, NekDouble> Dx2D1(pts[dir1].size());
+    Array<OneD, NekDouble> Dx2D2(pts[dir1].size());
+
+    // Ideally this will be stored in m_geomfactors
+    bndXmap->PhysDeriv(pts[dir1], Dx1D1, Dx1D2);
+    bndXmap->PhysDeriv(pts[dir2], Dx2D1, Dx2D2);
+       
     // Initial the locCoord
     Lcoords[0] = 0.0;
     Lcoords[1] = 0.0;
 
     NekDouble x1map, x2map, F1, F2;
     NekDouble derx1_1, derx1_2, derx2_1, derx2_2, jac;
-
-    Array<OneD, const NekDouble> ptsx1, ptsx2;
-    Array<OneD, NekDouble> LcoordsTmp(2);
-    int dir[2]={-1, -1};
-    if(projDir==0)
-    {
-        dir[0] = 1;
-        dir[1] = 2;
-        ptsx1 = ptsy;
-        ptsx2 = ptsz;
-    }
-    else if(projDir==1)
-    {
-        dir[0] = 2;
-        dir[1] = 0;
-        ptsx1 = ptsz;
-        ptsx2 = ptsx;     
-    }
-    else if(projDir==2)
-    {
-        dir[0] = 0;
-        dir[1] = 1;
-        ptsx1 = ptsx;
-        ptsx2 = ptsy;
-    }
-    else{
-        ASSERTL0(false, "The projection direction needs to be 0 or 1 or 2.");  
-    }
-     
-    Array<OneD, NekDouble> Dx1D1(ptsx1.size());
-    Array<OneD, NekDouble> Dx1D2(ptsx1.size());
-    Array<OneD, NekDouble> Dx2D1(ptsx1.size());
-    Array<OneD, NekDouble> Dx2D2(ptsx1.size());
-
-    // Ideally this will be stored in m_geomfactors
-    bndXmap->PhysDeriv(ptsx1, Dx1D1, Dx1D2);
-    bndXmap->PhysDeriv(ptsx2, Dx2D1, Dx2D2);
-    
+    bool isConverge = false;
     int cnt = 0;
 
     F1 = F2 = 2000; // Starting value of Function
     NekDouble resid;
     while (cnt++ < MaxIterations)
     {
-        x1map = bndXmap->PhysEvaluate(Lcoords, ptsx1);
-        x2map = bndXmap->PhysEvaluate(Lcoords, ptsx2);
+        x1map = bndXmap->PhysEvaluate(Lcoords, pts[dir1]);
+        x2map = bndXmap->PhysEvaluate(Lcoords, pts[dir2]);
 
-        F1 = coords[dir[0]] - x1map;
-        F2 = coords[dir[1]] - x2map;
+        F1 = coords[dir1] - x1map;
+        F2 = coords[dir2] - x2map;
 
         if (F1 * F1 + F2 * F2 < ScaledTol)
         {
             resid = sqrt(F1 * F1 + F2 * F2);
+            isConverge = true;
             break;
         }
 
@@ -635,11 +694,11 @@ void ProcessLocalStabilityAnalysis::NewtonIterationForLocCoordOnBndElmt(
         // also similar to those of metric factors.
         Lcoords[0] =
             Lcoords[0] +
-            ( derx2_2 * (coords[dir[0]] - x1map) - derx1_2 * (coords[dir[1]] - x2map)) / jac;
+            ( derx2_2 * (coords[dir1] - x1map) - derx1_2 * (coords[dir2] - x2map)) / jac;
 
         Lcoords[1] =
             Lcoords[1] +
-            (-derx2_1 * (coords[dir[0]] - x1map) + derx1_1 * (coords[dir[1]] - x2map)) / jac;
+            (-derx2_1 * (coords[dir1] - x1map) + derx1_1 * (coords[dir2] - x2map)) / jac;
 
         
         if( !(std::isfinite(Lcoords[0]) && std::isfinite(Lcoords[1])) )
@@ -649,7 +708,7 @@ void ProcessLocalStabilityAnalysis::NewtonIterationForLocCoordOnBndElmt(
             ss << "nan or inf found in NewtonIterationForLocCoord in element "
                << bndGeom->GetGlobalID();
             WARNINGL1(false, ss.str());
-            return;
+            return false;
         }
         if (fabs(Lcoords[0]) > LcoordDiv || fabs(Lcoords[1]) > LcoordDiv)
         {
@@ -666,10 +725,10 @@ void ProcessLocalStabilityAnalysis::NewtonIterationForLocCoordOnBndElmt(
         I[0] = bndXmap->GetBasis(0)->GetI(eta);
         I[1] = bndXmap->GetBasis(1)->GetI(eta + 1);
         // calculate the global point corresponding to Lcoords
-        x1map = bndXmap->PhysEvaluate(I, ptsx1);
-        x2map = bndXmap->PhysEvaluate(I, ptsx2);
-        F1 = coords[dir[0]] - x1map;
-        F2 = coords[dir[1]] - x2map;
+        x1map = bndXmap->PhysEvaluate(I, pts[dir1]);
+        x2map = bndXmap->PhysEvaluate(I, pts[dir2]);
+        F1 = coords[dir1] - x1map;
+        F2 = coords[dir2] - x2map;
         dist = sqrt(F1 * F1 + F2 * F2);
     }
     else
@@ -677,10 +736,11 @@ void ProcessLocalStabilityAnalysis::NewtonIterationForLocCoordOnBndElmt(
         dist = 0.0;
     }
 
+    // Warning if failed
     if (cnt >= MaxIterations)
     {
         Array<OneD, NekDouble> collCoords(2);
-        bndXmap->LocCoordToLocCollapsed(LcoordsTmp, collCoords);
+        bndXmap->LocCoordToLocCollapsed(Lcoords, collCoords);
 
         // if coordinate is inside element dump error!
         if ((collCoords[0] >= -1.0 && collCoords[0] <= 1.0) &&
@@ -693,20 +753,94 @@ void ProcessLocalStabilityAnalysis::NewtonIterationForLocCoordOnBndElmt(
             ss << "Init value (" << setprecision(4) << 0 << "," << 0
                << ","
                << ") ";
-            ss << "Fin  value (" << LcoordsTmp[0] << "," << LcoordsTmp[1] << ","
+            ss << "Fin  value (" << Lcoords[0] << "," << Lcoords[1] << ","
                << ") ";
             ss << "Resid = " << resid << " Tolerance = " << sqrt(ScaledTol);
 
             WARNINGL1(cnt < MaxIterations, ss.str());
         }
     }
+
+    return isConverge;
+
+}
+
+
+/*
+* Check if the boundary element contain an input point
+* Find the Lcoord if it is inside
+*/
+bool ProcessLocalStabilityAnalysis::BndElmtContainsPoint(
+    SpatialDomains::GeometrySharedPtr bndGeom,
+    const Array< OneD, const NekDouble > & gloCoord,
+    Array< OneD, NekDouble > & locCoord,
+    const bool isUseY, 
+    const NekDouble geomTol,
+    NekDouble & dist)
+{
+    // Get variables
+    StdRegions::StdExpansionSharedPtr bndXmap = bndGeom->GetXmap();
+    const int npts      = bndXmap->GetTotPoints();
+    const int nCoordDim = m_f->m_exp[0]->GetCoordim(0);     // =2 for 2.5D cases
+    Array<OneD, Array<OneD, NekDouble> >       pts(nCoordDim);
+    Array<OneD, Array<OneD, const NekDouble> > bndCoeffs(nCoordDim);
     
-    /*
-    cout << "dir1, dir2 = [" << dir[0] << ", " << dir[1] << "]" << endl;
-    cout << "Lcoords = [" << Lcoords[0] << ", " << Lcoords[1] << ", " << Lcoords[2] << "]" << endl;
-    cout << "xyz = " << bndXmap->PhysEvaluate(Lcoords, ptsx1) << ", " 
-                     << bndXmap->PhysEvaluate(Lcoords, ptsx2) << endl;
-    */
+    for (int i=0; i<nCoordDim; ++i) 
+    {
+        pts[i] = Array<OneD, NekDouble>(npts);
+        bndCoeffs[i] = bndGeom->GetCoeffs(i); // 0/1/2 for x/y/z
+        bndXmap->BwdTrans(bndCoeffs[i], pts[i]);
+    }
+
+    const int dir1 = isUseY ? 1 : 0; // Use x or y to determine the location
+    const int dir2 = 1 - dir1;       // The other Lcoord to be computed
+
+
+    if(nCoordDim==2)
+    {
+        if( isInProjectedArea2D(bndGeom, gloCoord, dir2) )
+        {
+            NekDouble tmp;
+            bool isConverge, isDesired;
+            
+            isConverge = BisectionForLocCoordOnBndElmt(bndGeom, gloCoord, pts, dir2, locCoord, dist);
+
+            tmp = bndXmap->PhysEvaluate(locCoord, pts[dir2]);
+            if (fabs(gloCoord[dir2]-tmp) < geomTol)
+            {
+                isDesired = true;
+            }
+
+            return isConverge && isDesired;
+
+         }
+         else{
+             return false;
+         }
+    }
+    else
+    {
+        if( isInProjectedArea3D(bndGeom, gloCoord, dir2) )
+         {
+            NekDouble tmp;
+            bool isConverge, isDesired;
+            
+            isConverge = NewtonIterationForLocCoordOnBndElmt(bndGeom, gloCoord, pts, dir2, locCoord, dist);
+
+            tmp = bndXmap->PhysEvaluate(locCoord, pts[dir2]);
+            if (fabs(gloCoord[dir2]-tmp) < geomTol)
+            {
+                isDesired = true;
+            }
+
+            return isConverge && isDesired;
+            
+         }
+         else{
+             return false;
+         }
+    }
+
 }
 
 
@@ -798,7 +932,7 @@ Re-scale the data as the CoPSE3D_LST needed [in python]
 
 
 Case 1: 2D channel
-/disk_two/Nek_Test/nektar++/build_f90/dist/bin/FieldConvert -f -m localStabilityAnalysis:bnd=2:x=0.10472:y=1 test_1.xml test_1.fld test_1.pts
+/disk_two/Nek_Test/nektar++/build_f90/dist/bin/FieldConvert -f -m localStabilityAnalysis:bnd=2:x=0.10472:y=1.01 test_1.xml test_1.fld test_1.pts
 
 Case 2: 2D airfoil
 /disk_two/Nek_Test/nektar++/build_f90/dist/bin/FieldConvert -f -m localStabilityAnalysis:bnd=0:x=0.02:y=0.0195:useY=1:h=0.02:nh=5 test_2_mesh.xml test_2_session.xml test_2.fld test_2.pts
@@ -812,3 +946,4 @@ Case4: 3D flat plate
 Case5: 3D airfoil (close output as case2)
 /disk_two/Nek_Test/nektar++/build_f90/dist/bin/FieldConvert -f -m localStabilityAnalysis:bnd=0:x=0.02:y=0.0195:useY=1:h=0.02:nh=5 test_5_mesh.xml test_5_session.xml test_5.fld test_5.pts
 */
+
