@@ -201,7 +201,29 @@ class Helmholtz_IterPerExp : public Operator
                      "Constant factor not defined: "
                      + std::string(StdRegions::ConstFactorTypeMap
                                    [StdRegions::eFactorLambda]));
-            NekDouble lambda = x->second; 
+            NekDouble lambda = x->second;
+
+            auto d00 = factors.find(StdRegions::eFactorCoeffD00);
+            if(d00 != factors.end())
+            {
+                static bool print = true;
+                if(print)
+                {
+                    cout << "Found a value of d00 of " << d00->second << std::endl;
+                    print = false;
+                }
+                
+            }
+            auto d11 = factors.find(StdRegions::eFactorCoeffD11);            
+            if(d11 != factors.end())
+            {
+                static bool print = true;
+                if(print)
+                {
+                    cout << "Found a value of d11 of " << d11->second << std::endl;
+                    print = false;
+                }
+            }
             
             tmpphys = wsp; 
             for(int i = 1; i < m_coordim+1; ++i)
@@ -264,8 +286,20 @@ class Helmholtz_IterPerExp : public Operator
                     // calculate Iproduct WRT Std Deriv
                     for(int j = 0; j < m_dim; ++j)
                     {
+                                                                
+                        // add diffusivity here
+                        if(j == 0 && d00 != factors.end())
+                        {
+                            Vmath::Smul(nPhys,d00->second,dtmp[j],1,dtmp[j],1);
+                        }
+                        else if(j == 1 && d11 != factors.end())
+                        {
+                            Vmath::Smul(nPhys,d11->second,dtmp[j],1,dtmp[j],1);  
+                        }
+                        
                         // multiply by Jacobian
                         Vmath::Vmul(nPhys,m_jac+i*nPhys,1,dtmp[j],1,dtmp[j],1);
+
                         m_stdExp->IProductWRTDerivBase(j,dtmp[j],tmp[0]);
                         Vmath::Vadd(nCoeffs,tmp[0],1,output+i*nCoeffs,1,
                                     t1 = output+i*nCoeffs,1);
@@ -302,8 +336,21 @@ class Helmholtz_IterPerExp : public Operator
                     // calculate Iproduct WRT Std Deriv
                     for(int j = 0; j < m_dim; ++j)
                     {
+                                            
+                        // add diffusivity here
+                        if(j == 0 && d00 != factors.end())
+                        {
+                            Vmath::Smul(nPhys,d00->second,dtmp[j],1,dtmp[j],1);
+                        }
+                        else if(j == 1 && d11 != factors.end())
+                        {
+                            Vmath::Smul(nPhys,d11->second,dtmp[j],1,dtmp[j],1);  
+                        }
+                        
                         // multiply by Jacobian
                         Vmath::Smul(nPhys,m_jac[i],dtmp[j],1,dtmp[j],1);
+
+                        
                         m_stdExp->IProductWRTDerivBase(j,dtmp[j],tmp[0]);
                         Vmath::Vadd(nCoeffs,tmp[0],1,output+i*nCoeffs,1,
                                     t1 = output+i*nCoeffs,1);
