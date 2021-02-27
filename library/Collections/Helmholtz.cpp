@@ -203,26 +203,43 @@ class Helmholtz_IterPerExp : public Operator
                                    [StdRegions::eFactorLambda]));
             NekDouble lambda = x->second;
 
-            auto d00 = factors.find(StdRegions::eFactorCoeffD00);
-            if(d00 != factors.end())
+            Array<OneD, Array<OneD, NekDouble> > diff;
+            bool HasVarCoeffDiff = false;
+            
+            
+            auto d = factors.find(StdRegions::eFactorCoeffD00);
+            // Get hold of diffusion coefficients if defined
+            if(d != factors.end())
             {
-                static bool print = true;
-                if(print)
+                diff = Array<OneD, Array<OneD, NekDouble> >(m_coordim);
+                for(int i = 0; i < m_coordim; ++i)
                 {
-                    cout << "Found a value of d00 of " << d00->second << std::endl;
-                    print = false;
+                    diff[i] = Array<OneD, NekDouble>(m_coordim);
                 }
                 
-            }
-            auto d11 = factors.find(StdRegions::eFactorCoeffD11);            
-            if(d11 != factors.end())
-            {
-                static bool print = true;
-                if(print)
+                for(int i = 0; i < m_coordim; ++i)
                 {
-                    cout << "Found a value of d11 of " << d11->second << std::endl;
-                    print = false;
-                }
+                    if((d = factors.find(m_factorCoeffDef[i][i])) != factors.end())
+                    {                        
+                        diff[i][i] = d->second;
+                    }
+                    else
+                    {
+                        diff[i][i] = 1.0;
+                    }
+                    for(int j = i+1; j < m_coordim; ++j)
+                    {
+                        if((d = factors.find(m_factorCoeffDef[i][j])) != factors.end())
+                        {                        
+                            diff[i][j] = diff[j][i] = d->second;
+                        }
+                        else
+                        {
+                            diff[i][j] = diff[j][i] = 0.0;
+                        }
+                    }
+                }                
+                HasVarCoeffDiff = true;
             }
             
             tmpphys = wsp; 
@@ -253,9 +270,9 @@ class Helmholtz_IterPerExp : public Operator
                 Vmath::Smul(nCoeffs,lambda,output + i*nCoeffs,1,
                             t1 = output+i*nCoeffs,1);
                 
-                // calculate full derivative
                 if(m_isDeformed)
                 {
+                    // calculate full derivative
                     for(int j = 0; j < m_coordim; ++j)
                     {
                         Vmath::Vmul(nPhys,m_derivFac[j*m_dim].origin() + i*nPhys,1,
@@ -268,34 +285,63 @@ class Helmholtz_IterPerExp : public Operator
                                           &tmp[j][0],   1,  &tmp[j][0],   1);
                         }
                     }
-
-                    // calculate dx/dxi tmp[0] + dy/dxi tmp[2] + dz/dxi tmp[3]
-                    for(int j = 0; j < m_dim; ++j)
+                    
+                    if(HasVarCoeffDiff)
                     {
-                        Vmath::Vmul (nPhys,m_derivFac[j].origin() + i*nPhys,1,
-                                     &tmp[0][0], 1, &dtmp[j][0],1);
+                        // calculate dtmp[i] = dx/dxi sum_j diff[0][j] tmp[j] + dy/dxi sum_j diff[1][j] tmp[j] +
+                        //                     dz/dxi sum_j diff[2][j] tmp[j]
+
+                        // First term 
+                        Vmath::Smul(nPhys,diff[0][0], &tmp[0][0],1, &tmpphys[0],1);
+                        for(int l = 1; l < m_coordim; ++l)
+                        {                            
+                            Vmath::Svtvp(nPhys,diff[0][l], &tmp[l][0],1, &tmpphys[0],1, &tmpphys[0],1);
+                        }
                         
-                        for(int k = 1; k < m_coordim; ++k)
+                        for(int j = 0; j < m_dim; ++j)
                         {
-                            Vmath::Vvtvp (nPhys, m_derivFac[j +k*m_dim].origin()
-                                          + i*nPhys, 1, &tmp[k][0], 1,
-                                          &dtmp[j][0], 1, &dtmp[j][0], 1);
+                            
+                            Vmath::Vmul (nPhys,m_derivFac[j].origin() + i*nPhys,1,
+                                         &tmpphys[0], 1, &dtmp[j][0],1);
+                        }
+
+                        // Second and third terms 
+                        for(int k = 1; k < m_coordim; ++k)
+                        {                            
+                            Vmath::Smul(nPhys,diff[k][0], &tmp[0][0],1, &tmpphys[0],1);
+                            for(int l = 1; l < m_coordim; ++l)
+                            {                            
+                                Vmath::Svtvp(nPhys,diff[k][l], &tmp[l][0],1, &tmpphys[0],1, &tmpphys[0],1);
+                            }
+
+                            for(int j = 0; j < m_dim; ++j)
+                            {
+                                Vmath::Vvtvp (nPhys, m_derivFac[j +k*m_dim].origin()
+                                              + i*nPhys, 1, &tmpphys[0], 1,
+                                              &dtmp[j][0], 1, &dtmp[j][0], 1);
+                            }
+                        }
+                    }
+                    else
+                    {
+                        // calculate dx/dxi tmp[0] + dy/dxi tmp[1] + dz/dxi tmp[2]
+                        for(int j = 0; j < m_dim; ++j)
+                        {
+                            Vmath::Vmul (nPhys,m_derivFac[j].origin() + i*nPhys,1,
+                                         &tmp[0][0], 1, &dtmp[j][0],1);
+                            
+                            for(int k = 1; k < m_coordim; ++k)
+                            {
+                                Vmath::Vvtvp (nPhys, m_derivFac[j +k*m_dim].origin()
+                                              + i*nPhys, 1, &tmp[k][0], 1,
+                                              &dtmp[j][0], 1, &dtmp[j][0], 1);
+                            }
                         }
                     }
                     
                     // calculate Iproduct WRT Std Deriv
                     for(int j = 0; j < m_dim; ++j)
                     {
-                                                                
-                        // add diffusivity here
-                        if(j == 0 && d00 != factors.end())
-                        {
-                            Vmath::Smul(nPhys,d00->second,dtmp[j],1,dtmp[j],1);
-                        }
-                        else if(j == 1 && d11 != factors.end())
-                        {
-                            Vmath::Smul(nPhys,d11->second,dtmp[j],1,dtmp[j],1);  
-                        }
                         
                         // multiply by Jacobian
                         Vmath::Vmul(nPhys,m_jac+i*nPhys,1,dtmp[j],1,dtmp[j],1);
@@ -307,6 +353,7 @@ class Helmholtz_IterPerExp : public Operator
                 }
                 else
                 {
+                    // calculate full derivative
                     for(int j = 0; j < m_coordim; ++j)
                     {
                         Vmath::Smul(nPhys,m_derivFac[j*m_dim][i],
@@ -317,39 +364,64 @@ class Helmholtz_IterPerExp : public Operator
                             Vmath::Svtvp (nPhys, m_derivFac[j*m_dim+k][i],
                                           &dtmp[k][0], 1, &tmp[j][0], 1, &tmp[j][0], 1);
                         }
+
                     }
-
-                    // calculate dx/dxi tmp[0] + dy/dxi tmp[2] + dz/dxi tmp[3]
-                    for(int j = 0; j < m_dim; ++j)
+                    
+                    if(HasVarCoeffDiff)
                     {
-                        Vmath::Smul (nPhys,m_derivFac[j][i],
-                                     &tmp[0][0], 1, &dtmp[j][0],1);
+                        // calculate dtmp[i] = dx/dxi sum_j diff[0][j] tmp[j] + dy/dxi sum_j diff[1][j] tmp[j] +
+                        //                     dz/dxi sum_j diff[2][j] tmp[j]
 
-                        for(int k = 1; k < m_coordim; ++k)
-                        {
-                            Vmath::Svtvp (nPhys, m_derivFac[j +k*m_dim][i],
-                                          &tmp[k][0], 1, &dtmp[j][0], 1, &dtmp[j][0], 1);
+                        // First term 
+                        Vmath::Smul(nPhys,diff[0][0], &tmp[0][0],1, &tmpphys[0],1);
+                        for(int l = 1; l < m_coordim; ++l)
+                        {                            
+                            Vmath::Svtvp(nPhys,diff[0][l], &tmp[l][0],1, &tmpphys[0],1, &tmpphys[0],1);
                         }
-                        
+
+                        for(int j = 0; j < m_dim; ++j)
+                        {
+                            Vmath::Smul (nPhys,m_derivFac[j][i], &tmpphys[0], 1, &dtmp[j][0],1);
+                        }
+
+                        // Second and third terms 
+                        for(int k = 1; k < m_coordim; ++k)
+                        {                            
+                            Vmath::Smul(nPhys,diff[k][0], &tmp[0][0],1, &tmpphys[0],1);
+                            for(int l = 1; l < m_coordim; ++l)
+                            {                            
+                                Vmath::Svtvp(nPhys,diff[k][l], &tmp[l][0],1, &tmpphys[0],1, &tmpphys[0],1);
+                            }
+                            
+                            for(int j = 0; j < m_dim; ++j)
+                            {
+                                Vmath::Svtvp (nPhys, m_derivFac[j +k*m_dim][i],
+                                              &tmpphys[0], 1, &dtmp[j][0], 1, &dtmp[j][0], 1);
+                            }
+                        }
+                    }
+                    else
+                    {
+                    
+                        // calculate dx/dxi tmp[0] + dy/dxi tmp[2] + dz/dxi tmp[3]
+                        for(int j = 0; j < m_dim; ++j)
+                        {
+                            Vmath::Smul (nPhys,m_derivFac[j][i],
+                                         &tmp[0][0], 1, &dtmp[j][0],1);
+                            
+                            for(int k = 1; k < m_coordim; ++k)
+                            {
+                                Vmath::Svtvp (nPhys, m_derivFac[j +k*m_dim][i],
+                                              &tmp[k][0], 1, &dtmp[j][0], 1, &dtmp[j][0], 1);
+                            }
+                        }
                     }
                     
                     // calculate Iproduct WRT Std Deriv
                     for(int j = 0; j < m_dim; ++j)
                     {
-                                            
-                        // add diffusivity here
-                        if(j == 0 && d00 != factors.end())
-                        {
-                            Vmath::Smul(nPhys,d00->second,dtmp[j],1,dtmp[j],1);
-                        }
-                        else if(j == 1 && d11 != factors.end())
-                        {
-                            Vmath::Smul(nPhys,d11->second,dtmp[j],1,dtmp[j],1);  
-                        }
-                        
                         // multiply by Jacobian
                         Vmath::Smul(nPhys,m_jac[i],dtmp[j],1,dtmp[j],1);
-
                         
                         m_stdExp->IProductWRTDerivBase(j,dtmp[j],tmp[0]);
                         Vmath::Vadd(nCoeffs,tmp[0],1,output+i*nCoeffs,1,
@@ -370,10 +442,14 @@ class Helmholtz_IterPerExp : public Operator
         }
 
     protected:
-        Array<TwoD, const NekDouble>    m_derivFac;
-        Array<OneD, const NekDouble>    m_jac;
-        int                             m_dim;
-        int                             m_coordim;
+    Array<TwoD, const NekDouble>    m_derivFac;
+    Array<OneD, const NekDouble>    m_jac;
+    int                             m_dim;
+    int                             m_coordim;
+    const StdRegions::ConstFactorType           m_factorCoeffDef[3][3] =
+        {{StdRegions::eFactorCoeffD00,StdRegions::eFactorCoeffD01,StdRegions::eFactorCoeffD02},
+         {StdRegions::eFactorCoeffD01,StdRegions::eFactorCoeffD11,StdRegions::eFactorCoeffD12},
+         {StdRegions::eFactorCoeffD02,StdRegions::eFactorCoeffD12,StdRegions::eFactorCoeffD22}};
     
     private:
         Helmholtz_IterPerExp(
