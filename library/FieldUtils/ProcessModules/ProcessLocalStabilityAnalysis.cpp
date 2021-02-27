@@ -128,13 +128,11 @@ void ProcessLocalStabilityAnalysis::Process(po::variables_map &vm)
     }
     int bnd = BndRegionMap[m_f->m_bndRegionsToWrite[0]]; // Refer to wnd module
 
-
     // Get expansion list for boundary and the number of points and elements
     Array<OneD, MultiRegions::ExpListSharedPtr> BndExp(nfields); 
     for (int i = 0; i < nfields; ++i) {
         BndExp[i] = m_f->m_exp[i]->UpdateBndCondExpansion(bnd);
     }
-    
     
 
     //-------------------------------------------------------------------------
@@ -173,6 +171,7 @@ void ProcessLocalStabilityAnalysis::Process(po::variables_map &vm)
             bndXmap->BwdTrans(bndCoeffs[i], pts[i]);
         }
 
+        // Key routine
         isInside = BndElmtContainsPoint(bndGeom, orig, locCoord, isUseY, scaledTol, resid); 
 
         if (isInside) 
@@ -249,7 +248,7 @@ void ProcessLocalStabilityAnalysis::Process(po::variables_map &vm)
         normalsRef[i] = normalsQ[i][refId];
     }
     
-    // Correct the direction of the normals
+    // Get the precise normals and correct the direction to be inward
     Array< OneD, NekDouble > normals(3, 0.0);
     GetNormals(bndGeom, locCoord, normals);
 
@@ -272,7 +271,7 @@ void ProcessLocalStabilityAnalysis::Process(po::variables_map &vm)
 #endif
 
     
-
+    //-------------------------------------------------------------------------
     // Set parametric distance of sampling points
     // Expression in Agrawal's paper:
     // h = 1- tanh((1-ksi)*atanh(sqrt(1-delta)))/sqrt(1-delta), ksi in [0,1]
@@ -311,8 +310,6 @@ void ProcessLocalStabilityAnalysis::Process(po::variables_map &vm)
 
     Interpolator interp;
     interp.Interpolate(m_f->m_exp, m_f->m_fieldPts, NekConstants::kNekUnsetDouble);
-
-    
 
 
     //------------------------------------------------------------------------- 
