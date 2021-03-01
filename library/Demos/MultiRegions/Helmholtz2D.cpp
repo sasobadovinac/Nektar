@@ -110,6 +110,14 @@ int main(int argc, char *argv[])
             varcoeffs[StdRegions::eVarCoeffD00] = d00;
         }
         
+        if (vSession->DefinesFunction("d01"))
+        {
+            Array<OneD, NekDouble> d01(nq,0.0);
+            LibUtilities::EquationSharedPtr d01func = vSession->GetFunction("d01",0);
+            d01func->Evaluate(xc0, xc1, xc2, d01);
+            varcoeffs[StdRegions::eVarCoeffD01] = d01;
+        }
+        
         if (vSession->DefinesFunction("d11"))
         {
             Array<OneD, NekDouble> d11(nq,0.0);
@@ -126,6 +134,13 @@ int main(int argc, char *argv[])
             NekDouble d00;
             vSession->LoadParameter("d00",d00,1.0);            
             factors[StdRegions::eFactorCoeffD00] = d00;
+        }
+        
+        if (vSession->DefinesParameter("d01"))
+        {
+            NekDouble d01;
+            vSession->LoadParameter("d01",d01,1.0);            
+            factors[StdRegions::eFactorCoeffD01] = d01;
         }
 
         if (vSession->DefinesParameter("d11"))
