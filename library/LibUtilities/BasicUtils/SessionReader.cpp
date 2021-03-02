@@ -1520,21 +1520,43 @@ namespace Nektar
             TiXmlElement* vMainNektar =
                 vMainHandle.FirstChildElement("NEKTAR").Element();
 
+            
+            
             // Read all subsequent XML documents.
             // For each element within the NEKTAR tag, use it to replace the
             // version already present in the loaded XML data.
+
+            //int exp_Counter = 0; 
+            
+            TiXmlElement* r = vMainNektar->FirstChildElement();
+            bool mainFile_expListSet = false;
+            bool nextFile_expList = false;
+            
+            //Check Main file for Expansion List Definition.
+            while (r)
+            {
+             if (std::string(r->Value())=="EXPANSIONS")
+             {
+                mainFile_expListSet = true; 
+             }
+            r = r->NextSiblingElement();
+            }
+
+
             for (int i = 1; i < pFilenames.size(); ++i)
             {
-                if((pFilenames[i].compare(pFilenames[i].size()-3,3,"xml") == 0)
+                            if((pFilenames[i].compare(pFilenames[i].size()-3,3,"xml") == 0)
                    ||(pFilenames[i].compare(pFilenames[i].size()-6,6,"xml.gz") == 0))
                 {
                     TiXmlDocument* vTempDoc = new TiXmlDocument;
                     LoadDoc(pFilenames[i], vTempDoc);
+                    std::cout << (pFilenames[i]) << endl;
 
                     TiXmlHandle docHandle(vTempDoc);
                     TiXmlElement* vTempNektar;
                     vTempNektar = docHandle.FirstChildElement("NEKTAR").Element();
                     ASSERTL0(vTempNektar, "Unable to find NEKTAR tag in file.");
+
                     TiXmlElement* p = vTempNektar->FirstChildElement();
 
                     while (p)
@@ -1559,11 +1581,24 @@ namespace Nektar
                                 vMainNektar->RemoveChild(vMainEntry);
                             }
                             TiXmlElement *q = new TiXmlElement(*p);
+                            
                             vMainNektar->LinkEndChild(q);
+
+                            if (std::string(p->Value())=="EXPANSIONS")
+                                {
+                                    nextFile_expList = true; 
+                                }
+
                         }
                         p = p->NextSiblingElement();
-                    }
 
+                        // Check any subsequent file for Expansion List Definition. If both have definitions error. 
+                        if (mainFile_expListSet == true && nextFile_expList == true)
+                        {
+                            std::string warningmsg = "You have defined the Expansion lists in both the specified XML files. Please delete one before continuing. ";
+                            NEKERROR(ErrorUtil::efatal, warningmsg.c_str());
+                        } 
+                    }
                     delete vTempDoc;
                 }
             }
@@ -2119,7 +2154,6 @@ namespace Nektar
             }
         }
 
-
         /**
          *
          */
@@ -2414,6 +2448,9 @@ namespace Nektar
         /**
          *
          */
+
+
+
         void SessionReader::ReadFilters(TiXmlElement *filters)
         {
             if (!filters)
