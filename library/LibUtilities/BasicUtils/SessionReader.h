@@ -523,7 +523,6 @@ namespace Nektar
             LIB_UTILITIES_EXPORT void ReadVariables(TiXmlElement *conditions);
             /// Reads the FUNCTIONS section of the XML document.
             LIB_UTILITIES_EXPORT void ReadFunctions(TiXmlElement *conditions);
-
             /// Reads the FILTERS section of the XML document.
             LIB_UTILITIES_EXPORT void ReadFilters(TiXmlElement *filters);
             /// Enforce parameters from command line arguments.

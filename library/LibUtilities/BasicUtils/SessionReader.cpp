@@ -1530,7 +1530,8 @@ namespace Nektar
             
             TiXmlElement* r = vMainNektar->FirstChildElement();
             bool mainFile_expListSet = false;
-            bool nextFile_expList = false;
+            bool nextFile_expListSet = false;
+            bool tempFile_expListSet = false;
             
             //Check Main file for Expansion List Definition.
             while (r)
@@ -1550,7 +1551,6 @@ namespace Nektar
                 {
                     TiXmlDocument* vTempDoc = new TiXmlDocument;
                     LoadDoc(pFilenames[i], vTempDoc);
-                    std::cout << (pFilenames[i]) << endl;
 
                     TiXmlHandle docHandle(vTempDoc);
                     TiXmlElement* vTempNektar;
@@ -1584,18 +1584,25 @@ namespace Nektar
                             
                             vMainNektar->LinkEndChild(q);
 
+                            // If found Expansions set first temp boolean true.
                             if (std::string(p->Value())=="EXPANSIONS")
-                                {
-                                    nextFile_expList = true; 
-                                }
+                            {
+                                nextFile_expListSet = true; 
+                            }
 
+                            // If found expansions and first temp boolean already true. 
+                            if (std::string(p->Value())=="EXPANSIONS" && nextFile_expListSet==true)
+                            {
+                                tempFile_expListSet = true; 
+                            }    
                         }
                         p = p->NextSiblingElement();
 
-                        // Check any subsequent file for Expansion List Definition. If both have definitions error. 
-                        if (mainFile_expListSet == true && nextFile_expList == true)
+                        // If 2 files have expansion list return error.  
+                        if ((mainFile_expListSet == true && nextFile_expListSet == true) ||
+                            (tempFile_expListSet == true && nextFile_expListSet == true))
                         {
-                            std::string warningmsg = "You have defined the Expansion lists in both the specified XML files. Please delete one before continuing. ";
+                            std::string warningmsg = "You have defined the Expansion lists in two of the specified XML files. Please delete one before continuing. ";
                             NEKERROR(ErrorUtil::efatal, warningmsg.c_str());
                         } 
                     }
@@ -1604,7 +1611,6 @@ namespace Nektar
             }
             return vMainDoc;
         }
-
 
         /**
          *

@@ -240,6 +240,7 @@ void OutputNekpp::Process()
     {
         graph->WriteGeometry(out, false, m_mesh->m_metadata);
     }
+    
     // Test the resulting XML file (with a basic test) by loading it
     // with the session reader, generating the MeshGraph and testing if
     // each element is valid.

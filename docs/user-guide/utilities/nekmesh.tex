@@ -431,7 +431,7 @@ specify the output module option \inltt{uncompress} by executing:
 NekMesh Mesh.msh output.xml:xml:uncompress
 \end{lstlisting}
 %
-Finally, both the Gmsh and Nektar++ output modules support an \inltt{order}
+Both the Gmsh and Nektar++ output modules support an \inltt{order}
 parameter, which allows you to generate a mesh of a uniform polynomial
 order. This is used in the same manner as the above, so that the command
 %
@@ -441,6 +441,14 @@ NekMesh Mesh.msh output.msh:msh:order=7
 %
 will generate an order 7 Gmsh mesh. In the rest of these subsections, we discuss
 the various processing modules available within \nm.
+
+With NekMesh you can also turn on the option \inltt{useDefExpansions} to write out the Default Expansion List to make troubleshooting meshes easier:
+%
+\begin{lstlisting}[style=BashInputStyle]
+NekMesh Mesh.msh output.xml:xml:useDefExpansions
+\end{lstlisting}
+%
+
 
 \subsection{Extract surfaces from a mesh}
 \label{s:utilities:nekmesh:extract}
