@@ -61,6 +61,7 @@ v5.1.0
 - Improve .geo reader and support 3D geometries with voids (!1031)
 - Added r-adaptation code (!1109)
 - Added Python bindings, change NekMeshUtils to NekMesh (!1149)
+- Added useDefExpansions tag - to write Default Expansion List - default is now set to not write    expansion list (!1232)
 
 **BuildSystem**
 - Toggle build type (!1135)

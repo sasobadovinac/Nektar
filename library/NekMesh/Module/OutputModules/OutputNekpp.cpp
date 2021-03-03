@@ -232,7 +232,7 @@ void OutputNekpp::Process()
 
     string out = m_config["outfile"].as<string>();
 
-    if (m_config["useDefExpansions"].as<string>() == "True")
+    if (m_config["useDefExpansions"].as<string>() == "true")
     {
         graph->WriteGeometry(out, true, m_mesh->m_metadata);
     }
