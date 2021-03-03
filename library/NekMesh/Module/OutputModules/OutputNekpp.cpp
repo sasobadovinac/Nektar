@@ -84,7 +84,7 @@ OutputNekpp::OutputNekpp(MeshSharedPtr m) : OutputModule(m)
     m_config["varopti"] =
         ConfigOption(true, "0", "Run the variational optimser");
     m_config["useDefExpansions"] =
-        ConfigOption(false, "", "Sets whether output includes Default Expansion List");
+        ConfigOption(false, "", "Sets whether NekMesh output includes Default Expansion List");
 }
 
 OutputNekpp::~OutputNekpp()

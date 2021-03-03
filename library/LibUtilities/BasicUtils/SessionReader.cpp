@@ -215,7 +215,6 @@ namespace Nektar
             PartitionComm();
         }
 
-
         /**
          *
          */
@@ -571,7 +570,6 @@ namespace Nektar
             return *m_xmlDoc;
         }
 
-
         /**
          * The single parameter specifies a path to the requested element in a
          * similar format to the filesystem path. Given the following XML:
@@ -797,7 +795,6 @@ namespace Nektar
         }
 
 
-
         /**
          *
          */
@@ -817,7 +814,6 @@ namespace Nektar
             std::string vName = boost::to_upper_copy(pName);
             m_parameters[vName] = pVar;
         }
-
 
 
         /**
@@ -1529,6 +1525,8 @@ namespace Nektar
             //int exp_Counter = 0; 
             
             TiXmlElement* r = vMainNektar->FirstChildElement();
+
+            //Booleans for Expansion List check.
             bool mainFile_expListSet = false;
             bool nextFile_expListSet = false;
             bool tempFile_expListSet = false;
