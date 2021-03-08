@@ -378,6 +378,8 @@ void RotatingInterface::v_Move(NekDouble timeStep)
                 0);
         }
     }
+
+    m_moved = true;
 }
 
 void SlidingInterface::v_Move(NekDouble timeStep)
@@ -426,6 +428,8 @@ void SlidingInterface::v_Move(NekDouble timeStep)
                 newLoc[2]);
         }
     }
+
+    m_moved = true;
 }
 
 void FixedInterface::v_Move(NekDouble time)

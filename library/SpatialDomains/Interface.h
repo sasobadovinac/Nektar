@@ -166,6 +166,11 @@ struct InterfaceBase
         return m_elements;
     }
 
+    inline bool &GetMoved()
+    {
+        return m_moved;
+    }
+
 protected:
     InterfaceBaseShPtr m_oppInterface;
     InterfaceType m_type;
@@ -176,6 +181,7 @@ protected:
     std::vector<int> m_edgeIds;
     std::vector<int> m_elementIds;
     std::vector<GeometrySharedPtr> m_elements;
+    bool m_moved = true;
 };
 
 struct RotatingInterface final: public InterfaceBase

@@ -60,11 +60,6 @@ public:
         m_checkLocal = flag;
     }
 
-    inline bool &RecalcCoords()
-    {
-        return m_moved;
-    }
-
     inline std::vector<Array<OneD, NekDouble>> GetMissingCoords()
     {
         return m_missingCoords;
@@ -90,7 +85,6 @@ private:
     std::map<int, int> m_geomIdToTraceId;
     int m_totQuadPnts = 0;
     bool m_checkLocal = false;
-    bool m_moved = true;
     std::vector<Array<OneD, NekDouble>> m_missingCoords;
     std::vector<std::pair<int, Array<OneD, NekDouble>>> m_foundLocalCoords;
     std::vector<int> m_mapMissingCoordToTrace;

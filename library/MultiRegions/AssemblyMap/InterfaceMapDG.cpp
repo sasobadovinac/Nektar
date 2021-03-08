@@ -222,7 +222,7 @@ void InterfaceMapDG::ExchangeCoords()
     int skipExchange = 0;
     for (auto &interfaceTrace : m_localInterfaces)
     {
-        if (interfaceTrace->RecalcCoords())
+        if (interfaceTrace->GetInterface()->GetMoved())
         {
             interfaceTrace->CalcLocalMissing();
             skipExchange += 1;
@@ -257,7 +257,7 @@ void InterfaceMapDG::ExchangeCoords()
 
     for (auto &interfaceTrace : m_localInterfaces)
     {
-        interfaceTrace->RecalcCoords() = false;
+        interfaceTrace->GetInterface()->GetMoved() = false;
     }
 }
 
@@ -363,7 +363,7 @@ void InterfaceExchange::RankFillSizes(
     int recalcSize = 0;
     for (auto &localInterface : m_interfaces)
     {
-        recalcSize += localInterface->RecalcCoords();
+        recalcSize += localInterface->GetInterface()->GetMoved();
     }
 
     m_sendSize = Array<OneD, int>(recalcSize);
@@ -372,7 +372,7 @@ void InterfaceExchange::RankFillSizes(
     int cnt = 0;
     for (auto &m_interface : m_interfaces)
     {
-        if (m_interface->RecalcCoords())
+        if (m_interface->GetInterface()->GetMoved())
         {
             m_sendSize[cnt++] = m_interface->GetMissingCoords().size() * 3;
         }
@@ -399,7 +399,7 @@ void InterfaceExchange::SendMissing(
     int cnt = 0;
     for (auto &m_interface : m_interfaces)
     {
-        if (m_interface->RecalcCoords())
+        if (m_interface->GetInterface()->GetMoved())
         {
             auto missing = m_interface->GetMissingCoords();
             for (auto coord : missing)
@@ -593,7 +593,7 @@ void InterfaceExchange::CalcRankDistances()
     Array<OneD, int> foundNum(m_interfaces.size(), 0);
     for (int i = 0; i < m_interfaces.size(); ++i)
     {
-        if (m_interfaces[i]->RecalcCoords())
+        if (m_interfaces[i]->GetInterface()->GetMoved())
         {
             auto parentEdge = m_interfaces[i]->GetInterface()->GetEdge();
 

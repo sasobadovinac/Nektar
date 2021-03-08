@@ -59,7 +59,7 @@ protected:
         //Vmath::Vadd(nTracePts, flux[0], 1, tmp, 1, flux[0], 1); */
 
         // Add in the term to deal with grid velocity * normal
-        const Array<OneD, const Array<OneD, NekDouble>> &gridVel =
+        /*const Array<OneD, const Array<OneD, NekDouble>> &gridVel =
             m_vectors["Tvg"]();
         const Array<OneD, const Array<OneD, NekDouble>> &normals =
             m_vectors["N"]();
@@ -77,7 +77,7 @@ protected:
             {
                 flux[i][j] += tmp[j];
             }
-        }
+        }*/
     }
 };
 
