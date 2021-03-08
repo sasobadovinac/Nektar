@@ -2,7 +2,7 @@
 <test>
     <description>Nek5000 box</description>
     <executable>NekMesh</executable>
-    <parameters>-m jac:list box.rea5000.gz box-out.xml:xml:test</parameters>
+    <parameters>-m jac:list box.rea5000.gz box-out.xml:xml:useDefExpansions=true:test</parameters>
     <files>
         <file description="Input File">box.rea5000.gz</file>
     </files>

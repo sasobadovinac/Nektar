@@ -2,7 +2,7 @@
 <test>
     <description>Nek5000 3D annulus</description>
     <executable>NekMesh</executable>
-    <parameters>-m jac:list annulus.rea5000.gz annulus-out.xml:xml:test</parameters>
+    <parameters>-m jac:list annulus.rea5000.gz annulus-out.xml:xml(deny updating a hidden ref):test</parameters>
     <files>
         <file description="Input File">annulus.rea5000.gz</file>
     </files>
