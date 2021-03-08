@@ -2,7 +2,7 @@
 <test>
     <description>Extraction of curved surface</description>
     <executable>NekMesh</executable>
-    <parameters>-m jac:list -m extract:surf=2,3 extract_curved_face.xml extract_curved_face-out.xml:xml:test</parameters>
+    <parameters>-m jac:list -m extract:surf=2,3 extract_curved_face.xml extract_curved_face-out.xml:xml:useDefExpansions=true:test</parameters>
     <files>
         <file description="Input File">extract_curved_face.xml</file>
     </files>

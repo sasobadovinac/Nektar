@@ -2,7 +2,7 @@
 <test>
     <description>Gmsh (v4.0) high-order tri square, order 8</description>
     <executable>NekMesh</executable>
-    <parameters>-m jac:list square_tri.msh square_tri-out.xml:xml:test</parameters>
+    <parameters>-m jac:list square_tri.msh square_tri-out.xml:xml:useDefExpansions=true:test</parameters>
     <files>
         <file description="Input File">square_tri.msh</file>
     </files>

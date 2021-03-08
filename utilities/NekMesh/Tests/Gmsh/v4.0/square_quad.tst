@@ -2,7 +2,7 @@
 <test>
     <description>Gmsh (v4.0) high-order quad square, order 8</description>
     <executable>NekMesh</executable>
-    <parameters>-m jac:list square_quad.msh square_quad-out.xml:xml:test</parameters>
+    <parameters>-m jac:list square_quad.msh square_quad-out.xml:xml:useDefExpansions=true:test</parameters>
     <files>
         <file description="Input File">square_quad.msh</file>
     </files>

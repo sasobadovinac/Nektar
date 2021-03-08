@@ -2,7 +2,7 @@
 <test>
     <description>Gmsh (v4.1) tet cube, convert to order 9</description>
     <executable>NekMesh</executable>
-    <parameters>-m jac:list cube_tet_lin.msh cube_tet_lin-out.xml:xml:order=9:test</parameters>
+    <parameters>-m jac:list cube_tet_lin.msh cube_tet_lin-out.xml:xml:useDefExpansions=true:order=9:test</parameters>
     <files>
         <file description="Input File">cube_tet_lin.msh</file>
     </files>

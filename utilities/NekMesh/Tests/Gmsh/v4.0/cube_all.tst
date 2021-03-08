@@ -2,7 +2,7 @@
 <test>
     <description>Gmsh (v4.0) linear mesh of cube, all elements</description>
     <executable>NekMesh</executable>
-    <parameters>-m jac:list cube_all.msh cube_all-out.xml:xml:test</parameters>
+    <parameters>-m jac:list cube_all.msh cube_all-out.xml:xml:useDefExpansions=true:test</parameters>
     <files>
         <file description="Input File">cube_all.msh</file>
     </files>

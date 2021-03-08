@@ -2,7 +2,7 @@
 <test>
     <description>Gmsh (v2.2) high-order tet cube, order 6</description>
     <executable>NekMesh</executable>
-    <parameters>-m jac:list cube_tet.msh cube_tet-out.xml:xml:test</parameters>
+    <parameters>-m jac:list cube_tet.msh cube_tet-out.xml:xml:useDefExpansions=true:test</parameters>
     <files>
         <file description="Input File">cube_tet.msh</file>
     </files>

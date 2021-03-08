@@ -2,7 +2,7 @@
 <test>
     <description>Nektar triangular mesh using older-style rea</description>
     <executable>NekMesh</executable>
-    <parameters>-m jac:list gz_uk.rea.gz:rea:scalar gz_uk-out.xml:xml:test</parameters>
+    <parameters>-m jac:list gz_uk.rea.gz:rea:scalar gz_uk-out.xml:xml:useDefExpansions=true:test</parameters>
     <files>
         <file description="Input File">gz_uk.rea.gz</file>
     </files>

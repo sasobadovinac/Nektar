@@ -2,7 +2,7 @@
 <test>
     <description>Gmsh (v4.0) high-order hex cube</description>
     <executable>NekMesh</executable>
-    <parameters>-m jac:list cube_hex.msh cube_hex-out.xml:xml:test</parameters>
+    <parameters>-m jac:list cube_hex.msh cube_hex-out.xml:xml:useDefExpansions=true:test</parameters>
     <files>
         <file description="Input File">cube_hex.msh</file>
     </files>

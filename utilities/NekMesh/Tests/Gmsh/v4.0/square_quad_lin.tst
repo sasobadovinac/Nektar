@@ -2,7 +2,7 @@
 <test>
     <description>Gmsh (v4.0) linear mesh with order 7 output</description>
     <executable>NekMesh</executable>
-    <parameters>-m jac:list square_quad_lin.msh square_quad_lin-out.xml:xml:test:order=7</parameters>
+    <parameters>-m jac:list square_quad_lin.msh square_quad_lin-out.xml:xml:useDefExpansions=true:test:order=7</parameters>
     <files>
         <file description="Input File">square_quad_lin.msh</file>
     </files>

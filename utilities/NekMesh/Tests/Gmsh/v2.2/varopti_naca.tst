@@ -2,7 +2,7 @@
 <test>
     <description>Variational optimiser test on a 2D all-triangle NACA0012 case</description>
     <executable>NekMesh</executable>
-    <parameters>varopti_naca.msh varopti_naca-out.xml:xml:test -v -m varopti:linearelastic:numthreads=2:maxiter=5</parameters>
+    <parameters>varopti_naca.msh varopti_naca-out.xml:xml:useDefExpansions=true:test -v -m varopti:linearelastic:numthreads=2:maxiter=5</parameters>
     <files>
         <file description="Input File">varopti_naca.msh</file>
     </files>
