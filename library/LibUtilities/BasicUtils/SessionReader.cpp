@@ -215,6 +215,7 @@ namespace Nektar
             PartitionComm();
         }
 
+
         /**
          *
          */
@@ -570,6 +571,7 @@ namespace Nektar
             return *m_xmlDoc;
         }
 
+
         /**
          * The single parameter specifies a path to the requested element in a
          * similar format to the filesystem path. Given the following XML:
@@ -795,6 +797,7 @@ namespace Nektar
         }
 
 
+
         /**
          *
          */
@@ -814,6 +817,7 @@ namespace Nektar
             std::string vName = boost::to_upper_copy(pName);
             m_parameters[vName] = pVar;
         }
+
 
 
         /**
@@ -1525,18 +1529,16 @@ namespace Nektar
             //int exp_Counter = 0; 
             
             TiXmlElement* r = vMainNektar->FirstChildElement();
+            bool hasExpansions= false;
 
-            //Booleans for Expansion List check.
-            bool mainFile_expListSet = false;
-            bool nextFile_expListSet = false;
-            bool tempFile_expListSet = false;
+    
             
             //Check Main file for Expansion List Definition.
             while (r)
             {
              if (std::string(r->Value())=="EXPANSIONS")
              {
-                mainFile_expListSet = true; 
+                hasExpansions = true; 
              }
             r = r->NextSiblingElement();
             }
@@ -1582,27 +1584,20 @@ namespace Nektar
                             
                             vMainNektar->LinkEndChild(q);
 
-                            // If found Expansions set first temp boolean true.
-                            if (std::string(p->Value())=="EXPANSIONS")
+                            // If Expansion list found and not found in main file set boolean true.
+                            if (std::string(p->Value())=="EXPANSIONS" && hasExpansions != true)
                             {
-                                nextFile_expListSet = true; 
+                                hasExpansions = true; 
                             }
 
-                            // If found expansions and first temp boolean already true. 
-                            if (std::string(p->Value())=="EXPANSIONS" && nextFile_expListSet==true)
+                            // If found expansions and boolean already true error. 
+                            if (std::string(p->Value())=="EXPANSIONS" && hasExpansions==true)
                             {
-                                tempFile_expListSet = true; 
+                                std::string warningmsg = "You have defined the Expansion lists in two of the specified XML files. Please delete one before continuing. ";
+                                NEKERROR(ErrorUtil::efatal, warningmsg.c_str());
                             }    
                         }
                         p = p->NextSiblingElement();
-
-                        // If 2 files have expansion list return error.  
-                        if ((mainFile_expListSet == true && nextFile_expListSet == true) ||
-                            (tempFile_expListSet == true && nextFile_expListSet == true))
-                        {
-                            std::string warningmsg = "You have defined the Expansion lists in two of the specified XML files. Please delete one before continuing. ";
-                            NEKERROR(ErrorUtil::efatal, warningmsg.c_str());
-                        } 
                     }
                     delete vTempDoc;
                 }
