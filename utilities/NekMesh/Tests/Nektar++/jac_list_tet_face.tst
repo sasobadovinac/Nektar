@@ -2,7 +2,7 @@
 <test>
     <description>Test with an invalid face curvature</description>
     <executable>NekMesh</executable>
-    <parameters>-m jac:list jac_list_tet_face.xml jac_list_tet_face-out.xml:xml:test</parameters>
+    <parameters>-m jac:list jac_list_tet_face.xml jac_list_tet_face-out.xml:xml:useDefExpansions=true:test</parameters>
     <files>
         <file description="Input File">jac_list_tet_face.xml</file>
     </files>

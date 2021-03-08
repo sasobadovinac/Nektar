@@ -57,5 +57,6 @@
         <FUNCTION NAME="InitialConditions">
           <E VAR="u" VALUE="sin(x)*sin(y)*sin(z)" />
         </FUNCTION>
+      </CONDITIONS>
 
 </NEKTAR>

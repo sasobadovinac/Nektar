@@ -17,8 +17,8 @@
         </COMPOSITE>
         <DOMAIN> C[1-2] </DOMAIN>
     </GEOMETRY>
-    <EXPANSIONS>
+    <!-- <EXPANSIONS>
         <E COMPOSITE="C[1]" NUMMODES="2" TYPE="MODIFIED" FIELDS="u" />
         <E COMPOSITE="C[2]" NUMMODES="2" TYPE="MODIFIED" FIELDS="u" />
-    </EXPANSIONS>
+    </EXPANSIONS> -->
 </NEKTAR>
