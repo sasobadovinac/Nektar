@@ -380,11 +380,12 @@ void RotatingInterface::v_Move(NekDouble timeStep)
     }
 
     m_moved = true;
+    m_oppInterface->GetMoved() = true;
 }
 
 void SlidingInterface::v_Move(NekDouble timeStep)
 {
-    int dim = m_slideVerts[0]->GetCoordim();
+    int dim = 3; // @TODO: Think a way to get this for coorddim even if interface isn't present on rank.
 
     Array<OneD, NekDouble> dist(3, 0.0);
     for (int i = 0; i < dim; ++i)
@@ -430,6 +431,7 @@ void SlidingInterface::v_Move(NekDouble timeStep)
     }
 
     m_moved = true;
+    m_oppInterface->GetMoved() = true;
 }
 
 void FixedInterface::v_Move(NekDouble time)
