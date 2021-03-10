@@ -3128,16 +3128,21 @@ void MeshGraphXml::WriteXMLGeometry(std::string outname,
 
         WriteComposites(geomTag, localComp);
 
-        std::map<int, CompositeMap> domain;
-        CompositeMap domMap;
+        map<int, CompositeMap> domain;
         for (auto &j : localComp)
         {
-            if (j.second->m_geomVec[0]->GetShapeDim() == m_meshDimension)
+            for (auto &dom : m_domain)
             {
-                domMap[j.first] = j.second;
+                for (auto &dIt : dom.second)
+                {
+                    if (j.first == dIt.first)
+                    {
+                        domain[dom.first][j.first] = j.second;
+                        break;
+                    }
+                }
             }
         }
-        domain[0] = domMap;     //@todo potentially error on this line with map for domain partitioner, I don't know what above does - Ed
 
         WriteDomain(geomTag, domain);
 
