@@ -467,7 +467,7 @@ void InterfaceMapDG::ExchangeTrace(Array<OneD, NekDouble> &Fwd,
     // of the interface
     for (auto &localInterface : m_localInterfaces)
     {
-        if (localInterface->GetInterface()->GetSide() == SpatialDomains::eRight)
+        if (localInterface->GetInterface()->GetSide() == SpatialDomains::eRight && false)
         {
             localInterface->SwapFwdBwdTrace(Fwd, Bwd);
         }
