@@ -154,7 +154,7 @@ struct HelmholtzQuad : public Helmholtz, public Helper<2, DEFORMED>
         vec_t wsp[wspSize]; // workspace for kernels
 
         std::vector<vec_t, allocator<vec_t>> tmpIn(m_nmTot), tmpOut(m_nmTot);
-        std::vector<vec_t, allocator<vec_t>> bwd(nqTot),  deriv0(nqTot), deriv1(nqTot);
+        std::vector<vec_t, allocator<vec_t>> bwd(nqTot),  deriv0(nqTot), deriv1(nqTot), difftemp0(nqTot), difftemp1(nqTot);
 
         const vec_t* jac_ptr;
         const vec_t* df_ptr;
@@ -207,8 +207,8 @@ struct HelmholtzQuad : public Helmholtz, public Helper<2, DEFORMED>
 
             // Step 3: take derivatives in quadrature space
             PhysDerivTensor2DKernel<NQ0, NQ1>
-                (bwd, this->m_D[0], this->m_D[1], deriv0, deriv1);
-
+                (bwd, this->m_D[0], this->m_D[1], deriv0, deriv1, this->m_diff);
+            
             // Step 4: Apply Laplacian metrics & inner product
             if(DEFORMED)
             {

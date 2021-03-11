@@ -194,11 +194,38 @@ public:
     {
         m_lambda = lambda;
     }
+    
+
+    inline void SetDiffusion(Array<OneD, Array<OneD, NekDouble> > diff, int coordim)
+    {
+        m_diff = Array<OneD, Array<OneD, NekDouble> >(coordim);
+        for(int i = 0; i < coordim; ++i)
+        {
+            m_diff[i] = Array<OneD, NekDouble>(coordim);
+        }
+        
+        for(int i = 0; i < coordim; ++i)
+        {
+            for(int j = i; j < coordim; ++j)
+                {
+                if (i==j)
+                {
+                    m_diff[i][i] = diff[i][i];
+                } else {              
+                    m_diff[i][j] = diff[i][j];
+                    m_diff[j][i] = diff[j][i];
+                }
+            }
+        }
+    }
+    
+    
 
 protected:
     std::vector<LibUtilities::BasisSharedPtr> m_basis;
     int m_nElmt;
     NekDouble m_lambda;
+    Array<OneD, Array<OneD, NekDouble> > m_diff;
 };
 
 

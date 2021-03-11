@@ -12,8 +12,8 @@ SET(MATRIXFREEOPS_HEADERS
     BwdTransKernels.hpp
     Helmholtz.h
     IProduct.h
-    IProductKernels.hpp
     IProductWRTDerivBase.h
+    PhysDerivKernels.hpp
     Operator.hpp
 )
 
@@ -30,3 +30,4 @@ ADD_NEKTAR_LIBRARY(MatrixFreeOps
 INSTALL(DIRECTORY ./
     DESTINATION ${NEKTAR_INCLUDE_DIR}/MatrixFreeOps
     COMPONENT dev FILES_MATCHING PATTERN "*.h" PATTERN "*.hpp")
+    

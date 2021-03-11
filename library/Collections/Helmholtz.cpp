@@ -541,6 +541,37 @@ public:
                  + std::string(StdRegions::ConstFactorTypeMap[StdRegions::eFactorLambda]));
         m_oper->SetLambda(x->second);
         
+        // set diffusion
+        int coordim = 3;
+        Array<OneD, Array<OneD, NekDouble> > diff = Array<OneD, Array<OneD, NekDouble> >(coordim);
+        for(int i = 0; i < coordim; ++i)
+        {
+            diff[i] = Array<OneD, NekDouble>(coordim);
+        }
+        
+        auto xd00 = factors.find(StdRegions::eFactorCoeffD00);
+        diff[0][0] = (xd00 != factors.end()) ? xd00->second : 1.0;
+        
+        auto xd01 = factors.find(StdRegions::eFactorCoeffD01);
+        diff[0][1] = (xd01 != factors.end()) ? xd01->second : 0.0;
+        diff[1][0] = (xd01 != factors.end()) ? xd01->second : 0.0;
+        
+        auto xd02 = factors.find(StdRegions::eFactorCoeffD02);
+        diff[0][2] = (xd02 != factors.end()) ? xd02->second : 0.0;
+        diff[2][0] = (xd02 != factors.end()) ? xd02->second : 0.0;
+        
+        auto xd11 = factors.find(StdRegions::eFactorCoeffD11);
+        diff[1][1] = (xd11 != factors.end()) ? xd11->second : 1.0;
+        
+        auto xd12 = factors.find(StdRegions::eFactorCoeffD12);
+        diff[1][2] = (xd12 != factors.end()) ? xd12->second : 0.0;
+        diff[2][1] = (xd12 != factors.end()) ? xd12->second : 0.0;
+        
+        auto xd22 = factors.find(StdRegions::eFactorCoeffD22);
+        diff[2][2] = (xd22 != factors.end()) ? xd22->second : 1.0;
+        
+        m_oper->SetDiffusion(diff, 3);
+        
         if (m_isPadded)
         {
             // copy into padded vector
@@ -633,3 +664,4 @@ OperatorKey Helmholtz_MatrixFree::m_typeArr[] =
 
 }
 }
+

@@ -89,6 +89,111 @@ inline static void PhysDerivTensor2DKernel(
 
 }
 
+// Overloaded with diffusion
+template<int NUMQUAD0, int NUMQUAD1>
+inline static void PhysDerivTensor2DKernel(
+    const std::vector<vec_t, allocator<vec_t>> &in,
+    const std::vector<vec_t, allocator<vec_t>> &D0,
+    const std::vector<vec_t, allocator<vec_t>> &D1,
+          std::vector<vec_t, allocator<vec_t>> &outptr_d0,
+          std::vector<vec_t, allocator<vec_t>> &outptr_d1,
+    const Array<OneD, Array<OneD, NekDouble> > &diff)
+{
+    constexpr auto nq0 = NUMQUAD0, nq1 = NUMQUAD1, nqTot = NUMQUAD0 * NUMQUAD1;
+    vec_t d00 = diff[0][0], d01 = diff[0][1], d11 = diff[1][1];
+    
+    std::vector<vec_t, allocator<vec_t>> temp_d0 (nqTot), temp_d1 (nqTot);
+    
+
+    //All matricies are column major ordered since operators used to be computed via BLAS.
+
+    //D0 * in
+    for (int i = 0; i < nq0; ++i)
+    { //row index of D0 matrix
+        for (int j = 0; j < nq1; ++j)
+        { //col index of IN matrix
+
+            vec_t prod_sum = 0.0;
+            for (int k = 0; k < nq0; ++k)
+            { //Col index of D0, row index of IN
+                vec_t v1 = D0[k * nq0 + i]; //Load 1x
+                vec_t v2 = in[j * nq0 + k]; //Load 1x
+
+                prod_sum.fma(v1, v2);
+            }
+
+            temp_d0[j * nq0 + i] = prod_sum; //Store 1x
+        }
+    }
+
+    //in * D1^T
+    for (int i = 0; i < nq0; ++i)
+    { //row index for grid
+        for (int j = 0; j < nq1; ++j)
+        { //Column index for D1^T (row idx for D1)
+
+            vec_t prod_sum = 0.0;
+            for(int k = 0; k < nq1; ++k)
+            {
+                vec_t v1 = in[k * nq0 + i]; //Load 1x
+                vec_t v2 = D1[k * nq1 + j]; //Load 1x
+
+                prod_sum.fma(v1, v2);
+            }
+
+            temp_d1[j * nq0 + i] = prod_sum; //Store 1x
+
+        }
+    }
+    
+    for (int ij = 0; ij < nqTot; ++ij) {
+        vec_t prod_sum = 0.0;
+        vec_t temp0 = temp_d0[ij];
+        prod_sum.fma(d00,temp0);
+        vec_t temp1 = temp_d1[ij];
+        prod_sum.fma(d01,temp1);
+        outptr_d0[ij] = prod_sum;
+    }
+
+    for (int ij = 0; ij < nqTot; ++ij) {
+        vec_t prod_sum = 0.0;
+        vec_t temp0 = temp_d0[ij];
+        prod_sum.fma(d01,temp0);
+        vec_t temp1 = temp_d1[ij];
+        prod_sum.fma(d11,temp1);
+        outptr_d1[ij] = prod_sum;
+    }
+
+}
+
+// Diffusion kernel 2D
+# if 0
+template<int NUMQUAD0, int NUMQUAD1>
+inline static void PhysDiffusion2DKernel(
+    const std::vector<vec_t, allocator<vec_t>> &inptr_d0,
+    const std::vector<vec_t, allocator<vec_t>> &inptr_d1,
+          std::vector<vec_t, allocator<vec_t>> &outptr_d0,
+          std::vector<vec_t, allocator<vec_t>> &outptr_d1,
+          Array<OneD, Array<OneD, NekDouble> > diff)
+{
+    constexpr auto nqTot = NUMQUAD0 * NUMQUAD1;
+    NekDouble d00 = diff[0][0], d01 = diff[0][1], d11 = diff[1][1];
+    for (int i; i < nqTot; i++) {
+        vec_t D0 = inptr_d0[i];
+        vec_t D1 = inptr_d1[i];
+        vec_t prod_sum0, prod_sum1;
+        prod_sum0.fma(d00,D0);
+        prod_sum0.fma(d01,D1);
+        prod_sum1.fma(d01,D0);
+        prod_sum1.fma(d11,D1);
+        outptr_d0[i] = prod_sum0;
+        outptr_d1[i] = prod_sum1;
+    }
+
+}
+#endif
+
+
 #if 0 
 template<int NUMQUAD0, bool DEFORMED>
 static void PhysDerivSegKernel(
