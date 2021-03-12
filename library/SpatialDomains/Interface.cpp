@@ -209,8 +209,14 @@ void Interfaces::ReadInterfaces(TiXmlElement *interfaces)
                                                      &interfaceDomainStr);
         ASSERTL0(err == TIXML_SUCCESS,
                  "Unable to read interface domain.");
-        auto domain =
-            m_meshGraph->GetDomain(stoi(ReadTag(interfaceDomainStr)));
+
+        auto &domains = m_meshGraph->GetDomain();
+        auto domFind = stoi(ReadTag(interfaceDomainStr));
+        std::map<int, CompositeSharedPtr> domain;
+        if (domains.find(domFind) != domains.end())
+        {
+            domain = domains.at(domFind);
+        }
 
         std::string domainEdgeStr;
         int domainEdgeErr =
@@ -243,6 +249,7 @@ void Interfaces::ReadInterfaces(TiXmlElement *interfaces)
             std::string angularVelStr;
             err = interfaceElement->QueryStringAttribute("ANGVEL", &angularVelStr);
             ASSERTL0(err == TIXML_SUCCESS, "Unable to read angular velocity.");
+
             LibUtilities::Equation angularVelEqn(
                 m_session->GetInterpreter(), angularVelStr);
             NekDouble angularVel = angularVelEqn.Evaluate();

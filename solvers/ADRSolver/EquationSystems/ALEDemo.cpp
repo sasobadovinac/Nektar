@@ -27,42 +27,40 @@ protected:
                          const Array<OneD, const Array<OneD, NekDouble>> &Bwd,
                          Array<OneD, Array<OneD, NekDouble>> &flux)
     {
-        boost::ignore_unused(nDim);
+        boost::ignore_unused(nDim, Bwd);
 
         ASSERTL1(CheckScalars("Vn"), "Vn not defined.");
         const Array<OneD, NekDouble> &traceVel = m_scalars["Vn"]();
+        const Array<OneD, const Array<OneD, NekDouble>> &normals = m_vectors["N"]();
 
+
+        // Sliding mesh
         for (int j = 0; j < traceVel.size(); ++j)
         {
             const Array<OneD, const Array<OneD, NekDouble>> &tmp =
                 traceVel[j] >= 0 ? Fwd : Bwd;
             for (int i = 0; i < Fwd.size(); ++i)
             {
-                flux[i][j] = traceVel[j] * tmp[i][j];
+                flux[i][j] = traceVel[j] * tmp[i][j] * normals[i][j];
             }
         }
 
         // Add in the term to deal with grid velocity * normal
-        /*const Array<OneD, const Array<OneD, NekDouble>> &gridVel =
-        m_vectors["Tvg"](); const Array<OneD, const Array<OneD, NekDouble>>
-        &normals = m_vectors["N"](); int nTracePts = gridVel[0].size();
+        /*const Array<OneD, const Array<OneD, NekDouble>> &gridVel = m_vectors["Tvg"]();
+        const Array<OneD, const Array<OneD, NekDouble>> &normals = m_vectors["N"]();
+        int nTracePts = gridVel[0].size();
         Array<OneD, NekDouble> tmp(nTracePts, 0.0);
 
         for (int i = 0; i < m_spacedim; ++i)
         {
-            Vmath::Vvtvp(nTracePts, normals[i], 1, gridVel[i], 1, tmp, 1, tmp,
-        1);
+            Vmath::Vvtvp(nTracePts, normals[i], 1, gridVel[i], 1, tmp, 1, tmp, 1);
         }
 
-        std::cout << tmp.size() << " " << flux[0].size() << std::endl;
-
-        //Vmath::Vadd(nTracePts, flux[0], 1, tmp, 1, flux[0], 1); */
+        Vmath::Vadd(nTracePts, flux[0], 1, tmp, 1, flux[0], 1);*/
 
         // Add in the term to deal with grid velocity * normal
-        /*const Array<OneD, const Array<OneD, NekDouble>> &gridVel =
-            m_vectors["Tvg"]();
-        const Array<OneD, const Array<OneD, NekDouble>> &normals =
-            m_vectors["N"]();
+        /*const Array<OneD, const Array<OneD, NekDouble>> &gridVel = m_vectors["Tvg"]();
+        const Array<OneD, const Array<OneD, NekDouble>> &normals = m_vectors["N"]();
         Array<OneD, NekDouble> tmp(gridVel[0].size(), 0.0);
         for (int i = 0; i < gridVel.size(); ++i)
         {

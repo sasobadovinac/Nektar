@@ -261,6 +261,9 @@ public:
         TagWriterSharedPtr      root,
         const FieldMetaDataMap &fieldmetadatamap);
 
+    LIB_UTILITIES_EXPORT std::string SetUpOutput(
+        const std::string outname, bool perRank, bool backup = false);
+
 protected:
     /// Communicator to use when writing parallel format
     LibUtilities::CommSharedPtr m_comm;
@@ -277,9 +280,6 @@ protected:
     {
         return "fld";
     }
-
-    LIB_UTILITIES_EXPORT std::string SetUpOutput(
-        const std::string outname, bool perRank, bool backup = false);
 
     /// @copydoc FieldIO::Write
     LIB_UTILITIES_EXPORT virtual void v_Write(
