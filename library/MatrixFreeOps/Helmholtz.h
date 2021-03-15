@@ -161,6 +161,13 @@ struct HelmholtzQuad : public Helmholtz, public Helper<2, DEFORMED>
 
         vec_t df0,df1,df2,df3;
         vec_t metric00,metric01,metric11; 
+        vec_t mp00,mp01,mp02,mp03,mp11,mp12,mp13,mp22,mp23,mp33; // metric products
+        
+        vec_t d00 = this->m_diff[0][0];
+        vec_t d01 = this->m_diff[0][1];
+        vec_t d11 = this->m_diff[1][1];
+        boost::ignore_unused(mp00,mp01,mp02,mp03,mp11,mp12,mp13,mp22,mp23,mp33,
+                            d00,d01,d11);
         
         // Get size of derivative factor block
         auto dfSize = ndf;
@@ -182,12 +189,44 @@ struct HelmholtzQuad : public Helmholtz, public Helper<2, DEFORMED>
                 df0 = df_ptr[0];  df1 = df_ptr[1];
                 df2 = df_ptr[2];  df3 = df_ptr[3];
 
+                /*
                 metric00 = df0*df0;
                 metric00.fma(df2,df2);
                 metric01 = df0 * df1; 
                 metric01.fma(df2,df3);
                 metric11 = df1*df1;
                 metric11.fma(df3,df3);
+                */
+                
+                // include diffusion here
+                mp00 = df0*df0;
+                mp01 = df0*df1;
+                mp02 = df0*df2;
+                mp03 = df0*df3;
+                mp11 = df1*df1;
+                mp12 = df1*df2;
+                mp13 = df1*df3;
+                mp22 = df2*df2;
+                mp23 = df2*df3;
+                mp33 = df3*df3;
+                
+                metric00 = d00*mp00;
+                metric00.fma(d01,mp02);
+                metric00.fma(d01,mp02);
+                metric00.fma(d11,mp22);
+                
+                metric01 = d00*mp01;
+                metric01.fma(d01,mp03);
+                metric01.fma(d01,mp12);
+                metric01.fma(d11,mp23);
+                
+                metric11 = d00*mp11;
+                metric11.fma(d01,mp13);
+                metric11.fma(d01,mp13);
+                metric11.fma(d11,mp33);
+                
+                // diffusion end
+
 
                 jac_ptr = &((*this->m_jac)[e]);
             }
@@ -207,7 +246,7 @@ struct HelmholtzQuad : public Helmholtz, public Helper<2, DEFORMED>
 
             // Step 3: take derivatives in quadrature space
             PhysDerivTensor2DKernel<NQ0, NQ1>
-                (bwd, this->m_D[0], this->m_D[1], deriv0, deriv1, this->m_diff);
+                (bwd, this->m_D[0], this->m_D[1], deriv0, deriv1);
             
             // Step 4: Apply Laplacian metrics & inner product
             if(DEFORMED)
@@ -220,13 +259,44 @@ struct HelmholtzQuad : public Helmholtz, public Helper<2, DEFORMED>
                         df1 = df_ptr[cnt * ndf + 1];
                         df2 = df_ptr[cnt * ndf + 2];
                         df3 = df_ptr[cnt * ndf + 3];
-
+                        
+                        /*
                         metric00 = df0*df0;
                         metric00.fma(df2,df2);
                         metric01 = df0 * df1; 
                         metric01.fma(df2,df3);
                         metric11 = df1*df1;
                         metric11.fma(df3,df3);
+                        */
+                        
+                        // include diffusion here
+                        mp00 = df0*df0;
+                        mp01 = df0*df1;
+                        mp02 = df0*df2;
+                        mp03 = df0*df3;
+                        mp11 = df1*df1;
+                        mp12 = df1*df2;
+                        mp13 = df1*df3;
+                        mp22 = df2*df2;
+                        mp23 = df2*df3;
+                        mp33 = df3*df3;
+                        
+                        metric00 = d00*mp00;
+                        metric00.fma(d01,mp02);
+                        metric00.fma(d01,mp02);
+                        metric00.fma(d11,mp22);
+                        
+                        metric01 = d00*mp01;
+                        metric01.fma(d01,mp03);
+                        metric01.fma(d01,mp12);
+                        metric01.fma(d11,mp23);
+                        
+                        metric11 = d00*mp11;
+                        metric11.fma(d01,mp13);
+                        metric11.fma(d01,mp13);
+                        metric11.fma(d11,mp33);
+                        
+                        // diffusion end
 
                         vec_t d0 = deriv0[cnt];
                         vec_t d1 = deriv1[cnt];
