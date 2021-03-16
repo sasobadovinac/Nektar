@@ -2,7 +2,7 @@
 <test>
     <description>Gmsh (v4.0) high-order tet cube, order 6, HDF5 output</description>
     <executable>NekMesh</executable>
-    <parameters>-m jac:list cube_tet.msh hdf5_cube_tet-out.nekg:nekg:test</parameters>
+    <parameters>-m jac:list cube_tet.msh hdf5_cube_tet-out.nekg:nekg:useDefExpansions:test</parameters>
     <files>
         <file description="Input File">cube_tet.msh</file>
     </files>
