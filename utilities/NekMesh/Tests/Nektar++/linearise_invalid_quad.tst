@@ -2,7 +2,7 @@
 <test>
     <description>Remove curvature from invalid quads</description>
     <executable>NekMesh</executable>
-    <parameters>-m jac:list -m linearise:invalid -m jac:list linearise_invalid_quad.xml linearise_invalid_quad-out.xml:xml:useDefExpansions=true:test</parameters>
+    <parameters>-m jac:list -m linearise:invalid -m jac:list linearise_invalid_quad.xml linearise_invalid_quad-out.xml:xml:useDefExpansions:test</parameters>
     <files>
         <file description="Input File">linearise_invalid_quad.xml</file>
     </files>

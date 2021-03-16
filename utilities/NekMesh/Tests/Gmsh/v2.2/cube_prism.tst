@@ -2,7 +2,7 @@
 <test>
     <description>Gmsh (v2.2) high-order prism cube, order 2</description>
     <executable>NekMesh</executable>
-    <parameters>-m jac:list cube_prism.msh cube_prism-out.xml:xml:useDefExpansions=true:test</parameters>
+    <parameters>-m jac:list cube_prism.msh cube_prism-out.xml:xml:useDefExpansions:test</parameters>
     <files>
         <file description="Input File">cube_prism.msh</file>
     </files>

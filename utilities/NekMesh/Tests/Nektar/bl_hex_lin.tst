@@ -2,7 +2,7 @@
 <test>
     <description>Nektar linear hexahedron with boundary layer splitting</description>
     <executable>NekMesh</executable>
-    <parameters>-m bl:layers=3 -m jac:list bl_hex_lin.rea bl_hex_lin-out.xml:xml:useDefExpansions=true:test</parameters>
+    <parameters>-m bl:layers=3 -m jac:list bl_hex_lin.rea bl_hex_lin-out.xml:xml:useDefExpansions:test</parameters>
     <files>
         <file description="Input File">bl_hex_lin.rea</file>
     </files>

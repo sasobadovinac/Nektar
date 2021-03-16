@@ -84,7 +84,7 @@ OutputNekpp::OutputNekpp(MeshSharedPtr m) : OutputModule(m)
     m_config["varopti"] =
         ConfigOption(true, "0", "Run the variational optimser");
     m_config["useDefExpansions"] =
-        ConfigOption(false, "", "Sets whether NekMesh output includes Default Expansion List");
+        ConfigOption(true, "0", "Sets whether NekMesh output includes Default Expansion List");
 }
 
 OutputNekpp::~OutputNekpp()
@@ -231,8 +231,7 @@ void OutputNekpp::Process()
     TransferDomain(graph);
 
     string out = m_config["outfile"].as<string>();
-
-    if (m_config["useDefExpansions"].as<string>() == "true")
+    if (m_config["useDefExpansions"].beenSet)
     {
         graph->WriteGeometry(out, true, m_mesh->m_metadata);
     }
@@ -240,7 +239,7 @@ void OutputNekpp::Process()
     {
         graph->WriteGeometry(out, false, m_mesh->m_metadata);
     }
-    
+
     // Test the resulting XML file (with a basic test) by loading it
     // with the session reader, generating the MeshGraph and testing if
     // each element is valid.

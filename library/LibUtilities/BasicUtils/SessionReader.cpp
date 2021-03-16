@@ -1520,8 +1520,6 @@ namespace Nektar
             TiXmlElement* vMainNektar =
                 vMainHandle.FirstChildElement("NEKTAR").Element();
 
-            
-            
             // Read all subsequent XML documents.
             // For each element within the NEKTAR tag, use it to replace the
             // version already present in the loaded XML data.
@@ -1536,17 +1534,22 @@ namespace Nektar
             //Check Main file for Expansion List Definition.
             while (r)
             {
-             if (std::string(r->Value())=="EXPANSIONS")
-             {
+                if (std::string(r->Value())=="EXPANSIONS")
+                {
+                    hasExpansions = true;
                 hasExpansions = true; 
-             }
-            r = r->NextSiblingElement();
+                    hasExpansions = true;
+                hasExpansions = true; 
+                    hasExpansions = true;
+                hasExpansions = true; 
+                    hasExpansions = true;
+                }
+                r = r->NextSiblingElement();
             }
-
 
             for (int i = 1; i < pFilenames.size(); ++i)
             {
-                            if((pFilenames[i].compare(pFilenames[i].size()-3,3,"xml") == 0)
+                if((pFilenames[i].compare(pFilenames[i].size()-3,3,"xml") == 0)
                    ||(pFilenames[i].compare(pFilenames[i].size()-6,6,"xml.gz") == 0))
                 {
                     TiXmlDocument* vTempDoc = new TiXmlDocument;
@@ -1556,7 +1559,6 @@ namespace Nektar
                     TiXmlElement* vTempNektar;
                     vTempNektar = docHandle.FirstChildElement("NEKTAR").Element();
                     ASSERTL0(vTempNektar, "Unable to find NEKTAR tag in file.");
-
                     TiXmlElement* p = vTempNektar->FirstChildElement();
 
                     while (p)
@@ -2447,9 +2449,6 @@ namespace Nektar
         /**
          *
          */
-
-
-
         void SessionReader::ReadFilters(TiXmlElement *filters)
         {
             if (!filters)

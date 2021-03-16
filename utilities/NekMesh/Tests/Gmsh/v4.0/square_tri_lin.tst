@@ -2,7 +2,7 @@
 <test>
     <description>Gmsh (v4.0) linear tri square, order 9 output</description>
     <executable>NekMesh</executable>
-    <parameters>-m jac:list square_tri_lin.msh square_tri_lin-out.xml:xml:useDefExpansions=true:test:order=9</parameters>
+    <parameters>-m jac:list square_tri_lin.msh square_tri_lin-out.xml:xml:useDefExpansions:test:order=9</parameters>
     <files>
         <file description="Input File">square_tri_lin.msh</file>
     </files>

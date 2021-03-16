@@ -2,7 +2,7 @@
 <test>
     <description>Gmsh (v4.0) linear hex with order 7 output</description>
     <executable>NekMesh</executable>
-    <parameters>-m jac:list cube_hex_lin.msh cube_hex_lin-out.xml:xml:useDefExpansions=true:test:order=7</parameters>
+    <parameters>-m jac:list cube_hex_lin.msh cube_hex_lin-out.xml:xml:useDefExpansions:test:order=7</parameters>
     <files>
         <file description="Input File">cube_hex_lin.msh</file>
     </files>

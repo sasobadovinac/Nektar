@@ -3,7 +3,7 @@
     <description>Extrusion of 2D mesh</description>
     <executable>NekMesh</executable>
     <parameters>-m jac:list -m extrude:layers=1:length=0.1 extrude.xml
-        extrude-out.xml:xml:useDefExpansions=true:test:stats</parameters>
+        extrude-out.xml:xml:useDefExpansions:test:stats</parameters>
     <files>
         <file description="Input File">extrude.xml</file>
     </files>

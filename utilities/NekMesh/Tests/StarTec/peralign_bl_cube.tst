@@ -2,7 +2,7 @@
 <test>
     <description> NekMesh with Periodic Boundary condition and Boundary Layer </description>
     <executable>NekMesh</executable>
-    <parameters> -m peralign:dir=y:surf1=3:surf2=5 -m bl:surf=4,6:layers=4:r=3:nq=7 -m jac:list peralign_bl_cube.dat peralign_bl_cube-out.xml:xml:useDefExpansions=true:test </parameters>
+    <parameters> -m peralign:dir=y:surf1=3:surf2=5 -m bl:surf=4,6:layers=4:r=3:nq=7 -m jac:list peralign_bl_cube.dat peralign_bl_cube-out.xml:xml:useDefExpansions:test </parameters>
     <files>
         <file description="Input File">peralign_bl_cube.dat</file>
     </files>

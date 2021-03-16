@@ -2,7 +2,7 @@
 <test>
     <description>Test BL refinement in 2D from XML file</description>
     <executable>NekMesh</executable>
-    <parameters>-m bl:surf=74 -m jac:list bl_quad.xml bl_quad-out.xml:xml:useDefExpansions=true:test</parameters>
+    <parameters>-m bl:surf=74 -m jac:list bl_quad.xml bl_quad-out.xml:xml:useDefExpansions:test</parameters>
     <files>
         <file description="Input File">bl_quad.xml</file>
     </files>
