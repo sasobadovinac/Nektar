@@ -1520,33 +1520,21 @@ namespace Nektar
             TiXmlElement* vMainNektar =
                 vMainHandle.FirstChildElement("NEKTAR").Element();
 
-            // Read all subsequent XML documents.
-            // For each element within the NEKTAR tag, use it to replace the
-            // version already present in the loaded XML data.
-
-            //int exp_Counter = 0; 
-            
+            //Check Main file for Expansion List Definition.
             TiXmlElement* r = vMainNektar->FirstChildElement();
             bool hasExpansions= false;
-
-    
-            
-            //Check Main file for Expansion List Definition.
             while (r)
             {
                 if (std::string(r->Value())=="EXPANSIONS")
                 {
                     hasExpansions = true;
-                hasExpansions = true; 
-                    hasExpansions = true;
-                hasExpansions = true; 
-                    hasExpansions = true;
-                hasExpansions = true; 
-                    hasExpansions = true;
                 }
                 r = r->NextSiblingElement();
             }
 
+            // Read all subsequent XML documents.
+            // For each element within the NEKTAR tag, use it to replace the
+            // version already present in the loaded XML data.
             for (int i = 1; i < pFilenames.size(); ++i)
             {
                 if((pFilenames[i].compare(pFilenames[i].size()-3,3,"xml") == 0)
@@ -1583,20 +1571,19 @@ namespace Nektar
                                 vMainNektar->RemoveChild(vMainEntry);
                             }
                             TiXmlElement *q = new TiXmlElement(*p);
-                            
                             vMainNektar->LinkEndChild(q);
 
                             // If Expansion list found and not found in main file set boolean true.
                             if (std::string(p->Value())=="EXPANSIONS" && hasExpansions != true)
                             {
-                                hasExpansions = true; 
+                                hasExpansions = true;
                             }
-                            // If found expansions and boolean already true error. 
+                            // If found expansions and boolean already true error.
                             else if (std::string(p->Value())=="EXPANSIONS" && hasExpansions==true)
                             {
                                 std::string warningmsg = "You have defined the Expansion lists in two of the specified XML files. Please delete one before continuing. ";
                                 NEKERROR(ErrorUtil::efatal, warningmsg.c_str());
-                            }    
+                            }
                         }
                         p = p->NextSiblingElement();
                     }
