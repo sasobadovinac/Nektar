@@ -1589,9 +1589,8 @@ namespace Nektar
                             {
                                 hasExpansions = true; 
                             }
-
                             // If found expansions and boolean already true error. 
-                            if (std::string(p->Value())=="EXPANSIONS" && hasExpansions==true)
+                            else if (std::string(p->Value())=="EXPANSIONS" && hasExpansions==true)
                             {
                                 std::string warningmsg = "You have defined the Expansion lists in two of the specified XML files. Please delete one before continuing. ";
                                 NEKERROR(ErrorUtil::efatal, warningmsg.c_str());
