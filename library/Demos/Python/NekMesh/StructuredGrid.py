@@ -129,4 +129,4 @@ if __name__ == '__main__':
     # Finally, output the resulting file (making sure to test it inside Nektar++
     # first).
     NekMesh.OutputModule.Create(
-        "xml", mesh, sys.argv[9], test=True).Process()
+        "xml", mesh, sys.argv[9], useDefExpansions=True, test=True).Process()

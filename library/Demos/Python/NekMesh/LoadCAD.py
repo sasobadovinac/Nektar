@@ -32,4 +32,4 @@ ProcessModule.Create("hosurface", mesh).Process()
 ProcessModule.Create("jac", mesh, list=True).Process()
 
 # Dump out the surface mesh.
-OutputModule.Create("xml", mesh, sys.argv[2], test=True).Process()
+OutputModule.Create("xml", mesh, sys.argv[2], useDefExpansions=True, test=True).Process()
