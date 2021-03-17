@@ -1588,7 +1588,7 @@ namespace Nektar
                 {
                     //do nothing
                 }
-                if (i > 0)
+                if (vMainDoc != vTempDoc)
                 {
                     delete vTempDoc;
                 }
