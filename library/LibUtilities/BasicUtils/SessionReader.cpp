@@ -1561,7 +1561,7 @@ namespace Nektar
                                     FirstChildElement(p->Value()));
                                 --elemtcount[value];
                                 std::string warningmsg = value + " is defined more " +
-                                    "than once. Please delete one before continuing.";
+                                    "than once. Please delete others before continuing.";
                                 NEKERROR(ErrorUtil::efatal, warningmsg.c_str());
                             }
                             if (i > 0)
@@ -1579,7 +1579,7 @@ namespace Nektar
                     }
                 }
             }
-            ASSERTL0(elemtcount.size(), "No contents for merging.");
+            ASSERTL0(elemtcount.size(), "No content for merging.");
             return vMainDoc;
         }
 
