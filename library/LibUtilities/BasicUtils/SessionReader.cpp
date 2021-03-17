@@ -1467,7 +1467,11 @@ namespace Nektar
             {
                 ifstream file(pFilename.c_str(),
                               ios_base::in | ios_base::binary);
-                ASSERTL0(file.good(), "Unable to open file: " + pFilename);
+                if (!file.good())
+                {
+                    throw ErrorUtil::NekError("Unable to open file: " +
+                        pFilename);
+                }
                 stringstream ss;
                 io::filtering_streambuf<io::input> in;
                 in.push(io::gzip_decompressor());
@@ -1479,8 +1483,8 @@ namespace Nektar
                 }
                 catch (io::gzip_error&)
                 {
-                    NEKERROR(ErrorUtil::efatal,
-                             "Error: File '" + pFilename + "' is corrupt.");
+                    throw ErrorUtil::NekError("Error: File '" +
+                        pFilename + "' is corrupt.");
                 }
             }
             else if (pFilename.size() > 4 &&
@@ -1493,13 +1497,21 @@ namespace Nektar
                 fs::path fullpath = pdirname / pRankFilename;
 
                 ifstream file(PortablePath(fullpath).c_str());
-                ASSERTL0(file.good(), "Unable to open file: " + fullpath.string());
+                if (!file.good())
+                {
+                    throw ErrorUtil::NekError("Unable to open file: " +
+                        fullpath.string());
+                }
                 file >> (*pDoc);
             }
             else
             {
                 ifstream file(pFilename.c_str());
-                ASSERTL0(file.good(), "Unable to open file: " + pFilename);
+                if (!file.good())
+                {
+                    throw ErrorUtil::NekError("Unable to open file: " +
+                        pFilename);
+                }
                 file >> (*pDoc);
             }
         }
@@ -1518,11 +1530,9 @@ namespace Nektar
             std::map<std::string, int> elemtcount;
             for (size_t i = 0; i < pFilenames.size(); ++i)
             {
-                size_t len = pFilenames[i].size();
-                if((len >= 3 && pFilenames[i].compare(len-3,3,"xml") == 0)
-                   ||(len >= 6 && pFilenames[i].compare(len-6,6,"xml.gz") == 0))
+                TiXmlDocument* vTempDoc = new TiXmlDocument;
+                try
                 {
-                    TiXmlDocument* vTempDoc = new TiXmlDocument;
                     LoadDoc(pFilenames[i], vTempDoc);
 
                     TiXmlHandle docHandle(vTempDoc);
@@ -1573,10 +1583,14 @@ namespace Nektar
                         }
                         p = p->NextSiblingElement();
                     }
-                    if (i > 0)
-                    {
-                        delete vTempDoc;
-                    }
+                }
+                catch (const std::runtime_error &e)
+                {
+                    //do nothing
+                }
+                if (i > 0)
+                {
+                    delete vTempDoc;
                 }
             }
             ASSERTL0(elemtcount.size(), "No content for merging.");
