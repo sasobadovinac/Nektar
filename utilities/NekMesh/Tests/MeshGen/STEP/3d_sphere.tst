@@ -2,7 +2,7 @@
 <test>
     <description>Simple geometry with sphere</description>
     <executable>NekMesh</executable>
-    <parameters>-m jac:list 3d_sphere.mcf 3d_sphere-out.xml:xml:test</parameters>
+    <parameters>-m jac:list 3d_sphere.mcf 3d_sphere-out.xml:xml:useDefExpansions:test</parameters>
     <files>
         <file description="Input File">3d_sphere.mcf</file>
         <file description="Input File 2">3d_sphere.stp</file>

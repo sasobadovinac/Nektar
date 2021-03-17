@@ -2,7 +2,7 @@
 <test>
     <description>Simple 2D aerofoil mesh</description>
     <executable>NekMesh</executable>
-    <parameters>-m jac:list 2d_bl_aerofoil.mcf 2d_bl_aerofoil-out.xml:xml:test</parameters>
+    <parameters>-m jac:list 2d_bl_aerofoil.mcf 2d_bl_aerofoil-out.xml:xml:useDefExpansions:test</parameters>
     <files>
         <file description="Input File">2d_bl_aerofoil.mcf</file>
         <file description="Input File 2">2d_bl_aerofoil.stp</file>

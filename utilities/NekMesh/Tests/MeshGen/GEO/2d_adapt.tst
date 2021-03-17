@@ -2,7 +2,7 @@
 <test>
     <description>r-adaptation test</description>
     <executable>NekMesh</executable>
-    <parameters>-v -m varopti:hyperelastic:scalingfile=2d_adapt.txt:maxiter=10:subiter=2:nq=2 2d_adapt.mcf 2d_adapt-out.xml:xml:test</parameters>
+    <parameters>-v -m varopti:hyperelastic:scalingfile=2d_adapt.txt:maxiter=10:subiter=2:nq=2 2d_adapt.mcf 2d_adapt-out.xml:xml:useDefExpansions:test</parameters>
     <files>
         <file description="Input File">2d_adapt.mcf</file>
         <file description="Input File 2">2d_adapt.geo</file>

@@ -2,7 +2,7 @@
 <test>
     <description>.geo reader test mesh</description>
     <executable>NekMesh</executable>
-    <parameters>-m jac:list 2d_t106c.mcf 2d_t106c-out.xml:xml:test</parameters>
+    <parameters>-m jac:list 2d_t106c.mcf 2d_t106c-out.xml:xml:useDefExpansions:test</parameters>
     <files>
         <file description="Input File">2d_t106c.mcf</file>
         <file description="Input File 2">2d_t106c.geo</file>

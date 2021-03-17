@@ -2,7 +2,7 @@
 <test>
     <description>Simple 2D NACA mesh</description>
     <executable>NekMesh</executable>
-    <parameters>-m jac:list 2d_bl.mcf 2d_bl-out.xml:xml:test</parameters>
+    <parameters>-m jac:list 2d_bl.mcf 2d_bl-out.xml:xml:useDefExpansions:test</parameters>
     <files>
         <file description="Input File">2d_bl.mcf</file>
     </files>

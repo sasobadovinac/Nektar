@@ -2,7 +2,7 @@
 <test>
     <description> NekMesh with Star CCM input and STEP file to project CAD </description>
     <executable>NekMesh</executable>
-    <parameters> -m projectcad:file=projectcad_ahmed.stp -m jac:list projectcad_ahmed.ccm projectcad_ahmed-out.xml:xml:test </parameters>
+    <parameters> -m projectcad:file=projectcad_ahmed.stp -m jac:list projectcad_ahmed.ccm projectcad_ahmed-out.xml:xml:useDefExpansions:test </parameters>
     <files>
         <file description="Input File">projectcad_ahmed.ccm</file>
         <file description="Input File">projectcad_ahmed.stp</file>

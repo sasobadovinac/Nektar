@@ -2,7 +2,7 @@
 <test>
     <description>t106 step variant</description>
     <executable>NekMesh</executable>
-    <parameters>-m jac:list 2d_bl_t106.mcf 2d_bl_t106-out.xml:xml:test</parameters>
+    <parameters>-m jac:list 2d_bl_t106.mcf 2d_bl_t106-out.xml:xml:useDefExpansions:test</parameters>
     <files>
         <file description="Input File">2d_bl_t106.mcf</file>
         <file description="Input File 2">2d_bl_t106.stp</file>

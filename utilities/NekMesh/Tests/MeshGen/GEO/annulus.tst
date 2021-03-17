@@ -2,7 +2,7 @@
 <test>
     <description>.geo reader test mesh</description>
     <executable>NekMesh</executable>
-    <parameters>-m jac:list annulus.mcf annulus.xml:xml:test</parameters>
+    <parameters>-m jac:list annulus.mcf annulus.xml:xml:useDefExpansions:test</parameters>
     <files>
         <file description="Input File">annulus.mcf</file>
         <file description="Input File 2">annulus.geo</file>
