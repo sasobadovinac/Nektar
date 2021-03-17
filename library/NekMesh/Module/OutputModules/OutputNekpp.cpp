@@ -231,14 +231,8 @@ void OutputNekpp::Process()
     TransferDomain(graph);
 
     string out = m_config["outfile"].as<string>();
-    if (m_config["useDefExpansions"].beenSet)
-    {
-        graph->WriteGeometry(out, true, m_mesh->m_metadata);
-    }
-    else
-    {
-        graph->WriteGeometry(out, false, m_mesh->m_metadata);
-    }
+    graph->WriteGeometry(out, m_config["useDefExpansions"].beenSet,
+        m_mesh->m_metadata);
 
     // Test the resulting XML file (with a basic test) by loading it
     // with the session reader, generating the MeshGraph and testing if

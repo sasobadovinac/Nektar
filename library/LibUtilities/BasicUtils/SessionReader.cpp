@@ -1510,35 +1510,17 @@ namespace Nektar
         TiXmlDocument *SessionReader::MergeDoc(
             const std::vector<std::string> &pFilenames) const
         {
-            ASSERTL0(pFilenames.size() > 0, "No filenames for merging.");
-
-            // Read the first document
-            TiXmlDocument *vMainDoc = new TiXmlDocument;
-            LoadDoc(pFilenames[0], vMainDoc);
-
-            TiXmlHandle vMainHandle(vMainDoc);
-            TiXmlElement* vMainNektar =
-                vMainHandle.FirstChildElement("NEKTAR").Element();
-
-            //Check Main file for Expansion List Definition.
-            TiXmlElement* r = vMainNektar->FirstChildElement();
-            bool hasExpansions= false;
-            while (r)
-            {
-                if (std::string(r->Value())=="EXPANSIONS")
-                {
-                    hasExpansions = true;
-                }
-                r = r->NextSiblingElement();
-            }
-
-            // Read all subsequent XML documents.
+            // Read all XML documents.
             // For each element within the NEKTAR tag, use it to replace the
             // version already present in the loaded XML data.
-            for (int i = 1; i < pFilenames.size(); ++i)
+            TiXmlDocument *vMainDoc = nullptr;
+            TiXmlElement *vMainNektar = nullptr;
+            std::map<std::string, int> elemtcount;
+            for (size_t i = 0; i < pFilenames.size(); ++i)
             {
-                if((pFilenames[i].compare(pFilenames[i].size()-3,3,"xml") == 0)
-                   ||(pFilenames[i].compare(pFilenames[i].size()-6,6,"xml.gz") == 0))
+                size_t len = pFilenames[i].size();
+                if((len >= 3 && pFilenames[i].compare(len-3,3,"xml") == 0)
+                   ||(len >= 6 && pFilenames[i].compare(len-6,6,"xml.gz") == 0))
                 {
                     TiXmlDocument* vTempDoc = new TiXmlDocument;
                     LoadDoc(pFilenames[i], vTempDoc);
@@ -1546,50 +1528,58 @@ namespace Nektar
                     TiXmlHandle docHandle(vTempDoc);
                     TiXmlElement* vTempNektar;
                     vTempNektar = docHandle.FirstChildElement("NEKTAR").Element();
-                    ASSERTL0(vTempNektar, "Unable to find NEKTAR tag in file.");
+                    if (!vTempNektar)
+                    {
+                        delete vTempDoc;
+                        continue;
+                    }
+                    if (vMainDoc == nullptr)
+                    {
+                        vMainDoc = vTempDoc;
+                        vMainNektar = vTempNektar;
+                    }
                     TiXmlElement* p = vTempNektar->FirstChildElement();
 
                     while (p)
                     {
-                        TiXmlElement *vMainEntry =
-                            vMainNektar->FirstChildElement(p->Value());
-
                         // First check if the new item is in fact blank
-                        if (!p->FirstChild() && vMainEntry)
+                        std::string value(p->Value());
+                        if (!p->FirstChild())
                         {
                             std::string warningmsg =
                                 "File " + pFilenames[i] + " contains " +
                                 "an empty XML element " +
-                                std::string(p->Value()) +
+                                value +
                                 " which will be ignored.";
                             NEKERROR(ErrorUtil::ewarning, warningmsg.c_str());
                         }
                         else
                         {
-                            if (vMainEntry)
+                            while (elemtcount[value] > 0)
                             {
-                                vMainNektar->RemoveChild(vMainEntry);
-                            }
-                            TiXmlElement *q = new TiXmlElement(*p);
-                            vMainNektar->LinkEndChild(q);
-
-                            // If Expansion list found and not found in main file set boolean true.
-                            if (std::string(p->Value())=="EXPANSIONS" && hasExpansions != true)
-                            {
-                                hasExpansions = true;
-                            }
-                            // If found expansions and boolean already true error.
-                            else if (std::string(p->Value())=="EXPANSIONS" && hasExpansions==true)
-                            {
-                                std::string warningmsg = "You have defined the Expansion lists in two of the specified XML files. Please delete one before continuing. ";
+                                vMainNektar->RemoveChild(vMainNektar->
+                                    FirstChildElement(p->Value()));
+                                --elemtcount[value];
+                                std::string warningmsg = value + " is defined more " +
+                                    "than once. Please delete one before continuing.";
                                 NEKERROR(ErrorUtil::efatal, warningmsg.c_str());
                             }
+                            if (i > 0)
+                            {
+                                TiXmlElement *q = new TiXmlElement(*p);
+                                vMainNektar->LinkEndChild(q);
+                            }
+                            elemtcount[value] += 1;
                         }
                         p = p->NextSiblingElement();
                     }
-                    delete vTempDoc;
+                    if (i > 0)
+                    {
+                        delete vTempDoc;
+                    }
                 }
             }
+            ASSERTL0(elemtcount.size(), "No contents for merging.");
             return vMainDoc;
         }
 
