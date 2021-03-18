@@ -1574,7 +1574,7 @@ namespace Nektar
                                     "than once. Please delete others before continuing.";
                                 NEKERROR(ErrorUtil::efatal, warningmsg.c_str());
                             }
-                            if (i > 0)
+                            if (vMainDoc != vTempDoc)
                             {
                                 TiXmlElement *q = new TiXmlElement(*p);
                                 vMainNektar->LinkEndChild(q);
