@@ -168,7 +168,7 @@ public:
     Helmholtz(std::vector<LibUtilities::BasisSharedPtr> basis,
               int nElmt) :
         m_basis(basis), m_nElmt(nElmt),
-        m_lambda(1.0)
+        m_lambda(1.0), m_isDiff(false), m_diff(Array<OneD, NekDouble>(6))
     {
     }
 
@@ -196,26 +196,13 @@ public:
     }
     
 
-    inline void SetDiffusion(Array<OneD, Array<OneD, NekDouble> > diff, int coordim)
+    inline void SetDiffusion(Array<OneD, NekDouble> diff)
     {
-        m_diff = Array<OneD, Array<OneD, NekDouble> >(coordim);
-        for(int i = 0; i < coordim; ++i)
-        {
-            m_diff[i] = Array<OneD, NekDouble>(coordim);
-        }
+        m_isDiff = true;
         
-        for(int i = 0; i < coordim; ++i)
+        for(int i = 0; i < 6; ++i)
         {
-            for(int j = i; j < coordim; ++j)
-                {
-                if (i==j)
-                {
-                    m_diff[i][i] = diff[i][i];
-                } else {              
-                    m_diff[i][j] = diff[i][j];
-                    m_diff[j][i] = diff[j][i];
-                }
-            }
+            m_diff[i] = diff[i];
         }
     }
     
@@ -225,7 +212,8 @@ protected:
     std::vector<LibUtilities::BasisSharedPtr> m_basis;
     int m_nElmt;
     NekDouble m_lambda;
-    Array<OneD, Array<OneD, NekDouble> > m_diff;
+    bool m_isDiff;
+    Array<OneD, NekDouble> m_diff;
 };
 
 

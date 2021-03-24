@@ -542,35 +542,61 @@ public:
         m_oper->SetLambda(x->second);
         
         // set diffusion
-        int coordim = 3;
-        Array<OneD, Array<OneD, NekDouble> > diff = Array<OneD, Array<OneD, NekDouble> >(coordim);
-        for(int i = 0; i < coordim; ++i)
-        {
-            diff[i] = Array<OneD, NekDouble>(coordim);
+        bool isDiff = false;
+        Array<OneD, NekDouble> diff = Array<OneD, NekDouble> (6);
+    
+        auto xd00 = factors.find(StdRegions::eFactorCoeffD00);
+        if (xd00 != factors.end() && xd00->second != 1.0) {
+            isDiff = true;
+            diff[0] = xd00->second;
+        } else {
+            diff[0] = 1.0;
         }
         
-        auto xd00 = factors.find(StdRegions::eFactorCoeffD00);
-        diff[0][0] = (xd00 != factors.end()) ? xd00->second : 1.0;
-        
         auto xd01 = factors.find(StdRegions::eFactorCoeffD01);
-        diff[0][1] = (xd01 != factors.end()) ? xd01->second : 0.0;
-        diff[1][0] = (xd01 != factors.end()) ? xd01->second : 0.0;
+        if (xd01 != factors.end() && xd01->second != 0.0) {
+            isDiff = true;
+            diff[1] = xd01->second;
+        } else {
+            diff[1] = 0.0;
+        }
         
         auto xd02 = factors.find(StdRegions::eFactorCoeffD02);
-        diff[0][2] = (xd02 != factors.end()) ? xd02->second : 0.0;
-        diff[2][0] = (xd02 != factors.end()) ? xd02->second : 0.0;
+        if (xd02 != factors.end() && xd02->second != 0.0) {
+            isDiff = true;
+            diff[2] = xd02->second;
+        } else {
+            diff[2] = 0.0;
+        }
         
         auto xd11 = factors.find(StdRegions::eFactorCoeffD11);
-        diff[1][1] = (xd11 != factors.end()) ? xd11->second : 1.0;
+        if (xd11 != factors.end() && xd11->second != 1.0) {
+            isDiff = true;
+            diff[3] = xd11->second;
+        } else {
+            diff[3] = 1.0;
+        }
         
         auto xd12 = factors.find(StdRegions::eFactorCoeffD12);
-        diff[1][2] = (xd12 != factors.end()) ? xd12->second : 0.0;
-        diff[2][1] = (xd12 != factors.end()) ? xd12->second : 0.0;
+        if (xd12 != factors.end() && xd12->second != 0.0) {
+            isDiff = true;
+            diff[4] = xd12->second;
+        } else {
+            diff[4] = 0.0;
+        }
         
         auto xd22 = factors.find(StdRegions::eFactorCoeffD22);
-        diff[2][2] = (xd22 != factors.end()) ? xd22->second : 1.0;
+        if (xd22 != factors.end() && xd22->second != 1.0) {
+            isDiff = true;
+            diff[5] = xd22->second;
+        } else {
+            diff[5] = 1.0;
+        }
         
-        m_oper->SetDiffusion(diff, 3);
+        if (isDiff) {
+            m_oper->SetDiffusion(diff);
+        }
+        // end diffusion
         
         if (m_isPadded)
         {

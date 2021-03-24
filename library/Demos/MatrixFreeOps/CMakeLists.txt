@@ -1,5 +1,5 @@
-ADD_NEKTAR_EXECUTABLE(MFOQuadTiming
-    COMPONENT demos DEPENDS MultiRegions SOURCES MFOQuadTiming.cpp)
+ADD_NEKTAR_EXECUTABLE(MFO_Timing
+    COMPONENT demos DEPENDS MultiRegions SOURCES MFO_Timing.cpp)
     
 ADD_NEKTAR_EXECUTABLE(Helmholtz2D_MFO
     COMPONENT demos DEPENDS MultiRegions SOURCES Helmholtz2D_MFO.cpp)
