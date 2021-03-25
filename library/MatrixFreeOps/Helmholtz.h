@@ -196,6 +196,7 @@ struct HelmholtzQuad : public Helmholtz, public Helper<2, DEFORMED>
                 df2 = df_ptr[2];  df3 = df_ptr[3];
 
                 if (!this->m_isDiff) {
+                
                     metric00 = df0*df0;
                     metric00.fma(df2,df2);
                     metric01 = df0 * df1; 
