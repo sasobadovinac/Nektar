@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<NEKTAR>
+    <GEOMETRY DIM="2" SPACE="2">
+        <VERTEX COMPRESSED="B64Z-LittleEndian" BITSIZE="64">eJxtk19IU3EUx2/OpqVL25rXtlxaTbOSEYS9RL/5JBGUpHdY0KtmYEEYKNRD6yErrhRC2R8xI5luIZlvq/m7lNFDBGPT3rxl2ygmk+uyrUwo5j332L3c8/Lhng/fcw4Xfgwj13N/rlaoh8tVgkKb2QDs8Qb98XmJpp/2X6vqiqHPA96dCf6q3Z+lxk7X2Y9/gkTxBvV8AvPR5wP7EucPv5qVSGDohhDgY+g3Ahuu8sf45iyJeM3vJ2ancL+R+b8kpS8onQJGt9AXAh9k+zjfaIKyt482Tp/I4PxN+vPdSmcz8J46j/cX6e/HfDGwZe2//KRAzJuAvuGOftdxie7L/1DYvRxHv0U/j/eXqO9Xcri/FBi57BhJDiXIuTsvf3ia1u/fqp8XlI4ZGIZ8p5zH/Rb1fUR73zYgvzqTV9ooEUtdT43tbxy9VT+P95UBkwOGrjlnihwMdxgG659gngUWvxirH3ClaK3sMV8OPCl+k5Jmkb6+yRYsGRfQbwdy4IOyx/k2YGbkYesFh0geTX6xltvXvR34G/xj2eP8HYyq3IymKtSfgtY7gMr75TTva6faE07zviuBrXxb7zhfQSfJm2iYpjFfBfQFVR7zu4CnPH7L8JVDtKjXfebW4Dz63UDuuiW0Wt1AVlLP3gltX3H+HuDCYq5E+n3qvjfdEsG8E3jJZ+2++FakB5ZOj2acUcxXAxflPGFD7eZQewR9DXAiOceUhURiMn1eZuuiOH8vMGCLTX9qstOxtf80fkTx/wAKSC1Z</VERTEX>
+        <EDGE COMPRESSED="B64Z-LittleEndian" BITSIZE="64">eJx1lNdWFUEURAdBoogIAirIFUmCAmImqGAmSVCJkkz//wc+WPuBvVbPy15169yek3qq6v9TV1180JcKupKuDxsK+nJB10s3hk0F3VzQjdItYWtBtxV0i/SVsL2gW6WvKg6/Q/kRdy2sk9+pOPzryo9zu3Qefrfi8G/oPN7XEzbJ71Ucfp/eQx439X/8W4rDv13Irz9skD+gOPw7IftEPYPSxNdC9pg670rT/6GQuVL/PWn2YVj/py8j0sx9NKQv9GtMmn6Oh9RDH+9L07eJkHtHfyel6d+D6uJD3x9K07+pkPqZx7Q092MmZM95HoXMl3xnQ+pnro+l2a8nYS1kbk/DNvnPQubPnj8Pm+W/COkv57xUHPOcC6mf7818yHeMfiyE3F/6sRhSJ/fyVUgfmOPrsF/+m5C5MMelcED+ckhd7O/bcEj+O8Xhvw99bz6ENfkfFYf/SedyPz5Lk8+K/s/9WJXmvWuh7/F62Ct/IxyR/yVsl7+pOPytkO8B93s77JG/E47J/xp2y/+mOPzvIX0mz92QOpnnnvKgf/uhv18HIXWyb4fKg709Uh58734oH/xjxeGfKA/8U+WPf6Y4/HOdy979DNkb8vml3znvtzTn/FE87/2r/Ij/B1D/JWoA</EDGE>
+        <ELEMENT>
+            <T COMPRESSED="B64Z-LittleEndian" BITSIZE="64">eJxdlGs7lFEYhR1KKCTjrIxjiRzKISRjEMUgmnRwKsn//we+3PcH6/1yX/Pud+9nP89aa2pq7j+1sC5+18MH8GF81wAfwcbY1wSb4eM47wlsga1Rpw0+he1R9xnsgIW4Tyfsgt1xzx7YC/vi3v1wAD6H9vMC2s8gtM8idJ5D0L6Hof2PxO9RaP9j0DmNx/1fQuf2Ku4/Eee9hs57EjrnKajeb6Bzn4b2MwPVw3N8ZqE6OU/9MgfV7S1Up3dQPdVhHi5AdV6ES1Bf9MT37+PeztM6y3GePlmB6pG+0WfqsQrVoxDff4DOZS3qORd9p14f4TrUh+pVghuwCMtwE25BfboNP8EdqG93Y/9nqI+/xP49qK/1s/qU47311Ne6+t56y/HeHOh39fU+5sI+92El9h3AQ3gEzY1z/gqPobqcwG+wCs2Vc/L871DdTuN+zs3c/Yj69mUOnYP1f0JzWIK/4lxzeBTrRWgu9d3veG9Oq7Gub9XzDJ7DC2guK7GuHubwEl7BP1A/Hce6eugH/f4XOm/9pB7X0DyY+3+xbj/m3H48/waac+/7P85bi+9vof06d/Pkfv3g/4B6u9+83gFehC74</T>
+        </ELEMENT>
+        <COMPOSITE>
+            <C ID="1"> E[11,18,60,49,42,63,51,61,23,6,59,48,44,65,47,58] </C>
+            <C ID="2"> T[0-63] </C>
+        </COMPOSITE>
+        <DOMAIN> C[2] </DOMAIN>
+    </GEOMETRY>
+    <EXPANSIONS>
+        <E COMPOSITE="C[2]" NUMMODES="7" TYPE="MODIFIED" FIELDS="u" />
+    </EXPANSIONS>
+    <CONDITIONS>
+
+      <SOLVERINFO>
+        <I PROPERTY="GlobalSysSoln" VALUE="IterativeFull" />
+        <I PROPERTY="MaxIterations" VALUE="10000"/>
+      </SOLVERINFO> 
+
+      <PARAMETERS>
+            <P> Lambda    = 1 </P>
+            <P> a         = 1.414  </P>
+            <P> b         = 0.5  </P>
+            <P> d00       = 1.0*a*a </P>
+            <P> d11       = 1.5*b*b </P>
+            <P> d01       = 0.75*a*b </P>
+        </PARAMETERS>
+        
+        <VARIABLES>
+            <V ID="0"> u </V>
+        </VARIABLES>
+
+        <BOUNDARYREGIONS>
+            <B ID="0"> C[1] </B>
+        </BOUNDARYREGIONS>
+
+        <BOUNDARYCONDITIONS>
+            <REGION REF="0">
+                <D VAR="u" VALUE="sin(PI*x/a)*sin(PI*y/b)" />
+            </REGION>
+        </BOUNDARYCONDITIONS>
+
+        <FUNCTION NAME="Forcing">
+            <E VAR="u" VALUE="-(Lambda + PI*PI*((d00/(a*a))+(d11/(b*b))))*sin(PI*x/a)*sin(PI*y/b) + 2*PI*PI*(d01/(a*b))*cos(PI*x/a)*cos(PI*y/b)" />
+        </FUNCTION>
+
+        <FUNCTION NAME="ExactSolution">
+            <E VAR="u" VALUE="sin(PI*x/a)*sin(PI*y/b)" />
+        </FUNCTION>
+
+    </CONDITIONS>
+</NEKTAR>
