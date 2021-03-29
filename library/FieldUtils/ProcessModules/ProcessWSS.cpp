@@ -339,11 +339,20 @@ void ProcessWSS::GetViscosity(
             NekDouble  m_rhoInf;
             NekDouble  m_gasConstant;
             NekDouble  cv_inv;
+            NekDouble  m_Tref;
+            NekDouble m_TRatioSutherland;
             m_f->m_session->LoadParameter("Gamma", m_gamma, 1.4);
             m_f->m_session->LoadParameter("pInf", m_pInf, 101325);
             m_f->m_session->LoadParameter("rhoInf", m_rhoInf, 1.225);
             m_f->m_session->LoadParameter("GasConstant", m_gasConstant
                                          , 287.058);
+            std::string viscosityType;
+            m_f->m_session->LoadSolverInfo("ViscosityType", viscosityType, "Constant");
+            if ("Variable" == viscosityType)
+            {
+                m_f->m_session->LoadParameter ("Tref", m_Tref, 288.15);
+                m_TRatioSutherland = 110.0 / m_Tref;
+            }
 
             // Get temperature from flowfield
             cv_inv = (m_gamma - 1.0) / m_gasConstant;
@@ -375,7 +384,7 @@ void ProcessWSS::GetViscosity(
             // CompressibleFlowSolver function in VariableConverter.cpp
             // (this class should be restructured).
 
-            const NekDouble C = .38175;
+            const NekDouble C = m_TRatioSutherland;
             NekDouble mu_star = m_mu;
             NekDouble T_star  = m_pInf / (m_rhoInf * m_gasConstant);
             NekDouble ratio;
