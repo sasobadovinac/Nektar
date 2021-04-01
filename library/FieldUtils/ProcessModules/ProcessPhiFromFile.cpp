@@ -311,7 +311,8 @@ void ProcessPhiFromFile::GetPhifromSTL(
     }
 
     // Initialise octree
-    m_tree = Octree(centroids, 10, bounds);
+    int nb_centroids_per_octree_node = 2;
+    m_tree = Octree(centroids, nb_centroids_per_octree_node, bounds);
 
     // For each strip...
     for (int s = 0; s < nStrips; ++s)
@@ -330,8 +331,9 @@ void ProcessPhiFromFile::GetPhifromSTL(
             tmpCoords[0] = coords[0][i];
 
             // Find the shortest distance to the body(ies)
-            double dist;
+            double dist = numeric_limits<double>::max();
             FindShortestDist(file, tmpCoords, dist);
+ 
 
             // Get corresponding value of Phi
             phi->UpdatePhys()[i] = PhiFunction(dist, 
@@ -369,6 +371,20 @@ bool ProcessPhiFromFile::CheckHit(const ProcessPhiFromFile::triangle &tri,
                                   const Array<OneD, NekDouble> &Dvec,
                                   double &distance, double &u, double &v)
 {
+    //normalize Dvec
+    //double normDvec = sqrt(pow(Dvec[0],2) + pow(Dvec[1],2) + pow(Dvec[2],2));
+    double scaling = fabs(Dvec[0]);
+    if (fabs(Dvec[1]) > scaling){
+        scaling = fabs(Dvec[1]);
+    }
+    if (fabs(Dvec[2]) > scaling){
+        scaling = fabs(Dvec[2]);
+    } 
+    double normDvec = scaling*sqrt(pow(Dvec[0]/scaling,2) + pow(Dvec[1]/scaling,2) + pow(Dvec[2]/scaling,2)); // less rounding errors
+    Array<OneD, NekDouble> normalVec(3); 
+    normalVec[0] = Dvec[0] / normDvec;
+    normalVec[1] = Dvec[1] / normDvec;
+    normalVec[2] = Dvec[2] / normDvec;	
     // Edge vectors
     Array<OneD, NekDouble> E1(3);
     Array<OneD, NekDouble> E2(3);
@@ -376,7 +392,7 @@ bool ProcessPhiFromFile::CheckHit(const ProcessPhiFromFile::triangle &tri,
     Vmath::Vsub(3, tri.v2, 1, tri.v0, 1, E2, 1);
 
     // If det == 0, ray parallel to triangle
-    Array<OneD, NekDouble> Pvec = Cross(Dvec, E2);
+    Array<OneD, NekDouble> Pvec = Cross(normalVec, E2);
     double det = Vmath::Dot(3, Pvec, E1);
     double inv_det = 1.0 / det;
     if (IsEqual(0.0, det, 1e-10))
@@ -394,7 +410,7 @@ bool ProcessPhiFromFile::CheckHit(const ProcessPhiFromFile::triangle &tri,
 
     // Vector Q and parameter v = (0.0, 1.0)
     Array<OneD, NekDouble> Qvec = Cross(Tvec, E1);
-    v = Vmath::Dot(3, Qvec, Dvec) * inv_det;
+    v = Vmath::Dot(3, Qvec, normalVec) * inv_det;
 
     // There is a hit if (u,v) coordinates are bounded
     distance = Vmath::Dot(3, Qvec, E2) * inv_det;
@@ -427,6 +443,7 @@ void ProcessPhiFromFile::FindShortestDist(
 
     // Set 'dist' to an unreal value
     dist = numeric_limits<double>::max();
+    double best_dist = numeric_limits<double>::max();
 
     // If the node's depth is less than 3 the point is far from the object
     int depth = m_tree.QueryDepth(node);
@@ -454,8 +471,8 @@ void ProcessPhiFromFile::FindShortestDist(
         // Keep the sign (interior or exterior),
         int distSign = 1;
         // the normal vector of closest triangle so far,
-        Array<OneD, NekDouble> triNormal =
-            file.triangles[treeTriangles[0]].normal;
+        Array<OneD, NekDouble> triNormal = file.triangles[treeTriangles[0]].normal;
+		Array<OneD, NekDouble> triCentroid = file.triangles[treeTriangles[0]].centroid;
         // and the distance to the triangle PLANE
         double tParam = dist;
 
@@ -463,6 +480,10 @@ void ProcessPhiFromFile::FindShortestDist(
         {
             // Find distance to triangle
             triangle tri = file.triangles[treeTriangles[i]];
+			Array<OneD, NekDouble> currentcentroid(3);
+			currentcentroid[0] = tri.centroid[0];
+			currentcentroid[1] = tri.centroid[1];
+			currentcentroid[2] = tri.centroid[2];
             double currentTparam;
             double u, v;
             bool hit = CheckHit(tri, x, tri.normal, currentTparam, u, v);
@@ -482,20 +503,26 @@ void ProcessPhiFromFile::FindShortestDist(
             }
             else
             {
-                // The minimum has to be in one of the edges
-                if (v < 0)   // Edge V0-V1
-                {
-                    distVector = Vector2edge(x, tri.v0, tri.v1);
-                }
-                else if (u < 0)   // Edge V0-V2
-                {
-                    distVector = Vector2edge(x, tri.v0, tri.v2);
-                }
-                else   // Edge V1-V2
-                {
-                    distVector = Vector2edge(x, tri.v1, tri.v2);
-                }
+                Array<OneD, NekDouble> distVector_tmp(3);
+                double currentDist_tmp;
+                // The minimum has to be in one of the edges				
+                distVector = Vector2edge(x, tri.v0, tri.v1);
                 currentDist = sqrt(Vmath::Dot(3, distVector, distVector));
+                
+                distVector_tmp = Vector2edge(x, tri.v0, tri.v2);
+                currentDist_tmp = sqrt(Vmath::Dot(3, distVector_tmp, distVector_tmp));
+                if (currentDist_tmp < currentDist)
+                {
+                	distVector = distVector_tmp;
+                	currentDist = currentDist_tmp;
+                }
+                distVector_tmp = Vector2edge(x, tri.v1, tri.v2);
+                currentDist_tmp = sqrt(Vmath::Dot(3, distVector_tmp, distVector_tmp));
+                if (currentDist_tmp < currentDist)
+                {
+                	distVector = distVector_tmp;
+                	currentDist = currentDist_tmp;
+                }
             }
 
             // Update 'dist', MAGIC CONSTANT AHEAD!
@@ -503,6 +530,10 @@ void ProcessPhiFromFile::FindShortestDist(
             // giving contradictory information and, if so, use the one
             // closer to 'x'. Otherwise, some exterior points will be treated
             // as interior and viceversa
+			if (currentDist < best_dist)
+            {
+                best_dist = currentDist;
+            }
             if (dist-currentDist > 1e-5*currentDist ||
                 (IsEqual(dist, currentDist, 1e-5) &&
                  IsNegative(Vmath::Dot(3, triNormal, tri.normal), 1e-5) &&
@@ -512,10 +543,12 @@ void ProcessPhiFromFile::FindShortestDist(
                 tParam    = currentTparam;
                 distSign  = currentDistSign;
                 triNormal = tri.normal;
+				triCentroid = tri.centroid;
             }
         }
 
         // Update distance sign
+		dist = best_dist;
         dist *= -distSign;
     }
 }
