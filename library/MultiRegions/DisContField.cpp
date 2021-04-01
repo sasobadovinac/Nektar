@@ -3996,6 +3996,15 @@ namespace Nektar
         {
             ExpList::v_Reset();
 
+            // Reset trace expansions as well
+            if (m_trace)
+            {
+                for (int i = 0; i < m_trace->GetExpSize(); ++i)
+                {
+                    m_trace->GetExp(i)->Reset();
+                }
+            }
+
             // Reset boundary condition expansions.
             for (int n = 0; n < m_bndCondExpansions.size(); ++n)
             {

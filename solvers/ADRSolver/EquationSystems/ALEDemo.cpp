@@ -3,86 +3,6 @@
 
 namespace Nektar
 {
-
-class ALEUpwindSolver : public SolverUtils::RiemannSolver
-{
-public:
-    static SolverUtils::RiemannSolverSharedPtr create(
-        const LibUtilities::SessionReaderSharedPtr &pSession)
-    {
-        return SolverUtils::RiemannSolverSharedPtr(
-            new ALEUpwindSolver(pSession));
-    }
-
-    static std::string solverName;
-
-protected:
-    ALEUpwindSolver(const LibUtilities::SessionReaderSharedPtr &pSession)
-        : SolverUtils::RiemannSolver(pSession)
-    {
-    }
-
-    virtual void v_Solve(const int nDim,
-                         const Array<OneD, const Array<OneD, NekDouble>> &Fwd,
-                         const Array<OneD, const Array<OneD, NekDouble>> &Bwd,
-                         Array<OneD, Array<OneD, NekDouble>> &flux)
-    {
-        boost::ignore_unused(nDim, Bwd);
-
-        ASSERTL1(CheckScalars("Vn"), "Vn not defined.");
-        const Array<OneD, NekDouble> &traceVel = m_scalars["Vn"]();
-        const Array<OneD, const Array<OneD, NekDouble>> &normals = m_vectors["N"]();
-
-
-        // Sliding mesh
-        for (int j = 0; j < traceVel.size(); ++j)
-        {
-            const Array<OneD, const Array<OneD, NekDouble>> &tmp =
-                traceVel[j] >= 0 ? Fwd : Bwd;
-            for (int i = 0; i < Fwd.size(); ++i)
-            {
-                flux[i][j] = traceVel[j] * tmp[i][j] * normals[i][j];
-            }
-        }
-
-        // Add in the term to deal with grid velocity * normal
-        /*const Array<OneD, const Array<OneD, NekDouble>> &gridVel = m_vectors["Tvg"]();
-        const Array<OneD, const Array<OneD, NekDouble>> &normals = m_vectors["N"]();
-        int nTracePts = gridVel[0].size();
-        Array<OneD, NekDouble> tmp(nTracePts, 0.0);
-
-        for (int i = 0; i < m_spacedim; ++i)
-        {
-            Vmath::Vvtvp(nTracePts, normals[i], 1, gridVel[i], 1, tmp, 1, tmp, 1);
-        }
-
-        Vmath::Vadd(nTracePts, flux[0], 1, tmp, 1, flux[0], 1);*/
-
-        // Add in the term to deal with grid velocity * normal
-        /*const Array<OneD, const Array<OneD, NekDouble>> &gridVel = m_vectors["Tvg"]();
-        const Array<OneD, const Array<OneD, NekDouble>> &normals = m_vectors["N"]();
-        Array<OneD, NekDouble> tmp(gridVel[0].size(), 0.0);
-        for (int i = 0; i < gridVel.size(); ++i)
-        {
-            for (int j = 0; j < gridVel[0].size(); ++j)
-            {
-                tmp[j] += gridVel[i][j] * normals[i][j];
-            }
-        }
-        for (int j = 0; j < traceVel.size(); ++j)
-        {
-            for (int i = 0; i < Fwd.size(); ++i)
-            {
-                flux[i][j] += tmp[j];
-            }
-        }*/
-    }
-};
-
-std::string ALEUpwindSolver::solverName =
-        SolverUtils::GetRiemannSolverFactory().RegisterCreatorFunction(
-            "ALEUpwind", ALEUpwindSolver::create, "ALE Upwind solver");
-
     class ALEDemo : public SolverUtils::EquationSystem
     {
     public:
@@ -109,7 +29,6 @@ std::string ALEUpwindSolver::solverName =
         SolverUtils::RiemannSolverSharedPtr m_riemannSolver;
         Array<OneD, Array<OneD, NekDouble>> m_velocity;
         Array<OneD, Array<OneD, NekDouble>> m_gridVelocity;
-        Array<OneD, Array<OneD, NekDouble>> m_traceGridVelocity;
         Array<OneD, NekDouble> m_traceVn;
         SolverUtils::AdvectionSharedPtr m_advObject;
 
@@ -123,10 +42,7 @@ std::string ALEUpwindSolver::solverName =
         {
             EquationSystem::v_InitObject();
 
-            std::vector<std::string> vel;
-            vel.push_back("Vx");
-            vel.push_back("Vy");
-            vel.push_back("Vz");
+            std::vector<std::string> vel{"Vx", "Vy", "Vz"};
 
             // Resize the advection velocities vector to dimension of the problem
             vel.resize(m_spacedim);
@@ -147,10 +63,8 @@ std::string ALEUpwindSolver::solverName =
 
             m_riemannSolver =
                 SolverUtils::GetRiemannSolverFactory().CreateInstance(
-                    "ALEUpwind", m_session);
+                    "Upwind", m_session);
             m_riemannSolver->SetScalar("Vn", &ALEDemo::GetNormalVelocity, this);
-            m_riemannSolver->SetVector("Tvg", &ALEDemo::GetTraceGridVelocity,
-                                       this);
             m_riemannSolver->SetVector("N", &ALEDemo::GetNormals, this);
             m_advObject->SetRiemannSolver(m_riemannSolver);
             m_advObject->InitObject(m_session, m_fields);
@@ -211,12 +125,10 @@ std::string ALEUpwindSolver::solverName =
                 }
 
                 // Perform movement and reset the matrices
-                for (int i = 0; i < m_fields.size(); ++i)
+                for (auto &field : m_fields)
                 {
-                    m_fields[i]->GetInterfaces()->PerformMovement(m_timestep);
-                    m_fields[i]->GetTrace()->Reset();
-                    m_fields[i]->Reset();
-                    m_fields[i]->GetInterfaces()->GenGeomFactors();
+                    field->GetInterfaces()->PerformMovement(m_timestep);
+                    field->Reset();
                 }
 
                 // Why does this break everything for rotating?!?
@@ -292,28 +204,26 @@ std::string ALEUpwindSolver::solverName =
             // Number of trace (interface) points
             int i;
             int nTracePts = GetTraceNpoints();
-
+            int nPts = m_velocity[0].size();
             // Auxiliary variable to compute the normal velocity
-            Array<OneD, NekDouble> tmp(nTracePts);
+            Array<OneD, NekDouble> tmp(nPts), tmp2(nTracePts);
 
             // Reset the normal velocity
             Vmath::Zero(nTracePts, m_traceVn, 1);
 
-            GetTraceGridVelocity();
+            GetGridVelocity();
 
             for (i = 0; i < m_velocity.size(); ++i)
             {
-                m_fields[0]->ExtractTracePhys(m_velocity[i], tmp);
-
                 // Subtract grid velocity here from trace velocity
                 // tmp - grid velocity
-                Vmath::Vsub(nTracePts, tmp, 1, m_traceGridVelocity[i], 1, tmp, 1);
+                Vmath::Vsub(nPts, m_velocity[i], 1, m_gridVelocity[i], 1, tmp, 1);
 
-                Vmath::Vvtvp(nTracePts, m_traceNormals[i], 1, tmp, 1, m_traceVn,
+                m_fields[0]->ExtractTracePhys(tmp, tmp2);
+
+                Vmath::Vvtvp(nTracePts, m_traceNormals[i], 1, tmp2, 1, m_traceVn,
                              1, m_traceVn, 1);
             }
-
-
             return m_traceVn;
         }
 
@@ -396,97 +306,6 @@ std::string ALEUpwindSolver::solverName =
             }
 
             return m_gridVelocity;
-        }
-
-        const Array<OneD, const Array<OneD, NekDouble>> &GetTraceGridVelocity()
-        {
-            // Initialise grid velocity as 0s
-            m_traceGridVelocity = Array<OneD, Array<OneD, NekDouble>>(m_spacedim);
-            for (int i =0; i < m_spacedim; ++i)
-            {
-                m_traceGridVelocity[i] = Array<OneD, NekDouble>(m_fields[0]->GetTrace()->GetTotPoints(), 0.0);
-            }
-
-            // Do I need to do this for each field? I think it is consistent?
-            auto exp = m_fields[0]->GetTrace()->GetExp();
-
-            // Create map from element ID to expansion ID
-            std::map<int, int> elmtToTraceId;
-            for (int i = (*exp).size() - 1; i >= 0; --i)
-            {
-                elmtToTraceId[(*exp)[i]->GetGeom()->GetGlobalID()] = i;
-            }
-
-            auto intVec = m_fields[0]->GetInterfaces()->GetInterfaceVector();
-            for (auto &interface : intVec)
-            {
-                // If the interface domain is fixed then grid velocity is left at 0
-                if (interface->GetInterfaceType() == SpatialDomains::eFixed)
-                {
-                    continue;
-                }
-                else if (interface->GetInterfaceType() == SpatialDomains::eRotating)
-                {
-
-                    SpatialDomains::RotatingInterfaceShPtr interfaceRotate =
-                        std::static_pointer_cast<
-                            SpatialDomains::RotatingInterface>(interface);
-                    NekDouble angVel = interfaceRotate->GetAngularVel();
-
-                    auto ids = interface->GetElementIds();
-                    for (auto id : ids)
-                    {
-                        int ne = m_graph->GetGeometry2D(id)->GetNumEdges();
-
-                        for (int i = 0; i < ne; ++i)
-                        {
-                            auto edge = m_graph->GetGeometry2D(id)->GetEdge(i);
-                            int indx  = elmtToTraceId[edge->GetGlobalID()];
-                            int offset = m_fields[0]->GetTrace()->GetPhys_Offset(indx);
-                            auto expansion = (*exp)[indx];
-
-                            int nq = expansion->GetTotPoints();
-                            Array<OneD, NekDouble> xc(nq, 0.0), yc(nq, 0.0), zc(nq, 0.0);
-                            expansion->GetCoords(xc, yc, zc);
-
-                            for (int j = 0; j < nq; ++j)
-                            {
-                                m_traceGridVelocity[0][offset + j] = angVel * -yc[j];
-                                m_traceGridVelocity[1][offset + j] = angVel * xc[j];
-                            }
-                        }
-                    }
-                }
-                else if (interface->GetInterfaceType() == SpatialDomains::eSliding)
-                {
-                    SpatialDomains::SlidingInterfaceShPtr interfaceSlide =
-                        std::static_pointer_cast<
-                            SpatialDomains::SlidingInterface>(interface);
-                    std::vector<NekDouble> velocity = interfaceSlide->GetVel();
-
-                    auto ids = interface->GetElementIds();
-                    for (auto id : ids)
-                    {
-                        int ne = m_graph->GetGeometry2D(id)->GetNumEdges();
-                        for (int i = 0; i < ne; ++i)
-                        {
-                            auto edge = m_graph->GetGeometry2D(id)->GetEdge(i);
-                            int indx       = elmtToTraceId[edge->GetGlobalID()];
-                            int offset = m_fields[0]->GetTrace()->GetPhys_Offset(indx);
-                            auto expansion = (*exp)[indx];
-
-                            int nq = expansion->GetTotPoints();
-                            for (int j = 0; j < nq; ++j)
-                            {
-                                m_traceGridVelocity[0][offset + j] = velocity[0];
-                                m_traceGridVelocity[1][offset + j] = velocity[1];
-                            }
-                        }
-                    }
-                }
-            }
-
-            return m_traceGridVelocity;
         }
     };
 
