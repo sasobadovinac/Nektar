@@ -149,12 +149,14 @@ struct HelmholtzQuad : public Helmholtz, public Helper<2, DEFORMED>
         // product kernels.
         constexpr auto wspInnerProd = NQ1;
         constexpr auto wspBwdTrans = NQ0 * NM0;
-        constexpr auto wspSize = wspInnerProd > wspBwdTrans ? wspInnerProd : wspBwdTrans;
+        constexpr auto wspSize = wspInnerProd > wspBwdTrans ?
+            wspInnerProd : wspBwdTrans;
 
         vec_t wsp[wspSize]; // workspace for kernels
 
         std::vector<vec_t, allocator<vec_t>> tmpIn(m_nmTot), tmpOut(m_nmTot);
-        std::vector<vec_t, allocator<vec_t>> bwd(nqTot),  deriv0(nqTot), deriv1(nqTot), difftemp0(nqTot), difftemp1(nqTot);
+        std::vector<vec_t, allocator<vec_t>> bwd(nqTot),  deriv0(nqTot),
+            deriv1(nqTot), difftemp0(nqTot), difftemp1(nqTot);
 
         const vec_t* jac_ptr;
         const vec_t* df_ptr;
@@ -165,14 +167,11 @@ struct HelmholtzQuad : public Helmholtz, public Helper<2, DEFORMED>
         vec_t mp00,mp01,mp02,mp03,mp11,mp12,mp13,mp22,mp23,mp33; // metric products
         vec_t d00,d01,d11; // diffusion terms
         
-        if (this->m_isDiff) {
+        if (this->m_isDiff)
+        {
             d00 = this->m_diff[0];
             d01 = this->m_diff[1];
             d11 = this->m_diff[3];
-        } else {
-            d00 = 1.0;
-            d01 = 0.0;
-            d11 = 1.0;
         }
                 
         // Get size of derivative factor block
@@ -195,18 +194,17 @@ struct HelmholtzQuad : public Helmholtz, public Helper<2, DEFORMED>
                 df0 = df_ptr[0];  df1 = df_ptr[1];
                 df2 = df_ptr[2];  df3 = df_ptr[3];
 
-                if (!this->m_isDiff) {
-                
+                if (!this->m_isDiff)
+                {
                     metric00 = df0*df0;
                     metric00.fma(df2,df2);
-                    metric01 = df0 * df1; 
+                    metric01 = df0*df1; 
                     metric01.fma(df2,df3);
                     metric11 = df1*df1;
                     metric11.fma(df3,df3);
-                
-                } else {
-                
-                    // include diffusion here
+                }
+                else
+                {
                     mp00 = df0*df0;
                     mp01 = df0*df1;
                     mp02 = df0*df2;
@@ -232,10 +230,7 @@ struct HelmholtzQuad : public Helmholtz, public Helper<2, DEFORMED>
                     metric11.fma(d01,mp13);
                     metric11.fma(d01,mp13);
                     metric11.fma(d11,mp33);
-                    
-                    // diffusion end
                 }
-
 
                 jac_ptr = &((*this->m_jac)[e]);
             }
@@ -269,17 +264,17 @@ struct HelmholtzQuad : public Helmholtz, public Helper<2, DEFORMED>
                         df2 = df_ptr[cnt * ndf + 2];
                         df3 = df_ptr[cnt * ndf + 3];
                         
-                        if (!this->m_isDiff) {
+                        if (!this->m_isDiff)
+                        {
                             metric00 = df0*df0;
                             metric00.fma(df2,df2);
-                            metric01 = df0 * df1; 
+                            metric01 = df0*df1; 
                             metric01.fma(df2,df3);
                             metric11 = df1*df1;
                             metric11.fma(df3,df3);
-                        
-                        } else {
-                        
-                            // include diffusion here
+                        }
+                        else
+                        {
                             mp00 = df0*df0;
                             mp01 = df0*df1;
                             mp02 = df0*df2;
@@ -305,8 +300,6 @@ struct HelmholtzQuad : public Helmholtz, public Helper<2, DEFORMED>
                             metric11.fma(d01,mp13);
                             metric11.fma(d01,mp13);
                             metric11.fma(d11,mp33);
-                            
-                            // diffusion end
                         }
 
                         vec_t d0 = deriv0[cnt];
@@ -615,15 +608,13 @@ struct HelmholtzTri : public Helmholtz, public Helper<2, DEFORMED>
         vec_t mp00,mp01,mp02,mp03,mp11,mp12,mp13,mp22,mp23,mp33; // metric products
         vec_t d00,d01,d11; // diffusion terms
         
-        if (this->m_isDiff) {
+        if (this->m_isDiff)
+        {
             d00 = this->m_diff[0];
             d01 = this->m_diff[1];
             d11 = this->m_diff[3];
-        } else {
-            d00 = 1.0;
-            d01 = 0.0;
-            d11 = 1.0;
         }
+
 
         // Get size of derivative factor block
         auto dfSize = ndf;
@@ -694,8 +685,8 @@ struct HelmholtzTri : public Helmholtz, public Helper<2, DEFORMED>
                     metric00 = h1j * (df0 + h0i * df1);  // M_00
                     vec_t tmp = h1j * (df2 + h0i * df3); // M_10
                     
-                    if (!this->m_isDiff) {
-                    
+                    if (!this->m_isDiff)
+                    {
                         metric01 = metric00 * df1;
                         metric00 = metric00 * metric00;
 
@@ -704,10 +695,9 @@ struct HelmholtzTri : public Helmholtz, public Helper<2, DEFORMED>
 
                         metric11 = df1 * df1;
                         metric11.fma(df3, df3);
-                        
-                    } else {
-                    
-                        // include diffusion here
+                    }
+                    else
+                    {
                         mp00 = metric00*metric00;
                         mp01 = metric00*df1;
                         mp02 = metric00*tmp;
@@ -733,8 +723,6 @@ struct HelmholtzTri : public Helmholtz, public Helper<2, DEFORMED>
                         metric11.fma(d01,mp13);
                         metric11.fma(d01,mp13);
                         metric11.fma(d11,mp33);
-                        
-                        // diffusion end
                     }
 
                     vec_t d0 = deriv0[cnt];

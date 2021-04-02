@@ -168,8 +168,10 @@ public:
     Helmholtz(std::vector<LibUtilities::BasisSharedPtr> basis,
               int nElmt) :
         m_basis(basis), m_nElmt(nElmt),
-        m_lambda(1.0), m_isDiff(false), m_diff(Array<OneD, NekDouble>(6))
+        m_lambda(1.0), m_isDiff(false)
     {
+        int n = m_basis.size();
+        m_diff = Array<OneD, NekDouble>(n*(n+1)/2);
     }
 
     virtual ~Helmholtz()
