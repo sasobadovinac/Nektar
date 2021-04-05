@@ -54,13 +54,15 @@ enum InterfaceType
     eFixed,
     eRotating,
     eSliding,
+    ePrescribed
 };
 
 const std::string InterfaceTypeStr[] =
 {
     "Fixed",
     "Rotating",
-    "Sliding"
+    "Sliding",
+    "Prescribed"
 };
 
 enum InterfaceSide
@@ -237,6 +239,32 @@ protected:
     std::vector<CurveSharedPtr> m_slideCurves;
 };
 
+struct PrescribedInterface final: public InterfaceBase
+{
+    PrescribedInterface(int id, const CompositeMap &domain,
+                        LibUtilities::EquationSharedPtr xDeform,
+                        LibUtilities::EquationSharedPtr yDeform);
+
+    virtual ~PrescribedInterface() = default;
+
+    inline NekDouble GetXDeform(NekDouble x, NekDouble y,  NekDouble z, NekDouble t) const
+    {
+        return m_xDeform->Evaluate(x, y, z, t);
+    }
+
+    inline NekDouble GetYDeform(NekDouble x, NekDouble y,  NekDouble z, NekDouble t) const
+    {
+        return m_yDeform->Evaluate(x, y, z, t);
+    }
+
+    virtual void v_Move(NekDouble timeStep) final;
+
+protected:
+    LibUtilities::EquationSharedPtr m_xDeform;
+    LibUtilities::EquationSharedPtr m_yDeform;
+    std::vector<PointGeomSharedPtr> m_interiorVerts;
+};
+
 struct FixedInterface final: public InterfaceBase
 {
     FixedInterface(int id, const CompositeMap &domain)
@@ -252,6 +280,7 @@ struct FixedInterface final: public InterfaceBase
 typedef std::shared_ptr<RotatingInterface> RotatingInterfaceShPtr;
 typedef std::shared_ptr<SlidingInterface> SlidingInterfaceShPtr;
 typedef std::shared_ptr<FixedInterface> FixedInterfaceShPtr;
+typedef std::shared_ptr<PrescribedInterface> PrescribedInterfaceShPtr;
 
 struct InterfacePair
 {

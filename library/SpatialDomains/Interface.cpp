@@ -169,6 +169,61 @@ SlidingInterface::SlidingInterface(int id, const CompositeMap &domain,
     }
 }
 
+PrescribedInterface::PrescribedInterface(int id,
+                                         const CompositeMap &domain,
+                                         LibUtilities::EquationSharedPtr xDeform,
+                                         LibUtilities::EquationSharedPtr yDeform)
+    : InterfaceBase(ePrescribed, id, domain), m_xDeform(xDeform), m_yDeform(yDeform)
+{
+    std::set<int> seenVerts, seenEdges;
+    for (auto &comp : m_domain)
+    {
+        for (auto &geom : comp.second->m_geomVec)
+        {
+            for (int i = 0; i < geom->GetNumVerts(); ++i)
+            {
+                PointGeomSharedPtr vert = geom->GetVertex(i);
+
+                if (seenVerts.find(vert->GetGlobalID()) != seenVerts.end())
+                {
+                    continue;
+                }
+
+                seenVerts.insert(vert->GetGlobalID());
+                m_interiorVerts.emplace_back(vert);
+            }
+
+            for (int i = 0; i < geom->GetNumEdges(); ++i)
+            {
+                SegGeomSharedPtr edge =
+                    std::static_pointer_cast<SegGeom>(geom->GetEdge(i));
+
+                if (seenEdges.find(edge->GetGlobalID()) != seenEdges.end())
+                {
+                    continue;
+                }
+
+                seenEdges.insert(edge->GetGlobalID());
+
+                CurveSharedPtr curve = edge->GetCurve();
+                if (!curve)
+                {
+                    continue;
+                }
+
+                for (auto &point : curve->m_points)
+                {
+                    if (seenVerts.find(point->GetGlobalID()) != seenVerts.end())
+                    {
+                        m_interiorVerts.emplace_back(point);
+                    }
+                }
+            }
+        }
+    }
+}
+
+
 
 std::string ReadTag(std::string &tagStr)
 {
@@ -218,18 +273,21 @@ void Interfaces::ReadInterfaces(TiXmlElement *interfaces)
             domain = domains.at(domFind);
         }
 
-        std::string domainEdgeStr;
-        int domainEdgeErr =
-            interfaceElement->QueryStringAttribute("EDGE", &domainEdgeStr);
         map<int, CompositeSharedPtr> domainEdge;
-        if (domainEdgeErr == TIXML_SUCCESS)
+        if (interfaceType != "P")
         {
-            std::string indxStr = ReadTag(domainEdgeStr);
-            m_meshGraph->GetCompositeList(indxStr, domainEdge);
+            std::string domainEdgeStr;
+            int domainEdgeErr =
+                interfaceElement->QueryStringAttribute("EDGE", &domainEdgeStr);
+
+            if (domainEdgeErr == TIXML_SUCCESS)
+            {
+                std::string indxStr = ReadTag(domainEdgeStr);
+                m_meshGraph->GetCompositeList(indxStr, domainEdge);
+            }
         }
 
         InterfaceBaseShPtr interface;
-
         if (interfaceType == "R")
         {
             std::string originStr;
@@ -271,8 +329,26 @@ void Interfaces::ReadInterfaces(TiXmlElement *interfaces)
         {
             interface = FixedInterfaceShPtr(MemoryManager<FixedInterface>::AllocateSharedPtr(indx, domain));
         }
+        else if (interfaceType == "P")
+        {
+            std::string xDeformStr;
+            err = interfaceElement->QueryStringAttribute("XDEFORM", &xDeformStr);
+            ASSERTL0(err == TIXML_SUCCESS, "Unable to read x deform equation.");
+            LibUtilities::EquationSharedPtr xDeformEqn =
+                std::make_shared<LibUtilities::Equation>(m_session->GetInterpreter(), xDeformStr);
 
-        interface->SetEdge(domainEdge);
+            std::string yDeformStr;
+            err = interfaceElement->QueryStringAttribute("YDEFORM", &yDeformStr);
+            ASSERTL0(err == TIXML_SUCCESS, "Unable to read y deform equation.");
+            LibUtilities::EquationSharedPtr yDeformEqn =
+                std::make_shared<LibUtilities::Equation>(m_session->GetInterpreter(), yDeformStr);
+
+            interface = PrescribedInterfaceShPtr(MemoryManager<PrescribedInterface>::AllocateSharedPtr(indx, domain, xDeformEqn, yDeformEqn));
+        }
+        if ( interfaceType != "P")
+        {
+            interface->SetEdge(domainEdge);
+        }
 
         tmpInterfaceMap[indx].emplace_back(interface);
 
@@ -444,6 +520,43 @@ void SlidingInterface::v_Move(NekDouble timeStep)
 void FixedInterface::v_Move(NekDouble time)
 {
     boost::ignore_unused(time);
+}
+
+void PrescribedInterface::v_Move(NekDouble time)
+{
+    // This is hacky - as interface is set up for 2 sides usually, we only use the left side in this case
+    if (m_side == eLeft)
+    {
+        int dim = 3;
+
+        for (auto &vert : m_interiorVerts)
+        {
+            Array<OneD, NekDouble> coords(dim, 0.0);
+            vert->GetCoords(coords);
+
+            Array<OneD, NekDouble> newLoc(3, 0.0);
+
+            // newLoc[0] = m_xDeform->Evaluate(coords[0], coords[1], coords[2], time);
+            // newLoc[1] = m_yDeform->Evaluate(coords[0], coords[1], coords[2], time); newLoc[2] = coords[2];
+
+            NekDouble Lx = 20, Ly = 20;         // Size of mesh
+            NekDouble nx = 1, ny = 1, nt = 1;   // Space and time period
+            NekDouble X0 = 0.5, Y0 = 0.5;       // Amplitude
+            NekDouble t0 = sqrt(5*5 + 5*5);     // Time domain
+
+            newLoc[0] = coords[0] + X0 * sin((nt * 2 * M_PI * time) / t0)
+                                       * sin((nx * 2 * M_PI * coords[0]) / Lx)
+                                       * sin((ny * 2 * M_PI * coords[1]) / Ly);
+
+            newLoc[1] = coords[1] + Y0 * sin((nt * 2 * M_PI * time) / t0)
+                                       * sin((nx * 2 * M_PI * coords[0]) / Lx)
+                                       * sin((ny * 2 * M_PI * coords[1]) / Ly);
+
+            newLoc[2] = coords[2];
+
+            vert->UpdatePosition(newLoc[0], newLoc[1], newLoc[2]);
+        }
+    }
 }
 
 }

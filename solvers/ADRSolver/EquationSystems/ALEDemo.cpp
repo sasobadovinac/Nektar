@@ -215,8 +215,8 @@ namespace Nektar
 
             for (i = 0; i < m_velocity.size(); ++i)
             {
-                // Subtract grid velocity here from trace velocity
-                // tmp - grid velocity
+                // Subtract grid velocity here from velocity
+                // velocity - grid velocity
                 Vmath::Vsub(nPts, m_velocity[i], 1, m_gridVelocity[i], 1, tmp, 1);
 
                 m_fields[0]->ExtractTracePhys(tmp, tmp2);
@@ -300,6 +300,45 @@ namespace Nektar
                         {
                             m_gridVelocity[0][offset + i] = velocity[0];
                             m_gridVelocity[1][offset + i] = velocity[1];
+                        }
+                    }
+                }
+                else if (interface->GetInterfaceType() == SpatialDomains::ePrescribed)
+                {
+                    // This is hacky - as interface is set up for 2 sides usually, we only use the left side in this case
+                    if (interface->GetSide() == SpatialDomains::eLeft)
+                    {
+                        NekDouble Lx = 20, Ly = 20;         // Size of mesh
+                        NekDouble nx = 1, ny = 1, nt = 1;   // Space and time period
+                        NekDouble X0 = 0.5, Y0 = 0.5;       // Amplitude
+                        NekDouble t0 = sqrt(5*5 + 5*5);     // Time domain
+                        auto ids = interface->GetElementIds();
+                        for (auto id : ids)
+                        {
+                            int indx       = elmtToExpId[id];
+                            int offset     = m_fields[0]->GetPhys_Offset(indx);
+                            auto expansion = (*exp)[indx];
+
+                            int nq = expansion->GetTotPoints();
+                            Array<OneD, NekDouble> xc(nq, 0.0), yc(nq, 0.0), zc(nq, 0.0);
+                            expansion->GetCoords(xc, yc, zc);
+
+                            for (int i = 0; i < nq; ++i)
+                            {
+                                NekDouble distx, disty;
+
+                                distx = X0 * sin((nt * 2 * M_PI * m_timestep) / t0)
+                                                        * sin((nx * 2 * M_PI * xc[i]) / Lx)
+                                                        * sin((ny * 2 * M_PI * yc[i]) / Ly);
+
+                                disty = Y0 * sin((nt * 2 * M_PI * m_timestep) / t0)
+                                                        * sin((nx * 2 * M_PI * xc[i]) / Lx)
+                                                        * sin((ny * 2 * M_PI * yc[i]) / Ly);
+
+                                m_gridVelocity[0][offset + i] = distx / m_timestep;
+                                m_gridVelocity[1][offset + i] = disty / m_timestep;
+
+                            }
                         }
                     }
                 }
