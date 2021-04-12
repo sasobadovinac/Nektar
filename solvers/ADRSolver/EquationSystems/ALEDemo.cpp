@@ -127,13 +127,13 @@ namespace Nektar
                 // Perform movement and reset the matrices
                 for (auto &field : m_fields)
                 {
-                    field->GetInterfaces()->PerformMovement(m_timestep);
+                    field->GetInterfaces()->PerformMovement(m_time);
                     field->Reset();
                 }
 
                 // Why does this break everything for rotating?!?
-                m_fields[0]->SetUpPhysNormals();
-                m_fields[0]->GetTrace()->GetNormals(m_traceNormals);
+                //m_fields[0]->SetUpPhysNormals();
+                //m_fields[0]->GetTrace()->GetNormals(m_traceNormals);
 
                 for (int i = 0; i < nFields; ++i)
                 {
@@ -308,10 +308,11 @@ namespace Nektar
                     // This is hacky - as interface is set up for 2 sides usually, we only use the left side in this case
                     if (interface->GetSide() == SpatialDomains::eLeft)
                     {
-                        NekDouble Lx = 20, Ly = 20;         // Size of mesh
+                        /*NekDouble Lx = 20, Ly = 20;         // Size of mesh
                         NekDouble nx = 1, ny = 1, nt = 1;   // Space and time period
                         NekDouble X0 = 0.5, Y0 = 0.5;       // Amplitude
-                        NekDouble t0 = sqrt(5*5 + 5*5);     // Time domain
+                        NekDouble t0 = sqrt(5*5 + 5*5);     // Time domain*/
+
                         auto ids = interface->GetElementIds();
                         for (auto id : ids)
                         {
@@ -325,19 +326,25 @@ namespace Nektar
 
                             for (int i = 0; i < nq; ++i)
                             {
-                                NekDouble distx, disty;
-
-                                distx = X0 * sin((nt * 2 * M_PI * m_timestep) / t0)
+                                //NekDouble distx, disty;
+                                // @TODO: Put analytic solution in (partial derivative r/t time)
+                                /*distx = X0 * sin((nt * 2 * M_PI * m_time) / t0)
                                                         * sin((nx * 2 * M_PI * xc[i]) / Lx)
                                                         * sin((ny * 2 * M_PI * yc[i]) / Ly);
 
-                                disty = Y0 * sin((nt * 2 * M_PI * m_timestep) / t0)
+                                disty = Y0 * sin((nt * 2 * M_PI * m_time) / t0)
                                                         * sin((nx * 2 * M_PI * xc[i]) / Lx)
-                                                        * sin((ny * 2 * M_PI * yc[i]) / Ly);
-
-                                m_gridVelocity[0][offset + i] = distx / m_timestep;
-                                m_gridVelocity[1][offset + i] = disty / m_timestep;
-
+                                                        * sin((ny * 2 * M_PI * yc[i]) / Ly);*/
+                                if (xc[i] < 1e-8 || fabs(xc[i] - 1) < 1e-8)
+                                {
+                                    m_gridVelocity[0][offset + i] = 0; //2 * M_PI * cos(2 * M_PI * m_time) * xc[i] * (1 - xc[i]);
+                                    m_gridVelocity[1][offset + i] = 0;
+                                }
+                                else
+                                {
+                                    m_gridVelocity[0][offset + i] = 0.5; //2 * M_PI * cos(2 * M_PI * m_time) * xc[i] * (1 - xc[i]);
+                                    m_gridVelocity[1][offset + i] = 0;
+                                }
                             }
                         }
                     }

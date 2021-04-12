@@ -469,7 +469,7 @@ void RotatingInterface::v_Move(NekDouble timeStep)
 void SlidingInterface::v_Move(NekDouble timeStep)
 {
     int dim = 3; // @TODO: Think a way to get this for coorddim even if interface isn't present on rank.
-
+                    // @TODO: We have changed this to time not timestep now.
     Array<OneD, NekDouble> dist(3, 0.0);
     for (int i = 0; i < dim; ++i)
     {
@@ -524,6 +524,7 @@ void FixedInterface::v_Move(NekDouble time)
 
 void PrescribedInterface::v_Move(NekDouble time)
 {
+    boost::ignore_unused(time);
     // This is hacky - as interface is set up for 2 sides usually, we only use the left side in this case
     if (m_side == eLeft)
     {
@@ -539,23 +540,41 @@ void PrescribedInterface::v_Move(NekDouble time)
             // newLoc[0] = m_xDeform->Evaluate(coords[0], coords[1], coords[2], time);
             // newLoc[1] = m_yDeform->Evaluate(coords[0], coords[1], coords[2], time); newLoc[2] = coords[2];
 
-            NekDouble Lx = 20, Ly = 20;         // Size of mesh
+            /*NekDouble Lx = 20, Ly = 20;         // Size of mesh
             NekDouble nx = 1, ny = 1, nt = 1;   // Space and time period
             NekDouble X0 = 0.5, Y0 = 0.5;       // Amplitude
-            NekDouble t0 = sqrt(5*5 + 5*5);     // Time domain
+            NekDouble t0 = sqrt(5*5 + 5*5);     // Time domain*/
 
-            newLoc[0] = coords[0] + X0 * sin((nt * 2 * M_PI * time) / t0)
-                                       * sin((nx * 2 * M_PI * coords[0]) / Lx)
-                                       * sin((ny * 2 * M_PI * coords[1]) / Ly);
+            //newLoc[0] = coords[0] + X0 * sin((nt * 2 * M_PI * time) / t0)
+                                       //* sin((nx * 2 * M_PI * coords[0]) / Lx)
+                                       //* sin((ny * 2 * M_PI * coords[1]) / Ly);
 
-            newLoc[1] = coords[1] + Y0 * sin((nt * 2 * M_PI * time) / t0)
-                                       * sin((nx * 2 * M_PI * coords[0]) / Lx)
-                                       * sin((ny * 2 * M_PI * coords[1]) / Ly);
-
-            newLoc[2] = coords[2];
-
+            //newLoc[1] = coords[1] + Y0 * sin((nt * 2 * M_PI * time) / t0)
+                                       //* sin((nx * 2 * M_PI * coords[0]) / Lx)
+                                       //* sin((ny * 2 * M_PI * coords[1]) / Ly);
+            if (coords[0] < 1e-8 || fabs(coords[0] - 1) < 1e-8)
+            {
+                newLoc[0] = coords[0]; // + 0.001 * sin(2 * M_PI * time) * coords[0] * (1 - coords[0]);
+                newLoc[1] = coords[1];
+                newLoc[2] = coords[2];
+            }
+            else
+            {
+                newLoc[0] = coords[0] + 0.001 * 0.5; // + 0.001 * sin(2 * M_PI * time) * coords[0] * (1 - coords[0]);
+                newLoc[1] = coords[1];
+                newLoc[2] = coords[2];
+            }
             vert->UpdatePosition(newLoc[0], newLoc[1], newLoc[2]);
         }
+    }
+
+    for (auto &el : m_elements)
+    {
+        SpatialDomains::CurveMap edges;
+        el->Reset(edges, edges);
+        el->Setup();
+        el->GenGeomFactors();
+        el->FillGeom();
     }
 }
 

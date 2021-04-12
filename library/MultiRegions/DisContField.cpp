@@ -3105,8 +3105,6 @@ namespace Nektar
                                     m_locTraceToTraceMap->GetNFwdLocTracePts());
                 m_locTraceToTraceMap->FwdLocTracesFromField(inarray,tracevals);
                 m_locTraceToTraceMap->InterpLocTracesToTrace(0,tracevals,outarray);
-                m_traceMap->GetAssemblyCommDG()->
-                    PerformExchange(outarray, outarray);
             }
             else
             {
@@ -3136,6 +3134,9 @@ namespace Nektar
                     }
                 }
             }
+
+            m_traceMap->GetAssemblyCommDG()->
+                PerformExchange(outarray, outarray);
 	}
 
         /**
@@ -3279,7 +3280,7 @@ namespace Nektar
                 // Basis definition on each element
                 LibUtilities::BasisSharedPtr basis = (*m_exp)[0]->GetBasis(0);
                 if((m_expType != e1D)&&
-                   (basis->GetBasisType() != LibUtilities::eGauss_Lagrange))
+                   (basis->GetBasisType() != LibUtilities::eGauss_Lagrange) && false)
                 {
                     Array<OneD, NekDouble> Fcoeffs(m_trace->GetNcoeffs());
                     m_trace->IProductWRTBase(Fn, Fcoeffs);
@@ -3995,7 +3996,6 @@ namespace Nektar
         void DisContField::v_Reset()
         {
             ExpList::v_Reset();
-
             // Reset trace expansions as well
             if (m_trace)
             {
