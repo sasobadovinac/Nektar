@@ -1,5 +1,6 @@
 #include <SolverUtils/EquationSystem.h>
 #include <SolverUtils/Advection/Advection.h>
+#include <LocalRegions/MatrixKey.h>
 
 namespace Nektar
 {
@@ -14,6 +15,8 @@ namespace Nektar
             const LibUtilities::SessionReaderSharedPtr &pSession,
             const SpatialDomains::MeshGraphSharedPtr &pGraph)
         {
+            LibUtilities::NekManager<LocalRegions::MatrixKey, DNekScalMat, LocalRegions::MatrixKey::opLess>::DisableManagement("QuadExpMatrix");
+
             SolverUtils::EquationSystemSharedPtr p =
                 MemoryManager<ALEDemo>::AllocateSharedPtr(pSession, pGraph);
             p->InitObject();
@@ -350,6 +353,23 @@ namespace Nektar
                     }
                 }
             }
+
+            // Print coords trace
+            /*for (auto &traceExp : *m_fields[0]->GetTrace()->GetExp())
+            {
+                int nq = traceExp->GetTotPoints();
+                Array<OneD, NekDouble> xc(nq, 0.0), yc(nq, 0.0), zc(nq, 0.0);
+                traceExp->GetCoords(xc, yc, zc);
+                if (traceExp->GetGeom()->GetGlobalID() == 115)
+                {
+                    std::cout << "Time = " << m_time << " | Element ID = " << traceExp->GetGeom()->GetGlobalID() << " | Coords = ";
+                    for (int i = 0; i < nq; ++i)
+                    {
+                        std::cout << "(" << xc[i] << " " << yc[i] << ") ->";
+                    }
+                    std::cout << std::endl;
+                }
+            }*/
 
             return m_gridVelocity;
         }
