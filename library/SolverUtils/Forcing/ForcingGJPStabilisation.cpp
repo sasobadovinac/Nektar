@@ -86,11 +86,25 @@ namespace SolverUtils
             m_velScalingStr = std::string("DEFAULT");
         }
 
+
+        funcNameElmt = pForce->FirstChildElement("JUMPSCALING");
+
+        if (funcNameElmt)
+        {
+            std::string jumpscal = funcNameElmt->GetText();
+            m_jumpScal = boost::lexical_cast<NekDouble>(jumpscal);
+        }
+        else
+        {
+            m_jumpScal = 1.0;
+        }
+        
         if(m_session->GetComm()->GetRank() == 0)
         {
             cout << "GJP Stabilisation:" << endl;
             cout << "\t H-Scaling:        " << m_hScalingStr << endl;
             cout << "\t Velocity-Scaling: " << m_velScalingStr << endl;
+            cout << "\t jump-Scaling:    " << m_jumpScal << endl;
         }
         
         m_numForcingFields = pNumForcingFields;
@@ -238,6 +252,8 @@ namespace SolverUtils
                         jumpScal = 0.8*pow(p+1,-4.0)*h*h;
                     }
                 }
+
+                jumpScal *= m_jumpScal;
 
                 //#define GJPDEBUG 1
 #if GJPDEBUG

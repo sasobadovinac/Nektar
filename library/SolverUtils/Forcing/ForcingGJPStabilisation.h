@@ -90,6 +90,9 @@ private:
     int m_traceDim; 
     /// Number of planes in expansion to be stabilised for Homgoeneous expansion
     int m_nplanes;
+
+    NekDouble m_jumpScal;
+
     /// DG expansion for projection evalaution along trace
     MultiRegions::DisContFieldSharedPtr m_dgfield;    
     /// LocaTraceToTraceMap 

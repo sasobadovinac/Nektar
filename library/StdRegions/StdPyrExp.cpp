@@ -1440,14 +1440,36 @@ namespace Nektar
                 // zero signmap and set maparray to zero if elemental
                 // modes are not as large as face modesl
                 int idx = 0;
-                int cnt = 0; 
-                for (j = 0; j < nummodesA; ++j)
+                int cnt = 0;
+                int minPA = min(nummodesA,P);
+                int minQB = min(nummodesB,Q);
+                
+                for (j = 0; j < minPA; ++j)
                 {
                     // set maparray
-                    for (k = 0; k < nummodesB-j; ++k, ++cnt)
+                    for (k = 0; k < minQB-j; ++k, ++cnt)
                     {
                         maparray[idx++] = cnt;
                     }
+
+                    cnt += nummodesB-minQB;
+
+                    for (k = nummodesB-j; k < Q-j; ++k)
+                    {
+                        signarray[idx]  = 0.0;
+                        maparray[idx++] = maparray[0];
+                    }
+                }
+
+                for (j = minPA; j < nummodesA; ++j)
+                {
+                    // set maparray
+                    for (k = 0; k < minQB-j; ++k, ++cnt)
+                    {
+                        maparray[idx++] = cnt;
+                    }
+
+                    cnt += nummodesB-minQB;
 
                     for (k = nummodesB-j; k < Q-j; ++k)
                     {
@@ -1478,7 +1500,7 @@ namespace Nektar
                     idx = 0; 
                     for (p = 0; p < P; ++p)
                     {
-                        for (r = 0; r < Q-p; ++r)
+                        for (r = 0; r < Q-p; ++r, idx++)
                         {
                             if (p > 1)
                             {
@@ -1512,10 +1534,10 @@ namespace Nektar
                 
                 // zero signmap and set maparray to zero if elemental
                 // modes are not as large as face modesl
-                for (j = 0; j < nummodesA; ++j)
+                for (j = 0; j < P; ++j)
                 {
                     // set up default maparray
-                    for(k = 0; k < nummodesB; k++)
+                    for(k = 0; k < Q; k++)
                     {
                         maparray[ arrayindx[j+k*P]] = j+k*nummodesA; 
                     }
@@ -1577,41 +1599,44 @@ namespace Nektar
                             swap (signarray[i], signarray[i+Q]);
                         }
                     }
-		} 
+		}
 
                 if (faceOrient ==  eDir1BwdDir1_Dir2FwdDir2 || 
                     faceOrient ==  eDir1BwdDir1_Dir2BwdDir2 ||
                     faceOrient ==  eDir1FwdDir2_Dir2BwdDir1 ||
                     faceOrient ==  eDir1BwdDir2_Dir2BwdDir1 )
                 {
-                    for (i = 0; i < Q; i++)
+                    if(faceOrient<eDir1FwdDir2_Dir2FwdDir1)
                     {
-                        for (j = 3; j < P; j += 2)
+                        for (i = 0; i < Q; i++)
                         {
-                            signarray[arrayindx[i*P+j]] *= -1;
+                            for (j = 3; j < P; j += 2)
+                            {
+                                signarray[arrayindx[i*P+j]] *= -1;
+                            }
+                        }
+                        
+                        for(i = 0; i < Q; i++)
+                        {
+                            swap(maparray [i*P], maparray [i*P+1]);
+                            swap(signarray[i*P], signarray[i*P+1]);
                         }
                     }
-                    
-                    for(i = 0; i < Q; i++)
+                    else
                     {
-                        swap(maparray [i*P], maparray [i*P+1]);
-                        swap(signarray[i*P], signarray[i*P+1]);
-                    }
-                }
-                else
-                {
-                    for (i = 3; i < Q; i += 2)
-                    {
-                        for (j = 0; j < P; j++)
+                        for (i = 3; i < Q; i += 2)
                         {
-                            signarray[arrayindx[i*P+j]] *= -1;
+                            for (j = 0; j < P; j++)
+                            {
+                                signarray[arrayindx[i*P+j]] *= -1;
+                            }
                         }
-                    }
                     
-                    for (i = 0; i < P; i++)
-                    {
-                        swap(maparray [i*Q], maparray [i*Q+1]);
-                        swap(signarray[i*Q], signarray[i*Q+1]);
+                        for (i = 0; i < P; i++)
+                        {
+                            swap(maparray [i*Q], maparray [i*Q+1]);
+                            swap(signarray[i*Q], signarray[i*Q+1]);
+                        }
                     }
                 }
             }

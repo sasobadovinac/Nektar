@@ -1386,13 +1386,6 @@ namespace Nektar
                 maparray = Array<OneD, unsigned int>(nFaceCoeffs);
             }
 
-#if 0 
-            for(i = 0; i < nFaceCoeffs; ++i)
-            {
-                maparray[i] = i;
-            }
-#endif
-            
             if (signarray.size() != nFaceCoeffs)
             {
                 signarray = Array<OneD, int>(nFaceCoeffs,1);
@@ -1402,6 +1395,8 @@ namespace Nektar
                 fill(signarray.get(), signarray.get() + nFaceCoeffs, 1);
             }
 
+            int minPA = min(nummodesA,P);
+            int minQB = min(nummodesB,Q);
             // triangular faces 
             if (fid == 1 || fid == 3)
             {
@@ -1409,14 +1404,35 @@ namespace Nektar
                 // modes are not as large as face modesl
                 idx = 0;
                 int cnt = 0; 
-                for (j = 0; j < nummodesA; ++j)
+                
+                for (j = 0; j < minPA; ++j)
                 {
                     // set maparray
-                    for (k = 0; k < nummodesB-j; ++k, ++cnt)
+                    for (k = 0; k < minQB-j; ++k, ++cnt)
                     {
                         maparray[idx++] = cnt;
                     }
 
+                    cnt += nummodesB-minQB;
+                    
+                    //idx += nummodesB-j;
+                    for (k = nummodesB-j; k < Q-j; ++k)
+                    {
+                        signarray[idx]  = 0.0;
+                        maparray[idx++] = maparray[0];
+                    }
+                }
+
+                for (j = minPA; j < nummodesA; ++j)
+                {
+                    // set maparray
+                    for (k = 0; k < minQB-j; ++k, ++cnt)
+                    {
+                        maparray[idx++] = cnt;
+                    }
+
+                    cnt += nummodesB-minQB;
+                    
                     //idx += nummodesB-j;
                     for (k = nummodesB-j; k < Q-j; ++k)
                     {
@@ -1441,7 +1457,7 @@ namespace Nektar
                     idx = 0; 
                     for (p = 0; p < P; ++p)
                     {
-                        for (r = 0; r < Q-p; ++r)
+                        for (r = 0; r < Q-p; ++r, idx++)
                         {
                             if (p > 1)
                             {
@@ -1480,10 +1496,10 @@ namespace Nektar
 
                 // zero signmap and set maparray to zero if elemental
                 // modes are not as large as face modesl
-                for (j = 0; j < nummodesA; ++j)
+                for (j = 0; j < P; ++j)
                 {
                     // set up default maparray
-                    for(k = 0; k < nummodesB; k++)
+                    for(k = 0; k < Q; k++)
                     {
                         maparray[ arrayindx[j+k*P]] = j+k*nummodesA; 
                     }

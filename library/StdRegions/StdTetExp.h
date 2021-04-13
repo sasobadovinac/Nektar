@@ -231,15 +231,7 @@ namespace Nektar
                    Orientation                traceOrient = eForwards,
                    int                        P = -1,
                    int                        Q = -1);
-#if 0 
-            STD_REGIONS_EXPORT virtual void v_GetTraceToElementMap(
-                const int                  fid,
-                Array<OneD, unsigned int> &maparray,
-                Array<OneD,          int> &signarray,
-                Orientation               faceOrient,
-                int                        P,
-                int                        Q);
-#endif
+
             STD_REGIONS_EXPORT virtual void v_GetEdgeInteriorToElementMap(
                const int                  tid,
                Array<OneD, unsigned int> &maparray,
