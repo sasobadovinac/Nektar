@@ -74,7 +74,7 @@ namespace Vmath
     template<class T>  LIB_UTILITIES_EXPORT void Vdiv( int n, const T *x, const int incx, const T *y,
                   const int incy,  T*z, const int incz);
 
-    /// \brief Scalar multiply  y = alpha/y
+    /// \brief Scalar multiply  y = alpha/x
     template<class T>  LIB_UTILITIES_EXPORT void Sdiv( int n, const T alpha, const T *x,
                                   const int incx, T *y, const int incy);
 
