@@ -55,7 +55,7 @@ PreconCfsBRJ::PreconCfsBRJ(
     const LibUtilities::CommSharedPtr &vComm)
     : PreconCfsOp(pFields, pSession, vComm)
 {
-    pSession->LoadParameter("PreconItsStep", m_PreconItsStep, 7);
+    pSession->LoadParameter("PreconItsStep", m_PreconItsStep, 5);
     pSession->LoadParameter("BRJRelaxParam", m_BRJRelaxParam, 1.0);
 
     int nvariables     = pFields.size();
