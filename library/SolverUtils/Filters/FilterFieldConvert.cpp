@@ -227,6 +227,8 @@ void FilterFieldConvert::v_Initialise(
     const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
     const NekDouble &time)
 {
+    m_indexScaleStt = 0;
+    m_indexScaleEnd = m_outFields.size();
     v_FillVariablesName(pFields);
 
     // m_variables need to be filled by a derived class
@@ -312,7 +314,7 @@ void FilterFieldConvert::v_Initialise(
 
         // Divide by scale
         NekDouble scale = v_GetScale();
-        for (int n = 0; n < m_outFields.size(); ++n)
+        for (int n = m_indexScaleStt; n < m_indexScaleEnd; ++n)
         {
             Vmath::Smul(m_outFields[n].size(),
                         1.0/scale,
@@ -443,7 +445,7 @@ void FilterFieldConvert::OutputField(
     const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields, int dump)
 {
     NekDouble scale = v_GetScale();
-    for (int n = 0; n < m_outFields.size(); ++n)
+    for (int n = m_indexScaleStt; n < m_indexScaleEnd; ++n)
     {
         Vmath::Smul(m_outFields[n].size(),
                     scale,

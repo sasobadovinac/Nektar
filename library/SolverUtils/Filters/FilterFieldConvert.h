@@ -125,6 +125,9 @@ protected:
     unsigned int m_index;
     unsigned int m_outputIndex;
 
+    unsigned int m_indexScaleStt;
+    unsigned int m_indexScaleEnd;
+
     // Phase sample parameters
     bool         m_phaseSample;
     NekDouble    m_phaseSamplePeriod;
