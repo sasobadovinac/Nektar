@@ -57,6 +57,11 @@ v5.0.2
 ------
 **CI**
 - Add Debian Bullseye to CI system (!1181)
+- Removed Ubuntu Trusty (14.04) from CI and added Focal (20.04) (!1238)
+
+**BuildSystem**
+- Updated third party zlib version to 1.2.9 to resolve OCE source build issue (!1227)
+- Adding SolverUtils as a core library that is built by default (!1240)
 
 v5.0.1
 ------
