@@ -41,7 +41,6 @@ v5.1.0
 
 **Documentation**:
 - Updated Windows source build instructions in user guide (!1152)
-- Updated Documentation to include HDF5 Mesh Output (!1230)
 
 **NekMesh**
 - Improved boundary layer splitting and output to CADfix (!938)
@@ -56,6 +55,9 @@ v5.1.0
 
 v5.0.2
 ------
+**Documentation**
+- Updated Documentation to include HDF5 Mesh Output (!1230)
+
 **CI**
 - Add Debian Bullseye to CI system (!1181)
 - Removed Ubuntu Trusty (14.04) from CI and added Focal (20.04) (!1238)
