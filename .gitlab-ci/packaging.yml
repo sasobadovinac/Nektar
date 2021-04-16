@@ -252,7 +252,8 @@ package-source-archive-build:
   script:
     - VERSION=$(cat VERSION)
     - mkdir -p src
-    - git archive --format=tar --output=src/nektar++-${VERSION}.tar HEAD
+    - git archive --format=tar --prefix=nektar-v${VERSION}/ --output=src/nektar++-${VERSION}.tar HEAD
+    - git archive --format=zip --prefix=nektar-v${VERSION}/ --output=src/nektar++-${VERSION}.zip HEAD
     - cd src
     - gzip  --stdout nektar++-${VERSION}.tar > nektar++-${VERSION}.tar.gz
     - bzip2 --stdout nektar++-${VERSION}.tar > nektar++-${VERSION}.tar.bz2
@@ -260,10 +261,12 @@ package-source-archive-build:
   artifacts:
     paths:
       - src/nektar++*.tar*
+      - src/nektar++*.zip
     expire_in: 1 week
 
-package-source-archive-deploy:
-  stage: package-deploy
+package-source-archive-deploy-dev: &package-source-archive-deploy-dev
+  <<: *package-conditions
+  stage: package-deploy-dev
   only:
     refs:
       - tags@nektar/nektar
@@ -272,10 +275,21 @@ package-source-archive-deploy:
   tags:
     - pkg
     - pkg-src
+  variables:
+    DPATH: /web/src-test
   dependencies:
     - package-source-archive-build
   script:
-    - cp src/nektar++*.tar* /web/src
+    - cp src/nektar++*.* /web/src
+
+package-source-archive-deploy:
+  <<: *package-source-archive-deploy-dev
+  stage: package-deploy
+  only:
+    refs:
+      - tags@nektar/nektar
+  variables:
+    DPATH: /web/src
 
 ##
 ## Documentation
@@ -295,7 +309,7 @@ package-source-doc-build:
   script:
     - VERSION=$(cat VERSION)
     - mkdir build && cd build
-    - cmake -DNEKTAR_BUILD_DEMOS:BOOL=OFF -DNEKTAR_BUILD_DOC:BOOL=ON -DNEKTAR_BUILD_LIBRARY:BOOL=OFF -DNEKTAR_BUILD_SOLVERS:BOOL=OFF -DNEKTAR_BUILD_UTILITIES:BOOL=OFF ..
+    - cmake -DNEKTAR_BUILD_DEMOS:BOOL=OFF -DNEKTAR_BUILD_DOC:BOOL=ON -DNEKTAR_BUILD_LIBRARY:BOOL=OFF -DNEKTAR_BUILD_SOLVERS:BOOL=OFF -DNEKTAR_BUILD_UTILITIES:BOOL=ON -DNEKTAR_USE_MESHGEN:BOOL=ON ..
     - make doc
     - make user-guide-pdf user-guide-html
     - make developer-guide-pdf developer-guide-html
@@ -311,16 +325,16 @@ package-source-doc-build:
       - build/docs/tutorial/*/*/*.tar.gz
       - build/docs/tutorial/*/*/html
 
-package-source-doc-deploy:
-  stage: package-deploy
+package-source-doc-deploy-dev: &package-source-doc-deploy-dev
+  stage: package-deploy-dev
   only:
     refs:
       - tags@nektar/nektar
   image: debian:stable-slim
   needs: ["package-source-doc-build"]
   variables:
-      DPATH_DOC: /web/doc
-      DPATH_SRC: /web/src
+      DPATH_DOC: /web/doc-test
+      DPATH_SRC: /web/src-test
   tags:
     - pkg
     - pkg-src
@@ -340,6 +354,7 @@ package-source-doc-deploy:
     - ${RSYNC} developer-guide/developer-guide.pdf $DPATH_SRC/developer-guide-${VERSION}.pdf
     - mkdir -p $DPATH_DOC/tutorials/${VERSION}
     - ${RSYNC} tutorial/ $DPATH_DOC/tutorials/${VERSION}/
+    - for i in tutorial/*/*; do mv $i/html/* $i/; rmdir $i/html; done
     - mkdir -p $DPATH_DOC/doxygen/${VERSION}
     - ${RSYNC} doxygen/html/ $DPATH_DOC/doxygen/${VERSION}/
     - cd $DPATH_DOC/userguide && if [ $(ls -1 | grep -v latest | tail -n 1) == "${VERSION}" ]; then rm -f latest; ln -s ${VERSION} latest; fi
@@ -347,6 +362,15 @@ package-source-doc-deploy:
     - cd $DPATH_DOC/tutorials && if [ $(ls -1 | grep -v latest | tail -n 1) == "${VERSION}" ]; then rm -f latest; ln -s ${VERSION} latest; fi
     - cd $DPATH_DOC/doxygen && if [ $(ls -1 | grep -v latest | tail -n 1) == "${VERSION}" ]; then rm -f latest; ln -s ${VERSION} latest; fi
 
+package-source-doc-deploy:
+  <<: *package-source-doc-deploy-dev
+  stage: package-deploy
+  only:
+    refs:
+      - tags@nektar/nektar
+  variables:
+      DPATH_DOC: /web/doc
+      DPATH_SRC: /web/src
 
 ##
 ## Debian unstable
