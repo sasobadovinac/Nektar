@@ -16,15 +16,26 @@ v5.1.0
 - Fix bug in StdHexExp FillMode (!1192)
 
 **FieldConvert**
+- Fix compilation errors when CWIPI interface enabled (!1207)
+- Fix distance in ContainsPoint and GetLocCoords (!1200)
+- Fix compiler warning of maybe-uninitialized elType in InputStar (!1217)
+- Add vectorisation of most element on basix operations (!1158)
+- Limit MPI methods based on core count (!1208)
+- Split out IProduct.cpp and IProductWRTDerivBase.cpp in order to avoid long time compilations (!1228)
 - Refactored time integration code using factory pattern (!1034)
 - Fix to preprocessor logic for boost with Visual Studio >= 2015 (!1115)
 - Fix type consistency and real comparison in SharedArray.hpp, replaced
   num_elements with size() (!1127, !1137, !1141)
 - Use base MPI functions instead of the GS library in the trace exchange
   for parallel DG simulations (!1112)
+
+**FieldConvert**:
 - Add phifile module to compute shape functions for the SPM solver (!1065)
 - Fix mean and innerProduct modules in 3DH1D cases (!1157)
 - Fix wss module with nparts option and reading of parallel xml files when the root partition is missing(!1197)
+- Fix a segment error in the gradient module when the number of fields is smaller than space dimension(!1216)
+- Fix to interppointsdatatofld to allow for mpi processing of large files (!1191)
+- Fix the logic of C0Projection:helmsmoothing (!1220)
 
 **CardiacEPSolver**
 - Added additional parameter sets to Fenton-Karma model (!1119)
@@ -56,6 +67,9 @@ v5.1.0
 
 v5.0.2
 ------
+**Library**
+- Fix bug in StdHexExp FillMode (!1192)
+
 **Documentation**
 - Updated Documentation to include HDF5 Mesh Output (!1230)
 
