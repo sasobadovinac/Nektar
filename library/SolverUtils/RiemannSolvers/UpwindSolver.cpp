@@ -98,6 +98,7 @@ namespace Nektar
             {
                 const Array<OneD, const Array<OneD, NekDouble> > &tmp =
                     traceVel[j] >= 0 ? Fwd : Bwd;
+
                 for (int i = 0; i < Fwd.size(); ++i)
                 {
                     flux[i][j] = traceVel[j]*tmp[i][j];

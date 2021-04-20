@@ -4,6 +4,46 @@
 
 namespace Nektar
 {
+class LaxFriedrichsSolver : public SolverUtils::RiemannSolver
+{
+public:
+    static SolverUtils::RiemannSolverSharedPtr create(
+        const LibUtilities::SessionReaderSharedPtr& pSession)
+    {
+        return SolverUtils::RiemannSolverSharedPtr(
+            new LaxFriedrichsSolver(pSession));
+    }
+
+    static std::string solverName;
+
+protected:
+    LaxFriedrichsSolver(
+        const LibUtilities::SessionReaderSharedPtr& pSession)
+        : SolverUtils::RiemannSolver(pSession)
+    {
+    }
+
+    void v_Solve(
+        const int                                         nDim,
+        const Array<OneD, const Array<OneD, NekDouble> > &Fwd,
+        const Array<OneD, const Array<OneD, NekDouble> > &Bwd,
+              Array<OneD,       Array<OneD, NekDouble> > &flux) final
+    {
+        boost::ignore_unused(nDim);
+        const Array<OneD, NekDouble> &traceVel = m_scalars["Vn"]();
+
+        for (int j = 0; j < traceVel.size(); ++j)
+        {
+            flux[0][j] = 0.5 * traceVel[j] * (Fwd[0][j] + Bwd[0][j]) +
+                0.5 * abs(traceVel[j]) * (Fwd[0][j] - Bwd[0][j]);
+        }
+    }
+};
+std::string LaxFriedrichsSolver::solverName = SolverUtils::GetRiemannSolverFactory().
+    RegisterCreatorFunction("LaxFriedrichs", LaxFriedrichsSolver::create,
+                            "L-F solver");
+
+
     class ALEDemo : public SolverUtils::EquationSystem
     {
     public:
@@ -15,8 +55,6 @@ namespace Nektar
             const LibUtilities::SessionReaderSharedPtr &pSession,
             const SpatialDomains::MeshGraphSharedPtr &pGraph)
         {
-            LibUtilities::NekManager<LocalRegions::MatrixKey, DNekScalMat, LocalRegions::MatrixKey::opLess>::DisableManagement("QuadExpMatrix");
-
             SolverUtils::EquationSystemSharedPtr p =
                 MemoryManager<ALEDemo>::AllocateSharedPtr(pSession, pGraph);
             p->InitObject();
@@ -135,8 +173,8 @@ namespace Nektar
                 }
 
                 // Why does this break everything for rotating?!?
-                //m_fields[0]->SetUpPhysNormals();
-                //m_fields[0]->GetTrace()->GetNormals(m_traceNormals);
+                m_fields[0]->SetUpPhysNormals();
+                m_fields[0]->GetTrace()->GetNormals(m_traceNormals);
 
                 for (int i = 0; i < nFields; ++i)
                 {
@@ -190,6 +228,13 @@ namespace Nektar
                     Vmath::Vvtvvtm(nq, physfield[i], 1, m_velocity[j], 1,
                                    physfield[i], 1, m_gridVelocity[j], 1,
                                    flux[i][j], 1);
+                    /*
+                    for (int k = 0; k < nq; ++k)
+                    {
+                        flux[i][j][k] = physfield[i][k] * (
+                            m_velocity[j][k] - m_gridVelocity[j][k]);
+                    }
+                    */
                 }
             }
         }
@@ -200,7 +245,7 @@ namespace Nektar
         }
 
         /**
-     * @brief Get the normal velocity for the linear advection equation.
+         * @brief Get the normal velocity for the linear advection equation.
          */
         Array<OneD, NekDouble> &GetNormalVelocity()
         {
@@ -338,6 +383,7 @@ namespace Nektar
                                 disty = Y0 * sin((nt * 2 * M_PI * m_time) / t0)
                                                         * sin((nx * 2 * M_PI * xc[i]) / Lx)
                                                         * sin((ny * 2 * M_PI * yc[i]) / Ly);*/
+                                /*
                                 if (xc[i] < 1e-8 || fabs(xc[i] - 1) < 1e-8)
                                 {
                                     m_gridVelocity[0][offset + i] = 0; //2 * M_PI * cos(2 * M_PI * m_time) * xc[i] * (1 - xc[i]);
@@ -348,6 +394,12 @@ namespace Nektar
                                     m_gridVelocity[0][offset + i] = 0.5; //2 * M_PI * cos(2 * M_PI * m_time) * xc[i] * (1 - xc[i]);
                                     m_gridVelocity[1][offset + i] = 0;
                                 }
+                                */
+
+                                m_gridVelocity[0][offset + i] = 0.05 * 2 * M_PI * cos(2*M_PI*m_time) * sin(2*M_PI*xc[i]) * sin(2*M_PI*yc[i]);
+                                m_gridVelocity[1][offset + i] = 0.05 * 2 * M_PI * cos(2*M_PI*m_time) * sin(2*M_PI*xc[i]) * sin(2*M_PI*yc[i]);
+                                //m_gridVelocity[0][offset + i] = 0.0;
+                                //m_gridVelocity[1][offset + i] = 0.0;
                             }
                         }
                     }

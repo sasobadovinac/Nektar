@@ -2550,6 +2550,9 @@ namespace Nektar
             LibUtilities::NekManager<LocalRegions::MatrixKey,
                 DNekScalBlkMat, LocalRegions::MatrixKey::opLess>::ClearManager();
 
+            // Reset block matrix map
+            m_blockMat->clear();
+
             // Loop over all elements and reset geometry information.
             for (int i = 0; i < m_exp->size(); ++i)
             {

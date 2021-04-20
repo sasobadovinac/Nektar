@@ -3999,6 +3999,7 @@ namespace Nektar
             // Reset trace expansions as well
             if (m_trace)
             {
+                //m_trace->Reset();
                 for (int i = 0; i < m_trace->GetExpSize(); ++i)
                 {
                     m_trace->GetExp(i)->Reset();

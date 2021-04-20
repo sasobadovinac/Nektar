@@ -36,6 +36,7 @@
 #include <LibUtilities/BasicUtils/SessionReader.h>
 #include <LibUtilities/BasicUtils/Timer.h>
 #include <LibUtilities/BasicUtils/Likwid.hpp>
+#include <LocalRegions/QuadExp.h>
 
 using namespace std;
 using namespace Nektar;
@@ -51,6 +52,10 @@ int main(int argc, char *argv[])
 
     try
     {
+        LibUtilities::NekManager<LocalRegions::MatrixKey, DNekScalMat, LocalRegions::MatrixKey::opLess>::DisableManagement("QuadExpMatrix");
+
+
+
         // Create session reader.
         session = LibUtilities::SessionReader::CreateInstance(argc, argv);
 

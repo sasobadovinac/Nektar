@@ -1508,7 +1508,7 @@ DNekMatSharedPtr QuadExp::v_CreateStdMatrix(
 
 DNekScalMatSharedPtr QuadExp::CreateMatrix(const MatrixKey &mkey)
 {
-    std::cout << "being generated" << std::endl;
+    //std::cout << "being generated: " << mkey << std::endl;
     DNekScalMatSharedPtr returnval;
     LibUtilities::PointsKeyVector ptsKeys = GetPointsKeys();
 

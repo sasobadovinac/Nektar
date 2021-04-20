@@ -263,6 +263,8 @@ protected:
     LibUtilities::EquationSharedPtr m_xDeform;
     LibUtilities::EquationSharedPtr m_yDeform;
     std::vector<PointGeomSharedPtr> m_interiorVerts;
+
+    std::vector<PointGeom> m_origPosition;
 };
 
 struct FixedInterface final: public InterfaceBase

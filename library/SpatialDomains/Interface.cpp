@@ -221,6 +221,12 @@ PrescribedInterface::PrescribedInterface(int id,
             }
         }
     }
+
+    // Copy points so we know original positions.
+    for (auto &pt : m_interiorVerts)
+    {
+        m_origPosition.push_back(PointGeom(*pt));
+    }
 }
 
 
@@ -529,6 +535,7 @@ void PrescribedInterface::v_Move(NekDouble time)
     if (m_side == eLeft)
     {
         int dim = 3;
+        int cnt = 0;
 
         for (auto &vert : m_interiorVerts)
         {
@@ -552,6 +559,7 @@ void PrescribedInterface::v_Move(NekDouble time)
             //newLoc[1] = coords[1] + Y0 * sin((nt * 2 * M_PI * time) / t0)
                                        //* sin((nx * 2 * M_PI * coords[0]) / Lx)
                                        //* sin((ny * 2 * M_PI * coords[1]) / Ly);
+            /*
             if (coords[0] < 1e-8 || fabs(coords[0] - 1) < 1e-8)
             {
                 newLoc[0] = coords[0]; // + 0.001 * sin(2 * M_PI * time) * coords[0] * (1 - coords[0]);
@@ -564,6 +572,13 @@ void PrescribedInterface::v_Move(NekDouble time)
                 newLoc[1] = coords[1];
                 newLoc[2] = coords[2];
             }
+            */
+
+            auto pnt = m_origPosition[cnt];
+            newLoc[0] = pnt(0) + 0.05 * sin(2*M_PI*time) * sin(2*M_PI*coords[0]) * sin(2*M_PI*coords[1]);
+            newLoc[1] = pnt(1) + 0.05 * sin(2*M_PI*time) * sin(2*M_PI*coords[0]) * sin(2*M_PI*coords[1]);
+            cnt++;
+
             vert->UpdatePosition(newLoc[0], newLoc[1], newLoc[2]);
         }
     }
