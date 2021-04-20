@@ -184,7 +184,7 @@ namespace Nektar
             if(m_base[0]->Collocation() && m_base[1]->Collocation()
                     && m_base[2]->Collocation())
             {
-                Vmath::Vcopy(m_base[0]->GetNumPoints()
+	      Vmath::Vcopy(m_base[0]->GetNumPoints()
                                 * m_base[1]->GetNumPoints()
                                 * m_base[2]->GetNumPoints(),
                              inarray, 1, outarray, 1);
@@ -609,15 +609,6 @@ namespace Nektar
             eta[2] = xi[2];
         }
 
-        void StdHexExp::v_LocCollapsedToLocCoord
-                          (const Array<OneD, const NekDouble>& eta,
-                           Array<OneD, NekDouble>& xi)
-        {
-            xi[0] = eta[0];
-            xi[1] = eta[1];
-            xi[2] = eta[2];
-        }
-
         /**
          * @note for hexahedral expansions _base[0] (i.e. p) modes run fastest.
          */
@@ -665,35 +656,6 @@ namespace Nektar
                 Blas::Dscal(nquad0*nquad1,base2[mode2*nquad2+i],
                             &outarray[0]+i*nquad0*nquad1,1);
             }
-        }
-
-        NekDouble StdHexExp::v_PhysEvaluateBasis(
-            const Array<OneD, const NekDouble>& coords,
-            int mode)
-        {
-            ASSERTL2(coords[0] > -1 - NekConstants::kNekZeroTol,
-                     "coord[0] < -1");
-            ASSERTL2(coords[0] <  1 + NekConstants::kNekZeroTol,
-                     "coord[0] >  1");
-            ASSERTL2(coords[1] > -1 - NekConstants::kNekZeroTol,
-                     "coord[1] < -1");
-            ASSERTL2(coords[1] <  1 + NekConstants::kNekZeroTol,
-                     "coord[1] >  1");
-            ASSERTL2(coords[2] > -1 - NekConstants::kNekZeroTol,
-                     "coord[2] < -1");
-            ASSERTL2(coords[2] <  1 + NekConstants::kNekZeroTol,
-                     "coord[2] >  1");
-
-            const int nm0 = m_base[0]->GetNumModes();
-            const int nm1 = m_base[1]->GetNumModes();
-            const int mode2 = mode / (nm0 * nm1);
-            const int mode1 = (mode - mode2 * nm0 * nm1) / nm0;
-            const int mode0 = (mode - mode2 * nm0 * nm1) % nm0;
-
-            return
-                StdExpansion::BaryEvaluateBasis<0>(coords[0], mode0) *
-                StdExpansion::BaryEvaluateBasis<1>(coords[1], mode1) *
-                StdExpansion::BaryEvaluateBasis<2>(coords[2], mode2);
         }
 
         int StdHexExp::v_GetNverts() const
@@ -1053,6 +1015,7 @@ namespace Nektar
                         p = 1;
                     }
                 }
+
                 // Back face (vertices 2,3,6,7)
                 if( localVertexId % 4 > 1 )
                 {
@@ -1240,6 +1203,16 @@ namespace Nektar
             }
 
             sort(outarray.get(), outarray.get() + nBndCoeffs);
+        }
+
+        NekDouble StdHexExp::v_PhysEvaluate(
+            const Array<OneD, NekDouble> coord,
+            const Array<OneD, const NekDouble> &inarray,
+            NekDouble &out_d0,
+            NekDouble &out_d1,
+            NekDouble &out_d2)
+        {
+            return BaryTensorDeriv(coord, inarray, out_d0, out_d1, out_d2);
         }
 
         /**
