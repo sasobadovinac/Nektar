@@ -180,7 +180,7 @@ public:
     int i, j;       
     Nektar::Array<Nektar::OneD, Nektar::NekDouble> ab1(evalPts);
     Nektar::Array<Nektar::OneD, Nektar::NekDouble> ab2(evalPts);
-    RecCoeff(evalPts, &ab1[0], &ab2[0], -0.5, -0.5);
+    Polylib::RecCoeff(evalPts, &ab1[0], &ab2[0], -0.5, -0.5);
     // Form confederate matrix
   
     // a = 2*a
@@ -684,7 +684,7 @@ public:
     // cout<<"\n";
     // exit(0);
     Array<OneD, NekDouble>  wr(n), wi(n);
-    Nektar::FullMatrixFuncs::EigenSolve(n, A, wr, wi);
+    Nektar::FullMatrixFuncs::EigenSolve(n, A, wr, wi, NullNekDouble1DArray);
     vector<NekDouble>EIG_R;
     for(int k = 0; k < sizemat-1; k++)
       {

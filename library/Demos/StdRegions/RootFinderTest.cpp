@@ -331,14 +331,10 @@ int main(int argc, char *argv[])
       // elapsed  = timer.TimePerTest(1);
       // cout<<"\n setup phase took "<<elapsed<<"s\n\n";
       // cout<<"\n checking for -vity took "<<timer.TimePerTest(1)<<"s\n\n";
-      cout<<"\n1\n\n";
       NekDouble v1;
       Array<OneD, Array<OneD, NekDouble> > dummy, surf(1);
-      cout<<"\n2\n\n";
       surf[0] = Array<OneD, NekDouble>(coeffs.size());
-      cout<<"\n3\n\n";
       Vmath::Vcopy(coeffs.size(), &coeffs[0], 1, &surf[0][0], 1); 
-      cout<<"\n4\n\n";
       Array<OneD, NekDouble> optima = call_find_roots(coeffs, v1, dummy, surf,  v1, v1, v1, v1);
 	  
     }
@@ -413,54 +409,54 @@ int main(int argc, char *argv[])
     
 }
 
-Array<OneD, Array<OneD, NekDouble> > vectoarr(vector<vector <NekDouble> > vec)
-{
-  //    cout<<"\n vec size = "<<vec.size()<<" "<<vec[0].size()<<"\n";
-  Array<OneD, Array<OneD, NekDouble> > ret(vec.size());
-  for (int k = 0; k < vec.size(); k++)
-    {
-      ret[k ] = Array<OneD, NekDouble>(vec[k].size(), vec[k].data());
-      // for(int p = 0; p < vec[k].size(); p++)
-      // {
-      //     ret[k][p] = vec[k][p];
-      // }
-    }
-  return ret;
-}
-
-
-// when d = 1, its the uhatpqd case from do_optimize
-// void project_edges( Array<OneD, NekDouble>uhats1,    Array<OneD, Array<OneD, NekDouble> >&ret)
+// Array<OneD, Array<OneD, NekDouble> > vectoarr(vector<vector <NekDouble> > vec)
 // {
+//   //    cout<<"\n vec size = "<<vec.size()<<" "<<vec[0].size()<<"\n";
+//   Array<OneD, Array<OneD, NekDouble> > ret(vec.size());
+//   for (int k = 0; k < vec.size(); k++)
+//     {
+//       ret[k ] = Array<OneD, NekDouble>(vec[k].size(), vec[k].data());
+//       // for(int p = 0; p < vec[k].size(); p++)
+//       // {
+//       //     ret[k][p] = vec[k][p];
+//       // }
+//     }
+//   return ret;
+// }
+
+
+// // when d = 1, its the uhatpqd case from do_optimize
+// // void project_edges( Array<OneD, NekDouble>uhats1,    Array<OneD, Array<OneD, NekDouble> >&ret)
+// // {
     
-//     Array<OneD, NekDouble> wsp(uhats1.size());
+// //     Array<OneD, NekDouble> wsp(uhats1.size());
 
 
-//     //    int E3segncoeff = E3seg->GetNcoeffs();
+// //     //    int E3segncoeff = E3seg->GetNcoeffs();
 
-//     // for(int k= 0; k < numedges; k++)
-//     //   {
-//     // 	ret[k] = Array<OneD, NekDouble>(E3segncoeff);//(3*(E->GetBasis(0)->GetNumModes()-1));        
+// //     // for(int k= 0; k < numedges; k++)
+// //     //   {
+// //     // 	ret[k] = Array<OneD, NekDouble>(E3segncoeff);//(3*(E->GetBasis(0)->GetNumModes()-1));        
       
-//     //   }
-//     // cout<<"\nhere2\n\n";
+// //     //   }
+// //     // cout<<"\nhere2\n\n";
 
-//     if(numedges == 4) // quad
-//       {
-// 	// bot edge
-// 	edgederpquhats(uhats1, ret[0], wsp, Vym1, Vdxym1, Vdyym1, NullNekDouble1DArray);
-// 	// right edge
-// 	edgederpquhats(uhats1, ret[1],wsp, Vx1, Vdxx1, Vdyx1, NullNekDouble1DArray);
-// 	// top edge
-// 	edgederpquhats(uhats1, ret[2], wsp, Vy1, Vdxy1, Vdyy1, NullNekDouble1DArray);
-// 	// left edge
-// 	edgederpquhats(uhats1, ret[3], wsp, Vxm1, Vdxxm1, Vdyxm1, NullNekDouble1DArray);
+// //     if(numedges == 4) // quad
+// //       {
+// // 	// bot edge
+// // 	edgederpquhats(uhats1, ret[0], wsp, Vym1, Vdxym1, Vdyym1, NullNekDouble1DArray);
+// // 	// right edge
+// // 	edgederpquhats(uhats1, ret[1],wsp, Vx1, Vdxx1, Vdyx1, NullNekDouble1DArray);
+// // 	// top edge
+// // 	edgederpquhats(uhats1, ret[2], wsp, Vy1, Vdxy1, Vdyy1, NullNekDouble1DArray);
+// // 	// left edge
+// // 	edgederpquhats(uhats1, ret[3], wsp, Vxm1, Vdxxm1, Vdyxm1, NullNekDouble1DArray);
 
-//       }
-//     if(numedges == 3) // tri
-//       {
-// 	// bot edge  
-// 	edgederpquhats(uhats1, ret[0], wsp,  Vym1, Vdxym1, Vdyym1,NullNekDouble1DArray);
+// //       }
+// //     if(numedges == 3) // tri
+// //       {
+// // 	// bot edge  
+// // 	edgederpquhats(uhats1, ret[0], wsp,  Vym1, Vdxym1, Vdyym1,NullNekDouble1DArray);
 
 // 	// left edge
 // 	edgederpquhats(uhats1, ret[1], wsp, Vxm1, Vdxxm1, Vdyxm1, NullNekDouble1DArray);
@@ -722,15 +718,12 @@ Array<OneD,  NekDouble> call_find_roots(Array<OneD,  NekDouble> &uhats1 , NekDou
   int dimension = E->GetShapeDimension(); 
   Array<OneD, NekDouble> coords(dimension);
   Array<OneD, Array<OneD, NekDouble > >  rethold(dimension);
-      cout<<"\nc1\n\n";
   if(numsurfaces == 1)
     {
-      cout<<"\nstype="<<stype<<"\n\n";
       if(stype == 3)	  //if tri
 	rethold = demo.find_roots(uhats1, E, storage2d,  avgiterGD, 0, 1, 0 , 1);
       else if(stype == 4)//else quad
 	rethold = demo.find_roots(uhats1, E, storage2d,  avgiterGD, 0, 1, 0 , 0);
-      //      cout<<"\n GD returns: "<<rethold[0][0]<<" "<<rethold[1][0]<<" \n";
     }
   coords[0] = rethold[0][0];
   coords[1] = rethold[1][0];

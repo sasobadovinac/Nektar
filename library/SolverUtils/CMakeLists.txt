@@ -89,6 +89,7 @@ SET(SOLVER_UTILS_HEADERS
   RiemannSolvers/UpwindSolver.h
   RiemannSolvers/UpwindLDGSolver.h
   SolverUtils.hpp
+  StdDemoSupportnew.hpp
   SolverUtilsDeclspec.h
   UnsteadySystem.h
   Forcing/Forcing.h
