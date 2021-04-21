@@ -312,7 +312,7 @@ namespace Nektar
             }
 
             v_MultiplyByStdQuadratureMetric(m_metrics[eMetricQuadrature],
-                                            m_metrics[eMetricQuadrature]);
+                                                   m_metrics[eMetricQuadrature]);
         }
 
         void Expansion::v_GetCoords(
@@ -760,6 +760,7 @@ namespace Nektar
             boost::ignore_unused(dir,inarray,outarray);
             NEKERROR(ErrorUtil::efatal, "v_AlignVectorToCollapsedDir is not defined");
         }
+
     } //end of namespace
 } //end of namespace
 

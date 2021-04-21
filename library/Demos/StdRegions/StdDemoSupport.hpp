@@ -180,7 +180,7 @@ public:
     int i, j;       
     Nektar::Array<Nektar::OneD, Nektar::NekDouble> ab1(evalPts);
     Nektar::Array<Nektar::OneD, Nektar::NekDouble> ab2(evalPts);
-    LibUtilities::Polylib::RecCoeff(evalPts, &ab1[0], &ab2[0], -0.5, -0.5);
+    RecCoeff(evalPts, &ab1[0], &ab2[0], -0.5, -0.5);
     // Form confederate matrix
   
     // a = 2*a

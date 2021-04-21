@@ -139,15 +139,14 @@ namespace Nektar
             {
                 return m_indexMapManager[ikey];
             }
-
-
-            LOCAL_REGIONS_EXPORT void AlignVectorToCollapsedDir(
+	    LOCAL_REGIONS_EXPORT void AlignVectorToCollapsedDir(
                     const int dir, 
                     const Array<OneD, const NekDouble>      &inarray, 
                     Array<OneD, Array<OneD, NekDouble> >    &outarray)
             {
                 v_AlignVectorToCollapsedDir(dir,inarray,outarray);
             }
+
 
             inline ExpansionSharedPtr GetLeftAdjacentElementExp() const;
 
@@ -360,11 +359,12 @@ namespace Nektar
             virtual NekDouble v_VectorFlux(
                     const Array<OneD, Array<OneD, NekDouble > > &vec);
 
-            virtual void v_AlignVectorToCollapsedDir
+	    virtual void v_AlignVectorToCollapsedDir
                    (const int dir, 
                     const Array<OneD, const NekDouble>      &inarray, 
                     Array<OneD, Array<OneD, NekDouble> >    &outarray);
             
+
             virtual StdRegions::Orientation v_GetTraceOrient(int trace);
 
             virtual void v_SetCoeffsToOrientation(StdRegions::Orientation dir,
