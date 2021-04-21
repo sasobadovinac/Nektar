@@ -267,9 +267,6 @@ package-source-archive-build:
 package-source-archive-deploy-dev: &package-source-archive-deploy-dev
   <<: *package-conditions
   stage: package-deploy-dev
-  only:
-    refs:
-      - tags@nektar/nektar
   image: debian:stable-slim
   needs: ["package-source-archive-build"]
   tags:
