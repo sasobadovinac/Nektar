@@ -323,7 +323,6 @@ public:
 	    break;
 	  }
       }
-
     //Convert string input argument to shape type
     if (stype == eNoShapeType)
       {
@@ -348,7 +347,6 @@ public:
     ASSERTL0(ptype.size() == dimension || ptype.size() == 0,
 	     "Number of points types should match shape dimension if "
 	     "supplied.");
-
     if (!m_vm.count("nodal"))
       {
 	ASSERTL0(m_basis.size() == dimension,
@@ -408,7 +406,6 @@ public:
       {eOrtho_A, eModified_A, eFourier, eGLL_Lagrange, eGauss_Lagrange,
        eLegendre, eChebyshev, eMonomial}
     };
-
 
     for (int i = 0; i < dimension; ++i)
       {
@@ -680,11 +677,7 @@ public:
   // With backtracking new
   void steepestgradient_descent2Dquad(Array<OneD, NekDouble> &uhats, StdExpansion *E, Array<OneD, Array<OneD, NekDouble> > &storage, Array<OneD, Array<OneD, NekDouble> >&retarr, NekDouble &avgiterGD, Array<OneD, Array<OneD, NekDouble> > &testcoord2d, Array<OneD, Array<OneD, NekDouble> > &testcoord2dqmid, Array<OneD, NekDouble> &interioreval2dqmid, Array<OneD, Array<OneD, NekDouble> > &testcoord2dlattice)
   {
-    if(gamhold == 0)
-      {
-	exit(0);
-      }
-    boost::ignore_unused(testcoord2dlattice);
+    boost::ignore_unused(testcoord2dlattice, testcoord2dqmid);
     int dim = 2;
     Array<OneD, NekDouble> g(dim);
     double inf = numeric_limits<double>::infinity();
@@ -692,112 +685,146 @@ public:
     retarr[0] = Array<OneD,NekDouble>(1);
     retarr[1] = Array<OneD,NekDouble>(1);
 
-    Array<OneD,NekDouble> xnew(dim) ,x(dim), denseeval(1e4+1), holdpq(1);;
+    Array<OneD,NekDouble> xnew(dim) ,x(dim);//, denseeval(1e4+1), holdpq(1);;
     NekDouble gprev = inf;
     Array<OneD, NekDouble> nullarr(0), temp2(testcoord2d[0].size()), temp3, alltemp;
-    vector<NekDouble> idxx, idxy;
     NekDouble gnew = inf;
 
-    Array<OneD, Array<OneD, NekDouble> > tempdense (dim), coeffhold(dim);
-    for(int k = 0; k < dim; k++)
-      {
-	tempdense[k] = Array<OneD, NekDouble>(1e4+1);
-	coeffhold[k] = Array<OneD, NekDouble>(1);
-	
-      }
-    int ct = 0;
-    NekDouble allmin = inf;
-    for(int y  = 0; y < 1e2; y++)
-      {
-	NekDouble valtmp = ( 1.0*y)/50 - 1.0;
-	for(int u = 0; u < 1e2; u++)
-	  {
-	    tempdense[0][ct] = valtmp;
-	    tempdense[1][ct] =(1.0*u)/50 - 1.0;
-	    coeffhold[0][0] = valtmp;
-	    coeffhold[1][0] =(1.0*u)/50 - 1.0;
-	    Array<OneD, NekDouble > tmp  = E->PhysEvaluateBasis(coeffhold, storage, NullNekDouble1DArray, NullNekDouble1DArray, NullNekDouble1DArray  );
-	    pq(uhats, coeffhold, tmp, nullarr, holdpq);
-
-	    if(holdpq[0]<=allmin )
-	      {
-		if(abs(holdpq[0]-allmin)<1e-7)
-		  {
-		    idxx.push_back(tempdense[0][ct]);
-		    idxy.push_back(tempdense[1][ct]);
-		  }
-		else
-		  {
-		    idxx.clear();
-		    idxy.clear();
-		    allmin = holdpq[0];
-		    idxx.push_back(tempdense[0][ct]);
-		    idxy.push_back(tempdense[1][ct]);
-
-		  }
-	      }
-	    ct++;
-	  }
-      }
-    tempdense[0][ct] = 1.0;
-    tempdense[1][ct] = 1.0;
-
-    coeffhold[0][0] = 1.0;
-    coeffhold[1][0] = 1.0;
-
-    Array<OneD, NekDouble> tmp  = E->PhysEvaluateBasis(coeffhold, storage, NullNekDouble1DArray, NullNekDouble1DArray, NullNekDouble1DArray  );
-
-    pq(uhats, coeffhold, tmp, nullarr, holdpq);
-
-    if(holdpq[0]<=allmin)
-      {
-	if(abs(holdpq[0]-allmin)<1e-7)
-	  {
-	    idxx.push_back(tempdense[0][ct]);
-	    idxy.push_back(tempdense[1][ct]);
-	  }
-	else
-	  {
-	    idxx.clear();
-	    idxy.clear();
-	    allmin = holdpq[0];
-	    idxx.push_back(tempdense[0][ct]);
-	    idxy.push_back(tempdense[1][ct]);
-
-	  }
-      }
-    cout<<"\n Dense lattice min val at ";
-    for(int k = 0; k < idxx.size(); k++)
-      {
-	cout<<idxx[k] <<" ,"<<idxy[k]<<" val = "<<allmin<<"\n\n";
-      }
-
+    int idxgprev;
+        
     int sz = testcoord2d[0].size();
     Array<OneD, Array<OneD, NekDouble > > tempeval(4);
+
     for(int i = 0; i < 4; i++)
       {
-	tempeval[i] = Array<OneD, NekDouble>(E->GetNcoeffs());
+        tempeval[i] = Array<OneD, NekDouble>(E->GetNcoeffs());
       }
 
     pq(uhats, testcoord2d, storage[0], nullarr, temp2 );
 
     gprev = Vmath::Vmin(sz, temp2, 1);
+    idxgprev = Vmath::Imin(temp2.size(), temp2, 1);
     pq(uhats, testcoord2dqmid, interioreval2dqmid, nullarr, temp3 );
+
     NekDouble gprevmid =  Vmath::Vmin(temp3.size(), temp3, 1);
+
     if(gprev > gprevmid)
       {
-	gprev = gprevmid;
-      }
+        gprev = gprevmid;
+        idxgprev = sz+Vmath::Imin(temp3.size(), temp3, 1);
 
-    xnew[0] = 0.2;
-    xnew[1] = -0.1;
+      }
+    xnew[0] = testcoord2dlattice[0][idxgprev];
+    xnew[1] = testcoord2dlattice[1][idxgprev];
+
+
+
+    // Array<OneD, Array<OneD, NekDouble> > tempdense (dim), coeffhold(dim);
+    // for(int k = 0; k < dim; k++)
+    //   {
+    // 	tempdense[k] = Array<OneD, NekDouble>(1e4+1);
+    // 	coeffhold[k] = Array<OneD, NekDouble>(1);
+	
+    //   }
+    // int ct = 0;
+    // NekDouble allmin = inf;
+    // for(int y  = 0; y < 1e2; y++)
+    //   {
+    // 	NekDouble valtmp = ( 1.0*y)/50 - 1.0;
+    // 	for(int u = 0; u < 1e2; u++)
+    // 	  {
+    // 	    tempdense[0][ct] = valtmp;
+    // 	    tempdense[1][ct] =(1.0*u)/50 - 1.0;
+    // 	    coeffhold[0][0] = valtmp;
+    // 	    coeffhold[1][0] =(1.0*u)/50 - 1.0;
+    // 	    Array<OneD, NekDouble > tmp  = E->PhysEvaluateBasis(coeffhold, storage, NullNekDouble1DArray, NullNekDouble1DArray, NullNekDouble1DArray  );
+    // 	    pq(uhats, coeffhold, tmp, nullarr, holdpq);
+
+    // 	    if(holdpq[0]<=allmin )
+    // 	      {
+    // 		if(abs(holdpq[0]-allmin)<1e-7)
+    // 		  {
+    // 		    idxx.push_back(tempdense[0][ct]);
+    // 		    idxy.push_back(tempdense[1][ct]);
+    // 		  }
+    // 		else
+    // 		  {
+    // 		    idxx.clear();
+    // 		    idxy.clear();
+    // 		    allmin = holdpq[0];
+    // 		    idxx.push_back(tempdense[0][ct]);
+    // 		    idxy.push_back(tempdense[1][ct]);
+
+    // 		  }
+    // 	      }
+    // 	    ct++;
+    // 	  }
+    //   }
+    // tempdense[0][ct] = 1.0;
+    // tempdense[1][ct] = 1.0;
+
+    // coeffhold[0][0] = 1.0;
+    // coeffhold[1][0] = 1.0;
+
+    // Array<OneD, NekDouble> tmp  = E->PhysEvaluateBasis(coeffhold, storage, NullNekDouble1DArray, NullNekDouble1DArray, NullNekDouble1DArray  );
+
+    // pq(uhats, coeffhold, tmp, nullarr, holdpq);
+
+    // if(holdpq[0]<=allmin)
+    //   {
+    // 	if(abs(holdpq[0]-allmin)<1e-7)
+    // 	  {
+    // 	    idxx.push_back(tempdense[0][ct]);
+    // 	    idxy.push_back(tempdense[1][ct]);
+    // 	  }
+    // 	else
+    // 	  {
+    // 	    idxx.clear();
+    // 	    idxy.clear();
+    // 	    allmin = holdpq[0];
+    // 	    idxx.push_back(tempdense[0][ct]);
+    // 	    idxy.push_back(tempdense[1][ct]);
+
+    // 	  }
+    //   }
+    // cout<<"\n Dense lattice min val at ";
+    // for(int k = 0; k < idxx.size(); k++)
+    //   {
+    // 	cout<<idxx[k] <<" ,"<<idxy[k]<<" val = "<<allmin<<"\n\n";
+    //   }
+
+    // int sz = testcoord2d[0].size();
+    // Array<OneD, Array<OneD, NekDouble > > tempeval(4);
+    // for(int i = 0; i < 4; i++)
+    //   {
+    // 	tempeval[i] = Array<OneD, NekDouble>(E->GetNcoeffs());
+    //   }
+
+    // pq(uhats, testcoord2d, storage[0], nullarr, temp2 );
+
+    // gprev = Vmath::Vmin(sz, temp2, 1);
+    // pq(uhats, testcoord2dqmid, interioreval2dqmid, nullarr, temp3 );
+    // NekDouble gprevmid =  Vmath::Vmin(temp3.size(), temp3, 1);
+    // if(gprev > gprevmid)
+    //   {
+    // 	gprev = gprevmid;
+    //   }
+
+    // xnew[0] = 0.2;
+    // xnew[1] = -0.1;
+
+    //expected min (rougly, using dense grid)
+    NekDouble allmin = startarr[2];
+    cout<<"\n expected root roughly = "<< startarr[0]<<" , "<<startarr[1]<<"\n";
     Array<OneD, NekDouble> xstart(2);
     xstart[0] = xnew[0];
     xstart[1] = xnew[1];
     Array<OneD, NekDouble> dereval(dim);
-    fstream fio;
-    fio.open("dumquad.txt", ios::app | ios::out | ios::in);
-    fio<<"\n func = -2*x[i] + pow((x[i] + 0.6),3) + (pow(y[i],2) - 0.2); starting pt = "<<xnew[0]<<","<<xnew[1]<<" N = 5";
+    // fstream fio;
+    // fio.open("dumquad.txt", ios::app | ios::out | ios::in);
+    // fio<<"\n func = -2*x[i] + pow((x[i] + 0.6),3) + (pow(y[i],2) - 0.2); starting pt = "<<xnew[0]<<","<<xnew[1]<<" N = 5";
+
+    cout<<"\n func = "<<funcdef<< " starting pt = "<<xnew[0]<<","<<xnew[1]<<" N = 5";
 
     if(gprev < 0 && abs(gprev)>1e-13)
       {
@@ -810,7 +837,6 @@ public:
 	Array<OneD, Array<OneD, NekDouble > > xastaa(2);
 	xastaa[0] = Array<OneD, NekDouble> (1, xnew[0]);
 	xastaa[1] = Array<OneD, NekDouble> (1, xnew[1]);
-
 
 	NekDouble c = chold;
 	tempeval[0] = E->PhysEvaluateBasis(xastaa, storage, tempeval[1], tempeval[2], tempeval[3]);
@@ -835,14 +861,15 @@ public:
 	savesavehold[2] = inf;
 	int truth_val = abs(g[0]+g[1]) > 1e-8;
 	int ctr = 0, ct  = 0;
-
 	NekDouble fac = 1,  gnew0 = gnew, gnew1 = gnew, gnew2 = gnew;
+	cout<<"\n g = "<<g[0]<<","<<g[1]<<" t1 = "<<t1[0]<<" fac = "<<fac<<" ";
+
 	if(truth_val)
 	  {
 	    NekDouble iter = secarg;
 	    int counter_min_change = 0;
 
-	    while(ctr < iter && (abs(g[0]) > 1e-9) && abs(g[1]) > 1e-9 && fac > 1e-6 && counter_min_change < 5 )
+	    while(ctr < iter && ((abs(g[0]) > 1e-9) || abs(g[1]) > 1e-9) && fac > 1e-6 && counter_min_change < 5 )
 	      {
 		if(ctr > 2 && abs(gnew0 - gnew2) < 1e-6)
 		  break;
@@ -850,6 +877,7 @@ public:
 		  {
 		    fac = gamhold;
 		  }
+		cout<<"\n bla\n\n";
 		saveholdxandval[0] = xastaa[0][0];
 		saveholdxandval[1] = xastaa[1][0];
 		saveholdxandval[2] = t1[0];
@@ -937,8 +965,8 @@ public:
 		// holdxandval[0] = xastaa[0][0];
 		// holdxandval[1] = xastaa[1][0];
 		// holdxandval[2] = t1[0];
-		fio<<"\n ctr = "<< ctr<<" "<<xastaa[0][0]<<" "<<xastaa[1][0]<<" "<<t1[0]<<" ct \
-= "<<ct;
+		//fio<<"\n ctr = "<< ctr<<" "<<xastaa[0][0]<<" "<<xastaa[1][0]<<" "<<t1[0]<<" c= "<<ct;
+		cout<<"\n ctr = "<< ctr<<" "<<xastaa[0][0]<<" "<<xastaa[1][0]<<" "<<t1[0]<<" ct = "<<ct;
 		avgiterGD = ctr;
 		if(saveholdval < holdval)
 		  {
@@ -954,7 +982,9 @@ public:
 		      {
 			counter_min_change++;
 		      }
-		    fio<<" "<<savesavehold[2];
+		    //fio<<" "<<savesavehold[2];
+
+		    cout<<" "<<savesavehold[2];
 		    cout<<"\n  after: min till now="<<savesavehold[2];
 		    xastaa[0][0] = saveholdxandval[0];
 		    xastaa[1][0] = saveholdxandval[1];
@@ -982,7 +1012,7 @@ public:
 			counter_min_change++;
 		      }
 		    cout<<"\n  after: min till now="<<savesavehold[2];
-		    fio<<" "<<savesavehold[2];
+		    //		    fio<<" "<<savesavehold[2];
 
 		    cout<<"\n savesavehold[0] = "<<savesavehold[0]<<" "<<savesavehold[1]<<"  saveholdxandval[2]="<<saveholdxandval[2]<< " t1[0] = "<<t1[0];
 
@@ -1024,7 +1054,7 @@ public:
 	tempeval[0] = E->PhysEvaluateBasis(retarr, storage, tempeval[1], tempeval[2], tempeval[3]);
 	pq(uhats, retarr, tempeval[0], nullarr, t2);
 	cout<<"\n returning:"<<retarr[0][0]<<","<<retarr[1][0]<<" and val = "<<t2[0];
-	fio<<"\n*********************************************************\n";
+	//fio<<"\n*********************************************************\n";
 	if(allmin > t2[0])
 	  {
 	    allmin = t2[0];
@@ -1032,9 +1062,9 @@ public:
 	if(abs(t2[0]-allmin) > 1e-4)
 	  {
 	    cout<<"\n \n fail!  gam ="<< gamhold<<", c = "<<chold<<"  "<<ctr <<" iters";
-	    cout<<" \n expected min = "<<allmin<<" found = "<<t2[0]<<" error ="<< abs(t2[0]-allmin) ;
-	    fio<<"\n \n fail!  gam ="<< gamhold<<", c = "<<chold<<"  "<<ctr <<" iters";
-	    fio<<" \n expected min = "<<allmin<<" at "<< idxx[0]<<" "<<idxy[0]<<" found = "<<t2[0]<<" error ="<< abs(t2[0]-allmin) ;
+	    cout<<" \n expected min = "<<allmin<<" found = "<<t2[0]<<" error ="<< abs(t2[0]-allmin) <<"\n";
+	    //fio<<"\n \n fail!  gam ="<< gamhold<<", c = "<<chold<<"  "<<ctr <<" iters";
+	    //fio<<" \n expected min = "<<allmin<<" at "<< idxx[0]<<" "<<idxy[0]<<" found = "<<t2[0]<<" error ="<< abs(t2[0]-allmin) ;
 	    
 
 	  }
@@ -1042,12 +1072,12 @@ public:
 	  {
 
 	    cout<<"\n\n pass!  gam ="<< gamhold<<", c = "<<chold<<"  "<<ctr <<" iters";
-	    cout<<" \n expected min = "<<allmin<<" found = "<<t2[0]<<" error ="<< abs(t2[0]-allmin) ;
-	    fio<<"\n\n pass!  gam ="<< gamhold<<", c = "<<chold<<"  "<<ctr <<" iters";
-	    fio<<" \n expected min = "<<allmin<<" at "<< idxx[0]<<" "<<idxy[0]<<" found = "<<t2[0]<<" error ="<< abs(t2[0]-allmin) ;
+	    cout<<" \n expected min = "<<allmin<<" found = "<<t2[0]<<" error ="<< abs(t2[0]-allmin) <<"\n";
+	    //fio<<"\n\n pass!  gam ="<< gamhold<<", c = "<<chold<<"  "<<ctr <<" iters";
+	    //fio<<" \n expected min = "<<allmin<<" at "<< idxx[0]<<" "<<idxy[0]<<" found = "<<t2[0]<<" error ="<< abs(t2[0]-allmin) ;
 
 	  }
-	fio.close();
+	//fio.close();
 	avgiterGD = ctr;
 
 	return;
@@ -1057,11 +1087,7 @@ public:
 
   void steepestgradient_descent2Dtri(Array<OneD, NekDouble> &uhats, StdExpansion *E, Array<OneD,Array<OneD, NekDouble> > &storage, Array<OneD, Array<OneD, NekDouble> >&retarr, NekDouble &avgiterGD, Array<OneD, Array<OneD, NekDouble> > &testcoord2d, Array<OneD, Array<OneD, NekDouble> > &testcoord2dqmid, Array<OneD, NekDouble> &interioreval2dqmid, Array<OneD, Array<OneD, NekDouble> > &testcoord2dlattice)
   {
-    if(gamhold == 0)
-      {
-	exit(0);
-      }
-    boost::ignore_unused(testcoord2dlattice);
+    boost::ignore_unused(testcoord2dlattice, interioreval2dqmid, testcoord2dqmid);
     int dim = 2;
     Array<OneD, NekDouble> g(dim);
     double inf = numeric_limits<double>::infinity();
@@ -1069,89 +1095,16 @@ public:
     retarr[0] = Array<OneD,NekDouble>(1);
     retarr[1] = Array<OneD,NekDouble>(1);
 
-    Array<OneD,NekDouble> xnew(dim) ,x(dim), denseeval(1e4+1), holdpq(1);;
+    Array<OneD,NekDouble> xnew(dim) ,x(dim);//, holdpq(1);
     NekDouble gprev = inf;
     Array<OneD, NekDouble> nullarr(0), temp2(testcoord2d[0].size()), temp3, alltemp;
-    vector<NekDouble> idxx, idxy;
+
     NekDouble gnew = inf;
-
-    Array<OneD, Array<OneD, NekDouble> > tempdense (dim), coeffhold(dim);
-    for(int k = 0; k < dim; k++)
-      {
-	tempdense[k] = Array<OneD, NekDouble>(1e4+1);
-	coeffhold[k] = Array<OneD, NekDouble>(1);
-      }
-    int ct = 0;
-    NekDouble allmin = inf;
-    for(int y  = 0; y < 1e2; y++)
-      {
-	NekDouble valtmp = ( 1.0*y)/50 - 1.0;
-	for(int u = 0; u < 1e2; u++)
-	  {
-	    tempdense[0][ct] = valtmp;
-	    tempdense[1][ct] =(1.0*u)/50 - 1.0;
-	    coeffhold[0][0] = valtmp;
-	    coeffhold[1][0] =(1.0*u)/50 - 1.0;
-	    if(coeffhold[0][0]+coeffhold[1][0] <= 1)
-	      {
-		Array<OneD, NekDouble > tmp  = E->PhysEvaluateBasis(coeffhold, storage, NullNekDouble1DArray, NullNekDouble1DArray, NullNekDouble1DArray  );
-		pq(uhats, coeffhold, tmp, nullarr, holdpq);
-
-		if(holdpq[0]<=allmin )
-		  {
-		    if(abs(holdpq[0]-allmin)<1e-7)
-		      {
-			idxx.push_back(tempdense[0][ct]);
-			idxy.push_back(tempdense[1][ct]);
-		      }
-		    else{
-		      idxx.clear();
-		      idxy.clear();
-		      allmin = holdpq[0];
-		      idxx.push_back(tempdense[0][ct]);
-		      idxy.push_back(tempdense[1][ct]);
-
-		    }
-		  }
-	      }
-	    ct++;
-	  }
-      }
-    tempdense[0][ct] = 1.0;
-    tempdense[1][ct] = 1.0;
-
-    coeffhold[0][0] = 1.0;
-    coeffhold[1][0] = 1.0;
-
-    Array<OneD, NekDouble> tmp  = E->PhysEvaluateBasis(coeffhold, storage, NullNekDouble1DArray,NullNekDouble1DArray, NullNekDouble1DArray  );
-
-    pq(uhats, coeffhold, tmp, nullarr, holdpq);
-
-    if(holdpq[0]<=allmin)
-      {
-	if(abs(holdpq[0]-allmin)<1e-7)
-	  {
-	    idxx.push_back(1e2);
-	    idxy.push_back(1e2);
-	  }
-	else{
-
-	  idxx.clear();
-	  idxy.clear();
-	  allmin = holdpq[0];
-	  idxx.push_back(1e2);
-	  idxy.push_back(1e2);
-	}
-      }
-    cout<<"\n Dense lattice min val at ";
-    for(int k = 0; k < idxx.size(); k++)
-      for(int k = 0; k < idxx.size(); k++)
-	{
-	  cout<<idxx[k] <<" ,"<<idxy[k]<<" val = "<<allmin<<"\n\n";
-	}
+    int idxgprev;
 
     int sz = testcoord2d[0].size();
     Array<OneD, Array<OneD, NekDouble > > tempeval(4);
+
     for(int i = 0; i < 4; i++)
       {
 	tempeval[i] = Array<OneD, NekDouble>(E->GetNcoeffs());
@@ -1160,28 +1113,31 @@ public:
     pq(uhats, testcoord2d, storage[0], nullarr, temp2 );
 
     gprev = Vmath::Vmin(sz, temp2, 1);
+    idxgprev = Vmath::Imin(temp2.size(), temp2, 1);
     pq(uhats, testcoord2dqmid, interioreval2dqmid, nullarr, temp3 );
+
     NekDouble gprevmid =  Vmath::Vmin(temp3.size(), temp3, 1);
+
     if(gprev > gprevmid)
       {
 	gprev = gprevmid;
+	idxgprev = sz+Vmath::Imin(temp3.size(), temp3, 1);
+
       }
+    xnew[0] = testcoord2dlattice[0][idxgprev];
+    xnew[1] = testcoord2dlattice[1][idxgprev];
 
-    xnew[0] = 0.2;//-1.0;//0.1;//-0.9;
-    xnew[1] = -0.2;//0.6;//0.1;//0.6;
-
+    NekDouble allmin = startarr[2];
+    cout<<"\n expected root roughly = "<< startarr[0]<<" , "<<startarr[1]<<"\n";
+       
     Array<OneD, NekDouble> xstart(2);
     xstart[0] = xnew[0];
     xstart[1] = xnew[1];
-    //    NekDouble gnew = inf;
+    
     cout<<"\n gprev = "<<gprev<<"\n\n";
     Array<OneD, NekDouble> dereval(dim);
     if(gprev < 0 && abs(gprev)>1e-13)
       {
-
-	fstream fio;
-	fio.open("dumtri.txt", ios::app | ios::out | ios::in);
-	fio<<"\n func =-2*x[i] + pow((x[i] + 0.6),3) + (pow(y[i],2) - 0.2);;  = "<<xnew[0]<<","<<xnew[1]<<" N = 5";
 
 	Array<OneD, Array<OneD, NekDouble > > tempeval(4);
 	for(int k = 0; k < tempeval.size(); k++)
@@ -1227,7 +1183,7 @@ public:
 	    NekDouble iter = secarg;
 	    int counter_min_change = 0;
 	    cout<<"\n fac="<<fac<<" ter_min_change="<<counter_min_change<<" ctr="<<ctr<<"\n";
-	    while(ctr < iter && (abs(g[0]) > 1e-9) && abs(g[1]) > 1e-9 && fac > 1e-6 && counter_min_change <5)
+	    while(ctr < iter && ((abs(g[0]) > 1e-9) || abs(g[1]) > 1e-9) && fac > 1e-6 && counter_min_change <5)
 	      {
 		cout<<"\n****counter_min_change="<<counter_min_change<<"****\n";
 		if(ctr > 2 && abs(gnew0 - gnew2) < 1e-6)
@@ -1323,7 +1279,7 @@ public:
 		    cout<<"\n at ct = "<<ct<<" val="<<t1[0]<<" saveholdxandval[2] = "<<saveholdxandval[2]<<" fac = "<<fac<< " g = "<<g[0]<<"  "<<g[1]<<"\n";
 		    cout<<"\n rhs="<<holdxandval[2] - c*fac*(g[0] + g[1]);
 		  }
-		fio<<"\n ctr = "<< ctr<<" "<<xastaa[0][0]<<" "<<xastaa[1][0]<<" "<<t1[0]<<" ct = "<<ct;
+		//fio<<"\n ctr = "<< ctr<<" "<<xastaa[0][0]<<" "<<xastaa[1][0]<<" "<<t1[0]<<" ct = "<<ct;
 		avgiterGD = ctr;
 		cout<<"\n faccccccc="<<fac;
 		if(saveholdval < holdval )
@@ -1344,7 +1300,7 @@ public:
 			cout<<"\n ctr min change"<< counter_min_change<<"\n";
 		      }
 		    cout<<"\n  after: min till now="<<savesavehold[2];
-		    fio<<" "<<savesavehold[2];
+		    //fio<<" "<<savesavehold[2];
 		    xastaa[0][0] = saveholdxandval[0];
 		    xastaa[1][0] = saveholdxandval[1];
 		    cout<<"\n saveholdxandval[2]="<<saveholdxandval[2]<< " t1[0] = "<<t1[0];
@@ -1373,7 +1329,7 @@ public:
 		      }
 		    cout<<"\n counter_min_change = "<<counter_min_change<<" ct = "<<ct<<"\n";
 		    cout<<"\n  after: min till now="<<savesavehold[2];
-		    fio<<" "<<savesavehold[2];
+		    //fio<<" "<<savesavehold[2];
 		    cout<<"\n savesavehold[0] = "<<savesavehold[0]<<" "<<savesavehold[1]<<"  saveholdxandval[2]="<<saveholdxandval[2]<< " t1[0] = "<<t1[0];                                     
 		    t1[0] = holdval;
 		    if(abs(xastaa[0][0])>1 || abs(xastaa[1][0]) > 1 || (xastaa[0][0] + xastaa[1][0])>1)
@@ -1416,7 +1372,7 @@ public:
 	cout<<"\n returning:"<<retarr[0][0]<<","<<retarr[1][0]<<" and val = "<<t2[0];
 
 
-	fio<<"\n*********************************************************\n";
+	//fio<<"\n*********************************************************\n";
 	if(allmin > t2[0])
 	  {
 	    allmin = t2[0];
@@ -1425,8 +1381,8 @@ public:
 	  {
 	    cout<<"\n \n fail!  gam ="<< gamhold<<", c = "<<chold<<"  "<<ctr <<" iters";
 	    cout<<" \n expected min = "<<allmin<<" found = "<<t2[0]<<" error ="<< abs(t2[0]-allmin) ;
-	    fio<<"\n \n fail!  gam ="<< gamhold<<", c = "<<chold<<"  "<<ctr <<" iters";
-	    fio<<" \n expected min = "<<allmin<<" at "<< idxx[0]<<" "<<idxy[0]<<" found = "<<t2[0]<<" error ="<< abs(t2[0]-allmin) ;
+	    // //fio<<"\n \n fail!  gam ="<< gamhold<<", c = "<<chold<<"  "<<ctr <<" iters";
+	    // fio<<" \n expected min = "<<allmin<<" at "<< idxx[0]<<" "<<idxy[0]<<" found = "<<t2[0]<<" error ="<< abs(t2[0]-allmin) ;
 
 	  }
 	else
@@ -1434,11 +1390,11 @@ public:
 
 	    cout<<"\n\n pass!  gam ="<< gamhold<<", c = "<<chold<<"  "<<ctr <<" iters";
 	    cout<<" \n expected min = "<<allmin<<" found = "<<t2[0]<<" error ="<< abs(t2[0]-allmin) ;
-	    fio<<"\n\n pass!  gam ="<< gamhold<<", c = "<<chold<<"  "<<ctr <<" iters";
-	    fio<<" \n expected min = "<<allmin<<" at "<< idxx[0]<<" "<<idxy[0]<<" found = "<<t2[0]<<" error ="<< abs(t2[0]-allmin) ;
+	    // fio<<"\n\n pass!  gam ="<< gamhold<<", c = "<<chold<<"  "<<ctr <<" iters";
+	    // fio<<" \n expected min = "<<allmin<<" at "<< idxx[0]<<" "<<idxy[0]<<" found = "<<t2[0]<<" error ="<< abs(t2[0]-allmin) ;
 
 	  }
-	fio.close();
+	//	fio.close();
 	avgiterGD = ctr;
 
 	return;
@@ -1676,17 +1632,153 @@ public:
       dimension = 3;
 
     Array<OneD, Array<OneD, NekDouble> > coords(dimension);
-
-    //    if testing rootfinder only:
-    if(1)
+    boost::ignore_unused(surfid);
+    //Confederate matrix approach
+    if(surfflag == 0 && volflag == 0)
       {
-	// for(NekDouble g =0.01; g < 0.95; g = g+0.04)
-	//   {
-	//     gamhold = g;
-	//     for(NekDouble c = 0.01; c < 0.95; c = c+0.04)
-	//       {
-	//      chold = c;
+	    
+	vector<NekDouble>ret;
+	    
+	while(true)
+	  {
 
+	    int N = uhats.size();
+
+	    //vector<NekDouble> uhatsmon;
+	    while(abs(uhats[N-1])<1e-8 && N > 0)
+	      {
+		N = N-1;
+
+		if(N == 0)
+		  {
+
+		    ret.push_back(-1.0);
+		    ret.push_back(1.0);
+		    break;
+		  }
+
+	      }
+	    if(N == 0)
+	      break;
+	    Array<OneD, NekDouble> uhatsmon;
+
+	    //          vector<NekDouble> temp(N);
+	    Array<OneD, NekDouble> temp2(N*N);
+	    int ct = 0;
+	    // convert uhats to monomial, find roots of uhats or der of uhats
+	    //          cout<<"\n uhatsmon=\n";
+
+	    for(int k = 0; k < N; k++)
+	      {
+		for(int jj= 0 ; jj < N; jj++)
+		  {
+		    //  temp[jj ] = C[jj][k];
+		    temp2[ct++] = this->C[jj][k];
+		  }
+		//  Vmath::Vmul(N, &temp[0], 1,  &uhats[0], 1, &temp[0], 1);
+		//NekDouble temp2 =
+		//cout<<" "<<Vmath::Vsum(N, &temp[0], 1);
+		//  uhatsmon.push_back(temp2);
+	      }
+
+	    //          cout<<"\n uhatsmon blas:\n";
+	    uhatsmon = blasmatvec(temp2, uhats, N, N);
+	    //for(int k = 0; k < uhatsmon.size(); k++)
+	    // cout<<" "<<uhatsmon[k]<<" ";
+	    if(abs(Vmath::Vmax(uhatsmon.size(), &uhatsmon[0], 1))<1e-10)
+	      {
+		ret.push_back(-1.0);
+		ret.push_back(1.0);
+		break;
+	      }
+
+	    // truncate trailing zeros
+	    while(abs(uhatsmon[N-1])<1e-8 && N > 0)
+	      {
+		N = N-1;
+		if(N == 0)
+		  {
+
+		    ret.push_back(-1.0);
+		    ret.push_back(1.0);
+		    break;
+
+		  }
+
+	      }
+	    if(N == 0)
+	      break;
+	    //N = uhatsmon.size();
+
+	    // if(N == 0 || Vmath::Vmin(N,&uhatsmon[0],1)<-1e10)
+	    //   {
+	    //     ret[0].push_back(-1.0);
+	    //     ret[0].push_back(1.0);
+	    //     return ret;
+	    //   }
+	    // now size of uhatsmon = N;
+	    vector<NekDouble> uhatsdiff;
+	    // if d == 1,
+
+	    if(d == 1)
+	      {
+		for(int k = 1; k < N; k++)
+		  {
+		    uhatsdiff.push_back(k*uhatsmon[k]);
+		  }
+		N = N-1;
+		if(N == 0)
+		  {
+		    ret.push_back(-1.0);
+		    ret.push_back(1.0);
+
+		    break;
+		  }
+
+	      }
+	    else //d == 0
+	      {
+		for(int k = 0; k<N; k++)
+		  uhatsdiff.push_back(uhatsmon[k]);
+	      }
+
+	    // if(N == 1)
+	    //   {
+	    //       // ret[0].push_back(-1.0);
+	    //       // ret[0].push_back(1.0);
+
+	    //     return ret;
+	    //   }
+
+	    Vmath::Smul(N, 1.0/uhatsdiff[N-1], &uhatsdiff[0], 1, &uhatsdiff[0], 1);
+
+	    vector<NekDouble> EIG_R = FindEigenval(uhatsdiff, N);
+
+
+	    for(int kk = 0; kk <EIG_R.size(); kk++)
+	      {
+		ret.push_back( EIG_R[kk] );
+
+	      }
+	    ret.push_back(-1.0);
+	    ret.push_back(1.0);
+
+	    break;
+
+	  }
+	Array<OneD, Array<OneD, NekDouble> > retarr(1);
+	retarr[0] = Array<OneD, NekDouble> (ret.size(), ret.data()); // check if this is eq to ret
+
+	return retarr;
+      }
+
+    else if(dimension > 1 && surfflag == 1 && volflag == 0 )
+      {
+	Array<OneD, Array<OneD, NekDouble> > coords(dimension);
+	for(int k = 0; k < dimension; k++)
+	  {
+	    coords[k] = Array<OneD, NekDouble> (1);
+	  }
 	if(surfid == 0)
 	  {
 	    steepestgradient_descent2Dquad(uhats, E, storage, coords,  avgiterGD, testcoord2dqqpts, testcoord2dqqmidpts, interioreval2dqqmidpts, testcoord2dqlattice);
@@ -1700,190 +1792,24 @@ public:
 	    cout<<"\n avgitergd = "<<avgiterGD<<" ";
 
 	  }
-	//     }
-	// }
 	return coords;
+
       }
-    else
+    else if(volflag == 1)
       {
-	boost::ignore_unused(surfid);
-	//Confederate matrix approach
-	if(surfflag == 0 && volflag == 0)
+	for(int k = 0; k < dimension; k++)
 	  {
-
-	    vector<NekDouble>ret;
-
-	    while(true)
-	      {
-
-		int N = uhats.size();
-
-		//vector<NekDouble> uhatsmon;
-		while(abs(uhats[N-1])<1e-8 && N > 0)
-		  {
-		    N = N-1;
-
-		    if(N == 0)
-		      {
-
-			ret.push_back(-1.0);
-			ret.push_back(1.0);
-			break;
-		      }
-
-		  }
-		if(N == 0)
-		  break;
-		Array<OneD, NekDouble> uhatsmon;
-
-		//          vector<NekDouble> temp(N);
-		Array<OneD, NekDouble> temp2(N*N);
-		int ct = 0;
-		// convert uhats to monomial, find roots of uhats or der of uhats
-		//          cout<<"\n uhatsmon=\n";
-
-		for(int k = 0; k < N; k++)
-		  {
-		    for(int jj= 0 ; jj < N; jj++)
-		      {
-			//  temp[jj ] = C[jj][k];
-			temp2[ct++] = this->C[jj][k];
-		      }
-		    //  Vmath::Vmul(N, &temp[0], 1,  &uhats[0], 1, &temp[0], 1);
-		    //NekDouble temp2 =
-		    //cout<<" "<<Vmath::Vsum(N, &temp[0], 1);
-		    //  uhatsmon.push_back(temp2);
-		  }
-
-		//          cout<<"\n uhatsmon blas:\n";
-		uhatsmon = blasmatvec(temp2, uhats, N, N);
-		//for(int k = 0; k < uhatsmon.size(); k++)
-		// cout<<" "<<uhatsmon[k]<<" ";
-		if(abs(Vmath::Vmax(uhatsmon.size(), &uhatsmon[0], 1))<1e-10)
-		  {
-		    ret.push_back(-1.0);
-		    ret.push_back(1.0);
-		    break;
-		  }
-
-		// truncate trailing zeros
-		while(abs(uhatsmon[N-1])<1e-8 && N > 0)
-		  {
-		    N = N-1;
-		    if(N == 0)
-		      {
-
-			ret.push_back(-1.0);
-			ret.push_back(1.0);
-			break;
-
-		      }
-
-		  }
-		if(N == 0)
-		  break;
-		//N = uhatsmon.size();
-
-		// if(N == 0 || Vmath::Vmin(N,&uhatsmon[0],1)<-1e10)
-		//   {
-		//     ret[0].push_back(-1.0);
-		//     ret[0].push_back(1.0);
-		//     return ret;
-		//   }
-		// now size of uhatsmon = N;
-		vector<NekDouble> uhatsdiff;
-		// if d == 1,
-
-		if(d == 1)
-		  {
-		    for(int k = 1; k < N; k++)
-		      {
-			uhatsdiff.push_back(k*uhatsmon[k]);
-		      }
-		    N = N-1;
-		    if(N == 0)
-		      {
-			ret.push_back(-1.0);
-			ret.push_back(1.0);
-
-			break;
-		      }
-
-		  }
-		else //d == 0
-		  {
-		    for(int k = 0; k<N; k++)
-		      uhatsdiff.push_back(uhatsmon[k]);
-		  }
-
-		// if(N == 1)
-		//   {
-		//       // ret[0].push_back(-1.0);
-		//       // ret[0].push_back(1.0);
-
-		//     return ret;
-		//   }
-
-		Vmath::Smul(N, 1.0/uhatsdiff[N-1], &uhatsdiff[0], 1, &uhatsdiff[0], 1);
-
-		vector<NekDouble> EIG_R = FindEigenval(uhatsdiff, N);
-
-
-		for(int kk = 0; kk <EIG_R.size(); kk++)
-		  {
-		    ret.push_back( EIG_R[kk] );
-
-		  }
-		ret.push_back(-1.0);
-		ret.push_back(1.0);
-
-		break;
-
-	      }
-	    Array<OneD, Array<OneD, NekDouble> > retarr(1);
-	    retarr[0] = Array<OneD, NekDouble> (ret.size(), ret.data()); // check if this is eq to ret
-
-	    return retarr;
+	    coords[k] = Array<OneD, NekDouble> (1);
 	  }
+	//  coords = gradient_descent3D(uhats, E, storage,  avgiterGD, testcoord3dqpts, test
+	//coord3dqmidpts, interioreval3dqmidpts, testcoord3dlattice, sig);
 
-	else if(dimension > 1 && surfflag == 1 && volflag == 0 )
-	  {
-	    Array<OneD, Array<OneD, NekDouble> > coords(dimension);
-	    for(int k = 0; k < dimension; k++)
-	      {
-		coords[k] = Array<OneD, NekDouble> (1);
-	      }
-	    if(surfid == 0)
-	      {
-		steepestgradient_descent2Dquad(uhats, E, storage, coords,  avgiterGD, testcoord2dqqpts, testcoord2dqqmidpts, interioreval2dqqmidpts, testcoord2dqlattice);
-		cout<<"\n avgitergd = "<<avgiterGD<<" ";
-
-	      }
-	    else //tri
-	      {
-
-		steepestgradient_descent2Dtri(uhats, E, storage, coords,  avgiterGD, testcoord2dtqpts, testcoord2dtqmidpts, interioreval2dtqmidpts, testcoord2dtlattice);
-		cout<<"\n avgitergd = "<<avgiterGD<<" ";
-
-	      }
-	    return coords;
-
-	  }
-	else if(volflag == 1)
-	  {
-	    for(int k = 0; k < dimension; k++)
-	      {
-		coords[k] = Array<OneD, NekDouble> (1);
-	      }
-	    //  coords = gradient_descent3D(uhats, E, storage,  avgiterGD, testcoord3dqpts, test
-	    //coord3dqmidpts, interioreval3dqmidpts, testcoord3dlattice, sig);
-
-	    steepestgradientdescent3D(uhats, E, storage, coords,  avgiterGD, testcoord3dqpts, testcoord3dqmidpts, interioreval3dqmidpts, testcoord3dlattice);
-	    //cout<<"\n roots3d = "<<coords[0][0] <<" "<<coords[1][0]<<" "<<coords[2][0]<<"\n";
-	  }
-
-	return coords;
+	steepestgradientdescent3D(uhats, E, storage, coords,  avgiterGD, testcoord3dqpts, testcoord3dqmidpts, interioreval3dqmidpts, testcoord3dlattice);
+	//cout<<"\n roots3d = "<<coords[0][0] <<" "<<coords[1][0]<<" "<<coords[2][0]<<"\n";
       }
+
+    return coords;
+  
   }
   
   
@@ -1947,9 +1873,12 @@ public:
   {
     return stypeglo;
   }
+  void SetStartArr(Array<OneD, NekDouble> &st)
+  {
+    startarr = st;;
+  }
 
-  Array<OneD, Array<OneD, NekDouble>> GetQuadratureMidCoords(StdExpansion *E, Array<OneD, Array<\
-							     OneD, NekDouble>> &coords)
+  Array<OneD, Array<OneD, NekDouble>> GetQuadratureMidCoords(StdExpansion *E, Array<OneD, Array<OneD, NekDouble>> &coords)
 
   {
 
@@ -2034,6 +1963,8 @@ public:
     return coords;
   }
 
+  string funcdef;
+
 protected:
   po::options_description m_desc;
   po::variables_map m_vm;
@@ -2043,8 +1974,8 @@ protected:
   NekDouble secarg = 1e3;
   NekDouble eps = -0.1;
   int avgnum = 1;
-  NekDouble chold = 1.0;
-  NekDouble gamhold = 0.1;
+  NekDouble chold = 0.1;
+  NekDouble gamhold = 0.6;
   std::string    m_shape;
   std::string    m_ntype;
   vector<string> m_basis{3, "NoBasisType"};
@@ -2053,7 +1984,8 @@ protected:
   vector<int>    m_points;
   Array<OneD, Array<OneD, NekDouble> > C;
   LibUtilities::ShapeType stypeglo;
-  
+  Array<OneD, NekDouble> startarr;  
+
 };
 
 #endif

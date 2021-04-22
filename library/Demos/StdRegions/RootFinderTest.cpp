@@ -62,6 +62,7 @@ namespace po = boost::program_options;
 // Array<OneD, Array<OneD,  NekDouble> >  call_find_roots(Array<OneD, NekDouble> &uhatsall, NekDouble &avgiterGD, int d = 0, Array< OneD, Array<OneD, NekDouble> >&uhatsedges =NullNekDoubleArrayofArray , int flag = 0 );
 Array<OneD,NekDouble>  call_find_roots(Array<OneD,  NekDouble> &uhats1 , NekDouble &avgiterGD, Array<OneD, Array<OneD, NekDouble> >&uhatsedges, Array<OneD, Array<OneD, NekDouble> >&surfaceuhats , NekDouble &minv, NekDouble &roots1dtime, NekDouble &roots2dtime, NekDouble &roots3dtime);
 
+Array<OneD, NekDouble> find_rough_min(Array<OneD, NekDouble> uhats);
 
 //declare Opt_needed
 //int Opt_needed(Array<OneD, NekDouble> uhats, int flag = 0);
@@ -130,8 +131,8 @@ int main(int argc, char *argv[])
   po::variables_map vm = demo.GetVariableMap();
 
   //only for 2D
-       
   E = demo.CreateStdExpansion();
+  
   storage2d = E->GetPhysEvaluateStorage(); 
   stype = E->DetShapeType();
       
@@ -207,11 +208,11 @@ int main(int argc, char *argv[])
     default:
       break;
     }
+  demo.funcdef = "-2x + (x+0.6)^3 + y^2 - 0.2";
 
   //get solution array
   for (int i = 0; i < totPoints; ++i)
     {
-
       if(dimension ==2) 
         {
 	  // f3
@@ -222,7 +223,8 @@ int main(int argc, char *argv[])
 	  //-1*((sin((x[i]+0.5*M_PI)))*(cos((y[i]))))+0.95;
 	  //-2*x[i] + pow((x[i] + 0.6),3) + (pow(y[i],2) - 0.2);
 	  // funcdef = tostring(sol);
-        }
+	 
+	}
       // else{
       // 	// dim = 1
       // 	// for _/\_ function:
@@ -252,8 +254,8 @@ int main(int argc, char *argv[])
 
 
   // check for -ve values and apply opt if necessary
-  if (vm.count("optm"))
-    {
+  //  if (vm.count("optm"))
+  // {
       // timer.Start();
       
       // // int dimension = E->GetShapeDimension(); 
@@ -335,9 +337,10 @@ int main(int argc, char *argv[])
       Array<OneD, Array<OneD, NekDouble> > dummy, surf(1);
       surf[0] = Array<OneD, NekDouble>(coeffs.size());
       Vmath::Vcopy(coeffs.size(), &coeffs[0], 1, &surf[0][0], 1); 
+
       Array<OneD, NekDouble> optima = call_find_roots(coeffs, v1, dummy, surf,  v1, v1, v1, v1);
 	  
-    }
+      //    }
 
 
   //Calculate L_inf & L_2 error
@@ -711,26 +714,159 @@ int main(int argc, char *argv[])
 
 
 
-Array<OneD,  NekDouble> call_find_roots(Array<OneD,  NekDouble> &uhats1 , NekDouble &avgiterGD, Array<OneD, Array<OneD, NekDouble> >&uhatsedges, Array<OneD, Array<OneD, NekDouble> >&surfaceuhats, NekDouble &minv, NekDouble &roots1dtime, NekDouble &roots2dtime, NekDouble &roots3dtime)
+Array<OneD,  NekDouble> call_find_roots(Array<OneD,  NekDouble> &coeff , NekDouble &avgiterGD, Array<OneD, Array<OneD, NekDouble> >&uhatsedges, Array<OneD, Array<OneD, NekDouble> >&surfaceuhats, NekDouble &minv, NekDouble &roots1dtime, NekDouble &roots2dtime, NekDouble &roots3dtime)
 {
   
   boost::ignore_unused(surfaceuhats, roots2dtime, roots3dtime, roots1dtime, minv, uhatsedges);
   int dimension = E->GetShapeDimension(); 
-  Array<OneD, NekDouble> coords(dimension);
+  Array<OneD, NekDouble> coords(dimension), startA = find_rough_min(coeff);
   Array<OneD, Array<OneD, NekDouble > >  rethold(dimension);
+  demo.SetStartArr(startA);
+
   if(numsurfaces == 1)
     {
-      if(stype == 3)	  //if tri
-	rethold = demo.find_roots(uhats1, E, storage2d,  avgiterGD, 0, 1, 0 , 1);
-      else if(stype == 4)//else quad
-	rethold = demo.find_roots(uhats1, E, storage2d,  avgiterGD, 0, 1, 0 , 0);
+      if(stype == 4)	  //if quad
+	{
+	  //rethold = demo.find_roots(coeff, E, storage2d,  avgiterGD, 0, 1, 0 , 1);
+	  demo.steepestgradient_descent2Dquad(coeff, E, storage2d, rethold,  avgiterGD, demo.testcoord2dqqpts, demo.testcoord2dqqmidpts,demo. interioreval2dqqmidpts, demo.testcoord2dqlattice);
+	}
+      else if(stype == 3)//else tri
+	{
+	  demo.steepestgradient_descent2Dtri(coeff, E, storage2d, rethold,  avgiterGD, demo.testcoord2dtqpts, demo.testcoord2dtqmidpts, demo.interioreval2dtqmidpts, demo.testcoord2dtlattice);
+	  
+	//rethold = demo.find_roots(coeff, E, storage2d,  avgiterGD, 0, 1, 0 , 0);
+	}
     }
   coords[0] = rethold[0][0];
   coords[1] = rethold[1][0];
+
+  //eval pq at roots returned;
+  // Array<OneD, Array<OneD, NekDouble> > holdarr(dimension);
+  // for(int k = 0; k < dimension; k++)
+  //   holdarr[k] = Array<OneD, NekDouble>(1, rethold[k]);
+
+  Array<OneD, NekDouble> evalbasis(coeff.size()), tmp(1);
+  evalbasis = E->PhysEvaluateBasis(rethold, storage2d, NullNekDouble1DArray, NullNekDouble1DArray, NullNekDouble1DArray);
+  demo.pq(coeff, rethold, evalbasis, NullNekDouble1DArray, tmp);
+
+  // if rough min is larger than the min found
+  // if(startA[dimension] > tmp[0])
+  //   startA[dimension] = tmp[0];
+
+  Array<OneD, NekDouble> s1(E->GetTotPoints()), p1(E->GetTotPoints());
+  s1[0] = startA[dimension];
+  p1[0] = tmp[0];
+  cout<<"\n exp ="<< startA[dimension]<<" tmp[0] = "<<tmp[0]<<" err="<<startA[dimension]- tmp[0]<<"\n";
+  NekDouble eLinf, eL2;
+
+  eLinf = E->Linf(s1,p1);
+  eL2 = E->L2(s1,p1);
+  
+  cout << "L infinity error : " << scientific << eLinf << endl;
+  cout << "L 2 error        : " << scientific << eL2 << endl;
+
   return coords;	
 }
 
+Array<OneD, NekDouble> find_rough_min(Array<OneD, NekDouble> uhats)
+{
+  int dim = E->GetShapeDimension();
+  Array<OneD, NekDouble> roughmin(dimension+1);
+  Array<OneD, Array<OneD, NekDouble> > tempdense (dim), coeffhold(dim);
+  for(int k = 0; k < dim; k++)
+    {
+      tempdense[k] = Array<OneD, NekDouble>(1e4+1);
+      coeffhold[k] = Array<OneD, NekDouble>(1);
 
+    }
+  vector<NekDouble> idxx, idxy;
+  int ct = 0, flg = 1;
+  double inf = numeric_limits<double>::infinity();
+  Array<OneD, NekDouble> holdpq(1);
+
+  NekDouble allmin = inf;
+  for(int y  = 0; y < 1e2; y++)
+    {
+      NekDouble valtmp = ( 1.0*y)/50 - 1.0;
+      for(int u = 0; u < 1e2; u++)
+	{
+	  tempdense[0][ct] = valtmp;
+	  tempdense[1][ct] =(1.0*u)/50 - 1.0;
+	  coeffhold[0][0] = valtmp;
+	  coeffhold[1][0] =(1.0*u)/50 - 1.0;
+	  if(stype == 3)
+	    {
+	      flg = (coeffhold[0][0]+coeffhold[1][0] <= 1);
+	    }
+	  else
+	    {
+	      flg = 1;
+	    }
+	  if(flg)
+	    {
+	      Array<OneD, NekDouble > tmp  = E->PhysEvaluateBasis(coeffhold, storage2d, NullNekDouble1DArray, NullNekDouble1DArray, NullNekDouble1DArray  );
+	      demo.pq(uhats, coeffhold, tmp, NullNekDouble1DArray, holdpq);
+	      
+	      if(holdpq[0]<=allmin )
+		{
+		  if(abs(holdpq[0]-allmin)<1e-7)
+		    {
+		      idxx.push_back(tempdense[0][ct]);
+		      idxy.push_back(tempdense[1][ct]);
+		    }
+		  else
+		    {
+		      idxx.clear();
+		      idxy.clear();
+		      allmin = holdpq[0];
+		      idxx.push_back(tempdense[0][ct]);
+		      idxy.push_back(tempdense[1][ct]);
+		      
+		    }
+		}
+	    }
+	  ct++;
+	}
+    }
+  tempdense[0][ct] = 1.0;
+  tempdense[1][ct] = 1.0;
+
+  coeffhold[0][0] = 1.0;
+  coeffhold[1][0] = 1.0;
+
+ Array<OneD, NekDouble> tmp  = E->PhysEvaluateBasis(coeffhold, storage2d, NullNekDouble1DArray,\
+						   NullNekDouble1DArray, NullNekDouble1DArray  );
+ demo.pq(uhats, coeffhold, tmp, NullNekDouble1DArray, holdpq);
+ 
+ if(holdpq[0]<=allmin)
+   {
+     if(abs(holdpq[0]-allmin)<1e-7)
+       {
+	 idxx.push_back(tempdense[0][ct]);
+	 idxy.push_back(tempdense[1][ct]);
+       }
+    else
+      {
+	idxx.clear();
+	idxy.clear();
+	allmin = holdpq[0];
+	idxx.push_back(tempdense[0][ct]);
+	idxy.push_back(tempdense[1][ct]);
+      }
+   }
+ cout<<"\n Dense lattice min val at ";
+ for(int k = 0; k < idxx.size(); k++)
+   {
+    cout<<idxx[k] <<" ,"<<idxy[k]<<" val = "<<allmin<<"\n\n";
+  }
+
+ roughmin[0] = idxx[0];
+ roughmin[1] = idxy[0];
+ roughmin[2] = allmin;
+
+ return roughmin;
+
+}
 // int Opt_needed(Array<OneD, NekDouble> uhats, int flag)
 // {
 //   int totModes = uhats.size();

@@ -28,11 +28,15 @@ ADD_NEKTAR_EXECUTABLE(StdEquiToCoeff2D
 ADD_NEKTAR_EXECUTABLE(StdProjectPositivityPres3D
         COMPONENT demos DEPENDS StdRegions SOURCES StdProjectPositivityPres3D.cpp)
 ADD_NEKTAR_EXECUTABLE( StdProjectPositivityPres3D_tets
-        COMPONENT demos DEPENDS StdRegions SOURCES  StdProjectPositivityPres3D_tets.cpp)
+        COMPONENT demos DEPENDS StdRegions SOURCES StdProjectPositivityPres3D_tets.cpp)
 ADD_NEKTAR_EXECUTABLE( TriDerivativeDemo
         COMPONENT demos DEPENDS StdRegions SOURCES  TriDerivativeDemo.cpp)
 ADD_NEKTAR_EXECUTABLE( RootFinderTest
 	COMPONENT demos DEPENDS StdRegions SOURCES  RootFinderTest.cpp)
+
+# Rootfinder Test
+ADD_NEKTAR_TEST(RootFinderDemo_Quad_Orth_P5_Q5_c06_g03)
+ADD_NEKTAR_TEST(RootFinderDemo_Tri_Orth_P5_Q5_c06_g03)
 
 # Interpolation tests.
 ADD_NEKTAR_TEST(StdInterp_Seg_Mod_P6_Q7)
