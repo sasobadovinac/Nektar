@@ -118,12 +118,15 @@ int main(int argc, char *argv[])
       Vmath::Vcopy(nPts, &sol1[0] + i, nCoeffs, &tmp2[0], 1);
       errL2 += E->L2(tmp, tmp2);
       errLinf += E->Linf(tmp, tmp2);
-
-      Vmath::Vcopy(nPts, &phys2[0] + i, nCoeffs, &tmp[0], 1);
-      Vmath::Vcopy(nPts, &sol2[0] + i, nCoeffs, &tmp2[0], 1);
-      errL2 += E->L2(tmp, tmp2);
-      errLinf += E->Linf(tmp, tmp2);
+      if(dimension>2)
+	{
+	  Vmath::Vcopy(nPts, &phys2[0] + i, nCoeffs, &tmp[0], 1);
+	  Vmath::Vcopy(nPts, &sol2[0] + i, nCoeffs, &tmp2[0], 1);
+	  errL2 += E->L2(tmp, tmp2);
+	  errLinf += E->Linf(tmp, tmp2);
+	}
     }
+  
 
   cout << "L infinity error : " << scientific << errLinf << endl;
   cout << "L 2 error        : " << scientific << errL2 << endl;

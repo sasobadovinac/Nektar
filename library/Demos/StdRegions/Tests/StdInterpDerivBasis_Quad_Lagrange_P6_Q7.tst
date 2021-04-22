@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <test>
-    <description>StdInterpDerivBasis Quadrilateral Lagrange basis P=62D Q=7</description>
+    <description>StdInterpDerivBasis Quadrilateral Lagrange basis P=6 Q=7</description>
     <executable>StdInterpDerivBasis</executable>
     <parameters>-s quadrilateral -b GLL_Lagrange GLL_Lagrange -o 6 6 -p 7 7 </parameters>
     <metrics>

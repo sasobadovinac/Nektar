@@ -31,8 +31,8 @@ ADD_NEKTAR_EXECUTABLE( StdProjectPositivityPres3D_tets
         COMPONENT demos DEPENDS StdRegions SOURCES  StdProjectPositivityPres3D_tets.cpp)
 ADD_NEKTAR_EXECUTABLE( TriDerivativeDemo
         COMPONENT demos DEPENDS StdRegions SOURCES  TriDerivativeDemo.cpp)
-#ADD_NEKTAR_EXECUTABLE( RootFinderTest
- #       COMPONENT demos DEPENDS StdRegions SOURCES  RootFinderTest.cpp)
+ADD_NEKTAR_EXECUTABLE( RootFinderTest
+	COMPONENT demos DEPENDS StdRegions SOURCES  RootFinderTest.cpp)
 
 # Interpolation tests.
 ADD_NEKTAR_TEST(StdInterp_Seg_Mod_P6_Q7)
