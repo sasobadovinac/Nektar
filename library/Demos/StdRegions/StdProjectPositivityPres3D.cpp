@@ -33,7 +33,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <iostream>
-#include "StdDemoSupport.hpp"
+#include "StdDemoSupportnew.hpp"
 #include <fstream>
 #include <time.h>
 #include <LibUtilities/BasicUtils/Timer.h>
@@ -61,7 +61,7 @@ void surfuhats(Array<OneD, NekDouble> &uhats, Array<OneD, NekDouble> &ret,  Arra
 // declare caller routine to find_roots
 // flag = 0 -> opt_needed calls
 // flag = 1 -> sphere_rot calls
-Array<OneD, NekDouble> call_find_roots(Array<OneD, NekDouble> &uhatsall, Array< OneD, Array<OneD, NekDouble> >&uhatsedges, Array< OneD, Array<OneD, NekDouble> >&surfaceuhats,  NekDouble &minv, NekDouble &roots1dtime,  NekDouble &roots2dtime , NekDouble &roots3dtime,NekDouble &itert2d , NekDouble &itert3d );
+Array<OneD, NekDouble> call_find_roots(Array<OneD, NekDouble> &uhatsall, NekDouble &avgiterGD, Array< OneD, Array<OneD, NekDouble> >&uhatsedges, Array< OneD, Array<OneD, NekDouble> >&surfaceuhats,  NekDouble &minv, NekDouble &roots1dtime,  NekDouble &roots2dtime , NekDouble &roots3dtime );
 
 
 //declare Opt_needed
@@ -216,9 +216,9 @@ Array<OneD, NekDouble>Vxy1z ;
   
 
 int dimension ;
-NekDouble  startval, startcoordx, startcoordy, startcoordz,  itertemp2d = 0, itertemp3d = 0;
+NekDouble  startval, startcoordx, startcoordy, startcoordz, itersGD1, itersGD2, itersGD3;
 
-DemoSupport demo;
+DemoSupportNew demo;
 
 int main(int argc, char *argv[])
 {
@@ -441,11 +441,11 @@ int main(int argc, char *argv[])
       storage2d = Equad->GetPhysEvaluateStorage();
 
       demo.testcoord2dqqpts = demo.GetCoords(Equad);
-      demo.testcoord2dqqmidpts = demo.GetQuadratureMidCoords(Equad, demo.testcoord2dqqpts);
-      demo.testcoord2dqlattice = demo.GetLatticeCoords(demo.testcoord2dqqpts, demo.testcoord2dqqmidpts);
+      demo.testcoord2dqqmidpts = demo.GetQuadratureMidCoords(Equad);
+      demo.testcoord2dqlattice = demo.GetLatticeCoords(Equad);
       demo.testcoord3dqpts  =  demo.GetCoords(E); 
-      demo.testcoord3dqmidpts  = demo.GetQuadratureMidCoords(E, demo.testcoord3dqpts);
-      demo.testcoord3dlattice = demo.GetLatticeCoords(demo.testcoord3dqpts, demo.testcoord3dqmidpts);
+      demo.testcoord3dqmidpts  = demo.GetQuadratureMidCoords(E);
+      demo.testcoord3dlattice = demo.GetLatticeCoords(E);
 
 	//For 2D:
       
@@ -798,7 +798,7 @@ int main(int argc, char *argv[])
 	      cout<<"func="<<funcdef;
 	      
 	      cout<<"\n fail\n";
-	      cout<<" "<<" "<<startval<<", ("<<startcoordx<<" "<<startcoordy<<" "<<startcoordz<<"), "<<setup<<", fail, "<<" total iters by 2d GD = "<< itertemp2d <<",total iters by 3d GD = "<< itertemp3d <<", "<<", "<<timeneg<<", "<<elap<<", "<<timeverify<<","<<elapref<<" \n";;
+	      cout<<" "<<" "<<startval<<", ("<<startcoordx<<" "<<startcoordy<<" "<<startcoordz<<"), "<<setup<<", fail, "<<" "<<itersGD1<<", "<<itersGD2<<", "<<itersGD3<<", "<<timeneg<<", "<<elap<<", "<<timeverify<<","<<elapref<<" \n";;
  
 	      exit(0);
             }
@@ -811,8 +811,8 @@ int main(int argc, char *argv[])
 	      cout<<"func="<<funcdef;
 	      
 	      cout<<"\n pass\n\n";
-	      cout<<" "<<" "<<startval<<", ("<<startcoordx<<" "<<startcoordy<<" "<<startcoordz<<"), "<<setup<<", fail, "<<" total iters by 2d GD = "<< itertemp2d <<",total iters by 3d GD = "<< itertemp3d <<", "<<", "<<timeneg<<", "<<elap<<", "<<timeverify<<","<<elapref<<" \n";;
-  	      //WriteCSV(coeffs, 1);
+	      cout<<" "<<" "<<startval<<", ("<<startcoordx<<" "<<startcoordy<<" "<<startcoordz<<"), "<<setup<<", pass, "<<" "<<itersGD1<<", "<<itersGD2<<", "<<itersGD3<<", "<<iterstaken<<", "<<timeneg<<", "<<elap<<", "<<timeverify<<", "<<elapref<<"\n";;
+ 	      //WriteCSV(coeffs, 1);
 	      
 	      sol = phys; //(? or sol = phys)
             }
@@ -1222,7 +1222,9 @@ void edgederpquhats(Array<OneD, NekDouble> &uhats, Array<OneD, NekDouble> &ret, 
 }
 
 
-Array<OneD, NekDouble>  call_find_roots(Array<OneD,  NekDouble> &uhats, Array<OneD, Array<OneD, NekDouble> >&uhatsedges, Array<OneD, Array<OneD, NekDouble> >&surfaceuhats, NekDouble &minv, NekDouble &roots1dtime, NekDouble &roots2dtime, NekDouble &roots3dtime, NekDouble &itert2d, NekDouble &itert3d)
+// sig = 0 -> called by opt_needed
+// sig = 1 -> called by sphere_rotation
+Array<OneD, NekDouble>  call_find_roots(Array<OneD,  NekDouble> &uhats , NekDouble &avgiterGD, Array<OneD, Array<OneD, NekDouble> >&uhatsedges, Array<OneD, Array<OneD, NekDouble> >&surfaceuhats, NekDouble &minv, NekDouble &roots1dtime, NekDouble &roots2dtime, NekDouble &roots3dtime)
 {
   int dimension = E->GetShapeDimension(); 
   NekDouble dummy;
@@ -1248,7 +1250,7 @@ Array<OneD, NekDouble>  call_find_roots(Array<OneD,  NekDouble> &uhats, Array<On
 	{
 	  
 	  t.Start();
-	  rethold  = (demo.find_roots(uhatsedges[ii], E, NullNekDoubleArrayofArray, dummy,  0, 0, 0, 0)) ;
+	  rethold  = (demo.find_roots(uhatsedges[ii], E, NullNekDoubleArrayOfArray, dummy,  0, 0, 0, 0)) ;
 	  t.Stop();
 
 	  roots1dtime +=  t.TimePerTest(1);
@@ -1356,6 +1358,7 @@ Array<OneD, NekDouble>  call_find_roots(Array<OneD,  NekDouble> &uhats, Array<On
 	}
       if(numsurfaces ==6)
 	{
+	  NekDouble avgiterGDhold;
 	  for(int ii = 0; ii < numsurfaces; ii++)
 	    {
 	      t.Start();   
@@ -1364,7 +1367,7 @@ Array<OneD, NekDouble>  call_find_roots(Array<OneD,  NekDouble> &uhats, Array<On
 t.Stop();
 	      roots2dtime +=  t.TimePerTest(1);
 	      //	      cout<<"\n ii = "<<ii<<" rethold = "<<rethold[0][0]<<" "<<rethold[1][0]<<" ";
-	      itert2d += avgiterGDhold;
+	      avgiterGD += avgiterGDhold;
 	      if(ii == 0)
 		{
 		  retall[0].push_back( (rethold[0][0]));
@@ -1416,8 +1419,8 @@ t.Stop();
       roots3dtime +=  t.TimePerTest(1);  
 
       //cout<<" rethold = "<<rethold[0][0]<<" "<<rethold[1][0]<<" "<<rethold[2][0];
-      itert3d += avgiterGDhold;
-      Array<OneD, Array<OneD, NekDouble> > tmpcoord(dimension);
+      avgiterGD += avgiterGDhold;
+Array<OneD, Array<OneD, NekDouble> > tmpcoord(dimension);
 	  
       if(rethold[0][0] < inf && rethold[1][0] < inf && rethold[2][0] < inf)
 	{
@@ -1604,7 +1607,7 @@ void Do_optimize(Array<OneD, NekDouble> &uhats)
     
     Array<OneD, NekDouble>  pqvalcoords(dim+1), xastarr(dim), utemp(N1), wsp1(1);   
     
-    itertemp2d = 0, itertemp3d = 0;
+
     Array<OneD, Array<OneD, NekDouble> > surfaceuhats  (numsurfaces), tmpcoord(dim);
     Array<OneD, Array<OneD, NekDouble> > Pf(numedges);
     for(int k= 0; k < numedges; k++)
@@ -1617,7 +1620,7 @@ void Do_optimize(Array<OneD, NekDouble> &uhats)
 	surfaceuhats[k] = Array<OneD, NekDouble>(Equad->GetNcoeffs());
       }
     NekDouble pqval, timeprojectsurf = 0.0, timeprojectedges = 0.0;
-    NekDouble  roots1dtimehold = 0.0, roots2dtimehold = 0.0, roots3dtimehold = 0.0;//, evalrootshold;   
+    NekDouble avgiterGD = 0.0, avgiterhold = 0.0, roots1dtimehold = 0.0, roots2dtimehold = 0.0, roots3dtimehold = 0.0;//, evalrootshold;   
     //    cout<<"\n avgiterGD ="<<avgiterGD<<" avgiterhold="<<avgiterhold;
     Array<OneD, NekDouble> Vtmp(  E->GetNcoeffs());
 
@@ -1625,7 +1628,7 @@ void Do_optimize(Array<OneD, NekDouble> &uhats)
     while (counter <= niter)
     {
 
-      NekDouble roots1dtime = 0.0, roots2dtime = 0.0, roots3dtime = 0.0, itertemp2dhold = 0.0, itertemp3dhold = 0.0 ;
+      NekDouble roots1dtime = 0.0, roots2dtime = 0.0, roots3dtime = 0.0 ;
       pqval = inf;
       utemp = d.back();
       //      cout<<"\n counter ="<<counter<<" roots3dtimehold="<<roots3dtimehold<<"\n";	
@@ -1641,13 +1644,16 @@ void Do_optimize(Array<OneD, NekDouble> &uhats)
 	  project_surfaces(utemp, surfaceuhats);
 	  t.Stop();
 	  timeprojectsurf += t.TimePerTest(1);
-	  optima = call_find_roots(utemp, Pf, surfaceuhats,  minv, roots1dtime, roots2dtime, roots3dtime, itertemp2dhold, itertemp3dhold);
+	  optima = call_find_roots(utemp, avgiterhold, Pf, surfaceuhats,  minv, roots1dtime, roots2dtime, roots3dtime);
 	  roots1dtimehold += roots1dtime;
 	  roots2dtimehold += roots2dtime;
+
 	  roots3dtimehold += roots3dtime;
-	  itertemp2d += itertemp2dhold;
-	  itertemp3d += itertemp3dhold;
-	  
+	  //	  cout<<"\n counter ="<<counter<<" roots3dtimehold="<<roots3dtimehold<<"\n";	
+ 	
+	  //	cout<<"\n avgiterhold="<<avgiterhold<<" ";
+	  avgiterGD += avgiterhold;    
+    
 	  //        wsp1 = Array<OneD, NekDouble>(optima[0].size());
 	  // cout<<"\n optima:\n";
 	  // for(int pp = 0; pp < optima.size(); pp++)
@@ -1749,7 +1755,7 @@ void Do_optimize(Array<OneD, NekDouble> &uhats)
     roots3dtimehold = roots3dtimehold/(counter-1);
     timeprojectedges = timeprojectedges/(counter);
     timeprojectsurf = timeprojectsurf/(counter);    
-    //    itersGD2 = (avgiterGD)/(counter);
+    itersGD2 = (avgiterGD)/(counter);
     iterstaken = counter;
     cout<<"sphere_rotation took "<<counter<<"iterations";//
     //cout<<"\n  startv = "<<startval<<" at startcoords("<<startcoordx<<","<<startcoordy<<" ," <<startcoordz<<")    GD iter stepszie ="<<demo.GetTol()<<" maxiters = "<<demo.GetMaxIter()<<" o = "<<E->GetBasis(0)->GetNumModes()<<" p = "<<E->GetBasis(0)->GetNumPoints()<<" eps = "<<demo.GetEps()<<"  avgiterGD = "<<itersGD2;//<<" total time taken post rootfinding per iter = "<< evalrootshold/(counter)<<" hex \n";;

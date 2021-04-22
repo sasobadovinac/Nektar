@@ -129,19 +129,19 @@ int main(int argc, char *argv[])
     switch(dimension)
     {
         case 3:
-            sol2 = EvalPolyDerivz(coordsF);
-	    break;
+	  sol2 = EvalPolyDerivz(coordsF);
+	  // fall through 
     case 2:
-            sol1 = EvalPolyDerivy(coordsF);
-	    break;
+      sol1 = EvalPolyDerivy(coordsF);
+      // fall through 
     case 1:
-            sol0 = EvalPolyDerivx(coordsF);
-	    break;
+      sol0 = EvalPolyDerivx(coordsF);
+      // fall through 
     default:
-            sol = EvalPoly(coordsF);
-            break;
+      sol = EvalPoly(coordsF);
+      break;
     }
-
+    
     cout << "\nL infinity error: " << scientific << F->Linf(physOut, sol) +
                                                     F->Linf(physOut0, sol0) +
                                                     F->Linf(physOut1, sol1) +

@@ -106,10 +106,6 @@ void StdExpansion3D::PhysTensorDeriv(
                     nquad0 * nquad1, D2, nquad2, 0.0, &out_dz[0],
                     nquad0 * nquad1);
     }
-    /*for(int k = 0; k < out_dz.size(); k++)
-        std::                cout<<out_dz[k]<<" ";
-    std::cout<<"\n*****\n";
-    */
 }
 
 void StdExpansion3D::BwdTrans_SumFacKernel(
@@ -376,17 +372,17 @@ NekDouble StdExpansion3D::v_PhysEvaluate(
     return value;
 }
 
-// NekDouble StdExpansion3D::v_PhysEvaluate(
-//     const Array<OneD, NekDouble> coord,
-//     const Array<OneD, const NekDouble> &inarray, NekDouble &out_d0,
-//     NekDouble &out_d1, NekDouble &out_d2)
-// {
-//     boost::ignore_unused(coord, inarray, out_d0, out_d1, out_d2);
-//     return 0;
-// }
+NekDouble StdExpansion3D::v_PhysEvaluate(
+    const Array<OneD, NekDouble> coord,
+    const Array<OneD, const NekDouble> &inarray, NekDouble &out_d0,
+    NekDouble &out_d1, NekDouble &out_d2)
+{
+    boost::ignore_unused(coord, inarray, out_d0, out_d1, out_d2);
+    return 0;
+}
 
 /**
- * @param   inarray     Input coefficients.
+ * @Param   inarray     Input coefficients.
  * @param   output      Output coefficients.
  * @param   mkey        Matrix key
  */

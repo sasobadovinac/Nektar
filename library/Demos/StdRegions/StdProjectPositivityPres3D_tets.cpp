@@ -33,7 +33,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <iostream>
-#include "StdDemoSupport.hpp"
+#include "StdDemoSupportnew.hpp"
 #include <fstream>
 #include <time.h>
 #include <LibUtilities/BasicUtils/Timer.h>
@@ -60,7 +60,7 @@ void Do_optimize(Array<OneD, NekDouble> &uhats);
 // declare caller routine to find_roots
 // flag = 0 -> opt_needed calls
 // flag = 1 -> sphere_rot calls
-Array<OneD, Array< OneD,  NekDouble> >  call_find_roots(Array<OneD, NekDouble> &uhatsall, NekDouble &avgiterGD, int d = 0, Array< OneD, Array<OneD, NekDouble> >&uhatsedges =NullNekDoubleArrayofArray , Array< OneD, Array<OneD, NekDouble> >&surfaceuhats =NullNekDoubleArrayofArray );
+Array<OneD, Array< OneD,  NekDouble> >  call_find_roots(Array<OneD, NekDouble> &uhatsall, NekDouble &avgiterGD, int d = 0, Array< OneD, Array<OneD, NekDouble> >&uhatsedges =NullNekDoubleArrayOfArray , Array< OneD, Array<OneD, NekDouble> >&surfaceuhats =NullNekDoubleArrayOfArray );
 
 //declare Opt_needed
 int Opt_needed(Array<OneD, NekDouble> uhats, int flag = 0);
@@ -161,7 +161,7 @@ Array<OneD, NekDouble> Vxyzm1;
 int dimension ;
 NekDouble startval, startcoordx, startcoordy, startcoordz,  itersGD1, itersGD2, itersGD3;
             
-DemoSupport demo;
+DemoSupportNew demo;
 
 int main(int argc, char *argv[])
 {
@@ -325,11 +325,11 @@ int main(int argc, char *argv[])
 
       storage2dtri = Etri->GetPhysEvaluateStorage();
       demo.testcoord2dtqpts = demo.GetCoords(Etri);
-      demo.testcoord2dtqmidpts = demo.GetQuadratureMidCoords(Etri, demo.testcoord2dtqpts);
-      demo.testcoord2dtlattice = demo.GetLatticeCoords(demo.testcoord2dtqpts,  demo.testcoord2dtqmidpts);
+      demo.testcoord2dtqmidpts = demo.GetQuadratureMidCoords(Etri);
+      demo.testcoord2dtlattice = demo.GetLatticeCoords(Etri);
       demo.testcoord3dqpts  =  demo.GetCoords(E); 
-      demo.testcoord3dqmidpts  = demo.GetQuadratureMidCoords(E, demo.testcoord3dqpts);
-      demo.testcoord3dlattice = demo.GetLatticeCoords(demo.testcoord3dqpts,  demo.testcoord3dlattice);
+      demo.testcoord3dqmidpts  = demo.GetQuadratureMidCoords(E);
+      demo.testcoord3dlattice = demo.GetLatticeCoords(E);
 	
 
       //For 2D:
@@ -891,7 +891,7 @@ Array< OneD,  NekDouble>  call_find_roots(Array<OneD,  NekDouble> &uhats , NekDo
         {
 	
     	  t.Start();
-	  rethold  = (demo.find_roots(uhatsedges[ii], E, NullNekDoubleArrayofArray, dummy,  0, 0, 0, 0)) ;
+	  rethold  = (demo.find_roots(uhatsedges[ii], E, NullNekDoubleArrayOfArray, dummy,  0, 0, 0, 0)) ;
 	  t.Stop();
 
 	  roots1dtime +=  t.TimePerTest(1);

@@ -121,16 +121,13 @@ Array<OneD, NekDouble> StdExpansion2D::v_PhysEvaluateBasis(
     int tot = GetTotPoints();
     Array<OneD, NekDouble> physall(tot), ret(coords[0].size());
     Vmath::Vcopy(tot, &storage[0][mode * tot], 1, &physall[0], 1);
-    Array<OneD, NekDouble> ctemp(2);
-    Array<OneD, NekDouble> coll(2);
-
+    
     for (int i = 0; i < coords[0].size(); i++)
     {
+      Array<OneD, NekDouble> ctemp(2);
         ctemp[0] = coords[0][i];
         ctemp[1] = coords[1][i];
-	LocCoordToLocCollapsed(ctemp, coll);
-
-        ret[i] = v_PhysEvaluate(coll, physall);
+	ret[i] = v_PhysEvaluate(ctemp, physall);
     }
     return ret;
 }
@@ -298,15 +295,14 @@ NekDouble StdExpansion2D::v_PhysEvaluate(
     return val;
 }
 
-// NekDouble StdExpansion2D::v_PhysEvaluate(
-//     const Array<OneD, NekDouble> coord,
-//     const Array<OneD, const NekDouble> &inarray, NekDouble &out_d0,
-//     NekDouble &out_d1, NekDouble &out_d2)
-// {
-//     boost::ignore_unused(coord, inarray, out_d0, out_d1, out_d2);
-
-//     return 0;
-// }
+NekDouble StdExpansion2D::v_PhysEvaluate(
+    const Array<OneD, NekDouble> coord,
+    const Array<OneD, const NekDouble> &inarray, NekDouble &out_d0,
+    NekDouble &out_d1, NekDouble &out_d2)
+{
+  boost::ignore_unused(coord, inarray, out_d0, out_d1, out_d2);
+  return 0;
+}
 
 //////////////////////////////
 // Integration Methods
