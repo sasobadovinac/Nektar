@@ -420,7 +420,8 @@ namespace Nektar
             const Array<OneD, Array<OneD, NekDouble> > &vec)
         {
             const Array<OneD, const Array<OneD, NekDouble> >
-                &normals = GetTraceNormal(GetLeftAdjacentElementTrace());
+                &normals = GetLeftAdjacentElementExp()->
+                GetTraceNormal(GetLeftAdjacentElementTrace());
 
             int nq = m_base[0]->GetNumPoints();
             Array<OneD, NekDouble > Fn(nq);
