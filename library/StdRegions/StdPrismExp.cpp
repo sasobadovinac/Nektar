@@ -1422,7 +1422,7 @@ namespace Nektar
                         maparray[idx++] = maparray[0];
                     }
                 }
-
+#if 0 // no required? 
                 for (j = minPA; j < nummodesA; ++j)
                 {
                     // set maparray
@@ -1440,7 +1440,7 @@ namespace Nektar
                         maparray[idx++] = maparray[0];
                     }
                 }
-                
+#endif
                 for (j = nummodesA; j < P; ++j)
                 {
                     for (k = 0; k < Q-j; ++k)

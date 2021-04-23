@@ -1604,13 +1604,18 @@ namespace Nektar
             // modes are not as large as face modesl
             idx = 0;
             int cnt = 0; 
-            for (j = 0; j < nummodesA; ++j)
+            int minPA = min(nummodesA,P);
+            int minQB = min(nummodesB,Q);
+            
+            for (j = 0; j < minPA; ++j)
             {
                 // set maparray
-                for (k = 0; k < nummodesB-j; ++k, ++cnt)
+                for (k = 0; k < minQB-j; ++k, ++cnt)
                 {
                     maparray[idx++] = cnt;
                 }
+                
+                cnt += nummodesB-minQB;
                 
                 for (k = nummodesB-j; k < Q-j; ++k)
                 {

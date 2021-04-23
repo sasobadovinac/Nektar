@@ -1496,11 +1496,11 @@ namespace Nektar
 
             // zero signmap and set maparray to zero entry if
             // elemental modes are not as large as face modesl
-            for(i = 0; i < nummodesB; i++)
+            for(i = 0; i < Q; i++)
             {
                 // fill values into map array of trace size
                 // for element face index 
-                for(j = 0; j < nummodesA; j++)
+                for(j = 0; j < P; j++)
                 {
                     maparray[ arrayindx[i*P+j]] = i*nummodesA+j; 
                 }
