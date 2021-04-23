@@ -3210,13 +3210,13 @@ namespace Nektar
                     {
                         t_offset = GetTrace()->GetCoeff_Offset
                             (elmtToTrace[n][0]->GetElmtId());
-                        if(m_leftAdjacentTraces[2*n])
+                        if(negatedFluxNormal[2*n])
                         {
-                            outarray[offset] += Fn[t_offset];
+                            outarray[offset] -= Fn[t_offset];
                         }
                         else
                         {
-                            outarray[offset] -= Fn[t_offset];
+                            outarray[offset] += Fn[t_offset];
                         }
 
                         t_offset = GetTrace()->GetCoeff_Offset
@@ -3224,12 +3224,12 @@ namespace Nektar
 
                         if(negatedFluxNormal[2*n+1])
                         {
-                            outarray[offset+(*m_exp)[n]->GetVertexMap(1)] +=
+                            outarray[offset+(*m_exp)[n]->GetVertexMap(1)] -=
                                 Fn[t_offset];
                         }
                         else
                         {
-                            outarray[offset+(*m_exp)[n]->GetVertexMap(1)] -=
+                            outarray[offset+(*m_exp)[n]->GetVertexMap(1)] +=
                                 Fn[t_offset];
                         }
 
@@ -3263,15 +3263,7 @@ namespace Nektar
                         t_offset = GetTrace()->GetCoeff_Offset
                             (elmtToTrace[n][0]->GetElmtId());
 
-                        if(m_leftAdjacentTraces[2*n])
-                        {
-                            for (j = 0; j < e_ncoeffs; j++)
-                            {
-                                outarray[offset + j]  +=
-                                    (m_Ixm->GetPtr())[j] * Fn[t_offset];
-                            }
-                        }
-                        else
+                        if(negatedFluxNormal[2*n])
                         {
                             for (j = 0; j < e_ncoeffs; j++)
                             {
@@ -3279,15 +3271,23 @@ namespace Nektar
                                     (m_Ixm->GetPtr())[j] * Fn[t_offset];
                             }
                         }
+                        else
+                        {
+                            for (j = 0; j < e_ncoeffs; j++)
+                            {
+                                outarray[offset + j]  +=
+                                    (m_Ixm->GetPtr())[j] * Fn[t_offset];
+                            }
+                        }
 
                         t_offset = GetTrace()->GetCoeff_Offset
                             (elmtToTrace[n][1]->GetElmtId());
 
-                        if(m_leftAdjacentTraces[2*n+1])
+                        if (negatedFluxNormal[2*n+1])
                         {
                             for (j = 0; j < e_ncoeffs; j++)
                             {
-                                outarray[offset + j] +=
+                                outarray[offset + j] -=
                                     (m_Ixp->GetPtr())[j] * Fn[t_offset];
                             }
                         }
@@ -3295,7 +3295,7 @@ namespace Nektar
                         {
                             for (j = 0; j < e_ncoeffs; j++)
                             {
-                                outarray[offset + j] -=
+                                outarray[offset + j] +=
                                     (m_Ixp->GetPtr())[j] * Fn[t_offset];
                             }
                         }
