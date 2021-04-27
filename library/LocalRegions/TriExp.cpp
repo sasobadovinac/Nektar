@@ -1141,6 +1141,7 @@ DNekMatSharedPtr TriExp::v_CreateStdMatrix(const StdRegions::StdMatrixKey &mkey)
 
 DNekScalMatSharedPtr TriExp::CreateMatrix(const MatrixKey &mkey)
 {
+    //std::cout << "being generated: " << mkey << std::endl;
     DNekScalMatSharedPtr returnval;
     LibUtilities::PointsKeyVector ptsKeys = GetPointsKeys();
 

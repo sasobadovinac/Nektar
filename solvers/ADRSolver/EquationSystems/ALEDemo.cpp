@@ -324,8 +324,8 @@ std::string LaxFriedrichsSolver::solverName = SolverUtils::GetRiemannSolverFacto
                         for (int i = 0; i < nq; ++i)
                         {
                             //std::cout << "Coordinate: (" << xc[i] << ", " << yc[i] << ") has velocity = " << -yc[i] << ", " << xc[i] << std::endl;
-                            m_gridVelocity[0][offset + i] = angVel * -yc[i];
-                            m_gridVelocity[1][offset + i] = angVel * xc[i];
+                            m_gridVelocity[0][offset + i] =  angVel * -yc[i];
+                            m_gridVelocity[1][offset + i] =  angVel * xc[i];
                         }
                     }
                 }

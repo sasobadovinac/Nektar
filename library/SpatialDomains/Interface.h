@@ -217,6 +217,7 @@ protected:
     NekDouble m_angularVel;
     std::vector<PointGeomSharedPtr> m_rotateVerts;
     std::vector<CurveSharedPtr> m_rotateCurves;
+    std::vector<PointGeom> m_origPosition;
 };
 
 struct SlidingInterface final: public InterfaceBase
@@ -237,6 +238,7 @@ protected:
     std::vector<NekDouble> m_velocity;
     std::vector<PointGeomSharedPtr> m_slideVerts;
     std::vector<CurveSharedPtr> m_slideCurves;
+    std::vector<PointGeom> m_origPosition;
 };
 
 struct PrescribedInterface final: public InterfaceBase

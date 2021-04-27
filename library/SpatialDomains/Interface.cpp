@@ -121,6 +121,20 @@ RotatingInterface::RotatingInterface(int id, const CompositeMap &domain,
             }
         }
     }
+
+    // Copy points so we know original positions.
+    for (auto &pt : m_rotateVerts)
+    {
+        m_origPosition.emplace_back(*pt);
+    }
+
+    for (auto &curve : m_rotateCurves)
+    {
+        for (auto &pt : curve->m_points)
+        {
+            m_origPosition.emplace_back(*pt);
+        }
+    }
 }
 
 SlidingInterface::SlidingInterface(int id, const CompositeMap &domain,
@@ -165,6 +179,20 @@ SlidingInterface::SlidingInterface(int id, const CompositeMap &domain,
 
                 m_slideCurves.emplace_back(curve);
             }
+        }
+    }
+
+    // Copy points so we know original positions.
+    for (auto &pt : m_slideVerts)
+    {
+        m_origPosition.emplace_back(*pt);
+    }
+
+    for (auto &curve : m_slideCurves)
+    {
+        for (auto &pt : curve->m_points)
+        {
+            m_origPosition.emplace_back(*pt);
         }
     }
 }
@@ -225,7 +253,7 @@ PrescribedInterface::PrescribedInterface(int id,
     // Copy points so we know original positions.
     for (auto &pt : m_interiorVerts)
     {
-        m_origPosition.push_back(PointGeom(*pt));
+        m_origPosition.emplace_back(*pt);
     }
 }
 
@@ -436,35 +464,38 @@ void Interfaces::GenGeomFactors()
     }*/
 }
 
-void RotatingInterface::v_Move(NekDouble timeStep)
+void RotatingInterface::v_Move(NekDouble time)
 {
-    NekDouble angle = m_angularVel * timeStep;
+    NekDouble angle = m_angularVel * time;
 
     NekDouble ox, oy, oz;
     m_origin.GetCoords(ox, oy, oz);
+    std::cout << "ox = " << ox << " oy = " << oy << " oz = " << oz << std::endl;
+    std::cout << "angular vel = " << m_angularVel << " time = " << time << " angle = " << angle << std::endl;
 
+    int cnt = 0;
     for (auto &vert : m_rotateVerts)
     {
-        NekDouble x, y, z;
-        vert->GetCoords(x, y, z);
+        Array<OneD, NekDouble> newLoc(3, 0.0);
+        auto pnt = m_origPosition[cnt];
+        newLoc[0] = std::cos(angle) * pnt(0) - std::sin(angle) * pnt(1);
+        newLoc[1] = std::sin(angle) * pnt(0) + std::cos(angle) * pnt(1);
 
-        vert->UpdatePosition(
-            std::cos(angle) * (x - ox) - std::sin(angle) * (y - oy) + ox,
-            std::sin(angle) * (x - ox) + std::cos(angle) * (y - oy) + oy,
-            0);
+        vert->UpdatePosition(newLoc[0], newLoc[1], newLoc[2]);
+        cnt++;
     }
 
     for (auto &curve : m_rotateCurves)
     {
         for (auto &vert : curve->m_points)
         {
-            NekDouble x, y, z;
-            vert->GetCoords(x, y, z);
+            Array<OneD, NekDouble> newLoc(3, 0.0);
+            auto pnt = m_origPosition[cnt];
+            newLoc[0] = std::cos(angle) * pnt(0) - std::sin(angle) * pnt(1);
+            newLoc[1] = std::sin(angle) * pnt(0) + std::cos(angle) * pnt(1);
 
-            vert->UpdatePosition(
-                std::cos(angle) * (x - ox) - std::sin(angle) * (y - oy) + ox,
-                std::sin(angle) * (x - ox) + std::cos(angle) * (y - oy) + oy,
-                0);
+            vert->UpdatePosition(newLoc[0], newLoc[1], newLoc[2]);
+            cnt++;
         }
     }
 
@@ -475,47 +506,42 @@ void RotatingInterface::v_Move(NekDouble timeStep)
 void SlidingInterface::v_Move(NekDouble timeStep)
 {
     int dim = 3; // @TODO: Think a way to get this for coorddim even if interface isn't present on rank.
-                    // @TODO: We have changed this to time not timestep now.
+
     Array<OneD, NekDouble> dist(3, 0.0);
     for (int i = 0; i < dim; ++i)
     {
         dist[i] = m_velocity[i] * timeStep;
     }
 
+    int cnt = 0;
     for (auto &vert : m_slideVerts)
     {
-        Array<OneD, NekDouble> coords(dim, 0.0);
-        vert->GetCoords(coords);
-
         Array<OneD, NekDouble> newLoc(3, 0.0);
+        auto pnt = m_origPosition[cnt];
+
         for (int i = 0; i < dim; ++i)
         {
-            newLoc[i] = coords[i] + dist[i];
+            newLoc[i] = pnt(i) + dist[i];
         }
 
-        vert->UpdatePosition(
-            newLoc[0],
-            newLoc[1],
-            newLoc[2]);
+        vert->UpdatePosition(newLoc[0], newLoc[1], newLoc[2]);
+        cnt++;
     }
 
     for (auto &curve : m_slideCurves)
     {
         for (auto &vert : curve->m_points)
         {
-            Array<OneD, NekDouble> coords(dim, 0.0);
-            vert->GetCoords(coords);
-
             Array<OneD, NekDouble> newLoc(3, 0.0);
+            auto pnt = m_origPosition[cnt];
+
             for (int i = 0; i < dim; ++i)
             {
-                newLoc[i] = coords[i] + dist[i];
+                newLoc[i] = pnt(i) + dist[i];
             }
 
-            vert->UpdatePosition(
-                newLoc[0],
-                newLoc[1],
-                newLoc[2]);
+            vert->UpdatePosition(newLoc[0], newLoc[1], newLoc[2]);
+            cnt++;
         }
     }
 
