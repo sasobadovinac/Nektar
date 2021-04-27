@@ -437,6 +437,13 @@ namespace Nektar
                         m_ncoeffs, inarray.get(), 1, 0.0, outarray.get(), 1);
         }
 
+        void StdQuadExp::v_IProductWRTDerivBase(const int dir,
+                            const Array<OneD, const NekDouble>& inarray,
+                            Array<OneD, NekDouble> & outarray)
+        {
+            v_IProductWRTDerivBase_SumFac(dir,inarray,outarray);
+        }
+
         void StdQuadExp::v_IProductWRTStdDerivBase(const int dir,
                             const Array<OneD, const NekDouble>& inarray,
                             Array<OneD, NekDouble> & outarray)

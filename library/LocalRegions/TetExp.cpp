@@ -365,9 +365,9 @@ namespace Nektar
          * @param outarray  Value of the inner product.
          */
         void TetExp::v_IProductWRTDerivBase(
-                                            const int                           dir,
-                                            const Array<OneD, const NekDouble> &inarray,
-                                            Array<OneD,       NekDouble> &outarray)
+                                 const int                           dir,
+                                 const Array<OneD, const NekDouble> &inarray,
+                                 Array<OneD,       NekDouble> &outarray)
         {
             const int nquad0 = m_base[0]->GetNumPoints();
             const int nquad1 = m_base[1]->GetNumPoints();

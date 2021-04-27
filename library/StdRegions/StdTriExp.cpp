@@ -552,6 +552,14 @@ namespace Nektar
             }
         }
 
+        void StdTriExp::v_IProductWRTDerivBase(
+            const int                           dir,
+            const Array<OneD, const NekDouble>& inarray,
+                  Array<OneD,       NekDouble>& outarray)
+        {
+            StdTriExp::v_IProductWRTDerivBase_SumFac(dir,inarray,outarray);
+        }
+
         void StdTriExp::v_IProductWRTStdDerivBase(
             const int                           dir,
             const Array<OneD, const NekDouble>& inarray,

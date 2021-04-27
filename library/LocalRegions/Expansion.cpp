@@ -770,7 +770,7 @@ namespace Nektar
             boost::ignore_unused(traceid,primCoeffs,incoeffs, coeffs);
             NEKERROR(ErrorUtil::efatal, "This function is not valid for this class");
         }
-
+#if 0 
         void  Expansion::v_IProductWRTDerivBase
                  (const int dir,
                   const Array<OneD, const NekDouble>& inarray,
@@ -779,6 +779,7 @@ namespace Nektar
             boost::ignore_unused(dir, inarray, outarray);
             NEKERROR(ErrorUtil::efatal, "This method has not been defined");
         }
+#endif
 
         const Array<OneD, const NekDouble > &Expansion::
             GetElmtBndNormDirElmtLen(const int nbnd) const

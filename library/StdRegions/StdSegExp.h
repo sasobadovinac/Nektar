@@ -138,6 +138,11 @@ namespace Nektar
                     Array<OneD, NekDouble> &outarray,
                     bool multiplybyweights = true);
 
+            STD_REGIONS_EXPORT virtual void v_IProductWRTDerivBase (
+                    const int dir,
+                    const Array<OneD, const NekDouble> &inarray,
+                    Array<OneD, NekDouble> &outarray);
+
             STD_REGIONS_EXPORT virtual void v_IProductWRTStdDerivBase (
                     const int dir,
                     const Array<OneD, const NekDouble> &inarray,

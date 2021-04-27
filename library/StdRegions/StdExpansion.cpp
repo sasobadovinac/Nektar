@@ -671,7 +671,7 @@ namespace Nektar
                     SVVLaplacianFilter(dtmp,mkey);
                     Vmath::Vadd(nq, tmp, 1, dtmp, 1, dtmp, 1);
                 }
-                v_IProductWRTDerivBase_SumFac(k1, dtmp, outarray);
+                v_IProductWRTDerivBase(k1, dtmp, outarray);
             }
         }
 
@@ -698,9 +698,9 @@ namespace Nektar
             else
             {
                 const MatrixType mtype[3][3]
-                    = {{eLaplacian00,eLaplacian01,eLaplacian02},
-                       {eLaplacian01,eLaplacian11,eLaplacian12},
-                       {eLaplacian02,eLaplacian12,eLaplacian22}};
+            = {{eLaplacian00,eLaplacian01,eLaplacian02},
+               {eLaplacian01,eLaplacian11,eLaplacian12},
+               {eLaplacian02,eLaplacian12,eLaplacian22}};
                 StdMatrixKeySharedPtr mkeyij;
 
                 for(i = 0; i < dim; i++)
@@ -738,9 +738,9 @@ namespace Nektar
         }
 
         void StdExpansion::WeakDirectionalDerivMatrixOp_MatFree(
-            const Array<OneD, const NekDouble> &inarray,
-                  Array<OneD,NekDouble> &outarray,
-            const StdMatrixKey &mkey)
+                                                                const Array<OneD, const NekDouble> &inarray,
+                                                                Array<OneD,NekDouble> &outarray,
+                                                                const StdMatrixKey &mkey)
         {
             int nq = GetTotPoints();
 
@@ -754,15 +754,15 @@ namespace Nektar
 
             // Compte M_{div tv}
             Vmath::Vmul(nq, &(mkey.GetVarCoeff(eVarCoeffMFDiv))[0], 1,
-                            &tmp[0],                                1,
-                            &Mtmp[0],                               1);
+                        &tmp[0],                                1,
+                        &Mtmp[0],                               1);
 
             v_IProductWRTBase(Mtmp, Mout);
 
             // Add D_tv + M_{div tv}
             Vmath::Vadd(m_ncoeffs, &Mout[0],     1,
-                                   &outarray[0], 1,
-                                   &outarray[0], 1);
+                        &outarray[0], 1,
+                        &outarray[0], 1);
         }
 
         void StdExpansion::MassLevelCurvatureMatrixOp_MatFree
@@ -927,8 +927,8 @@ namespace Nektar
         }
 
         void StdExpansion::v_SetCoeffsToOrientation(
-            Array<OneD, NekDouble> &coeffs,
-            StdRegions::Orientation dir)
+                                                    Array<OneD, NekDouble> &coeffs,
+                                                    StdRegions::Orientation dir)
         {
             boost::ignore_unused(coeffs, dir);
             NEKERROR(ErrorUtil::efatal, "This function is not defined for this shape");
@@ -1063,7 +1063,7 @@ namespace Nektar
             return false;
         }
 
-        void  StdExpansion::v_IProductWRTStdDerivBase
+        void  StdExpansion::v_IProductWRTDerivBase
         (const int dir,
          const Array<OneD, const NekDouble>& inarray,
          Array<OneD, NekDouble> &outarray)
@@ -1072,6 +1072,14 @@ namespace Nektar
             NEKERROR(ErrorUtil::efatal, "This method has not been defined");
         }
 
+        void  StdExpansion::v_IProductWRTStdDerivBase
+        (const int dir,
+         const Array<OneD, const NekDouble>& inarray,
+         Array<OneD, NekDouble> &outarray)
+        {
+            boost::ignore_unused(dir, inarray, outarray);
+            NEKERROR(ErrorUtil::efatal, "This method has not been defined");
+        }
 
         /**
          *

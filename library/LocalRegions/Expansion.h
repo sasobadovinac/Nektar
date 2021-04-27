@@ -135,14 +135,6 @@ namespace Nektar
             LOCAL_REGIONS_EXPORT NekDouble VectorFlux(
                     const Array<OneD, Array<OneD, NekDouble > > &vec);
 
-            LOCAL_REGIONS_EXPORT void  IProductWRTDerivBase(
-                    const int dir,
-                    const Array<OneD, const NekDouble>& inarray,
-                          Array<OneD, NekDouble> &outarray)
-            {
-                v_IProductWRTDerivBase(dir,inarray, outarray);
-            }
-
             LOCAL_REGIONS_EXPORT  void NormalTraceDerivFactors
                  (Array<OneD, Array<OneD, NekDouble> > &factors,
                   Array<OneD, Array<OneD, NekDouble> > &d0factors,
@@ -393,9 +385,11 @@ namespace Nektar
             virtual void v_GetTracePhysMap( const int       edge,
                                             Array<OneD,int> &outarray);
 
+#if 0 
             virtual void  v_IProductWRTDerivBase(const int dir,
                                  const Array<OneD, const NekDouble>& inarray,
                                  Array<OneD, NekDouble> &outarray);
+#endif
 
             virtual void v_ReOrientTracePhysMap(
                                 const StdRegions::Orientation orient,
