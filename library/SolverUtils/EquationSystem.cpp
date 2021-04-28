@@ -972,7 +972,7 @@ namespace Nektar
 
             }
 
-            if (dumpInitialConditions && m_checksteps)
+            if (dumpInitialConditions && m_checksteps && m_nchk == 0)
             {
                 Checkpoint_Output(m_nchk);
                 m_nchk++;
