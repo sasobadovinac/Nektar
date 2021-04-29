@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File AdjointAdvection.h
+// File: MetricNoWarning.h
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -28,52 +28,49 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 //
-// Description: TBA
+// Description: Definition of the no-warning metric.
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#ifndef NEKTAR_SOLVERS_ADJOINTADVECTION_H
-#define NEKTAR_SOLVERS_ADJOINTADVECTION_H
+#ifndef NEKTAR_TESTS_METRICNOWARNING_H
+#define NEKTAR_TESTS_METRICNOWARNING_H
 
-#include <IncNavierStokesSolver/AdvectionTerms/LinearisedAdvection.h>
+#include <Metric.h>
+#include <boost/regex.hpp>
+#include <vector>
 
 namespace Nektar
 {
-
-
-/// Advection for the adjoint form of the linearised Navier-Stokes equations
-class AdjointAdvection: public LinearisedAdvection
-{
-public:
-    friend class MemoryManager<AdjointAdvection>;
-
-    /// Creates an instance of this class
-    static SolverUtils::AdvectionSharedPtr create(std::string)
+    class MetricNoWarning : public Metric
     {
-        return MemoryManager<AdjointAdvection>::AllocateSharedPtr();
-    }
+    public:
+        virtual ~MetricNoWarning(){};
 
-    /// Name of class
-    static std::string className;
+        static MetricSharedPtr create(TiXmlElement *metric, bool generate)
+        {
+            return MetricSharedPtr(new MetricNoWarning(metric, generate));
+        }
 
-protected:
-    AdjointAdvection();
+        static std::string type;
 
-    virtual ~AdjointAdvection();
+    protected:
 
-    virtual void v_Advect(
-        const int nConvectiveFields,
-        const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
-        const Array<OneD, Array<OneD, NekDouble> >        &advVel,
-        const Array<OneD, Array<OneD, NekDouble> >        &inarray,
-              Array<OneD, Array<OneD, NekDouble> >        &outarray,
-        const NekDouble                                   &time,
-        const Array<OneD, Array<OneD, NekDouble> > &pFwd =
-                                            NullNekDoubleArrayOfArray,
-        const Array<OneD, Array<OneD, NekDouble> > &pBwd =
-                                            NullNekDoubleArrayOfArray);
-};
+        // Regex expression that should match warning message
+        boost::regex m_regexWarning{".*WARNING.*"};
+
+        // Vector of (optional) groups
+        std::vector<std::vector<std::string>> m_matches;
+
+        // Constructor
+        MetricNoWarning(TiXmlElement *metric, bool generate);
+
+        virtual bool v_Test    (std::istream& pStdout, std::istream& pStderr);
+        virtual void v_Generate(std::istream& pStdout, std::istream& pStderr);
+
+    };
 
 }
 
-#endif //NEKTAR_SOLVERS_INCNAVIERSTOKES_H
+
+
+#endif

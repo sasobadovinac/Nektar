@@ -236,7 +236,7 @@ namespace Nektar
         &Diffusion::v_GetTraceNormal()
         {
             NEKERROR(ErrorUtil::efatal,"v_GetTraceNormal not defined");
-            return NullNekDoubleArrayofArray;
+            return NullNekDoubleArrayOfArray;
         }
 
         void Diffusion::v_ConsVarAveJump(
@@ -318,7 +318,7 @@ namespace Nektar
          */
         void Diffusion::GetDivCurl(
             const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
-            const Array<OneD, Array<OneD, Array<OneD, NekDouble>>> &pVarDer)
+            const TensorOfArray3D<NekDouble> &pVarDer)
         {
             int nDim = fields[0]->GetCoordim(0);
             int nPts = fields[0]->GetTotPoints();

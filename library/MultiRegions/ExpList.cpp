@@ -1188,62 +1188,6 @@ namespace Nektar
         }
 
         /**
-         * The integration is evaluated locally, that is
-         * \f[\int
-         *    f(\boldsymbol{x})d\boldsymbol{x}=\sum_{e=1}^{{N_{\mathrm{el}}}}
-         * \left\{\int_{\Omega_e}f(\boldsymbol{x})d\boldsymbol{x}\right\},  \f]
-         * where the integration over the separate elements is done by the
-         * function StdRegions#StdExpansion#Integral, which discretely
-         * evaluates the integral using Gaussian quadrature.
-         *
-         * Note that the array #m_phys should be filled with the values of the
-         * function \f$f(\boldsymbol{x})\f$ at the quadrature points
-         * \f$\boldsymbol{x}_i\f$.
-         *
-         * @return  The value of the discretely evaluated integral
-         *          \f$\int f(\boldsymbol{x})d\boldsymbol{x}\f$.
-         */
-        NekDouble ExpList::PhysIntegral()
-        {
-            ASSERTL1(m_physState == true,
-                     "local physical space is not true ");
-
-            return PhysIntegral(m_phys);
-        }
-
-
-        /**
-         * The integration is evaluated locally, that is
-         * \f[\int
-         *    f(\boldsymbol{x})d\boldsymbol{x}=\sum_{e=1}^{{N_{\mathrm{el}}}}
-         * \left\{\int_{\Omega_e}f(\boldsymbol{x})d\boldsymbol{x}\right\},  \f]
-         * where the integration over the separate elements is done by the
-         * function StdRegions#StdExpansion#Integral, which discretely
-         * evaluates the integral using Gaussian quadrature.
-         *
-         * @param   inarray         An array of size \f$Q_{\mathrm{tot}}\f$
-         *                          containing the values of the function
-         *                          \f$f(\boldsymbol{x})\f$ at the quadrature
-         *                          points \f$\boldsymbol{x}_i\f$.
-         * @return  The value of the discretely evaluated integral
-         *          \f$\int f(\boldsymbol{x})d\boldsymbol{x}\f$.
-         */
-        NekDouble ExpList::PhysIntegral(
-                                const Array<OneD, const NekDouble> &inarray)
-        {
-            int       i;
-            NekDouble sum = 0.0;
-
-            for(i = 0; i < (*m_exp).size(); ++i)
-            {
-                sum += (*m_exp)[i]->Integral(inarray + m_phys_offset[i]);
-            }
-
-            return sum;
-        }
-
-
-        /**
          * Retrieves the block matrix specified by \a bkey, and computes
          * \f$ y=Mx \f$.
          * @param   gkey        GlobalMatrixKey specifying the block matrix to
@@ -3066,18 +3010,34 @@ namespace Nektar
             return sqrt(err);
         }
 
+        /**
+	 * The integration is evaluated locally, that is
+	 * \f[\int
+	 *    f(\boldsymbol{x})d\boldsymbol{x}=\sum_{e=1}^{{N_{\mathrm{el}}}}
+	 * \left\{\int_{\Omega_e}f(\boldsymbol{x})d\boldsymbol{x}\right\},  \f]
+	 * where the integration over the separate elements is done by the
+	 * function StdRegions#StdExpansion#Integral, which discretely
+	 * evaluates the integral using Gaussian quadrature.
+	 *
+	 * @param   inarray         An array of size \f$Q_{\mathrm{tot}}\f$
+	 *                          containing the values of the function
+	 *                          \f$f(\boldsymbol{x})\f$ at the quadrature
+	 *                          points \f$\boldsymbol{x}_i\f$.
+	 * @return  The value of the discretely evaluated integral
+	 *          \f$\int f(\boldsymbol{x})d\boldsymbol{x}\f$.
+	 */
         NekDouble ExpList::v_Integral(const Array<OneD, const NekDouble> &inarray)
         {
-            NekDouble err = 0.0;
+            NekDouble sum = 0.0;
             int       i   = 0;
 
             for (i = 0; i < (*m_exp).size(); ++i)
             {
-                err += (*m_exp)[i]->Integral(inarray + m_phys_offset[i]);
+                sum += (*m_exp)[i]->Integral(inarray + m_phys_offset[i]);
             }
-            m_comm->GetRowComm()->AllReduce(err, LibUtilities::ReduceSum);
+            m_comm->GetRowComm()->AllReduce(sum, LibUtilities::ReduceSum);
 
-            return err;
+            return sum;
         }
 
         NekDouble ExpList::v_VectorFlux(const Array<OneD, Array<OneD, NekDouble> > &inarray)
@@ -5184,7 +5144,7 @@ namespace Nektar
             const int                                           nDirctn, 
             Array<OneD, DNekMatSharedPtr>                       &mtxPerVar)
         {
-            int ntotElmt            = (*m_exp).size();
+            int nTotElmt            = (*m_exp).size();
             int nElmtPnt            = (*m_exp)[0]->GetTotPoints();
             int nElmtCoef           = (*m_exp)[0]->GetNcoeffs();
  
@@ -5192,7 +5152,7 @@ namespace Nektar
             Array<OneD, NekDouble>  tmpCoef(nElmtCoef,0.0);
             Array<OneD, NekDouble>  tmpPhys(nElmtPnt,0.0);
 
-            for(int  nelmt = 0; nelmt < ntotElmt; nelmt++)
+            for(int nelmt = 0; nelmt < nTotElmt; nelmt++)
             {
                 nElmtCoef           = (*m_exp)[nelmt]->GetNcoeffs();
                 nElmtPnt            = (*m_exp)[nelmt]->GetTotPoints();
@@ -5224,7 +5184,7 @@ namespace Nektar
             const TensorOfArray3D<NekDouble>    &inarray,
             Array<OneD, DNekMatSharedPtr>       &mtxPerVar)
         {
-            int ntotElmt            = (*m_exp).size();
+            int nTotElmt            = (*m_exp).size();
 
             int nspacedim   =   m_graph->GetSpaceDimension();
             Array<OneD, Array<OneD, NekDouble> >    projectedpnts(nspacedim);
@@ -5240,7 +5200,7 @@ namespace Nektar
             int nElmtCoefPrevious   = 0;
 
             int nElmtPnt,nElmtCoef;
-            for(int nelmt = 0; nelmt < ntotElmt; nelmt++)
+            for(int nelmt = 0; nelmt < nTotElmt; nelmt++)
             {
                 nElmtCoef           = (*m_exp)[nelmt]->GetNcoeffs();
                 nElmtPnt            = (*m_exp)[nelmt]->GetTotPoints();
@@ -5301,7 +5261,7 @@ namespace Nektar
 
                 for(int ndir =0;ndir<nspacedim;ndir++)
                 {
-                    (*m_exp)[nelmt]->ProjectVectorIntoStandardExp(
+                    (*m_exp)[nelmt]->AlignVectorToCollapsedDir(
                             ndir,inarray[ndir][nelmt],tmppnts);
                     for(int n =0;n<nspacedim;n++)
                     {
@@ -5339,7 +5299,7 @@ namespace Nektar
                 LibUtilities::eNoShapeType;
             int nElmtPntPrevious    = 0;
             int nElmtCoefPrevious   = 0;
-            int ntotElmt            = (*m_exp).size();
+            int nTotElmt            = (*m_exp).size();
             int nElmtPnt            = (*m_exp)[0]->GetTotPoints();
             int nElmtCoef           = (*m_exp)[0]->GetNcoeffs();
 
@@ -5347,7 +5307,7 @@ namespace Nektar
             Array<OneD, NekDouble > clmnArray,clmnStdMatArray;
             Array<OneD, NekDouble > stdMat_data;
 
-            for(int  nelmt = 0; nelmt < ntotElmt; nelmt++)
+            for(int nelmt = 0; nelmt < nTotElmt; nelmt++)
             {
                 nElmtCoef           = (*m_exp)[nelmt]->GetNcoeffs();
                 nElmtPnt            = (*m_exp)[nelmt]->GetTotPoints();

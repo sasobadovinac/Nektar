@@ -211,7 +211,7 @@ void DiffusionIP::v_DiffuseCoeffs(
     Array<OneD, Array<OneD, NekDouble>> vFwd{nConvectiveFields};
     Array<OneD, Array<OneD, NekDouble>> vBwd{nConvectiveFields};
     // when does this happen?
-    if (pFwd == NullNekDoubleArrayofArray || pBwd == NullNekDoubleArrayofArray)
+    if (pFwd == NullNekDoubleArrayOfArray || pBwd == NullNekDoubleArrayOfArray)
     {
         for (int i = 0; i < nConvectiveFields; ++i)
         {
@@ -253,7 +253,7 @@ void DiffusionIP::v_DiffuseCoeffs(
     // release qfield, elmtFlux and muvar;
     for (int j = 0; j < nDim; ++j)
     {
-        elmtFlux[j] = NullNekDoubleArrayofArray;
+        elmtFlux[j] = NullNekDoubleArrayOfArray;
     }
 
     // pre-allocate this?
@@ -303,10 +303,10 @@ void DiffusionIP::v_DiffuseCoeffs(
     int nCoeffs   = fields[0]->GetNcoeffs();
     int nTracePts = fields[0]->GetTrace()->GetTotPoints();
     
-    Array<OneD, Array<OneD, Array<OneD, NekDouble> > > elmtFlux(nDim);
+    TensorOfArray3D<NekDouble> elmtFlux(nDim);
     for (j = 0; j < nDim; ++j)
     {
-        elmtFlux[j] = Array<OneD, Array<OneD, NekDouble> >(nConvectiveFields);
+        elmtFlux[j] = Array<OneD, Array<OneD, NekDouble>>(nConvectiveFields);
         for (i = 0; i < nConvectiveFields; ++i)
         {
             elmtFlux[j][i] = Array<OneD, NekDouble>(nPts, 0.0);
@@ -315,7 +315,7 @@ void DiffusionIP::v_DiffuseCoeffs(
     
     DiffuseVolumeFlux(fields,inarray,qfield,elmtFlux,nonZeroIndex);
     
-    Array<OneD, Array<OneD, NekDouble> > tmpFluxIprdct(nDim);
+    Array<OneD, Array<OneD, NekDouble>> tmpFluxIprdct(nDim);
     // volume intergration: the nonZeroIndex indicates which flux is nonzero
     for(i = 0; i < nonZeroIndex.size(); ++i)
     {
@@ -340,7 +340,7 @@ void DiffusionIP::v_DiffuseCoeffs(
     // release qfield, elmtFlux and muvar;
     for (j = 0; j < nDim; ++j)
     {
-        elmtFlux[j]     = NullNekDoubleArrayofArray;
+        elmtFlux[j]     = NullNekDoubleArrayOfArray;
     }
     
     for(i = 0; i < nonZeroIndex.size(); ++i)
@@ -398,7 +398,7 @@ void DiffusionIP::v_DiffuseVolumeFlux(
         GetAVmu(fields, inarray, muvar, m_MuVarTrace);
     }
 
-    Array<OneD, Array<OneD, NekDouble>> tmparray2D = NullNekDoubleArrayofArray;
+    Array<OneD, Array<OneD, NekDouble>> tmparray2D = NullNekDoubleArrayOfArray;
 
     LibUtilities::Timer timer;
     timer.Start();
@@ -419,7 +419,7 @@ void DiffusionIP::v_DiffuseTraceFlux(
 {
     boost::ignore_unused(VolumeFlux);
 
-    Array<OneD, Array<OneD, Array<OneD, NekDouble>>> traceflux3D(1);
+    TensorOfArray3D<NekDouble> traceflux3D(1);
     traceflux3D[0] = TraceFlux;
 
     size_t nConvectiveFields = fields.size();

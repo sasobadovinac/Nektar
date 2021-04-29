@@ -498,33 +498,16 @@ namespace Nektar
             int    nqtot   = nquad0*nquad1;
             int    nmodes0 = m_base[0]->GetNumModes();
 
-            const Array<TwoD, const NekDouble>& df = m_metricinfo->GetDerivFactors(GetPointsKeys());
-
             Array<OneD, NekDouble> tmp1(2*nqtot+m_ncoeffs+nmodes0*nquad1);
             Array<OneD, NekDouble> tmp2(tmp1 +   nqtot);
             Array<OneD, NekDouble> tmp3(tmp1 + 2*nqtot);
             Array<OneD, NekDouble> tmp4(tmp1 + 2*nqtot+m_ncoeffs);
 
-            if (m_metricinfo->GetGtype() == SpatialDomains::eDeformed)
-            {
-                Vmath::Vmul(nqtot,
-                            &df[2*dir][0], 1,
-                            inarray.get(), 1,
-                            tmp1.get(), 1);
-                Vmath::Vmul(nqtot,
-                            &df[2*dir+1][0], 1,
-                            inarray.get(), 1,
-                            tmp2.get(),1);
-            }
-            else
-            {
-                Vmath::Smul(nqtot,
-                            df[2*dir][0], inarray.get(), 1,
-                            tmp1.get(), 1);
-                Vmath::Smul(nqtot,
-                            df[2*dir+1][0], inarray.get(), 1,
-                            tmp2.get(), 1);
-            }
+            Array<OneD, Array<OneD, NekDouble>> tmp2D{2};
+            tmp2D[0] = tmp1;
+            tmp2D[1] = tmp2;
+
+            QuadExp::v_AlignVectorToCollapsedDir(dir, inarray, tmp2D);
 
             MultiplyByQuadratureMetric(tmp1,tmp1);
             MultiplyByQuadratureMetric(tmp2,tmp2);
@@ -538,7 +521,7 @@ namespace Nektar
             Vmath::Vadd(m_ncoeffs, tmp3, 1, outarray, 1, outarray, 1);
         }
 
-        void QuadExp::v_ProjectVectorIntoStandardExp(
+        void QuadExp::v_AlignVectorToCollapsedDir(
             const int dir,
             const Array<OneD, const NekDouble>      &inarray,
             Array<OneD, Array<OneD, NekDouble> >    &outarray)
