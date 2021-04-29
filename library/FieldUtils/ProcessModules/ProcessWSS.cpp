@@ -346,13 +346,8 @@ void ProcessWSS::GetViscosity(
             m_f->m_session->LoadParameter("rhoInf", m_rhoInf, 1.225);
             m_f->m_session->LoadParameter("GasConstant", m_gasConstant
                                          , 287.058);
-            std::string viscosityType;
-            m_f->m_session->LoadSolverInfo("ViscosityType", viscosityType, "Constant");
-            if ("Variable" == viscosityType)
-            {
-                m_f->m_session->LoadParameter ("Tref", m_Tref, 288.15);
-                m_TRatioSutherland = 110.0 / m_Tref;
-            }
+            m_f->m_session->LoadParameter ("Tref", m_Tref, 288.15);
+            m_TRatioSutherland = 110.0 / m_Tref;
 
             // Get temperature from flowfield
             cv_inv = (m_gamma - 1.0) / m_gasConstant;

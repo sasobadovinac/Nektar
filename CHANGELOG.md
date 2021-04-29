@@ -50,6 +50,7 @@ v5.1.0
 
 **CompressibleFlowSolver**
 - Added vectorisation of the Interior Penalty method (!!223)
+- Fix non-dimensional Sutherland law
 
 **PulseWaveSolver**
 - Added viscoelasticity (!1138)
