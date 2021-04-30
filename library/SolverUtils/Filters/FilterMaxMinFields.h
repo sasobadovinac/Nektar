@@ -83,7 +83,7 @@ protected:
     
     //std::vector<Array<OneD, NekDouble> > m_outFieldsPhys;
     //std::vector<Array<OneD, NekDouble> > fieldPhys;
-    std::vector<Array<OneD, NekDouble> > m_fieldsPhys;
+    std::vector<Array<OneD, NekDouble> > m_curFieldsPhys;
     std::vector<Array<OneD, NekDouble> > m_outFieldsPhys;
 
 

@@ -35,6 +35,7 @@
 #include <boost/core/ignore_unused.hpp>
 
 #include <SolverUtils/Filters/FilterMaxMinFields.h>
+#include <CompressibleFlowSolver/Misc/VariableConverter.h>
 
 namespace Nektar
 {
@@ -95,12 +96,12 @@ void FilterMaxMinFields::v_Initialise(
     FilterFieldConvert::v_Initialise(pFields, time);
 
     // Allocate storage
-    m_fieldsPhys.resize(m_variables.size());
+    m_curFieldsPhys.resize(m_variables.size());
     m_outFieldsPhys.resize(m_variables.size());
 
     for (int n = 0; n < m_variables.size(); ++n)
     {
-        m_fieldsPhys[n]    = Array<OneD, NekDouble>(pFields[0]->GetTotPoints(), 0.0);
+        m_curFieldsPhys[n] = Array<OneD, NekDouble>(pFields[0]->GetTotPoints(), 0.0);
         m_outFieldsPhys[n] = Array<OneD, NekDouble>(pFields[0]->GetTotPoints(), 0.0);
     }
 
@@ -207,16 +208,19 @@ void FilterMaxMinFields::v_ProcessSample(
     // FilterReynoldsStresses::v_Initialise
 
 
-    // fieldcoeffs is current coeffs at current time step, size=[n][m_ncoeffs]
-    // fieldPhys is physical value at current time step, size=[n][m_npoints]
+    //     fieldcoeffs is current coeffs at current time step, size=[n][m_ncoeffs]
+    // m_curFieldsPhys is physical value at current time step, size=[n][m_npoints]
     // m_outFields is the coeffs for output fld, ref. FilterFieldConvert.cpp -> line 234,242
-    // outFieldsPhys is the physical value for output fld
+    // m_outFieldsPhys is the physical value for output fld
 
     // Generate array for physical variables
-    const int nFields = pFields.size();
-    const int nVars   = m_outFields.size();
+    const int nFields = pFields.size();       // field vars, rho, rhou, rhov, rhow, E
+    const int nVars   = m_variables.size();   // extra vars, u, v, w, p, T. s, Mach, sensor
 
+    const int nPhys   = pFields[0]->GetNpoints();
+    const int nCoeffs = pFields[0]->GetNcoeffs();
 
+    /*
     std::cout << "Size of filtered fields    = " << nFields << std::endl;
     std::cout << "Size of filtered variables = " << nVars   << std::endl;
 
@@ -232,10 +236,82 @@ void FilterMaxMinFields::v_ProcessSample(
     {
         outFieldsPhys[n] = Array<OneD, NekDouble>(pFields[0]->GetTotPoints(), 0.0);
     }
+    */
+    
 
-    // Update outFieldsPhys
+
+    // Need to create a dummy coeffs vector to get extra variables names...
+    std::vector<Array<OneD, NekDouble> > tmpCoeffs(nFields);
+    std::string tmpStr;
+    for (int n = 0; n < nFields; ++n)
+    {
+        tmpCoeffs[n] = pFields[n]->GetCoeffs();
+    }
+    // Get extra variables
+    auto equ = m_equ.lock();
+    ASSERTL0(equ, "Weak pointer expired");
+    equ->ExtraFldOutput(tmpCoeffs, tmpStr);
+
+
+
+    /*
+    // tmp for field vars in type of Array of Array
+    Array<OneD, Array<OneD, NekDouble> > tmp(nFields);
+    for (int i=0; i < pFields.size(); ++i)
+    {
+        tmp[i] = pFields[i]->GetPhys();
+    }
+
+
+    Array<OneD, Array<OneD, NekDouble> > velocity(m_spaceDim);
+    //Array<OneD, Array<OneD, NekDouble> > velFwd  (m_spaceDim);
+    for (int i = 0; i < m_spaceDim; ++i)
+    {
+        velocity[i] = Array<OneD, NekDouble> (pFields[0]->GetTotPoints());
+    }
+
+
+    Array<OneD, NekDouble> pressure(nPhys), temperature(nPhys);
+    Array<OneD, NekDouble> entropy(nPhys);
+    Array<OneD, NekDouble> soundSpeed(nPhys), mach(nPhys);
+    Array<OneD, NekDouble> sensor(nPhys), SensorKappa(nPhys);
+
+    auto equ = m_equ.lock();
+    VariableConverterSharedPtr varConv = equ->GetVarConv();
+    //MemoryManager<VariableConverter>::AllocateSharedPtr(
+    //                m_session, m_spacedim);
+    varConv->GetVelocityVector(tmp, velocity);
+    varConv->GetPressure      (tmp, pressure);
+    varConv->GetTemperature   (tmp, temperature);
+    varConv->GetEntropy       (tmp, entropy);
+    varConv->GetSoundSpeed    (tmp, soundSpeed);
+    varConv->GetMach          (tmp, soundSpeed, mach);
+    */
+    
+    // Updata m_curFieldsPhys
+    /*
+    for (int n=0; n<nFields; ++n)
+    {
+        m_curFieldsPhys[n] = pFields[n]->GetPhys();
+    }
+    */
+
+
+
+
+
+    // Update m_outFieldsPhys
     // What is the following if() for?
     // Ref. FilterReynoldsStresses.cpp
+    for (int j = 0; j < nVars; ++j)
+    {
+        pFields[0]->BwdTrans(m_outFields[j], m_outFieldsPhys[j]);
+        if (pFields[0]->GetWaveSpace())
+        {
+            pFields[0]->HomogeneousBwdTrans(m_outFieldsPhys[j], m_outFieldsPhys[j]);
+        }
+    }
+    /*
     for (int j = 0; j < nFields; ++j)
     {
         pFields[0]->BwdTrans(m_outFields[j], outFieldsPhys[j]);
@@ -244,10 +320,39 @@ void FilterMaxMinFields::v_ProcessSample(
             pFields[0]->HomogeneousBwdTrans(outFieldsPhys[j], outFieldsPhys[j]);
         }
     }
-
+    */
 
     // Get max/min for each field
     // Save the result in outFieldsPhys
+    for(int n = 0; n < nVars; ++n)
+    {
+        size_t length = m_outFieldsPhys[n].size();
+        
+        if (m_isMax)
+        {
+            // Compute max
+            for (int i=0; i<length; ++i)
+            {
+                if (m_curFieldsPhys[n][i] > m_outFieldsPhys[n][i])
+                {
+                    m_outFieldsPhys[n][i] = m_curFieldsPhys[n][i];
+                }
+            }
+        }
+        else
+        {
+            // Compute min
+            for (int i=0; i<length; ++i)
+            {
+                if (m_curFieldsPhys[n][i] < m_outFieldsPhys[n][i])
+                {
+                    m_outFieldsPhys[n][i] = m_curFieldsPhys[n][i];
+                }
+            }
+        }
+
+    }
+    /*
     for(int n = 0; n < nFields; ++n)
     {
         size_t length = outFieldsPhys[n].size();
@@ -276,12 +381,19 @@ void FilterMaxMinFields::v_ProcessSample(
         }
 
     }
+    */
 
     // Forward transform and put into m_outFields (except pressure)
+    for (int n = 0; n < nVars; ++n)
+    {
+        pFields[0]->FwdTrans_IterPerExp(m_outFieldsPhys[n], m_outFields[n]);
+    }
+    /*
     for (int n = 0; n < nFields; ++n)
     {
         pFields[0]->FwdTrans_IterPerExp(outFieldsPhys[n], m_outFields[n]);
-    }    
+    }
+    */   
 
 }
 
