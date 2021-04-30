@@ -98,7 +98,6 @@ void FilterMaxMinFields::v_Initialise(
     // Allocate storage
     m_curFieldsPhys.resize(m_variables.size());
     m_outFieldsPhys.resize(m_variables.size());
-
     for (int n = 0; n < m_variables.size(); ++n)
     {
         m_curFieldsPhys[n] = Array<OneD, NekDouble>(pFields[0]->GetTotPoints(), 0.0);
@@ -139,62 +138,6 @@ void FilterMaxMinFields::v_Initialise(
 
 }
 
-/*
-// Add fields for filtered variables
-void FilterMaxMinFields::v_FillVariablesName(
-    const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields)
-{
-    // General variable names 
-    FilterFieldConvert::v_FillVariablesName(pFields);
-
-    // Check type of problem
-    std::string firstVarName = pFields[0]->GetSession()->GetVariable(0);
-    if (boost::iequals(firstVarName, "u"))
-    {
-        m_problemType = eIncompressible;
-    }
-    else if (boost::iequals(firstVarName, "rho"))
-    {
-        m_problemType = eCompressible;
-        // Remove sensor from [rho,rhou,rhov,E,u,v,p,T,s,a,Mach,Sensor]
-        m_variables.pop_back();
-    }
-    else
-    {
-        m_problemType = eOthers;
-    }
-
-    // Check the space dim
-    int nFields = pFields.size();
-    if (m_problemType == eCompressible)
-    {
-        m_spaceDim = nFields==5 ? 3 : 2;
-    }
-    else if (m_problemType == eIncompressible)
-    {
-        m_spaceDim = nFields==4 ? 3 : 2; // will not be used
-    }
-    else
-    {
-        m_spaceDim = 2;                 // Will not be used
-    }
-    
-    // Change the variable names
-    
-    for (int i=0; i<m_variables.size(); ++i)
-    {
-        m_variables[i] = m_variables[i] + v_GetFileSuffix();
-        std::cout << m_variables[i] << std::endl;
-    }
-    
-
-
-}
-*/
-
-
-
-
 
 void FilterMaxMinFields::v_ProcessSample(
     const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
@@ -213,36 +156,19 @@ void FilterMaxMinFields::v_ProcessSample(
     // m_outFields is the coeffs for output fld, ref. FilterFieldConvert.cpp -> line 234,242
     // m_outFieldsPhys is the physical value for output fld
 
+    
+
     // Generate array for physical variables
     const int nFields = pFields.size();       // field vars, rho, rhou, rhov, rhow, E
     const int nVars   = m_variables.size();   // extra vars, u, v, w, p, T. s, Mach, sensor
 
-    const int nPhys   = pFields[0]->GetNpoints();
-    const int nCoeffs = pFields[0]->GetNcoeffs();
-
-    /*
-    std::cout << "Size of filtered fields    = " << nFields << std::endl;
-    std::cout << "Size of filtered variables = " << nVars   << std::endl;
-
-
-    std::vector<Array<OneD, NekDouble> > fieldPhys(nFields);                                              
-    for (int n = 0; n < nFields; ++n)
-    {
-        fieldPhys[n] = pFields[n]->GetPhys();
-    }
-    
-    std::vector<Array<OneD, NekDouble> > outFieldsPhys(nFields);
-    for (int n = 0; n < nFields; ++n)
-    {
-        outFieldsPhys[n] = Array<OneD, NekDouble>(pFields[0]->GetTotPoints(), 0.0);
-    }
-    */
     
 
-
+    // solvers/CompressibleFlowSolver/EquationSystems/CompressibleFlowSystem.h
+    // FilterFieldConvert::v_FillVariablesName
     // Need to create a dummy coeffs vector to get extra variables names...
     std::vector<Array<OneD, NekDouble> > tmpCoeffs(nFields);
-    std::string tmpStr;
+    std::vector<std::string> tmpStr;
     for (int n = 0; n < nFields; ++n)
     {
         tmpCoeffs[n] = pFields[n]->GetCoeffs();
@@ -250,54 +176,18 @@ void FilterMaxMinFields::v_ProcessSample(
     // Get extra variables
     auto equ = m_equ.lock();
     ASSERTL0(equ, "Weak pointer expired");
-    equ->ExtraFldOutput(tmpCoeffs, tmpStr);
-
-
-
-    /*
-    // tmp for field vars in type of Array of Array
-    Array<OneD, Array<OneD, NekDouble> > tmp(nFields);
-    for (int i=0; i < pFields.size(); ++i)
-    {
-        tmp[i] = pFields[i]->GetPhys();
-    }
-
-
-    Array<OneD, Array<OneD, NekDouble> > velocity(m_spaceDim);
-    //Array<OneD, Array<OneD, NekDouble> > velFwd  (m_spaceDim);
-    for (int i = 0; i < m_spaceDim; ++i)
-    {
-        velocity[i] = Array<OneD, NekDouble> (pFields[0]->GetTotPoints());
-    }
-
-
-    Array<OneD, NekDouble> pressure(nPhys), temperature(nPhys);
-    Array<OneD, NekDouble> entropy(nPhys);
-    Array<OneD, NekDouble> soundSpeed(nPhys), mach(nPhys);
-    Array<OneD, NekDouble> sensor(nPhys), SensorKappa(nPhys);
-
-    auto equ = m_equ.lock();
-    VariableConverterSharedPtr varConv = equ->GetVarConv();
-    //MemoryManager<VariableConverter>::AllocateSharedPtr(
-    //                m_session, m_spacedim);
-    varConv->GetVelocityVector(tmp, velocity);
-    varConv->GetPressure      (tmp, pressure);
-    varConv->GetTemperature   (tmp, temperature);
-    varConv->GetEntropy       (tmp, entropy);
-    varConv->GetSoundSpeed    (tmp, soundSpeed);
-    varConv->GetMach          (tmp, soundSpeed, mach);
-    */
+    equ->ExtraFldOutput(tmpCoeffs, tmpStr); // tmpCoeffs.size is much larger now
+    //std::cout << "new size =" <<  tmpCoeffs.size()  << std::endl; // 12
     
     // Updata m_curFieldsPhys
-    /*
-    for (int n=0; n<nFields; ++n)
+    for (int j=0; j<tmpCoeffs.size(); ++j) //tmpCoeffs.size()==nVars
     {
-        m_curFieldsPhys[n] = pFields[n]->GetPhys();
+        pFields[0]->BwdTrans(tmpCoeffs[j], m_curFieldsPhys[j]);
+        if (pFields[0]->GetWaveSpace())
+        {
+            pFields[0]->HomogeneousBwdTrans(m_curFieldsPhys[j], m_curFieldsPhys[j]);
+        }
     }
-    */
-
-
-
 
 
     // Update m_outFieldsPhys
@@ -311,16 +201,7 @@ void FilterMaxMinFields::v_ProcessSample(
             pFields[0]->HomogeneousBwdTrans(m_outFieldsPhys[j], m_outFieldsPhys[j]);
         }
     }
-    /*
-    for (int j = 0; j < nFields; ++j)
-    {
-        pFields[0]->BwdTrans(m_outFields[j], outFieldsPhys[j]);
-        if (pFields[0]->GetWaveSpace())
-        {
-            pFields[0]->HomogeneousBwdTrans(outFieldsPhys[j], outFieldsPhys[j]);
-        }
-    }
-    */
+
 
     // Get max/min for each field
     // Save the result in outFieldsPhys
@@ -352,36 +233,7 @@ void FilterMaxMinFields::v_ProcessSample(
         }
 
     }
-    /*
-    for(int n = 0; n < nFields; ++n)
-    {
-        size_t length = outFieldsPhys[n].size();
-        
-        if (m_isMax)
-        {
-            // Compute max
-            for (int i=0; i<length; ++i)
-            {
-                if (fieldPhys[n][i] > outFieldsPhys[n][i])
-                {
-                    outFieldsPhys[n][i] = fieldPhys[n][i];
-                }
-            }
-        }
-        else
-        {
-            // Compute min
-            for (int i=0; i<length; ++i)
-            {
-                if (fieldPhys[n][i] < outFieldsPhys[n][i])
-                {
-                    outFieldsPhys[n][i] = fieldPhys[n][i];
-                }
-            }
-        }
 
-    }
-    */
 
     // Forward transform and put into m_outFields (except pressure)
     for (int n = 0; n < nVars; ++n)
