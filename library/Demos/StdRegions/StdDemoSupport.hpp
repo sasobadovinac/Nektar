@@ -677,6 +677,7 @@ public:
   // With backtracking new
   void steepestgradient_descent2Dquad(Array<OneD, NekDouble> &uhats, StdExpansion *E, Array<OneD, Array<OneD, NekDouble> > &storage, Array<OneD, Array<OneD, NekDouble> >&retarr, NekDouble &avgiterGD, Array<OneD, Array<OneD, NekDouble> > &testcoord2d, Array<OneD, Array<OneD, NekDouble> > &testcoord2dqmid, Array<OneD, NekDouble> &interioreval2dqmid, Array<OneD, Array<OneD, NekDouble> > &testcoord2dlattice)
   {
+    // if fromTest = 1, called from GDBackTrackingTest
     int dim = 2;
     Array<OneD, NekDouble> g(dim);
     double inf = numeric_limits<double>::infinity();
@@ -684,7 +685,10 @@ public:
     retarr[0] = Array<OneD,NekDouble>(1);
     retarr[1] = Array<OneD,NekDouble>(1);
 
-    Array<OneD,NekDouble> xnew(dim) ,x(dim);//, denseeval(1e4+1), holdpq(1);;
+    // flag that determines if GD is called from GDBackTrackingTest.cpp
+    int flagTest = 1;
+    
+    Array<OneD,NekDouble> xnew(dim) ,x(dim);
     NekDouble gprev = inf;
     Array<OneD, NekDouble> nullarr(0), temp2(testcoord2d[0].size()), temp3, alltemp;
     NekDouble gnew = inf;
@@ -716,21 +720,26 @@ public:
     xnew[0] = testcoord2dlattice[0][idxgprev];
     xnew[1] = testcoord2dlattice[1][idxgprev];
 
-    //expected min (rougly, using dense grid)
-    //NekDouble allmin = startarr[2];
-    cout<<"\n expected root roughly = "<< startarr[0]<<" , "<<startarr[1]<<"\n";
+    if(startarr.size() > 0)
+      {
+	cout<<"\n expected root roughly = "<< startarr[0]<<" , "<<startarr[1]<<"\n";
+	flagTest = 0;
+      }
     Array<OneD, NekDouble> xstart(2);
     xstart[0] = xnew[0];
     xstart[1] = xnew[1];
     Array<OneD, NekDouble> dereval(dim);
-
+    cout<<"    starting pt = "<<xnew[0]<<","<<xnew[1]<<" N "<< uhats.size();
     // fstream fio;
     // fio.open("dumquad.txt", ios::app | ios::out | ios::in);
     // fio<<"\n func = "<<funcdef<<"; starting pt = "<<xnew[0]<<","<<xnew[1]<<" N = 5";
 
-    cout<<"\n func = "<<funcdef<< " starting pt = "<<xnew[0]<<","<<xnew[1]<<" N = 5";
-
-    if(gprev < 0 && abs(gprev)>1e-13)
+    int call_GD;
+    if(flagTest == 0)
+      call_GD = 1;
+    else
+      call_GD = gprev < 0 && abs(gprev)>1e-13; 
+    if(call_GD)
       {
 
 	Array<OneD, Array<OneD, NekDouble > > tempeval(4);
@@ -777,7 +786,7 @@ public:
 		  {
 		    break;
 		  }
-		    if(ctr > 1)
+		if(ctr > 1)
 		  {
 		    fac = gamhold;
 		  }
@@ -804,7 +813,14 @@ public:
 		    derpq(uhats, dereval[p], tempeval[0], tempeval[p+1]);
 		    g[p] = dereval[p];
 		  }
-
+		
+		if(savesavehold[dim] > t1[0])
+		  {
+		    for(int j = 0; j < dim; j++)
+		      savesavehold[j] = xastaa[j][0];
+		    savesavehold[dim] = t1[0];
+		  }
+		
 		gnew2 = gnew1;
 		gnew1 = gnew0;
 		gnew = pow((pow(g[0],2) + pow(g[1],2)) ,0.5);
@@ -855,11 +871,19 @@ public:
 			g[1] = g[1]/gnew;
 		      }
 		    pq(uhats, xastaa, tempeval[0], nullarr, t1);
+		    if(savesavehold[dim] > t1[0])
+		      {
+			for(int j = 0; j < dim; j++)
+			  savesavehold[j] = xastaa[j][0];
+			savesavehold[dim] = t1[0];
+		      }
+		    
 		    if(abs(holdval -t1[0]) > 1e-5)
 		      holdval = t1[0];
 		    else
 		      break;
 		  }
+		cout<<"\n ct = "<<ct;
 		//fio<<"\n ctr = "<< ctr<<" "<<xastaa[0][0]<<" "<<xastaa[1][0]<<" "<<t1[0]<<" c= "<<ct;
 		avgiterGD = ctr;
 		if(saveholdval < holdval)
@@ -931,7 +955,9 @@ public:
     retarr[0] = Array<OneD,NekDouble>(1);
     retarr[1] = Array<OneD,NekDouble>(1);
 
-    Array<OneD,NekDouble> xnew(dim) ,x(dim);//, holdpq(1);
+    // flag that determines if GD is called from GDBackTrackingTest.cpp
+    int flagTest = 1;
+    Array<OneD,NekDouble> xnew(dim) ,x(dim);
     NekDouble gprev = inf;
     Array<OneD, NekDouble> nullarr(0), temp2(testcoord2d[0].size()), temp3, alltemp;
 
@@ -964,15 +990,24 @@ public:
     xnew[1] = testcoord2dlattice[1][idxgprev];
 
     //expected min (rougly, using dense grid)  
-    //    NekDouble allmin = startarr[2];
-    cout<<"\n expected root roughly = "<< startarr[0]<<" , "<<startarr[1]<<"\n";
-       
+    if(startarr.size() > 1)
+      {
+	cout<<"\n expected root roughly = "<< startarr[0]<<" , "<<startarr[1]<<"\n";
+	flagTest = 0;
+      }
     Array<OneD, NekDouble> xstart(2);
     xstart[0] = xnew[0];
     xstart[1] = xnew[1];
     cout<<"\n func = "<<funcdef<< " starting pt = "<<xnew[0]<<","<<xnew[1]<<" N = 5";    
     Array<OneD, NekDouble> dereval(dim);
-    if(gprev < 0 && abs(gprev)>1e-13)
+
+    int call_GD;
+    if(flagTest == 0)
+      call_GD = 1;
+    else
+      call_GD = gprev < 0 && abs(gprev)>1e-13;
+	
+    if(call_GD)
       {
 
 	Array<OneD, Array<OneD, NekDouble > > tempeval(4);
@@ -1043,7 +1078,13 @@ public:
 		ctr++;
 		tempeval[0] = E->PhysEvaluateBasis(xastaa, storage, tempeval[1], tempeval[2], tempeval[3]);
 		pq(uhats, xastaa, tempeval[0], nullarr, t1);
-
+		if(savesavehold[dim] > t1[0])
+		  {
+		    for(int j = 0; j < dim; j++)
+		      savesavehold[j] = xastaa[j][0];
+		    savesavehold[dim] = t1[0];
+		  }
+		
 		for(int p = 0; p < dim; p++)
 		  {
 		    derpq(uhats, dereval[p], tempeval[0], tempeval[p+1]);
@@ -1100,6 +1141,13 @@ public:
 		      }
 		    gnew0 = gnew;
 		    pq(uhats, xastaa, tempeval[0], nullarr, t1);
+		    if(savesavehold[dim] > t1[0])
+		      {
+			for(int j = 0; j < dim; j++)
+			  savesavehold[j] = xastaa[j][0];
+			savesavehold[dim] = t1[0];
+		      }
+		    
 		    if(abs(holdval -t1[0]) > 1e-5)
 		      holdval = t1[0];
 		    else
@@ -1164,590 +1212,728 @@ public:
 	return;
       }
 
-
   }
 
+  //GD with backtracking
+  void steepestgradientdescent3D(Array<OneD, NekDouble> &uhats, StdExpansion *E, Array<OneD, Array<OneD, NekDouble> > &storage, Array<OneD, Array<OneD, NekDouble> >&retarr, NekDouble &avgiterGD, Array<OneD, Array<OneD, NekDouble> > &testcoord3d, Array<OneD, Array<OneD, NekDouble> > &testcoord3dqmid, Array<OneD, NekDouble> &interioreval3dqmid, Array<OneD, Array<OneD, NekDouble> > &testcoord3dlattice)
+  {
+    int dim = 3;
+    Array<OneD, NekDouble> g(dim);
+    double inf = numeric_limits<double>::infinity();
+    retarr = Array<OneD, Array<OneD, NekDouble> >(dim);
+    for(int p = 0; p < dim; p++)
+      {
+	retarr[p] = Array<OneD,NekDouble>(1);
+      }
 
- void steepestgradientdescent3D(Array<OneD, NekDouble> &uhats, StdExpansion *E, Array<OneD, Array<OneD, NekDouble> > &storage, Array<OneD, Array<OneD, NekDouble> >&retarr, NekDouble &avgiterGD, Array<OneD, Array<OneD, NekDouble> > &testcoord3d, Array<OneD, Array<OneD, NekDouble> > &testcoord3dqmid, Array<OneD, NekDouble> &interioreval3dqmid, Array<OneD, Array<OneD, NekDouble> > &testcoord3dlattice)
+    // flag that determines if GD is called from GDBackTrackingTest.cpp
+    int flagTest = 1;
+    
+    Array<OneD,NekDouble> xnew(dim) ,x(dim);
+    NekDouble gprev = inf;
+    Array<OneD, NekDouble> nullarr(0), temp2(testcoord3d[0].size()), temp3, alltemp;
+    NekDouble gnew = inf;
+
+    int idxgprev;
+    
+    int sz = testcoord3d[0].size();
+
+    pq(uhats, testcoord3d, storage[0], nullarr, temp2 );
+    gprev = Vmath::Vmin(sz, temp2, 1);
+    
+    idxgprev = Vmath::Imin(temp2.size(), temp2, 1);
+    pq(uhats, testcoord3dqmid, interioreval3dqmid, nullarr, temp3 );
+
+    NekDouble gprevmid =  Vmath::Vmin(temp3.size(), temp3, 1);
+
+    if(gprev > gprevmid)
+      {
+        gprev = gprevmid;
+        idxgprev = sz+Vmath::Imin(temp3.size(), temp3, 1);
+
+      }
+    for(int p = 0; p < dim; p++)
+      {
+	xnew[p] = testcoord3dlattice[p][idxgprev];
+      }
+
+    if(startarr.size() > 0)
+      {
+	cout<<"\nexpected root roughly = "<< startarr[0]<<" , "<<startarr[1]<<", "<<startarr[2]<<" val = "<<startarr[3];
+	flagTest = 0;
+      }
+    Array<OneD, NekDouble> xstart(dim);
+    for(int p = 0; p < dim; p++)
+      {
+	xstart[p] = xnew[p];
+      }
+    Array<OneD, NekDouble> dereval(dim);
+
+    // fstream fio;
+    // fio.open("dumquad.txt", ios::app | ios::out | ios::in);
+
+    cout<<"\n func = "<<funcdef<< " \n starting pt = "<<xnew[0]<<","<<xnew[1]<<" "<<xnew[2];
+
+    int call_GD;
+    if(flagTest == 0)
+      call_GD = 1;
+    else
+      call_GD = gprev < 0 && abs(gprev)>1e-13;
+    if(call_GD)
+      {
+        Array<OneD, Array<OneD, NekDouble > > tempeval(4);
+	for(int k = 0; k < tempeval.size(); k++)
+	  {
+	    tempeval[k] = Array<OneD, NekDouble>(uhats.size());
+	  }
+	Array<OneD, Array<OneD, NekDouble > > xastaa(dim);
+	for(int p = 0; p < dim; p++)
+	  {
+	    xastaa[p] = Array<OneD, NekDouble> (1, xnew[p]);
+	
+	  }
+
+	NekDouble c = chold;
+	tempeval[0] = E->PhysEvaluateBasis(xastaa, storage, tempeval[1], tempeval[2], tempeval[3]);
+	for(int p = 0; p < dim; p++)
+	  {
+	    derpq(uhats, dereval[p], tempeval[0], tempeval[p+1]);
+	    g[p] = dereval[p];
+	  }
+	gnew = 0;
+	for(int p = 0; p < dim; p++)
+	  {
+	    gnew += pow(g[p],2);
+	  }
+	    
+	gnew = pow( gnew, 0.5);
+	if(abs(g[0]) > 1 || abs(g[1]) > 1 || abs(g[2]) > 1)
+          {
+            g[0] = g[0]/gnew;
+            g[1] = g[1]/gnew;
+	    g[2] = g[2]/gnew;
+	    
+          }
+	Array<OneD, NekDouble> t1(1);
+	pq(uhats, xastaa, tempeval[0], nullarr, t1);
+	Array<OneD, NekDouble > holdxandval(dim+1), saveholdxandval(dim+1), savesavehold(dim+1);
+
+	for(int p = 0; p < dim; p++)
+	  {
+	    holdxandval[p] = xastaa[p][0];
+	  }
+	holdxandval[dim] = t1[0];
+	savesavehold[dim] = inf;
+	NekDouble allg;
+	for(int p = 0; p < dim; p++)
+	  {
+	    allg = allg + g[p];
+	  }
+	int truth_val = abs(allg) > 1e-8;
+	int ctr = 0, ct  = 0;
+	NekDouble fac = 1,  gnew0 = gnew, gnew1 = gnew, gnew2 = gnew;
+
+	if(truth_val)
+	  {
+	    NekDouble iter = secarg;
+	    int counter_min_change = 0;
+	    while(ctr < iter  && fac > 1e-6 && counter_min_change < 5 && ((abs(g[0]) > 1e-9) || abs(g[1]) > 1e-9 ||  abs(g[2]) > 1e-9) )
+	      {
+		if(ctr > 2 && abs(gnew0 - gnew2) < 1e-6)
+		  {
+		    break;
+		  }
+		if(ctr > 1)
+		  {
+		    fac = gamhold;
+		  }
+		for(int p = 0; p < dim; p++)
+		  {
+		    saveholdxandval[p] = xastaa[p][0];
+		  }
+		saveholdxandval[dim] = t1[0];
+		for(int p = 0; p < dim; p++)
+		  {
+		    xastaa[p][0] = saveholdxandval[p]  - fac*g[p];
+		  }
+
+		// absg = 0;
+		// for(int p = 0; p < dim; p++)
+		//   {
+		//     absg = absg || abs(xastaa[p][0]) > 1; 
+		//   }
+		while(abs(xastaa[0][0])>1 || abs(xastaa[1][0])>1 || abs(xastaa[2][0])>1)
+		  {
+		    for(int p = 0; p < dim; p++)
+		      {
+			xastaa[p][0] = holdxandval[p]  - fac*g[p];
+		      }
+		    fac = fac*gamhold;
+		  }
+		ctr++;
+		tempeval[0] = E->PhysEvaluateBasis(xastaa, storage, tempeval[1], tempeval[2], tempeval[3]);
+		pq(uhats, xastaa, tempeval[0], nullarr, t1);
+		if(savesavehold[dim] > t1[0])
+		  {
+		    for(int j = 0; j < dim; j++)
+		      savesavehold[j] = xastaa[j][0];
+		    savesavehold[dim] = t1[0];
+		  }
+		for(int p = 0; p < dim; p++)
+		  {
+		    derpq(uhats, dereval[p], tempeval[0], tempeval[p+1]);
+		    g[p] = dereval[p];
+		  }
+
+		gnew2 = gnew1;
+		gnew1 = gnew0;
+		gnew = 0;
+		for(int p = 0; p < dim; p++)
+		  {
+		    gnew += pow(g[p],2);
+		  }
+
+		gnew = pow( gnew, 0.5);
+		gnew0 = gnew;
+		
+		if(abs(g[0]) > 1 || abs(g[1])>1 || abs(g[2])>1)
+		  {
+		    for(int p = 0; p < dim; p++)
+		      {
+			g[p] = g[p]/gnew;
+		      }
+		  }
+		NekDouble holdval = t1[0], saveholdval = t1[0];
+		Array<OneD, NekDouble> gsave(dim);
+
+		for(int p = 0; p < dim; p++)
+		  {
+		    gsave[p] = g[p];
+		  }
+
+		ct = 0;
+		while(holdval > saveholdxandval[dim] - c*fac*(gsave[0] + gsave[1] + gsave[2]) && ct < iter && fac > 1e-6)
+		  {
+		    ct++;
+		    for(int p = 0; p < dim; p++)
+		      {
+			holdxandval[p] = xastaa[p][0];
+		      }
+		    holdxandval[dim] = holdval;
+
+		    fac = fac*gamhold;
+		    for(int p = 0; p < dim; p++)
+		      {
+			xastaa[p][0] = holdxandval[p]  - fac*g[p];
+		      }
+		    
+
+		
+		
+		    while(abs(xastaa[0][0])>1 || abs(xastaa[1][0])>1 || abs(xastaa[2][0])>1)
+		      {
+			for(int p = 0; p < dim; p++)
+			  {
+			    xastaa[p][0] = holdxandval[p]  - fac*g[p];
+			    
+			  }
+			fac = fac*gamhold;
+		      }
+		    
+		    tempeval[0] = E->PhysEvaluateBasis(xastaa, storage, tempeval[1], tempeval[2]
+						       , tempeval[3]);
+
+		    for(int p = 0; p < dim; p++)
+		      {
+			derpq(uhats, dereval[p], tempeval[0], tempeval[p+1]);
+			g[p] = dereval[p];
+		      }
+		    gnew2 = gnew1;
+		    gnew1 = gnew0;
+
+		    gnew = 0;
+		    for(int p = 0; p < dim; p++)
+		      {
+			gnew += pow(g[p],2);
+		      }
+		    
+		    gnew = pow(gnew ,0.5);
+		    gnew0 = gnew;
+
+		    
+		    if(abs(g[2])>1 || abs(g[0]) > 1 || abs(g[1])>1)
+		      {
+			for(int p = 0; p < dim; p++)
+			  {
+			    g[p] = g[p]/gnew;
+			  }
+		      }
+
+		        
+		    pq(uhats, xastaa, tempeval[0], nullarr, t1);
+		    
+		    if(savesavehold[dim] > t1[0])
+		      {
+			for(int j = 0; j < dim; j++)
+			  savesavehold[j] = xastaa[j][0];
+			savesavehold[dim] = t1[0];
+		      }
+		    
+		    
+	            if(abs(holdval -t1[0]) > 1e-6)
+		      {
+			holdval = t1[0];
+		      }
+		    else
+		      break;
+		  }
+		cout<<"\n ctr = "<< ctr<<" ct = "<<ct;
+		avgiterGD = ctr;
+
+		if(saveholdval < holdval)
+		  {
+		    if((saveholdxandval[dim]<savesavehold[dim]) && abs(saveholdxandval[dim] - savesavehold[dim]) > 1e-5)
+		      {
+			for(int p = 0; p < dim+1; p++)
+			  { 
+			    savesavehold[p] = saveholdxandval[p];
+			  }
+			counter_min_change = 0;
+		      }
+		    else
+		      {
+			counter_min_change++;
+		      }
+		    for(int p = 0; p < dim; p++)
+		      { 
+			xastaa[p][0] = saveholdxandval[p];
+		      }
+		    
+		    t1[0] = saveholdval;
+		    
+		  }
+		else
+		  {
+		    
+		    
+		    if((saveholdxandval[dim]<savesavehold[dim]) && abs(saveholdxandval[dim] - savesavehold[dim]) > 1e-5)
+		      {
+			for(int p = 0; p < dim; p++)
+			  { 
+			    savesavehold[p] = saveholdxandval[p];
+			  }
+			savesavehold[dim] = saveholdxandval[dim];
+			counter_min_change = 0;
+		      }
+		    else
+		      {
+			counter_min_change++;
+		      }
+		    
+		    t1[0] = holdval;
+		    if(abs(xastaa[0][0])>1 || abs(xastaa[1][0])>1 || abs(xastaa[2][0])>1)
+		      {
+			for(int p = 0; p < dim; p++)
+			  {
+			    xastaa[p][0] = savesavehold[p];
+			  }
+		      }
+		    fac = 1;
+		    
+		  }
+	      }
+	    
+	  }
+	for(int p = 0; p < dim; p++)
+	  {
+	    retarr[p] = Array<OneD, NekDouble>(1, savesavehold[p]);
+	  }
+	avgiterGD = ctr;
+	
+	return;
+      }
+    
+  }
+
+  
+
+
+  
+  
+    // upon return, coords will have the only point with min value out of all vals
+    Array<OneD, Array<OneD, NekDouble> >find_roots( Array<OneD, NekDouble> &uhats, StdExpansion *E , Array<OneD, Array<OneD, NekDouble> > &storage, NekDouble &avgiterGD, int d , int surfflag, int volflag, int surfid)
     {
-      int dim = 3;
-      Array<OneD, NekDouble> g(dim);
-      double inf = numeric_limits<double>::infinity();
+      int dimension;
+      if(surfflag == 0 && volflag == 0)
+	dimension = 1;
+      else if(volflag == 0)
+	dimension = 2;
+      else
+	dimension = 3;
+
+      Array<OneD, Array<OneD, NekDouble> > coords(dimension);
+      boost::ignore_unused(surfid);
+      //Confederate matrix approach
+      if(surfflag == 0 && volflag == 0)
+	{
+	    
+	  vector<NekDouble>ret;
+	    
+	  while(true)
+	    {
+
+	      int N = uhats.size();
+
+	      //vector<NekDouble> uhatsmon;
+	      while(abs(uhats[N-1])<1e-8 && N > 0)
+		{
+		  N = N-1;
+
+		  if(N == 0)
+		    {
+
+		      ret.push_back(-1.0);
+		      ret.push_back(1.0);
+		      break;
+		    }
+
+		}
+	      if(N == 0)
+		break;
+	      Array<OneD, NekDouble> uhatsmon;
+
+	      //          vector<NekDouble> temp(N);
+	      Array<OneD, NekDouble> temp2(N*N);
+	      int ct = 0;
+	      // convert uhats to monomial, find roots of uhats or der of uhats
+	      //          cout<<"\n uhatsmon=\n";
+
+	      for(int k = 0; k < N; k++)
+		{
+		  for(int jj= 0 ; jj < N; jj++)
+		    {
+		      //  temp[jj ] = C[jj][k];
+		      temp2[ct++] = this->C[jj][k];
+		    }
+		  //  Vmath::Vmul(N, &temp[0], 1,  &uhats[0], 1, &temp[0], 1);
+		  //NekDouble temp2 =
+		  //cout<<" "<<Vmath::Vsum(N, &temp[0], 1);
+		  //  uhatsmon.push_back(temp2);
+		}
+
+	      //          cout<<"\n uhatsmon blas:\n";
+	      uhatsmon = blasmatvec(temp2, uhats, N, N);
+	      //for(int k = 0; k < uhatsmon.size(); k++)
+	      // cout<<" "<<uhatsmon[k]<<" ";
+	      if(abs(Vmath::Vmax(uhatsmon.size(), &uhatsmon[0], 1))<1e-10)
+		{
+		  ret.push_back(-1.0);
+		  ret.push_back(1.0);
+		  break;
+		}
+
+	      // truncate trailing zeros
+	      while(abs(uhatsmon[N-1])<1e-8 && N > 0)
+		{
+		  N = N-1;
+		  if(N == 0)
+		    {
+
+		      ret.push_back(-1.0);
+		      ret.push_back(1.0);
+		      break;
+
+		    }
+
+		}
+	      if(N == 0)
+		break;
+	      //N = uhatsmon.size();
+
+	      // if(N == 0 || Vmath::Vmin(N,&uhatsmon[0],1)<-1e10)
+	      //   {
+	      //     ret[0].push_back(-1.0);
+	      //     ret[0].push_back(1.0);
+	      //     return ret;
+	      //   }
+	      // now size of uhatsmon = N;
+	      vector<NekDouble> uhatsdiff;
+	      // if d == 1,
+
+	      if(d == 1)
+		{
+		  for(int k = 1; k < N; k++)
+		    {
+		      uhatsdiff.push_back(k*uhatsmon[k]);
+		    }
+		  N = N-1;
+		  if(N == 0)
+		    {
+		      ret.push_back(-1.0);
+		      ret.push_back(1.0);
+
+		      break;
+		    }
+
+		}
+	      else //d == 0
+		{
+		  for(int k = 0; k<N; k++)
+		    uhatsdiff.push_back(uhatsmon[k]);
+		}
+
+	      // if(N == 1)
+	      //   {
+	      //       // ret[0].push_back(-1.0);
+	      //       // ret[0].push_back(1.0);
+
+	      //     return ret;
+	      //   }
+
+	      Vmath::Smul(N, 1.0/uhatsdiff[N-1], &uhatsdiff[0], 1, &uhatsdiff[0], 1);
+
+	      vector<NekDouble> EIG_R = FindEigenval(uhatsdiff, N);
 
 
-      Array<OneD,NekDouble> xnew(dim) ,x(dim);
-      NekDouble gprev = inf;
-      int idxgprev;
-      int sz = testcoord3d[0].size();
-      Array<OneD, Array<OneD, NekDouble > > tempeval(4);
+	      for(int kk = 0; kk <EIG_R.size(); kk++)
+		{
+		  ret.push_back( EIG_R[kk] );
 
-      for(int i = 0; i < 4; i++)
-        {
-          tempeval[i] = Array<OneD, NekDouble>(E->GetNcoeffs());
-        }
+		}
+	      ret.push_back(-1.0);
+	      ret.push_back(1.0);
 
-      Array<OneD, NekDouble> nullarr(0), temp2, temp3, alltemp;
-      pq(uhats, testcoord3d, storage[0], nullarr, temp2 );
-      
-      gprev = Vmath::Vmin(sz, temp2, 1);
-      idxgprev = Vmath::Imin(temp2.size(), temp2, 1);
+	      break;
 
-      pq(uhats, testcoord3dqmid, interioreval3dqmid, nullarr, temp3 );
+	    }
+	  Array<OneD, Array<OneD, NekDouble> > retarr(1);
+	  retarr[0] = Array<OneD, NekDouble> (ret.size(), ret.data()); // check if this is eq to ret
 
-      NekDouble gprevmid =  Vmath::Vmin(temp3.size(), temp3, 1);
+	  return retarr;
+	}
 
-      if(gprev > gprevmid)
-        {
-          gprev = gprevmid;
-          idxgprev = sz + Vmath::Imin(temp3.size(), temp3, 1);
-        }
-      xnew[0] = testcoord3dlattice[0][idxgprev];
-      xnew[1] = testcoord3dlattice[1][idxgprev];
-      xnew[2] = testcoord3dlattice[2][idxgprev];
+      else if(dimension > 1 && surfflag == 1 && volflag == 0 )
+	{
+	  Array<OneD, Array<OneD, NekDouble> > coords(dimension);
+	  for(int k = 0; k < dimension; k++)
+	    {
+	      coords[k] = Array<OneD, NekDouble> (1);
+	    }
+	  if(surfid == 0)
+	    {
+	      steepestgradient_descent2Dquad(uhats, E, storage, coords,  avgiterGD, testcoord2dqqpts, testcoord2dqqmidpts, interioreval2dqqmidpts, testcoord2dqlattice);
+	      cout<<"\n avgitergd = "<<avgiterGD<<" ";
 
-      Array<OneD, NekDouble> xstart(dim);
-      xstart[0] = xnew[0];
-      xstart[1] = xnew[1];
-      xstart[2] = xnew[2];
-      NekDouble   fnval, fnvalnew, dfval;
-      NekDouble gnew = inf;
-      Array<OneD, NekDouble> dereval(dim);
-      Array<OneD, NekDouble> xsave(dim);
-        
-      if(gprev < 0 && abs(gprev)>1e-13)
-        {
-          Timer tt1;
-          tt1.Start();
+	    }
+	  else //tri
+	    {
 
-          Timer t12;
-        
+	      steepestgradient_descent2Dtri(uhats, E, storage, coords,  avgiterGD, testcoord2dtqpts, testcoord2dtqmidpts, interioreval2dtqmidpts, testcoord2dtlattice);
+	      cout<<"\n avgitergd = "<<avgiterGD<<" ";
 
-          NekDouble  iter = secarg;
-          Array<OneD, Array<OneD, NekDouble> > xastaa(dim);
-          Array<OneD, NekDouble> temp1 (uhats.size());
-          Array<OneD, Array<OneD, NekDouble > > tempeval(4);
-        
+	    }
+	  return coords;
 
-          for(int k = 0; k < tempeval.size(); k++)
-            {
-              tempeval[k] = Array<OneD, NekDouble>(uhats.size());
-            }
-          for(int p = 0; p < dim; p++)
-            {
-              xastaa[p] = Array<OneD, NekDouble>(1,xnew[p]);
-            }
+	}
+      else if(volflag == 1)
+	{
+	  for(int k = 0; k < dimension; k++)
+	    {
+	      coords[k] = Array<OneD, NekDouble> (1);
+	    }
+	  //  coords = gradient_descent3D(uhats, E, storage,  avgiterGD, testcoord3dqpts, test
+	  //coord3dqmidpts, interioreval3dqmidpts, testcoord3dlattice, sig);
 
-          xsave[0] = xnew[0];
-   xsave[1] = xnew[1];
-          xsave[2] = xnew[2];
-        
-          NekDouble c = chold;
-           //find der at xnew:                                                                           
-          xastaa[0][0] = xnew[0];
-          xastaa[1][0] = xnew[1];
-          xastaa[2][0] = xnew[2];
-        
-          tempeval[0] = E->PhysEvaluateBasis(xastaa, storage, tempeval[1], tempeval[2], tempeval[3]);
-        
+	  steepestgradientdescent3D(uhats, E, storage, coords,  avgiterGD, testcoord3dqpts, testcoord3dqmidpts, interioreval3dqmidpts, testcoord3dlattice);
+	  //cout<<"\n roots3d = "<<coords[0][0] <<" "<<coords[1][0]<<" "<<coords[2][0]<<"\n";
+	}
 
-          for(int p = 0; p < dim; p++)
-            {
-              derpq(uhats, dereval[p], tempeval[0], tempeval[p+1]);
-              g[p] = dereval[p];
-            }
-          fnval = 0;
-          Array<OneD, NekDouble> t1(1);
-        
-          pq(uhats, xastaa, tempeval[0], nullarr, t1);
-           
-          fnval = t1[0];
-        
-          gnew = pow((pow(g[0],2) + pow(g[1],2) + pow(g[2],2)) ,0.5);
-          if(gnew <1e-6)
-            {
-              retarr[0][0] = (xastaa[0][0]);
-              retarr[1][0] = (xastaa[1][0]);
-              retarr[2][0] = (xastaa[2][0]);
-              avgiterGD = 0;
-              tt1.Stop();
-              return;
-            }
-          dfval = c*(g[0] + g[1] + g[2]);
-
-        
-          xastaa[0][0] = xnew[0] - g[0]/gnew;
-          xastaa[1][0] = xnew[1] - g[1]/gnew;
-          xastaa[2][0] = xnew[2] - g[2]/gnew;
-          NekDouble fac = gamhold;
-
-          switch(E->DetShapeType())
-            {
-            case LibUtilities::eHexahedron:
-              while(abs(xastaa[0][0])>1 || abs(xastaa[1][0])>1 || abs(xastaa[2][0] ) > 1)
-                {
-                  xastaa[0][0] = xnew[0] - fac*g[0]/gnew;
-                  xastaa[1][0] = xnew[1] - fac*g[1]/gnew;
-                  xastaa[2][0] = xnew[2] - fac*g[2]/gnew;
-                  fac = fac*gamhold;
-
-                }
-              break;
-            case LibUtilities::eTetrahedron:
-              while(abs(xastaa[0][0])>1 || abs(xastaa[1][0])>1 || abs(xastaa[2][0] ) > 1 || xastaa[0][0] + xastaa[1][0] > 1e-9 || xastaa[0][0] + xastaa[2][0] > 1e-9 || xastaa[1][0] + xastaa[2][0] > 1e-9)
-                {
-        
-                  xastaa[0][0] = xnew[0] - fac*g[0]/gnew;
-                  xastaa[1][0] = xnew[1] - fac*g[1]/gnew;
-                  xastaa[2][0] = xnew[2] - fac*g[2]/gnew;
-                  fac = fac*gamhold;
-                }
-              break;
-            default: cout<<"\n invalid element!\n";
-              exit(0);
-            }
-
-          tempeval[0] = E->PhysEvaluateBasis(xastaa, storage, tempeval[1], tempeval[2], tempeval[3]);
-          fnvalnew = 0;
-          pq(uhats, xastaa, tempeval[0], nullarr, t1);
-          fnvalnew = t1[0];
-          NekDouble tls = 1, gam = fac;
-          Array<OneD, NekDouble> gdnew(dim);
-          Array<OneD, NekDouble> xold(dim);
-          tls = tls*gam;
-          int ctr = 0;
-
-          while(ctr < iter && fnvalnew > fnval + tls*dfval/gnew)
-            {
-              ctr++;
-              xastaa[0][0] = xnew[0] - tls*(g[0]/gnew);
-              xastaa[1][0] = xnew[1] - tls*g[1]/gnew;
-              xastaa[2][0] = xnew[2] - tls*g[2]/gnew;
-              if(abs(xastaa[0][0] ) > 1 || abs(xastaa[1][0] ) > 1 || abs(xastaa[1][0] ) > 1 )
-                {
-                  tls = tls*gam;
-
-                  continue;
-                }
-
-              tempeval[0] = E->PhysEvaluateBasis(xastaa,storage, NullNekDouble1DArray, NullNekDouble1DArray, NullNekDouble1DArray);
-              fnvalnew = 0;
-              Array<OneD, NekDouble> t1(1);
-              pq(uhats, xastaa, tempeval[0], nullarr, t1);
-              fnvalnew = t1[0];
-
-              tls= tls*gam;
-            }
-          xnew[0] = xastaa[0][0];//xnew[0] - tls*g[0]/gnew;
-	  xnew[1] = xastaa[1][0];//xnew[1] - tls*g[1]/gnew;
-	  xnew[2] = xastaa[2][0];//xnew[2] - tls*g[2]/gnew;
-	   
-          if(xnew[0] - xsave[0] < 1e-7 && xnew[1] - xsave[1] <1e-7  && xnew[2] - xsave[2] <1e-7 )
-            {
-              retarr[0][0] = (xnew[0]);
-              retarr[1][0] = (xnew[1]);
-              retarr[2][0] = (xnew[2]);
-              iterGD = ctr;
-              tt1.Stop();
-        
-              return;
-
-            }
-        
-
-          avgiterGD = ctr;
-          if(abs(xnew[0] ) > 1 || abs(xnew[1] ) > 1 || abs(xnew[2] ) > 1 )
-            {
-
-              retarr[0][0] = (xstart[0]);
-              retarr[1][0] = (xstart[1]);
-              retarr[2][0] = (xstart[2]);
-
-            }
-          else
-            {
-
-              retarr[0][0] = (xnew[0]);
-              retarr[1][0] = (xnew[1]);
-              retarr[2][0] = (xnew[2]);
-
-            }
-          tt1.Stop();
-        
-
-          return;
-        }
-      return;
-
+      return coords;
+  
+    }
+  
+  
+    po::options_description &GetOptions()
+    {
+      return m_desc;
     }
 
+    po::variables_map &GetVariableMap()
+    {
+      return m_vm;
+    }
 
+    std::vector<string> &GetPointsType()
+    {
+      return m_pointstype;
+    }
+    vector<int> &GetPoints()
+    {
+      return m_points;
+    }
+    NekDouble &GetTol()
+    {
+      return iterGD;
+    }
+    NekDouble &GetEps()
+    {
+      return eps;
+    }
+    int &GetAvgNum()
+    {
+      return avgnum;
+    }
+    NekDouble &GetMaxIter()
+    {
+      return secarg;
+    }
+    NekDouble &GetGamHold()
+    {
+      return gamhold;
+    }
+    void SetC(Array<OneD, Array<OneD, NekDouble> >&newC)
+    {
+      this->C = newC;
+    }
+    NekDouble &GetCHold()
+    {
+      return chold;
+    }
 
-  
-  
-  // upon return, coords will have the only point with min value out of all vals
-  Array<OneD, Array<OneD, NekDouble> >find_roots( Array<OneD, NekDouble> &uhats, StdExpansion *E , Array<OneD, Array<OneD, NekDouble> > &storage, NekDouble &avgiterGD, int d , int surfflag, int volflag, int surfid)
+    vector<PointsKey> &GetPointsKey()
+    {
+      return m_pkey;
+    }
+
+    vector<BasisKey>  &GetBasisKey()
+    {
+      return m_bkey;
+    }
+    LibUtilities::ShapeType  &GetStype()
+    {
+      return stypeglo;
+    }
+    void SetStartArr(Array<OneD, NekDouble> &st)
+    {
+      this->startarr = st;
+    }
+  void Setgamhold(NekDouble g)
   {
-    int dimension;
-    if(surfflag == 0 && volflag == 0)
-      dimension = 1;
-    else if(volflag == 0)
-      dimension = 2;
-    else
-      dimension = 3;
+    gamhold = g;
+  }
+  
+  void Setchold(NekDouble c)
+  {
+    chold = c;
+  }
+  
+    Array<OneD, Array<OneD, NekDouble>> GetQuadratureMidCoords(StdExpansion *E, Array<OneD, Array<OneD, NekDouble>> &coords)
 
-    Array<OneD, Array<OneD, NekDouble> > coords(dimension);
-    boost::ignore_unused(surfid);
-    //Confederate matrix approach
-    if(surfflag == 0 && volflag == 0)
-      {
-	    
-	vector<NekDouble>ret;
-	    
-	while(true)
+    {
+
+      int dimension = E->GetShapeDimension();
+      //   const auto totPoints = (unsigned) E->GetTotPoints();
+      int totPoints = coords[0].size()-1;//pow(E->GetBasis(0)->GetZ().size()-1, dimension);
+
+      // form lattice by adding midpoints between each pair of quad points
+      Array<OneD, Array<OneD, NekDouble> > quadraturemidcoords(dimension);
+      for(int k = 0 ; k < dimension; k++)
+	{
+	  quadraturemidcoords[k] = Array<OneD, NekDouble> (totPoints);
+
+	  for(int p = 0; p < quadraturemidcoords[k].size(); p++)
+	    {
+	      quadraturemidcoords[k][p] = (coords[k][p]+coords[k][p+1])/2;
+	    }
+	}
+
+      return quadraturemidcoords;
+    }
+
+  
+  
+    Array<OneD, Array<OneD, NekDouble>> GetLatticeCoords( Array<OneD, Array<OneD, NekDouble>> &coords, Array<OneD, Array<OneD, NekDouble>> &midcoords)
+
+    {
+      Array<OneD, Array<OneD, NekDouble>> latticecoords(coords.size());
+
+      for(int k = 0; k < coords.size(); k++)
+	{
+	  latticecoords[k] = Array<OneD, NekDouble>(coords[k].size() + midcoords[k].size());
+	  Vmath::Vcopy(coords[k].size(), &coords[k][0], 1, &latticecoords[k][0], 1);
+	  Vmath::Vcopy(midcoords[k].size(), &midcoords[k][0], 1, &latticecoords[k][coords[k].size()], 1);
+
+	}
+      
+
+      return latticecoords;
+    }
+
+  
+  
+    Array<OneD, Array<OneD, NekDouble>> GetCoords(StdExpansion *E)
+    {
+      int dimension = E->GetShapeDimension();
+      const auto totPoints = (unsigned) E->GetTotPoints();
+
+      Array<OneD, NekDouble> x(totPoints), y(totPoints), z(totPoints);
+      Array<OneD, Array<OneD, NekDouble>> coords(dimension);
+
+      switch (dimension)
+	{
+	case 1:
 	  {
-
-	    int N = uhats.size();
-
-	    //vector<NekDouble> uhatsmon;
-	    while(abs(uhats[N-1])<1e-8 && N > 0)
-	      {
-		N = N-1;
-
-		if(N == 0)
-		  {
-
-		    ret.push_back(-1.0);
-		    ret.push_back(1.0);
-		    break;
-		  }
-
-	      }
-	    if(N == 0)
-	      break;
-	    Array<OneD, NekDouble> uhatsmon;
-
-	    //          vector<NekDouble> temp(N);
-	    Array<OneD, NekDouble> temp2(N*N);
-	    int ct = 0;
-	    // convert uhats to monomial, find roots of uhats or der of uhats
-	    //          cout<<"\n uhatsmon=\n";
-
-	    for(int k = 0; k < N; k++)
-	      {
-		for(int jj= 0 ; jj < N; jj++)
-		  {
-		    //  temp[jj ] = C[jj][k];
-		    temp2[ct++] = this->C[jj][k];
-		  }
-		//  Vmath::Vmul(N, &temp[0], 1,  &uhats[0], 1, &temp[0], 1);
-		//NekDouble temp2 =
-		//cout<<" "<<Vmath::Vsum(N, &temp[0], 1);
-		//  uhatsmon.push_back(temp2);
-	      }
-
-	    //          cout<<"\n uhatsmon blas:\n";
-	    uhatsmon = blasmatvec(temp2, uhats, N, N);
-	    //for(int k = 0; k < uhatsmon.size(); k++)
-	    // cout<<" "<<uhatsmon[k]<<" ";
-	    if(abs(Vmath::Vmax(uhatsmon.size(), &uhatsmon[0], 1))<1e-10)
-	      {
-		ret.push_back(-1.0);
-		ret.push_back(1.0);
-		break;
-	      }
-
-	    // truncate trailing zeros
-	    while(abs(uhatsmon[N-1])<1e-8 && N > 0)
-	      {
-		N = N-1;
-		if(N == 0)
-		  {
-
-		    ret.push_back(-1.0);
-		    ret.push_back(1.0);
-		    break;
-
-		  }
-
-	      }
-	    if(N == 0)
-	      break;
-	    //N = uhatsmon.size();
-
-	    // if(N == 0 || Vmath::Vmin(N,&uhatsmon[0],1)<-1e10)
-	    //   {
-	    //     ret[0].push_back(-1.0);
-	    //     ret[0].push_back(1.0);
-	    //     return ret;
-	    //   }
-	    // now size of uhatsmon = N;
-	    vector<NekDouble> uhatsdiff;
-	    // if d == 1,
-
-	    if(d == 1)
-	      {
-		for(int k = 1; k < N; k++)
-		  {
-		    uhatsdiff.push_back(k*uhatsmon[k]);
-		  }
-		N = N-1;
-		if(N == 0)
-		  {
-		    ret.push_back(-1.0);
-		    ret.push_back(1.0);
-
-		    break;
-		  }
-
-	      }
-	    else //d == 0
-	      {
-		for(int k = 0; k<N; k++)
-		  uhatsdiff.push_back(uhatsmon[k]);
-	      }
-
-	    // if(N == 1)
-	    //   {
-	    //       // ret[0].push_back(-1.0);
-	    //       // ret[0].push_back(1.0);
-
-	    //     return ret;
-	    //   }
-
-	    Vmath::Smul(N, 1.0/uhatsdiff[N-1], &uhatsdiff[0], 1, &uhatsdiff[0], 1);
-
-	    vector<NekDouble> EIG_R = FindEigenval(uhatsdiff, N);
-
-
-	    for(int kk = 0; kk <EIG_R.size(); kk++)
-	      {
-		ret.push_back( EIG_R[kk] );
-
-	      }
-	    ret.push_back(-1.0);
-	    ret.push_back(1.0);
-
+	    E->GetCoords(x);
+	    coords[0] = x;
 	    break;
-
 	  }
-	Array<OneD, Array<OneD, NekDouble> > retarr(1);
-	retarr[0] = Array<OneD, NekDouble> (ret.size(), ret.data()); // check if this is eq to ret
 
-	return retarr;
-      }
-
-    else if(dimension > 1 && surfflag == 1 && volflag == 0 )
-      {
-	Array<OneD, Array<OneD, NekDouble> > coords(dimension);
-	for(int k = 0; k < dimension; k++)
+	case 2:
 	  {
-	    coords[k] = Array<OneD, NekDouble> (1);
+	    E->GetCoords(x, y);
+	    coords[0] = x;
+	    coords[1] = y;
+	    break;
 	  }
-	if(surfid == 0)
+
+	case 3:
 	  {
-	    steepestgradient_descent2Dquad(uhats, E, storage, coords,  avgiterGD, testcoord2dqqpts, testcoord2dqqmidpts, interioreval2dqqmidpts, testcoord2dqlattice);
-	    cout<<"\n avgitergd = "<<avgiterGD<<" ";
-
+	    E->GetCoords(x, y, z);
+	    coords[0] = x;
+	    coords[1] = y;
+	    coords[2] = z;
+	    break;
 	  }
-	else //tri
-	  {
-
-	    steepestgradient_descent2Dtri(uhats, E, storage, coords,  avgiterGD, testcoord2dtqpts, testcoord2dtqmidpts, interioreval2dtqmidpts, testcoord2dtlattice);
-	    cout<<"\n avgitergd = "<<avgiterGD<<" ";
-
-	  }
-	return coords;
-
-      }
-    else if(volflag == 1)
-      {
-	for(int k = 0; k < dimension; k++)
-	  {
-	    coords[k] = Array<OneD, NekDouble> (1);
-	  }
-	//  coords = gradient_descent3D(uhats, E, storage,  avgiterGD, testcoord3dqpts, test
-	//coord3dqmidpts, interioreval3dqmidpts, testcoord3dlattice, sig);
-
-	steepestgradientdescent3D(uhats, E, storage, coords,  avgiterGD, testcoord3dqpts, testcoord3dqmidpts, interioreval3dqmidpts, testcoord3dlattice);
-	//cout<<"\n roots3d = "<<coords[0][0] <<" "<<coords[1][0]<<" "<<coords[2][0]<<"\n";
-      }
-
-    return coords;
-  
-  }
-  
-  
-  po::options_description &GetOptions()
-  {
-    return m_desc;
-  }
-
-  po::variables_map &GetVariableMap()
-  {
-    return m_vm;
-  }
-
-  std::vector<string> &GetPointsType()
-  {
-    return m_pointstype;
-  }
-  vector<int> &GetPoints()
-  {
-    return m_points;
-  }
-  NekDouble &GetTol()
-  {
-    return iterGD;
-  }
-  NekDouble &GetEps()
-  {
-    return eps;
-  }
-  int &GetAvgNum()
-  {
-    return avgnum;
-  }
-  NekDouble &GetMaxIter()
-  {
-    return secarg;
-  }
-  NekDouble &GetGamHold()
-  {
-    return gamhold;
-  }
-  void SetC(Array<OneD, Array<OneD, NekDouble> >&newC)
-  {
-    this->C = newC;
-  }
-  NekDouble &GetCHold()
-  {
-    return chold;
-  }
-
-  vector<PointsKey> &GetPointsKey()
-  {
-    return m_pkey;
-  }
-
-  vector<BasisKey>  &GetBasisKey()
-  {
-    return m_bkey;
-  }
-  LibUtilities::ShapeType  &GetStype()
-  {
-    return stypeglo;
-  }
-  void SetStartArr(Array<OneD, NekDouble> &st)
-  {
-    startarr = st;;
-  }
-
-  Array<OneD, Array<OneD, NekDouble>> GetQuadratureMidCoords(StdExpansion *E, Array<OneD, Array<OneD, NekDouble>> &coords)
-
-  {
-
-    int dimension = E->GetShapeDimension();
-    //   const auto totPoints = (unsigned) E->GetTotPoints();
-    int totPoints = (E->GetTotPoints()-1);//pow(E->GetBasis(0)->GetZ().size()-1, dimension);
-
-    // form lattice by adding midpoints between each pair of quad points
-    Array<OneD, Array<OneD, NekDouble> > quadraturemidcoords(dimension);
-    for(int k = 0 ; k < dimension; k++)
-      {
-	quadraturemidcoords[k] = Array<OneD, NekDouble> (totPoints);
-
-	for(int p = 0; p < quadraturemidcoords[k].size(); p++)
-	  {
-	    quadraturemidcoords[k][p] = (coords[k][p]+coords[k][p+1])/2;
-	  }
-      }
-
-    return quadraturemidcoords;
-  }
-
-  
-  
-  Array<OneD, Array<OneD, NekDouble>> GetLatticeCoords( Array<OneD, Array<OneD, NekDouble>> &coords, Array<OneD, Array<OneD, NekDouble>> &midcoords)
-
-  {
-    Array<OneD, Array<OneD, NekDouble>> latticecoords(coords.size());
-
-    for(int k = 0; k < coords.size(); k++)
-      {
-	latticecoords[k] = Array<OneD, NekDouble>(coords[k].size() + midcoords[k].size());
-	Vmath::Vcopy(coords[k].size(), &coords[k][0], 1, &latticecoords[k][0], 1);
-	Vmath::Vcopy(midcoords[k].size(), &midcoords[k][0], 1, &latticecoords[k][coords[k].size()], 1);
-
-      }
-
-    return latticecoords;
-  }
-
-  
-  
-  Array<OneD, Array<OneD, NekDouble>> GetCoords(StdExpansion *E)
-  {
-    int dimension = E->GetShapeDimension();
-    const auto totPoints = (unsigned) E->GetTotPoints();
-
-    Array<OneD, NekDouble> x(totPoints), y(totPoints), z(totPoints);
-    Array<OneD, Array<OneD, NekDouble>> coords(dimension);
-
-    switch (dimension)
-      {
-      case 1:
-	{
-	  E->GetCoords(x);
-	  coords[0] = x;
+	default:
 	  break;
 	}
 
-      case 2:
-	{
-	  E->GetCoords(x, y);
-	  coords[0] = x;
-	  coords[1] = y;
-	  break;
-	}
+      return coords;
+    }
+    
+    string funcdef;
+    
+  protected:
+    po::options_description m_desc;
+    po::variables_map m_vm;
+    vector<PointsKey> m_pkey;
+    vector<BasisKey> m_bkey;
+    NekDouble iterGD = 1e-2;
+    NekDouble secarg = 1e3;
+    NekDouble eps = -0.1;
+    int avgnum = 1;
+    NekDouble chold = 0.1;
+    NekDouble gamhold = 0.6;
+    std::string    m_shape;
+    std::string    m_ntype;
+    vector<string> m_basis{3, "NoBasisType"};
+    vector<string> m_pointstype{3, "NoPointsType"};
+    vector<int>    m_order;
+    vector<int>    m_points;
+    Array<OneD, Array<OneD, NekDouble> > C;
+    LibUtilities::ShapeType stypeglo;
+    Array<OneD, NekDouble> startarr;  
 
-      case 3:
-	{
-	  E->GetCoords(x, y, z);
-	  coords[0] = x;
-	  coords[1] = y;
-	  coords[2] = z;
-	  break;
-	}
-      default:
-	break;
-      }
-
-    return coords;
-  }
-
-  string funcdef;
-
-protected:
-  po::options_description m_desc;
-  po::variables_map m_vm;
-  vector<PointsKey> m_pkey;
-  vector<BasisKey> m_bkey;
-  NekDouble iterGD = 1e-2;
-  NekDouble secarg = 1e3;
-  NekDouble eps = -0.1;
-  int avgnum = 1;
-  NekDouble chold = 0.1;
-  NekDouble gamhold = 0.6;
-  std::string    m_shape;
-  std::string    m_ntype;
-  vector<string> m_basis{3, "NoBasisType"};
-  vector<string> m_pointstype{3, "NoPointsType"};
-  vector<int>    m_order;
-  vector<int>    m_points;
-  Array<OneD, Array<OneD, NekDouble> > C;
-  LibUtilities::ShapeType stypeglo;
-  Array<OneD, NekDouble> startarr;  
-
-};
+  };
 
 #endif

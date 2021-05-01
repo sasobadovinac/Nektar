@@ -11,33 +11,19 @@ ADD_NEKTAR_EXECUTABLE(StdInterpDerivBasis
 ADD_NEKTAR_EXECUTABLE(StdEquiToCoeff2D
     COMPONENT demos DEPENDS StdRegions SOURCES StdEquiToCoeff2D.cpp)
 
-#ADD_NEKTAR_EXECUTABLE(BarycentricSpeedTest3D
-#        COMPONENT demos DEPENDS StdRegions SOURCES BarycentricSpeedTest3D.cpp)
-
-#ADD_NEKTAR_EXECUTABLE(BarycentricSpeedTest3DEvalOnly
-#        COMPONENT demos DEPENDS StdRegions SOURCES BarycentricSpeedTest3DEvalOnly.cpp)
-
-#ADD_NEKTAR_EXECUTABLE(BarycentricSpeedTest2D
-#        COMPONENT demos DEPENDS StdRegions SOURCES BarycentricSpeedTest2D.cpp)
-
-#ADD_NEKTAR_EXECUTABLE(BarycentricSpeedTest2DEvalOnly
-#        COMPONENT demos DEPENDS StdRegions SOURCES BarycentricSpeedTest2DEvalOnly.cpp)
-
-#ADD_NEKTAR_EXECUTABLE(StdInterpBasisTimings
-#        COMPONENT demos DEPENDS StdRegions SOURCES StdInterpBasisTimings.cpp)
 ADD_NEKTAR_EXECUTABLE(StdProjectPositivityPres3D
         COMPONENT demos DEPENDS StdRegions SOURCES StdProjectPositivityPres3D.cpp)
 ADD_NEKTAR_EXECUTABLE( StdProjectPositivityPres3D_tets
         COMPONENT demos DEPENDS StdRegions SOURCES StdProjectPositivityPres3D_tets.cpp)
 ADD_NEKTAR_EXECUTABLE( TriDerivativeDemo
         COMPONENT demos DEPENDS StdRegions SOURCES  TriDerivativeDemo.cpp)
-ADD_NEKTAR_EXECUTABLE( RootFinderTest
-	COMPONENT demos DEPENDS StdRegions SOURCES  RootFinderTest.cpp)
+ADD_NEKTAR_EXECUTABLE( GDBackTrackingTest
+	COMPONENT demos DEPENDS StdRegions SOURCES  GDBackTrackingTest.cpp)
 
 # Rootfinder Test
-ADD_NEKTAR_TEST(RootFinderDemo_Quad_Orth_P5_Q5_c06_g03)
-ADD_NEKTAR_TEST(RootFinderDemo_Tri_Orth_P5_Q5_c06_g03)
-
+ADD_NEKTAR_TEST(GDBacktracking_Quad_Orth_P5_Q5)
+ADD_NEKTAR_TEST(GDBacktracking_Tri_Orth_P5_Q5)
+ADD_NEKTAR_TEST(GDBacktracking_Hex_Orth_P5_Q5)
 # Interpolation tests.
 ADD_NEKTAR_TEST(StdInterp_Seg_Mod_P6_Q7)
 ADD_NEKTAR_TEST(StdInterp_Hex_Mod_P6_Q7)
