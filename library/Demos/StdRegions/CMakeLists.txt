@@ -24,6 +24,8 @@ ADD_NEKTAR_EXECUTABLE( GDBackTrackingTest
 ADD_NEKTAR_TEST(GDBacktracking_Quad_Orth_P5_Q5)
 ADD_NEKTAR_TEST(GDBacktracking_Tri_Orth_P5_Q5)
 ADD_NEKTAR_TEST(GDBacktracking_Hex_Orth_P5_Q5)
+ADD_NEKTAR_TEST(GDBacktracking_Tet_Orth_P6_Q6)
+
 # Interpolation tests.
 ADD_NEKTAR_TEST(StdInterp_Seg_Mod_P6_Q7)
 ADD_NEKTAR_TEST(StdInterp_Hex_Mod_P6_Q7)
