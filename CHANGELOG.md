@@ -39,6 +39,9 @@ v5.1.0
 - Fix to interppointsdatatofld to allow for mpi processing of large files (!1191)
 - Fix the logic of C0Projection:helmsmoothing (!1220)
 
+**Filter**:
+- Add MaxMinFields filter to record the max/min at each quadrature point and output the max/min fields. (!1256)
+
 **CardiacEPSolver**
 - Added additional parameter sets to Fenton-Karma model (!1119)
 
