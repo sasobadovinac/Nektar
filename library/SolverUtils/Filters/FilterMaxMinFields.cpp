@@ -35,6 +35,7 @@
 #include <boost/core/ignore_unused.hpp>
 
 #include <SolverUtils/Filters/FilterMaxMinFields.h>
+#include <CompressibleFlowSolver/Misc/VariableConverter.h>
 
 namespace Nektar
 {
@@ -58,8 +59,7 @@ FilterMaxMinFields::FilterMaxMinFields(
     }
     else
     {
-        LibUtilities::Equation equ(
-            m_session->GetInterpreter(), it->second);
+        LibUtilities::Equation equ(m_session->GetInterpreter(), it->second);
         m_sampleFrequency = round(equ.Evaluate());
     }
 
@@ -75,11 +75,66 @@ FilterMaxMinFields::FilterMaxMinFields(
         m_isMax = !(boost::iequals(sOption, "minimum") || 
                     boost::iequals(sOption, "min"));
     }
+
+    // Initialize other member vars
+    m_problemType = eCompressible;
 }
 
 FilterMaxMinFields::~FilterMaxMinFields()
 {
 }
+
+
+void FilterMaxMinFields::v_Initialise(
+    const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
+    const NekDouble &time)
+{
+    // Initialise output arrays
+    FilterFieldConvert::v_Initialise(pFields, time);
+
+    // Allocate storage
+    m_curFieldsPhys.resize(m_variables.size());
+    m_outFieldsPhys.resize(m_variables.size());
+    for (int n = 0; n < m_variables.size(); ++n)
+    {
+        m_curFieldsPhys[n] = Array<OneD, NekDouble>(
+                                 pFields[0]->GetTotPoints(), 0.0);
+        m_outFieldsPhys[n] = Array<OneD, NekDouble>(
+                                 pFields[0]->GetTotPoints(), 0.0);
+    }
+
+    // Check type of problem
+    std::string firstVarName = pFields[0]->GetSession()->GetVariable(0);
+    if (boost::iequals(firstVarName, "u"))
+    {
+        m_problemType = eIncompressible;
+    }
+    else if (boost::iequals(firstVarName, "rho"))
+    {
+        m_problemType = eCompressible;
+    }
+    else
+    {
+        m_problemType = eOthers;
+    }
+
+}
+
+
+// For compressible flows, also compute max/min for extra variabless, which can
+// include (u, v, w, p, T. s, a, Mach, sensor, ArtificialVisc), but not sure
+// for variables (divVelSquare, curlVelSquare, Ducros) when Ducros sensor is
+// turned on. Now presume Ducros sensor is turned off.
+// For other cases, including incompressible flows, only compute max/min for
+// variables in pFields.
+// 
+// curFieldsCoeffs is the coeffs     at current time step, size=[*][m_ncoeffs]
+// m_curFieldsPhys is the phys value at current time step, size=[*][m_npoints]
+// m_outFields     is the coeffs     for output fld
+// m_outFieldsPhys is the phys value for output fld
+// PS. curFieldsCoeffs is not set to be a member variable since its size will
+//     be increased by CompressibleFlowSystem::v_ExtraFldOutput to also include
+//     coeffs for extra variables. fieldcoeffs is not used.
 
 void FilterMaxMinFields::v_ProcessSample(
     const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
@@ -88,75 +143,85 @@ void FilterMaxMinFields::v_ProcessSample(
 {
     boost::ignore_unused(fieldcoeffs, time);
 
-
-    // fieldcoeffs is current coeffs at current time step, size=[n][m_ncoeffs]
-    // fieldPhys is physical value at current time step, size=[n][m_npoints]
-    // m_outFields is the coeffs for output fld, ref. FilterFieldConvert.cpp -> line 234,242
-    // outFieldsPhys is the physical value for output fld
-
-    // Generate array for physical variables
-    const int nFields = pFields.size();
-    std::vector<Array<OneD, NekDouble> > fieldPhys(nFields);                                              
-    for (int n = 0; n < nFields; ++n)
+    int nFields, nVars;
+ 
+    if (m_problemType==eCompressible)
     {
-        fieldPhys[n] = pFields[n]->GetPhys();
-    }
-    
-    std::vector<Array<OneD, NekDouble> > outFieldsPhys(nFields);
-    for (int n = 0; n < nFields; ++n)
-    {
-        outFieldsPhys[n] = Array<OneD, NekDouble>(pFields[0]->GetTotPoints(), 0.0);
-    }
+        nFields = pFields.size();       // Conservative vars
+        nVars   = m_variables.size();   // Include extra vars
 
-    // Update outFieldsPhys
-    // What is the following if() for?
-    // Ref. FilterReynoldsStresses.cpp
-    for (int j = 0; j < nFields; ++j)
-    {
-        pFields[0]->BwdTrans(m_outFields[j], outFieldsPhys[j]);
-        if (pFields[0]->GetWaveSpace())
+        std::vector<Array<OneD, NekDouble> > curFieldsCoeffs(nFields);
+        std::vector<std::string> tmpVariables;    // dummy vector 
+        for (int n = 0; n < nFields; ++n)
         {
-            pFields[0]->HomogeneousBwdTrans(outFieldsPhys[j], outFieldsPhys[j]);
+            curFieldsCoeffs[n] = pFields[n]->GetCoeffs();
+        }
+
+        // Get extra variables, then curFieldsCoeffs.size() == nVars
+        auto equ = m_equ.lock();
+        ASSERTL0(equ, "Weak pointer expired");
+        equ->ExtraFldOutput(curFieldsCoeffs, tmpVariables);
+
+        // Updata m_curFieldsPhys and m_outFieldsPhys
+        for (int n = 0; n < nVars; ++n)
+        {
+            pFields[0]->BwdTrans(curFieldsCoeffs[n], m_curFieldsPhys[n]);
+            pFields[0]->BwdTrans(m_outFields[n],     m_outFieldsPhys[n]);
+        }
+    }
+    else
+    {
+        nFields = pFields.size();
+        nVars   = nFields;
+
+        // Updata m_curFieldsPhys and m_outFieldsPhys
+        for (int n = 0; n < nVars; ++n)
+        {
+            m_curFieldsPhys[n] = pFields[n]->GetPhys();
+
+            pFields[0]->BwdTrans(m_outFields[n], m_outFieldsPhys[n]);
+            if (pFields[0]->GetWaveSpace())
+            {
+                pFields[0]->HomogeneousBwdTrans(m_outFieldsPhys[n], m_outFieldsPhys[n]);
+            }          
         }
     }
 
 
     // Get max/min for each field
-    // Save the result in outFieldsPhys
-    for(int n = 0; n < nFields; ++n)
+    for(int n = 0; n < nVars; ++n)
     {
-        size_t length = outFieldsPhys[n].size();
+        size_t length = m_outFieldsPhys[n].size();
         
         if (m_isMax)
         {
             // Compute max
-            for (int i=0; i<length; ++i)
+            for (int i = 0; i < length; ++i)
             {
-                if (fieldPhys[n][i] > outFieldsPhys[n][i])
+                if (m_curFieldsPhys[n][i] > m_outFieldsPhys[n][i])
                 {
-                    outFieldsPhys[n][i] = fieldPhys[n][i];
+                    m_outFieldsPhys[n][i] = m_curFieldsPhys[n][i];
                 }
             }
         }
         else
         {
             // Compute min
-            for (int i=0; i<length; ++i)
+            for (int i = 0; i < length; ++i)
             {
-                if (fieldPhys[n][i] < outFieldsPhys[n][i])
+                if (m_curFieldsPhys[n][i] < m_outFieldsPhys[n][i])
                 {
-                    outFieldsPhys[n][i] = fieldPhys[n][i];
+                    m_outFieldsPhys[n][i] = m_curFieldsPhys[n][i];
                 }
             }
         }
-
     }
 
-    // Forward transform and put into m_outFields (except pressure)
-    for (int n = 0; n < nFields; ++n)
+    // Forward transform and put into m_outFields
+    for (int n = 0; n < nVars; ++n)
     {
-        pFields[0]->FwdTrans_IterPerExp(outFieldsPhys[n], m_outFields[n]);
-    }    
+        pFields[0]->FwdTrans_IterPerExp(m_outFieldsPhys[n], m_outFields[n]);
+    } 
 
 }
 
