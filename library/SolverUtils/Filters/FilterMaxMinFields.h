@@ -78,24 +78,18 @@ public:
 
 protected:
     bool m_isMax;
-    int  m_spaceDim;
     ProblemType m_problemType;
-    
-    //std::vector<Array<OneD, NekDouble> > m_outFieldsPhys;
-    //std::vector<Array<OneD, NekDouble> > fieldPhys;
     std::vector<Array<OneD, NekDouble> > m_curFieldsPhys;
     std::vector<Array<OneD, NekDouble> > m_outFieldsPhys;
-
-
     
     virtual void v_Initialise(
         const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
         const NekDouble &time);
-    /*
     virtual void v_FillVariablesName(
-        const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields);
-    */
-
+        const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields)
+    {
+        FilterFieldConvert::v_FillVariablesName(pFields);
+    }
     virtual void v_ProcessSample(
         const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
               std::vector<Array<OneD, NekDouble> > &fieldcoeffs,
@@ -114,13 +108,8 @@ protected:
         {
             return "_min";
         }
-    }
+    } 
     
-    virtual void v_FillVariablesName(
-        const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields)
-    {
-        FilterFieldConvert::v_FillVariablesName(pFields);
-    }
 };
 }
 }

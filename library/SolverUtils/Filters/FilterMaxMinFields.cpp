@@ -78,7 +78,6 @@ FilterMaxMinFields::FilterMaxMinFields(
 
     // Initialize other member vars
     m_problemType = eCompressible;
-    m_spaceDim    = 2;
 }
 
 FilterMaxMinFields::~FilterMaxMinFields()
@@ -90,9 +89,7 @@ void FilterMaxMinFields::v_Initialise(
     const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
     const NekDouble &time)
 {
-
     // Initialise output arrays
-    // FilterMaxMinFields::v_FillVariablesName is called inside
     FilterFieldConvert::v_Initialise(pFields, time);
 
     // Allocate storage
@@ -100,10 +97,11 @@ void FilterMaxMinFields::v_Initialise(
     m_outFieldsPhys.resize(m_variables.size());
     for (int n = 0; n < m_variables.size(); ++n)
     {
-        m_curFieldsPhys[n] = Array<OneD, NekDouble>(pFields[0]->GetTotPoints(), 0.0);
-        m_outFieldsPhys[n] = Array<OneD, NekDouble>(pFields[0]->GetTotPoints(), 0.0);
+        m_curFieldsPhys[n] = Array<OneD, NekDouble>(
+                                 pFields[0]->GetTotPoints(), 0.0);
+        m_outFieldsPhys[n] = Array<OneD, NekDouble>(
+                                 pFields[0]->GetTotPoints(), 0.0);
     }
-
 
     // Check type of problem
     std::string firstVarName = pFields[0]->GetSession()->GetVariable(0);
@@ -120,24 +118,23 @@ void FilterMaxMinFields::v_Initialise(
         m_problemType = eOthers;
     }
 
-    // Check the space dim
-    int nFields = pFields.size();
-    if (m_problemType == eCompressible)
-    {
-        m_spaceDim = nFields==5 ? 3 : 2;
-    }
-    else if (m_problemType == eIncompressible)
-    {
-        m_spaceDim = nFields==4 ? 3 : 2; // will not be used
-    }
-    else
-    {
-        m_spaceDim = 2;                 // Will not be used
-    }
-        
-
 }
 
+
+// For compressible flows, also compute max/min for extra variabless, which can
+// include (u, v, w, p, T. s, a, Mach, sensor, ArtificialVisc), but not sure
+// for variables (divVelSquare, curlVelSquare, Ducros) when Ducros sensor is
+// turned on. Now presume Ducros sensor is turned off.
+// For other cases, including incompressible flows, only compute max/min for
+// variables in pFields.
+// 
+// curFieldsCoeffs is the coeffs     at current time step, size=[*][m_ncoeffs]
+// m_curFieldsPhys is the phys value at current time step, size=[*][m_npoints]
+// m_outFields     is the coeffs     for output fld
+// m_outFieldsPhys is the phys value for output fld
+// PS. curFieldsCoeffs is not set to be a member variable since its size will
+//     be increased by CompressibleFlowSystem::v_ExtraFldOutput to also include
+//     coeffs for extra variables. fieldcoeffs is not used.
 
 void FilterMaxMinFields::v_ProcessSample(
     const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
@@ -146,65 +143,52 @@ void FilterMaxMinFields::v_ProcessSample(
 {
     boost::ignore_unused(fieldcoeffs, time);
 
-    // Ref 
-    // FilterReynoldsStresses::v_FillVariablesName in solvers/IncNavierStokesSolver/Filters/FilterReynoldsStresses.cpp
-    // FilterReynoldsStresses::v_Initialise
-
-
-    //     fieldcoeffs is current coeffs at current time step, size=[n][m_ncoeffs]
-    // m_curFieldsPhys is physical value at current time step, size=[n][m_npoints]
-    // m_outFields is the coeffs for output fld, ref. FilterFieldConvert.cpp -> line 234,242
-    // m_outFieldsPhys is the physical value for output fld
-
-    
-
-    // Generate array for physical variables
-    const int nFields = pFields.size();       // field vars, rho, rhou, rhov, rhow, E
-    const int nVars   = m_variables.size();   // extra vars, u, v, w, p, T. s, Mach, sensor
-
-    
-
-    // solvers/CompressibleFlowSolver/EquationSystems/CompressibleFlowSystem.h
-    // FilterFieldConvert::v_FillVariablesName
-    // Need to create a dummy coeffs vector to get extra variables names...
-    std::vector<Array<OneD, NekDouble> > tmpCoeffs(nFields);
-    std::vector<std::string> tmpStr;
-    for (int n = 0; n < nFields; ++n)
+    int nFields, nVars;
+ 
+    if (m_problemType==eCompressible)
     {
-        tmpCoeffs[n] = pFields[n]->GetCoeffs();
-    }
-    // Get extra variables
-    auto equ = m_equ.lock();
-    ASSERTL0(equ, "Weak pointer expired");
-    equ->ExtraFldOutput(tmpCoeffs, tmpStr); // tmpCoeffs.size is much larger now
-    //std::cout << "new size =" <<  tmpCoeffs.size()  << std::endl; // 12
-    
-    // Updata m_curFieldsPhys
-    for (int j=0; j<tmpCoeffs.size(); ++j) //tmpCoeffs.size()==nVars
-    {
-        pFields[0]->BwdTrans(tmpCoeffs[j], m_curFieldsPhys[j]);
-        if (pFields[0]->GetWaveSpace())
+        nFields = pFields.size();       // Conservative vars
+        nVars   = m_variables.size();   // Include extra vars
+
+        std::vector<Array<OneD, NekDouble> > curFieldsCoeffs(nFields);
+        std::vector<std::string> tmpVariables;    // dummy vector 
+        for (int n = 0; n < nFields; ++n)
         {
-            pFields[0]->HomogeneousBwdTrans(m_curFieldsPhys[j], m_curFieldsPhys[j]);
+            curFieldsCoeffs[n] = pFields[n]->GetCoeffs();
+        }
+
+        // Get extra variables, then curFieldsCoeffs.size() == nVars
+        auto equ = m_equ.lock();
+        ASSERTL0(equ, "Weak pointer expired");
+        equ->ExtraFldOutput(curFieldsCoeffs, tmpVariables);
+
+        // Updata m_curFieldsPhys and m_outFieldsPhys
+        for (int n = 0; n < nVars; ++n)
+        {
+            pFields[0]->BwdTrans(curFieldsCoeffs[n], m_curFieldsPhys[n]);
+            pFields[0]->BwdTrans(m_outFields[n],     m_outFieldsPhys[n]);
         }
     }
-
-
-    // Update m_outFieldsPhys
-    // What is the following if() for?
-    // Ref. FilterReynoldsStresses.cpp
-    for (int j = 0; j < nVars; ++j)
+    else
     {
-        pFields[0]->BwdTrans(m_outFields[j], m_outFieldsPhys[j]);
-        if (pFields[0]->GetWaveSpace())
+        nFields = pFields.size();
+        nVars   = nFields;
+
+        // Updata m_curFieldsPhys and m_outFieldsPhys
+        for (int n = 0; n < nVars; ++n)
         {
-            pFields[0]->HomogeneousBwdTrans(m_outFieldsPhys[j], m_outFieldsPhys[j]);
+            m_curFieldsPhys[n] = pFields[n]->GetPhys();
+
+            pFields[0]->BwdTrans(m_outFields[n], m_outFieldsPhys[n]);
+            if (pFields[0]->GetWaveSpace())
+            {
+                pFields[0]->HomogeneousBwdTrans(m_outFieldsPhys[n], m_outFieldsPhys[n]);
+            }          
         }
     }
 
 
     // Get max/min for each field
-    // Save the result in outFieldsPhys
     for(int n = 0; n < nVars; ++n)
     {
         size_t length = m_outFieldsPhys[n].size();
@@ -212,7 +196,7 @@ void FilterMaxMinFields::v_ProcessSample(
         if (m_isMax)
         {
             // Compute max
-            for (int i=0; i<length; ++i)
+            for (int i = 0; i < length; ++i)
             {
                 if (m_curFieldsPhys[n][i] > m_outFieldsPhys[n][i])
                 {
@@ -223,7 +207,7 @@ void FilterMaxMinFields::v_ProcessSample(
         else
         {
             // Compute min
-            for (int i=0; i<length; ++i)
+            for (int i = 0; i < length; ++i)
             {
                 if (m_curFieldsPhys[n][i] < m_outFieldsPhys[n][i])
                 {
@@ -231,21 +215,13 @@ void FilterMaxMinFields::v_ProcessSample(
                 }
             }
         }
-
     }
 
-
-    // Forward transform and put into m_outFields (except pressure)
+    // Forward transform and put into m_outFields
     for (int n = 0; n < nVars; ++n)
     {
         pFields[0]->FwdTrans_IterPerExp(m_outFieldsPhys[n], m_outFields[n]);
-    }
-    /*
-    for (int n = 0; n < nFields; ++n)
-    {
-        pFields[0]->FwdTrans_IterPerExp(outFieldsPhys[n], m_outFields[n]);
-    }
-    */   
+    } 
 
 }
 
