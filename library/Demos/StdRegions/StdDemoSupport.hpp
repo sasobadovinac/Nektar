@@ -1356,20 +1356,33 @@ public:
 		  {
 		    xastaa[p][0] = saveholdxandval[p]  - fac*g[p];
 		  }
-
-		// absg = 0;
-		// for(int p = 0; p < dim; p++)
-		//   {
-		//     absg = absg || abs(xastaa[p][0]) > 1; 
-		//   }
-		while(abs(xastaa[0][0])>1 || abs(xastaa[1][0])>1 || abs(xastaa[2][0])>1)
+	        
+		switch(E->DetShapeType())
 		  {
-		    for(int p = 0; p < dim; p++)
+		  case LibUtilities::eHexahedron:
+		    while(abs(xastaa[0][0])>1 || abs(xastaa[1][0])>1 || abs(xastaa[2][0] ) > 1)
 		      {
-			xastaa[p][0] = holdxandval[p]  - fac*g[p];
+			for(int p = 0; p < dim; p++)
+			  {
+			    xastaa[p][0] = holdxandval[p]  - fac*g[p];
+			  }
+			fac = fac*gamhold;
 		      }
-		    fac = fac*gamhold;
+		    break;
+		  case LibUtilities::eTetrahedron:
+		    while(abs(xastaa[0][0])>1 || abs(xastaa[1][0])>1 || abs(xastaa[2][0] ) > 1 || xastaa[0][0] + xastaa[1][0] > 1e-9 || xastaa[0][0] + xastaa[2][0] > 1e-9 || xastaa[1][0] + xastaa[2][0] > 1e-9)
+		      {
+			for(int p = 0; p < dim; p++)
+			  {
+			    xastaa[p][0] = holdxandval[p]  - fac*g[p];
+			  }
+			fac = fac*gamhold;
+		      }
+		    break;
+		  default: cout<<"\n invalid element, not yet supported!";
+		    exit(0);
 		  }
+
 		ctr++;
 		tempeval[0] = E->PhysEvaluateBasis(xastaa, storage, tempeval[1], tempeval[2], tempeval[3]);
 		pq(uhats, xastaa, tempeval[0], nullarr, t1);
@@ -1427,18 +1440,35 @@ public:
 			xastaa[p][0] = holdxandval[p]  - fac*g[p];
 		      }
 		    
-
-		
-		
-		    while(abs(xastaa[0][0])>1 || abs(xastaa[1][0])>1 || abs(xastaa[2][0])>1)
+		    switch(E->DetShapeType())
 		      {
-			for(int p = 0; p < dim; p++)
+		      case LibUtilities::eHexahedron:
+			while(abs(xastaa[0][0])>1 || abs(xastaa[1][0])>1 || abs(xastaa[2][0] ) > 1)
 			  {
-			    xastaa[p][0] = holdxandval[p]  - fac*g[p];
-			    
+			    for(int p = 0; p < dim; p++)
+			      {
+				xastaa[p][0] = holdxandval[p]  - fac*g[p];
+				
+			      }
+			    fac = fac*gamhold;
 			  }
-			fac = fac*gamhold;
+			break;
+		      case LibUtilities::eTetrahedron:
+			while(abs(xastaa[0][0])>1 || abs(xastaa[1][0])>1 || abs(xastaa[2][0] ) > 1 || xastaa[0][0] + xastaa[1][0] > 1e-9 || xastaa[0][0] + xastaa[2][0] > 1e-9 || xastaa[1][0] + xastaa[2][0] > 1e-9) 
+			  {
+			    for(int p = 0; p < dim; p++)
+			      {
+				xastaa[p][0] = holdxandval[p]  - fac*g[p];
+
+			      }
+			    fac = fac*gamhold;
+			  }
+			break;
+		      default:
+			cout<<"\n invalid element!\n";
+			exit(0);
 		      }
+		
 		    
 		    tempeval[0] = E->PhysEvaluateBasis(xastaa, storage, tempeval[1], tempeval[2]
 						       , tempeval[3]);
@@ -1531,13 +1561,29 @@ public:
 		      }
 		    
 		    t1[0] = holdval;
-		    if(abs(xastaa[0][0])>1 || abs(xastaa[1][0])>1 || abs(xastaa[2][0])>1)
+		    int opt = 0;
+		    switch(E->DetShapeType())
+		      {
+		      case LibUtilities::eHexahedron:
+			opt = abs(xastaa[0][0])>1 || abs(xastaa[1][0])>1 || abs(xastaa[2][0])>1;
+			break;
+
+		      case LibUtilities::eTetrahedron:
+			opt = abs(xastaa[0][0])>1 || abs(xastaa[1][0])>1 || abs(xastaa[2][0] ) > 1|| xastaa[0][0] + xastaa[1][0] > 1e-9 || xastaa[0][0] + xastaa[2][0] > 1e-9 || xastaa[1][0] + xastaa[2][0] > 1e-9;
+			break;
+
+		      default: cout<<"\n invalid element type!\n";
+			exit(0);
+		      }
+
+		    if(opt)
 		      {
 			for(int p = 0; p < dim; p++)
 			  {
 			    xastaa[p][0] = savesavehold[p];
 			  }
 		      }
+		  
 		    fac = 1;
 		    
 		  }
@@ -1554,10 +1600,10 @@ public:
       }
     
   }
-
   
-
-
+  
+  
+  
   
   
     // upon return, coords will have the only point with min value out of all vals
