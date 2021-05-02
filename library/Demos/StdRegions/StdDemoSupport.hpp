@@ -677,7 +677,6 @@ public:
   // With backtracking new
   void steepestgradient_descent2Dquad(Array<OneD, NekDouble> &uhats, StdExpansion *E, Array<OneD, Array<OneD, NekDouble> > &storage, Array<OneD, Array<OneD, NekDouble> >&retarr, NekDouble &avgiterGD, Array<OneD, Array<OneD, NekDouble> > &testcoord2d, Array<OneD, Array<OneD, NekDouble> > &testcoord2dqmid, Array<OneD, NekDouble> &interioreval2dqmid, Array<OneD, Array<OneD, NekDouble> > &testcoord2dlattice)
   {
-    // if fromTest = 1, called from GDBackTrackingTest
     int dim = 2;
     Array<OneD, NekDouble> g(dim);
     double inf = numeric_limits<double>::infinity();
@@ -717,19 +716,19 @@ public:
         idxgprev = sz+Vmath::Imin(temp3.size(), temp3, 1);
 
       }
-    xnew[0] = testcoord2dlattice[0][idxgprev];
-    xnew[1] = testcoord2dlattice[1][idxgprev];
-
-    if(startarr.size() > 0)
+    if(startarr.size() > 1)
       {
 	cout<<"\n expected root roughly = "<< startarr[0]<<" , "<<startarr[1]<<"\n";
 	flagTest = 0;
       }
+    xnew[0] = testcoord2dlattice[0][idxgprev];
+    xnew[1] = testcoord2dlattice[1][idxgprev];
+
     Array<OneD, NekDouble> xstart(2);
     xstart[0] = xnew[0];
     xstart[1] = xnew[1];
     Array<OneD, NekDouble> dereval(dim);
-    cout<<"    starting pt = "<<xnew[0]<<","<<xnew[1]<<" N "<< uhats.size();
+    //    cout<<"    starting pt = "<<xnew[0]<<","<<xnew[1]<<" N "<< uhats.size();
     // fstream fio;
     // fio.open("dumquad.txt", ios::app | ios::out | ios::in);
     // fio<<"\n func = "<<funcdef<<"; starting pt = "<<xnew[0]<<","<<xnew[1]<<" N = 5";
@@ -771,7 +770,7 @@ public:
 	holdxandval[1] = xastaa[1][0];
 	holdxandval[2] = t1[0];
 	savesavehold[2] = inf;
-	int truth_val = abs(g[0]+g[1]) > 1e-8;
+	int truth_val = abs(g[0]+g[1]) > 1e-9;
 	int ctr = 0, ct  = 0;
 	NekDouble fac = 1,  gnew0 = gnew, gnew1 = gnew, gnew2 = gnew;
 
@@ -782,7 +781,7 @@ public:
 
 	    while(ctr < iter && ((abs(g[0]) > 1e-9) || abs(g[1]) > 1e-9) && fac > 1e-6 && counter_min_change < 5 )
 	      {
-		if(ctr > 2 && abs(gnew0 - gnew2) < 1e-6)
+		if(ctr > 2 && abs(gnew0 - gnew2) < 1e-8)
 		  {
 		    break;
 		  }
@@ -883,12 +882,12 @@ public:
 		    else
 		      break;
 		  }
-		cout<<"\n ct = "<<ct;
+		//		cout<<"\n ct = "<<ct;
 		//fio<<"\n ctr = "<< ctr<<" "<<xastaa[0][0]<<" "<<xastaa[1][0]<<" "<<t1[0]<<" c= "<<ct;
 		avgiterGD = ctr;
 		if(saveholdval < holdval)
 		  {
-		    if((saveholdxandval[2]<savesavehold[2]) && abs(saveholdxandval[2] - savesavehold[2]) > 1e-5)
+		    if((saveholdxandval[2]<savesavehold[2]) && abs(saveholdxandval[2] - savesavehold[2]) > 1e-6)
 		      {
 			savesavehold[0] = saveholdxandval[0];
 			savesavehold[1] = saveholdxandval[1];
@@ -911,7 +910,7 @@ public:
 		  {
  		    
 		    
-		    if((saveholdxandval[2]<savesavehold[2]) && abs(saveholdxandval[2] - savesavehold[2]) > 1e-5)
+		    if((saveholdxandval[2]<savesavehold[2]) && abs(saveholdxandval[2] - savesavehold[2]) > 1e-6)
 		      {
 			savesavehold[0] = saveholdxandval[0];
 			savesavehold[1] = saveholdxandval[1];
@@ -998,7 +997,7 @@ public:
     Array<OneD, NekDouble> xstart(2);
     xstart[0] = xnew[0];
     xstart[1] = xnew[1];
-    cout<<"\n func = "<<funcdef<< " starting pt = "<<xnew[0]<<","<<xnew[1]<<" N = 5";    
+    //    cout<<"\n func = "<<funcdef<< " starting pt = "<<xnew[0]<<","<<xnew[1];    
     Array<OneD, NekDouble> dereval(dim);
 
     int call_GD;
@@ -1044,7 +1043,7 @@ public:
 	holdxandval[1] = xastaa[1][0];
 	holdxandval[2] = t1[0];
 	savesavehold[2] = inf;
-	int truth_val = abs(g[0]+g[1]) > 1e-8;
+	int truth_val = abs(g[0]+g[1]) > 1e-9;
 	int ctr = 0, ct  = 0;
 	NekDouble fac = 1, gnew0 = gnew, gnew1 = gnew, gnew2 = gnew;
 	if(truth_val)
@@ -1053,7 +1052,7 @@ public:
 	    int counter_min_change = 0;
 	    while(ctr < iter && ((abs(g[0]) > 1e-9) || abs(g[1]) > 1e-9) && fac > 1e-6 && counter_min_change <5)
 	      {
-		if(ctr > 2 && abs(gnew0 - gnew2) < 1e-6)
+		if(ctr > 2 && abs(gnew0 - gnew2) < 1e-8)
 		  {
 		    break;
 		  }
@@ -1157,7 +1156,7 @@ public:
 		avgiterGD = ctr;
 		if(saveholdval < holdval )
 		  {
-		    if((saveholdxandval[2]<savesavehold[2]) && abs(saveholdxandval[2] - savesavehold[2]) > 1e-5)
+		    if((saveholdxandval[2]<savesavehold[2]) && abs(saveholdxandval[2] - savesavehold[2]) > 1e-6)
 		      {
 			savesavehold[0] = saveholdxandval[0];
 			savesavehold[1] = saveholdxandval[1];
@@ -1179,7 +1178,7 @@ public:
 		  {
 
 		    
-		    if((saveholdxandval[2]<savesavehold[2]) && abs(saveholdxandval[2] - savesavehold[2]) > 1e-5)
+		    if((saveholdxandval[2]<savesavehold[2]) && abs(saveholdxandval[2] - savesavehold[2]) > 1e-6)
 		      {
 			savesavehold[0] = saveholdxandval[0];
 			savesavehold[1] = saveholdxandval[1];
@@ -1272,7 +1271,7 @@ public:
     // fstream fio;
     // fio.open("dumquad.txt", ios::app | ios::out | ios::in);
 
-    cout<<"\n func = "<<funcdef<< " \n starting pt = "<<xnew[0]<<","<<xnew[1]<<" "<<xnew[2];
+    //    cout<<"\n func = "<<funcdef<< " \n starting pt = "<<xnew[0]<<","<<xnew[1]<<" "<<xnew[2];
 
     int call_GD;
     if(flagTest == 0)
@@ -1517,7 +1516,7 @@ public:
 		    else
 		      break;
 		  }
-		cout<<"\n ctr = "<< ctr<<" ct = "<<ct;
+		//cout<<"\n ctr = "<< ctr<<" ct = "<<ct;
 		avgiterGD = ctr;
 
 		if(saveholdval < holdval)
@@ -1768,14 +1767,14 @@ public:
 	  if(surfid == 0)
 	    {
 	      steepestgradient_descent2Dquad(uhats, E, storage, coords,  avgiterGD, testcoord2dqqpts, testcoord2dqqmidpts, interioreval2dqqmidpts, testcoord2dqlattice);
-	      cout<<"\n avgitergd = "<<avgiterGD<<" ";
+	      //	      cout<<"\n avgitergd = "<<avgiterGD<<" ";
 
 	    }
 	  else //tri
 	    {
 
 	      steepestgradient_descent2Dtri(uhats, E, storage, coords,  avgiterGD, testcoord2dtqpts, testcoord2dtqmidpts, interioreval2dtqmidpts, testcoord2dtlattice);
-	      cout<<"\n avgitergd = "<<avgiterGD<<" ";
+	      //cout<<"\n avgitergd = "<<avgiterGD<<" ";
 
 	    }
 	  return coords;
@@ -1968,8 +1967,8 @@ public:
     NekDouble secarg = 1e3;
     NekDouble eps = -0.1;
     int avgnum = 1;
-    NekDouble chold = 0.1;
-    NekDouble gamhold = 0.6;
+    NekDouble chold = 0.4;
+    NekDouble gamhold = 0.7;
     std::string    m_shape;
     std::string    m_ntype;
     vector<string> m_basis{3, "NoBasisType"};

@@ -123,7 +123,18 @@ int main(int argc, char *argv[])
       demo.interioreval3dqmidpts = E->PhysEvaluateBasis( demo.testcoord3dqmidpts, storage3d, NullNekDouble1DArray, NullNekDouble1DArray, NullNekDouble1DArray);
  
       break;
-  
+
+    case LibUtilities::eTetrahedron:
+      numedges = 12;
+      numsurfaces = 6;
+
+      demo.testcoord3dqpts = demo.GetCoords(E);
+      demo.testcoord3dqmidpts = demo.GetQuadratureMidCoords( E, demo.testcoord3dqpts);
+      demo.testcoord3dlattice = demo.GetLatticeCoords(demo.testcoord3dqpts, demo.testcoord3dqmidpts);
+      demo.interioreval3dqmidpts = E->PhysEvaluateBasis( demo.testcoord3dqmidpts, storage3d, NullNekDouble1DArray, NullNekDouble1DArray, NullNekDouble1DArray);
+ 
+      break;
+      
     default: cout<<"\n unknown shape type\n\n";exit(0);
 
       
@@ -239,7 +250,7 @@ Array<OneD,  NekDouble> callGD(Array<OneD,  NekDouble> &coeff , NekDouble &avgit
     }
   else //3d
     {
-      if(stype == LibUtilities::eHexahedron)    //if hex
+      if(stype == LibUtilities::eHexahedron || stype == LibUtilities::eTetrahedron)    //if hex
 	{
 	  holdstorage = storage3d;
 	  demo.steepestgradientdescent3D(coeff, E, storage3d, rethold,  avgiterGD, demo.testcoord3dqpts,  demo.testcoord3dqmidpts, demo.interioreval3dqmidpts, demo.testcoord3dlattice);
@@ -307,7 +318,7 @@ Array<OneD, NekDouble> find_rough_min(Array<OneD, NekDouble> uhats)
       storage_t = storage2d;
 
     }
-  else if(stype == LibUtilities::eHexahedron)
+  else if(stype == LibUtilities::eHexahedron || stype == LibUtilities::eTetrahedron)
     {
       storage_t = storage3d;
     }
