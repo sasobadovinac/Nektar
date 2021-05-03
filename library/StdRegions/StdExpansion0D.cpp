@@ -137,8 +137,7 @@ Array<OneD, NekDouble> StdExpansion0D::v_PhysEvaluateBasis(
             Array<OneD, NekDouble> ctemp(1);
             ctemp[0] = coords[0][i];
 
-            out_eval[i + k * (coords[0].size())] =
-                v_PhysEvaluate(ctemp, physall);
+            out_eval[k * coords[0].size() + i] = v_PhysEvaluate(ctemp, physall);
         }
     }
 

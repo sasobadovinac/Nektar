@@ -183,7 +183,8 @@ Array<OneD, NekDouble> StdExpansion3D::v_PhysEvaluateBasis(
             ctemp[1] = coords[1][i];
             ctemp[2] = coords[2][i];
 
-            out_eval[k * tot + i] = v_PhysEvaluate(ctemp, physall);
+            out_eval[k * coords[0].size() + i] =
+                v_PhysEvaluate(ctemp, physall);
         }
     }
 
@@ -199,14 +200,14 @@ Array<OneD, NekDouble> StdExpansion3D::v_PhysEvaluateBasis(
                 ctemp[1] = coords[1][i];
                 ctemp[2] = coords[2][i];
 
-                out_d0[k * tot + i] = v_PhysEvaluate(ctemp, physall);
+                out_d0[k * coords[0].size() + i] =
+                    v_PhysEvaluate(ctemp, physall);
             }
         }
     }
 
     if (out_d1.size() > 0)
     {
-
         for (int k = 0; k < neq; k++)
         {
             Vmath::Vcopy(tot, &storage[2][k * tot], 1, &physall[0], 1);
@@ -217,14 +218,14 @@ Array<OneD, NekDouble> StdExpansion3D::v_PhysEvaluateBasis(
                 ctemp[1] = coords[1][i];
                 ctemp[2] = coords[2][i];
 
-                out_d1[k * tot + i] = v_PhysEvaluate(ctemp, physall);
+                out_d1[k * coords[0].size() + i] =
+                    v_PhysEvaluate(ctemp, physall);
             }
         }
     }
 
     if (out_d2.size() > 0)
     {
-
         for (int k = 0; k < neq; k++)
         {
             Vmath::Vcopy(tot, &storage[3][k * tot], 1, &physall[0], 1);
@@ -235,7 +236,8 @@ Array<OneD, NekDouble> StdExpansion3D::v_PhysEvaluateBasis(
                 ctemp[1] = coords[1][i];
                 ctemp[2] = coords[2][i];
 
-                out_d2[k * tot + i] = v_PhysEvaluate(ctemp, physall);
+                out_d2[k * coords[0].size() + i] =
+                    v_PhysEvaluate(ctemp, physall);
             }
         }
     }

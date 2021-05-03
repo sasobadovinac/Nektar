@@ -157,13 +157,12 @@ Array<OneD, NekDouble> StdExpansion2D::v_PhysEvaluateBasis(
             coll[0] = coords[0][i];
             coll[1] = coords[1][i];
 
-            out_eval[k * tot + i] = v_PhysEvaluate(coll, physvals);
+            out_eval[k * coords[0].size() + i] = v_PhysEvaluate(coll, physvals);
         }
     }
 
     if (out_d0.size() > 0)
     {
-
         for (int k = 0; k < neq; k++)
         {
             Vmath::Vcopy(tot, &storage[1][k * tot], 1, &physvals[0], 1);
@@ -172,13 +171,13 @@ Array<OneD, NekDouble> StdExpansion2D::v_PhysEvaluateBasis(
             {
                 coll[0]             = coords[0][i];
                 coll[1]             = coords[1][i];
-                out_d0[i + k * tot] = v_PhysEvaluate(coll, physvals);
+                out_d0[k * coords[0].size() + i] =
+                    v_PhysEvaluate(coll, physvals);
             }
         }
     }
     if (out_d1.size() > 0)
     {
-
         for (int k = 0; k < neq; k++)
         {
             Vmath::Vcopy(tot, &storage[2][k * tot], 1, &physvals[0], 1);
@@ -187,7 +186,8 @@ Array<OneD, NekDouble> StdExpansion2D::v_PhysEvaluateBasis(
             {
                 coll[0]             = coords[0][i];
                 coll[1]             = coords[1][i];
-                out_d1[k * tot + i] = v_PhysEvaluate(coll, physvals);
+                out_d1[k * coords[0].size() + i] =
+                    v_PhysEvaluate(coll, physvals);
             }
         }
     }
