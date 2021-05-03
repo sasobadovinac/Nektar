@@ -1,0 +1,633 @@
+///////////////////////////////////////////////////////////////////////////////
+// For more information, please see: http://www.nektar.info
+//
+// The MIT License
+//
+// Copyright (c) 2006 Division of Applied Mathematics, Brown University (USA),
+// Department of Aeronautics, Imperial College London (UK), and Scientific
+// Computing and Imaging Institute, University of Utah (USA).
+//
+// Permission is hereby granted, free of charge, to any person obtaining a
+// copy of this software and associated documentation files (the "Software"),
+// to deal in the Software without restriction, including without limitation
+// the rights to use, copy, modify, merge, publish, distribute, sublicense,
+// and/or sell copies of the Software, and to permit persons to whom the
+// Software is furnished to do so, subject to the following conditions:
+//
+/// The above copyright notice and this permission notice shall be included
+// in all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+// OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+// THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+// FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+// DEALINGS IN THE SOFTWARE.
+//
+// Description:
+//
+///////////////////////////////////////////////////////////////////////////////
+
+#include <LibUtilities/SimdLib/tinysimd.hpp>
+#include <LibUtilities/SimdLib/io.hpp>
+
+#include <boost/test/auto_unit_test.hpp>
+#include <boost/test/test_case_template.hpp>
+#include <boost/test/floating_point_comparison.hpp>
+#include <boost/test/unit_test.hpp>
+#include <boost/core/ignore_unused.hpp>
+
+
+#include <array>
+#include <cmath>
+#include <iostream>
+
+// type in use
+#if defined(__SSE2__) && defined(NEKTAR_ENABLE_SIMD_SSE2)
+    #define USING_SSE2
+#endif
+#if defined(__AVX2__) && defined(NEKTAR_ENABLE_SIMD_AVX2)
+    #define USING_AVX2
+#endif
+#if defined(__AVX512__) && defined(NEKTAR_ENABLE_SIMD_AVX512)
+    #define USING_AVX512
+#endif
+
+
+namespace Nektar
+{
+namespace SimdLibTests
+{
+    using namespace tinysimd;
+    using vec_t = simd<float>;
+
+    BOOST_AUTO_TEST_CASE(SimdLibFloat_type_traits)
+    {
+        BOOST_CHECK_EQUAL(has_width<float>::value, false);
+        BOOST_CHECK_EQUAL(has_width<vec_t>::value, true);
+
+        BOOST_CHECK_EQUAL(has_alignment<float>::value, false);
+        BOOST_CHECK_EQUAL(has_alignment<vec_t>::value, true);
+
+        BOOST_CHECK_EQUAL(has_scalarType<float>::value, false);
+        BOOST_CHECK_EQUAL(has_scalarType<vec_t>::value, true);
+
+        BOOST_CHECK_EQUAL(is_vector<float>::value, false);
+        BOOST_CHECK_EQUAL(is_vector<vec_t>::value, true);
+
+        BOOST_CHECK_EQUAL(is_vector_floating_point<float>::value, false);
+        BOOST_CHECK_EQUAL(is_vector_floating_point<simd<int>>::value, false);
+        BOOST_CHECK_EQUAL(is_vector_floating_point<vec_t>::value, true);
+    }
+
+    BOOST_AUTO_TEST_CASE(SimdLibFloat_mem_size)
+    {
+        BOOST_CHECK_EQUAL(sizeof(vec_t), sizeof(float)*vec_t::width);
+    }
+
+    BOOST_AUTO_TEST_CASE(SimdLibFloat_ctors)
+    {
+        vec_t avec1;
+
+        vec_t::scalarType ascalar = 0;
+        vec_t avec2(ascalar);
+        vec_t avec3{ascalar};
+        vec_t avec4 = ascalar;
+
+        vec_t avec5(avec2);
+        vec_t avec6{avec4};
+
+        vec_t avec7(avec2._data);
+        vec_t avec8{avec2._data};
+
+        vec_t::vectorType anative;
+        vec_t avec9(anative);
+        vec_t avec10{anative};
+
+
+        boost::ignore_unused(avec1, avec3, avec5, avec6, avec7, avec8, avec9,
+            avec10);
+    }
+
+
+    BOOST_AUTO_TEST_CASE(SimdLibFloat_load)
+    {
+        alignas(vec_t::alignment) std::array<float, vec_t::width>
+            ascalararr{{}}; // double brace to deal with gcc 4.8.5 ...
+        vec_t avec;
+        avec.load(ascalararr.data());
+    }
+
+    BOOST_AUTO_TEST_CASE(SimdLibFloat_load_implicit)
+    {
+        alignas(vec_t::alignment) std::array<float, vec_t::width>
+            ascalararr{{}}; // double brace to deal with gcc 4.8.5 ...
+        vec_t avec;
+        avec = *(reinterpret_cast<vec_t*>(ascalararr.data()));
+    }
+
+    BOOST_AUTO_TEST_CASE(SimdLibFloat_load_aligned)
+    {
+        alignas(vec_t::alignment) std::array<float, vec_t::width>
+            ascalararr{{}}; // double brace to deal with gcc 4.8.5 ...
+        vec_t avec;
+        avec.load(ascalararr.data(), is_aligned);
+    }
+
+    BOOST_AUTO_TEST_CASE(SimdLibFloat_load_unaligned)
+    {
+        std::array<float, vec_t::width> ascalararr{{}}; // double brace to deal with gcc 4.8.5 ...
+        vec_t avec;
+        avec.load(ascalararr.data(), is_not_aligned);
+    }
+
+    BOOST_AUTO_TEST_CASE(SimdLibFloat_store)
+    {
+        float val = 4.0;
+        vec_t avec(val);
+        alignas(vec_t::alignment) std::array<float, vec_t::width> ascalararr{{}}; // float brace to deal with gcc 4.8.5 ...
+        avec.store(ascalararr.data());
+
+        for (size_t i = 0; i < vec_t::width; ++i)
+        {
+            BOOST_CHECK_EQUAL(ascalararr[i], val);
+        }
+    }
+
+    BOOST_AUTO_TEST_CASE(SimdLibFloat_store_aligned)
+    {
+        float val = 4.0;
+        vec_t avec(val);
+        alignas(vec_t::alignment) std::array<float, vec_t::width> ascalararr{{}}; // float brace to deal with gcc 4.8.5 ...
+        avec.store(ascalararr.data(), is_aligned);
+
+        for (size_t i = 0; i < vec_t::width; ++i)
+        {
+            BOOST_CHECK_EQUAL(ascalararr[i], val);
+        }
+    }
+
+    BOOST_AUTO_TEST_CASE(SimdLibFloat_store_unaligned)
+    {
+        float val = 4.0;
+        vec_t avec(val);
+        std::array<float, vec_t::width> ascalararr{{}}; // float brace to deal with gcc 4.8.5 ...
+        avec.store(ascalararr.data(), is_not_aligned);
+
+        for (size_t i = 0; i < vec_t::width; ++i)
+        {
+            BOOST_CHECK_EQUAL(ascalararr[i], val);
+        }
+    }
+
+    BOOST_AUTO_TEST_CASE(SimdLibFloat_store_non_temporal)
+    {
+        float val = 4.0;
+        vec_t avec(val);
+        alignas(vec_t::alignment) std::array<float, vec_t::width> ascalararr{{}}; // float brace to deal with gcc 4.8.5 ...
+        avec.store(ascalararr.data(), is_not_reused);
+
+        for (size_t i = 0; i < vec_t::width; ++i)
+        {
+            BOOST_CHECK_EQUAL(ascalararr[i], val);
+        }
+    }
+
+    BOOST_AUTO_TEST_CASE(SimdLibFloat_subscript_assign_read)
+    {
+        vec_t avec;
+        std::array<float, vec_t::width> ascalararr{{}}; // float brace to deal with gcc 4.8.5 ...
+
+        for (size_t i = 0; i < vec_t::width; ++i)
+        {
+            ascalararr[i] = i;
+        }
+
+
+        for (size_t i = 0; i < vec_t::width; ++i)
+        {
+            avec[i] = ascalararr[i];
+        }
+
+        for (size_t i = 0; i < vec_t::width; ++i)
+        {
+            BOOST_CHECK_EQUAL(ascalararr[i], avec[i]);
+        }
+    }
+/*
+    #if defined(__AVX2__) && defined(NEKTAR_ENABLE_AVX2)
+    BOOST_AUTO_TEST_CASE(SimdLibFloat_load_any)
+    {
+        vec_t avec;
+        float* p0, * p1, * p2, * p3;
+        std::array<float, 32> ascalararr{1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32};
+
+        p0 =  ascalararr.data();
+        p1 =  ascalararr.data() + 7;
+        p2 =  ascalararr.data() + 11;
+        p3 =  ascalararr.data() + 13;
+
+        avec.load(p0, p1, p2, p3);
+
+        BOOST_CHECK_EQUAL(ascalararr[0], avec[0]);
+        BOOST_CHECK_EQUAL(ascalararr[3], avec[1]);
+        BOOST_CHECK_EQUAL(ascalararr[5], avec[2]);
+        BOOST_CHECK_EQUAL(ascalararr[6], avec[3]);
+
+    }
+    #endif
+*/
+    BOOST_AUTO_TEST_CASE(SimdLibFloat_gather64)
+    {
+        vec_t avec;
+        using index_t = simd<size_t>;
+        index_t aindexvec;
+
+        // create and fill index
+        std::array<size_t, vec_t::width> aindex;
+        aindex[0] = 0;
+        if (vec_t::width > 2)
+        {
+            aindex[1] = 3;
+            aindex[2] = 5;
+            aindex[3] = 6;
+        }
+        if (vec_t::width > 4)
+        {
+            aindex[4] = 8;
+            aindex[5] = 15;
+            aindex[6] = 20;
+            aindex[7] = 23;
+        }
+
+        // load index
+        aindexvec.load(aindex.data(), is_not_aligned);
+
+        // create and fill scalar array
+        constexpr size_t scalarArraySize = 32;
+        std::array<float, scalarArraySize> ascalararr;
+        for (size_t i = 0; i < scalarArraySize; ++i)
+        {
+            ascalararr[i] = i;
+        }
+
+        avec.gather(ascalararr.data(), aindexvec);
+
+        // check
+        for (size_t i = 0; i < vec_t::width; ++i)
+        {
+            BOOST_CHECK_EQUAL(ascalararr[aindex[i]], avec[i]);
+        }
+
+    }
+
+    BOOST_AUTO_TEST_CASE(SimdLibFloat_scatter64)
+    {
+        vec_t avec;
+        using index_t = simd<size_t>;
+        index_t aindexvec;
+
+        // create and fill index
+        std::array<size_t, vec_t::width> aindex;
+        aindex[0] = 1;
+        if (vec_t::width > 2)
+        {
+            aindex[1] = 3;
+            aindex[2] = 5;
+            aindex[3] = 6;
+        }
+        if (vec_t::width > 4)
+        {
+            aindex[4] = 8;
+            aindex[5] = 15;
+            aindex[6] = 20;
+            aindex[7] = 30;
+        }
+
+         // load index
+        aindexvec.load(aindex.data(), is_not_aligned);
+
+        // create scalar array
+        constexpr size_t scalarArraySize = 32;
+        std::array<float, scalarArraySize> ascalararr;
+
+        // fill vector
+        avec[0] = 10;
+        if (vec_t::width > 2)
+        {
+            avec[1] =  9;
+            avec[2] =  8;
+            avec[3] =  7;
+        }
+        if (vec_t::width > 4)
+        {
+            avec[4] =  4;
+            avec[5] =  3;
+            avec[6] =  2;
+            avec[7] =  1;
+        }
+
+        avec.scatter(ascalararr.data(), aindexvec);
+
+        // check
+        for (size_t i = 0; i < vec_t::width; ++i)
+        {
+            BOOST_CHECK_EQUAL(avec[i], ascalararr[aindex[i]]);
+        }
+
+    }
+
+    BOOST_AUTO_TEST_CASE(SimdLibFloat_add_unary)
+    {
+        float val1 = -4.0;
+        float val2 =  2.0;
+        vec_t res(val1);
+        vec_t avec(val2);
+        res += avec;
+        alignas(vec_t::alignment) std::array<float, vec_t::width>
+            ascalararr{{}}; // float brace to deal with gcc 4.8.5 ...
+        res.store(ascalararr.data());
+
+        for (size_t i = 0; i < vec_t::width; ++i)
+        {
+            BOOST_CHECK_EQUAL(ascalararr[i], val1 + val2);
+        }
+    }
+
+    BOOST_AUTO_TEST_CASE(SimdLibFloat_sub_unary)
+    {
+        float val1 = -4.0;
+        float val2 =  2.0;
+        vec_t res(val1);
+        vec_t avec(val2);
+        res -= avec;
+        alignas(vec_t::alignment) std::array<float, vec_t::width>
+            ascalararr{{}}; // float brace to deal with gcc 4.8.5 ...
+        res.store(ascalararr.data());
+
+        for (size_t i = 0; i < vec_t::width; ++i)
+        {
+            BOOST_CHECK_EQUAL(ascalararr[i], val1 - val2);
+        }
+    }
+
+    BOOST_AUTO_TEST_CASE(SimdLibFloat_mul_unary)
+    {
+        float val1 = -4.0;
+        float val2 =  2.0;
+        vec_t res(val1);
+        vec_t avec(val2);
+        res *= avec;
+        alignas(vec_t::alignment) std::array<float, vec_t::width>
+            ascalararr{{}}; // float brace to deal with gcc 4.8.5 ...
+        res.store(ascalararr.data());
+
+        for (size_t i = 0; i < vec_t::width; ++i)
+        {
+            BOOST_CHECK_EQUAL(ascalararr[i], val1 * val2);
+        }
+    }
+
+    BOOST_AUTO_TEST_CASE(SimdLibFloat_div_unary)
+    {
+        float val1 = -4.0;
+        float val2 =  2.0;
+        vec_t res(val1);
+        vec_t avec(val2);
+        res /= avec;
+        alignas(vec_t::alignment) std::array<float, vec_t::width>
+            ascalararr{{}}; // float brace to deal with gcc 4.8.5 ...
+        res.store(ascalararr.data());
+
+        for (size_t i = 0; i < vec_t::width; ++i)
+        {
+            BOOST_CHECK_EQUAL(ascalararr[i], val1 / val2);
+        }
+    }
+
+    BOOST_AUTO_TEST_CASE(SimdLibFloat_add_mul)
+    {
+        float val1 = -4.0;
+        float val2 =  2.0;
+        float val3 =  2.0;
+        vec_t avec1(val1);
+        vec_t avec2(val2);
+        vec_t avec3(val3);
+        vec_t res = avec1 + avec2 * avec3;
+        alignas(vec_t::alignment) std::array<float, vec_t::width>
+            ascalararr{{}}; // float brace to deal with gcc 4.8.5 ...
+        res.store(ascalararr.data());
+
+        for (size_t i = 0; i < vec_t::width; ++i)
+        {
+            BOOST_CHECK_EQUAL(ascalararr[i], val1 + val2 + val3);
+        }
+
+    }
+
+    BOOST_AUTO_TEST_CASE(SimdLibFloat_sqrt)
+    {
+        float val = 4.0;
+        vec_t avec(val);
+        vec_t asqrt = sqrt(avec);
+        alignas(vec_t::alignment) std::array<float, vec_t::width>
+            ascalararr{{}}; // float brace to deal with gcc 4.8.5 ...
+        asqrt.store(ascalararr.data());
+
+        for (size_t i = 0; i < vec_t::width; ++i)
+        {
+            BOOST_CHECK_EQUAL(ascalararr[i], std::sqrt(val));
+        }
+    }
+
+
+    BOOST_AUTO_TEST_CASE(SimdLibFloat_abs)
+    {
+        float val = -4.0;
+        vec_t avec(val);
+        vec_t aabs = abs(avec);
+        alignas(vec_t::alignment) std::array<float, vec_t::width>
+            ascalararr{{}}; // float brace to deal with gcc 4.8.5 ...
+        aabs.store(ascalararr.data());
+
+        for (size_t i = 0; i < vec_t::width; ++i)
+        {
+            BOOST_CHECK_EQUAL(ascalararr[i], std::abs(val));
+        }
+
+    }
+
+    BOOST_AUTO_TEST_CASE(SimdLibFloat_log)
+    {
+        float val = 4.0;
+        vec_t avec(val);
+        vec_t alog = log(avec);
+        alignas(vec_t::alignment) std::array<float, vec_t::width>
+            ascalararr{{}}; // float brace to deal with gcc 4.8.5 ...
+        alog.store(ascalararr.data());
+
+        for (size_t i = 0; i < vec_t::width; ++i)
+        {
+            BOOST_CHECK_EQUAL(ascalararr[i], std::log(val));
+        }
+    }
+
+    BOOST_AUTO_TEST_CASE(SimdLibFloat_greater)
+    {
+        float aval = 4.0;
+        vec_t avec(aval);
+        using mask_t = simd<bool>;
+        mask_t amask;
+
+        amask = avec > avec;
+        // check
+        alignas(vec_t::alignment) std::array<std::uint64_t, vec_t::width>
+            ascalararr{{}}; // float brace to deal with gcc 4.8.5 ...
+        amask.store(ascalararr.data());
+        for (size_t i = 0; i < vec_t::width; ++i)
+        {
+            // type conversion make lvalue in rvalue, needed pre-c++17
+            BOOST_CHECK_EQUAL(ascalararr[i], (std::uint64_t)mask_t::false_v);
+        }
+
+        float bval = 3.0;
+        vec_t bvec(bval);
+
+        amask = avec > bvec;
+        // check
+        amask.store(ascalararr.data());
+        for (size_t i = 0; i < vec_t::width; ++i)
+        {
+            // type conversion make lvalue in rvalue, needed pre-c++17
+            BOOST_CHECK_EQUAL(ascalararr[i], (std::uint64_t)mask_t::true_v);
+        }
+
+        float cval = 5.0;
+        vec_t cvec(cval);
+
+        amask = avec > cvec;
+        // check
+        amask.store(ascalararr.data());
+        for (size_t i = 0; i < vec_t::width; ++i)
+        {
+            // type conversion make lvalue in rvalue, needed pre-c++17
+            BOOST_CHECK_EQUAL(ascalararr[i], (std::uint64_t)mask_t::false_v);
+        }
+
+
+        if (vec_t::width == 4)
+        {
+            alignas(vec_t::alignment) std::array<float, 4>
+                ascalararr2{{1.0,2.0,3.0,4.0}}; // float brace to deal with gcc 4.8.5 ...
+            float dval = 2.0;
+            vec_t dvec(dval);
+            vec_t evec;
+            evec.load(ascalararr2.data());
+
+            simd<bool> amask;
+            amask = dvec > evec;
+            // check
+            for (size_t i = 0; i < vec_t::width; ++i)
+            {
+                BOOST_CHECK_EQUAL(static_cast<bool>(amask[i]), dvec[i] > evec[i]);
+            }
+
+        }
+    }
+
+    BOOST_AUTO_TEST_CASE(SimdLibFloat_logic_and)
+    {
+        float aval = 4.0;
+        vec_t avec(aval);
+        using mask_t = simd<bool>;
+        mask_t amask;
+
+        alignas(vec_t::alignment) std::array<std::uint64_t, vec_t::width>
+            ascalararr{{}}; // float brace to deal with gcc 4.8.5 ...
+        for (size_t i = 0; i < vec_t::width; ++i)
+        {
+            ascalararr[i] = mask_t::true_v;
+        }
+        amask.load(ascalararr.data());
+
+        // check
+        BOOST_CHECK_EQUAL(amask && false, false);
+        BOOST_CHECK_EQUAL(amask && true, true);
+
+        for (size_t i = 0; i < vec_t::width; ++i)
+        {
+            ascalararr[i] = mask_t::false_v;
+        }
+        amask.load(ascalararr.data());
+
+        // check
+        BOOST_CHECK_EQUAL(amask && false, false);
+        BOOST_CHECK_EQUAL(amask && true, false);
+
+        if (vec_t::width > 1)
+        {
+            ascalararr[0] = mask_t::true_v;
+            // check
+            BOOST_CHECK_EQUAL(amask && false, false);
+            BOOST_CHECK_EQUAL(amask && true, false);
+        }
+    }
+
+    BOOST_AUTO_TEST_CASE(SimdLibFloat_load_interleave_unload)
+    {
+        constexpr size_t nDof{5};
+        // no padding in load_interleave deinterleave_store
+        constexpr size_t nEle{vec_t::width * 5};
+        constexpr size_t nDofBlock = nDof * vec_t::width;
+
+        constexpr size_t size{nDof*nEle};
+        std::array<float,size> dofScalarArr{{}};
+        for (size_t i = 0; i < size; ++i)
+        {
+            dofScalarArr[i] = i;
+        }
+
+        // number of blocks
+        size_t nBlock = nEle / vec_t::width;
+
+        // aligned vector
+        std::vector<vec_t, allocator<vec_t>> dofVectorArr(nDof);
+
+        float* dataPtr = dofScalarArr.data();
+        // loop over blocks vec_t::width elements at the time
+        for (size_t b = 0; b < nBlock; ++b)
+        {
+            // load
+            load_interleave(dataPtr, nDof, dofVectorArr);
+
+            // manipulate each block
+            for (size_t j = 0; j < nDof; ++j)
+            {
+                dofVectorArr[j] = dofVectorArr[j] + j;
+            }
+
+            // store
+            deinterleave_store(dofVectorArr, nDof, dataPtr);
+            dataPtr += nDofBlock;
+        }
+
+        // check
+        for (size_t b = 0, i = 0; b < nBlock; ++b)
+        {
+            for (size_t j = 0; j < nDof; ++j, ++i)
+            {
+                BOOST_CHECK_EQUAL(dofScalarArr[i], i + j);
+            }
+        }
+
+    }
+
+    BOOST_AUTO_TEST_CASE(SimdLibFloat_io)
+    {
+        vec_t avec(3.14);
+        std::cout << avec << std::endl;
+    }
+
+}
+}

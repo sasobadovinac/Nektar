@@ -70,7 +70,7 @@ namespace abi
 
 // mapping between abstract types and concrete types
 template <> struct avx2<double> { using type = avx2Double4; };
-template <> struct avx2<float> { using type = avx2Float8; };
+template <> struct avx2<float>  { using type = avx2Float8; };
 template <> struct avx2<std::int64_t> { using type = avx2Long4<std::int64_t>; };
 template <> struct avx2<std::uint64_t> { using type = avx2Long4<std::uint64_t>; };
 template <> struct avx2<bool> { using type = avx2Mask; };
@@ -182,7 +182,7 @@ struct avx2Int8
     }
 
     // subscript
-    // subscript operators are convienient but expensive
+    // subscriptsoperators are convienient but expensive
     // should not be used in optimized kernels
     inline scalarType operator[](size_t i) const
     {
@@ -741,7 +741,7 @@ struct avx2Float8
     }
 
     // load random
-    inline void load(scalarType const* a, scalarType const* b,
+/*    inline void load(scalarType const* a, scalarType const* b,
         scalarType const* c, scalarType const* d)
     {
         // TODO
@@ -754,7 +754,7 @@ struct avx2Float8
         t5 = _mm256_castpd128_pd256(t2);          // cast __m128d -> __m256d
         _data = _mm256_insertf128_pd(t5, t4, 1);
     }
-
+*/
     // broadcast
     inline void broadcast(const scalarType rhs)
     {
@@ -996,8 +996,12 @@ struct avx2Mask : avx2Long4<std::uint64_t>
 
 inline avx2Mask operator>(avx2Double4 lhs, avx2Double4 rhs)
 {
-
     return reinterpret_cast<__m256i>(_mm256_cmp_pd(rhs._data, lhs._data, 1));
+}
+
+inline avx2Mask operator>(avx2Float8 lhs, avx2Float8 rhs)
+{
+    return reinterpret_cast<__m256i>(_mm256_cmp_ps(rhs._data, lhs._data, 1));
 }
 
 inline bool operator&&(avx2Mask lhs, bool rhs)

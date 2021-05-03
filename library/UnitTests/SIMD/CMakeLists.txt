@@ -1,6 +1,8 @@
 SET(VecDataTestSources
     main.cpp
-    TestSimdLib.cpp
+    TestSimdLibTraits.cpp
+    TestSimdLibDouble.cpp
+    TestSimdLibSingle.cpp
 )
 
 ADD_DEFINITIONS(-DENABLE_NEKTAR_EXCEPTIONS)
