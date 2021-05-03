@@ -163,7 +163,7 @@ Array<OneD, NekDouble> StdExpansion1D::v_PhysEvaluateBasis(
     Array<OneD, NekDouble> physall(tot);
     int neq = m_ncoeffs;
 
-    Array<OneD, NekDouble> out_eval(tot * neq);
+    Array<OneD, NekDouble> out_eval(coords[0].size() * neq);
     for (int k = 0; k < neq; k++)
     {
         Vmath::Vcopy(tot, &storage[0][k * tot], 1, &physall[0], 1);

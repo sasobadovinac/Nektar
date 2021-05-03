@@ -147,7 +147,7 @@ Array<OneD, NekDouble> StdExpansion2D::v_PhysEvaluateBasis(
     Array<OneD, NekDouble> physvals(tot);
     Array<OneD, NekDouble> coll(2);
 
-    Array<OneD, NekDouble> out_eval(tot * neq);
+    Array<OneD, NekDouble> out_eval(coords[0].size() * neq);
     for (int k = 0; k < neq; k++)
     {
         Vmath::Vcopy(tot, &storage[0][k * tot], 1, &physvals[0], 1);

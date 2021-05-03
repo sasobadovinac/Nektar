@@ -172,7 +172,7 @@ Array<OneD, NekDouble> StdExpansion3D::v_PhysEvaluateBasis(
 
     int neq = m_ncoeffs;
     Array<OneD, NekDouble> wsp1(nq1 * nq2), wsp2(nq2);
-    Array<OneD, NekDouble> out_eval(tot * neq);
+    Array<OneD, NekDouble> out_eval(coords[0].size() * neq);
     for (int k = 0; k < neq; k++)
     {
         Vmath::Vcopy(tot, &storage[0][k * tot], 1, &physall[0], 1);
