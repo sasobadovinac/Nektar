@@ -1486,9 +1486,6 @@ Array<OneD, Array<OneD, NekDouble> > tmpcoord(dimension);
 
 int Opt_needed(Array<OneD, NekDouble> uhats, int flag)
 {
-  // check for -ve vals on lattice (E->testcoord3dlat)
-  // ? should we check on 2dqlattice as well? Find out
-
   int nq = E->GetTotPoints();//demo.testcoord3dlat[0].size();
   Array<OneD, NekDouble> temp1(nq);
   Array<OneD, NekDouble> temp2(uhats.size());

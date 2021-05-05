@@ -11,6 +11,8 @@ ADD_NEKTAR_EXECUTABLE(StdInterpDerivBasis
 ADD_NEKTAR_EXECUTABLE(StdEquiToCoeff2D
     COMPONENT demos DEPENDS StdRegions SOURCES StdEquiToCoeff2D.cpp)
 
+ADD_NEKTAR_EXECUTABLE(StdProjectPositivityPres1D
+        COMPONENT demos DEPENDS StdRegions SOURCES StdProjectPositivityPres1D.cpp)
 ADD_NEKTAR_EXECUTABLE(StdProjectPositivityPres2D
         COMPONENT demos DEPENDS StdRegions SOURCES StdProjectPositivityPres2D.cpp)
 ADD_NEKTAR_EXECUTABLE(StdProjectPositivityPres3D
@@ -21,10 +23,16 @@ ADD_NEKTAR_EXECUTABLE( TriDerivativeDemo
         COMPONENT demos DEPENDS StdRegions SOURCES  TriDerivativeDemo.cpp)
 ADD_NEKTAR_EXECUTABLE( GDBackTrackingTest
 	COMPONENT demos DEPENDS StdRegions SOURCES  GDBackTrackingTest.cpp)
+ADD_NEKTAR_EXECUTABLE( ConfRootFinderDemo
+        COMPONENT demos DEPENDS StdRegions SOURCES  ConfRootFinderDemo.cpp)
 
 # Positivity Preserving Filter Test
 ADD_NEKTAR_TEST(StdProjectPosPres2D_Quad_Orth_P4_Q7)
 ADD_NEKTAR_TEST(StdProjectPosPres2D_Tri_Orth_P4_Q6)
+ADD_NEKTAR_TEST(StdProjectPosPres1D_Seg_orth_P6_Q7)
+ADD_NEKTAR_TEST(StdProjectPosPres1D_Seg_orth_P5_Q6)
+ADD_NEKTAR_TEST(ConfRootFinderDemo_Seg_Orth_P5_Q16)
+ADD_NEKTAR_TEST(ConfRootFinderDemo_Seg_Orth_P7_Q8)
 
 # GD Test
 ADD_NEKTAR_TEST(GDBacktracking_Quad_Orth_P5_Q5)
