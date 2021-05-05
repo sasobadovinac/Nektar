@@ -172,37 +172,34 @@ Array<OneD, NekDouble> StdExpansion1D::v_PhysEvaluateBasis(
     Array<OneD, NekDouble> physall(tot);
     int neq = m_ncoeffs;
 
-    Array<OneD, NekDouble> out_eval(tot * neq);
+    Array<OneD, NekDouble> out_eval(coords[0].size() * neq);
+ 	    
     for (int k = 0; k < neq; k++)
     {
         Vmath::Vcopy(tot, &storage[0][k * tot], 1, &physall[0], 1);
         for (int i = 0; i < coords[0].size(); i++)
-        {
-            Array<OneD, NekDouble> ctemp(1);
-            ctemp[0] = coords[0][i];
-
-            out_eval[i + k * (coords[0].size())] =
-                v_PhysEvaluate(ctemp, physall);
-        }
+	  {
+	    Array<OneD, NekDouble> ctemp(1, coords[0][i]);
+	    
+	    // ctemp[0] = coords[0][i];
+	    out_eval[i + k * (coords[0].size())] =
+	      v_PhysEvaluate(ctemp, physall);
+	  }
     }
-
     if (out_d0.size() > 0)
     {
-
-        std::cout << "\n here\n\n";
+      Array<OneD, NekDouble> ctemp(1);
         for (int k = 0; k < neq; k++)
         {
             Vmath::Vcopy(tot, &storage[1][k * tot], 1, &physall[0], 1);
-            for (int i = 0; i < tot; i++)
+            for (int i = 0; i < coords[0].size(); i++)
             {
-                Array<OneD, NekDouble> ctemp(1);
                 ctemp[0] = coords[0][i];
 
-                out_d0[i + k * tot] = v_PhysEvaluate(ctemp, physall);
+                out_d0[i + k * coords[0].size()] = v_PhysEvaluate(ctemp, physall);
             }
         }
     }
-
     return out_eval;
 }
 
