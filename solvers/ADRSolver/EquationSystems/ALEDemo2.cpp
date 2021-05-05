@@ -119,16 +119,16 @@ protected:
 
     virtual void v_DoInitialise()
     {
-        SetBoundaryConditions(m_time);
-        SetInitialConditions(m_time);
-        GetGridVelocity(m_time);
-
         // Store all points
         auto &ptsMap = m_graph->GetAllPointGeoms();
         for (auto &pt : ptsMap)
         {
             m_pts[pt.first] = *(pt.second);
         }
+
+        SetBoundaryConditions(m_time);
+        SetInitialConditions(m_time);
+        GetGridVelocity(m_time);
     }
 
     /*
