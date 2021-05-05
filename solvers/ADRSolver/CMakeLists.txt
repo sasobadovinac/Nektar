@@ -24,7 +24,7 @@ IF( NEKTAR_SOLVER_ADR )
         ./EquationSystems/UnsteadyViscousBurgers.cpp
         ./EquationSystems/EigenValuesAdvection.cpp
         ./EquationSystems/ALEDemo.cpp
-        #./EquationSystems/ALEDemo2.cpp
+        ./EquationSystems/ALEDemo2.cpp
             )
 
     #MMF advection
