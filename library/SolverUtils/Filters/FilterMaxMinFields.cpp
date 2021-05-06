@@ -64,17 +64,23 @@ FilterMaxMinFields::FilterMaxMinFields(
     }
 
     // Load flag for max or min
-    it = pParams.find("MaxMin");
-    if (it == pParams.end())
+    it = pParams.find("MaxOrMin");
+    std::string sOption = it->second.c_str();
+    if ( boost::iequals(sOption, "maximun") ||
+         boost::iequals(sOption, "max") )
     {
         m_isMax = true;
     }
+    else if ( boost::iequals(sOption, "minimum") ||
+              boost::iequals(sOption, "min") )
+    {
+        m_isMax = false;
+    }
     else
     {
-        std::string sOption = it->second.c_str();
-        m_isMax = !(boost::iequals(sOption, "minimum") || 
-                    boost::iequals(sOption, "min"));
+        ASSERTL1(false, "MaxOrMin needs to be max or min.");
     }
+
 
     // Initialize other member vars
     m_problemType = eCompressible;
