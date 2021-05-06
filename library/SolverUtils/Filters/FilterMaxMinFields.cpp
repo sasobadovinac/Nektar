@@ -66,7 +66,7 @@ FilterMaxMinFields::FilterMaxMinFields(
     // Load flag for max or min
     it = pParams.find("MaxOrMin");
     std::string sOption = it->second.c_str();
-    if ( boost::iequals(sOption, "maximun") ||
+    if ( boost::iequals(sOption, "maximum") ||
          boost::iequals(sOption, "max") )
     {
         m_isMax = true;
