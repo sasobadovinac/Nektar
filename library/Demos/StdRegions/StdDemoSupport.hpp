@@ -576,7 +576,7 @@ public:
     vector<NekDouble> tmp;
     for(int k = 0; k < EIG_R.size(); k++)
       {
-	cout<<"\n i = "<<EIG_I[k]<<" r = "<<EIG_R[k];
+	//	cout<<"\n i = "<<EIG_I[k]<<" r = "<<EIG_R[k];
 	if(abs(EIG_I[k]) < 1e-5 && abs(EIG_R[k]) < 1)
 	  tmp.push_back(EIG_R[k]);
       }
