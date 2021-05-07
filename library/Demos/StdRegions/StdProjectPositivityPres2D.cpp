@@ -43,29 +43,17 @@ namespace po = boost::program_options;
 //declare Do_optimize
 void Do_optimize(Array<OneD, NekDouble> &uhats);
 
-//declare find_roots, flag is 0 for confederate matrix approach
-Array<OneD, Array<OneD, NekDouble> >  find_roots(Array<OneD, NekDouble> &uhats, int d = 0, int flag = 0,  int sig = 0, int surfflag = 0);
-
 Array<OneD,NekDouble>  call_find_roots(Array<OneD,  NekDouble> &uhats1 , NekDouble &avgiterGD, Array<OneD, Array<OneD, NekDouble> >&uhatsedges, Array<OneD, Array<OneD, NekDouble> >&surfaceuhats , NekDouble &minv, NekDouble &roots1dtime, NekDouble &roots2dtime, NekDouble &roots3dtime);
-
-
-//declare Opt_needed
-int Opt_needed(Array<OneD, NekDouble> uhats, int flag = 0);
-
 
 // for 2D elements to get uhats at edges
 void project_edges( Array<OneD, NekDouble> uhats,Array<OneD, Array<OneD, NekDouble> >&ret );
 
-
-// uhatpqd stuff: 
+// derivative of scaled fn stuff: 
 void edgederpquhats(Array<OneD, NekDouble> &uhats1, Array<OneD, NekDouble> &ret,  Array<OneD, NekDouble> &wsp,  Array<OneD, NekDouble> Vxy, Array<OneD, NekDouble> Vxyd0, Array<OneD, NekDouble> Vxyd1, Array<OneD, NekDouble> Vxyd2);
 
-void deruhatsedges(Array<OneD, NekDouble> &uhats, Array<OneD, NekDouble >&ret,  Array<OneD, NekDouble> Vxy, Array<OneD, NekDouble> Vxyd0, Array<OneD, NekDouble> Vxyd1, Array<OneD, NekDouble> Vxyd2 = NullNekDouble1DArray );
-
-vector< vector<NekDouble> > gradient_descent(Array<OneD, NekDouble> uhats, int sig, int surfid = 0 );
 
 string funcdef;
-NekDouble  itersGD1, itersGD2, itersGD3;
+NekDouble  itersGD2 ;
 
 int iterstaken;
 NekDouble  startval, startcoordx, startcoordy, startcoordz;
@@ -214,10 +202,11 @@ int main(int argc, char *argv[])
 	  
 	  sol[i] = floor(0.5*(floor(0.5*(x[i]<=-0.4)+0.5*(x[i]>=-0.8)))+0.5*(floor(0.5*(y[i]>=0.4)+0.5*(y[i]<=0.8))))*sin(2*M_PI*(x[i]-0.15))*cos(2*M_PI*(y[i]-0.6));
 	  funcdef = "floor(0.5*(floor(0.5*(x[i]<=-0.4)+0.5*(x[i]>=-0.8)))+0.5*(floor(0.5*(y[i]>=0.4)+0.5*(y[i]<=0.8))))*sin(2*M_PI*(x[i]-0.15))*cos(2*M_PI*(y[i]-0.6))";        
+	  // cout<<"\n sol["<<i<<"]= "<<sol[i]<<" ";
 	}
       else
 	{
-	  cout<<"\n Thiw demo only works for 2D\n";
+	  cout<<"\n This demo only works for 2D\n";
 	  exit(0);
 	}
     }
@@ -233,6 +222,8 @@ int main(int argc, char *argv[])
   LibUtilities::Timer     timer;
   NekDouble elapsed       = 0.0;
 
+  Array<OneD, NekDouble> physold(phys.size());
+  Vmath::Vcopy(phys.size(), phys, 1, physold, 1);
 
   // check for -ve values and apply opt if necessary
   if (vm.count("optm"))
@@ -242,7 +233,7 @@ int main(int argc, char *argv[])
       vector<LibUtilities::BasisKey> tmpBasisKey = demo.GetBasisKey();       
       LibUtilities::PointsKey pkeycheb(E->GetBasis(0)->GetNumPoints(), pointsTypeCheb);
 
-      LibUtilities::BasisKey bkeycheb(LibUtilities::eChebyshev, 3*(E->GetBasis(0)->GetNumModes()-1),  pkeycheb);
+      LibUtilities::BasisKey bkeycheb(LibUtilities::eChebyshev, 3*(E->GetBasis(0)->GetNumModes()),  pkeycheb);
         
       E3seg = new StdSegExp(bkeycheb);
         
@@ -317,7 +308,8 @@ int main(int argc, char *argv[])
 
       timer.Stop();
       elapsed  = timer.TimePerTest(1);
-      cout<<"\n setup phase took "<<elapsed<<"s\n\n";
+      cout<<"\nN = "<<E->GetBasis(0)->GetNumModes()<<" p = "<<E->GetBasis(0)->GetNumPoints();
+      cout<<"\nsetup phase took "<<elapsed<<"s";
 
       timer.Start();
 
@@ -406,24 +398,24 @@ int main(int argc, char *argv[])
 	}
       timer.Stop();
       elapsed += timer.TimePerTest(1);
-      cout<<"\n checking for -vity took "<<timer.TimePerTest(1)<<"s\n\n";
+      cout<<"\nchecking for -vity took "<<timer.TimePerTest(1)<<"s";
 
 	  
 
       if(found_negb4)
 	{
-	  cout<<"\n need optimization\n\n";
+	  cout<<"\nneed optimization. Negative found at "<<startcoordx<<","<<startcoordy<<" ="<<minall<<"\n";
 	  timer.Start();
 	  Do_optimize(coeffs);
 	  timer.Stop();
 	  elapsed += timer.TimePerTest(1);
-	  cout<<"\n optimizertook "<<timer.TimePerTest(1)<<"s\n\n";
+	  cout<<"\noptimizertook "<<timer.TimePerTest(1)<<"s";
 
 	}
       else{
 	elapsed += timer.TimePerTest(1);
 	  
-	cout<<"\n optimizer no need\n\n";
+	cout<<"\noptimizer not needed\n";
       }
       //Backward transform solution to get projected values
       E->BwdTrans(coeffs, phys);
@@ -480,42 +472,49 @@ int main(int argc, char *argv[])
 	{
 	  timer.Stop();
 	  elapsed += timer.TimePerTest(1);
-	  cout<<"\n Verification took "<<timer.TimePerTest(1)<<"s\n\n";
+	  cout<<"\nVerification took "<<timer.TimePerTest(1)<<"s";
 		  
-	  cout<<" fail\n";
-	  cout<<"\n func="<<funcdef<<"\n";
+	  cout<<" \nfail";
+	  cout<<"\nfunc="<<funcdef<<"";
 	  if(numedges == 3)
 	    cout<<"\ntri\n";
 	  else
-	    cout<<"\n quad\n";
+	    cout<<"\nquad";
 	}
       else
 	{
 	  timer.Stop();
 	  elapsed += timer.TimePerTest(1);
-	  cout<<"\n Verification took "<<timer.TimePerTest(1)<<"s\n\n";
+	  cout<<"\nVerification took "<<timer.TimePerTest(1)<<"s";
 	      
-	  cout<<"pass\n";
+	  cout<<"\npass";
 	      
-	  cout<<"\n func="<<funcdef<<"\n";;
+	  cout<<"\nfunc="<<funcdef<<"";;
 	  if(numedges == 3)
-	    cout<<"\ntri\n";
+	    cout<<"\ntri";
 	  else
-	    cout<<"\n quad\n";
+	    cout<<"\nquad";
 	      
 	  phys = sol;
 	}
 	  
     }
 
-
   //Calculate L_inf & L_2 error
-  cout << "L infinity error: \t" << E->Linf(phys, sol) << endl;
+  cout << "\nUnconstrained:\nL infinity error UC:  \t" << E->Linf(physold, sol) << endl;
+  if (stype != ePoint)
+    {
+      cout << "L 2 error UC: \t \t \t" << E->L2(physold, sol) << endl;
+    }
+
+  cout<<"\nConstrained:";
+  cout << "\nL infinity error: \t" << E->Linf(phys, sol) << endl;
   if (stype != ePoint)
     {
       cout << "L 2 error: \t \t \t" << E->L2(phys, sol) << endl;
     }
 
+  cout<<"\n*******************\n";
   return 0;
     
 }
@@ -570,82 +569,10 @@ void project_edges( Array<OneD, NekDouble>uhats1,    Array<OneD, Array<OneD, Nek
       // hypto
       edgederpquhats(uhats1, ret[2], wsp, Vxyhyp, Vdxxyhyp, Vdyxyhyp, NullNekDouble1DArray);
     }
-  // if(numedges == 6) // tet
-  //   {
 
-  //     if(d == 1)
-  //       {
-
-  // 	  // edge front left (AD) (x = -1) (y = -1)
-  // 	  edgederpquhats(uhats, ret[0], E->GetNcoeffs(),  Vxm1ym1z, Vdxxm1ym1z, Vdyxm1ym1z, Vdzxm1ym1z);
-                        
-  // 	  //edge front hypt (DB) (y = -1) (z = -x) 
-  // 	  edgederpquhats(uhats, ret[1], E->GetNcoeffs(), Vym1xmz, Vdxym1xmz, Vdyym1xmz, Vdzym1xmz  );
-            
-  // 	  //edge front bot (AB) (y = -1) (z = -1)  
-  // 	  edgederpquhats(uhats, ret[2], E->GetNcoeffs(), Vym1xzm1, Vdxym1xzm1, Vdyym1xzm1, Vdzym1xzm1 );
-
-  // 	  //edge left hypt (DC) ( x = -1) (z = -y)  
-  // 	  edgederpquhats(uhats, ret[3], E->GetNcoeffs(), Vxm1ymz, Vdxxm1ymz, Vdyxm1ymz, Vdzxm1ymz);
-     
-  // 	  // edge bot diag (BC) (z = -1) (y = -x)
-  // 	  edgederpquhats(uhats, ret[4], E->GetNcoeffs(),  Vxm1ymz, Vdxxm1ymz, Vdyxm1ymz, Vdzxm1ymz);
-
-  // 	  //edge CA bot left (x = -1) (z = -1)
-  // 	  edgederpquhats(uhats, ret[5], E->GetNcoeffs(),Vxm1yzm1, Vdxxm1yzm1, Vdyxm1yzm1, Vdzxm1yzm1);
-            
-     
-  //       }
-  //     else if( d == 0)
-  //       {
-  // 	  // edge front left (AD) (x = -1) (y = -1)
-  // 	  deruhatsedges(uhats, ret[0],  Vxm1ym1z, Vdxxm1ym1z, Vdyxm1ym1z, Vdzxm1ym1z);
-
-  // 	  //edge front hypt (DB) (y = -1) (z = -x)
-  // 	  deruhatsedges(uhats, ret[1],Vym1xmz, Vdxym1xmz, Vdyym1xmz, Vdzym1xmz);
-            
-  // 	  //edge front bot (AB) (y = -1) (z = -1)
-  // 	  deruhatsedges(uhats, ret[2],  Vym1xzm1, Vdxym1xzm1, Vdyym1xzm1, Vdzym1xzm1);
-
-  // 	  //edge left hypt (DC) ( x = -1) (z = -y)
-  // 	  deruhatsedges(uhats, ret[3], Vxm1ymz, Vdxxm1ymz, Vdyxm1ymz, Vdzxm1ymz);
-
-  // 	  // edge bot diag (BC) (z = -1) (y = -x)
-  // 	  deruhatsedges(uhats, ret[4],  Vxm1ymz, Vdxxm1ymz, Vdyxm1ymz, Vdzxm1ymz);
-                   
-  // 	  //edge CA bot left (x = -1) (z = -1)
-  // 	  deruhatsedges(uhats, ret[5], Vxm1yzm1, Vdxxm1yzm1, Vdyxm1yzm1, Vdzxm1yzm1);
-          
-
-  //       }
-  //   }
-  //return ret;   
 }
 
    
-
-
-void deruhatsedges(Array<OneD, NekDouble> &uhats, Array<OneD, NekDouble> &ret,  Array<OneD, NekDouble> Vxyz, Array<OneD, NekDouble> Vdxyz, Array<OneD, NekDouble> Vxdyz, Array<OneD, NekDouble> Vxydz)
-{
-  boost::ignore_unused(Vxyz, Vxydz);
-  int totpts =   E3seg->GetBasis(0)->GetZ().size();
-  int modes = uhats.size();
-  NekDouble v1;   
-  Array<OneD, NekDouble> vals(totpts), hold(totpts);
-  Array<OneD, NekDouble> temp(uhats.size());  
-    
-  for(int k = 0; k < totpts; k++)
-    {
-      Vmath::Vmul(uhats.size(), &Vdxyz[k], totpts, &uhats[0], 1, &temp[0], 1);
-
-      v1  = Vmath::Vsum(modes, temp, 1);
-      Vmath::Vmul(uhats.size(), &Vxdyz[k], totpts, &uhats[0], 1, &temp[0], 1);
-      v1  = v1 + Vmath::Vsum(modes, temp, 1);  
-        
-    }    
-  E3seg->FwdTrans(vals,ret);
-}
-
 
 void edgederpquhats(Array<OneD, NekDouble> &uhats, Array<OneD, NekDouble> &ret,  Array<OneD, NekDouble> &wsp,  Array<OneD, NekDouble> Vxy, Array<OneD, NekDouble> Vxyd0, Array<OneD, NekDouble> Vxyd1, Array<OneD, NekDouble> Vxyd2)
 {
@@ -922,54 +849,6 @@ Array<OneD,  NekDouble> call_find_roots(Array<OneD,  NekDouble> &uhats1 , NekDou
 }
 
 
-int Opt_needed(Array<OneD, NekDouble> uhats, int flag)
-{
-  int nq = E->GetTotPoints();//demo.testcoord3dlat[0].size();                                           
-  Array<OneD, NekDouble> temp1(nq);
-  Array<OneD, NekDouble> temp2(uhats.size());
-  Array<OneD, Array<OneD, NekDouble> > coordquad = demo.GetCoords(E);
-  //interioreval3dlat*uhats (todo: change to blas  call if needed)                                      
-  NekDouble minv = numeric_limits<double>::infinity();
-  int idxmin = -1;
-  for (int i = 0; i<nq; i++)
-    {
-      Vmath::Vmul(uhats.size(), &storage2d[0][i], nq, &uhats[0], 1, &temp2[0], 1);
-      temp1[i] = Vmath::Vsum(uhats.size(), temp2, 1);
-      if(temp1[i] < minv)
-	{
-	  minv = temp1[i];
-	  idxmin = i;
-	}
-    }
-      
-  int ct = nq;
-  nq = demo.testcoord3dqmidpts[0].size();
-  temp1=Array<OneD, NekDouble>(nq);
-  for (int i = 0; i<nq; i++)
-    {
-      Vmath::Vmul(uhats.size(), &demo.interioreval2dtqmidpts[i], nq, &uhats[0], 1, &temp2[0], 1);
-      temp1[i] = Vmath::Vsum(uhats.size(), temp2, 1);
-      if(temp1[i] < minv)
-	{
-	  minv = temp1[i];
-	  idxmin = i+ct;
-	}
-    }
-  if(minv < 0 && abs(minv) > 1e-10 && idxmin != -1)
-    {
-      if(flag == 0)
-	{
-	  startval = minv;
-	  startcoordx = demo.testcoord2dtlattice[0][idxmin];
-	  startcoordy = demo.testcoord2dtlattice[1][idxmin];
-	}
-      return 1;
-
-    }
-  return 0;
-}
-
-
 
 void Do_optimize(Array<OneD, NekDouble> &uhats)
 {
@@ -1108,7 +987,7 @@ void Do_optimize(Array<OneD, NekDouble> &uhats)
   timeprojectsurf = timeprojectsurf/(counter);    
   itersGD2 = (avgiterGD)/(counter);
   iterstaken = counter;
-  cout<<"sphere_rotation took "<<counter<<"iterations. avgiterGD = "<<avgiterGD;
+  cout<<"\nfilter took "<<counter<<"iterations. avgiterGD = "<<avgiterGD;
   uhats = d.back();
 }
 
