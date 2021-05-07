@@ -31,6 +31,12 @@ ADD_NEKTAR_TEST(StdProjectPosPres2D_Quad_Orth_P4_Q7)
 ADD_NEKTAR_TEST(StdProjectPosPres2D_Tri_Orth_P4_Q6)
 ADD_NEKTAR_TEST(StdProjectPosPres1D_Seg_orth_P6_Q7)
 ADD_NEKTAR_TEST(StdProjectPosPres1D_Seg_orth_P5_Q6)
+ADD_NEKTAR_TEST(StdProjectPosPres3D_Hex_Orth_P4_Q6)
+ADD_NEKTAR_TEST(StdProjectPosPres3D_Hex_Orth_P6_Q6)
+ADD_NEKTAR_TEST(StdProjectPosPres3D_Tet_Orth_P4_Q6)
+ADD_NEKTAR_TEST(StdProjectPosPres3D_Tet_Orth_P6_Q6)
+
+# Confederate matrix root-finder tests
 ADD_NEKTAR_TEST(ConfRootFinderDemo_Seg_Orth_P5_Q16)
 ADD_NEKTAR_TEST(ConfRootFinderDemo_Seg_Orth_P7_Q8)
 
