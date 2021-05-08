@@ -16,7 +16,7 @@ include:
 .execution-conditions: &execution-conditions
   only:
     refs:
-      - /^release\/.*$/
+      - /^release\/.*$/@nektar/nektar
       - merge_requests
       - master@nektar/nektar
       - tags@nektar/nektar
