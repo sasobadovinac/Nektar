@@ -42,11 +42,11 @@ namespace po = boost::program_options;
 void Do_optimize(Array<OneD, NekDouble> &uhats);
 
 //surface roots
-void surfuhats(Array<OneD, NekDouble> &uhats, Array<OneD, NekDouble> &ret,  Array<OneD, NekDouble> Vxyz );
+void surfuhats(Array<OneD, NekDouble> &uhats, Array<OneD, NekDouble> &ret,  Array<OneD, NekDouble> Vxyz, StdExpansion* Etemp );
 
 void call_setup_hex();
-
 void call_setup_tet();
+void call_setup_pyr();
 
 // declare caller routine to find_roots
 Array<OneD, NekDouble> call_find_roots(Array<OneD, NekDouble> &uhatsall, NekDouble &avgiterGD, Array< OneD, Array<OneD, NekDouble> >&uhatsedges, Array< OneD, Array<OneD, NekDouble> >&surfaceuhats,  NekDouble &minv, NekDouble &roots1dtime,  NekDouble &roots2dtime , NekDouble &roots3dtime );
@@ -77,7 +77,6 @@ StdExpansion *Etri;
 Array<OneD, Array<OneD, NekDouble> > edgeptsin;
 
 // for edges root finding hex:
-
 // edge front left (x = -1) (y = -1)
 Array<OneD, NekDouble> Vxm1ym1z   ;
 Array<OneD, NekDouble> Vdxxm1ym1z   ;
@@ -224,6 +223,77 @@ Array<OneD, NekDouble> Vxpz0ym1tet;
 //surf DCB restriction  on GD: (x + y + z = -1)  
 Array<OneD, NekDouble> Vxpypzm1tet;
 
+//pyr dges:
+// edge front left (x = -1) (y = -1) EA
+Array<OneD, NekDouble> Vxm1ym1zpyr;
+Array<OneD, NekDouble> Vdyxm1ym1zpyr;
+Array<OneD, NekDouble> Vdxxm1ym1zpyr;
+Array<OneD, NekDouble> Vdzxm1ym1zpyr;
+
+//edge front hypt (y = -1) (z = -x) EB
+Array<OneD, NekDouble> Vym1xmzpyr   ;
+Array<OneD, NekDouble> Vdxym1xmzpyr   ;
+Array<OneD, NekDouble> Vdyym1xmzpyr   ;
+Array<OneD, NekDouble> Vdzym1xmzpyr   ;
+
+
+//edge back hypt (z = -x  or x = -z) (x = y) EC
+Array<OneD, NekDouble> Vxeyxmzpyr   ;
+Array<OneD, NekDouble> Vdxxeyxmzpyr   ;
+Array<OneD, NekDouble> Vdyxeyxmzpyr   ;
+Array<OneD, NekDouble> Vdzxeyxmzpyr   ;
+
+//edge back left (y = -z) (x = -1) ED
+Array<OneD, NekDouble> Vx1ymzpyr   ;
+Array<OneD, NekDouble> Vdxx1ymzpyr   ;
+Array<OneD, NekDouble> Vdyx1ymzpyr   ;
+Array<OneD, NekDouble> Vdzx1ymzpyr   ;
+
+
+//edge front bot (y = -1) (z = -1) AB
+Array<OneD, NekDouble> Vym1xzm1pyr   ;
+Array<OneD, NekDouble> Vdyym1xzm1pyr   ;
+Array<OneD, NekDouble> Vdxym1xzm1pyr   ;
+Array<OneD, NekDouble> Vdzym1xzm1pyr   ;
+
+
+//edge back bot (y = 1) (z = -1)) DC
+Array<OneD, NekDouble> Vy1xzm1pyr   ;
+Array<OneD, NekDouble> Vdyy1xzm1pyr   ;
+Array<OneD, NekDouble> Vdxy1xzm1pyr   ;
+Array<OneD, NekDouble> Vdzy1xzm1pyr   ;
+
+// edge left bot (z = -1), (x = -1) AD
+Array<OneD, NekDouble> Vxm1yzm1pyr   ;
+Array<OneD, NekDouble> Vdyxm1yzm1pyr   ;
+Array<OneD, NekDouble> Vdxxm1yzm1pyr   ;
+Array<OneD, NekDouble> Vdzxm1yzm1pyr   ;
+
+//edge right bot ( z = -1) (x = 1) BC
+Array<OneD, NekDouble> Vx1yzm1pyr   ;
+Array<OneD, NekDouble> Vdyx1yzm1pyr   ;
+Array<OneD, NekDouble> Vdxx1yzm1pyr   ;
+Array<OneD, NekDouble> Vdzx1yzm1pyr   ;
+
+//pyr surfaces
+//surface bot z = -1
+Array<OneD, NekDouble> Vxyzm1pyr ;
+
+//surface hypt x+z = 0
+Array<OneD, NekDouble> Vxmzypyr;
+
+//surface left x = -1
+Array<OneD, NekDouble> Vxm1yzpyr;
+
+
+//surface front y = -1
+Array<OneD, NekDouble> Vxym1zpyr;
+
+//surface back y +z = 0
+Array<OneD, NekDouble> Vxymzpyr;
+
+
+
 int dimension ;
 NekDouble  startval, startcoordx, startcoordy, startcoordz, itersGD1, itersGD2, itersGD3;
 
@@ -273,7 +343,13 @@ int main(int argc, char *argv[])
       numedges = 12;
       numsurfaces = 6;
       break;
-     
+
+    case LibUtilities::ePyramid:
+        
+      numedges = 8;
+      numsurfaces = 5;
+      break;
+
     default: cout<<"\n unknown shape typen\n";exit(0);
     
     }
@@ -445,6 +521,10 @@ int main(int argc, char *argv[])
 	  else if(numedges == 6) //tet
 	    {
 	      call_setup_tet();
+	    }
+	  else if(numedges == 8) //pyr
+	    {
+	      call_setup_pyr();
 	    }
 	  timer.Stop();
 	  setup += timer.TimePerTest(1);
@@ -806,6 +886,163 @@ void call_setup_hex()
   Vxy1z = E->PhysEvaluateBasis(surfptsintemp,storage3d, NullNekDouble1DArray, NullNekDouble1DArray, NullNekDouble1DArray);
 }
 
+void call_setup_pyr()
+{
+
+  //we need qzin + qzinmid as input points                                                         
+  Array<OneD, NekDouble> edgexyztemp =   E3seg->GetBasis(0)->GetZ();
+
+  int totszedges1d =  edgexyztemp.size()*(E->GetNcoeffs());      
+  edgeptsin = Array<OneD, Array<OneD, NekDouble> >(dimension);
+  for(int p = 0; p < dimension; p++)
+    {
+      edgeptsin[p] = Array<OneD, NekDouble>(edgexyztemp);
+    }
+		
+  // edge front left EA (x = -1) (y = -1)                 
+  Vxm1ym1zpyr = Array<OneD, NekDouble>(totszedges1d);
+  Vdxxm1ym1zpyr = Array<OneD, NekDouble>(totszedges1d);
+  Vdyxm1ym1zpyr = Array<OneD, NekDouble>(totszedges1d);
+  Vdzxm1ym1zpyr = Array<OneD, NekDouble>(totszedges1d);
+
+  edgeptsin[0]  = Array<OneD, NekDouble>(edgeptsin[0].size(), -1.0);
+  edgeptsin[1]  = Array<OneD, NekDouble>(edgeptsin[0].size(), -1.0);
+  Vxm1ym1zpyr   = E->PhysEvaluateBasis(edgeptsin, storage3d, Vdxxm1ym1zpyr, Vdyxm1ym1zpyr, Vdzxm1ym1zpyr);
+
+  //edge front hypt EB (y = -1) (z + x = 0)
+  Vym1xmzpyr    = Array<OneD, NekDouble>(totszedges1d);
+  Vdxym1xmzpyr  = Array<OneD, NekDouble>(totszedges1d);
+  Vdyym1xmzpyr  = Array<OneD, NekDouble>(totszedges1d);
+  Vdzym1xmzpyr  = Array<OneD, NekDouble>(totszedges1d);
+  Vmath::Smul(edgeptsin[0].size(), -1.0, &edgeptsin[2][0], 1, &edgeptsin[0][0], 1);
+
+  Vxm1ym1zpyr =  E->PhysEvaluateBasis(edgeptsin, storage3d, Vdxym1xmzpyr, Vdxym1xmzpyr, Vdzym1xmzpyr);
+  //edge back hypt (z = -x  or x = -z) (x = y) EC
+  Vxeyxmzpyr    = Array<OneD, NekDouble>(totszedges1d);
+  Vdxxeyxmzpyr  = Array<OneD, NekDouble>(totszedges1d);
+  Vdyxeyxmzpyr  = Array<OneD, NekDouble>(totszedges1d);
+  Vdzxeyxmzpyr  = Array<OneD, NekDouble>(totszedges1d);
+
+  edgeptsin[1]  =  Array<OneD, NekDouble>(edgexyztemp);
+  Vxeyxmzpyr    =  E->PhysEvaluateBasis(edgeptsin, storage3d, Vdxxeyxmzpyr, Vdyxeyxmzpyr, Vdzxeyxmzpyr);
+
+  //edge back left (y = -z) (x = -1) ED
+  Vx1ymzpyr     = Array<OneD, NekDouble>(totszedges1d);
+  Vdxx1ymzpyr   = Array<OneD, NekDouble>(totszedges1d);
+  Vdyx1ymzpyr   = Array<OneD, NekDouble>(totszedges1d);
+  Vdzx1ymzpyr   = Array<OneD, NekDouble>(totszedges1d); ;
+  Vmath::Smul(edgeptsin[0].size(), -1.0, &edgeptsin[2][0], 1, &edgeptsin[1][0], 1);
+
+  edgeptsin[0]  = Array<OneD, NekDouble>(edgeptsin[0].size(), -1.0);
+  Vx1ymzpyr     = E->PhysEvaluateBasis(edgeptsin, storage3d, Vdxx1ymzpyr, Vdyx1ymzpyr, Vdzx1ymzpyr);
+  
+  //edge front bot (y = -1) (z = -1) AB
+  Vym1xzm1pyr   = Array<OneD, NekDouble>(totszedges1d);
+  Vdxym1xzm1pyr = Array<OneD, NekDouble>(totszedges1d)   ;
+  Vdyym1xzm1pyr = Array<OneD, NekDouble>(totszedges1d)    ;
+  Vdzym1xzm1pyr = Array<OneD, NekDouble>(totszedges1d)    ;
+
+  edgeptsin[1]  = Array<OneD, NekDouble>(edgeptsin[0].size(), -1.0);
+  edgeptsin[2]  = Array<OneD, NekDouble>(edgeptsin[0].size(), -1.0);
+  edgeptsin[0]  = Array<OneD, NekDouble>(edgexyztemp);
+  Vym1xzm1pyr   = E->PhysEvaluateBasis(edgeptsin, storage3d, Vdxym1xzm1pyr, Vdyym1xzm1pyr,Vdzym1xzm1pyr);
+
+  
+  //edge back bot (y = 1) (z = -1)) DC
+  Vy1xzm1pyr    = Array<OneD, NekDouble>(totszedges1d);
+  Vdyy1xzm1pyr  = Array<OneD, NekDouble>(totszedges1d)   ;
+  Vdxy1xzm1pyr  = Array<OneD, NekDouble>(totszedges1d);
+  Vdzy1xzm1pyr  = Array<OneD, NekDouble>  (totszedges1d) ;
+
+  edgeptsin[0]  = edgexyztemp;
+  edgeptsin[1]  = Array<OneD, NekDouble>(edgeptsin[0].size(), 1.0);
+  Vy1xzm1pyr   = E->PhysEvaluateBasis(edgeptsin, storage3d, Vdxy1xzm1pyr, Vdyy1xzm1pyr, Vdzy1xzm1pyr);
+
+  
+  // edge left bot (z = -1), (x = -1) AD
+  Vxm1yzm1pyr   = Array<OneD, NekDouble>(totszedges1d);
+  Vdyxm1yzm1pyr = Array<OneD, NekDouble>(totszedges1d)   ;
+  Vdxxm1yzm1pyr = Array<OneD, NekDouble>(totszedges1d)   ;
+  Vdzxm1yzm1pyr = Array<OneD, NekDouble>(totszedges1d)   ;
+
+  edgeptsin[1]  = edgexyztemp;
+  edgeptsin[0]  = Array<OneD, NekDouble>(edgeptsin[0].size(), -1.0);
+  edgeptsin[2]  = Array<OneD, NekDouble>(edgeptsin[0].size(), -1.0);
+  Vxm1yzm1pyr   =  E->PhysEvaluateBasis(edgeptsin, storage3d, Vdxxm1yzm1pyr, Vdyxm1yzm1pyr, Vdzxm1yzm1pyr);
+
+  
+  //edge right bot ( z = -1) (x = 1) BC
+  Vx1yzm1pyr    = Array<OneD, NekDouble>(totszedges1d);
+  Vdyx1yzm1pyr  = Array<OneD, NekDouble>(totszedges1d);
+  Vdxx1yzm1pyr  = Array<OneD, NekDouble>(totszedges1d);
+  Vdzx1yzm1pyr  = Array<OneD, NekDouble>(totszedges1d);
+
+  edgeptsin[1]  = edgexyztemp;
+  edgeptsin[0]  = Array<OneD, NekDouble>(edgeptsin[0].size(), 1.0);
+  edgeptsin[2]  = Array<OneD, NekDouble>(edgeptsin[0].size(), -1.0);
+  Vx1yzm1pyr    =  E->PhysEvaluateBasis(edgeptsin, storage3d, Vdxx1yzm1pyr, Vdyx1yzm1pyr, Vdzx1yzm1pyr);
+
+  int totsurf2d = (demo.testcoord2dqqpts[0].size())*E->GetNcoeffs();
+            
+  Array<OneD, Array<OneD, NekDouble> > surfptsin(dimension), surfptsintemp(dimension);
+  for(int k = 0; k < dimension-1; k++)
+    {
+      surfptsin[k] = Array<OneD, NekDouble>(demo.testcoord2dqqpts[k]);
+      surfptsintemp[k] = Array<OneD, NekDouble>(demo.testcoord2dqqpts[k]);
+    }
+            
+  surfptsin[dimension-1] = Array<OneD, NekDouble>(demo.testcoord2dqqpts[0].size()); 
+  surfptsintemp[dimension-1] = Array<OneD, NekDouble>(demo.testcoord2dqqpts[0].size()); 
+            
+  //surface bot z = -1, (ABC)  
+  Vxyzm1pyr = Array<OneD, NekDouble>(totsurf2d);
+  surfptsintemp[2] = Array<OneD, NekDouble>(surfptsin[0].size(), -1.0);
+  surfptsintemp[0] = surfptsin[0];
+  surfptsintemp[1] = surfptsin[1];
+  Vxyzm1pyr = E->PhysEvaluateBasis(surfptsintemp, storage3d, NullNekDouble1DArray, NullNekDouble1DArray, NullNekDouble1DArray);
+
+  
+  totsurf2d =  (demo.testcoord2dtqpts[0].size())*E->GetNcoeffs();
+  //Array<OneD, Array<OneD, NekDouble> > surfptsin(dimension), surfptsintemp(dimension);
+
+  for(int k = 0; k < dimension-1; k++)
+    {
+      surfptsin[k] = Array<OneD, NekDouble>(demo.testcoord2dtqpts[k]);
+      surfptsintemp[k] = Array<OneD, NekDouble>(demo.testcoord2dtqpts[k]);
+    }
+  surfptsin[dimension-1] = Array<OneD, NekDouble>(demo.testcoord2dtqpts[0].size());
+  surfptsintemp[dimension-1] = Array<OneD, NekDouble>(demo.testcoord2dtqpts[0].size());
+
+  int totpt = surfptsin[0].size();
+  
+  //surface hypt (tri) x+z = 0 && y + z = 0   
+  Vxmzypyr = Array<OneD, NekDouble>(totsurf2d);
+  Vmath::Smul(totpt, -1.0, &surfptsintemp[0][0], 1, &surfptsintemp[2][0], 1);
+  Vmath::Vcopy(totpt,  &surfptsintemp[0][0], 1,  &surfptsintemp[1][0], 1);
+  Vxmzypyr = E->PhysEvaluateBasis(surfptsintemp, storage3d, NullNekDouble1DArray, NullNekDouble1DArray\
+, NullNekDouble1DArray);
+
+  //surface left (tri) x = -1   
+  Vxm1yzpyr = Array<OneD, NekDouble>(totsurf2d);
+  surfptsintemp[1] = surfptsin[1];
+  surfptsintemp[2] = surfptsin[2];
+  surfptsintemp[0] = Array<OneD, NekDouble>(totpt, -1.0);
+  Vxm1yzpyr = E->PhysEvaluateBasis(surfptsintemp, storage3d, NullNekDouble1DArray, NullNekDouble1DArray, NullNekDouble1DArray);
+  
+  //surface front (tri) y = -1     
+  Vxym1zpyr = Array<OneD, NekDouble>(totsurf2d);
+  surfptsintemp[1] = Array<OneD, NekDouble>(totpt, -1.0);
+  surfptsintemp[0] = surfptsin[0];
+  Vxym1zpyr = E->PhysEvaluateBasis(surfptsintemp, storage3d, NullNekDouble1DArray, NullNekDouble1DArray, NullNekDouble1DArray);
+
+ //surface back (tri) y = -z
+  Vxymzpyr = Array<OneD, NekDouble>(totsurf2d);
+  Vmath::Smul(totpt, -1.0, &surfptsintemp[2][0], 1, &surfptsintemp[1][0], 1);
+  Vxymzpyr =  E->PhysEvaluateBasis(surfptsintemp, storage3d, NullNekDouble1DArray, NullNekDouble1DArray, NullNekDouble1DArray);
+
+}
+
+
 
 // FILE *csvfile(int flag)
 // {
@@ -851,77 +1088,78 @@ void project_surfaces( Array<OneD, NekDouble>uhats,    Array<OneD, Array<OneD, N
   if(numsurfaces == 6) //hex
     {
       //bot surface  z = -1
-      surfuhats(uhats, ret[0], Vxyzm1);
+      surfuhats(uhats, ret[0], Vxyzm1, Equad);
 
       //right surface x = 1
-      surfuhats(uhats, ret[1], Vx1yz);
+      surfuhats(uhats, ret[1], Vx1yz, Equad);
 
       //surface top z = 1
-      surfuhats(uhats, ret[2], Vxyz1);
+      surfuhats(uhats, ret[2], Vxyz1, Equad);
             
       //left surface x = -1
-      surfuhats(uhats, ret[3], Vxm1yz);
+      surfuhats(uhats, ret[3], Vxm1yz, Equad);
        
       //surface front y = -1
-      surfuhats(uhats, ret[4], Vxym1z);
+      surfuhats(uhats, ret[4], Vxym1z, Equad);
        
       //surface back y = 1
-      surfuhats(uhats, ret[5], Vxy1z);
+      surfuhats(uhats, ret[5], Vxy1z, Equad);
     }
   else if(numsurfaces == 4) //tets
     {
 
       //surface bot z = -1 restriction on GD: x+y = 0 (ABC)
-      surfuhats(uhats, ret[0],  Vxyzm1tet);
+      surfuhats(uhats, ret[0],  Vxyzm1tet, Etri);
 
       //surface left x = -1 restriction on GD: y + z = 0 (DAC)
-      surfuhats(uhats, ret[1], Vxm1ypz0tet);
+      surfuhats(uhats, ret[1], Vxm1ypz0tet, Etri);
 
       //surf front y = -1   restriction on GD: x + z = 0 (DAB)
-      surfuhats(uhats, ret[2], Vxpz0ym1tet);
+      surfuhats(uhats, ret[2], Vxpz0ym1tet, Etri);
 
       //surf DCB restriction  on GD: (x + y + z = -1)
-      surfuhats(uhats, ret[3], Vxpypzm1tet);
+      surfuhats(uhats, ret[3], Vxpypzm1tet, Etri);
 
       
     }
+  else if(numsurfaces == 5)
+    {
+      //surface bot z = -1   
+      surfuhats(uhats, ret[0], Vxyzm1pyr, Equad);
+
+      //surface hypt x+z = 0
+      surfuhats(uhats, ret[1], Vxmzypyr, Etri);
+
+	//surface left x = -1
+      surfuhats(uhats, ret[2], Vxm1yzpyr, Etri);
+
+	//surface front y = -1
+      surfuhats(uhats, ret[3], Vxym1zpyr, Etri);
+	
+	//surface back y +z =  0
+      surfuhats(uhats, ret[4], Vxymzpyr, Etri);
+    }
 }
 
-void surfuhats(Array<OneD, NekDouble> &uhats, Array<OneD, NekDouble> &ret,  Array<OneD, NekDouble> Vxyz)
+void surfuhats(Array<OneD, NekDouble> &uhats, Array<OneD, NekDouble> &ret,  Array<OneD, NekDouble> Vxyz, StdExpansion *Etemp)
 {
   int modes = uhats.size();
 
   Array<OneD, NekDouble> temp(uhats.size());  
-  int totpts;
-  if(E->DetShapeType() == LibUtilities::eHexahedron)
-    {
-      totpts = Equad->GetTotPoints();
-    }
-  else if (E->DetShapeType() == LibUtilities::eTetrahedron)
-    {
-      totpts = Etri->GetTotPoints();
-
-    }
+  int totpts = Etemp->GetTotPoints();
   Array<OneD, NekDouble> vals(totpts);    
-  //Vxyz*uhats -> project to -> E3tri
+  //Vxyz*uhats -> project to -> E3tri or Equad
   for(int k = 0; k < totpts; k++)
     {
       
       Vmath::Vmul(uhats.size(), &Vxyz[k], totpts, &uhats[0], 1, &temp[0], 1);
       
       vals[k]  = Vmath::Vsum(modes, temp, 1);
+      
     }
   //    vals = demo.blasmatvec(Vxyz, uhats, totpts, modes);
-  if(E->DetShapeType() == LibUtilities::eHexahedron)
-    {
-      Equad->FwdTrans(vals, ret);
-    }
-  else if (E->DetShapeType() == LibUtilities::eTetrahedron)
-    {
-      Etri->FwdTrans(vals, ret);
-
-    }
-
+  
+  Etemp->FwdTrans(vals, ret);
 }
 
 
@@ -991,6 +1229,33 @@ void project_edges( Array<OneD, NekDouble>uhats,    Array<OneD, Array<OneD, NekD
       edgederpquhats(uhats, ret[5], E->GetNcoeffs(),Vxm1yzm1tet, Vdxxm1yzm1tet,  Vdyxm1yzm1tet,  Vdzxm1yzm1tet);
 
 	
+    }
+  else if(numedges == 8) //pyr
+    {
+                                                                     
+      // edge front left (x = -1) (y = -1) EA
+      edgederpquhats(uhats, ret[0], E->GetNcoeffs(), Vxm1ym1zpyr, Vdxxm1ym1zpyr, Vdyxm1ym1zpyr, Vdzxm1ym1zpyr);
+
+      //edge front hypt (y = -1) (z = -x) EB
+      edgederpquhats(uhats, ret[1], E->GetNcoeffs(), Vym1xmzpyr, Vdxym1xmzpyr, Vdyym1xmzpyr, Vdzym1xmzpyr);
+
+      //edge back hypt (z = -x  or x = -z) (x = y) EC
+      edgederpquhats(uhats, ret[2], E->GetNcoeffs(), Vxeyxmzpyr, Vdxxeyxmzpyr, Vdyxeyxmzpyr, Vdzxeyxmzpyr);
+
+      //edge back left (y = -z) (x = -1) ED
+      edgederpquhats(uhats, ret[3], E->GetNcoeffs(), Vxeyxmzpyr, Vdxxeyxmzpyr, Vdyxeyxmzpyr, Vdzxeyxmzpyr); 
+
+      //edge front bot (y = -1) (z = -1) AB
+      edgederpquhats(uhats, ret[4], E->GetNcoeffs(), Vym1xzm1pyr, Vdxym1xzm1pyr, Vdyym1xzm1pyr, Vdzym1xzm1pyr); 
+
+      //edge back bot (y = 1) (z = -1)) DC
+      edgederpquhats(uhats, ret[5], E->GetNcoeffs(), Vy1xzm1pyr, Vdxy1xzm1pyr, Vdyy1xzm1pyr, Vdzy1xzm1pyr);
+
+      // edge left bot (z = -1), (x = -1) AD
+      edgederpquhats(uhats, ret[6], E->GetNcoeffs(), Vxm1yzm1pyr, Vdxxm1yzm1pyr, Vdyxm1yzm1pyr, Vdzxm1yzm1pyr);
+
+      //edge right bot ( z = -1) (x = 1) BC
+      edgederpquhats(uhats, ret[7], E->GetNcoeffs(), Vx1yzm1pyr, Vdxx1yzm1pyr, Vdyx1yzm1pyr, Vdzx1yzm1pyr);
     }
 }
     
@@ -1094,6 +1359,9 @@ Array<OneD, NekDouble>  call_find_roots(Array<OneD,  NekDouble> &uhats , NekDoub
   vector<vector<NekDouble> > retall(dimension);
 
   Array<OneD, NekDouble> ret(dimension);
+
+
+  // EDGES
   if(numedges == 6) // tet
     {
       for(int ii = 0; ii < numedges; ii++)
@@ -1283,8 +1551,87 @@ Array<OneD, NekDouble>  call_find_roots(Array<OneD,  NekDouble> &uhats , NekDoub
     	    
 	}
     }
-  if(numsurfaces == 4)
+  else if(numedges == 8) //pyr
     {
+       for(int ii = 0; ii < numedges; ii++)
+        {
+	  t.Start();
+          rethold  = (demo.find_roots(uhatsedges[ii], E, NullNekDoubleArrayOfArray, dum,  0, 0, 0, 0));
+          t.Stop();
+	  
+          roots1dtime +=  t.TimePerTest(1);
+	    for(int p = 0; p < rethold[0].size(); p++)
+            {
+	      if(ii == 0)
+		  { 
+                    retall[0].push_back(-1);
+                    retall[1].push_back(-1);
+                    retall[2].push_back(rethold[0][p]);
+		  }
+		else if(ii == 1) //edge front hypt (y = -1) (z = -x)                                    
+                {
+                    retall[0].push_back(rethold[0][p]);
+                    retall[2].push_back(-rethold[0][p]);
+                    retall[1].push_back(-1);
+
+                    retall[0].push_back(-rethold[0][p]);
+                    retall[2].push_back(rethold[0][p]);
+                    retall[1].push_back(-1);
+                }
+		  else if(ii == 2) //edge back hypt ( y = -z) (z +x = 0)                                  
+                {
+                    retall[0].push_back(rethold[0][p]);
+                    retall[1].push_back(rethold[0][p]);
+                    retall[2].push_back(-rethold[0][p]);
+
+                    retall[0].push_back(-rethold[0][p]);
+                    retall[1].push_back(-rethold[0][p]);
+		    retall[2].push_back(rethold[0][p]);
+
+                }
+                else if(ii == 3)  //edge back left (y = -z) (x = -1) ED                                 
+                {
+                    retall[0].push_back(-1);
+                    retall[1].push_back(-rethold[0][p]);
+                    retall[2].push_back(rethold[0][p]);
+
+                    retall[0].push_back(-1);
+                    retall[1].push_back(rethold[0][p]);
+                    retall[2].push_back(-rethold[0][p]);
+                }
+                else if(ii == 4)  //edge front bot (y = -1) (z = -1)                                    
+                {
+                    retall[1].push_back(-1);
+                    retall[0].push_back(rethold[0][p]);
+                    retall[2].push_back(-1);
+                }
+                else if(ii == 5) //edge back bot (y = 1) (z = -1)                                       
+                {
+                    retall[1].push_back(1);
+                    retall[0].push_back(rethold[0][p]);
+                    retall[2].push_back(-1);
+                }
+                else if(ii == 6)//edge left bot (z = -1), (x = -1)                                      
+                {
+                    retall[0].push_back(-1);
+                    retall[1].push_back(rethold[0][p]);
+                    retall[2].push_back(-1);
+                }
+                else if(ii == 7) //edge right bot ( z = -1) (x = 1)                                     
+                {
+                    retall[2].push_back(-1);
+                    retall[1].push_back(rethold[0][p]);
+                    retall[0].push_back(1);
+                }
+
+	    }
+	}
+    }
+
+  //SURFACES:
+  if(numsurfaces == 4) //tet
+    {
+
       NekDouble avgiterGDhold;
 
       // call 2D rootfinder on each surface:
@@ -1330,7 +1677,7 @@ Array<OneD, NekDouble>  call_find_roots(Array<OneD,  NekDouble> &uhats , NekDoub
 	}
 	  
     }
-  else if(numsurfaces == 6)
+  else if(numsurfaces == 6) //hex
     {
       NekDouble avgiterGDhold;
       for(int ii = 0; ii < numsurfaces; ii++)
@@ -1382,7 +1729,60 @@ Array<OneD, NekDouble>  call_find_roots(Array<OneD,  NekDouble> &uhats , NekDoub
 	    
 	}
       
-    }                     
+    }
+  else if(numsurfaces == 5) //pyr
+    {
+      NekDouble avgiterGDhold;
+      for(int ii = 0; ii < numsurfaces; ii++)
+	{
+	  if( ii == 0) // bot surface: quad, z = -1
+	    {
+	      t.Start();   
+	      rethold = demo.find_roots(surfaceuhats[ii], Equad, storage2dq,  avgiterGDhold, 0, 1, 0 , 0);
+	      t.Stop();
+	      
+	      roots2dtime +=  t.TimePerTest(1);
+	      avgiterGD += avgiterGDhold;
+
+	      retall[2].push_back(-1);
+	      retall[1].push_back(rethold[1][0]);
+	      retall[0].push_back(rethold[0][0]);
+	      
+	    }
+	  else  // rest surfaces: tri
+	    {
+	      t.Start();
+              rethold = demo.find_roots(surfaceuhats[ii], Etri, storage2dt,  avgiterGDhold, 0, 1, 0 , 0);
+              t.Stop();
+	      roots2dtime +=  t.TimePerTest(1);
+              avgiterGD += avgiterGDhold;
+
+	      switch(ii)
+		{
+		case 1: // x+z = 0
+		  retall[0].push_back(rethold[0][0]);
+		  retall[1].push_back(rethold[1][0]);
+		  retall[2].push_back(-rethold[0][0]);
+		  break;
+		case 2: // x = -1 
+		  retall[2].push_back(rethold[1][0]);
+		  retall[1].push_back(rethold[0][0]);
+		  retall[0].push_back(-1.0);
+		  break;
+		case 3: //y = -1
+		  retall[2].push_back(rethold[1][0]);
+                  retall[1].push_back(-1.0);
+                  retall[0].push_back(rethold[0][0]);
+                  break;
+		case 4: // y+z = 0
+		  retall[2].push_back(-rethold[1][0]);
+		  retall[1].push_back(rethold[1][0]);
+		  retall[0].push_back(rethold[0][0]);
+		  
+		}
+	    }
+	}
+    }
     
   //find interior roots:
       
@@ -1438,11 +1838,10 @@ Array<OneD, NekDouble>  call_find_roots(Array<OneD,  NekDouble> &uhats , NekDoub
 
 int Opt_needed(Array<OneD, NekDouble> uhats, int flag)
 {
-  int nq = E->GetTotPoints();//demo.testcoord3dlat[0].size();
+  int nq = E->GetTotPoints();
   Array<OneD, NekDouble> temp1(nq);
   Array<OneD, NekDouble> temp2(uhats.size());
   Array<OneD, Array<OneD, NekDouble> > coordquad = demo.GetCoords(E);
-  //interioreval3dlat*uhats (todo: change to blas  call if needed)
   NekDouble minv = numeric_limits<double>::infinity();
   int idxmin = -1;
   for (int i = 0; i<nq; i++)
@@ -1519,22 +1918,33 @@ void Do_optimize(Array<OneD, NekDouble> &uhats)
       Pf[k] = Array<OneD, NekDouble>(E3seg->GetNcoeffs());
     }
 
+  
   for(int k = 0; k < numsurfaces; k++)
     {
       if(E->DetShapeType() == LibUtilities::eHexahedron)
 	{
 	  surfaceuhats[k] = Array<OneD, NekDouble>(Equad->GetNcoeffs());
 	}
-      else if( E->DetShapeType() == LibUtilities::eTetrahedron)
+      if( E->DetShapeType() == LibUtilities::eTetrahedron)
 	{
 	  surfaceuhats[k] = Array<OneD, NekDouble>(Etri->GetNcoeffs());
+	}
+      if(E->DetShapeType() == LibUtilities::ePyramid)
+	{
+	  if(k == 0 )
+	    {
+	       surfaceuhats[k] = Array<OneD, NekDouble>(Equad->GetNcoeffs());
+	    }
+	  else
+	    {
+	      surfaceuhats[k] = Array<OneD, NekDouble>(Etri->GetNcoeffs());
+	    }
 	}
     }
 
   NekDouble pqval, timeprojectsurf = 0.0, timeprojectedges = 0.0;
   NekDouble avgiterGD = 0.0, avgiterhold = 0.0, roots1dtimehold = 0.0, roots2dtimehold = 0.0, roots3dtimehold = 0.0;
   Array<OneD, NekDouble> Vtmp(  E->GetNcoeffs());
-
 
   Timer t;
   while (counter <= niter)
@@ -1551,6 +1961,7 @@ void Do_optimize(Array<OneD, NekDouble> &uhats)
 	  //pq = @(xx) cfun(xx) .* (constraints(1,jj).*Vc(xx)*uhats);  
 
 	  project_edges(utemp, Pf);
+
 	  t.Stop();
 	  timeprojectedges += t.TimePerTest(1);
 

@@ -917,8 +917,6 @@ public:
 		      {
 			counter_min_change++;
 		      }
-		    //cout<<"\n  min till now="<<savesavehold[2];
-		    //fio<<" "<<savesavehold[2];
 
 		    t1[0] = holdval;
 		    if(abs(xastaa[0][0])>1 || abs(xastaa[1][0]) > 1)
@@ -1361,7 +1359,7 @@ public:
 		      }
 		    break;
 		  case LibUtilities::eTetrahedron:
-		    while(abs(xastaa[0][0])>1 || abs(xastaa[1][0])>1 || abs(xastaa[2][0] ) > 1 || xastaa[0][0] + xastaa[1][0] > 1e-9 || xastaa[0][0] + xastaa[2][0] > 1e-9 || xastaa[1][0] + xastaa[2][0] > 1e-9)
+		    while(abs(xastaa[0][0])>1 || abs(xastaa[1][0])>1 || abs(xastaa[2][0] ) > 1 || xastaa[2][0] + xastaa[1][0] > 1e-9 || xastaa[0][0] + xastaa[2][0] > 1e-9 || xastaa[1][0] + xastaa[2][0] > 1e-9)
 		      {
 			for(int p = 0; p < dim; p++)
 			  {
@@ -1369,6 +1367,16 @@ public:
 			  }
 			fac = fac*gamhold;
 		      }
+		    break;
+		  case LibUtilities::ePyramid:
+		    while(abs(xastaa[0][0])>1 || abs(xastaa[1][0])>1 || abs(xastaa[2][0] ) > 1 || xastaa[0][0] + xastaa[1][0] > 1e-9 ||  xastaa[0][0] + xastaa[2][0] > 1e-9 )
+		      {
+                        for(int p = 0; p < dim; p++)
+                          {
+                            xastaa[p][0] = holdxandval[p]  - fac*g[p];
+                          }
+                        fac = fac*gamhold;
+                      }
 		    break;
 		  default: cout<<"\n invalid element, not yet supported!";
 		    exit(0);
@@ -1455,6 +1463,17 @@ public:
 			    fac = fac*gamhold;
 			  }
 			break;
+			case LibUtilities::ePyramid:
+			  while(abs(xastaa[0][0])>1 || abs(xastaa[1][0])>1 || abs(xastaa[2][0] ) > 1 || xastaa[0][0] + xastaa[1][0] > 1e-9 ||  xastaa[0][0] + xastaa[2][0] > 1e-9 )
+			    {
+			      for(int p = 0; p < dim; p++)
+				{
+				  xastaa[p][0] = holdxandval[p]  - fac*g[p];
+				  
+				}
+			      fac = fac*gamhold;
+			    }
+			  break;
 		      default:
 			cout<<"\n invalid element!\n";
 			exit(0);
@@ -1563,6 +1582,10 @@ public:
 			opt = abs(xastaa[0][0])>1 || abs(xastaa[1][0])>1 || abs(xastaa[2][0] ) > 1|| xastaa[0][0] + xastaa[1][0] > 1e-9 || xastaa[0][0] + xastaa[2][0] > 1e-9 || xastaa[1][0] + xastaa[2][0] > 1e-9;
 			break;
 
+		      case LibUtilities::ePyramid:
+			opt = abs(xastaa[0][0])>1 || abs(xastaa[1][0])>1 || abs(xastaa[2][0] ) > 1|| xastaa[2][0] + xastaa[1][0] > 1e-9 || xastaa[0][0] + xastaa[2][0] > 1e-9;
+		      break;
+		      
 		      default: cout<<"\n invalid element type!\n";
 			exit(0);
 		      }
@@ -1611,11 +1634,16 @@ public:
     //Confederate matrix approach
     if(surfflag == 0 && volflag == 0)
       {
+	Array<OneD, Array<OneD, NekDouble> > retarr(1);
+
 	vector<NekDouble>ret;
-	    
-	while(true)
+        while(true)
 	  {
 	    int N = uhats.size();
+	    //	    cout<<"\n uhats:\n";
+	    // for(int k = 0; k < uhats.size(); k++)
+	    //   cout<<" "<<uhats[k];
+	    
 	    while(abs(uhats[N-1])<1e-10 && N > 1)
 	      {
 		N = N-1;
@@ -1655,12 +1683,19 @@ public:
 		      {
 			Cnew[jj][k] = Cnew[jj][k] - uhats[jj];
 		      }
-		      
+		    
 		      
 		    temp2.push_back(  Cnew[jj][k]);
 		  }
 	      }
-	    Cnew[N-3][N-2] =  - uhats[N-3];
+	    if( N>2)
+	      {
+		Cnew[N-3][N-2] =  - uhats[N-3];
+	      }
+	    else
+	      {
+		return retarr;	
+	      }
 	    Array<OneD, NekDouble>	      EIG_R   (N);
 	    Array<OneD, NekDouble>	      EIG_I   (N);
 	    FindEigenval(Cnew, EIG_R, EIG_I);
@@ -1674,7 +1709,6 @@ public:
 	    break;
 	      
 	  }
-	Array<OneD, Array<OneD, NekDouble> > retarr(1);
 	retarr[0] = Array<OneD, NekDouble> (ret.size(), ret.data());
 
 	return retarr;

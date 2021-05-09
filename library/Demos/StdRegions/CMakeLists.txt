@@ -17,8 +17,8 @@ ADD_NEKTAR_EXECUTABLE(StdProjectPositivityPres2D
         COMPONENT demos DEPENDS StdRegions SOURCES StdProjectPositivityPres2D.cpp)
 ADD_NEKTAR_EXECUTABLE(StdProjectPositivityPres3D
         COMPONENT demos DEPENDS StdRegions SOURCES StdProjectPositivityPres3D.cpp)
-ADD_NEKTAR_EXECUTABLE( StdProjectPositivityPres3D_tets
-        COMPONENT demos DEPENDS StdRegions SOURCES StdProjectPositivityPres3D_tets.cpp)
+#ADD_NEKTAR_EXECUTABLE( StdProjectPositivityPres3D_pyr
+#        COMPONENT demos DEPENDS StdRegions SOURCES StdProjectPositivityPres3D_pyr.cpp)
 ADD_NEKTAR_EXECUTABLE( TriDerivativeDemo
         COMPONENT demos DEPENDS StdRegions SOURCES  TriDerivativeDemo.cpp)
 ADD_NEKTAR_EXECUTABLE( GDBackTrackingTest
@@ -35,6 +35,8 @@ ADD_NEKTAR_TEST(StdProjectPosPres3D_Hex_Orth_P4_Q6)
 ADD_NEKTAR_TEST(StdProjectPosPres3D_Hex_Orth_P6_Q6)
 ADD_NEKTAR_TEST(StdProjectPosPres3D_Tet_Orth_P4_Q6)
 ADD_NEKTAR_TEST(StdProjectPosPres3D_Tet_Orth_P6_Q6)
+ADD_NEKTAR_TEST(StdProjectPosPres3D_Pyr_Orth_P4_Q6)
+ADD_NEKTAR_TEST(StdProjectPosPres3D_Pyr_Orth_P6_Q6)
 
 # Confederate matrix root-finder tests
 ADD_NEKTAR_TEST(ConfRootFinderDemo_Seg_Orth_P5_Q16)
