@@ -42,7 +42,7 @@ protected:
     Array<OneD, NekDouble> m_traceVn, m_xc, m_yc;
     SolverUtils::AdvectionSharedPtr m_advObject;
     int m_infosteps;
-    std::map<int, SpatialDomains::PointGeom> m_pts;
+    std::map<int, SpatialDomains::PointGeom> m_pts, m_ptsCurve;
     SpatialDomains::CurveMap m_curveEdge, m_curveFace;
 
     /// Wrapper to the time integration scheme
@@ -126,6 +126,22 @@ protected:
             m_pts[pt.first] = *(pt.second);
         }
 
+        // Storage of curve points from original mesh
+        m_curveEdge = m_graph->GetCurvedEdges();
+        m_curveFace = m_graph->GetCurvedFaces();
+        int cnt = 0;
+        for (auto &edge : m_curveEdge)
+        {
+            for (auto &point : edge.second->m_points)
+            {
+                m_ptsCurve[cnt++] = *(point);
+            }
+        }
+        for (auto &pt : m_ptsCurve)
+        {
+            std::cout << pt.first << " " << pt.second.x() << " " << pt.second.y() << std::endl;
+        }
+
         SetBoundaryConditions(m_time);
         SetInitialConditions(m_time);
         GetGridVelocity(m_time);
@@ -163,9 +179,9 @@ protected:
 
         for (int i = 0; i < m_steps; ++i)
         {
-            std::cout << "SOLVING TIME = " << m_time << std::endl;
+            //std::cout << "SOLVING TIME = " << m_time << std::endl;
             fields = m_intScheme->TimeIntegrate(step, m_timestep, m_ode);
-            std::cout << "FINISHED SOLVING TIME" << std::endl;
+            //std::cout << "FINISHED SOLVING TIME" << std::endl;
 
             ++step;
             m_time += m_timestep;
@@ -180,7 +196,7 @@ protected:
             // Update m_fields with u^n by multiplying by inverse mass
             // matrix. That's then used in e.g. checkpoint output and L^2 error
             // calculation.
-            std::cout << "ELMT INV MASS TIME = " << m_time << std::endl;
+            //std::cout << "ELMT INV MASS TIME = " << m_time << std::endl;
             for (int j = 0; j < nvar; ++j)
             {
                 m_fields[j]->MultiplyByElmtInvMass(
@@ -209,7 +225,7 @@ protected:
               Array<OneD,        Array<OneD, NekDouble> >&outarray,
         const NekDouble time)
     {
-        std::cout << "EVAL RHS WITH TIME = " << time << std::endl;
+        //std::cout << "EVAL RHS WITH TIME = " << time << std::endl;
         boost::ignore_unused(time);
         const int nVariables = inarray.size();
         const int nc = GetNcoeffs();
@@ -252,7 +268,7 @@ protected:
               Array<OneD,       Array<OneD, NekDouble> >&outarray,
         const NekDouble time)
     {
-        std::cout << "ODE PROJECT WITH TIME = " << time << std::endl;
+        //std::cout << "ODE PROJECT WITH TIME = " << time << std::endl;
         // Counter variable
         int i;
 
@@ -265,7 +281,7 @@ protected:
         // We need to update the geometry for the next stage, if necessary.
         if (time != m_prevStageTime)
         {
-            std::cout << "MOVING FIELDS TIME = " << time << std::endl;
+            //std::cout << "MOVING FIELDS TIME = " << time << std::endl;
             auto &ptsMap = m_graph->GetAllPointGeoms();
             for (auto &pt : ptsMap)
             {
@@ -278,6 +294,29 @@ protected:
                 newLoc[1] = pnt(1) + 0.05 * sin(2*M_PI*time) * sin(2*M_PI*pnt(0)) * sin(2*M_PI*pnt(1));
 
                 pt.second->UpdatePosition(newLoc[0], newLoc[1], newLoc[2]);
+            }
+
+            int cnt = 0;
+            for (auto &edge : m_curveEdge)
+            {
+                for (auto &pt : edge.second->m_points)
+                {
+                    Array<OneD, NekDouble> coords(2, 0.0);
+                    pt->GetCoords(coords);
+                    Array<OneD, NekDouble> newLoc(3, 0.0);
+                    auto pnt = m_ptsCurve[cnt++];
+
+                    newLoc[0] = pnt(0) + 0.05 * sin(2*M_PI*time) * sin(2*M_PI*pnt(0)) * sin(2*M_PI*pnt(1));
+                    newLoc[1] = pnt(1) + 0.05 * sin(2*M_PI*time) * sin(2*M_PI*pnt(0)) * sin(2*M_PI*pnt(1));
+                    pt->UpdatePosition(newLoc[0], newLoc[1], newLoc[2]);
+                }
+            }
+
+            // Attempt to reset element
+            auto &quads = m_graph->GetAllQuadGeoms();
+            for (auto &q : quads)
+            {
+                q.second->Reset(m_curveEdge, m_curveFace);
             }
 
             for (int i = 0; i < m_fields.size(); ++i)
@@ -320,12 +359,11 @@ protected:
         ASSERTL1(flux[0].size() == m_velocity.size(),
                  "Dimension of flux array and velocity array do not match");
 
-        int i, j;
         int nq = physfield[0].size();
 
-        for (i = 0; i < flux.size(); ++i)
+        for (int i = 0; i < flux.size(); ++i)
         {
-            for (j = 0; j < flux[0].size(); ++j)
+            for (int j = 0; j < flux[0].size(); ++j)
             {
                 // This is u * vel - u * gridvel
                 //Vmath::Vvtvvtm(nq, physfield[i], 1, m_velocity[j], 1,
@@ -353,7 +391,6 @@ protected:
     Array<OneD, NekDouble> &GetNormalVelocity()
     {
         // Number of trace (interface) points
-        int i;
         int nTracePts = GetTraceNpoints();
         int nPts = m_velocity[0].size();
 
@@ -363,7 +400,7 @@ protected:
         // Reset the normal velocity
         Vmath::Zero(nTracePts, m_traceVn, 1);
 
-        for (i = 0; i < m_velocity.size(); ++i)
+        for (int i = 0; i < m_velocity.size(); ++i)
         {
             // Subtract grid velocity here from velocity
             // velocity - grid velocity
@@ -380,15 +417,16 @@ protected:
 
     const Array<OneD, const Array<OneD, NekDouble>> &GetGridVelocity(NekDouble time)
     {
-        std::cout << "RECOMPUTE GRID VELOCITY TIME = " << time << std::endl;
+        //std::cout << "RECOMPUTE GRID VELOCITY TIME = " << time << std::endl;
         boost::ignore_unused(time);
-        int nq = m_fields[0]->GetNpoints();
-
-        // Get updated coordinates.
-        Array<OneD, NekDouble> xc(nq), yc(nq);
-        m_fields[0]->GetCoords(xc, yc);
 
         // First order approximation...
+        //int nq = m_fields[0]->GetNpoints();
+        //
+        // Get updated coordinates.
+        //Array<OneD, NekDouble> xc(nq), yc(nq);
+        //m_fields[0]->GetCoords(xc, yc);
+        //
         // for (int i = 0; i < nq; ++i)
         // {
         //     //m_gridVelocity[0][i] = (xc[i] - m_xc[i]) / (time - m_prevStageTime);
@@ -397,7 +435,34 @@ protected:
         //     //m_yc[i] = yc[i];
         // }
 
+        // My method for GLL_LAGRANGE_SEM same order as geometry order
+        auto exp = m_fields[0]->GetExp();
         int nexp = m_fields[0]->GetExpSize();
+        for (int i = 0; i < nexp; ++i)
+        {
+            auto elmt = m_fields[0]->GetExp(i);
+            int offset = m_fields[0]->GetPhys_Offset(i);
+            auto expansion = (*exp)[i];
+
+            int nq = expansion->GetTotPoints();
+            Array<OneD, NekDouble> xc(nq, 0.0), yc(nq, 0.0), zc(nq, 0.0);
+            expansion->GetCoords(xc, yc, zc);
+
+            for (int j = 0; j < nq; ++j)
+            {
+                // original vertex from t=0 mesh
+                m_gridVelocity[0][offset + j] = 0.05 * 2 * M_PI * cos(2*M_PI*time) * sin(2*M_PI*xc[j]) * sin(2*M_PI*yc[j]);
+                m_gridVelocity[1][offset + j] = 0.05 * 2 * M_PI * cos(2*M_PI*time) * sin(2*M_PI*xc[j]) * sin(2*M_PI*yc[j]);
+            }
+        }
+
+        // Daves method for interpolating the grid velocity
+        //int nq = m_fields[0]->GetNpoints();
+        //
+        // Get updated coordinates.
+        //Array<OneD, NekDouble> xc(nq), yc(nq);
+        //m_fields[0]->GetCoords(xc, yc);
+        /*int nexp = m_fields[0]->GetExpSize();
         for (int i = 0; i < nexp; ++i)
         {
             // Construct a standard expansion for each quadrilateral to evaluate
@@ -434,7 +499,7 @@ protected:
                 tmpx, tmp = m_gridVelocity[0] + m_fields[0]->GetPhys_Offset(i));
             stdexp.BwdTrans(
                 tmpy, tmp = m_gridVelocity[1] + m_fields[0]->GetPhys_Offset(i));
-        }
+        }*/
 
         // Update
         /*
@@ -568,7 +633,7 @@ protected:
         m_fields[0]->FwdTrans_IterPerExp(m_gridVelocity[0], gridVelFwdX);
         m_fields[0]->FwdTrans_IterPerExp(m_gridVelocity[1], gridVelFwdY);
 
-        /*
+
         int nexp = m_fields[0]->GetExpSize();
 
         for (int i = 0; i < nexp; ++i)
@@ -583,7 +648,7 @@ protected:
             stdexp->FwdTrans(m_gridVelocity[1] + offset_phys,
                              tmp = gridVelFwdY + offset_coeff);
         }
-        */
+
 
         fieldcoeffs.push_back(gridVelFwdX);
         fieldcoeffs.push_back(gridVelFwdY);
