@@ -17,10 +17,11 @@ v5.1.0
 - Fix compilation errors when CWIPI interface enabled (!1207)
 - Fix distance in ContainsPoint and GetLocCoords (!1200)
 - Fix compiler warning of maybe-uninitialized elType in InputStar (!1217)
+- Extend vectoisation to include all elements and initialise collections on first call (!1162)
 - Add vectorisation of most element on basix operations (!1158)
 - Limit MPI methods based on core count (!1208)
 - Split out IProduct.cpp and IProductWRTDerivBase.cpp in order to avoid long time compilations (!1228)
-- Refactored time integration code using factory pattern (!1034)
+- Refactored time integration code using factory pattern (!1034, !1103)
 - Fix to preprocessor logic for boost with Visual Studio >= 2015 (!1115)
 - Fix type consistency and real comparison in SharedArray.hpp, replaced
   num_elements with size() (!1127, !1137, !1141)
@@ -28,6 +29,11 @@ v5.1.0
   for parallel DG simulations (!1112)
 - Replace PhysIntegral with Integral (!1246)
 - Change the way periodic boundary conditions in parallel is setup to reduce excessive memory usage (!1235)
+- Add exponential and fractional-in-time integration schemes (!1106, !1111, !1210)
+- Add nonlinear and linear system solvers (!1196)
+- Add ESDIRK3 and ESDIRK4 time integration schemes (!1196)
+- Add a filter to calculate mean value of solution fields (!1211)
+- Fix the time dependent absorption forcing (!1254)
 
 **FieldConvert**:
 - Add phifile module to compute shape functions for the SPM solver (!1065)
@@ -52,6 +58,10 @@ v5.1.0
 **CompressibleFlowSolver**
 - Added vectorisation of the Interior Penalty method (!!223)
 - Fix non-dimensional Sutherland law
+- Added a simplified implicit solver with naive preconditioner (!!1196)
+- Add BRJ preconditioner to the implicit solver (!!1212)
+- Fix implicit solver for Euler system (!!1252)
+- Updated WallAdiabatic/WallViscous BC to accept time-dependent perturbations on the ghost state (!1248)
 
 **PulseWaveSolver**
 - Added viscoelasticity (!1138)
@@ -76,6 +86,14 @@ v5.1.0
 - Updated minimum required CMake version to 3.5.1 (!1152)
 - Updated third party Boost version 1.71 (!1152)
 - Updated third party OCE version to 0.18.3 (!1234)
+
+v5.0.3
+------
+**CompressibleFlowSolver**
+- Fix repeated output of u,v,w for Euler system
+
+**FieldConvert**
+- Fix the Filters output files numbering (!1251)
 
 v5.0.2
 ------
