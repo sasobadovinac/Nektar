@@ -117,10 +117,10 @@ int main(int argc, char *argv[])
       numedges = 12;
       numsurfaces = 6;
 
-      demo.testcoord3dqpts = demo.GetCoords(E);
-      demo.testcoord3dqmidpts = demo.GetQuadratureMidCoords( E, demo.testcoord3dqpts);
-      demo.testcoord3dlattice = demo.GetLatticeCoords(demo.testcoord3dqpts, demo.testcoord3dqmidpts);
-      demo.interioreval3dqmidpts = E->PhysEvaluateBasis( demo.testcoord3dqmidpts, storage3d, NullNekDouble1DArray, NullNekDouble1DArray, NullNekDouble1DArray);
+      demo.testcoord3dhqpts = demo.GetCoords(E);
+      demo.testcoord3dhqmidpts = demo.GetQuadratureMidCoords( E, demo.testcoord3dhqpts);
+      demo.testcoord3dhlattice = demo.GetLatticeCoords(demo.testcoord3dhqpts, demo.testcoord3dhqmidpts);
+      demo.interioreval3hqmidpts = E->PhysEvaluateBasis( demo.testcoord3dhqmidpts, storage3d, NullNekDouble1DArray, NullNekDouble1DArray, NullNekDouble1DArray);
  
       break;
 
@@ -128,10 +128,10 @@ int main(int argc, char *argv[])
       numedges = 12;
       numsurfaces = 6;
 
-      demo.testcoord3dqpts = demo.GetCoords(E);
-      demo.testcoord3dqmidpts = demo.GetQuadratureMidCoords( E, demo.testcoord3dqpts);
-      demo.testcoord3dlattice = demo.GetLatticeCoords(demo.testcoord3dqpts, demo.testcoord3dqmidpts);
-      demo.interioreval3dqmidpts = E->PhysEvaluateBasis( demo.testcoord3dqmidpts, storage3d, NullNekDouble1DArray, NullNekDouble1DArray, NullNekDouble1DArray);
+      demo.testcoord3dhqpts = demo.GetCoords(E);
+      demo.testcoord3dhqmidpts = demo.GetQuadratureMidCoords( E, demo.testcoord3dhqpts);
+      demo.testcoord3dhlattice = demo.GetLatticeCoords(demo.testcoord3dhqpts, demo.testcoord3dhqmidpts);
+      demo.interioreval3hqmidpts = E->PhysEvaluateBasis( demo.testcoord3dhqmidpts, storage3d, NullNekDouble1DArray, NullNekDouble1DArray, NullNekDouble1DArray);
  
       break;
       
@@ -241,11 +241,12 @@ Array<OneD,  NekDouble> callGD(Array<OneD,  NekDouble> &coeff , NekDouble &avgit
       holdstorage = storage2d;
       if(stype == 4)	  //ifstarting pt = "<<xnew[0]<<","<<xnew[1]<<" N = 5"; quad
 	{
-	  demo.steepestgradient_descent2Dquad(coeff, E, storage2d, rethold,  avgiterGD, demo.testcoord2dqqpts, demo.testcoord2dqqmidpts,demo. interioreval2dqqmidpts, demo.testcoord2dqlattice);
+	  demo.steepestgradient_descent2Dquad(coeff, E, storage2d, rethold,  avgiterGD);
+	  //, demo.testcoord2dqqpts, demo.testcoord2dqqmidpts,demo. interioreval2dqqmidpts, demo.testcoord2dqlattice);
 	}
       else if(stype == 3)//else tri
 	{
-	  demo.steepestgradient_descent2Dtri(coeff, E, storage2d, rethold,  avgiterGD, demo.testcoord2dtqpts, demo.testcoord2dtqmidpts, demo.interioreval2dtqmidpts, demo.testcoord2dtlattice);
+	  demo.steepestgradient_descent2Dtri(coeff, E, storage2d, rethold,  avgiterGD);
 	}
     }
   else //3d
@@ -253,7 +254,7 @@ Array<OneD,  NekDouble> callGD(Array<OneD,  NekDouble> &coeff , NekDouble &avgit
       if(stype == LibUtilities::eHexahedron || stype == LibUtilities::eTetrahedron)    //if hex
 	{
 	  holdstorage = storage3d;
-	  demo.steepestgradientdescent3D(coeff, E, storage3d, rethold,  avgiterGD, demo.testcoord3dqpts,  demo.testcoord3dqmidpts, demo.interioreval3dqmidpts, demo.testcoord3dlattice);
+	  demo.steepestgradientdescent3D(coeff, E, storage3d, rethold,  avgiterGD);
     
 	}
     }
