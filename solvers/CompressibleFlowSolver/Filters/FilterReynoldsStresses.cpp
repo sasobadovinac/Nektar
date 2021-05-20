@@ -279,6 +279,8 @@ void FilterReynoldsStresses::v_PrepareOutput(
 
     // Restore waveSpace
     pFields[0]->SetWaveSpace(waveSpace);
+
+    TransOutputVarsIntoSampleVars(pFields.size());
 }
 
 NekDouble FilterReynoldsStresses::v_GetScale()
@@ -378,7 +380,7 @@ void FilterReynoldsStresses::TransOutputVarsIntoSampleVars(
         int moment0 = m_stressTensor[nstress][0];
         int moment1 = m_stressTensor[nstress][1];
 
-        Vmath::Vvtvm(npnts,
+        Vmath::Vvtvp(npnts,
                     tmpVol[moment0],
                     1,
                     tmpVol[moment1],
@@ -387,7 +389,6 @@ void FilterReynoldsStresses::TransOutputVarsIntoSampleVars(
                     1,
                     m_fields[j],
                     1);
-        Vmath::Neg(npnts, m_fields[j], 1);
 
         Vmath::Vmul(npnts,
                     m_fields[0],
