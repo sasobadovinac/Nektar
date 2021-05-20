@@ -39,9 +39,9 @@
 namespace po = boost::program_options;
 
 //declare filter call
-void Do_optimize(StdExpansion *E, Array<OneD, Array<OneD, NekDouble> > &storage, Array<OneD, NekDouble> &uhats);
+void Do_optimize(Array<OneD, NekDouble> &uhats);
 
-Array<OneD,NekDouble>  call_find_roots(Array<OneD,  NekDouble> &uhats1 , NekDouble &avgiterGD, Array<OneD, Array<OneD, NekDouble> >&uhatsedges, Array<OneD, Array<OneD, NekDouble> >&surfaceuhats ,Array<OneD, Array<OneD, NekDouble> >&storage,  StdExpansion *E, NekDouble &minv, NekDouble &roots1dtime, NekDouble &roots2dtime, NekDouble &roots3dtime);
+Array<OneD,NekDouble>  call_find_roots(Array<OneD,  NekDouble> &uhats1 , NekDouble &avgiterGD, Array<OneD, Array<OneD, NekDouble> >&uhatsedges, Array<OneD, Array<OneD, NekDouble> >&surfaceuhats , NekDouble &minv, NekDouble &roots1dtime, NekDouble &roots2dtime, NekDouble &roots3dtime);
 
 // for 2D elements to get uhats at edges
 void project_edges( Array<OneD, NekDouble> uhats,Array<OneD, Array<OneD, NekDouble> >&ret );
@@ -184,7 +184,7 @@ int main(int argc, char *argv[])
       
       edgeptsin = Array<OneD, Array<OneD, NekDouble> >(2);
       break;
-    
+      
     default: cout<<"\n unknown shape type\n\n";exit(0);
     
     }
@@ -258,28 +258,26 @@ int main(int argc, char *argv[])
 
   Array<OneD, NekDouble> physold(phys.size());
   Vmath::Vcopy(phys.size(), phys, 1, physold, 1);
-  int orthoflag = (E->GetBasisType(0) != LibUtilities::eOrtho_A);
-  Array<OneD, BasisType> btypearr(dimension);
-  btypearr[0] = LibUtilities::eOrtho_A;
+
 
   // check for -ve values and apply opt if necessary
   if (vm.count("optm"))
     {
       timer.Start();
       int found_negb4 = Opt_needed(coeffs, 0);
+      timer.Stop();
       
       elapsed += timer.TimePerTest(1);
       cout<<"\nchecking for -vity took "<<timer.TimePerTest(1)<<"s";
 
-	  
 
       if(found_negb4 == 1)
 	{
-
-	  timer.Stop();
-
+	  int orthoflag = (E->GetBasisType(0) != LibUtilities::eOrtho_A);
+	  Array<OneD, BasisType> btypearr(dimension);
+	  btypearr[0] = LibUtilities::eOrtho_A;
 	  timer.Start();
-
+	  
 	  if(numedges == 4 && demo.Eorthquad != nullptr)
 	    {
 	      Eorth = demo.Eorthquad;
@@ -383,7 +381,7 @@ int main(int argc, char *argv[])
 	      //	      demo.OrthoNormalize(E, coeffs, btypearr, 0);
 	    }
 	  //maybe don't pass storage2d as it is glo var?
-	  Do_optimize(Eorth, storage2d,  coeffs);
+	  Do_optimize(coeffs);
 	  if(orthoflag)
 	    {
 	      Eorth->BwdTrans(coeffs, phys);
@@ -684,13 +682,12 @@ void edgederpquhats(Array<OneD, NekDouble> &uhats, Array<OneD, NekDouble> &ret, 
 }
 
 //try replacing storage with the global var -> storage2d
-Array<OneD,NekDouble>  call_find_roots(Array<OneD,  NekDouble> &uhats1 , NekDouble &avgiterGD, Array<OneD, Array<OneD, NekDouble> >&uhatsedges, Array<OneD, Array<OneD, NekDouble> >&surfaceuhats ,Array<OneD, Array<OneD, NekDouble> >&storage,  StdExpansion *E, NekDouble &minv, NekDouble &roots1dtime, NekDouble &roots2dtime, NekDouble &roots3dtime)
+Array<OneD,NekDouble>  call_find_roots(Array<OneD,  NekDouble> &uhats , NekDouble &avgiterGD, Array<OneD, Array<OneD, NekDouble> >&uhatsedges, Array<OneD, Array<OneD, NekDouble> >&surfaceuhats, NekDouble &minv, NekDouble &roots1dtime, NekDouble &roots2dtime, NekDouble &roots3dtime)
 {
   
   boost::ignore_unused(surfaceuhats, roots2dtime, roots3dtime, roots1dtime);
-  int dimension = E->GetShapeDimension(); 
-  NekDouble dummy;
-  Array<OneD, NekDouble> temp(uhats1.size());
+  int dimension = Eorth->GetShapeDimension(); 
+  Array<OneD, NekDouble> temp(uhats.size());
 
   NekDouble  inf = numeric_limits<double>::infinity();
   //    NekDouble avgiterGDhold;
@@ -704,35 +701,35 @@ Array<OneD,NekDouble>  call_find_roots(Array<OneD,  NekDouble> &uhats1 , NekDoub
   if(numedges == 4) // quad
     {
           
-      for(int ii = 0; ii < numedges; ii++)
+      for(int i = 0; i < numedges; i++)
 	{
 
 	  t.Start();
-	  rethold  = (demo.find_roots(uhatsedges[ii], nullptr, NullNekDoubleArrayOfArray, dummy,  0, 0, 0, 0)) ;  
+	  rethold  = demo.call_companion_rf(uhatsedges[i]);//, nullptr, NullNekDoubleArrayOfArray, dummy,  0, 0, 0, 0)) ;  
 	  t.Stop();
 
 	  roots1dtime +=  t.TimePerTest(1);
 	  for(int p = 0; p < rethold[0].size(); p++)
 	    {
-	      switch(ii)
+	      switch(i)
 		{
 		case 0:
-		  //if(ii == 0) // edge bot (y = -1) 
+		  //if(i == 0) // edge bot (y = -1) 
 		  retall[1].push_back(   (-1.0));
 		  retall[0].push_back( (rethold[0][p]));  
 		  break;
 		case 1:
-		  //if(ii == 1) // edge right (x = 1) 
+		  //if(i == 1) // edge right (x = 1) 
 		  retall[0].push_back(   (1.0));
 		  retall[1].push_back( (rethold[0][p]));  
 		  break;
 		case 2: 
-		  //if(ii == 2) // edge top (y = 1) 
+		  //if(i == 2) // edge top (y = 1) 
 		  retall[1].push_back(   (1.0));
 		  retall[0].push_back( (rethold[0][p]));  
 		  break;
 		case 3:
-		  //if(ii == 3) // edge left (x = -1) 
+		  //if(i == 3) // edge left (x = -1) 
 		  retall[0].push_back(   (-1.0));
 		  retall[1].push_back( (rethold[0][p]));  
 		  break;
@@ -762,30 +759,31 @@ Array<OneD,NekDouble>  call_find_roots(Array<OneD,  NekDouble> &uhats1 , NekDoub
   else if(numedges == 3) //tri
     {
       
-      for(int ii = 0; ii < numedges; ii++)
+      for(int i = 0; i < numedges; i++)
 	{
 	  t.Start();
-	  rethold  = (demo.find_roots(uhatsedges[ii], nullptr, NullNekDoubleArrayOfArray, dummy,  0, 0, 0, 0)) ;
+
+	  rethold  = demo.call_companion_rf(uhatsedges[i]);//(demo.find_roots(uhatsedges[i], nullptr, NullNekDoubleArrayOfArray, dummy,  0, 0, 0, 0)) ;
 	  
 	  t.Stop();
 	  roots1dtime +=  t.TimePerTest(1);
 	  for(int p = 0; p < rethold[0].size(); p++)
 	    {
-	      switch(ii)
+	      switch(i)
 		{
 		case 0:
-		  //if(ii == 0) // edge bot (y = -1) 
+		  //if(i == 0) // edge bot (y = -1) 
 		  retall[1].push_back(   (-1.0));
 		  retall[0].push_back( (rethold[0][p]));  
 		  break;
 		case 1:
-		  //if(ii == 1) // edge left (x = -1) 
+		  //if(i == 1) // edge left (x = -1) 
 		  retall[0].push_back(   (-1.0));
 		  retall[1].push_back( (rethold[0][p]));  
 		  
 		  break;
 		case 2: 
-		  //if(ii == 2) // edge hypt (y = -x) 
+		  //if(i == 2) // edge hypt (y = -x) 
 		  retall[1].push_back(   (-rethold[0][p]));
 		  retall[0].push_back( (rethold[0][p]));  
 		  
@@ -811,9 +809,14 @@ Array<OneD,NekDouble>  call_find_roots(Array<OneD,  NekDouble> &uhats1 , NekDoub
       //	NekDouble avgiterGDhold;
       t.Start();   
       if(stype == 3)	  //if tri
-	rethold = demo.find_roots(uhats1, E, storage,  avgiterGD, 0, 1, 0 , 1);
+	{
+	  demo.steepestgradient_descent2Dtri(uhats, Eorth, storage2d, rethold, avgiterGD);  
+	}
       else if(stype == 4)   //else quad
-	rethold = demo.find_roots(uhats1, E, storage,  avgiterGD, 0, 1, 0 , 0);
+	{
+	  demo.steepestgradient_descent2Dquad(uhats, Eorth, storage2d, rethold, avgiterGD);  
+	}
+	  //rethold = demo.find_roots(uhats, Eorth, storage2d,  avgiterGD, 0, 1, 0 , 0);
 	  
       t.Stop();
       roots2dtime +=  t.TimePerTest(1);
@@ -839,13 +842,13 @@ Array<OneD,NekDouble>  call_find_roots(Array<OneD,  NekDouble> &uhats1 , NekDoub
       NekDouble tempmin = inf;
       Array<OneD, NekDouble> evalroots;
       if(stype == 3)
-	evalroots = E->PhysEvaluateBasis(tmpcoord, storage, NullNekDouble1DArray, NullNekDouble1DArray, NullNekDouble1DArray);
+	evalroots = Eorth->PhysEvaluateBasis(tmpcoord, storage2d, NullNekDouble1DArray, NullNekDouble1DArray, NullNekDouble1DArray);
       else if(stype == 4)
-	evalroots = E->PhysEvaluateBasis(tmpcoord, storage, NullNekDouble1DArray, NullNekDouble1DArray, NullNekDouble1DArray);
+	evalroots = Eorth->PhysEvaluateBasis(tmpcoord, storage2d, NullNekDouble1DArray, NullNekDouble1DArray, NullNekDouble1DArray);
 	    
       Array<OneD, NekDouble> minvandx(dimension+1);
       Array<OneD, NekDouble> tmparr(retall[0].size());
-      demo.pq(uhats1, tmpcoord, evalroots, minvandx, tmparr);
+      demo.pq(uhats, tmpcoord, evalroots, minvandx, tmparr);
       // cout<<"\n vals at roots:\n";
       // for(int k = 0; k < tmparr.size(); k++)
       //   cout<<" "<<tmpcoord[0][k]<<","<<tmpcoord[1][k]<<" = "<<tmparr[k]<<" \n";
@@ -861,10 +864,10 @@ Array<OneD,NekDouble>  call_find_roots(Array<OneD,  NekDouble> &uhats1 , NekDoub
 
 }
 
-void Do_optimize(StdExpansion *E, Array<OneD, Array<OneD, NekDouble> > &storage, Array<OneD, NekDouble> &uhats)
+void Do_optimize(Array<OneD, NekDouble> &uhats)
 {
 
-  int dim = E->GetShapeDimension();
+  int dim = Eorth->GetShapeDimension();
   double inf = numeric_limits<double>::infinity();
     
   //assert(size(constraints, 1) == N+2);
@@ -896,12 +899,12 @@ void Do_optimize(StdExpansion *E, Array<OneD, Array<OneD, NekDouble> > &storage,
 
   for(int k = 0; k < numsurfaces; k++)
     {
-      surfaceuhats[k] = Array<OneD, NekDouble>(E->GetNcoeffs());
+      surfaceuhats[k] = Array<OneD, NekDouble>(Eorth->GetNcoeffs());
     }
 
   NekDouble pqval, timeprojectsurf = 0.0, timeprojectedges = 0.0;
   NekDouble avgiterGD = 0.0, avgiterhold = 0.0, roots1dtimehold = 0.0, roots2dtimehold = 0.0, roots3dtimehold = 0.0;
-  Array<OneD, NekDouble> Vtmp(E->GetNcoeffs());
+  Array<OneD, NekDouble> Vtmp(Eorth->GetNcoeffs());
 
   Timer t;
   while (counter <= niter)
@@ -917,7 +920,7 @@ void Do_optimize(StdExpansion *E, Array<OneD, Array<OneD, NekDouble> > &storage,
 	  t.Stop();
 	  timeprojectedges += t.TimePerTest(1);
 
-	  optima = call_find_roots(utemp, avgiterhold, Pf, surfaceuhats, storage, E, minv, roots1dtime, roots2dtime, roots3dtime);
+	  optima = call_find_roots(utemp, avgiterhold, Pf, surfaceuhats, minv, roots1dtime, roots2dtime, roots3dtime);
 	  roots1dtimehold += roots1dtime;
 	  roots2dtimehold += roots2dtime;
 	  roots3dtimehold += roots3dtime;
@@ -930,7 +933,7 @@ void Do_optimize(StdExpansion *E, Array<OneD, Array<OneD, NekDouble> > &storage,
 	      cout<<" "<<optima[k];
 	    }
 	
-	  Vtmp = E->PhysEvaluateBasis(tmpcoord, storage, NullNekDouble1DArray, NullNekDouble1DArray, NullNekDouble1DArray);
+	  Vtmp = Eorth->PhysEvaluateBasis(tmpcoord, storage2d, NullNekDouble1DArray, NullNekDouble1DArray, NullNekDouble1DArray);
         
 	}// end if(counter > 0)
       else 
@@ -945,7 +948,7 @@ void Do_optimize(StdExpansion *E, Array<OneD, Array<OneD, NekDouble> > &storage,
 
 	  optima[0] = startcoordx;
 	  optima[1] = startcoordy;
-	  Vtmp = E->PhysEvaluateBasis(tmpcoord, storage, NullNekDouble1DArray, NullNekDouble1DArray, NullNekDouble1DArray);
+	  Vtmp = Eorth->PhysEvaluateBasis(tmpcoord, storage2d, NullNekDouble1DArray, NullNekDouble1DArray, NullNekDouble1DArray);
         
 
 	}
@@ -974,7 +977,7 @@ void Do_optimize(StdExpansion *E, Array<OneD, Array<OneD, NekDouble> > &storage,
 
       Array<OneD, NekDouble> tmp;
       NekDouble vastsqsum;
-      Vast = E->PhysEvaluateBasis(xastarrofarr, storage, NullNekDouble1DArray, NullNekDouble1DArray, NullNekDouble1DArray);
+      Vast = Eorth->PhysEvaluateBasis(xastarrofarr, storage2d, NullNekDouble1DArray, NullNekDouble1DArray, NullNekDouble1DArray);
 
       for( int i = 0; i < N1; i++)
 	{

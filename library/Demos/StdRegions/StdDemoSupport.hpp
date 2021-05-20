@@ -101,8 +101,8 @@ public:
   StdExpansion *E3seg;    
   StdExpansion *Eorthseg;    
   StdExpansion *Eorthtri;    
-  StdExpansion *Eorthquad;   
-  StdExpansion *Eorthhex;    
+  StdExpansion *Eorthquad;
+  StdExpansion *Eorthele;    
 
   // Seg - Physeval and derivatives eval at quad point
   Array<OneD, Array<OneD, NekDouble> > eorthSegstore;
@@ -155,7 +155,7 @@ public:
     Eorthseg = nullptr;
     Eorthquad = nullptr;
     Eorthtri = nullptr;
-    Eorthhex = nullptr;
+    Eorthele  = nullptr;
     
   }
 
@@ -677,19 +677,17 @@ public:
       }
     else if(bkeyarr.size() == 2) //dimension = 2
       {
-	cout<<"\n b4 orthnor:\n";
-	for(int k = 0; k < coeffs.size(); k++)
-	  {
-	    cout<<" "<<coeffs[k];
-	  }
+	// for(int k = 0; k < coeffs.size(); k++)
+	//   {
+	//     cout<<" "<<coeffs[k];
+	//   }
 	if(flag == 0) //Non-ortho to Ortho 
 	  {
 	    LibUtilities::InterpCoeff2D(bkeyarr[0],  bkeyarr[1],  coeffs, bkeyortharr[0], bkeyortharr[1], temp1);
-	    cout<<"\n after orthnor:\n";
-	    for(int k = 0; k < temp1.size(); k++)
-	      {
-		cout<<" "<<temp1[k];
-	      }
+	    // for(int k = 0; k < temp1.size(); k++)
+	    //   {
+	    // 	cout<<" "<<temp1[k];
+	    //   }
 
 	  }
 	else if(flag == 1) // Ortho to Non-ortho
@@ -699,11 +697,11 @@ public:
 
       }
     Vmath::Vcopy(coeffs.size(), temp1, 1, coeffs, 1);
-	cout<<"\n after orthnor:\n";
-	for(int k = 0; k < coeffs.size(); k++)
-	  {
-	    cout<<" "<<coeffs[k];
-	  }
+	// cout<<"\n after orthnor:\n";
+	// for(int k = 0; k < coeffs.size(); k++)
+	//   {
+	//     cout<<" "<<coeffs[k];
+	//   }
 	
   }
 
@@ -910,7 +908,7 @@ public:
         tempeval[i] = Array<OneD, NekDouble>(E->GetNcoeffs());
       }
 
-    pq(uhats, testcoord2dqqpts , storage[0], nullarr, temp2 );
+    pq(uhats, testcoord2dqqpts , storage[0], nullarr, temp2);
 
     gprev = Vmath::Vmin(sz, temp2, 1);
     idxgprev = Vmath::Imin(temp2.size(), temp2, 1);
@@ -1151,11 +1149,10 @@ public:
 
   void steepestgradient_descent2Dtri(Array<OneD, NekDouble> &uhats, StdExpansion *E, Array<OneD,Array<OneD, NekDouble> > &storage, Array<OneD, Array<OneD, NekDouble> >&retarr, NekDouble &avgiterGD)
   {
-
     Array<OneD, NekDouble> interioreval;
-
     if(Eorthtri != nullptr)
       {
+
 	interioreval = interiorevalorth2dtqmidpts;
       }
     else
@@ -1178,7 +1175,6 @@ public:
     Array<OneD, NekDouble> nullarr(0), temp2(testcoord2dtqpts[0].size()), temp3, alltemp;
 
     int idxgprev;
-
     int sz = testcoord2dtqpts[0].size();
     Array<OneD, Array<OneD, NekDouble > > tempeval(4);
 
@@ -1221,7 +1217,6 @@ public:
     // else
     //   call_GD = gprev < 0 && abs(gprev)>1e-13;
 	
-
     if(gprev < 0 && abs(gprev)>1e-13)
       {
 	Array<OneD, Array<OneD, NekDouble > > tempeval(4);
@@ -1438,7 +1433,7 @@ public:
   {
     
     Array<OneD, NekDouble> interioreval;
-    if(Eorthhex != nullptr)
+    if(Eorthele != nullptr)
       {
 	interioreval = interiorevalorth3hqmidpts;
       }
@@ -1850,8 +1845,7 @@ public:
       }
     
   } 
-  
-  
+
   // upon return, coords will have the only point with min value out of all vals
   Array<OneD, Array<OneD, NekDouble> >find_roots( Array<OneD, NekDouble> uhats, StdExpansion *E , Array<OneD, Array<OneD, NekDouble> > &storage, NekDouble &avgiterGD, int d , int surfflag, int volflag, int surfid)
   {
@@ -1982,101 +1976,102 @@ public:
 
   Array<OneD, Array<OneD, NekDouble> > call_companion_rf(Array<OneD, NekDouble> uhats)
   {
-    	Array<OneD, NekDouble> uhatshold;
-	Array<OneD, Array<OneD, NekDouble> > Cmat;
+    Array<OneD, NekDouble> uhatshold;
+    Array<OneD, Array<OneD, NekDouble> > Cmat;
 	
-	Array<OneD, Array<OneD, NekDouble> > retarr(1);
-	// cout<<"\n";
-	// for(int k = 0; k < uhats.size(); k++)
-	//   {
-	//     cout<<" "<<uhats[k];
-	//   }
-	vector<NekDouble>ret;
+    Array<OneD, Array<OneD, NekDouble> > retarr(1);
+
+    int N = uhats.size();
+    vector<NekDouble>ret;
+
+    // cout<<"\n";
+    // for(int k = 0; k < uhats.size(); k++)
+    //   {
+    // 	cout<<" "<<uhats[k];
+    //   }
+    while(abs(uhats[N-1])<1e-12)
+      {
+	N = N-1;
+	if(N == 0)
+	  {
+	    ret.push_back(-1.0);
+	    ret.push_back(1.0);
+		    
+	    retarr[0] = Array<OneD, NekDouble>(ret.size(), ret.data());
+	    return retarr;
+	  }
+      }
         
-	    int N = uhats.size();
-	    uhatshold = Array<OneD, NekDouble>(N);;
-
-	    //C'*uhat
-	    for(int k = 0; k < N; k++)
-	      {
+    uhatshold = Array<OneD, NekDouble>(N);;
+    //C'*uhat
+    for(int k = 0; k < N; k++)
+      {
 		
-		for(int i = 0; i < N; i ++)
-		  {
-		    // C[i][k] since transpose
-		    uhatshold[k] += C[i][k]*uhats[i];
-		  }
-	      }
-	    while(abs(uhatshold[N-1])<1e-12 && N>0)
-	      {
-		N = N-1;
-
-	      }
-	    if(N == 0)
-	      {
-		ret.push_back(-1.0);
-		ret.push_back(1.0);
-		retarr[0] = Array<OneD, NekDouble>(ret.size(), ret.data());
-		return retarr;
-	      }
-	    Vmath::Smul(N, 1/uhatshold[N-1], uhatshold, 1, uhatshold, 1); //last ele = 1
-	    Cmat =  Array<OneD, Array<OneD, NekDouble> >(N-1);
-	    for(int i = 0; i<N-1; i++)
-	      {
-		Array<OneD, NekDouble> row(N-1, 0.0);
+	for(int i = 0; i < N; i ++)
+	  {
+	    // C[i][k] since transpose
+	    uhatshold[k] += C[i][k]*uhats[i];
+	  }
+      }
+    Vmath::Smul(N, 1/uhatshold[N-1], uhatshold, 1, uhatshold, 1); //last ele = 1
+    Cmat =  Array<OneD, Array<OneD, NekDouble> >(N-1);
+    for(int i = 0; i<N-1; i++)
+      {
+	Array<OneD, NekDouble> row(N-1, 0.0);
 		
-		if(i > 0)
-		  {
-		    row[i-1] = 1;
-		  } 
-		row[N-2] = -uhatshold[i];
+	if(i > 0)
+	  {
+	    row[i-1] = 1;
+	  } 
+	row[N-2] = -uhatshold[i];
 		
-		Cmat[i] = row;
+	Cmat[i] = row;
 
 		
-	      }
+      }
 	    
-	    // uhatshold = Array<OneD, NekDouble> (N);
-	    // Vmath::Vcopy(N, uhats, 1, uhatshold, 1);
+    // uhatshold = Array<OneD, NekDouble> (N);
+    // Vmath::Vcopy(N, uhats, 1, uhatshold, 1);
 	    
-	    // cout<<"\n C =\n";
-	    // for(int k = 0; k < N-1; k++)
-            //   {
-	    // 	for(int i=0; i < N-1; i++)
-	    // 	  {
-	    // 	    cout<<" "<<C[k][i];
-	    // 	  }
-	    // 	cout<<"\n";
-	    //   }
-	    // cout<<"\n Cnew:\n";
-	    // Array<OneD, Array<OneD,NekDouble> > Cnew(N-1);
-	    // for(int i = 0; i<N-1; i++)
-	    //   {
-	    // 	Cnew[i] = Array<OneD, NekDouble>(N-1);
-	    // 	for(int j = 0; j<N-1; j++)
-	    // 	  {
-	    // 	    cout<<" "<<C[j][i];
-	    // 	    Cnew[i][j] = C[j][i];
-	    // 	  }
-	    // 	cout<<"\n";
-	    //   }
+    // cout<<"\n C =\n";
+    // for(int k = 0; k < N-1; k++)
+    //   {
+    // 	for(int i=0; i < N-1; i++)
+    // 	  {
+    // 	    cout<<" "<<C[k][i];
+    // 	  }
+    // 	cout<<"\n";
+    //   }
+    // cout<<"\n Cnew:\n";
+    // Array<OneD, Array<OneD,NekDouble> > Cnew(N-1);
+    // for(int i = 0; i<N-1; i++)
+    //   {
+    // 	Cnew[i] = Array<OneD, NekDouble>(N-1);
+    // 	for(int j = 0; j<N-1; j++)
+    // 	  {
+    // 	    cout<<" "<<C[j][i];
+    // 	    Cnew[i][j] = C[j][i];
+    // 	  }
+    // 	cout<<"\n";
+    //   }
 
-	    // for(int k = 0; k < Cnew.size(); k++)
-            //   {
-	    // 	Vmath::Vcopy(N-1, &C[k][0], 1, &Cnew[k][0], N-1);
+    // for(int k = 0; k < Cnew.size(); k++)
+    //   {
+    // 	Vmath::Vcopy(N-1, &C[k][0], 1, &Cnew[k][0], N-1);
 		  
-	    //   }
+    //   }
 
-	    // //transpose Cnew:
+    // //transpose Cnew:
 	    
-	    // cout<<"\n Cnew =\n";
-	    // for(int k = 0; k < Cnew.size(); k++)
-            //   {
-	    // 	for(int i=0; i < Cnew[0].size(); i++)
-	    // 	  {
-	    // 	    cout<<" "<<Cnew[k][i];
-	    // 	  }
-	    // 	cout<<"\n";
-	    //   }
+    // cout<<"\n Cnew =\n";
+    // for(int k = 0; k < Cnew.size(); k++)
+    //   {
+    // 	for(int i=0; i < Cnew[0].size(); i++)
+    // 	  {
+    // 	    cout<<" "<<Cnew[k][i];
+    // 	  }
+    // 	cout<<"\n";
+    //   }
 	    // for(int k = 0; k < Cnew[0].size(); k++)
 	    //   {
 	    // 	Vmath::Vmul(

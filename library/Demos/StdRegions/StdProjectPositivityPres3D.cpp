@@ -39,7 +39,7 @@
 namespace po = boost::program_options;
 
 //declare Do_optimize
-void Do_optimize(StdExpansion *Eorth, Array<OneD, NekDouble> &uhats);
+void Do_optimize(Array<OneD, NekDouble> &uhats);
 
 //surface roots
 void surfuhats(Array<OneD, NekDouble> &uhats, Array<OneD, NekDouble> &ret,  Array<OneD, NekDouble> Vxyz, StdExpansion* Etemp );
@@ -48,7 +48,7 @@ void call_setup_quad();
 void call_setup_hex();
 void call_setup_tet();
 void call_setup_pyr();
-
+void call_setup_tri();  
 // declare caller routine to find_roots
 Array<OneD, NekDouble> call_find_roots(Array<OneD, NekDouble> &uhatsall, NekDouble &avgiterGD, Array< OneD, Array<OneD, NekDouble> >&uhatsedges, Array< OneD, Array<OneD, NekDouble> >&surfaceuhats,  NekDouble &minv, NekDouble &roots1dtime,  NekDouble &roots2dtime , NekDouble &roots3dtime );
 
@@ -330,49 +330,43 @@ int main(int argc, char *argv[])
       btype[i] = E->GetBasisType(i);
       order.push_back(E->GetBasisNumModes(i));
     }
-
+  if(dimension > 2)
+    {
+      demo.testcoord3dhqpts  =  demo.GetCoords(E);
+      demo.testcoord3dhqmidpts  = demo.GetQuadratureMidCoords(E, demo.testcoord3dhqpts);
+      demo.testcoord3dhlattice = demo.GetLatticeCoords(demo.testcoord3dhqpts, demo.testcoord3dhqmidpts);
+      demo.interioreval3hqmidpts = E->PhysEvaluateBasis(demo.testcoord3dhqmidpts, storage3d, NullNekDouble1DArray, NullNekDouble1DArray, NullNekDouble1DArray   );
+    }
   switch(E->DetShapeType())
     {
+    case LibUtilities::eQuadrilateral:
+      break;
+    case LibUtilities::eTriangle:
+      break;
+    
     case LibUtilities::eTetrahedron:
-        
+      {
       numedges = 6;
       numsurfaces = 4;
+
+      }
       break;
 
     case LibUtilities::eHexahedron:
         
       numedges = 12;
       numsurfaces = 6;
-      demo.testcoord3dhqpts  =  demo.GetCoords(E);
-      demo.testcoord3dhqmidpts  = demo.GetQuadratureMidCoords(E, demo.testcoord3dhqpts);
-      demo.testcoord3dhlattice = demo.GetLatticeCoords(demo.testcoord3dhqpts, demo.testcoord3dhqmidpts);
-      demo.interioreval3hqmidpts = E->PhysEvaluateBasis(demo.testcoord3dhqmidpts, storage3d, NullNekDouble1DArray, NullNekDouble1DArray, NullNekDouble1DArray   );
 
-      // check if we need to activate the ortho version of this element
-      if(E->GetBasisType(0) != eOrtho_A )
-	{
-	  LibUtilities::BasisKey bkeyorthA ( LibUtilities::eOrtho_A,
-					     E->GetBasis(0)->GetNumModes(),
-					     E->GetBasis(0)->GetPointsKey());
-	  LibUtilities::BasisKey bkeyorthB ( LibUtilities::eOrtho_A,
-					     E->GetBasis(1)->GetNumModes(),
-					     E->GetBasis(1)->GetPointsKey());
-	  LibUtilities::BasisKey bkeyorthC ( LibUtilities::eOrtho_A,
-					     E->GetBasis(2)->GetNumModes(),
-					     E->GetBasis(2)->GetPointsKey());
-	  
-	  demo.Eorthhex =  new StdHexExp(bkeyorthA, bkeyorthB, bkeyorthC);
-	  demo.interiorevalorth3hqmidpts = demo.Eorthhex->PhysEvaluateBasis(demo.testcoord3dhqmidpts , demo.Eorthhex->GetPhysEvaluateStorage(), NullNekDouble1DArray, NullNekDouble1DArray, NullNekDouble1DArray);
-	}
       break;
 
     case LibUtilities::ePyramid:
         
       numedges = 8;
       numsurfaces = 5;
+      
       break;
 
-    default: cout<<"\n unknown shape typen\n";exit(0);
+      default: cout<<"\n unknown shape typen\n";exit(0);
     
     }
 
@@ -417,7 +411,7 @@ int main(int argc, char *argv[])
     {
       if(dimension == 3)
         {
-	  sol[i] =   (pow(x[i] -0.1, 2) + pow(y[i]-0.2,2)) + pow(z[i]-0.2,2) -0.1;//pow((x[i]+0.6),2)+ pow((y[i]+0.6),2) + pow((z[i]-0.3),2) + demo.GetEps();
+	  sol[i] =   (pow(x[i] +0.3, 2) + pow(y[i]+0.290413,2)) + pow(z[i]+0.419174,2) -0.1;//pow((x[i]+0.6),2)+ pow((y[i]+0.6),2) + pow((z[i]-0.3),2) + demo.GetEps();
 	  funcdef ="pow((x[i]+0.2),2)+ pow((y[i]-0.3),2) + pow((z[i]-0.5),2) + demo.GetEps()";
         }
     }
@@ -436,69 +430,124 @@ int main(int argc, char *argv[])
   Array<OneD, NekDouble> physold(phys.size());
   Vmath::Vcopy(phys.size(), phys, 1, physold, 1);
 
-  int orthoflag = (E->GetBasisType(0) != LibUtilities::eOrtho_A);
-  Array<OneD, BasisType> btypearr(dimension);
-  btypearr[0] = LibUtilities::eOrtho_A; 
   // check for -ve values and apply opt if necessary
   if (vm.count("optm"))
     {
 
       timer.Start();
+
       int opt_need = Opt_needed(coeffs);            
       timer.Stop();
       NekDouble  timeneg = timer.TimePerTest(1);  
       cout<<"\nchecking for -vity took "<<timeneg<<"s\n";
-      
+
+      Eorth = E;      
       if(opt_need)
 	{
-	  if(E->DetShapeType() == LibUtilities::eHexahedron && demo.Eorthhex != nullptr)  
-	    {
-	      Eorth = demo.Eorthhex;
-	      btypearr[1] = LibUtilities::eOrtho_A;
-	      btypearr[2] = LibUtilities::eOrtho_A;  
+	  NekDouble setup = 0, timeverify;
+	  timer.Start();
+	  int orthoflag = (E->GetBasisType(0) != LibUtilities::eOrtho_A);
+	  Array<OneD, BasisType> btypearr(dimension);
+	  btypearr[0] = LibUtilities::eOrtho_A; 
 
-
-	    }
-	  else if(E->DetShapeType() == LibUtilities::eHexahedron && demo.Eorthhex == nullptr)
+	  timer.Start();
+	  if(orthoflag)
 	    {
-	      Eorth = E;
+	      switch(E->DetShapeType())
+		{
+		case LibUtilities::eHexahedron:
+		  {
+		    	LibUtilities::BasisKey bkeyorthA ( LibUtilities::eOrtho_A,
+							   E->GetBasis(0)->GetNumModes(),
+							   E->GetBasis(0)->GetPointsKey());
+			LibUtilities::BasisKey bkeyorthB ( LibUtilities::eOrtho_A,
+							   E->GetBasis(1)->GetNumModes(),
+							   E->GetBasis(1)->GetPointsKey());
+			LibUtilities::BasisKey bkeyorthC ( LibUtilities::eOrtho_A,
+							   E->GetBasis(2)->GetNumModes(),
+							   E->GetBasis(2)->GetPointsKey());
+	  
+			demo.Eorthele =  new StdHexExp(bkeyorthA, bkeyorthB, bkeyorthC);
+			demo.interiorevalorth3hqmidpts = demo.Eorthele->PhysEvaluateBasis(demo.testcoord3dhqmidpts , demo.Eorthele->GetPhysEvaluateStorage(), NullNekDouble1DArray, NullNekDouble1DArray, NullNekDouble1DArray);
+		      
+
+		    if( demo.Eorthele != nullptr)  
+		    {
+		      Eorth = demo.Eorthele;
+		      btypearr[1] = LibUtilities::eOrtho_A;
+		      btypearr[2] = LibUtilities::eOrtho_A;  
+		      
+		    }
+		  }
+		    break;
+		case LibUtilities::eTetrahedron: 
+		  {
+		          // check if we need to activate the ortho version of this element
+		    LibUtilities::BasisKey bkeyorthA ( LibUtilities::eOrtho_A,
+						       E->GetBasis(0)->GetNumModes(),
+						       E->GetBasis(0)->GetPointsKey());
+		    LibUtilities::BasisKey bkeyorthB ( LibUtilities::eOrtho_B,
+						       E->GetBasis(1)->GetNumModes(),
+						       E->GetBasis(1)->GetPointsKey());
+		    LibUtilities::BasisKey bkeyorthC ( LibUtilities::eOrtho_C,
+						       E->GetBasis(2)->GetNumModes(),
+						       E->GetBasis(2)->GetPointsKey());
+	  
+		    demo.Eorthele =  new StdTetExp(bkeyorthA, bkeyorthB, bkeyorthC);
+		    demo.interiorevalorth3hqmidpts = demo.Eorthele->PhysEvaluateBasis(demo.testcoord3dhqmidpts , demo.Eorthele->GetPhysEvaluateStorage(), NullNekDouble1DArray, NullNekDouble1DArray, NullNekDouble1DArray);
+		  
+
+		    if( demo.Eorthele != nullptr)
+		      {
+			Eorth = demo.Eorthele;   
+			btypearr[1] = LibUtilities::eOrtho_B;
+			btypearr[2] = LibUtilities::eOrtho_C;
+		      }
+		  }
+		  break;
+		case LibUtilities::ePyramid:
+		  {
+		       // check if we need to activate the ortho version of this element
+		    LibUtilities::BasisKey bkeyorthA ( LibUtilities::eOrtho_A,
+						       E->GetBasis(0)->GetNumModes(),
+						       E->GetBasis(0)->GetPointsKey());
+		    LibUtilities::BasisKey bkeyorthB ( LibUtilities::eOrtho_A,
+						       E->GetBasis(1)->GetNumModes(),
+						       E->GetBasis(1)->GetPointsKey());
+		    LibUtilities::BasisKey bkeyorthC ( LibUtilities::eOrthoPyr_C,
+						       E->GetBasis(2)->GetNumModes(),
+						       E->GetBasis(2)->GetPointsKey());
+	  
+		    demo.Eorthele =  new StdPyrExp(bkeyorthA, bkeyorthB, bkeyorthC);
+		    demo.interiorevalorth3hqmidpts = demo.Eorthele->PhysEvaluateBasis(demo.testcoord3dhqmidpts , demo.Eorthele->GetPhysEvaluateStorage(), NullNekDouble1DArray, NullNekDouble1DArray, NullNekDouble1DArray);
+		  
+
+		    if( demo.Eorthele != nullptr)
+		      {
+			Eorth = demo.Eorthele;   
+			btypearr[1] = LibUtilities::eOrtho_B;
+			btypearr[2] = LibUtilities::eOrtho_C;
+		      }
+		  }
+		  break;
+	        default:
+		  cout<<"\n invalid element type!\n";
+		  exit(0);
+		}
 	    }
+	
 	  storage3d = Eorth->GetPhysEvaluateStorage();
-	  NekDouble setup, timeverify;
-      
+	  
 	  if(stype != LibUtilities::eTetrahedron)
 	    {
 	      call_setup_quad();
 	    }
 	  if(stype != LibUtilities::eHexahedron)
 	    {
-	      LibUtilities::PointsType pointsTypetriA = LibUtilities::eGaussLobattoLegendre;
-	      LibUtilities::PointsKey pkeytri(E->GetBasis(0)->GetZ().size(), pointsTypetriA);
-	      LibUtilities::BasisKey bkeytriB(LibUtilities::eOrtho_B,(E->GetBasis(0)->GetNumModes()), pkeytri);
-	      LibUtilities::BasisKey bkeytriA(LibUtilities::eOrtho_A, (E->GetBasis(0)->GetNumModes()),pkeytri);
-	      Etri = new StdTriExp(bkeytriA, bkeytriB);
-	      if (Etri== nullptr)
-		{
-		  return 1;
-		}
-	      storage2dt = Etri->GetPhysEvaluateStorage();
-	      // to-do : move this in demo constructor
-	      demo.testcoord2dtqpts = demo.GetCoords(Etri);
-	      demo.testcoord2dtqmidpts = demo.GetQuadratureMidCoords( Etri, demo.testcoord2dtqpts);
-	      demo.testcoord2dtlattice = demo.GetLatticeCoords(demo.testcoord2dtqpts, demo.testcoord2dtqmidpts);
-	      demo.interioreval2dtqmidpts = Etri->PhysEvaluateBasis(  demo.testcoord2dtqmidpts, storage2dt, NullNekDouble1DArray, NullNekDouble1DArray, NullNekDouble1DArray   );
-
-	    
+	      call_setup_tri();
 	    }
       
 
-	  timer.Stop();
-	  setup = timer.TimePerTest(1);  
-
-      
-	  cout<<"need optimization";
-
-	  timer.Start();	  
 	  if(numedges == 12) //hex
 	    {
 	      call_setup_hex();
@@ -515,7 +564,6 @@ int main(int argc, char *argv[])
 	  setup += timer.TimePerTest(1);
 
 	  cout<<"\nsetup phase took "<<setup<<"s";
-
 	  if(orthoflag)
 	    {
 	      E->BwdTrans(coeffs, phys);
@@ -525,7 +573,7 @@ int main(int argc, char *argv[])
 	  NekDouble elap = 0;
 	  timer.Start();
 
-	  Do_optimize( Eorth, coeffs);
+	  Do_optimize(coeffs);
 
 	  timer.Stop();
 	  elap += timer.TimePerTest(1); 
@@ -556,62 +604,84 @@ int main(int argc, char *argv[])
 	  timer.Stop();
 	  timeverify = timer.TimePerTest(1);
 	  cout<<"\nVerification took "<<timeverify<<"s";
-	    
+	
 	  if(opt_need)
 	    {
-		
+	  
 	      //cout<<"func="<<funcdef;
-		
+	  
 	      cout<<"\n\n fail\n";
-	      
+	  
 	      //cout<<" "<<" "<<startval<<", ("<<startcoordx<<" "<<startcoordy<<" "<<startcoordz<<"), "<<setup<<", fail, "<<" "<<itersGD1<<", "<<itersGD2<<", "<<itersGD3<<", "<<timeneg<<", "<<elap<<", "<<timeverify<<","<<elapref<<" \n";;
-		
+	  
 	    }
 	  else
 	    {
 	      //cout<<"func="<<funcdef;
 	      cout<<"\n\n pass\n\n";
-
+	  
 	      //	cout<<" "<<" "<<startval<<", ("<<startcoordx<<" "<<startcoordy<<" "<<startcoordz<<"), "<<setup<<", pass, "<<" "<<itersGD1<<", "<<itersGD2<<", "<<itersGD3<<", "<<iterstaken<<", "<<timeneg<<", "<<elap<<", "<<timeverify<<", "<<elapref<<"\n";;
 	      //WriteCSV(coeffs, 1);
-		
+	  
 	      sol = phys; 
 	    }
-
+          
 	}
       else{
-	cout<<"\nchecking for -vity took "<<timer.TimePerTest(1)<<"s\n\n";
-	
+    
 	cout<<"\noptimizer no need\n\n";
       }
-      //Backward transform solution to get projected values
-      E->BwdTrans(coeffs, phys);
-      
     }
-    
+  //Backward transform solution to get projected values
+  E->BwdTrans(coeffs, phys);
+  
+
+  
   //Calculate L_inf & L_2 error
   cout << "L infinity error: \t" << E->Linf(phys, sol) << endl;
   cout << "L 2 error: \t \t \t" << E->L2(phys, sol) << endl;
   cout<<"\n***********\n";
   return 0;
+    
 }
 
-void call_setup_quad()
-{
-  LibUtilities::BasisKey bkeyA ( LibUtilities::eOrtho_A, (E->GetBasis(0)->GetNumModes()),  E->GetBasis(0)->GetPointsKey());
-  Equad = new StdQuadExp(bkeyA, bkeyA);
-  if (Equad == nullptr)
-    {
-      cout<<"\n error!\n";
-      exit(0);
-    }
-  storage2dq = Equad->GetPhysEvaluateStorage();
-  // to-do : move this in demo constructor
-  demo.testcoord2dqqpts = demo.GetCoords(Equad);
-  demo.testcoord2dqqmidpts = demo.GetQuadratureMidCoords(Equad,  demo.testcoord2dqqpts);
-  demo.testcoord2dqlattice = demo.GetLatticeCoords(  demo.testcoord2dqqpts, demo.testcoord2dqqmidpts);
+  void call_setup_tri()
+  {
+    // LibUtilities::PointsType pointsTypetriA = LibUtilities::eGaussLobattoLegendre;
+    // LibUtilities::PointsKey pkeytri(E->GetBasis(0)->GetZ().size(), pointsTypetriA);
+    LibUtilities::BasisKey bkeytriB(LibUtilities::eOrtho_B,(E->GetBasis(0)->GetNumModes()), E->GetBasis(0)->GetPointsKey()); 
+    LibUtilities::BasisKey bkeytriA(LibUtilities::eOrtho_A, (E->GetBasis(1)->GetNumModes()),E->GetBasis(1)->GetPointsKey());
+    Etri = new StdTriExp(bkeytriA, bkeytriB);
+    if (Etri== nullptr)
+      {
+	cout<<"\n error!\n";
+	exit(0);
+      }
+    storage2dt = Etri->GetPhysEvaluateStorage();
+    // to-do : move this in demo constructor
+    demo.testcoord2dtqpts = demo.GetCoords(Etri);
+    demo.testcoord2dtqmidpts = demo.GetQuadratureMidCoords( Etri, demo.testcoord2dtqpts);
+    demo.testcoord2dtlattice = demo.GetLatticeCoords(demo.testcoord2dtqpts, demo.testcoord2dtqmidpts);
+    demo.interioreval2dtqmidpts = Etri->PhysEvaluateBasis(  demo.testcoord2dtqmidpts, storage2dt, NullNekDouble1DArray, NullNekDouble1DArray, NullNekDouble1DArray   );
+
+  }
+
+  void call_setup_quad()
+  {
+    LibUtilities::BasisKey bkeyA ( LibUtilities::eOrtho_A, (E->GetBasis(0)->GetNumModes()),  E->GetBasis(0)->GetPointsKey());
+    Equad = new StdQuadExp(bkeyA, bkeyA);
+    if (Equad == nullptr)
+      {
+	cout<<"\n error!\n";
+	exit(0);
+      }
+    storage2dq = Equad->GetPhysEvaluateStorage();
+    // to-do : move this in demo constructor
+    demo.testcoord2dqqpts = demo.GetCoords(Equad);
+    demo.testcoord2dqqmidpts = demo.GetQuadratureMidCoords(Equad,  demo.testcoord2dqqpts);
+    demo.testcoord2dqlattice = demo.GetLatticeCoords(  demo.testcoord2dqqpts, demo.testcoord2dqqmidpts);
   
-  demo.interioreval2dqqmidpts = Equad->PhysEvaluateBasis(  demo.testcoord2dqqmidpts, storage2dq, NullNekDouble1DArray, NullNekDouble1DArray, NullNekDouble1DArray );
+    demo.interioreval2dqqmidpts = Equad->PhysEvaluateBasis(  demo.testcoord2dqqmidpts, storage2dq, NullNekDouble1DArray, NullNekDouble1DArray, NullNekDouble1DArray );
   
 }
 
@@ -1204,62 +1274,62 @@ void project_edges( Array<OneD, NekDouble>uhats,    Array<OneD, Array<OneD, NekD
     {
 
       // edge front left (x = -1) (y = -1)
-      edgederpquhats(uhats, ret[0], E->GetNcoeffs(), Vxm1ym1z, Vdxxm1ym1z, Vdyxm1ym1z, Vdzxm1ym1z);                     
+      edgederpquhats(uhats, ret[0], Eorth->GetNcoeffs(), Vxm1ym1z, Vdxxm1ym1z, Vdyxm1ym1z, Vdzxm1ym1z);                     
       //edge front right (x = 1) (y = -1)
-      edgederpquhats(uhats, ret[1], E->GetNcoeffs(), Vx1ym1z, Vdxx1ym1z, Vdyx1ym1z, Vdzx1ym1z);
+      edgederpquhats(uhats, ret[1], Eorth->GetNcoeffs(), Vx1ym1z, Vdxx1ym1z, Vdyx1ym1z, Vdzx1ym1z);
             
       //edge front top (y = -1) (z = 1)
-      edgederpquhats(uhats, ret[2], E->GetNcoeffs(),  Vym1xz1, Vdxym1xz1, Vdyym1xz1, Vdzym1xz1);
+      edgederpquhats(uhats, ret[2], Eorth->GetNcoeffs(),  Vym1xz1, Vdxym1xz1, Vdyym1xz1, Vdzym1xz1);
     
       //edge front bot (y = -1) (z = -1)
-      edgederpquhats(uhats, ret[3], E->GetNcoeffs(),  Vym1xzm1, Vdxym1xzm1, Vdyym1xzm1, Vdzym1xzm1);
+      edgederpquhats(uhats, ret[3], Eorth->GetNcoeffs(),  Vym1xzm1, Vdxym1xzm1, Vdyym1xzm1, Vdzym1xzm1);
      
       // edge back left (y = 1), (x = -1)
-      edgederpquhats(uhats, ret[4], E->GetNcoeffs(), Vxm1y1z, Vdxxm1y1z, Vdyxm1y1z, Vdzxm1y1z);
+      edgederpquhats(uhats, ret[4], Eorth->GetNcoeffs(), Vxm1y1z, Vdxxm1y1z, Vdyxm1y1z, Vdzxm1y1z);
      
       //edge back right (x = 1), (y = 1))
-      edgederpquhats(uhats, ret[5], E->GetNcoeffs(),  Vx1y1z, Vdxx1y1z, Vdyx1y1z, Vdzx1y1z);
+      edgederpquhats(uhats, ret[5], Eorth->GetNcoeffs(),  Vx1y1z, Vdxx1y1z, Vdyx1y1z, Vdzx1y1z);
    
       //edge back top ( y = 1) (z = 1)
-      edgederpquhats(uhats, ret[6], E->GetNcoeffs(),  Vy1xz1, Vdxy1xz1, Vdyy1xz1, Vdzy1xz1);
+      edgederpquhats(uhats, ret[6], Eorth->GetNcoeffs(),  Vy1xz1, Vdxy1xz1, Vdyy1xz1, Vdzy1xz1);
    
       //edge back bot (y = 1) (z = -1))
-      edgederpquhats(uhats, ret[7], E->GetNcoeffs(),  Vy1xzm1, Vdxy1xzm1, Vdyy1xzm1, Vdzy1xzm1);
+      edgederpquhats(uhats, ret[7], Eorth->GetNcoeffs(),  Vy1xzm1, Vdxy1xzm1, Vdyy1xzm1, Vdzy1xzm1);
             
       // edge left bot (z = -1), (x = -1)
-      edgederpquhats(uhats, ret[8], E->GetNcoeffs(), Vxm1yzm1, Vdxxm1yzm1, Vdyxm1yzm1, Vdzxm1yzm1);
+      edgederpquhats(uhats, ret[8], Eorth->GetNcoeffs(), Vxm1yzm1, Vdxxm1yzm1, Vdyxm1yzm1, Vdzxm1yzm1);
             
       //edge left top (x = -1), (z = 1))
-      edgederpquhats(uhats, ret[9], E->GetNcoeffs(),   Vxm1yz1,Vdxxm1yz1, Vdyxm1yz1, Vdzxm1yz1);
+      edgederpquhats(uhats, ret[9], Eorth->GetNcoeffs(),   Vxm1yz1,Vdxxm1yz1, Vdyxm1yz1, Vdzxm1yz1);
             
       //edge right bot ( z = -1) (x = 1)
-      edgederpquhats(uhats, ret[10], E->GetNcoeffs(),   Vx1yzm1, Vdxx1yzm1, Vdyx1yzm1, Vdzx1yzm1);
+      edgederpquhats(uhats, ret[10], Eorth->GetNcoeffs(),   Vx1yzm1, Vdxx1yzm1, Vdyx1yzm1, Vdzx1yzm1);
         
       
       //edge right top (z  1) (x  1))
-      edgederpquhats(uhats, ret[11], E->GetNcoeffs(),Vx1yz1, Vdxx1yz1, Vdyx1yz1, Vdzx1yz1); 
+      edgederpquhats(uhats, ret[11], Eorth->GetNcoeffs(),Vx1yz1, Vdxx1yz1, Vdyx1yz1, Vdzx1yz1); 
 
         
     }
   else if(numedges == 6) //tet
     {
       // edge front left (AD) (x = -1) (y = -1)
-      edgederpquhats(uhats, ret[0], E->GetNcoeffs(),  Vxm1ym1ztet, Vdxxm1ym1ztet, Vdyxm1ym1ztet, Vdzxm1ym1ztet);
+      edgederpquhats(uhats, ret[0], Eorth->GetNcoeffs(),  Vxm1ym1ztet, Vdxxm1ym1ztet, Vdyxm1ym1ztet, Vdzxm1ym1ztet);
 
       //edge front hypt (DB) (y = -1) (z = -x)
-      edgederpquhats(uhats, ret[1], E->GetNcoeffs(), Vym1xmztet, Vdxym1xmztet, Vdyym1xmztet, Vdzym1xmztet);
+      edgederpquhats(uhats, ret[1], Eorth->GetNcoeffs(), Vym1xmztet, Vdxym1xmztet, Vdyym1xmztet, Vdzym1xmztet);
 
       //edge front bot (AB) (y = -1) (z = -1)
-      edgederpquhats(uhats, ret[2], E->GetNcoeffs(), Vym1xzm1tet, Vdxym1xzm1tet, Vdyym1xzm1tet, Vdzym1xzm1tet );
+      edgederpquhats(uhats, ret[2], Eorth->GetNcoeffs(), Vym1xzm1tet, Vdxym1xzm1tet, Vdyym1xzm1tet, Vdzym1xzm1tet );
 
       //edge left hypt (DC) ( x = -1) (z = -y)
-      edgederpquhats(uhats, ret[3], E->GetNcoeffs(), Vxm1ymztet, Vdxxm1ymztet, Vdyxm1ymztet, Vdzxm1ymztet);
+      edgederpquhats(uhats, ret[3], Eorth->GetNcoeffs(), Vxm1ymztet, Vdxxm1ymztet, Vdyxm1ymztet, Vdzxm1ymztet);
 
       // edge bot diag (BC) (z = -1) (y = -x)
-      edgederpquhats(uhats, ret[4], E->GetNcoeffs(),  Vxmyzm1tet, Vdxxmyzm1tet, Vdyxmyzm1tet, Vdzxmyzm1tet);
+      edgederpquhats(uhats, ret[4], Eorth->GetNcoeffs(),  Vxmyzm1tet, Vdxxmyzm1tet, Vdyxmyzm1tet, Vdzxmyzm1tet);
 
       //edge CA bot left (x = -1) (z = -1)
-      edgederpquhats(uhats, ret[5], E->GetNcoeffs(),Vxm1yzm1tet, Vdxxm1yzm1tet,  Vdyxm1yzm1tet,  Vdzxm1yzm1tet);
+      edgederpquhats(uhats, ret[5], Eorth->GetNcoeffs(),Vxm1yzm1tet, Vdxxm1yzm1tet,  Vdyxm1yzm1tet,  Vdzxm1yzm1tet);
 
 	
     }
@@ -1267,28 +1337,28 @@ void project_edges( Array<OneD, NekDouble>uhats,    Array<OneD, Array<OneD, NekD
     {
                                                                      
       // edge front left (x = -1) (y = -1) EA
-      edgederpquhats(uhats, ret[0], E->GetNcoeffs(), Vxm1ym1zpyr, Vdxxm1ym1zpyr, Vdyxm1ym1zpyr, Vdzxm1ym1zpyr);
+      edgederpquhats(uhats, ret[0], Eorth->GetNcoeffs(), Vxm1ym1zpyr, Vdxxm1ym1zpyr, Vdyxm1ym1zpyr, Vdzxm1ym1zpyr);
 
       //edge front hypt (y = -1) (z = -x) EB
-      edgederpquhats(uhats, ret[1], E->GetNcoeffs(), Vym1xmzpyr, Vdxym1xmzpyr, Vdyym1xmzpyr, Vdzym1xmzpyr);
+      edgederpquhats(uhats, ret[1], Eorth->GetNcoeffs(), Vym1xmzpyr, Vdxym1xmzpyr, Vdyym1xmzpyr, Vdzym1xmzpyr);
 
       //edge back hypt (z = -x  or x = -z) (x = y) EC
-      edgederpquhats(uhats, ret[2], E->GetNcoeffs(), Vxeyxmzpyr, Vdxxeyxmzpyr, Vdyxeyxmzpyr, Vdzxeyxmzpyr);
+      edgederpquhats(uhats, ret[2], Eorth->GetNcoeffs(), Vxeyxmzpyr, Vdxxeyxmzpyr, Vdyxeyxmzpyr, Vdzxeyxmzpyr);
 
       //edge back left (y = -z) (x = -1) ED
-      edgederpquhats(uhats, ret[3], E->GetNcoeffs(), Vxeyxmzpyr, Vdxxeyxmzpyr, Vdyxeyxmzpyr, Vdzxeyxmzpyr); 
+      edgederpquhats(uhats, ret[3], Eorth->GetNcoeffs(), Vxeyxmzpyr, Vdxxeyxmzpyr, Vdyxeyxmzpyr, Vdzxeyxmzpyr); 
 
       //edge front bot (y = -1) (z = -1) AB
-      edgederpquhats(uhats, ret[4], E->GetNcoeffs(), Vym1xzm1pyr, Vdxym1xzm1pyr, Vdyym1xzm1pyr, Vdzym1xzm1pyr); 
+      edgederpquhats(uhats, ret[4], Eorth->GetNcoeffs(), Vym1xzm1pyr, Vdxym1xzm1pyr, Vdyym1xzm1pyr, Vdzym1xzm1pyr); 
 
       //edge back bot (y = 1) (z = -1)) DC
-      edgederpquhats(uhats, ret[5], E->GetNcoeffs(), Vy1xzm1pyr, Vdxy1xzm1pyr, Vdyy1xzm1pyr, Vdzy1xzm1pyr);
+      edgederpquhats(uhats, ret[5], Eorth->GetNcoeffs(), Vy1xzm1pyr, Vdxy1xzm1pyr, Vdyy1xzm1pyr, Vdzy1xzm1pyr);
 
       // edge left bot (z = -1), (x = -1) AD
-      edgederpquhats(uhats, ret[6], E->GetNcoeffs(), Vxm1yzm1pyr, Vdxxm1yzm1pyr, Vdyxm1yzm1pyr, Vdzxm1yzm1pyr);
+      edgederpquhats(uhats, ret[6], Eorth->GetNcoeffs(), Vxm1yzm1pyr, Vdxxm1yzm1pyr, Vdyxm1yzm1pyr, Vdzxm1yzm1pyr);
 
       //edge right bot ( z = -1) (x = 1) BC
-      edgederpquhats(uhats, ret[7], E->GetNcoeffs(), Vx1yzm1pyr, Vdxx1yzm1pyr, Vdyx1yzm1pyr, Vdzx1yzm1pyr);
+      edgederpquhats(uhats, ret[7], Eorth->GetNcoeffs(), Vx1yzm1pyr, Vdxx1yzm1pyr, Vdyx1yzm1pyr, Vdzx1yzm1pyr);
     }
 }
     
@@ -1378,8 +1448,8 @@ void edgederpquhats(Array<OneD, NekDouble> &uhats, Array<OneD, NekDouble> &ret, 
 
 Array<OneD, NekDouble>  call_find_roots(Array<OneD,  NekDouble> &uhats , NekDouble &avgiterGD, Array<OneD, Array<OneD, NekDouble> >&uhatsedges, Array<OneD, Array<OneD, NekDouble> >&surfaceuhats, NekDouble &minv, NekDouble &roots1dtime, NekDouble &roots2dtime, NekDouble &roots3dtime)
 {
-  int dimension = E->GetShapeDimension(); 
-  NekDouble dum;
+  int dimension = Eorth->GetShapeDimension(); 
+
   Array<OneD, NekDouble> temp(uhats.size());
   roots1dtime = 0.0;
   roots2dtime = 0.0;
@@ -1390,23 +1460,22 @@ Array<OneD, NekDouble>  call_find_roots(Array<OneD,  NekDouble> &uhats , NekDoub
   Timer t;
   Array<OneD, Array<OneD, NekDouble > >  rethold(dimension);
   vector<vector<NekDouble> > retall(dimension);
-
   Array<OneD, NekDouble> ret(dimension);
-
-
   // EDGES
   if(numedges == 6) // tet
     {
-      for(int ii = 0; ii < numedges; ii++)
+      for(int i = 0; i < numedges; i++)
         {
+
 	  t.Start();
-	  rethold  = (demo.find_roots(uhatsedges[ii], E, NullNekDoubleArrayOfArray, dum,  0, 0, 0, 0));
+	  rethold  = (demo.call_companion_rf(uhatsedges[i]));//, Eorth, NullNekDoubleArrayOfArray, dum,  0, 0, 0, 0));
           t.Stop();
 
           roots1dtime +=  t.TimePerTest(1);
 	  for(int p = 0; p < rethold[0].size(); p++)
             {
-	      switch(ii)
+
+	      switch(i)
 		{
 		case 0:
 		  retall[0].push_back(-1);
@@ -1473,18 +1542,18 @@ Array<OneD, NekDouble>  call_find_roots(Array<OneD,  NekDouble> &uhats , NekDoub
     }
   else if(numedges == 12) //hex
     {
-      for(int ii = 0; ii < numedges; ii++)
+      for(int i = 0; i < numedges; i++)
 	{
 
 	  t.Start();
-	  rethold  = (demo.find_roots(uhatsedges[ii], E, NullNekDoubleArrayOfArray, dum,  0, 0, 0, 0));
+	  rethold  = demo.call_companion_rf(uhatsedges[i]);//, Eorth, NullNekDoubleArrayOfArray, dum,  0, 0, 0, 0));
 	  t.Stop();
 
 	  roots1dtime +=  t.TimePerTest(1);
 	  
 	  for(int p = 0; p < rethold[0].size(); p++)
 	    {
-	      switch(ii)
+	      switch(i)
 		{
 		case 0: // edge front left (x = -1) (y = -1)
 		  {
@@ -1586,77 +1655,79 @@ Array<OneD, NekDouble>  call_find_roots(Array<OneD,  NekDouble> &uhats , NekDoub
     }
   else if(numedges == 8) //pyr
     {
-       for(int ii = 0; ii < numedges; ii++)
+       for(int i = 0; i < numedges; i++)
         {
 	  t.Start();
-          rethold  = (demo.find_roots(uhatsedges[ii], E, NullNekDoubleArrayOfArray, dum,  0, 0, 0, 0));
+          rethold  = demo.call_companion_rf(uhatsedges[i]);//, Eorth, NullNekDoubleArrayOfArray, dum,  0, 0, 0, 0));
           t.Stop();
 	  
           roots1dtime +=  t.TimePerTest(1);
-	    for(int p = 0; p < rethold[0].size(); p++)
-            {
-	      if(ii == 0)
-		  { 
-                    retall[0].push_back(-1);
-                    retall[1].push_back(-1);
-                    retall[2].push_back(rethold[0][p]);
-		  }
-		else if(ii == 1) //edge front hypt (y = -1) (z = -x)                                    
-                {
-                    retall[0].push_back(rethold[0][p]);
-                    retall[2].push_back(-rethold[0][p]);
-                    retall[1].push_back(-1);
+	  if(rethold != NullNekDoubleArrayOfArray )
+	    {
+	      for(int p = 0; p < rethold[0].size(); p++)
+		{
+		  if(i == 0)
+		    { 
+		      retall[0].push_back(-1);
+		      retall[1].push_back(-1);
+		      retall[2].push_back(rethold[0][p]);
+		    }
+		  else if(i == 1) //edge front hypt (y = -1) (z = -x)                                    
+		    {
+		      retall[0].push_back(rethold[0][p]);
+		      retall[2].push_back(-rethold[0][p]);
+		      retall[1].push_back(-1);
 
-                    retall[0].push_back(-rethold[0][p]);
-                    retall[2].push_back(rethold[0][p]);
-                    retall[1].push_back(-1);
-                }
-		  else if(ii == 2) //edge back hypt ( y = -z) (z +x = 0)                                  
-                {
-                    retall[0].push_back(rethold[0][p]);
-                    retall[1].push_back(rethold[0][p]);
-                    retall[2].push_back(-rethold[0][p]);
+		      retall[0].push_back(-rethold[0][p]);
+		      retall[2].push_back(rethold[0][p]);
+		      retall[1].push_back(-1);
+		    }
+		  else if(i == 2) //edge back hypt ( y = -z) (z +x = 0)                                  
+		    {
+		      retall[0].push_back(rethold[0][p]);
+		      retall[1].push_back(rethold[0][p]);
+		      retall[2].push_back(-rethold[0][p]);
 
-                    retall[0].push_back(-rethold[0][p]);
-                    retall[1].push_back(-rethold[0][p]);
-		    retall[2].push_back(rethold[0][p]);
+		      retall[0].push_back(-rethold[0][p]);
+		      retall[1].push_back(-rethold[0][p]);
+		      retall[2].push_back(rethold[0][p]);
 
-                }
-                else if(ii == 3)  //edge back left (y = -z) (x = -1) ED                                 
-                {
-                    retall[0].push_back(-1);
-                    retall[1].push_back(-rethold[0][p]);
-                    retall[2].push_back(rethold[0][p]);
+		    }
+		  else if(i == 3)  //edge back left (y = -z) (x = -1) ED                                 
+		    {
+		      retall[0].push_back(-1);
+		      retall[1].push_back(-rethold[0][p]);
+		      retall[2].push_back(rethold[0][p]);
 
-                    retall[0].push_back(-1);
-                    retall[1].push_back(rethold[0][p]);
-                    retall[2].push_back(-rethold[0][p]);
-                }
-                else if(ii == 4)  //edge front bot (y = -1) (z = -1)                                    
-                {
-                    retall[1].push_back(-1);
-                    retall[0].push_back(rethold[0][p]);
-                    retall[2].push_back(-1);
-                }
-                else if(ii == 5) //edge back bot (y = 1) (z = -1)                                       
-                {
-                    retall[1].push_back(1);
-                    retall[0].push_back(rethold[0][p]);
-                    retall[2].push_back(-1);
-                }
-                else if(ii == 6)//edge left bot (z = -1), (x = -1)                                      
-                {
-                    retall[0].push_back(-1);
-                    retall[1].push_back(rethold[0][p]);
-                    retall[2].push_back(-1);
-                }
-                else if(ii == 7) //edge right bot ( z = -1) (x = 1)                                     
-                {
-                    retall[2].push_back(-1);
-                    retall[1].push_back(rethold[0][p]);
-                    retall[0].push_back(1);
-                }
-
+		      retall[0].push_back(-1);
+		      retall[1].push_back(rethold[0][p]);
+		      retall[2].push_back(-rethold[0][p]);
+		    }
+		  else if(i == 4)  //edge front bot (y = -1) (z = -1)                                    
+		    {
+		      retall[1].push_back(-1);
+		      retall[0].push_back(rethold[0][p]);
+		      retall[2].push_back(-1);
+		    }
+		  else if(i == 5) //edge back bot (y = 1) (z = -1)                                       
+		    {
+		      retall[1].push_back(1);
+		      retall[0].push_back(rethold[0][p]);
+		      retall[2].push_back(-1);
+		    }
+		  else if(i == 6)//edge left bot (z = -1), (x = -1)                                      
+		    {
+		      retall[0].push_back(-1);
+		      retall[1].push_back(rethold[0][p]);
+		      retall[2].push_back(-1);
+		    }
+		  else if(i == 7) //edge right bot ( z = -1) (x = 1)                                     
+		    {
+		      retall[2].push_back(-1);
+		      retall[1].push_back(rethold[0][p]);
+		      retall[0].push_back(1);
+		    }
+		}
 	    }
 	}
     }
@@ -1668,44 +1739,49 @@ Array<OneD, NekDouble>  call_find_roots(Array<OneD,  NekDouble> &uhats , NekDoub
       NekDouble avgiterGDhold;
 
       // call 2D rootfinder on each surface:
-      for(int ii = 0; ii < numsurfaces; ii++)
+      for(int i = 0; i < numsurfaces; i++)
 	{
 	  t.Start();
-	  rethold = demo.find_roots(surfaceuhats[ii], Etri, storage2dt,  avgiterGDhold, 0, 1, 0, 1);
-	  // last arg = 1 coz all 2d ele are triangles
 
-	  t.Stop();
-	  roots2dtime +=  t.TimePerTest(1);
-	  avgiterGD += avgiterGDhold;
-
-	  switch(ii)
+	  demo.steepestgradient_descent2Dtri(surfaceuhats[i], Etri, storage2dt, rethold,  avgiterGDhold);
+	  if(rethold != NullNekDoubleArrayOfArray)
 	    {
-	    case 0:
-	      //surface bot z = -1, x + y = 0 (ABC)
-	      retall[0].push_back( (rethold[0][0]));
-	      retall[1].push_back( (rethold[1][0]));
-	      retall[2].push_back( (-1.0));
-	      break;
-	    case 1:
-	      //surface left x = -1 y + z = 0 (DAC)
-	      retall[0].push_back(-1);
-	      retall[2].push_back(rethold[1][0]);
-	      retall[1].push_back(rethold[0][0]);
-	      break;
-	    case 2:
-	      //surf front y = -1, x + z = 0 (DAB)
-	      retall[2].push_back(rethold[1][0]);
-	      retall[1].push_back(-1);
-	      retall[0].push_back(rethold[0][0]);
-	      break;
-	    case 3:
-	      //surf DCB (x + y + z = -1)
-	      retall[2].push_back(-1.0 - rethold[1][0] - rethold[0][0]);
-	      retall[1].push_back(rethold[1][0]);
-	      retall[0].push_back(rethold[0][0]);
-	      break;
-	    default: cout<<"\n invalid surface id\n";
-	      exit(0);
+	      //find_roots(surfaceuhats[i]);//, Etri, storage2dt,  avgiterGDhold, 0, 1, 0, 1);
+	      // last arg = 1 coz all 2d ele are triangles
+
+	      t.Stop();
+	      roots2dtime +=  t.TimePerTest(1);
+	      avgiterGD += avgiterGDhold;
+
+	      switch(i)
+		{
+		case 0:
+		  //surface bot z = -1, x + y = 0 (ABC)
+		  retall[0].push_back( (rethold[0][0]));
+		  retall[1].push_back( (rethold[1][0]));
+		  retall[2].push_back( (-1.0));
+		  break;
+		case 1:
+		  //surface left x = -1 y + z = 0 (DAC)
+		  retall[0].push_back(-1);
+		  retall[2].push_back(rethold[1][0]);
+		  retall[1].push_back(rethold[0][0]);
+		  break;
+		case 2:
+		  //surf front y = -1, x + z = 0 (DAB)
+		  retall[2].push_back(rethold[1][0]);
+		  retall[1].push_back(-1);
+		  retall[0].push_back(rethold[0][0]);
+		  break;
+		case 3:
+		  //surf DCB (x + y + z = -1)
+		  retall[2].push_back(-1.0 - rethold[1][0] - rethold[0][0]);
+		  retall[1].push_back(rethold[1][0]);
+		  retall[0].push_back(rethold[0][0]);
+		  break;
+		default: cout<<"\n invalid surface id\n";
+		  exit(0);
+		}
 	    }
 	}
 	  
@@ -1713,11 +1789,11 @@ Array<OneD, NekDouble>  call_find_roots(Array<OneD,  NekDouble> &uhats , NekDoub
   else if(numsurfaces == 6) //hex
     {
       NekDouble avgiterGDhold;
-      for(int ii = 0; ii < numsurfaces; ii++)
+      for(int i = 0; i < numsurfaces; i++)
 	{
 	  
 	  t.Start();   
-	  rethold = demo.find_roots(surfaceuhats[ii], Equad, storage2dq,  avgiterGDhold, 0, 1, 0 , 0);
+	  demo.steepestgradient_descent2Dquad(surfaceuhats[i], Equad, storage2dq, rethold,  avgiterGDhold);//find_roots(surfaceuhats[i], Equad, storage2dq,  avgiterGDhold, 0, 1, 0 , 0);
 	  t.Stop();
 
 	  roots2dtime +=  t.TimePerTest(1);
@@ -1727,41 +1803,40 @@ Array<OneD, NekDouble>  call_find_roots(Array<OneD,  NekDouble> &uhats , NekDoub
 	      continue;
 	      
 	    }
-	  if(ii == 0 ) // surf bot (z = -1)
+	  if(i == 0 ) // surf bot (z = -1)
 	    {
 
 	      retall[0].push_back( (rethold[0][0]));
 	      retall[1].push_back( (rethold[1][0]));
 	      retall[2].push_back( (-1.0));
-	  cout<<"\nhere ii = "<<ii<<"\n\n";
 
 	    }
-	  else if(ii == 1) //surf right (x = 1)
+	  else if(i == 1) //surf right (x = 1)
 	    {
 	      retall[0].push_back  (1.0);
 	      retall[1].push_back (rethold[0][0]);
 	      retall[2].push_back (rethold[1][0]);
 	    
 	    }
-	  else if(ii == 2) //surf top (z = 1)
+	  else if(i == 2) //surf top (z = 1)
 	    {
 	      retall[0].push_back  (rethold[0][0]);
 	      retall[1].push_back (rethold[1][0]);
 	      retall[2].push_back (1.0);
 	    }
-	  else if(ii == 3) //surf left (x = -1)
+	  else if(i == 3) //surf left (x = -1)
 	    {
 	      retall[0].push_back  (-1.0);
 	      retall[1].push_back (rethold[0][0]);
 	      retall[2].push_back (rethold[1][0]);
 	    }
-	  else if(ii == 4) //surf front (y = -1)           
+	  else if(i == 4) //surf front (y = -1)           
 	    {
 	      retall[0].push_back  (rethold[0][0]);
 	      retall[1].push_back (-1.0);
 	      retall[2].push_back (rethold[1][0]);
 	    }
-	  else if(ii == 5) //surf back (y = 1)
+	  else if(i == 5) //surf back (y = 1)
 	    {
 	      retall[0].push_back  (rethold[0][0]);
 	      retall[1].push_back (1.0);
@@ -1774,61 +1849,65 @@ Array<OneD, NekDouble>  call_find_roots(Array<OneD,  NekDouble> &uhats , NekDoub
   else if(numsurfaces == 5) //pyr
     {
       NekDouble avgiterGDhold;
-      for(int ii = 0; ii < numsurfaces; ii++)
+      for(int i = 0; i < numsurfaces; i++)
 	{
-	  if( ii == 0) // bot surface: quad, z = -1
+	  if( i == 0) // bot surface: quad, z = -1
 	    {
 	      t.Start();   
-	      rethold = demo.find_roots(surfaceuhats[ii], Equad, storage2dq,  avgiterGDhold, 0, 1, 0 , 0);
+	      demo.steepestgradient_descent2Dquad(surfaceuhats[i], Equad, storage2dq, rethold,  avgiterGDhold);
 	      t.Stop();
 	      
 	      roots2dtime +=  t.TimePerTest(1);
 	      avgiterGD += avgiterGDhold;
-
-	      retall[2].push_back(-1);
-	      retall[1].push_back(rethold[1][0]);
-	      retall[0].push_back(rethold[0][0]);
-	      
+	      if(rethold != NullNekDoubleArrayOfArray)
+		{
+		  retall[2].push_back(-1);
+		  retall[1].push_back(rethold[1][0]);
+		  retall[0].push_back(rethold[0][0]);
+		}
 	    }
 	  else  // rest surfaces: tri
 	    {
 	      t.Start();
-              rethold = demo.find_roots(surfaceuhats[ii], Etri, storage2dt,  avgiterGDhold, 0, 1, 0 , 0);
+	      demo.steepestgradient_descent2Dtri(surfaceuhats[i], Etri, storage2dt, rethold,  avgiterGDhold);
+	      //rethold = demo.find_roots(surfaceuhats[i], Etri, storage2dt,  avgiterGDhold, 0, 1, 0 , 0);
               t.Stop();
 	      roots2dtime +=  t.TimePerTest(1);
               avgiterGD += avgiterGDhold;
-
-	      switch(ii)
+	      if(rethold != NullNekDoubleArrayOfArray)
 		{
-		case 1: // x+z = 0
-		  retall[0].push_back(rethold[0][0]);
-		  retall[1].push_back(rethold[1][0]);
-		  retall[2].push_back(-rethold[0][0]);
-		  break;
-		case 2: // x = -1 
-		  retall[2].push_back(rethold[1][0]);
-		  retall[1].push_back(rethold[0][0]);
-		  retall[0].push_back(-1.0);
-		  break;
-		case 3: //y = -1
-		  retall[2].push_back(rethold[1][0]);
-                  retall[1].push_back(-1.0);
-                  retall[0].push_back(rethold[0][0]);
-                  break;
-		case 4: // y+z = 0
-		  retall[2].push_back(-rethold[1][0]);
-		  retall[1].push_back(rethold[1][0]);
-		  retall[0].push_back(rethold[0][0]);
+		  switch(i)
+		    {
+		    case 1: // x+z = 0
+		      retall[0].push_back(rethold[0][0]);
+		      retall[1].push_back(rethold[1][0]);
+		      retall[2].push_back(-rethold[0][0]);
+		      break;
+		    case 2: // x = -1 
+		      retall[2].push_back(rethold[1][0]);
+		      retall[1].push_back(rethold[0][0]);
+		      retall[0].push_back(-1.0);
+		      break;
+		    case 3: //y = -1
+		      retall[2].push_back(rethold[1][0]);
+		      retall[1].push_back(-1.0);
+		      retall[0].push_back(rethold[0][0]);
+		      break;
+		    case 4: // y+z = 0
+		      retall[2].push_back(-rethold[1][0]);
+		      retall[1].push_back(rethold[1][0]);
+		      retall[0].push_back(rethold[0][0]);
 		  
+		    }
 		}
 	    }
 	}
     }
     
   //find interior roots:
-      
   t.Start();
-  rethold =  (demo.find_roots(uhats, E,storage3d,  avgiterGDhold, 0, 0, 1, 0)) ;
+  demo.steepestgradientdescent3D(uhats, Eorth, storage3d, rethold, avgiterGDhold);
+  //(demo.find_roots(uhats, E,storage3d,  avgiterGDhold, 0, 0, 1, 0)) ;
   t.Stop();
   roots3dtime +=  t.TimePerTest(1);  
 
@@ -1853,7 +1932,7 @@ Array<OneD, NekDouble>  call_find_roots(Array<OneD,  NekDouble> &uhats , NekDoub
       tmpcoord[2][p] = retall[2][p];
     }
   NekDouble tempmin = inf;
-  Array<OneD, NekDouble> evalroots = E->PhysEvaluateBasis(tmpcoord, storage3d, NullNekDouble1DArray, NullNekDouble1DArray, NullNekDouble1DArray);
+  Array<OneD, NekDouble> evalroots = Eorth->PhysEvaluateBasis(tmpcoord, storage3d, NullNekDouble1DArray, NullNekDouble1DArray, NullNekDouble1DArray);
      
   Array<OneD, NekDouble> minvandx(dimension+1);
   Array<OneD, NekDouble> tmparr(retall[0].size());
@@ -1926,10 +2005,10 @@ int Opt_needed(Array<OneD, NekDouble> uhats, int flag)
   
 }
 
-void Do_optimize(StdExpansion *E, Array<OneD, NekDouble> &uhats)
+void Do_optimize(Array<OneD, NekDouble> &uhats)
 {
 
-  int dim = E->GetShapeDimension();
+  int dim = Eorth->GetShapeDimension();
   double inf = numeric_limits<double>::infinity();
     
   //assert(size(constraints, 1) == N+2);
@@ -1956,18 +2035,18 @@ void Do_optimize(StdExpansion *E, Array<OneD, NekDouble> &uhats)
       Pf[k] = Array<OneD, NekDouble>(demo.E3seg->GetNcoeffs());
     }
 
-  
+	  
   for(int k = 0; k < numsurfaces; k++)
     {
-      if(E->DetShapeType() == LibUtilities::eHexahedron)
+      if(Eorth->DetShapeType() == LibUtilities::eHexahedron)
 	{
 	  surfaceuhats[k] = Array<OneD, NekDouble>(Equad->GetNcoeffs());
 	}
-      if( E->DetShapeType() == LibUtilities::eTetrahedron)
+      if( Eorth->DetShapeType() == LibUtilities::eTetrahedron)
 	{
 	  surfaceuhats[k] = Array<OneD, NekDouble>(Etri->GetNcoeffs());
 	}
-      if(E->DetShapeType() == LibUtilities::ePyramid)
+      if(Eorth->DetShapeType() == LibUtilities::ePyramid)
 	{
 	  if(k == 0 )
 	    {
@@ -1978,11 +2057,12 @@ void Do_optimize(StdExpansion *E, Array<OneD, NekDouble> &uhats)
 	      surfaceuhats[k] = Array<OneD, NekDouble>(Etri->GetNcoeffs());
 	    }
 	}
+	  
     }
 
   NekDouble pqval, timeprojectsurf = 0.0, timeprojectedges = 0.0;
   NekDouble avgiterGD = 0.0, avgiterhold = 0.0, roots1dtimehold = 0.0, roots2dtimehold = 0.0, roots3dtimehold = 0.0;
-  Array<OneD, NekDouble> Vtmp(  E->GetNcoeffs());
+  Array<OneD, NekDouble> Vtmp(  Eorth->GetNcoeffs());
 
   Timer t;
   while (counter <= niter)
@@ -2005,9 +2085,7 @@ void Do_optimize(StdExpansion *E, Array<OneD, NekDouble> &uhats)
 	  project_surfaces(utemp, surfaceuhats);
 	  t.Stop();
 	  timeprojectsurf += t.TimePerTest(1);
-
 	  optima = call_find_roots(utemp, avgiterhold, Pf, surfaceuhats,  minv, roots1dtime, roots2dtime, roots3dtime);
-
 	  roots1dtimehold += roots1dtime;
 	  roots2dtimehold += roots2dtime;
 	  roots3dtimehold += roots3dtime;
@@ -2021,7 +2099,7 @@ void Do_optimize(StdExpansion *E, Array<OneD, NekDouble> &uhats)
 	      tmpcoord[k] = Array<OneD, NekDouble>(1, optima[k]);
 	    }
 	
-	  Vtmp = E->PhysEvaluateBasis(tmpcoord, storage3d, NullNekDouble1DArray, NullNekDouble1DArray, NullNekDouble1DArray);
+	  Vtmp = Eorth->PhysEvaluateBasis(tmpcoord, storage3d, NullNekDouble1DArray, NullNekDouble1DArray, NullNekDouble1DArray);
 
 	}// end if(counter > 0)
       else //if(counter == 0)
@@ -2039,7 +2117,7 @@ void Do_optimize(StdExpansion *E, Array<OneD, NekDouble> &uhats)
 	  optima[1] = startcoordy;
 	  optima[2] = startcoordz;
 
-	  Vtmp = E->PhysEvaluateBasis(tmpcoord, storage3d, NullNekDouble1DArray, NullNekDouble1DArray, NullNekDouble1DArray);
+	  Vtmp = Eorth->PhysEvaluateBasis(tmpcoord, storage3d, NullNekDouble1DArray, NullNekDouble1DArray, NullNekDouble1DArray);
 
 	}
       demo.pq(utemp, tmpcoord, Vtmp, pqvalcoords, wsp1);
@@ -2069,11 +2147,12 @@ void Do_optimize(StdExpansion *E, Array<OneD, NekDouble> &uhats)
       
       for( int i = 0; i < N1; i++)
         {
-	  tmp = E->PhysEvaluateBasis(xastarrofarr, storage3d, i);
+	  tmp = Eorth->PhysEvaluateBasis(xastarrofarr, storage3d, i);
 	  Vast[i] = tmp[0];
 	  Vastsq[i] = (Vast[i]*Vast[i]);
 	  
         }
+
       vastsqsum = Vmath::Vsum(N1, &Vastsq[0], 1);
 
       Array<OneD, NekDouble>  qast(N1);
@@ -2100,7 +2179,7 @@ void Do_optimize(StdExpansion *E, Array<OneD, NekDouble> &uhats)
   iterstaken = counter;
   cout<<"\nsphere_rotation took "<<counter<<"iterations";//
 
-  //cout<<"\n  startv = "<<startval<<" at startcoords("<<startcoordx<<","<<startcoordy<<" ," <<startcoordz<<")    GD iter stepszie ="<<demo.GetTol()<<" maxiters = "<<demo.GetMaxIter()<<" o = "<<E->GetBasis(0)->GetNumModes()<<" p = "<<E->GetBasis(0)->GetNumPoints()<<" eps = "<<demo.GetEps()<<"  avgiterGD = "<<itersGD2;//<<" total time taken post rootfinding per iter = "<< evalrootshold/(counter)<<" hex \n";;
+  //cout<<"\n  startv = "<<startval<<" at startcoords("<<startcoordx<<","<<startcoordy<<" ," <<startcoordz<<")    GD iter stepszie ="<<demo.GetTol()<<" maxiters = "<<demo.GetMaxIter()<<" o = "<<Eorth->GetBasis(0)->GetNumModes()<<" p = "<<Eorth->GetBasis(0)->GetNumPoints()<<" eps = "<<demo.GetEps()<<"  avgiterGD = "<<itersGD2;//<<" total time taken post rootfinding per iter = "<< evalrootshold/(counter)<<" hex \n";;
 
   cout<<"\nAvg times per iter (1drootfinder,2drootfinder,3drootfinder) = : "  << roots1dtimehold<<", "<<roots2dtimehold<<", "<<roots3dtimehold<<" itergd2 = "<<itersGD2; ;//<< timeprojectedges<<", "<<timeprojectsurf<<",
 
@@ -2119,9 +2198,9 @@ void Do_optimize(StdExpansion *E, Array<OneD, NekDouble> &uhats)
       // 	{
       
       // 	  timer.Start();
-      // 	  E->BwdTrans(uhatsnew, physder);
-      // 	  E->PhysDeriv(physder, physder0);
-      // 	  E->FwdTrans(physder0, uhatsnew); 
+      // 	  Eorth->BwdTrans(uhatsnew, physder);
+      // 	  Eorth->PhysDeriv(physder, physder0);
+      // 	  Eorth->FwdTrans(physder0, uhatsnew); 
       // 	  timer.Stop();
       // 	  elapref += timer.TimePerTest(1);
       // 	}
@@ -2129,5 +2208,5 @@ void Do_optimize(StdExpansion *E, Array<OneD, NekDouble> &uhats)
       // elapref = elapref/demo.GetAvgNum();
       // cout<<"\n Ref time (first derivative uhats from f(x) uhats took) "<<(elapref)<<" s\n\n";
 
-      //      int dimension = E->GetShapeDimension(); 
+      //      int dimension = Eorth->GetShapeDimension(); 
         
