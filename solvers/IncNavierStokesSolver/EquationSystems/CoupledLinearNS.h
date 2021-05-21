@@ -39,7 +39,6 @@
 #include <IncNavierStokesSolver/EquationSystems/IncNavierStokes.h>
 #include <MultiRegions/GlobalLinSys.h>
 #include <MultiRegions/ExpList3DHomogeneous1D.h>
-#include <MultiRegions/ExpList2D.h>
 #include <LibUtilities/LinearAlgebra/NekTypeDefs.hpp>
 //#include <MultiRegions/GlobalLinSysDirectStaticCond.h>
 
@@ -107,11 +106,12 @@ namespace Nektar
          *  pressure modes.
          */
         void SetUpCoupledMatrix(const NekDouble lambda = 0.0, 
-                                const Array< OneD, Array<OneD, NekDouble>  > &Advfield = NullNekDoubleArrayofArray, 
+                                const Array< OneD, Array<OneD, NekDouble>  > &Advfield = NullNekDoubleArrayOfArray, 
                                 bool IsLinearNSEquation = true);
         
         
-        const SpatialDomains::ExpansionMap &GenPressureExp(const SpatialDomains::ExpansionMap &VelExp);
+        const SpatialDomains::ExpansionInfoMap
+            &GenPressureExp(const SpatialDomains::ExpansionInfoMap &VelExp);
         
         void Solve(void);
         

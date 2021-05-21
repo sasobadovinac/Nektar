@@ -5,29 +5,90 @@ v5.1.0
 ------
 **Library**
 - Restructure library to use local coefficient storage down to the GlobalLinSys
-  level. Removed GlobalCeoffs functionality (!963)
+  level. Removed GlobalCoeffs functionality (!963, !1145)
+- Corrected the use of communicator in AssemblyMapDG and AssemblyCommDG which
+  was not using GetRowComm() (!1144)
 - Add interior penalty method to DG framework (!1101)
 - Add an error filter for the time-evolution of the L2 and Linf errors (!1147)
-
-**FieldConvert**
+- Fix successiveRHS method (!1176)
+- Add cachedId in GetExpIndex and use in Fieldconvert (!1167)
+- Fix bug in PreconditionerLowEnergy (!1161)
+- Fix intel c compiler error in AeroFilters (!1198)
+- Fix compilation errors when CWIPI interface enabled (!1207)
+- Fix distance in ContainsPoint and GetLocCoords (!1200)
+- Fix compiler warning of maybe-uninitialized elType in InputStar (!1217)
+- Add vectorisation of most element on basix operations (!1158)
+- Limit MPI methods based on core count (!1208)
+- Split out IProduct.cpp and IProductWRTDerivBase.cpp in order to avoid long time compilations (!1228)
 - Refactored time integration code using factory pattern (!1034)
 - Fix to preprocessor logic for boost with Visual Studio >= 2015 (!1115)
 - Fix type consistency and real comparison in SharedArray.hpp, replaced
-  num_elements with size() (!1127)
+  num_elements with size() (!1127, !1137, !1141)
 - Use base MPI functions instead of the GS library in the trace exchange
   for parallel DG simulations (!1112)
-  num_elements with size() (!1127, !1137, !1141)
+- Change the way periodic boundary conditions in parallel is setup to reduce excessive memory usage (!1235)
+
+**FieldConvert**:
+- Add phifile module to compute shape functions for the SPM solver (!1065)
+- Fix mean and innerProduct modules in 3DH1D cases (!1157)
+- Add Python interface (!1081)
+- Fix wss module with nparts option and reading of parallel xml files when the root partition is missing(!1197)
+- Fix a segment error in the gradient module when the number of fields is smaller than space dimension(!1216)
+- Add QCriterion for 2D flow (!1243)
+- Fix to interppointsdatatofld to allow for mpi processing of large files (!1191)
+- Fix the logic of C0Projection:helmsmoothing (!1220)
 
 **CardiacEPSolver**
 - Added additional parameter sets to Fenton-Karma model (!1119)
+
+**IncNavierStokesSolver**
+- Add Smoothed Profile Method (SPM) for the formulation of immersed boundaries
+  (!1065)
+- Add new filter AeroForcesSPM to compute aerodynamic forces in immersed
+  boundaries (!1065)
+
+**CompressibleFlowSolver**
+- Added vectorisation of the Interior Penalty method (!!223)
+
+**PulseWaveSolver**
+- Added viscoelasticity (!1138)
+- Added empirical and power laws (!1138)
+- Code tidying (!1138)
+
+**Documentation**:
+- Updated Windows source build instructions in user guide (!1152)
+
+**Tester**
+- Added test metric to check if warnings appear in output and error stream (!1225)
 
 **NekMesh**
 - Improved boundary layer splitting and output to CADfix (!938)
 - Improve .geo reader and support 3D geometries with voids (!1031)
 - Added r-adaptation code (!1109)
+- Added Python bindings, change NekMeshUtils to NekMesh (!1149)
+- Added option to use absolute tolerance in peralign (!1225)
 
 **BuildSystem**
 - Toggle build type (!1135)
+- Updated minimum required CMake version to 3.5.1 (!1152)
+- Updated third party Boost version 1.71 (!1152)
+- Updated third party OCE version to 0.18.3 (!1234)
+
+v5.0.2
+------
+**Library**
+- Fix bug in StdHexExp FillMode (!1192)
+
+**Documentation**
+- Updated Documentation to include HDF5 Mesh Output (!1230)
+- Removed Ubuntu Trusty (14.04) from CI and added Focal (20.04) (!1238)
+
+**CI**
+- Add Debian Bullseye to CI system (!1181)
+
+**BuildSystem**
+- Updated third party zlib version to 1.2.9 to resolve OCE source build issue (!1227)
+- Adding SolverUtils as a core library that is built by default (!1240)
 
 v5.0.1
 ------
@@ -38,6 +99,11 @@ v5.0.1
 - Added IsRealEqual method to compare real numbers with relative tolerance.
   Started using it in SharedArray and in NekMesh to fix peralign-extrude tool
   chain (!1134)
+- Fix performance of GetExp(coord) by using octree lookup (!1165)
+- Fix Collection unit tests (!1160)
+- Fix periodic boundary conditions with HDF5 input file (!1163)
+- Fix DESTDIR issues for MacPorts (!1179)
+- Fix Bodyforcing and history point filter bounds issue (!1184)
 
 **IncNavierStokesSolver**
 - Change the baseflow time in the Adjoint advection (!1133)
@@ -55,6 +121,7 @@ v5.0.1
 **CI**
 - Added checked conversion from double to int in SessionReader (!1113)
 - Switched to Gitlab CI (!1120, !1120, !1128, !1129, !1131, !1141)
+- Updated bullseye build to remove UCX components (!1203)
 
 v5.0.0
 ------

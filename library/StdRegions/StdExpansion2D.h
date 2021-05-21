@@ -175,22 +175,15 @@ namespace StdRegions
                           Array<OneD,       NekDouble> &outarray,
                     const StdRegions::StdMatrixKey &mkey);
 
-            STD_REGIONS_EXPORT virtual int v_GetTraceNcoeffs(const int i) const
-            {
-                return GetEdgeNcoeffs(i);
-            }
-
+            STD_REGIONS_EXPORT virtual void v_GenStdMatBwdDeriv(
+                  const int dir,
+                  DNekMatSharedPtr &mat);
         private:
 
             // Virtual Functions ----------------------------------------
             virtual int v_GetShapeDimension() const
             {
                 return 2;
-            }
-
-            virtual int v_GetNfaces() const
-            {
-                return 0;
             }
 
             virtual int v_GetCoordim(void)

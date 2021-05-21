@@ -83,7 +83,7 @@ ProcessInterpField::~ProcessInterpField()
 
 void ProcessInterpField::Process(po::variables_map &vm)
 {
-    boost::ignore_unused(vm);
+    m_f->SetUpExp(vm);
 
     FieldSharedPtr fromField = std::shared_ptr<Field>(new Field());
 
@@ -98,8 +98,8 @@ void ProcessInterpField::Process(po::variables_map &vm)
             LibUtilities::GetCommFactory().CreateInstance("Serial", 0, 0));
 
     // Set up range based on min and max of local parallel partition
-    SpatialDomains::DomainRangeShPtr rng =
-        MemoryManager<SpatialDomains::DomainRange>::AllocateSharedPtr();
+    LibUtilities::DomainRangeShPtr rng =
+        MemoryManager<LibUtilities::DomainRange>::AllocateSharedPtr();
 
     int coordim = m_f->m_exp[0]->GetCoordim(0);
     int npts    = m_f->m_exp[0]->GetTotPoints();
@@ -144,8 +144,8 @@ void ProcessInterpField::Process(po::variables_map &vm)
         SpatialDomains::MeshGraph::Read(fromField->m_session, rng);
 
     // Read in local from field partitions
-    const SpatialDomains::ExpansionMap &expansions =
-        fromField->m_graph->GetExpansions();
+    const SpatialDomains::ExpansionInfoMap &expansions =
+        fromField->m_graph->GetExpansionInfo();
 
     // check for case where no elements are specified on this
     // parallel partition
@@ -171,7 +171,7 @@ void ProcessInterpField::Process(po::variables_map &vm)
 
     //----------------------------------------------
     // Set up Expansion information to use mode order from field
-    fromField->m_graph->SetExpansions(fromField->m_fielddef);
+    fromField->m_graph->SetExpansionInfo(fromField->m_fielddef);
 
     int nfields = fromField->m_fielddef[0]->m_fields.size();
 

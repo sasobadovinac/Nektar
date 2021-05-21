@@ -182,9 +182,6 @@ namespace Nektar
 
             virtual StdRegions::StdExpansionSharedPtr v_GetLinStdExp(void) const;
             
-            LOCAL_REGIONS_EXPORT virtual
-                StdRegions::Orientation v_GetEorient(int edge);
-
             virtual DNekMatSharedPtr v_GenMatrix(const StdRegions::StdMatrixKey &mkey);
 
         private:           
@@ -343,6 +340,11 @@ namespace Nektar
                 IProductWRTDerivBase_SumFac(dir,inarray,outarray);
             }    
 
+            virtual void v_AlignVectorToCollapsedDir(
+                const int dir, 
+                const Array<OneD, const NekDouble>      &inarray, 
+                Array<OneD, Array<OneD, NekDouble> >    &outarray);
+
             virtual void v_MassMatrixOp(const Array<OneD, const NekDouble> &inarray, 
                                         Array<OneD,NekDouble> &outarray,
                                         const StdRegions::StdMatrixKey &mkey)
@@ -380,7 +382,7 @@ namespace Nektar
                 HelmholtzMatrixOp(inarray,outarray,mkey);
             }  
             
-            void v_ComputeEdgeNormal(const int edge);
+            void v_ComputeTraceNormal(const int edge);
         };
     
         typedef std::shared_ptr<NodalTriExp> NodalTriExpSharedPtr;

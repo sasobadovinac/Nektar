@@ -127,6 +127,11 @@ namespace Nektar
                 const int                           dir,
                 const Array<OneD, const NekDouble> &inarray,
                       Array<OneD,       NekDouble> &outarray);
+            
+            LOCAL_REGIONS_EXPORT virtual void v_AlignVectorToCollapsedDir(
+                const int dir, 
+                const Array<OneD, const NekDouble>      &inarray, 
+                Array<OneD, Array<OneD, NekDouble> >    &outarray);
 
             LOCAL_REGIONS_EXPORT void IProductWRTDerivBase_MatOp(
                 const int                           dir,
@@ -191,11 +196,11 @@ namespace Nektar
             LOCAL_REGIONS_EXPORT virtual 
                 bool v_GetFaceDGForwards(const int i) const;
 
-            LOCAL_REGIONS_EXPORT virtual void v_GetFacePhysMap(
+            LOCAL_REGIONS_EXPORT virtual void v_GetTracePhysMap(
                 const int                face,
                 Array<OneD, int>        &outarray);
 
-            LOCAL_REGIONS_EXPORT void v_ComputeFaceNormal(const int face);      
+            LOCAL_REGIONS_EXPORT void v_ComputeTraceNormal(const int face);      
 
             //---------------------------------------
             // Operator creation functions

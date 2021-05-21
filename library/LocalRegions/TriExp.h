@@ -121,6 +121,10 @@ namespace Nektar
                             const int dir,
                             const Array<OneD, const NekDouble>& inarray,
                                   Array<OneD, NekDouble> & outarray);
+            LOCAL_REGIONS_EXPORT virtual void v_AlignVectorToCollapsedDir(
+                const int dir, 
+                const Array<OneD, const NekDouble>      &inarray, 
+                Array<OneD, Array<OneD, NekDouble> >    &outarray);
 
             LOCAL_REGIONS_EXPORT virtual void v_IProductWRTDerivBase_MatOp(
                             const int dir,
@@ -170,15 +174,6 @@ namespace Nektar
             LOCAL_REGIONS_EXPORT virtual NekDouble v_PhysEvaluate(
                             const Array<OneD, const NekDouble> &coord,
                             const Array<OneD, const NekDouble> & physvals);
-            LOCAL_REGIONS_EXPORT virtual void v_GetEdgePhysVals(
-                            const int edge,
-                            const Array<OneD, const NekDouble> &inarray,
-                                  Array<OneD,       NekDouble> &outarray);
-            LOCAL_REGIONS_EXPORT virtual void v_GetEdgePhysVals(
-                            const int edge,
-                            const StdRegions::StdExpansionSharedPtr &EdgeExp,
-                            const Array<OneD, const NekDouble> &inarray,
-                                  Array<OneD,NekDouble> &outarray);
             LOCAL_REGIONS_EXPORT virtual void v_GetTracePhysVals(
                             const int edge,
                             const StdRegions::StdExpansionSharedPtr &EdgeExp,
@@ -189,10 +184,10 @@ namespace Nektar
                             const int edge,
                             const Array<OneD, const NekDouble> &inarray,
                             Array<OneD,NekDouble> &outarray);
-            LOCAL_REGIONS_EXPORT virtual void v_GetEdgeQFactors(
+            LOCAL_REGIONS_EXPORT virtual void v_GetTraceQFactors(
                             const int edge,
                             Array<OneD, NekDouble> &outarray);
-            LOCAL_REGIONS_EXPORT virtual void v_ComputeEdgeNormal(
+            LOCAL_REGIONS_EXPORT virtual void v_ComputeTraceNormal(
                             const int edge);
 
             //---------------------------------------
@@ -206,12 +201,12 @@ namespace Nektar
                             NekDouble *coeffs,
                             std::vector<LibUtilities::BasisType> &fromType);
             LOCAL_REGIONS_EXPORT virtual
-                StdRegions::Orientation v_GetEorient(int edge);
+                StdRegions::Orientation v_GetTraceOrient(int edge);
             LOCAL_REGIONS_EXPORT virtual const
                 LibUtilities::BasisSharedPtr& v_GetBasis(int dir) const;
             LOCAL_REGIONS_EXPORT virtual int v_GetNumPoints(
                 const int dir) const;
-            LOCAL_REGIONS_EXPORT virtual void v_GetEdgePhysMap(
+            LOCAL_REGIONS_EXPORT virtual void v_GetTracePhysMap(
                 const int                edge,
                 Array<OneD, int>        &outarray);
 

@@ -74,9 +74,6 @@ public:
     //---------------------------------------
     // Helper functions
     //---------------------------------------
-    SPATIAL_DOMAINS_EXPORT int GetDir(const int faceidx,
-                                      const int facedir) const;
-
     SPATIAL_DOMAINS_EXPORT static const int kDim = 3;
 
 protected:
@@ -92,12 +89,16 @@ protected:
     // 3D Geometry Methods
     //---------------------------------------
 
+    SPATIAL_DOMAINS_EXPORT virtual NekDouble v_GetLocCoords(
+        const Array<OneD, const NekDouble> &coords,
+        Array<OneD, NekDouble> &Lcoords);
+
     void NewtonIterationForLocCoord(const Array<OneD, const NekDouble> &coords,
                                     const Array<OneD, const NekDouble> &ptsx,
                                     const Array<OneD, const NekDouble> &ptsy,
                                     const Array<OneD, const NekDouble> &ptsz,
                                     Array<OneD, NekDouble> &Lcoords,
-                                    NekDouble &resid);
+                                    NekDouble &dist);
 
     virtual void v_FillGeom();
     virtual NekDouble v_GetCoord(const int i,
@@ -115,7 +116,6 @@ protected:
     virtual Geometry2DSharedPtr v_GetFace(int i) const;
     virtual StdRegions::Orientation v_GetEorient(const int i) const;
     virtual StdRegions::Orientation v_GetForient(const int i) const;
-    virtual int v_GetDir(const int faceidx, const int facedir) const = 0;
 };
 
 } // end of namespace
