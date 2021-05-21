@@ -301,6 +301,8 @@ namespace Nektar
             
             LIB_UTILITIES_EXPORT ThisType& operator=(const ThisType& rhs);
 
+            LIB_UTILITIES_EXPORT ThisType& operator=(const DataType& rhs);
+
             template<typename InnerMatrixType>
             ThisType& operator=(const NekMatrix<InnerMatrixType, ScaledMatrixTag>& rhs)
             {
@@ -453,11 +455,11 @@ namespace Nektar
 
             
 
-            LIB_UTILITIES_EXPORT NekDouble AbsMaxtoMinEigenValueRatio(void);
+            LIB_UTILITIES_EXPORT DataType AbsMaxtoMinEigenValueRatio(void);
 
-            LIB_UTILITIES_EXPORT void EigenSolve(Array<OneD, NekDouble> &EigValReal,
-                            Array<OneD, NekDouble> &EigValImag,
-                            Array<OneD, NekDouble> &EigVecs =NullNekDouble1DArray);
+            LIB_UTILITIES_EXPORT void EigenSolve(Array<OneD, DataType> &EigValReal,
+                            Array<OneD, DataType> &EigValImag,
+                            Array<OneD, DataType> &EigVecs);
 
             LIB_UTILITIES_EXPORT void Invert();
                 

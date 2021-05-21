@@ -151,7 +151,7 @@ public:
         const Array<OneD, const NekDouble> &gloCoord,
         Array<OneD, NekDouble> &locCoord,
         NekDouble tol,
-        NekDouble &resid);
+        NekDouble &dist);
     SPATIAL_DOMAINS_EXPORT inline NekDouble GetLocCoords(
         const Array<OneD, const NekDouble> &coords,
         Array<OneD, NekDouble> &Lcoords);
@@ -159,7 +159,7 @@ public:
         const int i, const Array<OneD, const NekDouble> &Lcoord);
     SPATIAL_DOMAINS_EXPORT bool MinMaxCheck(
         const Array<OneD, const NekDouble> &gloCoord);
-    SPATIAL_DOMAINS_EXPORT void ClampLocCoords(
+    SPATIAL_DOMAINS_EXPORT bool ClampLocCoords(
         Array<OneD, NekDouble> &locCoord,
         NekDouble tol);
 
@@ -169,7 +169,9 @@ public:
     SPATIAL_DOMAINS_EXPORT inline int GetVertexEdgeMap(int i, int j) const;
     SPATIAL_DOMAINS_EXPORT inline int GetVertexFaceMap(int i, int j) const;
     SPATIAL_DOMAINS_EXPORT inline int GetEdgeFaceMap(int i, int j) const;
+    SPATIAL_DOMAINS_EXPORT inline int GetDir(const int i, const int j = 0) const;
 
+    
     SPATIAL_DOMAINS_EXPORT inline void Reset(CurveMap &curvedEdges,
                                              CurveMap &curvedFaces);
     SPATIAL_DOMAINS_EXPORT inline void Setup();
@@ -199,6 +201,8 @@ protected:
     int                               m_globalID;
     /// Array containing expansion coefficients of @p m_xmap
     Array<OneD, Array<OneD, NekDouble> > m_coeffs;
+    /// Array containing bounding box
+    Array<OneD, NekDouble> m_boundingBox;
 
     /// Handles generation of geometry factors.
     void                              GenGeomFactors();
@@ -222,7 +226,7 @@ protected:
     virtual bool v_ContainsPoint(const Array<OneD, const NekDouble> &gloCoord,
                                  Array<OneD, NekDouble> &locCoord,
                                  NekDouble tol,
-                                 NekDouble &resid);
+                                 NekDouble &dist);
 
     virtual NekDouble v_GetCoord(const int i,
                                  const Array<OneD, const NekDouble> &Lcoord);
@@ -232,6 +236,7 @@ protected:
     virtual int v_GetVertexEdgeMap(int i, int j) const;
     virtual int v_GetVertexFaceMap(int i, int j) const;
     virtual int v_GetEdgeFaceMap(int i, int j) const;
+    virtual int v_GetDir(const int faceidx, const int facedir) const;
 
     virtual void v_Reset(CurveMap &curvedEdges, CurveMap &curvedFaces);
     virtual void v_Setup();
@@ -455,8 +460,8 @@ inline bool Geometry::ContainsPoint(
     NekDouble tol)
 {
     Array<OneD,NekDouble> locCoord(GetCoordim(), 0.0);
-    NekDouble resid;
-    return v_ContainsPoint(gloCoord, locCoord, tol, resid);
+    NekDouble dist;
+    return v_ContainsPoint(gloCoord, locCoord, tol, dist);
 }
 
 /**
@@ -470,8 +475,8 @@ inline bool Geometry::ContainsPoint(
     Array<OneD, NekDouble> &locCoord,
     NekDouble tol)
 {
-    NekDouble resid;
-    return v_ContainsPoint(gloCoord, locCoord, tol, resid);
+    NekDouble dist;
+    return v_ContainsPoint(gloCoord, locCoord, tol, dist);
 }
 
 /**
@@ -494,7 +499,7 @@ inline bool Geometry::ContainsPoint(
  *                  that \f$\chi(\vec{\xi}) = \vec{x}\f$.
  * @param tol       The tolerance used to dictate the bounding box of the
  *                  standard coordinates \f$\vec{\xi}\f$.
- * @param resid     On exit, returns the minimum distance between @p gloCoord
+ * @param dist      On exit, returns the minimum distance between @p gloCoord
  *                  and the quadrature points inside the element.
  *
  * @return `true` if the coordinate @p gloCoord is contained in the element;
@@ -506,9 +511,9 @@ inline bool Geometry::ContainsPoint(
     const Array<OneD, const NekDouble> &gloCoord,
     Array<OneD, NekDouble> &locCoord,
     NekDouble tol,
-    NekDouble &resid)
+    NekDouble &dist)
 {
-    return v_ContainsPoint(gloCoord, locCoord, tol, resid);
+    return v_ContainsPoint(gloCoord, locCoord, tol, dist);
 }
 
 /**
@@ -611,6 +616,16 @@ inline int Geometry::GetVertexFaceMap(int i, int j) const
 inline int Geometry::GetEdgeFaceMap(int i, int j) const
 {
     return v_GetEdgeFaceMap(i, j);
+}
+
+
+/**
+ * @brief Returns the element coordinate direction corresponding to a given face
+ * coordinate direction
+ */
+inline int Geometry::GetDir(const int faceidx, const int facedir) const
+{
+    return v_GetDir(faceidx, facedir);
 }
 
 /**

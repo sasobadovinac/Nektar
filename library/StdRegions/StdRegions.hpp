@@ -122,10 +122,14 @@ namespace Nektar
             eNBasisTrans,
             eInvNBasisTrans,
             eBwdTrans,
+            eBwdMat,
             eIProductWRTBase,
             eIProductWRTDerivBase0,
             eIProductWRTDerivBase1,
             eIProductWRTDerivBase2,
+            eDerivBase0,
+            eDerivBase1,
+            eDerivBase2,
             eHelmholtz,
             eHybridDGHelmholtz,
             eInvHybridDGHelmholtz,
@@ -171,10 +175,14 @@ namespace Nektar
             "NBasisTrans",
             "InvNBasisTrans",
             "BwdTrans",
+            "BwdMat",
             "IProductWRTBase",
             "IProductWRTDerivBase0",
             "IProductWRTDerivBase1",
             "IProductWRTDerivBase2",
+            "DerivBase0",
+            "DerivBase1",
+            "DerivBase2",
             "Helmholtz",
             "HybridDGHelmholz",
             "InvHybridDGHelmholtz",
@@ -294,25 +302,6 @@ namespace Nektar
         typedef std::map<ConstFactorType, NekDouble> ConstFactorMap;
         static ConstFactorMap NullConstFactorMap;
 
-        enum IndexMapType
-            {
-                eEdgeToElement,
-                eFaceToElement,
-                eEdgeInterior,
-                eFaceInterior,
-                eBoundary,
-                eVertex
-		};
-        
-        const char* const IndexMapTypeMap[] =
-            {
-                "EdgeToElement",
-                "FaceToElement",
-                "EdgeInterior",
-                "FaceInterior",
-                "Boundary",
-                "Vertex"
-            };
 	
         enum Orientation
         {

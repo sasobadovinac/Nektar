@@ -315,7 +315,7 @@ namespace Nektar
                 {
                     physEdge[i]  = Array<OneD, NekDouble>(npoints[i%2]);
                     coeffEdge[i] = Array<OneD, NekDouble>(nmodes[i%2]);
-                    orient[i]    = GetEorient(i);
+                    orient[i]    = GetTraceOrient(i);
                 }
 
                 for (i = 0; i < npoints[0]; i++)
@@ -358,7 +358,7 @@ namespace Nektar
                     segexp[i%2]->FwdTrans_BndConstrained(
                         physEdge[i],coeffEdge[i]);
 
-                    GetEdgeToElementMap(i,orient[i],mapArray,signArray);
+                    GetTraceToElementMap(i,mapArray,signArray,orient[i]);
                     for (j=0; j < nmodes[i%2]; j++)
                     {
                         sign = (NekDouble) signArray[j];
@@ -436,7 +436,7 @@ namespace Nektar
             IProductWRTDerivBase_SumFac(dir,inarray,outarray);
         }
 
-
+        
         void QuadExp::v_IProductWRTBase_SumFac(
             const Array<OneD, const NekDouble>& inarray,
             Array<OneD, NekDouble> &outarray,
@@ -498,12 +498,51 @@ namespace Nektar
             int    nqtot   = nquad0*nquad1;
             int    nmodes0 = m_base[0]->GetNumModes();
 
-            const Array<TwoD, const NekDouble>& df = m_metricinfo->GetDerivFactors(GetPointsKeys());
-
             Array<OneD, NekDouble> tmp1(2*nqtot+m_ncoeffs+nmodes0*nquad1);
             Array<OneD, NekDouble> tmp2(tmp1 +   nqtot);
             Array<OneD, NekDouble> tmp3(tmp1 + 2*nqtot);
             Array<OneD, NekDouble> tmp4(tmp1 + 2*nqtot+m_ncoeffs);
+
+            Array<OneD, Array<OneD, NekDouble>> tmp2D{2};
+            tmp2D[0] = tmp1;
+            tmp2D[1] = tmp2;
+
+            QuadExp::v_AlignVectorToCollapsedDir(dir, inarray, tmp2D);
+
+            MultiplyByQuadratureMetric(tmp1,tmp1);
+            MultiplyByQuadratureMetric(tmp2,tmp2);
+
+            IProductWRTBase_SumFacKernel(
+                m_base[0]->GetDbdata(), m_base[1]->GetBdata(),
+                tmp1, tmp3, tmp4, false, true);
+            IProductWRTBase_SumFacKernel(
+                m_base[0]->GetBdata() , m_base[1]->GetDbdata(),
+                tmp2, outarray, tmp4, true, false);
+            Vmath::Vadd(m_ncoeffs, tmp3, 1, outarray, 1, outarray, 1);
+        }
+
+        void QuadExp::v_AlignVectorToCollapsedDir(
+            const int dir,
+            const Array<OneD, const NekDouble>      &inarray,
+            Array<OneD, Array<OneD, NekDouble> >    &outarray)
+        {
+            ASSERTL1((dir==0) || (dir==1) || (dir==2),
+                     "Invalid direction.");
+            ASSERTL1((dir==2) ? (m_geom->GetCoordim() ==3):true,
+                     "Invalid direction.");
+
+            int    nquad0  = m_base[0]->GetNumPoints();
+            int    nquad1  = m_base[1]->GetNumPoints();
+            int    nqtot   = nquad0*nquad1;
+            int    nmodes0 = m_base[0]->GetNumModes();
+
+            const Array<TwoD, const NekDouble>& df =
+                m_metricinfo->GetDerivFactors(GetPointsKeys());
+
+            Array<OneD, NekDouble> tmp1 =  outarray[0];
+            Array<OneD, NekDouble> tmp2 =  outarray[1];
+            Array<OneD, NekDouble> tmp3(m_ncoeffs);
+            Array<OneD, NekDouble> tmp4(nmodes0*nquad1);
 
             if (m_metricinfo->GetGtype() == SpatialDomains::eDeformed)
             {
@@ -525,19 +564,7 @@ namespace Nektar
                             df[2*dir+1][0], inarray.get(), 1,
                             tmp2.get(), 1);
             }
-
-            MultiplyByQuadratureMetric(tmp1,tmp1);
-            MultiplyByQuadratureMetric(tmp2,tmp2);
-
-            IProductWRTBase_SumFacKernel(
-                m_base[0]->GetDbdata(), m_base[1]->GetBdata(),
-                tmp1, tmp3, tmp4, false, true);
-            IProductWRTBase_SumFacKernel(
-                m_base[0]->GetBdata() , m_base[1]->GetDbdata(),
-                tmp2, outarray, tmp4, true, false);
-            Vmath::Vadd(m_ncoeffs, tmp3, 1, outarray, 1, outarray, 1);
         }
-
 
         void QuadExp::v_IProductWRTDerivBase_MatOp(
             const int dir,
@@ -588,11 +615,11 @@ namespace Nektar
         {
             int nq = m_base[0]->GetNumPoints()*m_base[1]->GetNumPoints();
             Array<OneD, NekDouble> Fn(nq);
-
-            const Array<OneD, const Array<OneD, NekDouble> > &normals =
-                GetLeftAdjacentElementExp()->GetFaceNormal(
-                    GetLeftAdjacentElementFace());
-
+            
+            const Array<OneD, const Array<OneD, NekDouble> > &normals = 
+                GetLeftAdjacentElementExp()->GetTraceNormal(
+                    GetLeftAdjacentElementTrace());
+            
             if (m_metricinfo->GetGtype() == SpatialDomains::eDeformed)
             {
                 Vmath::Vvtvvtp(nq,&normals[0][0],1,&Fx[0],1,
@@ -699,7 +726,7 @@ namespace Nektar
             int nquad0 = m_base[0]->GetNumPoints();
             int nquad1 = m_base[1]->GetNumPoints();
 
-            StdRegions::Orientation edgedir = GetEorient(edge);
+            StdRegions::Orientation edgedir = GetTraceOrient(edge);
             switch(edge)
             {
             case 0:
@@ -763,17 +790,6 @@ namespace Nektar
              Array<OneD,NekDouble> &outarray,
              StdRegions::Orientation  orient)
         {
-            boost::ignore_unused(orient);
-            v_GetEdgePhysVals(edge,EdgeExp,inarray,outarray);
-        }
-
-
-        void QuadExp::v_GetEdgePhysVals(
-            const int edge,
-            const StdRegions::StdExpansionSharedPtr &EdgeExp,
-            const Array<OneD, const NekDouble> &inarray,
-                  Array<OneD,NekDouble> &outarray)
-        {
             int nquad0 = m_base[0]->GetNumPoints();
             int nquad1 = m_base[1]->GetNumPoints();
 
@@ -823,8 +839,12 @@ namespace Nektar
                     EdgeExp->GetBasis(0)->GetPointsKey(), outarray);
             }
 
+            if (orient == StdRegions::eNoOrientation)
+            {
+                orient = GetTraceOrient(edge);
+            }
             //Reverse data if necessary
-            if(GetEorient(edge) == StdRegions::eBackwards)
+            if(orient == StdRegions::eBackwards)
             {
                 Vmath::Reverse(EdgeExp->GetNumPoints(0),&outarray[0], 1,
                                &outarray[0], 1);
@@ -897,7 +917,7 @@ namespace Nektar
         }
 
 
-        void QuadExp::v_GetEdgePhysMap(
+        void QuadExp::v_GetTracePhysMap(
             const int                edge,
             Array<OneD, int>        &outarray)
         {
@@ -945,7 +965,7 @@ namespace Nektar
 
 
 
-        void QuadExp::v_GetEdgeQFactors(
+        void QuadExp::v_GetTraceQFactors(
                 const int edge,
                 Array<OneD, NekDouble> &outarray)
         {
@@ -1197,7 +1217,7 @@ namespace Nektar
         }
 
 
-        void QuadExp::v_ComputeEdgeNormal(const int edge)
+        void QuadExp::v_ComputeTraceNormal(const int edge)
         {
             int i;
             const SpatialDomains::GeomFactorsSharedPtr & geomFactors =
@@ -1235,6 +1255,11 @@ namespace Nektar
             {
                 normal[i] = Array<OneD, NekDouble>(nqe);
             }
+
+            size_t nqb = nqe;
+            size_t nbnd= edge;
+            m_elmtBndNormDirElmtLen[nbnd] = Array<OneD, NekDouble> {nqb, 0.0};
+            Array<OneD, NekDouble> &length = m_elmtBndNormDirElmtLen[nbnd];
 
             // Regular geometry case
             if ((type == SpatialDomains::eRegular)||
@@ -1279,6 +1304,9 @@ namespace Nektar
                     fac += normal[i][0]*normal[i][0];
                 }
                 fac = 1.0/sqrt(fac);
+
+                Vmath::Fill(nqb, fac, length, 1);
+
                 for (i = 0; i < vCoordDim; ++i)
                 {
                     Vmath::Smul(nqe, fac, normal[i], 1,normal[i], 1);
@@ -1471,6 +1499,8 @@ namespace Nektar
                 Vmath::Vsqrt(nqe,work,1,work,1);
                 Vmath::Sdiv(nqe,1.0,work,1,work,1);
 
+                Vmath::Vcopy(nqb, work, 1, length, 1);
+
                 for (i = 0; i < GetCoordim(); ++i)
                 {
                     Vmath::Vmul(nqe, normal[i], 1, work, 1, normal[i], 1);
@@ -1599,7 +1629,7 @@ namespace Nektar
         }
 
 
-        StdRegions::Orientation QuadExp::v_GetEorient(int edge)
+        StdRegions::Orientation QuadExp::v_GetTraceOrient(int edge)
         {
             return m_geom->GetEorient(edge);
         }

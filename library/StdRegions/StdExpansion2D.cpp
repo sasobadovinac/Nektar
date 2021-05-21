@@ -112,22 +112,33 @@ namespace Nektar
             }
         }
 
-        NekDouble StdExpansion2D::v_PhysEvaluate(const Array<OneD, const NekDouble>& coords, const Array<OneD, const NekDouble> & physvals)
+        NekDouble StdExpansion2D::v_PhysEvaluate(
+            const Array<OneD, const NekDouble> &coords,
+            const Array<OneD, const NekDouble> &physvals)
         {
+            ASSERTL2(coords[0] > -1 - NekConstants::kNekZeroTol,
+                     "coord[0] < -1");
+            ASSERTL2(coords[0] <  1 + NekConstants::kNekZeroTol,
+                     "coord[0] >  1");
+            ASSERTL2(coords[1] > -1 - NekConstants::kNekZeroTol,
+                     "coord[1] < -1");
+            ASSERTL2(coords[1] <  1 + NekConstants::kNekZeroTol,
+                     "coord[1] >  1");
+
             Array<OneD, NekDouble> coll(2);
-            Array<OneD, DNekMatSharedPtr>  I(2);
-
-            ASSERTL2(coords[0] > -1 - NekConstants::kNekZeroTol, "coord[0] < -1");
-            ASSERTL2(coords[0] <  1 + NekConstants::kNekZeroTol, "coord[0] >  1");
-            ASSERTL2(coords[1] > -1 - NekConstants::kNekZeroTol, "coord[1] < -1");
-            ASSERTL2(coords[1] <  1 + NekConstants::kNekZeroTol, "coord[1] >  1");
-
             LocCoordToLocCollapsed(coords,coll);
 
-            I[0] = m_base[0]->GetI(coll);
-            I[1] = m_base[1]->GetI(coll+1);
+            const int nq0 = m_base[0]->GetNumPoints();
+            const int nq1 = m_base[1]->GetNumPoints();
 
-            return v_PhysEvaluate(I,physvals);
+            Array<OneD, NekDouble> wsp(nq1);
+            for (int i = 0; i < nq1; ++i)
+            {
+                wsp[i] = StdExpansion::BaryEvaluate<0>(
+                    coll[0], &physvals[0] + i * nq0);
+            }
+
+            return StdExpansion::BaryEvaluate<1>(coll[1], &wsp[0]);
         }
 
         NekDouble StdExpansion2D::v_PhysEvaluate(
@@ -206,6 +217,60 @@ namespace Nektar
                 bool doCheckCollDir1)
         {
             v_IProductWRTBase_SumFacKernel(base0, base1, inarray, outarray, wsp, doCheckCollDir0, doCheckCollDir1);
+        }
+
+        void StdExpansion2D::v_GenStdMatBwdDeriv(
+            const int dir,
+                  DNekMatSharedPtr &mat)
+        {
+            ASSERTL1((dir==0) || (dir==1),
+                     "Invalid direction.");
+
+            int    nquad0  = m_base[0]->GetNumPoints();
+            int    nquad1  = m_base[1]->GetNumPoints();
+            int    nqtot   = nquad0*nquad1;
+            int    nmodes0 = m_base[0]->GetNumModes();
+
+            Array<OneD, NekDouble> tmp1(2*nqtot+m_ncoeffs+nmodes0*nquad1,0.0);
+            Array<OneD, NekDouble> tmp3(tmp1 + 2*nqtot);
+            Array<OneD, NekDouble> tmp4(tmp1 + 2*nqtot+m_ncoeffs);
+
+            switch(dir)
+            {
+            case 0:
+                for(int i=0; i<nqtot;i++)
+                {
+                    tmp1[i] =   1.0;
+                    IProductWRTBase_SumFacKernel(
+                        m_base[0]->GetDbdata(), m_base[1]->GetBdata(),
+                        tmp1, tmp3, tmp4, false, true);
+                    tmp1[i] =   0.0;
+                    
+                    for(int j=0; j<m_ncoeffs;j++)
+                    {
+                        (*mat)(j,i) =   tmp3[j];
+                    }
+                }
+                break;
+            case 1:
+                for(int i=0; i<nqtot;i++)
+                {
+                    tmp1[i] =   1.0;
+                    IProductWRTBase_SumFacKernel(
+                        m_base[0]->GetBdata() , m_base[1]->GetDbdata(),
+                        tmp1, tmp3, tmp4, true, false);
+                    tmp1[i] =   0.0;
+                    
+                    for(int j=0; j<m_ncoeffs;j++)
+                    {
+                        (*mat)(j,i) =   tmp3[j];
+                    }
+                }
+                break;
+            default:
+                NEKERROR(ErrorUtil::efatal, "Not a 2D expansion.");
+                break;
+            }
         }
 
         void StdExpansion2D::v_LaplacianMatrixOp_MatFree(

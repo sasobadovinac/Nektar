@@ -347,7 +347,7 @@ namespace Nektar
         BndConds = m_fields[fieldid]->GetBndConditions();
         BndExp   = m_fields[fieldid]->GetBndCondExpansions();
 
-        StdRegions::StdExpansionSharedPtr elmt;
+        LocalRegions::ExpansionSharedPtr elmt;
         StdRegions::StdExpansionSharedPtr Bc;
 
         int cnt;
@@ -424,7 +424,7 @@ namespace Nektar
             BndExp[i]   = m_fields[m_velocity[i]]->GetBndCondExpansions();
         }
 
-        StdRegions::StdExpansionSharedPtr elmt,Bc;
+        LocalRegions::ExpansionSharedPtr elmt,Bc;
 
         int cnt;
         int elmtid,nq, boundary;
@@ -447,7 +447,7 @@ namespace Nektar
                     elmt     = m_fields[0]->GetExp(elmtid);
                     boundary = m_fieldsBCToTraceID[fldid][cnt];
 
-                    normals = elmt->GetSurfaceNormal(boundary);
+                    normals = elmt->GetTraceNormal(boundary);
 
                     nq = BndExp[0][n]->GetExp(i)->GetTotPoints();
                     Array<OneD, NekDouble> normvel(nq,0.0);
@@ -784,8 +784,10 @@ namespace Nektar
     /**
      *
      */
-    Array<OneD, NekDouble> IncNavierStokes::v_GetMaxStdVelocity(void)
+    Array<OneD, NekDouble> IncNavierStokes::v_GetMaxStdVelocity(
+        const NekDouble SpeedSoundFactor)
     {
+        boost::ignore_unused(SpeedSoundFactor);
         int nvel  = m_velocity.size();
         int nelmt = m_fields[0]->GetExpSize();
 
@@ -856,7 +858,7 @@ namespace Nektar
     bool IncNavierStokes::v_PreIntegrate(int step)
     {
         m_extrapolation->SubStepSaveFields(step);
-        m_extrapolation->SubStepAdvance(m_intSoln,step,m_time);
+        m_extrapolation->SubStepAdvance(step,m_time);
         SetBoundaryConditions(m_time+m_timestep);
         return false;
     }
