@@ -91,11 +91,11 @@ public:
   Array<OneD, Array<OneD, NekDouble> > testcoord2dqlattice;
 
   //3D: hex
-  Array<OneD, NekDouble > interioreval3hqmidpts;
-  Array<OneD, NekDouble > interiorevalorth3hqmidpts;
-  Array<OneD, Array<OneD, NekDouble> > testcoord3dhqpts;
-  Array<OneD, Array<OneD, NekDouble> > testcoord3dhqmidpts;
-  Array<OneD, Array<OneD, NekDouble> > testcoord3dhlattice;
+  Array<OneD, NekDouble > midpteval;
+  Array<OneD, NekDouble > midptortheval;
+  Array<OneD, Array<OneD, NekDouble> > coordpts;
+  Array<OneD, Array<OneD, NekDouble> > coordmidpts;
+  Array<OneD, Array<OneD, NekDouble> > allptslattice, storage3d, storage3dorth;
 
   //Orthogonal ver of elements 
   StdExpansion *E3seg;    
@@ -146,10 +146,10 @@ public:
       ("chold,c",
        po::value<NekDouble>(&chold)->multitoken(),
        "c value for steepest descent with line-search.")
-
       ("pointstype,P",
        po::value<vector<string>>(&m_pointstype)->multitoken(),
-       "Optional points type, separate by spaces for higher dimensions.");                      
+       "Optional points type, separate by spaces for higher dimensions.")                      
+      ("verbose,v", "flag for verbose output");
 
     E3seg = nullptr;
     Eorthseg = nullptr;
@@ -189,6 +189,10 @@ public:
 		cout << kPointsTypeStr[i] << endl;
 	      };
 	    exit(0);
+	  }
+	if(m_vm.count("verbose"))
+	  {
+	    verbose = 1;
 	  }
 	po::notify(m_vm);
       }
@@ -257,8 +261,6 @@ public:
   Array<OneD, Array<OneD, NekDouble> > formConf(NekDouble N)
   {
     Polylib::RecCoeff(N, &ab1[0], &ab2[0], -0.5, -0.5);   
-    cout<<"\n N = "<<N<<" ";
-    //    int evalPts = N; //+1 for luck
     int i, j;
     // Form confederate matrix
     // a = 2*a
@@ -275,7 +277,6 @@ public:
     tt = ab2[1];
     row[1] = tt;
     J.push_back(row);
-    cout<<"\n N = "<<N<<" ab1 sz="<<ab1.size()<<"\n";
     for(i = 1; i < N-1; ++i)
       {
 	vector<NekDouble> row(N,0.0);
@@ -635,10 +636,17 @@ public:
     E3seg = new StdSegExp(bkeyorth);
     if (E3seg == nullptr)
       {
-	cout<<"\n Could not initialize segment object! \n";
-	exit(0);
+    	cout<<"\n Could not initialize segment object! \n";
+    	exit(0);
       }
-      return E;
+    
+    storage3d = E->GetPhysEvaluateStorage();
+  
+    coordpts  =  GetCoords(E);
+    coordmidpts  = GetQuadratureMidCoords(E, coordpts);
+    allptslattice = GetLatticeCoords(coordpts, coordmidpts);    
+    midpteval = E->PhysEvaluateBasis(coordmidpts, storage3d, NullNekDouble1DArray, NullNekDouble1DArray ,  NullNekDouble1DArray );
+    return E;
   }
 
   //if flag = 0 -> Non-ortho to Ortho
@@ -677,18 +685,9 @@ public:
       }
     else if(bkeyarr.size() == 2) //dimension = 2
       {
-	// for(int k = 0; k < coeffs.size(); k++)
-	//   {
-	//     cout<<" "<<coeffs[k];
-	//   }
 	if(flag == 0) //Non-ortho to Ortho 
 	  {
 	    LibUtilities::InterpCoeff2D(bkeyarr[0],  bkeyarr[1],  coeffs, bkeyortharr[0], bkeyortharr[1], temp1);
-	    // for(int k = 0; k < temp1.size(); k++)
-	    //   {
-	    // 	cout<<" "<<temp1[k];
-	    //   }
-
 	  }
 	else if(flag == 1) // Ortho to Non-ortho
 	  {
@@ -697,11 +696,6 @@ public:
 
       }
     Vmath::Vcopy(coeffs.size(), temp1, 1, coeffs, 1);
-	// cout<<"\n after orthnor:\n";
-	// for(int k = 0; k < coeffs.size(); k++)
-	//   {
-	//     cout<<" "<<coeffs[k];
-	//   }
 	
   }
 
@@ -710,53 +704,12 @@ public:
   		    Array<OneD,NekDouble> &EIG_R,
   		    Array<OneD,NekDouble> &EIG_I)
   {
-    // const int sz = CM.size();
-    // Array<OneD, NekDouble> Mat(sz*sz,0.0);
-    // int info = 0;
-
-    // const int  lwork = 3*(sz);
-    // Array<OneD, NekDouble> work1(lwork);
-    // for(int i = 0; i<sz; i++)
-
-    //   {
-    // 	//Vmath::Vcopy(sz, &CM[i][0], 1, &Mat[0]+i, sz);
-    // 	Vmath::Vcopy(sz, &CM[i][0], 1, &Mat[0]+i*sz, 1);
-    //   }
-
-    // char jobvl = 'N';
-    // char jobvr = 'N';
-
-    // NekDouble dum1, dum2;
-
-    // Lapack::Dgeev(jobvl,jobvr,sz,Mat.get(),sz,EIG_R.get(),EIG_I.get(),&dum1,1,&dum2,1,&work1[0],lwork,info);
-    
-    // vector<NekDouble> tmp;
-    // for(int k = 0; k < EIG_R.size(); k++)
-    //   {
-    // 		cout<<"\n i = "<<EIG_I[k]<<" r = "<<EIG_R[k];
-    // 	if(abs(EIG_I[k]) < 1e-5 && abs(EIG_R[k]) < 1)
-    // 	  tmp.push_back(EIG_R[k]);
-    //   }
-    // EIG_R = Array<OneD, NekDouble>(tmp.size());
-    // for(int k = 0; k < tmp.size(); k++)
-    //   {
-    // 	EIG_R[k] = tmp[k];
-    //   }
 
     boost::ignore_unused(EIG_I);
     const unsigned int n = CM.size();
     const int sz = (n)*(n);
     Array<OneD, NekDouble> A(sz,0.0);
 
-    // cout<<"\n CM:\n";
-    // for(int i =0; i<CM.size(); i++)
-    //   {
-    // 	for(int k = 0; k <CM[0].size(); k++)
-    // 	  {
-    // 	    cout<<" "<<CM[i][k];
-    // 	  }
-    // 	cout<<"\n";
-    //   }
     for(int i = 0; i<n; i++)
       {
 	Vmath::Vcopy(n, &CM[i][0], 1, &A[0]+i*n, 1);
@@ -774,13 +727,18 @@ public:
   	  }
       }
     EIG_R = Array<OneD, NekDouble>(EIG_Rvec.size());
-    //    cout<<"\n EIG vals:\n";
+    // if(verbose)
+    //   {
+    // 	cout<<"\n EIG vals:\n";
+    //   }
     for(int k = 0; k < EIG_Rvec.size(); k++)
       {
   	EIG_R[k] = EIG_Rvec[k];
-	//	cout<<" "<<EIG_R[k];
+	// if(verbose)
+	//   {
+	//     cout<<" "<<EIG_R[k];
+	//   }
       }
-    
     
   }
   
@@ -817,6 +775,98 @@ public:
 
   }
 
+    
+void edgederpquhats(Array<OneD, NekDouble> &uhats, Array<OneD, NekDouble> &ret,  Array<OneD, NekDouble> Vxy, Array<OneD, NekDouble> Vxyd0, Array<OneD, NekDouble> Vxyd1, Array<OneD, NekDouble> Vxyd2)
+{
+  int uhatstot = uhats.size();
+  int modes = uhats.size();
+  int totpts = E3seg->GetBasis(0)->GetZ().size();
+  
+  Array<OneD, NekDouble> temp(totpts), temp2(modes), temp3(uhatstot);
+  Array<OneD, NekDouble> pqeval(totpts);
+  NekDouble v1, v2;
+  int dim;
+  if(Vxyd2 == NullNekDouble1DArray)
+    dim = 2;
+  else if(Vxyd1 == NullNekDouble1DArray)
+    dim = 1;
+  
+  for(int i = 0; i<totpts; i++)
+    {
+      Vmath::Vmul(modes, &Vxy[0]+i, totpts, &Vxyd0[0]+i, totpts, &temp2[0], 1);
+      v1  = Vmath::Vsum(modes, temp2, 1); 
+      Vmath::Vmul(uhatstot, &Vxy[i], totpts, &uhats[0], 1, &temp3[0], 1);
+      v2  = Vmath::Vsum(uhatstot, temp3, 1);  
+
+      v1 = v2*v1;
+
+      // At this point,                 
+      // v1 = (sum(Vxm1.*Vdxm1, 2)).*(Vxm1*c) for 1 point
+
+      // calculate (sum(Vxm1.*Vxm1, 2)).*(Vd*c)
+      Vmath::Vmul(uhatstot, &Vxy[0]+i, totpts, &Vxy[0]+i, totpts, &temp2[0], 1);
+        
+      v2  = Vmath::Vsum(uhatstot, temp2, 1);  
+ 
+      Vmath::Vmul(uhats.size(), &Vxyd0[i], totpts, &uhats[0], 1, &temp2[0], 1);
+
+      v1= v2*Vmath::Vsum(uhats.size(), temp2, 1)- v1;
+ 
+      pqeval[i] = v1;
+ 
+      if(dim > 1)
+        {
+
+	  Vmath::Vmul(modes, &Vxy[0]+i, totpts, &Vxyd1[0]+i, totpts, &temp2[0], 1);
+	  v1  = Vmath::Vsum(modes, temp2, 1); 
+	  Vmath::Vmul(uhatstot, &Vxy[i], totpts, &uhats[0], 1, &temp3[0], 1);
+
+	  v2  = Vmath::Vsum(uhatstot, temp3, 1);  
+	  v1 = v2*v1;
+
+	  // At this point,                 
+	  // v1 = (sum(Vxm1.*Vdxm1, 2)).*(Vxm1*c) for 1 point
+
+	  // calculate (sum(Vxm1.*Vxm1, 2)).*(Vd*c)
+	  Vmath::Vmul(uhatstot, &Vxy[0]+i, totpts, &Vxy[0]+i, totpts, &temp2[0], 1);
+
+ 
+        
+	  v2  = Vmath::Vsum(uhatstot, temp2, 1);  
+	  Vmath::Vmul(uhats.size(), &Vxyd1[i], totpts, &uhats[0], 1, &temp2[0], 1);
+
+	  v1= v2*Vmath::Vsum(uhats.size(), temp2, 1) - v1;
+	  pqeval[i] += v1;
+ 
+        }
+      if(dim == 3)
+        {
+
+	  Vmath::Vmul(modes, &Vxy[0]+i, totpts, &Vxyd2[0]+i, totpts, &temp2[0], 1);
+	  v1  = Vmath::Vsum(modes, temp2, 1); 
+	  Vmath::Vmul(uhatstot, &Vxy[i], totpts, &uhats[0], 1, &temp3[0], 1);
+
+	  v2  = Vmath::Vsum(uhatstot, temp3, 1);  
+	  v1 = v2*v1;
+
+	  // At this point,                 
+	  // v1 = (sum(Vxm1.*Vdxm1, 2)).*(Vxm1*c) for 1 point
+
+	  // calculate (sum(Vxm1.*Vxm1, 2)).*(Vd*c)
+	  Vmath::Vmul(uhatstot, &Vxy[0]+i, totpts, &Vxy[0]+i, totpts, &temp2[0], 1);
+        
+	  v2  = Vmath::Vsum(uhatstot, temp2, 1);  
+	  Vmath::Vmul(uhats.size(), &Vxyd2[i], totpts, &uhats[0], 1, &temp2[0], 1);
+
+	  v1= v2*Vmath::Vsum(uhats.size(), temp2, 1) - v1;
+	  pqeval[i] += v1;
+ 
+        }
+    }
+
+  E3seg->FwdTrans(pqeval, ret);
+  
+}
   void derpq(Array<OneD, NekDouble> &uhats, NekDouble &ret,  Array<OneD, NekDouble> Vxy, Array<OneD, NekDouble> Vxyd)
   {
     int N = uhats.size();
@@ -866,7 +916,71 @@ public:
       }
     return hold;
   }
-  
+
+  void CreateOrthElement( StdExpansion *E)
+  {
+    
+    switch(E->DetShapeType())
+      {
+      case LibUtilities::eHexahedron:
+	{
+	  
+	  LibUtilities::BasisKey bkeyorthA ( LibUtilities::eOrtho_A,
+					     E->GetBasis(0)->GetNumModes(),
+					     E->GetBasis(0)->GetPointsKey());
+	  LibUtilities::BasisKey bkeyorthB ( LibUtilities::eOrtho_A,
+					     E->GetBasis(1)->GetNumModes(),
+					     E->GetBasis(1)->GetPointsKey());
+	  LibUtilities::BasisKey bkeyorthC ( LibUtilities::eOrtho_A,
+					     E->GetBasis(2)->GetNumModes(),
+					     E->GetBasis(2)->GetPointsKey());
+
+	  Eorthele =  new StdHexExp(bkeyorthA, bkeyorthB, bkeyorthC);
+	  
+	}
+	break;
+      case LibUtilities::eTetrahedron: 
+	{
+	  LibUtilities::BasisKey bkeyorthA ( LibUtilities::eOrtho_A,
+					     E->GetBasis(0)->GetNumModes(),
+					     E->GetBasis(0)->GetPointsKey());
+	  LibUtilities::BasisKey bkeyorthB ( LibUtilities::eOrtho_B,
+					     E->GetBasis(1)->GetNumModes(),
+					     E->GetBasis(1)->GetPointsKey());
+	  LibUtilities::BasisKey bkeyorthC ( LibUtilities::eOrtho_C,
+					     E->GetBasis(2)->GetNumModes(),
+					     E->GetBasis(2)->GetPointsKey());
+	  
+	  Eorthele =  new StdTetExp(bkeyorthA, bkeyorthB, bkeyorthC);
+	  
+	}
+	break;
+      case LibUtilities::ePyramid:
+	{
+	   LibUtilities::BasisKey bkeyorthA ( LibUtilities::eOrtho_A,
+					      E->GetBasis(0)->GetNumModes(),
+					      E->GetBasis(0)->GetPointsKey());
+	   LibUtilities::BasisKey bkeyorthB ( LibUtilities::eOrtho_A,
+					      E->GetBasis(1)->GetNumModes(),
+					      E->GetBasis(1)->GetPointsKey());
+	   LibUtilities::BasisKey bkeyorthC ( LibUtilities::eOrthoPyr_C,
+					      E->GetBasis(2)->GetNumModes(),
+					      E->GetBasis(2)->GetPointsKey());
+	   
+	   Eorthele =  new StdPyrExp(bkeyorthA, bkeyorthB, bkeyorthC);
+	   
+	}
+	break;
+      default:
+	cout<<"\n invalid element type!\n";
+	exit(0);
+	
+      }
+    storage3dorth =  Eorthele->GetPhysEvaluateStorage();
+    //eval basis at midpt grid for new ortho element
+    midptortheval = Eorthele->PhysEvaluateBasis(coordmidpts, storage3dorth, NullNekDouble1DArray, NullNekDouble1DArray, NullNekDouble1DArray);
+    
+  }
   
   // With backtracking new
   void steepestgradient_descent2Dquad(Array<OneD, NekDouble> &uhats, StdExpansion *E, Array<OneD, Array<OneD, NekDouble> > &storage, Array<OneD, Array<OneD, NekDouble> >&retarr, NekDouble &avgiterGD)
@@ -922,13 +1036,12 @@ public:
         idxgprev = sz+Vmath::Imin(temp3.size(), temp3, 1);
 
       }
-    // if(startarr.size() > 1)
-    //   {
-    //	cout<<"\n expected root roughly = "<< startarr[0]<<" , "<<startarr[1]<<"\n";
-	//	flagTest = 0;
-    //}
+    if(startarr.size() > 1)
+      {
+	cout<<"\n expected root roughly = "<< startarr[0]<<" , "<<startarr[1]<<"\n";
+      }
     Array<OneD, NekDouble> xstart(dim);
-
+    
     for(int p = 0; p < dim; p++)
       {
 	xnew[p] = testcoord2dqlattice[p][idxgprev];
@@ -936,10 +1049,10 @@ public:
 
       }
     Array<OneD, NekDouble> dereval(dim);
-    //    cout<<"    starting pt = "<<xnew[0]<<","<<xnew[1]<<" N "<< uhats.size();
-    // fstream fio;
-    // fio.open("dumquad.txt", ios::app | ios::out | ios::in);
-    // fio<<"\n func = "<<funcdef<<"; starting pt = "<<xnew[0]<<","<<xnew[1]<<" N = 5";
+    if(verbose)
+      {
+	//	cout<<"\n    starting pt = "<<xnew[0]<<","<<xnew[1]<<" N "<< uhats.size();
+      }
     if(gprev < 0 && abs(gprev)>1e-13)
       {
 	
@@ -974,12 +1087,12 @@ public:
 	int truth_val = abs(g[0]+g[1]) > 1e-9;
 	int ctr = 0, ct  = 0;
 	NekDouble fac = 1,  gnew0 = gnew, gnew1 = gnew, gnew2 = gnew;
-    
+    		    	
 	if(truth_val)
 	  {
 	    NekDouble iter = secarg;
-	    int counter_min_change = 0;
-	
+	    int counter_min_change = 0;	
+
 	    while(ctr < iter && ((abs(g[0]) > 1e-9) || abs(g[1]) > 1e-9) && fac > 1e-6 && counter_min_change < 5 )
 	      {
 		if(ctr > 2 && abs(gnew0 - gnew2) < 1e-8)
@@ -1003,6 +1116,8 @@ public:
 		    xastaa[0][0] = holdxandval[0]  - fac*g[0];
 		    xastaa[1][0] = holdxandval[1]  - fac*g[1];
 		    fac = fac*gamhold;
+		    // if(fac < 1e-8)
+		    //   break;
 		  }
 	    
 		ctr++;
@@ -1017,7 +1132,9 @@ public:
 		if(savesavehold[dim] > t1[0])
 		  {
 		    for(int j = 0; j < dim; j++)
-		      savesavehold[j] = xastaa[j][0];
+		      {
+			savesavehold[j] = xastaa[j][0];
+		      }
 		    savesavehold[dim] = t1[0];
 		  }
 	    
@@ -1053,6 +1170,8 @@ public:
 			xastaa[1][0] = holdxandval[1]  - fac*g[1];
 			fac = fac*gamhold;
 		      }
+
+		
 		    tempeval[0] = E->PhysEvaluateBasis(xastaa, storage, tempeval[1], tempeval[2]
 						       , tempeval[3]);
 		    for(int p = 0; p < dim; p++)
@@ -1150,6 +1269,7 @@ public:
   void steepestgradient_descent2Dtri(Array<OneD, NekDouble> &uhats, StdExpansion *E, Array<OneD,Array<OneD, NekDouble> > &storage, Array<OneD, Array<OneD, NekDouble> >&retarr, NekDouble &avgiterGD)
   {
     Array<OneD, NekDouble> interioreval;
+
     if(Eorthtri != nullptr)
       {
 
@@ -1159,6 +1279,8 @@ public:
       {
 	interioreval = interioreval2dtqmidpts;
       }
+
+
     int dim = 2;
     Array<OneD, NekDouble> g(dim);
     double inf = numeric_limits<double>::infinity();
@@ -1182,7 +1304,6 @@ public:
       {
 	tempeval[i] = Array<OneD, NekDouble>(E->GetNcoeffs());
       }
-
     pq(uhats, testcoord2dtqpts, storage[0], nullarr, temp2 );
 
     gprev = Vmath::Vmin(sz, temp2, 1);
@@ -1259,8 +1380,9 @@ public:
 	  {
 	    NekDouble iter = secarg;
 	    int counter_min_change = 0;
-	    while(ctr < iter && ((abs(g[0]) > 1e-9) || abs(g[1]) > 1e-9) && fac > 1e-6 && counter_min_change <5)
+	    while(ctr < iter && ((abs(g[0]) > 1e-9) || abs(g[1]) > 1e-9) && fac > 1e-7 && counter_min_change <5)
 	      {
+		
 		if(ctr > 2 && abs(gnew0 - gnew2) < 1e-8)
 		  {
 		    break;
@@ -1276,20 +1398,23 @@ public:
 		xastaa[0][0] = saveholdxandval[0]  - fac*g[0];
 		xastaa[1][0] = saveholdxandval[1]  - fac*g[1];
 
-		while(abs(xastaa[0][0])>1 || abs(xastaa[1][0])>1 || (xastaa[0][0] + xastaa[1][0])>1)
+		while((abs(xastaa[0][0])>1 || abs(xastaa[1][0])>1 || (xastaa[0][0] + xastaa[1][0])>0))
 		  {
 		    xastaa[0][0] = holdxandval[0]  - fac*g[0];
 		    xastaa[1][0] = holdxandval[1]  - fac*g[1];
 		    fac = fac*gamhold;
+		    if(fac < 1e-7)
+		      break;
 		  }
-
-		ctr++;
+ 		ctr++;
 		tempeval[0] = E->PhysEvaluateBasis(xastaa, storage, tempeval[1], tempeval[2], tempeval[3]);
 		pq(uhats, xastaa, tempeval[0], NullNekDouble1DArray, t1);
 		if(savesavehold[dim] > t1[0])
 		  {
 		    for(int j = 0; j < dim; j++)
-		      savesavehold[j] = xastaa[j][0];
+		      {
+			savesavehold[j] = xastaa[j][0];
+		      }
 		    savesavehold[dim] = t1[0];
 		  }
 		
@@ -1312,9 +1437,11 @@ public:
 		Array<OneD, NekDouble> gsave(2);
 		gsave[0] = g[0];
 		gsave[1] = g[1];
+        
 		while(holdval > saveholdxandval[2] - c*fac*(gsave[0] + gsave[1]) && ct < iter &&
 		      fac > 1e-6)
 		  {
+
 		    ct++;
 		    holdxandval[0] = xastaa[0][0];
 		    holdxandval[1] = xastaa[1][0];
@@ -1324,12 +1451,13 @@ public:
 		    fac = fac*gamhold;
 		    xastaa[0][0] = holdxandval[0]  - fac*g[0];
 		    xastaa[1][0] = holdxandval[1]  - fac*g[1];
-
-		    while((abs(xastaa[0][0])>1 || abs(xastaa[1][0])>1 || (xastaa[0][0] + xastaa[1][0])>1 ) && fac > 1e-7)
+		    while((abs(xastaa[0][0])>1 || abs(xastaa[1][0])>1 || (xastaa[0][0] + xastaa[1][0])>0 ))
 		      {
 			xastaa[0][0] = holdxandval[0]  - fac*g[0];
 			xastaa[1][0] = holdxandval[1]  - fac*g[1];
 			fac = fac*gamhold;
+			if(fac < 1e-7)
+			  break;
 		      }
 		    tempeval[0] = E->PhysEvaluateBasis(xastaa, storage, tempeval[1], tempeval[2]
 						       , tempeval[3]);
@@ -1401,7 +1529,7 @@ public:
 		      }
 		    //fio<<" "<<savesavehold[2];
 		    t1[0] = holdval;
-		    if(abs(xastaa[0][0])>1 || abs(xastaa[1][0]) > 1 || (xastaa[0][0] + xastaa[1][0])>1)
+		    if(abs(xastaa[0][0])>1 || abs(xastaa[1][0]) > 1 || (xastaa[0][0] + xastaa[1][0])>0)
 		      {
 			xastaa[0][0] = savesavehold[0];
 			xastaa[1][0] = savesavehold[1];
@@ -1412,6 +1540,7 @@ public:
 
 	      }
 	  }
+	
 	retarr = Array<OneD, Array<OneD, NekDouble> >(2);
 	retarr[0] = Array<OneD, NekDouble>(1, savesavehold[0]);
 	retarr[1] = Array<OneD, NekDouble>(1, savesavehold[1]);
@@ -1435,17 +1564,17 @@ public:
     Array<OneD, NekDouble> interioreval;
     if(Eorthele != nullptr)
       {
-	interioreval = interiorevalorth3hqmidpts;
+	interioreval = midptortheval;
       }
     else
       {
-	interioreval = interioreval3hqmidpts;
+	interioreval = midpteval;
       }
-
     int dim = 3;
     Array<OneD, NekDouble> g(dim);
     double inf = numeric_limits<double>::infinity();
     retarr = Array<OneD, Array<OneD, NekDouble> >(dim);
+
     for(int p = 0; p < dim; p++)
       {
 	retarr[p] = Array<OneD,NekDouble>(1);
@@ -1456,20 +1585,19 @@ public:
     
     Array<OneD,NekDouble> xnew(dim) ,x(dim);
     NekDouble gprev = inf;
-    Array<OneD, NekDouble>  temp2(testcoord3dhqpts[0].size()), temp3, xstart(dim);
+    Array<OneD, NekDouble>  temp2(coordpts[0].size()), temp3, xstart(dim);
     NekDouble gnew = inf;
 
     int idxgprev;
-    int sz = testcoord3dhqpts[0].size();
+    int sz = coordpts[0].size();
 
-    pq(uhats, testcoord3dhqpts, storage[0], NullNekDouble1DArray, temp2 );
+    pq(uhats, coordpts, storage[0], NullNekDouble1DArray, temp2 );
     gprev = Vmath::Vmin(sz, temp2, 1);
     
     idxgprev = Vmath::Imin(temp2.size(), temp2, 1);
-    pq(uhats, testcoord3dhqmidpts, interioreval, NullNekDouble1DArray, temp3 );
+    pq(uhats, coordmidpts, interioreval, NullNekDouble1DArray, temp3 );
 
     NekDouble gprevmid =  Vmath::Vmin(temp3.size(), temp3, 1);
-
     if(gprev > gprevmid)
       {
         gprev = gprevmid;
@@ -1478,10 +1606,11 @@ public:
       }
     for(int p = 0; p < dim; p++)
       {
-	xnew[p] = testcoord3dhlattice[p][idxgprev];
+	xnew[p] = allptslattice[p][idxgprev];
 	xstart[p] = xnew[p];
 
       }
+
 
     // if(startarr.size() > 0)
     //   {
@@ -1552,7 +1681,6 @@ public:
 	int truth_val = abs(allg) > 1e-8;
 	int ctr = 0, ct  = 0;
 	NekDouble fac = 1,  gnew0 = gnew, gnew1 = gnew, gnew2 = gnew;
-
 	if(truth_val)
 	  {
 	    NekDouble iter = secarg;
@@ -1587,6 +1715,8 @@ public:
 			    xastaa[p][0] = holdxandval[p]  - fac*g[p];
 			  }
 			fac = fac*gamhold;
+			// // if(fac < 1e-7)
+			//   break;
 		      }
 		    break;
 		  case LibUtilities::eTetrahedron:
@@ -1597,6 +1727,8 @@ public:
 			    xastaa[p][0] = holdxandval[p]  - fac*g[p];
 			  }
 			fac = fac*gamhold;
+			if(fac <1e-7)
+			  break;
 		      }
 		    break;
 		  case LibUtilities::ePyramid:
@@ -1607,13 +1739,18 @@ public:
                             xastaa[p][0] = holdxandval[p]  - fac*g[p];
                           }
                         fac = fac*gamhold;
-                      }
+			if(fac < 1e-7)
+			break;
+		      }
 		    break;
 		  default: cout<<"\n invalid element, not yet supported!";
 		    exit(0);
 		  }
-
+		// if(fac < 1e-7)
+		//   break;
 		ctr++;
+
+
 		tempeval[0] = E->PhysEvaluateBasis(xastaa, storage, tempeval[1], tempeval[2], tempeval[3]);
 		pq(uhats, xastaa, tempeval[0], NullNekDouble1DArray, t1);
 		if(savesavehold[dim] > t1[0])
@@ -1655,9 +1792,10 @@ public:
 		  }
 
 		ct = 0;
-		while(holdval > saveholdxandval[dim] - c*fac*(gsave[0] + gsave[1] + gsave[2]) && ct < iter && fac > 1e-6)
+		while(holdval > saveholdxandval[dim] - c*fac*(gsave[0] + gsave[1] + gsave[2]) && ct < iter && fac > 1e7)
 		  {
 		    ct++;
+		
 		    for(int p = 0; p < dim; p++)
 		      {
 			holdxandval[p] = xastaa[p][0];
@@ -1673,7 +1811,7 @@ public:
 		    switch(E->DetShapeType())
 		      {
 		      case LibUtilities::eHexahedron:
-			while(abs(xastaa[0][0])>1 || abs(xastaa[1][0])>1 || abs(xastaa[2][0] ) > 1)
+			while((abs(xastaa[0][0])>1 || abs(xastaa[1][0])>1 || abs(xastaa[2][0] ) > 1) )//&&(fac > 1e-7))
 			  {
 			    for(int p = 0; p < dim; p++)
 			      {
@@ -1684,18 +1822,22 @@ public:
 			  }
 			break;
 		      case LibUtilities::eTetrahedron:
-			while(abs(xastaa[0][0])>1 || abs(xastaa[1][0])>1 || abs(xastaa[2][0] ) > 1 || xastaa[0][0] + xastaa[1][0] > 1e-9 || xastaa[0][0] + xastaa[2][0] > 1e-9 || xastaa[1][0] + xastaa[2][0] > 1e-9) 
+		        
+
+			while((abs(xastaa[0][0])>1 || abs(xastaa[1][0])>1 || abs(xastaa[2][0] ) > 1 || xastaa[0][0] + xastaa[1][0] > 1e-9 || xastaa[0][0] + xastaa[2][0] > 1e-9 || xastaa[1][0] + xastaa[2][0] > 1e-9))// && (fac > 1e-7)) 
 			  {
 			    for(int p = 0; p < dim; p++)
 			      {
 				xastaa[p][0] = holdxandval[p]  - fac*g[p];
-
 			      }
+			
 			    fac = fac*gamhold;
+			if(fac < 1e-8)
+			  break;
 			  }
 			break;
 			case LibUtilities::ePyramid:
-			  while(abs(xastaa[0][0])>1 || abs(xastaa[1][0])>1 || abs(xastaa[2][0] ) > 1 || xastaa[0][0] + xastaa[1][0] > 1e-9 ||  xastaa[0][0] + xastaa[2][0] > 1e-9 )
+			  while((abs(xastaa[0][0])>1 || abs(xastaa[1][0])>1 || abs(xastaa[2][0] ) > 1  ||  xastaa[0][0] + xastaa[2][0] > 1e-9 || xastaa[0][0] + xastaa[1][0] > 1e-9) )//&& (fac > 1e-7) )//
 			    {
 			      for(int p = 0; p < dim; p++)
 				{
@@ -1703,14 +1845,18 @@ public:
 				  
 				}
 			      fac = fac*gamhold;
+			      if(fac < 1e-8)
+				break;
+				  
 			    }
+			    
 			  break;
 		      default:
 			cout<<"\n invalid element!\n";
 			exit(0);
 		      }
-		
-		    
+		    if(fac < 1e-8)
+		      break;
 		    tempeval[0] = E->PhysEvaluateBasis(xastaa, storage, tempeval[1], tempeval[2]
 						       , tempeval[3]);
 
@@ -1749,8 +1895,6 @@ public:
 			  savesavehold[j] = xastaa[j][0];
 			savesavehold[dim] = t1[0];
 		      }
-		    
-		    
 	            if(abs(holdval -t1[0]) > 1e-6)
 		      {
 			holdval = t1[0];
@@ -1758,7 +1902,6 @@ public:
 		    else
 		      break;
 		  }
-		//cout<<"\n ctr = "<< ctr<<" ct = "<<ct;
 		avgiterGD = ctr;
 
 		if(saveholdval < holdval)
@@ -1814,7 +1957,7 @@ public:
 			break;
 
 		      case LibUtilities::ePyramid:
-			opt = abs(xastaa[0][0])>1 || abs(xastaa[1][0])>1 || abs(xastaa[2][0] ) > 1|| xastaa[2][0] + xastaa[1][0] > 1e-9 || xastaa[0][0] + xastaa[2][0] > 1e-9;
+			opt = abs(xastaa[0][0])>1 || abs(xastaa[1][0])>1 || abs(xastaa[2][0] ) > 1|| xastaa[0][0] + xastaa[2][0] > 1e-9 || xastaa[2][0] + xastaa[1][0] > 1e-9;  
 		      break;
 		      
 		      default: cout<<"\n invalid element type!\n";
@@ -1875,12 +2018,10 @@ public:
 	if(surfid == 0)
 	  {
 	    steepestgradient_descent2Dquad(uhats, E, storage, coords,  avgiterGD);
-
 	  }
 	else //tri
 	  {
 	    steepestgradient_descent2Dtri(uhats, E, storage, coords,  avgiterGD);
-	
 	  }
 	return coords;
 
@@ -1891,7 +2032,6 @@ public:
 	  {
 	    coords[k] = Array<OneD, NekDouble> (1);
 	  }
-	
 	steepestgradientdescent3D(uhats, E, storage, coords,  avgiterGD);
       }
 
@@ -1925,6 +2065,10 @@ public:
   NekDouble &GetEps()
   {
     return eps;
+  }
+  int GetVerbose()
+  {
+    return verbose;
   }
   int &GetAvgNum()
   {
@@ -1984,15 +2128,10 @@ public:
     int N = uhats.size();
     vector<NekDouble>ret;
 
-    // cout<<"\n";
-    // for(int k = 0; k < uhats.size(); k++)
-    //   {
-    // 	cout<<" "<<uhats[k];
-    //   }
     while(abs(uhats[N-1])<1e-12)
       {
 	N = N-1;
-	if(N == 0)
+	if(N == 0 || N == 1)
 	  {
 	    ret.push_back(-1.0);
 	    ret.push_back(1.0);
@@ -2001,7 +2140,6 @@ public:
 	    return retarr;
 	  }
       }
-        
     uhatshold = Array<OneD, NekDouble>(N);;
     //C'*uhat
     for(int k = 0; k < N; k++)
@@ -2026,105 +2164,29 @@ public:
 	row[N-2] = -uhatshold[i];
 		
 	Cmat[i] = row;
-
+	// for(int k = 0; k < row.size(); k++)
+	//   cout<<" "<<row[k]<<" ";
+	// cout<<"\n";
 		
       }
-	    
-    // uhatshold = Array<OneD, NekDouble> (N);
-    // Vmath::Vcopy(N, uhats, 1, uhatshold, 1);
-	    
-    // cout<<"\n C =\n";
-    // for(int k = 0; k < N-1; k++)
-    //   {
-    // 	for(int i=0; i < N-1; i++)
-    // 	  {
-    // 	    cout<<" "<<C[k][i];
-    // 	  }
-    // 	cout<<"\n";
-    //   }
-    // cout<<"\n Cnew:\n";
-    // Array<OneD, Array<OneD,NekDouble> > Cnew(N-1);
-    // for(int i = 0; i<N-1; i++)
-    //   {
-    // 	Cnew[i] = Array<OneD, NekDouble>(N-1);
-    // 	for(int j = 0; j<N-1; j++)
-    // 	  {
-    // 	    cout<<" "<<C[j][i];
-    // 	    Cnew[i][j] = C[j][i];
-    // 	  }
-    // 	cout<<"\n";
-    //   }
 
-    // for(int k = 0; k < Cnew.size(); k++)
-    //   {
-    // 	Vmath::Vcopy(N-1, &C[k][0], 1, &Cnew[k][0], N-1);
-		  
-    //   }
-
-    // //transpose Cnew:
-	    
-    // cout<<"\n Cnew =\n";
-    // for(int k = 0; k < Cnew.size(); k++)
-    //   {
-    // 	for(int i=0; i < Cnew[0].size(); i++)
-    // 	  {
-    // 	    cout<<" "<<Cnew[k][i];
-    // 	  }
-    // 	cout<<"\n";
-    //   }
-	    // for(int k = 0; k < Cnew[0].size(); k++)
-	    //   {
-	    // 	Vmath::Vmul(
-	    // cout<<"\n N = "<<N<<" uhatshold.size() = "<<uhatshold.size();
-	    // Vmath::Smul(N, -(2*ab2[N-1])/uhatshold[N-1], uhatshold, 1, uhatshold, 1);
-	    // cout<<"\n1\n\n";
-	    // Vmath::Vadd(N-1, Cnew[N-2], 1, uhatshold, 1, Cnew[N-2], 1);
-	    // cout<<"\n2\n\n";
-	    // Cnew[1][0] = 0.5;
-	    // Cnew[0][1] = 1;
-	    // Cnew[N-2][0] =  2*ab2[N-1]*1.414213562373094*Cnew[N-2][0];
-
-	    // for(int k = 0; k < N-1; k++)
-	    //   {
-	    // 	uhatshold[k] = sqrt(2)*ab2[N-1]*(uhats[k])/uhats[N-1];
-	    //   }
-	    // for(int k = 0; k < N-1; k++)
-	    //   {
-	    // 	for(int jj= 0 ; jj < N-1; jj++)
-	    // 	  {
-	    // 	    if(k == N-2)
-	    // 	      {
-	    // 		Cnew[k][jj] = Cnew[k][jj] - uhatshold[jj];
-	    // 	      }
-		    
-		      
-	    // 	    //	    temp2.push_back(  Cnew[jj][k]);
-	    // 	  }
-	    //   }
-	    // if( N>2)
-	    //   {
-	    // 	//	Cnew[N-3][N-2] =  - uhats[N-3];
-	    //   }
-	    // else
-	    //   {
-	    // 	return retarr;	
-	    //   }
-	    Array<OneD, NekDouble> EIG_R , EIG_I;
-	    FindEigenval(Cmat, EIG_R, EIG_I);
-
-	    for(int kk = 0; kk <EIG_R.size(); kk++)
-	      {
-		ret.push_back( EIG_R[kk] );
-	      }
-	    ret.push_back(-1.0);
-	    ret.push_back(1.0);
-	      
-	  
-	retarr[0] = Array<OneD, NekDouble> (ret.size(), ret.data());
-
-	return retarr;
-
+    Array<OneD, NekDouble> EIG_R , EIG_I;
+    FindEigenval(Cmat, EIG_R, EIG_I);
+    
+    for(int kk = 0; kk <EIG_R.size(); kk++)
+      {
+	ret.push_back( EIG_R[kk] );
+      }
+    ret.push_back(-1.0);
+    ret.push_back(1.0);
+    
+    
+    retarr[0] = Array<OneD, NekDouble> (ret.size(), ret.data());
+    
+    return retarr;
+    
   }
+  
   
   Array<OneD, Array<OneD, NekDouble>> GetQuadratureMidCoords(StdExpansion *E, Array<OneD, Array<OneD, NekDouble>> &coords)
 
@@ -2219,6 +2281,7 @@ protected:
   NekDouble secarg = 1e3;
   NekDouble eps = -0.1;
   int avgnum = 1;
+  //defaults
   NekDouble chold = 0.4;
   NekDouble gamhold = 0.7;
   std::string    m_shape;
@@ -2231,7 +2294,7 @@ protected:
   LibUtilities::ShapeType stypeglo;
   Array<OneD, NekDouble> startarr;  
   Array<OneD, NekDouble> bcheb;  
-
+  int verbose = 0;
 };
 
 #endif

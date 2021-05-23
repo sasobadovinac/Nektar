@@ -117,10 +117,10 @@ int main(int argc, char *argv[])
       numedges = 12;
       numsurfaces = 6;
 
-      demo.testcoord3dhqpts = demo.GetCoords(E);
-      demo.testcoord3dhqmidpts = demo.GetQuadratureMidCoords( E, demo.testcoord3dhqpts);
-      demo.testcoord3dhlattice = demo.GetLatticeCoords(demo.testcoord3dhqpts, demo.testcoord3dhqmidpts);
-      demo.interioreval3hqmidpts = E->PhysEvaluateBasis( demo.testcoord3dhqmidpts, storage3d, NullNekDouble1DArray, NullNekDouble1DArray, NullNekDouble1DArray);
+      demo.coordpts = demo.GetCoords(E);
+      demo.coordmidpts = demo.GetQuadratureMidCoords( E, demo.coordpts);
+      demo.allptslattice = demo.GetLatticeCoords(demo.coordpts, demo.coordmidpts);
+      demo.midpteval = E->PhysEvaluateBasis( demo.coordmidpts, storage3d, NullNekDouble1DArray, NullNekDouble1DArray, NullNekDouble1DArray);
  
       break;
 
@@ -128,10 +128,10 @@ int main(int argc, char *argv[])
       numedges = 12;
       numsurfaces = 6;
 
-      demo.testcoord3dhqpts = demo.GetCoords(E);
-      demo.testcoord3dhqmidpts = demo.GetQuadratureMidCoords( E, demo.testcoord3dhqpts);
-      demo.testcoord3dhlattice = demo.GetLatticeCoords(demo.testcoord3dhqpts, demo.testcoord3dhqmidpts);
-      demo.interioreval3hqmidpts = E->PhysEvaluateBasis( demo.testcoord3dhqmidpts, storage3d, NullNekDouble1DArray, NullNekDouble1DArray, NullNekDouble1DArray);
+      demo.coordpts= demo.GetCoords(E);
+      demo.coordmidpts = demo.GetQuadratureMidCoords( E, demo.coordpts);
+      demo.allptslattice = demo.GetLatticeCoords(demo.coordpts, demo.coordmidpts);
+      demo.midpteval = E->PhysEvaluateBasis( demo.coordmidpts, storage3d, NullNekDouble1DArray, NullNekDouble1DArray, NullNekDouble1DArray);
  
       break;
       

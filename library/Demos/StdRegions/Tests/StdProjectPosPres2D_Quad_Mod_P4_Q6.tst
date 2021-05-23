@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <test>
-    <description>StdProjectPositivityPres2D Quad Orthonormal basis P=4 Q=7</description>
+    <description>StdProjectPositivityPres2D Quad Modified basis P=4 Q=6</description>
     <executable>StdProjectPositivityPres2D</executable>
-    <parameters>-s Quadrilateral -b Ortho_A Ortho_A -o 4 4 -p 7  7 -z</parameters>
+    <parameters>-s Quadrilateral -b Modified_A Modified_A -o 4 4 -p 6 6 -z</parameters>
     <metrics>
         <metric type="L2" id="1">
             <value tolerance="1e-12">5.37715e-16</value>

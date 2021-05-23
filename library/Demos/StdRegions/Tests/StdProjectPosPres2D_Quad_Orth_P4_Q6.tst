@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <test>
-    <description>StdProjectPositivityPres3D  Pyr  Orthonormal basis P=4 Q=6</description>
-    <executable>StdProjectPositivityPres3D</executable>
-    <parameters>-s pyramid -b Ortho_A Ortho_A OrthoPyr_C -o 4 4 4 -p 6 6 6  -z</parameters>
+    <description>StdProjectPositivityPres2D Quad Orthonormal basis P=4 Q=6</description>
+    <executable>StdProjectPositivityPres2D</executable>
+    <parameters>-s Quadrilateral -b Ortho_A Ortho_A -o 4 4 -p 6 6  -z</parameters>
     <metrics>
         <metric type="L2" id="1">
             <value tolerance="1e-12">5.37715e-16</value>
