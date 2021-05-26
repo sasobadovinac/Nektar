@@ -43,7 +43,6 @@
 
 #include <boost/core/ignore_unused.hpp>
 #include <boost/random/normal_distribution.hpp>
-#include <boost/random/variate_generator.hpp>
 
 #include <MultiRegions/AssemblyMap/AssemblyMapDG.h>
 
@@ -112,6 +111,31 @@ void AcousticSystem::v_InitObject()
 
     m_whiteNoiseBC_lastUpdate = -1.0;
     m_whiteNoiseBC_p          = 0.0;
+    
+    m_NewmanSignalBC_lastUpdate = -1.0;
+    m_NewmanSignalBC_p          = 0.0;
+    
+    fmin = 60;                    // minimum frequency value
+    fmax = 1160;                  // maximum frequency value
+    int finc = 50;                // frequency increment
+    Nfre = (fmax-fmin) / finc;    // anpassen, sodass immer integer raus kommt
+    
+    int frng[Nfre];
+    double prng[Nfre];
+    
+    frng[0] = fmin;
+    prng[0] = 0.0;
+    
+    int i=1;
+    while ( frng[i-1] < fmax ) 
+    {
+        frng[i] = frng[i-1] + finc;
+        prng[i] = (M_PI *i*i) / Nfre;
+        
+        m_frange.push_back(frng[i]);
+        m_prange.push_back(prng[i]);
+        i++;
+    }
 }
 
 /**
@@ -268,6 +292,10 @@ void AcousticSystem::SetBoundaryConditions(
             {
                 v_WhiteNoiseBC(n, cnt, Fwd, bfFwd, inarray);
             }
+            else if (boost::iequals(userDefStr, "NewmanSignal"))
+            {
+                v_NewmanSignalBC(n, cnt, Fwd, bfFwd, inarray);
+            }
             else if (boost::iequals(userDefStr, "RiemannInvariantBC"))
             {
                 v_RiemannInvariantBC(n, cnt, Fwd, bfFwd, inarray);
@@ -358,7 +386,7 @@ void AcousticSystem::v_WallBC(int bcRegion, int cnt,
 }
 
 /**
- * @brief Wall boundary conditions for the AcousticSystem equations.
+ * @brief White Noise boundary conditions for the AcousticSystem equations.
  */
 void AcousticSystem::v_WhiteNoiseBC(
     int bcRegion, int cnt, Array<OneD, Array<OneD, NekDouble>> &Fwd,
@@ -391,7 +419,7 @@ void AcousticSystem::v_WhiteNoiseBC(
     ASSERTL0(sigma > NekConstants::kNekZeroTol,
              "sigma must be greater than zero");
 
-    // random velocity perturbation
+    // random pressure perturbation
     if (m_whiteNoiseBC_lastUpdate < m_time)
     {
         m_whiteNoiseBC_lastUpdate = m_time;
@@ -462,6 +490,118 @@ void AcousticSystem::v_WhiteNoiseBC(
         }
     }
 }
+
+
+/**
+ * @brief Sound Signal with constant frequency interval, using Newman phases for optimal crest factor.
+ */
+void AcousticSystem::v_NewmanSignalBC(
+    int bcRegion, int cnt, Array<OneD, Array<OneD, NekDouble>> &Fwd,
+    Array<OneD, Array<OneD, NekDouble>> &BfFwd,
+    Array<OneD, Array<OneD, NekDouble>> &physarray)
+{
+    boost::ignore_unused(Fwd);
+
+    int id1, id2, nBCEdgePts;
+    int nVariables = physarray.num_elements();
+    const bool root = (m_session->GetComm()->GetRank() == 0);
+
+    const Array<OneD, const int> &traceBndMap = m_fields[0]->GetTraceBndMap();
+
+    ASSERTL0(
+        m_fields[0]->GetBndConditions()[bcRegion]->GetBoundaryConditionType() ==
+            SpatialDomains::eDirichlet,
+        "Newman Signal BCs must be Dirichlet type BCs");
+
+    LibUtilities::Equation cond =
+        std::static_pointer_cast<SpatialDomains::DirichletBoundaryCondition>(
+            m_fields[0]->GetBndConditions()[bcRegion])
+            ->m_dirichletCondition;
+    NekDouble Amp = cond.Evaluate();
+
+    ASSERTL0(Amp > NekConstants::kNekZeroTol,
+             "Amplitude must be greater than zero");
+
+    ofstream file;
+    file.open ("timeseries.csv", std::ios_base::app);
+
+    // random pressure perturbation
+    if (m_NewmanSignalBC_lastUpdate < m_time)
+    {
+         m_NewmanSignalBC_lastUpdate = m_time;
+         m_NewmanSignalBC_p = 0.0;
+
+         for (int i = 0; i < Nfre; i++)
+         {
+             m_NewmanSignalBC_p += ( sqrt(2) * Amp)/(sqrt(Nfre)) * sin( 2*M_PI*m_frange[i] * m_time + m_prange[i]  );
+         }
+         if (root)
+         {
+             file << m_time << "," << m_NewmanSignalBC_p << endl;
+         }
+    }
+    int eMax = m_fields[0]->GetBndCondExpansions()[bcRegion]->GetExpSize();
+    for (int e = 0; e < eMax; ++e)
+    {
+        nBCEdgePts = m_fields[0]
+                         ->GetBndCondExpansions()[bcRegion]
+                         ->GetExp(e)
+                         ->GetTotPoints();
+        id1 = m_fields[0]->GetBndCondExpansions()[bcRegion]->GetPhys_Offset(e);
+        id2 = m_fields[0]->GetTrace()->GetPhys_Offset(traceBndMap[cnt + e]);
+
+        Array<OneD, Array<OneD, NekDouble>> tmp(nVariables);
+        for (int i = 0; i < nVariables; ++i)
+        {
+            tmp[i] = Array<OneD, NekDouble>(nBCEdgePts, 0.0);
+        }
+
+        // pressure perturbation
+        Vmath::Fill(nBCEdgePts, m_NewmanSignalBC_p, &tmp[m_ip][0], 1);
+        if (m_conservative)
+        {
+            for (int i = 0; i < nBCEdgePts; ++i)
+            {
+                // density perturbation
+                tmp[m_irho][i] = m_NewmanSignalBC_p *
+                                 BfFwd[m_spacedim + 2][id2 + i] /
+                                 BfFwd[0][id2 + i];
+
+                // velocity perturbation
+                NekDouble ru = m_NewmanSignalBC_p / sqrt(BfFwd[0][id2 + i]);
+                for (int j = 0; j < m_spacedim; ++j)
+                {
+                    tmp[m_iu + j][i] = -1.0 * ru * m_traceNormals[j][id2 + i];
+                }
+            }
+        }
+        else
+        {
+            for (int i = 0; i < nBCEdgePts; ++i)
+            {
+                // velocity perturbation
+                NekDouble u = m_NewmanSignalBC_p /
+                              (sqrt(BfFwd[0][id2 + i]) * BfFwd[1][id2 + i]);
+
+                for (int j = 0; j < m_spacedim; ++j)
+                {
+                    tmp[m_iu + j][i] = -1.0 * u * m_traceNormals[j][id2 + i];
+                }
+            }
+        }
+
+        // Copy boundary adjusted values into the boundary expansion
+        for (int i = 0; i < nVariables; ++i)
+        {
+            Vmath::Vcopy(nBCEdgePts, &tmp[i][0], 1,
+                         &(m_fields[i]
+                               ->GetBndCondExpansions()[bcRegion]
+                               ->UpdatePhys())[id1],
+                         1);
+        }
+    }
+}
+
 
 /**
  * @brief Compute the advection velocity in the standard space

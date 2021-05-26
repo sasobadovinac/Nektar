@@ -124,6 +124,17 @@ private:
     std::map<int, boost::mt19937> m_rng;
     NekDouble m_whiteNoiseBC_lastUpdate;
     NekDouble m_whiteNoiseBC_p;
+    
+    NekDouble m_NewmanSignalBC_lastUpdate;
+    NekDouble m_NewmanSignalBC_p;
+    int Nfre;
+    int fmin;
+    int fmax;
+    double pmin;
+    double pmax;
+    double pinc;
+    std::vector<int> m_frange; 
+    std::vector<double> m_prange;
 
     NekDouble GetCFLEstimate();
 
@@ -140,6 +151,11 @@ private:
         Array<OneD, Array<OneD, NekDouble>> &physarray) = 0;
 
     virtual void v_WhiteNoiseBC(int bcRegion, int cnt,
+                                Array<OneD, Array<OneD, NekDouble>> &Fwd,
+                                Array<OneD, Array<OneD, NekDouble>> &BfFwd,
+                                Array<OneD, Array<OneD, NekDouble>> &physarray);
+
+    virtual void v_NewmanSignalBC(int bcRegion, int cnt,
                                 Array<OneD, Array<OneD, NekDouble>> &Fwd,
                                 Array<OneD, Array<OneD, NekDouble>> &BfFwd,
                                 Array<OneD, Array<OneD, NekDouble>> &physarray);
