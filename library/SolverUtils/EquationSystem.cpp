@@ -1238,10 +1238,10 @@ namespace Nektar
             LibUtilities::FieldMetaDataMap fieldMetaDataMap(m_fieldMetaDataMap);
             mapping->Output( fieldMetaDataMap, outname);
 
-#ifdef NEKTAR_DISABLE_BACKUPS
-            bool backup = false;
-#else
+#ifdef NEKTAR_ENABLE_BACKUPS
             bool backup = true;
+#else
+            bool backup = false;
 #endif
 
             m_fld->Write(outname, FieldDef, FieldData, fieldMetaDataMap, backup);
