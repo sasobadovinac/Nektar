@@ -35,6 +35,7 @@ SET(SOLVER_UTILS_SOURCES
   Filters/FilterFieldConvert.cpp
   Filters/FilterThresholdMax.cpp
   Filters/FilterThresholdMin.cpp
+  Filters/FilterStructurePres.cpp
   RiemannSolvers/RiemannSolver.cpp
   RiemannSolvers/UpwindSolver.cpp
   RiemannSolvers/UpwindLDGSolver.cpp
@@ -85,11 +86,11 @@ SET(SOLVER_UTILS_HEADERS
   Filters/FilterFieldConvert.h
   Filters/FilterThresholdMax.h
   Filters/FilterThresholdMin.h
+  Filters/FilterStructurePres.h
   RiemannSolvers/RiemannSolver.h
   RiemannSolvers/UpwindSolver.h
   RiemannSolvers/UpwindLDGSolver.h
   SolverUtils.hpp
-  StdDemoSupportnew.hpp
   SolverUtilsDeclspec.h
   UnsteadySystem.h
   Forcing/Forcing.h
