@@ -179,33 +179,35 @@ namespace StdRegions
                                      (const unsigned int         traceid,
                                       Array<OneD, unsigned int>& maparray);
 
-            STD_REGIONS_EXPORT virtual void v_GetElmtTraceToTraceMap
-                                     (const unsigned int          eid,
-                                      Array<OneD, unsigned int>& maparray,
-                                      Array<OneD, int>&          signarray,
-                                      Orientation                edgeOrient,
-                                      int P, int Q);
-
-            STD_REGIONS_EXPORT virtual void v_GetTraceToElementMap
-                               (const int  eid,
-                                Array<OneD, unsigned int>& maparray,
-                                Array<OneD, int>&          signarray,
-                                Orientation                edgeOrient = eForwards,
-                                int                        P = -1,
-                                int                        Q = -1);
-
+        STD_REGIONS_EXPORT virtual void v_GetElmtTraceToTraceMap
+        (const unsigned int          eid,
+         Array<OneD, unsigned int>& maparray,
+         Array<OneD, int>&          signarray,
+         Orientation                edgeOrient,
+         int P, int Q);
+        
+        STD_REGIONS_EXPORT virtual void v_GetTraceToElementMap
+        (const int  eid,
+         Array<OneD, unsigned int>& maparray,
+         Array<OneD, int>&          signarray,
+         Orientation                edgeOrient = eForwards,
+         int                        P = -1,
+         int                        Q = -1);
+        
+        STD_REGIONS_EXPORT virtual void v_GenStdMatBwdDeriv(
+                  const int dir,
+                  DNekMatSharedPtr &mat);
     private:
-
-            // Virtual Functions ----------------------------------------
-            virtual int v_GetShapeDimension() const
-            {
-                return 2;
-            }
-
-            virtual int v_GetCoordim(void)
-            {
-                return 2;
-            }
+        // Virtual Functions ----------------------------------------
+        virtual int v_GetShapeDimension() const
+        {
+            return 2;
+        }
+        
+        virtual int v_GetCoordim(void)
+        {
+            return 2;
+        }
     };
 
     typedef std::shared_ptr<StdExpansion2D> StdExpansion2DSharedPtr;

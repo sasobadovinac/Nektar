@@ -243,6 +243,16 @@ public:
         const Array<OneD, const NekDouble> &race,
         Array<OneD, NekDouble> &field);
 
+    MULTI_REGIONS_EXPORT void CalcLocTracePhysToTraceIDMap(
+        const ExpListSharedPtr &tracelist,
+        const int               ndim);
+    
+    MULTI_REGIONS_EXPORT void CalcLocTracePhysToTraceIDMap_2D(
+        const ExpListSharedPtr &tracelist);
+
+    MULTI_REGIONS_EXPORT void CalcLocTracePhysToTraceIDMap_3D(
+        const ExpListSharedPtr &tracelist);
+
     /**
      * @brief Return the number of `forward' local trace points.
      */
@@ -285,28 +295,34 @@ public:
         return m_traceCoeffToLeftRightExpCoeffSign;
     }
 
-    MULTI_REGIONS_EXPORT inline void SetTracePhysToLeftRightExpPhysMap(
-        const Array<OneD, const Array<OneD, Array<OneD, int > > > & inarray)
+    MULTI_REGIONS_EXPORT inline const Array<OneD, int >
+           &GetElemNeighbsNumb() const
     {
-        m_tracePhysToLeftRightExpPhysMap = inarray;
+        return m_ElemNeighbsNumb;
     }
 
-    MULTI_REGIONS_EXPORT inline const Array<OneD,
-        const Array<OneD, Array<OneD, int > > >
-        &GetTracePhysToLeftRightExpPhysMap() const
+    MULTI_REGIONS_EXPORT inline const Array<OneD, const Array<OneD, int > >
+           &GetElemNeighbsId() const
     {
-        return m_tracePhysToLeftRightExpPhysMap;
+        return m_ElemNeighbsId;
     }
 
-    MULTI_REGIONS_EXPORT inline void SetFlagTracePhysToLeftRightExpPhysMap(
-        const bool in)
+    MULTI_REGIONS_EXPORT inline const Array<OneD, const Array<OneD, int > >
+           &GetLocTracephysToTraceIDMap() const
     {
-        m_flagTracePhysToLeftRightExpPhysMap = in;
+        return m_LocTracephysToTraceIDMap;
     }
 
-    MULTI_REGIONS_EXPORT inline bool GetFlagTracePhysToLeftRightExpPhysMap()
+    MULTI_REGIONS_EXPORT inline void SetLocTracePhysToTraceIDMap
+            (const Array<OneD, Array<OneD, int > > & inarray)
     {
-        return m_flagTracePhysToLeftRightExpPhysMap;
+        m_LocTracephysToTraceIDMap = inarray;
+    }
+
+    MULTI_REGIONS_EXPORT inline const Array<OneD, const int >
+           &GetLocTraceToFieldMap() const
+    {
+        return m_locTraceToFieldMap;
     }
 
     MULTI_REGIONS_EXPORT void TraceLocToElmtLocCoeffMap(
@@ -323,11 +339,13 @@ private:
     int m_nLocTracePts;
     /// The number of global trace points.
     int m_nTracePts;
-    /// A mapping from the local elemental trace points, arranged as all forwards traces
-    /// followed by backwards traces, to elemental storage.
+    /// A mapping from the local elemental trace points, arranged as
+    /// all forwards traces followed by backwards traces, to elemental
+    /// storage.
     Array<OneD, int> m_locTraceToFieldMap;
-    /// A mapping from the local elemental trace points, arranged as all forwards traces
-    /// followed by backwards traces, to elemental storage.
+    /// A mapping from the local elemental trace points, arranged as
+    /// all forwards traces followed by backwards traces, to elemental
+    /// storage.
     Array<OneD, Array<OneD, int> > m_locTraceToElmtTraceMap;
     /// A mapping from local trace points to the global trace. Dimension 0 holds
     /// forward traces, dimension 1 backward.
@@ -392,8 +410,17 @@ private:
     /// interpolation matrix.
     Array<OneD, Array<OneD, Array<OneD, int> > >
         m_tracePhysToLeftRightExpPhysMap;
-    bool m_flagTracePhysToLeftRightExpPhysMap;
 
+    // store the number of neighbor elements for each element
+    Array<OneD, int >                               m_ElemNeighbsNumb;
+    // store the id of neighbor elements for each element
+    Array<OneD, Array<OneD, int > >                 m_ElemNeighbsId;
+
+    Array<OneD, Array<OneD, int> >                  m_LocTracephysToTraceIDMap;
+
+    void FindElmtNeighbors(
+        const ExpList &locExp,
+        const ExpListSharedPtr &trace);
 };
 
 typedef std::shared_ptr<LocTraceToTraceMap> LocTraceToTraceMapSharedPtr;

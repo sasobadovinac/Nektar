@@ -236,6 +236,10 @@ namespace Nektar
                 Orientation                traceOrient,
                 int P,  int Q);
             
+            STD_REGIONS_EXPORT virtual void v_GenStdMatBwdDeriv(
+                  const int dir,
+                  DNekMatSharedPtr &mat);
+
         private:
 
             virtual int v_GetShapeDimension() const

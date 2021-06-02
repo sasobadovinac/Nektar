@@ -145,6 +145,15 @@ namespace Nektar
                 return m_indexMapManager[ikey];
             }
 
+
+            LOCAL_REGIONS_EXPORT void AlignVectorToCollapsedDir(
+                    const int dir, 
+                    const Array<OneD, const NekDouble>      &inarray, 
+                    Array<OneD, Array<OneD, NekDouble> >    &outarray)
+            {
+                v_AlignVectorToCollapsedDir(dir,inarray,outarray);
+            }
+
             inline ExpansionSharedPtr GetLeftAdjacentElementExp() const;
 
             inline ExpansionSharedPtr GetRightAdjacentElementExp() const;
@@ -367,6 +376,11 @@ namespace Nektar
                   Array<OneD, Array<OneD, NekDouble> > &d0factors,
                   Array<OneD, Array<OneD, NekDouble> > &d1factors); 
 
+            virtual void v_AlignVectorToCollapsedDir
+                   (const int dir, 
+                    const Array<OneD, const NekDouble>      &inarray, 
+                    Array<OneD, Array<OneD, NekDouble> >    &outarray);
+            
             virtual StdRegions::Orientation v_GetTraceOrient(int trace);
 
             virtual void v_SetCoeffsToOrientation(StdRegions::Orientation dir,
@@ -384,12 +398,6 @@ namespace Nektar
             
             virtual void v_GetTracePhysMap( const int       edge,
                                             Array<OneD,int> &outarray);
-
-#if 0 
-            virtual void  v_IProductWRTDerivBase(const int dir,
-                                 const Array<OneD, const NekDouble>& inarray,
-                                 Array<OneD, NekDouble> &outarray);
-#endif
 
             virtual void v_ReOrientTracePhysMap(
                                 const StdRegions::Orientation orient,
