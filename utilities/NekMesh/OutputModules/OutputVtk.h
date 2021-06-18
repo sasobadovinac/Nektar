@@ -42,9 +42,11 @@ namespace Nektar
 namespace Utilities
 {
 
-/// Converter for Gmsh files.
+/// Converter for VTK files.
 class OutputVtk : public NekMeshUtils::OutputModule
 {
+int GetVtkCellType(std::string pType);
+	
 public:
     /// Creates an instance of this class
     static std::shared_ptr<Module> create(NekMeshUtils::MeshSharedPtr m)

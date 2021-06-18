@@ -64,7 +64,8 @@ IF (NEKTAR_USE_VTK)
     IF (VTK_MAJOR_VERSION LESS 6)
         TARGET_LINK_LIBRARIES(NekMesh LINK_PUBLIC vtkCommon vtkIO vtkGraphics)
     ELSE ()
-        TARGET_LINK_LIBRARIES(NekMesh LINK_PUBLIC vtkCommonCore vtkIOLegacy)
+        TARGET_LINK_LIBRARIES(NekMesh LINK_PUBLIC vtkCommonCore vtkIOLegacy
+            vtkIOXML)
     ENDIF ()
 ENDIF (NEKTAR_USE_VTK)
 
