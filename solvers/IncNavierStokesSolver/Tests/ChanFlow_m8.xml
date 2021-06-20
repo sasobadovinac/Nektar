@@ -120,7 +120,7 @@
         <FILTER TYPE="MaxMinFields">
             <PARAM NAME="OutputFrequency">2000</PARAM>
             <PARAM NAME="MaxOrMin">max</PARAM>
-            <PARAM NAME="error">true</PARAM>
+            <PARAM NAME="options">  --error </PARAM>
         </FILTER>
     </FILTERS>
 
