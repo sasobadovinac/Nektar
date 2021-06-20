@@ -34,6 +34,8 @@ v5.1.0
 - Add ESDIRK3 and ESDIRK4 time integration schemes (!1196)
 - Add a filter to calculate mean value of solution fields (!1211)
 - Fix the time dependent absorption forcing (!1254)
+- Add rotation and improve performance of MovingReferenceFrame forcing (!1185)
+- Fix BODYFORCE defined by a file (!1215)
 
 **FieldConvert**:
 - Add phifile module to compute shape functions for the SPM solver (!1065)
@@ -54,6 +56,7 @@ v5.1.0
   (!1065)
 - Add new filter AeroForcesSPM to compute aerodynamic forces in immersed
   boundaries (!1065)
+- Add mask function and more baseflow parameters for the linear stability problem (!1201)
 
 **CompressibleFlowSolver**
 - Added vectorisation of the Interior Penalty method (!!223)
@@ -93,7 +96,10 @@ v5.0.3
 - Fix repeated output of u,v,w for Euler system
 
 **FieldConvert**
+- Fix the Filters output files numbering (!1251, !1261)
 - Fix the Filters output files numbering (!1251)
+**NekMesh**
+- Fix VTK Output for 3D meshes and support XML format (!1258)
 
 v5.0.2
 ------
