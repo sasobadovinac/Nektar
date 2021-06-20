@@ -31,6 +31,7 @@ SET(SOLVER_UTILS_SOURCES
   Filters/FilterEnergy.cpp
   Filters/FilterError.cpp
   Filters/FilterHistoryPoints.cpp
+  Filters/FilterMean.cpp
   Filters/FilterModalEnergy.cpp
   Filters/FilterMovingAverage.cpp
   Filters/FilterFieldConvert.cpp
@@ -82,6 +83,7 @@ SET(SOLVER_UTILS_HEADERS
   Filters/FilterEnergy.h
   Filters/FilterError.h
   Filters/FilterHistoryPoints.h
+  Filters/FilterMean.h
   Filters/FilterModalEnergy.h
   Filters/FilterMovingAverage.h
   Filters/FilterFieldConvert.h
