@@ -109,7 +109,8 @@ protected:
             return "_min";
         }
     } 
-    
+private:
+    bool m_initialized;
 };
 }
 }

@@ -80,7 +80,7 @@ FilterMaxMinFields::FilterMaxMinFields(
     {
         ASSERTL1(false, "MaxOrMin needs to be max or min.");
     }
-
+    m_initialized = m_restartFile != "";
 
     // Initialize other member vars
     m_problemType = eCompressible;
@@ -157,7 +157,7 @@ void FilterMaxMinFields::v_ProcessSample(
         nVars   = m_variables.size();   // Include extra vars
 
         std::vector<Array<OneD, NekDouble> > curFieldsCoeffs(nFields);
-        std::vector<std::string> tmpVariables;    // dummy vector 
+        std::vector<std::string> tmpVariables;    // dummy vector
         for (int n = 0; n < nFields; ++n)
         {
             curFieldsCoeffs[n] = pFields[n]->GetCoeffs();
@@ -195,29 +195,41 @@ void FilterMaxMinFields::v_ProcessSample(
 
 
     // Get max/min for each field
-    for(int n = 0; n < nVars; ++n)
+    if (!m_initialized)
     {
-        size_t length = m_outFieldsPhys[n].size();
-        
-        if (m_isMax)
+        for(int n = 0; n < nVars; ++n)
         {
-            // Compute max
-            for (int i = 0; i < length; ++i)
+            int length = m_outFieldsPhys[n].size();
+            Vmath::Vcopy(length, m_curFieldsPhys[n], 1,
+                                 m_outFieldsPhys[n], 1);
+        }
+        m_initialized = true;
+    }
+    else
+    {
+        for(int n = 0; n < nVars; ++n)
+        {
+            int length = m_outFieldsPhys[n].size();
+            if (m_isMax)
             {
-                if (m_curFieldsPhys[n][i] > m_outFieldsPhys[n][i])
+                // Compute max
+                for (int i = 0; i < length; ++i)
                 {
-                    m_outFieldsPhys[n][i] = m_curFieldsPhys[n][i];
+                    if (m_curFieldsPhys[n][i] > m_outFieldsPhys[n][i])
+                    {
+                        m_outFieldsPhys[n][i] = m_curFieldsPhys[n][i];
+                    }
                 }
             }
-        }
-        else
-        {
-            // Compute min
-            for (int i = 0; i < length; ++i)
+            else
             {
-                if (m_curFieldsPhys[n][i] < m_outFieldsPhys[n][i])
+                // Compute min
+                for (int i = 0; i < length; ++i)
                 {
-                    m_outFieldsPhys[n][i] = m_curFieldsPhys[n][i];
+                    if (m_curFieldsPhys[n][i] < m_outFieldsPhys[n][i])
+                    {
+                        m_outFieldsPhys[n][i] = m_curFieldsPhys[n][i];
+                    }
                 }
             }
         }
@@ -227,7 +239,7 @@ void FilterMaxMinFields::v_ProcessSample(
     for (int n = 0; n < nVars; ++n)
     {
         pFields[0]->FwdTrans_IterPerExp(m_outFieldsPhys[n], m_outFields[n]);
-    } 
+    }
 
 }
 
