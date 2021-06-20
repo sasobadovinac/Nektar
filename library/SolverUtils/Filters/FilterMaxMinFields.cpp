@@ -104,9 +104,9 @@ void FilterMaxMinFields::v_Initialise(
     for (int n = 0; n < m_variables.size(); ++n)
     {
         m_curFieldsPhys[n] = Array<OneD, NekDouble>(
-                                 pFields[0]->GetTotPoints(), 0.0);
+                                 pFields[n]->GetTotPoints(), 0.0);
         m_outFieldsPhys[n] = Array<OneD, NekDouble>(
-                                 pFields[0]->GetTotPoints(), 0.0);
+                                 pFields[n]->GetTotPoints(), 0.0);
     }
 
     // Check type of problem
@@ -171,8 +171,8 @@ void FilterMaxMinFields::v_ProcessSample(
         // Updata m_curFieldsPhys and m_outFieldsPhys
         for (int n = 0; n < nVars; ++n)
         {
-            pFields[0]->BwdTrans(curFieldsCoeffs[n], m_curFieldsPhys[n]);
-            pFields[0]->BwdTrans(m_outFields[n],     m_outFieldsPhys[n]);
+            pFields[n]->BwdTrans(curFieldsCoeffs[n], m_curFieldsPhys[n]);
+            pFields[n]->BwdTrans(m_outFields[n],     m_outFieldsPhys[n]);
         }
     }
     else
@@ -185,10 +185,10 @@ void FilterMaxMinFields::v_ProcessSample(
         {
             m_curFieldsPhys[n] = pFields[n]->GetPhys();
 
-            pFields[0]->BwdTrans(m_outFields[n], m_outFieldsPhys[n]);
-            if (pFields[0]->GetWaveSpace())
+            pFields[n]->BwdTrans(m_outFields[n], m_outFieldsPhys[n]);
+            if (pFields[n]->GetWaveSpace())
             {
-                pFields[0]->HomogeneousBwdTrans(m_outFieldsPhys[n], m_outFieldsPhys[n]);
+                pFields[n]->HomogeneousBwdTrans(m_outFieldsPhys[n], m_outFieldsPhys[n]);
             }          
         }
     }
@@ -238,7 +238,7 @@ void FilterMaxMinFields::v_ProcessSample(
     // Forward transform and put into m_outFields
     for (int n = 0; n < nVars; ++n)
     {
-        pFields[0]->FwdTrans_IterPerExp(m_outFieldsPhys[n], m_outFields[n]);
+        pFields[n]->FwdTrans_IterPerExp(m_outFieldsPhys[n], m_outFields[n]);
     }
 
 }

@@ -81,7 +81,7 @@ protected:
     ProblemType m_problemType;
     std::vector<Array<OneD, NekDouble> > m_curFieldsPhys;
     std::vector<Array<OneD, NekDouble> > m_outFieldsPhys;
-    
+
     virtual void v_Initialise(
         const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
         const NekDouble &time);

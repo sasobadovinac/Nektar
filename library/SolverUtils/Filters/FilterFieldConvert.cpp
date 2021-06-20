@@ -478,6 +478,7 @@ void FilterFieldConvert::OutputField(
                 "Force the output to be written without any checks");
     po::variables_map vm;
     vm.insert(std::make_pair("forceoutput", po::variable_value()));
+    vm.insert(std::make_pair("error", po::variable_value()));
 
     // Run field process.
     for (int n = 0; n < SIZE_ModulePriority; ++n)
