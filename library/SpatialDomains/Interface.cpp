@@ -253,7 +253,9 @@ PrescribedInterface::PrescribedInterface(int id,
     // Copy points so we know original positions.
     for (auto &pt : m_interiorVerts)
     {
-        m_origPosition.emplace_back(*pt);
+        //m_origPosition.emplace_back(*pt);
+        m_origPosition.emplace_back(
+            PointGeom(pt->GetCoordim(), pt->GetGlobalID(), pt->x(), pt->y(), pt->z()));
     }
 }
 
@@ -601,8 +603,13 @@ void PrescribedInterface::v_Move(NekDouble time)
             */
 
             auto pnt = m_origPosition[cnt];
-            newLoc[0] = pnt(0) + 0.05 * sin(2*M_PI*time) * sin(2*M_PI*coords[0]) * sin(2*M_PI*coords[1]);
-            newLoc[1] = pnt(1) + 0.05 * sin(2*M_PI*time) * sin(2*M_PI*coords[0]) * sin(2*M_PI*coords[1]);
+            newLoc[0] = pnt(0) + 0.05 * sin(2*M_PI*time) * sin(2*M_PI*pnt(0)) * sin(2*M_PI*pnt(1));
+            newLoc[1] = pnt(1) + 0.05 * sin(2*M_PI*time) * sin(2*M_PI*pnt(0)) * sin(2*M_PI*pnt(1));
+            //NekDouble angle = time;
+            //newLoc[0] = std::cos(angle) * pnt(0) - std::sin(angle) * pnt(1);
+            //newLoc[1] = std::sin(angle) * pnt(0) + std::cos(angle) * pnt(1);
+            //std::cout << "Updating (" << pnt(0) << ", " << pnt(1) << ") -> "
+            //          << "(" << newLoc[0] << ", " << newLoc[1] << ") " << std::endl;;
             cnt++;
 
             vert->UpdatePosition(newLoc[0], newLoc[1], newLoc[2]);

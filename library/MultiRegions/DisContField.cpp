@@ -3996,6 +3996,7 @@ namespace Nektar
         void DisContField::v_Reset()
         {
             ExpList::v_Reset();
+
             // Reset trace expansions as well
             if (m_trace)
             {

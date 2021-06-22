@@ -176,10 +176,10 @@ namespace Nektar
                 timer.Stop();
                 timer.AccumulateRegion("AddTraceIntegral");
 
-                timer.Start();
+                //timer.Start();
                 //fields[i]->MultiplyByElmtInvMass(outarray[i], outarray[i]);
-                timer.Stop();
-                timer.AccumulateRegion("MultiplyByElmtInvMass");
+                //timer.Stop();
+                //timer.AccumulateRegion("MultiplyByElmtInvMass");
             }
 
         }

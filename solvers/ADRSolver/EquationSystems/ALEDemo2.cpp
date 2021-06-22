@@ -12,6 +12,48 @@ using namespace std;
 namespace Nektar
 {
 
+/*
+class LaxFriedrichsSolver : public SolverUtils::RiemannSolver
+{
+public:
+    static SolverUtils::RiemannSolverSharedPtr create(
+        const LibUtilities::SessionReaderSharedPtr& pSession)
+    {
+        return SolverUtils::RiemannSolverSharedPtr(
+            new LaxFriedrichsSolver(pSession));
+    }
+
+    static std::string solverName;
+
+protected:
+    LaxFriedrichsSolver(
+        const LibUtilities::SessionReaderSharedPtr& pSession)
+        : SolverUtils::RiemannSolver(pSession)
+    {
+    }
+
+    void v_Solve(
+        const int                                         nDim,
+        const Array<OneD, const Array<OneD, NekDouble> > &Fwd,
+        const Array<OneD, const Array<OneD, NekDouble> > &Bwd,
+              Array<OneD,       Array<OneD, NekDouble> > &flux) final
+    {
+        boost::ignore_unused(nDim);
+        const Array<OneD, NekDouble> &traceVel = m_scalars["Vn"]();
+
+        // Normal upwind
+        for (int j = 0; j < traceVel.size(); ++j)
+        {
+            flux[0][j] = 0.5 * traceVel[j] * (Fwd[0][j] + Bwd[0][j]) +
+                0.5 * abs(traceVel[j]) * (Fwd[0][j] - Bwd[0][j]);
+        }
+    }
+};
+std::string LaxFriedrichsSolver::solverName = SolverUtils::GetRiemannSolverFactory().
+    RegisterCreatorFunction("LaxFriedrichs", LaxFriedrichsSolver::create,
+                            "L-F solver");
+*/
+
 class ALEDemo2 : public SolverUtils::EquationSystem
 {
 public:
@@ -35,11 +77,11 @@ public:
     virtual ~ALEDemo2() = default;
 
 protected:
-    NekDouble m_prevStageTime = 0.0;
+    NekDouble m_prevStageTime;
     SolverUtils::RiemannSolverSharedPtr m_riemannSolver;
     Array<OneD, Array<OneD, NekDouble>> m_velocity;
     Array<OneD, Array<OneD, NekDouble>> m_gridVelocity;
-    Array<OneD, NekDouble> m_traceVn, m_xc, m_yc;
+    Array<OneD, NekDouble> m_traceVn;
     SolverUtils::AdvectionSharedPtr m_advObject;
     int m_infosteps;
     std::map<int, SpatialDomains::PointGeom> m_pts;
@@ -109,26 +151,20 @@ protected:
         {
             m_gridVelocity[i] = Array<OneD, NekDouble>(m_fields[0]->GetTotPoints(), 0.0);
         }
-
-        // Storage of points from original mesh.
-        int nq = m_fields[0]->GetNpoints();
-        m_xc = Array<OneD, NekDouble>(nq);
-        m_yc = Array<OneD, NekDouble>(nq);
-        m_fields[0]->GetCoords(m_xc, m_yc);
     }
 
     virtual void v_DoInitialise()
     {
-        // Store all points
-        auto &ptsMap = m_graph->GetAllPointGeoms();
-        for (auto &pt : ptsMap)
-        {
-            m_pts[pt.first] = *(pt.second);
-        }
-
+        std::cout << "INITIALISING, TIME = " << m_time << std::endl;
+        m_prevStageTime = m_time;
         SetBoundaryConditions(m_time);
         SetInitialConditions(m_time);
         GetGridVelocity(m_time);
+    }
+
+    virtual void SetPts(std::map<int, SpatialDomains::PointGeom> pts)
+    {
+        m_pts = pts;
     }
 
     /*
@@ -161,6 +197,7 @@ protected:
 
         int step = 0;
 
+        std::cout << "SOLVING AND m_steps = " << m_steps << std::endl;
         for (int i = 0; i < m_steps; ++i)
         {
             std::cout << "SOLVING TIME = " << m_time << std::endl;

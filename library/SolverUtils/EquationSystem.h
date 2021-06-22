@@ -77,6 +77,11 @@ class Interpolator;
             /// Destructor
             SOLVER_UTILS_EXPORT virtual ~EquationSystem();
 
+            SOLVER_UTILS_EXPORT virtual void SetPts(std::map<int, SpatialDomains::PointGeom> pts)
+            {
+                boost::ignore_unused(pts);
+            }
+
             // Set up trace normals if required
             SOLVER_UTILS_EXPORT void SetUpTraceNormals(void);
 
