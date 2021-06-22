@@ -1,6 +1,7 @@
 #include <SolverUtils/AdvectionSystem.h>
 #include <SolverUtils/Advection/Advection.h>
 #include <SolverUtils/EquationSystem.h>
+#include <MultiRegions/DisContField.h>
 #include <LibUtilities/TimeIntegration/TimeIntegrationScheme.h>
 #include <LibUtilities/TimeIntegration/TimeIntegrationSchemeOperators.h>
 #include <iomanip>
@@ -151,6 +152,12 @@ protected:
         {
             m_gridVelocity[i] = Array<OneD, NekDouble>(m_fields[0]->GetTotPoints(), 0.0);
         }
+
+        auto &ptsMap = m_graph->GetAllPointGeoms();
+        for (auto &pt : ptsMap)
+        {
+            m_pts[pt.first] = *(pt.second);
+        }
     }
 
     virtual void v_DoInitialise()
@@ -213,6 +220,12 @@ protected:
                 cout << "Steps: " << setw(8)  << left << step+1 << " "
                      << "Time: "  << setw(12) << left << m_time << endl;
             }
+
+            m_fields[0] = MemoryManager<MultiRegions::DisContField>
+                ::AllocateSharedPtr(m_session, m_graph, m_session->GetVariable(0));
+            m_fields[0]->GetTrace()->GetNormals(m_traceNormals);
+            GetGridVelocity(m_time);
+            SetBoundaryConditions(m_time);
 
             // Update m_fields with u^n by multiplying by inverse mass
             // matrix. That's then used in e.g. checkpoint output and L^2 error
