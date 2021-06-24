@@ -310,8 +310,45 @@ void ProcessPhiFromFile::GetPhifromSTL(
         centroids[i] = file.triangles[i].centroid;
     }
 
+    /*NekDouble maxCentroidX,minCentroidX,maxCentroidY,minCentroidY,maxCentroidZ,minCentroidZ;
+    maxCentroidX = centroids[0][0];
+    minCentroidX = centroids[0][0];
+    maxCentroidY = centroids[0][1];
+    minCentroidY = centroids[0][1];
+    maxCentroidZ = centroids[0][2];
+    minCentroidZ = centroids[0][2];
+
+    for (int i = 0; i < file.numTri; ++i)
+    {
+        if(maxCentroidX < centroids[i][0])
+        {
+            maxCentroidX = centroids[i][0];
+        }
+        if(minCentroidX > centroids[i][0])
+        {
+            minCentroidX = centroids[i][0];
+        }
+        if(maxCentroidY < centroids[i][1])
+        {
+            maxCentroidY = centroids[i][1];
+        }
+        if(minCentroidY > centroids[i][1])
+        {
+            minCentroidY = centroids[i][1];
+        }
+        if(maxCentroidZ < centroids[i][2])
+        {
+            maxCentroidZ = centroids[i][2];
+        }
+        if(minCentroidZ > centroids[i][2])
+        {
+            minCentroidZ = centroids[i][2];
+        }
+    }
+    NekDouble coeff = m_config["scale"].as<double>();*/
+
     // Initialise octree
-    int nb_centroids_per_octree_node = 2;
+    int nb_centroids_per_octree_node = 10;
     m_tree = Octree(centroids, nb_centroids_per_octree_node, bounds);
 
     // For each strip...
@@ -332,9 +369,15 @@ void ProcessPhiFromFile::GetPhifromSTL(
 
             // Find the shortest distance to the body(ies)
             double dist = numeric_limits<double>::max();
-            FindShortestDist(file, tmpCoords, dist);
- 
+            //Bounding box for search
+            /*if(tmpCoords[0] < maxCentroidX + coeff && tmpCoords[0] > minCentroidX - coeff &&
+               tmpCoords[1] < maxCentroidY + coeff && tmpCoords[1] > minCentroidY - coeff && 
+               tmpCoords[2] < maxCentroidZ + coeff && tmpCoords[2] > minCentroidZ - coeff)
+            {*/           
 
+            FindShortestDist(file, tmpCoords, dist);
+            //}    
+                 
             // Get corresponding value of Phi
             phi->UpdatePhys()[i] = PhiFunction(dist, 
                                                m_config["scale"].as<double>());
@@ -395,7 +438,7 @@ bool ProcessPhiFromFile::CheckHit(const ProcessPhiFromFile::triangle &tri,
     Array<OneD, NekDouble> Pvec = Cross(normalVec, E2);
     double det = Vmath::Dot(3, Pvec, E1);
     double inv_det = 1.0 / det;
-    if (IsEqual(0.0, det, 1e-10))
+    if (IsEqual(0.0, det, 1e-16))
     {
         distance = numeric_limits<double>::max();
         u        = numeric_limits<double>::max();
@@ -414,12 +457,12 @@ bool ProcessPhiFromFile::CheckHit(const ProcessPhiFromFile::triangle &tri,
 
     // There is a hit if (u,v) coordinates are bounded
     distance = Vmath::Dot(3, Qvec, E2) * inv_det;
-    if ((u < 0.0 || u > 1.0) || (v < 0.0 || u+v > 1.0))
+    if ((u < 0.0 || u > 1.0) || (v < 0.0 || v > 1.0 || u+v > 1.0))
     {
         return false;
     }
     else
-    {
+    {   
         return true;
     }
 }
@@ -469,7 +512,7 @@ void ProcessPhiFromFile::FindShortestDist(
         }
 
         // Keep the sign (interior or exterior),
-        int distSign = 1;
+        // int distSign = 1;
         // the normal vector of closest triangle so far,
         Array<OneD, NekDouble> triNormal = file.triangles[treeTriangles[0]].normal;
 		Array<OneD, NekDouble> triCentroid = file.triangles[treeTriangles[0]].centroid;
@@ -489,13 +532,12 @@ void ProcessPhiFromFile::FindShortestDist(
             bool hit = CheckHit(tri, x, tri.normal, currentTparam, u, v);
 
             // Save "sign" of 'currentTparam'
-            int currentDistSign = (currentTparam >= 0) - (currentTparam < 0);
+            // int currentDistSign = (currentTparam >= 0) - (currentTparam < 0);
             // and distance to the triangle
-            double currentDist;
+            double currentDist = numeric_limits<double>::max();
 
             // Vector linking the hit point with the node
             Array<OneD, NekDouble> distVector(3);
-
             if (hit)
             {
                 Vmath::Smul(3, -currentTparam, tri.normal, 1, distVector, 1);
@@ -541,15 +583,42 @@ void ProcessPhiFromFile::FindShortestDist(
             {
                 dist      = currentDist;
                 tParam    = currentTparam;
-                distSign  = currentDistSign;
+                //int distSign  = currentDistSign;
                 triNormal = tri.normal;
 				triCentroid = tri.centroid;
             }
         }
 
+        dist = best_dist;
+
         // Update distance sign
-		dist = best_dist;
-        dist *= -distSign;
+        int hitCount = 0;
+        Array<OneD, NekDouble> rayDirection(3);
+        Vmath::Vsub(3, file.triangles[0].centroid, 1, x, 1, rayDirection, 1);
+        double RayDirectionNorm = sqrt(Vmath::Dot(3, rayDirection, rayDirection));
+        rayDirection[0] = rayDirection[0]/RayDirectionNorm;
+        rayDirection[1] = rayDirection[1]/RayDirectionNorm;
+        rayDirection[2] = rayDirection[2]/RayDirectionNorm;
+        //dist *= -distSign;
+        for (triangle tri : file.triangles)
+        {   
+            double currentTparam;
+            double u, v;
+            bool hit = CheckHit(tri, x, rayDirection, currentTparam, u, v);
+            if(hit)
+            {
+                hitCount++;
+            }
+        }
+
+        if((hitCount & 1) == 0)
+        {   
+            dist = fabs(dist);
+        }
+        else
+        {
+            dist = -numeric_limits<double>::max();
+        }
     }
 }
 
