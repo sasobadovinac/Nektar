@@ -511,9 +511,7 @@ void ProcessPhiFromFile::FindShortestDist(
             }
         }
 
-        // Keep the sign (interior or exterior),
-        // int distSign = 1;
-        // the normal vector of closest triangle so far,
+        // The normal vector of closest triangle so far,
         Array<OneD, NekDouble> triNormal = file.triangles[treeTriangles[0]].normal;
 		Array<OneD, NekDouble> triCentroid = file.triangles[treeTriangles[0]].centroid;
         // and the distance to the triangle PLANE
@@ -531,9 +529,7 @@ void ProcessPhiFromFile::FindShortestDist(
             double u, v;
             bool hit = CheckHit(tri, x, tri.normal, currentTparam, u, v);
 
-            // Save "sign" of 'currentTparam'
-            // int currentDistSign = (currentTparam >= 0) - (currentTparam < 0);
-            // and distance to the triangle
+            //Distance to the triangle
             double currentDist = numeric_limits<double>::max();
 
             // Vector linking the hit point with the node
@@ -583,7 +579,6 @@ void ProcessPhiFromFile::FindShortestDist(
             {
                 dist      = currentDist;
                 tParam    = currentTparam;
-                //int distSign  = currentDistSign;
                 triNormal = tri.normal;
 				triCentroid = tri.centroid;
             }
@@ -592,6 +587,7 @@ void ProcessPhiFromFile::FindShortestDist(
         dist = best_dist;
 
         // Update distance sign
+        // A ray is traced bewtween the mesh element and a triangle of the STL
         int hitCount = 0;
         Array<OneD, NekDouble> rayDirection(3);
         Vmath::Vsub(3, file.triangles[0].centroid, 1, x, 1, rayDirection, 1);
@@ -599,25 +595,31 @@ void ProcessPhiFromFile::FindShortestDist(
         rayDirection[0] = rayDirection[0]/RayDirectionNorm;
         rayDirection[1] = rayDirection[1]/RayDirectionNorm;
         rayDirection[2] = rayDirection[2]/RayDirectionNorm;
-        //dist *= -distSign;
+
+
         for (triangle tri : file.triangles)
         {   
+            // Make sure only the intersections in the positive direction are taken into
+            // account
+            Array<OneD, NekDouble> triangleCentroidX(3);
+            Vmath::Vsub(3, tri.centroid, 1, x, 1, triangleCentroidX, 1);
+            double alignedRayDirection = Vmath::Dot(3, rayDirection, triangleCentroidX);
             double currentTparam;
             double u, v;
             bool hit = CheckHit(tri, x, rayDirection, currentTparam, u, v);
-            if(hit)
+            if(hit && alignedRayDirection > 0)
             {
                 hitCount++;
             }
         }
-
+        // If the number of hits is even then the point is outside
         if((hitCount & 1) == 0)
         {   
             dist = fabs(dist);
         }
         else
         {
-            dist = -numeric_limits<double>::max();
+            dist = -fabs(dist);
         }
     }
 }
