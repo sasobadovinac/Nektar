@@ -79,11 +79,6 @@ void ProcessPhiFromFile::Process(po::variables_map &vm)
     // Ignore warnings due to 'vm'
     boost::ignore_unused(vm);
 
-    // Do not run in parallel
-    //ASSERTL0(m_f->m_session->GetComm()->IsSerial(), "Parallel execution is "
-    //                                                "not supported yet in "
-    //                                                "this module.")
-
     // Check if required params are defined
     ASSERTL0(m_f->m_graph, "A session file file must be provided before the "
                            "STL file.")
@@ -303,6 +298,28 @@ void ProcessPhiFromFile::GetPhifromSTL(
         bounds[i] -= pow(-1,i) * 1e-10;
     }
 
+    //Get the bounds of the fill domain to have the full octree in each proc
+    Array<OneD, NekDouble> boundsMin(3);
+    Array<OneD, NekDouble> boundsMax(3);
+    Array<OneD, NekDouble> boundsMinFullDomain(3);
+
+    boundsMin[0] = bounds[0];
+    boundsMin[1] = bounds[2];
+    boundsMin[2] = bounds[4];
+    boundsMax[0] = bounds[1];
+    boundsMax[1] = bounds[3];
+    boundsMax[2] = bounds[5];
+
+    m_f->m_session->GetComm()->AllReduce(boundsMin,LibUtilities::ReduceMin);
+    m_f->m_session->GetComm()->AllReduce(boundsMax,LibUtilities::ReduceMax);
+
+    bounds[0] = boundsMin[0];
+    bounds[2] = boundsMin[1];
+    bounds[4] = boundsMin[2];
+    bounds[1] = boundsMax[0];
+    bounds[3] = boundsMax[1];
+    bounds[5] = boundsMax[2];
+
     // Array of centroids of triangles in the STL object
     Array<OneD, Array<OneD, NekDouble> > centroids(file.numTri);
     for (int i = 0; i < file.numTri; ++i)
@@ -310,54 +327,15 @@ void ProcessPhiFromFile::GetPhifromSTL(
         centroids[i] = file.triangles[i].centroid;
     }
 
-    /*NekDouble maxCentroidX,minCentroidX,maxCentroidY,minCentroidY,maxCentroidZ,minCentroidZ;
-    maxCentroidX = centroids[0][0];
-    minCentroidX = centroids[0][0];
-    maxCentroidY = centroids[0][1];
-    minCentroidY = centroids[0][1];
-    maxCentroidZ = centroids[0][2];
-    minCentroidZ = centroids[0][2];
-
-    for (int i = 0; i < file.numTri; ++i)
-    {
-        if(maxCentroidX < centroids[i][0])
-        {
-            maxCentroidX = centroids[i][0];
-        }
-        if(minCentroidX > centroids[i][0])
-        {
-            minCentroidX = centroids[i][0];
-        }
-        if(maxCentroidY < centroids[i][1])
-        {
-            maxCentroidY = centroids[i][1];
-        }
-        if(minCentroidY > centroids[i][1])
-        {
-            minCentroidY = centroids[i][1];
-        }
-        if(maxCentroidZ < centroids[i][2])
-        {
-            maxCentroidZ = centroids[i][2];
-        }
-        if(minCentroidZ > centroids[i][2])
-        {
-            minCentroidZ = centroids[i][2];
-        }
-    }
-    NekDouble coeff = m_config["scale"].as<double>();*/
-
     // Initialise octree
     int nb_centroids_per_octree_node = 10;
     m_tree = Octree(centroids, nb_centroids_per_octree_node, bounds);
-
     // For each strip...
     for (int s = 0; s < nStrips; ++s)
     {
         // Append Phi expansion to 'm_f'
         MultiRegions::ExpListSharedPtr phi;
         phi = m_f->AppendExpList(m_f->m_numHomogeneousDir);
-
         // Parallelisation is highly recommended here
         for (int i = 0; i < nPts; ++i)
         {
@@ -368,16 +346,10 @@ void ProcessPhiFromFile::GetPhifromSTL(
             tmpCoords[0] = coords[0][i];
 
             // Find the shortest distance to the body(ies)
-            double dist = numeric_limits<double>::max();
-            //Bounding box for search
-            /*if(tmpCoords[0] < maxCentroidX + coeff && tmpCoords[0] > minCentroidX - coeff &&
-               tmpCoords[1] < maxCentroidY + coeff && tmpCoords[1] > minCentroidY - coeff && 
-               tmpCoords[2] < maxCentroidZ + coeff && tmpCoords[2] > minCentroidZ - coeff)
-            {*/           
+            double dist = numeric_limits<double>::max();         
 
             FindShortestDist(file, tmpCoords, dist);
-            //}    
-                 
+                   
             // Get corresponding value of Phi
             phi->UpdatePhys()[i] = PhiFunction(dist, 
                                                m_config["scale"].as<double>());
