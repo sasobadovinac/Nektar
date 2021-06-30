@@ -2565,6 +2565,8 @@ namespace Nektar
             {
                 (*m_exp)[i]->Reset();
             }
+
+            CreateCollections(Collections::eNoImpType); // @TODO: Might need to pass in correct type here
         }
 
         /**

@@ -177,6 +177,11 @@ protected:
                      << "Time: "  << setw(12) << left << m_time << endl;
             }
 
+            m_fields[0]->Reset();
+            m_fields[0]->GetTrace()->GetNormals(m_traceNormals);
+            GetGridVelocity(m_time);
+            SetBoundaryConditions(m_time);
+
             // Update m_fields with u^n by multiplying by inverse mass
             // matrix. That's then used in e.g. checkpoint output and L^2 error
             // calculation.
