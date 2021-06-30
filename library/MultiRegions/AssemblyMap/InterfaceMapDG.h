@@ -49,7 +49,7 @@ public:
     /// Default constructor
     MULTI_REGIONS_EXPORT InterfaceTrace(
         const ExpListSharedPtr &trace,
-        const SpatialDomains::InterfaceBaseShPtr &interfaceBaseShPtr,
+        const SpatialDomains::ZoneBaseShPtr &interfaceBaseShPtr,
         const std::map<int, int> &geomIdToTraceId);
 
     /// Default destructor
@@ -65,7 +65,7 @@ public:
         return m_missingCoords;
     }
 
-    SpatialDomains::InterfaceBaseShPtr GetInterface()
+    SpatialDomains::ZoneBaseShPtr GetInterface()
     {
         return m_interfaceBase;
     }
@@ -81,7 +81,7 @@ public:
 
 private:
     ExpListSharedPtr m_trace;
-    SpatialDomains::InterfaceBaseShPtr m_interfaceBase;
+    SpatialDomains::ZoneBaseShPtr m_interfaceBase;
     std::map<int, int> m_geomIdToTraceId;
     int m_totQuadPnts = 0;
     bool m_checkLocal = false;

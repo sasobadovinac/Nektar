@@ -294,19 +294,19 @@ std::string LaxFriedrichsSolver::solverName = SolverUtils::GetRiemannSolverFacto
                 elmtToExpId[(*exp)[i]->GetGeom()->GetGlobalID()] = i;
             }
 
-            auto intVec = m_fields[0]->GetInterfaces()->GetInterfaceVector();
+            auto intVec = m_fields[0]->GetInterfaces()->GetZones();
             for (auto &interface : intVec)
             {
                 // If the interface domain is fixed then grid velocity is left at 0
-                if (interface->GetInterfaceType() == SpatialDomains::eFixed)
+                if (interface->GetMovementType() == SpatialDomains::eFixed)
                 {
                     continue;
                 }
-                else if (interface->GetInterfaceType() == SpatialDomains::eRotating)
+                else if (interface->GetMovementType() == SpatialDomains::eRotating)
                 {
-                    SpatialDomains::RotatingInterfaceShPtr interfaceRotate =
+                    SpatialDomains::ZoneRotateShPtr interfaceRotate =
                         std::static_pointer_cast<
-                            SpatialDomains::RotatingInterface>(interface);
+                            SpatialDomains::ZoneRotate>(interface);
                     NekDouble angVel = interfaceRotate->GetAngularVel();
 
                     auto ids = interface->GetElementIds();
@@ -329,11 +329,11 @@ std::string LaxFriedrichsSolver::solverName = SolverUtils::GetRiemannSolverFacto
                         }
                     }
                 }
-                else if (interface->GetInterfaceType() == SpatialDomains::eSliding)
+                else if (interface->GetMovementType() == SpatialDomains::eSliding)
                 {
-                    SpatialDomains::SlidingInterfaceShPtr interfaceSlide =
+                    SpatialDomains::ZoneTranslateShPtr interfaceSlide =
                         std::static_pointer_cast<
-                            SpatialDomains::SlidingInterface>(interface);
+                            SpatialDomains::ZoneTranslate>(interface);
                     std::vector<NekDouble> velocity = interfaceSlide->GetVel();
 
                     auto ids = interface->GetElementIds();
@@ -351,7 +351,7 @@ std::string LaxFriedrichsSolver::solverName = SolverUtils::GetRiemannSolverFacto
                         }
                     }
                 }
-                else if (interface->GetInterfaceType() == SpatialDomains::ePrescribed)
+                else if (interface->GetMovementType() == SpatialDomains::ePrescribed)
                 {
                     // This is hacky - as interface is set up for 2 sides usually, we only use the left side in this case
                     if (interface->GetSide() == SpatialDomains::eLeft)

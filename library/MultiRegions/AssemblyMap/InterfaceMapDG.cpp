@@ -41,7 +41,7 @@ namespace MultiRegions
 
 InterfaceTrace::InterfaceTrace(
     const ExpListSharedPtr &trace,
-    const SpatialDomains::InterfaceBaseShPtr &interfaceBaseShPtr,
+    const SpatialDomains::ZoneBaseShPtr &interfaceBaseShPtr,
     const std::map<int, int> &geomIdToTraceId)
     : m_trace(trace), m_interfaceBase(interfaceBaseShPtr),
       m_geomIdToTraceId(geomIdToTraceId)

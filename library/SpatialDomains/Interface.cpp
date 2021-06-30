@@ -45,22 +45,25 @@ namespace Nektar
 {
 namespace SpatialDomains
 {
-Interfaces::Interfaces(const LibUtilities::SessionReaderSharedPtr &pSession,
+Movement::Movement(const LibUtilities::SessionReaderSharedPtr &pSession,
                        const MeshGraphSharedPtr &meshGraph)
     : m_meshGraph(meshGraph), m_session(pSession)
 {
     TiXmlElement *xmlDoc = m_session->GetElement("NEKTAR");
-    if(xmlDoc->FirstChild("CONDITIONS") != nullptr)
+    if(xmlDoc->FirstChild("CONDITIONS") != nullptr) // @TODO: Can I remove this line?
     {
-        if(xmlDoc->FirstChild("CONDITIONS")->FirstChild("INTERFACES") != nullptr)
+        if(xmlDoc->FirstChild("CONDITIONS")->FirstChild("MOVEMENT")->FirstChild("ZONES") != nullptr)
         {
-            ReadInterfaces(
-                m_session->GetElement("NEKTAR/CONDITIONS/INTERFACES"));
+            ReadZones(m_session->GetElement("NEKTAR/CONDITIONS/MOVEMENT/ZONES"));
+        }
+        if(xmlDoc->FirstChild("CONDITIONS")->FirstChild("MOVEMENT")->FirstChild("INTERFACES") != nullptr)
+        {
+            ReadInterfaces(m_session->GetElement("NEKTAR/CONDITIONS/MOVEMENT/INTERFACES"));
         }
     }
 }
 
-InterfaceBase::InterfaceBase(InterfaceType type, int indx, CompositeMap domain)
+ZoneBase::ZoneBase(MovementType type, int indx, CompositeMap domain)
 : m_type(type), m_id(indx), m_domain(domain)
 {
     // Fill element Ids
@@ -74,11 +77,11 @@ InterfaceBase::InterfaceBase(InterfaceType type, int indx, CompositeMap domain)
     }
 }
 
-RotatingInterface::RotatingInterface(int id, const CompositeMap &domain,
+ZoneRotate::ZoneRotate(int id, const CompositeMap &domain,
                                      const PointGeom &origin,
                                      const std::vector<NekDouble> &axis,
                                      const NekDouble angularVel)
-    : InterfaceBase(eRotating, id, domain), m_origin(origin), m_axis(axis),
+    : ZoneBase(eRotating, id, domain), m_origin(origin), m_axis(axis),
       m_angularVel(angularVel)
 {
     std::set<int> seenVerts, seenEdges;
@@ -137,9 +140,9 @@ RotatingInterface::RotatingInterface(int id, const CompositeMap &domain,
     }
 }
 
-SlidingInterface::SlidingInterface(int id, const CompositeMap &domain,
+ZoneTranslate::ZoneTranslate(int id, const CompositeMap &domain,
                                    const std::vector<NekDouble> &velocity)
-    : InterfaceBase(eSliding, id, domain), m_velocity(velocity)
+    : ZoneBase(eSliding, id, domain), m_velocity(velocity)
 {
     std::set<int> seenVerts, seenEdges;
     for (auto &comp : m_domain)
@@ -197,11 +200,11 @@ SlidingInterface::SlidingInterface(int id, const CompositeMap &domain,
     }
 }
 
-PrescribedInterface::PrescribedInterface(int id,
+ZonePrescribe::ZonePrescribe(int id,
                                          const CompositeMap &domain,
                                          LibUtilities::EquationSharedPtr xDeform,
                                          LibUtilities::EquationSharedPtr yDeform)
-    : InterfaceBase(ePrescribed, id, domain), m_xDeform(xDeform), m_yDeform(yDeform)
+    : ZoneBase(ePrescribed, id, domain), m_xDeform(xDeform), m_yDeform(yDeform)
 {
     std::set<int> seenVerts, seenEdges;
     for (auto &comp : m_domain)
@@ -274,30 +277,27 @@ std::string ReadTag(std::string &tagStr)
     return indxStr;
 }
 
-void Interfaces::ReadInterfaces(TiXmlElement *interfaces)
+void Movement::ReadZones(TiXmlElement *zonesTag)
 {
+    ASSERTL0(zonesTag, "Unable to find ZONES tag in file.");
 
-    ASSERTL0(interfaces, "Unable to find INTERFACES tag in file.");
+    TiXmlElement *zonesElement = zonesTag->FirstChildElement();
 
-    TiXmlElement *interfaceElement = interfaces->FirstChildElement();
-
-    std::map<int, std::vector<InterfaceBaseShPtr>> tmpInterfaceMap;
-
-    while (interfaceElement)
+    while (zonesElement)
     {
-        std::string interfaceType = interfaceElement->Value();
+        std::string zoneType = zonesElement->Value();
 
         int err;
         int indx;
 
-        err = interfaceElement->QueryIntAttribute("ID", &indx);
-        ASSERTL0(err == TIXML_SUCCESS, "Unable to read interface ID.");
+        err = zonesElement->QueryIntAttribute("ID", &indx);
+        ASSERTL0(err == TIXML_SUCCESS, "Unable to read zone ID.");
 
         std::string interfaceDomainStr;
-        err = interfaceElement->QueryStringAttribute("DOMAIN",
+        err = zonesElement->QueryStringAttribute("DOMAIN",
                                                      &interfaceDomainStr);
         ASSERTL0(err == TIXML_SUCCESS,
-                 "Unable to read interface domain.");
+                 "Unable to read zone domain.");
 
         auto &domains = m_meshGraph->GetDomain();
         auto domFind = stoi(ReadTag(interfaceDomainStr));
@@ -307,25 +307,25 @@ void Interfaces::ReadInterfaces(TiXmlElement *interfaces)
             domain = domains.at(domFind);
         }
 
-        map<int, CompositeSharedPtr> domainEdge;
-        if (interfaceType != "P")
+        /*map<int, CompositeSharedPtr> domainEdge;
+        if (zoneType != "P")
         {
             std::string domainEdgeStr;
             int domainEdgeErr =
-                interfaceElement->QueryStringAttribute("EDGE", &domainEdgeStr);
+                zonesElement->QueryStringAttribute("EDGE", &domainEdgeStr);
 
             if (domainEdgeErr == TIXML_SUCCESS)
             {
                 std::string indxStr = ReadTag(domainEdgeStr);
                 m_meshGraph->GetCompositeList(indxStr, domainEdge);
             }
-        }
+        }*/
 
-        InterfaceBaseShPtr interface;
-        if (interfaceType == "R")
+        ZoneBaseShPtr zone;
+        if (zoneType == "R" || zoneType == "ROTATE" || zoneType == "ROTATING")
         {
             std::string originStr;
-            err = interfaceElement->QueryStringAttribute("ORIGIN", &originStr);
+            err = zonesElement->QueryStringAttribute("ORIGIN", &originStr);
             ASSERTL0(err == TIXML_SUCCESS, "Unable to read origin.");
             std::vector<NekDouble> originVec;
             ParseUtils::GenerateVector(originStr, originVec);
@@ -333,79 +333,140 @@ void Interfaces::ReadInterfaces(TiXmlElement *interfaces)
                 PointGeom(3, 0, originVec[0], originVec[1], originVec[2]);
 
             std::string axisStr;
-            err = interfaceElement->QueryStringAttribute("AXIS", &axisStr);
+            err = zonesElement->QueryStringAttribute("AXIS", &axisStr);
             ASSERTL0(err == TIXML_SUCCESS, "Unable to read axis.");
             std::vector<NekDouble> axis;
             ParseUtils::GenerateVector(axisStr, axis);
 
             std::string angularVelStr;
-            err = interfaceElement->QueryStringAttribute("ANGVEL", &angularVelStr);
+            err = zonesElement->QueryStringAttribute("ANGVEL", &angularVelStr);
             ASSERTL0(err == TIXML_SUCCESS, "Unable to read angular velocity.");
 
             LibUtilities::Equation angularVelEqn(
                 m_session->GetInterpreter(), angularVelStr);
             NekDouble angularVel = angularVelEqn.Evaluate();
 
-            interface = RotatingInterfaceShPtr(MemoryManager<RotatingInterface>::AllocateSharedPtr(indx, domain,  origin, axis, angularVel));
+            zone = ZoneRotateShPtr(MemoryManager<ZoneRotate>::AllocateSharedPtr(indx, domain,  origin, axis, angularVel));
         }
-        else if (interfaceType == "S")
+        else if (zoneType == "T" || zoneType == "TRANSLATE" || zoneType == "TRANSLATING")
         {
             std::string velocityStr;
-            err = interfaceElement->QueryStringAttribute("VELOCITY", &velocityStr);
+            err = zonesElement->QueryStringAttribute("VELOCITY", &velocityStr);
             ASSERTL0(err == TIXML_SUCCESS, "Unable to read direction.");
             std::vector<NekDouble> velocity;
             ParseUtils::GenerateVector(velocityStr, velocity);
 
-            interface = SlidingInterfaceShPtr(MemoryManager<SlidingInterface>::AllocateSharedPtr(indx, domain, velocity));
+            zone = ZoneTranslateShPtr(MemoryManager<ZoneTranslate>::AllocateSharedPtr(indx, domain, velocity));
 
         }
-        else if (interfaceType == "F")
+        else if (zoneType == "F" || zoneType == "FIXED")
         {
-            interface = FixedInterfaceShPtr(MemoryManager<FixedInterface>::AllocateSharedPtr(indx, domain));
+            zone = ZoneFixedShPtr(MemoryManager<ZoneFixed>::AllocateSharedPtr(indx, domain));
         }
-        else if (interfaceType == "P")
+        else if (zoneType == "P" || zoneType == "PRESCRIBED")
         {
             std::string xDeformStr;
-            err = interfaceElement->QueryStringAttribute("XDEFORM", &xDeformStr);
+            err = zonesElement->QueryStringAttribute("XDEFORM", &xDeformStr);
             ASSERTL0(err == TIXML_SUCCESS, "Unable to read x deform equation.");
             LibUtilities::EquationSharedPtr xDeformEqn =
                 std::make_shared<LibUtilities::Equation>(m_session->GetInterpreter(), xDeformStr);
 
             std::string yDeformStr;
-            err = interfaceElement->QueryStringAttribute("YDEFORM", &yDeformStr);
+            err = zonesElement->QueryStringAttribute("YDEFORM", &yDeformStr);
             ASSERTL0(err == TIXML_SUCCESS, "Unable to read y deform equation.");
             LibUtilities::EquationSharedPtr yDeformEqn =
                 std::make_shared<LibUtilities::Equation>(m_session->GetInterpreter(), yDeformStr);
 
-            interface = PrescribedInterfaceShPtr(MemoryManager<PrescribedInterface>::AllocateSharedPtr(indx, domain, xDeformEqn, yDeformEqn));
-        }
-        if ( interfaceType != "P")
-        {
-            interface->SetEdge(domainEdge);
+            zone = ZonePrescribeShPtr(MemoryManager<ZonePrescribe>::AllocateSharedPtr(indx, domain, xDeformEqn, yDeformEqn));
         }
 
-        tmpInterfaceMap[indx].emplace_back(interface);
+        m_zones[indx] = zone;
 
-        m_interfaceVector.emplace_back(interface);
-
-        interfaceElement = interfaceElement->NextSiblingElement();
-    }
-
-    for (auto interfacePair : tmpInterfaceMap)
-    {
-        ASSERTL0(interfacePair.second.size() == 2,
-                 "Every interface ID must have two domains associated with it")
-
-        interfacePair.second[0]->SetOppInterface(interfacePair.second[1]);
-        interfacePair.second[1]->SetOppInterface(interfacePair.second[0]);
-
-        m_interfaces[interfacePair.first] =
-            MemoryManager<SpatialDomains::InterfacePair>::AllocateSharedPtr(
-                interfacePair.second[0], interfacePair.second[1]);
+        zonesElement = zonesElement->NextSiblingElement();
     }
 }
 
-void InterfaceBase::SetEdge(const CompositeMap &edge)
+void Movement::ReadInterfaces(TiXmlElement *interfacesTag)
+{
+    ASSERTL0(interfacesTag, "Unable to find INTERFACES tag in file.");
+
+    TiXmlElement *interfaceElement = interfacesTag->FirstChildElement();
+
+    while (interfaceElement)
+    {
+        ASSERTL0("INTERFACE" == (std::string)interfaceElement->Value(),
+                 "Only INTERFACE tags may be present inside the INTERFACES block.")
+
+        int err;
+
+        std::string name;
+        err = interfaceElement->QueryStringAttribute("NAME", &name);
+        ASSERTL0(err == TIXML_SUCCESS, "Unable to read interface name.");
+
+        TiXmlElement *sideElement = interfaceElement->FirstChildElement();
+
+        int cnt = 0;
+        Array<OneD, InterfaceShPtr> interfaces(2);
+        while(sideElement)
+        {
+            ASSERTL0(cnt < 2, "Only two sides may be present in each interface block.")
+            std::string sideStr = interfaceElement->Value();
+
+            InterfaceSide side;
+            if(sideStr == "L" || sideStr == "LEFT")
+            {
+                side = eLeft;
+            }
+            else if (sideStr == "R" || sideStr == "RIGHT")
+            {
+                side = eRight;
+            }
+            else
+            {
+                NEKERROR(ErrorUtil::efatal,
+                         "Only LEFT or RIGHT tags may be present inside the INTERFACE block.")
+            }
+
+            int indx;
+            err = sideElement->QueryIntAttribute("ID", &indx);
+            ASSERTL0(err == TIXML_SUCCESS, "Unable to read interface ID.");
+
+            std::string boundaryStr;
+            int boundaryErr =
+                sideElement->QueryStringAttribute("BOUNDARY", &boundaryStr);
+
+            CompositeMap boundaryEdge;
+            if (boundaryErr == TIXML_SUCCESS)
+            {
+                std::string indxStr = ReadTag(boundaryStr);
+                m_meshGraph->GetCompositeList(indxStr, boundaryEdge);
+            }
+
+            interfaces[cnt] = InterfaceShPtr(MemoryManager<Interface>::AllocateSharedPtr(indx, boundaryEdge));
+
+            sideElement = sideElement->NextSiblingElement();
+        }
+
+        m_interfaces[name] = InterfacePairShPtr(MemoryManager<InterfacePair>::AllocateSharedPtr(interfaces[0], interfaces[1]));
+        interfaceElement = interfaceElement->NextSiblingElement();
+    }
+}
+
+Interface::Interface(int indx, CompositeMap edge)
+    : m_id(indx)
+{
+    // Fill element Ids
+    for (auto &comp : edge)
+    {
+        for (auto &geom : comp.second->m_geomVec)
+        {
+            m_edgeIds.emplace_back(geom->GetGlobalID());
+            m_edge[geom->GetGlobalID()] = geom;
+        }
+    }
+}
+
+void ZoneBase::SetEdge(const CompositeMap &edge)
 {
     for (auto &compIt : edge)
     {
@@ -428,17 +489,17 @@ void InterfaceBase::SetEdge(const CompositeMap &edge)
     std::sort(m_edgeIds.begin(), m_edgeIds.end());
 }
 
-void Interfaces::PerformMovement(NekDouble timeStep)
+void Movement::PerformMovement(NekDouble timeStep)
 {
-    for (auto &interface : m_interfaceVector)
+    for (auto &interface : m_zones)
     {
         interface->Move(timeStep);
     }
 }
 
-void Interfaces::GenGeomFactors()
+void Movement::GenGeomFactors()
 {
-    for (auto &interface : m_interfaceVector)
+    for (auto &interface : m_zones)
     {
         auto edges = interface->GetEdge();
         for (auto &el : edges)
@@ -448,7 +509,7 @@ void Interfaces::GenGeomFactors()
     }
 
     // @TODO: Don't know if below is needed?
-    /*for (auto &interface : m_interfaceVector)
+    /*for (auto &interface : m_zones)
     {
         auto elements = interface->GetElements();
         for (auto &el : elements)
@@ -464,7 +525,7 @@ void Interfaces::GenGeomFactors()
     }*/
 }
 
-void RotatingInterface::v_Move(NekDouble time)
+void ZoneRotate::v_Move(NekDouble time)
 {
     NekDouble angle = m_angularVel * time;
 
@@ -503,7 +564,7 @@ void RotatingInterface::v_Move(NekDouble time)
     m_oppInterface->GetMoved() = true;
 }
 
-void SlidingInterface::v_Move(NekDouble timeStep)
+void ZoneTranslate::v_Move(NekDouble timeStep)
 {
     int dim = 3; // @TODO: Think a way to get this for coorddim even if interface isn't present on rank.
 
@@ -549,12 +610,12 @@ void SlidingInterface::v_Move(NekDouble timeStep)
     m_oppInterface->GetMoved() = true;
 }
 
-void FixedInterface::v_Move(NekDouble time)
+void ZoneFixed::v_Move(NekDouble time)
 {
     boost::ignore_unused(time);
 }
 
-void PrescribedInterface::v_Move(NekDouble time)
+void ZonePrescribe::v_Move(NekDouble time)
 {
     boost::ignore_unused(time);
     // This is hacky - as interface is set up for 2 sides usually, we only use the left side in this case

@@ -215,7 +215,7 @@ namespace Nektar
 
             // Initialise interfaces
             m_interfaces =
-                MemoryManager<SpatialDomains::Interfaces>::AllocateSharedPtr(
+                MemoryManager<SpatialDomains::Movement>::AllocateSharedPtr(
                     m_session, m_graph);
 
             // Retrieve the list of expansions

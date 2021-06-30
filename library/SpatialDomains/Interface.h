@@ -49,7 +49,7 @@ struct OneD;
 namespace SpatialDomains
 {
 
-enum InterfaceType
+enum MovementType
 {
     eFixed,
     eRotating,
@@ -57,7 +57,7 @@ enum InterfaceType
     ePrescribed
 };
 
-const std::string InterfaceTypeStr[] =
+const std::string MovementTypeStr[] =
 {
     "Fixed",
     "Rotating",
@@ -82,16 +82,16 @@ const std::string InterfaceSideStr[] =
 struct Composite;
 typedef std::map<int, std::shared_ptr<Composite>> CompositeMap;
 
-struct InterfaceBase;
-typedef std::shared_ptr<InterfaceBase> InterfaceBaseShPtr;
+struct ZoneBase;
+typedef std::shared_ptr<ZoneBase> ZoneBaseShPtr;
 
-struct InterfaceBase
+struct ZoneBase
 {
-    InterfaceBase(InterfaceType type, int indx, CompositeMap domain);
+    ZoneBase(MovementType type, int indx, CompositeMap domain);
 
-    virtual ~InterfaceBase() = default;
+    virtual ~ZoneBase() = default;
 
-    inline InterfaceType GetInterfaceType() const
+    inline MovementType GetMovementType() const
     {
         return m_type;
     }
@@ -101,51 +101,9 @@ struct InterfaceBase
         return m_domain;
     }
 
-    inline std::map<int, GeometrySharedPtr> const &GetEdge() const
-    {
-        return m_edge;
-    }
-
-    inline std::vector<int> const &GetEdgeIds() const
-    {
-        return m_edgeIds;
-    }
-
-    inline bool IsEmpty() const
-    {
-        return m_edge.empty();
-    }
-
-    inline void SetEdge(const GeometrySharedPtr &edge)
-    {
-        m_edge[edge->GetGlobalID()] = edge;
-    }
-
-    void SetEdge(const CompositeMap &edge);
-
-    inline void SetOppInterface(InterfaceBaseShPtr oppInterface)
-    {
-        m_oppInterface = oppInterface;
-    }
-
-    inline InterfaceBaseShPtr GetOppInterface()
-    {
-        return m_oppInterface;
-    }
-
     inline int &GetId()
     {
         return m_id;
-    }
-
-    inline InterfaceSide GetSide() const
-    {
-        return m_side;
-    }
-
-    inline void SetSide(const InterfaceSide &side)
-    {
-        m_side = side;
     }
 
     inline virtual void v_Move(NekDouble time)
@@ -174,25 +132,25 @@ struct InterfaceBase
     }
 
 protected:
-    InterfaceBaseShPtr m_oppInterface;
-    InterfaceType m_type;
+    //ZoneBaseShPtr m_oppInterface;
+    MovementType m_type;
     int m_id;
-    InterfaceSide m_side = eNone;
+    //InterfaceSide m_side = eNone;
     CompositeMap m_domain;
-    std::map<int, GeometrySharedPtr> m_edge;
-    std::vector<int> m_edgeIds;
+    //std::map<int, GeometrySharedPtr> m_edge;
+    //std::vector<int> m_edgeIds;
     std::vector<int> m_elementIds;
     std::vector<GeometrySharedPtr> m_elements;
     bool m_moved = true;
 };
 
-struct RotatingInterface final: public InterfaceBase
+struct ZoneRotate final: public ZoneBase
 {
-    RotatingInterface(int id, const CompositeMap &domain, const PointGeom &origin,
+    ZoneRotate(int id, const CompositeMap &domain, const PointGeom &origin,
                       const std::vector<NekDouble> &axis,
                       const NekDouble angularVel);
 
-    virtual ~RotatingInterface() = default;
+    virtual ~ZoneRotate() = default;
 
     inline PointGeom GetOrigin() const
     {
@@ -220,12 +178,12 @@ protected:
     std::vector<PointGeom> m_origPosition;
 };
 
-struct SlidingInterface final: public InterfaceBase
+struct ZoneTranslate final: public ZoneBase
 {
-    SlidingInterface(int id, const CompositeMap &domain,
+    ZoneTranslate(int id, const CompositeMap &domain,
                      const std::vector<NekDouble> &velocity);
 
-    virtual ~SlidingInterface() = default;
+    virtual ~ZoneTranslate() = default;
 
     inline std::vector<NekDouble> GetVel() const
     {
@@ -241,13 +199,13 @@ protected:
     std::vector<PointGeom> m_origPosition;
 };
 
-struct PrescribedInterface final: public InterfaceBase
+struct ZonePrescribe final: public ZoneBase
 {
-    PrescribedInterface(int id, const CompositeMap &domain,
+    ZonePrescribe(int id, const CompositeMap &domain,
                         LibUtilities::EquationSharedPtr xDeform,
                         LibUtilities::EquationSharedPtr yDeform);
 
-    virtual ~PrescribedInterface() = default;
+    virtual ~ZonePrescribe() = default;
 
     inline NekDouble GetXDeform(NekDouble x, NekDouble y,  NekDouble z, NekDouble t) const
     {
@@ -265,75 +223,138 @@ protected:
     LibUtilities::EquationSharedPtr m_xDeform;
     LibUtilities::EquationSharedPtr m_yDeform;
     std::vector<PointGeomSharedPtr> m_interiorVerts;
-
     std::vector<PointGeom> m_origPosition;
 };
 
-struct FixedInterface final: public InterfaceBase
+struct ZoneFixed final: public ZoneBase
 {
-    FixedInterface(int id, const CompositeMap &domain)
-            : InterfaceBase(eFixed, id, domain)
+    ZoneFixed(int id, const CompositeMap &domain)
+            : ZoneBase(eFixed, id, domain)
     {
     }
 
-    virtual ~FixedInterface() = default;
+    virtual ~ZoneFixed() = default;
 
     virtual void v_Move(NekDouble timeStep) final;
 };
 
-typedef std::shared_ptr<RotatingInterface> RotatingInterfaceShPtr;
-typedef std::shared_ptr<SlidingInterface> SlidingInterfaceShPtr;
-typedef std::shared_ptr<FixedInterface> FixedInterfaceShPtr;
-typedef std::shared_ptr<PrescribedInterface> PrescribedInterfaceShPtr;
+typedef std::shared_ptr<ZoneRotate> ZoneRotateShPtr;
+typedef std::shared_ptr<ZoneTranslate> ZoneTranslateShPtr;
+typedef std::shared_ptr<ZonePrescribe> ZonePrescribeShPtr;
+typedef std::shared_ptr<ZoneFixed> ZoneFixedShPtr;
+
+struct Interface;
+typedef std::shared_ptr<Interface> InterfaceShPtr;
+struct Interface
+{
+    Interface(int indx, CompositeMap edge);
+
+    virtual ~Interface() = default;
+
+    inline std::map<int, GeometrySharedPtr> const &GetEdge() const
+    {
+        return m_edge;
+    }
+
+    inline std::vector<int> const &GetEdgeIds() const
+    {
+        return m_edgeIds;
+    }
+
+    inline bool IsEmpty() const
+    {
+        return m_edge.empty();
+    }
+
+    inline void SetEdge(const GeometrySharedPtr &edge)
+    {
+        m_edge[edge->GetGlobalID()] = edge;
+    }
+
+    void SetEdge(const CompositeMap &edge);
+
+    inline void SetOppInterface(InterfaceShPtr oppInterface)
+    {
+        m_oppInterface = oppInterface;
+    }
+
+    inline InterfaceShPtr GetOppInterface()
+    {
+        return m_oppInterface;
+    }
+
+    inline int &GetId()
+    {
+        return m_id;
+    }
+
+    inline InterfaceSide GetSide() const
+    {
+        return m_side;
+    }
+
+    inline void SetSide(const InterfaceSide &side)
+    {
+        m_side = side;
+    }
+
+protected:
+    InterfaceShPtr m_oppInterface;
+    int m_id;
+    InterfaceSide m_side = eNone;
+    std::map<int, GeometrySharedPtr> m_edge;
+    std::vector<int> m_edgeIds;
+};
 
 struct InterfacePair
 {
-    InterfacePair(InterfaceBaseShPtr leftInterface,
-                  InterfaceBaseShPtr rightInterface)
+    InterfacePair(InterfaceShPtr leftInterface, InterfaceShPtr rightInterface)
                  : m_leftInterface(leftInterface),
                    m_rightInterface(rightInterface)
     {
         leftInterface->SetSide(eLeft);
         rightInterface->SetSide(eRight);
+
+        leftInterface->SetOppInterface(rightInterface);
+        rightInterface->SetOppInterface(leftInterface);
     }
 
-    InterfaceBaseShPtr m_leftInterface;
-    InterfaceBaseShPtr m_rightInterface;
+    InterfaceShPtr m_leftInterface;
+    InterfaceShPtr m_rightInterface;
 
 public:
-    inline const InterfaceBaseShPtr &GetLeftInterface() const
+    inline const InterfaceShPtr &GetLeftInterface() const
     {
         return m_leftInterface;
     }
 
-    inline const InterfaceBaseShPtr &GetRightInterface() const
+    inline const InterfaceShPtr &GetRightInterface() const
     {
         return m_rightInterface;
     }
 };
 
-
 typedef std::shared_ptr<InterfacePair> InterfacePairShPtr;
-typedef std::map<int, InterfacePairShPtr> InterfaceCollection;
+typedef std::map<std::string, InterfacePairShPtr> InterfaceCollection;
 typedef std::shared_ptr<InterfaceCollection> InterfaceCollectionShPtr;
 
-class Interfaces
+class Movement
 {
 public:
-    SPATIAL_DOMAINS_EXPORT Interfaces(
+    SPATIAL_DOMAINS_EXPORT Movement(
         const LibUtilities::SessionReaderSharedPtr &pSession,
         const MeshGraphSharedPtr &meshGraph);
 
-    SPATIAL_DOMAINS_EXPORT Interfaces() = default;
+    SPATIAL_DOMAINS_EXPORT Movement() = default;
 
     inline const InterfaceCollection &GetInterfaces() const
     {
         return m_interfaces;
     }
 
-    inline const std::vector<InterfaceBaseShPtr> &GetInterfaceVector() const
+    inline const std::map<int, ZoneBaseShPtr> &GetZones() const
     {
-        return m_interfaceVector;
+        return m_zones;
     }
 
     void PerformMovement(NekDouble timeStep);
@@ -345,16 +366,17 @@ protected:
     MeshGraphSharedPtr m_meshGraph;
     LibUtilities::SessionReaderSharedPtr m_session;
     InterfaceCollection m_interfaces;
-    std::vector<InterfaceBaseShPtr> m_interfaceVector;
+    std::map<int, ZoneBaseShPtr> m_zones;
 
 
 private:
     /// Read interfaces (and general MeshGraph) given TiXmlDocument.
-    void Read(TiXmlElement *interfaceTag);
-    void ReadInterfaces(TiXmlElement *interfaceTag);
+    void Read(TiXmlElement *movementTag);
+    void ReadZones(TiXmlElement *zonesTag);
+    void ReadInterfaces(TiXmlElement *interfacesTag);
 };
 
-typedef std::shared_ptr<Interfaces> InterfacesSharedPtr;
+typedef std::shared_ptr<Movement> InterfacesSharedPtr;
 
 } // namespace SpatialDomains
 } // namespace Nektar
