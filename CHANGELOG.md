@@ -61,6 +61,7 @@ v5.1.0
 
 **CompressibleFlowSolver**
 - Added vectorisation of the Interior Penalty method (!!223)
+- Fix non-dimensional Sutherland law
 - Added a simplified implicit solver with naive preconditioner (!!1196)
 - Add BRJ preconditioner to the implicit solver (!!1212)
 - Fix implicit solver for Euler system (!!1252)
