@@ -515,6 +515,8 @@ namespace Nektar
             /// containing all local expansion coefficients.
             inline const Array<OneD, const NekDouble> &GetCoeffs() const;
 
+            inline const Collections::CollectionVector &GetCollections() const;
+
             /// Impose Dirichlet Boundary Conditions onto Array
             inline void ImposeDirichletConditions(
                 Array<OneD,NekDouble>& outarray);
@@ -2183,6 +2185,11 @@ namespace Nektar
         inline const Array<OneD, const NekDouble> &ExpList::GetCoeffs() const
         {
             return m_coeffs;
+        }
+
+        inline const Collections::CollectionVector &ExpList::GetCollections() const
+        {
+            return m_collections;
         }
 
         inline void ExpList::ImposeDirichletConditions(

@@ -221,8 +221,8 @@ protected:
                      << "Time: "  << setw(12) << left << m_time << endl;
             }
 
-            m_fields[0] = MemoryManager<MultiRegions::DisContField>
-                ::AllocateSharedPtr(m_session, m_graph, m_session->GetVariable(0));
+            //m_fields[0] = MemoryManager<MultiRegions::DisContField>::AllocateSharedPtr(m_fields[0], m_session, m_graph, m_session->GetVariable(0));
+            m_fields[0]->Reset();
             m_fields[0]->GetTrace()->GetNormals(m_traceNormals);
             GetGridVelocity(m_time);
             SetBoundaryConditions(m_time);

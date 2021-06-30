@@ -93,6 +93,7 @@ namespace Nektar
             : ExpList(pSession,graph,DeclareCoeffPhysArrays, variable, ImpType),
               m_trace(NullExpListSharedPtr)
         {
+            std::cout << "old" << std::endl;
             if (variable.compare("DefaultVar") != 0)
             {
                 SpatialDomains::BoundaryConditions bcs(m_session, graph);
@@ -151,6 +152,63 @@ namespace Nektar
                     SetUpPhysNormals();
                 }
             }
+        }
+
+        DisContField::DisContField(
+            const MultiRegions::ExpListSharedPtr       &In,
+            const LibUtilities::SessionReaderSharedPtr &pSession,
+            const SpatialDomains::MeshGraphSharedPtr   &graph,
+            const std::string                          &variable)
+            : m_trace(NullExpListSharedPtr)
+        {
+            boost::ignore_unused(In, variable);
+            std::cout << "New DisContField constructor " << std::endl;
+
+            m_comm = pSession->GetComm();
+            m_session = pSession;
+            m_graph = graph;
+            m_physState = false;
+            m_exp = MemoryManager<LocalRegions::ExpansionVector>::AllocateSharedPtr();
+            m_blockMat = MemoryManager<BlockMatrixMap>::AllocateSharedPtr();
+            m_WaveSpace = false;
+
+            // Initialise interfaces
+            m_interfaces = In->GetInterfaces();
+
+            // Initialise Expansion Vector
+            //InitialiseExpVector(expansions);
+            m_exp = In->GetExp();
+
+            // Setup phys coeff space
+            //SetupCoeffPhys(true);
+            m_coeffs = In->GetCoeffs();
+            m_phys = In->GetPhys();
+            m_coeffsToElmt = In->GetCoeffsToElmt();
+            m_ncoeffs = In->GetNcoeffs();
+            m_npoints = In->GetTotPoints();
+
+            m_coeff_offset   = Array<OneD,int>(m_exp->size());
+            m_phys_offset    = Array<OneD,int>(m_exp->size());
+            for (int i = 0; i < m_exp->size(); ++i)
+            {
+                m_coeff_offset[i] = In->GetCoeff_Offset(i);
+                m_phys_offset[i] = In->GetPhys_Offset(i);
+            }
+
+            // Initialise collection
+            CreateCollections(Collections::eNoImpType);
+            // m_collections = In->GetCollections();
+
+            //SpatialDomains::BoundaryConditions bcs(m_session, graph);
+            //GenerateBoundaryConditionExpansion(graph,bcs,variable,true);
+            m_bndCondExpansions = In->GetBndCondExpansions();
+            m_bndConditions = In->GetBndConditions();
+            m_bndCondBndWeight = In->GetBndCondBwdWeight();
+
+            //EvaluateBoundaryConditions(0.0, variable);
+            //ApplyGeomInfo();
+
+            //SetUpDG(variable);
         }
 
         /**
