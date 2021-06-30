@@ -138,14 +138,6 @@ protected:
             }
         }
 
-        for (auto &edge : m_curveFace)
-        {
-            for (auto &point : edge.second->m_points)
-            {
-                m_ptsCurve[cnt++] = *(point);
-            }
-        }
-
         SetBoundaryConditions(m_time);
         SetInitialConditions(m_time);
         GetGridVelocity(m_time);
@@ -299,18 +291,6 @@ protected:
 
             int cnt = 0;
             for (auto &edge : m_curveEdge)
-            {
-                for (auto &pt : edge.second->m_points)
-                {
-                    Array<OneD, NekDouble> newLoc(3, 0.0);
-                    auto pnt = m_ptsCurve[cnt++];
-
-                    newLoc[0] = pnt(0) + 0.05 * sin(2*M_PI*time) * sin(2*M_PI*pnt(0)) * sin(2*M_PI*pnt(1));
-                    newLoc[1] = pnt(1) + 0.05 * sin(2*M_PI*time) * sin(2*M_PI*pnt(0)) * sin(2*M_PI*pnt(1));
-                    pt->UpdatePosition(newLoc[0], newLoc[1], newLoc[2]);
-                }
-            }
-            for (auto &edge : m_curveFace)
             {
                 for (auto &pt : edge.second->m_points)
                 {
