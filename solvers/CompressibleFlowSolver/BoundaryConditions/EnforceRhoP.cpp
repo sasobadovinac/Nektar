@@ -36,7 +36,7 @@
 // 
 ///////////////////////////////////////////////////////////////////////////////
 
-
+#include <boost/core/ignore_unused.hpp>
 #include "EnforceRhoP.h"
 using namespace std;
 
@@ -87,10 +87,10 @@ EnforceRhoP::EnforceRhoP(
         }
     }
 
-    Array<OneD, Array<OneD, NekDouble> > BCvals(m_fields.num_elements());
-    m_bndPhys = Array<OneD, Array<OneD, NekDouble> > (m_fields.num_elements());
+    Array<OneD, Array<OneD, NekDouble> > BCvals(m_fields.size());
+    m_bndPhys = Array<OneD, Array<OneD, NekDouble> > (m_fields.size());
     
-    for(int i = 0; i < m_fields.num_elements(); ++i)
+    for(int i = 0; i < m_fields.size(); ++i)
     {
         m_bndPhys[i] = m_fields[i]->GetBndCondExpansions()[m_bcRegion]
             ->UpdatePhys();
@@ -134,16 +134,16 @@ void EnforceRhoP::v_Apply
         Array<OneD, Array<OneD, NekDouble> >               &physarray,
         const NekDouble                                    &time)
 {
-    boost::ignore_unused(physarray,time);
+    boost::ignore_unused(physarray,time,VtDiff,vt_abs,vn);
     
     int i, j;
     int nDimensions = m_spacedim;
 
-    Array<OneD, Array<OneD, NekDouble> > FwdBnd(Fwd.num_elements());
-    Array<OneD, Array<OneD, NekDouble> > bndPhys(Fwd.num_elements());
+    Array<OneD, Array<OneD, NekDouble> > FwdBnd(Fwd.size());
+    Array<OneD, Array<OneD, NekDouble> > bndPhys(Fwd.size());
 
     // make a local copy of Fwd along boundary of interest
-    for(i = 0; i < Fwd.num_elements(); ++i)
+    for(i = 0; i < Fwd.size(); ++i)
     {
         FwdBnd[i] = Array<OneD, NekDouble> (m_npts);
         for(j =0; j < m_npts; ++j)
