@@ -380,7 +380,7 @@ void EnforceRhoP::v_Apply
                 // subsonic outflow: fix pstar
                 rR = -Vn[pnt] - sqrt(m_gamma * pressure[pnt] /
                                      FwdBnd[0][pnt])*twoOverGamMinOne;
-                vn = -m_VnInf[pnt];
+                //vn = -m_VnInf[pnt];
 
                 pstar   = m_pBC[pnt];
                 rhostar = FwdBnd[0][pnt] * pow( (pstar/pressure[pnt]) , gamInv ); 
