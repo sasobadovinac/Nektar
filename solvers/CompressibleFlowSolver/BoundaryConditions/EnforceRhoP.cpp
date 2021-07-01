@@ -36,7 +36,6 @@
 // 
 ///////////////////////////////////////////////////////////////////////////////
 
-#include <boost/core/ignore_unused.hpp>
 #include "EnforceRhoP.h"
 using namespace std;
 
@@ -134,7 +133,7 @@ void EnforceRhoP::v_Apply
         Array<OneD, Array<OneD, NekDouble> >               &physarray,
         const NekDouble                                    &time)
 {
-    boost::ignore_unused(physarray,time,VtDiff,vt_abs,vn);
+    boost::ignore_unused(physarray,time);
     
     int i, j;
     int nDimensions = m_spacedim;
@@ -301,6 +300,7 @@ void EnforceRhoP::v_Apply
             NekDouble VnDiff = uL + m_VnInf[pnt];
 
             //---------------------------------------------------------------
+            /*
             NekDouble n[2], t[2], VtDiff, u, v;
             n[0] =  m_traceNormals[0][m_bndToTraceMap[pnt]];
             n[1] =  m_traceNormals[1][m_bndToTraceMap[pnt]];
@@ -309,10 +309,10 @@ void EnforceRhoP::v_Apply
             u = m_velBC[0][pnt];
             v = m_velBC[1][pnt];
             VtDiff = (n[0]*v - n[1]*u)/(t[0]*v - t[1]*u) * VnDiff;
-
+            */
             //cout << pnt <<", [nx,ny] = [" << n[0]<<", "<<n[1]<<endl;
             //cout << pnt <<", [tx,ty] = [" << t[0]<<", "<<t[1]<<endl;
-
+            /*
             NekDouble tmp, vt_abs;
             tmp = (u*u + v*v - uL*uL);
             if(tmp>0)
@@ -323,6 +323,7 @@ void EnforceRhoP::v_Apply
                 vt_abs = 0.0;
             }
             tmp = u*t[0] + v*t[1];
+            */
             //cout << pnt <<", [v_t] = [" << tmp<<endl;
 
             //cout << vt_abs<<endl;
