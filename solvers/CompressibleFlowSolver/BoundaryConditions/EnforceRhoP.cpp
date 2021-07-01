@@ -183,7 +183,7 @@ void EnforceRhoP::v_Apply
     // L represents properties outside boundary
     // R represents properties inside boundary (numerical state)
     NekDouble rhoL, uL, pL;
-    NekDouble EBC, vn, rR, cstar, pstar, rhostar, ustar; 
+    NekDouble EBC, rR, cstar, pstar, rhostar, ustar; //vn 
 
     NekDouble gamMinOne         = m_gamma - 1.0;
     NekDouble twoOverGamMinOne  = 2.0 / gamMinOne;
@@ -201,7 +201,7 @@ void EnforceRhoP::v_Apply
                 // right characteristic
                 rR = -Vn[pnt] - sqrt(m_gamma * pressure[pnt] /
                                      FwdBnd[0][pnt])*twoOverGamMinOne; 
-                vn = -m_VnInf[pnt]; //vn BC
+                //vn = -m_VnInf[pnt]; //vn BC
 
                 // fix rhostar and pstar to be the input values
                 // compute ustar using left-pointing characteristic line IR^-
