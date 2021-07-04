@@ -54,8 +54,12 @@ namespace FieldUtils
 
 extern "C" 
 {
-    void F77NAME(copse3d) ();
     void F77NAME(helloworld) ();
+    void F77NAME(copse3d) (const long int  &option, 
+                           const NekDouble* finalValue1,
+                           const long int  &numStep1,
+                           const NekDouble* finalValue2,
+                           const long int  &numStep2);
 }
 
 
@@ -92,55 +96,19 @@ public:
     }
 
 
-    inline void call_lst()
+    inline void call_lst(const long int  &option, 
+                         const NekDouble* finalValue1,
+                         const long int  &numStep1,
+                         const NekDouble* finalValue2,
+                         const long int  &numStep2)
     {
-        F77NAME(copse3d) ();
+        F77NAME(copse3d) (option, finalValue1, numStep1,
+                                  finalValue2, numStep2);
     }
-
-    // necessasy routines
-    bool isInProjectedArea2D(
-        SpatialDomains::GeometrySharedPtr bndGeom,
-        const Array<OneD, const NekDouble > & gloCoord,
-        const int projDir);
-    
-    bool isInProjectedArea3D(
-        SpatialDomains::GeometrySharedPtr bndGeom,
-        const Array<OneD, const NekDouble > & gloCoord,
-        const int projDir);
-
-    bool BisectionForLocCoordOnBndElmt(
-        SpatialDomains::GeometrySharedPtr bndGeom,
-        const Array<OneD, const NekDouble > & gloCoord,
-        const Array<OneD, const Array<OneD, NekDouble> > & pts,
-        const int projDir,
-        Array< OneD, NekDouble > & locCoord,
-        NekDouble & dist);
-
-    bool NewtonIterationForLocCoordOnBndElmt(
-        SpatialDomains::GeometrySharedPtr bndGeom,
-        const Array<OneD, const NekDouble> &coords,
-        const Array<OneD, const Array<OneD, NekDouble> > &pts,
-        const int projDir,
-        Array<OneD, NekDouble> &Lcoords,
-        NekDouble &dist);
-
-    bool BndElmtContainsPoint(
-        SpatialDomains::GeometrySharedPtr bndGeom,
-        const Array< OneD, const NekDouble > & gloCoord,
-        Array< OneD, NekDouble > & locCoord,
-        const bool isUseY, 
-        const NekDouble geomTol,
-        NekDouble & dist);
-
-    void GetNormals(
-        SpatialDomains::GeometrySharedPtr bndGeom,
-        Array< OneD, NekDouble > & locCoord, 
-        Array< OneD, NekDouble > & normals);
 
 protected:
 
 private:
-    int m_spacedim;
 
 };
 }
