@@ -293,12 +293,15 @@ namespace SolverUtils
         Array<OneD, DNekMatSharedPtr> TraceMat;
         
         int nelmt = 1;
-        const Array<OneD, const LibUtilities::BasisSharedPtr> base_sav = dgfield->GetExp(0)->GetBase();
+        Array<OneD, const LibUtilities::BasisSharedPtr>
+            base_sav = dgfield->GetExp(0)->GetBase();
+
         dgfield->GetExp(0)->IProductWRTTensorDerivBaseOnTraceMat(TraceMat);
 
         for(int n = 1; n < dgfield->GetExpSize(); ++n)
         {
-            const Array<OneD, const LibUtilities::BasisSharedPtr>& base = dgfield->GetExp(n)->GetBase();
+            const Array<OneD, const LibUtilities::BasisSharedPtr>&
+                base = dgfield->GetExp(n)->GetBase();
 
             int i; 
             for(i = 0; i < base.size(); ++i)
@@ -321,6 +324,7 @@ namespace SolverUtils
                 // start new block 
                 dgfield->GetExp(n)->IProductWRTTensorDerivBaseOnTraceMat(TraceMat);
                 nelmt = 1;
+                base_sav = dgfield->GetExp(n)->GetBase();
             }
         }
         // save latest block of data. 
@@ -339,6 +343,9 @@ namespace SolverUtils
         int nTracePts = m_dgfield->GetTrace()->GetTotPoints();
         int nLocETrace = m_locElmtTrace->GetTotPoints();
         int nLocETraceCoeffs = m_locElmtTrace->GetNcoeffs();
+
+        ASSERTL1(nLocETrace == m_scalTrace[0].size(),"expect these to be similar");
+        ASSERTL1(nLocETraceCoeffs <= nphys,"storage assumptions presume that nLocETraceCoeffs < nphys");
         
         Array<OneD, Array<OneD, NekDouble> > deriv(3,NullNekDouble1DArray);
         for(int i = 0; i < m_coordDim; ++i)
@@ -355,6 +362,7 @@ namespace SolverUtils
         Array<OneD, NekDouble> tmp(nLocETrace);
         Array<OneD, NekDouble> LocElmtTracePhys   = m_locElmtTrace->UpdatePhys();
         Array<OneD, NekDouble> LocElmtTraceCoeffs = m_locElmtTrace->UpdateCoeffs();
+        ASSERTL1(LocElmtTracePhys.size() <= nLocETrace,"expect this vector to be at least of size nLocETrace");
 
         if(boost::iequals(m_velScalingStr,"NormalVelocity"))
         {
@@ -413,7 +421,7 @@ namespace SolverUtils
                     // Scale jump on trace
                     Vmath::Vmul(nLocETrace,m_scalTrace[i+1],1,LocElmtTracePhys,1,tmp,1);
                     MultiplyByIProductWRTDerivOnTraceMat(i+1,tmp,deriv[0]);
-                    Vmath::Vadd(nLocETraceCoeffs,deriv[0],1,FilterCoeffs,1,FilterCoeffs,1);
+                    Vmath::Vadd(ncoeffs,deriv[0],1,FilterCoeffs,1,FilterCoeffs,1);
                 }
                 Vmath::Neg(ncoeffs,FilterCoeffs,1);
                 m_dgfield->MultiplyByElmtInvMass(FilterCoeffs,deriv[0]);
