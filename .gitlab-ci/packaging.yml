@@ -348,8 +348,8 @@ package-source-doc-deploy-dev: &package-source-doc-deploy-dev
     - ${RSYNC} developer-guide/html/ $DPATH_DOC/developerguide/${VERSION}/
     - ${RSYNC} developer-guide/developer-guide.pdf $DPATH_SRC/developer-guide-${VERSION}.pdf
     - mkdir -p $DPATH_DOC/tutorials/${VERSION}
-    - ${RSYNC} tutorial/ $DPATH_DOC/tutorials/${VERSION}/
     - for i in tutorial/*/*; do mv $i/html/* $i/; rmdir $i/html; done
+    - ${RSYNC} tutorial/ $DPATH_DOC/tutorials/${VERSION}/
     - mkdir -p $DPATH_DOC/doxygen/${VERSION}
     - ${RSYNC} doxygen/html/ $DPATH_DOC/doxygen/${VERSION}/
     - cd $DPATH_DOC/userguide && if [ $(ls -1 | grep -v latest | tail -n 1) == "${VERSION}" ]; then rm -f latest; ln -s ${VERSION} latest; fi
