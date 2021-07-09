@@ -41,13 +41,13 @@ namespace MultiRegions
 
 InterfaceTrace::InterfaceTrace(
     const ExpListSharedPtr &trace,
-    const SpatialDomains::ZoneBaseShPtr &interfaceBaseShPtr,
+    const SpatialDomains::InterfaceShPtr &interfaceShPtr,
     const std::map<int, int> &geomIdToTraceId)
-    : m_trace(trace), m_interfaceBase(interfaceBaseShPtr),
+    : m_trace(trace), m_interface(interfaceShPtr),
       m_geomIdToTraceId(geomIdToTraceId)
 {
     // Calc total quad points
-    for (auto id : m_interfaceBase->GetEdgeIds())
+    for (auto id : m_interface->GetEdgeIds())
     {
         m_totQuadPnts +=
             m_trace->GetExp(m_geomIdToTraceId.at(id))->GetTotPoints();
@@ -55,9 +55,11 @@ InterfaceTrace::InterfaceTrace(
 }
 
 InterfaceMapDG::InterfaceMapDG(
-    const SpatialDomains::InterfacesSharedPtr &interfaces,
-    const ExpListSharedPtr &trace, const std::map<int, int> geomIdToTraceId)
-    : m_interfaces(interfaces), m_trace(trace),
+    const SpatialDomains::MovementSharedPtr &interfaces,
+    const ExpListSharedPtr &trace,
+    const std::map<int, int> geomIdToTraceId)
+    : m_interfaces(interfaces),
+      m_trace(trace),
       m_geomIdToTraceId(geomIdToTraceId)
 {
     auto comm                = m_trace->GetComm();
@@ -75,28 +77,28 @@ InterfaceMapDG::InterfaceMapDG(
     size_t cnt = 0;
     for (const auto &interface : interfaceCollection)
     {
-        indxToInterfaceID[cnt]       = interface.first;
-        myIndxLRMap[interface.first] = 0;
+        indxToInterfaceID[cnt]       = interface.first.first;
+        myIndxLRMap[interface.first.first] = 0;
 
         if (!interface.second->GetLeftInterface()->IsEmpty())
         {
-            myIndxLRMap[interface.first] += 1;
-            localInterfaces[interface.first][SpatialDomains::eLeft] =
+            myIndxLRMap[interface.first.first] += 1;
+            localInterfaces[interface.first.first][SpatialDomains::eLeft] =
                 MemoryManager<InterfaceTrace>::AllocateSharedPtr(
                     trace, interface.second->GetLeftInterface(),
                     geomIdToTraceId);
             m_localInterfaces.emplace_back(
-                localInterfaces[interface.first][SpatialDomains::eLeft]);
+                localInterfaces[interface.first.first][SpatialDomains::eLeft]);
         }
         if (!interface.second->GetRightInterface()->IsEmpty())
         {
-            myIndxLRMap[interface.first] += 2;
-            localInterfaces[interface.first][SpatialDomains::eRight] =
+            myIndxLRMap[interface.first.first] += 2;
+            localInterfaces[interface.first.first][SpatialDomains::eRight] =
                 MemoryManager<InterfaceTrace>::AllocateSharedPtr(
                     trace, interface.second->GetRightInterface(),
                     geomIdToTraceId);
             m_localInterfaces.emplace_back(
-                localInterfaces[interface.first][SpatialDomains::eRight]);
+                localInterfaces[interface.first.first][SpatialDomains::eRight]);
         }
 
         cnt++;
@@ -211,18 +213,19 @@ InterfaceMapDG::InterfaceMapDG(
     {
         m_exchange.emplace_back(
             MemoryManager<InterfaceExchange>::AllocateSharedPtr(
-                m_trace, comm, rank, geomIdToTraceId));
+                m_interfaces->GetZones(), m_trace, comm, rank, geomIdToTraceId));
     }
 }
 
 void InterfaceMapDG::ExchangeCoords()
 {
     auto comm = m_trace->GetComm();
+    auto zones = m_interfaces->GetZones();
 
     int skipExchange = 0;
     for (auto &interfaceTrace : m_localInterfaces)
     {
-        if (interfaceTrace->GetInterface()->GetMoved())
+        if (zones[interfaceTrace->GetInterface()->GetId()]->GetMoved())
         {
             interfaceTrace->CalcLocalMissing();
             skipExchange += 1;
@@ -257,7 +260,7 @@ void InterfaceMapDG::ExchangeCoords()
 
     for (auto &interfaceTrace : m_localInterfaces)
     {
-        interfaceTrace->GetInterface()->GetMoved() = false;
+        zones[interfaceTrace->GetInterface()->GetId()]->GetMoved() = false;
     }
 }
 
@@ -276,7 +279,7 @@ void InterfaceTrace::CalcLocalMissing()
     m_foundLocalCoords.clear();
     m_mapFoundCoordToTrace.clear();
 
-    auto childEdgeIds = m_interfaceBase->GetEdgeIds();
+    auto childEdgeIds = m_interface->GetEdgeIds();
 
     // If not flagged 'check local' then all points are missing
     if (!m_checkLocal)
@@ -306,7 +309,7 @@ void InterfaceTrace::CalcLocalMissing()
     // interface on this rank contains
     else
     {
-        auto parentEdge = m_interfaceBase->GetOppInterface()->GetEdge();
+        auto parentEdge = m_interface->GetOppInterface()->GetEdge();
 
         int cnt = 0;
         for (auto childId : childEdgeIds)
@@ -359,22 +362,23 @@ void InterfaceExchange::RankFillSizes(
     LibUtilities::CommRequestSharedPtr &requestSend,
     LibUtilities::CommRequestSharedPtr &requestRecv, int requestNum)
 {
+
     // Get size of all interfaces missing and moved to communicate
     int recalcSize = 0;
     for (auto &localInterface : m_interfaces)
     {
-        recalcSize += localInterface->GetInterface()->GetMoved();
+        recalcSize += m_zones[localInterface->GetInterface()->GetId()]->GetMoved();
     }
 
     m_sendSize = Array<OneD, int>(recalcSize);
     m_recvSize = Array<OneD, int>(recalcSize);
 
     int cnt = 0;
-    for (auto &m_interface : m_interfaces)
+    for (auto &interface : m_interfaces)
     {
-        if (m_interface->GetInterface()->GetMoved())
+        if (m_zones[interface->GetInterface()->GetId()]->GetMoved())
         {
-            m_sendSize[cnt++] = m_interface->GetMissingCoords().size() * 3;
+            m_sendSize[cnt++] = interface->GetMissingCoords().size() * 3;
         }
     }
 
@@ -397,11 +401,11 @@ void InterfaceExchange::SendMissing(
     m_recv        = Array<OneD, NekDouble>(m_totRecvSize);
 
     int cnt = 0;
-    for (auto &m_interface : m_interfaces)
+    for (auto &interface : m_interfaces)
     {
-        if (m_interface->GetInterface()->GetMoved())
+        if (m_zones[interface->GetInterface()->GetId()]->GetMoved())
         {
-            auto missing = m_interface->GetMissingCoords();
+            auto missing = interface->GetMissingCoords();
             for (auto coord : missing)
             {
                 for (int k = 0; k < 3; ++k, ++cnt)
@@ -481,7 +485,7 @@ void InterfaceTrace::SwapFwdBwdTrace(Array<OneD, NekDouble> &Fwd,
                                      Array<OneD, NekDouble> &Bwd)
 {
     // Flips interface edges
-    for (auto &id : m_interfaceBase->GetEdgeIds())
+    for (auto &id : m_interface->GetEdgeIds())
     {
         int traceId = m_geomIdToTraceId.at(id);
         int offset = m_trace->GetPhys_Offset(traceId);
@@ -593,7 +597,7 @@ void InterfaceExchange::CalcRankDistances()
     Array<OneD, int> foundNum(m_interfaces.size(), 0);
     for (int i = 0; i < m_interfaces.size(); ++i)
     {
-        if (m_interfaces[i]->GetInterface()->GetMoved())
+        if (m_zones[m_interfaces[i]->GetInterface()->GetId()]->GetMoved())
         {
             auto parentEdge = m_interfaces[i]->GetInterface()->GetEdge();
 

@@ -168,7 +168,7 @@ std::string LaxFriedrichsSolver::solverName = SolverUtils::GetRiemannSolverFacto
                 // Perform movement and reset the matrices
                 for (auto &field : m_fields)
                 {
-                    field->GetInterfaces()->PerformMovement(m_time);
+                    field->GetMovement()->PerformMovement(m_time);
                     field->Reset();
                 }
 
@@ -294,22 +294,23 @@ std::string LaxFriedrichsSolver::solverName = SolverUtils::GetRiemannSolverFacto
                 elmtToExpId[(*exp)[i]->GetGeom()->GetGlobalID()] = i;
             }
 
-            auto intVec = m_fields[0]->GetInterfaces()->GetZones();
-            for (auto &interface : intVec)
+            auto zones = m_fields[0]->GetMovement()->GetZones();
+            for (auto &zone : zones)
             {
-                // If the interface domain is fixed then grid velocity is left at 0
-                if (interface->GetMovementType() == SpatialDomains::eFixed)
+                // If the zone domain is fixed then grid velocity is left at 0
+                if (zone.second->GetMovementType() == SpatialDomains::eFixed)
                 {
                     continue;
                 }
-                else if (interface->GetMovementType() == SpatialDomains::eRotating)
+                else if (zone.second->GetMovementType() == SpatialDomains::eRotating)
                 {
-                    SpatialDomains::ZoneRotateShPtr interfaceRotate =
+                    SpatialDomains::ZoneRotateShPtr zoneRotate =
                         std::static_pointer_cast<
-                            SpatialDomains::ZoneRotate>(interface);
-                    NekDouble angVel = interfaceRotate->GetAngularVel();
+                            SpatialDomains::ZoneRotate>(
+                            zone.second);
+                    NekDouble angVel = zoneRotate->GetAngularVel();
 
-                    auto ids = interface->GetElementIds();
+                    auto ids = zone.second->GetElementIds();
                     for (auto id : ids)
                     {
                         int indx       = elmtToExpId[id];
@@ -329,14 +330,16 @@ std::string LaxFriedrichsSolver::solverName = SolverUtils::GetRiemannSolverFacto
                         }
                     }
                 }
-                else if (interface->GetMovementType() == SpatialDomains::eSliding)
+                else if (zone.second->GetMovementType() == SpatialDomains::eSliding)
                 {
-                    SpatialDomains::ZoneTranslateShPtr interfaceSlide =
+                    SpatialDomains::ZoneTranslateShPtr interfaceTranslate =
                         std::static_pointer_cast<
-                            SpatialDomains::ZoneTranslate>(interface);
-                    std::vector<NekDouble> velocity = interfaceSlide->GetVel();
+                            SpatialDomains::ZoneTranslate>(
+                            zone.second);
+                    std::vector<NekDouble> velocity =
+                        interfaceTranslate->GetVel();
 
-                    auto ids = interface->GetElementIds();
+                    auto ids = zone.second->GetElementIds();
                     for (auto id : ids)
                     {
                         int indx       = elmtToExpId[id];
@@ -351,56 +354,52 @@ std::string LaxFriedrichsSolver::solverName = SolverUtils::GetRiemannSolverFacto
                         }
                     }
                 }
-                else if (interface->GetMovementType() == SpatialDomains::ePrescribed)
+                else if (zone.second->GetMovementType() == SpatialDomains::ePrescribed)
                 {
-                    // This is hacky - as interface is set up for 2 sides usually, we only use the left side in this case
-                    if (interface->GetSide() == SpatialDomains::eLeft)
+                    /*NekDouble Lx = 20, Ly = 20;         // Size of mesh
+                    NekDouble nx = 1, ny = 1, nt = 1;   // Space and time period
+                    NekDouble X0 = 0.5, Y0 = 0.5;       // Amplitude
+                    NekDouble t0 = sqrt(5*5 + 5*5);     // Time domain*/
+
+                    auto ids = zone.second->GetElementIds();
+                    for (auto id : ids)
                     {
-                        /*NekDouble Lx = 20, Ly = 20;         // Size of mesh
-                        NekDouble nx = 1, ny = 1, nt = 1;   // Space and time period
-                        NekDouble X0 = 0.5, Y0 = 0.5;       // Amplitude
-                        NekDouble t0 = sqrt(5*5 + 5*5);     // Time domain*/
+                        int indx       = elmtToExpId[id];
+                        int offset     = m_fields[0]->GetPhys_Offset(indx);
+                        auto expansion = (*exp)[indx];
 
-                        auto ids = interface->GetElementIds();
-                        for (auto id : ids)
+                        int nq = expansion->GetTotPoints();
+                        Array<OneD, NekDouble> xc(nq, 0.0), yc(nq, 0.0), zc(nq, 0.0);
+                        expansion->GetCoords(xc, yc, zc);
+
+                        for (int i = 0; i < nq; ++i)
                         {
-                            int indx       = elmtToExpId[id];
-                            int offset     = m_fields[0]->GetPhys_Offset(indx);
-                            auto expansion = (*exp)[indx];
+                            //NekDouble distx, disty;
+                            // @TODO: Put analytic solution in (partial derivative r/t time)
+                            /*distx = X0 * sin((nt * 2 * M_PI * m_time) / t0)
+                                                    * sin((nx * 2 * M_PI * xc[i]) / Lx)
+                                                    * sin((ny * 2 * M_PI * yc[i]) / Ly);
 
-                            int nq = expansion->GetTotPoints();
-                            Array<OneD, NekDouble> xc(nq, 0.0), yc(nq, 0.0), zc(nq, 0.0);
-                            expansion->GetCoords(xc, yc, zc);
-
-                            for (int i = 0; i < nq; ++i)
+                            disty = Y0 * sin((nt * 2 * M_PI * m_time) / t0)
+                                                    * sin((nx * 2 * M_PI * xc[i]) / Lx)
+                                                    * sin((ny * 2 * M_PI * yc[i]) / Ly);*/
+                            /*
+                            if (xc[i] < 1e-8 || fabs(xc[i] - 1) < 1e-8)
                             {
-                                //NekDouble distx, disty;
-                                // @TODO: Put analytic solution in (partial derivative r/t time)
-                                /*distx = X0 * sin((nt * 2 * M_PI * m_time) / t0)
-                                                        * sin((nx * 2 * M_PI * xc[i]) / Lx)
-                                                        * sin((ny * 2 * M_PI * yc[i]) / Ly);
-
-                                disty = Y0 * sin((nt * 2 * M_PI * m_time) / t0)
-                                                        * sin((nx * 2 * M_PI * xc[i]) / Lx)
-                                                        * sin((ny * 2 * M_PI * yc[i]) / Ly);*/
-                                /*
-                                if (xc[i] < 1e-8 || fabs(xc[i] - 1) < 1e-8)
-                                {
-                                    m_gridVelocity[0][offset + i] = 0; //2 * M_PI * cos(2 * M_PI * m_time) * xc[i] * (1 - xc[i]);
-                                    m_gridVelocity[1][offset + i] = 0;
-                                }
-                                else
-                                {
-                                    m_gridVelocity[0][offset + i] = 0.5; //2 * M_PI * cos(2 * M_PI * m_time) * xc[i] * (1 - xc[i]);
-                                    m_gridVelocity[1][offset + i] = 0;
-                                }
-                                */
-
-                                m_gridVelocity[0][offset + i] = 0.05 * 2 * M_PI * cos(2*M_PI*m_time) * sin(2*M_PI*xc[i]) * sin(2*M_PI*yc[i]);
-                                m_gridVelocity[1][offset + i] = 0.05 * 2 * M_PI * cos(2*M_PI*m_time) * sin(2*M_PI*xc[i]) * sin(2*M_PI*yc[i]);
-                                //m_gridVelocity[0][offset + i] = 0.0;
-                                //m_gridVelocity[1][offset + i] = 0.0;
+                                m_gridVelocity[0][offset + i] = 0; //2 * M_PI * cos(2 * M_PI * m_time) * xc[i] * (1 - xc[i]);
+                                m_gridVelocity[1][offset + i] = 0;
                             }
+                            else
+                            {
+                                m_gridVelocity[0][offset + i] = 0.5; //2 * M_PI * cos(2 * M_PI * m_time) * xc[i] * (1 - xc[i]);
+                                m_gridVelocity[1][offset + i] = 0;
+                            }
+                            */
+
+                            m_gridVelocity[0][offset + i] = 0.05 * 2 * M_PI * cos(2*M_PI*m_time) * sin(2*M_PI*xc[i]) * sin(2*M_PI*yc[i]);
+                            m_gridVelocity[1][offset + i] = 0.05 * 2 * M_PI * cos(2*M_PI*m_time) * sin(2*M_PI*xc[i]) * sin(2*M_PI*yc[i]);
+                            //m_gridVelocity[0][offset + i] = 0.0;
+                            //m_gridVelocity[1][offset + i] = 0.0;
                         }
                     }
                 }

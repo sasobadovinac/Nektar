@@ -402,7 +402,6 @@ void Movement::ReadInterfaces(TiXmlElement *interfacesTag)
         std::string name;
         err = interfaceElement->QueryStringAttribute("NAME", &name);
         ASSERTL0(err == TIXML_SUCCESS, "Unable to read interface name.");
-
         TiXmlElement *sideElement = interfaceElement->FirstChildElement();
 
         int cnt = 0;
@@ -410,9 +409,9 @@ void Movement::ReadInterfaces(TiXmlElement *interfacesTag)
         while(sideElement)
         {
             ASSERTL0(cnt < 2, "Only two sides may be present in each interface block.")
-            std::string sideStr = interfaceElement->Value();
+            std::string sideStr = sideElement->Value();
 
-            InterfaceSide side;
+            InterfaceSide side; // @TODO: Currently don't use these sides. Change to make sure we define a left and right.
             if(sideStr == "L" || sideStr == "LEFT")
             {
                 side = eLeft;
@@ -427,7 +426,7 @@ void Movement::ReadInterfaces(TiXmlElement *interfacesTag)
                          "Only LEFT or RIGHT tags may be present inside the INTERFACE block.")
             }
 
-            int indx;
+            int indx; // @TODO: Do I need ID?
             err = sideElement->QueryIntAttribute("ID", &indx);
             ASSERTL0(err == TIXML_SUCCESS, "Unable to read interface ID.");
 
@@ -442,18 +441,18 @@ void Movement::ReadInterfaces(TiXmlElement *interfacesTag)
                 m_meshGraph->GetCompositeList(indxStr, boundaryEdge);
             }
 
-            interfaces[cnt] = InterfaceShPtr(MemoryManager<Interface>::AllocateSharedPtr(indx, boundaryEdge));
+            interfaces[cnt++] = InterfaceShPtr(MemoryManager<Interface>::AllocateSharedPtr(indx, side, boundaryEdge));
 
             sideElement = sideElement->NextSiblingElement();
         }
 
-        m_interfaces[name] = InterfacePairShPtr(MemoryManager<InterfacePair>::AllocateSharedPtr(interfaces[0], interfaces[1]));
+        m_interfaces[std::make_pair(m_interfaces.size(), name)] = InterfacePairShPtr(MemoryManager<InterfacePair>::AllocateSharedPtr(interfaces[0], interfaces[1]));
         interfaceElement = interfaceElement->NextSiblingElement();
     }
 }
 
-Interface::Interface(int indx, CompositeMap edge)
-    : m_id(indx)
+Interface::Interface(int indx, InterfaceSide side, CompositeMap edge)
+    : m_id(indx), m_side(side)
 {
     // Fill element Ids
     for (auto &comp : edge)
@@ -466,7 +465,7 @@ Interface::Interface(int indx, CompositeMap edge)
     }
 }
 
-void ZoneBase::SetEdge(const CompositeMap &edge)
+/*void ZoneBase::SetEdge(const CompositeMap &edge)
 {
     for (auto &compIt : edge)
     {
@@ -487,13 +486,30 @@ void ZoneBase::SetEdge(const CompositeMap &edge)
     }
 
     std::sort(m_edgeIds.begin(), m_edgeIds.end());
-}
+}*/
 
 void Movement::PerformMovement(NekDouble timeStep)
 {
-    for (auto &interface : m_zones)
+    std::set<int> movedZoneIds;
+    for (auto &zone : m_zones)
     {
-        interface->Move(timeStep);
+        zone.second->Move(timeStep);
+        movedZoneIds.insert(zone.first);
+    }
+
+    // If zone has moved, set all interfaces on that zone to moved.
+    // @TODO: Probably better to save the moved flag on the interface pair obj?
+    for (auto &interPair : m_interfaces)
+    {
+        int leftId = interPair.second->GetLeftInterface()->GetId();
+        int rightId = interPair.second->GetLeftInterface()->GetId();
+
+        if (movedZoneIds.find(leftId) != movedZoneIds.end()
+            || movedZoneIds.find(rightId) != movedZoneIds.end())
+        {
+            m_zones[leftId]->GetMoved() = true;
+            m_zones[rightId]->GetMoved() = true;
+        }
     }
 }
 
@@ -501,10 +517,10 @@ void Movement::GenGeomFactors()
 {
     for (auto &interface : m_zones)
     {
-        auto edges = interface->GetEdge();
-        for (auto &el : edges)
+        auto elements = interface.second->GetElements();
+        for (auto &el : elements)
         {
-            el.second->GenGeomFactors();
+            el->GenGeomFactors();
         }
     }
 
@@ -559,9 +575,6 @@ void ZoneRotate::v_Move(NekDouble time)
             cnt++;
         }
     }
-
-    m_moved = true;
-    m_oppInterface->GetMoved() = true;
 }
 
 void ZoneTranslate::v_Move(NekDouble timeStep)
@@ -605,9 +618,6 @@ void ZoneTranslate::v_Move(NekDouble timeStep)
             cnt++;
         }
     }
-
-    m_moved = true;
-    m_oppInterface->GetMoved() = true;
 }
 
 void ZoneFixed::v_Move(NekDouble time)
@@ -618,6 +628,7 @@ void ZoneFixed::v_Move(NekDouble time)
 void ZonePrescribe::v_Move(NekDouble time)
 {
     boost::ignore_unused(time);
+    /*
     // This is hacky - as interface is set up for 2 sides usually, we only use the left side in this case
     if (m_side == eLeft)
     {
@@ -634,19 +645,19 @@ void ZonePrescribe::v_Move(NekDouble time)
             // newLoc[0] = m_xDeform->Evaluate(coords[0], coords[1], coords[2], time);
             // newLoc[1] = m_yDeform->Evaluate(coords[0], coords[1], coords[2], time); newLoc[2] = coords[2];
 
-            /*NekDouble Lx = 20, Ly = 20;         // Size of mesh
+            NekDouble Lx = 20, Ly = 20;         // Size of mesh
             NekDouble nx = 1, ny = 1, nt = 1;   // Space and time period
             NekDouble X0 = 0.5, Y0 = 0.5;       // Amplitude
-            NekDouble t0 = sqrt(5*5 + 5*5);     // Time domain*/
+            NekDouble t0 = sqrt(5*5 + 5*5);     // Time domain
 
             //newLoc[0] = coords[0] + X0 * sin((nt * 2 * M_PI * time) / t0)
-                                       //* sin((nx * 2 * M_PI * coords[0]) / Lx)
-                                       //* sin((ny * 2 * M_PI * coords[1]) / Ly);
+                                       // * sin((nx * 2 * M_PI * coords[0]) / Lx)
+                                       // * sin((ny * 2 * M_PI * coords[1]) / Ly);
 
             //newLoc[1] = coords[1] + Y0 * sin((nt * 2 * M_PI * time) / t0)
-                                       //* sin((nx * 2 * M_PI * coords[0]) / Lx)
-                                       //* sin((ny * 2 * M_PI * coords[1]) / Ly);
-            /*
+                                       // * sin((nx * 2 * M_PI * coords[0]) / Lx)
+                                       // * sin((ny * 2 * M_PI * coords[1]) / Ly);
+
             if (coords[0] < 1e-8 || fabs(coords[0] - 1) < 1e-8)
             {
                 newLoc[0] = coords[0]; // + 0.001 * sin(2 * M_PI * time) * coords[0] * (1 - coords[0]);
@@ -659,7 +670,7 @@ void ZonePrescribe::v_Move(NekDouble time)
                 newLoc[1] = coords[1];
                 newLoc[2] = coords[2];
             }
-            */
+
 
             auto pnt = m_origPosition[cnt];
             newLoc[0] = pnt(0) + 0.05 * sin(2*M_PI*time) * sin(2*M_PI*coords[0]) * sin(2*M_PI*coords[1]);
@@ -677,7 +688,7 @@ void ZonePrescribe::v_Move(NekDouble time)
         el->Setup();
         el->GenGeomFactors();
         el->FillGeom();
-    }
+    } */
 }
 
 }

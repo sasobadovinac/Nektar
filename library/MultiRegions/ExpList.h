@@ -1116,16 +1116,16 @@ namespace Nektar
             MULTI_REGIONS_EXPORT inline const LocTraceToTraceMapSharedPtr
                 &GetLocTraceToTraceMap() const;
 
-            inline SpatialDomains::InterfacesSharedPtr GetInterfaces()
+            inline SpatialDomains::MovementSharedPtr GetMovement()
             {
-                return m_interfaces;
+                return m_movement;
             }
 
         protected:
             /// Expansion type
             ExpansionType m_expType;
 
-            SpatialDomains::InterfacesSharedPtr m_interfaces;
+            SpatialDomains::MovementSharedPtr m_movement;
 
             std::shared_ptr<DNekMat> GenGlobalMatrixFull(
                 const GlobalLinSysKey &mkey,

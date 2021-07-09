@@ -49,7 +49,7 @@ public:
     /// Default constructor
     MULTI_REGIONS_EXPORT InterfaceTrace(
         const ExpListSharedPtr &trace,
-        const SpatialDomains::ZoneBaseShPtr &interfaceBaseShPtr,
+        const SpatialDomains::InterfaceShPtr &interfaceShPtr,
         const std::map<int, int> &geomIdToTraceId);
 
     /// Default destructor
@@ -65,9 +65,9 @@ public:
         return m_missingCoords;
     }
 
-    SpatialDomains::ZoneBaseShPtr GetInterface()
+    SpatialDomains::InterfaceShPtr GetInterface()
     {
-        return m_interfaceBase;
+        return m_interface;
     }
 
     void CalcLocalMissing();
@@ -81,7 +81,7 @@ public:
 
 private:
     ExpListSharedPtr m_trace;
-    SpatialDomains::ZoneBaseShPtr m_interfaceBase;
+    SpatialDomains::InterfaceShPtr m_interface;
     std::map<int, int> m_geomIdToTraceId;
     int m_totQuadPnts = 0;
     bool m_checkLocal = false;
@@ -101,10 +101,12 @@ public:
 
     /// Default constructor
     MULTI_REGIONS_EXPORT InterfaceExchange(
-        const ExpListSharedPtr &trace, const LibUtilities::CommSharedPtr &comm,
+        const std::map<int, SpatialDomains::ZoneBaseShPtr> &zones,
+        const ExpListSharedPtr &trace,
+        const LibUtilities::CommSharedPtr &comm,
         std::pair<int, std::vector<InterfaceTraceSharedPtr>> rankPair,
         const std::map<int, int> &geomIdToTraceId)
-        : m_trace(trace), m_comm(comm), m_rank(rankPair.first),
+        : m_zones(zones), m_trace(trace), m_comm(comm), m_rank(rankPair.first),
           m_interfaces(rankPair.second), m_geomIdToTraceId(geomIdToTraceId)
     {
     }
@@ -127,6 +129,7 @@ public:
         Array<OneD, NekDouble> &Bwd);
 
 private:
+    std::map<int, SpatialDomains::ZoneBaseShPtr> m_zones;
     const ExpListSharedPtr m_trace;
     const LibUtilities::CommSharedPtr m_comm;
     int m_rank;
@@ -153,7 +156,7 @@ public:
 
     // Constructor for interface communication
     MULTI_REGIONS_EXPORT InterfaceMapDG(
-        const SpatialDomains::InterfacesSharedPtr &interfaces,
+        const SpatialDomains::MovementSharedPtr &interfaces,
         const ExpListSharedPtr &trace,
         const std::map<int, int> geomIdToTraceId);
 
@@ -162,7 +165,7 @@ public:
     MULTI_REGIONS_EXPORT void ExchangeCoords();
 
 private:
-    SpatialDomains::InterfacesSharedPtr m_interfaces;
+    SpatialDomains::MovementSharedPtr m_interfaces;
     std::vector<InterfaceTraceSharedPtr> m_localInterfaces;
     const ExpListSharedPtr m_trace;
     std::vector<InterfaceExchangeSharedPtr> m_exchange;

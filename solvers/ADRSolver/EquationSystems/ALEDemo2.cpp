@@ -287,7 +287,7 @@ protected:
 
             for (int i = 0; i < m_fields.size(); ++i)
             {
-                //m_fields[i]->GetInterfaces()->PerformMovement(time);
+                //m_fields[i]->GetMovement()->PerformMovement(time);
                 m_fields[i]->Reset();
             }
 
@@ -455,7 +455,7 @@ protected:
 
         //std::cout << "COMPUTE GRID TIME = " << time << std::endl;
 
-        auto intVec = m_fields[0]->GetInterfaces()->GetZones();
+        auto intVec = m_fields[0]->GetMovement()->GetZones();
         for (auto &interface : intVec)
         {
             // If the interface domain is fixed then grid velocity is left at 0

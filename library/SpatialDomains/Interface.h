@@ -247,7 +247,7 @@ struct Interface;
 typedef std::shared_ptr<Interface> InterfaceShPtr;
 struct Interface
 {
-    Interface(int indx, CompositeMap edge);
+    Interface(int indx, InterfaceSide side, CompositeMap edge);
 
     virtual ~Interface() = default;
 
@@ -273,7 +273,7 @@ struct Interface
 
     void SetEdge(const CompositeMap &edge);
 
-    inline void SetOppInterface(InterfaceShPtr oppInterface)
+    inline void SetOppInterface(const InterfaceShPtr &oppInterface)
     {
         m_oppInterface = oppInterface;
     }
@@ -308,13 +308,11 @@ protected:
 
 struct InterfacePair
 {
-    InterfacePair(InterfaceShPtr leftInterface, InterfaceShPtr rightInterface)
+    InterfacePair(const InterfaceShPtr &leftInterface,
+                  const InterfaceShPtr &rightInterface)
                  : m_leftInterface(leftInterface),
                    m_rightInterface(rightInterface)
     {
-        leftInterface->SetSide(eLeft);
-        rightInterface->SetSide(eRight);
-
         leftInterface->SetOppInterface(rightInterface);
         rightInterface->SetOppInterface(leftInterface);
     }
@@ -335,7 +333,7 @@ public:
 };
 
 typedef std::shared_ptr<InterfacePair> InterfacePairShPtr;
-typedef std::map<std::string, InterfacePairShPtr> InterfaceCollection;
+typedef std::map<std::pair<int, std::string>, InterfacePairShPtr> InterfaceCollection;
 typedef std::shared_ptr<InterfaceCollection> InterfaceCollectionShPtr;
 
 class Movement
@@ -376,7 +374,7 @@ private:
     void ReadInterfaces(TiXmlElement *interfacesTag);
 };
 
-typedef std::shared_ptr<Movement> InterfacesSharedPtr;
+typedef std::shared_ptr<Movement> MovementSharedPtr;
 
 } // namespace SpatialDomains
 } // namespace Nektar

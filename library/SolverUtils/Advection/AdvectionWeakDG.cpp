@@ -177,7 +177,7 @@ namespace Nektar
                 timer.AccumulateRegion("AddTraceIntegral");
 
                 timer.Start();
-                //fields[i]->MultiplyByElmtInvMass(outarray[i], outarray[i]);
+                fields[i]->MultiplyByElmtInvMass(outarray[i], outarray[i]); // comment this if using ALEDemo2
                 timer.Stop();
                 timer.AccumulateRegion("MultiplyByElmtInvMass");
             }

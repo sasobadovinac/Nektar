@@ -214,7 +214,7 @@ namespace Nektar
         {
 
             // Initialise interfaces
-            m_interfaces =
+            m_movement =
                 MemoryManager<SpatialDomains::Movement>::AllocateSharedPtr(
                     m_session, m_graph);
 
