@@ -50,15 +50,23 @@ Movement::Movement(const LibUtilities::SessionReaderSharedPtr &pSession,
     : m_meshGraph(meshGraph), m_session(pSession)
 {
     TiXmlElement *xmlDoc = m_session->GetElement("NEKTAR");
-    if(xmlDoc->FirstChild("CONDITIONS") != nullptr) // @TODO: Can I remove this line?
+    auto conditionsXml   = xmlDoc->FirstChild("CONDITIONS");
+    if (conditionsXml != nullptr) // @TODO: Can I remove this line?
     {
-        if(xmlDoc->FirstChild("CONDITIONS")->FirstChild("MOVEMENT")->FirstChild("ZONES") != nullptr)
+        auto movement = conditionsXml->FirstChild("MOVEMENT");
+        if (movement != nullptr)
         {
-            ReadZones(m_session->GetElement("NEKTAR/CONDITIONS/MOVEMENT/ZONES"));
-        }
-        if(xmlDoc->FirstChild("CONDITIONS")->FirstChild("MOVEMENT")->FirstChild("INTERFACES") != nullptr)
-        {
-            ReadInterfaces(m_session->GetElement("NEKTAR/CONDITIONS/MOVEMENT/INTERFACES"));
+            if (movement->FirstChild("ZONES") != nullptr)
+            {
+                ReadZones(m_session->GetElement(
+                    "NEKTAR/CONDITIONS/MOVEMENT/ZONES"));
+            }
+
+            if (movement->FirstChild("INTERFACES") != nullptr)
+            {
+                ReadInterfaces(m_session->GetElement(
+                    "NEKTAR/CONDITIONS/MOVEMENT/INTERFACES"));
+            }
         }
     }
 }
