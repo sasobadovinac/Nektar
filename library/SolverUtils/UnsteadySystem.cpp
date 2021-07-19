@@ -70,6 +70,7 @@ namespace Nektar
             const LibUtilities::SessionReaderSharedPtr& pSession,
             const SpatialDomains::MeshGraphSharedPtr& pGraph)
             : EquationSystem(pSession, pGraph),
+              SolverUtils::ALEHelper(),
               m_infosteps(10)
 
         {
@@ -81,6 +82,7 @@ namespace Nektar
         void UnsteadySystem::v_InitObject()
         {
             EquationSystem::v_InitObject();
+            ALEHelper::InitObject(m_graph, m_fields);
 
             m_initialStep = 0;
 
@@ -235,6 +237,20 @@ namespace Nektar
                 m_fields[m_intVariables[i]]->SetPhysState(false);
             }
 
+            if(m_ALESolver)
+            {
+                const int nm = GetNcoeffs();
+                MultiRegions::GlobalMatrixKey mkey(StdRegions::eMass);
+
+                // Premultiply each field by the mass matrix
+                for (i = 0; i < nvariables; ++i)
+                {
+                    fields[i] = Array<OneD, NekDouble>(nm);
+                    m_fields[i]->GeneralMatrixOp_IterPerExp(
+                        mkey, m_fields[i]->GetCoeffs(), fields[i]);
+                }
+            }
+
             // Initialise time integration scheme
             m_intScheme->InitializeScheme( m_timestep, fields, m_time, m_ode );
 
@@ -329,31 +345,44 @@ namespace Nektar
                     cpuTime = 0.0;
                 }
 
-                // Transform data into coefficient space
-                for (i = 0; i < nvariables; ++i)
+                // ALE stuff
+                if(m_ALESolver)
                 {
-                    // copy fields into ExpList::m_phys and assign the new
-                    // array to fields
-                    m_fields[m_intVariables[i]]->SetPhys(fields[i]);
-                    fields[i] = m_fields[m_intVariables[i]]->UpdatePhys();
-                    if( v_RequireFwdTrans() )
+                    m_fields[0]->Reset();
+                    m_fields[0]->GetTrace()->GetNormals(m_traceNormals);
+                    UpdateGridVelocity(m_time);
+                    SetBoundaryConditions(m_time);
+
+                    // Update m_fields with u^n by multiplying by inverse mass
+                    // matrix. That's then used in e.g. checkpoint output and L^2 error
+                    // calculation.
+
+                    for (i = 0; i < nvariables; ++i)
                     {
-                        m_fields[m_intVariables[i]]->FwdTrans_IterPerExp(
-                            fields[i],
-                            m_fields[m_intVariables[i]]->UpdateCoeffs());
+                        m_fields[i]->MultiplyByElmtInvMass(
+                            fields[i], m_fields[i]->UpdateCoeffs());
+                        m_fields[i]->BwdTrans(
+                            m_fields[i]->GetCoeffs(), m_fields[i]->UpdatePhys());
                     }
-                    m_fields[m_intVariables[i]]->SetPhysState(false);
                 }
-
-                // Perform interface movement, probably shouldn't be here (would be better in a generic place rather just calling fields[0])
-                /*m_fields[0]->GetMovement()->PerformMovement(m_timestep);
-                if (abs(std::fmod(m_time, m_checksteps*m_timestep)) < 1e-8)
+                else
                 {
-                    std::string name = m_sessionName + "_" + std::to_string(m_nchk) +".xml";
-                    m_graph->WriteGeometry(name, true);
+                    // Transform data into coefficient space
+                    for (i = 0; i < nvariables; ++i)
+                    {
+                        // copy fields into ExpList::m_phys and assign the new
+                        // array to fields
+                        m_fields[m_intVariables[i]]->SetPhys(fields[i]);
+                        fields[i] = m_fields[m_intVariables[i]]->UpdatePhys();
+                        if (v_RequireFwdTrans())
+                        {
+                            m_fields[m_intVariables[i]]->FwdTrans_IterPerExp(
+                                fields[i],
+                                m_fields[m_intVariables[i]]->UpdateCoeffs());
+                        }
+                        m_fields[m_intVariables[i]]->SetPhysState(false);
+                    }
                 }
-                m_fields[0]->Reset();*/
-
                 // Perform any solver-specific post-integration steps
                 if (v_PostIntegrate(step))
                 {
@@ -447,7 +476,7 @@ namespace Nektar
                 if ((m_checksteps && !((step + 1) % m_checksteps)) ||
                      doCheckTime)
                 {
-                    if(m_HomogeneousType != eNotHomogeneous)
+                    if(m_HomogeneousType != eNotHomogeneous && !m_ALESolver)
                     {
                         vector<bool> transformed(nfields, false);
                         for(i = 0; i < nfields; i++)
@@ -504,28 +533,30 @@ namespace Nektar
             }
 
             // If homogeneous, transform back into physical space if necessary.
-            if(m_HomogeneousType != eNotHomogeneous)
+            if(!m_ALESolver)
             {
-                for(i = 0; i < nfields; i++)
+                if (m_HomogeneousType != eNotHomogeneous)
                 {
-                    if (m_fields[i]->GetWaveSpace())
+                    for (i = 0; i < nfields; i++)
                     {
-                        m_fields[i]->SetWaveSpace(false);
-                        m_fields[i]->BwdTrans(m_fields[i]->GetCoeffs(),
-                                              m_fields[i]->UpdatePhys());
-                        m_fields[i]->SetPhysState(true);
+                        if (m_fields[i]->GetWaveSpace())
+                        {
+                            m_fields[i]->SetWaveSpace(false);
+                            m_fields[i]->BwdTrans(m_fields[i]->GetCoeffs(),
+                                                  m_fields[i]->UpdatePhys());
+                            m_fields[i]->SetPhysState(true);
+                        }
+                    }
+                }
+                else
+                {
+                    for (i = 0; i < nvariables; ++i)
+                    {
+                        m_fields[m_intVariables[i]]->SetPhys(fields[i]);
+                        m_fields[m_intVariables[i]]->SetPhysState(true);
                     }
                 }
             }
-            else
-            {
-                for(i = 0; i < nvariables; ++i)
-                {
-                    m_fields[m_intVariables[i]]->SetPhys(fields[i]);
-                    m_fields[m_intVariables[i]]->SetPhysState(true);
-                }
-            }
-
             // Finalise filters
             for (auto &x : m_filters)
             {
@@ -547,6 +578,7 @@ namespace Nektar
             CheckForRestartTime(m_time, m_nchk);
             SetBoundaryConditions(m_time);
             SetInitialConditions(m_time);
+            UpdateGridVelocity(m_time);
             InitializeSteadyState();
         }
 

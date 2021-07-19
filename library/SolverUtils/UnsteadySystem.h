@@ -39,13 +39,14 @@
 #include <LibUtilities/TimeIntegration/TimeIntegrationSchemeOperators.h>
 #include <SolverUtils/EquationSystem.h>
 #include <SolverUtils/Filters/Filter.h>
+#include <SolverUtils/ALEHelper.h>
 
 namespace Nektar
 {
 namespace SolverUtils
 {
 /// Base class for unsteady solvers.
-class UnsteadySystem : public EquationSystem
+class UnsteadySystem : public EquationSystem, public SolverUtils::ALEHelper
 {
 public:
     /// Destructor

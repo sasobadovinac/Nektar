@@ -104,23 +104,10 @@ protected:
         m_ode.DefineProjection (&ALEDemo2::DoOdeProjection, this);
 
         m_session->LoadParameter("IO_InfoSteps", m_infosteps, 0);
-
-        // Storage of points from original mesh.
-        int nq = m_fields[0]->GetNpoints();
-        m_xc = Array<OneD, NekDouble>(nq);
-        m_yc = Array<OneD, NekDouble>(nq);
-        m_fields[0]->GetCoords(m_xc, m_yc);
     }
 
     virtual void v_DoInitialise()
     {
-        // Store all points
-        auto &ptsMap = m_graph->GetAllPointGeoms();
-        for (auto &pt : ptsMap)
-        {
-            m_pts[pt.first] = *(pt.second);
-        }
-
         SetBoundaryConditions(m_time);
         SetInitialConditions(m_time);
         UpdateGridVelocity(m_time);
@@ -137,8 +124,8 @@ protected:
      */
     virtual void v_DoSolve()
     {
-        const int nm = GetNcoeffs();
         const int nvar = m_fields.size();
+        const int nm = GetNcoeffs();
 
         // Set initial condition
         MultiRegions::GlobalMatrixKey mkey(StdRegions::eMass);
@@ -281,7 +268,7 @@ protected:
 
             }*/
 
-            for (int i = 0; i < m_fields.size(); ++i)
+            for (i = 0; i < m_fields.size(); ++i)
             {
                 m_fields[i]->GetMovement()->PerformMovement(time);
                 m_fields[i]->Reset();

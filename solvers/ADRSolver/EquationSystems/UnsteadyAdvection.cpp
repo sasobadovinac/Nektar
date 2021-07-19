@@ -175,20 +175,25 @@ namespace Nektar
         // Number of trace (interface) points
         int i;
         int nTracePts = GetTraceNpoints();
+        int nPts = m_velocity[0].size();
 
         // Auxiliary variable to compute the normal velocity
-        Array<OneD, NekDouble> tmp(nTracePts);
+        Array<OneD, NekDouble> tmp(nPts), tmp2(nTracePts);
 
         // Reset the normal velocity
         Vmath::Zero(nTracePts, m_traceVn, 1);
 
         for (i = 0; i < m_velocity.size(); ++i)
         {
-            m_fields[0]->ExtractTracePhys(m_velocity[i], tmp);
+            // Subtract grid velocity here from velocity
+            // velocity - grid velocity
+            Vmath::Vsub(nPts, m_velocity[i], 1, m_gridVelocity[i], 1, tmp, 1);
+
+            m_fields[0]->ExtractTracePhys(tmp, tmp2);
 
             Vmath::Vvtvp(nTracePts,
                          m_traceNormals[i], 1,
-                         tmp,               1,
+                         tmp2,              1,
                          m_traceVn,         1,
                          m_traceVn,         1);
         }
@@ -214,22 +219,44 @@ namespace Nektar
         // Number of fields (variables of the problem)
         int nVariables = inarray.size();
 
-        // Number of solution points
-        int nSolutionPts = GetNpoints();
-
-LibUtilities::Timer timer;
+        LibUtilities::Timer timer;
+        if(m_ALESolver)
+        {
 timer.Start();
-        // RHS computation using the new advection base class
-        m_advObject->Advect(nVariables, m_fields, m_velocity, inarray,
-                            outarray, time);
+            const int nc = GetNcoeffs();
+            // General idea is that we are time-integrating the quantity (Mu), so we
+            // need to multiply input by inverse mass matrix to get coefficients u,
+            // and then backwards transform so we can apply the DG operator.
+            Array<OneD, NekDouble> tmp(nc);
+            Array<OneD, Array<OneD, NekDouble>> tmpin(nVariables);
+
+            for (i = 0; i < nVariables; ++i)
+            {
+                tmpin[i] = Array<OneD, NekDouble>(GetNpoints());
+                m_fields[i]->MultiplyByElmtInvMass(inarray[i], tmp);
+                m_fields[i]->BwdTrans(tmp, tmpin[i]);
+            }
+
+            // RHS computation using the new advection base class
+            m_advObject->AdvectCoeffs(nVariables, m_fields, m_velocity, tmpin,
+                                      outarray, m_time);
 timer.Stop();
+        }
+        else
+        {
+timer.Start();
+            // RHS computation using the new advection base class
+            m_advObject->Advect(nVariables, m_fields, m_velocity, inarray,
+                                outarray, time);
+timer.Stop();
+        }
 // Elapsed time
 timer.AccumulateRegion("Advect");
 
         // Negate the RHS
         for (i = 0; i < nVariables; ++i)
         {
-            Vmath::Neg(nSolutionPts, outarray[i], 1);
+            Vmath::Neg(outarray[i].size(), outarray[i], 1);
         }
     }
 
@@ -251,6 +278,27 @@ timer.AccumulateRegion("Advect");
         // Number of fields (variables of the problem)
         int nVariables = inarray.size();
 
+        // Perform movement
+        if (m_ALESolver)
+        {
+            if (time != m_prevStageTime)
+            {
+                for (i = 0; i < m_fields.size(); ++i)
+                {
+                    m_fields[i]->GetMovement()->PerformMovement(time);
+                    m_fields[i]->Reset();
+                }
+
+                m_fields[0]->SetUpPhysNormals();
+                m_fields[0]->GetTrace()->GetNormals(m_traceNormals);
+
+                // Recompute grid velocity.
+                UpdateGridVelocity(m_time);
+
+                m_prevStageTime = time;
+            }
+        }
+
         // Set the boundary conditions
         SetBoundaryConditions(time);
 
@@ -260,13 +308,10 @@ timer.AccumulateRegion("Advect");
             // Discontinuous projection
             case MultiRegions::eDiscontinuous:
             {
-                // Number of quadrature points
-                int nQuadraturePts = GetNpoints();
-
                 // Just copy over array
                 for(i = 0; i < nVariables; ++i)
                 {
-                    Vmath::Vcopy(nQuadraturePts, inarray[i], 1, outarray[i], 1);
+                    Vmath::Vcopy(inarray[i].size(), inarray[i], 1, outarray[i], 1);
                 }
                 break;
             }
@@ -311,8 +356,11 @@ timer.AccumulateRegion("Advect");
         {
             for (j = 0; j < flux[0].size(); ++j)
             {
-                Vmath::Vmul(nq, physfield[i], 1, m_velocity[j], 1,
-                            flux[i][j], 1);
+                for (int k = 0; k < nq; ++k)
+                {
+                    flux[i][j][k] = physfield[i][k] * (
+                        m_velocity[j][k] - m_gridVelocity[j][k]);
+                }
             }
         }
     }

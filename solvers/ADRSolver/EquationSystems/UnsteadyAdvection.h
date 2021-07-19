@@ -110,6 +110,7 @@ namespace Nektar
 
     private:
         NekDouble m_waveFreq;
+        NekDouble m_prevStageTime = 0.0;
     };
 }
 
