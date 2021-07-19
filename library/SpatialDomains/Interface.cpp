@@ -50,10 +50,10 @@ Movement::Movement(const LibUtilities::SessionReaderSharedPtr &pSession,
     : m_meshGraph(meshGraph), m_session(pSession)
 {
     TiXmlElement *xmlDoc = m_session->GetElement("NEKTAR");
-    auto conditionsXml   = xmlDoc->FirstChild("CONDITIONS");
+    TiXmlNode *conditionsXml   = xmlDoc->FirstChild("CONDITIONS");
     if (conditionsXml != nullptr) // @TODO: Can I remove this line?
     {
-        auto movement = conditionsXml->FirstChild("MOVEMENT");
+        TiXmlNode *movement = conditionsXml->FirstChild("MOVEMENT");
         if (movement != nullptr)
         {
             if (movement->FirstChild("ZONES") != nullptr)
@@ -67,6 +67,8 @@ Movement::Movement(const LibUtilities::SessionReaderSharedPtr &pSession,
                 ReadInterfaces(m_session->GetElement(
                     "NEKTAR/CONDITIONS/MOVEMENT/INTERFACES"));
             }
+
+            // @TODO: Put in a check that both zones and interfaces are defined
         }
     }
 }
@@ -89,7 +91,7 @@ ZoneRotate::ZoneRotate(int id, const CompositeMap &domain,
                                      const PointGeom &origin,
                                      const std::vector<NekDouble> &axis,
                                      const NekDouble angularVel)
-    : ZoneBase(eRotating, id, domain), m_origin(origin), m_axis(axis),
+    : ZoneBase(eRotate, id, domain), m_origin(origin), m_axis(axis),
       m_angularVel(angularVel)
 {
     std::set<int> seenVerts, seenEdges;
@@ -150,7 +152,7 @@ ZoneRotate::ZoneRotate(int id, const CompositeMap &domain,
 
 ZoneTranslate::ZoneTranslate(int id, const CompositeMap &domain,
                                    const std::vector<NekDouble> &velocity)
-    : ZoneBase(eSliding, id, domain), m_velocity(velocity)
+    : ZoneBase(eTranslate, id, domain), m_velocity(velocity)
 {
     std::set<int> seenVerts, seenEdges;
     for (auto &comp : m_domain)
@@ -212,7 +214,7 @@ ZonePrescribe::ZonePrescribe(int id,
                                          const CompositeMap &domain,
                                          LibUtilities::EquationSharedPtr xDeform,
                                          LibUtilities::EquationSharedPtr yDeform)
-    : ZoneBase(ePrescribed, id, domain), m_xDeform(xDeform), m_yDeform(yDeform)
+    : ZoneBase(ePrescribe, id, domain), m_xDeform(xDeform), m_yDeform(yDeform)
 {
     std::set<int> seenVerts, seenEdges;
     for (auto &comp : m_domain)
@@ -510,7 +512,7 @@ void Movement::PerformMovement(NekDouble timeStep)
     for (auto &interPair : m_interfaces)
     {
         int leftId = interPair.second->GetLeftInterface()->GetId();
-        int rightId = interPair.second->GetLeftInterface()->GetId();
+        int rightId = interPair.second->GetRightInterface()->GetId();
 
         if (movedZoneIds.find(leftId) != movedZoneIds.end()
             || movedZoneIds.find(rightId) != movedZoneIds.end())

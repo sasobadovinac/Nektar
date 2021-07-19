@@ -105,7 +105,7 @@ InterfaceMapDG::InterfaceMapDG(
     }
 
     // DEBUG COMMENTS
-    if (false) // Set if verbose/debug mode? to output rank interface information
+    if (true) // Set if verbose/debug mode? to output rank interface information
     {
         if (comm->GetRank() == 0)
         {

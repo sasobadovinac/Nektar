@@ -44,7 +44,6 @@
 
 namespace Nektar
 {
-struct OneD;
 
 namespace SpatialDomains
 {
@@ -52,9 +51,9 @@ namespace SpatialDomains
 enum MovementType
 {
     eFixed,
-    eRotating,
-    eSliding,
-    ePrescribed
+    eRotate,
+    eTranslate,
+    ePrescribe
 };
 
 const std::string MovementTypeStr[] =

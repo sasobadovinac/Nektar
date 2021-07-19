@@ -302,7 +302,7 @@ std::string LaxFriedrichsSolver::solverName = SolverUtils::GetRiemannSolverFacto
                 {
                     continue;
                 }
-                else if (zone.second->GetMovementType() == SpatialDomains::eRotating)
+                else if (zone.second->GetMovementType() == SpatialDomains::eRotate)
                 {
                     SpatialDomains::ZoneRotateShPtr zoneRotate =
                         std::static_pointer_cast<
@@ -330,8 +330,9 @@ std::string LaxFriedrichsSolver::solverName = SolverUtils::GetRiemannSolverFacto
                         }
                     }
                 }
-                else if (zone.second->GetMovementType() == SpatialDomains::eSliding)
+                else if (zone.second->GetMovementType() == SpatialDomains::eTranslate)
                 {
+                    std::cout << "translate get grid vel" << std::endl;
                     SpatialDomains::ZoneTranslateShPtr interfaceTranslate =
                         std::static_pointer_cast<
                             SpatialDomains::ZoneTranslate>(
@@ -349,12 +350,12 @@ std::string LaxFriedrichsSolver::solverName = SolverUtils::GetRiemannSolverFacto
                         int nq = expansion->GetTotPoints();
                         for (int i = 0; i < nq; ++i)
                         {
-                            m_gridVelocity[0][offset + i] = velocity[0];
-                            m_gridVelocity[1][offset + i] = velocity[1];
+                            m_gridVelocity[0][offset + i] = 0;
+                            m_gridVelocity[1][offset + i] = 0;
                         }
                     }
                 }
-                else if (zone.second->GetMovementType() == SpatialDomains::ePrescribed)
+                else if (zone.second->GetMovementType() == SpatialDomains::ePrescribe)
                 {
                     /*NekDouble Lx = 20, Ly = 20;         // Size of mesh
                     NekDouble nx = 1, ny = 1, nt = 1;   // Space and time period

@@ -4,6 +4,7 @@
 #include <LibUtilities/TimeIntegration/TimeIntegrationScheme.h>
 #include <LibUtilities/TimeIntegration/TimeIntegrationSchemeOperators.h>
 #include <iomanip>
+#include <SolverUtils/ALEHelper.h>
 
 #include <StdRegions/StdQuadExp.h>
 
@@ -12,7 +13,7 @@ using namespace std;
 namespace Nektar
 {
 
-class ALEDemo2 : public SolverUtils::EquationSystem
+class ALEDemo2 : public SolverUtils::EquationSystem, public SolverUtils::ALEHelper
 {
 public:
     /// Class may only be instantiated through the MemoryManager.
@@ -38,7 +39,6 @@ protected:
     NekDouble m_prevStageTime = 0.0;
     SolverUtils::RiemannSolverSharedPtr m_riemannSolver;
     Array<OneD, Array<OneD, NekDouble>> m_velocity;
-    Array<OneD, Array<OneD, NekDouble>> m_gridVelocity;
     Array<OneD, NekDouble> m_traceVn, m_xc, m_yc;
     SolverUtils::AdvectionSharedPtr m_advObject;
     int m_infosteps;
@@ -52,13 +52,15 @@ protected:
 
     ALEDemo2(const LibUtilities::SessionReaderSharedPtr &pSession,
             const SpatialDomains::MeshGraphSharedPtr &pGraph)
-        : EquationSystem(pSession, pGraph)
+        : EquationSystem(pSession, pGraph),
+          SolverUtils::ALEHelper()
     {
     }
 
     void v_InitObject()
     {
         EquationSystem::v_InitObject();
+        ALEHelper::InitObject(m_graph, m_fields);
 
         std::vector<std::string> vel;
         vel.push_back("Vx");
@@ -103,13 +105,6 @@ protected:
 
         m_session->LoadParameter("IO_InfoSteps", m_infosteps, 0);
 
-        // Initialise grid velocity as 0s
-        m_gridVelocity = Array<OneD, Array<OneD, NekDouble>>(m_spacedim);
-        for (int i = 0; i < m_spacedim; ++i)
-        {
-            m_gridVelocity[i] = Array<OneD, NekDouble>(m_fields[0]->GetTotPoints(), 0.0);
-        }
-
         // Storage of points from original mesh.
         int nq = m_fields[0]->GetNpoints();
         m_xc = Array<OneD, NekDouble>(nq);
@@ -128,7 +123,7 @@ protected:
 
         SetBoundaryConditions(m_time);
         SetInitialConditions(m_time);
-        GetGridVelocity(m_time);
+        UpdateGridVelocity(m_time);
     }
 
     /*
@@ -163,9 +158,9 @@ protected:
 
         for (int i = 0; i < m_steps; ++i)
         {
-            std::cout << "SOLVING TIME = " << m_time << std::endl;
+            //std::cout << "SOLVING TIME = " << m_time << std::endl;
             fields = m_intScheme->TimeIntegrate(step, m_timestep, m_ode);
-            std::cout << "FINISHED SOLVING TIME" << std::endl;
+            //std::cout << "FINISHED SOLVING TIME" << std::endl;
 
             ++step;
             m_time += m_timestep;
@@ -179,13 +174,13 @@ protected:
 
             m_fields[0]->Reset();
             m_fields[0]->GetTrace()->GetNormals(m_traceNormals);
-            GetGridVelocity(m_time);
+            UpdateGridVelocity(m_time);
             SetBoundaryConditions(m_time);
 
             // Update m_fields with u^n by multiplying by inverse mass
             // matrix. That's then used in e.g. checkpoint output and L^2 error
             // calculation.
-            std::cout << "ELMT INV MASS TIME = " << m_time << std::endl;
+            //std::cout << "ELMT INV MASS TIME = " << m_time << std::endl;
             for (int j = 0; j < nvar; ++j)
             {
                 m_fields[j]->MultiplyByElmtInvMass(
@@ -214,7 +209,7 @@ protected:
               Array<OneD,        Array<OneD, NekDouble> >&outarray,
         const NekDouble time)
     {
-        std::cout << "EVAL RHS WITH TIME = " << time << std::endl;
+        //std::cout << "EVAL RHS WITH TIME = " << time << std::endl;
         boost::ignore_unused(time);
         const int nVariables = inarray.size();
         const int nc = GetNcoeffs();
@@ -257,7 +252,7 @@ protected:
               Array<OneD,       Array<OneD, NekDouble> >&outarray,
         const NekDouble time)
     {
-        std::cout << "ODE PROJECT WITH TIME = " << time << std::endl;
+        //std::cout << "ODE PROJECT WITH TIME = " << time << std::endl;
         // Counter variable
         int i;
 
@@ -270,8 +265,8 @@ protected:
         // We need to update the geometry for the next stage, if necessary.
         if (time != m_prevStageTime)
         {
-            std::cout << "MOVING FIELDS TIME = " << time << std::endl;
-            auto &ptsMap = m_graph->GetAllPointGeoms();
+            //std::cout << "MOVING FIELDS TIME = " << time << std::endl;
+            /*auto &ptsMap = m_graph->GetAllPointGeoms();
             for (auto &pt : ptsMap)
             {
                 Array<OneD, NekDouble> coords(2, 0.0);
@@ -283,11 +278,12 @@ protected:
                 newLoc[1] = pnt(1) + 0.05 * sin(2*M_PI*time) * sin(2*M_PI*pnt(0)) * sin(2*M_PI*pnt(1));
 
                 pt.second->UpdatePosition(newLoc[0], newLoc[1], newLoc[2]);
-            }
+
+            }*/
 
             for (int i = 0; i < m_fields.size(); ++i)
             {
-                //m_fields[i]->GetMovement()->PerformMovement(time);
+                m_fields[i]->GetMovement()->PerformMovement(time);
                 m_fields[i]->Reset();
             }
 
@@ -296,7 +292,7 @@ protected:
             m_fields[0]->GetTrace()->GetNormals(m_traceNormals);
 
             // Recompute grid velocity.
-            GetGridVelocity(time);
+            UpdateGridVelocity(m_time);
 
             m_prevStageTime = time;
         }
@@ -381,185 +377,6 @@ protected:
         }
 
         return m_traceVn;
-    }
-
-    const Array<OneD, const Array<OneD, NekDouble>> &GetGridVelocity(NekDouble time)
-    {
-        std::cout << "RECOMPUTE GRID VELOCITY TIME = " << time << std::endl;
-        boost::ignore_unused(time);
-        int nq = m_fields[0]->GetNpoints();
-
-        // Get updated coordinates.
-        Array<OneD, NekDouble> xc(nq), yc(nq);
-        m_fields[0]->GetCoords(xc, yc);
-
-        // First order approximation...
-        // for (int i = 0; i < nq; ++i)
-        // {
-        //     //m_gridVelocity[0][i] = (xc[i] - m_xc[i]) / (time - m_prevStageTime);
-        //     //m_gridVelocity[1][i] = (yc[i] - m_yc[i]) / (time - m_prevStageTime);
-        //     //m_xc[i] = xc[i];
-        //     //m_yc[i] = yc[i];
-        // }
-
-        int nexp = m_fields[0]->GetExpSize();
-        for (int i = 0; i < nexp; ++i)
-        {
-            // Construct a standard expansion for each quadrilateral to evaluate
-            // grid velocity inside deformed element.
-            auto elmt = m_fields[0]->GetExp(i);
-            auto pkey = elmt->GetBasis(0)->GetPointsKey();
-            LibUtilities::BasisKey bkey(LibUtilities::eModified_A, 2, pkey);
-            StdRegions::StdQuadExp stdexp(bkey, bkey);
-
-            // Grid velocity of each quadrilateral vertex.
-            Array<OneD, NekDouble> tmpx(4), tmpy(4);
-
-            for (int j = 0; j < 4; ++j)
-            {
-                auto vert = elmt->GetGeom()->GetVertex(j);
-
-                // original vertex from t=0 mesh
-                auto pnt  = m_pts[vert->GetGlobalID()];
-
-                // x/y velocity for each vertex
-                tmpx[j] = 0.05 * 2 * M_PI * cos(2*M_PI*time) * sin(2*M_PI*pnt.x()) * sin(2*M_PI*pnt.y());
-                tmpy[j] = 0.05 * 2 * M_PI * cos(2*M_PI*time) * sin(2*M_PI*pnt.x()) * sin(2*M_PI*pnt.y());
-            }
-
-            // swap to match tensor product order of coefficients
-            // vs. anti-clockwise order of vertices.
-            std::swap(tmpx[2], tmpx[3]);
-            std::swap(tmpy[2], tmpy[3]);
-
-            // Evaluate at all points in the deformed (time t) high-order
-            // element.
-            Array<OneD, NekDouble> tmp;
-            stdexp.BwdTrans(
-                tmpx, tmp = m_gridVelocity[0] + m_fields[0]->GetPhys_Offset(i));
-            stdexp.BwdTrans(
-                tmpy, tmp = m_gridVelocity[1] + m_fields[0]->GetPhys_Offset(i));
-        }
-
-        // Update
-        /*
-        // Do I need to do this for each field? I think it is consistent?
-        auto exp = m_fields[0]->GetExp();
-
-        // Create map from element ID to expansion ID
-        std::map<int, int> elmtToExpId;
-        for (int i = (*exp).size() - 1; i >= 0; --i)
-        {
-            elmtToExpId[(*exp)[i]->GetGeom()->GetGlobalID()] = i;
-        }
-
-        //std::cout << "COMPUTE GRID TIME = " << time << std::endl;
-
-        auto intVec = m_fields[0]->GetMovement()->GetZones();
-        for (auto &interface : intVec)
-        {
-            // If the interface domain is fixed then grid velocity is left at 0
-            if (interface->GetInterfaceType() == SpatialDomains::eFixed)
-            {
-                continue;
-            }
-            else if (interface->GetInterfaceType() == SpatialDomains::eRotating)
-            {
-                SpatialDomains::ZoneRotateShPtr interfaceRotate =
-                    std::static_pointer_cast<
-                        SpatialDomains::ZoneRotate>(interface);
-                NekDouble angVel = interfaceRotate->GetAngularVel();
-
-                auto ids = interface->GetElementIds();
-                for (auto id : ids)
-                {
-                    int indx       = elmtToExpId[id];
-                    int offset     = m_fields[0]->GetPhys_Offset(indx);
-                    auto expansion = (*exp)[indx];
-
-                    int nq = expansion->GetTotPoints();
-                    Array<OneD, NekDouble> xc(nq, 0.0), yc(nq, 0.0),
-                        zc(nq, 0.0);
-                    expansion->GetCoords(xc, yc, zc);
-
-                    for (int i = 0; i < nq; ++i)
-                    {
-                        m_gridVelocity[0][offset + i] = -angVel*yc[i];
-                        m_gridVelocity[1][offset + i] = angVel*xc[i];
-                        //std::cout << "Coordinate: (" << xc[i] << ", " << yc[i] << ") has velocity = "
-                        //          << m_gridVelocity[0][offset + i] << ", " << m_gridVelocity[1][offset + i] << std::endl;
-                    }
-                }
-            }
-            else if (interface->GetInterfaceType() == SpatialDomains::eSliding)
-            {
-                SpatialDomains::ZoneTranslateShPtr interfaceSlide =
-                    std::static_pointer_cast<
-                        SpatialDomains::ZoneTranslate>(interface);
-                std::vector<NekDouble> velocity = interfaceSlide->GetVel();
-
-                auto ids = interface->GetElementIds();
-                for (auto id : ids)
-                {
-                    int indx       = elmtToExpId[id];
-                    int offset     = m_fields[0]->GetPhys_Offset(indx);
-                    auto expansion = (*exp)[indx];
-
-                    int nq = expansion->GetTotPoints();
-                    for (int i = 0; i < nq; ++i)
-                    {
-                        m_gridVelocity[0][offset + i] = velocity[0];
-                        m_gridVelocity[1][offset + i] = velocity[1];
-                    }
-                }
-            }
-            else if (interface->GetMovementType() == SpatialDomains::ePrescribed)
-            {
-                // This is hacky - as interface is set up for 2 sides usually, we only use the left side in this case
-                if (interface->GetSide() == SpatialDomains::eLeft)
-                {
-                    auto ids = interface->GetElementIds();
-                    for (auto id : ids)
-                    {
-                        int indx       = elmtToExpId[id];
-                        int offset     = m_fields[0]->GetPhys_Offset(indx);
-                        auto expansion = (*exp)[indx];
-
-                        int nq = expansion->GetTotPoints();
-                        Array<OneD, NekDouble> xc(nq, 0.0), yc(nq, 0.0), zc(nq, 0.0);
-                        expansion->GetCoords(xc, yc, zc);
-
-                        for (int i = 0; i < nq; ++i)
-                        {
-                            m_gridVelocity[0][offset + i] = 0.05 * 2 * M_PI * cos(2*M_PI*time) * sin(2*M_PI*xc[i]) * sin(2*M_PI*yc[i]);
-                            m_gridVelocity[1][offset + i] = 0.05 * 2 * M_PI * cos(2*M_PI*time) * sin(2*M_PI*xc[i]) * sin(2*M_PI*yc[i]);
-                            //m_gridVelocity[0][offset + i] = -yc[i];
-                            //m_gridVelocity[1][offset + i] = xc[i];
-                        }
-                    }
-                }
-            }
-        }
-*/
-
-        // Print coords trace
-        /*for (auto &traceExp : *m_fields[0]->GetTrace()->GetExp())
-          {
-          int nq = traceExp->GetTotPoints();
-          Array<OneD, NekDouble> xc(nq, 0.0), yc(nq, 0.0), zc(nq, 0.0);
-          traceExp->GetCoords(xc, yc, zc);
-          if (traceExp->GetGeom()->GetGlobalID() == 115)
-          {
-          std::cout << "Time = " << m_time << " | Element ID = " << traceExp->GetGeom()->GetGlobalID() << " | Coords = ";
-          for (int i = 0; i < nq; ++i)
-          {
-          std::cout << "(" << xc[i] << " " << yc[i] << ") ->";
-          }
-          std::cout << std::endl;
-          }
-          }*/
-
-        return m_gridVelocity;
     }
 
     void v_ExtraFldOutput(
