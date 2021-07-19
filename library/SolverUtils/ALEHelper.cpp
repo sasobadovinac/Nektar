@@ -36,12 +36,15 @@ void ALEHelper::InitObject(const SpatialDomains::MeshGraphSharedPtr &pGraph,
                 break;
             case SpatialDomains::eTranslate :
                 m_ALEs.emplace_back(ALETranslateShPtr(MemoryManager<ALETranslate>::AllocateSharedPtr(zone.second)));
+                m_ALESolver = true;
                 break;
             case SpatialDomains::eRotate :
                 m_ALEs.emplace_back(ALERotateShPtr(MemoryManager<ALERotate>::AllocateSharedPtr(zone.second)));
+                m_ALESolver = true;
                 break;
             case SpatialDomains::ePrescribe :
                 m_ALEs.emplace_back(ALEPrescribeShPtr(MemoryManager<ALEPrescribe>::AllocateSharedPtr(zone.second)));
+                m_ALESolver = true;
                 break;
         }
     }

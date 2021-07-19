@@ -12,7 +12,7 @@ namespace SolverUtils
 struct ALEBase;
 typedef std::shared_ptr<ALEBase> ALEBaseShPtr;
 
-class ALEHelper : public std::enable_shared_from_this<ALEHelper>
+class ALEHelper
 {
 public:
 
@@ -31,6 +31,7 @@ protected:
     std::map<int, int> m_elmtToExpId;
     Array<OneD, Array<OneD, NekDouble>> m_gridVelocity;
     std::vector<ALEBaseShPtr> m_ALEs;
+    bool m_ALESolver = false;
 };
 
 struct ALEBase
