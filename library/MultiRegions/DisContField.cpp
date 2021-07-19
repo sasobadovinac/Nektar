@@ -3281,7 +3281,7 @@ namespace Nektar
                 // Basis definition on each element
                 LibUtilities::BasisSharedPtr basis = (*m_exp)[0]->GetBasis(0);
                 if((m_expType != e1D)&&
-                   (basis->GetBasisType() != LibUtilities::eGauss_Lagrange) && false)
+                   (basis->GetBasisType() != LibUtilities::eGauss_Lagrange))
                 {
                     Array<OneD, NekDouble> Fcoeffs(m_trace->GetNcoeffs());
                     m_trace->IProductWRTBase(Fn, Fcoeffs);

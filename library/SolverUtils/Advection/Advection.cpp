@@ -144,6 +144,20 @@ void Advection::AdvectCoeffs(
                    pOutarray, pTime, pFwd, pBwd);
 }
 
+void Advection::AdvectCoeffsALE(
+    const int                                          nConvectiveFields,
+    const Array<OneD, MultiRegions::ExpListSharedPtr> &pFields,
+    const Array<OneD, Array<OneD, NekDouble> >        &pAdvVel,
+    const Array<OneD, Array<OneD, NekDouble> >        &pInarray,
+    Array<OneD, Array<OneD, NekDouble> >              &pOutarray,
+    const NekDouble                                   &pTime,
+    const Array<OneD, Array<OneD, NekDouble> >        &pFwd,
+    const Array<OneD, Array<OneD, NekDouble> >        &pBwd)
+{
+    v_AdvectCoeffsALE(nConvectiveFields, pFields, pAdvVel, pInarray,
+                   pOutarray, pTime, pFwd, pBwd);
+}
+
 /**
  * This function should be overridden in derived classes to initialise the
  * specific advection data members. However, this base class function should
@@ -203,6 +217,21 @@ void Advection::v_AdvectCoeffs(
     boost::ignore_unused(nConvectiveFields, fields, advVel, inarray, outarray,
                         time, pFwd, pBwd);
     ASSERTL0(false, "v_AdvectCoeffs not defined");
+}
+
+void Advection::v_AdvectCoeffsALE(
+    const int nConvectiveFields,
+    const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
+    const Array<OneD, Array<OneD, NekDouble> >        &advVel,
+    const Array<OneD, Array<OneD, NekDouble> >        &inarray,
+    Array<OneD, Array<OneD, NekDouble> >              &outarray,
+    const NekDouble                                   &time,
+    const Array<OneD, Array<OneD, NekDouble> >        &pFwd,
+    const Array<OneD, Array<OneD, NekDouble> >        &pBwd)
+{
+    boost::ignore_unused(nConvectiveFields, fields, advVel, inarray, outarray,
+                         time, pFwd, pBwd);
+    ASSERTL0(false, "v_AdvectCoeffsALE not defined");
 }
 }
 }

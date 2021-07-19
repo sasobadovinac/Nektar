@@ -238,8 +238,8 @@ timer.Start();
             }
 
             // RHS computation using the new advection base class
-            m_advObject->AdvectCoeffs(nVariables, m_fields, m_velocity, tmpin,
-                                      outarray, m_time);
+            m_advObject->AdvectCoeffsALE(nVariables, m_fields, m_velocity, tmpin,
+                                      outarray, time);
 timer.Stop();
         }
         else
