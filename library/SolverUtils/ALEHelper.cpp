@@ -120,33 +120,28 @@ void ALERotate::v_UpdateGridVel(NekDouble time,
                                std::map<int, int> &elmtToExpId,
                                Array<OneD, Array<OneD, NekDouble>> &gridVelocity)
 {
-    boost::ignore_unused(time, fields, elmtToExpId, gridVelocity);
-    /*SpatialDomains::ZoneRotateShPtr interfaceRotate =
-                    std::static_pointer_cast<
-                        SpatialDomains::ZoneRotate>(interface);
-                NekDouble angVel = interfaceRotate->GetAngularVel();
+    boost::ignore_unused(time);
 
-                auto ids = interface->GetElementIds();
-                for (auto id : ids)
-                {
-                    int indx       = elmtToExpId[id];
-                    int offset     = m_fields[0]->GetPhys_Offset(indx);
-                    auto expansion = (*exp)[indx];
+    auto angVel = m_zone->GetAngularVel();
+    auto exp = fields[0]->GetExp();
 
-                    int nq = expansion->GetTotPoints();
-                    Array<OneD, NekDouble> xc(nq, 0.0), yc(nq, 0.0),
-                        zc(nq, 0.0);
-                    expansion->GetCoords(xc, yc, zc);
+    auto ids = m_zone->GetElementIds();
+    for (auto id : ids)
+    {
+        int indx       = elmtToExpId[id];
+        int offset     = fields[0]->GetPhys_Offset(indx);
+        auto expansion = (*exp)[indx];
 
-                    for (int i = 0; i < nq; ++i)
-                    {
-                        m_gridVelocity[0][offset + i] = -angVel*yc[i];
-                        m_gridVelocity[1][offset + i] = angVel*xc[i];
-                        //std::cout << "Coordinate: (" << xc[i] << ", " << yc[i] << ") has velocity = "
-                        //          << m_gridVelocity[0][offset + i] << ", " << m_gridVelocity[1][offset + i] << std::endl;
-                    }
-                }
-     */
+        int nq = expansion->GetTotPoints();
+        Array<OneD, NekDouble> xc(nq, 0.0), yc(nq, 0.0), zc(nq, 0.0);
+        expansion->GetCoords(xc, yc, zc);
+
+        for (int i = 0; i < nq; ++i)
+        {
+            gridVelocity[0][offset + i] += -angVel*yc[i];
+            gridVelocity[1][offset + i] += angVel*xc[i];
+        }
+    }
 }
 
 ALEPrescribe::ALEPrescribe(SpatialDomains::ZoneBaseShPtr zone) :

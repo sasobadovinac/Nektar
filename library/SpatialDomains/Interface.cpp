@@ -557,8 +557,6 @@ void ZoneRotate::v_Move(NekDouble time)
 
     NekDouble ox, oy, oz;
     m_origin.GetCoords(ox, oy, oz);
-    std::cout << "ox = " << ox << " oy = " << oy << " oz = " << oz << std::endl;
-    std::cout << "angular vel = " << m_angularVel << " time = " << time << " angle = " << angle << std::endl;
 
     int cnt = 0;
     for (auto &vert : m_rotateVerts)
