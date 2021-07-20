@@ -175,82 +175,9 @@ namespace Nektar
                 fields[i]->AddTraceIntegral     (numflux[i], outarray[i]);
                 timer.Stop();
                 timer.AccumulateRegion("AddTraceIntegral");
-
-                timer.Start();
-                fields[i]->MultiplyByElmtInvMass(outarray[i], outarray[i]);
-                timer.Stop();
-                timer.AccumulateRegion("MultiplyByElmtInvMass");
             }
 
         }
-
-    void AdvectionWeakDG::v_AdvectCoeffsALE(
-        const int                                         nConvectiveFields,
-        const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
-        const Array<OneD, Array<OneD, NekDouble> >        &advVel,
-        const Array<OneD, Array<OneD, NekDouble> >        &inarray,
-        Array<OneD, Array<OneD, NekDouble> >        &outarray,
-        const NekDouble                                   &time,
-        const Array<OneD, Array<OneD, NekDouble> >        &pFwd,
-        const Array<OneD, Array<OneD, NekDouble> >        &pBwd)
-    {
-        size_t nPointsTot      = fields[0]->GetTotPoints();
-        size_t nCoeffs         = fields[0]->GetNcoeffs();
-        size_t nTracePointsTot = fields[0]->GetTrace()->GetTotPoints();
-
-        Array<OneD, Array<OneD, Array<OneD, NekDouble> > >
-            fluxvector(nConvectiveFields);
-        // Allocate storage for flux vector F(u).
-        for (int i = 0; i < nConvectiveFields; ++i)
-        {
-            fluxvector[i] =
-                Array<OneD, Array<OneD, NekDouble> > {size_t(m_spaceDim)};
-            for (int j = 0; j < m_spaceDim; ++j)
-            {
-                fluxvector[i][j] = Array<OneD, NekDouble> {nPointsTot};
-            }
-        }
-
-        LibUtilities::Timer timer;
-        timer.Start();
-        v_AdvectVolumeFlux(nConvectiveFields, fields, advVel, inarray,
-                           fluxvector, time);
-        timer.Stop();
-        timer.AccumulateRegion("m_fluxVector");
-
-
-        timer.Start();
-        // Get the advection part (without numerical flux)
-        for (int i = 0; i < nConvectiveFields; ++i)
-        {
-            Vmath::Fill(outarray[i].size(), 0.0, outarray[i], 1);
-            fields[i]->IProductWRTDerivBase(fluxvector[i], outarray[i]);
-        }
-        timer.Stop();
-        timer.AccumulateRegion("IProductWRTDerivBase");
-
-        Array<OneD, Array<OneD, NekDouble> >
-            numflux{size_t(nConvectiveFields)};
-
-        for (int i = 0; i < nConvectiveFields; ++i)
-        {
-            numflux[i] = Array<OneD, NekDouble> {nTracePointsTot, 0.0};
-        }
-
-        v_AdvectTraceFlux(nConvectiveFields, fields, advVel, inarray,
-                          numflux, time, pFwd, pBwd);
-
-        for (int i = 0; i < nConvectiveFields; ++i)
-        {
-            Vmath::Neg                      (nCoeffs, outarray[i], 1);
-
-            timer.Start();
-            fields[i]->AddTraceIntegral     (numflux[i], outarray[i]);
-            timer.Stop();
-            timer.AccumulateRegion("AddTraceIntegral");
-        }
-
-    }
 
         void AdvectionWeakDG::v_AdvectTraceFlux(
             const int                                         nConvectiveFields,

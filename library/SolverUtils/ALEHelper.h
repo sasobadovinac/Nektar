@@ -2,6 +2,7 @@
 #define NEKTAR_ALEHELPER_H
 
 #include <MultiRegions/ExpList.h>
+#include <SolverUtils/Advection/Advection.h>
 
 namespace Nektar
 {
@@ -19,7 +20,22 @@ public:
     void InitObject(const SpatialDomains::MeshGraphSharedPtr &pGraph,
                     Array<OneD, MultiRegions::ExpListSharedPtr> &fields);
 
-    void UpdateGridVelocity(NekDouble &time);
+    void UpdateGridVelocity(const NekDouble &time);
+
+    void ALEPreMultiplyMass(Array<OneD, Array<OneD, NekDouble> > &fields);
+
+    void ALEDoElmtInvMass(Array<OneD, Array<OneD, NekDouble> > &traceNormals,
+                          Array<OneD, Array<OneD, NekDouble> > &fields,
+                          NekDouble time);
+
+    void ALEDoOdeProjection(const NekDouble &time,
+                            Array<OneD, Array<OneD, NekDouble>> &traceNormals);
+
+    void ALEDoOdeRhs(const Array<OneD, const Array<OneD, NekDouble>> &inarray,
+                     Array<OneD, Array<OneD, NekDouble>> &outarray,
+                     const NekDouble time,
+                     AdvectionSharedPtr advObject,
+                     Array<OneD, Array<OneD, NekDouble> > &velocity);
 
     inline Array<OneD, Array<OneD, NekDouble>> GetGridVelocity()
     {
@@ -32,11 +48,13 @@ protected:
     Array<OneD, Array<OneD, NekDouble>> m_gridVelocity;
     std::vector<ALEBaseShPtr> m_ALEs;
     bool m_ALESolver = false;
+    NekDouble m_prevStageTime = 0.0;
+
 };
 
 struct ALEBase
 {
-    inline void UpdateGridVel(NekDouble time,
+    inline void UpdateGridVel(const NekDouble time,
                               Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
                               std::map<int, int> &elmtToExpId,
                               Array<OneD, Array<OneD, NekDouble>> &gridVelocity)
@@ -45,7 +63,7 @@ struct ALEBase
     }
 
 private:
-    inline virtual void v_UpdateGridVel(NekDouble time,
+    inline virtual void v_UpdateGridVel(const NekDouble time,
                                         Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
                                         std::map<int, int> &elmtToExpId,
                                         Array<OneD, Array<OneD, NekDouble>> &gridVelocity) = 0;
@@ -55,7 +73,7 @@ struct ALEFixed final : public ALEBase
 {
     ALEFixed(SpatialDomains::ZoneBaseShPtr zone);
 
-    virtual void v_UpdateGridVel(NekDouble time,
+    virtual void v_UpdateGridVel(const NekDouble time,
                                  Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
                                  std::map<int, int> &elmtToExpId,
                                  Array<OneD, Array<OneD, NekDouble>> &gridVelocity) final;
@@ -68,7 +86,7 @@ struct ALETranslate final : public ALEBase
 {
     ALETranslate(SpatialDomains::ZoneBaseShPtr zone);
 
-    virtual void v_UpdateGridVel(NekDouble time,
+    virtual void v_UpdateGridVel(const NekDouble time,
                                  Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
                                  std::map<int, int> &elmtToExpId,
                                  Array<OneD, Array<OneD, NekDouble>> &gridVelocity) final;
@@ -81,7 +99,7 @@ struct ALERotate final : public ALEBase
 {
     ALERotate(SpatialDomains::ZoneBaseShPtr zone);
 
-    virtual void v_UpdateGridVel(NekDouble time,
+    virtual void v_UpdateGridVel(const NekDouble time,
                                  Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
                                  std::map<int, int> &elmtToExpId,
                                  Array<OneD, Array<OneD, NekDouble>> &gridVelocity) final;
@@ -94,7 +112,7 @@ struct ALEPrescribe final : public ALEBase
 {
     ALEPrescribe(SpatialDomains::ZoneBaseShPtr zone);
 
-    virtual void v_UpdateGridVel(NekDouble time,
+    virtual void v_UpdateGridVel(const NekDouble time,
                                  Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
                                  std::map<int, int> &elmtToExpId,
                                  Array<OneD, Array<OneD, NekDouble>> &gridVelocity) final;

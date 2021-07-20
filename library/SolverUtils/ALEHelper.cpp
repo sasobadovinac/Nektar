@@ -50,7 +50,7 @@ void ALEHelper::InitObject(const SpatialDomains::MeshGraphSharedPtr &pGraph,
     }
 }
 
-void ALEHelper::UpdateGridVelocity(NekDouble &time)
+void ALEHelper::UpdateGridVelocity(const NekDouble &time)
 {
     // Reset grid velocity to 0
     int spaceDim = m_fieldsALE[0]->GetGraph()->GetSpaceDimension();
@@ -64,6 +64,86 @@ void ALEHelper::UpdateGridVelocity(NekDouble &time)
     {
         ALE->UpdateGridVel(time, m_fieldsALE, m_elmtToExpId, m_gridVelocity);
     }
+}
+
+void ALEHelper::ALEPreMultiplyMass(Array<OneD, Array<OneD, NekDouble> > &fields)
+{
+    const int nm = m_fieldsALE[0]->GetNcoeffs();
+    MultiRegions::GlobalMatrixKey mkey(StdRegions::eMass);
+
+    // Premultiply each field by the mass matrix
+    for (int i = 0; i < m_fieldsALE.size(); ++i)
+    {
+        fields[i] = Array<OneD, NekDouble>(nm);
+        m_fieldsALE[i]->GeneralMatrixOp_IterPerExp(
+            mkey, m_fieldsALE[i]->GetCoeffs(), fields[i]);
+    }
+}
+
+void ALEHelper::ALEDoElmtInvMass(Array<OneD, Array<OneD, NekDouble> > &traceNormals, Array<OneD, Array<OneD, NekDouble> > &fields, NekDouble time)
+{
+    m_fieldsALE[0]->Reset();
+    m_fieldsALE[0]->GetTrace()->GetNormals(traceNormals);
+    UpdateGridVelocity(time);
+
+    // Update m_fields with u^n by multiplying by inverse mass
+    // matrix. That's then used in e.g. checkpoint output and L^2 error
+    // calculation.
+
+    for (int i = 0; i < m_fieldsALE.size(); ++i)
+    {
+        m_fieldsALE[i]->MultiplyByElmtInvMass(
+            fields[i], m_fieldsALE[i]->UpdateCoeffs());
+        m_fieldsALE[i]->BwdTrans(
+            m_fieldsALE[i]->GetCoeffs(), m_fieldsALE[i]->UpdatePhys());
+    }
+}
+
+void ALEHelper::ALEDoOdeProjection(const NekDouble &time, Array<OneD, Array<OneD, NekDouble> > &traceNormals)
+{
+    if (time != m_prevStageTime)
+    {
+        for (auto & i : m_fieldsALE)
+        {
+            i->GetMovement()->PerformMovement(time);
+            i->Reset();
+        }
+
+        m_fieldsALE[0]->SetUpPhysNormals();
+        m_fieldsALE[0]->GetTrace()->GetNormals(traceNormals);
+
+        // Recompute grid velocity.
+        UpdateGridVelocity(time);
+
+        m_prevStageTime = time;
+    }
+}
+
+void ALEHelper::ALEDoOdeRhs(const Array<OneD, const  Array<OneD, NekDouble> >&inarray,
+                            Array<OneD,        Array<OneD, NekDouble> >&outarray,
+                            const NekDouble time,
+                            AdvectionSharedPtr advObject,
+                            Array<OneD, Array<OneD, NekDouble> > &velocity)
+{
+    const int nc = m_fieldsALE[0]->GetNcoeffs();
+    int nVariables = inarray.size();
+
+    // General idea is that we are time-integrating the quantity (Mu), so we
+    // need to multiply input by inverse mass matrix to get coefficients u,
+    // and then backwards transform so we can apply the DG operator.
+    Array<OneD, NekDouble> tmp(nc);
+    Array<OneD, Array<OneD, NekDouble>> tmpin(nVariables);
+
+    for (int i = 0; i < nVariables; ++i)
+    {
+        tmpin[i] = Array<OneD, NekDouble>(m_fieldsALE[0]->GetNpoints());
+        m_fieldsALE[i]->MultiplyByElmtInvMass(inarray[i], tmp);
+        m_fieldsALE[i]->BwdTrans(tmp, tmpin[i]);
+    }
+
+    // RHS computation using the new advection base class
+    advObject->AdvectCoeffs(nVariables, m_fieldsALE, velocity, tmpin,
+                                 outarray, time);
 }
 
 ALEFixed::ALEFixed(SpatialDomains::ZoneBaseShPtr zone) :
@@ -138,7 +218,7 @@ void ALERotate::v_UpdateGridVel(NekDouble time,
 
         for (int i = 0; i < nq; ++i)
         {
-            gridVelocity[0][offset + i] += -angVel*yc[i];
+            gridVelocity[0][offset + i] += -angVel*yc[i]; // @TODO: Update to include axis and origin.
             gridVelocity[1][offset + i] += angVel*xc[i];
         }
     }

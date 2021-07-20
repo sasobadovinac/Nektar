@@ -549,6 +549,16 @@ timer.AccumulateRegion("DoDiffusion");
 
         m_advObject->AdvectCoeffs(nvariables, m_fields, advVel, inarray,
                                   outarray, time, pFwd, pBwd);
+
+        // Multiply by inverse mass matrix
+        LibUtilities::Timer timer;
+        for (int i = 0; i < nvariables; ++i)
+        {
+            timer.Start();
+            m_fields[i]->MultiplyByElmtInvMass(outarray[i], outarray[i]);
+            timer.Stop();
+            timer.AccumulateRegion("MultiplyByElmtInvMass");
+        }
     }
 
     /**

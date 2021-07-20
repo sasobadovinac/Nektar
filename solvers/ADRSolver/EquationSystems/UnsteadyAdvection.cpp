@@ -223,23 +223,7 @@ namespace Nektar
         if(m_ALESolver)
         {
 timer.Start();
-            const int nc = GetNcoeffs();
-            // General idea is that we are time-integrating the quantity (Mu), so we
-            // need to multiply input by inverse mass matrix to get coefficients u,
-            // and then backwards transform so we can apply the DG operator.
-            Array<OneD, NekDouble> tmp(nc);
-            Array<OneD, Array<OneD, NekDouble>> tmpin(nVariables);
-
-            for (i = 0; i < nVariables; ++i)
-            {
-                tmpin[i] = Array<OneD, NekDouble>(GetNpoints());
-                m_fields[i]->MultiplyByElmtInvMass(inarray[i], tmp);
-                m_fields[i]->BwdTrans(tmp, tmpin[i]);
-            }
-
-            // RHS computation using the new advection base class
-            m_advObject->AdvectCoeffsALE(nVariables, m_fields, m_velocity, tmpin,
-                                      outarray, time);
+            ALEHelper::ALEDoOdeRhs(inarray, outarray, time, m_advObject, m_velocity);
 timer.Stop();
         }
         else
@@ -278,27 +262,11 @@ timer.AccumulateRegion("Advect");
         // Number of fields (variables of the problem)
         int nVariables = inarray.size();
 
-        // Perform movement
+        // Perform ALE movement
         if (m_ALESolver)
         {
-            if (time != m_prevStageTime)
-            {
-                for (i = 0; i < m_fields.size(); ++i)
-                {
-                    m_fields[i]->GetMovement()->PerformMovement(time);
-                    m_fields[i]->Reset();
-                }
-
-                m_fields[0]->SetUpPhysNormals();
-                m_fields[0]->GetTrace()->GetNormals(m_traceNormals);
-
-                // Recompute grid velocity.
-                UpdateGridVelocity(m_time);
-
-                m_prevStageTime = time;
-            }
+            ALEDoOdeProjection(time, m_traceNormals);
         }
-
         // Set the boundary conditions
         SetBoundaryConditions(time);
 
@@ -445,5 +413,11 @@ timer.AccumulateRegion("Advect");
     void UnsteadyAdvection::v_GenerateSummary(SolverUtils::SummaryList& s)
     {
         AdvectionSystem::v_GenerateSummary(s);
+    }
+
+    bool UnsteadyAdvection::v_PreIntegrate(int step)
+    {
+        boost::ignore_unused(step);
+        return 0;
     }
 }

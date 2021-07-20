@@ -239,16 +239,7 @@ namespace Nektar
 
             if(m_ALESolver)
             {
-                const int nm = GetNcoeffs();
-                MultiRegions::GlobalMatrixKey mkey(StdRegions::eMass);
-
-                // Premultiply each field by the mass matrix
-                for (i = 0; i < nvariables; ++i)
-                {
-                    fields[i] = Array<OneD, NekDouble>(nm);
-                    m_fields[i]->GeneralMatrixOp_IterPerExp(
-                        mkey, m_fields[i]->GetCoeffs(), fields[i]);
-                }
+                ALEHelper::ALEPreMultiplyMass(fields);
             }
 
             // Initialise time integration scheme
@@ -310,7 +301,7 @@ namespace Nektar
 
                 // Perform any solver-specific pre-integration steps
                 timer.Start();
-                if (v_PreIntegrate(step))
+                if (v_PreIntegrate(step)) // Could be possible to put a preintegrate step in the ALEHelper class, put in the Unsteady Advection class
                 {
                     break;
                 }
@@ -345,25 +336,11 @@ namespace Nektar
                     cpuTime = 0.0;
                 }
 
-                // ALE stuff
-                if(m_ALESolver)
+
+                if(m_ALESolver) // Change to advect coeffs, change flag to physical vs coefficent space
                 {
-                    m_fields[0]->Reset();
-                    m_fields[0]->GetTrace()->GetNormals(m_traceNormals);
-                    UpdateGridVelocity(m_time);
                     SetBoundaryConditions(m_time);
-
-                    // Update m_fields with u^n by multiplying by inverse mass
-                    // matrix. That's then used in e.g. checkpoint output and L^2 error
-                    // calculation.
-
-                    for (i = 0; i < nvariables; ++i)
-                    {
-                        m_fields[i]->MultiplyByElmtInvMass(
-                            fields[i], m_fields[i]->UpdateCoeffs());
-                        m_fields[i]->BwdTrans(
-                            m_fields[i]->GetCoeffs(), m_fields[i]->UpdatePhys());
-                    }
+                    ALEHelper::ALEDoElmtInvMass(m_traceNormals, fields, m_time);
                 }
                 else
                 {

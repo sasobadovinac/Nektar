@@ -108,9 +108,10 @@ namespace Nektar
         /// Print Summary
         virtual void v_GenerateSummary(SolverUtils::SummaryList& s);
 
+        virtual bool v_PreIntegrate(int step) final;
+
     private:
         NekDouble m_waveFreq;
-        NekDouble m_prevStageTime = 0.0;
     };
 }
 

@@ -137,18 +137,6 @@ public:
         const Array<OneD, Array<OneD, NekDouble> >
             &pBwd = NullNekDoubleArrayofArray);
 
-    SOLVER_UTILS_EXPORT void AdvectCoeffsALE(
-        const int nConvectiveFields,
-        const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
-        const Array<OneD, Array<OneD, NekDouble> >        &advVel,
-        const Array<OneD, Array<OneD, NekDouble> >        &inarray,
-        Array<OneD, Array<OneD, NekDouble> >              &outarray,
-        const NekDouble                                   &time,
-        const Array<OneD, Array<OneD, NekDouble> >
-        &pFwd = NullNekDoubleArrayofArray,
-        const Array<OneD, Array<OneD, NekDouble> >
-        &pBwd = NullNekDoubleArrayofArray);
-
     /**
      * @brief Set the flux vector callback function.
      *
@@ -253,18 +241,6 @@ protected:
             &pFwd = NullNekDoubleArrayofArray,
         const Array<OneD, Array<OneD, NekDouble> >
             &pBwd = NullNekDoubleArrayofArray);
-
-    SOLVER_UTILS_EXPORT virtual void v_AdvectCoeffsALE(
-        const int nConvectiveFields,
-        const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
-        const Array<OneD, Array<OneD, NekDouble> >        &advVel,
-        const Array<OneD, Array<OneD, NekDouble> >        &inarray,
-        Array<OneD, Array<OneD, NekDouble> >        &outarray,
-        const NekDouble                                   &time,
-        const Array<OneD, Array<OneD, NekDouble> >
-        &pFwd = NullNekDoubleArrayofArray,
-        const Array<OneD, Array<OneD, NekDouble> >
-        &pBwd = NullNekDoubleArrayofArray);
 
     /// Overrides the base flow used during linearised advection
     SOLVER_UTILS_EXPORT virtual void v_SetBaseFlow(
