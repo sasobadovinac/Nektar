@@ -298,11 +298,11 @@ std::string LaxFriedrichsSolver::solverName = SolverUtils::GetRiemannSolverFacto
             for (auto &zone : zones)
             {
                 // If the zone domain is fixed then grid velocity is left at 0
-                if (zone.second->GetMovementType() == SpatialDomains::eFixed)
+                if (zone.second->GetMovementType() == SpatialDomains::MovementType::eFixed)
                 {
                     continue;
                 }
-                else if (zone.second->GetMovementType() == SpatialDomains::eRotate)
+                else if (zone.second->GetMovementType() == SpatialDomains::MovementType::eRotate)
                 {
                     SpatialDomains::ZoneRotateShPtr zoneRotate =
                         std::static_pointer_cast<
@@ -330,7 +330,7 @@ std::string LaxFriedrichsSolver::solverName = SolverUtils::GetRiemannSolverFacto
                         }
                     }
                 }
-                else if (zone.second->GetMovementType() == SpatialDomains::eTranslate)
+                else if (zone.second->GetMovementType() == SpatialDomains::MovementType::eTranslate)
                 {
                     std::cout << "translate get grid vel" << std::endl;
                     SpatialDomains::ZoneTranslateShPtr interfaceTranslate =
@@ -355,7 +355,7 @@ std::string LaxFriedrichsSolver::solverName = SolverUtils::GetRiemannSolverFacto
                         }
                     }
                 }
-                else if (zone.second->GetMovementType() == SpatialDomains::ePrescribe)
+                else if (zone.second->GetMovementType() == SpatialDomains::MovementType::ePrescribe)
                 {
                     /*NekDouble Lx = 20, Ly = 20;         // Size of mesh
                     NekDouble nx = 1, ny = 1, nt = 1;   // Space and time period

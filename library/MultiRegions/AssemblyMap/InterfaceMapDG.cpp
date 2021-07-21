@@ -83,22 +83,22 @@ InterfaceMapDG::InterfaceMapDG(
         if (!interface.second->GetLeftInterface()->IsEmpty())
         {
             myIndxLRMap[interface.first.first] += 1;
-            localInterfaces[interface.first.first][SpatialDomains::eLeft] =
+            localInterfaces[interface.first.first][SpatialDomains::InterfaceSide::eLeft] =
                 MemoryManager<InterfaceTrace>::AllocateSharedPtr(
                     trace, interface.second->GetLeftInterface(),
                     geomIdToTraceId);
             m_localInterfaces.emplace_back(
-                localInterfaces[interface.first.first][SpatialDomains::eLeft]);
+                localInterfaces[interface.first.first][SpatialDomains::InterfaceSide::eLeft]);
         }
         if (!interface.second->GetRightInterface()->IsEmpty())
         {
             myIndxLRMap[interface.first.first] += 2;
-            localInterfaces[interface.first.first][SpatialDomains::eRight] =
+            localInterfaces[interface.first.first][SpatialDomains::InterfaceSide::eRight] =
                 MemoryManager<InterfaceTrace>::AllocateSharedPtr(
                     trace, interface.second->GetRightInterface(),
                     geomIdToTraceId);
             m_localInterfaces.emplace_back(
-                localInterfaces[interface.first.first][SpatialDomains::eRight]);
+                localInterfaces[interface.first.first][SpatialDomains::InterfaceSide::eRight]);
         }
 
         cnt++;
@@ -172,9 +172,9 @@ InterfaceMapDG::InterfaceMapDG(
                 // If contains opposite edge locally then set true
                 if (otherCode == 3)
                 {
-                    localInterfaces[otherId][SpatialDomains::eLeft]
+                    localInterfaces[otherId][SpatialDomains::InterfaceSide::eLeft]
                         ->SetCheckLocal(true);
-                    localInterfaces[otherId][SpatialDomains::eRight]
+                    localInterfaces[otherId][SpatialDomains::InterfaceSide::eRight]
                         ->SetCheckLocal(true);
                 }
 
@@ -188,21 +188,21 @@ InterfaceMapDG::InterfaceMapDG(
                 (myCode == 3 && otherCode == 2))
             {
                 oppRankSharedInterface[i].emplace_back(
-                    localInterfaces[otherId][SpatialDomains::eLeft]);
+                    localInterfaces[otherId][SpatialDomains::InterfaceSide::eLeft]);
             }
             else if ((myCode == 2 && otherCode == 1) ||
                      (myCode == 2 && otherCode == 3) ||
                      (myCode == 3 && otherCode == 1))
             {
                 oppRankSharedInterface[i].emplace_back(
-                    localInterfaces[otherId][SpatialDomains::eRight]);
+                    localInterfaces[otherId][SpatialDomains::InterfaceSide::eRight]);
             }
             else if (myCode == 3 && otherCode == 3)
             {
                 oppRankSharedInterface[i].emplace_back(
-                    localInterfaces[otherId][SpatialDomains::eLeft]);
+                    localInterfaces[otherId][SpatialDomains::InterfaceSide::eLeft]);
                 oppRankSharedInterface[i].emplace_back(
-                    localInterfaces[otherId][SpatialDomains::eRight]);
+                    localInterfaces[otherId][SpatialDomains::InterfaceSide::eRight]);
             }
         }
     }
@@ -471,7 +471,7 @@ void InterfaceMapDG::ExchangeTrace(Array<OneD, NekDouble> &Fwd,
     // of the interface
     for (auto &localInterface : m_localInterfaces)
     {
-        if (localInterface->GetInterface()->GetSide() == SpatialDomains::eRight && false)
+        if (localInterface->GetInterface()->GetSide() == SpatialDomains::InterfaceSide::eRight && false)
         {
             localInterface->SwapFwdBwdTrace(Fwd, Bwd);
         }

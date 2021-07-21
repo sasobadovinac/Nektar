@@ -48,8 +48,9 @@ namespace Nektar
 namespace SpatialDomains
 {
 
-enum MovementType
+enum class MovementType
 {
+    eNone,
     eFixed,
     eRotate,
     eTranslate,
@@ -58,13 +59,14 @@ enum MovementType
 
 const std::string MovementTypeStr[] =
 {
+    "None",
     "Fixed",
     "Rotating",
     "Sliding",
     "Prescribed"
 };
 
-enum InterfaceSide
+enum class InterfaceSide
 {
     eNone,
     eLeft,
@@ -132,7 +134,7 @@ struct ZoneBase
 
 protected:
     //ZoneBaseShPtr m_oppInterface;
-    MovementType m_type;
+    MovementType m_type = MovementType::eNone;
     int m_id;
     //InterfaceSide m_side = eNone;
     CompositeMap m_domain;
@@ -141,6 +143,7 @@ protected:
     std::vector<int> m_elementIds;
     std::vector<GeometrySharedPtr> m_elements;
     bool m_moved = true;
+    int m_coordDim;
 };
 
 struct ZoneRotate final: public ZoneBase
@@ -228,7 +231,7 @@ protected:
 struct ZoneFixed final: public ZoneBase
 {
     ZoneFixed(int id, const CompositeMap &domain)
-            : ZoneBase(eFixed, id, domain)
+            : ZoneBase(MovementType::eFixed, id, domain)
     {
     }
 
@@ -300,7 +303,7 @@ struct Interface
 protected:
     InterfaceShPtr m_oppInterface;
     int m_id;
-    InterfaceSide m_side = eNone;
+    InterfaceSide m_side = InterfaceSide::eNone;
     std::map<int, GeometrySharedPtr> m_edge;
     std::vector<int> m_edgeIds;
 };

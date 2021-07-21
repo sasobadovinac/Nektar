@@ -31,21 +31,23 @@ void ALEHelper::InitObject(const SpatialDomains::MeshGraphSharedPtr &pGraph,
     {
         switch(zone.second->GetMovementType())
         {
-            case SpatialDomains::eFixed :
+            case SpatialDomains::MovementType::eFixed :
                 m_ALEs.emplace_back(ALEFixedShPtr(MemoryManager<ALEFixed>::AllocateSharedPtr(zone.second)));
                 break;
-            case SpatialDomains::eTranslate :
+            case SpatialDomains::MovementType::eTranslate :
                 m_ALEs.emplace_back(ALETranslateShPtr(MemoryManager<ALETranslate>::AllocateSharedPtr(zone.second)));
                 m_ALESolver = true;
                 break;
-            case SpatialDomains::eRotate :
+            case SpatialDomains::MovementType::eRotate :
                 m_ALEs.emplace_back(ALERotateShPtr(MemoryManager<ALERotate>::AllocateSharedPtr(zone.second)));
                 m_ALESolver = true;
                 break;
-            case SpatialDomains::ePrescribe :
+            case SpatialDomains::MovementType::ePrescribe :
                 m_ALEs.emplace_back(ALEPrescribeShPtr(MemoryManager<ALEPrescribe>::AllocateSharedPtr(zone.second)));
                 m_ALESolver = true;
                 break;
+            case SpatialDomains::MovementType::eNone :
+                WARNINGL0(false, "Zone cannot have movement type of 'None'.")
         }
     }
 }
@@ -184,8 +186,10 @@ void ALETranslate::v_UpdateGridVel(NekDouble time,
         int nq = expansion->GetTotPoints();
         for (int i = 0; i < nq; ++i)
         {
-            gridVelocity[0][offset + i] += vel[0];
-            gridVelocity[1][offset + i] += vel[1];
+            for (int j = 0; j < gridVelocity.size(); ++j)
+            {
+                gridVelocity[j][offset + i] += vel[j];
+            }
         }
     }
 }

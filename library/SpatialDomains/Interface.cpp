@@ -71,6 +71,52 @@ Movement::Movement(const LibUtilities::SessionReaderSharedPtr &pSession,
             // @TODO: Put in a check that both zones and interfaces are defined
         }
     }
+
+    // DEBUG COMMENTS
+    if (conditionsXml != nullptr) // Set if verbose/debug mode? to output rank interface information
+    {
+        if (m_session->GetComm()->GetRank() == 0)
+        {
+            std::cout << "Num zones: " << m_zones.size();
+            std::cout << "\n-----------------------------\n";
+            std::cout << "Zone ID "
+                      << "Type \t"
+                      << "# elmts \n";
+            std::cout << "-----------------------------" << std::endl;
+
+            std::array<std::string, 4> edgeName = {"n", "l", "r", "b"};
+
+            for (auto &zone : m_zones)
+            {
+                std::cout << zone.first
+                          << "\t"
+                          << MovementTypeStr[static_cast<int>(zone.second->GetMovementType())]
+                          << "\t"
+                          << zone.second->GetElements().size()
+                          << std::endl;
+            }
+            std::cout << "-----------------------------" << std::endl << std::endl;
+
+            std::cout << "Num interfaces: " << m_interfaces.size();
+            std::cout << "\n-----------------------------\n";
+            std::cout << "Name \t"
+                      << "L # elmts \t"
+                      << "R # elmts \n";
+            std::cout << "-----------------------------" << std::endl;
+
+            for (auto &interface : m_interfaces)
+            {
+                std::cout
+                    << interface.first.second
+                    << "\t"
+                    << interface.second->GetLeftInterface()->GetEdgeIds().size()
+                    << "\t"
+                    << interface.second->GetRightInterface()->GetEdgeIds().size()
+                    << std::endl;
+            }
+            std::cout << "-----------------------------" << std::endl;
+        }
+    }
 }
 
 ZoneBase::ZoneBase(MovementType type, int indx, CompositeMap domain)
@@ -85,13 +131,15 @@ ZoneBase::ZoneBase(MovementType type, int indx, CompositeMap domain)
             m_elements.emplace_back(geom);
         }
     }
+
+    m_coordDim = domain.begin()->second->m_geomVec[0]->GetCoordim();
 }
 
 ZoneRotate::ZoneRotate(int id, const CompositeMap &domain,
                                      const PointGeom &origin,
                                      const std::vector<NekDouble> &axis,
                                      const NekDouble angularVel)
-    : ZoneBase(eRotate, id, domain), m_origin(origin), m_axis(axis),
+    : ZoneBase(MovementType::eRotate, id, domain), m_origin(origin), m_axis(axis),
       m_angularVel(angularVel)
 {
     std::set<int> seenVerts, seenEdges;
@@ -152,7 +200,7 @@ ZoneRotate::ZoneRotate(int id, const CompositeMap &domain,
 
 ZoneTranslate::ZoneTranslate(int id, const CompositeMap &domain,
                                    const std::vector<NekDouble> &velocity)
-    : ZoneBase(eTranslate, id, domain), m_velocity(velocity)
+    : ZoneBase(MovementType::eTranslate, id, domain), m_velocity(velocity)
 {
     std::set<int> seenVerts, seenEdges;
     for (auto &comp : m_domain)
@@ -210,11 +258,10 @@ ZoneTranslate::ZoneTranslate(int id, const CompositeMap &domain,
     }
 }
 
-ZonePrescribe::ZonePrescribe(int id,
-                                         const CompositeMap &domain,
-                                         LibUtilities::EquationSharedPtr xDeform,
-                                         LibUtilities::EquationSharedPtr yDeform)
-    : ZoneBase(ePrescribe, id, domain), m_xDeform(xDeform), m_yDeform(yDeform)
+ZonePrescribe::ZonePrescribe(int id, const CompositeMap &domain,
+                             LibUtilities::EquationSharedPtr xDeform,
+                             LibUtilities::EquationSharedPtr yDeform)
+    : ZoneBase(MovementType::ePrescribe, id, domain), m_xDeform(xDeform), m_yDeform(yDeform)
 {
     std::set<int> seenVerts, seenEdges;
     for (auto &comp : m_domain)
@@ -389,6 +436,10 @@ void Movement::ReadZones(TiXmlElement *zonesTag)
 
             zone = ZonePrescribeShPtr(MemoryManager<ZonePrescribe>::AllocateSharedPtr(indx, domain, xDeformEqn, yDeformEqn));
         }
+        else
+        {
+            WARNINGL0(false, "Zone type '" + zoneType + "' is unsupported. Valid types are: 'Fixed', 'Rotate', 'Translate', or 'Prescribe'.")
+        }
 
         m_zones[indx] = zone;
 
@@ -424,11 +475,11 @@ void Movement::ReadInterfaces(TiXmlElement *interfacesTag)
             InterfaceSide side; // @TODO: Currently don't use these sides. Change to make sure we define a left and right.
             if(sideStr == "L" || sideStr == "LEFT")
             {
-                side = eLeft;
+                side = InterfaceSide::eLeft;
             }
             else if (sideStr == "R" || sideStr == "RIGHT")
             {
-                side = eRight;
+                side = InterfaceSide::eRight;
             }
             else
             {
@@ -587,10 +638,8 @@ void ZoneRotate::v_Move(NekDouble time)
 
 void ZoneTranslate::v_Move(NekDouble timeStep)
 {
-    int dim = 3; // @TODO: Think a way to get this for coorddim even if interface isn't present on rank.
-
     Array<OneD, NekDouble> dist(3, 0.0);
-    for (int i = 0; i < dim; ++i)
+    for (int i = 0; i < m_coordDim; ++i)
     {
         dist[i] = m_velocity[i] * timeStep;
     }
@@ -601,7 +650,7 @@ void ZoneTranslate::v_Move(NekDouble timeStep)
         Array<OneD, NekDouble> newLoc(3, 0.0);
         auto pnt = m_origPosition[cnt];
 
-        for (int i = 0; i < dim; ++i)
+        for (int i = 0; i < m_coordDim; ++i)
         {
             newLoc[i] = pnt(i) + dist[i];
         }
@@ -617,7 +666,7 @@ void ZoneTranslate::v_Move(NekDouble timeStep)
             Array<OneD, NekDouble> newLoc(3, 0.0);
             auto pnt = m_origPosition[cnt];
 
-            for (int i = 0; i < dim; ++i)
+            for (int i = 0; i < m_coordDim; ++i)
             {
                 newLoc[i] = pnt(i) + dist[i];
             }
