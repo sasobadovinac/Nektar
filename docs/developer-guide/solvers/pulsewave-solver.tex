@@ -1,0 +1,168 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\chapter{PulseWaveSolver: Solving the 1D Pulse Wave Equations}
+
+In this chapter, we introduce the 1D pulse wave solver to the readers.
+\section{Fundamental Theories of PulseWaveSolver}
+\subsection{Governing equations}
+The characteristic system  of 1D pulse wave equation is inherently subcritical and does not produce shock under physiological conditions. Therefore the numerical challenge is to propagate waves for many periods without suffering from excessive dispersion and diffusion errors.
+The governing pulse wave 1D equations, representing conservation of mass and momentum, can be written in abridged form as
+\begin{equation}
+\frac{\partial\textbf U}{\partial t}+\frac{\partial \textbf F}{\partial x}=\textbf S
+\end{equation}
+where 
+\begin{equation}\nonumber
+\textbf{U}=
+\begin{bmatrix}
+U_1 \\
+U_2
+\end{bmatrix}
+=
+\begin{bmatrix}
+A\\
+u
+\end{bmatrix}
+,
+\textbf F=
+\begin{bmatrix}
+F_1\\
+F_2
+\end{bmatrix}
+=
+\begin{bmatrix}
+uA\\
+\frac{u^2}{2}+\frac{p}{\rho}
+\end{bmatrix}
+,
+\textbf S=
+\begin{bmatrix}
+S_1\\
+S_2
+\end{bmatrix}
+=
+\begin{bmatrix}
+0\\
+-K_R u
+\end{bmatrix}
+\end{equation}
+The $x$ is the axial direction, $A=A(x,t)$is the area of a cross section,$u$ denotes the velocity of the fluid averaged across the section,\ $p$ is the internal pressure,$\rho$ is the density of the blood which is taken to be constant.The term $K_R$ is a strictly positive quantity which represents the viscous resistance of the flow per unit length of tube.
+\newline
+In our case, we consider the one-dimensional hyperbolic system (1.1) in conservative form and assuming that $K_R=0$ we have
+\begin{equation}
+\frac{\partial\textbf U}{\partial t}=L({\textbf U})=-\frac{\partial \textbf F}{\partial x}
+\end{equation}
+where $L$ is the analytical nonlinear spatial operator.
+
+
+\subsection{Discretization}
+\subsection*{Spatial discretization}
+ The discontinuous Galerkin method is an attractive formulation for high-order discretisation of hyperbolic conservation laws. In order to use this method, the computational domain $(\Omega)$ is divided into $N_e$ non-overlapping elements $(\Omega _e)$. The weak form of Eqs. (1.2) is obtained by multiplying the test function $\phi _p$ and performing integration by parts in  $(\Omega _e)$,
+\begin{equation}
+\int\limits_{\Omega_e}\frac{\partial\textbf U}{\partial t}\phi_pd\Omega_e=\int\limits_{\Omega_e}\nabla\phi_p\cdot\textbf{F}d\Omega_e-\int\limits_{\Gamma_e}\phi_p\textbf{F}^n d\Gamma_e
+\end{equation}
+The fluxes are calculated at some quadrature points and a quadrature rule with $N_Q$ quadrature points is adopted to calculate the integration in the element and $N_Q^\Gamma$ quadrature points on element boundaries. We rewrite the Eqs. (1.3) into the matrix form. This leads to
+\begin{equation}
+\sum^{N_Q}_{i=1}\sum^{N}_{q=1}\phi_p(\textbf{x}_i)w_iJ_i\phi_q(\textbf{x}_i)\frac{d\textbf{u}_q}{dt}=\sum^{N_Q}_{i=1}w_iJ_i\nabla\phi_p(\textbf{x}_i)\cdot\textbf{F}(\textbf{U}_{\delta,i})-\sum^{N^\Gamma_Q}_{i=1}\phi_p(x^\Gamma_i)w^\Gamma_iJ^\Gamma_i\hat{\textbf F}^n_i
+\end{equation}
+where $\textbf u_q$ is the coefficient vector of the basis function. The whole discretization can be written in the following matrix form
+\begin{equation}
+\frac{d\textbf u}{dt}=\textbf M^{-1}L_{\delta}(\textbf U)=\mathcal{L}_\delta(\textbf u_\delta)\\
+=\textbf M^{-1}\Big[\sum^{d}_{j=1}\textbf B^T\textbf D^T_j\Lambda(wJ)\textbf F_j-(\textbf B^\Gamma \textbf M_c)^T\Gamma(w^\Gamma J^\Gamma)\hat{\textbf F}^n\Big]
+\end{equation}
+where $d$ is the spatial dimension, $\textbf M=\textbf B^T\Lambda(wJ)\textbf B$ is the mass matrix, $\Lambda$ represents a diagonal matrix, $\textbf D_j$ is the derivative matrix in the $j$th direction, $\textbf B^\Gamma$ is the backward transformation matrix of $\phi^\Gamma$ and $\textbf M_c$ is the mapping matrix between $\phi^\Gamma $ and $\phi$, $\textbf J$ is the interpolation matrix from quadrature points of a element to quadrature points of its element boundaries.
+\subsection*{Time discretization}
+Various multi-step and multi-stage methods have been implemented in an object-oriented general linear methods framework. Here, the Adams-Bashforth methods are took as examples. 
+If we consider a constant step size $\Delta t$ and a mesh $t_0 \leq t_1 \leq t_2 \leq \cdots \leq t_f $, and we apply a Adams-Bashforth scheme, then the approximate solution $\textbf U_k$ at $t_k$ is obtained from the previous values $\textbf U_{k-1},\textbf U_{k-2},\cdots,\textbf U_{k-r}$ as
+\begin{equation}
+\textbf U^{(i)}_\delta = \textbf {Bu}^{(i)}
+\end{equation}
+
+\begin{equation}
+\textbf U_k =\textbf U_{k-1}+\Delta t \sum^r_{j=1}\beta _jL(\textbf U_{k-j})
+\end{equation}
+where 
+\begin{equation}
+\gamma_i=(-1)^i\int^1_0\begin{bmatrix} -s \\ i \end{bmatrix}ds,
+\ \ \ 
+\beta_j = (-1)^{j-1}\sum^{k-1}_{i=j-1}\begin{pmatrix} i \\ j-1 \end{pmatrix}\gamma_i
+\end{equation}
+
+%\begin{equation}
+%\textbf s^{(i)}=\textbf u^n+\Delta t\sum^{i-1}_{j=1}a_{ij}\mathcal{L}_\delta(\textbf u_\delta^{(j)}),i=1,2...s
+%\end{equation}
+%\begin{equation}
+%\textbf u^{(i)}=\textbf s^{(i)}+\Delta ta_{ii}\mathcal{L}_\delta(\textbf u_\delta^{(j)}),i=1,2...s
+%\end{equation}
+
+where $\beta_{i}$ and $\gamma_i$ is the coefficient of the Adams-Bashforth method,  $\textbf B$ is the backward transform matrix. This formula is a k-step method because it uses information at the $r$ points $t_{k-1}$ , $t_{k-2}$,$\cdots$, $t_{k-r}$. 
+%Finally, the solution of the new time step (n+1) is calculated by
+%\begin{equation}
+%\textbf U^{n+1}=\textbf U^n+\Delta t\sum^{s}_{i=1}b_iL(\textbf{U}(i))
+%\end{equation}
+%For explicit RK methods, $a_{ii}=0$, the discretization is complete and straightforward.
+\section{Functions of the implementation}
+Table 1.1 lists the main functions of the pulse wave solver.The discretization of the advection term mainly uses the $\texttt{AdvectVolumeFlux}$ and $\texttt{AdvectTraceFlux}$ to calculate the fluxes on the quadrature points of inside the element and on the element boundaries. Then, $\texttt{IProductWRTDerivBase}$ and $\texttt{AddTraceIntegral}$ are adopted to perform the integrations. All of these opeators are organized into \texttt{AdvectionWeakDG}.
+\begin{table}[htbp]
+\centering
+\caption{Table of variable and function mapping used in the PulseWave solver to their mathemaitcal operations}
+\begin{tabular}{|l|l|}
+\hline
+\textbf{Variable/Function name} & \textbf{Physical meaning}\\ \hline
+
+$\texttt{AdvectVolumeFlux}$ & Advection Euler flux vector $\textbf F_j$\\ \hline
+
+$\texttt{AdvectTraceFlux}$ & Advection (Riemann) numerical flux at trace $\hat{\textbf F}^n$\\ \hline
+
+$\texttt{IProductWRTDerivBase}$ & 
+{$\sum^{d}_{j=1} \textbf B^T\textbf D^T_j \Lambda(wJ)$ operator to a vector} \\ \hline
+
+$\texttt{AddTraceIntegral}$ & ${(\textbf B^\Gamma\textbf M_c)^T\Lambda(w^\Gamma J^\Gamma)}$ to a vector \\ \hline
+
+$\texttt{MultiplyByElmImvMass}$ & Multiply the inverse of mass matrix to a vector\\ \hline
+
+$\texttt{DoOdeRhs}$ & Calculate $\mathcal{L}_\delta(\textbf u)$\\ \hline
+
+$\texttt{BwdTrans}$ & Calculate $\textbf U$ \\ \hline
+\end{tabular}
+\end{table}
+\clearpage
+\section{Flow Chart of PulseWaveSolver}
+\begin{figure}[b]
+\centering
+\includegraphics[width=.8\textwidth]{pulse-image.pdf} 
+\caption{Class structure of the pulse wave solver.The equation system classes $\texttt{PulseWavePropogation}$ contain access to the main functionalities of the solver, such as time integration, boundary conditions and the solution fields.They make use of numerical methods from the libraries, such as $\texttt{AdvectionWeakDG}$, and equations system related functions.}
+\label{img} 
+\end{figure}
+The main procedures for building a solver are briefly introduced. Besides the main solver class ($\texttt{PulseWaveSolver}$) which controls the solving procedure, an equation system class is needed. The equation system classes ($\texttt{PulseWavePropogation}$) are instantiated and initialized dynamically based on user inputs using a factory method pattern, which is also extensively used for the dynamic object creation of classes in the solver.The equation system class inherits instantiations of classes related to geometry information, solution approximation, time integration and others from equations system classes in the libraries such as $\texttt{UnsteadySystem}$  in $\texttt{SolverUtils}$. Thus the main functionality of the equation system class is to offer equation system related functions and to form spatial discretization operators using numerical methods from the libraries such as, $\texttt{AdvectionWeakDG}$. Fig. 1.1 illustrates the class structure of the pulse wave solvers. 
+
+\begin{table}[h]
+\centering
+\caption{Nassi–Shneiderman diagram of the pulse wave solver with the corresponding class or function names. Brown: class name; cyan: function name.}
+\renewcommand\arraystretch{1.2}
+\begin{tabular}{|ll|}
+\hline
+Initialization&in \texttt{\textcolor{brown}{PulseWaveSolver}}\\
+\hline
+Time step loop&in \texttt{\textcolor{brown}{UnsteadySystem}}\\
+\hline
+\ \ \ Calculate $\mathcal{L}_\delta(\textbf u)$&in \texttt{\textcolor{brown}{AdvectionWeakDG}} \\
+\hline
+\ \ \ \ \ \ Calculate $\textbf F_j$ &in \texttt{\textcolor{cyan}{AdvectVolumnFlux}}\\
+\hline
+\ \ \ \ \ \ Calculates the upwind flux $\hat{\textbf F}^n$ &in \texttt{\textcolor{cyan}{AdvectTraceFlux}}\\
+\hline
+\ \ \ \ \ \ Do inner product&in \texttt{\textcolor{cyan}{IProductWRTDerivBase}}\\
+\hline
+\ \ \ \ \ \ Do trace of Integral&in \texttt{\textcolor{cyan}{AddTraceIntegral}}\\
+\hline
+\ \ \ \ \ \ Multiply the inverse of mass matrix&in \texttt{\textcolor{cyan}{MultiplyByElmImvMass}}
+\\ \hline
+\ \ \ \ \ \ Change the $d\textbf u/dt$ to $d\textbf U/dt$&in \texttt{\textcolor{cyan}{BwdTrans}}\\
+\hline
+\ \ \  Calculate $\textbf U$ &in \texttt{\textcolor{brown}{TimeIntegrationScheme}}\\
+\hline
+Output and finalization&in \texttt{\textcolor{brown}{PulseWavePropogation}}\\
+\hline
+\end{tabular}
+
+\label{tab:wei1}
+\end{table}
