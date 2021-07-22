@@ -135,10 +135,11 @@ ZoneBase::ZoneBase(MovementType type, int indx, CompositeMap domain)
     m_coordDim = domain.begin()->second->m_geomVec[0]->GetCoordim();
 }
 
-ZoneRotate::ZoneRotate(int id, const CompositeMap &domain,
-                                     const PointGeom &origin,
-                                     const std::vector<NekDouble> &axis,
-                                     const NekDouble angularVel)
+ZoneRotate::ZoneRotate(int id,
+                       const CompositeMap &domain,
+                       const NekPoint<NekDouble> &origin,
+                       const DNekVec &axis,
+                       const NekDouble &angularVel)
     : ZoneBase(MovementType::eRotate, id, domain), m_origin(origin), m_axis(axis),
       m_angularVel(angularVel)
 {
@@ -196,6 +197,23 @@ ZoneRotate::ZoneRotate(int id, const CompositeMap &domain,
             m_origPosition.emplace_back(*pt);
         }
     }
+
+    // Construct rotation matrix
+    m_W(0, 1) = -m_axis[2];
+    m_W(0, 2) =  m_axis[1];
+    m_W(1, 0) =  m_axis[2];
+    m_W(1, 2) = -m_axis[0];
+    m_W(2, 0) = -m_axis[1];
+    m_W(2, 1) =  m_axis[0];
+
+    m_W2 = m_W*m_W;
+
+    std::cout << "W matrix: " << std::endl;
+    std::cout << m_W << std::endl << std::endl;
+    std::cout << "W^2 matrix: " << std::endl;
+    std::cout << m_W2 << std::endl << std::endl;
+    std::cout << "Origin: " << std::endl;
+    std::cout << m_origin << std::endl << std::endl;
 }
 
 ZoneTranslate::ZoneTranslate(int id, const CompositeMap &domain,
@@ -364,20 +382,6 @@ void Movement::ReadZones(TiXmlElement *zonesTag)
             domain = domains.at(domFind);
         }
 
-        /*map<int, CompositeSharedPtr> domainEdge;
-        if (zoneType != "P")
-        {
-            std::string domainEdgeStr;
-            int domainEdgeErr =
-                zonesElement->QueryStringAttribute("EDGE", &domainEdgeStr);
-
-            if (domainEdgeErr == TIXML_SUCCESS)
-            {
-                std::string indxStr = ReadTag(domainEdgeStr);
-                m_meshGraph->GetCompositeList(indxStr, domainEdge);
-            }
-        }*/
-
         ZoneBaseShPtr zone;
         if (zoneType == "R" || zoneType == "ROTATE" || zoneType == "ROTATING")
         {
@@ -386,14 +390,14 @@ void Movement::ReadZones(TiXmlElement *zonesTag)
             ASSERTL0(err == TIXML_SUCCESS, "Unable to read origin.");
             std::vector<NekDouble> originVec;
             ParseUtils::GenerateVector(originStr, originVec);
-            auto origin =
-                PointGeom(3, 0, originVec[0], originVec[1], originVec[2]);
+            NekPoint<NekDouble> origin =
+                NekPoint<NekDouble>(originVec[0], originVec[1], originVec[2]);
 
             std::string axisStr;
             err = zonesElement->QueryStringAttribute("AXIS", &axisStr);
             ASSERTL0(err == TIXML_SUCCESS, "Unable to read axis.");
-            std::vector<NekDouble> axis;
-            ParseUtils::GenerateVector(axisStr, axis);
+            DNekVec axis(axisStr);
+            axis.Normalize();
 
             std::string angularVelStr;
             err = zonesElement->QueryStringAttribute("ANGVEL", &angularVelStr);
@@ -602,22 +606,31 @@ void Movement::GenGeomFactors()
     }*/
 }
 
+// Calculate new location of points using Rodrigues formula
 void ZoneRotate::v_Move(NekDouble time)
 {
+    boost::ignore_unused(time);
     NekDouble angle = m_angularVel * time;
 
-    NekDouble ox, oy, oz;
-    m_origin.GetCoords(ox, oy, oz);
+    // Identity matrix
+    DNekMat rot(3,3,0.0);
+    rot(0,0) = 1.0;
+    rot(1,1) = 1.0;
+    rot(2,2) = 1.0;
+
+    rot = rot + sin(angle) * m_W + (1 - cos(angle)) * m_W2;
 
     int cnt = 0;
     for (auto &vert : m_rotateVerts)
     {
-        Array<OneD, NekDouble> newLoc(3, 0.0);
-        auto pnt = m_origPosition[cnt];
-        newLoc[0] = std::cos(angle) * pnt(0) - std::sin(angle) * pnt(1);
-        newLoc[1] = std::sin(angle) * pnt(0) + std::cos(angle) * pnt(1);
+        NekPoint<NekDouble> pnt = m_origPosition[cnt] - m_origin;
+        DNekVec pntVec = {pnt[0], pnt[1], pnt[2]};
 
-        vert->UpdatePosition(newLoc[0], newLoc[1], newLoc[2]);
+        DNekVec newLoc = rot * pntVec;
+
+        vert->UpdatePosition(newLoc(0) + m_origin[0],
+                             newLoc(1) + m_origin[1],
+                             newLoc(2) + m_origin[2]);
         cnt++;
     }
 
@@ -625,12 +638,14 @@ void ZoneRotate::v_Move(NekDouble time)
     {
         for (auto &vert : curve->m_points)
         {
-            Array<OneD, NekDouble> newLoc(3, 0.0);
-            auto pnt = m_origPosition[cnt];
-            newLoc[0] = std::cos(angle) * pnt(0) - std::sin(angle) * pnt(1);
-            newLoc[1] = std::sin(angle) * pnt(0) + std::cos(angle) * pnt(1);
+            NekPoint<NekDouble> pnt = m_origPosition[cnt] - m_origin;
+            DNekVec pntVec = {pnt[0], pnt[1], pnt[2]};
 
-            vert->UpdatePosition(newLoc[0], newLoc[1], newLoc[2]);
+            DNekVec newLoc = rot * pntVec;
+
+            vert->UpdatePosition(newLoc(0) + m_origin[0],
+                                 newLoc(1) + m_origin[1],
+                                 newLoc(2) + m_origin[2]);
             cnt++;
         }
     }

@@ -148,18 +148,20 @@ protected:
 
 struct ZoneRotate final: public ZoneBase
 {
-    ZoneRotate(int id, const CompositeMap &domain, const PointGeom &origin,
-                      const std::vector<NekDouble> &axis,
-                      const NekDouble angularVel);
+    ZoneRotate(int id,
+               const CompositeMap &domain,
+               const NekPoint<NekDouble> &origin,
+               const DNekVec &axis,
+               const NekDouble &angularVel);
 
     virtual ~ZoneRotate() = default;
 
-    inline PointGeom GetOrigin() const
+    inline NekPoint<NekDouble> GetOrigin() const
     {
         return m_origin;
     }
 
-    inline std::vector<NekDouble> GetAxis() const
+    inline NekVector<NekDouble> GetAxis() const
     {
         return m_axis;
     }
@@ -172,12 +174,15 @@ struct ZoneRotate final: public ZoneBase
     virtual void v_Move(NekDouble timeStep) final;
 
 protected:
-    PointGeom m_origin;
-    std::vector<NekDouble> m_axis;
+    NekPoint<NekDouble> m_origin;
+    DNekVec m_axis;
     NekDouble m_angularVel;
     std::vector<PointGeomSharedPtr> m_rotateVerts;
     std::vector<CurveSharedPtr> m_rotateCurves;
     std::vector<PointGeom> m_origPosition;
+    DNekMat m_W  = DNekMat(3, 3, 0.0);
+    DNekMat m_W2 = DNekMat(3, 3, 0.0);
+
 };
 
 struct ZoneTranslate final: public ZoneBase
