@@ -207,7 +207,7 @@ void ProcessSurfDistance::Process(po::variables_map &vm)
                         elmt->GetTracePhysVals(oppositeNum, bndElmt, x[k],
                                               face2);
                         // Consider edge orientation
-                        if (elmt->GetTraceOrient(facetNum) ==
+                        if (elmt->GetTraceOrient(facetNum) !=
                             elmt->GetTraceOrient(oppositeNum))
                         {
                             Vmath::Reverse(nqBnd, face2, 1, face2, 1);
