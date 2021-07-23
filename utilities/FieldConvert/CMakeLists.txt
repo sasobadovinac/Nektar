@@ -47,7 +47,7 @@ ADD_NEKTAR_TEST(scale_compressed_2D)
 ADD_NEKTAR_TEST(naca0012_3D_bnd)
 ADD_NEKTAR_TEST(Helmholtz)
 ADD_NEKTAR_TEST(Hex_channel_C0helmsmoothing)
-
+ADD_NEKTAR_TEST(surfDist)
 
 IF (NEKTAR_USE_METIS OR NEKTAR_USE_SCOTCH)
     ADD_NEKTAR_TEST(chan3D_part_only)
