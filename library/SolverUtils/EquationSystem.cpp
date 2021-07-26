@@ -1120,6 +1120,7 @@ namespace Nektar
             std::string filename = m_fld->SetUpOutput(graphname, true, true);
             filename.replace(filename.size() - 3, filename.size(), "xml"); // replace .fld with .xml
             m_graph->WriteGeometry(filename, true);
+            std::cout << std::endl;
         }
 
         /**

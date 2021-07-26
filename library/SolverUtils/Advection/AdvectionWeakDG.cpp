@@ -99,9 +99,18 @@ namespace Nektar
                 nConvectiveFields, fields, advVel, inarray, tmp, time,
                 pFwd, pBwd);
 
+            // Multiply by inverse mass matrix
+            LibUtilities::Timer timer;
+            for (int i = 0; i < nConvectiveFields; ++i)
+            {
+                timer.Start();
+                fields[i]->MultiplyByElmtInvMass(tmp[i], tmp[i]);
+                timer.Stop();
+                timer.AccumulateRegion("MultiplyByElmtInvMass");
+            }
+
             // why was this broken in many loops over convective fields?
             // this is terrible for locality
-            LibUtilities::Timer timer;
             timer.Start();
             for (int i = 0; i < nConvectiveFields; ++i)
             {

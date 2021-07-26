@@ -204,9 +204,12 @@ void ALERotate::v_UpdateGridVel(NekDouble time,
                                std::map<int, int> &elmtToExpId,
                                Array<OneD, Array<OneD, NekDouble>> &gridVelocity)
 {
-    boost::ignore_unused(time);
+    boost::ignore_unused(time, fields, elmtToExpId, gridVelocity);
 
     auto angVel = m_zone->GetAngularVel();
+    auto axis = m_zone->GetAxis();
+    auto origin = m_zone->GetOrigin();
+
     auto exp = fields[0]->GetExp();
 
     auto ids = m_zone->GetElementIds();
@@ -217,13 +220,31 @@ void ALERotate::v_UpdateGridVel(NekDouble time,
         auto expansion = (*exp)[indx];
 
         int nq = expansion->GetTotPoints();
+
         Array<OneD, NekDouble> xc(nq, 0.0), yc(nq, 0.0), zc(nq, 0.0);
         expansion->GetCoords(xc, yc, zc);
-
         for (int i = 0; i < nq; ++i)
         {
-            gridVelocity[0][offset + i] += -angVel*yc[i]; // @TODO: Update to include axis and origin.
-            gridVelocity[1][offset + i] += angVel*xc[i];
+            // Vector from origin to point
+            DNekVec pointMinOrigin = {xc[i] - origin(0),
+                                      yc[i] - origin(1),
+                                      zc[i] - origin(2)};
+
+            // Vector orthogonal to plane formed by axis and point
+            DNekVec norm = pointMinOrigin.Cross(axis);
+            //std::cout << xc[i] << " " << yc[i] << " " << zc[i] << " " << norm[0] << " " << norm[1] << " " << norm[2] << std::endl;
+
+            // Distance between point and axis
+            //DNekVec dist = pointMinOrigin - (pointMinOrigin.Dot(axis) * axis);
+
+            // @TODO: Not sure here? multiply normal vector by distance from axis and angular velocity?
+            //norm.Normalize();
+            norm = norm * angVel;
+
+            for (int j = 0; j < gridVelocity.size(); ++j)
+            {
+                gridVelocity[j][offset + i] = norm[j];
+            }
         }
     }
 }

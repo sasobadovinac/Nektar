@@ -143,7 +143,7 @@ ZoneRotate::ZoneRotate(int id,
     : ZoneBase(MovementType::eRotate, id, domain), m_origin(origin), m_axis(axis),
       m_angularVel(angularVel)
 {
-    std::set<int> seenVerts, seenEdges;
+    std::set<int> seenVerts, seenEdges, seenFaces;
     for (auto &comp : m_domain)
     {
         for (auto &geom : comp.second->m_geomVec)
@@ -174,6 +174,27 @@ ZoneRotate::ZoneRotate(int id,
                 seenEdges.insert(edge->GetGlobalID());
 
                 CurveSharedPtr curve = edge->GetCurve();
+                if (!curve)
+                {
+                    continue;
+                }
+
+                m_rotateCurves.emplace_back(curve);
+            }
+
+            for (int i = 0; i < geom->GetNumFaces(); ++i)
+            {
+                Geometry2DSharedPtr face =
+                    std::static_pointer_cast<Geometry2D>(geom->GetFace(i));
+
+                if (seenFaces.find(face->GetGlobalID()) != seenFaces.end())
+                {
+                    continue;
+                }
+
+                seenFaces.insert(face->GetGlobalID());
+
+                CurveSharedPtr curve = face->GetCurve();
                 if (!curve)
                 {
                     continue;
@@ -610,7 +631,7 @@ void Movement::GenGeomFactors()
 void ZoneRotate::v_Move(NekDouble time)
 {
     boost::ignore_unused(time);
-    NekDouble angle = m_angularVel * time;
+    NekDouble angle = -m_angularVel * time;
 
     // Identity matrix
     DNekMat rot(3,3,0.0);
@@ -620,6 +641,8 @@ void ZoneRotate::v_Move(NekDouble time)
 
     rot = rot + sin(angle) * m_W + (1 - cos(angle)) * m_W2;
 
+    std::cout << "Rotation matrix: " << std::endl;
+    std::cout << rot << std::endl;
     int cnt = 0;
     for (auto &vert : m_rotateVerts)
     {
@@ -631,6 +654,7 @@ void ZoneRotate::v_Move(NekDouble time)
         vert->UpdatePosition(newLoc(0) + m_origin[0],
                              newLoc(1) + m_origin[1],
                              newLoc(2) + m_origin[2]);
+
         cnt++;
     }
 
