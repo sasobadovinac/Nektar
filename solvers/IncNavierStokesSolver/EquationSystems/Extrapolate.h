@@ -141,8 +141,6 @@ namespace Nektar
 
         void EvaluateBDFArray(Array<OneD, Array<OneD, NekDouble> > &array);
 
-        void AccelerationBDF( Array<OneD, Array<OneD, NekDouble> > &array);
-
         void ExtrapolateArray(
             Array<OneD, Array<OneD, NekDouble> > &oldarrays,
             Array<OneD, NekDouble>  &newarray,
@@ -181,6 +179,9 @@ namespace Nektar
             Array<OneD, const NekDouble> &Advection)=0;
         
         virtual std::string v_GetSubStepName(void);
+
+        virtual void v_AccelerationBDF(
+            Array<OneD, Array<OneD, NekDouble> > &array);
 
         void CalcNeumannPressureBCs(
             const Array<OneD, const Array<OneD, NekDouble> > &fields,
