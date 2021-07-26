@@ -410,6 +410,12 @@ velocity system allows the introduction of a spatially varying
 viscosity, which arise for non-Newtonian flows, with only minor
 modifications.
 
+\begin{notebox}
+  The coupled solver is only supported for two-dimensional or quasi-3D problems,
+  and only using a direct solver (e.g. \inltt{DirectStaticCond}) which prevents
+  its use in parallel.
+\end{notebox}
+
 We consider the weak form of the Stokes problem for the velocity field
 $\boldsymbol{u}=[u,v]^{T}$ and the pressure field $p$:
 
@@ -706,7 +712,7 @@ Possible values are:
 \midrule
 Velocity Correction Scheme (VCS) & \texttt{VelocityCorrectionScheme} & 2D, Quasi-3D, 3D & CG, CG-DG\\
 VCS with weak pressure & \texttt{VCSWeakPressure} & 2D, Quasi-3D, 3D & CG, CG-DG\\
-Direct solver & \texttt{CoupledLinearisedNS} & 2D, Quasi-3D, 3D &CG\\
+Direct solver & \texttt{CoupledLinearisedNS} & 2D, Quasi-3D &CG\\
 \bottomrule
 \end{tabular}
 \end{center}
