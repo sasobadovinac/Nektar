@@ -54,6 +54,7 @@ v5.1.0
   (!1065)
 - Add new filter AeroForcesSPM to compute aerodynamic forces in immersed
   boundaries (!1065)
+- Fix dudt in high-order pressure boundary condition (!1190)
 
 **CompressibleFlowSolver**
 - Added vectorisation of the Interior Penalty method (!!223)

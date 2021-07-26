@@ -37,6 +37,11 @@
 
 namespace Nektar
 {
+    NekDouble StandardExtrapolate::DuDt_Coeffs[3][4] = {
+        { 1.0,  -1., 0.0, 0.0},
+        { 2.5, -4.0, 1.5, 0.0},
+        { 13./3., -9.5, 7.0, -11.0/6.0}};
+
     /**
      * Registers the class with the Factory.
      */
@@ -151,5 +156,46 @@ namespace Nektar
         Array<OneD, const NekDouble> &Advection)
     {
         Vmath::Svtvp(HBCdata,-kinvis,Q,1,Advection,1,Q,1);
+    }
+
+    /**
+     *    At the start, the newest value is stored in array[nlevels-1]
+     *        and the previous values in the first positions
+     *    At the end, the acceleration from BDF is stored in array[nlevels-1]
+     *        and the storage has been updated to included the new value
+     */
+    void StandardExtrapolate::v_AccelerationBDF(
+            Array<OneD, Array<OneD, NekDouble> > &array)
+    {
+        int nlevels  = array.size();
+        int nPts     = array[0].size();
+
+
+        if(nPts)
+        {
+            // Update array
+            RollOver(array);
+
+            // Calculate acceleration using Backward Differentiation Formula
+            Array<OneD, NekDouble> accelerationTerm (nPts, 0.0);
+            if (m_pressureCalls > 2)
+            {
+                int acc_order = min(m_pressureCalls-2,m_intSteps);
+                Vmath::Smul(nPts,
+                            DuDt_Coeffs[acc_order-1][0],
+                            array[0], 1,
+                            accelerationTerm,  1);
+
+                for(int i = 0; i < acc_order; i++)
+                {
+                    Vmath::Svtvp(nPts,
+                                 DuDt_Coeffs[acc_order-1][i+1],
+                                 array[i+1], 1,
+                                 accelerationTerm,    1,
+                                 accelerationTerm,    1);
+                }
+            }
+            array[nlevels-1] = accelerationTerm;
+        }
     }
 }
