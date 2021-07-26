@@ -140,8 +140,6 @@ namespace Nektar
 
         void EvaluateBDFArray(Array<OneD, Array<OneD, NekDouble> > &array);
 
-        void AccelerationBDF( Array<OneD, Array<OneD, NekDouble> > &array);
-
         void ExtrapolateArray(
             Array<OneD, Array<OneD, NekDouble> > &oldarrays,
             Array<OneD, NekDouble>  &newarray,
@@ -183,6 +181,9 @@ namespace Nektar
         
         virtual LibUtilities::TimeIntegrationMethod 
             v_GetSubStepIntegrationMethod(void);
+
+        virtual void v_AccelerationBDF(
+            Array<OneD, Array<OneD, NekDouble> > &array);
 
         void CalcNeumannPressureBCs(
             const Array<OneD, const Array<OneD, NekDouble> > &fields,

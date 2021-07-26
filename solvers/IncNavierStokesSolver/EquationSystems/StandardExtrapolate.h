@@ -110,7 +110,11 @@ namespace Nektar
             NekDouble kinvis, 
             Array<OneD, NekDouble> &Q, 
             Array<OneD, const NekDouble> &Advection);
-        
+
+        virtual void v_AccelerationBDF(
+            Array<OneD, Array<OneD, NekDouble> > &array);
+
+        static NekDouble DuDt_Coeffs[3][4];
     };
     
 }
