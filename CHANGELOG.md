@@ -102,6 +102,9 @@ v5.0.3
 **NekMesh**
 - Fix VTK Output for 3D meshes and support XML format (!1258)
 
+**Library**
+- Add robustness to the read expansions (!1239)
+
 v5.0.2
 ------
 **Library**
