@@ -106,6 +106,8 @@ v5.0.3
 
 **Documentation**
 - Fix documentation to note restrictions on use of coupled solver (!1268)
+**Library**
+- Add robustness to the read expansions (!1239)
 
 v5.0.2
 ------
