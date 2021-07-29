@@ -141,6 +141,7 @@
   variables:
     GIT_SUBMODULE_STRATEGY: normal
   script:
+    - yum -y upgrade
     - OS_DIST=$(echo $CI_JOB_NAME | cut -d- -f 2)
     - OS_VERSION=$(echo $CI_JOB_NAME | cut -d- -f 3)
     - NEKVER=$(<VERSION)
