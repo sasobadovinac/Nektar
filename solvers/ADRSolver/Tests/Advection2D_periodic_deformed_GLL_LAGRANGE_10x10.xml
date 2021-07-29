@@ -24,7 +24,7 @@
             <I PROPERTY="TimeIntegrationMethod" VALUE="ClassicalRungeKutta4"/>
         </SOLVERINFO>
         
-        <VARIABLES>
+        <VARIABLES><
             <V ID="0"> u </V>
         </VARIABLES>
         
@@ -515,10 +515,10 @@
         </ELEMENT>
         <COMPOSITE>
             <C ID="0"> Q[0-99] </C>
-            <C ID="100"> E[0,31,52,73,94,115,136,157,178,199] </C>
-            <C ID="200"> E[200,202,204,206,208,210,212,214,216,218] </C>
-            <C ID="300"> E[29,51,72,93,114,135,156,177,198,219] </C>
-            <C ID="400"> E[3,6,9,12,15,18,21,24,27,30] </C>
+            <C ID="100"> E[0,31,52,73,94,115,136,157,178,199] </C><!--bot l to r-->
+            <C ID="200"> E[200,202,204,206,208,210,212,214,216,218] </C><!--right bot to top-->
+            <C ID="300"> E[29,51,72,93,114,135,156,177,198,219] </C><!--top r to l-->
+            <C ID="400"> E[3,6,9,12,15,18,21,24,27,30] </C><!-- left top to bot--> 
         </COMPOSITE>
         <DOMAIN> C[0] </DOMAIN>
     </GEOMETRY>

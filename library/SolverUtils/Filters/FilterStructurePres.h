@@ -72,7 +72,7 @@ namespace Nektar
     protected:
 
       Array<OneD, Array<OneD, NekDouble> > FormConf(NekDouble N);
-      
+      Array<OneD, StdExpansion*> listeletype;
       SOLVER_UTILS_EXPORT virtual void v_Initialise(
 						    const Array<OneD, const MultiRegions::ExpListSharedPtr> &pField,
 						    const NekDouble &time);
@@ -83,17 +83,16 @@ namespace Nektar
 						  const Array<OneD, const MultiRegions::ExpListSharedPtr> &pField, const NekDouble &time);
       SOLVER_UTILS_EXPORT virtual bool v_IsTimeDependent();
 
-      Array<OneD, Array<OneD, NekDouble> > FindIds(
-						   const MultiRegions::ExpListSharedPtr &pFields);
+      Array<OneD, NekDouble> FindIds(Array<OneD, NekDouble> &uhatslocal, StdExpansion *E, NekDouble tol = 1e-6);
 
-      void  Optimize(LocalRegions::ExpansionSharedPtr exp, Array<OneD, NekDouble> &coefflocal, Array<OneD, NekDouble> &physlocal, Array<OneD, NekDouble> tmpcoord);
+      void  Optimize(StdExpansion* exp, Array<OneD, NekDouble> &coefflocal, Array<OneD, NekDouble> tmpcoord, NekDouble &avgiterGDret);
 
       Array<OneD, Array<OneD, NekDouble> > formConf(NekDouble N); 
 
       void project_edges( Array<OneD, NekDouble>uhats,    Array<OneD, Array<OneD, NekDouble> >&ret, StdExpansion *E);
       void edgederpquhats(Array<OneD, NekDouble> &uhats, Array<OneD, NekDouble> &ret, int modes,  Array <OneD, NekDouble> Vxy, Array<OneD, NekDouble> Vxyd0, Array<OneD, NekDouble> Vxyd1, Array<OneD, NekDouble> Vxyd2);
 	
-      Array<OneD, NekDouble>  call_find_roots(Array<OneD,  NekDouble> &uhats , NekDouble &avgiterGD, Array<OneD, Array<OneD, NekDouble> >&uhatsedges, Array<OneD, Array<OneD, NekDouble> >&surfaceuhats, NekDouble &minv, StdExpansion *E, NekDouble &roots1dtime, NekDouble &roots2dtime, NekDouble &roots3dtime);
+      Array<OneD, NekDouble>  call_find_roots(Array<OneD,  NekDouble> &uhats , NekDouble &avgiterGD, Array<OneD, Array<OneD, NekDouble> >&uhatsedges, Array<OneD, Array<OneD, NekDouble> >&surfaceuhats, NekDouble &minv, StdExpansion *E, NekDouble tol, NekDouble &roots1dtime, NekDouble &roots2dtime, NekDouble &roots3dtime);
 
 
       void surfuhats(Array<OneD, NekDouble> &uhats, Array<OneD, NekDouble> &ret,  Array<OneD, NekDouble> Vxyz, StdExpansion *Etemp);
@@ -106,8 +105,9 @@ namespace Nektar
       void call_setup_hex(LocalRegions::ExpansionSharedPtr exp);
       void call_setup_tet(LocalRegions::ExpansionSharedPtr exp);
       void call_setup_pyr(LocalRegions::ExpansionSharedPtr exp);
-      void DoOrthonormalize(const MultiRegions::ExpListSharedPtr &pFields,
-			    int flag = 0);
+      void call_setup_pri(LocalRegions::ExpansionSharedPtr exp);
+      /* void DoOrthonormalize(const MultiRegions::ExpListSharedPtr &pFields, */
+      /* 			    int flag = 0); */
     private:
       int dimension;
       unsigned int                m_index;
@@ -119,7 +119,13 @@ namespace Nektar
       LibUtilities::CommSharedPtr m_comm;
       Array<OneD, unsigned int>   m_planes;
 
-      
+      NekDouble                   timeStrPres = 0;
+      NekDouble                   timeFindIds = 0;
+      NekDouble                   timeOrth = 0;
+      int                         retGDall = 0;
+      int                         tot_optiter = 0;
+      NekDouble roots1dtimehold = 0.0, roots2dtimehold = 0.0, roots3dtimehold = 0.0 ;
+	        
       // Structure pres filter
       //Orthogonal ver of elements 
       StdExpansion *E3seg = nullptr; 
@@ -128,13 +134,12 @@ namespace Nektar
       StdExpansion *Epyr = nullptr;
       StdExpansion *Equad = nullptr;
       StdExpansion *Etri = nullptr;
+      StdExpansion *Epri = nullptr;
 
       Array<OneD, Array<OneD, NekDouble> > C;
       
       Array<OneD, const MultiRegions::ExpListSharedPtr> saveFields;
-      /* Array<OneD, Array<OneD, NekDouble > > storage3dhex, storage3dtet, storage3dpyr, storage2dt, storage2dq, coordmidhex, coordmidtet, coordmidquad,  coordmidtri, coordmidpyr, coordhex, coordtet, coordpyr, coordtri, coordquad; */
       
-      /* Array<OneD, NekDouble> midptevalhex, midptevaltet, midptevalpyr, midptevalquad, midptevaltri;  */
       Array<OneD, Array<OneD, NekDouble > > x, y, z;// coords of glo domain (all elements)
       
       DemoSupport demo;
@@ -326,6 +331,81 @@ namespace Nektar
       //surf DCB restriction  on GD: (x + y + z = -1)  
       Array<OneD, NekDouble> Vxpypzm1tet;
 
+      //prism edges:
+      // edge front left (x = -1) (y = -1) EA
+      Array<OneD, NekDouble> Vxm1ym1zpri;
+      Array<OneD, NekDouble> Vdyxm1ym1zpri;
+      Array<OneD, NekDouble> Vdxxm1ym1zpri;
+      Array<OneD, NekDouble> Vdzxm1ym1zpri;
+
+      //edge front hypt (y = -1) (z = -x) EB
+      Array<OneD, NekDouble> Vym1xmzpri   ;
+      Array<OneD, NekDouble> Vdxym1xmzpri   ;
+      Array<OneD, NekDouble> Vdyym1xmzpri   ;
+      Array<OneD, NekDouble> Vdzym1xmzpri   ;
+
+      //edge front bot (y = -1) (z = -1) AB
+      Array<OneD, NekDouble> Vym1xzm1pri   ;
+      Array<OneD, NekDouble> Vdyym1xzm1pri   ;
+      Array<OneD, NekDouble> Vdxym1xzm1pri   ;
+      Array<OneD, NekDouble> Vdzym1xzm1pri   ;
+
+      
+      //edge back left (y = 1) (x = -1))
+      Array<OneD, NekDouble> Vxm1y1zpri;
+      Array<OneD, NekDouble> Vdxxm1y1zpri;
+      Array<OneD, NekDouble> Vdyxm1y1zpri;
+      Array<OneD, NekDouble> Vdzxm1y1zpri;
+
+      //edge back hypt (y = 1) (z = -x)
+      Array<OneD, NekDouble> Vy1xmzpri   ;
+      Array<OneD, NekDouble> Vdxy1xmzpri   ;
+      Array<OneD, NekDouble> Vdyy1xmzpri   ;
+      Array<OneD, NekDouble> Vdzy1xmzpri   ;
+      
+      //edge back bot (y = 1) (z = -1)) DC
+      Array<OneD, NekDouble> Vy1xzm1pri   ;
+      Array<OneD, NekDouble> Vdyy1xzm1pri   ;
+      Array<OneD, NekDouble> Vdxy1xzm1pri   ;
+      Array<OneD, NekDouble> Vdzy1xzm1pri   ;
+
+
+      //edge left top (x = -1) (z = 1)
+      Array<OneD, NekDouble> Vxm1yz1pri   ;
+      Array<OneD, NekDouble> Vdxxm1yz1pri   ;
+      Array<OneD, NekDouble> Vdyxm1yz1pri   ;
+      Array<OneD, NekDouble> Vdzxm1yz1pri   ;
+
+      //edge bot  right (x = 1) (z = -1)
+      Array<OneD, NekDouble> Vx1yzm1pri  ;
+      Array<OneD, NekDouble> Vdxx1yzm1pri  ;
+      Array<OneD, NekDouble> Vdyx1yzm1pri  ;
+      Array<OneD, NekDouble> Vdzx1yzm1pri  ;
+
+      //edge bot left (x = -1) (z = -1)
+      Array<OneD, NekDouble> Vxm1yzm1pri;
+      Array<OneD, NekDouble> Vdxxm1yzm1pri;
+      Array<OneD, NekDouble> Vdyxm1yzm1pri;
+      Array<OneD, NekDouble> Vdzxm1yzm1pri;
+
+
+      //prism surfaces (bot, front. right, back, left, //top)
+
+      //surf bot z = -1
+      Array<OneD, NekDouble> Vxyzm1pri;
+
+      //surf front y = -1, x + z <= 0
+      Array<OneD, NekDouble> Vxym1zpri;  
+
+      //surf right (hypt) x+z <=0
+      Array<OneD, NekDouble> Vxemzym1pri;
+
+      //surf back y = 1, x + z <= 0
+      Array<OneD, NekDouble> Vxy1zpri;            
+
+      //surf left x = -1
+      Array<OneD, NekDouble> Vxm1yzpri;
+      
       //pyr dges:
       // edge front left (x = -1) (y = -1) EA
       Array<OneD, NekDouble> Vxm1ym1zpyr;
@@ -382,15 +462,15 @@ namespace Nektar
       //surface bot z = -1
       Array<OneD, NekDouble> Vxyzm1pyr ;
 
-      //surface hypt x+z = 0
+      //surface hypt x+z < 0 ,
       Array<OneD, NekDouble> Vxmzypyr;
 
-      //surface left x = -1
-      Array<OneD, NekDouble> Vxm1yzpyr;
+      //surface left x = -1, y+z < 0
+      Array<OneD, NekDouble> Vxm1ymzpyr;
 
 
-      //surface front y = -1
-      Array<OneD, NekDouble> Vxym1zpyr;
+      //surface front y = -1, x+z < 0
+      Array<OneD, NekDouble> Vxmzym1pyr;
 
       //surface back y +z = 0
       Array<OneD, NekDouble> Vxymzpyr;

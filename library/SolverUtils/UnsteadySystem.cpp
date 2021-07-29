@@ -81,7 +81,6 @@ namespace Nektar
         void UnsteadySystem::v_InitObject()
         {
             EquationSystem::v_InitObject();
-
             m_initialStep = 0;
 
             // Load SolverInfo parameters
@@ -200,7 +199,6 @@ namespace Nektar
         void UnsteadySystem::v_DoSolve()
         {
             ASSERTL0(m_intScheme != 0, "No time integration scheme.");
-
             int i = 1;
             int nvariables = 0;
             int nfields = m_fields.size();
@@ -243,12 +241,38 @@ namespace Nektar
             // Initialise time integration scheme
             m_intScheme->InitializeScheme( m_timestep, fields, m_time, m_ode );
 
+	      if(m_session->DefinesCmdLineArgument("verbose"))
+	      {
+		cout<<"\n max = "<<Vmath::Vmax(m_fields[m_intVariables[0]]->GetPhys().size(), m_fields[m_intVariables[0]]->GetPhys(), 1);
+		cout<<"\n min = "<<Vmath::Vmin(m_fields[m_intVariables[0]]->GetPhys().size(), m_fields[m_intVariables[0]]->GetPhys(), 1)<<"\n";
+	      }
+	    
             // Initialise filters
             for( auto &x : m_filters )
             {
-                x.second->Initialise(m_fields, m_time);
-            }
+	    
+	      x.second->Initialise(m_fields, m_time);
 
+	      for (i = 0; i < nvariables; ++i)
+		{
+		  fields[i] =  m_fields[m_intVariables[i]]->UpdatePhys();
+		  m_fields[m_intVariables[i]]->FwdTrans_IterPerExp( m_fields[m_intVariables[i]]->GetPhys(),
+								    m_fields[m_intVariables[i]]->UpdateCoeffs());
+		  
+		  m_fields[m_intVariables[i]]->SetPhysState(false);
+		}
+
+	      m_intScheme->SetSolutionVector( 0, fields);  		    
+	      
+	      if(m_session->DefinesCmdLineArgument("verbose"))
+		{
+		  
+		  cout<<"\n max = "<<Vmath::Vmax(m_fields[m_intVariables[0]]->GetPhys().size(), m_fields[m_intVariables[0]]->GetPhys(), 1);
+		  cout<<"\n min = "<<Vmath::Vmin(m_fields[m_intVariables[0]]->GetPhys().size(), m_fields[m_intVariables[0]]->GetPhys(), 1);
+		}
+	    }
+	    //	      return;
+	    //	    exit(0);
             LibUtilities::Timer         timer;
             bool      doCheckTime       = false;
             int       step              = m_initialStep;
@@ -274,20 +298,30 @@ namespace Nektar
             }
 
             NekDouble tmp_cflSafetyFactor = m_cflSafetyFactor;
+	    std::string filtername = "StructurePres";
 
             m_timestepMax = m_timestep;
             while ((step   < m_steps ||
                    m_time < m_fintime - NekConstants::kNekZeroTol) &&
                    abortFlags[1] == 0)
             {
-                restartStep++;
+                for (auto &x : m_filters)
+                {
+		  
+		  if(!filtername.compare(x.first) )   
+		    {
+		      m_intScheme->SetSolutionVector( 0, fields);
+		      
+		    }
+		}
+		restartStep++;
                 
                 if(m_CFLGrowth > 1.0&&m_cflSafetyFactor<m_CFLEnd)
-                {
+		  {
                     tmp_cflSafetyFactor = 
-                        min(m_CFLEnd,m_CFLGrowth*tmp_cflSafetyFactor);
-                }
-
+		      min(m_CFLEnd,m_CFLGrowth*tmp_cflSafetyFactor);
+		  }
+		
                 m_flagUpdatePreconMat = true;
 
                 // Flag to update AV
@@ -344,6 +378,13 @@ namespace Nektar
                     m_intScheme->TimeIntegrate( stepCounter, m_timestep, m_ode);
                 timer.Stop();
 
+		// std::    cout<<" \n\n After timeintegrate\n\n";
+		// for(int k = 0; k < fields[0].size(); k++)
+		//   {
+		//     std::cout<<" "<<fields[0][k]<<" ";
+		//   }
+		// std::    cout<<" \n\n"; 
+    
                 m_time  += m_timestep;
                 elapsed  = timer.TimePerTest(1);
                 intTime += elapsed;
@@ -372,11 +413,11 @@ namespace Nektar
                     if(m_flagImplicitItsStatistics && m_flagImplicitSolver)
                     {
                         cout 
-                             << "       &&" 
-                             << " TotImpStages= " << m_TotImpStages 
-                             << " TotNewtonIts= " << m_TotNewtonIts
-                             << " TotLinearIts = " << m_TotLinIts  
-                             << endl;
+			  << "       &&" 
+			  << " TotImpStages= " << m_TotImpStages 
+			  << " TotNewtonIts= " << m_TotNewtonIts
+			  << " TotLinearIts = " << m_TotLinIts  
+			  << endl;
                     }
                 }
 
@@ -450,16 +491,54 @@ namespace Nektar
                 // Update filters
                 for (auto &x : m_filters)
                 {
-                    timer.Start();
-                    x.second->Update(m_fields, m_time);
-                    timer.Stop();
-                    elapsed = timer.TimePerTest(1);
-                    totFilterTime += elapsed;
 
-                    // Write out individual filter status information
+		  if(!filtername.compare(x.first))
+		     {
+		       for (i = 0; i < nvariables; ++i)
+		       	{
+			  m_fields[m_intVariables[i]]->SetPhys(fields[i]);
+		   	}
+		     }
+		  // cout<<"\n\n\n fields before:\n\n";
+		  // for(int p = 0; p < fields[0].size(); p++)
+		  //   cout<<" "<<fields[0][p]<<" ";
+		  // cout<<"\n";
+		  
+		  timer.Start();
+		  x.second->Update(m_fields, m_time);
+		  timer.Stop();
+		  
+		  elapsed = timer.TimePerTest(1);
+		  totFilterTime += elapsed;
+		  if(!filtername.compare(x.first))
+		    {
+		      for (i = 0; i < nvariables; ++i)
+			{
+			  fields[i] =  m_fields[m_intVariables[i]]->UpdatePhys();
+			  m_fields[m_intVariables[i]]->FwdTrans_IterPerExp( m_fields[m_intVariables[i]]->GetPhys(),
+									    m_fields[m_intVariables[i]]->UpdateCoeffs());
+			  
+			  m_fields[m_intVariables[i]]->SetPhysState(false);
+			}
+		    }
+			  
+		// cout<<"\n\n\n fields AFTER:\n\n";
+		//   for(int p = 0; p < fields[0].size(); p++)
+		//     cout<<" "<<fields[0][p]<<" ";
+		//   cout<<"\n";
+		  
+
+
+		// std::    cout<<" \n\n After filter\n\n";
+		// for(int k = 0; k < fields[0].size(); k++)
+		//   {
+		//     std::cout<<" "<<fields[0][k]<<" ";
+		//   }
+		// std::    cout<<" \n\n"; 		  
+		  // Write out individual filter status information
                     if(m_session->GetComm()->GetRank() == 0 &&
                     !((step+1) % m_filtersInfosteps) && !m_filters.empty() &&
-                    m_session->DefinesCmdLineArgument("verbose"))
+		      m_session->DefinesCmdLineArgument("verbose"))
                     {
                         stringstream s0;
                         s0 << x.first << ":";
@@ -472,8 +551,8 @@ namespace Nektar
                             endl << "\t Percentage of time integration:     "
                              << setw(10) << left << s2.str() << endl;
                     }
-                }
-
+                
+		}
                 // Write out overall filter status information
                 if (m_session->GetComm()->GetRank() == 0 &&
                     !((step+1) % m_filtersInfosteps) && !m_filters.empty())
@@ -519,7 +598,7 @@ namespace Nektar
                     }
                     else
                     {
-                        Checkpoint_Output(m_nchk);
+		      Checkpoint_Output(m_nchk);
                         m_nchk++;
                     }
                     doCheckTime = false;
@@ -529,8 +608,8 @@ namespace Nektar
                 ++step;
                 ++stepCounter;
             }
-
-            // Print out summary statistics
+	    
+	    // Print out summary statistics
             if (m_session->GetComm()->GetRank() == 0)
             {
                 if (m_cflSafetyFactor > 0.0)
@@ -577,6 +656,7 @@ namespace Nektar
                     m_fields[m_intVariables[i]]->SetPhysState(true);
                 }
             }
+	    Checkpoint_Output(m_nchk);
 
             // Finalise filters
             for (auto &x : m_filters)
@@ -589,7 +669,7 @@ namespace Nektar
             {
                 v_AppendOutput1D(fields);
             }
-        }
+	}
 
         /**
          * @brief Sets the initial conditions.

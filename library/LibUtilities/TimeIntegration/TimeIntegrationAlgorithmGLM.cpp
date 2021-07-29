@@ -65,7 +65,6 @@ TimeIntegrationSolutionGLMSharedPtr
     TimeIntegrationSolutionGLMSharedPtr y_out =
         MemoryManager<TimeIntegrationSolutionGLM>::AllocateSharedPtr(this, y_0,
                                                                   time, deltaT);
-
     if (m_schemeType == eExplicit || m_schemeType == eExponential)
     {
         // ensure initial solution is in correct space
@@ -186,7 +185,7 @@ TimeIntegrate(const NekDouble deltaT,
             // NekDouble    t_n = solvector->GetValueTime( curTimeLevels[n] );
 
             y_n = solvector->GetValue(curTimeLevels[n]);
-            t_n = solvector->GetValueTime(curTimeLevels[n]);
+	    t_n = solvector->GetValueTime(curTimeLevels[n]);
 
             // Set the required value in the input solution
             // vector of the current scheme
@@ -352,14 +351,29 @@ TimeIntegrate(const NekDouble deltaT,
         TimeIntegrationSolutionGLMSharedPtr solvector_new =
             MemoryManager<TimeIntegrationSolutionGLM>::AllocateSharedPtr(
                 this, nvar, npoints);
-
-        TimeIntegrate(deltaT,
+	//Print sol :
+	// TripleArray solvectortmp = solvector->GetSolutionVector();
+	// Array<OneD, Array<OneD, NekDouble> >tmp = solvectortmp[0];
+	// std::cout<<"\n\n*****\n  before integration\n\n";
+	// for(int k = 0; k < tmp[0].size(); k++)
+	//   {
+	//     std::cout<<" "<<tmp[0][k]<<" ";
+	//       }
+	    
+	    TimeIntegrate(deltaT,
                       solvector->GetSolutionVector(),
                       solvector->GetTimeVector(),
                       solvector_new->UpdateSolutionVector(),
                       solvector_new->UpdateTimeVector(), op);
-
+	    
         solvector = solvector_new;
+	// std::cout<<"\n\n****after integration\n\n";
+	// solvectortmp = solvector_new->GetSolutionVector();
+	// tmp = solvectortmp[0];
+	// for(int k = 0; k < tmp[0].size(); k++)
+	//   {
+	//     std::cout<<" "<<tmp[0][k]<<" ";
+	//   }
     }
 
     return solvector->GetSolution();

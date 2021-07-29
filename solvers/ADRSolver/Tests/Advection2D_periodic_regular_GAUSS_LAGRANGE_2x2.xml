@@ -53,25 +53,39 @@
     </GEOMETRY>
 
     <EXPANSIONS>
-        <E COMPOSITE="C[0]" NUMMODES="16" FIELDS="u" TYPE="GAUSS_LAGRANGE" />
-    </EXPANSIONS>
+      	 <E COMPOSITE="C[0]"
+	 NUMMODES="5,5"
+	 BASISTYPE="Modified_A,Modified_A"
+	 NUMPOINTS="10,10"
+	 POINTSTYPE="GaussLobattoLegendre,GaussLobattoLegendre"
+	 FIELDS="u" />
 
+      </EXPANSIONS>
+
+
+      <FILTERS>
+      	<FILTER TYPE="StructurePres">
+      	  <PARAM NAME="c_gd"> 0.7 </PARAM>
+      	  <PARAM NAME="gam_gd"> 0.7 </PARAM>
+      	</FILTER>
+      </FILTERS>
+      
     <CONDITIONS>
 
         <PARAMETERS>
-            <P> FinTime         = 2.0              </P>
-            <P> TimeStep        = 0.004             </P>
+            <P> FinTime         = 2             </P>
+            <P> TimeStep        = 0.001             </P>
             <P> NumSteps        = FinTime/TimeStep  </P>
-            <P> IO_CheckSteps   = 100000            </P>
+            <P> IO_CheckSteps   = 200        </P>
             <P> IO_InfoSteps    = 100000            </P>
-            <P> advx            = 1.1                 </P>
-            <P> advy            = 1.1                 </P>
+            <P> advx            = 1.0                 </P>
+            <P> advy            = 1.0                 </P>
         </PARAMETERS>
 
         <SOLVERINFO>
             <I PROPERTY="EQTYPE"                VALUE="UnsteadyAdvection"   />
             <I PROPERTY="Projection"            VALUE="DisContinuous"       />
-            <I PROPERTY="AdvectionType"         VALUE="FRDG"                />
+            <I PROPERTY="AdvectionType"         VALUE="WeakDG"                />
             <I PROPERTY="UpwindType"            VALUE="Upwind"              />
             <I PROPERTY="TimeIntegrationMethod" VALUE="ClassicalRungeKutta4"/>
         </SOLVERINFO>
@@ -103,16 +117,18 @@
         </BOUNDARYCONDITIONS>
 
         <FUNCTION NAME="AdvectionVelocity">
-            <E VAR="Vx" VALUE="1.1" />
-            <E VAR="Vy" VALUE="1.1" />
+            <E VAR="Vx" VALUE="1" />
+            <E VAR="Vy" VALUE="1" />
         </FUNCTION>
 
         <FUNCTION NAME="InitialConditions">
-            <E VAR="u" VALUE="exp(-40.0*(x^2 + y^2))" />
+            <!-- <E VAR="u" VALUE="floor(0.5*(floor(0.5*(x>= -0.8) + 0.5*(x&lt;=0.2))) +  0.5*(floor(0.5*( y>=-0.2) + 0.5*(y&lt;=0.8))))*sin(PI*(0.2-x))*sin(PI*(y+0.2))" /> -->
+            <E VAR="u" VALUE="x^2 + y^2" />
         </FUNCTION>
         
         <FUNCTION NAME="ExactSolution">
-            <E VAR="u" VALUE="exp(-40.0*((x - advx*t)^2 + (y - advy*t)^2))" />
+	  <!--            <E VAR="u" VALUE="exp(-40.0*((x - advx*t)^2 + (y - advy*t)^2))" />-->
+	              <E VAR="u" VALUE="x^2 + y^2" />
         </FUNCTION>
 
     </CONDITIONS>

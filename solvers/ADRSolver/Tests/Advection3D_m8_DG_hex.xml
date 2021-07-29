@@ -128,6 +128,13 @@
   <EXPANSIONS>
     <E COMPOSITE="C[0]" NUMMODES="8" TYPE="MODIFIED" FIELDS="u" />
   </EXPANSIONS>
+       	<FILTERS>
+	  <FILTER TYPE="StructurePres">
+	    <PARAM NAME="c_gd"> 0.7 </PARAM>
+	    <PARAM NAME="gam_gd"> 0.7</PARAM>
+	  </FILTER>
+	</FILTERS>
+
   <CONDITIONS>
     <PARAMETERS>
       <P> NumSteps       = 20              </P>

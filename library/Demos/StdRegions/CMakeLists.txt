@@ -1,30 +1,30 @@
-ADD_NEKTAR_EXECUTABLE(StdProject
-    COMPONENT demos DEPENDS StdRegions SOURCES StdProject.cpp)
-ADD_NEKTAR_EXECUTABLE(StdInterp
-    COMPONENT demos DEPENDS StdRegions SOURCES StdInterp.cpp)
-ADD_NEKTAR_EXECUTABLE(StdInterpDeriv
-    COMPONENT demos DEPENDS StdRegions SOURCES StdInterpDeriv.cpp)
-ADD_NEKTAR_EXECUTABLE(StdInterpBasis
-    COMPONENT demos DEPENDS StdRegions SOURCES StdInterpBasis.cpp)
-ADD_NEKTAR_EXECUTABLE(StdInterpDerivBasis
-    COMPONENT demos DEPENDS StdRegions SOURCES StdInterpDerivBasis.cpp)
-ADD_NEKTAR_EXECUTABLE(StdEquiToCoeff2D
-    COMPONENT demos DEPENDS StdRegions SOURCES StdEquiToCoeff2D.cpp)
+# ADD_NEKTAR_EXECUTABLE(StdProject
+#     COMPONENT demos DEPENDS StdRegions SOURCES StdProject.cpp)
+# ADD_NEKTAR_EXECUTABLE(StdInterp
+#     COMPONENT demos DEPENDS StdRegions SOURCES StdInterp.cpp)
+# ADD_NEKTAR_EXECUTABLE(StdInterpDeriv
+#     COMPONENT demos DEPENDS StdRegions SOURCES StdInterpDeriv.cpp)
+# ADD_NEKTAR_EXECUTABLE(StdInterpBasis
+#     COMPONENT demos DEPENDS StdRegions SOURCES StdInterpBasis.cpp)
+# ADD_NEKTAR_EXECUTABLE(StdInterpDerivBasis
+#     COMPONENT demos DEPENDS StdRegions SOURCES StdInterpDerivBasis.cpp)
+# ADD_NEKTAR_EXECUTABLE(StdEquiToCoeff2D
+#     COMPONENT demos DEPENDS StdRegions SOURCES StdEquiToCoeff2D.cpp)
 
-ADD_NEKTAR_EXECUTABLE(StdProjectPositivityPres1D
-        COMPONENT demos DEPENDS StdRegions SOURCES StdProjectPositivityPres1D.cpp)
-ADD_NEKTAR_EXECUTABLE(StdProjectPositivityPres2D
-        COMPONENT demos DEPENDS StdRegions SOURCES StdProjectPositivityPres2D.cpp)
+#ADD_NEKTAR_EXECUTABLE(StdProjectPositivityPres1D
+#        COMPONENT demos DEPENDS StdRegions SOURCES StdProjectPositivityPres1D.cpp)
+#ADD_NEKTAR_EXECUTABLE(StdProjectPositivityPres2D
+ #       COMPONENT demos DEPENDS StdRegions SOURCES StdProjectPositivityPres2D.cpp)
 ADD_NEKTAR_EXECUTABLE(StdProjectPositivityPres3D
         COMPONENT demos DEPENDS StdRegions SOURCES StdProjectPositivityPres3D.cpp)
 #ADD_NEKTAR_EXECUTABLE( StdProjectPositivityPres3D_pyr
 #        COMPONENT demos DEPENDS StdRegions SOURCES StdProjectPositivityPres3D_pyr.cpp)
-ADD_NEKTAR_EXECUTABLE( TriDerivativeDemo
-        COMPONENT demos DEPENDS StdRegions SOURCES  TriDerivativeDemo.cpp)
-ADD_NEKTAR_EXECUTABLE( GDBackTrackingTest
-	COMPONENT demos DEPENDS StdRegions SOURCES  GDBackTrackingTest.cpp)
-ADD_NEKTAR_EXECUTABLE( ConfRootFinderDemo
-        COMPONENT demos DEPENDS StdRegions SOURCES  ConfRootFinderDemo.cpp)
+#ADD_NEKTAR_EXECUTABLE( TriDerivativeDemo
+#        COMPONENT demos DEPENDS StdRegions SOURCES  TriDerivativeDemo.cpp)
+#ADD_NEKTAR_EXECUTABLE( GDBackTrackingTest
+#	COMPONENT demos DEPENDS StdRegions SOURCES  GDBackTrackingTest.cpp)
+#ADD_NEKTAR_EXECUTABLE( ConfRootFinderDemo
+ #       COMPONENT demos DEPENDS StdRegions SOURCES  ConfRootFinderDemo.cpp)
 
 # Positivity Preserving Filter Test
 ADD_NEKTAR_TEST(StdProjectPosPres2D_Quad_Orth_P4_Q6)

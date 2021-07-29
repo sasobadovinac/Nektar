@@ -754,7 +754,7 @@ namespace Nektar
             bool Normalised)
         {
             NekDouble L2error = -1.0;
-
+	    //	    cout<<"\n m_NumQuadPointsError = "<<m_NumQuadPointsError<<"\n";
             if (m_NumQuadPointsError == 0)
             {
                 if (m_fields[field]->GetPhysState() == false)
@@ -762,12 +762,14 @@ namespace Nektar
                     m_fields[field]->BwdTrans(m_fields[field]->GetCoeffs(),
                                               m_fields[field]->UpdatePhys());
                 }
-
+		
                 if (exactsoln.size())
                 {
                     L2error = m_fields[field]->L2(
                             m_fields[field]->GetPhys(), exactsoln);
-                }
+
+
+		}
                 else if (m_session->DefinesFunction("ExactSolution"))
                 {
                     Array<OneD, NekDouble>
@@ -775,29 +777,34 @@ namespace Nektar
 
                     GetFunction("ExactSolution")->Evaluate(
                             m_session->GetVariable(field), exactsoln, m_time);
-
-                    L2error = m_fields[field]->L2(
-                            m_fields[field]->GetPhys(), exactsoln);
+		    // Array<OneD, NekDouble> tmp = m_fields[field]->GetPhys();
+		    // cout<<"\n all phys here in eqsystem:\n";
+		    // for(int k = 0; k < tmp.size(); k++)
+		    //   {
+		    // 	cout<<" "<<tmp[k]<<" ";
+		    //   }			
+                    L2error = m_fields[field]->L2(m_fields[field]->GetPhys(), exactsoln);
                 }
                 else
                 {
                     L2error = m_fields[field]->L2(m_fields[field]->GetPhys());
-                }
+		}
 
                 if (Normalised == true)
                 {
-                    Array<OneD, NekDouble> one(m_fields[field]->GetNpoints(),
+            Array<OneD, NekDouble> one(m_fields[field]->GetNpoints(),
                                                1.0);
 
-                    NekDouble Vol = m_fields[field]->PhysIntegral(one);
-                    m_comm->AllReduce(Vol, LibUtilities::ReduceSum);
-
-                    L2error = sqrt(L2error*L2error/Vol);
+		    NekDouble Vol = m_fields[field]->Integral(one);
+		    L2error = sqrt(L2error*L2error/Vol);
                 }
             }
+	    
             else
             {
-                Array<OneD,NekDouble> L2INF(2);
+	      // if( m_NumQuadPointsError>=100)
+	      // 	m_NumQuadPointsError = 99;
+	      Array<OneD,NekDouble> L2INF(2);
                 L2INF = ErrorExtraPoints(field);
                 L2error = L2INF[0];
             }
@@ -867,8 +874,7 @@ namespace Nektar
         {
             int NumModes = GetNumExpModes();
             Array<OneD,NekDouble> L2INF(2);
-
-            const LibUtilities::PointsKey PkeyT1(
+	    const LibUtilities::PointsKey PkeyT1(
                 m_NumQuadPointsError,LibUtilities::eGaussLobattoLegendre);
             const LibUtilities::PointsKey PkeyT2(
                 m_NumQuadPointsError, LibUtilities::eGaussRadauMAlpha1Beta0);
@@ -935,10 +941,23 @@ namespace Nektar
             // of this new expansion basis
             ErrorExp->BwdTrans_IterPerExp(m_fields[field]->GetCoeffs(),
                                           ErrorExp->UpdatePhys());
-
+	    Array<OneD, NekDouble> tmpphys = ErrorExp->GetPhys();
+	    
+	    // std::		cout<<"\n\n ********\n\n !exactsoln  here \n";
+	    // for(int k = 0; k < ErrorSol.size(); k++)
+	    //   {
+	    // 	std::cout<<" "<<ErrorSol[k]<<" ";
+	    //   }
+	    
+	    // std::		cout<<"\n\n ********\n\n phys here \n";
+	    // for(int k = 0; k < tmpphys.size(); k++)
+	    //   {
+	    // 	std::cout<<" "<<tmpphys[k]<<" ";
+	    //   }
+	    
             L2INF[0] = ErrorExp->L2  (ErrorExp->GetPhys(), ErrorSol);
             L2INF[1] = ErrorExp->Linf(ErrorExp->GetPhys(), ErrorSol);
-
+	    //	    cout<<"\n\n L2INF = "<<L2INF[0]<<" "<<L2INF[1];
             return L2INF;
         }
 
@@ -1007,7 +1026,7 @@ namespace Nektar
 
             }
 
-            if (dumpInitialConditions && m_checksteps)
+            if (dumpInitialConditions && m_checksteps && m_nchk == 0)
             {
                 Checkpoint_Output(m_nchk);
                 m_nchk++;
@@ -1027,7 +1046,7 @@ namespace Nektar
                 GetFunction("ExactSolution")->Evaluate(
                         m_session->GetVariable(field), outfield, time);
             }
-        }
+	}
 
 
         /**

@@ -96,7 +96,7 @@ int main(int argc, char *argv[])
       numsurfaces = 1;
 
       demo.testcoord2dtqpts = demo.GetCoords(E);
-      demo.testcoord2dtqmidpts = demo.GetQuadratureMidCoords( E, demo.testcoord2dtqpts);
+      demo.testcoord2dtqmidpts = demo.GetQuadratureMidCoords( demo.testcoord2dtqpts);
       demo.testcoord2dtlattice = demo.GetLatticeCoords(demo.testcoord2dtqpts, demo.testcoord2dtqmidpts);     demo.interioreval2dtqmidpts = E->PhysEvaluateBasis( demo.testcoord2dtqmidpts, storage2d, NullNekDouble1DArray, NullNekDouble1DArray, NullNekDouble1DArray);
  
       break;
@@ -105,7 +105,7 @@ int main(int argc, char *argv[])
 
 
       demo.testcoord2dqqpts = demo.GetCoords(E);
-      demo.testcoord2dqqmidpts = demo.GetQuadratureMidCoords( E, demo.testcoord2dqqpts);
+      demo.testcoord2dqqmidpts = demo.GetQuadratureMidCoords(  demo.testcoord2dqqpts);
       demo.testcoord2dqlattice = demo.GetLatticeCoords( demo.testcoord2dqqpts, demo.testcoord2dqqmidpts);
       demo.interioreval2dqqmidpts = E->PhysEvaluateBasis( demo.testcoord2dqqmidpts, storage2d, NullNekDouble1DArray, NullNekDouble1DArray, NullNekDouble1DArray);
  
@@ -118,7 +118,7 @@ int main(int argc, char *argv[])
       numsurfaces = 6;
 
       demo.coordpts = demo.GetCoords(E);
-      demo.coordmidpts = demo.GetQuadratureMidCoords( E, demo.coordpts);
+      demo.coordmidpts = demo.GetQuadratureMidCoords(  demo.coordpts);
       demo.allptslattice = demo.GetLatticeCoords(demo.coordpts, demo.coordmidpts);
       demo.midpteval = E->PhysEvaluateBasis( demo.coordmidpts, storage3d, NullNekDouble1DArray, NullNekDouble1DArray, NullNekDouble1DArray);
  
@@ -129,7 +129,7 @@ int main(int argc, char *argv[])
       numsurfaces = 6;
 
       demo.coordpts= demo.GetCoords(E);
-      demo.coordmidpts = demo.GetQuadratureMidCoords( E, demo.coordpts);
+      demo.coordmidpts = demo.GetQuadratureMidCoords(  demo.coordpts);
       demo.allptslattice = demo.GetLatticeCoords(demo.coordpts, demo.coordmidpts);
       demo.midpteval = E->PhysEvaluateBasis( demo.coordmidpts, storage3d, NullNekDouble1DArray, NullNekDouble1DArray, NullNekDouble1DArray);
  

@@ -86,7 +86,7 @@ void TimeIntegrationSchemeGLM::
                      const NekDouble time,
                      const TimeIntegrationSchemeOperators &op)
 {
-    m_solVector =
+  m_solVector =
         m_integration_phases.back()->InitializeData(deltaT, y_0, time, op);
 }
 
@@ -100,10 +100,21 @@ ConstDoubleArray &TimeIntegrationSchemeGLM::TimeIntegrate(
 {
     int nPhases = m_integration_phases.size();
 
+    
+    
+    // std::    cout<<" \n\n before timeintegrate\n\n";
+    // ConstDoubleArray tmp2 = m_solVector->GetSolution(); 
+    // for(int k = 0; k < tmp2[0].size(); k++)
+    //   {
+    // 	std::cout<<" "<<tmp2[0][k]<<" ";
+    //   }
+    // std::    cout<<" \n\n"; 
+
     TimeIntegrationAlgorithmGLMSharedPtr &algorithm =
         m_integration_phases[std::min(timestep, nPhases - 1)];
 
-    return algorithm->TimeIntegrate(delta_t, m_solVector, op);
+    return  algorithm->TimeIntegrate(delta_t, m_solVector, op);
+    
 }
 
 void TimeIntegrationSchemeGLM::

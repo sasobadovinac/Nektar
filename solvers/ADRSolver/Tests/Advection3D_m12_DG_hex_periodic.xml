@@ -1,17 +1,25 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <NEKTAR>
     <EXPANSIONS>
-        <E COMPOSITE="C[0]" NUMMODES="6" TYPE="MODIFIED" FIELDS="u" />
+        <E COMPOSITE="C[0]" NUMMODES="5" TYPE="MODIFIED" FIELDS="u" />
     </EXPANSIONS>
+    
+       	<FILTERS>
+	  <FILTER TYPE="StructurePres">
+	    <PARAM NAME="c_gd"> 0.1 </PARAM>
+	    <PARAM NAME="gam_gd"> 0.7</PARAM>
+	  </FILTER>
+	</FILTERS>
+
     <CONDITIONS>
         <PARAMETERS>
-            <P> NumSteps       = 20       </P>
-            <P> TimeStep       = 0.002    </P>
-            <P> IO_CheckSteps  = 200      </P>
-            <P> IO_InfoSteps   = 200      </P>
+            <P> NumSteps       = 0      </P>
+            <P> TimeStep       = 0.001    </P>
+            <P> IO_CheckSteps  = 1      </P>
+            <P> IO_InfoSteps   = 100      </P>
             <P> advx           = 1        </P>
-            <P> advy           = 1        </P>
-            <P> advz           = 1        </P>
+            <P> advy           = 0        </P>
+            <P> advz           = 0        </P>
         </PARAMETERS>
         
         <SOLVERINFO>
@@ -20,6 +28,7 @@
             <I PROPERTY="AdvectionType"         VALUE="WeakDG"              />
             <I PROPERTY="UpwindType"            VALUE="Upwind"              />       
             <I PROPERTY="TimeIntegrationMethod" VALUE="ClassicalRungeKutta4"/>
+<I PROPERTY="GlobalSysSoln"         VALUE="IterativeFull"       />
         </SOLVERINFO>
 
         <VARIABLES>
@@ -37,38 +46,54 @@
         
         <BOUNDARYCONDITIONS>
             <REGION REF="0">
-                <P VAR="u" VALUE="[5]" />
+        <D VAR="u" VALUE="0" />
             </REGION>
-            <REGION REF="1">
-                <P VAR="u" VALUE="[3]" />
-            </REGION>
-            <REGION REF="2">
-                <P VAR="u" VALUE="[4]" />
-            </REGION>
-            <REGION REF="3">
-                <P VAR="u" VALUE="[1]" />
-            </REGION>
-            <REGION REF="4">
-                <P VAR="u" VALUE="[2]" />
-            </REGION>
+      <REGION REF="1">
+        <D VAR="u" VALUE="0" />
+      </REGION>
+      <REGION REF="2">
+        <D VAR="u" VALUE="0" />
+      </REGION>
+      <REGION REF="3">
+        <D VAR="u" VALUE="0" />
+      </REGION>
+      <REGION REF="4">
+        <D VAR="u" VALUE="0" />
+      </REGION>
+
+            <!-- <REGION REF="1"> -->
+            <!--     <P VAR="u" VALUE="[3]" /> -->
+            <!-- </REGION> -->
+            <!-- <REGION REF="2"> -->
+            <!--     <P VAR="u" VALUE="[4]" /> -->
+            <!-- </REGION> -->
+            <!-- <REGION REF="3"> -->
+            <!--     <P VAR="u" VALUE="[1]" /> -->
+            <!-- </REGION> -->
+            <!-- <REGION REF="4"> -->
+            <!--     <P VAR="u" VALUE="[2]" /> -->
+            <!-- </REGION> -->
             <REGION REF="5">
-                <P VAR="u" VALUE="[0]" />
+        <D VAR="u" VALUE="0" />
             </REGION>
         </BOUNDARYCONDITIONS>
 
         <FUNCTION NAME="AdvectionVelocity">
-            <E VAR="Vx" VALUE="1" />
-            <E VAR="Vy" VALUE="1" />
-            <E VAR="Vz" VALUE="1" />
+            <E VAR="Vx" VALUE="0" />
+            <E VAR="Vy" VALUE="0" />
+            <E VAR="Vz" VALUE="0" />
         </FUNCTION>
 
         <FUNCTION NAME="ExactSolution">
-            <E VAR="u" VALUE="sin(2*PI*(x-advx*t))*sin(2*PI*(y-advy*t))*sin(2*PI*(z-advz*t))" />
+            <E VAR="u" VALUE="floor(0.5*floor(0.5*(floor(0.5*(x >= -0.8) + 0.5*(x&lt;=-0.5))) +  0.5*(floor(0.5*( y>=0) + 0.5*(y&lt;=0.3)))) + 0.5*floor(0.5*(z &lt;= -0.1) + 0.5*(z >=-0.4)))*cos(3*PI*(x))*sin(3*PI*(y))" />
         </FUNCTION>
 
-        <FUNCTION NAME="InitialConditions">
-            <E VAR="u" VALUE="sin(2*PI*x)*sin(2*PI*y)*sin(2*PI*z)" />
-        </FUNCTION>
+    <FUNCTION NAME="InitialConditions">
+<E VAR="u" VALUE="floor(0.5*floor(0.5*(floor(0.5*(x >= -0.8) + 0.5*(x&lt;=-0.5))) +  0.5*(floor(0.5*( y>=0) + 0.5*(y&lt;=0.3)))) + 0.5*floor(0.5*(z &lt;= -0.1) + 0.5*(z >=-0.4)))*cos(3*PI*(x))*sin(3*PI*(y))" />
+             
+<!-- <E VAR="u" VALUE="floor(0.5*floor(0.5*(z>=-0.8) + 0.5*(z &lt; 0.2)) + 0.5*floor(0.5*floor(0.5*(y>=-0.2) + 0.5*(y &lt; 0.8)) +0.5*floor(0.5*(x>=-0.8) + 0.5*(x &lt; 0.2))))*sin(PI*(0.2-x))*sin(PI*y + 0.2*PI)*sin(PI*z - 0.2*PI)" />
+floor( 0.5*floor( 0.5*floor(0.5*(x >= 0.43) + 0.5*(x&lt;=0.7)) +  0.5*floor(0.5*( y>=-0.9) + 0.5*(y&lt;=0))) + 0.5*floor(0.5*(z &lt;= 0.9) + 0.5*(z >=0)))*sin(PI*(0.2-x))*-->
+    </FUNCTION>
     </CONDITIONS>
     <GEOMETRY DIM="3" SPACE="3">
         <VERTEX>

@@ -127,18 +127,26 @@
   </GEOMETRY>
 
 
-  <COLLECTIONS>
-      <OPERATOR TYPE="BwdTrans">
-          <ELEMENT TYPE="H" ORDER="2-8" IMPTYPE="MatrixFree" />
-      </OPERATOR>
-      <OPERATOR TYPE="IProductWRTDerivBase">
-          <ELEMENT TYPE="H" ORDER="2-8" IMPTYPE="MatrixFree" />
-      </OPERATOR>
-  </COLLECTIONS>
+  <!-- <COLLECTIONS> -->
+  <!--     <OPERATOR TYPE="BwdTrans"> -->
+  <!--         <ELEMENT TYPE="H" ORDER="2-8" IMPTYPE="MatrixFree" /> -->
+  <!--     </OPERATOR> -->
+  <!--     <OPERATOR TYPE="IProductWRTDerivBase"> -->
+  <!--         <ELEMENT TYPE="H" ORDER="2-8" IMPTYPE="MatrixFree" /> -->
+  <!--     </OPERATOR> -->
+  <!-- </COLLECTIONS> -->
 
   <EXPANSIONS>
     <E COMPOSITE="C[0]" NUMMODES="8" TYPE="MODIFIED" FIELDS="u" />
   </EXPANSIONS>
+
+       	<FILTERS>
+	  <FILTER TYPE="StructurePres">
+	    <PARAM NAME="c_gd"> 0.4 </PARAM>
+	    <PARAM NAME="gam_gd"> 0.5</PARAM>
+	  </FILTER>
+	</FILTERS>
+
   <CONDITIONS>
     <PARAMETERS>
       <P> NumSteps       = 20         </P>

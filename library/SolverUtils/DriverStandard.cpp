@@ -104,21 +104,21 @@ namespace Nektar
             // Evaluate L2 Error
             for(int i = 0; i < m_equ[0]->GetNvariables(); ++i)
             {
-                Array<OneD, NekDouble> exactsoln(m_equ[0]->GetTotPoints(), 0.0);
+	      Array<OneD, NekDouble> exactsoln(m_equ[0]->GetTotPoints(), 0.0);
 
-                // Evaluate "ExactSolution" function, or zero array
-                m_equ[0]->EvaluateExactSolution(i, exactsoln, 
-                                                    m_equ[0]->GetFinalTime());
-
+	      // // Evaluate "ExactSolution" function, or zero array
+	      m_equ[0]->EvaluateExactSolution(i, exactsoln, 
+					      m_equ[0]->GetFinalTime());
                 NekDouble vL2Error   = m_equ[0]->L2Error  (i, exactsoln);
                 NekDouble vLinfError = m_equ[0]->LinfError(i, exactsoln);
 
                 if (m_comm->GetRank() == 0)
                 {
-                    out << "L 2 error (variable " << m_equ[0]->GetVariable(i) 
-                        << ") : " << vL2Error << endl;
+                    out << "!!!L 2 error (variable " << m_equ[0]->GetVariable(i) 
+                        << ") : " <<vL2Error << endl;
                     out << "L inf error (variable " << m_equ[0]->GetVariable(i) 
                         << ") : " << vLinfError << endl;
+
                 }
             }
         }

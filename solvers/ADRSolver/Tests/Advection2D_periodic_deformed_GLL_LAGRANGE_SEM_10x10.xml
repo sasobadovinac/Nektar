@@ -56,11 +56,11 @@
         </FUNCTION>
         
         <FUNCTION NAME="InitialConditions">
-            <E VAR="u" VALUE="exp(-40.0*(x^2 + y^2))" />
+            <E VAR="u" VALUE="((x-0.5)^2 + (y-0.3)^2)" />
         </FUNCTION>
         
         <FUNCTION NAME="ExactSolution">
-            <E VAR="u" VALUE="exp(-40.0*((x - advx*t)^2 + (y - advy*t)^2))" />
+            <E VAR="u" VALUE="(x-advx*t -0.5)^2 + (y-advy*t - 0.3)^2" />
         </FUNCTION>
         
     </CONDITIONS>

@@ -69,7 +69,6 @@ public:
     {
         return m_solVector->GetSolutionVector();
     }
-
     // Sets the solution Vector
     inline void SetSolutionVector(const int Offset, const DoubleArray &y)
     {
