@@ -50,8 +50,8 @@ void project_edges( Array<OneD, NekDouble> uhats,Array<OneD, Array<OneD, NekDoub
 //int Opt_needed(Array<OneD, NekDouble> uhats, Array<OneD, NekDouble> &evallattice, int flag ); 
 int Opt_needed(Array<OneD, NekDouble> &uhatslocal, Array <OneD, NekDouble>& t,int flag );
 Array<OneD, NekDouble> eval_sol(Array<OneD, NekDouble> x, Array<OneD, NekDouble> y, Array<OneD, NekDouble> z);
-void call_setup_quad();
-void call_setup_tri();
+void call_setup_quad(StdExpansion *E);
+void call_setup_tri(StdExpansion *E);
 
 string funcdef;
 NekDouble  itersGD2 ;
@@ -124,7 +124,10 @@ int main(int argc, char *argv[])
     {
       return 1;
     }
-  
+  LibUtilities::PointsKey pkeycheb( 3*(E->GetBasis(0)->GetNumPoints()),LibUtilities::eGaussLobattoChebyshev);
+  LibUtilities::BasisKey bkeyorth(LibUtilities::eOrtho_A, 3*(E->GetBasis(0)->GetNumModes()),  pkeycheb);
+  demo.E3seg = new StdSegExp(bkeyorth);
+
   dimension = E->GetShapeDimension();
   storage2d = E->GetPhysEvaluateStorage();
   if(dimension != 2 )
@@ -154,6 +157,8 @@ int main(int argc, char *argv[])
     
 
     case LibUtilities::eTriangle:
+      call_setup_tri(E);
+	  
       numedges = 3;
       numsurfaces = 1;
       edgeptsin = Array<OneD, Array<OneD, NekDouble> >(2);
@@ -161,7 +166,7 @@ int main(int argc, char *argv[])
       break;
     
     case LibUtilities::eQuadrilateral:
-
+      call_setup_quad(E);
       numedges = 4;
       numsurfaces = 1;
       edgeptsin = Array<OneD, Array<OneD, NekDouble> >(2);
@@ -206,7 +211,6 @@ int main(int argc, char *argv[])
     }
 
   sol = eval_sol(x, y, z);
-
   Array<OneD, NekDouble> phys(totPoints),  sollattice;
   Array<OneD, NekDouble> coeffs((unsigned) E->GetNcoeffs());
   NekDouble L2errlattice = 0, Linferrlattice = 0;
@@ -219,7 +223,6 @@ int main(int argc, char *argv[])
   E->BwdTrans(coeffs, phys);
   LibUtilities::Timer     timer;
   NekDouble elapsed       = 0.0;
-
   cout<<"\n unconstrained sol on quadrature points (Linf, L2)::"<< E->Linf(phys, sol)<<", "<< E->L2(phys, sol)   ;
   
   Array<OneD, NekDouble> retvalslattice, solhold;
@@ -228,16 +231,17 @@ int main(int argc, char *argv[])
     {
       if(E->DetShapeType() == LibUtilities::eTriangle)
 	{
-	  call_setup_tri();
 	  sollattice = eval_sol(demo.coordlatticetri[0], demo.coordlatticetri[1], NullNekDouble1DArray );
 	}
       if(E->DetShapeType() == LibUtilities::eQuadrilateral)
 	{
-	  call_setup_quad();
 	  sollattice = eval_sol(      demo.coordlatticequad[0],       demo.coordlatticequad[1], NullNekDouble1DArray );
 
 	}
+      
+      Eorth = E;
       Array<OneD, NekDouble> retvalslatticesave;
+      storage2d = Eorth->GetPhysEvaluateStorage();
 
       timer.Start();
       int found_negb4 = Opt_needed(coeffs, retvalslattice, 0);
@@ -266,29 +270,28 @@ int main(int argc, char *argv[])
       if(found_negb4 == 1)
 	{
 	  int orthoflag = (E->GetBasisType(0) != LibUtilities::eOrtho_A);
-	  Array<OneD, BasisType> btypearr(dimension);
-	  btypearr[0] = LibUtilities::eOrtho_A;
-	  timer.Start();
-	  if(orthoflag)
-	    {
-	      if(numedges == 4 && demo.Eorthquad != nullptr)
-		{
-		  Eorth = demo.Eorthquad;
-		  btypearr[1] = LibUtilities::eOrtho_A;
+	  // Array<OneD, BasisType> btypearr(dimension);
+	  // btypearr[0] = LibUtilities::eOrtho_A;
+	  // timer.Start();
+	  // if(orthoflag)
+	  //   {
+	  //     if(numedges == 4 && demo.Eorthquad != nullptr)
+	  // 	{
+	  // 	  Eorth = demo.Eorthquad;
+	  // 	  btypearr[1] = LibUtilities::eOrtho_A;
 		  
-		}
-	      else //if (numedges == 3  && demo.Eorthtri != nullptr)
-		{
-		  Eorth = demo.Eorthtri;
-		  btypearr[1] = LibUtilities::eOrtho_B;     
-		}
-	    }
-	  else
-	    {
-	      Eorth = E;
-	    }
+	  // 	}
+	  //     else //if (numedges == 3  && demo.Eorthtri != nullptr)
+	  // 	{
+	  // 	  Eorth = demo.Eorthtri;
+	  // 	  btypearr[1] = LibUtilities::eOrtho_B;     
+	  // 	}
+	  //   }
+	  // else
+	  //   {
+	  //     Eorth = E;
+	  //   }
 
-	  storage2d = Eorth->GetPhysEvaluateStorage();
 	  
 	  if(orthoflag)
 	    {
@@ -382,14 +385,14 @@ int main(int argc, char *argv[])
 		{
 		  cout<<"\nVerification took "<<timer.TimePerTest(1)<<"  s";
 		}
-	      //	      cout<<" \nfail tests";
-	      //fail unit test:
+	      cout<<" \nfail tests";
+	      //	      fail unit test:
 	      
-	      // cout << "\nL infinity error: \t" << 1 << endl;
-	      // if (stype != ePoint)
-	      // 	{
-	      // 	  cout << "L 2 error: \t \t " << 1<< endl;
-	      // 	}
+	      cout << "\nL infinity error: \t" << 1 << endl;
+	      if (stype != ePoint)
+	      	{
+	      	  cout << "L 2 error: \t \t " << 1<< endl;
+	      	}
 	      return 0;
 	    }
 	  else
@@ -400,15 +403,15 @@ int main(int argc, char *argv[])
 		{
 		  cout<<"\nVerification took "<<timer.TimePerTest(1)<<"  s";
 		}
-	      // cout<<"\npass tests";
+	      cout<<"\npass tests";
 		  
-	      // //pass  unit test:
+	      //pass  unit test:
 	      
-	      // cout << "\nL infinity error: \t" << 0 << endl;
-	      // if (stype != ePoint)
-	      // 	{
-	      // 	  cout << "L 2 error: \t \t " << 0<< endl;
-	      // 	}
+	      cout << "\nL infinity error: \t" << 0 << endl;
+	      if (stype != ePoint)
+	      	{
+	      	  cout << "L 2 error: \t \t " << 0<< endl;
+	      	}
 	      return 0;
 
 	    }
@@ -680,33 +683,184 @@ Array<OneD, NekDouble> eval_sol(Array<OneD, NekDouble> x, Array<OneD, NekDouble>
     }
 
 
-void call_setup_tri()
-{
-      int nmodes0 = E->GetBasis(0)->GetNumModes();
-      int nmodes1 = E->GetBasis(1)->GetNumModes();
-      int npts0 = E->GetBasis(0)->GetNumPoints();
-      int npts1 = E->GetBasis(1)->GetNumPoints();
-      if(E->GetBasisType(0) != LibUtilities::eOrtho_A || E->GetBasisType(1) != LibUtilities::eOrtho_B     )
+// void call_setup_tri()
+// {
+//       int nmodes0 = E->GetBasis(0)->GetNumModes();
+//       int nmodes1 = E->GetBasis(1)->GetNumModes();
+//       int npts0 = E->GetBasis(0)->GetNumPoints();
+//       int npts1 = E->GetBasis(1)->GetNumPoints();
+//       if(E->GetBasisType(0) != LibUtilities::eOrtho_A || E->GetBasisType(1) != LibUtilities::eOrtho_B     )
+// 	{
+// 	  PointsKey p0(npts0, E->GetBasis(0)->GetPointsType());
+// 	  PointsKey p1(npts1, E->GetBasis(1)->GetPointsType());
+// 	  BasisKey  b0(LibUtilities::eOrtho_A,  nmodes0, p0);
+// 	  BasisKey  b1(LibUtilities::eOrtho_B,  nmodes1, p1);
+// 	  demo.Eorthtri = new StdTriExp(b0, b1);
+// 	}
+//       else
+// 	{
+// 	  demo.Eorthtri = E;
+// 	}
+//       // LibUtilities::PointsType ptypeA =  LibUtilities::eGaussLobattoLegendre;
+//       // LibUtilities::PointsType ptypeB =  LibUtilities::eGaussGaussLegendre;
+      
+//       demo.storage2dt =  demo.Eorthtri->GetPhysEvaluateStorage(); 
+//       demo.coordtri = demo.GetCoords(demo.Eorthtri);
+//       demo.coordmidtri = demo.GetQuadratureMidCoords(demo.coordtri);
+//       demo.coordlatticetri = demo.GetLatticeCoords(demo.coordtri, demo.coordmidtri);
+
+//       demo.midptevaltri = demo.Eorthtri->PhysEvaluateBasis(demo.coordmidtri, demo.storage2dt, NullNekDouble1DArray, NullNekDouble1DArray, NullNekDouble1DArray);
+
+//       Array<OneD, Array<OneD, NekDouble> > edgeptsin(2), edgexy(2);
+//       for(int k = 0; k <2; k++)
+// 	{
+// 	  edgexy[k] = Array<OneD, NekDouble>(demo.E3seg->GetBasis(0)->GetNumPoints());
+// 	  edgeptsin[k] =   Array<OneD, NekDouble>(edgexy[k]);
+// 	}
+//       Array<OneD, NekDouble> edgexytemp = demo.E3seg->GetBasis(0)->GetZ();
+//       int totszedges = edgexytemp.size()*(demo.Eorthtri->GetNcoeffs());
+      
+//       // left (x = -1)
+//       Vxm1t = Array<OneD, NekDouble>(totszedges);
+//       Vdyxm1t = Array<OneD, NekDouble>(totszedges);
+//       Vdxxm1t = Array<OneD, NekDouble>(totszedges);
+      
+//       // left x = -1
+//       edgexy[1] = edgexytemp;
+//       edgexy[0] = Array<OneD, NekDouble>(edgexytemp.size(), -1.0);
+//       Vxm1t = demo.Eorthtri->PhysEvaluateBasis(edgexy, demo.storage2dt, Vdxxm1t, Vdyxm1t, NullNekDouble1DArray);
+      
+//       // bot (y = -1)
+//       Vym1t  = Array<OneD, NekDouble>(totszedges);
+//       Vdxym1t  = Array<OneD, NekDouble>(totszedges);
+//       Vdyym1t  = Array<OneD, NekDouble>(totszedges);
+      
+//       // bot y = -1
+//       edgexy[0] = edgexytemp;             
+//       edgexy[1] = Array<OneD, NekDouble>(edgexytemp.size(), -1.0);
+      
+//       Vym1t = demo.Eorthtri->PhysEvaluateBasis(edgexy,  demo.storage2dt, Vdxym1t, Vdyym1t, NullNekDouble1DArray);
+      
+//       // hypt tri (y = -x)
+//       Vxyhypt = Array<OneD, NekDouble>(totszedges);
+//       Vdxxyhypt = Array<OneD, NekDouble>(totszedges);
+//       Vdyxyhypt = Array<OneD, NekDouble>(totszedges);
+      
+//       edgexy[0] = edgexytemp;
+//       Vmath::Smul(edgexy[0].size(), -1.0, edgexy[0], 1, edgexy[1] , 1);
+//       Vxyhypt = demo.Eorthtri->PhysEvaluateBasis(edgexy, demo.storage2dt,  Vdxxyhypt, Vdyxyhypt, NullNekDouble1DArray);
+      
+
+// }
+
+// void call_setup_quad()
+// {
+//       // get # of quad pts in curr exp
+//       // get order of current exp
+//       // get ptypes and btypes
+//       int nmodes0 = E->GetBasis(0)->GetNumModes();
+//       int nmodes1 = E->GetBasis(1)->GetNumModes();
+//       int npts0 = E->GetBasis(0)->GetNumPoints();
+//       int npts1 = E->GetBasis(1)->GetNumPoints();
+//       if(E->GetBasisType(0) != LibUtilities::eOrtho_A || E->GetBasisType(1) != LibUtilities::eOrtho_A     )
+// 	{
+// 	  PointsKey p0(npts0, E->GetBasis(0)->GetPointsType());
+// 	  PointsKey p1(npts1, E->GetBasis(1)->GetPointsType());
+// 	  BasisKey  b0(LibUtilities::eOrtho_A,  nmodes0, p0);
+// 	  BasisKey  b1(LibUtilities::eOrtho_A,  nmodes1, p1);
+// 	  demo.Eorthquad = new StdQuadExp(b0, b1);
+// 	}
+//       else
+// 	{
+// 	  demo.Eorthquad = E;
+// 	}
+
+//       demo.storage2dq =  demo.Eorthquad->GetPhysEvaluateStorage();
+//       demo.coordquad = demo.GetCoords(demo.Eorthquad);
+//       demo.coordmidquad = demo.GetQuadratureMidCoords(demo.coordquad);
+//       demo.coordlatticequad = demo.GetLatticeCoords(demo.coordquad, demo.coordmidquad);
+
+//       demo.midptevalquad = demo.Eorthquad->PhysEvaluateBasis(demo.coordmidquad, demo.storage2dq, NullNekDouble1DArray, NullNekDouble1DArray, NullNekDouble1DArray);
+
+//       Array<OneD, Array<OneD, NekDouble> > edgeptsin(2), edgexy(2);
+//       for(int k = 0; k <2; k++)
+// 	{
+// 	  edgexy[k] = Array<OneD, NekDouble>(demo.E3seg->GetBasis(0)->GetNumPoints());
+// 	  edgeptsin[k] =   Array<OneD, NekDouble>(edgexy[k]);
+// 	}
+//       Array<OneD, NekDouble> edgexytemp =   demo.E3seg->GetBasis(0)->GetZ();
+//       int totszedges = edgexytemp.size()*(demo.Eorthquad->GetNcoeffs());
+//       // left (x = -1)
+//       Vxm1q = Array<OneD, NekDouble>(totszedges);
+//       Vdyxm1q = Array<OneD, NekDouble>(totszedges);
+//       Vdxxm1q = Array<OneD, NekDouble>(totszedges);
+      
+//       // left x = -1
+//       edgexy[1] = edgexytemp;
+//       edgexy[0] = Array<OneD, NekDouble>(edgexytemp.size(), -1.0);
+//       Vxm1q = demo.Eorthquad->PhysEvaluateBasis(edgexy, demo.storage2dq, Vdxxm1q, Vdyxm1q, NullNekDouble1DArray);
+      
+//       // bot (y = -1)
+//       Vym1q  = Array<OneD, NekDouble>(totszedges);
+//       Vdxym1q  = Array<OneD, NekDouble>(totszedges);
+//       Vdyym1q  = Array<OneD, NekDouble>(totszedges);
+//       // bot y = -1
+//       edgexy[0] = edgexytemp;             
+//       edgexy[1] = Array<OneD, NekDouble>(edgexytemp.size(), -1.0);
+      
+//       Vym1q = demo.Eorthquad->PhysEvaluateBasis(edgexy,  demo.storage2dq, Vdxym1q, Vdyym1q, NullNekDouble1DArray);
+
+      	  
+//       // right quad (x = 1)
+//       Vx1q = Array<OneD, NekDouble>(totszedges);
+//       Vdxx1q = Array<OneD, NekDouble>(totszedges);
+//       Vdyx1q = Array<OneD, NekDouble>(totszedges);
+      
+//       // top quad (y = 1)
+//       Vdxy1q = Array<OneD, NekDouble>(totszedges);
+//       Vdyy1q = Array<OneD, NekDouble>(totszedges);
+//       Vy1q = Array<OneD, NekDouble>(totszedges);
+      
+//       // right x = 1
+//       edgexy[1] = edgexytemp; 
+//       edgexy[0] = Array<OneD, NekDouble>(edgexytemp.size(), 1.0); 
+//       Vx1q = demo.Eorthquad->PhysEvaluateBasis(edgexy, demo.storage2dq, Vdxx1q, Vdyx1q, NullNekDouble1DArray);
+      
+//       //top y = 1
+//       edgexy[0] = edgexytemp; 
+//       edgexy[1] = Array<OneD, NekDouble>(edgexytemp.size(), 1.0); 
+//       Vy1q = demo.Eorthquad->PhysEvaluateBasis(edgexy, demo.storage2dq, Vdxy1q, Vdyy1q, NullNekDouble1DArray);
+  
+// }
+
+    void call_setup_tri(StdExpansion * exp)
+    {
+      int orthoflag = (exp->GetBasisType(0) != LibUtilities::eOrtho_A);
+      if(!orthoflag)
 	{
-	  PointsKey p0(npts0, E->GetBasis(0)->GetPointsType());
-	  PointsKey p1(npts1, E->GetBasis(1)->GetPointsType());
+	  int nmodes0 = exp->GetBasis(0)->GetNumModes();
+	  
+	  int nmodes1 = exp->GetBasis(1)->GetNumModes();
+	  int npts0 = exp->GetBasis(0)->GetNumPoints();
+	  int npts1 = exp->GetBasis(1)->GetNumPoints();
+	  // LibUtilities::PointsType ptypeA =  LibUtilities::eGaussLobattoLegendre;
+	  // LibUtilities::PointsType ptypeB =  LibUtilities::eGaussGaussLegendre;
+	  PointsKey p0(npts0, exp->GetBasis(0)->GetPointsType());
+	  PointsKey p1(npts1, exp->GetBasis(1)->GetPointsType());
 	  BasisKey  b0(LibUtilities::eOrtho_A,  nmodes0, p0);
 	  BasisKey  b1(LibUtilities::eOrtho_B,  nmodes1, p1);
-	  demo.Eorthtri = new StdTriExp(b0, b1);
+	  E = new StdTriExp(b0, b1);
 	}
       else
 	{
-	  demo.Eorthtri = E;
+	  E = exp;
 	}
-      // LibUtilities::PointsType ptypeA =  LibUtilities::eGaussLobattoLegendre;
-      // LibUtilities::PointsType ptypeB =  LibUtilities::eGaussGaussLegendre;
-      
-      demo.storage2dt =  demo.Eorthtri->GetPhysEvaluateStorage(); 
-      demo.coordtri = demo.GetCoords(demo.Eorthtri);
+      demo.storage2dt =  E->GetPhysEvaluateStorage(); 
+      demo.coordtri = demo.GetCoords(E);
       demo.coordmidtri = demo.GetQuadratureMidCoords(demo.coordtri);
       demo.coordlatticetri = demo.GetLatticeCoords(demo.coordtri, demo.coordmidtri);
 
-      demo.midptevaltri = demo.Eorthtri->PhysEvaluateBasis(demo.coordmidtri, demo.storage2dt, NullNekDouble1DArray, NullNekDouble1DArray, NullNekDouble1DArray);
+      demo.midptevaltri = E->PhysEvaluateBasis(demo.coordmidtri, demo.storage2dt, NullNekDouble1DArray, NullNekDouble1DArray, NullNekDouble1DArray);
 
       Array<OneD, Array<OneD, NekDouble> > edgeptsin(2), edgexy(2);
       for(int k = 0; k <2; k++)
@@ -715,7 +869,7 @@ void call_setup_tri()
 	  edgeptsin[k] =   Array<OneD, NekDouble>(edgexy[k]);
 	}
       Array<OneD, NekDouble> edgexytemp = demo.E3seg->GetBasis(0)->GetZ();
-      int totszedges = edgexytemp.size()*(demo.Eorthtri->GetNcoeffs());
+      int totszedges = edgexytemp.size()*(E->GetNcoeffs());
       
       // left (x = -1)
       Vxm1t = Array<OneD, NekDouble>(totszedges);
@@ -725,7 +879,7 @@ void call_setup_tri()
       // left x = -1
       edgexy[1] = edgexytemp;
       edgexy[0] = Array<OneD, NekDouble>(edgexytemp.size(), -1.0);
-      Vxm1t = demo.Eorthtri->PhysEvaluateBasis(edgexy, demo.storage2dt, Vdxxm1t, Vdyxm1t, NullNekDouble1DArray);
+      Vxm1t = E->PhysEvaluateBasis(edgexy, demo.storage2dt, Vdxxm1t, Vdyxm1t, NullNekDouble1DArray);
       
       // bot (y = -1)
       Vym1t  = Array<OneD, NekDouble>(totszedges);
@@ -736,7 +890,7 @@ void call_setup_tri()
       edgexy[0] = edgexytemp;             
       edgexy[1] = Array<OneD, NekDouble>(edgexytemp.size(), -1.0);
       
-      Vym1t = demo.Eorthtri->PhysEvaluateBasis(edgexy,  demo.storage2dt, Vdxym1t, Vdyym1t, NullNekDouble1DArray);
+      Vym1t = E->PhysEvaluateBasis(edgexy,  demo.storage2dt, Vdxym1t, Vdyym1t, NullNekDouble1DArray);
       
       // hypt tri (y = -x)
       Vxyhypt = Array<OneD, NekDouble>(totszedges);
@@ -745,40 +899,42 @@ void call_setup_tri()
       
       edgexy[0] = edgexytemp;
       Vmath::Smul(edgexy[0].size(), -1.0, edgexy[0], 1, edgexy[1] , 1);
-      Vxyhypt = demo.Eorthtri->PhysEvaluateBasis(edgexy, demo.storage2dt,  Vdxxyhypt, Vdyxyhypt, NullNekDouble1DArray);
+      Vxyhypt = E->PhysEvaluateBasis(edgexy, demo.storage2dt,  Vdxxyhypt, Vdyxyhypt, NullNekDouble1DArray);
       
+    }
 
-}
+    
+    void call_setup_quad(StdExpansion* exp)
+    {
+  int orthoflag = (exp->GetBasisType(0) != LibUtilities::eOrtho_A);
+  if(!orthoflag)
+    {
 
-void call_setup_quad()
-{
       // get # of quad pts in curr exp
       // get order of current exp
       // get ptypes and btypes
-      int nmodes0 = E->GetBasis(0)->GetNumModes();
-      int nmodes1 = E->GetBasis(1)->GetNumModes();
-      int npts0 = E->GetBasis(0)->GetNumPoints();
-      int npts1 = E->GetBasis(1)->GetNumPoints();
-      if(E->GetBasisType(0) != LibUtilities::eOrtho_A || E->GetBasisType(1) != LibUtilities::eOrtho_A     )
-	{
-	  PointsKey p0(npts0, E->GetBasis(0)->GetPointsType());
-	  PointsKey p1(npts1, E->GetBasis(1)->GetPointsType());
-	  BasisKey  b0(LibUtilities::eOrtho_A,  nmodes0, p0);
-	  BasisKey  b1(LibUtilities::eOrtho_A,  nmodes1, p1);
-	  demo.Eorthquad = new StdQuadExp(b0, b1);
-	}
-      else
-	{
-	  demo.Eorthquad = E;
-	}
-
-      demo.storage2dq =  demo.Eorthquad->GetPhysEvaluateStorage();
-      demo.coordquad = demo.GetCoords(demo.Eorthquad);
+      int nmodes0 = exp->GetBasis(0)->GetNumModes();
+      int nmodes1 = exp->GetBasis(1)->GetNumModes();
+      int npts0 = exp->GetBasis(0)->GetNumPoints();
+      int npts1 = exp->GetBasis(1)->GetNumPoints();
+      
+      PointsKey p0(npts0, exp->GetBasis(0)->GetPointsType());
+      PointsKey p1(npts1, exp->GetBasis(1)->GetPointsType());
+      BasisKey  b0(LibUtilities::eOrtho_A,  nmodes0, p0);
+      BasisKey  b1(LibUtilities::eOrtho_A,  nmodes1, p1);
+      E = new StdQuadExp(b0, b1);
+    }
+  else
+    {
+      E = exp;
+    }
+      demo.storage2dq =  E->GetPhysEvaluateStorage();
+      demo.coordquad = demo.GetCoords(E);
       demo.coordmidquad = demo.GetQuadratureMidCoords(demo.coordquad);
       demo.coordlatticequad = demo.GetLatticeCoords(demo.coordquad, demo.coordmidquad);
 
-      demo.midptevalquad = demo.Eorthquad->PhysEvaluateBasis(demo.coordmidquad, demo.storage2dq, NullNekDouble1DArray, NullNekDouble1DArray, NullNekDouble1DArray);
-
+      demo.midptevalquad = E->PhysEvaluateBasis(demo.coordmidquad, demo.storage2dq, NullNekDouble1DArray, NullNekDouble1DArray, NullNekDouble1DArray);
+      
       Array<OneD, Array<OneD, NekDouble> > edgeptsin(2), edgexy(2);
       for(int k = 0; k <2; k++)
 	{
@@ -786,7 +942,8 @@ void call_setup_quad()
 	  edgeptsin[k] =   Array<OneD, NekDouble>(edgexy[k]);
 	}
       Array<OneD, NekDouble> edgexytemp =   demo.E3seg->GetBasis(0)->GetZ();
-      int totszedges = edgexytemp.size()*(demo.Eorthquad->GetNcoeffs());
+      int totszedges = edgexytemp.size()*(E->GetNcoeffs());
+      
       // left (x = -1)
       Vxm1q = Array<OneD, NekDouble>(totszedges);
       Vdyxm1q = Array<OneD, NekDouble>(totszedges);
@@ -795,17 +952,18 @@ void call_setup_quad()
       // left x = -1
       edgexy[1] = edgexytemp;
       edgexy[0] = Array<OneD, NekDouble>(edgexytemp.size(), -1.0);
-      Vxm1q = demo.Eorthquad->PhysEvaluateBasis(edgexy, demo.storage2dq, Vdxxm1q, Vdyxm1q, NullNekDouble1DArray);
+      Vxm1q = E->PhysEvaluateBasis(edgexy, demo.storage2dq, Vdxxm1q, Vdyxm1q, NullNekDouble1DArray);
       
       // bot (y = -1)
       Vym1q  = Array<OneD, NekDouble>(totszedges);
       Vdxym1q  = Array<OneD, NekDouble>(totszedges);
       Vdyym1q  = Array<OneD, NekDouble>(totszedges);
+      
       // bot y = -1
       edgexy[0] = edgexytemp;             
       edgexy[1] = Array<OneD, NekDouble>(edgexytemp.size(), -1.0);
       
-      Vym1q = demo.Eorthquad->PhysEvaluateBasis(edgexy,  demo.storage2dq, Vdxym1q, Vdyym1q, NullNekDouble1DArray);
+      Vym1q = E->PhysEvaluateBasis(edgexy,  demo.storage2dq, Vdxym1q, Vdyym1q, NullNekDouble1DArray);
 
       	  
       // right quad (x = 1)
@@ -821,14 +979,14 @@ void call_setup_quad()
       // right x = 1
       edgexy[1] = edgexytemp; 
       edgexy[0] = Array<OneD, NekDouble>(edgexytemp.size(), 1.0); 
-      Vx1q = demo.Eorthquad->PhysEvaluateBasis(edgexy, demo.storage2dq, Vdxx1q, Vdyx1q, NullNekDouble1DArray);
+      Vx1q = E->PhysEvaluateBasis(edgexy, demo.storage2dq, Vdxx1q, Vdyx1q, NullNekDouble1DArray);
       
       //top y = 1
       edgexy[0] = edgexytemp; 
       edgexy[1] = Array<OneD, NekDouble>(edgexytemp.size(), 1.0); 
-      Vy1q = demo.Eorthquad->PhysEvaluateBasis(edgexy, demo.storage2dq, Vdxy1q, Vdyy1q, NullNekDouble1DArray);
-  
-}
+      Vy1q = E->PhysEvaluateBasis(edgexy, demo.storage2dq, Vdxy1q, Vdyy1q, NullNekDouble1DArray);
+      
+    }
 
 
 //try replacing storage with the global var -> storage2d
@@ -1054,7 +1212,7 @@ void Do_optimize(Array<OneD, NekDouble> &uhats)
     {
       pqval = inf;
       utemp = d.back();
-      if (counter > 0)
+      if (counter > -1)
 	{
 	  //t.Start();
 	  //pq = @(xx) cfun(xx) .* (constraints(1,jj).*Vc(xx)*uhats);  
