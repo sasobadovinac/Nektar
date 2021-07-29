@@ -348,6 +348,19 @@ int main(int argc, char *argv[])
    
   verboseflag = demo.GetVerbose();
   E = demo.CreateStdExpansion();
+  
+  coordsE = demo.GetCoords(E);
+  midcoordsE = demo.GetQuadratureMidCoords(coordsE);
+  allptslattice = demo.GetLatticeCoords(coordsE, midcoordsE);
+
+  LibUtilities::PointsKey pkeycheb( 3*(E->GetBasis(0)->GetNumPoints()),LibUtilities::eGaussLobattoChebyshev);
+  LibUtilities::BasisKey bkeyorth(LibUtilities::eOrtho_A, 3*(E->GetBasis(0)->GetNumModes()),  pkeycheb);
+  demo.E3seg = new StdSegExp(bkeyorth);
+  if (demo.E3seg == nullptr)
+    {
+      cout<<"\n Could not initialize segment object! \n";
+      exit(0);
+    }
   if (E == nullptr)
     {
       return 1;
