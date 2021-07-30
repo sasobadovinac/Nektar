@@ -49,7 +49,15 @@ Array<OneD, Array<OneD, NekDouble> > storage2d, storage3d;
 // Colleague matrix
 int numedges, numsurfaces;
 //Array<OneD, Array<OneD, NekDouble> > C;
-StdExpansion *E;
+StdExpansion *E, *Eorth;
+StdExpansion *Equad;
+StdExpansion *Etri;
+
+void call_setup_quad(StdExpansion *E);
+void call_setup_hex(StdExpansion *E);
+void call_setup_tet(StdExpansion *E);
+void call_setup_pyr(StdExpansion *E);
+void call_setup_tri(StdExpansion *E);  
 
 int dimension ;
 
@@ -74,7 +82,61 @@ int main(int argc, char *argv[])
       return 1;
     }
   dimension = E->GetShapeDimension();
-  if(dimension == 1 )
+std::vector<int> order;
+  std::vector<BasisType> btype(3, eNoBasisType);
+
+  for (int i = 0; i < dimension; ++i)
+    {
+      btype[i] = E->GetBasisType(i);
+      order.push_back(E->GetBasisNumModes(i));
+    }
+
+  switch(E->DetShapeType())
+    {
+    case LibUtilities::eQuadrilateral:
+      call_setup_quad(E);
+      numsurfaces = 1;
+      numedges = 4;
+      break;
+    case LibUtilities::eTriangle:
+      call_setup_tri(E);
+
+      numsurfaces = 1;
+      numedges = 3;
+      break;
+    
+    case LibUtilities::eTetrahedron:
+      {
+	call_setup_tri(E); 
+	call_setup_tet(E);
+	numedges = 6;
+	numsurfaces = 4;
+
+      }
+      break;
+
+    case LibUtilities::eHexahedron:
+      call_setup_quad(E);
+      call_setup_hex(E);
+        
+      numedges = 12;
+      numsurfaces = 6;
+
+      break;
+
+    case LibUtilities::ePyramid:
+      call_setup_tri(E);
+      call_setup_quad(E);
+      call_setup_pyr(E);
+      numedges = 8;
+      numsurfaces = 5;
+      
+      break;
+
+    default: cout<<"\n unknown shape typen\n";exit(0);
+    
+    }
+ if(dimension == 1 )
     {
       cout<<"\n dimension should be 2 or 3 for this demo!";
       exit(0);
@@ -87,58 +149,7 @@ int main(int argc, char *argv[])
     {
       storage3d = E->GetPhysEvaluateStorage();
     }
-  switch(E->DetShapeType())
-    {
-
-    case LibUtilities::eTriangle:
-
-      numedges = 3;
-      numsurfaces = 1;
-
-      demo.testcoord2dtqpts = demo.GetCoords(E);
-      demo.testcoord2dtqmidpts = demo.GetQuadratureMidCoords( demo.testcoord2dtqpts);
-      demo.testcoord2dtlattice = demo.GetLatticeCoords(demo.testcoord2dtqpts, demo.testcoord2dtqmidpts);     demo.interioreval2dtqmidpts = E->PhysEvaluateBasis( demo.testcoord2dtqmidpts, storage2d, NullNekDouble1DArray, NullNekDouble1DArray, NullNekDouble1DArray);
  
-      break;
-    
-    case LibUtilities::eQuadrilateral:
-
-
-      demo.testcoord2dqqpts = demo.GetCoords(E);
-      demo.testcoord2dqqmidpts = demo.GetQuadratureMidCoords(  demo.testcoord2dqqpts);
-      demo.testcoord2dqlattice = demo.GetLatticeCoords( demo.testcoord2dqqpts, demo.testcoord2dqqmidpts);
-      demo.interioreval2dqqmidpts = E->PhysEvaluateBasis( demo.testcoord2dqqmidpts, storage2d, NullNekDouble1DArray, NullNekDouble1DArray, NullNekDouble1DArray);
- 
-      numedges = 4;
-      numsurfaces = 1;
-      break;
-
-    case LibUtilities::eHexahedron:
-      numedges = 12;
-      numsurfaces = 6;
-
-      demo.coordpts = demo.GetCoords(E);
-      demo.coordmidpts = demo.GetQuadratureMidCoords(  demo.coordpts);
-      demo.allptslattice = demo.GetLatticeCoords(demo.coordpts, demo.coordmidpts);
-      demo.midpteval = E->PhysEvaluateBasis( demo.coordmidpts, storage3d, NullNekDouble1DArray, NullNekDouble1DArray, NullNekDouble1DArray);
- 
-      break;
-
-    case LibUtilities::eTetrahedron:
-      numedges = 12;
-      numsurfaces = 6;
-
-      demo.coordpts= demo.GetCoords(E);
-      demo.coordmidpts = demo.GetQuadratureMidCoords(  demo.coordpts);
-      demo.allptslattice = demo.GetLatticeCoords(demo.coordpts, demo.coordmidpts);
-      demo.midpteval = E->PhysEvaluateBasis( demo.coordmidpts, storage3d, NullNekDouble1DArray, NullNekDouble1DArray, NullNekDouble1DArray);
- 
-      break;
-      
-    default: cout<<"\n unknown shape type\n\n";exit(0);
-
-      
-    }
   const auto totPoints = (unsigned) E->GetTotPoints();
 
   Array<OneD, NekDouble> x = Array<OneD, NekDouble>(totPoints);
@@ -241,24 +252,40 @@ Array<OneD,  NekDouble> callGD(Array<OneD,  NekDouble> &coeff , NekDouble &avgit
       holdstorage = storage2d;
       if(stype == 4)	  //ifstarting pt = "<<xnew[0]<<","<<xnew[1]<<" N = 5"; quad
 	{
-	  demo.steepestgradient_descent2Dquad(coeff, E, storage2d, rethold,  avgiterGD);
+      demo.steepestgradient_descent2D(coeff, E, rethold, avgiterGD, 1e-7); 
 	  //, demo.testcoord2dqqpts, demo.testcoord2dqqmidpts,demo. interioreval2dqqmidpts, demo.testcoord2dqlattice);
 	}
       else if(stype == 3)//else tri
 	{
-	  demo.steepestgradient_descent2Dtri(coeff, E, storage2d, rethold,  avgiterGD);
+      demo.steepestgradient_descent2D(coeff, E, rethold, avgiterGD, 1e-7); 
 	}
     }
   else //3d
     {
-      if(stype == LibUtilities::eHexahedron || stype == LibUtilities::eTetrahedron)    //if hex
+      if(stype == LibUtilities::eHexahedron)
 	{
-	  holdstorage = storage3d;
-	  demo.steepestgradientdescent3D(coeff, E, storage3d, rethold,  avgiterGD);
+	  storage3d = demo.storage3dhex;
+	  demo.steepestgradientdescent3D(coeff, E, storage3d, demo.coordhex, demo.coordmidhex, demo.midptevalhex, rethold, avgiterGD);  
+
+	}
+      else if( stype == LibUtilities::eTetrahedron)
+	{
+	  storage3d = demo.storage3dtet;
+	 
+	  demo.steepestgradientdescent3D(coeff, E, storage3d, demo.coordtet, demo.coordmidtet, demo.midptevaltet, rethold, avgiterGD);  
+	}
+      else if( stype == LibUtilities::ePyramid)    //if hex
+	{
+	  storage3d = demo.storage3dpyr;
+	  demo.steepestgradientdescent3D(coeff, E, storage3d, demo.coordpyr, demo.coordmidpyr, demo.midptevalpyr, rethold, avgiterGD);  
     
 	}
+       holdstorage = storage3d;
+
     }
   cout<<"\n iters taken = "<<avgiterGD;
+  cout<<"\n expected ="<< startA[dimension]<<" rethold.size()="<<rethold.size()<<" rethold[0].size()="<<rethold[0][0]<<", "<<rethold[1][0]<<",";//<<rethold[2][0]<<"\n\n";
+
   coords[0] = rethold[0][0];
   coords[1] = rethold[1][0];
     
@@ -268,7 +295,6 @@ Array<OneD,  NekDouble> callGD(Array<OneD,  NekDouble> &coeff , NekDouble &avgit
   Array<OneD, NekDouble> evalbasis(coeff.size()), tmp(1);
   evalbasis = E->PhysEvaluateBasis(rethold, holdstorage, NullNekDouble1DArray, NullNekDouble1DArray, NullNekDouble1DArray);
   demo.pq(coeff, rethold, evalbasis, NullNekDouble1DArray, tmp);
-	    
   Array<OneD, NekDouble> s1(E->GetTotPoints(),0.0), p1(E->GetTotPoints(),0.0);
   cout<<"\n Min value on dense lattice = "<<startA[dimension];
   if(startA[dimension] > tmp[0] )
@@ -289,6 +315,163 @@ Array<OneD,  NekDouble> callGD(Array<OneD,  NekDouble> &coeff , NekDouble &avgit
   cout << "L 2 error        : " << scientific << eL2 << endl<<" *****\n";
 	 
   return coords;	
+}
+
+void call_setup_tri(StdExpansion * exp)
+{
+  int nmodes0 = exp->GetBasis(0)->GetNumModes();
+      
+  int nmodes1 = exp->GetBasis(1)->GetNumModes();
+  int npts0 = exp->GetBasis(0)->GetNumPoints();
+  int npts1 = exp->GetBasis(1)->GetNumPoints();
+  PointsKey p0(npts0, exp->GetBasis(0)->GetPointsType());
+  PointsKey p1(npts1, exp->GetBasis(1)->GetPointsType());
+  BasisKey  b0(LibUtilities::eOrtho_A,  nmodes0, p0);
+  BasisKey  b1(LibUtilities::eOrtho_B,  nmodes1, p1);
+  Etri = new StdTriExp(b0, b1);
+      
+  demo.storage2dt =  Etri->GetPhysEvaluateStorage(); 
+  demo.coordtri = demo.GetCoords(Etri);
+  demo.coordmidtri = demo.GetQuadratureMidCoords(demo.coordtri);
+  demo.coordlatticetri = demo.GetLatticeCoords(demo.coordtri, demo.coordmidtri);
+
+  demo.midptevaltri = Etri->PhysEvaluateBasis(demo.coordmidtri, demo.storage2dt, NullNekDouble1DArray, NullNekDouble1DArray, NullNekDouble1DArray);
+
+      
+}
+
+    
+void call_setup_quad(StdExpansion* exp)
+{
+  // get # of quad pts in curr exp
+  // get order of current exp
+  // get ptypes and btypes
+  int nmodes0 = exp->GetBasis(0)->GetNumModes();
+  int nmodes1 = exp->GetBasis(1)->GetNumModes();
+  int npts0 = exp->GetBasis(0)->GetNumPoints();
+  int npts1 = exp->GetBasis(1)->GetNumPoints();
+      
+  PointsKey p0(npts0, exp->GetBasis(0)->GetPointsType());
+  PointsKey p1(npts1, exp->GetBasis(1)->GetPointsType());
+  BasisKey  b0(LibUtilities::eOrtho_A,  nmodes0, p0);
+  BasisKey  b1(LibUtilities::eOrtho_A,  nmodes1, p1);
+  Equad = new StdQuadExp(b0, b1);
+  demo.storage2dq =  Equad->GetPhysEvaluateStorage();
+  demo.coordquad = demo.GetCoords(Equad);
+  demo.coordmidquad = demo.GetQuadratureMidCoords(demo.coordquad);
+  demo.coordlatticequad = demo.GetLatticeCoords(demo.coordquad, demo.coordmidquad);
+
+  demo.midptevalquad = Equad->PhysEvaluateBasis(demo.coordmidquad, demo.storage2dq, NullNekDouble1DArray, NullNekDouble1DArray, NullNekDouble1DArray);
+      
+
+      
+}
+
+void call_setup_tet(StdExpansion *exp)
+{
+  int orthoflag = (exp->GetBasisType(0) != LibUtilities::eOrtho_A);
+  if(!orthoflag)
+    {
+      int nmodes0 = exp->GetBasis(0)->GetNumModes();
+      int nmodes1 = exp->GetBasis(1)->GetNumModes();
+      int nmodes2 = exp->GetBasis(2)->GetNumModes();
+      int npts0 = exp->GetBasis(0)->GetNumPoints();	
+      int npts1 = exp->GetBasis(1)->GetNumPoints();
+      int npts2 = exp->GetBasis(2)->GetNumPoints();
+      
+      PointsKey p0(npts0, exp->GetBasis(0)->GetPointsType());
+      PointsKey p1(npts1, exp->GetBasis(1)->GetPointsType());
+      PointsKey p2(npts2, exp->GetBasis(2)->GetPointsType());
+      BasisKey  b0(LibUtilities::eOrtho_A,  nmodes0, p0);
+      BasisKey  b1(LibUtilities::eOrtho_B,  nmodes1, p1);
+      BasisKey  b2(LibUtilities::eOrtho_C,  nmodes2, p2);
+      
+      Eorth = new StdTetExp(b0, b1, b2);
+    }
+  else
+    {
+      Eorth = exp;
+    }
+  
+  demo.storage3dtet = Eorth->GetPhysEvaluateStorage();
+  demo.coordtet = demo.GetCoords(Eorth);
+  demo.coordmidtet = demo.GetQuadratureMidCoords(demo.coordtet);
+  demo.coordlatticetri = demo.GetLatticeCoords(demo.coordtet, demo.coordmidtet);
+  
+  demo.midptevaltet = Eorth->PhysEvaluateBasis(demo.coordmidtet, demo.storage3dtet, NullNekDouble1DArray, NullNekDouble1DArray, NullNekDouble1DArray);
+
+}
+
+void call_setup_hex(StdExpansion *exp)
+{
+  
+  // get # of quad pts in curr exp
+  // get order of current exp
+  // get ptypes and btypes
+  int orthoflag = (exp->GetBasisType(0) != LibUtilities::eOrtho_A);
+  if(!orthoflag)
+    {
+
+      int nmodes0 = exp->GetBasis(0)->GetNumModes();
+      int nmodes1 = exp->GetBasis(1)->GetNumModes();
+      int nmodes2 = exp->GetBasis(2)->GetNumModes();
+      
+      int npts0 = exp->GetBasis(0)->GetNumPoints();
+      int npts1 = exp->GetBasis(1)->GetNumPoints();
+      int npts2 = exp->GetBasis(2)->GetNumPoints();
+      
+      PointsKey p0(npts0, exp->GetBasis(0)->GetPointsType());
+      PointsKey p1(npts1, exp->GetBasis(1)->GetPointsType());
+      PointsKey p2(npts2, exp->GetBasis(2)->GetPointsType());
+      BasisKey  b0(LibUtilities::eOrtho_A,  nmodes0, p0);
+      BasisKey  b1(LibUtilities::eOrtho_A,  nmodes1, p1);
+      BasisKey  b2(LibUtilities::eOrtho_A,  nmodes2, p2);
+      E = new StdHexExp(b0, b1, b2);
+    }
+  else
+    {
+      E = exp;
+    }
+  demo.storage3dhex =  E->GetPhysEvaluateStorage();
+  
+  demo.coordhex = demo.GetCoords(E);
+  demo.coordmidhex = demo.GetQuadratureMidCoords(demo.coordhex);
+  demo.coordlatticehex = demo.GetLatticeCoords(demo.coordhex, demo.coordmidhex);
+  
+  demo.midptevalhex = E->PhysEvaluateBasis(demo.coordmidhex, demo.storage3dhex, NullNekDouble1DArray, NullNekDouble1DArray, NullNekDouble1DArray);
+}
+
+void call_setup_pyr(StdExpansion *exp)
+{
+  int orthoflag = (exp->GetBasisType(0) != LibUtilities::eOrtho_A);
+  if(!orthoflag)
+    {
+      int nmodes0 = exp->GetBasis(0)->GetNumModes();
+      int nmodes1 = exp->GetBasis(1)->GetNumModes();
+      int nmodes2 = exp->GetBasis(2)->GetNumModes();
+      int npts0 = exp->GetBasis(0)->GetNumPoints();
+      int npts1 = exp->GetBasis(1)->GetNumPoints();
+      int npts2 = exp->GetBasis(2)->GetNumPoints();
+      PointsKey p0(npts0, exp->GetBasis(0)->GetPointsType());
+      PointsKey p1(npts1, exp->GetBasis(1)->GetPointsType());
+      PointsKey p2(npts2, exp->GetBasis(2)->GetPointsType());
+      BasisKey  b0(LibUtilities::eOrtho_A,  nmodes0, p0);
+      BasisKey  b1(LibUtilities::eOrtho_A,  nmodes1, p1);
+      BasisKey  b2(LibUtilities::eOrthoPyr_C,  nmodes2, p2);
+      E = new StdPyrExp(b0, b1, b2);
+    }
+  else
+    {
+      E = E;
+    }
+  demo.storage3dpyr = E->GetPhysEvaluateStorage();
+  demo.coordpyr = demo.GetCoords(E);
+  demo.coordmidpyr = demo.GetQuadratureMidCoords(demo.coordpyr);
+  demo.coordlatticepyr = demo.GetLatticeCoords(demo.coordpyr, demo.coordmidpyr);
+  
+  demo.midptevalpyr = E->PhysEvaluateBasis(demo.coordmidpyr, demo.storage3dpyr, NullNekDouble1DArray, NullNekDouble1DArray, NullNekDouble1DArray);
+  
+
 }
 
 Array<OneD, NekDouble> find_rough_min(Array<OneD, NekDouble> uhats)

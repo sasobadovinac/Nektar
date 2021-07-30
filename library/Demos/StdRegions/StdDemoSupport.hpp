@@ -67,7 +67,7 @@ public:
   // recurrence coeff:
   Nektar::Array<Nektar::OneD, Nektar::NekDouble> ab1;
   Nektar::Array<Nektar::OneD, Nektar::NekDouble> ab2;
-//Orthogonal ver of elements 
+  //Orthogonal ver of elements 
   StdExpansion *E3seg;    
   StdExpansion *Eorthseg;    
   StdExpansion *Eorthtri;    
@@ -122,7 +122,7 @@ public:
       ("verbose,v", "flag for verbose output");
   }
 
-    StdExpansion *CreateStdExpansion()
+  StdExpansion *CreateStdExpansion()
   {
     vector<PointsType> ptype;
     if (m_vm.count("pointstype"))
@@ -453,35 +453,6 @@ public:
   
   Array<OneD, NekDouble> midptevalhex, midptevaltet, midptevalpyr, midptevalquad, midptevaltri, midptevalpri; 
   
-  // //seg - don't need ortho ver coz no GD
-  // Array<OneD, NekDouble > interioreval1dmidpts;
-  // Array<OneD, Array<OneD, NekDouble> > testcoord1dpts;
-  // Array<OneD, Array<OneD, NekDouble> > testcoord1dmidptspts;
-  // Array<OneD, Array<OneD, NekDouble> > testcoord1dlattice;
-
-  // //tri
-  // Array<OneD, NekDouble > interioreval2dqqmidpts;
-  // Array<OneD, NekDouble > interioreval2dtqmidpts;
-  // Array<OneD, Array<OneD, NekDouble> > testcoord2dtqpts;
-  // Array<OneD, Array<OneD, NekDouble> > testcoord2dtlattice;
-  // Array<OneD, Array<OneD, NekDouble> > testcoord2dtqmidpts;
-
-  // //quad
-  // Array<OneD, NekDouble > interiorevalorth2dqqmidpts;
-  // Array<OneD, NekDouble > interiorevalorth2dtqmidpts;
-  // Array<OneD, Array<OneD, NekDouble> > testcoord2dqqmidpts;
-  // Array<OneD, Array<OneD, NekDouble> > testcoord2dqqpts;
-  // Array<OneD, Array<OneD, NekDouble> > testcoord2dqlattice;
-
-  // //3D: hex
-  // Array<OneD, NekDouble > midpteval;
-  // Array<OneD, NekDouble > midptortheval;
-  // Array<OneD, Array<OneD, NekDouble> > coordpts;
-  // Array<OneD, Array<OneD, NekDouble> > coordmidpts;
-  // Array<OneD, Array<OneD, NekDouble> > allptslattice, storage3d;
-
-  // Seg - Physeval and derivatives eval at quad point
-  //  Array<OneD, Array<OneD, NekDouble> > eorthSegstore;
   
   Array<OneD, Array<OneD, NekDouble> > formCompanion(NekDouble N)
   {
@@ -597,25 +568,6 @@ public:
     return C;
   }
   
-  // {
-  //   const int ordmax = (dimension)*pow(3*m_order[0]+1,2) + 1;//5.0*(Vmath::Vmax(m_order.size(), &m_order[0], 1));
-  //   ab1 = Array<OneD, NekDouble>(ordmax);
-  //   ab2 = Array<OneD, NekDouble>(ordmax);
-  //   // Polylib::RecCoeff(ordmax, &ab1[0], &ab2[0], 0, 0);
-
-  //   m_bkey = bkey;
-  //   m_pkey = pkey;
-  //   stypeglo = stype;
-
-    
-  //   storage3d = E->GetPhysEvaluateStorage();
-  
-  //   coordpts  =  GetCoords(E);
-  //   coordmidpts  = GetQuadratureMidCoords( coordpts);
-  //   allptslattice = GetLatticeCoords(coordpts, coordmidpts);    
-  //   midpteval = E->PhysEvaluateBasis(coordmidpts, storage3d, NullNekDouble1DArray, NullNekDouble1DArray ,  NullNekDouble1DArray );
-  //   return E;
-  // }
 
   Array<OneD, NekDouble>  FindLatticeEval(Array<OneD, NekDouble> coeffs,  Array<OneD, Array< OneD, NekDouble> >storage,   Array<OneD, Array<OneD, NekDouble> > quadcoord , Array<OneD, NekDouble> evalbasisatmid, Array<OneD, Array<OneD, NekDouble>> quadmidcoord )
   {
@@ -669,7 +621,7 @@ public:
   }
   
 
-    //if flag = 0 -> Non-ortho to Ortho
+  //if flag = 0 -> Non-ortho to Ortho
   //if flag = 1 -> Ortho to Non-ortho
   void OrthoNormalize(StdExpansion *E, Array<OneD, NekDouble>  &coeffs,  Array<OneD, BasisType> btypeorth, int flag)//,  LibUtilities::BasisKey fromBasisKey0, LibUtilities::BasisKey toBasisKey0, int flag)
   {
@@ -842,99 +794,6 @@ public:
       }
 
   }
-
-    
-//   void edgederpquhats(Array<OneD, NekDouble> &uhats, StdExpansion *E3seg, Array<OneD, NekDouble> &ret,  Array<OneD, NekDouble> Vxy, Array<OneD, NekDouble> Vxyd0, Array<OneD, NekDouble> Vxyd1, Array<OneD, NekDouble> Vxyd2)
-// {
-//   int uhatstot = uhats.size();
-//   int modes = uhats.size();
-//   int totpts = E3seg->GetBasis(0)->GetZ().size();
-  
-//   Array<OneD, NekDouble> temp(totpts), temp2(modes), temp3(uhatstot);
-//   Array<OneD, NekDouble> pqeval(totpts);
-//   NekDouble v1, v2;
-//   int dim;
-//   if(Vxyd2 == NullNekDouble1DArray)
-//     dim = 2;
-//   else if(Vxyd1 == NullNekDouble1DArray)
-//     dim = 1;
-  
-//   for(int i = 0; i<totpts; i++)
-//     {
-//       Vmath::Vmul(modes, &Vxy[0]+i, totpts, &Vxyd0[0]+i, totpts, &temp2[0], 1);
-//       v1  = Vmath::Vsum(modes, temp2, 1); 
-//       Vmath::Vmul(uhatstot, &Vxy[i], totpts, &uhats[0], 1, &temp3[0], 1);
-//       v2  = Vmath::Vsum(uhatstot, temp3, 1);  
-
-//       v1 = v2*v1;
-
-//       // At this point,                 
-//       // v1 = (sum(Vxm1.*Vdxm1, 2)).*(Vxm1*c) for 1 point
-
-//       // calculate (sum(Vxm1.*Vxm1, 2)).*(Vd*c)
-//       Vmath::Vmul(uhatstot, &Vxy[0]+i, totpts, &Vxy[0]+i, totpts, &temp2[0], 1);
-        
-//       v2  = Vmath::Vsum(uhatstot, temp2, 1);  
- 
-//       Vmath::Vmul(uhats.size(), &Vxyd0[i], totpts, &uhats[0], 1, &temp2[0], 1);
-
-//       v1= v2*Vmath::Vsum(uhats.size(), temp2, 1)- v1;
- 
-//       pqeval[i] = v1;
- 
-//       if(dim > 1)
-//         {
-
-// 	  Vmath::Vmul(modes, &Vxy[0]+i, totpts, &Vxyd1[0]+i, totpts, &temp2[0], 1);
-// 	  v1  = Vmath::Vsum(modes, temp2, 1); 
-// 	  Vmath::Vmul(uhatstot, &Vxy[i], totpts, &uhats[0], 1, &temp3[0], 1);
-
-// 	  v2  = Vmath::Vsum(uhatstot, temp3, 1);  
-// 	  v1 = v2*v1;
-
-// 	  // At this point,                 
-// 	  // v1 = (sum(Vxm1.*Vdxm1, 2)).*(Vxm1*c) for 1 point
-
-// 	  // calculate (sum(Vxm1.*Vxm1, 2)).*(Vd*c)
-// 	  Vmath::Vmul(uhatstot, &Vxy[0]+i, totpts, &Vxy[0]+i, totpts, &temp2[0], 1);
-
- 
-        
-// 	  v2  = Vmath::Vsum(uhatstot, temp2, 1);  
-// 	  Vmath::Vmul(uhats.size(), &Vxyd1[i], totpts, &uhats[0], 1, &temp2[0], 1);
-
-// 	  v1= v2*Vmath::Vsum(uhats.size(), temp2, 1) - v1;
-// 	  pqeval[i] += v1;
- 
-//         }
-//       if(dim == 3)
-//         {
-
-// 	  Vmath::Vmul(modes, &Vxy[0]+i, totpts, &Vxyd2[0]+i, totpts, &temp2[0], 1);
-// 	  v1  = Vmath::Vsum(modes, temp2, 1); 
-// 	  Vmath::Vmul(uhatstot, &Vxy[i], totpts, &uhats[0], 1, &temp3[0], 1);
-
-// 	  v2  = Vmath::Vsum(uhatstot, temp3, 1);  
-// 	  v1 = v2*v1;
-
-// 	  // At this point,                 
-// 	  // v1 = (sum(Vxm1.*Vdxm1, 2)).*(Vxm1*c) for 1 point
-
-// 	  // calculate (sum(Vxm1.*Vxm1, 2)).*(Vd*c)
-// 	  Vmath::Vmul(uhatstot, &Vxy[0]+i, totpts, &Vxy[0]+i, totpts, &temp2[0], 1);
-        
-// 	  v2  = Vmath::Vsum(uhatstot, temp2, 1);  
-// 	  Vmath::Vmul(uhats.size(), &Vxyd2[i], totpts, &uhats[0], 1, &temp2[0], 1);
-
-// 	  v1= v2*Vmath::Vsum(uhats.size(), temp2, 1) - v1;
-// 	  pqeval[i] += v1;
- 
-//         }
-//     }
-
-//   E3seg->FwdTrans(pqeval, ret);
-  
-// }
   void derpq(Array<OneD, NekDouble> &uhats, NekDouble &ret,  Array<OneD, NekDouble> Vxy, Array<OneD, NekDouble> Vxyd)
   {
     int N = uhats.size();
@@ -974,14 +833,14 @@ public:
     // we want fn eval on lattice
     //    for(int k = 0; k < GetAvgNum(); k++)
     //{
-	double alpha= 1.0, beta= 0.0;
-	char no= 'N';
-	int m = nq1, n = nq2, lda = m, incx = 1, incy = 1;
-	double *A = &M[0];
-	//t1.Start();
-	Blas::dgemv_(no,m,n,alpha,A,lda,&vec[0],incx,beta,&hold[0],incy);
-	//t1.Stop();
-	//}
+    double alpha= 1.0, beta= 0.0;
+    char no= 'N';
+    int m = nq1, n = nq2, lda = m, incx = 1, incy = 1;
+    double *A = &M[0];
+    //t1.Start();
+    Blas::dgemv_(no,m,n,alpha,A,lda,&vec[0],incx,beta,&hold[0],incy);
+    //t1.Stop();
+    //}
     return hold;
   }
 
@@ -1000,6 +859,7 @@ public:
     int stype = E->DetShapeType();
     Array<OneD, Array<OneD, NekDouble> > storage, coords, coordsmid;
     Array<OneD, NekDouble> midpteval;
+
     if(stype == 3)
       {
 	storage = storage2dt;
@@ -1021,8 +881,7 @@ public:
     Array<OneD, NekDouble> nullarr(0), temp2(coords[0].size()), temp3, alltemp;
     NekDouble gnew = inf;
 
-    int idxgprev;
-        
+    int idxgprev;     
     int sz = coords[0].size();
     Array<OneD, Array<OneD, NekDouble > > tempeval(4);
     Array<OneD, NekDouble> xstart(dim);
@@ -1064,7 +923,7 @@ public:
     //	cout<<"\n    starting pt = "<<xnew[0]<<","<<xnew[1]<<" N "<< uhats.size();
     
     Array<OneD, NekDouble> dereval(dim);
-    if(gprev < 0 && abs(gprev)>1e-8)
+    if(gprev < 0 && abs(gprev)>tol)
       {
 	
 	Array<OneD, Array<OneD, NekDouble > > xastaa(2);
@@ -1133,7 +992,7 @@ public:
 		    xastaa[1][0] = holdxandval[1]  - fac*g[1];
 		    fac = fac*gamhold;
 		    if(fac < 1e-6)
-		       break;
+		      break;
 		    chkval = abs(xastaa[0][0] )>1 ||abs( xastaa[1][0]) > 1;
 		    if(stype == 3)
 		      {
@@ -1316,594 +1175,7 @@ public:
     
   }
 
-  
-  //******
-
-  // void steepestgradient_descent2Dquad(Array<OneD, NekDouble> &uhats, StdExpansion *E, Array<OneD, Array<OneD, NekDouble> >&retarr, NekDouble &avgiterGD, NekDouble tol)
-  // {
-  //   Array<OneD, NekDouble> interioreval = midptevalquad;
-
-  //   int dim = 2;
-  //   Array<OneD, NekDouble> g(dim);
-  //   double inf = numeric_limits<double>::infinity();
-  //   retarr = Array<OneD, Array<OneD, NekDouble> >(dim);
-  //   for(int p = 0; p < dim; p++)
-  //     {
-  // 	retarr[p] = Array<OneD,NekDouble>(1);
-  //     }
-  //   // flag that determines if GD is called from GDBackTrackingTest.cpp
-    
-  //   Array<OneD,NekDouble> xnew(dim) ,x(dim);
-  //   NekDouble gprev = inf;
-  //   Array<OneD, NekDouble> nullarr(0), temp2(coordquad[0].size()), temp3, alltemp;
-  //   NekDouble gnew = inf;
-
-  //   int idxgprev;
-        
-  //   int sz = coordquad[0].size();
-  //   Array<OneD, Array<OneD, NekDouble > > tempeval(4);
-  //   Array<OneD, NekDouble> xstart(dim);
- 
-  //   for(int i = 0; i < 4; i++)
-  //     {
-  //       tempeval[i] = Array<OneD, NekDouble>(E->GetNcoeffs());
-  //     }
-
-  //   pq(uhats, coordquad , storage2dq[0], nullarr, temp2);
-
-  //   gprev = Vmath::Vmin(sz, temp2, 1);
-  //   idxgprev = Vmath::Imin(temp2.size(), temp2, 1);
-  //   for(int p = 0; p < dim; p++)
-  //     {
-  // 	xnew[p] = coordquad[p][idxgprev];
-  // 	xstart[p] = xnew[p];  
-  //     }
-
-  //   pq(uhats, coordmidquad, midptevalquad, nullarr, temp3 );
-
-  //   NekDouble gprevmid =  Vmath::Vmin(temp3.size(), temp3, 1);
-
-  //   if(gprev > gprevmid)
-  //     {
-  //       gprev = gprevmid;
-  //       idxgprev = Vmath::Imin(temp3.size(), temp3, 1);
-  // 	for(int p = 0; p < dim; p++)
-  // 	  {
-  // 	    xnew[p] = coordmidquad[p][idxgprev];  
-  // 	    xstart[p] = xnew[p]; 
-  // 	  }
-  //     }
-  //   if(startarr.size() > 1)
-  //     {
-  // 	cout<<"\n expected root roughly = "<< startarr[0]<<" , "<<startarr[1]<<"\n";
-	
-  //     }
-    
-  //   Array<OneD, NekDouble> dereval(dim);
-  //   if(verbose)
-  //     {
-  // 	cout<<"\n    starting pt = "<<xnew[0]<<","<<xnew[1]<<" N "<< uhats.size();
-  //     }
-  //   if(gprev < 0 && abs(gprev)>1e-10)
-  //     {
-	
-  // 	Array<OneD, Array<OneD, NekDouble > > xastaa(2);
-  // 	xastaa[0] = Array<OneD, NekDouble> (1, xnew[0]);
-  // 	xastaa[1] = Array<OneD, NekDouble> (1, xnew[1]);
-	
-  // 	NekDouble c = chold;
-
-  // 	tempeval[0] = E->PhysEvaluateBasis(xastaa, storage2dq, tempeval[1], tempeval[2], tempeval[3]);
-
-	
-  // 	for(int p = 0; p < dim; p++)
-  // 	  {
-  // 	    derpq(uhats, dereval[p], tempeval[0], tempeval[p+1]);
-  // 	    g[p] = dereval[p];
-  // 	  }
-  // 	gnew = pow((pow(g[0],2) + pow(g[1],2)) ,0.5);
-  // 	if(abs(g[0]) > 1 || abs(g[1])>1)
-  // 	  {
-  // 	    g[0] = g[0]/gnew;
-  // 	    g[1] = g[1]/gnew;
-  // 	  }
-
-  // 	Array<OneD, NekDouble> t1(1);
-  // 	pq(uhats, xastaa, tempeval[0], NullNekDouble1DArray, t1);
-  // 	Array<OneD, NekDouble > holdxandval(dim+1), saveholdxandval(dim+1), savesavehold(dim+1);
-  // 	holdxandval[0] = xastaa[0][0];
-  // 	holdxandval[1] = xastaa[1][0];
-  // 	holdxandval[2] = t1[0];
-  // 	savesavehold[2] = inf;
-  // 	int truth_val = abs(g[0]+g[1]) > 1e-8;//tol;
-  // 	int ctr = 0, ct  = 0;
-  // 	NekDouble savevalprev0 = 0, savevalprev1 = 0, saveholdval = 0, fac = 1,  gnew0 = gnew, gnew1 = gnew, gnew2 = gnew;
-    		    	
-  // 	if(truth_val)
-  // 	  {
-  // 	    NekDouble iter = secarg;
-  // 	    int counter_min_change = 0;	
-
-  // 	    while(ctr < iter && ((abs(g[0]) > 1e-8) || abs(g[1]) > 1e-8) && fac > 1e-7  && counter_min_change < 9 )
-  // 	      {
-  // 		if(ctr > 2 && abs(gnew0 - gnew2) < tol)//1e-8)
-  // 		  {
-  // 		    break;
-  // 		  }[
-  // 		if(ctr > 1)
-  // 		  {
-  // 		    fac = gamhold;
-  // 		  }
-  // 		saveholdxandval[0] = xastaa[0][0];
-  // 		saveholdxandval[1] = xastaa[1][0];
-  // 		saveholdxandval[2] = t1[0];
-	    
-  // 		xastaa[0][0] = saveholdxandval[0]  - fac*g[0];
-  // 		xastaa[1][0] = saveholdxandval[1]  - fac*g[1];
-	    
-	    
-  // 		while(abs(xastaa[0][0])>1 || abs(xastaa[1][0])>1)
-  // 		  {
-  // 		    xastaa[0][0] = holdxandval[0]  - fac*g[0];
-  // 		    xastaa[1][0] = holdxandval[1]  - fac*g[1];
-  // 		    fac = fac*gamhold;
-  // 		    if(fac < 1e-7)
-  // 		       break;
-  // 		  }
-	    
-  // 		ctr++;
-  // 		tempeval[0] = E->PhysEvaluateBasis(xastaa, storage2dq, tempeval[1], tempeval[2], tempeval[3]);
-  // 		pq(uhats, xastaa, tempeval[0], NullNekDouble1DArray, t1);
-  // 		for(int p = 0; p < dim; p++)
-  // 		  {
-  // 		    derpq(uhats, dereval[p], tempeval[0], tempeval[p+1]);
-  // 		    g[p] = dereval[p];
-  // 		  }
-	    
-  // 		if(savesavehold[dim] > t1[0])
-  // 		  {
-  // 		    for(int j = 0; j < dim; j++)
-  // 		      {
-  // 			savesavehold[j] = xastaa[j][0];
-  // 		      }
-  // 		    savesavehold[dim] = t1[0];
-  // 		  }
-	    
-  // 		gnew2 = gnew1;
-  // 		gnew1 = gnew0;
-  // 		gnew = pow((pow(g[0],2) + pow(g[1],2)) ,0.5);
-  // 		gnew0 = gnew;
-  // 		if(abs(g[0]) > 1 || abs(g[1])>1)
-  // 		  {
-  // 		    g[0] = g[0]/gnew;
-  // 		    g[1] = g[1]/gnew;
-  // 		  }
-		
-  // 		savevalprev0 = savevalprev1;
-  // 		savevalprev1 = saveholdval;
-  // 		saveholdval = t1[0];
-  // 		NekDouble holdval = t1[0];
-  // 		Array<OneD, NekDouble> gsave(2);
-  // 		gsave[0] = g[0];
-  // 		gsave[1] = g[1];
-  // 		ct = 0;
-  // 		while(holdval > saveholdxandval[2] - c*fac*(gsave[0] + gsave[1]) && ct < iter &&
-  // 		      fac > 1e-8)
-  // 		  {
-  // 		    ct++;
-  // 		    holdxandval[0] = xastaa[0][0];
-  // 		    holdxandval[1] = xastaa[1][0];
-  // 		    holdxandval[2] = holdval;
-		
-  // 		    fac = fac*gamhold;
-  // 		    xastaa[0][0] = holdxandval[0]  - fac*g[0];
-  // 		    xastaa[1][0] = holdxandval[1]  - fac*g[1];
-
-  // 		    while(abs(xastaa[0][0])>1 || abs(xastaa[1][0])>1)
-  // 		      {
-  // 			xastaa[0][0] = holdxandval[0]  - fac*g[0];
-  // 			xastaa[1][0] = holdxandval[1]  - fac*g[1];
-  // 			fac = fac*gamhold;
-  // 			if(fac < 1e-7)
-  // 			  break;
-  // 		      }
-  // 		    if(fac < 1e-7)
-  // 		      break;
-		
-  // 		    tempeval[0] = E->PhysEvaluateBasis(xastaa, storage2dq, tempeval[1], tempeval[2]
-  // 						       , tempeval[3]);
-  // 		    for(int p = 0; p < dim; p++)
-  // 		      {
-  // 			derpq(uhats, dereval[p], tempeval[0], tempeval[p+1]);
-  // 			g[p] = dereval[p];
-  // 		      }
-  // 		    gnew2 = gnew1;
-  // 		    gnew1 = gnew0;
-  // 		    gnew = pow((pow(g[0],2) + pow(g[1],2)) ,0.5);
-  // 		    gnew0 = gnew;
-		
-  // 		    if(abs(g[0]) > 1 || abs(g[1])>1)
-  // 		      {
-  // 			g[0] = g[0]/gnew;
-  // 			g[1] = g[1]/gnew;
-  // 		      }
-  // 		    pq(uhats, xastaa, tempeval[0], NullNekDouble1DArray, t1);
-  // 		    if(savesavehold[dim] > t1[0])
-  // 		      {
-  // 			for(int j = 0; j < dim; j++)
-  // 			  savesavehold[j] = xastaa[j][0];
-  // 			savesavehold[dim] = t1[0];
-  // 		      }
-		
-  // 		    if(abs(holdval -t1[0]) > 1e-5)
-  // 		      holdval = t1[0];
-  // 		    else
-  // 		      break;
-  // 		  }
-  // 		avgiterGD = ctr;
-
-  // 		  if(saveholdval < holdval)
-  // 		  {
-  // 		    if((saveholdxandval[2]<savesavehold[2]) && abs(saveholdxandval[2] - savesavehold[2]) > 1e-7)
-  // 		      {
-  // 			savesavehold[0] = saveholdxandval[0];
-  // 			savesavehold[1] = saveholdxandval[1];
-  // 			savesavehold[2] = saveholdxandval[2];
-  // 			counter_min_change = 0;
-  // 		      }
-  // 		    else
-  // 		      {
-  // 			counter_min_change++;
-  // 		      }
-		
-  // 		    xastaa[0][0] = saveholdxandval[0];
-  // 		    xastaa[1][0] = saveholdxandval[1];
-		
-  // 		    t1[0] = saveholdval;
-
-  // 		  }
-  // 		else
-  // 		  {
-		
-		
-  // 		    if((saveholdxandval[2]<savesavehold[2]) && abs(saveholdxandval[2] - savesavehold[2]) > 1e-7)
-  // 		      {
-  // 			savesavehold[0] = saveholdxandval[0];
-  // 			savesavehold[1] = saveholdxandval[1];
-  // 			savesavehold[2] = saveholdxandval[2];
-  // 			counter_min_change = 0;
-  // 		      }
-  // 		    else
-  // 		      {
-  // 		    	counter_min_change++;
-  // 		      }
-		
-  // 		    t1[0] = holdval;
-  // 		    if(abs(xastaa[0][0])>1 || abs(xastaa[1][0]) > 1)
-  // 		      {
-  // 			xastaa[0][0] = savesavehold[0];
-  // 			xastaa[1][0] = savesavehold[1];
-  // 		      }
-  // 		    fac = 1;
-		    
-  // 		    if(ctr > 2 && abs(savevalprev0 - saveholdval) < 1e-5)
-  // 		      {
-  // 		    	break;
-  // 		      }
-  // 		  }
-  // 	      }
-  // 	  }
-
-  // 	retarr = Array<OneD, Array<OneD, NekDouble> >(2);
-  // 	retarr[0] = Array<OneD, NekDouble>(1, savesavehold[0]);
-  // 	retarr[1] = Array<OneD, NekDouble>(1, savesavehold[1]);
-  // 	avgiterGD = ctr;
-  // 	//	cout<<"\n*** "<<avgiterGD<<" ***"<<"\n";
-  // 	return;	
-  //     }
-  //   else
-  //     {
-  // 	retarr = NullNekDoubleArrayOfArray;
-  // 	return;
-  //     }
-    
-  // }
-  
-
-  // void steepestgradient_descent2Dtri(Array<OneD, NekDouble> &uhats, StdExpansion *E, Array<OneD, Array<OneD, NekDouble> >&retarr, NekDouble &avgiterGD, NekDouble tol)
-  // {
-  //   Array<OneD, NekDouble> interioreval = midptevaltri;
-
-  //   int dim = 2;
-  //   Array<OneD, NekDouble> g(dim);
-  //   double inf = numeric_limits<double>::infinity();
-  //   retarr = Array<OneD, Array<OneD, NekDouble> >(dim);
-  //   for(int p = 0; p < dim; p++)
-  //     {
-  // 	retarr[p] = Array<OneD,NekDouble>(1);
-  //     }
-  //   // flag that determines if GD is called from GDBackTrackingTest.cpp
-  //   //    int flagTest = 1;
-    
-  //   Array<OneD,NekDouble> xnew(dim) ,x(dim);
-  //   NekDouble gprev = inf;
-  //   Array<OneD, NekDouble> nullarr(0), temp2(coordtri[0].size()), temp3, alltemp;
-  //   NekDouble gnew = inf;
-
-  //   int idxgprev;
-        
-  //   int sz = coordtri[0].size();
-  //   Array<OneD, Array<OneD, NekDouble > > tempeval(4);
-  //   Array<OneD, NekDouble> xstart(dim);
- 
-  //   for(int i = 0; i < 4; i++)
-  //     {
-  //       tempeval[i] = Array<OneD, NekDouble>(E->GetNcoeffs());
-  //     }
-
-  //   pq(uhats, coordtri , storage2dt[0], nullarr, temp2);
-
-  //   gprev = Vmath::Vmin(sz, temp2, 1);
-  //   idxgprev = Vmath::Imin(temp2.size(), temp2, 1);
-  //   for(int p = 0; p < dim; p++)
-  //     {
-  // 	xnew[p] = coordtri[p][idxgprev];
-  // 	xstart[p] = xnew[p];  
-  //     }
-
-  //   pq(uhats, coordmidtri, midptevaltri, nullarr, temp3 );
-
-  //   NekDouble gprevmid =  Vmath::Vmin(temp3.size(), temp3, 1);
-
-  //   if(gprev > gprevmid)
-  //     {
-  //       gprev = gprevmid;
-  //       idxgprev = Vmath::Imin(temp3.size(), temp3, 1);
-  // 	for(int p = 0; p < dim; p++)
-  // 	  {
-  // 	    xnew[p] = coordmidtri[p][idxgprev];  
-  // 	    xstart[p] = xnew[p]; 
-  // 	  }
-  //     }
-  //   if(startarr.size() > 1)
-  //     {
-  // 	cout<<"\n expected root roughly = "<< startarr[0]<<" , "<<startarr[1]<<"\n";
-	
-  //     }
-    
-  //   Array<OneD, NekDouble> dereval(dim);
-  //   if(verbose)
-  //     {
-  // 	cout<<"\n    starting pt = "<<xnew[0]<<","<<xnew[1]<<" N "<< uhats.size();
-  //     }
-  //   if(gprev < 0 && abs(gprev)>1e-10)
-  //     {
-	
-  // 	Array<OneD, Array<OneD, NekDouble > > xastaa(2);
-  // 	xastaa[0] = Array<OneD, NekDouble> (1, xnew[0]);
-  // 	xastaa[1] = Array<OneD, NekDouble> (1, xnew[1]);
-	
-  // 	NekDouble c = chold;
-
-  // 	tempeval[0] = E->PhysEvaluateBasis(xastaa, storage2dt, tempeval[1], tempeval[2], tempeval[3]);
-
-	
-  // 	for(int p = 0; p < dim; p++)
-  // 	  {
-  // 	    derpq(uhats, dereval[p], tempeval[0], tempeval[p+1]);
-  // 	    g[p] = dereval[p];
-  // 	  }
-  // 	gnew = pow((pow(g[0],2) + pow(g[1],2)) ,0.5);
-  // 	if(abs(g[0]) > 1 || abs(g[1])>1)
-  // 	  {
-  // 	    g[0] = g[0]/gnew;
-  // 	    g[1] = g[1]/gnew;
-  // 	  }
-
-  // 	Array<OneD, NekDouble> t1(1);
-  // 	pq(uhats, xastaa, tempeval[0], NullNekDouble1DArray, t1);
-  // 	Array<OneD, NekDouble > holdxandval(dim+1), saveholdxandval(dim+1), savesavehold(dim+1);
-  // 	holdxandval[0] = xastaa[0][0];
-  // 	holdxandval[1] = xastaa[1][0];
-  // 	holdxandval[2] = t1[0];
-  // 	savesavehold[2] = inf;
-  // 	int truth_val = abs(g[0]+g[1]) > 1e-8;//tol;
-  // 	int ctr = 0, ct  = 0;
-  // 	NekDouble savevalprev0 = 0, savevalprev1 = 0, saveholdval = 0, fac = 1,  gnew0 = gnew, gnew1 = gnew, gnew2 = gnew;
-    		    	
-  // 	if(truth_val)
-  // 	  {
-  // 	    NekDouble iter = secarg;
-  // 	    int counter_min_change = 0;	
-
-  // 	    while(ctr < iter && ((abs(g[0]) > 1e-8) || abs(g[1]) > 1e-8) && fac > 1e-7  && counter_min_change < 9 )
-  // 	      {
-  // 		if(ctr > 2 && abs(gnew0 - gnew2) < tol)//1e-8)
-  // 		  {
-  // 		    break;
-  // 		  }
-  // 		if(ctr > 1)
-  // 		  {
-  // 		    fac = gamhold;
-  // 		  }
-  // 		saveholdxandval[0] = xastaa[0][0];
-  // 		saveholdxandval[1] = xastaa[1][0];
-  // 		saveholdxandval[2] = t1[0];
-	    
-  // 		xastaa[0][0] = saveholdxandval[0]  - fac*g[0];
-  // 		xastaa[1][0] = saveholdxandval[1]  - fac*g[1];
-	    
-	    
-  // 		while(abs(xastaa[0][0])>1 || abs(xastaa[1][0])>1 || abs(saveholdxandval[2] + savesavehold[2]) > 1)
-  // 		  {
-  // 		    xastaa[0][0] = holdxandval[0]  - fac*g[0];
-  // 		    xastaa[1][0] = holdxandval[1]  - fac*g[1];
-  // 		    fac = fac*gamhold;
-  // 		    if(fac < 1e-7)
-  // 		       break;
-  // 		  }
-	    
-  // 		ctr++;
-  // 		tempeval[0] = E->PhysEvaluateBasis(xastaa, storage2dt, tempeval[1], tempeval[2], tempeval[3]);
-  // 		pq(uhats, xastaa, tempeval[0], NullNekDouble1DArray, t1);
-  // 		for(int p = 0; p < dim; p++)
-  // 		  {
-  // 		    derpq(uhats, dereval[p], tempeval[0], tempeval[p+1]);
-  // 		    g[p] = dereval[p];
-  // 		  }
-	    
-  // 		if(savesavehold[dim] > t1[0])
-  // 		  {
-  // 		    for(int j = 0; j < dim; j++)
-  // 		      {
-  // 			savesavehold[j] = xastaa[j][0];
-  // 		      }
-  // 		    savesavehold[dim] = t1[0];
-  // 		  }
-	    
-  // 		gnew2 = gnew1;
-  // 		gnew1 = gnew0;
-  // 		gnew = pow((pow(g[0],2) + pow(g[1],2)) ,0.5);
-  // 		gnew0 = gnew;
-  // 		if(abs(g[0]) > 1 || abs(g[1])>1)
-  // 		  {
-  // 		    g[0] = g[0]/gnew;
-  // 		    g[1] = g[1]/gnew;
-  // 		  }
-		
-  // 		savevalprev0 = savevalprev1;
-  // 		savevalprev1 = saveholdval;
-  // 		saveholdval = t1[0];
-  // 		NekDouble holdval = t1[0];
-  // 		Array<OneD, NekDouble> gsave(2);
-  // 		gsave[0] = g[0];
-  // 		gsave[1] = g[1];
-  // 		ct = 0;
-  // 		while(holdval > saveholdxandval[2] - c*fac*(gsave[0] + gsave[1]) && ct < iter &&
-  // 		      fac > 1e-8)
-  // 		  {
-  // 		    ct++;
-  // 		    holdxandval[0] = xastaa[0][0];
-  // 		    holdxandval[1] = xastaa[1][0];
-  // 		    holdxandval[2] = holdval;
-		
-  // 		    fac = fac*gamhold;
-  // 		    xastaa[0][0] = holdxandval[0]  - fac*g[0];
-  // 		    xastaa[1][0] = holdxandval[1]  - fac*g[1];
-
-  // 		    while(abs(xastaa[0][0])>1 || abs(xastaa[1][0])>1 || abs(xastaa[1][0] + xastaa[0][0]) > 1)
-  // 		      {
-  // 			xastaa[0][0] = holdxandval[0]  - fac*g[0];
-  // 			xastaa[1][0] = holdxandval[1]  - fac*g[1];
-  // 			fac = fac*gamhold;
-  // 			if(fac < 1e-7)
-  // 			  break;
-  // 		      }
-  // 		    if(fac < 1e-7)
-  // 		      break;
-		
-  // 		    tempeval[0] = E->PhysEvaluateBasis(xastaa, storage2dt, tempeval[1], tempeval[2]
-  // 						       , tempeval[3]);
-  // 		    for(int p = 0; p < dim; p++)
-  // 		      {
-  // 			derpq(uhats, dereval[p], tempeval[0], tempeval[p+1]);
-  // 			g[p] = dereval[p];
-  // 		      }
-  // 		    gnew2 = gnew1;
-  // 		    gnew1 = gnew0;
-  // 		    gnew = pow((pow(g[0],2) + pow(g[1],2)) ,0.5);
-  // 		    gnew0 = gnew;
-		
-  // 		    if(abs(g[0]) > 1 || abs(g[1])>1)
-  // 		      {
-  // 			g[0] = g[0]/gnew;
-  // 			g[1] = g[1]/gnew;
-  // 		      }
-  // 		    pq(uhats, xastaa, tempeval[0], NullNekDouble1DArray, t1);
-  // 		    if(savesavehold[dim] > t1[0])
-  // 		      {
-  // 			for(int j = 0; j < dim; j++)
-  // 			  savesavehold[j] = xastaa[j][0];
-  // 			savesavehold[dim] = t1[0];
-  // 		      }
-		
-  // 		    if(abs(holdval -t1[0]) > 1e-5)
-  // 		      holdval = t1[0];
-  // 		    else
-  // 		      break;
-  // 		  }
-  // 		avgiterGD = ctr;
-  // 		if(saveholdval < holdval)
-  // 		  {
-  // 		    if((saveholdxandval[2]<savesavehold[2]) && abs(saveholdxandval[2] - savesavehold[2]) > 1e-7)
-  // 		      {
-  // 			savesavehold[0] = saveholdxandval[0];
-  // 			savesavehold[1] = saveholdxandval[1];
-  // 			savesavehold[2] = saveholdxandval[2];
-  // 			counter_min_change = 0;
-  // 		      }
-  // 		    else
-  // 		      {
-  // 			counter_min_change++;
-  // 		      }
-		
-  // 		    xastaa[0][0] = saveholdxandval[0];
-  // 		    xastaa[1][0] = saveholdxandval[1];
-		
-  // 		    t1[0] = saveholdval;
-		    
-  // 		  }
-  // 		else
-  // 		  {
-		
-		
-  // 		    if((saveholdxandval[2]<savesavehold[2]) && abs(saveholdxandval[2] - savesavehold[2]) > 1e-7)
-  // 		      {
-  // 			savesavehold[0] = saveholdxandval[0];
-  // 			savesavehold[1] = saveholdxandval[1];
-  // 			savesavehold[2] = saveholdxandval[2];
-  // 			counter_min_change = 0;
-  // 		      }
-  // 		    else
-  // 		      {
-  // 		    	counter_min_change++;
-  // 		      }
-		
-  // 		    t1[0] = holdval;
-  // 		    if(abs(xastaa[0][0])>1 || abs(xastaa[1][0]) > 1)
-  // 		      {
-  // 			xastaa[0][0] = savesavehold[0];
-  // 			xastaa[1][0] = savesavehold[1];
-  // 		      }
-  // 		    fac = 1;
-
-  // 		    if(ctr > 2 && abs(savevalprev0 - saveholdval) < 1e-5)
-  // 		      {
-  // 		    	break;
-  // 		      }
-		    
-  // 		  }
-  // 	      }
-  // 	  }
-
-  // 	retarr = Array<OneD, Array<OneD, NekDouble> >(2);
-  // 	retarr[0] = Array<OneD, NekDouble>(1, savesavehold[0]);
-  // 	retarr[1] = Array<OneD, NekDouble>(1, savesavehold[1]);
-  // 	avgiterGD = ctr;
-  // 	return;	
-  //     }
-  //   else
-  //     {
-  // 	retarr = NullNekDoubleArrayOfArray;
-  // 	return;
-  //     }
-
-
-
-  // }
-
   //GD with backtracking
-  //  void steepestgradientdescent3D(Array<OneD, NekDouble> &uhats, StdExpansion *E, Array<OneD, Array<OneD, NekDouble> > &storage, Array<OneD, Array<OneD, NekDouble> >&retarr, NekDouble &avgiterGD)
   void steepestgradientdescent3D(Array<OneD, NekDouble> &uhats, StdExpansion *E, Array<OneD, Array<OneD, NekDouble> > &storage, Array<OneD, Array<OneD, NekDouble> > &coordpts, Array<OneD, Array<OneD, NekDouble> > &coordmidpts, Array<OneD, NekDouble> &interioreval, Array<OneD, Array<OneD, NekDouble> >&retarr, NekDouble &avgiterGD)
   {
     // Array<OneD, NekDouble> interioreval;
@@ -1962,12 +1234,6 @@ public:
 	  }
 
       }
-    // for(int p = 0; p < dim; p++)
-    //   {
-    // 	xnew[p] = allptslattice[p][idxgprev];
-    // 	xstart[p] = xnew[p];
-
-    //   }
 
 
     if(startarr.size() > 0)
@@ -2028,7 +1294,7 @@ public:
 	for(int p = 0; p < dim; p++)
 	  {
 	    holdxandval[p] = xastaa[p][0];
-	     savesavehold[p] = xastaa[p][0];
+	    savesavehold[p] = xastaa[p][0];
 	  }
 	holdxandval[dim] = t1[0];
 	savesavehold[dim] = t1[0];
@@ -2054,7 +1320,7 @@ public:
 		    break;
 		  }
 		
-		    //     savesavehold[0] = xastaa[0][0];
+		//     savesavehold[0] = xastaa[0][0];
 		//     savesavehold[1] = xastaa[1][0];
 		//     savesavehold[2] = xastaa[2][0];
 		//     break;
@@ -2118,7 +1384,7 @@ public:
                           }
                         fac = fac*gamhold;
 			if(fac < 1e-7)
-			break;
+			  break;
 		      }
 		    break;
 		  case LibUtilities::ePrism:
@@ -2130,7 +1396,7 @@ public:
                           }
                         fac = fac*gamhold;
 			if(fac < 1e-7)
-			break;
+			  break;
 		      }
 
 		    break;
@@ -2197,7 +1463,6 @@ public:
 		while(holdval > saveholdxandval[dim] - c*fac*(gsave[0] + gsave[1] + gsave[2]) && ct < iter && fac > 1e7)
 		  {
 		    ct++;
-		    //cout<<"\n ct = "<<ct;
 		    for(int p = 0; p < dim; p++)
 		      {
 			holdxandval[p] = xastaa[p][0];
@@ -2239,25 +1504,25 @@ public:
 			      }
 			
 			    fac = fac*gamhold;
-			if(fac < 1e-7)
-			  break;
+			    if(fac < 1e-7)
+			      break;
 			  }
 			break;
-			case LibUtilities::ePyramid:
-			  while((abs(xastaa[0][0])>1 || abs(xastaa[1][0])>1 || abs(xastaa[2][0] ) > 1  ||  xastaa[0][0] + xastaa[2][0] > 0 || xastaa[0][0] + xastaa[1][0] > 0) )//&& (fac > 1e-7) )//
-			    {
-			      for(int p = 0; p < dim; p++)
-				{
-				  xastaa[p][0] = holdxandval[p]  - fac*g[p];
+		      case LibUtilities::ePyramid:
+			while((abs(xastaa[0][0])>1 || abs(xastaa[1][0])>1 || abs(xastaa[2][0] ) > 1  ||  xastaa[0][0] + xastaa[2][0] > 0 || xastaa[0][0] + xastaa[1][0] > 0) )//&& (fac > 1e-7) )//
+			  {
+			    for(int p = 0; p < dim; p++)
+			      {
+				xastaa[p][0] = holdxandval[p]  - fac*g[p];
 				  
-				}
-			      fac = fac*gamhold;
-			      if(fac < 1e-7)
-				break;
+			      }
+			    fac = fac*gamhold;
+			    if(fac < 1e-7)
+			      break;
 				  
-			    }
+			  }
 			    
-			  break;
+			break;
 		      case LibUtilities::ePrism:
 			while(abs(xastaa[0][0])>1 || abs(xastaa[1][0])>1 || abs(xastaa[2][0] ) > 1 || xastaa[0][0] + xastaa[2][0] > 1e-8 )
 			  {
@@ -2327,163 +1592,87 @@ public:
 		  }
 		avgiterGD = ctr;
 
-		// if(saveholdval < holdval)
-		//   {
-		//     cout<<"\n never called !\n"; exit(0);
-		//     if((saveholdxandval[2]<savesavehold[2]) && abs(saveholdxandval[2] - savesavehold[2]) > 1e-7)
-		//       {
-		// 	savesavehold[0] = saveholdxandval[0];
-		// 	savesavehold[1] = saveholdxandval[1];
-		// 	savesavehold[2] = saveholdxandval[2];
-		// 	counter_min_change = 0;
-		//       }
-		//     else
-		//       {
-		// 	counter_min_change++;
-		//       }
-		
-		//     xastaa[0][0] = saveholdxandval[0];
-		//     xastaa[1][0] = saveholdxandval[1];
-		//     xastaa[2][0] = saveholdxandval[2];
-		
-		//     t1[0] = saveholdval;
-		
-		//   }
-
-		// else
-		//   {
-
-		    if(ctr > 1 && minall[dim] <  savesavehold[dim] && abs(minall[dim] -  savesavehold[dim]) >1e-7)
-		      {
-			//		cout<<" saveholdxandval[dim]"
-			for(int p = 0; p < dim; p++)
-			  { 
-			    savesavehold[p] = minall[p];//saveholdxandval[p];
-			  }
-			savesavehold[dim] = minall[dim];//saveholdxandval[dim];
-			counter_min_change = 0;
+		if(ctr > 1 && minall[dim] <  savesavehold[dim] && abs(minall[dim] -  savesavehold[dim]) >1e-7)
+		  {
+		    //		cout<<" saveholdxandval[dim]"
+		    for(int p = 0; p < dim; p++)
+		      { 
+			savesavehold[p] = minall[p];//saveholdxandval[p];
 		      }
-		    else
-		      {
-			counter_min_change++;
-			// if(counter_min_change == 15)// && abs(minall  - saveholdval) <1e-3)
-			//   {
-			//     //cout<<"\n stagnation! savesavehold="<<savesavehold[0]<<" "<<savesavehold[1]<<" "<<savesavehold[2]<<" "<<savesavehold[3];
-			//     break;
-			//   }
-		      }
+		    savesavehold[dim] = minall[dim];//saveholdxandval[dim];
+		    counter_min_change = 0;
+		  }
+		else
+		  {
+		    counter_min_change++;
+		    // if(counter_min_change == 15)// && abs(minall  - saveholdval) <1e-3)
+		    //   {
+		    //     //cout<<"\n stagnation! savesavehold="<<savesavehold[0]<<" "<<savesavehold[1]<<" "<<savesavehold[2]<<" "<<savesavehold[3];
+		    //     break;
+		    //   }
+		  }
 		    
-		    t1[0] = holdval;
-		    int opt = 0;
-		    switch(E->DetShapeType())
+		t1[0] = holdval;
+		int opt = 0;
+		switch(E->DetShapeType())
+		  {
+		  case LibUtilities::eHexahedron:
+		    opt = abs(xastaa[0][0])>1 || abs(xastaa[1][0])>1 || abs(xastaa[2][0])>1;
+		    break;
+
+		  case LibUtilities::eTetrahedron:
+		    opt = abs(xastaa[0][0])>1 || abs(xastaa[1][0])>1 || abs(xastaa[2][0] ) > 1|| xastaa[0][0] + xastaa[1][0] > 1e-8 || xastaa[0][0] + xastaa[2][0] > 1e-8 || xastaa[1][0] + xastaa[2][0] > 1e-8;
+		    break;
+
+		  case LibUtilities::ePyramid:
+		    opt = abs(xastaa[0][0])>1 || abs(xastaa[1][0])>1 || abs(xastaa[2][0] ) > 1|| xastaa[0][0] + xastaa[2][0] > 0 || xastaa[2][0] + xastaa[1][0] > 0;  
+		    break;
+		  case LibUtilities::ePrism:
+		    opt = abs(xastaa[0][0])>1 || abs(xastaa[1][0])>1 || abs(xastaa[2][0] ) > 1|| xastaa[0][0] + xastaa[2][0] > 1e-8;
+		    break;
+		  default: cout<<"\n invalid element type!\n";
+		    exit(0);
+		  }
+
+		if(opt)
+		  {
+		    for(int p = 0; p < dim; p++)
 		      {
-		      case LibUtilities::eHexahedron:
-			opt = abs(xastaa[0][0])>1 || abs(xastaa[1][0])>1 || abs(xastaa[2][0])>1;
-			break;
-
-		      case LibUtilities::eTetrahedron:
-			opt = abs(xastaa[0][0])>1 || abs(xastaa[1][0])>1 || abs(xastaa[2][0] ) > 1|| xastaa[0][0] + xastaa[1][0] > 1e-8 || xastaa[0][0] + xastaa[2][0] > 1e-8 || xastaa[1][0] + xastaa[2][0] > 1e-8;
-			break;
-
-		      case LibUtilities::ePyramid:
-			opt = abs(xastaa[0][0])>1 || abs(xastaa[1][0])>1 || abs(xastaa[2][0] ) > 1|| xastaa[0][0] + xastaa[2][0] > 0 || xastaa[2][0] + xastaa[1][0] > 0;  
-			break;
-		      case LibUtilities::ePrism:
-			opt = abs(xastaa[0][0])>1 || abs(xastaa[1][0])>1 || abs(xastaa[2][0] ) > 1|| xastaa[0][0] + xastaa[2][0] > 1e-8;
-			break;
-		      default: cout<<"\n invalid element type!\n";
-			exit(0);
+			xastaa[p][0] = savesavehold[p];
 		      }
-
-		    if(opt)
-		      {
-			for(int p = 0; p < dim; p++)
-			  {
-			    xastaa[p][0] = savesavehold[p];
-			  }
-		      }
+		  }
 		
-		    fac = 1;
-		    //cout<<"\n here xastaa ="<<xastaa[0][0]<<" "<<xastaa[1][0]<<" ,"<<xastaa[2][0]<<" \n";
-		    if(ctr > 2 && abs(savevalprev0 - saveholdval) < 1e-5)
-		      {
-			break;
-		      }
+		fac = 1;
+		//cout<<"\n here xastaa ="<<xastaa[0][0]<<" "<<xastaa[1][0]<<" ,"<<xastaa[2][0]<<" \n";
+		if(ctr > 2 && abs(savevalprev0 - saveholdval) < 1e-5)
+		  {
+		    break;
+		  }
 	      
 
 	      }
 	  }
 	//
-	    for(int p = 0; p < dim; p++)
-	      {
-		retarr[p] = Array<OneD, NekDouble>(1, savesavehold[p]);
-		//	cout<<" "<< retarr[p][0]<<" ";
-	      }
-	    //cout<<"\n";
-	    avgiterGD = ctr;
-	
-	    return;
-      }
-	else
+	for(int p = 0; p < dim; p++)
 	  {
-	    cout<<"\n null\n\n";
-	    retarr = NullNekDoubleArrayOfArray;
-	    return;
+	    retarr[p] = Array<OneD, NekDouble>(1, savesavehold[p]);
+	    //	cout<<" "<< retarr[p][0]<<" ";
 	  }
+	//cout<<"\n";
+	avgiterGD = ctr;
+	
+	return;
+      }
+    else
+      {
+	cout<<"\n null\n\n";
+	retarr = NullNekDoubleArrayOfArray;
+	return;
+      }
     
   } 
 
   
-
-  // upon return, coords will have the only point with min value out of all vals
-  // Array<OneD, Array<OneD, NekDouble> >find_roots( Array<OneD, NekDouble> uhats, StdExpansion *E , Array<OneD, Array<OneD, NekDouble> > &storage, NekDouble &avgiterGD, int d , int surfflag, int volflag, int surfid)
-  // {
-  //   boost::ignore_unused(d);
-  //   int dimension;
-  //   if(surfflag == 0 && volflag == 0)
-  //     dimension = 1;
-  //   else if(volflag == 0)
-  //     dimension = 2;
-  //   else
-  //     dimension = 3;
-
-  //   boost::ignore_unused(surfid);
-  //   Array<OneD, Array<OneD, NekDouble> > coords(dimension);
-  //   //Confederate matrix approach
-  //   if(surfflag == 0 && volflag == 0)
-  //     {
-  // 	return call_companion_rf(uhats);
-  //     }
-
-  //   else if(dimension > 1 && surfflag == 1 && volflag == 0 )
-  //     {
-  // 	for(int k = 0; k < dimension; k++)
-  // 	  {
-  // 	    coords[k] = Array<OneD, NekDouble> (1);
-  // 	  }
-  // 	if(surfid == 0)
-  // 	  {
-  // 	    steepestgradient_descent2Dquad(uhats, E, storage, coords,  avgiterGD);
-  // 	  }
-  // 	else //tri
-  // 	  {
-  // 	    steepestgradient_descent2Dtr(iuhats, E, storage, coords,  avgiterGD);
-  // 	  }
-  // 	return coords;
-
-  //     }
-  //   else if(volflag == 1)
-  //     {
-  // 	for(int k = 0; k < dimension; k++)
-  // 	  {
-  // 	    coords[k] = Array<OneD, NekDouble> (1);
-  // 	  }
-  // 	steepestgradientdescent3D(uhats, E, storage, coords,  avgiterGD);
-  //     }
-
-  //   return coords;
-  
-  // }
   
 
   Array<OneD, Array<OneD, NekDouble> > call_companion_rf(Array<OneD, NekDouble> uhats)
@@ -2592,17 +1781,17 @@ public:
 	break;
       case LibUtilities::ePyramid:
 	{
-	   LibUtilities::BasisKey bkeyorthA ( LibUtilities::eOrtho_A,
-					      E->GetBasis(0)->GetNumModes(),
-					      E->GetBasis(0)->GetPointsKey());
-	   LibUtilities::BasisKey bkeyorthB ( LibUtilities::eOrtho_A,
-					      E->GetBasis(1)->GetNumModes(),
-					      E->GetBasis(1)->GetPointsKey());
-	   LibUtilities::BasisKey bkeyorthC ( LibUtilities::eOrthoPyr_C,
-					      E->GetBasis(2)->GetNumModes(),
-					      E->GetBasis(2)->GetPointsKey());
+	  LibUtilities::BasisKey bkeyorthA ( LibUtilities::eOrtho_A,
+					     E->GetBasis(0)->GetNumModes(),
+					     E->GetBasis(0)->GetPointsKey());
+	  LibUtilities::BasisKey bkeyorthB ( LibUtilities::eOrtho_A,
+					     E->GetBasis(1)->GetNumModes(),
+					     E->GetBasis(1)->GetPointsKey());
+	  LibUtilities::BasisKey bkeyorthC ( LibUtilities::eOrthoPyr_C,
+					     E->GetBasis(2)->GetNumModes(),
+					     E->GetBasis(2)->GetPointsKey());
 	   
-	   Eorthele =  new StdPyrExp(bkeyorthA, bkeyorthB, bkeyorthC);
+	  Eorthele =  new StdPyrExp(bkeyorthA, bkeyorthB, bkeyorthC);
 	   
 	}
 	break;
