@@ -91,6 +91,8 @@ protected:
     std::vector<Array<OneD, NekDouble> > m_delta;
     NekDouble m_alpha;
     bool m_movAvg;
+    int m_dim;
+    NekDouble m_mu;
 };
 }
 }
