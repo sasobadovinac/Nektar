@@ -157,7 +157,7 @@ void FilterReynoldsStresses::v_Initialise(
     }
     int nFields      = pFields.size();
     int nExtraFields = nFields * (nFields + 1) / 2;
-    nExtraFields += 1;
+    nExtraFields += m_dim + 1;
 
     // Allocate storage
     m_fields.resize(nFields + nExtraFields);
@@ -207,6 +207,11 @@ void FilterReynoldsStresses::v_FillVariablesName(
             m_variables.push_back(name);
         }
     }
+    for (int i=0; i < m_dim; ++i)
+    {
+        std::string name = "k"+ m_variables[i];
+        m_variables.push_back(name);
+    }
     m_variables.push_back("dissipation");
 }
 
@@ -229,12 +234,15 @@ void FilterReynoldsStresses::v_ProcessSample(
 
     // Define auxiliary constants for averages
     NekDouble facOld, facAvg, facStress, facDelta;
+    NekDouble fac1Skew, fac2Skew;
     if (m_movAvg)
     {
         facOld    = 1.0 - alpha;
         facAvg    = alpha;
         facStress = alpha;
         facDelta  = 1.0;
+        fac1Skew  = 0.;
+        fac2Skew  = alpha;
     }
     else
     {
@@ -242,6 +250,8 @@ void FilterReynoldsStresses::v_ProcessSample(
         facAvg    = 1.0;
         facStress = nSamples / (nSamples - 1);
         facDelta  = 1.0 / nSamples;
+        fac1Skew  = -1.0 / (nSamples - 1);
+        fac2Skew  = facStress *  (nSamples + 1.) / (nSamples - 1.);
     }
 
     Array<OneD, NekDouble> vel(nq);
@@ -267,18 +277,43 @@ void FilterReynoldsStresses::v_ProcessSample(
         return;
     }
 
-    Array<OneD, NekDouble> tmp = vel;
     // Calculate C_{n} = facOld * C_{n-1} + facStress * deltaI * deltaJ
+    Array<OneD, NekDouble> tmp = vel;
+    std::vector<std::vector<int>> cov(nFields); //vu, wu, wv
     for (i = 0, n = nFields; i < nFields; ++i)
     {
-        for (j = 0; j <= i; ++j)
+        cov[i].resize(nFields);
+        for (j = 0; j <= i; ++j, ++n)
         {
             Vmath::Vmul(nq, m_delta[i], 1, m_delta[j], 1, tmp, 1);
             Vmath::Svtsvtp(
                 nq, facStress, tmp, 1, facOld, m_fields[n], 1, m_fields[n], 1);
-            ++n;
+            cov[i][j] = cov[j][i] = n;
         }
     }
+    // Calculate u_i u_i u_j, j=0,1,...,m_dim
+    for (i=0; i < m_dim; ++i, ++n)
+    {
+        for (j=0; j < m_dim; ++j)
+        {
+            Vmath::Vmul(nq, m_delta[i], 1, m_delta[i], 1, tmp, 1);
+            Vmath::Vmul(nq, m_delta[j], 1, tmp, 1, tmp, 1);
+            Vmath::Svtsvtp(
+                nq, fac2Skew, tmp, 1, facOld, m_fields[n], 1, m_fields[n], 1);
+            if (fac1Skew==0.)
+            {
+                continue;
+            }
+            Vmath::Vmul(nq, m_fields[cov[i][j]], 1, m_delta[i], 1, tmp, 1);
+            Vmath::Svtsvtp(
+                nq, 2.*fac1Skew, tmp, 1, facOld, m_fields[n], 1, m_fields[n], 1);
+            Vmath::Vmul(nq, m_fields[cov[i][i]], 1, m_delta[j], 1, tmp, 1);
+            Vmath::Svtsvtp(
+                nq, fac1Skew, tmp, 1, facOld, m_fields[n], 1, m_fields[n], 1);
+        }
+
+    }
+    // Calculate dissipation term
     Array<OneD, Array<OneD, NekDouble>> dvel(3);
     for (i=0; i < m_dim; ++i)
     {
