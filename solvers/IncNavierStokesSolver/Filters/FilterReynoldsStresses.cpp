@@ -209,7 +209,7 @@ void FilterReynoldsStresses::v_FillVariablesName(
     }
     for (int i=0; i < m_dim; ++i)
     {
-        std::string name = "k"+ m_variables[i];
+        std::string name = "u_iu_i"+ m_variables[i];
         m_variables.push_back(name);
     }
     m_variables.push_back("dissipation");
