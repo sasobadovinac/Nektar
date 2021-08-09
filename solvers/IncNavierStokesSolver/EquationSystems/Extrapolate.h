@@ -42,6 +42,7 @@
 #include <LibUtilities/BasicUtils/SharedArray.hpp>
 #include <LibUtilities/TimeIntegration/TimeIntegrationScheme.h>
 #include <SolverUtils/AdvectionSystem.h>
+#include <SolverUtils/Forcing/Forcing.h>
 
 
 namespace Nektar
@@ -113,6 +114,8 @@ namespace Nektar
             const Array<OneD, const Array<OneD, NekDouble> >  &N,
             NekDouble kinvis);
 
+        inline void SetForcing(
+            const std::vector<SolverUtils::ForcingSharedPtr> &forcing);
         
         void AddDuDt(void);
 
@@ -137,8 +140,6 @@ namespace Nektar
         void ExtrapolateArray( Array<OneD, Array<OneD, NekDouble> > &array);
 
         void EvaluateBDFArray(Array<OneD, Array<OneD, NekDouble> > &array);
-
-        void AccelerationBDF( Array<OneD, Array<OneD, NekDouble> > &array);
 
         void ExtrapolateArray(
             Array<OneD, Array<OneD, NekDouble> > &oldarrays,
@@ -178,6 +179,9 @@ namespace Nektar
             Array<OneD, const NekDouble> &Advection)=0;
         
         virtual std::string v_GetSubStepName(void);
+
+        virtual void v_AccelerationBDF(
+            Array<OneD, Array<OneD, NekDouble> > &array);
 
         void CalcNeumannPressureBCs(
             const Array<OneD, const Array<OneD, NekDouble> > &fields,
@@ -220,6 +224,8 @@ namespace Nektar
         Array<OneD, int> m_velocity;
 
         SolverUtils::AdvectionSharedPtr m_advObject;
+
+        std::vector<SolverUtils::ForcingSharedPtr> m_forcing;
 
         Array<OneD, Array<OneD, NekDouble> > m_previousVelFields;
 
@@ -355,6 +361,15 @@ namespace Nektar
         int nstep)
     {
         v_SubStepSaveFields(nstep);
+    }
+
+    /**
+     *
+     */
+    inline void Extrapolate::SetForcing(
+        const std::vector<SolverUtils::ForcingSharedPtr> &forcing)
+    {
+        m_forcing = forcing;
     }
 
     /**

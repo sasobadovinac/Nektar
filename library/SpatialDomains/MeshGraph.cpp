@@ -2639,11 +2639,15 @@ void MeshGraph::ReadExpansionInfo()
     {
         // Find the Expansion type
         TiXmlElement *expansion = expansionTypes->FirstChildElement();
+        ASSERTL0(expansion, "Unable to find entries in EXPANSIONS tag in "
+                            "file.");
         std::string expType     = expansion->Value();
+        std::vector<std::string> vars  = m_session->GetVariables();
 
         if (expType == "E")
         {
             int i;
+            m_expansionMapShPtrMap.clear();
             ExpansionInfoMapShPtr expansionMap;
 
             /// Expansiontypes will contain composite,
@@ -2653,82 +2657,25 @@ void MeshGraph::ReadExpansionInfo()
 
             /// Expansiontypes may also contain a list of
             /// fields that this expansion relates to. If this
-            /// does not exist the variable is only set to
-            /// "DefaultVar".
+            /// does not exist the variable is set to "DefaultVar".
+            /// "DefaultVar" is used as the default for any
+            /// variables not explicitly listed in FIELDS.
+
+            // Collect all composites of the domain to control which
+            // composites are defined for each variable.
+            map<int, bool> domainCompList;
+            for (int d = 0; d < m_domain.size(); ++d)
+            {
+                for (auto c = m_domain[d].begin(); c != m_domain[d].end(); ++c)
+                {
+                    domainCompList[c->first] = false;
+                }
+            }
+            map<std::string, map<int, bool>> fieldDomainCompList;
 
             while (expansion)
             {
-
-                const char *fStr = expansion->Attribute("FIELDS");
-                std::vector<std::string> fieldStrings;
-
-                if (fStr) // extract other fields.
-                {
-                    std::string fieldStr = fStr;
-                    bool valid = ParseUtils::GenerateVector(
-                        fieldStr.c_str(), fieldStrings);
-                    ASSERTL0(valid, "Unable to correctly parse the field "
-                                    "string in ExpansionTypes.");
-                }
-
-                // check to see if m_expasionVectorShPtrMap has
-                // already been intiailised and if not intiailse
-                // vector.
-                if (m_expansionMapShPtrMap.count("DefaultVar") ==
-                    0) // no previous definitions
-                {
-                    expansionMap = SetUpExpansionInfoMap();
-
-                    m_expansionMapShPtrMap["DefaultVar"] = expansionMap;
-
-                    // make sure all fields in this search point
-                    // to same expansion vector;
-                    for (i = 0; i < fieldStrings.size(); ++i)
-                    {
-                        m_expansionMapShPtrMap[fieldStrings[i]] = expansionMap;
-                    }
-                }
-                else // default variable is defined
-                {
-
-                    if (fieldStrings.size()) // fields are defined
-                    {
-                        // see if field exists
-                        if (m_expansionMapShPtrMap.count(fieldStrings[0]))
-                        {
-                            expansionMap =
-                                m_expansionMapShPtrMap.find(fieldStrings[0])
-                                    ->second;
-                        }
-                        else
-                        {
-                            expansionMap = SetUpExpansionInfoMap();
-                            // make sure all fields in this search point
-                            // to same expansion vector;
-                            for (i = 0; i < fieldStrings.size(); ++i)
-                            {
-                                if (m_expansionMapShPtrMap.count(
-                                        fieldStrings[i]) == 0)
-                                {
-                                    m_expansionMapShPtrMap[fieldStrings[i]] =
-                                        expansionMap;
-                                }
-                                else
-                                {
-                                    ASSERTL0(false, "Expansion vector for this "
-                                                    "field is already  setup");
-                                }
-                            }
-                        }
-                    }
-                    else // use default variable list
-                    {
-                        expansionMap =
-                            m_expansionMapShPtrMap.find("DefaultVar")->second;
-                    }
-                }
-
-                /// Mandatory components...optional are to follow later.
+                // Extract Composites
                 std::string compositeStr = expansion->Attribute("COMPOSITE");
                 ASSERTL0(compositeStr.length() > 3,
                          "COMPOSITE must be specified in expansion definition");
@@ -2740,6 +2687,124 @@ void MeshGraph::ReadExpansionInfo()
                 map<int, CompositeSharedPtr> compositeVector;
                 GetCompositeList(compositeListStr, compositeVector);
 
+                // Extract Fields if any
+                const char *fStr = expansion->Attribute("FIELDS");
+                std::vector<std::string> fieldStrings;
+
+                if (fStr) // extract fields.
+                {
+                    std::string fieldStr = fStr;
+                    bool valid = ParseUtils::GenerateVector(
+                                            fieldStr.c_str(), fieldStrings);
+                    ASSERTL0(valid, "Unable to correctly parse the field "
+                                    "string in ExpansionTypes.");
+
+                    // see if field exists
+                    if(m_expansionMapShPtrMap.count(fieldStrings[0]))
+                    {
+                        expansionMap =
+                            m_expansionMapShPtrMap.find(fieldStrings[0])
+                                ->second;
+                    }
+                    else
+                    {
+                        expansionMap = SetUpExpansionInfoMap();
+                    }
+
+                    // make sure all fields in this search point
+                    // are asigned to same expansion map
+                    for (i = 0; i < fieldStrings.size(); ++i)
+                    {
+                        if (vars.size() && std::count(vars.begin(), vars.end(),
+                                       fieldStrings[i]) == 0)
+                        {
+                            ASSERTL0(false, "Variable '" + fieldStrings[i] +
+                                            "' defined in EXPANSIONS is not"
+                                            " defined in VARIABLES.");
+                        }  
+                        
+                        if (m_expansionMapShPtrMap.count(fieldStrings[i]) == 0)
+                        {
+                                m_expansionMapShPtrMap[fieldStrings[i]] =
+                                    expansionMap;
+
+                            // set true to the composites where expansion is
+                            // defined
+                                fieldDomainCompList[fieldStrings[i]] =
+                                domainCompList;
+                            for (auto c = compositeVector.begin(); c != 
+                                     compositeVector.end(); ++c)
+                            {
+                                fieldDomainCompList.find(fieldStrings[i])
+                                    ->second.find(c->first)
+                                               ->second = true;
+                            }
+                        }
+                        else
+                        {
+                            for (auto c = compositeVector.begin(); c != 
+                                 compositeVector.end(); ++c)
+                            {
+                                if (fieldDomainCompList.find(fieldStrings[i])
+                                        ->second.find(c->first)->second ==false)
+                                {
+                                    fieldDomainCompList.find(fieldStrings[i])
+                                        ->second.find(c->first)->second = true;
+                                }
+                                else
+                                {
+                                    ASSERTL0(false, "Expansion vector for " 
+                                                    "variable '"+fieldStrings[i]
+                                                    +"' is already setup for C["
+                                                    +to_string(c->first) +"].");
+                                }
+                            }
+                            expansionMap =
+                                m_expansionMapShPtrMap.find(fieldStrings[i])
+                                        ->second;
+                        }
+                    }
+                }
+                else // If no FIELDS attribute, DefaultVar is genereted.
+                {
+                    if (m_expansionMapShPtrMap.count("DefaultVar") == 0)
+                    {
+                        expansionMap = SetUpExpansionInfoMap();
+                        m_expansionMapShPtrMap["DefaultVar"] = expansionMap;
+                            
+                        fieldDomainCompList["DefaultVar"] = domainCompList;
+                        for (auto c = compositeVector.begin(); c != 
+                                 compositeVector.end(); ++c)
+                        {
+                            fieldDomainCompList.find("DefaultVar")
+                                ->second.find(c->first)->second = true;
+                        }
+                    }
+                    else
+                    {
+                        for (auto c = compositeVector.begin(); c != 
+                             compositeVector.end(); ++c)
+                        {
+                            if (fieldDomainCompList.find("DefaultVar")
+                                    ->second.find(c->first)->second ==false) 
+                            {
+                                    fieldDomainCompList.find("DefaultVar")
+                                    ->second.find(c->first)->second = true;
+                            }
+                            else
+                            {
+                                ASSERTL0(false, "Default expansion already "
+                                                "defined for C[" + 
+                                                to_string(c->first) + "].");
+                            }
+                        }
+                        expansionMap =
+                            m_expansionMapShPtrMap.find("DefaultVar")
+                                    ->second;
+                    }
+                }
+
+                /// Mandatory components...optional are to follow later.
                 bool useExpansionType = false;
                 ExpansionType expansion_type;
                 int num_modes;
@@ -2933,85 +2998,110 @@ void MeshGraph::ReadExpansionInfo()
 
                 expansion = expansion->NextSiblingElement("E");
             }
+
+            // Check if all the domain has been defined for the existing fields
+            // excluding DefaultVar. Fill the absent composites of a field if
+            // the DefaultVar is defined for that composite
+            for (auto f = fieldDomainCompList.begin(); f !=
+                 fieldDomainCompList.end(); ++f)
+            {
+                    if (f->first != "DefaultVar")
+                {
+                    for (auto c = f->second.begin(); c != f->second.end(); ++c)
+                    {
+                        if (c->second == false && 
+                            fieldDomainCompList.find("DefaultVar")->second
+                            .find(c->first)->second == true)
+                        {
+                            // Copy DefaultVar into the missing composite
+                            // by cycling through the element list.
+                                for (auto geomVecIter = m_meshComposites.find(c->
+                                     first)->second->m_geomVec.begin();
+                                 geomVecIter != m_meshComposites.find(c->first)->
+                                     second->m_geomVec.end();
+                                 ++geomVecIter)
+                                 {
+                                auto xDefaultVar =
+                                               m_expansionMapShPtrMap.find("DefaultVar")->
+                                    second->find((*geomVecIter)->GetGlobalID());
+
+                                auto xField =
+                                               m_expansionMapShPtrMap.find(f->first)->
+                                    second->find((*geomVecIter)->GetGlobalID());
+
+                                (xField->second)->m_basisKeyVector = 
+                                        (xDefaultVar->second)->m_basisKeyVector;
+                                }
+                            c->second = true;
+                            NEKERROR(ErrorUtil::ewarning,
+                                (std::string(
+                                    "Using Default expansion definition for "
+                                    "field '") + f->first + "' in composite "
+                                    "C[" + to_string(c->first) + "].").c_str());
+                        }
+                        ASSERTL0(c->second, "There is no expansion defined for "
+                                                 "variable '" + f->first + "' in C["+
+                                                 to_string(c->first) + "].");
+                        }
+                }
+            }
+            // Ensure m_expansionMapShPtrMap has an entry for all variables
+            // listed in CONDITIONS/VARIABLES section if DefaultVar is defined.
+            for (i = 0; i < vars.size(); ++i)
+            {
+                if (m_expansionMapShPtrMap.count(vars[i]) == 0)
+                {
+                    if (m_expansionMapShPtrMap.count("DefaultVar"))
+                    {
+                        expansionMap = m_expansionMapShPtrMap.find("DefaultVar")
+                                           ->second;
+                        m_expansionMapShPtrMap[vars[i]] = expansionMap;
+
+                        NEKERROR(ErrorUtil::ewarning,
+                            (std::string(
+                                 "Using Default expansion definition for field "
+                                 "'") + vars[i] + "'.").c_str());
+                    }
+                    else
+                    {
+                               ASSERTL0(false,        "Variable '" + vars[i] + "' is missing"
+                                            " in FIELDS attribute of EXPANSIONS"
+                                        " tag.");
+                    }
+                }
+            }
+                // Define "DefaultVar" if not set by user.
+            if (m_expansionMapShPtrMap.count("DefaultVar") == 0)
+            {
+                // Originally assignment was using m_expansionMapShPtrMap["DefaultVar"] =
+                // m_expansionMapShPtrMap.begin()->second; but on certain macOS versions,
+                // this was causing a seg fault so switched to storing addr first - see #271
+                ExpansionInfoMapShPtr firstEntryAddr =
+                        m_expansionMapShPtrMap.begin()->second;
+                       m_expansionMapShPtrMap["DefaultVar"] = firstEntryAddr;
+                }
         }
         else if (expType == "H")
         {
             int i;
+            m_expansionMapShPtrMap.clear();
             ExpansionInfoMapShPtr expansionMap;
+
+            // Collect all composites of the domain to control which
+            // composites are defined for each variable.
+            map<int, bool> domainCompList;
+                for (int d = 0; d < m_domain.size(); ++d)
+            {
+                for (auto c = m_domain[d].begin(); c != m_domain[d].end(); ++c)
+                {
+                    domainCompList[c->first] = false;
+                }
+            }
+            map<std::string, map<int, bool>> fieldDomainCompList;
 
             while (expansion)
             {
-
-                const char *fStr = expansion->Attribute("FIELDS");
-                std::vector<std::string> fieldStrings;
-
-                if (fStr) // extract other fields.
-                {
-                    std::string fieldStr = fStr;
-                    bool valid = ParseUtils::GenerateVector(
-                        fieldStr.c_str(), fieldStrings);
-                    ASSERTL0(valid, "Unable to correctly parse the field "
-                                    "string in ExpansionTypes.");
-                }
-
-                // check to see if m_expasionVectorShPtrMap has
-                // already been intiailised and if not intiailse
-                // vector.
-                if (m_expansionMapShPtrMap.count("DefaultVar") ==
-                    0) // no previous definitions
-                {
-                    expansionMap = SetUpExpansionInfoMap();
-
-                    m_expansionMapShPtrMap["DefaultVar"] = expansionMap;
-
-                    // make sure all fields in this search point
-                    // to same expansion vector;
-                    for (i = 0; i < fieldStrings.size(); ++i)
-                    {
-                        m_expansionMapShPtrMap[fieldStrings[i]] = expansionMap;
-                    }
-                }
-                else // default variable is defined
-                {
-
-                    if (fieldStrings.size()) // fields are defined
-                    {
-                        // see if field exists
-                        if (m_expansionMapShPtrMap.count(fieldStrings[0]))
-                        {
-                            expansionMap =
-                                m_expansionMapShPtrMap.find(fieldStrings[0])
-                                    ->second;
-                        }
-                        else
-                        {
-                            expansionMap = SetUpExpansionInfoMap();
-                            // make sure all fields in this search point
-                            // to same expansion vector;
-                            for (i = 0; i < fieldStrings.size(); ++i)
-                            {
-                                if (m_expansionMapShPtrMap.count(
-                                        fieldStrings[i]) == 0)
-                                {
-                                    m_expansionMapShPtrMap[fieldStrings[i]] =
-                                        expansionMap;
-                                }
-                                else
-                                {
-                                    ASSERTL0(false, "Expansion vector for this "
-                                                    "field is already  setup");
-                                }
-                            }
-                        }
-                    }
-                    else // use default variable list
-                    {
-                        expansionMap =
-                            m_expansionMapShPtrMap.find("DefaultVar")->second;
-                    }
-                }
-
-                /// Mandatory components...optional are to follow later.
+                // Extract Composites
                 std::string compositeStr = expansion->Attribute("COMPOSITE");
                 ASSERTL0(compositeStr.length() > 3,
                          "COMPOSITE must be specified in expansion definition");
@@ -3023,6 +3113,124 @@ void MeshGraph::ReadExpansionInfo()
                 map<int, CompositeSharedPtr> compositeVector;
                 GetCompositeList(compositeListStr, compositeVector);
 
+                // Extract Fields if any
+                const char *fStr = expansion->Attribute("FIELDS");
+                std::vector<std::string> fieldStrings;
+
+                if (fStr) // extract fields.
+                {
+                    std::string fieldStr = fStr;
+                    bool valid = ParseUtils::GenerateVector(
+                                            fieldStr.c_str(), fieldStrings);
+                    ASSERTL0(valid, "Unable to correctly parse the field "
+                                    "string in ExpansionTypes.");
+
+                    // see if field exists
+                    if(m_expansionMapShPtrMap.count(fieldStrings[0]))
+                    {
+                        expansionMap =
+                            m_expansionMapShPtrMap.find(fieldStrings[0])
+                                ->second;
+                    }
+                    else
+                    {
+                        expansionMap = SetUpExpansionInfoMap();
+                    }
+
+                    // make sure all fields in this search point
+                    // are asigned to same expansion map
+                    for (i = 0; i < fieldStrings.size(); ++i)
+                    {
+                        if (vars.size() && std::count(vars.begin(), vars.end(),
+                                       fieldStrings[i]) == 0)
+                        {
+                            ASSERTL0(false, "Variable '" + fieldStrings[i] +
+                                            "' defined in EXPANSIONS is not"
+                                            " defined in VARIABLES.");
+                        }
+
+                        if (m_expansionMapShPtrMap.count(fieldStrings[i]) == 0)
+                        {
+                            m_expansionMapShPtrMap[fieldStrings[i]] =
+                                    expansionMap;
+
+                            // set true to the composites where expansion is
+                            // defined
+                                fieldDomainCompList[fieldStrings[i]] =
+                                domainCompList;
+                            for (auto c = compositeVector.begin(); c != 
+                                     compositeVector.end(); ++c)
+                                {
+                                fieldDomainCompList.find(fieldStrings[i])
+                                    ->second.find(c->first)
+                                               ->second = true;
+                            }
+                        }
+                        else
+                        {
+                            for (auto c = compositeVector.begin(); c != 
+                                 compositeVector.end(); ++c)
+                            {
+                                if (fieldDomainCompList.find(fieldStrings[i])
+                                        ->second.find(c->first)->second ==false)
+                                {
+                                    fieldDomainCompList.find(fieldStrings[i])
+                                        ->second.find(c->first)->second = true;
+                                }
+                                else
+                                {
+                                    ASSERTL0(false, "Expansion vector for " 
+                                                    "variable '"+fieldStrings[i]
+                                                    +"' is already setup for C["
+                                                    +to_string(c->first) +"].");
+                                }
+                            }
+                            expansionMap =
+                                    m_expansionMapShPtrMap.find(fieldStrings[i])
+                                        ->second;
+                        }
+                    }
+                }
+                else // If no FIELDS attribute, DefaultVar is genereted.
+                {
+                    if (m_expansionMapShPtrMap.count("DefaultVar") == 0)
+                    {
+                        expansionMap = SetUpExpansionInfoMap();
+                        m_expansionMapShPtrMap["DefaultVar"] = expansionMap;
+
+                        fieldDomainCompList["DefaultVar"] = domainCompList;
+                        for (auto c = compositeVector.begin(); c != 
+                                 compositeVector.end(); ++c)
+                        {
+                            fieldDomainCompList.find("DefaultVar")
+                                ->second.find(c->first)->second = true;
+                        }
+                    }
+                    else
+                    {
+                        for (auto c = compositeVector.begin(); c != 
+                             compositeVector.end(); ++c)
+                        {
+                            if (fieldDomainCompList.find("DefaultVar")
+                                    ->second.find(c->first)->second ==false) 
+                            {
+                                fieldDomainCompList.find("DefaultVar")
+                                    ->second.find(c->first)->second = true;
+                            }
+                            else
+                            {
+                                ASSERTL0(false, "Default expansion already "
+                                                "defined for C[" + 
+                                                to_string(c->first) + "].");
+                            }
+                        }
+                        expansionMap =
+                            m_expansionMapShPtrMap.find("DefaultVar")
+                                    ->second;
+                    }
+                }
+
+                /// Mandatory components...optional are to follow later.
                 ExpansionType expansion_type_x = eNoExpansionType;
                 ExpansionType expansion_type_y = eNoExpansionType;
                 ExpansionType expansion_type_z = eNoExpansionType;
@@ -3151,6 +3359,90 @@ void MeshGraph::ReadExpansionInfo()
                 }
 
                 expansion = expansion->NextSiblingElement("H");
+            }
+            
+            // Check if all the domain has been defined for the existing fields
+            // excluding DefaultVar. Fill the absent composites of a field if
+            // the DefaultVar is defined for that composite
+            for (auto f = fieldDomainCompList.begin(); f !=
+                 fieldDomainCompList.end(); ++f)
+            {
+                    if (f->first != "DefaultVar")
+                {
+                    for (auto c = f->second.begin(); c != f->second.end(); ++c)
+                    {
+                        if (c->second == false && 
+                            fieldDomainCompList.find("DefaultVar")->second
+                            .find(c->first)->second == true)
+                        {
+                            // Copy DefaultVar into the missing composite
+                            // by cycling through the element list.
+                            for (auto geomVecIter = m_meshComposites.find(c->
+                                 first)->second->m_geomVec.begin();
+                                 geomVecIter != m_meshComposites.find(c->first)->
+                                 second->m_geomVec.end();
+                                 ++geomVecIter)
+                            {
+                                auto xDefaultVar =
+                                    m_expansionMapShPtrMap.find("DefaultVar")->
+                                    second->find((*geomVecIter)->GetGlobalID());
+
+                                auto xField =
+                                    m_expansionMapShPtrMap.find(f->first)->
+                                    second->find((*geomVecIter)->GetGlobalID());
+
+                                (xField->second)->m_basisKeyVector = 
+                                        (xDefaultVar->second)->m_basisKeyVector;
+                            }
+                            c->second = true;
+                            NEKERROR(ErrorUtil::ewarning,
+                                (std::string(
+                                    "Using Default expansion definition for "
+                                    "field '") + f->first + "' in composite "
+                                    "C[" + to_string(c->first) + "].").c_str());
+                        }
+                        ASSERTL0(c->second, "There is no expansion defined for "
+                                            "variable '" + f->first + "' in C["+
+                                            to_string(c->first) + "].");
+                    }
+                }
+            }
+            // Ensure m_expansionMapShPtrMap has an entry for all variables
+            // listed in CONDITIONS/VARIABLES section if DefaultVar is defined.
+            for (i = 0; i < vars.size(); ++i)
+            {
+                if (m_expansionMapShPtrMap.count(vars[i]) == 0)
+                {
+                    if (m_expansionMapShPtrMap.count("DefaultVar"))
+                    {
+                        expansionMap = m_expansionMapShPtrMap.find("DefaultVar")
+                                           ->second;
+                        m_expansionMapShPtrMap[vars[i]] = expansionMap;
+
+                        NEKERROR(ErrorUtil::ewarning,
+                            (std::string(
+                                 "Using Default expansion definition for field "
+                                 "'") + vars[i] + "'.").c_str());
+                    }
+                    else
+                    {
+                        ASSERTL0(false, "Variable '" + vars[i] + "' is missing"
+                                        " in FIELDS attribute of EXPANSIONS"
+                                        " tag.");
+                    }
+                }
+            }
+                // Define "DefaultVar" if not set by user.
+            if (m_expansionMapShPtrMap.count("DefaultVar") == 0)
+            {
+                // Originally assignment was using 
+                // m_expansionMapShPtrMap["DefaultVar"] =
+                // m_expansionMapShPtrMap.begin()->second; but on certain macOS
+                // versions, This was causing a seg fault so switched to
+                // storing addr first - see #271
+                ExpansionInfoMapShPtr firstEntryAddr =
+                        m_expansionMapShPtrMap.begin()->second;
+                       m_expansionMapShPtrMap["DefaultVar"] = firstEntryAddr;
             }
         }
         else if (expType ==
