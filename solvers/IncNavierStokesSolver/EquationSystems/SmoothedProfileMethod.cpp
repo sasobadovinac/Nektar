@@ -714,14 +714,13 @@ namespace Nektar
 
                 // Extract Phi field to output
                 string tmp("phi");
-                m_phi->ExtractDataToCoeffs(fieldDef[0], fieldData[0],
+                for (int i = 0; i < fieldData.size(); ++i)
+                {
+                    m_phi->ExtractDataToCoeffs(fieldDef[i], fieldData[i],
                                             tmp, m_phi->UpdateCoeffs());
-                m_phi->BwdTrans(m_phi->GetCoeffs(), m_phi->UpdatePhys());
-
-                m_phi->ExtractDataToCoeffs(fieldDef[1], fieldData[1],
-                                            tmp, m_phi->UpdateCoeffs());
-                m_phi->BwdTrans(m_phi->GetCoeffs(), m_phi->UpdatePhys());
-                    
+                    m_phi->BwdTrans(m_phi->GetCoeffs(), m_phi->UpdatePhys());
+                }    
+                // Extract the number of coefficients for Fourier interpolation
                 nCoeffs = m_phi -> GetNcoeffs();
 
                 // Table containing phi fields of all samples 
@@ -746,23 +745,18 @@ namespace Nektar
                         LibUtilities::FieldIO::CreateForFile(m_session, sampleFileName);
                     phiFile->Import(sampleFileName, fieldDef, fieldData, fieldMetaData);
 
-                    // Only Phi field should be defined in the file
-                    //ASSERTL0(fieldData.size() == 1, "Only one field (phi) must be "
-                    //                                "defined in the FLD file.")
-
                     // Extract Phi field to output
                     string tmp("phi");
-                    m_phi->ExtractDataToCoeffs(fieldDef[0], fieldData[0],
-                                               tmp, m_phi->UpdateCoeffs());
-                    m_phi->BwdTrans(m_phi->GetCoeffs(), m_phi->UpdatePhys());
-
-                    m_phi->ExtractDataToCoeffs(fieldDef[1], fieldData[1],
-                                            tmp, m_phi->UpdateCoeffs());
-                    m_phi->BwdTrans(m_phi->GetCoeffs(), m_phi->UpdatePhys());
-                    
+                    for (int i = 0; i < fieldData.size(); ++i)
+                    {
+                        m_phi->ExtractDataToCoeffs(fieldDef[i], fieldData[i],
+                                                   tmp, m_phi->UpdateCoeffs());
+                        m_phi->BwdTrans(m_phi->GetCoeffs(), m_phi->UpdatePhys());
+                    }
                     // Store Phi in table of Phi fields
                     Vmath::Vcopy(nCoeffs,&((m_phi -> UpdateCoeffs())[0]),1,&m_phiInterpCoeffs[i*nCoeffs],1);
 
+                    // Update variables
                     angle = angle + dAngle;
                     samplesCount++;
                 }
@@ -776,14 +770,13 @@ namespace Nektar
                 phiFile->Import(sampleFileName, fieldDef, fieldData, fieldMetaData);
 
                 // Extract Phi field to output
-                m_phi->ExtractDataToCoeffs(fieldDef[0], fieldData[0],
-                                               tmp, m_phi->UpdateCoeffs());
-                m_phi->BwdTrans(m_phi->GetCoeffs(), m_phi->UpdatePhys());
+                for (int i = 0; i < fieldData.size(); ++i)
+                {
+                    m_phi->ExtractDataToCoeffs(fieldDef[i], fieldData[i],
+                                                   tmp, m_phi->UpdateCoeffs());
+                    m_phi->BwdTrans(m_phi->GetCoeffs(), m_phi->UpdatePhys());
+                }
 
-                m_phi->ExtractDataToCoeffs(fieldDef[1], fieldData[1],
-                                            tmp, m_phi->UpdateCoeffs());
-                m_phi->BwdTrans(m_phi->GetCoeffs(), m_phi->UpdatePhys());
-              
                 //Discrete Fourier Transform using FFTW
                 Array<OneD, NekDouble> fft_inCoeffs(nCoeffs*nSamples);
                 Array<OneD, NekDouble> fft_outCoeffs(nCoeffs*nSamples);
@@ -842,20 +835,27 @@ namespace Nektar
                     LibUtilities::FieldIO::CreateForFile(m_session, fileName);
                 phiFile->Import(fileName, fieldDef, fieldData, fieldMetaData);
 
-                // Only Phi field should be defined in the file
-                //ASSERTL0(fieldData.size() == 1, "Only one field (phi) must be "
-                //                                "defined in the FLD file.")
-
                 // Extract Phi field to output
                 string tmp("phi");
-                m_phi->ExtractDataToCoeffs(fieldDef[0], fieldData[0],
+                for (int i = 0; i < fieldData.size(); ++i)
+                {
+                    m_phi->ExtractDataToCoeffs(fieldDef[i], fieldData[i],
                                            tmp, m_phi->UpdateCoeffs());
-                m_phi->BwdTrans(m_phi->GetCoeffs(), m_phi->UpdatePhys());
-                m_phi->ExtractDataToCoeffs(fieldDef[1], fieldData[1],
-                                           tmp, m_phi->UpdateCoeffs());
-                m_phi->BwdTrans(m_phi->GetCoeffs(), m_phi->UpdatePhys());
+                    m_phi->BwdTrans(m_phi->GetCoeffs(), m_phi->UpdatePhys());
+                }
+                
+                
                 m_timeDependentPhi = false;
-                m_timeDependentUp  = false;                
+                m_timeDependentUp  = false;     
+
+                m_phi->BwdTrans_IterPerExp(m_phi->GetCoeffs(), m_phi->UpdatePhys());
+                m_phi->FwdTrans_IterPerExp(m_phi->GetPhys(), m_phi->UpdateCoeffs());
+                  
+                std::vector<Array<OneD, NekDouble> > phiOutputVectorOfArray;
+                phiOutputVectorOfArray.push_back(m_phi -> UpdateCoeffs()); 
+                std::vector<std::string> variableName;
+                variableName.push_back("phi");
+                EquationSystem::WriteFld("phi_0.fld",m_phi,phiOutputVectorOfArray, variableName);           
             }
             m_filePhi = true;
         }
