@@ -40,6 +40,7 @@
 #include <FieldUtils/Interpolator.h>
 #include <LibUtilities/BasicUtils/ParseUtils.h>
 
+#include "ProcessWallNormalData.h"
 #include "ProcessBodyFittedVelocity.h"
 
 
@@ -239,7 +240,7 @@ void ProcessBodyFittedVelocity::Process(po::variables_map &vm)
                 // Compute the distance from the pnt (bnd elmt) to the inner pnt
                 // The elemt with the smallest distance is the one to place the 
                 // body-fitted coordinate.  
-                dist_tmp = PointToBndElmtDistance_1(pts, pId, bndPts);
+                dist_tmp = PntToBndElmtPntDistance(pts, pId, bndPts);
 
                 if (dist_tmp < distance[phys_offset+pId])
                 {
@@ -446,7 +447,7 @@ void ProcessBodyFittedVelocity::Process(po::variables_map &vm)
 
 
 // Compute point-to-point distance to find the cloest element
-NekDouble ProcessBodyFittedVelocity::PointToBndElmtDistance_1(
+NekDouble ProcessBodyFittedVelocity::PntToBndElmtPntDistance(
     const Array<OneD, Array<OneD, NekDouble> > & pts,
     const int pId,
     const Array<OneD, Array<OneD, NekDouble> > & bndPts)
@@ -529,12 +530,6 @@ bool ProcessBodyFittedVelocity::LocCoordForNearestPntOnBndElmt_2D(
         ++cnt;
     }
 
-    // if (gloCoord[0]>1.5)
-    // {
-    //     cout << "dist [" <<gloCoord[0] <<", " << gloCoord[1] << "] = " <<  dist << endl;
-    // }
-
-
     // Warning if failed
     if(cnt >= iterMax)
     {
@@ -586,13 +581,10 @@ bool ProcessBodyFittedVelocity::LocCoordForNearestPntOnBndElmt(
         ASSERTL0(false, "Not available at the moment.");
     }
 
-    // if (gloCoord[0]>1.5)
-    // {
-    //     cout << "dist [" <<gloCoord[0] <<", " << gloCoord[1] << "] = " <<  dist << endl;
-    // }
-
     // Compute the wall normal
-    GetNormals(bndGeom, locCoord, normals);
+    // Using the function in wallNormalData class
+    ProcessWallNormalData wnd(m_f);
+    wnd.GetNormals(bndGeom, locCoord, normals);
 
     return isConverge;
 }
@@ -981,82 +973,6 @@ bool ProcessBodyFittedVelocity::BndElmtContainsPoint(
 }
 */
 
-/**
- * @brief Get the normals for a given locCoord
- * @param bndGeom      Pointer to the geometry of the boundary element.
- * @param locCoord     Iteration results for local coordinates (if inside).
- * @param normals      Wall normal as the result
- */
-void ProcessBodyFittedVelocity::GetNormals(
-    SpatialDomains::GeometrySharedPtr bndGeom,
-    const Array<OneD, const NekDouble > & locCoord, 
-    Array< OneD, NekDouble > & normals)
-{
-    const int nCoordDim = m_f->m_exp[0]->GetCoordim(0);     // =2 for 2.5D cases
-    StdRegions::StdExpansionSharedPtr bndXmap = bndGeom->GetXmap();
-    Array<OneD, Array<OneD, NekDouble> >        pts(m_spacedim);
-    Array<OneD, Array<OneD, const NekDouble> >  bndCoeffs(m_spacedim);
-    int npts = bndXmap->GetTotPoints();
-
-    // Get pts in the element
-    for (int i=0; i<nCoordDim; ++i) 
-    {
-        pts[i] = Array<OneD, NekDouble>(npts);
-        bndCoeffs[i] = bndGeom->GetCoeffs(i); // 0/1/2 for x/y/z
-        bndXmap->BwdTrans(bndCoeffs[i], pts[i]);
-    }
-
-    // Get the outward-pointing normals according to the given locCoord
-    if(nCoordDim==2)
-    {
-        Array<OneD, NekDouble> DxD1(pts[0].size());
-        Array<OneD, NekDouble> DyD1(pts[0].size());
-
-        bndXmap->PhysDeriv(pts[0], DxD1);
-        bndXmap->PhysDeriv(pts[1], DyD1);
-
-        NekDouble dxd1, dyd1, norm;
-        dxd1 = bndXmap->PhysEvaluate(locCoord, DxD1);
-        dyd1 = bndXmap->PhysEvaluate(locCoord, DyD1);
-        norm = sqrt(dxd1*dxd1 + dyd1*dyd1);
-
-        normals[0] =  dyd1/norm;
-        normals[1] = -dxd1/norm;
-        normals[2] =  0.0;
-    }
-    else
-    {
-        Array<OneD, NekDouble> DxD1(pts[0].size());
-        Array<OneD, NekDouble> DxD2(pts[0].size());
-        Array<OneD, NekDouble> DyD1(pts[0].size());
-        Array<OneD, NekDouble> DyD2(pts[0].size());
-        Array<OneD, NekDouble> DzD1(pts[0].size());
-        Array<OneD, NekDouble> DzD2(pts[0].size());
-
-        bndXmap->PhysDeriv(pts[0], DxD1, DxD2);
-        bndXmap->PhysDeriv(pts[1], DyD1, DyD2);
-        bndXmap->PhysDeriv(pts[2], DzD1, DzD2);
-
-        NekDouble dxd1, dyd1, dzd1, dxd2, dyd2, dzd2;
-        dxd1 = bndXmap->PhysEvaluate(locCoord, DxD1);
-        dxd2 = bndXmap->PhysEvaluate(locCoord, DxD2);
-        dyd1 = bndXmap->PhysEvaluate(locCoord, DyD1);
-        dyd2 = bndXmap->PhysEvaluate(locCoord, DyD2);
-        dzd1 = bndXmap->PhysEvaluate(locCoord, DzD1);
-        dzd2 = bndXmap->PhysEvaluate(locCoord, DzD2);
-
-        NekDouble n1, n2, n3, norm;
-        n1 = dyd1*dzd2 - dyd2*dzd1;
-        n2 = dzd1*dxd2 - dzd2*dxd1;
-        n3 = dxd1*dyd2 - dxd2*dyd1;
-        norm = sqrt(n1*n1 + n2*n2 + n3*n3);
-
-        normals[0] = n1/norm;
-        normals[1] = n2/norm;
-        normals[2] = n3/norm;
-    }
-
-}
 
 
 
