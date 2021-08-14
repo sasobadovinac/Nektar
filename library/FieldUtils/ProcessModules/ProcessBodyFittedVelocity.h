@@ -95,7 +95,6 @@ private:
         const Array<OneD, const NekDouble > & gloCoord,
         SpatialDomains::GeometrySharedPtr bndGeom,
         Array<OneD, NekDouble > & locCoord,
-        Array<OneD, NekDouble > & normals,
         NekDouble & dist,
         const NekDouble iterTol = 1.0e-6,
         const int iterMax = 51);

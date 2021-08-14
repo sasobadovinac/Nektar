@@ -184,7 +184,19 @@ void ProcessBodyFittedVelocity::Process(po::variables_map &vm)
     NekDouble dist_tmp;
     bool isConverge;
     int bndElmtId=-1;
+    std::vector<int> bndElmtIds;
     int phys_offset; // coef_offset = m_field->GetCoeff_Offset(i);
+    const NekDouble geoTol = 1.0e-12;
+
+    Array<OneD, Array<OneD, NekDouble> > bndCoeffs(nCoordDim);
+    Array<OneD, Array<OneD, NekDouble> > bndPts(nCoordDim);
+
+    Array<OneD, NekDouble> locCoord(nBndLcoordDim), locCoord_tmp(nBndLcoordDim);
+    Array<OneD, NekDouble> gloCoord(3, 0.0);
+    Array<OneD, NekDouble> normal(3);
+    Array<OneD, NekDouble> tangential(3);
+
+    ProcessWallNormalData wnd(m_f); // wallNormalData object to use its routine
 
     // Loop inner element
     for (int eId=0; eId<nElmts; ++eId) //element id, nElmts
@@ -215,12 +227,22 @@ void ProcessBodyFittedVelocity::Process(po::variables_map &vm)
 
         
         phys_offset = m_f->m_exp[0]->GetPhys_Offset(eId);
-        bndElmtId   = -1;
+
         // Loop points in the inner element
         for (int pId=0; pId<nPts; ++pId)
         {
 
-            // Loop bnd element to find the element to build body-fitted coordinate 
+            // Compute the distance from the pnt (bnd elmt) to the inner pnt
+            // Step 1 - Estimate search
+            //  - Find the closest quadrature pnt among all the bnd elmt;
+            //  - The bnd elmt which contains this pnt is saved for Step 2.
+            //  * If the quadtature pnt is on the edge or corner of the bnd
+            //    elmt, there will be more than one bnd elmt which contains
+            //    this point.
+
+            bndElmtIds.clear();
+
+            // Loop bnd element to find the element to build body-fitted coordinate
             for (int beId=0; beId<nBndElmts; ++beId)
             {
                 // Get geomery and points
@@ -228,8 +250,6 @@ void ProcessBodyFittedVelocity::Process(po::variables_map &vm)
                 bndXmap = bndGeom->GetXmap();
                 nBndPts = bndXmap->GetTotPoints();
 
-                Array<OneD, Array<OneD, const NekDouble> > bndCoeffs(nCoordDim);
-                Array<OneD, Array<OneD, NekDouble> >       bndPts(nCoordDim);
                 for (int i=0; i<nCoordDim; ++i) 
                 {
                     bndPts[i]    = Array<OneD, NekDouble>(nBndPts);
@@ -237,45 +257,94 @@ void ProcessBodyFittedVelocity::Process(po::variables_map &vm)
                     bndXmap->BwdTrans(bndCoeffs[i], bndPts[i]);
                 }
 
-                // Compute the distance from the pnt (bnd elmt) to the inner pnt
-                // The elemt with the smallest distance is the one to place the 
-                // body-fitted coordinate.  
+                // Compute the distance (estimate) 
                 dist_tmp = PntToBndElmtPntDistance(pts, pId, bndPts);
 
-                if (dist_tmp < distance[phys_offset+pId])
+                if (dist_tmp < (distance[phys_offset+pId] - geoTol))
                 {
+                    // Find a closer quadrature point from a different bnd elmt
+                    // Update distance and bnd elmt id vector
                     distance[phys_offset+pId] = dist_tmp;
-                    bndElmtId = beId;
+                    bndElmtIds.clear();
+                    bndElmtIds.push_back(beId);
+                }
+                else if (dist_tmp < (distance[phys_offset+pId] + geoTol))
+                {
+                    // The same quadrature point from a different bnd elmt is
+                    // found for the other time.
+                    // Keep the distance and add the bnd elmt id to the vector
+                    bndElmtIds.push_back(beId);
                 }
 
             } // end of bnd elmt loop  
+            
 
-            //cout << "pnt " << pId <<", dist = " << dist <<", beId = " << bndElmtId << endl;
-            // Use iteration to find out the local coordinate and wall normal
-            bndGeom = BndExp[0]->GetExp(bndElmtId)->GetGeom(); // Get the geom for target bnd elmt
-            Array<OneD, NekDouble > normals(3, 0.0);
-            Array<OneD, NekDouble > locCoord(nBndLcoordDim, -999.0);
-            Array<OneD, NekDouble > gloCoord(3, 0.0);
+            // Step 2 - Accurate search
+            //  - Find the accurate distance and locCoord for the nearest pnt
+            //    (to the inner point) on the bnd elmt 
+            //  - This process will be repeated for all the bnd elmt in the bnd
+            //    elmt id vector.
+
+            // Get the coordinate for the inner point
             for (int i=0; i<nCoordDim; ++i) 
             {
                 gloCoord[i] = pts[i][pId];
             }
 
-            isConverge = LocCoordForNearestPntOnBndElmt( gloCoord, bndGeom,
-                                    locCoord, normals, dist_tmp, 1.0e-8, 51);
-            
-            if (!isConverge)
+            distance[phys_offset+pId] = 9999;
+
+            // Compute the accurate distance and locCoord
+            for (int i=0; i<bndElmtIds.size(); ++i)
             {
-                WARNINGL1(false, "Bisection iteration is not converged!!!");
+                bndGeom = BndExp[0]->GetExp(bndElmtIds[i])->GetGeom();
+                
+                isConverge = LocCoordForNearestPntOnBndElmt(gloCoord, bndGeom,
+                                locCoord_tmp, dist_tmp, 1.0e-8, 51);
+                
+                if (!isConverge)
+                {
+                    WARNINGL1(false, "Bisection iteration is not converged!!!");
+                }
+
+                if (dist_tmp < distance[phys_offset+pId])
+                {
+                    bndElmtId = bndElmtIds[i];
+                    distance[phys_offset+pId] = dist_tmp;
+
+                    for (int j=0; j<nBndLcoordDim; ++j)
+                    {
+                        locCoord[j] = locCoord_tmp[j];
+                    }
+                }
+
             }
 
-            distance[phys_offset+pId] = dist_tmp; // Update a more accurate distance field
-
             // -------Debug------
-            if (eId==0 && pId==12){
+            if (eId==0 && (pId==12 || pId==13 || pId==14 || pId==15)){
                 cout << "  - pId = " << pId <<", [x,y]=["<<pts[0][pId]<<", "<<pts[1][pId]<<"]"<<endl;
                 cout << "    - dist     = " << dist_tmp << ", locCoord = "<<locCoord[0]<<", bndElmtId = "<< bndElmtId <<endl;
                 cout << "    - dist_fld = " << distance[phys_offset+pId] << endl;
+            }
+
+            
+
+            // Get the wall normal using the function in wallNormalData class
+            wnd.GetNormals(bndGeom, locCoord, normal);
+
+            // Get the tangential dir according to the fixed velocity component
+            if (boost::iequals(fixedDir, "x") || boost::iequals(fixedDir, "X"))
+            {
+
+            }
+            else if (boost::iequals(fixedDir, "y") || boost::iequals(fixedDir, "Y"))
+            {
+
+            }
+            else
+            {
+                tangential[0] = -normal[1];
+                tangential[1] =  normal[0];
+                tangential[2] =  normal[2];
             }
 
         } // end of inner pts loop
@@ -456,7 +525,7 @@ NekDouble ProcessBodyFittedVelocity::PntToBndElmtPntDistance(
 
     NekDouble dist = 9999, dist_tmp;
 
-    for (int i=0; i<bndPts.size(); ++i)
+    for (int i=0; i<bndPts[0].size(); ++i)
     {
         // Compute distance
         dist_tmp = 0.0;
@@ -470,6 +539,11 @@ NekDouble ProcessBodyFittedVelocity::PntToBndElmtPntDistance(
         {
             dist = dist_tmp;
         }
+
+        // Debug
+        // if (fabs(pts[0][pId]-0.0742252)<1e-5 && fabs(pts[1][pId]-0.515241)<1e-5){
+        //     cout << "####### i = " <<i<<", dist = " << dist << ", size = " << bndPts[0].size() << endl;
+        // }
     }
 
     return dist;
@@ -547,7 +621,6 @@ bool ProcessBodyFittedVelocity::LocCoordForNearestPntOnBndElmt(
     const Array<OneD, const NekDouble > & gloCoord,
     SpatialDomains::GeometrySharedPtr bndGeom,
     Array<OneD, NekDouble > & locCoord,
-    Array<OneD, NekDouble > & normals,
     NekDouble & dist,
     const NekDouble iterTol,
     const int iterMax)
@@ -581,10 +654,6 @@ bool ProcessBodyFittedVelocity::LocCoordForNearestPntOnBndElmt(
         ASSERTL0(false, "Not available at the moment.");
     }
 
-    // Compute the wall normal
-    // Using the function in wallNormalData class
-    ProcessWallNormalData wnd(m_f);
-    wnd.GetNormals(bndGeom, locCoord, normals);
 
     return isConverge;
 }
