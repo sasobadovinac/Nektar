@@ -83,21 +83,28 @@ private:
         const Array<OneD, Array<OneD, NekDouble> > & bndPts);
 
     bool LocCoordForNearestPntOnBndElmt_2D(
-        const Array<OneD, const NekDouble > & gloCoord,
+        const Array<OneD, const NekDouble > & inGloCoord,
         SpatialDomains::GeometrySharedPtr bndGeom,
         const Array<OneD, Array<OneD, NekDouble> > & pts,
         Array<OneD, NekDouble > & locCoord,
+        Array<OneD, NekDouble > & gloCoord,
         NekDouble & dist,
         const NekDouble iterTol = 1.0e-6,
         const int iterMax = 51);
 
     bool LocCoordForNearestPntOnBndElmt(
-        const Array<OneD, const NekDouble > & gloCoord,
+        const Array<OneD, const NekDouble > & inGloCoord,
         SpatialDomains::GeometrySharedPtr bndGeom,
         Array<OneD, NekDouble > & locCoord,
+        Array<OneD, NekDouble > & gloCoord,
         NekDouble & dist,
         const NekDouble iterTol = 1.0e-6,
         const int iterMax = 51);
+    
+    void ScaledCrosssProduct(
+        const Array<OneD, NekDouble > & vec1,
+        const Array<OneD, NekDouble > & vec2,
+        Array<OneD, NekDouble > & vec3);
 
     //===========================================================
     

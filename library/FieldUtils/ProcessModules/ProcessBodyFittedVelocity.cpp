@@ -61,9 +61,11 @@ ProcessBodyFittedVelocity::ProcessBodyFittedVelocity(FieldSharedPtr f) : Process
     f->m_writeBndFld = false; // turned on in the father class ProcessBoundaryExtract
 
     // bnd is read from father class ProcessBoundaryExtract
-    m_config["fixedDir"]  = ConfigOption(false, "z",
-                            "The fixed direction at which the velocity \
-                            component does not rotated. default=z");
+    m_config["assistDir"] = ConfigOption(false, "0.0,0.0,1.0",
+                            "The normal direction of the assistant plane, where \
+                            the first body-fitted coordinate direction is located. \
+                            The assistance plane is defined in point normal form. \
+                            default=[0,0,1]");
 }
 
 ProcessBodyFittedVelocity::~ProcessBodyFittedVelocity()
@@ -89,16 +91,6 @@ ProcessBodyFittedVelocity::~ProcessBodyFittedVelocity()
 void ProcessBodyFittedVelocity::Process(po::variables_map &vm)
 {
     ProcessBoundaryExtract::Process(vm);
-    
-    string fixedDir  = m_config["fixedDir"].as<string>();
-
-    if (!(boost::iequals(fixedDir, "x") || boost::iequals(fixedDir, "X") ||
-          boost::iequals(fixedDir, "y") || boost::iequals(fixedDir, "Y") ||
-          boost::iequals(fixedDir, "z") || boost::iequals(fixedDir, "Z") ) )
-    {
-        ASSERTL0(false, "fixedDir must be set as x, y or z, \
-                         or the uppercase.");
-    }
 
     // Get dim to store data
     const int nFields   = m_f->m_variables.size();
@@ -108,6 +100,27 @@ void ProcessBodyFittedVelocity::Process(po::variables_map &vm)
     const int nTotVars   = m_spacedim + nFields;
 
     cout <<nFields<<nCoordDim<<m_spacedim<<nBndLcoordDim<<nTotVars << endl;
+
+
+    vector<NekDouble> assistDir;
+    ASSERTL0(ParseUtils::GenerateVector(m_config["assistDir"].as<string>(), assistDir),
+             "Failed to interpret assistance direction");
+
+
+    Array<OneD, NekDouble> assistVec(3); // Save the assist vector
+    for (int i=0; i<3; ++i)
+    {
+        assistVec[i] = (assistDir.size() > i) ? assistDir[i] : 0.0;
+    }
+    if (nCoordDim==2)
+    {
+        assistVec[0] = 0.0;
+        assistVec[1] = 0.0;
+    }
+    Vmath::Smul(3, 1.0/sqrt(Vmath::Dot(3, assistVec, 1, assistVec, 1)), 
+                assistVec, 1, assistVec, 1);
+
+
 
 
     // Add var names
@@ -192,9 +205,10 @@ void ProcessBodyFittedVelocity::Process(po::variables_map &vm)
     Array<OneD, Array<OneD, NekDouble> > bndPts(nCoordDim);
 
     Array<OneD, NekDouble> locCoord(nBndLcoordDim), locCoord_tmp(nBndLcoordDim);
-    Array<OneD, NekDouble> gloCoord(3, 0.0);
+    Array<OneD, NekDouble> gloCoord(3, 0.0), gloCoord_tmp(3, 0.0), inGloCoord(3, 0.0);
     Array<OneD, NekDouble> normal(3);
-    Array<OneD, NekDouble> tangential(3);
+    Array<OneD, NekDouble> tangential1(3), tangential2(3); // 1 - main, 2 - minor
+
 
     ProcessWallNormalData wnd(m_f); // wallNormalData object to use its routine
 
@@ -288,7 +302,7 @@ void ProcessBodyFittedVelocity::Process(po::variables_map &vm)
             // Get the coordinate for the inner point
             for (int i=0; i<nCoordDim; ++i) 
             {
-                gloCoord[i] = pts[i][pId];
+                inGloCoord[i] = pts[i][pId];
             }
 
             distance[phys_offset+pId] = 9999;
@@ -298,8 +312,8 @@ void ProcessBodyFittedVelocity::Process(po::variables_map &vm)
             {
                 bndGeom = BndExp[0]->GetExp(bndElmtIds[i])->GetGeom();
                 
-                isConverge = LocCoordForNearestPntOnBndElmt(gloCoord, bndGeom,
-                                locCoord_tmp, dist_tmp, 1.0e-8, 51);
+                isConverge = LocCoordForNearestPntOnBndElmt(inGloCoord, bndGeom,
+                                locCoord_tmp, gloCoord_tmp, dist_tmp, 1.0e-8, 51);
                 
                 if (!isConverge)
                 {
@@ -314,6 +328,11 @@ void ProcessBodyFittedVelocity::Process(po::variables_map &vm)
                     for (int j=0; j<nBndLcoordDim; ++j)
                     {
                         locCoord[j] = locCoord_tmp[j];
+                    }
+
+                    for (int j=0; j<3; ++j)
+                    {
+                        gloCoord[j] = gloCoord_tmp[j];
                     }
                 }
 
@@ -331,21 +350,35 @@ void ProcessBodyFittedVelocity::Process(po::variables_map &vm)
             // Get the wall normal using the function in wallNormalData class
             wnd.GetNormals(bndGeom, locCoord, normal);
 
-            // Get the tangential dir according to the fixed velocity component
-            if (boost::iequals(fixedDir, "x") || boost::iequals(fixedDir, "X"))
-            {
+            // Correct the normal direction to make suore it points out
 
-            }
-            else if (boost::iequals(fixedDir, "y") || boost::iequals(fixedDir, "Y"))
-            {
 
+
+            
+
+            
+            // The main tagential direction is defined to be overlapped with the
+            // intersection line of the tangantial plane and the assistant plane,
+            // whose normal is the input assistDir. Both plane is defined using
+            // the point normal form, where the point is the nearest point on
+            // the boundary (gloCoord), and the vectors are the normal (pointing
+            // out) and the assistant direction (assistDir). Therefore, the main
+            // tangantial direction can be obtained by the cross product of the
+            // two vectors, since the two vectors has the same starting point and 
+            // the tangantial direction is perpendicular to both of them.
+
+            ScaledCrosssProduct(assistVec,  normal,  tangential1);
+            ScaledCrosssProduct(normal, tangential1, tangential2);
+
+
+            if (eId==0 && (pId==12 || pId==13 || pId==14 || pId==15)){
+                cout << "  - pId = " << pId <<", [x,y]=["<<pts[0][pId]<<", "<<pts[1][pId]<<"]"<<endl;
+                cout << "    - normal = " << normal[0]      << ", "<< normal[1]      <<", "<< normal[2] <<endl;
+                cout << "    - tan1   = " << tangential1[0] << ", "<< tangential1[1] <<", "<< tangential1[2] <<endl;
+                cout << "    - tan2   = " << tangential2[0] << ", "<< tangential2[1] <<", "<< tangential2[2] <<endl;
             }
-            else
-            {
-                tangential[0] = -normal[1];
-                tangential[1] =  normal[0];
-                tangential[2] =  normal[2];
-            }
+
+
 
         } // end of inner pts loop
              
@@ -389,52 +422,6 @@ void ProcessBodyFittedVelocity::Process(po::variables_map &vm)
             vel_bfc[i], m_f->m_exp[nFields + i]->UpdateCoeffs());
     }
     */
-
-
-
-    /*
-    SpatialDomains::GeometrySharedPtr geom, bndGeom;
-    geom     = m_f->m_exp[0]->GetExp(140)->GetGeom(); // id=0
-    bndGeom  = BndExp[0]->GetExp(0)->GetGeom();     //  bndElmtId=0
-
-    StdRegions::StdExpansionSharedPtr xmap    = geom->GetXmap();
-    StdRegions::StdExpansionSharedPtr bndXmap = bndGeom->GetXmap();
-
-    const int nPts     = xmap->GetTotPoints();
-    const int nBndPts  = bndXmap->GetTotPoints();
-
-    cout << "nPts0 = " << nPts <<", nBndPts0 = " << nBndPts << endl;
-
-
-    Array<OneD, Array<OneD, const NekDouble> > coeffs(nCoordDim);
-    Array<OneD, Array<OneD, NekDouble> >       pts(nCoordDim);
-    for (int i=0; i<nCoordDim; ++i) 
-    {
-        pts[i]     = Array<OneD, NekDouble>(nPts);
-        coeffs[i]  = geom->GetCoeffs(i); // 0/1/2 for x/y/z
-        xmap->BwdTrans(coeffs[i], pts[i]);
-    }
-
-    Array<OneD, Array<OneD, const NekDouble> > bndCoeffs(nCoordDim);
-    Array<OneD, Array<OneD, NekDouble> >       bndPts(nCoordDim);
-    for (int i=0; i<nCoordDim; ++i) 
-    {
-        bndPts[i]     = Array<OneD, NekDouble>(nBndPts);
-        bndCoeffs[i]  = bndGeom->GetCoeffs(i); // 0/1/2 for x/y/z
-        bndXmap->BwdTrans(bndCoeffs[i], bndPts[i]);
-    }
-
-
-
-    for (int i=0;i<nPts;++i){
-        cout << pts[0][i] << ", " << pts[1][i] << endl;
-    }
-    cout << "---"<<endl;
-    for (int i=0;i<nBndPts;++i){
-        cout << bndPts[0][i] << ", " << bndPts[1][i] << endl;
-    }
-    */
-
 
 
     /*
@@ -551,10 +538,11 @@ NekDouble ProcessBodyFittedVelocity::PntToBndElmtPntDistance(
 
 
 bool ProcessBodyFittedVelocity::LocCoordForNearestPntOnBndElmt_2D(
-    const Array<OneD, const NekDouble > & gloCoord,
+    const Array<OneD, const NekDouble > & inGloCoord,
     SpatialDomains::GeometrySharedPtr bndGeom,
     const Array<OneD, Array<OneD, NekDouble> > & pts,
     Array<OneD, NekDouble > & locCoord,
+    Array<OneD, NekDouble > & gloCoord,
     NekDouble & dist,
     const NekDouble iterTol,
     const int iterMax)
@@ -578,10 +566,10 @@ bool ProcessBodyFittedVelocity::LocCoordForNearestPntOnBndElmt_2D(
         tmpRx = bndXmap->PhysEvaluate(etaLR+1, pts[0]);
         tmpRy = bndXmap->PhysEvaluate(etaLR+1, pts[1]);
         
-        distL2 = (tmpLx-gloCoord[0])*(tmpLx-gloCoord[0])
-               + (tmpLy-gloCoord[1])*(tmpLy-gloCoord[1]);
-        distR2 = (tmpRx-gloCoord[0])*(tmpRx-gloCoord[0])
-               + (tmpRy-gloCoord[1])*(tmpRy-gloCoord[1]);
+        distL2 = (tmpLx-inGloCoord[0])*(tmpLx-inGloCoord[0])
+               + (tmpLy-inGloCoord[1])*(tmpLy-inGloCoord[1]);
+        distR2 = (tmpRx-inGloCoord[0])*(tmpRx-inGloCoord[0])
+               + (tmpRy-inGloCoord[1])*(tmpRy-inGloCoord[1]);
         
         if (distL2 >= distR2)
         {
@@ -596,6 +584,8 @@ bool ProcessBodyFittedVelocity::LocCoordForNearestPntOnBndElmt_2D(
         if ((etaLR[1]-etaLR[0]) < iterTol)
         {
             locCoord[0] = 0.5 * (etaLR[0]+etaLR[1]);
+            gloCoord[0] = 0.5 * (tmpLx+tmpRx);
+            gloCoord[1] = 0.5 * (tmpLy+tmpRy);
             dist        = sqrt(0.5*(distL2+distR2));
             isConverge  = true;
             break;
@@ -618,9 +608,10 @@ bool ProcessBodyFittedVelocity::LocCoordForNearestPntOnBndElmt_2D(
 // Compute the locCoord for the nearest point on the bnd elmt
 // The locCoord is the position to set up the body-fitted coordinate
 bool ProcessBodyFittedVelocity::LocCoordForNearestPntOnBndElmt(
-    const Array<OneD, const NekDouble > & gloCoord,
+    const Array<OneD, const NekDouble > & inGloCoord,
     SpatialDomains::GeometrySharedPtr bndGeom,
     Array<OneD, NekDouble > & locCoord,
+    Array<OneD, NekDouble > & gloCoord,
     NekDouble & dist,
     const NekDouble iterTol,
     const int iterMax)
@@ -646,7 +637,8 @@ bool ProcessBodyFittedVelocity::LocCoordForNearestPntOnBndElmt(
     {
         // Bisection search
         isConverge = LocCoordForNearestPntOnBndElmt_2D(
-                        gloCoord, bndGeom, bndPts, locCoord, dist, iterTol, iterMax);
+                        inGloCoord, bndGeom, bndPts, locCoord,
+                        gloCoord, dist, iterTol, iterMax);
     }
     else
     {
@@ -658,6 +650,24 @@ bool ProcessBodyFittedVelocity::LocCoordForNearestPntOnBndElmt(
     return isConverge;
 }
 
+
+
+void ProcessBodyFittedVelocity::ScaledCrosssProduct(
+    const Array<OneD, NekDouble > & vec1,
+    const Array<OneD, NekDouble > & vec2,
+    Array<OneD, NekDouble > & vec3)
+{
+    vec3[0] = vec1[1]*vec2[2] - vec1[2]*vec2[1];
+    vec3[1] = vec1[2]*vec2[0] - vec1[0]*vec2[2];
+    vec3[2] = vec1[0]*vec2[1] - vec1[1]*vec2[0];
+
+    NekDouble coef;
+    coef = 1.0/sqrt(vec3[0]*vec3[0] + vec3[1]*vec3[1] + vec3[2]*vec3[2]);
+    
+    vec3[0] = vec3[0] * coef;
+    vec3[1] = vec3[1] * coef;
+    vec3[2] = vec3[2] * coef;
+}
 
 
 
