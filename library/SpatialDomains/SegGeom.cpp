@@ -390,11 +390,6 @@ int SegGeom::v_GetNumEdges() const
 NekDouble SegGeom::v_FindDistance(const Array<OneD, const NekDouble> &xs,
                                   Array<OneD, NekDouble> &xiOut)
 {
-    //std::cout << "SEARCHING EDGE: " << m_globalID << std::endl;
-    //std::cout << "ARE GEOM FACTORS FILLED? : " << m_geomFactorsState << std::endl;
-    //std::cout << m_geomFactors->GetGtype() << std::endl;
-    //auto type = m_geomFactors->GetGtype();
-
     if (m_geomFactors->GetGtype() == eRegular)
     {
         xiOut = Array<OneD, NekDouble>(1,0.0);
@@ -417,19 +412,20 @@ NekDouble SegGeom::v_FindDistance(const Array<OneD, const NekDouble> &xs,
         Array<OneD, NekDouble> xi(1, 0.0);
         const NekDouble c1 = 1e-4, c2 = 0.9;
 
+        int dim = GetCoordim();
         int nq = m_xmap->GetTotPoints();
 
-        Array<OneD, NekDouble> x(nq), y(nq);
-        m_xmap->BwdTrans(m_coeffs[0], x);
-        m_xmap->BwdTrans(m_coeffs[1], y);
+        Array<OneD, Array<OneD, NekDouble>> x(dim), xder(dim), xder2(dim);
+        for (int i = 0; i < dim; ++i)
+        {
+            x[i] = Array<OneD, NekDouble>(nq);
+            xder[i] = Array<OneD, NekDouble>(nq);
+            xder2[i] = Array<OneD, NekDouble>(nq);
 
-        Array<OneD, NekDouble> xder(nq), yder(nq);
-        m_xmap->PhysDeriv(x, xder);
-        m_xmap->PhysDeriv(y, yder);
-
-        Array<OneD, NekDouble> xder2(nq), yder2(nq);
-        m_xmap->PhysDeriv(xder, xder2);
-        m_xmap->PhysDeriv(yder, yder2);
+            m_xmap->BwdTrans(m_coeffs[i], x[i]);
+            m_xmap->PhysDeriv(x[i], xder[i]);
+            m_xmap->PhysDeriv(xder[i], xder2[i]);
+        }
 
         bool opt_succeed = false;
 
@@ -438,19 +434,21 @@ NekDouble SegGeom::v_FindDistance(const Array<OneD, const NekDouble> &xs,
         for (int i = 0; i < 100; ++i)
         {
             // Compute f(x_k) and its derivatives
-            NekDouble xc = m_xmap->PhysEvaluate(xi, x);
-            NekDouble yc = m_xmap->PhysEvaluate(xi, y);
+            Array<OneD, NekDouble> xc(dim), xc_der(dim), xc_der2(dim);
+            NekDouble fx = 0, fxp = 0, fxp2 = 0;
+            for (int j = 0; j < dim; ++j)
+            {
+                xc[j] = m_xmap->PhysEvaluate(xi, x[j]);
+                xc_der[j] = m_xmap->PhysEvaluate(xi, xder[j]);
+                xc_der2[j] = m_xmap->PhysEvaluate(xi, xder2[j]);
 
-            NekDouble xc_der = m_xmap->PhysEvaluate(xi, xder);
-            NekDouble yc_der = m_xmap->PhysEvaluate(xi, yder);
+                fx += (xc[j] - xs[j]) * (xc[j] - xs[j]);
+                fxp += xc_der[j] * (xc[j] - xs[j]);
+                fxp2 += xc_der2[j] * (xc[j] - xs[j]) + xc_der[j] * xc_der[j];
+            }
 
-            NekDouble xc_der2 = m_xmap->PhysEvaluate(xi, xder2);
-            NekDouble yc_der2 = m_xmap->PhysEvaluate(xi, yder2);
-
-            NekDouble fx = (xc - xs[0]) * (xc - xs[0]) + (yc - xs[1]) * (yc - xs[1]);
-            NekDouble fxp = 2.0 * (xc_der * (xc - xs[0]) + yc_der * (yc - xs[1]));
-            NekDouble fxp2 = 2.0 * (xc_der2 * (xc - xs[0]) + xc_der * xc_der +
-                                    yc_der2 * (yc - xs[1]) + yc_der * yc_der);
+            fxp *= 2;
+            fxp2 *= 2;
 
             // Check for convergence
             if (abs(fx - fx_prev) < 1e-16)
@@ -482,16 +480,18 @@ NekDouble SegGeom::v_FindDistance(const Array<OneD, const NekDouble> &xs,
                     continue;
                 }
 
-                NekDouble xc_pk = m_xmap->PhysEvaluate(xi_pk, x);
-                NekDouble yc_pk = m_xmap->PhysEvaluate(xi_pk, y);
+                Array<OneD, NekDouble> xc_pk(dim), xc_der_pk(dim);
+                NekDouble fx_pk = 0, fxp_pk = 0;
+                for (int j = 0; j < dim; ++j)
+                {
+                    xc_pk[j] = m_xmap->PhysEvaluate(xi_pk, x[j]);
+                    xc_der_pk[j] = m_xmap->PhysEvaluate(xi_pk, xder[j]);
 
-                NekDouble xc_der_pk = m_xmap->PhysEvaluate(xi_pk, xder);
-                NekDouble yc_der_pk = m_xmap->PhysEvaluate(xi_pk, yder);
+                    fx_pk += (xc_pk[j] - xs[j]) * (xc_pk[j] - xs[j]);
+                    fxp_pk += xc_der_pk[j] * (xc_pk[j] - xs[j]);
+                }
 
-                NekDouble fx_pk = (xc_pk - xs[0]) * (xc_pk - xs[0]) +
-                                  (yc_pk - xs[1]) * (yc_pk - xs[1]);
-                NekDouble fxp_pk = 2.0 * (xc_der_pk * (xc_pk - xs[0]) +
-                                          yc_der_pk * (yc_pk - xs[1]));
+                fxp_pk *= 2;
 
                 // Check Wolfe conditions
                 //cout << "Condition 1: " << fx_pk << " <= " << fx + c1 * gamma * pk * fxp << endl;
@@ -518,7 +518,7 @@ NekDouble SegGeom::v_FindDistance(const Array<OneD, const NekDouble> &xs,
         if (opt_succeed)
         {
             xiOut = xi;
-            return fx_prev;
+            return sqrt(fx_prev);
         }
         else
         {
