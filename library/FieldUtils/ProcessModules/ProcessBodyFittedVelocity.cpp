@@ -40,6 +40,9 @@
 #include <FieldUtils/Interpolator.h>
 #include <LibUtilities/BasicUtils/ParseUtils.h>
 
+#include <GlobalMapping/Mapping.h>
+#include "ProcessMapping.h"
+
 #include "ProcessWallNormalData.h"
 #include "ProcessBodyFittedVelocity.h"
 
@@ -97,15 +100,13 @@ void ProcessBodyFittedVelocity::Process(po::variables_map &vm)
     const int nCoordDim = m_f->m_exp[0]->GetCoordim(0);
     m_spacedim          = nCoordDim + m_f->m_numHomogeneousDir;
     const int nBndLcoordDim = nCoordDim - 1;
-    const int nTotVars   = m_spacedim + nFields;
+    const int nAddFields = m_spacedim + 1;
 
-    cout <<nFields<<nCoordDim<<m_spacedim<<nBndLcoordDim<<nTotVars << endl;
-
-
+    
+    // Get the assist vector
     vector<NekDouble> assistDir;
     ASSERTL0(ParseUtils::GenerateVector(m_config["assistDir"].as<string>(), assistDir),
              "Failed to interpret assistance direction");
-
 
     Array<OneD, NekDouble> assistVec(3); // Save the assist vector
     for (int i=0; i<3; ++i)
@@ -117,33 +118,41 @@ void ProcessBodyFittedVelocity::Process(po::variables_map &vm)
         assistVec[0] = 0.0;
         assistVec[1] = 0.0;
     }
-    Vmath::Smul(3, 1.0/sqrt(Vmath::Dot(3, assistVec, 1, assistVec, 1)), 
-                assistVec, 1, assistVec, 1);
 
-
-
-
-    // Add var names
-    m_f->m_variables.push_back("distance2Wall");
-    /*
-    if (m_spacedim == 2)
+    NekDouble norm = sqrt(Vmath::Dot(3, assistVec, 1, assistVec, 1));
+    if (norm < 1.0e-12)
     {
-        
-        //m_f->m_variables.push_back("u_bfc");
-        //m_f->m_variables.push_back("v_bfc");
+        ASSERTL0(false, "Error. The amplitude of assist vector is smaller than \
+                         the tolerence 1.0e-12.");
     }
-    else if (m_spacedim == 3)
+    Vmath::Smul(3, 1.0/norm, assistVec, 1, assistVec, 1);
+
+
+    
+    // Generate the distance array and three arrays for directional vectors 
+    // bfcsDir[i][j][k]
+    //   i - dir vec:   0-main tangential, 1-normal, (2-minor tangential)
+    //   j - component: 0-x, 1-y, (2-z)
+    //   k - point id
+    int npoints = m_f->m_exp[0]->GetNpoints();
+    Array<OneD, NekDouble> distance(npoints, 9999);
+    Array<OneD, Array<OneD, Array<OneD, NekDouble> > > bfcsDir(m_spacedim);
+    for (int i=0; i<m_spacedim; ++i)
     {
-        //m_f->m_variables.push_back("u_bfc");
-        //m_f->m_variables.push_back("v_bfc");
-        //m_f->m_variables.push_back("w_bfc");
+        bfcsDir[i] = Array<OneD, Array<OneD, NekDouble> >(m_spacedim);
+
+        for (int j=0; j<m_spacedim; ++j)
+        {
+            bfcsDir[i][j] = Array<OneD, NekDouble>(npoints);
+        }
     }
-    else
-    {
-        ASSERTL0(false, "Velocity in 1D case is already in the body fitted \
-                         coordinate. The dimension should be 2 or 3.");
-    }
-    */
+
+
+
+
+    // At each quadrature point inside the domian, compute the body-fitted
+    // coordinate with respect to the input bnd id
+
 
 
 
@@ -172,20 +181,6 @@ void ProcessBodyFittedVelocity::Process(po::variables_map &vm)
     // Loop all the Q points of the field, and find out the closest point on
     // the bnd, and the bnd element contains this bnd point
 
-    // Add the new fields (distance + u,v,w_bfc)
-    m_f->m_exp.resize(nFields + 1);
-    int npoints = m_f->m_exp[0]->GetNpoints();
-    Array<OneD, NekDouble> distance(npoints, 9999);
-    /*
-    Array<OneD, Array<OneD, NekDouble> > vel_bfc(m_spacedim);
-    for (int i = 0; i < m_spacedim; ++i)
-    {
-        vel_bfc[i] = Array<OneD, NekDouble>(npoints, 0.0);
-    }
-    */
-
-
-
     const int nElmts    = m_f->m_exp[0]->GetNumElmts(); // num for domain element
     const int nBndElmts = BndExp[0]->GetNumElmts();     // num for bnd element
 
@@ -193,24 +188,29 @@ void ProcessBodyFittedVelocity::Process(po::variables_map &vm)
 
     SpatialDomains::GeometrySharedPtr bndGeom; //geom
     StdRegions::StdExpansionSharedPtr bndXmap; //xmap
-    int nPts, nBndPts;
-    NekDouble dist_tmp;
-    bool isConverge;
-    int bndElmtId=-1;
-    std::vector<int> bndElmtIds;
-    int phys_offset; // coef_offset = m_field->GetCoeff_Offset(i);
-    const NekDouble geoTol = 1.0e-12;
-
     Array<OneD, Array<OneD, NekDouble> > bndCoeffs(nCoordDim);
     Array<OneD, Array<OneD, NekDouble> > bndPts(nCoordDim);
 
+    int nPts, nBndPts;
+    NekDouble dist_tmp;
+    bool isConverge;
+    vector<int> bndElmtIds;
+    int bndElmtId=-1;
+    int phys_offset, bnd_phys_offset;
+    const NekDouble geoTol = 1.0e-12;
+
     Array<OneD, NekDouble> locCoord(nBndLcoordDim), locCoord_tmp(nBndLcoordDim);
     Array<OneD, NekDouble> gloCoord(3, 0.0), gloCoord_tmp(3, 0.0), inGloCoord(3, 0.0);
-    Array<OneD, NekDouble> normal(3);
+    Array<OneD, NekDouble> normal(3), normalRef(3);
     Array<OneD, NekDouble> tangential1(3), tangential2(3); // 1 - main, 2 - minor
 
-
     ProcessWallNormalData wnd(m_f); // wallNormalData object to use its routine
+
+    // Use the outward-pointing normal at quardrature pts on bnd elmt as dir ref
+    Array<OneD, Array<OneD, NekDouble> > normalQ;
+    m_f->m_exp[0]->GetBoundaryNormals(bnd, normalQ);
+    
+
 
     // Loop inner element
     for (int eId=0; eId<nElmts; ++eId) //element id, nElmts
@@ -320,6 +320,11 @@ void ProcessBodyFittedVelocity::Process(po::variables_map &vm)
                     WARNINGL1(false, "Bisection iteration is not converged!!!");
                 }
 
+                // Should add an option for angle constrain.
+                // When activated, if (distance > tol)
+                // the smallest angle is used to get the element
+                // The reason is to avoid confusion when there are steps and gaps
+                
                 if (dist_tmp < distance[phys_offset+pId])
                 {
                     bndElmtId = bndElmtIds[i];
@@ -338,24 +343,22 @@ void ProcessBodyFittedVelocity::Process(po::variables_map &vm)
 
             }
 
-            // -------Debug------
-            if (eId==0 && (pId==12 || pId==13 || pId==14 || pId==15)){
-                cout << "  - pId = " << pId <<", [x,y]=["<<pts[0][pId]<<", "<<pts[1][pId]<<"]"<<endl;
-                cout << "    - dist     = " << dist_tmp << ", locCoord = "<<locCoord[0]<<", bndElmtId = "<< bndElmtId <<endl;
-                cout << "    - dist_fld = " << distance[phys_offset+pId] << endl;
+            //Get ref normal for outward-point dir
+            bnd_phys_offset = BndExp[0]->GetPhys_Offset(bndElmtId);
+            for(int i=0; i<nCoordDim; ++i)
+            {
+                normalRef[i] = normalQ[i][bnd_phys_offset];
             }
 
-            
-
             // Get the wall normal using the function in wallNormalData class
+            bndGeom = BndExp[0]->GetExp(bndElmtId)->GetGeom();
             wnd.GetNormals(bndGeom, locCoord, normal);
 
-            // Correct the normal direction to make suore it points out
-
-
-
-            
-
+            // Correct the normal direction to make sure it points inward
+            if(Vmath::Dot(nCoordDim, normal, normalRef) > 0.0)
+            {
+                Vmath::Neg(nCoordDim, normal, 1);
+            }
             
             // The main tagential direction is defined to be overlapped with the
             // intersection line of the tangantial plane and the assistant plane,
@@ -366,136 +369,106 @@ void ProcessBodyFittedVelocity::Process(po::variables_map &vm)
             // tangantial direction can be obtained by the cross product of the
             // two vectors, since the two vectors has the same starting point and 
             // the tangantial direction is perpendicular to both of them.
+            ScaledCrosssProduct(normal, assistVec, tangential1);
+            
+            // Save the direction vectors
+            for (int i=0; i<m_spacedim; ++i)
+            {
+                bfcsDir[0][i][phys_offset+pId] = tangential1[i];
+                bfcsDir[1][i][phys_offset+pId] = normal[i];
+            }
 
-            ScaledCrosssProduct(assistVec,  normal,  tangential1);
-            ScaledCrosssProduct(normal, tangential1, tangential2);
+            if (m_spacedim==3)
+            {
+                ScaledCrosssProduct(tangential1, normal, tangential2);
+                for (int i=0; i<3; ++i)
+                {
+                    bfcsDir[2][i][phys_offset+pId] = tangential2[i];
+                }
+            }
+            
 
 
-            if (eId==0 && (pId==12 || pId==13 || pId==14 || pId==15)){
+            // -------Debug------
+            if (eId==3 && (pId==12 || pId==13 || pId==14 || pId==15)){
                 cout << "  - pId = " << pId <<", [x,y]=["<<pts[0][pId]<<", "<<pts[1][pId]<<"]"<<endl;
+                cout << "    - dist     = " << dist_tmp << ", locCoord = "<<locCoord[0]<<", bndElmtId = "<< bndElmtId <<endl;
+                cout << "    - dist_fld = " << distance[phys_offset+pId] << endl;
+                //cout << "  - pId = " << pId <<", [x,y]=["<<pts[0][pId]<<", "<<pts[1][pId]<<"]"<<endl;
+                cout << "    - assVec = " << assistVec[0]   << ", "<< assistVec[1]   <<", "<< assistVec[2] <<endl;
                 cout << "    - normal = " << normal[0]      << ", "<< normal[1]      <<", "<< normal[2] <<endl;
                 cout << "    - tan1   = " << tangential1[0] << ", "<< tangential1[1] <<", "<< tangential1[2] <<endl;
                 cout << "    - tan2   = " << tangential2[0] << ", "<< tangential2[1] <<", "<< tangential2[2] <<endl;
+                cout << "    - offset = " << bnd_phys_offset<< ", "<< endl;
             }
-
-
 
         } // end of inner pts loop
              
     } // end of inner elmt loop
 
-    // ==========================================================================================
-    
 
-    
-    
-    int number = 0;
-    for (int i=0;i<m_f->m_exp[0]->GetNumElmts(); ++i)
+
+    //==================================================================================================
+    // Compute the velocity 
+    Array<OneD, Array<OneD, NekDouble> > vel_car(m_spacedim); // Cartesian
+    Array<OneD, Array<OneD, NekDouble> > vel_bfc(m_spacedim); // body-fiitted
+    Array<OneD, NekDouble> vel_tmp(npoints);
+
+    for (int i = 0; i < m_spacedim; ++i)
     {
-        //number += m_f->m_exp[0]->GetExp(i)->GetGeom()->GetXmap()->GetTotPoints();
-        number += m_f->m_exp[0]->GetExp(i)->GetTotPoints();
+        vel_bfc[i] = Array<OneD, NekDouble>(npoints, 0.0);
     }
-    cout << "totNumPts_1 = " << number<<endl;
-    cout << "totNumPts_2 = " << m_f->m_exp[0]->GetNpoints()<<endl;
-    cout << " " << bndElmtId << endl;
+
+    // Get the velocity in Cartesian coordinate system
+    GetVelAndConvertToCartSys(vel_car);
+
+    // Project the velocity into the body-fitted coordinate system
+    for (int i=0; i<m_spacedim; ++i)     // loop for bfc velocity
+    {
+        for (int j=0; j<m_spacedim; ++j)
+        {
+            Vmath::Vmul(npoints, vel_car[j], 1, bfcsDir[i][j], 1, vel_tmp,    1);
+            Vmath::Vadd(npoints, vel_tmp,    1, vel_bfc[i],    1, vel_bfc[i], 1);
+        }
+    }
+
     
-    cout << (m_f->m_exp[0]->GetExp(1)->GetBase())[0]->GetNumPoints() << endl;        // 4
-    cout << (m_f->m_exp[0]->GetExp(1)->GetBase())[1]->GetNumPoints() << endl;        // 4
-    cout <<  m_f->m_exp[0]->GetExp(1)->GetTotPoints() << endl;                       // 16
-    cout <<  m_f->m_exp[0]->GetExp(1)->GetGeom()->GetXmap()->GetTotPoints() << endl; // 15
 
+    // Add var names
+    m_f->m_variables.push_back("distance2Wall");
+    m_f->m_variables.push_back("u_bfc");
+    m_f->m_variables.push_back("v_bfc");
+    if (m_spacedim == 3)
+    {
+        m_f->m_variables.push_back("w_bfc");
+    }
+    else if (m_spacedim == 1)
+    {
+        ASSERTL0(false, "Velocity in 1D case is already in the body fitted \
+                         coordinate. The dimension should be 2 or 3.");
+    }
 
+    // Add the new fields (distance + u,v,w_bfc)
     // copy distance
+    m_f->m_exp.resize(nFields + nAddFields);
+
     m_f->m_exp[nFields] = m_f->AppendExpList(m_f->m_numHomogeneousDir);
     Vmath::Vcopy(npoints, distance, 1, 
                      m_f->m_exp[nFields]->UpdatePhys(), 1);
     m_f->m_exp[nFields]->FwdTrans_IterPerExp(
             distance, m_f->m_exp[nFields]->UpdateCoeffs());
-    /*
+
+
     // copy vel_bfc
-    for (int i = 1; i < (m_spacedim+1); ++i)
+    for (int i=1; i<nAddFields; ++i)
     {
         m_f->m_exp[nFields + i] = m_f->AppendExpList(m_f->m_numHomogeneousDir);
-        Vmath::Vcopy(npoints, vel_bfc[i], 1, 
+        Vmath::Vcopy(npoints, vel_bfc[i-1], 1, 
                      m_f->m_exp[nFields + i]->UpdatePhys(), 1);
         m_f->m_exp[nFields + i]->FwdTrans_IterPerExp(
-            vel_bfc[i], m_f->m_exp[nFields + i]->UpdateCoeffs());
-    }
-    */
-
-
-    /*
-    //-------------------------------------------------------------------------
-    // Find the element that contains the origin, and give the precise origin
-    SpatialDomains::GeometrySharedPtr bndGeom;
-    Array<OneD, NekDouble> locCoord(nBndLcoordDim, -999.0);
-    NekDouble projDist;
-    int elmtid;
-    bool isInside = false;
-
-    // Search and get precise locCoord
-    for (elmtid=0; elmtid<nBndElmts; ++elmtid) //nBndElmts
-    {    
-        bndGeom  = BndExp[0]->GetExp(elmtid)->GetGeom();         
-        isInside = BndElmtContainsPoint(bndGeom, orig, projDir, locCoord,
-                                        projDist, maxDist);
-        if (isInside) 
-        {
-            break;
-        }
-
-    }
-    ASSERTL0(isInside, "Failed to find the sampling origin on the boundary.");
-    */
- 
-    /*
-    // Then Update the precise sampling position
-    StdRegions::StdExpansionSharedPtr bndXmap = bndGeom->GetXmap();
-    const int npts = bndXmap->GetTotPoints();
-    Array<OneD, Array<OneD, NekDouble> >       pts(nCoordDim);
-    Array<OneD, Array<OneD, const NekDouble> > bndCoeffs(nCoordDim);
-
-    for (int i=0; i<nCoordDim; ++i) 
-    {
-        pts[i] = Array<OneD, NekDouble>(npts);
-        bndCoeffs[i] = bndGeom->GetCoeffs(i);              // 0/1/2 for x/y/z
-        bndXmap->BwdTrans(bndCoeffs[i], pts[i]);
-        orig[i] = bndXmap->PhysEvaluate(locCoord, pts[i]); // Update wall point
-    }
- 
-    
-    // Get outward-pointing normal vectors for all quadrature points on bnd
-    // Use these normals as diretion references
-    Array<OneD, Array<OneD, NekDouble> > normalsQ; 
-    m_f->m_exp[0]->GetBoundaryNormals(bnd, normalsQ);
-
-    // Get the normals in the element
-    // Set point key to get point id
-    Array<OneD, LibUtilities::PointsKey> from_key(nBndLcoordDim);
-    int from_nPtsPerElmt = 1;
-    for (int i=0; i<nBndLcoordDim; ++i)
-    {
-        from_key[i] = BndExp[0]->GetExp(elmtid)->GetBasis(i)->GetPointsKey();
-        from_nPtsPerElmt *= from_key[i].GetNumPoints();
+            vel_bfc[i-1], m_f->m_exp[nFields + i]->UpdateCoeffs());
     }
 
-    //Get ref normal
-    Array< OneD, NekDouble > normalsRef(3, 0.0);
-    int refId = elmtid*from_nPtsPerElmt + 0; // the 1st normal in the bnd elmt
-    for(int i=0;i<m_spacedim; ++i)
-    {
-        normalsRef[i] = normalsQ[i][refId];
-    }
-    
-    // Get the precise normals and correct the direction to be inward
-    Array< OneD, NekDouble > normals(3, 0.0);
-    GetNormals(bndGeom, locCoord, normals);
-
-    if(Vmath::Dot(3, normals, normalsRef) > 0.0)
-    {
-        Vmath::Neg(3, normals, 1);
-    }
-    */
     
     
 
@@ -651,7 +624,6 @@ bool ProcessBodyFittedVelocity::LocCoordForNearestPntOnBndElmt(
 }
 
 
-
 void ProcessBodyFittedVelocity::ScaledCrosssProduct(
     const Array<OneD, NekDouble > & vec1,
     const Array<OneD, NekDouble > & vec2,
@@ -671,387 +643,88 @@ void ProcessBodyFittedVelocity::ScaledCrosssProduct(
 
 
 
-//========================================================================
 
 
-/**
- * @brief Use iteration to get the locCoord. This routine should be used after
- *        we have checked the projected point is inside the projected element.
- * @param bndGeom      Geometry to get the xmap.
- * @param gloCoord     Global coordinate of the point. size=3.
- * @param pts          Global coordinate of the vertices of the elmt. size=2/3.
- * @param dieUse       The main direction(s) used to compute local coordinate
- * @param locCoord     Iteration results for local coordinate(s)
- * @param dist         Returned distance in physical space if the collapsed 
- *                     locCoord is out of range [-1,1].
- * @param iterTol      Tolerence for iteration.
- * @param iterMax      Maximum iteration steps
- * @return             Converged (true) or not (false)
- */
-bool ProcessBodyFittedVelocity::BisectionForLocCoordOnBndElmt(
-    SpatialDomains::GeometrySharedPtr bndGeom,
-    const Array<OneD, const NekDouble > & gloCoord,
-    const Array<OneD, const Array<OneD, NekDouble> > & pts,
-    const Array<OneD, const int > & dirUse,
-    Array<OneD, NekDouble > & locCoord,
-    const NekDouble iterTol,
-    const int iterMax)
+
+
+
+
+
+// Get velocity and convert to Cartesian system,
+//      if it is still in transformed system
+// from ProcessGrad.cpp
+void ProcessBodyFittedVelocity::GetVelAndConvertToCartSys(
+    Array<OneD, Array<OneD, NekDouble> > & vel)
 {
-    // Initial settings
-    Array<OneD, NekDouble> etaLR(2); // range [-1,1]
-    etaLR[0] = -1.0;                 // left
-    etaLR[1] =  1.0;                 // right
-    NekDouble tmpL, tmpR;            // tmp values for L/R
+    int spacedim = m_f->m_exp[0]->GetCoordim(0) + m_f->m_numHomogeneousDir;
+    int nfields  = m_f->m_variables.size();
+    int npoints  = m_f->m_exp[0]->GetNpoints();
+    int var_offset = 0;
 
-    StdRegions::StdExpansionSharedPtr bndXmap = bndGeom->GetXmap();
-    locCoord[0] = -2.0;
-    int cnt = 0;
-    bool isConverge = false;
-    while(cnt<iterMax)
+    // Check type of the fields and set variable offset 
+    vector<string> vars = m_f->m_exp[0]->GetSession()->GetVariables();
+    if (boost::iequals(vars[0], "rho") && boost::iequals(vars[1], "rhou"))
     {
-        tmpL = bndXmap->PhysEvaluate(etaLR  , pts[dirUse[0]]);
-        tmpR = bndXmap->PhysEvaluate(etaLR+1, pts[dirUse[0]]);
-
-        if (fabs(gloCoord[dirUse[0]]-tmpL) >= fabs(gloCoord[dirUse[0]]-tmpR))
-        {
-            etaLR[0] = 0.5 * (etaLR[0]+etaLR[1]);
-        }
-        else
-        {
-            etaLR[1] = 0.5 * (etaLR[0]+etaLR[1]);
-        }
-
-        if ((etaLR[1]-etaLR[0]) < iterTol)
-        {
-            locCoord[0] = 0.5 * (etaLR[0]+etaLR[1]);
-            isConverge = true;
-            break;
-        }
-
-        ++cnt;
-    }
-
-    // Warning if failed
-    if(cnt >= iterMax)
-    {
-        WARNINGL1(false, "Bisection iteration is not converged");
-    }
-
-    return isConverge;
-}
-
-
-bool ProcessBodyFittedVelocity::NewtonIterForLocCoordOnBndElmt(
-    SpatialDomains::GeometrySharedPtr bndGeom,
-    const Array<OneD, const NekDouble> & gloCoord,
-    const Array<OneD, const Array<OneD, NekDouble> > & pts,
-    const Array<OneD, const int > & dirUse,
-    Array<OneD, NekDouble> & locCoord,
-    NekDouble & dist,
-    const NekDouble iterTol,
-    const int iterMax)
-{
-
-    const NekDouble LcoordDiv = 15.0;
-
-    StdRegions::StdExpansionSharedPtr bndXmap = bndGeom->GetXmap();
-
-    Array<OneD, const NekDouble> Jac =
-        bndGeom->GetMetricInfo()->GetJac(bndXmap->GetPointsKeys());
-    NekDouble scaledTol = Vmath::Vsum(Jac.size(), Jac, 1) /
-                          ((NekDouble)Jac.size());
-    scaledTol *= iterTol;
-
-
-    // Set the gloCoord used to compute locCoord
-    const int dir1 = dirUse[0]; 
-    const int dir2 = dirUse[1];
-
-    Array<OneD, NekDouble> Dx1D1(pts[dir1].size());
-    Array<OneD, NekDouble> Dx1D2(pts[dir1].size());
-    Array<OneD, NekDouble> Dx2D1(pts[dir1].size());
-    Array<OneD, NekDouble> Dx2D2(pts[dir1].size());
-
-    // Ideally this will be stored in m_geomfactors
-    bndXmap->PhysDeriv(pts[dir1], Dx1D1, Dx1D2);
-    bndXmap->PhysDeriv(pts[dir2], Dx2D1, Dx2D2);
-       
-    // Initial the locCoord, in [-1,1]
-    locCoord[0] = 0.0;
-    locCoord[1] = 0.0;
-
-    NekDouble x1map, x2map, F1, F2;
-    NekDouble derx1_1, derx1_2, derx2_1, derx2_2, jac;
-    NekDouble resid;
-    int cnt = 0;
-    bool isConverge = false;
-    
-
-    F1 = F2 = 2000; // Starting value of Function
-    while (cnt++ < iterMax)
-    {
-        x1map = bndXmap->PhysEvaluate(locCoord, pts[dir1]);
-        x2map = bndXmap->PhysEvaluate(locCoord, pts[dir2]);
-
-        F1 = gloCoord[dir1] - x1map;
-        F2 = gloCoord[dir2] - x2map;
-
-        if (F1 * F1 + F2 * F2 < scaledTol)
-        {
-            resid = sqrt(F1 * F1 + F2 * F2);
-            isConverge = true;
-            break;
-        }
-
-        // Interpolate derivative metric at locCoord
-        derx1_1 = bndXmap->PhysEvaluate(locCoord, Dx1D1);
-        derx1_2 = bndXmap->PhysEvaluate(locCoord, Dx1D2);
-        derx2_1 = bndXmap->PhysEvaluate(locCoord, Dx2D1);
-        derx2_2 = bndXmap->PhysEvaluate(locCoord, Dx2D2);
-
-        jac = derx2_2 * derx1_1 - derx2_1 * derx1_2;
-        
-        // Use analytical inverse of derivitives which are
-        // also similar to those of metric factors.
-        locCoord[0] = locCoord[0] + ( derx2_2 * (gloCoord[dir1] - x1map) -
-                                      derx1_2 * (gloCoord[dir2] - x2map)) / jac;
-
-        locCoord[1] = locCoord[1] + (-derx2_1 * (gloCoord[dir1] - x1map) +
-                                      derx1_1 * (gloCoord[dir2] - x2map)) / jac;
-
-        
-        // locCoord have diverged so stop iteration
-        if( !(std::isfinite(locCoord[0]) && std::isfinite(locCoord[1])) )
-        {
-            dist = 1e16;
-            std::ostringstream ss;
-            ss << "nan or inf found in NewtonIterForLocCoordOnProjBndElmt in element "
-               << bndGeom->GetGlobalID();
-            WARNINGL1(false, ss.str());
-            return false;
-        }
-        if (fabs(locCoord[0]) > LcoordDiv || fabs(locCoord[1]) > LcoordDiv)
-        {
-            break; 
-        }
-    }
-
-    // Check distance for collapsed coordinate 
-    Array<OneD, NekDouble> eta(2);
-    bndXmap->LocCoordToLocCollapsed(locCoord, eta);
-
-    if(bndGeom->ClampLocCoords(eta, 0.0))
-    {
-        // calculate the global point corresponding to locCoord
-        x1map = bndXmap->PhysEvaluate(eta, pts[dir1]);
-        x2map = bndXmap->PhysEvaluate(eta, pts[dir2]);
-
-        F1 = gloCoord[dir1] - x1map;
-        F2 = gloCoord[dir2] - x2map;
-
-        dist = sqrt(F1 * F1 + F2 * F2);
-    }
-    else
-    {
-        dist = 0.0;
-    }
-
-    // Warning if failed
-    if (cnt >= iterMax)
-    {
-        Array<OneD, NekDouble> collCoords(2);
-        bndXmap->LocCoordToLocCollapsed(locCoord, collCoords);
-
-        // if coordinate is inside element dump error!
-        if ((collCoords[0] >= -1.0 && collCoords[0] <= 1.0) &&
-            (collCoords[1] >= -1.0 && collCoords[1] <= 1.0))
-        {
-            std::ostringstream ss;
-
-            ss << "Reached MaxIterations (" << iterMax
-               << ") in Newton iteration ";
-            ss << "Init value (" << setprecision(4) << 0 << "," << 0
-               << ","
-               << ") ";
-            ss << "Fin  value (" << locCoord[0] << "," << locCoord[1] << ","
-               << ") ";
-            ss << "Resid = " << resid << " Tolerance = " << sqrt(scaledTol);
-
-            WARNINGL1(cnt < iterMax, ss.str());
-        }
-    }
-
-    return isConverge;
-
-}
-
-
-/**
- * @brief Check if a point can be projected onto an oundary element in a given
- *        direction. If yes, give the local coordinates of the projected point.
- *        we have checked the projected point is inside the projected element.
- * @param bndGeom      Pointer to the geometry of the boundary element.
- * @param gloCoord     Global coordinate of the point. size=3.
- * @param projDir      Projection direction, which is used as the reference
- *                     direction in the 3D routine. size=3, norm=1. 
- * @param locCoord     Iteration results for local coordinates (if inside).
- * @param projDist     Projection distance betweem the point to the wall point.
- * @param maxDist      Disntance to check if the wall point is desired.
- * @param iterTol      Tolerence for iteration.
- * @return             Inside (true) or not (false)
- */
-/*
-bool ProcessBodyFittedVelocity::BndElmtContainsPoint(
-    SpatialDomains::GeometrySharedPtr bndGeom,
-    const Array<OneD, const NekDouble > & gloCoord,
-    const Array<OneD, const NekDouble > & projDir,
-    Array< OneD, NekDouble > & locCoord,
-    NekDouble & projDist,
-    const NekDouble maxDist,
-    const NekDouble iterTol)
-{
-    // Get variables
-    StdRegions::StdExpansionSharedPtr bndXmap = bndGeom->GetXmap();
-    const int npts      = bndXmap->GetTotPoints();
-    const int nCoordDim = m_f->m_exp[0]->GetCoordim(0);     // =2 for 2.5D cases
-
-    Array<OneD, Array<OneD, const NekDouble> > bndCoeffs(nCoordDim);
-    Array<OneD, Array<OneD, NekDouble> >       pts(nCoordDim);
-    Array<OneD, Array<OneD, NekDouble> >       projPts(nCoordDim);
-    Array<OneD, NekDouble >                    projGloCoord(3, 0.0);
-    
-    for (int i=0; i<nCoordDim; ++i) 
-    {
-        pts[i]     = Array<OneD, NekDouble>(npts);
-        projPts[i] = Array<OneD, NekDouble>(npts);
-        bndCoeffs[i] = bndGeom->GetCoeffs(i); // 0/1/2 for x/y/z
-        bndXmap->BwdTrans(bndCoeffs[i], pts[i]);
-    }
-
-    // Project the point and vertices of the element in the input direction
-    ProjectPoint(gloCoord, projDir, 0.0, projGloCoord);
-    ProjectVertices(pts, projDir, 0.0, projPts);
-
-
-    // Set the main direction(s) and the minor direction
-    // The gloCoord for minor direction will not be used for locCoord iteration
-    // dirUse[0] is the main dir for 2D/2.5D cases, dirUse[1]/[2] is the minor one
-    // dirUse[0] and dirUse[1] are the main dir for 3D cases, dirUse[2] is hte minor one
-    int dirMaxId = 0; // id to get the dir with largest projDir component
-    for (int i=1; i<nCoordDim; ++i)
-    {
-        if (fabs(projDir[i])>fabs(projDir[dirMaxId]))
-        {
-            dirMaxId = i;
-        }
-    }
-
-    Array<OneD, int > dirUse(3, 0); 
-    if (nCoordDim==2)
-    {
-        // 2D or 2.5D cases
-        if (dirMaxId==0)
-        {
-            dirUse[0] = 1;
-            dirUse[1] = 0;
-            dirUse[2] = 2;
-        }
-        else 
-        {
-            dirUse[0] = 0;
-            dirUse[1] = 1;
-            dirUse[2] = 2;
-        }
-    }
-    else
-    {
-        // 3D cases
-        if (dirMaxId==0)
-        {
-            dirUse[0] = 1;
-            dirUse[1] = 2;
-            dirUse[2] = 0;
-        }
-        else if (dirMaxId==1)
-        {
-            dirUse[0] = 2;
-            dirUse[1] = 0;
-            dirUse[2] = 1;
-        }
-        else
-        {
-            dirUse[0] = 0;
-            dirUse[1] = 1;
-            dirUse[2] = 2;
-        }
-
+        var_offset = spacedim + 2;
     }
 
 
-    // Check if the projected point is in the projected elmt
-    // If yes, then compute the locCoord and check if desired point is found
-    if(nCoordDim==2)
+    // Get mapping
+    GlobalMapping::MappingSharedPtr mapping = ProcessMapping::GetMapping(m_f);
+
+    // Get velocity and convert to Cartesian system,
+    //      if it is still in transformed system
+    if (m_f->m_fieldMetaDataMap.count("MappingCartesianVel"))
     {
-        if (isInProjectedArea2D(projGloCoord, projPts, 1.0e-12))
+        if (m_f->m_fieldMetaDataMap["MappingCartesianVel"] == "False")
         {
-            bool isConverge, isDesired;
-            
-            isConverge = BisectionForLocCoordOnBndElmt(bndGeom, projGloCoord,
-                             projPts, dirUse, locCoord, iterTol);
-
-            Array<OneD, NekDouble > tmp(2, 0.0);
-            tmp[0] = bndXmap->PhysEvaluate(locCoord, pts[0]) - gloCoord[0];
-            tmp[1] = bndXmap->PhysEvaluate(locCoord, pts[1]) - gloCoord[1];
-            projDist = Vmath::Dot(2, tmp, 1, projDir, 1);  // can be negative
-            
-            isDesired = (projDist > 0.0) && (projDist < maxDist);
-
-            return isConverge && isDesired;
-        }
-        else
-        {
-            return false;
-        }
-        
-    }
-    else
-    {
-        if (isInProjectedArea3D(projGloCoord, projPts, projDir, 1.0e-12, 1.0e-6))
-        {
-            NekDouble dist; 
-            bool isConverge, isDesired;
-
-            isConverge = NewtonIterForLocCoordOnBndElmt(bndGeom, projGloCoord,
-                             projPts, dirUse, locCoord, dist, iterTol);
-            
-            if (dist>iterTol)
+            // Initialize arrays and copy velocity
+            for (int i = 0; i < spacedim; ++i)
             {
-                std::ostringstream ss;
-                ss << "Collapsed locCoord out of range.\n"
-                   << "Newton iteration gives the distance: " << dist;
-                WARNINGL1(false, ss.str());
+                vel[i] = Array<OneD, NekDouble>(npoints);
+                if (m_f->m_exp[0]->GetWaveSpace())
+                {
+                    m_f->m_exp[0]->HomogeneousBwdTrans(
+                        m_f->m_exp[var_offset+i]->GetPhys(), vel[i]);
+                }
+                else
+                {
+                    Vmath::Vcopy(npoints, m_f->m_exp[var_offset+i]->GetPhys(),
+                                 1, vel[i], 1);
+                }
             }
-            
-            Array<OneD, NekDouble > tmp(3, 0.0);
-            tmp[0] = bndXmap->PhysEvaluate(locCoord, pts[0]) - gloCoord[0];
-            tmp[1] = bndXmap->PhysEvaluate(locCoord, pts[1]) - gloCoord[1];
-            tmp[2] = bndXmap->PhysEvaluate(locCoord, pts[2]) - gloCoord[2];
-            projDist = Vmath::Dot(3, tmp, 1, projDir, 1);  // can be negative
-
-            isDesired = (projDist > 0.0) && (projDist < maxDist);
-
-            return isConverge && isDesired;
+            // Convert velocity to cartesian system
+            mapping->ContravarToCartesian(vel, vel);
+            // Convert back to wavespace if necessary
+            if (m_f->m_exp[0]->GetWaveSpace())
+            {
+                for (int i = 0; i < spacedim; ++i)
+                {
+                    m_f->m_exp[0]->HomogeneousFwdTrans(vel[i], vel[i]);
+                }
+            }
         }
         else
         {
-            return false;
+            for (int i = 0; i < spacedim; ++i)
+            {
+                vel[i] = Array<OneD, NekDouble>(npoints);
+                Vmath::Vcopy(npoints, m_f->m_exp[var_offset+i]->GetPhys(),
+                             1, vel[i], 1);
+            }
         }
-        
     }
-    
-}
-*/
+    else
+    {
+        for (int i = 0; i < spacedim && i < nfields; ++i)
+        {
+            vel[i] = Array<OneD, NekDouble>(npoints);
+            Vmath::Vcopy(npoints, m_f->m_exp[var_offset+i]->GetPhys(),
+                         1, vel[i], 1);
+        }
+    }
 
+}
 
 
 
