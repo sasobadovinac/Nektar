@@ -99,8 +99,10 @@ void ProcessBodyFittedVelocity::Process(po::variables_map &vm)
     const int nFields   = m_f->m_variables.size();
     const int nCoordDim = m_f->m_exp[0]->GetCoordim(0);
     m_spacedim          = nCoordDim + m_f->m_numHomogeneousDir;
-    const int nBndLcoordDim = nCoordDim - 1;
     const int nAddFields = m_spacedim + 1;
+
+    const NekDouble geoTol = 1.0e-12; // For dist check and relTol for locCoord
+    const NekDouble dirTol = 1.0e-4;  // For perpendicular check
 
     
     // Get the assist vector
@@ -120,15 +122,29 @@ void ProcessBodyFittedVelocity::Process(po::variables_map &vm)
     }
 
     NekDouble norm = sqrt(Vmath::Dot(3, assistVec, 1, assistVec, 1));
-    if (norm < 1.0e-12)
+    if (norm < geoTol)
     {
         ASSERTL0(false, "Error. The amplitude of assist vector is smaller than \
                          the tolerence 1.0e-12.");
     }
     Vmath::Smul(3, 1.0/norm, assistVec, 1, assistVec, 1);
 
-
     
+    // Get the bnd id
+    // We only use the first one [0], check ProcessBoundaryExtract for more info
+    SpatialDomains::BoundaryConditions bcs(m_f->m_session,
+                                           m_f->m_exp[0]->GetGraph());
+    const SpatialDomains::BoundaryRegionCollection bregions =
+        bcs.GetBoundaryRegions();
+    map<int, int> BndRegionMap;
+    int cnt = 0;
+    for (auto &breg_it : bregions)
+    {
+        BndRegionMap[breg_it.first] = cnt++;
+    }
+    int bnd = BndRegionMap[m_f->m_bndRegionsToWrite[0]]; 
+
+
     // Generate the distance array and three arrays for directional vectors 
     // bfcsDir[i][j][k]
     //   i - dir vec:   0-main tangential, 1-normal, (2-minor tangential)
@@ -149,266 +165,12 @@ void ProcessBodyFittedVelocity::Process(po::variables_map &vm)
 
 
 
-
-    // At each quadrature point inside the domian, compute the body-fitted
-    // coordinate with respect to the input bnd id
-
-
-
-
-    // Get the bnd id
-    // We only use the first one [0], check ProcessBoundaryExtract for more info
-    SpatialDomains::BoundaryConditions bcs(m_f->m_session,
-                                           m_f->m_exp[0]->GetGraph());
-    const SpatialDomains::BoundaryRegionCollection bregions =
-        bcs.GetBoundaryRegions();
-    map<int, int> BndRegionMap;
-    int cnt = 0;
-    for (auto &breg_it : bregions)
-    {
-        BndRegionMap[breg_it.first] = cnt++;
-    }
-    int bnd = BndRegionMap[m_f->m_bndRegionsToWrite[0]]; 
-
-    // Get expansion list for boundary
-    Array<OneD, MultiRegions::ExpListSharedPtr> BndExp(nFields); 
-    for (int i = 0; i < nFields; ++i) {
-        BndExp[i] = m_f->m_exp[i]->UpdateBndCondExpansion(bnd);
-    }
-    
-
-    //-------------------------------------------------------------------------
-    // Loop all the Q points of the field, and find out the closest point on
-    // the bnd, and the bnd element contains this bnd point
-
-    const int nElmts    = m_f->m_exp[0]->GetNumElmts(); // num for domain element
-    const int nBndElmts = BndExp[0]->GetNumElmts();     // num for bnd element
-
-    cout << "nElmts = " << nElmts <<", nBndElmts = " << nBndElmts << endl;
-
-    SpatialDomains::GeometrySharedPtr bndGeom; //geom
-    StdRegions::StdExpansionSharedPtr bndXmap; //xmap
-    Array<OneD, Array<OneD, NekDouble> > bndCoeffs(nCoordDim);
-    Array<OneD, Array<OneD, NekDouble> > bndPts(nCoordDim);
-
-    int nPts, nBndPts;
-    NekDouble dist_tmp;
-    bool isConverge;
-    vector<int> bndElmtIds;
-    int bndElmtId=-1;
-    int phys_offset, bnd_phys_offset;
-    const NekDouble geoTol = 1.0e-12;
-
-    Array<OneD, NekDouble> locCoord(nBndLcoordDim), locCoord_tmp(nBndLcoordDim);
-    Array<OneD, NekDouble> gloCoord(3, 0.0), gloCoord_tmp(3, 0.0), inGloCoord(3, 0.0);
-    Array<OneD, NekDouble> normal(3), normalRef(3);
-    Array<OneD, NekDouble> tangential1(3), tangential2(3); // 1 - main, 2 - minor
-
-    ProcessWallNormalData wnd(m_f); // wallNormalData object to use its routine
-
-    // Use the outward-pointing normal at quardrature pts on bnd elmt as dir ref
-    Array<OneD, Array<OneD, NekDouble> > normalQ;
-    m_f->m_exp[0]->GetBoundaryNormals(bnd, normalQ);
-    
+    // Key function. At each quadrature point inside the domian, compute the
+    // body-fitted coordinate system with respect to the input bnd id
+    GenPntwiseBodyFittedCoordSys(bnd, assistVec, distance, bfcsDir, true,
+                                                           geoTol,  dirTol);
 
 
-    // Loop inner element
-    for (int eId=0; eId<nElmts; ++eId) //element id, nElmts
-    {
-        // Get inner points
-        nPts = m_f->m_exp[0]->GetExp(eId)->GetTotPoints();
-        Array<OneD, Array<OneD, NekDouble> > pts(nCoordDim);
-        for (int i=0; i<nCoordDim; ++i) 
-        {
-            pts[i] = Array<OneD, NekDouble>(nPts, 0.0);
-        }
-
-        if (nCoordDim == 2)
-        {
-            m_f->m_exp[0]->GetExp(eId)->GetCoords(pts[0], pts[1]);
-        }
-        else if (nCoordDim == 3)
-        {
-            m_f->m_exp[0]->GetExp(eId)->GetCoords(pts[0], pts[1], pts[2]);
-        }
-
-        // -------Debug------
-        if (eId==0){
-            for (int i=0; i<nPts; ++i){
-                cout << "pId = " << i <<", [x,y]=["<<pts[0][i]<<", "<<pts[1][i]<<"]"<<endl;
-            }
-        }
-
-        
-        phys_offset = m_f->m_exp[0]->GetPhys_Offset(eId);
-
-        // Loop points in the inner element
-        for (int pId=0; pId<nPts; ++pId)
-        {
-
-            // Compute the distance from the pnt (bnd elmt) to the inner pnt
-            // Step 1 - Estimate search
-            //  - Find the closest quadrature pnt among all the bnd elmt;
-            //  - The bnd elmt which contains this pnt is saved for Step 2.
-            //  * If the quadtature pnt is on the edge or corner of the bnd
-            //    elmt, there will be more than one bnd elmt which contains
-            //    this point.
-
-            bndElmtIds.clear();
-
-            // Loop bnd element to find the element to build body-fitted coordinate
-            for (int beId=0; beId<nBndElmts; ++beId)
-            {
-                // Get geomery and points
-                bndGeom = BndExp[0]->GetExp(beId)->GetGeom();   // get geom of a bnd element
-                bndXmap = bndGeom->GetXmap();
-                nBndPts = bndXmap->GetTotPoints();
-
-                for (int i=0; i<nCoordDim; ++i) 
-                {
-                    bndPts[i]    = Array<OneD, NekDouble>(nBndPts);
-                    bndCoeffs[i] = bndGeom->GetCoeffs(i); // 0/1/2 for x/y/z
-                    bndXmap->BwdTrans(bndCoeffs[i], bndPts[i]);
-                }
-
-                // Compute the distance (estimate) 
-                dist_tmp = PntToBndElmtPntDistance(pts, pId, bndPts);
-
-                if (dist_tmp < (distance[phys_offset+pId] - geoTol))
-                {
-                    // Find a closer quadrature point from a different bnd elmt
-                    // Update distance and bnd elmt id vector
-                    distance[phys_offset+pId] = dist_tmp;
-                    bndElmtIds.clear();
-                    bndElmtIds.push_back(beId);
-                }
-                else if (dist_tmp < (distance[phys_offset+pId] + geoTol))
-                {
-                    // The same quadrature point from a different bnd elmt is
-                    // found for the other time.
-                    // Keep the distance and add the bnd elmt id to the vector
-                    bndElmtIds.push_back(beId);
-                }
-
-            } // end of bnd elmt loop  
-            
-
-            // Step 2 - Accurate search
-            //  - Find the accurate distance and locCoord for the nearest pnt
-            //    (to the inner point) on the bnd elmt 
-            //  - This process will be repeated for all the bnd elmt in the bnd
-            //    elmt id vector.
-
-            // Get the coordinate for the inner point
-            for (int i=0; i<nCoordDim; ++i) 
-            {
-                inGloCoord[i] = pts[i][pId];
-            }
-
-            distance[phys_offset+pId] = 9999;
-
-            // Compute the accurate distance and locCoord
-            for (int i=0; i<bndElmtIds.size(); ++i)
-            {
-                bndGeom = BndExp[0]->GetExp(bndElmtIds[i])->GetGeom();
-                
-                isConverge = LocCoordForNearestPntOnBndElmt(inGloCoord, bndGeom,
-                                locCoord_tmp, gloCoord_tmp, dist_tmp, 1.0e-8, 51);
-                
-                if (!isConverge)
-                {
-                    WARNINGL1(false, "Bisection iteration is not converged!!!");
-                }
-
-                // Should add an option for angle constrain.
-                // When activated, if (distance > tol)
-                // the smallest angle is used to get the element
-                // The reason is to avoid confusion when there are steps and gaps
-                
-                if (dist_tmp < distance[phys_offset+pId])
-                {
-                    bndElmtId = bndElmtIds[i];
-                    distance[phys_offset+pId] = dist_tmp;
-
-                    for (int j=0; j<nBndLcoordDim; ++j)
-                    {
-                        locCoord[j] = locCoord_tmp[j];
-                    }
-
-                    for (int j=0; j<3; ++j)
-                    {
-                        gloCoord[j] = gloCoord_tmp[j];
-                    }
-                }
-
-            }
-
-            //Get ref normal for outward-point dir
-            bnd_phys_offset = BndExp[0]->GetPhys_Offset(bndElmtId);
-            for(int i=0; i<nCoordDim; ++i)
-            {
-                normalRef[i] = normalQ[i][bnd_phys_offset];
-            }
-
-            // Get the wall normal using the function in wallNormalData class
-            bndGeom = BndExp[0]->GetExp(bndElmtId)->GetGeom();
-            wnd.GetNormals(bndGeom, locCoord, normal);
-
-            // Correct the normal direction to make sure it points inward
-            if(Vmath::Dot(nCoordDim, normal, normalRef) > 0.0)
-            {
-                Vmath::Neg(nCoordDim, normal, 1);
-            }
-            
-            // The main tagential direction is defined to be overlapped with the
-            // intersection line of the tangantial plane and the assistant plane,
-            // whose normal is the input assistDir. Both plane is defined using
-            // the point normal form, where the point is the nearest point on
-            // the boundary (gloCoord), and the vectors are the normal (pointing
-            // out) and the assistant direction (assistDir). Therefore, the main
-            // tangantial direction can be obtained by the cross product of the
-            // two vectors, since the two vectors has the same starting point and 
-            // the tangantial direction is perpendicular to both of them.
-            ScaledCrosssProduct(normal, assistVec, tangential1);
-            
-            // Save the direction vectors
-            for (int i=0; i<m_spacedim; ++i)
-            {
-                bfcsDir[0][i][phys_offset+pId] = tangential1[i];
-                bfcsDir[1][i][phys_offset+pId] = normal[i];
-            }
-
-            if (m_spacedim==3)
-            {
-                ScaledCrosssProduct(tangential1, normal, tangential2);
-                for (int i=0; i<3; ++i)
-                {
-                    bfcsDir[2][i][phys_offset+pId] = tangential2[i];
-                }
-            }
-            
-
-
-            // -------Debug------
-            if (eId==3 && (pId==12 || pId==13 || pId==14 || pId==15)){
-                cout << "  - pId = " << pId <<", [x,y]=["<<pts[0][pId]<<", "<<pts[1][pId]<<"]"<<endl;
-                cout << "    - dist     = " << dist_tmp << ", locCoord = "<<locCoord[0]<<", bndElmtId = "<< bndElmtId <<endl;
-                cout << "    - dist_fld = " << distance[phys_offset+pId] << endl;
-                //cout << "  - pId = " << pId <<", [x,y]=["<<pts[0][pId]<<", "<<pts[1][pId]<<"]"<<endl;
-                cout << "    - assVec = " << assistVec[0]   << ", "<< assistVec[1]   <<", "<< assistVec[2] <<endl;
-                cout << "    - normal = " << normal[0]      << ", "<< normal[1]      <<", "<< normal[2] <<endl;
-                cout << "    - tan1   = " << tangential1[0] << ", "<< tangential1[1] <<", "<< tangential1[2] <<endl;
-                cout << "    - tan2   = " << tangential2[0] << ", "<< tangential2[1] <<", "<< tangential2[2] <<endl;
-                cout << "    - offset = " << bnd_phys_offset<< ", "<< endl;
-            }
-
-        } // end of inner pts loop
-             
-    } // end of inner elmt loop
-
-
-
-    //==================================================================================================
     // Compute the velocity 
     Array<OneD, Array<OneD, NekDouble> > vel_car(m_spacedim); // Cartesian
     Array<OneD, Array<OneD, NekDouble> > vel_bfc(m_spacedim); // body-fiitted
@@ -432,7 +194,6 @@ void ProcessBodyFittedVelocity::Process(po::variables_map &vm)
         }
     }
 
-    
 
     // Add var names
     m_f->m_variables.push_back("distance2Wall");
@@ -454,10 +215,9 @@ void ProcessBodyFittedVelocity::Process(po::variables_map &vm)
 
     m_f->m_exp[nFields] = m_f->AppendExpList(m_f->m_numHomogeneousDir);
     Vmath::Vcopy(npoints, distance, 1, 
-                     m_f->m_exp[nFields]->UpdatePhys(), 1);
+                 m_f->m_exp[nFields]->UpdatePhys(), 1);
     m_f->m_exp[nFields]->FwdTrans_IterPerExp(
-            distance, m_f->m_exp[nFields]->UpdateCoeffs());
-
+        distance, m_f->m_exp[nFields]->UpdateCoeffs());
 
     // copy vel_bfc
     for (int i=1; i<nAddFields; ++i)
@@ -469,13 +229,17 @@ void ProcessBodyFittedVelocity::Process(po::variables_map &vm)
             vel_bfc[i-1], m_f->m_exp[nFields + i]->UpdateCoeffs());
     }
 
-    
-    
 
 }
 
 
-// Compute point-to-point distance to find the cloest element
+
+/**
+ * @brief Compute the point-to-point distance to find the estimated cloest element.
+ * @param pts    Global coordinate of the quadrature points in the inner element.
+ * @param pId    Id of the inner point of interest in the current loop.
+ * @param bndPts Global coordinate of the quadrature points in the boundary element.
+ */ 
 NekDouble ProcessBodyFittedVelocity::PntToBndElmtPntDistance(
     const Array<OneD, Array<OneD, NekDouble> > & pts,
     const int pId,
@@ -500,16 +264,26 @@ NekDouble ProcessBodyFittedVelocity::PntToBndElmtPntDistance(
             dist = dist_tmp;
         }
 
-        // Debug
-        // if (fabs(pts[0][pId]-0.0742252)<1e-5 && fabs(pts[1][pId]-0.515241)<1e-5){
-        //     cout << "####### i = " <<i<<", dist = " << dist << ", size = " << bndPts[0].size() << endl;
-        // }
     }
 
     return dist;
 }
 
 
+
+
+/**
+ * @brief Compute the local coordinate for the nearest point on the given
+ *        2D boundary element to the input point.
+ * @param inGloCoord  Global coordinate for the input point.
+ * @param bndGeom     Geometry of the boundary element to search from.
+ * @param pts         Global coordinate of the quadrature points in the boundary element.
+ * @param locCoord    Local coordinate of the result.
+ * @param gloCoord    Global coordinate of the result.
+ * @param dist        Distance from the input point to the boundary element.
+ * @param iterTol     Iteration tolerence.
+ * @param iterMax     Max iteration steps.
+ */ 
 bool ProcessBodyFittedVelocity::LocCoordForNearestPntOnBndElmt_2D(
     const Array<OneD, const NekDouble > & inGloCoord,
     SpatialDomains::GeometrySharedPtr bndGeom,
@@ -577,9 +351,18 @@ bool ProcessBodyFittedVelocity::LocCoordForNearestPntOnBndElmt_2D(
 }
 
 
-
-// Compute the locCoord for the nearest point on the bnd elmt
-// The locCoord is the position to set up the body-fitted coordinate
+/**
+ * @brief Compute the local coordinate for the nearest point on the given
+ *        boundary element to the input point. The locCoord is the position to
+ *        set up the body-fitted coordinate. This function works as a driver.
+ * @param inGloCoord  Global coordinate for the input point.
+ * @param bndGeom     Geometry of the boundary element to search from.
+ * @param locCoord    Local coordinate of the result.
+ * @param gloCoord    Global coordinate of the result.
+ * @param dist        Distance from the input point to the boundary element.
+ * @param iterTol     Iteration tolerence.
+ * @param iterMax     Max iteration steps.
+ */ 
 bool ProcessBodyFittedVelocity::LocCoordForNearestPntOnBndElmt(
     const Array<OneD, const NekDouble > & inGloCoord,
     SpatialDomains::GeometrySharedPtr bndGeom,
@@ -624,6 +407,10 @@ bool ProcessBodyFittedVelocity::LocCoordForNearestPntOnBndElmt(
 }
 
 
+/**
+ * @brief Compute the normalized cross product for two 2D vectors.
+ *        vec3 = vec1 x vec2
+ */ 
 void ProcessBodyFittedVelocity::ScaledCrosssProduct(
     const Array<OneD, NekDouble > & vec1,
     const Array<OneD, NekDouble > & vec2,
@@ -642,17 +429,300 @@ void ProcessBodyFittedVelocity::ScaledCrosssProduct(
 }
 
 
+/**
+ * @brief At each quadrature point inside the domian, compute the body-fitted
+ *        coordinate system with respect to the input boundary id.
+ * @param targetBndId  Target boundary id.
+ * @param assistVec    Unit assistant vector, the cross product of inward-
+ *                     pointing wall normalId and wihch gives of the main
+ *                     tangential direction of the body-fitted system.
+ * @param bfcsDir      Pointwise body-fitted coordinate system.
+ * @param isPerpendicularCondition Flag for using perpendicular check or not
+ * @param geoTol       Geometry tolerence. Used as the relative tolerence for
+ *                     local coord and distance absolute tolerence.
+ * @param dirTol       Direction tolerencce. Used to check if the inner product
+ *                     of two unit vectors is cloes enough to 1.0.
+ */ 
+void ProcessBodyFittedVelocity::GenPntwiseBodyFittedCoordSys(
+    const int targetBndId,
+    const Array<OneD, NekDouble> assistVec,
+    Array<OneD, NekDouble> & distance,
+    Array<OneD, Array<OneD, Array<OneD, NekDouble> > > & bfcsDir,
+    const bool isPerpendicularCondition,
+    const NekDouble geoTol,
+    const NekDouble dirTol)
+{
+    const int nFields   = m_f->m_variables.size();
+    const int nCoordDim = m_f->m_exp[0]->GetCoordim(0);
+    //const int nSpacedim = nCoordDim + m_f->m_numHomogeneousDir;
+    const int nBndLcoordDim = nCoordDim - 1;
+
+    // Get expansion list for boundary
+    Array<OneD, MultiRegions::ExpListSharedPtr> BndExp(nFields); 
+    for (int i = 0; i < nFields; ++i) {
+        BndExp[i] = m_f->m_exp[i]->UpdateBndCondExpansion(targetBndId);
+    }
+    
+    const int nElmts    = m_f->m_exp[0]->GetNumElmts(); // num of inner element
+    const int nBndElmts = BndExp[0]->GetNumElmts();     // num of bnd element
+
+    // Use the outward-pointing normal at quardrature pts on bnd elmt as dir ref
+    Array<OneD, Array<OneD, NekDouble> > normalQ;
+    m_f->m_exp[0]->GetBoundaryNormals(targetBndId, normalQ);
+
+    // Vars in the loop
+    SpatialDomains::GeometrySharedPtr bndGeom;
+    StdRegions::StdExpansionSharedPtr bndXmap;
+    Array<OneD, Array<OneD, NekDouble> > bndCoeffs(nCoordDim);
+    Array<OneD, Array<OneD, NekDouble> > bndPts(nCoordDim);
+
+    int nPts, nBndPts;
+    NekDouble dist_tmp;
+    bool isConverge;
+    vector<int> bndElmtIds;
+    int bndElmtId;
+    int phys_offset, bnd_phys_offset;
+
+    Array<OneD, NekDouble> inGloCoord(3, 0.0); // inner pnt
+    Array<OneD, NekDouble> locCoord(nBndLcoordDim), locCoord_tmp(nBndLcoordDim);
+    Array<OneD, NekDouble> gloCoord(3, 0.0),        gloCoord_tmp(3, 0.0);
+    Array<OneD, NekDouble> normal(3), normalRef(3);
+    Array<OneD, NekDouble> tangential1(3), tangential2(3); // 1 - main, 2 - minor
+    Array<OneD, NekDouble> normalChk(3);
+    ProcessWallNormalData wnd(m_f); // wallNormalData object to use its routine
+
+    
+    //-------------------------------------------------------------------------
+    // Loop all the quadrature points of the field, and find out the closest
+    // point on the bnd for each of them. The bnd element contains this bnd
+    // point is recorded.
+
+     // Loop inner element
+    for (int eId=0; eId<nElmts; ++eId) //element id, nElmts
+    {
+        // Get inner points
+        nPts = m_f->m_exp[0]->GetExp(eId)->GetTotPoints();
+        Array<OneD, Array<OneD, NekDouble> > pts(nCoordDim);
+        for (int i=0; i<nCoordDim; ++i) 
+        {
+            pts[i] = Array<OneD, NekDouble>(nPts, 0.0);
+        }
+
+        if (nCoordDim == 2)
+        {
+            m_f->m_exp[0]->GetExp(eId)->GetCoords(pts[0], pts[1]);
+        }
+        else if (nCoordDim == 3)
+        {
+            m_f->m_exp[0]->GetExp(eId)->GetCoords(pts[0], pts[1], pts[2]);
+        }
+
+        // Get the offset for the current elmt
+        phys_offset = m_f->m_exp[0]->GetPhys_Offset(eId);
 
 
+        // Loop points in the inner element
+        for (int pId=0; pId<nPts; ++pId)
+        {
+
+            // Compute the distance from the pnt (bnd elmt) to the inner pnt
+            // Step 1 - Estimate search
+            //  - Find the closest quadrature pnt among all the bnd elmt;
+            //  - The bnd elmt which contains this pnt is saved for Step 2.
+            //  * If the quadtature pnt is on the edge or corner of the bnd
+            //    elmt, there will be more than one bnd elmt which contains
+            //    this point.
+
+            bndElmtIds.clear(); // clear the bnd elmt id vec for a new inner pnt
+
+            // Loop bnd elmt to find the elmt to build body-fitted coord sys
+            for (int beId=0; beId<nBndElmts; ++beId)
+            {
+                // Get geomery and points
+                bndGeom = BndExp[0]->GetExp(beId)->GetGeom();
+                bndXmap = bndGeom->GetXmap();
+                nBndPts = bndXmap->GetTotPoints();
+
+                for (int i=0; i<nCoordDim; ++i) 
+                {
+                    bndPts[i]    = Array<OneD, NekDouble>(nBndPts);
+                    bndCoeffs[i] = bndGeom->GetCoeffs(i); // 0/1/2 for x/y/z
+                    bndXmap->BwdTrans(bndCoeffs[i], bndPts[i]);
+                }
+
+                // Compute the distance (estimate) 
+                dist_tmp = PntToBndElmtPntDistance(pts, pId, bndPts);
+
+                if (dist_tmp < (distance[phys_offset+pId] - geoTol))
+                {
+                    // Find a closer quadrature point from a different bnd elmt
+                    // Update distance and bnd elmt id vector
+                    distance[phys_offset+pId] = dist_tmp;
+                    bndElmtIds.clear();
+                    bndElmtIds.push_back(beId);
+                }
+                else if (dist_tmp < (distance[phys_offset+pId] + geoTol))
+                {
+                    // The same quadrature point from a different bnd elmt is
+                    // found for the other time.
+                    // Keep the distance and add the bnd elmt id to the vector
+                    bndElmtIds.push_back(beId);
+                }
+
+            } // end of bnd elmt loop  
+            
+
+            // Step 2 - Accurate search
+            //  - Find the accurate distance and locCoord for the nearest pnt
+            //    (to the inner point) on the bnd elmt 
+            //  - This process will be repeated on all the bnd elmts in the bnd
+            //    elmt id vector.
+
+            // Generate the coordinate for the inner point
+            for (int i=0; i<nCoordDim; ++i) 
+            {
+                inGloCoord[i] = pts[i][pId];
+            }
+
+            // reset the dist to make sure the condition for if will be satisfied
+            distance[phys_offset+pId] = 9999;
+            bndElmtId = -1;
+
+            // Compute the accurate distance and locCoord
+            for (int i=0; i<bndElmtIds.size(); ++i)
+            {
+                bndGeom = BndExp[0]->GetExp(bndElmtIds[i])->GetGeom();
+                
+                isConverge = LocCoordForNearestPntOnBndElmt(inGloCoord, bndGeom,
+                                locCoord_tmp, gloCoord_tmp, dist_tmp, geoTol, 51);
+                
+                if (!isConverge)
+                {
+                    WARNINGL1(false, "Bisection iteration is not converged!!!");
+                }
+
+                // Should add an option for angle constrain.
+                // When activated, if (distance > tol)
+                // the smallest angle is used to get the element
+                // The reason is to avoid confusion when there are steps and gaps
+
+                // Perpendicular check
+                if (isPerpendicularCondition && (dist_tmp>geoTol))
+                {
+                    // Generate the scaled vector
+                    Vmath::Vcopy(nCoordDim, gloCoord_tmp, 1, normalChk, 1);
+                    Vmath::Neg(nCoordDim, normalChk, 1);
+                    Vmath::Vadd(nCoordDim, inGloCoord, 1, normalChk, 1, normalChk, 1);    
+                    Vmath::Smul(nCoordDim, 1.0/sqrt(Vmath::Dot(nCoordDim, normalChk, 1, normalChk, 1)),
+                                normalChk, 1, normalChk, 1);
+                    
+                    //Get normal based on the locCoord_tmp
+                    wnd.GetNormals(bndGeom, locCoord_tmp, normal);
+
+                    // Reverse the direction to make it point into the field
+                    bnd_phys_offset = BndExp[0]->GetPhys_Offset(bndElmtIds[i]);
+                    for(int j=0; j<nCoordDim; ++j)
+                    {
+                        normalRef[j] = normalQ[j][bnd_phys_offset];
+                    }
+
+                    if(Vmath::Dot(nCoordDim, normal, normalRef) > 0.0)
+                    {
+                        Vmath::Neg(nCoordDim, normal, 1);
+                    }
+
+                    // Check if the current bnd elmt convers this inner pnt
+                    if (Vmath::Dot(nCoordDim, normalChk, 1, normal, 1) < (1-dirTol))
+                    {
+                        continue;
+                    }
+
+                }
+                
+                // No violation occurs, update the current result
+                if (dist_tmp < distance[phys_offset+pId])
+                {
+                    bndElmtId = bndElmtIds[i];
+                    distance[phys_offset+pId] = dist_tmp;
+
+                    for (int j=0; j<nBndLcoordDim; ++j)
+                    {
+                        locCoord[j] = locCoord_tmp[j];
+                    }
+
+                    for (int j=0; j<3; ++j)
+                    {
+                        gloCoord[j] = gloCoord_tmp[j];
+                    }
+                }
+
+            }
+
+            // Check if the bnd elmt is found
+            if (bndElmtId == -1)
+            {
+                ASSERTL0(false, "The boundary element is not found under given\
+                                 tolerence. Please check and reset the tolerence,\
+                                 or simply turn off the perpendicular check.");
+            }
+
+            // Get the wall normal using the function in wallNormalData class
+            bndGeom = BndExp[0]->GetExp(bndElmtId)->GetGeom();
+            wnd.GetNormals(bndGeom, locCoord, normal);
+
+            //Get ref normal for outward-point dir
+            bnd_phys_offset = BndExp[0]->GetPhys_Offset(bndElmtId);
+            for(int i=0; i<nCoordDim; ++i)
+            {
+                normalRef[i] = normalQ[i][bnd_phys_offset];
+            }
+
+            // Correct the normal direction to make sure it points inward
+            if(Vmath::Dot(nCoordDim, normal, normalRef) > 0.0)
+            {
+                Vmath::Neg(nCoordDim, normal, 1);
+            }
+            
+            // The main tagential direction is defined to be overlapped with the
+            // intersection line of the tangantial plane and the assistant plane,
+            // whose normal is the input assistDir. Both plane is defined using
+            // the point normal form, where the point is the nearest point on
+            // the boundary (gloCoord), and the vectors are the normal (pointing
+            // out) and the assistant direction (assistDir). Therefore, the main
+            // tangantial direction can be obtained by the cross product of the
+            // two vectors, since the two vectors has the same starting point and 
+            // the tangantial direction is perpendicular to both of them.
+            ScaledCrosssProduct(normal, assistVec, tangential1);
+            
+            // Save the direction vectors
+            for (int i=0; i<m_spacedim; ++i)
+            {
+                bfcsDir[0][i][phys_offset+pId] = tangential1[i];
+                bfcsDir[1][i][phys_offset+pId] = normal[i];
+            }
+
+            if (m_spacedim==3)
+            {
+                ScaledCrosssProduct(tangential1, normal, tangential2);
+                for (int i=0; i<3; ++i)
+                {
+                    bfcsDir[2][i][phys_offset+pId] = tangential2[i];
+                }
+            }
+            
+
+        } // end of inner pts loop
+             
+    } // end of inner elmt loop
+
+}
 
 
-
-
-
-
-// Get velocity and convert to Cartesian system,
-//      if it is still in transformed system
-// from ProcessGrad.cpp
+/**
+ * @brief Get velocity and convert to Cartesian system, if it is still in
+ *        transformed system. It is copied and modified from from 
+ *        ProcessGrad.cpp
+ */ 
 void ProcessBodyFittedVelocity::GetVelAndConvertToCartSys(
     Array<OneD, Array<OneD, NekDouble> > & vel)
 {
