@@ -64,11 +64,27 @@ ProcessBodyFittedVelocity::ProcessBodyFittedVelocity(FieldSharedPtr f) : Process
     f->m_writeBndFld = false; // turned on in the father class ProcessBoundaryExtract
 
     // bnd is read from father class ProcessBoundaryExtract
-    m_config["assistDir"] = ConfigOption(false, "0.0,0.0,1.0",
-                            "The normal direction of the assistant plane, where \
-                            the first body-fitted coordinate direction is located. \
-                            The assistance plane is defined in point normal form. \
-                            default=[0,0,1]");
+    m_config["assistDir"]  = ConfigOption(false, "0.0,0.0,1.0",
+                             "The normal direction of the assistant plane, where \
+                             the first body-fitted coordinate direction is located. \
+                             The assistance plane is defined in point normal form. \
+                             Default = [0,0,1]");
+    m_config["checkAngle"] = ConfigOption(true, "0",
+                             "The flag for checking the distance vector \
+                             perpendicular to the nearest element or not. It \
+                             does not need to be turned on if geometry is \
+                             smooth and there is no special consideration of \
+                             the body-fitted coordinate system. It would be \
+                             helpful to set up a desired coordinate system \
+                             based on the surface with with sharp corners, \
+                             such as at the presence of a step or gap. \
+                             Default = false.");
+    m_config["distTol"]    = ConfigOption(false, "1.0e-12",
+                             "The distance tolerence to properly find out the \
+                             nearest boundary element. It works together with \
+                             the CHECKANGLE option to set up the body-fitted \
+                             coordinate system near the corner. \
+                             Default = 1.0e-12.");
 }
 
 ProcessBodyFittedVelocity::~ProcessBodyFittedVelocity()
@@ -101,10 +117,16 @@ void ProcessBodyFittedVelocity::Process(po::variables_map &vm)
     m_spacedim          = nCoordDim + m_f->m_numHomogeneousDir;
     const int nAddFields = m_spacedim + 1;
 
-    const NekDouble geoTol = 1.0e-12; // For dist check and relTol for locCoord
-    const NekDouble dirTol = 1.0e-4;  // For perpendicular check
-
     
+    // Tolerence setting
+    // To include more elmts for further check
+    const NekDouble distTol = m_config["distTol"].as<NekDouble>();
+    const NekDouble geoTol  = 1.0e-12; // To check if two pnts are too close
+    const NekDouble dirTol  = 1.0e-4;  // To check if two unit vecs are parallel
+    const NekDouble iterTol = 1.0e-12; // To check if locCoord iter convergence
+    
+    const bool isCheckAngle = m_config["checkAngle"].as<bool>();
+ 
     // Get the assist vector
     vector<NekDouble> assistDir;
     ASSERTL0(ParseUtils::GenerateVector(m_config["assistDir"].as<string>(), assistDir),
@@ -125,11 +147,15 @@ void ProcessBodyFittedVelocity::Process(po::variables_map &vm)
     if (norm < geoTol)
     {
         ASSERTL0(false, "Error. The amplitude of assist vector is smaller than \
-                         the tolerence 1.0e-12.");
+                         the geometry tolerence 1.0e-12.");
     }
     Vmath::Smul(3, 1.0/norm, assistVec, 1, assistVec, 1);
 
+
     
+    
+
+
     // Get the bnd id
     // We only use the first one [0], check ProcessBoundaryExtract for more info
     SpatialDomains::BoundaryConditions bcs(m_f->m_session,
@@ -167,8 +193,8 @@ void ProcessBodyFittedVelocity::Process(po::variables_map &vm)
 
     // Key function. At each quadrature point inside the domian, compute the
     // body-fitted coordinate system with respect to the input bnd id
-    GenPntwiseBodyFittedCoordSys(bnd, assistVec, distance, bfcsDir, true,
-                                                           geoTol,  dirTol);
+    GenPntwiseBodyFittedCoordSys(bnd, assistVec, distance, bfcsDir,
+        isCheckAngle, distTol, iterTol, dirTol, geoTol);
 
 
     // Compute the velocity 
@@ -196,7 +222,7 @@ void ProcessBodyFittedVelocity::Process(po::variables_map &vm)
 
 
     // Add var names
-    m_f->m_variables.push_back("distance2Wall");
+    m_f->m_variables.push_back("distanceToWall");
     m_f->m_variables.push_back("u_bfc");
     m_f->m_variables.push_back("v_bfc");
     if (m_spacedim == 3)
@@ -268,8 +294,6 @@ NekDouble ProcessBodyFittedVelocity::PntToBndElmtPntDistance(
 
     return dist;
 }
-
-
 
 
 /**
@@ -438,20 +462,26 @@ void ProcessBodyFittedVelocity::ScaledCrosssProduct(
  *                     tangential direction of the body-fitted system.
  * @param bfcsDir      Pointwise body-fitted coordinate system.
  * @param isPerpendicularCondition Flag for using perpendicular check or not
+ * @param distTol      Distance tolerence. Used to find the boundary elements
+ *                     for local coordinate iteration.
+ * @param iterTol      Iteration tolerence. Used to check iteration convergence.
+ * @param dirTol       Direction tolerencce. Used to check if the inner product
+ *                     of two unit vectors is cloes enough to 1.0.                    
  * @param geoTol       Geometry tolerence. Used as the relative tolerence for
  *                     local coord and distance absolute tolerence.
- * @param dirTol       Direction tolerencce. Used to check if the inner product
- *                     of two unit vectors is cloes enough to 1.0.
  */ 
 void ProcessBodyFittedVelocity::GenPntwiseBodyFittedCoordSys(
     const int targetBndId,
     const Array<OneD, NekDouble> assistVec,
     Array<OneD, NekDouble> & distance,
     Array<OneD, Array<OneD, Array<OneD, NekDouble> > > & bfcsDir,
-    const bool isPerpendicularCondition,
-    const NekDouble geoTol,
-    const NekDouble dirTol)
+    const bool isCheckAngle,
+    const NekDouble distTol,
+    const NekDouble iterTol,
+    const NekDouble dirTol,
+    const NekDouble geoTol)
 {
+
     const int nFields   = m_f->m_variables.size();
     const int nCoordDim = m_f->m_exp[0]->GetCoordim(0);
     //const int nSpacedim = nCoordDim + m_f->m_numHomogeneousDir;
@@ -477,10 +507,10 @@ void ProcessBodyFittedVelocity::GenPntwiseBodyFittedCoordSys(
     Array<OneD, Array<OneD, NekDouble> > bndPts(nCoordDim);
 
     int nPts, nBndPts;
-    NekDouble dist_tmp;
+    NekDouble dist_tmp, dist_bak;
     bool isConverge;
     vector<int> bndElmtIds;
-    int bndElmtId;
+    int bndElmtId, bndElmtId_bak;
     int phys_offset, bnd_phys_offset;
 
     Array<OneD, NekDouble> inGloCoord(3, 0.0); // inner pnt
@@ -490,6 +520,9 @@ void ProcessBodyFittedVelocity::GenPntwiseBodyFittedCoordSys(
     Array<OneD, NekDouble> tangential1(3), tangential2(3); // 1 - main, 2 - minor
     Array<OneD, NekDouble> normalChk(3);
     ProcessWallNormalData wnd(m_f); // wallNormalData object to use its routine
+    
+    // backup for angle check
+    Array<OneD, NekDouble> locCoord_bak(nBndLcoordDim), gloCoord_bak(3, 0.0);
 
     
     //-------------------------------------------------------------------------
@@ -553,7 +586,8 @@ void ProcessBodyFittedVelocity::GenPntwiseBodyFittedCoordSys(
                 // Compute the distance (estimate) 
                 dist_tmp = PntToBndElmtPntDistance(pts, pId, bndPts);
 
-                if (dist_tmp < (distance[phys_offset+pId] - geoTol))
+                if ( (dist_tmp < (distance[phys_offset+pId] - geoTol)) &&
+                     (dist_tmp < (distance[phys_offset+pId] - distTol)) )
                 {
                     // Find a closer quadrature point from a different bnd elmt
                     // Update distance and bnd elmt id vector
@@ -561,7 +595,8 @@ void ProcessBodyFittedVelocity::GenPntwiseBodyFittedCoordSys(
                     bndElmtIds.clear();
                     bndElmtIds.push_back(beId);
                 }
-                else if (dist_tmp < (distance[phys_offset+pId] + geoTol))
+                else if ( (dist_tmp < (distance[phys_offset+pId] + geoTol)) ||
+                          (dist_tmp < (distance[phys_offset+pId] + distTol)) )
                 {
                     // The same quadrature point from a different bnd elmt is
                     // found for the other time.
@@ -587,27 +622,31 @@ void ProcessBodyFittedVelocity::GenPntwiseBodyFittedCoordSys(
             // reset the dist to make sure the condition for if will be satisfied
             distance[phys_offset+pId] = 9999;
             bndElmtId = -1;
+            dist_bak = 9999;
+            bndElmtId_bak = -1;
 
             // Compute the accurate distance and locCoord
             for (int i=0; i<bndElmtIds.size(); ++i)
             {
+                // Iterate on each of the possible bnd elmt to get the locCoord
+                // and the smallest dist
                 bndGeom = BndExp[0]->GetExp(bndElmtIds[i])->GetGeom();
                 
                 isConverge = LocCoordForNearestPntOnBndElmt(inGloCoord, bndGeom,
-                                locCoord_tmp, gloCoord_tmp, dist_tmp, geoTol, 51);
+                                locCoord_tmp, gloCoord_tmp, dist_tmp, iterTol, 51);
                 
                 if (!isConverge)
                 {
                     WARNINGL1(false, "Bisection iteration is not converged!!!");
                 }
 
-                // Should add an option for angle constrain.
-                // When activated, if (distance > tol)
-                // the smallest angle is used to get the element
-                // The reason is to avoid confusion when there are steps and gaps
 
-                // Perpendicular check
-                if (isPerpendicularCondition && (dist_tmp>geoTol))
+                // Perpendicular check (angle check)
+                // When activated (distance > geoTol)
+                // if the pnt-to-pnt vector is not parallel with the wall normal,
+                // this bnd will be skipped.
+                // It is helpful to avoid confusion when there are cornors
+                if (isCheckAngle && (dist_tmp>geoTol)) // skip pts on the bnd
                 {
                     // Generate the scaled vector
                     Vmath::Vcopy(nCoordDim, gloCoord_tmp, 1, normalChk, 1);
@@ -634,12 +673,34 @@ void ProcessBodyFittedVelocity::GenPntwiseBodyFittedCoordSys(
                     // Check if the current bnd elmt convers this inner pnt
                     if (Vmath::Dot(nCoordDim, normalChk, 1, normal, 1) < (1-dirTol))
                     {
-                        continue;
+                        // If not covered, save the nearest result as backup
+                        // Then skip
+                        if (dist_tmp < dist_bak)
+                        {
+                            bndElmtId_bak = bndElmtIds[i];
+                            dist_bak      = dist_tmp;
+
+                            for (int j=0; j<nBndLcoordDim; ++j)
+                            {
+                                locCoord_bak[j] = locCoord_tmp[j];
+                            }
+
+                            for (int j=0; j<3; ++j)
+                            {
+                                gloCoord_bak[j] = gloCoord_tmp[j];
+                            }
+                        }
+                        
+                        continue; // Skip current bnd elmt
                     }
 
                 }
                 
+
                 // No violation occurs, update the current result
+                // This section must be executed at least once if there the
+                // angle check is turned off. It means the following
+                // (bndElmtId == -1) can only be caused by angle check.
                 if (dist_tmp < distance[phys_offset+pId])
                 {
                     bndElmtId = bndElmtIds[i];
@@ -658,13 +719,36 @@ void ProcessBodyFittedVelocity::GenPntwiseBodyFittedCoordSys(
 
             }
 
-            // Check if the bnd elmt is found
+            // Check if the bnd elmt is found. If not, use nearest one.
             if (bndElmtId == -1)
             {
-                ASSERTL0(false, "The boundary element is not found under given\
-                                 tolerence. Please check and reset the tolerence,\
-                                 or simply turn off the perpendicular check.");
+                if (bndElmtIds.size()==0)
+                {
+                    ASSERTL0(false, "No boundary element is found to be the \
+                                     possible nearest element. Please check.");
+                }
+
+                distance[phys_offset+pId] = dist_bak;
+                bndElmtId  = bndElmtId_bak;
+
+                for (int i=0; i<nBndLcoordDim; ++i)
+                {
+                    locCoord[i] = locCoord_bak[i];
+                }
+
+                for (int i=0; i<3; ++i)
+                {
+                    gloCoord[i] = gloCoord_bak[i];
+                }
+
+                WARNINGL1(false, "The boundary element is not found under given \
+                                  tolerence. Please check and reset the \
+                                  tolerence, or just turn off the angle check. \
+                                  If you would like to continue, the nearest \
+                                  boundary element is used.");
             }
+
+
 
             // Get the wall normal using the function in wallNormalData class
             bndGeom = BndExp[0]->GetExp(bndElmtId)->GetGeom();
