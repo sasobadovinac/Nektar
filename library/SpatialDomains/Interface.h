@@ -263,6 +263,16 @@ struct Interface
         return m_edge;
     }
 
+    inline GeometrySharedPtr const &GetEdge(int id)
+    {
+        return m_edge[id];
+    }
+
+    inline std::deque<GeometrySharedPtr> const &GetEdgeDeque() const
+    {
+        return m_edgeDeque;
+    }
+
     inline std::vector<int> const &GetEdgeIds() const
     {
         return m_edgeIds;
@@ -310,6 +320,7 @@ protected:
     int m_id;
     InterfaceSide m_side = InterfaceSide::eNone;
     std::map<int, GeometrySharedPtr> m_edge;
+    std::deque<GeometrySharedPtr> m_edgeDeque;
     std::vector<int> m_edgeIds;
 };
 

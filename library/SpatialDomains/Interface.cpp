@@ -547,6 +547,7 @@ Interface::Interface(int indx, InterfaceSide side, CompositeMap edge)
         {
             m_edgeIds.emplace_back(geom->GetGlobalID());
             m_edge[geom->GetGlobalID()] = geom;
+            m_edgeDeque.emplace_back(geom);
         }
     }
 }
@@ -641,8 +642,8 @@ void ZoneRotate::v_Move(NekDouble time)
 
     rot = rot + sin(angle) * m_W + (1 - cos(angle)) * m_W2;
 
-    std::cout << "Rotation matrix: " << std::endl;
-    std::cout << rot << std::endl;
+    //std::cout << "Rotation matrix: " << std::endl;
+    //std::cout << rot << std::endl;
     int cnt = 0;
     for (auto &vert : m_rotateVerts)
     {

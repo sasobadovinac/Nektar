@@ -276,8 +276,10 @@ void InterfaceTrace::CalcLocalMissing()
     // Nuke old missing/found
     m_missingCoords.clear();
     m_mapMissingCoordToTrace.clear();
+
+    // Store copy of found coords to optimise search
+    auto foundLocalCoordsCopy = m_foundLocalCoords;
     m_foundLocalCoords.clear();
-    m_mapFoundCoordToTrace.clear();
 
     auto childEdgeIds = m_interface->GetEdgeIds();
 
@@ -309,7 +311,7 @@ void InterfaceTrace::CalcLocalMissing()
     // interface on this rank contains
     else
     {
-        auto parentEdge = m_interface->GetOppInterface()->GetEdge();
+        auto parentEdgeDeque = m_interface->GetOppInterface()->GetEdgeDeque();
 
         int cnt = 0;
         for (auto childId : childEdgeIds)
@@ -329,17 +331,24 @@ void InterfaceTrace::CalcLocalMissing()
                 xs[1] = yc[i];
                 xs[2] = zc[i];
 
-                for (auto &edge : parentEdge)
+                // Search the edge the point was found in last time first
+                if (foundLocalCoordsCopy.find(offset + i) !=
+                    foundLocalCoordsCopy.end())
+                {
+                    auto oldEdge = m_interface->GetOppInterface()->GetEdge(
+                        foundLocalCoordsCopy[offset + i].first);
+                    parentEdgeDeque.emplace_front(oldEdge);
+                }
+
+                for (auto &edge : parentEdgeDeque)
                 {
                     NekDouble dist =
-                        edge.second->FindDistance(xs, foundLocCoord);
+                        edge->FindDistance(xs, foundLocCoord);
 
                     if (dist < 1e-8)
                     {
                         found = true;
-                        m_foundLocalCoords.emplace_back(
-                            edge.second->GetGlobalID(), foundLocCoord);
-                        m_mapFoundCoordToTrace.emplace_back(offset + i);
+                        m_foundLocalCoords[offset + i] = std::make_pair(edge->GetGlobalID(), foundLocCoord);
                         break;
                     }
                 }
@@ -350,6 +359,18 @@ void InterfaceTrace::CalcLocalMissing()
                     m_mapMissingCoordToTrace.emplace_back(offset + i);
                 }
             }
+        }
+
+        // @TODO: Debugging, can remove.
+        if (!m_missingCoords.empty())
+        {
+            std::cout << "Missing coords: " << std::endl;
+            for (auto &pnt : m_missingCoords)
+            {
+                std::cout << pnt[0] << " " << pnt[1] << " " << pnt[2]
+                          << std::endl;
+            }
+            std::cout << std::endl;
         }
     }
 }
@@ -508,14 +529,14 @@ void InterfaceTrace::FillLocalBwdTrace(Array<OneD, NekDouble> &Fwd,
     // If flagged then fill trace from local coords
     if (m_checkLocal)
     {
-        for (int i = 0; i < m_foundLocalCoords.size(); ++i)
+        for (auto &foundLocCoord : m_foundLocalCoords)
         {
-            int traceId = m_geomIdToTraceId[m_foundLocalCoords[i].first];
-            Array<OneD, NekDouble> locCoord = m_foundLocalCoords[i].second;
+            int traceId = m_geomIdToTraceId[foundLocCoord.second.first];
+            Array<OneD, NekDouble> locCoord = foundLocCoord.second.second;
 
             Array<OneD, NekDouble> edgePhys =
                 Fwd + m_trace->GetPhys_Offset(traceId);
-            Bwd[m_mapFoundCoordToTrace[i]] =
+            Bwd[foundLocCoord.first] =
                 m_trace->GetExp(traceId)->StdPhysEvaluate(locCoord, edgePhys);
         }
     }
