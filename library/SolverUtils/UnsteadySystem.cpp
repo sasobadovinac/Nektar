@@ -231,12 +231,15 @@ namespace Nektar
             Array<OneD, Array<OneD, NekDouble> > fields(nvariables);
 
             // Order storage to list time-integrated fields first.
+            // @TODO: Refactor to take coeffs (FwdTrans) if boolean flag (in constructor function) says to.
             for(i = 0; i < nvariables; ++i)
             {
                 fields[i] = m_fields[m_intVariables[i]]->GetPhys();
                 m_fields[m_intVariables[i]]->SetPhysState(false);
             }
 
+            // @TODO: Virtual function that allows to transform the field space, embed the MultiplyMassMatrix in here.
+            // @TODO: Specify what the fields variables are physical or coefficient, boolean in UnsteadySystem class...
             if(m_ALESolver)
             {
                 ALEHelper::ALEPreMultiplyMass(fields);
@@ -336,7 +339,7 @@ namespace Nektar
                     cpuTime = 0.0;
                 }
 
-
+                // @TODO: Another virtual function with this in it based on if ALE or not.
                 if(m_ALESolver) // Change to advect coeffs, change flag to physical vs coefficent space
                 {
                     SetBoundaryConditions(m_time);

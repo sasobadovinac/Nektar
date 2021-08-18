@@ -101,7 +101,7 @@ void ALEHelper::ALEDoElmtInvMass(Array<OneD, Array<OneD, NekDouble> > &traceNorm
     }
 }
 
-void ALEHelper::ALEDoOdeProjection(const NekDouble &time, Array<OneD, Array<OneD, NekDouble> > &traceNormals)
+void ALEHelper::MoveMesh(const NekDouble &time, Array<OneD, Array<OneD, NekDouble> > &traceNormals)
 {
     if (time != m_prevStageTime)
     {

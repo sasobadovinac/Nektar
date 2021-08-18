@@ -265,7 +265,7 @@ timer.AccumulateRegion("Advect");
         // Perform ALE movement
         if (m_ALESolver)
         {
-            ALEDoOdeProjection(time, m_traceNormals);
+            MoveMesh(time, m_traceNormals);
         }
         // Set the boundary conditions
         SetBoundaryConditions(time);

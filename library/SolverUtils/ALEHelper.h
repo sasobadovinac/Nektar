@@ -28,7 +28,7 @@ public:
                           Array<OneD, Array<OneD, NekDouble> > &fields,
                           NekDouble time);
 
-    void ALEDoOdeProjection(const NekDouble &time,
+    void MoveMesh(const NekDouble &time,
                             Array<OneD, Array<OneD, NekDouble>> &traceNormals);
 
     void ALEDoOdeRhs(const Array<OneD, const Array<OneD, NekDouble>> &inarray,
