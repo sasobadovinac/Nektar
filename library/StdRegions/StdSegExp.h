@@ -145,12 +145,25 @@ namespace Nektar
                                            const Array<OneD, const NekDouble>& eta,
                                            Array<OneD, NekDouble>& xi);
 
-            STD_REGIONS_EXPORT virtual NekDouble v_PhysEvaluate(
+            STD_REGIONS_EXPORT virtual inline NekDouble v_PhysEvaluate(
                 const Array<OneD, NekDouble> coord,
                 const Array<OneD, const NekDouble> &inarray,
                 NekDouble &out_d0,
                 NekDouble &out_d1,
-                NekDouble &out_d2);
+                NekDouble &out_d2)
+            {
+                boost::ignore_unused(out_d1, out_d2);
+                return BaryTensorDeriv(coord, inarray, out_d0);
+            }
+
+            STD_REGIONS_EXPORT virtual NekDouble v_PhysEvaluate2ndDeriv(
+                const Array<OneD, NekDouble> coord,
+                const Array<OneD, const NekDouble> &inarray,
+                NekDouble &out_d0,
+                NekDouble &out_2d0)
+            {
+                return BaryTensorDeriv(coord, inarray, out_d0, out_2d0);
+            }
 
             STD_REGIONS_EXPORT virtual void v_LaplacianMatrixOp(
                 const Array<OneD, const NekDouble> &inarray,

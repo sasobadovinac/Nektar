@@ -423,8 +423,8 @@ NekDouble SegGeom::v_FindDistance(const Array<OneD, const NekDouble> &xs,
             xder2[i] = Array<OneD, NekDouble>(nq);
 
             m_xmap->BwdTrans(m_coeffs[i], x[i]);
-            m_xmap->PhysDeriv(x[i], xder[i]);
-            m_xmap->PhysDeriv(xder[i], xder2[i]);
+            // m_xmap->PhysDeriv(x[i], xder[i]);
+            // m_xmap->PhysDeriv(xder[i], xder2[i]);
         }
 
         bool opt_succeed = false;
@@ -435,16 +435,22 @@ NekDouble SegGeom::v_FindDistance(const Array<OneD, const NekDouble> &xs,
         {
             // Compute f(x_k) and its derivatives
             Array<OneD, NekDouble> xc(dim), xc_der(dim), xc_der2(dim);
-            NekDouble fx = 0, fxp = 0, fxp2 = 0;
+            NekDouble fx = 0, fxp = 0, fxp2 = 0, xcDiff = 0;
             for (int j = 0; j < dim; ++j)
             {
-                xc[j] = m_xmap->PhysEvaluate(xi, x[j]);
-                xc_der[j] = m_xmap->PhysEvaluate(xi, xder[j]);
-                xc_der2[j] = m_xmap->PhysEvaluate(xi, xder2[j]);
+                // PhysEvaluate2ndDeriv is only implemented for segments
+                // For other shapes must use PhysDeriv after the BwdTrans
+                // Followed by multiple PhysEvaluates here:
+                // xc[j] = m_xmap->PhysEvaluate(xi, x[j]);
+                // xc_der[j] = m_xmap->PhysEvaluate(xi, xder[j]);
+                // xc_der2[j] = m_xmap->PhysEvaluate(xi, xder2[j]);
 
-                fx += (xc[j] - xs[j]) * (xc[j] - xs[j]);
-                fxp += xc_der[j] * (xc[j] - xs[j]);
-                fxp2 += xc_der2[j] * (xc[j] - xs[j]) + xc_der[j] * xc_der[j];
+                xc[j] = m_xmap->PhysEvaluate2ndDeriv(xi, x[j], xc_der[j], xc_der2[j]);
+
+                xcDiff = xc[j] - xs[j];
+                fx += xcDiff * xcDiff;
+                fxp += xc_der[j] * xcDiff;
+                fxp2 += xc_der2[j] * xcDiff + xc_der[j] * xc_der[j];
             }
 
             fxp *= 2;
@@ -481,14 +487,14 @@ NekDouble SegGeom::v_FindDistance(const Array<OneD, const NekDouble> &xs,
                 }
 
                 Array<OneD, NekDouble> xc_pk(dim), xc_der_pk(dim);
-                NekDouble fx_pk = 0, fxp_pk = 0;
+                NekDouble fx_pk = 0, fxp_pk = 0, xc_pkDiff = 0;
                 for (int j = 0; j < dim; ++j)
                 {
-                    xc_pk[j] = m_xmap->PhysEvaluate(xi_pk, x[j]);
-                    xc_der_pk[j] = m_xmap->PhysEvaluate(xi_pk, xder[j]);
+                    xc_pk[j] = m_xmap->PhysEvaluate(xi_pk, x[j], xc_der_pk[j]);
 
-                    fx_pk += (xc_pk[j] - xs[j]) * (xc_pk[j] - xs[j]);
-                    fxp_pk += xc_der_pk[j] * (xc_pk[j] - xs[j]);
+                    xc_pkDiff = xc_pk[j] - xs[j];
+                    fx_pk += xc_pkDiff * xc_pkDiff;
+                    fxp_pk += xc_der_pk[j] * xc_pkDiff;
                 }
 
                 fxp_pk *= 2;
