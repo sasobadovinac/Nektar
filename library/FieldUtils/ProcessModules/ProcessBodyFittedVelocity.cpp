@@ -117,6 +117,8 @@ void ProcessBodyFittedVelocity::Process(po::variables_map &vm)
     m_spacedim          = nCoordDim + m_f->m_numHomogeneousDir;
     const int nAddFields = m_spacedim + 1;
 
+    std::cout << "isCon = "      << m_f->m_declareExpansionAsContField 
+              << ", isDisCon = " << m_f->m_declareExpansionAsDisContField << std::endl;
     
     // Tolerence setting
     // To include more elmts for further check
@@ -255,6 +257,29 @@ void ProcessBodyFittedVelocity::Process(po::variables_map &vm)
             vel_bfc[i-1], m_f->m_exp[nFields + i]->UpdateCoeffs());
     }
 
+
+    //===============================================
+    // Testing below
+    //===============================================
+    // Test two constructors in t_f->AppendExpList()
+    MultiRegions::ContFieldSharedPtr tmp;
+    MultiRegions::ExpListSharedPtr t_exp1, t_exp2;
+
+    cout << "Exp type = " << m_f->m_exp[0]->GetExpType() << endl;
+
+    cout << "Call default constructor:" << endl;
+    t_exp1 = MemoryManager<MultiRegions::ContField>::AllocateSharedPtr(
+                                                     m_f->m_session, m_f->m_graph, m_f->m_variables[0]);
+
+    cout << "Call copy constructor:" << endl;
+    cout << " -- Exp type BEFORE dynamic cast = " << m_f->m_exp[0]->GetExpType() << endl;
+    tmp    = std::dynamic_pointer_cast<MultiRegions::ContField>(m_f->m_exp[0]);
+    cout << " -- Exp type AFTER  dynamic cast = " << tmp->GetExpType() << endl;
+    t_exp2 = MemoryManager<MultiRegions::ContField>::AllocateSharedPtr(
+                                                     *tmp, m_f->m_graph, m_f->m_variables[0]);
+
+    MultiRegions::ContField test_exp2(*tmp, false);
+    cout << "Two constructors passed" << endl;
 
 }
 
@@ -519,7 +544,7 @@ void ProcessBodyFittedVelocity::GenPntwiseBodyFittedCoordSys(
     Array<OneD, NekDouble> normal(3), normalRef(3);
     Array<OneD, NekDouble> tangential1(3), tangential2(3); // 1 - main, 2 - minor
     Array<OneD, NekDouble> normalChk(3);
-    ProcessWallNormalData wnd(m_f); // wallNormalData object to use its routine
+    ProcessWallNormalData  wnd(m_f); // wallNormalData object to use its routine
     
     // backup for angle check
     Array<OneD, NekDouble> locCoord_bak(nBndLcoordDim), gloCoord_bak(3, 0.0);
@@ -530,7 +555,7 @@ void ProcessBodyFittedVelocity::GenPntwiseBodyFittedCoordSys(
     // point on the bnd for each of them. The bnd element contains this bnd
     // point is recorded.
 
-     // Loop inner element
+    // Loop inner element
     for (int eId=0; eId<nElmts; ++eId) //element id, nElmts
     {
         // Get inner points

@@ -72,6 +72,35 @@ public:
         return "Get the wall-normal data at a given origin.";
     }
 
+
+        /**
+     * @brief At each quadrature point inside the domian, compute the body-fitted
+     *        coordinate system with respect to the input boundary id.
+     * @param targetBndId  Target boundary id.
+     * @param assistVec    Unit assistant vector, the cross product of inward-
+     *                     pointing wall normalId and wihch gives of the main
+     *                     tangential direction of the body-fitted system.
+     * @param bfcsDir      Pointwise body-fitted coordinate system.
+     * @param isPerpendicularCondition Flag for using perpendicular check or not
+     * @param distTol      Distance tolerence. Used to find the boundary elements
+     *                     for local coordinate iteration.
+     * @param iterTol      Iteration tolerence. Used to check iteration convergence.
+     * @param dirTol       Direction tolerencce. Used to check if the inner product
+     *                     of two unit vectors is cloes enough to 1.0.                    
+     * @param geoTol       Geometry tolerence. Used as the relative tolerence for
+     *                     local coord and distance absolute tolerence.
+     */ 
+    void GenPntwiseBodyFittedCoordSys(
+        const int targetBndId,
+        const Array<OneD, NekDouble> assistVec,
+        Array<OneD, NekDouble> & distance,
+        Array<OneD, Array<OneD, Array<OneD, NekDouble> > > & bfcsDir,
+        const bool isCheckAngle,
+        const NekDouble distTol = 1.0e-12,
+        const NekDouble iterTol = 1.0e-12,
+        const NekDouble dirTol  = 1.0e-4,
+        const NekDouble geoTol  = 1.0e-12);
+
 protected:
 
 private:
@@ -148,35 +177,6 @@ private:
         const Array<OneD, NekDouble > & vec1,
         const Array<OneD, NekDouble > & vec2,
         Array<OneD, NekDouble > & vec3);
-
-
-    /**
-     * @brief At each quadrature point inside the domian, compute the body-fitted
-     *        coordinate system with respect to the input boundary id.
-     * @param targetBndId  Target boundary id.
-     * @param assistVec    Unit assistant vector, the cross product of inward-
-     *                     pointing wall normalId and wihch gives of the main
-     *                     tangential direction of the body-fitted system.
-     * @param bfcsDir      Pointwise body-fitted coordinate system.
-     * @param isPerpendicularCondition Flag for using perpendicular check or not
-     * @param distTol      Distance tolerence. Used to find the boundary elements
-     *                     for local coordinate iteration.
-     * @param iterTol      Iteration tolerence. Used to check iteration convergence.
-     * @param dirTol       Direction tolerencce. Used to check if the inner product
-     *                     of two unit vectors is cloes enough to 1.0.                    
-     * @param geoTol       Geometry tolerence. Used as the relative tolerence for
-     *                     local coord and distance absolute tolerence.
-     */ 
-    void GenPntwiseBodyFittedCoordSys(
-        const int targetBndId,
-        const Array<OneD, NekDouble> assistVec,
-        Array<OneD, NekDouble> & distance,
-        Array<OneD, Array<OneD, Array<OneD, NekDouble> > > & bfcsDir,
-        const bool isCheckAngle,
-        const NekDouble distTol = 1.0e-12,
-        const NekDouble iterTol = 1.0e-12,
-        const NekDouble dirTol  = 1.0e-4,
-        const NekDouble geoTol  = 1.0e-12);
 
 
     /**
