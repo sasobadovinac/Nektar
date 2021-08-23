@@ -566,7 +566,7 @@ dockerhub-test-nektar-dev:
     image_name: nektar-dev
   script:
     - cd $CI_PROJECT_DIR/templates/executable
-    - ./test.sh /usr/local/lib64/nektar++/cmake 3
+    - ./test.sh /usr/local/lib64/nektar++/cmake 3 /usr/bin/cmake
 
 # Deployment
 dockerhub-deploy-nektar:
