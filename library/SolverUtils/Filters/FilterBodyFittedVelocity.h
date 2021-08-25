@@ -93,6 +93,7 @@ protected:
     std::stringstream  m_assistDir; 
     Array<OneD, NekDouble> m_assistVec;
     bool m_isAngleCheck;
+    NekDouble m_distTol;
     //NekDouble m_distTol, m_iterTol, m_dirTol, m_geoTol;
 
     Array<OneD, NekDouble> m_distance;

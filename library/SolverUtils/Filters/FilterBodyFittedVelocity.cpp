@@ -155,13 +155,24 @@ FilterBodyFittedVelocity::FilterBodyFittedVelocity(
                          (boost::iequals(sOptionChk, "yes"));
     }
 
+    // Get the distance tolerence
+    it = pParams.find("DistTol");
+    if (it == pParams.end())
+    {
+        m_distTol = 1.0e-12;
+    }
+    else
+    {
+        LibUtilities::Equation equDistTol(m_session->GetInterpreter(), it->second);
+        m_distTol = equDistTol.Evaluate();
+    }
 
 
     std::cout << "m_wallRefId    = " << m_wallRefId <<std::endl;
     std::cout << ", m_filterType = " << m_filterType << std::endl;
     std::cout << "assistVec      = " << m_assistVec[0] << ", " << m_assistVec[1] <<", "<< m_assistVec[2] << std::endl;
     std::cout << "angleChk       = " << m_isAngleCheck << std::endl;
-
+    std::cout << "distTol        = " << m_distTol << std::endl;
 }
 
 FilterBodyFittedVelocity::~FilterBodyFittedVelocity()
@@ -177,12 +188,12 @@ void FilterBodyFittedVelocity::v_Initialise(
     FilterFieldConvert::v_Initialise(pFields, time);
 
 
-    // Generate the body-fitted coordinate system
+    // Generate the body-fitted coordinate system and distance field
     const int npoints = pFields[0]->GetTotPoints();
     std::cout << "npts 2 = "<< npoints  << std::endl;
 
-    Array<OneD, NekDouble> m_distance(npoints, 9999);
-    Array<OneD, Array<OneD, Array<OneD, NekDouble> > > m_bfcsDir(m_spaceDim);
+    m_distance = Array<OneD, NekDouble>(npoints, 9999);
+    m_bfcsDir  = Array<OneD, Array<OneD, Array<OneD, NekDouble> > >(m_spaceDim);
     for (int i=0; i<m_spaceDim; ++i)
     {
         m_bfcsDir[i] = Array<OneD, Array<OneD, NekDouble> >(m_spaceDim);
@@ -192,149 +203,85 @@ void FilterBodyFittedVelocity::v_Initialise(
         }
     }
 
-    //===============================================
-    // Updated above
-    //===============================================
-    // Test the codes in FilterFieldConvert::CreateFields()
-    //===============================================
-    FieldSharedPtr t_f = std::shared_ptr<Field>(new Field());
+    // We change the flag for expansion to DisContField so that the copy
+    // constructor for DisContField will be called in AppendExpList() when
+    // CreateFields() is called. In the constructor of DisContField, the
+    // m_bndCondExpansions will be generated and it is needed in
+    // GenPntwiseBodyFittedCoordSys().
+    // After the body-fitted coordinate system is generated, we set the flags
+    // back so that the following modules will not be influenced. 
+    // *Note: The flag m_declareExpansionAsContField is set true in the base
+    // class (ProcessBoundaryExtract) constructor of ProcessBodyFittedVelocity
+    // class. The ClearField will not change this flag, and it will lead to an
+    // error in dynamic_pointer_cast in m_f->AppendExpList in CreateFields() in
+    // FilterFieldConvert::OutputField. Thus, we explicitly set it false.
 
-    t_f->m_declareExpansionAsContField    = true;    // default = false
-    t_f->m_declareExpansionAsDisContField = false;   // default = false
-
-    cout << "Status: isCon = " << t_f->m_declareExpansionAsContField 
-         <<    ", isDisCon = " << t_f->m_declareExpansionAsDisContField << endl;
-
-    // Generate t_f
-    t_f->m_session = m_session;
-    t_f->m_graph   = pFields[0]->GetGraph();
-    t_f->m_comm    = t_f->m_session->GetComm();
-    t_f->m_fieldMetaDataMap = m_fieldMetaData;
-    t_f->m_fieldPts = LibUtilities::NullPtsField;
-    t_f->m_numHomogeneousDir = 0;
-
-    t_f->m_exp.resize(m_variables.size());
-    t_f->m_exp[0] = pFields[0]; // call copy constructor
-    //t_f->m_exp[0] = t_f->AppendExpList(t_f->m_numHomogeneousDir, m_variables[0]); // debug - true works
-    
-    // Test two constructors in t_f->AppendExpList()
-    MultiRegions::ContFieldSharedPtr tmp;
-    MultiRegions::ExpListSharedPtr   tmp2;
-    MultiRegions::ExpListSharedPtr t_exp1, t_exp2, t_exp3;
-
-    cout << "Exp type = " << pFields[0]->GetExpType() << endl;
-
-    cout << "Call copy constructor of ExpList:" << endl;
-    tmp2 = std::dynamic_pointer_cast<MultiRegions::ExpList>(t_f->m_exp[0]);
-    t_exp1 = MemoryManager<MultiRegions::ExpList>::AllocateSharedPtr(*tmp2);
-    MultiRegions::ExpList test_exp1(*tmp2, false);
-
-    
-    cout << "Call default constructor of ContField:" << endl;
-    t_exp2 = MemoryManager<MultiRegions::ContField>::AllocateSharedPtr(m_session, t_f->m_graph, m_variables[0]);
-
-
-    // ****** Error here ******
-    cout << "Call copy constructor of ContField:" << endl;
-    cout << " -- Exp type BEFORE dynamic cast = " << t_f->m_exp[0]->GetExpType() << endl;
-    tmp    = std::dynamic_pointer_cast<MultiRegions::ContField>(t_f->m_exp[0]);
-    cout << " -- Exp type AFTER  dynamic cast = " << tmp->GetExpType() << endl;
-    cout << " -- Check 1 --" << endl;
-    MultiRegions::ContField test_exp2(*tmp, false);
-    cout << " -- Check 2 --" << endl;
-    t_exp3 = MemoryManager<MultiRegions::ContField>::AllocateSharedPtr(*tmp, t_f->m_graph, m_variables[0]);
-
-    cout << "=====================================\n==============Test passed============" << endl;
-    cout << "=====================================\n=====================================" << endl;
-
-
-
-
-
-
-    //===============================================
-    // Testing above
-    //===============================================
     std::cout << "Begin " << std::endl;
+    std::cout << "Before: isCon = " << m_f->m_declareExpansionAsContField 
+              << ", isDisCon = "    << m_f->m_declareExpansionAsDisContField << std::endl;
 
-    m_f->m_declareExpansionAsContField    = true;
-    m_f->m_declareExpansionAsDisContField = false;
-
-    std::cout << "isCon = "      << m_f->m_declareExpansionAsContField 
-              << ", isDisCon = " << m_f->m_declareExpansionAsDisContField << std::endl;
-
-    FilterFieldConvert::CreateFields(pFields); // fill the m_f
     
+    bool isExpContField    = m_f->m_declareExpansionAsContField;    // save initial status
+    bool isExpDisContField = m_f->m_declareExpansionAsDisContField;
 
-    //GetExpType()
-    // SpatialDomains::MeshGraphSharedPtr graph = m_f->m_exp[0]->GetGraph();
-    // SpatialDomains::BoundaryConditions bcs(m_f->m_session, m_f->m_exp[0]->GetGraph());
-    // std::string name = "rho";
-    // m_f->m_exp[0]->GenerateBoundaryConditionExpansion(m_f->m_graph, bcs, name, false);
-    //std::cout << "Exp type = " << m_f->m_exp[0]->GetExpType() << std::endl; 
-
-    // Check bnd exp
-    Array<OneD, MultiRegions::ExpListSharedPtr> tmp_BndExp(1); 
-    tmp_BndExp[0] = m_f->m_exp[0]->UpdateBndCondExpansion(0); // cannot run
-    int tmp_nElmts    = m_f->m_exp[0]->GetNumElmts(); 
-    int tmp_nBndElmts = tmp_BndExp[0]->GetNumElmts();
-    std::cout <<"nElmt   = " << tmp_nElmts  << ", nBndEmlt  = " << tmp_nBndElmts << std::endl;
- 
-
-    ProcessBodyFittedVelocity  bfv(m_f); // bodyFittedVelocity object to use its routine
-
-    std::cout << "Chk - 1 " << std::endl;
-
+    m_f->m_declareExpansionAsDisContField = true;
+    FilterFieldConvert::CreateFields(pFields); // Generate m_bndCondExpansions
+    
+    ProcessBodyFittedVelocity bfv(m_f);
     bfv.GenPntwiseBodyFittedCoordSys(m_wallRefId, m_assistVec, m_distance, m_bfcsDir,
-        m_isAngleCheck, 1.0e-12, 1.0e-12, 1.0e-4, 1.0e-12);
+        m_isAngleCheck, m_distTol, 1.0e-12, 1.0e-4, 1.0e-12);
 
-    std::cout << "Chk - 2 " << std::endl;
-
-    // This flag is set true in the base class (ProcessBoundaryExtract)
-    // constructor of ProcessBodyFittedVelocity class. The ClearField will not
-    // change this flag, and it will lead to an error in m_f->AppendExpList
-    // in FilterFieldConvert::CreateFields in FilterFieldConvert::OutputField
-    // Thus, we explicitly set it false.
-    m_f->m_declareExpansionAsContField = false; // Turned on in constructor of bfv
+    m_f->m_declareExpansionAsContField    = isExpContField;    // was set true in bfv
+    m_f->m_declareExpansionAsDisContField = isExpDisContField; // was set true aobve
 
     m_f->ClearField();                         // clear the m_f for output useage
 
+    std::cout << "After: isCon = "      << m_f->m_declareExpansionAsContField 
+              << ", isDisCon = " << m_f->m_declareExpansionAsDisContField << std::endl;
     std::cout << "End " << std::endl;
 
     
-
-
-    m_curFieldsPhys.resize(m_variables.size());
-    m_outFieldsPhys.resize(m_variables.size());
-
-
+    //===============================================
+    // Updated above
+    //===============================================
 
     
 
 
-
-    // Update distance2Wall, uvw_bfc in m_outFields
+    // Update distanceToWall, uvw_bfc in m_outFields
     // (The restart file does not include them so the values are useless)
-
     // With rst file    - default variables are available, other bfs and dist are not correct
-    // Without ret file - everything is zero in m_outFields
-    
+    // Without rst file - everything is zero in m_outFields
     // Solution - discard the data in restart file, use current data 
 
+    cout << "spaceDim   = " << m_spaceDim   << endl;
+    cout << "nAddFields = " << m_nAddFields << endl;
 
     // Allocate storage
-    /*
+    NekDouble initVal;
+    if (m_filterType == eMin)
+    {
+        initVal = 9999.0;
+    }
+    else if (m_filterType == eMax)
+    {
+        initVal = -9999.0;
+    }
+    else
+    {
+        initVal = 0.0;
+    }
 
-    for (int n = 0; n < m_variables.size(); ++n)
+    m_curFieldsPhys.resize(m_nAddFields - 1);
+    m_outFieldsPhys.resize(m_nAddFields - 1);
+
+    for (int n = 0; n < (m_nAddFields-1); ++n)
     {
         m_curFieldsPhys[n] = Array<OneD, NekDouble>(
                                  pFields[0]->GetTotPoints(), 0.0);
         m_outFieldsPhys[n] = Array<OneD, NekDouble>(
-                                 pFields[0]->GetTotPoints(), 0.0);
+                                 pFields[0]->GetTotPoints(), initVal);
     }
-    */
-
-
 
 }
 
@@ -373,7 +320,6 @@ void FilterBodyFittedVelocity::v_FillVariablesName(
 
     // Fill in the body-fitted velocity names
     // bfc is for body-fitted coordinate
-    /*
     m_variables.push_back("distanceToWall");
     m_variables.push_back("u_bfc");
     m_variables.push_back("v_bfc");
@@ -386,7 +332,6 @@ void FilterBodyFittedVelocity::v_FillVariablesName(
     {
         ASSERTL0(false, "Unsupported dimension");
     }
-    */
     
 }
 
@@ -490,13 +435,15 @@ void FilterBodyFittedVelocity::v_ProcessSample(
             }
         }
     }
-
-    // Forward transform and put into m_outFields
-    for (int n = 0; n < nVars; ++n)
-    {
-        pFields[0]->FwdTrans_IterPerExp(m_outFieldsPhys[n], m_outFields[n]);
-    }
     */
+    
+    // Forward transform and put into m_outFields
+    pFields[0]->FwdTrans_IterPerExp(m_distance, m_outFields[m_nVars]);
+    for (int n = 0; n < (m_nAddFields-1); ++n)
+    {
+        pFields[0]->FwdTrans_IterPerExp(m_outFieldsPhys[n], m_outFields[m_nVars+1+n]);
+    }
+    
 
 }
 

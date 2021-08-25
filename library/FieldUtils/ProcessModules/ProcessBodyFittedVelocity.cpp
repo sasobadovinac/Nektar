@@ -114,11 +114,8 @@ void ProcessBodyFittedVelocity::Process(po::variables_map &vm)
     // Get dim to store data
     const int nFields   = m_f->m_variables.size();
     const int nCoordDim = m_f->m_exp[0]->GetCoordim(0);
-    m_spacedim          = nCoordDim + m_f->m_numHomogeneousDir;
-    const int nAddFields = m_spacedim + 1;
-
-    std::cout << "isCon = "      << m_f->m_declareExpansionAsContField 
-              << ", isDisCon = " << m_f->m_declareExpansionAsDisContField << std::endl;
+    const int nSpaceDim = nCoordDim + m_f->m_numHomogeneousDir;
+    const int nAddFields = nSpaceDim + 1;
     
     // Tolerence setting
     // To include more elmts for further check
@@ -180,12 +177,12 @@ void ProcessBodyFittedVelocity::Process(po::variables_map &vm)
     //   k - point id
     int npoints = m_f->m_exp[0]->GetNpoints();
     Array<OneD, NekDouble> distance(npoints, 9999);
-    Array<OneD, Array<OneD, Array<OneD, NekDouble> > > bfcsDir(m_spacedim);
-    for (int i=0; i<m_spacedim; ++i)
+    Array<OneD, Array<OneD, Array<OneD, NekDouble> > > bfcsDir(nSpaceDim);
+    for (int i=0; i<nSpaceDim; ++i)
     {
-        bfcsDir[i] = Array<OneD, Array<OneD, NekDouble> >(m_spacedim);
+        bfcsDir[i] = Array<OneD, Array<OneD, NekDouble> >(nSpaceDim);
 
-        for (int j=0; j<m_spacedim; ++j)
+        for (int j=0; j<nSpaceDim; ++j)
         {
             bfcsDir[i][j] = Array<OneD, NekDouble>(npoints);
         }
@@ -200,11 +197,11 @@ void ProcessBodyFittedVelocity::Process(po::variables_map &vm)
 
 
     // Compute the velocity 
-    Array<OneD, Array<OneD, NekDouble> > vel_car(m_spacedim); // Cartesian
-    Array<OneD, Array<OneD, NekDouble> > vel_bfc(m_spacedim); // body-fiitted
+    Array<OneD, Array<OneD, NekDouble> > vel_car(nSpaceDim); // Cartesian
+    Array<OneD, Array<OneD, NekDouble> > vel_bfc(nSpaceDim); // body-fiitted
     Array<OneD, NekDouble> vel_tmp(npoints);
 
-    for (int i = 0; i < m_spacedim; ++i)
+    for (int i = 0; i < nSpaceDim; ++i)
     {
         vel_bfc[i] = Array<OneD, NekDouble>(npoints, 0.0);
     }
@@ -213,9 +210,9 @@ void ProcessBodyFittedVelocity::Process(po::variables_map &vm)
     GetVelAndConvertToCartSys(vel_car);
 
     // Project the velocity into the body-fitted coordinate system
-    for (int i=0; i<m_spacedim; ++i)     // loop for bfc velocity
+    for (int i=0; i<nSpaceDim; ++i)     // loop for bfc velocity
     {
-        for (int j=0; j<m_spacedim; ++j)
+        for (int j=0; j<nSpaceDim; ++j)
         {
             Vmath::Vmul(npoints, vel_car[j], 1, bfcsDir[i][j], 1, vel_tmp,    1);
             Vmath::Vadd(npoints, vel_tmp,    1, vel_bfc[i],    1, vel_bfc[i], 1);
@@ -227,11 +224,11 @@ void ProcessBodyFittedVelocity::Process(po::variables_map &vm)
     m_f->m_variables.push_back("distanceToWall");
     m_f->m_variables.push_back("u_bfc");
     m_f->m_variables.push_back("v_bfc");
-    if (m_spacedim == 3)
+    if (nSpaceDim == 3)
     {
         m_f->m_variables.push_back("w_bfc");
     }
-    else if (m_spacedim == 1)
+    else if (nSpaceDim == 1)
     {
         ASSERTL0(false, "Velocity in 1D case is already in the body fitted \
                          coordinate. The dimension should be 2 or 3.");
@@ -509,7 +506,7 @@ void ProcessBodyFittedVelocity::GenPntwiseBodyFittedCoordSys(
 
     const int nFields   = m_f->m_variables.size();
     const int nCoordDim = m_f->m_exp[0]->GetCoordim(0);
-    //const int nSpacedim = nCoordDim + m_f->m_numHomogeneousDir;
+    const int nSpaceDim = nCoordDim + m_f->m_numHomogeneousDir;
     const int nBndLcoordDim = nCoordDim - 1;
 
     // Get expansion list for boundary
@@ -524,6 +521,7 @@ void ProcessBodyFittedVelocity::GenPntwiseBodyFittedCoordSys(
     // Use the outward-pointing normal at quardrature pts on bnd elmt as dir ref
     Array<OneD, Array<OneD, NekDouble> > normalQ;
     m_f->m_exp[0]->GetBoundaryNormals(targetBndId, normalQ);
+    
 
     // Vars in the loop
     SpatialDomains::GeometrySharedPtr bndGeom;
@@ -549,7 +547,6 @@ void ProcessBodyFittedVelocity::GenPntwiseBodyFittedCoordSys(
     // backup for angle check
     Array<OneD, NekDouble> locCoord_bak(nBndLcoordDim), gloCoord_bak(3, 0.0);
 
-    
     //-------------------------------------------------------------------------
     // Loop all the quadrature points of the field, and find out the closest
     // point on the bnd for each of them. The bnd element contains this bnd
@@ -774,7 +771,6 @@ void ProcessBodyFittedVelocity::GenPntwiseBodyFittedCoordSys(
             }
 
 
-
             // Get the wall normal using the function in wallNormalData class
             bndGeom = BndExp[0]->GetExp(bndElmtId)->GetGeom();
             wnd.GetNormals(bndGeom, locCoord, normal);
@@ -804,13 +800,13 @@ void ProcessBodyFittedVelocity::GenPntwiseBodyFittedCoordSys(
             ScaledCrosssProduct(normal, assistVec, tangential1);
             
             // Save the direction vectors
-            for (int i=0; i<m_spacedim; ++i)
+            for (int i=0; i<nSpaceDim; ++i)
             {
                 bfcsDir[0][i][phys_offset+pId] = tangential1[i];
                 bfcsDir[1][i][phys_offset+pId] = normal[i];
             }
 
-            if (m_spacedim==3)
+            if (nSpaceDim==3)
             {
                 ScaledCrosssProduct(tangential1, normal, tangential2);
                 for (int i=0; i<3; ++i)

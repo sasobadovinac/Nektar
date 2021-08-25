@@ -104,7 +104,6 @@ public:
 protected:
 
 private:
-    int m_spacedim;
 
     /**
      * @brief Compute the local coordinate for the nearest point on the given
