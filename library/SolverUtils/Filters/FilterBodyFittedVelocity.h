@@ -99,8 +99,9 @@ protected:
     Array<OneD, NekDouble> m_distance;
     Array<OneD, Array<OneD, Array<OneD, NekDouble> > > m_bfcsDir;
     
-    std::vector<Array<OneD, NekDouble> > m_curFieldsPhys;
-    std::vector<Array<OneD, NekDouble> > m_outFieldsPhys;
+    std::vector<Array<OneD, NekDouble> > m_curFieldsVels_Car;
+    std::vector<Array<OneD, NekDouble> > m_curFieldsVels;
+    std::vector<Array<OneD, NekDouble> > m_outFieldsVels;
     
     virtual void v_Initialise(
         const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,

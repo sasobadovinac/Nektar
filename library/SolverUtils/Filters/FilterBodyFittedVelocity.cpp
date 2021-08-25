@@ -168,11 +168,11 @@ FilterBodyFittedVelocity::FilterBodyFittedVelocity(
     }
 
 
-    std::cout << "m_wallRefId    = " << m_wallRefId <<std::endl;
-    std::cout << ", m_filterType = " << m_filterType << std::endl;
-    std::cout << "assistVec      = " << m_assistVec[0] << ", " << m_assistVec[1] <<", "<< m_assistVec[2] << std::endl;
-    std::cout << "angleChk       = " << m_isAngleCheck << std::endl;
-    std::cout << "distTol        = " << m_distTol << std::endl;
+    std::cout << "m_wallRefId  = " << m_wallRefId <<std::endl;
+    std::cout << "m_filterType = " << m_filterType << std::endl;
+    std::cout << "assistVec    = " << m_assistVec[0] << ", " << m_assistVec[1] <<", "<< m_assistVec[2] << std::endl;
+    std::cout << "angleChk     = " << m_isAngleCheck << std::endl;
+    std::cout << "distTol      = " << m_distTol << std::endl;
 }
 
 FilterBodyFittedVelocity::~FilterBodyFittedVelocity()
@@ -190,8 +190,6 @@ void FilterBodyFittedVelocity::v_Initialise(
 
     // Generate the body-fitted coordinate system and distance field
     const int npoints = pFields[0]->GetTotPoints();
-    std::cout << "npts 2 = "<< npoints  << std::endl;
-
     m_distance = Array<OneD, NekDouble>(npoints, 9999);
     m_bfcsDir  = Array<OneD, Array<OneD, Array<OneD, NekDouble> > >(m_spaceDim);
     for (int i=0; i<m_spaceDim; ++i)
@@ -215,12 +213,6 @@ void FilterBodyFittedVelocity::v_Initialise(
     // class. The ClearField will not change this flag, and it will lead to an
     // error in dynamic_pointer_cast in m_f->AppendExpList in CreateFields() in
     // FilterFieldConvert::OutputField. Thus, we explicitly set it false.
-
-    std::cout << "Begin " << std::endl;
-    std::cout << "Before: isCon = " << m_f->m_declareExpansionAsContField 
-              << ", isDisCon = "    << m_f->m_declareExpansionAsDisContField << std::endl;
-
-    
     bool isExpContField    = m_f->m_declareExpansionAsContField;    // save initial status
     bool isExpDisContField = m_f->m_declareExpansionAsDisContField;
 
@@ -236,26 +228,12 @@ void FilterBodyFittedVelocity::v_Initialise(
 
     m_f->ClearField();                         // clear the m_f for output useage
 
-    std::cout << "After: isCon = "      << m_f->m_declareExpansionAsContField 
-              << ", isDisCon = " << m_f->m_declareExpansionAsDisContField << std::endl;
-    std::cout << "End " << std::endl;
-
     
-    //===============================================
-    // Updated above
-    //===============================================
-
-    
-
-
     // Update distanceToWall, uvw_bfc in m_outFields
     // (The restart file does not include them so the values are useless)
     // With rst file    - default variables are available, other bfs and dist are not correct
     // Without rst file - everything is zero in m_outFields
     // Solution - discard the data in restart file, use current data 
-
-    cout << "spaceDim   = " << m_spaceDim   << endl;
-    cout << "nAddFields = " << m_nAddFields << endl;
 
     // Allocate storage
     NekDouble initVal;
@@ -272,15 +250,18 @@ void FilterBodyFittedVelocity::v_Initialise(
         initVal = 0.0;
     }
 
-    m_curFieldsPhys.resize(m_nAddFields - 1);
-    m_outFieldsPhys.resize(m_nAddFields - 1);
+    m_curFieldsVels_Car.resize(m_spaceDim);
+    m_curFieldsVels.resize(m_spaceDim); // m_spaceDim = m_nAddFields-1
+    m_outFieldsVels.resize(m_spaceDim);
 
-    for (int n = 0; n < (m_nAddFields-1); ++n)
+    for (int n = 0; n < m_spaceDim; ++n)
     {
-        m_curFieldsPhys[n] = Array<OneD, NekDouble>(
-                                 pFields[0]->GetTotPoints(), 0.0);
-        m_outFieldsPhys[n] = Array<OneD, NekDouble>(
-                                 pFields[0]->GetTotPoints(), initVal);
+        m_curFieldsVels_Car[n] = Array<OneD, NekDouble>(npoints, 0.0);
+        m_curFieldsVels[n]     = Array<OneD, NekDouble>(npoints, 0.0);
+        m_outFieldsVels[n]     = Array<OneD, NekDouble>(npoints, initVal);
+        
+        // Re-initialize the coeff
+        pFields[0]->FwdTrans(m_outFieldsVels[n], m_outFields[m_nVars+1+n]);
     }
 
 }
@@ -314,8 +295,8 @@ void FilterBodyFittedVelocity::v_FillVariablesName(
         m_spaceDim    = 2;
     }
 
-    m_nVars      = m_variables.size();
-    m_nFields    = pFields.size();
+    m_nVars      = m_variables.size(); // Include extra vars
+    m_nFields    = pFields.size();     // Conservative vars for cfs
     m_nAddFields = 3;
 
     // Fill in the body-fitted velocity names
@@ -356,94 +337,117 @@ void FilterBodyFittedVelocity::v_ProcessSample(
     const NekDouble &time)
 {
     boost::ignore_unused(fieldcoeffs, time, pFields);
-    
-    /*
-    int nFields, nVars;
- 
-    if (m_problemType==eCompressible)
-    {
-        nFields = pFields.size();       // Conservative vars
-        nVars   = m_variables.size();   // Include extra vars
 
-        std::vector<Array<OneD, NekDouble> > curFieldsCoeffs(nFields);
+    if (m_problemType == eCompressible)
+    {
+        std::vector<Array<OneD, NekDouble> > curFieldsCoeffs(m_nFields);
         std::vector<std::string> tmpVariables;    // dummy vector 
-        for (int n = 0; n < nFields; ++n)
+        for (int n = 0; n < m_nFields; ++n)
         {
             curFieldsCoeffs[n] = pFields[n]->GetCoeffs();
         }
 
-        // Get extra variables, then curFieldsCoeffs.size() == nVars
+        // Get extra variables, then curFieldsCoeffs.size() == m_nVars
         auto equ = m_equ.lock();
         ASSERTL0(equ, "Weak pointer expired");
         equ->ExtraFldOutput(curFieldsCoeffs, tmpVariables);
 
         // curFieldsCoeffs and m_outFields has different size
         // curFieldsCoeffs has conservative and the default variables
-        // m_outFields has nVar variables, include distanceToWall, ut,vn,w
+        // m_outFields has (m_nVars+m_nAddFields) variables
 
-        // Updata m_curFieldsPhys and m_outFieldsPhys
-        for (int n = 0; n < nVars; ++n)
+        // Updata m_outFieldsPhys and m_curFieldsPhys (vel in Cartesian system) 
+        for (int n = 0; n < m_spaceDim; ++n)
         {
-            pFields[0]->BwdTrans(curFieldsCoeffs[n], m_curFieldsPhys[n]);
-            pFields[0]->BwdTrans(m_outFields[n],     m_outFieldsPhys[n]);
+            pFields[0]->BwdTrans(curFieldsCoeffs[m_spaceDim+2+n],
+                                 m_curFieldsVels_Car[n]); // cur uvw_Car
+            pFields[0]->BwdTrans(m_outFields[m_nVars+1+n],
+                                 m_outFieldsVels[n]);     // out uvw_bfc
+        }
+
+        // Fill coeffs for other fields
+        for (int n=0; n<m_nVars; ++n)
+        {
+            m_outFields[n] = curFieldsCoeffs[n];
         }
     }
     else
     {
-        nFields = pFields.size();
-        nVars   = nFields;
-
         // Updata m_curFieldsPhys and m_outFieldsPhys
-        for (int n = 0; n < nVars; ++n)
+        for (int n = 0; n < m_spaceDim; ++n)
         {
-            m_curFieldsPhys[n] = pFields[n]->GetPhys();
+            m_curFieldsVels_Car[n] = pFields[n]->GetPhys();
 
-            pFields[0]->BwdTrans(m_outFields[n], m_outFieldsPhys[n]);
+            pFields[0]->BwdTrans(m_outFields[n], m_outFieldsVels[n]);
             if (pFields[0]->GetWaveSpace())
             {
-                pFields[0]->HomogeneousBwdTrans(m_outFieldsPhys[n], m_outFieldsPhys[n]);
+                pFields[0]->HomogeneousBwdTrans(m_outFieldsVels[n], m_outFieldsVels[n]);
             }          
+        }
+
+        // Fill coeffs for other fields
+        for (int n = 0; n < m_nVars; ++n)
+        {
+            m_outFields[n] = pFields[n]->GetCoeffs();
+        }
+    }
+
+    // Project the velocity into the body-fitted coordinate system
+    int npoints = pFields[0]->GetTotPoints();
+    Array<OneD, NekDouble> vel_tmp(npoints);
+    
+    for (int i=0; i<m_spaceDim; ++i)     // loop for bfc velocity
+    {
+        Vmath::Zero(npoints, m_curFieldsVels[i], 1);
+
+        for (int j=0; j<m_spaceDim; ++j)
+        {
+            Vmath::Vmul(npoints, m_curFieldsVels_Car[j], 1, m_bfcsDir[i][j], 1, vel_tmp,  1);
+            Vmath::Vadd(npoints, vel_tmp, 1,  m_curFieldsVels[i],  1, m_curFieldsVels[i], 1);
         }
     }
 
 
-    // Get max/min for each field
-    for(int n = 0; n < nVars; ++n)
+    // Get max/min/original for the u/v/w_bfc field
+    for(int n = 0; n < m_spaceDim; ++n)
     {
-        size_t length = m_outFieldsPhys[n].size();
+        size_t length = m_outFieldsVels[n].size();
         
-        if (m_isMax)
+        if (m_filterType == eMax)
         {
             // Compute max
             for (int i = 0; i < length; ++i)
             {
-                if (m_curFieldsPhys[n][i] > m_outFieldsPhys[n][i])
+                if (m_curFieldsVels[n][i] > m_outFieldsVels[n][i])
                 {
-                    m_outFieldsPhys[n][i] = m_curFieldsPhys[n][i];
+                    m_outFieldsVels[n][i] = m_curFieldsVels[n][i];
+                }
+            }
+        }
+        else if (m_filterType == eMin)
+        {
+            // Compute min
+            for (int i = 0; i < length; ++i)
+            {
+                if (m_curFieldsVels[n][i] < m_outFieldsVels[n][i])
+                {
+                    m_outFieldsVels[n][i] = m_curFieldsVels[n][i];
                 }
             }
         }
         else
         {
-            // Compute min
-            for (int i = 0; i < length; ++i)
-            {
-                if (m_curFieldsPhys[n][i] < m_outFieldsPhys[n][i])
-                {
-                    m_outFieldsPhys[n][i] = m_curFieldsPhys[n][i];
-                }
-            }
+            // Original field
+            m_outFieldsVels[n] = m_curFieldsVels[n];
         }
     }
-    */
     
     // Forward transform and put into m_outFields
     pFields[0]->FwdTrans_IterPerExp(m_distance, m_outFields[m_nVars]);
-    for (int n = 0; n < (m_nAddFields-1); ++n)
+    for (int n = 0; n < m_spaceDim; ++n)
     {
-        pFields[0]->FwdTrans_IterPerExp(m_outFieldsPhys[n], m_outFields[m_nVars+1+n]);
+        pFields[0]->FwdTrans_IterPerExp(m_outFieldsVels[n], m_outFields[m_nVars+1+n]);
     }
-    
 
 }
 

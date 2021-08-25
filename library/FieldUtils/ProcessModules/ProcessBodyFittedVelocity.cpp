@@ -254,30 +254,6 @@ void ProcessBodyFittedVelocity::Process(po::variables_map &vm)
             vel_bfc[i-1], m_f->m_exp[nFields + i]->UpdateCoeffs());
     }
 
-
-    //===============================================
-    // Testing below
-    //===============================================
-    // Test two constructors in t_f->AppendExpList()
-    MultiRegions::ContFieldSharedPtr tmp;
-    MultiRegions::ExpListSharedPtr t_exp1, t_exp2;
-
-    cout << "Exp type = " << m_f->m_exp[0]->GetExpType() << endl;
-
-    cout << "Call default constructor:" << endl;
-    t_exp1 = MemoryManager<MultiRegions::ContField>::AllocateSharedPtr(
-                                                     m_f->m_session, m_f->m_graph, m_f->m_variables[0]);
-
-    cout << "Call copy constructor:" << endl;
-    cout << " -- Exp type BEFORE dynamic cast = " << m_f->m_exp[0]->GetExpType() << endl;
-    tmp    = std::dynamic_pointer_cast<MultiRegions::ContField>(m_f->m_exp[0]);
-    cout << " -- Exp type AFTER  dynamic cast = " << tmp->GetExpType() << endl;
-    t_exp2 = MemoryManager<MultiRegions::ContField>::AllocateSharedPtr(
-                                                     *tmp, m_f->m_graph, m_f->m_variables[0]);
-
-    MultiRegions::ContField test_exp2(*tmp, false);
-    cout << "Two constructors passed" << endl;
-
 }
 
 
