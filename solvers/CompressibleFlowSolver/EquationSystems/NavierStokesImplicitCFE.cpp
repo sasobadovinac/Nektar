@@ -132,6 +132,22 @@ namespace Nektar
         if (m_shockCaptureType == "Physical" && m_CalcPhysicalAV)
         {
             GetPhysicalAV(inarray);
+            // Apply Ducros sensor
+            if (m_physicalSensorType == "Ducros")
+            {
+                Ducros(m_muav);
+            }
+            // Apply approximate c0 smoothing
+            if (m_smoothing == "C0")
+            {
+                C0Smooth(m_muav);
+            }
+            GetTracePhysicalAV();
+            // Freeze AV for Implicit time stepping
+            if (m_explicitDiffusion == false)
+            {
+                m_CalcPhysicalAV = false;
+            }
         }
 
         if (m_is_diffIP)
@@ -205,7 +221,7 @@ namespace Nektar
                             outarray[i], 1);
             }
 
-            if (m_shockCaptureType != "Off")
+            if (m_artificialDiffusion)
             {
                 m_artificialDiffusion->DoArtificialDiffusionCoeff(
                     inarray, outarray);

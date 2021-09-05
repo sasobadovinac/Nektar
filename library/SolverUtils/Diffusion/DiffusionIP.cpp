@@ -88,16 +88,24 @@ void DiffusionIP::v_InitObject(
     Array<OneD, NekDouble> lengthFwd{nTracePts, 0.0};
     Array<OneD, NekDouble> lengthBwd{nTracePts, 0.0};
     pFields[0]->GetTrace()->GetElmtNormalLength(lengthFwd, lengthBwd);
-    pFields[0]->PeriodicBwdCopy(lengthFwd, lengthBwd);
+
+    // pFields[0]->PeriodicBwdCopy(lengthFwd, lengthBwd);
 
     const MultiRegions::AssemblyMapDGSharedPtr TraceMap =
         pFields[0]->GetTraceMap();
     TraceMap->GetAssemblyCommDG()->PerformExchange(lengthFwd, lengthBwd);
 
-    Vmath::Vadd(nTracePts, lengthBwd, 1, lengthFwd, 1, lengthFwd, 1);
-    m_traceNormDirctnElmtLength      = lengthFwd;
-    m_traceNormDirctnElmtLengthRecip = lengthBwd;
-    Vmath::Sdiv(nTracePts, 1.0, m_traceNormDirctnElmtLength, 1,
+    Array<OneD, NekDouble>  lengthsum(nTracePts,0.0);
+    Array<OneD, NekDouble>  lengthmul(nTracePts,0.0);
+    Vmath::Vadd(nTracePts,lengthBwd,1,lengthFwd,1,lengthsum,1);
+    Vmath::Smul(nTracePts,0.5,lengthsum,1,lengthsum,1);
+    Vmath::Vcopy(nTracePts,lengthsum,1,lengthFwd,1);
+    Vmath::Vcopy(nTracePts,lengthsum,1,lengthBwd,1);
+    Vmath::Vmul(nTracePts,lengthBwd,1,lengthFwd,1,lengthmul,1);
+    Vmath::Vdiv(nTracePts,lengthsum,1,lengthmul,1,lengthFwd,1);
+    m_traceNormDirctnElmtLength = lengthsum;
+    m_traceNormDirctnElmtLengthRecip =   lengthFwd;
+    Vmath::Smul(nTracePts, 0.5, m_traceNormDirctnElmtLengthRecip, 1, 
                 m_traceNormDirctnElmtLengthRecip, 1);
 
     m_tracBwdWeightAver = Array<OneD, NekDouble>{nTracePts, 0.0};
@@ -646,6 +654,8 @@ void DiffusionIP::GetPenaltyFactor(
 
     NekDouble spaceDim = NekDouble(fields[0]->GetCoordim(0));
 
+    int ntmp,numModes;
+
     for (int ntrace = 0; ntrace < ntotTrac; ++ntrace)
     {
         noffset  = tracelist->GetPhys_Offset(ntrace);
@@ -658,10 +668,14 @@ void DiffusionIP::GetPenaltyFactor(
         {
             if (LRAdjflag[nlr][ntrace])
             {
-                int numModes = fields[0]->GetNcoeffs(LRAdjExpid[nlr][ntrace]);
-                NekDouble numModesdir =
-                    pow(NekDouble(numModes), (1.0 / spaceDim));
-                factorFwdBwd[nlr] = 1.0 * numModesdir * (numModesdir + 1.0);
+                numModes = 0;  
+                for(int nd = 0; nd < spaceDim; ++nd)
+                {
+                    ntmp = fields[0]->GetExp(LRAdjExpid[nlr][ntrace])->
+                        GetBasisNumModes(nd);  
+                    numModes = std::max(ntmp,numModes);
+                }
+                factorFwdBwd[nlr] = (numModes)*(numModes);
             }
         }
 
@@ -820,13 +834,19 @@ void DiffusionIP::CalcTraceNumFlux(
     timer.Stop();
     timer.AccumulateRegion("DiffIP:_ConsVarAveJump",1);
 
+    Array<OneD, NekDouble> PenaltyFactor(nTracePts,0.0);
+
+    GetPenaltyFactor(fields,PenaltyFactor);
+
+    Vmath::Vmul(nTracePts,PenaltyFactor,1, m_traceNormDirctnElmtLengthRecip,1,PenaltyFactor,1);
+
     for (size_t p = 0; p < nTracePts; ++p)
     {
-        NekDouble PenaltyFactor = m_IPPenaltyCoeff * m_traceNormDirctnElmtLengthRecip[p]; // load 1x
+        NekDouble penaltyFactorPnt = PenaltyFactor[p]; // load 1x
 
         for (size_t f = 0; f < nConvectiveFields; ++f)
         {
-            NekDouble jumpTmp = solution_jump[f][p] * PenaltyFactor; // load 1x
+            NekDouble jumpTmp = solution_jump[f][p] * penaltyFactorPnt; // load 1x
             for (size_t d = 0; d < nDim; ++d)
             {
                 NekDouble tmp = m_traceNormals[d][p] * jumpTmp + m_wspNumDerivFwd[d][f][p]; // load 2x

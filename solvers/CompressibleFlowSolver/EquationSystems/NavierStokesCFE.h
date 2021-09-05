@@ -105,7 +105,7 @@ namespace Nektar
         Array< OneD, int > &nonZeroIndex = NullInt1DArray,
         const Array<OneD, Array<OneD, NekDouble>>
             &normal             =   NullNekDoubleArrayOfArray,
-        const Array<OneD, NekDouble> &ArtifDiffFactor = NullNekDouble1DArray);
+        const Array<OneD, NekDouble> &LapArtifDiffFactor = NullNekDouble1DArray);
     void GetViscousSymmtrFluxConservVar(
             const int                                           nSpaceDim,
             const Array<OneD, Array<OneD, NekDouble> >          &inaverg,
@@ -116,14 +116,6 @@ namespace Nektar
 
     void SpecialBndTreat(
               Array<OneD,       Array<OneD, NekDouble> >    &consvar);
-
-    void GetArtificialViscosity(
-        const Array<OneD, Array<OneD, NekDouble> >  &inarray,
-              Array<OneD,             NekDouble  >  &muav);
-
-    void CalcViscosity(
-        const Array<OneD, const Array<OneD, NekDouble>> &inaverg,
-              Array<OneD, NekDouble>                    &mu);
 
     void InitObject_Explicit();
       
@@ -149,17 +141,26 @@ namespace Nektar
               TensorOfArray3D<NekDouble>                &derivatives,
               TensorOfArray3D<NekDouble>                &viscousTensor);
 
-    void GetPhysicalAV(
-        const Array<OneD, const Array<OneD, NekDouble>> &physfield);
-      
-    void Ducros( Array<OneD, NekDouble> &field );
-    void C0Smooth(Array<OneD, NekDouble> &field);
-  
-
     virtual void v_GetFluxPenalty(
         const Array<OneD, const Array<OneD, NekDouble>> &uFwd,
         const Array<OneD, const Array<OneD, NekDouble>> &uBwd,
               Array<OneD,       Array<OneD, NekDouble>> &penaltyCoeff);
+
+    void GetArtificialViscosity(
+        const Array<OneD, Array<OneD, NekDouble> >  &inarray,
+              Array<OneD,             NekDouble  >  &muav);
+
+    void Ducros( Array<OneD, NekDouble> &field );
+    void C0Smooth(Array<OneD, NekDouble> &field);
+
+    void CalcViscosity(
+        const Array<OneD, const Array<OneD, NekDouble>> &inaverg,
+              Array<OneD, NekDouble>                    &mu);
+
+    void GetPhysicalAV(
+        const Array<OneD, const Array<OneD, NekDouble>> &physfield);
+
+    void GetTracePhysicalAV();
 
     void GetViscosityAndThermalCondFromTemp(
         const Array<OneD, NekDouble> &temperature,
@@ -365,7 +366,7 @@ namespace Nektar
         TensorOfArray3D<NekDouble>                             &outarray,
         Array< OneD, int >                                     &nonZeroIndex,
         const Array<OneD, Array<OneD, NekDouble> >             &normal,
-        const Array<OneD, NekDouble>                           &ArtifDiffFactor)
+        const Array<OneD, NekDouble>                           &LapArtifDiffFactor)
     {
         size_t nConvectiveFields = inarray.size();
         size_t nPts = inarray[0].size();
@@ -376,11 +377,30 @@ namespace Nektar
         constexpr unsigned short nVarMax = 5;
         constexpr unsigned short nDimMax = 3;
 
+        Array<OneD, NekDouble > muArray(nPts,0.0);
+        CalcViscosity(inarray, muArray);
+
+        // Add artificial viscosity if wanted
+        if (m_shockCaptureType == "Physical")
+        {
+            Array<OneD, NekDouble> muav;
+            if (m_fields[0]->GetTrace()->GetTotPoints()==nPts)
+            {
+                muav = m_muavTrace;
+            }
+            else
+            {
+                muav = m_muav;
+            }
+
+            Vmath::Vadd(nPts, muArray, 1, muav, 1, muArray, 1);
+        }
+
         // vector loop
+        size_t p = 0;
         using namespace tinysimd;
         using vec_t = simd<NekDouble>;
         size_t sizeVec = (nPts / vec_t::width) * vec_t::width;
-        size_t p = 0;
 
         for (; p < sizeVec; p += vec_t::width)
         {
@@ -416,11 +436,8 @@ namespace Nektar
                 }
             }
 
-            // get temp
-            vec_t temperature = m_varConv->GetTemperature(inTmp.data());
-            // get viscosity
             vec_t mu;
-            GetViscosityFromTempKernel(temperature, mu);
+            mu.load(&(muArray[p]), is_not_aligned);
 
             for (size_t nderiv = 0; nderiv < nDim; ++nderiv)
             {
@@ -506,11 +523,7 @@ namespace Nektar
                 }
             }
 
-            // get temp
-            NekDouble temperature = m_varConv->GetTemperature(inTmp.data());
-            // get viscosity
-            NekDouble mu;
-            GetViscosityFromTempKernel(temperature, mu);
+            NekDouble mu = muArray[p];
 
             for (int nderiv = 0; nderiv < nDim; ++nderiv)
             {
@@ -566,7 +579,7 @@ namespace Nektar
 
         // this loop would need to be brought up into the main loop so that it
         // can be vectorized as well
-        if (ArtifDiffFactor.size())
+        if (LapArtifDiffFactor.size())
         {
             n_nonZero = nConvectiveFields;
 
@@ -576,7 +589,7 @@ namespace Nektar
                 {
                     if (IS_TRACE)
                     {
-                        NekDouble tmp = ArtifDiffFactor[p] * normal[d][p];
+                        NekDouble tmp = LapArtifDiffFactor[p] * normal[d][p];
 
                         for (int j = 0; j < nConvectiveFields; ++j)
                         {
@@ -587,7 +600,8 @@ namespace Nektar
                     {
                         for (int j = 0; j < nConvectiveFields; ++j)
                         {
-                            outarray[d][j][p] += ArtifDiffFactor[p] * qfields[d][j][p];
+                            outarray[d][j][p] += LapArtifDiffFactor[p] * 
+                                qfields[d][j][p];
                         }
                     }
                 }

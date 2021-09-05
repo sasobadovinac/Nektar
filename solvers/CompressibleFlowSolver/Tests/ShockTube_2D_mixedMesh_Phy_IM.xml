@@ -17,8 +17,8 @@
 
   <CONDITIONS>
     <PARAMETERS>
-        <P> TimeStep             = 1.0e-8                         </P>
-        <P> NumSteps             = 20                              </P>
+        <P> TimeStep             = 1.0e-6                         </P>
+        <P> NumSteps             = 5                              </P>
         <P> IO_CheckSteps        = 100                            </P>
         <P> IO_InfoSteps         = 1                              </P>
 
@@ -49,16 +49,21 @@
         <P> Er = pr / Gm1 + 0.5 * rhor * (ur*ur + vr*vr)          </P>
         <P> Pr                   = 0.72                           </P>
         <P> Cp                   = (Gamma / Gm1 )*GasConstant     </P>
+        <P> mu                   = 0.0E-12                        </P>
+        <P> PreconItsStep        = 0                        </P>
     </PARAMETERS>
 
     <SOLVERINFO>
-        <I PROPERTY="EQType"                VALUE="EulerCFE"            />
-        <I PROPERTY="Projection"            VALUE="DisContinuous"       />
-        <I PROPERTY="AdvectionType"         VALUE="WeakDG"              />
-        <I PROPERTY="TimeIntegrationMethod" VALUE="ForwardEuler"        />
-        <I PROPERTY="UpwindType"            VALUE="Roe"                 />
-        <I PROPERTY="ProblemType"           VALUE="General"             />
-        <I PROPERTY="ShockCaptureType"      VALUE="NonSmooth"           />
+        <I PROPERTY="EQType"                VALUE="NavierStokesImplicitCFE" />
+        <I PROPERTY="AdvectionAdvancement"  VALUE="Implicit"                />
+        <I PROPERTY="DiffusionAdvancement"  VALUE="Implicit"                />
+        <I PROPERTY="DiffusionType"         VALUE="InteriorPenalty"         />
+        <I PROPERTY="Projection"            VALUE="DisContinuous"           />
+        <I PROPERTY="AdvectionType"         VALUE="WeakDG"                  />
+        <I PROPERTY="TimeIntegrationMethod" VALUE="DIRKOrder2"              />
+        <I PROPERTY="UpwindType"            VALUE="Roe"                     />
+        <I PROPERTY="ProblemType"           VALUE="General"                 />
+        <I PROPERTY="ShockCaptureType"      VALUE="Physical"                />
     </SOLVERINFO>
 
     <VARIABLES>

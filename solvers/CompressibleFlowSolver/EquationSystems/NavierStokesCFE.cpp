@@ -162,7 +162,7 @@ namespace Nektar
         m_diffusion->SetDiffusionSymmFluxCons(
             &NavierStokesCFE::GetViscousSymmtrFluxConservVar, this);
 
-        if (m_shockCaptureType != "Off")
+        if (m_artificialDiffusion)
         {
             m_diffusion->SetArtificialDiffusionVector(
                 &NavierStokesCFE::GetArtificialViscosity, this);
@@ -319,6 +319,22 @@ namespace Nektar
         if (m_shockCaptureType == "Physical" && m_CalcPhysicalAV)
         {
             GetPhysicalAV(inarray);
+            // Apply Ducros sensor
+            if (m_physicalSensorType == "Ducros")
+            {
+                Ducros(m_muav);
+            }
+            // Apply approximate c0 smoothing
+            if (m_smoothing == "C0")
+            {
+                C0Smooth(m_muav);
+            }
+            GetTracePhysicalAV();
+            // Freeze AV for Implicit time stepping
+            if (m_explicitDiffusion == false)
+            {
+                m_CalcPhysicalAV = false;
+            }
         }
 
         if (m_is_diffIP)
@@ -865,6 +881,25 @@ namespace Nektar
                 tmp = m_muav + physOffset, 1);
         }
     }
+
+    /**
+    * @brief Get trace of the physical artificial viscosity
+    *
+    */
+    void NavierStokesCFE::GetTracePhysicalAV()
+    {
+        int nTracePts = m_fields[0]->GetTrace()->GetTotPoints();
+        Array<OneD, NekDouble> Fwd(nTracePts,0.0);
+        Array<OneD, NekDouble> Bwd(nTracePts,0.0);
+        // BwdMuvar is left to be 0.0 according to DiffusionLDG.cpp
+        m_fields[0]->GetFwdBwdTracePhys(m_muav, Fwd, Bwd, false, 
+            false, true);
+
+        for(int k = 0; k < nTracePts; ++k)
+        {
+            m_muavTrace[k] = 0.5 * (Fwd[k] + Bwd[k]) ;
+        }
+    }
         
     void NavierStokesCFE::CalcViscosity(
         const Array<OneD, const Array<OneD, NekDouble>> &inaverg,
@@ -989,8 +1024,8 @@ namespace Nektar
             }
         }
     }
+  
 
-    
     /**
      * @brief Update viscosity
      * todo: add artificial viscosity here

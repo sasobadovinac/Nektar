@@ -128,6 +128,8 @@ IF( NEKTAR_SOLVER_COMPRESSIBLE_FLOW )
     ADD_NEKTAR_TEST(Rarefaction_vanderWaals LENGTHY)
     ADD_NEKTAR_TEST(MMS_Compressible_Poiseuille_testIP)
     ADD_NEKTAR_TEST(ShockTube_2D_mixedMesh_Lap)
+    ADD_NEKTAR_TEST(ShockTube_2D_mixedMesh_Phy)
+    ADD_NEKTAR_TEST(ShockTube_2D_mixedMesh_Phy_IM)
     ADD_NEKTAR_TEST(TimeDependentAbsorption)
 
     IF (NEKTAR_USE_MPI)
