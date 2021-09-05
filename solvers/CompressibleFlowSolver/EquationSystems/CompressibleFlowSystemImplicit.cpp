@@ -1675,6 +1675,12 @@ namespace Nektar
         const Array<OneD, const Array<OneD, NekDouble>> &pBwd)
     {
         v_DoDiffusionCoeff(inarray, outarray, pFwd, pBwd);
+
+        if (m_artificialDiffusion)
+        {
+            m_artificialDiffusion->DoArtificialDiffusionCoeff(
+                inarray, outarray);
+        }
     }
 
 

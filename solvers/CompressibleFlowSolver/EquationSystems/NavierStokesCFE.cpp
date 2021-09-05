@@ -344,8 +344,7 @@ namespace Nektar
                 NEKERROR(ErrorUtil::efatal, "m_bndEvaluateTime not setup");
             }
             m_diffusion->Diffuse(nvariables, m_fields, inarray, outarrayDiff,
-                                m_bndEvaluateTime,
-                                pFwd, pBwd);
+                m_bndEvaluateTime, pFwd, pBwd);
             for (int i = 0; i < nvariables; ++i)
             {
                 Vmath::Vadd(npoints,
@@ -399,7 +398,7 @@ namespace Nektar
 
             // Diffusion term in physical rhs form
             m_diffusion->Diffuse(nvariables, m_fields, inarrayDiff,
-                                outarrayDiff, inFwd, inBwd);
+                outarrayDiff, inFwd, inBwd);
 
             for (int i = 0; i < nvariables; ++i)
             {
@@ -410,8 +409,6 @@ namespace Nektar
             }
         }
     }
-
-
 
     /**
      * @brief Return the flux vector for the LDG diffusion problem.
@@ -674,7 +671,6 @@ namespace Nektar
         }
     }
 
-
     /**
      * @brief For very special treatment. For general boundaries it does nothing
      * But for WallViscous and WallAdiabatic, special treatment is needed
@@ -682,7 +678,6 @@ namespace Nektar
      * boundary treatment of diffusion flux
      * Note: This special treatment could be removed by seperating
      * WallViscous and WallAdiabatic into two different classes.
-     *
      */
     void NavierStokesCFE::SpecialBndTreat(
         Array<OneD, Array<OneD, NekDouble>> &consvar)

@@ -156,9 +156,8 @@ namespace Nektar
             {
                 NEKERROR(ErrorUtil::efatal, "m_bndEvaluateTime not setup");
             }
-            m_diffusion->DiffuseCoeffs(nvariables, m_fields, inarray,
-                                        outarrayDiff, m_bndEvaluateTime,
-                                        pFwd, pBwd);
+            m_diffusion->DiffuseCoeffs(nvariables, m_fields, inarray, 
+                outarrayDiff, m_bndEvaluateTime, pFwd, pBwd);
             for (int i = 0; i < nvariables; ++i)
             {
                 Vmath::Vadd(ncoeffs,
@@ -210,8 +209,8 @@ namespace Nektar
             }
 
             // Diffusion term in physical rhs form
-            m_diffusion->Diffuse(nvariables, m_fields, inarrayDiff, outarrayDiff,
-                                inFwd, inBwd);
+            m_diffusion->Diffuse(nvariables, m_fields, inarrayDiff, 
+                outarrayDiff, inFwd, inBwd);
 
             for (int i = 0; i < nvariables; ++i)
             {
@@ -219,12 +218,6 @@ namespace Nektar
                             outarrayDiff[i], 1,
                             outarray[i], 1,
                             outarray[i], 1);
-            }
-
-            if (m_artificialDiffusion)
-            {
-                m_artificialDiffusion->DoArtificialDiffusionCoeff(
-                    inarray, outarray);
             }
         }
     }
