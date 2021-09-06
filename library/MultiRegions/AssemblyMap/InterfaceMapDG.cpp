@@ -331,6 +331,8 @@ void InterfaceTrace::CalcLocalMissing()
                 xs[1] = yc[i];
                 xs[2] = zc[i];
 
+                std::cout << "Coord: " << xs[0] << " " << xs[1] << " " << xs[2] << std::endl;
+
                 // Search the edge the point was found in last time first
                 if (foundLocalCoordsCopy.find(offset + i) !=
                     foundLocalCoordsCopy.end())
@@ -348,6 +350,7 @@ void InterfaceTrace::CalcLocalMissing()
                     if (dist < 1e-8)
                     {
                         found = true;
+                        std::cout << "Found at: " << foundLocCoord[0] << " " << foundLocCoord[1] << " in " << edge->GetGlobalID() << std::endl;
                         m_foundLocalCoords[offset + i] = std::make_pair(edge->GetGlobalID(), foundLocCoord);
                         break;
                     }

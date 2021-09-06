@@ -918,6 +918,8 @@ namespace Nektar
              *  calculates the value of the expansion at a set of points
              * given in \a coords
              */
+             // @TODO: Change output to an array and template on size of array
+            // @TODO: If put in two arrays get 2nd derivs
             inline NekDouble PhysEvaluate(const Array<OneD, NekDouble> &coord,
                                           const Array<OneD, const NekDouble> &inarray,
                                           NekDouble &out_d0, NekDouble &out_d1,

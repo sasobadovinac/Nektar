@@ -92,10 +92,12 @@ void ALEHelper::ALEDoElmtInvMass(Array<OneD, Array<OneD, NekDouble> > &traceNorm
     // matrix. That's then used in e.g. checkpoint output and L^2 error
     // calculation.
 
+    // @TODO: Look at geometric factor and junk only what is needed
+    // @TODO: Look at collections and see if they offer a speed up
     for (int i = 0; i < m_fieldsALE.size(); ++i)
     {
         m_fieldsALE[i]->MultiplyByElmtInvMass(
-            fields[i], m_fieldsALE[i]->UpdateCoeffs());
+            fields[i], m_fieldsALE[i]->UpdateCoeffs()); // @TODO: Potentially matrix free?
         m_fieldsALE[i]->BwdTrans(
             m_fieldsALE[i]->GetCoeffs(), m_fieldsALE[i]->UpdatePhys());
     }
