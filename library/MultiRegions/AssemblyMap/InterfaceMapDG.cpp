@@ -331,8 +331,7 @@ void InterfaceTrace::CalcLocalMissing()
                 xs[1] = yc[i];
                 xs[2] = zc[i];
 
-                std::cout << "Coord: " << xs[0] << " " << xs[1] << " " << xs[2] << std::endl;
-
+                std::cout << "Point: " << xs[0] << " " << xs[1] << " " << xs[2] << std::endl;
                 // Search the edge the point was found in last time first
                 if (foundLocalCoordsCopy.find(offset + i) !=
                     foundLocalCoordsCopy.end())
@@ -346,11 +345,12 @@ void InterfaceTrace::CalcLocalMissing()
                 {
                     NekDouble dist =
                         edge->FindDistance(xs, foundLocCoord);
+                    std::cout << "Looked in: " << edge->GetGlobalID() << " | dist = " << dist << std::endl;
 
-                    if (dist < 1e-8)
+                    if (dist < 1e-8) // @TODO: Check relative residuals
                     {
                         found = true;
-                        std::cout << "Found at: " << foundLocCoord[0] << " " << foundLocCoord[1] << " in " << edge->GetGlobalID() << std::endl;
+                        std::cout << "Found at: " << foundLocCoord[0] << " " << foundLocCoord[1] << " in " << edge->GetGlobalID() << " with dist = " << dist << std::endl;
                         m_foundLocalCoords[offset + i] = std::make_pair(edge->GetGlobalID(), foundLocCoord);
                         break;
                     }
@@ -358,6 +358,9 @@ void InterfaceTrace::CalcLocalMissing()
 
                 if (!found)
                 {
+                    std::cout << "NOT FOUND!" << std::endl;
+                    exit(0);
+
                     m_missingCoords.emplace_back(xs);
                     m_mapMissingCoordToTrace.emplace_back(offset + i);
                 }

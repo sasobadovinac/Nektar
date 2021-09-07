@@ -539,8 +539,8 @@ NekDouble TriGeom::v_FindDistance(const Array<OneD, const NekDouble> &xs,
     // Debug to print objective function values
     if (false)
     {
-        std::cout << "Looking for point: " << xs[0] << ", " << xs[1] << std::endl;
-
+        std::cout << std::scientific << std::setprecision(10) << "Looking for point: " << xs[0] << ", " << xs[1] << std::endl;
+        std::cout << "Triangle: " << m_globalID << " contains point: " << ContainsPoint(xs) << std::endl;
         // triangle verts
         Array<OneD, NekDouble> xt(3), yt(3), zt(3);
         for (int i = 0; i < 3; ++i)
@@ -548,9 +548,14 @@ NekDouble TriGeom::v_FindDistance(const Array<OneD, const NekDouble> &xs,
             m_verts[i]->GetCoords(xt[i], yt[i], zt[i]);
         }
 
-        std::cout << "In triangle ID " << GetGlobalID() << ": "  << xt[0] << ", " << yt[0] << ", " << zt[0] << " -> "
-                  << xt[1] << ", " << yt[1] << ", " << zt[1] << " -> "
-                  << xt[2] << ", " << yt[2] << ", " << zt[2] << std::endl;
+        ofstream file_xtri;
+        ofstream file_ytri;
+        file_xtri.open("xtri.txt");
+        file_ytri.open("ytri.txt");
+        file_xtri << xt[0] << std::endl << xt[1] << std::endl << xt[2] << std::endl << xt[0] << std::endl;
+        file_ytri << yt[0] << std::endl << yt[1] << std::endl << yt[2] << std::endl << yt[0] << std::endl;
+        file_xtri.close();
+        file_ytri.close();
 
 
         // Print curve point locations
@@ -558,19 +563,11 @@ NekDouble TriGeom::v_FindDistance(const Array<OneD, const NekDouble> &xs,
         ofstream file_ycurve;
         file_xcurve.open("xcurve.txt");
         file_ycurve.open("ycurve.txt");
-        std::cout << "Curve points = " << std::endl;
         for (auto & m_point : m_curve->m_points)
         {
             file_xcurve << m_point->x() << std::endl;
             file_ycurve << m_point->y() << std::endl;
-
-            Array<OneD, NekDouble> gloCoord(2), locCoord(2);
-            gloCoord[0] = m_point->x();
-            gloCoord[1] = m_point->y();
-            GetLocCoords(gloCoord, locCoord);
-            std::cout << locCoord[0] << " " << locCoord[1] << std::endl;
         }
-        std::cout << std::endl;
         file_xcurve.close();
         file_ycurve.close();
 
@@ -621,13 +618,17 @@ NekDouble TriGeom::v_FindDistance(const Array<OneD, const NekDouble> &xs,
         file_fx_derxi1xi2.open("fx_derxi1xi2.txt");
         file_fx_derxi2xi2.open("fx_derxi2xi2.txt");
 
-        int n = 20;
+        int n = 100;
         for (int i = 0; i < n + 1; ++i)
         {
             xi[0] = -1.0 + 2.0 * i / n;
-            for (int j = 0; j < n; ++j)
+            for (int j = 0; j < n + 1; ++j)
             {
                 xi[1] = -1.0 + 2.0 * j / n;
+
+                Array<OneD, NekDouble> eta(2);
+                m_xmap->LocCollapsedToLocCoord(xi, eta);
+                xi = eta;
 
                 file_xi_x << xi[0] << std::endl;
                 file_xi_y << xi[1] << std::endl;
@@ -718,14 +719,16 @@ NekDouble TriGeom::v_FindDistance(const Array<OneD, const NekDouble> &xs,
     }
     else if (false)
     {
+        std::cout << "Triangle: " << m_globalID << " contains point: " << ContainsPoint(xs) << std::endl;
+
         int nq = m_xmap->GetTotPoints();
 
         Array<OneD, NekDouble> x(nq), y(nq);
         m_xmap->BwdTrans(m_coeffs[0], x);
         m_xmap->BwdTrans(m_coeffs[1], y);
 
-        // Pick quad point closest to xs for starter xi
         Array<OneD, NekDouble> xi(2, 0.0);
+        // Pick quad point closest to xs for starter xi
         Array<OneD, NekDouble> mxc(nq), myc(nq);
         m_xmap->GetCoords(mxc, myc);
         NekDouble fx_test = std::numeric_limits<NekDouble>::max();
@@ -747,6 +750,7 @@ NekDouble TriGeom::v_FindDistance(const Array<OneD, const NekDouble> &xs,
                 xi = testxi;
             }
         }
+        std::cout << "Closest quad point: " << xi[0] << " " << xi[1] << std::endl;
 
         Array<OneD, NekDouble> xderxi1(nq, 0.0), yderxi1(nq, 0.0),
             xderxi2(nq, 0.0), yderxi2(nq, 0.0),
@@ -767,17 +771,17 @@ NekDouble TriGeom::v_FindDistance(const Array<OneD, const NekDouble> &xs,
         bool opt_succeed = false;
         NekDouble fx_prev = std::numeric_limits<NekDouble>::max();
 
-        ofstream file_xc_newton;
-        ofstream file_yc_newton;
-        file_xc_newton.open("xc_newton.txt");
-        file_yc_newton.open("yc_newton.txt");
+        //ofstream file_xc_newton;
+        //ofstream file_yc_newton;
+        //file_xc_newton.open("xc_newton.txt");
+        //file_yc_newton.open("yc_newton.txt");
         for (int i = 0; i < 100; ++i)
         {
             // Compute f(x_k) and its derivatives
             NekDouble xc = m_xmap->PhysEvaluate(xi, x);
             NekDouble yc = m_xmap->PhysEvaluate(xi, y);
-            file_xc_newton << xc << std::endl;
-            file_yc_newton << yc << std::endl;
+            //file_xc_newton << xc << std::endl;
+            //file_yc_newton << yc << std::endl;
 
             NekDouble xc_derxi1 = m_xmap->PhysEvaluate(xi, xderxi1);
             NekDouble yc_derxi1 = m_xmap->PhysEvaluate(xi, yderxi1);
@@ -796,8 +800,6 @@ NekDouble TriGeom::v_FindDistance(const Array<OneD, const NekDouble> &xs,
             // Objective function
             NekDouble fx =
                 (xc - xs[0]) * (xc - xs[0]) + (yc - xs[1]) * (yc - xs[1]);
-
-            //std::cout << fx << std::endl;
 
             NekDouble fx_derxi1 = 2.0 * (xc - xs[0]) * xc_derxi1 +
                                   2.0 * (yc - xs[1]) * yc_derxi1;
@@ -834,11 +836,14 @@ NekDouble TriGeom::v_FindDistance(const Array<OneD, const NekDouble> &xs,
             hessInv[1][0] = det * -fx_derxi1xi2;
             hessInv[1][1] = det * fx_derxi1xi1;
 
-            xi[0] = xi[0] - (hessInv[0][0] * jac[0] + hessInv[1][0] * jac[1]);
-            xi[1] = xi[1] - (hessInv[0][1] * jac[1] + hessInv[1][1] * jac[1]);
+            xi[0] = xi[0] - (hessInv[0][0] * jac[0] + hessInv[0][1] * jac[1]);
+            xi[1] = xi[1] - (hessInv[1][0] * jac[0] + hessInv[1][1] * jac[1]);
 
-            if (xi[0] < -1.1 || xi[0] > 1.1 ||
-                xi[1] < -1.1 || xi[1] > 1.1)
+            // Gradient descent
+            // xi[0] = xi[0] - jac[0];
+
+            if (xi[0] < -1 || xi[0] > 1 ||
+                xi[1] < -1 || xi[1] > 1)
             {
                 fx_prev = fx;
                 continue;
@@ -856,8 +861,8 @@ NekDouble TriGeom::v_FindDistance(const Array<OneD, const NekDouble> &xs,
             }
         }
 
-        file_xc_newton.close();
-        file_yc_newton.close();
+        //file_xc_newton.close();
+        //file_yc_newton.close();
 
         if (opt_succeed)
         {
@@ -899,12 +904,19 @@ NekDouble TriGeom::v_FindDistance(const Array<OneD, const NekDouble> &xs,
 
         bool opt_succeed = false;
 
+        //ofstream file_xc_newton;
+        //ofstream file_yc_newton;
+        //file_xc_newton.open("xc_newton.txt");
+        //file_yc_newton.open("yc_newton.txt");
         NekDouble fx_prev = std::numeric_limits<NekDouble>::max();
         for (int i = 0; i < 100; ++i)
         {
             // Compute f(x_k) and its derivatives
             NekDouble xc = m_xmap->PhysEvaluate(xi, x);
             NekDouble yc = m_xmap->PhysEvaluate(xi, y);
+
+            //file_xc_newton << xc << std::endl;
+            //file_yc_newton << yc << std::endl;
 
             NekDouble xc_derxi1 = m_xmap->PhysEvaluate(xi, xderxi1);
             NekDouble yc_derxi1 = m_xmap->PhysEvaluate(xi, yderxi1);
@@ -945,9 +957,7 @@ NekDouble TriGeom::v_FindDistance(const Array<OneD, const NekDouble> &xs,
                                      2.0 * (yc - xs[1]) * yc_derxi2xi2 +
                                      2.0 * yc_derxi2 * yc_derxi2;
 
-            //std::cout << "xi[0] = " << xi[0] << ", xi[1] = " << xi[1]
-            //          << ", xc = " << xc << ", yc = " << yc
-            //          << ", fx = " << fx << std::endl;
+            std::cout << "xi[0] = " << xi[0] << ", xi[1] = " << xi[1] << ", xc = " << xc << ", yc = " << yc << ", fx = " << fx << ", fx_diff = " << abs(fx - fx_prev) << std::endl;
 
             // Jacobian
             NekDouble jac[2];
@@ -989,21 +999,21 @@ NekDouble TriGeom::v_FindDistance(const Array<OneD, const NekDouble> &xs,
             // Search direction: Newton's method
             NekDouble pk[2];
             pk[0] = -(hessInv[0][0] * jac[0] + hessInv[1][0] * jac[1]);
-            pk[1] = -(hessInv[0][1] * jac[1] + hessInv[1][1] * jac[1]);
-
-            //std::cout << "pk..." << std::endl;
-            //std::cout << pk[0] << " " << pk[1] << std::endl;
+            pk[1] = -(hessInv[0][1] * jac[0] + hessInv[1][1] * jac[1]);
 
             //std::cout << "pk[0] = " << pk[0] << ", pk[1] = " << pk[1] << std::endl;
+
             // Backtracking line search
-            while (gamma > 1e-10)
+            while (gamma > 1e-16)
             {
                 Array<OneD, NekDouble> xi_pk(2);
                 xi_pk[0] = xi[0] + pk[0] * gamma;
                 xi_pk[1] = xi[1] + pk[1] * gamma;
 
-                if (xi_pk[0] < -1.0 || xi_pk[0] > 1.0 ||
-                    xi_pk[1] < -1.0 || xi_pk[1] > 1.0)
+                if (xi_pk[0] < (-1 - std::numeric_limits<NekDouble>::epsilon()) ||
+                    xi_pk[0] > ( 1 + std::numeric_limits<NekDouble>::epsilon()) ||
+                    xi_pk[1] < (-1 - std::numeric_limits<NekDouble>::epsilon()) ||
+                    xi_pk[1] > ( 1 + std::numeric_limits<NekDouble>::epsilon()))
                 {
                     gamma /= 2.0;
                     continue;
@@ -1020,11 +1030,7 @@ NekDouble TriGeom::v_FindDistance(const Array<OneD, const NekDouble> &xs,
                 NekDouble fx_pk = (xc_pk - xs[0]) * (xc_pk - xs[0]) +
                                   (yc_pk - xs[1]) * (yc_pk - xs[1]);
 
-                //std::cout << "xi_pk[0] = " << xi_pk[0]
-                //        << ", xi_pk[1] = " << xi_pk[1]
-                //        <<" xc_pk = " << xc_pk
-                //        << ", yc_pk = " << yc_pk
-                //        << ", fx_pk = " << fx_pk << std::endl;
+                std::cout << "xi_pk[0] = " << xi_pk[0] << ", xi_pk[1] = " << xi_pk[1] <<" xc_pk = " << xc_pk << ", yc_pk = " << yc_pk << ", fx_pk = " << fx_pk << std::endl;
 
                 NekDouble fx_pk_derxi1 = 2.0 * (xc_pk - xs[0]) * xc_pk_derxi1 +
                                          2.0 * (yc_pk - xs[1]) * yc_pk_derxi1;
@@ -1046,7 +1052,7 @@ NekDouble TriGeom::v_FindDistance(const Array<OneD, const NekDouble> &xs,
                 // Armijo condition
                 if ((fx_pk  - (fx + c1 * gamma * tmp))
                         < std::numeric_limits<NekDouble>::epsilon()
-                    // Curvature condition (weak) @TODO: Should this be strong condition?
+                    // Curvature condition (weak) @TODO: Should this be strong condition? i.e. with abs
                     && (-tmp2 - (-c2 * tmp))
                            < std::numeric_limits<NekDouble>::epsilon())
                 {
@@ -1067,16 +1073,13 @@ NekDouble TriGeom::v_FindDistance(const Array<OneD, const NekDouble> &xs,
             xi[1] += gamma * pk[1];
         }
 
-        if (opt_succeed)
-        {
-            xiOut = xi;
-            return  sqrt(fx_prev);
-        }
-        else
-        {
-            xiOut = Array<OneD, NekDouble>(2, std::numeric_limits<NekDouble>::max());
-            return std::numeric_limits<NekDouble>::max();
-        }
+        //file_xc_newton.close();
+        //file_yc_newton.close();
+
+
+        xiOut = xi;
+        return  sqrt(fx_prev);
+
     }
     else
     {
