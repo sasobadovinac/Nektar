@@ -471,6 +471,11 @@ namespace Nektar
             CalcMuDmuDT(inarray,mu,DmuDT);
         }
 
+        if (m_muav.size())
+        {
+            Vmath::Vadd(npoints, mu, 1, m_muav, 1, mu, 1);
+        }
+
         Array<OneD, NekDouble> normals;
         Array<OneD, Array<OneD, NekDouble>> normal3D(3);
         for(int i = 0; i < 3; i++)
@@ -1121,13 +1126,20 @@ namespace Nektar
         // DmuDT of artificial diffusion is neglected
         // TODO: to consider the Jacobian of AV seperately
         Array<OneD, NekDouble> muvar        =   NullNekDouble1DArray;
-        Array<OneD, NekDouble> MuVarTrace   =   NullNekDouble1DArray;
+        Array<OneD, NekDouble> muAVTrace   =   NullNekDouble1DArray;
         if (m_shockCaptureType != "Off" && m_shockCaptureType != "Physical")
         {
-            MuVarTrace  =   Array<OneD, NekDouble>(nTracePts, 0.0);
-            muvar       =   Array<OneD, NekDouble>(npoints, 0.0);
-            m_diffusion->GetAVmu(fields,inarray,muvar,MuVarTrace);
-            muvar       =   NullNekDouble1DArray;
+            if (m_CalcPhysicalAV)
+            {
+                muAVTrace  =   Array<OneD, NekDouble>(nTracePts, 0.0);
+                muvar       =   Array<OneD, NekDouble>(npoints, 0.0);
+                m_diffusion->GetAVmu(fields,inarray,muvar,muAVTrace);
+                muvar       =   NullNekDouble1DArray;
+            }
+            else
+            {
+                muAVTrace = m_muavTrace;
+            }
         }
 
         Array<OneD, Array<OneD, NekDouble>> numflux(nvariables);
@@ -1161,7 +1173,7 @@ namespace Nektar
 
         CalcTraceNumericalFlux(nConvectiveFields,nDim,npoints,nTracePts,
             PenaltyFactor2, fields,AdvVel,inarray,time,qfield,Fwd,Bwd,
-            qFwd,qBwd,MuVarTrace,nonZeroIndex,numflux);
+            qFwd,qBwd,muAVTrace,nonZeroIndex,numflux);
 
         int nFields = nvariables;
         Array<OneD, Array<OneD, NekDouble>>  plusFwd(nFields),plusBwd(nFields);
@@ -1214,7 +1226,7 @@ namespace Nektar
 
             CalcTraceNumericalFlux(nConvectiveFields,nDim,npoints,nTracePts,
                 PenaltyFactor2,fields,AdvVel,inarray,time,qfield,
-                plusFwd,plusBwd,qFwd,qBwd,MuVarTrace,nonZeroIndex,plusflux);
+                plusFwd,plusBwd,qFwd,qBwd,muAVTrace,nonZeroIndex,plusflux);
 
             for (int n = 0; n < nFields; n++)
             {
@@ -1266,7 +1278,7 @@ namespace Nektar
 
             CalcTraceNumericalFlux(nConvectiveFields,nDim,npoints,nTracePts,
                 PenaltyFactor2,fields,AdvVel,inarray,time,qfield,Fwd,
-                plusBwd,qFwd,qBwd,MuVarTrace,nonZeroIndex,plusflux);
+                plusBwd,qFwd,qBwd,muAVTrace,nonZeroIndex,plusflux);
 
             for (int n = 0; n < nFields; n++)
             {
@@ -1301,12 +1313,12 @@ namespace Nektar
             const Array<OneD, const Array<OneD, NekDouble>>   &vBwd,
             const Array<OneD, const TensorOfArray2D<NekDouble>> &qFwd,
             const Array<OneD, const TensorOfArray2D<NekDouble>> &qBwd,
-            const Array<OneD, NekDouble >                     &MuVarTrace,
+            const Array<OneD, NekDouble >                     &muAVTrace,
                   Array<OneD, int >                           &nonZeroIndex,
                   Array<OneD, Array<OneD,       NekDouble>>   &traceflux)
     {
         boost::ignore_unused(nDim, nPts, PenaltyFactor2, time, qFwd, qBwd, 
-            MuVarTrace);
+            muAVTrace);
 
         if (m_advectionJacFlag)
         {
