@@ -204,12 +204,6 @@ namespace Nektar
                             outarray[i], 1,
                             outarray[i], 1);
             }
-
-            if (m_shockCaptureType != "Off")
-            {
-                m_artificialDiffusion->DoArtificialDiffusionCoeff(
-                    inarray, outarray);
-            }
         }
     }
 

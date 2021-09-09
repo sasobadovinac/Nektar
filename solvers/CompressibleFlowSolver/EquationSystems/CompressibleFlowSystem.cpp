@@ -389,7 +389,7 @@ namespace Nektar
     {
         v_DoDiffusion(inarray, outarray, pFwd, pBwd);
 
-        if (m_shockCaptureType != "Off" && m_shockCaptureType != "Physical")
+        if (m_artificialDiffusion)
         {
             m_artificialDiffusion->DoArtificialDiffusion(inarray, outarray);
         }

@@ -162,7 +162,7 @@ namespace Nektar
         m_diffusion->SetDiffusionSymmFluxCons(
             &NavierStokesCFE::GetViscousSymmtrFluxConservVar, this);
 
-        if (m_shockCaptureType != "Off")
+        if (m_shockCaptureType != "Off" && m_shockCaptureType !=  "Physical")
         {
             m_diffusion->SetArtificialDiffusionVector(
                 &NavierStokesCFE::GetArtificialViscosity, this);
