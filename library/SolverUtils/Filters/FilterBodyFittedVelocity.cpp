@@ -259,7 +259,7 @@ void FilterBodyFittedVelocity::v_Initialise(
         m_curFieldsVels_Car[n] = Array<OneD, NekDouble>(npoints, 0.0);
         m_curFieldsVels[n]     = Array<OneD, NekDouble>(npoints, 0.0);
         m_outFieldsVels[n]     = Array<OneD, NekDouble>(npoints, initVal);
-        
+
         // Re-initialize the coeff
         pFields[0]->FwdTrans(m_outFieldsVels[n], m_outFields[m_nVars+1+n]);
     }
