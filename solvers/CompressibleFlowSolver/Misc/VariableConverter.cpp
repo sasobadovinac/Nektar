@@ -60,8 +60,6 @@ VariableConverter::VariableConverter(
     // Parameters for sensor
     m_session->LoadParameter("Skappa", m_Skappa, -1.0);
     m_session->LoadParameter("Kappa", m_Kappa, 0.25);
-
-
 }
 
 /**
@@ -311,7 +309,7 @@ void VariableConverter::GetSensor(
         numerator = Vmath::Dot(nElmtPoints, difference, difference);
         denominator = Vmath::Dot(nElmtPoints, elmtPhys, elmtPhys);
 
-        NekDouble elmtSensor = numerator / denominator;
+        NekDouble elmtSensor = sqrt(numerator / denominator);
         elmtSensor = log10(max(elmtSensor, NekConstants::kNekSqrtTol));
 
         Vmath::Fill(nElmtPoints, elmtSensor, tmp = Sensor + physOffset, 1);
@@ -320,7 +318,7 @@ void VariableConverter::GetSensor(
         order = max(numModesElement-1, 1);
         if (order > 0 )
         {
-            Skappa = m_Skappa - 4.25 * log10(static_cast<NekDouble>(order));
+            Skappa = m_Skappa - 4.0 * log10(static_cast<NekDouble>(order));
         }
         else
         {
