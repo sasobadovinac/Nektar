@@ -41,6 +41,9 @@ v5.1.0
 - Add ESDIRK3 and ESDIRK4 time integration schemes (!1196)
 - Add a filter to calculate mean value of solution fields (!1211)
 - Fix the time dependent absorption forcing (!1254)
+- Enable very high order (>100) quadrature use (!1262)
+- Add rotation and improve performance of MovingReferenceFrame forcing (!1185)
+- Fix BODYFORCE defined by a file (!1215, !1264)
 
 **FieldConvert**:
 - Add phifile module to compute shape functions for the SPM solver (!1065)
@@ -52,6 +55,7 @@ v5.1.0
 - Add QCriterion for 2D flow (!1243)
 - Fix to interppointsdatatofld to allow for mpi processing of large files (!1191)
 - Fix the logic of C0Projection:helmsmoothing (!1220)
+- Fix extract module for boundaries with periodic boundary conditions (!1277)
 
 **CardiacEPSolver**
 - Added additional parameter sets to Fenton-Karma model (!1119)
@@ -62,6 +66,7 @@ v5.1.0
 - Add new filter AeroForcesSPM to compute aerodynamic forces in immersed
   boundaries (!1065)
 - Add mask function and more baseflow parameters for the linear stability problem (!1201)
+- Fix dudt in high-order pressure boundary condition (!1190)
 
 **CompressibleFlowSolver**
 - Added vectorisation of the Interior Penalty method (!!223)
@@ -100,7 +105,17 @@ v5.0.3
 - Fix repeated output of u,v,w for Euler system
 
 **FieldConvert**
+- Fix the Filters output files numbering (!1251, !1261)
 - Fix the Filters output files numbering (!1251)
+- Fix 2D surfDistance calculation (!1263)
+
+**NekMesh**
+- Fix VTK Output for 3D meshes and support XML format (!1258)
+
+**Documentation**
+- Fix documentation to note restrictions on use of coupled solver (!1268)
+**Library**
+- Add robustness to the read expansions (!1239)
 
 v5.0.2
 ------
