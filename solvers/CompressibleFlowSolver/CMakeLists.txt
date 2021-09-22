@@ -131,6 +131,8 @@ IF( NEKTAR_SOLVER_COMPRESSIBLE_FLOW )
     ADD_NEKTAR_TEST(ShockTube_2D_mixedMesh_Phy)
     ADD_NEKTAR_TEST(ShockTube_2D_mixedMesh_Phy_IM)
     ADD_NEKTAR_TEST(TimeDependentAbsorption)
+    ADD_NEKTAR_TEST(ShockTube_2D_QuadMesh_Phy)
+    ADD_NEKTAR_TEST(ShockTube_2D_QuadMesh_PhyIm)
 
     IF (NEKTAR_USE_MPI)
         #ADD_NEKTAR_TEST(Perturbation_M05_square_CBC_par LENGTHY)
