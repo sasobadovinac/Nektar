@@ -685,12 +685,6 @@ namespace Nektar
 
             for(int i = 0; i < m_bndCondExpansions.size(); ++i)
             {
-                if (m_bndConditions[i]->GetBoundaryConditionType() ==
-                       SpatialDomains::ePeriodic)
-                {
-                    continue;
-                }
-
                 Array<OneD, NekDouble>& coeffs = m_bndCondExpansions[i]->UpdateCoeffs();
 
                 if(m_locToGloMap->GetSignChange())
@@ -731,12 +725,6 @@ namespace Nektar
 
             for(int j = 0; j < nreg; ++j)
             {
-                if (m_bndConditions[j]->GetBoundaryConditionType() ==
-                    SpatialDomains::ePeriodic)
-                {
-                    continue;
-                }
-
                 bndcnt += m_bndCondExpansions[j]->GetNcoeffs();
             }
 
