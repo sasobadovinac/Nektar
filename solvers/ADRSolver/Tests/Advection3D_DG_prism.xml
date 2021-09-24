@@ -1,0 +1,158 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<NEKTAR>
+    <GEOMETRY DIM="3" SPACE="3">
+        <VERTEX>
+            <V ID="9">2.34068111e-02 -2.33781791e-01 4.04921940e-01</V>
+            <V ID="10">-1.25000000e-01 -2.30000000e-01 3.98371686e-01</V>
+            <V ID="11">-1.25000000e-01 -2.50000000e-01 4.33012702e-01</V>
+            <V ID="12">0.00000000e+00 -2.50000000e-01 4.33012702e-01</V>
+            <V ID="13">-1.25148582e-01 -1.18077980e-01 4.44587050e-01</V>
+            <V ID="14">-1.25147867e-01 -1.28415174e-01 4.83228252e-01</V>
+            <V ID="15">4.70476903e-02 -2.17401400e-01 3.76550271e-01</V>
+            <V ID="17">-1.25149303e-01 -1.07637415e-01 4.05559437e-01</V>
+            <V ID="27">2.80389708e-02 -4.95417081e-02 4.68863695e-01</V>
+            <V ID="28">0.00000000e+00 -5.22642322e-02 4.97260948e-01</V>
+            <V ID="29">5.63583312e-02 -4.67919587e-02 4.40182469e-01</V>
+            <V ID="47">-1.25478594e-01 4.77282851e-02 4.57518965e-01</V>
+            <V ID="48">-1.25478444e-01 5.22642308e-02 4.97260948e-01</V>
+            <V ID="63">2.47816451e-02 -2.70619631e-01 4.68910746e-01</V>
+            <V ID="64">0.00000000e+00 -2.55000000e-01 4.41672956e-01</V>
+        </VERTEX>
+        <EDGE>
+            <E ID="15">10 9</E>
+            <E ID="16">10 11</E>
+            <E ID="17">11 12</E>
+            <E ID="18">9 12</E>
+            <E ID="19">13 9</E>
+            <E ID="20">10 13</E>
+            <E ID="21">11 14</E>
+            <E ID="22">14 12</E>
+            <E ID="23">13 14</E>
+            <E ID="26">15 9</E>
+            <E ID="27">17 15</E>
+            <E ID="29">17 13</E>
+            <E ID="54">9 27</E>
+            <E ID="55">12 28</E>
+            <E ID="56">27 28</E>
+            <E ID="57">13 27</E>
+            <E ID="58">14 28</E>
+            <E ID="59">15 29</E>
+            <E ID="60">29 27</E>
+            <E ID="61">17 29</E>
+            <E ID="97">27 47</E>
+            <E ID="98">28 48</E>
+            <E ID="100">47 48</E>
+            <E ID="152">13 47</E>
+            <E ID="153">14 48</E>
+            <E ID="174">9 63</E>
+            <E ID="175">12 64</E>
+            <E ID="176">63 64</E>
+            <E ID="177">27 63</E>
+            <E ID="178">28 64</E>
+        </EDGE>
+        <FACE>
+            <T ID="10">15 20 19</T>
+            <T ID="12">17 21 22</T>
+            <T ID="40">54 19 57</T>
+            <T ID="41">55 22 58</T>
+            <T ID="44">59 27 61</T>
+            <T ID="130">97 57 152</T>
+            <T ID="131">98 58 153</T>
+            <T ID="161">174 54 177</T>
+            <T ID="162">175 55 178</T>
+            <Q ID="9">15 16 17 18</Q>
+            <Q ID="11">16 21 23 20</Q>
+            <Q ID="13">18 22 23 19</Q>
+            <Q ID="17">26 19 29 27</Q>
+            <Q ID="39">54 18 55 56</Q>
+            <Q ID="42">56 58 23 57</Q>
+            <Q ID="43">59 26 54 60</Q>
+            <Q ID="45">60 57 29 61</Q>
+            <Q ID="71">56 98 100 97</Q>
+            <Q ID="132">100 153 23 152</Q>
+            <Q ID="160">174 18 175 176</Q>
+            <Q ID="163">176 178 56 177</Q>
+        </FACE>
+        <ELEMENT>
+            <R ID="2">9 10 11 12 13 </R>
+            <R ID="10">39 40 13 41 42 </R>
+            <R ID="11">43 44 17 40 45 </R>
+            <R ID="36">71 130 42 131 132 </R>
+            <R ID="48">160 161 39 162 163 </R>
+        </ELEMENT>
+        <CURVED />
+        <COMPOSITE>
+            <C ID="1"> F[9,10,11,12,43,44,17,45,71,130,131,132,160,161,162,163,41] </C>
+            <C ID="6"> R[2,10,11,36,48] </C>
+        </COMPOSITE>
+        <DOMAIN> C[6] </DOMAIN>
+    </GEOMETRY>
+    <Metadata>
+        <Provenance>
+            <GitBranch>refs/heads/feature/CollectionPhysInterp</GitBranch>
+            <GitSHA1>088213cbc0e3402564af89e9db086211ed251f92</GitSHA1>
+            <Hostname>MacBook-Pro.local</Hostname>
+            <NektarVersion>5.0.0</NektarVersion>
+            <Timestamp>26-May-2021 23:33:45</Timestamp>
+        </Provenance>
+        <NekMeshCommandLine>nozzle1.xml tmp.xml:xml:uncompress </NekMeshCommandLine>
+    </Metadata>
+
+    <EXPANSIONS>
+        <E COMPOSITE="C[6]" NUMMODES="2" TYPE="MODIFIED" FIELDS="u" />
+    </EXPANSIONS>
+
+    <CONDITIONS>
+
+        <PARAMETERS>
+            <P> TimeStep      = 0.001        </P>
+            <P> NumSteps      = 1            </P>
+            <P> IO_CheckSteps = 0            </P>
+            <P> IO_InfoSteps  = 1            </P>
+        </PARAMETERS>
+
+        <SOLVERINFO>
+            <I PROPERTY="EQType"                VALUE="UnsteadyAdvection"  />
+            <I PROPERTY="AdvectionAdvancement"  VALUE="Explicit"  />
+            <I PROPERTY="TimeIntegrationMethod" VALUE="ForwardEuler"  />
+            <I PROPERTY="Projection"            VALUE="DisContinuous" />
+            <I PROPERTY="AdvectionType"         VALUE="WeakDG"              />
+            <I PROPERTY="UpwindType"            VALUE="Upwind" />
+        </SOLVERINFO>
+
+        <VARIABLES>
+            <V ID="0"> u </V>
+        </VARIABLES>
+
+        <FUNCTION NAME="AdvectionVelocity">
+            <E VAR="Vx" VALUE="1.0" />
+            <E VAR="Vy" VALUE="0.0" />
+            <E VAR="Vz" VALUE="0.0" />
+        </FUNCTION>
+
+        <BOUNDARYREGIONS>
+            <B ID="1"> C[1] </B>
+        </BOUNDARYREGIONS>
+
+        <BOUNDARYCONDITIONS>
+            <!-- Dirichlet -->
+            <REGION REF="1">
+                <D VAR="u"  VALUE="1" />
+            </REGION>
+        </BOUNDARYCONDITIONS>
+
+        <FUNCTION NAME="InitialConditions">
+            <E VAR="u" VALUE="1.0" />
+        </FUNCTION>
+
+        <FUNCTION NAME="ExactSolution">
+            <E VAR="u" VALUE="1.0" />
+        </FUNCTION>
+
+	    <FUNCTION NAME="Forcing">
+            <E VAR="u" VALUE="0" />
+        </FUNCTION>
+
+    </CONDITIONS>
+
+</NEKTAR>

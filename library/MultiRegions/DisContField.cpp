@@ -2974,7 +2974,7 @@ namespace Nektar
 
             if (FillBnd)
             {
-                    v_FillBwdWithBoundCond(Fwd, Bwd, PutFwdInBwdOnBCs);
+                v_FillBwdWithBoundCond(Fwd, Bwd, PutFwdInBwdOnBCs);
             }
 
             if(DoExchange)
@@ -3347,18 +3347,38 @@ namespace Nektar
                     Array<OneD, Array<OneD, LocalRegions::ExpansionSharedPtr> >
                         &elmtToTrace = m_traceMap->GetElmtToTrace();
 
-                    for(n = 0; n < GetExpSize(); ++n)
+                    if(m_expType == e2D)
                     {
-                        offset = GetCoeff_Offset(n);
-                        for(e = 0; e < (*m_exp)[n]->GetNtraces(); ++e)
+                        for(n = 0; n < GetExpSize(); ++n)
                         {
-                            t_offset = GetTrace()->GetPhys_Offset
-                                (elmtToTrace[n][e]->GetElmtId());
-                            (*m_exp)[n]->AddEdgeNormBoundaryInt
-                                (e, elmtToTrace[n][e],
-                                 Fn+t_offset,
-                                 e_outarray = outarray+offset);
+                            offset = GetCoeff_Offset(n);
+                            for(e = 0; e < (*m_exp)[n]->GetNtraces(); ++e)
+                            {
+                                t_offset = GetTrace()->GetPhys_Offset
+                                    (elmtToTrace[n][e]->GetElmtId());
+                                (*m_exp)[n]->AddEdgeNormBoundaryInt
+                                    (e, elmtToTrace[n][e],
+                                     Fn+t_offset,
+                                     e_outarray = outarray+offset);
+                            }
                         }
+                    }
+                    else if (m_expType == e3D)
+                    {
+                        for(n = 0; n < GetExpSize(); ++n)
+                        {
+                            offset = GetCoeff_Offset(n);
+                            for(e = 0; e < (*m_exp)[n]->GetNtraces(); ++e)
+                            {
+                                t_offset = GetTrace()->GetPhys_Offset
+                                     (elmtToTrace[n][e]->GetElmtId());
+                                (*m_exp)[n]->AddFaceNormBoundaryInt
+                                    (e, elmtToTrace[n][e],
+                                     Fn+t_offset,
+                                     e_outarray = outarray+offset);
+                            }
+                        }
+                        
                     }
                 }
             }
@@ -3699,7 +3719,7 @@ namespace Nektar
 
                                 condition.Evaluate(x0, x1, x2, time, valuesExp);
                             }
-
+                                   
                             Vmath::Vmul(npoints, valuesExp, 1, valuesFile, 1,
                                         locExpList->UpdatePhys(), 1);
 

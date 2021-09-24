@@ -3744,6 +3744,7 @@ LibUtilities::BasisKey MeshGraph::GetFaceBasisKey(Geometry2DSharedPtr face,
     // direction of the element which corresponds to the requested
     // coordinate direction of the given face.
     int dir = geom3d->GetDir(elements->at(0).second, facedir);
+        
     if (face->GetNumVerts() == 3)
     {
         return StdRegions::EvaluateTriFaceBasisKey(
@@ -3753,6 +3754,16 @@ LibUtilities::BasisKey MeshGraph::GetFaceBasisKey(Geometry2DSharedPtr face,
     }
     else
     {
+     
+        // Check face orientationa to see if it should be transposed 
+        StdRegions::Orientation orient =
+            geom3d->GetForient(elements->at(0).second);
+        // revese direction if face rotated so dir1 aligned to dir2
+        if(orient >= StdRegions::eDir1FwdDir2_Dir2FwdDir1)
+        {
+            dir = (dir == 0)? 1: 0;
+        }
+        
         return StdRegions::EvaluateQuadFaceBasisKey(
             facedir, expansion->m_basisKeyVector[dir].GetBasisType(),
             expansion->m_basisKeyVector[dir].GetNumPoints(),

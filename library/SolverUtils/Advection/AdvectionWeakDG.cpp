@@ -189,6 +189,7 @@ namespace Nektar
                 timer.Stop();
                 timer.AccumulateRegion("AdvWeakDG:_MultiplyByElmtInvMass",1);
             }
+
             timer1.Stop();
             timer1.AccumulateRegion("AdvWeakDG: Coeff All");
         }

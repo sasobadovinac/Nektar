@@ -292,7 +292,7 @@ namespace Nektar
 
         /**
          * Store expansions for the trace space expansions used in
-         * DisContField2D
+         * DisContField
          *
          * @param  pSession      A session within information about expansion
          * @param  bndConstraint Array of ExpList1D objects each containing a
@@ -543,7 +543,7 @@ namespace Nektar
                             LibUtilities::BasisKey existing0 =
                                 it->second.second.first;
                             LibUtilities::BasisKey existing1 =
-                            it->second.second.second;
+                                it->second.second.second;
 
                             int np11 = face0    .GetNumPoints();
                             int np12 = face1    .GetNumPoints();
@@ -4271,8 +4271,8 @@ namespace Nektar
                     const Array<OneD, const Array<OneD, NekDouble> > &locNormals
                         = exp3D->GetTraceNormal(faceNum);
 
-                    // Project normals from 3D element onto the same orientation as
-                    // the trace expansion.
+                    // Project normals from 3D element onto the same
+                    // orientation as the trace expansion.
                     StdRegions::Orientation orient = exp3D->
                         GetTraceOrient(faceNum);
 
@@ -4301,11 +4301,16 @@ namespace Nektar
                     const int faceNq0 = faceBasis0.GetNumPoints();
                     const int faceNq1 = faceBasis1.GetNumPoints();
 
+                    Array<OneD, int> faceids; 
+                    exp3D->ReOrientTracePhysMap(orient,faceids,faceNq0,faceNq1);
+                    
+                    Array<OneD, NekDouble> traceNormals(faceNq0 * faceNq1);
+
                     for (j = 0; j < coordim; ++j)
                     {
-                        Array<OneD, NekDouble> traceNormals(faceNq0 * faceNq1);
-                        AlignFace(orient, faceNq0, faceNq1,
-                                  locNormals[j], traceNormals);
+                         Vmath::Scatr(faceNq0*faceNq1,locNormals[j],faceids,
+                                      traceNormals);
+
                         LibUtilities::Interp2D(faceBasis0.GetPointsKey(),
                                                faceBasis1.GetPointsKey(),
                                                traceNormals,
