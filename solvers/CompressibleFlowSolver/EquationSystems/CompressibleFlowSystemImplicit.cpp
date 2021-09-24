@@ -56,6 +56,8 @@ namespace Nektar
     void CFSImplicit::v_InitObject()
     {
         CompressibleFlowSystem::v_InitObject();
+        m_explicitAdvection = false;
+        m_explicitDiffusion = false;
 
         // initialise implicit parameters
         m_session->LoadParameter ("JacobiFreeEps", m_jacobiFreeEps, 5.0E-8);

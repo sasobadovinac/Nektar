@@ -69,8 +69,6 @@
         <I PROPERTY="Projection"            VALUE="DisContinuous"       />
         <I PROPERTY="AdvectionType"         VALUE="WeakDG"              />
         <I PROPERTY="DiffusionType"         VALUE="InteriorPenalty"     />
-        <I PROPERTY="AdvectionAdvancement"  VALUE="Implicit"            />
-        <I PROPERTY="DiffusionAdvancement"  VALUE="Implicit"            />
         <I PROPERTY="TimeIntegrationMethod" VALUE="BackwardEuler"       />
         <I PROPERTY="UpwindType"            VALUE="Roe"                 />
         <I PROPERTY="ProblemType"           VALUE="General"             />
