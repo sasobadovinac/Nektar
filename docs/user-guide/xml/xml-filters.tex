@@ -424,15 +424,30 @@ The following parameters are supported:
     Prefix of the output filename to which the checkpoints are written.\\
     \inltt{OutputFrequency} & \xmark   & 1 &
     Number of timesteps after which output is written.\\
-    \inltt{OutputPlane}     & \xmark   & 0 &
+    \inltt{OutputOneFile}      & \xmark   & \texttt{true} &
+    If \inltt{OutputOneFile} is \inltt{true} or \inltt{yes}, only one file is generated for all points and the whole history. Otherwise, a separate file is created for each time snapshot.\\
+    \inltt{OutputPlane}     & \xmark   & -1 &
     If the simulation is homogeneous, the plane on which to evaluate the 
-    history point. (No Fourier interpolation is currently implemented.)\\
-    \inltt{Points      }    & \cmark   & - &
-    A list of the history points. These should always be given in three
-    dimensions. \\
+    history point. If set, all points will be reset to lie on this plane.\\
+     \inltt{WaveSpace}     & \xmark   & false &
+    If the simulation is homogeneous and \inltt{WaveSpace} is \inltt{true} or \inltt{yes}, the Fourier coefficient on the nearest plane will be output. \\
+    \inltt{Points      }    & \xmark   & - &
+    A list of the history points. \\
+    \inltt{line      }    & \xmark   & - &
+    \inltt{npts,x0,y0,x1,y1} in 2D or \inltt{npts,x0,y0,z0,x1,y1,z1} in 3D. Set the history points as npts equispaced points between (x0,y0,z0) and (x1,y1,z1).\\
+    \inltt{plane      }    & \xmark   & - &
+    \inltt{npts1,npts2,x0,y0,z0,x1,y1,z1,x2,y2,z2,x3,y3,z3}. Set the history points as \inltt{npts1 * npts2} equispaced points on a plane. \inltt{npts1,npts2} is the number of equispaced points in each
+    direction and $(x_0,y_0,z_0)$, $(x_1,y_1,z_1)$, $(x_2,y_2,z_2)$ and
+    $(x_3,y_3,z_3)$ define the plane of points specified in a clockwise or
+    anticlockwise direction. Be careful about the size of history points file when using this option.\\
+    \inltt{box      }    & \xmark   & - &
+    \inltt{npts1,npts2,npts3,xmin,xmax,ymin,ymax,zmin,zmax}. Set the history points as \inltt{npts1 * npts2 * npts3} equispaced points in a box. \inltt{npts1,npts2,npts3} is the number of equispaced points in each
+    direction and $(x_{min},y_{min},z_{min})$ and $(x_{max},y_{max},z_{max})$
+    define the limits of the box of points. Be careful about the size of history points file when using this option.\\
     \bottomrule
   \end{tabularx}
 \end{center}
+One of \inltt{Points      }, \inltt{line      }, \inltt{plane      } or \inltt{box      } must be specified.
 
 For example, to output the value of the solution fields at three points
 $(1,0.5,0)$, $(2,0.5,0)$ and $(3,0.5,0)$ into a file \inltt{TimeValues.his}
@@ -447,6 +462,14 @@ every 10 timesteps, we use the syntax:
           2 0.5 0
           3 0.5 0
       </PARAM>
+  </FILTER>
+\end{lstlisting}
+or
+\begin{lstlisting}[style=XMLStyle,gobble=2]
+  <FILTER TYPE="HistoryPoints">
+      <PARAM NAME="OutputFile">TimeValues</PARAM>
+      <PARAM NAME="OutputFrequency">10</PARAM>
+      <PARAM NAME="line">3,1,0.5,0,3,0.5,0</PARAM>
   </FILTER>
 \end{lstlisting}
 
