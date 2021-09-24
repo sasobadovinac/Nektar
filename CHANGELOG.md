@@ -29,6 +29,12 @@ v5.1.0
 - Limit MPI methods based on core count (!1208)
 - Split out IProduct.cpp and IProductWRTDerivBase.cpp in order to avoid long time compilations (!1228)
 - Refactored time integration code using factory pattern (!1034, !1103)
+- Fix WriteStream with empty Array/vector (!1233)
+- Add interpolation at arbitrary point in 3DH1 (!1233)
+
+**FieldConvert**
+- Refactored time integration code using factory pattern (!1034)
+- Refactored time integration code using factory pattern (!1034, !1103)
 - Fix to preprocessor logic for boost with Visual Studio >= 2015 (!1115)
 - Fix type consistency and real comparison in SharedArray.hpp, replaced
   num_elements with size() (!1127, !1137, !1141)

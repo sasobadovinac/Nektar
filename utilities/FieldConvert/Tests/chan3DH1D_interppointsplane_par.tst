@@ -12,7 +12,7 @@
         <metric type="L2" id="1">
             <value variable="x" tolerance="1e-6"> 0.593171</value>
             <value variable="y" tolerance="1e-6">0.593171</value>
-            <value variable="z" tolerance="1e-6">0.493007</value>
+            <value variable="z" tolerance="1e-6">0.595119</value>
             <value variable="u" tolerance="1e-6">1.73509</value>
             <value variable="v" tolerance="1e-6">0</value>
             <value variable="w" tolerance="1e-6">0</value>
