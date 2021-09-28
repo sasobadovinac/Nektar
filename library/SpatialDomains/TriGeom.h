@@ -93,9 +93,6 @@ protected:
                                                 CurveMap &curvedFaces);
     SPATIAL_DOMAINS_EXPORT virtual void v_Setup();
 
-    virtual NekDouble v_FindDistance(const Array<OneD, const NekDouble> &xs,
-                                     Array<OneD, NekDouble> &xi);
-
 private:
     void SetUpXmap();
 };

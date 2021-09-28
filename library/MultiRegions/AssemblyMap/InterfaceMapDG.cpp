@@ -343,15 +343,20 @@ void InterfaceTrace::CalcLocalMissing()
 
                 for (auto &edge : parentEdgeDeque)
                 {
-                    NekDouble dist =
-                        edge->FindDistance(xs, foundLocCoord);
+                    NekDouble dist = edge->FindDistance(xs, foundLocCoord);
                     std::cout << "Looked in: " << edge->GetGlobalID() << " | dist = " << dist << std::endl;
 
-                    if (dist < 1e-8) // @TODO: Check relative residuals
+                    if (dist < 1e-4) // @TODO: Check relative residuals?
                     {
                         found = true;
                         std::cout << "Found at: " << foundLocCoord[0] << " " << foundLocCoord[1] << " in " << edge->GetGlobalID() << " with dist = " << dist << std::endl;
+
                         m_foundLocalCoords[offset + i] = std::make_pair(edge->GetGlobalID(), foundLocCoord);
+                        break;
+                    }
+
+                    if(found)
+                    {
                         break;
                     }
                 }
@@ -359,7 +364,6 @@ void InterfaceTrace::CalcLocalMissing()
                 if (!found)
                 {
                     std::cout << "NOT FOUND!" << std::endl;
-                    exit(0);
 
                     m_missingCoords.emplace_back(xs);
                     m_mapMissingCoordToTrace.emplace_back(offset + i);
@@ -377,6 +381,7 @@ void InterfaceTrace::CalcLocalMissing()
                           << std::endl;
             }
             std::cout << std::endl;
+            exit(0);
         }
     }
 }
@@ -495,7 +500,7 @@ void InterfaceMapDG::ExchangeTrace(Array<OneD, NekDouble> &Fwd,
     }
 
     // LDG needs a consistent flux definition so swap Fwd/Bwd for right-hand side
-    // of the interface
+    // of the interface. Disabled for now.
     for (auto &localInterface : m_localInterfaces)
     {
         if (localInterface->GetInterface()->GetSide() == SpatialDomains::InterfaceSide::eRight && false)
@@ -542,8 +547,27 @@ void InterfaceTrace::FillLocalBwdTrace(Array<OneD, NekDouble> &Fwd,
 
             Array<OneD, NekDouble> edgePhys =
                 Fwd + m_trace->GetPhys_Offset(traceId);
+
             Bwd[foundLocCoord.first] =
                 m_trace->GetExp(traceId)->StdPhysEvaluate(locCoord, edgePhys);
+
+
+
+            // @TODO: DEBUG
+            if((Bwd[foundLocCoord.first] < -1) || (Bwd[foundLocCoord.first] > 1))
+            {
+                //std::cout << "Geom ID->Trace ID: " << foundLocCoord.second.first <<"->" << traceId << "\t@ local coord = " << locCoord[0] << " " << locCoord[1] << "\tgives Bwd value for Phys ID: " << foundLocCoord.first << " = " << Bwd[foundLocCoord.first] << std::endl;
+                Array<OneD, NekDouble> gloCoord;
+                m_trace->GetExp(traceId)->GetCoord(locCoord, gloCoord);
+                //std::cout << "Getting from global coord: " << gloCoord[0] << " " << gloCoord[1] << " " << gloCoord[2] << std::endl;
+
+                /*std::cout << "\tedgePhys = ";
+                for (int i = 0; i < m_trace->GetExp(traceId)->GetTotPoints(); ++i)
+                {
+                    std::cout << edgePhys[i] << ", ";
+                }
+                std::cout << std::endl << std::endl;*/
+            }
         }
     }
 }

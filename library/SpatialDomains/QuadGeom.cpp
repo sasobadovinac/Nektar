@@ -452,23 +452,5 @@ void QuadGeom::v_Setup()
     }
 }
 
-NekDouble QuadGeom::v_FindDistance(const Array<OneD, const NekDouble> &xs,
-                                  Array<OneD, NekDouble> &xiOut)
-{
-    xiOut = Array<OneD, NekDouble>(2,0.0);
-
-    GetLocCoords(xs, xiOut);
-    ClampLocCoords(xiOut);
-
-    Array<OneD, NekDouble> gloCoord(3);
-    gloCoord[0] = GetCoord(0, xiOut);
-    gloCoord[1] = GetCoord(1, xiOut);
-    gloCoord[2] = GetCoord(2, xiOut);
-
-    return sqrt((xs[0] - gloCoord[0])*(xs[0] - gloCoord[0]) +
-                (xs[1] - gloCoord[1])*(xs[1] - gloCoord[1]) +
-                (xs[2] - gloCoord[2])*(xs[2] - gloCoord[2]));
-}
-
 } // end of namespace
 } // end of namespace

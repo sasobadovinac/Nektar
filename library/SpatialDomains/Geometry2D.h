@@ -104,6 +104,9 @@ private:
     virtual int v_GetNumVerts() const;
     virtual int v_GetNumEdges() const;
     virtual StdRegions::Orientation v_GetEorient(const int i) const;
+
+    virtual NekDouble v_FindDistance(const Array<OneD, const NekDouble> &xs,
+                                     Array<OneD, NekDouble> &xi) final;
 };
 
 }
