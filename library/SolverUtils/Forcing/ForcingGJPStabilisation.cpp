@@ -67,7 +67,7 @@ namespace SolverUtils
         const TiXmlElement* funcNameElmt = pForce->FirstChildElement("HSCALING");
 
         if (funcNameElmt)
-        {
+         {
             m_hScalingStr = funcNameElmt->GetText();
         }
         else
@@ -205,7 +205,6 @@ namespace SolverUtils
         }
                 
         int cnt              = 0;
-        int offset           = 0;
         int offset_phys      = 0;
         int coeff_offset     = 0; 
         Array<OneD, Array<OneD, Array<OneD, NekDouble> > >dbasis;
@@ -261,8 +260,6 @@ namespace SolverUtils
 #endif
 
                 int nptrace = elmt->GetTraceNumPoints(n);
-                elmt->GetTraceCoeffMap(n,map);               
-                int traceNcoeffs = elmt->GetTraceNcoeffs(n);
 
                 for(int i = 0; i < m_traceDim+1; ++i)
                 {
@@ -271,7 +268,6 @@ namespace SolverUtils
                 }
                 
                 offset_phys += nptrace;
-                offset      += traceNcoeffs; 
             }
             coeff_offset += elmt->GetNcoeffs();
         }
@@ -284,7 +280,8 @@ namespace SolverUtils
             if(m_traceDim > 0)
             {
                 //multiply by Jacobian and quadrature points. 
-                m_locElmtTrace->MultiplyByQuadratureMetric(m_scalTrace[i],m_scalTrace[i]);
+                m_locElmtTrace->MultiplyByQuadratureMetric(m_scalTrace[i],
+                                                           m_scalTrace[i]);
             }
         }
 
@@ -319,16 +316,19 @@ namespace SolverUtils
             else
             {
                 // save previous block of data. 
-                m_IPWRTDBOnTraceMat.push_back(std::pair<int,Array<OneD, DNekMatSharedPtr>>(nelmt,TraceMat));
+                m_IPWRTDBOnTraceMat.push_back(std::pair<int,
+                            Array<OneD, DNekMatSharedPtr>>(nelmt,TraceMat));
 
                 // start new block 
-                dgfield->GetExp(n)->IProductWRTTensorDerivBaseOnTraceMat(TraceMat);
+                dgfield->GetExp(n)->IProductWRTTensorDerivBaseOnTraceMat
+                           (TraceMat);
                 nelmt = 1;
                 base_sav = dgfield->GetExp(n)->GetBase();
             }
         }
         // save latest block of data. 
-        m_IPWRTDBOnTraceMat.push_back(std::pair<int,Array<OneD, DNekMatSharedPtr>>(nelmt,TraceMat));
+        m_IPWRTDBOnTraceMat.push_back(std::pair<int,Array<OneD,
+                                      DNekMatSharedPtr>>(nelmt,TraceMat));
     }
     
     void ForcingGJPStabilisation::v_Apply(const Array<OneD, MultiRegions::ExpListSharedPtr> &pFields,
@@ -360,9 +360,12 @@ namespace SolverUtils
         Array<OneD, NekDouble> unorm(nTracePts,1.0);
 
         Array<OneD, NekDouble> tmp(nLocETrace);
-        Array<OneD, NekDouble> LocElmtTracePhys   = m_locElmtTrace->UpdatePhys();
-        Array<OneD, NekDouble> LocElmtTraceCoeffs = m_locElmtTrace->UpdateCoeffs();
-        ASSERTL1(LocElmtTracePhys.size() <= nLocETrace,"expect this vector to be at least of size nLocETrace");
+        Array<OneD, NekDouble> LocElmtTracePhys   =
+                                       m_locElmtTrace->UpdatePhys();
+        Array<OneD, NekDouble> LocElmtTraceCoeffs =
+                                       m_locElmtTrace->UpdateCoeffs();
+        ASSERTL1(LocElmtTracePhys.size() <= nLocETrace,
+                 "expect this vector to be at least of size nLocETrace");
 
         if(boost::iequals(m_velScalingStr,"NormalVelocity"))
         {
@@ -397,36 +400,52 @@ namespace SolverUtils
                     
                     // Multiply by normal and add to trace evaluation
                     Vmath::Vsub(nTracePts,Fwd,1,Bwd,1,Fwd,1);
+
                     Vmath::Vvtvp(nTracePts,Fwd,1,m_traceNormals[n],1,
                                  GradJumpOnTrace,1,GradJumpOnTrace,1);
                 }
-                Vmath::Vmul(nTracePts,unorm,1,GradJumpOnTrace,1,GradJumpOnTrace,1);
+                Vmath::Vmul(nTracePts,unorm,1,GradJumpOnTrace,1,
+                            GradJumpOnTrace,1);
 
 #if GJPDEBUG // debugging
                 Vmath::Fill(nTracePts,1.0,GradJumpOnTrace,1); 
-#endif
                 
+                cout << "Max GradJumpOnTrace " <<
+                    Vmath::Vmax(nTracePts,GradJumpOnTrace,1) << endl;
+#endif
+
+
                 // Interpolate GradJumpOnTrace to Local elemental traces.
-                m_locTraceToTraceMap->InterpTraceToLocTrace(0,GradJumpOnTrace, tmp);
-                m_locTraceToTraceMap->UnshuffleLocTraces(0,tmp,LocElmtTracePhys);
-                m_locTraceToTraceMap->InterpTraceToLocTrace(1,GradJumpOnTrace, tmp);
-                m_locTraceToTraceMap->UnshuffleLocTraces(1,tmp,LocElmtTracePhys);
+                m_locTraceToTraceMap->InterpTraceToLocTrace
+                    (0,GradJumpOnTrace, tmp);
+                m_locTraceToTraceMap->UnshuffleLocTraces
+                    (0,tmp,LocElmtTracePhys);
+                m_locTraceToTraceMap->InterpTraceToLocTrace
+                    (1,GradJumpOnTrace, tmp);
+                m_locTraceToTraceMap->UnshuffleLocTraces
+                    (1,tmp,LocElmtTracePhys);
 
                 // Scale jump on trace
-                Vmath::Vmul(nLocETrace,m_scalTrace[0],1,LocElmtTracePhys,1,tmp,1);
+                Vmath::Vmul(nLocETrace,m_scalTrace[0],1,LocElmtTracePhys,1,
+                            tmp,1);
                 MultiplyByIProductWRTDerivOnTraceMat(0,tmp,FilterCoeffs);
                 
                 for(int i = 0; i < m_traceDim; ++i)
                 {
                     // Scale jump on trace
-                    Vmath::Vmul(nLocETrace,m_scalTrace[i+1],1,LocElmtTracePhys,1,tmp,1);
+                    Vmath::Vmul(nLocETrace,m_scalTrace[i+1],1,
+                                LocElmtTracePhys,1,tmp,1);
                     MultiplyByIProductWRTDerivOnTraceMat(i+1,tmp,deriv[0]);
-                    Vmath::Vadd(ncoeffs,deriv[0],1,FilterCoeffs,1,FilterCoeffs,1);
+                    Vmath::Vadd(ncoeffs,deriv[0],1,FilterCoeffs,1,
+                                FilterCoeffs,1);
                 }
+                
                 Vmath::Neg(ncoeffs,FilterCoeffs,1);
+
                 m_dgfield->MultiplyByElmtInvMass(FilterCoeffs,deriv[0]);
 
 #if GJPDEBUG
+                cout << "Max FilterCoeffs " << Vmath::Vmax(ncoeffs,FilterCoeffs,1) << endl;
                 {
                     Array<OneD, NekDouble> FilterCoeffs1(ncoeffs,0.0);
                     Array<OneD, NekDouble> GradFwdOnTrace(nTracePts);
@@ -474,7 +493,7 @@ namespace SolverUtils
                                                    (1,tmp,LocElmtTracePhys);
                          
                         // Integrate 
-                        FilterCoeffs1[i] = m_locElmtTrace->PhysIntegral(LocElmtTracePhys); 
+                        FilterCoeffs1[i] = m_locElmtTrace->Integral(LocElmtTracePhys); 
                     }
 
                     for(int i = 0; i < ncoeffs; ++i)

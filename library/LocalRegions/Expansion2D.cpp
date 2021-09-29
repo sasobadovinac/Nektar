@@ -1183,8 +1183,8 @@ namespace Nektar
 //                                    Vmath::Vmul(nquad_e,varcoeff_work,1,EdgeExp[e]->GetPhys(),1,EdgeExp[e]->UpdatePhys(),1);
 //                                }
 
-                                Vmath::Vvtvp(nquad_e, normals[2], 1, edgePhys, 1,
-                                                      work,       1, work,     1);
+                                Vmath::Vvtvp(nquad_e, normals[2], 1, edgePhys,
+                                             1, work, 1, work, 1);
                             }
 
                             // - tau (ulam - lam)
@@ -1244,6 +1244,58 @@ namespace Nektar
                     lmat->Invert();
                 }
                 break;
+#if 0 
+            case eGJPMatrix
+            {
+                int bndcoeffs = NumDGBndryCoeffs();
+                int nedges  = GetNtraces();
+
+                Array<OneD,const Array<OneD, NekDouble> > normals;
+                Array<OneD, NekDouble> coeffs(m_ncoeffs);
+                Array<OneD, NekDouble> phys(GetTotPoints());
+                returnval = MemoryManager<DNekMat>::AllocateSharedPtr
+                    (m_ncoeffs, m_ncoeffs);
+                
+                Array<OneD, DNekMatSharedPtr> IPWRTDBOnTraceMat;
+                
+                v_IProductWRTTensorDerivBaseOnTraceMat(IPWRTDBOnTraceMat);
+                
+                int nquad = GetTotPoints();
+                int ntraces = GetNtraces();
+                
+                Array<OneD, NekDouble> coeffs(m_ncoeffs);
+                Array<OneD, NekDouble> phys(nquad), deriv0(nquad), deriv1(nquad);
+                
+                Array<OneD, Array<OneD, int> > traceids(ntraces);
+                
+                for(int i = 0; i < m_ncoeffs; ++i)
+                {
+                    Vmath::Zero(m_ncoeffs,coeffs,1);
+                    coeffs[i] = 1.0; 
+                    BwdTrans(coeffs,phys);
+                    
+                    // calculate normal deriv
+                    physderiv();
+
+                    // extract trace
+
+
+                    // multiply by normal
+
+                    // multiply by quadrature
+
+                    // call Iproductwrttensorderivmat  routine for each component.                     
+                    
+                    for(int j = i; j < m_ncoeffs; ++j)
+                    {
+
+                    }
+
+                }
+                
+            }
+            break;
+#endif 
             default:
                 ASSERTL0(false,"This matrix type cannot be generated from this class");
                 break;
@@ -1703,9 +1755,15 @@ namespace Nektar
                 coeffs[i] = 1.0;
                 BwdTrans(coeffs,phys);
                 
+#if 0
+                // dphi_i/d\xi_1,  dphi_i/d\xi_2
+                StdPhysDeriv(phys,deriv0,deriv1);
+#else
+                // Think this is now redunant
                 // dphi_i/d\eta_1,  dphi_i/d\eta_2
                 PhysTensorDeriv(phys,deriv0,deriv1);
-
+#endif
+                
                 int cnt = 0;
                 for(int j = 0; j < ntraces; ++j)
                 {

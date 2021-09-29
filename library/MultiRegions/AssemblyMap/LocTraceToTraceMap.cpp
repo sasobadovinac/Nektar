@@ -1093,10 +1093,13 @@ void LocTraceToTraceMap::UnshuffleLocTraces(const int dir,
              "option dir out of range, "
              " dir=0 is fwd, dir=1 is bwd");
 
-    Vmath::Scatr(m_locTraceToElmtTraceMap[dir].size(),
-                 loctraces,
-                 m_locTraceToElmtTraceMap[dir],
-                 unshuffle);
+    if(m_locTraceToElmtTraceMap[dir].size()) // single elemt check
+    {
+        Vmath::Scatr(m_locTraceToElmtTraceMap[dir].size(),
+                     loctraces,
+                     m_locTraceToElmtTraceMap[dir],
+                     unshuffle);
+    }
 }
 
 void LocTraceToTraceMap::InterpLocTracesToTrace(
