@@ -24,10 +24,6 @@ v5.1.0
 - Refactored time integration code using factory pattern (!1034, !1103)
 - Fix WriteStream with empty Array/vector (!1233)
 - Add interpolation at arbitrary point in 3DH1 (!1233)
-
-**FieldConvert**
-- Refactored time integration code using factory pattern (!1034)
-- Refactored time integration code using factory pattern (!1034, !1103)
 - Fix to preprocessor logic for boost with Visual Studio >= 2015 (!1115)
 - Fix type consistency and real comparison in SharedArray.hpp, replaced
   num_elements with size() (!1127, !1137, !1141)
@@ -66,6 +62,7 @@ v5.1.0
   boundaries (!1065)
 - Add mask function and more baseflow parameters for the linear stability problem (!1201)
 - Fix dudt in high-order pressure boundary condition (!1190)
+- Add flow rate forcing with a scalar (!1026)
 
 **CompressibleFlowSolver**
 - Added vectorisation of the Interior Penalty method (!!223)

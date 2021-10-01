@@ -92,6 +92,7 @@ void DriverArpack::v_InitObject(ostream &out)
     ASSERTL0(m_kdim <= m_maxncv,"NEV is greater than MAXNEV");
     ASSERTL0(2      <= m_kdim-m_nvec,"NCV-NEV is less than 2");
 
+    ASSERTL0(m_comm->GetSize()==1,"..ARPACK is not currently set-up for parallel execution...\n");
     m_equ[0]->PrintSummary(out);
 
     ASSERTL0(m_comm->GetSize() == 1,
