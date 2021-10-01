@@ -122,8 +122,19 @@ void DriverSteadyState::v_Execute(ostream &out)
     // Definition of shared pointer (used only for the Adaptive SFD method)
     AdvectionSystemSharedPtr A = m_equ[0]->as<AdvectionSystem>();
 
-    // Condition necessary to run SFD for the compressible case
     NumVar_SFD = m_equ[m_nequ - 1]->UpdateFields()[0]->GetCoordim(0);
+    // SFD to run for incompressible case with scalar field
+    if (m_session->GetSolverInfo("EqType")=="UnsteadyNavierStokes"||
+        m_session->GetSolverInfo("EqType")=="SteadyNavierStokes")
+    {
+        int nConvectiveFields = m_session->GetVariables().size();
+        if (boost::iequals(m_session->GetVariable(nConvectiveFields-1),"p"))
+        {
+            nConvectiveFields -= 1;
+        }
+        NumVar_SFD = nConvectiveFields;
+    }
+    // Condition necessary to run SFD for the compressible case
     if (m_session->GetSolverInfo("EqType") == "EulerCFE" ||
         m_session->GetSolverInfo("EqType") == "NavierStokesCFE")
     {

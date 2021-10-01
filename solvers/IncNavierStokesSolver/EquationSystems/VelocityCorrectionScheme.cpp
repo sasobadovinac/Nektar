@@ -296,11 +296,12 @@ namespace Nektar
             }
         }
 
-        // At this point, some processors may not have m_flowrateBnd set if they
-        // don't contain the appropriate boundary. To calculate the area, we
-        // integrate 1.0 over the boundary (which has been set up with the
-        // appropriate subcommunicator to avoid deadlock), and then communicate
-        // this to the other processors with an AllReduce.
+        // At this point, some processors may not have m_flowrateBnd
+        // set if they don't contain the appropriate boundary. To
+        // calculate the area, we integrate 1.0 over the boundary
+        // (which has been set up with the appropriate subcommunicator
+        // to avoid deadlock), and then communicate this to the other
+        // processors with an AllReduce.
         if (m_flowrateBnd)
         {
             Array<OneD, NekDouble> inArea(m_flowrateBnd->GetNpoints(), 1.0);
@@ -365,10 +366,21 @@ namespace Nektar
 
         // Create temporary extrapolation object to avoid issues with
         // m_extrapolation for HOPBCs using higher order timestepping schemes.
-        ExtrapolateSharedPtr tmpExtrap = m_extrapolation;
-        m_extrapolation = GetExtrapolateFactory().CreateInstance(
-            "Standard", m_session, m_fields, m_pressure, m_velocity,
-            m_advObject);
+        // Zero pressure BCs in Neumann boundaries that may have been
+        // set in the advection step.
+        Array<OneD, const SpatialDomains::BoundaryConditionShPtr>
+            PBndConds = m_pressure->GetBndConditions();
+        Array<OneD, MultiRegions::ExpListSharedPtr>
+           PBndExp = m_pressure->GetBndCondExpansions();
+        for(int n = 0; n < PBndConds.size(); ++n)
+        {
+           if(PBndConds[n]->GetBoundaryConditionType() ==
+             SpatialDomains::eNeumann)
+            {
+                Vmath::Zero(PBndExp[n]->GetNcoeffs(),
+                            PBndExp[n]->UpdateCoeffs(),1);
+            }
+        }
 
         // Finally, calculate the solution and the flux of the Stokes
         // solution. We set m_greenFlux to maximum numeric limit, which signals
@@ -376,7 +388,13 @@ namespace Nektar
         // force.
         m_greenFlux = numeric_limits<NekDouble>::max();
         m_flowrateAiidt = aii_dt;
+
+        //  Save the number of convective field in case it is not set
+        //  to spacedim. Only need velocity components for stokes forcing
+        int SaveNConvectiveFields = m_nConvectiveFields;
+        m_nConvectiveFields = m_spacedim;
         SolveUnsteadyStokesSystem(inTmp, m_flowrateStokes, 0.0, aii_dt);
+        m_nConvectiveFields = SaveNConvectiveFields;
         m_greenFlux = MeasureFlowrate(m_flowrateStokes);
 
         // If the user specified IO_FlowSteps, open a handle to store output.
@@ -392,7 +410,8 @@ namespace Nektar
                              << endl;
         }
 
-        m_extrapolation = tmpExtrap;
+        // Replace pressure BCs with those evaluated from advection step
+        m_extrapolation->CopyPressureHBCsToPbndExp();
     }
 
     /**
