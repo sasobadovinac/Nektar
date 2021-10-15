@@ -1224,6 +1224,33 @@ GEO files should be a straightforward succession of entity creations (see list
 above). This should however allow for the creation of quite a wide range of 2D
 and 3D geometries by transformation of arbitrary curves into generic splines and
 arcs.
+
+\subsubsection{CCM format}
+For very complex 3D geometries with manifold bodies, \nekpp can take advantage of the meshing tool embedded in the Star-CCM package. \nm projects linear meshes generated in Star-CCM on the CAD definition to generate high-order meshes. \nekpp must be built \texttt{NEKTAR\_USE\_CCM} in conjunction with the \texttt{ccmio} package to use this functionality. Projection is performed by specifying the option \inltt{projectcad}.
+
+The supported element types for the linear mesh are :
+\begin{itemize}
+  \item \inltt{Tetrahedron}
+  \item \inltt{Prism}
+  \item \inltt{Pyramid}
+\end{itemize}
+
+Therefore it is recommended to use the \texttt{Surface Remesher}, the \texttt{Tetrahedral Mesher} and the \texttt{Prism Layer Mesher} in Star-CCM. The \texttt{CAD Projection} and \texttt{Generate Only Standard Prismatic Cells} options should be activated. 
+The prismatic layer for the linear mesh in Star-CCM should not be splitted e.g. there should be only one layer with the total thickness of the boundary layer (see figure \ref{fig:util:mc:Car_mesh}. Splitting will then be perfomed directly by \nm on surfaces specified by the argument \inltt{surf} and the number of layers (\inltt{layers} argument) and growth rate (\inltt{r} argument) are specified during the mesh conversion process with the \inltt{bl} option. Surfaces correspond to the regions created in Star-CCM and the reference index is displayed when running \nm with verbosity (\inltt{-v} option).
+
+\begin{lstlisting}[style=BashInputStyle]
+  NekMesh -m projectcad:file=cadFile.STEP:order=meshOrder -m bl:surf=surf1,surf2,surf3:r=growthRate:layers=nLayers linearMesh.ccm outputMesh.xml
+\end{lstlisting}
+
+The command \inltt{linearise} can be added to correct bad elements.
+
+\begin{figure}
+  \begin{center}
+    \includegraphics[width=1.0\textwidth]{img/Car_mesh.png}
+  \end{center}
+  \caption{Linear mesh generated in Star-CCM (visualised with ParaView) showing the one-layer prismatic cells layer}
+  \label{fig:util:mc:Car_mesh}
+\end{figure}
 %%% Local Variables:
 %%% mode: latex
 %%% TeX-master: "../user-guide"
