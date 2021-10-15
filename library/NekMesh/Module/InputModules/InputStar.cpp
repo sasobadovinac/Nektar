@@ -143,11 +143,13 @@ void InputStar::SetupElements(void)
 
     // create Prisms/Pyramids first
     int nelements = ElementFaces.size();
+    m_log(VERBOSE) << nelements << " Elements" << endl;
     m_log(VERBOSE) << "Generating 3D Zones: " << endl;
     int cnt = 0;
     for (i = 0; i < nelements; ++i)
     {
-        if (ElementFaces[i].size() > 4)
+        Array<OneD, int> Nodes = SortFaceNodes(m_mesh->m_node, ElementFaces[i], FaceNodes);
+        if (ElementFaces[i].size() == 5 && Nodes.size() == 6)
         {
             GenElement3D(
                 m_mesh->m_node, i, ElementFaces[i], FaceNodes, nComposite, true);
@@ -156,6 +158,19 @@ void InputStar::SetupElements(void)
     }
     m_log(VERBOSE) << "  - # of prisms: " << cnt << endl;
 
+    nComposite++;
+
+    cnt = 0; 
+    for (i = 0; i < nelements; ++i)
+    {
+        Array<OneD, int> Nodes = SortFaceNodes(m_mesh->m_node, ElementFaces[i], FaceNodes);
+        if (ElementFaces[i].size() ==5  && Nodes.size() == 5)
+        {
+            GenElement3D(
+                m_mesh->m_node, i, ElementFaces[i], FaceNodes, nComposite, true);
+            ++cnt;
+        }
+    }
     nComposite++;
 
     // create Tets second
@@ -252,6 +267,25 @@ void InputStar::ResetNodes(vector<NodeSharedPtr> &Vnodes,
                 FaceToPrisms[ElementFaces[i][LocTriFaces[0]]].push_back(i);
                 FaceToPrisms[ElementFaces[i][LocTriFaces[1]]].push_back(i);
             }
+            else if (LocTriFaces.size() == 4)
+            {
+                continue; // do nothing
+                Prisms[i] = i;
+
+                PrismToFaces[i].push_back(ElementFaces[i][LocTriFaces[0]]);
+                PrismToFaces[i].push_back(ElementFaces[i][LocTriFaces[1]]);
+                PrismToFaces[i].push_back(ElementFaces[i][LocTriFaces[2]]);
+                PrismToFaces[i].push_back(ElementFaces[i][LocTriFaces[3]]);
+
+                FaceToPrisms[ElementFaces[i][LocTriFaces[0]]].push_back(i);
+                FaceToPrisms[ElementFaces[i][LocTriFaces[1]]].push_back(i);
+                FaceToPrisms[ElementFaces[i][LocTriFaces[2]]].push_back(i);
+                FaceToPrisms[ElementFaces[i][LocTriFaces[3]]].push_back(i);
+            }
+            else
+            {
+                ASSERTL0(false, "Not set up for elements which are not Prism or Pyramid");
+            }
         }
     }
 
@@ -260,7 +294,7 @@ void InputStar::ResetNodes(vector<NodeSharedPtr> &Vnodes,
 
     // For every prism find the list of prismatic elements
     // that represent an aligned block of cells. Then renumber
-    // these blocks consecutativiesly
+    // these blocks consecutively
     for (auto &PrismIt : Prisms)
     {
         int elmtid = PrismIt.first;
@@ -275,7 +309,7 @@ void InputStar::ResetNodes(vector<NodeSharedPtr> &Vnodes,
             // Generate list of faces in list
             PrismLineFaces(
                 elmtid, facelist, FaceToPrisms, PrismToFaces, PrismDone);
-
+        }
             // loop over faces and number vertices of associated prisms.
             for (auto &faceIt : facelist)
             {
@@ -290,10 +324,14 @@ void InputStar::ResetNodes(vector<NodeSharedPtr> &Vnodes,
                     {
                         continue;
                     }
-
+                    // ISSUE ON PYRAMIDS
                     Array<OneD, int> Nodes =
                         SortFaceNodes(Vnodes, ElementFaces[prismid], FaceNodes);
 
+                    if(Nodes.size()==5)
+                    {
+                        continue;
+                    }
                     if ((FacesDone[PrismToFaces[prismid][0]] == false) &&
                         (FacesDone[PrismToFaces[prismid][1]] == false))
                     {
@@ -387,7 +425,6 @@ void InputStar::ResetNodes(vector<NodeSharedPtr> &Vnodes,
                     }
                 }
             }
-        }
     }
 
     // fill in any unset nodes at from other shapes
@@ -521,7 +558,6 @@ void InputStar::GenElement3D(vector<NodeSharedPtr> &VertNodes,
     }
     else if (nnodes != 4)
     {
-        elType = LibUtilities::eHexahedron;
         m_log(FATAL) << "Not set up for elements which are not tets or prisms"
                      << endl;
     }
@@ -537,20 +573,11 @@ void InputStar::GenElement3D(vector<NodeSharedPtr> &VertNodes,
         nodeList.push_back(VertNodes[Nodes[j]]);
     }
 
-    // Create element
-    if (elType != LibUtilities::ePyramid)
-    {
-        ElmtConfig conf(elType, 1, true, true, DoOrient);
-        ElementSharedPtr E =
-            GetElementFactory().CreateInstance(elType, conf, nodeList, tags);
+    ElmtConfig conf(elType, 1, true, true, DoOrient);
+    ElementSharedPtr E = GetElementFactory().
+        CreateInstance(elType, conf, nodeList, tags);
 
-        m_mesh->m_element[E->GetDim()].push_back(E);
-    }
-    else
-    {
-        m_log(WARNING) << "Pyramid detected: this element type is not yet"
-                       << " supported." << endl;
-    }
+    m_mesh->m_element[E->GetDim()].push_back(E);
 }
 
 Array<OneD, int> InputStar::SortEdgeNodes(vector<NodeSharedPtr> &Vnodes,
@@ -729,14 +756,12 @@ Array<OneD, int> InputStar::SortFaceNodes(vector<NodeSharedPtr> &Vnodes,
         }
         else // Pyramid
         {
+            returnval = Array<OneD, int>(5);
             ASSERTL1(quadface0 != -1, "Quad face 0 not found");
             ASSERTL1(triface0 != -1, "Tri face 0 not found");
             ASSERTL1(triface1 != -1, "Tri face 1 not found");
             ASSERTL1(triface2 != -1, "Tri face 2 not found");
             ASSERTL1(triface3 != -1, "Tri face 3 not found");
-            m_log(FATAL) << "Meshes containing Pyramids are not supported."
-                         << endl;
-            returnval = Array<OneD, int>(5);
         }
 
         // find matching nodes between triface0 and triquad0
@@ -824,49 +849,47 @@ Array<OneD, int> InputStar::SortFaceNodes(vector<NodeSharedPtr> &Vnodes,
         // check to see if two vertices are shared between one of the other
         // faces
         // to define which is indx2 and indx3
-
-        auto &quadface1_vec = FaceNodes.find(ElementFaces[quadface1])->second;
-        auto &quadface2_vec = FaceNodes.find(ElementFaces[quadface2])->second;
-        int cnt = 0;
-        for (int i = 0; i < 4; ++i)
+        if(isPrism == true)
         {
-            if (quadface1_vec[i] == returnval[1] || quadface1_vec[i] == indx2)
-            {
-                cnt++;
-            }
-        }
-
-        if (cnt == 2) // have two matching vertices
-        {
-            returnval[2] = indx2;
-            returnval[3] = indx3;
-        }
-        else
-        {
-            cnt = 0;
+            auto &quadface1_vec = FaceNodes.find(ElementFaces[quadface1])->second;
+            auto &quadface2_vec = FaceNodes.find(ElementFaces[quadface2])->second;
+            int cnt = 0;
             for (int i = 0; i < 4; ++i)
             {
-                if (quadface2_vec[i] == returnval[1] || quadface2_vec[i] == indx2)
+                if (quadface1_vec[i] == returnval[1] || quadface1_vec[i] == indx2)
                 {
                     cnt++;
                 }
             }
 
-            if (cnt != 2) // neither of the other faces has two matching nodes
-                          // so reverse
-            {
-                returnval[2] = indx3;
-                returnval[3] = indx2;
-            }
-            else // have two matching vertices
+            if (cnt == 2) // have two matching vertices
             {
                 returnval[2] = indx2;
                 returnval[3] = indx3;
             }
-        }
+            else
+            {
+                cnt = 0;
+                for (int i = 0; i < 4; ++i)
+                {
+                    if (quadface2_vec[i] == returnval[1] || quadface2_vec[i] == indx2)
+                    {
+                        cnt++;
+                    }
+                }
 
-        if (isPrism == true)
-        {
+                if (cnt != 2) // neither of the other faces has two matching nodes
+                              // so reverse
+                {
+                    returnval[2] = indx3;
+                    returnval[3] = indx2;
+                }
+                else // have two matching vertices
+                {
+                    returnval[2] = indx2;
+                    returnval[3] = indx3;
+                }
+            }
             // finally need to find last vertex from second triangular face.
             auto &triface1_vec = FaceNodes.find(ElementFaces[triface1])->second;
             for (int i = 0; i < 3; ++i)
@@ -876,6 +899,38 @@ Array<OneD, int> InputStar::SortFaceNodes(vector<NodeSharedPtr> &Vnodes,
                     returnval[5] = triface1_vec[i];
                     break;
                 }
+            }
+        }
+        else
+        {
+            vector<int> trifaceid;
+            trifaceid.push_back(triface1);
+            trifaceid.push_back(triface2);
+            trifaceid.push_back(triface3);
+            int cnt = 0;
+            for(auto id : trifaceid)
+            {
+                auto &triface_vec = FaceNodes.find(ElementFaces[id])->second;
+                cnt = 0;
+                for (int i = 0; i < 3; ++i)
+                {
+                    if (triface_vec[i] == returnval[1] || triface_vec[i] == indx2)
+                    {
+                        cnt++;
+                    }
+                }
+
+                if (cnt == 2) // have two matching vertices
+                {
+                    returnval[2] = indx2;
+                    returnval[3] = indx3;
+                    break;
+                }
+            }
+            if(cnt != 2)
+            {
+                returnval[2] = indx3;
+                returnval[3] = indx2;
             }
         }
     }

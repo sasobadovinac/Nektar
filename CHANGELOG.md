@@ -90,6 +90,7 @@ v5.1.0
 - Improve .geo reader and support 3D geometries with voids (!1031)
 - Added r-adaptation code (!1109)
 - Added Python bindings, change NekMeshUtils to NekMesh (!1149)
+- Added pyramid element for the Star-CCM mesh (!1229)
 - Added option to use absolute tolerance in peralign (!1225)
 
 **BuildSystem**

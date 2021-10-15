@@ -54,6 +54,11 @@ const NekDouble prismU1[6] = {-1.0, 1.0, 1.0,-1.0,-1.0,-1.0};
 const NekDouble prismV1[6] = {-1.0,-1.0, 1.0, 1.0,-1.0, 1.0};
 const NekDouble prismW1[6] = {-1.0,-1.0,-1.0,-1.0, 1.0, 1.0};
 
+const int pyramidV0[4] = {0, 1, 2, 3};
+const int pyramidV1[4] = {1, 2, 3, 0};
+const int pyramidV2[4] = {3, 0, 1, 2};
+const int pyramidV3[4] = {4, 4, 4, 4};
+
 ModuleKey ProcessProjectCAD::className = GetModuleFactory().RegisterCreatorFunction(
     ModuleKey(eProcessModule, "projectcad"),
     ProcessProjectCAD::create,
@@ -111,6 +116,7 @@ bool ProcessProjectCAD::findAndProject(bgi::rtree<boxI, bgi::quadratic<16> > &rt
 bool ProcessProjectCAD::IsNotValid(vector<ElementSharedPtr> &els)
 {
     //short algebraic method to figure out the vailidy of elements
+    //test the volume of tetrahedrons constituted by three sibling edges
     for(int i = 0; i < els.size(); i++)
     {
         if(els[i]->GetShapeType() == LibUtilities::ePrism)
@@ -160,22 +166,22 @@ bool ProcessProjectCAD::IsNotValid(vector<ElementSharedPtr> &els)
                 }
             }
         }
-        else if(els[i]->GetShapeType() == LibUtilities::eTetrahedron)
+        else if(els[i]->GetShapeType() == LibUtilities::ePyramid)
         {
             vector<NodeSharedPtr> ns = els[i]->GetVertexList();
             for(int j = 0; j < 4; j++)
             {
                 Array<OneD, NekDouble> jac(9,0.0);
 
-                jac[0] = 0.5*(ns[1]->m_x - ns[0]->m_x);
-                jac[1] = 0.5*(ns[1]->m_y - ns[0]->m_y);
-                jac[2] = 0.5*(ns[1]->m_z - ns[0]->m_z);
-                jac[3] = 0.5*(ns[2]->m_x - ns[0]->m_x);
-                jac[4] = 0.5*(ns[2]->m_y - ns[0]->m_y);
-                jac[5] = 0.5*(ns[2]->m_z - ns[0]->m_z);
-                jac[6] = 0.5*(ns[3]->m_x - ns[0]->m_x);
-                jac[7] = 0.5*(ns[3]->m_y - ns[0]->m_y);
-                jac[8] = 0.5*(ns[3]->m_z - ns[0]->m_z);
+                jac[0] = 0.5*(ns[pyramidV1[j]]->m_x - ns[pyramidV0[j]]->m_x);
+                jac[1] = 0.5*(ns[pyramidV1[j]]->m_y - ns[pyramidV0[j]]->m_y);
+                jac[2] = 0.5*(ns[pyramidV1[j]]->m_z - ns[pyramidV0[j]]->m_z);
+                jac[3] = 0.5*(ns[pyramidV2[j]]->m_x - ns[pyramidV0[j]]->m_x);
+                jac[4] = 0.5*(ns[pyramidV2[j]]->m_y - ns[pyramidV0[j]]->m_y);
+                jac[5] = 0.5*(ns[pyramidV2[j]]->m_z - ns[pyramidV0[j]]->m_z);
+                jac[6] = 0.5*(ns[pyramidV3[j]]->m_x - ns[pyramidV0[j]]->m_x);
+                jac[7] = 0.5*(ns[pyramidV3[j]]->m_y - ns[pyramidV0[j]]->m_y);
+                jac[8] = 0.5*(ns[pyramidV3[j]]->m_z - ns[pyramidV0[j]]->m_z);
 
                 NekDouble jc = jac[0] * (jac[4] * jac[8] - jac[5] * jac[7]) -
                                jac[3] * (jac[1] * jac[8] - jac[2] * jac[7]) +
@@ -185,6 +191,30 @@ bool ProcessProjectCAD::IsNotValid(vector<ElementSharedPtr> &els)
                 {
                     return true;
                 }
+            }
+        }
+        else if(els[i]->GetShapeType() == LibUtilities::eTetrahedron)
+        {
+            vector<NodeSharedPtr> ns = els[i]->GetVertexList();
+            Array<OneD, NekDouble> jac(9,0.0);
+
+            jac[0] = 0.5*(ns[1]->m_x - ns[0]->m_x);
+            jac[1] = 0.5*(ns[1]->m_y - ns[0]->m_y);
+            jac[2] = 0.5*(ns[1]->m_z - ns[0]->m_z);
+            jac[3] = 0.5*(ns[2]->m_x - ns[0]->m_x);
+            jac[4] = 0.5*(ns[2]->m_y - ns[0]->m_y);
+            jac[5] = 0.5*(ns[2]->m_z - ns[0]->m_z);
+            jac[6] = 0.5*(ns[3]->m_x - ns[0]->m_x);
+            jac[7] = 0.5*(ns[3]->m_y - ns[0]->m_y);
+            jac[8] = 0.5*(ns[3]->m_z - ns[0]->m_z);
+
+            NekDouble jc = jac[0] * (jac[4] * jac[8] - jac[5] * jac[7]) -
+                           jac[3] * (jac[1] * jac[8] - jac[2] * jac[7]) +
+                           jac[6] * (jac[1] * jac[5] - jac[2] * jac[4]);
+
+            if (jc < NekConstants::kNekZeroTol)
+            {
+                return true;
             }
         }
         else
