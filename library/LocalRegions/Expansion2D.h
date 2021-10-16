@@ -41,6 +41,7 @@
 #include <StdRegions/StdExpansion2D.h>
 #include <LocalRegions/LocalRegionsDeclspec.h>
 #include <SpatialDomains/Geometry2D.h>
+#include <LocalRegions/MatrixKey.h>
 
 namespace Nektar
 {
@@ -64,6 +65,12 @@ namespace Nektar
             
             LOCAL_REGIONS_EXPORT virtual ~Expansion2D() {}
             
+            LOCAL_REGIONS_EXPORT DNekScalBlkMatSharedPtr
+                  CreateStaticCondMatrix(const MatrixKey &mkey);
+
+            LOCAL_REGIONS_EXPORT DNekScalMatSharedPtr
+                  CreateMatrix(const MatrixKey &mkey);
+
             LOCAL_REGIONS_EXPORT void SetTraceToGeomOrientation(
                 Array<OneD, ExpansionSharedPtr> &EdgeExp,
                 Array<OneD, NekDouble>          &inout);
@@ -115,8 +122,10 @@ namespace Nektar
                 const int                        nq0,
                 Array<OneD, int>                &idmap);
 
+            virtual DNekMatSharedPtr v_GenMatrix(
+                                                 const StdRegions::StdMatrixKey &mkey);
         protected:
-            std::vector<Expansion1DWeakPtr>    m_edgeExp;
+            // std::vector<Expansion1DWeakPtr>    m_edgeExp; no longer required? 
             std::vector<bool>                  m_requireNeg;
             std::map<int, NormalVector>        m_edgeNormals;
             Expansion3DWeakPtr                 m_elementLeft;
@@ -137,8 +146,6 @@ namespace Nektar
                                                                            const int dir,
                                                                            const StdRegions::VarCoeffMap   &varcoeffs);
 
-            virtual DNekMatSharedPtr v_GenMatrix(
-                                                 const StdRegions::StdMatrixKey &mkey);
 
             // Hybridized DG routines
             virtual void v_DGDeriv(
@@ -197,8 +204,7 @@ namespace Nektar
             virtual const NormalVector &v_GetTraceNormal(const int edge) const;
             virtual NekDouble v_VectorFlux(
                                            const Array<OneD, Array<OneD, NekDouble > > &vec);
-            virtual  void v_IProductWRTTensorDerivBaseOnTraceMat
-            (Array<OneD, DNekMatSharedPtr> &DerivMat); 
+            virtual void v_TraceNormLen(const int traceid, NekDouble &h, NekDouble &p);
         };
 
 

@@ -256,6 +256,10 @@ namespace Nektar
                 v_AddRobinMassMatrix(traceid,primCoeffs,inoutmat);
             }
             
+            inline void TraceNormLen(const int traceid, NekDouble &h, NekDouble &p)
+            {
+                v_TraceNormLen(traceid,h,p);
+            }
 
             virtual void AddRobinTraceContribution(
                 const int traceid,
@@ -269,12 +273,10 @@ namespace Nektar
             LOCAL_REGIONS_EXPORT const Array<OneD, const NekDouble > 
                         &GetElmtBndNormDirElmtLen(const int nbnd) const;
             
-            void IProductWRTTensorDerivBaseOnTraceMat(
-                    Array<OneD, DNekMatSharedPtr> &DerivMat)
-            {
-                v_IProductWRTTensorDerivBaseOnTraceMat(DerivMat);
-            }
+            void StdDerivBaseOnTraceMat(Array<OneD,DNekMatSharedPtr> &DerivMat);
             
+
+
         protected:
 	    LibUtilities::NekManager<IndexMapKey,
                       IndexMapValues, IndexMapKey::opLess> m_indexMapManager;
@@ -426,9 +428,8 @@ namespace Nektar
                 const Array<OneD, NekDouble> &incoeffs,
                 Array<OneD, NekDouble> &coeffs);
 
-            virtual  void v_IProductWRTTensorDerivBaseOnTraceMat(
-                    Array<OneD, DNekMatSharedPtr> &DerivMat); 
-
+            virtual void v_TraceNormLen(const int traceid, NekDouble &h, NekDouble &p);
+            
         private:
 
         };

@@ -264,7 +264,10 @@ namespace Nektar
             {
             case eInvMass:
                 {
-                    StdMatrixKey masskey(eMass,mkey.GetShapeType(),*this,NullConstFactorMap,NullVarCoeffMap,mkey.GetNodalPointsType());
+                    StdMatrixKey masskey(eMass,mkey.GetShapeType(),
+                                         *this,NullConstFactorMap,
+                                         NullVarCoeffMap,
+                                         mkey.GetNodalPointsType());
                     DNekMatSharedPtr mmat = GetStdMatrix(masskey);
 
                     returnval = MemoryManager<DNekMat>::AllocateSharedPtr(*mmat); //Populate standard mass matrix.
@@ -273,7 +276,10 @@ namespace Nektar
                 break;
             case eInvNBasisTrans:
                 {
-                    StdMatrixKey tmpkey(eNBasisTrans,mkey.GetShapeType(),*this,NullConstFactorMap,NullVarCoeffMap,mkey.GetNodalPointsType());
+                    StdMatrixKey tmpkey(eNBasisTrans,mkey.GetShapeType(),
+                                        *this,NullConstFactorMap,
+                                        NullVarCoeffMap,
+                                        mkey.GetNodalPointsType());
                     DNekMatSharedPtr tmpmat = GetStdMatrix(tmpkey);
                     returnval = MemoryManager<DNekMat>::AllocateSharedPtr(*tmpmat); //Populate  matrix.
                     returnval->Invert();

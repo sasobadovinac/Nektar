@@ -926,7 +926,10 @@ namespace Nektar
                 bndcnt += m_bndCondExpansions[i]->GetNcoeffs();
             }
 
-            GlobalLinSysKey key(StdRegions::eHelmholtz,m_locToGloMap,factors,
+            StdRegions::MatrixType mtype = factors.count(StdRegions::eFactorGJP)?
+                                            StdRegions::eHelmholtzGJP:
+                                            StdRegions::eHelmholtz;
+            GlobalLinSysKey key(mtype,m_locToGloMap,factors,
                                 varcoeff,varfactors);
 
             GlobalSolve(key,wsp,outarray,dirForcing);

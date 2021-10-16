@@ -39,6 +39,7 @@
 #include <SolverUtils/RiemannSolvers/RiemannSolver.h>
 #include <SolverUtils/AdvectionSystem.h>
 #include <SolverUtils/Diffusion/Diffusion.h>
+#include <SolverUtils/Forcing/Forcing.h>
 
 namespace Nektar
 {
@@ -67,6 +68,7 @@ namespace Nektar
     protected:
         bool m_subSteppingScheme;
         bool m_useSpecVanVisc;
+        bool m_useGJPSemiImplicit;
         NekDouble m_sVVCutoffRatio;   // cut off ratio from which to start decayhing modes
         NekDouble m_sVVDiffCoeff;     // Diffusion coefficient of SVV modes
         SolverUtils::RiemannSolverSharedPtr     m_riemannSolver;
@@ -77,6 +79,9 @@ namespace Nektar
         // Plane (used only for Discontinous projection
         //        with 3DHomogenoeus1D expansion)
         int                                     m_planeNumber;
+
+        /// Forcing terms
+        std::vector<SolverUtils::ForcingSharedPtr>  m_forcing;
 
         /// Session reader
         UnsteadyAdvectionDiffusion(

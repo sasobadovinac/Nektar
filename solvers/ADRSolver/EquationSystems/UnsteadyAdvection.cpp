@@ -35,6 +35,7 @@
 #include <iostream>
 #include <ADRSolver/EquationSystems/UnsteadyAdvection.h>
 #include <LibUtilities/BasicUtils/Timer.h>
+#include <MultiRegions/ContField.h>
 
 using namespace std;
 
@@ -64,6 +65,9 @@ namespace Nektar
 
         m_session->LoadParameter("wavefreq",   m_waveFreq, 0.0);
         // Read the advection velocities from session file
+
+        m_session->MatchSolverInfo(
+            "GJPStabilisation", "SemiImplicit", m_useGJPSemiImplicit, false);
 
         std::vector<std::string> vel;
         vel.push_back("Vx");
@@ -222,26 +226,29 @@ namespace Nektar
         // Number of solution points
         int nSolutionPts = GetNpoints();
 
-LibUtilities::Timer timer;
-timer.Start();
+        LibUtilities::Timer timer;
+        timer.Start();
         // RHS computation using the new advection base class
         m_advObject->Advect(nVariables, m_fields, m_velocity, inarray,
                             outarray, time);
-timer.Stop();
-// Elapsed time
-timer.AccumulateRegion("Advect");
-
+        timer.Stop();
+        // Elapsed time
+        timer.AccumulateRegion("Advect");
+        
         // Negate the RHS
         for (i = 0; i < nVariables; ++i)
         {
             Vmath::Neg(nSolutionPts, outarray[i], 1);
         }
 
-        // Add forcing terms
-        for (auto &x : m_forcing)
+        // Add explicit GJP forcing if available
+        if(!m_useGJPSemiImplicit)
         {
-            // set up non-linear terms
-            x->Apply(m_fields, inarray, outarray, time);
+            for (auto &x : m_forcing)
+            {
+                // set up non-linear terms
+                x->Apply(m_fields, inarray, outarray, time);
+            }
         }
     }
 
@@ -287,12 +294,56 @@ timer.AccumulateRegion("Advect");
             case MultiRegions::eGalerkin:
             case MultiRegions::eMixed_CG_Discontinuous:
             {
-                Array<OneD, NekDouble> coeffs(m_fields[0]->GetNcoeffs(),0.0);
+                int ncoeffs = m_fields[0]->GetNcoeffs();
+                Array<OneD, NekDouble> coeffs(ncoeffs,0.0);
+
+#if 1
                 for(i = 0; i < nVariables; ++i)
                 {
                     m_fields[i]->FwdTrans(inarray[i], coeffs);
                     m_fields[i]->BwdTrans_IterPerExp(coeffs, outarray[i]);
                 }
+#else
+                --> Decide if want this approach here. 
+                Array<OneD,NekDouble> wsp(ncoeffs);
+                // copy inarray 
+                Array<OneD, NekDouble> in = inarray[i]; 
+
+                if(m_useGJPSemiImplicit)
+                {
+                    // Add GJP forcing terms
+                    for (auto &x : m_forcing)
+                    {
+                        // set up non-linear terms
+                        x->Apply(m_fields, inarray, in, time);
+                    }
+                }
+                
+                for(i = 0; i < nVariables; ++i)
+                {
+                    StdRegions::ConstFactorMap factors;
+                    StdRegions::MatrixType mtype = StdRegions::eMass;
+                    if(m_useGJPSemiImplicit)
+                    {
+                        factors[StdRegions::eFactorGJP] = m_timestep;
+                        mtype = StdRegions::eMassGJP;
+
+                    }
+                    
+                    m_fields[i]->IProductWRTBase(in, wsp);
+
+                    // Solve the system
+                    MultiRegions::ContFieldSharedPtr cfield =
+                        std::dynamic_pointer_cast<
+                            MultiRegions::ContField>(m_fields[i]);
+                    MultiRegions::GlobalLinSysKey
+                        key(mtype, cfield->GetLocalToGlobalMap(),factors);
+                    
+                    cfield->GlobalSolve(key,wsp,coeffs);
+
+                    m_fields[i]->BwdTrans_IterPerExp(coeffs, outarray[i]);
+                }
+#endif
                 break;
             }
 
@@ -409,5 +460,9 @@ timer.AccumulateRegion("Advect");
     void UnsteadyAdvection::v_GenerateSummary(SolverUtils::SummaryList& s)
     {
         AdvectionSystem::v_GenerateSummary(s);
+        if(m_useGJPSemiImplicit)
+        {
+            SolverUtils::AddSummaryItem(s,"GJP Stabilisation", "Semi Implicit");
+        }
     }
 }

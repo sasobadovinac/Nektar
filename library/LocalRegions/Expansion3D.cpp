@@ -2499,56 +2499,58 @@ namespace Nektar
                       "face normal not computed.");
             return x->second;
         }
-
-        void Expansion3D::v_IProductWRTTensorDerivBaseOnTraceMat(
-                                Array<OneD, DNekMatSharedPtr> &DerivMat)
+        
+        void Expansion3D::v_TraceNormLen(const int traceid, NekDouble &h, NekDouble &p)
         {
-            int nquad = GetTotPoints();
-            int ntraces = GetNtraces();
+            SpatialDomains::GeometrySharedPtr geom = GetGeom(); 
+            
+            int nverts = geom->GetFace(traceid)->GetNumVerts();
 
-            Array<OneD, NekDouble> coeffs(m_ncoeffs);
-            Array<OneD, NekDouble> phys(nquad), deriv0(nquad), deriv1(nquad),
-                deriv2(nquad);
+            SpatialDomains::PointGeom tn1,tn2, normal;
+            tn1.Sub(*(geom->GetFace(traceid)->GetVertex(1)),
+                    *(geom->GetFace(traceid)->GetVertex(0)));
+            tn2.Sub(*(geom->GetFace(traceid)->GetVertex(nverts-1)),
+                    *(geom->GetFace(traceid)->GetVertex(0)));
 
-            Array<OneD, Array<OneD, int> > traceids(ntraces);
+            normal.Mult(tn1,tn2);
 
-            int tottracepts = 0; 
-            for(int i = 0; i < ntraces; ++i)
+            //normalise normal
+            NekDouble mag = normal.dot(normal);
+            mag = 1.0/sqrt(mag); 
+            normal.UpdatePosition(normal.x()*mag,normal.y()*mag,
+                                  normal.z()*mag);
+
+            SpatialDomains::PointGeom Dx;
+            h = 0.0;
+            p = 0.0; 
+            for(int i = 0; i < nverts; ++i)
             {
-                GetTracePhysMap(i,traceids[i]);
-                tottracepts += GetTraceNumPoints(i);
-            }               
-                                  
-            DerivMat = Array<OneD, DNekMatSharedPtr> (3); 
-            DerivMat[0] = MemoryManager<DNekMat>::AllocateSharedPtr
-                (m_ncoeffs,tottracepts);
-            DerivMat[1] = MemoryManager<DNekMat>::AllocateSharedPtr
-                (m_ncoeffs,tottracepts);
-            DerivMat[2] = MemoryManager<DNekMat>::AllocateSharedPtr
-                (m_ncoeffs,tottracepts);
+                //vertices on edges
+                int edgid = geom->GetEdgeNormalToFaceVert(traceid,i); 
+                    
+                //vector along noramal edge to each vertex 
+                Dx.Sub(*(geom->GetEdge(edgid)->GetVertex(0)),
+                       *(geom->GetEdge(edgid)->GetVertex(1)));
 
-            for(int i = 0; i < m_ncoeffs; ++i)
+                // calculate perpendicular distance of normal length
+                // from first vertex
+                h  += fabs(normal.dot(Dx));
+            }
+            
+            h /= (NekDouble)(nverts);
+
+            // find normal basis direction
+            int dir0 = geom->GetDir(traceid,0);
+            int dir1 = geom->GetDir(traceid,1);
+            int dirn;
+            for(dirn = 0; dirn < 3; ++dirn)
             {
-                Vmath::Zero(m_ncoeffs,coeffs,1);
-                coeffs[i] = 1.0;
-                BwdTrans(coeffs,phys);
-                
-                // dphi_i/d\xi_1,  dphi_i/d\xi_2  dphi_i/d\xi_3
-                StdPhysDeriv(phys,deriv0,deriv1,deriv2);
-
-                int cnt = 0;
-                for(int j = 0; j < ntraces; ++j)
+                if((dirn != dir0)&&(dirn != dir1))
                 {
-                    int nTracePts = GetTraceNumPoints(j);
-                    for(int k = 0; k < nTracePts; ++k)
-                    {
-                        (*DerivMat[0])(i,cnt+k) = deriv0[traceids[j][k]];
-                        (*DerivMat[1])(i,cnt+k) = deriv1[traceids[j][k]];
-                        (*DerivMat[2])(i,cnt+k) = deriv2[traceids[j][k]];
-                    }
-                    cnt += nTracePts; 
+                    break;
                 }
             }
+            p = (NekDouble) (GetBasisNumModes(dirn)-1);
         }
     } //end of namespace
 } //end of namespace

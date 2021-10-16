@@ -55,10 +55,10 @@ namespace Nektar
             Expansion     (geom),
             Expansion2D   (geom),
             m_matrixManager(
-                std::bind(&TriExp::CreateMatrix, this, std::placeholders::_1),
+                std::bind(&Expansion2D::CreateMatrix, this, std::placeholders::_1),
                 std::string("TriExpMatrix")),
             m_staticCondMatrixManager(
-                std::bind(&TriExp::CreateStaticCondMatrix, this, std::placeholders::_1),
+                std::bind(&Expansion2D::CreateStaticCondMatrix, this, std::placeholders::_1),
                 std::string("TriExpStaticCondMatrix"))
         {
         }
@@ -795,20 +795,23 @@ namespace Nektar
         {
             int nquad0 = m_base[0]->GetNumPoints();
             int nquad1 = m_base[1]->GetNumPoints();
-
+            int nt  = 0; 
             // Extract in Cartesian direction because we have to deal with
             // e.g. Gauss-Radau points.
             switch(edge)
             {
             case 0:
                 Vmath::Vcopy(nquad0, &(inarray[0]), 1, &(outarray[0]), 1);
+                nt = nquad0;
                 break;
             case 1:
                 Vmath::Vcopy(nquad1, &(inarray[0])+(nquad0-1),
                              nquad0, &(outarray[0]), 1);
+                nt = nquad1;
                 break;
             case 2:
                 Vmath::Vcopy(nquad1, &(inarray[0]), nquad0, &(outarray[0]), 1);
+                nt = nquad1;
                 break;
             default:
                 ASSERTL0(false,"edge value (< 3) is out of range");
@@ -824,7 +827,7 @@ namespace Nektar
             {
                 Array<OneD,NekDouble> outtmp(max(nquad0,nquad1));
 
-                outtmp = outarray;
+                Vmath::Vcopy(nt,outarray,1,outtmp,1);
 
                 LibUtilities::Interp1D(m_base[edge?1:0]->GetPointsKey(),
                                        outtmp,
@@ -1049,7 +1052,8 @@ namespace Nektar
                 // interpolate
                 for(i = 0; i < GetCoordim(); ++i)
                 {
-                    LibUtilities::Interp1D(from_key,&normals[i*nq],m_base[0]->GetPointsKey(),&normal[i][0]);
+                    LibUtilities::Interp1D(from_key,&normals[i*nq],
+                                  m_base[0]->GetPointsKey(),&normal[i][0]);
                     Vmath::Vmul(nqe,work,1,normal[i],1,normal[i],1);
                 }
 
@@ -1182,7 +1186,7 @@ namespace Nektar
             return tmp->GetStdMatrix(mkey);
         }
 
-
+#if 0 
         DNekScalMatSharedPtr TriExp::CreateMatrix(const MatrixKey &mkey)
         {
             DNekScalMatSharedPtr returnval;
@@ -1534,124 +1538,34 @@ namespace Nektar
                 break;
             }
 
-            return returnval;
-        }
-
-
-        DNekScalBlkMatSharedPtr TriExp::CreateStaticCondMatrix(const MatrixKey &mkey)
-        {
-            DNekScalBlkMatSharedPtr returnval;
-            LibUtilities::PointsKeyVector ptsKeys = GetPointsKeys();
-
-            ASSERTL2(m_metricinfo->GetGtype() != SpatialDomains::eNoGeomType,"Geometric information is not set up");
-
-            // set up block matrix system
-            unsigned int nbdry = NumBndryCoeffs();
-            unsigned int nint = (unsigned int)(m_ncoeffs - nbdry);
-            unsigned int exp_size[] = {nbdry,nint};
-            unsigned int nblks = 2;
-            returnval = MemoryManager<DNekScalBlkMat>::AllocateSharedPtr(nblks,nblks,exp_size,exp_size); //Really need a constructor which takes Arrays
-            NekDouble factor = 1.0;
-
-            switch(mkey.GetMatrixType())
+            // Check to see if GJPScaling is present
+            if(mkey.ConstFactorExists(StdRegions::eFactorGJP))
             {
-                // this can only use stdregions statically condensed system for mass matrix
-            case StdRegions::eMass:
-                if((m_metricinfo->GetGtype() == SpatialDomains::eDeformed)||(mkey.GetNVarCoeff()))
-                {
-                    factor = 1.0;
-                    goto UseLocRegionsMatrix;
-                }
-                else
-                {
-                    factor = (m_metricinfo->GetJac(ptsKeys))[0];
-                    goto UseStdRegionsMatrix;
-                }
-                break;
-            default:     // use Deformed case for both regular and deformed geometries
-                factor = 1.0;
-                goto UseLocRegionsMatrix;
-                break;
-            UseStdRegionsMatrix:
-                {
-                    NekDouble            invfactor = 1.0/factor;
-                    NekDouble            one = 1.0;
-                    DNekBlkMatSharedPtr  mat = GetStdStaticCondMatrix(mkey);
-                    DNekScalMatSharedPtr Atmp;
-                    DNekMatSharedPtr     Asubmat;
+                MatrixKey key(mkey, StdRegions::eNormDerivOnTrace);
 
-                    returnval->SetBlock(0,0,Atmp = MemoryManager<DNekScalMat>::AllocateSharedPtr(factor,Asubmat = mat->GetBlock(0,0)));
-                    returnval->SetBlock(0,1,Atmp = MemoryManager<DNekScalMat>::AllocateSharedPtr(one,Asubmat = mat->GetBlock(0,1)));
-                    returnval->SetBlock(1,0,Atmp = MemoryManager<DNekScalMat>::AllocateSharedPtr(factor,Asubmat = mat->GetBlock(1,0)));
-                    returnval->SetBlock(1,1,Atmp = MemoryManager<DNekScalMat>::AllocateSharedPtr(invfactor,Asubmat = mat->GetBlock(1,1)));
-                }
-                break;
-
-                UseLocRegionsMatrix:
-                {
-                    int i,j;
-                    NekDouble            invfactor = 1.0/factor;
-                    NekDouble            one = 1.0;
-
-                    DNekScalMat &mat = *GetLocMatrix(mkey);
-
-                    DNekMatSharedPtr A = MemoryManager<DNekMat>::AllocateSharedPtr(nbdry,nbdry);
-                    DNekMatSharedPtr B = MemoryManager<DNekMat>::AllocateSharedPtr(nbdry,nint);
-                    DNekMatSharedPtr C = MemoryManager<DNekMat>::AllocateSharedPtr(nint,nbdry);
-                    DNekMatSharedPtr D = MemoryManager<DNekMat>::AllocateSharedPtr(nint,nint);
-
-                    Array<OneD,unsigned int> bmap(nbdry);
-                    Array<OneD,unsigned int> imap(nint);
-                    GetBoundaryMap(bmap);
-                    GetInteriorMap(imap);
-
-                    for(i = 0; i < nbdry; ++i)
-                    {
-                        for(j = 0; j < nbdry; ++j)
-                        {
-                            (*A)(i,j) = mat(bmap[i],bmap[j]);
-                        }
-
-                        for(j = 0; j < nint; ++j)
-                        {
-                            (*B)(i,j) = mat(bmap[i],imap[j]);
-                        }
-                    }
-
-                    for(i = 0; i < nint; ++i)
-                    {
-                        for(j = 0; j < nbdry; ++j)
-                        {
-                            (*C)(i,j) = mat(imap[i],bmap[j]);
-                        }
-
-                        for(j = 0; j < nint; ++j)
-                        {
-                            (*D)(i,j) = mat(imap[i],imap[j]);
-                        }
-                    }
-
-                    // Calculate static condensed system
-                    if(nint)
-                    {
-                        D->Invert();
-                        (*B) = (*B)*(*D);
-                        (*A) = (*A) - (*B)*(*C);
-                    }
-
-                    DNekScalMatSharedPtr     Atmp;
-
-                    returnval->SetBlock(0,0,Atmp = MemoryManager<DNekScalMat>::AllocateSharedPtr(factor,A));
-                    returnval->SetBlock(0,1,Atmp = MemoryManager<DNekScalMat>::AllocateSharedPtr(one,B));
-                    returnval->SetBlock(1,0,Atmp = MemoryManager<DNekScalMat>::AllocateSharedPtr(factor,C));
-                    returnval->SetBlock(1,1,Atmp = MemoryManager<DNekScalMat>::AllocateSharedPtr(invfactor,D));
-
-                }
+                // Generate a local copy of traceMat
+                DNekMat NDTraceMat =
+                   *(this->m_matrixManager[key]->GetOwnedMatrix());
+                
+                NekDouble factor =
+                    mkey.GetConstFactor(StdRegions::eFactorGJP); 
+                factor /= returnval->Scale(); 
+                
+                int ntot = returnval->GetRows()*
+                                    returnval->GetColumns(); 
+                
+                Vmath::Svtvp(ntot, factor,
+                             &NDTraceMat.GetPtr()[0],1,
+                             returnval->GetRawPtr(),1,
+                             &NDTraceMat.GetPtr()[0],1);
+                returnval = MemoryManager<DNekScalMat>::
+                    AllocateSharedPtr(returnval->Scale(),
+                        std::make_shared<DNekMat>(NDTraceMat));
             }
 
             return returnval;
         }
-
+#endif
 
         DNekScalMatSharedPtr TriExp::v_GetLocMatrix(const MatrixKey &mkey)
         {
@@ -2041,8 +1955,6 @@ namespace Nektar
             const Array<TwoD, const NekDouble>&
                        df = m_metricinfo->GetDerivFactors(GetPointsKeys());
 
-            const Array<OneD, const NekDouble>& z0 = m_base[0]->GetZ();
-            const Array<OneD, const NekDouble>& z1 = m_base[1]->GetZ();
 
             if(d0factors.size() !=3)
             {
@@ -2205,19 +2117,6 @@ namespace Nektar
                         d1factors[2][i] += df[2*n+1][0]*normal_2[n][i];
                     }
                 }
-            }
-
-            // readjust factors for collapsed coordinates 
-            for(int i = 0; i < nquad0; ++i)
-            {
-                d0factors[0][i] = d0factors[0][i] + 0.5*(1+z0[i])*d1factors[0][i];
-            }
-            
-            // readjust factors for collapsed coordinates 
-            for(int i = 0; i < nquad1; ++i)
-            {
-                d0factors[1][i]   = (2.0*d0factors[1][i]+2.0*d1factors[1][i])/(1-z1[i]);
-                d0factors[2][i]   = 2.0*d0factors[2][i]/(1-z1[i]);
             }
         }
     }

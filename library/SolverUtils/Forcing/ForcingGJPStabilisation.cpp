@@ -35,6 +35,8 @@
 #include <SolverUtils/Forcing/ForcingGJPStabilisation.h>
 #include <MultiRegions/AssemblyMap/AssemblyMapDG.h>
 #include <MultiRegions/AssemblyMap/LocTraceToTraceMap.h>
+#include <LocalRegions/MatrixKey.h>
+#include <LocalRegions/Expansion2D.h>
 #include <SolverUtils/EquationSystem.h>
 
 using namespace std;
@@ -67,7 +69,7 @@ namespace SolverUtils
         const TiXmlElement* funcNameElmt = pForce->FirstChildElement("HSCALING");
 
         if (funcNameElmt)
-         {
+        {
             m_hScalingStr = funcNameElmt->GetText();
         }
         else
@@ -99,6 +101,9 @@ namespace SolverUtils
             m_jumpScal = 1.0;
         }
         
+        m_session->MatchSolverInfo("GJPStabilisation",
+                                   "SemiImplicit", m_useGJPSemiImplicit, false);
+
         if(m_session->GetComm()->GetRank() == 0)
         {
             cout << "GJP Stabilisation:" << endl;
@@ -205,6 +210,7 @@ namespace SolverUtils
         }
                 
         int cnt              = 0;
+        int offset           = 0;
         int offset_phys      = 0;
         int coeff_offset     = 0; 
         Array<OneD, Array<OneD, Array<OneD, NekDouble> > >dbasis;
@@ -223,7 +229,7 @@ namespace SolverUtils
             for(int n = 0; n < elmt->GetNtraces(); ++n, ++cnt)
             {
                 NekDouble jumpScal; 
-                eval_h(elmt,n,h,p);
+                elmt->TraceNormLen(n,h,p);
                 ASSERTL0(boost::math::isnan(h) == false,
                          "h has a nan value when e = " + 
                          boost::lexical_cast<std::string>(e) + " n =" +
@@ -260,6 +266,8 @@ namespace SolverUtils
 #endif
 
                 int nptrace = elmt->GetTraceNumPoints(n);
+                elmt->GetTraceCoeffMap(n,map);               
+                int traceNcoeffs = elmt->GetTraceNcoeffs(n);
 
                 for(int i = 0; i < m_traceDim+1; ++i)
                 {
@@ -268,6 +276,7 @@ namespace SolverUtils
                 }
                 
                 offset_phys += nptrace;
+                offset      += traceNcoeffs; 
             }
             coeff_offset += elmt->GetNcoeffs();
         }
@@ -280,8 +289,7 @@ namespace SolverUtils
             if(m_traceDim > 0)
             {
                 //multiply by Jacobian and quadrature points. 
-                m_locElmtTrace->MultiplyByQuadratureMetric(m_scalTrace[i],
-                                                           m_scalTrace[i]);
+                m_locElmtTrace->MultiplyByQuadratureMetric(m_scalTrace[i],m_scalTrace[i]);
             }
         }
 
@@ -293,7 +301,7 @@ namespace SolverUtils
         Array<OneD, const LibUtilities::BasisSharedPtr>
             base_sav = dgfield->GetExp(0)->GetBase();
 
-        dgfield->GetExp(0)->IProductWRTTensorDerivBaseOnTraceMat(TraceMat);
+        dgfield->GetExp(0)->StdDerivBaseOnTraceMat(TraceMat);
 
         for(int n = 1; n < dgfield->GetExpSize(); ++n)
         {
@@ -316,19 +324,16 @@ namespace SolverUtils
             else
             {
                 // save previous block of data. 
-                m_IPWRTDBOnTraceMat.push_back(std::pair<int,
-                            Array<OneD, DNekMatSharedPtr>>(nelmt,TraceMat));
+                m_StdDBaseOnTraceMat.push_back(std::pair<int,Array<OneD, DNekMatSharedPtr>>(nelmt,TraceMat));
 
                 // start new block 
-                dgfield->GetExp(n)->IProductWRTTensorDerivBaseOnTraceMat
-                           (TraceMat);
+                dgfield->GetExp(n)->StdDerivBaseOnTraceMat(TraceMat);
                 nelmt = 1;
                 base_sav = dgfield->GetExp(n)->GetBase();
             }
         }
         // save latest block of data. 
-        m_IPWRTDBOnTraceMat.push_back(std::pair<int,Array<OneD,
-                                      DNekMatSharedPtr>>(nelmt,TraceMat));
+        m_StdDBaseOnTraceMat.push_back(std::pair<int,Array<OneD, DNekMatSharedPtr>>(nelmt,TraceMat));
     }
     
     void ForcingGJPStabilisation::v_Apply(const Array<OneD, MultiRegions::ExpListSharedPtr> &pFields,
@@ -343,6 +348,12 @@ namespace SolverUtils
         int nTracePts = m_dgfield->GetTrace()->GetTotPoints();
         int nLocETrace = m_locElmtTrace->GetTotPoints();
         int nLocETraceCoeffs = m_locElmtTrace->GetNcoeffs();
+
+#if 0
+        boost::ignore_unused(pinarray);
+        Array<OneD, Array<OneD, NekDouble> >inarray(1);
+        inarray[0] = Array<OneD, NekDouble> (nphys,1.0); 
+#endif
 
         ASSERTL1(nLocETrace == m_scalTrace[0].size(),"expect these to be similar");
         ASSERTL1(nLocETraceCoeffs <= nphys,"storage assumptions presume that nLocETraceCoeffs < nphys");
@@ -361,9 +372,9 @@ namespace SolverUtils
 
         Array<OneD, NekDouble> tmp(nLocETrace);
         Array<OneD, NekDouble> LocElmtTracePhys   =
-                                       m_locElmtTrace->UpdatePhys();
+            m_locElmtTrace->UpdatePhys();
         Array<OneD, NekDouble> LocElmtTraceCoeffs =
-                                       m_locElmtTrace->UpdateCoeffs();
+            m_locElmtTrace->UpdateCoeffs();
         ASSERTL1(LocElmtTracePhys.size() <= nLocETrace,
                  "expect this vector to be at least of size nLocETrace");
 
@@ -381,29 +392,56 @@ namespace SolverUtils
             }
             Vmath::Vabs(nTracePts,unorm,1,unorm,1);
         }
-            
+
+        Array<OneD, NekDouble> GradJumpOnTraceBwd; 
+        if(m_useGJPSemiImplicit)
+        {
+            GradJumpOnTraceBwd = Array<OneD, NekDouble>(nTracePts); 
+
+        }
+        
         for(int f = 0; f < m_numForcingFields; ++f)
         {
             for(int p = 0; p < m_nplanes; ++p)
             {
                 Vmath::Zero(nmax,FilterCoeffs,1);
                 Vmath::Zero(nTracePts,GradJumpOnTrace,1);
+                if(m_useGJPSemiImplicit)
+                {
+                    Vmath::Zero(nTracePts,GradJumpOnTraceBwd,1);
+                }
                 
                 // calculate derivative 
                 m_dgfield->PhysDeriv(inarray[f] + p*nphys,deriv[0],
                                      deriv[1], deriv[2]);
-        
+                                    
                 // Evaluate the  normal derivative jump on the trace
                 for(int n = 0; n < m_coordDim; ++n)
                 {
                     m_dgfield->GetFwdBwdTracePhys(deriv[n],Fwd,Bwd,true,true);
                     
-                    // Multiply by normal and add to trace evaluation
-                    Vmath::Vsub(nTracePts,Fwd,1,Bwd,1,Fwd,1);
-
-                    Vmath::Vvtvp(nTracePts,Fwd,1,m_traceNormals[n],1,
-                                 GradJumpOnTrace,1,GradJumpOnTrace,1);
+                    if(m_useGJPSemiImplicit)
+                    {
+                        // want to put Fwd vals on bwd trace and vice versa
+                        Vmath::Vvtvp(nTracePts,Bwd,1,m_traceNormals[n],1,
+                                     GradJumpOnTrace,1,GradJumpOnTrace,1);
+                        Vmath::Vvtvp(nTracePts,Fwd,1,m_traceNormals[n],1,
+                                     GradJumpOnTraceBwd,1,GradJumpOnTraceBwd,1);
+                    }
+                    else
+                    {
+                        // Multiply by normal and add to trace evaluation
+                        Vmath::Vsub(nTracePts,Fwd,1,Bwd,1,Fwd,1);
+                        Vmath::Vvtvp(nTracePts,Fwd,1,m_traceNormals[n],1,
+                                     GradJumpOnTrace,1,GradJumpOnTrace,1);
+                    }
                 }
+                if(m_useGJPSemiImplicit)
+                {
+                    // Need to negate Bwd case when  using Fwd normal
+                    Vmath::Neg(nTracePts,GradJumpOnTrace,1);
+                }
+                
                 Vmath::Vmul(nTracePts,unorm,1,GradJumpOnTrace,1,
                             GradJumpOnTrace,1);
 
@@ -414,34 +452,84 @@ namespace SolverUtils
                     Vmath::Vmax(nTracePts,GradJumpOnTrace,1) << endl;
 #endif
 
-
                 // Interpolate GradJumpOnTrace to Local elemental traces.
                 m_locTraceToTraceMap->InterpTraceToLocTrace
                     (0,GradJumpOnTrace, tmp);
                 m_locTraceToTraceMap->UnshuffleLocTraces
                     (0,tmp,LocElmtTracePhys);
-                m_locTraceToTraceMap->InterpTraceToLocTrace
-                    (1,GradJumpOnTrace, tmp);
-                m_locTraceToTraceMap->UnshuffleLocTraces
-                    (1,tmp,LocElmtTracePhys);
+
+                if(m_useGJPSemiImplicit)
+                {
+                    //Vmath::Neg(nTracePts,GradJumpOnTraceBwd,1);
+                    Vmath::Vmul(nTracePts,unorm,1,GradJumpOnTraceBwd,1,
+                                GradJumpOnTraceBwd,1);
+                    m_locTraceToTraceMap->InterpTraceToLocTrace
+                        (1,GradJumpOnTraceBwd, tmp);
+                    m_locTraceToTraceMap->UnshuffleLocTraces
+                        (1,tmp,LocElmtTracePhys);
+                }
+                else
+                {
+                    m_locTraceToTraceMap->InterpTraceToLocTrace
+                        (1,GradJumpOnTrace, tmp);
+                    m_locTraceToTraceMap->UnshuffleLocTraces
+                        (1,tmp,LocElmtTracePhys);
+                }
 
                 // Scale jump on trace
                 Vmath::Vmul(nLocETrace,m_scalTrace[0],1,LocElmtTracePhys,1,
                             tmp,1);
-                MultiplyByIProductWRTDerivOnTraceMat(0,tmp,FilterCoeffs);
+                MultiplyByStdDerivBaseOnTraceMat(0,tmp,FilterCoeffs);
                 
                 for(int i = 0; i < m_traceDim; ++i)
                 {
                     // Scale jump on trace
                     Vmath::Vmul(nLocETrace,m_scalTrace[i+1],1,
                                 LocElmtTracePhys,1,tmp,1);
-                    MultiplyByIProductWRTDerivOnTraceMat(i+1,tmp,deriv[0]);
+                    MultiplyByStdDerivBaseOnTraceMat(i+1,tmp,deriv[0]);
                     Vmath::Vadd(ncoeffs,deriv[0],1,FilterCoeffs,1,
                                 FilterCoeffs,1);
                 }
                 
                 Vmath::Neg(ncoeffs,FilterCoeffs,1);
+                
 
+#if 0
+
+                for(int n = 0; n < m_dgfield->GetNumElmts(); ++n)
+                {
+                    int ncoeffs = m_dgfield->GetExp(n)->GetNcoeffs();
+                    
+                    LocalRegions::MatrixKey key(StdRegions::eNormDerivOnTrace,
+                                          m_dgfield->GetExp(n)->DetShapeType(),
+                                                (*m_dgfield->GetExp(n)));
+                    
+                    // Generate a local copy of traceMat
+                    LocalRegions::Expansion2DSharedPtr exp2d =
+                        m_dgfield->GetExp(n)->as<LocalRegions::Expansion2D>(); 
+                    DNekMatSharedPtr NDTraceMat =exp2d->
+                        Expansion2D::v_GenMatrix(key);
+
+                    Array<OneD, NekDouble> c(ncoeffs);
+                    int poffset = m_dgfield->GetPhys_Offset(n);
+                    
+                    m_dgfield->GetExp(n)->FwdTrans(inarray[0]+poffset,c);
+
+                    DNekVec     C (ncoeffs,c, eWrapper);
+                    DNekVec     D (ncoeffs);
+
+                    D = (*NDTraceMat)*C;
+
+                    int coffset = m_dgfield->GetCoeff_Offset(n);
+                    for(int i =0; i < ncoeffs; ++i)
+                    {
+                        cout << "Filter " << FilterCoeffs[i + coffset] << " Mat: " << D[i] << " Diff: " << FilterCoeffs[i + coffset] - D[i] << endl;
+                    }
+                }
+                exit(1);
+#endif
+                
+                
                 m_dgfield->MultiplyByElmtInvMass(FilterCoeffs,deriv[0]);
 
 #if GJPDEBUG
@@ -521,116 +609,6 @@ namespace SolverUtils
         }
     }
 
-    void ForcingGJPStabilisation::eval_h(LocalRegions::ExpansionSharedPtr elmt,
-                                      int traceid, NekDouble &h, NekDouble &p)
-    {
-        SpatialDomains::GeometrySharedPtr geom = elmt->GetGeom();
-
-        h = 0.0;
-        
-        switch(geom->GetCoordim())
-        {
-        case 1:
-            {
-                h = geom->GetVertex(1)->dist(*geom->GetVertex(0));
-                p = elmt->GetNcoeffs(); 
-            }
-            break;
-        case 2:
-            {
-                int nverts = geom->GetNumVerts();
-                int pe;
-                //vertices on edges
-                SpatialDomains::PointGeom ev0 = *geom->GetVertex(traceid);
-                SpatialDomains::PointGeom ev1 = *geom->GetVertex((traceid+1)%
-                                                                 nverts);
-
-                //vertex on adjacent edge to ev0 
-                SpatialDomains::PointGeom vadj = *geom->GetVertex
-                    ((traceid+(nverts-1))%nverts);
-                
-                // calculate perpendicular distance of normal length
-                // from first vertex
-                NekDouble h1 = ev0.dist(vadj);
-                SpatialDomains::PointGeom Dx, Dx1; 
-
-                Dx.Sub(ev1,ev0);
-                Dx1.Sub(vadj,ev0);
-                
-                NekDouble d1  = Dx.dot(Dx1); 
-                NekDouble lenDx = Dx.dot(Dx);
-                h = sqrt(h1*h1-d1*d1/lenDx);
-                pe = elmt->GetTraceNcoeffs((traceid+nverts-1)%nverts)-1;
-                p = pe; 
-                    
-                // perpendicular distanace from second vertex 
-                vadj = *geom->GetVertex((traceid+2)%nverts);
-
-                h1  = ev1.dist(vadj);
-                Dx1.Sub(vadj,ev1);
-                d1 = Dx.dot(Dx1); 
-
-                h = (h+sqrt(h1*h1-d1*d1/lenDx))*0.5;
-                pe = elmt->GetTraceNcoeffs((traceid+1)%nverts)-1;
-                p = (p+pe)*0.5;
-            }
-        break;
-        case 3:
-        {
-            int nverts = geom->GetFace(traceid)->GetNumVerts();
-
-            SpatialDomains::PointGeom tn1,tn2, normal;
-            tn1.Sub(*(geom->GetFace(traceid)->GetVertex(1)),
-                    *(geom->GetFace(traceid)->GetVertex(0)));
-            tn2.Sub(*(geom->GetFace(traceid)->GetVertex(nverts-1)),
-                    *(geom->GetFace(traceid)->GetVertex(0)));
-
-            normal.Mult(tn1,tn2);
-
-            //normalise normal
-            NekDouble mag = normal.dot(normal);
-            mag = 1.0/sqrt(mag); 
-            normal.UpdatePosition(normal.x()*mag,
-                                  normal.y()*mag,
-                                  normal.z()*mag);
-
-            SpatialDomains::PointGeom Dx;
-            for(int i = 0; i < nverts; ++i)
-            {
-                //vertices on edges
-                int edgid = geom->GetEdgeNormalToFaceVert(traceid,i); 
-                    
-                //vector along noramal edge to each vertex 
-                Dx.Sub(*(geom->GetEdge(edgid)->GetVertex(0)),
-                       *(geom->GetEdge(edgid)->GetVertex(1)));
-
-                // calculate perpendicular distance of normal length
-                // from first vertex
-                h  += fabs(normal.dot(Dx));
-            }
-            
-            h /= (NekDouble)(nverts);
-
-            // find normal basis direction
-            int dir0 = geom->GetDir(traceid,0);
-            int dir1 = geom->GetDir(traceid,1);
-            int dirn;
-            for(dirn = 0; dirn < 3; ++dirn)
-            {
-                if((dirn != dir0)&&(dirn != dir1))
-                {
-                    break;
-                }
-            }
-            p = (NekDouble) (elmt->GetBasisNumModes(dirn)-1);
-        }
-        break;
-        default:
-        break;
-        }
-    }
-
-
     void ForcingGJPStabilisation::SetUpExpansionInfoMapForGJP(SpatialDomains::MeshGraphSharedPtr graph)
     {
         const SpatialDomains::ExpansionInfoMap  expInfo = graph->GetExpansionInfo(m_session->GetVariable(0));
@@ -678,19 +656,22 @@ namespace SolverUtils
         graph->SetExpansionInfo("GJP",newInfo);
     }
 
-    void ForcingGJPStabilisation::MultiplyByIProductWRTDerivOnTraceMat(int i, Array<OneD, NekDouble> &in,
-                                                                       Array<OneD, NekDouble> &out)
+    void ForcingGJPStabilisation::MultiplyByStdDerivBaseOnTraceMat(
+                                         int i,
+                                         Array<OneD, NekDouble> &in,
+                                         Array<OneD, NekDouble> &out)
     {
         // Should be vectorised
 
         int cnt = 0; 
         int cnt1 = 0; 
-        for(auto &it: m_IPWRTDBOnTraceMat)
+        for(auto &it: m_StdDBaseOnTraceMat)
         {
             int rows = it.second[i]->GetRows();
             int cols = it.second[i]->GetColumns();
             
-            Blas::Dgemm('N','N', rows, it.first, cols,  1.0, &(it.second[i]->GetPtr())[0],
+            Blas::Dgemm('N','N', rows, it.first, cols,  1.0,
+                        &(it.second[i]->GetPtr())[0],
                         rows, &in[0]+cnt,  cols, 
                         0.0, &out[0]+cnt1, rows);
 

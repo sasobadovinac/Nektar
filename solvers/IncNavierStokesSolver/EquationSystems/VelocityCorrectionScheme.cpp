@@ -107,6 +107,19 @@ namespace Nektar
         SetUpExtrapolation();
         SetUpSVV();
 
+        m_session->MatchSolverInfo(
+            "GJPStabilisation", "SemiImplicit", m_useGJPSemiImplicit, false);
+        if(m_useGJPSemiImplicit)
+        {
+            bool check = true;
+            
+            m_session->MatchSolverInfo("Projection","Mixed_CG_Discontinuous",check,false);
+            
+            ASSERTL0(check,"Semi Implicit use of GJPStabilisation currently "
+                     "requires Projection to be set to type Mixed_CG_Discontinuous"); 
+        }
+
+        
         m_session->MatchSolverInfo("SmoothAdvection", "True",
                                     m_SmoothAdvection, false);
 
@@ -551,6 +564,10 @@ namespace Nektar
                   + boost::lexical_cast<string>(m_sVVDiffCoeffHomo1D)+"))");
         }
 
+        if(m_useGJPSemiImplicit)
+        {
+            SolverUtils::AddSummaryItem(s,"GJP Stabilisation", "Semi Implicit");
+        }
     }
 
     /**
@@ -698,30 +715,30 @@ timer.AccumulateRegion("Pressure BCs");
         m_extrapolation->SubStepSetPressureBCs(inarray,aii_Dt,m_kinvis);
 
         // Set up forcing term for pressure Poisson equation
-LibUtilities::Timer timer;
-timer.Start();
+        LibUtilities::Timer timer;
+        timer.Start();
         SetUpPressureForcing(inarray, m_F, aii_Dt);
-timer.Stop();
-timer.AccumulateRegion("Pressure Forcing");
-
+        timer.Stop();
+        timer.AccumulateRegion("Pressure Forcing");
+        
         // Solve Pressure System
-timer.Start();
+        timer.Start();
         SolvePressure (m_F[0]);
-timer.Stop();
-timer.AccumulateRegion("Pressure Solve");
-
+        timer.Stop();
+        timer.AccumulateRegion("Pressure Solve");
+        
         // Set up forcing term for Helmholtz problems
-timer.Start();
+        timer.Start();
         SetUpViscousForcing(inarray, m_F, aii_Dt);
-timer.Stop();
-timer.AccumulateRegion("Viscous Forcing");
-
+        timer.Stop();
+        timer.AccumulateRegion("Viscous Forcing");
+        
         // Solve velocity system
-timer.Start();
+        timer.Start();
         SolveViscous( m_F, outarray, aii_Dt);
-timer.Stop();
-timer.AccumulateRegion("Viscous Solve");
-
+        timer.Stop();
+        timer.AccumulateRegion("Viscous Solve");
+        
         // Apply flowrate correction
         if (m_flowrate > 0.0 && m_greenFlux != numeric_limits<NekDouble>::max())
         {
@@ -843,9 +860,16 @@ timer.AccumulateRegion("Viscous Solve");
 
         AppendSVVFactors(factors,varFactorsMap);
 
+
         // Solve Helmholtz system and put in Physical space
         for(int i = 0; i < m_nConvectiveFields; ++i)
         {
+            // test by adding GJP implicit 
+            if(m_useGJPSemiImplicit)
+            {
+                factors[StdRegions::eFactorGJP] = 1.0/m_diffCoeff[i];
+            }
+            
             // Setup coefficients for equation
             factors[StdRegions::eFactorLambda] = 1.0/aii_Dt/m_diffCoeff[i];
             m_fields[i]->HelmSolve(Forcing[i], m_fields[i]->UpdateCoeffs(),

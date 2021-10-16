@@ -181,9 +181,8 @@ namespace Nektar
             LOCAL_REGIONS_EXPORT const virtual NormalVector &v_GetTraceNormal
                 (const int face) const;
 
-            LOCAL_REGIONS_EXPORT virtual void
-                       v_IProductWRTTensorDerivBaseOnTraceMat(
-                                    Array<OneD, DNekMatSharedPtr> &DerivMat);
+            LOCAL_REGIONS_EXPORT virtual void v_TraceNormLen
+                                (const int traceid, NekDouble &h, NekDouble &p);
         private:
             // Do not add members here since it may lead to conflicts.
             // Only use this class for member functions

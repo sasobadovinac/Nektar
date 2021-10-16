@@ -535,6 +535,15 @@ namespace Nektar
                 }
             }
         }
+
+        void Expansion1D::v_TraceNormLen(const int traceid, NekDouble &h, NekDouble &p)
+        {
+            boost::ignore_unused(traceid); 
+            h = GetGeom()->GetVertex(1)->dist(*GetGeom()->GetVertex(0));
+            p = m_ncoeffs-1;
+
+        }
+        
     } //end of namespace
 } //end of namespace
 

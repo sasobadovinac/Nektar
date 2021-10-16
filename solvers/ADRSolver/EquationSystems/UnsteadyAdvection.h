@@ -64,6 +64,7 @@ namespace Nektar
         virtual ~UnsteadyAdvection();
 
     protected:
+        bool m_useGJPSemiImplicit;
         SolverUtils::RiemannSolverSharedPtr     m_riemannSolver;
 
         /// Advection velocity

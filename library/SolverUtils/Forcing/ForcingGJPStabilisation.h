@@ -93,6 +93,8 @@ private:
 
     NekDouble m_jumpScal;
 
+    bool m_useGJPSemiImplicit; 
+    
     /// DG expansion for projection evalaution along trace
     MultiRegions::DisContFieldSharedPtr m_dgfield;    
     /// LocaTraceToTraceMap 
@@ -104,10 +106,10 @@ private:
     /// normals and tangent geometric factors 
     Array<OneD, Array<OneD, NekDouble>> m_scalTrace;
 
-    std::vector<std::pair<int,Array<OneD, DNekMatSharedPtr>>> m_IPWRTDBOnTraceMat;
+    std::vector<std::pair<int,Array<OneD, DNekMatSharedPtr>>> m_StdDBaseOnTraceMat;
 
-    void MultiplyByIProductWRTDerivOnTraceMat(int i, Array<OneD, NekDouble> &in,
-                                              Array<OneD, NekDouble> &out);
+    void MultiplyByStdDerivBaseOnTraceMat(int i, Array<OneD, NekDouble> &in,
+                                          Array<OneD, NekDouble> &out);
     
     // Link to the trace normals 
     Array<OneD, Array<OneD, NekDouble> > m_traceNormals; 
@@ -124,9 +126,6 @@ private:
          const std::weak_ptr<EquationSystem>      &pEquation);
     
     virtual ~ForcingGJPStabilisation(void){};
-
-    void eval_h(LocalRegions::ExpansionSharedPtr geom, int traceid,
-               NekDouble &h, NekDouble &p);
 
     void SetUpExpansionInfoMapForGJP(SpatialDomains::MeshGraphSharedPtr graph);
 };

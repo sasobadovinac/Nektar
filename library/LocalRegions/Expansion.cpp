@@ -325,11 +325,63 @@ namespace Nektar
                                             m_metrics[eMetricQuadrature]);
         }
 
-        void Expansion::v_IProductWRTTensorDerivBaseOnTraceMat(
+        void Expansion::StdDerivBaseOnTraceMat(
                     Array<OneD, DNekMatSharedPtr> &DerivMat)
         {
-            boost::ignore_unused(DerivMat);
-            ASSERTL0(false, "Not implemented.");
+            int nquad = GetTotPoints();
+            int ntraces = GetNtraces();
+            int ndir  = m_base.size();
+            
+            Array<OneD, NekDouble> coeffs(m_ncoeffs);
+            Array<OneD, NekDouble> phys(nquad);
+            
+            Array<OneD, Array<OneD, int> > traceids(ntraces);
+            
+            int tottracepts = 0; 
+            for(int i = 0; i < ntraces; ++i)
+            {
+                GetTracePhysMap(i,traceids[i]);
+                tottracepts += GetTraceNumPoints(i);
+            }               
+            
+            // initialise array to null so can call for
+            // differnt dimensions
+            Array<OneD, Array<OneD, NekDouble> >
+                Deriv(3,NullNekDouble1DArray);
+            
+            DerivMat = Array<OneD, DNekMatSharedPtr> (ndir);
+            
+            for(int i = 0; i < ndir; ++i)
+            {
+                Deriv[i] = Array<OneD, NekDouble>(nquad); 
+                DerivMat[i] = MemoryManager<DNekMat>::AllocateSharedPtr
+                    (m_ncoeffs,tottracepts);
+            }
+            
+            for(int i = 0; i < m_ncoeffs; ++i)
+            {
+                Vmath::Zero(m_ncoeffs,coeffs,1);
+                coeffs[i] = 1.0;
+                BwdTrans(coeffs,phys);
+                
+                // dphi_i/d\xi_1,  dphi_i/d\xi_2  dphi_i/d\xi_3
+                StdPhysDeriv(phys,Deriv[0], Deriv[1], Deriv[2]);
+                
+                int cnt = 0;
+                for(int j = 0; j < ntraces; ++j)
+                {
+                    int nTracePts = GetTraceNumPoints(j);
+                    for(int k = 0; k < nTracePts; ++k)
+                    {
+                        for(int d = 0; d < ndir; ++d)
+                        {
+                            (*DerivMat[d])(i,cnt+k) =
+                                Deriv[d][traceids[j][k]];
+                        }
+                    }
+                    cnt += nTracePts; 
+                }
+            }
         }
 
         void Expansion::v_GetCoords(
@@ -770,16 +822,12 @@ namespace Nektar
             boost::ignore_unused(traceid,primCoeffs,incoeffs, coeffs);
             NEKERROR(ErrorUtil::efatal, "This function is not valid for this class");
         }
-#if 0 
-        void  Expansion::v_IProductWRTDerivBase
-                 (const int dir,
-                  const Array<OneD, const NekDouble>& inarray,
-                  Array<OneD, NekDouble> &outarray)
+
+        void Expansion::v_TraceNormLen(const int traceid, NekDouble &h, NekDouble &p)
         {
-            boost::ignore_unused(dir, inarray, outarray);
+            boost::ignore_unused(traceid,h,p);
             NEKERROR(ErrorUtil::efatal, "This method has not been defined");
         }
-#endif
 
         const Array<OneD, const NekDouble > &Expansion::
             GetElmtBndNormDirElmtLen(const int nbnd) const

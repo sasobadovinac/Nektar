@@ -158,6 +158,12 @@ namespace Nektar
 
             inline int GetGlobalMatrixNnz(const GlobalMatrixKey &gkey);
 
+            /// Solves the linear system specified by the key \a key.
+            MULTI_REGIONS_EXPORT void GlobalSolve(const GlobalLinSysKey &key,
+                             const Array<OneD, const  NekDouble> &rhs,
+                                   Array<OneD,        NekDouble> &inout,
+                             const Array<OneD, const NekDouble> &dirForcing
+                                                        = NullNekDouble1DArray);
         protected:
 
             //private:
@@ -175,13 +181,6 @@ namespace Nektar
             /// linear systems being assembled, such that they should be
             /// constructed only once.
             LibUtilities::NekManager<GlobalLinSysKey, GlobalLinSys> m_globalLinSysManager;
-
-            /// Solves the linear system specified by the key \a key.
-            MULTI_REGIONS_EXPORT void GlobalSolve(const GlobalLinSysKey &key,
-                             const Array<OneD, const  NekDouble> &rhs,
-                                   Array<OneD,        NekDouble> &inout,
-                             const Array<OneD, const NekDouble> &dirForcing
-                                                        = NullNekDouble1DArray);
 
             /// Returns the global matrix specified by \a mkey.
             MULTI_REGIONS_EXPORT GlobalMatrixSharedPtr

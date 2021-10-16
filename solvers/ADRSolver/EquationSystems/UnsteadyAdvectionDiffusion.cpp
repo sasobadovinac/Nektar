@@ -66,7 +66,7 @@ namespace Nektar
         AdvectionSystem::v_InitObject();
 
         m_session->LoadParameter("wavefreq",   m_waveFreq, 0.0);
-        m_session->LoadParameter("epsilon",    m_epsilon,  0.0);
+        m_session->LoadParameter("epsilon",    m_epsilon,  1.0);
 
         // turn on substepping
         m_session->MatchSolverInfo("Extrapolation", "SubStepping",
@@ -84,6 +84,9 @@ namespace Nektar
 
         m_session->MatchSolverInfo(
             "SpectralVanishingViscosity", "True", m_useSpecVanVisc, false);
+
+        m_session->MatchSolverInfo(
+            "GJPStabilisation", "SemiImplicit", m_useGJPSemiImplicit, false);
 
         if(m_useSpecVanVisc)
         {
@@ -171,6 +174,10 @@ namespace Nektar
                 break;
             }
         }
+
+        // Forcing terms
+        m_forcing = SolverUtils::Forcing::Load(m_session, shared_from_this(),
+                                    m_fields, m_fields.size());
 
         m_ode.DefineImplicitSolve (
             &UnsteadyAdvectionDiffusion::DoImplicitSolve, this);
@@ -278,6 +285,12 @@ namespace Nektar
             }
         }
 
+        // Add forcing terms
+        for (auto &x : m_forcing)
+        {
+            // set up non-linear terms
+            x->Apply(m_fields, inarray, outarray, time);
+        }
     }
 
     /**
@@ -349,6 +362,12 @@ namespace Nektar
         StdRegions::ConstFactorMap factors;
         factors[StdRegions::eFactorLambda] = 1.0/lambda/m_epsilon;
 
+        // test by adding GJP implicit 
+        if(m_useGJPSemiImplicit)
+        {
+            factors[StdRegions::eFactorGJP] = 1.0/m_epsilon;
+        }
+        
         if(m_useSpecVanVisc)
         {
             factors[StdRegions::eFactorSVVCutoffRatio] = m_sVVCutoffRatio;
@@ -446,6 +465,10 @@ namespace Nektar
             SolverUtils::SummaryList& s)
     {
         AdvectionSystem::v_GenerateSummary(s);
+        if(m_useGJPSemiImplicit)
+        {
+            SolverUtils::AddSummaryItem(s,"GJP Stabilisation", "Semi Implicit");
+        }
     }
 
 

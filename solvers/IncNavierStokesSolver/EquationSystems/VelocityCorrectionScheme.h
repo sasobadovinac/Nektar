@@ -115,6 +115,8 @@ namespace Nektar
         bool m_useHomo1DSpecVanVisc;
         /// bool to identify if spectral vanishing viscosity is active.
         bool m_useSpecVanVisc;
+        /// bool to identify if GJP semi-implicit is active.
+        bool m_useGJPSemiImplicit;
         /// cutt off ratio from which to start decayhing modes
         NekDouble m_sVVCutoffRatio;
         /// Diffusion coefficient of SVV modes
