@@ -52,7 +52,7 @@ int main(int argc, char *argv[])
 
     try
     {
-        LibUtilities::NekManager<LocalRegions::MatrixKey, DNekScalMat, LocalRegions::MatrixKey::opLess>::DisableManagement("QuadExpMatrix");
+        //LibUtilities::NekManager<LocalRegions::MatrixKey, DNekScalMat, LocalRegions::MatrixKey::opLess>::DisableManagement("QuadExpMatrix");
 
 
 

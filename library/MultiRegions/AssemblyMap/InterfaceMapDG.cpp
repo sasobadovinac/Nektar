@@ -313,16 +313,17 @@ void InterfaceTrace::CalcLocalMissing()
     {
         auto parentEdgeDeque = m_interface->GetOppInterface()->GetEdgeDeque();
 
-        int cnt = 0;
+        int cnt = 1;
         for (auto childId : childEdgeIds)
         {
+            std::cout << "\rSearching in interface " << m_interface->GetId() << " edge # " << cnt++ << "/" << childEdgeIds.size() << "." << std::flush;
             auto childElmt = m_trace->GetExp(m_geomIdToTraceId.at(childId));
             size_t nq      = childElmt->GetTotPoints();
             Array<OneD, NekDouble> xc(nq, 0.0), yc(nq, 0.0), zc(nq, 0.0);
             childElmt->GetCoords(xc, yc, zc);
             int offset = m_trace->GetPhys_Offset(m_geomIdToTraceId.at(childId));
 
-            for (int i = 0; i < nq; ++i, ++cnt)
+            for (int i = 0; i < nq; ++i)
             {
                 bool found = false;
                 Array<OneD, NekDouble> foundLocCoord;
@@ -331,7 +332,7 @@ void InterfaceTrace::CalcLocalMissing()
                 xs[1] = yc[i];
                 xs[2] = zc[i];
 
-                std::cout << "Point: " << xs[0] << " " << xs[1] << " " << xs[2] << std::endl;
+                std::cout << std::endl << "Point: " << xs[0] << " " << xs[1] << " " << xs[2];
                 // Search the edge the point was found in last time first
                 if (foundLocalCoordsCopy.find(offset + i) !=
                     foundLocalCoordsCopy.end())
@@ -344,12 +345,12 @@ void InterfaceTrace::CalcLocalMissing()
                 for (auto &edge : parentEdgeDeque)
                 {
                     NekDouble dist = edge->FindDistance(xs, foundLocCoord);
-                    std::cout << "Looked in: " << edge->GetGlobalID() << " | dist = " << dist << std::endl;
+                    std::cout << std::endl << "Looked in: " << edge->GetGlobalID() << " | dist = " << dist;
 
                     if (dist < 1e-4) // @TODO: Check relative residuals?
                     {
                         found = true;
-                        std::cout << "Found at: " << foundLocCoord[0] << " " << foundLocCoord[1] << " in " << edge->GetGlobalID() << " with dist = " << dist << std::endl;
+                        std::cout << std::endl << "Found at: " << foundLocCoord[0] << " " << foundLocCoord[1] << " in " << edge->GetGlobalID() << " with dist = " << dist;
 
                         m_foundLocalCoords[offset + i] = std::make_pair(edge->GetGlobalID(), foundLocCoord);
                         break;
@@ -363,16 +364,19 @@ void InterfaceTrace::CalcLocalMissing()
 
                 if (!found)
                 {
-                    std::cout << "NOT FOUND!" << std::endl;
+                    if(true)
+                    {
+                        std::cout << std::endl << "NOT FOUND!!! " << "Point " << i << ": " << xs[0] << " " << xs[1] << " " << xs[2];
+                    }
 
                     m_missingCoords.emplace_back(xs);
                     m_mapMissingCoordToTrace.emplace_back(offset + i);
                 }
             }
         }
-
+        std::cout << std::endl;
         // @TODO: Debugging, can remove.
-        if (!m_missingCoords.empty())
+        if (!m_missingCoords.empty() && false)
         {
             std::cout << "Missing coords: " << std::endl;
             for (auto &pnt : m_missingCoords)
@@ -381,7 +385,7 @@ void InterfaceTrace::CalcLocalMissing()
                           << std::endl;
             }
             std::cout << std::endl;
-            exit(0);
+            //exit(0);
         }
     }
 }
@@ -556,17 +560,17 @@ void InterfaceTrace::FillLocalBwdTrace(Array<OneD, NekDouble> &Fwd,
             // @TODO: DEBUG
             if((Bwd[foundLocCoord.first] < -1) || (Bwd[foundLocCoord.first] > 1))
             {
-                //std::cout << "Geom ID->Trace ID: " << foundLocCoord.second.first <<"->" << traceId << "\t@ local coord = " << locCoord[0] << " " << locCoord[1] << "\tgives Bwd value for Phys ID: " << foundLocCoord.first << " = " << Bwd[foundLocCoord.first] << std::endl;
-                Array<OneD, NekDouble> gloCoord;
+                std::cout << "Geom ID->Trace ID: " << foundLocCoord.second.first <<"->" << traceId << "\t@ local coord = " << locCoord[0] << " " << locCoord[1] << "\tgives Bwd value for Phys ID: " << foundLocCoord.first << " = " << Bwd[foundLocCoord.first] << std::endl;
+                Array<OneD, NekDouble> gloCoord(3);
                 m_trace->GetExp(traceId)->GetCoord(locCoord, gloCoord);
-                //std::cout << "Getting from global coord: " << gloCoord[0] << " " << gloCoord[1] << " " << gloCoord[2] << std::endl;
+                std::cout << "Getting from global coord: " << gloCoord[0] << " " << gloCoord[1] << " " << gloCoord[2] << std::endl;
 
-                /*std::cout << "\tedgePhys = ";
+                std::cout << "\tedgePhys = ";
                 for (int i = 0; i < m_trace->GetExp(traceId)->GetTotPoints(); ++i)
                 {
                     std::cout << edgePhys[i] << ", ";
                 }
-                std::cout << std::endl << std::endl;*/
+                std::cout << std::endl << std::endl;
             }
         }
     }
