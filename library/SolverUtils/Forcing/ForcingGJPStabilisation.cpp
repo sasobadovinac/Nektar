@@ -351,16 +351,11 @@ namespace SolverUtils
         int nphys     = m_dgfield->GetNpoints();
         int nTracePts = m_dgfield->GetTrace()->GetTotPoints();
         int nLocETrace = m_locElmtTrace->GetTotPoints();
-        int nLocETraceCoeffs = m_locElmtTrace->GetNcoeffs();
-
-#if 0
-        boost::ignore_unused(pinarray);
-        Array<OneD, Array<OneD, NekDouble> >inarray(1);
-        inarray[0] = Array<OneD, NekDouble> (nphys,1.0); 
-#endif
-
-        ASSERTL1(nLocETrace == m_scalTrace[0].size(),"expect these to be similar");
-        ASSERTL1(nLocETraceCoeffs <= nphys,"storage assumptions presume that nLocETraceCoeffs < nphys");
+        
+        ASSERTL1(nLocETrace == m_scalTrace[0].size(),
+                 "expect these to be similar");
+        ASSERTL1(m_locElmtTrace->GetNcoeffs() <= nphys,
+                 "storage assumptions presume that nLocETraceCoeffs < nphys");
         
         Array<OneD, Array<OneD, NekDouble> > deriv(3,NullNekDouble1DArray);
         for(int i = 0; i < m_coordDim; ++i)
