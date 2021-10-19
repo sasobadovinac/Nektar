@@ -69,6 +69,8 @@ namespace Nektar
         bool m_subSteppingScheme;
         bool m_useSpecVanVisc;
         bool m_useGJPSemiImplicit;
+        // scaling factor for GJP penalisation, default = 1.0
+        NekDouble m_GJPJumpScale; 
         NekDouble m_sVVCutoffRatio;   // cut off ratio from which to start decayhing modes
         NekDouble m_sVVDiffCoeff;     // Diffusion coefficient of SVV modes
         SolverUtils::RiemannSolverSharedPtr     m_riemannSolver;

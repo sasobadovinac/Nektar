@@ -777,8 +777,8 @@ namespace Nektar
 
             int vCoordDim = GetCoordim();
 
-            m_faceNormals[face] = Array<OneD, Array<OneD, NekDouble> >(vCoordDim);
-            Array<OneD, Array<OneD, NekDouble> > &normal = m_faceNormals[face];
+            m_traceNormals[face] = Array<OneD, Array<OneD, NekDouble> >(vCoordDim);
+            Array<OneD, Array<OneD, NekDouble> > &normal = m_traceNormals[face];
             for (i = 0; i < vCoordDim; ++i)
             {
                 normal[i] = Array<OneD, NekDouble>(nq_face);

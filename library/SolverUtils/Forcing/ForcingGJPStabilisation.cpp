@@ -88,22 +88,25 @@ namespace SolverUtils
             m_velScalingStr = std::string("DEFAULT");
         }
 
+        
+        m_session->MatchSolverInfo("GJPStabilisation",
+                                   "SemiImplicit", m_useGJPSemiImplicit, false);
+
+        m_session->LoadParameter("GJPJumpScale", m_jumpScal, 1.0);
 
         funcNameElmt = pForce->FirstChildElement("JUMPSCALING");
 
         if (funcNameElmt)
         {
-            std::string jumpscal = funcNameElmt->GetText();
-            m_jumpScal = boost::lexical_cast<NekDouble>(jumpscal);
-        }
-        else
-        {
-            m_jumpScal = 1.0;
+            std::string jumpscalstr = funcNameElmt->GetText();
+            NekDouble jumpScal = boost::lexical_cast<NekDouble>(jumpscalstr);
+
+            if(m_useGJPSemiImplicit)
+            {
+                ASSERTL0(jumpScal == m_jumpScal,"Parameter GJPJumpScale and Definition of JUMPSCALING in Forcing GJPStabilisation must be the same for semi implicit formulation");
+            }
         }
         
-        m_session->MatchSolverInfo("GJPStabilisation",
-                                   "SemiImplicit", m_useGJPSemiImplicit, false);
-
         if(m_session->GetComm()->GetRank() == 0)
         {
             cout << "GJP Stabilisation:" << endl;
@@ -112,6 +115,7 @@ namespace SolverUtils
             cout << "\t jump-Scaling:    " << m_jumpScal << endl;
         }
         
+
         m_numForcingFields = pNumForcingFields;
         
         bool isHomogeneous1D;

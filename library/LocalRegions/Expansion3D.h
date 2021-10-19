@@ -120,8 +120,6 @@ namespace Nektar
                     Array<OneD, Array<OneD, unsigned int> > &fmap );
             
         protected:
-            std::map<int, NormalVector> m_faceNormals;
-
             virtual void v_DGDeriv(
                 const int                            dir,
                 const Array<OneD, const NekDouble>  &incoeffs,
@@ -177,9 +175,6 @@ namespace Nektar
 
             LOCAL_REGIONS_EXPORT virtual DNekMatSharedPtr v_BuildVertexMatrix(
                 const DNekScalMatSharedPtr &r_bnd); 
-
-            LOCAL_REGIONS_EXPORT const virtual NormalVector &v_GetTraceNormal
-                (const int face) const;
 
             LOCAL_REGIONS_EXPORT virtual void v_TraceNormLen
                                 (const int traceid, NekDouble &h, NekDouble &p);

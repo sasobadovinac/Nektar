@@ -117,6 +117,8 @@ namespace Nektar
         bool m_useSpecVanVisc;
         /// bool to identify if GJP semi-implicit is active.
         bool m_useGJPSemiImplicit;
+        // scaling factor for GJP penalisation, default = 1.0
+        NekDouble m_GJPJumpScale; 
         /// cutt off ratio from which to start decayhing modes
         NekDouble m_sVVCutoffRatio;
         /// Diffusion coefficient of SVV modes

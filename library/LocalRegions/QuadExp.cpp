@@ -1248,9 +1248,9 @@ namespace Nektar
             }
             int vCoordDim = GetCoordim();
 
-            m_edgeNormals[edge] = Array<OneD, Array<OneD, NekDouble> >
+            m_traceNormals[edge] = Array<OneD, Array<OneD, NekDouble> >
                                                                     (vCoordDim);
-            Array<OneD, Array<OneD, NekDouble> > &normal = m_edgeNormals[edge];
+            Array<OneD, Array<OneD, NekDouble> > &normal = m_traceNormals[edge];
             for (i = 0; i < vCoordDim; ++i)
             {
                 normal[i] = Array<OneD, NekDouble>(nqe);
@@ -1625,7 +1625,6 @@ namespace Nektar
                          "basis is either not set up or not hierarchicial");
             }
         }
-
 
         StdRegions::Orientation QuadExp::v_GetTraceOrient(int edge)
         {

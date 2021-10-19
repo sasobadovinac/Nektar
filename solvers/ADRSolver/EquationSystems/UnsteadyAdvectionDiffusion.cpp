@@ -88,6 +88,8 @@ namespace Nektar
         m_session->MatchSolverInfo(
             "GJPStabilisation", "SemiImplicit", m_useGJPSemiImplicit, false);
 
+        m_session->LoadParameter("GJPJumpScale", m_GJPJumpScale, 1.0);
+
         if(m_useSpecVanVisc)
         {
             m_session->LoadParameter("SVVCutoffRatio",m_sVVCutoffRatio,0.75);
@@ -365,7 +367,7 @@ namespace Nektar
         // test by adding GJP implicit 
         if(m_useGJPSemiImplicit)
         {
-            factors[StdRegions::eFactorGJP] = 1.0/m_epsilon;
+            factors[StdRegions::eFactorGJP] = m_GJPJumpScale/m_epsilon;
         }
         
         if(m_useSpecVanVisc)

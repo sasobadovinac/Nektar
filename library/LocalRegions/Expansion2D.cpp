@@ -37,6 +37,7 @@
 #include <LocalRegions/Expansion1D.h>
 #include <LocalRegions/Expansion2D.h>
 #include <LocalRegions/Expansion3D.h>
+#include <LocalRegions/SegExp.h>
 #include <SpatialDomains/Geometry.h>
 #include <SpatialDomains/Geometry2D.h>
 #include <LibUtilities/Foundations/InterpCoeff.h>
@@ -1828,10 +1829,12 @@ namespace Nektar
                 }
                 
                 Array<OneD, int> tracepts(ntraces);
+                Array<OneD, ExpansionSharedPtr> traceExp(ntraces); 
                 int maxtpts = 0; 
                 for(int t = 0; t < ntraces; ++t)
                 {
-                    tracepts[t] = m_traceExp[t].lock()->GetTotPoints();
+                    traceExp[t] = GetTraceExp(t);
+                    tracepts[t] = traceExp[t]->GetTotPoints();
                     maxtpts = (maxtpts > tracepts[t])? maxtpts: tracepts[t];
                 }
 
@@ -1852,11 +1855,10 @@ namespace Nektar
                     for(int t = 0; t < ntraces; ++t)
                     {
                         const NormalVector norm     = GetTraceNormal(t);
-                        ExpansionSharedPtr traceExp = m_traceExp[t].lock(); 
                         
                         for(int d = 0; d < ncoords; ++d)
                         {
-                            GetTracePhysVals(t,traceExp,Deriv[d],val,
+                            GetTracePhysVals(t,traceExp[t],Deriv[d],val,
                                              v_GetTraceOrient(t));
                             Vmath::Vvtvp(tracepts[t],norm[d],1,val,1,
                                          tmp  = dphidn[t] + i*tracepts[t],1,
@@ -1867,7 +1869,6 @@ namespace Nektar
 
                 for(int t = 0; t < ntraces; ++t)
                 {
-                    ExpansionSharedPtr traceExp = m_traceExp[t].lock(); 
                     int nt = tracepts[t];
                     NekDouble h,p;
                     TraceNormLen(t,h,p);
@@ -1877,17 +1878,16 @@ namespace Nektar
                     
                     for(int i = 0; i < m_ncoeffs; ++i)
                     {
-                        for(int j = 0; j < m_ncoeffs; ++j)
+                        for(int j = i; j < m_ncoeffs; ++j)
                         {
                             Vmath::Vmul(nt,dphidn[t] + i*nt,1,
                                         dphidn[t] + j*nt,1,val,1);
                             Mat(i,j) = Mat(i,j) +
-                                scale*traceExp->Integral(val);
+                                scale*traceExp[t]->Integral(val);
                         }
                     }
                 }
 
-#if 0 
                 // fill in symmetric components. 
                 for(int i = 0; i < m_ncoeffs; ++i)
                 {
@@ -1896,8 +1896,6 @@ namespace Nektar
                         Mat(i,j) = Mat(j,i); 
                     }
                 }
-#endif
-                
             }
             break;
             default:
@@ -2147,6 +2145,14 @@ namespace Nektar
             return m_vertexmatrix;
         }
 
+        void Expansion2D::v_GenTraceExp(const int traceid,
+                                      ExpansionSharedPtr &exp)
+        {
+            exp = MemoryManager<LocalRegions::SegExp>::AllocateSharedPtr
+                (GetTraceBasisKey(traceid), m_geom->GetEdge(traceid));
+        }
+
+
         Array<OneD, unsigned int> Expansion2D::GetTraceInverseBoundaryMap(
             int eid)
         {
@@ -2189,16 +2195,6 @@ namespace Nektar
         void Expansion2D::v_SetUpPhysNormals(const int edge)
         {
             v_ComputeTraceNormal(edge);
-        }
-
-        const NormalVector &Expansion2D::v_GetTraceNormal(
-                    const int edge) const
-        {
-            std::map<int, NormalVector>::const_iterator x;
-            x = m_edgeNormals.find(edge);
-            ASSERTL1 (x != m_edgeNormals.end(),
-                        "Edge normal not computed.");
-            return x->second;
         }
 
         void Expansion2D::v_ReOrientTracePhysMap

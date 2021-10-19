@@ -931,8 +931,8 @@ namespace Nektar
             int nqe = m_base[0]->GetNumPoints();
             int dim = GetCoordim();
 
-            m_edgeNormals[edge] = Array<OneD, Array<OneD, NekDouble> >(dim);
-            Array<OneD, Array<OneD, NekDouble> > &normal = m_edgeNormals[edge];
+            m_traceNormals[edge] = Array<OneD, Array<OneD, NekDouble> >(dim);
+            Array<OneD, Array<OneD, NekDouble> > &normal = m_traceNormals[edge];
             for (i = 0; i < dim; ++i)
             {
                 normal[i] = Array<OneD, NekDouble>(nqe);

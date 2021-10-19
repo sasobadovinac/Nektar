@@ -2492,14 +2492,6 @@ namespace Nektar
             return nFacecdotMF;
         }
 
-        const NormalVector &Expansion3D::v_GetTraceNormal(const int face) const
-        {
-            auto x = m_faceNormals.find(face);
-            ASSERTL0 (x != m_faceNormals.end(),
-                      "face normal not computed.");
-            return x->second;
-        }
-        
         void Expansion3D::v_TraceNormLen(const int traceid, NekDouble &h, NekDouble &p)
         {
             SpatialDomains::GeometrySharedPtr geom = GetGeom(); 

@@ -109,16 +109,8 @@ namespace Nektar
 
         m_session->MatchSolverInfo(
             "GJPStabilisation", "SemiImplicit", m_useGJPSemiImplicit, false);
-        if(m_useGJPSemiImplicit)
-        {
-            bool check = true;
-            
-            m_session->MatchSolverInfo("Projection","Mixed_CG_Discontinuous",check,false);
-            
-            ASSERTL0(check,"Semi Implicit use of GJPStabilisation currently "
-                     "requires Projection to be set to type Mixed_CG_Discontinuous"); 
-        }
 
+        m_session->LoadParameter("GJPJumpScale", m_GJPJumpScale, 1.0);
         
         m_session->MatchSolverInfo("SmoothAdvection", "True",
                                     m_SmoothAdvection, false);
@@ -867,7 +859,7 @@ timer.AccumulateRegion("Pressure BCs");
             // test by adding GJP implicit 
             if(m_useGJPSemiImplicit)
             {
-                factors[StdRegions::eFactorGJP] = 1.0/m_diffCoeff[i];
+                factors[StdRegions::eFactorGJP] = m_GJPJumpScale/m_diffCoeff[i];
             }
             
             // Setup coefficients for equation

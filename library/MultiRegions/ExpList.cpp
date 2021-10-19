@@ -369,14 +369,14 @@ namespace Nektar
                                  LocalRegions::Expansion1D>(
                                                   bndConstraint[i]->GetExp(j))))
                         {
-                        m_expType = e1D;
+                            m_expType = e1D;
 
-                        LibUtilities::BasisKey bkey = exp1D->
-                            GetBasis(0)->GetBasisKey();
-                        segGeom = exp1D->GetGeom1D();
-                        exp = MemoryManager<LocalRegions::SegExp>
-                            ::AllocateSharedPtr(bkey, segGeom);
-                        tracesDone.insert(segGeom->GetGlobalID());
+                            LibUtilities::BasisKey bkey = exp1D->
+                                GetBasis(0)->GetBasisKey();
+                            segGeom = exp1D->GetGeom1D();
+                            exp = MemoryManager<LocalRegions::SegExp>
+                                ::AllocateSharedPtr(bkey, segGeom);
+                            tracesDone.insert(segGeom->GetGlobalID());
 
                         }
                         else if ((exp2D = std::dynamic_pointer_cast

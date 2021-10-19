@@ -76,7 +76,8 @@ namespace Nektar
                 Array<OneD, NekDouble>          &inout);
 
             LOCAL_REGIONS_EXPORT Array<OneD, unsigned int>
-                              GetTraceInverseBoundaryMap(int eid);
+
+            GetTraceInverseBoundaryMap(int eid);
 
             inline void AddNormTraceInt(
                 const int                             dir,
@@ -124,14 +125,11 @@ namespace Nektar
 
             virtual DNekMatSharedPtr v_GenMatrix(
                                                  const StdRegions::StdMatrixKey &mkey);
+            virtual void v_GenTraceExp(const int traceid,
+                                       ExpansionSharedPtr &exp);
         protected:
             // std::vector<Expansion1DWeakPtr>    m_edgeExp; no longer required? 
             std::vector<bool>                  m_requireNeg;
-            std::map<int, NormalVector>        m_edgeNormals;
-            Expansion3DWeakPtr                 m_elementLeft;
-            Expansion3DWeakPtr                 m_elementRight;
-            int                                m_elementFaceLeft;
-            int                                m_elementFaceRight;
 
             LOCAL_REGIONS_EXPORT virtual Array<OneD, NekDouble> v_GetMF(
                                                                         const int dir,
@@ -201,12 +199,11 @@ namespace Nektar
              const int nq0,  const int nq1);
 
             virtual void v_SetUpPhysNormals (const int edge);
-            virtual const NormalVector &v_GetTraceNormal(const int edge) const;
             virtual NekDouble v_VectorFlux(
                                            const Array<OneD, Array<OneD, NekDouble > > &vec);
             virtual void v_TraceNormLen(const int traceid, NekDouble &h, NekDouble &p);
-        };
 
+        };
 
 
         inline SpatialDomains::Geometry2DSharedPtr
