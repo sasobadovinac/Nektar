@@ -361,6 +361,7 @@ void QuadGeom::v_FillGeom()
 
             for (i = 0; i < kNedges; ++i)
             {
+                std::cout << nEdgePts << " " << m_edges[i]->GetXmap()->GetNcoeffs() << std::endl;
                 ASSERTL0(m_edges[i]->GetXmap()->GetNcoeffs() == nEdgePts,
                          "Number of edge points does not correspond to "
                          "number of face points in quadrilateral " +

@@ -360,6 +360,8 @@ void InterfaceTrace::CalcLocalMissing()
                     {
                         break;
                     }
+
+                    exit(0);
                 }
 
                 if (!found)

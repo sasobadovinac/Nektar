@@ -355,346 +355,7 @@ int Geometry2D::v_GetShapeDim() const
 NekDouble Geometry2D::v_FindDistance(const Array<OneD, const NekDouble> &xs,
                                   Array<OneD, NekDouble> &xiOut)
 {
-    // Debug to print objective function values
-    if (false)
-    {
-        std::cout << std::scientific << std::setprecision(10) << "Looking for point: " << xs[0] << ", " << xs[1] << std::endl;
-        std::cout << "Triangle: " << m_globalID << " contains point: " << ContainsPoint(xs) << std::endl;
-        // triangle verts
-        Array<OneD, NekDouble> xt(3), yt(3), zt(3);
-        for (int i = 0; i < 3; ++i)
-        {
-            m_verts[i]->GetCoords(xt[i], yt[i], zt[i]);
-        }
-
-        ofstream file_xtri;
-        ofstream file_ytri;
-        file_xtri.open("xtri.txt");
-        file_ytri.open("ytri.txt");
-        file_xtri << xt[0] << std::endl << xt[1] << std::endl << xt[2] << std::endl << xt[0] << std::endl;
-        file_ytri << yt[0] << std::endl << yt[1] << std::endl << yt[2] << std::endl << yt[0] << std::endl;
-        file_xtri.close();
-        file_ytri.close();
-
-
-        // Print curve point locations
-        ofstream file_xcurve;
-        ofstream file_ycurve;
-        file_xcurve.open("xcurve.txt");
-        file_ycurve.open("ycurve.txt");
-        for (auto & m_point : m_curve->m_points)
-        {
-            file_xcurve << m_point->x() << std::endl;
-            file_ycurve << m_point->y() << std::endl;
-        }
-        file_xcurve.close();
-        file_ycurve.close();
-
-
-        Array<OneD, NekDouble> xi(2, 0.0);
-        int nq = m_xmap->GetTotPoints();
-
-        Array<OneD, NekDouble> x(nq), y(nq);
-        m_xmap->BwdTrans(m_coeffs[0], x);
-        m_xmap->BwdTrans(m_coeffs[1], y);
-
-        Array<OneD, NekDouble> xderxi1(nq, 0.0), yderxi1(nq, 0.0),
-            xderxi2(nq, 0.0), yderxi2(nq, 0.0),
-            xderxi1xi1(nq, 0.0), yderxi1xi1(nq, 0.0),
-            xderxi1xi2(nq, 0.0), yderxi1xi2(nq, 0.0),
-            xderxi2xi1(nq, 0.0), yderxi2xi1(nq, 0.0),
-            xderxi2xi2(nq, 0.0), yderxi2xi2(nq, 0.0);
-
-        m_xmap->PhysDeriv(x, xderxi1, xderxi2);
-        m_xmap->PhysDeriv(y, yderxi1, yderxi2);
-
-        m_xmap->PhysDeriv(xderxi1, xderxi1xi1, xderxi1xi2);
-        m_xmap->PhysDeriv(yderxi1, yderxi1xi1, yderxi1xi2);
-
-        m_xmap->PhysDeriv(yderxi2, yderxi2xi1, yderxi2xi2);
-        m_xmap->PhysDeriv(xderxi2, xderxi2xi1, xderxi2xi2);
-
-        // Open files
-        ofstream file_xc;
-        ofstream file_yc;
-        ofstream file_xi_x;
-        ofstream file_xi_y;
-        ofstream file_fx;
-        ofstream file_fx_derxi1;
-        ofstream file_fx_derxi2;
-        ofstream file_fx_derxi1xi1;
-        ofstream file_fx_derxi1xi2;
-        ofstream file_fx_derxi2xi2;
-
-        file_xc.open("xc.txt");
-        file_yc.open("yc.txt");
-        file_xi_x.open("xi_x.txt");
-        file_xi_y.open("xi_y.txt");
-        file_fx.open("fx.txt");
-        file_fx_derxi1.open("fx_derxi1.txt");
-        file_fx_derxi2.open("fx_derxi2.txt");
-        file_fx_derxi1xi1.open("fx_derxi1xi1.txt");
-        file_fx_derxi1xi2.open("fx_derxi1xi2.txt");
-        file_fx_derxi2xi2.open("fx_derxi2xi2.txt");
-
-        int n = 100;
-        for (int i = 0; i < n + 1; ++i)
-        {
-            xi[0] = -1.0 + 2.0 * i / n;
-            for (int j = 0; j < n + 1; ++j)
-            {
-                xi[1] = -1.0 + 2.0 * j / n;
-
-                Array<OneD, NekDouble> eta(2);
-                m_xmap->LocCollapsedToLocCoord(xi, eta);
-                xi = eta;
-
-                file_xi_x << xi[0] << std::endl;
-                file_xi_y << xi[1] << std::endl;
-
-                // Compute f(x_k) and its derivatives
-                NekDouble xc = m_xmap->PhysEvaluate(xi, x);
-                NekDouble yc = m_xmap->PhysEvaluate(xi, y);
-
-                NekDouble xc_derxi1 = m_xmap->PhysEvaluate(xi, xderxi1);
-                NekDouble yc_derxi1 = m_xmap->PhysEvaluate(xi, yderxi1);
-                NekDouble xc_derxi2 = m_xmap->PhysEvaluate(xi, xderxi2);
-                NekDouble yc_derxi2 = m_xmap->PhysEvaluate(xi, yderxi2);
-
-                NekDouble xc_derxi1xi1 = m_xmap->PhysEvaluate(xi, xderxi1xi1);
-                NekDouble yc_derxi1xi1 = m_xmap->PhysEvaluate(xi, yderxi1xi1);
-
-                NekDouble xc_derxi1xi2 = m_xmap->PhysEvaluate(xi, xderxi1xi2);
-                NekDouble yc_derxi1xi2 = m_xmap->PhysEvaluate(xi, yderxi1xi2);
-
-                NekDouble xc_derxi2xi2 = m_xmap->PhysEvaluate(xi, xderxi2xi2);
-                NekDouble yc_derxi2xi2 = m_xmap->PhysEvaluate(xi, yderxi2xi2);
-
-                file_xc << xc << std::endl;
-                file_yc << yc << std::endl;
-
-                // Objective function
-                NekDouble fx =
-                    (xc - xs[0]) * (xc - xs[0]) + (yc - xs[1]) * (yc - xs[1]);
-
-                NekDouble fx_derxi1 = 2.0 * (xc - xs[0]) * xc_derxi1 +
-                                      2.0 * (yc - xs[1]) * yc_derxi1;
-
-                NekDouble fx_derxi2 = 2.0 * (xc - xs[0]) * xc_derxi2 +
-                                      2.0 * (yc - xs[1]) * yc_derxi2;
-
-                NekDouble fx_derxi1xi1 = 2.0 * (xc - xs[0]) * xc_derxi1xi1 +
-                                         2.0 * xc_derxi1 * xc_derxi1 +
-                                         2.0 * (yc - xs[1]) * yc_derxi1xi1 +
-                                         2.0 * yc_derxi1 * yc_derxi1;
-
-                NekDouble fx_derxi1xi2 = 2.0 * (xc - xs[0]) * xc_derxi1xi2 +
-                                         2.0 * xc_derxi2 * xc_derxi1 +
-                                         2.0 * (yc - xs[1]) * yc_derxi1xi2 +
-                                         2.0 * yc_derxi2 * yc_derxi1;
-
-                NekDouble fx_derxi2xi2 = 2.0 * (xc - xs[0]) * xc_derxi2xi2 +
-                                         2.0 * xc_derxi2 * xc_derxi2 +
-                                         2.0 * (yc - xs[1]) * yc_derxi2xi2 +
-                                         2.0 * yc_derxi2 * yc_derxi2;
-
-                // Print to file
-                file_fx << fx << std::endl;
-                file_fx_derxi1 << fx_derxi1 << std::endl;
-                file_fx_derxi2 << fx_derxi2 << std::endl;
-                file_fx_derxi1xi1 << fx_derxi1xi1 << std::endl;
-                file_fx_derxi1xi2 << fx_derxi1xi2 << std::endl;
-                file_fx_derxi2xi2 << fx_derxi2xi2 << std::endl;
-            }
-        }
-
-        file_xc.close();
-        file_yc.close();
-        file_xi_x.close();
-        file_xi_y.close();
-        file_fx.close();
-        file_fx_derxi1.close();
-        file_fx_derxi2.close();
-        file_fx_derxi1xi1.close();
-        file_fx_derxi1xi2.close();
-        file_fx_derxi2xi2.close();
-    }
-
-    if (m_geomFactors->GetGtype() == eRegular)
-    {
-        xiOut = Array<OneD, NekDouble>(2, 0.0);
-
-        GetLocCoords(xs, xiOut);
-        ClampLocCoords(xiOut);
-
-        Array<OneD, NekDouble> gloCoord(3);
-        gloCoord[0] = GetCoord(0, xiOut);
-        gloCoord[1] = GetCoord(1, xiOut);
-        gloCoord[2] = GetCoord(2, xiOut);
-
-        return sqrt((xs[0] - gloCoord[0]) * (xs[0] - gloCoord[0]) +
-                    (xs[1] - gloCoord[1]) * (xs[1] - gloCoord[1]) +
-                    (xs[2] - gloCoord[2]) * (xs[2] - gloCoord[2]));
-    }
-    else if (false)
-    {
-        std::cout << "Triangle: " << m_globalID << " contains point: " << ContainsPoint(xs) << std::endl;
-
-        int nq = m_xmap->GetTotPoints();
-
-        Array<OneD, NekDouble> x(nq), y(nq);
-        m_xmap->BwdTrans(m_coeffs[0], x);
-        m_xmap->BwdTrans(m_coeffs[1], y);
-
-        Array<OneD, NekDouble> xi(2, 0.0);
-        // Pick quad point closest to xs for starter xi
-        Array<OneD, NekDouble> mxc(nq), myc(nq);
-        m_xmap->GetCoords(mxc, myc);
-        NekDouble fx_test = std::numeric_limits<NekDouble>::max();
-        for (int i = 0; i < nq; ++i)
-        {
-            Array<OneD, NekDouble> testxi(2);
-            testxi[0] = mxc[i];
-            testxi[1] = myc[i];
-
-            NekDouble testxc = m_xmap->PhysEvaluate(testxi, x);
-            NekDouble testyc = m_xmap->PhysEvaluate(testxi, y);
-
-            NekDouble fx =
-                (testxc - xs[0]) * (testxc - xs[0]) + (testyc - xs[1]) * (testyc - xs[1]);
-
-            if (fx < fx_test)
-            {
-                fx_test = fx;
-                xi = testxi;
-            }
-        }
-        std::cout << "Closest quad point: " << xi[0] << " " << xi[1] << std::endl;
-
-        Array<OneD, NekDouble> xderxi1(nq, 0.0), yderxi1(nq, 0.0),
-            xderxi2(nq, 0.0), yderxi2(nq, 0.0),
-            xderxi1xi1(nq, 0.0), yderxi1xi1(nq, 0.0),
-            xderxi1xi2(nq, 0.0), yderxi1xi2(nq, 0.0),
-            xderxi2xi1(nq, 0.0), yderxi2xi1(nq, 0.0),
-            xderxi2xi2(nq, 0.0), yderxi2xi2(nq, 0.0);
-
-        m_xmap->PhysDeriv(x, xderxi1, xderxi2);
-        m_xmap->PhysDeriv(y, yderxi1, yderxi2);
-
-        m_xmap->PhysDeriv(xderxi1, xderxi1xi1, xderxi1xi2);
-        m_xmap->PhysDeriv(yderxi1, yderxi1xi1, yderxi1xi2);
-
-        m_xmap->PhysDeriv(yderxi2, yderxi2xi1, yderxi2xi2);
-        m_xmap->PhysDeriv(xderxi2, xderxi2xi1, xderxi2xi2);
-
-        bool opt_succeed = false;
-        NekDouble fx_prev = std::numeric_limits<NekDouble>::max();
-
-        //ofstream file_xc_newton;
-        //ofstream file_yc_newton;
-        //file_xc_newton.open("xc_newton.txt");
-        //file_yc_newton.open("yc_newton.txt");
-        for (int i = 0; i < 100; ++i)
-        {
-            // Compute f(x_k) and its derivatives
-            NekDouble xc = m_xmap->PhysEvaluate(xi, x);
-            NekDouble yc = m_xmap->PhysEvaluate(xi, y);
-            //file_xc_newton << xc << std::endl;
-            //file_yc_newton << yc << std::endl;
-
-            NekDouble xc_derxi1 = m_xmap->PhysEvaluate(xi, xderxi1);
-            NekDouble yc_derxi1 = m_xmap->PhysEvaluate(xi, yderxi1);
-            NekDouble xc_derxi2 = m_xmap->PhysEvaluate(xi, xderxi2);
-            NekDouble yc_derxi2 = m_xmap->PhysEvaluate(xi, yderxi2);
-
-            NekDouble xc_derxi1xi1 = m_xmap->PhysEvaluate(xi, xderxi1xi1);
-            NekDouble yc_derxi1xi1 = m_xmap->PhysEvaluate(xi, yderxi1xi1);
-
-            NekDouble xc_derxi1xi2 = m_xmap->PhysEvaluate(xi, xderxi1xi2);
-            NekDouble yc_derxi1xi2 = m_xmap->PhysEvaluate(xi, yderxi1xi2);
-
-            NekDouble xc_derxi2xi2 = m_xmap->PhysEvaluate(xi, xderxi2xi2);
-            NekDouble yc_derxi2xi2 = m_xmap->PhysEvaluate(xi, yderxi2xi2);
-
-            // Objective function
-            NekDouble fx =
-                (xc - xs[0]) * (xc - xs[0]) + (yc - xs[1]) * (yc - xs[1]);
-
-            NekDouble fx_derxi1 = 2.0 * (xc - xs[0]) * xc_derxi1 +
-                                  2.0 * (yc - xs[1]) * yc_derxi1;
-
-            NekDouble fx_derxi2 = 2.0 * (xc - xs[0]) * xc_derxi2 +
-                                  2.0 * (yc - xs[1]) * yc_derxi2;
-
-            NekDouble fx_derxi1xi1 = 2.0 * (xc - xs[0]) * xc_derxi1xi1 +
-                                     2.0 * xc_derxi1 * xc_derxi1 +
-                                     2.0 * (yc - xs[1]) * yc_derxi1xi1 +
-                                     2.0 * yc_derxi1 * yc_derxi1;
-
-            NekDouble fx_derxi1xi2 = 2.0 * (xc - xs[0]) * xc_derxi1xi2 +
-                                     2.0 * xc_derxi2 * xc_derxi1 +
-                                     2.0 * (yc - xs[1]) * yc_derxi1xi2 +
-                                     2.0 * yc_derxi2 * yc_derxi1;
-
-            NekDouble fx_derxi2xi2 = 2.0 * (xc - xs[0]) * xc_derxi2xi2 +
-                                     2.0 * xc_derxi2 * xc_derxi2 +
-                                     2.0 * (yc - xs[1]) * yc_derxi2xi2 +
-                                     2.0 * yc_derxi2 * yc_derxi2;
-
-            // Jacobian
-            NekDouble jac[2];
-            jac[0] = fx_derxi1;
-            jac[1] = fx_derxi2;
-
-            // Inverse of 2x2 hessian
-            NekDouble hessInv[2][2];
-            NekDouble det =
-                1 / (fx_derxi1xi1 * fx_derxi2xi2 - fx_derxi1xi2 * fx_derxi1xi2);
-            hessInv[0][0] = det * fx_derxi2xi2;
-            hessInv[0][1] = det * -fx_derxi1xi2;
-            hessInv[1][0] = det * -fx_derxi1xi2;
-            hessInv[1][1] = det * fx_derxi1xi1;
-
-            xi[0] = xi[0] - (hessInv[0][0] * jac[0] + hessInv[0][1] * jac[1]);
-            xi[1] = xi[1] - (hessInv[1][0] * jac[0] + hessInv[1][1] * jac[1]);
-
-            // Gradient descent
-            // xi[0] = xi[0] - jac[0];
-
-            if (xi[0] < -1 || xi[0] > 1 ||
-                xi[1] < -1 || xi[1] > 1)
-            {
-                fx_prev = fx;
-                continue;
-            }
-
-            if (abs(fx - fx_prev) < 1e-16)
-            {
-                opt_succeed = true;
-                fx_prev     = fx;
-                break;
-            }
-            else
-            {
-                fx_prev = fx;
-            }
-        }
-
-        //file_xc_newton.close();
-        //file_yc_newton.close();
-
-        if (opt_succeed)
-        {
-            xiOut = xi;
-            return  sqrt(fx_prev);
-        }
-        else
-        {
-            xiOut = Array<OneD, NekDouble>(2, std::numeric_limits<NekDouble>::max());
-            return std::numeric_limits<NekDouble>::max();
-        }
-    }
-    else if(m_geomFactors->GetGtype() == eDeformed && false)
+    if(m_geomFactors->GetGtype() == eDeformed && false)
     {
         xiOut = Array<OneD, NekDouble>(2,0.0);
 
@@ -712,100 +373,102 @@ NekDouble Geometry2D::v_FindDistance(const Array<OneD, const NekDouble> &xs,
     }
     else if (m_geomFactors->GetGtype() == eDeformed)
     {
-        Array<OneD, NekDouble> xi(2, 0.0), eta(2, 0.0);
+        // Choose starting based on closest quad
+        Array<OneD, NekDouble> xi(2, 0.0), eta(2, -0.5);
         m_xmap->LocCollapsedToLocCoord(eta, xi);
 
         const NekDouble c1 = 1e-4, c2 = 0.9;
 
         int nq = m_xmap->GetTotPoints();
 
-        Array<OneD, NekDouble> x(nq), y(nq);
+        Array<OneD, NekDouble> x(nq), y(nq), z(nq);
         m_xmap->BwdTrans(m_coeffs[0], x);
         m_xmap->BwdTrans(m_coeffs[1], y);
+        m_xmap->BwdTrans(m_coeffs[2], z);
 
-        Array<OneD, NekDouble> xderxi1(nq, 0.0), yderxi1(nq, 0.0),
-            xderxi2(nq, 0.0), yderxi2(nq, 0.0),
-            xderxi1xi1(nq, 0.0), yderxi1xi1(nq, 0.0),
-            xderxi1xi2(nq, 0.0), yderxi1xi2(nq, 0.0),
-            xderxi2xi1(nq, 0.0), yderxi2xi1(nq, 0.0),
-            xderxi2xi2(nq, 0.0), yderxi2xi2(nq, 0.0);
+        Array<OneD, NekDouble>
+            xderxi1(nq, 0.0),       yderxi1(nq, 0.0),       zderxi1(nq, 0.0),
+            xderxi2(nq, 0.0),       yderxi2(nq, 0.0),       zderxi2(nq, 0.0),
+            xderxi1xi1(nq, 0.0),    yderxi1xi1(nq, 0.0),    zderxi1xi1(nq, 0.0),
+            xderxi1xi2(nq, 0.0),    yderxi1xi2(nq, 0.0),    zderxi1xi2(nq, 0.0),
+            xderxi2xi1(nq, 0.0),    yderxi2xi1(nq, 0.0),    zderxi2xi1(nq, 0.0),
+            xderxi2xi2(nq, 0.0),    yderxi2xi2(nq, 0.0),    zderxi2xi2(nq, 0.0);
 
         m_xmap->PhysDeriv(x, xderxi1, xderxi2);
         m_xmap->PhysDeriv(y, yderxi1, yderxi2);
+        m_xmap->PhysDeriv(z, zderxi1, zderxi2);
 
         m_xmap->PhysDeriv(xderxi1, xderxi1xi1, xderxi1xi2);
         m_xmap->PhysDeriv(yderxi1, yderxi1xi1, yderxi1xi2);
+        m_xmap->PhysDeriv(zderxi1, zderxi1xi1, zderxi1xi2);
 
         m_xmap->PhysDeriv(yderxi2, yderxi2xi1, yderxi2xi2);
         m_xmap->PhysDeriv(xderxi2, xderxi2xi1, xderxi2xi2);
+        m_xmap->PhysDeriv(zderxi2, zderxi2xi1, zderxi2xi2);
 
-        //ofstream file_xc_newton;
-        //ofstream file_yc_newton;
-        //file_xc_newton.open("xc_newton.txt");
-        //file_yc_newton.open("yc_newton.txt");
         NekDouble fx_prev = std::numeric_limits<NekDouble>::max();
         for (int i = 0; i < 100; ++i)
         {
             // Compute f(x_k) and its derivatives
             NekDouble xc = m_xmap->PhysEvaluate(xi, x);
             NekDouble yc = m_xmap->PhysEvaluate(xi, y);
-
-            //file_xc_newton << xc << std::endl;
-            //file_yc_newton << yc << std::endl;
+            NekDouble zc = m_xmap->PhysEvaluate(xi, z);
 
             NekDouble xc_derxi1 = m_xmap->PhysEvaluate(xi, xderxi1);
             NekDouble yc_derxi1 = m_xmap->PhysEvaluate(xi, yderxi1);
+            NekDouble zc_derxi1 = m_xmap->PhysEvaluate(xi, zderxi1);
+
             NekDouble xc_derxi2 = m_xmap->PhysEvaluate(xi, xderxi2);
             NekDouble yc_derxi2 = m_xmap->PhysEvaluate(xi, yderxi2);
+            NekDouble zc_derxi2 = m_xmap->PhysEvaluate(xi, zderxi2);
 
             NekDouble xc_derxi1xi1 = m_xmap->PhysEvaluate(xi, xderxi1xi1);
             NekDouble yc_derxi1xi1 = m_xmap->PhysEvaluate(xi, yderxi1xi1);
+            NekDouble zc_derxi1xi1 = m_xmap->PhysEvaluate(xi, zderxi1xi1);
 
             NekDouble xc_derxi1xi2 = m_xmap->PhysEvaluate(xi, xderxi1xi2);
             NekDouble yc_derxi1xi2 = m_xmap->PhysEvaluate(xi, yderxi1xi2);
+            NekDouble zc_derxi1xi2 = m_xmap->PhysEvaluate(xi, zderxi1xi2);
 
             NekDouble xc_derxi2xi2 = m_xmap->PhysEvaluate(xi, xderxi2xi2);
             NekDouble yc_derxi2xi2 = m_xmap->PhysEvaluate(xi, yderxi2xi2);
+            NekDouble zc_derxi2xi2 = m_xmap->PhysEvaluate(xi, zderxi2xi2);
 
             // Objective function
             NekDouble fx = (xc - xs[0]) * (xc - xs[0]) +
-                           (yc - xs[1]) * (yc - xs[1]);
+                           (yc - xs[1]) * (yc - xs[1]) +
+                           (zc - xs[2]) * (zc - xs[2]);
 
             NekDouble fx_derxi1 = 2.0 * (xc - xs[0]) * xc_derxi1 +
-                                  2.0 * (yc - xs[1]) * yc_derxi1;
+                                  2.0 * (yc - xs[1]) * yc_derxi1 +
+                                  2.0 * (zc - xs[2]) * zc_derxi1;
 
             NekDouble fx_derxi2 = 2.0 * (xc - xs[0]) * xc_derxi2 +
-                                  2.0 * (yc - xs[1]) * yc_derxi2;
+                                  2.0 * (yc - xs[1]) * yc_derxi2 +
+                                  2.0 * (zc - xs[2]) * zc_derxi2;
 
-            NekDouble fx_derxi1xi1 = 2.0 * (xc - xs[0]) * xc_derxi1xi1 +
-                                     2.0 * xc_derxi1 * xc_derxi1 +
-                                     2.0 * (yc - xs[1]) * yc_derxi1xi1 +
-                                     2.0 * yc_derxi1 * yc_derxi1;
+            NekDouble fx_derxi1xi1 = 2.0 * (xc - xs[0]) * xc_derxi1xi1 + 2.0 * xc_derxi1 * xc_derxi1 +
+                                     2.0 * (yc - xs[1]) * yc_derxi1xi1 + 2.0 * yc_derxi1 * yc_derxi1 +
+                                     2.0 * (zc - xs[2]) * zc_derxi1xi1 + 2.0 * zc_derxi1 * zc_derxi1 ;
 
-            NekDouble fx_derxi1xi2 =  2.0 * (xc - xs[0]) * xc_derxi1xi2 +
-                                      2.0 * xc_derxi2 * xc_derxi1 +
-                                      2.0 * (yc - xs[1]) * yc_derxi1xi2 +
-                                      2.0 * yc_derxi2 * yc_derxi1;
+            NekDouble fx_derxi1xi2 =  2.0 * (xc - xs[0]) * xc_derxi1xi2 + 2.0 * xc_derxi2 * xc_derxi1 +
+                                      2.0 * (yc - xs[1]) * yc_derxi1xi2 + 2.0 * yc_derxi2 * yc_derxi1 +
+                                      2.0 * (zc - xs[2]) * zc_derxi1xi2 + 2.0 * zc_derxi2 * zc_derxi1 ;
 
-            NekDouble fx_derxi2xi2 = 2.0 * (xc - xs[0]) * xc_derxi2xi2 +
-                                     2.0 * xc_derxi2 * xc_derxi2 +
-                                     2.0 * (yc - xs[1]) * yc_derxi2xi2 +
-                                     2.0 * yc_derxi2 * yc_derxi2;
+            NekDouble fx_derxi2xi2 = 2.0 * (xc - xs[0]) * xc_derxi2xi2 + 2.0 * xc_derxi2 * xc_derxi2 +
+                                     2.0 * (yc - xs[1]) * yc_derxi2xi2 + 2.0 * yc_derxi2 * yc_derxi2 +
+                                     2.0 * (zc - xs[2]) * zc_derxi2xi2 + 2.0 * zc_derxi2 * zc_derxi2;
 
-            //std::cout << "xi[0] = " << xi[0] << ", xi[1] = " << xi[1] << ", xc = " << xc << ", yc = " << yc << ", fx = " << fx << ", fx_diff = " << abs(fx - fx_prev) << std::endl;
+            std::cout << std::endl << "xi[0] = " << xi[0] << ", xi[1] = " << xi[1] << ", xc = " << xc << ", yc = " << yc << ", zc = " << zc << ", fx = " << fx << ", fx_diff = " << abs(fx - fx_prev) << std::endl;
 
             // Jacobian
             NekDouble jac[2];
             jac[0] = fx_derxi1;
             jac[1] = fx_derxi2;
 
-            //std::cout << "jac.." << std::endl;
-            //std::cout << jac[0] << " " << jac[1] << std::endl;
-
             // Inverse of 2x2 hessian
             NekDouble hessInv[2][2];
-            //std::cout << "fx_der..." << std::endl;
-            //std::cout << fx_derxi1xi1 << " " << fx_derxi1xi2 << " " << fx_derxi2xi2 << std::endl;
+
             NekDouble det =
                 1 / (fx_derxi1xi1 * fx_derxi2xi2 - fx_derxi1xi2 * fx_derxi1xi2);
             hessInv[0][0] = det * fx_derxi2xi2;
@@ -835,7 +498,7 @@ NekDouble Geometry2D::v_FindDistance(const Array<OneD, const NekDouble> &xs,
             pk[0] = -(hessInv[0][0] * jac[0] + hessInv[1][0] * jac[1]);
             pk[1] = -(hessInv[0][1] * jac[0] + hessInv[1][1] * jac[1]);
 
-            //std::cout << "pk[0] = " << pk[0] << ", pk[1] = " << pk[1] << std::endl;
+            std::cout << "pk[0] = " << pk[0] << ", pk[1] = " << pk[1] << std::endl;
 
             // Backtracking line search
             while (gamma > 1e-16)
@@ -858,22 +521,29 @@ NekDouble Geometry2D::v_FindDistance(const Array<OneD, const NekDouble> &xs,
 
                 NekDouble xc_pk = m_xmap->PhysEvaluate(xi_pk, x);
                 NekDouble yc_pk = m_xmap->PhysEvaluate(xi_pk, y);
+                NekDouble zc_pk = m_xmap->PhysEvaluate(xi_pk, z);
 
                 NekDouble xc_pk_derxi1 = m_xmap->PhysEvaluate(xi_pk, xderxi1);
                 NekDouble yc_pk_derxi1 = m_xmap->PhysEvaluate(xi_pk, yderxi1);
+                NekDouble zc_pk_derxi1 = m_xmap->PhysEvaluate(xi_pk, zderxi1);
+
                 NekDouble xc_pk_derxi2 = m_xmap->PhysEvaluate(xi_pk, xderxi2);
                 NekDouble yc_pk_derxi2 = m_xmap->PhysEvaluate(xi_pk, yderxi2);
+                NekDouble zc_pk_derxi2 = m_xmap->PhysEvaluate(xi_pk, zderxi2);
 
                 NekDouble fx_pk = (xc_pk - xs[0]) * (xc_pk - xs[0]) +
-                                  (yc_pk - xs[1]) * (yc_pk - xs[1]);
+                                  (yc_pk - xs[1]) * (yc_pk - xs[1]) +
+                                  (zc_pk - xs[1]) * (zc_pk - xs[1]) ;
 
-                //std::cout << "xi_pk[0] = " << xi_pk[0] << ", xi_pk[1] = " << xi_pk[1] <<" xc_pk = " << xc_pk << ", yc_pk = " << yc_pk << ", fx_pk = " << fx_pk << std::endl;
+                std::cout << "xi_pk[0] = " << xi_pk[0] << ", xi_pk[1] = " << xi_pk[1] <<" xc_pk = " << xc_pk << ", yc_pk = " << yc_pk << ", zc_pk = " << zc_pk << ", fx_pk = " << fx_pk << std::endl;
 
                 NekDouble fx_pk_derxi1 = 2.0 * (xc_pk - xs[0]) * xc_pk_derxi1 +
-                                         2.0 * (yc_pk - xs[1]) * yc_pk_derxi1;
+                                         2.0 * (yc_pk - xs[1]) * yc_pk_derxi1 +
+                                         2.0 * (zc_pk - xs[1]) * zc_pk_derxi1 ;
 
                 NekDouble fx_pk_derxi2 = 2.0 * (xc_pk - xs[0]) * xc_pk_derxi2 +
-                                         2.0 * (yc_pk - xs[1]) * yc_pk_derxi2;
+                                         2.0 * (yc_pk - xs[1]) * yc_pk_derxi2 +
+                                         2.0 * (zc_pk - xs[1]) * zc_pk_derxi2;
 
                 // Check Wolfe conditions
                 // Armijo: fx_pk =< fx + c1 * gamma * pk * fx_der;
