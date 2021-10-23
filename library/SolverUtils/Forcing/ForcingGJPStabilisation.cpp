@@ -369,7 +369,7 @@ namespace SolverUtils
         Array<OneD, NekDouble> Fwd(nTracePts), Bwd(nTracePts); 
         Array<OneD, NekDouble> unorm(nTracePts,1.0);
 
-        Array<OneD, NekDouble> tmp(nLocETrace);
+        Array<OneD, NekDouble> wsp(nLocETrace), tmp;
         Array<OneD, NekDouble> LocElmtTracePhys   =
             m_locElmtTrace->UpdatePhys();
         Array<OneD, NekDouble> LocElmtTraceCoeffs =
@@ -453,9 +453,9 @@ namespace SolverUtils
 
                 // Interpolate GradJumpOnTrace to Local elemental traces.
                 m_locTraceToTraceMap->InterpTraceToLocTrace
-                    (0,GradJumpOnTrace, tmp);
+                    (0,GradJumpOnTrace, wsp);
                 m_locTraceToTraceMap->UnshuffleLocTraces
-                    (0,tmp,LocElmtTracePhys);
+                    (0,wsp,LocElmtTracePhys);
 
                 if(m_useGJPSemiImplicit)
                 {
@@ -463,29 +463,29 @@ namespace SolverUtils
                     Vmath::Vmul(nTracePts,unorm,1,GradJumpOnTraceBwd,1,
                                 GradJumpOnTraceBwd,1);
                     m_locTraceToTraceMap->InterpTraceToLocTrace
-                        (1,GradJumpOnTraceBwd, tmp);
+                        (1,GradJumpOnTraceBwd, wsp);
                     m_locTraceToTraceMap->UnshuffleLocTraces
-                        (1,tmp,LocElmtTracePhys);
+                        (1,wsp,LocElmtTracePhys);
                 }
                 else
                 {
                     m_locTraceToTraceMap->InterpTraceToLocTrace
-                        (1,GradJumpOnTrace, tmp);
+                        (1,GradJumpOnTrace, wsp);
                     m_locTraceToTraceMap->UnshuffleLocTraces
-                        (1,tmp,LocElmtTracePhys);
+                        (1,wsp,LocElmtTracePhys);
                 }
 
                 // Scale jump on trace
                 Vmath::Vmul(nLocETrace,m_scalTrace[0],1,LocElmtTracePhys,1,
-                            tmp,1);
-                MultiplyByStdDerivBaseOnTraceMat(0,tmp,FilterCoeffs);
+                            wsp,1);
+                MultiplyByStdDerivBaseOnTraceMat(0,wsp,FilterCoeffs);
                 
                 for(int i = 0; i < m_traceDim; ++i)
                 {
                     // Scale jump on trace
                     Vmath::Vmul(nLocETrace,m_scalTrace[i+1],1,
-                                LocElmtTracePhys,1,tmp,1);
-                    MultiplyByStdDerivBaseOnTraceMat(i+1,tmp,deriv[0]);
+                                LocElmtTracePhys,1,wsp,1);
+                    MultiplyByStdDerivBaseOnTraceMat(i+1,wsp,deriv[0]);
                     Vmath::Vadd(ncoeffs,deriv[0],1,FilterCoeffs,1,
                                 FilterCoeffs,1);
                 }
@@ -568,16 +568,16 @@ namespace SolverUtils
                         Vmath::Zero(nLocETrace,LocElmtTracePhys,1);
 
                         // Interpolate GradJumpOnTrace to Local elemental traces.
-                        Vmath::Zero(nLocETrace,tmp,1);
+                        Vmath::Zero(nLocETrace,wsp,1);
                         m_locTraceToTraceMap->InterpTraceToLocTrace
-                                                   (0,GradFwdOnTrace, tmp);
+                                                   (0,GradFwdOnTrace, wsp);
                         m_locTraceToTraceMap->UnshuffleLocTraces
-                                                   (0,tmp,LocElmtTracePhys);
-                        Vmath::Zero(nLocETrace,tmp,1);
+                                                   (0,wsp,LocElmtTracePhys);
+                        Vmath::Zero(nLocETrace,wsp,1);
                         m_locTraceToTraceMap->InterpTraceToLocTrace
-                                                   (1,GradBwdOnTrace, tmp);
+                                                   (1,GradBwdOnTrace, wsp);
                         m_locTraceToTraceMap->UnshuffleLocTraces
-                                                   (1,tmp,LocElmtTracePhys);
+                                                   (1,wsp,LocElmtTracePhys);
                          
                         // Integrate 
                         FilterCoeffs1[i] = m_locElmtTrace->Integral(LocElmtTracePhys); 
