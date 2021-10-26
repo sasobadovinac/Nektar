@@ -85,6 +85,7 @@ IF( NEKTAR_SOLVER_ADR )
     # GJP tests
     ADD_NEKTAR_TEST(Advection2D_Quad_GJP)
     ADD_NEKTAR_TEST(Advection2D_Tri_GJP)
+    ADD_NEKTAR_TEST(AdvDiff_QuadTri_GJP)
 
     # 2D continuous advection (non-conservative)
     ADD_NEKTAR_TEST(Advection_m12_Order1)
