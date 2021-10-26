@@ -935,10 +935,10 @@ cout<<"deps/dx ="<<inarray_d0[i]<<"  deps/dy="<<inarray_d1[i]<<endl;
             int nqe = 1;
             int vCoordDim = GetCoordim();
 
-            m_vertexNormals[vertex] =
+            m_traceNormals[vertex] =
                 Array<OneD, Array<OneD, NekDouble> >(vCoordDim);
             Array<OneD, Array<OneD, NekDouble> > &normal =
-                m_vertexNormals[vertex];
+                m_traceNormals[vertex];
             for (i = 0; i < vCoordDim; ++i)
             {
                 normal[i] = Array<OneD, NekDouble>(nqe);

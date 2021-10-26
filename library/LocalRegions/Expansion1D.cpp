@@ -47,8 +47,8 @@ namespace Nektar
                     const int vert) const
         {
             std::map<int, NormalVector>::const_iterator x;
-            x = m_vertexNormals.find(vert);
-            ASSERTL1 (x != m_vertexNormals.end(),
+            x = m_traceNormals.find(vert);
+            ASSERTL1 (x != m_traceNormals.end(),
                         "Vertex normal not computed.");
             return x->second;
         }
