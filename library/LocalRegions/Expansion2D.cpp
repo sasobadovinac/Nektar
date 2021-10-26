@@ -2352,10 +2352,10 @@ namespace Nektar
             h = sqrt(h1*h1-d1*d1/lenDx);
             
             // perpendicular distanace from second vertex 
-            vadj = *geom->GetVertex((traceid+2)%nverts);
+	    SpatialDomains::PointGeom vadj1 = *geom->GetVertex((traceid+2)%nverts);
             
-            h1  = ev1.dist(vadj);
-            Dx1.Sub(vadj,ev1);
+            h1  = ev1.dist(vadj1);
+            Dx1.Sub(vadj1,ev1);
             d1 = Dx.dot(Dx1); 
             
             h = (h+sqrt(h1*h1-d1*d1/lenDx))*0.5;
