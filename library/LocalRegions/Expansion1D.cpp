@@ -497,44 +497,6 @@ namespace Nektar
 
             idmap[0] = 0;
         }
-        
-        void Expansion1D::v_IProductWRTTensorDerivBaseOnTraceMat(
-                                Array<OneD, DNekMatSharedPtr> &DerivMat)
-        {
-            int nquad   = GetTotPoints();
-            int ntraces = GetNtraces();
-
-            Array<OneD, NekDouble> coeffs(m_ncoeffs);
-            Array<OneD, NekDouble> phys(nquad), deriv0(nquad); 
-
-            Array<OneD, Array<OneD, int> > traceids(ntraces);
-
-            int tottracepts = ntraces; 
-
-            for(int i = 0; i < ntraces; ++i)
-            {
-                GetTracePhysMap(i,traceids[i]);
-            }               
-
-            DerivMat = Array<OneD, DNekMatSharedPtr> (1); 
-            DerivMat[0] = MemoryManager<DNekMat>::AllocateSharedPtr
-                (m_ncoeffs,tottracepts);
-
-            for(int i = 0; i < m_ncoeffs; ++i)
-            {
-                Vmath::Zero(m_ncoeffs,coeffs,1);
-                coeffs[i] = 1.0;
-                BwdTrans(coeffs,phys);
-                
-                // dphi_i/d\eta_1, 
-                PhysTensorDeriv(phys,deriv0);
-
-                for(int j = 0; j < ntraces; ++j)
-                {
-                    (*DerivMat[0])(i,j) = deriv0[traceids[j][0]];
-                }
-            }
-        }
 
         void Expansion1D::v_TraceNormLen(const int traceid, NekDouble &h, NekDouble &p)
         {

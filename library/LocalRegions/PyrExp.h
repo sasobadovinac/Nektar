@@ -176,10 +176,6 @@ namespace Nektar
                 const MatrixKey &mkey);
             LOCAL_REGIONS_EXPORT void v_DropLocStaticCondMatrix(
                 const MatrixKey &mkey);
-            LOCAL_REGIONS_EXPORT DNekScalMatSharedPtr CreateMatrix(
-                const MatrixKey &mkey);
-            LOCAL_REGIONS_EXPORT DNekScalBlkMatSharedPtr CreateStaticCondMatrix(
-                const MatrixKey &mkey);
             LOCAL_REGIONS_EXPORT virtual void v_ComputeLaplacianMetric();
             LOCAL_REGIONS_EXPORT virtual void v_NormalTraceDerivFactors
             (Array<OneD, Array<OneD, NekDouble> > &d0factors,

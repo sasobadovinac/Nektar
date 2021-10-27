@@ -111,9 +111,6 @@ namespace Nektar
 
             virtual void v_TraceNormLen(const int traceid, NekDouble &h, NekDouble &p);
         private:
-            
-            virtual  void v_IProductWRTTensorDerivBaseOnTraceMat
-            (Array<OneD, DNekMatSharedPtr> &DerivMat); 
         };
 
         inline SpatialDomains::Geometry1DSharedPtr Expansion1D

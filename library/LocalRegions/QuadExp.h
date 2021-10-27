@@ -59,7 +59,7 @@ namespace Nektar
             LOCAL_REGIONS_EXPORT QuadExp(
                     const LibUtilities::BasisKey &Ba,
                     const LibUtilities::BasisKey &Bb,
-                    const SpatialDomains::QuadGeomSharedPtr &geom);
+                    const SpatialDomains::Geometry2DSharedPtr &geom);
 
             LOCAL_REGIONS_EXPORT QuadExp(const QuadExp &T);
 
@@ -215,10 +215,6 @@ namespace Nektar
 
             LOCAL_REGIONS_EXPORT virtual DNekMatSharedPtr v_CreateStdMatrix(
                         const StdRegions::StdMatrixKey &mkey);
-#if 0 
-            LOCAL_REGIONS_EXPORT DNekScalMatSharedPtr  CreateMatrix(
-                        const MatrixKey &mkey);
-#endif
 
             LOCAL_REGIONS_EXPORT virtual DNekScalMatSharedPtr v_GetLocMatrix(
                         const MatrixKey &mkey);

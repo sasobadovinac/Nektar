@@ -94,6 +94,9 @@ namespace Nektar
             
             LOCAL_REGIONS_EXPORT IndexMapValuesSharedPtr CreateIndexMap(const IndexMapKey &ikey);
 
+            LOCAL_REGIONS_EXPORT DNekScalBlkMatSharedPtr
+                  CreateStaticCondMatrix(const MatrixKey &mkey);
+
             LOCAL_REGIONS_EXPORT const SpatialDomains::GeomFactorsSharedPtr& GetMetricInfo() const;
 
             LOCAL_REGIONS_EXPORT DNekMatSharedPtr BuildTransformationMatrix(

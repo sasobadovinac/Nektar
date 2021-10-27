@@ -46,7 +46,7 @@
         <SOLVERINFO>
           <I PROPERTY="EQTYPE" VALUE="UnsteadyAdvectionDiffusion"  />
           <I PROPERTY="Projection"  VALUE="Continuous" />
-          <!--I PROPERTY="GJPStabilisation"  VALUE="SemiImplicit"     /-->
+          <I PROPERTY="GJPStabilisation"  VALUE="SemiImplicit"     />
           <I PROPERTY="DiffusionAdvancement"     VALUE="Implicit"  />
           <I PROPERTY="AdvectionAdvancement"     VALUE="Explicit"  />
           <I PROPERTY="TimeIntegrationMethod"    VALUE="IMEXOrder1"/>

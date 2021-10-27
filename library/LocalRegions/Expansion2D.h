@@ -65,9 +65,6 @@ namespace Nektar
             
             LOCAL_REGIONS_EXPORT virtual ~Expansion2D() {}
             
-            LOCAL_REGIONS_EXPORT DNekScalBlkMatSharedPtr
-                  CreateStaticCondMatrix(const MatrixKey &mkey);
-
             LOCAL_REGIONS_EXPORT DNekScalMatSharedPtr
                   CreateMatrix(const MatrixKey &mkey);
 
