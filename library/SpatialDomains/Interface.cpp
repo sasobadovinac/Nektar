@@ -737,6 +737,24 @@ bool ZoneTranslate::v_Move(NekDouble timeStep)
         }
     }
 
+    // Clear bounding boxes (these will be regenerated next time GetBoundingBox is called)
+    for (auto &el : m_elements)
+    {
+        el->DeleteBoundingBox();
+
+        int nfaces = el->GetNumFaces();
+        for (int i = 0; i < nfaces; ++i)
+        {
+            el->GetFace(i)->DeleteBoundingBox();
+        }
+
+        int nedges = el->GetNumEdges();
+        for (int i = 0; i < nedges; ++i)
+        {
+            el->GetEdge(i)->DeleteBoundingBox();
+        }
+    }
+
     return true;
 }
 

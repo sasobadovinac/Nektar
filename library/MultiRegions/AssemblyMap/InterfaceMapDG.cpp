@@ -330,7 +330,7 @@ void InterfaceTrace::CalcLocalMissing()
                 xs[1] = yc[i];
                 xs[2] = zc[i];
 
-                std::cout << std::endl << "Point: " << xs[0] << " " << xs[1] << " " << xs[2];
+                //std::cout << std::endl << "Point: " << xs[0] << " " << xs[1] << " " << xs[2];
 
                 // Search the edge the point was found in last time first
                 auto parentEdgeDeque = m_interface->GetOppInterface()->GetEdgeDeque();
@@ -353,12 +353,12 @@ void InterfaceTrace::CalcLocalMissing()
                     }
 
                     NekDouble dist = edge->FindDistance(xs, foundLocCoord);
-                    std::cout << std::endl << "Looked in: " << edge->GetGlobalID() << " | dist = " << dist;
+                    //std::cout << std::endl << "Looked in: " << edge->GetGlobalID() << " | dist = " << dist;
 
                     if (dist < 5e-5) // @TODO: Check relative residuals?
                     {
                         found = true;
-                        std::cout << std::endl << "Found at: " << foundLocCoord[0] << " " << foundLocCoord[1] << " in " << edge->GetGlobalID() << " with dist = " << dist;
+                        //std::cout << std::endl << "Found at: " << foundLocCoord[0] << " " << foundLocCoord[1] << " in " << edge->GetGlobalID() << " with dist = " << dist;
 
                         m_foundLocalCoords[offset + i] = std::make_pair(edge->GetGlobalID(), foundLocCoord);
                         break;
@@ -388,8 +388,6 @@ void InterfaceTrace::CalcLocalMissing()
             std::cout << std::endl;
             //exit(0);
         }
-
-        m_flag = true;
     }
 }
 
