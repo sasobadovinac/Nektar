@@ -311,12 +311,10 @@ void InterfaceTrace::CalcLocalMissing()
     // interface on this rank contains
     else
     {
-        auto parentEdgeDeque = m_interface->GetOppInterface()->GetEdgeDeque();
-
-        int cnt = 1;
+        //int cnt = 1;
         for (auto childId : childEdgeIds)
         {
-            std::cout << "\rSearching in interface " << m_interface->GetId() << " edge # " << cnt++ << "/" << childEdgeIds.size() << "." << std::flush;
+            //std::cout << "\rSearching in interface " << m_interface->GetId() << " edge # " << cnt++ << "/" << childEdgeIds.size() << "." << std::flush;
             auto childElmt = m_trace->GetExp(m_geomIdToTraceId.at(childId));
             size_t nq      = childElmt->GetTotPoints();
             Array<OneD, NekDouble> xc(nq, 0.0), yc(nq, 0.0), zc(nq, 0.0);
@@ -333,7 +331,9 @@ void InterfaceTrace::CalcLocalMissing()
                 xs[2] = zc[i];
 
                 std::cout << std::endl << "Point: " << xs[0] << " " << xs[1] << " " << xs[2];
+
                 // Search the edge the point was found in last time first
+                auto parentEdgeDeque = m_interface->GetOppInterface()->GetEdgeDeque();
                 if (foundLocalCoordsCopy.find(offset + i) !=
                     foundLocalCoordsCopy.end())
                 {
@@ -344,10 +344,18 @@ void InterfaceTrace::CalcLocalMissing()
 
                 for (auto &edge : parentEdgeDeque)
                 {
+
+                    // First check if inside the edge bounding box
+                    // @TODO: Might better to query a rtree? as in meshgraph.
+                    if (!edge->MinMaxCheck(xs))
+                    {
+                        continue;
+                    }
+
                     NekDouble dist = edge->FindDistance(xs, foundLocCoord);
                     std::cout << std::endl << "Looked in: " << edge->GetGlobalID() << " | dist = " << dist;
 
-                    if (dist < 1e-4) // @TODO: Check relative residuals?
+                    if (dist < 5e-5) // @TODO: Check relative residuals?
                     {
                         found = true;
                         std::cout << std::endl << "Found at: " << foundLocCoord[0] << " " << foundLocCoord[1] << " in " << edge->GetGlobalID() << " with dist = " << dist;
@@ -355,24 +363,15 @@ void InterfaceTrace::CalcLocalMissing()
                         m_foundLocalCoords[offset + i] = std::make_pair(edge->GetGlobalID(), foundLocCoord);
                         break;
                     }
-
-                    if(found)
-                    {
-                        break;
-                    }
-
-                    exit(0);
                 }
 
                 if (!found)
                 {
-                    if(true)
-                    {
-                        std::cout << std::endl << "NOT FOUND!!! " << "Point " << i << ": " << xs[0] << " " << xs[1] << " " << xs[2];
-                    }
+                    std::cout << std::endl << std::endl << "NOT FOUND!!! " << "Point " << i << ": " << xs[0] << " " << xs[1] << " " << xs[2];
 
                     m_missingCoords.emplace_back(xs);
                     m_mapMissingCoordToTrace.emplace_back(offset + i);
+                    exit(0);
                 }
             }
         }
@@ -389,6 +388,8 @@ void InterfaceTrace::CalcLocalMissing()
             std::cout << std::endl;
             //exit(0);
         }
+
+        m_flag = true;
     }
 }
 

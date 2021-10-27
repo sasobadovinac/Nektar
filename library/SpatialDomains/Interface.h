@@ -107,14 +107,15 @@ struct ZoneBase
         return m_id;
     }
 
-    inline virtual void v_Move(NekDouble time)
+    inline virtual bool v_Move(NekDouble time)
     {
         boost::ignore_unused(time);
+        return false;
     }
 
-    inline void Move(NekDouble time)
+    inline bool Move(NekDouble time)
     {
-        v_Move(time);
+        return v_Move(time);
     }
 
     inline std::vector<int> const &GetElementIds() const
@@ -171,7 +172,7 @@ struct ZoneRotate final: public ZoneBase
         return m_angularVel;
     }
 
-    virtual void v_Move(NekDouble timeStep) final;
+    virtual bool v_Move(NekDouble timeStep) final;
 
 protected:
     NekPoint<NekDouble> m_origin;
@@ -197,7 +198,7 @@ struct ZoneTranslate final: public ZoneBase
         return m_velocity;
     }
 
-    virtual void v_Move(NekDouble timeStep) final;
+    virtual bool v_Move(NekDouble timeStep) final;
 
 protected:
     std::vector<NekDouble> m_velocity;
@@ -224,7 +225,7 @@ struct ZonePrescribe final: public ZoneBase
         return m_yDeform->Evaluate(x, y, z, t);
     }
 
-    virtual void v_Move(NekDouble timeStep) final;
+    virtual bool v_Move(NekDouble timeStep) final;
 
 protected:
     LibUtilities::EquationSharedPtr m_xDeform;
@@ -242,7 +243,7 @@ struct ZoneFixed final: public ZoneBase
 
     virtual ~ZoneFixed() = default;
 
-    virtual void v_Move(NekDouble timeStep) final;
+    virtual bool v_Move(NekDouble timeStep) final;
 };
 
 typedef std::shared_ptr<ZoneRotate> ZoneRotateShPtr;

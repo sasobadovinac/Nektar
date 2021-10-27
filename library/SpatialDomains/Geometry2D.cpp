@@ -374,7 +374,7 @@ NekDouble Geometry2D::v_FindDistance(const Array<OneD, const NekDouble> &xs,
     else if (m_geomFactors->GetGtype() == eDeformed)
     {
         // Choose starting based on closest quad
-        Array<OneD, NekDouble> xi(2, 0.0), eta(2, -0.5);
+        Array<OneD, NekDouble> xi(2, 0.0), eta(2, 0.0);
         m_xmap->LocCollapsedToLocCoord(eta, xi);
 
         const NekDouble c1 = 1e-4, c2 = 0.9;
@@ -449,17 +449,17 @@ NekDouble Geometry2D::v_FindDistance(const Array<OneD, const NekDouble> &xs,
 
             NekDouble fx_derxi1xi1 = 2.0 * (xc - xs[0]) * xc_derxi1xi1 + 2.0 * xc_derxi1 * xc_derxi1 +
                                      2.0 * (yc - xs[1]) * yc_derxi1xi1 + 2.0 * yc_derxi1 * yc_derxi1 +
-                                     2.0 * (zc - xs[2]) * zc_derxi1xi1 + 2.0 * zc_derxi1 * zc_derxi1 ;
+                                     2.0 * (zc - xs[2]) * zc_derxi1xi1 + 2.0 * zc_derxi1 * zc_derxi1;
 
             NekDouble fx_derxi1xi2 =  2.0 * (xc - xs[0]) * xc_derxi1xi2 + 2.0 * xc_derxi2 * xc_derxi1 +
                                       2.0 * (yc - xs[1]) * yc_derxi1xi2 + 2.0 * yc_derxi2 * yc_derxi1 +
-                                      2.0 * (zc - xs[2]) * zc_derxi1xi2 + 2.0 * zc_derxi2 * zc_derxi1 ;
+                                      2.0 * (zc - xs[2]) * zc_derxi1xi2 + 2.0 * zc_derxi2 * zc_derxi1;
 
             NekDouble fx_derxi2xi2 = 2.0 * (xc - xs[0]) * xc_derxi2xi2 + 2.0 * xc_derxi2 * xc_derxi2 +
                                      2.0 * (yc - xs[1]) * yc_derxi2xi2 + 2.0 * yc_derxi2 * yc_derxi2 +
                                      2.0 * (zc - xs[2]) * zc_derxi2xi2 + 2.0 * zc_derxi2 * zc_derxi2;
 
-            std::cout << std::endl << "xi[0] = " << xi[0] << ", xi[1] = " << xi[1] << ", xc = " << xc << ", yc = " << yc << ", zc = " << zc << ", fx = " << fx << ", fx_diff = " << abs(fx - fx_prev) << std::endl;
+            //std::cout << std::endl << "xi[0] = " << xi[0] << ", xi[1] = " << xi[1] << ", xc = " << xc << ", yc = " << yc << ", zc = " << zc << ", fx = " << fx << ", fx_diff = " << abs(fx - fx_prev) << std::endl;
 
             // Jacobian
             NekDouble jac[2];
@@ -498,7 +498,7 @@ NekDouble Geometry2D::v_FindDistance(const Array<OneD, const NekDouble> &xs,
             pk[0] = -(hessInv[0][0] * jac[0] + hessInv[1][0] * jac[1]);
             pk[1] = -(hessInv[0][1] * jac[0] + hessInv[1][1] * jac[1]);
 
-            std::cout << "pk[0] = " << pk[0] << ", pk[1] = " << pk[1] << std::endl;
+            //std::cout << "pk[0] = " << pk[0] << ", pk[1] = " << pk[1] << std::endl;
 
             // Backtracking line search
             while (gamma > 1e-16)
@@ -533,17 +533,17 @@ NekDouble Geometry2D::v_FindDistance(const Array<OneD, const NekDouble> &xs,
 
                 NekDouble fx_pk = (xc_pk - xs[0]) * (xc_pk - xs[0]) +
                                   (yc_pk - xs[1]) * (yc_pk - xs[1]) +
-                                  (zc_pk - xs[1]) * (zc_pk - xs[1]) ;
+                                  (zc_pk - xs[2]) * (zc_pk - xs[2]) ;
 
-                std::cout << "xi_pk[0] = " << xi_pk[0] << ", xi_pk[1] = " << xi_pk[1] <<" xc_pk = " << xc_pk << ", yc_pk = " << yc_pk << ", zc_pk = " << zc_pk << ", fx_pk = " << fx_pk << std::endl;
+                //std::cout << "xi_pk[0] = " << xi_pk[0] << ", xi_pk[1] = " << xi_pk[1] <<" xc_pk = " << xc_pk << ", yc_pk = " << yc_pk << ", zc_pk = " << zc_pk << ", fx_pk = " << fx_pk << std::endl;
 
                 NekDouble fx_pk_derxi1 = 2.0 * (xc_pk - xs[0]) * xc_pk_derxi1 +
                                          2.0 * (yc_pk - xs[1]) * yc_pk_derxi1 +
-                                         2.0 * (zc_pk - xs[1]) * zc_pk_derxi1 ;
+                                         2.0 * (zc_pk - xs[2]) * zc_pk_derxi1 ;
 
                 NekDouble fx_pk_derxi2 = 2.0 * (xc_pk - xs[0]) * xc_pk_derxi2 +
                                          2.0 * (yc_pk - xs[1]) * yc_pk_derxi2 +
-                                         2.0 * (zc_pk - xs[1]) * zc_pk_derxi2;
+                                         2.0 * (zc_pk - xs[2]) * zc_pk_derxi2;
 
                 // Check Wolfe conditions
                 // Armijo: fx_pk =< fx + c1 * gamma * pk * fx_der;
@@ -588,10 +588,6 @@ NekDouble Geometry2D::v_FindDistance(const Array<OneD, const NekDouble> &xs,
                 exit(0);
             }
         }
-
-        //file_xc_newton.close();
-        //file_yc_newton.close();
-
 
         xiOut = xi;
         return  sqrt(fx_prev);

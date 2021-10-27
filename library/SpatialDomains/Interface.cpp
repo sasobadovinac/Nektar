@@ -580,8 +580,10 @@ void Movement::PerformMovement(NekDouble timeStep)
     std::set<int> movedZoneIds;
     for (auto &zone : m_zones)
     {
-        zone.second->Move(timeStep);
-        movedZoneIds.insert(zone.first);
+        if(zone.second->Move(timeStep))
+        {
+            movedZoneIds.insert(zone.first);
+        }
     }
 
     // If zone has moved, set all interfaces on that zone to moved.
@@ -629,7 +631,7 @@ void Movement::GenGeomFactors()
 }
 
 // Calculate new location of points using Rodrigues formula
-void ZoneRotate::v_Move(NekDouble time)
+bool ZoneRotate::v_Move(NekDouble time)
 {
     boost::ignore_unused(time);
     NekDouble angle = -m_angularVel * time;
@@ -655,7 +657,6 @@ void ZoneRotate::v_Move(NekDouble time)
         vert->UpdatePosition(newLoc(0) + m_origin[0],
                              newLoc(1) + m_origin[1],
                              newLoc(2) + m_origin[2]);
-
         cnt++;
     }
 
@@ -674,9 +675,29 @@ void ZoneRotate::v_Move(NekDouble time)
             cnt++;
         }
     }
+
+    // Clear bounding boxes (these will be regenerated next time GetBoundingBox is called)
+    for (auto &el : m_elements)
+    {
+        el->DeleteBoundingBox();
+
+        int nfaces = el->GetNumFaces();
+        for (int i = 0; i < nfaces; ++i)
+        {
+            el->GetFace(i)->DeleteBoundingBox();
+        }
+
+        int nedges = el->GetNumEdges();
+        for (int i = 0; i < nedges; ++i)
+        {
+            el->GetEdge(i)->DeleteBoundingBox();
+        }
+    }
+
+    return true;
 }
 
-void ZoneTranslate::v_Move(NekDouble timeStep)
+bool ZoneTranslate::v_Move(NekDouble timeStep)
 {
     Array<OneD, NekDouble> dist(3, 0.0);
     for (int i = 0; i < m_coordDim; ++i)
@@ -715,14 +736,17 @@ void ZoneTranslate::v_Move(NekDouble timeStep)
             cnt++;
         }
     }
+
+    return true;
 }
 
-void ZoneFixed::v_Move(NekDouble time)
+bool ZoneFixed::v_Move(NekDouble time)
 {
     boost::ignore_unused(time);
+    return false;
 }
 
-void ZonePrescribe::v_Move(NekDouble time)
+bool ZonePrescribe::v_Move(NekDouble time)
 {
     boost::ignore_unused(time);
     /*
@@ -786,6 +810,8 @@ void ZonePrescribe::v_Move(NekDouble time)
         el->GenGeomFactors();
         el->FillGeom();
     } */
+
+    return true;
 }
 
 }
