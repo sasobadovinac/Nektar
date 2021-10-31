@@ -779,17 +779,20 @@ struct avx2Float8
         out[_mm_extract_epi32(indices._data, 1)] = tmp[1];
         out[_mm_extract_epi32(indices._data, 2)] = tmp[2];
         out[_mm_extract_epi32(indices._data, 3)] = tmp[3];
-        out[_mm_extract_epi32(indices._data, 4)] = tmp[4];
-        out[_mm_extract_epi32(indices._data, 5)] = tmp[5];
-        out[_mm_extract_epi32(indices._data, 6)] = tmp[6];
-        out[_mm_extract_epi32(indices._data, 7)] = tmp[7];
+        out[_mm_extract_epi32(indices._data+8, 0)] = tmp[4];
+        out[_mm_extract_epi32(indices._data+8, 1)] = tmp[5];
+        out[_mm_extract_epi32(indices._data+8, 2)] = tmp[6];
+        out[_mm_extract_epi32(indices._data+8, 3)] = tmp[7];
     }
 
     // gather scatter with avx2
     template <typename T>
     inline void gather(scalarType const* p, const avx2Long4<T>& indices)
     {
-        _data = _mm256_i64gather_ps(p, indices._data, 8);
+	__m128 a = _mm256_i64gather_ps(p, indices._data, 4);
+	__m128 b = _mm256_i64gather_ps(p, indices._data+8, 4);
+	__m256 c = _mm256_castps128_ps256(a);
+        _data = _mm256_insertf128_ps(c, b, 1);
     }
 
     template <typename T>
@@ -803,10 +806,10 @@ struct avx2Float8
         out[_mm256_extract_epi64(indices._data, 1)] = tmp[1];
         out[_mm256_extract_epi64(indices._data, 2)] = tmp[2];
         out[_mm256_extract_epi64(indices._data, 3)] = tmp[3];
-        out[_mm256_extract_epi64(indices._data, 4)] = tmp[4];
-        out[_mm256_extract_epi64(indices._data, 5)] = tmp[5];
-        out[_mm256_extract_epi64(indices._data, 6)] = tmp[6];
-        out[_mm256_extract_epi64(indices._data, 7)] = tmp[7];
+        out[_mm256_extract_epi64(indices._data+8, 0)] = tmp[4];
+        out[_mm256_extract_epi64(indices._data+8, 1)] = tmp[5];
+        out[_mm256_extract_epi64(indices._data+8, 2)] = tmp[6];
+        out[_mm256_extract_epi64(indices._data+8, 3)] = tmp[7];
     }
 
     // fma
@@ -884,7 +887,7 @@ inline avx2Float8 sqrt(avx2Float8 in)
 inline avx2Float8 abs(avx2Float8 in)
 {
     // there is no avx2 _mm256_abs_ps intrinsic
-    static const __m256d sign_mask = _mm256_set1_ps(-0.); // -0. = 1 << 63
+    static const __m256 sign_mask = _mm256_set1_ps(-0.); // -0. = 1 << 63
     return _mm256_andnot_ps(sign_mask, in._data);        // !sign_mask & x
 }
 
@@ -908,7 +911,7 @@ inline avx2Float8 log(avx2Float8 in)
 }
 
 inline void load_interleave(
-    const double* in,
+    const float* in,
     size_t dataLen,
     std::vector<avx2Float8, allocator<avx2Float8>> &out)
 {
@@ -917,7 +920,7 @@ inline void load_interleave(
     alignas(32) size_t tmp[8] = {0, dataLen, 2*dataLen, 3*dataLen,
                             4*dataLen, 5*dataLen, 6*dataLen, 7*dataLen};
     using index_t = avx2Long4<size_t>;
-    index_t index0(tmp);
+    index_t index0(tmp[0]);
     index_t index1 = index0 + 1;
     index_t index2 = index0 + 2;
     index_t index3 = index0 + 3;
@@ -959,14 +962,14 @@ inline void load_interleave(
 inline void deinterleave_store(
     const std::vector<avx2Float8, allocator<avx2Float8>> &in,
     size_t dataLen,
-    double *out)
+    float *out)
 {
     // size_t nBlocks = dataLen / 4;
 
     alignas(32) size_t tmp[8] = {0, dataLen, 2*dataLen, 3*dataLen,
                             4*dataLen, 5*dataLen, 6*dataLen, 7*dataLen};
     using index_t = avx2Long4<size_t>;
-    index_t index0(tmp);
+    index_t index0(tmp[0]);
 
     for (size_t i = 0; i < dataLen; ++i)
     {
