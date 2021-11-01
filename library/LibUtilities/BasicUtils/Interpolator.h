@@ -41,9 +41,10 @@
 #include <functional>
 #include <memory>
 
+#include <boost/geometry/strategies/disjoint.hpp> // required for rtree.hpp with boost 1.77
+#include <boost/geometry/index/rtree.hpp>
 #include <boost/geometry/geometries/box.hpp>
 #include <boost/geometry/geometries/point.hpp>
-#include <boost/geometry/index/rtree.hpp>
 
 #include <LibUtilities/BasicUtils/ErrorUtil.hpp>
 #include <LibUtilities/BasicUtils/PtsField.h>
