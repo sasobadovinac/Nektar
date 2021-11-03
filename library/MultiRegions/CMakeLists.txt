@@ -17,6 +17,7 @@ ExpList2DHomogeneous1D.cpp
 ExpList1DHomogeneous2D.cpp
 ExpList3DHomogeneous1D.cpp
 ExpList3DHomogeneous2D.cpp
+GJPForcing.cpp
 GlobalLinSys.cpp
 GlobalLinSysKey.cpp
 GlobalLinSysDirect.cpp
@@ -49,6 +50,7 @@ ExpList2DHomogeneous1D.h
 ExpList1DHomogeneous2D.h
 ExpList3DHomogeneous1D.h
 ExpList3DHomogeneous2D.h
+GJPForcing.h
 GlobalLinSys.h
 GlobalLinSysKey.h
 GlobalLinSysDirect.h

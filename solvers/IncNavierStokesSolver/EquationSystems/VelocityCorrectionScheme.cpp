@@ -107,8 +107,16 @@ namespace Nektar
         SetUpExtrapolation();
         SetUpSVV();
 
-        m_session->MatchSolverInfo(
-            "GJPStabilisation", "SemiImplicit", m_useGJPSemiImplicit, false);
+        if(m_session->DefinesSolverInfo("GJPStabilisation"))
+        {
+            // check to see if it is explicity turned off
+            m_session->MatchSolverInfo("GJPStabilisation", "False",
+                                       m_useGJPStabilisation, false);
+
+            // if GJPStabilisation set to False bool will be true and
+            // if not false so negate/revese bool 
+            m_useGJPStabilisation = !m_useGJPStabilisation; 
+        }
 
         m_session->LoadParameter("GJPJumpScale", m_GJPJumpScale, 1.0);
         
@@ -575,9 +583,12 @@ namespace Nektar
                   + boost::lexical_cast<string>(m_sVVDiffCoeffHomo1D)+"))");
         }
 
-        if(m_useGJPSemiImplicit)
+        if(m_useGJPStabilisation)
         {
-            SolverUtils::AddSummaryItem(s,"GJP Stabilisation", "Semi Implicit");
+            SolverUtils::AddSummaryItem(s,"GJP Stab. Impl.    ",
+                            m_session->GetSolverInfo("GJPStabilisation"));
+            SolverUtils::AddSummaryItem(s,"GJP Stab. JumpScale",
+                                        m_GJPJumpScale);
         }
     }
 
@@ -871,12 +882,11 @@ timer.AccumulateRegion("Pressure BCs");
 
         AppendSVVFactors(factors,varFactorsMap);
 
-
         // Solve Helmholtz system and put in Physical space
         for(int i = 0; i < m_nConvectiveFields; ++i)
         {
             // test by adding GJP implicit 
-            if(m_useGJPSemiImplicit)
+            if(m_useGJPStabilisation)
             {
                 factors[StdRegions::eFactorGJP] = m_GJPJumpScale/m_diffCoeff[i];
             }
@@ -884,8 +894,7 @@ timer.AccumulateRegion("Pressure BCs");
             // Setup coefficients for equation
             factors[StdRegions::eFactorLambda] = 1.0/aii_Dt/m_diffCoeff[i];
             m_fields[i]->HelmSolve(Forcing[i], m_fields[i]->UpdateCoeffs(),
-                                   factors, varCoeffMap,
-                                   varFactorsMap);
+                                   factors, varCoeffMap, varFactorsMap);
             m_fields[i]->BwdTrans(m_fields[i]->GetCoeffs(),outarray[i]);
         }
     }

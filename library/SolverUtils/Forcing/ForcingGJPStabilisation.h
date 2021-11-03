@@ -39,10 +39,10 @@
 
 #include <LibUtilities/BasicUtils/NekFactory.hpp>
 #include <LibUtilities/BasicUtils/SharedArray.hpp>
-#include <MultiRegions/ExpList.h>
 #include <SolverUtils/SolverUtilsDeclspec.h>
 #include <SolverUtils/Forcing/Forcing.h>
 #include <MultiRegions/DisContField.h>
+#include <MultiRegions/GJPForcing.h>
 
 namespace Nektar
 {
@@ -84,50 +84,24 @@ protected:
          Array<OneD, Array<OneD, NekDouble> > &outarray,
          const NekDouble &time);
 private:
-    MultiRegions::ExpansionType  m_expType; 
-    int m_numForcingFields; 
-    int m_coordDim; 
-    int m_traceDim; 
-    /// Number of planes in expansion to be stabilised for Homgoeneous expansion
-    int m_nplanes;
 
-    NekDouble m_jumpScal;
+    int m_numForcingFields; 
 
     bool m_useGJPSemiImplicit; 
-    
-    /// DG expansion for projection evalaution along trace
-    MultiRegions::DisContFieldSharedPtr m_dgfield;    
-    /// LocaTraceToTraceMap 
-    MultiRegions::LocTraceToTraceMapSharedPtr  m_locTraceToTraceMap;
-    /// Local Elemental trace expansions
-    MultiRegions::ExpListSharedPtr m_locElmtTrace;
-
-    /// Scale factor for phys values along trace involving the lcoal
-    /// normals and tangent geometric factors 
-    Array<OneD, Array<OneD, NekDouble>> m_scalTrace;
-
-    std::vector<std::pair<int,Array<OneD, DNekMatSharedPtr>>> m_StdDBaseOnTraceMat;
-
-    void MultiplyByStdDerivBaseOnTraceMat(int i, Array<OneD, NekDouble> &in,
-                                          Array<OneD, NekDouble> &out);
     
     // Link to the trace normals 
     Array<OneD, Array<OneD, NekDouble> > m_traceNormals; 
 
-    // String to define type of forcing, i.e. default, h-cubed
-    std::string m_hScalingStr; 
-
     // String to define scaling velocity
     std::string m_velScalingStr; 
     
+    MultiRegions::GJPForcingSharedPtr m_GJPData; 
     
     ForcingGJPStabilisation
         (const LibUtilities::SessionReaderSharedPtr &pSession,
          const std::weak_ptr<EquationSystem>      &pEquation);
     
     virtual ~ForcingGJPStabilisation(void){};
-
-    void SetUpExpansionInfoMapForGJP(SpatialDomains::MeshGraphSharedPtr graph);
 };
 
 }

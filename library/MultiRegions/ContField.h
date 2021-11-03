@@ -39,6 +39,7 @@
 #include <SpatialDomains/Conditions.h>
 #include <MultiRegions/MultiRegions.hpp>
 #include <MultiRegions/DisContField.h>
+#include <MultiRegions/GJPForcing.h>
 #include <MultiRegions/GlobalMatrix.h>
 #include <MultiRegions/GlobalLinSys.h>
 #include <MultiRegions/AssemblyMap/AssemblyMapCG.h>
@@ -49,6 +50,7 @@ namespace Nektar
 {
     namespace MultiRegions
     {
+
         /// This class is the abstraction of a global continuous two-
         /// dimensional spectral/hp element expansion which approximates the
         /// solution of a set of partial differential equations.
@@ -164,6 +166,19 @@ namespace Nektar
                                    Array<OneD,        NekDouble> &inout,
                              const Array<OneD, const NekDouble> &dirForcing
                                                         = NullNekDouble1DArray);
+
+            MULTI_REGIONS_EXPORT const GJPForcingSharedPtr GetGJPForcing()
+            {
+                // initialize if required
+                if(!m_GJPData)
+                {
+                    m_GJPData = MemoryManager<GJPForcing>::
+                        AllocateSharedPtr(GetSharedThisPtr());
+                }
+
+                return m_GJPData;
+            }
+
         protected:
 
             //private:
@@ -182,6 +197,9 @@ namespace Nektar
             /// constructed only once.
             LibUtilities::NekManager<GlobalLinSysKey, GlobalLinSys> m_globalLinSysManager;
 
+            /// Data for Gradient Jump Penalisation (GJP) stabilisaiton
+            GJPForcingSharedPtr m_GJPData; 
+            
             /// Returns the global matrix specified by \a mkey.
             MULTI_REGIONS_EXPORT GlobalMatrixSharedPtr
                 GetGlobalMatrix(const GlobalMatrixKey &mkey);

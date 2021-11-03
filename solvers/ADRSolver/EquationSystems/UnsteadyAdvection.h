@@ -64,7 +64,9 @@ namespace Nektar
         virtual ~UnsteadyAdvection();
 
     protected:
-        bool m_useGJPSemiImplicit;
+        bool m_useGJPStabilisation;
+        // scaling factor for GJP penalisation, default = 1.0
+        NekDouble m_GJPJumpScale; 
         SolverUtils::RiemannSolverSharedPtr     m_riemannSolver;
 
         /// Advection velocity

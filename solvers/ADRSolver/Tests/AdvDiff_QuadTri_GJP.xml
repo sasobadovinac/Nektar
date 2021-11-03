@@ -133,10 +133,5 @@
         </FUNCTION>
     </CONDITIONS>
 
-    <FORCING>
-      <FORCE TYPE="GJPStabilisation">
-    </FORCE>
-  </FORCING>
-
 </NEKTAR>
 

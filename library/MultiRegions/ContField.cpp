@@ -182,7 +182,8 @@ namespace Nektar
             m_globalMat   (MemoryManager<GlobalMatrixMap>::AllocateSharedPtr()),
             m_globalLinSysManager(
                 std::bind(&ContField::GenGlobalLinSys, this, std::placeholders::_1),
-                std::string("GlobalLinSys"))
+                std::string("GlobalLinSys")),
+            m_GJPData(In.m_GJPData)
         {
             if(!SameTypeOfBoundaryConditions(In) || CheckIfSingularSystem)
             {
@@ -218,7 +219,8 @@ namespace Nektar
             DisContField(In,DeclareCoeffPhysArrays),
             m_locToGloMap(In.m_locToGloMap),
             m_globalMat(In.m_globalMat),
-            m_globalLinSysManager(In.m_globalLinSysManager)
+            m_globalLinSysManager(In.m_globalLinSysManager),
+            m_GJPData(In.m_GJPData)
         {
         }
 
@@ -268,7 +270,7 @@ namespace Nektar
          *                      points in its array #m_phys.
          */
         void ContField::FwdTrans(const Array<OneD, const NekDouble> &inarray,
-                                   Array<OneD,       NekDouble> &outarray)
+                                       Array<OneD,       NekDouble> &outarray)
 
         {
             // Inner product of forcing
@@ -926,9 +928,31 @@ namespace Nektar
                 bndcnt += m_bndCondExpansions[i]->GetNcoeffs();
             }
 
-            StdRegions::MatrixType mtype = factors.count(StdRegions::eFactorGJP)?
-                                            StdRegions::eHelmholtzGJP:
-                                            StdRegions::eHelmholtz;
+            StdRegions::MatrixType mtype = StdRegions::eHelmholtz;
+
+            if(factors.count(StdRegions::eFactorGJP))
+            {
+                // initialize if required
+                if(!m_GJPData)
+                {
+                    m_GJPData = MemoryManager<GJPForcing>::
+                        AllocateSharedPtr(GetSharedThisPtr());
+                }
+
+                if(m_GJPData->IsSemiImplicit())
+                {
+                    mtype = StdRegions::eHelmholtzGJP;
+                }
+
+                // to set up forcing need initial guess in physical space
+                Array<OneD, NekDouble> phys(m_npoints);
+                BwdTrans(outarray,phys);
+                NekDouble scale = -1.0*factors.
+                    find(StdRegions::eFactorGJP)->second; 
+                m_GJPData->Apply(phys,wsp,true, NullNekDouble1DArray,
+                                 scale);
+            }
+            
             GlobalLinSysKey key(mtype,m_locToGloMap,factors,
                                 varcoeff,varfactors);
 

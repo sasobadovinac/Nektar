@@ -66,8 +66,18 @@ namespace Nektar
         m_session->LoadParameter("wavefreq",   m_waveFreq, 0.0);
         // Read the advection velocities from session file
 
-        m_session->MatchSolverInfo(
-            "GJPStabilisation", "SemiImplicit", m_useGJPSemiImplicit, false);
+        if(m_session->DefinesSolverInfo("GJPStabilisation"))
+        {
+            // check to see if it is explicity turned off
+            m_session->MatchSolverInfo("GJPStabilisation", "False",
+                                       m_useGJPStabilisation, false);
+
+            // if GJPStabilisation set to False bool will be true and
+            // if not false so negate/revese bool 
+            m_useGJPStabilisation = !m_useGJPStabilisation; 
+        }
+
+        m_session->LoadParameter("GJPJumpScale", m_GJPJumpScale, 1.0);
 
         std::vector<std::string> vel;
         vel.push_back("Vx");
@@ -241,14 +251,10 @@ namespace Nektar
             Vmath::Neg(nSolutionPts, outarray[i], 1);
         }
 
-        // Add explicit GJP forcing if available
-        if(!m_useGJPSemiImplicit)
+        for (auto &x : m_forcing)
         {
-            for (auto &x : m_forcing)
-            {
-                // set up non-linear terms
-                x->Apply(m_fields, inarray, outarray, time);
-            }
+            // set up non-linear terms
+            x->Apply(m_fields, inarray, outarray, time);
         }
     }
 
@@ -296,58 +302,64 @@ namespace Nektar
             {
                 int ncoeffs = m_fields[0]->GetNcoeffs();
                 Array<OneD, NekDouble> coeffs(ncoeffs,0.0);
-
-#if 1
+                
+#if 0
                 for(i = 0; i < nVariables; ++i)
                 {
                     m_fields[i]->FwdTrans(inarray[i], coeffs);
                     m_fields[i]->BwdTrans_IterPerExp(coeffs, outarray[i]);
                 }
 #else
-                --> Decide if want this approach here. 
-                Array<OneD,NekDouble> wsp(ncoeffs);
-                // copy inarray 
-                Array<OneD, NekDouble> in = inarray[i]; 
+                StdRegions::ConstFactorMap factors;
+                StdRegions::MatrixType mtype = StdRegions::eMass;
 
-                if(m_useGJPSemiImplicit)
-                {
-                    // Add GJP forcing terms
-                    for (auto &x : m_forcing)
-                    {
-                        // set up non-linear terms
-                        x->Apply(m_fields, inarray, in, time);
-                    }
-                }
+                Array<OneD,NekDouble> wsp(ncoeffs);
                 
                 for(i = 0; i < nVariables; ++i)
                 {
-                    StdRegions::ConstFactorMap factors;
-                    StdRegions::MatrixType mtype = StdRegions::eMass;
-                    if(m_useGJPSemiImplicit)
-                    {
-                        factors[StdRegions::eFactorGJP] = m_timestep;
-                        mtype = StdRegions::eMassGJP;
-
-                    }
-                    
-                    m_fields[i]->IProductWRTBase(in, wsp);
-
-                    // Solve the system
                     MultiRegions::ContFieldSharedPtr cfield =
                         std::dynamic_pointer_cast<
                             MultiRegions::ContField>(m_fields[i]);
+                
+                    // copy inarray 
+                    Array<OneD, NekDouble> in = inarray[i]; 
+                    
+                    m_fields[i]->IProductWRTBase(in, wsp);
+                    
+                    if(m_useGJPStabilisation)
+                    {
+                        const MultiRegions::GJPForcingSharedPtr GJPData =
+                            cfield->GetGJPForcing(); 
+                        
+                        factors[StdRegions::eFactorGJP] =
+                            m_GJPJumpScale*m_timestep;
+                        
+                        if(GJPData->IsSemiImplicit())
+                        {
+                            mtype = StdRegions::eMassGJP;
+                        }
+                        
+                        // to set up forcing need initial guess in
+                        // physical space
+                        NekDouble scale = -1.0*factors[StdRegions::eFactorGJP];
+                        
+                        GJPData->Apply(inarray[i],wsp,true,
+                                       NullNekDouble1DArray, scale);
+                    }
+                
+                    // Solve the system
                     MultiRegions::GlobalLinSysKey
                         key(mtype, cfield->GetLocalToGlobalMap(),factors);
+                
+                    cfield->GlobalSolve(key,wsp,coeffs,
+                             NullNekDouble1DArray);
                     
-                    cfield->GlobalSolve(key,wsp,coeffs);
-
                     m_fields[i]->BwdTrans_IterPerExp(coeffs, outarray[i]);
                 }
 #endif
                 break;
             }
-
-            default:
+        default:
                 ASSERTL0(false,"Unknown projection scheme");
                 break;
         }
@@ -460,9 +472,12 @@ namespace Nektar
     void UnsteadyAdvection::v_GenerateSummary(SolverUtils::SummaryList& s)
     {
         AdvectionSystem::v_GenerateSummary(s);
-        if(m_useGJPSemiImplicit)
+        if(m_useGJPStabilisation)
         {
-            SolverUtils::AddSummaryItem(s,"GJP Stabilisation", "Semi Implicit");
+            SolverUtils::AddSummaryItem(s,"GJP Stab. Impl.    ",
+                            m_session->GetSolverInfo("GJPStabilisation"));
+            SolverUtils::AddSummaryItem(s,"GJP Stab. JumpScale",
+                                        m_GJPJumpScale);
         }
     }
 }

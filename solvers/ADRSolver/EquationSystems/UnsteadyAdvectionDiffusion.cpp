@@ -85,8 +85,16 @@ namespace Nektar
         m_session->MatchSolverInfo(
             "SpectralVanishingViscosity", "True", m_useSpecVanVisc, false);
 
-        m_session->MatchSolverInfo(
-            "GJPStabilisation", "SemiImplicit", m_useGJPSemiImplicit, false);
+        if(m_session->DefinesSolverInfo("GJPStabilisation"))
+        {
+            // check to see if it is explicity turned off
+            m_session->MatchSolverInfo("GJPStabilisation", "False",
+                                       m_useGJPStabilisation, false);
+
+            // if GJPStabilisation set to False bool will be true and
+            // if not false so negate/revese bool 
+            m_useGJPStabilisation = !m_useGJPStabilisation; 
+        }
 
         m_session->LoadParameter("GJPJumpScale", m_GJPJumpScale, 1.0);
 
@@ -364,8 +372,8 @@ namespace Nektar
         StdRegions::ConstFactorMap factors;
         factors[StdRegions::eFactorLambda] = 1.0/lambda/m_epsilon;
 
-        // test by adding GJP implicit 
-        if(m_useGJPSemiImplicit)
+        // Add factor is GJP turned on
+        if(m_useGJPStabilisation)
         {
             factors[StdRegions::eFactorGJP] = m_GJPJumpScale/m_epsilon;
         }
@@ -467,9 +475,12 @@ namespace Nektar
             SolverUtils::SummaryList& s)
     {
         AdvectionSystem::v_GenerateSummary(s);
-        if(m_useGJPSemiImplicit)
+        if(m_useGJPStabilisation)
         {
-            SolverUtils::AddSummaryItem(s,"GJP Stabilisation", "Semi Implicit");
+            SolverUtils::AddSummaryItem(s,"GJP Stab. Impl.    ",
+                            m_session->GetSolverInfo("GJPStabilisation"));
+            SolverUtils::AddSummaryItem(s,"GJP Stab. JumpScale",
+                                        m_GJPJumpScale);
         }
     }
 

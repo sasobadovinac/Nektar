@@ -68,7 +68,7 @@ namespace Nektar
     protected:
         bool m_subSteppingScheme;
         bool m_useSpecVanVisc;
-        bool m_useGJPSemiImplicit;
+        bool m_useGJPStabilisation;
         // scaling factor for GJP penalisation, default = 1.0
         NekDouble m_GJPJumpScale; 
         NekDouble m_sVVCutoffRatio;   // cut off ratio from which to start decayhing modes

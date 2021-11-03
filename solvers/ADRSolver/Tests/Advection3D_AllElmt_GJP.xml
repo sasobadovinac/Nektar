@@ -16,6 +16,7 @@
       <SOLVERINFO>
         <I PROPERTY="EQTYPE"                VALUE="UnsteadyAdvection"   />
         <I PROPERTY="AdvectionType"         VALUE="NonConservative"     />
+        <I PROPERTY="GJPStabilisation"      VALUE="Explicit"     />
         <I PROPERTY="Projection"            VALUE="Galerkin"            />
         <I PROPERTY="TimeIntegrationMethod" VALUE="ForwardEuler"/>
       </SOLVERINFO>
@@ -57,10 +58,6 @@
       </FUNCTION>
     </CONDITIONS>
 
-    <FORCING>
-      <FORCE TYPE="GJPStabilisation">
-      </FORCE>
-    </FORCING>
     <EXPANSIONS>
         <E COMPOSITE="C[0]" NUMMODES="4" TYPE="MODIFIED" FIELDS="u" />
         <E COMPOSITE="C[7]" NUMMODES="4" TYPE="MODIFIED" FIELDS="u" />

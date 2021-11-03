@@ -1363,8 +1363,7 @@ namespace Nektar
                 const std::shared_ptr<DNekMat> &Gmat,
                 Array<OneD, NekDouble> &EigValsReal,
                 Array<OneD, NekDouble> &EigValsImag,
-                Array<OneD, NekDouble> &EigVecs
-                = NullNekDouble1DArray);
+                Array<OneD, NekDouble> &EigVecs = NullNekDouble1DArray);
 
 
             /// This operation constructs the global linear system of type \a
