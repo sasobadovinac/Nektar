@@ -187,6 +187,7 @@ FilterFieldConvert::FilterFieldConvert(
 
     m_numSamples  = 0;
     m_index       = 0;
+    m_outputIndex = 0;
 
     //
     // FieldConvert modules
@@ -304,10 +305,6 @@ void FilterFieldConvert::v_Initialise(
         if (fieldMetaData.count("FilterFileNum"))
         {
             m_outputIndex = atoi(fieldMetaData["FilterFileNum"].c_str());
-        }
-        else
-        {
-            m_outputIndex = 0;
         }
 
         // Divide by scale
