@@ -65,10 +65,10 @@ template <typename T, int width> struct default_abi
 {
     using type = typename first_not_void_of
     <
-        // typename avx512<T>::type,
-        typename avx2<T, width>::type
-        // typename sse2<T>::type,
-        // typename scalar<T>::type
+        typename avx512<T>::type,
+        typename avx2<T, width>::type,
+        typename sse2<T>::type,
+        typename scalar<T>::type
     >::type;
 
     static_assert(!std::is_void<type>::value, "unsupported SIMD type");
