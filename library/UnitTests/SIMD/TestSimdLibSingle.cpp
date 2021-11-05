@@ -458,18 +458,18 @@ namespace SimdLibTests
     {
         float aval = 4.0;
         vec_t avec(aval);
-        using mask_t = simd<bool>;
+        using mask_t = simd<bool, vec_t::width>;
         mask_t amask;
 
         amask = avec > avec;
         // check
-        alignas(vec_t::alignment) std::array<std::uint64_t, vec_t::width>
+        alignas(vec_t::alignment) std::array<vec_t::scalarIndexType, vec_t::width>
             ascalararr{{}}; // float brace to deal with gcc 4.8.5 ...
         amask.store(ascalararr.data());
         for (size_t i = 0; i < vec_t::width; ++i)
         {
             // type conversion make lvalue in rvalue, needed pre-c++17
-            BOOST_CHECK_EQUAL(ascalararr[i], (std::uint64_t)mask_t::false_v);
+            BOOST_CHECK_EQUAL(ascalararr[i], (std::uint32_t)mask_t::false_v);
         }
 
         float bval = 3.0;
@@ -481,7 +481,7 @@ namespace SimdLibTests
         for (size_t i = 0; i < vec_t::width; ++i)
         {
             // type conversion make lvalue in rvalue, needed pre-c++17
-            BOOST_CHECK_EQUAL(ascalararr[i], (std::uint64_t)mask_t::true_v);
+            BOOST_CHECK_EQUAL(ascalararr[i], (std::uint32_t)mask_t::true_v);
         }
 
         float cval = 5.0;
@@ -493,7 +493,7 @@ namespace SimdLibTests
         for (size_t i = 0; i < vec_t::width; ++i)
         {
             // type conversion make lvalue in rvalue, needed pre-c++17
-            BOOST_CHECK_EQUAL(ascalararr[i], (std::uint64_t)mask_t::false_v);
+            BOOST_CHECK_EQUAL(ascalararr[i], (std::uint32_t)mask_t::false_v);
         }
 
 
@@ -506,7 +506,6 @@ namespace SimdLibTests
             vec_t evec;
             evec.load(ascalararr2.data());
 
-            simd<bool> amask;
             amask = dvec > evec;
             // check
             for (size_t i = 0; i < vec_t::width; ++i)
@@ -521,10 +520,10 @@ namespace SimdLibTests
     {
         float aval = 4.0;
         vec_t avec(aval);
-        using mask_t = simd<bool>;
+        using mask_t = simd<bool, vec_t::width>;
         mask_t amask;
 
-        alignas(vec_t::alignment) std::array<std::uint64_t, vec_t::width>
+        alignas(vec_t::alignment) std::array<std::uint32_t, vec_t::width>
             ascalararr{{}}; // float brace to deal with gcc 4.8.5 ...
         for (size_t i = 0; i < vec_t::width; ++i)
         {

@@ -473,7 +473,7 @@ namespace SimdLibTests
     {
         double aval = 4.0;
         vec_t avec(aval);
-        using mask_t = simd<bool>;
+        using mask_t = simd<bool, vec_t::width>;
         mask_t amask;
 
         amask = avec > avec;
@@ -521,7 +521,6 @@ namespace SimdLibTests
             vec_t evec;
             evec.load(ascalararr2.data());
 
-            simd<bool> amask;
             amask = dvec > evec;
             // check
             for (size_t i = 0; i < vec_t::width; ++i)
@@ -536,7 +535,7 @@ namespace SimdLibTests
     {
         double aval = 4.0;
         vec_t avec(aval);
-        using mask_t = simd<bool>;
+        using mask_t = simd<bool, vec_t::width>;
         mask_t amask;
 
         alignas(vec_t::alignment) std::array<std::uint64_t, vec_t::width>

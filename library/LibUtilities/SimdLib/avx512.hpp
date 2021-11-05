@@ -468,30 +468,6 @@ inline void deinterleave_store(
     size_t dataLen,
     double *out)
 {
-#if 0
-    double *out0 = out;
-    double *out1 = out + dataLen;
-    double *out2 = out + 2 * dataLen;
-    double *out3 = out + 3 * dataLen;
-    double *out4 = out + 4 * dataLen;
-    double *out5 = out + 5 * dataLen;
-    double *out6 = out + 6 * dataLen;
-    double *out7 = out + 7 * dataLen;
-
-
-    for (size_t i = 0; i < dataLen; ++i)
-    {
-        out0[i] = in[i][0];
-        out1[i] = in[i][1];
-        out2[i] = in[i][2];
-        out3[i] = in[i][3];
-        out4[i] = in[i][4];
-        out5[i] = in[i][5];
-        out6[i] = in[i][6];
-        out7[i] = in[i][7];
-    }
-#else
-
     // size_t nBlocks = dataLen / 4;
 
     alignas(avx512Double8::alignment) size_t tmp[avx512Double8::width] =
@@ -528,7 +504,6 @@ inline void deinterleave_store(
         in[i].scatter(out, index0);
         index0 = index0 + 1;
     }
-#endif
 
 }
 

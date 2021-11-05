@@ -47,7 +47,7 @@ namespace tinysimd
 namespace abi
 {
 
-template <typename scalarType>
+template <typename scalarType, int width = 0>
 struct avx2
 {
     using type = void;
@@ -63,7 +63,8 @@ template<typename T> struct avx2Int8;
 template<typename T> struct avx2Long4;
 struct avx2Double4;
 struct avx2Float8;
-struct avx2Mask;
+struct avx2Mask4;
+struct avx2Mask8;
 
 namespace abi
 {
@@ -73,15 +74,10 @@ template <> struct avx2<double> { using type = avx2Double4; };
 template <> struct avx2<float>  { using type = avx2Float8; };
 template <> struct avx2<std::int64_t> { using type = avx2Long4<std::int64_t>; };
 template <> struct avx2<std::uint64_t> { using type = avx2Long4<std::uint64_t>; };
-template <> struct avx2<bool> { using type = avx2Mask; };
-// #if defined(__AVX512F__) && defined(NEKTAR_ENABLE_SIMD_AVX512)
-// these types are used for indexes only
-// should be enabled only with avx512 otherwise they get selected by the wrapper
-// instead of sse2int4. The concrete type avx2Int8 is available in case someone
-// wants to explicity use it
 template <> struct avx2<std::int32_t> { using type = avx2Int8<std::int32_t>; };
 template <> struct avx2<std::uint32_t> { using type = avx2Int8<std::uint32_t>; };
-// #endif
+template <> struct avx2<bool, 4> { using type = avx2Mask4; };
+template <> struct avx2<bool, 8> { using type = avx2Mask8; };
 
 } // namespace abi
 
@@ -877,11 +873,11 @@ inline void load_interleave(
     std::vector<avx2Float8, allocator<avx2Float8>> &out)
 {
 
-    alignas(avx2Float8::alignment) std::uint32_t tmp[8] =
+    alignas(avx2Float8::alignment) avx2Float8::scalarIndexType tmp[8] =
         {0, dataLen, 2*dataLen, 3*dataLen, 4*dataLen, 5*dataLen,6*dataLen,
             7*dataLen};
 
-    using index_t = avx2Int8<std::uint32_t>;
+    using index_t = avx2Int8<avx2Float8::scalarIndexType>;
     index_t index0(tmp);
     index_t index1 = index0 + 1;
     index_t index2 = index0 + 2;
@@ -915,12 +911,10 @@ inline void deinterleave_store(
     size_t dataLen,
     float *out)
 {
-    // size_t nBlocks = dataLen / 4;
-
-    alignas(avx2Float8::alignment) std::uint32_t tmp[8] =
+    alignas(avx2Float8::alignment) avx2Float8::scalarIndexType tmp[8] =
         {0, dataLen, 2*dataLen, 3*dataLen, 4*dataLen, 5*dataLen, 6*dataLen,
             7*dataLen};
-    using index_t = avx2Int8<std::uint32_t>;
+    using index_t = avx2Int8<avx2Float8::scalarIndexType>;
     index_t index0(tmp);
 
     for (size_t i = 0; i < dataLen; ++i)
@@ -940,7 +934,7 @@ inline void deinterleave_store(
 //
 // VERY LIMITED SUPPORT...just enough to make cubic eos work...
 //
-struct avx2Mask : avx2Long4<std::uint64_t>
+struct avx2Mask4 : avx2Long4<std::uint64_t>
 {
     // bring in ctors
     using avx2Long4::avx2Long4;
@@ -949,19 +943,36 @@ struct avx2Mask : avx2Long4<std::uint64_t>
     static constexpr scalarType false_v = 0;
 };
 
-inline avx2Mask operator>(avx2Double4 lhs, avx2Double4 rhs)
+inline avx2Mask4 operator>(avx2Double4 lhs, avx2Double4 rhs)
 {
     return reinterpret_cast<__m256i>(_mm256_cmp_pd(rhs._data, lhs._data, 1));
 }
 
-inline avx2Mask operator>(avx2Float8 lhs, avx2Float8 rhs)
+inline bool operator&&(avx2Mask4 lhs, bool rhs)
+{
+    bool tmp = _mm256_testc_si256(lhs._data, _mm256_set1_epi64x(avx2Mask4::true_v));
+
+    return tmp && rhs;
+}
+
+struct avx2Mask8 : avx2Int8<std::uint32_t>
+{
+    // bring in ctors
+    using avx2Int8::avx2Int8;
+
+    static constexpr scalarType true_v = -1;
+    static constexpr scalarType false_v = 0;
+};
+
+
+inline avx2Mask8 operator>(avx2Float8 lhs, avx2Float8 rhs)
 {
     return reinterpret_cast<__m256i>(_mm256_cmp_ps(rhs._data, lhs._data, 1));
 }
 
-inline bool operator&&(avx2Mask lhs, bool rhs)
+inline bool operator&&(avx2Mask8 lhs, bool rhs)
 {
-    bool tmp = _mm256_testc_si256(lhs._data, _mm256_set1_epi64x(avx2Mask::true_v));
+    bool tmp = _mm256_testc_si256(lhs._data, _mm256_set1_epi64x(avx2Mask8::true_v));
 
     return tmp && rhs;
 }

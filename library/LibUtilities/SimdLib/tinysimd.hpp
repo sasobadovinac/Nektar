@@ -61,14 +61,14 @@ namespace abi
 {
 
 // pick the most specialiazed available match out of available ABIs.
-template <typename T> struct default_abi
+template <typename T, int width> struct default_abi
 {
     using type = typename first_not_void_of
     <
-        typename avx512<T>::type,
-        typename avx2<T>::type,
-        typename sse2<T>::type,
-        typename scalar<T>::type
+        // typename avx512<T>::type,
+        typename avx2<T, width>::type
+        // typename sse2<T>::type,
+        // typename scalar<T>::type
     >::type;
 
     static_assert(!std::is_void<type>::value, "unsupported SIMD type");
@@ -78,9 +78,9 @@ template <typename T> struct default_abi
 
 
 // light wrapper for default types
-template <typename ScalarType,
-    template <typename> class abi = abi::default_abi>
-using simd = typename abi<ScalarType>::type;
+template <typename ScalarType, int width = 0,
+    template <typename, int> class abi = abi::default_abi>
+using simd = typename abi<ScalarType, width>::type;
 
 
 } // namespace tinysimd
