@@ -212,37 +212,15 @@ namespace SimdLibTests
             BOOST_CHECK_EQUAL(ascalararr[i], avec[i]);
         }
     }
-/*
-    #if defined(__AVX2__) && defined(NEKTAR_ENABLE_AVX2)
-    BOOST_AUTO_TEST_CASE(SimdLibFloat_load_any)
+
+    BOOST_AUTO_TEST_CASE(SimdLibFloat_gather32)
     {
         vec_t avec;
-        float* p0, * p1, * p2, * p3;
-        std::array<float, 32> ascalararr{1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32};
-
-        p0 =  ascalararr.data();
-        p1 =  ascalararr.data() + 7;
-        p2 =  ascalararr.data() + 11;
-        p3 =  ascalararr.data() + 13;
-
-        avec.load(p0, p1, p2, p3);
-
-        BOOST_CHECK_EQUAL(ascalararr[0], avec[0]);
-        BOOST_CHECK_EQUAL(ascalararr[3], avec[1]);
-        BOOST_CHECK_EQUAL(ascalararr[5], avec[2]);
-        BOOST_CHECK_EQUAL(ascalararr[6], avec[3]);
-
-    }
-    #endif
-*/
-    BOOST_AUTO_TEST_CASE(SimdLibFloat_gather64)
-    {
-        vec_t avec;
-        using index_t = simd<size_t>;
+        using index_t = simd<vec_t::scalarIndexType>;
         index_t aindexvec;
 
         // create and fill index
-        std::array<size_t, vec_t::width> aindex;
+        std::array<vec_t::scalarIndexType, vec_t::width> aindex;
         aindex[0] = 0;
         if (vec_t::width > 2)
         {
@@ -279,18 +257,21 @@ namespace SimdLibTests
 
     }
 
-    BOOST_AUTO_TEST_CASE(SimdLibFloat_scatter64)
+    BOOST_AUTO_TEST_CASE(SimdLibFloat_scatter32)
     {
         vec_t avec;
-        using index_t = simd<size_t>;
+        using index_t = simd<vec_t::scalarIndexType>;
         index_t aindexvec;
 
         // create and fill index
-        std::array<size_t, vec_t::width> aindex;
+        std::array<vec_t::scalarIndexType, vec_t::width> aindex;
         aindex[0] = 1;
-        if (vec_t::width > 2)
+        if (vec_t::width > 1)
         {
             aindex[1] = 3;
+        }
+        if (vec_t::width > 2)
+        {
             aindex[2] = 5;
             aindex[3] = 6;
         }
@@ -311,9 +292,12 @@ namespace SimdLibTests
 
         // fill vector
         avec[0] = 10;
-        if (vec_t::width > 2)
+        if (vec_t::width > 1)
         {
             avec[1] =  9;
+        }
+        if (vec_t::width > 2)
+        {
             avec[2] =  8;
             avec[3] =  7;
         }
