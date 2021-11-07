@@ -55,7 +55,7 @@ namespace Nektar
             void Apply(const Array<OneD, NekDouble>  &inarray,
                        Array<OneD, NekDouble> &outarray,
                        bool OutArrayInCoeffSpace,
-                       Array<OneD, NekDouble> &pUnorm = NullNekDouble1DArray,
+                       const Array<OneD, NekDouble> &pUnorm = NullNekDouble1DArray,
                        const NekDouble scale = 1.0) const;
             
 

@@ -869,7 +869,7 @@ namespace Nektar
                 const Array<OneD, const NekDouble> &inarray,
                       Array<OneD,       NekDouble> &outarray,
                 const StdRegions::ConstFactorMap &factors,
-                const StdRegions::VarCoeffMap &varcoeff,
+                const StdRegions::VarCoeffMap &pvarcoeff,
                 const MultiRegions::VarFactorsMap &varfactors,
                 const Array<OneD, const NekDouble> &dirForcing,
                 const bool PhysSpaceForcing)
@@ -930,6 +930,7 @@ namespace Nektar
 
             StdRegions::MatrixType mtype = StdRegions::eHelmholtz;
 
+            StdRegions::VarCoeffMap varcoeff;
             if(factors.count(StdRegions::eFactorGJP))
             {
                 // initialize if required
@@ -945,12 +946,18 @@ namespace Nektar
                 }
 
                 // to set up forcing need initial guess in physical space
-                Array<OneD, NekDouble> phys(m_npoints);
+                Array<OneD, NekDouble> phys(m_npoints), tmp;
                 BwdTrans(outarray,phys);
                 NekDouble scale = -1.0*factors.
                     find(StdRegions::eFactorGJP)->second; 
-                m_GJPData->Apply(phys,wsp,true, NullNekDouble1DArray,
+
+                m_GJPData->Apply(phys, wsp, true,
+                                 pvarcoeff.count(StdRegions::eVarCoeffGJPNormVel)?
+                                 pvarcoeff.find(StdRegions::eVarCoeffGJPNormVel)->second :
+                                 NullNekDouble1DArray,
                                  scale);
+
+                varcoeff.erase(StdRegions::eVarCoeffGJPNormVel); 
             }
             
             GlobalLinSysKey key(mtype,m_locToGloMap,factors,

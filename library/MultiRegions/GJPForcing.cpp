@@ -222,7 +222,7 @@ namespace Nektar
                         const Array<OneD, NekDouble>  &inarray,
                         Array<OneD, NekDouble> &outarray,
                         bool OutarrayInCoeffSpace,
-                        Array<OneD, NekDouble> &pUnorm,
+                        const Array<OneD, NekDouble> &pUnorm,
                         NekDouble scale) const 
         {
             int ncoeffs    = m_dgfield->GetNcoeffs();

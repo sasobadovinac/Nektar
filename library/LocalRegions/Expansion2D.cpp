@@ -43,6 +43,7 @@
 #include <LibUtilities/Foundations/InterpCoeff.h>
 #include <LocalRegions/MatrixKey.h>
 #include <LibUtilities/Foundations/ManagerAccess.h>
+#include <LibUtilities/Foundations/Interp.h>
 using namespace std;
 
 namespace Nektar
@@ -1718,6 +1719,7 @@ namespace Nektar
                         (m_ncoeffs*tracepts[t],0.0);
                 }
 
+                
                 for(int i = 0; i < m_ncoeffs; ++i)
                 {
                     FillMode(i,phys);
@@ -1727,11 +1729,30 @@ namespace Nektar
                     {
                         const NormalVector norm     = GetTraceNormal(t);
                         
+                        LibUtilities::BasisKey fromkey
+                            = GetTraceBasisKey(t);
+                        LibUtilities::BasisKey tokey
+                            = traceExp[t]->GetBasis(0)->GetBasisKey();
+                        bool DoInterp = (fromkey != tokey);
+
+                        
+                        Array<OneD, NekDouble> n(tracepts[t]);;
                         for(int d = 0; d < ncoords; ++d)
                         {
+                            // if variable p may need to interpolate
+                            if(DoInterp)
+                            {
+                                LibUtilities::Interp1D(fromkey,norm[d],tokey,n);
+                            }
+                            else
+                            {
+                                n = norm[d]; 
+                            }
+                            
                             GetTracePhysVals(t,traceExp[t],Deriv[d],val,
                                              v_GetTraceOrient(t));
-                            Vmath::Vvtvp(tracepts[t],norm[d],1,val,1,
+
+                            Vmath::Vvtvp(tracepts[t],n,1,val,1,
                                          tmp  = dphidn[t] + i*tracepts[t],1,
                                          tmp1 = dphidn[t] + i*tracepts[t],1);
                         }

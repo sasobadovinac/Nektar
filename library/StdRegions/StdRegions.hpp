@@ -240,6 +240,7 @@ namespace Nektar
             eVarCoeffMF,
             eVarCoeffMFDiv,
             eVarCoeffGmat,
+            eVarCoeffGJPNormVel,
             SIZE_VarCoeffType
         };
 
@@ -273,7 +274,8 @@ namespace Nektar
             "VarCoeffMF3Mag",
             "VarCoeffMF",
             "VarCoeffMFDiv",
-            "VarCoeffGmat"
+            "VarCoeffGmat",
+            "VarCoeffGJPNormVel"
         };
         typedef std::map<StdRegions::VarCoeffType, Array<OneD, NekDouble> > VarCoeffMap;
         static VarCoeffMap NullVarCoeffMap;

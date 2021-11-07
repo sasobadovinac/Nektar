@@ -1434,6 +1434,9 @@ namespace Nektar
                         for(int t = 0; t < ntraces; ++t)
                         {
                             const NormalVector norm     = GetTraceNormal(t);
+
+                            // for variable p need add check and
+                            // interpolation here.
                             
                             for(int d = 0; d < ncoords; ++d)
                             {

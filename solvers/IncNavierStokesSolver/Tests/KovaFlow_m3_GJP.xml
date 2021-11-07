@@ -13,6 +13,8 @@
             <I PROPERTY="EQTYPE" VALUE="UnsteadyNavierStokes" />
             <I PROPERTY="AdvectionForm" VALUE="Convective" />
             <I PROPERTY="Projection" VALUE="Continuous" />
+            <I PROPERTY="GJPStabilisation" VALUE="Explicit" />
+            <I PROPERTY="GJPNormalVelocity" VALUE="True" />
             <I PROPERTY="TimeIntegrationMethod" VALUE="IMEXOrder1" />
         </SOLVERINFO>
 
@@ -67,12 +69,6 @@
 
     </CONDITIONS>
 
-    <FORCING>
-      <FORCE TYPE="GJPStabilisation">
-	<VELSCALING> NormalVelocity </VELSCALING>
-      </FORCE>
-    </FORCING>
-    
     <GEOMETRY DIM="2" SPACE="2">
 
         <VERTEX>

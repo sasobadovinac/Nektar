@@ -912,7 +912,8 @@ namespace Nektar
         void TriExp::v_ComputeTraceNormal(const int edge)
         {
             int i;
-            const SpatialDomains::GeomFactorsSharedPtr & geomFactors = GetGeom()->GetMetricInfo();
+            const SpatialDomains::GeomFactorsSharedPtr
+                & geomFactors = GetGeom()->GetMetricInfo();
 
             LibUtilities::PointsKeyVector ptsKeys = GetPointsKeys();
             for(i = 0; i < ptsKeys.size(); ++i)
@@ -926,9 +927,9 @@ namespace Nektar
             }
 
             const SpatialDomains::GeomType type = geomFactors->GetGtype();
-            const Array<TwoD, const NekDouble> & df = geomFactors->GetDerivFactors(ptsKeys);
-            const Array<OneD, const NekDouble> & jac  = geomFactors->GetJac(ptsKeys);
-            int nqe = m_base[0]->GetNumPoints();
+            const Array<TwoD, const NekDouble> &df = geomFactors->GetDerivFactors(ptsKeys);
+            const Array<OneD, const NekDouble> &jac  = geomFactors->GetJac(ptsKeys);
+            int nqe = m_base[0]->GetNumPoints(); 
             int dim = GetCoordim();
 
             m_traceNormals[edge] = Array<OneD, Array<OneD, NekDouble> >(dim);
@@ -944,7 +945,8 @@ namespace Nektar
             Array<OneD, NekDouble>  &length = m_elmtBndNormDirElmtLen[nbnd];
 
             // Regular geometry case
-            if((type == SpatialDomains::eRegular)||(type == SpatialDomains::eMovingRegular))
+            if((type == SpatialDomains::eRegular)||
+               (type == SpatialDomains::eMovingRegular))
             {
                 NekDouble fac;
                 // Set up normals
@@ -1074,6 +1076,7 @@ namespace Nektar
                     Vmath::Vmul(nqe,normal[i],1,work,1,normal[i],1);
                 }
             }
+            
             if(GetGeom()->GetEorient(edge) == StdRegions::eBackwards)
             {
                 for(i = 0; i < GetCoordim(); ++i)
