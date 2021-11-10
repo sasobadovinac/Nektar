@@ -223,6 +223,7 @@ namespace Nektar
 
             void RotateFwd(NekDouble &u, NekDouble &v, NekDouble &w)
             {
+                ASSERTL0(false, "Not to be used");
                 // Set up just
                 switch(m_dir)
                 {
@@ -274,7 +275,15 @@ namespace Nektar
                     break;
                 case 2:
                     {
-                        ASSERTL0(false,"Set up z axis rotation");
+                        NekDouble xrot, yrot; 
+
+                        for(int n = 0; n < ind.num_elements(); ++n)
+                        {
+                            xrot = cos(m_angle)*u[ind[n]] - sin(m_angle)*v[ind[n]];
+                            yrot = sin(m_angle)*u[ind[n]] + cos(m_angle)*v[ind[n]];
+                            u[ind[n]] = xrot;
+                            v[ind[n]] = yrot;
+                        }
                     }
                     break;
                 }
@@ -283,6 +292,7 @@ namespace Nektar
             
             void RotateBwd(NekDouble &u, NekDouble &v, NekDouble &w)
             {
+                ASSERTL0(false, "Not to be used");
                 // Set up just
                 switch(m_dir)
                 {
@@ -333,7 +343,15 @@ namespace Nektar
                     break;
                 case 2:
                     {
-                        ASSERTL0(false,"Set up z axis rotation");
+                        NekDouble xrot, yrot; 
+
+                        for(int n = 0; n < ind.num_elements(); ++n)
+                        {
+                            xrot =   cos(m_angle)*u[ind[n]] + sin(m_angle)*v[ind[n]];
+                            yrot = - sin(m_angle)*u[ind[n]] + cos(m_angle)*v[ind[n]];
+                            u[ind[n]] = xrot;
+                            v[ind[n]] = yrot;
+                        }
                     }
                     break;
                 }

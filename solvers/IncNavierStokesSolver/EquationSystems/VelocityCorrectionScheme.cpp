@@ -416,7 +416,27 @@ namespace Nektar
 
         if(perRotInfo.get())
         {
-            perRotInfo->RotateFwd(periodicRotMap,fields[0], fields[1], fields[2]);
+            Array<OneD, NekDouble> tmp;
+            // cout << "---------------------------------------VCS.cpp RotateFwd " << fields[0].num_elements() <<
+            // " " << periodicRotMap.num_elements() << " -------------------------------" << endl;
+            // for(auto &it : periodicRotMap) cout << it << endl;
+
+            // for(auto &it : fields[0]) cout << it << ", ";
+            // cout << endl;
+            // for(auto &it : fields[1]) cout << it << ", ";
+            // cout << endl;
+
+            if(m_nConvectiveFields == 1)
+                perRotInfo->RotateFwd(periodicRotMap,fields[0], tmp, tmp);
+            else if(m_nConvectiveFields == 2)
+                perRotInfo->RotateFwd(periodicRotMap,fields[0], fields[1], tmp);
+            else
+                perRotInfo->RotateFwd(periodicRotMap,fields[0], fields[1], fields[2]);
+            
+            // for(auto &it : fields[0]) cout << it << ", ";
+            // cout << endl;
+            // for(auto &it : fields[1]) cout << it << ", ";
+            // cout << endl;
         }
 
         for(int i = 0; i < m_nConvectiveFields; ++i)
@@ -428,8 +448,27 @@ namespace Nektar
 
         if(perRotInfo.get())
         {
-            // put in fwd rotation term here.
-            perRotInfo->RotateBwd(periodicRotMap,fields[0],fields[1],fields[2]);
+            // cout << "---------------------------------------VCS.cpp RotateBwd "  << fields[0].num_elements() <<
+            // " " << periodicRotMap.num_elements() << " -------------------------------" << endl;
+            // for(auto &it : periodicRotMap) cout << it << endl;
+
+            // for(auto &it : fields[0]) cout << it << ", ";
+            // cout << endl;
+            // for(auto &it : fields[1]) cout << it << ", ";
+            // cout << endl;
+
+            Array<OneD, NekDouble> tmp;
+            if(m_nConvectiveFields == 1)
+                perRotInfo->RotateBwd(periodicRotMap,fields[0], tmp, tmp);
+            else if(m_nConvectiveFields == 2)
+                perRotInfo->RotateBwd(periodicRotMap,fields[0],fields[1], tmp);
+            else
+                perRotInfo->RotateBwd(periodicRotMap,fields[0],fields[1],fields[2]);
+            
+            // for(auto &it : fields[0]) cout << it << ", ";
+            // cout << endl;
+            // for(auto &it : fields[1]) cout << it << ", ";
+            // cout << endl;
         }
 
 

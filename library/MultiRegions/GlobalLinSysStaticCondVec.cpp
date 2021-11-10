@@ -179,12 +179,42 @@ namespace Nektar
 
             RotPeriodicInfoSharedPtr perRotInfo = m_locToGloMapVec[0]->GetPerRotInfo();
             Array<OneD, int> periodicRotBndMap = m_locToGloMapVec[0]->GetPeriodicRotBndMap();
+            for(auto &it: periodicRotBndMap)
+            {
+                cout << "\t\t\t id=" << it << endl;
+                cout << m_locToGloMapVec[0]->GetLocalToGlobalMap(it) << endl;
+                cout << m_locToGloMapVec[0]->GetGlobalToUniversalMap(it) << endl;
+                cout << m_locToGloMapVec[0]->GetGlobalToUniversalMapUnique(it) << endl;
+                cout << m_locToGloMapVec[0]->GetLocalToGlobalBndMap(it) << endl;
+                cout << m_locToGloMapVec[0]->GetBndCondCoeffsToGlobalCoeffsMap(it) << endl;
+            }
             
             // put in fwd rotation term here.
             if(perRotInfo.get())
             {
-                perRotInfo->RotateFwd(periodicRotBndMap,F_bnd[0],F_bnd[1],
-                                      F_bnd[2]);
+                cout << "---------------------------------------VCS.cpp RotateFwd "  << F_bnd[0].num_elements() <<
+                " " << periodicRotBndMap.num_elements() << " -------------------------------" << endl;
+                for(auto &it : periodicRotBndMap) cout << it << endl;
+                
+                for(auto &it : F_bnd[0]) cout << it << ", ";
+                cout << endl;
+                for(auto &it : F_bnd[1]) cout << it << ", ";
+                cout << endl;
+
+                Array<OneD, NekDouble> tmp;
+                if(nvec == 1)
+                    perRotInfo->RotateFwd(periodicRotBndMap,F_bnd[0],tmp, tmp);
+                else if(nvec == 2)
+                    perRotInfo->RotateFwd(periodicRotBndMap,F_bnd[0],F_bnd[1],
+                                        tmp);
+                else
+                    perRotInfo->RotateFwd(periodicRotBndMap,F_bnd[0],F_bnd[1],
+                                        F_bnd[2]);
+
+                // for(auto &it : F_bnd[0]) cout << it << ", ";
+                // cout << endl;
+                // for(auto &it : F_bnd[1]) cout << it << ", ";
+                // cout << endl;
             }
 
             // calculate globally  condensed forcing
@@ -212,8 +242,29 @@ namespace Nektar
             // periodic rotate bwd
             if(perRotInfo.get())
             {
-                perRotInfo->RotateBwd(periodicRotBndMap,outloc[0],outloc[1],
+                // cout << "---------------------------------------VCS.cpp RotateBwd "  << outloc[0].num_elements() <<
+                // " " << periodicRotBndMap.num_elements() << " -------------------------------" << endl;
+                // for(auto &it : periodicRotBndMap) cout << it << endl;
+                
+                // for(auto &it : outloc[0]) cout << it << ", ";
+                // cout << endl;
+                // for(auto &it : outloc[1]) cout << it << ", ";
+                // cout << endl;
+
+                Array<OneD, NekDouble> tmp;
+                if(nvec == 1)
+                    perRotInfo->RotateBwd(periodicRotBndMap,outloc[0],tmp, tmp);
+                else if(nvec == 2)
+                    perRotInfo->RotateBwd(periodicRotBndMap,outloc[0],outloc[1],
+                                      tmp);
+                else
+                    perRotInfo->RotateBwd(periodicRotBndMap,outloc[0],outloc[1],
                                       outloc[2]);
+
+                // for(auto &it : outloc[0]) cout << it << ", ";
+                // cout << endl;
+                // for(auto &it : outloc[1]) cout << it << ", ";
+                // cout << endl;
             }
             
             Array<OneD, NekDouble> V_int = m_wsp + 3*nvec*nLocBndDofs + nvec*nGlobDofs;
