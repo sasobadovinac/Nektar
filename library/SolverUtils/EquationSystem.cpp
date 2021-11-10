@@ -1116,11 +1116,11 @@ namespace Nektar
             WriteFld(outname + ".chk");
 
             // @TODO: Properly implement an xml output (guess this kinda works though?)
-            std::string graphname = outname + ".xml";
-            std::string filename = m_fld->SetUpOutput(graphname, true, true);
-            filename.replace(filename.size() - 3, filename.size(), "xml"); // replace .fld with .xml
-            m_graph->WriteGeometry(filename, true);
-            std::cout << std::endl;
+            // std::string graphname = outname + "_xml";
+            // std::string filename = m_fld->SetUpOutput(graphname, true, true);
+            // filename.replace(filename.size() - 3, filename.size(), "xml"); // replace .fld with .xml
+            // m_graph->WriteGeometry(filename, false);
+            // std::cout << std::endl;
         }
 
         /**

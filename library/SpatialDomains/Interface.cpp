@@ -46,11 +46,11 @@ namespace Nektar
 namespace SpatialDomains
 {
 Movement::Movement(const LibUtilities::SessionReaderSharedPtr &pSession,
-                       const MeshGraphSharedPtr &meshGraph)
+                   const MeshGraphSharedPtr &meshGraph)
     : m_meshGraph(meshGraph), m_session(pSession)
 {
-    TiXmlElement *xmlDoc = m_session->GetElement("NEKTAR");
-    TiXmlNode *conditionsXml   = xmlDoc->FirstChild("CONDITIONS");
+    TiXmlElement *xmlDoc     = m_session->GetElement("NEKTAR");
+    TiXmlNode *conditionsXml = xmlDoc->FirstChild("CONDITIONS");
     if (conditionsXml != nullptr) // @TODO: Can I remove this line?
     {
         TiXmlNode *movement = conditionsXml->FirstChild("MOVEMENT");
@@ -58,8 +58,8 @@ Movement::Movement(const LibUtilities::SessionReaderSharedPtr &pSession,
         {
             if (movement->FirstChild("ZONES") != nullptr)
             {
-                ReadZones(m_session->GetElement(
-                    "NEKTAR/CONDITIONS/MOVEMENT/ZONES"));
+                ReadZones(
+                    m_session->GetElement("NEKTAR/CONDITIONS/MOVEMENT/ZONES"));
             }
 
             if (movement->FirstChild("INTERFACES") != nullptr)
@@ -75,7 +75,8 @@ Movement::Movement(const LibUtilities::SessionReaderSharedPtr &pSession,
     // DEBUG COMMENTS
     if (conditionsXml != nullptr) // Set if verbose/debug mode? to output rank interface information
     {
-        if (m_session->GetComm()->GetRank() == 0)
+        if (m_session->GetComm()->GetRank() == 0 &&
+                m_session->DefinesCmdLineArgument("verbose"))
         {
             std::cout << "Num zones: " << m_zones.size();
             std::cout << "\n-----------------------------\n";
@@ -88,14 +89,14 @@ Movement::Movement(const LibUtilities::SessionReaderSharedPtr &pSession,
 
             for (auto &zone : m_zones)
             {
-                std::cout << zone.first
-                          << "\t"
-                          << MovementTypeStr[static_cast<int>(zone.second->GetMovementType())]
-                          << "\t"
-                          << zone.second->GetElements().size()
+                std::cout << zone.first << "\t"
+                          << MovementTypeStr[static_cast<int>(
+                                 zone.second->GetMovementType())]
+                          << "\t" << zone.second->GetElements().size()
                           << std::endl;
             }
-            std::cout << "-----------------------------" << std::endl << std::endl;
+            std::cout << "-----------------------------" << std::endl
+                      << std::endl;
 
             std::cout << "Num interfaces: " << m_interfaces.size();
             std::cout << "\n-----------------------------\n";
@@ -107,11 +108,12 @@ Movement::Movement(const LibUtilities::SessionReaderSharedPtr &pSession,
             for (auto &interface : m_interfaces)
             {
                 std::cout
-                    << interface.first.second
-                    << "\t"
+                    << interface.first.second << "\t"
                     << interface.second->GetLeftInterface()->GetEdgeIds().size()
                     << "\t"
-                    << interface.second->GetRightInterface()->GetEdgeIds().size()
+                    << interface.second->GetRightInterface()
+                           ->GetEdgeIds()
+                           .size()
                     << std::endl;
             }
             std::cout << "-----------------------------" << std::endl;
@@ -119,8 +121,9 @@ Movement::Movement(const LibUtilities::SessionReaderSharedPtr &pSession,
     }
 }
 
-ZoneBase::ZoneBase(MovementType type, int indx, CompositeMap domain)
-: m_type(type), m_id(indx), m_domain(domain)
+ZoneBase::ZoneBase(MovementType type, int indx, CompositeMap domain,
+                   int coordDim)
+    : m_type(type), m_id(indx), m_domain(domain), m_coordDim(coordDim)
 {
     // Fill element Ids
     for (auto &comp : domain)
@@ -131,17 +134,13 @@ ZoneBase::ZoneBase(MovementType type, int indx, CompositeMap domain)
             m_elements.emplace_back(geom);
         }
     }
-
-    m_coordDim = domain.begin()->second->m_geomVec[0]->GetCoordim();
 }
 
-ZoneRotate::ZoneRotate(int id,
-                       const CompositeMap &domain,
-                       const NekPoint<NekDouble> &origin,
-                       const DNekVec &axis,
+ZoneRotate::ZoneRotate(int id, const CompositeMap &domain, const int coordDim,
+                       const NekPoint<NekDouble> &origin, const DNekVec &axis,
                        const NekDouble &angularVel)
-    : ZoneBase(MovementType::eRotate, id, domain), m_origin(origin), m_axis(axis),
-      m_angularVel(angularVel)
+    : ZoneBase(MovementType::eRotate, id, domain, coordDim), m_origin(origin),
+      m_axis(axis), m_angularVel(angularVel)
 {
     std::set<int> seenVerts, seenEdges, seenFaces;
     for (auto &comp : m_domain)
@@ -221,25 +220,27 @@ ZoneRotate::ZoneRotate(int id,
 
     // Construct rotation matrix
     m_W(0, 1) = -m_axis[2];
-    m_W(0, 2) =  m_axis[1];
-    m_W(1, 0) =  m_axis[2];
+    m_W(0, 2) = m_axis[1];
+    m_W(1, 0) = m_axis[2];
     m_W(1, 2) = -m_axis[0];
     m_W(2, 0) = -m_axis[1];
-    m_W(2, 1) =  m_axis[0];
+    m_W(2, 1) = m_axis[0];
 
-    m_W2 = m_W*m_W;
+    m_W2 = m_W * m_W;
 
-    std::cout << "W matrix: " << std::endl;
-    std::cout << m_W << std::endl << std::endl;
-    std::cout << "W^2 matrix: " << std::endl;
-    std::cout << m_W2 << std::endl << std::endl;
-    std::cout << "Origin: " << std::endl;
-    std::cout << m_origin << std::endl << std::endl;
+    // std::cout << "W matrix: " << std::endl;
+    // std::cout << m_W << std::endl << std::endl;
+    // std::cout << "W^2 matrix: " << std::endl;
+    // std::cout << m_W2 << std::endl << std::endl;
+    // std::cout << "Origin: " << std::endl;
+    // std::cout << m_origin << std::endl << std::endl;
 }
 
 ZoneTranslate::ZoneTranslate(int id, const CompositeMap &domain,
-                                   const std::vector<NekDouble> &velocity)
-    : ZoneBase(MovementType::eTranslate, id, domain), m_velocity(velocity)
+                             const int coordDim,
+                             const std::vector<NekDouble> &velocity)
+    : ZoneBase(MovementType::eTranslate, id, domain, coordDim),
+      m_velocity(velocity)
 {
     std::set<int> seenVerts, seenEdges;
     for (auto &comp : m_domain)
@@ -298,9 +299,11 @@ ZoneTranslate::ZoneTranslate(int id, const CompositeMap &domain,
 }
 
 ZonePrescribe::ZonePrescribe(int id, const CompositeMap &domain,
+                             const int coordDim,
                              LibUtilities::EquationSharedPtr xDeform,
                              LibUtilities::EquationSharedPtr yDeform)
-    : ZoneBase(MovementType::ePrescribe, id, domain), m_xDeform(xDeform), m_yDeform(yDeform)
+    : ZoneBase(MovementType::ePrescribe, id, domain, coordDim),
+      m_xDeform(xDeform), m_yDeform(yDeform)
 {
     std::set<int> seenVerts, seenEdges;
     for (auto &comp : m_domain)
@@ -356,8 +359,6 @@ ZonePrescribe::ZonePrescribe(int id, const CompositeMap &domain,
     }
 }
 
-
-
 std::string ReadTag(std::string &tagStr)
 {
     std::string::size_type indxBeg = tagStr.find_first_of('[') + 1;
@@ -375,10 +376,10 @@ std::string ReadTag(std::string &tagStr)
 
 void Movement::ReadZones(TiXmlElement *zonesTag)
 {
+    int coordDim = m_meshGraph->GetSpaceDimension();
+
     ASSERTL0(zonesTag, "Unable to find ZONES tag in file.");
-
     TiXmlElement *zonesElement = zonesTag->FirstChildElement();
-
     while (zonesElement)
     {
         std::string zoneType = zonesElement->Value();
@@ -390,13 +391,11 @@ void Movement::ReadZones(TiXmlElement *zonesTag)
         ASSERTL0(err == TIXML_SUCCESS, "Unable to read zone ID.");
 
         std::string interfaceDomainStr;
-        err = zonesElement->QueryStringAttribute("DOMAIN",
-                                                     &interfaceDomainStr);
-        ASSERTL0(err == TIXML_SUCCESS,
-                 "Unable to read zone domain.");
+        err = zonesElement->QueryStringAttribute("DOMAIN", &interfaceDomainStr);
+        ASSERTL0(err == TIXML_SUCCESS, "Unable to read zone domain.");
 
         auto &domains = m_meshGraph->GetDomain();
-        auto domFind = stoi(ReadTag(interfaceDomainStr));
+        auto domFind  = stoi(ReadTag(interfaceDomainStr));
         std::map<int, CompositeSharedPtr> domain;
         if (domains.find(domFind) != domains.end())
         {
@@ -424,13 +423,15 @@ void Movement::ReadZones(TiXmlElement *zonesTag)
             err = zonesElement->QueryStringAttribute("ANGVEL", &angularVelStr);
             ASSERTL0(err == TIXML_SUCCESS, "Unable to read angular velocity.");
 
-            LibUtilities::Equation angularVelEqn(
-                m_session->GetInterpreter(), angularVelStr);
+            LibUtilities::Equation angularVelEqn(m_session->GetInterpreter(),
+                                                 angularVelStr);
             NekDouble angularVel = angularVelEqn.Evaluate();
 
-            zone = ZoneRotateShPtr(MemoryManager<ZoneRotate>::AllocateSharedPtr(indx, domain,  origin, axis, angularVel));
+            zone = ZoneRotateShPtr(MemoryManager<ZoneRotate>::AllocateSharedPtr(
+                indx, domain, coordDim, origin, axis, angularVel));
         }
-        else if (zoneType == "T" || zoneType == "TRANSLATE" || zoneType == "TRANSLATING")
+        else if (zoneType == "T" || zoneType == "TRANSLATE" ||
+                 zoneType == "TRANSLATING")
         {
             std::string velocityStr;
             err = zonesElement->QueryStringAttribute("VELOCITY", &velocityStr);
@@ -438,12 +439,14 @@ void Movement::ReadZones(TiXmlElement *zonesTag)
             std::vector<NekDouble> velocity;
             ParseUtils::GenerateVector(velocityStr, velocity);
 
-            zone = ZoneTranslateShPtr(MemoryManager<ZoneTranslate>::AllocateSharedPtr(indx, domain, velocity));
-
+            zone = ZoneTranslateShPtr(
+                MemoryManager<ZoneTranslate>::AllocateSharedPtr(
+                    indx, domain, coordDim, velocity));
         }
         else if (zoneType == "F" || zoneType == "FIXED")
         {
-            zone = ZoneFixedShPtr(MemoryManager<ZoneFixed>::AllocateSharedPtr(indx, domain));
+            zone = ZoneFixedShPtr(MemoryManager<ZoneFixed>::AllocateSharedPtr(
+                indx, domain, coordDim));
         }
         else if (zoneType == "P" || zoneType == "PRESCRIBED")
         {
@@ -451,19 +454,24 @@ void Movement::ReadZones(TiXmlElement *zonesTag)
             err = zonesElement->QueryStringAttribute("XDEFORM", &xDeformStr);
             ASSERTL0(err == TIXML_SUCCESS, "Unable to read x deform equation.");
             LibUtilities::EquationSharedPtr xDeformEqn =
-                std::make_shared<LibUtilities::Equation>(m_session->GetInterpreter(), xDeformStr);
+                std::make_shared<LibUtilities::Equation>(
+                    m_session->GetInterpreter(), xDeformStr);
 
             std::string yDeformStr;
             err = zonesElement->QueryStringAttribute("YDEFORM", &yDeformStr);
             ASSERTL0(err == TIXML_SUCCESS, "Unable to read y deform equation.");
             LibUtilities::EquationSharedPtr yDeformEqn =
-                std::make_shared<LibUtilities::Equation>(m_session->GetInterpreter(), yDeformStr);
+                std::make_shared<LibUtilities::Equation>(
+                    m_session->GetInterpreter(), yDeformStr);
 
-            zone = ZonePrescribeShPtr(MemoryManager<ZonePrescribe>::AllocateSharedPtr(indx, domain, xDeformEqn, yDeformEqn));
+            zone = ZonePrescribeShPtr(
+                MemoryManager<ZonePrescribe>::AllocateSharedPtr(
+                    indx, domain, coordDim, xDeformEqn, yDeformEqn));
         }
         else
         {
-            WARNINGL0(false, "Zone type '" + zoneType + "' is unsupported. Valid types are: 'Fixed', 'Rotate', 'Translate', or 'Prescribe'.")
+            WARNINGL0(false, "Zone type '" + zoneType +
+                                 "' is unsupported. Valid types are: 'Fixed', 'Rotate', 'Translate', or 'Prescribe'.")
         }
 
         m_zones[indx] = zone;
@@ -480,8 +488,9 @@ void Movement::ReadInterfaces(TiXmlElement *interfacesTag)
 
     while (interfaceElement)
     {
-        ASSERTL0("INTERFACE" == (std::string)interfaceElement->Value(),
-                 "Only INTERFACE tags may be present inside the INTERFACES block.")
+        ASSERTL0(
+            "INTERFACE" == (std::string)interfaceElement->Value(),
+            "Only INTERFACE tags may be present inside the INTERFACES block.")
 
         int err;
 
@@ -492,13 +501,15 @@ void Movement::ReadInterfaces(TiXmlElement *interfacesTag)
 
         int cnt = 0;
         Array<OneD, InterfaceShPtr> interfaces(2);
-        while(sideElement)
+        while (sideElement)
         {
-            ASSERTL0(cnt < 2, "Only two sides may be present in each interface block.")
+            ASSERTL0(cnt < 2,
+                     "Only two sides may be present in each interface block.")
             std::string sideStr = sideElement->Value();
 
-            InterfaceSide side; // @TODO: Currently don't use these sides. Change to make sure we define a left and right.
-            if(sideStr == "L" || sideStr == "LEFT")
+            InterfaceSide
+                side; // @TODO: Currently don't use these sides. Change to make sure we define a left and right.
+            if (sideStr == "L" || sideStr == "LEFT")
             {
                 side = InterfaceSide::eLeft;
             }
@@ -527,12 +538,16 @@ void Movement::ReadInterfaces(TiXmlElement *interfacesTag)
                 m_meshGraph->GetCompositeList(indxStr, boundaryEdge);
             }
 
-            interfaces[cnt++] = InterfaceShPtr(MemoryManager<Interface>::AllocateSharedPtr(indx, side, boundaryEdge));
+            interfaces[cnt++] =
+                InterfaceShPtr(MemoryManager<Interface>::AllocateSharedPtr(
+                    indx, side, boundaryEdge));
 
             sideElement = sideElement->NextSiblingElement();
         }
 
-        m_interfaces[std::make_pair(m_interfaces.size(), name)] = InterfacePairShPtr(MemoryManager<InterfacePair>::AllocateSharedPtr(interfaces[0], interfaces[1]));
+        m_interfaces[std::make_pair(m_interfaces.size(), name)] =
+            InterfacePairShPtr(MemoryManager<InterfacePair>::AllocateSharedPtr(
+                interfaces[0], interfaces[1]));
         interfaceElement = interfaceElement->NextSiblingElement();
     }
 }
@@ -580,7 +595,7 @@ void Movement::PerformMovement(NekDouble timeStep)
     std::set<int> movedZoneIds;
     for (auto &zone : m_zones)
     {
-        if(zone.second->Move(timeStep))
+        if (zone.second->Move(timeStep))
         {
             movedZoneIds.insert(zone.first);
         }
@@ -590,13 +605,13 @@ void Movement::PerformMovement(NekDouble timeStep)
     // @TODO: Probably better to save the moved flag on the interface pair obj?
     for (auto &interPair : m_interfaces)
     {
-        int leftId = interPair.second->GetLeftInterface()->GetId();
+        int leftId  = interPair.second->GetLeftInterface()->GetId();
         int rightId = interPair.second->GetRightInterface()->GetId();
 
-        if (movedZoneIds.find(leftId) != movedZoneIds.end()
-            || movedZoneIds.find(rightId) != movedZoneIds.end())
+        if (movedZoneIds.find(leftId) != movedZoneIds.end() ||
+            movedZoneIds.find(rightId) != movedZoneIds.end())
         {
-            m_zones[leftId]->GetMoved() = true;
+            m_zones[leftId]->GetMoved()  = true;
             m_zones[rightId]->GetMoved() = true;
         }
     }
@@ -633,14 +648,13 @@ void Movement::GenGeomFactors()
 // Calculate new location of points using Rodrigues formula
 bool ZoneRotate::v_Move(NekDouble time)
 {
-    boost::ignore_unused(time);
     NekDouble angle = -m_angularVel * time;
 
     // Identity matrix
-    DNekMat rot(3,3,0.0);
-    rot(0,0) = 1.0;
-    rot(1,1) = 1.0;
-    rot(2,2) = 1.0;
+    DNekMat rot(3, 3, 0.0);
+    rot(0, 0) = 1.0;
+    rot(1, 1) = 1.0;
+    rot(2, 2) = 1.0;
 
     rot = rot + sin(angle) * m_W + (1 - cos(angle)) * m_W2;
 
@@ -650,12 +664,11 @@ bool ZoneRotate::v_Move(NekDouble time)
     for (auto &vert : m_rotateVerts)
     {
         NekPoint<NekDouble> pnt = m_origPosition[cnt] - m_origin;
-        DNekVec pntVec = {pnt[0], pnt[1], pnt[2]};
+        DNekVec pntVec          = {pnt[0], pnt[1], pnt[2]};
 
         DNekVec newLoc = rot * pntVec;
 
-        vert->UpdatePosition(newLoc(0) + m_origin[0],
-                             newLoc(1) + m_origin[1],
+        vert->UpdatePosition(newLoc(0) + m_origin[0], newLoc(1) + m_origin[1],
                              newLoc(2) + m_origin[2]);
         cnt++;
     }
@@ -665,7 +678,7 @@ bool ZoneRotate::v_Move(NekDouble time)
         for (auto &vert : curve->m_points)
         {
             NekPoint<NekDouble> pnt = m_origPosition[cnt] - m_origin;
-            DNekVec pntVec = {pnt[0], pnt[1], pnt[2]};
+            DNekVec pntVec          = {pnt[0], pnt[1], pnt[2]};
 
             DNekVec newLoc = rot * pntVec;
 
@@ -768,8 +781,8 @@ bool ZonePrescribe::v_Move(NekDouble time)
 {
     boost::ignore_unused(time);
     /*
-    // This is hacky - as interface is set up for 2 sides usually, we only use the left side in this case
-    if (m_side == eLeft)
+    // This is hacky - as interface is set up for 2 sides usually, we only use
+    the left side in this case if (m_side == eLeft)
     {
         int dim = 3;
         int cnt = 0;
@@ -781,8 +794,10 @@ bool ZonePrescribe::v_Move(NekDouble time)
 
             Array<OneD, NekDouble> newLoc(3, 0.0);
 
-            // newLoc[0] = m_xDeform->Evaluate(coords[0], coords[1], coords[2], time);
-            // newLoc[1] = m_yDeform->Evaluate(coords[0], coords[1], coords[2], time); newLoc[2] = coords[2];
+            // newLoc[0] = m_xDeform->Evaluate(coords[0], coords[1], coords[2],
+    time);
+            // newLoc[1] = m_yDeform->Evaluate(coords[0], coords[1], coords[2],
+    time); newLoc[2] = coords[2];
 
             NekDouble Lx = 20, Ly = 20;         // Size of mesh
             NekDouble nx = 1, ny = 1, nt = 1;   // Space and time period
@@ -790,31 +805,34 @@ bool ZonePrescribe::v_Move(NekDouble time)
             NekDouble t0 = sqrt(5*5 + 5*5);     // Time domain
 
             //newLoc[0] = coords[0] + X0 * sin((nt * 2 * M_PI * time) / t0)
-                                       // * sin((nx * 2 * M_PI * coords[0]) / Lx)
-                                       // * sin((ny * 2 * M_PI * coords[1]) / Ly);
+                                       // * sin((nx * 2 * M_PI * coords[0]) /
+    Lx)
+                                       // * sin((ny * 2 * M_PI * coords[1]) /
+    Ly);
 
             //newLoc[1] = coords[1] + Y0 * sin((nt * 2 * M_PI * time) / t0)
-                                       // * sin((nx * 2 * M_PI * coords[0]) / Lx)
-                                       // * sin((ny * 2 * M_PI * coords[1]) / Ly);
+                                       // * sin((nx * 2 * M_PI * coords[0]) /
+    Lx)
+                                       // * sin((ny * 2 * M_PI * coords[1]) /
+    Ly);
 
             if (coords[0] < 1e-8 || fabs(coords[0] - 1) < 1e-8)
             {
-                newLoc[0] = coords[0]; // + 0.001 * sin(2 * M_PI * time) * coords[0] * (1 - coords[0]);
-                newLoc[1] = coords[1];
-                newLoc[2] = coords[2];
+                newLoc[0] = coords[0]; // + 0.001 * sin(2 * M_PI * time) *
+    coords[0] * (1 - coords[0]); newLoc[1] = coords[1]; newLoc[2] = coords[2];
             }
             else
             {
-                newLoc[0] = coords[0] + 0.001 * 0.5; // + 0.001 * sin(2 * M_PI * time) * coords[0] * (1 - coords[0]);
-                newLoc[1] = coords[1];
-                newLoc[2] = coords[2];
+                newLoc[0] = coords[0] + 0.001 * 0.5; // + 0.001 * sin(2 * M_PI *
+    time) * coords[0] * (1 - coords[0]); newLoc[1] = coords[1]; newLoc[2] =
+    coords[2];
             }
 
 
             auto pnt = m_origPosition[cnt];
-            newLoc[0] = pnt(0) + 0.05 * sin(2*M_PI*time) * sin(2*M_PI*coords[0]) * sin(2*M_PI*coords[1]);
-            newLoc[1] = pnt(1) + 0.05 * sin(2*M_PI*time) * sin(2*M_PI*coords[0]) * sin(2*M_PI*coords[1]);
-            cnt++;
+            newLoc[0] = pnt(0) + 0.05 * sin(2*M_PI*time) * sin(2*M_PI*coords[0])
+    * sin(2*M_PI*coords[1]); newLoc[1] = pnt(1) + 0.05 * sin(2*M_PI*time) *
+    sin(2*M_PI*coords[0]) * sin(2*M_PI*coords[1]); cnt++;
 
             vert->UpdatePosition(newLoc[0], newLoc[1], newLoc[2]);
         }

@@ -233,6 +233,19 @@ void OutputVtk::OutputFromExp(po::variables_map &vm)
     // Extract the output filename and extension
     string filename = PrepareOutput(vm);
 
+
+    // Move geometry based on zones data in .xml and time in .fld metadatamap
+    // Perform movement of zones based on time in field files metadata map
+    for (int i = 0; i < m_f->m_exp.size(); ++i)
+    {
+        if(!m_f->m_exp[i]->GetMovement()->GetZones().empty())
+        {
+            m_f->m_exp[i]->GetMovement()->PerformMovement(
+                boost::lexical_cast<NekDouble>(m_f->m_fieldMetaDataMap["Time"]));
+            m_f->m_exp[i]->Reset();
+        }
+    }
+
     // Write solution.
     ofstream outfile(filename.c_str());
     WriteVtkHeader(outfile);

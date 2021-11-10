@@ -1116,7 +1116,7 @@ namespace Nektar
             MULTI_REGIONS_EXPORT inline const LocTraceToTraceMapSharedPtr
                 &GetLocTraceToTraceMap() const;
 
-            inline SpatialDomains::MovementSharedPtr GetMovement()
+            inline SpatialDomains::MovementSharedPtr const GetMovement()
             {
                 return m_movement;
             }

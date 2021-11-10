@@ -396,6 +396,13 @@ AssemblyCommDG::AssemblyCommDG(
             std::cout << "MPI setup for trace exchange: " << std::endl;
         }
 
+        // Padding for output
+        int maxStrLen = 0;
+        for (size_t i = 0; i < MPIFuncs.size(); ++i)
+        {
+            maxStrLen = MPIFuncsNames[i].size() > maxStrLen ? MPIFuncsNames[i].size() : maxStrLen;
+        }
+
         for (size_t i = 0; i < MPIFuncs.size(); ++i)
         {
             Timing(comm, warmup, numPoints, MPIFuncs[i]);
@@ -404,8 +411,10 @@ AssemblyCommDG::AssemblyCommDG(
             if (verbose && comm->GetRank() == 0)
             {
                 std::cout << "  " << MPIFuncsNames[i]
-                          << " times (avg, min, max): " << avg[i] << " " << min
-                          << " " << max << std::endl;
+                          << " times (avg, min, max)"
+                          << std::string(maxStrLen - MPIFuncsNames[i].size(), ' ')
+                          << ": " << avg[i] << " " << min << " " << max
+                          << std::endl;
             }
         }
 

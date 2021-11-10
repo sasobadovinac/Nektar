@@ -88,7 +88,7 @@ typedef std::shared_ptr<ZoneBase> ZoneBaseShPtr;
 
 struct ZoneBase
 {
-    ZoneBase(MovementType type, int indx, CompositeMap domain);
+    ZoneBase(MovementType type, int indx, CompositeMap domain, int coordDim);
 
     virtual ~ZoneBase() = default;
 
@@ -151,6 +151,7 @@ struct ZoneRotate final: public ZoneBase
 {
     ZoneRotate(int id,
                const CompositeMap &domain,
+               const int coordDim,
                const NekPoint<NekDouble> &origin,
                const DNekVec &axis,
                const NekDouble &angularVel);
@@ -188,8 +189,10 @@ protected:
 
 struct ZoneTranslate final: public ZoneBase
 {
-    ZoneTranslate(int id, const CompositeMap &domain,
-                     const std::vector<NekDouble> &velocity);
+    ZoneTranslate(int id,
+                  const CompositeMap &domain,
+                  const int coordDim,
+                  const std::vector<NekDouble> &velocity);
 
     virtual ~ZoneTranslate() = default;
 
@@ -209,9 +212,11 @@ protected:
 
 struct ZonePrescribe final: public ZoneBase
 {
-    ZonePrescribe(int id, const CompositeMap &domain,
-                        LibUtilities::EquationSharedPtr xDeform,
-                        LibUtilities::EquationSharedPtr yDeform);
+    ZonePrescribe(int id,
+                  const CompositeMap &domain,
+                  const int coordDim,
+                  LibUtilities::EquationSharedPtr xDeform,
+                  LibUtilities::EquationSharedPtr yDeform);
 
     virtual ~ZonePrescribe() = default;
 
@@ -236,14 +241,17 @@ protected:
 
 struct ZoneFixed final: public ZoneBase
 {
-    ZoneFixed(int id, const CompositeMap &domain)
-            : ZoneBase(MovementType::eFixed, id, domain)
+    ZoneFixed(int id,
+              const CompositeMap &domain,
+              const int coordDim)
+            : ZoneBase(MovementType::eFixed, id, domain, coordDim)
     {
     }
 
     virtual ~ZoneFixed() = default;
 
     virtual bool v_Move(NekDouble timeStep) final;
+
 };
 
 typedef std::shared_ptr<ZoneRotate> ZoneRotateShPtr;

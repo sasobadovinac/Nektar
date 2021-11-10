@@ -2798,6 +2798,11 @@ void MeshGraphXml::WriteGeometry(
     geomTag->SetAttribute("DIM", m_meshDimension);
     geomTag->SetAttribute("SPACE", m_spaceDimension);
 
+    if(!m_session->GetComm()->IsSerial())
+    {
+        geomTag->SetAttribute("PARTITION", m_session->GetComm()->GetRank());
+    }
+
     // Clear existing elements.
     geomTag->Clear();
 

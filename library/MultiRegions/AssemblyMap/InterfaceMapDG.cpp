@@ -367,26 +367,12 @@ void InterfaceTrace::CalcLocalMissing()
 
                 if (!found)
                 {
-                    std::cout << std::endl << std::endl << "NOT FOUND!!! " << "Point " << i << ": " << xs[0] << " " << xs[1] << " " << xs[2];
+                    //std::cout << std::endl << std::endl << "NOT FOUND!!! " << "Point " << i << ": " << xs[0] << " " << xs[1] << " " << xs[2];
 
                     m_missingCoords.emplace_back(xs);
                     m_mapMissingCoordToTrace.emplace_back(offset + i);
-                    exit(0);
                 }
             }
-        }
-        std::cout << std::endl;
-        // @TODO: Debugging, can remove.
-        if (!m_missingCoords.empty() && false)
-        {
-            std::cout << "Missing coords: " << std::endl;
-            for (auto &pnt : m_missingCoords)
-            {
-                std::cout << pnt[0] << " " << pnt[1] << " " << pnt[2]
-                          << std::endl;
-            }
-            std::cout << std::endl;
-            //exit(0);
         }
     }
 }
@@ -558,8 +544,7 @@ void InterfaceTrace::FillLocalBwdTrace(Array<OneD, NekDouble> &Fwd,
 
 
 
-            // @TODO: DEBUG
-            if((Bwd[foundLocCoord.first] < -1) || (Bwd[foundLocCoord.first] > 1))
+            /*if((Bwd[foundLocCoord.first] < -1) || (Bwd[foundLocCoord.first] > 1))
             {
                 std::cout << "Geom ID->Trace ID: " << foundLocCoord.second.first <<"->" << traceId << "\t@ local coord = " << locCoord[0] << " " << locCoord[1] << "\tgives Bwd value for Phys ID: " << foundLocCoord.first << " = " << Bwd[foundLocCoord.first] << std::endl;
                 Array<OneD, NekDouble> gloCoord(3);
@@ -572,7 +557,7 @@ void InterfaceTrace::FillLocalBwdTrace(Array<OneD, NekDouble> &Fwd,
                     std::cout << edgePhys[i] << ", ";
                 }
                 std::cout << std::endl << std::endl;
-            }
+            }*/
         }
     }
 }
@@ -648,7 +633,7 @@ void InterfaceExchange::SendFwdTrace(
 void InterfaceExchange::CalcRankDistances()
 {
     Array<OneD, NekDouble> disp(m_recvSize.size() + 1, 0.0);
-    std::partial_sum(m_recvSize.begin(), m_recvSize.end(), &disp[1]);
+    std::partial_sum(m_recvSize.begin(), m_recvSize.end(), &disp[1]); // @TODO: Use partial sum for other displacement calculations
 
     Array<OneD, int> foundNum(m_interfaces.size(), 0);
     for (int i = 0; i < m_interfaces.size(); ++i)
@@ -667,10 +652,17 @@ void InterfaceExchange::CalcRankDistances()
 
                 for (auto &edge : parentEdge)
                 {
+                    // First check if inside the edge bounding box
+                    // @TODO: Might better to query a rtree? as in meshgraph.
+                    if (!edge.second->MinMaxCheck(xs))
+                    {
+                        continue;
+                    }
+
                     NekDouble dist =
                         edge.second->FindDistance(xs, foundLocCoord);
 
-                    if (dist < 1e-8)
+                    if (dist < 5e-5)
                     {
                         m_foundRankCoords[j / 3] = std::make_pair(
                             edge.second->GetGlobalID(), foundLocCoord);
