@@ -183,10 +183,10 @@ namespace Nektar
             {
                 cout << "\t\t\t id=" << it << endl;
                 cout << m_locToGloMapVec[0]->GetLocalToGlobalMap(it) << endl;
-                cout << m_locToGloMapVec[0]->GetGlobalToUniversalMap(it) << endl;
-                cout << m_locToGloMapVec[0]->GetGlobalToUniversalMapUnique(it) << endl;
-                cout << m_locToGloMapVec[0]->GetLocalToGlobalBndMap(it) << endl;
-                cout << m_locToGloMapVec[0]->GetBndCondCoeffsToGlobalCoeffsMap(it) << endl;
+                // cout << m_locToGloMapVec[0]->GetGlobalToUniversalMap(it) << endl;
+                // cout << m_locToGloMapVec[0]->GetGlobalToUniversalMapUnique(it) << endl;
+                // cout << m_locToGloMapVec[0]->GetLocalToGlobalBndMap(it) << endl;
+                // cout << m_locToGloMapVec[0]->GetBndCondCoeffsToGlobalCoeffsMap(it) << endl;
             }
             
             // put in fwd rotation term here.
