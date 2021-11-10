@@ -54,6 +54,7 @@ v5.1.0
 
 **CardiacEPSolver**
 - Added additional parameter sets to Fenton-Karma model (!1119)
+- Fix electrogram calculation in 1D/2D domains (!1285)
 
 **IncNavierStokesSolver**
 - Add Smoothed Profile Method (SPM) for the formulation of immersed boundaries
