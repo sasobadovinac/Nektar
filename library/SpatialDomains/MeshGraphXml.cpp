@@ -137,8 +137,8 @@ void MeshGraphXml::PartitionMesh(
 
             MeshPartitionSharedPtr partitioner =
                 GetMeshPartitionFactory().CreateInstance(
-                    partitionerName, session, m_meshDimension,
-                    CreateMeshEntities(), comp);
+                    partitionerName, session, session->GetComm(),
+                    m_meshDimension, CreateMeshEntities(), comp);
 
             if (session->DefinesCmdLineArgument("part-only"))
             {
@@ -195,8 +195,8 @@ void MeshGraphXml::PartitionMesh(
                     // Create mesh partitioner.
                     MeshPartitionSharedPtr partitioner =
                         GetMeshPartitionFactory().CreateInstance(
-                            partitionerName, session, m_meshDimension,
-                            CreateMeshEntities(), comp);
+                            partitionerName, session, session->GetComm(),
+                            m_meshDimension, CreateMeshEntities(), comp);
 
                     partitioner->PartitionMesh(nParts, true);
 
@@ -328,8 +328,8 @@ void MeshGraphXml::PartitionMesh(
                 // file to the working directory.
                 MeshPartitionSharedPtr partitioner =
                     GetMeshPartitionFactory().CreateInstance(
-                        partitionerName, session, m_meshDimension,
-                        CreateMeshEntities(), comp);
+                        partitionerName, session, session->GetComm(),
+                        m_meshDimension, CreateMeshEntities(), comp);
 
                 partitioner->PartitionMesh(nParts, false);
 

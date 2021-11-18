@@ -64,3 +64,7 @@ Forces the use of METIS for mesh partitioning. Requires the
 \hangindent=1.5cm
 Forces the use of Scotch for mesh partitioning. If \nekpp{} is compiled with
 METIS support, the default is to use METIS.
+
+\lstinline[style=BashInputStyle]{--use-hdf5-node-comm}\\
+\hangindent=1.5cm
+Partition the \inlsh{Hdf5}-format mesh in parallel to avoid one single thread runs out of memory in serial partitioning.
